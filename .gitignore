@@ -1,2 +1,8 @@
 # Ignore all externals upstream files
 /externals/**/upstream.*
+
+# Ignore binary files
+/binaries
+
+# Ignore baked files
+/baked

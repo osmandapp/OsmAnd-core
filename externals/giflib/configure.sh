@@ -11,7 +11,7 @@ fi
 
 # Download
 echo "Downloading new upstream..."
-curl -L http://sourceforge.net/projects/libpng/files/libpng15/1.5.13/libpng-1.5.13.tar.bz2/download > $SRCLOC/upstream.tar.bz2 || { echo "Failed to download!" 1>&2; exit; }
+curl -L http://sourceforge.net/projects/giflib/files/giflib-5.x/giflib-5.0.2.tar.bz2/download > $SRCLOC/upstream.tar.bz2 || { echo "Failed to download!" 1>&2; exit; }
 
 # Extract
 echo "Extracting upstream..."
