@@ -1,0 +1,359 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|ARM">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|ARM">
+      <Configuration>Release</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{c8654ac8-b707-45a0-a838-355e247220d8}</ProjectGuid>
+    <RootNamespace>skia</RootNamespace>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <MinimumVisualStudioVersion>11.0</MinimumVisualStudioVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v110_wp80</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v110_wp80</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v110_wp80</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v110_wp80</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <GenerateManifest>false</GenerateManifest>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
+    <OutDir>$(SolutionDir)..\..\binaries\wp8\core\externals\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)..\..\binaries\wp8\core\externals\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
+    <OutDir>$(SolutionDir)..\..\binaries\wp8\core\externals\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)..\..\binaries\wp8\core\externals\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)..\..\binaries\wp8\core\externals\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)..\..\binaries\wp8\core\externals\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)..\..\binaries\wp8\core\externals\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)..\..\binaries\wp8\core\externals\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>_LIB;SK_BUILD_FOR_WIN32;SK_RELEASE;SK_ALLOW_STATIC_GLOBAL_INITIALIZERS=0;SK_SCALAR_IS_FLOAT;SK_CPU_LENDIAN;SK_SUPPORT_GPU=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\externals\skia\upstream.patched\src\core;$(SolutionDir)..\..\externals\skia\upstream.patched\include\core;$(SolutionDir)..\..\externals\skia\upstream.patched\src\config;$(SolutionDir)..\..\externals\skia\upstream.patched\include\config;$(SolutionDir)..\..\externals\skia\upstream.patched\src\effects;$(SolutionDir)..\..\externals\skia\upstream.patched\include\effects;$(SolutionDir)..\..\externals\skia\upstream.patched\src\image;$(SolutionDir)..\..\externals\skia\upstream.patched\src\images;$(SolutionDir)..\..\externals\skia\upstream.patched\include\images;$(SolutionDir)..\..\externals\skia\upstream.patched\include\pipe;$(SolutionDir)..\..\externals\skia\upstream.patched\src\ports;$(SolutionDir)..\..\externals\skia\upstream.patched\include\ports;$(SolutionDir)..\..\externals\skia\upstream.patched\src\utils;$(SolutionDir)..\..\externals\skia\upstream.patched\include\utils;$(SolutionDir)..\..\externals\skia\upstream.patched\src\utils\win;$(SolutionDir)..\..\externals\skia\upstream.patched\include\utils\win;$(SolutionDir)..\..\externals\skia\upstream.patched\src\xml;$(SolutionDir)..\..\externals\skia\upstream.patched\include\xml;$(SolutionDir)..\..\externals\skia\upstream.patched\src\sfnt;$(SolutionDir)..\..\externals\expat\upstream.patched\lib;$(SolutionDir)..\..\externals\freetype\upstream.patched\include;$(SolutionDir)..\..\externals\giflib\include;$(SolutionDir)..\..\externals\giflib\upstream.patched\lib;$(SolutionDir)..\..\externals\jpeg\upstream.patched\;$(SolutionDir)..\..\externals\libpng\upstream.patched\;$(SolutionDir)..\..\externals\harfbuzz\upstream.patched\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <CompileAsWinRT>true</CompileAsWinRT>
+      <MinimalRebuild>false</MinimalRebuild>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>_LIB;SK_BUILD_FOR_WIN32;SK_RELEASE;SK_ALLOW_STATIC_GLOBAL_INITIALIZERS=0;SK_SCALAR_IS_FLOAT;SK_CPU_LENDIAN;SK_SUPPORT_GPU=0;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\externals\skia\upstream.patched\src\core;$(SolutionDir)..\..\externals\skia\upstream.patched\include\core;$(SolutionDir)..\..\externals\skia\upstream.patched\src\config;$(SolutionDir)..\..\externals\skia\upstream.patched\include\config;$(SolutionDir)..\..\externals\skia\upstream.patched\src\effects;$(SolutionDir)..\..\externals\skia\upstream.patched\include\effects;$(SolutionDir)..\..\externals\skia\upstream.patched\src\image;$(SolutionDir)..\..\externals\skia\upstream.patched\src\images;$(SolutionDir)..\..\externals\skia\upstream.patched\include\images;$(SolutionDir)..\..\externals\skia\upstream.patched\include\pipe;$(SolutionDir)..\..\externals\skia\upstream.patched\src\ports;$(SolutionDir)..\..\externals\skia\upstream.patched\include\ports;$(SolutionDir)..\..\externals\skia\upstream.patched\src\utils;$(SolutionDir)..\..\externals\skia\upstream.patched\include\utils;$(SolutionDir)..\..\externals\skia\upstream.patched\src\utils\win;$(SolutionDir)..\..\externals\skia\upstream.patched\include\utils\win;$(SolutionDir)..\..\externals\skia\upstream.patched\src\xml;$(SolutionDir)..\..\externals\skia\upstream.patched\include\xml;$(SolutionDir)..\..\externals\skia\upstream.patched\src\sfnt;$(SolutionDir)..\..\externals\expat\upstream.patched\lib;$(SolutionDir)..\..\externals\freetype\upstream.patched\include;$(SolutionDir)..\..\externals\giflib\include;$(SolutionDir)..\..\externals\giflib\upstream.patched\lib;$(SolutionDir)..\..\externals\jpeg\upstream.patched\;$(SolutionDir)..\..\externals\libpng\upstream.patched\;$(SolutionDir)..\..\externals\harfbuzz\upstream.patched\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <CompileAsWinRT>true</CompileAsWinRT>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
+    <ClCompile>
+      <PreprocessorDefinitions>_LIB;SK_BUILD_FOR_WIN32;SK_RELEASE;SK_ALLOW_STATIC_GLOBAL_INITIALIZERS=0;SK_SCALAR_IS_FLOAT;SK_CPU_LENDIAN;SK_SUPPORT_GPU=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\externals\skia\upstream.patched\src\core;$(SolutionDir)..\..\externals\skia\upstream.patched\include\core;$(SolutionDir)..\..\externals\skia\upstream.patched\src\config;$(SolutionDir)..\..\externals\skia\upstream.patched\include\config;$(SolutionDir)..\..\externals\skia\upstream.patched\src\effects;$(SolutionDir)..\..\externals\skia\upstream.patched\include\effects;$(SolutionDir)..\..\externals\skia\upstream.patched\src\image;$(SolutionDir)..\..\externals\skia\upstream.patched\src\images;$(SolutionDir)..\..\externals\skia\upstream.patched\include\images;$(SolutionDir)..\..\externals\skia\upstream.patched\include\pipe;$(SolutionDir)..\..\externals\skia\upstream.patched\src\ports;$(SolutionDir)..\..\externals\skia\upstream.patched\include\ports;$(SolutionDir)..\..\externals\skia\upstream.patched\src\utils;$(SolutionDir)..\..\externals\skia\upstream.patched\include\utils;$(SolutionDir)..\..\externals\skia\upstream.patched\src\utils\win;$(SolutionDir)..\..\externals\skia\upstream.patched\include\utils\win;$(SolutionDir)..\..\externals\skia\upstream.patched\src\xml;$(SolutionDir)..\..\externals\skia\upstream.patched\include\xml;$(SolutionDir)..\..\externals\skia\upstream.patched\src\sfnt;$(SolutionDir)..\..\externals\expat\upstream.patched\lib;$(SolutionDir)..\..\externals\freetype\upstream.patched\include;$(SolutionDir)..\..\externals\giflib\include;$(SolutionDir)..\..\externals\giflib\upstream.patched\lib;$(SolutionDir)..\..\externals\jpeg\upstream.patched\;$(SolutionDir)..\..\externals\libpng\upstream.patched\;$(SolutionDir)..\..\externals\harfbuzz\upstream.patched\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <CompileAsWinRT>true</CompileAsWinRT>
+      <MinimalRebuild>false</MinimalRebuild>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
+    <ClCompile>
+      <PreprocessorDefinitions>_LIB;SK_BUILD_FOR_WIN32;SK_RELEASE;SK_ALLOW_STATIC_GLOBAL_INITIALIZERS=0;SK_SCALAR_IS_FLOAT;SK_CPU_LENDIAN;SK_SUPPORT_GPU=0;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\externals\skia\upstream.patched\src\core;$(SolutionDir)..\..\externals\skia\upstream.patched\include\core;$(SolutionDir)..\..\externals\skia\upstream.patched\src\config;$(SolutionDir)..\..\externals\skia\upstream.patched\include\config;$(SolutionDir)..\..\externals\skia\upstream.patched\src\effects;$(SolutionDir)..\..\externals\skia\upstream.patched\include\effects;$(SolutionDir)..\..\externals\skia\upstream.patched\src\image;$(SolutionDir)..\..\externals\skia\upstream.patched\src\images;$(SolutionDir)..\..\externals\skia\upstream.patched\include\images;$(SolutionDir)..\..\externals\skia\upstream.patched\include\pipe;$(SolutionDir)..\..\externals\skia\upstream.patched\src\ports;$(SolutionDir)..\..\externals\skia\upstream.patched\include\ports;$(SolutionDir)..\..\externals\skia\upstream.patched\src\utils;$(SolutionDir)..\..\externals\skia\upstream.patched\include\utils;$(SolutionDir)..\..\externals\skia\upstream.patched\src\utils\win;$(SolutionDir)..\..\externals\skia\upstream.patched\include\utils\win;$(SolutionDir)..\..\externals\skia\upstream.patched\src\xml;$(SolutionDir)..\..\externals\skia\upstream.patched\include\xml;$(SolutionDir)..\..\externals\skia\upstream.patched\src\sfnt;$(SolutionDir)..\..\externals\expat\upstream.patched\lib;$(SolutionDir)..\..\externals\freetype\upstream.patched\include;$(SolutionDir)..\..\externals\giflib\include;$(SolutionDir)..\..\externals\giflib\upstream.patched\lib;$(SolutionDir)..\..\externals\jpeg\upstream.patched\;$(SolutionDir)..\..\externals\libpng\upstream.patched\;$(SolutionDir)..\..\externals\harfbuzz\upstream.patched\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <CompileAsWinRT>true</CompileAsWinRT>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <Reference Include="Windows">
+      <IsWinMDFile>true</IsWinMDFile>
+    </Reference>
+    <Reference Include="platform.winmd">
+      <IsWinMDFile>true</IsWinMDFile>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\Sk64.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkAAClip.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkAdvancedTypefaceMetrics.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkAlphaRuns.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkAnnotation.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkBBoxHierarchy.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkBBoxHierarchyRecord.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkBBoxRecord.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkBitmap.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkBitmapHeap.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkBitmapProcShader.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkBitmapProcState.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkBitmapProcState_matrixProcs.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkBitmapSampler.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkBitmap_scroll.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkBlitMask_D32.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkBlitRow_D16.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkBlitRow_D32.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkBlitRow_D4444.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkBlitter.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkBlitter_4444.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkBlitter_A1.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkBlitter_A8.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkBlitter_ARGB32.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkBlitter_RGB16.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkBlitter_Sprite.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkBuffer.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkCanvas.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkChunkAlloc.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkClipStack.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkColor.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkColorFilter.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkColorTable.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkComposeShader.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkConcaveToTriangles.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkConfig8888.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkCordic.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkCubicClipper.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkData.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkDebug.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkDeque.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkDevice.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkDeviceProfile.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkDither.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkDraw.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkEdge.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkEdgeBuilder.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkEdgeClipper.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkFilterProc.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkFlate.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkFlattenable.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkFlattenableBuffers.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkFloat.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkFloatBits.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkFontHost.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkGeometry.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkGlyphCache.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkGraphics.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkImageFilter.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkInstCnt.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkLineClipper.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkMallocPixelRef.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkMask.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkMaskFilter.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkMaskGamma.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkMath.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkMatrix.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkMemory_stdlib.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkMetaData.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkOrderedReadBuffer.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkOrderedWriteBuffer.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkPackBits.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkPaint.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkPath.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkPathEffect.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkPathHeap.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkPathMeasure.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkPicture.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkPictureFlat.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkPicturePlayback.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkPictureRecord.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkPictureStateTree.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkPixelRef.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkPoint.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkProcSpriteBlitter.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkPtrRecorder.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkQuadClipper.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkRasterClip.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkRasterizer.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkRect.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkRefCnt.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkRefDict.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkRegion.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkRegion_path.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkRegion_rects.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkRRect.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkRTree.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkScalar.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkScalerContext.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkScan.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkScan_Antihair.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkScan_AntiPath.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkScan_Hairline.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkScan_Path.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkShader.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkSpriteBlitter_ARGB32.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkSpriteBlitter_RGB16.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkStream.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkString.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkStroke.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkStrokerPriv.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkTileGrid.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkTLS.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkTSearch.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkTypeface.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkTypefaceCache.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkUnPreMultiply.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkUtils.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkUtilsArm.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkWriter32.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkXfermode.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\Sk1DPathEffect.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\Sk2DPathEffect.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkArithmeticMode.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkAvoidXfermode.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkBitmapSource.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkBlurDrawLooper.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkBlurImageFilter.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkBlurMask.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkBlurMaskFilter.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkColorFilters.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkColorMatrix.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkColorMatrixFilter.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkCornerPathEffect.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkDashPathEffect.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkDiscretePathEffect.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkEmbossMask.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkEmbossMaskFilter.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkKernel33MaskFilter.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkLayerDrawLooper.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkLayerRasterizer.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkMorphologyImageFilter.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkOffsetImageFilter.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkPaintFlagsDrawFilter.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkPixelXorXfermode.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkPorterDuff.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkSingleInputImageFilter.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkStippleMaskFilter.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkTableColorFilter.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkTableMaskFilter.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkTestImageFilters.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkTransparentShader.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\images\bmpdecoderhelper.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\images\SkBitmapFactory.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\images\SkFlipPixelRef.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\images\SkImageDecoder.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\images\SkImageDecoder_Factory.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\images\SkImageDecoder_libgif.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\images\SkImageDecoder_libjpeg.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\images\SkImageDecoder_libpng.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\images\SkImageEncoder.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\images\SkImageEncoder_Factory.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\images\SkImageRef.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\images\SkImageRefPool.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\images\SkImageRef_GlobalPool.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\images\SkImages.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\images\SkJpegUtility.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\images\SkMovie.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\images\SkMovie_gif.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\images\SkPageFlipper.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\images\SkScaledBitmapSampler.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\ports\SkDebug_win.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\ports\SkFontDescriptor.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\ports\SkFontHost_FreeType.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\ports\SkFontHost_FreeType_common.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\ports\SkGlobalInitialization_default.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\ports\SkHarfBuzzFont.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\ports\SkMemory_malloc.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\ports\SkOSFile_stdio.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\ports\SkThread_win.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\ports\SkTime_win.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\ports\SkXMLParser_expat.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\sfnt\SkOTUtils.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\SkBase64.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\SkBitSet.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\SkBoundaryPatch.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\SkCamera.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\SkCondVar.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\SkCountdown.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\SkCubicInterval.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\SkCullPoints.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\SkDeferredCanvas.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\SkDumpCanvas.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\SkInterpolator.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\SkJSON.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\SkLayer.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\SkMatrix44.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\SkMeshUtils.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\SkNinePatch.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\SkNullCanvas.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\SkNWayCanvas.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\SkOSFile.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\SkParse.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\SkParseColor.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\SkParsePath.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\SkPictureUtils.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\SkProxyCanvas.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\SkThreadPool.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\SkThreadUtils_win.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\SkUnitMappers.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\win\SkAutoCoInitialize.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\utils\win\SkIStream.cpp" />
+    <ClCompile Include="..\..\..\externals\skia\wp8-win32-threads\ThreadEmulation.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\externals\skia\upstream.patched\src\ports\SkFontDescriptor.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsPhone\v$(TargetPlatformVersion)\Microsoft.Cpp.WindowsPhone.$(TargetPlatformVersion).targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
