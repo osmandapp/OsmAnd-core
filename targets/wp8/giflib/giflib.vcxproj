@@ -19,8 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{8b51f873-c975-4cd1-9bcb-1ab46dcf11af}</ProjectGuid>
-    <RootNamespace>freetype</RootNamespace>
+    <ProjectGuid>{e47d2892-ed07-49b7-ba3b-bc9da99673b5}</ProjectGuid>
+    <RootNamespace>giflib</RootNamespace>
     <DefaultLanguage>en-US</DefaultLanguage>
     <MinimumVisualStudioVersion>11.0</MinimumVisualStudioVersion>
   </PropertyGroup>
@@ -73,10 +73,10 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>_LIB;FT2_BUILD_LIBRARY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_LIB;HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\..\externals\freetype\upstream.patched\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\externals\giflib\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -85,10 +85,10 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>_LIB;FT2_BUILD_LIBRARY;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_LIB;HAVE_CONFIG_H;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\..\externals\freetype\upstream.patched\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\externals\giflib\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -97,10 +97,10 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>
-      <PreprocessorDefinitions>_LIB;FT2_BUILD_LIBRARY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_LIB;HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\..\externals\freetype\upstream.patched\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\externals\giflib\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -109,10 +109,10 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
     <ClCompile>
-      <PreprocessorDefinitions>_LIB;FT2_BUILD_LIBRARY;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_LIB;HAVE_CONFIG_H;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\..\externals\freetype\upstream.patched\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\externals\giflib\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -129,27 +129,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\autofit\autofit.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\base\ftbase.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\base\ftbbox.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\base\ftbitmap.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\base\ftfstype.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\base\ftgasp.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\base\ftglyph.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\base\ftinit.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\base\ftlcdfil.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\base\ftstroke.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\base\ftsystem.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\base\fttype1.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\base\ftxf86.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\bdf\bdf.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\cff\cff.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\pshinter\pshinter.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\psnames\psnames.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\raster\raster.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\sfnt\sfnt.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\smooth\smooth.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\truetype\truetype.c" />
+    <ClCompile Include="..\..\..\externals\giflib\upstream.patched\lib\dgif_lib.c" />
+    <ClCompile Include="..\..\..\externals\giflib\upstream.patched\lib\gifalloc.c" />
+    <ClCompile Include="..\..\..\externals\giflib\upstream.patched\lib\gif_err.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsPhone\v$(TargetPlatformVersion)\Microsoft.Cpp.WindowsPhone.$(TargetPlatformVersion).targets" />
