@@ -11,7 +11,7 @@ fi
 
 # Download
 echo "Downloading new upstream..."
-git clone http://git.chromium.org/external/skia.git $SRCLOC/upstream.original
+git clone http://git.chromium.org/external/skia.git $SRCLOC/upstream.original --depth=50
 rm -rf $SRCLOC/upstream.original/.git
 
 # Patch
