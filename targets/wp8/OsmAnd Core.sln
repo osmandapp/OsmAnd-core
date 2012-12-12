@@ -33,6 +33,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skia", "skia\skia.vcxproj",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "harfbuzz", "harfbuzz\harfbuzz.vcxproj", "{E98090E5-46AF-4279-B9DF-F69E62EE5CCE}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OsmAndCore", "OsmAndCore\OsmAndCore.vcxproj", "{76B6346B-9BCB-4953-9DF7-1D7B07D6952E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
@@ -113,6 +115,14 @@ Global
 		{E98090E5-46AF-4279-B9DF-F69E62EE5CCE}.Release|ARM.Build.0 = Release|ARM
 		{E98090E5-46AF-4279-B9DF-F69E62EE5CCE}.Release|Win32.ActiveCfg = Release|Win32
 		{E98090E5-46AF-4279-B9DF-F69E62EE5CCE}.Release|Win32.Build.0 = Release|Win32
+		{76B6346B-9BCB-4953-9DF7-1D7B07D6952E}.Debug|ARM.ActiveCfg = Debug|ARM
+		{76B6346B-9BCB-4953-9DF7-1D7B07D6952E}.Debug|ARM.Build.0 = Debug|ARM
+		{76B6346B-9BCB-4953-9DF7-1D7B07D6952E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{76B6346B-9BCB-4953-9DF7-1D7B07D6952E}.Debug|Win32.Build.0 = Debug|Win32
+		{76B6346B-9BCB-4953-9DF7-1D7B07D6952E}.Release|ARM.ActiveCfg = Release|ARM
+		{76B6346B-9BCB-4953-9DF7-1D7B07D6952E}.Release|ARM.Build.0 = Release|ARM
+		{76B6346B-9BCB-4953-9DF7-1D7B07D6952E}.Release|Win32.ActiveCfg = Release|Win32
+		{76B6346B-9BCB-4953-9DF7-1D7B07D6952E}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
