@@ -12,6 +12,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import net.osmand.LogUtil;
 import net.osmand.data.IndexConstants;
@@ -239,6 +240,10 @@ public class IndexItem implements Comparable<IndexItem> {
 			return -1;
 		}
 		return getFileName().compareTo(another.getFileName());
+	}
+
+	public boolean isAlreadyDownloaded(Map<String, String> listAlreadyDownloaded) {
+		return listAlreadyDownloaded.containsKey(getTargetFileName());
 	}
 
 }

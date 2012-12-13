@@ -24,11 +24,11 @@ public class SrtmIndexItem extends IndexItem {
 	
 	public void updateExistingTiles(Map<String, String> existingFileNames) {
 		tilesToDownload.clear();
-		for(int i = 0; i<item.getTileSize() ; i++) {
+		for (int i = 0; i < item.getTileSize(); i++) {
 			int lat = item.getLat(i);
 			int lon = item.getLon(i);
 			String fname = getFileName(lat, lon);
-			if(!existingFileNames.containsKey(fname + IndexConstants.BINARY_MAP_INDEX_EXT)) {
+			if (!existingFileNames.containsKey(fname + IndexConstants.BINARY_MAP_INDEX_EXT)) {
 				tilesToDownload.add(fname);
 			}
 		}
@@ -107,12 +107,25 @@ public class SrtmIndexItem extends IndexItem {
 	
 	@Override
 	public String getSizeDescription(ClientContext ctx) {
-		return (item.getTileSize()-tilesToDownload.size()) + "/" + item.getTileSize() + " " + ctx.getString(R.string.index_srtm_parts);
+		return (item.getTileSize() - tilesToDownload.size()) + "/" + item.getTileSize() + " " + ctx.getString(R.string.index_srtm_parts);
 	}
 	
 	@Override
 	public String getVisibleDescription(ClientContext ctx) {
 		return ctx.getString(R.string.index_srtm_ele);
+	}
+	
+	@Override
+	public boolean isAlreadyDownloaded(Map<String, String> listAlreadyDownloaded) {
+		for (int i = 0; i < item.getTileSize(); i++) {
+			int lat = item.getLat(i);
+			int lon = item.getLon(i);
+			String fname = getFileName(lat, lon);
+			if (listAlreadyDownloaded.containsKey(fname + IndexConstants.BINARY_MAP_INDEX_EXT)) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	@Override
