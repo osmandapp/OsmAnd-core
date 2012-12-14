@@ -130,13 +130,15 @@ public class DownloadFileHelper {
 		try {
 			FileOutputStream out = new FileOutputStream(de.fileToSave);
 			try {
-				log.info("Download " + de.urlToDownload);
+				
 				if (de.parts == 1) {
 					URL url = new URL(de.urlToDownload); //$NON-NLS-1$
+					log.info("Download " + de.urlToDownload);
 					downloadFileInternal(de.baseName, out, url, null, indexOfAllFiles, progress, forceWifi);
 				} else {
 					for (int i = 1; i <= de.parts; i++) {
-						URL url = new URL(de.urlToDownload + i); //$NON-NLS-1$
+						URL url = new URL(de.urlToDownload + "-" + i); //$NON-NLS-1$
+						log.info("Download " + de.urlToDownload + "-" + i);
 						downloadFileInternal(de.baseName, out, url, " [" + i + "/" + de.parts + "]", indexOfAllFiles, progress, forceWifi);
 					}
 				}
