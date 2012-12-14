@@ -377,14 +377,14 @@ public class MapUtils {
 	public static String buildShortOsmUrl(double latitude, double longitude, int zoom){
 		StringBuilder str = new StringBuilder(10);
 		str.append(BASE_SHORT_OSM_URL);
-		long lat = (long) (((latitude + 90d)/180d)*(1l << 32));
-		long lon = (long) (((longitude + 180d)/360d)*(1l << 32));
-		str.append(createShortLocString(lat, lon, zoom));
+		str.append(createShortLocString(latitude, longitude, zoom));
 		str.append("?m");
 		return str.toString();
 	}
 
-	private static String createShortLocString(long lat, long lon, int zoom) {
+	public static String createShortLocString(double latitude, double longitude, int zoom) {
+		long lat = (long) (((latitude + 90d)/180d)*(1l << 32));
+		long lon = (long) (((longitude + 180d)/360d)*(1l << 32));
 		long code = interleaveBits(lon, lat);
 		String str = "";
 	    // add eight to the zoom level, which approximates an accuracy of one pixel in a tile.

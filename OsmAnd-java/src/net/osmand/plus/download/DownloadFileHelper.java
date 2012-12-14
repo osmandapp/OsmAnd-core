@@ -136,7 +136,7 @@ public class DownloadFileHelper {
 					downloadFileInternal(de.baseName, out, url, null, indexOfAllFiles, progress, forceWifi);
 				} else {
 					for (int i = 1; i <= de.parts; i++) {
-						URL url = new URL(de.urlToDownload); //$NON-NLS-1$
+						URL url = new URL(de.urlToDownload + i); //$NON-NLS-1$
 						downloadFileInternal(de.baseName, out, url, " [" + i + "/" + de.parts + "]", indexOfAllFiles, progress, forceWifi);
 					}
 				}

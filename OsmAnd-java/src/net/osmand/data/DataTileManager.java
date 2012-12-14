@@ -73,6 +73,20 @@ public class DataTileManager<T> {
 		return result;
 	}
 	
+	public List<T> getObjects(int leftX31, int topY31, int rightX31, int bottomY31) {
+		int tileXUp = leftX31 >> (31 - zoom);
+		int tileYUp = topY31 >> (31 - zoom);
+		int tileXDown = (rightX31 >> (31 - zoom)) + 1;
+		int tileYDown = (bottomY31 >> (31 - zoom)) + 1;
+		List<T> result = new ArrayList<T>();
+		for (int i = tileXUp; i <= tileXDown; i++) {
+			for (int j = tileYUp; j <= tileYDown; j++) {
+				putObjects(i, j, result);
+			}
+		}
+		return result;
+	}
+	
 	/**
 	 * @depth of the neighbor tile to visit
 	 * returns not exactly sorted list, 
@@ -152,8 +166,16 @@ public class DataTileManager<T> {
 		
 	}
 	
+	public long registerObject(int x31, int y31, T object){
+		return addObject(object, evTile(x31 >> (31 - zoom), y31 >> (31 - zoom)));
+	}
+	
 	public long registerObject(double latitude, double longitude, T object){
 		long tile = evaluateTile(latitude, longitude);
+		return addObject(object, tile);
+	}
+
+	private long addObject(T object, long tile) {
 		if(!objects.containsKey(tile)){
 			objects.put(tile, new ArrayList<T>());
 		}

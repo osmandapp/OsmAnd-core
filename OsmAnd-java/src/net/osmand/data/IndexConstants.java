@@ -11,6 +11,7 @@ public class IndexConstants {
 	public final static int TTSVOICE_VERSION = 1; //supported download versions
 	
 	public static final String SRTM_INDEX_DIR = "srtm/"; //$NON-NLS-1$
+	public static final String AV_INDEX_DIR = "avnotes/"; //$NON-NLS-1$
 	public static final String VOICE_INDEX_DIR = "voice/"; //$NON-NLS-1$
 	public static final String RENDERERS_DIR = "rendering/"; //$NON-NLS-1$
 	
