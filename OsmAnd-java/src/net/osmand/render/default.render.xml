@@ -1,16 +1,16 @@
 ﻿<renderingStyle name="default" depends="" defaultColor="#f1eae4" version="1">
 
-	<!-- Simple rule definition :
+	<!-- Rule definition :
 		- "filter" is analogue of If(...) Else. So if one "filter" passes other neighbors will not be checked.
 		- "group" is tag to combine many filters and define common inner filter for them as "groupFilter"
-		- "group" can be only Top Level Elemenet!
+		- "group" can be only top level element!
 		- "groupFilter" attach If statement to parent "filter" or "group" element
 		- inner "filter" is kind of inner If(..) { If(...) Else ... } Else...
 		- ! All top level filters should have "tag" and "value" attributes to proper indexing them
 	-->
 
-	<!-- Types : string, int, boolean; possibleValues comma separated possible values for int/string -->
-	<renderingProperty attr="contourLines" name="Show contour lines" description="Select minimum zoom level to display in map if available. Separate SRTM-file may be needed."
+	<!-- renderingProperty Types : string, int, boolean; possibleValues comma separated possible values for int/string -->
+	<renderingProperty attr="contourLines" name="Show contour lines" description="Select minimum zoom level to display in map if available. Separate contour file may be needed."
 		type="string" possibleValues="--,13,12,11"/>
 	<renderingProperty attr="appMode" name="Rendering mode" description="Map optimization for respective User Profile"
 		type="string" possibleValues="default,car,bicycle,pedestrian"/>
@@ -18,7 +18,7 @@
 		type="boolean" possibleValues=""/>
 	<renderingProperty attr="noAdminboundaries" name="Hide boundaries" description="Suppress display of admin levels 5-9"
 		type="boolean" possibleValues=""/>
-	<renderingProperty attr="showRoadMaps" name="Show road maps" description="Select how to show maps that have only road information."
+	<renderingProperty attr="showRoadMaps" name="Roads-only maps" description="Select how to show maps that have only road information"
 		type="string" possibleValues="Always - never show regular maps,Where no regular map is available,Never"/>
 
 	<renderingAttribute name="defaultColor">
@@ -34,8 +34,8 @@
 		<filter attrIntValue="0"/>
 	</renderingAttribute>
 
-	<!-- 0 - no shadow, 1 - one step, 2 - blur shadow, 3 - solid shadow -->	
 	<renderingAttribute name="shadowRendering">
+	<!-- 0 - no shadow, 1 - one step, 2 - blur shadow, 3 - solid shadow -->
 		<!-- next line corrects for shadowColor appearing very dark with solid shadow in day view, bridges would not stand out -->
 		<filter minzoom="14" nightMode="false" attrIntValue="3" shadowColor="#969696"/>
 		<filter minzoom="14" attrIntValue="3" shadowColor="#464646"/>
@@ -44,29 +44,29 @@
 	</renderingAttribute>
 
 	<renderingAttribute name="routeColor">
-		<!-- filter roadColors="Road atlas style" attrColorValue="#CCFF6600"/ -->
+		<!-- fluorescent: filter attrColorValue="#CCFF6600"/ -->
 		<filter nightMode="false" attrColorValue="#960000FF"/>
 		<filter attrColorValue="#CCFF6600"/>
 	</renderingAttribute>
 
 	<renderingAttribute name="gpxColor">
-		<!-- filter roadColors="Road atlas style" attrColorValue="#B400FFFF"/ -->
+		<!-- fluorescent: filter attrColorValue="#B400FFFF"/ -->
 		<filter nightMode="false" attrColorValue="#B4B319FF"/>
 		<filter attrColorValue="#B400FFFF"/>
 	</renderingAttribute>
 
-	<!-- Minimum polygon size in pixels -->
 	<renderingAttribute name="polygonMinSizeToDisplay">
+	<!-- Minimum polygon size in pixels -->
 		<filter attrIntValue="100"/>
 	</renderingAttribute>
 	
-	<!-- 8 (=1 pixel tile) down to 0 (=large tile) -->
 	<renderingAttribute name="roadDensityZoomTile">
+	<!-- 8 (=1 pixel tile) down to 0 (=large tile) -->
 		<filter attrIntValue="3"/>
 	</renderingAttribute>
 	
-	<!-- Number of roads to display per tile -->
 	<renderingAttribute name="roadsDensityLimitPerTile">
+	<!-- Number of roads to display per tile -->
 		<filter appMode="pedestrian" attrIntValue="24"/>
 		<filter appMode="bicycle" attrIntValue="24"/>
 		<filter test="$hmRendered" attrIntValue="100"/>
@@ -74,10 +74,10 @@
 	</renderingAttribute>
 	
 	<!-- filter does not work for renderingConstant - the last one will be used, but better use separate depends Rendering style -->
-	<!-- This section instead of UI setting for the "Show more map detail" property, so it can be called from depends rendering styles -->
+
+	<!-- Use hmRendered for more map detail and better visibility of small roads -->
 	<renderingConstant name="hmRendered" value="false"/>
-	
-	
+
 	<!-- roadColors="Modified Mapnik" -->
 	<renderingConstant name="motorwayRoadColor" value="#809bff"/>
 	<renderingConstant name="trunkRoadColor" value="#FF8095"/>
@@ -91,28 +91,12 @@
 		<renderingConstant name="secondaryRoadColor" value="#55ffd080"/>
 		<renderingConstant name="tertiaryRoadColor" value="#55ffff80"/> -->
 	<!-- roadColors="Road atlas style" -->
-		<!--
+		<!-- but see Touring view, optimized pattern is used there
 		<renderingConstant name="motorwayRoadColor" value="#809bff"/>
 		<renderingConstant name="trunkRoadColor" value="#ed154b"/>
 		<renderingConstant name="primaryRoadColor" value="#ff80a0"/>
 		<renderingConstant name="secondaryRoadColor" value="#ffd080"/>
 		<renderingConstant name="tertiaryRoadColor" value="#ffff80"/>
-		-->
-	<!-- roadColors="High contrast roads" -->
-		<!--
-		<renderingConstant name="motorwayRoadColor" value="#3838B0"/>
-		<renderingConstant name="trunkRoadColor" value="#A01060"/>
-		<renderingConstant name="primaryRoadColor" value="#C00828"/>
-		<renderingConstant name="secondaryRoadColor" value="#FF8000"/>
-		<renderingConstant name="tertiaryRoadColor" value="#F0C810"/>
-		-->
-	<!-- roadColors="Experimental" -->
-		<!--
-		<renderingConstant name="motorwayRoadColor" value="#6666CC"/>
-		<renderingConstant name="trunkRoadColor" value="#A02067"/>
-		<renderingConstant name="primaryRoadColor" value="#C04D61"/>
-		<renderingConstant name="secondaryRoadColor" value="#F7D131"/>
-		<renderingConstant name="tertiaryRoadColor" value="#F0CE30"/>
 		-->
 
 
@@ -121,15 +105,15 @@
 		- some roads already rendered at lower zooms (travel/orienteering)
 		- roadColors="Road atlas style" scheme aligned with conventional road atlas, Saturation=50, Brightness=100, except trunk is considered special case of primary (same hue). For best visibility: routeColor="#960000FF, gpxColor="#B400FFFF".
 		- map rendering is aligned to typical map use for all zoom levels (scales), to always give a complete and reliable map.
-		Typical zoom level use (zX) and alignment of features displayed:
-		 - z7  = "Rough Region Level Overview": Shows motorways, trunks, primary roads and city names
-		 - z11 = "Country Road Atlas": Secondary roads (already from z9) and tertiary (already from z10). Show large scale landuse like forest and residential areas (already from z10). Also all town names (already from z9) and now all other locality names. Shows mountain peaks for orientation.
-		 - z12 = "Detailed Country Road Atlas": Add all other public highways like road, unclassified, residential. Add foot and bike tracks. Also tag mountain peaks.
-		 - z13 = "Regional Driving. Good Overview": Displays all driving as well as hiking connections. Show service, living street, pedestrian and footway highways. Include all area landuse.
-		 - z14 = "Local Driving, also Hiking Map"
-		 - z15 = "City Driving": Display all details of interest for this.
-		 - z16 = "Walking, City tour": Outline and tag buildings
-		 - z17 = Building details, street corner details.
+		  Typical zoom level use (zX) and alignment of features displayed:
+		  - z7  = "Rough Region Level Overview": Shows motorways, trunks, primary roads and city names
+		  - z11 = "Country Road Atlas": Secondary roads (already from z9) and tertiary (already from z10). Show large scale landuse like forest and residential areas (already from z10). Also all town names (already from z9) and now all other locality names. Shows mountain peaks for orientation.
+		  - z12 = "Detailed Country Road Atlas": Add all other public highways like road, unclassified, residential. Add foot and bike tracks. Also tag mountain peaks.
+		  - z13 = "Regional Driving. Good Overview": Displays all driving as well as hiking connections. Show service, living street, pedestrian and footway highways. Include all area landuse.
+		  - z14 = "Local Driving, also Hiking Map"
+		  - z15 = "City Driving": Display all details of interest for this.
+		  - z16 = "Walking, City tour": Outline and tag buildings
+		  - z17 = Building details, street corner details.
 	--> 
 
 	<!--

@@ -1,7 +1,7 @@
 <renderingStyle name="Touring-view_(more-contrast-and-details).render" depends="default" defaultColor="#f1eae4" version="1">
 
 	<!--
-		by Hardy Mueller, 2012-10-28 (Advanced version the previous All-Purpose Renderer)
+		by Hardy Mueller, 2012-10-28 (Advanced version of the previous All-Purpose Renderer)
 		- some road and track types already rendered at lower zooms (for travel and orienteering)
 		- road colors allow unambiguous distinction between all highway/road/track types
 		- road colors aligned with conventional road atlas
@@ -9,28 +9,27 @@
 		- route+gpx visibility increased
 		- optional: SAC scale for Alpine hiking
 		- map rendering is aligned to typical map use for all zoom levels (scales), to always give a complete and reliable map at smallest possible zoom.
-
-		Typical zoom level use (zX) and alignment of features displayed:
-		 - z7  = "Rough Region Level Overview": Shows motorways, trunks, primary roads and city names
-		 - z11 = "Country Road Atlas": Secondary roads (already from z9) and tertiary (already from z10). Show large scale landuse like forest and residential areas (already from z10). Also all town names (already from z9) and now all other locality names. Shows mountain peaks for orientation.
-		 - z12 = "Detailed Country Road Atlas": Add all other public highways like road, unclassified, residential. Add foot and bike tracks. Also tag mountain peaks.
-		 - z13 = "Regional Driving. Good Overview": Displays all driving as well as hiking connections. Show service, living street, pedestrian and footway highways. Include all area landuse.
-		 - z14 = "Local Driving, also Hiking Map"
-		 - z15 = "City Driving": Display all details of interest for this.
-		 - z16 = "Walking, City tour": Outline and tag buildings
-		 - z17 = Building details, street corner details.
+		  Typical zoom level use (zX) and alignment of features displayed:
+		  - z7  = "Rough Region Level Overview": Shows motorways, trunks, primary roads and city names
+		  - z11 = "Country Road Atlas": Secondary roads (already from z9) and tertiary (already from z10). Show large scale landuse like forest and residential areas (already from z10). Also all town names (already from z9) and now all other locality names. Shows mountain peaks for orientation.
+		  - z12 = "Detailed Country Road Atlas": Add all other public highways like road, unclassified, residential. Add foot and bike tracks. Also tag mountain peaks.
+		  - z13 = "Regional Driving. Good Overview": Displays all driving as well as hiking connections. Show service, living street, pedestrian and footway highways. Include all area landuse.
+		  - z14 = "Local Driving, also Hiking Map"
+		  - z15 = "City Driving": Display all details of interest for this.
+		  - z16 = "Walking, City tour": Outline and tag buildings
+		  - z17 = Building details, street corner details.
 	--> 
 
 	<!--
-	alpine hiking renderer by Christof Knuesel based on default renderer by Hardy Mueller
+	Alpine hiking renderer by Christof Knuesel based on default renderer by Hardy Mueller
 	Purpose:
-		- Alpine Hiking option for alpine hiking with "Hike Bike Map (Hills Underlay)" as overlay map:
+		- Alpine Hiking option for mountain hiking with "Hike Bike Map (Hills Underlay)" as overlay map:
 		  With "Hike Bike Map (Hills Underlay)" it becomes hard to distinguish between black lines (path) and brown lines (track).
 		  For this reason tracks are rendered with higher strokewidth than paths,
 		  respectively as solid lines (all tracktypes), while paths are rendered as dashed lines (Alpine Hiking Mode).
 		- Roads: German map style
 
-	Features:
+	Legend:
 	1) Alpine Hiking Mode (advanced settings / Alpine Hiking enabled)
 		- Paths are colored by sac_scale:
 			black dashed line: sac_scale not specified or sac_scale = hiking
@@ -39,7 +38,6 @@
 			blue solid line: sac_scale = alpine_hiking
 			blue dashed line: sac_scale = demanding_alpine_hiking
 			blue dotted line: sac_scale = difficult_alpine_hiking
-
 		- Tracks (all tracktypes) are rendered as brown solid lines
 
 	2) Other Modes
@@ -49,7 +47,6 @@
 			short dashed line (tracktype = grade3, short dashed narrow-spaced: tracktype not specified)
 			dash-dotted line (tracktype = grade4)
 			dotted line (tracktype = grade5)
-
 		- Paths are rendered as thin black lines:
 			long dashed line: sac_scale not specified or sac_scale = hiking
 			short dashed line: sac_scale = mountain_hiking 
@@ -58,6 +55,7 @@
 	Christof Knuesel, 18.10.2012
 	email: dingsdale@gmx.de
 	-->
+
 
 	<renderingProperty attr="alpineHiking" name="Alpine hiking view" description="Render paths according to SAC scale"
 		type="boolean" possibleValues=""/>
@@ -70,12 +68,13 @@
 		<filter minzoom="14" attrIntValue="3" shadowColor="#464646"/>
 		<!-- next line avoids melting close-together highways into one another - disadvantage is separator lines between segments and at intersections --> 
 		<filter minzoom="9" maxzoom="13" attrIntValue="1" shadowColor="#464646"/>
-		<!-- appearance equivalents: one-step #464646 eq. solid #767676 -->
+		<!-- appearance equivalents: one-step #464646 equals solid #767676 -->
 		<!-- filter minzoom="9" maxzoom="13" attrIntValue="3" shadowColor="#767676"/ -->
 		<filter attrIntValue="0"/>
 	</renderingAttribute>
 
 	<!-- road color contrast higher than in default, and all road types clearly distinguished -->
+	<!-- next few lines outdated, road colors directly defined in line section below -->
 	<!-- roadColors="Road atlas style" -->
 		<!-- renderingConstant name="motorwayRoadColor" value="#809bff"/>
 		<renderingConstant name="trunkRoadColor" value="#ed154b"/>
@@ -95,9 +94,9 @@
 		<filter attrColorValue="#B400FFFF"/>
 	</renderingAttribute>
 
-	<!-- hmRendered switch:
-		- maximize map details: road inclusion as early as possible (TODO: include ALL roads in very low density areas)
-		- better visibility of 'white' roads at small zooms for driving -->
+	<!-- Use hmRendered
+		- to maximize map details: road inclusion as early as possible (TODO: include ALL roads in very low density areas)
+		- for better visibility of 'white' roads at small zooms for driving -->
 	<renderingConstant name="hmRendered" value="true"/>
 
 
@@ -119,7 +118,7 @@
 
 	<line>
 		<group>
-			<!-- (Night mode roads Brightness=80%) -->
+			<!-- (Car night mode roads Brightness=80% instead of 100%) -->
 			<filter appMode="car" tag="highway" value="motorway" nightMode="true" color="#c6cc26" color_0="#cc2626"/>
 			<filter appMode="car" tag="highway" value="trunk" nightMode="true" color="#ffffff" color_0="#cc2626"/>
 			<filter tag="highway" value="trunk" nightMode="true" color="#ffffff" color_0="#fe2e2e"/>
