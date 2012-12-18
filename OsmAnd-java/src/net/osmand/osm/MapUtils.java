@@ -399,6 +399,46 @@ public class MapUtils {
 		return str;
 	}
 	
+	@SuppressWarnings("unused")
+	public static LatLon decodeShortLocString(String s) {
+		long x = 0;
+		long y = 0;
+	    int z = 0;
+		int z_offset = 0;
+
+		for (int i = 0; i < s.length(); i++) {
+			if (s.charAt(i) == '-') {
+				z_offset--;
+				continue;
+			}
+			char c = s.charAt(i);
+			for (int j = 0; j < intToBase64.length; j++) {
+				if (c == intToBase64[j]) {
+					for (int k = 0; k < 3; k++) {
+						x <<= 1;
+						if ((j & 32) != 0) {
+							x = x | 1;
+						}
+						j <<= 1;
+						y <<= 1;
+						if ((j & 32) != 0) {
+							y = y | 1;
+						}
+						j <<= 1;
+					}
+					z += 3;
+					break;
+				}
+			}
+		}
+		x <<= (32 - z);
+		y <<= (32 - z);
+//		int zoom = z - 8 - ((3 + z_offset) % 3);
+		double dlat = (180d * (y) / ((double)(1l << 32))) - 90d;
+		double dlon = (360d * (x)/ ((double)(1l << 32))) - 180d;
+		return new LatLon(dlat, dlon);
+	}
+	
 	/**	
 	 * interleaves the bits of two 32-bit numbers. the result is known as a Morton code.	   
 	 */

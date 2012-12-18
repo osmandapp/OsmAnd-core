@@ -158,15 +158,27 @@ public class DataTileManager<T> {
 		return evTile(tileX, tileY);
 	}
 	
+	public long evaluateTileXY(int x31, int y31){
+		return evTile(x31 >> (31 - zoom), y31 >> (31 - zoom));
+	}
+	
 	public void unregisterObject(double latitude, double longitude, T object){
 		long tile = evaluateTile(latitude, longitude);
+		removeObject(object, tile);
+	}
+	
+	public void unregisterObjectXY(int  x31, int y31, T object){
+		long tile = evaluateTileXY(x31, y31);
+		removeObject(object, tile);
+	}
+
+	private void removeObject(T object, long tile) {
 		if(objects.containsKey(tile)){
 			objects.get(tile).remove(object);
 		}
-		
 	}
 	
-	public long registerObject(int x31, int y31, T object){
+	public long registerObjectXY(int x31, int y31, T object){
 		return addObject(object, evTile(x31 >> (31 - zoom), y31 >> (31 - zoom)));
 	}
 	
