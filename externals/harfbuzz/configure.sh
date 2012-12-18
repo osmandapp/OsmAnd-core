@@ -11,8 +11,9 @@ fi
 
 # Download
 echo "Downloading new upstream..."
-git clone git://anongit.freedesktop.org/harfbuzz.old $SRCLOC/upstream.original --depth=50
-rm -rf $SRCLOC/upstream.original/.git
+git clone git://anongit.freedesktop.org/harfbuzz.old $SRCLOC/upstream.original --depth=10
+git --work-tree="$SRCLOC/upstream.original" --git-dir="$SRCLOC/upstream.original/.git" checkout 3ab7b37bdebf0f8773493a1fee910b151c4de30f
+git --work-tree="$SRCLOC/upstream.original" --git-dir="$SRCLOC/upstream.original/.git" reset --hard
 
 # Patch
 cp -rf $SRCLOC/upstream.original $SRCLOC/upstream.patched

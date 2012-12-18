@@ -289,7 +289,6 @@
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\effects\SkTransparentShader.cpp" />
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\images\bmpdecoderhelper.cpp" />
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\images\SkBitmapFactory.cpp" />
-    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\images\SkFlipPixelRef.cpp" />
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\images\SkImageDecoder.cpp" />
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\images\SkImageDecoder_Factory.cpp" />
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\images\SkImageDecoder_libgif.cpp" />

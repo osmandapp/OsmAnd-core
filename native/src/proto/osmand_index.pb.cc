@@ -2,6 +2,9 @@
 
 #define INTERNAL_SUPPRESS_PROTOBUF_FIELD_DEPRECATION
 #include "osmand_index.pb.h"
+
+#include <algorithm>
+
 #include <google/protobuf/stubs/once.h>
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/wire_format_lite_inl.h>
@@ -132,7 +135,7 @@ bool OsmAndStoredIndex::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
                  input, &version_)));
-          _set_bit(0);
+          set_has_version();
         } else {
           goto handle_uninterpreted;
         }
@@ -163,7 +166,7 @@ bool OsmAndStoredIndex::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &datecreated_)));
-          _set_bit(1);
+          set_has_datecreated();
         } else {
           goto handle_uninterpreted;
         }
@@ -189,7 +192,7 @@ bool OsmAndStoredIndex::MergePartialFromCodedStream(
 void OsmAndStoredIndex::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
   // required uint32 version = 1;
-  if (_has_bit(0)) {
+  if (has_version()) {
     ::google::protobuf::internal::WireFormatLite::WriteUInt32(1, this->version(), output);
   }
   
@@ -200,7 +203,7 @@ void OsmAndStoredIndex::SerializeWithCachedSizes(
   }
   
   // required int64 dateCreated = 18;
-  if (_has_bit(1)) {
+  if (has_datecreated()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt64(18, this->datecreated(), output);
   }
   
@@ -248,10 +251,10 @@ void OsmAndStoredIndex::MergeFrom(const OsmAndStoredIndex& from) {
   GOOGLE_CHECK_NE(&from, this);
   fileindex_.MergeFrom(from.fileindex_);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    if (from._has_bit(0)) {
+    if (from.has_version()) {
       set_version(from.version());
     }
-    if (from._has_bit(1)) {
+    if (from.has_datecreated()) {
       set_datecreated(from.datecreated());
     }
   }
@@ -289,7 +292,6 @@ void OsmAndStoredIndex::Swap(OsmAndStoredIndex* other) {
 
 // ===================================================================
 
-const ::std::string FileIndex::_default_filename_;
 #ifndef _MSC_VER
 const int FileIndex::kSizeFieldNumber;
 const int FileIndex::kDateModifiedFieldNumber;
@@ -320,7 +322,7 @@ void FileIndex::SharedCtor() {
   _cached_size_ = 0;
   size_ = GOOGLE_LONGLONG(0);
   datemodified_ = GOOGLE_LONGLONG(0);
-  filename_ = const_cast< ::std::string*>(&_default_filename_);
+  filename_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   version_ = 0;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
@@ -330,7 +332,7 @@ FileIndex::~FileIndex() {
 }
 
 void FileIndex::SharedDtor() {
-  if (filename_ != &_default_filename_) {
+  if (filename_ != &::google::protobuf::internal::kEmptyString) {
     delete filename_;
   }
   if (this != default_instance_) {
@@ -356,8 +358,8 @@ void FileIndex::Clear() {
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     size_ = GOOGLE_LONGLONG(0);
     datemodified_ = GOOGLE_LONGLONG(0);
-    if (_has_bit(2)) {
-      if (filename_ != &_default_filename_) {
+    if (has_filename()) {
+      if (filename_ != &::google::protobuf::internal::kEmptyString) {
         filename_->clear();
       }
     }
@@ -384,7 +386,7 @@ bool FileIndex::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &size_)));
-          _set_bit(0);
+          set_has_size();
         } else {
           goto handle_uninterpreted;
         }
@@ -400,7 +402,7 @@ bool FileIndex::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &datemodified_)));
-          _set_bit(1);
+          set_has_datemodified();
         } else {
           goto handle_uninterpreted;
         }
@@ -430,7 +432,7 @@ bool FileIndex::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &version_)));
-          _set_bit(3);
+          set_has_version();
         } else {
           goto handle_uninterpreted;
         }
@@ -531,23 +533,23 @@ bool FileIndex::MergePartialFromCodedStream(
 void FileIndex::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
   // required int64 size = 1;
-  if (_has_bit(0)) {
+  if (has_size()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt64(1, this->size(), output);
   }
   
   // required int64 dateModified = 2;
-  if (_has_bit(1)) {
+  if (has_datemodified()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt64(2, this->datemodified(), output);
   }
   
   // required string fileName = 3;
-  if (_has_bit(2)) {
+  if (has_filename()) {
     ::google::protobuf::internal::WireFormatLite::WriteString(
       3, this->filename(), output);
   }
   
   // required int32 version = 4;
-  if (_has_bit(3)) {
+  if (has_version()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(4, this->version(), output);
   }
   
@@ -675,16 +677,16 @@ void FileIndex::MergeFrom(const FileIndex& from) {
   mapindex_.MergeFrom(from.mapindex_);
   routingindex_.MergeFrom(from.routingindex_);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    if (from._has_bit(0)) {
+    if (from.has_size()) {
       set_size(from.size());
     }
-    if (from._has_bit(1)) {
+    if (from.has_datemodified()) {
       set_datemodified(from.datemodified());
     }
-    if (from._has_bit(2)) {
+    if (from.has_filename()) {
       set_filename(from.filename());
     }
-    if (from._has_bit(3)) {
+    if (from.has_version()) {
       set_version(from.version());
     }
   }
@@ -740,8 +742,6 @@ void FileIndex::Swap(FileIndex* other) {
 
 // ===================================================================
 
-const ::std::string AddressPart::_default_name_;
-const ::std::string AddressPart::_default_nameen_;
 #ifndef _MSC_VER
 const int AddressPart::kSizeFieldNumber;
 const int AddressPart::kOffsetFieldNumber;
@@ -769,8 +769,8 @@ void AddressPart::SharedCtor() {
   _cached_size_ = 0;
   size_ = GOOGLE_LONGLONG(0);
   offset_ = GOOGLE_LONGLONG(0);
-  name_ = const_cast< ::std::string*>(&_default_name_);
-  nameen_ = const_cast< ::std::string*>(&_default_nameen_);
+  name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  nameen_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   indexnameoffset_ = 0;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
@@ -780,10 +780,10 @@ AddressPart::~AddressPart() {
 }
 
 void AddressPart::SharedDtor() {
-  if (name_ != &_default_name_) {
+  if (name_ != &::google::protobuf::internal::kEmptyString) {
     delete name_;
   }
-  if (nameen_ != &_default_nameen_) {
+  if (nameen_ != &::google::protobuf::internal::kEmptyString) {
     delete nameen_;
   }
   if (this != default_instance_) {
@@ -809,13 +809,13 @@ void AddressPart::Clear() {
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     size_ = GOOGLE_LONGLONG(0);
     offset_ = GOOGLE_LONGLONG(0);
-    if (_has_bit(2)) {
-      if (name_ != &_default_name_) {
+    if (has_name()) {
+      if (name_ != &::google::protobuf::internal::kEmptyString) {
         name_->clear();
       }
     }
-    if (_has_bit(3)) {
-      if (nameen_ != &_default_nameen_) {
+    if (has_nameen()) {
+      if (nameen_ != &::google::protobuf::internal::kEmptyString) {
         nameen_->clear();
       }
     }
@@ -838,7 +838,7 @@ bool AddressPart::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &size_)));
-          _set_bit(0);
+          set_has_size();
         } else {
           goto handle_uninterpreted;
         }
@@ -854,7 +854,7 @@ bool AddressPart::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &offset_)));
-          _set_bit(1);
+          set_has_offset();
         } else {
           goto handle_uninterpreted;
         }
@@ -898,7 +898,7 @@ bool AddressPart::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &indexnameoffset_)));
-          _set_bit(4);
+          set_has_indexnameoffset();
         } else {
           goto handle_uninterpreted;
         }
@@ -939,29 +939,29 @@ bool AddressPart::MergePartialFromCodedStream(
 void AddressPart::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
   // required int64 size = 1;
-  if (_has_bit(0)) {
+  if (has_size()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt64(1, this->size(), output);
   }
   
   // required int64 offset = 2;
-  if (_has_bit(1)) {
+  if (has_offset()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt64(2, this->offset(), output);
   }
   
   // optional string name = 3;
-  if (_has_bit(2)) {
+  if (has_name()) {
     ::google::protobuf::internal::WireFormatLite::WriteString(
       3, this->name(), output);
   }
   
   // optional string nameEn = 4;
-  if (_has_bit(3)) {
+  if (has_nameen()) {
     ::google::protobuf::internal::WireFormatLite::WriteString(
       4, this->nameen(), output);
   }
   
   // optional int32 indexNameOffset = 5;
-  if (_has_bit(4)) {
+  if (has_indexnameoffset()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(5, this->indexnameoffset(), output);
   }
   
@@ -1036,19 +1036,19 @@ void AddressPart::MergeFrom(const AddressPart& from) {
   GOOGLE_CHECK_NE(&from, this);
   cities_.MergeFrom(from.cities_);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    if (from._has_bit(0)) {
+    if (from.has_size()) {
       set_size(from.size());
     }
-    if (from._has_bit(1)) {
+    if (from.has_offset()) {
       set_offset(from.offset());
     }
-    if (from._has_bit(2)) {
+    if (from.has_name()) {
       set_name(from.name());
     }
-    if (from._has_bit(3)) {
+    if (from.has_nameen()) {
       set_nameen(from.nameen());
     }
-    if (from._has_bit(4)) {
+    if (from.has_indexnameoffset()) {
       set_indexnameoffset(from.indexnameoffset());
     }
   }
@@ -1163,7 +1163,7 @@ bool CityBlock::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &size_)));
-          _set_bit(0);
+          set_has_size();
         } else {
           goto handle_uninterpreted;
         }
@@ -1179,7 +1179,7 @@ bool CityBlock::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &offset_)));
-          _set_bit(1);
+          set_has_offset();
         } else {
           goto handle_uninterpreted;
         }
@@ -1195,7 +1195,7 @@ bool CityBlock::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &type_)));
-          _set_bit(2);
+          set_has_type();
         } else {
           goto handle_uninterpreted;
         }
@@ -1221,17 +1221,17 @@ bool CityBlock::MergePartialFromCodedStream(
 void CityBlock::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
   // required int64 size = 1;
-  if (_has_bit(0)) {
+  if (has_size()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt64(1, this->size(), output);
   }
   
   // required int64 offset = 2;
-  if (_has_bit(1)) {
+  if (has_offset()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt64(2, this->offset(), output);
   }
   
   // required int32 type = 3;
-  if (_has_bit(2)) {
+  if (has_type()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(3, this->type(), output);
   }
   
@@ -1277,13 +1277,13 @@ void CityBlock::CheckTypeAndMergeFrom(
 void CityBlock::MergeFrom(const CityBlock& from) {
   GOOGLE_CHECK_NE(&from, this);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    if (from._has_bit(0)) {
+    if (from.has_size()) {
       set_size(from.size());
     }
-    if (from._has_bit(1)) {
+    if (from.has_offset()) {
       set_offset(from.offset());
     }
-    if (from._has_bit(2)) {
+    if (from.has_type()) {
       set_type(from.type());
     }
   }
@@ -1318,7 +1318,6 @@ void CityBlock::Swap(CityBlock* other) {
 
 // ===================================================================
 
-const ::std::string PoiPart::_default_name_;
 #ifndef _MSC_VER
 const int PoiPart::kSizeFieldNumber;
 const int PoiPart::kOffsetFieldNumber;
@@ -1347,7 +1346,7 @@ void PoiPart::SharedCtor() {
   _cached_size_ = 0;
   size_ = GOOGLE_LONGLONG(0);
   offset_ = GOOGLE_LONGLONG(0);
-  name_ = const_cast< ::std::string*>(&_default_name_);
+  name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   left_ = 0;
   right_ = 0;
   top_ = 0;
@@ -1360,7 +1359,7 @@ PoiPart::~PoiPart() {
 }
 
 void PoiPart::SharedDtor() {
-  if (name_ != &_default_name_) {
+  if (name_ != &::google::protobuf::internal::kEmptyString) {
     delete name_;
   }
   if (this != default_instance_) {
@@ -1386,8 +1385,8 @@ void PoiPart::Clear() {
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     size_ = GOOGLE_LONGLONG(0);
     offset_ = GOOGLE_LONGLONG(0);
-    if (_has_bit(2)) {
-      if (name_ != &_default_name_) {
+    if (has_name()) {
+      if (name_ != &::google::protobuf::internal::kEmptyString) {
         name_->clear();
       }
     }
@@ -1412,7 +1411,7 @@ bool PoiPart::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &size_)));
-          _set_bit(0);
+          set_has_size();
         } else {
           goto handle_uninterpreted;
         }
@@ -1428,7 +1427,7 @@ bool PoiPart::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &offset_)));
-          _set_bit(1);
+          set_has_offset();
         } else {
           goto handle_uninterpreted;
         }
@@ -1458,7 +1457,7 @@ bool PoiPart::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &left_)));
-          _set_bit(3);
+          set_has_left();
         } else {
           goto handle_uninterpreted;
         }
@@ -1474,7 +1473,7 @@ bool PoiPart::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &right_)));
-          _set_bit(4);
+          set_has_right();
         } else {
           goto handle_uninterpreted;
         }
@@ -1490,7 +1489,7 @@ bool PoiPart::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &top_)));
-          _set_bit(5);
+          set_has_top();
         } else {
           goto handle_uninterpreted;
         }
@@ -1506,7 +1505,7 @@ bool PoiPart::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &bottom_)));
-          _set_bit(6);
+          set_has_bottom();
         } else {
           goto handle_uninterpreted;
         }
@@ -1532,38 +1531,38 @@ bool PoiPart::MergePartialFromCodedStream(
 void PoiPart::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
   // required int64 size = 1;
-  if (_has_bit(0)) {
+  if (has_size()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt64(1, this->size(), output);
   }
   
   // required int64 offset = 2;
-  if (_has_bit(1)) {
+  if (has_offset()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt64(2, this->offset(), output);
   }
   
   // optional string name = 3;
-  if (_has_bit(2)) {
+  if (has_name()) {
     ::google::protobuf::internal::WireFormatLite::WriteString(
       3, this->name(), output);
   }
   
   // required int32 left = 4;
-  if (_has_bit(3)) {
+  if (has_left()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(4, this->left(), output);
   }
   
   // required int32 right = 5;
-  if (_has_bit(4)) {
+  if (has_right()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(5, this->right(), output);
   }
   
   // required int32 top = 6;
-  if (_has_bit(5)) {
+  if (has_top()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(6, this->top(), output);
   }
   
   // required int32 bottom = 7;
-  if (_has_bit(6)) {
+  if (has_bottom()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(7, this->bottom(), output);
   }
   
@@ -1637,25 +1636,25 @@ void PoiPart::CheckTypeAndMergeFrom(
 void PoiPart::MergeFrom(const PoiPart& from) {
   GOOGLE_CHECK_NE(&from, this);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    if (from._has_bit(0)) {
+    if (from.has_size()) {
       set_size(from.size());
     }
-    if (from._has_bit(1)) {
+    if (from.has_offset()) {
       set_offset(from.offset());
     }
-    if (from._has_bit(2)) {
+    if (from.has_name()) {
       set_name(from.name());
     }
-    if (from._has_bit(3)) {
+    if (from.has_left()) {
       set_left(from.left());
     }
-    if (from._has_bit(4)) {
+    if (from.has_right()) {
       set_right(from.right());
     }
-    if (from._has_bit(5)) {
+    if (from.has_top()) {
       set_top(from.top());
     }
-    if (from._has_bit(6)) {
+    if (from.has_bottom()) {
       set_bottom(from.bottom());
     }
   }
@@ -1783,7 +1782,7 @@ bool MapLevel::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &size_)));
-          _set_bit(0);
+          set_has_size();
         } else {
           goto handle_uninterpreted;
         }
@@ -1799,7 +1798,7 @@ bool MapLevel::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &offset_)));
-          _set_bit(1);
+          set_has_offset();
         } else {
           goto handle_uninterpreted;
         }
@@ -1815,7 +1814,7 @@ bool MapLevel::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &left_)));
-          _set_bit(2);
+          set_has_left();
         } else {
           goto handle_uninterpreted;
         }
@@ -1831,7 +1830,7 @@ bool MapLevel::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &right_)));
-          _set_bit(3);
+          set_has_right();
         } else {
           goto handle_uninterpreted;
         }
@@ -1847,7 +1846,7 @@ bool MapLevel::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &top_)));
-          _set_bit(4);
+          set_has_top();
         } else {
           goto handle_uninterpreted;
         }
@@ -1863,7 +1862,7 @@ bool MapLevel::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &bottom_)));
-          _set_bit(5);
+          set_has_bottom();
         } else {
           goto handle_uninterpreted;
         }
@@ -1879,7 +1878,7 @@ bool MapLevel::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &minzoom_)));
-          _set_bit(6);
+          set_has_minzoom();
         } else {
           goto handle_uninterpreted;
         }
@@ -1895,7 +1894,7 @@ bool MapLevel::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &maxzoom_)));
-          _set_bit(7);
+          set_has_maxzoom();
         } else {
           goto handle_uninterpreted;
         }
@@ -1921,42 +1920,42 @@ bool MapLevel::MergePartialFromCodedStream(
 void MapLevel::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
   // required int64 size = 1;
-  if (_has_bit(0)) {
+  if (has_size()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt64(1, this->size(), output);
   }
   
   // required int64 offset = 2;
-  if (_has_bit(1)) {
+  if (has_offset()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt64(2, this->offset(), output);
   }
   
   // required int32 left = 4;
-  if (_has_bit(2)) {
+  if (has_left()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(4, this->left(), output);
   }
   
   // required int32 right = 5;
-  if (_has_bit(3)) {
+  if (has_right()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(5, this->right(), output);
   }
   
   // required int32 top = 6;
-  if (_has_bit(4)) {
+  if (has_top()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(6, this->top(), output);
   }
   
   // required int32 bottom = 7;
-  if (_has_bit(5)) {
+  if (has_bottom()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(7, this->bottom(), output);
   }
   
   // optional int32 minzoom = 8;
-  if (_has_bit(6)) {
+  if (has_minzoom()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(8, this->minzoom(), output);
   }
   
   // optional int32 maxzoom = 9;
-  if (_has_bit(7)) {
+  if (has_maxzoom()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(9, this->maxzoom(), output);
   }
   
@@ -2037,28 +2036,28 @@ void MapLevel::CheckTypeAndMergeFrom(
 void MapLevel::MergeFrom(const MapLevel& from) {
   GOOGLE_CHECK_NE(&from, this);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    if (from._has_bit(0)) {
+    if (from.has_size()) {
       set_size(from.size());
     }
-    if (from._has_bit(1)) {
+    if (from.has_offset()) {
       set_offset(from.offset());
     }
-    if (from._has_bit(2)) {
+    if (from.has_left()) {
       set_left(from.left());
     }
-    if (from._has_bit(3)) {
+    if (from.has_right()) {
       set_right(from.right());
     }
-    if (from._has_bit(4)) {
+    if (from.has_top()) {
       set_top(from.top());
     }
-    if (from._has_bit(5)) {
+    if (from.has_bottom()) {
       set_bottom(from.bottom());
     }
-    if (from._has_bit(6)) {
+    if (from.has_minzoom()) {
       set_minzoom(from.minzoom());
     }
-    if (from._has_bit(7)) {
+    if (from.has_maxzoom()) {
       set_maxzoom(from.maxzoom());
     }
   }
@@ -2098,7 +2097,6 @@ void MapLevel::Swap(MapLevel* other) {
 
 // ===================================================================
 
-const ::std::string MapPart::_default_name_;
 #ifndef _MSC_VER
 const int MapPart::kSizeFieldNumber;
 const int MapPart::kOffsetFieldNumber;
@@ -2124,7 +2122,7 @@ void MapPart::SharedCtor() {
   _cached_size_ = 0;
   size_ = GOOGLE_LONGLONG(0);
   offset_ = GOOGLE_LONGLONG(0);
-  name_ = const_cast< ::std::string*>(&_default_name_);
+  name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -2133,7 +2131,7 @@ MapPart::~MapPart() {
 }
 
 void MapPart::SharedDtor() {
-  if (name_ != &_default_name_) {
+  if (name_ != &::google::protobuf::internal::kEmptyString) {
     delete name_;
   }
   if (this != default_instance_) {
@@ -2159,8 +2157,8 @@ void MapPart::Clear() {
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     size_ = GOOGLE_LONGLONG(0);
     offset_ = GOOGLE_LONGLONG(0);
-    if (_has_bit(2)) {
-      if (name_ != &_default_name_) {
+    if (has_name()) {
+      if (name_ != &::google::protobuf::internal::kEmptyString) {
         name_->clear();
       }
     }
@@ -2182,7 +2180,7 @@ bool MapPart::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &size_)));
-          _set_bit(0);
+          set_has_size();
         } else {
           goto handle_uninterpreted;
         }
@@ -2198,7 +2196,7 @@ bool MapPart::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &offset_)));
-          _set_bit(1);
+          set_has_offset();
         } else {
           goto handle_uninterpreted;
         }
@@ -2253,17 +2251,17 @@ bool MapPart::MergePartialFromCodedStream(
 void MapPart::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
   // required int64 size = 1;
-  if (_has_bit(0)) {
+  if (has_size()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt64(1, this->size(), output);
   }
   
   // required int64 offset = 2;
-  if (_has_bit(1)) {
+  if (has_offset()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt64(2, this->offset(), output);
   }
   
   // optional string name = 3;
-  if (_has_bit(2)) {
+  if (has_name()) {
     ::google::protobuf::internal::WireFormatLite::WriteString(
       3, this->name(), output);
   }
@@ -2325,13 +2323,13 @@ void MapPart::MergeFrom(const MapPart& from) {
   GOOGLE_CHECK_NE(&from, this);
   levels_.MergeFrom(from.levels_);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    if (from._has_bit(0)) {
+    if (from.has_size()) {
       set_size(from.size());
     }
-    if (from._has_bit(1)) {
+    if (from.has_offset()) {
       set_offset(from.offset());
     }
-    if (from._has_bit(2)) {
+    if (from.has_name()) {
       set_name(from.name());
     }
   }
@@ -2459,7 +2457,7 @@ bool RoutingSubregion::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &size_)));
-          _set_bit(0);
+          set_has_size();
         } else {
           goto handle_uninterpreted;
         }
@@ -2475,7 +2473,7 @@ bool RoutingSubregion::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &offset_)));
-          _set_bit(1);
+          set_has_offset();
         } else {
           goto handle_uninterpreted;
         }
@@ -2491,7 +2489,7 @@ bool RoutingSubregion::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
                  input, &basemap_)));
-          _set_bit(2);
+          set_has_basemap();
         } else {
           goto handle_uninterpreted;
         }
@@ -2507,7 +2505,7 @@ bool RoutingSubregion::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &left_)));
-          _set_bit(3);
+          set_has_left();
         } else {
           goto handle_uninterpreted;
         }
@@ -2523,7 +2521,7 @@ bool RoutingSubregion::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &right_)));
-          _set_bit(4);
+          set_has_right();
         } else {
           goto handle_uninterpreted;
         }
@@ -2539,7 +2537,7 @@ bool RoutingSubregion::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &top_)));
-          _set_bit(5);
+          set_has_top();
         } else {
           goto handle_uninterpreted;
         }
@@ -2555,7 +2553,7 @@ bool RoutingSubregion::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &bottom_)));
-          _set_bit(6);
+          set_has_bottom();
         } else {
           goto handle_uninterpreted;
         }
@@ -2571,7 +2569,7 @@ bool RoutingSubregion::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
                  input, &shiftodata_)));
-          _set_bit(7);
+          set_has_shiftodata();
         } else {
           goto handle_uninterpreted;
         }
@@ -2597,42 +2595,42 @@ bool RoutingSubregion::MergePartialFromCodedStream(
 void RoutingSubregion::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
   // required int64 size = 1;
-  if (_has_bit(0)) {
+  if (has_size()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt64(1, this->size(), output);
   }
   
   // required int64 offset = 2;
-  if (_has_bit(1)) {
+  if (has_offset()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt64(2, this->offset(), output);
   }
   
   // optional bool basemap = 3;
-  if (_has_bit(2)) {
+  if (has_basemap()) {
     ::google::protobuf::internal::WireFormatLite::WriteBool(3, this->basemap(), output);
   }
   
   // required int32 left = 4;
-  if (_has_bit(3)) {
+  if (has_left()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(4, this->left(), output);
   }
   
   // required int32 right = 5;
-  if (_has_bit(4)) {
+  if (has_right()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(5, this->right(), output);
   }
   
   // required int32 top = 6;
-  if (_has_bit(5)) {
+  if (has_top()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(6, this->top(), output);
   }
   
   // required int32 bottom = 7;
-  if (_has_bit(6)) {
+  if (has_bottom()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(7, this->bottom(), output);
   }
   
   // required uint32 shifToData = 8;
-  if (_has_bit(7)) {
+  if (has_shiftodata()) {
     ::google::protobuf::internal::WireFormatLite::WriteUInt32(8, this->shiftodata(), output);
   }
   
@@ -2711,28 +2709,28 @@ void RoutingSubregion::CheckTypeAndMergeFrom(
 void RoutingSubregion::MergeFrom(const RoutingSubregion& from) {
   GOOGLE_CHECK_NE(&from, this);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    if (from._has_bit(0)) {
+    if (from.has_size()) {
       set_size(from.size());
     }
-    if (from._has_bit(1)) {
+    if (from.has_offset()) {
       set_offset(from.offset());
     }
-    if (from._has_bit(2)) {
+    if (from.has_basemap()) {
       set_basemap(from.basemap());
     }
-    if (from._has_bit(3)) {
+    if (from.has_left()) {
       set_left(from.left());
     }
-    if (from._has_bit(4)) {
+    if (from.has_right()) {
       set_right(from.right());
     }
-    if (from._has_bit(5)) {
+    if (from.has_top()) {
       set_top(from.top());
     }
-    if (from._has_bit(6)) {
+    if (from.has_bottom()) {
       set_bottom(from.bottom());
     }
-    if (from._has_bit(7)) {
+    if (from.has_shiftodata()) {
       set_shiftodata(from.shiftodata());
     }
   }
@@ -2772,7 +2770,6 @@ void RoutingSubregion::Swap(RoutingSubregion* other) {
 
 // ===================================================================
 
-const ::std::string RoutingPart::_default_name_;
 #ifndef _MSC_VER
 const int RoutingPart::kSizeFieldNumber;
 const int RoutingPart::kOffsetFieldNumber;
@@ -2798,7 +2795,7 @@ void RoutingPart::SharedCtor() {
   _cached_size_ = 0;
   size_ = GOOGLE_LONGLONG(0);
   offset_ = GOOGLE_LONGLONG(0);
-  name_ = const_cast< ::std::string*>(&_default_name_);
+  name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -2807,7 +2804,7 @@ RoutingPart::~RoutingPart() {
 }
 
 void RoutingPart::SharedDtor() {
-  if (name_ != &_default_name_) {
+  if (name_ != &::google::protobuf::internal::kEmptyString) {
     delete name_;
   }
   if (this != default_instance_) {
@@ -2833,8 +2830,8 @@ void RoutingPart::Clear() {
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     size_ = GOOGLE_LONGLONG(0);
     offset_ = GOOGLE_LONGLONG(0);
-    if (_has_bit(2)) {
-      if (name_ != &_default_name_) {
+    if (has_name()) {
+      if (name_ != &::google::protobuf::internal::kEmptyString) {
         name_->clear();
       }
     }
@@ -2856,7 +2853,7 @@ bool RoutingPart::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &size_)));
-          _set_bit(0);
+          set_has_size();
         } else {
           goto handle_uninterpreted;
         }
@@ -2872,7 +2869,7 @@ bool RoutingPart::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &offset_)));
-          _set_bit(1);
+          set_has_offset();
         } else {
           goto handle_uninterpreted;
         }
@@ -2927,17 +2924,17 @@ bool RoutingPart::MergePartialFromCodedStream(
 void RoutingPart::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
   // required int64 size = 1;
-  if (_has_bit(0)) {
+  if (has_size()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt64(1, this->size(), output);
   }
   
   // required int64 offset = 2;
-  if (_has_bit(1)) {
+  if (has_offset()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt64(2, this->offset(), output);
   }
   
   // optional string name = 3;
-  if (_has_bit(2)) {
+  if (has_name()) {
     ::google::protobuf::internal::WireFormatLite::WriteString(
       3, this->name(), output);
   }
@@ -2999,13 +2996,13 @@ void RoutingPart::MergeFrom(const RoutingPart& from) {
   GOOGLE_CHECK_NE(&from, this);
   subregions_.MergeFrom(from.subregions_);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    if (from._has_bit(0)) {
+    if (from.has_size()) {
       set_size(from.size());
     }
-    if (from._has_bit(1)) {
+    if (from.has_offset()) {
       set_offset(from.offset());
     }
-    if (from._has_bit(2)) {
+    if (from.has_name()) {
       set_name(from.name());
     }
   }
@@ -3044,7 +3041,6 @@ void RoutingPart::Swap(RoutingPart* other) {
 
 // ===================================================================
 
-const ::std::string TransportPart::_default_name_;
 #ifndef _MSC_VER
 const int TransportPart::kSizeFieldNumber;
 const int TransportPart::kOffsetFieldNumber;
@@ -3077,7 +3073,7 @@ void TransportPart::SharedCtor() {
   _cached_size_ = 0;
   size_ = GOOGLE_LONGLONG(0);
   offset_ = GOOGLE_LONGLONG(0);
-  name_ = const_cast< ::std::string*>(&_default_name_);
+  name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   left_ = 0;
   right_ = 0;
   top_ = 0;
@@ -3094,7 +3090,7 @@ TransportPart::~TransportPart() {
 }
 
 void TransportPart::SharedDtor() {
-  if (name_ != &_default_name_) {
+  if (name_ != &::google::protobuf::internal::kEmptyString) {
     delete name_;
   }
   if (this != default_instance_) {
@@ -3120,8 +3116,8 @@ void TransportPart::Clear() {
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     size_ = GOOGLE_LONGLONG(0);
     offset_ = GOOGLE_LONGLONG(0);
-    if (_has_bit(2)) {
-      if (name_ != &_default_name_) {
+    if (has_name()) {
+      if (name_ != &::google::protobuf::internal::kEmptyString) {
         name_->clear();
       }
     }
@@ -3152,7 +3148,7 @@ bool TransportPart::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &size_)));
-          _set_bit(0);
+          set_has_size();
         } else {
           goto handle_uninterpreted;
         }
@@ -3168,7 +3164,7 @@ bool TransportPart::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &offset_)));
-          _set_bit(1);
+          set_has_offset();
         } else {
           goto handle_uninterpreted;
         }
@@ -3198,7 +3194,7 @@ bool TransportPart::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &left_)));
-          _set_bit(3);
+          set_has_left();
         } else {
           goto handle_uninterpreted;
         }
@@ -3214,7 +3210,7 @@ bool TransportPart::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &right_)));
-          _set_bit(4);
+          set_has_right();
         } else {
           goto handle_uninterpreted;
         }
@@ -3230,7 +3226,7 @@ bool TransportPart::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &top_)));
-          _set_bit(5);
+          set_has_top();
         } else {
           goto handle_uninterpreted;
         }
@@ -3246,7 +3242,7 @@ bool TransportPart::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &bottom_)));
-          _set_bit(6);
+          set_has_bottom();
         } else {
           goto handle_uninterpreted;
         }
@@ -3262,7 +3258,7 @@ bool TransportPart::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
                  input, &stringtableoffset_)));
-          _set_bit(7);
+          set_has_stringtableoffset();
         } else {
           goto handle_uninterpreted;
         }
@@ -3278,7 +3274,7 @@ bool TransportPart::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
                  input, &stringtablelength_)));
-          _set_bit(8);
+          set_has_stringtablelength();
         } else {
           goto handle_uninterpreted;
         }
@@ -3294,7 +3290,7 @@ bool TransportPart::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
                  input, &stopstableoffset_)));
-          _set_bit(9);
+          set_has_stopstableoffset();
         } else {
           goto handle_uninterpreted;
         }
@@ -3310,7 +3306,7 @@ bool TransportPart::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
                  input, &stopstablelength_)));
-          _set_bit(10);
+          set_has_stopstablelength();
         } else {
           goto handle_uninterpreted;
         }
@@ -3336,58 +3332,58 @@ bool TransportPart::MergePartialFromCodedStream(
 void TransportPart::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
   // required int64 size = 1;
-  if (_has_bit(0)) {
+  if (has_size()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt64(1, this->size(), output);
   }
   
   // required int64 offset = 2;
-  if (_has_bit(1)) {
+  if (has_offset()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt64(2, this->offset(), output);
   }
   
   // optional string name = 3;
-  if (_has_bit(2)) {
+  if (has_name()) {
     ::google::protobuf::internal::WireFormatLite::WriteString(
       3, this->name(), output);
   }
   
   // optional int32 left = 4;
-  if (_has_bit(3)) {
+  if (has_left()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(4, this->left(), output);
   }
   
   // optional int32 right = 5;
-  if (_has_bit(4)) {
+  if (has_right()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(5, this->right(), output);
   }
   
   // optional int32 top = 6;
-  if (_has_bit(5)) {
+  if (has_top()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(6, this->top(), output);
   }
   
   // optional int32 bottom = 7;
-  if (_has_bit(6)) {
+  if (has_bottom()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(7, this->bottom(), output);
   }
   
   // optional uint32 stringTableOffset = 8;
-  if (_has_bit(7)) {
+  if (has_stringtableoffset()) {
     ::google::protobuf::internal::WireFormatLite::WriteUInt32(8, this->stringtableoffset(), output);
   }
   
   // optional uint32 stringTableLength = 9;
-  if (_has_bit(8)) {
+  if (has_stringtablelength()) {
     ::google::protobuf::internal::WireFormatLite::WriteUInt32(9, this->stringtablelength(), output);
   }
   
   // optional uint32 stopsTableOffset = 10;
-  if (_has_bit(9)) {
+  if (has_stopstableoffset()) {
     ::google::protobuf::internal::WireFormatLite::WriteUInt32(10, this->stopstableoffset(), output);
   }
   
   // optional uint32 stopsTableLength = 11;
-  if (_has_bit(10)) {
+  if (has_stopstablelength()) {
     ::google::protobuf::internal::WireFormatLite::WriteUInt32(11, this->stopstablelength(), output);
   }
   
@@ -3491,39 +3487,39 @@ void TransportPart::CheckTypeAndMergeFrom(
 void TransportPart::MergeFrom(const TransportPart& from) {
   GOOGLE_CHECK_NE(&from, this);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    if (from._has_bit(0)) {
+    if (from.has_size()) {
       set_size(from.size());
     }
-    if (from._has_bit(1)) {
+    if (from.has_offset()) {
       set_offset(from.offset());
     }
-    if (from._has_bit(2)) {
+    if (from.has_name()) {
       set_name(from.name());
     }
-    if (from._has_bit(3)) {
+    if (from.has_left()) {
       set_left(from.left());
     }
-    if (from._has_bit(4)) {
+    if (from.has_right()) {
       set_right(from.right());
     }
-    if (from._has_bit(5)) {
+    if (from.has_top()) {
       set_top(from.top());
     }
-    if (from._has_bit(6)) {
+    if (from.has_bottom()) {
       set_bottom(from.bottom());
     }
-    if (from._has_bit(7)) {
+    if (from.has_stringtableoffset()) {
       set_stringtableoffset(from.stringtableoffset());
     }
   }
   if (from._has_bits_[8 / 32] & (0xffu << (8 % 32))) {
-    if (from._has_bit(8)) {
+    if (from.has_stringtablelength()) {
       set_stringtablelength(from.stringtablelength());
     }
-    if (from._has_bit(9)) {
+    if (from.has_stopstableoffset()) {
       set_stopstableoffset(from.stopstableoffset());
     }
-    if (from._has_bit(10)) {
+    if (from.has_stopstablelength()) {
       set_stopstablelength(from.stopstablelength());
     }
   }

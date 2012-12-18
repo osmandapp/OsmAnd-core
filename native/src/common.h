@@ -9,9 +9,6 @@
 #elif defined(__APPLE__)
 #	include <tr1/unordered_map>
 #	include <tr1/unordered_set>
-#elif defined(_WIN32) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
-#	include <unordered_map>
-#	include <unordered_set>
 #else
 #	include <unordered_map>
 #	include <unordered_set>
@@ -25,48 +22,40 @@
 #include <SkPath.h>
 #include <SkBitmap.h>
 
+#include "osmand_log.h"
+
 // M_PI is no longer part of math.h/cmath by standart, but some GCC's define them
 #define _USE_MATH_DEFINES
 #include <math.h>
 #if !defined(M_PI)
-    namespace OsmAnd {
-	    const double M_PI = 3.14159265358979323846;
-    }
+	const double M_PI = 3.14159265358979323846;
 #endif
 #if !defined(M_PI_2)
-    namespace OsmAnd {
-	    const double M_PI_2 = M_PI / 2.0;
-    }
+	const double M_PI_2 = M_PI / 2.0;
 #endif
 
 // Wrapper for unordered classes
 #if defined(ANDROID)
-#	define UNORDERED_NAMESPACE std::tr1
+#	define UNORDERED_NAMESPACE std
 #	define UNORDERED_map unordered_map
 #	define UNORDERED_set unordered_set
 #elif defined(__APPLE__)
 #	define UNORDERED_NAMESPACE std::tr1
 #	define UNORDERED_map unordered_map
 #	define UNORDERED_set unordered_set
-#elif defined(_WIN32) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
-#	define UNORDERED_NAMESPACE std
-#	define UNORDERED_map unordered_map
-#	define UNORDERED_set unordered_set
 #else
 #	define UNORDERED_NAMESPACE std
 #	define UNORDERED_map unordered_map
 #	define UNORDERED_set unordered_set
+//#	define UNORDERED_map map
+//#	define UNORDERED_set set
 #endif
 #define UNORDERED(cls) UNORDERED_NAMESPACE::UNORDERED_##cls
 
 #if defined(ANDROID)
-#   include "shared_ptr.h"
-#   define SHARED_PTR my_shared_ptr
-//#   include <tr1/shared_ptr.h>
-//#   define SHARED_PTR std::tr1::shared_ptr
-#elif defined(_WIN32) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
-#   include <memory>
-#   define SHARED_PTR std::shared_ptr
+#   include <tr1/memory>
+#   define SHARED_PTR std::tr1::shared_ptr
+#elif defined(WINDOWS)
 #else
 //#	include "shared_ptr.h"
 //#   define SHARED_PTR my_shared_ptr
@@ -74,13 +63,15 @@
 #   define SHARED_PTR std::tr1::shared_ptr
 #endif
 
+
+// Better don't do this
+using namespace std;
+
 #ifdef PROFILE_NATIVE_OPERATIONS
 	#define PROFILE_NATIVE_OPERATION(rc, op) rc->nativeOperations.pause(); op; rc->nativeOperations.start()
 #else
 	#define PROFILE_NATIVE_OPERATION(rc, op) op;
 #endif
-
-namespace OsmAnd {
 
 struct RenderingContext;
 
