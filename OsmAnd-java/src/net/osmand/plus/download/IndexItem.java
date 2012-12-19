@@ -229,6 +229,13 @@ public class IndexItem implements Comparable<IndexItem> {
 			return s;
 		} else if(e.endsWith(IndexConstants.EXTRA_ZIP_EXT)){
 			return e.substring(0, e.length() - IndexConstants.EXTRA_ZIP_EXT.length()) + IndexConstants.EXTRA_EXT; 
+		} else if(e.endsWith(IndexConstants.VOICE_INDEX_EXT_ZIP) || e.endsWith(IndexConstants.TTSVOICE_INDEX_EXT_ZIP)) {
+			int l = e.lastIndexOf('_');
+			if(l == -1) {
+				l = e.length();
+			}
+			String s = e.substring(0, l);
+			return s;
 		}
 			
 		return e;
