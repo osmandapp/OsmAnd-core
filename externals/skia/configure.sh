@@ -11,9 +11,7 @@ fi
 
 # Download
 echo "Downloading new upstream..."
-git clone http://git.chromium.org/external/skia.git $SRCLOC/upstream.original --depth=10
-git --work-tree="$SRCLOC/upstream.original" --git-dir="$SRCLOC/upstream.original/.git" checkout d7204d413233fac7fc15c0efecb0622205165987
-git --work-tree="$SRCLOC/upstream.original" --git-dir="$SRCLOC/upstream.original/.git" reset --hard
+git clone https://github.com/osmandapp/OsmAnd-external-skia.git $SRCLOC/upstream.original --depth=1
 
 # Patch
 cp -rf $SRCLOC/upstream.original $SRCLOC/upstream.patched
