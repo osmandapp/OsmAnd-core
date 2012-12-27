@@ -18,7 +18,7 @@
 		<link>
 			<name>android</name>
 			<type>2</type>
-			<locationURI>OSMAND_TRUNK/OsmAnd/gen</locationURI>
+			<location>/home/victor/projects/OsmAnd/repo/platforms/android/OsmAnd/gen</location>
 		</link>
 	</linkedResources>
 </projectDescription>
