@@ -111,6 +111,9 @@
 		<avoid tag="access" value="private" decreasedPriority="0.3"/>
 		<avoid tag="motor_vehicle" value="private" decreasedPriority="0.3"/>
 		
+		<avoid tag="motorcar" value="destination" decreasedPriority="0.3"/>
+		<avoid tag="motorcycle" value="destination" decreasedPriority="0.3"/>
+		
 		<avoid tag="access" value="no"/>
 		<avoid tag="motorcycle" value="no"/>
 		<avoid tag="motorcar" value="no"/>
