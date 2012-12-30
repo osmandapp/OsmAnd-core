@@ -134,8 +134,15 @@ public class Street extends MapObject {
 		Collections.sort(buildings, new Comparator<Building>(){
 			@Override
 			public int compare(Building o1, Building o2) {
-				int i1 = Algoritms.extractFirstIntegerNumber(o1.getName());
-				int i2 = Algoritms.extractFirstIntegerNumber(o2.getName());
+				String s1 = o1.getName();
+				String s2 = o2.getName();
+				int i1 = Algoritms.extractFirstIntegerNumber(s1);
+				int i2 = Algoritms.extractFirstIntegerNumber(s2);
+				if(i1 == i2) {
+					String t1 = Algoritms.extractIntegerSuffix(s1);
+					String t2 = Algoritms.extractIntegerSuffix(s2);
+					return t1.compareTo(t2);
+				}
 				return i1 - i2;
 			}
 		});

@@ -81,6 +81,16 @@ public class Algoritms {
 		return i;
 	}
 	
+	public static String extractIntegerSuffix(String s) {
+		int k = 0;
+		for (; k < s.length(); k++) {
+			if (!Character.isDigit(s.charAt(k))) {
+				return s.substring(k);
+			}
+		}
+		return "";
+	}
+	
 	
 	public static void streamCopy(InputStream in, OutputStream out) throws IOException{
 		byte[] b = new byte[BUFFER_SIZE];
