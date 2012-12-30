@@ -92,15 +92,19 @@
 		
 		<!-- usually traffic_signals are not that bad. 
 		     It is usuall better to pass via secondary route with TS then residential -->
-		<obstacle tag="traffic_calming" value="" routingPenalty="10" penalty="8"/>
+		<obstacle tag="traffic_calming" value="" penalty="8" routingPenalty="10"/>
 		<obstacle tag="highway" value="traffic_signals" penalty="25" routingPenalty="5"/>
 		
+		<obstacle tag="highway" value="stop" penalty="15" routingPenalty="3"/>
+		<obstacle tag="highway" value="give_way" penalty="7"/>
+		<obstacle tag="highway" value="ford" penalty="25"/>
+		<obstacle tag="ford" value="" penalty="25"/>
 		<obstacle tag="railway" value="crossing" penalty="25"/>
 		<obstacle tag="railway" value="level_crossing" penalty="25"/>
-		<obstacle tag="motorcar" value="no" penalty="-1"/>  
-		<obstacle tag="barrier" value="lift_gate" routingPenalty="1000" penalty="25"/>
+		<obstacle tag="motorcar" value="no" penalty="-1"/>
+		<obstacle tag="barrier" value="bollard" routingPenalty="1000" penalty="25"/>
 		<obstacle tag="barrier" value="gate" routingPenalty="1000" penalty="25"/>
-		<obstacle tag="barrier" value="bollard" routingPenalty="1000" penalty="25"/> 
+		<obstacle tag="barrier" value="lift_gate" routingPenalty="1000" penalty="25"/>
 		
 		<avoid tag="tracktype" value="grade5" decreasedPriority="0.6"/>
 		
@@ -113,6 +117,8 @@
 		<avoid tag="motor_vehicle" value="no"/>
 		<avoid tag="vehicle" value="no"/>
 		<avoid tag="motorcar" value="no"/>
+		<avoid tag="barrier" value="debris"/>
+		<avoid tag="barrier" value="block"/>
 		
 		<avoid tag="toll" value="yes" decreasedPriority="1">
 			<specialization input="avoid_toll" />
@@ -155,6 +161,10 @@
 		<road tag="highway" value="steps" speed="3" priority="0.5" />
 
 		<obstacle tag="highway" value="traffic_signals" penalty="25" routingPenalty="10"/>
+		<obstacle tag="highway" value="stop" penalty="15" routingPenalty="1"/>
+		<obstacle tag="highway" value="give_way" penalty="7"/>
+		<obstacle tag="highway" value="ford" penalty="15"/>
+		<obstacle tag="ford" value="" penalty="15"/>
 		<obstacle tag="railway" value="crossing" penalty="15"/>
 		<obstacle tag="railway" value="level_crossing" penalty="15"/>
 		<obstacle tag="barrier" value="cycle_barrier" penalty="10"/>
@@ -165,6 +175,8 @@
 		<avoid tag="tracktype" value="grade4" decreasedPriority="0.3"/>
 		<avoid tag="tracktype" value="grade5" decreasedPriority="0.6"/>
 		<avoid tag="access" value="private" decreasedPriority="0.1"/>
+		<avoid tag="barrier" value="debris" decreasedPriority="0.1"/>
+		<avoid tag="barrier" value="block" decreasedPriority="0.1"/>
 		<avoid tag="bicycle" value="no"/>
 	</routingProfile>
 
@@ -204,9 +216,13 @@
 		<road tag="highway" value="bridleway" speed="5" priority="0.8" />
 		<road tag="highway" value="steps" speed="4" priority="1.2" />
 
+		<obstacle tag="highway" value="ford" penalty="15"/>
+		<obstacle tag="ford" value="" penalty="15"/>
 		<obstacle tag="highway" value="traffic_signals" penalty="30"/>
 		<obstacle tag="railway" value="crossing" penalty="15"/>
 		<obstacle tag="railway" value="level_crossing" penalty="15"/>
+		<obstacle tag="barrier" value="debris" penalty="15"/>
+		<obstacle tag="barrier" value="block" penalty="15"/>
 		
 		<avoid tag="foot" value="no"/>
 		<avoid tag="pedestrian" value="no"/>
