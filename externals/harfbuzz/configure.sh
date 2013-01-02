@@ -1,6 +1,10 @@
 #!/bin/bash
 
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+if ls -1 $SRCLOC/upstream.patched >/dev/null 2>&1
+then
+   exit
+fi
 
 # Delete old one if such exists
 if ls -1 $SRCLOC/upstream.* >/dev/null 2>&1
