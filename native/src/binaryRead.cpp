@@ -21,6 +21,7 @@ using google::protobuf::internal::WireFormatLite;
 //using namespace google::protobuf::internal;
 
 static int zoomForBaseRouteRendering  = 14;
+static int zoomOnlyForBasemaps  = 7;
 std::map< std::string, BinaryMapFile* > openFiles;
 OsmAndStoredIndex* cache = NULL;
 typedef UNORDERED(set)<long long> IDS_SET;
@@ -149,7 +150,7 @@ bool readMapLevel(CodedInputStream* input, MapRoot* root, bool initSubtrees) {
 			}
 			MapTreeBounds bounds;
 			readInt(input, &bounds.length);
-			bounds.filePointer = input->TotalBytesRead();
+			bounds.filePointer = input->getTotalBytesRead();
 			int oldLimit = input->PushLimit(bounds.length);
 			readMapTreeBounds(input, &bounds, root);
 			root->bounds.push_back(bounds);
@@ -295,7 +296,7 @@ bool readRouteTree(CodedInputStream* input, RouteSubregion* thisTree, RouteSubre
 			if (readChildren) {
 				RouteSubregion subregion(ind);
 				readInt(input, &subregion.length);
-				subregion.filePointer = input->TotalBytesRead();
+				subregion.filePointer = input->getTotalBytesRead();
 				int oldLimit = input->PushLimit(subregion.length);
 				readRouteTree(input, &subregion, thisTree, ind, depth - 1, true);
 				input->PopLimit(oldLimit);
@@ -349,7 +350,7 @@ bool readRoutingIndex(CodedInputStream* input, RoutingIndex* routingIndex, bool 
 			bool basemap = WireFormatLite::GetTagFieldNumber(tag) == OsmAndRoutingIndex::kBasemapBoxesFieldNumber;
 			RouteSubregion subregion(routingIndex);
 			readInt(input, &subregion.length);
-			subregion.filePointer = input->TotalBytesRead();
+			subregion.filePointer = input->getTotalBytesRead();
 			int oldLimit = input->PushLimit(subregion.length);
 			readRouteTree(input, &subregion, NULL, routingIndex,  0, true);
 			input->PopLimit(oldLimit);
@@ -404,7 +405,7 @@ bool readMapIndex(CodedInputStream* input, MapIndex* mapIndex, bool onlyInitEnco
 		case OsmAndMapIndex::kLevelsFieldNumber: {
 			MapRoot mapLevel;
 			readInt(input, &mapLevel.length);
-			mapLevel.filePointer = input->TotalBytesRead();
+			mapLevel.filePointer = input->getTotalBytesRead();
 			if (!onlyInitEncodingRules) {
 				int oldLimit = input->PushLimit(mapLevel.length);
 				readMapLevel(input, &mapLevel, false);
@@ -451,7 +452,7 @@ bool initMapStructure(CodedInputStream* input, BinaryMapFile* file) {
 		case OsmAndStructure::kMapIndexFieldNumber: {
 			MapIndex mapIndex;
 			readInt(input, &mapIndex.length);
-			mapIndex.filePointer = input->TotalBytesRead();
+			mapIndex.filePointer = input->getTotalBytesRead();
 			int oldLimit = input->PushLimit(mapIndex.length);
 			readMapIndex(input, &mapIndex, false);
 			input->PopLimit(oldLimit);
@@ -464,7 +465,7 @@ bool initMapStructure(CodedInputStream* input, BinaryMapFile* file) {
 		case OsmAndStructure::kRoutingIndexFieldNumber: {
 			RoutingIndex* routingIndex = new RoutingIndex;
 			readInt(input, &routingIndex->length);
-			routingIndex->filePointer = input->TotalBytesRead();
+			routingIndex->filePointer = input->getTotalBytesRead();
 			int oldLimit = input->PushLimit(routingIndex->length);
 			readRoutingIndex(input, routingIndex, false);
 			input->PopLimit(oldLimit);
@@ -781,7 +782,7 @@ bool searchMapTreeBounds(CodedInputStream* input, MapTreeBounds* current, MapTre
 		case OsmAndMapIndex_MapDataBox::kBoxesFieldNumber: {
 			MapTreeBounds* child = new MapTreeBounds();
 			readInt(input, &child->length);
-			child->filePointer = input->TotalBytesRead();
+			child->filePointer = input->getTotalBytesRead();
 			int oldLimit = input->PushLimit(child->length);
 			if (current->ocean) {
 				child->ocean = current->ocean;
@@ -1117,16 +1118,20 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 		// TODO skip duplicates doesn't work correctly with basemap ?
 		skipDuplicates = false;
 	}
-	IDS_SET ids;
 	map<std::string, BinaryMapFile*>::iterator i = openFiles.begin();
+	for (; i != openFiles.end() && !q->publisher->isCancelled(); i++) {
+		BinaryMapFile* file = i->second;
+		basemapExists |= file->isBasemap();
+	}
+	IDS_SET ids;
+	i = openFiles.begin();
 	for (; i != openFiles.end() && !q->publisher->isCancelled(); i++) {
 		BinaryMapFile* file = i->second;
 		if (q->req != NULL) {
 			q->req->clearState();
 		}
 		q->publisher->result.clear();
-		basemapExists |= file->isBasemap();
-		if(renderRouteDataFile == 1 && !file->isBasemap()) {
+		if((renderRouteDataFile == 1 || q->zoom < zoomOnlyForBasemaps) && !file->isBasemap()) {
 			continue;
 		} else if (!q->publisher->isCancelled()) {
 			readMapObjects(q, file);
@@ -1172,7 +1177,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 	readMapObjectsForRendering(q, basemapResult, tempResult, coastLines, basemapCoastLines, count,
 			basemapExists, renderRouteDataFile, skipDuplicates);
 
-	if (renderRouteDataFile >= 0) {
+	if (renderRouteDataFile >= 0 && q->zoom >= zoomOnlyForBasemaps) {
 		IDS_SET ids;
 		map<std::string, BinaryMapFile*>::iterator i = openFiles.begin();
 		for (; i != openFiles.end() && !q->publisher->isCancelled(); i++) {
