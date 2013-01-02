@@ -339,7 +339,7 @@ bool readRoutingIndex(CodedInputStream* input, RoutingIndex* routingIndex, bool 
 			int oldLimit = input->PushLimit(len);
 			readRouteEncodingRule(input, routingIndex, defaultId++);
 			input->PopLimit(oldLimit);
-			break;
+			break ;
 		}
 		case OsmAndRoutingIndex::kRootBoxesFieldNumber:
 		case OsmAndRoutingIndex::kBasemapBoxesFieldNumber:{
