@@ -25,13 +25,13 @@ package gnu.trove.set;
 // THIS IS A GENERATED CLASS. DO NOT HAND EDIT! //
 //////////////////////////////////////////////////
 
+import gnu.trove.TIntCollection;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.procedure.TIntProcedure;
-import gnu.trove.TIntCollection;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Set;
-import java.io.Serializable;
 
 /**
  * An implementation of the <tt>Set</tt> interface that uses an

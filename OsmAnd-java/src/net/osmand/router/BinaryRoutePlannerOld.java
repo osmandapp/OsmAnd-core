@@ -4,17 +4,13 @@ import gnu.trove.map.hash.TLongObjectHashMap;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.PriorityQueue;
 
 import net.osmand.LogUtil;
-import net.osmand.binary.BinaryMapRouteReaderAdapter;
-import net.osmand.binary.BinaryMapRouteReaderAdapter.RouteRegion;
 import net.osmand.binary.RouteDataObject;
-import net.osmand.osm.LatLon;
 import net.osmand.osm.MapRenderingTypes;
 import net.osmand.osm.MapUtils;
 import net.osmand.router.BinaryRoutePlanner.FinalRouteSegment;

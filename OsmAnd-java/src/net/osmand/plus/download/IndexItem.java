@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import net.osmand.LogUtil;
+import net.osmand.Version;
 import net.osmand.data.IndexConstants;
 import net.osmand.plus.ClientContext;
 import net.osmand.plus.R;
@@ -125,26 +126,26 @@ public class IndexItem implements Comparable<IndexItem> {
 		boolean unzipDir = false;
 		boolean preventMediaIndexing = false;
 		if (fileName.endsWith(IndexConstants.BINARY_MAP_INDEX_EXT)) {
-			parent = ctx.getAppDir();
+			parent = ctx.getInternalAPI().getAppDir();
 			toSavePostfix = BINARY_MAP_INDEX_EXT;
 			toCheckPostfix = BINARY_MAP_INDEX_EXT;
 		} else if (fileName.endsWith(IndexConstants.BINARY_MAP_INDEX_EXT_ZIP)) {
-			parent = ctx.getAppDir();
+			parent = ctx.getInternalAPI().getAppDir();
 			toSavePostfix = BINARY_MAP_INDEX_EXT_ZIP;
 			toCheckPostfix = BINARY_MAP_INDEX_EXT;
 		} else if (fileName.endsWith(IndexConstants.EXTRA_ZIP_EXT)) {
-			parent = ctx.getAppDir();
+			parent = ctx.getInternalAPI().getAppDir();
 			// unzipDir = true;
 			toSavePostfix = IndexConstants.EXTRA_ZIP_EXT;
 			toCheckPostfix = IndexConstants.EXTRA_EXT;
 		} else if (fileName.endsWith(IndexConstants.VOICE_INDEX_EXT_ZIP)) {
-			parent = ctx.getAppDir(IndexConstants.VOICE_INDEX_DIR);
+			parent = ctx.getInternalAPI().getAppDir(IndexConstants.VOICE_INDEX_DIR);
 			toSavePostfix = VOICE_INDEX_EXT_ZIP;
 			toCheckPostfix = ""; //$NON-NLS-1$
 			unzipDir = true;
 			preventMediaIndexing = true;
 		} else if (fileName.endsWith(IndexConstants.TTSVOICE_INDEX_EXT_ZIP)) {
-			parent = ctx.getAppDir(IndexConstants.VOICE_INDEX_DIR);
+			parent = ctx.getInternalAPI().getAppDir(IndexConstants.VOICE_INDEX_DIR);
 			toSavePostfix = TTSVOICE_INDEX_EXT_ZIP;
 			toCheckPostfix = ""; //$NON-NLS-1$
 			unzipDir = true;
@@ -173,7 +174,7 @@ public class IndexItem implements Comparable<IndexItem> {
 			entry.type = type;
 			entry.baseName = getBasename();
 			String url = "http://" + IndexConstants.INDEX_DOWNLOAD_DOMAIN + "/download?event=2&";
-			url += ctx.getVersionAsURLParam() + "&";
+			url += Version.getVersionAsURLParam(ctx) + "&";
 			if (type == DownloadActivityType.ROADS_FILE) {
 				url += "road=yes&";
 			}
@@ -197,7 +198,7 @@ public class IndexItem implements Comparable<IndexItem> {
 				entry.parts = Integer.parseInt(parts);
 			}
 			entry.fileToUnzip = new File(parent, entry.baseName + toCheckPostfix);
-			File backup = new File(ctx.getAppDir(IndexConstants.BACKUP_INDEX_DIR), entry.fileToUnzip.getName());
+			File backup = new File(ctx.getInternalAPI().getAppDir(IndexConstants.BACKUP_INDEX_DIR), entry.fileToUnzip.getName());
 			if (backup.exists()) {
 				entry.existingBackupFile = backup;
 			}

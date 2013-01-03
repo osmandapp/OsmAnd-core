@@ -20,18 +20,23 @@
 
 package gnu.trove.list.array;
 
+import gnu.trove.TIntCollection;
 import gnu.trove.function.TIntFunction;
+import gnu.trove.impl.Constants;
+import gnu.trove.impl.HashFunctions;
+import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.TIntList;
 import gnu.trove.procedure.TIntProcedure;
-import gnu.trove.iterator.TIntIterator;
-import gnu.trove.TIntCollection;
-import gnu.trove.impl.*;
 
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.ConcurrentModificationException;
+import java.util.NoSuchElementException;
+import java.util.Random;
 
 
 //////////////////////////////////////////////////

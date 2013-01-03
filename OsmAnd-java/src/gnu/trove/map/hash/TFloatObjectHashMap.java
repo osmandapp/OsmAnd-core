@@ -20,21 +20,30 @@
 
 package gnu.trove.map.hash;
 
-import gnu.trove.map.TFloatObjectMap;
+import gnu.trove.TFloatCollection;
+import gnu.trove.function.TObjectFunction;
 import gnu.trove.impl.Constants;
 import gnu.trove.impl.HashFunctions;
-import gnu.trove.impl.hash.*;
+import gnu.trove.impl.hash.TFloatHash;
+import gnu.trove.impl.hash.THashPrimitiveIterator;
+import gnu.trove.iterator.TFloatIterator;
+import gnu.trove.iterator.TFloatObjectIterator;
+import gnu.trove.map.TFloatObjectMap;
 import gnu.trove.procedure.TFloatObjectProcedure;
 import gnu.trove.procedure.TFloatProcedure;
 import gnu.trove.procedure.TObjectProcedure;
-import gnu.trove.iterator.TFloatIterator;
-import gnu.trove.iterator.TFloatObjectIterator;
-import gnu.trove.function.TObjectFunction;
 import gnu.trove.set.TFloatSet;
-import gnu.trove.TFloatCollection;
 
-import java.io.*;
-import java.util.*;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.AbstractSet;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 
 //////////////////////////////////////////////////

@@ -4,10 +4,10 @@ import java.io.Serializable;
 import java.text.Collator;
 
 import net.osmand.osm.Entity;
-import net.osmand.osm.LatLon;
-import net.osmand.osm.MapUtils;
 import net.osmand.osm.Entity.EntityId;
 import net.osmand.osm.Entity.EntityType;
+import net.osmand.osm.LatLon;
+import net.osmand.osm.MapUtils;
 import net.osmand.osm.OSMSettings.OSMTagKey;
 
 

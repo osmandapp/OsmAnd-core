@@ -14,6 +14,7 @@ import java.util.zip.ZipInputStream;
 
 import net.osmand.IProgress;
 import net.osmand.LogUtil;
+import net.osmand.Version;
 import net.osmand.data.IndexConstants;
 import net.osmand.plus.ClientContext;
 import net.osmand.plus.R;
@@ -60,7 +61,7 @@ public class DownloadFileHelper {
 						}
 					}
 					HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-					conn.setRequestProperty("User-Agent", ctx.getFullVersion()); //$NON-NLS-1$
+					conn.setRequestProperty("User-Agent", Version.getFullVersion(ctx)); //$NON-NLS-1$
 					conn.setReadTimeout(30000);
 					if (fileread > 0) {
 						String range = "bytes="+fileread + "-" + (length -1); //$NON-NLS-1$ //$NON-NLS-2$
@@ -121,7 +122,7 @@ public class DownloadFileHelper {
 	}
 	
 	public boolean isWifiConnected(){
-		return ctx.isWifiConnected();
+		return ctx.getExternalServiceAPI().isWifiConnected();
 	}
 	
 	public boolean downloadFile(DownloadEntry de, IProgress progress, 

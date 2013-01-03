@@ -30,13 +30,13 @@
 
 package com.google.protobuf;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.TreeMap;
 import java.util.List;
 import java.util.Map;
-import java.io.IOException;
+import java.util.TreeMap;
 
 /**
  * A class which represents an arbitrary set of fields of some message type.

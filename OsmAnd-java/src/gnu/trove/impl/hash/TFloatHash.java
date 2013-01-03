@@ -20,9 +20,9 @@
 
 package gnu.trove.impl.hash;
 
-import gnu.trove.procedure.TFloatProcedure;
-import gnu.trove.impl.HashFunctions;
 import gnu.trove.impl.Constants;
+import gnu.trove.impl.HashFunctions;
+import gnu.trove.procedure.TFloatProcedure;
 
 import java.util.Arrays;
 
