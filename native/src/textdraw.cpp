@@ -222,7 +222,7 @@ bool calculatePathToRotate(RenderingContext* rc, TextDrawInfo* p) {
 		return true;
 	}
 	int len = p->path->countPoints();
-	SkPoint points[len];
+    SkPoint* points= new SkPoint[len];// NEVER DEALLOCATED!
 	p->path->getPoints(points, len);
 
 
@@ -439,6 +439,9 @@ bool intersects(SkRect tRect, float tRot, TextDrawInfo* s)
 bool intersects(TextDrawInfo* t, TextDrawInfo* s) {
 	return intersects(t->bounds, t->pathRotate, s);
 }
+#if defined(WIN32)
+#undef max
+#endif
 inline float max(float a, float b) {
   return a > b ? a : b;
 }

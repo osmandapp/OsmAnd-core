@@ -2,7 +2,6 @@
 #include "binaryRead.h"
 
 #include <fcntl.h>
-#include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <algorithm>
@@ -12,6 +11,11 @@
 #include "proto/osmand_odb.pb.h"
 #include "proto/osmand_index.pb.h"
 #include "osmand_log.h"
+
+#if defined(WIN32)
+#undef min
+#undef max
+#endif
 
 using namespace std;
 #define DO_(EXPRESSION) if (!(EXPRESSION)) return false

@@ -1,6 +1,5 @@
-diff -rupN upstream.original/src/opts/SkBlitRow_opts_arm.cpp upstream.patched/src/opts/SkBlitRow_opts_arm.cpp
---- upstream.original/src/opts/SkBlitRow_opts_arm.cpp	2012-12-17 18:18:46.128677600 +0200
-+++ upstream.patched/src/opts/SkBlitRow_opts_arm.cpp	2012-12-18 08:10:48.047516400 +0200
+--- upstream.original/src/opts/SkBlitRow_opts_arm.cpp	2013-01-03 18:21:32.755525300 +0200
++++ upstream.patched/src/opts/SkBlitRow_opts_arm.cpp	2013-01-03 18:21:38.385361300 +0200
 @@ -45,7 +45,7 @@ static void S32A_D565_Opaque(uint16_t* S
                    "ldrh    r4, [%[dst]]                 \n\t"
                    "rsb     r7, r7, #255                 \n\t"

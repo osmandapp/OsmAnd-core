@@ -29,6 +29,10 @@
 
 const int MAX_V = 75;
 
+#if defined(WIN32)
+#undef min
+#endif
+
 struct MapDataObjectPrimitive {
 	MapDataObject* obj;
 	int typeInd;
@@ -624,7 +628,7 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 	int iconsW = rc -> getWidth() / skewConstant;
 	int iconsH = rc -> getHeight() / skewConstant;
 	int len = (iconsW * iconsH) / 32;
-	int alreadyDrawnIcons[len];
+	int* alreadyDrawnIcons = new int[len];// NEVER DEALLOCATED
 	memset(alreadyDrawnIcons, 0, sizeof(int)*len);
 	size_t ji = 0;
 	SkPaint p;

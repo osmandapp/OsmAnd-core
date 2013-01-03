@@ -1,8 +1,11 @@
 #ifndef _OSMAND_EXPAT_CONFIG_H_
 #define _OSMAND_EXPAT_CONFIG_H_
 
-// Windows Phone target
-#if defined(_WIN32) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
+// Windows target
+#if defined(_WIN32)
+
+/* Force expat to be static */
+#define XML_STATIC
 
 /* 1234 = LIL_ENDIAN, 4321 = BIGENDIAN */
 #define BYTEORDER 1234
@@ -37,10 +40,13 @@
 /* Define to `unsigned' if <sys/types.h> does not define. */
 #undef size_t
 
-#endif // defined(_WIN32) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
+#endif // defined(_WIN32)
 
 // Android target
 #if defined(ANDROID)
+
+/* Force expat to be static */
+#define XML_STATIC
 
 /* 1234 = LIL_ENDIAN, 4321 = BIGENDIAN */
 #define BYTEORDER 1234

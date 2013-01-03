@@ -55,7 +55,9 @@
 #if defined(ANDROID)
 #   include <tr1/memory>
 #   define SHARED_PTR std::tr1::shared_ptr
-#elif defined(WINDOWS)
+#elif defined(WIN32)
+#   include <memory>
+#   define SHARED_PTR std::tr1::shared_ptr
 #else
 //#	include "shared_ptr.h"
 //#   define SHARED_PTR my_shared_ptr

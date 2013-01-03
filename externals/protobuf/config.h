@@ -2,11 +2,11 @@
 #define _OSMAND_PROTOBUF_CONFIG_
 
 // For WindowsPhone target, InitializeCriticalSection is not supported
-#if defined(_WIN32) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
+#if defined(_WIN32) && defined(WINAPI_FAMILY) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
 #   define InitializeCriticalSection(cs) InitializeCriticalSectionEx((cs), 0, CRITICAL_SECTION_NO_DEBUG_INFO)
 #endif
 
-#if defined(_WIN32) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
+#if defined(_WIN32)
     /* the namespace of hash_map/hash_set */
 	#define HASH_NAMESPACE std
 

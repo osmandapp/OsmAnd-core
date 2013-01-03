@@ -1,10 +1,10 @@
-#if defined(_WIN32) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
+#if defined(_WIN32)
 
-#ifndef _OSMAND_WP_UNISTD_H
-#define _OSMAND_WP_UNISTD_H
+#ifndef _OSMAND_WINDOWS_UNISTD_H
+#define _OSMAND_WINDOWS_UNISTD_H
 
 // Simply empty file
 
-#endif // _OSMAND_WP_UNISTD_H
+#endif // _OSMAND_WINDOWS_UNISTD_H
 
-#endif // defined(_WIN32) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
+#endif // defined(_WIN32)

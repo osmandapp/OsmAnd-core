@@ -8,12 +8,13 @@
 #if defined(_WIN32)
 #	include <windows.h>
 #	include <mmsystem.h>
+#define isnan _isnan
+#define isinf !_finite
 #elif defined(__APPLE__)
 #	include <mach/mach_time.h>|
 #else
 #	include <time.h>
 #endif
-
 
 TextDrawInfo::TextDrawInfo(std::string itext)
 	: text(itext)

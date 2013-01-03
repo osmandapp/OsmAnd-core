@@ -1,6 +1,5 @@
-diff -rupN upstream.original/src/ports/FontHostConfiguration_android.cpp upstream.patched/src/ports/FontHostConfiguration_android.cpp
---- upstream.original/src/ports/FontHostConfiguration_android.cpp	2012-12-17 18:18:46.199752700 +0200
-+++ upstream.patched/src/ports/FontHostConfiguration_android.cpp	2012-12-17 19:32:47.788749900 +0200
+--- upstream.original/src/ports/FontHostConfiguration_android.cpp	2013-01-03 18:17:28.039350000 +0200
++++ upstream.patched/src/ports/FontHostConfiguration_android.cpp	2013-01-03 18:17:33.781609900 +0200
 @@ -252,6 +252,89 @@ void getFontFamilies(SkTDArray<FontFamil
      for (int i = 0; i < fallbackFonts.count(); ++i) {
          *fontFamilies.append() = fallbackFonts[i];

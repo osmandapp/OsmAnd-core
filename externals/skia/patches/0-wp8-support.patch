@@ -7,7 +7,7 @@ diff -rupN upstream.original/src/core/SkAdvancedTypefaceMetrics.cpp upstream.pat
  
 +//OSMAND{
 +// On WindowsPhone targets, use FreeType library with own font
-+#if defined(_WIN32) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
++#if defined(_WIN32) && defined(WINAPI_FAMILY) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
 +#   undef SK_BUILD_FOR_WIN
 +#   define SK_BUILD_FOR_UNIX
 +#	define generic _generic_renamed_due_to_winrt_reserved_work
@@ -22,7 +22,7 @@ diff -rupN upstream.original/src/core/SkAdvancedTypefaceMetrics.cpp upstream.pat
  #endif
  
 +//OSMAND{
-+#if defined(_WIN32) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
++#if defined(_WIN32) && defined(WINAPI_FAMILY) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
 +#	undef generic
 +#endif
 +//}OSMAND
@@ -39,7 +39,7 @@ diff -rupN upstream.original/src/ports/SkFontHost_FreeType.cpp upstream.patched/
  #endif
 +
 +//OSMAND{
-+#if defined(_WIN32) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
++#if defined(_WIN32) && defined(WINAPI_FAMILY) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
 +#	define generic _generic_renamed_due_to_winrt_reserved_work
 +#   if defined(ERROR)
 +#       undef ERROR
@@ -57,7 +57,7 @@ diff -rupN upstream.original/src/ports/SkFontHost_FreeType.cpp upstream.patched/
  #endif
  
 +//OSMAND{
-+#if defined(_WIN32) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
++#if defined(_WIN32) && defined(WINAPI_FAMILY) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
 +#	undef generic
 +#endif
 +//}OSMAND
@@ -73,7 +73,7 @@ diff -rupN upstream.original/src/ports/SkFontHost_FreeType_common.cpp upstream.p
  #include "SkPath.h"
  
 +//OSMAND{
-+#if defined(_WIN32) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
++#if defined(_WIN32) && defined(WINAPI_FAMILY) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
 +#	define generic _generic_renamed_due_to_winrt_reserved_work
 +#   if defined(ERROR)
 +#       undef ERROR
@@ -88,7 +88,7 @@ diff -rupN upstream.original/src/ports/SkFontHost_FreeType_common.cpp upstream.p
  #include FT_SYNTHESIS_H
  
 +//OSMAND{
-+#if defined(_WIN32) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
++#if defined(_WIN32) && defined(WINAPI_FAMILY) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
 +#	undef generic
 +#endif
 +//}OSMAND
@@ -105,7 +105,7 @@ diff -rupN upstream.original/src/ports/SkFontHost_FreeType_common.h upstream.pat
  #include "SkScalerContext.h"
 +
 +//OSMAND{
-+#if defined(_WIN32) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
++#if defined(_WIN32) && defined(WINAPI_FAMILY) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
 +#	define generic _generic_renamed_due_to_winrt_reserved_work
 +#   if defined(ERROR)
 +#       undef ERROR
@@ -117,7 +117,7 @@ diff -rupN upstream.original/src/ports/SkFontHost_FreeType_common.h upstream.pat
  #include FT_FREETYPE_H
  
 +//OSMAND{
-+#if defined(_WIN32) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
++#if defined(_WIN32) && defined(WINAPI_FAMILY) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
 +#	undef generic
 +#endif
 +//}OSMAND
@@ -133,7 +133,7 @@ diff -rupN upstream.original/src/ports/SkThread_win.cpp upstream.patched/src/por
  #include "SkTLS.h"
  
 +//OSMAND{
-+#if defined(_WIN32) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
++#if defined(_WIN32) && defined(WINAPI_FAMILY) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
 +    // Since WindowsPhone8 does not support old Win32 Threads API, we'll use wrapper
 +#   include "../../../wp8-win32-threads/ThreadEmulation.h"
 +    using namespace ThreadEmulation;
@@ -152,7 +152,7 @@ diff -rupN upstream.original/src/utils/SkCondVar.cpp upstream.patched/src/utils/
  #include "SkCondVar.h"
  
 +//OSMAND{
-+#if defined(_WIN32) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
++#if defined(_WIN32) && defined(WINAPI_FAMILY) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
 +    // Since WindowsPhone8 does not support old Win32 Threads API, we'll use wrapper
 +#   include "../../../wp8-win32-threads/ThreadEmulation.h"
 +    using namespace ThreadEmulation;
@@ -163,78 +163,6 @@ diff -rupN upstream.original/src/utils/SkCondVar.cpp upstream.patched/src/utils/
  SkCondVar::SkCondVar() {
  #ifdef SK_USE_POSIX_THREADS
      pthread_mutex_init(&fMutex, NULL /* default mutex attr */);
-diff -rupN upstream.original/src/utils/SkCondVar.cpp.orig upstream.patched/src/utils/SkCondVar.cpp.orig
---- upstream.original/src/utils/SkCondVar.cpp.orig	1970-01-01 02:00:00.000000000 +0200
-+++ upstream.patched/src/utils/SkCondVar.cpp.orig	2012-12-02 20:16:44.613235600 +0200
-@@ -0,0 +1,68 @@
-+/*
-+ * Copyright 2012 Google Inc.
-+ *
-+ * Use of this source code is governed by a BSD-style license that can be
-+ * found in the LICENSE file.
-+ */
-+
-+#include "SkCondVar.h"
-+
-+SkCondVar::SkCondVar() {
-+#ifdef SK_USE_POSIX_THREADS
-+    pthread_mutex_init(&fMutex, NULL /* default mutex attr */);
-+    pthread_cond_init(&fCond, NULL /* default cond attr */);
-+#elif defined(SK_BUILD_FOR_WIN32)
-+    InitializeCriticalSection(&fCriticalSection);
-+    InitializeConditionVariable(&fCondition);
-+#endif
-+}
-+
-+SkCondVar::~SkCondVar() {
-+#ifdef SK_USE_POSIX_THREADS
-+    pthread_mutex_destroy(&fMutex);
-+    pthread_cond_destroy(&fCond);
-+#elif defined(SK_BUILD_FOR_WIN32)
-+    DeleteCriticalSection(&fCriticalSection);
-+    // No need to clean up fCondition.
-+#endif
-+}
-+
-+void SkCondVar::lock() {
-+#ifdef SK_USE_POSIX_THREADS
-+    pthread_mutex_lock(&fMutex);
-+#elif defined(SK_BUILD_FOR_WIN32)
-+    EnterCriticalSection(&fCriticalSection);
-+#endif
-+}
-+
-+void SkCondVar::unlock() {
-+#ifdef SK_USE_POSIX_THREADS
-+    pthread_mutex_unlock(&fMutex);
-+#elif defined(SK_BUILD_FOR_WIN32)
-+    LeaveCriticalSection(&fCriticalSection);
-+#endif
-+}
-+
-+void SkCondVar::wait() {
-+#ifdef SK_USE_POSIX_THREADS
-+    pthread_cond_wait(&fCond, &fMutex);
-+#elif defined(SK_BUILD_FOR_WIN32)
-+    SleepConditionVariableCS(&fCondition, &fCriticalSection, INFINITE);
-+#endif
-+}
-+
-+void SkCondVar::signal() {
-+#ifdef SK_USE_POSIX_THREADS
-+    pthread_cond_signal(&fCond);
-+#elif defined(SK_BUILD_FOR_WIN32)
-+    WakeConditionVariable(&fCondition);
-+#endif
-+}
-+
-+void SkCondVar::broadcast() {
-+#ifdef SK_USE_POSIX_THREADS
-+    pthread_cond_broadcast(&fCond);
-+#elif defined(SK_BUILD_FOR_WIN32)
-+    WakeAllConditionVariable(&fCondition);
-+#endif
-+}
 diff -rupN upstream.original/src/utils/SkOSFile.cpp upstream.patched/src/utils/SkOSFile.cpp
 --- upstream.original/src/utils/SkOSFile.cpp	2012-12-02 20:16:40.402565400 +0200
 +++ upstream.patched/src/utils/SkOSFile.cpp	2012-12-02 20:42:54.163294200 +0200
@@ -243,7 +171,7 @@ diff -rupN upstream.original/src/utils/SkOSFile.cpp upstream.patched/src/utils/S
  #ifdef SK_BUILD_FOR_WIN
  
 +//OSMAND{
-+#if defined(_WIN32) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
++#if defined(_WIN32) && defined(WINAPI_FAMILY) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
 +	// Since WindowsPhone8 misses a lot of non-*Ex() API calls, wrap them into *Ex()
 +#   include "../../../wp8-functions-replacements.h"
 +#endif
@@ -260,7 +188,7 @@ diff -rupN upstream.original/src/utils/SkThreadUtils_win.cpp upstream.patched/sr
  #include "SkThreadUtils_win.h"
  
 +//OSMAND{
-+#if defined(_WIN32) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
++#if defined(_WIN32) && defined(WINAPI_FAMILY) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
 +    // Since WindowsPhone8 does not support old Win32 Threads API, we'll use wrapper
 +#   include "../../../wp8-win32-threads/ThreadEmulation.h"
 +    using namespace ThreadEmulation;

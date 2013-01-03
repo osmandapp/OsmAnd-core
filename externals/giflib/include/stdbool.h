@@ -1,7 +1,7 @@
-#if defined(_WIN32) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
+#if defined(_WIN32)
 
-#ifndef _OSMAND_WP_STDBOOL_H_
-#define _OSMAND_WP_STDBOOL_H_
+#ifndef _OSMAND_WINDOWS_STDBOOL_H_
+#define _OSMAND_WINDOWS_STDBOOL_H_
 
 #ifndef __cplusplus
 
@@ -26,6 +26,6 @@
 
 #define __bool_true_false_are_defined 1
 
-#endif // _OSMAND_WP_STDBOOL_H_
+#endif // _OSMAND_WINDOWS_STDBOOL_H_
 
-#endif // defined(_WIN32) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
+#endif // defined(_WIN32)

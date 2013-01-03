@@ -535,7 +535,7 @@ void pullFromJavaRenderingContext(JNIEnv* env, jobject jrc, JNIRenderingContext*
 jobject convertRouteDataObjectToJava(JNIEnv* ienv, RouteDataObject* route, jobject reg) {
 	jintArray nameInts = ienv->NewIntArray(route->names.size());
 	jobjectArray nameStrings = ienv->NewObjectArray(route->names.size(), jclassString, NULL);
-	jint ar[route->names.size()];
+	jint* ar = new jint[route->names.size()];//NEVER DEALLOCATED
 	UNORDERED(map)<int, std::string >::iterator itNames = route->names.begin();
 	jsize sz = 0;
 	for (; itNames != route->names.end(); itNames++, sz++) {
@@ -677,7 +677,7 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeRo
 		jintArray stateConfig, jobjectArray keyConfig, jobjectArray valueConfig, jfloat initDirection,
 		jobjectArray regions, jobject progress) {
 	vector<ROUTE_TRIPLE> cfg;
-	int* data = ienv->GetIntArrayElements(stateConfig, NULL);
+	int* data = (int*)ienv->GetIntArrayElements(stateConfig, NULL);
 	for(int k = 0; k < ienv->GetArrayLength(stateConfig); k++) {
 		jstring kl = (jstring)ienv->GetObjectArrayElement(keyConfig, k);
 		jstring vl = (jstring)ienv->GetObjectArrayElement(valueConfig, k);
@@ -689,17 +689,17 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeRo
 		ienv->DeleteLocalRef(vl);
 		cfg.push_back(t);
 	}
-	ienv->ReleaseIntArrayElements(stateConfig, data, 0);
+	ienv->ReleaseIntArrayElements(stateConfig, (jint*)data, 0);
 
 	RoutingConfiguration config(cfg, initDirection);
 	RoutingContext c(config);
 	c.progress = SHARED_PTR<RouteCalculationProgress>(new RouteCalculationProgressWrapper(ienv, progress));
-	data = ienv->GetIntArrayElements(coordinates, NULL);
+	data = (int*)ienv->GetIntArrayElements(coordinates, NULL);
 	c.startX = data[0];
 	c.startY = data[1];
 	c.endX = data[2];
 	c.endY = data[3];
-	ienv->ReleaseIntArrayElements(coordinates, data, 0);
+	ienv->ReleaseIntArrayElements(coordinates, (jint*)data, 0);
 	vector<RouteSegmentResult> r = searchRouteInternal(&c, false);
 	UNORDERED(map)<int64_t, int> indexes;
 	for (int t = 0; t< ienv->GetArrayLength(regions); t++) {

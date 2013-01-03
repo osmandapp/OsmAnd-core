@@ -327,10 +327,6 @@ LOCAL_SRC_FILES += \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/FontHostConfiguration_android.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/utils/SkThreadUtils_pthread.cpp
 	
-LOCAL_C_INCLUDES += \
-	$(OSMAND_SKIA)/src/ports \
-	$(OSMAND_SKIA)/include/utils/android
-	
 ifeq ($(TARGET_ARCH),arm)
 	ifeq ($(LOCAL_ARM_NEON),true)
 		LOCAL_SRC_FILES += \

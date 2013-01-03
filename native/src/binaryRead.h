@@ -2,9 +2,9 @@
 #define _OSMAND_BINARY_READ_H
 
 #include <fcntl.h>
-#include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <io.h>
 #include <stdio.h>
 #include <fstream>
 #include <map>
@@ -14,6 +14,9 @@
 #include "multipolygons.h"
 #include "common.h"
 
+#if defined(WIN32)
+#define close _close
+#endif
 
 #include "mapObjects.h"
 #include "renderRules.h"
