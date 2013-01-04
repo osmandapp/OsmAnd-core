@@ -1,4 +1,4 @@
-package net.osmand;
+package net.osmand.plus;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -22,7 +22,8 @@ import java.util.Map;
 import java.util.Stack;
 import java.util.TimeZone;
 
-import net.osmand.plus.ClientContext;
+import net.osmand.Location;
+import net.osmand.LogUtil;
 import net.osmand.plus.R;
 
 import org.apache.commons.logging.Log;

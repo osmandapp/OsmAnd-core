@@ -3,8 +3,12 @@ package net.osmand.plus.api;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 import net.osmand.NativeLibrary;
+import net.osmand.ResultMatcher;
+import net.osmand.data.Amenity;
+import net.osmand.plus.PoiFilter;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlSerializer;
@@ -28,4 +32,12 @@ public interface InternalOsmAndAPI {
 	public boolean accessibilityEnabled();
 	
 	public boolean accessibilityExtensions();
+	
+	public List<Amenity> searchAmenities(PoiFilter filter,
+			double topLatitude, double leftLongitude, double bottomLatitude, double rightLongitude,
+			double lat, double lon, ResultMatcher<Amenity> matcher);
+	
+	public List<Amenity> searchAmenitiesByName(String searchQuery,
+			double topLatitude, double leftLongitude, double bottomLatitude, double rightLongitude, 
+			double lat, double lon, ResultMatcher<Amenity> matcher);
 }

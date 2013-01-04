@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.10 FATAL_ERROR)
+cmake_minimum_required(VERSION 2.8.7 FATAL_ERROR)
 
 set(OSMAND_ROOT "${CMAKE_CURRENT_LIST_DIR}/../..")
 set(OSMAND_PROJECTS_ROOT "${CMAKE_CURRENT_LIST_DIR}/projects")
