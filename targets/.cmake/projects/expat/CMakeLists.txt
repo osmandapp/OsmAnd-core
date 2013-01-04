@@ -17,5 +17,4 @@ add_library(expat STATIC
     "${UPSTREAM}/lib/xmltok.c"
     "${UPSTREAM}/lib/xmltok_impl.c"
     "${UPSTREAM}/lib/xmltok_ns.c"
-	"${UPSTREAM}/lib/*.h"
 )
