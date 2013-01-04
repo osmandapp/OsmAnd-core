@@ -1,7 +1,7 @@
 #ifndef _OSMAND_MAP_OBJECTS
 #define _OSMAND_MAP_OBJECTS
 
-#include "common.h"
+#include "Common.h"
 #include "common2.h"
 #include "mapObjects.h"
 

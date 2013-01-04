@@ -14,7 +14,7 @@
 #include <stdint.h>
 #include "mapObjects.h"
 #include "multipolygons.h"
-#include "common.h"
+#include "Common.h"
 #include "common2.h"
 
 #if defined(WIN32)

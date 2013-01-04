@@ -17,7 +17,7 @@
 #include <SkPaint.h>
 #include <SkPath.h>
 
-#include "common.h"
+#include "Common.h"
 #include "common2.h"
 #include "renderRules.h"
 #include "binaryRead.h"

@@ -1,7 +1,7 @@
 #ifndef _OSMAND_RENDERING_H
 #define _OSMAND_RENDERING_H
 
-#include "common.h"
+#include "Common.h"
 #include "common2.h"
 #include "renderRules.h"
 #include <vector>

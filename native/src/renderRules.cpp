@@ -3,7 +3,7 @@
 #include <vector>
 #include <stack>
 #include <expat.h>
-#include "common.h"
+#include "Common.h"
 #include "common2.h"
 #include "renderRules.h"
 #include "Logging.h"
