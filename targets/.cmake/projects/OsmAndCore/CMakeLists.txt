@@ -22,6 +22,11 @@ if(CMAKE_TARGET_OS STREQUAL "windows")
 	include_directories(AFTER SYSTEM
 		"$ENV{JAVA_HOME}/include/win32"
 	)
+	add_definitions(-DSK_BUILD_FOR_WIN32)
+elseif(CMAKE_TARGET_OS STREQUAL "darwin")
+	add_definitions(-DSK_BUILD_FOR_MAC)
+elseif(CMAKE_TARGET_OS STREQUAL "linux")
+	add_definitions(-DSK_BUILD_FOR_UNIX)
 endif()
 add_definitions(
 	-DGOOGLE_PROTOBUF_NO_RTTI

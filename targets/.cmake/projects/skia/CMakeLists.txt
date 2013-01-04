@@ -51,6 +51,7 @@ if(CMAKE_TARGET_OS STREQUAL "windows")
 		"${UPSTREAM}/src/ports/SkTime_win.cpp"
 		"${UPSTREAM}/src/ports/SkThread_win.cpp"
 	)
+	add_definitions(-DSK_BUILD_FOR_WIN32)
 elseif(CMAKE_TARGET_OS STREQUAL "darwin")
 	set(target_specific_sources "${target_specific_sources}"
 		"${UPSTREAM}/src/ports/SkDebug_stdio.cpp"
@@ -60,6 +61,7 @@ elseif(CMAKE_TARGET_OS STREQUAL "darwin")
 		"${UPSTREAM}/src/ports/SkFontHost_freetype_mac.cpp"
 		"${UPSTREAM}/src/ports/SkTime_Unix.cpp"
 	)
+	add_definitions(-DSK_BUILD_FOR_MAC)
 elseif(CMAKE_TARGET_OS STREQUAL "linux")
 	set(target_specific_sources "${target_specific_sources}"
 		"${UPSTREAM}/src/ports/SkDebug_stdio.cpp"
@@ -70,6 +72,7 @@ elseif(CMAKE_TARGET_OS STREQUAL "linux")
 		"${UPSTREAM}/src/ports/SkFontHost_linux.cpp"
 		"${UPSTREAM}/src/core/SkMMapStream.cpp"
 	)
+	add_definitions(-DSK_BUILD_FOR_UNIX)
 endif()
 if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fno-rtti -fno-exceptions")
