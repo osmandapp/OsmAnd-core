@@ -16,6 +16,8 @@ include_directories(AFTER SYSTEM
 	"${OSMAND_ROOT}/externals/libpng/upstream.patched"
 	"${OSMAND_ROOT}/externals/harfbuzz/upstream.patched/src"
 	"${OSMAND_ROOT}/externals/protobuf/upstream.patched/src"
+	"${OSMAND_ROOT}/native/include"
+	"${OSMAND_ROOT}/native/src"
 	"$ENV{JAVA_HOME}/include"
 )
 if(CMAKE_TARGET_OS STREQUAL "windows")
@@ -40,7 +42,7 @@ if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 endif()
 add_library(osmand SHARED
-    "${ROOT}/src/osmand_log.cpp"
+    "${ROOT}/src/ElapsedTimer.cpp"
 	"${ROOT}/src/common.cpp"
 	"${ROOT}/src/mapObjects.cpp"
 	"${ROOT}/src/multipolygons.cpp"
