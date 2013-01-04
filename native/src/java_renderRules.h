@@ -3,7 +3,7 @@
 
 #include <jni.h>
 #include "java_wrap.h"
-#include "common.h"
+#include "Common.h"
 #include "renderRules.h"
 
 
