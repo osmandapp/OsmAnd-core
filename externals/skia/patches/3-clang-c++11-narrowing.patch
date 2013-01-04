@@ -1,0 +1,15 @@
+--- upstream.original/src/core/SkCanvas.cpp	2013-01-04 18:25:00.000000000 +0200
++++ upstream.patched/src/core/SkCanvas.cpp	2013-01-04 18:47:39.000000000 +0200
+@@ -1708,10 +1708,10 @@ void SkCanvas::internalDrawBitmapNine(co
+     c.fBottom = SkPin32(center.fBottom, c.fTop, h);
+ 
+     const SkScalar srcX[4] = {
+-        0, SkIntToScalar(c.fLeft), SkIntToScalar(c.fRight), w
++        0, SkIntToScalar(c.fLeft), SkIntToScalar(c.fRight), SkIntToScalar(w)
+     };
+     const SkScalar srcY[4] = {
+-        0, SkIntToScalar(c.fTop), SkIntToScalar(c.fBottom), h
++        0, SkIntToScalar(c.fTop), SkIntToScalar(c.fBottom), SkIntToScalar(h)
+     };
+     SkScalar dstX[4] = {
+         dst.fLeft, dst.fLeft + SkIntToScalar(c.fLeft),
