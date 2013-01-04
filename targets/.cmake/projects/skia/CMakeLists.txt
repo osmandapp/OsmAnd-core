@@ -64,7 +64,7 @@ elseif(CMAKE_TARGET_OS STREQUAL "darwin")
 		"${UPSTREAM}/src/ports/SkFontHost_freetype_mac.cpp"
 		"${UPSTREAM}/src/ports/SkTime_Unix.cpp"
 	)
-	add_definitions(-DSK_BUILD_FOR_MAC)
+	add_definitions(-DSK_BUILD_FOR_MAC -DSK_USE_CORETEXT)
 elseif(CMAKE_TARGET_OS STREQUAL "linux")
 	set(target_specific_sources "${target_specific_sources}"
 		"${UPSTREAM}/src/ports/SkDebug_stdio.cpp"

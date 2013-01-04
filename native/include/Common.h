@@ -17,7 +17,7 @@
 #elif defined(__APPLE__)
 #   include <unordered_map>
 #   include <unordered_set>
-#	define UNORDERED_NAMESPACE std::tr1
+#	define UNORDERED_NAMESPACE std
 #	define UNORDERED_map unordered_map
 #	define UNORDERED_set unordered_set
 #elif defined(_WIN32) && defined(WINAPI_FAMILY) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
