@@ -1,8 +1,8 @@
 #ifndef _MULTIPOLYGONS_CPP
 #define _MULTIPOLYGONS_CPP
 
+#include "Logging.h"
 #include "multipolygons.h"
-#include "osmand_log.h"
 
 // returns true if coastlines were added!
 bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int rightX, int bottomY, int topY, int zoom,
@@ -95,7 +95,7 @@ bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int 
 		o->points.push_back(int_pair(leftX, topY));
 		o->id = dbId;
 		o->types.push_back(tag_value("natural", "coastline"));
-		osmand_log_print(LOG_ERROR,  "!!! Isolated islands !!!");
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error,  "!!! Isolated islands !!!");
 		res.push_back(o);
 
 	}
@@ -262,7 +262,7 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 		// However this situation could happen because of broken multipolygons (so it should data causes app error)
 		// that's why these exceptions could be replaced with return; statement.
 		if (!end || !st) {
-			osmand_log_print(LOG_ERROR, "Error processing multipolygon");
+			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Error processing multipolygon");
 			toProccess.push_back(*ir);
 		} else {
 			nonvisitedRings.insert(j);

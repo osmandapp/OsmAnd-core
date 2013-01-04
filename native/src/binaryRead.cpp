@@ -1,4 +1,4 @@
-
+#include "Logging.h"
 #include "binaryRead.h"
 
 #include <fcntl.h>
@@ -10,7 +10,6 @@
 #include "google/protobuf/wire_format_lite.cc"
 #include "proto/osmand_odb.pb.h"
 #include "proto/osmand_index.pb.h"
-#include "osmand_log.h"
 
 #if defined(WIN32)
 #undef min
@@ -494,11 +493,11 @@ bool initMapStructure(CodedInputStream* input, BinaryMapFile* file) {
 		}
 	}
 	if (file->version != versionConfirm) {
-		osmand_log_print(LOG_ERROR, "Corrupted file. It should be ended as it starts with version");
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Corrupted file. It should be ended as it starts with version");
 		return false;
 	}
 	if (file->version != MAP_VERSION) {
-		osmand_log_print(LOG_ERROR, "Version of the file is not supported.");
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Version of the file is not supported.");
 		return false;
 	}
 	return true;
@@ -700,7 +699,7 @@ MapDataObject* readMapDataObject(CodedInputStream* input, MapTreeBounds* tree, S
 		}
 	}
 //	if(req->cacheCoordinates.size() > 100 && types.size() > 0 /*&& types[0].first == "admin_level"*/) {
-//		osmand_log_print(LOG_INFO, "TODO Object is %llu  (%llu) ignored %s %s", (id + baseId) >> 1, baseId, types[0].first.c_str(), types[0].second.c_str());
+//		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "TODO Object is %llu  (%llu) ignored %s %s", (id + baseId) >> 1, baseId, types[0].first.c_str(), types[0].second.c_str());
 //		return NULL;
 //	}
 
@@ -1043,7 +1042,7 @@ void readRouteDataAsMapObjects(SearchQuery* q, BinaryMapFile* file, std::vector<
 		for (std::vector<RouteSubregion>::iterator subreg = subs.begin(); subreg != subs.end(); subreg++) {
 			if (subreg->right >= q->left && q->right >= subreg->left && subreg->bottom >= q->top
 					&& q->bottom >= subreg->top) {
-				osmand_log_print(LOG_INFO, "Search route map %s", (*routeIndex)->name.c_str());
+				OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Search route map %s", (*routeIndex)->name.c_str());
 				contains = true;
 			}
 		}
@@ -1077,7 +1076,7 @@ void readMapObjects(SearchQuery* q, BinaryMapFile* file) {
 			if (mapLevel->minZoom <= q->zoom && mapLevel->maxZoom >= q->zoom) {
 				if (mapLevel->right >= q->left && q->right >= mapLevel->left && mapLevel->bottom >= q->top
 						&& q->bottom >= mapLevel->top) {
-					// osmand_log_print(LOG_INFO, "Search map %s", mapIndex->name.c_str());
+					// OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Search map %s", mapIndex->name.c_str());
 					// lazy initializing rules
 					if (mapIndex->decodingRules.size() == 0) {
 						lseek(file->fd, 0, SEEK_SET);
@@ -1192,7 +1191,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 			q->publisher->result.clear();
 			readRouteDataAsMapObjects(q, file, tempResult, skipDuplicates, ids);
 		}
-		osmand_log_print(LOG_INFO, "Route objects %d", tempResult.size());
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Route objects %d", tempResult.size());
 	}
 
 	// sort results/ analyze coastlines and publish back to publisher
@@ -1255,7 +1254,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 		}
 		q->publisher->result.clear();
 		q->publisher->publish(tempResult);
-		osmand_log_print(LOG_INFO,
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,
 				"Search : tree - read( %d), accept( %d), objs - visit( %d), accept(%d), in result(%d) ",
 				q->numberOfReadSubtrees, q->numberOfAcceptedSubtrees, q->numberOfVisitedObjects, q->numberOfAcceptedObjects,
 				q->publisher->result.size());
@@ -1519,7 +1518,7 @@ bool readRouteTreeData(CodedInputStream* input, RouteSubregion* s, std::vector<R
 				vector<pair<uint32_t, uint32_t> >::iterator itnames = (*dobj)->namesIds.begin();
 				for(; itnames != (*dobj)->namesIds.end(); itnames++) {
 					if((*itnames).second >= stringTable.size()) {
-						osmand_log_print(LOG_ERROR, "ERROR VALUE string table %d", (*itnames).second );
+						OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "ERROR VALUE string table %d", (*itnames).second );
 					} else {
 						(*dobj)->names[(int) (*itnames).first] = stringTable[(*itnames).second];
 					}
@@ -1594,7 +1593,7 @@ bool initMapFilesFromCache(std::string inputName) {
 	int fileDescriptor = open(inputName.c_str(), O_RDONLY);
 #endif
 	if (fileDescriptor < 0) {
-		osmand_log_print(LOG_ERROR, "Cache file could not be open to read : %s", inputName.c_str());
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Cache file could not be open to read : %s", inputName.c_str());
 		return false;
 	}
 	FileInputStream input(fileDescriptor);
@@ -1602,7 +1601,7 @@ bool initMapFilesFromCache(std::string inputName) {
 	cis.SetTotalBytesLimit(INT_MAX, INT_MAX);
 	OsmAndStoredIndex* c = new OsmAndStoredIndex();
 	if(c->MergeFromCodedStream(&cis)){
-		osmand_log_print(LOG_INFO, "Native Cache file initialized %s", inputName.c_str());
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Native Cache file initialized %s", inputName.c_str());
 		cache = c;
 		for (int i = 0; i < cache->fileindex_size(); i++) {
 			FileIndex fi = cache->fileindex(i);
@@ -1637,7 +1636,7 @@ BinaryMapFile* initBinaryMapFile(std::string inputName) {
 	int routeDescriptor = open(inputName.c_str(), O_RDONLY);
 #endif
 	if (fileDescriptor < 0 || routeDescriptor < 0 || routeDescriptor == fileDescriptor) {
-		osmand_log_print(LOG_ERROR, "File could not be open to read from C : %s", inputName.c_str());
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "File could not be open to read from C : %s", inputName.c_str());
 		return NULL;
 	}
 	BinaryMapFile* mapFile = new BinaryMapFile();
@@ -1708,7 +1707,7 @@ BinaryMapFile* initBinaryMapFile(std::string inputName) {
 			mapFile->routingIndexes.push_back(new RoutingIndex(mi));
 			mapFile->indexes.push_back(mapFile->routingIndexes.back());
 		}
-		osmand_log_print(LOG_DEBUG, "Native file initialized from cache %s", inputName.c_str());
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "Native file initialized from cache %s", inputName.c_str());
 	} else {
 		FileInputStream input(fileDescriptor);
 		input.SetCloseOnDelete(false);
@@ -1716,7 +1715,7 @@ BinaryMapFile* initBinaryMapFile(std::string inputName) {
 		cis.SetTotalBytesLimit(INT_MAX, INT_MAX);
 
 		if (!initMapStructure(&cis, mapFile)) {
-			osmand_log_print(LOG_ERROR, "File not initialised : %s", inputName.c_str());
+			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "File not initialised : %s", inputName.c_str());
 			delete mapFile;
 			return NULL;
 		}

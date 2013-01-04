@@ -20,11 +20,13 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/src \
 	$(OSMAND_SKIA)/include/config \
 	$(OSMAND_SKIA)/include/effects \
 	$(OSMAND_SKIA)/include/utils/android \
-	$(OSMAND_SKIA)/src/core
+	$(OSMAND_SKIA)/src/core \
+	$(OSMAND_CORE)/include \
+	$(OSMAND_CORE)/src
 
 LOCAL_CPP_EXTENSION := .cc .cpp
 LOCAL_SRC_FILES := \
-	$(OSMAND_CORE_RELATIVE)/src/osmand_log.cpp \
+	src/Logging.cpp \
 	$(OSMAND_CORE_RELATIVE)/src/common.cpp \
 	$(OSMAND_CORE_RELATIVE)/src/mapObjects.cpp \
 	$(OSMAND_CORE_RELATIVE)/src/multipolygons.cpp \
@@ -37,7 +39,7 @@ LOCAL_SRC_FILES := \
 	
 ifdef OSMAND_PROFILE_NATIVE_OPERATIONS
 	LOCAL_CFLAGS += \
-		-DPROFILE_NATIVE_OPERATIONS
+		-DOSMAND_NATIVE_PROFILING
 endif
 
 # Name of the local module

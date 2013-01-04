@@ -3,9 +3,10 @@
 #include <vector>
 #include <stack>
 #include <expat.h>
-#include "osmand_log.h"
 #include "common.h"
+#include "common2.h"
 #include "renderRules.h"
+#include "Logging.h"
 
 
 /**
@@ -23,11 +24,11 @@ int parseColor(string colorString) {
 			// Set the alpha value
 			color |= 0x00000000ff000000;
 		} else if (colorString.size() != 9) {
-			osmand_log_print(LOG_ERROR, "Unknown color %s", colorString.c_str());
+			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Unknown color %s", colorString.c_str());
 		}
 		return (int) color;
 	}
-	osmand_log_print(LOG_ERROR, "Unknown color %s", colorString.c_str());
+	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Unknown color %s", colorString.c_str());
 	return -1;
 }
 
@@ -51,7 +52,7 @@ RenderingRule::RenderingRule(map<string, string>& attrs, RenderingRulesStorage* 
 	for (; it != attrs.end(); it++) {
 		RenderingRuleProperty* property = storage->PROPS.getProperty(it->first.c_str());
 		if (property == NULL) {
-			osmand_log_print(LOG_ERROR, "Property %s was not found in registry", it->first.c_str());
+			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Property %s was not found in registry", it->first.c_str());
 			return ;
 		}
 		properties.push_back(property);
@@ -117,12 +118,12 @@ RenderingRule* RenderingRulesStorage::getRule(int state, int itag, int ivalue) {
 void RenderingRulesStorage::registerGlobalRule(RenderingRule* rr, int state) {
 	int tag = rr->getIntPropertyValue(this->PROPS.R_TAG->attrName);
 	if (tag == -1) {
-		osmand_log_print(LOG_ERROR, "Attribute tag should be specified for root filter ");
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Attribute tag should be specified for root filter ");
 	}
 	int value = rr->getIntPropertyValue(this->PROPS.R_VALUE->attrName);
 	if (value == -1) {
 		// attrsMap.toString()
-		osmand_log_print(LOG_ERROR, "Attribute tag should be specified for root filter ");
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Attribute tag should be specified for root filter ");
 	}
 	int key = (tag << SHIFT_TAG_VAL) + value;
 	RenderingRule* toInsert = rr;
@@ -243,7 +244,7 @@ class RenderingRulesHandler {
 			} else if (t->st.size() > 0 && !t->st.top().isGroup()) {
 				t->st.top().singleRule->ifChildren.push_back(renderingRule);
 			} else {
-				osmand_log_print(LOG_ERROR, "Group filter without parent");
+				OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Group filter without parent");
 			}
 			t->st.push(GroupRules(renderingRule));
 		} else if ("group" == name) { //$NON-NLS-1$
@@ -314,11 +315,11 @@ class RenderingRulesHandler {
 				t->storage->dictionaryMap = t->dependsStorage->dictionaryMap;
 				t->storage->PROPS.merge(t->dependsStorage->PROPS);
 			} else if (depends.size() > 0) {
-				osmand_log_print(LOG_ERROR, "!Dependent rendering style was not resolved : %s", depends.c_str());
+				OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "!Dependent rendering style was not resolved : %s", depends.c_str());
 			}
 			//renderingName = attrsMap["name"];
 		} else {
-			osmand_log_print(LOG_WARN, "Unknown tag : %s", name.c_str());
+			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Unknown tag : %s", name.c_str());
 		}
 
 	}
@@ -384,7 +385,7 @@ void RenderingRulesStorage::parseRulesFromXmlInputStream(const char* filename, R
 	XML_SetElementHandler(parser, RenderingRulesHandler::startElementHandler, RenderingRulesHandler::endElementHandler);
 	FILE *file = fopen(filename, "r");
 	if (file == NULL) {
-		osmand_log_print(LOG_ERROR, "File can not be open %s", filename);
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "File can not be open %s", filename);
 		XML_ParserFree(parser);
 		delete handler;
 		return;

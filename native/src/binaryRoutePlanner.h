@@ -1,8 +1,10 @@
 #ifndef _OSMAND_BINARY_ROUTE_PLANNER_H
 #define _OSMAND_BINARY_ROUTE_PLANNER_H
 #include "common.h"
+#include "common2.h"
 #include "binaryRead.h"
 #include <algorithm>
+#include "Logging.h"
 
 typedef UNORDERED(map)<string, float> MAP_STR_FLOAT;
 typedef UNORDERED(map)<string, string> MAP_STR_STR;
@@ -404,8 +406,8 @@ struct RoutingContext {
 
 	int visitedSegments;
 	int loadedTiles;
-	ElapsedTimer timeToLoad;
-	ElapsedTimer timeToCalculate;
+	OsmAnd::ElapsedTimer timeToLoad;
+	OsmAnd::ElapsedTimer timeToCalculate;
 	int firstRoadDirection;
 	int64_t firstRoadId;
 	RoutingConfiguration config;
@@ -473,7 +475,7 @@ struct RoutingContext {
 		for(i = 0; i<list.size(); i++) {
 			list[i]->access /= 3;
 		}
-		osmand_log_print(LOG_INFO, "Run GC (before %f Mb after %f Mb) unload %d of %d tiles",
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Run GC (before %f Mb after %f Mb) unload %d of %d tiles",
 				occupiedBefore, getSize() / (1024.0*1024.0),
 				unloadedTiles, loaded);
 	}
@@ -510,7 +512,7 @@ struct RoutingContext {
 	}
 
 	void loadHeaders(uint32_t xloc, uint32_t yloc) {
-		timeToLoad.start();
+		timeToLoad.Start();
 		int z  = config.zoomToLoad;
 		int tz = 31 - z;
 		int64_t tileId = (xloc << z) + yloc;
@@ -531,7 +533,7 @@ struct RoutingContext {
 			indexedSubregions[tileId] = collection;
 		}
 		loadHeaderObjects(tileId);
-		timeToLoad.pause();
+		timeToLoad.Pause();
 	}
 
 	void loadTileData(int x31, int y31, int zoomAround, vector<SHARED_PTR<RouteDataObject> >& dataObjects ) {

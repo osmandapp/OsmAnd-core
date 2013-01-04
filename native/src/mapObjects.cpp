@@ -2,6 +2,7 @@
 #define _OSMAND_MAP_OBJECTS
 
 #include "common.h"
+#include "common2.h"
 #include "mapObjects.h"
 
 void deleteObjects(std::vector <MapDataObject* > & v)

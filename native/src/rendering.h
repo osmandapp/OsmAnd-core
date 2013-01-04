@@ -2,6 +2,7 @@
 #define _OSMAND_RENDERING_H
 
 #include "common.h"
+#include "common2.h"
 #include "renderRules.h"
 #include <vector>
 #include <SkCanvas.h>

@@ -3,6 +3,7 @@
 
 #include "jni.h"
 #include "binaryRead.h"
+#include "Logging.h"
 
 struct ResultJNIPublisher : ResultPublisher {
 	JNIEnv* env;
@@ -45,7 +46,7 @@ jobject newGlobalRef(JNIEnv* env, jobject o)
 
 void throwNewException(JNIEnv* env, const char* msg)
 {
-	osmand_log_print(LOG_ERROR, msg);
+	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, msg);
 	env->ThrowNew(env->FindClass("java/lang/Exception"), msg);
 }
 

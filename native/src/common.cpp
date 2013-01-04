@@ -1,9 +1,10 @@
 #include "common.h"
+#include "common2.h"
 
 #include <SkPath.h>
 #include <SkBitmap.h>
 #include <SkImageDecoder.h>
-#include "osmand_log.h"
+#include "Logging.h"
 
 #if defined(_WIN32)
 #	include <windows.h>
@@ -48,73 +49,6 @@ bool RenderingContext::interrupted()
 	return false;
 }
 
-ElapsedTimer::ElapsedTimer()
-	: elapsedTime(0)
-	, enableFlag(true)
-	, run(false)
-{
-#if defined(__APPLE__)
-	mach_timebase_info(&machTimeInfo);
-#endif
-}
-
-void ElapsedTimer::enable()
-{
-	enableFlag = true;
-}
-
-void ElapsedTimer::disable()
-{
-	pause();
-	enableFlag = false;
-}
-
-void ElapsedTimer::start()
-{
-	if (!enableFlag)
-		return;
-	if (!run)
-	{
-#if defined(_WIN32)
-		startInit = timeGetTime();
-#elif defined(__APPLE__)
-		startInit = mach_absolute_time();
-#else
-		clock_gettime(CLOCK_REALTIME, &startInit);
-#endif
-	}
-	run = true;
-}
-
-void ElapsedTimer::pause()
-{
-	if (!run)
-		return;
-#if defined(_WIN32)
-	endInit = timeGetTime();
-	elapsedTime += (endInit - startInit) * 1000;
-#elif defined(__APPLE__)
-	endInit = mach_absolute_time();
-	uint64_t duration = endInit - startInit;
-	duration *= machTimeInfo.numer;
-	duration /= machTimeInfo.denom;
-	elapsedTime += duration;
-#else
-	clock_gettime(CLOCK_REALTIME, &endInit);
-	int sec = endInit.tv_sec - startInit.tv_sec;
-	if (sec > 0)
-		elapsedTime += 1000000 * sec;
-	elapsedTime += (endInit.tv_nsec - startInit.tv_nsec) / 1000;
-#endif
-	run = false;
-}
-
-int ElapsedTimer::getElapsedTime()
-{
-	pause();
-	return elapsedTime / 1000;
-}
-
 SkBitmap* RenderingContext::getCachedBitmap(const std::string& bitmapResource) {
 	if (defaultIconsDir.size() > 0) {
 		string fl = string(defaultIconsDir + "h_" + bitmapResource + ".png");
@@ -125,7 +59,7 @@ SkBitmap* RenderingContext::getCachedBitmap(const std::string& bitmapResource) {
 		}
 		if (f != NULL) {
 			fclose(f);
-			osmand_log_print(LOG_INFO, "Open file %s", fl.c_str());
+			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Open file %s", fl.c_str());
 			SkBitmap* bmp = new SkBitmap();
 			if (!SkImageDecoder::DecodeFile(fl.c_str(), bmp)) {
 				return NULL;
@@ -149,10 +83,10 @@ SkBitmap* getCachedBitmap(RenderingContext* rc, const std::string& bitmapResourc
 	if (itPreviouslyCachedBitmap != cachedBitmaps.end())
 		return itPreviouslyCachedBitmap->second;
 	
-	rc->nativeOperations.pause();
+	rc->nativeOperations.Pause();
 	SkBitmap* iconBitmap = rc->getCachedBitmap(bitmapResource);
 	cachedBitmaps[bitmapResource] = iconBitmap;
-	rc->nativeOperations.start();
+	rc->nativeOperations.Start();
 
 	return iconBitmap;
 }

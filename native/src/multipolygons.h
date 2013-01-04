@@ -7,6 +7,7 @@
 
 #include "renderRules.h"
 #include "common.h"
+#include "common2.h"
 #include "mapObjects.h"
 
 /// !!! Fuly copied from MapRenderRepositories.java, should be carefully synchroinized

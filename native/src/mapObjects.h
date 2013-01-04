@@ -6,6 +6,7 @@
 #include <limits.h>
 
 #include "common.h"
+#include "common2.h"
 
 typedef pair<std::string, std::string> tag_value;
 typedef pair<int, int> int_pair;

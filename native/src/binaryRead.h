@@ -4,7 +4,9 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#if defined(WIN32)
 #include <io.h>
+#endif
 #include <stdio.h>
 #include <fstream>
 #include <map>
@@ -13,6 +15,7 @@
 #include "mapObjects.h"
 #include "multipolygons.h"
 #include "common.h"
+#include "common2.h"
 
 #if defined(WIN32)
 #define close _close

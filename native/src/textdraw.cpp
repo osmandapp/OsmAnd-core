@@ -10,6 +10,7 @@
 #include "SkPath.h"
 
 #include "common.h"
+#include "common2.h"
 #include "renderRules.h"
 //#include "utf8.cpp"
 #include "utf8/unchecked.h"
@@ -542,19 +543,19 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 						paintText.setColor(0xFFFFFFFF);
 						paintText.setStyle(SkPaint::kStroke_Style);
 						paintText.setStrokeWidth(2 + text->textShadow);
-						rc->nativeOperations.pause();
+						rc->nativeOperations.Pause();
 						cv->drawTextOnPathHV(text->text.c_str(), text->text.length(), *text->path, text->hOffset,
 								text->vOffset, paintText);
-						rc->nativeOperations.start();
+						rc->nativeOperations.Start();
 						// reset
 						paintText.setStyle(SkPaint::kFill_Style);
 						paintText.setStrokeWidth(2);
 						paintText.setColor(text->textColor);
 					}
-					rc->nativeOperations.pause();
+					rc->nativeOperations.Pause();
 					cv->drawTextOnPathHV(text->text.c_str(), text->text.length(), *text->path, text->hOffset,
 							text->vOffset, paintText);
-					rc->nativeOperations.start();
+					rc->nativeOperations.Start();
 				} else {
 					if (text->shieldRes.length() > 0) {
 						SkBitmap* ico = getCachedBitmap(rc, text->shieldRes);

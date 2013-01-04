@@ -1,6 +1,3 @@
-#include "osmand_log.h"
-
-
 #include <math.h>
 #include <stdio.h>
 #include <vector>
@@ -21,11 +18,13 @@
 #include <SkPath.h>
 
 #include "common.h"
+#include "common2.h"
 #include "renderRules.h"
 #include "binaryRead.h"
 #include "textdraw.cpp"
 #include "mapObjects.h"
 #include "rendering.h"
+#include "Logging.h"
 
 const int MAX_V = 75;
 
@@ -790,7 +789,7 @@ void sortObjectsByProperOrder(std::vector <MapDataObject* > mapDataObjects,
 void doRendering(std::vector <MapDataObject* > mapDataObjects, SkCanvas* canvas,
 		RenderingRuleSearchRequest* req,
 		RenderingContext* rc) {
-	rc->nativeOperations.start();
+	rc->nativeOperations.Start();
 	SkPaint* paint = new SkPaint;
 	paint->setAntiAlias(true);
 
@@ -814,13 +813,13 @@ void doRendering(std::vector <MapDataObject* > mapDataObjects, SkCanvas* canvas,
 
 	drawIconsOverCanvas(rc, canvas);
 
-	rc->textRendering.start();
+	rc->textRendering.Start();
 	drawTextOverCanvas(rc, canvas);
-	rc->textRendering.pause();
+	rc->textRendering.Pause();
 
 	delete paint;
-	rc->nativeOperations.pause();
-	osmand_log_print(LOG_INFO,  "Native ok (rendering %d, text %d ms) \n (%d points, %d points inside, %d of %d objects visible)\n",
-				rc->nativeOperations.getElapsedTime(),	rc->textRendering.getElapsedTime(),
+	rc->nativeOperations.Pause();
+	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,  "Native ok (rendering %d, text %d ms) \n (%d points, %d points inside, %d of %d objects visible)\n",
+				(int)rc->nativeOperations.GetElapsedMs(),	(int)rc->textRendering.GetElapsedMs(),
 				rc->pointCount, rc->pointInsideCount, rc->visible, rc->allObjects);
 }

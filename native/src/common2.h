@@ -3,26 +3,13 @@
 
 #include <string>
 #include <vector>
-#if defined(ANDROID)
-#	include <unordered_map>
-#	include <unordered_set>
-#elif defined(__APPLE__)
-#	include <tr1/unordered_map>
-#	include <tr1/unordered_set>
-#else
-#	include <unordered_map>
-#	include <unordered_set>
-#endif
-#include <stdint.h>
-
-#if defined(__APPLE__)
-#	include <mach/mach_time.h>|
-#endif
 
 #include <SkPath.h>
 #include <SkBitmap.h>
 
-#include "osmand_log.h"
+#include <ElapsedTimer.h>
+#include "SkBlurDrawLooper.h"
+#include "Internal.h"
 
 // M_PI is no longer part of math.h/cmath by standart, but some GCC's define them
 #define _USE_MATH_DEFINES
@@ -34,83 +21,14 @@
 	const double M_PI_2 = M_PI / 2.0;
 #endif
 
-// Wrapper for unordered classes
-#if defined(ANDROID)
-#	define UNORDERED_NAMESPACE std
-#	define UNORDERED_map unordered_map
-#	define UNORDERED_set unordered_set
-#elif defined(__APPLE__)
-#	define UNORDERED_NAMESPACE std::tr1
-#	define UNORDERED_map unordered_map
-#	define UNORDERED_set unordered_set
-#else
-#	define UNORDERED_NAMESPACE std
-#	define UNORDERED_map unordered_map
-#	define UNORDERED_set unordered_set
-//#	define UNORDERED_map map
-//#	define UNORDERED_set set
-#endif
-#define UNORDERED(cls) UNORDERED_NAMESPACE::UNORDERED_##cls
-
-#if defined(ANDROID)
-#   include <tr1/memory>
-#   define SHARED_PTR std::tr1::shared_ptr
-#elif defined(WIN32)
-#   include <memory>
-#   define SHARED_PTR std::tr1::shared_ptr
-#else
-//#	include "shared_ptr.h"
-//#   define SHARED_PTR my_shared_ptr
-#   include <tr1/memory>
-#   define SHARED_PTR std::tr1::shared_ptr
-#endif
-
-
 // Better don't do this
 using namespace std;
-
-#ifdef PROFILE_NATIVE_OPERATIONS
-	#define PROFILE_NATIVE_OPERATION(rc, op) rc->nativeOperations.pause(); op; rc->nativeOperations.start()
-#else
-	#define PROFILE_NATIVE_OPERATION(rc, op) op;
-#endif
 
 struct RenderingContext;
 
 inline double toRadians(double angdeg) {
 	return angdeg / 180 * M_PI;
 }
-
-class ElapsedTimer
-{
-private:
-	long elapsedTime;
-	bool enableFlag;
-	bool run;
-
-#if defined(_WIN32)
-	DWORD startInit;
-	DWORD endInit;
-#elif defined(__APPLE__)
-	mach_timebase_info_data_t machTimeInfo;
-	uint64_t startInit;
-	uint64_t endInit;
-#else
-	timespec startInit;
-	timespec endInit;
-#endif
-	
-public:
-	ElapsedTimer();
-
-	void enable();
-	void disable();
-
-	void start();
-	void pause();
-
-	int getElapsedTime();
-};
 
 struct TextDrawInfo {
 	TextDrawInfo(std::string);
@@ -178,8 +96,8 @@ public:
 	int visible;
 	int allObjects;
 	int lastRenderedKey;
-	ElapsedTimer textRendering;
-	ElapsedTimer nativeOperations;
+	OsmAnd::ElapsedTimer textRendering;
+	OsmAnd::ElapsedTimer nativeOperations;
 
 // because they used in 3rd party functions
 public :
