@@ -6,11 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import net.osmand.Version;
 import net.osmand.data.IndexConstants;
 import net.osmand.map.RegionCountry;
 import net.osmand.plus.ClientContext;
 import net.osmand.plus.R;
+import net.osmand.plus.Version;
 
 public class SrtmIndexItem extends IndexItem {
 	

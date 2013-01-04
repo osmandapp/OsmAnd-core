@@ -15,10 +15,10 @@ import java.util.List;
 import java.util.Map;
 
 import net.osmand.LogUtil;
-import net.osmand.Version;
 import net.osmand.data.IndexConstants;
 import net.osmand.plus.ClientContext;
 import net.osmand.plus.R;
+import net.osmand.plus.Version;
 
 import org.apache.commons.logging.Log;
 

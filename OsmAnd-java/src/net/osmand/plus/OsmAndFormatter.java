@@ -1,16 +1,11 @@
-package net.osmand;
+package net.osmand.plus;
 
 import java.text.MessageFormat;
 
 import net.osmand.data.Amenity;
 import net.osmand.data.AmenityType;
 import net.osmand.data.City.CityType;
-import net.osmand.plus.ApplicationMode;
-import net.osmand.plus.ClientContext;
-import net.osmand.plus.OsmandSettings;
 import net.osmand.plus.OsmandSettings.MetricsConstants;
-import net.osmand.plus.R;
-import net.osmand.plus.SpecialPhrases;
 
 public class OsmAndFormatter {
 	private final static float METERS_IN_KILOMETER = 1000f;
