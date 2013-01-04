@@ -5,10 +5,10 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-
 import net.osmand.LogUtil;
 import net.osmand.map.OsmandRegionInfo.OsmAndRegionInfo;
+
+import org.apache.commons.logging.Log;
 
 public class RegionRegistry {
 	public static final String fileName = "countries.reginfo";

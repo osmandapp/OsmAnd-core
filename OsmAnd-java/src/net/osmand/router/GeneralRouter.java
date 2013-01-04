@@ -6,9 +6,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import net.osmand.binary.RouteDataObject;
 import net.osmand.binary.BinaryMapRouteReaderAdapter.RouteRegion;
 import net.osmand.binary.BinaryMapRouteReaderAdapter.RouteTypeRule;
+import net.osmand.binary.RouteDataObject;
 import net.osmand.osm.MapUtils;
 import net.osmand.router.BinaryRoutePlanner.RouteSegment;
 

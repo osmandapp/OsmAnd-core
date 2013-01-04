@@ -7,8 +7,8 @@ import net.osmand.Algoritms;
 import net.osmand.osm.Entity;
 import net.osmand.osm.MapRenderingTypes;
 import net.osmand.osm.Node;
-import net.osmand.osm.Relation;
 import net.osmand.osm.OSMSettings.OSMTagKey;
+import net.osmand.osm.Relation;
 
 public class Amenity extends MapObject {
 

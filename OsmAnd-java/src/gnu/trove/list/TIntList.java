@@ -24,9 +24,9 @@ package gnu.trove.list;
 //////////////////////////////////////////////////
 
 
-import gnu.trove.function.*;
-import gnu.trove.procedure.*;
 import gnu.trove.TIntCollection;
+import gnu.trove.function.TIntFunction;
+import gnu.trove.procedure.TIntProcedure;
 
 import java.io.Serializable;
 import java.util.Random;

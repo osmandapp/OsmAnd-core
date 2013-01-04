@@ -6,8 +6,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-import org.apache.commons.logging.Log;
-
 import net.osmand.LogUtil;
 import net.osmand.binary.BinaryMapAddressReaderAdapter.AddressRegion;
 import net.osmand.binary.BinaryMapAddressReaderAdapter.CitiesBlock;
@@ -29,6 +27,8 @@ import net.osmand.binary.OsmandIndex.RoutingPart;
 import net.osmand.binary.OsmandIndex.RoutingSubregion;
 import net.osmand.binary.OsmandIndex.TransportPart;
 import net.osmand.osm.MapUtils;
+
+import org.apache.commons.logging.Log;
 
 public class CachedOsmandIndexes {
 	

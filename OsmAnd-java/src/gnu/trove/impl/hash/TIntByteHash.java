@@ -20,12 +20,12 @@
 
 package gnu.trove.impl.hash;
 
-import gnu.trove.procedure.*;
 import gnu.trove.impl.HashFunctions;
+import gnu.trove.procedure.TIntProcedure;
 
-import java.io.ObjectOutput;
-import java.io.ObjectInput;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 
 //////////////////////////////////////////////////

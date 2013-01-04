@@ -20,16 +20,17 @@
 
 package gnu.trove.set.hash;
 
-import gnu.trove.set.TIntSet;
-import gnu.trove.iterator.TIntIterator;
-import gnu.trove.impl.*;
-import gnu.trove.impl.hash.*;
 import gnu.trove.TIntCollection;
+import gnu.trove.impl.HashFunctions;
+import gnu.trove.impl.hash.THashPrimitiveIterator;
+import gnu.trove.impl.hash.TIntHash;
+import gnu.trove.iterator.TIntIterator;
+import gnu.trove.set.TIntSet;
 
+import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.io.Externalizable;
 import java.util.Arrays;
 import java.util.Collection;
 

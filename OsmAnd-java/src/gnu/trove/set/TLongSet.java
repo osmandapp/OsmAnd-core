@@ -25,13 +25,13 @@ package gnu.trove.set;
 // THIS IS A GENERATED CLASS. DO NOT HAND EDIT! //
 //////////////////////////////////////////////////
 
+import gnu.trove.TLongCollection;
 import gnu.trove.iterator.TLongIterator;
 import gnu.trove.procedure.TLongProcedure;
-import gnu.trove.TLongCollection;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Set;
-import java.io.Serializable;
 
 /**
  * An implementation of the <tt>Set</tt> interface that uses an

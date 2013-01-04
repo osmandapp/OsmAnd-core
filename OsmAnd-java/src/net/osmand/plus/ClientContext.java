@@ -1,24 +1,30 @@
 package net.osmand.plus;
 
-import java.io.File;
+import net.osmand.plus.api.ExternalServiceAPI;
+import net.osmand.plus.api.InternalOsmAndAPI;
+import net.osmand.plus.api.InternalToDoAPI;
+import net.osmand.plus.api.SettingsAPI;
+import net.osmand.plus.render.RendererRegistry;
 
 
 public interface ClientContext {
 	
+	public String getString(int resId, Object... args);
 	
-	public String getFullVersion();
+	public void showToastMessage(int msgId, Object... args);
 	
-	public boolean isWifiConnected();
+	public void showToastMessage(String msg);
+	
+	public RendererRegistry getRendererRegistry();
 
-	public String getVersionAsURLParam();
+	public OsmandSettings getSettings();
 	
-	public String getString(int resId);
+	public SettingsAPI getSettingsAPI();
 	
-	public File getAppDir();
+	public ExternalServiceAPI getExternalServiceAPI();
 	
-	public File getAppDir(String extend);
+	public InternalToDoAPI getTodoAPI();
 	
-	public void showToastMessage(int msgId);
-	
+	public InternalOsmAndAPI getInternalAPI();
 
 }

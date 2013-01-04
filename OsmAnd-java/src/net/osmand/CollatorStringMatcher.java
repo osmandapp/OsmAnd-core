@@ -3,8 +3,6 @@ package net.osmand;
 
 import java.text.Collator;
 
-import net.osmand.StringMatcher;
-
 /**
  * Abstract collator matcher that basically supports subclasses with some collator
  * matching.

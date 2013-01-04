@@ -28,8 +28,8 @@ package gnu.trove;
 import gnu.trove.iterator.TLongIterator;
 import gnu.trove.procedure.TLongProcedure;
 
-import java.util.Collection;
 import java.io.Serializable;
+import java.util.Collection;
 
 /**
  * An interface that mimics the <tt>Collection</tt> interface.

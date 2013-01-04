@@ -20,11 +20,11 @@
 
 package gnu.trove.map;
 
+import gnu.trove.function.TObjectFunction;
 import gnu.trove.iterator.TIntObjectIterator;
+import gnu.trove.procedure.TIntObjectProcedure;
 import gnu.trove.procedure.TIntProcedure;
 import gnu.trove.procedure.TObjectProcedure;
-import gnu.trove.procedure.TIntObjectProcedure;
-import gnu.trove.function.TObjectFunction;
 import gnu.trove.set.TIntSet;
 
 import java.util.Collection;

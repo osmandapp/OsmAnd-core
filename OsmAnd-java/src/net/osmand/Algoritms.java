@@ -16,8 +16,6 @@ import java.net.URLEncoder;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 
-import net.osmand.LogUtil;
-
 import org.apache.commons.logging.Log;
 
 /**

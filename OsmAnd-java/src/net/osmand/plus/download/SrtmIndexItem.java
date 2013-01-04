@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import net.osmand.Version;
 import net.osmand.data.IndexConstants;
 import net.osmand.map.RegionCountry;
 import net.osmand.plus.ClientContext;
@@ -66,7 +67,7 @@ public class SrtmIndexItem extends IndexItem {
 	@Override
 	public List<DownloadEntry> createDownloadEntry(ClientContext ctx, DownloadActivityType type, 
 			List<DownloadEntry> downloadEntries) {
-		File parent = ctx.getAppDir(IndexConstants.SRTM_INDEX_DIR);
+		File parent = ctx.getInternalAPI().getAppDir(IndexConstants.SRTM_INDEX_DIR);
 		parent.mkdirs();
 		List<DownloadEntry> toDownload = new ArrayList<DownloadEntry>();
 		if (parent == null || !parent.exists()) {
@@ -78,7 +79,7 @@ public class SrtmIndexItem extends IndexItem {
 				entry.baseName = fileToDownload;
 				String url = "http://" + IndexConstants.INDEX_DOWNLOAD_DOMAIN;
 				url += "/download?event=2&srtm=yes&";
-				url += ctx.getVersionAsURLParam() + "&";
+				url += Version.getVersionAsURLParam(ctx) + "&";
 				String fullName = fileToDownload + "_" + IndexConstants.BINARY_MAP_VERSION + IndexConstants.BINARY_MAP_INDEX_EXT_ZIP;
 				entry.urlToDownload = url +"file=" + fullName;
 				// url + "file=" + fileName;
