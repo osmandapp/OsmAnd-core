@@ -1,7 +1,7 @@
 #!/bin/bash
 
 OSMAND_TARGET_TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=targets/$OSMAND_TARGET.cmake"
-if [ ! -n "$ILSDK_TARGET" ]
+if [ ! -n "$OSMAND_TARGET" ]
 then
    OSMAND_TARGET="unknown"
    OSMAND_TARGET_TOOLCHAIN=""
