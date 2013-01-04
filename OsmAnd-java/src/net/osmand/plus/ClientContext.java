@@ -3,6 +3,7 @@ package net.osmand.plus;
 import net.osmand.plus.api.ExternalServiceAPI;
 import net.osmand.plus.api.InternalOsmAndAPI;
 import net.osmand.plus.api.InternalToDoAPI;
+import net.osmand.plus.api.SQLiteAPI;
 import net.osmand.plus.api.SettingsAPI;
 import net.osmand.plus.render.RendererRegistry;
 
@@ -26,5 +27,7 @@ public interface ClientContext {
 	public InternalToDoAPI getTodoAPI();
 	
 	public InternalOsmAndAPI getInternalAPI();
+	
+	public SQLiteAPI getSQLiteAPI();
 
 }
