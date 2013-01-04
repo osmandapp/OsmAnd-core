@@ -27,6 +27,7 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/src \
 LOCAL_CPP_EXTENSION := .cc .cpp
 LOCAL_SRC_FILES := \
 	src/Logging.cpp \
+	$(OSMAND_CORE_RELATIVE)/src/ElapsedTimer.cpp \
 	$(OSMAND_CORE_RELATIVE)/src/common.cpp \
 	$(OSMAND_CORE_RELATIVE)/src/mapObjects.cpp \
 	$(OSMAND_CORE_RELATIVE)/src/multipolygons.cpp \
