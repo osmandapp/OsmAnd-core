@@ -53,6 +53,9 @@ if(CMAKE_TARGET_OS STREQUAL "windows")
 	)
 	add_definitions(-DSK_BUILD_FOR_WIN32)
 elseif(CMAKE_TARGET_OS STREQUAL "darwin")
+	include_directories(AFTER SYSTEM
+		"${UPSTREAM}/include/utils/mac"
+	)
 	set(target_specific_sources "${target_specific_sources}"
 		"${UPSTREAM}/src/ports/SkDebug_stdio.cpp"
 		"${UPSTREAM}/src/ports/SkThread_pthread.cpp"
