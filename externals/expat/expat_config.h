@@ -39,7 +39,7 @@
 	/* Define to `unsigned' if <sys/types.h> does not define. */
 	#undef size_t
 
-#elif defined(__ANDROID__)
+#elif defined(ANDROID) || defined(__ANDROID__)
 
 	/* Force expat to be static */
 	#define XML_STATIC
