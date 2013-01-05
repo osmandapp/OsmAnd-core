@@ -1,6 +1,7 @@
 package net.osmand.plus.api;
 
 
+
 public interface SQLiteAPI {
 
 	public interface SQLiteConnection {
@@ -18,6 +19,13 @@ public interface SQLiteAPI {
 		void setVersion(int newVersion);
 		
 		int getVersion();
+
+		boolean isReadOnly();
+
+		boolean isDbLockedByOtherThreads();
+
+		boolean isClosed();
+
 	}
 	
 	public interface SQLiteCursor {
@@ -37,7 +45,11 @@ public interface SQLiteAPI {
 		
 		long getInt(int ind);
 		
+		byte[] getBlob(int ind);
+		
 		void close();
+
+		
 		
 	}
 	
@@ -53,7 +65,17 @@ public interface SQLiteAPI {
 
 		void close();
 
+		long simpleQueryForLong();
+
+		String simpleQueryForString();
+
+		void bindLong(int i, long val);
+		
+		void bindBlob(int i, byte[] val);
+
 	}
 	
 	public SQLiteConnection getOrCreateDatabase(String name, boolean readOnly);
+	
+	public SQLiteConnection openByAbsolutePath(String path, boolean readOnly);
 }
