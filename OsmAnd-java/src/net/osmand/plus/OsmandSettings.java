@@ -954,7 +954,7 @@ public class OsmandSettings {
 		edit.commit();
 		objectToShow = toShow;
 		if(historyDescription != null){
-			ctx.getTodoAPI().addNewItemToHistory(latitude, longitude, historyDescription);
+			SearchHistoryHelper.getInstance(ctx).addNewItemToHistory(latitude, longitude, historyDescription);
 		}
 	}
 	
@@ -1056,7 +1056,7 @@ public class OsmandSettings {
 			settingsAPI.edit(globalPreferences).putString(POINT_NAVIGATE_ROUTE, "true").commit();
 		}
 		if (historyDescription != null) {
-			ctx.getTodoAPI().addNewItemToHistory(latitude, longitude, historyDescription);
+			SearchHistoryHelper.getInstance(ctx).addNewItemToHistory(latitude, longitude, historyDescription);
 		}
 		return saveIntermediatePoints(ps,ds);
 	}
@@ -1109,7 +1109,7 @@ public class OsmandSettings {
 		}
 		if(add){
 			if(historyDescription != null){
-				ctx.getTodoAPI().addNewItemToHistory(latitude, longitude, historyDescription);
+				SearchHistoryHelper.getInstance(ctx).addNewItemToHistory(latitude, longitude, historyDescription);
 			}
 		}
 		return add;

@@ -20,6 +20,10 @@ public interface InternalOsmAndAPI {
 	public XmlPullParser newPullParser();
 	
 	public String getPackageName();
+	
+	public String getVersionName();
+	
+	public int getVersionCode();
 
 	public InputStream openAsset(String name) throws IOException;
 	
@@ -40,4 +44,10 @@ public interface InternalOsmAndAPI {
 	public List<Amenity> searchAmenitiesByName(String searchQuery,
 			double topLatitude, double leftLongitude, double bottomLatitude, double rightLongitude, 
 			double lat, double lon, ResultMatcher<Amenity> matcher);
+
+	public String getDeviceName();
+
+	public String getBrandName();
+
+	public String getModelName();
 }

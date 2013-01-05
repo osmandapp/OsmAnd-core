@@ -10,8 +10,6 @@ import net.osmand.plus.OsmandSettings.DayNightMode;
 
 public interface InternalToDoAPI {
 
-	public void addNewItemToHistory(double latitude, double longitude, String historyDescription);
-
 	public void forceMapRendering();
 
 	public BinaryMapIndexReader[] getRoutingMapFiles();

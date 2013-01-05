@@ -23,14 +23,20 @@ public interface SQLiteAPI {
 	public interface SQLiteCursor {
 
 		boolean moveToFirst();
+		
+		boolean moveToNext();
 
 		/**
 		 * Takes parameter value (zero based)
 		 */
 		String getString(int ind);
 
-		boolean moveToNext();
-
+		double getDouble(int ind);
+		
+		long getLong(int ind);
+		
+		long getInt(int ind);
+		
 		void close();
 		
 	}
