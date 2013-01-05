@@ -8,6 +8,9 @@ import net.osmand.plus.api.SettingsAPI;
 import net.osmand.plus.render.RendererRegistry;
 
 
+/*
+ * In Android version ClientContext should be cast to Android.Context for backward compatibility
+ */
 public interface ClientContext {
 	
 	public String getString(int resId, Object... args);
