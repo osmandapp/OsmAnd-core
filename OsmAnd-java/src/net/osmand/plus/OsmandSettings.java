@@ -1414,6 +1414,7 @@ public class OsmandSettings {
 	
 	public static final int AV_DEFAULT_ACTION_AUDIO = 0;
 	public static final int AV_DEFAULT_ACTION_VIDEO = 1;
+	public static final int AV_DEFAULT_ACTION_TAKEPICTURE = 2;
 	public final CommonPreference<Integer> AV_DEFAULT_ACTION = new IntPreference("av_default_action", AV_DEFAULT_ACTION_AUDIO).makeGlobal();
 	
 
