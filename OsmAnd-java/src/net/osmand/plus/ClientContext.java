@@ -32,5 +32,8 @@ public interface ClientContext {
 	public InternalOsmAndAPI getInternalAPI();
 	
 	public SQLiteAPI getSQLiteAPI();
+	
+	public void runInUIThread(Runnable run);
 
+	public void runInUIThread(Runnable run, long delay);
 }
