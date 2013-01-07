@@ -12,6 +12,7 @@
 #include <SkShader.h>
 #include <SkBitmapProcShader.h>
 #include <SkPathEffect.h>
+#include <SkPathMeasure.h>
 #include <SkBlurDrawLooper.h>
 #include <SkDashPathEffect.h>
 #include <SkPaint.h>
@@ -355,7 +356,25 @@ void drawOneWayPaints(RenderingContext* rc, SkCanvas* cv, SkPath* p, int oneway)
 	}
 }
 
+void drawPathIcons(RenderingContext *rc, SkPath *path, SkBitmap *icon_bitmap, int icon_distance, int icon_offset) {
+	if (!path || !icon_bitmap) {
+		return;
+	}
+	SkPathMeasure measure(*path, false);
+	int max_length = measure.getLength();
+	for(int distance = icon_offset; distance < max_length; distance += icon_distance) {
+		SkPoint position, tangent;
+		if (!measure.getPosTan(distance, &position, &tangent)) {
+			continue;
+		}
 
+		IconDrawInfo ico;
+		ico.x = position.x();
+		ico.y = position.y();
+		ico.bmp = icon_bitmap;
+		rc->iconsToDraw.push_back(ico);
+	}
+}
 
 void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas* cv, SkPaint* paint,
 	RenderingContext* rc, tag_value pair, int layer, int drawOnlyShadow) {
@@ -388,6 +407,11 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 			oneway = -1;
 		}
 	}
+
+	int icon_distance = req->getIntPropertyValue(req->props()->R_PATH_ICON_DISTANCE);
+	int icon_offset = req->getIntPropertyValue(req->props()->R_PATH_ICON_OFFSET);
+	std::string icon_name = req->getStringPropertyValue(req-> props()-> R_PATH_ICON);
+	SkBitmap* icon_bitmap = getCachedBitmap(rc, icon_name);
 
 	rc->visible++;
 	SkPath path;
@@ -457,6 +481,7 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 			if (!drawOnlyShadow) {
 				renderText(mObj, req, rc, pair.first, pair.second, middlePoint.fX, middlePoint.fY, &path);
 			}
+			drawPathIcons(rc, &path, icon_bitmap, icon_distance, icon_offset);
 		}
 	}
 }

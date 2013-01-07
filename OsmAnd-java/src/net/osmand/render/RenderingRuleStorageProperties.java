@@ -36,6 +36,9 @@ public class RenderingRuleStorageProperties {
 	public static final String STROKE_WIDTH = "strokeWidth";
 	public static final String STROKE_WIDTH_0 = "strokeWidth_0";
 	public static final String STROKE_WIDTH__1 = "strokeWidth__1";
+	public static final String PATH_ICON = "pathIcon";
+	public static final String PATH_ICON_DISTANCE = "pathIconDistance";
+	public static final String PATH_ICON_OFFSET = "pathIconOffset";
 	public static final String COLOR_3 = "color_3";
 	public static final String COLOR = "color";
 	public static final String COLOR_2 = "color_2";
@@ -92,6 +95,9 @@ public class RenderingRuleStorageProperties {
 	public RenderingRuleProperty R_STROKE_WIDTH;
 	public RenderingRuleProperty R_STROKE_WIDTH_0;
 	public RenderingRuleProperty R_STROKE_WIDTH__1;
+	public RenderingRuleProperty R_PATH_ICON;
+	public RenderingRuleProperty R_PATH_ICON_DISTANCE;
+	public RenderingRuleProperty R_PATH_ICON_OFFSET;
 	public RenderingRuleProperty R_COLOR_3;
 	public RenderingRuleProperty R_COLOR;
 	public RenderingRuleProperty R_COLOR_2;
@@ -195,6 +201,10 @@ public class RenderingRuleStorageProperties {
 		R_STROKE_WIDTH_3 = registerRuleInternal(RenderingRuleProperty.createOutputFloatProperty(STROKE_WIDTH_3));
 		R_STROKE_WIDTH_0 = registerRuleInternal(RenderingRuleProperty.createOutputFloatProperty(STROKE_WIDTH_0));
 		R_STROKE_WIDTH__1 = registerRuleInternal(RenderingRuleProperty.createOutputFloatProperty(STROKE_WIDTH__1));
+
+		R_PATH_ICON = registerRuleInternal(RenderingRuleProperty.createOutputStringProperty(PATH_ICON));
+		R_PATH_ICON_DISTANCE = registerRuleInternal(RenderingRuleProperty.createOutputIntProperty(PATH_ICON_DISTANCE));
+		R_PATH_ICON_OFFSET = registerRuleInternal(RenderingRuleProperty.createOutputIntProperty(PATH_ICON_OFFSET));
 
 		R_PATH_EFFECT = registerRuleInternal(RenderingRuleProperty.createOutputStringProperty(PATH_EFFECT));
 		R_PATH_EFFECT_2 = registerRuleInternal(RenderingRuleProperty.createOutputStringProperty(PATH_EFFECT_2));
