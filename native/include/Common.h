@@ -39,6 +39,8 @@
 #   define UNIQUE_PTR std::unique_ptr
 #endif
 
+#include <string>
+
 namespace OsmAnd
 {
     typedef UNORDERED(map)<std::string, float> StringToFloatMap;
