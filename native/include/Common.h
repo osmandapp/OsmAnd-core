@@ -33,7 +33,7 @@
 #if defined(ANDROID) || defined(__ANDROID__)
 #   include <memory>
 #   define SHARED_PTR std::shared_ptr
-#if defined(__linux__)
+#elif defined(__linux__)
 #   include <memory>
 #   define SHARED_PTR std::shared_ptr
 #elif defined(_WIN32) && defined(WINAPI_FAMILY) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
