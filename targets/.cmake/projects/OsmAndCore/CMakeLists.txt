@@ -53,19 +53,13 @@ add_library(osmand SHARED
 	"${ROOT}/src/proto/osmand_index.pb.cc"
 	"${ROOT}/src/java_wrap.cpp"
 )
-target_link_libraries(osmand
+#target_link_libraries(osmand LINK_PRIVATE	protobuf	z	png	gif	jpeg	expat	freetype2	harfbuzz	skia)
+target_link_libraries(osmand LINK_PRIVATE
 	protobuf
-	z
-	png
-	gif
-	jpeg
-	expat
-	freetype2
-	harfbuzz
 	skia
 )
 if(CMAKE_TARGET_OS STREQUAL "windows")
-	target_link_libraries(osmand
+	target_link_libraries(osmand LINK_PRIVATE
 		Winmm
 		Usp10
 	)

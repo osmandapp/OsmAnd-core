@@ -71,7 +71,7 @@ elseif(CMAKE_TARGET_OS STREQUAL "linux")
 		"${UPSTREAM}/src/ports/SkFontHost_sandbox_none.cpp"
 		"${UPSTREAM}/src/ports/SkThread_pthread.cpp"
 		"${UPSTREAM}/src/ports/SkTime_Unix.cpp"
-		"${UPSTREAM}/src/ports/SkFontHost_FreeType.cpp"
+		"${UPSTREAM}/src/ports/SkFontHost_FreeType_common.cpp"
 		"${UPSTREAM}/src/ports/SkFontHost_linux.cpp"
 		"${UPSTREAM}/src/core/SkMMapStream.cpp"
 	)
@@ -80,6 +80,7 @@ endif()
 if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fno-rtti -fno-exceptions")
 endif()
+
 
 add_library(skia STATIC
     "${UPSTREAM}/src/core/Sk64.cpp"
@@ -299,3 +300,20 @@ add_library(skia STATIC
 	"${UPSTREAM}/src/pipe/SkGPipeWrite.cpp"
 	${target_specific_sources}
 )
+
+target_link_libraries(skia LINK_PRIVATE
+	png
+	gif
+	jpeg
+	expat
+	freetype2
+	harfbuzz
+)
+	
+if((CMAKE_TARGET_OS STREQUAL "linux") OR (CMAKE_TARGET_OS STREQUAL "darwin"))
+ target_link_libraries(skia LINK_PRIVATE
+  pthread
+ )
+endif()
+	
+	
