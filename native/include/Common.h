@@ -30,7 +30,10 @@
 #define UNORDERED(cls) UNORDERED_NAMESPACE::UNORDERED_##cls
 
 // Smart pointers
-#if defined(ANDROID)
+#if defined(ANDROID) || defined(__ANDROID__)
+#   include <memory>
+#   define SHARED_PTR std::shared_ptr
+#if defined(__linux__)
 #   include <memory>
 #   define SHARED_PTR std::shared_ptr
 #elif defined(_WIN32) && defined(WINAPI_FAMILY) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
