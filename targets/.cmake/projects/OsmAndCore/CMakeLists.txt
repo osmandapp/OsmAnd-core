@@ -41,6 +41,12 @@ if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 endif()
+set(pd_sources "")
+if(CMAKE_TARGET_OS STREQUAL "linux")
+    set(pd_sources
+	    "${OSMAND_ROOT}/../targets/linux/OsmAndCore/src/Logging.cpp"
+	)
+endif()
 add_library(osmand SHARED
     "${ROOT}/src/ElapsedTimer.cpp"
 	"${ROOT}/src/common.cpp"
@@ -52,6 +58,7 @@ add_library(osmand SHARED
 	"${ROOT}/src/binaryRoutePlanner.cpp"
 	"${ROOT}/src/proto/osmand_index.pb.cc"
 	"${ROOT}/src/java_wrap.cpp"
+	{pd_sources}
 )
 #target_link_libraries(osmand LINK_PRIVATE	protobuf	z	png	gif	jpeg	expat	freetype2	harfbuzz	skia)
 target_link_libraries(osmand LINK_PRIVATE
