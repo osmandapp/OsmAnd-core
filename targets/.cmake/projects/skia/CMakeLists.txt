@@ -72,6 +72,7 @@ elseif(CMAKE_TARGET_OS STREQUAL "linux")
 		"${UPSTREAM}/src/ports/SkThread_pthread.cpp"
 		"${UPSTREAM}/src/ports/SkTime_Unix.cpp"
 		"${UPSTREAM}/src/ports/SkFontHost_FreeType_common.cpp"
+		"${UPSTREAM}/src/ports/SkFontHost_FreeType.cpp"
 		"${UPSTREAM}/src/ports/SkFontHost_linux.cpp"
 		"${UPSTREAM}/src/core/SkMMapStream.cpp"
 	)
