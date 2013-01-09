@@ -142,6 +142,7 @@ public class SearchHistoryHelper {
 					conn = context.getSQLiteAPI().getOrCreateDatabase(DB_NAME, readonly);
 				}
 				if (conn.getVersion() == 0) {
+					conn.setVersion(DB_VERSION);
 					onCreate(conn);
 				} else {
 					onUpgrade(conn, conn.getVersion(), DB_VERSION);
