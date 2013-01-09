@@ -28,10 +28,6 @@ public interface InternalOsmAndAPI {
 
 	public InputStream openAsset(String name) throws IOException;
 	
-	public File getAppDir();
-	
-	public File getAppDir(String extend);
-	
 	public NativeLibrary getNativeLibrary();
 
 	public boolean accessibilityEnabled();

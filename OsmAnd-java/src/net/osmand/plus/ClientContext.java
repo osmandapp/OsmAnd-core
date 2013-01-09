@@ -1,5 +1,7 @@
 package net.osmand.plus;
 
+import java.io.File;
+
 import net.osmand.plus.api.ExternalServiceAPI;
 import net.osmand.plus.api.InternalOsmAndAPI;
 import net.osmand.plus.api.InternalToDoAPI;
@@ -14,6 +16,8 @@ import net.osmand.plus.render.RendererRegistry;
 public interface ClientContext {
 	
 	public String getString(int resId, Object... args);
+	
+	public File getAppPath(String extend);
 	
 	public void showToastMessage(int msgId, Object... args);
 	

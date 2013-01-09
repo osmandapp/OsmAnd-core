@@ -88,7 +88,7 @@ public class FavouritesDbHelper {
 	}
 	
 	public String exportFavorites(String fileName) {
-		File f = new File(context.getInternalAPI().getAppDir(), fileName);
+		File f = new File(context.getAppPath(null), fileName);
 		GPXFile gpx = new GPXFile();
 		for (FavouritePoint p : getFavouritePoints()) {
 			if (p.isStored()) {

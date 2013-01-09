@@ -126,26 +126,26 @@ public class IndexItem implements Comparable<IndexItem> {
 		boolean unzipDir = false;
 		boolean preventMediaIndexing = false;
 		if (fileName.endsWith(IndexConstants.BINARY_MAP_INDEX_EXT)) {
-			parent = ctx.getInternalAPI().getAppDir();
+			parent = ctx.getAppPath(IndexConstants.MAPS_PATH);
 			toSavePostfix = BINARY_MAP_INDEX_EXT;
 			toCheckPostfix = BINARY_MAP_INDEX_EXT;
 		} else if (fileName.endsWith(IndexConstants.BINARY_MAP_INDEX_EXT_ZIP)) {
-			parent = ctx.getInternalAPI().getAppDir();
+			parent = ctx.getAppPath(IndexConstants.MAPS_PATH);
 			toSavePostfix = BINARY_MAP_INDEX_EXT_ZIP;
 			toCheckPostfix = BINARY_MAP_INDEX_EXT;
 		} else if (fileName.endsWith(IndexConstants.EXTRA_ZIP_EXT)) {
-			parent = ctx.getInternalAPI().getAppDir();
+			parent = ctx.getAppPath("");
 			// unzipDir = true;
 			toSavePostfix = IndexConstants.EXTRA_ZIP_EXT;
 			toCheckPostfix = IndexConstants.EXTRA_EXT;
 		} else if (fileName.endsWith(IndexConstants.VOICE_INDEX_EXT_ZIP)) {
-			parent = ctx.getInternalAPI().getAppDir(IndexConstants.VOICE_INDEX_DIR);
+			parent = ctx.getAppPath(IndexConstants.VOICE_INDEX_DIR);
 			toSavePostfix = VOICE_INDEX_EXT_ZIP;
 			toCheckPostfix = ""; //$NON-NLS-1$
 			unzipDir = true;
 			preventMediaIndexing = true;
 		} else if (fileName.endsWith(IndexConstants.TTSVOICE_INDEX_EXT_ZIP)) {
-			parent = ctx.getInternalAPI().getAppDir(IndexConstants.VOICE_INDEX_DIR);
+			parent = ctx.getAppPath(IndexConstants.VOICE_INDEX_DIR);
 			toSavePostfix = TTSVOICE_INDEX_EXT_ZIP;
 			toCheckPostfix = ""; //$NON-NLS-1$
 			unzipDir = true;
@@ -198,7 +198,7 @@ public class IndexItem implements Comparable<IndexItem> {
 				entry.parts = Integer.parseInt(parts);
 			}
 			entry.fileToUnzip = new File(parent, entry.baseName + toCheckPostfix);
-			File backup = new File(ctx.getInternalAPI().getAppDir(IndexConstants.BACKUP_INDEX_DIR), entry.fileToUnzip.getName());
+			File backup = new File(ctx.getAppPath(IndexConstants.BACKUP_INDEX_DIR), entry.fileToUnzip.getName());
 			if (backup.exists()) {
 				entry.existingBackupFile = backup;
 			}

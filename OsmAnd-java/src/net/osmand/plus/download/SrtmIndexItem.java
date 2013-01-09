@@ -67,7 +67,7 @@ public class SrtmIndexItem extends IndexItem {
 	@Override
 	public List<DownloadEntry> createDownloadEntry(ClientContext ctx, DownloadActivityType type, 
 			List<DownloadEntry> downloadEntries) {
-		File parent = ctx.getInternalAPI().getAppDir(IndexConstants.SRTM_INDEX_DIR);
+		File parent = ctx.getAppPath(IndexConstants.SRTM_INDEX_DIR);
 		parent.mkdirs();
 		List<DownloadEntry> toDownload = new ArrayList<DownloadEntry>();
 		if (parent == null || !parent.exists()) {

@@ -83,7 +83,7 @@ public abstract class AbstractPrologCommandPlayer implements CommandPlayer {
 		prologSystem.clearTheory();
 		voiceDir = null;
 		if (voiceProvider != null) {
-			File parent = ctx.getInternalAPI().getAppDir(IndexConstants.VOICE_INDEX_DIR);
+			File parent = ctx.getAppPath(IndexConstants.VOICE_INDEX_DIR);
 			voiceDir = new File(parent, voiceProvider);
 			if (!voiceDir.exists()) {
 				voiceDir = null;

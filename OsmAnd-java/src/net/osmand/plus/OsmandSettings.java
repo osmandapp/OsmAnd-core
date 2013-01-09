@@ -89,6 +89,10 @@ public class OsmandSettings {
 		profilePreferences = getProfilePreferences(currentMode);
 	}
 	
+	public ClientContext getContext() {
+		return ctx;
+	}
+	
 	public static String getSharedPreferencesName(ApplicationMode mode){
 		if(mode == null){
 			return SHARED_PREFERENCES_NAME;
@@ -789,7 +793,7 @@ public class OsmandSettings {
 			return null;
 		}
 		List<TileSourceTemplate> knownTemplates = TileSourceManager.getKnownSourceTemplates();
-		File tPath = extendOsmandPath(IndexConstants.TILES_INDEX_DIR);
+		File tPath = ctx.getAppPath(IndexConstants.TILES_INDEX_DIR);
 		File dir = new File(tPath, tileName);
 		if (!dir.exists()) {
 			TileSourceTemplate ret = checkAmongAvailableTileSources(dir, knownTemplates);
@@ -828,7 +832,7 @@ public class OsmandSettings {
 	}
 	
 	public boolean installTileSource(TileSourceTemplate toInstall){
-		File tPath = extendOsmandPath(IndexConstants.TILES_INDEX_DIR);
+		File tPath = ctx.getAppPath(IndexConstants.TILES_INDEX_DIR);
 		File dir = new File(tPath, toInstall.getName());
 		dir.mkdirs();
 		if(dir.exists() && dir.isDirectory()){
@@ -843,7 +847,7 @@ public class OsmandSettings {
 	
 	public Map<String, String> getTileSourceEntries(){
 		Map<String, String> map = new LinkedHashMap<String, String>();
-		File dir = extendOsmandPath(IndexConstants.TILES_INDEX_DIR);
+		File dir = ctx.getAppPath(IndexConstants.TILES_INDEX_DIR);
 		if (dir != null && dir.canRead()) {
 			File[] files = dir.listFiles();
 			Arrays.sort(files, new Comparator<File>(){
@@ -888,10 +892,6 @@ public class OsmandSettings {
 		return settingsAPI.edit(globalPreferences).putString(EXTERNAL_STORAGE_DIR, externalStorageDir).commit();
 	}
 	
-	public File extendOsmandPath(String path) {
-		return new File(getExternalStorageDirectory(), path);
-	}
-
 	// This value is a key for saving last known location shown on the map
 	public static final String LAST_KNOWN_MAP_LAT = "last_known_map_lat"; //$NON-NLS-1$
 	public static final String LAST_KNOWN_MAP_LON = "last_known_map_lon"; //$NON-NLS-1$

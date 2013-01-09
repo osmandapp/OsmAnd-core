@@ -309,7 +309,7 @@ public class RouteProvider {
 		BinaryMapIndexReader[] files = params.ctx.getTodoAPI().getRoutingMapFiles();
 		RoutePlannerFrontEnd router = new RoutePlannerFrontEnd(true);
 		OsmandSettings settings = params.ctx.getSettings();
-		File routingXml = settings.extendOsmandPath(IndexConstants.ROUTING_XML_FILE);
+		File routingXml = params.ctx.getAppPath(IndexConstants.ROUTING_XML_FILE);
 		RoutingConfiguration.Builder config ;
 		if (routingXml.exists() && routingXml.canRead()) {
 			try {

@@ -70,7 +70,7 @@ public class DownloadTracker {
 			String domainHash = "app.osmand.net".hashCode() + "";
 
 			String utma = domainHash + ".";
-			File fl = a.getInternalAPI().getAppDir(".nomedia");
+			File fl = a.getAppPath(".nomedia");
 			if (fl.exists()) {
 				utma += (fl.lastModified()) + ".";
 			} else {
