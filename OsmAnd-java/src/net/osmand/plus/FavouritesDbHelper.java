@@ -52,6 +52,7 @@ public class FavouritesDbHelper {
 				conn = context.getSQLiteAPI().getOrCreateDatabase(FAVOURITE_DB_NAME, readonly);
 			}
 			if (conn.getVersion() == 0) {
+				conn.setVersion(DATABASE_VERSION);
 				onCreate(conn);
 			} else {
 				onUpgrade(conn, conn.getVersion(), DATABASE_VERSION);
