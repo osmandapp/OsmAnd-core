@@ -44,7 +44,7 @@ endif()
 set(pd_sources "")
 if(CMAKE_TARGET_OS STREQUAL "linux")
     set(pd_sources
-	    "${OSMAND_ROOT}/../targets/linux/OsmAndCore/src/Logging.cpp"
+	    "${OSMAND_ROOT}/targets/linux/OsmAndCore/src/Logging.cpp"
 	)
 endif()
 add_library(osmand SHARED
