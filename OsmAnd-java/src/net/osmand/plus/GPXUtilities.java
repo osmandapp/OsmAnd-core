@@ -118,9 +118,18 @@ public class GPXUtilities {
 		
 		public void proccessPoints(){
 			List<List<WptPt>> tpoints = new ArrayList<List<WptPt>>();
+			boolean created = false;
 			for (Track t : tracks) {
 				for (TrkSegment ts : t.segments) {
-					tpoints.add(ts.points);
+					if(ts.points.size() > 0) {
+						created = true;
+						tpoints.add(ts.points);
+					}
+				}
+			}
+			if(!created && routes.size() > 0) {
+				for(Route r : routes) {
+					tpoints.add(r.points);
 				}
 			}
 			processedPointsToDisplay = tpoints;
