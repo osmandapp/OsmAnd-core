@@ -54,8 +54,12 @@ public class City extends MapObject {
 	private String postcode = null;
 
 	public City(Node el) {
+		this(el, CityType.valueFromString(el.getTag(OSMTagKey.PLACE)));
+	}
+	
+	public City(Entity el, CityType t) {
 		super(el);
-		type = CityType.valueFromString(el.getTag(OSMTagKey.PLACE));
+		type = t;
 		isin = el.getTag(OSMTagKey.IS_IN);
 		isin = isin != null ? isin.toLowerCase() : null;
 	}

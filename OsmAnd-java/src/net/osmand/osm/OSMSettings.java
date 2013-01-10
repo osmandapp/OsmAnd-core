@@ -40,6 +40,7 @@ public class OSMSettings {
 		ADDRESS_HOUSE("address:house"), //$NON-NLS-1$
 		TYPE("type"), //$NON-NLS-1$
 		IS_IN("is_in"), //$NON-NLS-1$
+		LOCALITY("locality"), //$NON-NLS-1$
 		
 		// POI
 		AMENITY("amenity"), //$NON-NLS-1$

@@ -49,7 +49,7 @@ public class BinaryInspector {
 		// test cases show info
 		
 		
-//		 inspector(new String[]{"-vpoi",/* "-bbox=-121.785,37.35,-121.744,37.33", */"/home/victor/projects/OsmAnd/data/osm-gen/Map.obf"});
+//		 inspector(new String[]{"-vaddress", /*"-bbox=11.3,49,11.6,47"*/, "/home/victor/projects/OsmAnd/data/osm-gen/Germany_bayern_europe_2.obf"});
 		// test case extract parts
 		// test case 
 	}
