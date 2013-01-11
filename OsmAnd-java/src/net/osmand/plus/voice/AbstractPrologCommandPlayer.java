@@ -106,12 +106,9 @@ public abstract class AbstractPrologCommandPlayer implements CommandPlayer {
 				// } else {
 				config = new FileInputStream(new File(voiceDir, configFile)); //$NON-NLS-1$
 				// }
-				if (!wrong) {
-					MetricsConstants mc = settings.METRIC_SYSTEM.get();
-					prologSystem.addTheory(new Theory("measure('"+mc.toTTSString()+"')."));
-					prologSystem.addTheory(new Theory(config));
-					
-				}
+				MetricsConstants mc = settings.METRIC_SYSTEM.get();
+				prologSystem.addTheory(new Theory("measure('"+mc.toTTSString()+"')."));
+				prologSystem.addTheory(new Theory(config));
 			} catch (InvalidTheoryException e) {
 				log.error("Loading voice config exception " + voiceProvider, e); //$NON-NLS-1$
 				wrong = true;
