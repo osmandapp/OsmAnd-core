@@ -382,10 +382,12 @@ public class RouteResultPreparation {
 				boolean plus = rnext.getStartPointIndex() < rnext.getEndPointIndex();
 				int k = rnext.getStartPointIndex();
 				if (j == i) {
-					k = plus ? k + 1 : k - 1;
+					// first exit could be immediately after roundabout enter
+//					k = plus ? k + 1 : k - 1;
 				}
 				while (k != rnext.getEndPointIndex()) {
-					if (rnext.getAttachedRoutes(k).size() > 0) {
+					int attachedRoads = rnext.getAttachedRoutes(k).size();
+					if(attachedRoads > 0) {
 						exit++;
 					}
 					k = plus ? k + 1 : k - 1;
