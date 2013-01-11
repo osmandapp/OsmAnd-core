@@ -39,6 +39,9 @@ public class Building extends MapObject {
 		super(e);
 		// try to extract postcode
 		postcode = e.getTag(OSMTagKey.ADDR_POSTCODE);
+		if(postcode == null) {
+			postcode = e.getTag(OSMTagKey.POSTAL_CODE);
+		}
 	}
 	
 	public Building(){}

@@ -49,7 +49,7 @@ public class BinaryInspector {
 		// test cases show info
 		
 		
-//		 inspector(new String[]{"-vaddress", /*"-bbox=11.3,49,11.6,47"*/, "/home/victor/projects/OsmAnd/data/osm-gen/Germany_bayern_europe_2.obf"});
+//		inspector(new String[]{c"-vaddress", /*"-bbox=11.3,49,11.6,47",*/ "/home/victor/projects/OsmAnd/data/osm-gen/Ireland-and-northern-ireland_europe_2.obf"});
 		// test case extract parts
 		// test case 
 	}

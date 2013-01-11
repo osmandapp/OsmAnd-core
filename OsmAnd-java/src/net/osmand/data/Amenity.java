@@ -95,7 +95,7 @@ public class Amenity extends MapObject {
 				if (type != null) {
 					String subtype = renderingTypes.getAmenitySubtype(t, entity.getTag(t));
 					Amenity a = new Amenity(entity, type, subtype);
-					if(checkAmenitiesToAdd(a, amenitiesList)){
+					if(checkAmenitiesToAdd(a, amenitiesList) && !"no".equals(subtype)){
 						amenitiesList.add(shift, a);
 						shift++;
 					}
@@ -104,7 +104,7 @@ public class Amenity extends MapObject {
 					if (type != null) {
 						String subtype = renderingTypes.getAmenitySubtype(t, entity.getTag(t));
 						Amenity a = new Amenity(entity, type, subtype);
-						if(checkAmenitiesToAdd(a, amenitiesList)){
+						if(checkAmenitiesToAdd(a, amenitiesList) && !"no".equals(subtype)){
 							// 	add amenity to the end
 							amenitiesList.add(a);
 						}

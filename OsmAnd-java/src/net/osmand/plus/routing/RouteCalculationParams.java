@@ -25,4 +25,5 @@ public class RouteCalculationParams {
 	public boolean optimal;
 	public boolean leftSide;
 	public RouteCalculationProgress calculationProgress;
+	public boolean preciseRouting;
 }
