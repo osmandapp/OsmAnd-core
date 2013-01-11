@@ -88,17 +88,16 @@ public class MapAlgorithms {
 	}
 	
 	private static double orthogonalDistance(int zoom, Node nodeLineStart, Node nodeLineEnd, Node node) {
-		double x1 = MapUtils.getTileNumberX(zoom, nodeLineStart.getLongitude());
-		double y1 = MapUtils.getTileNumberY(zoom, nodeLineStart.getLatitude());
-		double x2 = MapUtils.getTileNumberX(zoom, nodeLineEnd.getLongitude());
-		double y2 = MapUtils.getTileNumberY(zoom, nodeLineEnd.getLatitude());
-		double x = MapUtils.getTileNumberX(zoom, node.getLongitude());
-		double y = MapUtils.getTileNumberY(zoom, node.getLatitude());
-		double A = x - x1;
-		double B = y - y1;
+		LatLon p = MapUtils.getProjection(node.getLatitude(), node.getLongitude(), nodeLineStart.getLatitude(), nodeLineStart.getLongitude(),
+				nodeLineEnd.getLatitude(), nodeLineEnd.getLongitude());
+		
+		double x1 = MapUtils.getTileNumberX(zoom, p.getLongitude());
+		double y1 = MapUtils.getTileNumberY(zoom, p.getLatitude());
+		double x2 = MapUtils.getTileNumberX(zoom, node.getLongitude());
+		double y2 = MapUtils.getTileNumberY(zoom, node.getLatitude());
 		double C = x2 - x1;
 		double D = y2 - y1;
-		return Math.abs(A * D - C * B) / Math.sqrt(C * C + D * D);
+		return Math.sqrt(C * C + D * D);
 	}
 	
 	public static boolean isClockwiseWay(Way w){
