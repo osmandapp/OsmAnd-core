@@ -179,4 +179,37 @@ public class NativeLibrary {
 	protected static native long searchNativeObjectsForRendering(int sleft, int sright, int stop, int sbottom, int zoom, 
 			RenderingRuleSearchRequest request, boolean skipDuplicates, int renderRouteDataFile, Object objectWithInterruptedField, String msgIfNothingFound);
 
+	
+	// Empty native impl
+	
+//	protected static NativeRouteSearchResult loadRoutingData(RouteRegion reg, String regName, int regfp,RouteSubregion subreg,
+//			boolean loadObjects) { return null;}
+//	
+//	protected static void deleteRouteSearchResult(long searchResultHandle) {}
+//	
+//	protected static RouteDataObject[] getRouteDataObjects(RouteRegion reg, long rs, int x31, int y31){return null;}
+//	
+//	protected static RouteSegmentResult[] nativeRouting(int[] coordinates, int[] state, String[] keyConfig, String[] valueConfig, 
+//			float initDirection, RouteRegion[] regions, RouteCalculationProgress progress) {return null;}
+//	
+//	protected static void deleteSearchResult(long searchResultHandle) {}
+//
+//	protected static boolean initBinaryMapFile(String filePath) {return false;}
+//	
+//	protected static boolean initCacheMapFiles(String filePath) {return false;}
+//	
+//	protected static boolean closeBinaryMapFile(String filePath) {return false;}
+//	
+//	protected static void initRenderingRulesStorage(RenderingRulesStorage storage) {}
+//
+//
+//	protected static RenderingGenerationResult generateRenderingIndirect(RenderingContext rc, long searchResultHandler,
+//			boolean isTransparent, RenderingRuleSearchRequest render, boolean encodePng) {
+//		return null;
+//	}
+//	
+//	protected static long searchNativeObjectsForRendering(int sleft, int sright, int stop, int sbottom, int zoom, 
+//			RenderingRuleSearchRequest request, boolean skipDuplicates, int renderRouteDataFile, Object objectWithInterruptedField, String msgIfNothingFound) {
+//		return 0;
+//	}
 }

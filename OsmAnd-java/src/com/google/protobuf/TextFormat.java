@@ -478,7 +478,11 @@ private static void printField(final FieldDescriptor field,
         // EOF
         currentToken = "";
       } else {
-        matcher.usePattern(TOKEN);
+    	  // OSMAND change
+//        matcher.usePattern(TOKEN);
+    	  if(true){
+    		  throw new UnsupportedOperationException();
+    	  }
         if (matcher.lookingAt()) {
           currentToken = matcher.group();
           matcher.region(matcher.end(), matcher.regionEnd());
@@ -497,7 +501,11 @@ private static void printField(final FieldDescriptor field,
      * token.
      */
     private void skipWhitespace() {
-      matcher.usePattern(WHITESPACE);
+  	  // OSMAND change
+    	if(true){
+  		  throw new UnsupportedOperationException();
+  	  }
+//      matcher.usePattern(WHITESPACE);
       if (matcher.lookingAt()) {
         matcher.region(matcher.end(), matcher.regionEnd());
       }

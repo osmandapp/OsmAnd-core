@@ -264,9 +264,10 @@ public class TileSourceManager {
 					BufferedReader reader = new BufferedReader(new InputStreamReader(
 							new FileInputStream(readUrl), "UTF-8")); //$NON-NLS-1$
 					url = reader.readLine();
-					url = url.replaceAll(Pattern.quote("{$z}"), "{0}"); //$NON-NLS-1$ //$NON-NLS-2$
-					url = url.replaceAll(Pattern.quote("{$x}"), "{1}"); //$NON-NLS-1$//$NON-NLS-2$
-					url = url.replaceAll(Pattern.quote("{$y}"), "{2}"); //$NON-NLS-1$ //$NON-NLS-2$
+					// 
+					url = url.replaceAll("\\{\\$z\\}", "{0}"); //$NON-NLS-1$ //$NON-NLS-2$
+					url = url.replaceAll("\\{\\$x\\}", "{1}"); //$NON-NLS-1$//$NON-NLS-2$
+					url = url.replaceAll("\\{\\$y\\}", "{2}"); //$NON-NLS-1$ //$NON-NLS-2$
 					reader.close();
 				}
 			} catch (IOException e) {
