@@ -80,16 +80,20 @@ public class MapUtils {
 		return new LatLon(prlat, prlon);
 	}
 	
+	private static double toRadians(double angdeg) {
+//		return Math.toRadians(angdeg);
+		return angdeg / 180.0 * Math.PI;
+	}
 	
 	/**
 	 * Gets distance in meters
 	 */
 	public static double getDistance(double lat1, double lon1, double lat2, double lon2){
 		double R = 6371; // km
-		double dLat = Math.toRadians(lat2-lat1);
-		double dLon = Math.toRadians(lon2-lon1); 
+		double dLat = toRadians(lat2-lat1);
+		double dLon = toRadians(lon2-lon1); 
 		double a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-		        Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * 
+		        Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * 
 		        Math.sin(dLon/2) * Math.sin(dLon/2); 
 		double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
 		return R * c * 1000;
@@ -223,7 +227,7 @@ public class MapUtils {
 	}
 	public static int get31TileNumberY( double latitude){
 		latitude = checkLatitude(latitude);
-		double eval = Math.log( Math.tan(Math.toRadians(latitude)) + 1/Math.cos(Math.toRadians(latitude)) );
+		double eval = Math.log( Math.tan(toRadians(latitude)) + 1/Math.cos(toRadians(latitude)) );
 		long l = 1l << 31;
 		if(eval > Math.PI){
 			eval = Math.PI;
@@ -258,10 +262,10 @@ public class MapUtils {
 	
 	public static double getTileNumberY(float zoom,  double latitude){
 		latitude = checkLatitude(latitude);
-		double eval = Math.log( Math.tan(Math.toRadians(latitude)) + 1/Math.cos(Math.toRadians(latitude)) );
+		double eval = Math.log( Math.tan(toRadians(latitude)) + 1/Math.cos(toRadians(latitude)) );
 		if (Double.isInfinite(eval) || Double.isNaN(eval)) {
 			latitude = latitude < 0 ? - 89.9 : 89.9;
-			eval = Math.log( Math.tan(Math.toRadians(latitude)) + 1/Math.cos(Math.toRadians(latitude)) );
+			eval = Math.log( Math.tan(toRadians(latitude)) + 1/Math.cos(toRadians(latitude)) );
 		}
 		double result = (1 - eval / Math.PI) / 2 * getPowZoom(zoom);
 		return  result;

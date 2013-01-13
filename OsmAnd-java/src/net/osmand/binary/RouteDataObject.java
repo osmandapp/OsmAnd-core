@@ -39,6 +39,7 @@ public class RouteDataObject {
 		this.pointsX = copy.pointsX;
 		this.pointsY = copy.pointsY;
 		this.types = copy.types;
+		this.names = copy.names;
 		this.restrictions = copy.restrictions;
 		this.pointTypes = copy.pointTypes;
 		this.id = copy.id;
