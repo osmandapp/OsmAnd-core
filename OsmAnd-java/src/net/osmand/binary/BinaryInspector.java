@@ -409,11 +409,11 @@ public class BinaryInspector {
 				int type = cityType[j];
 				for (City c : index.getCities(region, null, type)) {				
 					index.preloadStreets(c, null);
-					println("\t\t" + c + " " + c.getId() + " (" + c.getStreets().size() + ")");
+					println("\t\t" + c + " " + c.getId() + "\t(" + c.getStreets().size() + ")");
 					for (Street t : c.getStreets()) {
 						if (verbose.contains(t)) {
 							index.preloadBuildings(t, null);
-							print("\t\t\t" + t.getName() + getId(t) + " (" + t.getBuildings().size() + ")");
+							print("\t\t\t\t" + t.getName() + getId(t) + "\t(" + t.getBuildings().size() + ")");
 							// if (type == BinaryMapAddressReaderAdapter.CITY_TOWN_TYPE) {
 							List<Building> buildings = t.getBuildings();
 							if (buildings != null && !buildings.isEmpty()) {
@@ -425,7 +425,7 @@ public class BinaryInspector {
 							}
 							List<Street> streets = t.getIntersectedStreets();
 							if (streets != null && !streets.isEmpty()) {
-								print("\n\t\t\t\t\t\t\t x (");
+								print("\n\t\t\t\t\t\t\t\t\t x (");
 								for (Street s : streets) {
 									print(s.getName() + ", ");
 								}
