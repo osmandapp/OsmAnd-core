@@ -167,6 +167,7 @@ public class DataTileManager<T> {
 		removeObject(object, tile);
 	}
 	
+	
 	public void unregisterObjectXY(int  x31, int y31, T object){
 		long tile = evaluateTileXY(x31, y31);
 		removeObject(object, tile);
