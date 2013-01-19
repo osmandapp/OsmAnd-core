@@ -200,10 +200,10 @@ public class FavouritesDbHelper {
 		return false;
 	}
 	
-	private FavouritePoint findFavoriteByName(String name, String category){
+	private FavouritePoint findFavoriteByAllProperties(String category, String name, double lat, double lon){
 		if (favoriteGroups.containsKey(category)) {
 			for (FavouritePoint fv : favoriteGroups.get(category)) {
-				if (name.equals(fv.getName())) {
+				if (name.equals(fv.getName()) && (lat == fv.getLatitude()) && (lon == fv.getLongitude())) {
 					return fv;
 				}
 			}
@@ -218,7 +218,7 @@ public class FavouritesDbHelper {
 			try {
 				db.execSQL(
 						"DELETE FROM " + FAVOURITE_TABLE_NAME + " WHERE category = ? AND " + whereNameLatLon(), new Object[] { p.getCategory(), p.getName(), p.getLatitude(), p.getLongitude() }); //$NON-NLS-1$ //$NON-NLS-2$
-				FavouritePoint fp = findFavoriteByName(p.getName(), p.getCategory());
+				FavouritePoint fp = findFavoriteByAllProperties(p.getCategory(), p.getName(), p.getLatitude(), p.getLongitude());
 				if (fp != null) {
 					favoriteGroups.get(p.getCategory()).remove(fp);
 					cachedFavoritePoints.remove(fp);
