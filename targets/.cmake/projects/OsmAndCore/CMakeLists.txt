@@ -28,6 +28,9 @@ if(CMAKE_TARGET_OS STREQUAL "windows")
 elseif(CMAKE_TARGET_OS STREQUAL "darwin")
 	add_definitions(-DSK_BUILD_FOR_MAC)
 elseif(CMAKE_TARGET_OS STREQUAL "linux")
+	include_directories(AFTER SYSTEM
+		"$ENV{JAVA_HOME}/include/linux"
+	)
 	add_definitions(-DSK_BUILD_FOR_UNIX)
 endif()
 add_definitions(
