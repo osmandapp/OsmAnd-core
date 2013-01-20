@@ -27,8 +27,20 @@ add_library(png STATIC
 	"${UPSTREAM}/pngwtran.c"
 	"${UPSTREAM}/pngwutil.c"
 )
+if(CMAKE_COMPILER_FAMILY STREQUAL "gcc")
+	set(USE_WHOLE_LIBRARIES "-Wl,-whole-archive")
+	set(USE_WHOLE_LIBRARY "")
+	set(DONT_USE_WHOLE_LIBRARIES "-Wl,-no-whole-archive")
+else()
+	set(USE_WHOLE_LIBRARIES "")
+	set(USE_WHOLE_LIBRARY "")
+	set(DONT_USE_WHOLE_LIBRARIES "")
+endif()
+
 if((CMAKE_TARGET_OS STREQUAL "linux") OR (CMAKE_TARGET_OS STREQUAL "darwin"))
 	target_link_libraries(png LINK_PRIVATE
-		z
+	${USE_WHOLE_LIBRARIES}
+		${USE_WHOLE_LIBRARY} z
+	${DONT_USE_WHOLE_LIBRARIES}
 	)
 endif()
