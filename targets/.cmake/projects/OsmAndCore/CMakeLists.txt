@@ -62,9 +62,21 @@ add_library(osmand SHARED
 	${pd_sources}
 )
 
+if(CMAKE_COMPILER_FAMILY STREQUAL "gcc")
+	set(USE_WHOLE_LIBRARIES "-Wl,-whole-archive")
+	set(USE_WHOLE_LIBRARY "")
+	set(DONT_USE_WHOLE_LIBRARIES "-Wl,-no-whole-archive")
+else()
+	set(USE_WHOLE_LIBRARIES "")
+	set(USE_WHOLE_LIBRARY "")
+	set(DONT_USE_WHOLE_LIBRARIES "")
+endif()
+
 target_link_libraries(osmand LINK_PRIVATE
 	protobuf
-	skia
+	${USE_WHOLE_LIBRARIES}
+		${USE_WHOLE_LIBRARY} skia
+	${DONT_USE_WHOLE_LIBRARIES}
 )
 if(CMAKE_TARGET_OS STREQUAL "windows")
 	target_link_libraries(osmand LINK_PRIVATE
