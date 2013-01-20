@@ -125,7 +125,7 @@
 		<avoid tag="barrier" value="block"/>
 		
 		<avoid tag="toll" value="yes" decreasedPriority="1">
-			<specialization input="avoid_toll" />
+			<specialization input="avoid_toll"/>
 		</avoid>
 	</routingProfile>
 	

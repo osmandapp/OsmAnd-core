@@ -145,7 +145,6 @@ public class RoutingConfiguration {
 				@Override
 				public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
 					String name = parser.isNamespaceAware() ? localName : qName;
-					previousTag = name;
 					if("osmand_routing_config".equals(name)) {
 						config.defaultRouter = attributes.getValue("defaultProfile");
 					} else if("attribute".equals(name)) {
@@ -191,26 +190,24 @@ public class RoutingConfiguration {
 							}
 						}
 
-					} else if("road".equals(name)) {
-						previousKey = attributes.getValue("tag") +"$" + attributes.getValue("value");
-						currentRouter.highwayPriorities.put(previousKey, parseSilentFloat(attributes.getValue("priority"), 
-								1));
-						currentRouter.highwaySpeed.put(previousKey, parseSilentFloat(attributes.getValue("speed"), 
-								10));
-					} else if("obstacle".equals(name)) {
+					} else {
 						previousKey = attributes.getValue("tag") + "$" + attributes.getValue("value");
-						float penalty = parseSilentFloat(attributes.getValue("penalty"), 0);
-						currentRouter.obstacles.put(previousKey, penalty);
-						float routingPenalty = parseSilentFloat(attributes.getValue("routingPenalty"), penalty );
-						currentRouter.routingObstacles.put(previousKey, routingPenalty);
-					} else if("avoid".equals(name)) {
-						previousKey = attributes.getValue("tag") + "$" + attributes.getValue("value");
-						float priority = parseSilentFloat(attributes.getValue("decreasedPriority"), 
-								0);
-						if(priority == 0) {
-							currentRouter.avoid.put(previousKey, priority);
-						}  else {
-							currentRouter.highwayPriorities.put(previousKey, priority);
+						previousTag = name;
+						if ("road".equals(name)) {
+							currentRouter.highwayPriorities.put(previousKey, parseSilentFloat(attributes.getValue("priority"), 1));
+							currentRouter.highwaySpeed.put(previousKey, parseSilentFloat(attributes.getValue("speed"), 10));
+						} else if ("obstacle".equals(name)) {
+							float penalty = parseSilentFloat(attributes.getValue("penalty"), 0);
+							currentRouter.obstacles.put(previousKey, penalty);
+							float routingPenalty = parseSilentFloat(attributes.getValue("routingPenalty"), penalty);
+							currentRouter.routingObstacles.put(previousKey, routingPenalty);
+						} else if ("avoid".equals(name)) {
+							float priority = parseSilentFloat(attributes.getValue("decreasedPriority"), 0);
+							if (priority == 0) {
+								currentRouter.avoid.put(previousKey, priority);
+							} else {
+								currentRouter.highwayPriorities.put(previousKey, priority);
+							}
 						}
 					}
 				}
