@@ -8,26 +8,17 @@ set(OSMAND_OUTPUT_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../binaries/${CMAKE_TARGET_
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${OSMAND_OUTPUT_ROOT}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${OSMAND_OUTPUT_ROOT}")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${OSMAND_OUTPUT_ROOT}")
-# For gcc family, ensure that there are no undefined symbols and we use -fuse-cxa-atexit
 
+# For gcc family, ensure that there are no undefined symbols
 if(CMAKE_COMPILER_FAMILY STREQUAL "gcc")
-
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
-
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--no-undefined")
-
 endif()
 
-
-
 # For gcc and clang, allow all warnings
-
 if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang")
-
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
-
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-
 endif()
 
 # Include CPU specific settings

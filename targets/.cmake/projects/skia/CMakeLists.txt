@@ -302,19 +302,30 @@ add_library(skia STATIC
 	${target_specific_sources}
 )
 
+
+if(CMAKE_COMPILER_FAMILY STREQUAL "gcc")
+	set(USE_WHOLE_LIBRARIES "-Wl,-whole-archive")
+	set(USE_WHOLE_LIBRARY "")
+	set(DONT_USE_WHOLE_LIBRARIES "-Wl,-no-whole-archive")
+else()
+	set(USE_WHOLE_LIBRARIES "")
+	set(USE_WHOLE_LIBRARY "")
+	set(DONT_USE_WHOLE_LIBRARIES "")
+endif()
+
 target_link_libraries(skia LINK_PRIVATE
-	png
-	gif
-	jpeg
+	${USE_WHOLE_LIBRARIES}
+		${USE_WHOLE_LIBRARY} png
+		${USE_WHOLE_LIBRARY} gif
+		${USE_WHOLE_LIBRARY} jpeg
+	${DONT_USE_WHOLE_LIBRARIES}	
 	expat
 	freetype2
 	harfbuzz
 )
 	
 if((CMAKE_TARGET_OS STREQUAL "linux") OR (CMAKE_TARGET_OS STREQUAL "darwin"))
- target_link_libraries(skia LINK_PRIVATE
-  pthread
- )
+target_link_libraries(skia LINK_PRIVATE
+	pthread
+)
 endif()
-	
-	

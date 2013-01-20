@@ -36,7 +36,8 @@ add_definitions(
 	-DSK_RELEASE
 	-DSK_CPU_LENDIAN
 	-DGR_RELEASE=1
-	-DXML_STATIC)
+	-DXML_STATIC
+)
 if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
@@ -60,7 +61,7 @@ add_library(osmand SHARED
 	"${ROOT}/src/java_wrap.cpp"
 	${pd_sources}
 )
-#target_link_libraries(osmand LINK_PRIVATE	protobuf	z	png	gif	jpeg	expat	freetype2	harfbuzz	skia)
+
 target_link_libraries(osmand LINK_PRIVATE
 	protobuf
 	skia
