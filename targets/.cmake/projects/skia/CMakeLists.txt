@@ -82,7 +82,6 @@ if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fno-rtti -fno-exceptions")
 endif()
 
-
 add_library(skia STATIC
     "${UPSTREAM}/src/core/Sk64.cpp"
 	"${UPSTREAM}/src/core/SkAAClip.cpp"
@@ -302,7 +301,6 @@ add_library(skia STATIC
 	${target_specific_sources}
 )
 
-
 if(CMAKE_COMPILER_FAMILY STREQUAL "gcc")
 	set(USE_WHOLE_LIBRARIES "-Wl,-whole-archive")
 	set(USE_WHOLE_LIBRARY "")
@@ -325,7 +323,7 @@ target_link_libraries(skia LINK_PRIVATE
 )
 	
 if((CMAKE_TARGET_OS STREQUAL "linux") OR (CMAKE_TARGET_OS STREQUAL "darwin"))
-target_link_libraries(skia LINK_PRIVATE
-	pthread
-)
+	target_link_libraries(skia LINK_PRIVATE
+		pthread
+	)
 endif()

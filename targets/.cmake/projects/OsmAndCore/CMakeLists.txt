@@ -72,4 +72,3 @@ if(CMAKE_TARGET_OS STREQUAL "windows")
 		Usp10
 	)
 endif()
-# http://stackoverflow.com/questions/5693405/specifying-link-flags-for-only-one-static-lib-while-linking-executable

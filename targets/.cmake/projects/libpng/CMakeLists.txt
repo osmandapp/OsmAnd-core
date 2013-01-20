@@ -27,3 +27,8 @@ add_library(png STATIC
 	"${UPSTREAM}/pngwtran.c"
 	"${UPSTREAM}/pngwutil.c"
 )
+if((CMAKE_TARGET_OS STREQUAL "linux") OR (CMAKE_TARGET_OS STREQUAL "darwin"))
+	target_link_libraries(png LINK_PRIVATE
+		z
+	)
+endif()
