@@ -192,6 +192,7 @@ add_library(skia STATIC
 	"${UPSTREAM}/src/core/SkStream.cpp"
 	"${UPSTREAM}/src/core/SkString.cpp"
 	"${UPSTREAM}/src/core/SkStroke.cpp"
+	"${UPSTREAM}/src/core/SkStrokeRec.cpp"
 	"${UPSTREAM}/src/core/SkStrokerPriv.cpp"
 	"${UPSTREAM}/src/core/SkTileGrid.cpp"
 	"${UPSTREAM}/src/core/SkTLS.cpp"

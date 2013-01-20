@@ -45,7 +45,6 @@ extern "C" JNIEXPORT void JNICALL Java_net_osmand_NativeLibrary_deleteSearchResu
 	}
 }
 
-
 extern "C" JNIEXPORT void JNICALL Java_net_osmand_NativeLibrary_closeBinaryMapFile(JNIEnv* ienv,
 		jobject obj, jobject path) {
 	const char* utf = ienv->GetStringUTFChars((jstring) path, NULL);
@@ -282,6 +281,7 @@ size_t bitmapDataSize = 0;
 extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_NativeLibrary_generateRenderingIndirect( JNIEnv* ienv,
 		jobject obj, jobject renderingContext, jlong searchResult, jboolean isTransparent,
 		jobject renderingRuleSearchRequest, jboolean encodePNG) {
+
 
 	JNIRenderingContext rc;
 	pullFromJavaRenderingContext(ienv, renderingContext, &rc);

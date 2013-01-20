@@ -16,6 +16,7 @@ fi
 # Download
 echo "Downloading new upstream..."
 git clone https://github.com/osmandapp/OsmAnd-external-skia.git $SRCLOC/upstream.original --depth=1
+#git checkout d7204d413233fac7fc15c0e
 
 # Patch
 cp -rf $SRCLOC/upstream.original $SRCLOC/upstream.patched
