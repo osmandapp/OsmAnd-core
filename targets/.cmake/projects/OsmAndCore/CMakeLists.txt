@@ -74,6 +74,7 @@ endif()
 
 target_link_libraries(osmand LINK_PRIVATE
 	protobuf
+	#skia
 	${USE_WHOLE_LIBRARIES}
 		${USE_WHOLE_LIBRARY} skia
 	${DONT_USE_WHOLE_LIBRARIES}
