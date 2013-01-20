@@ -136,6 +136,7 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkStream.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkString.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkStroke.cpp \
+	$(OSMAND_SKIA_RELATIVE)/src/core/SkStrokeRec.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkStrokerPriv.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkTileGrid.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkTLS.cpp \
