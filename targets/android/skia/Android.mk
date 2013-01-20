@@ -152,6 +152,7 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_SKIA_RELATIVE)/src/effects/SkArithmeticMode.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/effects/SkAvoidXfermode.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/effects/SkBitmapSource.cpp \
+	$(OSMAND_SKIA_RELATIVE)/src/effects/SkBicubicImageFilter.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/effects/SkBlurDrawLooper.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/effects/SkBlurImageFilter.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/effects/SkBlurMask.cpp \
@@ -162,6 +163,7 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_SKIA_RELATIVE)/src/effects/SkCornerPathEffect.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/effects/SkDashPathEffect.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/effects/SkDiscretePathEffect.cpp \
+	$(OSMAND_SKIA_RELATIVE)/src/effects/SkDisplacementMapEffect.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/effects/SkEmbossMask.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/effects/SkEmbossMaskFilter.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/effects/SkKernel33MaskFilter.cpp \
@@ -237,7 +239,6 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_SKIA_RELATIVE)/src/utils/SkParsePath.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/utils/SkPictureUtils.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/utils/SkProxyCanvas.cpp \
-	$(OSMAND_SKIA_RELATIVE)/src/utils/SkThreadPool.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/utils/SkUnitMappers.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/SkFontDescriptor.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/pipe/SkGPipeRead.cpp \
