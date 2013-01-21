@@ -24,7 +24,7 @@ import net.sf.junidecode.Junidecode;
 
 import org.apache.commons.logging.Log;
 
-import com.google.protobuf.CodedInputStreamRAF;
+import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.WireFormat;
 
 public class BinaryMapPoiReaderAdapter {
@@ -63,7 +63,7 @@ public class BinaryMapPoiReaderAdapter {
 		}
 	}
 	
-	private CodedInputStreamRAF codedIS;
+	private CodedInputStream codedIS;
 	private final BinaryMapIndexReader map;
 	
 	protected BinaryMapPoiReaderAdapter(BinaryMapIndexReader map){

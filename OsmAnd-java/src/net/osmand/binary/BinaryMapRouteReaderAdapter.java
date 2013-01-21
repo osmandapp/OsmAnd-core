@@ -30,7 +30,7 @@ import net.osmand.osm.MapUtils;
 
 import org.apache.commons.logging.Log;
 
-import com.google.protobuf.CodedInputStreamRAF;
+import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.WireFormat;
 
@@ -280,7 +280,7 @@ public class BinaryMapRouteReaderAdapter {
 		}
 	}
 	
-	private CodedInputStreamRAF codedIS;
+	private CodedInputStream codedIS;
 	private final BinaryMapIndexReader map;
 	
 	protected BinaryMapRouteReaderAdapter(BinaryMapIndexReader map){

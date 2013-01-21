@@ -48,7 +48,7 @@ import net.osmand.osm.MapUtils;
 
 import org.apache.commons.logging.Log;
 
-import com.google.protobuf.CodedInputStreamRAF;
+import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.WireFormat;
 
 public class BinaryMapIndexReader {
@@ -69,7 +69,7 @@ public class BinaryMapIndexReader {
 	/*private */List<RouteRegion> routingIndexes = new ArrayList<RouteRegion>();
 	/*private */List<BinaryIndexPart> indexes = new ArrayList<BinaryIndexPart>();
 	
-	protected CodedInputStreamRAF codedIS;
+	protected CodedInputStream codedIS;
 	
 	private final BinaryMapTransportReaderAdapter transportAdapter;
 	private final BinaryMapPoiReaderAdapter poiAdapter;
@@ -81,7 +81,7 @@ public class BinaryMapIndexReader {
 	
 	public BinaryMapIndexReader(final RandomAccessFile raf) throws IOException {
 		this.raf = raf;
-		codedIS = CodedInputStreamRAF.newInstance(raf, 1024 * 5);
+		codedIS = CodedInputStream.newInstance(raf);
 		codedIS.setSizeLimit(Integer.MAX_VALUE); // 2048 MB
 		transportAdapter = new BinaryMapTransportReaderAdapter(this);
 		addressAdapter = new BinaryMapAddressReaderAdapter(this);
@@ -92,7 +92,7 @@ public class BinaryMapIndexReader {
 	
 	/*private */BinaryMapIndexReader(final RandomAccessFile raf, boolean init) throws IOException {
 		this.raf = raf;
-		codedIS = CodedInputStreamRAF.newInstance(raf, 1024 * 5);
+		codedIS = CodedInputStream.newInstance(raf);
 		codedIS.setSizeLimit(Integer.MAX_VALUE); // 2048 MB
 		transportAdapter = new BinaryMapTransportReaderAdapter(this);
 		addressAdapter = new BinaryMapAddressReaderAdapter(this);
@@ -105,7 +105,7 @@ public class BinaryMapIndexReader {
 	
 	public BinaryMapIndexReader(final RandomAccessFile raf, BinaryMapIndexReader referenceToSameFile) throws IOException {
 		this.raf = raf;
-		codedIS = CodedInputStreamRAF.newInstance(raf, 1024 * 5);
+		codedIS = CodedInputStream.newInstance(raf);
 		codedIS.setSizeLimit(Integer.MAX_VALUE); // 2048 MB
 		version = referenceToSameFile.version;
 		transportAdapter = new BinaryMapTransportReaderAdapter(this);
@@ -141,7 +141,7 @@ public class BinaryMapIndexReader {
 				version = codedIS.readUInt32();
 				break;
 			case OsmandOdb.OsmAndStructure.DATECREATED_FIELD_NUMBER :
-				dateCreated = codedIS.readInt64();
+				dateCreated = codedIS.readInt64(); 
 				break;
 			case OsmandOdb.OsmAndStructure.MAPINDEX_FIELD_NUMBER:
 				MapIndex mapIndex = new MapIndex();

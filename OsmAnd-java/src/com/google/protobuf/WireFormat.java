@@ -51,7 +51,7 @@ public final class WireFormat {
   static final int WIRETYPE_START_GROUP      = 3;
   static final int WIRETYPE_END_GROUP        = 4;
   static final int WIRETYPE_FIXED32          = 5;
-  // Delta change
+  // Osmand Delta change
   public static final int WIRETYPE_FIXED32_LENGTH_DELIMITED = 6;
 
   static final int TAG_TYPE_BITS = 3;

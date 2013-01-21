@@ -30,6 +30,7 @@
 
 package com.google.protobuf;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
@@ -47,6 +48,7 @@ import java.util.List;
  * reading some other format of your own design, use the latter.
  *
  * @author kenton@google.com Kenton Varda
+ * OSMAND change
  */
 public final class CodedInputStreamRAF {
   /**
@@ -540,7 +542,6 @@ public final class CodedInputStreamRAF {
 
     return oldLimit;
   }
-  
 
   private void recomputeBufferSizeAfterLimit() {
     bufferSize += bufferSizeAfterLimit;
@@ -619,6 +620,7 @@ public final class CodedInputStreamRAF {
     totalBytesRetired += bufferSize;
 
     bufferPos = 0;
+    // osmand change
     bufferSize = raf.read(buffer);
     if (bufferSize == 0 || bufferSize < -1) {
       throw new IllegalStateException(
@@ -733,6 +735,7 @@ public final class CodedInputStreamRAF {
         final byte[] chunk = new byte[Math.min(sizeLeft, BUFFER_SIZE)];
         int pos = 0;
         while (pos < chunk.length) {
+          // osmand change
           final int n = raf.read(chunk, pos, chunk.length - pos);
           if (n == -1) {
             throw InvalidProtocolBufferException.truncatedMessage();
@@ -792,6 +795,7 @@ public final class CodedInputStreamRAF {
 
       // Then skip directly from the InputStream for the rest.
       while (pos < size) {
+    	// osmand change
         final int n = raf.skipBytes(size - pos);
         if (n <= 0) {
           throw InvalidProtocolBufferException.truncatedMessage();
@@ -801,7 +805,8 @@ public final class CodedInputStreamRAF {
       }
     }
   }
-  
+
+  // osmand change
   public void seek(long pointer) throws IOException{
 	  if(pointer - totalBytesRetired >= 0  && pointer - totalBytesRetired < bufferSize){
 		  if (pointer > currentLimit) {
