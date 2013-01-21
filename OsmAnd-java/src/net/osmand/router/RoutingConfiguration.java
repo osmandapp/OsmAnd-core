@@ -5,14 +5,11 @@ import java.io.InputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
+import net.osmand.LogUtil;
 import net.osmand.router.GeneralRouter.GeneralRouterProfile;
 
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 
 public class RoutingConfiguration {
 	
@@ -132,90 +129,103 @@ public class RoutingConfiguration {
 		return DEFAULT;
 	}
 
-	public static RoutingConfiguration.Builder parseFromInputStream(InputStream is) throws SAXException, IOException {
-		try {
-			final SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-			final RoutingConfiguration.Builder config = new RoutingConfiguration.Builder();
-			DefaultHandler handler = new DefaultHandler() {
-				String currentSelectedRouter = null;
-				GeneralRouter currentRouter = null;
-				String previousKey = null;
-				String previousTag = null;
-				@Override
-				public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-					String name = parser.isNamespaceAware() ? localName : qName;
-					if("osmand_routing_config".equals(name)) {
-						config.defaultRouter = attributes.getValue("defaultProfile");
-					} else if("attribute".equals(name)) {
-						if(currentRouter != null) {
-							currentRouter.addAttribute(attributes.getValue("name"), attributes.getValue("value"));
-						} else {
-							config.attributes.put(attributes.getValue("name"), attributes.getValue("value"));
-						}
-					} else if("routingProfile".equals(name)) {
-						currentSelectedRouter = attributes.getValue("name");
-						Map<String, String> attrs = new LinkedHashMap<String, String>();
-						for(int i=0; i< attributes.getLength(); i++) {
-							attrs.put(parser.isNamespaceAware() ? attributes.getLocalName(i) : attributes.getQName(i), attributes.getValue(i));
-						}
-						currentRouter = new GeneralRouter(GeneralRouterProfile.valueOf(attributes.getValue("baseProfile").toUpperCase()), attrs);
-						config.routers.put(currentSelectedRouter, currentRouter);
-					} else if ("specialization".equals(name)) {
-						String in = attributes.getValue("input");
-						if (previousKey != null) {
-							String k = in + ":" + previousKey;
-							if (attributes.getValue("penalty") != null) {
-								float penalty = parseSilentFloat(attributes.getValue("penalty"), 0);
-								currentRouter.obstacles.put(k, penalty);
-								float routingPenalty = parseSilentFloat(attributes.getValue("routingPenalty"), penalty );
-								currentRouter.routingObstacles.put(k, routingPenalty);
-							}
-							if (attributes.getValue("priority") != null) {
-								currentRouter.highwayPriorities.put(k, parseSilentFloat(attributes.getValue("priority"), 0));
-							}
-							if (attributes.getValue("speed") != null) {
-								currentRouter.highwaySpeed.put(k, parseSilentFloat(attributes.getValue("speed"), 0));
-							}
-							if ("attribute".equals(previousTag)) {
-								currentRouter.attributes.put(k, attributes.getValue("value"));
-							}
-							if ("avoid".equals(previousTag)) {
-								float priority = parseSilentFloat(attributes.getValue("decreasedPriority"), 0);
-								if (priority == 0) {
-									currentRouter.avoid.put(k, priority);
-								} else {
-									currentRouter.highwayPriorities.put(k, priority);
-								}
-							}
-						}
-
-					} else {
-						previousKey = attributes.getValue("tag") + "$" + attributes.getValue("value");
-						previousTag = name;
-						if ("road".equals(name)) {
-							currentRouter.highwayPriorities.put(previousKey, parseSilentFloat(attributes.getValue("priority"), 1));
-							currentRouter.highwaySpeed.put(previousKey, parseSilentFloat(attributes.getValue("speed"), 10));
-						} else if ("obstacle".equals(name)) {
-							float penalty = parseSilentFloat(attributes.getValue("penalty"), 0);
-							currentRouter.obstacles.put(previousKey, penalty);
-							float routingPenalty = parseSilentFloat(attributes.getValue("routingPenalty"), penalty);
-							currentRouter.routingObstacles.put(previousKey, routingPenalty);
-						} else if ("avoid".equals(name)) {
-							float priority = parseSilentFloat(attributes.getValue("decreasedPriority"), 0);
-							if (priority == 0) {
-								currentRouter.avoid.put(previousKey, priority);
-							} else {
-								currentRouter.highwayPriorities.put(previousKey, priority);
-							}
-						}
-					}
+	public static RoutingConfiguration.Builder parseFromInputStream(InputStream is) throws IOException, XmlPullParserException {
+		XmlPullParser parser = LogUtil.newXMLPullParser();
+		final RoutingConfiguration.Builder config = new RoutingConfiguration.Builder();
+		GeneralRouter currentRouter = null;
+		String previousKey = null;
+		String previousTag = null;
+		int tok;
+		parser.setInput(is, "UTF-8");
+		while ((tok = parser.next()) != XmlPullParser.END_DOCUMENT) {
+			if (tok == XmlPullParser.START_TAG) {
+				String name = parser.getName();
+				if ("osmand_routing_config".equals(name)) {
+					config.defaultRouter = parser.getAttributeValue("", "defaultProfile");
+				} else if ("attribute".equals(name)) {
+					parseAttribute(parser, config, currentRouter);
+				} else if ("routingProfile".equals(name)) {
+					currentRouter = parseRoutingProfile(parser, config);
+				} else if ("specialization".equals(name)) {
+					parseSpecialization(parser, currentRouter, previousKey, previousTag);
+				} else {
+					previousKey = parser.getAttributeValue("", "tag") + "$" + parser.getAttributeValue("", "value");
+					previousTag = name;
+					parseCurrentRule(parser, currentRouter, previousKey, name);
 				}
+			}
+		}
+		return config;
+	}
 
-			};
-			parser.parse(is, handler);
-			return config;
-		} catch (Exception e) {
-			throw new SAXException(e);
+	private static void parseCurrentRule(XmlPullParser parser, GeneralRouter currentRouter, String key, String name) {
+		if ("road".equals(name)) {
+			currentRouter.highwayPriorities.put(key, parseSilentFloat(parser.getAttributeValue("", "priority"), 1));
+			currentRouter.highwaySpeed.put(key, parseSilentFloat(parser.getAttributeValue("", "speed"), 10));
+		} else if ("obstacle".equals(name)) {
+			float penalty = parseSilentFloat(parser.getAttributeValue("", "penalty"), 0);
+			currentRouter.obstacles.put(key, penalty);
+			float routingPenalty = parseSilentFloat(parser.getAttributeValue("", "routingPenalty"), penalty);
+			currentRouter.routingObstacles.put(key, routingPenalty);
+		} else if ("avoid".equals(name)) {
+			float priority = parseSilentFloat(parser.getAttributeValue("", "decreasedPriority"), 0);
+			if (priority == 0) {
+				currentRouter.avoid.put(key, priority);
+			} else {
+				currentRouter.highwayPriorities.put(key, priority);
+			}
+		}
+	}
+
+	private static void parseSpecialization(XmlPullParser parser, GeneralRouter currentRouter, String previousKey, String previousTag) {
+		String in = parser.getAttributeValue("","input");
+		if (previousKey != null) {
+			String k = in + ":" + previousKey;
+			if (parser.getAttributeValue("","penalty") != null) {
+				float penalty = parseSilentFloat(parser.getAttributeValue("","penalty"), 0);
+				currentRouter.obstacles.put(k, penalty);
+				float routingPenalty = parseSilentFloat(parser.getAttributeValue("","routingPenalty"), penalty );
+				currentRouter.routingObstacles.put(k, routingPenalty);
+			}
+			if (parser.getAttributeValue("","priority") != null) {
+				currentRouter.highwayPriorities.put(k, parseSilentFloat(parser.getAttributeValue("","priority"), 0));
+			}
+			if (parser.getAttributeValue("","speed") != null) {
+				currentRouter.highwaySpeed.put(k, parseSilentFloat(parser.getAttributeValue("","speed"), 0));
+			}
+			if ("attribute".equals(previousTag)) {
+				currentRouter.attributes.put(k, parser.getAttributeValue("","value"));
+			}
+			if ("avoid".equals(previousTag)) {
+				float priority = parseSilentFloat(parser.getAttributeValue("","decreasedPriority"), 0);
+				if (priority == 0) {
+					currentRouter.avoid.put(k, priority);
+				} else {
+					currentRouter.highwayPriorities.put(k, priority);
+				}
+			}
+		}
+	}
+
+	private static GeneralRouter parseRoutingProfile(XmlPullParser parser, final RoutingConfiguration.Builder config) {
+		GeneralRouter currentRouter;
+		String currentSelectedRouter = parser.getAttributeValue("", "name");
+		Map<String, String> attrs = new LinkedHashMap<String, String>();
+		for(int i=0; i< parser.getAttributeCount(); i++) {
+			attrs.put(parser.getAttributeName(i), parser.getAttributeValue(i));
+		}
+		currentRouter = new GeneralRouter(GeneralRouterProfile.valueOf(parser.getAttributeValue("", "baseProfile").toUpperCase()), attrs);
+		config.routers.put(currentSelectedRouter, currentRouter);
+		return currentRouter;
+	}
+
+	private static void parseAttribute(XmlPullParser parser, final RoutingConfiguration.Builder config, GeneralRouter currentRouter) {
+		if(currentRouter != null) {
+			currentRouter.addAttribute(parser.getAttributeValue("", "name"), 
+					parser.getAttributeValue("", "value"));
+		} else {
+			config.attributes.put(parser.getAttributeValue("", "name"), 
+					parser.getAttributeValue("", "value"));
 		}
 	}
 	

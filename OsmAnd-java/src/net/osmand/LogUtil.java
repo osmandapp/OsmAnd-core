@@ -2,6 +2,8 @@ package net.osmand;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 
 /**
  * That class is replacing of standard LogFactory due to 
@@ -15,6 +17,10 @@ public class LogUtil {
 	
 	public static Log getLog(Class<?> cl){
 		return LogFactory.getLog(cl);
+	}
+	
+	public static XmlPullParser newXMLPullParser() throws XmlPullParserException{
+		return new org.kxml2.io.KXmlParser();
 	}
 
 }

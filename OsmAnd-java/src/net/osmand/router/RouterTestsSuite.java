@@ -21,6 +21,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xmlpull.v1.XmlPullParserException;
 
 public class RouterTestsSuite {
 	
@@ -33,7 +34,7 @@ public class RouterTestsSuite {
 		public List<File> tests = new ArrayList<File>();
 		public RoutingConfiguration.Builder configBuilder;
 		
-		public static Parameters init(String[] args) throws SAXException, IOException {
+		public static Parameters init(String[] args) throws IOException, XmlPullParserException {
 			Parameters p = new Parameters();
 			String routingXmlFile = null;
 			String obfDirectory = null;

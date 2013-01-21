@@ -50,6 +50,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xmlpull.v1.XmlPullParserException;
 
 
 public class RouteProvider {
@@ -314,7 +315,7 @@ public class RouteProvider {
 		if (routingXml.exists() && routingXml.canRead()) {
 			try {
 				config = RoutingConfiguration.parseFromInputStream(new FileInputStream(routingXml));
-			} catch (SAXException e) {
+			} catch (XmlPullParserException e) {
 				throw new IllegalStateException(e);
 			}
 		} else {
