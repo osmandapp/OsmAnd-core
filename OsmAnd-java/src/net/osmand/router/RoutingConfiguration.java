@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
@@ -215,7 +214,7 @@ public class RoutingConfiguration {
 			};
 			parser.parse(is, handler);
 			return config;
-		} catch (ParserConfigurationException e) {
+		} catch (Exception e) {
 			throw new SAXException(e);
 		}
 	}
