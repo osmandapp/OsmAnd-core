@@ -52,7 +52,7 @@ public class RoutingHelper {
 	private Location lastProjection;
 	private Location lastFixedLocation;
 	
-	private RouteRecalculationThread currentRunningJob;
+	private Thread currentRunningJob;
 	private long lastTimeEvaluatedRoute = 0;
 	private int evalWaitInterval = 3000;
 	
@@ -125,8 +125,8 @@ public class RoutingHelper {
 		});
 		this.finalLocation = newFinalLocation;
 		this.intermediatePoints = newIntermediatePoints;
-		if(currentRunningJob != null) {
-			currentRunningJob.stopCalculation();
+		if(currentRunningJob instanceof RouteRecalculationThread) {
+			((RouteRecalculationThread) currentRunningJob).stopCalculation();
 		}
 		if (newFinalLocation == null) {
 			settings.FOLLOW_THE_ROUTE.set(false);
@@ -668,6 +668,27 @@ public class RoutingHelper {
 		}
 	}
 	
+	public Thread startTaskInRouteThreadIfPossible(final Runnable r) {
+		if(currentRunningJob == null) {
+			synchronized (this) {
+				currentRunningJob = new Thread(new Runnable() {
+					@Override
+					public void run() {
+						try {
+							r.run();
+						} finally {
+							synchronized (RoutingHelper.this) {
+								currentRunningJob = null;
+							}
+						}
+					}
+				}, "Calculating position"); //$NON-NLS-1$
+				currentRunningJob.start();
+			}
+		}
+		return currentRunningJob;
+	}
+	
 	
 	private void updateProgress(final RouteCalculationProgress calculationProgress) {
 		if(progressRoute != null) {
@@ -705,7 +726,7 @@ public class RoutingHelper {
 
 
 	public boolean isRouteBeingCalculated(){
-		return currentRunningJob != null;
+		return currentRunningJob instanceof RouteRecalculationThread;
 	}
 	
 	private void showMessage(final String msg){

@@ -8,6 +8,7 @@ import net.osmand.plus.api.InternalToDoAPI;
 import net.osmand.plus.api.SQLiteAPI;
 import net.osmand.plus.api.SettingsAPI;
 import net.osmand.plus.render.RendererRegistry;
+import net.osmand.plus.routing.RoutingHelper;
 
 
 /*
@@ -40,4 +41,6 @@ public interface ClientContext {
 	public void runInUIThread(Runnable run);
 
 	public void runInUIThread(Runnable run, long delay);
+	
+	public RoutingHelper getRoutingHelper();
 }

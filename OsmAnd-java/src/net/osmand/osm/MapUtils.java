@@ -544,6 +544,7 @@ public class MapUtils {
 		double multiple = convert31XToMeters(xB, xA) * convert31XToMeters(xC, xA) + convert31YToMeters(yB, yA) * convert31YToMeters(yC, yA);
 		return multiple;
 	}
+	
 }
 
 
