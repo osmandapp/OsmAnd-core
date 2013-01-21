@@ -8,19 +8,17 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.xml.parsers.DocumentBuilderFactory;
-
+import net.osmand.LogUtil;
 import net.osmand.NativeLibrary;
 import net.osmand.binary.BinaryMapIndexReader;
 import net.osmand.router.BinaryRoutePlanner.FinalRouteSegment;
 import net.osmand.router.BinaryRoutePlanner.RouteSegment;
 import net.osmand.router.RoutingConfiguration.Builder;
 
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 public class RouterTestsSuite {
@@ -126,21 +124,28 @@ public class RouterTestsSuite {
 
 
 	public static boolean test(NativeLibrary lib, InputStream resource, BinaryMapIndexReader[] rs, RoutingConfiguration.Builder config) throws Exception {
-		Document testSuite = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new InputSource(resource));
-		NodeList tests = testSuite.getElementsByTagName("test");
-		for (int i = 0; i < tests.getLength(); i++) {
-			Element e = (Element) tests.item(i);
-			testRoute(e, config, lib, rs);
+		XmlPullParser parser = LogUtil.newXMLPullParser();
+		parser.setInput(resource, "UTF-8");
+		int tok;
+		parser.setInput(resource, "UTF-8");
+		while ((tok = parser.next()) != XmlPullParser.END_DOCUMENT) {
+			if (tok == XmlPullParser.START_TAG) {
+				String name = parser.getName();
+				if(name.equals("test")){
+					testRoute(parser, config, lib, rs);
+				}
+			}
 		}
 
 		return true;
 	}
 	
-	private static float parseFloat(Element e, String attr) {
-		if(e.getAttribute(attr) == null || e.getAttribute(attr).length() == 0){
+	private static float parseFloat(XmlPullParser parser, String attr) {
+		String v = parser.getAttributeValue("", attr);
+		if(v == null || v.length() == 0){
 			return 0;
 		}
-		return Float.parseFloat(e.getAttribute(attr));
+		return Float.parseFloat(v);
 	}
 	private static boolean isInOrLess(float expected, float value, float percent){
 		if(equalPercent(expected, value, percent)){
@@ -160,15 +165,15 @@ public class RouterTestsSuite {
 		return false;
 	}
 
-	private static void testRoute(Element testCase, Builder config, NativeLibrary lib, BinaryMapIndexReader[] rs) throws IOException, SAXException, InterruptedException {
-		String vehicle = testCase.getAttribute("vehicle");
-		int loadedTiles = (int) parseFloat(testCase, "loadedTiles");
-		int visitedSegments = (int) parseFloat(testCase, "visitedSegments");
-		int complete_time = (int) parseFloat(testCase, "complete_time");
-		int routing_time = (int) parseFloat(testCase, "routing_time");
-		int complete_distance = (int) parseFloat(testCase, "complete_distance");
-		float percent = parseFloat(testCase, "best_percent");
-		String testDescription = testCase.getAttribute("description");
+	private static void testRoute(XmlPullParser parser, Builder config, NativeLibrary lib, BinaryMapIndexReader[] rs) throws IOException, SAXException, InterruptedException {
+		String vehicle = parser.getAttributeValue("", "vehicle");
+		int loadedTiles = (int) parseFloat(parser, "loadedTiles");
+		int visitedSegments = (int) parseFloat(parser, "visitedSegments");
+		int complete_time = (int) parseFloat(parser, "complete_time");
+		int routing_time = (int) parseFloat(parser, "routing_time");
+		int complete_distance = (int) parseFloat(parser, "complete_distance");
+		float percent = parseFloat(parser, "best_percent");
+		String testDescription = parser.getAttributeValue("", "description");
 		if(percent == 0){
 			System.err.println("\n\n!! Skipped test case '" + testDescription + "' because 'best_percent' attribute is not specified \n\n" );
 			return;
@@ -177,18 +182,18 @@ public class RouterTestsSuite {
 		RoutePlannerFrontEnd router = new RoutePlannerFrontEnd(false);
 		RoutingContext ctx = new RoutingContext(rconfig, 
 				lib, rs);
-		String skip = testCase.getAttribute("skip_comment");
+		String skip = parser.getAttributeValue("", "skip_comment");
 		if (skip != null && skip.length() > 0) {
 			System.err.println("\n\n!! Skipped test case '" + testDescription + "' because '" + skip + "'\n\n" );
 			return;
 		}
 		System.out.println("Run test " + testDescription);
 		
-		double startLat = Double.parseDouble(testCase.getAttribute("start_lat"));
-		double startLon = Double.parseDouble(testCase.getAttribute("start_lon"));
+		double startLat = Double.parseDouble(parser.getAttributeValue("", "start_lat"));
+		double startLon = Double.parseDouble(parser.getAttributeValue("", "start_lon"));
 		RouteSegment startSegment = router.findRouteSegment(startLat, startLon, ctx);
-		double endLat = Double.parseDouble(testCase.getAttribute("target_lat"));
-		double endLon = Double.parseDouble(testCase.getAttribute("target_lon"));
+		double endLat = Double.parseDouble(parser.getAttributeValue("", "target_lat"));
+		double endLon = Double.parseDouble(parser.getAttributeValue("", "target_lon"));
 		RouteSegment endSegment = router.findRouteSegment(endLat, endLon, ctx);
 		if(startSegment == null){
 			throw new IllegalArgumentException("Start segment is not found for test : " + testDescription);

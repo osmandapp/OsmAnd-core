@@ -537,10 +537,10 @@ public class RouteResultPreparation {
 			};	
 		} else {
 			RouteSegment rt = ctx.loadRouteSegment(road.getPoint31XTile(pointInd), road.getPoint31YTile(pointInd), ctx.config.memoryLimitation);
-			it = rt.getIterator();
+			it = rt == null ? null : rt.getIterator();
 		}
 		// try to attach all segments except with current id
-		while (it.hasNext()) {
+		while (it != null && it.hasNext()) {
 			RouteSegment routeSegment = it.next();
 			if (routeSegment.road.getId() != road.getId() && routeSegment.road.getId() != previousRoadId) {
 				RouteDataObject addRoad = routeSegment.road;
