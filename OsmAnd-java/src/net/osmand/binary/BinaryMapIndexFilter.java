@@ -9,7 +9,7 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -82,7 +82,7 @@ public class BinaryMapIndexFilter {
 	
 	private Stat process(final int zoom) throws IOException {
 		final Stat stat = new Stat();
-		final Map<TagValuePair, Integer> map = new LinkedHashMap<TagValuePair, Integer>();
+		final Map<TagValuePair, Integer> map = new HashMap<TagValuePair, Integer>();
 		SearchFilter sf = new SearchFilter() {
 			@Override
 			public boolean accept(TIntArrayList types, MapIndex index) {

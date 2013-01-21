@@ -14,7 +14,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -1461,7 +1460,7 @@ public class BinaryMapIndexReader {
 	public static class MapIndex extends BinaryIndexPart {
 		List<MapRoot> roots = new ArrayList<MapRoot>();
 		
-		Map<String, Map<String, Integer>> encodingRules = new LinkedHashMap<String, Map<String, Integer>>();
+		Map<String, Map<String, Integer>> encodingRules = new HashMap<String, Map<String, Integer>>();
 		TIntObjectMap<TagValuePair> decodingRules = new TIntObjectHashMap<TagValuePair>();
 		public int nameEncodingType = 0;
 		public int refEncodingType = -1;
@@ -1501,7 +1500,7 @@ public class BinaryMapIndexReader {
 		
 		public void initMapEncodingRule(int type, int id, String tag, String val) {
 			if(!encodingRules.containsKey(tag)){
-				encodingRules.put(tag, new LinkedHashMap<String, Integer>());
+				encodingRules.put(tag, new HashMap<String, Integer>());
 			}
 			encodingRules.get(tag).put(val, id);
 			if(!decodingRules.containsKey(id)){
@@ -1854,7 +1853,7 @@ public class BinaryMapIndexReader {
 	private static void testAddressSearch(BinaryMapIndexReader reader) throws IOException {
 		// test address index search
 		String reg = reader.getRegionNames().get(0);
-		final Map<String, Integer> streetFreq = new LinkedHashMap<String, Integer>();
+		final Map<String, Integer> streetFreq = new HashMap<String, Integer>();
 		List<City> cs = reader.getCities(reg, null, BinaryMapAddressReaderAdapter.CITY_TOWN_TYPE);
 		for(City c : cs){
 			int buildings = 0;

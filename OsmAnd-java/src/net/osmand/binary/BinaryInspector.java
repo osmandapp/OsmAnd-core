@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -133,7 +133,7 @@ public class BinaryInspector {
 				if (args.length < 4) {
 					printUsage("Too few parameters to extract (require minimum 4)");
 				} else {
-					Map<File, String> parts = new LinkedHashMap<File, String>();
+					Map<File, String> parts = new HashMap<File, String>();
 					for (int i = 2; i < args.length; i++) {
 						File file = new File(args[i]);
 						if (!file.exists()) {
@@ -321,12 +321,12 @@ public class BinaryInspector {
 		double r = MapUtils.get31LongitudeX(right);
 		double t = MapUtils.get31LatitudeY(top);
 		double b = MapUtils.get31LatitudeY(bottom);
-		MessageFormat format = new MessageFormat("(left top - right bottom) : {0}, {1} NE - {2}, {3} NE", Locale.US);
+		MessageFormat format = new MessageFormat("(left top - right bottom) : {0}, {1} NE - {2}, {3} NE", new Locale("EN", "US"));
 		return format.format(new Object[]{l, t, r, b}); 
 	}
 	
 	protected static String formatLatBounds(double l, double r, double t, double b){
-		MessageFormat format = new MessageFormat("(left top - right bottom) : {0}, {1} NE - {2}, {3} NE", Locale.US);
+		MessageFormat format = new MessageFormat("(left top - right bottom) : {0}, {1} NE - {2}, {3} NE", new Locale("EN", "US"));
 		return format.format(new Object[]{l, t, r, b}); 
 	}
 	
