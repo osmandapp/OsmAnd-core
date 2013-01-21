@@ -91,16 +91,19 @@ public class RouterTestsSuite {
 				files.add(f);
 			}
 		}
+		System.out.println("Obf directory : ");
 		BinaryMapIndexReader[] rs = new BinaryMapIndexReader[files.size()];
 		int it = 0;
 		for (File f : files) {
-			RandomAccessFile raf = new RandomAccessFile(f, "r"); //$NON-NLS-1$ //$NON-NLS-2$
+			RandomAccessFile raf = new RandomAccessFile(f.getAbsolutePath(), "r"); //$NON-NLS-1$ //$NON-NLS-2$
+			System.out.println(f.getName());
 			rs[it++] = new BinaryMapIndexReader(raf);
 		}
 		
 		boolean allSuccess = true;
-		
 		for(File f : params.tests) {
+			System.out.println("Before test " + f.getAbsolutePath());
+			System.out.flush();
 			allSuccess &= test(null, new FileInputStream(f), rs, params.configBuilder);	
 		}
 		if (allSuccess) {
