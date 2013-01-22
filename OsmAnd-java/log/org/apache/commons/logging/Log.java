@@ -1,62 +1,28 @@
 package org.apache.commons.logging;
 
-public class Log {
+public interface Log {
+	public void debug(Object msg);
+	
+	public void debug(Object msg, Exception e);
+	
+	public boolean isDebugEnabled();
 
-	private Class<?> cl;
+	public void info(Object msg) ;
+	
+	public void info(Object msg, Exception e);
+	
+	public boolean isInfoEnabled();
 
-	public Log(Class<?> cl) {
-		this.cl = cl;
-	}
+	public void error(Object msg) ;
 	
-	private void log(String type, Object msg, Exception e){
-		System.out.println(type.toUpperCase() + ": " + cl.getSimpleName() + "  " +msg);
-		if(e != null) {
-			e.printStackTrace();
-		}
-	}
-
-	public void debug(Object msg) {
-		log("DEBUG", msg, null);
-	}
+	public void error(Object msg, Exception e);
 	
-	public void debug(Object msg, Exception e) {
-		log("DEBUG", msg, e);
-	}
-	public boolean isDebugEnabled(){
-		return true;
-	}
-
-	public void info(Object msg) {
-		log("INFO", msg, null);
-	}
+	public boolean isErrorEnabled();
 	
-	public void info(Object msg, Exception e) {
-		log("INFO", msg, e);
-	}
-	public boolean isInfoEnabled(){
-		return true;
-	}
-
-	public void error(Object msg) {
-		log("ERROR", msg, null);
-	}
+	public void warn(Object msg);
 	
-	public void error(Object msg, Exception e) {
-		log("ERROR", msg, e);
-	}
-	public boolean isErrorEnabled(){
-		return true;
-	}
+	public void warn(Object msg, Exception e);
 	
-	public void warn(Object msg) {
-		log("WARN", msg, null);
-	}
-	
-	public void warn(Object msg, Exception e) {
-		log("WARN", msg, e);
-	}
-	public boolean isWarnEnabled(){
-		return true;
-	}
+	public boolean isWarnEnabled();
 
 }

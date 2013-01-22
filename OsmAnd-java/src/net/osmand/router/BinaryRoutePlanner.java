@@ -3,6 +3,7 @@ package net.osmand.router;
 import gnu.trove.map.hash.TLongObjectHashMap;
 
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;

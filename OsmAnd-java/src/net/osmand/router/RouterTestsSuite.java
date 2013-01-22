@@ -25,8 +25,8 @@ import org.xmlpull.v1.XmlPullParserException;
 public class RouterTestsSuite {
 	
 	public static int MEMORY_TEST_LIMIT = 800;
-	public static boolean TEST_WO_HEURISTIC = false; 
-	public static boolean TEST_BOTH_DIRECTION = false;
+	public static boolean TEST_WO_HEURISTIC = true; 
+	public static boolean TEST_BOTH_DIRECTION = true;
 	
 	private static class Parameters {
 		public File obfDir;
