@@ -484,7 +484,7 @@ public class TileSourceManager {
 		@Override
 		public String getUrlToLoad(int x, int y, int zoom) {
 			try {
-				return (String) bshInterpreter.eval(String.format("getTileUrl(%d,%d,%d);", zoom, x, y));
+				return (String) bshInterpreter.eval("getTileUrl("+zoom+","+x+","+y+");");
 			} catch (bsh.EvalError e) {
 				log.error(e.getMessage(), e);
 				return null;

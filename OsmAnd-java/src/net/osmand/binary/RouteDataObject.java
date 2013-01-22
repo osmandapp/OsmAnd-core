@@ -1,6 +1,8 @@
 package net.osmand.binary;
 
 
+import java.text.MessageFormat;
+
 import gnu.trove.map.hash.TIntObjectHashMap;
 import net.osmand.binary.BinaryMapRouteReaderAdapter.RouteRegion;
 import net.osmand.binary.BinaryMapRouteReaderAdapter.RouteTypeRule;
@@ -253,6 +255,6 @@ public class RouteDataObject {
 	public String toString() {
 		String name = getName();
 		String rf = getRef();
-		return String.format("Road id %s name %s ref %s", getId()+"", name == null ? "" : name, rf == null ? "" : rf);
+		return MessageFormat.format("Road id {0} name {1} ref {2}", getId()+"", name == null ? "" : name, rf == null ? "" : rf);
 	}
 }

@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,8 +25,8 @@ import org.xmlpull.v1.XmlPullParserException;
 public class RouterTestsSuite {
 	
 	public static int MEMORY_TEST_LIMIT = 800;
-	public static boolean TEST_WO_HEURISTIC = true; 
-	public static boolean TEST_BOTH_DIRECTION = true;
+	public static boolean TEST_WO_HEURISTIC = false; 
+	public static boolean TEST_BOTH_DIRECTION = false;
 	
 	private static class Parameters {
 		public File obfDir;
@@ -76,6 +77,7 @@ public class RouterTestsSuite {
 			info();
 			return;
 		}
+		long time = System.currentTimeMillis();
 		Parameters params = Parameters.init(args);
 		if(params.tests.isEmpty() || params.obfDir == null) {
 			info();
@@ -105,7 +107,7 @@ public class RouterTestsSuite {
 			allSuccess &= test(null, new FileInputStream(f), rs, params.configBuilder);	
 		}
 		if (allSuccess) {
-			System.out.println("All is successfull");
+			System.out.println("All is successfull " + (System.currentTimeMillis() - time) + " ms");
 		}
 
 	}
@@ -210,30 +212,30 @@ public class RouterTestsSuite {
 			completeDistance += route.get(i).getDistance();
 		}
 		if(complete_time > 0 && !isInOrLess(complete_time, completeTime, percent)) {
-			throw new IllegalArgumentException(String.format("Complete time (expected) %s != %s (original) : %s", complete_time, completeTime, testDescription));
+			throw new IllegalArgumentException(MessageFormat.format("Complete time (expected) {0} != {1} (original) : {2}", complete_time, completeTime, testDescription));
 		}
 		if(complete_distance > 0 && !isInOrLess(complete_distance, completeDistance, percent)) {
-			throw new IllegalArgumentException(String.format("Complete distance (expected) %s != %s (original) : %s", complete_distance, completeDistance, testDescription));
+			throw new IllegalArgumentException(MessageFormat.format("Complete distance (expected) {0} != {1} (original) : {2}", complete_distance, completeDistance, testDescription));
 		}
 		if(routing_time > 0 && !isInOrLess(routing_time, calcRoutingTime, percent)) {
-			throw new IllegalArgumentException(String.format("Complete routing time (expected) %s != %s (original) : %s", routing_time, calcRoutingTime, testDescription));
+			throw new IllegalArgumentException(MessageFormat.format("Complete routing time (expected) {0} != {1} (original) : {2}", routing_time, calcRoutingTime, testDescription));
 		}
 
 		if (visitedSegments > 0 && !isInOrLess(visitedSegments, ctx.visitedSegments, percent)) {
-			throw new IllegalArgumentException(String.format("Visited segments (expected) %s != %s (original) : %s", visitedSegments,
+			throw new IllegalArgumentException(MessageFormat.format("Visited segments (expected) {0} != {1} (original) : {2}", visitedSegments,
 					ctx.visitedSegments, testDescription));
 		}
 		if (loadedTiles > 0 && !isInOrLess(loadedTiles, ctx.loadedTiles, percent)) {
-			throw new IllegalArgumentException(String.format("Loaded tiles (expected) %s != %s (original) : %s", loadedTiles,
+			throw new IllegalArgumentException(MessageFormat.format("Loaded tiles (expected) {0} != {1} (original) : {2}", loadedTiles,
 					ctx.loadedTiles, testDescription));
 		}
 		
 		if(TEST_BOTH_DIRECTION){
 			rconfig.planRoadDirection = -1;
-			runTestSpecialTest(lib, rs, rconfig, router, startSegment, endSegment, calcRoutingTime, "Calculated routing time in both direction %s != %s time in -1 direction");
+			runTestSpecialTest(lib, rs, rconfig, router, startSegment, endSegment, calcRoutingTime, "Calculated routing time in both direction {0} != {1} time in -1 direction");
 			
 			rconfig.planRoadDirection = 1;
-			runTestSpecialTest(lib, rs, rconfig, router, startSegment, endSegment, calcRoutingTime, "Calculated routing time in both direction %s != %s time in 1 direction");
+			runTestSpecialTest(lib, rs, rconfig, router, startSegment, endSegment, calcRoutingTime, "Calculated routing time in both direction {0} != {1} time in 1 direction");
 			
 		}
 		
@@ -241,7 +243,7 @@ public class RouterTestsSuite {
 			rconfig.planRoadDirection = 0;
 			rconfig.heuristicCoefficient = 0.5f;
 			runTestSpecialTest(lib, rs, rconfig, router, startSegment, endSegment, calcRoutingTime, 
-				"Calculated routing time with heuristic 1 %s != %s with heuristic 0.5");
+				"Calculated routing time with heuristic 1 {0} != {1} with heuristic 0.5");
 		}
 		
 	}
@@ -254,7 +256,7 @@ public class RouterTestsSuite {
 		router.searchRoute(ctx, startSegment, endSegment, false);
 		FinalRouteSegment frs = ctx.finalRouteSegment;
 		if(frs == null || !equalPercent(calcRoutingTime, frs.distanceFromStart, 0.5f)){
-			throw new IllegalArgumentException(String.format(msg, calcRoutingTime+"",frs == null?"0":frs.distanceFromStart+""));
+			throw new IllegalArgumentException(MessageFormat.format(msg, calcRoutingTime+"",frs == null?"0":frs.distanceFromStart+""));
 		}
 	}
 

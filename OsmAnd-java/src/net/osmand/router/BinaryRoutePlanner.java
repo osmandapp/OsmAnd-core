@@ -810,7 +810,7 @@ public class BinaryRoutePlanner {
 		}
 		
 		public String getTestName(){
-			return String.format("s%.2f e%.2f", ((float)distanceFromStart), ((float)distanceToEnd));
+			return MessageFormat.format("s{0,number,#.##} e{1,number,#.##}", ((float)distanceFromStart), ((float)distanceToEnd));
 		}
 		
 		
