@@ -11,14 +11,14 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${OSMAND_OUTPUT_ROOT}")
 
 # For gcc family, ensure that there are no undefined symbols
 if(CMAKE_COMPILER_FAMILY STREQUAL "gcc")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--no-undefined")
+	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--no-undefined")
 endif()
 
 # For gcc and clang, allow all warnings
 if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 endif()
 
 # Include CPU specific settings
@@ -28,10 +28,10 @@ endif()
 
 # Take CMAKE_*_COMPILER_FLAGS if needed
 if(CMAKE_C_COMPILER_FLAGS)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_COMPILER_FLAGS}")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_COMPILER_FLAGS}")
 endif()
 if(CMAKE_CXX_COMPILER_FLAGS)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_COMPILER_FLAGS}")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_COMPILER_FLAGS}")
 endif()
 
 # External : z
@@ -39,7 +39,7 @@ add_subdirectory("${OSMAND_PROJECTS_ROOT}/zlib" "zlib")
 
 # External : png
 add_subdirectory("${OSMAND_PROJECTS_ROOT}/libpng" "libpng")
-add_dependencies(png z)
+add_dependencies(png_osmand z_osmand)
 
 # External : expat
 add_subdirectory("${OSMAND_PROJECTS_ROOT}/expat" "expat")
@@ -61,8 +61,8 @@ add_subdirectory("${OSMAND_PROJECTS_ROOT}/protobuf" "protobuf")
 
 # External : skia
 add_subdirectory("${OSMAND_PROJECTS_ROOT}/skia" "skia")
-add_dependencies(skia z png gif jpeg harfbuzza expat freetype2)
+add_dependencies(skia_osmand png_osmand gif_osmand jpeg_osmand harfbuzz_osmand expat_osmand freetype2_osmand)
 
 # OsmAnd core
 add_subdirectory("${OSMAND_PROJECTS_ROOT}/OsmAndCore" "OsmAndCore")
-add_dependencies(osmand	harfbuzz skia protobuf)
+add_dependencies(osmand	skia_osmand protobuf_osmand)

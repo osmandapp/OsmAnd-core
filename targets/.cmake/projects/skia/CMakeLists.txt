@@ -1,4 +1,6 @@
-project(skia)
+project(skia_osmand)
+
+include("../../common.cmake")
 
 set(ROOT "${OSMAND_ROOT}/externals/skia")
 set(UPSTREAM "${ROOT}/upstream.patched")
@@ -75,6 +77,7 @@ elseif(CMAKE_TARGET_OS STREQUAL "linux")
 		"${UPSTREAM}/src/ports/SkFontHost_FreeType.cpp"
 		"${UPSTREAM}/src/ports/SkFontHost_linux.cpp"
 		"${UPSTREAM}/src/core/SkMMapStream.cpp"
+		"${UPSTREAM}/src/utils/SkThreadUtils_pthread.cpp"
 	)
 	add_definitions(-DSK_BUILD_FOR_UNIX)
 endif()
@@ -82,8 +85,8 @@ if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fno-rtti -fno-exceptions")
 endif()
 
-add_library(skia STATIC
-    "${UPSTREAM}/src/core/Sk64.cpp"
+add_library(skia_osmand STATIC
+	"${UPSTREAM}/src/core/Sk64.cpp"
 	"${UPSTREAM}/src/core/SkAAClip.cpp"
 	"${UPSTREAM}/src/core/SkAdvancedTypefaceMetrics.cpp"
 	"${UPSTREAM}/src/core/SkAlphaRuns.cpp"
@@ -296,7 +299,7 @@ add_library(skia STATIC
 	"${UPSTREAM}/src/utils/SkParsePath.cpp"
 	"${UPSTREAM}/src/utils/SkPictureUtils.cpp"
 	"${UPSTREAM}/src/utils/SkProxyCanvas.cpp"
-	#"${UPSTREAM}/src/utils/SkThreadPool.cpp"
+	"${UPSTREAM}/src/utils/SkThreadPool.cpp"
 	"${UPSTREAM}/src/utils/SkUnitMappers.cpp"
 	"${UPSTREAM}/src/ports/SkFontDescriptor.cpp"
 	"${UPSTREAM}/src/pipe/SkGPipeRead.cpp"
@@ -304,29 +307,18 @@ add_library(skia STATIC
 	${target_specific_sources}
 )
 
-if(CMAKE_COMPILER_FAMILY STREQUAL "gcc")
-	set(USE_WHOLE_LIBRARIES "-Wl,-whole-archive")
-	set(USE_WHOLE_LIBRARY "")
-	set(DONT_USE_WHOLE_LIBRARIES "-Wl,-no-whole-archive")
-else()
-	set(USE_WHOLE_LIBRARIES "")
-	set(USE_WHOLE_LIBRARY "")
-	set(DONT_USE_WHOLE_LIBRARIES "")
-endif()
-
-target_link_libraries(skia LINK_PRIVATE
-	${USE_WHOLE_LIBRARIES}
-		${USE_WHOLE_LIBRARY} png
-		${USE_WHOLE_LIBRARY} gif
-		${USE_WHOLE_LIBRARY} jpeg
-	${DONT_USE_WHOLE_LIBRARIES}	
-	expat
-	freetype2
-	harfbuzz
+#target_link_libraries(skia_osmand LINK_PUBLIC ${USE_WHOLE_LIBRARY_}png_osmand${_USE_WHOLE_LIBRARY})
+#target_link_libraries(skia_osmand LINK_PUBLIC ${USE_WHOLE_LIBRARY_}z_osmand${_USE_WHOLE_LIBRARY}) # This is workaround
+#target_link_libraries(skia_osmand LINK_PUBLIC ${USE_WHOLE_LIBRARY_}gif_osmand${_USE_WHOLE_LIBRARY})
+#target_link_libraries(skia_osmand LINK_PUBLIC ${USE_WHOLE_LIBRARY_}jpeg_osmand${_USE_WHOLE_LIBRARY})
+target_link_libraries(skia_osmand LINK_PUBLIC
+	expat_osmand
+	freetype2_osmand
+	harfbuzz_osmand
 )
 	
-if((CMAKE_TARGET_OS STREQUAL "linux") OR (CMAKE_TARGET_OS STREQUAL "darwin"))
-	target_link_libraries(skia LINK_PRIVATE
+if(CMAKE_TARGET_OS STREQUAL "linux")
+	target_link_libraries(skia_osmand LINK_PUBLIC
 		pthread
 	)
 endif()

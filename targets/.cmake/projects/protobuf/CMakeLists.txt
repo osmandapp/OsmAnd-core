@@ -1,4 +1,4 @@
-project(protobuf)
+project(protobuf_osmand)
 
 set(ROOT "${OSMAND_ROOT}/externals/protobuf")
 set(UPSTREAM "${ROOT}/upstream.patched")
@@ -10,7 +10,7 @@ add_definitions(-DGOOGLE_PROTOBUF_NO_RTTI)
 if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 endif()
-add_library(protobuf STATIC
+add_library(protobuf_osmand STATIC
     "${UPSTREAM}/src/google/protobuf/extension_set.cc"
 	"${UPSTREAM}/src/google/protobuf/generated_message_util.cc"
 	"${UPSTREAM}/src/google/protobuf/io/coded_stream.cc"

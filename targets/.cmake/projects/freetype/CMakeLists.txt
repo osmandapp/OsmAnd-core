@@ -1,4 +1,4 @@
-project(freetype2)
+project(freetype2_osmand)
 
 set(ROOT "${OSMAND_ROOT}/externals/freetype")
 set(UPSTREAM "${ROOT}/upstream.patched")
@@ -10,7 +10,7 @@ add_definitions(-DFT2_BUILD_LIBRARY -DFT_CONFIG_MODULES_H=<ftmodule-override.h>)
 if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 endif()
-add_library(freetype2 STATIC
+add_library(freetype2_osmand STATIC
     "${UPSTREAM}/src/base/ftbase.c"
 	"${UPSTREAM}/src/base/ftbbox.c"
 	"${UPSTREAM}/src/base/ftbitmap.c"

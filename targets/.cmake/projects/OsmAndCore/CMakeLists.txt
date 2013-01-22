@@ -1,5 +1,7 @@
 project(osmand)
 
+include("../../common.cmake")
+
 set(ROOT "${OSMAND_ROOT}/native")
 include_directories(AFTER SYSTEM
 	"${OSMAND_ROOT}/externals/skia/upstream.patched/include/core"
@@ -48,11 +50,11 @@ endif()
 set(pd_sources "")
 if(CMAKE_TARGET_OS STREQUAL "linux")
     set(pd_sources
-	    "${OSMAND_ROOT}/targets/linux/OsmAndCore/src/Logging.cpp"
+		"${OSMAND_ROOT}/targets/linux/OsmAndCore/src/Logging.cpp"
 	)
 endif()
 add_library(osmand SHARED
-    "${ROOT}/src/ElapsedTimer.cpp"
+	"${ROOT}/src/ElapsedTimer.cpp"
 	"${ROOT}/src/common.cpp"
 	"${ROOT}/src/mapObjects.cpp"
 	"${ROOT}/src/multipolygons.cpp"
@@ -65,23 +67,34 @@ add_library(osmand SHARED
 	${pd_sources}
 )
 
-if(CMAKE_COMPILER_FAMILY STREQUAL "gcc")
-	set(USE_WHOLE_LIBRARIES "-Wl,-whole-archive")
-	set(USE_WHOLE_LIBRARY "")
-	set(DONT_USE_WHOLE_LIBRARIES "-Wl,-no-whole-archive")
-else()
-	set(USE_WHOLE_LIBRARIES "")
-	set(USE_WHOLE_LIBRARY "")
-	set(DONT_USE_WHOLE_LIBRARIES "")
+target_link_libraries(osmand LINK_PUBLIC
+# Using would have worked if CMake would allow both specifying --whole-library and would recognize dependencies
+# http://www.cmake.org/Bug/view.php?id=13866
+#	skia_osmand
+	protobuf_osmand
+)
+# libskia and dependencies
+target_link_libraries(osmand LINK_PUBLIC ${USE_WHOLE_LIBRARY_}skia_osmand${_USE_WHOLE_LIBRARY})
+#target_link_libraries(osmand LINK_PUBLIC ${USE_WHOLE_LIBRARY_}png_osmand${_USE_WHOLE_LIBRARY})
+#target_link_libraries(osmand LINK_PUBLIC ${USE_WHOLE_LIBRARY_}z_osmand${_USE_WHOLE_LIBRARY})
+#target_link_libraries(osmand LINK_PUBLIC ${USE_WHOLE_LIBRARY_}gif_osmand${_USE_WHOLE_LIBRARY})
+#target_link_libraries(osmand LINK_PUBLIC ${USE_WHOLE_LIBRARY_}jpeg_osmand${_USE_WHOLE_LIBRARY})
+target_link_libraries(osmand LINK_PUBLIC
+	png_osmand
+	z_osmand
+	jpeg_osmand
+	gif_osmand
+        expat_osmand
+        freetype2_osmand
+        harfbuzz_osmand
+)
+
+if(CMAKE_TARGET_OS STREQUAL "linux")
+        target_link_libraries(osmand LINK_PUBLIC
+                pthread
+        )
 endif()
 
-target_link_libraries(osmand LINK_PRIVATE
-	protobuf
-	#skia
-	${USE_WHOLE_LIBRARIES}
-		${USE_WHOLE_LIBRARY} skia
-	${DONT_USE_WHOLE_LIBRARIES}
-)
 if(CMAKE_TARGET_OS STREQUAL "windows")
 	target_link_libraries(osmand LINK_PRIVATE
 		Winmm

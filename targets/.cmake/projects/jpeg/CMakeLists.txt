@@ -1,4 +1,4 @@
-project(jpeg)
+project(jpeg_osmand)
 
 set(ROOT "${OSMAND_ROOT}/externals/jpeg")
 set(UPSTREAM "${ROOT}/upstream.patched")
@@ -9,7 +9,7 @@ add_definitions(-DNO_GETENV)
 if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 endif()
-add_library(jpeg STATIC
+add_library(jpeg_osmand STATIC
     "${UPSTREAM}/jaricom.c"
 	"${UPSTREAM}/jcapimin.c"
 	"${UPSTREAM}/jcapistd.c"

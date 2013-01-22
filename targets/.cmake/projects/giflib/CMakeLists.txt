@@ -1,4 +1,4 @@
-project(gif)
+project(gif_osmand)
 
 set(ROOT "${OSMAND_ROOT}/externals/giflib")
 set(UPSTREAM "${ROOT}/upstream.patched")
@@ -11,7 +11,7 @@ endif()
 if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 endif()
-add_library(gif STATIC
+add_library(gif_osmand STATIC
     "${UPSTREAM}/lib/dgif_lib.c"
     "${UPSTREAM}/lib/gifalloc.c"
     "${UPSTREAM}/lib/gif_err.c"
