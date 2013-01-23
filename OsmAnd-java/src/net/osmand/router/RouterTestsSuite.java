@@ -16,9 +16,6 @@ import net.osmand.router.BinaryRoutePlanner.FinalRouteSegment;
 import net.osmand.router.BinaryRoutePlanner.RouteSegment;
 import net.osmand.router.RoutingConfiguration.Builder;
 
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -129,7 +126,6 @@ public class RouterTestsSuite {
 		XmlPullParser parser = LogUtil.newXMLPullParser();
 		parser.setInput(resource, "UTF-8");
 		int tok;
-		parser.setInput(resource, "UTF-8");
 		while ((tok = parser.next()) != XmlPullParser.END_DOCUMENT) {
 			if (tok == XmlPullParser.START_TAG) {
 				String name = parser.getName();
@@ -167,7 +163,7 @@ public class RouterTestsSuite {
 		return false;
 	}
 
-	private static void testRoute(XmlPullParser parser, Builder config, NativeLibrary lib, BinaryMapIndexReader[] rs) throws IOException, SAXException, InterruptedException {
+	private static void testRoute(XmlPullParser parser, Builder config, NativeLibrary lib, BinaryMapIndexReader[] rs) throws IOException, InterruptedException {
 		String vehicle = parser.getAttributeValue("", "vehicle");
 		int loadedTiles = (int) parseFloat(parser, "loadedTiles");
 		int visitedSegments = (int) parseFloat(parser, "visitedSegments");
@@ -261,31 +257,5 @@ public class RouterTestsSuite {
 	}
 
 
-	protected static NodeList compareBySegment(Element testCase, String testDescription, List<RouteSegmentResult> route) {
-		NodeList segments = testCase.getElementsByTagName("segment");
-		int i = 0;
-		while (i < segments.getLength() && i < route.size()) {
-			Element segment = (Element) segments.item(i);
-			long expectedId = Long.parseLong(segment.getAttribute("id"));
-			int expectedStart = Integer.parseInt(segment.getAttribute("start"));
-			int expectedEnd = Integer.parseInt(segment.getAttribute("end"));
-			RouteSegmentResult segmentResult = route.get(i);
-			if (expectedId != segmentResult.getObject().getId() >> 1) {
-				throw new IllegalArgumentException("Test : '" + testDescription + "' on segment " + (i + 1) + " : " + "\n"
-						+ "(expected route id) " + expectedId + " != " + (segmentResult.getObject().getId() >> 1) + " (actual route id)");
-			}
-			if (expectedStart != segmentResult.getStartPointIndex()) {
-				throw new IllegalArgumentException("Test : '" + testDescription + "' on segment " + (i + 1) + " : " + "\n"
-						+ "(expected start index) " + expectedStart + " != " + segmentResult.getStartPointIndex() + " (actual start index)");
-			}
-			if (expectedEnd != segmentResult.getEndPointIndex()) {
-				throw new IllegalArgumentException("Test : '" + testDescription + "' on segment " + (i + 1) + " : " + "\n"
-						+ "(expected end index) " + expectedEnd + " != " + segmentResult.getEndPointIndex() + " (actual end index)");
-			}
-
-			i++;
-		}
-		return segments;
-	}
 
 }

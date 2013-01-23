@@ -16,18 +16,13 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 
 import net.osmand.LogUtil;
 
 import org.apache.commons.logging.Log;
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 
 import bsh.Interpreter;
 
@@ -186,6 +181,7 @@ public class TileSourceManager {
 						key = null;
 					}
 				}
+				reader.close();
 			}
 		} catch (IOException e) {
 			log.error("Error reading metainfo file " + dir.getAbsolutePath(), e);
@@ -324,38 +320,28 @@ public class TileSourceManager {
 		final List<TileSourceTemplate> templates = new ArrayList<TileSourceTemplate>();
 		try {
 			URLConnection connection = new URL("http://download.osmand.net//tile_sources.php?" + versionAsUrl).openConnection();
-			final SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
-			saxParser.parse(connection.getInputStream(), new DefaultHandler(){
-				@Override
-				public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-					String name = saxParser.isNamespaceAware() ? localName : qName;
-					Map<String, String> attrs = new LinkedHashMap<String, String>();
-					if(name.equals("tile_source")){
-						attrs.clear();
-						for(int i=0; i< attributes.getLength(); i++){
-							String local = attributes.getLocalName(i);
-							if(local != null){
-								attrs.put(local, attributes.getValue(i));
-							} else if(attributes.getQName(i) != null){
-								attrs.put(attributes.getQName(i), attributes.getValue(i));
-							} else {
-								return;
-							}
+			XmlPullParser parser = LogUtil.newXMLPullParser();
+			parser.setInput(connection.getInputStream(), "UTF-8");
+			int tok;
+			while ((tok = parser.next()) != XmlPullParser.END_DOCUMENT) {
+				if (tok == XmlPullParser.START_TAG) {
+					String name = parser.getName();
+					if (name.equals("tile_source")) {
+						Map<String, String> attrs = new LinkedHashMap<String, String>();
+						for(int i=0; i< parser.getAttributeCount(); i++) {
+							attrs.put(parser.getAttributeName(i), parser.getAttributeValue(i));
 						}
 						TileSourceTemplate template = createTileSourceTemplate(attrs);
-						if(template != null){
+						if (template != null) {
 							templates.add(template);
 						}
 					}
 				}
-			});
+			}
 		} catch (IOException e) {
 			log.error("Exception while downloading tile sources", e);
 			return null;
-		} catch (SAXException e) {
-			log.error("Exception while downloading tile sources", e);
-			return null;
-		} catch (ParserConfigurationException e) {
+		} catch (XmlPullParserException e) {
 			log.error("Exception while downloading tile sources", e);
 			return null;
 		}
