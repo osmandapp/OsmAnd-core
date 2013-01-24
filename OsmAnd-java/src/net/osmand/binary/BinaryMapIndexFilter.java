@@ -26,7 +26,7 @@ public class BinaryMapIndexFilter {
 	private final BinaryMapIndexReader reader;
 
 	public BinaryMapIndexFilter(File file) throws IOException{
-		reader = new BinaryMapIndexReader(new RandomAccessFile(file, "r"));
+		reader = new BinaryMapIndexReader(new RandomAccessFile(file.getPath(), "r"));
 	}
 	
 	
@@ -159,7 +159,7 @@ public class BinaryMapIndexFilter {
 	}
 	
 	public static void main(String[] iargs) throws IOException {
-		BinaryMapIndexFilter filter = new BinaryMapIndexFilter(new File("/home/victor/projects/OsmAnd/data/osmand_index/Netherlands_europe.obf"));
+		BinaryMapIndexFilter filter = new BinaryMapIndexFilter(new File(""));
 		for (int i = 10; i <= 14; i++) {
 			Stat st = filter.process(i);
 			System.out.println(i + " zoom -> " + st);

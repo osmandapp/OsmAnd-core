@@ -1,5 +1,6 @@
 package net.osmand;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -30,7 +31,7 @@ public class GeoidAltitudeCorrection {
 				this.f = new File(dir, fn);
 				if (f.exists()) {
 					try {
-						rf = new RandomAccessFile(f, "r");
+						rf = new RandomAccessFile(f.getPath(), "r");
 					} catch (FileNotFoundException e) {
 						log.error("Error", e);
 					}
@@ -55,7 +56,8 @@ public class GeoidAltitudeCorrection {
 		if (pointer != cachedPointer) {
 			try {
 				rf.seek(pointer);
-				cachedValue = rf.readShort();
+				// read short
+				cachedValue = readShort();
 				cachedPointer = pointer;
 			} catch (IOException e) {
 				log.error("Geoid info error", e);
@@ -63,5 +65,13 @@ public class GeoidAltitudeCorrection {
 		}
 		res = cachedValue;
 		return res / 100f;
+	}
+
+	private short readShort() throws IOException {
+		byte[] b = new byte[2];
+		rf.read(b);
+		int ch1 = b[0] < 0 ? b[0] + 256 : b[0];
+		int ch2 = b[1] < 0 ? b[1] + 256 : b[1];
+		return (short)((ch1 << 8) + (ch2 << 0));
 	}
 }
