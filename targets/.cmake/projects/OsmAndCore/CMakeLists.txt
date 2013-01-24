@@ -55,6 +55,7 @@ if(CMAKE_TARGET_OS STREQUAL "linux")
 endif()
 add_library(osmand SHARED
 	"${ROOT}/src/ElapsedTimer.cpp"
+	"${ROOT}/src/ExplicitSkiaReferences.cpp"
 	"${ROOT}/src/common.cpp"
 	"${ROOT}/src/mapObjects.cpp"
 	"${ROOT}/src/multipolygons.cpp"
@@ -68,36 +69,15 @@ add_library(osmand SHARED
 )
 
 target_link_libraries(osmand LINK_PUBLIC
-# Using would have worked if CMake would allow both specifying --whole-library and would recognize dependencies
-# http://www.cmake.org/Bug/view.php?id=13866
-#	skia_osmand
+	skia_osmand
 	protobuf_osmand
 )
-# libskia and dependencies
-target_link_libraries(osmand LINK_PUBLIC ${USE_WHOLE_LIBRARY_}skia_osmand${_USE_WHOLE_LIBRARY})
-#target_link_libraries(osmand LINK_PUBLIC ${USE_WHOLE_LIBRARY_}png_osmand${_USE_WHOLE_LIBRARY})
-#target_link_libraries(osmand LINK_PUBLIC ${USE_WHOLE_LIBRARY_}z_osmand${_USE_WHOLE_LIBRARY})
-#target_link_libraries(osmand LINK_PUBLIC ${USE_WHOLE_LIBRARY_}gif_osmand${_USE_WHOLE_LIBRARY})
-#target_link_libraries(osmand LINK_PUBLIC ${USE_WHOLE_LIBRARY_}jpeg_osmand${_USE_WHOLE_LIBRARY})
-target_link_libraries(osmand LINK_PUBLIC
-	png_osmand
-	z_osmand
-	jpeg_osmand
-	gif_osmand
-        expat_osmand
-        freetype2_osmand
-        harfbuzz_osmand
-)
 
-if(CMAKE_TARGET_OS STREQUAL "linux")
-        target_link_libraries(osmand LINK_PUBLIC
-                pthread
-        )
-endif()
-
-if(CMAKE_TARGET_OS STREQUAL "windows")
-	target_link_libraries(osmand LINK_PRIVATE
-		Winmm
-		Usp10
-	)
-endif()
+#
+#if(CMAKE_TARGET_OS STREQUAL "windows")
+#	target_link_libraries(osmand LINK_PRIVATE
+#		Winmm
+#		Usp10
+#	)
+#endif()
+#

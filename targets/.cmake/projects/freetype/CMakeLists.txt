@@ -11,7 +11,7 @@ if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 endif()
 add_library(freetype2_osmand STATIC
-    "${UPSTREAM}/src/base/ftbase.c"
+	"${UPSTREAM}/src/base/ftbase.c"
 	"${UPSTREAM}/src/base/ftbbox.c"
 	"${UPSTREAM}/src/base/ftbitmap.c"
 	"${UPSTREAM}/src/base/ftfstype.c"

@@ -12,7 +12,7 @@ if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 endif()
 add_library(gif_osmand STATIC
-    "${UPSTREAM}/lib/dgif_lib.c"
-    "${UPSTREAM}/lib/gifalloc.c"
-    "${UPSTREAM}/lib/gif_err.c"
+	"${UPSTREAM}/lib/dgif_lib.c"
+	"${UPSTREAM}/lib/gifalloc.c"
+	"${UPSTREAM}/lib/gif_err.c"
 )

@@ -307,14 +307,13 @@ add_library(skia_osmand STATIC
 	${target_specific_sources}
 )
 
-#target_link_libraries(skia_osmand LINK_PUBLIC ${USE_WHOLE_LIBRARY_}png_osmand${_USE_WHOLE_LIBRARY})
-#target_link_libraries(skia_osmand LINK_PUBLIC ${USE_WHOLE_LIBRARY_}z_osmand${_USE_WHOLE_LIBRARY}) # This is workaround
-#target_link_libraries(skia_osmand LINK_PUBLIC ${USE_WHOLE_LIBRARY_}gif_osmand${_USE_WHOLE_LIBRARY})
-#target_link_libraries(skia_osmand LINK_PUBLIC ${USE_WHOLE_LIBRARY_}jpeg_osmand${_USE_WHOLE_LIBRARY})
 target_link_libraries(skia_osmand LINK_PUBLIC
 	expat_osmand
 	freetype2_osmand
 	harfbuzz_osmand
+	png_osmand
+	gif_osmand
+	jpeg_osmand
 )
 	
 if(CMAKE_TARGET_OS STREQUAL "linux")

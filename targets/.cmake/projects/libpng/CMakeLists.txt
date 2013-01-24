@@ -28,8 +28,6 @@ add_library(png_osmand STATIC
 	"${UPSTREAM}/pngwutil.c"
 )
 
-if((CMAKE_TARGET_OS STREQUAL "linux") OR (CMAKE_TARGET_OS STREQUAL "darwin"))
-	target_link_libraries(png_osmand LINK_PUBLIC
-		z_osmand
-	)
-endif()
+target_link_libraries(png_osmand LINK_PUBLIC
+	z_osmand
+)
