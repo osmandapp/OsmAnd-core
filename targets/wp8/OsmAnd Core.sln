@@ -34,6 +34,10 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "harfbuzz", "harfbuzz\harfbuzz.vcxproj", "{E98090E5-46AF-4279-B9DF-F69E62EE5CCE}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OsmAndCore", "OsmAndCore\OsmAndCore.vcxproj", "{76B6346B-9BCB-4953-9DF7-1D7B07D6952E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{447A0949-EDB6-4681-8532-EF2FBF25D313} = {447A0949-EDB6-4681-8532-EF2FBF25D313}
+		{C8654AC8-B707-45A0-A838-355E247220D8} = {C8654AC8-B707-45A0-A838-355E247220D8}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

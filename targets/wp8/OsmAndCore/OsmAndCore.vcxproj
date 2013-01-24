@@ -140,7 +140,7 @@
     <ClCompile Include="..\..\..\native\src\rendering.cpp" />
     <ClCompile Include="..\..\..\native\src\renderRules.cpp" />
     <ClCompile Include="..\..\..\native\src\textdraw.cpp" />
-    <ClCompile Include="Logging.cpp" />
+    <ClCompile Include="..\..\windows\OsmAndCore\src\Logging.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\native\include\Common.h" />
