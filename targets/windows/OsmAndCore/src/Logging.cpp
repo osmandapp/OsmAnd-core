@@ -1,8 +1,19 @@
 #include "Logging.h"
 
-#include <Windows.h>
+#include <stdio.h>
+#include <stdarg.h>
 
-extern void OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel level, const char* msg, ...)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
+void OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel level, const char* format, ...)
 {
-//http://msdn.microsoft.com/en-us/library/windows/desktop/aa363362(v=vs.85).aspx
+    va_list args;
+	va_start(args, format);
+    int len = vsnprintf(nullptr, 0, format, args);
+    char* buffer = new char[len + 1];
+    vsnprintf(buffer, len, format, args);
+    OutputDebugStringA(buffer);
+	delete[] buffer;
+	va_end(args);
 }

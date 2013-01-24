@@ -498,7 +498,7 @@ bool textOrder(TextDrawInfo* text1, TextDrawInfo* text2) {
 	return text1->textOrder < text2->textOrder;
 }
 
-SkTypeface* serif = SkTypeface::CreateFromName("Droid Serif", SkTypeface::kNormal);
+static SkTypeface* sTypeface = nullptr;
 void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 	SkRect r = SkRect::MakeLTRB(0, 0, rc->getWidth(), rc->getHeight());
 	r.inset(-100, -100);
@@ -514,7 +514,9 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 	paintText.setStrokeWidth(1);
 	paintText.setColor(0xff000000);
 	paintText.setTextAlign(SkPaint::kCenter_Align);
-	paintText.setTypeface(serif);
+    if(!sTypeface)
+        sTypeface = SkTypeface::CreateFromName("Droid Serif", SkTypeface::kNormal);
+	paintText.setTypeface(sTypeface);
 	paintText.setAntiAlias(true);
 	SkPaint::FontMetrics fm;
 

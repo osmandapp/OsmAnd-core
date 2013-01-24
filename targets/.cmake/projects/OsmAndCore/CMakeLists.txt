@@ -55,6 +55,7 @@ if(CMAKE_TARGET_OS STREQUAL "linux")
 elseif(CMAKE_TARGET_OS STREQUAL "windows")
     set(pd_sources
 		"${OSMAND_ROOT}/targets/windows/OsmAndCore/src/Logging.cpp"
+		"${OSMAND_ROOT}/targets/windows_desktop/OsmAndCore/src/DllMain.cpp"
 	)
 endif()
 add_library(osmand SHARED
