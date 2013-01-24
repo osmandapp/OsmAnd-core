@@ -52,6 +52,7 @@
 		<echo>list is  ${lib.list}</echo>
 
 		<delete file="OsmAnd-core.jar" />
+		<delete file="OsmAnd-avian.jar" />
 		<delete file="MANIFEST.MF" />
 		<manifest file="MANIFEST.MF">
 			<attribute name="Built-By" value="${user.name}" />
@@ -72,7 +73,13 @@
 		<jar destfile="OsmAnd-avian.jar" manifest="MANIFEST.MF">
 			<fileset dir="${bin.absolute.dir}">
 				<include name="**/*" />
-				<exclude name="net/osmand/plus/*"/>
+				<exclude name="net/osmand/plus/**"/>
+				<!-- editing osm on client ... -->
+				<exclude name="net/osmand/osm/io/**"/>
+				<!-- map tile downloader  -->
+				<exclude name="net/osmand/map/**"/>
+				
+				<!-- <exclude name="com/google/protobuf/TextFormat*"/> -->
 			</fileset>
 		</jar>
 

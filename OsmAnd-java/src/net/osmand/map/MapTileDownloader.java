@@ -1,4 +1,4 @@
-package net.osmand.data;
+package net.osmand.map;
 
 import java.io.BufferedInputStream;
 import java.io.File;

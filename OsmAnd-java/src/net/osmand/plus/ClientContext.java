@@ -5,6 +5,7 @@ import java.io.File;
 import net.osmand.plus.api.ExternalServiceAPI;
 import net.osmand.plus.api.InternalOsmAndAPI;
 import net.osmand.plus.api.InternalToDoAPI;
+import net.osmand.plus.api.RendererAPI;
 import net.osmand.plus.api.SQLiteAPI;
 import net.osmand.plus.api.SettingsAPI;
 import net.osmand.plus.render.RendererRegistry;
@@ -37,6 +38,8 @@ public interface ClientContext {
 	public InternalOsmAndAPI getInternalAPI();
 	
 	public SQLiteAPI getSQLiteAPI();
+	
+	// public RendererAPI getRendererAPI();
 	
 	public void runInUIThread(Runnable run);
 

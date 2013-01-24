@@ -1676,7 +1676,7 @@ public class BinaryMapIndexReader {
 	}
 	
 	public static void main(String[] args) throws IOException {
-		RandomAccessFile raf = new RandomAccessFile(new File("/home/victor/projects/OsmAnd/data/osm-gen/Luxembourg.obf"), "r");
+		RandomAccessFile raf = new RandomAccessFile("", "r");
 		
 		BinaryMapIndexReader reader = new BinaryMapIndexReader(raf);
 		println("VERSION " + reader.getVersion()); //$NON-NLS-1$

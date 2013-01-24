@@ -167,7 +167,7 @@ public class CachedOsmandIndexes {
 	}
 	
 	public BinaryMapIndexReader getReader(File f) throws IOException {
-		RandomAccessFile mf = new RandomAccessFile(f, "r");
+		RandomAccessFile mf = new RandomAccessFile(f.getPath(), "r");
 		FileIndex found = null;
 		if (storedIndex != null) {
 			for (int i = 0; i < storedIndex.getFileIndexCount(); i++) {
