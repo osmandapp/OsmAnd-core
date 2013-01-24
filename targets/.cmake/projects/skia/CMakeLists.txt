@@ -320,4 +320,8 @@ if(CMAKE_TARGET_OS STREQUAL "linux")
 	target_link_libraries(skia_osmand LINK_PUBLIC
 		pthread
 	)
+elseif(CMAKE_TARGET_OS STREQUAL "windows")
+	target_link_libraries(skia_osmand LINK_PUBLIC
+		Usp10
+	)
 endif()

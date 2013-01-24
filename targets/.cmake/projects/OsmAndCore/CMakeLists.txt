@@ -52,6 +52,10 @@ if(CMAKE_TARGET_OS STREQUAL "linux")
     set(pd_sources
 		"${OSMAND_ROOT}/targets/linux/OsmAndCore/src/Logging.cpp"
 	)
+elseif(CMAKE_TARGET_OS STREQUAL "windows")
+    set(pd_sources
+		"${OSMAND_ROOT}/targets/windows/OsmAndCore/src/Logging.cpp"
+	)
 endif()
 add_library(osmand SHARED
 	"${ROOT}/src/ElapsedTimer.cpp"
@@ -72,12 +76,3 @@ target_link_libraries(osmand LINK_PUBLIC
 	skia_osmand
 	protobuf_osmand
 )
-
-#
-#if(CMAKE_TARGET_OS STREQUAL "windows")
-#	target_link_libraries(osmand LINK_PRIVATE
-#		Winmm
-#		Usp10
-#	)
-#endif()
-#

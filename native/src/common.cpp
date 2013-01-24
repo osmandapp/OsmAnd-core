@@ -7,8 +7,8 @@
 #include "Logging.h"
 
 #if defined(_WIN32)
-#	include <windows.h>
-#	include <mmsystem.h>
+//#	include <windows.h>
+//#	include <mmsystem.h>
 #define isnan _isnan
 #define isinf !_finite
 #elif defined(__APPLE__)

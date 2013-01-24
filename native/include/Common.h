@@ -20,7 +20,7 @@
 #   define UNORDERED_NAMESPACE std
 #   define UNORDERED_map unordered_map
 #   define UNORDERED_set unordered_set
-#elif defined(_WIN32) && defined(WINAPI_FAMILY) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
+#elif defined(_WIN32) 
 #   include <unordered_map>
 #   include <unordered_set>
 #   define UNORDERED_NAMESPACE std
@@ -36,7 +36,7 @@
 #elif defined(__linux__)
 #   include <memory>
 #   define SHARED_PTR std::shared_ptr
-#elif defined(_WIN32) && defined(WINAPI_FAMILY) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
+#elif defined(_WIN32) 
 #   include <memory>
 #   define SHARED_PTR std::shared_ptr
 #   define UNIQUE_PTR std::unique_ptr
