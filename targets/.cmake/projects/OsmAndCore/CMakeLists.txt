@@ -28,6 +28,9 @@ if(CMAKE_TARGET_OS STREQUAL "windows")
 	)
 	add_definitions(-DSK_BUILD_FOR_WIN32)
 elseif(CMAKE_TARGET_OS STREQUAL "darwin")
+        include_directories(AFTER SYSTEM
+                "$ENV{JAVA_HOME}/include/darwin"
+        )
 	add_definitions(-DSK_BUILD_FOR_MAC)
 elseif(CMAKE_TARGET_OS STREQUAL "linux")
 	include_directories(AFTER SYSTEM
@@ -52,6 +55,10 @@ if(CMAKE_TARGET_OS STREQUAL "linux")
     set(pd_sources
 		"${OSMAND_ROOT}/targets/linux/OsmAndCore/src/Logging.cpp"
 	)
+elseif(CMAKE_TARGET_OS STREQUAL "darwin")
+    set(pd_sources
+                "${OSMAND_ROOT}/targets/darwin/OsmAndCore/src/Logging.cpp"
+        )
 elseif(CMAKE_TARGET_OS STREQUAL "windows")
     set(pd_sources
 		"${OSMAND_ROOT}/targets/windows/OsmAndCore/src/Logging.cpp"

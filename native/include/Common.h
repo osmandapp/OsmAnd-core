@@ -36,6 +36,9 @@
 #elif defined(__linux__)
 #   include <memory>
 #   define SHARED_PTR std::shared_ptr
+#elif defined(__APPLE__)
+#   include <memory>
+#   define SHARED_PTR std::shared_ptr
 #elif defined(_WIN32) 
 #   include <memory>
 #   define SHARED_PTR std::shared_ptr

@@ -39,7 +39,6 @@ set(target_specific_sources
 	"${UPSTREAM}/src/ports/SkGlobalInitialization_default.cpp"
 	"${UPSTREAM}/src/ports/SkOSFile_stdio.cpp"
 	"${UPSTREAM}/src/ports/SkMemory_malloc.cpp"
-	"${UPSTREAM}/src/ports/SkFontHost_tables.cpp"
 	"${UPSTREAM}/src/ports/SkFontHost_sandbox_none.cpp"
 )
 
@@ -48,6 +47,7 @@ if(CMAKE_TARGET_OS STREQUAL "windows")
 		"${OSMAND_ROOT}/externals/giflib/include"
 	)
 	set(target_specific_sources "${target_specific_sources}"
+		"${UPSTREAM}/src/ports/SkFontHost_tables.cpp"
 		"${UPSTREAM}/src/ports/SkDebug_win.cpp"
 		"${UPSTREAM}/src/ports/SkFontHost_win.cpp"
 		"${UPSTREAM}/src/ports/SkTime_win.cpp"
@@ -65,10 +65,12 @@ elseif(CMAKE_TARGET_OS STREQUAL "darwin")
 		"${UPSTREAM}/src/ports/SkFontHost_mac_coretext.cpp"
 		"${UPSTREAM}/src/ports/SkFontHost_freetype_mac.cpp"
 		"${UPSTREAM}/src/ports/SkTime_Unix.cpp"
+		"${UPSTREAM}/src/utils/mac/SkStream_mac.cpp"
 	)
 	add_definitions(-DSK_BUILD_FOR_MAC -DSK_USE_CORETEXT)
 elseif(CMAKE_TARGET_OS STREQUAL "linux")
 	set(target_specific_sources "${target_specific_sources}"
+		"${UPSTREAM}/src/ports/SkFontHost_tables.cpp"
 		"${UPSTREAM}/src/ports/SkDebug_stdio.cpp"
 		"${UPSTREAM}/src/ports/SkFontHost_sandbox_none.cpp"
 		"${UPSTREAM}/src/ports/SkThread_pthread.cpp"
@@ -320,6 +322,15 @@ if(CMAKE_TARGET_OS STREQUAL "linux")
 	target_link_libraries(skia_osmand LINK_PUBLIC
 		pthread
 	)
+elseif(CMAKE_TARGET_OS STREQUAL "darwin")
+	find_library(CORE_FOUNDATION_LIBRARY CoreFoundation)
+	find_library(CORE_TEXT_LIBRARY CoreText)
+	find_library(CORE_GRAPHICS_LIBRARY CoreGraphics)
+	target_link_libraries(skia_osmand LINK_PUBLIC
+		${CORE_FOUNDATION_LIBRARY}
+		${CORE_TEXT_LIBRARY}
+		${CORE_GRAPHICS_LIBRARY}
+	)	
 elseif(CMAKE_TARGET_OS STREQUAL "windows")
 	target_link_libraries(skia_osmand LINK_PUBLIC
 		Usp10

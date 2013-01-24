@@ -7,7 +7,7 @@ index 72c5cf2..3490cbf 100644
  script_property_cmp(const void *vkey, const void *vcandidate) {
    const uint32_t key = (uint32_t) (intptr_t) vkey;
 -  const struct script_property *candidate = vcandidate;
-+  const struct script_property *candidate = (const script_property *)vcandidate;
++  const struct script_property *candidate = (const struct script_property *)vcandidate;
  
    if (key < candidate->range_start) {
      return -1;
@@ -16,7 +16,7 @@ index 72c5cf2..3490cbf 100644
  grapheme_break_property_cmp(const void *vkey, const void *vcandidate) {
    const uint32_t key = (uint32_t) (intptr_t) vkey;
 -  const struct grapheme_break_property *candidate = vcandidate;
-+  const struct grapheme_break_property *candidate = (const grapheme_break_property *)vcandidate;
++  const struct grapheme_break_property *candidate = (const struct grapheme_break_property *)vcandidate;
  
    if (key < candidate->range_start) {
      return -1;
@@ -41,7 +41,7 @@ index 72c5cf2..3490cbf 100644
  mirroring_property_cmp(const void *vkey, const void *vcandidate) {
    const uint32_t key = (uint32_t) (intptr_t) vkey;
 -  const struct mirroring_property *candidate = vcandidate;
-+  const struct mirroring_property *candidate = (const mirroring_property *)vcandidate;
++  const struct mirroring_property *candidate = (const struct mirroring_property *)vcandidate;
  
    if (key < candidate->a) {
      return -1;
