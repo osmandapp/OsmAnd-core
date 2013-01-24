@@ -72,7 +72,7 @@
 		<jar destfile="OsmAnd-avian.jar" manifest="MANIFEST.MF">
 			<fileset dir="${bin.absolute.dir}">
 				<include name="**/*" />
-				<exclude name="net/osmand/plus/*/>
+				<exclude name="net/osmand/plus/*"/>
 			</fileset>
 		</jar>
 
