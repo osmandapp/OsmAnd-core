@@ -67,6 +67,14 @@
 				<include name="**/*.java" />
 			</fileset>
 		</jar>
+		
+
+		<jar destfile="OsmAnd-avian.jar" manifest="MANIFEST.MF">
+			<fileset dir="${bin.absolute.dir}">
+				<include name="**/*" />
+				<exclude name="net/osmand/plus/*/>
+			</fileset>
+		</jar>
 
 		<delete file="MANIFEST.MF" />
 	</target>

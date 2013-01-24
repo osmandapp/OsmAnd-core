@@ -14,18 +14,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 
 import net.osmand.LogUtil;
 import net.osmand.data.AmenityType;
 import net.osmand.osm.OSMSettings.OSMTagKey;
 
 import org.apache.commons.logging.Log;
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 
 
 /**
@@ -265,18 +261,18 @@ public class MapRenderingTypes {
 				is = new FileInputStream(resourceName);
 			}
 			long time = System.currentTimeMillis();
-			final SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-			parser.parse(is, new DefaultHandler(){
-				
-				String poiParentCategory = null;
-				String poiParentPrefix  = null;
-				@Override
-				public void startElement(String uri, String localName, String name, Attributes attributes) throws SAXException {
-					name = parser.isNamespaceAware() ? localName : name;
-					if(name.equals("category")){ //$NON-NLS-1$
-						poiParentCategory = attributes.getValue("poi_category");
-						poiParentPrefix = attributes.getValue("poi_prefix");
-						String tag = attributes.getValue("poi_tag");
+			XmlPullParser parser = LogUtil.newXMLPullParser();
+			int tok;
+			parser.setInput(is, "UTF-8");
+			String poiParentCategory = null;
+			String poiParentPrefix  = null;
+			while ((tok = parser.next()) != XmlPullParser.END_DOCUMENT) {
+				if (tok == XmlPullParser.START_TAG) {
+					String name = parser.getName();
+					if (name.equals("category")) { //$NON-NLS-1$
+						poiParentCategory = parser.getAttributeValue("","poi_category");
+						poiParentPrefix = parser.getAttributeValue("","poi_prefix");
+						String tag = parser.getAttributeValue("","poi_tag");
 						if (tag != null) {
 							MapRulType rtype = new MapRulType();
 							rtype.poiCategory = AmenityType.valueOf(poiParentCategory.toUpperCase());
@@ -285,75 +281,12 @@ public class MapRenderingTypes {
 							rtype.tag = tag;
 							registerRuleType(tag, null, rtype);
 						}
-					} else if (name.equals("type")) { //$NON-NLS-1$
-						MapRulType rtype = new MapRulType();
-						String val = attributes.getValue("minzoom"); //$NON-NLS-1$
-						rtype.minzoom = 15;
-						if (val != null) {
-							rtype.minzoom = Integer.parseInt(val);
-						}
-						rtype.tag = attributes.getValue("tag"); //$NON-NLS-1$
-						rtype.value = attributes.getValue("value"); //$NON-NLS-1$
-						if (rtype.value != null && rtype.value.length() == 0) { //$NON-NLS-1$
-							rtype.value = null;
-						}
-						registerRuleType(rtype.tag, rtype.value, rtype);
-						rtype.additional = Boolean.parseBoolean(attributes.getValue("additional")); //$NON-NLS-1$
-						rtype.relation = Boolean.parseBoolean(attributes.getValue("relation")); //$NON-NLS-1$
-						String v = attributes.getValue("nameTags");
-						if(v != null) {
-							String[] names = v.split(",");
-							rtype.names = new MapRulType[names.length];
-							for(int i=0; i<names.length; i++){
-								MapRulType mt = types.get(constructRuleKey(names[i], null));
-								if(mt == null){
-									mt = new MapRulType();
-									mt.tag = names[i];
-									mt.onlyNameRef = true;
-									mt.additional = false;
-									registerRuleType(names[i], null, mt);
-								}
-								rtype.names[i] = mt;
-							}
-						}
-						String targetTag = attributes.getValue("target_tag");
-						String targetValue = attributes.getValue("target_value");
-						if (targetTag != null || targetValue != null) {
-							if(targetTag == null){
-								targetTag = rtype.tag;
-							}
-							if(targetValue == null){
-								targetValue = rtype.value;
-							}
-							rtype.targetTagValue = types.get(constructRuleKey(targetTag, targetValue));
-							if(rtype.targetTagValue == null){
-								throw new RuntimeException("Illegal target tag/value " + targetTag + " " + targetValue);
-							}
-						}
-						if(poiParentCategory != null){
-							rtype.poiCategory = AmenityType.valueOf(poiParentCategory.toUpperCase());
-							rtype.poiSpecified = true;
-						}
-						if(poiParentPrefix != null){
-							rtype.poiPrefix = poiParentPrefix;
-						}
-						
-						String poiCategory = attributes.getValue("poi_category");
-						if(poiCategory != null){
-							rtype.poiSpecified = true;
-							if(poiCategory.length() == 0) {
-								rtype.poiCategory = null;
-							} else {
-								rtype.poiCategory = AmenityType.valueOf(poiCategory.toUpperCase());
-							}
-						}
-						String poiPrefix = attributes.getValue("poi_prefix");
-						if(poiPrefix != null){
-							rtype.poiPrefix = poiPrefix;
-						}
+					} else if (name.equals("type")) {
+						parseTypeFromXML(parser, poiParentCategory, poiParentPrefix);
 					}
 				}
-			});
+			}
+			
 			log.info("Time to init " + (System.currentTimeMillis() - time)); //$NON-NLS-1$
 			is.close();
 		} catch (IOException e) {
@@ -364,14 +297,78 @@ public class MapRenderingTypes {
 			log.error("Unexpected error", e); //$NON-NLS-1$
 			e.printStackTrace();
 			throw e;
-		} catch (ParserConfigurationException e) {
+		} catch (XmlPullParserException e) {
 			log.error("Unexpected error", e); //$NON-NLS-1$
 			e.printStackTrace();
 			throw new RuntimeException(e);
-		} catch (SAXException e) {
-			log.error("Unexpected error", e); //$NON-NLS-1$
-			e.printStackTrace();
-			throw new RuntimeException(e);
+		}
+	}
+
+	private void parseTypeFromXML(XmlPullParser parser, String poiParentCategory, String poiParentPrefix) {
+		MapRulType rtype = new MapRulType();
+		String val = parser.getAttributeValue("", "minzoom"); //$NON-NLS-1$
+		rtype.minzoom = 15;
+		if (val != null) {
+			rtype.minzoom = Integer.parseInt(val);
+		}
+		rtype.tag = parser.getAttributeValue("", "tag"); //$NON-NLS-1$
+		rtype.value = parser.getAttributeValue("", "value"); //$NON-NLS-1$
+		if (rtype.value != null && rtype.value.length() == 0) { //$NON-NLS-1$
+			rtype.value = null;
+		}
+		registerRuleType(rtype.tag, rtype.value, rtype);
+		rtype.additional = Boolean.parseBoolean(parser.getAttributeValue("", "additional")); //$NON-NLS-1$
+		rtype.relation = Boolean.parseBoolean(parser.getAttributeValue("", "relation")); //$NON-NLS-1$
+		String v = parser.getAttributeValue("", "nameTags");
+		if (v != null) {
+			String[] names = v.split(",");
+			rtype.names = new MapRulType[names.length];
+			for (int i = 0; i < names.length; i++) {
+				MapRulType mt = types.get(constructRuleKey(names[i], null));
+				if (mt == null) {
+					mt = new MapRulType();
+					mt.tag = names[i];
+					mt.onlyNameRef = true;
+					mt.additional = false;
+					registerRuleType(names[i], null, mt);
+				}
+				rtype.names[i] = mt;
+			}
+		}
+		String targetTag = parser.getAttributeValue("", "target_tag");
+		String targetValue = parser.getAttributeValue("", "target_value");
+		if (targetTag != null || targetValue != null) {
+			if (targetTag == null) {
+				targetTag = rtype.tag;
+			}
+			if (targetValue == null) {
+				targetValue = rtype.value;
+			}
+			rtype.targetTagValue = types.get(constructRuleKey(targetTag, targetValue));
+			if (rtype.targetTagValue == null) {
+				throw new RuntimeException("Illegal target tag/value " + targetTag + " " + targetValue);
+			}
+		}
+		if (poiParentCategory != null) {
+			rtype.poiCategory = AmenityType.valueOf(poiParentCategory.toUpperCase());
+			rtype.poiSpecified = true;
+		}
+		if (poiParentPrefix != null) {
+			rtype.poiPrefix = poiParentPrefix;
+		}
+
+		String poiCategory = parser.getAttributeValue("", "poi_category");
+		if (poiCategory != null) {
+			rtype.poiSpecified = true;
+			if (poiCategory.length() == 0) {
+				rtype.poiCategory = null;
+			} else {
+				rtype.poiCategory = AmenityType.valueOf(poiCategory.toUpperCase());
+			}
+		}
+		String poiPrefix = parser.getAttributeValue("", "poi_prefix");
+		if (poiPrefix != null) {
+			rtype.poiPrefix = poiPrefix;
 		}
 	}
 	

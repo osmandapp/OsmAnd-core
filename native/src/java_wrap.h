@@ -5,6 +5,7 @@
 #include "binaryRead.h"
 #include "Logging.h"
 
+
 struct ResultJNIPublisher : ResultPublisher {
 	JNIEnv* env;
 	jobject o;

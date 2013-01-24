@@ -10,18 +10,13 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
 import net.osmand.LogUtil;
 import net.osmand.render.RenderingRulesStorage;
 import net.osmand.render.RenderingRulesStorage.RenderingRulesStorageResolver;
 
 import org.apache.commons.logging.Log;
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 
 
 public class RendererRegistry {
@@ -52,7 +47,7 @@ public class RendererRegistry {
 		return defaultRender;
 	}
 
-	public RenderingRulesStorage getRenderer(String name){
+	public RenderingRulesStorage getRenderer(String name) {
 		if(renderers.containsKey(name)){
 			return renderers.get(name);
 		}
@@ -65,7 +60,7 @@ public class RendererRegistry {
 			return r;
 		} catch (IOException e) {
 			log.error("Error loading renderer", e); //$NON-NLS-1$
-		} catch (SAXException e) {
+		} catch (XmlPullParserException e) {
 			log.error("Error loading renderer", e); //$NON-NLS-1$
 		}
 		return null;
@@ -76,23 +71,23 @@ public class RendererRegistry {
 	}
 	
 	private RenderingRulesStorage loadRenderer(String name, final Map<String, RenderingRulesStorage> loadedRenderers, 
-			final Map<String, String> renderingConstants) throws IOException, SAXException {
+			final Map<String, String> renderingConstants) throws IOException,  XmlPullParserException {
 		InputStream is = getInputStream(name);
 		try {
-			final SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
-			saxParser.parse(is, new DefaultHandler() {
-				@Override
-				public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-					String tagName = saxParser.isNamespaceAware() ? localName : qName;
-					if ("renderingConstant".equals(tagName)) { //$NON-NLS-1$
-						if (!renderingConstants.containsKey(attributes.getValue("name"))) {
-							renderingConstants.put(attributes.getValue("name"), attributes.getValue("value"));
+			XmlPullParser parser = LogUtil.newXMLPullParser();
+			parser.setInput(is, "UTF-8");
+			int tok;
+			while ((tok = parser.next()) != XmlPullParser.END_DOCUMENT) {
+				if (tok == XmlPullParser.START_TAG) {
+					String tagName = parser.getName();
+					if (tagName.equals("renderingConstant")) {
+						if (!renderingConstants.containsKey(parser.getAttributeValue("", "name"))) {
+							renderingConstants.put(parser.getAttributeValue("", "name"), 
+									parser.getAttributeValue("", "value"));
 						}
 					}
 				}
-			});
-		} catch (ParserConfigurationException e1) {
-			throw new IllegalStateException(e1);
+			}
 		} finally {
 			is.close();
 		}
@@ -106,7 +101,7 @@ public class RendererRegistry {
 			main.parseRulesFromXmlInputStream(is, new RenderingRulesStorageResolver() {
 
 				@Override
-				public RenderingRulesStorage resolve(String name, RenderingRulesStorageResolver ref) throws SAXException {
+				public RenderingRulesStorage resolve(String name, RenderingRulesStorageResolver ref) throws XmlPullParserException {
 					// reload every time to propogate rendering constants
 					if (loadedRenderers.containsKey(name)) {
 						log.warn("Circular dependencies found " + name); //$NON-NLS-1$
@@ -129,6 +124,7 @@ public class RendererRegistry {
 		return main;
 	}
 
+	@SuppressWarnings("resource")
 	private InputStream getInputStream(String name) throws FileNotFoundException {
 		InputStream is = null;
 		if(externalRenderers.containsKey(name)){
