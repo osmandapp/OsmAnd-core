@@ -8,7 +8,7 @@ public class LogImpl implements Log {
 		this.cl = cl;
 	}
 	
-	private void log(String type, Object msg, Exception e){
+	private void log(String type, Object msg, Throwable e){
 		System.out.println(type.toUpperCase() + ": " + cl.getSimpleName() + "  " +msg);
 		if(e != null) {
 			e.printStackTrace();
@@ -19,7 +19,7 @@ public class LogImpl implements Log {
 		log("DEBUG", msg, null);
 	}
 	
-	public void debug(Object msg, Exception e) {
+	public void debug(Object msg, Throwable e) {
 		log("DEBUG", msg, e);
 	}
 	public boolean isDebugEnabled(){
@@ -30,7 +30,7 @@ public class LogImpl implements Log {
 		log("INFO", msg, null);
 	}
 	
-	public void info(Object msg, Exception e) {
+	public void info(Object msg, Throwable e) {
 		log("INFO", msg, e);
 	}
 	public boolean isInfoEnabled(){
@@ -41,7 +41,7 @@ public class LogImpl implements Log {
 		log("ERROR", msg, null);
 	}
 	
-	public void error(Object msg, Exception e) {
+	public void error(Object msg, Throwable e) {
 		log("ERROR", msg, e);
 	}
 	public boolean isErrorEnabled(){
@@ -52,11 +52,21 @@ public class LogImpl implements Log {
 		log("WARN", msg, null);
 	}
 	
-	public void warn(Object msg, Exception e) {
+	public void warn(Object msg, Throwable e) {
 		log("WARN", msg, e);
 	}
 	public boolean isWarnEnabled(){
 		return true;
 	}
 
+	public void fatal(Object msg) {
+		log("FATAL", msg, null);
+	}
+	
+	public void fatal(Object msg, Throwable e) {
+		log("FATAL", msg, e);
+	}
+	public boolean isFatalEnabled(){
+		return true;
+	}
 }
