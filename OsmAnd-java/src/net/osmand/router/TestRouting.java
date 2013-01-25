@@ -2,6 +2,7 @@ package net.osmand.router;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
@@ -19,15 +20,21 @@ import net.osmand.router.RoutingConfiguration.Builder;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
-public class RouterTestsSuite {
+public class TestRouting {
 	
 	public static int MEMORY_TEST_LIMIT = 800;
 	public static boolean TEST_WO_HEURISTIC = true; 
 	public static boolean TEST_BOTH_DIRECTION = true;
+	public static NativeLibrary lib = null;
+	public static boolean oldRouting = true;
 	
-	private static class Parameters {
+	public static class Parameters {
 		public File obfDir;
 		public List<File> tests = new ArrayList<File>();
+		public double startLat = 0;
+		public double startLon = 0;
+		public double endLat = 0;
+		public double endLon = 0;
 		public RoutingConfiguration.Builder configBuilder;
 		
 		public static Parameters init(String[] args) throws IOException, XmlPullParserException {
@@ -42,6 +49,16 @@ public class RouterTestsSuite {
 					RouteResultPreparation.PRINT_TO_CONSOLE_ROUTE_INFORMATION_TO_TEST = true;
 				} else if (a.startsWith("-obfDir=")) {
 					obfDirectory = a.substring("-obfDir=".length());
+				} else if (a.startsWith("-start=")) {
+					String start = a.substring("-start=".length());
+					String[] pt = start.split(";");
+					p.startLat = Double.parseDouble(pt[0]);
+					p.startLon = Double.parseDouble(pt[1]);
+				} else if (a.startsWith("-end=")) {
+					String start = a.substring("-end=".length());
+					String[] pt = start.split(";");
+					p.endLat = Double.parseDouble(pt[0]);
+					p.endLon = Double.parseDouble(pt[1]);
 				} else if (a.startsWith("-testDir=")) {
 					String testDirectory = a.substring("-testDir=".length());
 					for(File f : new File(testDirectory).listFiles()) {
@@ -76,43 +93,45 @@ public class RouterTestsSuite {
 		}
 		long time = System.currentTimeMillis();
 		Parameters params = Parameters.init(args);
-		if(params.tests.isEmpty() || params.obfDir == null) {
+		if((params.tests.isEmpty() && params.startLat == 0) || params.obfDir == null) {
 			info();
 			return;
 		}
-		List<File> files = new ArrayList<File>();
-		
-		
-		for (File f : params.obfDir.listFiles()) {
-			if (f.getName().endsWith(".obf")) {
-				files.add(f);
+		if (!params.tests.isEmpty()) {
+			boolean allSuccess = runAllTests(params, lib);
+			if (allSuccess) {
+				System.out.println("All is successfull " + (System.currentTimeMillis() - time) + " ms");
 			}
 		}
-		System.out.println("Obf directory : ");
-		BinaryMapIndexReader[] rs = new BinaryMapIndexReader[files.size()];
-		int it = 0;
-		for (File f : files) {
-			RandomAccessFile raf = new RandomAccessFile(f.getAbsolutePath(), "r"); //$NON-NLS-1$ //$NON-NLS-2$
-			System.out.println(f.getName());
-			rs[it++] = new BinaryMapIndexReader(raf);
-		}
-		
-		boolean allSuccess = true;
-		for(File f : params.tests) {
-			System.out.println("Before test " + f.getAbsolutePath());
-			System.out.flush();
-			allSuccess &= test(null, new FileInputStream(f), rs, params.configBuilder);	
-		}
-		if (allSuccess) {
-			System.out.println("All is successfull " + (System.currentTimeMillis() - time) + " ms");
+		if(params.startLat != 0) {
+//			calculateRoute(params.obfDir.getAbsolutePath(), params.startLat, params.startLon,
+//					params.endLat, params.endLon);
+			BinaryMapIndexReader[] rs = collectFiles(params.obfDir.getAbsolutePath());
+			calculateRoute(params.startLat, params.startLon,
+					params.endLat, params.endLon, rs);
+			calculateRoute(params.startLat, params.startLon,
+					params.endLat, params.endLon, rs);
 		}
 
 	}
 
 
-	private static void info() {
-		println("Run router tests is console utility to test route calculation for osmand.");
-		println("\nUsage for run tests : runTestsSuite [-routingXmlPath=PATH] [-verbose]  [-obfDir=PATH] [-testDir=PATH] {individualTestPath}");
+	public static boolean runAllTests(Parameters params, NativeLibrary lib) throws FileNotFoundException, IOException, Exception {
+		BinaryMapIndexReader[] rs = collectFiles(params.obfDir.getAbsolutePath());
+		
+		boolean allSuccess = true;
+		for(File f : params.tests) {
+			System.out.println("Before test " + f.getAbsolutePath());
+			System.out.flush();
+			allSuccess &= test(lib, new FileInputStream(f), rs, params.configBuilder);	
+		}
+		return allSuccess;
+	}
+
+
+	public static void info() {
+		println("Run router tests is console utility to test route calculation for osmand. It is also possible to calculate one route from -start to -end.");
+		println("\nUsage for run tests : runTestsSuite [-routingXmlPath=PATH] [-verbose] [-obfDir=PATH] [-start=lat;lon] [-end=lat;lon]  [-testDir=PATH] {individualTestPath}");
 		return;
 	}
 	
@@ -177,7 +196,7 @@ public class RouterTestsSuite {
 			return;
 		}
 		RoutingConfiguration rconfig = config.build(vehicle, MEMORY_TEST_LIMIT);
-		RoutePlannerFrontEnd router = new RoutePlannerFrontEnd(false);
+		RoutePlannerFrontEnd router = new RoutePlannerFrontEnd(oldRouting);
 		RoutingContext ctx = new RoutingContext(rconfig, 
 				lib, rs);
 		String skip = parser.getAttributeValue("", "skip_comment");
@@ -256,6 +275,51 @@ public class RouterTestsSuite {
 		}
 	}
 
+	
+	
+	public static void calculateRoute(String folderWithObf,
+			double startLat, double startLon, double endLat, double endLon) throws IOException, InterruptedException {
+		BinaryMapIndexReader[] rs = collectFiles(folderWithObf);
+		calculateRoute(startLat, startLon, endLat, endLon, rs);
+	}
 
+
+	private static BinaryMapIndexReader[] collectFiles(String folderWithObf) throws FileNotFoundException, IOException {
+		List<File> files = new ArrayList<File>();
+		for (File f : new File(folderWithObf).listFiles()) {
+			if (f.getName().endsWith(".obf")) {
+				files.add(f);
+			}
+		}
+		BinaryMapIndexReader[] rs = new BinaryMapIndexReader[files.size()];
+		int it = 0;
+		for (File f : files) {
+			RandomAccessFile raf = new RandomAccessFile(f.getAbsolutePath(), "r"); //$NON-NLS-1$ //$NON-NLS-2$
+			System.out.println(f.getName());
+			rs[it++] = new BinaryMapIndexReader(raf);
+		}
+		return rs;
+	}
+
+
+	private static void calculateRoute(double startLat, double startLon, double endLat, double endLon, BinaryMapIndexReader[] rs)
+			throws IOException, InterruptedException {
+		long ts = System.currentTimeMillis();
+		Builder config = RoutingConfiguration.getDefault();
+		RoutingConfiguration rconfig = config.build("car", MEMORY_TEST_LIMIT);
+		RoutePlannerFrontEnd router = new RoutePlannerFrontEnd(oldRouting);
+		RoutingContext ctx = new RoutingContext(rconfig, lib, rs);
+		RouteSegment startSegment = router.findRouteSegment(startLat, startLon, ctx);
+		RouteSegment endSegment = router.findRouteSegment(endLat, endLon, ctx);
+		if(startSegment == null){
+			throw new IllegalArgumentException("Start segment is not found ");
+		}
+		if(endSegment == null){
+			throw new IllegalArgumentException("End segment is not found ");
+		}
+		RouteResultPreparation.PRINT_TO_CONSOLE_ROUTE_INFORMATION_TO_TEST = true;
+		List<RouteSegmentResult> route = router.searchRoute(ctx, startSegment, endSegment, false);
+		System.out.println("Route is " + route.size() + " segments " + (System.currentTimeMillis() - ts) + " ms ");
+	}
 
 }

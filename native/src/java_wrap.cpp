@@ -653,20 +653,26 @@ public:
 			ienv(ienv), j(j)  {
 	}
 	virtual bool isCancelled() {
+		if(j == NULL) {
+			return false;
+		}
 		return ienv->GetBooleanField(j, jfield_RouteCalculationProgress_isCancelled);
 	}
 	virtual void setSegmentNotFound(int s) {
-		ienv->SetIntField(j, jfield_RouteCalculationProgress_segmentNotFound, s);
+		if(j != NULL) {
+			ienv->SetIntField(j, jfield_RouteCalculationProgress_segmentNotFound, s);
+		}
 	}
 	virtual void updateStatus(float distanceFromBegin, int directSegmentQueueSize, float distanceFromEnd,
 			int reverseSegmentQueueSize) {
 		RouteCalculationProgress::updateStatus(distanceFromBegin, directSegmentQueueSize,
 				distanceFromEnd, reverseSegmentQueueSize);
-		ienv->SetFloatField(j, jfield_RouteCalculationProgress_distanceFromBegin, this->distanceFromBegin);
-		ienv->SetFloatField(j, jfield_RouteCalculationProgress_distanceFromEnd, this->distanceFromEnd);
-		ienv->SetIntField(j, jfield_RouteCalculationProgress_directSegmentQueueSize, this->directSegmentQueueSize);
-		ienv->SetIntField(j, jfield_RouteCalculationProgress_reverseSegmentQueueSize, this->reverseSegmentQueueSize);
-
+		if(j != NULL) {
+		   ienv->SetFloatField(j, jfield_RouteCalculationProgress_distanceFromBegin, this->distanceFromBegin);
+		   ienv->SetFloatField(j, jfield_RouteCalculationProgress_distanceFromEnd, this->distanceFromEnd);
+		   ienv->SetIntField(j, jfield_RouteCalculationProgress_directSegmentQueueSize, this->directSegmentQueueSize);
+		   ienv->SetIntField(j, jfield_RouteCalculationProgress_reverseSegmentQueueSize, this->reverseSegmentQueueSize);
+        }
 	}
 };
 
