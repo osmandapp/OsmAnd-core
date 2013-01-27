@@ -3,7 +3,6 @@ package net.osmand.binary;
 import gnu.trove.list.array.TIntArrayList;
 
 import java.io.IOException;
-import java.text.Collator;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -438,9 +437,7 @@ public class BinaryMapAddressReaderAdapter {
 
 	public void searchAddressDataByName(AddressRegion reg, SearchRequest<MapObject> req, int[] typeFilter) throws IOException {
 		TIntArrayList loffsets = new TIntArrayList();
-		Collator instance = Collator.getInstance();
-		instance.setStrength(Collator.PRIMARY);
-		CollatorStringMatcher matcher = new CollatorStringMatcher(instance, req.nameQuery, StringMatcherMode.CHECK_STARTS_FROM_SPACE);
+		CollatorStringMatcher matcher = new CollatorStringMatcher( req.nameQuery, StringMatcherMode.CHECK_STARTS_FROM_SPACE);
 		long time = System.currentTimeMillis();
 		int indexOffset = 0;
 		while (true) {
@@ -457,7 +454,7 @@ public class BinaryMapAddressReaderAdapter {
 				indexOffset = codedIS.getTotalBytesRead();
 				int oldLimit = codedIS.pushLimit(length);
 				// here offsets are sorted by distance
-				map.readIndexedStringTable(instance, req.nameQuery, "", loffsets, 0);
+				map.readIndexedStringTable(matcher.getCollator(), req.nameQuery, "", loffsets, 0);
 				codedIS.popLimit(oldLimit);
 				break;
 			case OsmAndAddressNameIndexData.ATOM_FIELD_NUMBER:

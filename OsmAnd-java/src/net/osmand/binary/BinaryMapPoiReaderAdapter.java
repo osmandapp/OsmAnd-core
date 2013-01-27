@@ -1,17 +1,18 @@
 package net.osmand.binary;
 
+
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntLongHashMap;
 import gnu.trove.set.hash.TLongHashSet;
 
 import java.io.IOException;
-import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
 import net.osmand.Algoritms;
+import net.osmand.Collator;
 import net.osmand.CollatorStringMatcher;
 import net.osmand.CollatorStringMatcher.StringMatcherMode;
 import net.osmand.LogUtil;
@@ -178,9 +179,7 @@ public class BinaryMapPoiReaderAdapter {
 	
 	protected void searchPoiByName( PoiRegion region, SearchRequest<Amenity> req) throws IOException {
 		TIntLongHashMap offsets = new TIntLongHashMap();
-		Collator instance = Collator.getInstance();
-		instance.setStrength(Collator.PRIMARY);
-		CollatorStringMatcher matcher = new CollatorStringMatcher(instance, req.nameQuery, 
+		CollatorStringMatcher matcher = new CollatorStringMatcher(req.nameQuery, 
 				StringMatcherMode.CHECK_STARTS_FROM_SPACE);
 		long time = System.currentTimeMillis();
 		int indexOffset = codedIS.getTotalBytesRead();
@@ -197,7 +196,7 @@ public class BinaryMapPoiReaderAdapter {
 				int length = readInt();
 				int oldLimit = codedIS.pushLimit(length);
 				// here offsets are sorted by distance
-				offsets = readPoiNameIndex(instance, req.nameQuery, req);
+				offsets = readPoiNameIndex(matcher.getCollator(), req.nameQuery, req);
 				codedIS.popLimit(oldLimit);
 				break;
 			case OsmandOdb.OsmAndPoiIndex.POIDATA_FIELD_NUMBER :

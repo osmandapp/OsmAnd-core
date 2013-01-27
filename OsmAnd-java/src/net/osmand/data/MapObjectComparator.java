@@ -1,11 +1,14 @@
 package net.osmand.data;
 
-import java.text.Collator;
+
 import java.util.Comparator;
+
+import net.osmand.Collator;
+import net.osmand.LogUtil;
 
 public class MapObjectComparator implements Comparator<MapObject>{
 	private final boolean en;
-	Collator collator = Collator.getInstance();
+	Collator collator = LogUtil.primaryCollator();
 	public MapObjectComparator(boolean en){
 		this.en = en;
 	}

@@ -1,9 +1,9 @@
 package net.osmand;
 
 
-import java.io.BufferedInputStream;
+
 import java.io.Closeable;
-import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -36,12 +36,21 @@ public class Algoritms {
 		if (file.length() < 4) {
 			return false;
 		}
-		DataInputStream in = new DataInputStream(new BufferedInputStream(
-				new FileInputStream(file)));
-		int test = in.readInt();
+		FileInputStream in = new FileInputStream(file);
+		int test = readInt(in);
 		in.close();
 		return test == 0x504b0304;
 	}
+	
+	private static final int readInt(InputStream in) throws IOException {
+        int ch1 = in.read();
+        int ch2 = in.read();
+        int ch3 = in.read();
+        int ch4 = in.read();
+        if ((ch1 | ch2 | ch3 | ch4) < 0)
+            throw new EOFException();
+        return ((ch1 << 24) + (ch2 << 16) + (ch3 << 8) + (ch4 << 0));
+    }
 	
 	public static String capitalizeFirstLetterAndLowercase(String s) {
 		if (s != null && s.length() > 1) {

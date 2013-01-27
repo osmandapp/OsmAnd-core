@@ -1,14 +1,13 @@
 package net.osmand.binary;
 
+
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.hash.TIntHashSet;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -19,6 +18,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import net.osmand.Algoritms;
+import net.osmand.Collator;
 import net.osmand.CollatorStringMatcher;
 import net.osmand.CollatorStringMatcher.StringMatcherMode;
 import net.osmand.LogUtil;
@@ -1134,8 +1134,7 @@ public class BinaryMapIndexReader {
 		if (query == null || query.length() == 0) {
 			throw new IllegalArgumentException();
 		}
-		Collator collator = Collator.getInstance();
-		collator.setStrength(Collator.PRIMARY);
+		Collator collator = LogUtil.primaryCollator();
 		for (PoiRegion poiIndex : poiIndexes) {
 			poiAdapter.initCategories(poiIndex);
 			for (int i = 0; i < poiIndex.categories.size(); i++) {

@@ -1,7 +1,6 @@
 package net.osmand;
 
 
-import java.text.Collator;
 
 /**
  * Abstract collator matcher that basically supports subclasses with some collator
@@ -22,8 +21,8 @@ public class CollatorStringMatcher implements StringMatcher {
 		CHECK_CONTAINS
 	}
 
-	public CollatorStringMatcher(Collator collator, String part, StringMatcherMode mode) {
-		this.collator = collator;
+	public CollatorStringMatcher(String part, StringMatcherMode mode) {
+		this.collator = LogUtil.primaryCollator();
 		this.part = part;
 		this.mode = mode;
 	}

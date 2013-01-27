@@ -74,14 +74,15 @@
 			<fileset dir="${bin.absolute.dir}">
 				<include name="**/*" />
 				<exclude name="net/osmand/plus/**"/>
-				<!-- eclude for now editing osm on client ... -->
+				<!-- exclude for now editing osm on client ... -->
 				<exclude name="net/osmand/osm/io/**"/>
 				<exclude name="net/osmand/IOUtils*"/>
 				<!-- map tile downloader  -->
 				<exclude name="net/osmand/map/**"/>
+				<exclude name="net/osmand/osm/OpeningHoursParser*"/>
+				<exclude name="net/osmand/SunriseSunset*"/>
 				
-				
-				<!-- <exclude name="com/google/protobuf/TextFormat*"/> -->
+				 <!-- <exclude name="com/google/protobuf/TextFormat*"/> -->
 			</fileset>
 		</jar>
 

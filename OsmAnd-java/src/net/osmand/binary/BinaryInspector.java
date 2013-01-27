@@ -11,6 +11,7 @@ import java.io.RandomAccessFile;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -192,7 +193,7 @@ public class BinaryInspector {
 				System.err.println("Error : Input file is equal to output file " + f.getAbsolutePath());
 				return null;
 			}
-			rafs[c] = new RandomAccessFile(f, "r");
+			rafs[c] = new RandomAccessFile(f.getAbsolutePath(), "r");
 			indexes[c] = new BinaryMapIndexReader(rafs[c]);
 			partsSet[c] = new LinkedHashSet<Float>();
 			if(version == -1){
@@ -225,14 +226,21 @@ public class BinaryInspector {
 					temp.add(Float.parseFloat(s));
 				}
 			}
-			
-			
-			if(minus){
-				partsSet[c].removeAll(temp);
-			} else {
-				partsSet[c].retainAll(temp);
+
+			Iterator<Float> p = partsSet[c].iterator();
+			while (p.hasNext()) {
+				Float part = p.next();
+				if (minus) {
+					if (temp.contains(part)) {
+						p.remove();
+					}
+				} else {
+					if (!temp.contains(part)) {
+						p.remove();
+					}
+				}
 			}
-			
+
 			c++;
 		}
 		

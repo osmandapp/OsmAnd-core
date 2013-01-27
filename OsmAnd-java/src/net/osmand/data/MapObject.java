@@ -1,8 +1,9 @@
 package net.osmand.data;
 
-import java.io.Serializable;
-import java.text.Collator;
 
+import java.io.Serializable;
+
+import net.osmand.LogUtil;
 import net.osmand.osm.Entity;
 import net.osmand.osm.Entity.EntityId;
 import net.osmand.osm.Entity.EntityType;
@@ -127,7 +128,7 @@ public abstract class MapObject implements Comparable<MapObject>, Serializable {
 	
 	@Override
 	public int compareTo(MapObject o) {
-		return Collator.getInstance().compare(getName(), o.getName());
+		return LogUtil.primaryCollator().compare(getName(), o.getName());
 	}
 	
 	public void doDataPreparation() {

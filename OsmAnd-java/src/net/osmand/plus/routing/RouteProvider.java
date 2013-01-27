@@ -23,6 +23,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import net.osmand.Location;
 import net.osmand.LogUtil;
+import net.osmand.NativeLibrary;
 import net.osmand.binary.BinaryMapIndexReader;
 import net.osmand.data.IndexConstants;
 import net.osmand.osm.LatLon;
@@ -304,6 +305,13 @@ public class RouteProvider {
 		}
 		return new RouteCalculationResult(res, null, params.start, params.end, null, null,
 				params.ctx, params.leftSide, true);
+	}
+	protected RouteCalculationResult findNewVectorMapsRoute(RouteCalculationParams params) throws IOException {
+		String path = params.ctx.getAppPath("").getAbsolutePath();
+		NativeLibrary.testNativeRouting(path, params.start.getLatitude(),
+				params.start.getLongitude(), params.end.getLatitude(),
+				params.end.getLongitude());
+		return new RouteCalculationResult("Done ");
 	}
 	
 	protected RouteCalculationResult findVectorMapsRoute(RouteCalculationParams params) throws IOException {

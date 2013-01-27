@@ -153,63 +153,70 @@ public class NativeLibrary {
 
 	
 	protected static native NativeRouteSearchResult loadRoutingData(RouteRegion reg, String regName, int regfp,RouteSubregion subreg,
-			boolean loadObjects); 
+				boolean loadObjects); 
+		
+		protected static native void deleteRouteSearchResult(long searchResultHandle);
+		
+		protected static native RouteDataObject[] getRouteDataObjects(RouteRegion reg, long rs, int x31, int y31);
+		
+		protected static native RouteSegmentResult[] nativeRouting(int[] coordinates, int[] state, String[] keyConfig, String[] valueConfig, 
+				float initDirection, RouteRegion[] regions, RouteCalculationProgress progress);
+		
+		protected static native void deleteSearchResult(long searchResultHandle);
 	
-	protected static native void deleteRouteSearchResult(long searchResultHandle);
+		protected static native boolean initBinaryMapFile(String filePath);
+		
+		protected static native boolean initCacheMapFiles(String filePath);
+		
+		protected static native boolean closeBinaryMapFile(String filePath);
+		
+		protected static native void initRenderingRulesStorage(RenderingRulesStorage storage);
 	
-	protected static native RouteDataObject[] getRouteDataObjects(RouteRegion reg, long rs, int x31, int y31);
 	
-	protected static native RouteSegmentResult[] nativeRouting(int[] coordinates, int[] state, String[] keyConfig, String[] valueConfig, 
-			float initDirection, RouteRegion[] regions, RouteCalculationProgress progress);
+		protected static native RenderingGenerationResult generateRenderingIndirect(RenderingContext rc, long searchResultHandler,
+				boolean isTransparent, RenderingRuleSearchRequest render, boolean encodePng);
+		
+		protected static native long searchNativeObjectsForRendering(int sleft, int sright, int stop, int sbottom, int zoom, 
+				RenderingRuleSearchRequest request, boolean skipDuplicates, int renderRouteDataFile, Object objectWithInterruptedField, String msgIfNothingFound);
 	
-	protected static native void deleteSearchResult(long searchResultHandle);
-
-	protected static native boolean initBinaryMapFile(String filePath);
-	
-	protected static native boolean initCacheMapFiles(String filePath);
-	
-	protected static native boolean closeBinaryMapFile(String filePath);
-	
-	protected static native void initRenderingRulesStorage(RenderingRulesStorage storage);
-
-
-	protected static native RenderingGenerationResult generateRenderingIndirect(RenderingContext rc, long searchResultHandler,
-			boolean isTransparent, RenderingRuleSearchRequest render, boolean encodePng);
-	
-	protected static native long searchNativeObjectsForRendering(int sleft, int sright, int stop, int sbottom, int zoom, 
-			RenderingRuleSearchRequest request, boolean skipDuplicates, int renderRouteDataFile, Object objectWithInterruptedField, String msgIfNothingFound);
-
+		public static native void testRoutingPing();
+		
+		public static native int testNativeRouting(String obfPath, double sLat, double sLon, double eLat, double eLon);
 	
 	// Empty native impl
 	
-//	protected static NativeRouteSearchResult loadRoutingData(RouteRegion reg, String regName, int regfp,RouteSubregion subreg,
-//			boolean loadObjects) { return null;}
-//	
-//	protected static void deleteRouteSearchResult(long searchResultHandle) {}
-//	
-//	protected static RouteDataObject[] getRouteDataObjects(RouteRegion reg, long rs, int x31, int y31){return null;}
-//	
-//	protected static RouteSegmentResult[] nativeRouting(int[] coordinates, int[] state, String[] keyConfig, String[] valueConfig, 
-//			float initDirection, RouteRegion[] regions, RouteCalculationProgress progress) {return null;}
-//	
-//	protected static void deleteSearchResult(long searchResultHandle) {}
-//
-//	protected static boolean initBinaryMapFile(String filePath) {return false;}
-//	
-//	protected static boolean initCacheMapFiles(String filePath) {return false;}
-//	
-//	protected static boolean closeBinaryMapFile(String filePath) {return false;}
-//	
-//	protected static void initRenderingRulesStorage(RenderingRulesStorage storage) {}
-//
-//
-//	protected static RenderingGenerationResult generateRenderingIndirect(RenderingContext rc, long searchResultHandler,
-//			boolean isTransparent, RenderingRuleSearchRequest render, boolean encodePng) {
-//		return null;
-//	}
-//	
-//	protected static long searchNativeObjectsForRendering(int sleft, int sright, int stop, int sbottom, int zoom, 
-//			RenderingRuleSearchRequest request, boolean skipDuplicates, int renderRouteDataFile, Object objectWithInterruptedField, String msgIfNothingFound) {
-//		return 0;
-//	}
-}
+	/*protected static NativeRouteSearchResult loadRoutingData(RouteRegion reg, String regName, int regfp,RouteSubregion subreg,
+			boolean loadObjects) { return null;}
+	
+	protected static void deleteRouteSearchResult(long searchResultHandle) {}
+	
+	protected static RouteDataObject[] getRouteDataObjects(RouteRegion reg, long rs, int x31, int y31){return null;}
+	
+	protected static RouteSegmentResult[] nativeRouting(int[] coordinates, int[] state, String[] keyConfig, String[] valueConfig, 
+			float initDirection, RouteRegion[] regions, RouteCalculationProgress progress) {return null;}
+	
+	protected static void deleteSearchResult(long searchResultHandle) {}
+
+	protected static boolean initBinaryMapFile(String filePath) {return false;}
+	
+	protected static boolean initCacheMapFiles(String filePath) {return false;}
+	
+	protected static boolean closeBinaryMapFile(String filePath) {return false;}
+	
+	protected static void initRenderingRulesStorage(RenderingRulesStorage storage) {}
+
+
+	protected static RenderingGenerationResult generateRenderingIndirect(RenderingContext rc, long searchResultHandler,
+			boolean isTransparent, RenderingRuleSearchRequest render, boolean encodePng) {
+		return null;
+	}
+	
+	protected static long searchNativeObjectsForRendering(int sleft, int sright, int stop, int sbottom, int zoom, 
+			RenderingRuleSearchRequest request, boolean skipDuplicates, int renderRouteDataFile, Object objectWithInterruptedField, String msgIfNothingFound) {
+		return 0;
+	}
+	
+	public static void testRoutingPing() {}
+	
+	public static int testNativeRouting(String obfPath, double sLat, double sLon, double eLat, double eLon) {return 0;}
+*/}
