@@ -1,4 +1,4 @@
-package net.osmand.data;
+package net.osmand;
 
 
 public class IndexConstants {

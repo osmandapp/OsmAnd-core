@@ -1,9 +1,9 @@
 package net.osmand.plus.download;
 
-import static net.osmand.data.IndexConstants.BINARY_MAP_INDEX_EXT;
-import static net.osmand.data.IndexConstants.BINARY_MAP_INDEX_EXT_ZIP;
-import static net.osmand.data.IndexConstants.TTSVOICE_INDEX_EXT_ZIP;
-import static net.osmand.data.IndexConstants.VOICE_INDEX_EXT_ZIP;
+import static net.osmand.IndexConstants.BINARY_MAP_INDEX_EXT;
+import static net.osmand.IndexConstants.BINARY_MAP_INDEX_EXT_ZIP;
+import static net.osmand.IndexConstants.TTSVOICE_INDEX_EXT_ZIP;
+import static net.osmand.IndexConstants.VOICE_INDEX_EXT_ZIP;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,8 +14,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import net.osmand.IndexConstants;
 import net.osmand.PlatformUtil;
-import net.osmand.data.IndexConstants;
 import net.osmand.plus.ClientContext;
 import net.osmand.plus.R;
 import net.osmand.plus.Version;

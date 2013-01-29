@@ -3,7 +3,6 @@ package net.osmand.data;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.osmand.QuadRect;
 
 
 

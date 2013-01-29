@@ -1,4 +1,4 @@
-package net.osmand.data;
+package net.osmand.util;
 
 import gnu.trove.list.TLongList;
 

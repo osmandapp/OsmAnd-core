@@ -1,6 +1,6 @@
 package net.osmand.plus;
-import net.osmand.QuadPoint;
-import net.osmand.QuadRect;
+import net.osmand.data.QuadPoint;
+import net.osmand.data.QuadRect;
 import net.osmand.osm.MapUtils;
 
 public class RotatedTileBox {
