@@ -5,11 +5,11 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
-import net.osmand.Algoritms;
 import net.osmand.PlatformUtil;
 import net.osmand.osm.Entity;
 import net.osmand.osm.Node;
 import net.osmand.osm.OSMSettings.OSMTagKey;
+import net.osmand.util.Algorithms;
 
 
 public class City extends MapObject {
@@ -121,7 +121,7 @@ public class City extends MapObject {
 	protected Street registerStreet(Street street, boolean en) {
 		String name = en ? street.getEnName() : street.getName();
 		name = name.toLowerCase();
-		if (!Algoritms.isEmpty(name)) {
+		if (!Algorithms.isEmpty(name)) {
 			if (!streets.containsKey(name)) {
 				return streets.put(name, street);
 			} else {

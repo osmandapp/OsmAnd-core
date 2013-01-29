@@ -4,8 +4,6 @@ package net.osmand.plus;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
-import net.osmand.plus.R;
-
 public class Version {
 	
 	private final String appVersion; 

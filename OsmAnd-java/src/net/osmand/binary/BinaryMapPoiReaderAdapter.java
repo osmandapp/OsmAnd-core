@@ -11,7 +11,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-import net.osmand.Algoritms;
 import net.osmand.Collator;
 import net.osmand.CollatorStringMatcher;
 import net.osmand.CollatorStringMatcher.StringMatcherMode;
@@ -21,6 +20,7 @@ import net.osmand.binary.OsmandOdb.OsmAndPoiNameIndex.OsmAndPoiNameIndexData;
 import net.osmand.data.Amenity;
 import net.osmand.data.AmenityType;
 import net.osmand.osm.MapUtils;
+import net.osmand.util.Algorithms;
 import net.sf.junidecode.Junidecode;
 
 import org.apache.commons.logging.Log;
@@ -518,7 +518,7 @@ public class BinaryMapPoiReaderAdapter {
 			}
 			switch (tag) {
 			case 0:
-				if(Algoritms.isEmpty(am.getEnName())){
+				if(Algorithms.isEmpty(am.getEnName())){
 					am.setEnName(Junidecode.unidecode(am.getName()));
 				}
 				req.numberOfAcceptedObjects++;

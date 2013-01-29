@@ -5,8 +5,8 @@ import gnu.trove.list.array.TIntArrayList;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.osmand.Algoritms;
 import net.osmand.map.OsmandRegionInfo.OsmAndRegion;
+import net.osmand.util.Algorithms;
 
 public class RegionCountry {
 	public String continentName;
@@ -97,10 +97,10 @@ public class RegionCountry {
 			px = this.getLon(i);
 			py = this.getLat(i);
 		}
-		String n = Algoritms.capitalizeFirstLetterAndLowercase(this.name.replace('_', ' '));
+		String n = Algorithms.capitalizeFirstLetterAndLowercase(this.name.replace('_', ' '));
 		reg.setName(n);
 		if(this.continentName != null) {
-			reg.setContinentName(Algoritms.capitalizeFirstLetterAndLowercase(this.continentName));
+			reg.setContinentName(Algorithms.capitalizeFirstLetterAndLowercase(this.continentName));
 		}
 		for (RegionCountry c : this.regions) {
 			reg.addSubregions(c.convert());

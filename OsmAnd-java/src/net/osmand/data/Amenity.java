@@ -3,12 +3,12 @@ package net.osmand.data;
 import java.util.Collection;
 import java.util.List;
 
-import net.osmand.Algoritms;
 import net.osmand.osm.Entity;
 import net.osmand.osm.MapRenderingTypes;
 import net.osmand.osm.Node;
 import net.osmand.osm.OSMSettings.OSMTagKey;
 import net.osmand.osm.Relation;
+import net.osmand.util.Algorithms;
 
 public class Amenity extends MapObject {
 
@@ -119,7 +119,7 @@ public class Amenity extends MapObject {
 	private static boolean checkAmenitiesToAdd(Amenity a, List<Amenity> amenitiesList){
 		// check amenity for duplication
 		for(Amenity b : amenitiesList){
-			if(b.getType() == a.getType() && Algoritms.objectEquals(a.getSubType(), b.getSubType())){
+			if(b.getType() == a.getType() && Algorithms.objectEquals(a.getSubType(), b.getSubType())){
 				return false;
 			}
 		}

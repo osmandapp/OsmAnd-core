@@ -1,6 +1,4 @@
-package net.osmand;
-
-
+package net.osmand.util;
 
 import java.io.Closeable;
 import java.io.EOFException;
@@ -10,14 +8,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import net.osmand.PlatformUtil;
+
 import org.apache.commons.logging.Log;
 
 /**
  * Basic algorithms that are not in jdk 
  */
-public class Algoritms {
+public class Algorithms {
 	private static final int BUFFER_SIZE = 1024;
-	private static final Log log = PlatformUtil.getLog(Algoritms.class);
+	private static final Log log = PlatformUtil.getLog(Algorithms.class);
 	
 	public static boolean isEmpty(String s){
 		return s == null || s.length() == 0;

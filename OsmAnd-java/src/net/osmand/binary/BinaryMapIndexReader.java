@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import net.osmand.Algoritms;
 import net.osmand.Collator;
 import net.osmand.CollatorStringMatcher;
 import net.osmand.CollatorStringMatcher.StringMatcherMode;
@@ -44,6 +43,7 @@ import net.osmand.data.TransportRoute;
 import net.osmand.data.TransportStop;
 import net.osmand.osm.LatLon;
 import net.osmand.osm.MapUtils;
+import net.osmand.util.Algorithms;
 
 import org.apache.commons.logging.Log;
 
@@ -223,7 +223,7 @@ public class BinaryMapIndexReader {
 	private void calculateCenterPointForRegions(){
 		for(AddressRegion reg : addressIndexes){
 			for(MapIndex map : mapIndexes){
-				if(Algoritms.objectEquals(reg.name, map.name)){
+				if(Algorithms.objectEquals(reg.name, map.name)){
 					if(map.getRoots().size() > 0){
 						MapRoot mapRoot = map.getRoots().get(map.getRoots().size() - 1);
 						double cy = (MapUtils.get31LatitudeY(mapRoot.getBottom()) + MapUtils.get31LatitudeY(mapRoot.getTop())) / 2;

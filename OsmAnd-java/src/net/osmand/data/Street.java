@@ -5,13 +5,13 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import net.osmand.Algoritms;
 import net.osmand.osm.Entity;
 import net.osmand.osm.LatLon;
 import net.osmand.osm.MapUtils;
 import net.osmand.osm.Node;
 import net.osmand.osm.OSMSettings.OSMTagKey;
 import net.osmand.osm.Way;
+import net.osmand.util.Algorithms;
 
 
 public class Street extends MapObject {
@@ -136,11 +136,11 @@ public class Street extends MapObject {
 			public int compare(Building o1, Building o2) {
 				String s1 = o1.getName();
 				String s2 = o2.getName();
-				int i1 = Algoritms.extractFirstIntegerNumber(s1);
-				int i2 = Algoritms.extractFirstIntegerNumber(s2);
+				int i1 = Algorithms.extractFirstIntegerNumber(s1);
+				int i2 = Algorithms.extractFirstIntegerNumber(s2);
 				if(i1 == i2) {
-					String t1 = Algoritms.extractIntegerSuffix(s1);
-					String t2 = Algoritms.extractIntegerSuffix(s2);
+					String t1 = Algorithms.extractIntegerSuffix(s1);
+					String t2 = Algorithms.extractIntegerSuffix(s2);
 					return t1.compareTo(t2);
 				}
 				return i1 - i2;

@@ -1,9 +1,10 @@
 package net.osmand.binary;
 
 
+import gnu.trove.map.hash.TIntObjectHashMap;
+
 import java.text.MessageFormat;
 
-import gnu.trove.map.hash.TIntObjectHashMap;
 import net.osmand.binary.BinaryMapRouteReaderAdapter.RouteRegion;
 import net.osmand.binary.BinaryMapRouteReaderAdapter.RouteTypeRule;
 

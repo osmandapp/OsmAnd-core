@@ -8,8 +8,8 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-import net.osmand.Algoritms;
 import net.osmand.PlatformUtil;
+import net.osmand.util.Algorithms;
 
 import org.apache.commons.logging.Log;
 
@@ -37,7 +37,7 @@ public class SpecialPhrases {
 			
 		}
 		String specialValue = m.get(value);
-		if(Algoritms.isEmpty(specialValue)) {
+		if(Algorithms.isEmpty(specialValue)) {
 			return value;
 		}
 		return specialValue;
@@ -76,8 +76,8 @@ public class SpecialPhrases {
 			}
 
 		} finally {
-			Algoritms.closeStream(is);
-			Algoritms.closeStream(br);
+			Algorithms.closeStream(is);
+			Algorithms.closeStream(br);
 		}
 
 	}

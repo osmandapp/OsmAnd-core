@@ -1,4 +1,4 @@
-package net.osmand;
+package net.osmand.util;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -13,6 +13,8 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
+
+import net.osmand.PlatformUtil;
 
 import org.apache.commons.logging.Log;
 
@@ -105,17 +107,17 @@ public class IOUtils {
 			ous.flush();
 			if(gzip){
 				GZIPOutputStream gous = new GZIPOutputStream(ous, 1024);
-				Algoritms.streamCopy(bis, gous);
+				Algorithms.streamCopy(bis, gous);
 				gous.flush();
 				gous.finish();
 			} else {
-				Algoritms.streamCopy(bis, ous);
+				Algorithms.streamCopy(bis, ous);
 			}
 			
 	        ous.write(("\r\n--" + BOUNDARY + "--\r\n").getBytes()); //$NON-NLS-1$ //$NON-NLS-2$
 			ous.flush();
-			Algoritms.closeStream(bis);
-			Algoritms.closeStream(ous);
+			Algorithms.closeStream(bis);
+			Algorithms.closeStream(ous);
 
 			log.info("Finish uploading file " + fileToUpload.getName());
 			log.info("Response code and message : " + conn.getResponseCode() + " " + conn.getResponseMessage());

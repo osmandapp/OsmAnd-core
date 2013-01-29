@@ -16,8 +16,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import net.osmand.Algoritms;
 import net.osmand.PlatformUtil;
+import net.osmand.util.Algorithms;
 
 import org.apache.commons.logging.Log;
 
@@ -192,11 +192,11 @@ public class MapTileDownloader {
 					FileOutputStream stream = null;
 					try {
 						stream = new FileOutputStream(request.fileToSave);
-						Algoritms.streamCopy(inputStream, stream);
+						Algorithms.streamCopy(inputStream, stream);
 						stream.flush();
 					} finally {
-						Algoritms.closeStream(inputStream);
-						Algoritms.closeStream(stream);
+						Algorithms.closeStream(inputStream);
+						Algorithms.closeStream(stream);
 					}
 					if (log.isDebugEnabled()) {
 						log.debug("Downloading tile : " + request.url + " successfull " + (System.currentTimeMillis() - time) + " ms"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$

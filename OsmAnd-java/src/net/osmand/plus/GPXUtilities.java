@@ -24,7 +24,6 @@ import java.util.TimeZone;
 
 import net.osmand.Location;
 import net.osmand.PlatformUtil;
-import net.osmand.plus.R;
 
 import org.apache.commons.logging.Log;
 import org.xmlpull.v1.XmlPullParser;

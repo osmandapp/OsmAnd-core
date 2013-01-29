@@ -1,10 +1,10 @@
 package net.osmand.data;
 
 
-import net.osmand.Algoritms;
 import net.osmand.osm.Entity;
 import net.osmand.osm.LatLon;
 import net.osmand.osm.OSMSettings.OSMTagKey;
+import net.osmand.util.Algorithms;
 
 public class Building extends MapObject {
 	
@@ -97,12 +97,12 @@ public class Building extends MapObject {
 
 	public float interpolation(String hno) {
 		if(getInterpolationType() != null || getInterpolationInterval() > 0) {
-			int num = Algoritms.extractFirstIntegerNumber(hno);
-			int numB = Algoritms.extractFirstIntegerNumber(super.getName());
+			int num = Algorithms.extractFirstIntegerNumber(hno);
+			int numB = Algorithms.extractFirstIntegerNumber(super.getName());
 			int numT = numB; 
 			if (num >= numB) {
 				if (getName2() != null) {
-					numT = Algoritms.extractFirstIntegerNumber(getName2());
+					numT = Algorithms.extractFirstIntegerNumber(getName2());
 					if(numT < num) {
 						return -1;
 					}

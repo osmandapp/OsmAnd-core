@@ -1,4 +1,4 @@
-package net.osmand;
+package net.osmand.util;
 /******************************************************************************
 *
 *							SunriseSunset.java
