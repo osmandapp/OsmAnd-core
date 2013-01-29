@@ -95,8 +95,6 @@ public class NameFinderPoiFilter extends PoiFilter {
 								if (matcher == null || matcher.publish(a)) {
 									searchedAmenities.add(a);
 								}
-							} catch (NullPointerException e) {
-								log.info("Invalid attributes", e); //$NON-NLS-1$
 							} catch (NumberFormatException e) {
 								log.info("Invalid attributes", e); //$NON-NLS-1$
 							}

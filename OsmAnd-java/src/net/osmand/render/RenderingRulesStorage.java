@@ -302,7 +302,7 @@ public class RenderingRulesStorage {
 			} else if("renderingAttribute".equals(name)){ //$NON-NLS-1$
 				String attr = parser.getAttributeValue("", "name");
 				@SuppressWarnings("unchecked")
-				RenderingRule root = new RenderingRule(Collections.EMPTY_MAP, RenderingRulesStorage.this);
+				RenderingRule root = new RenderingRule(new HashMap<String, String>(	), RenderingRulesStorage.this);
 				renderingAttributes.put(attr, root);
 				stack.push(root);
 			} else if("renderingProperty".equals(name)){ //$NON-NLS-1$

@@ -1,10 +1,12 @@
 package net.osmand.router;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import net.osmand.Collator;
 import net.osmand.LogUtil;
 import net.osmand.router.GeneralRouter.GeneralRouterProfile;
 
@@ -120,8 +122,9 @@ public class RoutingConfiguration {
 	public static RoutingConfiguration.Builder getDefault() {
 		if (DEFAULT == null) {
 			try {
+				// AVIAN FIXME doesn't work in embedded
 				DEFAULT = parseFromInputStream(RoutingConfiguration.class.getResourceAsStream("routing.xml"));
-
+//				DEFAULT = parseFromInputStream(new FileInputStream("/home/victor/projects/OsmAnd/repo/core/OsmAnd-java/src/net/osmand/router/routing.xml"));
 			} catch (Exception e) {
 				throw new IllegalStateException(e);
 			}

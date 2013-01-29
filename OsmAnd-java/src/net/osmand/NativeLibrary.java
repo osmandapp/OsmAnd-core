@@ -151,7 +151,7 @@ public class NativeLibrary {
 		return lr;
 	}
 
-	
+	/**/
 	protected static native NativeRouteSearchResult loadRoutingData(RouteRegion reg, String regName, int regfp,RouteSubregion subreg,
 				boolean loadObjects); 
 		
@@ -182,10 +182,10 @@ public class NativeLibrary {
 		public static native void testRoutingPing();
 		
 		public static native int testNativeRouting(String obfPath, double sLat, double sLon, double eLat, double eLon);
-	
+	/**/
 	// Empty native impl
-	
-	/*protected static NativeRouteSearchResult loadRoutingData(RouteRegion reg, String regName, int regfp,RouteSubregion subreg,
+	/*
+	protected static NativeRouteSearchResult loadRoutingData(RouteRegion reg, String regName, int regfp,RouteSubregion subreg,
 			boolean loadObjects) { return null;}
 	
 	protected static void deleteRouteSearchResult(long searchResultHandle) {}
@@ -219,4 +219,5 @@ public class NativeLibrary {
 	public static void testRoutingPing() {}
 	
 	public static int testNativeRouting(String obfPath, double sLat, double sLon, double eLat, double eLon) {return 0;}
-*/}
+	/* */
+}

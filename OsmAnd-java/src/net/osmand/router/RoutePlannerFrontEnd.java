@@ -192,7 +192,7 @@ public class RoutePlannerFrontEnd {
 	}
 	
 
-	public List<RouteSegmentResult> searchRoute(final RoutingContext ctx, List<RouteSegment> points, boolean leftSideNavigation) throws IOException, InterruptedException {
+	private List<RouteSegmentResult> searchRoute(final RoutingContext ctx, List<RouteSegment> points, boolean leftSideNavigation) throws IOException, InterruptedException {
 		if(points.size() > 2) {
 			ArrayList<RouteSegmentResult> firstPartRecalculatedRoute = null;
 			ArrayList<RouteSegmentResult> restPartRecalculatedRoute = null;
@@ -203,8 +203,15 @@ public class RoutePlannerFrontEnd {
 				for (int i = 0; i < prev.size(); i++) {
 					RouteSegmentResult rsr = prev.get(i);
 					if (id == rsr.getObject().getId() && ss == rsr.getEndPointIndex()) {
-						firstPartRecalculatedRoute = new ArrayList<RouteSegmentResult>(prev.subList(0, i + 1));
-						restPartRecalculatedRoute = new ArrayList<RouteSegmentResult>(prev.subList(i + 1, prev.size()));
+						firstPartRecalculatedRoute = new ArrayList<RouteSegmentResult>(i + 1);
+						restPartRecalculatedRoute = new ArrayList<RouteSegmentResult>(prev.size() - i);
+						for(int k = 0; k < prev.size(); k++) {
+							if(k <= i) {
+								firstPartRecalculatedRoute.add(prev.get(k));
+							} else {
+								restPartRecalculatedRoute.add(prev.get(k));
+							}
+						}
 						break;
 					}
 				}
@@ -242,7 +249,7 @@ public class RoutePlannerFrontEnd {
 	}
 	
 	@SuppressWarnings("static-access")
-	public List<RouteSegmentResult> searchRoute(final RoutingContext ctx, RouteSegment start, RouteSegment end, boolean leftSideNavigation) throws IOException, InterruptedException {
+	private List<RouteSegmentResult> searchRoute(final RoutingContext ctx, RouteSegment start, RouteSegment end, boolean leftSideNavigation) throws IOException, InterruptedException {
 		if(ctx.SHOW_GC_SIZE){
 			long h1 = ctx.runGCUsedMemory();
 			float mb = (1 << 20);

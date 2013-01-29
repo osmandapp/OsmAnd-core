@@ -82,7 +82,7 @@
 				<exclude name="net/osmand/osm/OpeningHoursParser*"/>
 				<exclude name="net/osmand/SunriseSunset*"/>
 				
-				 <!-- <exclude name="com/google/protobuf/TextFormat*"/> -->
+				<!-- <exclude name="com/google/protobuf/TextFormat*"/>--> 
 			</fileset>
 		</jar>
 

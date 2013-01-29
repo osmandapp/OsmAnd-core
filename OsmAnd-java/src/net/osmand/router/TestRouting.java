@@ -13,6 +13,7 @@ import java.util.List;
 import net.osmand.LogUtil;
 import net.osmand.NativeLibrary;
 import net.osmand.binary.BinaryMapIndexReader;
+import net.osmand.osm.LatLon;
 import net.osmand.router.BinaryRoutePlanner.FinalRouteSegment;
 import net.osmand.router.BinaryRoutePlanner.RouteSegment;
 import net.osmand.router.RoutingConfiguration.Builder;
@@ -208,17 +209,11 @@ public class TestRouting {
 		
 		double startLat = Double.parseDouble(parser.getAttributeValue("", "start_lat"));
 		double startLon = Double.parseDouble(parser.getAttributeValue("", "start_lon"));
-		RouteSegment startSegment = router.findRouteSegment(startLat, startLon, ctx);
 		double endLat = Double.parseDouble(parser.getAttributeValue("", "target_lat"));
 		double endLon = Double.parseDouble(parser.getAttributeValue("", "target_lon"));
-		RouteSegment endSegment = router.findRouteSegment(endLat, endLon, ctx);
-		if(startSegment == null){
-			throw new IllegalArgumentException("Start segment is not found for test : " + testDescription);
-		}
-		if(endSegment == null){
-			throw new IllegalArgumentException("End segment is not found for test : " + testDescription);
-		}
-		List<RouteSegmentResult> route = router.searchRoute(ctx, startSegment, endSegment, false);
+		LatLon start = new LatLon(startLat, startLon);
+		LatLon end = new LatLon(endLat, endLon);
+		List<RouteSegmentResult> route = router.searchRoute(ctx, start, end, null, false);
 		final float calcRoutingTime = ctx.routingTime;
 		float completeTime = 0;
 		float completeDistance = 0;
@@ -247,17 +242,17 @@ public class TestRouting {
 		
 		if(TEST_BOTH_DIRECTION){
 			rconfig.planRoadDirection = -1;
-			runTestSpecialTest(lib, rs, rconfig, router, startSegment, endSegment, calcRoutingTime, "Calculated routing time in both direction {0} != {1} time in -1 direction");
+			runTestSpecialTest(lib, rs, rconfig, router, start, end, calcRoutingTime, "Calculated routing time in both direction {0} != {1} time in -1 direction");
 			
 			rconfig.planRoadDirection = 1;
-			runTestSpecialTest(lib, rs, rconfig, router, startSegment, endSegment, calcRoutingTime, "Calculated routing time in both direction {0} != {1} time in 1 direction");
+			runTestSpecialTest(lib, rs, rconfig, router, start, end, calcRoutingTime, "Calculated routing time in both direction {0} != {1} time in 1 direction");
 			
 		}
 		
 		if(TEST_WO_HEURISTIC) {
 			rconfig.planRoadDirection = 0;
 			rconfig.heuristicCoefficient = 0.5f;
-			runTestSpecialTest(lib, rs, rconfig, router, startSegment, endSegment, calcRoutingTime, 
+			runTestSpecialTest(lib, rs, rconfig, router, start, end, calcRoutingTime, 
 				"Calculated routing time with heuristic 1 {0} != {1} with heuristic 0.5");
 		}
 		
@@ -265,10 +260,10 @@ public class TestRouting {
 
 
 	private static void runTestSpecialTest(NativeLibrary lib, BinaryMapIndexReader[] rs, RoutingConfiguration rconfig, RoutePlannerFrontEnd router,
-			RouteSegment startSegment, RouteSegment endSegment, final float calcRoutingTime, String msg) throws IOException, InterruptedException {
+			LatLon start, LatLon end, final float calcRoutingTime, String msg) throws IOException, InterruptedException {
 		RoutingContext ctx;
 		ctx = new RoutingContext(rconfig, lib, rs);
-		router.searchRoute(ctx, startSegment, endSegment, false);
+		router.searchRoute(ctx, start, end, null, false);
 		FinalRouteSegment frs = ctx.finalRouteSegment;
 		if(frs == null || !equalPercent(calcRoutingTime, frs.distanceFromStart, 0.5f)){
 			throw new IllegalArgumentException(MessageFormat.format(msg, calcRoutingTime+"",frs == null?"0":frs.distanceFromStart+""));
@@ -280,10 +275,11 @@ public class TestRouting {
 	public static void calculateRoute(String folderWithObf,
 			double startLat, double startLon, double endLat, double endLon) throws IOException, InterruptedException {
 		BinaryMapIndexReader[] rs = collectFiles(folderWithObf);
+		RouteResultPreparation.PRINT_TO_CONSOLE_ROUTE_INFORMATION_TO_TEST = false;
+		calculateRoute(startLat, startLon, endLat, endLon, rs);
 		calculateRoute(startLat, startLon, endLat, endLon, rs);
 	}
-
-
+	
 	private static BinaryMapIndexReader[] collectFiles(String folderWithObf) throws FileNotFoundException, IOException {
 		List<File> files = new ArrayList<File>();
 		for (File f : new File(folderWithObf).listFiles()) {
@@ -317,8 +313,8 @@ public class TestRouting {
 		if(endSegment == null){
 			throw new IllegalArgumentException("End segment is not found ");
 		}
-		RouteResultPreparation.PRINT_TO_CONSOLE_ROUTE_INFORMATION_TO_TEST = true;
-		List<RouteSegmentResult> route = router.searchRoute(ctx, startSegment, endSegment, false);
+		List<RouteSegmentResult> route = router.searchRoute(ctx,
+				new LatLon(startLat, startLon), new LatLon(endLat, endLon), null,  false);
 		System.out.println("Route is " + route.size() + " segments " + (System.currentTimeMillis() - ts) + " ms ");
 	}
 

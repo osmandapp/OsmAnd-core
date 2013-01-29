@@ -30,6 +30,7 @@
 
 package com.google.protobuf;
 
+
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.CharBuffer;
@@ -264,12 +265,14 @@ private static void printField(final FieldDescriptor field,
       for (final int value : field.getFixed32List()) {
         generator.print(entry.getKey().toString());
         generator.print(": ");
+        // AVIAN missing dependency
         generator.print(String.format((Locale) null, "0x%08x", value));
         generator.print("\n");
       }
       for (final long value : field.getFixed64List()) {
         generator.print(entry.getKey().toString());
         generator.print(": ");
+        // AVIAN missing dependency
         generator.print(String.format((Locale) null, "0x%016x", value));
         generator.print("\n");
       }
@@ -459,6 +462,10 @@ private static void printField(final FieldDescriptor field,
 
     /** Advance to the next token. */
     public void nextToken() {
+        // AVIAN missing dependency
+//    	if(true){
+//  		  throw new UnsupportedOperationException();
+//  	  }
       previousLine = line;
       previousColumn = column;
 
@@ -478,11 +485,7 @@ private static void printField(final FieldDescriptor field,
         // EOF
         currentToken = "";
       } else {
-    	  // OSMAND change
-//        matcher.usePattern(TOKEN);
-    	  if(true){
-    		  throw new UnsupportedOperationException();
-    	  }
+        matcher.usePattern(TOKEN);
         if (matcher.lookingAt()) {
           currentToken = matcher.group();
           matcher.region(matcher.end(), matcher.regionEnd());
@@ -501,11 +504,11 @@ private static void printField(final FieldDescriptor field,
      * token.
      */
     private void skipWhitespace() {
-  	  // OSMAND change
-    	if(true){
-  		  throw new UnsupportedOperationException();
-  	  }
-//      matcher.usePattern(WHITESPACE);
+        // AVIAN missing dependency
+//    	if(true){
+//  		  throw new UnsupportedOperationException();
+//  	  }
+      matcher.usePattern(WHITESPACE);
       if (matcher.lookingAt()) {
         matcher.region(matcher.end(), matcher.regionEnd());
       }

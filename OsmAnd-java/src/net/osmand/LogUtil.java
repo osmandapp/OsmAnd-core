@@ -1,6 +1,6 @@
 package net.osmand;
 
-import java.text.Collator;
+
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -17,6 +17,8 @@ import org.xmlpull.v1.XmlPullParserException;
  */
 public class LogUtil {
 	
+	public static boolean AVIAN_LIBRARY = false;
+	
 	public static Log getLog(Class<?> cl){
 		return LogFactory.getLog(cl);
 	}
@@ -26,13 +28,40 @@ public class LogUtil {
 	}
 	
 
+	// AVIAN missing dependency
+	/*public static net.osmand.Collator primaryCollator(){
+		return new net.osmand.Collator() {
+			
+			@Override
+			public int compare(Object o1, Object o2) {
+				return compare(o1+"", o2+"");
+			}
+			
+			@Override
+			public boolean equals(String source, String target) {
+				if(source == null) {
+					return source == target;
+				}
+				return source.equals(target);
+			}
+			
+			@Override
+			public int compare(String source, String target) {
+				if(source == null) {
+					return source == target ? 0 : -1;
+				}
+				return source.compareTo(target);
+			}
+		};
+	}*/
+	
 	public static net.osmand.Collator primaryCollator(){
-		final Collator instance = Collator.getInstance();
-		instance.setStrength(Collator.PRIMARY);
+		final java.text.Collator instance = java.text.Collator.getInstance();
+		instance.setStrength(java.text.Collator.PRIMARY);
 		return wrapCollator(instance);
 	}
-
-	public static net.osmand.Collator wrapCollator(final Collator instance) {
+	
+	public static net.osmand.Collator wrapCollator(final java.text.Collator instance) {
 		return new net.osmand.Collator() {
 			
 			@Override
