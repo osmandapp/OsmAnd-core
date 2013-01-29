@@ -6,7 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 import net.osmand.binary.BinaryMapAddressReaderAdapter.AddressRegion;
 import net.osmand.binary.BinaryMapAddressReaderAdapter.CitiesBlock;
 import net.osmand.binary.BinaryMapIndexReader.MapIndex;
@@ -34,7 +34,7 @@ public class CachedOsmandIndexes {
 	
 	private OsmAndStoredIndex storedIndex;
 	private OsmAndStoredIndex.Builder storedIndexBuilder;
-	private Log log = LogUtil.getLog(CachedOsmandIndexes.class);
+	private Log log = PlatformUtil.getLog(CachedOsmandIndexes.class);
 	private boolean hasChanged = true;
 	
 	public static final int VERSION = 2;

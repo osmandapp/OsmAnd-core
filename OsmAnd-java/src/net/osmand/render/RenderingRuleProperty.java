@@ -1,14 +1,14 @@
 package net.osmand.render;
 
 
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 import net.osmand.binary.BinaryMapDataObject;
 
 import org.apache.commons.logging.Log;
 
 
 public class RenderingRuleProperty {
-	private final static Log log = LogUtil.getLog(RenderingRuleProperty.class);
+	private final static Log log = PlatformUtil.getLog(RenderingRuleProperty.class);
 	
 	private final static int INT_TYPE = 1;
 	private final static int FLOAT_TYPE = 2;

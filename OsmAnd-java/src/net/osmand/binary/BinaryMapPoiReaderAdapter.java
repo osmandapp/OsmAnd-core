@@ -15,7 +15,7 @@ import net.osmand.Algoritms;
 import net.osmand.Collator;
 import net.osmand.CollatorStringMatcher;
 import net.osmand.CollatorStringMatcher.StringMatcherMode;
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 import net.osmand.binary.BinaryMapIndexReader.SearchRequest;
 import net.osmand.binary.OsmandOdb.OsmAndPoiNameIndex.OsmAndPoiNameIndexData;
 import net.osmand.data.Amenity;
@@ -29,7 +29,7 @@ import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.WireFormat;
 
 public class BinaryMapPoiReaderAdapter {
-	private static final Log LOG = LogUtil.getLog(BinaryMapPoiReaderAdapter.class);
+	private static final Log LOG = PlatformUtil.getLog(BinaryMapPoiReaderAdapter.class);
 	
 	public static final int SHIFT_BITS_CATEGORY = 7;
 	private static final int CATEGORY_MASK = (1 << SHIFT_BITS_CATEGORY) - 1 ;

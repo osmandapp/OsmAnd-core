@@ -8,7 +8,7 @@ import java.util.List;
 
 import net.osmand.CollatorStringMatcher;
 import net.osmand.CollatorStringMatcher.StringMatcherMode;
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 import net.osmand.StringMatcher;
 import net.osmand.binary.BinaryMapIndexReader.SearchRequest;
 import net.osmand.binary.OsmandOdb.AddressNameIndexDataAtom;
@@ -37,7 +37,7 @@ public class BinaryMapAddressReaderAdapter {
 	public final static int VILLAGES_TYPE = 3;
 	public final static int STREET_TYPE = 4;
 	
-	private static final Log LOG = LogUtil.getLog(BinaryMapAddressReaderAdapter.class);
+	private static final Log LOG = PlatformUtil.getLog(BinaryMapAddressReaderAdapter.class);
 	
 	public static class AddressRegion extends BinaryIndexPart {
 		String enName;

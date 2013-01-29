@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import net.osmand.Algoritms;
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 import net.osmand.osm.Entity;
 import net.osmand.osm.Node;
 import net.osmand.osm.OSMSettings.OSMTagKey;
@@ -49,7 +49,7 @@ public class City extends MapObject {
 
 	private CityType type = null;
 	// Be attentive ! Working with street names ignoring case
-	private Map<String, Street> streets = new TreeMap<String, Street>(LogUtil.primaryCollator());
+	private Map<String, Street> streets = new TreeMap<String, Street>(PlatformUtil.primaryCollator());
 	private String isin = null;
 	private String postcode = null;
 

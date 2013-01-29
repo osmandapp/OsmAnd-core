@@ -10,7 +10,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 import net.osmand.NativeLibrary;
 import net.osmand.binary.BinaryMapIndexReader;
 import net.osmand.osm.LatLon;
@@ -143,7 +143,7 @@ public class TestRouting {
 
 
 	public static boolean test(NativeLibrary lib, InputStream resource, BinaryMapIndexReader[] rs, RoutingConfiguration.Builder config) throws Exception {
-		XmlPullParser parser = LogUtil.newXMLPullParser();
+		XmlPullParser parser = PlatformUtil.newXMLPullParser();
 		parser.setInput(resource, "UTF-8");
 		int tok;
 		while ((tok = parser.next()) != XmlPullParser.END_DOCUMENT) {

@@ -1,6 +1,6 @@
 package net.osmand.plus;
 
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 
 import org.apache.commons.logging.Log;
 
@@ -10,7 +10,7 @@ import com.ibm.icu.text.Bidi;
 import com.ibm.icu.text.BidiRun;
 
 public class Reshaper {
-	private final static Log LOG = LogUtil.getLog(Reshaper.class);
+	private final static Log LOG = PlatformUtil.getLog(Reshaper.class);
 	
 	public static String reshape(String s) {
 //		if(true) {

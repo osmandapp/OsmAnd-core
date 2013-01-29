@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 
 import org.apache.commons.logging.Log;
 
@@ -13,7 +13,7 @@ import alice.tuprolog.Term;
 
 public class CommandBuilder {
 	
-	private static final Log log = LogUtil.getLog(CommandBuilder.class);
+	private static final Log log = PlatformUtil.getLog(CommandBuilder.class);
 	
 	protected static final String C_PREPARE_TURN = "prepare_turn";  //$NON-NLS-1$
 	protected static final String C_PREPARE_ROUNDABOUT = "prepare_roundabout";  //$NON-NLS-1$

@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Stack;
 
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 import net.osmand.osm.MapRenderingTypes;
 
 import org.apache.commons.logging.Log;
@@ -24,7 +24,7 @@ import org.xmlpull.v1.XmlPullParserException;
 
 public class RenderingRulesStorage {
 
-	private final static Log log = LogUtil.getLog(RenderingRulesStorage.class);
+	private final static Log log = PlatformUtil.getLog(RenderingRulesStorage.class);
 	
 	// keep sync !
 	public final static int POINT_RULES = MapRenderingTypes.POINT_TYPE;
@@ -92,7 +92,7 @@ public class RenderingRulesStorage {
 	
 	public void parseRulesFromXmlInputStream(InputStream is, RenderingRulesStorageResolver resolver) throws XmlPullParserException,
 			IOException {
-		XmlPullParser parser = LogUtil.newXMLPullParser();
+		XmlPullParser parser = PlatformUtil.newXMLPullParser();
 		RenderingRulesHandler handler = new RenderingRulesHandler(parser, resolver);
 		handler.parse(is);
 		RenderingRulesStorage depends = handler.getDependsStorage();

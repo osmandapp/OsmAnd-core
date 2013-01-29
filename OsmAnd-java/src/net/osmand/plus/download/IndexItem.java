@@ -14,7 +14,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 import net.osmand.data.IndexConstants;
 import net.osmand.plus.ClientContext;
 import net.osmand.plus.R;
@@ -23,7 +23,7 @@ import net.osmand.plus.Version;
 import org.apache.commons.logging.Log;
 
 public class IndexItem implements Comparable<IndexItem> {
-	private static final Log log = LogUtil.getLog(IndexItem.class);
+	private static final Log log = PlatformUtil.getLog(IndexItem.class);
 	
 	String description;
 	String date;

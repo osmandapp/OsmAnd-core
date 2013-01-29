@@ -15,7 +15,7 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 import net.osmand.data.AmenityType;
 import net.osmand.osm.OSMSettings.OSMTagKey;
 
@@ -32,7 +32,7 @@ import org.xmlpull.v1.XmlPullParserException;
  */
 public class MapRenderingTypes {
 
-	private static final Log log = LogUtil.getLog(MapRenderingTypes.class);
+	private static final Log log = PlatformUtil.getLog(MapRenderingTypes.class);
 	
 	// keep sync ! not change values
 	public final static int MULTY_POLYGON_TYPE = 0;
@@ -261,7 +261,7 @@ public class MapRenderingTypes {
 				is = new FileInputStream(resourceName);
 			}
 			long time = System.currentTimeMillis();
-			XmlPullParser parser = LogUtil.newXMLPullParser();
+			XmlPullParser parser = PlatformUtil.newXMLPullParser();
 			int tok;
 			parser.setInput(is, "UTF-8");
 			String poiParentCategory = null;

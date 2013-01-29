@@ -4,11 +4,11 @@ package net.osmand.data;
 import java.util.Comparator;
 
 import net.osmand.Collator;
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 
 public class MapObjectComparator implements Comparator<MapObject>{
 	private final boolean en;
-	Collator collator = LogUtil.primaryCollator();
+	Collator collator = PlatformUtil.primaryCollator();
 	public MapObjectComparator(boolean en){
 		this.en = en;
 	}

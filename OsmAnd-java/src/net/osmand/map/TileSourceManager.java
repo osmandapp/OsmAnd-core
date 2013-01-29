@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 
 import org.apache.commons.logging.Log;
 import org.xmlpull.v1.XmlPullParser;
@@ -28,7 +28,7 @@ import bsh.Interpreter;
 
 
 public class TileSourceManager {
-	private static final Log log = LogUtil.getLog(TileSourceManager.class);
+	private static final Log log = PlatformUtil.getLog(TileSourceManager.class);
 	private static final String RULE_BEANSHELL = "beanshell";
 	public static final String RULE_YANDEX_TRAFFIC = "yandex_traffic";
 	private static final String RULE_WMS = "wms_tile";
@@ -320,7 +320,7 @@ public class TileSourceManager {
 		final List<TileSourceTemplate> templates = new ArrayList<TileSourceTemplate>();
 		try {
 			URLConnection connection = new URL("http://download.osmand.net//tile_sources.php?" + versionAsUrl).openConnection();
-			XmlPullParser parser = LogUtil.newXMLPullParser();
+			XmlPullParser parser = PlatformUtil.newXMLPullParser();
 			parser.setInput(connection.getInputStream(), "UTF-8");
 			int tok;
 			while ((tok = parser.next()) != XmlPullParser.END_DOCUMENT) {

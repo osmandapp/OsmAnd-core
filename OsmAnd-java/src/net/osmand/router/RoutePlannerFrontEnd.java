@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 import net.osmand.binary.BinaryMapRouteReaderAdapter;
 import net.osmand.binary.BinaryMapRouteReaderAdapter.RouteRegion;
 import net.osmand.binary.RouteDataObject;
@@ -19,7 +19,7 @@ import org.apache.commons.logging.Log;
 public class RoutePlannerFrontEnd {
 	
 	private boolean useOldVersion;
-	protected static final Log log = LogUtil.getLog(BinaryRoutePlannerOld.class);
+	protected static final Log log = PlatformUtil.getLog(BinaryRoutePlannerOld.class);
 
 	public RoutePlannerFrontEnd(boolean useOldVersion) {
 		this.useOldVersion = useOldVersion;

@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 import net.osmand.data.IndexConstants;
 import net.osmand.plus.ClientContext;
 import net.osmand.plus.OsmandSettings;
@@ -32,7 +32,7 @@ import alice.tuprolog.Var;
 
 public abstract class AbstractPrologCommandPlayer implements CommandPlayer {
 
-	private static final Log log = LogUtil.getLog(AbstractPrologCommandPlayer.class);
+	private static final Log log = PlatformUtil.getLog(AbstractPrologCommandPlayer.class);
 
 	protected ClientContext ctx;
 	protected File voiceDir;

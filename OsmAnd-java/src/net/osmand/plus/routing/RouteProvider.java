@@ -22,7 +22,7 @@ import javax.xml.parsers.FactoryConfigurationError;
 import javax.xml.parsers.ParserConfigurationException;
 
 import net.osmand.Location;
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 import net.osmand.NativeLibrary;
 import net.osmand.binary.BinaryMapIndexReader;
 import net.osmand.data.IndexConstants;
@@ -55,7 +55,7 @@ import org.xmlpull.v1.XmlPullParserException;
 
 
 public class RouteProvider {
-	private static final org.apache.commons.logging.Log log = LogUtil.getLog(RouteProvider.class);
+	private static final org.apache.commons.logging.Log log = PlatformUtil.getLog(RouteProvider.class);
 	private static final String OSMAND_ROUTER = "OsmAndRouter";
 	
 	public enum RouteService {
@@ -315,7 +315,7 @@ public class RouteProvider {
 	}
 	
 	protected RouteCalculationResult findVectorMapsRoute(RouteCalculationParams params) throws IOException {
-		if(LogUtil.AVIAN_LIBRARY) {
+		if(PlatformUtil.AVIAN_LIBRARY) {
 			return findNewVectorMapsRoute(params);
 		}
 		BinaryMapIndexReader[] files = params.ctx.getTodoAPI().getRoutingMapFiles();

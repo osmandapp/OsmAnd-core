@@ -9,7 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.PriorityQueue;
 
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 import net.osmand.binary.RouteDataObject;
 import net.osmand.osm.MapRenderingTypes;
 import net.osmand.osm.MapUtils;
@@ -24,7 +24,7 @@ public class BinaryRoutePlannerOld {
 	private final int REVERSE_WAY_RESTRICTION_ONLY = 1024;
 	private final int STANDARD_ROAD_IN_QUEUE_OVERHEAD = 900;
 	
-	protected static final Log log = LogUtil.getLog(BinaryRoutePlannerOld.class);
+	protected static final Log log = PlatformUtil.getLog(BinaryRoutePlannerOld.class);
 	
 	private static final int ROUTE_POINTS = 11;
 	

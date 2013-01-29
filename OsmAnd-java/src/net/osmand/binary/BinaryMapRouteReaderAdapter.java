@@ -12,7 +12,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 import net.osmand.ResultMatcher;
 import net.osmand.binary.BinaryMapIndexReader.SearchRequest;
 import net.osmand.binary.OsmandOdb.IdTable;
@@ -35,7 +35,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.WireFormat;
 
 public class BinaryMapRouteReaderAdapter {
-	protected static final Log LOG = LogUtil.getLog(BinaryMapRouteReaderAdapter.class);
+	protected static final Log LOG = PlatformUtil.getLog(BinaryMapRouteReaderAdapter.class);
 	private static final int SHIFT_COORDINATES = 4;
 	
 	public static class RouteTypeRule {

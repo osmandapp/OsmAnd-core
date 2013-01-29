@@ -13,7 +13,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import net.osmand.IProgress;
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 import net.osmand.data.IndexConstants;
 import net.osmand.plus.ClientContext;
 import net.osmand.plus.R;
@@ -23,7 +23,7 @@ import org.apache.commons.logging.Log;
 
 public class DownloadFileHelper {
 	
-	private final static Log log = LogUtil.getLog(DownloadFileHelper.class);
+	private final static Log log = PlatformUtil.getLog(DownloadFileHelper.class);
 	private static final int BUFFER_SIZE = 32256;
 	protected final int TRIES_TO_DOWNLOAD = 15;
 	protected final long TIMEOUT_BETWEEN_DOWNLOADS = 8000;

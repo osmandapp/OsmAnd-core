@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import net.osmand.FavouritePoint;
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 import net.osmand.plus.GPXUtilities.GPXFile;
 import net.osmand.plus.GPXUtilities.WptPt;
 import net.osmand.plus.api.SQLiteAPI.SQLiteConnection;
@@ -17,7 +17,7 @@ import net.osmand.plus.api.SQLiteAPI.SQLiteCursor;
 public class FavouritesDbHelper {
 
 	private static final int DATABASE_VERSION = 2;
-	private static final org.apache.commons.logging.Log log = LogUtil.getLog(FavouritesDbHelper.class);
+	private static final org.apache.commons.logging.Log log = PlatformUtil.getLog(FavouritesDbHelper.class);
 	public static final String FAVOURITE_DB_NAME = "favourite"; //$NON-NLS-1$
 	private static final String FAVOURITE_TABLE_NAME = "favourite"; //$NON-NLS-1$
 	private static final String FAVOURITE_COL_NAME = "name"; //$NON-NLS-1$

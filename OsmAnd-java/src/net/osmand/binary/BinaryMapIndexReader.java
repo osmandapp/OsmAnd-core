@@ -21,7 +21,7 @@ import net.osmand.Algoritms;
 import net.osmand.Collator;
 import net.osmand.CollatorStringMatcher;
 import net.osmand.CollatorStringMatcher.StringMatcherMode;
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 import net.osmand.ResultMatcher;
 import net.osmand.StringMatcher;
 import net.osmand.binary.BinaryMapAddressReaderAdapter.AddressRegion;
@@ -54,7 +54,7 @@ public class BinaryMapIndexReader {
 	
 	public final static int TRANSPORT_STOP_ZOOM = 24;
 	public static final int SHIFT_COORDINATES = 5;
-	private final static Log log = LogUtil.getLog(BinaryMapIndexReader.class);
+	private final static Log log = PlatformUtil.getLog(BinaryMapIndexReader.class);
 	
 	private final RandomAccessFile raf;
 	/*private*/ int version;
@@ -1134,7 +1134,7 @@ public class BinaryMapIndexReader {
 		if (query == null || query.length() == 0) {
 			throw new IllegalArgumentException();
 		}
-		Collator collator = LogUtil.primaryCollator();
+		Collator collator = PlatformUtil.primaryCollator();
 		for (PoiRegion poiIndex : poiIndexes) {
 			poiAdapter.initCategories(poiIndex);
 			for (int i = 0; i < poiIndex.categories.size(); i++) {

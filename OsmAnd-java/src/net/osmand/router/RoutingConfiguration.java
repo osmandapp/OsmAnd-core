@@ -7,7 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import net.osmand.Collator;
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 import net.osmand.router.GeneralRouter.GeneralRouterProfile;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -133,7 +133,7 @@ public class RoutingConfiguration {
 	}
 
 	public static RoutingConfiguration.Builder parseFromInputStream(InputStream is) throws IOException, XmlPullParserException {
-		XmlPullParser parser = LogUtil.newXMLPullParser();
+		XmlPullParser parser = PlatformUtil.newXMLPullParser();
 		final RoutingConfiguration.Builder config = new RoutingConfiguration.Builder();
 		GeneralRouter currentRouter = null;
 		String previousKey = null;

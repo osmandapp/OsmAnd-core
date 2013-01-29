@@ -9,7 +9,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import net.osmand.Algoritms;
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 
 import org.apache.commons.logging.Log;
 
@@ -18,7 +18,7 @@ public class SpecialPhrases {
 
 
 	private static Map<String,String> m;
-	private static final Log log = LogUtil.getLog(SpecialPhrases.class);
+	private static final Log log = PlatformUtil.getLog(SpecialPhrases.class);
 
 	/**
 	 * Use this method to query a special phrase for a certain subtype

@@ -1,5 +1,5 @@
 <!--  build JAR libraty -->
-<project name="DataExtractionOSM" default="build" basedir=".">
+<project name="OsmAnd-core" default="build" basedir=".">
 
 	<property file="local.properties" />
 

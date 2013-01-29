@@ -17,7 +17,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import net.osmand.Algoritms;
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 
 import org.apache.commons.logging.Log;
 
@@ -31,7 +31,7 @@ public class MapTileDownloader {
 	
 	
 	private static MapTileDownloader downloader = null;
-	private static Log log = LogUtil.getLog(MapTileDownloader.class);
+	private static Log log = PlatformUtil.getLog(MapTileDownloader.class);
 	
 	public static String USER_AGENT = "OsmAnd~";
 	

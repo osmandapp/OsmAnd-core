@@ -17,7 +17,7 @@ import org.apache.commons.logging.Log;
  */
 public class Algoritms {
 	private static final int BUFFER_SIZE = 1024;
-	private static final Log log = LogUtil.getLog(Algoritms.class);
+	private static final Log log = PlatformUtil.getLog(Algoritms.class);
 	
 	public static boolean isEmpty(String s){
 		return s == null || s.length() == 0;

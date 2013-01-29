@@ -7,7 +7,7 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 import net.osmand.ResultMatcher;
 import net.osmand.data.Amenity;
 import net.osmand.data.AmenityType;
@@ -22,7 +22,7 @@ import org.xmlpull.v1.XmlPullParserException;
 public class NameFinderPoiFilter extends PoiFilter {
 
 	public static final String FILTER_ID = "name_finder"; //$NON-NLS-1$
-	private static final Log log = LogUtil.getLog(NameFinderPoiFilter.class);
+	private static final Log log = PlatformUtil.getLog(NameFinderPoiFilter.class);
 	private static final int LIMIT = 300;
 	
 	List<Amenity> searchedAmenities = new ArrayList<Amenity>();

@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 import net.osmand.NativeLibrary;
 import net.osmand.NativeLibrary.NativeRouteSearchResult;
 import net.osmand.binary.BinaryMapIndexReader;
@@ -42,7 +42,7 @@ public class RoutingContext {
 	public static final boolean SHOW_GC_SIZE = false;
 	 
 	
-	private final static Log log = LogUtil.getLog(RoutingContext.class);
+	private final static Log log = PlatformUtil.getLog(RoutingContext.class);
 	public static final int OPTION_NO_LOAD = 0;
 	public static final int OPTION_SMART_LOAD = 1;
 	public static final int OPTION_IN_MEMORY_LOAD = 2;

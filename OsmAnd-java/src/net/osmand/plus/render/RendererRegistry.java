@@ -10,7 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 import net.osmand.render.RenderingRulesStorage;
 import net.osmand.render.RenderingRulesStorage.RenderingRulesStorageResolver;
 
@@ -21,7 +21,7 @@ import org.xmlpull.v1.XmlPullParserException;
 
 public class RendererRegistry {
 
-	private final static Log log = LogUtil.getLog(RendererRegistry.class);
+	private final static Log log = PlatformUtil.getLog(RendererRegistry.class);
 	
 	public final static String DEFAULT_RENDER = "default";  //$NON-NLS-1$
 	
@@ -74,7 +74,7 @@ public class RendererRegistry {
 			final Map<String, String> renderingConstants) throws IOException,  XmlPullParserException {
 		InputStream is = getInputStream(name);
 		try {
-			XmlPullParser parser = LogUtil.newXMLPullParser();
+			XmlPullParser parser = PlatformUtil.newXMLPullParser();
 			parser.setInput(is, "UTF-8");
 			int tok;
 			while ((tok = parser.next()) != XmlPullParser.END_DOCUMENT) {

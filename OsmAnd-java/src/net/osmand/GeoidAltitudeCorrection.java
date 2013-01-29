@@ -10,7 +10,7 @@ import org.apache.commons.logging.Log;
 
 public class GeoidAltitudeCorrection {
 
-	private final Log log = LogUtil.getLog(GeoidAltitudeCorrection.class);
+	private final Log log = PlatformUtil.getLog(GeoidAltitudeCorrection.class);
 	private File f;
 	private RandomAccessFile rf;
 	

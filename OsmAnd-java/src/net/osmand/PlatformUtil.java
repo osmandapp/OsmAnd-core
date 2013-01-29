@@ -15,7 +15,7 @@ import org.xmlpull.v1.XmlPullParserException;
  * That class should be very simple & always use LogFactory methods,
  * there is an intention to delegate all static methods to LogFactory.
  */
-public class LogUtil {
+public class PlatformUtil {
 	
 	public static boolean AVIAN_LIBRARY = false;
 	

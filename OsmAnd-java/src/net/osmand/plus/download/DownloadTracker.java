@@ -12,14 +12,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 import net.osmand.plus.ClientContext;
 import net.osmand.plus.Version;
 
 import org.apache.commons.logging.Log;
 
 public class DownloadTracker {
-	private static final Log log = LogUtil.getLog(DownloadTracker.class);
+	private static final Log log = PlatformUtil.getLog(DownloadTracker.class);
 
 	private Map<String, String> getCustomVars(ClientContext ctx) {
 		Map<String, String> map = new LinkedHashMap<String, String>();

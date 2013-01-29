@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.List;
 
 import net.osmand.Location;
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 import net.osmand.osm.LatLon;
 import net.osmand.osm.MapUtils;
 import net.osmand.plus.ApplicationMode;
@@ -26,7 +26,7 @@ import net.osmand.router.RouteSegmentResult;
 
 public class RoutingHelper {
 	
-	private static final org.apache.commons.logging.Log log = LogUtil.getLog(RoutingHelper.class);
+	private static final org.apache.commons.logging.Log log = PlatformUtil.getLog(RoutingHelper.class);
 	
 	public static interface IRouteInformationListener {
 		

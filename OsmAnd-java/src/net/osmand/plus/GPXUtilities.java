@@ -23,7 +23,7 @@ import java.util.Stack;
 import java.util.TimeZone;
 
 import net.osmand.Location;
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 import net.osmand.plus.R;
 
 import org.apache.commons.logging.Log;
@@ -33,7 +33,7 @@ import org.xmlpull.v1.XmlSerializer;
 
 
 public class GPXUtilities {
-	public final static Log log = LogUtil.getLog(GPXUtilities.class);
+	public final static Log log = PlatformUtil.getLog(GPXUtilities.class);
 
 	private final static String GPX_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";  //$NON-NLS-1$
 	

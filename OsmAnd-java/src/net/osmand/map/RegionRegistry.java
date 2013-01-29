@@ -5,14 +5,14 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.osmand.LogUtil;
+import net.osmand.PlatformUtil;
 import net.osmand.map.OsmandRegionInfo.OsmAndRegionInfo;
 
 import org.apache.commons.logging.Log;
 
 public class RegionRegistry {
 	public static final String fileName = "countries.reginfo";
-	private static final Log log = LogUtil.getLog(RegionRegistry.class);
+	private static final Log log = PlatformUtil.getLog(RegionRegistry.class);
 	private static RegionRegistry r = null;
 	
 	private List<RegionCountry> countries = new ArrayList<RegionCountry>();
