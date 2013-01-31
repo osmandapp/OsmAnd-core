@@ -3,7 +3,7 @@
 PROGUARD_PATH=../../../../proguard4.9beta1
 
 OSMAND_REPO=../../
-AVIAN_PATH=../../avian
+AVIAN_PATH=../../avian/core
 AND_PLATFORM=$ANDROID_NDK/platforms/android-5/arch-arm/usr/
 AND_TOOLCHAIN=$ANDROID_NDK/toolchains/arm-linux-androideabi-4.6/prebuilt/linux-x86/
 
