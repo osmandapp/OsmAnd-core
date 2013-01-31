@@ -725,4 +725,16 @@
 		<!-- Here user defined categories could be added -->
 		<!-- <type tag="user_defined" value="wsl" minzoom="10" /> -->
 	</category>
+
+		<category name="osmc">
+		<type tag="osmc_symbol_red-white-red_bar" value="" minzoom="8" relation="true"/>
+		<type tag="osmc_symbol_green-white-green_bar" value="" minzoom="8" relation="true"/>
+		<type tag="osmc_symbol_blue-white-blue_bar" value="" minzoom="8" relation="true"/>
+		<type tag="osmc_symbol_yellow-white-yellow_bar" value="" minzoom="8" relation="true"/>
+
+		<type tag="osmc:symbol" target_tag="osmc_symbol_red-white-red_bar" value="red:white:red_bar" target_value="" minzoom="8" relation="true"/>
+		<type tag="osmc:symbol" target_tag="osmc_symbol_green-white-green_bar" value="green:white:green_bar" target_value="" minzoom="8" relation="true"/>
+		<type tag="osmc:symbol" target_tag="osmc_symbol_blue-white-blue_bar" value="blue:white:blue_bar" target_value="" minzoom="8" relation="true"/>
+		<type tag="osmc:symbol" target_tag="osmc_symbol_yellow-white-yellow_bar" value="yellow:white:yellow_bar" target_value="" minzoom="8" relation="true"/>
+	</category>
 </osmand_types>

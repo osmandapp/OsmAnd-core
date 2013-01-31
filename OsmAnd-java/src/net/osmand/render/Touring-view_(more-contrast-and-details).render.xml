@@ -59,6 +59,8 @@
 
 	<renderingProperty attr="alpineHiking" name="Alpine hiking view" description="Render paths according to SAC scale"
 		type="boolean" possibleValues=""/>
+	<renderingProperty attr="osmcTraces" name="OSMC traces view" description="Render paths according to OSMC traces"
+		type="boolean" possibleValues=""/>
 
 	<!-- road casing contrast higher than in default -->
 	<renderingAttribute name="shadowRendering">
@@ -489,6 +491,38 @@
 				<filter minzoom="14" color__1="#000000" strokeWidth__1="6.5" pathEffect__1="3_3" color_0="#ffffff" strokeWidth_0="5"/>
 			</groupFilter>
 		</group>
+
+
+		<filter tag="osmc_symbol_red-white-red_bar" value="" color="#31FF0000" osmcTraces="true" >
+			<filter minzoom="13" maxzoom="13" strokeWidth="8" pathEffect="8_6" pathIconDistance="90" pathIcon="osmc_white_red" />
+			<filter minzoom="14" maxzoom="14" strokeWidth="10" pathEffect="8_6" pathIconDistance="90" pathIcon="osmc_white_red" />
+			<filter minzoom="15" maxzoom="15" strokeWidth="12" pathEffect="16_12" pathIconDistance="90" pathIcon="osmc_white_red" />
+			<filter minzoom="16" maxzoom="16" strokeWidth="16" pathEffect="32_24" pathIconDistance="90" pathIcon="osmc_white_red" />
+			<filter minzoom="17" strokeWidth="20" pathEffect="32_24" pathIconDistance="90" pathIcon="osmc_white_red" />
+		</filter>
+
+		<filter tag="osmc_symbol_green-white-green_bar" value="" color="#3100FF00" osmcTraces="true">
+			<filter minzoom="13" maxzoom="13" strokeWidth="8" pathEffect="8_6_2" pathIconDistance="90" pathIcon="osmc_white_green" />
+			<filter minzoom="14" maxzoom="14" strokeWidth="10" pathEffect="8_6_2" pathIconDistance="90" pathIcon="osmc_white_green" />
+			<filter minzoom="15" maxzoom="15" strokeWidth="12" pathEffect="16_12_4" pathIconDistance="90" pathIcon="osmc_white_green" />
+			<filter minzoom="16" maxzoom="16" strokeWidth="16" pathEffect="32_24_8" pathIconDistance="90" pathIcon="osmc_white_green" />
+			<filter minzoom="17" strokeWidth="20" pathEffect="32_24_8" pathIconDistance="90"  pathIconOffset="15" pathIcon="osmc_white_green" />
+		</filter>
+
+		<filter tag="osmc_symbol_blue-white-blue_bar" value="" color="#310000FF" osmcTraces="true">
+			<filter minzoom="13" maxzoom="13" strokeWidth="8" pathEffect="8_6_4" pathIconDistance="90" pathIcon="osmc_white_blue" />
+			<filter minzoom="14" maxzoom="14" strokeWidth="10" pathEffect="8_6_4" pathIconDistance="90" pathIcon="osmc_white_blue" />
+			<filter minzoom="15" maxzoom="15" strokeWidth="12" pathEffect="16_12_8" pathIconDistance="90" pathIcon="osmc_white_blue" />
+			<filter minzoom="16" maxzoom="16" strokeWidth="16" pathEffect="32_24_16" pathIconDistance="90" pathIcon="osmc_white_blue" />
+			<filter minzoom="17" strokeWidth="20" pathEffect="32_24_16" pathIconDistance="90" pathIconOffset="30" pathIcon="osmc_white_blue" />
+		</filter>
+		<filter tag="osmc_symbol_yellow-white-yellow_bar" value="" color="#64ffff5d" osmcTraces="true">
+			<filter minzoom="13" maxzoom="13" strokeWidth="8" pathEffect="8_6_6" pathIconDistance="90" pathIcon="osmc_white_yellow" />
+			<filter minzoom="14" maxzoom="14" strokeWidth="10" pathEffect="8_6_6" pathIconDistance="90" pathIcon="osmc_white_yellow" />
+			<filter minzoom="15" maxzoom="15" strokeWidth="12" pathEffect="16_12_12" pathIconDistance="90" pathIcon="osmc_white_yellow" />
+			<filter minzoom="16" maxzoom="16" strokeWidth="16" pathEffect="32_24_24" pathIconDistance="90" pathIcon="osmc_white_yellow" />
+			<filter minzoom="17" strokeWidth="20" pathEffect="32_24_24" pathIconDistance="90"  pathIconOffset="45" pathIcon="osmc_white_yellow" />
+		</filter>
 	</line>
 
 </renderingStyle>

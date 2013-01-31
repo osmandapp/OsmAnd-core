@@ -234,6 +234,9 @@ public:
 	RenderingRuleProperty* R_ATTR_COLOR_VALUE;
 	RenderingRuleProperty* R_ATTR_BOOL_VALUE;
 	RenderingRuleProperty* R_ATTR_STRING_VALUE;
+	RenderingRuleProperty* R_PATH_ICON;
+	RenderingRuleProperty* R_PATH_ICON_DISTANCE;
+	RenderingRuleProperty* R_PATH_ICON_OFFSET;
 
 	UNORDERED(map)<string, RenderingRuleProperty*> properties;
 	vector<RenderingRuleProperty*> rules;
@@ -364,6 +367,10 @@ public:
 		R_SHADER = registerRuleInternal(RenderingRuleProperty::createOutputStringProperty("shader"));
 		R_SHADOW_COLOR = registerRuleInternal(RenderingRuleProperty::createOutputColorProperty("shadowColor"));
 		R_SHADOW_RADIUS = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("shadowRadius"));
+
+		R_PATH_ICON = registerRuleInternal(RenderingRuleProperty::createOutputStringProperty("pathIcon"));
+		R_PATH_ICON_DISTANCE = registerRuleInternal(RenderingRuleProperty::createOutputStringProperty("pathIconDistance"));
+		R_PATH_ICON_OFFSET = registerRuleInternal(RenderingRuleProperty::createOutputStringProperty("pathIconOffset"));
 	}
 
 };
