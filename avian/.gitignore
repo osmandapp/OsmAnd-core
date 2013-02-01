@@ -1,6 +1,7 @@
 *.so
 *.o
-stage1
-stage2
-stage3
+*.obj
+*.lib
+*.a
+stage*
 routing_test
