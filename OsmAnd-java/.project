@@ -18,7 +18,13 @@
 		<link>
 			<name>android</name>
 			<type>2</type>
-			<location>/home/victor/projects/OsmAnd/repo/platforms/android/OsmAnd/gen</location>
+			<location>OSMAND_TRUNK/android/OsmAnd/gen</location>
 		</link>
 	</linkedResources>
+	<variableList>
+		<variable>
+			<name>OSMAND_TRUNK</name>
+			<value>$%7BPARENT-2-PROJECT_LOC%7D</value>
+		</variable>
+	</variableList>
 </projectDescription>
