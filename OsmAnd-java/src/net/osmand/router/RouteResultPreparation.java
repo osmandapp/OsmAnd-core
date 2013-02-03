@@ -30,21 +30,18 @@ public class RouteResultPreparation {
 
 	List<RouteSegmentResult> prepareResult(RoutingContext ctx, boolean leftside, List<RouteSegmentResult> result) throws IOException {
 		validateAllPointsConnected(result);
+		splitRoadsAndAttachRoadSegments(ctx, result);
 		// calculate time
-		calculateTimeSpeedAndAttachRoadSegments(ctx, result);
+		calculateTimeSpeed(ctx, result);
 		
 		addTurnInfo(leftside, result);
 		return result;
 	}
 
-	private void calculateTimeSpeedAndAttachRoadSegments(RoutingContext ctx, List<RouteSegmentResult> result) throws IOException {
+	private void calculateTimeSpeed(RoutingContext ctx, List<RouteSegmentResult> result) throws IOException {
 		for (int i = 0; i < result.size(); i++) {
-			if(ctx.checkIfMemoryLimitCritical(ctx.config.memoryLimitation)) {
-				ctx.unloadUnusedTiles(ctx.config.memoryLimitation);
-			}
 			RouteSegmentResult rr = result.get(i);
 			RouteDataObject road = rr.getObject();
-			checkAndInitRouteRegion(ctx, road);
 			double distOnRoadToPass = 0;
 			double speed = ctx.getRouter().defineSpeed(road);
 			if (speed == 0) {
@@ -55,22 +52,49 @@ public class RouteResultPreparation {
 			double distance = 0;
 			for (int j = rr.getStartPointIndex(); j != rr.getEndPointIndex(); j = next) {
 				next = plus ? j + 1 : j - 1;
-					if (j == rr.getStartPointIndex()) {
-						attachRoadSegments(ctx, result, i, j, plus);
-					}
-					if (next != rr.getEndPointIndex()) {
-						attachRoadSegments(ctx, result, i, next, plus);
-					}
-				
+				if (j == rr.getStartPointIndex()) {
+					attachRoadSegments(ctx, result, i, j, plus);
+				}
+				if (next != rr.getEndPointIndex()) {
+					attachRoadSegments(ctx, result, i, next, plus);
+				}
+
 				double d = measuredDist(road.getPoint31XTile(j), road.getPoint31YTile(j), road.getPoint31XTile(next),
 						road.getPoint31YTile(next));
 				distance += d;
 				double obstacle = ctx.getRouter().defineObstacle(road, j);
-				if(obstacle < 0) {
+				if (obstacle < 0) {
 					obstacle = 0;
 				}
 				distOnRoadToPass += d / speed + obstacle;
-				
+
+			}
+			// last point turn time can be added
+			// if(i + 1 < result.size()) { distOnRoadToPass += ctx.getRouter().calculateTurnTime(); }
+			rr.setSegmentTime((float) distOnRoadToPass);
+			rr.setSegmentSpeed((float) speed);
+			rr.setDistance((float) distance);
+		}
+	}
+
+	private void splitRoadsAndAttachRoadSegments(RoutingContext ctx, List<RouteSegmentResult> result) throws IOException {
+		for (int i = 0; i < result.size(); i++) {
+			if (ctx.checkIfMemoryLimitCritical(ctx.config.memoryLimitation)) {
+				ctx.unloadUnusedTiles(ctx.config.memoryLimitation);
+			}
+			RouteSegmentResult rr = result.get(i);
+			RouteDataObject road = rr.getObject();
+			checkAndInitRouteRegion(ctx, road);
+			boolean plus = rr.getStartPointIndex() < rr.getEndPointIndex();
+			int next;
+			for (int j = rr.getStartPointIndex(); j != rr.getEndPointIndex(); j = next) {
+				next = plus ? j + 1 : j - 1;
+				if (j == rr.getStartPointIndex()) {
+					attachRoadSegments(ctx, result, i, j, plus);
+				}
+				if (next != rr.getEndPointIndex()) {
+					attachRoadSegments(ctx, result, i, next, plus);
+				}
 				List<RouteSegmentResult> attachedRoutes = rr.getAttachedRoutes(next);
 				if (next != rr.getEndPointIndex() && !rr.getObject().roundabout() && attachedRoutes != null) {
 					float before = rr.getBearing(next, !plus);
@@ -90,26 +114,14 @@ public class RouteResultPreparation {
 						int endPointIndex = rr.getEndPointIndex();
 						RouteSegmentResult split = new RouteSegmentResult(rr.getObject(), next, endPointIndex);
 						split.copyPreattachedRoutes(rr, Math.abs(next - rr.getStartPointIndex()));
-						rr.setSegmentTime((float) distOnRoadToPass);
-						rr.setSegmentSpeed((float) speed);
-						rr.setDistance((float) distance);
 						rr.setEndPointIndex(next);
 						result.add(i + 1, split);
 						i++;
 						// switch current segment to the splitted
 						rr = split;
-						distOnRoadToPass = 0;
-						distance = 0;
 					}
 				}
 			}
-			// last point turn time can be added
-			// if(i + 1 < result.size()) { distOnRoadToPass += ctx.getRouter().calculateTurnTime(); }
-			rr.setSegmentTime((float) distOnRoadToPass);
-			rr.setSegmentSpeed((float) speed);
-			rr.setDistance((float) distance);
-
-			
 		}
 	}
 
