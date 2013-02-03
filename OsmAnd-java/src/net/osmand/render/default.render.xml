@@ -922,7 +922,7 @@
 
 		<!-- Polygon waterways -->
 		<group>
-			<filter minzoom="8" tag="waterway" value="riverbank"/>
+			<filter minzoom="10" tag="waterway" value="riverbank" />
 			<filter minzoom="10" tag="waterway" value="canal"/>
 			<filter minzoom="10" tag="waterway" value="dock"/>
 			<filter minzoom="10" tag="waterway" value="mill_pond"/>
