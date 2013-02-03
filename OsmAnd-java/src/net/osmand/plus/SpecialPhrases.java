@@ -38,7 +38,7 @@ public class SpecialPhrases {
 		}
 		String specialValue = m.get(value);
 		if(Algorithms.isEmpty(specialValue)) {
-			return value;
+			return value.replace('_', ' ');
 		}
 		return specialValue;
 	}
