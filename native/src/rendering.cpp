@@ -460,7 +460,66 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 		}
 	}
 }
+#define I_MIN_VALUE 0x8000
 
+int ray_intersect_xo(int prevX, int prevY, int x, int y, int middleY) {
+	// prev node above line
+	// x,y node below line
+	if (prevY > y) {
+		int tx = x;
+		int ty = y;
+		x = prevX;
+		y = prevY;
+		prevX = tx;
+		prevY = ty;
+	}
+	if (y == middleY || prevY == middleY) {
+			middleY -= 1;
+	}
+	if (prevY > middleY || y < middleY) {
+			return I_MIN_VALUE;
+	} else {
+		if (y == prevY) {
+			// the node on the boundary !!!
+			return x;
+		}
+		// that tested on all cases (left/right)
+		double rx = x + ((double) middleY - y) * ((double) x - prevX) / (((double) y - prevY));
+		return (int) rx;
+	}
+}
+// COPIED from MapAlgorithms
+bool ray_intersect_x(int prevX, int prevY, int nx, int ny, int x, int y) {
+	int t = ray_intersect_xo(prevX, prevY, nx, ny, y);
+	if(t == I_MIN_VALUE){
+		return false;
+	}
+	if(t < x){
+		return true;
+	}
+	return false;
+}
+
+int countIntersections(vector<pair<int,int> > points, int x, int y) {
+	int intersections = 0;
+	for (int i = 0; i < points.size() - 1; i++) {
+		if (ray_intersect_x(points[i].first, points[i].second,
+				points[i + 1].first, points[i + 1].second, x, y)) {
+			intersections++;
+		}
+	}
+	// special handling, also count first and last, might not be closed, but
+	// we want this!
+	if (ray_intersect_x(points[0].first, points[0].second,
+				points[points.size()-1].first, points[points.size()-1].second, x, y)) {
+		intersections++;
+	}
+	return intersections;
+}
+
+bool contains(vector<pair<int,int> > points, int x, int y) {
+	return countIntersections(points, x, y) % 2 == 1;
+}
 
 void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas* cv, SkPaint* paint,
 	RenderingContext* rc, tag_value pair) {
@@ -485,6 +544,7 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 	int i = 0;
 	bool containsPoint = false;
 	int bounds = 0;
+	std::vector< std::pair<int,int > > ps;
 	for (; i < length; i++) {
 		calcPoint(mObj->points.at(i), rc);
 		if (i == 0) {
@@ -511,19 +571,30 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 		if (!containsPoint) {
 			if (rc->calcX >= 0 && rc->calcY >= 0 && rc->calcX < rc->getWidth() && rc->calcY < rc->getHeight()) {
 				containsPoint = true;
+			} else {
+				ps.push_back(std::pair<int, int>(rc->calcX, rc->calcY));
 			}
 			bounds |= (rc->calcX < 0 ? 1 : 0);
 			bounds |= (rc->calcX >= rc->getWidth() ? 2 : 0);
-			bounds |= (rc->calcY < 0 ? 4 : 0);
-			bounds |= (rc->calcY >= rc->getHeight() ? 8 : 0);
+			bounds |= (rc->calcY >= rc->getHeight()  ? 4 : 0);
+			bounds |= (rc->calcY <= rc->getHeight() ? 8 : 0);
 		}
 	}
 	xText /= length;
 	yText /= length;
 	if(!containsPoint){
-		if(bounds == 15) {
-			xText = rc->getWidth() / 2;
-			yText = rc->getHeight() / 2;
+		// fast check for polygons
+		if((bounds&3 != 3) || (bounds >> 2) != 3) {
+			return;
+		}
+		if(contains(ps, 0, 0) ||
+			contains(ps, rc->getWidth(), rc->getHeight()) ||
+			contains(ps, 0, rc->getHeight()) ||
+			contains(ps, rc->getWidth(), 0)) {
+			if(contains(ps, rc->getWidth() / 2, rc->getHeight() / 2)) {
+				xText = rc->getWidth() / 2;
+				yText = rc->getHeight() / 2;
+			}
 		} else {
 			return;
 		}
