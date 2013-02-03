@@ -21,12 +21,12 @@ ARCH=i386
 PLATFORM=linux
 B_ARCH=$ARCH
 B_PLATFORM=$PLATFORM
-DEBUG=-debug
+# DEBUG=-debug
 BOOTIMAGE=-bootimage
 
 
-
 AVIAN_BUILD=$AVIAN_PATH/build/$PLATFORM-$ARCH$DEBUG$BOOTIMAGE
+AVIAN_BUILD_NOT_BOOT=$AVIAN_PATH/build/$PLATFORM-$ARCH$DEBUG
 #CXX="g++ -DDEBUG -g"
 CXX="g++ -DDEBUG -g"
 CXX_FLAGS="-I$JAVA_HOME/include -I$JAVA_HOME/include/$PLATFORM -D_JNI_IMPLEMENTATION_ -fPIC"
@@ -73,6 +73,15 @@ if [ $JAR_BOOT ]; then
 	$AVIAN_BUILD/binaryToObject/binaryToObject $JAR_FOLDER/classes.jar stage3/classes-jar.o \
 	 _binary_boot_jar_start _binary_boot_jar_end $B_PLATFORM $B_ARCH
 else
+	# Collect resources
+	rm -rf resources 
+	mkdir -p resources
+	(cd stage1 && find . -type f -not -name '*.class' | xargs tar cf - | tar xf - -C ../resources)
+	(cd resources && jar cf ../resources.jar *)
+
+	# Compile resources
+	$AVIAN_BUILD_NOT_BOOT/binaryToObject/binaryToObject \
+		resources.jar stage3/resources.o _binary_resources_jar_start _binary_resources_jar_end $B_PLATFORM $B_ARCH
 	if [ $CODEIMAGE_OBJ ]; then
 		cp $CODEIMAGE_OBJ stage3
 		cp $BOOTIMAGE_OBJ stage3

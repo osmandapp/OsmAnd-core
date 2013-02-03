@@ -55,6 +55,25 @@ void print( const char* format, ...)
     
   } // extern "C"
 #else
+  #if (! defined __x86_64__) && ((defined __MINGW32__) || (defined _MSC_VER))
+  #  define SYMBOL(x) binary_resources_jar_##x
+  #else
+  #  define SYMBOL(x) _binary_resources_jar_##x
+  #endif
+    
+  extern "C" {
+    
+    extern const uint8_t SYMBOL(start)[];
+    extern const uint8_t SYMBOL(end)[];
+  
+    EXPORT const uint8_t*
+    binaryResourcesJar(unsigned* size)
+    {
+      *size = SYMBOL(end) - SYMBOL(start);
+     return SYMBOL(start);
+    }
+    
+  } // extern "C"
 
   #if (! defined __x86_64__) && ((defined __MINGW32__) || (defined _MSC_VER))
   #  define BOOTIMAGE_BIN(x) binary_bootimage_bin_##x
@@ -107,6 +126,8 @@ JNIEnv* createJVM(){
        = const_cast<char*>("-Davian.bootimage=bootimageBin");
     options[optionsCount++].optionString
        = const_cast<char*>("-Davian.codeimage=codeimageBin");
+    options[optionsCount++].optionString
+       = const_cast<char*>("-Xbootclasspath:[binaryResourcesJar]");
   #endif
   #ifdef BOOTSTRAP_SO
     options[optionsCount++].optionString =
