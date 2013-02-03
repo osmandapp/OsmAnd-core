@@ -218,13 +218,8 @@ public class BinaryMapAddressReaderAdapter {
 				break;
 			case OsmandOdb.CityIndex.NAME_EN_FIELD_NUMBER :
 				String enName = codedIS.readString();
-				if (nameMatcher != null && enName.length() > 0) {
-					if(!nameMatcher.matches(enName)){
-						codedIS.skipRawBytes(codedIS.getBytesUntilLimit());
-						return null;
-					} else {
-						englishNameMatched = true;
-					}
+				if (nameMatcher != null && enName.length() > 0 && nameMatcher.matches(enName)) {
+					englishNameMatched = true;
 				}
 				c.setEnName(enName);
 				break;
@@ -236,10 +231,8 @@ public class BinaryMapAddressReaderAdapter {
 							codedIS.skipRawBytes(codedIS.getBytesUntilLimit());
 							return null;
 						}
-					} else {
-						if(nameMatcher.matches(Junidecode.unidecode(name))){
-							englishNameMatched = true;
-						}
+					} else if(nameMatcher.matches(Junidecode.unidecode(name))){
+						englishNameMatched = true;
 					}
 				}
 				if(c == null) {
