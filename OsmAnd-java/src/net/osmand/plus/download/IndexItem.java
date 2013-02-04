@@ -75,7 +75,7 @@ public class IndexItem implements Comparable<IndexItem> {
 			return fileName.substring(0, fileName.length() - IndexConstants.EXTRA_ZIP_EXT.length());
 		}
 		if (fileName.endsWith(IndexConstants.SQLITE_EXT)) {
-			return fileName.substring(0, fileName.length() - IndexConstants.SQLITE_EXT.length());
+			return fileName.substring(0, fileName.length() - IndexConstants.SQLITE_EXT.length()).replace('_', ' ');
 		}
 		int ls = fileName.lastIndexOf('_');
 		if (ls >= 0) {
