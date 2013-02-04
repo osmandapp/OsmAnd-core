@@ -52,7 +52,9 @@ public class IndexItem implements Comparable<IndexItem> {
 
 	public String getVisibleDescription(ClientContext ctx) {
 		String s = ""; //$NON-NLS-1$
-		if (type == DownloadActivityType.ROADS_FILE) {
+		if (type == DownloadActivityType.SRTM_FILE) {
+			return ctx.getString(R.string.download_srtm_maps);
+		} else if (type == DownloadActivityType.ROADS_FILE) {
 			return ctx.getString(R.string.download_roads_only_item);
 		}
 		if (fileName.endsWith(IndexConstants.BINARY_MAP_INDEX_EXT) || fileName.endsWith(IndexConstants.BINARY_MAP_INDEX_EXT_ZIP)) {
@@ -85,6 +87,7 @@ public class IndexItem implements Comparable<IndexItem> {
 				|| fileName.endsWith(addVersionToExt(IndexConstants.BINARY_MAP_INDEX_EXT_ZIP, IndexConstants.BINARY_MAP_VERSION)) //
 				|| fileName.endsWith(addVersionToExt(IndexConstants.VOICE_INDEX_EXT_ZIP, IndexConstants.VOICE_VERSION))
 				|| fileName.endsWith(IndexConstants.EXTRA_ZIP_EXT)
+				|| fileName.endsWith(IndexConstants.SQLITE_EXT)
 		// || fileName.endsWith(addVersionToExt(IndexConstants.TTSVOICE_INDEX_EXT_ZIP, IndexConstants.TTSVOICE_VERSION)) drop support for
 		// downloading tts files from inet
 		) {
@@ -138,6 +141,10 @@ public class IndexItem implements Comparable<IndexItem> {
 			// unzipDir = true;
 			toSavePostfix = IndexConstants.EXTRA_ZIP_EXT;
 			toCheckPostfix = IndexConstants.EXTRA_EXT;
+		} else if (fileName.endsWith(IndexConstants.VOICE_INDEX_EXT_ZIP)) {
+			parent = ctx.getAppPath(IndexConstants.TILES_INDEX_DIR);
+			toSavePostfix = IndexConstants.SQLITE_EXT;
+			toCheckPostfix = IndexConstants.SQLITE_EXT;
 		} else if (fileName.endsWith(IndexConstants.VOICE_INDEX_EXT_ZIP)) {
 			parent = ctx.getAppPath(IndexConstants.VOICE_INDEX_DIR);
 			toSavePostfix = VOICE_INDEX_EXT_ZIP;
@@ -228,6 +235,8 @@ public class IndexItem implements Comparable<IndexItem> {
 			}	
 			s += IndexConstants.BINARY_MAP_INDEX_EXT;
 			return s;
+		} else if(e.endsWith(IndexConstants.SQLITE_EXT)){
+			return e;
 		} else if(e.endsWith(IndexConstants.EXTRA_ZIP_EXT)){
 			return e.substring(0, e.length() - IndexConstants.EXTRA_ZIP_EXT.length()) + IndexConstants.EXTRA_EXT; 
 		} else if(e.endsWith(IndexConstants.VOICE_INDEX_EXT_ZIP) || e.endsWith(IndexConstants.TTSVOICE_INDEX_EXT_ZIP)) {
