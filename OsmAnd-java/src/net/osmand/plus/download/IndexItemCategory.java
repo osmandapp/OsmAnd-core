@@ -54,19 +54,19 @@ public class IndexItemCategory implements Comparable<IndexItemCategory> {
 			} else if (lc.startsWith("france_")) {
 				nameId = R.string.index_name_france;
 				order = 17;
-			} else if (lc.startsWith("germany_") || lc.contains("germany")) {
+			} else if ( lc.contains("germany")) {
 				nameId = R.string.index_name_germany;
 				order = 16;
-			} else if (lc.contains("_europe_") || lc.startsWith("europe")) {
+			} else if (lc.contains("europe")) {
 				nameId = R.string.index_name_europe;
 				order = 15;
-			} else if (lc.startsWith("russia")) {
+			} else if (lc.contains("russia")) {
 				nameId = R.string.index_name_russia;
 				order = 18;
 			} else if (lc.contains("africa")) {
 				nameId = R.string.index_name_africa;
 				order = 80;
-			} else if (lc.contains("_asia_")|| lc.startsWith("asia")) {
+			} else if (lc.contains("_asia")|| lc.startsWith("asia")) {
 				nameId = R.string.index_name_asia;
 				order = 50;
 			} else if (lc.contains("oceania") || lc.contains("australia")) {

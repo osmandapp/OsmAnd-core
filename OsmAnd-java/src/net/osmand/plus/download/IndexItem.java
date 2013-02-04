@@ -74,6 +74,9 @@ public class IndexItem implements Comparable<IndexItem> {
 		if (fileName.endsWith(IndexConstants.EXTRA_ZIP_EXT)) {
 			return fileName.substring(0, fileName.length() - IndexConstants.EXTRA_ZIP_EXT.length());
 		}
+		if (fileName.endsWith(IndexConstants.SQLITE_EXT)) {
+			return fileName.substring(0, fileName.length() - IndexConstants.SQLITE_EXT.length());
+		}
 		int ls = fileName.lastIndexOf('_');
 		if (ls >= 0) {
 			return fileName.substring(0, ls);
@@ -141,7 +144,7 @@ public class IndexItem implements Comparable<IndexItem> {
 			// unzipDir = true;
 			toSavePostfix = IndexConstants.EXTRA_ZIP_EXT;
 			toCheckPostfix = IndexConstants.EXTRA_EXT;
-		} else if (fileName.endsWith(IndexConstants.VOICE_INDEX_EXT_ZIP)) {
+		} else if (fileName.endsWith(IndexConstants.SQLITE_EXT)) {
 			parent = ctx.getAppPath(IndexConstants.TILES_INDEX_DIR);
 			toSavePostfix = IndexConstants.SQLITE_EXT;
 			toCheckPostfix = IndexConstants.SQLITE_EXT;
@@ -184,6 +187,9 @@ public class IndexItem implements Comparable<IndexItem> {
 			url += Version.getVersionAsURLParam(ctx) + "&";
 			if (type == DownloadActivityType.ROADS_FILE) {
 				url += "road=yes&";
+			}
+			if (type == DownloadActivityType.HILLSHADE_FILE) {
+				url += "hillshade=yes&";
 			}
 			entry.urlToDownload = url + "file=" + fileName;
 			entry.fileToSave = new File(parent, entry.baseName + toSavePostfix);
@@ -236,7 +242,7 @@ public class IndexItem implements Comparable<IndexItem> {
 			s += IndexConstants.BINARY_MAP_INDEX_EXT;
 			return s;
 		} else if(e.endsWith(IndexConstants.SQLITE_EXT)){
-			return e;
+			return e.replace('_', ' ');
 		} else if(e.endsWith(IndexConstants.EXTRA_ZIP_EXT)){
 			return e.substring(0, e.length() - IndexConstants.EXTRA_ZIP_EXT.length()) + IndexConstants.EXTRA_EXT; 
 		} else if(e.endsWith(IndexConstants.VOICE_INDEX_EXT_ZIP) || e.endsWith(IndexConstants.TTSVOICE_INDEX_EXT_ZIP)) {
