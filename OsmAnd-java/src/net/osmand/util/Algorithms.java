@@ -136,8 +136,11 @@ public class Algorithms {
 			return false;
 		}
 		if (f.isDirectory()) {
-			for (File c : f.listFiles()) {
-				removeAllFiles(c);
+			File[] fs = f.listFiles();
+			if(fs != null) {
+			  for (File c : fs) {
+			   removeAllFiles(c);
+			  }
 			}
 			return f.delete();
 		} else {
