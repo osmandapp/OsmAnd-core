@@ -137,9 +137,13 @@ public class RouteProvider {
 		loc.setLatitude(pt.lat);
 		loc.setLongitude(pt.lon);
 		loc.setSpeed((float) pt.speed);
-		loc.setAltitude(pt.ele);
+		if(!Double.isNaN(pt.ele)) {
+			loc.setAltitude(pt.ele);
+		}
 		loc.setTime(pt.time);
-		loc.setAccuracy((float) pt.hdop);
+		if(!Double.isNaN(pt.hdop)) {
+			loc.setAccuracy((float) pt.hdop);
+		}
 		return loc;
 	}
 	
