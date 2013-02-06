@@ -24,6 +24,7 @@ import java.util.TimeZone;
 
 import net.osmand.Location;
 import net.osmand.PlatformUtil;
+import net.osmand.plus.GPXUtilities.GPXFile;
 
 import org.apache.commons.logging.Log;
 import org.xmlpull.v1.XmlPullParser;
@@ -514,6 +515,25 @@ public class GPXUtilities {
 		} catch (NumberFormatException e) {
 		}
 		return wpt;
+	}
+
+	public static void mergeGPXFileInto(GPXFile to, GPXFile from) {
+		if(from == null) {
+			return;
+		}
+		if(from.points != null) { 
+			to.points.addAll(from.points);
+		}
+		if(from.tracks != null) {
+			to.tracks.addAll(from.tracks);
+		}
+		if(from.routes != null) {
+			to.routes.addAll(from.routes);
+		}
+		if(from.warning != null) {
+			to.warning = from.warning;
+		}
+		
 	}
 
 
