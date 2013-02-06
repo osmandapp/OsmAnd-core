@@ -109,6 +109,7 @@ public class GPXUtilities {
 		public List<Route> routes = new ArrayList<Route>();
 		public String warning = null;
 		public String path = "";
+		public boolean showCurrentTrack;
 		
 		public List<List<WptPt>> processedPointsToDisplay = new ArrayList<List<WptPt>>();
 		
@@ -520,6 +521,9 @@ public class GPXUtilities {
 	public static void mergeGPXFileInto(GPXFile to, GPXFile from) {
 		if(from == null) {
 			return;
+		}
+		if(from.showCurrentTrack) {
+			to.showCurrentTrack = true;
 		}
 		if(from.points != null) { 
 			to.points.addAll(from.points);
