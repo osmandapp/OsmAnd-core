@@ -42,6 +42,7 @@
 		 source="1.6"
 	  >
 			<exclude name="net/osmand/plus/**"/>
+			<include name="net/osmand/plus/Reshaper*"/>
 		</javac>
 
 	</target>
