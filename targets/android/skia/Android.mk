@@ -61,7 +61,6 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkColorFilter.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkColorTable.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkComposeShader.cpp \
-	$(OSMAND_SKIA_RELATIVE)/src/core/SkConcaveToTriangles.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkConfig8888.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkCordic.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkCubicClipper.cpp \
@@ -81,6 +80,7 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkFlattenableBuffers.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkFloat.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkFloatBits.cpp \
+	$(OSMAND_SKIA_RELATIVE)/src/core/SkFontDescriptor.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkFontHost.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkGeometry.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkGlyphCache.cpp \
@@ -175,7 +175,6 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_SKIA_RELATIVE)/src/effects/SkPaintFlagsDrawFilter.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/effects/SkPixelXorXfermode.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/effects/SkPorterDuff.cpp \
-	$(OSMAND_SKIA_RELATIVE)/src/effects/SkSingleInputImageFilter.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/effects/SkStippleMaskFilter.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/effects/SkTableColorFilter.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/effects/SkTableMaskFilter.cpp \
@@ -241,7 +240,6 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_SKIA_RELATIVE)/src/utils/SkPictureUtils.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/utils/SkProxyCanvas.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/utils/SkUnitMappers.cpp \
-	$(OSMAND_SKIA_RELATIVE)/src/ports/SkFontDescriptor.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/pipe/SkGPipeRead.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/pipe/SkGPipeWrite.cpp
 

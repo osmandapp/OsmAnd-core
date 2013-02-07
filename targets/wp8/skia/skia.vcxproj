@@ -169,7 +169,6 @@
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkColorFilter.cpp" />
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkColorTable.cpp" />
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkComposeShader.cpp" />
-    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkConcaveToTriangles.cpp" />
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkConfig8888.cpp" />
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkCordic.cpp" />
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkCubicClipper.cpp" />
@@ -189,6 +188,7 @@
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkFlattenableBuffers.cpp" />
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkFloat.cpp" />
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkFloatBits.cpp" />
+	<ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkFontDescriptor.cpp" />
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkFontHost.cpp" />
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkGeometry.cpp" />
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkGlyphCache.cpp" />
@@ -306,7 +306,6 @@
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\images\SkPageFlipper.cpp" />
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\images\SkScaledBitmapSampler.cpp" />
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\ports\SkDebug_win.cpp" />
-    <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\ports\SkFontDescriptor.cpp" />
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\ports\SkFontHost_FreeType.cpp" />
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\ports\SkFontHost_FreeType_common.cpp" />
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\ports\SkGlobalInitialization_default.cpp" />
