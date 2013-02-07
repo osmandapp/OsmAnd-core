@@ -314,6 +314,7 @@ endif
 # Android specific files
 LOCAL_SRC_FILES += \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkMMapStream.cpp \
+	$(OSMAND_SKIA_RELATIVE)/src/images/SkImageRef_ashmem.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/SkDebug_android.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/SkGlobalInitialization_default.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/SkFontHost_FreeType.cpp \
