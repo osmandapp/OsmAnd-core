@@ -274,7 +274,6 @@ LOCAL_C_INCLUDES += \
 	$(OSMAND_HARFBUZZ)/src
 	
 LOCAL_CFLAGS += \
-	-DSK_BUILD_FOR_ANDROID \
 	-DSK_BUILD_FOR_ANDROID_NDK \
 	-DSK_ALLOW_STATIC_GLOBAL_INITIALIZERS=0 \
 	-DSK_RELEASE \
@@ -314,7 +313,6 @@ endif
 # Android specific files
 LOCAL_SRC_FILES += \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkMMapStream.cpp \
-	$(OSMAND_SKIA_RELATIVE)/src/images/SkImageRef_ashmem.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/SkDebug_android.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/SkGlobalInitialization_default.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/SkFontHost_FreeType.cpp \
