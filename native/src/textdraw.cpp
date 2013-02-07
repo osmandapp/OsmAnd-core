@@ -514,9 +514,9 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 	paintText.setStrokeWidth(1);
 	paintText.setColor(0xff000000);
 	paintText.setTextAlign(SkPaint::kCenter_Align);
-    if(!sTypeface)
-        sTypeface = SkTypeface::CreateFromName("Droid Serif", SkTypeface::kNormal);
-	paintText.setTypeface(sTypeface);
+ //    if(!sTypeface)
+ //       sTypeface = SkTypeface::CreateFromName("Droid", SkTypeface::kNormal);
+	// paintText.setTypeface(sTypeface);
 	paintText.setAntiAlias(true);
 	SkPaint::FontMetrics fm;
 
