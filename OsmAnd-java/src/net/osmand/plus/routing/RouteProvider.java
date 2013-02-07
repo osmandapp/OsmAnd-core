@@ -408,8 +408,9 @@ public class RouteProvider {
 				// something really strange better to see that message on the scren
 				return new RouteCalculationResult("Empty result");
 			} else {
-				return new RouteCalculationResult(result, params.start, params.end, 
-						params.intermediates, params.ctx, params.leftSide);
+				RouteCalculationResult res = new RouteCalculationResult(result, params.start, params.end, 
+						params.intermediates, params.ctx, params.leftSide, ctx.routingTime);
+				return res;
 			}
 		} catch (InterruptedException e) {
 			return new RouteCalculationResult("Route calculation was interrupted");

@@ -188,6 +188,9 @@ public class RoutePlannerFrontEnd {
 		RouteSegmentResult[] res = ctx.nativeLib.runNativeRouting(ctx.startX, ctx.startY, ctx.targetX, ctx.targetY,
 				ctx.config, regions, ctx.calculationProgress);
 		ArrayList<RouteSegmentResult> result = new ArrayList<RouteSegmentResult>(Arrays.asList(res));
+		ctx.routingTime = ctx.calculationProgress.routingCalculatedTime;
+		ctx.visitedSegments = ctx.calculationProgress.visitedSegments;
+		ctx.loadedTiles = ctx.calculationProgress.loadedTiles;
 		return new RouteResultPreparation().prepareResult(ctx, leftSideNavigation, result);
 	}
 	

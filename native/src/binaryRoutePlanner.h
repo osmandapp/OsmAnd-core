@@ -218,10 +218,10 @@ struct RoutingConfiguration {
 		bool accepted = false;
 		for(; t != r->types.end(); t++) {
 			tag_value type = r->region->decodingRules[*t];
-			if(type.first=="highway" && highwaySpeed[type.second] > 0) {
+			if(type.first=="highway" && getHighwaySpeed(type.second) > 0) {
 				accepted = true;
 				break;
-			} else if(highwaySpeed[type.first + '$' + type.second] > 0) {
+			} else if(getHighwaySpeed(type.first + '$' + type.second) > 0) {
 				accepted = true;
 				break;
 			}
@@ -255,8 +255,9 @@ struct RoutingConfiguration {
 		std::vector<uint32_t>::iterator t = r->types.begin();
 		for(; t != r->types.end(); t++) {
 			tag_value type = r->region->decodingRules[*t];
-			if(highwayPriorities.find(type.first+"$"+type.second) != highwaySpeed.end()) {
-				priority *= highwayPriorities[type.first+"$"+type.second];
+			string key = type.first+"$"+type.second;
+			if(highwayPriorities.find(key) != highwaySpeed.end()) {
+				priority *= highwayPriorities[key];
 			}
 		}
 		return priority;
@@ -329,20 +330,31 @@ struct RoutingConfiguration {
 			tag_value type = r->region->decodingRules[*t];
 			if(type.first=="maxspeed") {
 				std::string v = type.second;
-				int i = 0;
-				while(i < v.length() && v[i] >= '0' && v[i] <= '9') {
-					i++;
-				}
-				if(i > 0) {
-					float f = atoi(v.substr(0, i).c_str());
-					f = f / 3.6;
-					if(v.find("mph") != std::string::npos ) {
-						f *= 1.6;
+				if(v == "none") {
+					return 40;
+				} else {
+					int i = 0;
+					while(i < v.length() && v[i] >= '0' && v[i] <= '9') {
+						i++;
 					}
-					return f;
+					if(i > 0) {
+						float f = atoi(v.substr(0, i).c_str());
+						f = f / 3.6;
+						if(v.find("mph") != std::string::npos ) {
+							f *= 1.6;
+						}
+						return f;
+					}
+					return 0;
 				}
-				return 0;
 			}
+		}
+		return 0;
+	}
+
+	float getHighwaySpeed(string key) {
+		if(highwaySpeed.find(key) != highwaySpeed.end()) {
+			return highwaySpeed[key];
 		}
 		return 0;
 	}
@@ -357,8 +369,10 @@ struct RoutingConfiguration {
 		std::vector<uint32_t>::iterator t = r->types.begin();
 		for(; t != r->types.end(); t++) {
 			tag_value type = r->region->decodingRules[*t];
-			if(highwaySpeed.find(type.first+"$"+type.second) != highwaySpeed.end()) {
-				return highwaySpeed[type.first+"$"+type.second] / 3.6;
+			string key =type.first+"$"+type.second;
+			float f =  getHighwaySpeed(key);
+			if(f > 0) {
+				return f / 3.6;
 			}
 		}
 		return getMinDefaultSpeed();

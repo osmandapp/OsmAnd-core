@@ -26,6 +26,7 @@ public class RouteCalculationResult {
 	private final String errorMessage;
 	private final int[] listDistance;
 	private final int[] intermediatePoints;
+	private final float routingTime;
 	
 
 	// Note always currentRoute > get(currentDirectionInfo).routeOffset, 
@@ -41,6 +42,7 @@ public class RouteCalculationResult {
 
 	public RouteCalculationResult(List<Location> list, List<RouteDirectionInfo> directions, Location start, LatLon end, 
 			List<LatLon> intermediates, String errorMessage, ClientContext ctx, boolean leftSide, boolean addMissingTurns) {
+		this.routingTime = 0;
 		this.errorMessage = errorMessage;
 		this.intermediatePoints = new int[intermediates == null ? 0 : intermediates.size()];
 		List<Location> locations = list == null ? new ArrayList<Location>() : new ArrayList<Location>(list);
@@ -67,7 +69,8 @@ public class RouteCalculationResult {
 	}
 	
 	public RouteCalculationResult(List<RouteSegmentResult> list, Location start, LatLon end, List<LatLon> intermediates,  
-			ClientContext ctx, boolean leftSide) {
+			ClientContext ctx, boolean leftSide, float routingTime) {
+		this.routingTime = routingTime;
 		List<RouteDirectionInfo> computeDirections = new ArrayList<RouteDirectionInfo>();
 		this.errorMessage = null;
 		this.intermediatePoints = new int[intermediates == null ? 0 : intermediates.size()];
@@ -595,6 +598,10 @@ public class RouteCalculationResult {
 			return res.getObject().getMaximumSpeed();
 		}
 		return 0;
+	}
+	
+	public float getRoutingTime() {
+		return routingTime;
 	}
 	
 	

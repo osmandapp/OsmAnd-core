@@ -23,6 +23,7 @@ import net.osmand.plus.routing.RouteProvider.RouteService;
 import net.osmand.plus.voice.CommandPlayer;
 import net.osmand.router.RouteCalculationProgress;
 import net.osmand.router.RouteSegmentResult;
+import net.osmand.util.Algorithms;
 
 public class RoutingHelper {
 	
@@ -619,8 +620,12 @@ public class RoutingHelper {
 			}
 
 			if (res.isCalculated()) {
-				showMessage(app.getString(R.string.new_route_calculated_dist)
-						+ ": " + OsmAndFormatter.getFormattedDistance(res.getWholeDistance(), app)); //$NON-NLS-1$
+				String msg = app.getString(R.string.new_route_calculated_dist) + ": " + 
+							OsmAndFormatter.getFormattedDistance(res.getWholeDistance(), app);
+				if (res.getRoutingTime() != 0f) {
+					msg += " (" + Algorithms.formatDuration((int) res.getRoutingTime()) + ")";
+				}
+				showMessage(msg);
 			} else if (params.type != RouteService.OSMAND && !settings.isInternetConnectionAvailable()) {
 					showMessage(app.getString(R.string.error_calculating_route)
 						+ ":\n" + app.getString(R.string.internet_connection_required_for_online_route)); //$NON-NLS-1$
