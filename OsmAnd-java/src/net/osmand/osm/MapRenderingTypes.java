@@ -118,16 +118,44 @@ public class MapRenderingTypes {
 		return coastlineRuleType;
 	}
 	
-	public boolean isRelationalTagValuePropogated(String tag, String val) {
+	private MapRulType getRelationalTagValue(String tag, String val) {
 		Map<String, MapRulType> types = getEncodingRuleTypes();
 		MapRulType rType = types.get(constructRuleKey(tag, val));
 		if (rType == null) {
 			rType = types.get(constructRuleKey(tag, null));
 		}
-		if(rType != null) {
-			return rType.relation;
+		if(rType != null && rType.relation) {
+			return rType;
 		}
-		return false;
+		return null;
+	}
+	
+	public Map<String, String> getRelationPropogatedTags(Relation relation) {
+		Map<String, String> propogated = null; 
+		Map<String, String> ts = relation.getTags();
+		Iterator<Entry<String, String>> its = ts.entrySet().iterator();
+		while(its.hasNext()) {
+			Entry<String, String> ev = its.next();
+			MapRulType rule = getRelationalTagValue(ev.getKey(), ev.getValue());
+			if(rule != null) {
+				if(propogated == null) {
+					propogated = new LinkedHashMap<String, String>();
+				}
+				if (rule.names != null) {
+					for (int i = 0; i < rule.names.length; i++) {
+						String tag = rule.names[i].tag;
+						if(ts.containsKey(tag)) {
+							propogated.put(tag, ts.get(tag));
+						}
+					}
+				}
+				propogated.put(ev.getKey(), ev.getValue());
+				if(ts.containsKey("name")) {
+					propogated.put("name", ts.get("name"));
+				}
+			}
+		}
+		return propogated;
 	}
 	
 	
@@ -182,31 +210,6 @@ public class MapRenderingTypes {
 		return area;
 	}
 	
-	
-	
-	public void getEntityNames(Entity e, Map<MapRulType, String> names) {
-		String name = e.getTag(OSMTagKey.NAME);
-		if (name == null) {
-			name = e.getTag(OSMTagKey.NAME_EN);
-		}
-		if (name != null) {
-			names.put(nameRuleType, name);
-		}
-		Map<String, MapRulType> rules = getEncodingRuleTypes();
-		for (int i = 0; i < 2; i++) {
-			for (Entry<String, String> tag : e.getTags().entrySet()) {
-				MapRulType rt = rules.get(constructRuleKey(tag.getKey(), i == 0 ? tag.getValue() : null));
-				if (rt != null && rt.names != null) {
-					for (MapRulType rtname : rt.names) {
-						String tg = e.getTag(rtname.tag);
-						if (tg != null) {
-							names.put(rtname, name);
-						}
-					}
-				}
-			}
-		}
-	}
 	
 	public Map<AmenityType, Map<String, String>> getAmenityTypeNameToTagVal() {
 		if (amenityTypeNameToTagVal == null) {
@@ -663,8 +666,7 @@ public class MapRenderingTypes {
  		}
 		return attr;
 	}
-	
-	
+
 	
 }
 
