@@ -9,6 +9,10 @@ public class RouteCalculationProgress {
 	public int reverseSegmentQueueSize;
 	public float totalEstimatedDistance = 0;
 	
+	public float routingCalculatedTime = 0;
+	public int loadedTiles = 0;
+	public int visitedSegments = 0;
+	
 	public boolean isCancelled;
 	
 }

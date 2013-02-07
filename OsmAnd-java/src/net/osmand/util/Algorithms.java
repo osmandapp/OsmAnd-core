@@ -260,5 +260,25 @@ public class Algorithms {
 	}
 	
 
-	
+	public static String formatDuration(int seconds) {
+		String sec;
+		if (seconds % 60 < 10) {
+			sec = "0" + (seconds % 60);
+		} else {
+			sec = (seconds % 60) + "";
+		}
+		int minutes = seconds / 60;
+		if (minutes < 60) {
+			return minutes + ":" + sec;
+		} else {
+			String min;
+			if (minutes % 60 < 10) {
+				min = "0" + (minutes % 60);
+			} else {
+				min = (minutes % 60) + "";
+			}
+			int hours = minutes / 60;
+			return hours + ":" + min + ":" + sec;
+		}
+	}
 }

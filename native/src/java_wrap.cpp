@@ -379,6 +379,9 @@ jfieldID jfield_RouteCalculationProgress_directSegmentQueueSize = NULL;
 jfieldID jfield_RouteCalculationProgress_distanceFromEnd = NULL;
 jfieldID jfield_RouteCalculationProgress_reverseSegmentQueueSize = NULL;
 jfieldID jfield_RouteCalculationProgress_isCancelled = NULL;
+jfieldID jfield_RouteCalculationProgress_routingCalculatedTime = NULL;
+jfieldID jfield_RouteCalculationProgress_visitedSegments = NULL;
+jfieldID jfield_RouteCalculationProgress_loadedTiles = NULL;
 
 jclass jclass_RenderingContext = NULL;
 jfieldID jfield_RenderingContext_interrupted = NULL;
@@ -452,6 +455,9 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_RouteCalculationProgress_distanceFromEnd  = getFid(env, jclass_RouteCalculationProgress, "distanceFromEnd", "F");
 	jfield_RouteCalculationProgress_directSegmentQueueSize  = getFid(env, jclass_RouteCalculationProgress, "directSegmentQueueSize", "I");
 	jfield_RouteCalculationProgress_reverseSegmentQueueSize  = getFid(env, jclass_RouteCalculationProgress, "reverseSegmentQueueSize", "I");
+	jfield_RouteCalculationProgress_routingCalculatedTime  = getFid(env, jclass_RouteCalculationProgress, "routingCalculatedTime", "F");
+	jfield_RouteCalculationProgress_visitedSegments  = getFid(env, jclass_RouteCalculationProgress, "visitedSegments", "I");
+	jfield_RouteCalculationProgress_loadedTiles  = getFid(env, jclass_RouteCalculationProgress, "loadedTiles", "I");
 
 	jclass_RenderingContext = findClass(env, "net/osmand/RenderingContext");
 	jfield_RenderingContext_interrupted = getFid(env, jclass_RenderingContext, "interrupted", "Z");
@@ -722,6 +728,11 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeRo
 		ienv->SetObjectArrayElement(res, i, resobj);
 		ienv->DeleteLocalRef(resobj);
 	}
+	if(c.finalRouteSegment.get() != NULL) {
+		ienv->SetFloatField(progress, jfield_RouteCalculationProgress_routingCalculatedTime, c.finalRouteSegment->distanceFromStart);
+	}
+	ienv->SetIntField(progress, jfield_RouteCalculationProgress_visitedSegments, c.visitedSegments);
+	ienv->SetIntField(progress, jfield_RouteCalculationProgress_loadedTiles, c.loadedTiles);
 	if (r.size() == 0) {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "No route found");
 	}
