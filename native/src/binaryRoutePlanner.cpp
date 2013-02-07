@@ -341,6 +341,10 @@ bool processRouteSegment(RoutingContext* ctx, bool reverseWaySearch, SEGMENTS_QU
 			}
 			double distOnRoadToPass = positive? posSegmentDist : negSegmentDist;
 			double distStartObstacles = segment->distanceFromStart + ( positive ? obstaclePlusTime : obstacleMinusTime) + distOnRoadToPass / speed;
+			if(TRACE_ROUTING) {
+				OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, ">> ? distToPass=%f speed=%f prio=%f time=%f start=%f", 
+					distOnRoadToPass, ctx->config.defineSpeed(road), ctx->config.defineSpeedPriority(road) , distOnRoadToPass / speed, segment->distanceFromStart);
+			}
 
 			double distToFinalPoint = squareRootDist(x, y, targetEndX, targetEndY);
 			bool routeFound = processIntersections(ctx, graphSegments, visitedSegments, oppositeSegments,

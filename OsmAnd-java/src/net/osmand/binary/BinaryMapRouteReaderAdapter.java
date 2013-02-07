@@ -134,15 +134,19 @@ public class BinaryMapRouteReaderAdapter {
 			} else if(t.equalsIgnoreCase("maxspeed") && v != null){
 				type = MAXSPEED;
 				floatValue = -1;
-				int i = 0;
-				while(i < v.length() && Character.isDigit(v.charAt(i))) {
-					i++;
-				}
-				if(i > 0) {
-					floatValue = Integer.parseInt(v.substring(0, i));
-					floatValue /= 3.6; // km/h -> m/s
-					if(v.contains("mph")) {
-						floatValue *= 1.6;
+				if(v.equals("none")) {
+					floatValue = 40f;
+				} else {
+					int i = 0;
+					while (i < v.length() && Character.isDigit(v.charAt(i))) {
+						i++;
+					}
+					if (i > 0) {
+						floatValue = Integer.parseInt(v.substring(0, i));
+						floatValue /= 3.6; // km/h -> m/s
+						if (v.contains("mph")) {
+							floatValue *= 1.6;
+						}
 					}
 				}
 			} else if (t.equalsIgnoreCase("lanes") && v != null) {
