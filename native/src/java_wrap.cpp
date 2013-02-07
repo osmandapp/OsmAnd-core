@@ -482,7 +482,7 @@ void loadJniRenderingContext(JNIEnv* env)
 
 	jclass_JUnidecode = findClass(env, "net/sf/junidecode/Junidecode");
     jmethod_JUnidecode_unidecode = env->GetStaticMethodID(jclass_JUnidecode, "unidecode", "(Ljava/lang/String;)Ljava/lang/String;");
-    jclass_Reshaper = findClass(env, "net/osmand/plus/Reshaper");
+    jclass_Reshaper = findClass(env, "net/osmand/Reshaper");
     jmethod_Reshaper_reshape = env->GetStaticMethodID(jclass_Reshaper, "reshape", "(Ljava/lang/String;)Ljava/lang/String;");
 
     jclass_RouteDataObject = findClass(env, "net/osmand/binary/RouteDataObject");

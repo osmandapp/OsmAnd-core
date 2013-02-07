@@ -1,6 +1,4 @@
-package net.osmand.plus;
-
-import net.osmand.PlatformUtil;
+package net.osmand;
 
 import org.apache.commons.logging.Log;
 
