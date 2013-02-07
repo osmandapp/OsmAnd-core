@@ -208,6 +208,7 @@
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkOrderedWriteBuffer.cpp" />
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkPackBits.cpp" />
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkPaint.cpp" />
+	<ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkPaintPriv.cpp" />
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkPath.cpp" />
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkPathEffect.cpp" />
     <ClCompile Include="..\..\..\externals\skia\upstream.patched\src\core\SkPathHeap.cpp" />

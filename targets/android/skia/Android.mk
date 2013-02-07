@@ -99,6 +99,7 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkOrderedWriteBuffer.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkPackBits.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkPaint.cpp \
+	$(OSMAND_SKIA_RELATIVE)/src/core/SkPaintPriv.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkPath.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkPathEffect.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkPathHeap.cpp \
