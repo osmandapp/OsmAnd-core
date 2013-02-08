@@ -20,10 +20,11 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/src \
 	$(OSMAND_SKIA) \
 	$(OSMAND_EXPAT)/lib \
 	$(OSMAND_SKIA)/include/core \
-	$(OSMAND_SKIA)/include/images \
-	$(OSMAND_SKIA)/include/utils \
 	$(OSMAND_SKIA)/include/config \
 	$(OSMAND_SKIA)/include/effects \
+	$(OSMAND_SKIA)/include/images \
+	$(OSMAND_SKIA)/include/ports \
+	$(OSMAND_SKIA)/include/utils \
 	$(OSMAND_SKIA)/include/utils/android \
 	$(OSMAND_SKIA)/src/core \
 	$(OSMAND_CORE)/include \
