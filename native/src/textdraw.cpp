@@ -505,6 +505,10 @@ bool textOrder(TextDrawInfo* text1, TextDrawInfo* text2) {
 
 #if defined(ANDROID)
 extern uint32_t *gFallbackFonts;
+struct FamilyRec {
+    FamilyRec*  fNext;
+    SkTypeface* fFaces[4];
+};
 static SkTypeface* sDefaultTypeface = nullptr;
 #endif
 void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
