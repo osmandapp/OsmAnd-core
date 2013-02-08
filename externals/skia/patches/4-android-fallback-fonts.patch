@@ -1,3 +1,24 @@
+diff --git a/include/ports/SkTypeface_android.h b/include/ports/SkTypeface_android.h
+index 1ee17e6..0f62d1b 100644
+--- a/include/ports/SkTypeface_android.h
++++ b/include/ports/SkTypeface_android.h
+@@ -65,6 +65,16 @@ SK_API FallbackScripts SkGetFallbackScriptFromID(const char* id);
+ SK_API SkTypeface* SkCreateFallbackTypefaceForChar(SkUnichar uni,
+                                                    SkTypeface::Style style);
+
++//OSMAND
++/**
++ *  Return a new typeface of the font in the fallback font list containing
++ *  the specified string. If no typeface is found or inconsistent typefaces,
++ *  returns null.
++ */
++SK_API SkTypeface* osmand_SkCreateFallbackTypefaceForString(
++    const void* textData, size_t byteLength, SkTypeface::Style style);
++//}OSMAND
++
+ /**
+  *  Get the family name of the font in the fallback font list containing
+  *  the specified chararacter. if no font is found, returns false.
 diff --git a/src/ports/SkFontHost_android.cpp b/src/ports/SkFontHost_android.cpp
 index 12357f1..55028eb 100644
 --- a/src/ports/SkFontHost_android.cpp
