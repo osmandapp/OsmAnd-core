@@ -576,7 +576,7 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
                 OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Rendered text is NOT presentable by current typeface");
                 if(properTypeface != sDefaultTypeface)
                     properTypeface->unref();
-                properTypeface = osmand_SkCreateFallbackTypefaceForString(textDrawInfo->text.c_str(), textDrawInfo->text.length());
+                properTypeface = osmand_SkCreateFallbackTypefaceForString(textDrawInfo->text.c_str(), textDrawInfo->text.length(), SkTypeface::kNormal);
                 if(!properTypeface)
                     OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Suitable typeface was not found");
             }

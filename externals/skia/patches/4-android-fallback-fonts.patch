@@ -20,12 +20,12 @@ index 1ee17e6..0f62d1b 100644
   *  Get the family name of the font in the fallback font list containing
   *  the specified chararacter. if no font is found, returns false.
 diff --git a/src/ports/SkFontHost_android.cpp b/src/ports/SkFontHost_android.cpp
-index 12357f1..55028eb 100644
+index 12357f1..e50a7f3 100644
 --- a/src/ports/SkFontHost_android.cpp
 +++ b/src/ports/SkFontHost_android.cpp
 @@ -883,7 +883,8 @@ size_t SkFontHost::GetFileName(SkFontID fontID, char path[], size_t length,
  }
- 
+
  SkFontID SkFontHost::NextLogicalFont(SkFontID currFontID, SkFontID origFontID) {
 -#ifdef SK_BUILD_FOR_ANDROID_NDK
 +#define OSMAND_NO_FALLBACK_FONTS
@@ -33,10 +33,10 @@ index 12357f1..55028eb 100644
      // Skia does not support font fallback for ndk applications in order to
      // enable clients such as WebKit to customize their font selection.
      // Clients can use GetFallbackFamilyNameForChar() to get the fallback
-@@ -1120,6 +1121,52 @@ SkTypeface* SkCreateFallbackTypefaceForChar(SkUnichar uni,
+@@ -1120,6 +1121,55 @@ SkTypeface* SkCreateFallbackTypefaceForChar(SkUnichar uni,
      return tf;
  }
- 
+
 +//OSMAND
 +SK_API SkTypeface* osmand_SkCreateFallbackTypefaceForString(
 +    const void* textData, size_t byteLength, SkTypeface::Style style) {
@@ -78,7 +78,10 @@ index 12357f1..55028eb 100644
 +    }
 +
 +    if(properTypeface)
++    {
++        properTypeface = find_typeface(properTypeface, style);
 +        properTypeface->ref();
++    }
 +    return properTypeface;
 +}
 +//}OSMAND
