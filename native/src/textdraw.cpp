@@ -509,6 +509,7 @@ struct FamilyRec {
     FamilyRec*  fNext;
     SkTypeface* fFaces[4];
 };
+extern FamilyRec* gFamilyHead;
 static SkTypeface* sDefaultTypeface = nullptr;
 #endif
 void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
@@ -561,7 +562,7 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
                 testPaint.setTypeface(properTypeface);
 
                 uint16_t* glyphIds = new uint16_t[textDrawInfo->text.length()];
-                paint.textToGlyphs(textDrawInfo->text.c_str(), textDrawInfo->text.length(), glyphIds);
+                testPaint.textToGlyphs(textDrawInfo->text.c_str(), textDrawInfo->text.length(), glyphIds);
                 isProperTypeface = glyphIds[0] != 0;
                 delete[] glyphIds;
             }
@@ -599,7 +600,7 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
                     testPaint.setTypeface(testedTypeface);
 
                     uint16_t* glyphIds = new uint16_t[textDrawInfo->text.length()];
-                    paint.textToGlyphs(textDrawInfo->text.c_str(), textDrawInfo->text.length(), glyphIds);
+                    testPaint.textToGlyphs(textDrawInfo->text.c_str(), textDrawInfo->text.length(), glyphIds);
                     if(glyphIds[0] != 0)
                         properTypeface = testedTypeface;
                     delete[] glyphIds;
