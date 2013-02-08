@@ -9,6 +9,10 @@
 #include "SkPaint.h"
 #include "SkPath.h"
 
+#if defined(ANDROID)
+#   include <SkTypeface_android.h>
+#endif
+
 #include "Common.h"
 #include "common2.h"
 #include "renderRules.h"
@@ -498,11 +502,39 @@ bool textOrder(TextDrawInfo* text1, TextDrawInfo* text2) {
 	return text1->textOrder < text2->textOrder;
 }
 
-static SkTypeface* sTypeface = nullptr;
+#if defined(ANDROID)
+extern bool typefaceContainsChar(SkTypeface* face, SkUnichar uni);
+static SkTypeface* sDefaultTypeface = nullptr;
+#endif
 void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 	SkRect r = SkRect::MakeLTRB(0, 0, rc->getWidth(), rc->getHeight());
 	r.inset(-100, -100);
 	quad_tree<TextDrawInfo*> boundsIntersect(r, 4, 0.6);
+
+    // Get proper typeface
+    SkTypeface* properTypeface = nullptr;
+#if defined(ANDROID)
+    if(!sDefaultTypeface)
+        sDefaultTypeface = SkTypeface::CreateFromName("Droid Serif", SkTypeface::kNormal);
+    properTypeface = sDefaultTypeface;
+    for(auto ttd = rc->textToDraw.begin(); ttd != rc->textToDraw.end(); ++ttd)
+    {
+        auto textInfo = (*ttd)->text;
+
+        for(auto chr = textInfo->text->begin(); chr != textInfo->text->end(); ++chr)
+        {
+            if(properTypeface && typefaceContainsChar(properTypeface, *chr))
+                continue;
+
+            OsmAnd::LogPrintf(LogSeverityLevel::Info, "Rendered text is not presentable by default typeface");
+
+            if(properTypeface != sDefaultTypeface && properTypeface)
+                OsmAnd::LogPrintf(LogSeverityLevel::Error, "Rendered text contains multi-script, will probably render incorrectly");
+
+            properTypeface = SkCreateFallbackTypefaceForChar(*chr, SkTypeface::kNormal);
+        }
+    }
+#endif
 
 	SkPaint paintIcon;
 	paintIcon.setStyle(SkPaint::kStroke_Style);
@@ -514,9 +546,8 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 	paintText.setStrokeWidth(1);
 	paintText.setColor(0xff000000);
 	paintText.setTextAlign(SkPaint::kCenter_Align);
- //    if(!sTypeface)
- //       sTypeface = SkTypeface::CreateFromName("Droid", SkTypeface::kNormal);
-	// paintText.setTypeface(sTypeface);
+    if(properTypeface)
+        paintText.setTypeface(properTypeface);
 	paintText.setAntiAlias(true);
 	SkPaint::FontMetrics fm;
 
