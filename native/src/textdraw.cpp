@@ -520,17 +520,15 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
     properTypeface = sDefaultTypeface;
     for(auto ttd = rc->textToDraw.begin(); ttd != rc->textToDraw.end(); ++ttd)
     {
-        auto textInfo = (*ttd)->text;
-
-        for(auto chr = textInfo->text.begin(); chr != textInfo->text.end(); ++chr)
+        for(auto chr = (*ttd)->text.begin(); chr != (*ttd)->text.end(); ++chr)
         {
             if(properTypeface && typefaceContainsChar(properTypeface, *chr))
                 continue;
 
-            OsmAnd::LogPrintf(LogSeverityLevel::Info, "Rendered text is not presentable by default typeface");
+            OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Rendered text is not presentable by default typeface");
 
             if(properTypeface != sDefaultTypeface && properTypeface)
-                OsmAnd::LogPrintf(LogSeverityLevel::Error, "Rendered text contains multi-script, will probably render incorrectly");
+                OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Rendered text contains multi-script, will probably render incorrectly");
 
             properTypeface = SkCreateFallbackTypefaceForChar(*chr, SkTypeface::kNormal);
         }
