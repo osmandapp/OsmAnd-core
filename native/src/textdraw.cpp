@@ -9,10 +9,6 @@
 #include "SkPaint.h"
 #include "SkPath.h"
 
-#if defined(ANDROID)
-#   include <SkTypeface_android.h>
-#endif
-
 #include "Common.h"
 #include "common2.h"
 #include "Logging.h"
@@ -504,14 +500,6 @@ bool textOrder(TextDrawInfo* text1, TextDrawInfo* text2) {
 }
 
 #if defined(ANDROID)
-/*
-extern uint32_t *gFallbackFonts;
-struct FamilyRec {
-    FamilyRec*  fNext;
-    SkTypeface* fFaces[4];
-};
-extern FamilyRec* gFamilyHead;
-*/
 static SkTypeface* sDefaultTypeface = nullptr;
 #endif
 void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
@@ -556,31 +544,6 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
         SkTypeface* properTypeface = nullptr;
 #if defined(ANDROID)
         properTypeface = sDefaultTypeface;
-        /*{
-            bool isProperTypeface = false;
-            if(properTypeface)
-            {
-                SkPaint testPaint;
-                testPaint.setTypeface(properTypeface);
-
-                uint16_t* glyphIds = new uint16_t[textDrawInfo->text.length()];
-                testPaint.textToGlyphs(textDrawInfo->text.c_str(), textDrawInfo->text.length(), glyphIds);
-                isProperTypeface = glyphIds[0] != 0;
-                delete[] glyphIds;
-            }
-
-            if(isProperTypeface)
-                OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "Rendered text is presentable by current typeface");
-            else
-            {
-                OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Rendered text is NOT presentable by current typeface");
-                if(properTypeface != sDefaultTypeface)
-                    properTypeface->unref();
-                properTypeface = osmand_SkCreateFallbackTypefaceForString(textDrawInfo->text.c_str(), textDrawInfo->text.length(), SkTypeface::kNormal);
-                if(!properTypeface)
-                    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Suitable typeface was not found");
-            }
-        }*/
 #endif
         if(properTypeface)
             paintText.setTypeface(properTypeface);
