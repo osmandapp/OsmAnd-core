@@ -525,7 +525,7 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
         //paint.setTextEncoding(SkPaint::kUTF8_TextEncoding);
 
         uint16_t* glyphIds = new uint16_t[(*ttd)->text.length()];
-        paint.textToGlyphs((*ttd)->text.c_str(), (*ttd)->text.length(), &glyphID);
+        paint.textToGlyphs((*ttd)->text.c_str(), (*ttd)->text.length(), glyphIds);
         const bool isProperTypeface = glyphIds[0] != 0;
         delete[] glyphIds;
 
