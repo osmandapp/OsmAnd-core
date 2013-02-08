@@ -1,0 +1,67 @@
+diff --git a/src/ports/SkFontHost_android.cpp b/src/ports/SkFontHost_android.cpp
+index 12357f1..55028eb 100644
+--- a/src/ports/SkFontHost_android.cpp
++++ b/src/ports/SkFontHost_android.cpp
+@@ -883,7 +883,8 @@ size_t SkFontHost::GetFileName(SkFontID fontID, char path[], size_t length,
+ }
+ 
+ SkFontID SkFontHost::NextLogicalFont(SkFontID currFontID, SkFontID origFontID) {
+-#ifdef SK_BUILD_FOR_ANDROID_NDK
++#define OSMAND_NO_FALLBACK_FONTS
++#ifdef OSMAND_NO_FALLBACK_FONTS
+     // Skia does not support font fallback for ndk applications in order to
+     // enable clients such as WebKit to customize their font selection.
+     // Clients can use GetFallbackFamilyNameForChar() to get the fallback
+@@ -1120,6 +1121,52 @@ SkTypeface* SkCreateFallbackTypefaceForChar(SkUnichar uni,
+     return tf;
+ }
+ 
++//OSMAND
++SK_API SkTypeface* osmand_SkCreateFallbackTypefaceForString(
++    const void* textData, size_t byteLength, SkTypeface::Style style) {
++    SkAutoMutexAcquire  ac(gFamilyHeadAndNameListMutex);
++    load_system_fonts();
++
++    SkTypeface* properTypeface = NULL;
++    for (unsigned idx = 0; gFallbackFonts[idx] != 0; idx++)
++    {
++        SkTypeface* testedTypeface = NULL;
++        FamilyRec* familyHead = gFamilyHead;
++        while (familyHead && !testedTypeface)
++        {
++            for (int i = 0; i < 4; i++)
++            {
++                SkTypeface* familyTypeface = familyHead->fFaces[i];
++                if (familyTypeface && familyTypeface->uniqueID() == skiaFallbackFonts[idx])
++                {
++                    testedTypeface = familyTypeface;
++                    break;
++                }
++            }
++
++            familyHead = familyHead->fNext;
++        }
++
++        // Test typeface
++        SkPaint testPaint;
++        testPaint.setTypeface(testedTypeface);
++
++        uint16_t* glyphIds = new uint16_t[textDrawInfo->text.length()];
++        testPaint.textToGlyphs(textDrawInfo->text.c_str(), textDrawInfo->text.length(), glyphIds);
++        if(glyphIds[0] != 0)
++            properTypeface = testedTypeface;
++        delete[] glyphIds;
++
++        if(properTypeface)
++            break;
++    }
++
++    if(properTypeface)
++        properTypeface->ref();
++    return properTypeface;
++}
++//}OSMAND
++
+ bool SkGetFallbackFamilyNameForChar(SkUnichar uni, SkString* name) {
+     SkASSERT(name);
+     {

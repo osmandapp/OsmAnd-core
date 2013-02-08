@@ -504,12 +504,14 @@ bool textOrder(TextDrawInfo* text1, TextDrawInfo* text2) {
 }
 
 #if defined(ANDROID)
+/*
 extern uint32_t *gFallbackFonts;
 struct FamilyRec {
     FamilyRec*  fNext;
     SkTypeface* fFaces[4];
 };
 extern FamilyRec* gFamilyHead;
+*/
 static SkTypeface* sDefaultTypeface = nullptr;
 #endif
 void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
@@ -574,41 +576,7 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
                 OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Rendered text is NOT presentable by current typeface");
                 if(properTypeface != sDefaultTypeface)
                     properTypeface->unref();
-                properTypeface = nullptr;
-                const uint32_t* skiaFallbackFonts = gFallbackFonts;
-                for (unsigned idx = 0; skiaFallbackFonts[idx] != 0; idx++)
-                {
-                    SkTypeface* testedTypeface = nullptr;
-                    FamilyRec* familyHead = gFamilyHead;
-                    while (familyHead && !testedTypeface)
-                    {
-                        for (int i = 0; i < 4; i++)
-                        {
-                            SkTypeface* familyTypeface = familyHead->fFaces[i];
-                            if (familyTypeface && familyTypeface->uniqueID() == skiaFallbackFonts[idx])
-                            {
-                                testedTypeface = familyTypeface;
-                                break;
-                            }
-                        }
-
-                        familyHead = familyHead->fNext;
-                    }
-
-                    // Test typeface
-                    SkPaint testPaint;
-                    testPaint.setTypeface(testedTypeface);
-
-                    uint16_t* glyphIds = new uint16_t[textDrawInfo->text.length()];
-                    testPaint.textToGlyphs(textDrawInfo->text.c_str(), textDrawInfo->text.length(), glyphIds);
-                    if(glyphIds[0] != 0)
-                        properTypeface = testedTypeface;
-                    delete[] glyphIds;
-
-                    if(properTypeface)
-                        break;
-                }
-
+                properTypeface = osmand_SkCreateFallbackTypefaceForString(textDrawInfo->text.c_str(), textDrawInfo->text.length());
                 if(!properTypeface)
                     OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Suitable typeface was not found");
             }
