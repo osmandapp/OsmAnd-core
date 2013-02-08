@@ -1410,7 +1410,7 @@ public class OsmandSettings {
 	
 	public final CommonPreference<Boolean> AV_EXTERNAL_RECORDER = new BooleanPreference("av_external_recorder", false).makeGlobal();
 	
-	public final CommonPreference<Boolean> AV_EXTERNAL_PHOTO_CAM = new BooleanPreference("av_external_cam", false).makeGlobal();
+	public final CommonPreference<Boolean> AV_EXTERNAL_PHOTO_CAM = new BooleanPreference("av_external_cam", true).makeGlobal();
 	
 	public static final int VIDEO_OUTPUT_MP4 = 0;
 	public static final int VIDEO_OUTPUT_3GP = 1;
