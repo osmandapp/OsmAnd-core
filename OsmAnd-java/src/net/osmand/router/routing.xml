@@ -40,12 +40,15 @@
 		
 		<road tag="highway" value="motorway" speed="110" priority="1.2">
 			<specialization input="avoid_motorway" speed="0"/>
+			<specialization input="prefer_motorway" priority="1.4"/>
 		</road>
 		<road tag="highway" value="motorway_link" speed="80" priority="1.2" >
 			<specialization input="avoid_motorway" speed="0"/>
 		</road>
 		
-		<road tag="highway" value="trunk" speed="100" priority="1.2" />
+		<road tag="highway" value="trunk" speed="100" priority="1.2" >
+			<specialization input="prefer_motorway" priority="1.4"/>
+		</road>
 		<road tag="highway" value="trunk_link" speed="75" priority="1.2" />
 		
 		<!-- generally linking larger towns. -->
