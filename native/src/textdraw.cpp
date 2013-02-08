@@ -537,12 +537,11 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
             if(isProperTypeface)
                 continue;
 
-            OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Rendered text is not presentable by default typeface");
-
-            if(properTypeface != sDefaultTypeface && properTypeface)
-                OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Rendered text contains multi-script, will probably render incorrectly");
+            OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Character [%x] is not presentable by current typeface", *chr);
 
             properTypeface = SkCreateFallbackTypefaceForChar(*chr, SkTypeface::kNormal);
+            if(!properTypeface)
+                OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "No typeface found for character [%x]", *chr);
         }
     }
 #endif
