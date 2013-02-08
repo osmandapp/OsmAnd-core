@@ -53,7 +53,7 @@ index 12357f1..e50a7f3 100644
 +            for (int i = 0; i < 4; i++)
 +            {
 +                SkTypeface* familyTypeface = familyHead->fFaces[i];
-+                if (familyTypeface && familyTypeface->uniqueID() == skiaFallbackFonts[idx])
++                if (familyTypeface && familyTypeface->uniqueID() == gFallbackFonts[idx])
 +                {
 +                    testedTypeface = familyTypeface;
 +                    break;
@@ -67,8 +67,8 @@ index 12357f1..e50a7f3 100644
 +        SkPaint testPaint;
 +        testPaint.setTypeface(testedTypeface);
 +
-+        uint16_t* glyphIds = new uint16_t[textDrawInfo->text.length()];
-+        testPaint.textToGlyphs(textDrawInfo->text.c_str(), textDrawInfo->text.length(), glyphIds);
++        uint16_t* glyphIds = new uint16_t[byteLength];
++        testPaint.textToGlyphs(textData, byteLength, glyphIds);
 +        if(glyphIds[0] != 0)
 +            properTypeface = testedTypeface;
 +        delete[] glyphIds;
