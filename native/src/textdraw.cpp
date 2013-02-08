@@ -504,6 +504,7 @@ bool textOrder(TextDrawInfo* text1, TextDrawInfo* text2) {
 }
 
 #if defined(ANDROID)
+extern uint32_t *gFallbackFonts;
 static SkTypeface* sDefaultTypeface = nullptr;
 #endif
 void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
@@ -511,36 +512,10 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 	r.inset(-100, -100);
 	quad_tree<TextDrawInfo*> boundsIntersect(r, 4, 0.6);
 
-    // Get proper typeface
-    SkTypeface* properTypeface = nullptr;
 #if defined(ANDROID)
+    //TODO: This is never released because of always +1 of reference counter
     if(!sDefaultTypeface)
         sDefaultTypeface = SkTypeface::CreateFromName("Droid Serif", SkTypeface::kNormal);
-    properTypeface = sDefaultTypeface;
-    
-    for(auto ttd = rc->textToDraw.begin(); ttd != rc->textToDraw.end(); ++ttd)
-    {
-        SkPaint paint;
-        paint.setTypeface(properTypeface);
-        //paint.setTextEncoding(SkPaint::kUTF8_TextEncoding);
-
-        uint16_t* glyphIds = new uint16_t[(*ttd)->text.length()];
-        paint.textToGlyphs((*ttd)->text.c_str(), (*ttd)->text.length(), glyphIds);
-        const bool isProperTypeface = glyphIds[0] != 0;
-        delete[] glyphIds;
-
-        if(isProperTypeface)
-        {
-            OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "Rendered text is presentable by current typeface");
-            continue;
-        }
-        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Rendered text is NOT presentable by current typeface");
-/*
-        properTypeface = SkCreateFallbackTypefaceForChar(*chr, SkTypeface::kNormal);
-        if(!properTypeface)
-            OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "No typeface found for character [%x]", *chr);
-*/
-    }
 #endif
 
 	SkPaint paintIcon;
@@ -553,63 +528,136 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 	paintText.setStrokeWidth(1);
 	paintText.setColor(0xff000000);
 	paintText.setTextAlign(SkPaint::kCenter_Align);
-    if(properTypeface)
-        paintText.setTypeface(properTypeface);
-	paintText.setAntiAlias(true);
+    paintText.setAntiAlias(true);
 	SkPaint::FontMetrics fm;
 
 	// 1. Sort text using text order
 	std::sort(rc->textToDraw.begin(), rc->textToDraw.end(), textOrder);
-	for (uint32_t i = 0; i < rc->textToDraw.size(); i++) {
-		TextDrawInfo* text = rc->textToDraw.at(i);
-		if (text->text.length() > 0) {
-			// sest text size before finding intersection (it is used there)
-			float textSize = rc->getDensityValue(text->textSize);
-			paintText.setTextSize(textSize);
-			paintText.setFakeBoldText(text->bold);
-			paintText.setColor(text->textColor);
-			// align center y
-			paintText.getFontMetrics(&fm);
-			text->centerY += (-fm.fAscent);
+    for(auto itdi = rc->textToDraw.begin(); itdi != rc->textToDraw.end(); ++itdi)
+    {
+        auto textDrawInfo = *itdi;
 
-			// calculate if there is intersection
-			bool intersects = findTextIntersection(cv, rc, boundsIntersect, text, &paintText, &paintIcon);
-			if (!intersects) {
-				if(rc->interrupted()){
-						return;
-				}
-				if (text->drawOnPath && text->path != NULL) {
-					if (text->textShadow > 0) {
-						paintText.setColor(0xFFFFFFFF);
-						paintText.setStyle(SkPaint::kStroke_Style);
-						paintText.setStrokeWidth(2 + text->textShadow);
-						rc->nativeOperations.Pause();
-						cv->drawTextOnPathHV(text->text.c_str(), text->text.length(), *text->path, text->hOffset,
-								text->vOffset, paintText);
-						rc->nativeOperations.Start();
-						// reset
-						paintText.setStyle(SkPaint::kFill_Style);
-						paintText.setStrokeWidth(2);
-						paintText.setColor(text->textColor);
-					}
+        // Skip empty text
+	    if(textDrawInfo->text.length() <= 0)
+            continue;
+
+        // Prepare font
+#if defined(ANDROID)
+        if(sDefaultTypeface)
+            paintText.setTypeface(sDefaultTypeface);
+#endif
+        SkTypeface* properTypeface = nullptr;
+#if defined(ANDROID)
+        properTypeface = sDefaultTypeface;
+        {
+            bool isProperTypeface = false;
+            if(properTypeface)
+            {
+                SkPaint testPaint;
+                testPaint.setTypeface(properTypeface);
+
+                uint16_t* glyphIds = new uint16_t[(*ttd)->text.length()];
+                paint.textToGlyphs((*ttd)->text.c_str(), (*ttd)->text.length(), glyphIds);
+                isProperTypeface = glyphIds[0] != 0;
+                delete[] glyphIds;
+            }
+
+            if(isProperTypeface)
+                OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "Rendered text is presentable by current typeface");
+            else
+            {
+                OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Rendered text is NOT presentable by current typeface");
+                if(properTypeface != sDefaultTypeface)
+                    properTypeface->unref();
+                properTypeface = nullptr;
+                const uint32_t* skiaFallbackFonts = gFallbackFonts;
+                for (unsigned idx = 0; skiaFallbackFonts[idx] != 0; idx++)
+                {
+                    SkTypeface* testedTypeface = nullptr;
+                    FamilyRec* familyHead = gFamilyHead;
+                    while (familyHead && !testedTypeface)
+                    {
+                        for (int i = 0; i < 4; i++)
+                        {
+                            SkTypeface* familyTypeface = familyHead->fFaces[i];
+                            if (familyTypeface && familyTypeface->uniqueID() == skiaFallbackFonts[idx])
+                            {
+                                testedTypeface = familyTypeface;
+                                break;
+                            }
+                        }
+
+                        familyHead = familyHead->fNext;
+                    }
+
+                    // Test typeface
+                    SkPaint testPaint;
+                    testPaint.setTypeface(testedTypeface);
+
+                    uint16_t* glyphIds = new uint16_t[(*ttd)->text.length()];
+                    paint.textToGlyphs((*ttd)->text.c_str(), (*ttd)->text.length(), glyphIds);
+                    if(glyphIds[0] != 0)
+                        properTypeface = testedTypeface;
+                    delete[] glyphIds;
+
+                    if(properTypeface)
+                        break;
+                }
+
+                if(!properTypeface)
+                    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Suitable typeface was not found");
+            }
+        }
+#endif
+        if(properTypeface)
+            paintText.setTypeface(properTypeface);
+
+		// sest text size before finding intersection (it is used there)
+		float textSize = rc->getDensityValue(textDrawInfo->textSize);
+		paintText.setTextSize(textSize);
+		paintText.setFakeBoldText(textDrawInfo->bold);
+		paintText.setColor(textDrawInfo->textColor);
+		// align center y
+		paintText.getFontMetrics(&fm);
+		textDrawInfo->centerY += (-fm.fAscent);
+
+		// calculate if there is intersection
+		bool intersects = findTextIntersection(cv, rc, boundsIntersect, textDrawInfo, &paintText, &paintIcon);
+		if (!intersects) {
+			if(rc->interrupted()){
+					return;
+			}
+			if (textDrawInfo->drawOnPath && textDrawInfo->path != NULL) {
+				if (textDrawInfo->textShadow > 0) {
+					paintText.setColor(0xFFFFFFFF);
+					paintText.setStyle(SkPaint::kStroke_Style);
+					paintText.setStrokeWidth(2 + textDrawInfo->textShadow);
 					rc->nativeOperations.Pause();
-					cv->drawTextOnPathHV(text->text.c_str(), text->text.length(), *text->path, text->hOffset,
-							text->vOffset, paintText);
+					cv->drawTextOnPathHV(textDrawInfo->text.c_str(), textDrawInfo->text.length(), *textDrawInfo->path, textDrawInfo->hOffset,
+							textDrawInfo->vOffset, paintText);
 					rc->nativeOperations.Start();
-				} else {
-					if (text->shieldRes.length() > 0) {
-						SkBitmap* ico = getCachedBitmap(rc, text->shieldRes);
-						if (ico != NULL) {
-							float left = text->centerX - rc->getDensityValue(ico->width() / 2) - 0.5f;
-							float top = text->centerY - rc->getDensityValue(ico->height() / 2)
-									- rc->getDensityValue(4.5f);
-							SkRect r = SkRect::MakeXYWH(left, top, rc->getDensityValue(ico->width()),
-									rc->getDensityValue(ico->height()));
-							PROFILE_NATIVE_OPERATION(rc, cv->drawBitmapRect(*ico, (SkIRect*) NULL, r, &paintIcon));
-						}
-					}
-					drawWrappedText(rc, cv, text, textSize, paintText);
+					// reset
+					paintText.setStyle(SkPaint::kFill_Style);
+					paintText.setStrokeWidth(2);
+					paintText.setColor(textDrawInfo->textColor);
 				}
+				rc->nativeOperations.Pause();
+				cv->drawTextOnPathHV(textDrawInfo->text.c_str(), textDrawInfo->text.length(), *textDrawInfo->path, textDrawInfo->hOffset,
+						textDrawInfo->vOffset, paintText);
+				rc->nativeOperations.Start();
+			} else {
+				if (textDrawInfo->shieldRes.length() > 0) {
+					SkBitmap* ico = getCachedBitmap(rc, textDrawInfo->shieldRes);
+					if (ico != NULL) {
+						float left = textDrawInfo->centerX - rc->getDensityValue(ico->width() / 2) - 0.5f;
+						float top = textDrawInfo->centerY - rc->getDensityValue(ico->height() / 2)
+								- rc->getDensityValue(4.5f);
+						SkRect r = SkRect::MakeXYWH(left, top, rc->getDensityValue(ico->width()),
+								rc->getDensityValue(ico->height()));
+						PROFILE_NATIVE_OPERATION(rc, cv->drawBitmapRect(*ico, (SkIRect*) NULL, r, &paintIcon));
+					}
+				}
+				drawWrappedText(rc, cv, textDrawInfo, textSize, paintText);
 			}
 		}
 	}
