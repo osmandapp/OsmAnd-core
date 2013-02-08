@@ -15,6 +15,7 @@
 
 #include "Common.h"
 #include "common2.h"
+#include "Logging.h"
 #include "renderRules.h"
 //#include "utf8.cpp"
 #include "utf8/unchecked.h"
@@ -521,7 +522,7 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
     {
         auto textInfo = (*ttd)->text;
 
-        for(auto chr = textInfo->text->begin(); chr != textInfo->text->end(); ++chr)
+        for(auto chr = textInfo->text.begin(); chr != textInfo->text.end(); ++chr)
         {
             if(properTypeface && typefaceContainsChar(properTypeface, *chr))
                 continue;
