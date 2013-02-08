@@ -556,8 +556,8 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
                 SkPaint testPaint;
                 testPaint.setTypeface(properTypeface);
 
-                uint16_t* glyphIds = new uint16_t[(*ttd)->text.length()];
-                paint.textToGlyphs((*ttd)->text.c_str(), (*ttd)->text.length(), glyphIds);
+                uint16_t* glyphIds = new uint16_t[textDrawInfo->text.length()];
+                paint.textToGlyphs(textDrawInfo->text.c_str(), textDrawInfo->text.length(), glyphIds);
                 isProperTypeface = glyphIds[0] != 0;
                 delete[] glyphIds;
             }
@@ -594,8 +594,8 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
                     SkPaint testPaint;
                     testPaint.setTypeface(testedTypeface);
 
-                    uint16_t* glyphIds = new uint16_t[(*ttd)->text.length()];
-                    paint.textToGlyphs((*ttd)->text.c_str(), (*ttd)->text.length(), glyphIds);
+                    uint16_t* glyphIds = new uint16_t[textDrawInfo->text.length()];
+                    paint.textToGlyphs(textDrawInfo->text.c_str(), textDrawInfo->text.length(), glyphIds);
                     if(glyphIds[0] != 0)
                         properTypeface = testedTypeface;
                     delete[] glyphIds;
