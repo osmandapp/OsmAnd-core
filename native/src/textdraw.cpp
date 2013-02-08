@@ -504,7 +504,6 @@ bool textOrder(TextDrawInfo* text1, TextDrawInfo* text2) {
 }
 
 #if defined(ANDROID)
-extern bool typefaceContainsChar(SkTypeface* face, SkUnichar uni);
 static SkTypeface* sDefaultTypeface = nullptr;
 #endif
 void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
@@ -518,11 +517,24 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
     if(!sDefaultTypeface)
         sDefaultTypeface = SkTypeface::CreateFromName("Droid Serif", SkTypeface::kNormal);
     properTypeface = sDefaultTypeface;
+    
     for(auto ttd = rc->textToDraw.begin(); ttd != rc->textToDraw.end(); ++ttd)
     {
         for(auto chr = (*ttd)->text.begin(); chr != (*ttd)->text.end(); ++chr)
         {
-            if(properTypeface && typefaceContainsChar(properTypeface, *chr))
+            bool isProperTypeface = false;
+            if(properTypeface)
+            {
+                SkPaint paint;
+                paint.setTypeface(properTypeface);
+                paint.setTextEncoding(SkPaint::kUTF8_TextEncoding);
+
+                uint16_t glyphID;
+                paint.textToGlyphs(&(*chr), sizeof(*chr), &glyphID);
+                isProperTypeface = glyphID != 0;
+            }
+
+            if(isProperTypeface)
                 continue;
 
             OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Rendered text is not presentable by default typeface");
