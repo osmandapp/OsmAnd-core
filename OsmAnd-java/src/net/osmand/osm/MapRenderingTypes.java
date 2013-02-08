@@ -47,9 +47,11 @@ public class MapRenderingTypes {
 	// stored information to convert from osm tags to int type
 	private Map<String, MapRulType> types = null;
 	private List<MapRulType> typeList = new ArrayList<MapRenderingTypes.MapRulType>();
+	private List<MapRouteTag> routeTags = new ArrayList<MapRenderingTypes.MapRouteTag>();
 	
 	private Map<AmenityType, Map<String, String>> amenityTypeNameToTagVal = null;
 	private Map<String, AmenityType> amenityNameToType = null;
+	
 
 	private MapRulType nameRuleType;
 	private MapRulType coastlineRuleType;
@@ -69,6 +71,11 @@ public class MapRenderingTypes {
 	}
 
 	public Map<String, MapRulType> getEncodingRuleTypes(){
+		checkIfInitNeeded();
+		return types;
+	}
+
+	private void checkIfInitNeeded() {
 		if (types == null) {
 			types = new LinkedHashMap<String, MapRulType>();
 			typeList.clear();
@@ -79,7 +86,6 @@ public class MapRenderingTypes {
 			registerRuleType("name", null, nameRuleType);
 			init();
 		}
-		return types;
 	}
 	
 	public MapRulType getTypeByInternalId(int id) {
@@ -286,6 +292,8 @@ public class MapRenderingTypes {
 						}
 					} else if (name.equals("type")) {
 						parseTypeFromXML(parser, poiParentCategory, poiParentPrefix);
+					} else if (name.equals("routing_type")) {
+						parseRouteTagFromXML(parser);
 					}
 				}
 			}
@@ -305,6 +313,24 @@ public class MapRenderingTypes {
 			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
+	}
+
+	private void parseRouteTagFromXML(XmlPullParser parser) {
+		MapRouteTag rtype = new MapRouteTag();
+		String mode = parser.getAttributeValue("", "mode"); //$NON-NLS-1$
+		rtype.tag = parser.getAttributeValue("", "tag"); //$NON-NLS-1$
+		rtype.value = parser.getAttributeValue("", "value"); //$NON-NLS-1$
+		rtype.base = Boolean.parseBoolean(parser.getAttributeValue("", "base"));
+		rtype.register = "register".equalsIgnoreCase(mode);
+		rtype.amend = "amend".equalsIgnoreCase(mode);
+		rtype.text = "text".equalsIgnoreCase(mode);
+		rtype.relation = "relation".equalsIgnoreCase(parser.getAttributeValue("", "relation"));
+		routeTags.add(rtype);
+	}
+	
+	public List<MapRouteTag> getRouteTags() {
+		checkIfInitNeeded();
+		return routeTags;
 	}
 
 	private void parseTypeFromXML(XmlPullParser parser, String poiParentCategory, String poiParentPrefix) {
@@ -431,6 +457,17 @@ public class MapRenderingTypes {
 			return rt.poiCategory;
 		}
 		return null;
+	}
+	
+	public static class MapRouteTag {
+		boolean relation;
+		String tag;
+		String value;
+		boolean register;
+		boolean amend;
+		boolean base; 
+		boolean text;
+		
 	}
 	
 	public static class MapRulType {
