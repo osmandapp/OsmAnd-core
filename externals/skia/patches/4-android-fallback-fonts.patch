@@ -28,7 +28,7 @@ index 12357f1..e50a7f3 100644
 
  SkFontID SkFontHost::NextLogicalFont(SkFontID currFontID, SkFontID origFontID) {
 -#ifdef SK_BUILD_FOR_ANDROID_NDK
-+#define OSMAND_NO_FALLBACK_FONTS
++#undef OSMAND_NO_FALLBACK_FONTS
 +#ifdef OSMAND_NO_FALLBACK_FONTS
      // Skia does not support font fallback for ndk applications in order to
      // enable clients such as WebKit to customize their font selection.

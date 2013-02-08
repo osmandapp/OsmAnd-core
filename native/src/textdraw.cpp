@@ -556,7 +556,7 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
         SkTypeface* properTypeface = nullptr;
 #if defined(ANDROID)
         properTypeface = sDefaultTypeface;
-        {
+        /*{
             bool isProperTypeface = false;
             if(properTypeface)
             {
@@ -580,7 +580,7 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
                 if(!properTypeface)
                     OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Suitable typeface was not found");
             }
-        }
+        }*/
 #endif
         if(properTypeface)
             paintText.setTypeface(properTypeface);
