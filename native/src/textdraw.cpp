@@ -520,29 +520,26 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
     
     for(auto ttd = rc->textToDraw.begin(); ttd != rc->textToDraw.end(); ++ttd)
     {
-        for(auto chr = (*ttd)->text.begin(); chr != (*ttd)->text.end(); ++chr)
+        SkPaint paint;
+        paint.setTypeface(properTypeface);
+        //paint.setTextEncoding(SkPaint::kUTF8_TextEncoding);
+
+        uint16_t* glyphIds = new uint16_t[(*ttd)->text.length()];
+        paint.textToGlyphs((*ttd)->text.c_str(), (*ttd)->text.length(), &glyphID);
+        const bool isProperTypeface = glyphIds[0] != 0;
+        delete[] glyphIds;
+
+        if(isProperTypeface)
         {
-            bool isProperTypeface = false;
-            if(properTypeface)
-            {
-                SkPaint paint;
-                paint.setTypeface(properTypeface);
-                paint.setTextEncoding(SkPaint::kUTF8_TextEncoding);
-
-                uint16_t glyphID;
-                paint.textToGlyphs(&(*chr), sizeof(*chr), &glyphID);
-                isProperTypeface = glyphID != 0;
-            }
-
-            if(isProperTypeface)
-                continue;
-
-            OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Character [%x] is not presentable by current typeface", *chr);
-
-            properTypeface = SkCreateFallbackTypefaceForChar(*chr, SkTypeface::kNormal);
-            if(!properTypeface)
-                OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "No typeface found for character [%x]", *chr);
+            OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "Rendered text is presentable by current typeface");
+            continue;
         }
+        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Rendered text is NOT presentable by current typeface");
+/*
+        properTypeface = SkCreateFallbackTypefaceForChar(*chr, SkTypeface::kNormal);
+        if(!properTypeface)
+            OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "No typeface found for character [%x]", *chr);
+*/
     }
 #endif
 
