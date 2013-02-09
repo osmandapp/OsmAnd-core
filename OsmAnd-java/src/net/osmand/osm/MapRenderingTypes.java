@@ -151,13 +151,15 @@ public class MapRenderingTypes {
 					for (int i = 0; i < rule.names.length; i++) {
 						String tag = rule.names[i].tag;
 						if(ts.containsKey(tag)) {
-							propogated.put(tag, ts.get(tag));
+							String key = rule.namePrefix + tag;
+							propogated.put(key, ts.get(tag));
 						}
 					}
 				}
 				propogated.put(ev.getKey(), ev.getValue());
 				if(ts.containsKey("name")) {
-					propogated.put("name", ts.get("name"));
+					String key = rule.namePrefix + "name";
+					propogated.put(key, ts.get("name"));
 				}
 			}
 		}
@@ -348,6 +350,8 @@ public class MapRenderingTypes {
 		registerRuleType(rtype.tag, rtype.value, rtype);
 		rtype.additional = Boolean.parseBoolean(parser.getAttributeValue("", "additional")); //$NON-NLS-1$
 		rtype.relation = Boolean.parseBoolean(parser.getAttributeValue("", "relation")); //$NON-NLS-1$
+		rtype.namePrefix = parser.getAttributeValue("", "namePrefix"); //$NON-NLS-1$
+		
 		String v = parser.getAttributeValue("", "nameTags");
 		if (v != null) {
 			String[] names = v.split(",");
@@ -486,6 +490,7 @@ public class MapRenderingTypes {
 		int targetId;
 		
 		String poiPrefix;
+		String namePrefix;
 		AmenityType poiCategory;
 		boolean poiSpecified;
 		

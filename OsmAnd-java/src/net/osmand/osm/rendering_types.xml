@@ -81,8 +81,8 @@
 	</category>
 	
 	<category name="routes">
-		<type tag="route" value="ferry" minzoom="8" relation="true"/>
-		<type tag="route" value="hiking" minzoom="8" relation="true"/>
+		<type tag="route" value="ferry" minzoom="8" relation="true" namePrefix="route_"/>
+		<type tag="route" value="hiking" minzoom="8" relation="true" namePrefix="route_"/>
 	</category>
 
 	<category name="tracktype">
