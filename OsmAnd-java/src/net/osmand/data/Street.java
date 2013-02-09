@@ -118,6 +118,16 @@ public class Street extends MapObject {
 		}
 	}
 	
+	public String getNameWithoutCityPart(boolean en) {
+		String nm = getName(en);
+		int t = nm.lastIndexOf('(');
+		if(t > 0) {
+			return nm.substring(0, t);
+		}
+		return nm;
+		
+	}
+	
 	
 	public List<Way> getWayNodes() {
 		if(wayNodes == null){
