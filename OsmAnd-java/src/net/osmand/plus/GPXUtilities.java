@@ -1,5 +1,7 @@
 package net.osmand.plus;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -7,12 +9,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -345,7 +350,7 @@ public class GPXUtilities {
 		format.setTimeZone(TimeZone.getTimeZone("UTC"));
 		try {
 			XmlPullParser parser = ctx.getInternalAPI().newPullParser();
-			parser.setInput(new InputStreamReader(f, "UTF-8")); //$NON-NLS-1$
+			parser.setInput(getUTF8Reader(f)); //$NON-NLS-1$
 			Stack<GPXExtensions> parserState = new Stack<GPXExtensions>();
 			boolean extensionReadMode = false;
 			parserState.push(res);
@@ -506,6 +511,23 @@ public class GPXUtilities {
 
 		return res;
 	}
+
+	private static Reader getUTF8Reader(InputStream f) throws IOException {
+		BufferedInputStream bis = new BufferedInputStream(f);
+		assert bis.markSupported();
+		bis.mark(3);
+		boolean reset = true;
+		byte[] t = new byte[3]; 
+		bis.read(t); 
+		if (t[0] == ((byte)0xef) && t[1]== ((byte)0xbb) && t[2] == ((byte)0xbf)) {
+			reset = false;
+		}
+		if(reset) {
+			bis.reset();
+		}
+		return new InputStreamReader(bis, "UTF-8");
+	}
+	
 	
 
 	private static WptPt parseWptAttributes(XmlPullParser parser) {
