@@ -137,16 +137,13 @@ public class MapRenderingTypes {
 	}
 	
 	public Map<String, String> getRelationPropogatedTags(Relation relation) {
-		Map<String, String> propogated = null; 
+		Map<String, String> propogated = new LinkedHashMap<String, String>();
 		Map<String, String> ts = relation.getTags();
 		Iterator<Entry<String, String>> its = ts.entrySet().iterator();
 		while(its.hasNext()) {
 			Entry<String, String> ev = its.next();
 			MapRulType rule = getRelationalTagValue(ev.getKey(), ev.getValue());
 			if(rule != null) {
-				if(propogated == null) {
-					propogated = new LinkedHashMap<String, String>();
-				}
 				if (rule.names != null) {
 					for (int i = 0; i < rule.names.length; i++) {
 						String tag = rule.names[i].tag;
@@ -162,10 +159,30 @@ public class MapRenderingTypes {
 					propogated.put(key, ts.get("name"));
 				}
 			}
+			addParsedSpecialTags(propogated, ev);
 		}
 		return propogated;
 	}
 	
+	public void addParsedSpecialTags(Map<String,String> propogated, Entry<String,String> ev) {
+		if ("osmc:symbol".equals(ev.getKey())) {
+			String[] tokens = ev.getValue().split(":", 6);
+			if (tokens.length > 0) {
+				String symbol_name = "osmc_symbol_" + tokens[0];
+				propogated.put(symbol_name, "");
+				if (tokens.length > 2) {
+					String symbol = "osmc_symbol_" + tokens[1] + "_"
+							+ tokens[2];
+					propogated.put(symbol, "");
+					String name = "\u00A0";
+					if (tokens.length > 3 && tokens[3].trim().length() > 0) {
+						name = tokens[3];
+					}
+					propogated.put(symbol + "_name", name);
+				}
+			}
+		}
+	}
 	
 	// if type equals 0 no need to save that point
 	public boolean encodeEntityWithType(Entity e, int zoom, TIntArrayList outTypes, 

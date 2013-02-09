@@ -113,6 +113,13 @@
 		<type tag="sac_scale" value="difficult_alpine_hiking" minzoom="12" additional="true"/>
 	</category>
 
+	<category name="osmc">
+		<type tag="osmc_symbol_red"    nameTags="osmc_symbol_white_red_bar_name"    value="" minzoom="12"/>
+		<type tag="osmc_symbol_yellow" nameTags="osmc_symbol_white_yellow_bar_name" value="" minzoom="12"/>
+		<type tag="osmc_symbol_green"  nameTags="osmc_symbol_white_green_bar_name"  value="" minzoom="12"/>
+		<type tag="osmc_symbol_blue"   nameTags="osmc_symbol_white_blue_bar_name"   value="" minzoom="12"/>
+	</category>
+
 	<category name="cycleway">
 		<type tag="cycleway" value="lane" minzoom="12"/>
 		<type tag="cycleway" value="opposite_lane" minzoom="12"/>
