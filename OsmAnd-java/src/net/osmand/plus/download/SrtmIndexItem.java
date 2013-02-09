@@ -113,7 +113,7 @@ public class SrtmIndexItem extends IndexItem {
 	
 	@Override
 	public String getVisibleDescription(ClientContext ctx) {
-		return ctx.getString(R.string.index_srtm_ele);
+		return ctx.getString(R.string.index_srtm_ele) + "\n";
 	}
 	
 	@Override
