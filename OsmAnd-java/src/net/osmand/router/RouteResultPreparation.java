@@ -52,13 +52,6 @@ public class RouteResultPreparation {
 			double distance = 0;
 			for (int j = rr.getStartPointIndex(); j != rr.getEndPointIndex(); j = next) {
 				next = plus ? j + 1 : j - 1;
-				if (j == rr.getStartPointIndex()) {
-					attachRoadSegments(ctx, result, i, j, plus);
-				}
-				if (next != rr.getEndPointIndex()) {
-					attachRoadSegments(ctx, result, i, next, plus);
-				}
-
 				double d = measuredDist(road.getPoint31XTile(j), road.getPoint31YTile(j), road.getPoint31XTile(next),
 						road.getPoint31YTile(next));
 				distance += d;
