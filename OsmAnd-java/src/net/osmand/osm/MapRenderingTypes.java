@@ -148,14 +148,14 @@ public class MapRenderingTypes {
 					for (int i = 0; i < rule.names.length; i++) {
 						String tag = rule.names[i].tag;
 						if(ts.containsKey(tag)) {
-							String key = rule.namePrefix + tag;
+							String key = (rule.namePrefix == null? "" : rule.namePrefix) + tag;
 							propogated.put(key, ts.get(tag));
 						}
 					}
 				}
 				propogated.put(ev.getKey(), ev.getValue());
 				if(ts.containsKey("name")) {
-					String key = rule.namePrefix + "name";
+					String key = (rule.namePrefix == null? "" : rule.namePrefix) + "name";
 					propogated.put(key, ts.get("name"));
 				}
 			}
