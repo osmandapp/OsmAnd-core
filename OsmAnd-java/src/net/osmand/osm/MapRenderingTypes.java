@@ -364,6 +364,9 @@ public class MapRenderingTypes {
 		rtype.additional = Boolean.parseBoolean(parser.getAttributeValue("", "additional")); //$NON-NLS-1$
 		rtype.relation = Boolean.parseBoolean(parser.getAttributeValue("", "relation")); //$NON-NLS-1$
 		rtype.namePrefix = parser.getAttributeValue("", "namePrefix"); //$NON-NLS-1$
+		if(rtype.namePrefix == null){
+			rtype.namePrefix = "";
+		}
 		
 		String v = parser.getAttributeValue("", "nameTags");
 		if (v != null) {
