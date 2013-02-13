@@ -510,7 +510,7 @@ public class MapRenderingTypes {
 		int targetId;
 		
 		String poiPrefix;
-		String namePrefix;
+		String namePrefix ="";
 		AmenityType poiCategory;
 		boolean poiSpecified;
 		
