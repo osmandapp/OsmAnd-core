@@ -146,18 +146,14 @@ public class MapRenderingTypes {
 			if(rule != null) {
 				if (rule.names != null) {
 					for (int i = 0; i < rule.names.length; i++) {
-						String tag = rule.names[i].tag;
+						String tag = rule.names[i].tag.substring(rule.namePrefix.length());
 						if(ts.containsKey(tag)) {
-							String key = (rule.namePrefix == null? "" : rule.namePrefix) + tag;
+							String key = rule.names[i].tag;
 							propogated.put(key, ts.get(tag));
 						}
 					}
 				}
 				propogated.put(ev.getKey(), ev.getValue());
-				if(ts.containsKey("name")) {
-					String key = (rule.namePrefix == null? "" : rule.namePrefix) + "name";
-					propogated.put(key, ts.get("name"));
-				}
 			}
 			addParsedSpecialTags(propogated, ev);
 		}
@@ -372,15 +368,22 @@ public class MapRenderingTypes {
 		String v = parser.getAttributeValue("", "nameTags");
 		if (v != null) {
 			String[] names = v.split(",");
+			if (names.length == 0) {
+				names = new String[] { "name" };
+			}
 			rtype.names = new MapRulType[names.length];
 			for (int i = 0; i < names.length; i++) {
-				MapRulType mt = types.get(constructRuleKey(names[i], null));
+				String tagName = names[i];
+				if(rtype.namePrefix.length() > 0) {
+					tagName = rtype.namePrefix + tagName;
+				}
+				MapRulType mt = types.get(constructRuleKey(tagName, null));
 				if (mt == null) {
 					mt = new MapRulType();
-					mt.tag = names[i];
+					mt.tag = tagName;
 					mt.onlyNameRef = true;
 					mt.additional = false;
-					registerRuleType(names[i], null, mt);
+					registerRuleType(tagName, null, mt);
 				}
 				rtype.names[i] = mt;
 			}

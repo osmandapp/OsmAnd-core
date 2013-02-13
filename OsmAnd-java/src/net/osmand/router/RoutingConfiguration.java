@@ -48,10 +48,14 @@ public class RoutingConfiguration {
 		private Map<String, GeneralRouter> routers = new LinkedHashMap<String, GeneralRouter>();
 		private Map<String, String> attributes = new LinkedHashMap<String, String>();
 
-		public RoutingConfiguration build(String router, int memoryLimitMB, String... specialization) {
+		public RoutingConfiguration build(String router, int memoryLimitMB) {
+			return build(router, null, memoryLimitMB, new String[0]);
+		}
+		
+		public RoutingConfiguration build(String router, int memoryLimitMB, String[] specialization) {
 			return build(router, null, memoryLimitMB, specialization);
 		}
-		public RoutingConfiguration build(String router, Double direction, int memoryLimitMB, String... specialization) {
+		public RoutingConfiguration build(String router, Double direction, int memoryLimitMB, String[] specialization) {
 			if (!routers.containsKey(router)) {
 				router = defaultRouter;
 			}
