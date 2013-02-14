@@ -375,7 +375,7 @@ public class BinaryMapIndexReader {
 				groupPoints.get(ind).add(filePointer);
 			}
 		}
-		Iterator<Entry<TransportIndex, TIntArrayList>> it = groupPoints.entrySet().iterator();
+		Iterator<Entry<TransportIndex, TIntArrayList> > it = groupPoints.entrySet().iterator();
 		if(it.hasNext()){
 			Entry<TransportIndex, TIntArrayList> e = it.next();
 			TransportIndex ind = e.getKey();
@@ -1130,7 +1130,7 @@ public class BinaryMapIndexReader {
 		return req.getSearchResults();
 	}
 	
-	public Map<AmenityType, List<String>> searchPoiCategoriesByName(String query, Map<AmenityType, List<String>> map) throws IOException {
+	public Map<AmenityType, List<String> > searchPoiCategoriesByName(String query, Map<AmenityType, List<String> > map) throws IOException {
 		if (query == null || query.length() == 0) {
 			throw new IllegalArgumentException();
 		}
@@ -1459,7 +1459,7 @@ public class BinaryMapIndexReader {
 	public static class MapIndex extends BinaryIndexPart {
 		List<MapRoot> roots = new ArrayList<MapRoot>();
 		
-		Map<String, Map<String, Integer>> encodingRules = new HashMap<String, Map<String, Integer>>();
+		Map<String, Map<String, Integer> > encodingRules = new HashMap<String, Map<String, Integer> >();
 		TIntObjectMap<TagValuePair> decodingRules = new TIntObjectHashMap<TagValuePair>();
 		public int nameEncodingType = 0;
 		public int refEncodingType = -1;

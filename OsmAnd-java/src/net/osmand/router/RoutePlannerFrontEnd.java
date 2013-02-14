@@ -238,6 +238,7 @@ public class RoutePlannerFrontEnd {
 				ctx.timeToLoad += local.timeToLoad;
 				ctx.timeToLoadHeaders += local.timeToLoadHeaders;
 				ctx.relaxedSegments += local.relaxedSegments;
+				ctx.routingTime += local.routingTime;
 				
 				local.unloadAllData(ctx);
 				if(restPartRecalculatedRoute != null) {

@@ -1,5 +1,6 @@
 package net.osmand.router;
 
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -8,6 +9,7 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import net.osmand.PlatformUtil;
@@ -28,6 +30,11 @@ public class TestRouting {
 	public static boolean TEST_BOTH_DIRECTION = true;
 	public static NativeLibrary lib = null;
 	public static boolean oldRouting = true;
+	
+	
+	public static Iterator getIterator(Iterable it){
+		return it.iterator();
+	}
 	
 	public static class Parameters {
 		public File obfDir;

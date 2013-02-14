@@ -40,7 +40,7 @@ public class BinaryMapPoiReaderAdapter {
 
 		List<String> categories = new ArrayList<String>();
 		List<AmenityType> categoriesType = new ArrayList<AmenityType>();
-		List<List<String>> subcategories = new ArrayList<List<String>>();
+		List<List<String> > subcategories = new ArrayList<List<String> >();
 		
 		double leftLongitude;
 		double rightLongitude;

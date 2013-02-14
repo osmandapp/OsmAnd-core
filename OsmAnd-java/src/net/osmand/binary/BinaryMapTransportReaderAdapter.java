@@ -1,6 +1,5 @@
 package net.osmand.binary;
 
-import static net.osmand.binary.BinaryMapIndexReader.TRANSPORT_STOP_ZOOM;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntObjectHashMap;
 
@@ -281,8 +280,8 @@ public class BinaryMapTransportReaderAdapter {
 				TransportStop stop = readTransportRouteStop(dx, dy, did, stringTable);
 				dataObject.getBackwardStops().add(stop);
 				did = stop.getId();
-				dx = (int) MapUtils.getTileNumberX(TRANSPORT_STOP_ZOOM, stop.getLocation().getLongitude());
-				dy = (int) MapUtils.getTileNumberY(TRANSPORT_STOP_ZOOM, stop.getLocation().getLatitude());
+				dx = (int) MapUtils.getTileNumberX(BinaryMapIndexReader.TRANSPORT_STOP_ZOOM, stop.getLocation().getLongitude());
+				dy = (int) MapUtils.getTileNumberY(BinaryMapIndexReader.TRANSPORT_STOP_ZOOM, stop.getLocation().getLatitude());
 				codedIS.popLimit(olds);
 				break;
 			case OsmandOdb.TransportRoute.DIRECTSTOPS_FIELD_NUMBER:
@@ -296,8 +295,8 @@ public class BinaryMapTransportReaderAdapter {
 				stop = readTransportRouteStop(rx, ry, rid, stringTable);
 				dataObject.getForwardStops().add(stop);
 				rid = stop.getId();
-				rx = (int) MapUtils.getTileNumberX(TRANSPORT_STOP_ZOOM, stop.getLocation().getLongitude());
-				ry = (int) MapUtils.getTileNumberY(TRANSPORT_STOP_ZOOM, stop.getLocation().getLatitude());
+				rx = (int) MapUtils.getTileNumberX(BinaryMapIndexReader.TRANSPORT_STOP_ZOOM, stop.getLocation().getLongitude());
+				ry = (int) MapUtils.getTileNumberY(BinaryMapIndexReader.TRANSPORT_STOP_ZOOM, stop.getLocation().getLatitude());
 				codedIS.popLimit(olds);
 				break;
 			default:
@@ -413,7 +412,7 @@ public class BinaryMapTransportReaderAdapter {
 			}
 		}
 		dataObject.setId(did);
-		dataObject.setLocation(MapUtils.getLatitudeFromTile(TRANSPORT_STOP_ZOOM, dy), MapUtils.getLongitudeFromTile(TRANSPORT_STOP_ZOOM, dx));
+		dataObject.setLocation(MapUtils.getLatitudeFromTile(BinaryMapIndexReader.TRANSPORT_STOP_ZOOM, dy), MapUtils.getLongitudeFromTile(BinaryMapIndexReader.TRANSPORT_STOP_ZOOM, dx));
 		return dataObject;
 	}
 	
@@ -438,7 +437,7 @@ public class BinaryMapTransportReaderAdapter {
 		req.cacheTypes.clear();
 		
 		TransportStop dataObject = new TransportStop();
-		dataObject.setLocation(MapUtils.getLatitudeFromTile(TRANSPORT_STOP_ZOOM, y), MapUtils.getLongitudeFromTile(TRANSPORT_STOP_ZOOM, x));
+		dataObject.setLocation(MapUtils.getLatitudeFromTile(BinaryMapIndexReader.TRANSPORT_STOP_ZOOM, y), MapUtils.getLongitudeFromTile(BinaryMapIndexReader.TRANSPORT_STOP_ZOOM, x));
 		dataObject.setFileOffset(shift);
 		while(true){
 			int t = codedIS.readTag();
