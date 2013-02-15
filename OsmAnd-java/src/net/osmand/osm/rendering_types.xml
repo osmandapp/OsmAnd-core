@@ -513,7 +513,7 @@
 		<type tag="natural" value="wetland" minzoom="10" />
 		<type tag="natural" value="wood" minzoom="8" />
 		<type tag="landuse" value="wood" minzoom="8" 
-				target_tag="natural" target_value="wood" poi_category="natural" />
+			target_tag="natural" target_value="wood" poi_category="natural" />
 		<type tag="contour" value="elevation" minzoom="11" />
 	</category>
 	<category name="contourtype">

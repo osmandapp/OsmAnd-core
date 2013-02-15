@@ -125,19 +125,16 @@ public class MapRenderingTypes {
 	}
 	
 	private MapRulType getRelationalTagValue(String tag, String val) {
-		Map<String, MapRulType> types = getEncodingRuleTypes();
-		MapRulType rType = types.get(constructRuleKey(tag, val));
-		if (rType == null) {
-			rType = types.get(constructRuleKey(tag, null));
-		}
+		MapRulType rType = getRuleType(tag, val);
 		if(rType != null && rType.relation) {
 			return rType;
 		}
 		return null;
 	}
 	
-	public Map<String, String> getRelationPropogatedTags(Relation relation) {
-		Map<String, String> propogated = new LinkedHashMap<String, String>();
+	
+	public Map<MapRulType, String> getRelationPropogatedTags(Relation relation) {
+		Map<MapRulType, String> propogated = new LinkedHashMap<MapRulType, String>();
 		Map<String, String> ts = relation.getTags();
 		Iterator<Entry<String, String>> its = ts.entrySet().iterator();
 		while(its.hasNext()) {
@@ -148,33 +145,37 @@ public class MapRenderingTypes {
 					for (int i = 0; i < rule.names.length; i++) {
 						String tag = rule.names[i].tag.substring(rule.namePrefix.length());
 						if(ts.containsKey(tag)) {
-							String key = rule.names[i].tag;
-							propogated.put(key, ts.get(tag));
+							propogated.put(rule.names[i], ts.get(tag));
 						}
 					}
 				}
-				propogated.put(ev.getKey(), ev.getValue());
+				propogated.put(rule, ev.getValue());
 			}
 			addParsedSpecialTags(propogated, ev);
 		}
 		return propogated;
 	}
 	
-	public void addParsedSpecialTags(Map<String,String> propogated, Entry<String,String> ev) {
+	public void addParsedSpecialTags(Map<MapRulType,String> propogated, Entry<String,String> ev) {
 		if ("osmc:symbol".equals(ev.getKey())) {
 			String[] tokens = ev.getValue().split(":", 6);
 			if (tokens.length > 0) {
 				String symbol_name = "osmc_symbol_" + tokens[0];
-				propogated.put(symbol_name, "");
-				if (tokens.length > 2) {
-					String symbol = "osmc_symbol_" + tokens[1] + "_"
-							+ tokens[2];
-					propogated.put(symbol, "");
-					String name = "\u00A0";
-					if (tokens.length > 3 && tokens[3].trim().length() > 0) {
-						name = tokens[3];
+				MapRulType rt = getRuleType(symbol_name, "");
+				if(rt != null) {
+					propogated.put(rt, "");
+					if (tokens.length > 2 && rt.names != null) {
+						String symbol = "osmc_symbol_" + tokens[1] + "_" + tokens[2];
+						String name = "\u00A0";
+						if (tokens.length > 3 && tokens[3].trim().length() > 0) {
+							name = tokens[3];
+						}
+						for(int k = 0; k < rt.names.length; k++) {
+							if(rt.names[k].tag.equals(symbol)) {
+								propogated.put(rt.names[k], name);
+							}
+						}
 					}
-					propogated.put(symbol + "_name", name);
 				}
 			}
 		}
@@ -183,7 +184,6 @@ public class MapRenderingTypes {
 	// if type equals 0 no need to save that point
 	public boolean encodeEntityWithType(Entity e, int zoom, TIntArrayList outTypes, 
 			TIntArrayList outaddTypes, Map<MapRulType, String> namesToEncode, List<MapRulType> tempList) {
-		Map<String, MapRulType> types = getEncodingRuleTypes();
 		outTypes.clear();
 		outaddTypes.clear();
 		namesToEncode.clear();
@@ -195,10 +195,7 @@ public class MapRenderingTypes {
 		Collection<String> tagKeySet = e.getTagKeySet();
 		for (String tag : tagKeySet) {
 			String val = e.getTag(tag);
-			MapRulType rType = types.get(constructRuleKey(tag, val));
-			if (rType == null) {
-				rType = types.get(constructRuleKey(tag, null));
-			}
+			MapRulType rType = getRuleType(tag, val);
 			if (rType != null) {
 				if (rType.minzoom > zoom) {
 					continue;
@@ -229,6 +226,15 @@ public class MapRenderingTypes {
 			}
 		}
 		return area;
+	}
+
+	private MapRulType getRuleType(String tag, String val) {
+		Map<String, MapRulType> types = getEncodingRuleTypes();
+		MapRulType rType = types.get(constructRuleKey(tag, val));
+		if (rType == null) {
+			rType = types.get(constructRuleKey(tag, null));
+		}
+		return rType;
 	}
 	
 	
@@ -364,6 +370,7 @@ public class MapRenderingTypes {
 		rtype.additional = Boolean.parseBoolean(parser.getAttributeValue("", "additional")); //$NON-NLS-1$
 		rtype.relation = Boolean.parseBoolean(parser.getAttributeValue("", "relation")); //$NON-NLS-1$
 		rtype.namePrefix = parser.getAttributeValue("", "namePrefix"); //$NON-NLS-1$
+		rtype.nameCombinator = parser.getAttributeValue("", "nameCombinator"); //$NON-NLS-1$
 		if(rtype.namePrefix == null){
 			rtype.namePrefix = "";
 		}
@@ -514,6 +521,7 @@ public class MapRenderingTypes {
 		
 		String poiPrefix;
 		String namePrefix ="";
+		String nameCombinator = null;
 		AmenityType poiCategory;
 		boolean poiSpecified;
 		
