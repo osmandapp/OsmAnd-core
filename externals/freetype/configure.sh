@@ -9,16 +9,16 @@ fi
 # Delete old one if such exists
 if ls -1 $SRCLOC/upstream.* >/dev/null 2>&1
 then
-	echo "Deleting old upstream..."
+	echo "FreeType Deleting old upstream..."
 	rm -rf $SRCLOC/upstream.*
 fi
 
 # Download
-echo "Downloading new upstream..."
+echo "FreeType Downloading new upstream..."
 curl -L http://sourceforge.net/projects/freetype/files/freetype2/2.4.10/freetype-2.4.10.tar.bz2/download > $SRCLOC/upstream.tar.bz2 || { echo "Failed to download!" 1>&2; exit; }
 
 # Extract
-echo "Extracting upstream..."
+echo "FreeType Extracting upstream..."
 mkdir -p $SRCLOC/upstream.original
 tar -xjf $SRCLOC/upstream.tar.bz2 -C $SRCLOC/upstream.original --strip 1
 
