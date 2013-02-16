@@ -14,13 +14,13 @@ then
 fi
 
 # Download
-echo "Downloading new upstream..."
+echo "GIF Downloading new upstream..."
 # GIF 5.x is not supported yet by SKIA
 #curl -L http://sourceforge.net/projects/giflib/files/giflib-5.x/giflib-5.0.2.tar.bz2/download > $SRCLOC/upstream.tar.bz2 || { echo "Failed to download!" 1>&2; exit; }
 curl -L http://sourceforge.net/projects/giflib/files/giflib-4.x/giflib-4.2.1.tar.bz2/download > $SRCLOC/upstream.tar.bz2 || { echo "Failed to download!" 1>&2; exit; }
 
 # Extract
-echo "Extracting upstream..."
+echo "GIF Extracting upstream..."
 mkdir -p $SRCLOC/upstream.original
 tar -xjf $SRCLOC/upstream.tar.bz2 -C $SRCLOC/upstream.original --strip 1
 
