@@ -15,11 +15,11 @@ then
 fi
 
 # Download
-echo "Downloading new upstream..."
+echo "Zlib Downloading new upstream..."
 curl -L http://zlib.net/zlib-1.2.7.tar.bz2 > $SRCLOC/upstream.tar.bz2 || { echo "Failed to download!" 1>&2; exit; }
 
 # Extract
-echo "Extracting upstream..."
+echo "Zlib Extracting upstream..."
 mkdir -p $SRCLOC/upstream.original
 tar -xjf $SRCLOC/upstream.tar.bz2 -C $SRCLOC/upstream.original --strip 1
 
