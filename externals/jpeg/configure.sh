@@ -15,11 +15,11 @@ then
 fi
 
 # Download
-echo "Downloading new upstream..."
+echo "JPEG Downloading new upstream..."
 curl -L http://www.ijg.org/files/jpegsrc.v8d.tar.gz > $SRCLOC/upstream.tar.gz || { echo "Failed to download!" 1>&2; exit; }
 
 # Extract
-echo "Extracting upstream..."
+echo "JPEG Extracting upstream..."
 mkdir -p $SRCLOC/upstream.original
 tar -xzf $SRCLOC/upstream.tar.gz -C $SRCLOC/upstream.original --strip 1
 
