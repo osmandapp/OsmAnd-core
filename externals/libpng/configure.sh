@@ -15,11 +15,11 @@ then
 fi
 
 # Download
-echo "Downloading new upstream..."
+echo "PNG Downloading new upstream..."
 curl -L http://sourceforge.net/projects/libpng/files/libpng15/1.5.13/libpng-1.5.13.tar.bz2/download > $SRCLOC/upstream.tar.bz2 || { echo "Failed to download!" 1>&2; exit; }
 
 # Extract
-echo "Extracting upstream..."
+echo "PNG Extracting upstream..."
 mkdir -p $SRCLOC/upstream.original
 tar -xjf $SRCLOC/upstream.tar.bz2 -C $SRCLOC/upstream.original --strip 1
 
