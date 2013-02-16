@@ -45,6 +45,9 @@ public class CurrentPositionHelper {
 				initCtx(app);
 			}
 			RouteSegment sg = rp.findRouteSegment(loc.getLatitude(), loc.getLongitude(), ctx);
+			if(sg == null) {
+				return null;
+			}
 			return sg.getRoad();
 		} catch (IOException e) {
 			return null;

@@ -281,4 +281,13 @@ public class Algorithms {
 			return hours + ":" + min + ":" + sec;
 		}
 	}
+	
+	public static <T extends Enum<T>> T parseEnumValue(T[] cl, String val, T defaultValue){
+		for(int i = 0; i< cl.length; i++) {
+			if(cl[i].name().equalsIgnoreCase(val)) {
+				return cl[i];
+			}
+		}
+		return defaultValue;
+	} 
 }

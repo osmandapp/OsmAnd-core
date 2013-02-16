@@ -412,6 +412,8 @@ public class RouteProvider {
 						params.intermediates, params.ctx, params.leftSide, ctx.routingTime);
 				return res;
 			}
+		} catch (RuntimeException e) {
+			return new RouteCalculationResult(e.getMessage() );
 		} catch (InterruptedException e) {
 			return new RouteCalculationResult("Route calculation was interrupted");
 		} catch (OutOfMemoryError e) {

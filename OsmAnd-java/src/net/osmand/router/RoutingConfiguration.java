@@ -9,6 +9,7 @@ import java.util.Map;
 import net.osmand.Collator;
 import net.osmand.PlatformUtil;
 import net.osmand.router.GeneralRouter.GeneralRouterProfile;
+import net.osmand.util.Algorithms;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -219,7 +220,9 @@ public class RoutingConfiguration {
 		for(int i=0; i< parser.getAttributeCount(); i++) {
 			attrs.put(parser.getAttributeName(i), parser.getAttributeValue(i));
 		}
-		currentRouter = new GeneralRouter(GeneralRouterProfile.valueOf(parser.getAttributeValue("", "baseProfile").toUpperCase()), attrs);
+		GeneralRouterProfile c = Algorithms.parseEnumValue(GeneralRouterProfile.values(), 
+				parser.getAttributeValue("", "baseProfile"), GeneralRouterProfile.CAR);
+		currentRouter = new GeneralRouter(c, attrs);
 		config.routers.put(currentSelectedRouter, currentRouter);
 		return currentRouter;
 	}
