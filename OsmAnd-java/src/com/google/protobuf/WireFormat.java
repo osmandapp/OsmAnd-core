@@ -115,22 +115,11 @@ public final class WireFormat {
     FIXED64 (JavaType.LONG       , WIRETYPE_FIXED64         ),
     FIXED32 (JavaType.INT        , WIRETYPE_FIXED32         ),
     BOOL    (JavaType.BOOLEAN    , WIRETYPE_VARINT          ),
-    STRING  (JavaType.STRING     , WIRETYPE_LENGTH_DELIMITED) {
-      @Override
-	public boolean isPackable() { return false; }
-    },
-    GROUP   (JavaType.MESSAGE    , WIRETYPE_START_GROUP     ) {
-      @Override
-	public boolean isPackable() { return false; }
-    },
-    MESSAGE (JavaType.MESSAGE    , WIRETYPE_LENGTH_DELIMITED) {
-      @Override
-	public boolean isPackable() { return false; }
-    },
-    BYTES   (JavaType.BYTE_STRING, WIRETYPE_LENGTH_DELIMITED) {
-      @Override
-	public boolean isPackable() { return false; }
-    },
+    // OSMAND FIX no methods override for enum
+    STRING  (JavaType.STRING     , WIRETYPE_LENGTH_DELIMITED, false),
+    GROUP   (JavaType.MESSAGE    , WIRETYPE_START_GROUP     , false),
+    MESSAGE (JavaType.MESSAGE    , WIRETYPE_LENGTH_DELIMITED , false),
+    BYTES   (JavaType.BYTE_STRING, WIRETYPE_LENGTH_DELIMITED , false),
     UINT32  (JavaType.INT        , WIRETYPE_VARINT          ),
     ENUM    (JavaType.ENUM       , WIRETYPE_VARINT          ),
     SFIXED32(JavaType.INT        , WIRETYPE_FIXED32         ),
@@ -141,10 +130,18 @@ public final class WireFormat {
     FieldType(final JavaType javaType, final int wireType) {
       this.javaType = javaType;
       this.wireType = wireType;
+      this.packable = true;
     }
+    
+    FieldType(final JavaType javaType, final int wireType, boolean packable) {
+        this.javaType = javaType;
+        this.wireType = wireType;
+        this.packable = packable;
+      }
 
     private final JavaType javaType;
     private final int wireType;
+    private final boolean packable;
 
     public JavaType getJavaType() { return javaType; }
     public int getWireType() { return wireType; }

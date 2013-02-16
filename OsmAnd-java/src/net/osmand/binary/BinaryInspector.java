@@ -209,13 +209,13 @@ public class BinaryInspector {
 			String pattern = partsToExtractFrom.get(f);
 			boolean minus = true;
 			for (int i = 0; i < indexes[c].getIndexes().size(); i++) {
-				partsSet[c].add(i + 1f);
+				partsSet[c].add(new Float(i + 1f));
 				BinaryIndexPart part = indexes[c].getIndexes().get(i);
 				if(part instanceof MapIndex){
 					List<MapRoot> roots = ((MapIndex) part).getRoots();
 					int rsize = roots.size(); 
 					for(int j=0; j<rsize; j++){
-						partsSet[c].add((i+1f)+(j+1)/10f);
+						partsSet[c].add(new Float((i+1f)+(j+1)/10f));
 					}
 				}
 			}
@@ -223,7 +223,7 @@ public class BinaryInspector {
 				minus = pattern.startsWith("-");
 				String[] split = pattern.substring(1).split(",");
 				for(String s : split){
-					temp.add(Float.parseFloat(s));
+					temp.add(Float.valueOf(s));
 				}
 			}
 
@@ -259,10 +259,10 @@ public class BinaryInspector {
 			BinaryMapIndexReader index = indexes[k];
 			RandomAccessFile raf = rafs[k];
 			for (int i = 0; i < index.getIndexes().size(); i++) {
-				if (!partSet.contains(i + 1f)) {
+				if (!partSet.contains(Float.valueOf(i + 1f))) {
 					continue;
 				}
-				list.add(i + 1f);
+				list.add(new Float(i + 1f));
 
 				BinaryIndexPart part = index.getIndexes().get(i);
 				String map;
@@ -292,7 +292,8 @@ public class BinaryInspector {
 				}
 				writeInt(ous, part.getLength());
 				copyBinaryPart(ous, BUFFER_TO_READ, raf, part.getFilePointer(), part.getLength());
-				println(MessageFormat.format("{2} part {0} is extracted {1} bytes", part.getName(), part.getLength(), map));
+				println(MessageFormat.format("{2} part {0} is extracted {1} bytes",
+						new Object[]{part.getName(), part.getLength(), map}));
 				
 			}
 		}
@@ -369,7 +370,8 @@ public class BinaryInspector {
 					partname = "Address";
 				}
 				String name = p.getName() == null ? "" : p.getName(); 
-				println(MessageFormat.format("{0}. {1} data {3} - {2} bytes", i, partname, p.getLength(), name));
+				println(MessageFormat.format("{0}. {1} data {3} - {2} bytes",
+						new Object[]{Integer.valueOf(i), partname, p.getLength(), name}));
 				if(p instanceof TransportIndex){
 					TransportIndex ti = ((TransportIndex) p);
 					int sh = (31 - BinaryMapIndexReader.TRANSPORT_STOP_ZOOM);
@@ -384,9 +386,10 @@ public class BinaryInspector {
 					int j = 1;
 					for(MapRoot mi : m.getRoots()){
 						println(MessageFormat.format("\t{4}.{5} Map level minZoom = {0}, maxZoom = {1}, size = {2} bytes \n\t\tBounds {3}",
+								new Object[] {
 								mi.getMinZoom(), mi.getMaxZoom(), mi.getLength(), 
 								formatBounds(mi.getLeft(), mi.getRight(), mi.getTop(), mi.getBottom()), 
-								i, j++));
+								i, j++}));
 					}
 					if((verbose != null && verbose.isVmap())){
 						printMapDetailInfo(verbose, index);
@@ -574,7 +577,7 @@ public class BinaryInspector {
 		if(o.getId() == null) {
 			return " no id " ;
 		}
-		return " " + (o.getId() >> 1);
+		return " " + (o.getId().longValue() >> 1);
 	}
 
 	public static void printUsage(String warning) {

@@ -299,8 +299,9 @@ public class TIntObjectHashMap<V> extends TIntHash implements
     /** {@inheritDoc} */
     @Override
 	public void putAll( Map<? extends Integer, ? extends V> map ) {
-        Set<? extends Map.Entry<? extends Integer,? extends V>> set = map.entrySet();
-        for ( Map.Entry<? extends Integer,? extends V> entry : set ) {
+    	// osmand fix >> and final
+        Set<? extends Map.Entry<? extends Integer,? extends V> > set = map.entrySet();
+        for (final Map.Entry< ? extends Integer, ? extends V> entry : set ) {
             put( entry.getKey(), entry.getValue() );
         }
     }

@@ -130,7 +130,8 @@ public class Constants {
         if ( "MAX_VALUE".equalsIgnoreCase( property ) ) value = Float.MAX_VALUE;
         else if ( "MIN_VALUE".equalsIgnoreCase( property ) ) value = Float.MIN_VALUE;
         // Value from Float.MIN_NORMAL (introduced in 1.6)
-        else if ( "MIN_NORMAL".equalsIgnoreCase( property ) ) value = 0x1.0p-126f;
+        // osmand fix
+        else if ( "MIN_NORMAL".equalsIgnoreCase( property ) ) value = 1.17549435E-38f;//0x1.0p-126f;
         else if ( "NEGATIVE_INFINITY".equalsIgnoreCase( property ) ) value = Float.NEGATIVE_INFINITY;
         else if ( "POSITIVE_INFINITY".equalsIgnoreCase( property ) ) value = Float.POSITIVE_INFINITY;
 //        else if ( "NaN".equalsIgnoreCase( property ) ) value = Float.NaN;
@@ -151,7 +152,8 @@ public class Constants {
         if ( "MAX_VALUE".equalsIgnoreCase( property ) ) value = Double.MAX_VALUE;
         else if ( "MIN_VALUE".equalsIgnoreCase( property ) ) value = Double.MIN_VALUE;
         // Value from Double.MIN_NORMAL (introduced in 1.6)
-        else if ( "MIN_NORMAL".equalsIgnoreCase( property ) ) value = 0x1.0p-1022;
+        // osmand fix
+        else if ( "MIN_NORMAL".equalsIgnoreCase( property ) ) value = 2.2250738585072014E-308;// 0x1.0p-1022;
         else if ( "NEGATIVE_INFINITY".equalsIgnoreCase( property ) ) value = Double.NEGATIVE_INFINITY;
         else if ( "POSITIVE_INFINITY".equalsIgnoreCase( property ) ) value = Double.POSITIVE_INFINITY;
 //        else if ( "NaN".equalsIgnoreCase( property ) ) value = Double.NaN;

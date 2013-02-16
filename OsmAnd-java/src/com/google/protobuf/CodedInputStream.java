@@ -854,7 +854,6 @@ public final class CodedInputStream {
         System.arraycopy(chunk, 0, bytes, pos, chunk.length);
         pos += chunk.length;
       }
-
       // Done.
       return bytes;
     }

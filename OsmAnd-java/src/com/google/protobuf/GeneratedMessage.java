@@ -102,7 +102,8 @@ private Map<FieldDescriptor, Object> getAllFieldsMutable() {
       // Check that embedded messages are initialized.
       if (field.getJavaType() == FieldDescriptor.JavaType.MESSAGE) {
         if (field.isRepeated()) {
-          @SuppressWarnings("unchecked") final
+        	// Osmand fix (remove annotation)
+          final
           List<Message> messageList = (List<Message>) getField(field);
           for (final Message element : messageList) {
             if (!element.isInitialized()) {
@@ -360,7 +361,8 @@ public final UnknownFieldSet getUnknownFields() {
 
     /** Get the number of elements in a repeated extension. */
     public final <Type> int getExtensionCount(
-        final GeneratedExtension<MessageType, List<Type>> extension) {
+    		// osmand fix >> -> > > 
+        final GeneratedExtension<MessageType, List<Type> > extension) {
       verifyExtensionContainingType(extension);
       final FieldDescriptor descriptor = extension.getDescriptor();
       return extensions.getRepeatedFieldCount(descriptor);
@@ -391,7 +393,8 @@ public final UnknownFieldSet getUnknownFields() {
     /** Get one element of a repeated extension. */
     @SuppressWarnings("unchecked")
     public final <Type> Type getExtension(
-        final GeneratedExtension<MessageType, List<Type>> extension,
+    		// osmand fix >> -> > >  
+        final GeneratedExtension<MessageType, List<Type> > extension,
         final int index) {
       verifyExtensionContainingType(extension);
       FieldDescriptor descriptor = extension.getDescriptor();
@@ -418,8 +421,8 @@ public final UnknownFieldSet getUnknownFields() {
     protected class ExtensionWriter {
       // Imagine how much simpler this code would be if Java iterators had
       // a way to get the next element without advancing the iterator.
-
-      private final Iterator<Map.Entry<FieldDescriptor, Object>> iter =
+		// osmand fix >> -> > > 
+      private final Iterator<Map.Entry<FieldDescriptor, Object> > iter =
         extensions.iterator();
       private Map.Entry<FieldDescriptor, Object> next;
       private final boolean messageSetWireFormat;
@@ -601,7 +604,8 @@ public final UnknownFieldSet getUnknownFields() {
 
     /** Get the number of elements in a repeated extension. */
     public final <Type> int getExtensionCount(
-        final GeneratedExtension<MessageType, List<Type>> extension) {
+    		// osmand fix >> -> > > 
+        final GeneratedExtension<MessageType, List<Type> > extension) {
       return internalGetResult().getExtensionCount(extension);
     }
 
@@ -613,7 +617,8 @@ public final UnknownFieldSet getUnknownFields() {
 
     /** Get one element of a repeated extension. */
     public final <Type> Type getExtension(
-        final GeneratedExtension<MessageType, List<Type>> extension,
+    		// osmand fix >> -> > > 
+        final GeneratedExtension<MessageType, List<Type> > extension,
         final int index) {
       return internalGetResult().getExtension(extension, index);
     }
@@ -632,7 +637,8 @@ public final UnknownFieldSet getUnknownFields() {
 
     /** Set the value of one element of a repeated extension. */
     public final <Type> BuilderType setExtension(
-        final GeneratedExtension<MessageType, List<Type>> extension,
+    		// osmand fix >> -> > > 
+        final GeneratedExtension<MessageType, List<Type> > extension,
         final int index, final Type value) {
       final ExtendableMessage<MessageType> message = internalGetResult();
       message.verifyExtensionContainingType(extension);
@@ -645,7 +651,8 @@ public final UnknownFieldSet getUnknownFields() {
 
     /** Append a value to a repeated extension. */
     public final <Type> BuilderType addExtension(
-        final GeneratedExtension<MessageType, List<Type>> extension,
+    		// osmand fix >> -> > > 
+        final GeneratedExtension<MessageType, List<Type> > extension,
         final Type value) {
       final ExtendableMessage<MessageType> message = internalGetResult();
       message.verifyExtensionContainingType(extension);
