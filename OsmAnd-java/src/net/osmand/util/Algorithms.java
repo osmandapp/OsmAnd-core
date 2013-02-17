@@ -296,6 +296,7 @@ public class Algorithms {
 	}
 	
 	private static java.text.DateFormat dateFormat;
+	private static java.text.DateFormat dateTimeFormat;
 	public static String formatDate(long t) {
 		return getDateFormat().format(new Date(t));
 	}
@@ -308,10 +309,10 @@ public class Algorithms {
 	}
 	
 	public static DateFormat getDateTimeFormat() {
-		if(dateFormat == null) {
-			dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+		if (dateTimeFormat == null) {
+			dateTimeFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
 		}
-		return dateFormat;
+		return dateTimeFormat;
 	}
 
 	public static String formatDateTime(long t) {

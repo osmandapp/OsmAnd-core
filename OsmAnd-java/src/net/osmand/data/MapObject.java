@@ -18,19 +18,19 @@ public abstract class MapObject implements Comparable<MapObject>, Serializable {
 	private static final long serialVersionUID = -9222073549356615466L;
 	protected String name = null;
 	protected String enName = null;
-	
+	protected LatLon location = null;
 	protected int fileOffset = 0;
+	protected Long id = null;
 
 	public MapObject(){}
 	
 	
-	protected LatLon location = null;
-	protected Long id = null;
+	
+	
 	protected EntityType type = null;
 	public MapObject(Entity e){
 		setEntity(e);
 	}
-	
 	
 	public void setEntity(Entity e){
 		this.id = e.getId();
