@@ -3,6 +3,8 @@
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 NAME=$(basename $(dirname "${BASH_SOURCE[0]}") )
 
+export ANDROID_SDK_ROOT=$ANDROID_SDK
+export ANDROID_NDK_ROOT=$ANDROID_NDK
 if [ ! -d "$ANDROID_SDK_ROOT" ]; then
 	echo "ANDROID_SDK_ROOT is not set"
 	exit
@@ -11,8 +13,6 @@ if [ ! -d "$ANDROID_NDK_ROOT" ]; then
 	echo "ANDROID_NDK_ROOT is not set"
 	exit
 fi
-export ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT
-export ANDROID_NDK_ROOT=$ANDROID_NDK_ROOT
 export ANDROID_NDK_TOOLCHAIN_VERSION=4.7
 export ANDROID_NDK_PLATFORM=android-8
 (cd "$SRCLOC/upstream.patched" && \
