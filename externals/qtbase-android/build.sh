@@ -22,5 +22,6 @@ export ANDROID_NDK_PLATFORM=android-8
 	-qt-sql-sqlite \
 	-no-gui -no-widgets -no-opengl -no-accessibility -no-linuxfb -no-directfb -no-eglfs -no-xcb -no-qml-debug -no-javascript-jit \
 	-shared -release \
-	-v \
+	-v && \
+make -j10 \
 )
