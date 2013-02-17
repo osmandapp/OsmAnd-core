@@ -283,5 +283,13 @@ public class OsmBaseStorage extends DefaultHandler {
 		return filters;
 	}
 	
-	
+
+	/**
+	 * Thrown when version is not supported
+	 */
+	public static class OsmVersionNotSupported extends SAXException {
+		private static final long serialVersionUID = -127558215143984838L;
+
+	}
+
 }
