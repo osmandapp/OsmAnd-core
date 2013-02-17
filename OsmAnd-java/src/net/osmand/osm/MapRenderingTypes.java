@@ -141,6 +141,13 @@ public class MapRenderingTypes {
 			Entry<String, String> ev = its.next();
 			MapRulType rule = getRelationalTagValue(ev.getKey(), ev.getValue());
 			if(rule != null) {
+				String value = ev.getValue();
+				if(rule.targetTagValue != null) {
+					rule = rule.targetTagValue;
+					if(rule.getValue() != null) {
+						value = rule.getValue();
+					}
+				}
 				if (rule.names != null) {
 					for (int i = 0; i < rule.names.length; i++) {
 						String tag = rule.names[i].tag.substring(rule.namePrefix.length());
@@ -149,7 +156,7 @@ public class MapRenderingTypes {
 						}
 					}
 				}
-				propogated.put(rule, ev.getValue());
+				propogated.put(rule, value);
 			}
 			addParsedSpecialTags(propogated, ev);
 		}
