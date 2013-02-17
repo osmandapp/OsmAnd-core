@@ -7,9 +7,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import net.osmand.data.LatLon;
 import net.osmand.data.MapObject;
 import net.osmand.osm.Entity;
-import net.osmand.osm.LatLon;
 import net.osmand.osm.Node;
 import net.osmand.osm.Relation;
 import net.osmand.osm.Way;

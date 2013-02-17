@@ -2,7 +2,6 @@ package net.osmand.data;
 
 
 import net.osmand.osm.Entity;
-import net.osmand.osm.LatLon;
 import net.osmand.osm.OSMSettings.OSMTagKey;
 import net.osmand.util.Algorithms;
 

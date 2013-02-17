@@ -34,11 +34,6 @@ public class MapRenderingTypes {
 
 	private static final Log log = PlatformUtil.getLog(MapRenderingTypes.class);
 	
-	// keep sync ! not change values
-	public final static int MULTY_POLYGON_TYPE = 0;
-	public final static int POLYGON_TYPE = 3;
-	public final static int POLYLINE_TYPE = 2;
-	public final static int POINT_TYPE = 1;
 	
 	private static char TAG_DELIMETER = '/'; //$NON-NLS-1$
 	

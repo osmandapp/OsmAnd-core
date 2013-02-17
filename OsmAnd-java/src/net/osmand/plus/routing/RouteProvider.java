@@ -26,7 +26,7 @@ import net.osmand.Location;
 import net.osmand.PlatformUtil;
 import net.osmand.NativeLibrary;
 import net.osmand.binary.BinaryMapIndexReader;
-import net.osmand.osm.LatLon;
+import net.osmand.data.LatLon;
 import net.osmand.plus.ApplicationMode;
 import net.osmand.plus.ClientContext;
 import net.osmand.plus.GPXUtilities;

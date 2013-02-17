@@ -3,6 +3,7 @@ package net.osmand.binary;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import net.osmand.binary.BinaryMapIndexReader.MapIndex;
 import net.osmand.osm.MapRenderingTypes;
+import net.osmand.render.RenderingRulesStorage;
 
 public class BinaryMapDataObject {
 	protected int[] coordinates = null;
@@ -10,7 +11,7 @@ public class BinaryMapDataObject {
 	protected boolean area = false;
 	protected int[] types = null;
 	protected int[] additionalTypes = null;
-	protected int objectType = MapRenderingTypes.POINT_TYPE;
+	protected int objectType = RenderingRulesStorage.POINT_RULES;
 	
 	protected TIntObjectHashMap<String> objectNames = null;
 	protected long id = 0;

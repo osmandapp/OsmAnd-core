@@ -8,7 +8,7 @@ import java.util.List;
 import net.osmand.Location;
 import net.osmand.PlatformUtil;
 import net.osmand.binary.RouteDataObject;
-import net.osmand.osm.LatLon;
+import net.osmand.data.LatLon;
 import net.osmand.plus.ApplicationMode;
 import net.osmand.plus.GPXUtilities.GPXFile;
 import net.osmand.plus.ClientContext;

@@ -19,6 +19,7 @@ import net.osmand.binary.BinaryMapIndexReader.SearchFilter;
 import net.osmand.binary.BinaryMapIndexReader.SearchRequest;
 import net.osmand.binary.BinaryMapIndexReader.TagValuePair;
 import net.osmand.osm.MapRenderingTypes;
+import net.osmand.render.RenderingRulesStorage;
 import net.osmand.util.MapUtils;
 
 public class BinaryMapIndexFilter {
@@ -93,9 +94,9 @@ public class BinaryMapIndexFilter {
 					TagValuePair pair = index.decodeType(wholeType);
 					if (pair != null) {
 						int t = wholeType & 3;
-						if (t == MapRenderingTypes.POINT_TYPE) {
+						if (t == RenderingRulesStorage.POINT_RULES) {
 							stat.pointCount++;
-						} else if (t == MapRenderingTypes.POLYLINE_TYPE) {
+						} else if (t == RenderingRulesStorage.LINE_RULES) {
 							stat.wayCount++;
 							polyline = true;
 						} else {

@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.osmand.Location;
-import net.osmand.osm.LatLon;
+import net.osmand.data.LatLon;
 import net.osmand.plus.routing.RoutingHelper;
 
 public class TargetPointsHelper {

@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.List;
 
 import net.osmand.binary.RouteDataObject;
-import net.osmand.osm.LatLon;
+import net.osmand.data.LatLon;
 import net.osmand.util.MapUtils;
 
 

@@ -3,6 +3,8 @@ package net.osmand.osm;
 import java.io.Serializable;
 import java.util.Map;
 
+import net.osmand.data.LatLon;
+
 public class Node extends Entity implements Serializable {
 
 	private static final long serialVersionUID = -2981499160640211082L;

@@ -9,7 +9,6 @@ import net.osmand.PlatformUtil;
 import net.osmand.osm.Entity;
 import net.osmand.osm.Entity.EntityId;
 import net.osmand.osm.Entity.EntityType;
-import net.osmand.osm.LatLon;
 import net.osmand.osm.OSMSettings.OSMTagKey;
 import net.osmand.util.MapUtils;
 
@@ -19,13 +18,15 @@ public abstract class MapObject implements Comparable<MapObject>, Serializable {
 	private static final long serialVersionUID = -9222073549356615466L;
 	protected String name = null;
 	protected String enName = null;
-	protected LatLon location = null;
-	protected Long id = null;
-	protected EntityType type = null;
+	
 	protected int fileOffset = 0;
 
 	public MapObject(){}
 	
+	
+	protected LatLon location = null;
+	protected Long id = null;
+	protected EntityType type = null;
 	public MapObject(Entity e){
 		setEntity(e);
 	}

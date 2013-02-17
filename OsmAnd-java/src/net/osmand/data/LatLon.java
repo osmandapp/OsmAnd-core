@@ -1,4 +1,4 @@
-package net.osmand.osm;
+package net.osmand.data;
 
 public class LatLon {
 	private final double longitude;

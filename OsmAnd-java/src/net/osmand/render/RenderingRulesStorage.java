@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -16,7 +15,6 @@ import java.util.Map.Entry;
 import java.util.Stack;
 
 import net.osmand.PlatformUtil;
-import net.osmand.osm.MapRenderingTypes;
 
 import org.apache.commons.logging.Log;
 import org.xmlpull.v1.XmlPullParser;
@@ -27,9 +25,11 @@ public class RenderingRulesStorage {
 	private final static Log log = PlatformUtil.getLog(RenderingRulesStorage.class);
 	
 	// keep sync !
-	public final static int POINT_RULES = MapRenderingTypes.POINT_TYPE;
-	public final static int LINE_RULES = MapRenderingTypes.POLYLINE_TYPE;
-	public final static int POLYGON_RULES = MapRenderingTypes.POLYGON_TYPE;
+	// keep sync ! not change values
+	public final static int MULTY_POLYGON_TYPE = 0;
+	public final static int POINT_RULES = 1;
+	public final static int LINE_RULES = 2;
+	public final static int POLYGON_RULES = 3;
 	public final static int TEXT_RULES = 4;
 	public final static int ORDER_RULES = 5;
 	private final static int LENGTH_RULES = 6;

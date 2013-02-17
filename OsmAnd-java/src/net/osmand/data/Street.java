@@ -6,7 +6,6 @@ import java.util.Comparator;
 import java.util.List;
 
 import net.osmand.osm.Entity;
-import net.osmand.osm.LatLon;
 import net.osmand.osm.Node;
 import net.osmand.osm.OSMSettings.OSMTagKey;
 import net.osmand.osm.Way;
