@@ -19,6 +19,7 @@ import net.osmand.PlatformUtil;
 import net.osmand.plus.ClientContext;
 import net.osmand.plus.R;
 import net.osmand.plus.Version;
+import net.osmand.util.Algorithms;
 
 import org.apache.commons.logging.Log;
 
@@ -194,9 +195,8 @@ public class IndexItem implements Comparable<IndexItem> {
 			entry.urlToDownload = url + "file=" + fileName;
 			entry.fileToSave = new File(parent, entry.baseName + toSavePostfix);
 			entry.unzip = unzipDir;
-			SimpleDateFormat format = new SimpleDateFormat("dd.MM.yyyy"); //$NON-NLS-1$
 			try {
-				Date d = format.parse(date);
+				Date d = Algorithms.getDateFormat().parse(date);
 				entry.dateModified = d.getTime();
 			} catch (ParseException e1) {
 				log.error("ParseException", e1);

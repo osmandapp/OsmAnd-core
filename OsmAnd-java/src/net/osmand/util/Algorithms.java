@@ -1,5 +1,6 @@
 package net.osmand.util;
 
+
 import java.io.Closeable;
 import java.io.EOFException;
 import java.io.File;
@@ -7,10 +8,13 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.DateFormat;
+import java.util.Date;
 
 import net.osmand.PlatformUtil;
 
 import org.apache.commons.logging.Log;
+
 
 /**
  * Basic algorithms that are not in jdk 
@@ -289,5 +293,29 @@ public class Algorithms {
 			}
 		}
 		return defaultValue;
-	} 
+	}
+	
+	private static java.text.DateFormat dateFormat;
+	public static String formatDate(long t) {
+		return getDateFormat().format(new Date(t));
+	}
+
+	public static DateFormat getDateFormat() {
+		if(dateFormat == null) {
+			dateFormat = DateFormat.getDateInstance(DateFormat.SHORT);
+		}
+		return dateFormat;
+	}
+	
+	public static DateFormat getDateTimeFormat() {
+		if(dateFormat == null) {
+			dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+		}
+		return dateFormat;
+	}
+
+	public static String formatDateTime(long t) {
+		return getDateTimeFormat().format(new Date(t));
+	}
+	
 }

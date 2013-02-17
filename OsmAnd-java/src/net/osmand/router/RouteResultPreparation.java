@@ -408,30 +408,30 @@ public class RouteResultPreparation {
 	}
 
 
-	private TurnType attachKeepLeftInfoAndLanes(boolean leftSide, RouteSegmentResult prev, RouteSegmentResult rr, TurnType t) {
+	private TurnType attachKeepLeftInfoAndLanes(boolean leftSide, RouteSegmentResult prevSegm, RouteSegmentResult currentSegm, TurnType t) {
 		// keep left/right
 		int[] lanes =  null;
 		boolean kl = false;
 		boolean kr = false;
-		List<RouteSegmentResult> attachedRoutes = rr.getAttachedRoutes(rr.getStartPointIndex());
-		int ls = prev.getObject().getLanes();
-		if(ls >= 0 && prev.getObject().getOneway() == 0) {
+		List<RouteSegmentResult> attachedRoutes = currentSegm.getAttachedRoutes(currentSegm.getStartPointIndex());
+		int ls = prevSegm.getObject().getLanes();
+		if(ls >= 0 && prevSegm.getObject().getOneway() == 0) {
 			ls = (ls + 1) / 2;
 		}
 		int left = 0;
 		int right = 0;
 		boolean speak = false;
-		int speakPriority = Math.max(highwaySpeakPriority(prev.getObject().getHighway()), highwaySpeakPriority(rr.getObject().getHighway()));
+		int speakPriority = Math.max(highwaySpeakPriority(prevSegm.getObject().getHighway()), highwaySpeakPriority(currentSegm.getObject().getHighway()));
 		if (attachedRoutes != null) {
-			for (RouteSegmentResult rs : attachedRoutes) {
-				double ex = MapUtils.degreesDiff(rs.getBearingBegin(), rr.getBearingBegin());
-				double mpi = Math.abs(MapUtils.degreesDiff(prev.getBearingEnd(), rs.getBearingBegin()));
-				int rsSpeakPriority = highwaySpeakPriority(rs.getObject().getHighway());
+			for (RouteSegmentResult attached : attachedRoutes) {
+				double ex = MapUtils.degreesDiff(attached.getBearingBegin(), currentSegm.getBearingBegin());
+				double mpi = Math.abs(MapUtils.degreesDiff(prevSegm.getBearingEnd(), attached.getBearingBegin()));
+				int rsSpeakPriority = highwaySpeakPriority(attached.getObject().getHighway());
 				if (rsSpeakPriority != MAX_SPEAK_PRIORITY || speakPriority == MAX_SPEAK_PRIORITY) {
 					if ((ex < TURN_DEGREE_MIN || mpi < TURN_DEGREE_MIN) && ex >= 0) {
 						kl = true;
-						int lns = rs.getObject().getLanes();
-						if(rs.getObject().getOneway() == 0) {
+						int lns = attached.getObject().getLanes();
+						if(attached.getObject().getOneway() == 0) {
 							lns = (lns + 1) / 2;
 						}
 						if (lns > 0) {
@@ -440,8 +440,8 @@ public class RouteResultPreparation {
 						speak = speak || rsSpeakPriority <= speakPriority;
 					} else if ((ex > -TURN_DEGREE_MIN || mpi < TURN_DEGREE_MIN) && ex <= 0) {
 						kr = true;
-						int lns = rs.getObject().getLanes();
-						if(rs.getObject().getOneway() == 0) {
+						int lns = attached.getObject().getLanes();
+						if(attached.getObject().getOneway() == 0) {
 							lns = (lns + 1) / 2;
 						}
 						if (lns > 0) {
@@ -457,8 +457,8 @@ public class RouteResultPreparation {
 		} else if(kl && right == 0) {
 			right = 1;
 		}
-		int current = rr.getObject().getLanes();
-		if(rr.getObject().getOneway() == 0) {
+		int current = currentSegm.getObject().getLanes();
+		if(currentSegm.getObject().getOneway() == 0) {
 			current = (current + 1) / 2;
 		}
 		if (current <= 0) {
