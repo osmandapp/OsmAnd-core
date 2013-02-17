@@ -9,7 +9,6 @@ import net.osmand.Location;
 import net.osmand.PlatformUtil;
 import net.osmand.binary.RouteDataObject;
 import net.osmand.osm.LatLon;
-import net.osmand.osm.MapUtils;
 import net.osmand.plus.ApplicationMode;
 import net.osmand.plus.GPXUtilities.GPXFile;
 import net.osmand.plus.ClientContext;
@@ -25,6 +24,7 @@ import net.osmand.plus.voice.CommandPlayer;
 import net.osmand.router.RouteCalculationProgress;
 import net.osmand.router.RouteSegmentResult;
 import net.osmand.util.Algorithms;
+import net.osmand.util.MapUtils;
 
 public class RoutingHelper {
 	

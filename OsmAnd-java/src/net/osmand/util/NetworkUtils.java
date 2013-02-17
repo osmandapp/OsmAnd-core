@@ -18,8 +18,8 @@ import net.osmand.PlatformUtil;
 
 import org.apache.commons.logging.Log;
 
-public class IOUtils {
-	private static final Log log = PlatformUtil.getLog(IOUtils.class);
+public class NetworkUtils {
+	private static final Log log = PlatformUtil.getLog(NetworkUtils.class);
 	public static String sendGetRequest(String urlText, String userNamePassword){
 		URL url;
 		try {

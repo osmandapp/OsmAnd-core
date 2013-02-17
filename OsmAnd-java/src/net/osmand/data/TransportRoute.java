@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import net.osmand.osm.MapUtils;
 import net.osmand.osm.Relation;
 import net.osmand.osm.Way;
+import net.osmand.util.MapUtils;
 
 public class TransportRoute extends MapObject {
 	private List<Way> ways;

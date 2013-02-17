@@ -26,7 +26,7 @@ import net.osmand.binary.OsmandIndex.PoiPart;
 import net.osmand.binary.OsmandIndex.RoutingPart;
 import net.osmand.binary.OsmandIndex.RoutingSubregion;
 import net.osmand.binary.OsmandIndex.TransportPart;
-import net.osmand.osm.MapUtils;
+import net.osmand.util.MapUtils;
 
 import org.apache.commons.logging.Log;
 

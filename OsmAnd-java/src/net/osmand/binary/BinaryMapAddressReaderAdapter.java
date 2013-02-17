@@ -22,7 +22,7 @@ import net.osmand.data.City.CityType;
 import net.osmand.data.MapObject;
 import net.osmand.data.Street;
 import net.osmand.osm.LatLon;
-import net.osmand.osm.MapUtils;
+import net.osmand.util.MapUtils;
 import net.sf.junidecode.Junidecode;
 
 import org.apache.commons.logging.Log;

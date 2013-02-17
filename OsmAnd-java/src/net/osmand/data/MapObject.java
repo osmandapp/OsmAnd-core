@@ -2,14 +2,16 @@ package net.osmand.data;
 
 
 import java.io.Serializable;
+import java.util.Comparator;
 
+import net.osmand.Collator;
 import net.osmand.PlatformUtil;
 import net.osmand.osm.Entity;
 import net.osmand.osm.Entity.EntityId;
 import net.osmand.osm.Entity.EntityType;
 import net.osmand.osm.LatLon;
-import net.osmand.osm.MapUtils;
 import net.osmand.osm.OSMSettings.OSMTagKey;
+import net.osmand.util.MapUtils;
 
 
 public abstract class MapObject implements Comparable<MapObject>, Serializable {
@@ -172,5 +174,22 @@ public abstract class MapObject implements Comparable<MapObject>, Serializable {
 			return false;
 		return true;
 	}
+	
+	public static class MapObjectComparator implements Comparator<MapObject>{
+		private final boolean en;
+		Collator collator = PlatformUtil.primaryCollator();
+		public MapObjectComparator(boolean en){
+			this.en = en;
+		}
+		
+		@Override
+		public int compare(MapObject o1, MapObject o2) {
+			if(en){
+				return collator.compare(o1.getEnName(), o2.getEnName());
+			} else {
+				return collator.compare(o1.getName(), o2.getName());
+			}
+		}
+	}	
 
 }

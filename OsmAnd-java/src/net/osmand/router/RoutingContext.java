@@ -29,10 +29,10 @@ import net.osmand.binary.BinaryMapRouteReaderAdapter.RouteRegion;
 import net.osmand.binary.BinaryMapRouteReaderAdapter.RouteSubregion;
 import net.osmand.binary.RouteDataBorderLinePoint;
 import net.osmand.binary.RouteDataObject;
-import net.osmand.osm.MapUtils;
 import net.osmand.router.BinaryRoutePlanner.FinalRouteSegment;
 import net.osmand.router.BinaryRoutePlanner.RouteSegment;
 import net.osmand.router.BinaryRoutePlanner.RouteSegmentVisitor;
+import net.osmand.util.MapUtils;
 
 import org.apache.commons.logging.Log;
 

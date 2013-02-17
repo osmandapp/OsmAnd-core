@@ -7,6 +7,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import net.osmand.util.MapUtils;
+
 public class Way extends Entity {
 	
 	// lazy loading

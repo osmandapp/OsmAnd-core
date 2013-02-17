@@ -4,12 +4,12 @@ import java.io.IOException;
 
 import net.osmand.Location;
 import net.osmand.binary.RouteDataObject;
-import net.osmand.osm.MapUtils;
 import net.osmand.router.BinaryRoutePlanner.RouteSegment;
 import net.osmand.router.GeneralRouter.GeneralRouterProfile;
 import net.osmand.router.RoutePlannerFrontEnd;
 import net.osmand.router.RoutingConfiguration;
 import net.osmand.router.RoutingContext;
+import net.osmand.util.MapUtils;
 
 public class CurrentPositionHelper {
 	

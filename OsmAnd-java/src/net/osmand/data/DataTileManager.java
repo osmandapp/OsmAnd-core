@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import net.osmand.osm.MapUtils;
+import net.osmand.util.MapUtils;
 
 /**
  * 

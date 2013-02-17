@@ -8,7 +8,7 @@ import java.util.List;
 import net.osmand.ResultMatcher;
 import net.osmand.data.Amenity;
 import net.osmand.data.AmenityType;
-import net.osmand.osm.MapUtils;
+import net.osmand.util.MapUtils;
 
 public class SearchByNameFilter extends PoiFilter {
 

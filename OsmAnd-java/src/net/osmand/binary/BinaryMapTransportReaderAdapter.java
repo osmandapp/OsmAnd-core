@@ -9,7 +9,7 @@ import java.util.List;
 
 import net.osmand.binary.BinaryMapIndexReader.SearchRequest;
 import net.osmand.data.TransportStop;
-import net.osmand.osm.MapUtils;
+import net.osmand.util.MapUtils;
 import net.sf.junidecode.Junidecode;
 
 import com.google.protobuf.CodedInputStream;

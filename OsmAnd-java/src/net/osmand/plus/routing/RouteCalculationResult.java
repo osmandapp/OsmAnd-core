@@ -8,7 +8,6 @@ import net.osmand.Location;
 import net.osmand.binary.BinaryMapRouteReaderAdapter.RouteRegion;
 import net.osmand.binary.BinaryMapRouteReaderAdapter.RouteTypeRule;
 import net.osmand.osm.LatLon;
-import net.osmand.osm.MapUtils;
 import net.osmand.plus.ApplicationMode;
 import net.osmand.plus.ClientContext;
 import net.osmand.plus.OsmAndFormatter;
@@ -16,6 +15,7 @@ import net.osmand.plus.OsmandSettings;
 import net.osmand.plus.R;
 import net.osmand.router.RouteSegmentResult;
 import net.osmand.router.TurnType;
+import net.osmand.util.MapUtils;
 
 public class RouteCalculationResult {
 	// could not be null and immodifiable!

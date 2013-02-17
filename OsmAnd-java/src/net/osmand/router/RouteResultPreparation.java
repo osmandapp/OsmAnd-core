@@ -11,9 +11,9 @@ import java.util.List;
 import net.osmand.binary.BinaryMapIndexReader;
 import net.osmand.binary.RouteDataObject;
 import net.osmand.osm.LatLon;
-import net.osmand.osm.MapUtils;
 import net.osmand.router.BinaryRoutePlanner.FinalRouteSegment;
 import net.osmand.router.BinaryRoutePlanner.RouteSegment;
+import net.osmand.util.MapUtils;
 
 public class RouteResultPreparation {
 

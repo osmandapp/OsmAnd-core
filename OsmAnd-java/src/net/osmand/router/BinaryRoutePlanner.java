@@ -14,7 +14,7 @@ import net.osmand.PlatformUtil;
 import net.osmand.binary.RouteDataBorderLinePoint;
 import net.osmand.binary.RouteDataObject;
 import net.osmand.osm.MapRenderingTypes;
-import net.osmand.osm.MapUtils;
+import net.osmand.util.MapUtils;
 
 import org.apache.commons.logging.Log;
 

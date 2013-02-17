@@ -1,7 +1,7 @@
 package net.osmand.plus;
 import net.osmand.data.QuadPoint;
 import net.osmand.data.QuadRect;
-import net.osmand.osm.MapUtils;
+import net.osmand.util.MapUtils;
 
 public class RotatedTileBox {
 	private float leftTileX;
