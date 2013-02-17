@@ -1,37 +1,36 @@
 #!/bin/bash
 
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+NAME=$(basename $(dirname "${BASH_SOURCE[0]}") )
 
-if ls -1 $SRCLOC/upstream.patched >/dev/null 2>&1
-then
-   exit
+# Check if already configured
+if [ -d "$SRCLOC/upstream.patched" ]; then
+	echo "Skipping external '$NAME': already configured"
+	exit
 fi
 
-# Delete old one if such exists
-if ls -1 $SRCLOC/upstream.* >/dev/null 2>&1
-then
-	echo "Deleting old upstream..."
-	rm -rf $SRCLOC/upstream.*
+# Download upstream if needed
+if [ ! -f "$SRCLOC/upstream.pack" ]; then
+	echo "Downloading '$NAME' upstream..."
+	curl -L http://www.ijg.org/files/jpegsrc.v8d.tar.gz > "$SRCLOC/upstream.pack" || { echo "Failure" 1>&2; exit; }
 fi
 
-# Download
-echo "JPEG Downloading new upstream..."
-curl -L http://www.ijg.org/files/jpegsrc.v8d.tar.gz > $SRCLOC/upstream.tar.gz || { echo "Failed to download!" 1>&2; exit; }
-
-# Extract
-echo "JPEG Extracting upstream..."
-mkdir -p $SRCLOC/upstream.original
-tar -xzf $SRCLOC/upstream.tar.gz -C $SRCLOC/upstream.original --strip 1
+# Extract upstream if needed
+if [ ! -d "$SRCLOC/upstream.original" ]; then
+	echo "Extracting '$NAME' upstream..."
+	mkdir -p $SRCLOC/upstream.original
+	tar -xf "$SRCLOC/upstream.pack" -C "$SRCLOC/upstream.original" --strip 1	
+fi
 
 # Patch
-cp -rf $SRCLOC/upstream.original $SRCLOC/upstream.patched
-if [ -d $SRCLOC/patches ]; then
-	echo "Patching..."
+cp -rf "$SRCLOC/upstream.original" "$SRCLOC/upstream.patched"
+if [ -d "$SRCLOC/patches" ]; then
+	echo "Patching '$NAME'..."
 	PATCHES=`ls -1 $SRCLOC/patches/*.patch | sort`
 	for PATCH in $PATCHES
 	do
 		read  -rd '' PATCH <<< "$PATCH"
 		echo "Applying "`basename $PATCH`
-		patch --strip=1 --directory=$SRCLOC/upstream.patched/ --input=$PATCH
+		patch --strip=1 --directory="$SRCLOC/upstream.patched/" --input="$PATCH"
 	done
 fi
