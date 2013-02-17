@@ -135,7 +135,7 @@ public class BinaryMapRouteReaderAdapter {
 				type = MAXSPEED;
 				floatValue = -1;
 				if(v.equals("none")) {
-					floatValue = 40f;
+					floatValue = RouteDataObject.NONE_MAX_SPEED;
 				} else {
 					int i = 0;
 					while (i < v.length() && Character.isDigit(v.charAt(i))) {

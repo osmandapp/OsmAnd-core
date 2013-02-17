@@ -7,6 +7,7 @@ import java.util.List;
 
 import net.osmand.Location;
 import net.osmand.PlatformUtil;
+import net.osmand.binary.RouteDataObject;
 import net.osmand.osm.LatLon;
 import net.osmand.osm.MapUtils;
 import net.osmand.plus.ApplicationMode;
@@ -527,7 +528,7 @@ public class RoutingHelper {
 	public synchronized AlarmInfo getMostImportantAlarm(MetricsConstants mc, boolean showCameras){
 		float mxspeed = route.getCurrentMaxSpeed();
 		AlarmInfo speedAlarm = null;
-		if(mxspeed != 0 && lastProjection != null && lastProjection.hasSpeed()) {
+		if(mxspeed != 0 && lastProjection != null && lastProjection.hasSpeed() && mxspeed != RouteDataObject.NONE_MAX_SPEED) {
 			float delta = 5f/3.6f; 
 			if(lastProjection.getSpeed() > mxspeed + delta) {
 				int speed;

@@ -22,7 +22,8 @@ public class RouteDataObject {
 	public int[][] pointTypes;
 	public long id;
 	public TIntObjectHashMap<String> names;
-
+	public final static float NONE_MAX_SPEED = 40f;
+	
 	public RouteDataObject(RouteRegion region) {
 		this.region = region;
 	}
