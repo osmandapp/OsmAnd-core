@@ -1,8 +1,0 @@
-*.so
-*.o
-*.obj
-*.lib
-*.a
-stage*
-resources*
-routing_test
