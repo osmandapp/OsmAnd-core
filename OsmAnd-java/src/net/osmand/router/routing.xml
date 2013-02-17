@@ -108,6 +108,7 @@
 		<obstacle tag="barrier" value="bollard" routingPenalty="1000" penalty="25"/>
 		<obstacle tag="barrier" value="gate" routingPenalty="1000" penalty="25"/>
 		<obstacle tag="barrier" value="lift_gate" routingPenalty="1000" penalty="25"/>
+		<obstacle tag="barrier" value="guard_rail" routingPenalty="1000" penalty="25"/> 
 		
 		<avoid tag="tracktype" value="grade5" decreasedPriority="0.6"/>
 		
