@@ -15,6 +15,8 @@ include_directories(AFTER SYSTEM
 	"${OSMAND_ROOT}/core/externals/libpng/upstream.patched"
 	"${OSMAND_ROOT}/core/externals/harfbuzz/upstream.patched/src"
 	"${OSMAND_ROOT}/core/externals/protobuf/upstream.patched/src"
+	"${OSMAND_ROOT}/core/include"
+	"${OSMAND_ROOT}/core/src"
 	"${OSMAND_ROOT}/core/native/include"
 	"${OSMAND_ROOT}/core/native/src"
 	"$ENV{JAVA_HOME}/include"

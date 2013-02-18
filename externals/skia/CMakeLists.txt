@@ -40,7 +40,7 @@ set(target_specific_sources
 
 if(CMAKE_TARGET_OS STREQUAL "windows")
 	include_directories(AFTER SYSTEM
-		"${OSMAND_ROOT}/externals/giflib/include"
+		"${OSMAND_ROOT}/core/externals/giflib/include"
 	)
 	set(target_specific_sources "${target_specific_sources}"
 		"upstream.patched/src/ports/SkFontHost_tables.cpp"
