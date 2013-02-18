@@ -1,10 +1,5 @@
 LOCAL_PATH := $(call my-dir)
 
-# example of local shared library
-#include $(CLEAR_VARS)
-# LOCAL_MODULE := libavian_ms
-# LOCAL_SRC_FILES := /home/victor/projects/OsmAnd/avian-core/avian-arm/libavian_ms.so
-# include $(PREBUILT_SHARED_LIBRARY)
 include $(CLEAR_VARS)
 
 OSMAND_PROTOBUF := $(LOCAL_PATH)/../../../externals/protobuf/upstream.patched
@@ -89,10 +84,5 @@ else
 endif
 
 LOCAL_LDLIBS := -lz -llog -ldl
-# example of local shared library
-# LIB_PATH := /home/victor/projects/OsmAnd/avian-core/avian-arm/libavian_ms.so
-# LOCAL_SHARE_LIBRARIES := libavian_ms
-# LOCAL_LDLIBS := -L/home/victor/projects/OsmAnd/avian-core/avian-arm/ -lz -llog -ldl -lavian_ms
-
 
 include $(BUILD_SHARED_LIBRARY)

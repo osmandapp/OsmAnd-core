@@ -18,7 +18,6 @@ export ANDROID_NDK_TOOLCHAIN_VERSION=4.7
 QTBASE_CONFIGURATION=\
 "-opensource -confirm-license -xplatform android-g++ "\
 "-nomake examples -nomake demos -nomake tests -nomake docs "\
-"-qpa "\
 "-qt-sql-sqlite "\
 "-no-gui -no-widgets -no-opengl -no-accessibility -no-linuxfb -no-directfb -no-eglfs -no-xcb -no-qml-debug -no-javascript-jit "\
 "-c++11 -shared -release "\
@@ -29,7 +28,8 @@ if [ ! -d "$SRCLOC/upstream.patched.armeabi" ]; then
 	export ANDROID_TARGET_ARCH=armeabi
 	export ANDROID_NDK_PLATFORM=android-8
 	(cd "$SRCLOC/upstream.patched.armeabi" && \
-		./configure $QTBASE_CONFIGURATION)
+		./configure $QTBASE_CONFIGURATION \
+		-no-neon)
 fi
 (cd "$SRCLOC/upstream.patched.armeabi" && make -j`nproc`)
 
@@ -38,9 +38,20 @@ if [ ! -d "$SRCLOC/upstream.patched.armeabi-v7a" ]; then
 	export ANDROID_TARGET_ARCH=armeabi-v7a
 	export ANDROID_NDK_PLATFORM=android-8
 	(cd "$SRCLOC/upstream.patched.armeabi-v7a" && \
-		./configure $QTBASE_CONFIGURATION)
+		./configure $QTBASE_CONFIGURATION \
+		-no-neon)
 fi
 (cd "$SRCLOC/upstream.patched.armeabi-v7a" && make -j`nproc`)
+
+if [ ! -d "$SRCLOC/upstream.patched.armeabi-v7a-neon" ]; then
+	cp -rf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi-v7a-neon"
+	export ANDROID_TARGET_ARCH=armeabi-v7a
+	export ANDROID_NDK_PLATFORM=android-8
+	(cd "$SRCLOC/upstream.patched.armeabi-v7a-neon" && \
+		./configure $QTBASE_CONFIGURATION \
+		-qtlibinfix _neon)
+fi
+(cd "$SRCLOC/upstream.patched.armeabi-v7a-neon" && make -j`nproc`)
 
 if [ ! -d "$SRCLOC/upstream.patched.x86" ]; then
 	cp -rf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.x86"
