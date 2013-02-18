@@ -14,10 +14,8 @@ QTBASE_CONFIGURATION=\
 if [[ "$(uname -a)" == *Cygwin* ]]; then
 	if [ ! -d "$SRCLOC/upstream.patched.windows" ]; then
 		cp -rf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.windows"
-		(cd "$SRCLOC/upstream.patched.windows" && \
-			cmd.exe -C "configure.bat $QTBASE_CONFIGURATION")
 	fi
-	(cd "$SRCLOC/upstream.patched.windows" && cmd.exe -C "nmake")
+	echo "Please execute build.bat from required environment"
 fi
 
 if [[ "$(uname -a)" == *Linux* ]]; then
