@@ -1,9 +1,0 @@
-# VisualStudio specific files
-/*.suo
-/*.sdf
-/*.opensdf
-*.user
-*.filters
-
-# VisualStudio specific folders
-/ipch

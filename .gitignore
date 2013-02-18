@@ -1,8 +1,12 @@
 # Ignore all externals upstream files
 /externals/**/upstream.*
 
-# Ignore binary files
-/binaries
+# VisualStudio specific files
+/*.suo
+/*.sdf
+/*.opensdf
+*.user
+*.filters
 
-# Ignore baked files
-/baked
+# VisualStudio specific folders
+/ipch
