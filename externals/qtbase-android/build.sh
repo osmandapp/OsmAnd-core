@@ -17,13 +17,13 @@ export ANDROID_NDK_TOOLCHAIN_VERSION=4.7
 export ANDROID_NDK_PLATFORM=android-8
 
 QTBASE_CONFIGURATION=\
--opensource -confirm-license -xplatform android-g++ \
--nomake examples -nomake demos -nomake tests -nomake docs \
--qpa \
--qt-sql-sqlite \
--no-gui -no-widgets -no-opengl -no-accessibility -no-linuxfb -no-directfb -no-eglfs -no-xcb -no-qml-debug -no-javascript-jit \
--shared -release \
--v
+"-opensource -confirm-license -xplatform android-g++ "\
+"-nomake examples -nomake demos -nomake tests -nomake docs "\
+"-qpa "\
+"-qt-sql-sqlite "\
+"-no-gui -no-widgets -no-opengl -no-accessibility -no-linuxfb -no-directfb -no-eglfs -no-xcb -no-qml-debug -no-javascript-jit "\
+"-shared -release "\
+"-v"
 
 if [ ! -d "$SRCLOC/upstream.patched.armeabi" ]; then
 	cp -rf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi"
