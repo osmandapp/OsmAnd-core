@@ -28,16 +28,16 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/src \
 LOCAL_CPP_EXTENSION := .cc .cpp
 LOCAL_SRC_FILES := \
 	src/Logging.cpp \
-	$(OSMAND_CORE_RELATIVE)/src/ElapsedTimer.cpp \
-	$(OSMAND_CORE_RELATIVE)/src/common.cpp \
-	$(OSMAND_CORE_RELATIVE)/src/mapObjects.cpp \
-	$(OSMAND_CORE_RELATIVE)/src/multipolygons.cpp \
-	$(OSMAND_CORE_RELATIVE)/src/renderRules.cpp \
-	$(OSMAND_CORE_RELATIVE)/src/rendering.cpp \
-	$(OSMAND_CORE_RELATIVE)/src/binaryRead.cpp \
-	$(OSMAND_CORE_RELATIVE)/src/binaryRoutePlanner.cpp \
-	$(OSMAND_CORE_RELATIVE)/src/proto/osmand_index.pb.cc \
-	$(OSMAND_CORE_RELATIVE)/src/java_wrap.cpp
+	$(OSMAND_CORE_RELATIVE)/native/src/ElapsedTimer.cpp \
+	$(OSMAND_CORE_RELATIVE)/native/src/common.cpp \
+	$(OSMAND_CORE_RELATIVE)/native/src/mapObjects.cpp \
+	$(OSMAND_CORE_RELATIVE)/native/src/multipolygons.cpp \
+	$(OSMAND_CORE_RELATIVE)/native/src/renderRules.cpp \
+	$(OSMAND_CORE_RELATIVE)/native/src/rendering.cpp \
+	$(OSMAND_CORE_RELATIVE)/native/src/binaryRead.cpp \
+	$(OSMAND_CORE_RELATIVE)/native/src/binaryRoutePlanner.cpp \
+	$(OSMAND_CORE_RELATIVE)/native/src/proto/osmand_index.pb.cc \
+	$(OSMAND_CORE_RELATIVE)/native/src/java_wrap.cpp
 	
 ifdef OSMAND_PROFILE_NATIVE_OPERATIONS
 	LOCAL_CFLAGS += \
