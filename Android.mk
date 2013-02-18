@@ -23,7 +23,9 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/src \
 	$(OSMAND_SKIA)/include/utils/android \
 	$(OSMAND_SKIA)/src/core \
 	$(OSMAND_CORE)/include \
-	$(OSMAND_CORE)/src
+	$(OSMAND_CORE)/src \
+	$(OSMAND_CORE)/native/include \
+	$(OSMAND_CORE)/native/src
 
 LOCAL_CPP_EXTENSION := .cc .cpp
 LOCAL_SRC_FILES := \
