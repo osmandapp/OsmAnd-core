@@ -1,4 +1,4 @@
-project(protobuf_osmand)
+project(protobuf)
 
 include_directories(AFTER SYSTEM
 	"."

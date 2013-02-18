@@ -1,4 +1,4 @@
-project(jpeg_osmand)
+project(jpeg)
 
 include_directories(AFTER SYSTEM
 	"."

@@ -1,4 +1,4 @@
-project(freetype2_osmand)
+project(freetype2)
 
 include_directories(AFTER SYSTEM
 	"."

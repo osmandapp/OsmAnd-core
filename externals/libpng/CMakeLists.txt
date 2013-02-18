@@ -1,8 +1,8 @@
-project(png_osmand)
+project(png)
 
 include_directories(AFTER SYSTEM
 	"upstream.patched"
-	"${OSMAND_ROOT}/externals/zlib/upstream.patched"
+	"${OSMAND_ROOT}/core/externals/zlib/upstream.patched"
 )
 add_definitions(-DPNG_CONFIGURE_LIBPNG -DZ_PREFIX)
 if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang")

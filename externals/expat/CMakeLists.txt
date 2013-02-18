@@ -1,4 +1,4 @@
-project(expat_osmand)
+project(expat)
 
 include_directories(AFTER SYSTEM
 	"."

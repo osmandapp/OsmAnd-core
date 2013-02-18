@@ -1,4 +1,4 @@
-project(skia_osmand)
+project(skia)
 
 include_directories(AFTER SYSTEM
 	"upstream.patched/src/core"
@@ -20,12 +20,12 @@ include_directories(AFTER SYSTEM
 	"upstream.patched/src/sfnt"
 	"upstream.patched/src/gpu"
 	"upstream.patched/include/gpu"
-	"${OSMAND_ROOT}/externals/expat/upstream.patched/lib"
-	"${OSMAND_ROOT}/externals/freetype/upstream.patched/include"
-	"${OSMAND_ROOT}/externals/giflib/upstream.patched/lib"
-	"${OSMAND_ROOT}/externals/jpeg/upstream.patched"
-	"${OSMAND_ROOT}/externals/libpng/upstream.patched"
-	"${OSMAND_ROOT}/externals/harfbuzz/upstream.patched/src"
+	"${OSMAND_ROOT}/core/externals/expat/upstream.patched/lib"
+	"${OSMAND_ROOT}/core/externals/freetype/upstream.patched/include"
+	"${OSMAND_ROOT}/core/externals/giflib/upstream.patched/lib"
+	"${OSMAND_ROOT}/core/externals/jpeg/upstream.patched"
+	"${OSMAND_ROOT}/core/externals/libpng/upstream.patched"
+	"${OSMAND_ROOT}/core/externals/harfbuzz/upstream.patched/src"
 )
 add_definitions(-DSK_RELEASE -DGR_RELEASE=1 -DNDEBUG -DSK_SUPPORT_GPU=0)
 set(target_specific_sources

@@ -1,4 +1,4 @@
-project(harfbuzz_osmand)
+project(harfbuzz)
 
 include_directories(AFTER SYSTEM
 	"upstream.patched/src"

@@ -1,4 +1,4 @@
-project(gif_osmand)
+project(gif)
 
 add_definitions(-DHAVE_CONFIG_H)
 if(CMAKE_TARGET_OS STREQUAL "windows")
