@@ -63,25 +63,25 @@ LOCAL_CFLAGS := \
 	-DANDROID_BUILD \
 	-fPIC
 	
-ifneq ($(LOCAL_ARM_NEON),true)
-	LOCAL_STATIC_LIBRARIES := \
-		osmand_protobuf \
-		osmand_jpeg \
-		osmand_ft2 \
-		osmand_png \
-		osmand_gif \
-		osmand_expat
-	LOCAL_WHOLE_STATIC_LIBRARIES := osmand_skia
+ifeq ($(LOCAL_ARM_NEON),true)
+	OSMAND_BINARY_SUFFIX := _neon
 else
-	LOCAL_STATIC_LIBRARIES := \
-		osmand_protobuf_neon \
-		osmand_jpeg_neon \
-		osmand_ft2_neon \
-		osmand_png_neon \
-		osmand_gif_neon \
-		osmand_expat_neon
-	LOCAL_WHOLE_STATIC_LIBRARIES := osmand_skia_neon
+	OSMAND_BINARY_SUFFIX :=
 endif
+
+LOCAL_STATIC_LIBRARIES := \
+	osmand_protobuf$(OSMAND_BINARY_SUFFIX) \
+	osmand_jpeg$(OSMAND_BINARY_SUFFIX) \
+	osmand_ft2$(OSMAND_BINARY_SUFFIX) \
+	osmand_png$(OSMAND_BINARY_SUFFIX) \
+	osmand_gif$(OSMAND_BINARY_SUFFIX) \
+	osmand_expat$(OSMAND_BINARY_SUFFIX) \
+	Qt5Core$(OSMAND_BINARY_SUFFIX) \
+	Qt5Network$(OSMAND_BINARY_SUFFIX) \
+	Qt5Xml$(OSMAND_BINARY_SUFFIX) \
+	Qt5Sql$(OSMAND_BINARY_SUFFIX) \
+	Qt5Concurrent$(OSMAND_BINARY_SUFFIX)
+LOCAL_WHOLE_STATIC_LIBRARIES := osmand_skia$(OSMAND_BINARY_SUFFIX)
 
 LOCAL_LDLIBS := -lz -llog -ldl
 
