@@ -38,6 +38,7 @@
 #include <ObfAddressRegionSection.h>
 #include <ObfRoutingRegionSection.h>
 #include <ObfPoiRegionSection.h>
+#include <ObfTransportRegionSection.h>
 
 namespace OsmAnd {
 
@@ -58,6 +59,7 @@ namespace OsmAnd {
         std::list< std::shared_ptr<ObfAddressRegionSection> > _addressRegionsSections;
         std::list< std::shared_ptr<ObfRoutingRegionSection> > _routingRegionsSections;
         std::list< std::shared_ptr<ObfPoiRegionSection> > _poiRegionsSections;
+        std::list< std::shared_ptr<ObfTransportRegionSection> > _transportSections;
     protected:
         static void skipUnknownField(gpb::io::CodedInputStream* cis, int tag);
     public:
@@ -74,6 +76,7 @@ namespace OsmAnd {
     friend ObfAddressRegionSection;
     friend ObfRoutingRegionSection;
     friend ObfPoiRegionSection;
+    friend ObfTransportRegionSection;
     };
 } // namespace OsmAnd
 

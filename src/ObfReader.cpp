@@ -14,13 +14,16 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
 {
     _codedInputStream->SetTotalBytesLimit(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
 
-    gpb::uint32 tag;
-    while ((tag = _codedInputStream->ReadTag()) != 0)
+    bool loadedCorrectly = false;
+    for(;;)
     {
+        auto tag = _codedInputStream->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
-            throw new std::exception(); // Corrupted file. It should be ended as it starts with version
+            if(!loadedCorrectly)
+                throw new std::exception(); // Corrupted file. It should be ended as it starts with version
+            return;
         case OsmAndStructure::kVersionFieldNumber:
             _codedInputStream->ReadVarint32(reinterpret_cast<gpb::uint32*>(&_version));
             break;
@@ -59,17 +62,19 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
             }
             break;
         case OsmAndStructure::kTransportIndexFieldNumber:
-            /*TransportIndex ind = new TransportIndex();
-            ind.length = readInt();
-            ind.filePointer = codedIS.getTotalBytesRead();
-            if (transportAdapter != null) {
-            oldLimit = codedIS.pushLimit(ind.length);
-            transportAdapter.readTransportIndex(ind);
-            codedIS.popLimit(oldLimit);
-            transportIndexes.add(ind);
-            indexes.add(ind);
+            {
+                std::shared_ptr<ObfTransportRegionSection> section(new ObfTransportRegionSection());
+                gpb::uint32 length;
+                _codedInputStream->ReadRaw(&length, sizeof(length));
+                section->_length = qFromBigEndian(length);
+                section->_offset = _codedInputStream->TotalBytesRead();
+                auto oldLimit = _codedInputStream->PushLimit(section->_length);
+                ObfTransportRegionSection::read(_codedInputStream.get(), section.get());
+                _codedInputStream->PopLimit(oldLimit);
+                _codedInputStream->Seek(section->_offset + section->_length);
+                _transportSections.push_back(section);
+                //TODO:indexes.add(mapIndex);
             }
-            codedIS.seek(ind.filePointer + ind.length);*/
             break;
         case OsmAndStructure::kRoutingIndexFieldNumber:
             {
@@ -104,7 +109,7 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
         case OsmAndStructure::kVersionConfirmFieldNumber:
             /*int cversion = codedIS.readUInt32();
             calculateCenterPointForRegions();
-            initCorrectly = cversion == version;*/
+            loadedCorrectly = (cversion == version);*/
             break;
         default:
             skipUnknownField(_codedInputStream.get(), tag);
