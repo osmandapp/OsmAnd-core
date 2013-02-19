@@ -13,9 +13,9 @@ OsmAnd::ObfAddressRegionSection::ObfAddressRegionSection()
 
 void OsmAnd::ObfAddressRegionSection::read( gpb::io::CodedInputStream* cis, ObfAddressRegionSection* section )
 {
-    gpb::uint32 tag;
-    while ((tag = cis->ReadTag()) != 0)
+    for(;;)
     {
+        auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
@@ -39,13 +39,15 @@ void OsmAnd::ObfAddressRegionSection::read( gpb::io::CodedInputStream* cis, ObfA
                 section->_length = qFromBigEndian(length);
                 section->_offset = cis->TotalBytesRead();
 
-                gpb::uint32 tag2;
-                while ((tag2 = cis->ReadTag()) != 0)
+                for(;;)
                 {
-                    switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag2))
-                    {
-                    case 0:
+                    auto tag2 = cis->ReadTag();
+                    auto tagFieldNum2 = gpb::internal::WireFormatLite::GetTagFieldNumber(tag2);
+                    if(!tagFieldNum2)
                         break;
+
+                    switch(tagFieldNum2)
+                    {
                     case OsmAndAddressIndex_CitiesIndex::kTypeFieldNumber:
                         cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&citiesBlock->_type));
                     default:

@@ -1,6 +1,5 @@
 /**
  * @file
- * @author  Alexey Pelykh <alexey.pelykh@gmail.com>
  *
  * @section LICENSE
  *

@@ -93,9 +93,9 @@ void OsmAnd::ObfMapSection::finishInitializingTags()
 void OsmAnd::ObfMapSection::read( gpb::io::CodedInputStream* cis, ObfMapSection* section, bool onlyInitEncodingRules )
 {
     int defaultId = 1;
-    gpb::uint32 tag;
-    while ((tag = cis->ReadTag()) != 0)
+    for(;;)
     {
+        gpb::uint32 tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
@@ -145,9 +145,9 @@ void OsmAnd::ObfMapSection::readMapEncodingRule( gpb::io::CodedInputStream* cis,
     gpb::uint32 type = 0;
     std::string tags;
     std::string val;
-    gpb::uint32 tag;
-    while ((tag = cis->ReadTag()) != 0)
+    for(;;)
     {
+        auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
@@ -174,9 +174,9 @@ void OsmAnd::ObfMapSection::readMapEncodingRule( gpb::io::CodedInputStream* cis,
 
 OsmAnd::ObfMapSection::MapRoot* OsmAnd::ObfMapSection::readMapLevel( gpb::io::CodedInputStream* cis, MapRoot* root, bool initSubtrees )
 {
-    gpb::uint32 tag;
-    while ((tag = cis->ReadTag()) != 0)
+    for(;;)
     {
+        auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
@@ -226,15 +226,13 @@ OsmAnd::ObfMapSection::MapRoot* OsmAnd::ObfMapSection::readMapLevel( gpb::io::Co
             break;
         }
     }
-
-    return nullptr;
 }
 
 void OsmAnd::ObfMapSection::readMapTreeBounds( gpb::io::CodedInputStream* cis, MapTree* tree, int left, int right, int top, int bottom )
 {
-    gpb::uint32 tag;
-    while ((tag = cis->ReadTag()) != 0)
+    for(;;)
     {
+        auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:

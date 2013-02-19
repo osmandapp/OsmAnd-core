@@ -30,9 +30,9 @@ void OsmAnd::ObfRoutingRegionSection::initRouteEncodingRule( int id, std::string
 void OsmAnd::ObfRoutingRegionSection::read( gpb::io::CodedInputStream* cis, ObfRoutingRegionSection* section )
 {
     int routeEncodingRule = 1;
-    gpb::uint32 tag;
-    while ((tag = cis->ReadTag()) != 0)
+    for(;;)
     {
+        auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
@@ -103,9 +103,9 @@ void OsmAnd::ObfRoutingRegionSection::readRouteEncodingRule( gpb::io::CodedInput
 {
     std::string tags;
     std::string val;
-    gpb::uint32 tag;
-    while ((tag = cis->ReadTag()) != 0)
+    for(;;)
     {
+        auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
@@ -137,10 +137,10 @@ OsmAnd::ObfRoutingRegionSection::Subregion* OsmAnd::ObfRoutingRegionSection::Sub
     bool readChildren = depth != 0; 
 
     current->_section->_regionsRead++;
-    gpb::uint32 tag;
     gpb::int32 value;
-    while ((tag = cis->ReadTag()) != 0)
+    for(;;)
     {
+        auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:

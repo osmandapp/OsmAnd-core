@@ -40,7 +40,7 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
                 _codedInputStream->PopLimit(oldLimit);
                 _codedInputStream->Seek(section->_offset + section->_length);
                 _mapSections.push_back(section);
-                //indexes.add(mapIndex);
+                //TODO:indexes.add(mapIndex);
             }
             break;
         case OsmAndStructure::kAddressIndexFieldNumber:
@@ -55,7 +55,7 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
                 _codedInputStream->PopLimit(oldLimit);
                 _codedInputStream->Seek(section->_offset + section->_length);
                 _addressRegionsSections.push_back(section);
-                //indexes.add(mapIndex);
+                //TODO:indexes.add(mapIndex);
             }
             break;
         case OsmAndStructure::kTransportIndexFieldNumber:
@@ -83,21 +83,23 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
                 _codedInputStream->PopLimit(oldLimit);
                 _codedInputStream->Seek(section->_offset + section->_length);
                 _routingRegionsSections.push_back(section);
-                //indexes.add(mapIndex);
+                //TODO:indexes.add(mapIndex);
             }
             break;
         case OsmAndStructure::kPoiIndexFieldNumber:
-            /*PoiRegion poiInd = new PoiRegion();
-            poiInd.length = readInt();
-            poiInd.filePointer = codedIS.getTotalBytesRead();
-            if (poiAdapter != null) {
-            oldLimit = codedIS.pushLimit(poiInd.length);
-            poiAdapter.readPoiIndex(poiInd, false);
-            codedIS.popLimit(oldLimit);
-            poiIndexes.add(poiInd);
-            indexes.add(poiInd);
+            {
+                std::shared_ptr<ObfPoiRegionSection> section(new ObfPoiRegionSection());
+                gpb::uint32 length;
+                _codedInputStream->ReadRaw(&length, sizeof(length));
+                section->_length = qFromBigEndian(length);
+                section->_offset = _codedInputStream->TotalBytesRead();
+                auto oldLimit = _codedInputStream->PushLimit(section->_length);
+                ObfPoiRegionSection::read(_codedInputStream.get(), section.get(), false);
+                _codedInputStream->PopLimit(oldLimit);
+                _codedInputStream->Seek(section->_offset + section->_length);
+                _poiRegionsSections.push_back(section);
+                //TODO:indexes.add(mapIndex);
             }
-            codedIS.seek(poiInd.filePointer + poiInd.length);*/
             break;
         case OsmAndStructure::kVersionConfirmFieldNumber:
             /*int cversion = codedIS.readUInt32();
