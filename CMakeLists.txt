@@ -44,18 +44,26 @@ add_definitions(
 	-DSK_CPU_LENDIAN
 	-DGR_RELEASE=1
 	-DXML_STATIC
+	-DOSMAND_CORE_EXPORTS
 )
 if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 endif()
+
 set(pd_sources "")
 if(CMAKE_TARGET_OS STREQUAL "linux")
 elseif(CMAKE_TARGET_OS STREQUAL "darwin")
 elseif(CMAKE_TARGET_OS STREQUAL "windows")
 endif()
+
+find_package(Qt5Core REQUIRED)
+file(GLOB_RECURSE sources "src/*.c*")
+file(GLOB_RECURSE includes "include/*.h*")
 add_library(OsmAndCore SHARED
-	"src/Logging.cpp"
+	${includes}
+	${sources}
+	${pd_sources}
 	"native/src/ElapsedTimer.cpp"
 	"native/src/ExplicitSkiaReferences.cpp"
 	"native/src/common.cpp"
@@ -67,10 +75,10 @@ add_library(OsmAndCore SHARED
 	"native/src/binaryRoutePlanner.cpp"
 	"native/src/proto/osmand_index.pb.cc"
 	"native/src/java_wrap.cpp"
-	${pd_sources}
 )
 
 target_link_libraries(OsmAndCore LINK_PUBLIC
 	skia_osmand
 	protobuf_osmand
 )
+qt5_use_modules(OsmAndCore Core)
