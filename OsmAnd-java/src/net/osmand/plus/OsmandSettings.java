@@ -1497,4 +1497,75 @@ public class OsmandSettings {
 		
 	}
 	
+	/**
+	 * Measurement/Planning persistence and global access Data
+	 */
+	// Controls use of Planning/Measurement mode.
+	public final OsmandPreference<Boolean> PLANNING_MODE = new BooleanPreference("planning_mode",false).makeGlobal();
+	
+	// Persistent setting of the measurement mode point radius.
+	public final OsmandPreference<Integer> POINT_DISPLAY_RADIUS = new IntPreference("point_display_radius", 5).makeGlobal();
+	
+	// Persistent setting of the measurement mode point selection area radius.
+	public final OsmandPreference<Integer> POINT_SELECTION_RADIUS =
+		new IntPreference("point_selection_radius", 7).makeGlobal().cache();
+	
+	// Persistent setting of the map display zoom factor.
+	public final OsmandPreference<Float> DISPLAY_SCALE_FACTOR =
+		new FloatPreference("display_scale_factor", 1.0f).makeGlobal().cache();
+	
+	public boolean getPlanningMode() {
+		return settingsAPI.getBoolean(globalPreferences,"planning_mode", false);
+	}
+		
+	public void setPlanningMode(boolean mode) {
+		settingsAPI.edit(globalPreferences).putBoolean("planning_mode", mode).commit();
+//		public void setLastKnownMapZoom(int zoom) {
+//			settingsAPI.edit(globalPreferences).putInt(LAST_KNOWN_MAP_ZOOM, zoom).commit();
+	}
+	
+	public float getDisplayScaleFactor() {
+		return settingsAPI.getFloat(globalPreferences,"display_scale_factor", 1.0f);
+	}
+		
+	public void setDisplayScaleFactor(float factor) {
+		settingsAPI.edit(globalPreferences).putFloat("display_scale_factor", factor).commit();
+	}
+		
+	public int getMeasurementPointSelectionRadius() {
+		return settingsAPI.getInt(globalPreferences,"point_selection_radius", 7);
+	}
+		
+	public void setMeasurementPointSelectionRadius(int radius) {
+		settingsAPI.edit(globalPreferences).putInt("point_selection_radius", radius).commit();
+		}
+	
+	public int getMeasurementPointDisplayRadius() {
+		return settingsAPI.getInt(globalPreferences, "point_display_radius", 5);
+	}
+			
+	public void setMeasurementPointDisplayRadius(int radius) {
+		settingsAPI.edit(globalPreferences).putInt("point_display_radius", radius).commit();
+	}
+	
+	private boolean DisplayScaleChangedFlag = false;	//Used to indicate when the map zoom has been changed
+	
+	public boolean getDisplayScaleChangedFlag() {
+		return DisplayScaleChangedFlag;
+	}
+		
+	public void setDisplayScaleChangedFlag(boolean mode) {
+		DisplayScaleChangedFlag = mode;
+	}
+	
+	private boolean MapDisplayZoomButtonsVisibility = false;	//Used to control the visibility of the map display zoom buttons
+
+	public boolean getMapDisplayZoomButtonVisibility() {
+		return MapDisplayZoomButtonsVisibility;
+	}
+		
+	public void setMapDisplayZoomButtonVisibility(boolean visibility) {
+		MapDisplayZoomButtonsVisibility = visibility;
+	}	
+	
 }
