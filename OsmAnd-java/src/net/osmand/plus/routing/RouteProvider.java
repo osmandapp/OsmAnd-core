@@ -336,7 +336,6 @@ public class RouteProvider {
 		} else {
 			config = RoutingConfiguration.getDefault();
 		}
-		
 		GeneralRouterProfile p ;
 		if (params.mode == ApplicationMode.BICYCLE) {
 			p = GeneralRouterProfile.BICYCLE;
@@ -345,6 +344,7 @@ public class RouteProvider {
 		} else {
 			p = GeneralRouterProfile.CAR;
 		}
+		// order matters
 		List<String> specs = new ArrayList<String>();
 		if (!settings.FAST_ROUTE_MODE.getModeValue(params.mode)) {
 			specs.add(GeneralRouter.USE_SHORTEST_WAY);
@@ -357,6 +357,8 @@ public class RouteProvider {
 		}
 		if(settings.AVOID_MOTORWAY.getModeValue(params.mode)){
 			specs.add(GeneralRouter.AVOID_MOTORWAY);
+		} else if(settings.PREFER_MOTORWAYS.getModeValue(params.mode)){
+			specs.add(GeneralRouter.PREFER_MOTORWAYS);
 		}
 		if(settings.AVOID_UNPAVED_ROADS.getModeValue(params.mode)){
 			specs.add(GeneralRouter.AVOID_UNPAVED);
