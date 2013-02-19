@@ -32,18 +32,21 @@
 	<!-- 3) Avoid describes what road should be completely avoided or passed with multiplied (decreased) priority  -->
 	<!-- 			<avoid tag="access" value="no" decreasedPriority="0.9"/> -->
 	<!-- obstacle tag="highway" value="traffic_signals" penalty="35", penalty measured in seconds -->
+	<!-- The order of specialization matters only how it was supplied : -->
+	<!--  short_way, avoid_ferries, avoid_toll, [prefer_motorway | avoid_motorway], avoid_unpaved -->
 	<routingProfile name="car" baseProfile="car" restrictionsAware="true" minDefaultSpeed="45.0" maxDefaultSpeed="130.0" 
 			leftTurn="0" rightTurn="0" roundaboutTurn="0" followSpeedLimitations="true" onewayAware="true">
 	    <!--		
 		<attribute name="heuristicCoefficient" value="1.5" />
 		-->
-		
 		<road tag="highway" value="motorway" speed="110" priority="1.2">
 			<specialization input="avoid_motorway" speed="0"/>
 			<specialization input="prefer_motorway" priority="1.4"/>
+			<specialization input="short_way" speed="60"/>
 		</road>
 		<road tag="highway" value="motorway_link" speed="80" priority="1.2" >
 			<specialization input="avoid_motorway" speed="0"/>
+			<specialization input="short_way" speed="60"/>
 		</road>
 		
 		<road tag="highway" value="trunk" speed="100" priority="1.2" >
