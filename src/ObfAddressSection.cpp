@@ -33,12 +33,12 @@ void OsmAnd::ObfAddressSection::read( gpb::io::CodedInputStream* cis, ObfAddress
             break;
         case OBF::OsmAndAddressIndex::kCitiesFieldNumber:
             {
-                std::shared_ptr<CitiesBlock> entry(new CitiesBlock());
+                std::shared_ptr<AddressBlocksSection> entry(new AddressBlocksSection());
                 entry->_length = ObfReader::readBigEndianInt(cis);
                 entry->_offset = cis->TotalBytesRead();
-                CitiesBlock::read(cis, entry.get());
+                AddressBlocksSection::read(cis, entry.get());
                 cis->Seek(entry->_offset + entry->_length);
-                section->_entries.push_back(entry);
+                section->_blocksSections.push_back(entry);
             }
             break;
         case OBF::OsmAndAddressIndex::kNameIndexFieldNumber:
@@ -61,15 +61,15 @@ void OsmAnd::ObfAddressSection::readAllEntriesOfType( ObfReader* reader, ObfAddr
 
 }
 */
-OsmAnd::ObfAddressSection::CitiesBlock::CitiesBlock()
+OsmAnd::ObfAddressSection::AddressBlocksSection::AddressBlocksSection()
 {
 }
 
-OsmAnd::ObfAddressSection::CitiesBlock::~CitiesBlock()
+OsmAnd::ObfAddressSection::AddressBlocksSection::~AddressBlocksSection()
 {
 }
 
-void OsmAnd::ObfAddressSection::CitiesBlock::read( gpb::io::CodedInputStream* cis, CitiesBlock* section )
+void OsmAnd::ObfAddressSection::AddressBlocksSection::read( gpb::io::CodedInputStream* cis, AddressBlocksSection* section )
 {
     for(;;)
     {
