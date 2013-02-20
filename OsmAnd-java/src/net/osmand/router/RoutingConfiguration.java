@@ -86,7 +86,6 @@ public class RoutingConfiguration {
 				i.memoryLimitation = memoryLimitMB * (1 << 20);
 			}
 			i.planRoadDirection = parseSilentInt(getAttribute(i.router, "planRoadDirection"), i.planRoadDirection);
-
 			
 			return i;
 		}
@@ -150,6 +149,8 @@ public class RoutingConfiguration {
 					config.defaultRouter = parser.getAttributeValue("", "defaultProfile");
 				} else if ("attribute".equals(name)) {
 					parseAttribute(parser, config, currentRouter);
+					previousKey = parser.getAttributeValue("", "name");
+					previousTag = name;
 				} else if ("routingProfile".equals(name)) {
 					currentRouter = parseRoutingProfile(parser, config);
 				} else if ("specialization".equals(name)) {
