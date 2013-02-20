@@ -22,7 +22,7 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
         {
         case 0:
             if(!loadedCorrectly)
-                throw new std::invalid_argument("Corrupted file. It should be ended as it starts with version");
+                throw std::invalid_argument("Corrupted file. It should be ended as it starts with version");
             return;
         case OBF::OsmAndStructure::kVersionFieldNumber:
             _codedInputStream->ReadVarint32(reinterpret_cast<gpb::uint32*>(&_version));
