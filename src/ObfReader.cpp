@@ -1,5 +1,7 @@
 #include "ObfReader.h"
 
+#include <stdexcept>
+
 #include <QZeroCopyInputStream.h>
 #include <google/protobuf/wire_format_lite.h>
 #include <QtEndian>

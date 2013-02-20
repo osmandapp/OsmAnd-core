@@ -72,9 +72,11 @@ namespace OsmAnd {
         std::list< std::shared_ptr<CitiesBlock> > _entries;
         
         //LatLon calculatedCenter = null;
+
+        //public std::list< std::shared_ptr<AbstractCity> > loadCities()
     protected:
         static void read(gpb::io::CodedInputStream* cis, ObfAddressSection* section);
-        //static std::list< std::shared_ptr<> > readAllEntriesOfType(ObfReader* reader, ObfAddressSection* section, Entry::Type type);
+//        static std::list< std::shared_ptr<AbstractCity> > readCities(ObfAddressSection* section, Entry::Type type);
 
     private:
 
