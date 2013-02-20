@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.DateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 import net.osmand.PlatformUtil;
 
@@ -303,14 +304,14 @@ public class Algorithms {
 
 	public static DateFormat getDateFormat() {
 		if(dateFormat == null) {
-			dateFormat = DateFormat.getDateInstance(DateFormat.SHORT);
+			dateFormat = DateFormat.getDateInstance(DateFormat.SHORT, Locale.getDefault());
 		}
 		return dateFormat;
 	}
 	
 	public static DateFormat getDateTimeFormat() {
 		if (dateTimeFormat == null) {
-			dateTimeFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+			dateTimeFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.getDefault());
 		}
 		return dateTimeFormat;
 	}
