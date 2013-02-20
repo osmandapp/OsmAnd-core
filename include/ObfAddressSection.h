@@ -44,16 +44,16 @@ namespace OsmAnd {
     */
     struct OSMAND_CORE_API ObfAddressSection : public ObfSection
     {
-        struct OSMAND_CORE_API CitiesBlock : public ObfSection
+        struct OSMAND_CORE_API AddressBlock : public ObfSection
         {
             typedef OBF::OsmAndAddressIndex_CitiesIndex_CitiesType Type;
 
-            CitiesBlock();
-            virtual ~CitiesBlock();
+            AddressBlock();
+            virtual ~AddressBlock();
 
             Type _type;
         protected:
-            static void read(gpb::io::CodedInputStream* cis, CitiesBlock* section);
+            static void read(gpb::io::CodedInputStream* cis, AddressBlock* section);
 
         private:
 
@@ -69,7 +69,7 @@ namespace OsmAnd {
         //! ???
         int _indexNameOffset;
 
-        std::list< std::shared_ptr<CitiesBlock> > _entries;
+        std::list< std::shared_ptr<AddressBlock> > _blocks;
         
         //LatLon calculatedCenter = null;
 

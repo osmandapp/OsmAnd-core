@@ -81,7 +81,7 @@ bool OsmAnd::ObfMapSection::isBaseMap()
 #if defined(_MSC_VER)
     return stricmp(_name.c_str(), "basemap") == 0;
 #else
-    return strncasecmp(_name.c_str(), "basemap") == 0;
+    return strcasecmp(_name.c_str(), "basemap") == 0;
 #endif
 }
 
