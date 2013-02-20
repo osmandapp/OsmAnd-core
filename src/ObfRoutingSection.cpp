@@ -201,7 +201,7 @@ OsmAnd::ObfRoutingSection::TypeRule::TypeRule( std::string tag, std::string valu
     : _tag(tag)
     , _value(value)
 {
-    if(stricmp(_tag.c_str(), "oneway") == 0)
+    if(QString::compare(_tag.c_str(), "oneway", Qt::CaseInsensitive) == 0)
     {
         _type = ONEWAY;
         if( _value == "-1" || _value == "reverse") {
@@ -211,19 +211,19 @@ OsmAnd::ObfRoutingSection::TypeRule::TypeRule( std::string tag, std::string valu
         } else {
             _intValue = 0;
         }
-    } else if(stricmp(_tag.c_str(), "highway") == 0 && _value == "traffic_signals") {
+    } else if(QString::compare(_tag.c_str(), "highway", Qt::CaseInsensitive) == 0 && _value == "traffic_signals") {
         _type = TRAFFIC_SIGNALS;
-    } else if(stricmp(_tag.c_str(), "railway") == 0 && (_value == "crossing" || _value == "level_crossing")) {
+    } else if(QString::compare(_tag.c_str(), "railway", Qt::CaseInsensitive) == 0 && (_value == "crossing" || _value == "level_crossing")) {
         _type = RAILWAY_CROSSING;
-    } else if(stricmp(_tag.c_str(), "roundabout") == 0 && !_value.empty()){
+    } else if(QString::compare(_tag.c_str(), "roundabout", Qt::CaseInsensitive) == 0 && !_value.empty()){
         _type = ROUNDABOUT;
-    } else if(stricmp(_tag.c_str(), "junction") == 0 && stricmp(_value.c_str(), "roundabout") == 0){
+    } else if(QString::compare(_tag.c_str(), "junction", Qt::CaseInsensitive) == 0 && QString::compare(_value.c_str(), "roundabout", Qt::CaseInsensitive) == 0){
         _type = ROUNDABOUT;
-    } else if(stricmp(_tag.c_str(), "highway") == 0 && !_value.empty()){
+    } else if(QString::compare(_tag.c_str(), "highway", Qt::CaseInsensitive) == 0 && !_value.empty()){
         _type = HIGHWAY_TYPE;
     } else if(_tag.find("access") == 0 && !_value.empty()){
         _type = ACCESS;
-    } else if(stricmp(_tag.c_str(), "maxspeed") == 0 && !_value.empty()){
+    } else if(QString::compare(_tag.c_str(), "maxspeed", Qt::CaseInsensitive) == 0 && !_value.empty()){
         _type = MAXSPEED;
         _floatValue = -1;
         if(_value == "none") {
@@ -242,7 +242,7 @@ OsmAnd::ObfRoutingSection::TypeRule::TypeRule( std::string tag, std::string valu
                 }
             }
         }
-    } else if (stricmp(_tag.c_str(), "lanes") == 0 && !_value.empty()) {
+    } else if (QString::compare(_tag.c_str(), "lanes", Qt::CaseInsensitive) == 0 && !_value.empty()) {
         _intValue = -1;
         int i = 0;
         _type = LANES;

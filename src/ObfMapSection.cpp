@@ -78,11 +78,7 @@ void OsmAnd::ObfMapSection::initMapEncodingRule( int type, int id, std::string t
 
 bool OsmAnd::ObfMapSection::isBaseMap()
 {
-#if defined(_MSC_VER)
-    return stricmp(_name.c_str(), "basemap") == 0;
-#else
-    return strcasecmp(_name.c_str(), "basemap") == 0;
-#endif
+    return QString::compare(_name.c_str(), "basemap", Qt::CaseInsensitive);
 }
 
 void OsmAnd::ObfMapSection::finishInitializingTags()
