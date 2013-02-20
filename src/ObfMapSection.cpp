@@ -2,8 +2,6 @@
 
 #include <ObfReader.h>
 #include <google/protobuf/wire_format_lite.h>
-#include <string>
-#include <string.h>
 
 #include "OBF.pb.h"
 
@@ -80,7 +78,11 @@ void OsmAnd::ObfMapSection::initMapEncodingRule( int type, int id, std::string t
 
 bool OsmAnd::ObfMapSection::isBaseMap()
 {
+#if defined(_MSC_VER)
     return stricmp(_name.c_str(), "basemap") == 0;
+#else
+    return strncasecmp(_name.c_str(), "basemap") == 0;
+#endif
 }
 
 void OsmAnd::ObfMapSection::finishInitializingTags()
