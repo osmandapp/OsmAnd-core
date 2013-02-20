@@ -78,11 +78,11 @@ namespace OsmAnd {
         int getVersion() const;
         std::list< OsmAnd::ObfSection* > getSections() const;
 
-    friend ObfMapSection;
-    friend ObfAddressSection;
-    friend ObfRoutingSection;
-    friend ObfPoiSection;
-    friend ObfTransportSection;
+    friend struct ObfMapSection;
+    friend struct ObfAddressSection;
+    friend struct ObfRoutingSection;
+    friend struct ObfPoiSection;
+    friend struct ObfTransportSection;
     };
 } // namespace OsmAnd
 

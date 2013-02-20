@@ -4,7 +4,7 @@
 #include <google/protobuf/wire_format_lite.h>
 
 #include "Utilities.h"
-#include "../native/src/proto/osmand_odb.pb.h"
+#include "OBF.pb.h"
 
 OsmAnd::ObfPoiSection::ObfPoiSection()
 {
@@ -23,10 +23,10 @@ void OsmAnd::ObfPoiSection::read( gpb::io::CodedInputStream* cis, ObfPoiSection*
         {
         case 0:
             return;
-        case OsmAndPoiIndex::kNameFieldNumber:
+        case OBF::OsmAndPoiIndex::kNameFieldNumber:
             gpb::internal::WireFormatLite::ReadString(cis, &section->_name);
             break;
-        case OsmAndPoiIndex::kBoundariesFieldNumber:
+        case OBF::OsmAndPoiIndex::kBoundariesFieldNumber:
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
@@ -35,7 +35,7 @@ void OsmAnd::ObfPoiSection::read( gpb::io::CodedInputStream* cis, ObfPoiSection*
                 cis->PopLimit(oldLimit);
             }
             break; 
-        case OsmAndPoiIndex::kCategoriesTableFieldNumber:
+        case OBF::OsmAndPoiIndex::kCategoriesTableFieldNumber:
             {
                 if(!readCategories)
                 {
@@ -49,7 +49,7 @@ void OsmAnd::ObfPoiSection::read( gpb::io::CodedInputStream* cis, ObfPoiSection*
                 cis->PopLimit(oldLimit);
             }
             break;
-        case OsmAndPoiIndex::kBoxesFieldNumber:
+        case OBF::OsmAndPoiIndex::kBoxesFieldNumber:
             cis->Skip(cis->BytesUntilLimit());
             return;
         default:
@@ -69,19 +69,19 @@ void OsmAnd::ObfPoiSection::readPoiBoundariesIndex( gpb::io::CodedInputStream* c
         {
         case 0:
             return;
-        case OsmAndTileBox::kLeftFieldNumber:
+        case OBF::OsmAndTileBox::kLeftFieldNumber:
             cis->ReadVarint32(&value);
             section->_leftLongitude = Utilities::get31LongitudeX(value);
             break;
-        case OsmAndTileBox::kRightFieldNumber:
+        case OBF::OsmAndTileBox::kRightFieldNumber:
             cis->ReadVarint32(&value);
             section->_rightLongitude = Utilities::get31LongitudeX(value);
             break;
-        case OsmAndTileBox::kTopFieldNumber:
+        case OBF::OsmAndTileBox::kTopFieldNumber:
             cis->ReadVarint32(&value);
             section->_topLatitude = Utilities::get31LatitudeY(value);
             break;
-        case OsmAndTileBox::kBottomFieldNumber:
+        case OBF::OsmAndTileBox::kBottomFieldNumber:
             cis->ReadVarint32(&value);
             section->_bottomLatitude = Utilities::get31LatitudeY(value);
             break;
@@ -101,7 +101,7 @@ void OsmAnd::ObfPoiSection::readCategory( gpb::io::CodedInputStream* cis, ObfPoi
         {
         case 0:
             return;
-        case OsmAndCategoryTable::kCategoryFieldNumber:
+        case OBF::OsmAndCategoryTable::kCategoryFieldNumber:
             {
                 std::string category;
                 gpb::internal::WireFormatLite::ReadString(cis, &category);
@@ -110,7 +110,7 @@ void OsmAnd::ObfPoiSection::readCategory( gpb::io::CodedInputStream* cis, ObfPoi
                 section->_subcategories.push_back(std::list<std::string>());
             }
             break;
-        case OsmAndCategoryTable::kSubcategoriesFieldNumber:
+        case OBF::OsmAndCategoryTable::kSubcategoriesFieldNumber:
             {
                 std::string category;
                 gpb::internal::WireFormatLite::ReadString(cis, &category);

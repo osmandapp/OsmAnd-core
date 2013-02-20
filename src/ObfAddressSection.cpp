@@ -3,7 +3,7 @@
 #include <ObfReader.h>
 #include <google/protobuf/wire_format_lite.h>
 
-#include "../native/src/proto/osmand_odb.pb.h"
+#include "OBF.pb.h"
 
 OsmAnd::ObfAddressSection::ObfAddressSection()
     : _indexNameOffset(-1)
@@ -25,24 +25,23 @@ void OsmAnd::ObfAddressSection::read( gpb::io::CodedInputStream* cis, ObfAddress
             if(section->_enName.empty())
                 section->_enName = "Junidecode.unidecode(region.name)";//TODO: this should be fixed
             return;
-        case OsmAndAddressIndex::kNameFieldNumber:
+        case OBF::OsmAndAddressIndex::kNameFieldNumber:
             gpb::internal::WireFormatLite::ReadString(cis, &section->_name);
             break;
-        case OsmAndAddressIndex::kNameEnFieldNumber:
+        case OBF::OsmAndAddressIndex::kNameEnFieldNumber:
             gpb::internal::WireFormatLite::ReadString(cis, &section->_enName);
             break;
-        case OsmAndAddressIndex::kCitiesFieldNumber:
+        case OBF::OsmAndAddressIndex::kCitiesFieldNumber:
             {
-                std::shared_ptr<CitiesBlock> citiesBlock(new CitiesBlock());
-                citiesBlock->_type = 1;//TODO: Victor, what this 1 means?
-                citiesBlock->_length = ObfReader::readBigEndianInt(cis);
-                citiesBlock->_offset = cis->TotalBytesRead();
-                CitiesBlock::read(cis, citiesBlock.get());
-                cis->Seek(citiesBlock->_offset + citiesBlock->_length);
-                section->_cities.push_back(citiesBlock);
+                std::shared_ptr<CitiesBlock> entry(new CitiesBlock());
+                entry->_length = ObfReader::readBigEndianInt(cis);
+                entry->_offset = cis->TotalBytesRead();
+                CitiesBlock::read(cis, entry.get());
+                cis->Seek(entry->_offset + entry->_length);
+                section->_entries.push_back(entry);
             }
             break;
-        case OsmAndAddressIndex::kNameIndexFieldNumber:
+        case OBF::OsmAndAddressIndex::kNameIndexFieldNumber:
             {
                 section->_indexNameOffset = cis->TotalBytesRead();
                 auto length = ObfReader::readBigEndianInt(cis);
@@ -56,7 +55,12 @@ void OsmAnd::ObfAddressSection::read( gpb::io::CodedInputStream* cis, ObfAddress
     }
 
 }
+/*
+void OsmAnd::ObfAddressSection::readAllEntriesOfType( ObfReader* reader, ObfAddressSection* section, Entry::Type * type )
+{
 
+}
+*/
 OsmAnd::ObfAddressSection::CitiesBlock::CitiesBlock()
 {
 }
@@ -74,7 +78,7 @@ void OsmAnd::ObfAddressSection::CitiesBlock::read( gpb::io::CodedInputStream* ci
         {
         case 0:
             return;
-        case OsmAndAddressIndex_CitiesIndex::kTypeFieldNumber:
+        case OBF::OsmAndAddressIndex_CitiesIndex::kTypeFieldNumber:
             cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->_type));
             return;
         default:

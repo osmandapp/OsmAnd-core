@@ -4,7 +4,7 @@
 #include <google/protobuf/wire_format_lite.h>
 #include <QtEndian>
 
-#include "../native/src/proto/osmand_odb.pb.h"
+#include "OBF.pb.h"
 
 namespace gpb = google::protobuf;
 
@@ -24,13 +24,13 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
             if(!loadedCorrectly)
                 throw new std::invalid_argument("Corrupted file. It should be ended as it starts with version");
             return;
-        case OsmAndStructure::kVersionFieldNumber:
+        case OBF::OsmAndStructure::kVersionFieldNumber:
             _codedInputStream->ReadVarint32(reinterpret_cast<gpb::uint32*>(&_version));
             break;
-        case OsmAndStructure::kDateCreatedFieldNumber:
+        case OBF::OsmAndStructure::kDateCreatedFieldNumber:
             _codedInputStream->ReadVarint64(reinterpret_cast<gpb::uint64*>(&_creationTimestamp));
             break;
-        case OsmAndStructure::kMapIndexFieldNumber:
+        case OBF::OsmAndStructure::kMapIndexFieldNumber:
             {
                 std::shared_ptr<ObfMapSection> section(new ObfMapSection());
                 section->_length = ObfReader::readBigEndianInt(_codedInputStream.get());
@@ -44,7 +44,7 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
                 _sections.push_back(dynamic_cast<ObfSection*>(section.get()));
             }
             break;
-        case OsmAndStructure::kAddressIndexFieldNumber:
+        case OBF::OsmAndStructure::kAddressIndexFieldNumber:
             {
                 std::shared_ptr<ObfAddressSection> section(new ObfAddressSection());
                 section->_length = ObfReader::readBigEndianInt(_codedInputStream.get());
@@ -57,7 +57,7 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
                 _sections.push_back(dynamic_cast<ObfSection*>(section.get()));
             }
             break;
-        case OsmAndStructure::kTransportIndexFieldNumber:
+        case OBF::OsmAndStructure::kTransportIndexFieldNumber:
             {
                 std::shared_ptr<ObfTransportSection> section(new ObfTransportSection());
                 section->_length = ObfReader::readBigEndianInt(_codedInputStream.get());
@@ -70,7 +70,7 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
                 _sections.push_back(dynamic_cast<ObfSection*>(section.get()));
             }
             break;
-        case OsmAndStructure::kRoutingIndexFieldNumber:
+        case OBF::OsmAndStructure::kRoutingIndexFieldNumber:
             {
                 std::shared_ptr<ObfRoutingSection> section(new ObfRoutingSection());
                 section->_length = ObfReader::readBigEndianInt(_codedInputStream.get());
@@ -83,7 +83,7 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
                 _sections.push_back(dynamic_cast<ObfSection*>(section.get()));
             }
             break;
-        case OsmAndStructure::kPoiIndexFieldNumber:
+        case OBF::OsmAndStructure::kPoiIndexFieldNumber:
             {
                 std::shared_ptr<ObfPoiSection> section(new ObfPoiSection());
                 section->_length = ObfReader::readBigEndianInt(_codedInputStream.get());
@@ -96,7 +96,7 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
                 _sections.push_back(dynamic_cast<ObfSection*>(section.get()));
             }
             break;
-        case OsmAndStructure::kVersionConfirmFieldNumber:
+        case OBF::OsmAndStructure::kVersionConfirmFieldNumber:
             {
                 gpb::uint32 controlVersion;
                 _codedInputStream->ReadVarint32(&controlVersion);

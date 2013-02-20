@@ -17,6 +17,7 @@ include_directories(AFTER SYSTEM
 	"${OSMAND_ROOT}/core/externals/protobuf/upstream.patched/src"
 	"${OSMAND_ROOT}/core/include"
 	"${OSMAND_ROOT}/core/src"
+	"${OSMAND_ROOT}/core/protos"
 	"${OSMAND_ROOT}/core/native/include"
 	"${OSMAND_ROOT}/core/native/src"
 	"$ENV{JAVA_HOME}/include"
@@ -64,6 +65,8 @@ add_library(OsmAndCore SHARED
 	${includes}
 	${sources}
 	${pd_sources}
+	"protos/OBF.pb.h"
+
 	"native/src/ElapsedTimer.cpp"
 	"native/src/ExplicitSkiaReferences.cpp"
 	"native/src/common.cpp"

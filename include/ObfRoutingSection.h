@@ -102,7 +102,7 @@ namespace OsmAnd {
         protected:
             static Subregion* read(gpb::io::CodedInputStream* cis, Subregion* current, Subregion* parent, int depth, bool readCoordinates);
 
-        friend ObfRoutingSection;
+        friend struct ObfRoutingSection;
         };
 
         struct TypeRule
@@ -214,41 +214,7 @@ namespace OsmAnd {
     private:
         //! ???
         void initRouteEncodingRule(int id, std::string tags, std::string val);
-/*
-        public double getLeftLongitude() {
-            double l = 180;
-            for(RouteSubregion s : subregions) {
-                l = Math.min(l, MapUtils.get31LongitudeX(s.left));
-            }
-            return l;
-        }
-
-        public double getRightLongitude() {
-            double l = -180;
-            for(RouteSubregion s : subregions) {
-                l = Math.max(l, MapUtils.get31LongitudeX(s.right));
-            }
-            return l;
-        }
-
-        public double getBottomLatitude() {
-            double l = 90;
-            for(RouteSubregion s : subregions) {
-                l = Math.min(l, MapUtils.get31LatitudeY(s.bottom));
-            }
-            return l;
-        }
-
-        public double getTopLatitude() {
-            double l = -90;
-            for(RouteSubregion s : subregions) {
-                l = Math.max(l, MapUtils.get31LatitudeY(s.top));
-            }
-            return l;
-        } 
-        */
     protected:
-        //! ???
         static void read(gpb::io::CodedInputStream* cis, ObfRoutingSection* section);
 
     private:

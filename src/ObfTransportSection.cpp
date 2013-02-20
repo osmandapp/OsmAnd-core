@@ -3,7 +3,7 @@
 #include <ObfReader.h>
 #include <google/protobuf/wire_format_lite.h>
 
-#include "../native/src/proto/osmand_odb.pb.h"
+#include "OBF.pb.h"
 
 OsmAnd::ObfTransportSection::ObfTransportSection()
     : _top(0)
@@ -28,13 +28,13 @@ void OsmAnd::ObfTransportSection::read( gpb::io::CodedInputStream* cis, ObfTrans
         {
         case 0:
             return;
-        case OsmAndTransportIndex::kRoutesFieldNumber:
+        case OBF::OsmAndTransportIndex::kRoutesFieldNumber:
             ObfReader::skipUnknownField(cis, tag);
             break;
-        case OsmAndTransportIndex::kNameFieldNumber:
+        case OBF::OsmAndTransportIndex::kNameFieldNumber:
             gpb::internal::WireFormatLite::ReadString(cis, &section->_name);
             break;
-        case OsmAndTransportIndex::kStopsFieldNumber:
+        case OBF::OsmAndTransportIndex::kStopsFieldNumber:
             {
                 section->_stopsFileLength = ObfReader::readBigEndianInt(cis);
                 section->_stopsFileOffset = cis->TotalBytesRead();
@@ -43,7 +43,7 @@ void OsmAnd::ObfTransportSection::read( gpb::io::CodedInputStream* cis, ObfTrans
                 cis->PopLimit(oldLimit);
             }
             break;
-        case OsmAndTransportIndex::kStringTableFieldNumber:
+        case OBF::OsmAndTransportIndex::kStringTableFieldNumber:
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
@@ -75,16 +75,16 @@ void OsmAnd::ObfTransportSection::readTransportBounds( gpb::io::CodedInputStream
         {
         case 0:
             return;
-        case TransportStopsTree::kLeftFieldNumber:
+        case OBF::TransportStopsTree::kLeftFieldNumber:
             section->_left = ObfReader::readSInt32(cis);
             break;
-        case TransportStopsTree::kRightFieldNumber:
+        case OBF::TransportStopsTree::kRightFieldNumber:
             section->_right = ObfReader::readSInt32(cis);
             break;
-        case TransportStopsTree::kTopFieldNumber:
+        case OBF::TransportStopsTree::kTopFieldNumber:
             section->_top = ObfReader::readSInt32(cis);
             break;
-        case TransportStopsTree::kBottomFieldNumber:
+        case OBF::TransportStopsTree::kBottomFieldNumber:
             section->_bottom = ObfReader::readSInt32(cis);
             break;
         default:

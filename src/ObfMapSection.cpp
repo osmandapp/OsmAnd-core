@@ -3,7 +3,7 @@
 #include <ObfReader.h>
 #include <google/protobuf/wire_format_lite.h>
 
-#include "../native/src/proto/osmand_odb.pb.h"
+#include "OBF.pb.h"
 
 namespace gpb = google::protobuf;
 
@@ -105,10 +105,10 @@ void OsmAnd::ObfMapSection::read( gpb::io::CodedInputStream* cis, ObfMapSection*
             if (onlyInitEncodingRules)
                 section->finishInitializingTags();
             return;
-        case OsmAndMapIndex::kNameFieldNumber:
+        case OBF::OsmAndMapIndex::kNameFieldNumber:
             gpb::internal::WireFormatLite::ReadString(cis, &section->_name);
             break;
-        case OsmAndMapIndex::kRulesFieldNumber:
+        case OBF::OsmAndMapIndex::kRulesFieldNumber:
             if (onlyInitEncodingRules)
             {
                 gpb::uint32 len;
@@ -120,7 +120,7 @@ void OsmAnd::ObfMapSection::read( gpb::io::CodedInputStream* cis, ObfMapSection*
             else
                 ObfReader::skipUnknownField(cis, tag);
             break;
-        case OsmAndMapIndex::kLevelsFieldNumber:
+        case OBF::OsmAndMapIndex::kLevelsFieldNumber:
             {
                 auto length = ObfReader::readBigEndianInt(cis);
                 auto offset = cis->TotalBytesRead();
@@ -157,16 +157,16 @@ void OsmAnd::ObfMapSection::readMapEncodingRule( gpb::io::CodedInputStream* cis,
         case 0:
             section->initMapEncodingRule(type, id, tags, val);
             return;
-        case OsmAndMapIndex_MapEncodingRule::kValueFieldNumber:
+        case OBF::OsmAndMapIndex_MapEncodingRule::kValueFieldNumber:
             gpb::internal::WireFormatLite::ReadString(cis, &val);
             break;
-        case OsmAndMapIndex_MapEncodingRule::kTagFieldNumber:
+        case OBF::OsmAndMapIndex_MapEncodingRule::kTagFieldNumber:
             gpb::internal::WireFormatLite::ReadString(cis, &tags);
             break;
-        case OsmAndMapIndex_MapEncodingRule::kTypeFieldNumber:
+        case OBF::OsmAndMapIndex_MapEncodingRule::kTypeFieldNumber:
             cis->ReadVarint32(&type);
             break;
-        case OsmAndMapIndex_MapEncodingRule::kIdFieldNumber:
+        case OBF::OsmAndMapIndex_MapEncodingRule::kIdFieldNumber:
             cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&id));
             break;
         default:
@@ -185,25 +185,25 @@ OsmAnd::ObfMapSection::MapRoot* OsmAnd::ObfMapSection::readMapLevel( gpb::io::Co
         {
         case 0:
             return root;
-        case OsmAndMapIndex_MapRootLevel::kBottomFieldNumber:
+        case OBF::OsmAndMapIndex_MapRootLevel::kBottomFieldNumber:
             cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&root->_bottom));
             break;
-        case OsmAndMapIndex_MapRootLevel::kLeftFieldNumber:
+        case OBF::OsmAndMapIndex_MapRootLevel::kLeftFieldNumber:
             cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&root->_left));
             break;
-        case OsmAndMapIndex_MapRootLevel::kRightFieldNumber:
+        case OBF::OsmAndMapIndex_MapRootLevel::kRightFieldNumber:
             cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&root->_right));
             break;
-        case OsmAndMapIndex_MapRootLevel::kTopFieldNumber:
+        case OBF::OsmAndMapIndex_MapRootLevel::kTopFieldNumber:
             cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&root->_top));
             break;
-        case OsmAndMapIndex_MapRootLevel::kMaxZoomFieldNumber:
+        case OBF::OsmAndMapIndex_MapRootLevel::kMaxZoomFieldNumber:
             cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&root->_maxZoom));
             break;
-        case OsmAndMapIndex_MapRootLevel::kMinZoomFieldNumber:
+        case OBF::OsmAndMapIndex_MapRootLevel::kMinZoomFieldNumber:
             cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&root->_minZoom));
             break;
-        case OsmAndMapIndex_MapRootLevel::kBoxesFieldNumber:
+        case OBF::OsmAndMapIndex_MapRootLevel::kBoxesFieldNumber:
             {
                 auto length = ObfReader::readBigEndianInt(cis);
                 auto offset = cis->TotalBytesRead();
@@ -220,7 +220,7 @@ OsmAnd::ObfMapSection::MapRoot* OsmAnd::ObfMapSection::readMapLevel( gpb::io::Co
                 cis->Seek(offset + length);
             }
             break;
-        case OsmAndMapIndex_MapRootLevel::kBlocksFieldNumber:
+        case OBF::OsmAndMapIndex_MapRootLevel::kBlocksFieldNumber:
             cis->Skip(cis->BytesUntilLimit());
             break;
         default:
@@ -239,26 +239,26 @@ void OsmAnd::ObfMapSection::readMapTreeBounds( gpb::io::CodedInputStream* cis, M
         {
         case 0:
             return;
-        case OsmAndMapIndex_MapDataBox::kBottomFieldNumber:
+        case OBF::OsmAndMapIndex_MapDataBox::kBottomFieldNumber:
             tree->_bottom = ObfReader::readSInt32(cis) + bottom;
             break;
-        case OsmAndMapIndex_MapDataBox::kTopFieldNumber:
+        case OBF::OsmAndMapIndex_MapDataBox::kTopFieldNumber:
             tree->_top = ObfReader::readSInt32(cis) + top;
             break;
-        case OsmAndMapIndex_MapDataBox::kLeftFieldNumber:
+        case OBF::OsmAndMapIndex_MapDataBox::kLeftFieldNumber:
             tree->_left = ObfReader::readSInt32(cis) + left;
             break;
-        case OsmAndMapIndex_MapDataBox::kRightFieldNumber:
+        case OBF::OsmAndMapIndex_MapDataBox::kRightFieldNumber:
             tree->_right = ObfReader::readSInt32(cis) + right;
             break;   
-        case OsmAndMapIndex_MapDataBox::kOceanFieldNumber:
+        case OBF::OsmAndMapIndex_MapDataBox::kOceanFieldNumber:
             {
                 gpb::uint32 value;
                 cis->ReadVarint32(&value);
                 tree->_isOcean = (value != 0);
             }
             break;
-        case OsmAndMapIndex_MapDataBox::kShiftToMapDataFieldNumber:
+        case OBF::OsmAndMapIndex_MapDataBox::kShiftToMapDataFieldNumber:
             tree->_mapDataBlock = ObfReader::readBigEndianInt(cis) + tree->_offset;
             break;
 

@@ -33,6 +33,7 @@
 #include <string>
 #include <google/protobuf/io/coded_stream.h>
 #include <ObfSection.h>
+#include <OBF.pb.h>
 
 namespace OsmAnd {
 
@@ -45,17 +46,18 @@ namespace OsmAnd {
     {
         struct OSMAND_CORE_API CitiesBlock : public ObfSection
         {
+            typedef OBF::OsmAndAddressIndex_CitiesIndex_CitiesType Type;
+
             CitiesBlock();
             virtual ~CitiesBlock();
 
-            //! ???
-            int _type;
+            Type _type;
         protected:
             static void read(gpb::io::CodedInputStream* cis, CitiesBlock* section);
 
         private:
 
-        friend ObfAddressSection;
+        friend struct ObfAddressSection;
         };
 
         ObfAddressSection();
@@ -67,11 +69,12 @@ namespace OsmAnd {
         //! ???
         int _indexNameOffset;
 
-        std::list< std::shared_ptr<CitiesBlock> > _cities;
+        std::list< std::shared_ptr<CitiesBlock> > _entries;
         
         //LatLon calculatedCenter = null;
     protected:
         static void read(gpb::io::CodedInputStream* cis, ObfAddressSection* section);
+        //static std::list< std::shared_ptr<> > readAllEntriesOfType(ObfReader* reader, ObfAddressSection* section, Entry::Type type);
 
     private:
 
