@@ -61,15 +61,15 @@ public class GeneralRouter extends VehicleRouter {
 		}
 	}
 
-	public GeneralRouter(GeneralRouter pr) {
+	public GeneralRouter(GeneralRouter pr, Map<String, String> attributes) {
 		this.highwaySpeed = new LinkedHashMap<String, Float>(pr.highwaySpeed);
 		this.highwayPriorities = new LinkedHashMap<String, Float>(pr.highwayPriorities);
 		this.avoid = new LinkedHashMap<String, Float>(pr.avoid);
 		this.obstacles = new LinkedHashMap<String, Float>(pr.obstacles);
 		this.routingObstacles = new LinkedHashMap<String, Float>(pr.routingObstacles);
-		this.attributes = new LinkedHashMap<String, String>(pr.attributes);
+		this.attributes = new LinkedHashMap<String, String>();
 		this.profile = pr.profile;
-		Iterator<Entry<String, String>> e = pr.attributes.entrySet().iterator();
+		Iterator<Entry<String, String>> e = attributes.entrySet().iterator();
 		while(e.hasNext()){
 			Entry<String, String> next = e.next();
 			addAttribute(next.getKey(), next.getValue());
@@ -308,20 +308,29 @@ public class GeneralRouter extends VehicleRouter {
 		ArrayList<String> ks = new ArrayList<String>(m.keySet());
 		for(String s : ks){
 			if(s.startsWith(specializationTag +":")) {
-				m.put(s.substring((specializationTag +":").length()), m.get(s));
+				String tagName = s.substring((specializationTag +":").length());
+				m.put(tagName, m.get(s));
 			}
 		}
 	}
 
 	@Override
 	public GeneralRouter specialization(String specializationTag) {
-		GeneralRouter gr = new GeneralRouter(this);
+		Map<String, String> attrs = new LinkedHashMap<String, String>(attributes);
+		for(String s : attributes.keySet()){
+			if(s.startsWith(specializationTag +":")) {
+				String tagName = s.substring((specializationTag +":").length());
+				attrs.put(tagName, attributes.get(s));
+			}
+		}
+		GeneralRouter gr = new GeneralRouter(this, attrs);
 		gr.specialize(specializationTag, gr.highwayPriorities);
 		gr.specialize(specializationTag, gr.highwaySpeed);
 		gr.specialize(specializationTag, gr.avoid);
 		gr.specialize(specializationTag, gr.obstacles);
 		gr.specialize(specializationTag, gr.routingObstacles);
 		gr.specialize(specializationTag, gr.attributes);
+		
 		return gr;
 	}
 	
