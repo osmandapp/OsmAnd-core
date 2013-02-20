@@ -1,4 +1,4 @@
-#include "ObfTransportRegionSection.h"
+#include "ObfTransportSection.h"
 
 #include <QtEndian>
 #include <ObfReader.h>
@@ -6,7 +6,7 @@
 
 #include "../native/src/proto/osmand_odb.pb.h"
 
-OsmAnd::ObfTransportRegionSection::ObfTransportRegionSection()
+OsmAnd::ObfTransportSection::ObfTransportSection()
     : _top(0)
     , _left(0)
     , _bottom(0)
@@ -16,7 +16,11 @@ OsmAnd::ObfTransportRegionSection::ObfTransportRegionSection()
 {
 }
 
-void OsmAnd::ObfTransportRegionSection::read( gpb::io::CodedInputStream* cis, ObfTransportRegionSection* section )
+OsmAnd::ObfTransportSection::~ObfTransportSection()
+{
+}
+
+void OsmAnd::ObfTransportSection::read( gpb::io::CodedInputStream* cis, ObfTransportSection* section )
 {
     for(;;)
     {
@@ -29,7 +33,7 @@ void OsmAnd::ObfTransportRegionSection::read( gpb::io::CodedInputStream* cis, Ob
             ObfReader::skipUnknownField(cis, tag);
             break;
         case OsmAndTransportIndex::kNameFieldNumber:
-            cis->ReadString(&section->_name, std::numeric_limits<int>::max());
+            gpb::internal::WireFormatLite::ReadString(cis, &section->_name);
             break;
         case OsmAndTransportIndex::kStopsFieldNumber:
             {
@@ -65,7 +69,7 @@ void OsmAnd::ObfTransportRegionSection::read( gpb::io::CodedInputStream* cis, Ob
     }
 }
 
-void OsmAnd::ObfTransportRegionSection::readTransportBounds( gpb::io::CodedInputStream* cis, ObfTransportRegionSection* section )
+void OsmAnd::ObfTransportSection::readTransportBounds( gpb::io::CodedInputStream* cis, ObfTransportSection* section )
 {
     for(;;)
     {

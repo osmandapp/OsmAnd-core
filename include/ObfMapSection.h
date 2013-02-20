@@ -45,48 +45,29 @@ namespace OsmAnd {
     {
         struct OSMAND_CORE_API MapTree
         {
-            //! Ctor
             MapTree();
 
-            //! Offset
             off_t _offset;
-
-            //! ???
             size_t _length;
-
-            //! ???
             long _mapDataBlock;
-
-            //! ???
             bool _isOcean;
-
-            //! ???
             int _left;
-
-            //! ???
             int _right;
-
-            //! ???
             int _top;
-
-            //! ???
             int _bottom;
         };
 
         struct OSMAND_CORE_API MapRoot : public MapTree
         {
-            //! ???
             int _minZoom;
-
-            //! ???
             int _maxZoom;
 
             //! ???
             std::list< std::shared_ptr<MapTree> > _trees;
         };
 
-        //! Ctor
         ObfMapSection();
+        virtual ~ObfMapSection();
 
         //! ???
         std::list< std::shared_ptr<MapRoot> > _levels;

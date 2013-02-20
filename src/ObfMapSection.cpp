@@ -21,6 +21,10 @@ OsmAnd::ObfMapSection::ObfMapSection()
     _negativeLayers.reserve(2);
 }
 
+OsmAnd::ObfMapSection::~ObfMapSection()
+{
+}
+
 bool OsmAnd::ObfMapSection::getRule( std::string t, std::string v, int& outRule )
 {
     auto m = _encodingRules.find(t);
@@ -103,7 +107,7 @@ void OsmAnd::ObfMapSection::read( gpb::io::CodedInputStream* cis, ObfMapSection*
                 section->finishInitializingTags();
             return;
         case OsmAndMapIndex::kNameFieldNumber:
-            cis->ReadString(&section->_name, std::numeric_limits<int>::max());
+            gpb::internal::WireFormatLite::ReadString(cis, &section->_name);
             break;
         case OsmAndMapIndex::kRulesFieldNumber:
             if (onlyInitEncodingRules) {
@@ -154,10 +158,10 @@ void OsmAnd::ObfMapSection::readMapEncodingRule( gpb::io::CodedInputStream* cis,
             section->initMapEncodingRule(type, id, tags, val);
             return;
         case OsmAndMapIndex_MapEncodingRule::kValueFieldNumber:
-            cis->ReadString(&val, std::numeric_limits<int>::max());
+            gpb::internal::WireFormatLite::ReadString(cis, &val);
             break;
         case OsmAndMapIndex_MapEncodingRule::kTagFieldNumber:
-            cis->ReadString(&tags, std::numeric_limits<int>::max());
+            gpb::internal::WireFormatLite::ReadString(cis, &tags);
             break;
         case OsmAndMapIndex_MapEncodingRule::kTypeFieldNumber:
             cis->ReadVarint32(&type);

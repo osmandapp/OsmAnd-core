@@ -21,7 +21,7 @@ bool OsmAnd::QZeroCopyInputStream::Next( const void** data, int* size )
     char* buffer = new char[BufferSize];
 
     qint64 bytesRead = _device->read(buffer, BufferSize);
-    if (bytesRead < 0)
+    if (bytesRead < 0 || (bytesRead == 0 && _device->atEnd()))
     {
         delete[] buffer;
         *size = 0;
@@ -45,7 +45,7 @@ void OsmAnd::QZeroCopyInputStream::BackUp( int count )
 
 bool OsmAnd::QZeroCopyInputStream::Skip( int count )
 {
-    if (_device->pos() + count > _device->size())
+    if (_device->pos() + count > _device->size() || _device->atEnd())
     {
         _device->seek(_device->size());
         return false;

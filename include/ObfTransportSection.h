@@ -37,9 +37,10 @@ namespace OsmAnd {
     /**
     'POI Region' section of OsmAnd Binary File
     */
-    struct OSMAND_CORE_API ObfTransportRegionSection : public ObfSection
+    struct OSMAND_CORE_API ObfTransportSection : public ObfSection
     {
-        ObfTransportRegionSection();
+        ObfTransportSection();
+        virtual ~ObfTransportSection();
 
         int _left;
         int _right;
@@ -49,10 +50,10 @@ namespace OsmAnd {
         int _stopsFileOffset;
         int _stopsFileLength;   
     protected:
-        static void read(gpb::io::CodedInputStream* cis, ObfTransportRegionSection* section);
+        static void read(gpb::io::CodedInputStream* cis, ObfTransportSection* section);
 
     private:
-        static void readTransportBounds(gpb::io::CodedInputStream* cis, ObfTransportRegionSection* section);
+        static void readTransportBounds(gpb::io::CodedInputStream* cis, ObfTransportSection* section);
 
     friend class ObfReader;
     };

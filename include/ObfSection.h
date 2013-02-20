@@ -34,13 +34,10 @@ namespace OsmAnd {
     */
     struct OSMAND_CORE_API ObfSection
     {
-        //! Section name
+        virtual ~ObfSection();
+
         std::string _name;
-
-        //! Section size in bytes
         uint32_t _length;
-
-        //! Offset in bytes
         uint32_t _offset;
     };
 

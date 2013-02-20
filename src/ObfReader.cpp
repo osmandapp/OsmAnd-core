@@ -22,7 +22,7 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
         {
         case 0:
             if(!loadedCorrectly)
-                throw new std::exception(); // Corrupted file. It should be ended as it starts with version
+                throw new std::invalid_argument("Corrupted file. It should be ended as it starts with version");
             return;
         case OsmAndStructure::kVersionFieldNumber:
             _codedInputStream->ReadVarint32(reinterpret_cast<gpb::uint32*>(&_version));
@@ -43,73 +43,78 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
                 _codedInputStream->PopLimit(oldLimit);
                 _codedInputStream->Seek(section->_offset + section->_length);
                 _mapSections.push_back(section);
-                //TODO:indexes.add(mapIndex);
+                _sections.push_back(dynamic_cast<ObfSection*>(section.get()));
             }
             break;
         case OsmAndStructure::kAddressIndexFieldNumber:
             {
-                std::shared_ptr<ObfAddressRegionSection> section(new ObfAddressRegionSection());
+                std::shared_ptr<ObfAddressSection> section(new ObfAddressSection());
                 gpb::uint32 length;
                 _codedInputStream->ReadRaw(&length, sizeof(length));
                 section->_length = qFromBigEndian(length);
                 section->_offset = _codedInputStream->TotalBytesRead();
                 auto oldLimit = _codedInputStream->PushLimit(section->_length);
-                ObfAddressRegionSection::read(_codedInputStream.get(), section.get());
+                ObfAddressSection::read(_codedInputStream.get(), section.get());
                 _codedInputStream->PopLimit(oldLimit);
                 _codedInputStream->Seek(section->_offset + section->_length);
                 _addressRegionsSections.push_back(section);
-                //TODO:indexes.add(mapIndex);
+                _sections.push_back(dynamic_cast<ObfSection*>(section.get()));
             }
             break;
         case OsmAndStructure::kTransportIndexFieldNumber:
             {
-                std::shared_ptr<ObfTransportRegionSection> section(new ObfTransportRegionSection());
+                std::shared_ptr<ObfTransportSection> section(new ObfTransportSection());
                 gpb::uint32 length;
                 _codedInputStream->ReadRaw(&length, sizeof(length));
                 section->_length = qFromBigEndian(length);
                 section->_offset = _codedInputStream->TotalBytesRead();
                 auto oldLimit = _codedInputStream->PushLimit(section->_length);
-                ObfTransportRegionSection::read(_codedInputStream.get(), section.get());
+                ObfTransportSection::read(_codedInputStream.get(), section.get());
                 _codedInputStream->PopLimit(oldLimit);
                 _codedInputStream->Seek(section->_offset + section->_length);
                 _transportSections.push_back(section);
-                //TODO:indexes.add(mapIndex);
+                _sections.push_back(dynamic_cast<ObfSection*>(section.get()));
             }
             break;
         case OsmAndStructure::kRoutingIndexFieldNumber:
             {
-                std::shared_ptr<ObfRoutingRegionSection> section(new ObfRoutingRegionSection());
+                std::shared_ptr<ObfRoutingSection> section(new ObfRoutingSection());
                 gpb::uint32 length;
                 _codedInputStream->ReadRaw(&length, sizeof(length));
                 section->_length = qFromBigEndian(length);
                 section->_offset = _codedInputStream->TotalBytesRead();
                 auto oldLimit = _codedInputStream->PushLimit(section->_length);
-                ObfRoutingRegionSection::read(_codedInputStream.get(), section.get());
+                ObfRoutingSection::read(_codedInputStream.get(), section.get());
                 _codedInputStream->PopLimit(oldLimit);
                 _codedInputStream->Seek(section->_offset + section->_length);
                 _routingRegionsSections.push_back(section);
-                //TODO:indexes.add(mapIndex);
+                _sections.push_back(dynamic_cast<ObfSection*>(section.get()));
             }
             break;
         case OsmAndStructure::kPoiIndexFieldNumber:
             {
-                std::shared_ptr<ObfPoiRegionSection> section(new ObfPoiRegionSection());
+                std::shared_ptr<ObfPoiSection> section(new ObfPoiSection());
                 gpb::uint32 length;
                 _codedInputStream->ReadRaw(&length, sizeof(length));
                 section->_length = qFromBigEndian(length);
                 section->_offset = _codedInputStream->TotalBytesRead();
                 auto oldLimit = _codedInputStream->PushLimit(section->_length);
-                ObfPoiRegionSection::read(_codedInputStream.get(), section.get(), false);
+                ObfPoiSection::read(_codedInputStream.get(), section.get(), false);
                 _codedInputStream->PopLimit(oldLimit);
                 _codedInputStream->Seek(section->_offset + section->_length);
                 _poiRegionsSections.push_back(section);
-                //TODO:indexes.add(mapIndex);
+                _sections.push_back(dynamic_cast<ObfSection*>(section.get()));
             }
             break;
         case OsmAndStructure::kVersionConfirmFieldNumber:
-            /*int cversion = codedIS.readUInt32();
-            calculateCenterPointForRegions();
-            loadedCorrectly = (cversion == version);*/
+            {
+                gpb::uint32 controlVersion;
+                _codedInputStream->ReadVarint32(&controlVersion);
+                loadedCorrectly = (controlVersion == _version);
+                if(!loadedCorrectly)
+                    break;
+                //TODO:calculateCenterPointForRegions();
+            }
             break;
         default:
             skipUnknownField(_codedInputStream.get(), tag);
@@ -121,12 +126,25 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
 void OsmAnd::ObfReader::skipUnknownField( gpb::io::CodedInputStream* cis, int tag )
 {
     auto wireType = gpb::internal::WireFormatLite::GetTagWireType(tag);
-    if(wireType == gpb::internal::WireFormatLite::WIRETYPE_FIXED32_LENGTH_DELIMITED){
+    if(wireType == gpb::internal::WireFormatLite::WIRETYPE_FIXED32_LENGTH_DELIMITED)
+    {
         gpb::uint32 length;
-        cis->ReadRaw(&length, sizeof(length));
-        length = qFromBigEndian(length);
-        cis->Skip(length);
-    } else {
-        gpb::internal::WireFormatLite::SkipField(cis, tag);
+        if(cis->ReadRaw(&length, sizeof(length)))
+        {
+            auto nativeLength = qFromBigEndian(length);
+            cis->Skip(nativeLength);
+        }
     }
+    else
+        gpb::internal::WireFormatLite::SkipField(cis, tag);
+}
+
+int OsmAnd::ObfReader::getVersion() const
+{
+    return _version;
+}
+
+std::list< OsmAnd::ObfSection* > OsmAnd::ObfReader::getSections() const
+{
+    return _sections;
 }

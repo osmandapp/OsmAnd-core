@@ -41,15 +41,15 @@ namespace OsmAnd {
     /**
     'Routing Region' section of OsmAnd Binary File
     */
-    struct OSMAND_CORE_API ObfRoutingRegionSection : public ObfSection
+    struct OSMAND_CORE_API ObfRoutingSection : public ObfSection
     {
         struct OSMAND_CORE_API Subregion
         {
             //! Ctor
-            Subregion(ObfRoutingRegionSection* section);
+            Subregion(ObfRoutingSection* section);
 
             //! Pointer to parent section
-            ObfRoutingRegionSection* const _section;
+            ObfRoutingSection* const _section;
 
             //! ???
             int _length;
@@ -100,10 +100,9 @@ namespace OsmAnd {
             }
             */
         protected:
-            //! ???
             static Subregion* read(gpb::io::CodedInputStream* cis, Subregion* current, Subregion* parent, int depth, bool readCoordinates);
 
-        friend ObfRoutingRegionSection;
+        friend ObfRoutingSection;
         };
 
         struct TypeRule
@@ -179,8 +178,8 @@ namespace OsmAnd {
             */
         };
 
-        //! Ctor
-        ObfRoutingRegionSection();
+        ObfRoutingSection();
+        virtual ~ObfRoutingSection();
 
         //! ???
         int _regionsRead;
@@ -250,11 +249,11 @@ namespace OsmAnd {
         */
     protected:
         //! ???
-        static void read(gpb::io::CodedInputStream* cis, ObfRoutingRegionSection* section);
+        static void read(gpb::io::CodedInputStream* cis, ObfRoutingSection* section);
 
     private:
         //! ???
-        static void readRouteEncodingRule(gpb::io::CodedInputStream* cis, ObfRoutingRegionSection* section, int id);
+        static void readRouteEncodingRule(gpb::io::CodedInputStream* cis, ObfRoutingSection* section, int id);
 
     friend class ObfReader;
     };

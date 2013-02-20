@@ -20,16 +20,12 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __OBF_ADDRESS_REGION_SECTION_H_
-#define __OBF_ADDRESS_REGION_SECTION_H_
+#ifndef __OBF_POI_REGION_SECTION_H_
+#define __OBF_POI_REGION_SECTION_H_
 
 #include <OsmAndCore.h>
 #include <memory>
 #include <list>
-#include <map>
-#include <unordered_map>
-#include <unordered_set>
-#include <tuple>
 #include <string>
 #include <google/protobuf/io/coded_stream.h>
 #include <ObfSection.h>
@@ -39,38 +35,31 @@ namespace OsmAnd {
     namespace gpb = google::protobuf;
 
     /**
-    'Address Region' section of OsmAnd Binary File
+    'POI' section of OsmAnd Binary File
     */
-    struct OSMAND_CORE_API ObfAddressRegionSection : public ObfSection
+    struct OSMAND_CORE_API ObfPoiSection : public ObfSection
     {
-        struct OSMAND_CORE_API CitiesBlock : public ObfSection
-        {
-            //! ???
-            int _type;
-        };
+        ObfPoiSection();
+        virtual ~ObfPoiSection();
 
-        //! Ctor
-        ObfAddressRegionSection();
-
-        //! ???
-        std::string _enName;
+        std::list<std::string> _categories;
+        std::list< std::list<std::string> > _subcategories;
+        //List<AmenityType> categoriesType = new ArrayList<AmenityType>();
         
-        //! ???
-        int _indexNameOffset;
-
-        //! ???
-        std::list< std::shared_ptr<CitiesBlock> > _cities;
-        
-        //LatLon calculatedCenter = null;
+        double _leftLongitude;
+        double _rightLongitude;
+        double _topLatitude;
+        double _bottomLatitude;
     protected:
-        //! ???
-        static void read(gpb::io::CodedInputStream* cis, ObfAddressRegionSection* section);
+        static void read(gpb::io::CodedInputStream* cis, ObfPoiSection* section, bool readCategories);
 
     private:
+        static void readPoiBoundariesIndex(gpb::io::CodedInputStream* cis, ObfPoiSection* section);
+        static void readCategory(gpb::io::CodedInputStream* cis, ObfPoiSection* section);
 
     friend class ObfReader;
     };
 
 } // namespace OsmAnd
 
-#endif // __OBF_ADDRESS_REGION_SECTION_H_
+#endif // __OBF_POI_REGION_SECTION_H_

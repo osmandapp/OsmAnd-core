@@ -1,4 +1,4 @@
-#include "ObfPoiRegionSection.h"
+#include "ObfPoiSection.h"
 
 #include <QtEndian>
 #include <ObfReader.h>
@@ -6,7 +6,15 @@
 
 #include "../native/src/proto/osmand_odb.pb.h"
 
-void OsmAnd::ObfPoiRegionSection::read( gpb::io::CodedInputStream* cis, ObfPoiRegionSection* section, bool readCategories )
+OsmAnd::ObfPoiSection::ObfPoiSection()
+{
+}
+
+OsmAnd::ObfPoiSection::~ObfPoiSection()
+{
+}
+
+void OsmAnd::ObfPoiSection::read( gpb::io::CodedInputStream* cis, ObfPoiSection* section, bool readCategories )
 {
     for(;;)
     {
@@ -16,7 +24,7 @@ void OsmAnd::ObfPoiRegionSection::read( gpb::io::CodedInputStream* cis, ObfPoiRe
         case 0:
             return;
         case OsmAndPoiIndex::kNameFieldNumber:
-            cis->ReadString(&section->_name, std::numeric_limits<int>::max());
+            gpb::internal::WireFormatLite::ReadString(cis, &section->_name);
             break;
         case OsmAndPoiIndex::kBoundariesFieldNumber:
             {
@@ -51,7 +59,7 @@ void OsmAnd::ObfPoiRegionSection::read( gpb::io::CodedInputStream* cis, ObfPoiRe
     }
 }
 
-void OsmAnd::ObfPoiRegionSection::readPoiBoundariesIndex( gpb::io::CodedInputStream* cis, ObfPoiRegionSection* section )
+void OsmAnd::ObfPoiSection::readPoiBoundariesIndex( gpb::io::CodedInputStream* cis, ObfPoiSection* section )
 {
     gpb::uint32 value;
     for(;;)
@@ -84,7 +92,7 @@ void OsmAnd::ObfPoiRegionSection::readPoiBoundariesIndex( gpb::io::CodedInputStr
     }
 }
 
-void OsmAnd::ObfPoiRegionSection::readCategory( gpb::io::CodedInputStream* cis, ObfPoiRegionSection* section )
+void OsmAnd::ObfPoiSection::readCategory( gpb::io::CodedInputStream* cis, ObfPoiSection* section )
 {
     for(;;)
     {
@@ -96,7 +104,7 @@ void OsmAnd::ObfPoiRegionSection::readCategory( gpb::io::CodedInputStream* cis, 
         case OsmAndCategoryTable::kCategoryFieldNumber:
             {
                 std::string category;
-                cis->ReadString(&category, std::numeric_limits<int>::max());
+                gpb::internal::WireFormatLite::ReadString(cis, &category);
                 section->_categories.push_back(category);
                 //TODO:region.categoriesType.add(AmenityType.fromString(cat));
                 section->_subcategories.push_back(std::list<std::string>());
@@ -105,7 +113,7 @@ void OsmAnd::ObfPoiRegionSection::readCategory( gpb::io::CodedInputStream* cis, 
         case OsmAndCategoryTable::kSubcategoriesFieldNumber:
             {
                 std::string category;
-                cis->ReadString(&category, std::numeric_limits<int>::max());
+                gpb::internal::WireFormatLite::ReadString(cis, &category);
                 section->_subcategories.back().push_back(category);
             }
             break;

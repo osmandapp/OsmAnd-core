@@ -35,10 +35,10 @@
 #include <google/protobuf/io/coded_stream.h>
 #include <ObfSection.h>
 #include <ObfMapSection.h>
-#include <ObfAddressRegionSection.h>
-#include <ObfRoutingRegionSection.h>
-#include <ObfPoiRegionSection.h>
-#include <ObfTransportRegionSection.h>
+#include <ObfAddressSection.h>
+#include <ObfRoutingSection.h>
+#include <ObfPoiSection.h>
+#include <ObfTransportSection.h>
 
 namespace OsmAnd {
 
@@ -56,10 +56,11 @@ namespace OsmAnd {
         long _creationTimestamp;
         bool _isBasemap;
         std::list< std::shared_ptr<ObfMapSection> > _mapSections;
-        std::list< std::shared_ptr<ObfAddressRegionSection> > _addressRegionsSections;
-        std::list< std::shared_ptr<ObfRoutingRegionSection> > _routingRegionsSections;
-        std::list< std::shared_ptr<ObfPoiRegionSection> > _poiRegionsSections;
-        std::list< std::shared_ptr<ObfTransportRegionSection> > _transportSections;
+        std::list< std::shared_ptr<ObfAddressSection> > _addressRegionsSections;
+        std::list< std::shared_ptr<ObfRoutingSection> > _routingRegionsSections;
+        std::list< std::shared_ptr<ObfPoiSection> > _poiRegionsSections;
+        std::list< std::shared_ptr<ObfTransportSection> > _transportSections;
+        std::list< ObfSection* > _sections;
     protected:
         static void skipUnknownField(gpb::io::CodedInputStream* cis, int tag);
     public:
@@ -69,14 +70,16 @@ namespace OsmAnd {
             ShiftCoordinates = 5,
         };
 
-        //! Ctor
         ObfReader(QIODevice* input);
 
+        int getVersion() const;
+        std::list< OsmAnd::ObfSection* > getSections() const;
+
     friend ObfMapSection;
-    friend ObfAddressRegionSection;
-    friend ObfRoutingRegionSection;
-    friend ObfPoiRegionSection;
-    friend ObfTransportRegionSection;
+    friend ObfAddressSection;
+    friend ObfRoutingSection;
+    friend ObfPoiSection;
+    friend ObfTransportSection;
     };
 } // namespace OsmAnd
 

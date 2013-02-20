@@ -1,4 +1,4 @@
-#include "ObfRoutingRegionSection.h"
+#include "ObfRoutingSection.h"
 
 #include <QtEndian>
 #include <ObfReader.h>
@@ -6,7 +6,7 @@
 
 #include "../native/src/proto/osmand_odb.pb.h"
 
-OsmAnd::ObfRoutingRegionSection::ObfRoutingRegionSection()
+OsmAnd::ObfRoutingSection::ObfRoutingSection()
     : _borderBoxPointer(0)
     , _baseBorderBoxPointer(0)
     , _borderBoxLength(0)
@@ -16,7 +16,11 @@ OsmAnd::ObfRoutingRegionSection::ObfRoutingRegionSection()
 {
 }
 
-void OsmAnd::ObfRoutingRegionSection::initRouteEncodingRule( int id, std::string tags, std::string val )
+OsmAnd::ObfRoutingSection::~ObfRoutingSection()
+{
+}
+
+void OsmAnd::ObfRoutingSection::initRouteEncodingRule( int id, std::string tags, std::string val )
 {
     while(_routeEncodingRules.size() <= id)
         _routeEncodingRules.push_back(std::shared_ptr<TypeRule>());
@@ -27,7 +31,7 @@ void OsmAnd::ObfRoutingRegionSection::initRouteEncodingRule( int id, std::string
         _refTypeRule = id;
 }
 
-void OsmAnd::ObfRoutingRegionSection::read( gpb::io::CodedInputStream* cis, ObfRoutingRegionSection* section )
+void OsmAnd::ObfRoutingSection::read( gpb::io::CodedInputStream* cis, ObfRoutingSection* section )
 {
     int routeEncodingRule = 1;
     for(;;)
@@ -38,7 +42,7 @@ void OsmAnd::ObfRoutingRegionSection::read( gpb::io::CodedInputStream* cis, ObfR
         case 0:
             return;
         case OsmAndRoutingIndex::kNameFieldNumber:
-            cis->ReadString(&section->_name, std::numeric_limits<int>::max());
+            gpb::internal::WireFormatLite::ReadString(cis, &section->_name);
             break;
         case OsmAndRoutingIndex::kRulesFieldNumber:
             {
@@ -99,7 +103,7 @@ void OsmAnd::ObfRoutingRegionSection::read( gpb::io::CodedInputStream* cis, ObfR
     }
 }
 
-void OsmAnd::ObfRoutingRegionSection::readRouteEncodingRule( gpb::io::CodedInputStream* cis, ObfRoutingRegionSection* section, int id )
+void OsmAnd::ObfRoutingSection::readRouteEncodingRule( gpb::io::CodedInputStream* cis, ObfRoutingSection* section, int id )
 {
     std::string tags;
     std::string val;
@@ -112,10 +116,10 @@ void OsmAnd::ObfRoutingRegionSection::readRouteEncodingRule( gpb::io::CodedInput
             section->initRouteEncodingRule(id, tags, val);
             return;
         case OsmAndRoutingIndex_RouteEncodingRule::kValueFieldNumber:
-            cis->ReadString(&val, std::numeric_limits<int>::max());
+            gpb::internal::WireFormatLite::ReadString(cis, &val);
             break;
         case OsmAndRoutingIndex_RouteEncodingRule::kTagFieldNumber:
-            cis->ReadString(&tags, std::numeric_limits<int>::max());
+            gpb::internal::WireFormatLite::ReadString(cis, &tags);
             break;
         case OsmAndRoutingIndex_RouteEncodingRule::kIdFieldNumber:
             cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&id));
@@ -127,12 +131,12 @@ void OsmAnd::ObfRoutingRegionSection::readRouteEncodingRule( gpb::io::CodedInput
     }
 }
 
-OsmAnd::ObfRoutingRegionSection::Subregion::Subregion( ObfRoutingRegionSection* section )
+OsmAnd::ObfRoutingSection::Subregion::Subregion( ObfRoutingSection* section )
     : _section(section)
 {
 }
 
-OsmAnd::ObfRoutingRegionSection::Subregion* OsmAnd::ObfRoutingRegionSection::Subregion::read( gpb::io::CodedInputStream* cis, Subregion* current, Subregion* parent, int depth, bool readCoordinates )
+OsmAnd::ObfRoutingSection::Subregion* OsmAnd::ObfRoutingSection::Subregion::read( gpb::io::CodedInputStream* cis, Subregion* current, Subregion* parent, int depth, bool readCoordinates )
 {
     bool readChildren = depth != 0; 
 
@@ -198,7 +202,7 @@ OsmAnd::ObfRoutingRegionSection::Subregion* OsmAnd::ObfRoutingRegionSection::Sub
     }
 }
 
-OsmAnd::ObfRoutingRegionSection::TypeRule::TypeRule( std::string tag, std::string value )
+OsmAnd::ObfRoutingSection::TypeRule::TypeRule( std::string tag, std::string value )
     : _tag(tag)
     , _value(value)
 {
