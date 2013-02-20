@@ -1,9 +1,9 @@
 #include "ObfPoiSection.h"
 
-#include <QtEndian>
 #include <ObfReader.h>
 #include <google/protobuf/wire_format_lite.h>
 
+#include "Utilities.h"
 #include "../native/src/proto/osmand_odb.pb.h"
 
 OsmAnd::ObfPoiSection::ObfPoiSection()
@@ -71,19 +71,19 @@ void OsmAnd::ObfPoiSection::readPoiBoundariesIndex( gpb::io::CodedInputStream* c
             return;
         case OsmAndTileBox::kLeftFieldNumber:
             cis->ReadVarint32(&value);
-            //TODO:section->_leftLongitude = MapUtils.get31LongitudeX(value);
+            section->_leftLongitude = Utilities::get31LongitudeX(value);
             break;
         case OsmAndTileBox::kRightFieldNumber:
             cis->ReadVarint32(&value);
-            //TODO:section->_rightLongitude = MapUtils.get31LongitudeX(value);
+            section->_rightLongitude = Utilities::get31LongitudeX(value);
             break;
         case OsmAndTileBox::kTopFieldNumber:
             cis->ReadVarint32(&value);
-            //TODO:section->_topLatitude = MapUtils.get31LatitudeY(value);
+            section->_topLatitude = Utilities::get31LatitudeY(value);
             break;
         case OsmAndTileBox::kBottomFieldNumber:
             cis->ReadVarint32(&value);
-            //TODO:section->_bottomLatitude = MapUtils.get31LatitudeY(value);
+            section->_bottomLatitude = Utilities::get31LatitudeY(value);
             break;
         default:
             ObfReader::skipUnknownField(cis, tag);

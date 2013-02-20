@@ -62,10 +62,13 @@ namespace OsmAnd {
         std::list< std::shared_ptr<ObfTransportSection> > _transportSections;
         std::list< ObfSection* > _sections;
     protected:
+        static int readSInt32(gpb::io::CodedInputStream* cis);
+        static int readBigEndianInt(gpb::io::CodedInputStream* cis);
         static void skipUnknownField(gpb::io::CodedInputStream* cis, int tag);
     public:
         //! Constants
         enum {
+            //TODO: move to transport?
             TransportStopZoom = 24,
             ShiftCoordinates = 5,
         };

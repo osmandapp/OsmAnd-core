@@ -1,6 +1,5 @@
 #include "ObfAddressSection.h"
 
-#include <QtEndian>
 #include <ObfReader.h>
 #include <google/protobuf/wire_format_lite.h>
 
@@ -36,9 +35,7 @@ void OsmAnd::ObfAddressSection::read( gpb::io::CodedInputStream* cis, ObfAddress
             {
                 std::shared_ptr<CitiesBlock> citiesBlock(new CitiesBlock());
                 citiesBlock->_type = 1;//TODO: Victor, what this 1 means?
-                gpb::uint32 length;
-                cis->ReadRaw(&length, sizeof(length));
-                citiesBlock->_length = qFromBigEndian(length);
+                citiesBlock->_length = ObfReader::readBigEndianInt(cis);
                 citiesBlock->_offset = cis->TotalBytesRead();
                 CitiesBlock::read(cis, citiesBlock.get());
                 cis->Seek(citiesBlock->_offset + citiesBlock->_length);
@@ -48,9 +45,7 @@ void OsmAnd::ObfAddressSection::read( gpb::io::CodedInputStream* cis, ObfAddress
         case OsmAndAddressIndex::kNameIndexFieldNumber:
             {
                 section->_indexNameOffset = cis->TotalBytesRead();
-                int length;
-                cis->ReadRaw(&length, sizeof(length));
-                length = qFromBigEndian(length);
+                auto length = ObfReader::readBigEndianInt(cis);
                 cis->Seek(section->_indexNameOffset + length + 4);
             }
             break;

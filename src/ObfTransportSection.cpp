@@ -1,6 +1,5 @@
 #include "ObfTransportSection.h"
 
-#include <QtEndian>
 #include <ObfReader.h>
 #include <google/protobuf/wire_format_lite.h>
 
@@ -37,9 +36,7 @@ void OsmAnd::ObfTransportSection::read( gpb::io::CodedInputStream* cis, ObfTrans
             break;
         case OsmAndTransportIndex::kStopsFieldNumber:
             {
-                gpb::uint32 length;
-                cis->ReadRaw(&length, sizeof(length));
-                section->_stopsFileLength = qFromBigEndian(length);
+                section->_stopsFileLength = ObfReader::readBigEndianInt(cis);
                 section->_stopsFileOffset = cis->TotalBytesRead();
                 auto oldLimit = cis->PushLimit(section->_stopsFileLength);
                 readTransportBounds(cis, section);
@@ -79,16 +76,16 @@ void OsmAnd::ObfTransportSection::readTransportBounds( gpb::io::CodedInputStream
         case 0:
             return;
         case TransportStopsTree::kLeftFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->_left));
+            section->_left = ObfReader::readSInt32(cis);
             break;
         case TransportStopsTree::kRightFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->_right));
+            section->_right = ObfReader::readSInt32(cis);
             break;
         case TransportStopsTree::kTopFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->_top));
+            section->_top = ObfReader::readSInt32(cis);
             break;
         case TransportStopsTree::kBottomFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->_bottom));
+            section->_bottom = ObfReader::readSInt32(cis);
             break;
         default:
             ObfReader::skipUnknownField(cis, tag);

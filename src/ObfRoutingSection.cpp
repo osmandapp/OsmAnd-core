@@ -1,6 +1,5 @@
 #include "ObfRoutingSection.h"
 
-#include <QtEndian>
 #include <ObfReader.h>
 #include <google/protobuf/wire_format_lite.h>
 
@@ -37,7 +36,8 @@ void OsmAnd::ObfRoutingSection::read( gpb::io::CodedInputStream* cis, ObfRouting
     for(;;)
     {
         auto tag = cis->ReadTag();
-        switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        auto tfn = gpb::internal::WireFormatLite::GetTagFieldNumber(tag);
+        switch(tfn)
         {
         case 0:
             return;
@@ -58,13 +58,11 @@ void OsmAnd::ObfRoutingSection::read( gpb::io::CodedInputStream* cis, ObfRouting
         case OsmAndRoutingIndex::kBasemapBoxesFieldNumber:
             {
                 std::shared_ptr<Subregion> subregion(new Subregion(section));
-                gpb::uint32 length;
-                cis->ReadRaw(&length, sizeof(length));
-                subregion->_length = qFromBigEndian(length);
+                subregion->_length = ObfReader::readBigEndianInt(cis);
                 subregion->_offset = cis->TotalBytesRead();
                 auto oldLimit = cis->PushLimit(subregion->_length);
                 Subregion::read(cis, subregion.get(), nullptr, 0, true);
-                if(tag == OsmAndRoutingIndex::kRootBoxesFieldNumber)
+                if(tfn == OsmAndRoutingIndex::kRootBoxesFieldNumber)
                     section->_subregions.push_back(subregion);
                 else
                     section->_baseSubregions.push_back(subregion);
@@ -75,11 +73,9 @@ void OsmAnd::ObfRoutingSection::read( gpb::io::CodedInputStream* cis, ObfRouting
         case OsmAndRoutingIndex::kBaseBorderBoxFieldNumber:
         case OsmAndRoutingIndex::kBorderBoxFieldNumber:
             {
-                gpb::uint32 length;
-                cis->ReadRaw(&length, sizeof(length));
-                length = qFromBigEndian(length);
+                auto length = ObfReader::readBigEndianInt(cis);
                 auto offset = cis->TotalBytesRead();
-                if(tag == OsmAndRoutingIndex::kBorderBoxFieldNumber)
+                if(tfn == OsmAndRoutingIndex::kBorderBoxFieldNumber)
                 {
                     section->_borderBoxLength = length;
                     section->_borderBoxPointer = offset;
@@ -150,38 +146,37 @@ OsmAnd::ObfRoutingSection::Subregion* OsmAnd::ObfRoutingSection::Subregion::read
         case 0:
             return current;
         case OsmAndRoutingIndex_RouteDataBox::kLeftFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&value));
+            value = ObfReader::readSInt32(cis);
             if (readCoordinates)
                 current->_left = value + (parent ? parent->_left : 0);
-
             break;
         case OsmAndRoutingIndex_RouteDataBox::kRightFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&value));
+            value = ObfReader::readSInt32(cis);
             if (readCoordinates)
                 current->_right = value + (parent ? parent->_right : 0);
             break;
         case OsmAndRoutingIndex_RouteDataBox::kTopFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&value));
+            value = ObfReader::readSInt32(cis);
             if (readCoordinates)
                 current->_top = value + (parent ? parent->_top : 0);
             break;
         case OsmAndRoutingIndex_RouteDataBox::kBottomFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&value));
+            value = ObfReader::readSInt32(cis);
             if (readCoordinates)
                 current->_bottom = value + (parent ? parent->_bottom : 0);
             break;
         case OsmAndRoutingIndex_RouteDataBox::kShiftToDataFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&current->_shiftToData));
-            if(!readChildren)
-                readChildren = true;
+            {
+                current->_shiftToData = ObfReader::readBigEndianInt(cis);
+                if(!readChildren)
+                    readChildren = true;
+            }
             break;
         case OsmAndRoutingIndex_RouteDataBox::kBoxesFieldNumber:
             if(readChildren)
             {
                 std::shared_ptr< Subregion > subregion(new Subregion(current->_section));
-                gpb::uint32 length;
-                cis->ReadRaw(&length, sizeof(length));
-                subregion->_length = qFromBigEndian(length);
+                subregion->_length = ObfReader::readBigEndianInt(cis);
                 subregion->_offset = cis->TotalBytesRead();
                 auto oldLimit = cis->PushLimit(subregion->_length);
                 Subregion::read(cis, subregion.get(), current, depth - 1, true);

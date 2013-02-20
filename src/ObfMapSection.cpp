@@ -2,7 +2,6 @@
 
 #include <ObfReader.h>
 #include <google/protobuf/wire_format_lite.h>
-#include <QtEndian>
 
 #include "../native/src/proto/osmand_odb.pb.h"
 
@@ -110,30 +109,31 @@ void OsmAnd::ObfMapSection::read( gpb::io::CodedInputStream* cis, ObfMapSection*
             gpb::internal::WireFormatLite::ReadString(cis, &section->_name);
             break;
         case OsmAndMapIndex::kRulesFieldNumber:
-            if (onlyInitEncodingRules) {
+            if (onlyInitEncodingRules)
+            {
                 gpb::uint32 len;
                 cis->ReadVarint32(&len);
                 auto oldLimit = cis->PushLimit(len);
                 readMapEncodingRule(cis, section, defaultId++);
                 cis->PopLimit(oldLimit);
-            } else {
-                ObfReader::skipUnknownField(cis, tag);
             }
+            else
+                ObfReader::skipUnknownField(cis, tag);
             break;
         case OsmAndMapIndex::kLevelsFieldNumber:
             {
-                gpb::uint32 len;
-                cis->ReadVarint32(&len);
+                auto length = ObfReader::readBigEndianInt(cis);
                 auto offset = cis->TotalBytesRead();
-                if (!onlyInitEncodingRules) {
-                    auto oldLimit = cis->PushLimit(len);
+                if (!onlyInitEncodingRules)
+                {
+                    auto oldLimit = cis->PushLimit(length);
                     std::shared_ptr<MapRoot> mapRoot(readMapLevel(cis, new MapRoot(), false));
-                    mapRoot->_length = len;
+                    mapRoot->_length = length;
                     mapRoot->_offset = offset;
                     section->_levels.push_back(mapRoot);
                     cis->PopLimit(oldLimit);
                 }
-                cis->Seek(offset + len);
+                cis->Seek(offset + length);
             }
             break;
         default:
@@ -205,9 +205,7 @@ OsmAnd::ObfMapSection::MapRoot* OsmAnd::ObfMapSection::readMapLevel( gpb::io::Co
             break;
         case OsmAndMapIndex_MapRootLevel::kBoxesFieldNumber:
             {
-                int length;
-                cis->ReadRaw(&length, sizeof(length));
-                length = qFromBigEndian(length);
+                auto length = ObfReader::readBigEndianInt(cis);
                 auto offset = cis->TotalBytesRead();
                 if (initSubtrees)
                 {
@@ -242,20 +240,16 @@ void OsmAnd::ObfMapSection::readMapTreeBounds( gpb::io::CodedInputStream* cis, M
         case 0:
             return;
         case OsmAndMapIndex_MapDataBox::kBottomFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&tree->_bottom));
-            tree->_bottom += bottom;
+            tree->_bottom = ObfReader::readSInt32(cis) + bottom;
             break;
         case OsmAndMapIndex_MapDataBox::kTopFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&tree->_top));
-            tree->_top += top;
+            tree->_top = ObfReader::readSInt32(cis) + top;
             break;
         case OsmAndMapIndex_MapDataBox::kLeftFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&tree->_left));
-            tree->_left += left;
+            tree->_left = ObfReader::readSInt32(cis) + left;
             break;
         case OsmAndMapIndex_MapDataBox::kRightFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&tree->_right));
-            tree->_right += right;
+            tree->_right = ObfReader::readSInt32(cis) + right;
             break;   
         case OsmAndMapIndex_MapDataBox::kOceanFieldNumber:
             {
@@ -265,11 +259,7 @@ void OsmAnd::ObfMapSection::readMapTreeBounds( gpb::io::CodedInputStream* cis, M
             }
             break;
         case OsmAndMapIndex_MapDataBox::kShiftToMapDataFieldNumber:
-            {
-                int value;
-                cis->ReadRaw(&value, sizeof(value));
-                tree->_mapDataBlock = value + tree->_offset;
-            }
+            tree->_mapDataBlock = ObfReader::readBigEndianInt(cis) + tree->_offset;
             break;
 
         default:
