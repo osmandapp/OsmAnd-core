@@ -2,6 +2,8 @@
 
 #include <ObfReader.h>
 #include <google/protobuf/wire_format_lite.h>
+#include <string>
+#include <string.h>
 
 #include "OBF.pb.h"
 
