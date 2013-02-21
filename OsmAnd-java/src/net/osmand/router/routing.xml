@@ -161,8 +161,12 @@
 			<specialization input="avoid_motorway" speed="0"/>
 		</road>
 		
-		<road tag="highway" value="trunk" speed="16" priority="0.6" />
-		<road tag="highway" value="trunk_link" speed="16" priority="0.7" />
+		<road tag="highway" value="trunk" speed="16" priority="0.4" >
+			<specialization input="avoid_motorway" speed="0"/>
+		</road>
+		<road tag="highway" value="trunk_link" speed="16" priority="0.4">
+			<specialization input="avoid_motorway" speed="0"/>
+		</road>
 		<road tag="highway" value="primary" speed="16" priority="0.8" />
 		<road tag="highway" value="primary_link" speed="16" priority="0.8" />
 		<road tag="highway" value="secondary" speed="16" priority="1" />
