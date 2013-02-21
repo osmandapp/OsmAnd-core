@@ -67,6 +67,8 @@ public class OsmandSettings {
 	private Object defaultProfilePreferences;
 	private Object profilePreferences;
 	private ApplicationMode currentMode;
+	private Map<String, OsmandPreference<?>> registeredPreferences = 
+			new LinkedHashMap<String, OsmandSettings.OsmandPreference<?>>();
 	
 	// cache variables
 	private long lastTimeInternetConnectionChecked = 0;
@@ -381,6 +383,25 @@ public class OsmandSettings {
 
 	}
 	
+	private class LongPreference extends CommonPreference<Long> {
+
+
+		private LongPreference(String id, long defaultValue) {
+			super(id, defaultValue);
+		}
+		
+		@Override
+		protected Long getValue(Object prefs, Long defaultValue) {
+			return settingsAPI.getLong(prefs, getId(), defaultValue);
+		}
+
+		@Override
+		protected boolean setValue(Object prefs, Long val) {
+			return settingsAPI.edit( prefs).putLong(getId(), val).commit();
+		}
+
+	}
+	
 	private class FloatPreference extends CommonPreference<Float> {
 
 
@@ -447,6 +468,7 @@ public class OsmandSettings {
 		}
 
 	}
+	///////////// PREFERENCES classes ////////////////
 	
 	// this value string is synchronized with settings_pref.xml preference name
 	private final OsmandPreference<String> ENABLED_PLUGINS = new StringPreference("enabled_plugins", "").makeGlobal();
@@ -481,7 +503,46 @@ public class OsmandSettings {
 		}
 	}
 	
-	/////////////// PREFERENCES classes ////////////////
+
+	@SuppressWarnings("unchecked")
+	public CommonPreference<Boolean> registerBooleanPreference(String id, boolean defValue) {
+		if(registeredPreferences.containsKey(id)) {
+			return (CommonPreference<Boolean>) registeredPreferences.get(id);
+		}
+		BooleanPreference p = new BooleanPreference(id, defValue);
+		registeredPreferences.put(id, p);
+		return p;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public CommonPreference<Integer> registerIntPreference(String id, int defValue) {
+		if(registeredPreferences.containsKey(id)) {
+			return (CommonPreference<Integer>) registeredPreferences.get(id);
+		}
+		IntPreference p = new IntPreference(id, defValue);
+		registeredPreferences.put(id, p);
+		return p;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public CommonPreference<Long> registerLongPreference(String id, long defValue) {
+		if(registeredPreferences.containsKey(id)) {
+			return (CommonPreference<Long>) registeredPreferences.get(id);
+		}
+		LongPreference p = new LongPreference(id, defValue);
+		registeredPreferences.put(id, p);
+		return p;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public CommonPreference<Float> registerFloatPreference(String id, float defValue) {
+		if(registeredPreferences.containsKey(id)) {
+			return (CommonPreference<Float>) registeredPreferences.get(id);
+		}
+		FloatPreference p = new FloatPreference(id, defValue);
+		registeredPreferences.put(id, p);
+		return p;
+	}
 	
 	// this value string is synchronized with settings_pref.xml preference name
 	public final CommonPreference<Boolean> USE_INTERNET_TO_DOWNLOAD_TILES = new BooleanPreference("use_internet_to_download_tiles", true).makeGlobal().cache();
@@ -641,8 +702,6 @@ public class OsmandSettings {
 
 	// this value string is synchronized with settings_pref.xml preference name
 	public final OsmandPreference<Boolean> SHOW_OSM_BUGS = new BooleanPreference("show_osm_bugs", false).makeGlobal();
-	
-	public final OsmandPreference<Boolean> SHOW_RECORDINGS = new BooleanPreference("show_recordings", true).makeGlobal();
 	
 	public final OsmandPreference<String> MAP_INFO_CONTROLS = new StringPreference("map_info_controls", "").makeProfile();
 	
@@ -1123,65 +1182,7 @@ public class OsmandSettings {
 	/**
 	 * the location of a parked car
 	 */
-	public final static String PARKING_POINT_LAT = "parking_point_lat"; //$NON-NLS-1$
-	public final static String PARKING_POINT_LON = "parking_point_lon"; //$NON-NLS-1$
-	public final static String PARKING_TYPE = "parking_type"; //$NON-NLS-1$
-	public final static String PARKING_TIME = "parking_limit_time"; //$//$NON-NLS-1$
-	public final static String PARKING_START_TIME = "parking_time"; //$//$NON-NLS-1$
-	public final static String PARKING_EVENT_ADDED = "parking_event_added"; //$//$NON-NLS-1$
-	
-	public LatLon getParkingPosition() {
-		float lat = settingsAPI.getFloat(globalPreferences,PARKING_POINT_LAT, 0);
-		float lon = settingsAPI.getFloat(globalPreferences,PARKING_POINT_LON, 0);
-		if (lat == 0 && lon == 0) {
-			return null;
-		}
-		return new LatLon(lat, lon);
-	}
-	
-	public boolean getParkingType() {
-		return settingsAPI.getBoolean(globalPreferences,PARKING_TYPE, false);
-	}
-	
-	public boolean isParkingEventAdded() {
-		return settingsAPI.getBoolean(globalPreferences,PARKING_EVENT_ADDED, false);
-	}
-	
-	public boolean addOrRemoveParkingEvent(boolean added) {
-		return settingsAPI.edit(globalPreferences).putBoolean(PARKING_EVENT_ADDED, added).commit();
-	}
-	
-	public long getParkingTime() {
-		return settingsAPI.getLong(globalPreferences,PARKING_TIME, -1);
-	}
-
-	public long getStartParkingTime() {
-		return settingsAPI.getLong(globalPreferences,PARKING_START_TIME, -1);
-	}
-	
-	public boolean clearParkingPosition() {
-		return settingsAPI.edit(globalPreferences).remove(PARKING_POINT_LAT).remove(PARKING_POINT_LON).remove(PARKING_TYPE)
-				.remove(PARKING_TIME).remove(PARKING_EVENT_ADDED).remove(PARKING_START_TIME).commit();
-	}
-
-	public boolean setParkingPosition(double latitude, double longitude) {
-		return settingsAPI.edit(globalPreferences).putFloat(PARKING_POINT_LAT, (float) latitude).putFloat(PARKING_POINT_LON, (float) longitude).commit();
-	}
-	
-	public boolean setParkingType(boolean limited) {
-		if (!limited)
-			settingsAPI.edit(globalPreferences).remove(PARKING_TIME).commit();
-		return settingsAPI.edit(globalPreferences).putBoolean(PARKING_TYPE, limited).commit();
-	}
-	
-	public boolean setParkingTime(long timeInMillis) {		
-		return settingsAPI.edit(globalPreferences).putLong(PARKING_TIME, timeInMillis).commit();
-	}
-	
-	public boolean setParkingStartTime(long timeInMillis) {		
-		return settingsAPI.edit(globalPreferences).putLong(PARKING_START_TIME, timeInMillis).commit();
-	}
-	
+		
 	public static final String LAST_SEARCHED_REGION = "last_searched_region"; //$NON-NLS-1$
 	public static final String LAST_SEARCHED_CITY = "last_searched_city"; //$NON-NLS-1$
 	public static final String LAST_SEARCHED_CITY_NAME = "last_searched_city_name"; //$NON-NLS-1$
@@ -1410,18 +1411,6 @@ public class OsmandSettings {
 	public final CommonPreference<Boolean> SHOW_RULER = 
 			new BooleanPreference("show_ruler", true).makeProfile().cache();
 	
-	public final CommonPreference<Boolean> AV_EXTERNAL_RECORDER = new BooleanPreference("av_external_recorder", false).makeGlobal();
-	
-	public final CommonPreference<Boolean> AV_EXTERNAL_PHOTO_CAM = new BooleanPreference("av_external_cam", true).makeGlobal();
-	
-	public static final int VIDEO_OUTPUT_MP4 = 0;
-	public static final int VIDEO_OUTPUT_3GP = 1;
-	public final CommonPreference<Integer> AV_VIDEO_FORMAT = new IntPreference("av_video_format", VIDEO_OUTPUT_MP4).makeGlobal();
-	
-	public static final int AV_DEFAULT_ACTION_AUDIO = 0;
-	public static final int AV_DEFAULT_ACTION_VIDEO = 1;
-	public static final int AV_DEFAULT_ACTION_TAKEPICTURE = 2;
-	public final CommonPreference<Integer> AV_DEFAULT_ACTION = new IntPreference("av_default_action", AV_DEFAULT_ACTION_AUDIO).makeGlobal();
 	
 
 	public final OsmandPreference<Integer> NUMBER_OF_FREE_DOWNLOADS = new IntPreference("free_downloads_v1", 0).makeGlobal();
