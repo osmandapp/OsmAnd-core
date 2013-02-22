@@ -43,6 +43,8 @@ namespace OsmAnd {
             int64_t _id;
             QString _name;
             QString _latinName;
+            int _xTile24;
+            int _yTile24;
             double _longitude;
             double _latitude;
             unsigned int _offset;
@@ -51,6 +53,11 @@ namespace OsmAnd {
             {
                 QString _name;
                 QString _latinName;
+
+                int _xTile24;
+                int _yTile24;
+                double _longitude;
+                double _latitude;
             };
         };
 

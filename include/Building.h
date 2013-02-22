@@ -34,6 +34,16 @@ namespace OsmAnd {
 
         class OSMAND_CORE_API Building : public MapObject
         {
+        public:
+            enum Interpolation 
+            {
+                Invalid = 0,
+                All = -1,
+                Even = -2,
+                Odd = -3,
+                Alphabetic = -4
+            };
+
         private:
         protected:
         public:
@@ -45,6 +55,13 @@ namespace OsmAnd {
             QString _latinName;
             QString _name2; // WTF?
             QString _latinName2; // WTF?
+            QString _postcode;
+            int _xTile24;
+            int _yTile24;
+            double _longitude;
+            double _latitude;
+            Interpolation _interpolation;
+            uint32_t _interpolationInterval;
             unsigned int _offset;
         };
 

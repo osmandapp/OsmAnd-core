@@ -94,7 +94,7 @@ void OsmAnd::ObfAddressSection::loadStreetGroups( std::list< std::shared_ptr<Mod
 
 void OsmAnd::ObfAddressSection::loadStreetsFromGroup( ObfReader* reader, Model::StreetGroup* group, std::list< std::shared_ptr<Model::Street> >& list )
 {
-    //checkAddressIndex(c.getFileOffset());
+    //TODO:checkAddressIndex(c.getFileOffset());
     auto cis = reader->_codedInputStream;
     cis->Seek(group->_offset);
     gpb::uint32 length;
@@ -117,18 +117,18 @@ void OsmAnd::ObfAddressSection::readStreetsFromGroup( ObfReader* reader, Model::
             return;
         case OBF::CityBlockIndex::kStreetsFieldNumber:
             {
-                std::shared_ptr<Model::Street> street(new Model::Street(/*group*/));
+                std::shared_ptr<Model::Street> street(new Model::Street(/*TODO:group*/));
                 street->_offset = cis->CurrentPosition();
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
                 readStreet(reader, group, street.get());
-                if(/*resultMatcher == null || resultMatcher.publish(s)*/true)
+                if(/*TODO:resultMatcher == null || resultMatcher.publish(s)*/true)
                 {
                     //TODO:group->registerStreet(s);
                     list.push_back(street);
                 }
-                /*if(resultMatcher != null && resultMatcher.isCancelled()) {
+                /*TODO:if(resultMatcher != null && resultMatcher.isCancelled()) {
                     codedIS.skipRawBytes(codedIS.getBytesUntilLimit());
                 }*/
                 cis->PopLimit(oldLimit);
@@ -176,15 +176,15 @@ void OsmAnd::ObfAddressSection::readStreet( ObfReader* reader, Model::StreetGrou
         case OBF::StreetIndex::kXFieldNumber:
             {
                 auto dx = ObfReader::readSInt32(cis);
-                auto x = (Utilities::get31TileNumberX(group->_longitude) >> 7) + dx;
-                street->_longitude = Utilities::getLongitudeFromTile(24, x);
+                street->_xTile24 = (Utilities::get31TileNumberX(group->_longitude) >> 7) + dx;
+                street->_longitude = Utilities::getLongitudeFromTile(24, street->_xTile24);
             }
             break;
         case OBF::StreetIndex::kYFieldNumber:
             {
                 auto dy = ObfReader::readSInt32(cis);
-                auto y = (Utilities::get31TileNumberY(group->_latitude) >> 7) + dy;
-                street->_latitude = Utilities::getLatitudeFromTile(24, y);
+                street->_yTile24 = (Utilities::get31TileNumberY(group->_latitude) >> 7) + dy;
+                street->_latitude = Utilities::getLatitudeFromTile(24, street->_yTile24);
             }
             break;
         case OBF::StreetIndex::kIntersectionsFieldNumber:
@@ -204,7 +204,7 @@ void OsmAnd::ObfAddressSection::readStreet( ObfReader* reader, Model::StreetGrou
 
 void OsmAnd::ObfAddressSection::loadBuildingsFromStreet( ObfReader* reader, Model::Street* street, std::list< std::shared_ptr<Model::Building> >& list )
 {
-    //checkAddressIndex(s.getFileOffset());
+    //TODO:checkAddressIndex(s.getFileOffset());
     auto cis = reader->_codedInputStream;
     cis->Seek(street->_offset);
     gpb::uint32 length;
@@ -240,10 +240,10 @@ void OsmAnd::ObfAddressSection::readBuildingsFromStreet( ObfReader* reader, Mode
                 auto oldLimit = cis->PushLimit(length);
                 std::shared_ptr<Model::Building> building(new Model::Building());
                 building->_offset = offset;
-                readBuilding(reader, building.get());
-                if (/*postcodeFilter == null || postcodeFilter.equalsIgnoreCase(b.getPostcode())*/true)
+                readBuilding(reader, street, building.get());
+                if (/*TODO:postcodeFilter == null || postcodeFilter.equalsIgnoreCase(b.getPostcode())*/true)
                 {
-                    if (/*buildingsMatcher == null || buildingsMatcher.publish(b)*/true)
+                    if (/*TODO:buildingsMatcher == null || buildingsMatcher.publish(b)*/true)
                     {
                         //s.registerBuilding(b);
                         list.push_back(building);
@@ -259,7 +259,7 @@ void OsmAnd::ObfAddressSection::readBuildingsFromStreet( ObfReader* reader, Mode
     }
 }
 
-void OsmAnd::ObfAddressSection::readBuilding( ObfReader* reader, Model::Building* building )
+void OsmAnd::ObfAddressSection::readBuilding( ObfReader* reader, Model::Street* street, Model::Building* building )
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -269,7 +269,6 @@ void OsmAnd::ObfAddressSection::readBuilding( ObfReader* reader, Model::Building
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
-            //b.setLocation(MapUtils.getLatitudeFromTile(24, y), MapUtils.getLongitudeFromTile(24, x));
             if(building->_latinName.isEmpty())
                 building->_latinName = reader->transliterate(building->_name);
             if(building->_latinName2.isEmpty())
@@ -306,23 +305,36 @@ void OsmAnd::ObfAddressSection::readBuilding( ObfReader* reader, Model::Building
                 building->_name2 = QString::fromStdString(name);
             }
             break;
-        /*case OsmandOdb.BuildingIndex.INTERPOLATION_FIELD_NUMBER :
-            int sint = codedIS.readSInt32();
-            if(sint > 0) {
-                b.setInterpolationInterval(sint);
-            } else {
-                b.setInterpolationType(BuildingInterpolation.fromValue(sint));
+        case OBF::BuildingIndex::kInterpolationFieldNumber:
+            {
+                auto value = ObfReader::readSInt32(cis);
+                if(value > 0)
+                    building->_interpolationInterval = value;
+                else
+                    building->_interpolation = static_cast<Model::Building::Interpolation>(value);
             }
             break;
-        case OsmandOdb.BuildingIndex.X_FIELD_NUMBER :
-            x =  codedIS.readSInt32() + street24X;
+        case OBF::BuildingIndex::kXFieldNumber:
+            {
+                auto dx = ObfReader::readSInt32(cis);
+                building->_xTile24 = street->_xTile24 + dx;
+                building->_longitude = Utilities::getLongitudeFromTile(24, building->_xTile24);
+            }
             break;
-        case OsmandOdb.BuildingIndex.Y_FIELD_NUMBER :
-            y =  codedIS.readSInt32() + street24Y;
+        case OBF::BuildingIndex::kYFieldNumber:
+            {
+                auto dy = ObfReader::readSInt32(cis);
+                building->_yTile24 = street->_yTile24 + dy;
+                street->_latitude = Utilities::getLatitudeFromTile(24, building->_yTile24);
+            }
             break;
-        case OsmandOdb.BuildingIndex.POSTCODE_FIELD_NUMBER :
-            b.setPostcode(codedIS.readString());
-            break;*/
+        case OBF::BuildingIndex::kPostcodeFieldNumber:
+            {
+                std::string postcode;
+                gpb::internal::WireFormatLite::ReadString(cis, &postcode);
+                building->_postcode = QString::fromStdString(postcode);
+            }
+            break;
         default:
             ObfReader::skipUnknownField(cis, tag);
             break;
@@ -332,7 +344,7 @@ void OsmAnd::ObfAddressSection::readBuilding( ObfReader* reader, Model::Building
 
 void OsmAnd::ObfAddressSection::loadIntersectionsFromStreet( ObfReader* reader, Model::Street* street, std::list< std::shared_ptr<Model::Street::IntersectedStreet> >& list )
 {
-    //checkAddressIndex(s.getFileOffset());
+    //TODO:checkAddressIndex(s.getFileOffset());
     auto cis = reader->_codedInputStream;
     cis->Seek(street->_offset);
     gpb::uint32 length;
@@ -359,7 +371,7 @@ void OsmAnd::ObfAddressSection::readIntersectionsFromStreet( ObfReader* reader, 
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
                 std::shared_ptr<Model::Street::IntersectedStreet> intersectedStreet(new Model::Street::IntersectedStreet());
-                readIntersectedStreet(reader, intersectedStreet.get());
+                readIntersectedStreet(reader, street, intersectedStreet.get());
                 list.push_back(intersectedStreet);
                 cis->PopLimit(oldLimit);
             }
@@ -378,7 +390,7 @@ void OsmAnd::ObfAddressSection::readIntersectionsFromStreet( ObfReader* reader, 
     }
 }
 
-void OsmAnd::ObfAddressSection::readIntersectedStreet( ObfReader* reader, Model::Street::IntersectedStreet* street )
+void OsmAnd::ObfAddressSection::readIntersectedStreet( ObfReader* reader, Model::Street* street, Model::Street::IntersectedStreet* intersection )
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -388,30 +400,37 @@ void OsmAnd::ObfAddressSection::readIntersectedStreet( ObfReader* reader, Model:
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
-            //s.setLocation(MapUtils.getLatitudeFromTile(24, y), MapUtils.getLongitudeFromTile(24, x));
-            if(street->_latinName.isEmpty())
-                street->_latinName = reader->transliterate(street->_name);
+            if(intersection->_latinName.isEmpty())
+                intersection->_latinName = reader->transliterate(intersection->_name);
             return;
         case OBF::StreetIntersection::kNameEnFieldNumber:
             {
                 std::string latinName;
                 gpb::internal::WireFormatLite::ReadString(cis, &latinName);
-                street->_latinName = QString::fromStdString(latinName);
+                intersection->_latinName = QString::fromStdString(latinName);
             }
             break;
         case OBF::StreetIntersection::kNameFieldNumber:
             {
                 std::string name;
                 gpb::internal::WireFormatLite::ReadString(cis, &name);
-                street->_name = QString::fromStdString(name);
+                intersection->_name = QString::fromStdString(name);
             }
             break;
-        /*case OBF::StreetIntersection.INTERSECTEDX_FIELD_NUMBER :
-            x =  codedIS.readSInt32() + street24X;
+        case OBF::StreetIntersection::kIntersectedXFieldNumber:
+            {
+                auto dx = ObfReader::readSInt32(cis);
+                intersection->_xTile24 = street->_xTile24 + dx;
+                intersection->_longitude = Utilities::getLongitudeFromTile(24, intersection->_xTile24);
+            }
             break;
-        case OsmandOdb.StreetIntersection.INTERSECTEDY_FIELD_NUMBER :
-            y =  codedIS.readSInt32() + street24Y;
-            break;*/
+        case OBF::StreetIntersection::kIntersectedYFieldNumber:
+            {
+                auto dy = ObfReader::readSInt32(cis);
+                intersection->_yTile24 = street->_yTile24 + dy;
+                street->_latitude = Utilities::getLatitudeFromTile(24, intersection->_yTile24);
+            }
+            break;
         default:
             ObfReader::skipUnknownField(cis, tag);
             break;
@@ -554,10 +573,6 @@ std::shared_ptr<OsmAnd::Model::StreetGroup> OsmAnd::ObfAddressSection::AddressBl
                 } else if(nameMatcher.matches(Junidecode.unidecode(name))){
                 englishNameMatched = true;
                 }
-                }
-
-                if(c == null) {
-                c = City.createPostcode(name); 
                 }
                 */
 

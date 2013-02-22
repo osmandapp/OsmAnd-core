@@ -95,9 +95,9 @@ namespace OsmAnd {
         static void readStreetsFromGroup(ObfReader* reader, Model::StreetGroup* group, std::list< std::shared_ptr<Model::Street> >& list);
         static void readStreet(ObfReader* reader, Model::StreetGroup* group, Model::Street* street);
         static void readBuildingsFromStreet(ObfReader* reader, Model::Street* street, std::list< std::shared_ptr<Model::Building> >& list);
-        static void readBuilding(ObfReader* reader, Model::Building* building);
+        static void readBuilding(ObfReader* reader, Model::Street* street, Model::Building* building);
         static void readIntersectionsFromStreet(ObfReader* reader, Model::Street* street, std::list< std::shared_ptr<Model::Street::IntersectedStreet> >& list);
-        static void readIntersectedStreet(ObfReader* reader, Model::Street::IntersectedStreet* street);
+        static void readIntersectedStreet(ObfReader* reader, Model::Street* street, Model::Street::IntersectedStreet* intersection);
 
     private:
 
