@@ -147,8 +147,6 @@ void OsmAnd::ObfAddressSection::readStreet( ObfReader* reader, Model::StreetGrou
 {
     auto cis = reader->_codedInputStream.get();
 
-    const auto x24 = Utilities::get31TileNumberX(group->_longitude) >> 7;
-    const auto y24 = Utilities::get31TileNumberY(group->_latitude) >> 7;
     for(;;)
     {
         auto tag = cis->ReadTag();
@@ -178,13 +176,15 @@ void OsmAnd::ObfAddressSection::readStreet( ObfReader* reader, Model::StreetGrou
         case OBF::StreetIndex::kXFieldNumber:
             {
                 auto dx = ObfReader::readSInt32(cis);
-                street->_longitude = group->_longitude + dx;
+                auto x = (Utilities::get31TileNumberX(group->_longitude) >> 7) + dx;
+                street->_longitude = Utilities::getLongitudeFromTile(24, x);
             }
             break;
         case OBF::StreetIndex::kYFieldNumber:
             {
                 auto dy = ObfReader::readSInt32(cis);
-                street->_latitude = group->_latitude + dy;
+                auto y = (Utilities::get31TileNumberY(group->_latitude) >> 7) + dy;
+                street->_latitude = Utilities::getLatitudeFromTile(24, y);
             }
             break;
         case OBF::StreetIndex::kIntersectionsFieldNumber:

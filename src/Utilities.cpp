@@ -1,22 +1,22 @@
 #include "Utilities.h"
 
+#include <stdint.h>
 #include <limits>
 #include <cmath>
 
 OSMAND_CORE_API const double OsmAnd::Utilities::pi = 3.14159265358979323846;
+const int64_t l = 1UL << 31;
 
 OSMAND_CORE_API int OSMAND_CORE_CALL OsmAnd::Utilities::get31TileNumberX( double longitude )
 {
     longitude = checkLongitude(longitude);
-    long l = 1l << 31;
-    return (int)((longitude + 180.)/360. * l);
+    return (int)((longitude + 180)/360 * l);
 }
 
 OSMAND_CORE_API int OSMAND_CORE_CALL OsmAnd::Utilities::get31TileNumberY( double latitude )
 {
     latitude = checkLatitude(latitude);
     double eval = log( tan(toRadians(latitude)) + 1.0/cos(toRadians(latitude)) );
-    long l = 1l << 31;
     if(eval > pi)
         eval = pi;
     return  (int) ((1. - eval / pi) / 2. * l);
