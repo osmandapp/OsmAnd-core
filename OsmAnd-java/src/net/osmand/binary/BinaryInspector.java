@@ -460,8 +460,8 @@ public class BinaryInspector {
 			        }
 					println(":");
 					for (Street t : streets) {
-						/*if (!verbose.contains(t))
-							continue;*/
+						if (!verbose.contains(t))
+							continue;
 						
 						index.preloadBuildings(t, null);
 						final List<Building> buildings = t.getBuildings();

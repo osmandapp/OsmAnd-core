@@ -43,6 +43,8 @@ namespace OsmAnd {
             int64_t _id;
             QString _name;
             QString _latinName;
+            double _longitude;
+            double _latitude;
             unsigned int _offset;
 
             struct IntersectedStreet

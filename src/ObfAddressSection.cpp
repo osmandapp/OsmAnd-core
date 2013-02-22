@@ -149,7 +149,6 @@ void OsmAnd::ObfAddressSection::readStreet( ObfReader* reader, Model::StreetGrou
 
     const auto x24 = Utilities::get31TileNumberX(group->_longitude) >> 7;
     const auto y24 = Utilities::get31TileNumberY(group->_latitude) >> 7;
-    //boolean loadLocation = city24X != 0 || city24Y != 0;
     for(;;)
     {
         auto tag = cis->ReadTag();
@@ -176,25 +175,18 @@ void OsmAnd::ObfAddressSection::readStreet( ObfReader* reader, Model::StreetGrou
                 street->_name = QString::fromStdString(name);
             }
             break;
-        /*TODO:case OBF::StreetIndex::X_FIELD_NUMBER :
+        case OBF::StreetIndex::kXFieldNumber:
             {
-
-            int sx = codedIS.readSInt32();
-            if(loadLocation){
-                x =  sx + city24X;
-            } else {
-                x = (int) MapUtils.getTileNumberX(24, s.getLocation().getLongitude());
-            }
+                auto dx = ObfReader::readSInt32(cis);
+                street->_longitude = group->_longitude + dx;
             }
             break;
-        case OBF::StreetIndex::Y_FIELD_NUMBER :
-            int sy = codedIS.readSInt32();
-            if(loadLocation){
-                y =  sy + city24Y;
-            } else {
-                y = (int) MapUtils.getTileNumberY(24, s.getLocation().getLatitude());
+        case OBF::StreetIndex::kYFieldNumber:
+            {
+                auto dy = ObfReader::readSInt32(cis);
+                street->_latitude = group->_latitude + dy;
             }
-            break;*/
+            break;
         case OBF::StreetIndex::kIntersectionsFieldNumber:
         case OBF::StreetIndex::kBuildingsFieldNumber:
             {
@@ -218,7 +210,6 @@ void OsmAnd::ObfAddressSection::loadBuildingsFromStreet( ObfReader* reader, Mode
     gpb::uint32 length;
     cis->ReadVarint32(&length);
     auto oldLimit = cis->PushLimit(length);
-    //addressAdapter.readStreet(s, resultMatcher, true, 0, 0, city != null  && city.isPostcode() ? city.getName() : null);
     readBuildingsFromStreet(reader, street, list);
     cis->PopLimit(oldLimit);
 }
