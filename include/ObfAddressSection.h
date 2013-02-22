@@ -33,6 +33,9 @@
 #include <string>
 #include <google/protobuf/io/coded_stream.h>
 #include <ObfSection.h>
+#include <StreetGroup.h>
+#include <Street.h>
+#include <Building.h>
 #include <OBF.pb.h>
 
 namespace OsmAnd {
@@ -46,25 +49,34 @@ namespace OsmAnd {
     {
         struct OSMAND_CORE_API AddressBlocksSection : public ObfSection
         {
-            typedef OBF::OsmAndAddressIndex_CitiesIndex_CitiesType Type;
+            typedef OBF::OsmAndAddressIndex_CitiesIndex_CitiesType _Type;
+            enum Type : int
+            {
+                CitiesOrTowns = _Type::OsmAndAddressIndex_CitiesIndex_CitiesType_CitiesOrTowns,
+                Villages = _Type::OsmAndAddressIndex_CitiesIndex_CitiesType_Villages,
+                Postcodes = _Type::OsmAndAddressIndex_CitiesIndex_CitiesType_Postcodes,
+            };
 
-            AddressBlocksSection();
+            AddressBlocksSection(class ObfReader* owner);
             virtual ~AddressBlocksSection();
 
             Type _type;
+
+            void loadSteetGroupsFromBlock(std::list< std::shared_ptr<Model::StreetGroup> >& list);
         protected:
-            static void read(gpb::io::CodedInputStream* cis, AddressBlocksSection* section);
+            static void read(ObfReader* reader, AddressBlocksSection* section);
+            static void readStreetGroups(ObfReader* reader, AddressBlocksSection* section, std::list< std::shared_ptr<Model::StreetGroup> >& list);
+            static std::shared_ptr<Model::StreetGroup> readStreetGroupHeader(ObfReader* reader, AddressBlocksSection* section, unsigned int offset);
 
         private:
 
         friend struct ObfAddressSection;
         };
 
-        ObfAddressSection();
+        ObfAddressSection(class ObfReader* owner);
         virtual ~ObfAddressSection();
 
-        //! ???
-        std::string _enName;
+        QString _latinName;
         
         //! ???
         int _indexNameOffset;
@@ -73,10 +85,15 @@ namespace OsmAnd {
         
         //LatLon calculatedCenter = null;
 
-        //public std::list< std::shared_ptr<AbstractCity> > loadCities()
+        void loadStreetGroups(std::list< std::shared_ptr<Model::StreetGroup> >& list, uint8_t typeBitmask = std::numeric_limits<uint8_t>::max());
+        static void loadStreetsFromGroup(ObfReader* reader, Model::StreetGroup* group, std::list< std::shared_ptr<Model::Street> >& list);
+        static void loadBuildingsFromStreet(ObfReader* reader, Model::Street* street, std::list< std::shared_ptr<Model::Building> >& list);
     protected:
-        static void read(gpb::io::CodedInputStream* cis, ObfAddressSection* section);
-//        static std::list< std::shared_ptr<AbstractCity> > readCities(ObfAddressSection* section, Entry::Type type);
+        static void read(ObfReader* reader, ObfAddressSection* section);
+        static void readStreetGroups(ObfReader* reader, ObfAddressSection* section, std::list< std::shared_ptr<Model::StreetGroup> >& list, uint8_t typeBitmask = std::numeric_limits<uint8_t>::max());
+        static void readStreetsFromGroup(ObfReader* reader, Model::StreetGroup* group, std::list< std::shared_ptr<Model::Street> >& list);
+        static void readStreet(ObfReader* reader, Model::StreetGroup* group, Model::Street* street);
+        static void readBuildingsFromStreet(ObfReader* reader, Model::Street* street, std::list< std::shared_ptr<Model::Building> >& list);
 
     private:
 

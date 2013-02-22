@@ -6,7 +6,8 @@
 #include "Utilities.h"
 #include "OBF.pb.h"
 
-OsmAnd::ObfPoiSection::ObfPoiSection()
+OsmAnd::ObfPoiSection::ObfPoiSection( class ObfReader* owner )
+    : ObfSection(owner)
 {
 }
 
@@ -14,8 +15,10 @@ OsmAnd::ObfPoiSection::~ObfPoiSection()
 {
 }
 
-void OsmAnd::ObfPoiSection::read( gpb::io::CodedInputStream* cis, ObfPoiSection* section, bool readCategories )
+void OsmAnd::ObfPoiSection::read( ObfReader* reader, ObfPoiSection* section, bool readCategories )
 {
+    auto cis = reader->_codedInputStream.get();
+
     for(;;)
     {
         auto tag = cis->ReadTag();
@@ -24,14 +27,18 @@ void OsmAnd::ObfPoiSection::read( gpb::io::CodedInputStream* cis, ObfPoiSection*
         case 0:
             return;
         case OBF::OsmAndPoiIndex::kNameFieldNumber:
-            gpb::internal::WireFormatLite::ReadString(cis, &section->_name);
+            {
+                std::string name;
+                gpb::internal::WireFormatLite::ReadString(cis, &name);
+                section->_name = QString::fromStdString(name);
+            }
             break;
         case OBF::OsmAndPoiIndex::kBoundariesFieldNumber:
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
-                readPoiBoundariesIndex(cis, section);
+                readPoiBoundariesIndex(reader, section);
                 cis->PopLimit(oldLimit);
             }
             break; 
@@ -45,7 +52,7 @@ void OsmAnd::ObfPoiSection::read( gpb::io::CodedInputStream* cis, ObfPoiSection*
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
-                readCategory(cis, section);
+                readCategory(reader, section);
                 cis->PopLimit(oldLimit);
             }
             break;
@@ -59,8 +66,10 @@ void OsmAnd::ObfPoiSection::read( gpb::io::CodedInputStream* cis, ObfPoiSection*
     }
 }
 
-void OsmAnd::ObfPoiSection::readPoiBoundariesIndex( gpb::io::CodedInputStream* cis, ObfPoiSection* section )
+void OsmAnd::ObfPoiSection::readPoiBoundariesIndex( ObfReader* reader, ObfPoiSection* section )
 {
+    auto cis = reader->_codedInputStream.get();
+
     gpb::uint32 value;
     for(;;)
     {
@@ -92,8 +101,10 @@ void OsmAnd::ObfPoiSection::readPoiBoundariesIndex( gpb::io::CodedInputStream* c
     }
 }
 
-void OsmAnd::ObfPoiSection::readCategory( gpb::io::CodedInputStream* cis, ObfPoiSection* section )
+void OsmAnd::ObfPoiSection::readCategory( ObfReader* reader, ObfPoiSection* section )
 {
+    auto cis = reader->_codedInputStream.get();
+
     for(;;)
     {
         auto tag = cis->ReadTag();

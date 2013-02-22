@@ -100,7 +100,7 @@ namespace OsmAnd {
             }
             */
         protected:
-            static Subregion* read(gpb::io::CodedInputStream* cis, Subregion* current, Subregion* parent, int depth, bool readCoordinates);
+            static Subregion* read(ObfReader* reader, Subregion* current, Subregion* parent, int depth, bool readCoordinates);
 
         friend struct ObfRoutingSection;
         };
@@ -178,7 +178,7 @@ namespace OsmAnd {
             */
         };
 
-        ObfRoutingSection();
+        ObfRoutingSection(class ObfReader* owner);
         virtual ~ObfRoutingSection();
 
         //! ???
@@ -215,11 +215,11 @@ namespace OsmAnd {
         //! ???
         void initRouteEncodingRule(int id, std::string tags, std::string val);
     protected:
-        static void read(gpb::io::CodedInputStream* cis, ObfRoutingSection* section);
+        static void read(ObfReader* reader, ObfRoutingSection* section);
 
     private:
         //! ???
-        static void readRouteEncodingRule(gpb::io::CodedInputStream* cis, ObfRoutingSection* section, int id);
+        static void readRouteEncodingRule(ObfReader* reader, ObfRoutingSection* section, int id);
 
     friend class ObfReader;
     };

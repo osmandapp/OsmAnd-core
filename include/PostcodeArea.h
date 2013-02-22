@@ -20,33 +20,27 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __OBF_SECTION_H_
-#define __OBF_SECTION_H_
+#ifndef __MODEL_POSTCODE_AREA_H_
+#define __MODEL_POSTCODE_AREA_H_
 
 #include <OsmAndCore.h>
-#include <QString>
-#include <stdint.h>
+#include <StreetGroup.h>
 
 namespace OsmAnd {
 
-    class ObfReader;
+    namespace Model {
 
-    /**
-    Base section in OsmAnd binary file
-    */
-    struct OSMAND_CORE_API ObfSection
-    {
-        ObfSection(ObfReader* owner);
-        virtual ~ObfSection();
+        class PostcodeArea : public StreetGroup
+        {
+        private:
+        protected:
+        public:
+            PostcodeArea();
+            virtual ~PostcodeArea();
+        };
 
-        QString _name;
-        uint32_t _length;
-        uint32_t _offset;
-
-    protected:
-        ObfReader* const _owner;
-    };
+    } // namespace Model
 
 } // namespace OsmAnd
 
-#endif // __OBF_SECTION_H_
+#endif // __MODEL_POSTCODE_AREA_H_

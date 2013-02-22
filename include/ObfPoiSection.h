@@ -39,7 +39,7 @@ namespace OsmAnd {
     */
     struct OSMAND_CORE_API ObfPoiSection : public ObfSection
     {
-        ObfPoiSection();
+        ObfPoiSection(class ObfReader* owner);
         virtual ~ObfPoiSection();
 
         std::list<std::string> _categories;
@@ -51,11 +51,11 @@ namespace OsmAnd {
         double _topLatitude;
         double _bottomLatitude;
     protected:
-        static void read(gpb::io::CodedInputStream* cis, ObfPoiSection* section, bool readCategories);
+        static void read(ObfReader* reader, ObfPoiSection* section, bool readCategories);
 
     private:
-        static void readPoiBoundariesIndex(gpb::io::CodedInputStream* cis, ObfPoiSection* section);
-        static void readCategory(gpb::io::CodedInputStream* cis, ObfPoiSection* section);
+        static void readPoiBoundariesIndex(ObfReader* reader, ObfPoiSection* section);
+        static void readCategory(ObfReader* reader, ObfPoiSection* section);
 
     friend class ObfReader;
     };

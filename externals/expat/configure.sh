@@ -18,7 +18,7 @@ fi
 # Extract upstream if needed
 if [ ! -d "$SRCLOC/upstream.original" ]; then
 	echo "Extracting '$NAME' upstream..."
-	mkdir -p $SRCLOC/upstream.original
+	mkdir -p "$SRCLOC/upstream.original"
 	tar -xf "$SRCLOC/upstream.pack" -C "$SRCLOC/upstream.original" --strip 1	
 fi
 

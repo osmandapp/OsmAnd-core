@@ -2,7 +2,7 @@
 
 #include <stdexcept>
 
-#include <QZeroCopyInputStream.h>
+#include "QZeroCopyInputStream.h"
 #include <google/protobuf/wire_format_lite.h>
 #include <QtEndian>
 
@@ -14,6 +14,8 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
     : _codedInputStream(new gpb::io::CodedInputStream(new QZeroCopyInputStream(input)))
     , _isBasemap(false)
 {
+    //UErrorCode uErrorCode;
+    //_icuTransliterator.reset(Transliterator::createInstance("Any-Latin_ASCII", UTRANS_FORWARD, uErrorCode));
     _codedInputStream->SetTotalBytesLimit(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
 
     bool loadedCorrectly = false;
@@ -34,11 +36,11 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
             break;
         case OBF::OsmAndStructure::kMapIndexFieldNumber:
             {
-                std::shared_ptr<ObfMapSection> section(new ObfMapSection());
+                std::shared_ptr<ObfMapSection> section(new ObfMapSection(this));
                 section->_length = ObfReader::readBigEndianInt(_codedInputStream.get());
-                section->_offset = _codedInputStream->TotalBytesRead();
+                section->_offset = _codedInputStream->CurrentPosition();
                 auto oldLimit = _codedInputStream->PushLimit(section->_length);
-                ObfMapSection::read(_codedInputStream.get(), section.get(), false);
+                ObfMapSection::read(this, section.get(), false);
                 _isBasemap = _isBasemap || section->isBaseMap();
                 _codedInputStream->PopLimit(oldLimit);
                 _codedInputStream->Seek(section->_offset + section->_length);
@@ -48,11 +50,11 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
             break;
         case OBF::OsmAndStructure::kAddressIndexFieldNumber:
             {
-                std::shared_ptr<ObfAddressSection> section(new ObfAddressSection());
+                std::shared_ptr<ObfAddressSection> section(new ObfAddressSection(this));
                 section->_length = ObfReader::readBigEndianInt(_codedInputStream.get());
-                section->_offset = _codedInputStream->TotalBytesRead();
+                section->_offset = _codedInputStream->CurrentPosition();
                 auto oldLimit = _codedInputStream->PushLimit(section->_length);
-                ObfAddressSection::read(_codedInputStream.get(), section.get());
+                ObfAddressSection::read(this, section.get());
                 _codedInputStream->PopLimit(oldLimit);
                 _codedInputStream->Seek(section->_offset + section->_length);
                 _addressRegionsSections.push_back(section);
@@ -61,11 +63,11 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
             break;
         case OBF::OsmAndStructure::kTransportIndexFieldNumber:
             {
-                std::shared_ptr<ObfTransportSection> section(new ObfTransportSection());
+                std::shared_ptr<ObfTransportSection> section(new ObfTransportSection(this));
                 section->_length = ObfReader::readBigEndianInt(_codedInputStream.get());
-                section->_offset = _codedInputStream->TotalBytesRead();
+                section->_offset = _codedInputStream->CurrentPosition();
                 auto oldLimit = _codedInputStream->PushLimit(section->_length);
-                ObfTransportSection::read(_codedInputStream.get(), section.get());
+                ObfTransportSection::read(this, section.get());
                 _codedInputStream->PopLimit(oldLimit);
                 _codedInputStream->Seek(section->_offset + section->_length);
                 _transportSections.push_back(section);
@@ -74,11 +76,11 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
             break;
         case OBF::OsmAndStructure::kRoutingIndexFieldNumber:
             {
-                std::shared_ptr<ObfRoutingSection> section(new ObfRoutingSection());
+                std::shared_ptr<ObfRoutingSection> section(new ObfRoutingSection(this));
                 section->_length = ObfReader::readBigEndianInt(_codedInputStream.get());
-                section->_offset = _codedInputStream->TotalBytesRead();
+                section->_offset = _codedInputStream->CurrentPosition();
                 auto oldLimit = _codedInputStream->PushLimit(section->_length);
-                ObfRoutingSection::read(_codedInputStream.get(), section.get());
+                ObfRoutingSection::read(this, section.get());
                 _codedInputStream->PopLimit(oldLimit);
                 _codedInputStream->Seek(section->_offset + section->_length);
                 _routingRegionsSections.push_back(section);
@@ -87,11 +89,11 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
             break;
         case OBF::OsmAndStructure::kPoiIndexFieldNumber:
             {
-                std::shared_ptr<ObfPoiSection> section(new ObfPoiSection());
+                std::shared_ptr<ObfPoiSection> section(new ObfPoiSection(this));
                 section->_length = ObfReader::readBigEndianInt(_codedInputStream.get());
-                section->_offset = _codedInputStream->TotalBytesRead();
+                section->_offset = _codedInputStream->CurrentPosition();
                 auto oldLimit = _codedInputStream->PushLimit(section->_length);
-                ObfPoiSection::read(_codedInputStream.get(), section.get(), false);
+                ObfPoiSection::read(this, section.get(), false);
                 _codedInputStream->PopLimit(oldLimit);
                 _codedInputStream->Seek(section->_offset + section->_length);
                 _poiRegionsSections.push_back(section);
@@ -154,4 +156,11 @@ int OsmAnd::ObfReader::readSInt32( gpb::io::CodedInputStream* cis )
     gpb::uint32 value;
     cis->ReadVarint32(&value);
     return gpb::internal::WireFormatLite::ZigZagDecode32(value);
+}
+
+QString OsmAnd::ObfReader::transliterate( QString input )
+{
+    //UnicodeString icuString(input.toStdWString().c_str());
+    //_icuTransliterator->transliterate(icuString);
+    return QString("!translit!");
 }

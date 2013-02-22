@@ -153,7 +153,7 @@ bool readMapLevel(CodedInputStream* input, MapRoot* root, bool initSubtrees) {
 			}
 			MapTreeBounds bounds;
 			readInt(input, &bounds.length);
-			bounds.filePointer = input->TotalBytesRead();
+			bounds.filePointer = input->CurrentPosition();
 			int oldLimit = input->PushLimit(bounds.length);
 			readMapTreeBounds(input, &bounds, root);
 			root->bounds.push_back(bounds);
@@ -299,7 +299,7 @@ bool readRouteTree(CodedInputStream* input, RouteSubregion* thisTree, RouteSubre
 			if (readChildren) {
 				RouteSubregion subregion(ind);
 				readInt(input, &subregion.length);
-				subregion.filePointer = input->TotalBytesRead();
+				subregion.filePointer = input->CurrentPosition();
 				int oldLimit = input->PushLimit(subregion.length);
 				readRouteTree(input, &subregion, thisTree, ind, depth - 1, true);
 				input->PopLimit(oldLimit);
@@ -353,7 +353,7 @@ bool readRoutingIndex(CodedInputStream* input, RoutingIndex* routingIndex, bool 
 			bool basemap = WireFormatLite::GetTagFieldNumber(tag) == OsmAndRoutingIndex::kBasemapBoxesFieldNumber;
 			RouteSubregion subregion(routingIndex);
 			readInt(input, &subregion.length);
-			subregion.filePointer = input->TotalBytesRead();
+			subregion.filePointer = input->CurrentPosition();
 			int oldLimit = input->PushLimit(subregion.length);
 			readRouteTree(input, &subregion, NULL, routingIndex,  0, true);
 			input->PopLimit(oldLimit);
@@ -408,7 +408,7 @@ bool readMapIndex(CodedInputStream* input, MapIndex* mapIndex, bool onlyInitEnco
 		case OsmAndMapIndex::kLevelsFieldNumber: {
 			MapRoot mapLevel;
 			readInt(input, &mapLevel.length);
-			mapLevel.filePointer = input->TotalBytesRead();
+			mapLevel.filePointer = input->CurrentPosition();
 			if (!onlyInitEncodingRules) {
 				int oldLimit = input->PushLimit(mapLevel.length);
 				readMapLevel(input, &mapLevel, false);
@@ -455,7 +455,7 @@ bool initMapStructure(CodedInputStream* input, BinaryMapFile* file) {
 		case OsmAndStructure::kMapIndexFieldNumber: {
 			MapIndex mapIndex;
 			readInt(input, &mapIndex.length);
-			mapIndex.filePointer = input->TotalBytesRead();
+			mapIndex.filePointer = input->CurrentPosition();
 			int oldLimit = input->PushLimit(mapIndex.length);
 			readMapIndex(input, &mapIndex, false);
 			input->PopLimit(oldLimit);
@@ -468,7 +468,7 @@ bool initMapStructure(CodedInputStream* input, BinaryMapFile* file) {
 		case OsmAndStructure::kRoutingIndexFieldNumber: {
 			RoutingIndex* routingIndex = new RoutingIndex;
 			readInt(input, &routingIndex->length);
-			routingIndex->filePointer = input->TotalBytesRead();
+			routingIndex->filePointer = input->CurrentPosition();
 			int oldLimit = input->PushLimit(routingIndex->length);
 			readRoutingIndex(input, routingIndex, false);
 			input->PopLimit(oldLimit);
@@ -785,7 +785,7 @@ bool searchMapTreeBounds(CodedInputStream* input, MapTreeBounds* current, MapTre
 		case OsmAndMapIndex_MapDataBox::kBoxesFieldNumber: {
 			MapTreeBounds* child = new MapTreeBounds();
 			readInt(input, &child->length);
-			child->filePointer = input->TotalBytesRead();
+			child->filePointer = input->CurrentPosition();
 			int oldLimit = input->PushLimit(child->length);
 			if (current->ocean) {
 				child->ocean = current->ocean;

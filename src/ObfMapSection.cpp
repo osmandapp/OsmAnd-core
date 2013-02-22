@@ -7,8 +7,9 @@
 
 namespace gpb = google::protobuf;
 
-OsmAnd::ObfMapSection::ObfMapSection()
-    : _nameEncodingType(0)
+OsmAnd::ObfMapSection::ObfMapSection( class ObfReader* owner )
+    : ObfSection(owner)
+    , _nameEncodingType(0)
     , _refEncodingType(-1)
     , _coastlineEncodingType(-1)
     , _coastlineBrokenEncodingType(-1)
@@ -78,7 +79,7 @@ void OsmAnd::ObfMapSection::initMapEncodingRule( int type, int id, std::string t
 
 bool OsmAnd::ObfMapSection::isBaseMap()
 {
-    return QString::compare(_name.c_str(), "basemap", Qt::CaseInsensitive);
+    return QString::compare(_name, "basemap", Qt::CaseInsensitive);
 }
 
 void OsmAnd::ObfMapSection::finishInitializingTags()
@@ -93,8 +94,10 @@ void OsmAnd::ObfMapSection::finishInitializingTags()
     }
 }
 
-void OsmAnd::ObfMapSection::read( gpb::io::CodedInputStream* cis, ObfMapSection* section, bool onlyInitEncodingRules )
+void OsmAnd::ObfMapSection::read( ObfReader* reader, ObfMapSection* section, bool onlyInitEncodingRules )
 {
+    auto cis = reader->_codedInputStream.get();
+
     int defaultId = 1;
     for(;;)
     {
@@ -106,7 +109,11 @@ void OsmAnd::ObfMapSection::read( gpb::io::CodedInputStream* cis, ObfMapSection*
                 section->finishInitializingTags();
             return;
         case OBF::OsmAndMapIndex::kNameFieldNumber:
-            gpb::internal::WireFormatLite::ReadString(cis, &section->_name);
+            {
+                std::string name;
+                gpb::internal::WireFormatLite::ReadString(cis, &name);
+                section->_name = QString::fromStdString(name);
+            }
             break;
         case OBF::OsmAndMapIndex::kRulesFieldNumber:
             if (onlyInitEncodingRules)
@@ -114,7 +121,7 @@ void OsmAnd::ObfMapSection::read( gpb::io::CodedInputStream* cis, ObfMapSection*
                 gpb::uint32 len;
                 cis->ReadVarint32(&len);
                 auto oldLimit = cis->PushLimit(len);
-                readMapEncodingRule(cis, section, defaultId++);
+                readMapEncodingRule(reader, section, defaultId++);
                 cis->PopLimit(oldLimit);
             }
             else
@@ -123,11 +130,11 @@ void OsmAnd::ObfMapSection::read( gpb::io::CodedInputStream* cis, ObfMapSection*
         case OBF::OsmAndMapIndex::kLevelsFieldNumber:
             {
                 auto length = ObfReader::readBigEndianInt(cis);
-                auto offset = cis->TotalBytesRead();
+                auto offset = cis->CurrentPosition();
                 if (!onlyInitEncodingRules)
                 {
                     auto oldLimit = cis->PushLimit(length);
-                    std::shared_ptr<MapRoot> mapRoot(readMapLevel(cis, new MapRoot(), false));
+                    std::shared_ptr<MapRoot> mapRoot(readMapLevel(reader, new MapRoot(), false));
                     mapRoot->_length = length;
                     mapRoot->_offset = offset;
                     section->_levels.push_back(mapRoot);
@@ -144,8 +151,10 @@ void OsmAnd::ObfMapSection::read( gpb::io::CodedInputStream* cis, ObfMapSection*
 }
 
 
-void OsmAnd::ObfMapSection::readMapEncodingRule( gpb::io::CodedInputStream* cis, ObfMapSection* section, int id )
+void OsmAnd::ObfMapSection::readMapEncodingRule( ObfReader* reader, ObfMapSection* section, int id )
 {
+    auto cis = reader->_codedInputStream.get();
+
     gpb::uint32 type = 0;
     std::string tags;
     std::string val;
@@ -176,8 +185,10 @@ void OsmAnd::ObfMapSection::readMapEncodingRule( gpb::io::CodedInputStream* cis,
     }
 }
 
-OsmAnd::ObfMapSection::MapRoot* OsmAnd::ObfMapSection::readMapLevel( gpb::io::CodedInputStream* cis, MapRoot* root, bool initSubtrees )
+OsmAnd::ObfMapSection::MapRoot* OsmAnd::ObfMapSection::readMapLevel( ObfReader* reader, MapRoot* root, bool initSubtrees )
 {
+    auto cis = reader->_codedInputStream.get();
+
     for(;;)
     {
         auto tag = cis->ReadTag();
@@ -206,14 +217,14 @@ OsmAnd::ObfMapSection::MapRoot* OsmAnd::ObfMapSection::readMapLevel( gpb::io::Co
         case OBF::OsmAndMapIndex_MapRootLevel::kBoxesFieldNumber:
             {
                 auto length = ObfReader::readBigEndianInt(cis);
-                auto offset = cis->TotalBytesRead();
+                auto offset = cis->CurrentPosition();
                 if (initSubtrees)
                 {
                     std::shared_ptr<MapTree> r(new MapTree());
                     r->_length = length;
                     r->_offset= offset;
                     auto oldLimit = cis->PushLimit(length);
-                    readMapTreeBounds(cis, r.get(), root->_left, root->_right, root->_top, root->_bottom);
+                    readMapTreeBounds(reader, r.get(), root->_left, root->_right, root->_top, root->_bottom);
                     root->_trees.push_back(r);
                     cis->PopLimit(oldLimit);
                 }
@@ -230,8 +241,10 @@ OsmAnd::ObfMapSection::MapRoot* OsmAnd::ObfMapSection::readMapLevel( gpb::io::Co
     }
 }
 
-void OsmAnd::ObfMapSection::readMapTreeBounds( gpb::io::CodedInputStream* cis, MapTree* tree, int left, int right, int top, int bottom )
+void OsmAnd::ObfMapSection::readMapTreeBounds( ObfReader* reader, MapTree* tree, int left, int right, int top, int bottom )
 {
+    auto cis = reader->_codedInputStream.get();
+
     for(;;)
     {
         auto tag = cis->ReadTag();

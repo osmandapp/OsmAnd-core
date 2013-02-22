@@ -66,7 +66,7 @@ namespace OsmAnd {
             std::list< std::shared_ptr<MapTree> > _trees;
         };
 
-        ObfMapSection();
+        ObfMapSection(class ObfReader* owner);
         virtual ~ObfMapSection();
 
         //! ???
@@ -122,17 +122,17 @@ namespace OsmAnd {
 
     protected:
         //! ???
-        static void read(gpb::io::CodedInputStream* cis, ObfMapSection* section, bool onlyInitEncodingRules);
+        static void read(ObfReader* reader, ObfMapSection* section, bool onlyInitEncodingRules);
 
     private:
         //! ???
-        static void readMapEncodingRule(gpb::io::CodedInputStream* cis, ObfMapSection* section, int id);
+        static void readMapEncodingRule(ObfReader* reader, ObfMapSection* section, int id);
 
         //! ???
-        static void readMapTreeBounds(gpb::io::CodedInputStream* cis, MapTree* tree, int left, int right, int top, int bottom);
+        static void readMapTreeBounds(ObfReader* reader, MapTree* tree, int left, int right, int top, int bottom);
 
         //! ???
-        static MapRoot* readMapLevel(gpb::io::CodedInputStream* cis, MapRoot* root, bool initSubtrees);
+        static MapRoot* readMapLevel(ObfReader* reader, MapRoot* root, bool initSubtrees);
 
     friend class ObfReader;
     };

@@ -5,8 +5,9 @@
 
 #include "OBF.pb.h"
 
-OsmAnd::ObfRoutingSection::ObfRoutingSection()
-    : _borderBoxPointer(0)
+OsmAnd::ObfRoutingSection::ObfRoutingSection( class ObfReader* owner )
+    : ObfSection(owner)
+    , _borderBoxPointer(0)
     , _baseBorderBoxPointer(0)
     , _borderBoxLength(0)
     , _baseBorderBoxLength(0)
@@ -30,8 +31,10 @@ void OsmAnd::ObfRoutingSection::initRouteEncodingRule( int id, std::string tags,
         _refTypeRule = id;
 }
 
-void OsmAnd::ObfRoutingSection::read( gpb::io::CodedInputStream* cis, ObfRoutingSection* section )
+void OsmAnd::ObfRoutingSection::read( ObfReader* reader, ObfRoutingSection* section )
 {
+    auto cis = reader->_codedInputStream.get();
+
     int routeEncodingRule = 1;
     for(;;)
     {
@@ -42,14 +45,18 @@ void OsmAnd::ObfRoutingSection::read( gpb::io::CodedInputStream* cis, ObfRouting
         case 0:
             return;
         case OBF::OsmAndRoutingIndex::kNameFieldNumber:
-            gpb::internal::WireFormatLite::ReadString(cis, &section->_name);
+            {
+                std::string name;
+                gpb::internal::WireFormatLite::ReadString(cis, &name);
+                section->_name = QString::fromStdString(name);
+            }
             break;
         case OBF::OsmAndRoutingIndex::kRulesFieldNumber:
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
-                readRouteEncodingRule(cis, section, routeEncodingRule++);
+                readRouteEncodingRule(reader, section, routeEncodingRule++);
                 cis->Skip(cis->BytesUntilLimit());
                 cis->PopLimit(oldLimit);
             } 
@@ -59,9 +66,9 @@ void OsmAnd::ObfRoutingSection::read( gpb::io::CodedInputStream* cis, ObfRouting
             {
                 std::shared_ptr<Subregion> subregion(new Subregion(section));
                 subregion->_length = ObfReader::readBigEndianInt(cis);
-                subregion->_offset = cis->TotalBytesRead();
+                subregion->_offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(subregion->_length);
-                Subregion::read(cis, subregion.get(), nullptr, 0, true);
+                Subregion::read(reader, subregion.get(), nullptr, 0, true);
                 if(tfn == OBF::OsmAndRoutingIndex::kRootBoxesFieldNumber)
                     section->_subregions.push_back(subregion);
                 else
@@ -74,7 +81,7 @@ void OsmAnd::ObfRoutingSection::read( gpb::io::CodedInputStream* cis, ObfRouting
         case OBF::OsmAndRoutingIndex::kBorderBoxFieldNumber:
             {
                 auto length = ObfReader::readBigEndianInt(cis);
-                auto offset = cis->TotalBytesRead();
+                auto offset = cis->CurrentPosition();
                 if(tfn == OBF::OsmAndRoutingIndex::kBorderBoxFieldNumber)
                 {
                     section->_borderBoxLength = length;
@@ -99,8 +106,10 @@ void OsmAnd::ObfRoutingSection::read( gpb::io::CodedInputStream* cis, ObfRouting
     }
 }
 
-void OsmAnd::ObfRoutingSection::readRouteEncodingRule( gpb::io::CodedInputStream* cis, ObfRoutingSection* section, int id )
+void OsmAnd::ObfRoutingSection::readRouteEncodingRule( ObfReader* reader, ObfRoutingSection* section, int id )
 {
+    auto cis = reader->_codedInputStream.get();
+
     std::string tags;
     std::string val;
     for(;;)
@@ -132,8 +141,9 @@ OsmAnd::ObfRoutingSection::Subregion::Subregion( ObfRoutingSection* section )
 {
 }
 
-OsmAnd::ObfRoutingSection::Subregion* OsmAnd::ObfRoutingSection::Subregion::read( gpb::io::CodedInputStream* cis, Subregion* current, Subregion* parent, int depth, bool readCoordinates )
+OsmAnd::ObfRoutingSection::Subregion* OsmAnd::ObfRoutingSection::Subregion::read( ObfReader* reader, Subregion* current, Subregion* parent, int depth, bool readCoordinates )
 {
+    auto cis = reader->_codedInputStream.get();
     bool readChildren = depth != 0; 
 
     current->_section->_regionsRead++;
@@ -177,9 +187,9 @@ OsmAnd::ObfRoutingSection::Subregion* OsmAnd::ObfRoutingSection::Subregion::read
             {
                 std::shared_ptr< Subregion > subregion(new Subregion(current->_section));
                 subregion->_length = ObfReader::readBigEndianInt(cis);
-                subregion->_offset = cis->TotalBytesRead();
+                subregion->_offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(subregion->_length);
-                Subregion::read(cis, subregion.get(), current, depth - 1, true);
+                Subregion::read(reader, subregion.get(), current, depth - 1, true);
                 current->_subregions.push_back(subregion);
                 cis->PopLimit(oldLimit);
                 cis->Seek(subregion->_offset + subregion->_length);

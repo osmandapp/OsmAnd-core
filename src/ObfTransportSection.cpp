@@ -5,8 +5,9 @@
 
 #include "OBF.pb.h"
 
-OsmAnd::ObfTransportSection::ObfTransportSection()
-    : _top(0)
+OsmAnd::ObfTransportSection::ObfTransportSection( class ObfReader* owner )
+    : ObfSection(owner)
+    , _top(0)
     , _left(0)
     , _bottom(0)
     , _right(0)
@@ -19,8 +20,10 @@ OsmAnd::ObfTransportSection::~ObfTransportSection()
 {
 }
 
-void OsmAnd::ObfTransportSection::read( gpb::io::CodedInputStream* cis, ObfTransportSection* section )
+void OsmAnd::ObfTransportSection::read( ObfReader* reader, ObfTransportSection* section )
 {
+    auto cis = reader->_codedInputStream.get();
+
     for(;;)
     {
         auto tag = cis->ReadTag();
@@ -32,14 +35,18 @@ void OsmAnd::ObfTransportSection::read( gpb::io::CodedInputStream* cis, ObfTrans
             ObfReader::skipUnknownField(cis, tag);
             break;
         case OBF::OsmAndTransportIndex::kNameFieldNumber:
-            gpb::internal::WireFormatLite::ReadString(cis, &section->_name);
+            {
+                std::string name;
+                gpb::internal::WireFormatLite::ReadString(cis, &name);
+                section->_name = QString::fromStdString(name);
+            }
             break;
         case OBF::OsmAndTransportIndex::kStopsFieldNumber:
             {
                 section->_stopsFileLength = ObfReader::readBigEndianInt(cis);
-                section->_stopsFileOffset = cis->TotalBytesRead();
+                section->_stopsFileOffset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(section->_stopsFileLength);
-                readTransportBounds(cis, section);
+                readTransportBounds(reader, section);
                 cis->PopLimit(oldLimit);
             }
             break;
@@ -47,7 +54,7 @@ void OsmAnd::ObfTransportSection::read( gpb::io::CodedInputStream* cis, ObfTrans
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
-                auto offset = cis->TotalBytesRead();
+                auto offset = cis->CurrentPosition();
                 cis->Seek(offset + length);
             }
             //TODO:
@@ -66,8 +73,10 @@ void OsmAnd::ObfTransportSection::read( gpb::io::CodedInputStream* cis, ObfTrans
     }
 }
 
-void OsmAnd::ObfTransportSection::readTransportBounds( gpb::io::CodedInputStream* cis, ObfTransportSection* section )
+void OsmAnd::ObfTransportSection::readTransportBounds( ObfReader* reader, ObfTransportSection* section )
 {
+    auto cis = reader->_codedInputStream.get();
+
     for(;;)
     {
         auto tag = cis->ReadTag();

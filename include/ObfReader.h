@@ -32,6 +32,7 @@
 #include <unordered_set>
 #include <tuple>
 #include <string>
+//#include <unicode/translit.h>
 #include <google/protobuf/io/coded_stream.h>
 #include <ObfSection.h>
 #include <ObfMapSection.h>
@@ -39,6 +40,7 @@
 #include <ObfRoutingSection.h>
 #include <ObfPoiSection.h>
 #include <ObfTransportSection.h>
+#include <StreetGroup.h>
 
 namespace OsmAnd {
 
@@ -61,7 +63,9 @@ namespace OsmAnd {
         std::list< std::shared_ptr<ObfPoiSection> > _poiRegionsSections;
         std::list< std::shared_ptr<ObfTransportSection> > _transportSections;
         std::list< ObfSection* > _sections;
+        //std::shared_ptr<Transliterator> _icuTransliterator;
     protected:
+        QString transliterate(QString input);
         static int readSInt32(gpb::io::CodedInputStream* cis);
         static int readBigEndianInt(gpb::io::CodedInputStream* cis);
         static void skipUnknownField(gpb::io::CodedInputStream* cis, int tag);
