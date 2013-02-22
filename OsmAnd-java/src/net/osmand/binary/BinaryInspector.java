@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -65,6 +66,10 @@ public class BinaryInspector {
 	
 	protected static class VerboseInfo {
 		boolean vaddress;
+		boolean vstreetgroups;
+		boolean vstreets;
+		boolean vbuildings;
+		boolean vintersections;
 		boolean vtransport;
 		boolean vpoi;
 		boolean vmap;
@@ -97,6 +102,14 @@ public class BinaryInspector {
 			for(int i=0;i<params.length;i++){
 				if(params[i].equals("-vaddress")){
 					vaddress = true;
+				} else if(params[i].equals("-vstreets")){
+					vstreets = true;
+				} else if(params[i].equals("-vstreetgroups")){
+					vstreetgroups = true;
+				} else if(params[i].equals("-vbuildings")){
+					vbuildings = true;
+				} else if(params[i].equals("-vintersections")){
+					vintersections = true;
 				} else if(params[i].equals("-vmap")){
 					vmap = true;
 				} else if(params[i].equals("-vpoi")){
@@ -330,12 +343,11 @@ public class BinaryInspector {
 		double r = MapUtils.get31LongitudeX(right);
 		double t = MapUtils.get31LatitudeY(top);
 		double b = MapUtils.get31LatitudeY(bottom);
-		MessageFormat format = new MessageFormat("(left top - right bottom) : {0}, {1} NE - {2}, {3} NE", new Locale("EN", "US"));
-		return format.format(new Object[]{l, t, r, b}); 
+		return formatLatBounds(l, r, t, b); 
 	}
 	
 	protected static String formatLatBounds(double l, double r, double t, double b){
-		MessageFormat format = new MessageFormat("(left top - right bottom) : {0}, {1} NE - {2}, {3} NE", new Locale("EN", "US"));
+		MessageFormat format = new MessageFormat("(left top - right bottom) : {0,number,#.####}, {1,number,#.####} NE - {2,number,#.####}, {3,number,#.####} NE", new Locale("EN", "US"));
 		return format.format(new Object[]{l, t, r, b}); 
 	}
 	
@@ -363,14 +375,14 @@ public class BinaryInspector {
 				} else if(p instanceof TransportIndex){
 					partname = "Transport";
 				} else if(p instanceof RouteRegion){
-					partname = "Route";
+					partname = "Routing";
 				} else if(p instanceof PoiRegion){
 					partname = "Poi";
 				} else if(p instanceof AddressRegion){
 					partname = "Address";
 				}
 				String name = p.getName() == null ? "" : p.getName(); 
-				println(MessageFormat.format("{0}. {1} data {3} - {2} bytes",
+				println(MessageFormat.format("#{0} {1} data {3} - {2,number,#} bytes",
 						new Object[]{Integer.valueOf(i), partname, p.getLength(), name}));
 				if(p instanceof TransportIndex){
 					TransportIndex ti = ((TransportIndex) p);
@@ -385,7 +397,7 @@ public class BinaryInspector {
 					MapIndex m = ((MapIndex) p);
 					int j = 1;
 					for(MapRoot mi : m.getRoots()){
-						println(MessageFormat.format("\t{4}.{5} Map level minZoom = {0}, maxZoom = {1}, size = {2} bytes \n\t\tBounds {3}",
+						println(MessageFormat.format("\t{4}.{5} Map level minZoom = {0}, maxZoom = {1}, size = {2,number,#} bytes \n\t\tBounds {3}",
 								new Object[] {
 								mi.getMinZoom(), mi.getMaxZoom(), mi.getLength(), 
 								formatBounds(mi.getLeft(), mi.getRight(), mi.getTop(), mi.getBottom()), 
@@ -411,41 +423,67 @@ public class BinaryInspector {
 	}
 
 	private static void printAddressDetailedInfo(VerboseInfo verbose, BinaryMapIndexReader index) throws IOException {
+		String[] cityType_String = new String[] {
+	        "Cities/Towns section",
+	        "Villages section",
+	        "Postcodes section",
+	    };
+		int[] cityType = new int[] {
+			BinaryMapAddressReaderAdapter.CITY_TOWN_TYPE,
+			BinaryMapAddressReaderAdapter.VILLAGES_TYPE,
+			BinaryMapAddressReaderAdapter.POSTCODES_TYPE
+		};
+		
 		for(String region : index.getRegionNames()){
-			println("\tRegion:" + region);
-			int[] cityType = new int[] {BinaryMapAddressReaderAdapter.CITY_TOWN_TYPE,
-					BinaryMapAddressReaderAdapter.POSTCODES_TYPE, 
-					BinaryMapAddressReaderAdapter.VILLAGES_TYPE};
+			println("\tRegion: " + region);
+			
 			for (int j = 0; j < cityType.length; j++) {
 				int type = cityType[j];
-				for (City c : index.getCities(region, null, type)) {				
+				final List<City> cities = index.getCities(region, null, type);
+				
+				print(MessageFormat.format("\t\t{0}, {1,number,#} group(s)", new Object[]{cityType_String[j], Integer.valueOf(cities.size())}));
+				if(!verbose.vstreetgroups)
+		        {
+					println("");
+		            continue;
+		        }
+				println(":");
+				
+				for (City c : cities) {				
 					index.preloadStreets(c, null);
-					println("\t\t" + c + " " + c.getId() + "\t(" + c.getStreets().size() + ")");
-					for (Street t : c.getStreets()) {
-						if (verbose.contains(t)) {
-							index.preloadBuildings(t, null);
-							print("\t\t\t\t" + t.getName() + getId(t) + "\t(" + t.getBuildings().size() + ")");
-							// if (type == BinaryMapAddressReaderAdapter.CITY_TOWN_TYPE) {
-							List<Building> buildings = t.getBuildings();
-							if (buildings != null && !buildings.isEmpty()) {
-								print("\t\t (");
-								for (Building b : buildings) {
-									print(b.toString() + ",");
-								}
-								print(")");
+					final Collection<Street> streets = c.getStreets();
+					print(MessageFormat.format("\t\t\t''{0}'' [{1,number,#}], {2,number,#} street(s)", new Object[]{c.getEnName(), Long.valueOf(c.getId()), Integer.valueOf(streets.size())}));
+					if(!verbose.vstreets)
+			        {
+						println("");
+			            continue;
+			        }
+					println(":");
+					for (Street t : streets) {
+						/*if (!verbose.contains(t))
+							continue;*/
+						
+						index.preloadBuildings(t, null);
+						final List<Building> buildings = t.getBuildings();
+						final List<Street> intersections = t.getIntersectedStreets();
+					
+						println(MessageFormat.format("\t\t\t\t''{0}'' [{1,number,#}], {2,number,#} building(s), {3,number,#} intersections(s)",
+								new Object[]{t.getEnName(), Long.valueOf(t.getId()), Integer.valueOf(buildings.size()), Integer.valueOf(intersections.size())}));
+						
+						if (buildings != null && !buildings.isEmpty() && verbose.vbuildings) {
+							println("\t\t\t\t\tBuildings:");
+							for (Building b : buildings) {
+								println(MessageFormat.format("\t\t\t\t\t{0} [{1,number,#}]",
+										new Object[]{b.getName(true), Long.valueOf(b.getId())}));
 							}
-							List<Street> streets = t.getIntersectedStreets();
-							if (streets != null && !streets.isEmpty()) {
-								print("\n\t\t\t\t\t\t\t\t\t x (");
-								for (Street s : streets) {
-									print(s.getName() + ", ");
-								}
-								print(")");
-							}
-							// }
-							println("");
 						}
-
+						
+						if (intersections != null && !intersections.isEmpty() && verbose.vintersections) {
+							print("\t\t\t\t\tIntersects with:");
+							for (Street s : intersections) {
+								println("\t\t\t\t\t\t" + s.getEnName());
+							}
+						}
 					}
 				}
 			}
@@ -586,7 +624,7 @@ public class BinaryInspector {
 		}
 		println("Inspector is console utility for working with binary indexes of OsmAnd.");
 		println("It allows print info about file, extract parts and merge indexes.");
-		println("\nUsage for print info : inspector [-vaddress] [-vmap] [-vpoi] [-vtransport] [-zoom=Zoom] [-bbox=LeftLon,TopLat,RightLon,BottomLan] [file]");
+		println("\nUsage for print info : inspector [-vaddress] [-vstreetgroups] [-vstreets] [-vbuildings] [-vintersections] [-vmap] [-vpoi] [-vtransport] [-zoom=Zoom] [-bbox=LeftLon,TopLat,RightLon,BottomLan] [file]");
 		println("  Prints information about [file] binary index of OsmAnd.");
 		println("  -v.. more verbouse output (like all cities and their streets or all map objects with tags/values and coordinates)");
 		println("\nUsage for combining indexes : inspector -c file_to_create (file_from_extract ((+|-)parts_to_extract)? )*");

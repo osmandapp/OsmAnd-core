@@ -88,12 +88,16 @@ namespace OsmAnd {
         void loadStreetGroups(std::list< std::shared_ptr<Model::StreetGroup> >& list, uint8_t typeBitmask = std::numeric_limits<uint8_t>::max());
         static void loadStreetsFromGroup(ObfReader* reader, Model::StreetGroup* group, std::list< std::shared_ptr<Model::Street> >& list);
         static void loadBuildingsFromStreet(ObfReader* reader, Model::Street* street, std::list< std::shared_ptr<Model::Building> >& list);
+        static void loadIntersectionsFromStreet(ObfReader* reader, Model::Street* street, std::list< std::shared_ptr<Model::Street::IntersectedStreet> >& list);
     protected:
         static void read(ObfReader* reader, ObfAddressSection* section);
         static void readStreetGroups(ObfReader* reader, ObfAddressSection* section, std::list< std::shared_ptr<Model::StreetGroup> >& list, uint8_t typeBitmask = std::numeric_limits<uint8_t>::max());
         static void readStreetsFromGroup(ObfReader* reader, Model::StreetGroup* group, std::list< std::shared_ptr<Model::Street> >& list);
         static void readStreet(ObfReader* reader, Model::StreetGroup* group, Model::Street* street);
         static void readBuildingsFromStreet(ObfReader* reader, Model::Street* street, std::list< std::shared_ptr<Model::Building> >& list);
+        static void readBuilding(ObfReader* reader, Model::Building* building);
+        static void readIntersectionsFromStreet(ObfReader* reader, Model::Street* street, std::list< std::shared_ptr<Model::Street::IntersectedStreet> >& list);
+        static void readIntersectedStreet(ObfReader* reader, Model::Street::IntersectedStreet* street);
 
     private:
 

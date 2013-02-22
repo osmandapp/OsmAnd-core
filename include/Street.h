@@ -32,7 +32,7 @@ namespace OsmAnd {
 
     namespace Model {
 
-        class Street : public MapObject
+        class OSMAND_CORE_API Street : public MapObject
         {
         private:
         protected:
@@ -40,10 +40,16 @@ namespace OsmAnd {
             Street();
             virtual ~Street();
 
-            uint64_t _id;
+            int64_t _id;
             QString _name;
             QString _latinName;
             unsigned int _offset;
+
+            struct IntersectedStreet
+            {
+                QString _name;
+                QString _latinName;
+            };
         };
 
     } // namespace Model

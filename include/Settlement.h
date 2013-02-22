@@ -30,7 +30,7 @@ namespace OsmAnd {
 
     namespace Model {
 
-        class Settlement : public StreetGroup
+        class OSMAND_CORE_API Settlement : public StreetGroup
         {
         private:
         protected:

@@ -29,7 +29,7 @@ namespace OsmAnd {
 
     namespace Model {
 
-        class MapObject
+        class OSMAND_CORE_API MapObject
         {
         private:
         protected:

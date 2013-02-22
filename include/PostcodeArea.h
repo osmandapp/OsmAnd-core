@@ -30,7 +30,7 @@ namespace OsmAnd {
 
     namespace Model {
 
-        class PostcodeArea : public StreetGroup
+        class OSMAND_CORE_API PostcodeArea : public StreetGroup
         {
         private:
         protected:

@@ -32,7 +32,7 @@ namespace OsmAnd {
 
     namespace Model {
 
-        class Building : public MapObject
+        class OSMAND_CORE_API Building : public MapObject
         {
         private:
         protected:
@@ -40,9 +40,12 @@ namespace OsmAnd {
             Building();
             virtual ~Building();
 
-            //uint64_t _id;
-            //QString _name;
-            //QString _latinName;
+            int64_t _id;
+            QString _name;
+            QString _latinName;
+            QString _name2; // WTF?
+            QString _latinName2; // WTF?
+            unsigned int _offset;
         };
 
     } // namespace Model
