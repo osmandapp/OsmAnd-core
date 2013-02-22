@@ -610,13 +610,6 @@ public class BinaryInspector {
 		
 		
 	}
-	
-	private static String getId(MapObject o ){
-		if(o.getId() == null) {
-			return " no id " ;
-		}
-		return " " + (o.getId().longValue() >> 1);
-	}
 
 	public static void printUsage(String warning) {
 		if(warning != null){
