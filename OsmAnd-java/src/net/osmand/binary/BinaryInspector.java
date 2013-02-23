@@ -382,16 +382,16 @@ public class BinaryInspector {
 					partname = "Address";
 				}
 				String name = p.getName() == null ? "" : p.getName(); 
-				println(MessageFormat.format("#{0} {1} data {3} - {2,number,#} bytes",
+				println(MessageFormat.format("{0} {1} data {3} - {2,number,#} bytes",
 						new Object[]{Integer.valueOf(i), partname, p.getLength(), name}));
 				if(p instanceof TransportIndex){
 					TransportIndex ti = ((TransportIndex) p);
 					int sh = (31 - BinaryMapIndexReader.TRANSPORT_STOP_ZOOM);
-					println("\t Bounds " + formatBounds(ti.getLeft() << sh, ti.getRight() << sh, 
+					println("\tBounds " + formatBounds(ti.getLeft() << sh, ti.getRight() << sh, 
 							ti.getTop() << sh, ti.getBottom() << sh));
 				} else if(p instanceof RouteRegion){
 					RouteRegion ri = ((RouteRegion) p);
-					println("\t Bounds " + formatLatBounds(ri.getLeftLongitude(), ri.getRightLongitude(), 
+					println("\tBounds " + formatLatBounds(ri.getLeftLongitude(), ri.getRightLongitude(), 
 							ri.getTopLatitude(), ri.getBottomLatitude()));
 				} else if(p instanceof MapIndex){
 					MapIndex m = ((MapIndex) p);
