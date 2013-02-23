@@ -87,9 +87,9 @@ void OsmAnd::ObfAddressSection::readStreetGroups( ObfReader* reader, ObfAddressS
     }
 }
 
-void OsmAnd::ObfAddressSection::loadStreetGroups( std::list< std::shared_ptr<Model::StreetGroup> >& list, uint8_t typeBitmask /*= std::numeric_limits<uint8_t>::max()*/ )
+void OsmAnd::ObfAddressSection::loadStreetGroups( ObfReader* reader, ObfAddressSection* section, std::list< std::shared_ptr<Model::StreetGroup> >& list, uint8_t typeBitmask /*= std::numeric_limits<uint8_t>::max()*/ )
 {
-    readStreetGroups(_owner, this, list, typeBitmask);
+    readStreetGroups(reader, section, list, typeBitmask);
 }
 
 void OsmAnd::ObfAddressSection::loadStreetsFromGroup( ObfReader* reader, Model::StreetGroup* group, std::list< std::shared_ptr<Model::Street> >& list )

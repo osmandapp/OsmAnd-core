@@ -603,9 +603,12 @@ public class BinaryInspector {
 					}
 				});
 		index.searchPoi(req);
-		println("Categories : ");
+		println("\tRegion: " + p.name);
+		println("\t\tCategories:");
 		for(int i =0; i< p.categories.size(); i++) {
-			println(p.categories.get(i) + " - " + p.subcategories.get(i));	
+			println("\t\t\t" + p.categories.get(i));
+			for(int j = 0; j < p.subcategories.get(i).size(); j++)
+				println("\t\t\t\t" + p.subcategories.get(i).get(j));
 		}
 		
 		

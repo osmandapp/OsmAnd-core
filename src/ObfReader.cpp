@@ -93,7 +93,7 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
                 section->_length = ObfReader::readBigEndianInt(_codedInputStream.get());
                 section->_offset = _codedInputStream->CurrentPosition();
                 auto oldLimit = _codedInputStream->PushLimit(section->_length);
-                ObfPoiSection::read(this, section.get(), false);
+                ObfPoiSection::read(this, section.get());
                 _codedInputStream->PopLimit(oldLimit);
                 _codedInputStream->Seek(section->_offset + section->_length);
                 _poiRegionsSections.push_back(section);

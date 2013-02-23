@@ -85,7 +85,7 @@ namespace OsmAnd {
         
         //LatLon calculatedCenter = null;
 
-        void loadStreetGroups(std::list< std::shared_ptr<Model::StreetGroup> >& list, uint8_t typeBitmask = std::numeric_limits<uint8_t>::max());
+        static void loadStreetGroups(ObfReader* reader, ObfAddressSection* section, std::list< std::shared_ptr<Model::StreetGroup> >& list, uint8_t typeBitmask = std::numeric_limits<uint8_t>::max());
         static void loadStreetsFromGroup(ObfReader* reader, Model::StreetGroup* group, std::list< std::shared_ptr<Model::Street> >& list);
         static void loadBuildingsFromStreet(ObfReader* reader, Model::Street* street, std::list< std::shared_ptr<Model::Building> >& list);
         static void loadIntersectionsFromStreet(ObfReader* reader, Model::Street* street, std::list< std::shared_ptr<Model::Street::IntersectedStreet> >& list);
