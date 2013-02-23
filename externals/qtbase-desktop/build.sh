@@ -19,12 +19,19 @@ if [[ "$(uname -a)" == *Cygwin* ]]; then
 fi
 
 if [[ "$(uname -a)" == *Linux* ]]; then
-	if [ ! -d "$SRCLOC/upstream.patched.linux" ]; then
-		cp -rf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.linux"
-		(cd "$SRCLOC/upstream.patched.linux" && \
-			./configure $QTBASE_CONFIGURATION)
+	if [ ! -d "$SRCLOC/upstream.patched.linux.i686" ]; then
+		cp -rf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.linux.i686"
+		(cd "$SRCLOC/upstream.patched.linux.i686" && \
+			./configure -xplatform linux-g++-32 $QTBASE_CONFIGURATION)
 	fi
-	(cd "$SRCLOC/upstream.patched.linux" && make -j`nproc`)
+	(cd "$SRCLOC/upstream.patched.linux.i686" && make -j`nproc`)
+	
+	if [ ! -d "$SRCLOC/upstream.patched.linux.amd64" ]; then
+		cp -rf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.linux.amd64"
+		(cd "$SRCLOC/upstream.patched.linux.amd64" && \
+			./configure -xplatform linux-g++-64 $QTBASE_CONFIGURATION)
+	fi
+	(cd "$SRCLOC/upstream.patched.linux.amd64" && make -j`nproc`)
 fi
 
 if [[ "$(uname -a)" == *Darwin* ]]; then
