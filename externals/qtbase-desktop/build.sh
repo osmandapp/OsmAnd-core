@@ -12,10 +12,13 @@ QTBASE_CONFIGURATION=\
 "-v"
 
 if [[ "$(uname -a)" == *Cygwin* ]]; then
-	if [ ! -d "$SRCLOC/upstream.patched.windows" ]; then
-		cp -rf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.windows"
+	if [ ! -d "$SRCLOC/upstream.patched.windows.i686" ]; then
+		cp -rf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.windows.i686"
 	fi
-	echo "Please execute build.bat from required environment"
+	if [ ! -d "$SRCLOC/upstream.patched.windows.amd64" ]; then
+		cp -rf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.windows.amd64"
+	fi
+	echo "Please execute build.bat from required environments for i686 and amd64"
 fi
 
 if [[ "$(uname -a)" == *Linux* ]]; then

@@ -29,6 +29,7 @@
 #include <QString>
 #include <google/protobuf/io/coded_stream.h>
 #include <ObfSection.h>
+#include <Amenity.h>
 
 namespace OsmAnd {
 
@@ -57,13 +58,16 @@ namespace OsmAnd {
         double _bottomLatitude;
 
         static void loadCategories(OsmAnd::ObfReader* reader, OsmAnd::ObfPoiSection* section, std::list< std::shared_ptr<OsmAnd::ObfPoiSection::PoiCategory> >& categories);
+        static void loadAmenities(OsmAnd::ObfReader* reader, OsmAnd::ObfPoiSection* section, std::list< std::shared_ptr<OsmAnd::Model::Amenity> >& amenities);
     protected:
         static void read(ObfReader* reader, ObfPoiSection* section);
 
     private:
         static void readPoiBoundariesIndex(ObfReader* reader, ObfPoiSection* section);
         static void readCategories(ObfReader* reader, ObfPoiSection* section, std::list< std::shared_ptr<OsmAnd::ObfPoiSection::PoiCategory> >& categories);
-        static void readCategory(ObfReader* reader, OsmAnd::ObfPoiSection::PoiCategory* category);
+        static void readCategory(ObfReader* reader, ObfPoiSection::PoiCategory* category);
+        static void readAmenities(ObfReader* reader, ObfPoiSection* section, std::list< std::shared_ptr<OsmAnd::Model::Amenity> >& amenities);
+        static void readPoiBox(ObfReader* reader, ObfPoiSection* section);
         
     friend class ObfReader;
     };

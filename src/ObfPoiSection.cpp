@@ -186,4 +186,181 @@ void OsmAnd::ObfPoiSection::loadCategories( OsmAnd::ObfReader* reader, OsmAnd::O
     cis->PopLimit(oldLimit);
 }
 
+void OsmAnd::ObfPoiSection::loadAmenities( OsmAnd::ObfReader* reader, OsmAnd::ObfPoiSection* section, std::list< std::shared_ptr<OsmAnd::Model::Amenity> >& amenities )
+{
+    auto cis = reader->_codedInputStream.get();
+    cis->Seek(section->_offset);
+    auto oldLimit = cis->PushLimit(section->_length);
+    readAmenities(reader, section, amenities);
+    cis->PopLimit(oldLimit);
+}
 
+void OsmAnd::ObfPoiSection::readAmenities( ObfReader* reader, ObfPoiSection* section, std::list< std::shared_ptr<OsmAnd::Model::Amenity> >& amenities )
+{
+    auto cis = reader->_codedInputStream.get();
+
+    /*int indexOffset = codedIS.getTotalBytesRead();
+    long time = System.currentTimeMillis();
+    TLongHashSet skipTiles = null;
+    int zoomToSkip = 31;
+    if(req.zoom != -1){
+        skipTiles = new TLongHashSet();
+        zoomToSkip = req.zoom + ZOOM_TO_SKIP_FILTER;
+    }
+    int length ;
+    int oldLimit ;
+    TIntLongHashMap offsetsMap = new TIntLongHashMap();*/
+    for(;;)
+    {
+        /*if(req.isCancelled()){
+            return;
+        }*/
+        auto tag = cis->ReadTag();
+        switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        {
+        case 0:
+            return;
+        case OBF::OsmAndPoiIndex::kBoxesFieldNumber:
+            {
+                auto length = ObfReader::readBigEndianInt(cis);
+                auto oldLimit = cis->PushLimit(length);
+                //readBoxField(left31, right31, top31, bottom31, 0, 0, 0, offsetsMap,  skipTiles, req, region);
+                readPoiBox(reader, section);
+                cis->PopLimit(oldLimit);
+            }
+            break;
+        case OBF::OsmAndPoiIndex::kPoiDataFieldNumber:
+            /*
+            int[] offsets = offsetsMap.keys();
+            // also offsets can be randomly skipped by limit
+            Arrays.sort(offsets);
+            if(skipTiles != null){
+                skipTiles.clear();
+            }
+            LOG.info("Searched poi structure in "+(System.currentTimeMillis() - time) + 
+                "ms. Found " + offsets.length +" subtress");
+            for (int j = 0; j < offsets.length; j++) {
+                codedIS.seek(offsets[j] + indexOffset);
+                int len = readInt();
+                int oldLim = codedIS.pushLimit(len);
+                readPoiData(left31, right31, top31, bottom31, req, region, skipTiles, zoomToSkip);
+                codedIS.popLimit(oldLim);
+                if(req.isCancelled()){
+                    return;
+                }
+            }
+            codedIS.skipRawBytes(codedIS.getBytesUntilLimit());
+            */
+            return;
+        default:
+            ObfReader::skipUnknownField(cis, tag);
+            break;
+        }
+    }
+}
+
+void OsmAnd::ObfPoiSection::readPoiBox( ObfReader* reader, ObfPoiSection* section )
+{
+    auto cis = reader->_codedInputStream.get();
+
+    /*req.numberOfReadSubtrees++;
+    int zoomToSkip = req.zoom + ZOOM_TO_SKIP_FILTER;
+    boolean checkBox = true;
+    boolean existsCategories = false;
+    int zoom = pzoom;
+    int dy = py;
+    int dx = px;*/
+    while(true){
+        for(;;)
+    {
+        /*if(req.isCancelled()){
+            return;
+        }*/
+        auto tag = cis->ReadTag();
+        switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        {
+        case 0:
+            return;
+        case OBF::OsmAndPoiBox::kZoomFieldNumber:
+            //zoom = codedIS.readUInt32() + pzoom;
+            break;
+        case OBF::OsmAndPoiBox::kLeftFieldNumber:
+            //dx = codedIS.readSInt32();
+            break;
+        case OBF::OsmAndPoiBox::kTopFieldNumber:
+            //dy = codedIS.readSInt32();
+            break;
+        case OBF::OsmAndPoiBox::kCategoriesFieldNumber:
+            {
+                if(/*req.poiTypeFilter == null*/false)
+                {
+                    ObfReader::skipUnknownField(cis, tag);
+                    break;
+                }
+                /*
+                int length = codedIS.readRawVarint32();
+                int oldLimit = codedIS.pushLimit(length);
+                boolean check = checkCategories(req, region);
+                codedIS.popLimit(oldLimit);
+                if(!check){
+                    codedIS.skipRawBytes(codedIS.getBytesUntilLimit());
+                    return false;
+                }
+                existsCategories = true;
+            */
+            }
+            break;
+        case OBF::OsmAndPoiBox::kSubBoxesFieldNumber:
+            /*
+            {
+                int x = dx + (px << (zoom - pzoom));
+                int y = dy + (py << (zoom - pzoom));
+                if(checkBox){
+                    int xL = x << (31 - zoom);
+                    int xR = (x + 1) << (31 - zoom);
+                    int yT = y << (31 - zoom);
+                    int yB = (y + 1) << (31 - zoom);
+                    // check intersection
+                    if(left31 > xR || xL > right31 || bottom31 < yT || yB < top31){
+                        codedIS.skipRawBytes(codedIS.getBytesUntilLimit());
+                        return false;
+                    }
+                    req.numberOfAcceptedSubtrees++;
+                    checkBox = false;
+                }
+
+                int length = readInt();
+                int oldLimit = codedIS.pushLimit(length);
+                boolean exists = readBoxField(left31, right31, top31, bottom31, x, y, zoom, offsetsMap, skipTiles, req, region);
+                codedIS.popLimit(oldLimit);
+
+                if (skipTiles != null && zoom >= zoomToSkip && exists) {
+                    long val = ((((long) x) >> (zoom - zoomToSkip)) << zoomToSkip) | (((long) y) >> (zoom - zoomToSkip));
+                    if(skipTiles.contains(val)){
+                        codedIS.skipRawBytes(codedIS.getBytesUntilLimit());
+                        return true;
+                    }
+                }
+            }
+            */
+            break;
+        case OBF::OsmAndPoiBox::kShiftToDataFieldNumber:
+            {
+                /*
+                int x = dx + (px << (zoom - pzoom));
+                int y = dy + (py << (zoom - pzoom));
+                long l = ((((x << zoom) | y) << 5) | zoom);
+                offsetsMap.put(readInt(), l);
+                if(skipTiles != null && zoom >= zoomToSkip){
+                    long val = ((((long) x) >> (zoom - zoomToSkip)) << zoomToSkip) | (((long) y) >> (zoom - zoomToSkip));
+                    skipTiles.add(val);
+                }
+                */
+            }
+            break;
+        default:
+            ObfReader::skipUnknownField(cis, tag);
+            break;
+        }
+    }
+}
