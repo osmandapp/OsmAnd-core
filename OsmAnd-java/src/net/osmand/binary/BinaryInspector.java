@@ -409,7 +409,7 @@ public class BinaryInspector {
 				} else if(p instanceof PoiRegion && (verbose != null && verbose.isVpoi())){
 					printPOIDetailInfo(verbose, index, (PoiRegion) p);
 				} else if (p instanceof AddressRegion && (verbose != null && verbose.isVaddress())) {
-					printAddressDetailedInfo(verbose, index);
+					printAddressDetailedInfo(verbose, index, (AddressRegion)p);
 				}
 				i++;
 			}
@@ -422,7 +422,7 @@ public class BinaryInspector {
 		
 	}
 
-	private static void printAddressDetailedInfo(VerboseInfo verbose, BinaryMapIndexReader index) throws IOException {
+	private static void printAddressDetailedInfo(VerboseInfo verbose, BinaryMapIndexReader index, AddressRegion region) throws IOException {
 		String[] cityType_String = new String[] {
 	        "Cities/Towns section",
 	        "Villages section",
@@ -434,55 +434,51 @@ public class BinaryInspector {
 			BinaryMapAddressReaderAdapter.POSTCODES_TYPE
 		};
 		
-		for(String region : index.getRegionNames()){
-			println("\tRegion: " + region);
+		for (int j = 0; j < cityType.length; j++) {
+			int type = cityType[j];
+			final List<City> cities = index.getCities(region, null, type);
 			
-			for (int j = 0; j < cityType.length; j++) {
-				int type = cityType[j];
-				final List<City> cities = index.getCities(region, null, type);
-				
-				print(MessageFormat.format("\t\t{0}, {1,number,#} group(s)", new Object[]{cityType_String[j], Integer.valueOf(cities.size())}));
-				if(!verbose.vstreetgroups)
+			print(MessageFormat.format("\t{0}, {1,number,#} group(s)", new Object[]{cityType_String[j], Integer.valueOf(cities.size())}));
+			if(!verbose.vstreetgroups)
+	        {
+				println("");
+	            continue;
+	        }
+			println(":");
+			
+			for (City c : cities) {				
+				index.preloadStreets(c, null);
+				final Collection<Street> streets = c.getStreets();
+				print(MessageFormat.format("\t\t''{0}'' [{1,number,#}], {2,number,#} street(s)", new Object[]{c.getEnName(), Long.valueOf(c.getId()), Integer.valueOf(streets.size())}));
+				if(!verbose.vstreets)
 		        {
 					println("");
 		            continue;
 		        }
 				println(":");
-				
-				for (City c : cities) {				
-					index.preloadStreets(c, null);
-					final Collection<Street> streets = c.getStreets();
-					print(MessageFormat.format("\t\t\t''{0}'' [{1,number,#}], {2,number,#} street(s)", new Object[]{c.getEnName(), Long.valueOf(c.getId()), Integer.valueOf(streets.size())}));
-					if(!verbose.vstreets)
-			        {
-						println("");
-			            continue;
-			        }
-					println(":");
-					for (Street t : streets) {
-						if (!verbose.contains(t))
-							continue;
-						
-						index.preloadBuildings(t, null);
-						final List<Building> buildings = t.getBuildings();
-						final List<Street> intersections = t.getIntersectedStreets();
+				for (Street t : streets) {
+					if (!verbose.contains(t))
+						continue;
 					
-						println(MessageFormat.format("\t\t\t\t''{0}'' [{1,number,#}], {2,number,#} building(s), {3,number,#} intersections(s)",
-								new Object[]{t.getEnName(), Long.valueOf(t.getId()), Integer.valueOf(buildings.size()), Integer.valueOf(intersections.size())}));
-						
-						if (buildings != null && !buildings.isEmpty() && verbose.vbuildings) {
-							println("\t\t\t\t\tBuildings:");
-							for (Building b : buildings) {
-								println(MessageFormat.format("\t\t\t\t\t{0} [{1,number,#}]",
-										new Object[]{b.getName(true), Long.valueOf(b.getId())}));
-							}
+					index.preloadBuildings(t, null);
+					final List<Building> buildings = t.getBuildings();
+					final List<Street> intersections = t.getIntersectedStreets();
+				
+					println(MessageFormat.format("\t\t\t''{0}'' [{1,number,#}], {2,number,#} building(s), {3,number,#} intersections(s)",
+							new Object[]{t.getEnName(), Long.valueOf(t.getId()), Integer.valueOf(buildings.size()), Integer.valueOf(intersections.size())}));
+					
+					if (buildings != null && !buildings.isEmpty() && verbose.vbuildings) {
+						println("\t\t\t\tBuildings:");
+						for (Building b : buildings) {
+							println(MessageFormat.format("\t\t\t\t{0} [{1,number,#}]",
+									new Object[]{b.getName(true), Long.valueOf(b.getId())}));
 						}
-						
-						if (intersections != null && !intersections.isEmpty() && verbose.vintersections) {
-							print("\t\t\t\t\tIntersects with:");
-							for (Street s : intersections) {
-								println("\t\t\t\t\t\t" + s.getEnName());
-							}
+					}
+					
+					if (intersections != null && !intersections.isEmpty() && verbose.vintersections) {
+						print("\t\t\t\tIntersects with:");
+						for (Street s : intersections) {
+							println("\t\t\t\t\t" + s.getEnName());
 						}
 					}
 				}
@@ -602,15 +598,18 @@ public class BinaryInspector {
 						return false;
 					}
 				});
-		index.searchPoi(req);
+		
+		index.initCategories(p);
 		println("\tRegion: " + p.name);
+		println("\t\tBounds " + formatLatBounds(p.getLeftLongitude(), p.getRightLongitude(), 
+				p.getTopLatitude(), p.getBottomLatitude()));
 		println("\t\tCategories:");
 		for(int i =0; i< p.categories.size(); i++) {
 			println("\t\t\t" + p.categories.get(i));
 			for(int j = 0; j < p.subcategories.get(i).size(); j++)
 				println("\t\t\t\t" + p.subcategories.get(i).get(j));
 		}
-		
+		index.searchPoi(p, req);
 		
 	}
 

@@ -521,7 +521,7 @@ public class BinaryMapIndexReader {
 			int cityType) throws IOException {
 		List<City> cities = new ArrayList<City>();
 		AddressRegion r = getRegionByName(region);
-		for(CitiesBlock block :  r.cities) {
+		for(CitiesBlock block : r.cities) {
 			if(block.type == cityType) {
 				codedIS.seek(block.filePointer);
 				int old = codedIS.pushLimit(block.length);
@@ -532,6 +532,23 @@ public class BinaryMapIndexReader {
 		return cities;
 	}
 	
+	public List<City> getCities(AddressRegion region, SearchRequest<City> resultMatcher,  
+			int cityType) throws IOException {
+		return getCities(region, resultMatcher, null, false, cityType);
+	}
+	public List<City> getCities(AddressRegion region, SearchRequest<City> resultMatcher, StringMatcher matcher, boolean useEn, 
+			int cityType) throws IOException {
+		List<City> cities = new ArrayList<City>();
+		for(CitiesBlock block : region.cities) {
+			if(block.type == cityType) {
+				codedIS.seek(block.filePointer);
+				int old = codedIS.pushLimit(block.length);
+				addressAdapter.readCities(cities, resultMatcher, matcher, useEn);
+				codedIS.popLimit(old);
+			}
+		}
+		return cities;
+	}
 	
 	public void preloadStreets(City c, SearchRequest<Street> resultMatcher) throws IOException {
 		checkAddressIndex(c.getFileOffset());
@@ -1180,6 +1197,24 @@ public class BinaryMapIndexReader {
 		return req.getSearchResults();
 	}
 	
+	public List<Amenity> searchPoi(PoiRegion poiIndex, SearchRequest<Amenity> req) throws IOException {
+		req.numberOfVisitedObjects = 0;
+		req.numberOfAcceptedObjects = 0;
+		req.numberOfAcceptedSubtrees = 0;
+		req.numberOfReadSubtrees = 0;
+		
+		poiAdapter.initCategories(poiIndex);
+		codedIS.seek(poiIndex.filePointer);
+		int old = codedIS.pushLimit(poiIndex.length);
+		poiAdapter.searchPoiIndex(req.left, req.right, req.top, req.bottom, req, poiIndex);
+		codedIS.popLimit(old);
+		
+		log.info("Read " + req.numberOfReadSubtrees + " subtrees. Go through " + req.numberOfAcceptedSubtrees + " subtrees.");   //$NON-NLS-1$//$NON-NLS-2$//$NON-NLS-3$
+		log.info("Search poi is done. Visit " + req.numberOfVisitedObjects + " objects. Read " + req.numberOfAcceptedObjects + " objects."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		
+		return req.getSearchResults();
+	}
+		
 	protected List<String> readStringTable() throws IOException{
 		List<String> list = new ArrayList<String>();
 		while(true){
