@@ -58,7 +58,6 @@ elseif(CMAKE_TARGET_OS STREQUAL "darwin")
 elseif(CMAKE_TARGET_OS STREQUAL "windows")
 endif()
 
-find_package(Qt5Core REQUIRED)
 file(GLOB_RECURSE sources "src/*.c*")
 file(GLOB_RECURSE includes "include/*.h*")
 add_library(OsmAndCore SHARED
@@ -84,4 +83,5 @@ target_link_libraries(OsmAndCore LINK_PUBLIC
 	skia_osmand
 	protobuf_osmand
 )
+find_package(Qt5Core REQUIRED)
 qt5_use_modules(OsmAndCore Core)

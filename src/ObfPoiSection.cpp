@@ -270,8 +270,7 @@ void OsmAnd::ObfPoiSection::readPoiBox( ObfReader* reader, ObfPoiSection* sectio
     int zoom = pzoom;
     int dy = py;
     int dx = px;*/
-    while(true){
-        for(;;)
+    for(;;)
     {
         /*if(req.isCancelled()){
             return;

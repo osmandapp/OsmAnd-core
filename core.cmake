@@ -30,3 +30,7 @@ add_dependencies(skia_osmand png_osmand gif_osmand jpeg_osmand harfbuzz_osmand e
 # OsmAnd core
 add_subdirectory("${OSMAND_ROOT}/core" "core/OsmAndCore")
 add_dependencies(OsmAndCore skia_osmand protobuf_osmand)
+
+# OsmAnd Inspector
+add_subdirectory("${OSMAND_ROOT}/core/utils/inspector" "core/utils/OsmAndInspector")
+add_dependencies(OsmAndInspector OsmAndCore)
