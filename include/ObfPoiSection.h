@@ -40,12 +40,6 @@ namespace OsmAnd {
     */
     struct OSMAND_CORE_API ObfPoiSection : public ObfSection
     {
-        struct OSMAND_CORE_API PoiCategory
-        {
-            QString _name;
-            std::list<QString> _subcategories;
-        };
-
         ObfPoiSection(class ObfReader* owner);
         virtual ~ObfPoiSection();
 
@@ -57,17 +51,17 @@ namespace OsmAnd {
         double _topLatitude;
         double _bottomLatitude;
 
-        static void loadCategories(OsmAnd::ObfReader* reader, OsmAnd::ObfPoiSection* section, std::list< std::shared_ptr<OsmAnd::ObfPoiSection::PoiCategory> >& categories);
+        static void loadCategories(OsmAnd::ObfReader* reader, OsmAnd::ObfPoiSection* section, std::list< std::shared_ptr<Model::Amenity::Category> >& categories);
         static void loadAmenities(OsmAnd::ObfReader* reader, OsmAnd::ObfPoiSection* section, std::list< std::shared_ptr<OsmAnd::Model::Amenity> >& amenities);
     protected:
         static void read(ObfReader* reader, ObfPoiSection* section);
 
     private:
         static void readPoiBoundariesIndex(ObfReader* reader, ObfPoiSection* section);
-        static void readCategories(ObfReader* reader, ObfPoiSection* section, std::list< std::shared_ptr<OsmAnd::ObfPoiSection::PoiCategory> >& categories);
-        static void readCategory(ObfReader* reader, ObfPoiSection::PoiCategory* category);
-        static void readAmenities(ObfReader* reader, ObfPoiSection* section, std::list< std::shared_ptr<OsmAnd::Model::Amenity> >& amenities);
-        static void readPoiBox(ObfReader* reader, ObfPoiSection* section);
+        static void readCategories(ObfReader* reader, ObfPoiSection* section, std::list< std::shared_ptr<Model::Amenity::Category> >& categories);
+        static void readCategory(ObfReader* reader, Model::Amenity::Category* category);
+        static void readAmenities(ObfReader* reader, ObfPoiSection* section, std::list< std::shared_ptr<Model::Amenity> >& amenities);
+        static void readPoiTile(ObfReader* reader, ObfPoiSection* section);
         
     friend class ObfReader;
     };

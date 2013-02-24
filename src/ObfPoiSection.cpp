@@ -56,7 +56,7 @@ void OsmAnd::ObfPoiSection::read( ObfReader* reader, ObfPoiSection* section)
     }
 }
 
-void OsmAnd::ObfPoiSection::readCategories( ObfReader* reader, ObfPoiSection* section, std::list< std::shared_ptr<OsmAnd::ObfPoiSection::PoiCategory> >& categories )
+void OsmAnd::ObfPoiSection::readCategories( ObfReader* reader, ObfPoiSection* section, std::list< std::shared_ptr<OsmAnd::Model::Amenity::Category> >& categories )
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -93,7 +93,7 @@ void OsmAnd::ObfPoiSection::readCategories( ObfReader* reader, ObfPoiSection* se
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
-                std::shared_ptr<PoiCategory> category(new PoiCategory());
+                std::shared_ptr<Model::Amenity::Category> category(new Model::Amenity::Category());
                 readCategory(reader, category.get());
                 cis->PopLimit(oldLimit);
                 categories.push_back(category);
@@ -144,7 +144,7 @@ void OsmAnd::ObfPoiSection::readPoiBoundariesIndex( ObfReader* reader, ObfPoiSec
     }
 }
 
-void OsmAnd::ObfPoiSection::readCategory( ObfReader* reader, OsmAnd::ObfPoiSection::PoiCategory* category )
+void OsmAnd::ObfPoiSection::readCategory( ObfReader* reader, OsmAnd::Model::Amenity::Category* category )
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -177,7 +177,7 @@ void OsmAnd::ObfPoiSection::readCategory( ObfReader* reader, OsmAnd::ObfPoiSecti
     }
 }
 
-void OsmAnd::ObfPoiSection::loadCategories( OsmAnd::ObfReader* reader, OsmAnd::ObfPoiSection* section, std::list< std::shared_ptr<OsmAnd::ObfPoiSection::PoiCategory> >& categories )
+void OsmAnd::ObfPoiSection::loadCategories( OsmAnd::ObfReader* reader, OsmAnd::ObfPoiSection* section, std::list< std::shared_ptr<OsmAnd::Model::Amenity::Category> >& categories )
 {
     auto cis = reader->_codedInputStream.get();
     cis->Seek(section->_offset);
@@ -225,7 +225,7 @@ void OsmAnd::ObfPoiSection::readAmenities( ObfReader* reader, ObfPoiSection* sec
                 auto length = ObfReader::readBigEndianInt(cis);
                 auto oldLimit = cis->PushLimit(length);
                 //readBoxField(left31, right31, top31, bottom31, 0, 0, 0, offsetsMap,  skipTiles, req, region);
-                readPoiBox(reader, section);
+                readPoiTile(reader, section);
                 cis->PopLimit(oldLimit);
             }
             break;
@@ -259,7 +259,7 @@ void OsmAnd::ObfPoiSection::readAmenities( ObfReader* reader, ObfPoiSection* sec
     }
 }
 
-void OsmAnd::ObfPoiSection::readPoiBox( ObfReader* reader, ObfPoiSection* section )
+void OsmAnd::ObfPoiSection::readPoiTile( ObfReader* reader, ObfPoiSection* section )
 {
     auto cis = reader->_codedInputStream.get();
 

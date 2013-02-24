@@ -26,6 +26,7 @@
 #include <OsmAndCore.h>
 #include <MapObject.h>
 #include <QString>
+#include <QStringList>
 #include <stdint.h>
 
 namespace OsmAnd {
@@ -34,6 +35,12 @@ namespace OsmAnd {
 
         class OSMAND_CORE_API Amenity : public MapObject
         {
+        public:
+            struct OSMAND_CORE_API Category
+            {
+                QString _name;
+                QStringList _subcategories;
+            };
         private:
         protected:
         public:

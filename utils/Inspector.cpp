@@ -253,7 +253,7 @@ void printPOIDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
 {
     output << "\tBounds " << formatGeoBounds(section->_leftLongitude, section->_rightLongitude, section->_topLatitude, section->_bottomLatitude) << std::endl;
 
-    std::list< std::shared_ptr<OsmAnd::ObfPoiSection::PoiCategory> > categories;
+    std::list< std::shared_ptr<OsmAnd::Model::Amenity::Category> > categories;
     OsmAnd::ObfPoiSection::loadCategories(reader, section, categories);
     output << "\tCategories:" << std::endl;
     for(auto itCategory = categories.begin(); itCategory != categories.end(); ++itCategory)
