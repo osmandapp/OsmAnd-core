@@ -365,8 +365,6 @@ std::string formatBounds(int left, int right, int top, int bottom)
 std::string formatGeoBounds(double l, double r, double t, double b)
 {
     std::ostringstream oStream;
-    static std::locale enUS("en-US");
-    oStream.imbue(enUS);
     oStream << "(left top - right bottom) : " << l << ", " << t << " NE - " << r << ", " << b << " NE";
     return oStream.str();
 }
