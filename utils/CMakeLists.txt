@@ -1,6 +1,4 @@
-find_package(Qt5Core REQUIRED)
-
-project(OsmAndInspector)
+project(OsmAndCoreUtils)
 include_directories(AFTER SYSTEM
 	"${OSMAND_ROOT}/core/externals/protobuf/upstream.patched/src"
 	"${OSMAND_ROOT}/core/include"
@@ -11,10 +9,13 @@ add_definitions(
 	-DOSMAND_INSPECTOR_EXPORTS
 )
 file(GLOB_RECURSE includes "${OSMAND_ROOT}/core/include/*.h*")
-file(GLOB_RECURSE inspector "inspector.*")
-add_library(OsmAndInspector SHARED
+file(GLOB_RECURSE utils_includes "*.h*")
+file(GLOB_RECURSE utils_sources "*.c*")
+add_library(OsmAndCoreUtils SHARED
 	${includes}
-	${inspector}
+	${utils_includes}
+	${utils_sources}
 )
-target_link_libraries(OsmAndInspector OsmAndCore)
-qt5_use_modules(OsmAndInspector Core)
+target_link_libraries(OsmAndCoreUtils OsmAndCore)
+find_package(Qt5Core REQUIRED)
+qt5_use_modules(OsmAndCoreUtils Core)

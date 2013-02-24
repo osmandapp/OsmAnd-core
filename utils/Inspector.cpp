@@ -29,6 +29,24 @@ OsmAnd::Inspector::Configuration::Configuration()
     zoom = 15;
 }
 
+OsmAnd::Inspector::Configuration::Configuration(const QString& fileName)
+{
+    this->fileName = fileName;
+    verboseAddress = false;
+    verboseStreetGroups = false;
+    verboseStreets = false;
+    verboseBuildings = false;
+    verboseIntersections = false;
+    verboseMap = false;
+    verbosePoi = false;
+    verboseTrasport = false;
+    latTop = 85;
+    latBottom = -85;
+    lonLeft = -180;
+    lonRight = 180;
+    zoom = 15;
+}
+
 // Forward declarations
 void dump(std::ostream &output, QString filePath, const OsmAnd::Inspector::Configuration& cfg);
 void printAddressDetailedInfo(std::ostream& output, const OsmAnd::Inspector::Configuration& cfg, OsmAnd::ObfReader* reader, OsmAnd::ObfAddressSection* section);
@@ -37,16 +55,105 @@ void printMapDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
 std::string formatBounds(int left, int right, int top, int bottom);
 std::string formatGeoBounds(double l, double r, double t, double b);
 
-OSMAND_INSPECTOR_API void OSMAND_INSPECTOR_CALL OsmAnd::Inspector::dumpToStdOut( QString filePath, Configuration cfg /*= Configuration()*/ )
+OSMAND_INSPECTOR_API void OSMAND_INSPECTOR_CALL OsmAnd::Inspector::dumpToStdOut( Configuration cfg )
 {
-    dump(std::cout, filePath, cfg);
+    dump(std::cout, cfg.fileName, cfg);
 }
 
-OSMAND_INSPECTOR_API QString OSMAND_INSPECTOR_CALL OsmAnd::Inspector::dumpToString( QString filePath, Configuration cfg /*= Configuration()*/ )
+OSMAND_INSPECTOR_API QString OSMAND_INSPECTOR_CALL OsmAnd::Inspector::dumpToString( Configuration cfg )
 {
     std::ostringstream output;
-    dump(output, filePath, cfg);
+    dump(output, cfg.fileName, cfg);
     return QString::fromStdString(output.str());
+}
+
+OSMAND_INSPECTOR_API bool OSMAND_INSPECTOR_CALL OsmAnd::Inspector::parseCommandLineArguments( QStringList cmdLineArgs, Configuration& cfg, QString& error )
+{
+    if(cmdLineArgs.count() == 0)
+        return false;
+
+    auto cmd = cmdLineArgs.first();
+    if (cmd[0] == '-')
+    {
+        // command
+        if (cmd == "-c" || cmd == "-combine") {
+            if (cmdLineArgs.count() < 4)
+            {
+                error = "Too few parameters to extract (require minimum 4)";
+                return false;
+            }
+
+            std::map<std::shared_ptr<QFile>, std::string> parts;
+            /*for (int i = 3; i < argc; i++)
+            {
+                file = new File(args[i]);
+                if (!file.exists()) {
+                    System.err.std::cout << "File to extract from doesn't exist " + args[i]);
+                    return;
+                }
+                parts.put(file, null);
+                if (i < args.length - 1) {
+                    if (args[i + 1].startsWith("-") || args[i + 1].startsWith("+")) {
+                        parts.put(file, args[i + 1]);
+                        i++;
+                    }
+                }
+            }
+            List<Float> extracted = combineParts(new File(args[1]), parts);
+            if (extracted != null) {
+                std::cout << "\n" + extracted.size() + " parts were successfully extracted to " + args[1]);
+            }*/
+        }
+        else if (cmd.indexOf("-v") == 0)
+        {
+            if (cmdLineArgs.count() < 2)
+            {
+                error = "Missing file parameter";
+                return false;
+            }
+
+            for(auto itArg = cmdLineArgs.begin(); itArg != cmdLineArgs.end(); ++itArg)
+            {
+                auto arg = *itArg;
+                if(arg == "-vaddress")
+                    cfg.verboseAddress = true;
+                else if(arg == "-vstreets")
+                    cfg.verboseStreets = true;
+                else if(arg == "-vstreetgroups")
+                    cfg.verboseStreetGroups = true;
+                else if(arg == "-vbuildings")
+                    cfg.verboseBuildings = true;
+                else if(arg == "-vintersections")
+                    cfg.verboseIntersections = true;
+                else if(arg == "-vmap")
+                    cfg.verboseMap = true;
+                else if(arg == "-vpoi")
+                    cfg.verbosePoi = true;
+                else if(arg == "-vtransport")
+                    cfg.verboseTrasport = true;
+                else if(arg.indexOf("-zoom=") == 0)
+                    cfg.zoom = arg.mid(5).toInt();
+                else if(arg.indexOf("-bbox=") == 0)
+                {
+                    auto values = arg.mid(5).split(",");
+                    cfg.lonLeft = values[0].toDouble();
+                    cfg.latTop = values[1].toDouble();
+                    cfg.lonRight = values[2].toDouble();
+                    cfg.latBottom =  values[3].toDouble();
+                }
+            }
+
+            cfg.fileName = cmdLineArgs.last();
+        }
+        else
+        {
+            error = "Unknown command : " + cmd;
+            return false;
+        }
+    }
+    else
+        cfg.fileName = cmd;
+    return true;
 }
 
 void dump(std::ostream &output, QString filePath, const OsmAnd::Inspector::Configuration& cfg)

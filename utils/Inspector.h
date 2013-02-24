@@ -68,6 +68,7 @@
 #endif
 
 #include <QString>
+#include <QStringList>
 
 namespace OsmAnd
 {
@@ -76,7 +77,9 @@ namespace OsmAnd
         struct OSMAND_INSPECTOR_API Configuration
         {
             Configuration();
+            Configuration(const QString& fileName);
 
+            QString fileName;
             bool verboseAddress;
             bool verboseStreetGroups;
             bool verboseStreets;
@@ -91,8 +94,9 @@ namespace OsmAnd
             double lonRight;
             int zoom;
         };
-        OSMAND_INSPECTOR_API void OSMAND_INSPECTOR_CALL dumpToStdOut(QString filePath, Configuration cfg = Configuration());
-        OSMAND_INSPECTOR_API QString OSMAND_INSPECTOR_CALL dumpToString(QString filePath, Configuration cfg = Configuration());
+        OSMAND_INSPECTOR_API bool OSMAND_INSPECTOR_CALL parseCommandLineArguments(QStringList cmdLineArgs, Configuration& cfg, QString& error);
+        OSMAND_INSPECTOR_API void OSMAND_INSPECTOR_CALL dumpToStdOut(Configuration cfg);
+        OSMAND_INSPECTOR_API QString OSMAND_INSPECTOR_CALL dumpToString(Configuration cfg);
     } // namespace Inspector
 
 } // namespace OsmAnd 
