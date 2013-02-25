@@ -25,7 +25,7 @@
 
 #include <OsmAndCore.h>
 #include <memory>
-#include <list>
+#include <QList>
 #include <map>
 #include <unordered_map>
 #include <unordered_set>
@@ -73,7 +73,7 @@ namespace OsmAnd {
             int _shiftToData;
             
             //! ???
-            std::list< std::shared_ptr<Subregion> > _subregions;
+            QList< std::shared_ptr<Subregion> > _subregions;
 
             //! ???
             //List<RouteDataObject> dataObjects = null;
@@ -197,13 +197,13 @@ namespace OsmAnd {
         int _baseBorderBoxLength;
 
         //! ???
-        std::list< std::shared_ptr<Subregion> > _subregions;
+        QList< std::shared_ptr<Subregion> > _subregions;
         
         //! ???
-        std::list< std::shared_ptr<Subregion> > _baseSubregions;
+        QList< std::shared_ptr<Subregion> > _baseSubregions;
         
         //! ???
-        std::list< std::shared_ptr<TypeRule> > _routeEncodingRules;
+        QList< std::shared_ptr<TypeRule> > _routeEncodingRules;
 
         //! ???
         int _nameTypeRule;

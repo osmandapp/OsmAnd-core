@@ -253,7 +253,7 @@ void printPOIDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
 {
     output << "\tBounds " << formatGeoBounds(section->_leftLongitude, section->_rightLongitude, section->_topLatitude, section->_bottomLatitude) << std::endl;
 
-    std::list< std::shared_ptr<OsmAnd::Model::Amenity::Category> > categories;
+    QList< std::shared_ptr<OsmAnd::Model::Amenity::Category> > categories;
     OsmAnd::ObfPoiSection::loadCategories(reader, section, categories);
     output << "\tCategories:" << std::endl;
     for(auto itCategory = categories.begin(); itCategory != categories.end(); ++itCategory)
@@ -264,8 +264,9 @@ void printPOIDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
             output << "\t\t\t" << (*itSubcategory).toStdString() << std::endl;
     }
 
-    std::list< std::shared_ptr<OsmAnd::Model::Amenity> > amenities;
+    QList< std::shared_ptr<OsmAnd::Model::Amenity> > amenities;
     OsmAnd::ObfPoiSection::loadAmenities(reader, section, amenities);
+    auto sz = amenities.count();
     return;
 }
 
@@ -285,7 +286,7 @@ void printAddressDetailedInfo(std::ostream& output, const OsmAnd::Inspector::Con
     {
         auto type = types[typeIdx];
 
-        std::list< std::shared_ptr<OsmAnd::Model::StreetGroup> > streetGroups;
+        QList< std::shared_ptr<OsmAnd::Model::StreetGroup> > streetGroups;
         OsmAnd::ObfAddressSection::loadStreetGroups(reader, section, streetGroups, 1 << types[typeIdx]);
 
         output << "\t" << strTypes[typeIdx] << ", " << streetGroups.size() << " group(s)";
@@ -299,7 +300,7 @@ void printAddressDetailedInfo(std::ostream& output, const OsmAnd::Inspector::Con
         {
             auto g = *itStreetGroup;
 
-            std::list< std::shared_ptr<OsmAnd::Model::Street> > streets;
+            QList< std::shared_ptr<OsmAnd::Model::Street> > streets;
             OsmAnd::ObfAddressSection::loadStreetsFromGroup(reader, g.get(), streets);
             output << "\t\t'" << g->_latinName.toStdString() << "' [" << g->_id << "], " << streets.size() << " street(s)";
             if(!cfg.verboseStreets)
@@ -320,9 +321,9 @@ void printAddressDetailedInfo(std::ostream& output, const OsmAnd::Inspector::Con
                 if(!isInside)
                     continue;
 
-                std::list< std::shared_ptr<OsmAnd::Model::Building> > buildings;
+                QList< std::shared_ptr<OsmAnd::Model::Building> > buildings;
                 OsmAnd::ObfAddressSection::loadBuildingsFromStreet(reader, s.get(), buildings);
-                std::list< std::shared_ptr<OsmAnd::Model::Street::IntersectedStreet> > intersections;
+                QList< std::shared_ptr<OsmAnd::Model::Street::IntersectedStreet> > intersections;
                 OsmAnd::ObfAddressSection::loadIntersectionsFromStreet(reader, s.get(), intersections);
                 output << "\t\t\t'" << s->_latinName.toStdString() << "' [" << s->_id << "], " << buildings.size() << " building(s), " << intersections.size() << " intersection(s)" << std::endl;
                 if(cfg.verboseBuildings && buildings.size() > 0)

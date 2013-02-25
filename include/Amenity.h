@@ -46,6 +46,9 @@ namespace OsmAnd {
         public:
             Amenity();
             virtual ~Amenity();
+
+            QString _name;
+            QString _latinName;
         };
 
     } // namespace Model

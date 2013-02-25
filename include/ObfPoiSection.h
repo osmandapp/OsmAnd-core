@@ -25,7 +25,7 @@
 
 #include <OsmAndCore.h>
 #include <memory>
-#include <list>
+#include <QList>
 #include <QString>
 #include <google/protobuf/io/coded_stream.h>
 #include <ObfSection.h>
@@ -43,7 +43,7 @@ namespace OsmAnd {
         ObfPoiSection(class ObfReader* owner);
         virtual ~ObfPoiSection();
 
-        //std::list< std::shared_ptr<PoiCategory> > _categories;
+        //QList< std::shared_ptr<PoiCategory> > _categories;
         //List<AmenityType> categoriesType = new ArrayList<AmenityType>();
         
         double _leftLongitude;
@@ -51,17 +51,29 @@ namespace OsmAnd {
         double _topLatitude;
         double _bottomLatitude;
 
-        static void loadCategories(OsmAnd::ObfReader* reader, OsmAnd::ObfPoiSection* section, std::list< std::shared_ptr<Model::Amenity::Category> >& categories);
-        static void loadAmenities(OsmAnd::ObfReader* reader, OsmAnd::ObfPoiSection* section, std::list< std::shared_ptr<OsmAnd::Model::Amenity> >& amenities);
+        static void loadCategories(OsmAnd::ObfReader* reader, OsmAnd::ObfPoiSection* section, QList< std::shared_ptr<Model::Amenity::Category> >& categories);
+        static void loadAmenities(OsmAnd::ObfReader* reader, OsmAnd::ObfPoiSection* section, QList< std::shared_ptr<OsmAnd::Model::Amenity> >& amenities);
     protected:
         static void read(ObfReader* reader, ObfPoiSection* section);
 
     private:
-        static void readPoiBoundariesIndex(ObfReader* reader, ObfPoiSection* section);
-        static void readCategories(ObfReader* reader, ObfPoiSection* section, std::list< std::shared_ptr<Model::Amenity::Category> >& categories);
+        static void readBoundaries(ObfReader* reader, ObfPoiSection* section);
+        static void readCategories(ObfReader* reader, ObfPoiSection* section, QList< std::shared_ptr<Model::Amenity::Category> >& categories);
         static void readCategory(ObfReader* reader, Model::Amenity::Category* category);
-        static void readAmenities(ObfReader* reader, ObfPoiSection* section, std::list< std::shared_ptr<Model::Amenity> >& amenities);
-        static void readPoiTile(ObfReader* reader, ObfPoiSection* section);
+        static void readAmenities(ObfReader* reader, ObfPoiSection* section, QList< std::shared_ptr<Model::Amenity> >& amenities);
+        struct Tile
+        {
+            uint32_t _zoom;
+            int32_t _x;
+            int32_t _y;
+            uint64_t _hash;
+            int32_t _offset;
+        };
+        static void readTiles(ObfReader* reader, ObfPoiSection* section, QList< std::shared_ptr<Tile> >& tiles);
+        static void readTile(ObfReader* reader, ObfPoiSection* section, QList< std::shared_ptr<Tile> >& tiles, Tile* parent);
+        static void readAmenitiesFromTiles(ObfReader* reader, ObfPoiSection* section, const QList< std::shared_ptr<Tile> >& tiles, QList< std::shared_ptr<Model::Amenity> >& amenities);
+        static void readAmenitiesFromTile(ObfReader* reader, ObfPoiSection* section, Tile* tile, QList< std::shared_ptr<Model::Amenity> >& amenities);
+        static void readAmenity(ObfReader* reader, ObfPoiSection* section, int32_t px, int32_t py, uint32_t pzoom, std::shared_ptr<Model::Amenity>& amenity);
         
     friend class ObfReader;
     };

@@ -26,7 +26,7 @@
 #include <OsmAndCore.h>
 #include <QIODevice>
 #include <memory>
-#include <list>
+#include <QList>
 #include <map>
 #include <unordered_map>
 #include <unordered_set>
@@ -56,12 +56,12 @@ namespace OsmAnd {
         int _version;
         long _creationTimestamp;
         bool _isBasemap;
-        std::list< std::shared_ptr<ObfMapSection> > _mapSections;
-        std::list< std::shared_ptr<ObfAddressSection> > _addressRegionsSections;
-        std::list< std::shared_ptr<ObfRoutingSection> > _routingRegionsSections;
-        std::list< std::shared_ptr<ObfPoiSection> > _poiRegionsSections;
-        std::list< std::shared_ptr<ObfTransportSection> > _transportSections;
-        std::list< ObfSection* > _sections;
+        QList< std::shared_ptr<ObfMapSection> > _mapSections;
+        QList< std::shared_ptr<ObfAddressSection> > _addressRegionsSections;
+        QList< std::shared_ptr<ObfRoutingSection> > _routingRegionsSections;
+        QList< std::shared_ptr<ObfPoiSection> > _poiRegionsSections;
+        QList< std::shared_ptr<ObfTransportSection> > _transportSections;
+        QList< ObfSection* > _sections;
         //std::shared_ptr<Transliterator> _icuTransliterator;
     protected:
         QString transliterate(QString input);
@@ -79,7 +79,7 @@ namespace OsmAnd {
         ObfReader(QIODevice* input);
 
         int getVersion() const;
-        std::list< OsmAnd::ObfSection* > getSections() const;
+        QList< OsmAnd::ObfSection* > getSections() const;
 
     friend struct ObfMapSection;
     friend struct ObfAddressSection;

@@ -70,7 +70,7 @@ void OsmAnd::ObfAddressSection::read( ObfReader* reader, ObfAddressSection* sect
 
 }
 
-void OsmAnd::ObfAddressSection::readStreetGroups( ObfReader* reader, ObfAddressSection* section, std::list< std::shared_ptr<Model::StreetGroup> >& list, uint8_t typeBitmask /*= std::numeric_limits<uint8_t>::max()*/ )
+void OsmAnd::ObfAddressSection::readStreetGroups( ObfReader* reader, ObfAddressSection* section, QList< std::shared_ptr<Model::StreetGroup> >& list, uint8_t typeBitmask /*= std::numeric_limits<uint8_t>::max()*/ )
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -87,12 +87,12 @@ void OsmAnd::ObfAddressSection::readStreetGroups( ObfReader* reader, ObfAddressS
     }
 }
 
-void OsmAnd::ObfAddressSection::loadStreetGroups( ObfReader* reader, ObfAddressSection* section, std::list< std::shared_ptr<Model::StreetGroup> >& list, uint8_t typeBitmask /*= std::numeric_limits<uint8_t>::max()*/ )
+void OsmAnd::ObfAddressSection::loadStreetGroups( ObfReader* reader, ObfAddressSection* section, QList< std::shared_ptr<Model::StreetGroup> >& list, uint8_t typeBitmask /*= std::numeric_limits<uint8_t>::max()*/ )
 {
     readStreetGroups(reader, section, list, typeBitmask);
 }
 
-void OsmAnd::ObfAddressSection::loadStreetsFromGroup( ObfReader* reader, Model::StreetGroup* group, std::list< std::shared_ptr<Model::Street> >& list )
+void OsmAnd::ObfAddressSection::loadStreetsFromGroup( ObfReader* reader, Model::StreetGroup* group, QList< std::shared_ptr<Model::Street> >& list )
 {
     //TODO:checkAddressIndex(c.getFileOffset());
     auto cis = reader->_codedInputStream;
@@ -104,7 +104,7 @@ void OsmAnd::ObfAddressSection::loadStreetsFromGroup( ObfReader* reader, Model::
     cis->PopLimit(oldLimit);
 }
 
-void OsmAnd::ObfAddressSection::readStreetsFromGroup( ObfReader* reader, Model::StreetGroup* group, std::list< std::shared_ptr<Model::Street> >& list )
+void OsmAnd::ObfAddressSection::readStreetsFromGroup( ObfReader* reader, Model::StreetGroup* group, QList< std::shared_ptr<Model::Street> >& list )
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -202,7 +202,7 @@ void OsmAnd::ObfAddressSection::readStreet( ObfReader* reader, Model::StreetGrou
     }
 }
 
-void OsmAnd::ObfAddressSection::loadBuildingsFromStreet( ObfReader* reader, Model::Street* street, std::list< std::shared_ptr<Model::Building> >& list )
+void OsmAnd::ObfAddressSection::loadBuildingsFromStreet( ObfReader* reader, Model::Street* street, QList< std::shared_ptr<Model::Building> >& list )
 {
     //TODO:checkAddressIndex(s.getFileOffset());
     auto cis = reader->_codedInputStream;
@@ -214,7 +214,7 @@ void OsmAnd::ObfAddressSection::loadBuildingsFromStreet( ObfReader* reader, Mode
     cis->PopLimit(oldLimit);
 }
 
-void OsmAnd::ObfAddressSection::readBuildingsFromStreet( ObfReader* reader, Model::Street* street, std::list< std::shared_ptr<Model::Building> >& list )
+void OsmAnd::ObfAddressSection::readBuildingsFromStreet( ObfReader* reader, Model::Street* street, QList< std::shared_ptr<Model::Building> >& list )
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -342,7 +342,7 @@ void OsmAnd::ObfAddressSection::readBuilding( ObfReader* reader, Model::Street* 
     }
 }
 
-void OsmAnd::ObfAddressSection::loadIntersectionsFromStreet( ObfReader* reader, Model::Street* street, std::list< std::shared_ptr<Model::Street::IntersectedStreet> >& list )
+void OsmAnd::ObfAddressSection::loadIntersectionsFromStreet( ObfReader* reader, Model::Street* street, QList< std::shared_ptr<Model::Street::IntersectedStreet> >& list )
 {
     //TODO:checkAddressIndex(s.getFileOffset());
     auto cis = reader->_codedInputStream;
@@ -354,7 +354,7 @@ void OsmAnd::ObfAddressSection::loadIntersectionsFromStreet( ObfReader* reader, 
     cis->PopLimit(oldLimit);
 }
 
-void OsmAnd::ObfAddressSection::readIntersectionsFromStreet( ObfReader* reader, Model::Street* street, std::list< std::shared_ptr<Model::Street::IntersectedStreet> >& list )
+void OsmAnd::ObfAddressSection::readIntersectionsFromStreet( ObfReader* reader, Model::Street* street, QList< std::shared_ptr<Model::Street::IntersectedStreet> >& list )
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -468,7 +468,7 @@ void OsmAnd::ObfAddressSection::AddressBlocksSection::read( ObfReader* reader, A
     }
 }
 
-void OsmAnd::ObfAddressSection::AddressBlocksSection::readStreetGroups( ObfReader* reader, OsmAnd::ObfAddressSection::AddressBlocksSection* section, std::list< std::shared_ptr<Model::StreetGroup> >& list )
+void OsmAnd::ObfAddressSection::AddressBlocksSection::readStreetGroups( ObfReader* reader, OsmAnd::ObfAddressSection::AddressBlocksSection* section, QList< std::shared_ptr<Model::StreetGroup> >& list )
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -504,7 +504,7 @@ void OsmAnd::ObfAddressSection::AddressBlocksSection::readStreetGroups( ObfReade
     }
 }
 
-void OsmAnd::ObfAddressSection::AddressBlocksSection::loadSteetGroupsFromBlock( std::list< std::shared_ptr<Model::StreetGroup> >& list )
+void OsmAnd::ObfAddressSection::AddressBlocksSection::loadSteetGroupsFromBlock( QList< std::shared_ptr<Model::StreetGroup> >& list )
 {
     auto cis = _owner->_codedInputStream.get();
 

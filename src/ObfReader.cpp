@@ -146,7 +146,7 @@ int OsmAnd::ObfReader::getVersion() const
     return _version;
 }
 
-std::list< OsmAnd::ObfSection* > OsmAnd::ObfReader::getSections() const
+QList< OsmAnd::ObfSection* > OsmAnd::ObfReader::getSections() const
 {
     return _sections;
 }

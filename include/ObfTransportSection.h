@@ -25,7 +25,7 @@
 
 #include <OsmAndCore.h>
 #include <memory>
-#include <list>
+#include <QList>
 #include <string>
 #include <google/protobuf/io/coded_stream.h>
 #include <ObfSection.h>

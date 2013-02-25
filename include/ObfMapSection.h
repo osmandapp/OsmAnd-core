@@ -25,7 +25,7 @@
 
 #include <OsmAndCore.h>
 #include <memory>
-#include <list>
+#include <QList>
 #include <map>
 #include <unordered_map>
 #include <unordered_set>
@@ -63,14 +63,14 @@ namespace OsmAnd {
             int _maxZoom;
 
             //! ???
-            std::list< std::shared_ptr<MapTree> > _trees;
+            QList< std::shared_ptr<MapTree> > _trees;
         };
 
         ObfMapSection(class ObfReader* owner);
         virtual ~ObfMapSection();
 
         //! ???
-        std::list< std::shared_ptr<MapRoot> > _levels;
+        QList< std::shared_ptr<MapRoot> > _levels;
 
         //! ???
         std::map<std::string, std::map<std::string, int> > _encodingRules;
