@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <limits>
 #include <cmath>
-#include <QtGlobal>
+#include <QtNumeric>
 
 OSMAND_CORE_API const double OsmAnd::Utilities::pi = 3.14159265358979323846;
 const int64_t l = 1UL << 31;
@@ -46,7 +46,7 @@ OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::getTileNumberY( float
 {
     latitude = checkLatitude(latitude);
     double eval = log( tan(toRadians(latitude)) + 1/cos(toRadians(latitude)) );
-    if (qIsFinite(eval) || qIsNan(eval))
+    if (qIsFinite(eval) || qIsNaN(eval))
     {
         latitude = latitude < 0 ? - 89.9 : 89.9;
         eval = log( tan(toRadians(latitude)) + 1/cos(toRadians(latitude)) );
