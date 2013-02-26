@@ -2,6 +2,11 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
+ifeq ($(OSMAND_BUILDING_NEON_LIBRARY),true)
+	QT := $(LOCAL_PATH)/../core/externals/qtbase-android/upstream.patched.$(TARGET_ARCH_ABI)-neon
+else
+	QT := $(LOCAL_PATH)/../core/externals/qtbase-android/upstream.patched.$(TARGET_ARCH_ABI)
+endif
 OSMAND_PROTOBUF := $(LOCAL_PATH)/externals/protobuf/upstream.patched
 OSMAND_SKIA_ROOT := $(LOCAL_PATH)/externals/skia
 OSMAND_SKIA := $(LOCAL_PATH)/externals/skia/upstream.patched
@@ -9,8 +14,10 @@ OSMAND_EXPAT := $(LOCAL_PATH)/externals/expat/upstream.patched
 OSMAND_CORE_RELATIVE := .
 OSMAND_CORE := $(LOCAL_PATH)/$(OSMAND_CORE_RELATIVE)
 
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/src \
-    $(OSMAND_PROTOBUF)/src \
+LOCAL_C_INCLUDES := \
+	$(QT)/include/QtCore \
+    $(LOCAL_PATH)/src \
+	$(OSMAND_PROTOBUF)/src \
 	$(OSMAND_SKIA_ROOT) \
 	$(OSMAND_SKIA) \
 	$(OSMAND_EXPAT)/lib \
