@@ -32,6 +32,7 @@ LOCAL_C_INCLUDES := \
 	$(OSMAND_SKIA)/src/core \
 	$(OSMAND_CORE)/include \
 	$(OSMAND_CORE)/src \
+	$(OSMAND_CORE)/protos \
 	$(OSMAND_CORE)/native/include \
 	$(OSMAND_CORE)/native/src
 
