@@ -37,7 +37,7 @@ LOCAL_C_INCLUDES := \
 
 LOCAL_CPP_EXTENSION := .cc .cpp
 LOCAL_SRC_FILES := \
-	$(wildcard $(OSMAND_CORE_RELATIVE)/src/*.c*) \
+	$(wildcard $(OSMAND_CORE_RELATIVE)/src/*.cpp) \
 	$(OSMAND_CORE_RELATIVE)/native/src/ElapsedTimer.cpp \
 	$(OSMAND_CORE_RELATIVE)/native/src/common.cpp \
 	$(OSMAND_CORE_RELATIVE)/native/src/mapObjects.cpp \
