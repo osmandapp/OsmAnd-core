@@ -14,8 +14,6 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
     : _codedInputStream(new gpb::io::CodedInputStream(new QZeroCopyInputStream(input)))
     , _isBasemap(false)
 {
-    //UErrorCode uErrorCode;
-    //_icuTransliterator.reset(Transliterator::createInstance("Any-Latin_ASCII", UTRANS_FORWARD, uErrorCode));
     _codedInputStream->SetTotalBytesLimit(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
 
     bool loadedCorrectly = false;
@@ -40,7 +38,7 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
                 section->_length = ObfReader::readBigEndianInt(_codedInputStream.get());
                 section->_offset = _codedInputStream->CurrentPosition();
                 auto oldLimit = _codedInputStream->PushLimit(section->_length);
-                ObfMapSection::read(this, section.get(), false);
+                ObfMapSection::read(this, section.get());
                 _isBasemap = _isBasemap || section->isBaseMap();
                 _codedInputStream->PopLimit(oldLimit);
                 _codedInputStream->Seek(section->_offset + section->_length);
@@ -160,7 +158,5 @@ int OsmAnd::ObfReader::readSInt32( gpb::io::CodedInputStream* cis )
 
 QString OsmAnd::ObfReader::transliterate( QString input )
 {
-    //UnicodeString icuString(input.toStdWString().c_str());
-    //_icuTransliterator->transliterate(icuString);
     return QString("!translit!");
 }

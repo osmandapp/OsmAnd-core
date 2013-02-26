@@ -227,7 +227,7 @@ void dump(std::ostream &output, QString filePath, const OsmAnd::Inspector::Confi
             int levelIdx = 1;
             for(auto itLevel = mapSection->_levels.begin(); itLevel != mapSection->_levels.end(); ++itLevel, levelIdx++)
             {
-                OsmAnd::ObfMapSection::MapRoot* level = itLevel->get();
+                auto level = itLevel->get();
                 output << "\t" << idx << "." << levelIdx << " Map level minZoom = " << level->_minZoom << ", maxZoom = " << level->_maxZoom << ", size = " << level->_length << " bytes" << std::endl;
                 output << "\t\tBounds " << formatBounds(level->_left, level->_right, level->_top, level->_bottom) << std::endl;
             }

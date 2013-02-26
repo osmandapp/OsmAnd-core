@@ -9,22 +9,22 @@ namespace gpb = google::protobuf;
 
 OsmAnd::ObfMapSection::ObfMapSection( class ObfReader* owner )
     : ObfSection(owner)
-    , _nameEncodingType(0)
+/*    , _nameEncodingType(0)
     , _refEncodingType(-1)
     , _coastlineEncodingType(-1)
     , _coastlineBrokenEncodingType(-1)
     , _landEncodingType(-1)
     , _onewayAttribute(-1)
-    , _onewayReverseAttribute(-1)
+    , _onewayReverseAttribute(-1)*/
 {
-    _positiveLayers.reserve(2);
-    _negativeLayers.reserve(2);
+    /*_positiveLayers.reserve(2);
+    _negativeLayers.reserve(2);*/
 }
 
 OsmAnd::ObfMapSection::~ObfMapSection()
 {
 }
-
+/*
 bool OsmAnd::ObfMapSection::getRule( std::string t, std::string v, int& outRule )
 {
     auto m = _encodingRules.find(t);
@@ -76,12 +76,12 @@ void OsmAnd::ObfMapSection::initMapEncodingRule( int type, int id, std::string t
         }
     }
 }
-
+*/
 bool OsmAnd::ObfMapSection::isBaseMap()
 {
     return QString::compare(_name, "basemap", Qt::CaseInsensitive);
 }
-
+/*
 void OsmAnd::ObfMapSection::finishInitializingTags()
 {
     auto free = _decodingRules.size() * 2 + 1;
@@ -93,8 +93,8 @@ void OsmAnd::ObfMapSection::finishInitializingTags()
         initMapEncodingRule(0, _landEncodingType, "natural", "land");
     }
 }
-
-void OsmAnd::ObfMapSection::read( ObfReader* reader, ObfMapSection* section, bool onlyInitEncodingRules )
+*/
+void OsmAnd::ObfMapSection::read( ObfReader* reader, ObfMapSection* section )
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -105,8 +105,6 @@ void OsmAnd::ObfMapSection::read( ObfReader* reader, ObfMapSection* section, boo
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
-            if (onlyInitEncodingRules)
-                section->finishInitializingTags();
             return;
         case OBF::OsmAndMapIndex::kNameFieldNumber:
             {
@@ -115,32 +113,17 @@ void OsmAnd::ObfMapSection::read( ObfReader* reader, ObfMapSection* section, boo
                 section->_name = QString::fromStdString(name);
             }
             break;
-        case OBF::OsmAndMapIndex::kRulesFieldNumber:
-            if (onlyInitEncodingRules)
-            {
-                gpb::uint32 len;
-                cis->ReadVarint32(&len);
-                auto oldLimit = cis->PushLimit(len);
-                readMapEncodingRule(reader, section, defaultId++);
-                cis->PopLimit(oldLimit);
-            }
-            else
-                ObfReader::skipUnknownField(cis, tag);
-            break;
         case OBF::OsmAndMapIndex::kLevelsFieldNumber:
             {
                 auto length = ObfReader::readBigEndianInt(cis);
                 auto offset = cis->CurrentPosition();
-                if (!onlyInitEncodingRules)
-                {
-                    auto oldLimit = cis->PushLimit(length);
-                    std::shared_ptr<MapRoot> mapRoot(readMapLevel(reader, new MapRoot(), false));
-                    mapRoot->_length = length;
-                    mapRoot->_offset = offset;
-                    section->_levels.push_back(mapRoot);
-                    cis->PopLimit(oldLimit);
-                }
-                cis->Seek(offset + length);
+                auto oldLimit = cis->PushLimit(length);
+                std::shared_ptr<MapLevel> levelRoot(new MapLevel());
+                readMapLevel(reader, section, levelRoot.get());
+                levelRoot->_length = length;
+                levelRoot->_offset = offset;
+                section->_levels.push_back(levelRoot);
+                cis->PopLimit(oldLimit);
             }
             break;
         default:
@@ -150,7 +133,46 @@ void OsmAnd::ObfMapSection::read( ObfReader* reader, ObfMapSection* section, boo
     }
 }
 
+void OsmAnd::ObfMapSection::readMapLevel( ObfReader* reader, ObfMapSection* section, MapLevel* level )
+{
+    auto cis = reader->_codedInputStream.get();
 
+    for(;;)
+    {
+        auto tag = cis->ReadTag();
+        switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        {
+        case 0:
+            return;
+        case OBF::OsmAndMapIndex_MapRootLevel::kBottomFieldNumber:
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_bottom));
+            break;
+        case OBF::OsmAndMapIndex_MapRootLevel::kLeftFieldNumber:
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_left));
+            break;
+        case OBF::OsmAndMapIndex_MapRootLevel::kRightFieldNumber:
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_right));
+            break;
+        case OBF::OsmAndMapIndex_MapRootLevel::kTopFieldNumber:
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_top));
+            break;
+        case OBF::OsmAndMapIndex_MapRootLevel::kMaxZoomFieldNumber:
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_maxZoom));
+            break;
+        case OBF::OsmAndMapIndex_MapRootLevel::kMinZoomFieldNumber:
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_minZoom));
+            break;
+        case OBF::OsmAndMapIndex_MapRootLevel::kBlocksFieldNumber:
+            cis->Skip(cis->BytesUntilLimit());
+            return;
+        default:
+            ObfReader::skipUnknownField(cis, tag);
+            break;
+        }
+    }
+}
+//------------------------------------------------------------------------------------------------------------
+/*
 void OsmAnd::ObfMapSection::readMapEncodingRule( ObfReader* reader, ObfMapSection* section, int id )
 {
     auto cis = reader->_codedInputStream.get();
@@ -177,62 +199,6 @@ void OsmAnd::ObfMapSection::readMapEncodingRule( ObfReader* reader, ObfMapSectio
             break;
         case OBF::OsmAndMapIndex_MapEncodingRule::kIdFieldNumber:
             cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&id));
-            break;
-        default:
-            ObfReader::skipUnknownField(cis, tag);
-            break;
-        }
-    }
-}
-
-OsmAnd::ObfMapSection::MapRoot* OsmAnd::ObfMapSection::readMapLevel( ObfReader* reader, MapRoot* root, bool initSubtrees )
-{
-    auto cis = reader->_codedInputStream.get();
-
-    for(;;)
-    {
-        auto tag = cis->ReadTag();
-        switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
-        {
-        case 0:
-            return root;
-        case OBF::OsmAndMapIndex_MapRootLevel::kBottomFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&root->_bottom));
-            break;
-        case OBF::OsmAndMapIndex_MapRootLevel::kLeftFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&root->_left));
-            break;
-        case OBF::OsmAndMapIndex_MapRootLevel::kRightFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&root->_right));
-            break;
-        case OBF::OsmAndMapIndex_MapRootLevel::kTopFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&root->_top));
-            break;
-        case OBF::OsmAndMapIndex_MapRootLevel::kMaxZoomFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&root->_maxZoom));
-            break;
-        case OBF::OsmAndMapIndex_MapRootLevel::kMinZoomFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&root->_minZoom));
-            break;
-        case OBF::OsmAndMapIndex_MapRootLevel::kBoxesFieldNumber:
-            {
-                auto length = ObfReader::readBigEndianInt(cis);
-                auto offset = cis->CurrentPosition();
-                if (initSubtrees)
-                {
-                    std::shared_ptr<MapTree> r(new MapTree());
-                    r->_length = length;
-                    r->_offset= offset;
-                    auto oldLimit = cis->PushLimit(length);
-                    readMapTreeBounds(reader, r.get(), root->_left, root->_right, root->_top, root->_bottom);
-                    root->_trees.push_back(r);
-                    cis->PopLimit(oldLimit);
-                }
-                cis->Seek(offset + length);
-            }
-            break;
-        case OBF::OsmAndMapIndex_MapRootLevel::kBlocksFieldNumber:
-            cis->Skip(cis->BytesUntilLimit());
             break;
         default:
             ObfReader::skipUnknownField(cis, tag);
@@ -281,15 +247,4 @@ void OsmAnd::ObfMapSection::readMapTreeBounds( ObfReader* reader, MapTree* tree,
         }
     }
 }
-
-OsmAnd::ObfMapSection::MapTree::MapTree()
-    : _offset(0)
-    , _length(0)
-    , _mapDataBlock(0)
-    , _isOcean(false)
-    , _left(0)
-    , _right(0)
-    , _top(0)
-    , _bottom(0)
-{
-}
+*/
