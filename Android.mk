@@ -15,6 +15,7 @@ OSMAND_CORE_RELATIVE := .
 OSMAND_CORE := $(LOCAL_PATH)/$(OSMAND_CORE_RELATIVE)
 
 LOCAL_C_INCLUDES := \
+	$(QT)/include \
 	$(QT)/include/QtCore \
     $(LOCAL_PATH)/src \
 	$(OSMAND_PROTOBUF)/src \
