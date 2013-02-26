@@ -76,7 +76,7 @@
       <PreprocessorDefinitions>_LIB;FT2_BUILD_LIBRARY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\externals\freetype\upstream.patched\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)upstream.patched\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -88,7 +88,7 @@
       <PreprocessorDefinitions>_LIB;FT2_BUILD_LIBRARY;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\externals\freetype\upstream.patched\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)upstream.patched\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -100,7 +100,7 @@
       <PreprocessorDefinitions>_LIB;FT2_BUILD_LIBRARY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\externals\freetype\upstream.patched\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)upstream.patched\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -112,7 +112,7 @@
       <PreprocessorDefinitions>_LIB;FT2_BUILD_LIBRARY;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\externals\freetype\upstream.patched\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)upstream.patched\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -129,27 +129,27 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\autofit\autofit.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\base\ftbase.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\base\ftbbox.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\base\ftbitmap.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\base\ftfstype.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\base\ftgasp.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\base\ftglyph.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\base\ftinit.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\base\ftlcdfil.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\base\ftstroke.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\base\ftsystem.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\base\fttype1.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\base\ftxf86.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\bdf\bdf.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\cff\cff.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\pshinter\pshinter.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\psnames\psnames.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\raster\raster.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\sfnt\sfnt.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\smooth\smooth.c" />
-    <ClCompile Include="..\..\..\externals\freetype\upstream.patched\src\truetype\truetype.c" />
+    <ClCompile Include="upstream.patched\src\autofit\autofit.c" />
+    <ClCompile Include="upstream.patched\src\base\ftbase.c" />
+    <ClCompile Include="upstream.patched\src\base\ftbbox.c" />
+    <ClCompile Include="upstream.patched\src\base\ftbitmap.c" />
+    <ClCompile Include="upstream.patched\src\base\ftfstype.c" />
+    <ClCompile Include="upstream.patched\src\base\ftgasp.c" />
+    <ClCompile Include="upstream.patched\src\base\ftglyph.c" />
+    <ClCompile Include="upstream.patched\src\base\ftinit.c" />
+    <ClCompile Include="upstream.patched\src\base\ftlcdfil.c" />
+    <ClCompile Include="upstream.patched\src\base\ftstroke.c" />
+    <ClCompile Include="upstream.patched\src\base\ftsystem.c" />
+    <ClCompile Include="upstream.patched\src\base\fttype1.c" />
+    <ClCompile Include="upstream.patched\src\base\ftxf86.c" />
+    <ClCompile Include="upstream.patched\src\bdf\bdf.c" />
+    <ClCompile Include="upstream.patched\src\cff\cff.c" />
+    <ClCompile Include="upstream.patched\src\pshinter\pshinter.c" />
+    <ClCompile Include="upstream.patched\src\psnames\psnames.c" />
+    <ClCompile Include="upstream.patched\src\raster\raster.c" />
+    <ClCompile Include="upstream.patched\src\sfnt\sfnt.c" />
+    <ClCompile Include="upstream.patched\src\smooth\smooth.c" />
+    <ClCompile Include="upstream.patched\src\truetype\truetype.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsPhone\v$(TargetPlatformVersion)\Microsoft.Cpp.WindowsPhone.$(TargetPlatformVersion).targets" />

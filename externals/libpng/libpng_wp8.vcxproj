@@ -76,7 +76,7 @@
       <PreprocessorDefinitions>_LIB;PNG_CONFIGURE_LIBPNG;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\externals\zlib\upstream.patched;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\zlib\upstream.patched;$(ProjectDir)upstream.patched;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -88,7 +88,7 @@
       <PreprocessorDefinitions>_LIB;PNG_CONFIGURE_LIBPNG;_CRT_SECURE_NO_DEPRECATE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\externals\zlib\upstream.patched;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\zlib\upstream.patched;$(ProjectDir)upstream.patched;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -100,7 +100,7 @@
       <PreprocessorDefinitions>_LIB;PNG_CONFIGURE_LIBPNG;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\externals\zlib\upstream.patched;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\zlib\upstream.patched;$(ProjectDir)upstream.patched;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -112,7 +112,7 @@
       <PreprocessorDefinitions>_LIB;PNG_CONFIGURE_LIBPNG;_CRT_SECURE_NO_DEPRECATE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\externals\zlib\upstream.patched;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\zlib\upstream.patched;$(ProjectDir)upstream.patched;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -129,21 +129,21 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\externals\libpng\upstream.patched\png.c" />
-    <ClCompile Include="..\..\..\externals\libpng\upstream.patched\pngerror.c" />
-    <ClCompile Include="..\..\..\externals\libpng\upstream.patched\pngget.c" />
-    <ClCompile Include="..\..\..\externals\libpng\upstream.patched\pngmem.c" />
-    <ClCompile Include="..\..\..\externals\libpng\upstream.patched\pngpread.c" />
-    <ClCompile Include="..\..\..\externals\libpng\upstream.patched\pngread.c" />
-    <ClCompile Include="..\..\..\externals\libpng\upstream.patched\pngrio.c" />
-    <ClCompile Include="..\..\..\externals\libpng\upstream.patched\pngrtran.c" />
-    <ClCompile Include="..\..\..\externals\libpng\upstream.patched\pngrutil.c" />
-    <ClCompile Include="..\..\..\externals\libpng\upstream.patched\pngset.c" />
-    <ClCompile Include="..\..\..\externals\libpng\upstream.patched\pngtrans.c" />
-    <ClCompile Include="..\..\..\externals\libpng\upstream.patched\pngwio.c" />
-    <ClCompile Include="..\..\..\externals\libpng\upstream.patched\pngwrite.c" />
-    <ClCompile Include="..\..\..\externals\libpng\upstream.patched\pngwtran.c" />
-    <ClCompile Include="..\..\..\externals\libpng\upstream.patched\pngwutil.c" />
+    <ClCompile Include="upstream.patched\png.c" />
+    <ClCompile Include="upstream.patched\pngerror.c" />
+    <ClCompile Include="upstream.patched\pngget.c" />
+    <ClCompile Include="upstream.patched\pngmem.c" />
+    <ClCompile Include="upstream.patched\pngpread.c" />
+    <ClCompile Include="upstream.patched\pngread.c" />
+    <ClCompile Include="upstream.patched\pngrio.c" />
+    <ClCompile Include="upstream.patched\pngrtran.c" />
+    <ClCompile Include="upstream.patched\pngrutil.c" />
+    <ClCompile Include="upstream.patched\pngset.c" />
+    <ClCompile Include="upstream.patched\pngtrans.c" />
+    <ClCompile Include="upstream.patched\pngwio.c" />
+    <ClCompile Include="upstream.patched\pngwrite.c" />
+    <ClCompile Include="upstream.patched\pngwtran.c" />
+    <ClCompile Include="upstream.patched\pngwutil.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsPhone\v$(TargetPlatformVersion)\Microsoft.Cpp.WindowsPhone.$(TargetPlatformVersion).targets" />

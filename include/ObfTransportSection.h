@@ -35,7 +35,7 @@ namespace OsmAnd {
     namespace gpb = google::protobuf;
 
     /**
-    'POI Region' section of OsmAnd Binary File
+    'Transport' section of OsmAnd Binary File
     */
     struct OSMAND_CORE_API ObfTransportSection : public ObfSection
     {

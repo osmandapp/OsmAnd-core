@@ -76,7 +76,7 @@
       <PreprocessorDefinitions>_LIB;GOOGLE_PROTOBUF_NO_RTTI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\externals\protobuf;$(ProjectDir)..\..\..\externals\protobuf\upstream.patched\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)upstream.patched\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -88,7 +88,7 @@
       <PreprocessorDefinitions>_LIB;GOOGLE_PROTOBUF_NO_RTTI;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\externals\protobuf;$(ProjectDir)..\..\..\externals\protobuf\upstream.patched\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)upstream.patched\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -100,7 +100,7 @@
       <PreprocessorDefinitions>_LIB;GOOGLE_PROTOBUF_NO_RTTI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\externals\protobuf;$(ProjectDir)..\..\..\externals\protobuf\upstream.patched\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)upstream.patched\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -112,7 +112,7 @@
       <PreprocessorDefinitions>_LIB;GOOGLE_PROTOBUF_NO_RTTI;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\externals\protobuf;$(ProjectDir)..\..\..\externals\protobuf\upstream.patched\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)upstream.patched\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -129,17 +129,17 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\externals\protobuf\upstream.patched\src\google\protobuf\extension_set.cc" />
-    <ClCompile Include="..\..\..\externals\protobuf\upstream.patched\src\google\protobuf\generated_message_util.cc" />
-    <ClCompile Include="..\..\..\externals\protobuf\upstream.patched\src\google\protobuf\io\coded_stream.cc" />
-    <ClCompile Include="..\..\..\externals\protobuf\upstream.patched\src\google\protobuf\io\zero_copy_stream.cc" />
-    <ClCompile Include="..\..\..\externals\protobuf\upstream.patched\src\google\protobuf\io\zero_copy_stream_impl.cc" />
-    <ClCompile Include="..\..\..\externals\protobuf\upstream.patched\src\google\protobuf\io\zero_copy_stream_impl_lite.cc" />
-    <ClCompile Include="..\..\..\externals\protobuf\upstream.patched\src\google\protobuf\message_lite.cc" />
-    <ClCompile Include="..\..\..\externals\protobuf\upstream.patched\src\google\protobuf\repeated_field.cc" />
-    <ClCompile Include="..\..\..\externals\protobuf\upstream.patched\src\google\protobuf\stubs\common.cc" />
-    <ClCompile Include="..\..\..\externals\protobuf\upstream.patched\src\google\protobuf\stubs\once.cc" />
-    <ClCompile Include="..\..\..\externals\protobuf\upstream.patched\src\google\protobuf\wire_format_lite.cc" />
+    <ClCompile Include="upstream.patched\src\google\protobuf\extension_set.cc" />
+    <ClCompile Include="upstream.patched\src\google\protobuf\generated_message_util.cc" />
+    <ClCompile Include="upstream.patched\src\google\protobuf\io\coded_stream.cc" />
+    <ClCompile Include="upstream.patched\src\google\protobuf\io\zero_copy_stream.cc" />
+    <ClCompile Include="upstream.patched\src\google\protobuf\io\zero_copy_stream_impl.cc" />
+    <ClCompile Include="upstream.patched\src\google\protobuf\io\zero_copy_stream_impl_lite.cc" />
+    <ClCompile Include="upstream.patched\src\google\protobuf\message_lite.cc" />
+    <ClCompile Include="upstream.patched\src\google\protobuf\repeated_field.cc" />
+    <ClCompile Include="upstream.patched\src\google\protobuf\stubs\common.cc" />
+    <ClCompile Include="upstream.patched\src\google\protobuf\stubs\once.cc" />
+    <ClCompile Include="upstream.patched\src\google\protobuf\wire_format_lite.cc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsPhone\v$(TargetPlatformVersion)\Microsoft.Cpp.WindowsPhone.$(TargetPlatformVersion).targets" />

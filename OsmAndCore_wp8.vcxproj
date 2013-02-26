@@ -56,27 +56,27 @@
     <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
-    <OutDir>$(ProjectDir)..\..\..\binaries\wp8\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(ProjectDir)..\..\..\binaries\wp8\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(ProjectDir)..\binaries\wp8\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)..\binaries\wp8\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
-    <OutDir>$(ProjectDir)..\..\..\binaries\wp8\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(ProjectDir)..\..\..\binaries\wp8\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(ProjectDir)..\binaries\wp8\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)..\binaries\wp8\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>$(ProjectDir)..\..\..\binaries\wp8\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(ProjectDir)..\..\..\binaries\wp8\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(ProjectDir)..\binaries\wp8\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)..\binaries\wp8\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>$(ProjectDir)..\..\..\binaries\wp8\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(ProjectDir)..\..\..\binaries\wp8\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(ProjectDir)..\binaries\wp8\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)..\binaries\wp8\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PreprocessorDefinitions>_LIB;SK_BUILD_FOR_WIN32;SK_RELEASE;SK_ALLOW_STATIC_GLOBAL_INITIALIZERS=0;SK_SCALAR_IS_FLOAT;SK_CPU_LENDIAN;SK_SUPPORT_GPU=0;XML_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\externals\skia\upstream.patched\src\core;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\core;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\config;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\effects;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\images;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\pipe;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\ports;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\utils;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\utils\win;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\xml;$(ProjectDir)..\..\..\externals\expat\upstream.patched\lib;$(ProjectDir)..\..\..\externals\harfbuzz\upstream.patched\src;$(ProjectDir)..\..\..\externals\protobuf;$(ProjectDir)..\..\..\externals\protobuf\upstream.patched\src;$(ProjectDir)..\..\..\native\include;$(ProjectDir)..\..\..\native\src;$(ProjectDir)..\..\..\native\src\proto;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)externals\skia\upstream.patched\src\core;$(ProjectDir)externals\skia\upstream.patched\include\core;$(ProjectDir)externals\skia\upstream.patched\include\config;$(ProjectDir)externals\skia\upstream.patched\include\effects;$(ProjectDir)externals\skia\upstream.patched\include\images;$(ProjectDir)externals\skia\upstream.patched\include\pipe;$(ProjectDir)externals\skia\upstream.patched\include\ports;$(ProjectDir)externals\skia\upstream.patched\include\utils;$(ProjectDir)externals\skia\upstream.patched\include\utils\win;$(ProjectDir)externals\skia\upstream.patched\include\xml;$(ProjectDir)externals\expat\upstream.patched\lib;$(ProjectDir)externals\harfbuzz\upstream.patched\src;$(ProjectDir)externals\protobuf;$(ProjectDir)externals\protobuf\upstream.patched\src;$(ProjectDir)native\include;$(ProjectDir)native\src;$(ProjectDir)protos;$(ProjectDir)includes;$(ProjectDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -88,7 +88,7 @@
       <PreprocessorDefinitions>_LIB;SK_BUILD_FOR_WIN32;SK_RELEASE;SK_ALLOW_STATIC_GLOBAL_INITIALIZERS=0;SK_SCALAR_IS_FLOAT;SK_CPU_LENDIAN;SK_SUPPORT_GPU=0;XML_STATIC;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\externals\skia\upstream.patched\src\core;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\core;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\config;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\effects;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\images;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\pipe;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\ports;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\utils;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\utils\win;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\xml;$(ProjectDir)..\..\..\externals\expat\upstream.patched\lib;$(ProjectDir)..\..\..\externals\harfbuzz\upstream.patched\src;$(ProjectDir)..\..\..\externals\protobuf;$(ProjectDir)..\..\..\externals\protobuf\upstream.patched\src;$(ProjectDir)..\..\..\native\include;$(ProjectDir)..\..\..\native\src;$(ProjectDir)..\..\..\native\src\proto;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)externals\skia\upstream.patched\src\core;$(ProjectDir)externals\skia\upstream.patched\include\core;$(ProjectDir)externals\skia\upstream.patched\include\config;$(ProjectDir)externals\skia\upstream.patched\include\effects;$(ProjectDir)externals\skia\upstream.patched\include\images;$(ProjectDir)externals\skia\upstream.patched\include\pipe;$(ProjectDir)externals\skia\upstream.patched\include\ports;$(ProjectDir)externals\skia\upstream.patched\include\utils;$(ProjectDir)externals\skia\upstream.patched\include\utils\win;$(ProjectDir)externals\skia\upstream.patched\include\xml;$(ProjectDir)externals\expat\upstream.patched\lib;$(ProjectDir)externals\harfbuzz\upstream.patched\src;$(ProjectDir)externals\protobuf;$(ProjectDir)externals\protobuf\upstream.patched\src;$(ProjectDir)native\include;$(ProjectDir)native\src;$(ProjectDir)protos;$(ProjectDir)includes;$(ProjectDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -100,7 +100,7 @@
       <PreprocessorDefinitions>_LIB;SK_BUILD_FOR_WIN32;SK_RELEASE;SK_ALLOW_STATIC_GLOBAL_INITIALIZERS=0;SK_SCALAR_IS_FLOAT;SK_CPU_LENDIAN;SK_SUPPORT_GPU=0;XML_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\externals\skia\upstream.patched\src\core;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\core;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\config;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\effects;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\images;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\pipe;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\ports;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\utils;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\utils\win;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\xml;$(ProjectDir)..\..\..\externals\expat\upstream.patched\lib;$(ProjectDir)..\..\..\externals\harfbuzz\upstream.patched\src;$(ProjectDir)..\..\..\externals\protobuf;$(ProjectDir)..\..\..\externals\protobuf\upstream.patched\src;$(ProjectDir)..\..\..\native\include;$(ProjectDir)..\..\..\native\src;$(ProjectDir)..\..\..\native\src\proto;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)externals\skia\upstream.patched\src\core;$(ProjectDir)externals\skia\upstream.patched\include\core;$(ProjectDir)externals\skia\upstream.patched\include\config;$(ProjectDir)externals\skia\upstream.patched\include\effects;$(ProjectDir)externals\skia\upstream.patched\include\images;$(ProjectDir)externals\skia\upstream.patched\include\pipe;$(ProjectDir)externals\skia\upstream.patched\include\ports;$(ProjectDir)externals\skia\upstream.patched\include\utils;$(ProjectDir)externals\skia\upstream.patched\include\utils\win;$(ProjectDir)externals\skia\upstream.patched\include\xml;$(ProjectDir)externals\expat\upstream.patched\lib;$(ProjectDir)externals\harfbuzz\upstream.patched\src;$(ProjectDir)externals\protobuf;$(ProjectDir)externals\protobuf\upstream.patched\src;$(ProjectDir)native\include;$(ProjectDir)native\src;$(ProjectDir)protos;$(ProjectDir)includes;$(ProjectDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -112,7 +112,7 @@
       <PreprocessorDefinitions>_LIB;SK_BUILD_FOR_WIN32;SK_RELEASE;SK_ALLOW_STATIC_GLOBAL_INITIALIZERS=0;SK_SCALAR_IS_FLOAT;SK_CPU_LENDIAN;SK_SUPPORT_GPU=0;XML_STATIC;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\externals\skia\upstream.patched\src\core;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\core;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\config;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\effects;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\images;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\pipe;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\ports;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\utils;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\utils\win;$(ProjectDir)..\..\..\externals\skia\upstream.patched\include\xml;$(ProjectDir)..\..\..\externals\expat\upstream.patched\lib;$(ProjectDir)..\..\..\externals\harfbuzz\upstream.patched\src;$(ProjectDir)..\..\..\externals\protobuf;$(ProjectDir)..\..\..\externals\protobuf\upstream.patched\src;$(ProjectDir)..\..\..\native\include;$(ProjectDir)..\..\..\native\src;$(ProjectDir)..\..\..\native\src\proto;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)externals\skia\upstream.patched\src\core;$(ProjectDir)externals\skia\upstream.patched\include\core;$(ProjectDir)externals\skia\upstream.patched\include\config;$(ProjectDir)externals\skia\upstream.patched\include\effects;$(ProjectDir)externals\skia\upstream.patched\include\images;$(ProjectDir)externals\skia\upstream.patched\include\pipe;$(ProjectDir)externals\skia\upstream.patched\include\ports;$(ProjectDir)externals\skia\upstream.patched\include\utils;$(ProjectDir)externals\skia\upstream.patched\include\utils\win;$(ProjectDir)externals\skia\upstream.patched\include\xml;$(ProjectDir)externals\expat\upstream.patched\lib;$(ProjectDir)externals\harfbuzz\upstream.patched\src;$(ProjectDir)externals\protobuf;$(ProjectDir)externals\protobuf\upstream.patched\src;$(ProjectDir)native\include;$(ProjectDir)native\src;$(ProjectDir)protos;$(ProjectDir)includes;$(ProjectDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -129,33 +129,33 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\native\src\binaryRead.cpp" />
-    <ClCompile Include="..\..\..\native\src\binaryRoutePlanner.cpp" />
-    <ClCompile Include="..\..\..\native\src\common.cpp" />
-    <ClCompile Include="..\..\..\native\src\ElapsedTimer.cpp" />
-    <ClCompile Include="..\..\..\native\src\mapObjects.cpp" />
-    <ClCompile Include="..\..\..\native\src\multipolygons.cpp" />
-    <ClCompile Include="..\..\..\native\src\proto\osmand_index.pb.cc" />
-    <ClCompile Include="..\..\..\native\src\proto\osmand_odb.pb.cc" />
-    <ClCompile Include="..\..\..\native\src\rendering.cpp" />
-    <ClCompile Include="..\..\..\native\src\renderRules.cpp" />
-    <ClCompile Include="..\..\..\native\src\textdraw.cpp" />
-    <ClCompile Include="..\..\windows\OsmAndCore\src\Logging.cpp" />
+    <ClCompile Include="native\src\binaryRead.cpp" />
+    <ClCompile Include="native\src\binaryRoutePlanner.cpp" />
+    <ClCompile Include="native\src\common.cpp" />
+    <ClCompile Include="native\src\ElapsedTimer.cpp" />
+    <ClCompile Include="native\src\mapObjects.cpp" />
+    <ClCompile Include="native\src\multipolygons.cpp" />
+    <ClCompile Include="native\src\proto\osmand_index.pb.cc" />
+    <ClCompile Include="native\src\proto\osmand_odb.pb.cc" />
+    <ClCompile Include="native\src\rendering.cpp" />
+    <ClCompile Include="native\src\renderRules.cpp" />
+    <ClCompile Include="native\src\textdraw.cpp" />
+    <ClCompile Include="src\Logging.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\native\include\Common.h" />
-    <ClInclude Include="..\..\..\native\include\Logging.h" />
-    <ClInclude Include="..\..\..\native\src\binaryRead.h" />
-    <ClInclude Include="..\..\..\native\src\binaryRoutePlanner.h" />
-    <ClInclude Include="..\..\..\native\src\common2.h" />
-    <ClInclude Include="..\..\..\native\src\Internal.h" />
-    <ClInclude Include="..\..\..\native\src\ElapsedTimer.h" />
-    <ClInclude Include="..\..\..\native\src\mapObjects.h" />
-    <ClInclude Include="..\..\..\native\src\multipolygons.h" />
-    <ClInclude Include="..\..\..\native\src\proto\osmand_index.pb.h" />
-    <ClInclude Include="..\..\..\native\src\proto\osmand_odb.pb.h" />
-    <ClInclude Include="..\..\..\native\src\rendering.h" />
-    <ClInclude Include="..\..\..\native\src\renderRules.h" />
+    <ClInclude Include="native\include\Common.h" />
+    <ClInclude Include="native\include\Logging.h" />
+    <ClInclude Include="native\src\binaryRead.h" />
+    <ClInclude Include="native\src\binaryRoutePlanner.h" />
+    <ClInclude Include="native\src\common2.h" />
+    <ClInclude Include="native\src\Internal.h" />
+    <ClInclude Include="native\src\ElapsedTimer.h" />
+    <ClInclude Include="native\src\mapObjects.h" />
+    <ClInclude Include="native\src\multipolygons.h" />
+    <ClInclude Include="native\src\proto\osmand_index.pb.h" />
+    <ClInclude Include="native\src\proto\osmand_odb.pb.h" />
+    <ClInclude Include="native\src\rendering.h" />
+    <ClInclude Include="native\src\renderRules.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsPhone\v$(TargetPlatformVersion)\Microsoft.Cpp.WindowsPhone.$(TargetPlatformVersion).targets" />

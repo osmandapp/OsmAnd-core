@@ -3,24 +3,24 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Externals", "Externals", "{4045988E-7298-48C6-83C6-96619CABDFFF}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zlib", "zlib\zlib.vcxproj", "{0AA1EE83-8554-47DE-A7CF-544619A3D209}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zlib", "externals\zlib\zlib_wp8.vcxproj", "{0AA1EE83-8554-47DE-A7CF-544619A3D209}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libpng", "libpng\libpng.vcxproj", "{CDE91EF3-9C7A-4EB0-938D-24A726E9E635}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libpng", "externals\libpng\libpng_wp8.vcxproj", "{CDE91EF3-9C7A-4EB0-938D-24A726E9E635}"
 	ProjectSection(ProjectDependencies) = postProject
 		{0AA1EE83-8554-47DE-A7CF-544619A3D209} = {0AA1EE83-8554-47DE-A7CF-544619A3D209}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "jpeg", "jpeg\jpeg.vcxproj", "{FE5E17EF-149F-4760-9D0A-45A855749D17}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "jpeg", "externals\jpeg\jpeg_wp8.vcxproj", "{FE5E17EF-149F-4760-9D0A-45A855749D17}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "protobuf", "protobuf\protobuf.vcxproj", "{447A0949-EDB6-4681-8532-EF2FBF25D313}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "protobuf", "externals\protobuf\protobuf_wp8.vcxproj", "{447A0949-EDB6-4681-8532-EF2FBF25D313}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "expat", "expat\expat.vcxproj", "{BEDB7DDC-B4A1-4B00-A17D-F8D5130CDADD}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "expat", "externals\expat\expat_wp8.vcxproj", "{BEDB7DDC-B4A1-4B00-A17D-F8D5130CDADD}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "freetype", "freetype\freetype.vcxproj", "{8B51F873-C975-4CD1-9BCB-1AB46DCF11AF}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "freetype", "externals\freetype\freetype_wp8.vcxproj", "{8B51F873-C975-4CD1-9BCB-1AB46DCF11AF}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "giflib", "giflib\giflib.vcxproj", "{E47D2892-ED07-49B7-BA3B-BC9DA99673B5}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "giflib", "externals\giflib\giflib_wp8.vcxproj", "{E47D2892-ED07-49B7-BA3B-BC9DA99673B5}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skia", "skia\skia.vcxproj", "{C8654AC8-B707-45A0-A838-355E247220D8}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skia", "externals\skia\skia_wp8.vcxproj", "{C8654AC8-B707-45A0-A838-355E247220D8}"
 	ProjectSection(ProjectDependencies) = postProject
 		{447A0949-EDB6-4681-8532-EF2FBF25D313} = {447A0949-EDB6-4681-8532-EF2FBF25D313}
 		{8B51F873-C975-4CD1-9BCB-1AB46DCF11AF} = {8B51F873-C975-4CD1-9BCB-1AB46DCF11AF}
@@ -31,9 +31,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skia", "skia\skia.vcxproj",
 		{CDE91EF3-9C7A-4EB0-938D-24A726E9E635} = {CDE91EF3-9C7A-4EB0-938D-24A726E9E635}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "harfbuzz", "harfbuzz\harfbuzz.vcxproj", "{E98090E5-46AF-4279-B9DF-F69E62EE5CCE}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "harfbuzz", "externals\harfbuzz\harfbuzz_wp8.vcxproj", "{E98090E5-46AF-4279-B9DF-F69E62EE5CCE}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OsmAndCore", "OsmAndCore\OsmAndCore.vcxproj", "{76B6346B-9BCB-4953-9DF7-1D7B07D6952E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OsmAndCore", "OsmAndCore_wp8.vcxproj", "{76B6346B-9BCB-4953-9DF7-1D7B07D6952E}"
 	ProjectSection(ProjectDependencies) = postProject
 		{447A0949-EDB6-4681-8532-EF2FBF25D313} = {447A0949-EDB6-4681-8532-EF2FBF25D313}
 		{C8654AC8-B707-45A0-A838-355E247220D8} = {C8654AC8-B707-45A0-A838-355E247220D8}

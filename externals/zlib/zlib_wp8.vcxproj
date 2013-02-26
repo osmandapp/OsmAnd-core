@@ -133,21 +133,21 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\externals\zlib\upstream.patched\adler32.c" />
-    <ClCompile Include="..\..\..\externals\zlib\upstream.patched\compress.c" />
-    <ClCompile Include="..\..\..\externals\zlib\upstream.patched\crc32.c" />
-    <ClCompile Include="..\..\..\externals\zlib\upstream.patched\deflate.c" />
-    <ClCompile Include="..\..\..\externals\zlib\upstream.patched\gzclose.c" />
-    <ClCompile Include="..\..\..\externals\zlib\upstream.patched\gzlib.c" />
-    <ClCompile Include="..\..\..\externals\zlib\upstream.patched\gzread.c" />
-    <ClCompile Include="..\..\..\externals\zlib\upstream.patched\gzwrite.c" />
-    <ClCompile Include="..\..\..\externals\zlib\upstream.patched\infback.c" />
-    <ClCompile Include="..\..\..\externals\zlib\upstream.patched\inffast.c" />
-    <ClCompile Include="..\..\..\externals\zlib\upstream.patched\inflate.c" />
-    <ClCompile Include="..\..\..\externals\zlib\upstream.patched\inftrees.c" />
-    <ClCompile Include="..\..\..\externals\zlib\upstream.patched\trees.c" />
-    <ClCompile Include="..\..\..\externals\zlib\upstream.patched\uncompr.c" />
-    <ClCompile Include="..\..\..\externals\zlib\upstream.patched\zutil.c" />
+    <ClCompile Include="upstream.patched\adler32.c" />
+    <ClCompile Include="upstream.patched\compress.c" />
+    <ClCompile Include="upstream.patched\crc32.c" />
+    <ClCompile Include="upstream.patched\deflate.c" />
+    <ClCompile Include="upstream.patched\gzclose.c" />
+    <ClCompile Include="upstream.patched\gzlib.c" />
+    <ClCompile Include="upstream.patched\gzread.c" />
+    <ClCompile Include="upstream.patched\gzwrite.c" />
+    <ClCompile Include="upstream.patched\infback.c" />
+    <ClCompile Include="upstream.patched\inffast.c" />
+    <ClCompile Include="upstream.patched\inflate.c" />
+    <ClCompile Include="upstream.patched\inftrees.c" />
+    <ClCompile Include="upstream.patched\trees.c" />
+    <ClCompile Include="upstream.patched\uncompr.c" />
+    <ClCompile Include="upstream.patched\zutil.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsPhone\v$(TargetPlatformVersion)\Microsoft.Cpp.WindowsPhone.$(TargetPlatformVersion).targets" />

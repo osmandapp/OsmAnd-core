@@ -125,24 +125,24 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\externals\harfbuzz\upstream.patched\src\harfbuzz-arabic.c" />
-    <ClCompile Include="..\..\..\externals\harfbuzz\upstream.patched\src\harfbuzz-buffer.c" />
-    <ClCompile Include="..\..\..\externals\harfbuzz\upstream.patched\src\harfbuzz-dump.c" />
-    <ClCompile Include="..\..\..\externals\harfbuzz\upstream.patched\src\harfbuzz-gdef.c" />
-    <ClCompile Include="..\..\..\externals\harfbuzz\upstream.patched\src\harfbuzz-gpos.c" />
-    <ClCompile Include="..\..\..\externals\harfbuzz\upstream.patched\src\harfbuzz-greek.c" />
-    <ClCompile Include="..\..\..\externals\harfbuzz\upstream.patched\src\harfbuzz-gsub.c" />
-    <ClCompile Include="..\..\..\externals\harfbuzz\upstream.patched\src\harfbuzz-hangul.c" />
-    <ClCompile Include="..\..\..\externals\harfbuzz\upstream.patched\src\harfbuzz-hebrew.c" />
-    <ClCompile Include="..\..\..\externals\harfbuzz\upstream.patched\src\harfbuzz-impl.c" />
-    <ClCompile Include="..\..\..\externals\harfbuzz\upstream.patched\src\harfbuzz-indic.cpp" />
-    <ClCompile Include="..\..\..\externals\harfbuzz\upstream.patched\src\harfbuzz-khmer.c" />
-    <ClCompile Include="..\..\..\externals\harfbuzz\upstream.patched\src\harfbuzz-myanmar.c" />
-    <ClCompile Include="..\..\..\externals\harfbuzz\upstream.patched\src\harfbuzz-open.c" />
-    <ClCompile Include="..\..\..\externals\harfbuzz\upstream.patched\src\harfbuzz-shaper.cpp" />
-    <ClCompile Include="..\..\..\externals\harfbuzz\upstream.patched\src\harfbuzz-stream.c" />
-    <ClCompile Include="..\..\..\externals\harfbuzz\upstream.patched\src\harfbuzz-thai.c" />
-    <ClCompile Include="..\..\..\externals\harfbuzz\upstream.patched\src\harfbuzz-tibetan.c" />
+    <ClCompile Include="upstream.patched\src\harfbuzz-arabic.c" />
+    <ClCompile Include="upstream.patched\src\harfbuzz-buffer.c" />
+    <ClCompile Include="upstream.patched\src\harfbuzz-dump.c" />
+    <ClCompile Include="upstream.patched\src\harfbuzz-gdef.c" />
+    <ClCompile Include="upstream.patched\src\harfbuzz-gpos.c" />
+    <ClCompile Include="upstream.patched\src\harfbuzz-greek.c" />
+    <ClCompile Include="upstream.patched\src\harfbuzz-gsub.c" />
+    <ClCompile Include="upstream.patched\src\harfbuzz-hangul.c" />
+    <ClCompile Include="upstream.patched\src\harfbuzz-hebrew.c" />
+    <ClCompile Include="upstream.patched\src\harfbuzz-impl.c" />
+    <ClCompile Include="upstream.patched\src\harfbuzz-indic.cpp" />
+    <ClCompile Include="upstream.patched\src\harfbuzz-khmer.c" />
+    <ClCompile Include="upstream.patched\src\harfbuzz-myanmar.c" />
+    <ClCompile Include="upstream.patched\src\harfbuzz-open.c" />
+    <ClCompile Include="upstream.patched\src\harfbuzz-shaper.cpp" />
+    <ClCompile Include="upstream.patched\src\harfbuzz-stream.c" />
+    <ClCompile Include="upstream.patched\src\harfbuzz-thai.c" />
+    <ClCompile Include="upstream.patched\src\harfbuzz-tibetan.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsPhone\v$(TargetPlatformVersion)\Microsoft.Cpp.WindowsPhone.$(TargetPlatformVersion).targets" />
