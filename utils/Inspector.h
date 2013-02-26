@@ -102,4 +102,4 @@ namespace OsmAnd
 
 } // namespace OsmAnd 
 
-#endif __INSPECTOR_H_
+#endif // __INSPECTOR_H_
