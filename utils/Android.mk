@@ -17,7 +17,8 @@ LOCAL_C_INCLUDES := \
 	$(QT)/include/QtCore \
     $(OSMAND_CORE)/include \
 	$(OSMAND_CORE)/protos \
-	$(OSMAND_CORE)/native/include
+	$(OSMAND_CORE)/native/include \
+	$(OSMAND_PROTOBUF)/src
 
 LOCAL_CPP_EXTENSION := .cpp
 SRC_FILES := $(wildcard $(OSMAND_COREUTILS)/*.c*)
