@@ -48,9 +48,9 @@ endif
 
 # Name of the local module
 ifneq ($(OSMAND_BUILDING_NEON_LIBRARY),true)
-	LOCAL_MODULE := osmand
+	LOCAL_MODULE := OsmAndCore
 else
-	LOCAL_MODULE := osmand_neon
+	LOCAL_MODULE := OsmAndCore_neon
 	LOCAL_ARM_NEON := true
 endif
 
@@ -77,13 +77,14 @@ LOCAL_STATIC_LIBRARIES := \
 	osmand_ft2$(OSMAND_BINARY_SUFFIX) \
 	osmand_png$(OSMAND_BINARY_SUFFIX) \
 	osmand_gif$(OSMAND_BINARY_SUFFIX) \
-	osmand_expat$(OSMAND_BINARY_SUFFIX) \
+	osmand_expat$(OSMAND_BINARY_SUFFIX)
+LOCAL_WHOLE_STATIC_LIBRARIES := osmand_skia$(OSMAND_BINARY_SUFFIX)
+LOCAL_SHARED_LIBRARIES := \
 	Qt5Core$(OSMAND_BINARY_SUFFIX) \
 	Qt5Network$(OSMAND_BINARY_SUFFIX) \
 	Qt5Xml$(OSMAND_BINARY_SUFFIX) \
 	Qt5Sql$(OSMAND_BINARY_SUFFIX) \
 	Qt5Concurrent$(OSMAND_BINARY_SUFFIX)
-LOCAL_WHOLE_STATIC_LIBRARIES := osmand_skia$(OSMAND_BINARY_SUFFIX)
 
 LOCAL_LDLIBS := -lz -llog -ldl
 
