@@ -71,7 +71,30 @@ public class TargetPointsHelper {
 		return null;
 	}
 	
-	
+	/**
+	 * Clear the local and persistent waypoints list and destination.
+	 */
+	public void removeAllWayPoints(MapScreen map, boolean updateRoute){
+		settings.clearPointToNavigate();
+		pointToNavigate = null;		
+		settings.clearIntermediatePoints();
+		settings.clearPointToNavigate(); 
+		intermediatePoints.clear();
+		intermediatePointNames.clear();	
+		updateRouteAndReferesh(map, updateRoute);
+	}
+
+	/**
+	 * Move an intermediate waypoint to the destination.
+	 */
+	public void makeWayPointDestination(MapScreen map, boolean updateRoute, int index){
+		pointToNavigate = intermediatePoints.remove(index);
+		settings.setPointToNavigate(pointToNavigate.getLatitude(), pointToNavigate.getLongitude(), 
+				intermediatePointNames.remove(index));		
+		settings.deleteIntermediatePoint(index);
+		updateRouteAndReferesh(map, updateRoute);
+	}
+
 	public void removeWayPoint(MapScreen map, boolean updateRoute, int index){
 		if(index < 0){
 			settings.clearPointToNavigate();
