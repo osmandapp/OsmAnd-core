@@ -47,6 +47,8 @@ OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::getTileNumberY( float
     double eval = log( tan(toRadians(latitude)) + 1/cos(toRadians(latitude)) );
 #if defined(_MSC_VER)
     if (_finite(eval) || _isnan(eval))
+#elif defined(__ANDROID__)
+	if (isfinite(eval) || isnan(eval))
 #else
     if (std::isfinite(eval) || std::isnan(eval))
 #endif
