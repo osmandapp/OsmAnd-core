@@ -57,6 +57,8 @@ namespace OsmAnd {
         static void read(ObfReader* reader, ObfPoiSection* section);
 
     private:
+        const static uint32_t SubcategoryIdShift = 7;
+        const static uint32_t CategoryIdMask = (1 << SubcategoryIdShift) - 1;
         static void readBoundaries(ObfReader* reader, ObfPoiSection* section);
         static void readCategories(ObfReader* reader, ObfPoiSection* section, QList< std::shared_ptr<Model::Amenity::Category> >& categories);
         static void readCategory(ObfReader* reader, Model::Amenity::Category* category);
@@ -69,9 +71,7 @@ namespace OsmAnd {
             uint64_t _hash;
             int32_t _offset;
         };
-        static void readTiles(ObfReader* reader, ObfPoiSection* section, QList< std::shared_ptr<Tile> >& tiles);
         static void readTile(ObfReader* reader, ObfPoiSection* section, QList< std::shared_ptr<Tile> >& tiles, Tile* parent);
-        static void readAmenitiesFromTiles(ObfReader* reader, ObfPoiSection* section, const QList< std::shared_ptr<Tile> >& tiles, QList< std::shared_ptr<Model::Amenity> >& amenities);
         static void readAmenitiesFromTile(ObfReader* reader, ObfPoiSection* section, Tile* tile, QList< std::shared_ptr<Model::Amenity> >& amenities);
         static void readAmenity(ObfReader* reader, ObfPoiSection* section, int32_t px, int32_t py, uint32_t pzoom, std::shared_ptr<Model::Amenity>& amenity);
         

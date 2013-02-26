@@ -87,6 +87,7 @@ namespace OsmAnd
             bool verboseIntersections;
             bool verboseMap;
             bool verbosePoi;
+            bool verboseAmenities;
             bool verboseTrasport;
             double latTop;
             double latBottom;

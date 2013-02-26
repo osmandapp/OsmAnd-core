@@ -47,8 +47,17 @@ namespace OsmAnd {
             Amenity();
             virtual ~Amenity();
 
+            int64_t _id;
             QString _name;
             QString _latinName;
+            double _longitude;
+            double _latitude;
+            QString _openingHours;
+            QString _site;
+            QString _phone;
+            QString _description;
+            uint32_t _categoryId;
+            uint32_t _subcategoryId;
         };
 
     } // namespace Model

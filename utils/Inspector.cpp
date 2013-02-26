@@ -21,6 +21,7 @@ OsmAnd::Inspector::Configuration::Configuration()
     verboseIntersections = false;
     verboseMap = false;
     verbosePoi = false;
+    verboseAmenities = false;
     verboseTrasport = false;
     latTop = 85;
     latBottom = -85;
@@ -39,6 +40,7 @@ OsmAnd::Inspector::Configuration::Configuration(const QString& fileName)
     verboseIntersections = false;
     verboseMap = false;
     verbosePoi = false;
+    verboseAmenities = false;
     verboseTrasport = false;
     latTop = 85;
     latBottom = -85;
@@ -129,6 +131,8 @@ OSMAND_INSPECTOR_API bool OSMAND_INSPECTOR_CALL OsmAnd::Inspector::parseCommandL
                     cfg.verboseMap = true;
                 else if(arg == "-vpoi")
                     cfg.verbosePoi = true;
+                else if(arg == "-vamenities")
+                    cfg.verboseAmenities = true;
                 else if(arg == "-vtransport")
                     cfg.verboseTrasport = true;
                 else if(arg.indexOf("-zoom=") == 0)
@@ -266,8 +270,20 @@ void printPOIDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
 
     QList< std::shared_ptr<OsmAnd::Model::Amenity> > amenities;
     OsmAnd::ObfPoiSection::loadAmenities(reader, section, amenities);
-    auto sz = amenities.count();
-    return;
+    output << "\tAmenities, " << amenities.count() << " item(s)";
+    if(!cfg.verboseAmenities)
+    {
+        output << std::endl;
+        return;
+    }
+    output << ":" << std::endl;;
+    for(auto itAmenity = amenities.begin(); itAmenity != amenities.end(); ++itAmenity)
+    {
+        auto amenity = *itAmenity;
+
+        auto type = categories[amenity->_categoryId]->_name.toStdString() + ":" + categories[amenity->_categoryId]->_subcategories[amenity->_subcategoryId].toStdString();
+        output << "\t\t" << amenity->_latinName.toStdString() << " [" << amenity->_id << "], " << type  << ", lat " << amenity->_latitude << " lon " << amenity->_longitude << std::endl;
+    }
 }
 
 void printAddressDetailedInfo(std::ostream& output, const OsmAnd::Inspector::Configuration& cfg, OsmAnd::ObfReader* reader, OsmAnd::ObfAddressSection* section)
