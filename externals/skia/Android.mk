@@ -281,10 +281,6 @@ LOCAL_CFLAGS += \
 	-DGR_RELEASE=1 \
 	-DNDEBUG \
 	-DSK_SUPPORT_GPU=0
-
-LOCAL_CPPFLAGS := \
-	-fno-rtti \
-	-fno-exceptions
 	
 ifneq ($(OSMAND_BUILDING_NEON_LIBRARY),true)
 	LOCAL_MODULE := osmand_skia
