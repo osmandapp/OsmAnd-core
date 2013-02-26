@@ -3,9 +3,9 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 ifeq ($(OSMAND_BUILDING_NEON_LIBRARY),true)
-	QT := $(LOCAL_PATH)/../core/externals/qtbase-android/upstream.patched.$(TARGET_ARCH_ABI)-neon
+	QT := $(LOCAL_PATH)/externals/qtbase-android/upstream.patched.$(TARGET_ARCH_ABI)-neon
 else
-	QT := $(LOCAL_PATH)/../core/externals/qtbase-android/upstream.patched.$(TARGET_ARCH_ABI)
+	QT := $(LOCAL_PATH)/externals/qtbase-android/upstream.patched.$(TARGET_ARCH_ABI)
 endif
 OSMAND_PROTOBUF := $(LOCAL_PATH)/externals/protobuf/upstream.patched
 OSMAND_SKIA_ROOT := $(LOCAL_PATH)/externals/skia
@@ -90,11 +90,7 @@ LOCAL_STATIC_LIBRARIES := \
 	osmand_expat$(OSMAND_BINARY_SUFFIX)
 LOCAL_WHOLE_STATIC_LIBRARIES := osmand_skia$(OSMAND_BINARY_SUFFIX)
 LOCAL_SHARED_LIBRARIES := \
-	Qt5Core$(OSMAND_BINARY_SUFFIX) \
-	Qt5Network$(OSMAND_BINARY_SUFFIX) \
-	Qt5Xml$(OSMAND_BINARY_SUFFIX) \
-	Qt5Sql$(OSMAND_BINARY_SUFFIX) \
-	Qt5Concurrent$(OSMAND_BINARY_SUFFIX)
+	Qt5Core$(OSMAND_BINARY_SUFFIX)
 
 LOCAL_LDLIBS := -lz -llog -ldl
 
