@@ -120,12 +120,8 @@ void OsmAnd::ObfReader::skipUnknownField( gpb::io::CodedInputStream* cis, int ta
     auto wireType = gpb::internal::WireFormatLite::GetTagWireType(tag);
     if(wireType == gpb::internal::WireFormatLite::WIRETYPE_FIXED32_LENGTH_DELIMITED)
     {
-        gpb::uint32 length;
-        if(cis->ReadRaw(&length, sizeof(length)))
-        {
-            auto nativeLength = qFromBigEndian(length);
-            cis->Skip(nativeLength);
-        }
+        auto length = readBigEndianInt(cis);
+        cis->Skip(length);
     }
     else
         gpb::internal::WireFormatLite::SkipField(cis, tag);

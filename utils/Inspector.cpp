@@ -250,7 +250,8 @@ void dump(std::ostream &output, QString filePath, const OsmAnd::Inspector::Confi
 
 void printMapDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configuration& cfg, OsmAnd::ObfReader* reader, OsmAnd::ObfMapSection* section)
 {
-
+    QList< std::shared_ptr<OsmAnd::ObfMapSection::MapObject> > mapObjects;
+    OsmAnd::ObfMapSection::queryMapObjects(reader, section, &mapObjects);
 }
 
 void printPOIDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configuration& cfg, OsmAnd::ObfReader* reader, OsmAnd::ObfPoiSection* section)
