@@ -106,16 +106,16 @@ void OsmAnd::ObfMapSection::readMapLevel( ObfReader* reader, ObfMapSection* sect
         case 0:
             return;
         case OBF::OsmAndMapIndex_MapRootLevel::kBottomFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_bottom));
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_bottom31));
             break;
         case OBF::OsmAndMapIndex_MapRootLevel::kLeftFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_left));
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_left31));
             break;
         case OBF::OsmAndMapIndex_MapRootLevel::kRightFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_right));
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_right31));
             break;
         case OBF::OsmAndMapIndex_MapRootLevel::kTopFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_top));
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_top31));
             break;
         case OBF::OsmAndMapIndex_MapRootLevel::kMaxZoomFieldNumber:
             cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_maxZoom));
@@ -123,7 +123,7 @@ void OsmAnd::ObfMapSection::readMapLevel( ObfReader* reader, ObfMapSection* sect
         case OBF::OsmAndMapIndex_MapRootLevel::kMinZoomFieldNumber:
             cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_minZoom));
             break;
-        case OBF::OsmAndMapIndex_MapRootLevel::kBlocksFieldNumber:
+        case OBF::OsmAndMapIndex_MapRootLevel::kBoxesFieldNumber:
             cis->Skip(cis->BytesUntilLimit());
             return;
         default:
@@ -133,79 +133,93 @@ void OsmAnd::ObfMapSection::readMapLevel( ObfReader* reader, ObfMapSection* sect
     }
 }
 
-void OsmAnd::ObfMapSection::queryMapObjects( ObfReader* reader, ObfMapSection* section, QList< std::shared_ptr<MapObject> >* resultOut /*= nullptr*/ )
+void OsmAnd::ObfMapSection::loadRules( ObfReader* reader )
+{
+    if(!_encodingRules.isEmpty())
+        return;
+
+    auto cis = reader->_codedInputStream.get();
+
+    cis->Seek(_offset);
+    auto oldLimit = cis->PushLimit(_length);
+    readEncodingRules(reader,
+        _encodingRules,
+        _decodingRules,
+        _nameEncodingType,
+        _coastlineEncodingType,
+        _landEncodingType,
+        _onewayAttribute,
+        _onewayReverseAttribute,
+        _refEncodingType,
+        _coastlineBrokenEncodingType,
+        _negativeLayers,
+        _positiveLayers);
+    cis->PopLimit(oldLimit);
+}
+
+void OsmAnd::ObfMapSection::queryMapObjects( ObfReader* reader, ObfMapSection* section, QList< std::shared_ptr<MapObject> >* resultOut /*= nullptr*/, IQueryFilter* filter /*= nullptr*/, IQueryCallback* callback /*= nullptr*/ )
 {
     auto cis = reader->_codedInputStream.get();
     //List<MapTree> foundSubtrees = new ArrayList<MapTree>();
 
-    //TODO: may be moved out
-    // Load encoding rules if not yet done so
-    if(section->_encodingRules.isEmpty())
-    {
-        cis->Seek(section->_offset);
-        auto oldLimit = cis->PushLimit(section->_length);
-        readEncodingRules(reader,
-            section->_encodingRules,
-            section->_decodingRules,
-            section->_nameEncodingType,
-            section->_coastlineEncodingType,
-            section->_landEncodingType,
-            section->_onewayAttribute,
-            section->_onewayReverseAttribute,
-            section->_refEncodingType,
-            section->_coastlineBrokenEncodingType,
-            section->_negativeLayers,
-            section->_positiveLayers);
-        cis->PopLimit(oldLimit);
-    }
-
     for(auto itLevel = section->_levels.begin(); itLevel != section->_levels.end(); ++itLevel)
     {
         auto level = *itLevel;
-        /*
-        if (!(index.minZoom <= req.zoom && index.maxZoom >= req.zoom))
-        continue;
 
-        if (index.right < req.left || index.left > req.right || index.top > req.bottom || index.bottom < req.top) {
-        continue;
-        }*/
-        /*
-
-        // lazy initializing trees
-        if(index.trees == null){
-        index.trees = new ArrayList<MapTree>();
-        codedIS.seek(index.filePointer);
-        int oldLimit = codedIS.pushLimit(index.length);
-        readMapLevel(index);
-        codedIS.popLimit(oldLimit);
+        if(filter)
+        {
+            if(filter->_zoom != std::numeric_limits<uint32_t>::max())
+            {
+                if(level->_minZoom > filter->_zoom || level->_maxZoom < filter->_zoom)
+                    continue;
+            }
+            
+            if (level->_right31 < filter->_bboxLeft31 || level->_left31 > filter->_bboxRight31 || level->_top31 > filter->_bboxBottom31 || level->_bottom31 < filter->_bboxTop31)
+                continue;
         }
 
-        for (MapTree tree : index.trees) {
-        if (tree.right < req.left || tree.left > req.right || tree.top > req.bottom || tree.bottom < req.top) {
-        continue;
-        }
-        codedIS.seek(tree.filePointer);
-        int oldLimit = codedIS.pushLimit(tree.length);
-        searchMapTreeBounds(tree, index, req, foundSubtrees);
-        codedIS.popLimit(oldLimit);
+        if(level->_trees.isEmpty())
+        {
+            cis->Seek(level->_offset);
+            auto oldLimit = cis->PushLimit(level->_length);
+            readLevelTrees(reader, section, level.get(), level->_trees);
+            cis->PopLimit(oldLimit);
         }
 
-        Collections.sort(foundSubtrees, new Comparator<MapTree>() {
-        @Override
-        public int compare(MapTree o1, MapTree o2) {
-        return o1.mapDataBlock < o2.mapDataBlock ? -1 : (o1.mapDataBlock == o2.mapDataBlock ? 0 : 1);
+        QList< std::shared_ptr<LevelTree> > subtrees;
+        for(auto itTree = level->_trees.begin(); itTree != level->_trees.end(); ++itTree)
+        {
+            auto tree = *itTree;
+
+            if(filter)
+            {
+                if (tree->_right31 < filter->_bboxLeft31 || tree->_left31 > filter->_bboxRight31 || tree->_top31 > filter->_bboxBottom31 || tree->_bottom31 < filter->_bboxTop31)
+                    continue;
+            }
+            
+            cis->Seek(tree->_offset);
+            auto oldLimit = cis->PushLimit(tree->_length);
+            subtrees.push_back(tree);
+            queryMapObjects(reader, section, level.get(), tree.get(), subtrees, filter, callback);
+            cis->PopLimit(oldLimit);
         }
+        qSort(subtrees.begin(), subtrees.end(), [](const std::shared_ptr<LevelTree>& l, const std::shared_ptr<LevelTree>& r) -> int
+        {
+            return l->_mapDataBlock < r->_mapDataBlock ? -1 : (l->_mapDataBlock == r->_mapDataBlock ? 0 : 1);
         });
-        for(MapTree tree : foundSubtrees) {
-        if(!req.isCancelled()){
-        codedIS.seek(tree.mapDataBlock);
-        int length = codedIS.readRawVarint32();
-        int oldLimit = codedIS.pushLimit(length);
-        readMapDataBlocks(req, tree, mapIndex);
-        codedIS.popLimit(oldLimit);
+        for(auto itTree = subtrees.begin(); itTree != subtrees.end(); ++itTree)
+        {
+            auto tree = *itTree;
+            /*
+            if(req.isCancelled())
+            break*/
+            cis->Seek(tree->_mapDataBlock);
+            gpb::uint32 length;
+            cis->ReadVarint32(&length);
+            auto oldLimit = cis->PushLimit(length);
+            //readMapDataBlocks(req, tree, mapIndex);
+            cis->PopLimit(oldLimit);
         }
-        }
-        foundSubtrees.clear();*/
     }
 
     //log.info("Search is done. Visit " + req.numberOfVisitedObjects + " objects. Read " + req.numberOfAcceptedObjects + " objects."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
@@ -354,48 +368,119 @@ void OsmAnd::ObfMapSection::readEncodingRule(
     }
 }
 
-//------------------------------------------------------------------------------------------------------------
-/*
-
-
-void OsmAnd::ObfMapSection::readMapTreeBounds( ObfReader* reader, MapTree* tree, int left, int right, int top, int bottom )
+void OsmAnd::ObfMapSection::readLevelTrees( ObfReader* reader, ObfMapSection* section, MapLevel* level, QList< std::shared_ptr<LevelTree> >& trees )
 {
-auto cis = reader->_codedInputStream.get();
+    auto cis = reader->_codedInputStream.get();
+    for(;;)
+    {
+        gpb::uint32 tag = cis->ReadTag();
+        switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        {
+        case 0:
+            return;
+        case OBF::OsmAndMapIndex_MapRootLevel::kBoxesFieldNumber:
+            {
+                auto length = ObfReader::readBigEndianInt(cis);
+                auto offset = cis->CurrentPosition();
+                auto oldLimit = cis->PushLimit(length);
+                std::shared_ptr<LevelTree> levelTree(new LevelTree());
+                levelTree->_isOcean = false;
+                levelTree->_offset = offset;
+                levelTree->_length = length;
+                readLevelTree(reader, section, level, levelTree.get());
+                cis->Skip(cis->BytesUntilLimit());
+                cis->PopLimit(oldLimit);
+                trees.push_back(levelTree);
+            }
+            break;
+        case OBF::OsmAndMapIndex_MapRootLevel::kBlocksFieldNumber:
+            cis->Skip(cis->BytesUntilLimit());
+            return;
+        default:
+            ObfReader::skipUnknownField(cis, tag);
+            break;
+        }
+    }
+}
 
-for(;;)
+void OsmAnd::ObfMapSection::readLevelTree( ObfReader* reader, ObfMapSection* section, MapLevel* level, LevelTree* tree )
 {
-auto tag = cis->ReadTag();
-switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
-{
-case 0:
-return;
-case OBF::OsmAndMapIndex_MapDataBox::kBottomFieldNumber:
-tree->_bottom = ObfReader::readSInt32(cis) + bottom;
-break;
-case OBF::OsmAndMapIndex_MapDataBox::kTopFieldNumber:
-tree->_top = ObfReader::readSInt32(cis) + top;
-break;
-case OBF::OsmAndMapIndex_MapDataBox::kLeftFieldNumber:
-tree->_left = ObfReader::readSInt32(cis) + left;
-break;
-case OBF::OsmAndMapIndex_MapDataBox::kRightFieldNumber:
-tree->_right = ObfReader::readSInt32(cis) + right;
-break;   
-case OBF::OsmAndMapIndex_MapDataBox::kOceanFieldNumber:
-{
-gpb::uint32 value;
-cis->ReadVarint32(&value);
-tree->_isOcean = (value != 0);
-}
-break;
-case OBF::OsmAndMapIndex_MapDataBox::kShiftToMapDataFieldNumber:
-tree->_mapDataBlock = ObfReader::readBigEndianInt(cis) + tree->_offset;
-break;
+    auto cis = reader->_codedInputStream.get();
 
-default:
-ObfReader::skipUnknownField(cis, tag);
-break;
+    for(;;)
+    {
+        auto tag = cis->ReadTag();
+        switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        {
+        case 0:
+            return;
+        case OBF::OsmAndMapIndex_MapDataBox::kBottomFieldNumber:
+            tree->_bottom31 = ObfReader::readSInt32(cis) + level->_bottom31;
+            break;
+        case OBF::OsmAndMapIndex_MapDataBox::kTopFieldNumber:
+            tree->_top31 = ObfReader::readSInt32(cis) + level->_top31;
+            break;
+        case OBF::OsmAndMapIndex_MapDataBox::kLeftFieldNumber:
+            tree->_left31 = ObfReader::readSInt32(cis) + level->_left31;
+            break;
+        case OBF::OsmAndMapIndex_MapDataBox::kRightFieldNumber:
+            tree->_right31 = ObfReader::readSInt32(cis) + level->_right31;
+            break;   
+        case OBF::OsmAndMapIndex_MapDataBox::kOceanFieldNumber:
+            {
+                gpb::uint32 value;
+                cis->ReadVarint32(&value);
+                tree->_isOcean = (value != 0);
+            }
+            break;
+        case OBF::OsmAndMapIndex_MapDataBox::kShiftToMapDataFieldNumber:
+            tree->_mapDataBlock = ObfReader::readBigEndianInt(cis) + tree->_offset;
+            return;
+        default:
+            ObfReader::skipUnknownField(cis, tag);
+            break;
+        }
+    }
 }
+
+void OsmAnd::ObfMapSection::queryMapObjects( ObfReader* reader, ObfMapSection* section, MapLevel* level, LevelTree* tree, QList< std::shared_ptr<LevelTree> >& subtrees, IQueryFilter* filter /*= nullptr*/, IQueryCallback* callback /*= nullptr*/ )
+{
+    auto cis = reader->_codedInputStream.get();
+
+    for(;;)
+    {
+        auto tag = cis->ReadTag();
+        switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        {
+        case 0:
+            return;
+        case OBF::OsmAndMapIndex_MapDataBox::kBoxesFieldNumber:
+            {
+                auto length = ObfReader::readBigEndianInt(cis);
+                auto offset = cis->CurrentPosition();
+                auto oldLimit = cis->PushLimit(length);
+                std::shared_ptr<LevelTree> subtree(new LevelTree());
+                subtree->_isOcean = tree->_isOcean;
+                subtree->_offset = offset;
+                subtree->_length = length;
+                readLevelTree(reader, section, level, subtree.get());
+                if(filter)
+                {
+                    if (subtree->_right31 < filter->_bboxLeft31 || subtree->_left31 > filter->_bboxRight31 || subtree->_top31 > filter->_bboxBottom31 || subtree->_bottom31 < filter->_bboxTop31)
+                    {
+                        cis->Skip(cis->BytesUntilLimit());
+                        cis->PopLimit(oldLimit);
+                        break;
+                    }
+                }
+                subtrees.push_back(subtree);
+                queryMapObjects(reader, section, level, subtree.get(), subtrees, filter, callback);
+                cis->PopLimit(oldLimit);
+            }
+            break;
+        default:
+            ObfReader::skipUnknownField(cis, tag);
+            break;
+        }
+    }
 }
-}
-*/

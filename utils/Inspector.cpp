@@ -229,7 +229,7 @@ void dump(std::ostream &output, QString filePath, const OsmAnd::Inspector::Confi
             {
                 auto level = itLevel->get();
                 output << "\t" << idx << "." << levelIdx << " Map level minZoom = " << level->_minZoom << ", maxZoom = " << level->_maxZoom << ", size = " << level->_length << " bytes" << std::endl;
-                output << "\t\tBounds " << formatBounds(level->_left, level->_right, level->_top, level->_bottom) << std::endl;
+                output << "\t\tBounds " << formatBounds(level->_left31, level->_right31, level->_top31, level->_bottom31) << std::endl;
             }
 
             if(cfg.verboseMap)
@@ -251,7 +251,7 @@ void dump(std::ostream &output, QString filePath, const OsmAnd::Inspector::Confi
 void printMapDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configuration& cfg, OsmAnd::ObfReader* reader, OsmAnd::ObfMapSection* section)
 {
     QList< std::shared_ptr<OsmAnd::ObfMapSection::MapObject> > mapObjects;
-    OsmAnd::ObfMapSection::queryMapObjects(reader, section, &mapObjects);
+    OsmAnd::ObfMapSection::queryMapObjects(reader, section, &mapObjects, new OsmAnd::IQueryFilter());
 }
 
 void printPOIDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configuration& cfg, OsmAnd::ObfReader* reader, OsmAnd::ObfPoiSection* section)

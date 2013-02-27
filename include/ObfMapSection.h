@@ -31,6 +31,8 @@
 #include <tuple>
 #include <google/protobuf/io/coded_stream.h>
 #include <ObfSection.h>
+#include <IQueryFilter.h>
+#include <IQueryCallback.h>
 
 namespace OsmAnd {
 
@@ -48,12 +50,14 @@ namespace OsmAnd {
 
         struct LevelTree
         {
+            int32_t _offset;
+            int32_t _length;
             int32_t _mapDataBlock;
             bool _isOcean;
-            int32_t _left;
-            int32_t _right;
-            int32_t _top;
-            int32_t _bottom;
+            uint32_t _left31;
+            uint32_t _right31;
+            uint32_t _top31;
+            uint32_t _bottom31;
         };
 
         struct MapLevel
@@ -62,10 +66,10 @@ namespace OsmAnd {
             int32_t _length;
             uint32_t _minZoom;
             uint32_t _maxZoom;
-            int32_t _left;
-            int32_t _right;
-            int32_t _top;
-            int32_t _bottom;
+            uint32_t _left31;
+            uint32_t _right31;
+            uint32_t _top31;
+            uint32_t _bottom31;
             QList< std::shared_ptr<LevelTree> > _trees;
         };
 
@@ -90,7 +94,8 @@ namespace OsmAnd {
         //! ???
         //std::tuple<std::string, std::string, int> decodeType(int type);
         bool isBaseMap();
-        static void queryMapObjects(ObfReader* reader, ObfMapSection* section, QList< std::shared_ptr<OsmAnd::ObfMapSection::MapObject> >* resultOut = nullptr);
+        void loadRules(ObfReader* reader);
+        static void queryMapObjects(ObfReader* reader, ObfMapSection* section, QList< std::shared_ptr<OsmAnd::ObfMapSection::MapObject> >* resultOut = nullptr, IQueryFilter* filter = nullptr, IQueryCallback* callback = nullptr);
     protected:
         static void read(ObfReader* reader, ObfMapSection* section);
         static void readMapLevel(ObfReader* reader, ObfMapSection* section, MapLevel* level);
@@ -117,10 +122,13 @@ namespace OsmAnd {
             uint32_t& refEncodingType,
             QSet<uint32_t>& negativeLayers,
             QSet<uint32_t>& positiveLayers);
+        static void readLevelTrees(ObfReader* reader, ObfMapSection* section, MapLevel* level, QList< std::shared_ptr<LevelTree> >& trees);
+        static void readLevelTree(ObfReader* reader, ObfMapSection* section, MapLevel* level, LevelTree* tree);
+        static void queryMapObjects(ObfReader* reader, ObfMapSection* section, MapLevel* level, LevelTree* tree, QList< std::shared_ptr<LevelTree> >& subtrees, IQueryFilter* filter = nullptr, IQueryCallback* callback = nullptr);
 
     private:
         //! ???
-        //static void readMapTreeBounds(ObfReader* reader, MapTree* tree, int left, int right, int top, int bottom);
+        //
 
     friend class ObfReader;
     };
