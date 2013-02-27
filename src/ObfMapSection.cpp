@@ -160,7 +160,6 @@ void OsmAnd::ObfMapSection::loadRules( ObfReader* reader )
 void OsmAnd::ObfMapSection::queryMapObjects( ObfReader* reader, ObfMapSection* section, QList< std::shared_ptr<MapObject> >* resultOut /*= nullptr*/, IQueryFilter* filter /*= nullptr*/, IQueryCallback* callback /*= nullptr*/ )
 {
     auto cis = reader->_codedInputStream.get();
-    //List<MapTree> foundSubtrees = new ArrayList<MapTree>();
 
     for(auto itLevel = section->_levels.begin(); itLevel != section->_levels.end(); ++itLevel)
     {

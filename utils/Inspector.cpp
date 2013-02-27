@@ -252,6 +252,7 @@ void printMapDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
 {
     QList< std::shared_ptr<OsmAnd::ObfMapSection::MapObject> > mapObjects;
     OsmAnd::ObfMapSection::queryMapObjects(reader, section, &mapObjects, new OsmAnd::IQueryFilter());
+    output << "\tTotal map objects: " << mapObjects.count() << std::endl;
 }
 
 void printPOIDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configuration& cfg, OsmAnd::ObfReader* reader, OsmAnd::ObfPoiSection* section)
