@@ -27,11 +27,7 @@
 #include <QIODevice>
 #include <memory>
 #include <QList>
-#include <map>
-#include <unordered_map>
-#include <unordered_set>
-#include <tuple>
-#include <string>
+#include <QStringList>
 #include <google/protobuf/io/coded_stream.h>
 #include <ObfSection.h>
 #include <ObfMapSection.h>
@@ -67,13 +63,13 @@ namespace OsmAnd {
         QString transliterate(QString input);
         static int readSInt32(gpb::io::CodedInputStream* cis);
         static int readBigEndianInt(gpb::io::CodedInputStream* cis);
+        static void readStringTable(gpb::io::CodedInputStream* cis, QStringList& stringTableOut);
         static void skipUnknownField(gpb::io::CodedInputStream* cis, int tag);
     public:
         //! Constants
         enum {
             //TODO: move to transport?
             TransportStopZoom = 24,
-            ShiftCoordinates = 5,
         };
 
         ObfReader(QIODevice* input);

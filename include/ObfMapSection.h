@@ -46,7 +46,14 @@ namespace OsmAnd {
         ObfMapSection(class ObfReader* owner);
         virtual ~ObfMapSection();
 
-        struct MapObject {};
+        struct MapObject
+        {
+            uint64_t _id;
+            bool _isArea;
+            QList<uint32_t> _types;
+            QList<uint32_t> _extraTypes;
+            QMap<uint32_t, uint32_t> _names;
+        };
 
         struct LevelTree
         {
@@ -124,12 +131,14 @@ namespace OsmAnd {
             QSet<uint32_t>& positiveLayers);
         static void readLevelTrees(ObfReader* reader, ObfMapSection* section, MapLevel* level, QList< std::shared_ptr<LevelTree> >& trees);
         static void readLevelTree(ObfReader* reader, ObfMapSection* section, MapLevel* level, LevelTree* tree);
-        static void queryMapObjects(ObfReader* reader, ObfMapSection* section, MapLevel* level, LevelTree* tree, QList< std::shared_ptr<LevelTree> >& subtrees, IQueryFilter* filter = nullptr, IQueryCallback* callback = nullptr);
-
+        static void queryMapObjects(ObfReader* reader, ObfMapSection* section, MapLevel* level, LevelTree* tree, QList< std::shared_ptr<LevelTree> >& subtrees, IQueryFilter* filter, IQueryCallback* callback);
+        static void readMapObjects(ObfReader* reader, ObfMapSection* section, LevelTree* tree, QList< std::shared_ptr<OsmAnd::ObfMapSection::MapObject> >* resultOut, IQueryFilter* filter, IQueryCallback* callback);
+        static void readMapObject(ObfReader* reader, ObfMapSection* section, LevelTree* tree, std::shared_ptr<OsmAnd::ObfMapSection::MapObject>& mapObjectOut, IQueryFilter* filter);
+        enum {
+            ShiftCoordinates = 5,
+            MaskToRead = ~((1 << ShiftCoordinates) - 1),
+        };
     private:
-        //! ???
-        //
-
     friend class ObfReader;
     };
 

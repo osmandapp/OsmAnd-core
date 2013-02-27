@@ -156,3 +156,26 @@ QString OsmAnd::ObfReader::transliterate( QString input )
 {
     return QString("!translit!");
 }
+
+void OsmAnd::ObfReader::readStringTable( gpb::io::CodedInputStream* cis, QStringList& stringTableOut )
+{
+    for(;;)
+    {
+        auto tag = cis->ReadTag();
+        switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        {
+        case 0:
+            return;
+        case OBF::StringTable::kSFieldNumber:
+            {
+                std::string value;
+                gpb::internal::WireFormatLite::ReadString(cis, &value);
+                stringTableOut.append(QString::fromStdString(value));
+            }
+            break;
+        default:
+            skipUnknownField(cis, tag);
+            break;
+        }
+    }
+}

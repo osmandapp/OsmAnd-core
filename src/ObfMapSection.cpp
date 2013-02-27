@@ -205,7 +205,7 @@ void OsmAnd::ObfMapSection::queryMapObjects( ObfReader* reader, ObfMapSection* s
         }
         qSort(subtrees.begin(), subtrees.end(), [](const std::shared_ptr<LevelTree>& l, const std::shared_ptr<LevelTree>& r) -> int
         {
-            return l->_mapDataBlock < r->_mapDataBlock ? -1 : (l->_mapDataBlock == r->_mapDataBlock ? 0 : 1);
+            return l->_mapDataBlock - r->_mapDataBlock;
         });
         for(auto itTree = subtrees.begin(); itTree != subtrees.end(); ++itTree)
         {
@@ -217,14 +217,10 @@ void OsmAnd::ObfMapSection::queryMapObjects( ObfReader* reader, ObfMapSection* s
             gpb::uint32 length;
             cis->ReadVarint32(&length);
             auto oldLimit = cis->PushLimit(length);
-            //readMapDataBlocks(req, tree, mapIndex);
+            readMapObjects(reader, section, tree.get(), resultOut, filter, callback);
             cis->PopLimit(oldLimit);
         }
     }
-
-    //log.info("Search is done. Visit " + req.numberOfVisitedObjects + " objects. Read " + req.numberOfAcceptedObjects + " objects."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-    //log.info("Read " + req.numberOfReadSubtrees + " subtrees. Go through " + req.numberOfAcceptedSubtrees + " subtrees.");   //$NON-NLS-1$//$NON-NLS-2$//$NON-NLS-3$
-    //return req.getSearchResults();
 }
 
 void OsmAnd::ObfMapSection::readEncodingRules(
@@ -409,23 +405,27 @@ void OsmAnd::ObfMapSection::readLevelTree( ObfReader* reader, ObfMapSection* sec
 
     for(;;)
     {
+        auto tagPos = cis->CurrentPosition();
         auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
             return;
-        case OBF::OsmAndMapIndex_MapDataBox::kBottomFieldNumber:
-            tree->_bottom31 = ObfReader::readSInt32(cis) + level->_bottom31;
-            break;
-        case OBF::OsmAndMapIndex_MapDataBox::kTopFieldNumber:
-            tree->_top31 = ObfReader::readSInt32(cis) + level->_top31;
-            break;
         case OBF::OsmAndMapIndex_MapDataBox::kLeftFieldNumber:
             tree->_left31 = ObfReader::readSInt32(cis) + level->_left31;
             break;
         case OBF::OsmAndMapIndex_MapDataBox::kRightFieldNumber:
             tree->_right31 = ObfReader::readSInt32(cis) + level->_right31;
             break;   
+        case OBF::OsmAndMapIndex_MapDataBox::kTopFieldNumber:
+            tree->_top31 = ObfReader::readSInt32(cis) + level->_top31;
+            break;
+        case OBF::OsmAndMapIndex_MapDataBox::kBottomFieldNumber:
+            tree->_bottom31 = ObfReader::readSInt32(cis) + level->_bottom31;
+            break;
+        case OBF::OsmAndMapIndex_MapDataBox::kShiftToMapDataFieldNumber:
+            tree->_mapDataBlock = ObfReader::readBigEndianInt(cis) + tree->_offset;
+            break;
         case OBF::OsmAndMapIndex_MapDataBox::kOceanFieldNumber:
             {
                 gpb::uint32 value;
@@ -433,8 +433,9 @@ void OsmAnd::ObfMapSection::readLevelTree( ObfReader* reader, ObfMapSection* sec
                 tree->_isOcean = (value != 0);
             }
             break;
-        case OBF::OsmAndMapIndex_MapDataBox::kShiftToMapDataFieldNumber:
-            tree->_mapDataBlock = ObfReader::readBigEndianInt(cis) + tree->_offset;
+        case OBF::OsmAndMapIndex_MapDataBox::kBoxesFieldNumber:
+            // Pretend that we've never read this tag
+            cis->Seek(tagPos);
             return;
         default:
             ObfReader::skipUnknownField(cis, tag);
@@ -443,7 +444,7 @@ void OsmAnd::ObfMapSection::readLevelTree( ObfReader* reader, ObfMapSection* sec
     }
 }
 
-void OsmAnd::ObfMapSection::queryMapObjects( ObfReader* reader, ObfMapSection* section, MapLevel* level, LevelTree* tree, QList< std::shared_ptr<LevelTree> >& subtrees, IQueryFilter* filter /*= nullptr*/, IQueryCallback* callback /*= nullptr*/ )
+void OsmAnd::ObfMapSection::queryMapObjects( ObfReader* reader, ObfMapSection* section, MapLevel* level, LevelTree* tree, QList< std::shared_ptr<LevelTree> >& subtrees, IQueryFilter* filter, IQueryCallback* callback )
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -476,6 +477,236 @@ void OsmAnd::ObfMapSection::queryMapObjects( ObfReader* reader, ObfMapSection* s
                 subtrees.push_back(subtree);
                 queryMapObjects(reader, section, level, subtree.get(), subtrees, filter, callback);
                 cis->PopLimit(oldLimit);
+            }
+            break;
+        default:
+            ObfReader::skipUnknownField(cis, tag);
+            break;
+        }
+    }
+}
+
+void OsmAnd::ObfMapSection::readMapObjects( ObfReader* reader, ObfMapSection* section, LevelTree* tree, QList< std::shared_ptr<MapObject> >* resultOut, IQueryFilter* filter, IQueryCallback* callback )
+{
+    auto cis = reader->_codedInputStream.get();
+
+    QList< std::shared_ptr<MapObject> > intermediateResult;
+    gpb::uint64 baseId;
+    for(;;)
+    {
+        /*
+        if (req.isCancelled()) {
+        return;
+        }
+        */
+        auto tag = cis->ReadTag();
+        switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        {
+        case 0:
+            for(auto itEntry = intermediateResult.begin(); itEntry != intermediateResult.end(); ++itEntry)
+            {
+                auto entry = *itEntry;
+                if(resultOut)
+                    resultOut->push_back(entry);
+                //TODO: req.publish(obj);
+            }
+            return;
+        case OBF::MapDataBlock::kBaseIdFieldNumber:
+            cis->ReadVarint64(&baseId);
+            break;
+        case OBF::MapDataBlock::kDataObjectsFieldNumber:
+            {
+                gpb::uint32 length;
+                cis->ReadVarint32(&length);
+                auto oldLimit = cis->PushLimit(length);
+                std::shared_ptr<OsmAnd::ObfMapSection::MapObject> mapObject;
+                readMapObject(reader, section, tree, mapObject, filter);
+                if(mapObject)
+                {
+                    mapObject->_id += baseId;
+                    intermediateResult.push_back(mapObject);
+                }
+                cis->PopLimit(oldLimit);
+            }
+            break;
+        case OBF::MapDataBlock::kStringTableFieldNumber:
+            {
+                gpb::uint32 length;
+                cis->ReadVarint32(&length);
+                auto oldLimit = cis->PushLimit(length);
+                if(intermediateResult.isEmpty())
+                {
+                    cis->Skip(cis->BytesUntilLimit());
+                    cis->PopLimit(oldLimit);
+                    break;
+                }
+                QStringList stringTable;
+                ObfReader::readStringTable(cis, stringTable);
+                for(auto itEntry = intermediateResult.begin(); itEntry != intermediateResult.end(); ++itEntry)
+                {
+                    auto entry = *itEntry;
+                    /*TODO:if (rs.objectNames != null) {
+                        int[] keys = rs.objectNames.keys();
+                        for (int j = 0; j < keys.length; j++) {
+                            rs.objectNames.put(keys[j], stringTable.get(rs.objectNames.get(keys[j]).charAt(0)));
+                        }
+                    }*/
+                }
+                cis->PopLimit(oldLimit);
+            }
+            break;
+        default:
+            ObfReader::skipUnknownField(cis, tag);
+            break;
+        }
+    }
+}
+
+void OsmAnd::ObfMapSection::readMapObject( ObfReader* reader, ObfMapSection* section, LevelTree* tree, std::shared_ptr<OsmAnd::ObfMapSection::MapObject>& mapObject, IQueryFilter* filter )
+{
+    auto cis = reader->_codedInputStream.get();
+
+        /*
+    List<TIntArrayList> innercoordinates = null;
+    TIntArrayList additionalTypes = null;
+    TIntObjectHashMap<String> stringNames = null;
+    long id = 0;*/
+    for(;;)
+    {
+        auto tag = cis->ReadTag();
+        auto tgn = gpb::internal::WireFormatLite::GetTagFieldNumber(tag);
+        switch(tgn)
+        {
+        case 0:
+            return;
+        case OBF::MapData::kAreaCoordinatesFieldNumber:
+        case OBF::MapData::kCoordinatesFieldNumber:
+            {
+                gpb::uint32 length;
+                cis->ReadVarint32(&length);
+                auto oldLimit = cis->PushLimit(length);
+                auto px = tree->_left31 & MaskToRead;
+                auto py = tree->_top31 & MaskToRead;
+                uint32_t minX = std::numeric_limits<uint32_t>::max();
+                uint32_t maxX = 0;
+                uint32_t minY = std::numeric_limits<uint32_t>::max();
+                uint32_t maxY = 0;
+                bool contains = (filter == nullptr);
+                //TODO:req.numberOfVisitedObjects++;
+                while(cis->BytesUntilLimit() > 0)
+                {
+                    auto x = (ObfReader::readSInt32(cis) << ShiftCoordinates) + px;
+                    auto y = (ObfReader::readSInt32(cis) << ShiftCoordinates) + py;
+                    //req.cacheCoordinates.add(x);
+                    //req.cacheCoordinates.add(y);
+                    px = x;
+                    py = y;
+                    if(filter && !contains && filter->_bboxLeft31 <= x && filter->_bboxRight31 >= x && filter->_bboxTop31 <= y && filter->_bboxBottom31 >= y)
+                        contains = true;
+                    if(!contains)
+                    {
+                        minX = qMin(minX, x);
+                        maxX = qMax(maxX, x);
+                        minY = qMin(minY, y);
+                        maxY = qMax(maxY, y);
+                    }
+                }
+                if(filter && !contains && maxX >= filter->_bboxLeft31 && minX <= filter->_bboxRight31 && minY <= filter->_bboxBottom31 && maxY >= filter->_bboxTop31)
+                    contains = true;
+                cis->PopLimit(oldLimit);
+                if(filter && !contains)
+                {
+                    cis->Skip(cis->BytesUntilLimit());
+                    return;
+                }
+
+                // Finally, create the object
+                mapObject.reset(new MapObject());
+                mapObject->_isArea = (tgn == OBF::MapData::kAreaCoordinatesFieldNumber);
+            }
+            break;
+        case OBF::MapData::kPolygonInnerCoordinatesFieldNumber:
+            {
+                {
+                    gpb::uint32 length;
+                    cis->ReadVarint32(&length);
+                    auto oldLimit = cis->PushLimit(length);
+                    auto px = tree->_left31 & MaskToRead;
+                    auto py = tree->_top31 & MaskToRead;
+                    while(cis->BytesUntilLimit() > 0)
+                    {
+                        auto x = (ObfReader::readSInt32(cis) << ShiftCoordinates) + px;
+                        auto y = (ObfReader::readSInt32(cis) << ShiftCoordinates) + py;
+                        //TODO:polygon.add(x);
+                        //TODO:polygon.add(y);
+                        px = x;
+                        py = y;
+                    }
+                    cis->PopLimit(oldLimit);
+                }
+            }
+            break;
+        case OBF::MapData::kAdditionalTypesFieldNumber:
+            {
+                gpb::uint32 length;
+                cis->ReadVarint32(&length);
+                auto oldLimit = cis->PushLimit(length);
+                while(cis->BytesUntilLimit() > 0)
+                {
+                    gpb::uint32 type;
+                    cis->ReadVarint32(&type);
+
+                    mapObject->_extraTypes.append(type);
+                }
+                cis->PopLimit(oldLimit);
+            }
+            break;
+        case OBF::MapData::kTypesFieldNumber:
+            {
+                gpb::uint32 length;
+                cis->ReadVarint32(&length);
+                auto oldLimit = cis->PushLimit(length);
+                while(cis->BytesUntilLimit() > 0)
+                {
+                    gpb::uint32 type;
+                    cis->ReadVarint32(&type);
+
+                    mapObject->_types.append(type);
+                }
+                cis->PopLimit(oldLimit);
+
+                /*
+                if (req.searchFilter != null) {
+                accept = req.searchFilter.accept(req.cacheTypes, root);
+                }
+                if (!accept) {
+                codedIS.skipRawBytes(codedIS.getBytesUntilLimit());
+                return null;
+                }
+                req.numberOfAcceptedObjects++;
+                */
+            }
+            break;
+        case OBF::MapData::kStringNamesFieldNumber:
+            {
+                gpb::uint32 length;
+                cis->ReadVarint32(&length);
+                auto oldLimit = cis->PushLimit(length);
+                while(cis->BytesUntilLimit() > 0)
+                {
+                    gpb::uint32 stag;
+                    cis->ReadVarint32(&stag);
+                    gpb::uint32 sid;
+                    cis->ReadVarint32(&sid);
+
+                    mapObject->_names[stag] = sid;
+                }
+                cis->PopLimit(oldLimit);
+            }
+            break;
+        case OBF::MapData::kIdFieldNumber:
+            {
+                cis->ReadVarint64(&mapObject->_id);
             }
             break;
         default:
