@@ -6,8 +6,8 @@ NAME=$(basename $(dirname "${BASH_SOURCE[0]}") )
 QTBASE_CONFIGURATION=\
 "-opensource -confirm-license "\
 "-nomake examples -nomake demos -nomake tests -nomake docs "\
-"-qt-sql-sqlite "\
-"-no-gui -no-widgets -no-opengl -no-accessibility -no-linuxfb -no-directfb -no-eglfs -no-xcb -no-qml-debug -no-javascript-jit "\
+"-qt-sql-sqlite -opengl desktop"\
+"-no-accessibility -no-linuxfb -no-directfb -no-eglfs -no-xcb -no-qml-debug -no-javascript-jit "\
 "-c++11 -shared -release "\
 "-v"
 

@@ -24,26 +24,7 @@ OsmAnd::ObfMapSection::ObfMapSection( class ObfReader* owner )
 OsmAnd::ObfMapSection::~ObfMapSection()
 {
 }
-/*
-bool OsmAnd::ObfMapSection::getRule( std::string t, std::string v, int& outRule )
-{
-auto m = _encodingRules.find(t);
-if(m == _encodingRules.end())
-return false;
-outRule = m->second[v];
-return true;
-}
 
-std::tuple<std::string, std::string, int> OsmAnd::ObfMapSection::decodeType( int type )
-{
-return _decodingRules[type];
-}
-
-void OsmAnd::ObfMapSection::initMapEncodingRule( int type, int id, std::string tag, std::string val )
-{
-
-}
-*/
 bool OsmAnd::ObfMapSection::isBaseMap()
 {
     return QString::compare(_name, "basemap", Qt::CaseInsensitive);

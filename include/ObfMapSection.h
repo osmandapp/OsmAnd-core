@@ -95,11 +95,6 @@ namespace OsmAnd {
         QSet<uint32_t> _positiveLayers;
         QSet<uint32_t> _negativeLayers;
 
-        //! ???
-        //bool getRule(std::string t, std::string v, int& outRule);
-
-        //! ???
-        //std::tuple<std::string, std::string, int> decodeType(int type);
         bool isBaseMap();
         void loadRules(ObfReader* reader);
         static void queryMapObjects(ObfReader* reader, ObfMapSection* section, QList< std::shared_ptr<OsmAnd::ObfMapSection::MapObject> >* resultOut = nullptr, IQueryFilter* filter = nullptr, IQueryCallback* callback = nullptr);
