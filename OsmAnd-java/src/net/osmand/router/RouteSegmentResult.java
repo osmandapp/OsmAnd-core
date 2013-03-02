@@ -35,7 +35,11 @@ public class RouteSegmentResult {
 	@SuppressWarnings("unchecked")
 	private void updateCapacity() {
 		int capacity = Math.abs(endPointIndex - startPointIndex) + 1;
+		List<RouteSegmentResult>[] old = this.attachedRoutes ;
 		this.attachedRoutes = new List[capacity];
+		if(old != null){
+			System.arraycopy(old, 0, this.attachedRoutes, 0, Math.min(old.length, this.attachedRoutes.length));
+		}
 	}
 	
 	public void attachRoute(int roadIndex, RouteSegmentResult r){
