@@ -230,7 +230,7 @@ public class RoutingHelper {
 				// 5. Update Voice router
 				boolean inRecalc = calculateRoute || isRouteBeingCalculated();
 				if (!inRecalc && !uTurnIsNeeded && !wrongMovementDirection) {
-					voiceRouter.updateStatus(currentLocation);
+					voiceRouter.updateStatus(currentLocation, true);
 				} else if (uTurnIsNeeded) {
 					voiceRouter.makeUTStatus();
 				}

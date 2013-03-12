@@ -176,7 +176,7 @@ public class VoiceRouter {
 	 * Updates status of voice guidance 
 	 * @param currentLocation 
 	 */
-	protected void updateStatus(Location currentLocation) {
+	protected void updateStatus(Location currentLocation, boolean scheduledCall) {
 		// Directly after turn: goAhead (dist), unless:
 		// < PREPARE_LONG_DISTANCE (3000m): playPrepareTurn
 		// < PREPARE_DISTANCE (1500m): playPrepareTurn
@@ -219,7 +219,7 @@ public class VoiceRouter {
 			playGoAheadDist = 0;
 		}
 
-		if (dist == 0 || currentStatus == STATUS_TOLD) {
+		if (scheduledCall && (dist == 0 || currentStatus == STATUS_TOLD)) {
 			// nothing said possibly that's wrong case we should say before that
 			// however it should be checked manually ?
 			return;
@@ -242,7 +242,7 @@ public class VoiceRouter {
 			}
 		}
 
-		NextDirectionInfo nextNextInfo = router.getNextRouteDirectionInfoAfter(nextInfo, new NextDirectionInfo(), true);
+		NextDirectionInfo nextNextInfo = router.getNextRouteDirectionInfoAfter(nextInfo, new NextDirectionInfo(), scheduledCall);
 		if (statusNotPassed(STATUS_TURN) && isDistanceLess(speed, dist, TURN_DISTANCE, TURN_DEFAULT_SPEED)) {
 			if (next.distance < TURN_IN_DISTANCE_END && nextNextInfo != null) {
 				playMakeTurn(next, nextNextInfo.directionInfo);
@@ -251,7 +251,7 @@ public class VoiceRouter {
 			}
 			nextStatusAfter(STATUS_TURN);
 		} else if (statusNotPassed(STATUS_TURN_IN) && isDistanceLess(speed, dist, TURN_IN_DISTANCE)) {
-			if (dist >= TURN_IN_DISTANCE_END) {
+			if (!scheduledCall || dist >= TURN_IN_DISTANCE_END) {
 				if ((isDistanceLess(speed, next.distance, TURN_DISTANCE) || next.distance < TURN_IN_DISTANCE_END) &&
 						nextNextInfo != null) {
 					playMakeTurnIn(next, dist, nextNextInfo.directionInfo);
@@ -262,8 +262,8 @@ public class VoiceRouter {
 			nextStatusAfter(STATUS_TURN_IN);
 			// } else if (statusNotPassed(STATUS_PREPARE) && isDistanceLess(speed, dist, PREPARE_DISTANCE)) {
 		} else if (statusNotPassed(STATUS_PREPARE) && (dist <= PREPARE_DISTANCE)) {
-			if (dist >= PREPARE_DISTANCE_END) {
-				if(next.getTurnType().keepLeft() || next.getTurnType().keepRight()){
+			if (!scheduledCall || dist >= PREPARE_DISTANCE_END) {
+				if (scheduledCall && (next.getTurnType().keepLeft() || next.getTurnType().keepRight())){
 					// do not play prepare for keep left/right
 				} else {
 					playPrepareTurn(next, dist);
@@ -272,73 +272,28 @@ public class VoiceRouter {
 			nextStatusAfter(STATUS_PREPARE);
 			// } else if (statusNotPassed(STATUS_LONG_PREPARE) && isDistanceLess(speed, dist, PREPARE_LONG_DISTANCE)){
 		} else if (statusNotPassed(STATUS_LONG_PREPARE) && (dist <= PREPARE_LONG_DISTANCE)) {
-			if (dist >= PREPARE_LONG_DISTANCE_END) {
+			if (!scheduledCall || dist >= PREPARE_LONG_DISTANCE_END) {
 				playPrepareTurn(next, dist);
 			}
 			nextStatusAfter(STATUS_LONG_PREPARE);
 		} else if (statusNotPassed(STATUS_UNKNOWN)) {
 			// strange how we get here but
 			nextStatusAfter(STATUS_UNKNOWN);
-		} else if (statusNotPassed(STATUS_TURN_IN) && dist < playGoAheadDist) {
+		} else if (!scheduledCall || (statusNotPassed(STATUS_TURN_IN) && dist < playGoAheadDist)) {
 			playGoAheadDist = 0;
 			playGoAhead(dist);
 		}
 	}
 
 	public void announceCurrentDirection(Location currentLocation) {
-		NextDirectionInfo nextInfo = router.getNextRouteDirectionInfo(new NextDirectionInfo(), true);
-		if(nextInfo == null) {
-			playGoAheadToDestination();
-			return;
-		}
-		NextDirectionInfo nextNextInfo = router.getNextRouteDirectionInfoAfter(nextInfo, new NextDirectionInfo(), false);
-		float speed = DEFAULT_SPEED;
-		RouteDirectionInfo next = nextInfo.directionInfo;
-		int dist = nextInfo.distanceTo;
-
-		if(currentLocation != null && currentLocation.hasSpeed()){
-			speed = Math.max(currentLocation.getSpeed(), speed);
-		}
-
-		switch (currentStatus) {
-		case STATUS_UTWP_TOLD:
-			playMakeUTwp();
-			break;
-		case STATUS_UNKNOWN:
-			if (nextRouteDirection != null && ((next == null) || (next.distance == 0))) {
-				playGoAheadToDestination();
+		synchronized (router) {
+			if (currentStatus != STATUS_UTWP_TOLD) {
+				currentStatus = STATUS_UNKNOWN;
+				updateStatus(currentLocation, false);
 			} else {
-				playGoAhead(dist);
+				currentStatus = STATUS_UNKNOWN;
+				makeUTStatus();
 			}
-			break;
-		case STATUS_TOLD:
-			if (nextRouteDirection != null) {
-				playGoAheadToDestination();
-			}
-			break;
-		case STATUS_TURN:
-			if(next.distance < TURN_IN_DISTANCE_END && nextNextInfo != null) {
-				playMakeTurn(next, nextNextInfo.directionInfo);
-			} else {
-				playMakeTurn(next, null);
-			}
-			break;
-		case STATUS_TURN_IN:
-			if((isDistanceLess(speed, next.distance, TURN_DISTANCE) || next.distance < TURN_IN_DISTANCE_END) && 
-					nextNextInfo != null) {
-				playMakeTurnIn(next, dist, nextNextInfo.directionInfo);
-			} else {
-				playMakeTurnIn(next, dist, null);
-			}
-			break;
-		case STATUS_PREPARE:
-			playPrepareTurn(next, dist);
-			break;
-		case STATUS_LONG_PREPARE:
-			playPrepareTurn(next, dist);
-			break;
-		default:
-			break;
 		}
 	}
 
