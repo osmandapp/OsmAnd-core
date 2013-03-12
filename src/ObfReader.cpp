@@ -55,7 +55,7 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
                 ObfAddressSection::read(this, section.get());
                 _codedInputStream->PopLimit(oldLimit);
                 _codedInputStream->Seek(section->_offset + section->_length);
-                _addressRegionsSections.push_back(section);
+                _addressSections.push_back(section);
                 _sections.push_back(dynamic_cast<ObfSection*>(section.get()));
             }
             break;
@@ -81,7 +81,7 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
                 ObfRoutingSection::read(this, section.get());
                 _codedInputStream->PopLimit(oldLimit);
                 _codedInputStream->Seek(section->_offset + section->_length);
-                _routingRegionsSections.push_back(section);
+                _routingSections.push_back(section);
                 _sections.push_back(dynamic_cast<ObfSection*>(section.get()));
             }
             break;
@@ -94,7 +94,7 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
                 ObfPoiSection::read(this, section.get());
                 _codedInputStream->PopLimit(oldLimit);
                 _codedInputStream->Seek(section->_offset + section->_length);
-                _poiRegionsSections.push_back(section);
+                _poiSections.push_back(section);
                 _sections.push_back(dynamic_cast<ObfSection*>(section.get()));
             }
             break;

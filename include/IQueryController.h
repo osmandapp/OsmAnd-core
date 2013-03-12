@@ -20,8 +20,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __I_QUERY_CALLBACK_H_
-#define __I_QUERY_CALLBACK_H_
+#ifndef __I_QUERY_CONTROLLER_H_
+#define __I_QUERY_CONTROLLER_H_
 
 #include <OsmAndCore.h>
 #include <MapObject.h>
@@ -31,15 +31,17 @@
 
 namespace OsmAnd {
 
-    class OSMAND_CORE_API IQueryCallback
+    class OSMAND_CORE_API IQueryController
     {
     private:
     protected:
     public:
-        IQueryCallback();
-        virtual ~IQueryCallback();
+        IQueryController();
+        virtual ~IQueryController();
+
+        virtual bool isAborted() = 0;
     };
 
 } // namespace OsmAnd
 
-#endif // __I_QUERY_CALLBACK_H_
+#endif // __I_QUERY_CONTROLLER_H_

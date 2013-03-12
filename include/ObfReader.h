@@ -23,12 +23,13 @@
 #ifndef __OBF_READER_H_
 #define __OBF_READER_H_
 
-#include <OsmAndCore.h>
-#include <QIODevice>
 #include <memory>
+#include <functional>
+#include <QIODevice>
 #include <QList>
-#include <QStringList>
+#include <QMultiHash>
 #include <google/protobuf/io/coded_stream.h>
+#include <OsmAndCore.h>
 #include <ObfSection.h>
 #include <ObfMapSection.h>
 #include <ObfAddressSection.h>
@@ -36,6 +37,7 @@
 #include <ObfPoiSection.h>
 #include <ObfTransportSection.h>
 #include <StreetGroup.h>
+#include <IQueryController.h>
 
 namespace OsmAnd {
 
@@ -53,12 +55,11 @@ namespace OsmAnd {
         long _creationTimestamp;
         bool _isBasemap;
         QList< std::shared_ptr<ObfMapSection> > _mapSections;
-        QList< std::shared_ptr<ObfAddressSection> > _addressRegionsSections;
-        QList< std::shared_ptr<ObfRoutingSection> > _routingRegionsSections;
-        QList< std::shared_ptr<ObfPoiSection> > _poiRegionsSections;
+        QList< std::shared_ptr<ObfAddressSection> > _addressSections;
+        QList< std::shared_ptr<ObfRoutingSection> > _routingSections;
+        QList< std::shared_ptr<ObfPoiSection> > _poiSections;
         QList< std::shared_ptr<ObfTransportSection> > _transportSections;
         QList< ObfSection* > _sections;
-        //std::shared_ptr<Transliterator> _icuTransliterator;
     protected:
         QString transliterate(QString input);
         static int readSInt32(gpb::io::CodedInputStream* cis);
@@ -66,17 +67,12 @@ namespace OsmAnd {
         static void readStringTable(gpb::io::CodedInputStream* cis, QStringList& stringTableOut);
         static void skipUnknownField(gpb::io::CodedInputStream* cis, int tag);
     public:
-        //! Constants
-        enum {
-            //TODO: move to transport?
-            TransportStopZoom = 24,
-        };
-
         ObfReader(QIODevice* input);
 
         int getVersion() const;
         QList< OsmAnd::ObfSection* > getSections() const;
 
+    friend class ObfData;
     friend struct ObfMapSection;
     friend struct ObfAddressSection;
     friend struct ObfRoutingSection;

@@ -50,6 +50,8 @@ namespace OsmAnd {
             int64_t _id;
             QString _name;
             QString _latinName;
+            uint32_t _x31;
+            uint32_t _y31;
             double _longitude;
             double _latitude;
             QString _openingHours;

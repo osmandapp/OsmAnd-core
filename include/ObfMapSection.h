@@ -32,7 +32,7 @@
 #include <google/protobuf/io/coded_stream.h>
 #include <ObfSection.h>
 #include <IQueryFilter.h>
-#include <IQueryCallback.h>
+#include <IQueryController.h>
 
 namespace OsmAnd {
 
@@ -97,7 +97,7 @@ namespace OsmAnd {
 
         bool isBaseMap();
         void loadRules(ObfReader* reader);
-        static void queryMapObjects(ObfReader* reader, ObfMapSection* section, QList< std::shared_ptr<OsmAnd::ObfMapSection::MapObject> >* resultOut = nullptr, IQueryFilter* filter = nullptr, IQueryCallback* callback = nullptr);
+        static void queryMapObjects(ObfReader* reader, ObfMapSection* section, QList< std::shared_ptr<OsmAnd::ObfMapSection::MapObject> >* resultOut = nullptr, IQueryFilter* filter = nullptr, IQueryController* callback = nullptr);
     protected:
         static void read(ObfReader* reader, ObfMapSection* section);
         static void readMapLevel(ObfReader* reader, ObfMapSection* section, MapLevel* level);
@@ -126,8 +126,8 @@ namespace OsmAnd {
             QSet<uint32_t>& positiveLayers);
         static void readLevelTrees(ObfReader* reader, ObfMapSection* section, MapLevel* level, QList< std::shared_ptr<LevelTree> >& trees);
         static void readLevelTree(ObfReader* reader, ObfMapSection* section, MapLevel* level, LevelTree* tree);
-        static void queryMapObjects(ObfReader* reader, ObfMapSection* section, MapLevel* level, LevelTree* tree, QList< std::shared_ptr<LevelTree> >& subtrees, IQueryFilter* filter, IQueryCallback* callback);
-        static void readMapObjects(ObfReader* reader, ObfMapSection* section, LevelTree* tree, QList< std::shared_ptr<OsmAnd::ObfMapSection::MapObject> >* resultOut, IQueryFilter* filter, IQueryCallback* callback);
+        static void queryMapObjects(ObfReader* reader, ObfMapSection* section, MapLevel* level, LevelTree* tree, QList< std::shared_ptr<LevelTree> >& subtrees, IQueryFilter* filter, IQueryController* callback);
+        static void readMapObjects(ObfReader* reader, ObfMapSection* section, LevelTree* tree, QList< std::shared_ptr<OsmAnd::ObfMapSection::MapObject> >* resultOut, IQueryFilter* filter, IQueryController* callback);
         static void readMapObject(ObfReader* reader, ObfMapSection* section, LevelTree* tree, std::shared_ptr<OsmAnd::ObfMapSection::MapObject>& mapObjectOut, IQueryFilter* filter);
         enum {
             ShiftCoordinates = 5,

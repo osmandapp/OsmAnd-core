@@ -200,7 +200,7 @@ void dump(std::ostream &output, QString filePath, const OsmAnd::Inspector::Confi
         if(dynamic_cast<OsmAnd::ObfTransportSection*>(section))
         {
             auto transportSection = dynamic_cast<OsmAnd::ObfTransportSection*>(section);
-            int sh = (31 - OsmAnd::ObfReader::TransportStopZoom);
+            int sh = (31 - OsmAnd::ObfTransportSection::StopZoom);
             output << "\tBounds " << formatBounds(transportSection->_left << sh, transportSection->_right << sh, transportSection->_top << sh, transportSection->_bottom << sh) << std::endl;
         }
         else if(dynamic_cast<OsmAnd::ObfRoutingSection*>(section))
@@ -271,7 +271,7 @@ void printPOIDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
     }
 
     QList< std::shared_ptr<OsmAnd::Model::Amenity> > amenities;
-    OsmAnd::ObfPoiSection::loadAmenities(reader, section, amenities);
+    OsmAnd::ObfPoiSection::loadAmenities(reader, section, nullptr, &amenities);
     output << "\tAmenities, " << amenities.count() << " item(s)";
     if(!cfg.verboseAmenities)
     {

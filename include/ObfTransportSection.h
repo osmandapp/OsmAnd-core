@@ -48,7 +48,10 @@ namespace OsmAnd {
         int _bottom;
 
         int _stopsFileOffset;
-        int _stopsFileLength;   
+        int _stopsFileLength;
+        enum {
+            StopZoom = 24,
+        };
     protected:
         static void read(ObfReader* reader, ObfTransportSection* section);
 

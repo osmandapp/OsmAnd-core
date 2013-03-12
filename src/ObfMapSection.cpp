@@ -138,7 +138,7 @@ void OsmAnd::ObfMapSection::loadRules( ObfReader* reader )
     cis->PopLimit(oldLimit);
 }
 
-void OsmAnd::ObfMapSection::queryMapObjects( ObfReader* reader, ObfMapSection* section, QList< std::shared_ptr<MapObject> >* resultOut /*= nullptr*/, IQueryFilter* filter /*= nullptr*/, IQueryCallback* callback /*= nullptr*/ )
+void OsmAnd::ObfMapSection::queryMapObjects( ObfReader* reader, ObfMapSection* section, QList< std::shared_ptr<MapObject> >* resultOut /*= nullptr*/, IQueryFilter* filter /*= nullptr*/, IQueryController* callback /*= nullptr*/ )
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -424,7 +424,7 @@ void OsmAnd::ObfMapSection::readLevelTree( ObfReader* reader, ObfMapSection* sec
     }
 }
 
-void OsmAnd::ObfMapSection::queryMapObjects( ObfReader* reader, ObfMapSection* section, MapLevel* level, LevelTree* tree, QList< std::shared_ptr<LevelTree> >& subtrees, IQueryFilter* filter, IQueryCallback* callback )
+void OsmAnd::ObfMapSection::queryMapObjects( ObfReader* reader, ObfMapSection* section, MapLevel* level, LevelTree* tree, QList< std::shared_ptr<LevelTree> >& subtrees, IQueryFilter* filter, IQueryController* callback )
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -466,7 +466,7 @@ void OsmAnd::ObfMapSection::queryMapObjects( ObfReader* reader, ObfMapSection* s
     }
 }
 
-void OsmAnd::ObfMapSection::readMapObjects( ObfReader* reader, ObfMapSection* section, LevelTree* tree, QList< std::shared_ptr<MapObject> >* resultOut, IQueryFilter* filter, IQueryCallback* callback )
+void OsmAnd::ObfMapSection::readMapObjects( ObfReader* reader, ObfMapSection* section, LevelTree* tree, QList< std::shared_ptr<MapObject> >* resultOut, IQueryFilter* filter, IQueryController* callback )
 {
     auto cis = reader->_codedInputStream.get();
 

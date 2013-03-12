@@ -104,7 +104,6 @@ void OsmAnd::ObfPoiSection::readBoundaries( ObfReader* reader, ObfPoiSection* se
 {
     auto cis = reader->_codedInputStream.get();
 
-    gpb::uint32 value;
     for(;;)
     {
         auto tag = cis->ReadTag();
@@ -113,20 +112,20 @@ void OsmAnd::ObfPoiSection::readBoundaries( ObfReader* reader, ObfPoiSection* se
         case 0:
             return;
         case OBF::OsmAndTileBox::kLeftFieldNumber:
-            cis->ReadVarint32(&value);
-            section->_leftLongitude = Utilities::get31LongitudeX(value);
+            cis->ReadVarint32(&section->_left31);
+            section->_leftLongitude = Utilities::get31LongitudeX(section->_left31);
             break;
         case OBF::OsmAndTileBox::kRightFieldNumber:
-            cis->ReadVarint32(&value);
-            section->_rightLongitude = Utilities::get31LongitudeX(value);
+            cis->ReadVarint32(&section->_right31);
+            section->_rightLongitude = Utilities::get31LongitudeX(section->_right31);
             break;
         case OBF::OsmAndTileBox::kTopFieldNumber:
-            cis->ReadVarint32(&value);
-            section->_topLatitude = Utilities::get31LatitudeY(value);
+            cis->ReadVarint32(&section->_top31);
+            section->_topLatitude = Utilities::get31LatitudeY(section->_top31);
             break;
         case OBF::OsmAndTileBox::kBottomFieldNumber:
-            cis->ReadVarint32(&value);
-            section->_bottomLatitude = Utilities::get31LatitudeY(value);
+            cis->ReadVarint32(&section->_bottom31);
+            section->_bottomLatitude = Utilities::get31LatitudeY(section->_bottom31);
             break;
         default:
             ObfReader::skipUnknownField(cis, tag);
@@ -151,7 +150,6 @@ void OsmAnd::ObfPoiSection::readCategory( ObfReader* reader, OsmAnd::Model::Amen
                 std::string name;
                 gpb::internal::WireFormatLite::ReadString(cis, &name);
                 category->_name = QString::fromStdString(name);
-                //TODO:region.categoriesType.add(AmenityType.fromString(cat));
             }
             break;
         case OBF::OsmAndCategoryTable::kSubcategoriesFieldNumber:
@@ -177,16 +175,28 @@ void OsmAnd::ObfPoiSection::loadCategories( OsmAnd::ObfReader* reader, OsmAnd::O
     cis->PopLimit(oldLimit);
 }
 
-void OsmAnd::ObfPoiSection::loadAmenities( OsmAnd::ObfReader* reader, OsmAnd::ObfPoiSection* section, QList< std::shared_ptr<OsmAnd::Model::Amenity> >& amenities )
+void OsmAnd::ObfPoiSection::loadAmenities(
+    OsmAnd::ObfReader* reader, OsmAnd::ObfPoiSection* section,
+    QSet<uint32_t>* desiredCategories /*= nullptr*/,
+    QList< std::shared_ptr<OsmAnd::Model::Amenity> >* amenitiesOut /*= nullptr*/,
+    IQueryFilter* filter /*= nullptr*/, uint32_t zoomToSkipFilter /*= 3*/,
+    std::function<bool (std::shared_ptr<OsmAnd::Model::Amenity>)>* visitor /*= nullptr*/,
+    IQueryController* controller /*= nullptr*/ )
 {
     auto cis = reader->_codedInputStream.get();
     cis->Seek(section->_offset);
     auto oldLimit = cis->PushLimit(section->_length);
-    readAmenities(reader, section, amenities);
+    readAmenities(reader, section, desiredCategories, amenitiesOut, filter, zoomToSkipFilter, visitor, controller);
     cis->PopLimit(oldLimit);
 }
 
-void OsmAnd::ObfPoiSection::readAmenities( ObfReader* reader, ObfPoiSection* section, QList< std::shared_ptr<OsmAnd::Model::Amenity> >& amenities )
+void OsmAnd::ObfPoiSection::readAmenities(
+    ObfReader* reader, ObfPoiSection* section,
+    QSet<uint32_t>* desiredCategories,
+    QList< std::shared_ptr<OsmAnd::Model::Amenity> >* amenitiesOut,
+    IQueryFilter* filter, uint32_t zoomToSkipFilter,
+    std::function<bool (std::shared_ptr<OsmAnd::Model::Amenity>)>* visitor,
+    IQueryController* controller)
 {
     auto cis = reader->_codedInputStream.get();
     QList< std::shared_ptr<Tile> > tiles;
@@ -201,8 +211,10 @@ void OsmAnd::ObfPoiSection::readAmenities( ObfReader* reader, ObfPoiSection* sec
             {
                 auto length = ObfReader::readBigEndianInt(cis);
                 auto oldLimit = cis->PushLimit(length);
-                readTile(reader, section, tiles, nullptr);
+                readTile(reader, section, tiles, nullptr, desiredCategories, filter, zoomToSkipFilter, controller, nullptr);
                 cis->PopLimit(oldLimit);
+                if(controller && controller->isAborted())
+                    return;
             }
             break;
         case OBF::OsmAndPoiIndex::kPoiDataFieldNumber:
@@ -220,10 +232,10 @@ void OsmAnd::ObfPoiSection::readAmenities( ObfReader* reader, ObfPoiSection* sec
                     cis->Seek(section->_offset + tile->_offset);
                     auto length = ObfReader::readBigEndianInt(cis);
                     auto oldLimit = cis->PushLimit(length);
-                    readAmenitiesFromTile(reader, section, tile.get(), amenities);
+                    readAmenitiesFromTile(reader, section, tile.get(), desiredCategories, amenitiesOut, filter, zoomToSkipFilter, visitor, controller, nullptr);
                     cis->PopLimit(oldLimit);
-                    /*if(req.isCancelled())
-                        return;*/
+                    if(controller && controller->isAborted())
+                        return;
                 }
                 cis->Skip(cis->BytesUntilLimit());
             }
@@ -235,30 +247,35 @@ void OsmAnd::ObfPoiSection::readAmenities( ObfReader* reader, ObfPoiSection* sec
     }
 }
 
-void OsmAnd::ObfPoiSection::readTile( ObfReader* reader, ObfPoiSection* section, QList< std::shared_ptr<Tile> >& tiles, Tile* parent )
+bool OsmAnd::ObfPoiSection::readTile(
+    ObfReader* reader, ObfPoiSection* section,
+    QList< std::shared_ptr<Tile> >& tiles,
+    Tile* parent,
+    QSet<uint32_t>* desiredCategories,
+    IQueryFilter* filter, uint32_t zoomToSkipFilter,
+    IQueryController* controller,
+    QSet< uint64_t >* tilesToSkip)
 {
     auto cis = reader->_codedInputStream.get();
 
-    /*req.numberOfReadSubtrees++;
-    int zoomToSkip = req.zoom + ZOOM_TO_SKIP_FILTER;
-    boolean checkBox = true;
-    boolean existsCategories = false;
-    */
+    const auto zoomToSkip = (filter && filter->_zoom != std::numeric_limits<uint32_t>::max()) ? filter->_zoom + zoomToSkipFilter : std::numeric_limits<uint32_t>::max();
+    QSet< uint64_t > tilesToSkip_;
+    if(parent == nullptr && filter && filter->_zoom != std::numeric_limits<uint32_t>::max() && !tilesToSkip)
+        tilesToSkip = &tilesToSkip_;
 
     std::shared_ptr<Tile> tile(new Tile());
     gpb::uint32 lzoom;
     
     for(;;)
     {
-        /*if(req.isCancelled()){
-            return;
-        }*/
+        if(controller && controller->isAborted())
+            return false;
         auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
             tiles.push_back(tile);
-            return;
+            return true;
         case OBF::OsmAndPoiBox::kZoomFieldNumber:
             {
                 cis->ReadVarint32(&lzoom);
@@ -269,21 +286,41 @@ void OsmAnd::ObfPoiSection::readTile( ObfReader* reader, ObfPoiSection* section,
             break;
         case OBF::OsmAndPoiBox::kLeftFieldNumber:
             {
-                tile->_x = ObfReader::readSInt32(cis);
+                auto x = ObfReader::readSInt32(cis);
                 if(parent)
-                    tile->_x += (parent->_x << lzoom);
+                    tile->_x = x + (parent->_x << lzoom);
+                else
+                    tile->_x = x;
             }
             break;
         case OBF::OsmAndPoiBox::kTopFieldNumber:
             {
-                tile->_y = ObfReader::readSInt32(cis);
+                auto y = ObfReader::readSInt32(cis);
                 if(parent)
-                    tile->_y += (parent->_y << lzoom);
+                    tile->_y = y + (parent->_y << lzoom);
+                else
+                    tile->_y = y;
+
+                // Check that we're inside bounding box, if requested
+                if(filter)
+                {
+                    auto left31 = tile->_x << (31 - tile->_zoom);
+                    auto right31 = (tile->_x + 1) << (31 - tile->_zoom);
+                    auto top31 = tile->_y << (31 - tile->_zoom);
+                    auto bottom31 = (tile->_y + 1) << (31 - tile->_zoom);
+
+                    if (right31 < filter->_bboxLeft31 || left31 > filter->_bboxRight31 || top31 > filter->_bboxBottom31 || bottom31 < filter->_bboxTop31)
+                    {
+                        // This tile is outside of bounding box
+                        cis->Skip(cis->BytesUntilLimit());
+                        return false;
+                    }
+                }
             }
             break;
         case OBF::OsmAndPoiBox::kCategoriesFieldNumber:
             {
-                if(/*req.poiTypeFilter == null*/true)
+                if(!desiredCategories)
                 {
                     ObfReader::skipUnknownField(cis, tag);
                     break;
@@ -291,49 +328,32 @@ void OsmAnd::ObfPoiSection::readTile( ObfReader* reader, ObfPoiSection* section,
                 gpb::uint32 length;
                 cis->ReadLittleEndian32(&length);
                 auto oldLimit = cis->PushLimit(length);
-                //TODO: check that CURRENT tile has needed categories, and exit if no
-                //boolean check = checkCategories(req, region);
+                const auto containsDesired = checkTileCategories(reader, section, desiredCategories);
                 cis->PopLimit(oldLimit);
-                /*
-                if(!check){
-                    codedIS.skipRawBytes(codedIS.getBytesUntilLimit());
+                if(!containsDesired)
+                {
+                    cis->Skip(cis->BytesUntilLimit());
                     return false;
                 }
-                existsCategories = true;
-            */
             }
             break;
         case OBF::OsmAndPoiBox::kSubBoxesFieldNumber:
             {
-                /*
-                if(checkBox){
-                    int xL = x << (31 - zoom);
-                    int xR = (x + 1) << (31 - zoom);
-                    int yT = y << (31 - zoom);
-                    int yB = (y + 1) << (31 - zoom);
-                    // check intersection
-                    if(left31 > xR || xL > right31 || bottom31 < yT || yB < top31){
-                        codedIS.skipRawBytes(codedIS.getBytesUntilLimit());
-                        return false;
-                    }
-                    req.numberOfAcceptedSubtrees++;
-                    checkBox = false;
-                }
-                */
                 auto length = ObfReader::readBigEndianInt(cis);
                 auto oldLimit = cis->PushLimit(length);
-                readTile(reader, section, tiles, tile.get());
+                auto tileOmitted = readTile(reader, section, tiles, tile.get(), desiredCategories, filter, zoomToSkipFilter, controller, tilesToSkip);
                 cis->PopLimit(oldLimit);
 
-                /*
-                if (skipTiles != null && zoom >= zoomToSkip && exists) {
-                    long val = ((((long) x) >> (zoom - zoomToSkip)) << zoomToSkip) | (((long) y) >> (zoom - zoomToSkip));
-                    if(skipTiles.contains(val)){
-                        codedIS.skipRawBytes(codedIS.getBytesUntilLimit());
+                if(tilesToSkip && tile->_zoom >= zoomToSkip && tileOmitted)
+                {
+                    auto skipHash = (static_cast<uint64_t>(tile->_x) >> (tile->_zoom - zoomToSkip)) << zoomToSkip;
+                    skipHash |= static_cast<uint64_t>(tile->_y) >> (tile->_zoom - zoomToSkip);
+                    if(tilesToSkip->contains(skipHash))
+                    {
+                        cis->Skip(cis->BytesUntilLimit());
                         return true;
                     }
                 }
-                */
             }
             break;
         case OBF::OsmAndPoiBox::kShiftToDataFieldNumber:
@@ -344,12 +364,12 @@ void OsmAnd::ObfPoiSection::readTile( ObfReader* reader, ObfPoiSection* section,
                 tile->_hash |= tile->_zoom;
                 
                 // skipTiles - these tiles are going to be ignored, since we need only 1 POI object (x;y)@zoom
-                /*
-                if(skipTiles != null && zoom >= zoomToSkip){
-                    long val = ((((long) x) >> (zoom - zoomToSkip)) << zoomToSkip) | (((long) y) >> (zoom - zoomToSkip));
-                    skipTiles.add(val);
+                if(tilesToSkip && tile->_zoom >= zoomToSkip)
+                {
+                    auto skipHash = (static_cast<uint64_t>(tile->_x) >> (tile->_zoom - zoomToSkip)) << zoomToSkip;
+                    skipHash |= static_cast<uint64_t>(tile->_y) >> (tile->_zoom - zoomToSkip);
+                    tilesToSkip->insert(skipHash);
                 }
-                */
             }
             break;
         default:
@@ -359,17 +379,64 @@ void OsmAnd::ObfPoiSection::readTile( ObfReader* reader, ObfPoiSection* section,
     }
 }
 
-void OsmAnd::ObfPoiSection::readAmenitiesFromTile( ObfReader* reader, ObfPoiSection* section, Tile* tile, QList< std::shared_ptr<Model::Amenity> >& amenities )
+bool OsmAnd::ObfPoiSection::checkTileCategories( ObfReader* reader, ObfPoiSection* section, QSet<uint32_t>* desiredCategories )
 {
     auto cis = reader->_codedInputStream.get();
+    for(;;)
+    {
+        auto tag = cis->ReadTag();
+        switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        {
+        case 0:
+            return false;
+        case OBF::OsmAndPoiCategories::kCategoriesFieldNumber:
+            {
+                gpb::uint32 binaryMixedId;
+                cis->ReadVarint32(&binaryMixedId);
+                const auto catId = binaryMixedId & CategoryIdMask;
+                const auto subId = binaryMixedId >> SubcategoryIdShift;
+
+                const uint32_t allSubsId = (catId << 16) | 0xFFFF;
+                const uint32_t mixedId = (catId << 16) | subId;
+                if(desiredCategories->contains(allSubsId) || desiredCategories->contains(mixedId))
+                {
+                    cis->Skip(cis->BytesUntilLimit());
+                    return true;
+                }
+            }
+            break;
+        default:
+            ObfReader::skipUnknownField(cis, tag);
+            break;
+        }
+    }
+}
+
+void OsmAnd::ObfPoiSection::readAmenitiesFromTile(
+    ObfReader* reader, ObfPoiSection* section, Tile* tile,
+    QSet<uint32_t>* desiredCategories,
+    QList< std::shared_ptr<OsmAnd::Model::Amenity> >* amenitiesOut,
+    IQueryFilter* filter, uint32_t zoomToSkipFilter,
+    std::function<bool (std::shared_ptr<OsmAnd::Model::Amenity>)>* visitor,
+    IQueryController* controller,
+    QSet< uint64_t >* amenitiesToSkip)
+{
+    auto cis = reader->_codedInputStream.get();
+
+    const auto zoomToSkip = (filter && filter->_zoom != std::numeric_limits<uint32_t>::max()) ? filter->_zoom + zoomToSkipFilter : std::numeric_limits<uint32_t>::max();
+    QSet< uint64_t > amenitiesToSkip_;
+    if(filter && filter->_zoom != std::numeric_limits<uint32_t>::max() && !amenitiesToSkip)
+        amenitiesToSkip = &amenitiesToSkip_;
+
     int32_t x = 0;
     int32_t y = 0;
     uint32_t zoom = 0;
+
     for(;;)
     {
-        /*if(req.isCancelled()){
+        if(controller && controller->isAborted())
             return;
-        }*/
+
         auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
@@ -402,30 +469,37 @@ void OsmAnd::ObfPoiSection::readAmenitiesFromTile( ObfReader* reader, ObfPoiSect
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
                 std::shared_ptr<Model::Amenity> amenity;
-                readAmenity(reader, section, x, y, zoom, amenity);
+                readAmenity(reader, section, x, y, zoom, amenity, desiredCategories, filter, controller);
                 cis->PopLimit(oldLimit);
-                /*
-                if (am != null) {
-                    if (toSkip != null) {
-                        int xp = (int) MapUtils.getTileNumberX(zSkip, am.getLocation().getLongitude());
-                        int yp = (int) MapUtils.getTileNumberY(zSkip, am.getLocation().getLatitude());
-                        long val = (((long) xp) << zSkip) | yp;
-                        if (!toSkip.contains(val)) {
-                            boolean publish = req.publish(am);
-                            if(publish) {
-                                toSkip.add(val);
-                            }
+                if(!amenity)
+                    break;
+                if(amenitiesToSkip)
+                {
+                    const auto xp = (uint32_t)Utilities::getTileNumberX(zoomToSkip, amenity->_longitude);
+                    const auto yp = (uint32_t)Utilities::getTileNumberY(zoomToSkip, amenity->_latitude);
+                    const auto hash = (static_cast<uint64_t>(xp) << zoomToSkip) | static_cast<uint64_t>(yp);
+                    if(!amenitiesToSkip->contains(hash))
+                    {
+                        const auto visitorAgrees = visitor ? (*visitor)(amenity) : true;
+                        if(visitorAgrees)
+                        {
+                            amenitiesToSkip->insert(hash);
+                            if(amenitiesOut)
+                                amenitiesOut->push_back(amenity);
                         }
-                        if(zSkip <= zoom){
-                            codedIS.skipRawBytes(codedIS.getBytesUntilLimit());
-                            return;
-                        }
-                    } else {
-                        req.publish(am);
                     }
-                }*/
-                if(amenity)
-                    amenities.push_back(amenity);
+                    if(zoomToSkip <= zoom)
+                    {
+                        cis->Skip(cis->BytesUntilLimit());
+                        return;
+                    }
+                }
+                else
+                {
+                    const auto visitorAgrees = visitor ? (*visitor)(amenity) : true;
+                    if(amenitiesOut && visitorAgrees)
+                        amenitiesOut->push_back(amenity);
+                }
             }
             break;
         default:
@@ -435,61 +509,73 @@ void OsmAnd::ObfPoiSection::readAmenitiesFromTile( ObfReader* reader, ObfPoiSect
     }
 }
 
-void OsmAnd::ObfPoiSection::readAmenity( ObfReader* reader, ObfPoiSection* section, int32_t px, int32_t py, uint32_t pzoom, std::shared_ptr<Model::Amenity>& amenity )
+void OsmAnd::ObfPoiSection::readAmenity(
+    ObfReader* reader, ObfPoiSection* section, int32_t px, int32_t py, uint32_t pzoom, std::shared_ptr<Model::Amenity>& amenity,
+    QSet<uint32_t>* desiredCategories,
+    IQueryFilter* filter,
+    IQueryController* controller)
 {
     auto cis = reader->_codedInputStream.get();
-    int x;
-    int y;
-    //AmenityType amenityType = null;
+    uint32_t x31;
+    uint32_t y31;
+    uint32_t catId;
+    uint32_t subId;
     for(;;)
     {
-        /*if(req.isCancelled()){
+        if(controller && controller->isAborted())
             return;
-        }*/
+
         auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
             if(amenity->_latinName.isEmpty())
                 amenity->_latinName = section->_owner->transliterate(amenity->_name);
-            amenity->_longitude = Utilities::get31LongitudeX(x);
-            amenity->_latitude = Utilities::get31LatitudeY(y);
+            amenity->_x31 = x31;
+            amenity->_y31 = y31;
+            amenity->_longitude = Utilities::get31LongitudeX(x31);
+            amenity->_latitude = Utilities::get31LatitudeY(y31);
+            amenity->_categoryId = catId;
+            amenity->_subcategoryId = subId;
             return;
         case OBF::OsmAndPoiBoxDataAtom::kDxFieldNumber:
-            x = (ObfReader::readSInt32(cis) + (px << (24 - pzoom))) << 7;
+            x31 = (ObfReader::readSInt32(cis) + (px << (24 - pzoom))) << 7;
             break;
         case OBF::OsmAndPoiBoxDataAtom::kDyFieldNumber:
-            y = (ObfReader::readSInt32(cis) + (py << (24 - pzoom))) << 7;
-            /*req.numberOfVisitedObjects++;
-            if (checkBounds) {
-                if (left31 > x || right31 < x || top31 > y || bottom31 < y) {
-                    codedIS.skipRawBytes(codedIS.getBytesUntilLimit());
-                    return null;
+            y31 = (ObfReader::readSInt32(cis) + (py << (24 - pzoom))) << 7;
+            if(filter)
+            {
+                if (x31 < filter->_bboxLeft31 || x31 > filter->_bboxRight31 || y31 > filter->_bboxBottom31 || y31 < filter->_bboxTop31)
+                {
+                    cis->Skip(cis->BytesUntilLimit());
+                    return;
                 }
-            }*/
-            amenity.reset(new Model::Amenity());
+            }
             break;
         case OBF::OsmAndPoiBoxDataAtom::kCategoriesFieldNumber:
             {
                 gpb::uint32 value;
                 cis->ReadVarint32(&value);
-                amenity->_categoryId = value & CategoryIdMask;
-                amenity->_subcategoryId = value >> SubcategoryIdShift;
-            }
-            /*AmenityType type = AmenityType.OTHER;
-            if (req.poiTypeFilter == null || req.poiTypeFilter.accept(type, subtype)) {
-                if (amenityType == null) {
-                    amenityType = type;
-                    am.setSubType(subtype);
-                    am.setType(amenityType);
-                } else {
-                    am.setSubType(am.getSubType() + ";" + subtype);
+                catId = value & CategoryIdMask;
+                subId = value >> SubcategoryIdShift;
+
+                if(desiredCategories)
+                {
+                    const uint32_t allSubsId = (catId << 16) | 0xFFFF;
+                    const uint32_t mixedId = (catId << 16) | subId;
+                    if(desiredCategories->contains(allSubsId) || desiredCategories->contains(mixedId))
+                    {
+                        cis->Skip(cis->BytesUntilLimit());
+                        return;
+                    }
                 }
+                amenity.reset(new Model::Amenity());
             }
-            */
             break;
         case OBF::OsmAndPoiBoxDataAtom::kIdFieldNumber:
-            cis->ReadVarint64(reinterpret_cast<gpb::uint64*>(&amenity->_id));
+            {
+                cis->ReadVarint64(reinterpret_cast<gpb::uint64*>(&amenity->_id));
+            }
             break;
         case OBF::OsmAndPoiBoxDataAtom::kNameFieldNumber:
             {
