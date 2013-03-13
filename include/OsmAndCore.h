@@ -59,4 +59,5 @@
 #else
 #   define ASSERT(condition, message) do { } while (false)
 #endif
+
 #endif // __OSMAND_CORE_H_

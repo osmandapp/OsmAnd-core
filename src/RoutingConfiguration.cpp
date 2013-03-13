@@ -6,17 +6,17 @@
  */
 
 #include "RoutingConfiguration.h"
+#include "RoutingVehicleConfig.h"
 #include <qxmlstream.h>
 #include <qstack.h>
 #include <qstringlist.h>
-#include <RoutingVehicleConfig.h>
+
 
 
 namespace OsmAnd {
-
 QString RoutingConfiguration::getAttribute(RoutingVehicleConfig& router, QString& propertyName) {
-	if (router->containsAttribute(propertyName)) {
-		return router->getAttribute(propertyName);
+	if (router.containsAttribute(propertyName)) {
+		return router.getAttribute(propertyName);
 	}
 	return attributes[propertyName];
 }
@@ -34,16 +34,16 @@ float RoutingConfiguration::parseSilentFloat(QString t, float v) {
 	}
 	return t.toFloat();
 }
-
-
-RoutingConfiguration::RoutingConfiguration(std::shared_ptr<RoutingConfigurationFile> file, QString router, double direction = -720,
+/*
+RoutingConfiguration::RoutingConfiguration(shared_ptr<RoutingConfigurationFile> file, QString rt, double direction = -720,
 			int memoryLimitMB = 30, QMap<QString, QString>& params){
-		routerName = file->routers.contains(router) ? router : file->defaultRouterName;
-		this->router = file->routers[routerName];
+		routerName = file->routers.contains(rt) ? rt : file->defaultRouterName;
+		router = file->routers[routerName];
 		if (!params.isEmpty()) {
 			this->router = this->router.build(params);
 		}
 		attributes["routerName"] = router;
+		QString t = this->getAttribute(this->router, rt);
 		attributes.putAll(file->attributes);
 		recalculateDistance = parseSilentFloat(getAttribute(router, "recalculateDistanceHelp"),
 				10000);
@@ -58,6 +58,7 @@ RoutingConfiguration::RoutingConfiguration(std::shared_ptr<RoutingConfigurationF
 		}
 		planRoadDirection = parseSilentInt(getAttribute(router, "planRoadDirection"), 0);
 	}
+}*/
 
 
 RoutingConfiguration::~RoutingConfiguration() {
@@ -75,12 +76,12 @@ struct RoutingRule {
 
 bool checkTag(QString pname) {
 	return "select" == pname || "if" == pname ||
-			"ifnot" == pname || "ge" == pname || "le" == pname;
+			"ifnot"  == pname || "ge" == pname || "le" == pname;
 }
 
-void addSubclause(const RoutingRule& rr, shared_ptr<RouteAttributeContext> ctx) {
+void addSubclause(const RoutingRule& rr, std::shared_ptr<RouteAttributeContext> ctx) {
 	bool nt = "ifnot" == rr.tagName;
-	RouteAttributeEvalRule* ptr = ctx->getLastRule().get();
+	std::shared_ptr<RouteAttributeEvalRule> ptr = ctx->getLastRule();
 	if (rr.param != "") {
 		ptr->registerAndParamCondition(rr.param, nt);
 	}
@@ -145,7 +146,7 @@ void parseRoutingRule(QXmlStreamReader& parser, std::shared_ptr<RoutingVehicleCo
 		rr.value2 = parser.attributes().value("value2").toString();
 		rr.type = parser.attributes().value("type").toString();
 
-		shared_ptr<RouteAttributeContext> ctx = currentRouter->getObjContext(attr);
+		std::shared_ptr<RouteAttributeContext> ctx = currentRouter->getObjContext(attr);
 		if("select" == rr.tagName) {
 			QString val = parser.attributes().
 					value( "value").toString();
@@ -163,7 +164,7 @@ void parseRoutingRule(QXmlStreamReader& parser, std::shared_ptr<RoutingVehicleCo
 	}
 }
 
-void parseRoutingParameter(QXmlStreamReader& parser, std::shared_ptr<RoutingVehicleConfig> currentRouter) {
+void parseRoutingParameter(QXmlStreamReader&  parser, std::shared_ptr<RoutingVehicleConfig> currentRouter) {
 	QString description = parser.attributes().value("description").toString();
 	QString name = parser.attributes().value( "name").toString();
 	QString id = parser.attributes().value( "id").toString();

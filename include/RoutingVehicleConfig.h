@@ -7,38 +7,29 @@
 
 #ifndef ROUTINGVEHICLECONFIG_H_
 #define ROUTINGVEHICLECONFIG_H_
-#include <OsmAndCore.h>
+#include <memory>
 #include <qstring.h>
 #include <qmap.h>
+#include <qlist.h>
 #include <qbitarray.h>
+#include <qvector.h>
+
+#include <OsmAndCore.h>
+#include <ObfRoutingSection.h>
+
 // TODO not use it! Replace with new implementation
-#include "binaryRead.h"
-#include "binaryRoutePlanner.h"
+// #include "binaryRead.h"
+// #include "binaryRoutePlanner.h"
 namespace OsmAnd {
 
-class RouteAttributeEvalRule {
-public:
-	void registerAndParamCondition(QString s, bool nt);
 
-	void registerAndTagValueCondition(QString tag, QString value, bool nt);
-
-	void registerGreatCondition(QString v1, QString v2, QString type);
-
-	void registerLessCondition(QString v1, QString v2, QString type);
-};
 
 enum RoutingParameterType {
-		NUMERIC,
-		BOOLEAN,
-		SYMBOLIC
+	NUMERIC, BOOLEAN, SYMBOLIC
 };
 
-class RouteAttributeContext {
-public:
-	std::shared_ptr<RouteAttributeEvalRule> getLastRule();
+class RouteAttributeEvalRule;
 
-	void registerNewRule(QString val, QString type);
-};
 
 struct RoutingParameter {
 	QString id;
@@ -49,24 +40,35 @@ struct RoutingParameter {
 	QVector<QString> possibleValueDescriptions;
 };
 
+struct RouteSelectValue {
+	double doubleValue;
+	bool isDoubleValue;
+	QString selectValue;
+	RouteSelectValue(QString v) {
+		selectValue = v;
+		doubleValue = v.toDouble(&isDoubleValue);
+	}
+
+};
 
 enum RouteDataObjectAttribute {
-	UKNOWN = 0, ROAD_SPEED, ROAD_PRIORITIES, ACCESS, OBSTACLES, ROUTING_OBSTACLES, ONEWAY
+	UKNOWN = 0, ROAD_SPEED = 1, ROAD_PRIORITIES, ACCESS, OBSTACLES, ROUTING_OBSTACLES, ONEWAY, LAST
 };
 
 class OSMAND_CORE_API RoutingVehicleConfig {
 	// field declaration
 private:
 
-	const QVector<RouteAttributeContext> objectAttributes;
-	const QMap<QString, QString> attributes;
-	const QMap<QString, RoutingParameter> parameters;
-	const QMap<QString, int> universalRules;
-	const QVector<QString> universalRulesById;
-	// TOODO hash map
-	const QMap<QString, QBitArray> tagRuleMask;
-	const QVector<QObject> ruleToValue;
-	// TODO hash map * 2
+	QVector<RouteAttributeContext> objectAttributes;
+	QMap<QString, QString> attributes;
+	QMap<QString, RoutingParameter> parameters;
+	// TODO hash map
+	QMap<QString, int> universalRules;
+	QVector<QString> universalRulesById;
+	// TODO hash map
+	QMap<QString, QBitArray> tagRuleMask;
+	QVector<RouteSelectValue> ruleToValue;
+
 
 	// cached values
 	bool restrictionsAware;
@@ -76,9 +78,9 @@ private:
 	float minDefaultSpeed;
 	float maxDefaultSpeed;
 public:
-	bool containsAttribute(QString attribute);
+	bool containsAttribute(QString& attribute);
 
-	QString getAttribute(QString attribute);
+	QString& getAttribute(QString& attribute);
 
 	/**
 	 * return if the road is accepted for routing
@@ -115,19 +117,19 @@ public:
 	 *
 	 * @return minimal speed at road in m/s
 	 */
-	float getMinDefaultSpeed();
+	float getMinDefaultSpeed() { return minDefaultSpeed; }
 
 	/**
 	 * Used for A* routing to predict h(x) : it should be great any g(x)
 	 *
 	 * @return maximum speed to calculate shortest distance
 	 */
-	float getMaxDefaultSpeed();
+	float getMaxDefaultSpeed() { return maxDefaultSpeed; }
 
 	/**
 	 * aware of road restrictions
 	 */
-	bool areRestrictionsAware();
+	bool areRestrictionsAware() { return restrictionsAware; }
 
 	/**
 	 * Calculate turn time
@@ -147,25 +149,23 @@ public:
 	virtual ~RoutingVehicleConfig();
 
 	// Modify functionality used only to parse configuration
-	RoutingVehicleConfig() :
-			restrictionsAware(true), minDefaultSpeed(10), maxDefaultSpeed(10) {
-	}
+	RoutingVehicleConfig();
 
-	RoutingVehicleConfig(GeneralRouterProfile profile, QMap<QString, QString>& attrs);
+	RoutingVehicleConfig(RoutingVehicleConfig& parent, QMap<QString, QString>& params);
 
-	void addAttribute(QString name, QString value);
+	void addAttribute(const QString& name,const  QString& value);
 
-	void registerBooleanParameter(QString& id, QString name, QString& description);
+	void registerBooleanParameter(QString& id, QString& name, QString& description);
 
 	void registerNumericParameter(QString& id, QString& name, QString& description, QList<double>& numbers,
 			QList<QString> descriptions);
 
-	shared_ptr<RouteAttributeContext> getObjContext(RouteDataObjectAttribute attr);
+	std::shared_ptr<RouteAttributeContext> getObjContext(RouteDataObjectAttribute attr);
 
+private:
+	int registerTagValueAttribute(QString& tag, QString& value);
 };
 
-
-RouteDataObjectAttribute valueOfRouteDataObjectAttribute(QString& s) ;
-
+RouteDataObjectAttribute valueOfRouteDataObjectAttribute(QString& s);
 } /* namespace OsmAnd */
 #endif /* ROUTINGVEHICLECONFIG_H_ */

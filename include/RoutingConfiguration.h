@@ -12,6 +12,7 @@
 #include <qmap.h>
 
 #include <OsmAndCore.h>
+#include <ObfRoutingSection.h>
 #include <RoutingVehicleConfig.h>
 
 namespace OsmAnd {
@@ -57,8 +58,9 @@ private:
 
 	float parseSilentFloat(QString t, float v) ;
 public :
-	RoutingConfiguration(std::shared_ptr<RoutingConfigurationFile> file, QString router, double direction = -720,
-			int memoryLimitMB = 30, QMap<QString, QString> params) ;
+	RoutingConfiguration(std::shared_ptr<RoutingConfigurationFile> file, QString router, double direction,
+			int memoryLimitMB, QMap<QString, QString> params);
+
 
 	virtual ~RoutingConfiguration();
 
