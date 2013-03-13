@@ -7,12 +7,10 @@
 
 OsmAnd::ObfRoutingSection::ObfRoutingSection( class ObfReader* owner )
     : ObfSection(owner)
-    , _borderBoxPointer(0)
-    , _baseBorderBoxPointer(0)
+    , _borderBoxOffset(0)
+    , _baseBorderBoxOffset(0)
     , _borderBoxLength(0)
     , _baseBorderBoxLength(0)
-    , _nameTypeRule(-1)
-    , _refTypeRule(-1)
 {
 }
 
@@ -20,22 +18,11 @@ OsmAnd::ObfRoutingSection::~ObfRoutingSection()
 {
 }
 
-void OsmAnd::ObfRoutingSection::initRouteEncodingRule( int id, std::string tags, std::string val )
-{
-    while(_routeEncodingRules.size() <= id)
-        _routeEncodingRules.push_back(std::shared_ptr<TypeRule>());
-    _routeEncodingRules.push_back(std::shared_ptr<TypeRule>(new TypeRule(tags, val)));
-    if(tags == "name")
-        _nameTypeRule = id;
-    else if(tags == "ref")
-        _refTypeRule = id;
-}
-
 void OsmAnd::ObfRoutingSection::read( ObfReader* reader, ObfRoutingSection* section )
 {
     auto cis = reader->_codedInputStream.get();
 
-    int routeEncodingRule = 1;
+    uint32_t routeEncodingRuleId = 1;
     for(;;)
     {
         auto tag = cis->ReadTag();
@@ -56,47 +43,49 @@ void OsmAnd::ObfRoutingSection::read( ObfReader* reader, ObfRoutingSection* sect
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
-                readRouteEncodingRule(reader, section, routeEncodingRule++);
-                cis->Skip(cis->BytesUntilLimit());
+                std::shared_ptr<EncodingRule> encodingRule(new EncodingRule());
+                encodingRule->_id = routeEncodingRuleId++;
+                readEncodingRule(reader, section, encodingRule.get());
+                while((unsigned)section->_encodingRules.size() <= encodingRule->_id)
+                    section->_encodingRules.push_back(std::shared_ptr<EncodingRule>());
+                section->_encodingRules.push_back(encodingRule);
                 cis->PopLimit(oldLimit);
             } 
             break;
         case OBF::OsmAndRoutingIndex::kRootBoxesFieldNumber:
         case OBF::OsmAndRoutingIndex::kBasemapBoxesFieldNumber:
             {
-                std::shared_ptr<Subregion> subregion(new Subregion(section));
-                subregion->_length = ObfReader::readBigEndianInt(cis);
-                subregion->_offset = cis->CurrentPosition();
-                auto oldLimit = cis->PushLimit(subregion->_length);
-                Subregion::read(reader, subregion.get(), nullptr, 0, true);
+                std::shared_ptr<Subsection> subsection(new Subsection());
+                subsection->_length = ObfReader::readBigEndianInt(cis);
+                subsection->_offset = cis->CurrentPosition();
+                auto oldLimit = cis->PushLimit(subsection->_length);
+                readSubsection(reader, section, subsection.get(), nullptr);
                 if(tfn == OBF::OsmAndRoutingIndex::kRootBoxesFieldNumber)
-                    section->_subregions.push_back(subregion);
+                    section->_subsections.push_back(subsection);
                 else
-                    section->_baseSubregions.push_back(subregion);
-                cis->Skip(cis->BytesUntilLimit());
+                    section->_baseSubsections.push_back(subsection);
                 cis->PopLimit(oldLimit);
             }
             break;
-        case OBF::OsmAndRoutingIndex::kBaseBorderBoxFieldNumber:
         case OBF::OsmAndRoutingIndex::kBorderBoxFieldNumber:
+        case OBF::OsmAndRoutingIndex::kBaseBorderBoxFieldNumber:
             {
                 auto length = ObfReader::readBigEndianInt(cis);
                 auto offset = cis->CurrentPosition();
                 if(tfn == OBF::OsmAndRoutingIndex::kBorderBoxFieldNumber)
                 {
                     section->_borderBoxLength = length;
-                    section->_borderBoxPointer = offset;
+                    section->_borderBoxOffset = offset;
                 }
                 else
                 {
                     section->_baseBorderBoxLength = length;
-                    section->_baseBorderBoxPointer = offset;
+                    section->_baseBorderBoxOffset = offset;
                 }
                 cis->Skip(length);
             }
             break;
         case OBF::OsmAndRoutingIndex::kBlocksFieldNumber:
-            // Finish reading file!
             cis->Skip(cis->BytesUntilLimit());
             break;
         default:
@@ -106,28 +95,118 @@ void OsmAnd::ObfRoutingSection::read( ObfReader* reader, ObfRoutingSection* sect
     }
 }
 
-void OsmAnd::ObfRoutingSection::readRouteEncodingRule( ObfReader* reader, ObfRoutingSection* section, int id )
+void OsmAnd::ObfRoutingSection::readEncodingRule( ObfReader* reader, ObfRoutingSection* section, EncodingRule* rule )
 {
     auto cis = reader->_codedInputStream.get();
 
-    std::string tags;
-    std::string val;
     for(;;)
     {
         auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
-            section->initRouteEncodingRule(id, tags, val);
+            {
+                if(rule->_value.compare(QString("true"), Qt::CaseInsensitive) == 0)
+                    rule->_value = "yes";
+                if(rule->_value.compare(QString("false"), Qt::CaseInsensitive) == 0)
+                    rule->_value = "no";
+
+                if(rule->_tag.compare(QString("oneway"), Qt::CaseInsensitive) == 0)
+                {
+                    rule->_type = EncodingRule::OneWay;
+                    if(rule->_value == "-1" || rule->_value == "reverse")
+                        rule->_parsedValue.asSignedInt = -1;
+                    else if(rule->_value == "1" || rule->_value == "yes")
+                        rule->_parsedValue.asSignedInt = 1;
+                    else
+                        rule->_parsedValue.asSignedInt = 0;
+                }
+                else if(rule->_tag.compare(QString("highway"), Qt::CaseInsensitive) == 0 && rule->_value == "traffic_signals")
+                {
+                    rule->_type = EncodingRule::TrafficSignals;
+                }
+                else if(rule->_tag.compare(QString("railway"), Qt::CaseInsensitive) == 0 && (rule->_value == "crossing" || rule->_value == "level_crossing"))
+                {
+                    rule->_type = EncodingRule::RailwayCrossing;
+                }
+                else if(rule->_tag.compare(QString("roundabout"), Qt::CaseInsensitive) == 0 && !rule->_value.isEmpty())
+                {
+                    rule->_type = EncodingRule::Roundabout;
+                }
+                else if(rule->_tag.compare(QString("junction"), Qt::CaseInsensitive) == 0 && rule->_value.compare(QString("roundabout"), Qt::CaseInsensitive) == 0)
+                {
+                    rule->_type = EncodingRule::Roundabout;
+                }
+                else if(rule->_tag.compare(QString("highway"), Qt::CaseInsensitive) == 0 && !rule->_value.isEmpty())
+                {
+                    rule->_type = EncodingRule::Highway;
+                }
+                else if(rule->_tag.startsWith("access") && !rule->_value.isEmpty())
+                {
+                    rule->_type = EncodingRule::Access;
+                }
+                else if(rule->_tag.compare(QString("maxspeed"), Qt::CaseInsensitive) == 0 && !rule->_value.isEmpty())
+                {
+                    rule->_type = EncodingRule::Maxspeed;
+                    rule->_parsedValue.asFloat = -1.0f;
+                    if(rule->_value == "none")
+                    {
+                        //TODO:rule->_parsedValue.asFloat = RouteDataObject.NONE_MAX_SPEED;
+                    }
+                    else
+                    {
+                        /*TODO:
+                        int i = 0;
+                        while (i < v.length() && Character.isDigit(v.charAt(i))) {
+                            i++;
+                        }
+                        if (i > 0) {
+                            floatValue = Integer.parseInt(v.substring(0, i));
+                            floatValue /= 3.6; // km/h -> m/s
+                            if (v.contains("mph")) {
+                                floatValue *= 1.6;
+                            }
+                        }
+                        */
+                    }
+                }
+                else if (rule->_tag.compare(QString("lanes"), Qt::CaseInsensitive) == 0 && !rule->_value.isEmpty())
+                {
+                    rule->_type = EncodingRule::Lanes;
+                    rule->_parsedValue.asSignedInt = -1;
+                    /*TODO:
+                    int i = 0;
+                    while (i < v.length() && Character.isDigit(v.charAt(i))) {
+                        i++;
+                    }
+                    if (i > 0) {
+                        intValue = Integer.parseInt(v.substring(0, i));
+                    }
+                    */
+                }
+
+            }
             return;
-        case OBF::OsmAndRoutingIndex_RouteEncodingRule::kValueFieldNumber:
-            gpb::internal::WireFormatLite::ReadString(cis, &val);
-            break;
         case OBF::OsmAndRoutingIndex_RouteEncodingRule::kTagFieldNumber:
-            gpb::internal::WireFormatLite::ReadString(cis, &tags);
+            {
+                std::string tag_;
+                gpb::internal::WireFormatLite::ReadString(cis, &tag_);
+                rule->_tag = QString::fromStdString(tag_);
+            }
+            break;
+        case OBF::OsmAndRoutingIndex_RouteEncodingRule::kValueFieldNumber:
+            {
+                std::string value;
+                gpb::internal::WireFormatLite::ReadString(cis, &value);
+                rule->_value = QString::fromStdString(value);
+            }
             break;
         case OBF::OsmAndRoutingIndex_RouteEncodingRule::kIdFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&id));
+            {
+                gpb::uint32 id;
+                cis->ReadVarint32(&id);
+                rule->_id = id;
+            }
             break;
         default:
             ObfReader::skipUnknownField(cis, tag);
@@ -136,68 +215,54 @@ void OsmAnd::ObfRoutingSection::readRouteEncodingRule( ObfReader* reader, ObfRou
     }
 }
 
-OsmAnd::ObfRoutingSection::Subregion::Subregion( ObfRoutingSection* section )
-    : _section(section)
-{
-}
-
-OsmAnd::ObfRoutingSection::Subregion* OsmAnd::ObfRoutingSection::Subregion::read( ObfReader* reader, Subregion* current, Subregion* parent, int depth, bool readCoordinates )
+void OsmAnd::ObfRoutingSection::readSubsection( ObfReader* reader, ObfRoutingSection* section, Subsection* subsection, Subsection* parent )
 {
     auto cis = reader->_codedInputStream.get();
-    bool readChildren = depth != 0; 
-
-    current->_section->_regionsRead++;
-    gpb::int32 value;
     for(;;)
     {
         auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
-            return current;
+            return;
         case OBF::OsmAndRoutingIndex_RouteDataBox::kLeftFieldNumber:
-            value = ObfReader::readSInt32(cis);
-            if (readCoordinates)
-                current->_left = value + (parent ? parent->_left : 0);
+            {
+                auto dleft = ObfReader::readSInt32(cis);
+                subsection->_left31 = dleft + (parent ? parent->_left31 : 0);
+            }
             break;
         case OBF::OsmAndRoutingIndex_RouteDataBox::kRightFieldNumber:
-            value = ObfReader::readSInt32(cis);
-            if (readCoordinates)
-                current->_right = value + (parent ? parent->_right : 0);
+            {
+                auto dright = ObfReader::readSInt32(cis);
+                subsection->_right31 = dright + (parent ? parent->_right31 : 0);
+            }
             break;
         case OBF::OsmAndRoutingIndex_RouteDataBox::kTopFieldNumber:
-            value = ObfReader::readSInt32(cis);
-            if (readCoordinates)
-                current->_top = value + (parent ? parent->_top : 0);
+            {
+                auto dtop = ObfReader::readSInt32(cis);
+                subsection->_top31 = dtop + (parent ? parent->_top31 : 0);
+            }
             break;
         case OBF::OsmAndRoutingIndex_RouteDataBox::kBottomFieldNumber:
-            value = ObfReader::readSInt32(cis);
-            if (readCoordinates)
-                current->_bottom = value + (parent ? parent->_bottom : 0);
+            {
+                auto dbottom = ObfReader::readSInt32(cis);
+                subsection->_bottom31 = dbottom + (parent ? parent->_bottom31 : 0);
+            }
             break;
         case OBF::OsmAndRoutingIndex_RouteDataBox::kShiftToDataFieldNumber:
             {
-                current->_shiftToData = ObfReader::readBigEndianInt(cis);
-                if(!readChildren)
-                    readChildren = true;
+                subsection->_dataOffset = ObfReader::readBigEndianInt(cis);
             }
             break;
         case OBF::OsmAndRoutingIndex_RouteDataBox::kBoxesFieldNumber:
-            if(readChildren)
             {
-                std::shared_ptr< Subregion > subregion(new Subregion(current->_section));
-                subregion->_length = ObfReader::readBigEndianInt(cis);
-                subregion->_offset = cis->CurrentPosition();
-                auto oldLimit = cis->PushLimit(subregion->_length);
-                Subregion::read(reader, subregion.get(), current, depth - 1, true);
-                current->_subregions.push_back(subregion);
+                std::shared_ptr<Subsection> childSubsection(new Subsection());
+                childSubsection->_length = ObfReader::readBigEndianInt(cis);
+                childSubsection->_offset = cis->CurrentPosition();
+                auto oldLimit = cis->PushLimit(childSubsection->_length);
+                readSubsection(reader, section, childSubsection.get(), subsection);
+                subsection->_subsections.push_back(childSubsection);
                 cis->PopLimit(oldLimit);
-                cis->Seek(subregion->_offset + subregion->_length);
-            }
-            else
-            {
-                cis->Seek(current->_offset + current->_length);
-                // skipUnknownField(t);
             }
             break;
         default:
@@ -207,58 +272,19 @@ OsmAnd::ObfRoutingSection::Subregion* OsmAnd::ObfRoutingSection::Subregion::read
     }
 }
 
-OsmAnd::ObfRoutingSection::TypeRule::TypeRule( std::string tag, std::string value )
-    : _tag(tag)
-    , _value(value)
+OsmAnd::ObfRoutingSection::EncodingRule::EncodingRule()
 {
-    if(QString::compare(_tag.c_str(), "oneway", Qt::CaseInsensitive) == 0)
-    {
-        _type = ONEWAY;
-        if( _value == "-1" || _value == "reverse") {
-            _intValue = -1;
-        } else if(_value == "1" || _value == "yes") {
-            _intValue = 1;
-        } else {
-            _intValue = 0;
-        }
-    } else if(QString::compare(_tag.c_str(), "highway", Qt::CaseInsensitive) == 0 && _value == "traffic_signals") {
-        _type = TRAFFIC_SIGNALS;
-    } else if(QString::compare(_tag.c_str(), "railway", Qt::CaseInsensitive) == 0 && (_value == "crossing" || _value == "level_crossing")) {
-        _type = RAILWAY_CROSSING;
-    } else if(QString::compare(_tag.c_str(), "roundabout", Qt::CaseInsensitive) == 0 && !_value.empty()){
-        _type = ROUNDABOUT;
-    } else if(QString::compare(_tag.c_str(), "junction", Qt::CaseInsensitive) == 0 && QString::compare(_value.c_str(), "roundabout", Qt::CaseInsensitive) == 0){
-        _type = ROUNDABOUT;
-    } else if(QString::compare(_tag.c_str(), "highway", Qt::CaseInsensitive) == 0 && !_value.empty()){
-        _type = HIGHWAY_TYPE;
-    } else if(_tag.find("access") == 0 && !_value.empty()){
-        _type = ACCESS;
-    } else if(QString::compare(_tag.c_str(), "maxspeed", Qt::CaseInsensitive) == 0 && !_value.empty()){
-        _type = MAXSPEED;
-        _floatValue = -1;
-        if(_value == "none") {
-            //TODO:
-            //_floatValue = RouteDataObject.NONE_MAX_SPEED;
-        } else {
-            int i = 0;
-            while (i < _value.length() && isdigit(_value[i])) {
-                i++;
-            }
-            if (i > 0) {
-                _floatValue = atoi(_value.substr(0, i).c_str());
-                _floatValue /= 3.6f; // km/h -> m/s
-                if (_value.find("mph") != std::string::npos) {
-                    _floatValue *= 1.6f;
-                }
-            }
-        }
-    } else if (QString::compare(_tag.c_str(), "lanes", Qt::CaseInsensitive) == 0 && !_value.empty()) {
-        _intValue = -1;
-        int i = 0;
-        _type = LANES;
-        while (i < _value.length() && isdigit(_value[i]))
-            i++;
-        if (i > 0)
-            _intValue = atoi(_value.substr(0, i).c_str());
-    }
+}
+
+OsmAnd::ObfRoutingSection::EncodingRule::~EncodingRule()
+{
+}
+
+OsmAnd::ObfRoutingSection::Subsection::Subsection()
+    : _dataOffset(0)
+{
+}
+
+OsmAnd::ObfRoutingSection::Subsection::~Subsection()
+{
 }

@@ -20,8 +20,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __OBF_ADDRESS_REGION_SECTION_H_
-#define __OBF_ADDRESS_REGION_SECTION_H_
+#ifndef __OBF_ADDRESS_SECTION_H_
+#define __OBF_ADDRESS_SECTION_H_
 
 #include <OsmAndCore.h>
 #include <memory>
@@ -106,4 +106,4 @@ namespace OsmAnd {
 
 } // namespace OsmAnd
 
-#endif // __OBF_ADDRESS_REGION_SECTION_H_
+#endif // __OBF_ADDRESS_SECTION_H_

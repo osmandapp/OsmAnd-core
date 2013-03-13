@@ -34,7 +34,7 @@
 #include <OsmAndCore.h>
 #include <ObfReader.h>
 #include <Amenity.h>
-
+#include <MapObject.h>
 
 namespace OsmAnd {
 
@@ -77,6 +77,12 @@ namespace OsmAnd {
             QList< std::shared_ptr<OsmAnd::Model::Amenity> >* amenitiesOut = nullptr,
             IQueryFilter* filter = nullptr, uint32_t zoomToSkipFilter = 3,
             std::function<bool (std::shared_ptr<OsmAnd::Model::Amenity>)>* visitor = nullptr,
+            IQueryController* controller = nullptr);
+
+        void queryMapObjects(
+            QList< std::shared_ptr<OsmAnd::Model::MapObject> >* mapObjectsOut = nullptr,
+            IQueryFilter* filter = nullptr,
+            std::function<bool (std::shared_ptr<OsmAnd::Model::MapObject>)>* visitor = nullptr,
             IQueryController* controller = nullptr);
     };
 

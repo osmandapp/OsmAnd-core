@@ -138,7 +138,7 @@ void OsmAnd::ObfMapSection::loadRules( ObfReader* reader )
     cis->PopLimit(oldLimit);
 }
 
-void OsmAnd::ObfMapSection::queryMapObjects( ObfReader* reader, ObfMapSection* section, QList< std::shared_ptr<MapObject> >* resultOut /*= nullptr*/, IQueryFilter* filter /*= nullptr*/, IQueryController* callback /*= nullptr*/ )
+void OsmAnd::ObfMapSection::loadMapObjects( ObfReader* reader, ObfMapSection* section, QList< std::shared_ptr<MapObject> >* resultOut /*= nullptr*/, IQueryFilter* filter /*= nullptr*/, IQueryController* controller /*= nullptr*/ )
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -180,7 +180,7 @@ void OsmAnd::ObfMapSection::queryMapObjects( ObfReader* reader, ObfMapSection* s
             cis->Seek(tree->_offset);
             auto oldLimit = cis->PushLimit(tree->_length);
             subtrees.push_back(tree);
-            queryMapObjects(reader, section, level.get(), tree.get(), subtrees, filter, callback);
+            loadMapObjects(reader, section, level.get(), tree.get(), subtrees, filter, controller);
             cis->PopLimit(oldLimit);
         }
         qSort(subtrees.begin(), subtrees.end(), [](const std::shared_ptr<LevelTree>& l, const std::shared_ptr<LevelTree>& r) -> int
@@ -190,14 +190,14 @@ void OsmAnd::ObfMapSection::queryMapObjects( ObfReader* reader, ObfMapSection* s
         for(auto itTree = subtrees.begin(); itTree != subtrees.end(); ++itTree)
         {
             auto tree = *itTree;
-            /*
-            if(req.isCancelled())
-            break*/
+            if(controller && controller->isAborted())
+                break;
+            
             cis->Seek(tree->_mapDataBlock);
             gpb::uint32 length;
             cis->ReadVarint32(&length);
             auto oldLimit = cis->PushLimit(length);
-            readMapObjects(reader, section, tree.get(), resultOut, filter, callback);
+            readMapObjects(reader, section, tree.get(), resultOut, filter, controller);
             cis->PopLimit(oldLimit);
         }
     }
@@ -424,7 +424,7 @@ void OsmAnd::ObfMapSection::readLevelTree( ObfReader* reader, ObfMapSection* sec
     }
 }
 
-void OsmAnd::ObfMapSection::queryMapObjects( ObfReader* reader, ObfMapSection* section, MapLevel* level, LevelTree* tree, QList< std::shared_ptr<LevelTree> >& subtrees, IQueryFilter* filter, IQueryController* callback )
+void OsmAnd::ObfMapSection::loadMapObjects( ObfReader* reader, ObfMapSection* section, MapLevel* level, LevelTree* tree, QList< std::shared_ptr<LevelTree> >& subtrees, IQueryFilter* filter, IQueryController* controller )
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -455,7 +455,7 @@ void OsmAnd::ObfMapSection::queryMapObjects( ObfReader* reader, ObfMapSection* s
                     }
                 }
                 subtrees.push_back(subtree);
-                queryMapObjects(reader, section, level, subtree.get(), subtrees, filter, callback);
+                loadMapObjects(reader, section, level, subtree.get(), subtrees, filter, controller);
                 cis->PopLimit(oldLimit);
             }
             break;
@@ -466,7 +466,7 @@ void OsmAnd::ObfMapSection::queryMapObjects( ObfReader* reader, ObfMapSection* s
     }
 }
 
-void OsmAnd::ObfMapSection::readMapObjects( ObfReader* reader, ObfMapSection* section, LevelTree* tree, QList< std::shared_ptr<MapObject> >* resultOut, IQueryFilter* filter, IQueryController* callback )
+void OsmAnd::ObfMapSection::readMapObjects( ObfReader* reader, ObfMapSection* section, LevelTree* tree, QList< std::shared_ptr<MapObject> >* resultOut, IQueryFilter* filter, IQueryController* controller )
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -474,11 +474,9 @@ void OsmAnd::ObfMapSection::readMapObjects( ObfReader* reader, ObfMapSection* se
     gpb::uint64 baseId;
     for(;;)
     {
-        /*
-        if (req.isCancelled()) {
-        return;
-        }
-        */
+        if(controller && controller->isAborted())
+            return;
+        
         auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {

@@ -20,18 +20,15 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __OBF_ROUTING_REGION_SECTION_H_
-#define __OBF_ROUTING_REGION_SECTION_H_
+#ifndef __OBF_ROUTING_SECTION_H_
+#define __OBF_ROUTING_SECTION_H_
 
-#include <OsmAndCore.h>
+#include <cstdint>
 #include <memory>
-#include <QList>
-#include <map>
-#include <unordered_map>
-#include <unordered_set>
-#include <tuple>
-#include <string>
 #include <google/protobuf/io/coded_stream.h>
+#include <QList>
+#include <QString>
+#include <OsmAndCore.h>
 #include <ObfSection.h>
 
 namespace OsmAnd {
@@ -39,191 +36,78 @@ namespace OsmAnd {
     namespace gpb = google::protobuf;
 
     /**
-    'Routing Region' section of OsmAnd Binary File
+    'Routing' section of OsmAnd Binary File
     */
     struct OSMAND_CORE_API ObfRoutingSection : public ObfSection
     {
-        struct OSMAND_CORE_API Subregion
-        {
-            //! Ctor
-            Subregion(ObfRoutingSection* section);
-
-            //! Pointer to parent section
-            ObfRoutingSection* const _section;
-
-            //! ???
-            int _length;
-            
-            //! ???
-            int _offset;
-            
-            //! ???
-            int _left;
-            
-            //! ???
-            int _right;
-            
-            //! ???
-            int _top;
-            
-            //! ???
-            int _bottom;
-            
-            //! ???
-            int _shiftToData;
-            
-            //! ???
-            QList< std::shared_ptr<Subregion> > _subregions;
-
-            //! ???
-            //List<RouteDataObject> dataObjects = null;
-            /*
-            public int getEstimatedSize(){
-                int shallow = 7 * INT_SIZE + 4*3;
-                if (subregions != null) {
-                    shallow += 8;
-                    for (RouteSubregion s : subregions) {
-                        shallow += s.getEstimatedSize();
-                    }
-                }
-                return shallow;
-            }
-
-            public int countSubregions(){
-                int cnt = 1;
-                if (subregions != null) {
-                    for (RouteSubregion s : subregions) {
-                        cnt += s.countSubregions();
-                    }
-                }
-                return cnt;
-            }
-            */
-        protected:
-            static Subregion* read(ObfReader* reader, Subregion* current, Subregion* parent, int depth, bool readCoordinates);
-
-        friend struct ObfRoutingSection;
-        };
-
-        struct TypeRule
-        {
-            enum Type : int
-            {
-                ACCESS = 1,
-                ONEWAY = 2,
-                HIGHWAY_TYPE = 3,
-                MAXSPEED = 4,
-                ROUNDABOUT = 5,
-                TRAFFIC_SIGNALS = 6,
-                RAILWAY_CROSSING = 7,
-                LANES = 8,
-            };
-
-            //! Ctor
-            TypeRule(std::string tag, std::string value);
-
-            //! ???
-            const std::string _tag;
-            
-            //! ???
-            const std::string _value;
-
-            //! ???
-            int _intValue;
-
-            //! ???
-            float _floatValue;
-
-            //! ???
-            Type _type;
-
-            //! ???
-            /*
-            public boolean roundabout(){
-                return type == ROUNDABOUT;
-            }
-
-            public int getType() {
-                return type;
-            }
-
-            public int onewayDirection(){
-                if(type == ONEWAY){
-                    return intValue;
-                }
-                return 0;
-            }
-
-            public float maxSpeed(){
-                if(type == MAXSPEED){
-                    return floatValue;
-                }
-                return -1;
-            }
-
-            public int lanes(){
-                if(type == LANES){
-                    return intValue;
-                }
-                return -1;
-            }
-
-            public String highwayRoad(){
-                if(type == HIGHWAY_TYPE){
-                    return v;
-                }
-                return null;
-            }
-
-            */
-        };
-
         ObfRoutingSection(class ObfReader* owner);
         virtual ~ObfRoutingSection();
 
-        //! ???
-        int _regionsRead;
-        
-        //! ???
-        int _borderBoxPointer;
-        
-        //! ???
-        int _baseBorderBoxPointer;
-        
-        //! ???
-        int _borderBoxLength;
-        
-        //! ???
-        int _baseBorderBoxLength;
+        struct OSMAND_CORE_API EncodingRule
+        {
+            EncodingRule();
+            virtual ~EncodingRule();
 
-        //! ???
-        QList< std::shared_ptr<Subregion> > _subregions;
-        
-        //! ???
-        QList< std::shared_ptr<Subregion> > _baseSubregions;
-        
-        //! ???
-        QList< std::shared_ptr<TypeRule> > _routeEncodingRules;
+            enum Type : uint32_t
+            {
+                Access = 1,
+                OneWay = 2,
+                Highway = 3,
+                Maxspeed = 4,
+                Roundabout = 5,
+                TrafficSignals = 6,
+                RailwayCrossing = 7,
+                Lanes = 8,
+            };
 
-        //! ???
-        int _nameTypeRule;
-        
-        //! ???
-        int _refTypeRule;
+            uint32_t _id;
+            QString _tag;
+            QString _value;
+            Type _type;
+            union
+            {
+                int32_t asSignedInt;
+                uint32_t asUnsignedInt;
+                float asFloat;
+            } _parsedValue;
+        };
+        QList< std::shared_ptr<EncodingRule> > _encodingRules;
 
-    private:
-        //! ???
-        void initRouteEncodingRule(int id, std::string tags, std::string val);
+        uint32_t _borderBoxOffset;
+        uint32_t _baseBorderBoxOffset;
+        uint32_t _borderBoxLength;
+        uint32_t _baseBorderBoxLength;
+
+        struct OSMAND_CORE_API Subsection
+        {
+            Subsection();
+            virtual ~Subsection();
+
+            uint32_t _offset;
+            uint32_t _length;
+
+            uint32_t _left31;
+            uint32_t _right31;
+            uint32_t _top31;
+            uint32_t _bottom31;
+
+            uint32_t _dataOffset;
+
+            QList< std::shared_ptr<Subsection> > _subsections;
+        };
+        QList< std::shared_ptr<Subsection> > _subsections;
+        QList< std::shared_ptr<Subsection> > _baseSubsections;
+
     protected:
         static void read(ObfReader* reader, ObfRoutingSection* section);
+        static void readEncodingRule(ObfReader* reader, ObfRoutingSection* section, EncodingRule* rule);
+        static void readSubsection(ObfReader* reader, ObfRoutingSection* section, Subsection* subsection, Subsection* parent);
 
     private:
-        //! ???
-        static void readRouteEncodingRule(ObfReader* reader, ObfRoutingSection* section, int id);
 
     friend class ObfReader;
     };
 
 } // namespace OsmAnd
 
-#endif // __OBF_ROUTING_REGION_SECTION_H_
+#endif // __OBF_ROUTING_SECTION_H_

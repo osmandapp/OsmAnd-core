@@ -20,8 +20,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __OBF_POI_REGION_SECTION_H_
-#define __OBF_POI_REGION_SECTION_H_
+#ifndef __OBF_POI_SECTION_H_
+#define __OBF_POI_SECTION_H_
 
 #include <functional>
 #include <memory>
@@ -114,4 +114,4 @@ namespace OsmAnd {
 
 } // namespace OsmAnd
 
-#endif // __OBF_POI_REGION_SECTION_H_
+#endif // __OBF_POI_SECTION_H_

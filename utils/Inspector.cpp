@@ -210,14 +210,14 @@ void dump(std::ostream &output, QString filePath, const OsmAnd::Inspector::Confi
             double lonRight = -180;
             double latTop = -90;
             double latBottom = 90;
-            for(auto itSubregion = routingSection->_subregions.begin(); itSubregion != routingSection->_subregions.end(); ++itSubregion)
+            for(auto itSubsection = routingSection->_subsections.begin(); itSubsection != routingSection->_subsections.end(); ++itSubsection)
             {
-                OsmAnd::ObfRoutingSection::Subregion* subregion = itSubregion->get();
+                auto subsection = itSubsection->get();
 
-                lonLeft = std::min(lonLeft, OsmAnd::Utilities::get31LongitudeX(subregion->_left));
-                lonRight = std::max(lonRight, OsmAnd::Utilities::get31LongitudeX(subregion->_right));
-                latTop = std::max(latTop, OsmAnd::Utilities::get31LatitudeY(subregion->_top));
-                latBottom = std::min(latBottom, OsmAnd::Utilities::get31LatitudeY(subregion->_bottom));
+                lonLeft = std::min(lonLeft, OsmAnd::Utilities::get31LongitudeX(subsection->_left31));
+                lonRight = std::max(lonRight, OsmAnd::Utilities::get31LongitudeX(subsection->_right31));
+                latTop = std::max(latTop, OsmAnd::Utilities::get31LatitudeY(subsection->_top31));
+                latBottom = std::min(latBottom, OsmAnd::Utilities::get31LatitudeY(subsection->_bottom31));
             }
             output << "\tBounds " << formatGeoBounds(lonLeft, lonRight, latTop, latBottom) << std::endl;
         }
@@ -251,7 +251,7 @@ void dump(std::ostream &output, QString filePath, const OsmAnd::Inspector::Confi
 void printMapDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configuration& cfg, OsmAnd::ObfReader* reader, OsmAnd::ObfMapSection* section)
 {
     QList< std::shared_ptr<OsmAnd::ObfMapSection::MapObject> > mapObjects;
-    OsmAnd::ObfMapSection::queryMapObjects(reader, section, &mapObjects, new OsmAnd::IQueryFilter());
+    OsmAnd::ObfMapSection::loadMapObjects(reader, section, &mapObjects, new OsmAnd::IQueryFilter());
     output << "\tTotal map objects: " << mapObjects.count() << std::endl;
 }
 
