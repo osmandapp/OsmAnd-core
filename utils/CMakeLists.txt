@@ -6,15 +6,13 @@ include_directories(AFTER SYSTEM
 	"${OSMAND_ROOT}/core/native/include"
 )
 add_definitions(
-	-DOSMAND_INSPECTOR_EXPORTS
+	-DOSMAND_CORE_UTILS_EXPORTS
 )
-file(GLOB_RECURSE includes "${OSMAND_ROOT}/core/include/*.h*")
-file(GLOB_RECURSE utils_includes "*.h*")
-file(GLOB_RECURSE utils_sources "*.c*")
+file(GLOB_RECURSE includes "*.h*")
+file(GLOB_RECURSE sources "*.c*")
 add_library(OsmAndCoreUtils SHARED
 	${includes}
-	${utils_includes}
-	${utils_sources}
+	${sources}
 )
 target_link_libraries(OsmAndCoreUtils OsmAndCore)
 find_package(Qt5Core REQUIRED)

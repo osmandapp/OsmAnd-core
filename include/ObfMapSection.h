@@ -25,7 +25,7 @@
 
 #include <memory>
 #include <QList>
-#include <QMap>
+#include <QHash>
 #include <QSet>
 #include <tuple>
 #include <google/protobuf/io/coded_stream.h>
@@ -52,7 +52,7 @@ namespace OsmAnd {
             bool _isArea;
             QList<uint32_t> _types;
             QList<uint32_t> _extraTypes;
-            QMap<uint32_t, uint32_t> _names;
+            QHash<uint32_t, uint32_t> _names;
         };
 
         struct LevelTree
@@ -82,9 +82,9 @@ namespace OsmAnd {
 
         QList< std::shared_ptr<MapLevel> > _levels;
 
-        QMap< QString, QMap<QString, uint32_t> > _encodingRules;
+        QHash< QString, QHash<QString, uint32_t> > _encodingRules;
         typedef std::tuple<QString, QString, uint32_t> DecodingRule;
-        QMap< uint32_t, DecodingRule > _decodingRules;
+        QHash< uint32_t, DecodingRule > _decodingRules;
         uint32_t _nameEncodingType;
         uint32_t _refEncodingType;
         uint32_t _coastlineEncodingType;
@@ -105,8 +105,8 @@ namespace OsmAnd {
         static void read(ObfReader* reader, ObfMapSection* section);
         static void readMapLevel(ObfReader* reader, ObfMapSection* section, MapLevel* level);
         static void readEncodingRules(ObfReader* reader,
-            QMap< QString, QMap<QString, uint32_t> >& encodingRules,
-            QMap< uint32_t, DecodingRule >& decodingRules,
+            QHash< QString, QHash<QString, uint32_t> >& encodingRules,
+            QHash< uint32_t, DecodingRule >& decodingRules,
             uint32_t& nameEncodingType,
             uint32_t& coastlineEncodingType,
             uint32_t& landEncodingType,
@@ -117,8 +117,8 @@ namespace OsmAnd {
             QSet<uint32_t>& negativeLayers,
             QSet<uint32_t>& positiveLayers);
         static void readEncodingRule(ObfReader* reader, uint32_t defaultId,
-            QMap< QString, QMap<QString, uint32_t> >& encodingRules,
-            QMap< uint32_t, DecodingRule >& decodingRules,
+            QHash< QString, QHash<QString, uint32_t> >& encodingRules,
+            QHash< uint32_t, DecodingRule >& decodingRules,
             uint32_t& nameEncodingType,
             uint32_t& coastlineEncodingType,
             uint32_t& landEncodingType,

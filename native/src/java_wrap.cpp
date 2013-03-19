@@ -7,7 +7,7 @@
 #include <SkImageEncoder.h>
 #include <SkStream.h>
 #include "java_renderRules.h"
-#include "Common.h"
+#include "Common_.h"
 #include "java_wrap.h"
 #include "binaryRead.h"
 #include "rendering.h"

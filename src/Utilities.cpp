@@ -109,3 +109,89 @@ OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::getLatitudeFromTile( 
     double result = atan(sign * sinh(pi * (1 - 2 * y / getPowZoom(zoom)))) * 180. / pi;
     return result;
 }
+
+OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::Utilities::extractFirstNumberPosition( const QString& value, int& first, int& last )
+{
+    first = -1;
+    last = -1;
+    int curPos = 0;
+    for(auto itChr = value.begin(); itChr != value.end() && (first == -1 || last == -1); ++itChr, curPos++)
+    {
+        auto chr = *itChr;
+        if(first == -1 && chr.isDigit())
+            first = curPos;
+        if(last == -1 && first != -1 && !chr.isDigit())
+            last = curPos - 1;
+    }
+    if(first != -1 && last == -1)
+        last = value.length() - 1;
+    return first != -1;
+}
+
+OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::parseSpeed( const QString& value, double defValue )
+{
+    if(value == "none")
+        return std::numeric_limits<double>::max();
+    
+    int first, last;
+    if(!extractFirstNumberPosition(value, first, last))
+        return defValue;
+    bool ok;
+    auto result = value.mid(first, last - first + 1).toDouble(&ok);
+    if(!ok)
+        return defValue;
+    result /= 3.6;
+    if(value.contains("mph"))
+        result *= 1.6;
+    return result;
+}
+
+OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::parseLength( const QString& value, double defValue )
+{
+    int first, last;
+    if(!extractFirstNumberPosition(value, first, last))
+        return defValue;
+    bool ok;
+    auto result = value.mid(first, last - first + 1).toDouble(&ok);
+    if(!ok)
+        return defValue;
+    if(value.contains("ft") || value.contains('"'))
+        result *= 0.3048;
+    if(value.contains('\''))
+    {
+        auto inchesSubstr = value.mid(value.indexOf('"') + 1);
+        if(!extractFirstNumberPosition(inchesSubstr, first, last))
+            return defValue;
+        bool ok;
+        auto inches = inchesSubstr.mid(first, last - first + 1).toDouble(&ok);
+        if(ok)
+            result += inches * 0.0254;        
+    }
+    return result;
+}
+
+OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::parseWeight( const QString& value, double defValue )
+{
+    int first, last;
+    if(!extractFirstNumberPosition(value, first, last))
+        return defValue;
+    bool ok;
+    auto result = value.mid(first, last - first + 1).toDouble(&ok);
+    if(!ok)
+        return defValue;
+    if(value.contains("lbs"))
+        result = (result * 0.4535) / 1000.0; // lbs -> kg -> ton
+    return result;
+}
+
+OSMAND_CORE_API int OSMAND_CORE_CALL OsmAnd::Utilities::parseArbitraryInt( const QString& value, int defValue )
+{
+    int first, last;
+    if(!extractFirstNumberPosition(value, first, last))
+        return defValue;
+    bool ok;
+    auto result = value.mid(first, last - first + 1).toInt(&ok);
+    if(!ok)
+        return defValue;
+    return result;
+}

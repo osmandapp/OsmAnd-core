@@ -59,17 +59,17 @@ QMultiHash< QString, QString > OsmAnd::ObfData::getPoiCategories()
         return _combinedPoiCategories;
 
     _sourcesMutex.lock();
-    auto sources = _sources;
+    const auto sources = _sources;
     _sourcesMutex.unlock();
 
     for(auto itSource = sources.cbegin(); itSource != sources.cend(); ++itSource)
     {
-        auto source = itSource.key();
-        auto sourceData = itSource.value();
+        const auto& source = itSource.key();
+        const auto& sourceData = itSource.value();
 
         for(auto itPoiSection = source->_poiSections.begin(); itPoiSection != source->_poiSections.end(); ++itPoiSection)
         {
-            auto poiSection = *itPoiSection;
+            const auto& poiSection = *itPoiSection;
 
             auto itPoiData = sourceData->_poiData.find(poiSection);
             if(itPoiData == sourceData->_poiData.end())
@@ -77,7 +77,7 @@ QMultiHash< QString, QString > OsmAnd::ObfData::getPoiCategories()
                 std::shared_ptr<Data::PoiData> poiData(new Data::PoiData());
                 itPoiData = sourceData->_poiData.insert(poiSection, poiData);
             }
-            auto poiData = *itPoiData;
+            const auto& poiData = *itPoiData;
 
             // Check if we have loaded categories for that poi section already
             if(poiData->_categories.isEmpty())
@@ -86,7 +86,7 @@ QMultiHash< QString, QString > OsmAnd::ObfData::getPoiCategories()
             uint32_t categoryId = 0;
             for(auto itCategory = poiData->_categories.begin(); itCategory != poiData->_categories.end(); ++itCategory, categoryId++)
             {
-                auto category = *itCategory;
+                const auto& category = *itCategory;
 
                 auto itCategoryData = poiData->_categoriesIds.find(category->_name);
                 if(itCategoryData == poiData->_categoriesIds.end())
@@ -96,12 +96,12 @@ QMultiHash< QString, QString > OsmAnd::ObfData::getPoiCategories()
 
                     poiCategoryData->_id = categoryId;
                 }
-                auto categoryData = *itCategoryData;
+                const auto& categoryData = *itCategoryData;
 
                 uint32_t subcategoryId = 0;
                 for(auto itSubcategory = category->_subcategories.begin(); itSubcategory != category->_subcategories.end(); ++itSubcategory, subcategoryId++)
                 {
-                    auto subcategory = *itSubcategory;
+                    const auto& subcategory = *itSubcategory;
                     _combinedPoiCategories.insert(category->_name, subcategory);
 
                     categoryData->_subcategoriesIds.insert(subcategory, subcategoryId);
@@ -122,17 +122,17 @@ void OsmAnd::ObfData::queryPoiAmenities(
     IQueryController* controller /*= nullptr*/ )
 {
     _sourcesMutex.lock();
-    auto sources = _sources;
+    const auto sources = _sources;
     _sourcesMutex.unlock();
 
     for(auto itSource = sources.cbegin(); itSource != sources.cend(); ++itSource)
     {
-        auto source = itSource.key();
-        auto sourceData = itSource.value();
+        const auto& source = itSource.key();
+        const auto& sourceData = itSource.value();
 
         for(auto itPoiSection = source->_poiSections.cbegin(); itPoiSection != source->_poiSections.cend(); ++itPoiSection)
         {
-            auto poiSection = *itPoiSection;
+            const auto& poiSection = *itPoiSection;
 
             if(controller && controller->isAborted())
                 break;
@@ -148,7 +148,7 @@ void OsmAnd::ObfData::queryPoiAmenities(
                 std::shared_ptr<Data::PoiData> poiData(new Data::PoiData());
                 itPoiData = sourceData->_poiData.insert(poiSection, poiData);
             }
-            auto poiData = *itPoiData;
+            const auto& poiData = *itPoiData;
 
             QSet<uint32_t> desiredCategoriesIds;
             if(desiredCategories)
@@ -156,12 +156,12 @@ void OsmAnd::ObfData::queryPoiAmenities(
                 const auto& keys = desiredCategories->uniqueKeys();
                 for(auto itDesiredCat = keys.cbegin(); itDesiredCat != keys.cend(); ++itDesiredCat)
                 {
-                    auto desiredCat = *itDesiredCat;
+                    const auto& desiredCat = *itDesiredCat;
 
                     auto itCategory = poiData->_categoriesIds.find(desiredCat);
                     if(itCategory == poiData->_categoriesIds.end())
                         continue;
-                    auto category = *itCategory;
+                    const auto& category = *itCategory;
 
                     const auto& values = desiredCategories->values(desiredCat);
                     if(values.isEmpty())
@@ -173,7 +173,7 @@ void OsmAnd::ObfData::queryPoiAmenities(
                     }
                     for(auto itDesiredSubcat = values.cbegin(); itDesiredSubcat != values.cend(); ++itDesiredSubcat)
                     {
-                        auto desiredSubcat = *itDesiredSubcat;
+                        const auto& desiredSubcat = *itDesiredSubcat;
 
                         auto itSubcategoryId = category->_subcategoriesIds.find(desiredSubcat);
                         if(itSubcategoryId == category->_subcategoriesIds.end())

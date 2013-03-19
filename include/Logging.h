@@ -1,7 +1,7 @@
 #ifndef _OSMAND_LOGGING_H_
 #define _OSMAND_LOGGING_H_
 
-#include "Common.h"
+#include <OsmAndCore.h>
 
 namespace OsmAnd
 {

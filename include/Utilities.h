@@ -23,6 +23,8 @@
 #ifndef __UTILITIES_H_
 #define __UTILITIES_H_
 
+#include <QString>
+
 #include <OsmAndCore.h>
 
 namespace OsmAnd {
@@ -42,6 +44,11 @@ namespace OsmAnd {
         OSMAND_CORE_API double OSMAND_CORE_CALL getPowZoom(float zoom);
         OSMAND_CORE_API double OSMAND_CORE_CALL getLongitudeFromTile(float zoom, double x);
         OSMAND_CORE_API double OSMAND_CORE_CALL getLatitudeFromTile(float zoom, double y);
+        OSMAND_CORE_API bool OSMAND_CORE_CALL extractFirstNumberPosition(const QString& value, int& first, int& last);
+        OSMAND_CORE_API double OSMAND_CORE_CALL parseSpeed(const QString& value, double defValue);
+        OSMAND_CORE_API double OSMAND_CORE_CALL parseLength(const QString& value, double defValue);
+        OSMAND_CORE_API double OSMAND_CORE_CALL parseWeight(const QString& value, double defValue);
+        OSMAND_CORE_API int OSMAND_CORE_CALL parseArbitraryInt(const QString& value, int defValue);
     } // namespace Utilities
 
 } // namespace OsmAnd

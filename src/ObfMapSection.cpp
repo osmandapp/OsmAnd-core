@@ -205,8 +205,8 @@ void OsmAnd::ObfMapSection::loadMapObjects( ObfReader* reader, ObfMapSection* se
 
 void OsmAnd::ObfMapSection::readEncodingRules(
     ObfReader* reader,
-    QMap< QString, QMap<QString, uint32_t> >& encodingRules,
-    QMap< uint32_t, DecodingRule >& decodingRules,
+    QHash< QString, QHash<QString, uint32_t> >& encodingRules,
+    QHash< uint32_t, DecodingRule >& decodingRules,
     uint32_t& nameEncodingType,
     uint32_t& coastlineEncodingType,
     uint32_t& landEncodingType,
@@ -258,8 +258,8 @@ void OsmAnd::ObfMapSection::readEncodingRules(
 
 void OsmAnd::ObfMapSection::readEncodingRule(
     ObfReader* reader, uint32_t defaultId,
-    QMap< QString, QMap<QString, uint32_t> >& encodingRules,
-    QMap< uint32_t, DecodingRule >& decodingRules,
+    QHash< QString, QHash<QString, uint32_t> >& encodingRules,
+    QHash< uint32_t, DecodingRule >& decodingRules,
     uint32_t& nameEncodingType,
     uint32_t& coastlineEncodingType,
     uint32_t& landEncodingType,
@@ -283,7 +283,7 @@ void OsmAnd::ObfMapSection::readEncodingRule(
         case 0:
             {
                 if(!encodingRules.contains(ruleTag))
-                    encodingRules[ruleTag] = QMap<QString, uint32_t>();
+                    encodingRules[ruleTag] = QHash<QString, uint32_t>();
                 encodingRules[ruleTag][ruleVal] = ruleId;
 
                 if(!decodingRules.contains(ruleId))

@@ -1,5 +1,6 @@
 #include "ObfRoutingSection.h"
 
+#include <Utilities.h>
 #include <ObfReader.h>
 #include <google/protobuf/wire_format_lite.h>
 
@@ -148,41 +149,12 @@ void OsmAnd::ObfRoutingSection::readEncodingRule( ObfReader* reader, ObfRoutingS
                 else if(rule->_tag.compare(QString("maxspeed"), Qt::CaseInsensitive) == 0 && !rule->_value.isEmpty())
                 {
                     rule->_type = EncodingRule::Maxspeed;
-                    rule->_parsedValue.asFloat = -1.0f;
-                    if(rule->_value == "none")
-                    {
-                        //TODO:rule->_parsedValue.asFloat = RouteDataObject.NONE_MAX_SPEED;
-                    }
-                    else
-                    {
-                        /*TODO:
-                        int i = 0;
-                        while (i < v.length() && Character.isDigit(v.charAt(i))) {
-                            i++;
-                        }
-                        if (i > 0) {
-                            floatValue = Integer.parseInt(v.substring(0, i));
-                            floatValue /= 3.6; // km/h -> m/s
-                            if (v.contains("mph")) {
-                                floatValue *= 1.6;
-                            }
-                        }
-                        */
-                    }
+                    rule->_parsedValue.asFloat = Utilities::parseSpeed(rule->_value, -1.0);
                 }
                 else if (rule->_tag.compare(QString("lanes"), Qt::CaseInsensitive) == 0 && !rule->_value.isEmpty())
                 {
                     rule->_type = EncodingRule::Lanes;
-                    rule->_parsedValue.asSignedInt = -1;
-                    /*TODO:
-                    int i = 0;
-                    while (i < v.length() && Character.isDigit(v.charAt(i))) {
-                        i++;
-                    }
-                    if (i > 0) {
-                        intValue = Integer.parseInt(v.substring(0, i));
-                    }
-                    */
+                    rule->_parsedValue.asSignedInt = Utilities::parseArbitraryInt(rule->_value, -1);
                 }
 
             }

@@ -1,70 +1,84 @@
-/*
- * RoutingConfiguration.h
- *
- *  Created on: Mar 4, 2013
- *      Author: victor
- */
+/**
+* @file
+*
+* @section LICENSE
+*
+* OsmAnd - Android navigation software based on OSM maps.
+* Copyright (C) 2010-2013  OsmAnd Authors listed in AUTHORS file
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
 
-#ifndef ROUTINGCONFIGURATION_H_
-#define ROUTINGCONFIGURATION_H_
-#include <qiodevice.h>
-#include <qstring.h>
-#include <qmap.h>
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#ifndef __ROUTING_CONFIGURATION_H_
+#define __ROUTING_CONFIGURATION_H_
+
+#include <cstdint>
+
+#include <QIODevice>
+#include <QString>
+#include <QMap>
+#include <QHash>
+#include <QXmlStreamReader>
 
 #include <OsmAndCore.h>
 #include <ObfRoutingSection.h>
-#include <RoutingVehicleConfig.h>
+#include <RoutingProfile.h>
 
 namespace OsmAnd {
 
-class OSMAND_CORE_API RoutingConfiguration {
-public:
-	struct RoutingConfigurationFile {
-		QMap<QString, std::shared_ptr<RoutingVehicleConfig> > routers;
-		QMap<QString, QString> attributes;
-		QString defaultRouterName;
-	};
+    class OSMAND_CORE_API RoutingConfiguration
+    {
+    private:
+        static const uint8_t _defaultRawXml[];
+        static const size_t _defaultRawXmlSize;
 
-	QMap<QString, QString> attributes;
+        static void parseRoutingProfile(QXmlStreamReader* xmlParser, std::shared_ptr<RoutingProfile>& outRoutingProfile);
+        static void parseRoutingParameter(QXmlStreamReader* xmlParser, std::shared_ptr<RoutingProfile>& outRoutingProfile);
+    protected:
+    public:
+        RoutingConfiguration();
+        virtual ~RoutingConfiguration();
 
-	// 1. parameters of routing and different tweaks
-	// Influence on A* : f(x) + heuristicCoefficient*g(X)
-	const float heuristicCoefficient;
+        // 1. parameters of routing and different tweaks
+        // Influence on A* : f(x) + heuristicCoefficient*g(X)
+        //public float heuristicCoefficient = 1;
 
-	// 1.1 tile load parameters (should not affect routing)
-	const int zoomToLoadTiles;
-	const int memoryLimitation;
+        // 1.1 tile load parameters (should not affect routing)
+        //public int ZOOM_TO_LOAD_TILES = 16;
+        //public int memoryLimitation;
 
-	// 1.2 Build A* graph in backward/forward direction (should not affect results)
-	// 0 - 2 ways, 1 - direct way, -1 - reverse way
-	const int planRoadDirection;
+        // 1.2 Build A* graph in backward/forward direction (can affect results)
+        // 0 - 2 ways, 1 - direct way, -1 - reverse way
+        //public int planRoadDirection = 0;
 
-	// 1.3 Router specific attributes, coefficients and restrictions
-	const RoutingVehicleConfig router;
-	const QString routerName;
+        // 1.3 Router specific coefficients and restrictions
+        QMap< QString, std::shared_ptr<RoutingProfile> > _routingProfiles;
+        std::shared_ptr<RoutingProfile> _defaultRoutingProfile;
+        QString _defaultRoutingProfileName;
 
-	// 1.4 Used to calculate route in movement (-720 when not set)
-	const double initialDirection;
+        // 1.4 Used to calculate route in movement
+        //public Double initialDirection;
 
-	// 1.5 Recalculate distance help
-	const double recalculateDistance;
+        // 1.5 Recalculate distance help
+        //public float recalculateDistance = 10000f;
 
-	static RoutingConfigurationFile parseFromInputStream(QIODevice* is);
+        QHash< QString, QString > _attributes;
 
-private:
-	QString getAttribute(RoutingVehicleConfig& router, QString& propertyName) ;
+        static bool parseConfiguration(QIODevice* data, RoutingConfiguration& outConfig);
+        static void loadDefault(RoutingConfiguration& outConfig);
+    };
 
-	int parseSilentInt(QString t, int v) ;
+} // namespace OsmAnd
 
-	float parseSilentFloat(QString t, float v) ;
-public :
-	RoutingConfiguration(std::shared_ptr<RoutingConfigurationFile> file, QString router, double direction,
-			int memoryLimitMB, QMap<QString, QString> params);
-
-
-	virtual ~RoutingConfiguration();
-
-};
-
-} /* namespace OsmAnd */
-#endif /* ROUTINGCONFIGURATION_H_ */
+#endif // __ROUTING_CONFIGURATION_H_

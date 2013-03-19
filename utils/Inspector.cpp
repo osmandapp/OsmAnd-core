@@ -57,19 +57,19 @@ void printMapDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
 std::string formatBounds(int left, int right, int top, int bottom);
 std::string formatGeoBounds(double l, double r, double t, double b);
 
-OSMAND_INSPECTOR_API void OSMAND_INSPECTOR_CALL OsmAnd::Inspector::dumpToStdOut( Configuration cfg )
+OSMAND_CORE_UTILS_API void OSMAND_CORE_UTILS_CALL OsmAnd::Inspector::dumpToStdOut( const Configuration& cfg )
 {
     dump(std::cout, cfg.fileName, cfg);
 }
 
-OSMAND_INSPECTOR_API QString OSMAND_INSPECTOR_CALL OsmAnd::Inspector::dumpToString( Configuration cfg )
+OSMAND_CORE_UTILS_API QString OSMAND_CORE_UTILS_CALL OsmAnd::Inspector::dumpToString( const Configuration& cfg )
 {
     std::ostringstream output;
     dump(output, cfg.fileName, cfg);
     return QString::fromStdString(output.str());
 }
 
-OSMAND_INSPECTOR_API bool OSMAND_INSPECTOR_CALL OsmAnd::Inspector::parseCommandLineArguments( QStringList cmdLineArgs, Configuration& cfg, QString& error )
+OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::Inspector::parseCommandLineArguments( const QStringList& cmdLineArgs, Configuration& cfg, QString& error )
 {
     if(cmdLineArgs.count() == 0)
         return false;

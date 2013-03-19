@@ -20,43 +20,39 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __INSPECTOR_H_
-#define __INSPECTOR_H_
+#ifndef __VOYAGER_H_
+#define __VOYAGER_H_
 
+#include <memory>
 #include <QString>
 #include <QStringList>
+#include <QDir>
+#include <QFile>
 #include "CoreUtils.h"
+#include "RoutingConfiguration.h"
 
 namespace OsmAnd
 {
-    namespace Inspector
+    namespace Voyager
     {
         struct OSMAND_CORE_UTILS_API Configuration
         {
             Configuration();
-            Configuration(const QString& fileName);
+            
+            bool verbose;
+            QList< std::shared_ptr<QFile> > obfs;
+            double startLatitude;
+            double startLongitude;
+            double endLatitude;
+            double endLongitude;
 
-            QString fileName;
-            bool verboseAddress;
-            bool verboseStreetGroups;
-            bool verboseStreets;
-            bool verboseBuildings;
-            bool verboseIntersections;
-            bool verboseMap;
-            bool verbosePoi;
-            bool verboseAmenities;
-            bool verboseTrasport;
-            double latTop;
-            double latBottom;
-            double lonLeft;
-            double lonRight;
-            int zoom;
+            RoutingConfiguration routingConfig;
         };
         OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL parseCommandLineArguments(const QStringList& cmdLineArgs, Configuration& cfg, QString& error);
         OSMAND_CORE_UTILS_API void OSMAND_CORE_UTILS_CALL dumpToStdOut(const Configuration& cfg);
         OSMAND_CORE_UTILS_API QString OSMAND_CORE_UTILS_CALL dumpToString(const Configuration& cfg);
-    } // namespace Inspector
+    } // namespace Voyager
 
 } // namespace OsmAnd 
 
-#endif // __INSPECTOR_H_
+#endif // __VOYAGER_H_
