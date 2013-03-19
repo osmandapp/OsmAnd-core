@@ -1,0 +1,46 @@
+/*
+ * OsmAndApplication.h
+ *
+ *  Created on: Mar 15, 2013
+ *      Author: victor
+ */
+
+#ifndef OSMANDAPPLICATION_H_
+#define OSMANDAPPLICATION_H_
+
+#include <memory>
+#include <qthreadpool.h>
+#include <qmap.h>
+#include <OsmAndCore.h>
+
+
+namespace OsmAnd {
+
+struct OSMAND_CORE_API OsmAndTask {
+
+	virtual int getPriority() {
+		return 1;
+	}
+
+	virtual QString& getDescription() = 0;
+
+	virtual ~OsmAndTask() {};
+};
+
+
+class OSMAND_CORE_API OsmAndApplication {
+private:
+	OsmAndApplication();
+public:
+	QMap<QString, QThreadPool> threadPools;
+
+	virtual ~OsmAndApplication();
+
+	static std::shared_ptr<OsmAndApplication> getAndInitializeApplication();
+
+	void submitTask(OsmAndTask* run, int threadsSize = 1);
+
+};
+
+} /* namespace OsmAnd */
+#endif /* OSMANDAPPLICATION_H_ */

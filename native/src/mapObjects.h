@@ -8,9 +8,9 @@
 #include "Common.h"
 #include "common2.h"
 
-typedef pair<std::string, std::string> tag_value;
-typedef pair<int, int> int_pair;
-typedef vector< pair<int, int> > coordinates;
+typedef std::pair<std::string, std::string> tag_value;
+typedef std::pair<int, int> int_pair;
+typedef vector< std::pair<int, int> > coordinates;
 
 
 class MapDataObject
