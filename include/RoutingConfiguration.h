@@ -29,11 +29,13 @@
 #include <QString>
 #include <QMap>
 #include <QHash>
+#include <QStack>
 #include <QXmlStreamReader>
 
 #include <OsmAndCore.h>
 #include <ObfRoutingSection.h>
 #include <RoutingProfile.h>
+#include <RoutingRulesetContext.h>
 
 namespace OsmAnd {
 
@@ -43,9 +45,13 @@ namespace OsmAnd {
         static const uint8_t _defaultRawXml[];
         static const size_t _defaultRawXmlSize;
 
-        static void parseRoutingProfile(QXmlStreamReader* xmlParser, std::shared_ptr<RoutingProfile>& outRoutingProfile);
-        static void parseRoutingParameter(QXmlStreamReader* xmlParser, std::shared_ptr<RoutingProfile>& outRoutingProfile);
+        static void parseRoutingProfile(QXmlStreamReader* xmlParser, std::shared_ptr<RoutingProfile> routingProfile);
+        static void parseRoutingParameter(QXmlStreamReader* xmlParser, std::shared_ptr<RoutingProfile> routingProfile);
+        static void parseRoutingRuleset(QXmlStreamReader* xmlParser, std::shared_ptr<RoutingProfile> routingProfile, RoutingProfile::RulesetType rulesetType, QStack< std::shared_ptr<struct RoutingRule> >& ruleset);
+        static void addRulesetSubclause(std::shared_ptr<struct RoutingRule> routingRule, std::shared_ptr<RoutingRulesetContext> context);
+        static bool isConditionTag(const QStringRef& tagName);
     protected:
+        QHash< QString, QString > _attributes;
     public:
         RoutingConfiguration();
         virtual ~RoutingConfiguration();
@@ -72,8 +78,6 @@ namespace OsmAnd {
 
         // 1.5 Recalculate distance help
         //public float recalculateDistance = 10000f;
-
-        QHash< QString, QString > _attributes;
 
         static bool parseConfiguration(QIODevice* data, RoutingConfiguration& outConfig);
         static void loadDefault(RoutingConfiguration& outConfig);

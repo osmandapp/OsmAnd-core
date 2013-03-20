@@ -26,7 +26,7 @@ void OsmAnd::RoutingProfile::addAttribute( const QString& key, const QString& va
 
     if(key == "restrictionsAware")
     {
-        //TODO:_restrictionsAware = parseSilentBoolean(v, _restrictionsAware);
+        _restrictionsAware = (value.compare("true", Qt::CaseInsensitive) == 0);
     }
     else if(key == "leftTurn")
     {
@@ -63,4 +63,37 @@ void OsmAnd::RoutingProfile::addAttribute( const QString& key, const QString& va
         if(ok)
             _maxDefaultSpeed = parsed / 3.6f;
     }
+}
+
+void OsmAnd::RoutingProfile::registerBooleanParameter( const QString& id, const QString& name, const QString& description )
+{
+    std::shared_ptr<Parameter> parameter(new Parameter());
+    parameter->_id = id;
+    parameter->_type = Parameter::Boolean;
+    parameter->_name = name;
+    parameter->_description = description;
+    _parameters.insert(id, parameter);
+}
+
+void OsmAnd::RoutingProfile::registerNumericParameter( const QString& id, const QString& name, const QString& description, QList<double>& values, QList<QString> valuesDescriptions )
+{
+    std::shared_ptr<Parameter> parameter(new Parameter());
+    parameter->_id = id;
+    parameter->_type = Parameter::Numeric;
+    parameter->_name = name;
+    parameter->_description = description;
+    parameter->_possibleValues = values;
+    parameter->_possibleValueDescriptions = valuesDescriptions;
+    _parameters.insert(id, parameter);
+}
+
+std::shared_ptr<OsmAnd::RoutingRulesetContext> OsmAnd::RoutingProfile::getRulesetContext( RulesetType type )
+{
+    auto context = _rulesetContexts[static_cast<int>(type)];
+    if(!context)
+    {
+        _rulesetContexts[static_cast<int>(type)].reset(new RoutingRulesetContext());
+        context = _rulesetContexts[static_cast<int>(type)];
+    }
+    return context;
 }

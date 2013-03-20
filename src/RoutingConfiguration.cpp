@@ -1,4 +1,5 @@
 #include "RoutingConfiguration.h"
+#include "RoutingConfiguration_private.h"
 
 #include "Common.h"
 
@@ -18,12 +19,10 @@ OsmAnd::RoutingConfiguration::~RoutingConfiguration()
 bool OsmAnd::RoutingConfiguration::parseConfiguration( QIODevice* data, RoutingConfiguration& outConfig )
 {
     QXmlStreamReader xmlReader(data);
-    
-    //std::shared_ptr<RoutingVehicleConfig> currentRouter;
-    //QStack<RoutingRule > rulesStack;
-    //RouteDataObjectAttribute currentAttribute;
 
     std::shared_ptr<RoutingProfile> routingProfile;
+    RoutingProfile::RulesetType rulesetType = RoutingProfile::RulesetType::Invalid;
+    QStack< std::shared_ptr<RoutingRule> > ruleset;
     while (!xmlReader.atEnd() && !xmlReader.hasError())
     {
         xmlReader.readNext();
@@ -62,13 +61,27 @@ bool OsmAnd::RoutingConfiguration::parseConfiguration( QIODevice* data, RoutingC
             }
             else if (tagName == "point" || tagName == "way")
             {
-                /*QString attribute = parser.attributes().
-                    value( "attribute").toString();
-                currentAttribute = valueOfRouteDataObjectAttribute(attribute);*/
+                assert(rulesetType == RoutingProfile::RulesetType::Invalid);
+                auto attributeName = xmlReader.attributes().value("attribute");
+                if (attributeName == "priority")
+                    rulesetType = RoutingProfile::RulesetType::RoadPriorities;
+                else if (attributeName == "speed")
+                    rulesetType = RoutingProfile::RulesetType::RoadSpeed;
+                else if (attributeName == "access")
+                    rulesetType = RoutingProfile::RulesetType::Access;
+                else if (attributeName == "obstacle_time")
+                    rulesetType = RoutingProfile::RulesetType::Obstacles;
+                else if (attributeName == "obstacle")
+                    rulesetType = RoutingProfile::RulesetType::RoutingObstacles;
+                else if (attributeName == "oneway")
+                    rulesetType = RoutingProfile::RulesetType::OneWay;
+
+                OSMAND_ASSERT(rulesetType != RoutingProfile::RulesetType::Invalid, "Route data object attribute is unknown " << qPrintable(attributeName.toString()));
             }
-            else
+            else if(rulesetType != RoutingProfile::RulesetType::Invalid)
             {
-                //parseRoutingRule(parser, currentRouter, currentAttribute, rulesStack);
+                if(isConditionTag(tagName))
+                    parseRoutingRuleset(&xmlReader, routingProfile, rulesetType, ruleset);
             }
         }
         else if (xmlReader.isEndElement())
@@ -77,10 +90,14 @@ bool OsmAnd::RoutingConfiguration::parseConfiguration( QIODevice* data, RoutingC
             {
                 routingProfile.reset();
             }
-            /*if (checkTag(pname))
+            else if (tagName == "point" || tagName == "way")
             {
-                rulesStack.pop();
-            }*/
+                rulesetType = RoutingProfile::RulesetType::Invalid;
+            }
+            else if(isConditionTag(tagName))
+            {
+                ruleset.pop();
+            }
         }
     }
     if(xmlReader.hasError())
@@ -88,10 +105,37 @@ bool OsmAnd::RoutingConfiguration::parseConfiguration( QIODevice* data, RoutingC
         std::cerr << qPrintable(xmlReader.errorString()) << "(" << xmlReader.lineNumber() << ", " << xmlReader.columnNumber() << " @ " << data->pos() << ")" << std::endl;
         return false;
     }
+
+    //TODO:
+    //    //RoutingConfiguration::RoutingConfiguration(shared_ptr<RoutingConfigurationFile> file, QString rt, double direction = -720,
+    //			int memoryLimitMB = 30, QMap<QString, QString>& params){
+    //		routerName = file->routers.contains(rt) ? rt : file->defaultRouterName;
+    //		router = file->routers[routerName];
+    //		if (!params.isEmpty()) {
+    //			this->router = this->router.build(params);
+    //		}
+    //		attributes["routerName"] = router;
+    //		QString t = this->getAttribute(this->router, rt);
+    //		attributes.putAll(file->attributes);
+    //		recalculateDistance = parseSilentFloat(getAttribute(router, "recalculateDistanceHelp"),
+    //				10000);
+    //		heuristicCoefficient = parseSilentFloat(getAttribute(router, "heuristicCoefficient"),
+    //				1);
+    //		zoomToLoadTiles = parseSilentInt(getAttribute(router, "zoomToLoadTiles"), 16);
+    //		int desirable = parseSilentInt(getAttribute(router, "memoryLimitInMB"), 0);
+    //		if (desirable != 0) {
+    //			memoryLimitation = desirable * (1 << 20);
+    //		} else {
+    //			memoryLimitation = memoryLimitMB * (1 << 20);
+    //		}
+    //		planRoadDirection = parseSilentInt(getAttribute(router, "planRoadDirection"), 0);
+    //	}
+    //}*/
+
     return true;
 }
 
-void OsmAnd::RoutingConfiguration::parseRoutingParameter( QXmlStreamReader* xmlParser, std::shared_ptr<RoutingProfile>& outRoutingProfile )
+void OsmAnd::RoutingConfiguration::parseRoutingParameter( QXmlStreamReader* xmlParser, std::shared_ptr<RoutingProfile> routingProfile )
 {
     const auto& attribs = xmlParser->attributes();
     auto descriptionAttrib = attribs.value("description");
@@ -99,15 +143,15 @@ void OsmAnd::RoutingConfiguration::parseRoutingParameter( QXmlStreamReader* xmlP
     auto idAttrib = attribs.value("id");
     auto typeAttrib = attribs.value("type");
 
-    if(typeAttrib.compare("boolean", Qt::CaseInsensitive) == 0)
+    if(typeAttrib == "boolean")
     {
-        //TODO:outRoutingProfile->registerBooleanParameter(idAttrib.toString(), nameAttrib.toString(), descriptionAttrib.toString());
+        routingProfile->registerBooleanParameter(idAttrib.toString(), nameAttrib.toString(), descriptionAttrib.toString());
     }
     else if(typeAttrib == "numeric")
     {
         auto combinedValues = attribs.value("values");
         auto valueDescriptions = attribs.value("valueDescriptions");
-        const auto& stringifiedValues = combinedValues.string()->split(',');
+        const auto& stringifiedValues = combinedValues.toString().split(',');
         QList<double> values;
         for(auto itValue = stringifiedValues.begin(); itValue != stringifiedValues.end(); ++itValue)
         {
@@ -118,8 +162,7 @@ void OsmAnd::RoutingConfiguration::parseRoutingParameter( QXmlStreamReader* xmlP
             values.push_back(value);
         }
             
-        /*TODO:currentRouter->registerNumericParameter(id, name, description, vls ,
-            valueDescriptions.split(","));*/
+        routingProfile->registerNumericParameter(idAttrib.toString(), nameAttrib.toString(), descriptionAttrib.toString(), values, valueDescriptions.string()->split(','));
     }
     else
     {
@@ -136,10 +179,10 @@ void OsmAnd::RoutingConfiguration::loadDefault( RoutingConfiguration& outConfig 
     defaultConfig.close();
 }
 
-void OsmAnd::RoutingConfiguration::parseRoutingProfile( QXmlStreamReader* xmlParser, std::shared_ptr<RoutingProfile>& outRoutingProfile )
+void OsmAnd::RoutingConfiguration::parseRoutingProfile( QXmlStreamReader* xmlParser, std::shared_ptr<RoutingProfile> routingProfile )
 {
     const auto& attribs = xmlParser->attributes();
-    outRoutingProfile->_name = attribs.value("name").toString();
+    routingProfile->_name = attribs.value("name").toString();
     for (auto itAttrib = attribs.begin(); itAttrib != attribs.end(); ++itAttrib)
     {
         const auto& attrib = *itAttrib;
@@ -147,11 +190,10 @@ void OsmAnd::RoutingConfiguration::parseRoutingProfile( QXmlStreamReader* xmlPar
         auto value = attrib.value();
         if(name.isNull())
             continue;
-        outRoutingProfile->addAttribute(name.toString(), value.isNull() ? QString() : value.toString());
+        routingProfile->addAttribute(name.toString(), value.isNull() ? QString() : value.toString());
     }
 
-    //TODO: Override? config.defaultRouterName = parser.attributes().value("name").toString();
-    /*Useless?
+    /*TODO: Not yet used
     RoutingProfile::Preset baseProfile;
     auto baseProfileAttrib = xmlParser->attributes().value("baseProfile");
     if(baseProfileAttrib == "pedestrian")
@@ -168,127 +210,64 @@ void OsmAnd::RoutingConfiguration::parseRoutingProfile( QXmlStreamReader* xmlPar
     */
 }
 
+void OsmAnd::RoutingConfiguration::parseRoutingRuleset( QXmlStreamReader* xmlParser, std::shared_ptr<RoutingProfile> routingProfile, RoutingProfile::RulesetType rulesetType, QStack< std::shared_ptr<struct RoutingRule> >& ruleset )
+{
+    const auto& attribs = xmlParser->attributes();
 
+    std::shared_ptr<RoutingRule> routingRule(new RoutingRule());
+    routingRule->_tagName = xmlParser->name().toString();
+    routingRule->_t = attribs.value("t").toString();
+    routingRule->_v = attribs.value("v").toString();
+    routingRule->_param = attribs.value("param").toString();
+    routingRule->_value1 = attribs.value("value1").toString();
+    routingRule->_value2 = attribs.value("value2").toString();
+    routingRule->_type = attribs.value("type").toString();
 
-//#include "RoutingVehicleConfig.h"
-//#include <qxmlstream.h>
-//#include <qstack.h>
-//#include <qstringlist.h>
-//
-//
-//
-//namespace OsmAnd {
+    auto context = routingProfile->getRulesetContext(rulesetType);
+    if(routingRule->_tagName == "select")
+    {
+        context->registerSelectExpression(attribs.value("value").toString(), attribs.value("type").toString());
+        addRulesetSubclause(routingRule, context);
+
+        for(auto itItem = ruleset.begin(); itItem != ruleset.end(); ++itItem)
+            addRulesetSubclause(*itItem, context);
+    }
+    else if (!ruleset.isEmpty() && ruleset.top()->_tagName == "select")
+    {
+        addRulesetSubclause(routingRule, context);
+    }
+
+    ruleset.push(routingRule);
+}
+
+void OsmAnd::RoutingConfiguration::addRulesetSubclause( std::shared_ptr<struct RoutingRule> routingRule, std::shared_ptr<RoutingRulesetContext> context )
+{
+    auto lastExpression = context->_expressions.last();
+
+    if (!routingRule->_param.isEmpty())
+        lastExpression->registerAndParamCondition(routingRule->_param, (routingRule->_tagName == "ifnot"));
+
+    if (!routingRule->_t.isEmpty())
+        lastExpression->registerAndTagValue(routingRule->_t, routingRule->_v, (routingRule->_tagName == "ifnot"));
+
+    if (routingRule->_tagName == "ge")
+        lastExpression->registerGreaterOrEqualCondition(routingRule->_value1, routingRule->_value2, routingRule->_type);
+    else if (routingRule->_tagName == "g")
+        lastExpression->registerGreaterCondition(routingRule->_value1, routingRule->_value2, routingRule->_type);
+    else if (routingRule->_tagName == "le")
+        lastExpression->registerLessOrEqualCondition(routingRule->_value1, routingRule->_value2, routingRule->_type);
+    else if (routingRule->_tagName == "l")
+        lastExpression->registerLessCondition(routingRule->_value1, routingRule->_value2, routingRule->_type);
+}
+
+bool OsmAnd::RoutingConfiguration::isConditionTag( const QStringRef& tagName )
+{
+    return tagName == "select" || tagName == "if" || tagName == "ifnot" || tagName == "ge" || tagName == "le" || tagName == "g" || tagName == "l";
+}
+
 //QString RoutingConfiguration::getAttribute(RoutingVehicleConfig& router, QString& propertyName) {
 //	if (router.containsAttribute(propertyName)) {
 //		return router.getAttribute(propertyName);
 //	}
 //	return attributes[propertyName];
 //}
-//
-///*
-//RoutingConfiguration::RoutingConfiguration(shared_ptr<RoutingConfigurationFile> file, QString rt, double direction = -720,
-//			int memoryLimitMB = 30, QMap<QString, QString>& params){
-//		routerName = file->routers.contains(rt) ? rt : file->defaultRouterName;
-//		router = file->routers[routerName];
-//		if (!params.isEmpty()) {
-//			this->router = this->router.build(params);
-//		}
-//		attributes["routerName"] = router;
-//		QString t = this->getAttribute(this->router, rt);
-//		attributes.putAll(file->attributes);
-//		recalculateDistance = parseSilentFloat(getAttribute(router, "recalculateDistanceHelp"),
-//				10000);
-//		heuristicCoefficient = parseSilentFloat(getAttribute(router, "heuristicCoefficient"),
-//				1);
-//		zoomToLoadTiles = parseSilentInt(getAttribute(router, "zoomToLoadTiles"), 16);
-//		int desirable = parseSilentInt(getAttribute(router, "memoryLimitInMB"), 0);
-//		if (desirable != 0) {
-//			memoryLimitation = desirable * (1 << 20);
-//		} else {
-//			memoryLimitation = memoryLimitMB * (1 << 20);
-//		}
-//		planRoadDirection = parseSilentInt(getAttribute(router, "planRoadDirection"), 0);
-//	}
-//}*/
-//
-//
-//RoutingConfiguration::~RoutingConfiguration() {
-//}
-//
-//struct RoutingRule {
-//	QString tagName;
-//	QString t;
-//	QString v;
-//	QString param;
-//	QString value1;
-//	QString value2;
-//	QString type;
-//};
-//
-//bool checkTag(QString pname) {
-//	return "select" == pname || "if" == pname ||
-//			"ifnot"  == pname || "ge" == pname || "le" == pname;
-//}
-//
-//void addSubclause(const RoutingRule& rr, std::shared_ptr<RouteAttributeContext> ctx) {
-//	bool nt = "ifnot" == rr.tagName;
-//	std::shared_ptr<RouteAttributeEvalRule> ptr = ctx->getLastRule();
-//	if (rr.param != "") {
-//		ptr->registerAndParamCondition(rr.param, nt);
-//	}
-//	if (rr.t != "") {
-//		ptr->registerAndTagValueCondition(rr.t, rr.v, nt);
-//	}
-//	if (rr.tagName == "ge") {
-//		ptr->registerGreatCondition(rr.value1, rr.value2, rr.type);
-//	} else if (rr.tagName == "le") {
-//		ptr->registerLessCondition(rr.value1, rr.value2, rr.type);
-//	}
-//}
-//
-//RoutingVehicleConfig::GeneralRouterProfile parseProfile(QString a){
-//	if(a == "pedestrian") {
-//		return RoutingVehicleConfig::GeneralRouterProfile::PEDESTRIAN;
-//	} else if(a == "bicycle") {
-//		return RoutingVehicleConfig::GeneralRouterProfile::BICYCLE;
-//	}
-//	return RoutingVehicleConfig::GeneralRouterProfile::CAR;
-//}
-//
-//void parseRoutingRule(QXmlStreamReader& parser, std::shared_ptr<RoutingVehicleConfig> currentRouter, RouteDataObjectAttribute attr,
-//		QStack<RoutingRule >& stack) {
-//	QString pname = parser.name().toString();
-//	if (checkTag(pname)) {
-//		ASSERT(attr != RouteDataObjectAttribute::UKNOWN, "Select tag filter outside road attribute < " << \
-//				pname.toStdString() << " > : "<< parser.lineNumber());
-//		RoutingRule rr;
-//		rr.tagName = pname;
-//		rr.t = parser.attributes().value("t").toString();
-//		rr.v = parser.attributes().value("v").toString();
-//		rr.param = parser.attributes().value("param").toString();
-//		rr.value1 = parser.attributes().value("value1").toString();
-//		rr.value2 = parser.attributes().value("value2").toString();
-//		rr.type = parser.attributes().value("type").toString();
-//
-//		std::shared_ptr<RouteAttributeContext> ctx = currentRouter->getObjContext(attr);
-//		if("select" == rr.tagName) {
-//			QString val = parser.attributes().
-//					value( "value").toString();
-//			QString type = parser.attributes().
-//					value( "type").toString();
-//			ctx->registerNewRule(val, type);
-//			addSubclause(rr, ctx);
-//			for (int i = 0; i < stack.size(); i++) {
-//				addSubclause(stack.at(i), ctx);
-//			}
-//		} else if (stack.size() > 0 && stack.top().tagName == "select") {
-//			addSubclause(rr, ctx);
-//		}
-//		stack.push(rr);
-//	}
-//}
-//
-//
-//
-//
-//} /* namespace OsmAnd */
