@@ -672,10 +672,10 @@ public class BinaryMapPoiReaderAdapter {
 				int x = dx + (px << (zoom - pzoom));
 				int y = dy + (py << (zoom - pzoom));
 				if(checkBox){
-					int xL = x << (31 - zoom);
-					int xR = (x + 1) << (31 - zoom);
-					int yT = y << (31 - zoom);
-					int yB = (y + 1) << (31 - zoom);
+					int xL = x << (31 - zoom);					
+				        int xR = ((x + 1) << (31 - zoom)) - 1;
+                                        int yT = y << (31 - zoom);
+                                        int yB = ((y + 1) << (31 - zoom)) - 1;
 					// check intersection
 					if(left31 > xR || xL > right31 || bottom31 < yT || yB < top31){
 						codedIS.skipRawBytes(codedIS.getBytesUntilLimit());
