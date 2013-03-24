@@ -78,21 +78,21 @@ public class AlarmInfo {
 		return null;
 	}
 	
-	public int updateDistanceAndGetPriority(float time, float distance){
+	public int updateDistanceAndGetPriority(float time, float distance) {
 		this.distance = distance;
 		this.time = time;
-		if(distance > 1500) {
+		if (distance > 1500) {
 			return 0;
 		}
 		// 1 level of priorities
-		if((time > 0 && time < 12) || distance < 150 || type == SPEED_LIMIT) {
+		if (time < 8 || distance < 100 || type == SPEED_LIMIT) {
 			return type;
 		}
-		if(type == SPEED_CAMERA && (time < 20 || distance < 250)) {
+		if (type == SPEED_CAMERA && (time < 15 || distance < 150)) {
 			return type;
 		}
 		// 2nd level
-		if((time > 0 && time < 18) || distance < 300 ) {
+		if (time < 10 || distance < 150) {
 			return type + MAXIMUM;
 		}
 		return 0;
