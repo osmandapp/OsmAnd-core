@@ -758,7 +758,7 @@ public class RouteCalculationResult {
 				}
 				float time = speed > 0 ? d / speed : 0;
 				int vl = inf.updateDistanceAndGetPriority(time, d);
-				if(vl < value && (!showCameras || inf.getType() == AlarmInfo.SPEED_CAMERA)){
+				if(vl < value && (showCameras || inf.getType() != AlarmInfo.SPEED_CAMERA)){
 					mostImportant = inf;
 					value = vl;
 				}
