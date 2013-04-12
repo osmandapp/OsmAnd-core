@@ -576,9 +576,10 @@ public class OsmandSettings {
 		
 	
 	// this value string is synchronized with settings_pref.xml preference name
-	// make cloudmade by default why osmand is not stable enough
+	
 	public final OsmandPreference<RouteService> ROUTER_SERVICE = 
-		new EnumIntPreference<RouteService>("router_service", RouteService.OSMAND, RouteService.values()).makeProfile();
+	 new EnumIntPreference<RouteService>("router_service", RouteService.OSMAND, 
+		        new RouteService[] {RouteService.OSMAND, RouteService.ORS, RouteService.YOURS}).makeProfile();
 	
 	public final CommonPreference<Boolean> SNAP_TO_ROAD = new BooleanPreference("snap_to_road", false).makeProfile().cache();
 	{
