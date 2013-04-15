@@ -41,9 +41,12 @@ public class IndexItemCategory implements Comparable<IndexItemCategory> {
 					(lc.contains("united states") && lc.startsWith("north-america")) ) {
 				nameId = R.string.index_name_us;
 				order = 31;
+			} else if (lc.contains("_wiki_")) {
+				nameId = R.string.index_name_wiki;
+				order = 10;
 			} else if (lc.contains("openmaps")) {
 				nameId = R.string.index_name_openmaps;
-				order = 10;
+				order = 100;
 			} else if (lc.contains("northamerica") || lc.contains("north-america")) {
 				nameId = R.string.index_name_north_america;
 				order = 30;
@@ -74,10 +77,7 @@ public class IndexItemCategory implements Comparable<IndexItemCategory> {
 				order = 50;
 			} else if (lc.contains("oceania") || lc.contains("australia")) {
 				nameId = R.string.index_name_oceania;
-				order = 70;
-			} else if (lc.contains("_wiki_")) {
-				nameId = R.string.index_name_wiki;
-				order = 10;
+				order = 70;			
 			}
 
 			String name = ctx.getString(nameId);
