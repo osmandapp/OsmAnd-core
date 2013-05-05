@@ -47,7 +47,7 @@
 
 #if !defined(TRACE_ROUTING)
 #   if defined(DEBUG) || defined(_DEBUG)
-#       define TRACE_ROUTING 0
+#       define TRACE_ROUTING 1
 #   else
 #       define TRACE_ROUTING 0
 #   endif

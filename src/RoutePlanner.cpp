@@ -1608,7 +1608,7 @@ void OsmAnd::RoutePlanner::processIntersections(
                 current->_distanceFromStart = distFromStart;
                 current->_distanceToEnd = distanceToEnd;
                 if(sameRoadFutureDirection)
-                    current->_assignedDirection = segment->pointIndex < current->pointIndex ? 1 : - 1;
+                    current->_allowedDirection = segment->pointIndex < current->pointIndex ? 1 : - 1;
 
 #if TRACE_ROUTING
                 current->dump("\t>> ");
