@@ -681,7 +681,7 @@ bool OsmAnd::RoutePlanner::calculateRoute(
     auto parentSegmentEnd = pFinalSegment->_reverseWaySearch ? pFinalSegment->opposite->parentEndPointIndex : pFinalSegment->opposite->pointIndex;
     while (segment)
     {
-        LogPrintf(LogSeverityLevel::Debug, "%llu(%d, %d),\n", segment->road->id, parentSegmentStart, segment->pointIndex);
+        LogPrintf(LogSeverityLevel::Debug, "%llu(%d, %d),\n", segment->road->id, segment->pointIndex, parentSegmentEnd);
         std::shared_ptr<RouteSegment> routeSegment(new RouteSegment(segment->road, segment->pointIndex, parentSegmentEnd));
         parentSegmentEnd = segment->parentEndPointIndex;
         segment = segment->parent;
@@ -1018,7 +1018,6 @@ void OsmAnd::RoutePlanner::addRouteSegmentToRoute( QList< std::shared_ptr<RouteS
                 return;
         }
     }
-    LogPrintf(LogSeverityLevel::Debug, "-> %llu(%d, %d),\n", segment->road->id, segment->startPointIndex, segment->endPointIndex);
     route.push_back(segment);
 }
 
@@ -1156,7 +1155,7 @@ void OsmAnd::RoutePlanner::calculateRouteSegment(
     bool forwardDirection )
 {
     const auto initDirectionAllowed = checkIfInitialMovementAllowedOnSegment(context, reverseWaySearch, visitedSegments, segment, forwardDirection, segment->road);
-    auto directionAllowed = initDirectionAllowed; 
+    auto directionAllowed = initDirectionAllowed;
     
     // Go through all point of the way and find ways to continue
     //NOTE: ! Actually there is small bug when there is restriction to move forward on the way (it doesn't take into account)
@@ -1610,13 +1609,13 @@ void OsmAnd::RoutePlanner::processIntersections(
                 if(sameRoadFutureDirection)
                     current->_allowedDirection = segment->pointIndex < current->pointIndex ? 1 : - 1;
 
-#if TRACE_ROUTING
-                current->dump("\t>> ");
-#endif
-
                 // put additional information to recover whole route after
                 current->_parent = segment;
                 current->_parentEndPointIndex = segmentEnd;
+
+#if TRACE_ROUTING
+                current->dump("\t>> ");
+#endif
 
                 graphSegments.push(current);
             }

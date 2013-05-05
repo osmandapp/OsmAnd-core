@@ -192,7 +192,19 @@ OsmAnd::RoutePlannerContext::RouteCalculationSegment::~RouteCalculationSegment()
 
 void OsmAnd::RoutePlannerContext::RouteCalculationSegment::dump(const QString& prefix /*= QString()*/) const
 {
-    LogPrintf(LogSeverityLevel::Debug, "%sroad(%llu), point(%d), w(%f), ds(%f), es(%f)\n", prefix.toStdString().c_str(), road->id, pointIndex, _distanceFromStart + _distanceToEnd, _distanceFromStart, _distanceToEnd);
+    if(parent)
+    {
+        LogPrintf(LogSeverityLevel::Debug, "%sroad(%llu), point(%d), w(%f), ds(%f), es(%f); parent = road(%llu), point(%d);\n",
+            prefix.toStdString().c_str(),
+            road->id, pointIndex, _distanceFromStart + _distanceToEnd, _distanceFromStart, _distanceToEnd,
+            parent->road->id, parent->pointIndex);
+    }
+    else
+    {
+        LogPrintf(LogSeverityLevel::Debug, "%sroad(%llu), point(%d), w(%f), ds(%f), es(%f)\n",
+            prefix.toStdString().c_str(),
+            road->id, pointIndex, _distanceFromStart + _distanceToEnd, _distanceFromStart, _distanceToEnd);
+    }
 }
 
 OsmAnd::RoutePlannerContext::RouteCalculationFinalSegment::RouteCalculationFinalSegment( std::shared_ptr<Model::Road> road, uint32_t pointIndex )
