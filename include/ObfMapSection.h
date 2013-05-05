@@ -24,15 +24,20 @@
 #define __OBF_MAP_SECTION_H_
 
 #include <memory>
+#include <tuple>
+
+#include <google/protobuf/io/coded_stream.h>
+
 #include <QList>
 #include <QHash>
+#include <QMap>
 #include <QSet>
-#include <tuple>
-#include <google/protobuf/io/coded_stream.h>
+
 #include <OsmAndCore.h>
 #include <ObfSection.h>
-#include <IQueryFilter.h>
+#include <QueryFilter.h>
 #include <IQueryController.h>
+#include <Area.h>
 
 namespace OsmAnd {
 
@@ -52,7 +57,7 @@ namespace OsmAnd {
             bool _isArea;
             QList<uint32_t> _types;
             QList<uint32_t> _extraTypes;
-            QHash<uint32_t, uint32_t> _names;
+            QMap<uint32_t, uint32_t> _names;
         };
 
         struct LevelTree
@@ -61,10 +66,7 @@ namespace OsmAnd {
             int32_t _length;
             int32_t _mapDataBlock;
             bool _isOcean;
-            uint32_t _left31;
-            uint32_t _right31;
-            uint32_t _top31;
-            uint32_t _bottom31;
+            AreaI _area31;
         };
 
         struct MapLevel
@@ -73,10 +75,7 @@ namespace OsmAnd {
             int32_t _length;
             uint32_t _minZoom;
             uint32_t _maxZoom;
-            uint32_t _left31;
-            uint32_t _right31;
-            uint32_t _top31;
-            uint32_t _bottom31;
+            AreaI _area31;
             QList< std::shared_ptr<LevelTree> > _trees;
         };
 
@@ -84,7 +83,7 @@ namespace OsmAnd {
 
         QHash< QString, QHash<QString, uint32_t> > _encodingRules;
         typedef std::tuple<QString, QString, uint32_t> DecodingRule;
-        QHash< uint32_t, DecodingRule > _decodingRules;
+        QMap< uint32_t, DecodingRule > _decodingRules;
         uint32_t _nameEncodingType;
         uint32_t _refEncodingType;
         uint32_t _coastlineEncodingType;
@@ -99,14 +98,14 @@ namespace OsmAnd {
         void loadRules(ObfReader* reader);
         static void loadMapObjects(ObfReader* reader, ObfMapSection* section,
             QList< std::shared_ptr<OsmAnd::ObfMapSection::MapObject> >* resultOut = nullptr,
-            IQueryFilter* filter = nullptr,
+            QueryFilter* filter = nullptr,
             IQueryController* controller = nullptr);
     protected:
         static void read(ObfReader* reader, ObfMapSection* section);
         static void readMapLevel(ObfReader* reader, ObfMapSection* section, MapLevel* level);
         static void readEncodingRules(ObfReader* reader,
             QHash< QString, QHash<QString, uint32_t> >& encodingRules,
-            QHash< uint32_t, DecodingRule >& decodingRules,
+            QMap< uint32_t, DecodingRule >& decodingRules,
             uint32_t& nameEncodingType,
             uint32_t& coastlineEncodingType,
             uint32_t& landEncodingType,
@@ -118,7 +117,7 @@ namespace OsmAnd {
             QSet<uint32_t>& positiveLayers);
         static void readEncodingRule(ObfReader* reader, uint32_t defaultId,
             QHash< QString, QHash<QString, uint32_t> >& encodingRules,
-            QHash< uint32_t, DecodingRule >& decodingRules,
+            QMap< uint32_t, DecodingRule >& decodingRules,
             uint32_t& nameEncodingType,
             uint32_t& coastlineEncodingType,
             uint32_t& landEncodingType,
@@ -129,9 +128,9 @@ namespace OsmAnd {
             QSet<uint32_t>& positiveLayers);
         static void readLevelTrees(ObfReader* reader, ObfMapSection* section, MapLevel* level, QList< std::shared_ptr<LevelTree> >& trees);
         static void readLevelTree(ObfReader* reader, ObfMapSection* section, MapLevel* level, LevelTree* tree);
-        static void loadMapObjects(ObfReader* reader, ObfMapSection* section, MapLevel* level, LevelTree* tree, QList< std::shared_ptr<LevelTree> >& subtrees, IQueryFilter* filter, IQueryController* controller);
-        static void readMapObjects(ObfReader* reader, ObfMapSection* section, LevelTree* tree, QList< std::shared_ptr<OsmAnd::ObfMapSection::MapObject> >* resultOut, IQueryFilter* filter, IQueryController* controller);
-        static void readMapObject(ObfReader* reader, ObfMapSection* section, LevelTree* tree, std::shared_ptr<OsmAnd::ObfMapSection::MapObject>& mapObjectOut, IQueryFilter* filter);
+        static void loadMapObjects(ObfReader* reader, ObfMapSection* section, MapLevel* level, LevelTree* tree, QList< std::shared_ptr<LevelTree> >& subtrees, QueryFilter* filter, IQueryController* controller);
+        static void readMapObjects(ObfReader* reader, ObfMapSection* section, LevelTree* tree, QList< std::shared_ptr<OsmAnd::ObfMapSection::MapObject> >* resultOut, QueryFilter* filter, IQueryController* controller);
+        static void readMapObject(ObfReader* reader, ObfMapSection* section, LevelTree* tree, std::shared_ptr<OsmAnd::ObfMapSection::MapObject>& mapObjectOut, QueryFilter* filter);
         enum {
             ShiftCoordinates = 5,
             MaskToRead = ~((1 << ShiftCoordinates) - 1),

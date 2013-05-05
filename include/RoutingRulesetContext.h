@@ -23,29 +23,42 @@
 #ifndef __ROUTING_RULESET_CONTEXT_H_
 #define __ROUTING_RULESET_CONTEXT_H_
 
-#include <cstdint>
+#include <stdint.h>
 #include <memory>
 
 #include <QString>
 #include <QHash>
+#include <QBitArray>
 
 #include <OsmAndCore.h>
-#include <RoutingRuleExpression.h>
+#include <RoutingRuleset.h>
+#include <Road.h>
 
 namespace OsmAnd {
+
+    class RoutingProfileContext;
 
     class OSMAND_CORE_API RoutingRulesetContext
     {
     private:
-        QList< std::shared_ptr<RoutingRuleExpression> > _expressions;
         QHash<QString, QString> _contextValues;
     protected:
-        void registerSelectExpression(const QString& value, const QString& type);
+        bool evaluate(Model::Road* road, RoutingRuleExpression::ResultType type, void* result);
+        bool evaluate(const QBitArray& types, RoutingRuleExpression::ResultType type, void* result);
+        QBitArray encode(ObfRoutingSection* section, const QVector<uint32_t>& roadTypes);
     public:
-        RoutingRulesetContext();
+        RoutingRulesetContext(RoutingProfileContext* owner, std::shared_ptr<RoutingRuleset> ruleset, QHash<QString, QString>* contextValues);
         virtual ~RoutingRulesetContext();
 
-    friend class RoutingConfiguration;
+        RoutingProfileContext* const owner;
+        const std::shared_ptr<RoutingRuleset> ruleset;
+        const QHash<QString, QString>& contextValues;
+
+        int evaluateAsInteger(Model::Road* road, int defaultValue);
+        float evaluateAsFloat(Model::Road* road, float defaultValue);
+
+        int evaluateAsInteger(ObfRoutingSection* section, const QVector<uint32_t>& roadTypes, int defaultValue);
+        float evaluateAsFloat(ObfRoutingSection* section, const QVector<uint32_t>& roadTypes, float defaultValue);
     };
 
 } // namespace OsmAnd

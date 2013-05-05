@@ -35,11 +35,7 @@ void OsmAnd::ObfTransportSection::read( ObfReader* reader, ObfTransportSection* 
             ObfReader::skipUnknownField(cis, tag);
             break;
         case OBF::OsmAndTransportIndex::kNameFieldNumber:
-            {
-                std::string name;
-                gpb::internal::WireFormatLite::ReadString(cis, &name);
-                section->_name = QString::fromStdString(name);
-            }
+            ObfReader::readQString(cis, section->_name);
             break;
         case OBF::OsmAndTransportIndex::kStopsFieldNumber:
             {

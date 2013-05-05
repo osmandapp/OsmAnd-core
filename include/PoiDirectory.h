@@ -20,31 +20,39 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __I_QUERY_FILTER_H_
-#define __I_QUERY_FILTER_H_
+#ifndef __POI_DIRECTORY_H_
+#define __POI_DIRECTORY_H_
+
+#include <limits>
+#include <memory>
+
+#include <QString>
+#include <QMultiHash>
+#include <QList>
 
 #include <OsmAndCore.h>
-#include <stdint.h>
+#include <PoiDirectoryContext.h>
 
 namespace OsmAnd {
 
-    class OSMAND_CORE_API IQueryFilter
+    class OSMAND_CORE_API PoiDirectory
     {
     private:
     protected:
+        PoiDirectory();
     public:
-        IQueryFilter();
-        virtual ~IQueryFilter();
+        virtual ~PoiDirectory();
 
-        //! Filter by zoom, value of 0xFFFFFFFF indicates no filtering by zoom
-        uint32_t _zoom;
-
-        uint32_t _bboxTop31;
-        uint32_t _bboxLeft31;
-        uint32_t _bboxBottom31;
-        uint32_t _bboxRight31;
+        static const QMultiHash< QString, QString >& getPoiCategories(PoiDirectoryContext* context);
+        static void queryPoiAmenities(
+            PoiDirectoryContext* context,
+            QMultiHash< QString, QString >* desiredCategories = nullptr,
+            QList< std::shared_ptr<OsmAnd::Model::Amenity> >* amenitiesOut = nullptr,
+            QueryFilter* filter = nullptr, uint32_t zoomToSkipFilter = 3,
+            std::function<bool (std::shared_ptr<OsmAnd::Model::Amenity>)> visitor = nullptr,
+            IQueryController* controller = nullptr);
     };
 
 } // namespace OsmAnd
 
-#endif // __I_QUERY_FILTER_H_
+#endif // __POI_DIRECTORY_H_

@@ -25,15 +25,19 @@
 
 #include <functional>
 #include <memory>
+
 #include <QList>
 #include <QHash>
 #include <QSet>
+
 #include <google/protobuf/io/coded_stream.h>
+
 #include <OsmAndCore.h>
 #include <ObfSection.h>
 #include <Amenity.h>
-#include <IQueryFilter.h>
+#include <QueryFilter.h>
 #include <IQueryController.h>
+#include <Area.h>
 
 namespace OsmAnd {
 
@@ -47,22 +51,15 @@ namespace OsmAnd {
         ObfPoiSection(class ObfReader* owner);
         virtual ~ObfPoiSection();
 
-        uint32_t _left31;
-        uint32_t _right31;
-        uint32_t _top31;
-        uint32_t _bottom31;
-
-        double _leftLongitude;
-        double _rightLongitude;
-        double _topLatitude;
-        double _bottomLatitude;
-
+        AreaI _area31;
+        AreaD _areaGeo;
+        
         static void loadCategories(OsmAnd::ObfReader* reader, OsmAnd::ObfPoiSection* section, QList< std::shared_ptr<Model::Amenity::Category> >& categories);
         static void loadAmenities(OsmAnd::ObfReader* reader, OsmAnd::ObfPoiSection* section, 
             QSet<uint32_t>* desiredCategories = nullptr,
             QList< std::shared_ptr<OsmAnd::Model::Amenity> >* amenitiesOut = nullptr,
-            IQueryFilter* filter = nullptr, uint32_t zoomToSkipFilter = 3,
-            std::function<bool (std::shared_ptr<OsmAnd::Model::Amenity>)>* visitor = nullptr,
+            QueryFilter* filter = nullptr, uint32_t zoomToSkipFilter = 3,
+            std::function<bool (std::shared_ptr<OsmAnd::Model::Amenity>)> visitor = nullptr,
             IQueryController* controller = nullptr);
     protected:
         static void read(ObfReader* reader, ObfPoiSection* section);
@@ -76,8 +73,8 @@ namespace OsmAnd {
         static void readAmenities(ObfReader* reader, ObfPoiSection* section,
             QSet<uint32_t>* desiredCategories,
             QList< std::shared_ptr<OsmAnd::Model::Amenity> >* amenitiesOut,
-            IQueryFilter* filter, uint32_t zoomToSkipFilter,
-            std::function<bool (std::shared_ptr<OsmAnd::Model::Amenity>)>* visitor,
+            QueryFilter* filter, uint32_t zoomToSkipFilter,
+            std::function<bool (std::shared_ptr<OsmAnd::Model::Amenity>)> visitor,
             IQueryController* controller);
         struct Tile
         {
@@ -91,7 +88,7 @@ namespace OsmAnd {
             QList< std::shared_ptr<Tile> >& tiles,
             Tile* parent,
             QSet<uint32_t>* desiredCategories,
-            IQueryFilter* filter,
+            QueryFilter* filter,
             uint32_t zoomToSkipFilter,
             IQueryController* controller,
             QSet< uint64_t >* tilesToSkip);
@@ -100,13 +97,13 @@ namespace OsmAnd {
         static void readAmenitiesFromTile(ObfReader* reader, ObfPoiSection* section, Tile* tile,
             QSet<uint32_t>* desiredCategories,
             QList< std::shared_ptr<OsmAnd::Model::Amenity> >* amenitiesOut,
-            IQueryFilter* filter, uint32_t zoomToSkipFilter,
-            std::function<bool (std::shared_ptr<OsmAnd::Model::Amenity>)>* visitor,
+            QueryFilter* filter, uint32_t zoomToSkipFilter,
+            std::function<bool (std::shared_ptr<OsmAnd::Model::Amenity>)> visitor,
             IQueryController* controller,
             QSet< uint64_t >* amenitiesToSkip);
         static void readAmenity(ObfReader* reader, ObfPoiSection* section, int32_t px, int32_t py, uint32_t pzoom, std::shared_ptr<Model::Amenity>& amenity,
             QSet<uint32_t>* desiredCategories,
-            IQueryFilter* filter,
+            QueryFilter* filter,
             IQueryController* controller);
         
     friend class ObfReader;

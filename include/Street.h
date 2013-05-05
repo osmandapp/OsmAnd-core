@@ -23,12 +23,16 @@
 #ifndef __MODEL_STREET_H_
 #define __MODEL_STREET_H_
 
-#include <OsmAndCore.h>
-#include <MapObject.h>
-#include <QString>
 #include <stdint.h>
 
+#include <QString>
+
+#include <OsmAndCore.h>
+#include <MapObject.h>
+
 namespace OsmAnd {
+
+    struct ObfAddressSection;
 
     namespace Model {
 
@@ -36,10 +40,6 @@ namespace OsmAnd {
         {
         private:
         protected:
-        public:
-            Street();
-            virtual ~Street();
-
             int64_t _id;
             QString _name;
             QString _latinName;
@@ -48,6 +48,17 @@ namespace OsmAnd {
             double _longitude;
             double _latitude;
             unsigned int _offset;
+        public:
+            Street();
+            virtual ~Street();
+
+            const int64_t& id;
+            const QString& name;
+            const QString& latinName;
+            const int& xTile24;
+            const int& yTile24;
+            const double& longitude;
+            const double& latitude;
 
             struct IntersectedStreet
             {
@@ -59,6 +70,8 @@ namespace OsmAnd {
                 double _longitude;
                 double _latitude;
             };
+
+        friend struct ObfAddressSection;
         };
 
     } // namespace Model

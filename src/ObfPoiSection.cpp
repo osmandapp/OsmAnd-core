@@ -27,11 +27,7 @@ void OsmAnd::ObfPoiSection::read( ObfReader* reader, ObfPoiSection* section)
         case 0:
             return;
         case OBF::OsmAndPoiIndex::kNameFieldNumber:
-            {
-                std::string name;
-                gpb::internal::WireFormatLite::ReadString(cis, &name);
-                section->_name = QString::fromStdString(name);
-            }
+            ObfReader::readQString(cis, section->_name);
             break;
         case OBF::OsmAndPoiIndex::kBoundariesFieldNumber:
             {
@@ -64,11 +60,7 @@ void OsmAnd::ObfPoiSection::readCategories( ObfReader* reader, ObfPoiSection* se
         case 0:
             return;
         case OBF::OsmAndPoiIndex::kNameFieldNumber:
-            {
-                std::string name;
-                gpb::internal::WireFormatLite::ReadString(cis, &name);
-                section->_name = QString::fromStdString(name);
-            }
+            ObfReader::readQString(cis, section->_name);
             break;
         case OBF::OsmAndPoiIndex::kBoundariesFieldNumber:
             {
@@ -112,20 +104,20 @@ void OsmAnd::ObfPoiSection::readBoundaries( ObfReader* reader, ObfPoiSection* se
         case 0:
             return;
         case OBF::OsmAndTileBox::kLeftFieldNumber:
-            cis->ReadVarint32(&section->_left31);
-            section->_leftLongitude = Utilities::get31LongitudeX(section->_left31);
+            cis->ReadVarint32(&section->_area31.left);
+            section->_areaGeo.left = Utilities::get31LongitudeX(section->_area31.left);
             break;
         case OBF::OsmAndTileBox::kRightFieldNumber:
-            cis->ReadVarint32(&section->_right31);
-            section->_rightLongitude = Utilities::get31LongitudeX(section->_right31);
+            cis->ReadVarint32(&section->_area31.right);
+            section->_areaGeo.right = Utilities::get31LongitudeX(section->_area31.right);
             break;
         case OBF::OsmAndTileBox::kTopFieldNumber:
-            cis->ReadVarint32(&section->_top31);
-            section->_topLatitude = Utilities::get31LatitudeY(section->_top31);
+            cis->ReadVarint32(&section->_area31.top);
+            section->_areaGeo.top = Utilities::get31LatitudeY(section->_area31.top);
             break;
         case OBF::OsmAndTileBox::kBottomFieldNumber:
-            cis->ReadVarint32(&section->_bottom31);
-            section->_bottomLatitude = Utilities::get31LatitudeY(section->_bottom31);
+            cis->ReadVarint32(&section->_area31.bottom);
+            section->_areaGeo.bottom = Utilities::get31LatitudeY(section->_area31.bottom);
             break;
         default:
             ObfReader::skipUnknownField(cis, tag);
@@ -146,17 +138,13 @@ void OsmAnd::ObfPoiSection::readCategory( ObfReader* reader, OsmAnd::Model::Amen
         case 0:
             return;
         case OBF::OsmAndCategoryTable::kCategoryFieldNumber:
-            {
-                std::string name;
-                gpb::internal::WireFormatLite::ReadString(cis, &name);
-                category->_name = QString::fromStdString(name);
-            }
+            ObfReader::readQString(cis, category->_name);
             break;
         case OBF::OsmAndCategoryTable::kSubcategoriesFieldNumber:
             {
-                std::string name;
-                gpb::internal::WireFormatLite::ReadString(cis, &name);
-                category->_subcategories.push_back(QString::fromStdString(name));
+                QString name;
+                if(ObfReader::readQString(cis, name))
+                    category->_subcategories.push_back(name);
             }
             break;
         default:
@@ -179,8 +167,8 @@ void OsmAnd::ObfPoiSection::loadAmenities(
     OsmAnd::ObfReader* reader, OsmAnd::ObfPoiSection* section,
     QSet<uint32_t>* desiredCategories /*= nullptr*/,
     QList< std::shared_ptr<OsmAnd::Model::Amenity> >* amenitiesOut /*= nullptr*/,
-    IQueryFilter* filter /*= nullptr*/, uint32_t zoomToSkipFilter /*= 3*/,
-    std::function<bool (std::shared_ptr<OsmAnd::Model::Amenity>)>* visitor /*= nullptr*/,
+    QueryFilter* filter /*= nullptr*/, uint32_t zoomToSkipFilter /*= 3*/,
+    std::function<bool (std::shared_ptr<OsmAnd::Model::Amenity>)> visitor /*= nullptr*/,
     IQueryController* controller /*= nullptr*/ )
 {
     auto cis = reader->_codedInputStream.get();
@@ -194,8 +182,8 @@ void OsmAnd::ObfPoiSection::readAmenities(
     ObfReader* reader, ObfPoiSection* section,
     QSet<uint32_t>* desiredCategories,
     QList< std::shared_ptr<OsmAnd::Model::Amenity> >* amenitiesOut,
-    IQueryFilter* filter, uint32_t zoomToSkipFilter,
-    std::function<bool (std::shared_ptr<OsmAnd::Model::Amenity>)>* visitor,
+    QueryFilter* filter, uint32_t zoomToSkipFilter,
+    std::function<bool (std::shared_ptr<OsmAnd::Model::Amenity>)> visitor,
     IQueryController* controller)
 {
     auto cis = reader->_codedInputStream.get();
@@ -252,15 +240,15 @@ bool OsmAnd::ObfPoiSection::readTile(
     QList< std::shared_ptr<Tile> >& tiles,
     Tile* parent,
     QSet<uint32_t>* desiredCategories,
-    IQueryFilter* filter, uint32_t zoomToSkipFilter,
+    QueryFilter* filter, uint32_t zoomToSkipFilter,
     IQueryController* controller,
     QSet< uint64_t >* tilesToSkip)
 {
     auto cis = reader->_codedInputStream.get();
 
-    const auto zoomToSkip = (filter && filter->_zoom != std::numeric_limits<uint32_t>::max()) ? filter->_zoom + zoomToSkipFilter : std::numeric_limits<uint32_t>::max();
+    const auto zoomToSkip = (filter && filter->_zoom) ? *filter->_zoom + zoomToSkipFilter : std::numeric_limits<uint32_t>::max();
     QSet< uint64_t > tilesToSkip_;
-    if(parent == nullptr && filter && filter->_zoom != std::numeric_limits<uint32_t>::max() && !tilesToSkip)
+    if(parent == nullptr && filter && filter->_zoom && !tilesToSkip)
         tilesToSkip = &tilesToSkip_;
 
     std::shared_ptr<Tile> tile(new Tile());
@@ -302,14 +290,14 @@ bool OsmAnd::ObfPoiSection::readTile(
                     tile->_y = y;
 
                 // Check that we're inside bounding box, if requested
-                if(filter)
+                if(filter && filter->_bbox31)
                 {
                     auto left31 = tile->_x << (31 - tile->_zoom);
                     auto right31 = (tile->_x + 1) << (31 - tile->_zoom);
                     auto top31 = tile->_y << (31 - tile->_zoom);
                     auto bottom31 = (tile->_y + 1) << (31 - tile->_zoom);
 
-                    if (right31 < filter->_bboxLeft31 || left31 > filter->_bboxRight31 || top31 > filter->_bboxBottom31 || bottom31 < filter->_bboxTop31)
+                    if(!filter->_bbox31->intersects(top31, left31, bottom31, right31))
                     {
                         // This tile is outside of bounding box
                         cis->Skip(cis->BytesUntilLimit());
@@ -416,16 +404,16 @@ void OsmAnd::ObfPoiSection::readAmenitiesFromTile(
     ObfReader* reader, ObfPoiSection* section, Tile* tile,
     QSet<uint32_t>* desiredCategories,
     QList< std::shared_ptr<OsmAnd::Model::Amenity> >* amenitiesOut,
-    IQueryFilter* filter, uint32_t zoomToSkipFilter,
-    std::function<bool (std::shared_ptr<OsmAnd::Model::Amenity>)>* visitor,
+    QueryFilter* filter, uint32_t zoomToSkipFilter,
+    std::function<bool (std::shared_ptr<OsmAnd::Model::Amenity>)> visitor,
     IQueryController* controller,
     QSet< uint64_t >* amenitiesToSkip)
 {
     auto cis = reader->_codedInputStream.get();
 
-    const auto zoomToSkip = (filter && filter->_zoom != std::numeric_limits<uint32_t>::max()) ? filter->_zoom + zoomToSkipFilter : std::numeric_limits<uint32_t>::max();
+    const auto zoomToSkip = (filter && filter->_zoom) ? *filter->_zoom + zoomToSkipFilter : std::numeric_limits<uint32_t>::max();
     QSet< uint64_t > amenitiesToSkip_;
-    if(filter && filter->_zoom != std::numeric_limits<uint32_t>::max() && !amenitiesToSkip)
+    if(filter && filter->_zoom && !amenitiesToSkip)
         amenitiesToSkip = &amenitiesToSkip_;
 
     int32_t x = 0;
@@ -480,7 +468,7 @@ void OsmAnd::ObfPoiSection::readAmenitiesFromTile(
                     const auto hash = (static_cast<uint64_t>(xp) << zoomToSkip) | static_cast<uint64_t>(yp);
                     if(!amenitiesToSkip->contains(hash))
                     {
-                        const auto visitorAgrees = visitor ? (*visitor)(amenity) : true;
+                        const auto visitorAgrees = visitor ? visitor(amenity) : true;
                         if(visitorAgrees)
                         {
                             amenitiesToSkip->insert(hash);
@@ -496,7 +484,7 @@ void OsmAnd::ObfPoiSection::readAmenitiesFromTile(
                 }
                 else
                 {
-                    const auto visitorAgrees = visitor ? (*visitor)(amenity) : true;
+                    const auto visitorAgrees = visitor ? visitor(amenity) : true;
                     if(amenitiesOut && visitorAgrees)
                         amenitiesOut->push_back(amenity);
                 }
@@ -512,7 +500,7 @@ void OsmAnd::ObfPoiSection::readAmenitiesFromTile(
 void OsmAnd::ObfPoiSection::readAmenity(
     ObfReader* reader, ObfPoiSection* section, int32_t px, int32_t py, uint32_t pzoom, std::shared_ptr<Model::Amenity>& amenity,
     QSet<uint32_t>* desiredCategories,
-    IQueryFilter* filter,
+    QueryFilter* filter,
     IQueryController* controller)
 {
     auto cis = reader->_codedInputStream.get();
@@ -543,13 +531,10 @@ void OsmAnd::ObfPoiSection::readAmenity(
             break;
         case OBF::OsmAndPoiBoxDataAtom::kDyFieldNumber:
             y31 = (ObfReader::readSInt32(cis) + (py << (24 - pzoom))) << 7;
-            if(filter)
+            if(filter && filter->_bbox31 && !filter->_bbox31->contains(x31, y31))
             {
-                if (x31 < filter->_bboxLeft31 || x31 > filter->_bboxRight31 || y31 > filter->_bboxBottom31 || y31 < filter->_bboxTop31)
-                {
-                    cis->Skip(cis->BytesUntilLimit());
-                    return;
-                }
+                cis->Skip(cis->BytesUntilLimit());
+                return;
             }
             break;
         case OBF::OsmAndPoiBoxDataAtom::kCategoriesFieldNumber:
@@ -578,46 +563,22 @@ void OsmAnd::ObfPoiSection::readAmenity(
             }
             break;
         case OBF::OsmAndPoiBoxDataAtom::kNameFieldNumber:
-            {
-                std::string name;
-                gpb::internal::WireFormatLite::ReadString(cis, &name);
-                amenity->_name = QString::fromStdString(name);
-            }
+            ObfReader::readQString(cis, amenity->_name);
             break;
         case OBF::OsmAndPoiBoxDataAtom::kNameEnFieldNumber:
-            {
-                std::string latinName;
-                gpb::internal::WireFormatLite::ReadString(cis, &latinName);
-                amenity->_latinName = QString::fromStdString(latinName);
-            }
+            ObfReader::readQString(cis, amenity->_latinName);
             break;
         case OBF::OsmAndPoiBoxDataAtom::kOpeningHoursFieldNumber:
-            {
-                std::string openingHours;
-                gpb::internal::WireFormatLite::ReadString(cis, &openingHours);
-                amenity->_openingHours = QString::fromStdString(openingHours);
-            }
+            ObfReader::readQString(cis, amenity->_openingHours);
             break;
         case OBF::OsmAndPoiBoxDataAtom::kSiteFieldNumber:
-            {
-                std::string site;
-                gpb::internal::WireFormatLite::ReadString(cis, &site);
-                amenity->_site = QString::fromStdString(site);
-            }
+            ObfReader::readQString(cis, amenity->_site);
             break;
         case OBF::OsmAndPoiBoxDataAtom::kPhoneFieldNumber:
-            {
-                std::string phone;
-                gpb::internal::WireFormatLite::ReadString(cis, &phone);
-                amenity->_phone = QString::fromStdString(phone);
-            }
+            ObfReader::readQString(cis, amenity->_phone);
             break;
         case OBF::OsmAndPoiBoxDataAtom::kNoteFieldNumber:
-            {
-                std::string note;
-                gpb::internal::WireFormatLite::ReadString(cis, &note);
-                amenity->_description = QString::fromStdString(note);
-            }
+            ObfReader::readQString(cis, amenity->_description);
             break;
         default:
             ObfReader::skipUnknownField(cis, tag);

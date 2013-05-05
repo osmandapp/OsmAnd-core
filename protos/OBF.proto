@@ -545,9 +545,9 @@ message OsmAndRoutingIndex {
 	//   required sint32 top = 3; // delta encoded
 	//   required sint32 bottom = 4; // delta encoded
 		optional IdTable idTable = 5;
-		optional StringTable stringTable = 8;
 		repeated RouteData dataObjects = 6;
 		repeated RestrictionData restrictions = 7;
+		optional StringTable stringTable = 8;
 
 	}
 

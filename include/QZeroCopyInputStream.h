@@ -23,9 +23,11 @@
 #ifndef __Q_ZERO_COPY_INPUT_STREAM_H_
 #define __Q_ZERO_COPY_INPUT_STREAM_H_
 
-#include <OsmAndCore.h>
 #include <memory>
+
 #include <QIODevice>
+
+#include <OsmAndCore.h>
 #include <google/protobuf/io/zero_copy_stream.h>
 
 namespace OsmAnd {
@@ -41,7 +43,7 @@ namespace OsmAnd {
         GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(QZeroCopyInputStream);
 
         //! Pointer to I/O device
-        QIODevice* const _device;
+        const std::shared_ptr<QIODevice> _device;
 
         //! Should close on destruction?
         const bool _closeOnDestruction;
@@ -53,7 +55,7 @@ namespace OsmAnd {
     protected:
     public:
         //! Ctor
-        QZeroCopyInputStream(QIODevice* device);
+        QZeroCopyInputStream(std::shared_ptr<QIODevice> device);
 
         //! Dtor
         virtual ~QZeroCopyInputStream();

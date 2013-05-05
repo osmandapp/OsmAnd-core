@@ -56,13 +56,13 @@ namespace OsmAnd {
             QString _name2; // WTF?
             QString _latinName2; // WTF?
             QString _postcode;
-            int _xTile24;
-            int _yTile24;
-            double _longitude;
-            double _latitude;
+            uint32_t _xTile24;
+            uint32_t _yTile24;
+            uint32_t _x2Tile24;
+            uint32_t _y2Tile24;
             Interpolation _interpolation;
             uint32_t _interpolationInterval;
-            unsigned int _offset;
+            uint32_t _offset;
         };
 
     } // namespace Model

@@ -40,17 +40,23 @@ namespace OsmAnd
             Configuration();
             
             bool verbose;
+            bool generateXml;
+            bool doRecalculate;
             QList< std::shared_ptr<QFile> > obfs;
+            QString vehicle;
+            int memoryLimit;
             double startLatitude;
             double startLongitude;
+            QList< std::pair<double, double> > waypoints;
             double endLatitude;
             double endLongitude;
+            bool leftSide;
 
-            RoutingConfiguration routingConfig;
+            std::shared_ptr<RoutingConfiguration> routingConfig;
         };
         OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL parseCommandLineArguments(const QStringList& cmdLineArgs, Configuration& cfg, QString& error);
-        OSMAND_CORE_UTILS_API void OSMAND_CORE_UTILS_CALL dumpToStdOut(const Configuration& cfg);
-        OSMAND_CORE_UTILS_API QString OSMAND_CORE_UTILS_CALL dumpToString(const Configuration& cfg);
+        OSMAND_CORE_UTILS_API void OSMAND_CORE_UTILS_CALL logJourneyToStdOut(const Configuration& cfg);
+        OSMAND_CORE_UTILS_API QString OSMAND_CORE_UTILS_CALL logJourneyToString(const Configuration& cfg);
     } // namespace Voyager
 
 } // namespace OsmAnd 

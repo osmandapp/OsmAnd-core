@@ -32,18 +32,10 @@ void OsmAnd::ObfAddressSection::read( ObfReader* reader, ObfAddressSection* sect
                 section->_latinName = reader->transliterate(section->_name);
             return;
         case OBF::OsmAndAddressIndex::kNameFieldNumber:
-            {
-                std::string name;
-                gpb::internal::WireFormatLite::ReadString(cis, &name);
-                section->_name = QString::fromStdString(name);
-            }
+            ObfReader::readQString(cis, section->_name);
             break;
         case OBF::OsmAndAddressIndex::kNameEnFieldNumber:
-            {
-                std::string latinName;
-                gpb::internal::WireFormatLite::ReadString(cis, &latinName);
-                section->_latinName = QString::fromStdString(latinName);
-            }
+            ObfReader::readQString(cis, section->_latinName);
             break;
         case OBF::OsmAndAddressIndex::kCitiesFieldNumber:
             {
@@ -160,18 +152,10 @@ void OsmAnd::ObfAddressSection::readStreet( ObfReader* reader, Model::StreetGrou
             cis->ReadVarint64(reinterpret_cast<gpb::uint64*>(&street->_id));
             break;
         case OBF::StreetIndex::kNameEnFieldNumber:
-            {
-                std::string latinName;
-                gpb::internal::WireFormatLite::ReadString(cis, &latinName);
-                street->_latinName = QString::fromStdString(latinName);
-            }
+            ObfReader::readQString(cis, street->_latinName);
             break;
         case OBF::StreetIndex::kNameFieldNumber:
-            {
-                std::string name;
-                gpb::internal::WireFormatLite::ReadString(cis, &name);
-                street->_name = QString::fromStdString(name);
-            }
+            ObfReader::readQString(cis, street->_name);
             break;
         case OBF::StreetIndex::kXFieldNumber:
             {
@@ -278,32 +262,16 @@ void OsmAnd::ObfAddressSection::readBuilding( ObfReader* reader, Model::Street* 
             cis->ReadVarint64(reinterpret_cast<gpb::uint64*>(&building->_id));
             break;
         case OBF::BuildingIndex::kNameEnFieldNumber:
-            {
-                std::string latinName;
-                gpb::internal::WireFormatLite::ReadString(cis, &latinName);
-                building->_latinName = QString::fromStdString(latinName);
-            }
+            ObfReader::readQString(cis, building->_latinName);
             break;
         case OBF::BuildingIndex::kNameFieldNumber:
-            {
-                std::string name;
-                gpb::internal::WireFormatLite::ReadString(cis, &name);
-                building->_name = QString::fromStdString(name);
-            }
+            ObfReader::readQString(cis, building->_name);
             break;
         case OBF::BuildingIndex::kNameEn2FieldNumber:
-            {
-                std::string latinName;
-                gpb::internal::WireFormatLite::ReadString(cis, &latinName);
-                building->_latinName2 = QString::fromStdString(latinName);
-            }
+            ObfReader::readQString(cis, building->_latinName2);
             break;
         case OBF::BuildingIndex::kName2FieldNumber:
-            {
-                std::string name;
-                gpb::internal::WireFormatLite::ReadString(cis, &name);
-                building->_name2 = QString::fromStdString(name);
-            }
+            ObfReader::readQString(cis, building->_name2);
             break;
         case OBF::BuildingIndex::kInterpolationFieldNumber:
             {
@@ -318,22 +286,28 @@ void OsmAnd::ObfAddressSection::readBuilding( ObfReader* reader, Model::Street* 
             {
                 auto dx = ObfReader::readSInt32(cis);
                 building->_xTile24 = street->_xTile24 + dx;
-                building->_longitude = Utilities::getLongitudeFromTile(24, building->_xTile24);
+            }
+            break;
+        case OBF::BuildingIndex::kX2FieldNumber:
+            {
+                auto dx2 = ObfReader::readSInt32(cis);
+                building->_x2Tile24 = street->_xTile24 + dx2;
             }
             break;
         case OBF::BuildingIndex::kYFieldNumber:
             {
                 auto dy = ObfReader::readSInt32(cis);
                 building->_yTile24 = street->_yTile24 + dy;
-                street->_latitude = Utilities::getLatitudeFromTile(24, building->_yTile24);
+            }
+            break;
+        case OBF::BuildingIndex::kY2FieldNumber:
+            {
+                auto dy2 = ObfReader::readSInt32(cis);
+                building->_y2Tile24 = street->_yTile24 + dy2;
             }
             break;
         case OBF::BuildingIndex::kPostcodeFieldNumber:
-            {
-                std::string postcode;
-                gpb::internal::WireFormatLite::ReadString(cis, &postcode);
-                building->_postcode = QString::fromStdString(postcode);
-            }
+            ObfReader::readQString(cis, building->_postcode);
             break;
         default:
             ObfReader::skipUnknownField(cis, tag);
@@ -404,18 +378,10 @@ void OsmAnd::ObfAddressSection::readIntersectedStreet( ObfReader* reader, Model:
                 intersection->_latinName = reader->transliterate(intersection->_name);
             return;
         case OBF::StreetIntersection::kNameEnFieldNumber:
-            {
-                std::string latinName;
-                gpb::internal::WireFormatLite::ReadString(cis, &latinName);
-                intersection->_latinName = QString::fromStdString(latinName);
-            }
+            ObfReader::readQString(cis, intersection->_latinName);
             break;
         case OBF::StreetIntersection::kNameFieldNumber:
-            {
-                std::string name;
-                gpb::internal::WireFormatLite::ReadString(cis, &name);
-                intersection->_name = QString::fromStdString(name);
-            }
+            ObfReader::readQString(cis, intersection->_name);
             break;
         case OBF::StreetIntersection::kIntersectedXFieldNumber:
             {
@@ -548,21 +514,19 @@ std::shared_ptr<OsmAnd::Model::StreetGroup> OsmAnd::ObfAddressSection::AddressBl
             break;
         case OBF::CityIndex::kNameEnFieldNumber:
             {
-                std::string latinName;
-                gpb::internal::WireFormatLite::ReadString(cis, &latinName);
+                ObfReader::readQString(cis, streetGroup->_latinName);
                 /*
                 TODO:
                 if (nameMatcher != null && latinName.length() > 0 && nameMatcher.matches(latinName)) {
                 englishNameMatched = true;
                 }
                 */
-                streetGroup->_latinName = QString::fromStdString(latinName);
             }
             break;
         case OBF::CityIndex::kNameFieldNumber:
             {
-                std::string name;
-                gpb::internal::WireFormatLite::ReadString(cis, &name);
+                QString name;
+                ObfReader::readQString(cis, name);
                 /*
                 if(nameMatcher != null){
                 if(!useEn){
@@ -579,7 +543,7 @@ std::shared_ptr<OsmAnd::Model::StreetGroup> OsmAnd::ObfAddressSection::AddressBl
                 if(!streetGroup)
                     streetGroup.reset(new Model::PostcodeArea());
 
-                streetGroup->_name = QString::fromStdString(name);
+                streetGroup->_name = name;
             }
             break;
         case OBF::CityIndex::kXFieldNumber:

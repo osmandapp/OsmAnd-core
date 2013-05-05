@@ -1,81 +1,31 @@
-#include "ObfData.h"
+#include "PoiDirectory.h"
 
-OsmAnd::ObfData::ObfData()
-    : _combinedPoiCategoriesInvalidated(true)
+OsmAnd::PoiDirectory::PoiDirectory()
 {
 }
 
-OsmAnd::ObfData::~ObfData()
+OsmAnd::PoiDirectory::~PoiDirectory()
 {
 }
 
-void OsmAnd::ObfData::addSource( const std::shared_ptr<ObfReader>& source )
+const QMultiHash< QString, QString >& OsmAnd::PoiDirectory::getPoiCategories(PoiDirectoryContext* context)
 {
-    assert(source);
+    if(!context->_categoriesCache.isEmpty())
+        return context->_categoriesCache;
 
-    _sourcesMutex.lock();
-    assert(!_sources.contains(source));
-    _sources.insert(source, std::shared_ptr<Data>(new Data()));
-    invalidateCombinedPoiCategories();
-    _sourcesMutex.unlock();
-}
-
-void OsmAnd::ObfData::removeSource( const std::shared_ptr<ObfReader>& source )
-{
-    assert(source);
-
-    _sourcesMutex.lock();
-    assert(_sources.contains(source));
-    _sources.remove(source);
-    invalidateCombinedPoiCategories();
-    _sourcesMutex.unlock();
-}
-
-void OsmAnd::ObfData::clearSources()
-{
-    _sourcesMutex.lock();
-    _sources.clear();
-    invalidateCombinedPoiCategories();
-    _sourcesMutex.unlock();
-}
-
-QList< std::shared_ptr<OsmAnd::ObfReader> > OsmAnd::ObfData::getSources()
-{
-    _sourcesMutex.lock();
-    const auto& sources = _sources.keys();
-    _sourcesMutex.unlock();
-    return sources;
-}
-
-void OsmAnd::ObfData::invalidateCombinedPoiCategories()
-{
-    _combinedPoiCategoriesInvalidated = true;
-    _combinedPoiCategories.clear();
-}
-
-QMultiHash< QString, QString > OsmAnd::ObfData::getPoiCategories()
-{
-    if(!_combinedPoiCategoriesInvalidated)
-        return _combinedPoiCategories;
-
-    _sourcesMutex.lock();
-    const auto sources = _sources;
-    _sourcesMutex.unlock();
-
-    for(auto itSource = sources.cbegin(); itSource != sources.cend(); ++itSource)
+    for(auto itSource = context->sources.cbegin(); itSource != context->sources.cend(); ++itSource)
     {
-        const auto& source = itSource.key();
-        const auto& sourceData = itSource.value();
-
-        for(auto itPoiSection = source->_poiSections.begin(); itPoiSection != source->_poiSections.end(); ++itPoiSection)
+        auto source = *itSource;
+        
+        for(auto itPoiSection = source->poiSections.begin(); itPoiSection != source->poiSections.end(); ++itPoiSection)
         {
             const auto& poiSection = *itPoiSection;
 
-            auto itPoiData = sourceData->_poiData.find(poiSection);
-            if(itPoiData == sourceData->_poiData.end())
+            auto itPoiData = context->_contexts.find(poiSection);
+            if(itPoiData == context->_contexts.end())
             {
-                std::shared_ptr<Data::PoiData> poiData(new Data::PoiData());
-                itPoiData = sourceData->_poiData.insert(poiSection, poiData);
+                std::shared_ptr<PoiDirectoryContext::PoiSectionContext> poiData(new PoiDirectoryContext::PoiSectionContext());
+                itPoiData = context->_contexts.insert(poiSection, poiData);
             }
             const auto& poiData = *itPoiData;
 
@@ -91,7 +41,7 @@ QMultiHash< QString, QString > OsmAnd::ObfData::getPoiCategories()
                 auto itCategoryData = poiData->_categoriesIds.find(category->_name);
                 if(itCategoryData == poiData->_categoriesIds.end())
                 {
-                    std::shared_ptr<Data::PoiData::PoiCategoryData> poiCategoryData(new Data::PoiData::PoiCategoryData());
+                    std::shared_ptr<PoiDirectoryContext::PoiSectionContext::PoiCategoryData> poiCategoryData(new PoiDirectoryContext::PoiSectionContext::PoiCategoryData());
                     itCategoryData = poiData->_categoriesIds.insert(category->_name, poiCategoryData);
 
                     poiCategoryData->_id = categoryId;
@@ -102,7 +52,7 @@ QMultiHash< QString, QString > OsmAnd::ObfData::getPoiCategories()
                 for(auto itSubcategory = category->_subcategories.begin(); itSubcategory != category->_subcategories.end(); ++itSubcategory, subcategoryId++)
                 {
                     const auto& subcategory = *itSubcategory;
-                    _combinedPoiCategories.insert(category->_name, subcategory);
+                    context->_categoriesCache.insert(category->_name, subcategory);
 
                     categoryData->_subcategoriesIds.insert(subcategory, subcategoryId);
                 }
@@ -110,43 +60,35 @@ QMultiHash< QString, QString > OsmAnd::ObfData::getPoiCategories()
         }
     }
 
-    _combinedPoiCategoriesInvalidated = false;
-    return _combinedPoiCategories;
+    return context->_categoriesCache;
 }
 
-void OsmAnd::ObfData::queryPoiAmenities(
+void OsmAnd::PoiDirectory::queryPoiAmenities(
+    PoiDirectoryContext* context,
     QMultiHash< QString, QString >* desiredCategories /*= nullptr*/,
     QList< std::shared_ptr<OsmAnd::Model::Amenity> >* amenitiesOut /*= nullptr*/,
-    IQueryFilter* filter /*= nullptr*/, uint32_t zoomToSkipFilter /*= 3*/,
-    std::function<bool (std::shared_ptr<OsmAnd::Model::Amenity>)>* visitor /*= nullptr*/,
+    QueryFilter* filter /*= nullptr*/, uint32_t zoomToSkipFilter /*= 3*/,
+    std::function<bool (std::shared_ptr<OsmAnd::Model::Amenity>)> visitor /*= nullptr*/,
     IQueryController* controller /*= nullptr*/ )
 {
-    _sourcesMutex.lock();
-    const auto sources = _sources;
-    _sourcesMutex.unlock();
-
-    for(auto itSource = sources.cbegin(); itSource != sources.cend(); ++itSource)
+    for(auto itSource = context->sources.cbegin(); itSource != context->sources.cend(); ++itSource)
     {
-        const auto& source = itSource.key();
-        const auto& sourceData = itSource.value();
-
-        for(auto itPoiSection = source->_poiSections.cbegin(); itPoiSection != source->_poiSections.cend(); ++itPoiSection)
+        auto source = *itSource;
+        
+        for(auto itPoiSection = source->poiSections.cbegin(); itPoiSection != source->poiSections.cend(); ++itPoiSection)
         {
             const auto& poiSection = *itPoiSection;
 
             if(controller && controller->isAborted())
                 break;
-            if(filter)
+            if(filter && filter->_bbox31 && !filter->_bbox31->intersects(poiSection->_area31))
+                continue;
+            
+            auto itPoiData = context->_contexts.find(poiSection);
+            if(itPoiData == context->_contexts.end())
             {
-                if (poiSection->_right31 < filter->_bboxLeft31 || poiSection->_left31 > filter->_bboxRight31 || poiSection->_top31 > filter->_bboxBottom31 || poiSection->_bottom31 < filter->_bboxTop31)
-                    continue;
-            }
-
-            auto itPoiData = sourceData->_poiData.find(poiSection);
-            if(itPoiData == sourceData->_poiData.end())
-            {
-                std::shared_ptr<Data::PoiData> poiData(new Data::PoiData());
-                itPoiData = sourceData->_poiData.insert(poiSection, poiData);
+                std::shared_ptr<PoiDirectoryContext::PoiSectionContext> poiData(new PoiDirectoryContext::PoiSectionContext());
+                itPoiData = context->_contexts.insert(poiSection, poiData);
             }
             const auto& poiData = *itPoiData;
 
@@ -185,7 +127,7 @@ void OsmAnd::ObfData::queryPoiAmenities(
                     }
                 }
             }
-            
+
             ObfPoiSection::loadAmenities(source.get(), poiSection.get(), desiredCategories ? &desiredCategoriesIds : nullptr, amenitiesOut, filter, zoomToSkipFilter, visitor, controller);
         }
     }

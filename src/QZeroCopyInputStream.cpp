@@ -2,12 +2,13 @@
 
 namespace gpb = google::protobuf;
 
-OsmAnd::QZeroCopyInputStream::QZeroCopyInputStream( QIODevice* device )
+OsmAnd::QZeroCopyInputStream::QZeroCopyInputStream( std::shared_ptr<QIODevice> device )
     : _device(device)
     , _closeOnDestruction(!device->isOpen())
 {
     if(!_device->isOpen())
         _device->open(QIODevice::ReadOnly);
+    assert(_device->isOpen());
 }
 
 OsmAnd::QZeroCopyInputStream::~QZeroCopyInputStream()

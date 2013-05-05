@@ -23,32 +23,41 @@
 #ifndef __ROUTING_PROFILE_H_
 #define __ROUTING_PROFILE_H_
 
-#include <cstdint>
+#include <stdint.h>
 #include <memory>
 
 #include <QString>
+#include <QMap>
 #include <QHash>
 
 #include <OsmAndCore.h>
-#include <RoutingRulesetContext.h>
+#include <RoutingRuleset.h>
+#include <Road.h>
 
 namespace OsmAnd {
 
     class OSMAND_CORE_API RoutingProfile
     {
-    public:
-        enum RulesetType : int {
-            Invalid = -1,
-            RoadPriorities = 0,
-            RoadSpeed,
-            Access,
-            Obstacles,
-            RoutingObstacles,
-            OneWay,
-
-            RulesetTypesCount
-        };
     private:
+        QString _name;
+        QHash<QString, QString> _attributes;
+        std::shared_ptr<RoutingRuleset> _rulesets[RoutingRuleset::TypesCount];
+
+        QHash<QString, uint32_t> _universalRules;
+        QList<QString> _universalRulesKeysById;
+        QHash<QString, QBitArray> _tagRuleMask;
+        QMap<uint32_t, float> _ruleToValueCache;
+        
+        // Cached values
+        bool _restrictionsAware;
+        bool _oneWayAware;
+        bool _followSpeedLimitations;
+        float _leftTurn;
+        float _roundaboutTurn;
+        float _rightTurn;
+        float _minDefaultSpeed;
+        float _maxDefaultSpeed;
+    protected:
         struct Parameter
         {
             enum Type
@@ -65,10 +74,11 @@ namespace OsmAnd {
             QList<QString> _possibleValueDescriptions;
         };
         QHash< QString, std::shared_ptr<Parameter> > _parameters;
-        std::shared_ptr<RoutingRulesetContext> _rulesetContexts[RulesetTypesCount];
-    protected:
+
         void registerBooleanParameter(const QString& id, const QString& name, const QString& description);
         void registerNumericParameter(const QString& id, const QString& name, const QString& description, QList<double>& values, QList<QString> valuesDescriptions);
+        uint32_t registerTagValueAttribute(const QString& tag, const QString& value);
+        bool parseTypedValueFromTag(uint32_t id, const QString& type, float& parsedValue);
     public:
         RoutingProfile();
         virtual ~RoutingProfile();
@@ -80,22 +90,23 @@ namespace OsmAnd {
         };
         */
 
-        QString _name;
+        const QString& name;
+        const QHash<QString, QString>& attributes;
+        const QHash< QString, std::shared_ptr<Parameter> >& parameters;
 
-        // Cached values
-        bool _restrictionsAware;
-        float _leftTurn;
-        float _roundaboutTurn;
-        float _rightTurn;
-        float _minDefaultSpeed;
-        float _maxDefaultSpeed;
+        const bool& restrictionsAware;
+        const float& leftTurn;
+        const float& roundaboutTurn;
+        const float& rightTurn;
+        const float& minDefaultSpeed;
+        const float& maxDefaultSpeed;
 
-        QHash<QString, QString> _attributes;
+        inline std::shared_ptr<RoutingRuleset> getRuleset(RoutingRuleset::Type type) const;
         void addAttribute(const QString& key, const QString& value);
 
-        std::shared_ptr<RoutingRulesetContext> getRulesetContext(RulesetType type);
-
     friend class RoutingConfiguration;
+    friend class RoutingRuleExpression;
+    friend class RoutingRulesetContext;
     };
 
 } // namespace OsmAnd

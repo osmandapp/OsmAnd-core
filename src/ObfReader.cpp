@@ -2,6 +2,8 @@
 
 #include <stdexcept>
 
+#include "Logging.h"
+
 #include "QZeroCopyInputStream.h"
 #include <google/protobuf/wire_format_lite.h>
 #include <QtEndian>
@@ -10,9 +12,19 @@
 
 namespace gpb = google::protobuf;
 
-OsmAnd::ObfReader::ObfReader( QIODevice* input )
-    : _codedInputStream(new gpb::io::CodedInputStream(new QZeroCopyInputStream(input)))
+OsmAnd::ObfReader::ObfReader( std::shared_ptr<QIODevice> input )
+    : source(input)
+    , _codedInputStream(new gpb::io::CodedInputStream(new QZeroCopyInputStream(input)))
     , _isBasemap(false)
+    , version(_version)
+    , creationTimestamp(_creationTimestamp)
+    , isBaseMap(_isBasemap)
+    , mapSections(_mapSections)
+    , addressSections(_addressSections)
+    , routingSections(_routingSections)
+    , poiSections(_poiSections)
+    , transportSections(_transportSections)
+    , sections(_sections)
 {
     _codedInputStream->SetTotalBytesLimit(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
 
@@ -78,7 +90,7 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
                 section->_length = ObfReader::readBigEndianInt(_codedInputStream.get());
                 section->_offset = _codedInputStream->CurrentPosition();
                 auto oldLimit = _codedInputStream->PushLimit(section->_length);
-                ObfRoutingSection::read(this, section.get());
+                ObfRoutingSection::read(this, section);
                 _codedInputStream->PopLimit(oldLimit);
                 _codedInputStream->Seek(section->_offset + section->_length);
                 _routingSections.push_back(section);
@@ -115,6 +127,10 @@ OsmAnd::ObfReader::ObfReader( QIODevice* input )
     }
 }
 
+OsmAnd::ObfReader::~ObfReader()
+{
+}
+
 void OsmAnd::ObfReader::skipUnknownField( gpb::io::CodedInputStream* cis, int tag )
 {
     auto wireType = gpb::internal::WireFormatLite::GetTagWireType(tag);
@@ -127,7 +143,7 @@ void OsmAnd::ObfReader::skipUnknownField( gpb::io::CodedInputStream* cis, int ta
         gpb::internal::WireFormatLite::SkipField(cis, tag);
 }
 
-int OsmAnd::ObfReader::readBigEndianInt( gpb::io::CodedInputStream* cis )
+uint32_t OsmAnd::ObfReader::readBigEndianInt( gpb::io::CodedInputStream* cis )
 {
     gpb::uint32 be;
     cis->ReadRaw(&be, sizeof(be));
@@ -135,14 +151,14 @@ int OsmAnd::ObfReader::readBigEndianInt( gpb::io::CodedInputStream* cis )
     return ne;
 }
 
-int OsmAnd::ObfReader::getVersion() const
+bool OsmAnd::ObfReader::readQString( gpb::io::CodedInputStream* cis, QString& output )
 {
-    return _version;
-}
+    std::string value;
+    if(!gpb::internal::WireFormatLite::ReadString(cis, &value))
+        return false;
 
-QList< OsmAnd::ObfSection* > OsmAnd::ObfReader::getSections() const
-{
-    return _sections;
+    output = QString::fromUtf8(value.c_str(), value.size());
+    return true;
 }
 
 int OsmAnd::ObfReader::readSInt32( gpb::io::CodedInputStream* cis )
@@ -150,6 +166,13 @@ int OsmAnd::ObfReader::readSInt32( gpb::io::CodedInputStream* cis )
     gpb::uint32 value;
     cis->ReadVarint32(&value);
     return gpb::internal::WireFormatLite::ZigZagDecode32(value);
+}
+
+long OsmAnd::ObfReader::readSInt64( gpb::io::CodedInputStream* cis )
+{
+    gpb::uint64 value;
+    cis->ReadVarint64(&value);
+    return gpb::internal::WireFormatLite::ZigZagDecode64(value);
 }
 
 QString OsmAnd::ObfReader::transliterate( QString input )
@@ -168,9 +191,9 @@ void OsmAnd::ObfReader::readStringTable( gpb::io::CodedInputStream* cis, QString
             return;
         case OBF::StringTable::kSFieldNumber:
             {
-                std::string value;
-                gpb::internal::WireFormatLite::ReadString(cis, &value);
-                stringTableOut.append(QString::fromStdString(value));
+                QString value;
+                if(readQString(cis, value))
+                    stringTableOut.append(value);
             }
             break;
         default:

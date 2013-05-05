@@ -1,19 +1,26 @@
 #include "RoutingProfile.h"
 
+#include "RoutingConfiguration.h"
+#include "Utilities.h"
+
 OsmAnd::RoutingProfile::RoutingProfile()
     : _restrictionsAware(true)
+    , _oneWayAware(true)
+    , _followSpeedLimitations(true)
     , _minDefaultSpeed(10)
     , _maxDefaultSpeed(10)
+    , name(_name)
+    , attributes(_attributes)
+    , parameters(_parameters)
+    , restrictionsAware(_restrictionsAware)
+    , leftTurn(_leftTurn)
+    , roundaboutTurn(_roundaboutTurn)
+    , rightTurn(_rightTurn)
+    , minDefaultSpeed(_minDefaultSpeed)
+    , maxDefaultSpeed(_maxDefaultSpeed)
 {
-    /*objectAttributes = new RouteAttributeContext[RouteDataObjectAttribute.values().length];
-    for (int i = 0; i < objectAttributes.length; i++) {
-        objectAttributes[i] = new RouteAttributeContext();
-    }
-    universalRules = new LinkedHashMap<String, Integer>();
-    universalRulesById = new ArrayList<String>();
-    tagRuleMask = new LinkedHashMap<String, BitSet>();
-    ruleToValue = new ArrayList<Object>();
-    parameters = new LinkedHashMap<String, GeneralRouter.RoutingParameter>();*/
+    for(auto type = 0; type < RoutingRuleset::TypesCount; type++)
+        _rulesets[type].reset(new OsmAnd::RoutingRuleset(this, static_cast<RoutingRuleset::Type>(type)));
 }
 
 OsmAnd::RoutingProfile::~RoutingProfile()
@@ -26,7 +33,7 @@ void OsmAnd::RoutingProfile::addAttribute( const QString& key, const QString& va
 
     if(key == "restrictionsAware")
     {
-        _restrictionsAware = (value.compare("true", Qt::CaseInsensitive) == 0);
+        _restrictionsAware = Utilities::parseArbitraryBool(value, _restrictionsAware);
     }
     else if(key == "leftTurn")
     {
@@ -87,13 +94,50 @@ void OsmAnd::RoutingProfile::registerNumericParameter( const QString& id, const 
     _parameters.insert(id, parameter);
 }
 
-std::shared_ptr<OsmAnd::RoutingRulesetContext> OsmAnd::RoutingProfile::getRulesetContext( RulesetType type )
+std::shared_ptr<OsmAnd::RoutingRuleset> OsmAnd::RoutingProfile::getRuleset( RoutingRuleset::Type type ) const
 {
-    auto context = _rulesetContexts[static_cast<int>(type)];
-    if(!context)
+    return _rulesets[static_cast<int>(type)];
+}
+
+uint32_t OsmAnd::RoutingProfile::registerTagValueAttribute( const QString& tag, const QString& value )
+{
+    auto key = tag + "$" + value;
+
+    auto itId = _universalRules.find(key);
+    if(itId != _universalRules.end())
+        return *itId;
+    
+    uint32_t id = _universalRules.size();
+    _universalRulesKeysById.push_back(key);
+    _universalRules.insert(key, id);
+
+    auto itTagRuleMask = _tagRuleMask.find(tag);
+    if(itTagRuleMask == _tagRuleMask.end())
+        itTagRuleMask = _tagRuleMask.insert(tag, QBitArray());
+    
+    if(itTagRuleMask->size() <= id)
+        itTagRuleMask->resize(id + 1);
+    itTagRuleMask->setBit(id);
+    
+    return id;
+}
+
+bool OsmAnd::RoutingProfile::parseTypedValueFromTag( uint32_t id, const QString& type, float& parsedValue )
+{
+    bool ok = true;
+
+    auto itCachedValue = _ruleToValueCache.find(id);
+    if(itCachedValue == _ruleToValueCache.end())
     {
-        _rulesetContexts[static_cast<int>(type)].reset(new RoutingRulesetContext());
-        context = _rulesetContexts[static_cast<int>(type)];
+        const auto& key = _universalRulesKeysById[id];
+        const auto& valueName = key.mid(key.indexOf('$') + 1);
+
+        ok = RoutingConfiguration::parseTypedValue(valueName, type, parsedValue);
+        if(ok)
+            itCachedValue = _ruleToValueCache.insert(id, parsedValue);
     }
-    return context;
+
+    if(ok)
+        parsedValue = *itCachedValue;
+    return ok;
 }

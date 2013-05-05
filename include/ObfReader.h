@@ -23,13 +23,18 @@
 #ifndef __OBF_READER_H_
 #define __OBF_READER_H_
 
+#include <stdint.h>
 #include <memory>
 #include <functional>
+
 #include <QIODevice>
 #include <QList>
 #include <QMultiHash>
+
 #include <google/protobuf/io/coded_stream.h>
+
 #include <OsmAndCore.h>
+#include <ObfReader.h>
 #include <ObfSection.h>
 #include <ObfMapSection.h>
 #include <ObfAddressSection.h>
@@ -62,22 +67,34 @@ namespace OsmAnd {
         QList< ObfSection* > _sections;
     protected:
         QString transliterate(QString input);
-        static int readSInt32(gpb::io::CodedInputStream* cis);
-        static int readBigEndianInt(gpb::io::CodedInputStream* cis);
-        static void readStringTable(gpb::io::CodedInputStream* cis, QStringList& stringTableOut);
-        static void skipUnknownField(gpb::io::CodedInputStream* cis, int tag);
+        inline static bool readQString(gpb::io::CodedInputStream* cis, QString& output);
+        inline static int readSInt32(gpb::io::CodedInputStream* cis);
+        inline static long readSInt64(gpb::io::CodedInputStream* cis);
+        inline static uint32_t readBigEndianInt(gpb::io::CodedInputStream* cis);
+        inline static void readStringTable(gpb::io::CodedInputStream* cis, QStringList& stringTableOut);
+        inline static void skipUnknownField(gpb::io::CodedInputStream* cis, int tag);
     public:
-        ObfReader(QIODevice* input);
+        ObfReader(std::shared_ptr<QIODevice> input);
+        virtual ~ObfReader();
 
-        int getVersion() const;
-        QList< OsmAnd::ObfSection* > getSections() const;
+        const std::shared_ptr<QIODevice> source;
 
-    friend class ObfData;
-    friend struct ObfMapSection;
-    friend struct ObfAddressSection;
-    friend struct ObfRoutingSection;
-    friend struct ObfPoiSection;
-    friend struct ObfTransportSection;
+        const int& version;
+        const long& creationTimestamp;
+        const bool& isBaseMap;
+
+        const QList< std::shared_ptr<ObfMapSection> >& mapSections;
+        const QList< std::shared_ptr<ObfAddressSection> >& addressSections;
+        const QList< std::shared_ptr<ObfRoutingSection> >& routingSections;
+        const QList< std::shared_ptr<ObfPoiSection> >& poiSections;
+        const QList< std::shared_ptr<ObfTransportSection> >& transportSections;
+        const QList< ObfSection* >& sections;
+
+        friend struct ObfMapSection;
+        friend struct ObfAddressSection;
+        friend struct ObfRoutingSection;
+        friend struct ObfPoiSection;
+        friend struct ObfTransportSection;
     };
 } // namespace OsmAnd
 

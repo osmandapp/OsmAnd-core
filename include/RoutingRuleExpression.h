@@ -29,24 +29,49 @@
 #include <QString>
 #include <QSet>
 #include <QHash>
+#include <QBitArray>
 
 #include <OsmAndCore.h>
 
 namespace OsmAnd {
 
+    class RoutingRuleset;
+    class RoutingRulesetContext;
+
     class OSMAND_CORE_API RoutingRuleExpression
     {
+    public:
+        class OSMAND_CORE_API Operator
+        {
+        private:
+        protected:
+            Operator();
+        public:
+            virtual ~Operator();
+
+            virtual bool evaluate(const QBitArray& types, RoutingRulesetContext* context) const = 0;
+
+            friend class RoutingRuleExpression;
+        };
     private:
         QList<QString> _parameters;
-/*
-            Object selectValue;
-        QString selectType;
-        QBitSet filterTypes;
-        QBitSet filterNotTypes;
-        QBitSet evalFilterTypes;*/
+
+        QString _variableRef;
+        QString _tagRef;
+        float _value;
+
+        QBitArray _filterTypes;
+        QBitArray _filterNotTypes;
         QSet<QString> _onlyTags;
         QSet<QString> _onlyNotTags;
-        QList< std::shared_ptr<class RoutingRuleExpressionOperator> > _operators;
+
+        QList< std::shared_ptr<Operator> > _operators;
+
+        bool validateAllTypesShouldBePresent(const QBitArray& types) const;
+        bool validateAllTypesShouldNotBePresent(const QBitArray& types) const;
+        bool validateFreeTags(const QBitArray& types) const;
+        bool validateNotFreeTags(const QBitArray& types) const;
+        bool evaluateExpressions(const QBitArray& types, RoutingRulesetContext* context) const;
     protected:
         void registerAndTagValue(const QString& tag, const QString& value, bool negation);
         void registerLessCondition(const QString& lvalue, const QString& rvalue, const QString& type);
@@ -54,110 +79,29 @@ namespace OsmAnd {
         void registerGreaterCondition(const QString& lvalue, const QString& rvalue, const QString& type);
         void registerGreaterOrEqualCondition(const QString& lvalue, const QString& rvalue, const QString& type);
         void registerAndParamCondition(const QString& param, bool negation);
+        
+        RoutingRuleExpression(RoutingRuleset* ruleset, const QString& value, const QString& type);
+
+        QString _type;
     public:
-        RoutingRuleExpression(const QString& value, const QString& type);
         virtual ~RoutingRuleExpression();
 
-    friend class RoutingConfiguration;
-        
+        RoutingRuleset* const ruleset;
+        const QString& type;
 
-        
-    /*
-        public Object eval(BitSet types, ParameterContext paramContext) {
-            if (matches(types, paramContext)) {
-                return calcSelectValue(types, paramContext);
-            }
-            return null;
-        }
+        enum ResultType
+        {
+            Integer,
+            Float
+        };
+        bool validate(const QBitArray& types, RoutingRulesetContext* context) const;
+        bool evaluate(const QBitArray& types, RoutingRulesetContext* context, ResultType type, void* result) const;
 
-        protected Object calcSelectValue(BitSet types, ParameterContext paramContext) {
-            if (selectValue instanceof String && selectValue.toString().startsWith("$")) {
-                BitSet mask = tagRuleMask.get(selectValue.toString().substring(1));
-                if (mask != null && mask.intersects(types)) {
-                    BitSet findBit = new BitSet(mask.size());
-                    findBit.or(mask);
-                    findBit.and(types);
-                    int value = findBit.nextSetBit(0);
-                    return parseValueFromTag(value, selectType);
-                }
-            } else if (selectValue instanceof String && selectValue.toString().startsWith(":")) {
-                String p = ((String) selectValue).substring(1);
-                if (paramContext != null && paramContext.vars.containsKey(p)) {
-                    selectValue = parseValue(paramContext.vars.get(p), selectType);
-                } else {
-                    return null;
-                }
-            }
-            return selectValue;
-        }
+        static inline bool resolveVariableReferenceValue(RoutingRulesetContext* context, const QString& variableRef, const QString& type, float& value);
+        static inline bool resolveTagReferenceValue(RoutingRulesetContext* context, const QBitArray& types, const QString& tagRef, const QString& type, float& value);
 
-        public boolean matches(BitSet types, ParameterContext paramContext) {
-            if(!checkAllTypesShouldBePresent(types)) {
-                return false;
-            }
-            if(!checkAllTypesShouldNotBePresent(types)) {
-                return false;
-            }
-            if(!checkFreeTags(types)) {
-                return false;
-            }
-            if(!checkNotFreeTags(types)) {
-                return false;
-            }
-            if(!checkExpressions(types, paramContext)) {
-                return false;
-            }
-            return true;
-        }
-
-        private boolean checkExpressions(BitSet types, ParameterContext paramContext) {
-            for(RouteAttributeExpression e : expressions) {
-                if(!e.matches(types, paramContext)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        private boolean checkFreeTags(BitSet types) {
-            for (String ts : onlyTags) {
-                BitSet b = tagRuleMask.get(ts);
-                if (b == null || !b.intersects(types)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        private boolean checkNotFreeTags(BitSet types) {
-            for (String ts : onlyNotTags) {
-                BitSet b = tagRuleMask.get(ts);
-                if (b != null && b.intersects(types)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        private boolean checkAllTypesShouldNotBePresent(BitSet types) {
-            if(filterNotTypes.intersects(types)) {
-                return false;
-            }
-            return true;
-        }
-
-        private boolean checkAllTypesShouldBePresent(BitSet types) {
-            // Bitset method subset is missing "filterTypes.isSubset(types)"
-            // reset previous evaluation
-            evalFilterTypes.or(filterTypes);
-            // evaluate bit intersection and check if filterTypes contained as set in types
-            evalFilterTypes.and(types);
-            if(!evalFilterTypes.equals(filterTypes)) {
-                return false;
-            }
-            return true;
-        }
-        */
+        friend class RoutingConfiguration;
+        friend class RoutingRuleset;
     };
 
 } // namespace OsmAnd
