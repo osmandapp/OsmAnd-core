@@ -16,8 +16,8 @@ OsmAnd::Model::Road::Road(std::shared_ptr<ObfRoutingSection::Subsection> subsect
 }
 
 OsmAnd::Model::Road::Road( std::shared_ptr<Road> that, int insertIdx, uint32_t x31, uint32_t y31 )
-    : _id(0)
-    , _ref(that)
+    : _ref(that)
+    , _id(0)
     , _points(_ref->_points.size() + 1)
     , subsection(_ref->subsection)
     , id(_ref->_id)

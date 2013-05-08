@@ -67,12 +67,12 @@ namespace OsmAnd {
         QList< ObfSection* > _sections;
     protected:
         QString transliterate(QString input);
-        inline static bool readQString(gpb::io::CodedInputStream* cis, QString& output);
-        inline static int readSInt32(gpb::io::CodedInputStream* cis);
-        inline static long readSInt64(gpb::io::CodedInputStream* cis);
-        inline static uint32_t readBigEndianInt(gpb::io::CodedInputStream* cis);
-        inline static void readStringTable(gpb::io::CodedInputStream* cis, QStringList& stringTableOut);
-        inline static void skipUnknownField(gpb::io::CodedInputStream* cis, int tag);
+        static bool readQString(gpb::io::CodedInputStream* cis, QString& output);
+        static int readSInt32(gpb::io::CodedInputStream* cis);
+        static long readSInt64(gpb::io::CodedInputStream* cis);
+        static uint32_t readBigEndianInt(gpb::io::CodedInputStream* cis);
+        static void readStringTable(gpb::io::CodedInputStream* cis, QStringList& stringTableOut);
+        static void skipUnknownField(gpb::io::CodedInputStream* cis, int tag);
     public:
         ObfReader(std::shared_ptr<QIODevice> input);
         virtual ~ObfReader();

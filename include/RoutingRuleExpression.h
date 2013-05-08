@@ -97,8 +97,8 @@ namespace OsmAnd {
         bool validate(const QBitArray& types, RoutingRulesetContext* context) const;
         bool evaluate(const QBitArray& types, RoutingRulesetContext* context, ResultType type, void* result) const;
 
-        static inline bool resolveVariableReferenceValue(RoutingRulesetContext* context, const QString& variableRef, const QString& type, float& value);
-        static inline bool resolveTagReferenceValue(RoutingRulesetContext* context, const QBitArray& types, const QString& tagRef, const QString& type, float& value);
+        static bool resolveVariableReferenceValue(RoutingRulesetContext* context, const QString& variableRef, const QString& type, float& value);
+        static bool resolveTagReferenceValue(RoutingRulesetContext* context, const QBitArray& types, const QString& tagRef, const QString& type, float& value);
 
         friend class RoutingConfiguration;
         friend class RoutingRuleset;

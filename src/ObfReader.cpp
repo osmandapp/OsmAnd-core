@@ -13,9 +13,9 @@
 namespace gpb = google::protobuf;
 
 OsmAnd::ObfReader::ObfReader( std::shared_ptr<QIODevice> input )
-    : source(input)
-    , _codedInputStream(new gpb::io::CodedInputStream(new QZeroCopyInputStream(input)))
+    : _codedInputStream(new gpb::io::CodedInputStream(new QZeroCopyInputStream(input)))
     , _isBasemap(false)
+    , source(input)
     , version(_version)
     , creationTimestamp(_creationTimestamp)
     , isBaseMap(_isBasemap)

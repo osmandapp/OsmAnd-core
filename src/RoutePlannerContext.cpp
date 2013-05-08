@@ -14,12 +14,12 @@ OsmAnd::RoutePlannerContext::RoutePlannerContext(
     float initialHeading /*= std::numeric_limits<float>::quiet_NaN()*/,
     QHash<QString, QString>* options /*=nullptr*/,
     size_t memoryLimit /*= std::numeric_limits<size_t>::max()*/ )
-    : sources(sources)
-    , configuration(routingConfig)
-    , profileContext(new RoutingProfileContext(configuration->routingProfiles[vehicle], options))
-    , _useBasemap(useBasemap)
+    : _useBasemap(useBasemap)
     , _memoryUsageLimit(memoryLimit)
     , _initialHeading(initialHeading)
+    , sources(sources)
+    , configuration(routingConfig)
+    , profileContext(new RoutingProfileContext(configuration->routingProfiles[vehicle], options))
 {
     _partialRecalculationDistanceLimit = Utilities::parseArbitraryFloat(configuration->resolveAttribute(vehicle, "recalculateDistanceHelp"), 10000.0f);
     _heuristicCoefficient = Utilities::parseArbitraryFloat(configuration->resolveAttribute(vehicle, "heuristicCoefficient"), 1.0f);

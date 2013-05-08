@@ -101,7 +101,7 @@ namespace OsmAnd {
         const float& minDefaultSpeed;
         const float& maxDefaultSpeed;
 
-        inline std::shared_ptr<RoutingRuleset> getRuleset(RoutingRuleset::Type type) const;
+        std::shared_ptr<RoutingRuleset> getRuleset(RoutingRuleset::Type type) const;
         void addAttribute(const QString& key, const QString& value);
 
     friend class RoutingConfiguration;

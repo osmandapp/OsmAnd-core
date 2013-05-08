@@ -107,7 +107,8 @@ uint32_t OsmAnd::RoutingProfile::registerTagValueAttribute( const QString& tag, 
     if(itId != _universalRules.end())
         return *itId;
     
-    uint32_t id = _universalRules.size();
+    auto id = _universalRules.size();
+    assert(id & 0x80000000 == 0);
     _universalRulesKeysById.push_back(key);
     _universalRules.insert(key, id);
 
