@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-NAME=$(basename $(dirname "${BASH_SOURCE[0]}") )
+NAME=$(basename $SRCLOC)
 
 # Check if already configured
 if [ -d "$SRCLOC/upstream.patched" ]; then

@@ -1,7 +1,12 @@
 #!/bin/bash
 
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-NAME=$(basename $(dirname "${BASH_SOURCE[0]}") )
+NAME=$(basename $SRCLOC)
+
+if [[ "$(uname -a)" == *Cygwin* ]]; then
+	echo "Please execute build.bat"
+	exit
+fi
 
 if [ ! -d "$ANDROID_SDK" ]; then
 	echo "ANDROID_SDK is not set"

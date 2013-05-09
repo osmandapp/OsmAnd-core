@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-NAME=$(basename $(dirname "${BASH_SOURCE[0]}") )
+NAME=$(basename $SRCLOC)
 
 QTBASE_CONFIGURATION=\
 "-opensource -confirm-license "\
@@ -12,13 +12,8 @@ QTBASE_CONFIGURATION=\
 "-v"
 
 if [[ "$(uname -a)" == *Cygwin* ]]; then
-	if [ ! -d "$SRCLOC/upstream.patched.windows.i686" ]; then
-		cp -rf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.windows.i686"
-	fi
-	if [ ! -d "$SRCLOC/upstream.patched.windows.amd64" ]; then
-		cp -rf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.windows.amd64"
-	fi
 	echo "Please execute build.bat from required environments for i686 and amd64"
+	exit
 fi
 
 if [[ "$(uname -a)" == *Linux* ]]; then
