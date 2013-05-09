@@ -96,8 +96,8 @@ namespace OsmAnd {
             Direction getDirection() const;
             bool isRoundabout() const;
 
-        friend struct ObfRoutingSection;
-        friend class RoutePlanner;
+        friend struct OsmAnd::ObfRoutingSection;
+        friend class OsmAnd::RoutePlanner;
         };
 
     } // namespace Model
