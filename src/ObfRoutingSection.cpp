@@ -598,10 +598,10 @@ void OsmAnd::ObfRoutingSection::readRoad( ObfReader* reader, Subsection* subsect
 
                     char fakeString[] = {
                         '[',
-                        (stringId >> 8*0) & 0xff,
-                        (stringId >> 8*1) & 0xff,
-                        (stringId >> 8*2) & 0xff,
-                        (stringId >> 8*3) & 0xff,
+                        static_cast<char>((stringId >> 8*0) & 0xff),
+                        static_cast<char>((stringId >> 8*1) & 0xff),
+                        static_cast<char>((stringId >> 8*2) & 0xff),
+                        static_cast<char>((stringId >> 8*3) & 0xff),
                         ']'
                     };
                     auto fakeQString = QString::fromLocal8Bit(fakeString, sizeof(fakeString));
