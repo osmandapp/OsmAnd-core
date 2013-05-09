@@ -23,24 +23,28 @@
 #ifndef __OBF_ADDRESS_SECTION_H_
 #define __OBF_ADDRESS_SECTION_H_
 
-#include <OsmAndCore.h>
 #include <memory>
-#include <QList>
-#include <map>
-#include <unordered_map>
-#include <unordered_set>
 #include <tuple>
 #include <string>
+
+#include <OsmAndCore.h>
+
+#include <QList>
+
 #include <google/protobuf/io/coded_stream.h>
 #include <ObfSection.h>
-#include <StreetGroup.h>
-#include <Street.h>
 #include <Building.h>
 #include <OBF.pb.h>
 
 namespace OsmAnd {
 
     namespace gpb = google::protobuf;
+
+    namespace Model {
+        class StreetIntersection;
+        class Street;
+        class StreetGroup;
+    } // namespace Model
 
     /**
     'Address' section of OsmAnd Binary File
@@ -88,7 +92,7 @@ namespace OsmAnd {
         static void loadStreetGroups(ObfReader* reader, ObfAddressSection* section, QList< std::shared_ptr<Model::StreetGroup> >& list, uint8_t typeBitmask = std::numeric_limits<uint8_t>::max());
         static void loadStreetsFromGroup(ObfReader* reader, Model::StreetGroup* group, QList< std::shared_ptr<Model::Street> >& list);
         static void loadBuildingsFromStreet(ObfReader* reader, Model::Street* street, QList< std::shared_ptr<Model::Building> >& list);
-        static void loadIntersectionsFromStreet(ObfReader* reader, Model::Street* street, QList< std::shared_ptr<Model::Street::IntersectedStreet> >& list);
+        static void loadIntersectionsFromStreet(ObfReader* reader, Model::Street* street, QList< std::shared_ptr<Model::StreetIntersection> >& list);
     protected:
         static void read(ObfReader* reader, ObfAddressSection* section);
         static void readStreetGroups(ObfReader* reader, ObfAddressSection* section, QList< std::shared_ptr<Model::StreetGroup> >& list, uint8_t typeBitmask = std::numeric_limits<uint8_t>::max());
@@ -96,8 +100,8 @@ namespace OsmAnd {
         static void readStreet(ObfReader* reader, Model::StreetGroup* group, Model::Street* street);
         static void readBuildingsFromStreet(ObfReader* reader, Model::Street* street, QList< std::shared_ptr<Model::Building> >& list);
         static void readBuilding(ObfReader* reader, Model::Street* street, Model::Building* building);
-        static void readIntersectionsFromStreet(ObfReader* reader, Model::Street* street, QList< std::shared_ptr<Model::Street::IntersectedStreet> >& list);
-        static void readIntersectedStreet(ObfReader* reader, Model::Street* street, Model::Street::IntersectedStreet* intersection);
+        static void readIntersectionsFromStreet(ObfReader* reader, Model::Street* street, QList< std::shared_ptr<Model::StreetIntersection> >& list);
+        static void readIntersectedStreet(ObfReader* reader, Model::Street* street, Model::StreetIntersection* intersection);
 
     private:
 

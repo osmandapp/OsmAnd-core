@@ -3,6 +3,9 @@
 #include <ObfReader.h>
 #include <google/protobuf/wire_format_lite.h>
 #include <Settlement.h>
+#include <Street.h>
+#include <StreetGroup.h>
+#include <StreetIntersection.h>
 #include <PostcodeArea.h>
 #include <Utilities.h>
 
@@ -160,15 +163,15 @@ void OsmAnd::ObfAddressSection::readStreet( ObfReader* reader, Model::StreetGrou
         case OBF::StreetIndex::kXFieldNumber:
             {
                 auto dx = ObfReader::readSInt32(cis);
-                street->_xTile24 = (Utilities::get31TileNumberX(group->_longitude) >> 7) + dx;
-                street->_longitude = Utilities::getLongitudeFromTile(24, street->_xTile24);
+                street->_tile24.x = (Utilities::get31TileNumberX(group->_longitude) >> 7) + dx;
+                street->_location.x = Utilities::getLongitudeFromTile(24, street->_tile24.x);
             }
             break;
         case OBF::StreetIndex::kYFieldNumber:
             {
                 auto dy = ObfReader::readSInt32(cis);
-                street->_yTile24 = (Utilities::get31TileNumberY(group->_latitude) >> 7) + dy;
-                street->_latitude = Utilities::getLatitudeFromTile(24, street->_yTile24);
+                street->_tile24.y = (Utilities::get31TileNumberY(group->_latitude) >> 7) + dy;
+                street->_location.y = Utilities::getLatitudeFromTile(24, street->_tile24.y);
             }
             break;
         case OBF::StreetIndex::kIntersectionsFieldNumber:
@@ -285,25 +288,25 @@ void OsmAnd::ObfAddressSection::readBuilding( ObfReader* reader, Model::Street* 
         case OBF::BuildingIndex::kXFieldNumber:
             {
                 auto dx = ObfReader::readSInt32(cis);
-                building->_xTile24 = street->_xTile24 + dx;
+                building->_xTile24 = street->_tile24.x + dx;
             }
             break;
         case OBF::BuildingIndex::kX2FieldNumber:
             {
                 auto dx2 = ObfReader::readSInt32(cis);
-                building->_x2Tile24 = street->_xTile24 + dx2;
+                building->_x2Tile24 = street->_tile24.x + dx2;
             }
             break;
         case OBF::BuildingIndex::kYFieldNumber:
             {
                 auto dy = ObfReader::readSInt32(cis);
-                building->_yTile24 = street->_yTile24 + dy;
+                building->_yTile24 = street->_tile24.y + dy;
             }
             break;
         case OBF::BuildingIndex::kY2FieldNumber:
             {
                 auto dy2 = ObfReader::readSInt32(cis);
-                building->_y2Tile24 = street->_yTile24 + dy2;
+                building->_y2Tile24 = street->_tile24.y + dy2;
             }
             break;
         case OBF::BuildingIndex::kPostcodeFieldNumber:
@@ -316,7 +319,7 @@ void OsmAnd::ObfAddressSection::readBuilding( ObfReader* reader, Model::Street* 
     }
 }
 
-void OsmAnd::ObfAddressSection::loadIntersectionsFromStreet( ObfReader* reader, Model::Street* street, QList< std::shared_ptr<Model::Street::IntersectedStreet> >& list )
+void OsmAnd::ObfAddressSection::loadIntersectionsFromStreet( ObfReader* reader, Model::Street* street, QList< std::shared_ptr<Model::StreetIntersection> >& list )
 {
     //TODO:checkAddressIndex(s.getFileOffset());
     auto cis = reader->_codedInputStream;
@@ -328,7 +331,7 @@ void OsmAnd::ObfAddressSection::loadIntersectionsFromStreet( ObfReader* reader, 
     cis->PopLimit(oldLimit);
 }
 
-void OsmAnd::ObfAddressSection::readIntersectionsFromStreet( ObfReader* reader, Model::Street* street, QList< std::shared_ptr<Model::Street::IntersectedStreet> >& list )
+void OsmAnd::ObfAddressSection::readIntersectionsFromStreet( ObfReader* reader, Model::Street* street, QList< std::shared_ptr<Model::StreetIntersection> >& list )
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -344,7 +347,7 @@ void OsmAnd::ObfAddressSection::readIntersectionsFromStreet( ObfReader* reader, 
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
-                std::shared_ptr<Model::Street::IntersectedStreet> intersectedStreet(new Model::Street::IntersectedStreet());
+                std::shared_ptr<Model::StreetIntersection> intersectedStreet(new Model::StreetIntersection());
                 readIntersectedStreet(reader, street, intersectedStreet.get());
                 list.push_back(intersectedStreet);
                 cis->PopLimit(oldLimit);
@@ -364,7 +367,7 @@ void OsmAnd::ObfAddressSection::readIntersectionsFromStreet( ObfReader* reader, 
     }
 }
 
-void OsmAnd::ObfAddressSection::readIntersectedStreet( ObfReader* reader, Model::Street* street, Model::Street::IntersectedStreet* intersection )
+void OsmAnd::ObfAddressSection::readIntersectedStreet( ObfReader* reader, Model::Street* street, Model::StreetIntersection* intersection )
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -386,15 +389,15 @@ void OsmAnd::ObfAddressSection::readIntersectedStreet( ObfReader* reader, Model:
         case OBF::StreetIntersection::kIntersectedXFieldNumber:
             {
                 auto dx = ObfReader::readSInt32(cis);
-                intersection->_xTile24 = street->_xTile24 + dx;
-                intersection->_longitude = Utilities::getLongitudeFromTile(24, intersection->_xTile24);
+                intersection->_tile24.x = street->_tile24.x + dx;
+                intersection->_location.x = Utilities::getLongitudeFromTile(24, intersection->_tile24.x);
             }
             break;
         case OBF::StreetIntersection::kIntersectedYFieldNumber:
             {
                 auto dy = ObfReader::readSInt32(cis);
-                intersection->_yTile24 = street->_yTile24 + dy;
-                street->_latitude = Utilities::getLatitudeFromTile(24, intersection->_yTile24);
+                intersection->_tile24.y = street->_tile24.y + dy;
+                street->_location.y = Utilities::getLatitudeFromTile(24, intersection->_tile24.y);
             }
             break;
         default:

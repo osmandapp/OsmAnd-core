@@ -12,6 +12,9 @@
 #include <ObfReader.h>
 #include <Utilities.h>
 
+#include <Street.h>
+#include <StreetIntersection.h>
+
 OsmAnd::Inspector::Configuration::Configuration()
 {
     verboseAddress = false;
@@ -343,7 +346,8 @@ void printAddressDetailedInfo(std::ostream& output, const OsmAnd::Inspector::Con
             for(auto itStreet = streets.begin(); itStreet != streets.end(); ++itStreet)
             {
                 auto s = *itStreet;
-
+                //TODO: proper filter
+                /*
                 const bool isInside =
                     cfg.latTop >= s->latitude &&
                     cfg.latBottom <= s->latitude &&
@@ -351,10 +355,10 @@ void printAddressDetailedInfo(std::ostream& output, const OsmAnd::Inspector::Con
                     cfg.lonRight >= s->longitude;
                 if(!isInside)
                     continue;
-
+                */
                 QList< std::shared_ptr<OsmAnd::Model::Building> > buildings;
                 OsmAnd::ObfAddressSection::loadBuildingsFromStreet(reader, s.get(), buildings);
-                QList< std::shared_ptr<OsmAnd::Model::Street::IntersectedStreet> > intersections;
+                QList< std::shared_ptr<OsmAnd::Model::StreetIntersection> > intersections;
                 OsmAnd::ObfAddressSection::loadIntersectionsFromStreet(reader, s.get(), intersections);
                 output << "\t\t\t'" << qPrintable(s->latinName) << "' [" << s->id << "], " << buildings.size() << " building(s), " << intersections.size() << " intersection(s)" << std::endl;
                 if(cfg.verboseBuildings && buildings.size() > 0)
@@ -377,7 +381,7 @@ void printAddressDetailedInfo(std::ostream& output, const OsmAnd::Inspector::Con
                     {
                         auto intersection = *itIntersection;
 
-                        output << "\t\t\t\t\t" << intersection->_latinName.toStdString() << std::endl;
+                        output << "\t\t\t\t\t" << intersection->latinName.toStdString() << std::endl;
                     }
                 }
             }

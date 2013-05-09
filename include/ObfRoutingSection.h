@@ -82,8 +82,8 @@ namespace OsmAnd {
                 float asFloat;
             } _parsedValue;
 
-            inline bool isRoundabout() const;
-            inline int getDirection() const;
+            bool isRoundabout() const;
+            int getDirection() const;
         };
         QList< std::shared_ptr<EncodingRule> > _encodingRules;
 
@@ -111,7 +111,7 @@ namespace OsmAnd {
         public:
             virtual ~Subsection();
 
-            inline bool containsData() const;
+            bool containsData() const;
             const AreaI& area31;
             
             const std::shared_ptr<Subsection> parent;

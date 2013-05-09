@@ -108,7 +108,6 @@ uint32_t OsmAnd::RoutingProfile::registerTagValueAttribute( const QString& tag, 
         return *itId;
     
     auto id = _universalRules.size();
-    assert(id & 0x80000000 == 0);
     _universalRulesKeysById.push_back(key);
     _universalRules.insert(key, id);
 
@@ -117,7 +116,10 @@ uint32_t OsmAnd::RoutingProfile::registerTagValueAttribute( const QString& tag, 
         itTagRuleMask = _tagRuleMask.insert(tag, QBitArray());
     
     if(itTagRuleMask->size() <= id)
+    {
+        assert(id < std::numeric_limits<int>::max());
         itTagRuleMask->resize(id + 1);
+    }
     itTagRuleMask->setBit(id);
     
     return id;

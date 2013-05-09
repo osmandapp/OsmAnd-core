@@ -92,9 +92,9 @@ namespace OsmAnd {
             double getDirectionDelta(uint32_t originIdx, bool forward) const;
             double getDirectionDelta(uint32_t originIdx, bool forward, float distance) const;
 
-            inline bool isLoop() const;
-            inline Direction getDirection() const;
-            inline bool isRoundabout() const;
+            bool isLoop() const;
+            Direction getDirection() const;
+            bool isRoundabout() const;
 
         friend struct ObfRoutingSection;
         friend class RoutePlanner;

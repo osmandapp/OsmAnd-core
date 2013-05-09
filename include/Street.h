@@ -28,11 +28,11 @@
 #include <QString>
 
 #include <OsmAndCore.h>
+#include <ObfAddressSection.h>
 #include <MapObject.h>
+#include <Area.h>
 
 namespace OsmAnd {
-
-    struct ObfAddressSection;
 
     namespace Model {
 
@@ -40,26 +40,22 @@ namespace OsmAnd {
         {
         private:
         protected:
-            int64_t _id;
+            uint64_t _id;
             QString _name;
             QString _latinName;
-            int _xTile24;
-            int _yTile24;
-            double _longitude;
-            double _latitude;
-            unsigned int _offset;
+            PointI _tile24;
+            PointD _location;
+            uint32_t _offset;
         public:
             Street();
             virtual ~Street();
 
-            const int64_t& id;
+            const uint64_t& id;
             const QString& name;
             const QString& latinName;
-            const int& xTile24;
-            const int& yTile24;
-            const double& longitude;
-            const double& latitude;
-
+            const PointI& tile24;
+            const PointD& location;
+            
             struct IntersectedStreet
             {
                 QString _name;
