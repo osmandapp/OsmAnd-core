@@ -14,6 +14,8 @@
 
 #include <Street.h>
 #include <StreetIntersection.h>
+#include <StreetGroup.h>
+#include <Building.h>
 
 OsmAnd::Inspector::Configuration::Configuration()
 {

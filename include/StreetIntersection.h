@@ -29,7 +29,6 @@
 
 #include <OsmAndCore.h>
 #include <ObfAddressSection.h>
-#include <MapObject.h>
 #include <Area.h>
 
 namespace OsmAnd {

@@ -33,7 +33,6 @@
 
 #include <google/protobuf/io/coded_stream.h>
 #include <ObfSection.h>
-#include <Building.h>
 #include <OBF.pb.h>
 
 namespace OsmAnd {
@@ -44,6 +43,7 @@ namespace OsmAnd {
         class StreetIntersection;
         class Street;
         class StreetGroup;
+        class Building;
     } // namespace Model
 
     /**

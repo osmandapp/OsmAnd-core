@@ -6,6 +6,7 @@
 #include <Street.h>
 #include <StreetGroup.h>
 #include <StreetIntersection.h>
+#include <Building.h>
 #include <PostcodeArea.h>
 #include <Utilities.h>
 
