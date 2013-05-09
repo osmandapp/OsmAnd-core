@@ -6,8 +6,8 @@ NAME=$(basename $(dirname "${BASH_SOURCE[0]}") )
 QTBASE_CONFIGURATION=\
 "-opensource -confirm-license "\
 "-nomake examples -nomake demos -nomake tests -nomake docs "\
-"-qt-sql-sqlite -opengl desktop"\
-"-no-accessibility -no-linuxfb -no-directfb -no-eglfs -no-xcb -no-qml-debug -no-javascript-jit "\
+"-qt-sql-sqlite "\
+"-no-accessibility -no-opengl -no-kms -no-linuxfb -no-directfb -no-eglfs -no-xcb -no-qml-debug -no-javascript-jit "\
 "-c++11 -shared -release "\
 "-v"
 
@@ -28,7 +28,7 @@ if [[ "$(uname -a)" == *Linux* ]]; then
 			./configure -xplatform linux-g++-32 $QTBASE_CONFIGURATION)
 	fi
 	(cd "$SRCLOC/upstream.patched.linux.i686" && make -j`nproc`)
-	
+
 	if [ ! -d "$SRCLOC/upstream.patched.linux.amd64" ]; then
 		cp -rf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.linux.amd64"
 		(cd "$SRCLOC/upstream.patched.linux.amd64" && \
