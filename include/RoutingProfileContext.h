@@ -50,15 +50,15 @@ namespace OsmAnd {
 
         const std::shared_ptr<RoutingProfile> profile;
 
-        inline std::shared_ptr<RoutingRulesetContext> getRulesetContext(RoutingRuleset::Type type);
+        std::shared_ptr<RoutingRulesetContext> getRulesetContext(RoutingRuleset::Type type);
 
-        inline Model::Road::Direction getDirection(Model::Road* road);
-        inline bool acceptsRoad(Model::Road* road);
-        inline bool acceptsBorderLinePoint(ObfRoutingSection* section, ObfRoutingSection::BorderLinePoint* point);
-        inline float getSpeedPriority(Model::Road* road);
-        inline float getSpeed(Model::Road* road);
-        inline float getObstaclesExtraTime(Model::Road* road, uint32_t pointIndex);
-        inline float getRoutingObstaclesExtraTime(Model::Road* road, uint32_t pointIndex);
+        Model::Road::Direction getDirection(Model::Road* road);
+        bool acceptsRoad(Model::Road* road);
+        bool acceptsBorderLinePoint(ObfRoutingSection* section, ObfRoutingSection::BorderLinePoint* point);
+        float getSpeedPriority(Model::Road* road);
+        float getSpeed(Model::Road* road);
+        float getObstaclesExtraTime(Model::Road* road, uint32_t pointIndex);
+        float getRoutingObstaclesExtraTime(Model::Road* road, uint32_t pointIndex);
 
         friend class RoutingRulesetContext;
     };

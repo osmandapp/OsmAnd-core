@@ -115,8 +115,8 @@ namespace OsmAnd {
             RoutePlannerContext* const owner;
             const std::shared_ptr<ObfReader> origin;
 
-            inline bool isLoaded() const;
-            inline uint32_t getLoadsCounter() const;
+            bool isLoaded() const;
+            uint32_t getLoadsCounter() const;
 
             void registerRoad(std::shared_ptr<Model::Road> road);
             void collectRoads(QList< std::shared_ptr<Model::Road> >& output, QMap<uint64_t, std::shared_ptr<Model::Road> >* duplicatesRegistry = nullptr);
