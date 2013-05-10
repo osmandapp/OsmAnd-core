@@ -3,11 +3,6 @@
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 NAME=$(basename $SRCLOC)
 
-if [[ "$(uname -a)" == *Cygwin* ]]; then
-	echo "Please execute build.bat"
-	exit
-fi
-
 if [ ! -d "$ANDROID_SDK" ]; then
 	echo "ANDROID_SDK is not set"
 	exit
@@ -16,9 +11,15 @@ if [ ! -d "$ANDROID_NDK" ]; then
 	echo "ANDROID_NDK is not set"
 	exit
 fi
-export ANDROID_SDK_ROOT=$ANDROID_SDK
-export ANDROID_NDK_ROOT=$ANDROID_NDK
+export ANDROID_SDK_ROOT=`echo $ANDROID_SDK | sed 's/\\\\/\//g'`
+export ANDROID_NDK_ROOT=`echo $ANDROID_NDK | sed 's/\\\\/\//g'`
 export ANDROID_NDK_TOOLCHAIN_VERSION=4.7
+if [[ "$(uname -a)" == *Cygwin* ]]; then
+	export ANDROID_NDK_HOST=windows
+fi
+if [[ "$(uname -a)" == *Linux* ]]; then
+	export ANDROID_NDK_HOST=linux
+fi
 
 QTBASE_CONFIGURATION=\
 "-opensource -confirm-license -xplatform android-g++ "\
@@ -27,6 +28,10 @@ QTBASE_CONFIGURATION=\
 "-no-gui -no-widgets -no-opengl -no-accessibility -no-linuxfb -no-directfb -no-eglfs -no-xcb -no-qml-debug -no-javascript-jit "\
 "-c++11 -shared -release "\
 "-v"
+
+if [[ "$(uname -a)" == *Cygwin* ]]; then
+	$QTBASE_CONFIGURATION="$QTBASE_CONFIGURATION -no-c++11"
+fi
 
 if [ ! -d "$SRCLOC/upstream.patched.armeabi" ]; then
 	cp -rf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi"
