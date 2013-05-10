@@ -1,8 +1,8 @@
 diff --git a/src/corelib/arch/qatomic_armv5.h b/src/corelib/arch/qatomic_armv5.h
-index 445379a..10ae730 100644
+index e0a50b3..2307a9f 100644
 --- a/src/corelib/arch/qatomic_armv5.h
 +++ b/src/corelib/arch/qatomic_armv5.h
-@@ -67,9 +67,6 @@ QT_END_NAMESPACE
+@@ -68,9 +68,6 @@ QT_END_NAMESPACE
  #ifdef QT_NO_ARM_EABI
  # error "Sorry, ARM without EABI is no longer supported"
  #endif

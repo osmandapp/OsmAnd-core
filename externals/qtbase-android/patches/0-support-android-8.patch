@@ -1,5 +1,5 @@
 diff --git a/src/corelib/io/qfsfileengine_unix.cpp b/src/corelib/io/qfsfileengine_unix.cpp
-index 9f49fcf..8587506 100644
+index a5f077b..d0286ec 100644
 --- a/src/corelib/io/qfsfileengine_unix.cpp
 +++ b/src/corelib/io/qfsfileengine_unix.cpp
 @@ -263,6 +263,9 @@ bool QFSFileEnginePrivate::nativeFlush()
