@@ -36,7 +36,7 @@ if [[ "$(uname -a)" == *Darwin* ]]; then
 	if [ ! -d "$SRCLOC/upstream.patched.darwin" ]; then
 		cp -rf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.darwin"
 		(cd "$SRCLOC/upstream.patched.darwin" && \
-			./configure $QTBASE_CONFIGURATION -accessibility -opengl)
+			./configure -xplatform macx-clang-libc++ $QTBASE_CONFIGURATION -accessibility -opengl)
 	fi
 	(cd "$SRCLOC/upstream.patched.darwin" && make -j`nproc`)
 fi
