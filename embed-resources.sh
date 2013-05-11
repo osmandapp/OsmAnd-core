@@ -19,12 +19,12 @@ for resource in $SRCLOC/embeddable-resources/* ; do
 	echo -n "Packing '$(basename $resource)' "
 	originalSize=`stat --printf="%s" $resource`
 	echo -n "from $originalSize "
-		
+
 	zlibbedResource=$resource.qz
 	perl -MCompress::Zlib -e 'undef $/; print compress(<>, 9)' < $resource > $zlibbedResource
 	compressedSize=`stat --printf="%s" $zlibbedResource`
 	echo -n "to $compressedSize bytes..."
-	
+
 	echo -e "\tconst QString __bundled_resource_name_$((resourceCounter)) = \"$(basename $resource)\";" >&3
 	echo -e "\tconst uint8_t __bundled_resource_data_$((resourceCounter))[] = {" >&3
 	echo -e -n "\t\t" >&3
@@ -57,17 +57,17 @@ for resource in $SRCLOC/embeddable-resources/* ; do
 	echo "" >&3
 	echo -e "\t};" >&3
 	echo -e "\tconst size_t __bundled_resource_size_$((resourceCounter)) = 4 + $((byteCounter));" >&3	
-	
+
 	resourceCounter=$resourceCounter+1
 	rm -f $zlibbedResource
 	echo ""
 done
-echo -e "\tOsmAnd::EmbeddedResource OsmAnd::__bundled_resources[] = {" >&3
+echo -e "\tOsmAnd::EmbeddedResource __bundled_resources[] = {" >&3
 for (( resourceIdx=0; resourceIdx<$((resourceCounter)); resourceIdx++ )); do
 	echo -e "\t\t{ __bundled_resource_name_$resourceIdx, __bundled_resource_size_$resourceIdx, &__bundled_resource_data_$resourceIdx[0] }," >&3
 done
 echo -e "\t};" >&3
-echo -e "\tuint32_t OsmAnd::__bundled_resources_count = $((resourceCounter));" >&3
+echo -e "\tuint32_t __bundled_resources_count = $((resourceCounter));" >&3
 
 echo -e "} /* namespace OsmAnd */" >&3
 exec 3>&-

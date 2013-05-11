@@ -273,8 +273,8 @@ namespace OsmAnd {
 		0x8d, 0xaf, 0x0e, 0xff, 0x03, 0x44, 0x14, 0x74, 0xac, 
 	};
 	const size_t __bundled_resource_size_0 = 4 + 4249;
-	OsmAnd::EmbeddedResource OsmAnd::__bundled_resources[] = {
+	OsmAnd::EmbeddedResource __bundled_resources[] = {
 		{ __bundled_resource_name_0, __bundled_resource_size_0, &__bundled_resource_data_0[0] },
 	};
-	uint32_t OsmAnd::__bundled_resources_count = 1;
+	uint32_t __bundled_resources_count = 1;
 } /* namespace OsmAnd */
