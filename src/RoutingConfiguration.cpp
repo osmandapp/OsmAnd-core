@@ -2,6 +2,7 @@
 #include "RoutingConfiguration_private.h"
 
 #include "Common.h"
+#include "EmbeddedResources.h"
 #include "Utilities.h"
 
 #include <QByteArray>
@@ -148,7 +149,7 @@ void OsmAnd::RoutingConfiguration::parseRoutingParameter( QXmlStreamReader* xmlP
 
 void OsmAnd::RoutingConfiguration::loadDefault( RoutingConfiguration& outConfig )
 {
-    QByteArray rawDefaultConfig(reinterpret_cast<const char*>(&_defaultRawXml[0]), _defaultRawXmlSize);
+    auto& rawDefaultConfig = EmbeddedResources::decompressResource("routing.xml");
     QBuffer defaultConfig(&rawDefaultConfig);
     bool ok = false;
     ok = defaultConfig.open(QIODevice::ReadOnly | QIODevice::Text);

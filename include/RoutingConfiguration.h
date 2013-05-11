@@ -42,9 +42,6 @@ namespace OsmAnd {
     class OSMAND_CORE_API RoutingConfiguration
     {
     private:
-        static const uint8_t _defaultRawXml[];
-        static const size_t _defaultRawXmlSize;
-
         static void parseRoutingProfile(QXmlStreamReader* xmlParser, RoutingProfile* routingProfile);
         static void parseRoutingParameter(QXmlStreamReader* xmlParser, RoutingProfile* routingProfile);
         static void parseRoutingRuleset(QXmlStreamReader* xmlParser, RoutingProfile* routingProfile, RoutingRuleset::Type rulesetType, QStack< std::shared_ptr<struct RoutingRule> >& ruleset);
