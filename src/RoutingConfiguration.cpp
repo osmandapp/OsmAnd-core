@@ -138,7 +138,7 @@ void OsmAnd::RoutingConfiguration::parseRoutingParameter( QXmlStreamReader* xmlP
                 std::cerr << qPrintable(*itValue) << " is not a valid integer" << std::endl;
             values.push_back(value);
         }
-            
+
         routingProfile->registerNumericParameter(idAttrib.toString(), nameAttrib.toString(), descriptionAttrib.toString(), values, valueDescriptions.string()->split(','));
     }
     else
@@ -149,7 +149,7 @@ void OsmAnd::RoutingConfiguration::parseRoutingParameter( QXmlStreamReader* xmlP
 
 void OsmAnd::RoutingConfiguration::loadDefault( RoutingConfiguration& outConfig )
 {
-    auto& rawDefaultConfig = EmbeddedResources::decompressResource("routing.xml");
+    auto rawDefaultConfig = EmbeddedResources::decompressResource("routing.xml");
     QBuffer defaultConfig(&rawDefaultConfig);
     bool ok = false;
     ok = defaultConfig.open(QIODevice::ReadOnly | QIODevice::Text);
