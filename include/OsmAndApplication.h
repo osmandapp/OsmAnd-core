@@ -12,6 +12,7 @@
 #include <qthreadpool.h>
 #include <qmap.h>
 #include <OsmAndCore.h>
+#include "OsmAndSettings.h"
 
 
 namespace OsmAnd {
@@ -24,21 +25,22 @@ struct OSMAND_CORE_API OsmAndTask {
 
 	virtual QString& getDescription() = 0;
 
-	virtual ~OsmAndTask() {};
+    virtual ~OsmAndTask() {}
 };
 
 
 class OSMAND_CORE_API OsmAndApplication {
 private:
+    std::shared_ptr<OsmAndSettings> _settings;
 	OsmAndApplication();
 public:
-	QMap<QString, QThreadPool> threadPools;
-
 	virtual ~OsmAndApplication();
 
 	static std::shared_ptr<OsmAndApplication> getAndInitializeApplication();
 
-	void submitTask(OsmAndTask* run, int threadsSize = 1);
+    QString getVersion() { return "0.1"; }
+
+    std::shared_ptr<OsmAndSettings> getSettings() { return _settings; }
 
 };
 

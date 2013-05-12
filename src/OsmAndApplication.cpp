@@ -9,7 +9,8 @@
 
 namespace OsmAnd {
 
-OsmAndApplication::OsmAndApplication() {
+OsmAndApplication::OsmAndApplication() : _settings(std::shared_ptr<OsmAndSettings>(new OsmAndSettings()))
+{
 }
 
 OsmAndApplication::~OsmAndApplication() {
@@ -23,5 +24,6 @@ std::shared_ptr<OsmAndApplication> OsmAndApplication::getAndInitializeApplicatio
 
 	return globalApplicationRef;
 }
+
 
 } /* namespace OsmAnd */

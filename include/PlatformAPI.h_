@@ -9,7 +9,7 @@
 #define PLATFORMAPI_H_
 
 #include <memory>
-#include <qstring.h>
+#include <QString>
 
 #include <OsmAndCore.h>
 
