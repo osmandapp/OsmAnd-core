@@ -81,7 +81,8 @@ public:
 class OSMAND_CORE_API OsmAndSettings : public OsmAndSettingsBase {
 public:
     OsmAndSettings();
-    OsmAndPreference APPLICATION_DIRECTORY;
+    OsmAndPreference APPLICATION_DIRECTORY; // string
+    OsmAndPreference MAP_SCALE; // float
     virtual ~OsmAndSettings(){}
 };
 

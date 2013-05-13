@@ -20,10 +20,12 @@ QList<AppMode> ApplicationMode::getApplicationModes() {
 
 
 OsmAndSettings::OsmAndSettings():
-    APPLICATION_DIRECTORY(this, "application_directory", QString(""))
+    APPLICATION_DIRECTORY(this, "application_directory", QString("")),
+    MAP_SCALE(this, "map_scale", 1.0)
 {
     APP_MODE = ApplicationMode::DEFAULT;
     APPLICATION_DIRECTORY.cache();
+    MAP_SCALE.cache();
 
 }
 

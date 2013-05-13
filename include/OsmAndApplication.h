@@ -40,7 +40,7 @@ public:
 
     QString getVersion() { return "0.1"; }
 
-    std::shared_ptr<OsmAndSettings> getSettings() { return _settings; }
+    inline std::shared_ptr<OsmAndSettings> getSettings() { return _settings; }
 
 };
 
