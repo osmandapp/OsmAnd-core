@@ -19,6 +19,9 @@ if [[ "$(uname -a)" == *Cygwin* ]]; then
 fi
 if [[ "$(uname -a)" == *Linux* ]]; then
 	export ANDROID_NDK_HOST=linux
+	if [[ "$(uname -m)" == x86_64 ]] && [ -d $ANDROID_NDK/prebuilt/linux-x86_64 ]; then
+		export ANDROID_NDK_HOST=linux-x86_64;
+	fi
 fi
 
 QTBASE_CONFIGURATION=\
