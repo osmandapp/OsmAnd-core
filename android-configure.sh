@@ -13,6 +13,12 @@ QTBASE_CONFIGURATION=\
 "-c++11 -shared -release "\
 "-v"
 
+if [[ "$(uname -a)" == *Linux* ]]; then
+	if [[ "$(uname -m)" == x86_64 ]] && [ -d $ANDROID_NDK/prebuilt/linux-x86_64 ]; then
+		export ANDROID_NDK_HOST=linux-x86_64;
+	fi
+fi
+
 if [ -n "$BUILD_ALL" ] || [ -n "$OSMAND_ARM_ONLY" ] || [ -n "$OSMAND_ARMv5_ONLY" ]; then
 	if [ ! -d "$SRCLOC/upstream.patched.armeabi" ]; then
 		cp -rf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi"
