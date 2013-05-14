@@ -15,12 +15,28 @@ export ANDROID_SDK_ROOT=`echo $ANDROID_SDK | sed 's/\\\\/\//g'`
 export ANDROID_NDK_ROOT=`echo $ANDROID_NDK | sed 's/\\\\/\//g'`
 export ANDROID_NDK_TOOLCHAIN_VERSION=4.7
 if [[ "$(uname -a)" == *Cygwin* ]]; then
-	export ANDROID_NDK_HOST=windows
+	if [[ "$(uname -a)" == *WOW64* ]] && [ -d $ANDROID_NDK/prebuilt/windows-x86_64 ]; then
+		export ANDROID_NDK_HOST=windows-x86_64
+	else
+		export ANDROID_NDK_HOST=windows
+	fi
 fi
 if [[ "$(uname -a)" == *Linux* ]]; then
-	export ANDROID_NDK_HOST=linux
 	if [[ "$(uname -m)" == x86_64 ]] && [ -d $ANDROID_NDK/prebuilt/linux-x86_64 ]; then
 		export ANDROID_NDK_HOST=linux-x86_64;
+	elif [ -d $ANDROID_NDK/prebuilt/linux-x86 ]; then
+		export ANDROID_NDK_HOST=linux-x86
+	else
+		export ANDROID_NDK_HOST=linux
+	fi
+fi
+if [[ "$(uname -a)" == *Darwin* ]]; then
+	if [[ "$(uname -m)" == x86_64 ]] && [ -d $ANDROID_NDK/prebuilt/darwin-x86_64 ]; then
+		export ANDROID_NDK_HOST=darwin-x86_64;
+	elif [ -d $ANDROID_NDK/prebuilt/darwin-x86 ]; then
+		export ANDROID_NDK_HOST=darwin-x86
+	else
+		export ANDROID_NDK_HOST=darwin
 	fi
 fi
 

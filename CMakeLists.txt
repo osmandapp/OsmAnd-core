@@ -58,9 +58,11 @@ elseif(CMAKE_TARGET_OS STREQUAL "windows")
 endif()
 
 file(GLOB_RECURSE sources "src/*.c*")
+file(GLOB_RECURSE headers "src/*.h*")
 file(GLOB_RECURSE includes "include/*.h*")
 add_library(OsmAndCore SHARED
 	${includes}
+	${headers}
 	${sources}
 	${pd_sources}
 	"protos/OBF.pb.h"
