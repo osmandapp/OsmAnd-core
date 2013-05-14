@@ -47,7 +47,7 @@ OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::getTileNumberY( float
     double eval = log( tan(toRadians(latitude)) + 1/cos(toRadians(latitude)) );
     if (qIsInf(eval) || qIsNaN(eval))
     {
-        latitude = eval < 0 ? - 89.9 : 89.9;
+        latitude = latitude < 0 ? - 89.9 : 89.9;
         eval = log( tan(toRadians(latitude)) + 1/cos(toRadians(latitude)) );
     }
     double result = (1 - eval / M_PI) / 2 * getPowZoom(zoom);
