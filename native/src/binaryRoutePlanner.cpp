@@ -169,7 +169,7 @@ void searchRouteInternal(RoutingContext* ctx, SHARED_PTR<RouteSegment> start, SH
 				break;
 			}
 		}
-		if (graphReverseSegments.size() == 0 || graphDirectSegments.size() == 0 || routeFound) {
+		if (graphReverseSegments.empty() || graphDirectSegments.empty() || routeFound) {
 			break;
 		}
 		if(runRecalculation) {
