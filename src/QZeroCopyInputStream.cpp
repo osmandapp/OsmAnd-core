@@ -38,6 +38,9 @@ bool OsmAnd::QZeroCopyInputStream::Next( const void** data, int* size )
 
 void OsmAnd::QZeroCopyInputStream::BackUp( int count )
 {
+    if(!_device->isOpen() && !_closeOnDestruction)
+        return;
+
     if (count > _device->pos())
         _device->seek(0);
     else
@@ -46,6 +49,9 @@ void OsmAnd::QZeroCopyInputStream::BackUp( int count )
 
 bool OsmAnd::QZeroCopyInputStream::Skip( int count )
 {
+    if(!_device->isOpen() && !_closeOnDestruction)
+        return false;
+
     if (_device->pos() + count > _device->size() || _device->atEnd())
     {
         _device->seek(_device->size());
