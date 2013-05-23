@@ -23,16 +23,17 @@
 #ifndef __MODEL_STREET_GROUP_H_
 #define __MODEL_STREET_GROUP_H_
 
-#include <OsmAndCore.h>
-#include <MapObject.h>
-#include <QString>
 #include <stdint.h>
+
+#include <QString>
+
+#include <OsmAndCore.h>
 
 namespace OsmAnd {
 
     namespace Model {
 
-        class OSMAND_CORE_API StreetGroup : public MapObject
+        class OSMAND_CORE_API StreetGroup
         {
         private:
         protected:

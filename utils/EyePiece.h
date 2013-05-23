@@ -32,8 +32,8 @@
 
 #include "CoreUtils.h"
 #include <Area.h>
-#include <RenderStyle.h>
-#include <RenderStyles.h>
+#include <RasterizationStyle.h>
+#include <RasterizationStyles.h>
 
 namespace OsmAnd
 {

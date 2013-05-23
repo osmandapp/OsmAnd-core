@@ -15,16 +15,8 @@ OsmAnd::ObfMapSection::ObfMapSection( class ObfReader* owner_ )
     , _isBaseMap(false)
     , isBaseMap(_isBaseMap)
     , mapLevels(_mapLevels)
-    /*TODO:    , _nameEncodingType(0)
-    , _refEncodingType(-1)
-    , _coastlineEncodingType(-1)
-    , _coastlineBrokenEncodingType(-1)
-    , _landEncodingType(-1)
-    , _onewayAttribute(-1)
-    , _onewayReverseAttribute(-1)*/
+    , rules(_rules)
 {
-    /*_positiveLayers.reserve(2);
-    _negativeLayers.reserve(2);*/
 }
 
 OsmAnd::ObfMapSection::~ObfMapSection()
@@ -113,41 +105,21 @@ void OsmAnd::ObfMapSection::readMapLevelHeader( ObfReader* reader, ObfMapSection
 
 void OsmAnd::ObfMapSection::loadRules( ObfReader* reader )
 {
-    if(!_encodingRules.isEmpty())
+    if(_rules)
         return;
 
     auto cis = reader->_codedInputStream.get();
 
     cis->Seek(_offset);
     auto oldLimit = cis->PushLimit(_length);
-    readEncodingRules(reader,
-        _encodingRules,
-        _decodingRules,
-        _nameEncodingType,
-        _coastlineEncodingType,
-        _landEncodingType,
-        _onewayAttribute,
-        _onewayReverseAttribute,
-        _refEncodingType,
-        _coastlineBrokenEncodingType,
-        _negativeLayers,
-        _positiveLayers);
+    _rules.reset(new Rules());
+    readRules(reader, _rules.get());
     cis->PopLimit(oldLimit);
 }
 
-void OsmAnd::ObfMapSection::readEncodingRules(
+void OsmAnd::ObfMapSection::readRules(
     ObfReader* reader,
-    QHash< QString, QHash<QString, uint32_t> >& encodingRules,
-    QMap< uint32_t, DecodingRule >& decodingRules,
-    uint32_t& nameEncodingType,
-    uint32_t& coastlineEncodingType,
-    uint32_t& landEncodingType,
-    uint32_t& onewayAttribute,
-    uint32_t& onewayReverseAttribute,
-    uint32_t& refEncodingType,
-    uint32_t& coastlineBrokenEncodingType,
-    QSet<uint32_t>& negativeLayers,
-    QSet<uint32_t>& positiveLayers)
+    Rules* rules)
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -159,16 +131,13 @@ void OsmAnd::ObfMapSection::readEncodingRules(
         {
         case 0:
             {
-                auto free = decodingRules.size() * 2 + 1;
-                coastlineBrokenEncodingType = free++;
+                auto free = rules->_decodingRules.size() * 2 + 1;
+                rules->_coastlineBrokenEncodingType = free++;
+                createRule(rules, 0, rules->_coastlineBrokenEncodingType, "natural", "coastline_broken");
+                if(rules->_landEncodingType == -1)
                 {
-                    //TODO:initMapEncodingRule(0, _coastlineBrokenEncodingType, "natural", "coastline_broken");
-                }
-                
-                if(landEncodingType == -1)
-                {
-                    landEncodingType = free++;
-                    //TODO:initMapEncodingRule(0, _landEncodingType, "natural", "land");
+                    rules->_landEncodingType = free++;
+                    createRule(rules, 0, rules->_landEncodingType, "natural", "land");
                 }
             }
             return;
@@ -177,7 +146,7 @@ void OsmAnd::ObfMapSection::readEncodingRules(
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
-                readEncodingRule(reader, defaultId++, encodingRules, decodingRules, nameEncodingType, coastlineEncodingType, landEncodingType, onewayAttribute, onewayReverseAttribute, refEncodingType, negativeLayers, positiveLayers);
+                readRule(reader, defaultId++, rules);
                 cis->PopLimit(oldLimit);
             }
             break;
@@ -188,18 +157,10 @@ void OsmAnd::ObfMapSection::readEncodingRules(
     }
 }
 
-void OsmAnd::ObfMapSection::readEncodingRule(
-    ObfReader* reader, uint32_t defaultId,
-    QHash< QString, QHash<QString, uint32_t> >& encodingRules,
-    QMap< uint32_t, DecodingRule >& decodingRules,
-    uint32_t& nameEncodingType,
-    uint32_t& coastlineEncodingType,
-    uint32_t& landEncodingType,
-    uint32_t& onewayAttribute,
-    uint32_t& onewayReverseAttribute,
-    uint32_t& refEncodingType,
-    QSet<uint32_t>& negativeLayers,
-    QSet<uint32_t>& positiveLayers)
+void OsmAnd::ObfMapSection::readRule(
+    ObfReader* reader,
+    uint32_t defaultId,
+    Rules* rules)
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -213,41 +174,7 @@ void OsmAnd::ObfMapSection::readEncodingRule(
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
-            {
-                if(!encodingRules.contains(ruleTag))
-                    encodingRules[ruleTag] = QHash<QString, uint32_t>();
-                encodingRules[ruleTag][ruleVal] = ruleId;
-
-                if(!decodingRules.contains(ruleId))
-                    decodingRules[ruleId] = DecodingRule(ruleTag, ruleVal, ruleType);
-
-                if("name" == ruleTag)
-                    nameEncodingType = ruleId;
-                else if("natural" == ruleTag && "coastline" == ruleVal)
-                    coastlineEncodingType = ruleId;
-                else if("natural" == ruleTag && "land" == ruleVal)
-                    landEncodingType = ruleId;
-                else if("oneway" == ruleTag && "yes" == ruleVal)
-                    onewayAttribute = ruleId;
-                else if("oneway" == ruleTag && "-1" == ruleVal)
-                    onewayReverseAttribute = ruleId;
-                else if("ref" == ruleTag)
-                    refEncodingType = ruleId;
-                else if("tunnel" == ruleTag)
-                    negativeLayers.insert(ruleId);
-                else if("bridge" == ruleTag)
-                    positiveLayers.insert(ruleId);
-                else if("layer" == ruleTag)
-                {
-                    if(!ruleVal.isEmpty() && ruleVal != "0")
-                    {
-                        if (ruleVal[0] == '-')
-                            negativeLayers.insert(ruleId);
-                        else
-                            positiveLayers.insert(ruleId);
-                    }
-                }
-            }
+            createRule(rules, ruleType, ruleId, ruleTag, ruleVal);
             return;
         case OBF::OsmAndMapIndex_MapEncodingRule::kValueFieldNumber:
             ObfReader::readQString(cis, ruleVal);
@@ -264,6 +191,44 @@ void OsmAnd::ObfMapSection::readEncodingRule(
         default:
             ObfReader::skipUnknownField(cis, tag);
             break;
+        }
+    }
+}
+
+void OsmAnd::ObfMapSection::createRule( Rules* rules, uint32_t ruleType, uint32_t ruleId, const QString& ruleTag, const QString& ruleVal )
+{
+    auto itEncodingRule = rules->_encodingRules.find(ruleTag);
+    if(itEncodingRule == rules->_encodingRules.end())
+        itEncodingRule = rules->_encodingRules.insert(ruleTag, QHash<QString, uint32_t>());
+    itEncodingRule->insert(ruleVal, ruleId);
+    
+    if(!rules->_decodingRules.contains(ruleId))
+        rules->_decodingRules.insert(ruleId, DecodingRule(ruleTag, ruleVal, ruleType));
+
+    if("name" == ruleTag)
+        rules->_nameEncodingType = ruleId;
+    else if("natural" == ruleTag && "coastline" == ruleVal)
+        rules->_coastlineEncodingType = ruleId;
+    else if("natural" == ruleTag && "land" == ruleVal)
+        rules->_landEncodingType = ruleId;
+    else if("oneway" == ruleTag && "yes" == ruleVal)
+        rules->_onewayAttribute = ruleId;
+    else if("oneway" == ruleTag && "-1" == ruleVal)
+        rules->_onewayReverseAttribute = ruleId;
+    else if("ref" == ruleTag)
+        rules->_refEncodingType = ruleId;
+    else if("tunnel" == ruleTag)
+        rules->_negativeLayers.insert(ruleId);
+    else if("bridge" == ruleTag)
+        rules->_positiveLayers.insert(ruleId);
+    else if("layer" == ruleTag)
+    {
+        if(!ruleVal.isEmpty() && ruleVal != "0")
+        {
+            if (ruleVal[0] == '-')
+                rules->_negativeLayers.insert(ruleId);
+            else
+                rules->_positiveLayers.insert(ruleId);
         }
     }
 }
@@ -292,16 +257,14 @@ void OsmAnd::ObfMapSection::loadMapObjects(
         }
 
         // If there are no tree nodes in map level, it means they are not loaded
-        if(mapLevel->_treeNodes.isEmpty())
-        {
-            cis->Seek(mapLevel->_offset);
-            auto oldLimit = cis->PushLimit(mapLevel->_length);
-            readMapLevelTreeNodes(reader, section, mapLevel.get(), mapLevel->_treeNodes);
-            cis->PopLimit(oldLimit);
-        }
-
+        QList< std::shared_ptr<LevelTreeNode> > cachedTreeNodes;//TODO: these should be cached somehow
+        cis->Seek(mapLevel->_offset);
+        auto oldLimit = cis->PushLimit(mapLevel->_length);
+        readMapLevelTreeNodes(reader, section, mapLevel.get(), cachedTreeNodes);
+        cis->PopLimit(oldLimit);
+        
         QList< std::shared_ptr<LevelTreeNode> > treeNodesWithData;
-        for(auto itTreeNode = mapLevel->_treeNodes.begin(); itTreeNode != mapLevel->_treeNodes.end(); ++itTreeNode)
+        for(auto itTreeNode = cachedTreeNodes.begin(); itTreeNode != cachedTreeNodes.end(); ++itTreeNode)
         {
             auto treeNode = *itTreeNode;
 
@@ -620,7 +583,7 @@ void OsmAnd::ObfMapSection::readMapObject(
 
                 // Finally, create the object
                 if(!mapObject)
-                    mapObject.reset(new OsmAnd::Model::MapObject());
+                    mapObject.reset(new OsmAnd::Model::MapObject(section));
                 mapObject->_isArea = (tgn == OBF::MapData::kAreaCoordinatesFieldNumber);
                 mapObject->_coordinates = coordinates;
             }
@@ -628,7 +591,7 @@ void OsmAnd::ObfMapSection::readMapObject(
         case OBF::MapData::kPolygonInnerCoordinatesFieldNumber:
             {
                 if(!mapObject)
-                    mapObject.reset(new OsmAnd::Model::MapObject());
+                    mapObject.reset(new OsmAnd::Model::MapObject(section));
 
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
@@ -655,7 +618,7 @@ void OsmAnd::ObfMapSection::readMapObject(
         case OBF::MapData::kAdditionalTypesFieldNumber:
             {
                 if(!mapObject)
-                    mapObject.reset(new OsmAnd::Model::MapObject());
+                    mapObject.reset(new OsmAnd::Model::MapObject(section));
 
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
@@ -673,7 +636,7 @@ void OsmAnd::ObfMapSection::readMapObject(
         case OBF::MapData::kTypesFieldNumber:
             {
                 if(!mapObject)
-                    mapObject.reset(new OsmAnd::Model::MapObject());
+                    mapObject.reset(new OsmAnd::Model::MapObject(section));
 
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
@@ -741,5 +704,22 @@ OsmAnd::ObfMapSection::MapLevel::~MapLevel()
 
 OsmAnd::ObfMapSection::LevelTreeNode::LevelTreeNode()
     : _dataOffset(0)
+{
+}
+
+OsmAnd::ObfMapSection::Rules::Rules()
+    : _nameEncodingType(0)
+    , _refEncodingType(-1)
+    , _coastlineEncodingType(-1)
+    , _coastlineBrokenEncodingType(-1)
+    , _landEncodingType(-1)
+    , _onewayAttribute(-1)
+    , _onewayReverseAttribute(-1)
+{
+    _positiveLayers.reserve(2);
+    _negativeLayers.reserve(2);
+}
+
+OsmAnd::ObfMapSection::Rules::~Rules()
 {
 }

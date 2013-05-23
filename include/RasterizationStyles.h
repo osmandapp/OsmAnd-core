@@ -20,50 +20,37 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __MODEL_MAP_OBJECT_H_
-#define __MODEL_MAP_OBJECT_H_
+#ifndef __RASTERIZATION_STYLES_H_
+#define __RASTERIZATION_STYLES_H_
 
 #include <stdint.h>
+#include <memory>
 
-#include <QList>
-#include <QMap>
-#include <QVector>
 #include <QString>
+#include <QFile>
+#include <QHash>
 
 #include <OsmAndCore.h>
-#include <Area.h>
+#include <RasterizationStyle.h>
 
 namespace OsmAnd {
 
-    class ObfMapSection;
+    class OSMAND_CORE_API RasterizationStyles
+    {
+    private:
+        bool registerEmbeddedStyle(const QString& resourceName);
+    protected:
+        QHash< QString, std::shared_ptr<RasterizationStyle> > _styles;
+    public:
+        RasterizationStyles();
+        virtual ~RasterizationStyles();
 
-    namespace Model {
+        bool registerStyle(const QFile& file);
+        bool obtainCompleteStyle(const QString& name, std::shared_ptr<OsmAnd::RasterizationStyle>& outStyle);
 
-        class OSMAND_CORE_API MapObject
-        {
-        private:
-        protected:
-            MapObject(ObfMapSection* section);
-
-            uint64_t _id;
-            bool _isArea;
-            QVector< PointI > _coordinates;
-            QList< QVector< PointI > > _polygonInnerCoordinates;
-            QList<uint32_t> _types;
-            QList<uint32_t> _extraTypes;
-            QMap<uint32_t, QString> _names;
-        public:
-            virtual ~MapObject();
-
-            ObfMapSection* const section;
-            const uint64_t& id;
-            const QMap<uint32_t, QString>& names;
-
-            friend class ObfMapSection;
-        };
-
-    } // namespace Model
+    friend class RasterizationStyle;
+    };
 
 } // namespace OsmAnd
 
-#endif // __MODEL_MAP_OBJECT_H_
+#endif // __RASTERIZATION_STYLES_H_

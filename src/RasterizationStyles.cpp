@@ -1,10 +1,10 @@
-#include "RenderStyles.h"
+#include "RasterizationStyles.h"
 
 #include <cassert>
 
 #include "EmbeddedResources.h"
 
-OsmAnd::RenderStyles::RenderStyles()
+OsmAnd::RasterizationStyles::RasterizationStyles()
 {
     bool ok;
 
@@ -12,15 +12,15 @@ OsmAnd::RenderStyles::RenderStyles()
     assert(ok);
 }
 
-OsmAnd::RenderStyles::~RenderStyles()
+OsmAnd::RasterizationStyles::~RasterizationStyles()
 {
 }
 
-bool OsmAnd::RenderStyles::registerEmbeddedStyle( const QString& resourceName )
+bool OsmAnd::RasterizationStyles::registerEmbeddedStyle( const QString& resourceName )
 {
     assert(EmbeddedResources::containsResource(resourceName));
 
-    std::shared_ptr<RenderStyle> style(new RenderStyle(this, resourceName));
+    std::shared_ptr<RasterizationStyle> style(new RasterizationStyle(this, resourceName));
     if(!style->parseMetadata())
         return false;
     _styles.insert(style->name, style);
@@ -28,9 +28,9 @@ bool OsmAnd::RenderStyles::registerEmbeddedStyle( const QString& resourceName )
     return true;
 }
 
-bool OsmAnd::RenderStyles::registerStyle( const QFile& file )
+bool OsmAnd::RasterizationStyles::registerStyle( const QFile& file )
 {
-    std::shared_ptr<RenderStyle> style(new RenderStyle(this, file));
+    std::shared_ptr<RasterizationStyle> style(new RasterizationStyle(this, file));
     if(!style->parseMetadata())
         return false;
     _styles.insert(style->name, style);
@@ -38,7 +38,7 @@ bool OsmAnd::RenderStyles::registerStyle( const QFile& file )
     return true;
 }
 
-bool OsmAnd::RenderStyles::obtainCompleteStyle( const QString& name, std::shared_ptr<OsmAnd::RenderStyle>& outStyle )
+bool OsmAnd::RasterizationStyles::obtainCompleteStyle( const QString& name, std::shared_ptr<OsmAnd::RasterizationStyle>& outStyle )
 {
     auto itStyle = _styles.find(name);
     if(itStyle == _styles.end())
@@ -50,6 +50,9 @@ bool OsmAnd::RenderStyles::obtainCompleteStyle( const QString& name, std::shared
         if(!style->resolveDependencies())
             return false;
     }
+
+    if(!style->parse())
+        return false;
 
     outStyle = style;
     return true;

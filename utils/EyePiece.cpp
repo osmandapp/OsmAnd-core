@@ -3,6 +3,7 @@
 #include <iostream>
 #include <sstream>
 
+#include <Common.h>
 #include <ObfReader.h>
 #include <Utilities.h>
 
@@ -96,23 +97,41 @@ OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::EyePiece::parseCommand
     return true;
 }
 
+#if defined(_UNICODE) || defined(UNICODE)
+void rasterize(std::wostream &output, const OsmAnd::EyePiece::Configuration& cfg);
+#else
 void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg);
+#endif
 
 OSMAND_CORE_UTILS_API void OSMAND_CORE_UTILS_CALL OsmAnd::EyePiece::rasterizeToStdOut( const Configuration& cfg )
 {
+#if defined(_UNICODE) || defined(UNICODE)
+    rasterize(std::wcout, cfg);
+#else
     rasterize(std::cout, cfg);
+#endif
 }
 
 OSMAND_CORE_UTILS_API QString OSMAND_CORE_UTILS_CALL OsmAnd::EyePiece::rasterizeToString( const Configuration& cfg )
 {
+#if defined(_UNICODE) || defined(UNICODE)
+    std::wostringstream output;
+    rasterize(output, cfg);
+    return QString::fromStdWString(output.str());
+#else
     std::ostringstream output;
     rasterize(output, cfg);
     return QString::fromStdString(output.str());
+#endif
 }
 
+#if defined(_UNICODE) || defined(UNICODE)
+void rasterize(std::wostream &output, const OsmAnd::EyePiece::Configuration& cfg)
+#else
 void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
+#endif
 {
-    OsmAnd::RenderStyles stylesCollection;
+    OsmAnd::RasterizationStyles stylesCollection;
 
     for(auto itStyleFile = cfg.styleFiles.begin(); itStyleFile != cfg.styleFiles.end(); ++itStyleFile)
     {
@@ -120,17 +139,19 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
 
         if(!stylesCollection.registerStyle(*styleFile))
         {
-            output << "Failed to parse metadata of '" << qPrintable(styleFile->fileName()) << "'";
+            output << _L("Failed to parse metadata of '") << QStringToStdXString(styleFile->fileName()) << _L("'");
             return;
         }
     }
 
-    std::shared_ptr<OsmAnd::RenderStyle> style;
+    std::shared_ptr<OsmAnd::RasterizationStyle> style;
     if(!stylesCollection.obtainCompleteStyle(cfg.styleName, style))
     {
-        output << "Failed to resolve style '" << qPrintable(cfg.styleName) << "'";
+        output << _L("Failed to resolve style '") << QStringToStdXString(cfg.styleName) << _L("'");
         return;
     }
+
+    //std::unique_ptr<OsmAnd::RasterizerContext>
 
     QList< std::shared_ptr<OsmAnd::ObfReader> > obfData;
     for(auto itObf = cfg.obfs.begin(); itObf != cfg.obfs.end(); ++itObf)
@@ -140,7 +161,7 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
         obfData.push_back(obfReader);
     }
 
-    // Collect all map objects
+    // Collect all map objects (this should be replaced by something like RasterizerViewport/RasterizerContext)
     QList< std::shared_ptr<OsmAnd::Model::MapObject> > mapObjects;
     OsmAnd::AreaI bbox31(
             OsmAnd::Utilities::get31TileNumberY(cfg.bbox.top),
@@ -158,6 +179,8 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
         for(auto itMapSection = obf->mapSections.begin(); itMapSection != obf->mapSections.end(); ++itMapSection)
         {
             auto mapSection = *itMapSection;
+
+            mapSection->loadRules(obf.get());
             OsmAnd::ObfMapSection::loadMapObjects(obf.get(), mapSection.get(), &mapObjects, &filter, nullptr);
         }
     }
@@ -167,14 +190,14 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
     const auto tileHeight = OsmAnd::Utilities::getTileNumberX(cfg.zoom, cfg.bbox.top) - OsmAnd::Utilities::getTileNumberX(cfg.zoom, cfg.bbox.bottom);
     const auto pixelWidth = static_cast<int32_t>(tileWidth * cfg.tileSide);
     const auto pixelHeight = static_cast<int32_t>(tileHeight * cfg.tileSide);
-    output << "Will rasterize " << mapObjects.count() << " objects onto " << pixelWidth << "x" << pixelHeight << " bitmap" << std::endl;
+    output << _L("Will rasterize ") << mapObjects.count() << _L(" objects onto ") << pixelWidth << _L("x") << pixelHeight << _L(" bitmap") << std::endl;
 
     // Allocate render target
     SkBitmap renderSurface;
     renderSurface.setConfig(cfg.is32bit ? SkBitmap::kARGB_8888_Config : SkBitmap::kRGB_565_Config, pixelWidth, pixelHeight);
     if(!renderSurface.allocPixels())
     {
-        output << "Failed to allocated render target " << pixelWidth << "x" << pixelHeight;
+        output << _L("Failed to allocated render target ") << pixelWidth << _L("x") << pixelHeight;
         return;
     }
     SkDevice renderTarget(renderSurface);
@@ -184,9 +207,7 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
 
     // Perform actual rendering
     //canvas.drawColor(rc.getDefaultColor());
-    /*if (result != NULL) {
-        doRendering(result->result, canvas, req, &rc);
-    }*/
+    //doRendering(result->result, canvas, req, &rc);
 
     // Save rendered area
     if(!cfg.output.isEmpty())

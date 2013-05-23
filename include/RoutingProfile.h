@@ -76,7 +76,7 @@ namespace OsmAnd {
         QHash< QString, std::shared_ptr<Parameter> > _parameters;
 
         void registerBooleanParameter(const QString& id, const QString& name, const QString& description);
-        void registerNumericParameter(const QString& id, const QString& name, const QString& description, QList<double>& values, QList<QString> valuesDescriptions);
+        void registerNumericParameter(const QString& id, const QString& name, const QString& description, QList<double>& values, const QStringList& valuesDescriptions);
         uint32_t registerTagValueAttribute(const QString& tag, const QString& value);
         bool parseTypedValueFromTag(uint32_t id, const QString& type, float& parsedValue);
     public:

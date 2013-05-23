@@ -20,44 +20,67 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __RENDER_STYLE_H_
-#define __RENDER_STYLE_H_
+#ifndef __RASTERIZATION_STYLE_H_
+#define __RASTERIZATION_STYLE_H_
 
 #include <stdint.h>
 #include <memory>
 
 #include <QString>
+#include <QStringList>
 #include <QFile>
 #include <QXmlStreamReader>
+#include <QHash>
 
 #include <OsmAndCore.h>
+#include <RasterizationStyleExpression.h>
 
 namespace OsmAnd {
 
-    class RenderStyles;
+    class RasterizationStyles;
 
-    class OSMAND_CORE_API RenderStyle
+    class OSMAND_CORE_API RasterizationStyle
     {
+    public:
+        class OSMAND_CORE_API Option : RasterizationStyleExpression
+        {
+        private:
+        protected:
+            Option(Type type, const QString& name, const QString& title, const QString& description, const QStringList& possibleValues);
+
+            virtual bool evaluate() const;
+        public:
+            virtual ~Option();
+
+            const QString title;
+            const QString description;
+
+        friend class RasterizationStyle;
+        };
     private:
         bool parseMetadata(QXmlStreamReader& xmlReader);
+        bool parse(QXmlStreamReader& xmlReader);
+
+        QHash< QString, std::shared_ptr<Option> > _options;
     protected:
-        RenderStyle(RenderStyles* owner, const QString& embeddedResourceName);
-        RenderStyle(RenderStyles* owner, const QFile& externalStyleFile);
+        RasterizationStyle(RasterizationStyles* owner, const QString& embeddedResourceName);
+        RasterizationStyle(RasterizationStyles* owner, const QFile& externalStyleFile);
 
         QString _resourceName;
         QString _externalFileName;
 
         bool parseMetadata();
+        bool parse();
 
         QString _name;
         QString _parentName;
-        std::shared_ptr<RenderStyle> _parent;
+        std::shared_ptr<RasterizationStyle> _parent;
 
         bool resolveDependencies();
     public:
-        virtual ~RenderStyle();
+        virtual ~RasterizationStyle();
 
-        RenderStyles* const owner;
+        RasterizationStyles* const owner;
 
         const QString& resourceName;
         const QString& externalFileName;
@@ -67,11 +90,13 @@ namespace OsmAnd {
 
         bool isStandalone() const;
         bool areDependenciesResolved() const;
+
+        const QHash< QString, std::shared_ptr<Option> >& options;
         
-    friend class RenderStyles;
+    friend class RasterizationStyles;
     };
 
 
 } // namespace OsmAnd
 
-#endif // __RENDER_STYLE_H_
+#endif // __RASTERIZATION_STYLE_H_

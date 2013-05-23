@@ -13,6 +13,7 @@
 #include <ObfReader.h>
 #include <Utilities.h>
 
+#include <MapObject.h>
 #include <Street.h>
 #include <StreetIntersection.h>
 #include <StreetGroup.h>

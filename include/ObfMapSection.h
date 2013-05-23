@@ -80,7 +80,6 @@ namespace OsmAnd {
             uint32_t _minZoom;
             uint32_t _maxZoom;
             AreaI _area31;
-            QList< std::shared_ptr<LevelTreeNode> > _treeNodes;
         public:
             virtual ~MapLevel();
 
@@ -90,6 +89,29 @@ namespace OsmAnd {
 
             friend class ObfMapSection;
         };
+
+        class OSMAND_CORE_API Rules
+        {
+        private:
+        protected:
+            Rules();
+
+            QHash< QString, QHash<QString, uint32_t> > _encodingRules;
+            QMap< uint32_t, DecodingRule > _decodingRules;
+            uint32_t _nameEncodingType;
+            uint32_t _refEncodingType;
+            uint32_t _coastlineEncodingType;
+            uint32_t _coastlineBrokenEncodingType;
+            uint32_t _landEncodingType;
+            uint32_t _onewayAttribute;
+            uint32_t _onewayReverseAttribute;
+            QSet<uint32_t> _positiveLayers;
+            QSet<uint32_t> _negativeLayers;
+        public:
+            virtual ~Rules();
+
+        friend class ObfMapSection;
+        };
     private:
     protected:
         ObfMapSection(ObfReader* owner);
@@ -97,43 +119,13 @@ namespace OsmAnd {
         bool _isBaseMap;
 
         QList< std::shared_ptr<MapLevel> > _mapLevels;
-        QHash< QString, QHash<QString, uint32_t> > _encodingRules;
-        QMap< uint32_t, DecodingRule > _decodingRules;
-        uint32_t _nameEncodingType;
-        uint32_t _refEncodingType;
-        uint32_t _coastlineEncodingType;
-        uint32_t _coastlineBrokenEncodingType;
-        uint32_t _landEncodingType;
-        uint32_t _onewayAttribute;
-        uint32_t _onewayReverseAttribute;
-        QSet<uint32_t> _positiveLayers;
-        QSet<uint32_t> _negativeLayers;
+        std::shared_ptr< Rules > _rules;
 
         static void read(ObfReader* reader, ObfMapSection* section);
         static void readMapLevelHeader(ObfReader* reader, ObfMapSection* section, MapLevel* level);
-        static void readEncodingRules(ObfReader* reader,
-            QHash< QString, QHash<QString, uint32_t> >& encodingRules,
-            QMap< uint32_t, DecodingRule >& decodingRules,
-            uint32_t& nameEncodingType,
-            uint32_t& coastlineEncodingType,
-            uint32_t& landEncodingType,
-            uint32_t& onewayAttribute,
-            uint32_t& onewayReverseAttribute,
-            uint32_t& refEncodingType,
-            uint32_t& coastlineBrokenEncodingType,
-            QSet<uint32_t>& negativeLayers,
-            QSet<uint32_t>& positiveLayers);
-        static void readEncodingRule(ObfReader* reader, uint32_t defaultId,
-            QHash< QString, QHash<QString, uint32_t> >& encodingRules,
-            QMap< uint32_t, DecodingRule >& decodingRules,
-            uint32_t& nameEncodingType,
-            uint32_t& coastlineEncodingType,
-            uint32_t& landEncodingType,
-            uint32_t& onewayAttribute,
-            uint32_t& onewayReverseAttribute,
-            uint32_t& refEncodingType,
-            QSet<uint32_t>& negativeLayers,
-            QSet<uint32_t>& positiveLayers);
+        static void readRules(ObfReader* reader, Rules* rules);
+        static void readRule(ObfReader* reader, uint32_t defaultId, Rules* rules);
+        static void createRule(Rules* rules, uint32_t type, uint32_t id, const QString& tag, const QString& val);
         static void readMapLevelTreeNodes(ObfReader* reader, ObfMapSection* section, MapLevel* level, QList< std::shared_ptr<LevelTreeNode> >& nodes);
         static void readTreeNode(ObfReader* reader, ObfMapSection* section, const AreaI& parentArea, LevelTreeNode* treeNode);
         static void readTreeNodeChildren(ObfReader* reader, ObfMapSection* section,
@@ -160,8 +152,8 @@ namespace OsmAnd {
         virtual ~ObfMapSection();
 
         const bool& isBaseMap;
-
         const QList< std::shared_ptr<MapLevel> >& mapLevels;
+        const std::shared_ptr< Rules >& rules;
         
         void loadRules(ObfReader* reader);
         static void loadMapObjects(ObfReader* reader, ObfMapSection* section,

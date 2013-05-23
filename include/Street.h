@@ -29,14 +29,13 @@
 
 #include <OsmAndCore.h>
 #include <ObfAddressSection.h>
-#include <MapObject.h>
 #include <Area.h>
 
 namespace OsmAnd {
 
     namespace Model {
 
-        class OSMAND_CORE_API Street : public MapObject
+        class OSMAND_CORE_API Street
         {
         private:
         protected:

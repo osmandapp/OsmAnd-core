@@ -82,7 +82,7 @@ void OsmAnd::RoutingProfile::registerBooleanParameter( const QString& id, const 
     _parameters.insert(id, parameter);
 }
 
-void OsmAnd::RoutingProfile::registerNumericParameter( const QString& id, const QString& name, const QString& description, QList<double>& values, QList<QString> valuesDescriptions )
+void OsmAnd::RoutingProfile::registerNumericParameter( const QString& id, const QString& name, const QString& description, QList<double>& values, const QStringList& valuesDescriptions )
 {
     std::shared_ptr<Parameter> parameter(new Parameter());
     parameter->_id = id;

@@ -20,37 +20,49 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __RENDER_STYLES_H_
-#define __RENDER_STYLES_H_
+#ifndef __RENDER_STYLE_EXPRESSION_H_
+#define __RENDER_STYLE_EXPRESSION_H_
 
 #include <stdint.h>
 #include <memory>
 
 #include <QString>
+#include <QStringList>
 #include <QFile>
+#include <QXmlStreamReader>
 #include <QHash>
 
 #include <OsmAndCore.h>
-#include <RenderStyle.h>
+#include <RasterizationStyleExpression.h>
 
 namespace OsmAnd {
 
-    class OSMAND_CORE_API RenderStyles
+    class OSMAND_CORE_API RasterizationStyleExpression
     {
-    private:
-        bool registerEmbeddedStyle(const QString& resourceName);
-    protected:
-        QHash< QString, std::shared_ptr<RenderStyle> > _styles;
     public:
-        RenderStyles();
-        virtual ~RenderStyles();
+        enum Type
+        {
+            String,
+            Boolean,
+            Integer,
+            Float,
+            Color,
+        };
+    private:
+    protected:
+        RasterizationStyleExpression(Type type, const QString& name);
 
-        bool registerStyle(const QFile& file);
-        bool obtainCompleteStyle(const QString& name, std::shared_ptr<OsmAnd::RenderStyle>& outStyle);
+        virtual bool evaluate() const = 0;
+    public:
+        virtual ~RasterizationStyleExpression();
 
-    friend class RenderStyle;
+        const Type type;
+        const QString name;
+
+    friend class RasterizationStyle;
     };
+
 
 } // namespace OsmAnd
 
-#endif // __RENDER_STYLES_H_
+#endif // __RENDER_STYLE_EXPRESSION_H_
