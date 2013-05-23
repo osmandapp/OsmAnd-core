@@ -24,7 +24,6 @@
 #define __MODEL_AMENITY_H_
 
 #include <OsmAndCore.h>
-#include <MapObject.h>
 #include <QString>
 #include <QStringList>
 #include <stdint.h>
@@ -33,7 +32,7 @@ namespace OsmAnd {
 
     namespace Model {
 
-        class OSMAND_CORE_API Amenity : public MapObject
+        class OSMAND_CORE_API Amenity
         {
         public:
             struct OSMAND_CORE_API Category

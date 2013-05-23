@@ -24,9 +24,6 @@
 #define __I_QUERY_CONTROLLER_H_
 
 #include <OsmAndCore.h>
-#include <MapObject.h>
-#include <QString>
-#include <QStringList>
 #include <stdint.h>
 
 namespace OsmAnd {

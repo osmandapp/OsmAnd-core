@@ -9,6 +9,7 @@
 #include <QFile>
 #include <QStringList>
 
+#include <Common.h>
 #include <ObfReader.h>
 #include <Utilities.h>
 
@@ -26,6 +27,7 @@ OsmAnd::Inspector::Configuration::Configuration()
     verboseBuildings = false;
     verboseIntersections = false;
     verboseMap = false;
+    verboseMapObjects = false;
     verbosePoi = false;
     verboseAmenities = false;
     verboseTrasport = false;
@@ -49,23 +51,42 @@ OsmAnd::Inspector::Configuration::Configuration(const QString& fileName)
 }
 
 // Forward declarations
+#if defined(_UNICODE) || defined(UNICODE)
+void dump(std::wostream &output, const QString& filePath, const OsmAnd::Inspector::Configuration& cfg);
+void printAddressDetailedInfo(std::wostream& output, const OsmAnd::Inspector::Configuration& cfg, OsmAnd::ObfReader* reader, OsmAnd::ObfAddressSection* section);
+void printPOIDetailInfo(std::wostream& output, const OsmAnd::Inspector::Configuration& cfg, OsmAnd::ObfReader* reader, OsmAnd::ObfPoiSection* section);
+void printMapDetailInfo(std::wostream& output, const OsmAnd::Inspector::Configuration& cfg, OsmAnd::ObfReader* reader, OsmAnd::ObfMapSection* section);
+std::wstring formatBounds(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom);
+std::wstring formatGeoBounds(double l, double r, double t, double b);
+#else
 void dump(std::ostream &output, const QString& filePath, const OsmAnd::Inspector::Configuration& cfg);
 void printAddressDetailedInfo(std::ostream& output, const OsmAnd::Inspector::Configuration& cfg, OsmAnd::ObfReader* reader, OsmAnd::ObfAddressSection* section);
 void printPOIDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configuration& cfg, OsmAnd::ObfReader* reader, OsmAnd::ObfPoiSection* section);
 void printMapDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configuration& cfg, OsmAnd::ObfReader* reader, OsmAnd::ObfMapSection* section);
 std::string formatBounds(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom);
 std::string formatGeoBounds(double l, double r, double t, double b);
+#endif
 
 OSMAND_CORE_UTILS_API void OSMAND_CORE_UTILS_CALL OsmAnd::Inspector::dumpToStdOut( const Configuration& cfg )
 {
+#if defined(_UNICODE) || defined(UNICODE)
+    dump(std::wcout, cfg.fileName, cfg);
+#else
     dump(std::cout, cfg.fileName, cfg);
+#endif
 }
 
 OSMAND_CORE_UTILS_API QString OSMAND_CORE_UTILS_CALL OsmAnd::Inspector::dumpToString( const Configuration& cfg )
 {
+#if defined(_UNICODE) || defined(UNICODE)
+    std::wostringstream output;
+    dump(output, cfg.fileName, cfg);
+    return QString::fromStdWString(output.str());
+#else
     std::ostringstream output;
     dump(output, cfg.fileName, cfg);
     return QString::fromStdString(output.str());
+#endif
 }
 
 OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::Inspector::parseCommandLineArguments( const QStringList& cmdLineArgs, Configuration& cfg, QString& error )
@@ -85,6 +106,8 @@ OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::Inspector::parseComman
             cfg.verboseIntersections = true;
         else if(arg == "-vmap")
             cfg.verboseMap = true;
+        else if(arg == "-vmapObjects")
+            cfg.verboseMapObjects = true;
         else if(arg == "-vpoi")
             cfg.verbosePoi = true;
         else if(arg == "-vamenities")
@@ -115,41 +138,45 @@ OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::Inspector::parseComman
     return true;
 }
 
+#if defined(_UNICODE) || defined(UNICODE)
+void dump(std::wostream &output, const QString& filePath, const OsmAnd::Inspector::Configuration& cfg)
+#else
 void dump(std::ostream &output, const QString& filePath, const OsmAnd::Inspector::Configuration& cfg)
+#endif
 {
     std::shared_ptr<QFile> file(new QFile(filePath));
     if(!file->exists())
     {
-        output << "Binary OsmAnd index " << qPrintable(filePath) << " was not found." << std::endl;
+        output << _L("Binary OsmAnd index ") << QStringToStdXString(filePath) << _L(" was not found.") << std::endl;
         return;
     }
 
     if(!file->open(QIODevice::ReadOnly))
     {
-        output << "Failed to open file " << qPrintable(file->fileName()) << std::endl;
+        output << _L("Failed to open file ") << QStringToStdXString(file->fileName()) << std::endl;
         return;
     }
 
     OsmAnd::ObfReader obfMap(file);
-    output << "Binary index " << qPrintable(file->fileName()) << " version = " << obfMap.version << std::endl;
+    output << _L("Binary index ") << QStringToStdXString(file->fileName()) << _L(" version = ") << obfMap.version << std::endl;
     int idx = 1;
     for(auto itSection = obfMap.sections.begin(); itSection != obfMap.sections.end(); ++itSection, idx++)
     {
         OsmAnd::ObfSection* section = *itSection;
 
-        std::string sectionType = "unknown";
+        auto sectionType = _L("unknown");
         if(dynamic_cast<OsmAnd::ObfMapSection*>(section))
-            sectionType = "Map";
+            sectionType = _L("Map");
         else if(dynamic_cast<OsmAnd::ObfTransportSection*>(section))
-            sectionType = "Transport";
+            sectionType = _L("Transport");
         else if(dynamic_cast<OsmAnd::ObfRoutingSection*>(section))
-            sectionType = "Routing";
+            sectionType = _L("Routing");
         else if(dynamic_cast<OsmAnd::ObfPoiSection*>(section))
-            sectionType = "Poi";
+            sectionType = _L("Poi");
         else if(dynamic_cast<OsmAnd::ObfAddressSection*>(section))
-            sectionType = "Address";
+            sectionType = _L("Address");
 
-        output << idx << ". " << sectionType << " data " << section->name.toStdString() << " - " << section->length << " bytes" << std::endl;
+        output << idx << _L(". ") << sectionType << _L(" data ") << QStringToStdXString(section->name) << _L(" - ") << section->length << _L(" bytes") << std::endl;
 
         if(dynamic_cast<OsmAnd::ObfTransportSection*>(section))
         {
@@ -173,7 +200,7 @@ void dump(std::ostream &output, const QString& filePath, const OsmAnd::Inspector
                 latTop = std::max(latTop, OsmAnd::Utilities::get31LatitudeY(subsection->area31.top));
                 latBottom = std::min(latBottom, OsmAnd::Utilities::get31LatitudeY(subsection->area31.bottom));
             }
-            output << "\tBounds " << formatGeoBounds(lonLeft, lonRight, latTop, latBottom) << std::endl;
+            output << _L("\tBounds ") << formatGeoBounds(lonLeft, lonRight, latTop, latBottom) << std::endl;
         }
         else if(dynamic_cast<OsmAnd::ObfMapSection*>(section))
         {
@@ -182,8 +209,8 @@ void dump(std::ostream &output, const QString& filePath, const OsmAnd::Inspector
             for(auto itLevel = mapSection->mapLevels.begin(); itLevel != mapSection->mapLevels.end(); ++itLevel, levelIdx++)
             {
                 auto level = (*itLevel);
-                output << "\t" << idx << "." << levelIdx << " Map level minZoom = " << level->minZoom << ", maxZoom = " << level->maxZoom << std::endl;
-                output << "\t\tBounds " << formatBounds(level->area31.left, level->area31.right, level->area31.top, level->area31.bottom) << std::endl;
+                output << _L("\t") << idx << _L(".") << levelIdx << _L(" Map level minZoom = ") << level->minZoom << _L(", maxZoom = ") << level->maxZoom << std::endl;
+                output << _L("\t\tBounds ") << formatBounds(level->area31.left, level->area31.right, level->area31.top, level->area31.bottom) << std::endl;
             }
 
             if(cfg.verboseMap)
@@ -202,9 +229,13 @@ void dump(std::ostream &output, const QString& filePath, const OsmAnd::Inspector
     file->close();
 }
 
+#if defined(_UNICODE) || defined(UNICODE)
+void printMapDetailInfo(std::wostream& output, const OsmAnd::Inspector::Configuration& cfg, OsmAnd::ObfReader* reader, OsmAnd::ObfMapSection* section)
+#else
 void printMapDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configuration& cfg, OsmAnd::ObfReader* reader, OsmAnd::ObfMapSection* section)
+#endif
 {
-    QList< std::shared_ptr<OsmAnd::ObfMapSection::MapObject> > mapObjects;
+    QList< std::shared_ptr<OsmAnd::Model::MapObject> > mapObjects;
     OsmAnd::QueryFilter filter;
     OsmAnd::AreaI bbox31;
     bbox31.top = OsmAnd::Utilities::get31TileNumberY(cfg.bbox.top);
@@ -212,23 +243,45 @@ void printMapDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
     bbox31.left = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.left);
     bbox31.right = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right);
     filter._bbox31 = &bbox31;
+    filter._zoom = &cfg.zoom;
     OsmAnd::ObfMapSection::loadMapObjects(reader, section, &mapObjects, &filter);
-    output << "\tTotal map objects: " << mapObjects.count() << std::endl;
+    output << _L("\tTotal map objects: ") << mapObjects.count() << std::endl;
+    if(cfg.verboseMapObjects)
+    {
+        for(auto itMapObject = mapObjects.begin(); itMapObject != mapObjects.end(); ++itMapObject)
+        {
+            auto mapObject = *itMapObject;
+            output << _L("\t\t") << mapObject->id << std::endl;
+            if(mapObject->names.count() > 0)
+            {
+                output << _L("\t\t\tNames:");
+                for(auto itName = mapObject->names.begin(); itName != mapObject->names.end(); ++itName)
+                    output << itName.value().toStdWString() << _L(", ");
+                output << std::endl;
+            }
+            else
+                output << _L("\t\t\tNames: [none]") << std::endl;
+        }
+    }
 }
 
+#if defined(_UNICODE) || defined(UNICODE)
+void printPOIDetailInfo(std::wostream& output, const OsmAnd::Inspector::Configuration& cfg, OsmAnd::ObfReader* reader, OsmAnd::ObfPoiSection* section)
+#else
 void printPOIDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configuration& cfg, OsmAnd::ObfReader* reader, OsmAnd::ObfPoiSection* section)
+#endif
 {
-    output << "\tBounds " << formatGeoBounds(section->_areaGeo.left, section->_areaGeo.right, section->_areaGeo.top, section->_areaGeo.bottom) << std::endl;
+    output << _L("\tBounds ") << formatGeoBounds(section->_areaGeo.left, section->_areaGeo.right, section->_areaGeo.top, section->_areaGeo.bottom) << std::endl;
 
     QList< std::shared_ptr<OsmAnd::Model::Amenity::Category> > categories;
     OsmAnd::ObfPoiSection::loadCategories(reader, section, categories);
-    output << "\tCategories:" << std::endl;
+    output << _L("\tCategories:") << std::endl;
     for(auto itCategory = categories.begin(); itCategory != categories.end(); ++itCategory)
     {
         auto category = *itCategory;
-        output << "\t\t" << category->_name.toStdString() << std::endl;
+        output << _L("\t\t") << QStringToStdXString(category->_name) << std::endl;
         for(auto itSubcategory = category->_subcategories.begin(); itSubcategory != category->_subcategories.end(); ++itSubcategory)
-            output << "\t\t\t" << (*itSubcategory).toStdString() << std::endl;
+            output << _L("\t\t\t") << QStringToStdXString(*itSubcategory) << std::endl;
     }
 
     QList< std::shared_ptr<OsmAnd::Model::Amenity> > amenities;
@@ -240,7 +293,7 @@ void printPOIDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
     bbox31.right = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right);
     filter._bbox31 = &bbox31;
     OsmAnd::ObfPoiSection::loadAmenities(reader, section, nullptr, &amenities, &filter);
-    output << "\tAmenities, " << amenities.count() << " item(s)";
+    output << _L("\tAmenities, ") << amenities.count() << _L(" item(s)");
     if(!cfg.verboseAmenities)
     {
         output << std::endl;
@@ -251,12 +304,18 @@ void printPOIDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
     {
         auto amenity = *itAmenity;
 
-        auto type = categories[amenity->_categoryId]->_name.toStdString() + ":" + categories[amenity->_categoryId]->_subcategories[amenity->_subcategoryId].toStdString();
-        output << "\t\t" << amenity->_latinName.toStdString() << " [" << amenity->_id << "], " << type  << ", lat " << amenity->_latitude << " lon " << amenity->_longitude << std::endl;
+        output << _L("\t\t") <<
+            QStringToStdXString(amenity->_latinName) << _L(" [") << amenity->_id << _L("], ") <<
+            QStringToStdXString(categories[amenity->_categoryId]->_name) << _L(":") << QStringToStdXString(categories[amenity->_categoryId]->_subcategories[amenity->_subcategoryId]) <<
+            _L(", lat ") << amenity->_latitude << _L(" lon ") << amenity->_longitude << std::endl;
     }
 }
 
+#if defined(_UNICODE) || defined(UNICODE)
+void printAddressDetailedInfo(std::wostream& output, const OsmAnd::Inspector::Configuration& cfg, OsmAnd::ObfReader* reader, OsmAnd::ObfAddressSection* section)
+#else
 void printAddressDetailedInfo(std::ostream& output, const OsmAnd::Inspector::Configuration& cfg, OsmAnd::ObfReader* reader, OsmAnd::ObfAddressSection* section)
+#endif
 {
     OsmAnd::ObfAddressSection::AddressBlocksSection::Type types[] = {
         OsmAnd::ObfAddressSection::AddressBlocksSection::Type::CitiesOrTowns,
@@ -275,7 +334,7 @@ void printAddressDetailedInfo(std::ostream& output, const OsmAnd::Inspector::Con
         QList< std::shared_ptr<OsmAnd::Model::StreetGroup> > streetGroups;
         OsmAnd::ObfAddressSection::loadStreetGroups(reader, section, streetGroups, 1 << types[typeIdx]);
 
-        output << "\t" << strTypes[typeIdx] << ", " << streetGroups.size() << " group(s)";
+        output << _L("\t") << strTypes[typeIdx] << _L(", ") << streetGroups.size() << _L(" group(s)");
         if(!cfg.verboseStreetGroups)
         {
             output << std::endl;
@@ -288,13 +347,13 @@ void printAddressDetailedInfo(std::ostream& output, const OsmAnd::Inspector::Con
 
             QList< std::shared_ptr<OsmAnd::Model::Street> > streets;
             OsmAnd::ObfAddressSection::loadStreetsFromGroup(reader, g.get(), streets);
-            output << "\t\t'" << g->_latinName.toStdString() << "' [" << g->_id << "], " << streets.size() << " street(s)";
+            output << _L("\t\t'") << QStringToStdXString(g->_latinName) << _L("' [") << g->_id << _L("], ") << streets.size() << _L(" street(s)");
             if(!cfg.verboseStreets)
             {
                 output << std::endl;
                 continue;
             }
-            output << ":" << std::endl;
+            output << _L(":") << std::endl;
             for(auto itStreet = streets.begin(); itStreet != streets.end(); ++itStreet)
             {
                 auto s = *itStreet;
@@ -312,28 +371,28 @@ void printAddressDetailedInfo(std::ostream& output, const OsmAnd::Inspector::Con
                 OsmAnd::ObfAddressSection::loadBuildingsFromStreet(reader, s.get(), buildings);
                 QList< std::shared_ptr<OsmAnd::Model::StreetIntersection> > intersections;
                 OsmAnd::ObfAddressSection::loadIntersectionsFromStreet(reader, s.get(), intersections);
-                output << "\t\t\t'" << qPrintable(s->latinName) << "' [" << s->id << "], " << buildings.size() << " building(s), " << intersections.size() << " intersection(s)" << std::endl;
+                output << _L("\t\t\t'") << QStringToStdXString(s->latinName) << _L("' [") << s->id << _L("], ") << buildings.size() << _L(" building(s), ") << intersections.size() << _L(" intersection(s)") << std::endl;
                 if(cfg.verboseBuildings && buildings.size() > 0)
                 {
-                    output << "\t\t\t\tBuildings:" << std::endl;
+                    output << _L("\t\t\t\tBuildings:") << std::endl;
                     for(auto itBuilding = buildings.begin(); itBuilding != buildings.end(); ++itBuilding)
                     {
                         auto building = *itBuilding;
 
                         if(building->_interpolationInterval != 0)
-                            output << "\t\t\t\t\t" << building->_latinName.toStdString() << "-" << building->_latinName2.toStdString() << " (+" << building->_interpolationInterval << ") [" << building->_id << "]" << std::endl;
+                            output << _L("\t\t\t\t\t") << QStringToStdXString(building->_latinName) << _L("-") << QStringToStdXString(building->_latinName2) << _L(" (+") << building->_interpolationInterval << _L(") [") << building->_id << _L("]") << std::endl;
                         else if(building->_interpolation != OsmAnd::Model::Building::Interpolation::Invalid)
-                            output << "\t\t\t\t\t" << building->_latinName.toStdString() << "-" << building->_latinName2.toStdString() << " (" << building->_interpolation << ") [" << building->_id << "]" << std::endl;
+                            output << _L("\t\t\t\t\t") << QStringToStdXString(building->_latinName) << _L("-") << QStringToStdXString(building->_latinName2) << _L(" (") << building->_interpolation << _L(") [") << building->_id << _L("]") << std::endl;
                     }
                 }
                 if(cfg.verboseIntersections && intersections.size() > 0)
                 {
-                    output << "\t\t\t\tIntersects with:" << std::endl;
+                    output << _L("\t\t\t\tIntersects with:") << std::endl;
                     for(auto itIntersection = intersections.begin(); itIntersection != intersections.end(); ++itIntersection)
                     {
                         auto intersection = *itIntersection;
 
-                        output << "\t\t\t\t\t" << intersection->latinName.toStdString() << std::endl;
+                        output << _L("\t\t\t\t\t") << QStringToStdXString(intersection->latinName) << std::endl;
                     }
                 }
             }
@@ -341,7 +400,11 @@ void printAddressDetailedInfo(std::ostream& output, const OsmAnd::Inspector::Con
     }
 }
 
+#if defined(_UNICODE) || defined(UNICODE)
+std::wstring formatBounds(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom)
+#else
 std::string formatBounds(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom)
+#endif
 {
     double l = OsmAnd::Utilities::get31LongitudeX(left);
     double r = OsmAnd::Utilities::get31LongitudeX(right);
@@ -350,9 +413,17 @@ std::string formatBounds(uint32_t left, uint32_t right, uint32_t top, uint32_t b
     return formatGeoBounds(l, r, t, b);
 }
 
+#if defined(_UNICODE) || defined(UNICODE)
+std::wstring formatGeoBounds(double l, double r, double t, double b)
+#else
 std::string formatGeoBounds(double l, double r, double t, double b)
+#endif
 {
+#if defined(_UNICODE) || defined(UNICODE)
+    std::wostringstream oStream;
+#else
     std::ostringstream oStream;
-    oStream << "(left top - right bottom) : " << l << ", " << t << " NE - " << r << ", " << b << " NE";
+#endif
+    oStream << _L("(left top - right bottom) : ") << l << _L(", ") << t << _L(" NE - ") << r << _L(", ") << b << _L(" NE");
     return oStream.str();
 }

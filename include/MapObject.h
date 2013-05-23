@@ -23,9 +23,19 @@
 #ifndef __MODEL_MAP_OBJECT_H_
 #define __MODEL_MAP_OBJECT_H_
 
+#include <stdint.h>
+
+#include <QList>
+#include <QMap>
+#include <QVector>
+#include <QString>
+
 #include <OsmAndCore.h>
+#include <Area.h>
 
 namespace OsmAnd {
+
+    class ObfMapSection;
 
     namespace Model {
 
@@ -33,9 +43,22 @@ namespace OsmAnd {
         {
         private:
         protected:
-        public:
             MapObject();
+
+            uint64_t _id;
+            bool _isArea;
+            QVector< PointI > _coordinates;
+            QList< QVector< PointI > > _polygonInnerCoordinates;
+            QList<uint32_t> _types;
+            QList<uint32_t> _extraTypes;
+            QMap<uint32_t, QString> _names;
+        public:
             virtual ~MapObject();
+
+            const uint64_t& id;
+            const QMap<uint32_t, QString>& names;
+
+            friend class ObfMapSection;
         };
 
     } // namespace Model

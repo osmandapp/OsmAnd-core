@@ -366,7 +366,7 @@ void OsmAnd::ObfRoutingSection::readSubsectionData(
                 {
                     auto road = itEntry.value();
 
-                    // Fix strings in road
+                    // Fill names of roads from stringtable
                     for(auto itNameEntry = road->_names.begin(); itNameEntry != road->_names.end(); ++itNameEntry)
                     {
                         auto encodedId = itNameEntry.value();

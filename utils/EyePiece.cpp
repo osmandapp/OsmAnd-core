@@ -141,7 +141,7 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
     }
 
     // Collect all map objects
-    QList< std::shared_ptr<OsmAnd::ObfMapSection::MapObject> > mapObjects;
+    QList< std::shared_ptr<OsmAnd::Model::MapObject> > mapObjects;
     OsmAnd::AreaI bbox31(
             OsmAnd::Utilities::get31TileNumberY(cfg.bbox.top),
             OsmAnd::Utilities::get31TileNumberX(cfg.bbox.left),
@@ -167,6 +167,7 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
     const auto tileHeight = OsmAnd::Utilities::getTileNumberX(cfg.zoom, cfg.bbox.top) - OsmAnd::Utilities::getTileNumberX(cfg.zoom, cfg.bbox.bottom);
     const auto pixelWidth = static_cast<int32_t>(tileWidth * cfg.tileSide);
     const auto pixelHeight = static_cast<int32_t>(tileHeight * cfg.tileSide);
+    output << "Will rasterize " << mapObjects.count() << " objects onto " << pixelWidth << "x" << pixelHeight << " bitmap" << std::endl;
 
     // Allocate render target
     SkBitmap renderSurface;

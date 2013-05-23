@@ -45,6 +45,7 @@ namespace OsmAnd
             bool verboseBuildings;
             bool verboseIntersections;
             bool verboseMap;
+            bool verboseMapObjects;
             bool verbosePoi;
             bool verboseAmenities;
             bool verboseTrasport;

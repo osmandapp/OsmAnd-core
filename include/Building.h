@@ -24,7 +24,6 @@
 #define __MODEL_BUILDING_H_
 
 #include <OsmAndCore.h>
-#include <MapObject.h>
 #include <QString>
 #include <stdint.h>
 
@@ -32,7 +31,7 @@ namespace OsmAnd {
 
     namespace Model {
 
-        class OSMAND_CORE_API Building : public MapObject
+        class OSMAND_CORE_API Building
         {
         public:
             enum Interpolation 

@@ -25,6 +25,7 @@
 
 #include <memory>
 #include <tuple>
+#include <functional>
 
 #include <google/protobuf/io/coded_stream.h>
 
@@ -32,6 +33,7 @@
 #include <QHash>
 #include <QMap>
 #include <QSet>
+#include <QVector>
 
 #include <OsmAndCore.h>
 #include <ObfSection.h>
@@ -43,6 +45,10 @@ namespace OsmAnd {
 
     class ObfReader;
     namespace gpb = google::protobuf;
+
+    namespace Model {
+        class MapObject;
+    } // namespace Model
 
     /**
     'Map' section of OsmAnd Binary File
@@ -83,15 +89,6 @@ namespace OsmAnd {
             const AreaI& area31;
 
             friend class ObfMapSection;
-        };
-
-        struct MapObject
-        {
-            uint64_t _id;
-            bool _isArea;
-            QList<uint32_t> _types;
-            QList<uint32_t> _extraTypes;
-            QMap<uint32_t, uint32_t> _names;
         };
     private:
     protected:
@@ -139,9 +136,22 @@ namespace OsmAnd {
             QSet<uint32_t>& positiveLayers);
         static void readMapLevelTreeNodes(ObfReader* reader, ObfMapSection* section, MapLevel* level, QList< std::shared_ptr<LevelTreeNode> >& nodes);
         static void readTreeNode(ObfReader* reader, ObfMapSection* section, const AreaI& parentArea, LevelTreeNode* treeNode);
-        static void readTreeNodeChildren(ObfReader* reader, ObfMapSection* section, LevelTreeNode* treeNode, QList< std::shared_ptr<LevelTreeNode> >* nodesWithData, QueryFilter* filter, IQueryController* controller);
-        static void readMapObjectsBlock(ObfReader* reader, ObfMapSection* section, LevelTreeNode* treeNode, QList< std::shared_ptr<OsmAnd::ObfMapSection::MapObject> >* resultOut, QueryFilter* filter, IQueryController* controller);
-        static void readMapObject(ObfReader* reader, ObfMapSection* section, LevelTreeNode* treeNode, std::shared_ptr<OsmAnd::ObfMapSection::MapObject>& mapObjectOut, QueryFilter* filter);
+        static void readTreeNodeChildren(ObfReader* reader, ObfMapSection* section,
+            LevelTreeNode* treeNode,
+            QList< std::shared_ptr<LevelTreeNode> >* nodesWithData,
+            QueryFilter* filter,
+            IQueryController* controller);
+        static void readMapObjectsBlock(ObfReader* reader, ObfMapSection* section,
+            LevelTreeNode* treeNode,
+            QList< std::shared_ptr<OsmAnd::Model::MapObject> >* resultOut,
+            QueryFilter* filter,
+            std::function<bool (std::shared_ptr<OsmAnd::Model::MapObject>)> visitor,
+            IQueryController* controller);
+        static void readMapObject(ObfReader* reader, ObfMapSection* section,
+            LevelTreeNode* treeNode,
+            uint64_t baseId,
+            std::shared_ptr<OsmAnd::Model::MapObject>& mapObjectOut,
+            QueryFilter* filter);
         enum {
             ShiftCoordinates = 5,
             MaskToRead = ~((1 << ShiftCoordinates) - 1),
@@ -155,8 +165,9 @@ namespace OsmAnd {
         
         void loadRules(ObfReader* reader);
         static void loadMapObjects(ObfReader* reader, ObfMapSection* section,
-            QList< std::shared_ptr<OsmAnd::ObfMapSection::MapObject> >* resultOut = nullptr,
+            QList< std::shared_ptr<OsmAnd::Model::MapObject> >* resultOut = nullptr,
             QueryFilter* filter = nullptr,
+            std::function<bool (std::shared_ptr<OsmAnd::Model::MapObject>)> visitor = nullptr,
             IQueryController* controller = nullptr);
 
     friend class ObfReader;

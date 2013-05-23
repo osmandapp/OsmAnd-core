@@ -6,6 +6,7 @@
 #include <iostream>
 
 #include "OBF.pb.h"
+#include "MapObject.h"
 
 namespace gpb = google::protobuf;
 
@@ -270,8 +271,9 @@ void OsmAnd::ObfMapSection::readEncodingRule(
 void OsmAnd::ObfMapSection::loadMapObjects(
     ObfReader* reader,
     ObfMapSection* section,
-    QList< std::shared_ptr<MapObject> >* resultOut /*= nullptr*/,
+    QList< std::shared_ptr<OsmAnd::Model::MapObject> >* resultOut /*= nullptr*/,
     QueryFilter* filter /*= nullptr*/,
+    std::function<bool (std::shared_ptr<OsmAnd::Model::MapObject>)> visitor /*= nullptr*/,
     IQueryController* controller /*= nullptr*/)
 {
     auto cis = reader->_codedInputStream.get();
@@ -329,7 +331,7 @@ void OsmAnd::ObfMapSection::loadMapObjects(
             gpb::uint32 length;
             cis->ReadVarint32(&length);
             auto oldLimit = cis->PushLimit(length);
-            readMapObjectsBlock(reader, section, treeNode.get(), resultOut, filter, controller);
+            readMapObjectsBlock(reader, section, treeNode.get(), resultOut, filter, visitor, controller);
             cis->PopLimit(oldLimit);
         }
     }
@@ -469,11 +471,19 @@ void OsmAnd::ObfMapSection::readTreeNodeChildren( ObfReader* reader, ObfMapSecti
     }
 }
 
-void OsmAnd::ObfMapSection::readMapObjectsBlock( ObfReader* reader, ObfMapSection* section, LevelTreeNode* tree, QList< std::shared_ptr<MapObject> >* resultOut, QueryFilter* filter, IQueryController* controller )
+void OsmAnd::ObfMapSection::readMapObjectsBlock(
+    ObfReader* reader,
+    ObfMapSection* section, 
+    LevelTreeNode* tree,
+    QList< std::shared_ptr<OsmAnd::Model::MapObject> >* resultOut,
+    QueryFilter* filter,
+    std::function<bool (std::shared_ptr<OsmAnd::Model::MapObject>)> visitor,
+    IQueryController* controller)
 {
     auto cis = reader->_codedInputStream.get();
 
-    QList< std::shared_ptr<MapObject> > intermediateResult;
+    QList< std::shared_ptr<OsmAnd::Model::MapObject> > intermediateResult;
+    QStringList mapObjectsNamesTable;
     gpb::uint64 baseId = 0;
     for(;;)
     {
@@ -487,15 +497,29 @@ void OsmAnd::ObfMapSection::readMapObjectsBlock( ObfReader* reader, ObfMapSectio
             for(auto itEntry = intermediateResult.begin(); itEntry != intermediateResult.end(); ++itEntry)
             {
                 auto entry = *itEntry;
-                if(resultOut)
-                    resultOut->push_back(entry);
-                //TODO: req.publish(obj);
+
+                // Fill names of roads from stringtable
+                for(auto itNameEntry = entry->_names.begin(); itNameEntry != entry->_names.end(); ++itNameEntry)
+                {
+                    auto encodedId = itNameEntry.value();
+                    uint32_t stringId = 0;
+                    stringId |= (encodedId.at(1 + 0).unicode() & 0xff) << 8*0;
+                    stringId |= (encodedId.at(1 + 1).unicode() & 0xff) << 8*1;
+                    stringId |= (encodedId.at(1 + 2).unicode() & 0xff) << 8*2;
+                    stringId |= (encodedId.at(1 + 3).unicode() & 0xff) << 8*3;
+
+                    itNameEntry.value() = mapObjectsNamesTable[stringId];
+                }
+
+                if(!visitor || visitor(entry))
+                {
+                    if(resultOut)
+                        resultOut->push_back(entry);
+                }
             }
             return;
         case OBF::MapDataBlock::kBaseIdFieldNumber:
-            {
-                cis->ReadVarint64(&baseId);
-            }
+            cis->ReadVarint64(&baseId);
             break;
         case OBF::MapDataBlock::kDataObjectsFieldNumber:
             {
@@ -503,13 +527,10 @@ void OsmAnd::ObfMapSection::readMapObjectsBlock( ObfReader* reader, ObfMapSectio
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
                 auto pos = cis->CurrentPosition();
-                std::shared_ptr<OsmAnd::ObfMapSection::MapObject> mapObject;
-                readMapObject(reader, section, tree, mapObject, filter);
+                std::shared_ptr<OsmAnd::Model::MapObject> mapObject;
+                readMapObject(reader, section, tree, baseId, mapObject, filter);
                 if(mapObject)
-                {
-                    mapObject->_id += baseId;
                     intermediateResult.push_back(mapObject);
-                }
                 cis->PopLimit(oldLimit);
             }
             break;
@@ -524,18 +545,7 @@ void OsmAnd::ObfMapSection::readMapObjectsBlock( ObfReader* reader, ObfMapSectio
                     cis->PopLimit(oldLimit);
                     break;
                 }
-                QStringList stringTable;
-                ObfReader::readStringTable(cis, stringTable);
-                for(auto itEntry = intermediateResult.begin(); itEntry != intermediateResult.end(); ++itEntry)
-                {
-                    auto entry = *itEntry;
-                    /*TODO:if (rs.objectNames != null) {
-                        int[] keys = rs.objectNames.keys();
-                        for (int j = 0; j < keys.length; j++) {
-                            rs.objectNames.put(keys[j], stringTable.get(rs.objectNames.get(keys[j]).charAt(0)));
-                        }
-                    }*/
-                }
+                ObfReader::readStringTable(cis, mapObjectsNamesTable);
                 cis->PopLimit(oldLimit);
             }
             break;
@@ -546,15 +556,16 @@ void OsmAnd::ObfMapSection::readMapObjectsBlock( ObfReader* reader, ObfMapSectio
     }
 }
 
-void OsmAnd::ObfMapSection::readMapObject( ObfReader* reader, ObfMapSection* section, LevelTreeNode* tree, std::shared_ptr<OsmAnd::ObfMapSection::MapObject>& mapObject, QueryFilter* filter )
+void OsmAnd::ObfMapSection::readMapObject(
+    ObfReader* reader,
+    ObfMapSection* section,
+    LevelTreeNode* treeNode,
+    uint64_t baseId,
+    std::shared_ptr<OsmAnd::Model::MapObject>& mapObject,
+    QueryFilter* filter)
 {
     auto cis = reader->_codedInputStream.get();
 
-        /*
-    List<TIntArrayList> innercoordinates = null;
-    TIntArrayList additionalTypes = null;
-    TIntObjectHashMap<String> stringNames = null;
-    long id = 0;*/
     for(;;)
     {
         auto tag = cis->ReadTag();
@@ -566,27 +577,30 @@ void OsmAnd::ObfMapSection::readMapObject( ObfReader* reader, ObfMapSection* sec
         case OBF::MapData::kAreaCoordinatesFieldNumber:
         case OBF::MapData::kCoordinatesFieldNumber:
             {
+                QVector< PointI > coordinates;
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
-                auto px = tree->_area31.left & MaskToRead;
-                auto py = tree->_area31.top & MaskToRead;
+                auto px = treeNode->_area31.left & MaskToRead;
+                auto py = treeNode->_area31.top & MaskToRead;
                 uint32_t minX = std::numeric_limits<uint32_t>::max();
                 uint32_t maxX = 0;
                 uint32_t minY = std::numeric_limits<uint32_t>::max();
                 uint32_t maxY = 0;
-                bool contains = (filter == nullptr);
-                //TODO:req.numberOfVisitedObjects++;
+                bool contains = (filter == nullptr || filter->_bbox31 == nullptr);
                 while(cis->BytesUntilLimit() > 0)
                 {
-                    auto x = (ObfReader::readSInt32(cis) << ShiftCoordinates) + px;
-                    auto y = (ObfReader::readSInt32(cis) << ShiftCoordinates) + py;
-                    //req.cacheCoordinates.add(x);
-                    //req.cacheCoordinates.add(y);
+                    auto dx = (ObfReader::readSInt32(cis) << ShiftCoordinates);
+                    auto x = dx + px;
+                    auto dy = (ObfReader::readSInt32(cis) << ShiftCoordinates);
+                    auto y = dy + py;
+
+                    coordinates.push_back(PointI(x, y));
+                    
                     px = x;
                     py = y;
-                    if(filter && filter->_bbox31 && !contains && filter->_bbox31->contains(x, y))
-                        contains = true;
+                    if(!contains && filter && filter->_bbox31)
+                        contains = filter->_bbox31->contains(x, y);
                     if(!contains)
                     {
                         minX = qMin(minX, x);
@@ -595,10 +609,10 @@ void OsmAnd::ObfMapSection::readMapObject( ObfReader* reader, ObfMapSection* sec
                         maxY = qMax(maxY, y);
                     }
                 }
-                if(filter && filter->_bbox31 && !contains && filter->_bbox31->contains(maxX, maxY))
-                    contains = true;
+                if(!contains && filter && filter->_bbox31)
+                    contains = filter->_bbox31->contains(minX, minY) && filter->_bbox31->contains(maxX, maxY);
                 cis->PopLimit(oldLimit);
-                if(filter && !contains)
+                if(!contains)
                 {
                     cis->Skip(cis->BytesUntilLimit());
                     return;
@@ -606,26 +620,32 @@ void OsmAnd::ObfMapSection::readMapObject( ObfReader* reader, ObfMapSection* sec
 
                 // Finally, create the object
                 if(!mapObject)
-                    mapObject.reset(new MapObject());
+                    mapObject.reset(new OsmAnd::Model::MapObject());
                 mapObject->_isArea = (tgn == OBF::MapData::kAreaCoordinatesFieldNumber);
+                mapObject->_coordinates = coordinates;
             }
             break;
         case OBF::MapData::kPolygonInnerCoordinatesFieldNumber:
             {
                 if(!mapObject)
-                    mapObject.reset(new MapObject());
+                    mapObject.reset(new OsmAnd::Model::MapObject());
 
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
-                auto px = tree->_area31.left & MaskToRead;
-                auto py = tree->_area31.top & MaskToRead;
+                auto px = treeNode->_area31.left & MaskToRead;
+                auto py = treeNode->_area31.top & MaskToRead;
+                mapObject->_polygonInnerCoordinates.push_back(QVector< PointI >());
+                auto& polygon = mapObject->_polygonInnerCoordinates.last();
                 while(cis->BytesUntilLimit() > 0)
                 {
-                    auto x = (ObfReader::readSInt32(cis) << ShiftCoordinates) + px;
-                    auto y = (ObfReader::readSInt32(cis) << ShiftCoordinates) + py;
-                    //TODO:polygon.add(x);
-                    //TODO:polygon.add(y);
+                    auto dx = (ObfReader::readSInt32(cis) << ShiftCoordinates);
+                    auto x = dx + px;
+                    auto dy = (ObfReader::readSInt32(cis) << ShiftCoordinates);
+                    auto y = dy + py;
+
+                    polygon.push_back(PointI(x, y));
+                    
                     px = x;
                     py = y;
                 }
@@ -635,7 +655,7 @@ void OsmAnd::ObfMapSection::readMapObject( ObfReader* reader, ObfMapSection* sec
         case OBF::MapData::kAdditionalTypesFieldNumber:
             {
                 if(!mapObject)
-                    mapObject.reset(new MapObject());
+                    mapObject.reset(new OsmAnd::Model::MapObject());
 
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
@@ -653,7 +673,7 @@ void OsmAnd::ObfMapSection::readMapObject( ObfReader* reader, ObfMapSection* sec
         case OBF::MapData::kTypesFieldNumber:
             {
                 if(!mapObject)
-                    mapObject.reset(new MapObject());
+                    mapObject.reset(new OsmAnd::Model::MapObject());
 
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
@@ -666,17 +686,6 @@ void OsmAnd::ObfMapSection::readMapObject( ObfReader* reader, ObfMapSection* sec
                     mapObject->_types.append(type);
                 }
                 cis->PopLimit(oldLimit);
-
-                /*
-                if (req.searchFilter != null) {
-                accept = req.searchFilter.accept(req.cacheTypes, root);
-                }
-                if (!accept) {
-                codedIS.skipRawBytes(codedIS.getBytesUntilLimit());
-                return null;
-                }
-                req.numberOfAcceptedObjects++;
-                */
             }
             break;
         case OBF::MapData::kStringNamesFieldNumber:
@@ -686,18 +695,31 @@ void OsmAnd::ObfMapSection::readMapObject( ObfReader* reader, ObfMapSection* sec
                 auto oldLimit = cis->PushLimit(length);
                 while(cis->BytesUntilLimit() > 0)
                 {
-                    gpb::uint32 stag;
-                    cis->ReadVarint32(&stag);
-                    gpb::uint32 sid;
-                    cis->ReadVarint32(&sid);
+                    gpb::uint32 stringTag;
+                    cis->ReadVarint32(&stringTag);
+                    gpb::uint32 stringId;
+                    cis->ReadVarint32(&stringId);
 
-                    mapObject->_names[stag] = sid;
+                    char fakeString[] = {
+                        '[',
+                        static_cast<char>((stringId >> 8*0) & 0xff),
+                        static_cast<char>((stringId >> 8*1) & 0xff),
+                        static_cast<char>((stringId >> 8*2) & 0xff),
+                        static_cast<char>((stringId >> 8*3) & 0xff),
+                        ']'
+                    };
+                    auto fakeQString = QString::fromLocal8Bit(fakeString, sizeof(fakeString));
+                    assert(fakeQString.length() == 6);
+                    mapObject->_names.insert(stringTag, fakeQString);
                 }
                 cis->PopLimit(oldLimit);
             }
             break;
         case OBF::MapData::kIdFieldNumber:
-            cis->ReadVarint64(&mapObject->_id);
+            {
+                auto d = ObfReader::readSInt64(cis);
+                mapObject->_id = d + baseId;
+            }
             break;
         default:
             ObfReader::skipUnknownField(cis, tag);
