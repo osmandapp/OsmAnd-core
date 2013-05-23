@@ -6,6 +6,8 @@
 #include <Common.h>
 #include <ObfReader.h>
 #include <Utilities.h>
+#include <Rasterizer.h>
+#include <RasterizationStyleContext.h>
 
 #include <SkBitmap.h>
 #include <SkCanvas.h>
@@ -131,8 +133,8 @@ void rasterize(std::wostream &output, const OsmAnd::EyePiece::Configuration& cfg
 void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
 #endif
 {
+    // Obtain and configure rasterization style context
     OsmAnd::RasterizationStyles stylesCollection;
-
     for(auto itStyleFile = cfg.styleFiles.begin(); itStyleFile != cfg.styleFiles.end(); ++itStyleFile)
     {
         auto styleFile = *itStyleFile;
@@ -143,15 +145,13 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
             return;
         }
     }
-
     std::shared_ptr<OsmAnd::RasterizationStyle> style;
-    if(!stylesCollection.obtainCompleteStyle(cfg.styleName, style))
+    if(!stylesCollection.obtainStyle(cfg.styleName, style))
     {
         output << _L("Failed to resolve style '") << QStringToStdXString(cfg.styleName) << _L("'");
         return;
     }
-
-    //std::unique_ptr<OsmAnd::RasterizerContext>
+    OsmAnd::RasterizationStyleContext styleContext(style);
 
     QList< std::shared_ptr<OsmAnd::ObfReader> > obfData;
     for(auto itObf = cfg.obfs.begin(); itObf != cfg.obfs.end(); ++itObf)
@@ -207,7 +207,7 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
 
     // Perform actual rendering
     //canvas.drawColor(rc.getDefaultColor());
-    //doRendering(result->result, canvas, req, &rc);
+    OsmAnd::Rasterizer::rasterize(canvas, mapObjects, cfg.zoom, styleContext, nullptr);
 
     // Save rendered area
     if(!cfg.output.isEmpty())

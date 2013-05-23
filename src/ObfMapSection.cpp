@@ -280,9 +280,9 @@ void OsmAnd::ObfMapSection::loadMapObjects(
             assert(cis->BytesUntilLimit() == 0);
             cis->PopLimit(oldLimit);
         }
-        qSort(treeNodesWithData.begin(), treeNodesWithData.end(), [](const std::shared_ptr<LevelTreeNode>& l, const std::shared_ptr<LevelTreeNode>& r) -> int
+        qSort(treeNodesWithData.begin(), treeNodesWithData.end(), [](const std::shared_ptr<LevelTreeNode>& l, const std::shared_ptr<LevelTreeNode>& r) -> bool
         {
-            return l->_dataOffset - r->_dataOffset;
+            return l->_dataOffset < r->_dataOffset;
         });
         for(auto itTreeNode = treeNodesWithData.begin(); itTreeNode != treeNodesWithData.end(); ++itTreeNode)
         {

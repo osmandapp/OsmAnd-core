@@ -208,9 +208,9 @@ void OsmAnd::ObfPoiSection::readAmenities(
         case OBF::OsmAndPoiIndex::kPoiDataFieldNumber:
             {
                 // Sort tiles byte data offset, to all cache-friendly with I/O system
-                qSort(tiles.begin(), tiles.end(), [](const std::shared_ptr<Tile>& l, const std::shared_ptr<Tile>& r) -> int
+                qSort(tiles.begin(), tiles.end(), [](const std::shared_ptr<Tile>& l, const std::shared_ptr<Tile>& r) -> bool
                 {
-                    return l->_hash - r->_hash;
+                    return l->_hash < r->_hash;
                 });
 
                 for(auto itTile = tiles.begin(); itTile != tiles.end(); ++itTile)

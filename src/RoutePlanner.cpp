@@ -1098,9 +1098,9 @@ void OsmAnd::RoutePlanner::loadBorderPoints( OsmAnd::RoutePlannerContext::Calcul
         );
     }
 
-    qSort(context->_borderLines.begin(), context->_borderLines.end(), [](const std::shared_ptr<RoutePlannerContext::BorderLine>& l, const std::shared_ptr<RoutePlannerContext::BorderLine>& r) -> int
+    qSort(context->_borderLines.begin(), context->_borderLines.end(), [](const std::shared_ptr<RoutePlannerContext::BorderLine>& l, const std::shared_ptr<RoutePlannerContext::BorderLine>& r) -> bool
     {
-        return l->_y31 - r->_y31;
+        return l->_y31 < r->_y31;
     });
     
     context->_borderLinesY31.reserve(context->_borderLines.size());

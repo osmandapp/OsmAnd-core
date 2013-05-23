@@ -102,7 +102,7 @@ bool OsmAnd::RasterizationStyle::resolveDependencies()
     // Make sure parent is resolved before this style (if present)
     if(!_parentName.isEmpty() && !_parent)
     {
-        if(!owner->obtainCompleteStyle(_parentName, _parent))
+        if(!owner->obtainStyle(_parentName, _parent))
             return false;
     }
 

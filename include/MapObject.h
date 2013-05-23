@@ -36,6 +36,7 @@
 namespace OsmAnd {
 
     class ObfMapSection;
+    class Rasterizer;
 
     namespace Model {
 
@@ -60,6 +61,7 @@ namespace OsmAnd {
             const QMap<uint32_t, QString>& names;
 
             friend class ObfMapSection;
+            friend class Rasterizer;
         };
 
     } // namespace Model

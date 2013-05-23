@@ -38,7 +38,7 @@ bool OsmAnd::RasterizationStyles::registerStyle( const QFile& file )
     return true;
 }
 
-bool OsmAnd::RasterizationStyles::obtainCompleteStyle( const QString& name, std::shared_ptr<OsmAnd::RasterizationStyle>& outStyle )
+bool OsmAnd::RasterizationStyles::obtainStyle( const QString& name, std::shared_ptr<OsmAnd::RasterizationStyle>& outStyle )
 {
     auto itStyle = _styles.find(name);
     if(itStyle == _styles.end())

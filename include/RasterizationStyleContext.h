@@ -20,37 +20,30 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __RASTERIZATION_STYLES_H_
-#define __RASTERIZATION_STYLES_H_
+#ifndef __RASTERIZATION_STYLE_CONTEXT_H_
+#define __RASTERIZATION_STYLE_CONTEXT_H_
 
 #include <stdint.h>
 #include <memory>
 
-#include <QString>
-#include <QFile>
-#include <QHash>
-
 #include <OsmAndCore.h>
-#include <RasterizationStyle.h>
 
 namespace OsmAnd {
 
-    class OSMAND_CORE_API RasterizationStyles
+    class RasterizationStyle;
+
+    class OSMAND_CORE_API RasterizationStyleContext
     {
     private:
-        bool registerEmbeddedStyle(const QString& resourceName);
     protected:
-        QHash< QString, std::shared_ptr<RasterizationStyle> > _styles;
     public:
-        RasterizationStyles();
-        virtual ~RasterizationStyles();
+        RasterizationStyleContext(std::shared_ptr<RasterizationStyle> style);
+        virtual ~RasterizationStyleContext();
 
-        bool registerStyle(const QFile& file);
-        bool obtainStyle(const QString& name, std::shared_ptr<OsmAnd::RasterizationStyle>& outStyle);
-
-    friend class RasterizationStyle;
+        const std::shared_ptr<RasterizationStyle> style;
     };
+
 
 } // namespace OsmAnd
 
-#endif // __RASTERIZATION_STYLES_H_
+#endif // __RASTERIZATION_STYLE_CONTEXT_H_
