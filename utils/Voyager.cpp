@@ -7,6 +7,7 @@
 
 #include <QDateTime>
 
+#include <Common.h>
 #include <ObfReader.h>
 #include <Utilities.h>
 #include <RoutePlanner.h>
@@ -126,24 +127,48 @@ OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::Voyager::parseCommandL
     return true;
 }
 
+#if defined(_UNICODE) || defined(UNICODE)
+void performJourney(std::wostream &output, const OsmAnd::Voyager::Configuration& cfg);
+#else
 void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& cfg);
+#endif
 
 OSMAND_CORE_UTILS_API void OSMAND_CORE_UTILS_CALL OsmAnd::Voyager::logJourneyToStdOut( const Configuration& cfg )
 {
+#if defined(_UNICODE) || defined(UNICODE)
+    performJourney(std::wcout, cfg);
+#else
     performJourney(std::cout, cfg);
+#endif
 }
 
 OSMAND_CORE_UTILS_API QString OSMAND_CORE_UTILS_CALL OsmAnd::Voyager::logJourneyToString( const Configuration& cfg )
 {
+#if defined(_UNICODE) || defined(UNICODE)
+    std::wostringstream output;
+    performJourney(output, cfg);
+    return QString::fromStdWString(output.str());
+#else
     std::ostringstream output;
     performJourney(output, cfg);
     return QString::fromStdString(output.str());
+#endif
 }
 
+#if defined(_UNICODE) || defined(UNICODE)
+void performJourney(std::wostream &output, const OsmAnd::Voyager::Configuration& cfg)
+#else
 void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& cfg)
+#endif
 {
     if(cfg.generateXml)
-        output << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << std::endl;
+    {
+#if defined(_UNICODE) || defined(UNICODE)
+        output << _L("<?xml version=\"1.0\" encoding=\"UTF-16\"?>") << std::endl;
+#else
+        output << _L("<?xml version=\"1.0\" encoding=\"UTF-8\"?>") << std::endl;
+#endif
+    }
 
     QList< std::shared_ptr<OsmAnd::ObfReader> > obfData;
     for(auto itObf = cfg.obfs.begin(); itObf != cfg.obfs.end(); ++itObf)
@@ -158,10 +183,10 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
     if(!OsmAnd::RoutePlanner::findClosestRoadPoint(&plannerContext, cfg.startLatitude, cfg.startLongitude, &startRoad))
     {
         if(cfg.generateXml)
-            output << "<!--";
-        output << "Failed to find road near start point";
+            output << _L("<!--");
+        output << _L("Failed to find road near start point");
         if(cfg.generateXml)
-            output << "-->";
+            output << _L("-->");
         output << std::endl;
         return;
     }
@@ -169,10 +194,10 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
     if(!OsmAnd::RoutePlanner::findClosestRoadPoint(&plannerContext, cfg.endLatitude, cfg.endLongitude, &endRoad))
     {
         if(cfg.generateXml)
-            output << "<!--";
-        output << "Failed to find road near end point";
+            output << _L("<!--");
+        output << _L("Failed to find road near end point");
         if(cfg.generateXml)
-            output << "-->";
+            output << _L("-->");
         output << std::endl;
         return;
     }
@@ -180,55 +205,55 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
     if(cfg.verbose)
     {
         if(cfg.generateXml)
-            output << "<!--";
-        output << "Start point (LAT " << cfg.startLatitude << "; LON " << cfg.startLongitude << "):";
+            output << _L("<!--");
+        output << _L("Start point (LAT ") << cfg.startLatitude << _L("; LON ") << cfg.startLongitude << _L("):");
         if(cfg.generateXml)
-            output << "-->";
+            output << _L("-->");
         output << std::endl;
         if(cfg.generateXml)
-            output << "<!--";
-        output << "\tRoad name(s): ";
+            output << _L("<!--");
+        output << _L("\tRoad name(s): ");
         if(startRoad->names.size() == 0)
         {
-            output << "\t[none] (" << startRoad->id << ")";
+            output << _L("\t[none] (") << startRoad->id << _L(")");
             if(cfg.generateXml)
-                output << "-->";
+                output << _L("-->");
             output << std::endl;
         }
         else
         {
             for(auto itName = startRoad->names.begin(); itName != startRoad->names.end(); ++itName)
-                output << qPrintable(itName.value()) << "; ";
-            output << " (" << startRoad->id << ")";
+                output << QStringToStdXString(itName.value()) << _L("; ");
+            output << _L(" (") << startRoad->id << _L(")");
             if(cfg.generateXml)
-                output << "-->";
+                output << _L("-->");
             output << std::endl;
         }
         output << std::endl;
     
         if(cfg.generateXml)
-            output << "<!--";
-        output << "End point (LAT " << cfg.endLatitude << "; LON " << cfg.endLongitude << "):";
+            output << _L("<!--");
+        output << _L("End point (LAT ") << cfg.endLatitude << _L("; LON ") << cfg.endLongitude << _L("):");
         if(cfg.generateXml)
-            output << "-->";
+            output << _L("-->");
         output << std::endl;
         if(cfg.generateXml)
-            output << "<!--";
-        output << "\tRoad name(s): ";
+            output << _L("<!--");
+        output << _L("\tRoad name(s): ");
         if(endRoad->names.size() == 0)
         {
-            output << "\t[none] (" << endRoad->id << ")";
+            output << _L("\t[none] (") << endRoad->id << _L(")");
             if(cfg.generateXml)
-                output << "-->";
+                output << _L("-->");
             output << std::endl;
         }
         else
         {
             for(auto itName = endRoad->names.begin(); itName != endRoad->names.end(); ++itName)
-                output << qPrintable(itName.value()) << "; ";
-            output << " (" << endRoad->id << ")";
+                output << QStringToStdXString(itName.value()) << _L("; ");
+            output << _L(" (") << endRoad->id << _L(")");
             if(cfg.generateXml)
-                output << "-->";
+                output << _L("-->");
             output << std::endl;
         }
         output << std::endl;
@@ -245,10 +270,10 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
     if(cfg.verbose)
     {
         if(cfg.generateXml)
-            output << "<!--";
-        output << "Started route calculation " << qPrintable(QTime::currentTime().toString());
+            output << _L("<!--");
+        output << _L("Started route calculation ") << QStringToStdXString(QTime::currentTime().toString());
         if(cfg.generateXml)
-            output << "-->";
+            output << _L("-->");
         output << std::endl;
     }
     auto routeFound = OsmAnd::RoutePlanner::calculateRoute(&plannerContext, points, cfg.leftSide, nullptr, &route);
@@ -256,10 +281,10 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
     if(cfg.verbose)
     {
         if(cfg.generateXml)
-            output << "<!--";
-        output << "Finished route calculation " << qPrintable(QTime::currentTime().toString()) << ", took " << std::chrono::duration<double, std::milli> (routeCalculationFinish - routeCalculationStart).count() << " ms";
+            output << _L("<!--");
+        output << _L("Finished route calculation ") << QStringToStdXString(QTime::currentTime().toString()) << _L(", took ") << std::chrono::duration<double, std::milli> (routeCalculationFinish - routeCalculationStart).count() << _L(" ms");
         if(cfg.generateXml)
-            output << "-->";
+            output << _L("-->");
         output << std::endl;
     }
     if(cfg.doRecalculate)
@@ -268,10 +293,10 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
         if(cfg.verbose)
         {
             if(cfg.generateXml)
-                output << "<!--";
-            output << "Started route recalculation " << qPrintable(QTime::currentTime().toString());
+                output << _L("<!--");
+            output << _L("Started route recalculation ") << QStringToStdXString(QTime::currentTime().toString());
             if(cfg.generateXml)
-                output << "-->";
+                output << _L("-->");
             output << std::endl;
         }
         routeFound = OsmAnd::RoutePlanner::calculateRoute(&plannerContext, points, cfg.leftSide, nullptr, &route);
@@ -279,20 +304,20 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
         if(cfg.verbose)
         {
             if(cfg.generateXml)
-                output << "<!--";
-            output << "Finished route recalculation " << qPrintable(QTime::currentTime().toString()) << ", took " << std::chrono::duration<double, std::milli> (routeRecalculationFinish - routeRecalculationStart).count() << " ms";
+                output << _L("<!--");
+            output << _L("Finished route recalculation ") << QStringToStdXString(QTime::currentTime().toString()) << _L(", took ") << std::chrono::duration<double, std::milli> (routeRecalculationFinish - routeRecalculationStart).count() << _L(" ms");
             if(cfg.generateXml)
-                output << "-->";
+                output << _L("-->");
             output << std::endl;
         }
     }
     if(!routeFound)
     {
         if(cfg.generateXml)
-            output << "<!--";
-        output << "FAILED TO FIND ROUTE!";
+            output << _L("<!--");
+        output << _L("FAILED TO FIND ROUTE!");
         if(cfg.generateXml)
-            output << "-->";
+            output << _L("-->");
         output << std::endl;
     }
 
@@ -307,27 +332,27 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
     }
 
     if(cfg.generateXml)
-        output << "<test" << std::endl;
+        output << _L("<test") << std::endl;
     else
-        output << "ROUTE:" << std::endl;
+        output << _L("ROUTE:") << std::endl;
 
-    output << "\tregions=\"\"" << std::endl;
-    output << "\tdescription=\"\"" << std::endl;
-    output << "\tbest_percent=\"\"" << std::endl;
-    output << "\tvehicle=\"" << qPrintable(cfg.vehicle) << "\"" << std::endl;
-    output << "\tstart_lat=\"" << cfg.startLatitude << "\"" << std::endl;
-    output << "\tstart_lon=\"" << cfg.startLongitude << "\"" << std::endl;
-    output << "\ttarget_lat=\"" << cfg.endLatitude << "\"" << std::endl;
-    output << "\ttarget_lon=\"" << cfg.endLongitude << "\"" << std::endl;
-    output << "\tloadedTiles=\"" << 0 << "\"" << std::endl;
-    output << "\tvisitedSegments=\"" << 0 << "\"" << std::endl;
-    output << "\tcomplete_distance=\"" << totalDistance << "\"" << std::endl;
-    output << "\tcomplete_time=\"" << totalTime << "\"" << std::endl;
-    output << "\trouting_time=\"" << 0 << "\"" << std::endl;
-    output << "\tvehicle=\"" << qPrintable(cfg.vehicle) << "\"" << std::endl;
+    output << _L("\tregions=\"\"") << std::endl;
+    output << _L("\tdescription=\"\"") << std::endl;
+    output << _L("\tbest_percent=\"\"") << std::endl;
+    output << _L("\tvehicle=\"") << QStringToStdXString(cfg.vehicle) << _L("\"") << std::endl;
+    output << _L("\tstart_lat=\"") << cfg.startLatitude << _L("\"") << std::endl;
+    output << _L("\tstart_lon=\"") << cfg.startLongitude << _L("\"") << std::endl;
+    output << _L("\ttarget_lat=\"") << cfg.endLatitude << _L("\"") << std::endl;
+    output << _L("\ttarget_lon=\"") << cfg.endLongitude << _L("\"") << std::endl;
+    output << _L("\tloadedTiles=\"") << 0 << _L("\"") << std::endl;
+    output << _L("\tvisitedSegments=\"") << 0 << _L("\"") << std::endl;
+    output << _L("\tcomplete_distance=\"") << totalDistance << _L("\"") << std::endl;
+    output << _L("\tcomplete_time=\"") << totalTime << _L("\"") << std::endl;
+    output << _L("\trouting_time=\"") << 0 << _L("\"") << std::endl;
+    output << _L("\tvehicle=\"") << QStringToStdXString(cfg.vehicle) << _L("\"") << std::endl;
 
     if(cfg.generateXml)
-        output << ">" << std::endl;
+        output << _L(">") << std::endl;
     else
         output << std::endl;
 
@@ -336,13 +361,13 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
         auto segment = *itSegment;
 
         if(cfg.generateXml)
-            output << "\t<segment" << std::endl;
+            output << _L("\t<segment") << std::endl;
         else
-            output << "\tSEGMENT:" << std::endl;
+            output << _L("\tSEGMENT:") << std::endl;
 
-        output << "\t\tid=\"" << segment->road->id << "\"" << std::endl;
-        output << "\t\tstart=\"" << segment->startPointIndex << "\"" << std::endl;
-        output << "\t\tend=\"" << segment->endPointIndex << "\"" << std::endl;
+        output << _L("\t\tid=\"") << segment->road->id << _L("\"") << std::endl;
+        output << _L("\t\tstart=\"") << segment->startPointIndex << _L("\"") << std::endl;
+        output << _L("\t\tend=\"") << segment->endPointIndex << _L("\"") << std::endl;
 
         QString name;
         if(!segment->road->names.isEmpty())
@@ -351,10 +376,10 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
         if (ref != null) {
             name += " (" + ref + ") ";
         }*/
-        output << "\t\tname=\"" << qPrintable(name) << "\"" << std::endl;
+        output << _L("\t\tname=\"") << QStringToStdXString(name) << _L("\"") << std::endl;
 
-        output << "\t\ttime=\"" << segment->time << "\"" << std::endl;
-        output << "\t\tdistance=\"" << segment->distance << "\"" << std::endl;
+        output << _L("\t\ttime=\"") << segment->time << _L("\"") << std::endl;
+        output << _L("\t\tdistance=\"") << segment->distance << _L("\"") << std::endl;
         /*float ms = res.getObject().getMaximumSpeed();
         if(ms > 0) {
             additional.append("maxspeed = \"").append(ms * 3.6f).append("\" ").append(res.getObject().getHighway()).append(" ");
@@ -367,16 +392,16 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
                 additional.append("lanes = \"").append(Arrays.toString(res.getTurnType().getLanes())).append("\" ");
             }
         }*/
-        output << "\t\tstart_bearing=\"" << segment->getBearingBegin() << "\"" << std::endl;
-        output << "\t\tend_bearing=\"" << segment->getBearingEnd() << "\"" << std::endl;
+        output << _L("\t\tstart_bearing=\"") << segment->getBearingBegin() << _L("\"") << std::endl;
+        output << _L("\t\tend_bearing=\"") << segment->getBearingEnd() << _L("\"") << std::endl;
         //additional.append("description = \"").append(res.getDescription()).append("\" ");
         
         if(cfg.generateXml)
-            output << "\t/>" << std::endl;
+            output << _L("\t/>") << std::endl;
         else
             output << std::endl;
     }
 
     if(cfg.generateXml)
-        output << "</test>" << std::endl;
+        output << _L("</test>") << std::endl;
 }
