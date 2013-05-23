@@ -518,7 +518,7 @@ void OsmAnd::ObfPoiSection::readAmenity(
         {
         case 0:
             if(amenity->_latinName.isEmpty())
-                amenity->_latinName = section->_owner->transliterate(amenity->_name);
+                amenity->_latinName = section->owner->transliterate(amenity->_name);
             amenity->_x31 = x31;
             amenity->_y31 = y31;
             amenity->_longitude = Utilities::get31LongitudeX(x31);

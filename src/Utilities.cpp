@@ -7,13 +7,13 @@
 
 const uint64_t l = 1UL << 31;
 
-OSMAND_CORE_API uint32_t OSMAND_CORE_CALL OsmAnd::Utilities::get31TileNumberX( double longitude )
+OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::get31TileNumberX( double longitude )
 {
     longitude = checkLongitude(longitude);
     return (longitude + 180) / 360*l;
 }
 
-OSMAND_CORE_API uint32_t OSMAND_CORE_CALL OsmAnd::Utilities::get31TileNumberY( double latitude )
+OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::get31TileNumberY( double latitude )
 {
     latitude = checkLatitude(latitude);
     double eval = log( tan(toRadians(latitude)) + 1.0/cos(toRadians(latitude)) );
@@ -34,7 +34,7 @@ OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::get31LatitudeY( uint3
 
 OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::getTileNumberX( float zoom, double longitude )
 {
-    if( fabs(longitude - 180.) < std::numeric_limits<double>::epsilon() )
+    if( qAbs(longitude - 180.) < std::numeric_limits<double>::epsilon() )
         return getPowZoom(zoom) - 1;
 
     longitude = checkLongitude(longitude);
@@ -51,7 +51,7 @@ OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::getTileNumberY( float
         eval = log( tan(toRadians(latitude)) + 1/cos(toRadians(latitude)) );
     }
     double result = (1 - eval / M_PI) / 2 * getPowZoom(zoom);
-    return  result;
+    return result;
 }
 
 OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::checkLatitude( double latitude )
@@ -97,12 +97,12 @@ OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::getPowZoom( float zoo
     }
 }
 
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::getLongitudeFromTile( float zoom, double x )
+OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::getLongitudeFromTile( float zoom, uint32_t x )
 {
     return x / getPowZoom(zoom) * 360.0 - 180.0;
 }
 
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::getLatitudeFromTile( float zoom, double y )
+OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::getLatitudeFromTile( float zoom, uint32_t y )
 {
     int sign = y < 0 ? -1 : 1;
     double result = atan(sign * sinh(M_PI * (1 - 2 * y / getPowZoom(zoom)))) * 180. / M_PI;
@@ -382,4 +382,18 @@ OSMAND_CORE_API  int OSMAND_CORE_CALL OsmAnd::Utilities::javaDoubleCompare( doub
     
     // All other cases
     return qCeil(l) - qCeil(r);
+}
+
+OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::findFiles( const QDir& origin, const QStringList& masks, QList< std::shared_ptr<QFile> >& files, bool recursively /*= true */ )
+{
+    auto fileList = origin.entryInfoList(masks, QDir::Files);
+    for(auto itFile = fileList.begin(); itFile != fileList.end(); ++itFile)
+        files.push_back(std::shared_ptr<QFile>(new QFile(itFile->absoluteFilePath())));
+
+    if(recursively)
+    {
+        auto subdirs = origin.entryInfoList(QStringList(), QDir::AllDirs | QDir::NoSymLinks | QDir::NoDotAndDotDot);
+        for(auto itSubdir = subdirs.begin(); itSubdir != subdirs.end(); ++itSubdir)
+            findFiles(QDir(itSubdir->absoluteFilePath()), masks, files, recursively);
+    }
 }

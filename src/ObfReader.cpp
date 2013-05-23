@@ -51,7 +51,7 @@ OsmAnd::ObfReader::ObfReader( std::shared_ptr<QIODevice> input )
                 section->_offset = _codedInputStream->CurrentPosition();
                 auto oldLimit = _codedInputStream->PushLimit(section->_length);
                 ObfMapSection::read(this, section.get());
-                _isBasemap = _isBasemap || section->isBaseMap();
+                _isBasemap = _isBasemap || section->isBaseMap;
                 _codedInputStream->PopLimit(oldLimit);
                 _codedInputStream->Seek(section->_offset + section->_length);
                 _mapSections.push_back(section);

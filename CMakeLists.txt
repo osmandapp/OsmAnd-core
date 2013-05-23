@@ -68,7 +68,6 @@ add_library(OsmAndCore SHARED
 	"protos/OBF.pb.h"
 
 	"native/src/ElapsedTimer.cpp"
-	"native/src/ExplicitSkiaReferences.cpp"
 	"native/src/common.cpp"
 	"native/src/mapObjects.cpp"
 	"native/src/multipolygons.cpp"

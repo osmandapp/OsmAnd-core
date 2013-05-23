@@ -90,7 +90,7 @@ namespace OsmAnd {
         const QList< std::shared_ptr<ObfTransportSection> >& transportSections;
         const QList< ObfSection* >& sections;
 
-        friend struct ObfMapSection;
+        friend class ObfMapSection;
         friend struct ObfAddressSection;
         friend struct ObfRoutingSection;
         friend struct ObfPoiSection;

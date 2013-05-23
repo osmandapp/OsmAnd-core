@@ -24,6 +24,7 @@
 #define __OBF_ROUTING_SECTION_H_
 
 #include <stdint.h>
+#include <limits>
 #include <memory>
 #include <functional>
 

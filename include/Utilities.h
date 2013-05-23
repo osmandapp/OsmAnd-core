@@ -24,8 +24,13 @@
 #define __UTILITIES_H_
 
 #include <cstdint>
+#include <memory>
 
 #include <QString>
+#include <QStringList>
+#include <QList>
+#include <QDir>
+#include <QFile>
 
 #include <OsmAndCore.h>
 
@@ -34,17 +39,17 @@ namespace OsmAnd {
     namespace Utilities
     {
         OSMAND_CORE_API double OSMAND_CORE_CALL toRadians(double angle);
-        OSMAND_CORE_API uint32_t OSMAND_CORE_CALL get31TileNumberX(double longitude);
-        OSMAND_CORE_API uint32_t OSMAND_CORE_CALL get31TileNumberY(double latitude);
+        OSMAND_CORE_API double OSMAND_CORE_CALL get31TileNumberX(double longitude);
+        OSMAND_CORE_API double OSMAND_CORE_CALL get31TileNumberY(double latitude);
         OSMAND_CORE_API double OSMAND_CORE_CALL get31LongitudeX(uint32_t x);
         OSMAND_CORE_API double OSMAND_CORE_CALL get31LatitudeY(uint32_t y);
         OSMAND_CORE_API double OSMAND_CORE_CALL getTileNumberX(float zoom, double longitude);
-        OSMAND_CORE_API double OSMAND_CORE_CALL getTileNumberY(float zoom,  double latitude);
+        OSMAND_CORE_API double OSMAND_CORE_CALL getTileNumberY(float zoom, double latitude);
         OSMAND_CORE_API double OSMAND_CORE_CALL checkLatitude(double latitude);
         OSMAND_CORE_API double OSMAND_CORE_CALL checkLongitude(double longitude);
         OSMAND_CORE_API double OSMAND_CORE_CALL getPowZoom(float zoom);
-        OSMAND_CORE_API double OSMAND_CORE_CALL getLongitudeFromTile(float zoom, double x);
-        OSMAND_CORE_API double OSMAND_CORE_CALL getLatitudeFromTile(float zoom, double y);
+        OSMAND_CORE_API double OSMAND_CORE_CALL getLongitudeFromTile(float zoom, uint32_t x);
+        OSMAND_CORE_API double OSMAND_CORE_CALL getLatitudeFromTile(float zoom, uint32_t y);
         OSMAND_CORE_API bool OSMAND_CORE_CALL extractFirstNumberPosition(const QString& value, int& first, int& last, bool allowSigned, bool allowDot);
         OSMAND_CORE_API double OSMAND_CORE_CALL parseSpeed(const QString& value, double defValue, bool* wasParsed = nullptr);
         OSMAND_CORE_API double OSMAND_CORE_CALL parseLength(const QString& value, double defValue, bool* wasParsed = nullptr);
@@ -64,6 +69,7 @@ namespace OsmAnd {
         OSMAND_CORE_API double OSMAND_CORE_CALL normalizedAngleRadians(double angle);
         OSMAND_CORE_API double OSMAND_CORE_CALL normalizedAngleDegrees(double angle);
         OSMAND_CORE_API int OSMAND_CORE_CALL javaDoubleCompare(double l, double r);
+        OSMAND_CORE_API void OSMAND_CORE_CALL findFiles(const QDir& origin, const QStringList& masks, QList< std::shared_ptr<QFile> >& files, bool recursively = true );
     } // namespace Utilities
 
 } // namespace OsmAnd

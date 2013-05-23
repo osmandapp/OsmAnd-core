@@ -20,42 +20,44 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __INSPECTOR_H_
-#define __INSPECTOR_H_
+#ifndef __EYEPIECE_H_
+#define __EYEPIECE_H_
+
+#include <memory>
 
 #include <QString>
 #include <QStringList>
+#include <QDir>
+#include <QFile>
 
 #include "CoreUtils.h"
 #include <Area.h>
+#include <RenderStyle.h>
+#include <RenderStyles.h>
 
 namespace OsmAnd
 {
-    namespace Inspector
+    namespace EyePiece
     {
         struct OSMAND_CORE_UTILS_API Configuration
         {
             Configuration();
-            Configuration(const QString& fileName);
 
-            QString fileName;
-            bool verboseAddress;
-            bool verboseStreetGroups;
-            bool verboseStreets;
-            bool verboseBuildings;
-            bool verboseIntersections;
-            bool verboseMap;
-            bool verbosePoi;
-            bool verboseAmenities;
-            bool verboseTrasport;
+            bool verbose;
+            bool is32bit;
+            QList< std::shared_ptr<QFile> > styleFiles;
+            QList< std::shared_ptr<QFile> > obfs;
+            QString styleName;
             AreaD bbox;
             uint32_t zoom;
+            uint32_t tileSide;
+            QString output;
         };
         OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL parseCommandLineArguments(const QStringList& cmdLineArgs, Configuration& cfg, QString& error);
-        OSMAND_CORE_UTILS_API void OSMAND_CORE_UTILS_CALL dumpToStdOut(const Configuration& cfg);
-        OSMAND_CORE_UTILS_API QString OSMAND_CORE_UTILS_CALL dumpToString(const Configuration& cfg);
-    } // namespace Inspector
+        OSMAND_CORE_UTILS_API void OSMAND_CORE_UTILS_CALL rasterizeToStdOut(const Configuration& cfg);
+        OSMAND_CORE_UTILS_API QString OSMAND_CORE_UTILS_CALL rasterizeToString(const Configuration& cfg);
+    } // namespace EyePiece
 
 } // namespace OsmAnd 
 
-#endif // __INSPECTOR_H_
+#endif // __EYEPIECE_H_

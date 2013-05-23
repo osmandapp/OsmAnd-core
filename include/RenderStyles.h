@@ -20,41 +20,37 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __OBF_SECTION_H_
-#define __OBF_SECTION_H_
+#ifndef __RENDER_STYLES_H_
+#define __RENDER_STYLES_H_
+
+#include <stdint.h>
+#include <memory>
+
+#include <QString>
+#include <QFile>
+#include <QHash>
 
 #include <OsmAndCore.h>
-#include <QString>
-#include <stdint.h>
+#include <RenderStyle.h>
 
 namespace OsmAnd {
 
-    class ObfReader;
-
-    /**
-    Base section in OsmAnd binary file
-    */
-    class OSMAND_CORE_API ObfSection
+    class OSMAND_CORE_API RenderStyles
     {
     private:
+        bool registerEmbeddedStyle(const QString& resourceName);
     protected:
-        ObfSection(ObfReader* owner);
-
-        QString _name;
-        uint32_t _length;
-        uint32_t _offset;
+        QHash< QString, std::shared_ptr<RenderStyle> > _styles;
     public:
-        virtual ~ObfSection();
+        RenderStyles();
+        virtual ~RenderStyles();
 
-        const QString& name;
-        const uint32_t &length;
-        const uint32_t &offset;
-        
-        ObfReader* const owner;
+        bool registerStyle(const QFile& file);
+        bool obtainCompleteStyle(const QString& name, std::shared_ptr<OsmAnd::RenderStyle>& outStyle);
 
-    friend class ObfReader;
+    friend class RenderStyle;
     };
 
 } // namespace OsmAnd
 
-#endif // __OBF_SECTION_H_
+#endif // __RENDER_STYLES_H_

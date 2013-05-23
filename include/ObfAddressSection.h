@@ -26,6 +26,8 @@
 #include <memory>
 #include <tuple>
 #include <string>
+#include <stdint.h>
+#include <limits>
 
 #include <OsmAndCore.h>
 

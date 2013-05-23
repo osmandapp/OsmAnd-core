@@ -20,41 +20,18 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __OBF_SECTION_H_
-#define __OBF_SECTION_H_
+#ifndef __UTILS_COMMON_H_
+#define __UTILS_COMMON_H_
 
-#include <OsmAndCore.h>
+#include <memory>
+
 #include <QString>
-#include <stdint.h>
+#include <QStringList>
+#include <QDir>
+#include <QFile>
 
-namespace OsmAnd {
+namespace OsmAnd
+{
+} // namespace OsmAnd 
 
-    class ObfReader;
-
-    /**
-    Base section in OsmAnd binary file
-    */
-    class OSMAND_CORE_API ObfSection
-    {
-    private:
-    protected:
-        ObfSection(ObfReader* owner);
-
-        QString _name;
-        uint32_t _length;
-        uint32_t _offset;
-    public:
-        virtual ~ObfSection();
-
-        const QString& name;
-        const uint32_t &length;
-        const uint32_t &offset;
-        
-        ObfReader* const owner;
-
-    friend class ObfReader;
-    };
-
-} // namespace OsmAnd
-
-#endif // __OBF_SECTION_H_
+#endif // __UTILS_COMMON_H_

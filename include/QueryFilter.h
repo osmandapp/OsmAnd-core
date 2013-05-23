@@ -34,8 +34,8 @@ namespace OsmAnd {
     {
         QueryFilter();
     
-        uint32_t* _zoom;
-        AreaI* _bbox31;
+        const uint32_t* _zoom;
+        const AreaI* _bbox31;
     };
 
 } // namespace OsmAnd

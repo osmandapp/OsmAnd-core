@@ -41,15 +41,49 @@
 
 namespace OsmAnd {
 
+    class ObfReader;
     namespace gpb = google::protobuf;
 
     /**
     'Map' section of OsmAnd Binary File
     */
-    struct OSMAND_CORE_API ObfMapSection : public ObfSection
+    class OSMAND_CORE_API ObfMapSection : public ObfSection
     {
-        ObfMapSection(class ObfReader* owner);
-        virtual ~ObfMapSection();
+    protected:
+        struct LevelTreeNode
+        {
+            LevelTreeNode();
+
+            uint32_t _offset;
+            uint32_t _length;
+            uint32_t _dataOffset;
+            bool _isOcean;
+            AreaI _area31;
+        };
+
+        typedef std::tuple<QString, QString, uint32_t> DecodingRule;
+    public:
+        class OSMAND_CORE_API MapLevel
+        {
+        private:
+        protected:
+            MapLevel();
+
+            uint32_t _offset;
+            uint32_t _length;
+            uint32_t _minZoom;
+            uint32_t _maxZoom;
+            AreaI _area31;
+            QList< std::shared_ptr<LevelTreeNode> > _treeNodes;
+        public:
+            virtual ~MapLevel();
+
+            const uint32_t& minZoom;
+            const uint32_t& maxZoom;
+            const AreaI& area31;
+
+            friend class ObfMapSection;
+        };
 
         struct MapObject
         {
@@ -59,50 +93,27 @@ namespace OsmAnd {
             QList<uint32_t> _extraTypes;
             QMap<uint32_t, uint32_t> _names;
         };
+    private:
+    protected:
+        ObfMapSection(ObfReader* owner);
 
-        struct LevelTree
-        {
-            int32_t _offset;
-            int32_t _length;
-            int32_t _mapDataBlock;
-            bool _isOcean;
-            AreaI _area31;
-        };
+        bool _isBaseMap;
 
-        struct MapLevel
-        {
-            int32_t _offset;
-            int32_t _length;
-            uint32_t _minZoom;
-            uint32_t _maxZoom;
-            AreaI _area31;
-            QList< std::shared_ptr<LevelTree> > _trees;
-        };
-
-        QList< std::shared_ptr<MapLevel> > _levels;
-
+        QList< std::shared_ptr<MapLevel> > _mapLevels;
         QHash< QString, QHash<QString, uint32_t> > _encodingRules;
-        typedef std::tuple<QString, QString, uint32_t> DecodingRule;
         QMap< uint32_t, DecodingRule > _decodingRules;
         uint32_t _nameEncodingType;
         uint32_t _refEncodingType;
         uint32_t _coastlineEncodingType;
         uint32_t _coastlineBrokenEncodingType;
         uint32_t _landEncodingType;
-        uint32_t _onewayAttribute ;
-        uint32_t _onewayReverseAttribute ;
+        uint32_t _onewayAttribute;
+        uint32_t _onewayReverseAttribute;
         QSet<uint32_t> _positiveLayers;
         QSet<uint32_t> _negativeLayers;
 
-        bool isBaseMap();
-        void loadRules(ObfReader* reader);
-        static void loadMapObjects(ObfReader* reader, ObfMapSection* section,
-            QList< std::shared_ptr<OsmAnd::ObfMapSection::MapObject> >* resultOut = nullptr,
-            QueryFilter* filter = nullptr,
-            IQueryController* controller = nullptr);
-    protected:
         static void read(ObfReader* reader, ObfMapSection* section);
-        static void readMapLevel(ObfReader* reader, ObfMapSection* section, MapLevel* level);
+        static void readMapLevelHeader(ObfReader* reader, ObfMapSection* section, MapLevel* level);
         static void readEncodingRules(ObfReader* reader,
             QHash< QString, QHash<QString, uint32_t> >& encodingRules,
             QMap< uint32_t, DecodingRule >& decodingRules,
@@ -126,16 +137,28 @@ namespace OsmAnd {
             uint32_t& refEncodingType,
             QSet<uint32_t>& negativeLayers,
             QSet<uint32_t>& positiveLayers);
-        static void readLevelTrees(ObfReader* reader, ObfMapSection* section, MapLevel* level, QList< std::shared_ptr<LevelTree> >& trees);
-        static void readLevelTree(ObfReader* reader, ObfMapSection* section, MapLevel* level, LevelTree* tree);
-        static void loadMapObjects(ObfReader* reader, ObfMapSection* section, MapLevel* level, LevelTree* tree, QList< std::shared_ptr<LevelTree> >& subtrees, QueryFilter* filter, IQueryController* controller);
-        static void readMapObjects(ObfReader* reader, ObfMapSection* section, LevelTree* tree, QList< std::shared_ptr<OsmAnd::ObfMapSection::MapObject> >* resultOut, QueryFilter* filter, IQueryController* controller);
-        static void readMapObject(ObfReader* reader, ObfMapSection* section, LevelTree* tree, std::shared_ptr<OsmAnd::ObfMapSection::MapObject>& mapObjectOut, QueryFilter* filter);
+        static void readMapLevelTreeNodes(ObfReader* reader, ObfMapSection* section, MapLevel* level, QList< std::shared_ptr<LevelTreeNode> >& nodes);
+        static void readTreeNode(ObfReader* reader, ObfMapSection* section, const AreaI& parentArea, LevelTreeNode* treeNode);
+        static void readTreeNodeChildren(ObfReader* reader, ObfMapSection* section, LevelTreeNode* treeNode, QList< std::shared_ptr<LevelTreeNode> >* nodesWithData, QueryFilter* filter, IQueryController* controller);
+        static void readMapObjectsBlock(ObfReader* reader, ObfMapSection* section, LevelTreeNode* treeNode, QList< std::shared_ptr<OsmAnd::ObfMapSection::MapObject> >* resultOut, QueryFilter* filter, IQueryController* controller);
+        static void readMapObject(ObfReader* reader, ObfMapSection* section, LevelTreeNode* treeNode, std::shared_ptr<OsmAnd::ObfMapSection::MapObject>& mapObjectOut, QueryFilter* filter);
         enum {
             ShiftCoordinates = 5,
             MaskToRead = ~((1 << ShiftCoordinates) - 1),
         };
-    private:
+    public:
+        virtual ~ObfMapSection();
+
+        const bool& isBaseMap;
+
+        const QList< std::shared_ptr<MapLevel> >& mapLevels;
+        
+        void loadRules(ObfReader* reader);
+        static void loadMapObjects(ObfReader* reader, ObfMapSection* section,
+            QList< std::shared_ptr<OsmAnd::ObfMapSection::MapObject> >* resultOut = nullptr,
+            QueryFilter* filter = nullptr,
+            IQueryController* controller = nullptr);
+
     friend class ObfReader;
     };
 

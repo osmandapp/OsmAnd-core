@@ -43,7 +43,7 @@ void OsmAnd::ObfAddressSection::read( ObfReader* reader, ObfAddressSection* sect
             break;
         case OBF::OsmAndAddressIndex::kCitiesFieldNumber:
             {
-                std::shared_ptr<AddressBlocksSection> entry(new AddressBlocksSection(section->_owner));
+                std::shared_ptr<AddressBlocksSection> entry(new AddressBlocksSection(section->owner));
                 entry->_length = ObfReader::readBigEndianInt(cis);
                 entry->_offset = cis->CurrentPosition();
                 AddressBlocksSection::read(reader, entry.get());
@@ -164,14 +164,14 @@ void OsmAnd::ObfAddressSection::readStreet( ObfReader* reader, Model::StreetGrou
         case OBF::StreetIndex::kXFieldNumber:
             {
                 auto dx = ObfReader::readSInt32(cis);
-                street->_tile24.x = (Utilities::get31TileNumberX(group->_longitude) >> 7) + dx;
+                street->_tile24.x = (static_cast<uint32_t>(Utilities::get31TileNumberX(group->_longitude)) >> 7) + dx;
                 street->_location.x = Utilities::getLongitudeFromTile(24, street->_tile24.x);
             }
             break;
         case OBF::StreetIndex::kYFieldNumber:
             {
                 auto dy = ObfReader::readSInt32(cis);
-                street->_tile24.y = (Utilities::get31TileNumberY(group->_latitude) >> 7) + dy;
+                street->_tile24.y = (static_cast<uint32_t>(Utilities::get31TileNumberY(group->_latitude)) >> 7) + dy;
                 street->_location.y = Utilities::getLatitudeFromTile(24, street->_tile24.y);
             }
             break;
@@ -476,11 +476,11 @@ void OsmAnd::ObfAddressSection::AddressBlocksSection::readStreetGroups( ObfReade
 
 void OsmAnd::ObfAddressSection::AddressBlocksSection::loadSteetGroupsFromBlock( QList< std::shared_ptr<Model::StreetGroup> >& list )
 {
-    auto cis = _owner->_codedInputStream.get();
+    auto cis = owner->_codedInputStream.get();
 
     cis->Seek(_offset);
     auto oldLimit = cis->PushLimit(_length);
-    AddressBlocksSection::readStreetGroups(_owner, this, list);
+    AddressBlocksSection::readStreetGroups(owner, this, list);
     cis->PopLimit(oldLimit);
 }
 
@@ -497,7 +497,7 @@ std::shared_ptr<OsmAnd::Model::StreetGroup> OsmAnd::ObfAddressSection::AddressBl
         {
         case 0:
             if(streetGroup->_latinName.isEmpty())
-                streetGroup->_latinName = section->_owner->transliterate(streetGroup->_name);
+                streetGroup->_latinName = section->owner->transliterate(streetGroup->_name);
             return streetGroup;
         case OBF::CityIndex::kCityTypeFieldNumber:
             {

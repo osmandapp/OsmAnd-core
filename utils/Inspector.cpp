@@ -18,6 +18,7 @@
 #include <Building.h>
 
 OsmAnd::Inspector::Configuration::Configuration()
+    : bbox(90, -180, -90, 180)
 {
     verboseAddress = false;
     verboseStreetGroups = false;
@@ -28,14 +29,11 @@ OsmAnd::Inspector::Configuration::Configuration()
     verbosePoi = false;
     verboseAmenities = false;
     verboseTrasport = false;
-    latTop = 85;
-    latBottom = -85;
-    lonLeft = -180;
-    lonRight = 180;
     zoom = 15;
 }
 
 OsmAnd::Inspector::Configuration::Configuration(const QString& fileName)
+    : bbox(90, -180, -90, 180)
 {
     this->fileName = fileName;
     verboseAddress = false;
@@ -47,10 +45,6 @@ OsmAnd::Inspector::Configuration::Configuration(const QString& fileName)
     verbosePoi = false;
     verboseAmenities = false;
     verboseTrasport = false;
-    latTop = 85;
-    latBottom = -85;
-    lonLeft = -180;
-    lonRight = 180;
     zoom = 15;
 }
 
@@ -76,92 +70,48 @@ OSMAND_CORE_UTILS_API QString OSMAND_CORE_UTILS_CALL OsmAnd::Inspector::dumpToSt
 
 OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::Inspector::parseCommandLineArguments( const QStringList& cmdLineArgs, Configuration& cfg, QString& error )
 {
-    if(cmdLineArgs.count() == 0)
-        return false;
-
-    auto cmd = cmdLineArgs.first();
-    if (cmd[0] == '-')
+    for(auto itArg = cmdLineArgs.begin(); itArg != cmdLineArgs.end(); ++itArg)
     {
-        // command
-        if (cmd == "-c" || cmd == "-combine") {
-            if (cmdLineArgs.count() < 4)
-            {
-                error = "Too few parameters to extract (require minimum 4)";
-                return false;
-            }
-
-            std::map<std::shared_ptr<QFile>, std::string> parts;
-            /*for (int i = 3; i < argc; i++)
-            {
-                file = new File(args[i]);
-                if (!file.exists()) {
-                    System.err.std::cout << "File to extract from doesn't exist " + args[i]);
-                    return;
-                }
-                parts.put(file, null);
-                if (i < args.length - 1) {
-                    if (args[i + 1].startsWith("-") || args[i + 1].startsWith("+")) {
-                        parts.put(file, args[i + 1]);
-                        i++;
-                    }
-                }
-            }
-            List<Float> extracted = combineParts(new File(args[1]), parts);
-            if (extracted != null) {
-                std::cout << "\n" + extracted.size() + " parts were successfully extracted to " + args[1]);
-            }*/
-        }
-        else if (cmd.indexOf("-v") == 0)
+        auto arg = *itArg;
+        if(arg == "-vaddress")
+            cfg.verboseAddress = true;
+        else if(arg == "-vstreets")
+            cfg.verboseStreets = true;
+        else if(arg == "-vstreetgroups")
+            cfg.verboseStreetGroups = true;
+        else if(arg == "-vbuildings")
+            cfg.verboseBuildings = true;
+        else if(arg == "-vintersections")
+            cfg.verboseIntersections = true;
+        else if(arg == "-vmap")
+            cfg.verboseMap = true;
+        else if(arg == "-vpoi")
+            cfg.verbosePoi = true;
+        else if(arg == "-vamenities")
+            cfg.verboseAmenities = true;
+        else if(arg == "-vtransport")
+            cfg.verboseTrasport = true;
+        else if(arg.startsWith("-zoom="))
+            cfg.zoom = arg.mid(strlen("-zoom=")).toInt();
+        else if(arg.startsWith("-bbox="))
         {
-            if (cmdLineArgs.count() < 2)
-            {
-                error = "Missing file parameter";
-                return false;
-            }
-
-            for(auto itArg = cmdLineArgs.begin(); itArg != cmdLineArgs.end(); ++itArg)
-            {
-                auto arg = *itArg;
-                if(arg == "-vaddress")
-                    cfg.verboseAddress = true;
-                else if(arg == "-vstreets")
-                    cfg.verboseStreets = true;
-                else if(arg == "-vstreetgroups")
-                    cfg.verboseStreetGroups = true;
-                else if(arg == "-vbuildings")
-                    cfg.verboseBuildings = true;
-                else if(arg == "-vintersections")
-                    cfg.verboseIntersections = true;
-                else if(arg == "-vmap")
-                    cfg.verboseMap = true;
-                else if(arg == "-vpoi")
-                    cfg.verbosePoi = true;
-                else if(arg == "-vamenities")
-                    cfg.verboseAmenities = true;
-                else if(arg == "-vtransport")
-                    cfg.verboseTrasport = true;
-                else if(arg.indexOf("-zoom=") == 0)
-                    cfg.zoom = arg.mid(5).toInt();
-                else if(arg.indexOf("-bbox=") == 0)
-                {
-                    auto values = arg.mid(5).split(",");
-                    cfg.lonLeft = values[0].toDouble();
-                    cfg.latTop = values[1].toDouble();
-                    cfg.lonRight = values[2].toDouble();
-                    cfg.latBottom =  values[3].toDouble();
-                }
-            }
-
-            cfg.fileName = cmdLineArgs.last();
+            auto values = arg.mid(strlen("-bbox=")).split(",");
+            cfg.bbox.left = values[0].toDouble();
+            cfg.bbox.top = values[1].toDouble();
+            cfg.bbox.right = values[2].toDouble();
+            cfg.bbox.bottom =  values[3].toDouble();
         }
-        else
+        else if(arg.startsWith("-obf="))
         {
-            error = "Unknown command : " + cmd;
-            return false;
+            cfg.fileName = arg.mid(strlen("-obf="));
         }
     }
-    else
-        cfg.fileName = cmd;
+
+    if(cfg.fileName.isEmpty())
+    {
+        error = "OBF file not defined";
+        return false;
+    }
     return true;
 }
 
@@ -199,7 +149,7 @@ void dump(std::ostream &output, const QString& filePath, const OsmAnd::Inspector
         else if(dynamic_cast<OsmAnd::ObfAddressSection*>(section))
             sectionType = "Address";
 
-        output << idx << ". " << sectionType << " data " << section->_name.toStdString() << " - " << section->_length << " bytes" << std::endl;
+        output << idx << ". " << sectionType << " data " << section->name.toStdString() << " - " << section->length << " bytes" << std::endl;
 
         if(dynamic_cast<OsmAnd::ObfTransportSection*>(section))
         {
@@ -229,11 +179,11 @@ void dump(std::ostream &output, const QString& filePath, const OsmAnd::Inspector
         {
             auto mapSection = dynamic_cast<OsmAnd::ObfMapSection*>(section);
             int levelIdx = 1;
-            for(auto itLevel = mapSection->_levels.begin(); itLevel != mapSection->_levels.end(); ++itLevel, levelIdx++)
+            for(auto itLevel = mapSection->mapLevels.begin(); itLevel != mapSection->mapLevels.end(); ++itLevel, levelIdx++)
             {
-                auto level = itLevel->get();
-                output << "\t" << idx << "." << levelIdx << " Map level minZoom = " << level->_minZoom << ", maxZoom = " << level->_maxZoom << ", size = " << level->_length << " bytes" << std::endl;
-                output << "\t\tBounds " << formatBounds(level->_area31.left, level->_area31.right, level->_area31.top, level->_area31.bottom) << std::endl;
+                auto level = (*itLevel);
+                output << "\t" << idx << "." << levelIdx << " Map level minZoom = " << level->minZoom << ", maxZoom = " << level->maxZoom << std::endl;
+                output << "\t\tBounds " << formatBounds(level->area31.left, level->area31.right, level->area31.top, level->area31.bottom) << std::endl;
             }
 
             if(cfg.verboseMap)
@@ -256,12 +206,12 @@ void printMapDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
 {
     QList< std::shared_ptr<OsmAnd::ObfMapSection::MapObject> > mapObjects;
     OsmAnd::QueryFilter filter;
-    OsmAnd::AreaI bbox;
-    bbox.top = OsmAnd::Utilities::get31TileNumberY(cfg.latTop);
-    bbox.bottom = OsmAnd::Utilities::get31TileNumberY(cfg.latBottom);
-    bbox.left = OsmAnd::Utilities::get31TileNumberX(cfg.lonLeft);
-    bbox.right = OsmAnd::Utilities::get31TileNumberX(cfg.lonRight);
-    filter._bbox31 = &bbox;
+    OsmAnd::AreaI bbox31;
+    bbox31.top = OsmAnd::Utilities::get31TileNumberY(cfg.bbox.top);
+    bbox31.bottom = OsmAnd::Utilities::get31TileNumberY(cfg.bbox.bottom);
+    bbox31.left = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.left);
+    bbox31.right = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right);
+    filter._bbox31 = &bbox31;
     OsmAnd::ObfMapSection::loadMapObjects(reader, section, &mapObjects, &filter);
     output << "\tTotal map objects: " << mapObjects.count() << std::endl;
 }
@@ -283,12 +233,12 @@ void printPOIDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
 
     QList< std::shared_ptr<OsmAnd::Model::Amenity> > amenities;
     OsmAnd::QueryFilter filter;
-    OsmAnd::AreaI bbox;
-    bbox.top = OsmAnd::Utilities::get31TileNumberY(cfg.latTop);
-    bbox.bottom = OsmAnd::Utilities::get31TileNumberY(cfg.latBottom);
-    bbox.left = OsmAnd::Utilities::get31TileNumberX(cfg.lonLeft);
-    bbox.right = OsmAnd::Utilities::get31TileNumberX(cfg.lonRight);
-    filter._bbox31 = &bbox;
+    OsmAnd::AreaI bbox31;
+    bbox31.top = OsmAnd::Utilities::get31TileNumberY(cfg.bbox.top);
+    bbox31.bottom = OsmAnd::Utilities::get31TileNumberY(cfg.bbox.bottom);
+    bbox31.left = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.left);
+    bbox31.right = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right);
+    filter._bbox31 = &bbox31;
     OsmAnd::ObfPoiSection::loadAmenities(reader, section, nullptr, &amenities, &filter);
     output << "\tAmenities, " << amenities.count() << " item(s)";
     if(!cfg.verboseAmenities)

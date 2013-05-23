@@ -8,6 +8,7 @@
 #include <QDateTime>
 
 #include <ObfReader.h>
+#include <Utilities.h>
 #include <RoutePlanner.h>
 #include <RoutePlannerContext.h>
 
@@ -24,17 +25,6 @@ OsmAnd::Voyager::Configuration::Configuration()
     , leftSide(false)
     , routingConfig(new RoutingConfiguration())
 {
-}
-
-void lookForObfs(const QDir& origin, QList< std::shared_ptr<QFile> >& obfsCollection)
-{
-    auto obfs = origin.entryInfoList(QStringList() << "*.obf", QDir::Files);
-    for(auto itObf = obfs.begin(); itObf != obfs.end(); ++itObf)
-        obfsCollection.push_back(std::shared_ptr<QFile>(new QFile(itObf->absoluteFilePath())));
-    
-    auto subdirs = origin.entryInfoList(QStringList(), QDir::AllDirs | QDir::NoSymLinks | QDir::NoDotAndDotDot);
-    for(auto itSubdir = subdirs.begin(); itSubdir != subdirs.end(); ++itSubdir)
-        lookForObfs(QDir(itSubdir->absoluteFilePath()), obfsCollection);
 }
 
 OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::Voyager::parseCommandLineArguments( const QStringList& cmdLineArgs, Configuration& cfg, QString& error )
@@ -81,7 +71,7 @@ OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::Voyager::parseCommandL
                 error = "OBF directory does not exist";
                 return false;
             }
-            lookForObfs(obfRoot, cfg.obfs);
+            Utilities::findFiles(obfRoot, QStringList() << "*.obf", cfg.obfs);
             wasObfRootSpecified = true;
         }
         else if (arg.startsWith("-vehicle="))
@@ -124,7 +114,7 @@ OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::Voyager::parseCommandL
     }
 
     if(!wasObfRootSpecified)
-        lookForObfs(QDir::current(), cfg.obfs);
+        Utilities::findFiles(QDir::current(), QStringList() << "*.obf", cfg.obfs);
     if(cfg.obfs.isEmpty())
     {
         error = "No OBF files loaded";
