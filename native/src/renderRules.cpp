@@ -218,14 +218,14 @@ class RenderingRulesHandler {
 		string name(tag);
 		if (len == 6 && "filter" == name) {
 			map<string, string> attrsMap;
-			if (t->st.size() > 0 && t->st.top().isGroup()) {
+			if (!t->st.empty() && t->st.top().isGroup()) {
 				attrsMap.insert(t->st.top().groupAttributes.begin(), t->st.top().groupAttributes.end());
 			}
 			parseAttributes(atts, attrsMap, t->storage);
 			RenderingRule* renderingRule = new RenderingRule(attrsMap,t->storage);
-			if (t->st.size() > 0 && t->st.top().isGroup()) {
+			if (!t->st.empty() && t->st.top().isGroup()) {
 				t->st.top().children.push_back(renderingRule);
-			} else if (t->st.size() > 0 && !t->st.top().isGroup()) {
+			} else if (!t->st.empty() && !t->st.top().isGroup()) {
 				RenderingRule* parent = t->st.top().singleRule;
 				t->st.top().singleRule->ifElseChildren.push_back(renderingRule);
 			} else {
@@ -238,10 +238,10 @@ class RenderingRulesHandler {
 			map<string, string> attrsMap;
 			parseAttributes(atts, attrsMap, t->storage);
 			RenderingRule* renderingRule = new RenderingRule(attrsMap,t->storage);
-			if (t->st.size() > 0 && t->st.top().isGroup()) {
+			if (!t->st.empty() && t->st.top().isGroup()) {
 				GroupRules parent = ((GroupRules) t->st.top());
 				t->st.top().addGroupFilter(renderingRule);
-			} else if (t->st.size() > 0 && !t->st.top().isGroup()) {
+			} else if (!t->st.empty() && !t->st.top().isGroup()) {
 				t->st.top().singleRule->ifChildren.push_back(renderingRule);
 			} else {
 				OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Group filter without parent");
@@ -249,7 +249,7 @@ class RenderingRulesHandler {
 			t->st.push(GroupRules(renderingRule));
 		} else if ("group" == name) { //$NON-NLS-1$
 			GroupRules groupRules;
-			if (t->st.size() > 0 && t->st.top().isGroup()) {
+			if (!t->st.empty() && t->st.top().isGroup()) {
 				groupRules.groupAttributes.insert(t->st.top().groupAttributes.begin(), t->st.top().groupAttributes.end());
 			}
 			parseAttributes(atts, groupRules.groupAttributes, t->storage);
@@ -334,7 +334,7 @@ class RenderingRulesHandler {
 		} else if ("group" == name) { //$NON-NLS-1$
 			GroupRules group = t->st.top();
 			t->st.pop();
-			if (t->st.size() == 0) {
+			if (t->st.empty()) {
 				group.registerGlobalRules(t->storage,t->state);
 			} else if(t->st.top().isGroup()){
 				t->st.top().childrenGroups.push_back(group);
