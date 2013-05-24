@@ -27,13 +27,8 @@
 #include <memory>
 
 #include <QString>
-#include <QStringList>
-#include <QFile>
-#include <QXmlStreamReader>
-#include <QHash>
 
 #include <OsmAndCore.h>
-#include <RasterizationStyleExpression.h>
 
 namespace OsmAnd {
 

@@ -141,14 +141,14 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
 
         if(!stylesCollection.registerStyle(*styleFile))
         {
-            output << _L("Failed to parse metadata of '") << QStringToStdXString(styleFile->fileName()) << _L("'");
+            output << xT("Failed to parse metadata of '") << QStringToStlString(styleFile->fileName()) << xT("'");
             return;
         }
     }
     std::shared_ptr<OsmAnd::RasterizationStyle> style;
     if(!stylesCollection.obtainStyle(cfg.styleName, style))
     {
-        output << _L("Failed to resolve style '") << QStringToStdXString(cfg.styleName) << _L("'");
+        output << xT("Failed to resolve style '") << QStringToStlString(cfg.styleName) << xT("'");
         return;
     }
     OsmAnd::RasterizationStyleContext styleContext(style);
@@ -190,14 +190,14 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
     const auto tileHeight = OsmAnd::Utilities::getTileNumberX(cfg.zoom, cfg.bbox.top) - OsmAnd::Utilities::getTileNumberX(cfg.zoom, cfg.bbox.bottom);
     const auto pixelWidth = static_cast<int32_t>(tileWidth * cfg.tileSide);
     const auto pixelHeight = static_cast<int32_t>(tileHeight * cfg.tileSide);
-    output << _L("Will rasterize ") << mapObjects.count() << _L(" objects onto ") << pixelWidth << _L("x") << pixelHeight << _L(" bitmap") << std::endl;
+    output << xT("Will rasterize ") << mapObjects.count() << xT(" objects onto ") << pixelWidth << xT("x") << pixelHeight << xT(" bitmap") << std::endl;
 
     // Allocate render target
     SkBitmap renderSurface;
     renderSurface.setConfig(cfg.is32bit ? SkBitmap::kARGB_8888_Config : SkBitmap::kRGB_565_Config, pixelWidth, pixelHeight);
     if(!renderSurface.allocPixels())
     {
-        output << _L("Failed to allocated render target ") << pixelWidth << _L("x") << pixelHeight;
+        output << xT("Failed to allocated render target ") << pixelWidth << xT("x") << pixelHeight;
         return;
     }
     SkDevice renderTarget(renderSurface);
