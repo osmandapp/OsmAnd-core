@@ -62,8 +62,8 @@ namespace OsmAnd {
         const Type type;
         const QList< std::shared_ptr<RoutingRuleExpression> >& expressions;
 
-        friend class RoutingProfile;
-        friend class RoutingConfiguration;
+        friend class OsmAnd::RoutingProfile;
+        friend class OsmAnd::RoutingConfiguration;
     };
 
 } // namespace OsmAnd

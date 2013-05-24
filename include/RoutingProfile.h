@@ -104,9 +104,9 @@ namespace OsmAnd {
         std::shared_ptr<RoutingRuleset> getRuleset(RoutingRuleset::Type type) const;
         void addAttribute(const QString& key, const QString& value);
 
-    friend class RoutingConfiguration;
-    friend class RoutingRuleExpression;
-    friend class RoutingRulesetContext;
+    friend class OsmAnd::RoutingConfiguration;
+    friend class OsmAnd::RoutingRuleExpression;
+    friend class OsmAnd::RoutingRulesetContext;
     };
 
 } // namespace OsmAnd

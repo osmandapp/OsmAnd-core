@@ -52,7 +52,7 @@ namespace OsmAnd {
         
         ObfReader* const owner;
 
-    friend class ObfReader;
+    friend class OsmAnd::ObfReader;
     };
 
 } // namespace OsmAnd

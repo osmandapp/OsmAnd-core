@@ -38,6 +38,7 @@
 namespace OsmAnd {
 
     class RasterizationStyles;
+    class RasterizationStyle;
 
     class OSMAND_CORE_API RasterizationStyle
     {
@@ -55,7 +56,7 @@ namespace OsmAnd {
             const QString title;
             const QString description;
 
-        friend class RasterizationStyle;
+        friend class OsmAnd::RasterizationStyle;
         };
     private:
         bool parseMetadata(QXmlStreamReader& xmlReader);
@@ -93,7 +94,7 @@ namespace OsmAnd {
 
         const QHash< QString, std::shared_ptr<Option> >& options;
         
-    friend class RasterizationStyles;
+    friend class OsmAnd::RasterizationStyles;
     };
 
 

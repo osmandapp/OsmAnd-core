@@ -87,7 +87,7 @@ namespace OsmAnd {
             const uint32_t& maxZoom;
             const AreaI& area31;
 
-            friend class ObfMapSection;
+            friend class OsmAnd::ObfMapSection;
         };
 
         class OSMAND_CORE_API Rules
@@ -110,7 +110,7 @@ namespace OsmAnd {
         public:
             virtual ~Rules();
 
-        friend class ObfMapSection;
+        friend class OsmAnd::ObfMapSection;
         };
     private:
     protected:
@@ -162,7 +162,7 @@ namespace OsmAnd {
             std::function<bool (std::shared_ptr<OsmAnd::Model::MapObject>)> visitor = nullptr,
             IQueryController* controller = nullptr);
 
-    friend class ObfReader;
+    friend class OsmAnd::ObfReader;
     };
 
 } // namespace OsmAnd

@@ -66,7 +66,7 @@ namespace OsmAnd {
         double getBearingBegin() const;
         double getBearingEnd() const;
 
-        friend class RoutePlanner;
+        friend class OsmAnd::RoutePlanner;
     };
 
 } // namespace OsmAnd

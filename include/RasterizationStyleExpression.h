@@ -37,6 +37,8 @@
 
 namespace OsmAnd {
 
+    class RasterizationStyle;
+
     class OSMAND_CORE_API RasterizationStyleExpression
     {
     public:
@@ -59,7 +61,7 @@ namespace OsmAnd {
         const Type type;
         const QString name;
 
-    friend class RasterizationStyle;
+    friend class OsmAnd::RasterizationStyle;
     };
 
 

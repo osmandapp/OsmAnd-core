@@ -3,6 +3,7 @@
 #include <cassert>
 
 #include "EmbeddedResources.h"
+#include "RasterizationStyle.h"
 
 OsmAnd::RasterizationStyles::RasterizationStyles()
 {

@@ -74,8 +74,8 @@ namespace OsmAnd {
             // 1 - only positive allowed, -1 - only negative allowed
             int _allowedDirection;
 
-            friend class RoutePlanner;
-            friend class RoutePlannerContext;
+            friend class OsmAnd::RoutePlanner;
+            friend class OsmAnd::RoutePlannerContext;
         };
 
         class OSMAND_CORE_API RouteCalculationFinalSegment : public RouteCalculationSegment
@@ -92,8 +92,8 @@ namespace OsmAnd {
             const bool& reverseWaySearch;
             const std::shared_ptr<RouteCalculationSegment>& opposite;
 
-            friend class RoutePlanner;
-            friend class RoutePlannerContext;
+            friend class OsmAnd::RoutePlanner;
+            friend class OsmAnd::RoutePlannerContext;
         };
 
         class OSMAND_CORE_API RoutingSubsectionContext
@@ -121,8 +121,8 @@ namespace OsmAnd {
             void registerRoad(std::shared_ptr<Model::Road> road);
             void collectRoads(QList< std::shared_ptr<Model::Road> >& output, QMap<uint64_t, std::shared_ptr<Model::Road> >* duplicatesRegistry = nullptr);
 
-            friend class RoutePlanner;
-            friend class RoutePlannerContext;
+            friend class OsmAnd::RoutePlanner;
+            friend class OsmAnd::RoutePlannerContext;
         };
 
         struct OSMAND_CORE_API BorderLine
@@ -150,8 +150,8 @@ namespace OsmAnd {
 
             RoutePlannerContext* const owner;
 
-            friend class RoutePlanner;
-            friend class RoutePlannerContext;
+            friend class OsmAnd::RoutePlanner;
+            friend class OsmAnd::RoutePlannerContext;
         };
     private:
     protected:
@@ -198,7 +198,7 @@ namespace OsmAnd {
         const std::shared_ptr<RoutingConfiguration> configuration;
         const std::unique_ptr<RoutingProfileContext> profileContext;
 
-        friend class RoutePlanner;
+        friend class OsmAnd::RoutePlanner;
     };
 
 } // namespace OsmAnd

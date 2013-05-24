@@ -35,6 +35,7 @@
 
 namespace OsmAnd {
 
+    class RoutingConfiguration;
     class RoutingRuleset;
     class RoutingRulesetContext;
 
@@ -51,7 +52,7 @@ namespace OsmAnd {
 
             virtual bool evaluate(const QBitArray& types, RoutingRulesetContext* context) const = 0;
 
-            friend class RoutingRuleExpression;
+            friend class OsmAnd::RoutingRuleExpression;
         };
     private:
         QList<QString> _parameters;
@@ -100,8 +101,8 @@ namespace OsmAnd {
         static bool resolveVariableReferenceValue(RoutingRulesetContext* context, const QString& variableRef, const QString& type, float& value);
         static bool resolveTagReferenceValue(RoutingRulesetContext* context, const QBitArray& types, const QString& tagRef, const QString& type, float& value);
 
-        friend class RoutingConfiguration;
-        friend class RoutingRuleset;
+        friend class OsmAnd::RoutingConfiguration;
+        friend class OsmAnd::RoutingRuleset;
     };
 
 } // namespace OsmAnd

@@ -28,10 +28,11 @@
 #include <QString>
 
 #include <OsmAndCore.h>
-#include <ObfAddressSection.h>
 #include <Area.h>
 
 namespace OsmAnd {
+
+    struct ObfAddressSection;
 
     namespace Model {
 

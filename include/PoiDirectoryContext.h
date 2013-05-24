@@ -37,6 +37,8 @@
 
 namespace OsmAnd {
 
+    class PoiDirectory;
+
     class OSMAND_CORE_API PoiDirectoryContext
     {
     private:
@@ -60,7 +62,7 @@ namespace OsmAnd {
 
         const QList< std::shared_ptr<ObfReader> > sources;
 
-        friend class PoiDirectory;
+        friend class OsmAnd::PoiDirectory;
     };
 
 } // namespace OsmAnd

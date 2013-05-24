@@ -60,7 +60,7 @@ namespace OsmAnd {
         float getObstaclesExtraTime(Model::Road* road, uint32_t pointIndex);
         float getRoutingObstaclesExtraTime(Model::Road* road, uint32_t pointIndex);
 
-        friend class RoutingRulesetContext;
+        friend class OsmAnd::RoutingRulesetContext;
     };
 
 } // namespace OsmAnd

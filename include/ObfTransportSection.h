@@ -58,7 +58,7 @@ namespace OsmAnd {
     private:
         static void readTransportBounds(ObfReader* reader, ObfTransportSection* section);
 
-    friend class ObfReader;
+    friend class OsmAnd::ObfReader;
     };
 
 } // namespace OsmAnd

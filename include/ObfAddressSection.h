@@ -76,7 +76,7 @@ namespace OsmAnd {
 
         private:
 
-        friend struct ObfAddressSection;
+        friend struct OsmAnd::ObfAddressSection;
         };
 
         ObfAddressSection(class ObfReader* owner);
@@ -107,7 +107,7 @@ namespace OsmAnd {
 
     private:
 
-    friend class ObfReader;
+    friend class OsmAnd::ObfReader;
     };
 
 } // namespace OsmAnd

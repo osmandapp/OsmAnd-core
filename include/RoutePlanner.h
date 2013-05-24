@@ -194,7 +194,7 @@ namespace OsmAnd {
             IQueryController* controller = nullptr,
             QList< std::shared_ptr<RouteSegment> >* outResult = nullptr);
 
-        friend class RoutePlannerContext;
+        friend class OsmAnd::RoutePlannerContext;
     };
 
 } // namespace OsmAnd

@@ -31,9 +31,10 @@
 #include <QHash>
 
 #include <OsmAndCore.h>
-#include <RasterizationStyle.h>
 
 namespace OsmAnd {
+
+    class RasterizationStyle;
 
     class OSMAND_CORE_API RasterizationStyles
     {
@@ -48,7 +49,7 @@ namespace OsmAnd {
         bool registerStyle(const QFile& file);
         bool obtainStyle(const QString& name, std::shared_ptr<OsmAnd::RasterizationStyle>& outStyle);
 
-    friend class RasterizationStyle;
+    friend class OsmAnd::RasterizationStyle;
     };
 
 } // namespace OsmAnd

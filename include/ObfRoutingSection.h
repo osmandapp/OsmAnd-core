@@ -118,7 +118,7 @@ namespace OsmAnd {
             const std::shared_ptr<Subsection> parent;
             const std::shared_ptr<ObfRoutingSection> section;
 
-        friend struct ObfRoutingSection;
+        friend struct OsmAnd::ObfRoutingSection;
         };
         QList< std::shared_ptr<Subsection> > _subsections;
         QList< std::shared_ptr<Subsection> > _baseSubsections;
@@ -147,7 +147,7 @@ namespace OsmAnd {
             bool& y2present;
             uint32_t& offset;
 
-            friend struct ObfRoutingSection;
+            friend struct OsmAnd::ObfRoutingSection;
         };
 
         class OSMAND_CORE_API BorderLinePoint
@@ -172,7 +172,7 @@ namespace OsmAnd {
 
             std::shared_ptr<BorderLinePoint> bboxedClone(uint32_t x31) const;
             
-            friend struct ObfRoutingSection;
+            friend struct OsmAnd::ObfRoutingSection;
         };
 
         static void querySubsections(ObfReader* reader, const QList< std::shared_ptr<Subsection> >& in,
@@ -220,7 +220,7 @@ namespace OsmAnd {
             BorderLinePoint* point);
     private:
 
-    friend class ObfReader;
+    friend class OsmAnd::ObfReader;
     };
 
 } // namespace OsmAnd

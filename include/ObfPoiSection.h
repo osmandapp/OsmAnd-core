@@ -106,7 +106,7 @@ namespace OsmAnd {
             QueryFilter* filter,
             IQueryController* controller);
         
-    friend class ObfReader;
+    friend class OsmAnd::ObfReader;
     };
 
 } // namespace OsmAnd
