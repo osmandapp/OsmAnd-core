@@ -257,7 +257,7 @@ void printMapDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
             {
                 output << _L("\t\t\tNames:");
                 for(auto itName = mapObject->names.begin(); itName != mapObject->names.end(); ++itName)
-                    output << itName.value().toStdWString() << _L(", ");
+                    output << QStringToStdXString(itName.value()) << _L(", ");
                 output << std::endl;
             }
             else
