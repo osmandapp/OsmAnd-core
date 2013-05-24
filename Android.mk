@@ -19,9 +19,9 @@ LOCAL_C_INCLUDES := \
 	$(QT)/include/QtCore \
     $(LOCAL_PATH)/src \
 	$(OSMAND_PROTOBUF)/src \
+	$(OSMAND_EXPAT)/lib \
 	$(OSMAND_SKIA_ROOT) \
 	$(OSMAND_SKIA) \
-	$(OSMAND_EXPAT)/lib \
 	$(OSMAND_SKIA)/include/core \
 	$(OSMAND_SKIA)/include/config \
 	$(OSMAND_SKIA)/include/effects \

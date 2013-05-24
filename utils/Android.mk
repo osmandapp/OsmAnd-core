@@ -8,6 +8,8 @@ else
 	QT := $(LOCAL_PATH)/../externals/qtbase-android/upstream.patched.$(TARGET_ARCH_ABI)
 endif
 OSMAND_PROTOBUF := $(LOCAL_PATH)/../externals/protobuf/upstream.patched
+OSMAND_SKIA_ROOT := $(LOCAL_PATH)/externals/skia
+OSMAND_SKIA := $(LOCAL_PATH)/externals/skia/upstream.patched
 OSMAND_CORE := $(LOCAL_PATH)/..
 OSMAND_COREUTILS_RELATIVE := .
 OSMAND_COREUTILS := $(LOCAL_PATH)/$(OSMAND_COREUTILS_RELATIVE)
@@ -18,7 +20,17 @@ LOCAL_C_INCLUDES := \
     $(OSMAND_CORE)/include \
 	$(OSMAND_CORE)/protos \
 	$(OSMAND_CORE)/native/include \
-	$(OSMAND_PROTOBUF)/src
+	$(OSMAND_PROTOBUF)/src \
+	$(OSMAND_SKIA_ROOT) \
+	$(OSMAND_SKIA) \
+	$(OSMAND_SKIA)/include/core \
+	$(OSMAND_SKIA)/include/config \
+	$(OSMAND_SKIA)/include/effects \
+	$(OSMAND_SKIA)/include/images \
+	$(OSMAND_SKIA)/include/ports \
+	$(OSMAND_SKIA)/include/utils \
+	$(OSMAND_SKIA)/include/utils/android \
+	$(OSMAND_SKIA)/src/core
 
 LOCAL_CPP_EXTENSION := .cpp
 SRC_FILES := $(wildcard $(OSMAND_COREUTILS)/*.c*)
