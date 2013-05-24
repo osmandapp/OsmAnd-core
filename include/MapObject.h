@@ -60,8 +60,8 @@ namespace OsmAnd {
             const uint64_t& id;
             const QMap<uint32_t, QString>& names;
 
-            friend class ObfMapSection;
-            friend class Rasterizer;
+            friend class OsmAnd::ObfMapSection;
+            friend class OsmAnd::Rasterizer;
         };
 
     } // namespace Model
