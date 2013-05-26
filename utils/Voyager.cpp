@@ -113,7 +113,7 @@ OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::Voyager::parseCommandL
         {
             cfg.leftSide = true;
         }
-        else if (arg == "-gpx=")
+        else if (arg.startsWith("-gpx="))
         {
             cfg.gpxPath = arg.mid(strlen("-gpx="));
         }
