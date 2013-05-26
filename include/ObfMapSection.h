@@ -85,6 +85,7 @@ namespace OsmAnd {
 
             const uint32_t& minZoom;
             const uint32_t& maxZoom;
+            const uint32_t& length;
             const AreaI& area31;
 
             friend class OsmAnd::ObfMapSection;

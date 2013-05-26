@@ -689,6 +689,7 @@ void OsmAnd::ObfMapSection::readMapObject(
 OsmAnd::ObfMapSection::MapLevel::MapLevel()
     : minZoom(_minZoom)
     , maxZoom(_maxZoom)
+    , length(_length)
     , area31(_area31)
 {
 }
