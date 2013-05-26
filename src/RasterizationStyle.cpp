@@ -693,7 +693,7 @@ bool OsmAnd::RasterizationStyle::registerRule( RulesetType type, const std::shar
         insertedRule = createTagValueRootWrapperRule(id, *itPrevious);
         insertedRule->_ifElseChildren.push_back(rule);
     }
-    
+
     ruleset.insert(id, insertedRule);
 
     return true;
@@ -749,14 +749,14 @@ uint32_t OsmAnd::RasterizationStyle::lookupStringId( const QString& value )
     uint32_t id;
     if(lookupStringId(value, id))
         return id;
-    
+
     return registerString(value);
 }
 
 uint32_t OsmAnd::RasterizationStyle::registerString( const QString& value )
 {
     auto id = _stringsIdBase + _stringsLUT.size();
-    
+
     _stringsRevLUT.insert(value, id);
     _stringsLUT.push_back(value);
 
@@ -880,8 +880,8 @@ const OsmAnd::RasterizationStyle::_builtinValueDefinitions OsmAnd::Rasterization
 
 #define DECLARE_BUILTIN_VALUEDEF(varname, type, dataType, name) \
     varname(new OsmAnd::RasterizationStyle::ValueDefinition( \
-        OsmAnd::RasterizationStyle::ValueDefinition::##type##, \
-        OsmAnd::RasterizationStyle::ValueDefinition::##dataType##, \
+        OsmAnd::RasterizationStyle::ValueDefinition::type, \
+        OsmAnd::RasterizationStyle::ValueDefinition::dataType, \
         name \
     ))
 
