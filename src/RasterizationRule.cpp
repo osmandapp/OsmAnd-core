@@ -78,7 +78,7 @@ void OsmAnd::RasterizationRule::dump( const QString& prefix /*= QString()*/ ) co
             break;
         }
 
-        OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s%s:%s\n", newPrefix.toStdString().c_str(), valueDef->name.toStdString().c_str(), strValue.toStdString().c_str());
+        OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s%s = %s\n", newPrefix.toStdString().c_str(), valueDef->name.toStdString().c_str(), strValue.toStdString().c_str());
     }
         
     for(auto itChild = _ifElseChildren.begin(); itChild != _ifElseChildren.end(); ++itChild)

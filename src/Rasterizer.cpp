@@ -79,18 +79,18 @@ void OsmAnd::Rasterizer::obtainPrimitives(
             auto layer = mapObject->getSimpleLayerValue();
 
             RasterizationStyleEvaluator evaluator(styleContext, RasterizationStyle::RulesetType::Order, mapObject);
-            evaluator.setIntegerValue(evaluator.styleContext.style->INPUT_MINZOOM, zoom);
-            evaluator.setIntegerValue(evaluator.styleContext.style->INPUT_MAXZOOM, zoom);
-            evaluator.setIntegerValue(evaluator.styleContext.style->INPUT_LAYER, layer);
-            evaluator.setStringValue(evaluator.styleContext.style->INPUT_TAG, tag);
-            evaluator.setStringValue(evaluator.styleContext.style->INPUT_VALUE, value);
-            evaluator.setBooleanValue(evaluator.styleContext.style->INPUT_AREA, mapObject->_isArea);
-            evaluator.setBooleanValue(evaluator.styleContext.style->INPUT_POINT, mapObject->_coordinates.size() == 1);
-            evaluator.setBooleanValue(evaluator.styleContext.style->INPUT_CYCLE, mapObject->isClosedFigure());
+            evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_TAG, tag);
+            evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_VALUE, value);
+            evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
+            evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MAXZOOM, zoom);
+            evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_LAYER, layer);
+            evaluator.setBooleanValue(RasterizationStyle::builtinValueDefinitions.INPUT_AREA, mapObject->_isArea);
+            evaluator.setBooleanValue(RasterizationStyle::builtinValueDefinitions.INPUT_POINT, mapObject->_coordinates.size() == 1);
+            evaluator.setBooleanValue(RasterizationStyle::builtinValueDefinitions.INPUT_CYCLE, mapObject->isClosedFigure());
             if(evaluator.evaluate())
             {
-                auto objectType = static_cast<PrimitiveType>(evaluator.getIntegerValue(evaluator.styleContext.style->OUTPUT_OBJECT_TYPE));
-                auto zOrder = evaluator.getIntegerValue(evaluator.styleContext.style->OUTPUT_ORDER);
+                auto objectType = static_cast<PrimitiveType>(evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_OBJECT_TYPE));
+                auto zOrder = evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_ORDER);
 
                 Primitive primitive;
                 primitive.mapObject = mapObject;
@@ -118,7 +118,7 @@ void OsmAnd::Rasterizer::obtainPrimitives(
                     lines.push_back(primitive);
                 }
 
-                if (evaluator.getIntegerValue(evaluator.styleContext.style->OUTPUT_SHADOW_LEVEL) > 0)
+                if (evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADOW_LEVEL) > 0)
                 {
 //TODO:                    rc->shadowLevelMin = std::min(rc->shadowLevelMin, zOrder);
 //TODO:                    rc->shadowLevelMax = std::max(rc->shadowLevelMax, zOrder);

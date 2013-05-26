@@ -58,8 +58,8 @@ void OsmAnd::RasterizationStyleEvaluator::clearValue( const std::shared_ptr<OsmA
 
 bool OsmAnd::RasterizationStyleEvaluator::evaluate( bool fillOutput /*= true*/, bool evaluateChildren /*=true*/ )
 {
-    auto tagKey = _values[styleContext.style->INPUT_TAG.get()].asUInt;
-    auto valueKey = _values[styleContext.style->INPUT_VALUE.get()].asUInt;
+    auto tagKey = _values[RasterizationStyle::builtinValueDefinitions.INPUT_TAG.get()].asUInt;
+    auto valueKey = _values[RasterizationStyle::builtinValueDefinitions.INPUT_VALUE.get()].asUInt;
 
     auto evaluationResult = evaluate(tagKey, valueKey, fillOutput, evaluateChildren);
     if(evaluationResult)
@@ -78,8 +78,8 @@ bool OsmAnd::RasterizationStyleEvaluator::evaluate( bool fillOutput /*= true*/, 
 
 bool OsmAnd::RasterizationStyleEvaluator::evaluate( uint32_t tagKey, uint32_t valueKey, bool fillOutput, bool evaluateChildren )
 {
-    _values[styleContext.style->INPUT_TAG.get()].asUInt = tagKey;
-    _values[styleContext.style->INPUT_VALUE.get()].asUInt = valueKey;
+    _values[RasterizationStyle::builtinValueDefinitions.INPUT_TAG.get()].asUInt = tagKey;
+    _values[RasterizationStyle::builtinValueDefinitions.INPUT_VALUE.get()].asUInt = valueKey;
     
     const auto& rules = static_cast<const RasterizationStyle*>(styleContext.style.get())->obtainRules(ruleset);
     uint64_t ruleId = RasterizationStyle::encodeRuleId(tagKey, valueKey);
@@ -98,20 +98,21 @@ bool OsmAnd::RasterizationStyleEvaluator::evaluate( const std::shared_ptr<OsmAnd
     {
         const auto& valueDef = *itValueDef;
         const auto& valueData = *itValueData;
+        const auto& stackValue = _values[valueDef.get()];
 
         if(valueDef->type != RasterizationStyle::ValueDefinition::Input)
             continue;
 
         bool evaluationResult = false;
-        if(valueDef == styleContext.style->INPUT_MINZOOM)
+        if(valueDef == RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM)
         {
-            evaluationResult = valueData.asInt <= _values[valueDef.get()].asInt;
+            evaluationResult = valueData.asInt <= stackValue.asInt;
         }
-        else if(valueDef == styleContext.style->INPUT_MAXZOOM)
+        else if(valueDef == RasterizationStyle::builtinValueDefinitions.INPUT_MAXZOOM)
         {
-            evaluationResult = valueData.asInt <= _values[valueDef.get()].asInt;
+            evaluationResult = valueData.asInt <= stackValue.asInt;
         }
-        else if(valueDef == styleContext.style->INPUT_ADDITIONAL)
+        else if(valueDef == RasterizationStyle::builtinValueDefinitions.INPUT_ADDITIONAL)
         {
             if(!mapObject)
                 evaluationResult;
@@ -131,11 +132,11 @@ bool OsmAnd::RasterizationStyleEvaluator::evaluate( const std::shared_ptr<OsmAnd
         }
         else if(valueDef->dataType == RasterizationStyle::ValueDefinition::Float)
         {
-            evaluationResult = qFuzzyCompare(valueData.asFloat, _values[valueDef.get()].asFloat);
+            evaluationResult = qFuzzyCompare(valueData.asFloat, stackValue.asFloat);
         }
         else
         {
-            evaluationResult = valueData.asInt == _values[valueDef.get()].asInt;
+            evaluationResult = valueData.asInt == stackValue.asInt;
         }
 
         if(!evaluationResult)

@@ -13,8 +13,6 @@
 #include "RasterizationRule.h"
 #include "EmbeddedResources.h"
 
-//TODO: Once Visual Studio C++ compiler will support C++11 delegation ctors, this should be cleaned-up
-
 OsmAnd::RasterizationStyle::RasterizationStyle( RasterizationStyles* owner, const QString& embeddedResourceName )
     : owner(owner)
     , _firstNonBuiltinValueDefinitionIndex(0)
@@ -25,64 +23,9 @@ OsmAnd::RasterizationStyle::RasterizationStyle( RasterizationStyles* owner, cons
     , title(_title)
     , name(_name)
     , parentName(_parentName)
-    , INPUT_TEST(_builtin_INPUT_TEST)
-    , INPUT_TEXT_LENGTH(_builtin_INPUT_TEXT_LENGTH)
-    , INPUT_TAG(_builtin_INPUT_TAG)
-    , INPUT_VALUE(_builtin_INPUT_VALUE)
-    , INPUT_MINZOOM(_builtin_INPUT_MINZOOM)
-    , INPUT_MAXZOOM(_builtin_INPUT_MAXZOOM)
-    , INPUT_NIGHT_MODE(_builtin_INPUT_NIGHT_MODE)
-    , INPUT_LAYER(_builtin_INPUT_LAYER)
-    , INPUT_POINT(_builtin_INPUT_POINT)
-    , INPUT_AREA(_builtin_INPUT_AREA)
-    , INPUT_CYCLE(_builtin_INPUT_CYCLE)
-    , INPUT_NAME_TAG(_builtin_INPUT_NAME_TAG)
-    , INPUT_ADDITIONAL(_builtin_INPUT_ADDITIONAL)
-    , OUTPUT_REF(_builtin_OUTPUT_REF)
-    , OUTPUT_TEXT_SHIELD(_builtin_OUTPUT_TEXT_SHIELD)
-    , OUTPUT_SHADOW_RADIUS(_builtin_OUTPUT_SHADOW_RADIUS)
-    , OUTPUT_SHADOW_COLOR(_builtin_OUTPUT_SHADOW_COLOR)
-    , OUTPUT_SHADER(_builtin_OUTPUT_SHADER)
-    , OUTPUT_CAP_3(_builtin_OUTPUT_CAP_3)
-    , OUTPUT_CAP_2(_builtin_OUTPUT_CAP_2)
-    , OUTPUT_CAP(_builtin_OUTPUT_CAP)
-    , OUTPUT_CAP_0(_builtin_OUTPUT_CAP_0)
-    , OUTPUT_CAP__1(_builtin_OUTPUT_CAP__1)
-    , OUTPUT_PATH_EFFECT_3(_builtin_OUTPUT_PATH_EFFECT_3)
-    , OUTPUT_PATH_EFFECT_2(_builtin_OUTPUT_PATH_EFFECT_2)
-    , OUTPUT_PATH_EFFECT(_builtin_OUTPUT_PATH_EFFECT)
-    , OUTPUT_PATH_EFFECT_0(_builtin_OUTPUT_PATH_EFFECT_0)
-    , OUTPUT_PATH_EFFECT__1(_builtin_OUTPUT_PATH_EFFECT__1)
-    , OUTPUT_STROKE_WIDTH_3(_builtin_OUTPUT_STROKE_WIDTH_3)
-    , OUTPUT_STROKE_WIDTH_2(_builtin_OUTPUT_STROKE_WIDTH_2)
-    , OUTPUT_STROKE_WIDTH(_builtin_OUTPUT_STROKE_WIDTH)
-    , OUTPUT_STROKE_WIDTH_0(_builtin_OUTPUT_STROKE_WIDTH_0)
-    , OUTPUT_STROKE_WIDTH__1(_builtin_OUTPUT_STROKE_WIDTH__1)
-    , OUTPUT_COLOR_3(_builtin_OUTPUT_COLOR_3)
-    , OUTPUT_COLOR(_builtin_OUTPUT_COLOR)
-    , OUTPUT_COLOR_2(_builtin_OUTPUT_COLOR_2)
-    , OUTPUT_COLOR_0(_builtin_OUTPUT_COLOR_0)
-    , OUTPUT_COLOR__1(_builtin_OUTPUT_COLOR__1)
-    , OUTPUT_TEXT_BOLD(_builtin_OUTPUT_TEXT_BOLD)
-    , OUTPUT_TEXT_ORDER(_builtin_OUTPUT_TEXT_ORDER)
-    , OUTPUT_TEXT_MIN_DISTANCE(_builtin_OUTPUT_TEXT_MIN_DISTANCE)
-    , OUTPUT_TEXT_ON_PATH(_builtin_OUTPUT_TEXT_ON_PATH)
-    , OUTPUT_ICON(_builtin_OUTPUT_ICON)
-    , OUTPUT_ORDER(_builtin_OUTPUT_ORDER)
-    , OUTPUT_SHADOW_LEVEL(_builtin_OUTPUT_SHADOW_LEVEL)
-    , OUTPUT_TEXT_DY(_builtin_OUTPUT_TEXT_DY)
-    , OUTPUT_TEXT_SIZE(_builtin_OUTPUT_TEXT_SIZE)
-    , OUTPUT_TEXT_COLOR(_builtin_OUTPUT_TEXT_COLOR)
-    , OUTPUT_TEXT_HALO_RADIUS(_builtin_OUTPUT_TEXT_HALO_RADIUS)
-    , OUTPUT_TEXT_WRAP_WIDTH(_builtin_OUTPUT_TEXT_WRAP_WIDTH)
-    , OUTPUT_OBJECT_TYPE(_builtin_OUTPUT_OBJECT_TYPE)
-    , OUTPUT_ATTR_INT_VALUE(_builtin_OUTPUT_ATTR_INT_VALUE)
-    , OUTPUT_ATTR_COLOR_VALUE(_builtin_OUTPUT_ATTR_COLOR_VALUE)
-    , OUTPUT_ATTR_BOOL_VALUE(_builtin_OUTPUT_ATTR_BOOL_VALUE)
-    , OUTPUT_ATTR_STRING_VALUE(_builtin_OUTPUT_ATTR_STRING_VALUE)
 {
     _name = QFileInfo(embeddedResourceName).fileName().replace(".render.xml", "");
-    inflateBuiltinValues();
+    registerBuiltinValueDefinitions();
 }
 
 OsmAnd::RasterizationStyle::RasterizationStyle( RasterizationStyles* owner, const QFile& externalStyleFile )
@@ -95,64 +38,9 @@ OsmAnd::RasterizationStyle::RasterizationStyle( RasterizationStyles* owner, cons
     , title(_title)
     , name(_name)
     , parentName(_parentName)
-    , INPUT_TEST(_builtin_INPUT_TEST)
-    , INPUT_TEXT_LENGTH(_builtin_INPUT_TEXT_LENGTH)
-    , INPUT_TAG(_builtin_INPUT_TAG)
-    , INPUT_VALUE(_builtin_INPUT_VALUE)
-    , INPUT_MINZOOM(_builtin_INPUT_MINZOOM)
-    , INPUT_MAXZOOM(_builtin_INPUT_MAXZOOM)
-    , INPUT_NIGHT_MODE(_builtin_INPUT_NIGHT_MODE)
-    , INPUT_LAYER(_builtin_INPUT_LAYER)
-    , INPUT_POINT(_builtin_INPUT_POINT)
-    , INPUT_AREA(_builtin_INPUT_AREA)
-    , INPUT_CYCLE(_builtin_INPUT_CYCLE)
-    , INPUT_NAME_TAG(_builtin_INPUT_NAME_TAG)
-    , INPUT_ADDITIONAL(_builtin_INPUT_ADDITIONAL)
-    , OUTPUT_REF(_builtin_OUTPUT_REF)
-    , OUTPUT_TEXT_SHIELD(_builtin_OUTPUT_TEXT_SHIELD)
-    , OUTPUT_SHADOW_RADIUS(_builtin_OUTPUT_SHADOW_RADIUS)
-    , OUTPUT_SHADOW_COLOR(_builtin_OUTPUT_SHADOW_COLOR)
-    , OUTPUT_SHADER(_builtin_OUTPUT_SHADER)
-    , OUTPUT_CAP_3(_builtin_OUTPUT_CAP_3)
-    , OUTPUT_CAP_2(_builtin_OUTPUT_CAP_2)
-    , OUTPUT_CAP(_builtin_OUTPUT_CAP)
-    , OUTPUT_CAP_0(_builtin_OUTPUT_CAP_0)
-    , OUTPUT_CAP__1(_builtin_OUTPUT_CAP__1)
-    , OUTPUT_PATH_EFFECT_3(_builtin_OUTPUT_PATH_EFFECT_3)
-    , OUTPUT_PATH_EFFECT_2(_builtin_OUTPUT_PATH_EFFECT_2)
-    , OUTPUT_PATH_EFFECT(_builtin_OUTPUT_PATH_EFFECT)
-    , OUTPUT_PATH_EFFECT_0(_builtin_OUTPUT_PATH_EFFECT_0)
-    , OUTPUT_PATH_EFFECT__1(_builtin_OUTPUT_PATH_EFFECT__1)
-    , OUTPUT_STROKE_WIDTH_3(_builtin_OUTPUT_STROKE_WIDTH_3)
-    , OUTPUT_STROKE_WIDTH_2(_builtin_OUTPUT_STROKE_WIDTH_2)
-    , OUTPUT_STROKE_WIDTH(_builtin_OUTPUT_STROKE_WIDTH)
-    , OUTPUT_STROKE_WIDTH_0(_builtin_OUTPUT_STROKE_WIDTH_0)
-    , OUTPUT_STROKE_WIDTH__1(_builtin_OUTPUT_STROKE_WIDTH__1)
-    , OUTPUT_COLOR_3(_builtin_OUTPUT_COLOR_3)
-    , OUTPUT_COLOR(_builtin_OUTPUT_COLOR)
-    , OUTPUT_COLOR_2(_builtin_OUTPUT_COLOR_2)
-    , OUTPUT_COLOR_0(_builtin_OUTPUT_COLOR_0)
-    , OUTPUT_COLOR__1(_builtin_OUTPUT_COLOR__1)
-    , OUTPUT_TEXT_BOLD(_builtin_OUTPUT_TEXT_BOLD)
-    , OUTPUT_TEXT_ORDER(_builtin_OUTPUT_TEXT_ORDER)
-    , OUTPUT_TEXT_MIN_DISTANCE(_builtin_OUTPUT_TEXT_MIN_DISTANCE)
-    , OUTPUT_TEXT_ON_PATH(_builtin_OUTPUT_TEXT_ON_PATH)
-    , OUTPUT_ICON(_builtin_OUTPUT_ICON)
-    , OUTPUT_ORDER(_builtin_OUTPUT_ORDER)
-    , OUTPUT_SHADOW_LEVEL(_builtin_OUTPUT_SHADOW_LEVEL)
-    , OUTPUT_TEXT_DY(_builtin_OUTPUT_TEXT_DY)
-    , OUTPUT_TEXT_SIZE(_builtin_OUTPUT_TEXT_SIZE)
-    , OUTPUT_TEXT_COLOR(_builtin_OUTPUT_TEXT_COLOR)
-    , OUTPUT_TEXT_HALO_RADIUS(_builtin_OUTPUT_TEXT_HALO_RADIUS)
-    , OUTPUT_TEXT_WRAP_WIDTH(_builtin_OUTPUT_TEXT_WRAP_WIDTH)
-    , OUTPUT_OBJECT_TYPE(_builtin_OUTPUT_OBJECT_TYPE)
-    , OUTPUT_ATTR_INT_VALUE(_builtin_OUTPUT_ATTR_INT_VALUE)
-    , OUTPUT_ATTR_COLOR_VALUE(_builtin_OUTPUT_ATTR_COLOR_VALUE)
-    , OUTPUT_ATTR_BOOL_VALUE(_builtin_OUTPUT_ATTR_BOOL_VALUE)
-    , OUTPUT_ATTR_STRING_VALUE(_builtin_OUTPUT_ATTR_STRING_VALUE)
 {
     _name = QFileInfo(externalStyleFile.fileName()).fileName().replace(".render.xml", "");
-    inflateBuiltinValues();
+    registerBuiltinValueDefinitions();
 }
 
 OsmAnd::RasterizationStyle::~RasterizationStyle()
@@ -587,14 +475,12 @@ bool OsmAnd::RasterizationStyle::parse( QXmlStreamReader& xmlReader )
     return true;
 }
 
-std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition> OsmAnd::RasterizationStyle::registerBuiltinValue( ValueDefinition* pValueDefinition )
+void OsmAnd::RasterizationStyle::registerBuiltinValue( const std::shared_ptr<ValueDefinition>& valueDefinition )
 {
     assert(_valuesDefinitions.size() == 0 || _valuesDefinitions.size() <= _firstNonBuiltinValueDefinitionIndex);
 
-    std::shared_ptr<ValueDefinition> valueDefinition(pValueDefinition);
-    _valuesDefinitions.insert(pValueDefinition->name, valueDefinition);
+    _valuesDefinitions.insert(valueDefinition->name, valueDefinition);
     _firstNonBuiltinValueDefinitionIndex = _valuesDefinitions.size();
-    return valueDefinition;
 }
 
 std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition> OsmAnd::RasterizationStyle::registerValue( ValueDefinition* pValueDefinition )
@@ -604,75 +490,62 @@ std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition> OsmAnd::Rasterizati
     return valueDefinition;
 }
 
-void OsmAnd::RasterizationStyle::inflateBuiltinValues()
+void OsmAnd::RasterizationStyle::registerBuiltinValueDefinitions()
 {
-    _builtin_INPUT_TEST = registerBuiltinValue(new ValueDefinition(ValueDefinition::Input, ValueDefinition::Boolean, "test"));
-    _builtin_INPUT_TAG = registerBuiltinValue(new ValueDefinition(ValueDefinition::Input, ValueDefinition::String, "tag"));
-    _builtin_INPUT_VALUE = registerBuiltinValue(new ValueDefinition(ValueDefinition::Input, ValueDefinition::String, "value"));
-    _builtin_INPUT_ADDITIONAL = registerBuiltinValue(new ValueDefinition(ValueDefinition::Input, ValueDefinition::String, "additional"));
-    _builtin_INPUT_MINZOOM = registerBuiltinValue(new ValueDefinition(ValueDefinition::Input, ValueDefinition::Integer, "minzoom"));
-    _builtin_INPUT_MAXZOOM = registerBuiltinValue(new ValueDefinition(ValueDefinition::Input, ValueDefinition::Integer, "maxzoom"));
-    _builtin_INPUT_NIGHT_MODE = registerBuiltinValue(new ValueDefinition(ValueDefinition::Input, ValueDefinition::Boolean, "nightMode"));
-    _builtin_INPUT_LAYER = registerBuiltinValue(new ValueDefinition(ValueDefinition::Input, ValueDefinition::Integer, "layer"));
-    _builtin_INPUT_POINT = registerBuiltinValue(new ValueDefinition(ValueDefinition::Input, ValueDefinition::Boolean, "point"));
-    _builtin_INPUT_AREA = registerBuiltinValue(new ValueDefinition(ValueDefinition::Input, ValueDefinition::Boolean, "area"));
-    _builtin_INPUT_CYCLE = registerBuiltinValue(new ValueDefinition(ValueDefinition::Input, ValueDefinition::Boolean, "cycle"));
-
-    _builtin_INPUT_TEXT_LENGTH = registerBuiltinValue(new ValueDefinition(ValueDefinition::Input, ValueDefinition::Integer, "textLength"));
-    _builtin_INPUT_NAME_TAG = registerBuiltinValue(new ValueDefinition(ValueDefinition::Input, ValueDefinition::String, "nameTag"));
-
-    _builtin_OUTPUT_ATTR_INT_VALUE = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::Integer, "attrIntValue"));
-    _builtin_OUTPUT_ATTR_BOOL_VALUE = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::Boolean, "attrBoolValue"));
-    _builtin_OUTPUT_ATTR_COLOR_VALUE = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::Color, "attrColorValue"));
-    _builtin_OUTPUT_ATTR_STRING_VALUE = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::String, "attrStringValue"));
-
-    // order - no sense to make it float
-    _builtin_OUTPUT_ORDER = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::Integer, "order"));
-    _builtin_OUTPUT_OBJECT_TYPE = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::Integer, "objectType"));
-    _builtin_OUTPUT_SHADOW_LEVEL = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::Integer, "shadowLevel"));
-
-    // text properties
-    _builtin_OUTPUT_TEXT_WRAP_WIDTH = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::Integer, "textWrapWidth"));
-    _builtin_OUTPUT_TEXT_DY = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::Integer, "textDy"));
-    _builtin_OUTPUT_TEXT_HALO_RADIUS = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::Integer, "textHaloRadius"));
-    _builtin_OUTPUT_TEXT_SIZE = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::Integer, "textSize"));
-    _builtin_OUTPUT_TEXT_ORDER = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::Integer, "textOrder"));
-    _builtin_OUTPUT_TEXT_MIN_DISTANCE = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::Integer, "textMinDistance"));
-    _builtin_OUTPUT_TEXT_SHIELD = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::String, "textShield"));
-
-    _builtin_OUTPUT_TEXT_COLOR = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::Color, "textColor"));
-    _builtin_OUTPUT_TEXT_BOLD = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::Boolean, "textBold"));
-    _builtin_OUTPUT_TEXT_ON_PATH = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::Boolean, "textOnPath"));
-
-    // point
-    _builtin_OUTPUT_ICON = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::String, "icon"));
-
-    // polygon/way
-    _builtin_OUTPUT_COLOR = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::Color, "color"));
-    _builtin_OUTPUT_COLOR_2 = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::Color, "color_2"));
-    _builtin_OUTPUT_COLOR_3 = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::Color, "color_3"));
-    _builtin_OUTPUT_COLOR_0 = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::Color, "color_0"));
-    _builtin_OUTPUT_COLOR__1 = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::Color, "color__1"));
-    _builtin_OUTPUT_STROKE_WIDTH = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::Float, "strokeWidth"));
-    _builtin_OUTPUT_STROKE_WIDTH_2 = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::Float, "strokeWidth_2"));
-    _builtin_OUTPUT_STROKE_WIDTH_3 = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::Float, "strokeWidth_3"));
-    _builtin_OUTPUT_STROKE_WIDTH_0 = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::Float, "strokeWidth_0"));
-    _builtin_OUTPUT_STROKE_WIDTH__1 = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::Float, "strokeWidth__1"));
-
-    _builtin_OUTPUT_PATH_EFFECT = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::String, "pathEffect"));
-    _builtin_OUTPUT_PATH_EFFECT_2 = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::String, "pathEffect_2"));
-    _builtin_OUTPUT_PATH_EFFECT_3 = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::String, "pathEffect_3"));
-    _builtin_OUTPUT_PATH_EFFECT_0 = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::String, "pathEffect_0"));
-    _builtin_OUTPUT_PATH_EFFECT__1 = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::String, "pathEffect__1"));
-    _builtin_OUTPUT_CAP = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::String, "cap"));
-    _builtin_OUTPUT_CAP_2 = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::String, "cap_2"));
-    _builtin_OUTPUT_CAP_3 = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::String, "cap_3"));
-    _builtin_OUTPUT_CAP_0 = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::String, "cap_0"));
-    _builtin_OUTPUT_CAP__1 = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::String, "cap__1"));
-
-    _builtin_OUTPUT_SHADER = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::String, "shader"));
-    _builtin_OUTPUT_SHADOW_COLOR = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::Color, "shadowColor"));
-    _builtin_OUTPUT_SHADOW_RADIUS = registerBuiltinValue(new ValueDefinition(ValueDefinition::Output, ValueDefinition::Integer, "shadowRadius"));
+    registerBuiltinValue(builtinValueDefinitions.INPUT_TEST);
+    registerBuiltinValue(builtinValueDefinitions.INPUT_TEXT_LENGTH);
+    registerBuiltinValue(builtinValueDefinitions.INPUT_TAG);
+    registerBuiltinValue(builtinValueDefinitions.INPUT_VALUE);
+    registerBuiltinValue(builtinValueDefinitions.INPUT_MINZOOM);
+    registerBuiltinValue(builtinValueDefinitions.INPUT_MAXZOOM);
+    registerBuiltinValue(builtinValueDefinitions.INPUT_NIGHT_MODE);
+    registerBuiltinValue(builtinValueDefinitions.INPUT_LAYER);
+    registerBuiltinValue(builtinValueDefinitions.INPUT_POINT);
+    registerBuiltinValue(builtinValueDefinitions.INPUT_AREA);
+    registerBuiltinValue(builtinValueDefinitions.INPUT_CYCLE);
+    registerBuiltinValue(builtinValueDefinitions.INPUT_NAME_TAG);
+    registerBuiltinValue(builtinValueDefinitions.INPUT_ADDITIONAL);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_TEXT_SHIELD);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_SHADOW_RADIUS);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_SHADOW_COLOR);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_SHADER);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_CAP_3);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_CAP_2);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_CAP);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_CAP_0);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_CAP__1);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_PATH_EFFECT_3);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_PATH_EFFECT_2);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_PATH_EFFECT);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_PATH_EFFECT_0);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_PATH_EFFECT__1);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_STROKE_WIDTH_3);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_STROKE_WIDTH_2);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_STROKE_WIDTH);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_STROKE_WIDTH_0);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_STROKE_WIDTH__1);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_COLOR_3);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_COLOR);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_COLOR_2);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_COLOR_0);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_COLOR__1);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_TEXT_BOLD);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_TEXT_ORDER);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_TEXT_MIN_DISTANCE);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_TEXT_ON_PATH);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_ICON);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_ORDER);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_SHADOW_LEVEL);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_TEXT_DY);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_TEXT_SIZE);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_TEXT_COLOR);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_TEXT_HALO_RADIUS);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_TEXT_WRAP_WIDTH);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_OBJECT_TYPE);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_ATTR_INT_VALUE);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_ATTR_COLOR_VALUE);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_ATTR_BOOL_VALUE);
+    registerBuiltinValue(builtinValueDefinitions.OUTPUT_ATTR_STRING_VALUE);
 }
 
 bool OsmAnd::RasterizationStyle::resolveConstantValue( const QString& name, QString& value )
@@ -795,14 +668,14 @@ bool OsmAnd::RasterizationStyle::registerRule( RulesetType type, const std::shar
 {
     bool ok;
 
-    auto tag = rule->getIntegerAttribute(INPUT_TAG->name, &ok);
+    auto tag = rule->getIntegerAttribute(RasterizationStyle::builtinValueDefinitions.INPUT_TAG->name, &ok);
     if(!ok)
     {
         OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Attribute tag should be specified for root filter");
         return false;
     }
 
-    auto value = rule->getIntegerAttribute(INPUT_VALUE->name, &ok);
+    auto value = rule->getIntegerAttribute(RasterizationStyle::builtinValueDefinitions.INPUT_VALUE->name, &ok);
     if(!ok)
     {
         OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Attribute tag should be specified for root filter");
@@ -1002,3 +875,84 @@ OsmAnd::RasterizationStyle::ConfigurableInputValue::ConfigurableInputValue( Valu
 OsmAnd::RasterizationStyle::ConfigurableInputValue::~ConfigurableInputValue()
 {
 }
+
+const OsmAnd::RasterizationStyle::_builtinValueDefinitions OsmAnd::RasterizationStyle::builtinValueDefinitions;
+
+#define DECLARE_BUILTIN_VALUEDEF(varname, type, dataType, name) \
+    varname(new OsmAnd::RasterizationStyle::ValueDefinition( \
+        OsmAnd::RasterizationStyle::ValueDefinition::##type##, \
+        OsmAnd::RasterizationStyle::ValueDefinition::##dataType##, \
+        name \
+    ))
+
+OsmAnd::RasterizationStyle::_builtinValueDefinitions::_builtinValueDefinitions()
+    : DECLARE_BUILTIN_VALUEDEF(INPUT_TEST, Input, Boolean, "test")
+    , DECLARE_BUILTIN_VALUEDEF(INPUT_TAG, Input, String, "tag")
+    , DECLARE_BUILTIN_VALUEDEF(INPUT_VALUE, Input, String, "value")
+    , DECLARE_BUILTIN_VALUEDEF(INPUT_ADDITIONAL, Input, String, "additional")
+    , DECLARE_BUILTIN_VALUEDEF(INPUT_MINZOOM, Input, Integer, "minzoom")
+    , DECLARE_BUILTIN_VALUEDEF(INPUT_MAXZOOM, Input, Integer, "maxzoom")
+    , DECLARE_BUILTIN_VALUEDEF(INPUT_NIGHT_MODE, Input, Boolean, "nightMode")
+    , DECLARE_BUILTIN_VALUEDEF(INPUT_LAYER, Input, Integer, "layer")
+    , DECLARE_BUILTIN_VALUEDEF(INPUT_POINT, Input, Boolean, "point")
+    , DECLARE_BUILTIN_VALUEDEF(INPUT_AREA, Input, Boolean, "area")
+    , DECLARE_BUILTIN_VALUEDEF(INPUT_CYCLE, Input, Boolean, "cycle")
+
+    , DECLARE_BUILTIN_VALUEDEF(INPUT_TEXT_LENGTH, Input, Integer, "textLength")
+    , DECLARE_BUILTIN_VALUEDEF(INPUT_NAME_TAG, Input, String, "nameTag")
+
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_ATTR_INT_VALUE, Output, Integer, "attrIntValue")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_ATTR_BOOL_VALUE, Output, Boolean, "attrBoolValue")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_ATTR_COLOR_VALUE, Output, Color, "attrColorValue")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_ATTR_STRING_VALUE, Output, String, "attrStringValue")
+
+    // order - no sense to make it float
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_ORDER, Output, Integer, "order")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_OBJECT_TYPE, Output, Integer, "objectType")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_SHADOW_LEVEL, Output, Integer, "shadowLevel")
+
+    // text properties
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_WRAP_WIDTH, Output, Integer, "textWrapWidth")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_DY, Output, Integer, "textDy")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_HALO_RADIUS, Output, Integer, "textHaloRadius")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_SIZE, Output, Integer, "textSize")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_ORDER, Output, Integer, "textOrder")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_MIN_DISTANCE, Output, Integer, "textMinDistance")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_SHIELD, Output, String, "textShield")
+
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_COLOR, Output, Color, "textColor")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_BOLD, Output, Boolean, "textBold")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_ON_PATH, Output, Boolean, "textOnPath")
+
+    // point
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON, Output, String, "icon")
+
+    // polygon/way
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_COLOR, Output, Color, "color")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_COLOR_2, Output, Color, "color_2")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_COLOR_3, Output, Color, "color_3")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_COLOR_0, Output, Color, "color_0")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_COLOR__1, Output, Color, "color__1")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_STROKE_WIDTH, Output, Float, "strokeWidth")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_STROKE_WIDTH_2, Output, Float, "strokeWidth_2")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_STROKE_WIDTH_3, Output, Float, "strokeWidth_3")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_STROKE_WIDTH_0, Output, Float, "strokeWidth_0")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_STROKE_WIDTH__1, Output, Float, "strokeWidth__1")
+
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_EFFECT, Output, String, "pathEffect")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_EFFECT_2, Output, String, "pathEffect_2")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_EFFECT_3, Output, String, "pathEffect_3")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_EFFECT_0, Output, String, "pathEffect_0")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_EFFECT__1, Output, String, "pathEffect__1")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_CAP, Output, String, "cap")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_CAP_2, Output, String, "cap_2")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_CAP_3, Output, String, "cap_3")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_CAP_0, Output, String, "cap_0")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_CAP__1, Output, String, "cap__1")
+
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_SHADER, Output, String, "shader")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_SHADOW_COLOR, Output, Color, "shadowColor")
+    , DECLARE_BUILTIN_VALUEDEF(OUTPUT_SHADOW_RADIUS, Output, Integer, "shadowRadius")
+{
+}
+#undef DECLARE_BUILTIN_VALUEDEF
