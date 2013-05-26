@@ -69,8 +69,8 @@ namespace OsmAnd {
 
             SkPaint _paint;
             uint32_t _lastRenderedKey;
-            uint8_t _shadowLevelMin;
-            uint8_t _shadowLevelMax;
+            uint32_t _shadowLevelMin;
+            uint32_t _shadowLevelMax;
             double _polygonMinSizeToDisplay;
             uint32_t _roadDensityZoomTile;
             uint32_t _roadsDensityLimitPerTile;

@@ -51,6 +51,7 @@ namespace OsmAnd
             double endLatitude;
             double endLongitude;
             bool leftSide;
+            QString gpxPath;
 
             std::shared_ptr<RoutingConfiguration> routingConfig;
         };

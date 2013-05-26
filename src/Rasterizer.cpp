@@ -156,8 +156,8 @@ void OsmAnd::Rasterizer::obtainPrimitives(
 
                 if (evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADOW_LEVEL) > 0)
                 {
-                    context._shadowLevelMin = qMin(context._shadowLevelMin, static_cast<uint8_t>(zOrder));
-                    context._shadowLevelMax = qMax(context._shadowLevelMax, static_cast<uint8_t>(zOrder));
+                    context._shadowLevelMin = qMin(context._shadowLevelMin, static_cast<uint32_t>(zOrder));
+                    context._shadowLevelMax = qMax(context._shadowLevelMax, static_cast<uint32_t>(zOrder));
                 }
             }
         }

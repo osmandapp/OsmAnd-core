@@ -6,6 +6,7 @@
 #include <chrono>
 
 #include <QDateTime>
+#include <QTextStream>
 
 #include <Common.h>
 #include <ObfReader.h>
@@ -111,6 +112,10 @@ OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::Voyager::parseCommandL
         else if (arg == "-left")
         {
             cfg.leftSide = true;
+        }
+        else if (arg == "-gpx=")
+        {
+            cfg.gpxPath = arg.mid(strlen("-gpx="));
         }
     }
 
@@ -349,13 +354,27 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
     output << xT("\tcomplete_distance=\"") << totalDistance << xT("\"") << std::endl;
     output << xT("\tcomplete_time=\"") << totalTime << xT("\"") << std::endl;
     output << xT("\trouting_time=\"") << 0 << xT("\"") << std::endl;
-    output << xT("\tvehicle=\"") << QStringToStlString(cfg.vehicle) << xT("\"") << std::endl;
 
     if(cfg.generateXml)
         output << xT(">") << std::endl;
     else
         output << std::endl;
 
+    std::unique_ptr<QFile> gpxFile;
+    std::unique_ptr<QTextStream> gpxStream;
+    if(!cfg.gpxPath.isEmpty())
+    {
+        gpxFile.reset(new QFile(cfg.gpxPath));
+        gpxFile->open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text);
+        gpxStream.reset(new QTextStream(gpxFile.get()));
+    }
+    if(gpxFile && gpxFile->isOpen())
+    {
+        *(gpxStream.get()) << "<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>\n";
+        *(gpxStream.get()) << "<gpx version=\"1.0\" creator=\"OsmAnd Voyager tool\" xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd\">\n";
+        *(gpxStream.get()) << "\t<trk>\n";
+        *(gpxStream.get()) << "\t\t<trkseg>\n";
+    }
     for(auto itSegment = route.begin(); itSegment != route.end(); ++itSegment)
     {
         auto segment = *itSegment;
@@ -400,6 +419,27 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
             output << xT("\t/>") << std::endl;
         else
             output << std::endl;
+
+        if(gpxFile && gpxFile->isOpen())
+        {
+            output << xT("\t\tstart=\"") << segment->startPointIndex << xT("\"") << std::endl;
+            output << xT("\t\tend=\"") << segment->endPointIndex << xT("\"") << std::endl;
+            for(auto pointIdx = segment->startPointIndex; pointIdx < segment->endPointIndex; pointIdx++)
+            {
+                const auto& point = segment->road->points[pointIdx];
+
+                *(gpxStream.get()) << "\t\t\t<trkpt lat=\"" << OsmAnd::Utilities::get31LongitudeX(point.x) << "\" lon=\"" << OsmAnd::Utilities::get31LatitudeY(point.y) << "\"/>\n";
+            }
+        }
+    }
+
+    if(gpxFile && gpxFile->isOpen())
+    {
+        *(gpxStream.get()) << "\t\t</trkseg>\n";
+        *(gpxStream.get()) << "\t</trk>\n";
+        *(gpxStream.get()) << "</gpx>\n";
+        gpxStream->flush();
+        gpxFile->close();
     }
 
     if(cfg.generateXml)
