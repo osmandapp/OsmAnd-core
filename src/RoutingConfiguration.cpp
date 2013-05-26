@@ -139,7 +139,7 @@ void OsmAnd::RoutingConfiguration::parseRoutingParameter( QXmlStreamReader* xmlP
             values.push_back(value);
         }
 
-        auto valuesDescriptions = valueDescriptions.string()->split(',');
+        auto valuesDescriptions = valueDescriptions.toString().split(',');
         assert(valuesDescriptions.size() == values.size());
         routingProfile->registerNumericParameter(idAttrib.toString(), nameAttrib.toString(), descriptionAttrib.toString(), values, valuesDescriptions);
     }

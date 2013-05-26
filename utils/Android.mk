@@ -8,8 +8,8 @@ else
 	QT := $(LOCAL_PATH)/../externals/qtbase-android/upstream.patched.$(TARGET_ARCH_ABI)
 endif
 OSMAND_PROTOBUF := $(LOCAL_PATH)/../externals/protobuf/upstream.patched
-OSMAND_SKIA_ROOT := $(LOCAL_PATH)/externals/skia
-OSMAND_SKIA := $(LOCAL_PATH)/externals/skia/upstream.patched
+OSMAND_SKIA_ROOT := $(LOCAL_PATH)/../externals/skia
+OSMAND_SKIA := $(LOCAL_PATH)/../externals/skia/upstream.patched
 OSMAND_CORE := $(LOCAL_PATH)/..
 OSMAND_COREUTILS_RELATIVE := .
 OSMAND_COREUTILS := $(LOCAL_PATH)/$(OSMAND_COREUTILS_RELATIVE)
