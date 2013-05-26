@@ -1,5 +1,5 @@
 #include "MapView.h"
-#include <QtMath>
+#include <qmath.h>
 namespace OsmAnd {
 
 OsmAndMapView::OsmAndMapView(const std::shared_ptr<OsmAnd::OsmAndApplication>& app ) : zoom(3), longitude(0), latitude(0),
