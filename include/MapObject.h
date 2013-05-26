@@ -60,6 +60,11 @@ namespace OsmAnd {
             const uint64_t& id;
             const QMap<uint32_t, QString>& names;
 
+            int getSimpleLayerValue() const;
+            bool isClosedFigure() const;
+
+            bool containsType(const QString& tag, const QString& value, bool checkAdditional = false) const;
+
             friend class OsmAnd::ObfMapSection;
             friend class OsmAnd::Rasterizer;
         };

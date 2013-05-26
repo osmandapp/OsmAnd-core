@@ -55,7 +55,7 @@ namespace OsmAnd {
     protected:
     public:
         //! Ctor
-        QZeroCopyInputStream(std::shared_ptr<QIODevice> device);
+        QZeroCopyInputStream(const std::shared_ptr<QIODevice>& device);
 
         //! Dtor
         virtual ~QZeroCopyInputStream();

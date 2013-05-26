@@ -103,20 +103,6 @@ void OsmAnd::ObfMapSection::readMapLevelHeader( ObfReader* reader, ObfMapSection
     }
 }
 
-void OsmAnd::ObfMapSection::loadRules( ObfReader* reader )
-{
-    if(_rules)
-        return;
-
-    auto cis = reader->_codedInputStream.get();
-
-    cis->Seek(_offset);
-    auto oldLimit = cis->PushLimit(_length);
-    _rules.reset(new Rules());
-    readRules(reader, _rules.get());
-    cis->PopLimit(oldLimit);
-}
-
 void OsmAnd::ObfMapSection::readRules(
     ObfReader* reader,
     Rules* rules)
@@ -238,10 +224,19 @@ void OsmAnd::ObfMapSection::loadMapObjects(
     ObfMapSection* section,
     QList< std::shared_ptr<OsmAnd::Model::MapObject> >* resultOut /*= nullptr*/,
     QueryFilter* filter /*= nullptr*/,
-    std::function<bool (std::shared_ptr<OsmAnd::Model::MapObject>)> visitor /*= nullptr*/,
+    std::function<bool (const std::shared_ptr<OsmAnd::Model::MapObject>&)> visitor /*= nullptr*/,
     IQueryController* controller /*= nullptr*/)
 {
     auto cis = reader->_codedInputStream.get();
+
+    if(!section->_rules)
+    {
+        cis->Seek(section->_offset);
+        auto oldLimit = cis->PushLimit(section->_length);
+        section->_rules.reset(new Rules());
+        readRules(reader, section->_rules.get());
+        cis->PopLimit(oldLimit);
+    }
 
     for(auto itMapLevel = section->_mapLevels.begin(); itMapLevel != section->_mapLevels.end(); ++itMapLevel)
     {
@@ -440,7 +435,7 @@ void OsmAnd::ObfMapSection::readMapObjectsBlock(
     LevelTreeNode* tree,
     QList< std::shared_ptr<OsmAnd::Model::MapObject> >* resultOut,
     QueryFilter* filter,
-    std::function<bool (std::shared_ptr<OsmAnd::Model::MapObject>)> visitor,
+    std::function<bool (const std::shared_ptr<OsmAnd::Model::MapObject>&)> visitor,
     IQueryController* controller)
 {
     auto cis = reader->_codedInputStream.get();
@@ -715,6 +710,7 @@ OsmAnd::ObfMapSection::Rules::Rules()
     , _landEncodingType(-1)
     , _onewayAttribute(-1)
     , _onewayReverseAttribute(-1)
+    , decodingRules(_decodingRules)
 {
     _positiveLayers.reserve(2);
     _negativeLayers.reserve(2);
@@ -722,4 +718,18 @@ OsmAnd::ObfMapSection::Rules::Rules()
 
 OsmAnd::ObfMapSection::Rules::~Rules()
 {
+}
+
+bool OsmAnd::ObfMapSection::Rules::obtainTagValueId( const QString& tag, const QString& value, uint32_t& outId ) const
+{
+    auto itTag = _encodingRules.find(tag);
+    if(itTag == _encodingRules.end())
+        return false;
+
+    auto itValue = itTag->find(value);
+    if(itValue == itTag->end())
+        return false;
+
+    outId = *itValue;
+    return true;
 }

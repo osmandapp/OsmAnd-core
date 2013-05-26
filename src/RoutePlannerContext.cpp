@@ -8,7 +8,7 @@
 
 OsmAnd::RoutePlannerContext::RoutePlannerContext(
     const QList< std::shared_ptr<ObfReader> >& sources,
-    std::shared_ptr<RoutingConfiguration> routingConfig,
+    const std::shared_ptr<RoutingConfiguration>& routingConfig,
     const QString& vehicle,
     bool useBasemap,
     float initialHeading /*= std::numeric_limits<float>::quiet_NaN()*/,
@@ -39,7 +39,7 @@ OsmAnd::RoutePlannerContext::~RoutePlannerContext()
 {
 }
 
-OsmAnd::RoutePlannerContext::RoutingSubsectionContext::RoutingSubsectionContext( RoutePlannerContext* owner, std::shared_ptr<ObfReader> origin, std::shared_ptr<ObfRoutingSection::Subsection> subsection )
+OsmAnd::RoutePlannerContext::RoutingSubsectionContext::RoutingSubsectionContext( RoutePlannerContext* owner, const std::shared_ptr<ObfReader>& origin, const std::shared_ptr<ObfRoutingSection::Subsection>& subsection )
     : subsection(subsection)
     , owner(owner)
     , origin(origin)
@@ -50,7 +50,7 @@ OsmAnd::RoutePlannerContext::RoutingSubsectionContext::~RoutingSubsectionContext
 {
 }
 
-void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::registerRoad( std::shared_ptr<Model::Road> road )
+void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::registerRoad( const std::shared_ptr<Model::Road>& road )
 {
     //TODO:tileStatistics.addObject(ro);
 
@@ -136,13 +136,14 @@ void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::unload()
 std::shared_ptr<OsmAnd::RoutePlannerContext::RouteCalculationSegment> OsmAnd::RoutePlannerContext::RoutingSubsectionContext::loadRouteCalculationSegment(
     uint32_t x31, uint32_t y31,
     QMap<uint64_t, std::shared_ptr<Model::Road> >& processed,
-    std::shared_ptr<RouteCalculationSegment> original) const
+    const std::shared_ptr<RouteCalculationSegment>& original_) const
 {
     uint64_t id = (static_cast<uint64_t>(x31) << 31) | y31;
     auto itSegment = _roadSegments.find(id);
     if(itSegment == _roadSegments.end())
-        return original;
+        return original_;
 
+    auto original = original_;
     auto segment = *itSegment;
     while(segment)
     {
@@ -173,7 +174,7 @@ OsmAnd::RoutePlannerContext::CalculationContext::~CalculationContext()
 {
 }
 
-OsmAnd::RoutePlannerContext::RouteCalculationSegment::RouteCalculationSegment( std::shared_ptr<Model::Road> road, uint32_t pointIndex )
+OsmAnd::RoutePlannerContext::RouteCalculationSegment::RouteCalculationSegment( const std::shared_ptr<Model::Road>& road, uint32_t pointIndex )
     : _distanceFromStart(0)
     , _distanceToEnd(0)
     , next(_next)
@@ -207,7 +208,7 @@ void OsmAnd::RoutePlannerContext::RouteCalculationSegment::dump(const QString& p
     }
 }
 
-OsmAnd::RoutePlannerContext::RouteCalculationFinalSegment::RouteCalculationFinalSegment( std::shared_ptr<Model::Road> road, uint32_t pointIndex )
+OsmAnd::RoutePlannerContext::RouteCalculationFinalSegment::RouteCalculationFinalSegment( const std::shared_ptr<Model::Road>& road, uint32_t pointIndex )
     : RouteCalculationSegment(road, pointIndex)
     , reverseWaySearch(_reverseWaySearch)
     , opposite(_opposite)

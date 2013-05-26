@@ -21,7 +21,7 @@ OsmAnd::ObfRoutingSection::~ObfRoutingSection()
 {
 }
 
-void OsmAnd::ObfRoutingSection::read( ObfReader* reader, std::shared_ptr<ObfRoutingSection> section )
+void OsmAnd::ObfRoutingSection::read( ObfReader* reader, const std::shared_ptr<ObfRoutingSection>& section )
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -177,7 +177,7 @@ void OsmAnd::ObfRoutingSection::readEncodingRule( ObfReader* reader, ObfRoutingS
     }
 }
 
-void OsmAnd::ObfRoutingSection::readSubsectionHeader( ObfReader* reader, std::shared_ptr<Subsection> subsection, Subsection* parent, uint32_t depth/* = std::numeric_limits<uint32_t>::max()*/ )
+void OsmAnd::ObfRoutingSection::readSubsectionHeader( ObfReader* reader, const std::shared_ptr<Subsection>& subsection, Subsection* parent, uint32_t depth/* = std::numeric_limits<uint32_t>::max()*/ )
 {
     auto shouldReadSubsections = (depth > 0);
 
@@ -247,7 +247,7 @@ void OsmAnd::ObfRoutingSection::readSubsectionHeader( ObfReader* reader, std::sh
     }
 }
 
-void OsmAnd::ObfRoutingSection::readSubsectionChildrenHeaders( ObfReader* reader, std::shared_ptr<Subsection> subsection, uint32_t depth /*= std::numeric_limits<uint32_t>::max()*/ )
+void OsmAnd::ObfRoutingSection::readSubsectionChildrenHeaders( ObfReader* reader, const std::shared_ptr<Subsection>& subsection, uint32_t depth /*= std::numeric_limits<uint32_t>::max()*/ )
 {
     if(!subsection->_subsectionsOffset)
         return;
@@ -293,7 +293,7 @@ void OsmAnd::ObfRoutingSection::querySubsections(
     const QList< std::shared_ptr<Subsection> >& in,
     QList< std::shared_ptr<Subsection> >* resultOut /*= nullptr*/,
     QueryFilter* filter /*= nullptr*/,
-    std::function<bool (std::shared_ptr<Subsection>)> visitor /*= nullptr*/ )
+    std::function<bool (const std::shared_ptr<Subsection>&)> visitor /*= nullptr*/ )
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -327,11 +327,11 @@ void OsmAnd::ObfRoutingSection::querySubsections(
 }
 
 void OsmAnd::ObfRoutingSection::loadSubsectionData(
-    ObfReader* reader, std::shared_ptr<Subsection> subsection,
+    ObfReader* reader, const std::shared_ptr<Subsection>& subsection,
     QList< std::shared_ptr<Model::Road> >* resultOut /*= nullptr*/,
     QMap< uint64_t, std::shared_ptr<Model::Road> >* resultMapOut /*= nullptr*/,
     QueryFilter* filter /*= nullptr*/,
-    std::function<bool (std::shared_ptr<OsmAnd::Model::Road>)> visitor /*= nullptr*/ )
+    std::function<bool (const std::shared_ptr<OsmAnd::Model::Road>&)> visitor /*= nullptr*/ )
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -344,11 +344,11 @@ void OsmAnd::ObfRoutingSection::loadSubsectionData(
 }
 
 void OsmAnd::ObfRoutingSection::readSubsectionData(
-    ObfReader* reader, std::shared_ptr<Subsection> subsection,
+    ObfReader* reader, const std::shared_ptr<Subsection>& subsection,
     QList< std::shared_ptr<Model::Road> >* resultOut /*= nullptr*/,
     QMap< uint64_t, std::shared_ptr<Model::Road> >* resultMapOut /*= nullptr*/,
     QueryFilter* filter /*= nullptr*/,
-    std::function<bool (std::shared_ptr<OsmAnd::Model::Road>)> visitor /*= nullptr*/ )
+    std::function<bool (const std::shared_ptr<OsmAnd::Model::Road>&)> visitor /*= nullptr*/ )
 {
     QStringList roadNamesTable;
     QList<uint64_t> roadsIdsTable;
@@ -623,8 +623,8 @@ void OsmAnd::ObfRoutingSection::loadSubsectionBorderBoxLinesPoints(
     const ObfRoutingSection* section,
     QList< std::shared_ptr<BorderLinePoint> >* resultOut /*= nullptr*/,
     QueryFilter* filter /*= nullptr*/,
-    std::function<bool (std::shared_ptr<BorderLineHeader>)> visitorLine /*= nullptr*/,
-    std::function<bool (std::shared_ptr<BorderLinePoint>)> visitorPoint /*= nullptr*/)
+    std::function<bool (const std::shared_ptr<BorderLineHeader>&)> visitorLine /*= nullptr*/,
+    std::function<bool (const std::shared_ptr<BorderLinePoint>&)> visitorPoint /*= nullptr*/)
 {
     if(section->_borderBoxOffset == 0 || section->_borderBoxLength == 0)
         return;
@@ -635,7 +635,7 @@ void OsmAnd::ObfRoutingSection::loadSubsectionBorderBoxLinesPoints(
 
     QList<uint32_t> pointsOffsets;
     readBorderBoxLinesHeaders(reader, nullptr, filter,
-        [&] (std::shared_ptr<OsmAnd::ObfRoutingSection::BorderLineHeader> borderLine)
+        [&] (const std::shared_ptr<OsmAnd::ObfRoutingSection::BorderLineHeader>& borderLine)
         {
             auto valid = !visitorLine || visitorLine(borderLine);
             if(!valid)
@@ -666,7 +666,7 @@ void OsmAnd::ObfRoutingSection::loadSubsectionBorderBoxLinesPoints(
 void OsmAnd::ObfRoutingSection::readBorderBoxLinesHeaders(ObfReader* reader, 
     QList< std::shared_ptr<BorderLineHeader> >* resultOut /*= nullptr*/,
     QueryFilter* filter /*= nullptr*/,
-    std::function<bool (std::shared_ptr<BorderLineHeader>)> visitor /*= nullptr*/)
+    std::function<bool (const std::shared_ptr<BorderLineHeader>&)> visitor /*= nullptr*/)
 {
     auto cis = reader->_codedInputStream.get();
     for(;;)
@@ -754,7 +754,7 @@ void OsmAnd::ObfRoutingSection::readBorderLinePoints(
     ObfReader* reader,
     QList< std::shared_ptr<BorderLinePoint> >* resultOut /*= nullptr*/,
     QueryFilter* filter /*= nullptr*/,
-    std::function<bool (std::shared_ptr<BorderLinePoint>)> visitor /*= nullptr*/
+    std::function<bool (const std::shared_ptr<BorderLinePoint>&)> visitor /*= nullptr*/
     )
 {
     auto cis = reader->_codedInputStream.get();
@@ -875,7 +875,7 @@ int OsmAnd::ObfRoutingSection::EncodingRule::getDirection() const
     return OsmAnd::Model::Road::Direction::TwoWay;
 }
 
-OsmAnd::ObfRoutingSection::Subsection::Subsection(std::shared_ptr<Subsection> parent)
+OsmAnd::ObfRoutingSection::Subsection::Subsection(const std::shared_ptr<Subsection>& parent)
     : _dataOffset(0)
     , _subsectionsOffset(0)
     , area31(_area31)
@@ -884,7 +884,7 @@ OsmAnd::ObfRoutingSection::Subsection::Subsection(std::shared_ptr<Subsection> pa
 {
 }
 
-OsmAnd::ObfRoutingSection::Subsection::Subsection(std::shared_ptr<ObfRoutingSection> section)
+OsmAnd::ObfRoutingSection::Subsection::Subsection(const std::shared_ptr<ObfRoutingSection>& section)
     : _dataOffset(0)
     , _subsectionsOffset(0)
     , area31(_area31)

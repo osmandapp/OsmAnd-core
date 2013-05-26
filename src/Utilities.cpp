@@ -397,3 +397,18 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::findFiles( const QDir& 
             findFiles(QDir(itSubdir->absoluteFilePath()), masks, files, recursively);
     }
 }
+
+OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::polygonArea( const QVector<PointI>& points )
+{
+    auto area = 0.0;
+    auto j = points.size() - 1;
+    for(auto i = 0; i < points.size(); i++)
+    {
+        const auto& a = points[i];
+        const auto& b = points[j];
+
+        area += (b.x + a.x) * (b.y - a.y);
+        j = i;
+    }
+    return qAbs(area) * 0.5;
+}

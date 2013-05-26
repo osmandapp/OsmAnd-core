@@ -1,6 +1,6 @@
 #include "RoutingProfileContext.h"
 
-OsmAnd::RoutingProfileContext::RoutingProfileContext( std::shared_ptr<RoutingProfile> profile, QHash<QString, QString>* contextValues /*= nullptr*/ )
+OsmAnd::RoutingProfileContext::RoutingProfileContext( const std::shared_ptr<RoutingProfile>& profile, QHash<QString, QString>* contextValues /*= nullptr*/ )
     : profile(profile)
 {
     for(auto type = 0; type < RoutingRuleset::TypesCount; type++)

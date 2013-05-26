@@ -41,17 +41,28 @@ namespace OsmAnd {
     {
     private:
         Rasterizer();
+
+        enum {
+            MaxV = 75,
+        };
     protected:
+        enum PrimitiveType : uint32_t
+        {
+            Point = 1,
+            Line = 2,
+            Polygon = 3,
+        };
+
         struct Primitive
         {
             std::shared_ptr<OsmAnd::Model::MapObject> mapObject;
             double zOrder;
             uint32_t typeIndex;
-
-            int objectType;
+            PrimitiveType objectType;
         };
 
         static void obtainPrimitives(
+            const RasterizationStyleContext& styleContext,
             const QList< std::shared_ptr<OsmAnd::Model::MapObject> >& objects,
             uint32_t zoom,
             QList< Primitive >& polygons,
@@ -65,7 +76,7 @@ namespace OsmAnd {
             SkCanvas& canvas,
             const QList< std::shared_ptr<OsmAnd::Model::MapObject> >& objects,
             uint32_t zoom,
-            RasterizationStyleContext& styleContext,
+            const RasterizationStyleContext& styleContext,
             IQueryController* controller = nullptr);
     };
 

@@ -110,6 +110,9 @@ namespace OsmAnd {
         public:
             virtual ~Rules();
 
+            const QMap< uint32_t, DecodingRule >& decodingRules;
+            bool obtainTagValueId(const QString& tag, const QString& value, uint32_t& outId) const;
+
         friend class OsmAnd::ObfMapSection;
         };
     private:
@@ -137,7 +140,7 @@ namespace OsmAnd {
             LevelTreeNode* treeNode,
             QList< std::shared_ptr<OsmAnd::Model::MapObject> >* resultOut,
             QueryFilter* filter,
-            std::function<bool (std::shared_ptr<OsmAnd::Model::MapObject>)> visitor,
+            std::function<bool (const std::shared_ptr<OsmAnd::Model::MapObject>&)> visitor,
             IQueryController* controller);
         static void readMapObject(ObfReader* reader, ObfMapSection* section,
             LevelTreeNode* treeNode,
@@ -155,11 +158,10 @@ namespace OsmAnd {
         const QList< std::shared_ptr<MapLevel> >& mapLevels;
         const std::shared_ptr< Rules >& rules;
         
-        void loadRules(ObfReader* reader);
         static void loadMapObjects(ObfReader* reader, ObfMapSection* section,
             QList< std::shared_ptr<OsmAnd::Model::MapObject> >* resultOut = nullptr,
             QueryFilter* filter = nullptr,
-            std::function<bool (std::shared_ptr<OsmAnd::Model::MapObject>)> visitor = nullptr,
+            std::function<bool (const std::shared_ptr<OsmAnd::Model::MapObject>&)> visitor = nullptr,
             IQueryController* controller = nullptr);
 
     friend class OsmAnd::ObfReader;

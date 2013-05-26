@@ -2,7 +2,7 @@
 #include <math.h>
 namespace OsmAnd {
 
-MapView::MapView(std::shared_ptr<OsmAnd::OsmAndApplication> app ) : zoom(3), longitude(0), latitude(0),
+MapView::MapView(const std::shared_ptr<OsmAnd::OsmAndApplication>& app ) : zoom(3), longitude(0), latitude(0),
     rotate(0), rotateCos(1), rotateSin(0), app(app),
     mapPosition(CENTER_POSITION), width(0), height(0)
 {

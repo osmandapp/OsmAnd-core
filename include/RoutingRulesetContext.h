@@ -47,7 +47,7 @@ namespace OsmAnd {
         bool evaluate(const QBitArray& types, RoutingRuleExpression::ResultType type, void* result);
         QBitArray encode(ObfRoutingSection* section, const QVector<uint32_t>& roadTypes);
     public:
-        RoutingRulesetContext(RoutingProfileContext* owner, std::shared_ptr<RoutingRuleset> ruleset, QHash<QString, QString>* contextValues);
+        RoutingRulesetContext(RoutingProfileContext* owner, const std::shared_ptr<RoutingRuleset>& ruleset, QHash<QString, QString>* contextValues);
         virtual ~RoutingRulesetContext();
 
         RoutingProfileContext* const owner;

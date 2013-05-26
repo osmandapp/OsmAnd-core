@@ -3,7 +3,7 @@
 #include <RoutingProfile.h>
 #include <RoutingProfileContext.h>
 
-OsmAnd::RoutingRulesetContext::RoutingRulesetContext(RoutingProfileContext* owner_, std::shared_ptr<RoutingRuleset> ruleset_, QHash<QString, QString>* contextValues_)
+OsmAnd::RoutingRulesetContext::RoutingRulesetContext(RoutingProfileContext* owner_, const std::shared_ptr<RoutingRuleset>& ruleset_, QHash<QString, QString>* contextValues_)
     : ruleset(ruleset_)
     , owner(owner_)
     , contextValues(_contextValues)

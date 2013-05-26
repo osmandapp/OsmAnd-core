@@ -6,7 +6,7 @@
 #include "Utilities.h"
 #include "Logging.h"
 
-OsmAnd::RouteSegment::RouteSegment(std::shared_ptr<Model::Road> road_, uint32_t startPointIndex_, uint32_t endPointIndex_)
+OsmAnd::RouteSegment::RouteSegment(const std::shared_ptr<Model::Road>& road_, uint32_t startPointIndex_, uint32_t endPointIndex_)
     : _road(road_)
     , _startPointIndex(startPointIndex_)
     , _endPointIndex(endPointIndex_)

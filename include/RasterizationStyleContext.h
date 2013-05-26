@@ -37,7 +37,7 @@ namespace OsmAnd {
     private:
     protected:
     public:
-        RasterizationStyleContext(std::shared_ptr<RasterizationStyle> style);
+        RasterizationStyleContext(const std::shared_ptr<RasterizationStyle>& style);
         virtual ~RasterizationStyleContext();
 
         const std::shared_ptr<RasterizationStyle> style;

@@ -58,7 +58,7 @@ namespace OsmAnd {
 
             int _assignedDirection;
 
-            RouteCalculationSegment(std::shared_ptr<Model::Road> road, uint32_t pointIndex);
+            RouteCalculationSegment(const std::shared_ptr<Model::Road>& road, uint32_t pointIndex);
 
             void dump(const QString& prefix = QString()) const;
         public:
@@ -82,7 +82,7 @@ namespace OsmAnd {
         {
         private:
         protected:
-            RouteCalculationFinalSegment(std::shared_ptr<Model::Road> road, uint32_t pointIndex);
+            RouteCalculationFinalSegment(const std::shared_ptr<Model::Road>& road, uint32_t pointIndex);
 
             bool _reverseWaySearch;
             std::shared_ptr<RouteCalculationSegment> _opposite;
@@ -101,13 +101,13 @@ namespace OsmAnd {
         private:
             uint64_t _mixedLoadsCounter;
         protected:
-            RoutingSubsectionContext(RoutePlannerContext* owner, std::shared_ptr<ObfReader> origin, std::shared_ptr<ObfRoutingSection::Subsection> subsection);
+            RoutingSubsectionContext(RoutePlannerContext* owner, const std::shared_ptr<ObfReader>& origin, const std::shared_ptr<ObfRoutingSection::Subsection>& subsection);
 
             QMap< uint64_t, std::shared_ptr<RouteCalculationSegment> > _roadSegments;
 
             void markLoaded();
             void unload();
-            std::shared_ptr<RouteCalculationSegment> loadRouteCalculationSegment(uint32_t x31, uint32_t y31, QMap<uint64_t, std::shared_ptr<Model::Road> >& processed, std::shared_ptr<RouteCalculationSegment> original) const;
+            std::shared_ptr<RouteCalculationSegment> loadRouteCalculationSegment(uint32_t x31, uint32_t y31, QMap<uint64_t, std::shared_ptr<Model::Road> >& processed, const std::shared_ptr<RouteCalculationSegment>& original) const;
         public:
             virtual ~RoutingSubsectionContext();
 
@@ -118,7 +118,7 @@ namespace OsmAnd {
             bool isLoaded() const;
             uint32_t getLoadsCounter() const;
 
-            void registerRoad(std::shared_ptr<Model::Road> road);
+            void registerRoad(const std::shared_ptr<Model::Road>& road);
             void collectRoads(QList< std::shared_ptr<Model::Road> >& output, QMap<uint64_t, std::shared_ptr<Model::Road> >* duplicatesRegistry = nullptr);
 
             friend class OsmAnd::RoutePlanner;
@@ -185,7 +185,7 @@ namespace OsmAnd {
     public:
         RoutePlannerContext(
             const QList< std::shared_ptr<ObfReader> >& sources,
-            std::shared_ptr<RoutingConfiguration> routingConfig,
+            const std::shared_ptr<RoutingConfiguration>& routingConfig,
             const QString& vehicle,
             bool useBasemap,
             float initialHeading = std::numeric_limits<float>::quiet_NaN(),

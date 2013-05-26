@@ -59,7 +59,7 @@ namespace OsmAnd {
             QSet<uint32_t>* desiredCategories = nullptr,
             QList< std::shared_ptr<OsmAnd::Model::Amenity> >* amenitiesOut = nullptr,
             QueryFilter* filter = nullptr, uint32_t zoomToSkipFilter = 3,
-            std::function<bool (std::shared_ptr<OsmAnd::Model::Amenity>)> visitor = nullptr,
+            std::function<bool (const std::shared_ptr<OsmAnd::Model::Amenity>&)> visitor = nullptr,
             IQueryController* controller = nullptr);
     protected:
         static void read(ObfReader* reader, ObfPoiSection* section);
@@ -74,7 +74,7 @@ namespace OsmAnd {
             QSet<uint32_t>* desiredCategories,
             QList< std::shared_ptr<OsmAnd::Model::Amenity> >* amenitiesOut,
             QueryFilter* filter, uint32_t zoomToSkipFilter,
-            std::function<bool (std::shared_ptr<OsmAnd::Model::Amenity>)> visitor,
+            std::function<bool (const std::shared_ptr<OsmAnd::Model::Amenity>&)> visitor,
             IQueryController* controller);
         struct Tile
         {
@@ -98,7 +98,7 @@ namespace OsmAnd {
             QSet<uint32_t>* desiredCategories,
             QList< std::shared_ptr<OsmAnd::Model::Amenity> >* amenitiesOut,
             QueryFilter* filter, uint32_t zoomToSkipFilter,
-            std::function<bool (std::shared_ptr<OsmAnd::Model::Amenity>)> visitor,
+            std::function<bool (const std::shared_ptr<OsmAnd::Model::Amenity>&)> visitor,
             IQueryController* controller,
             QSet< uint64_t >* amenitiesToSkip);
         static void readAmenity(ObfReader* reader, ObfPoiSection* section, int32_t px, int32_t py, uint32_t pzoom, std::shared_ptr<Model::Amenity>& amenity,

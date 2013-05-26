@@ -45,7 +45,7 @@ namespace OsmAnd {
 
         QMap< ObfRoutingSection*, QMap<uint32_t, uint32_t> > _tagValueAttribIdCache;
     public:
-        RoutingProfileContext(std::shared_ptr<RoutingProfile> profile, QHash<QString, QString>* contextValues = nullptr);
+        RoutingProfileContext(const std::shared_ptr<RoutingProfile>& profile, QHash<QString, QString>* contextValues = nullptr);
         virtual ~RoutingProfileContext();
 
         const std::shared_ptr<RoutingProfile> profile;

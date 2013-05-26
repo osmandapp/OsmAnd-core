@@ -38,7 +38,7 @@ namespace OsmAnd {
     {
     private:
     protected:
-        RouteSegment(std::shared_ptr<Model::Road> road, uint32_t startPointIndex, uint32_t endPointIndex);
+        RouteSegment(const std::shared_ptr<Model::Road>& road, uint32_t startPointIndex, uint32_t endPointIndex);
 
         const std::shared_ptr<Model::Road> _road;
         uint32_t _startPointIndex;

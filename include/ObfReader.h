@@ -74,7 +74,7 @@ namespace OsmAnd {
         static void readStringTable(gpb::io::CodedInputStream* cis, QStringList& stringTableOut);
         static void skipUnknownField(gpb::io::CodedInputStream* cis, int tag);
     public:
-        ObfReader(std::shared_ptr<QIODevice> input);
+        ObfReader(const std::shared_ptr<QIODevice>& input);
         virtual ~ObfReader();
 
         const std::shared_ptr<QIODevice> source;

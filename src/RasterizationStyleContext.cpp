@@ -1,6 +1,6 @@
 #include "RasterizationStyleContext.h"
 
-OsmAnd::RasterizationStyleContext::RasterizationStyleContext( std::shared_ptr<RasterizationStyle> style_ )
+OsmAnd::RasterizationStyleContext::RasterizationStyleContext( const std::shared_ptr<RasterizationStyle>& style_ )
     : style(style_)
 {
 }

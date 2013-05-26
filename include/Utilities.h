@@ -31,8 +31,10 @@
 #include <QList>
 #include <QDir>
 #include <QFile>
+#include <QVector>
 
 #include <OsmAndCore.h>
+#include <Area.h>
 
 namespace OsmAnd {
 
@@ -69,7 +71,8 @@ namespace OsmAnd {
         OSMAND_CORE_API double OSMAND_CORE_CALL normalizedAngleRadians(double angle);
         OSMAND_CORE_API double OSMAND_CORE_CALL normalizedAngleDegrees(double angle);
         OSMAND_CORE_API int OSMAND_CORE_CALL javaDoubleCompare(double l, double r);
-        OSMAND_CORE_API void OSMAND_CORE_CALL findFiles(const QDir& origin, const QStringList& masks, QList< std::shared_ptr<QFile> >& files, bool recursively = true );
+        OSMAND_CORE_API void OSMAND_CORE_CALL findFiles(const QDir& origin, const QStringList& masks, QList< std::shared_ptr<QFile> >& files, bool recursively = true);
+        OSMAND_CORE_API double OSMAND_CORE_CALL polygonArea(const QVector<PointI>& points);
     } // namespace Utilities
 
 } // namespace OsmAnd

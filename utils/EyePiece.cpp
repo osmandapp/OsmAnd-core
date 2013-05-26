@@ -8,6 +8,7 @@
 #include <Utilities.h>
 #include <Rasterizer.h>
 #include <RasterizationStyleContext.h>
+#include <RasterizationStyleEvaluator.h>
 
 #include <SkBitmap.h>
 #include <SkCanvas.h>
@@ -35,9 +36,9 @@ OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::EyePiece::parseCommand
         {
             cfg.verbose = true;
         }
-        else if (arg.startsWith("-stylePath="))
+        else if (arg.startsWith("-stylesPath="))
         {
-            auto path = arg.mid(strlen("-stylePath="));
+            auto path = arg.mid(strlen("-stylesPath="));
             QDir dir(path);
             if(!dir.exists())
             {
@@ -140,19 +141,31 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
         auto styleFile = *itStyleFile;
 
         if(!stylesCollection.registerStyle(*styleFile))
-        {
-            output << xT("Failed to parse metadata of '") << QStringToStlString(styleFile->fileName()) << xT("'");
-            return;
-        }
+            output << xT("Failed to parse metadata of '") << QStringToStlString(styleFile->fileName()) << xT("' or duplicate style") << std::endl;
     }
     std::shared_ptr<OsmAnd::RasterizationStyle> style;
     if(!stylesCollection.obtainStyle(cfg.styleName, style))
     {
-        output << xT("Failed to resolve style '") << QStringToStlString(cfg.styleName) << xT("'");
+        output << xT("Failed to resolve style '") << QStringToStlString(cfg.styleName) << xT("'") << std::endl;
         return;
     }
+    style->dump();
     OsmAnd::RasterizationStyleContext styleContext(style);
+    /*
+    //////////////////////////////////////////////////////////////////////////
+    OsmAnd::RasterizationStyleEvaluator evaluator(styleContext, OsmAnd::RasterizationStyle::RulesetType::Polygon);
+    evaluator.setStringValue(style->INPUT_TAG, "landuse");
+    evaluator.setStringValue(style->INPUT_VALUE, "wood");
+    evaluator.setIntegerValue(style->INPUT_LAYER, 1);
+    evaluator.setIntegerValue(style->INPUT_MINZOOM, 15);
+    evaluator.setIntegerValue(style->INPUT_MAXZOOM, 15);
 
+    auto ok = evaluator.evaluate();
+    evaluator.dump(false, true);
+
+    int a = 0;
+    //////////////////////////////////////////////////////////////////////////
+    */
     QList< std::shared_ptr<OsmAnd::ObfReader> > obfData;
     for(auto itObf = cfg.obfs.begin(); itObf != cfg.obfs.end(); ++itObf)
     {
@@ -180,7 +193,6 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
         {
             auto mapSection = *itMapSection;
 
-            mapSection->loadRules(obf.get());
             OsmAnd::ObfMapSection::loadMapObjects(obf.get(), mapSection.get(), &mapObjects, &filter, nullptr);
         }
     }

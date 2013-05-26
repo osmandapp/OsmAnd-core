@@ -12,7 +12,7 @@
 
 namespace gpb = google::protobuf;
 
-OsmAnd::ObfReader::ObfReader( std::shared_ptr<QIODevice> input )
+OsmAnd::ObfReader::ObfReader( const std::shared_ptr<QIODevice>& input )
     : _codedInputStream(new gpb::io::CodedInputStream(new QZeroCopyInputStream(input)))
     , _isBasemap(false)
     , source(input)

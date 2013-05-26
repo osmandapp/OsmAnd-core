@@ -37,7 +37,7 @@ private :
 
 
 public:
-    MapView(std::shared_ptr<OsmAnd::OsmAndApplication>);
+    MapView(const std::shared_ptr<OsmAnd::OsmAndApplication>&);
 
     inline float getZoom() {return zoom;}
 

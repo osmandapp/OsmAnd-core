@@ -4,7 +4,7 @@
 
 #include "Utilities.h"
 
-OsmAnd::Model::Road::Road(std::shared_ptr<ObfRoutingSection::Subsection> subsection)
+OsmAnd::Model::Road::Road(const std::shared_ptr<ObfRoutingSection::Subsection>& subsection)
     : subsection(subsection)
     , id(_id)
     , names(_names)
@@ -15,7 +15,7 @@ OsmAnd::Model::Road::Road(std::shared_ptr<ObfRoutingSection::Subsection> subsect
 {
 }
 
-OsmAnd::Model::Road::Road( std::shared_ptr<Road> that, int insertIdx, uint32_t x31, uint32_t y31 )
+OsmAnd::Model::Road::Road( const std::shared_ptr<Road>& that, int insertIdx, uint32_t x31, uint32_t y31 )
     : _ref(that)
     , _id(0)
     , _points(_ref->_points.size() + 1)

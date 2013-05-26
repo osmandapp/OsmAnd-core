@@ -31,38 +31,144 @@
 #include <QFile>
 #include <QXmlStreamReader>
 #include <QHash>
+#include <QMap>
 
 #include <OsmAndCore.h>
-#include <RasterizationStyleExpression.h>
 
 namespace OsmAnd {
 
     class RasterizationStyles;
     class RasterizationStyle;
+    class RasterizationRule;
 
     class OSMAND_CORE_API RasterizationStyle
     {
     public:
-        class OSMAND_CORE_API Option : RasterizationStyleExpression
+        enum RulesetType : uint32_t
+        {
+            Invalid = 0,
+
+            Point = 1,
+            Line = 2,
+            Polygon = 3,
+            Text = 4,
+            Order = 5,
+        };
+
+        class OSMAND_CORE_API ValueDefinition
+        {
+        public:
+            enum DataType
+            {
+                Boolean,
+                Integer,
+                Float,
+                String,
+                Color,
+            };
+
+            enum Type
+            {
+                Input,
+                Output,
+            };
+        private:
+        protected:
+            ValueDefinition(ValueDefinition::Type type, ValueDefinition::DataType dataType, const QString& name);
+        public:
+            virtual ~ValueDefinition();
+
+            const Type type;
+            const DataType dataType;
+            const QString name;
+
+        friend class OsmAnd::RasterizationStyle;
+        };
+
+        class OSMAND_CORE_API ConfigurableInputValue : public ValueDefinition
         {
         private:
         protected:
-            Option(Type type, const QString& name, const QString& title, const QString& description, const QStringList& possibleValues);
-
-            virtual bool evaluate() const;
+            ConfigurableInputValue(ValueDefinition::DataType type, const QString& name, const QString& title, const QString& description, const QStringList& possibleValues);
         public:
-            virtual ~Option();
+            virtual ~ConfigurableInputValue();
 
             const QString title;
             const QString description;
+            const QStringList possibleValues;
 
-        friend class OsmAnd::RasterizationStyle;
+            friend class OsmAnd::RasterizationStyle;
         };
     private:
         bool parseMetadata(QXmlStreamReader& xmlReader);
         bool parse(QXmlStreamReader& xmlReader);
 
-        QHash< QString, std::shared_ptr<Option> > _options;
+        void inflateBuiltinValues();
+        std::shared_ptr<ValueDefinition> registerBuiltinValue(ValueDefinition* pValueDefinition);
+        std::shared_ptr<ValueDefinition> registerValue(ValueDefinition* pValueDefinition);
+        QHash< QString, std::shared_ptr<ValueDefinition> > _valuesDefinitions;
+        uint32_t _firstNonBuiltinValueDefinitionIndex;
+
+        bool registerRule(RulesetType type, const std::shared_ptr<RasterizationRule>& rule);
+
+        QHash< QString, QString > _parsetimeConstants;
+
+        std::shared_ptr<ValueDefinition> _builtin_INPUT_TEST;
+        std::shared_ptr<ValueDefinition> _builtin_INPUT_TEXT_LENGTH;
+        std::shared_ptr<ValueDefinition> _builtin_INPUT_TAG;
+        std::shared_ptr<ValueDefinition> _builtin_INPUT_VALUE;
+        std::shared_ptr<ValueDefinition> _builtin_INPUT_MINZOOM;
+        std::shared_ptr<ValueDefinition> _builtin_INPUT_MAXZOOM;
+        std::shared_ptr<ValueDefinition> _builtin_INPUT_NIGHT_MODE;
+        std::shared_ptr<ValueDefinition> _builtin_INPUT_LAYER;
+        std::shared_ptr<ValueDefinition> _builtin_INPUT_POINT;
+        std::shared_ptr<ValueDefinition> _builtin_INPUT_AREA;
+        std::shared_ptr<ValueDefinition> _builtin_INPUT_CYCLE;
+        std::shared_ptr<ValueDefinition> _builtin_INPUT_NAME_TAG;
+        std::shared_ptr<ValueDefinition> _builtin_INPUT_ADDITIONAL;
+
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_REF;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_TEXT_SHIELD;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_SHADOW_RADIUS;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_SHADOW_COLOR;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_SHADER;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_CAP_3;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_CAP_2;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_CAP;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_CAP_0;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_CAP__1;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_PATH_EFFECT_3;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_PATH_EFFECT_2;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_PATH_EFFECT;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_PATH_EFFECT_0;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_PATH_EFFECT__1;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_STROKE_WIDTH_3;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_STROKE_WIDTH_2;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_STROKE_WIDTH;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_STROKE_WIDTH_0;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_STROKE_WIDTH__1;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_COLOR_3;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_COLOR;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_COLOR_2;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_COLOR_0;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_COLOR__1;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_TEXT_BOLD;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_TEXT_ORDER;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_TEXT_MIN_DISTANCE;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_TEXT_ON_PATH;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_ICON;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_ORDER;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_SHADOW_LEVEL;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_TEXT_DY;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_TEXT_SIZE;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_TEXT_COLOR;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_TEXT_HALO_RADIUS;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_TEXT_WRAP_WIDTH;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_OBJECT_TYPE;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_ATTR_INT_VALUE;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_ATTR_COLOR_VALUE;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_ATTR_BOOL_VALUE;
+        std::shared_ptr<ValueDefinition> _builtin_OUTPUT_ATTR_STRING_VALUE;
     protected:
         RasterizationStyle(RasterizationStyles* owner, const QString& embeddedResourceName);
         RasterizationStyle(RasterizationStyles* owner, const QFile& externalStyleFile);
@@ -73,11 +179,41 @@ namespace OsmAnd {
         bool parseMetadata();
         bool parse();
 
+        QString _title;
+
         QString _name;
         QString _parentName;
         std::shared_ptr<RasterizationStyle> _parent;
 
         bool resolveDependencies();
+        bool resolveConstantValue(const QString& name, QString& value);
+        QString obtainValue(const QString& value);
+        QString obtainValue(const QStringRef& value);
+
+        bool mergeInherited();
+        bool mergeInheritedRules(RulesetType type);
+
+        QMap< uint64_t, std::shared_ptr<RasterizationRule> > _pointRules;
+        QMap< uint64_t, std::shared_ptr<RasterizationRule> > _lineRules;
+        QMap< uint64_t, std::shared_ptr<RasterizationRule> > _polygonRules;
+        QMap< uint64_t, std::shared_ptr<RasterizationRule> > _textRules;
+        QMap< uint64_t, std::shared_ptr<RasterizationRule> > _orderRules;
+        QMap< uint64_t, std::shared_ptr<RasterizationRule> >& obtainRules(RulesetType type);
+
+        std::shared_ptr<RasterizationRule> createTagValueRootWrapperRule(uint64_t id, const std::shared_ptr<RasterizationRule>& rule);
+
+        uint32_t _stringsIdBase;
+        QList< QString > _stringsLUT;
+        QHash< QString, uint32_t > _stringsRevLUT;
+        uint32_t lookupStringId(const QString& value);
+        uint32_t registerString(const QString& value);
+
+        const QString& getTagString(uint64_t ruleId) const;
+        const QString& getValueString(uint64_t ruleId) const;
+
+        enum {
+            RuleIdTagShift = 32,
+        };
     public:
         virtual ~RasterizationStyle();
 
@@ -86,15 +222,84 @@ namespace OsmAnd {
         const QString& resourceName;
         const QString& externalFileName;
 
+        const QString& title;
+
         const QString& name;
         const QString& parentName;
-
+        
         bool isStandalone() const;
         bool areDependenciesResolved() const;
 
-        const QHash< QString, std::shared_ptr<Option> >& options;
-        
+        const QMap< uint64_t, std::shared_ptr<RasterizationRule> >& obtainRules(RulesetType type) const;
+        static uint64_t encodeRuleId(uint32_t tag, uint32_t value);
+
+        bool resolveValueDefinition(const QString& name, std::shared_ptr<ValueDefinition>& outDefinition);
+
+        const std::shared_ptr<ValueDefinition>& INPUT_TEST;
+        const std::shared_ptr<ValueDefinition>& INPUT_TEXT_LENGTH;
+        const std::shared_ptr<ValueDefinition>& INPUT_TAG;
+        const std::shared_ptr<ValueDefinition>& INPUT_VALUE;
+        const std::shared_ptr<ValueDefinition>& INPUT_MINZOOM;
+        const std::shared_ptr<ValueDefinition>& INPUT_MAXZOOM;
+        const std::shared_ptr<ValueDefinition>& INPUT_NIGHT_MODE;
+        const std::shared_ptr<ValueDefinition>& INPUT_LAYER;
+        const std::shared_ptr<ValueDefinition>& INPUT_POINT;
+        const std::shared_ptr<ValueDefinition>& INPUT_AREA;
+        const std::shared_ptr<ValueDefinition>& INPUT_CYCLE;
+        const std::shared_ptr<ValueDefinition>& INPUT_NAME_TAG;
+        const std::shared_ptr<ValueDefinition>& INPUT_ADDITIONAL;
+
+        const std::shared_ptr<ValueDefinition>& OUTPUT_REF;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_TEXT_SHIELD;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_SHADOW_RADIUS;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_SHADOW_COLOR;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_SHADER;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_CAP_3;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_CAP_2;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_CAP;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_CAP_0;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_CAP__1;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_PATH_EFFECT_3;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_PATH_EFFECT_2;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_PATH_EFFECT;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_PATH_EFFECT_0;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_PATH_EFFECT__1;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_STROKE_WIDTH_3;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_STROKE_WIDTH_2;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_STROKE_WIDTH;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_STROKE_WIDTH_0;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_STROKE_WIDTH__1;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_COLOR_3;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_COLOR;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_COLOR_2;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_COLOR_0;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_COLOR__1;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_TEXT_BOLD;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_TEXT_ORDER;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_TEXT_MIN_DISTANCE;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_TEXT_ON_PATH;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_ICON;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_ORDER;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_SHADOW_LEVEL;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_TEXT_DY;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_TEXT_SIZE;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_TEXT_COLOR;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_TEXT_HALO_RADIUS;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_TEXT_WRAP_WIDTH;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_OBJECT_TYPE;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_ATTR_INT_VALUE;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_ATTR_COLOR_VALUE;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_ATTR_BOOL_VALUE;
+        const std::shared_ptr<ValueDefinition>& OUTPUT_ATTR_STRING_VALUE;
+
+        bool lookupStringId(const QString& value, uint32_t& id);
+        const QString& lookupStringValue(uint32_t id) const;
+
+        void dump(const QString& prefix = QString()) const;
+        void dump(RulesetType type, const QString& prefix = QString()) const;
+
     friend class OsmAnd::RasterizationStyles;
+    friend class OsmAnd::RasterizationRule;
     };
 
 

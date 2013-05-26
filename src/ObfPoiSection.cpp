@@ -168,7 +168,7 @@ void OsmAnd::ObfPoiSection::loadAmenities(
     QSet<uint32_t>* desiredCategories /*= nullptr*/,
     QList< std::shared_ptr<OsmAnd::Model::Amenity> >* amenitiesOut /*= nullptr*/,
     QueryFilter* filter /*= nullptr*/, uint32_t zoomToSkipFilter /*= 3*/,
-    std::function<bool (std::shared_ptr<OsmAnd::Model::Amenity>)> visitor /*= nullptr*/,
+    std::function<bool (const std::shared_ptr<OsmAnd::Model::Amenity>&)> visitor /*= nullptr*/,
     IQueryController* controller /*= nullptr*/ )
 {
     auto cis = reader->_codedInputStream.get();
@@ -183,7 +183,7 @@ void OsmAnd::ObfPoiSection::readAmenities(
     QSet<uint32_t>* desiredCategories,
     QList< std::shared_ptr<OsmAnd::Model::Amenity> >* amenitiesOut,
     QueryFilter* filter, uint32_t zoomToSkipFilter,
-    std::function<bool (std::shared_ptr<OsmAnd::Model::Amenity>)> visitor,
+    std::function<bool (const std::shared_ptr<OsmAnd::Model::Amenity>&)> visitor,
     IQueryController* controller)
 {
     auto cis = reader->_codedInputStream.get();
@@ -405,7 +405,7 @@ void OsmAnd::ObfPoiSection::readAmenitiesFromTile(
     QSet<uint32_t>* desiredCategories,
     QList< std::shared_ptr<OsmAnd::Model::Amenity> >* amenitiesOut,
     QueryFilter* filter, uint32_t zoomToSkipFilter,
-    std::function<bool (std::shared_ptr<OsmAnd::Model::Amenity>)> visitor,
+    std::function<bool (const std::shared_ptr<OsmAnd::Model::Amenity>&)> visitor,
     IQueryController* controller,
     QSet< uint64_t >* amenitiesToSkip)
 {

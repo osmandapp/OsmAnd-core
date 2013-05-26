@@ -76,8 +76,8 @@ namespace OsmAnd {
             QMap< uint32_t, QVector<uint32_t> > _pointsTypes;
             QMap< uint64_t, Restriction > _restrictions;
 
-            Road(std::shared_ptr<ObfRoutingSection::Subsection> subsection);
-            Road(std::shared_ptr<Road> that, int insertIdx, uint32_t x31, uint32_t y31);
+            Road(const std::shared_ptr<ObfRoutingSection::Subsection>& subsection);
+            Road(const std::shared_ptr<Road>& that, int insertIdx, uint32_t x31, uint32_t y31);
         public:
             virtual ~Road();
 
