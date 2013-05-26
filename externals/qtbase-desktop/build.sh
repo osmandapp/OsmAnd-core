@@ -18,14 +18,14 @@ fi
 
 if [[ "$(uname -a)" == *Linux* ]]; then
 	if [ ! -d "$SRCLOC/upstream.patched.linux.i686" ]; then
-		cp -rf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.linux.i686"
+		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.linux.i686"
 		(cd "$SRCLOC/upstream.patched.linux.i686" && \
 			./configure -xplatform linux-g++-32 $QTBASE_CONFIGURATION)
 	fi
 	(cd "$SRCLOC/upstream.patched.linux.i686" && make -j`nproc`)
 
 	if [ ! -d "$SRCLOC/upstream.patched.linux.amd64" ]; then
-		cp -rf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.linux.amd64"
+		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.linux.amd64"
 		(cd "$SRCLOC/upstream.patched.linux.amd64" && \
 			./configure -xplatform linux-g++-64 $QTBASE_CONFIGURATION)
 	fi
@@ -34,14 +34,14 @@ fi
 
 if [[ "$(uname -a)" == *Darwin* ]]; then
 	if [ ! -d "$SRCLOC/upstream.patched.darwin.i386" ]; then
-		cp -rf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.darwin.i386"
+		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.darwin.i386"
 		(cd "$SRCLOC/upstream.patched.darwin.i386" && \
 			./configure -xplatform macx-clang-libc++-32 $QTBASE_CONFIGURATION -accessibility -opengl)
 	fi
 	(cd "$SRCLOC/upstream.patched.darwin.i386" && make -j`nproc`)
 
 	if [ ! -d "$SRCLOC/upstream.patched.darwin.x86_64" ]; then
-		cp -rf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.darwin.x86_64"
+		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.darwin.x86_64"
 		(cd "$SRCLOC/upstream.patched.darwin.x86_64" && \
 			./configure -xplatform macx-clang-libc++-64 $QTBASE_CONFIGURATION -accessibility -opengl)
 	fi

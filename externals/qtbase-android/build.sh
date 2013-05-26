@@ -53,7 +53,7 @@ if [[ "$(uname -a)" == *Cygwin* ]]; then
 fi
 
 if [ ! -d "$SRCLOC/upstream.patched.armeabi" ]; then
-	cp -rf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi"
+	cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi"
 	export ANDROID_TARGET_ARCH=armeabi
 	export ANDROID_NDK_PLATFORM=android-8
 	(cd "$SRCLOC/upstream.patched.armeabi" && \
@@ -63,7 +63,7 @@ fi
 (cd "$SRCLOC/upstream.patched.armeabi" && make -j`nproc`)
 
 if [ ! -d "$SRCLOC/upstream.patched.armeabi-v7a" ]; then
-	cp -rf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi-v7a"
+	cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi-v7a"
 	export ANDROID_TARGET_ARCH=armeabi-v7a
 	export ANDROID_NDK_PLATFORM=android-8
 	(cd "$SRCLOC/upstream.patched.armeabi-v7a" && \
@@ -73,7 +73,7 @@ fi
 (cd "$SRCLOC/upstream.patched.armeabi-v7a" && make -j`nproc`)
 
 if [ ! -d "$SRCLOC/upstream.patched.armeabi-v7a-neon" ]; then
-	cp -rf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi-v7a-neon"
+	cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi-v7a-neon"
 	export ANDROID_TARGET_ARCH=armeabi-v7a
 	export ANDROID_NDK_PLATFORM=android-8
 	(cd "$SRCLOC/upstream.patched.armeabi-v7a-neon" && \
@@ -83,7 +83,7 @@ fi
 (cd "$SRCLOC/upstream.patched.armeabi-v7a-neon" && make -j`nproc`)
 
 if [ ! -d "$SRCLOC/upstream.patched.x86" ]; then
-	cp -rf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.x86"
+	cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.x86"
 	export ANDROID_TARGET_ARCH=x86
 	export ANDROID_NDK_PLATFORM=android-9
 	(cd "$SRCLOC/upstream.patched.x86" && \
@@ -92,7 +92,7 @@ fi
 (cd "$SRCLOC/upstream.patched.x86" && make -j`nproc`)
 
 if [ ! -d "$SRCLOC/upstream.patched.mips" ]; then
-	cp -rf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.mips"
+	cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.mips"
 	export ANDROID_TARGET_ARCH=mips
 	export ANDROID_NDK_PLATFORM=android-9
 	(cd "$SRCLOC/upstream.patched.mips" && \

@@ -16,7 +16,7 @@ if [ ! -d "$SRCLOC/upstream.original" ]; then
 fi
 
 # Patch
-cp -rf "$SRCLOC/upstream.original" "$SRCLOC/upstream.patched"
+cp -rpf "$SRCLOC/upstream.original" "$SRCLOC/upstream.patched"
 if [ -d "$SRCLOC/patches" ]; then
 	echo "Patching '$NAME'..."
 	PATCHES=`ls -1 $SRCLOC/patches/*.patch | sort`
