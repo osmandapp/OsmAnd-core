@@ -1,6 +1,5 @@
 #include "Rasterizer.h"
 
-#include <SkPaint.h>
 #include <QtGlobal>
 
 #include "Utilities.h"
@@ -19,53 +18,89 @@ OsmAnd::Rasterizer::~Rasterizer()
 bool OsmAnd::Rasterizer::rasterize(
     SkCanvas& canvas,
     const QList< std::shared_ptr<OsmAnd::Model::MapObject> >& objects,
-    uint32_t zoom,
     const RasterizationStyleContext& styleContext,
+    uint32_t zoom,
     IQueryController* controller /*= nullptr*/)
 {
-    SkPaint paint;
-    paint.setAntiAlias(true);
+    Context context;
+    context._paint.setAntiAlias(true);
 
-    QList< Primitive > polygons, lines, points;
-    obtainPrimitives(styleContext, objects, zoom, polygons, lines, points);
-    /*TODO:
-    rc->lastRenderedKey = 0;
+    // Fill atrributes
+    /*
+    TODO:attributes
+    req->clearState();
+	req->setIntFilter(req->props()->R_MINZOOM, rc.getZoom());
+	if (req->searchRenderingAttribute("defaultColor")) {
+		rc.setDefaultColor(req->getIntPropertyValue(req->props()->R_ATTR_COLOR_VALUE));
+	}
+	req->clearState();
+	req->setIntFilter(req->props()->R_MINZOOM, rc.getZoom());
+	if (req->searchRenderingAttribute("shadowRendering")) {
+		rc.setShadowRenderingMode(req->getIntPropertyValue(req->props()->R_ATTR_INT_VALUE));
+		rc.setShadowRenderingColor(req->getIntPropertyValue(req->props()->R_SHADOW_COLOR));
+	}
+	req->clearState();
+	req->setIntFilter(req->props()->R_MINZOOM, rc.getZoom());
+	if (req->searchRenderingAttribute("polygonMinSizeToDisplay")) {
+		rc.polygonMinSizeToDisplay = req->getIntPropertyValue(req->props()->R_ATTR_INT_VALUE);
+	}
+	req->clearState();
+	req->setIntFilter(req->props()->R_MINZOOM, rc.getZoom());
+	if (req->searchRenderingAttribute("roadDensityZoomTile")) {
+		rc.roadDensityZoomTile = req->getIntPropertyValue(req->props()->R_ATTR_INT_VALUE);
+	}
+	req->clearState();
+	req->setIntFilter(req->props()->R_MINZOOM, rc.getZoom());
+	if (req->searchRenderingAttribute("roadsDensityLimitPerTile")) {
+		rc.roadsDensityLimitPerTile = req->getIntPropertyValue(req->props()->R_ATTR_INT_VALUE);
+	}
+    */
 
-    drawObject(rc, canvas, req, paint, polygonsArray, 0);
-    rc->lastRenderedKey = 5;
-    if (rc->getShadowRenderingMode() > 1) {
-        drawObject(rc, canvas, req, paint, linesArray, 1);
-    }
-    rc->lastRenderedKey = 40;
-    drawObject(rc, canvas, req, paint, linesArray, 2);
-    rc->lastRenderedKey = 60;
+    QVector< Primitive > polygons, lines, points;
+    obtainPrimitives(context, styleContext, objects, zoom, polygons, lines, points, controller);
 
-    drawObject(rc, canvas, req, paint, pointsArray, 3);
-    rc->lastRenderedKey = 125;
+    context._lastRenderedKey = 0;
+    rasterizePrimitives(context, canvas, styleContext, zoom, polygons, Polygons, controller);
+    context._lastRenderedKey = 5;
+    /*if (context._shadowRenderingMode > 1)
+        rasterizePrimitives(context, canvas, styleContext, zoom, lines, ShadowOnlyLines, controller);*/
 
+    context._lastRenderedKey = 40;
+    rasterizePrimitives(context, canvas, styleContext, zoom, lines, Lines, controller);
+    context._lastRenderedKey = 60;
+
+    rasterizePrimitives(context, canvas, styleContext, zoom, points, Points, controller);
+    context._lastRenderedKey = 125;
+    /*
     drawIconsOverCanvas(rc, canvas);
 
     rc->textRendering.Start();
     drawTextOverCanvas(rc, canvas);
     rc->textRendering.Pause();
     */
-
     return true;
 }
 
 void OsmAnd::Rasterizer::obtainPrimitives(
+    Context& context,
     const RasterizationStyleContext& styleContext,
     const QList< std::shared_ptr<OsmAnd::Model::MapObject> >& objects,
     uint32_t zoom,
-    QList< Primitive >& polygons,
-    QList< Primitive >& lines,
-    QList< Primitive >& points)
+    QVector< Primitive >& polygons,
+    QVector< Primitive >& lines,
+    QVector< Primitive >& points,
+    IQueryController* controller)
 {
     auto mult = 1.0 / Utilities::getPowZoom(qMax(31 - (zoom + 8), 0U));
     mult *= mult;
     uint32_t idx = 0;
+
+    QVector< Primitive > unfilteredLines;
     for(auto itMapObject = objects.begin(); itMapObject != objects.end(); ++itMapObject, idx++)
     {
+        if(controller && controller->isAborted())
+            return;
+
         auto mapObject = *itMapObject;
         auto sh = idx << 8;
 
@@ -115,25 +150,25 @@ void OsmAnd::Rasterizer::obtainPrimitives(
                 }
                 else //if(objectType == RasterizationStyle::ObjectType::Line)
                 {
-                    lines.push_back(primitive);
+                    unfilteredLines.push_back(primitive);
                 }
 
                 if (evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADOW_LEVEL) > 0)
                 {
-//TODO:                    rc->shadowLevelMin = std::min(rc->shadowLevelMin, zOrder);
-//TODO:                    rc->shadowLevelMax = std::max(rc->shadowLevelMax, zOrder);
+                    context._shadowLevelMin = qMin(context._shadowLevelMin, static_cast<uint8_t>(zOrder));
+                    context._shadowLevelMax = qMax(context._shadowLevelMax, static_cast<uint8_t>(zOrder));
                 }
             }
         }
     }
 
-    qSort(polygons.begin(), polygons.end(), [](const Primitive& l, Primitive& r) -> bool
+    qSort(polygons.begin(), polygons.end(), [](const Primitive& l, const Primitive& r) -> bool
     {
         if( qFuzzyCompare(l.zOrder, r.zOrder) )
             return l.typeIndex < r.typeIndex;
         return l.zOrder > r.zOrder;
     });
-    qSort(lines.begin(), lines.end(), [](const Primitive& l, Primitive& r) -> bool
+    qSort(unfilteredLines.begin(), unfilteredLines.end(), [](const Primitive& l, const Primitive& r) -> bool
     {
         if(qFuzzyCompare(l.zOrder, r.zOrder))
         {
@@ -143,7 +178,8 @@ void OsmAnd::Rasterizer::obtainPrimitives(
         }
         return l.zOrder < r.zOrder;
     });
-    qSort(points.begin(), points.end(), [](const Primitive& l, Primitive& r) -> bool
+    filterOutLinesByDensity(context, zoom, unfilteredLines, lines, controller);
+    qSort(points.begin(), points.end(), [](const Primitive& l, const Primitive& r) -> bool
     {
         if(qFuzzyCompare(l.zOrder, r.zOrder))
         {
@@ -153,6 +189,98 @@ void OsmAnd::Rasterizer::obtainPrimitives(
         }
         return l.zOrder < r.zOrder;
     });
-    //TODO:filterLinesByDensity(rc, linesResArray, linesArray);
 }
 
+void OsmAnd::Rasterizer::filterOutLinesByDensity( Context& context, uint32_t zoom, const QVector< Primitive >& in, QVector< Primitive >& out, IQueryController* controller )
+{
+    if(context._roadDensityZoomTile == 0 || context._roadsDensityLimitPerTile == 0)
+    {
+        out = in;
+        return;
+    }
+
+    const auto dZ = zoom + context._roadDensityZoomTile;
+    QMap< uint64_t, std::pair<uint32_t, double> > densityMap;
+    out.reserve(in.size());
+    for(int lineIdx = in.size() - 1; lineIdx >= 0; lineIdx--)
+    {
+        if(controller && controller->isAborted())
+            return;
+
+        bool accept = true;
+        const auto& primitive = in[lineIdx];
+
+        auto typeId = primitive.mapObject->_types[primitive.typeIndex];
+        const auto& type = primitive.mapObject->section->rules->decodingRules[typeId];
+        if (std::get<0>(type) == "highway")
+        {
+            accept = false;
+
+            uint64_t prevId = 0;
+            for(auto itPoint = primitive.mapObject->_coordinates.begin(); itPoint != primitive.mapObject->_coordinates.end(); ++itPoint)
+            {
+                if(controller && controller->isAborted())
+                    return;
+
+                const auto& point = *itPoint;
+
+                auto x = point.x >> (31 - dZ);
+                auto y = point.y >> (31 - dZ);
+                uint64_t id = (static_cast<uint64_t>(x) << dZ) | y;
+                if(prevId != id)
+                {
+                    prevId = id;
+
+                    auto& mapEntry = densityMap[id];
+                    if (mapEntry.first < context._roadsDensityLimitPerTile /*&& p.second > o */)
+                    {
+                        accept = true;
+                        mapEntry.first += 1;
+                        mapEntry.second = primitive.zOrder;
+                    }
+                }
+            }
+        }
+
+        if(accept)
+            out.push_front(primitive);
+    }
+}
+
+void OsmAnd::Rasterizer::rasterizePrimitives( Context& context, SkCanvas& canvas, const RasterizationStyleContext& styleContext, uint32_t zoom, const QVector< Primitive >& primitives, PrimitivesType type, IQueryController* controller )
+{
+    for(auto itPrimitive = primitives.begin(); itPrimitive != primitives.end(); ++itPrimitive)
+    {
+        if(controller && controller->isAborted())
+            return;
+
+        const auto& primitive = *itPrimitive;
+        /*
+        MapDataObject* mObj = array[i].obj;
+        tag_value pair = mObj->types.at(array[i].typeInd);
+
+        if(type == Polygons)
+        {
+            if (primitive.zOrder < context._polygonMinSizeToDisplay)
+                return;
+            
+            drawPolygon(mObj, req, cv, paint, rc, pair);
+        }
+        else if(type == Lines || type == ShadowOnlyLines)
+        {
+            drawPolyline(mObj, req, cv, paint, rc, pair, mObj->getSimpleLayer(), objOrder == 1);
+        }
+        else if(type == Points)
+        {
+            drawPoint(mObj, req, cv, paint, rc, pair, array[i].typeInd == 0);
+        }*/
+    }
+}
+
+OsmAnd::Rasterizer::Context::Context()
+    : _shadowLevelMin(0)
+    , _shadowLevelMax(256)
+    , _roadDensityZoomTile(0)
+    , _roadsDensityLimitPerTile(0)
+{
+}

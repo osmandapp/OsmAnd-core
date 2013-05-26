@@ -27,6 +27,7 @@
 #include <memory>
 
 #include <SkCanvas.h>
+#include <SkPaint.h>
 #include <QList>
 
 #include <OsmAndCore.h>
@@ -61,22 +62,47 @@ namespace OsmAnd {
             PrimitiveType objectType;
         };
 
+        struct Context
+        {
+            Context();
+
+            SkPaint _paint;
+            uint32_t _lastRenderedKey;
+            uint8_t _shadowLevelMin;
+            uint8_t _shadowLevelMax;
+            double _polygonMinSizeToDisplay;
+            uint32_t _roadDensityZoomTile;
+            uint32_t _roadsDensityLimitPerTile;
+        };
+
         static void obtainPrimitives(
+            Context& context,
             const RasterizationStyleContext& styleContext,
             const QList< std::shared_ptr<OsmAnd::Model::MapObject> >& objects,
             uint32_t zoom,
-            QList< Primitive >& polygons,
-            QList< Primitive >& lines,
-            QList< Primitive >& points
+            QVector< Primitive >& polygons,
+            QVector< Primitive >& lines,
+            QVector< Primitive >& points,
+            IQueryController* controller
             );
+        static void filterOutLinesByDensity(Context& context, uint32_t zoom, const QVector< Primitive >& in, QVector< Primitive >& out, IQueryController* controller);
+
+        enum PrimitivesType
+        {
+            Polygons,
+            Lines,
+            ShadowOnlyLines,
+            Points
+        };
+        static void rasterizePrimitives(Context& context, SkCanvas& canvas, const RasterizationStyleContext& styleContext, uint32_t zoom, const QVector< Primitive >& primitives, PrimitivesType type, IQueryController* controller);
     public:
         virtual ~Rasterizer();
 
         static bool rasterize(
             SkCanvas& canvas,
             const QList< std::shared_ptr<OsmAnd::Model::MapObject> >& objects,
-            uint32_t zoom,
             const RasterizationStyleContext& styleContext,
+            uint32_t zoom,
             IQueryController* controller = nullptr);
     };
 

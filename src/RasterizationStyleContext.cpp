@@ -8,4 +8,3 @@ OsmAnd::RasterizationStyleContext::RasterizationStyleContext( const std::shared_
 OsmAnd::RasterizationStyleContext::~RasterizationStyleContext()
 {
 }
-

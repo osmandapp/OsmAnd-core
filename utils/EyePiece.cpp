@@ -218,8 +218,8 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
     SkCanvas canvas(&renderTarget);
 
     // Perform actual rendering
-    //canvas.drawColor(rc.getDefaultColor());
-    OsmAnd::Rasterizer::rasterize(canvas, mapObjects, cfg.zoom, styleContext, nullptr);
+    //canvas.drawColor(styleContext.getDefaultColor());
+    OsmAnd::Rasterizer::rasterize(canvas, mapObjects, styleContext, cfg.zoom, nullptr);
 
     // Save rendered area
     if(!cfg.output.isEmpty())
