@@ -428,7 +428,7 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
             {
                 const auto& point = segment->road->points[pointIdx];
 
-                *(gpxStream.get()) << "\t\t\t<trkpt lat=\"" << OsmAnd::Utilities::get31LongitudeX(point.x) << "\" lon=\"" << OsmAnd::Utilities::get31LatitudeY(point.y) << "\"/>\n";
+                *(gpxStream.get()) << "\t\t\t<trkpt lon=\"" << OsmAnd::Utilities::get31LongitudeX(point.x) << "\" lat=\"" << OsmAnd::Utilities::get31LatitudeY(point.y) << "\"/>\n";
             }
         }
     }
