@@ -11,9 +11,9 @@ namespace OsmAnd {
 
 const int CENTER_POSITION = 0;
 const int BOTTOM_POSITION = 1;
-const int LOWEST_ZOOM_TO_ROTATE = 10;
+const int LOWEST_ZOOM_TO_ROTATE = 3;
 
-class OSMAND_CORE_API MapView
+class OSMAND_CORE_API OsmAndMapView
 {
 private :
     float zoom ;
@@ -37,7 +37,7 @@ private :
 
 
 public:
-    MapView(std::shared_ptr<OsmAnd::OsmAndApplication>);
+    OsmAndMapView(std::shared_ptr<OsmAnd::OsmAndApplication>);
 
     inline float getZoom() {return zoom;}
 
@@ -58,6 +58,8 @@ public:
     int getHeight() { return  height; }
 
     float getRotate();
+
+    void setRotate(float r);
 
     bool isMapRotateEnabled();
 
