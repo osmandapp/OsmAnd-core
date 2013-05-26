@@ -33,6 +33,7 @@
 #include <OsmAndCore.h>
 #include <MapObject.h>
 #include <IQueryController.h>
+#include <RasterizationStyleEvaluator.h>
 
 namespace OsmAnd {
 
@@ -95,6 +96,8 @@ namespace OsmAnd {
             Points
         };
         static void rasterizePrimitives(Context& context, SkCanvas& canvas, const RasterizationStyleContext& styleContext, uint32_t zoom, const QVector< Primitive >& primitives, PrimitivesType type, IQueryController* controller);
+        static bool updatePaint(Context& context, const RasterizationStyleEvaluator& evaluator, int idx, bool isArea);
+        static void rasterizePolygon(Context& context, SkCanvas& canvas, const RasterizationStyleContext& styleContext, uint32_t zoom, const Primitive& primitive);
     public:
         virtual ~Rasterizer();
 

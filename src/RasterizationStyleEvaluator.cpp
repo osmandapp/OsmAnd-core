@@ -29,6 +29,11 @@ void OsmAnd::RasterizationStyleEvaluator::setIntegerValue( const std::shared_ptr
     _values[ref.get()].asInt = value;
 }
 
+void OsmAnd::RasterizationStyleEvaluator::setFloatValue( const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, const float& value )
+{
+    _values[ref.get()].asFloat = value;
+}
+
 void OsmAnd::RasterizationStyleEvaluator::setStringValue( const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, const QString& value )
 {
     bool ok = styleContext.style->lookupStringId(value, _values[ref.get()].asUInt);
@@ -44,6 +49,11 @@ bool OsmAnd::RasterizationStyleEvaluator::getBooleanValue( const std::shared_ptr
 int OsmAnd::RasterizationStyleEvaluator::getIntegerValue( const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref ) const
 {
     return _values[ref.get()].asInt;
+}
+
+float OsmAnd::RasterizationStyleEvaluator::getFloatValue( const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref ) const
+{
+    return _values[ref.get()].asFloat;
 }
 
 QString OsmAnd::RasterizationStyleEvaluator::getStringValue( const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref ) const

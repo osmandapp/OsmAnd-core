@@ -58,10 +58,12 @@ namespace OsmAnd {
 
         void setBooleanValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, const bool& value);
         void setIntegerValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, const int& value);
+        void setFloatValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, const float& value);
         void setStringValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, const QString& value);
 
         bool getBooleanValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref) const;
         int getIntegerValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref) const;
+        float getFloatValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref) const;
         QString getStringValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref) const;
 
         void clearValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref);
