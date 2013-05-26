@@ -211,7 +211,7 @@ void OsmAnd::RasterizationStyleEvaluator::dump( bool input /*= true*/, bool outp
                 OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%f\n", value.asFloat);
                 break;
             case RasterizationStyle::ValueDefinition::String:
-                OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s\n", styleContext.style->lookupStringValue(value.asUInt));
+                OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s\n", styleContext.style->lookupStringValue(value.asUInt).toStdString().c_str());
                 break;
             case RasterizationStyle::ValueDefinition::Color:
                 OsmAnd::LogPrintf(LogSeverityLevel::Debug, "#%s\n", QString::number(value.asUInt, 16).toStdString().c_str());
