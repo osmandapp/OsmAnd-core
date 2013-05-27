@@ -21,11 +21,19 @@ QList<AppMode> ApplicationMode::getApplicationModes() {
 
 OsmAndSettings::OsmAndSettings():
     APPLICATION_DIRECTORY(this, "application_directory", QString("")),
-    MAP_SCALE(this, "map_scale", 1.0)
+    MAP_SCALE(this, "map_scale", 1.0),
+    MAP_SHOW_LATITUDE(this, "show_lat", 0),
+    MAP_SHOW_LONGITUDE(this, "show_lon", 0),
+    MAP_SHOW_ZOOM(this, "show_zoom", 5),
+
+    TARGET_LATITUDE(this, "target_lat", -360),
+    TARGET_LONGITUDE(this, "target_lon", -360)
 {
     APP_MODE = ApplicationMode::DEFAULT;
     APPLICATION_DIRECTORY.cache();
     MAP_SCALE.cache();
+    TARGET_LATITUDE.cache();
+    TARGET_LONGITUDE.cache();
 
 }
 
@@ -45,6 +53,16 @@ QVariant OsmAndPreference::get() {
         return getModeValue(_settings->APP_MODE);
     }
     return getDefaultValue();
+}
+bool OsmAndPreference::present() {
+    if(_global) {
+        return _settings->_globalSettings.contains(_id);
+    } else {
+        _settings->_globalSettings.beginGroup(_settings->APP_MODE->_id);
+        bool pr = _settings->_globalSettings.contains(_id);
+        _settings->_globalSettings.beginGroup(_settings->APP_MODE->_id);
+        return pr;
+    }
 }
 
 bool OsmAndPreference::set(const QVariant& obj) {
