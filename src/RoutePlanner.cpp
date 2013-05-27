@@ -655,6 +655,14 @@ bool OsmAnd::RoutePlanner::calculateRoute(
     printDebugMemoryInformation(ctx, graphDirectSegments, graphReverseSegments, visitedDirectSegments, visitedOppositeSegments);
     */
     
+
+    return prepareResult(context, finalSegment, outResult, leftSideNavigation);
+}
+
+bool OsmAnd::RoutePlanner::prepareResult(OsmAnd::RoutePlannerContext::CalculationContext* context,
+                                         std::shared_ptr<RoutePlannerContext::RouteCalculationSegment> finalSegment,
+                                         QList< std::shared_ptr<RouteSegment> >* outResult,
+                                         bool leftSideNavigation){
     // Prepare result
     QList< std::shared_ptr<RouteSegment> > route;
     auto pFinalSegment = dynamic_cast<RoutePlannerContext::RouteCalculationFinalSegment*>(finalSegment.get());
@@ -719,7 +727,6 @@ bool OsmAnd::RoutePlanner::calculateRoute(
         float mb = (1 << 20);
         log.warn("Unload context :  estimated " + sz / mb + " ?= " + (h1 - h2) / mb + " actual");
     }*/
-    return true;
 }
 
 void OsmAnd::RoutePlanner::splitRoadsAndAttachRoadSegments( OsmAnd::RoutePlannerContext::CalculationContext* context, QList< std::shared_ptr<RouteSegment> >& route )

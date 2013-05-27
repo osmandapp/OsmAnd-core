@@ -46,7 +46,6 @@ extern void OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel level, const char* msg, .
 		printf("DEBUG: ");
 	}
 	vprintf(msg, args);
-	printf("\n");
 	va_end(args);
 }
 
