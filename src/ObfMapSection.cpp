@@ -6,6 +6,7 @@
 #include <iostream>
 
 #include "OBF.pb.h"
+#include "Utilities.h"
 #include "MapObject.h"
 
 namespace gpb = google::protobuf;

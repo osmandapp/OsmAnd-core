@@ -81,6 +81,16 @@ namespace OsmAnd {
         {
             return x != r.x || y != r.y;
         }
+
+        PointT& operator=(const PointT& that)
+        {
+            if(this != &that)
+            {
+                x = that.x;
+                y = that.y;
+            }
+            return *this;
+        }
     };
 
     template<typename T>
@@ -140,6 +150,16 @@ namespace OsmAnd {
         T& bottom;
         T& right;
 
+        AreaT& operator=(const AreaT& that)
+        {
+            if(this != &that)
+            {
+                topLeft = that.topLeft;
+                bottomRight = that.bottomRight;
+            }
+            return *this;
+        }
+
         bool contains(const T& x, const T& y) const
         {
             return !(left > x || right < x || top > y || bottom < y);
@@ -172,8 +192,10 @@ namespace OsmAnd {
     };
 
     typedef Point<double> PointD;
+    typedef Point<float> PointF;
     typedef Point<uint32_t> PointI;
     typedef Area<double> AreaD;
+    typedef Area<float> AreaF;
     typedef Area<uint32_t> AreaI;
 
 } // namespace OsmAnd

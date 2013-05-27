@@ -9,6 +9,7 @@
 #include "RasterizerContext.h"
 
 #include <SkBlurDrawLooper.h>
+#include <SkColorFilter.h>
 
 OsmAnd::Rasterizer::Rasterizer()
 {
@@ -20,32 +21,37 @@ OsmAnd::Rasterizer::~Rasterizer()
 
 bool OsmAnd::Rasterizer::rasterize(
     RasterizerContext& context,
+    bool fillBackground,
     SkCanvas& canvas,
     const AreaD& area,
     uint32_t zoom,
     uint32_t tileSidePixelLength,
     const QList< std::shared_ptr<OsmAnd::Model::MapObject> >& objects,
-    const PointI& originOffset /*= PointI()*/,
+    const PointI& tlOriginOffset /*= PointI()*/,
     IQueryController* controller /*= nullptr*/)
 {
-    context.refresh(zoom);
+    context.refresh(area, zoom, tlOriginOffset, tileSidePixelLength);
+    context._paint.setColor(context._defaultColor);
+    if(fillBackground)
+        canvas.drawRectCoords(context._viewport.top, context._viewport.left, context._viewport.right, context._viewport.bottom, context._paint);
 
     QVector< Primitive > polygons, lines, points;
-    obtainPrimitives(context, objects, zoom, polygons, lines, points, controller);
+    obtainPrimitives(context, objects, polygons, lines, points, controller);
 
     context._lastRenderedKey = 0;
-    rasterizePrimitives(context, canvas, zoom, polygons, Polygons, controller);
+    rasterizePrimitives(context, canvas, polygons, Polygons, controller);
     context._lastRenderedKey = 5;
     if (context._shadowRenderingMode > 1)
-        rasterizePrimitives(context, canvas, zoom, lines, ShadowOnlyLines, controller);
+        rasterizePrimitives(context, canvas, lines, ShadowOnlyLines, controller);
 
     context._lastRenderedKey = 40;
-    rasterizePrimitives(context, canvas, zoom, lines, Lines, controller);
+    rasterizePrimitives(context, canvas, lines, Lines, controller);
     context._lastRenderedKey = 60;
 
-    rasterizePrimitives(context, canvas, zoom, points, Points, controller);
+    rasterizePrimitives(context, canvas, points, Points, controller);
     context._lastRenderedKey = 125;
     /*
+    TODO:
     drawIconsOverCanvas(rc, canvas);
 
     rc->textRendering.Start();
@@ -58,13 +64,12 @@ bool OsmAnd::Rasterizer::rasterize(
 void OsmAnd::Rasterizer::obtainPrimitives(
     RasterizerContext& context,
     const QList< std::shared_ptr<OsmAnd::Model::MapObject> >& objects,
-    uint32_t zoom,
     QVector< Primitive >& polygons,
     QVector< Primitive >& lines,
     QVector< Primitive >& points,
     IQueryController* controller)
 {
-    auto mult = 1.0 / Utilities::getPowZoom(qMax(31 - (zoom + 8), 0U));
+    auto mult = 1.0 / Utilities::getPowZoom(qMax(31 - (context._zoom + 8), 0U));
     mult *= mult;
     uint32_t idx = 0;
 
@@ -90,8 +95,8 @@ void OsmAnd::Rasterizer::obtainPrimitives(
             context.applyContext(evaluator);
             evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_TAG, tag);
             evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_VALUE, value);
-            evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
-            evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MAXZOOM, zoom);
+            evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
+            evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
             evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_LAYER, layer);
             evaluator.setBooleanValue(RasterizationStyle::builtinValueDefinitions.INPUT_AREA, mapObject->_isArea);
             evaluator.setBooleanValue(RasterizationStyle::builtinValueDefinitions.INPUT_POINT, mapObject->_coordinates.size() == 1);
@@ -152,7 +157,7 @@ void OsmAnd::Rasterizer::obtainPrimitives(
         }
         return l.zOrder < r.zOrder;
     });
-    filterOutLinesByDensity(context, zoom, unfilteredLines, lines, controller);
+    filterOutLinesByDensity(context, unfilteredLines, lines, controller);
     qSort(points.begin(), points.end(), [](const Primitive& l, const Primitive& r) -> bool
     {
         if(qFuzzyCompare(l.zOrder, r.zOrder))
@@ -165,7 +170,7 @@ void OsmAnd::Rasterizer::obtainPrimitives(
     });
 }
 
-void OsmAnd::Rasterizer::filterOutLinesByDensity( RasterizerContext& context, uint32_t zoom, const QVector< Primitive >& in, QVector< Primitive >& out, IQueryController* controller )
+void OsmAnd::Rasterizer::filterOutLinesByDensity( RasterizerContext& context, const QVector< Primitive >& in, QVector< Primitive >& out, IQueryController* controller )
 {
     if(context._roadDensityZoomTile == 0 || context._roadsDensityLimitPerTile == 0)
     {
@@ -173,7 +178,7 @@ void OsmAnd::Rasterizer::filterOutLinesByDensity( RasterizerContext& context, ui
         return;
     }
 
-    const auto dZ = zoom + context._roadDensityZoomTile;
+    const auto dZ = context._zoom + context._roadDensityZoomTile;
     QMap< uint64_t, std::pair<uint32_t, double> > densityMap;
     out.reserve(in.size());
     for(int lineIdx = in.size() - 1; lineIdx >= 0; lineIdx--)
@@ -221,7 +226,7 @@ void OsmAnd::Rasterizer::filterOutLinesByDensity( RasterizerContext& context, ui
     }
 }
 
-void OsmAnd::Rasterizer::rasterizePrimitives( RasterizerContext& context, SkCanvas& canvas, uint32_t zoom, const QVector< Primitive >& primitives, PrimitivesType type, IQueryController* controller )
+void OsmAnd::Rasterizer::rasterizePrimitives( RasterizerContext& context, SkCanvas& canvas, const QVector< Primitive >& primitives, PrimitivesType type, IQueryController* controller )
 {
     for(auto itPrimitive = primitives.begin(); itPrimitive != primitives.end(); ++itPrimitive)
     {
@@ -235,15 +240,15 @@ void OsmAnd::Rasterizer::rasterizePrimitives( RasterizerContext& context, SkCanv
             if (primitive.zOrder < context._polygonMinSizeToDisplay)
                 return;
             
-            rasterizePolygon(context, canvas, zoom, primitive);
+            rasterizePolygon(context, canvas, primitive);
         }
         else if(type == Lines || type == ShadowOnlyLines)
         {
-            //TODO:drawPolyline(mObj, req, cv, paint, rc, pair, mObj->getSimpleLayer(), objOrder == 1);
+            rasterizeLine(context, canvas, primitive, type == ShadowOnlyLines);
         }
         else if(type == Points)
         {
-            //TODO:drawPoint(mObj, req, cv, paint, rc, pair, array[i].typeInd == 0);
+            rasterizePoint(context, canvas, primitive);
         }
     }
 }
@@ -325,8 +330,8 @@ bool OsmAnd::Rasterizer::updatePaint( RasterizerContext& context, const Rasteriz
 
         if(!pathEff.isEmpty())
         {
-            /*TODO:SkPathEffect* p = getDashEffect(pathEff);
-            context._paint.setPathEffect(p);*/
+            auto effect = context.obtainPathEffect(pathEff);
+            context._paint.setPathEffect(effect);
         }
         else
         {
@@ -365,7 +370,7 @@ bool OsmAnd::Rasterizer::updatePaint( RasterizerContext& context, const Rasteriz
     return true;
 }
 
-void OsmAnd::Rasterizer::rasterizePolygon( RasterizerContext& context, SkCanvas& canvas, uint32_t zoom, const Primitive& primitive )
+void OsmAnd::Rasterizer::rasterizePolygon( RasterizerContext& context, SkCanvas& canvas, const Primitive& primitive )
 {
     if(primitive.mapObject->_coordinates.size() <=2 )
     {
@@ -379,8 +384,8 @@ void OsmAnd::Rasterizer::rasterizePolygon( RasterizerContext& context, SkCanvas&
     context.applyContext(evaluator);
     evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_TAG, std::get<0>(tagValuePair));
     evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_VALUE, std::get<1>(tagValuePair));
-    evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
-    evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MAXZOOM, zoom);
+    evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
+    evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
     if(!evaluator.evaluate())
         return;
     if(!updatePaint(context, evaluator, Set_0, true))
@@ -474,4 +479,207 @@ void OsmAnd::Rasterizer::rasterizePolygon( RasterizerContext& context, SkCanvas&
     }
 
     renderText(mObj, req, rc, pair.first, pair.second, xText, yText, NULL);*/
+}
+
+void OsmAnd::Rasterizer::rasterizeLine( RasterizerContext& context, SkCanvas& canvas, const Primitive& primitive, bool drawOnlyShadow )
+{
+    if(primitive.mapObject->_coordinates.size() < 2 )
+    {
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rendered as line, but has %d vertices\n", primitive.mapObject->id, primitive.mapObject->_coordinates.size());
+        return;
+    }
+
+    const auto& tagValuePair = primitive.mapObject->section->rules->decodingRules[ primitive.mapObject->_types[primitive.typeIndex] ];
+
+    RasterizationStyleEvaluator evaluator(context.style, RasterizationStyle::RulesetType::Line, primitive.mapObject);
+    context.applyContext(evaluator);
+    evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_TAG, std::get<0>(tagValuePair));
+    evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_VALUE, std::get<1>(tagValuePair));
+    evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
+    evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
+    evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_LAYER, primitive.mapObject->getSimpleLayerValue());
+    if(!evaluator.evaluate())
+        return;
+    if(!updatePaint(context, evaluator, Set_0, false))
+        return;
+
+    auto shadowColor = evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADOW_COLOR);
+    auto shadowRadius = evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADOW_RADIUS);
+    if(drawOnlyShadow && shadowRadius == 0)
+        return;
+
+    if(shadowColor == 0)
+        shadowColor = context._shadowRenderingColor;
+
+    int oneway = 0;
+    if (context._zoom >= 16 && std::get<0>(tagValuePair) == "highway")
+    {
+        if (primitive.mapObject->containsType("oneway", "yes", true))
+            oneway = 1;
+        else if (primitive.mapObject->containsType("oneway", "-1", true))
+            oneway = -1;
+    }
+
+    SkPath path;
+    int pointIdx = 0;
+    const auto middleIdx = primitive.mapObject->_coordinates.size() >> 1;
+    float prevx;
+    float prevy;
+    bool intersect = false;
+    int prevCross = 0;
+    PointF vertex, middleVertex;
+    for(auto itPoint = primitive.mapObject->_coordinates.begin(); itPoint != primitive.mapObject->_coordinates.end(); ++itPoint, pointIdx++)
+    {
+        const auto& point = *itPoint;
+
+        calculateVertex(context, point, vertex);
+
+        if(pointIdx == 0)
+        {
+            path.moveTo(vertex.x, vertex.y);
+        }
+        else
+        {
+            if(pointIdx == middleIdx)
+                middleVertex = vertex;
+
+            path.lineTo(vertex.x, vertex.y);
+        }
+
+        if (!intersect)
+        {
+            if(vertex.x >= context._viewport.left && vertex.y >= context._viewport.top && vertex.x < context._viewport.right && vertex.y < context._viewport.bottom)
+            {
+                intersect = true;
+            }
+            else
+            {
+                int cross = 0;
+                cross |= (vertex.x < context._viewport.left ? 1 : 0);
+                cross |= (vertex.x > context._viewport.right ? 2 : 0);
+                cross |= (vertex.y < context._viewport.top ? 4 : 0);
+                cross |= (vertex.y > context._viewport.bottom ? 8 : 0);
+                if(pointIdx > 0)
+                {
+                    if((prevCross & cross) == 0)
+                    {
+                        intersect = true;
+                    }
+                }
+                prevCross = cross;
+            }
+        }
+    }
+    
+    if (!intersect)
+        return;
+
+    if (pointIdx > 0)
+    {
+        if (drawOnlyShadow)
+        {
+            rasterizeLineShadow(context, canvas, path, shadowColor, shadowRadius);
+        }
+        else
+        {
+            if (updatePaint(context, evaluator, Set_minus2, false))
+            {
+                canvas.drawPath(path, context._paint);
+            }
+            if (updatePaint(context, evaluator, Set_minus1, false))
+            {
+                canvas.drawPath(path, context._paint);
+            }
+            if (updatePaint(context, evaluator, Set_0, false))
+            {
+                canvas.drawPath(path, context._paint);
+            }
+            canvas.drawPath(path, context._paint);
+            if (updatePaint(context, evaluator, Set_1, false))
+            {
+                canvas.drawPath(path, context._paint);
+            }
+            if (updatePaint(context, evaluator, Set_3, false))
+            {
+                canvas.drawPath(path, context._paint);
+            }
+            /*if (oneway && !drawOnlyShadow)
+            {
+                drawOneWayPaints(rc, cv, &path, oneway);
+            }*/
+            /*if (!drawOnlyShadow) {
+                renderText(mObj, req, rc, pair.first, pair.second, middlePoint.fX, middlePoint.fY, &path);
+            }*/
+        }
+    }
+}
+
+void OsmAnd::Rasterizer::rasterizeLineShadow( RasterizerContext& context, SkCanvas& canvas, const SkPath& path, uint32_t shadowColor, int shadowRadius )
+{
+    // blurred shadows
+    if (context._shadowRenderingMode == 2 && shadowRadius > 0)
+    {
+        // simply draw shadow? difference from option 3 ?
+        // paint->setColor(0xffffffff);
+        context._paint.setLooper(new SkBlurDrawLooper(shadowRadius, 0, 0, shadowColor))->unref();
+        canvas.drawPath(path, context._paint);
+    }
+
+    // option shadow = 3 with solid border
+    if (context._shadowRenderingMode == 3 && shadowRadius > 0)
+    {
+        context._paint.setLooper(nullptr);
+        context._paint.setStrokeWidth(context._paint.getStrokeWidth() + shadowRadius * 2);
+        //		paint->setColor(0xffbababa);
+        context._paint.setColorFilter(SkColorFilter::CreateModeFilter(shadowColor, SkXfermode::kSrcIn_Mode))->unref();
+        //		paint->setColor(shadowColor);
+        canvas.drawPath(path, context._paint);
+    }
+}
+
+void OsmAnd::Rasterizer::rasterizePoint( RasterizerContext& context, SkCanvas& canvas, const Primitive& primitive )
+{
+    /*
+    std::string tag = pair.first;
+    std::string value = pair.second;
+
+    req->setInitialTagValueZoom(tag, value, rc->getZoom(), mObj);
+    req->searchRule(1);
+    std::string resId = req->getStringPropertyValue(req-> props()-> R_ICON);
+    SkBitmap* bmp = getCachedBitmap(rc, resId);
+
+    if (!bmp && !renderText)
+        return;
+
+    size_t length = mObj->points.size();
+    rc->visible++;
+    float px = 0;
+    float py = 0;
+    int i = 0;
+    for (; i < length; i++) {
+        calcPoint(mObj->points.at(i), rc);
+        px += rc->calcX;
+        py += rc->calcY;
+    }
+    if (length > 1) {
+        px /= length;
+        py /= length;
+    }
+
+    if (bmp != NULL) {
+        IconDrawInfo ico;
+        ico.x = px;
+        ico.y = py;
+        ico.bmp = bmp;
+        rc->iconsToDraw.push_back(ico);
+    }
+    if (renderTxt) {
+        renderText(mObj, req, rc, pair.first, pair.second, px, py, NULL);
+    }*/
+}
+
+void OsmAnd::Rasterizer::calculateVertex( RasterizerContext& context, const PointI& point, PointF& vertex )
+{
+    vertex.x = ((point.x / context._tileDivisor) - context._areaTileD.left) * context._tileSidePixelLength + context._viewport.left;
+    vertex.y = ((point.y / context._tileDivisor) - context._areaTileD.top) * context._tileSidePixelLength + context._viewport.top;
 }

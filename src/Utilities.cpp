@@ -22,14 +22,14 @@ OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::get31TileNumberY( dou
     return (1.0 - eval / M_PI) / 2.0*l;
 }
 
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::get31LongitudeX( uint32_t x )
+OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::get31LongitudeX( double x )
 {
-    return getLongitudeFromTile(21, (double)x / 1024.);
+    return getLongitudeFromTile(21, x / 1024.);
 }
 
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::get31LatitudeY( uint32_t y )
+OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::get31LatitudeY( double y )
 {
-    return getLatitudeFromTile(21, (double)y / 1024.);
+    return getLatitudeFromTile(21, y / 1024.);
 }
 
 OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::getTileNumberX( float zoom, double longitude )

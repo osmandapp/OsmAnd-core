@@ -66,13 +66,12 @@ namespace OsmAnd {
         static void obtainPrimitives(
             RasterizerContext& context,
             const QList< std::shared_ptr<OsmAnd::Model::MapObject> >& objects,
-            uint32_t zoom,
             QVector< Primitive >& polygons,
             QVector< Primitive >& lines,
             QVector< Primitive >& points,
             IQueryController* controller
             );
-        static void filterOutLinesByDensity(RasterizerContext& context, uint32_t zoom, const QVector< Primitive >& in, QVector< Primitive >& out, IQueryController* controller);
+        static void filterOutLinesByDensity(RasterizerContext& context, const QVector< Primitive >& in, QVector< Primitive >& out, IQueryController* controller);
 
         enum PrimitivesType
         {
@@ -81,7 +80,7 @@ namespace OsmAnd {
             ShadowOnlyLines,
             Points
         };
-        static void rasterizePrimitives(RasterizerContext& context, SkCanvas& canvas, uint32_t zoom, const QVector< Primitive >& primitives, PrimitivesType type, IQueryController* controller);
+        static void rasterizePrimitives(RasterizerContext& context, SkCanvas& canvas, const QVector< Primitive >& primitives, PrimitivesType type, IQueryController* controller);
         enum PaintValuesSet : int
         {
             Set_0 = 0,
@@ -91,18 +90,23 @@ namespace OsmAnd {
             Set_3 = 4,
         };
         static bool updatePaint(RasterizerContext& context, const RasterizationStyleEvaluator& evaluator, PaintValuesSet valueSetSelector, bool isArea);
-        static void rasterizePolygon(RasterizerContext& context, SkCanvas& canvas, uint32_t zoom, const Primitive& primitive);
+        static void rasterizePolygon(RasterizerContext& context, SkCanvas& canvas, const Primitive& primitive);
+        static void rasterizeLine(RasterizerContext& context, SkCanvas& canvas, const Primitive& primitive, bool drawOnlyShadow);
+        static void rasterizeLineShadow(RasterizerContext& context, SkCanvas& canvas, const SkPath& path, uint32_t shadowColor, int shadowRadius);
+        static void rasterizePoint(RasterizerContext& context, SkCanvas& canvas, const Primitive& primitive);
+        static void calculateVertex(RasterizerContext& context, const PointI& point, PointF& vertex);
     public:
         virtual ~Rasterizer();
 
         static bool rasterize(
             RasterizerContext& context,
+            bool fillBackground,
             SkCanvas& canvas,
             const AreaD& area,
             uint32_t zoom,
             uint32_t tileSidePixelLength,
             const QList< std::shared_ptr<OsmAnd::Model::MapObject> >& objects,
-            const PointI& originOffset = PointI(),
+            const PointI& tlOriginOffset = PointI(),
             IQueryController* controller = nullptr);
     };
 

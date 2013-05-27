@@ -190,6 +190,11 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
     const auto pixelWidth = static_cast<int32_t>(tileWidth * cfg.tileSide);
     const auto pixelHeight = static_cast<int32_t>(tileHeight * cfg.tileSide);
     output << xT("Will rasterize ") << mapObjects.count() << xT(" objects onto ") << pixelWidth << xT("x") << pixelHeight << xT(" bitmap") << std::endl;
+    /*for(auto itMapObject = mapObjects.begin(); itMapObject != mapObjects.end(); ++itMapObject)
+    {
+        const auto& mapObject = *itMapObject;
+        output << xT("\t") << mapObject->id << std::endl;
+    }*/
 
     // Allocate render target
     SkBitmap renderSurface;
@@ -206,7 +211,7 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
 
     // Perform actual rendering
     OsmAnd::RasterizerContext rasterizerContext(style);
-    OsmAnd::Rasterizer::rasterize(rasterizerContext, canvas, cfg.bbox, cfg.zoom, cfg.tileSide, mapObjects, OsmAnd::PointI(), nullptr);
+    OsmAnd::Rasterizer::rasterize(rasterizerContext, true, canvas, cfg.bbox, cfg.zoom, cfg.tileSide, mapObjects, OsmAnd::PointI(), nullptr);
 
     // Save rendered area
     if(!cfg.output.isEmpty())

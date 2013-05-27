@@ -29,10 +29,12 @@
 #include <QMap>
 
 #include <SkPaint.h>
+#include <SkPathEffect.h>
 
 #include <OsmAndCore.h>
 #include <RasterizationStyle.h>
 #include <RasterizationRule.h>
+#include <Area.h>
 
 namespace OsmAnd {
 
@@ -44,7 +46,14 @@ namespace OsmAnd {
     {
     private:
     protected:
-        uint32_t _previousZoom;
+        AreaD _areaGeo;
+        AreaD _areaTileD;
+        uint32_t _zoom;
+        double _tileDivisor;
+        uint32_t _tileSidePixelLength;
+        double _tileWidth;
+        double _tileHeight;
+        AreaI _viewport;
 
         SkPaint _paint;
         uint32_t _defaultColor;
@@ -66,7 +75,10 @@ namespace OsmAnd {
         std::shared_ptr<RasterizationRule> attributeRule_roadsDensityLimitPerTile;
 
         void initialize();
-        void refresh(uint32_t zoom);
+        void refresh(const AreaD& areaGeo, uint32_t zoom, const PointI& tlOriginOffset, uint32_t tileSidePixelLength);
+
+        QHash< QString, SkPathEffect* > _pathEffects;
+        SkPathEffect* obtainPathEffect(const QString& pathEffect);
     public:
         RasterizerContext(const std::shared_ptr<RasterizationStyle>& style);
         RasterizerContext(const std::shared_ptr<RasterizationStyle>& style, const QMap< std::shared_ptr<RasterizationStyle::ValueDefinition>, RasterizationRule::Value >& styleInitialSettings);

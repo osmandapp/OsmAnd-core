@@ -38,7 +38,11 @@ OsmAnd::RasterizationRule::RasterizationRule(RasterizationStyle* owner_, const Q
             parsedValue.asUInt = owner->lookupStringId(value);
             break;
         case RasterizationStyle::ValueDefinition::Color:
-            parsedValue.asUInt = value.mid(1).toUInt(nullptr, 16);
+            {
+                parsedValue.asUInt = value.mid(1).toUInt(nullptr, 16);
+                if(value.size() <= 7)
+                    parsedValue.asUInt |= 0xFF000000;
+            }
             break;
         }
         
@@ -74,7 +78,13 @@ void OsmAnd::RasterizationRule::dump( const QString& prefix /*= QString()*/ ) co
             strValue = getStringAttribute(valueDef->name);
             break;
         case RasterizationStyle::ValueDefinition::Color:
-            strValue = '#' + QString::number(getIntegerAttribute(valueDef->name), 16);
+            {
+                auto color = getIntegerAttribute(valueDef->name);
+                if((color & 0xFF000000) != 0)
+                    strValue = '#' + QString::number(color, 16).mid(2);
+                else
+                    strValue = '#' + QString::number(color, 16);
+            }
             break;
         }
 
