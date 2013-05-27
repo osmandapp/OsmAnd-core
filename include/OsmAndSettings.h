@@ -68,6 +68,8 @@ public:
 
     QVariant getDefaultValue();
 
+    bool present();
+
     QVariant get();
 
     bool set(const QVariant& obj);
@@ -83,6 +85,12 @@ public:
     OsmAndSettings();
     OsmAndPreference APPLICATION_DIRECTORY; // string
     OsmAndPreference MAP_SCALE; // float
+    OsmAndPreference MAP_SHOW_LATITUDE; // float
+    OsmAndPreference MAP_SHOW_LONGITUDE; // float
+    OsmAndPreference MAP_SHOW_ZOOM; // float
+
+    OsmAndPreference TARGET_LATITUDE; // float
+    OsmAndPreference TARGET_LONGITUDE; // float
     virtual ~OsmAndSettings(){}
 };
 
