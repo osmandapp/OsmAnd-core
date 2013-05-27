@@ -81,7 +81,11 @@ bool OsmAnd::RasterizationStyleEvaluator::evaluate( bool fillOutput /*= true*/, 
 {
     if(singleRule)
     {
-        return evaluate(singleRule, fillOutput, evaluateChildren);
+        auto evaluationResult = evaluate(singleRule, fillOutput, evaluateChildren);
+        if(evaluationResult)
+            return true;
+
+        return false;
     }
     else
     {

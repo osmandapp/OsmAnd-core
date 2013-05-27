@@ -39,6 +39,7 @@ OsmAnd::RasterizationRule::RasterizationRule(RasterizationStyle* owner_, const Q
             break;
         case RasterizationStyle::ValueDefinition::Color:
             {
+                assert(value[0] == '#');
                 parsedValue.asUInt = value.mid(1).toUInt(nullptr, 16);
                 if(value.size() <= 7)
                     parsedValue.asUInt |= 0xFF000000;

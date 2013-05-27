@@ -132,7 +132,6 @@ namespace OsmAnd {
         bool resolveDependencies();
         bool resolveConstantValue(const QString& name, QString& value);
         QString obtainValue(const QString& value);
-        QString obtainValue(const QStringRef& value);
 
         bool mergeInherited();
         bool mergeInheritedRules(RulesetType type);

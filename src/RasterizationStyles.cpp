@@ -54,6 +54,9 @@ bool OsmAnd::RasterizationStyles::obtainStyle( const QString& name, std::shared_
             return false;
     }
 
+    if(style->isStandalone())
+        style->registerString(QString());
+
     if(!style->parse())
         return false;
 

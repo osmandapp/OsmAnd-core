@@ -247,8 +247,8 @@ bool OsmAnd::RasterizationStyle::parse( QXmlStreamReader& xmlReader )
             {
                 const auto& attribs = xmlReader.attributes();
 
-                auto name = obtainValue(attribs.value("name").toString());
-                auto value = obtainValue(attribs.value("value").toString());
+                auto name = attribs.value("name").toString();
+                auto value = attribs.value("value").toString();
                 _parsetimeConstants.insert(name, value);
             }
             else if(tagName == "renderingProperty")
@@ -257,7 +257,7 @@ bool OsmAnd::RasterizationStyle::parse( QXmlStreamReader& xmlReader )
 
                 const auto& attribs = xmlReader.attributes();
                 auto name = obtainValue(attribs.value("attr").toString());
-                auto type = obtainValue(attribs.value("type"));
+                auto type = obtainValue(attribs.value("type").toString());
                 auto title = obtainValue(attribs.value("name").toString());
                 auto description = attribs.value("description").toString();
                 auto encodedPossibleValues = attribs.value("possibleValues");
@@ -329,7 +329,7 @@ bool OsmAnd::RasterizationStyle::parse( QXmlStreamReader& xmlReader )
                     const auto& xmlAttrib = *itXmlAttrib;
 
                     auto tag = xmlAttrib.name().toString();
-                    auto value = obtainValue(xmlAttrib.value());
+                    auto value = obtainValue(xmlAttrib.value().toString());
                     ruleAttributes.insert(tag, value);
                 }
 
@@ -366,7 +366,7 @@ bool OsmAnd::RasterizationStyle::parse( QXmlStreamReader& xmlReader )
                     const auto& xmlAttrib = *itXmlAttrib;
 
                     auto tag = xmlAttrib.name().toString();
-                    auto value = obtainValue(xmlAttrib.value());
+                    auto value = obtainValue(xmlAttrib.value().toString());
                     attributes.insert(tag, value);
                 }
 
@@ -406,7 +406,7 @@ bool OsmAnd::RasterizationStyle::parse( QXmlStreamReader& xmlReader )
                     const auto& xmlAttrib = *itXmlAttrib;
 
                     auto tag = xmlAttrib.name().toString();
-                    auto value = obtainValue(xmlAttrib.value());
+                    auto value = obtainValue(xmlAttrib.value().toString());
                     group->attributes.insert(tag, value);
                 }
 
@@ -566,28 +566,13 @@ QString OsmAnd::RasterizationStyle::obtainValue( const QString& input )
 {
     QString output;
 
-    if(input[0] == '$')
+    if(!input.isEmpty() && input[0] == '$')
     {
         if(!resolveConstantValue(input.mid(1), output))
             output = "unknown constant";
     }
     else
         output = input;
-
-    return output;
-}
-
-QString OsmAnd::RasterizationStyle::obtainValue( const QStringRef& input )
-{
-    QString output;
-
-    if(input.string()->at(0) == '$')
-    {
-        if(!resolveConstantValue(input.toString().mid(1), output))
-            output = "unknown constant";
-    }
-    else
-        output = input.toString();
 
     return output;
 }

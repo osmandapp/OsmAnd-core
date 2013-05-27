@@ -241,7 +241,7 @@ void OsmAnd::Rasterizer::rasterizePrimitives( RasterizerContext& context, SkCanv
             if (primitive.zOrder < context._polygonMinSizeToDisplay)
                 return;
             
-            rasterizePolygon(context, canvas, primitive);
+            //TODO:rasterizePolygon(context, canvas, primitive);
         }
         else if(type == Lines || type == ShadowOnlyLines)
         {
@@ -341,6 +341,7 @@ bool OsmAnd::Rasterizer::updatePaint( RasterizerContext& context, const Rasteriz
     }
 
     auto color = evaluator.getIntegerValue(valueSet.color);
+    assert(color != 0);
     context._paint.setColor(color);
 
     if (valueSetSelector == PaintValuesSet::Set_0)
