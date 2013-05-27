@@ -241,7 +241,7 @@ void OsmAnd::Rasterizer::rasterizePrimitives( RasterizerContext& context, SkCanv
             if (primitive.zOrder < context._polygonMinSizeToDisplay)
                 return;
             
-            //TODO:rasterizePolygon(context, canvas, primitive);
+            rasterizePolygon(context, canvas, primitive);
         }
         else if(type == Lines || type == ShadowOnlyLines)
         {
