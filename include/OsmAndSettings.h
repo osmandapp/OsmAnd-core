@@ -42,7 +42,7 @@ public:
 
 class  OSMAND_CORE_API OsmAndPreference {
 private :
-    std::shared_ptr<OsmAndSettingsBase>_settings;
+    OsmAndSettingsBase*_settings;
 
     QString _id;
     bool _global;
@@ -55,7 +55,7 @@ private :
     // Object cachedPreference;
 protected :
     OsmAndPreference(OsmAndSettingsBase* s,const char* id, QVariant defaultValue, bool global = true):
-        _settings(std::shared_ptr<OsmAndSettingsBase>(s)), _defaultValue(defaultValue), _id(id), _global(global){}
+        _settings(s), _defaultValue(defaultValue), _id(id), _global(global){}
 
     void makeGlobal() { _global = true; }
     void makeProfile() { _global = false; }

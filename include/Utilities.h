@@ -50,8 +50,8 @@ namespace OsmAnd {
         OSMAND_CORE_API double OSMAND_CORE_CALL checkLatitude(double latitude);
         OSMAND_CORE_API double OSMAND_CORE_CALL checkLongitude(double longitude);
         OSMAND_CORE_API double OSMAND_CORE_CALL getPowZoom(float zoom);
-        OSMAND_CORE_API double OSMAND_CORE_CALL getLongitudeFromTile(float zoom, uint32_t x);
-        OSMAND_CORE_API double OSMAND_CORE_CALL getLatitudeFromTile(float zoom, uint32_t y);
+        OSMAND_CORE_API double OSMAND_CORE_CALL getLongitudeFromTile(float zoom, double x);
+        OSMAND_CORE_API double OSMAND_CORE_CALL getLatitudeFromTile(float zoom, double y);
         OSMAND_CORE_API bool OSMAND_CORE_CALL extractFirstNumberPosition(const QString& value, int& first, int& last, bool allowSigned, bool allowDot);
         OSMAND_CORE_API double OSMAND_CORE_CALL parseSpeed(const QString& value, double defValue, bool* wasParsed = nullptr);
         OSMAND_CORE_API double OSMAND_CORE_CALL parseLength(const QString& value, double defValue, bool* wasParsed = nullptr);

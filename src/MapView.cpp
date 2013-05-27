@@ -174,7 +174,6 @@ bool OsmAndMapView::isPointOnTheRotatedMap(double latitude, double longitude) {
 void OsmAndMapView::moveTo(float dx, float dy) {
     float fy = calcDiffTileY(dx, dy);
     float fx = calcDiffTileX(dx, dy);
-
     this->latitude = OsmAnd::Utilities::getLatitudeFromTile(getZoom(), getYTile() + fy);
     this->longitude = OsmAnd::Utilities::getLongitudeFromTile(getZoom(), getXTile() + fx);
 }
