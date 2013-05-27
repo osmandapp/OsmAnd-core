@@ -93,6 +93,7 @@ namespace OsmAnd {
         static void rasterizePolygon(RasterizerContext& context, SkCanvas& canvas, const Primitive& primitive);
         static void rasterizeLine(RasterizerContext& context, SkCanvas& canvas, const Primitive& primitive, bool drawOnlyShadow);
         static void rasterizeLineShadow(RasterizerContext& context, SkCanvas& canvas, const SkPath& path, uint32_t shadowColor, int shadowRadius);
+        static void rasterizeLine_OneWay( RasterizerContext& context, SkCanvas& canvas, const SkPath& path, int oneway );
         static void rasterizePoint(RasterizerContext& context, SkCanvas& canvas, const Primitive& primitive);
         static void calculateVertex(RasterizerContext& context, const PointI& point, PointF& vertex);
     public:

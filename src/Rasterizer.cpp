@@ -10,6 +10,7 @@
 
 #include <SkBlurDrawLooper.h>
 #include <SkColorFilter.h>
+#include <SkDashPathEffect.h>
 
 OsmAnd::Rasterizer::Rasterizer()
 {
@@ -603,10 +604,10 @@ void OsmAnd::Rasterizer::rasterizeLine( RasterizerContext& context, SkCanvas& ca
             {
                 canvas.drawPath(path, context._paint);
             }
-            /*if (oneway && !drawOnlyShadow)
+            if (oneway && !drawOnlyShadow)
             {
-                drawOneWayPaints(rc, cv, &path, oneway);
-            }*/
+                rasterizeLine_OneWay(context, canvas, path, oneway);
+            }
             /*if (!drawOnlyShadow) {
                 renderText(mObj, req, rc, pair.first, pair.second, middlePoint.fX, middlePoint.fY, &path);
             }*/
@@ -634,6 +635,24 @@ void OsmAnd::Rasterizer::rasterizeLineShadow( RasterizerContext& context, SkCanv
         context._paint.setColorFilter(SkColorFilter::CreateModeFilter(shadowColor, SkXfermode::kSrcIn_Mode))->unref();
         //		paint->setColor(shadowColor);
         canvas.drawPath(path, context._paint);
+    }
+}
+
+void OsmAnd::Rasterizer::rasterizeLine_OneWay( RasterizerContext& context, SkCanvas& canvas, const SkPath& path, int oneway )
+{
+    if (oneway > 0)
+    {
+        for(auto itPaint = context._oneWayPaints.begin(); itPaint != context._oneWayPaints.end(); ++itPaint)
+        {
+            canvas.drawPath(path, *itPaint);
+        }
+    }
+    else
+    {
+        for(auto itPaint = context._reverseOneWayPaints.begin(); itPaint != context._reverseOneWayPaints.end(); ++itPaint)
+        {
+            canvas.drawPath(path, *itPaint);
+        }
     }
 }
 

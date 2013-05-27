@@ -138,7 +138,7 @@ bool OsmAnd::RasterizationStyleEvaluator::evaluate( const std::shared_ptr<OsmAnd
         }
         else if(valueDef == RasterizationStyle::builtinValueDefinitions.INPUT_MAXZOOM)
         {
-            evaluationResult = valueData.asInt <= stackValue.asInt;
+            evaluationResult = valueData.asInt >= stackValue.asInt;
         }
         else if(valueDef == RasterizationStyle::builtinValueDefinitions.INPUT_ADDITIONAL)
         {

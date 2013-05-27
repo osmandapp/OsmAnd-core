@@ -74,6 +74,10 @@ namespace OsmAnd {
         std::shared_ptr<RasterizationRule> attributeRule_roadDensityZoomTile;
         std::shared_ptr<RasterizationRule> attributeRule_roadsDensityLimitPerTile;
 
+        QVector< SkPaint > _oneWayPaints;
+        QVector< SkPaint > _reverseOneWayPaints;
+        static void initializeOneWayPaint(SkPaint& paint);
+
         void initialize();
         void refresh(const AreaD& areaGeo, uint32_t zoom, const PointI& tlOriginOffset, uint32_t tileSidePixelLength);
 

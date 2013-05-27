@@ -29,6 +29,13 @@ OsmAnd::RasterizerContext::~RasterizerContext()
     }
 }
 
+void OsmAnd::RasterizerContext::initializeOneWayPaint( SkPaint& paint )
+{
+    paint.setAntiAlias(true);
+    paint.setStyle(SkPaint::kStroke_Style);
+    paint.setColor(0xff6c70d5);
+}
+
 void OsmAnd::RasterizerContext::initialize()
 {
     _paint.setAntiAlias(true);
@@ -46,6 +53,98 @@ void OsmAnd::RasterizerContext::initialize()
     style->resolveAttribute("polygonMinSizeToDisplay", attributeRule_polygonMinSizeToDisplay);
     style->resolveAttribute("roadDensityZoomTile", attributeRule_roadDensityZoomTile);
     style->resolveAttribute("roadsDensityLimitPerTile", attributeRule_roadsDensityLimitPerTile);
+
+    {
+        const float intervals_oneway[4][4] =
+        {
+            {0, 12, 10, 152},
+            {0, 12, 9, 153},
+            {0, 18, 2, 154},
+            {0, 18, 1, 155}
+        };
+        SkPathEffect* arrowDashEffect1 = new SkDashPathEffect(intervals_oneway[0], 4, 0);
+        SkPathEffect* arrowDashEffect2 = new SkDashPathEffect(intervals_oneway[1], 4, 1);
+        SkPathEffect* arrowDashEffect3 = new SkDashPathEffect(intervals_oneway[2], 4, 1);
+        SkPathEffect* arrowDashEffect4 = new SkDashPathEffect(intervals_oneway[3], 4, 1);
+
+        {
+            SkPaint paint;
+            initializeOneWayPaint(paint);
+            paint.setStrokeWidth(1.0f);
+            paint.setPathEffect(arrowDashEffect1)->unref();
+            _oneWayPaints.push_back(paint);
+        }
+
+        {
+            SkPaint paint;
+            initializeOneWayPaint(paint);
+            paint.setStrokeWidth(2.0f);
+            paint.setPathEffect(arrowDashEffect2)->unref();
+            _oneWayPaints.push_back(paint);
+        }
+
+        {
+            SkPaint paint;
+            initializeOneWayPaint(paint);
+            paint.setStrokeWidth(3.0f);
+            paint.setPathEffect(arrowDashEffect3)->unref();
+            _oneWayPaints.push_back(paint);
+        }
+
+        {
+            SkPaint paint;
+            initializeOneWayPaint(paint);
+            paint.setStrokeWidth(4.0f);
+            paint.setPathEffect(arrowDashEffect4)->unref();
+            _oneWayPaints.push_back(paint);
+        }
+    }
+    
+    {
+        const float intervals_reverse[4][4] =
+        {
+            {0, 12, 10, 152},
+            {0, 13, 9, 152},
+            {0, 14, 2, 158},
+            {0, 15, 1, 158}
+        };
+        SkPathEffect* arrowDashEffect1 = new SkDashPathEffect(intervals_reverse[0], 4, 0);
+        SkPathEffect* arrowDashEffect2 = new SkDashPathEffect(intervals_reverse[1], 4, 1);
+        SkPathEffect* arrowDashEffect3 = new SkDashPathEffect(intervals_reverse[2], 4, 1);
+        SkPathEffect* arrowDashEffect4 = new SkDashPathEffect(intervals_reverse[3], 4, 1);
+
+        {
+            SkPaint paint;
+            initializeOneWayPaint(paint);
+            paint.setStrokeWidth(1.0f);
+            paint.setPathEffect(arrowDashEffect1)->unref();
+            _reverseOneWayPaints.push_back(paint);
+        }
+
+        {
+            SkPaint paint;
+            initializeOneWayPaint(paint);
+            paint.setStrokeWidth(2.0f);
+            paint.setPathEffect(arrowDashEffect2)->unref();
+            _reverseOneWayPaints.push_back(paint);
+        }
+
+        {
+            SkPaint paint;
+            initializeOneWayPaint(paint);
+            paint.setStrokeWidth(3.0f);
+            paint.setPathEffect(arrowDashEffect3)->unref();
+            _reverseOneWayPaints.push_back(paint);
+        }
+
+        {
+            SkPaint paint;
+            initializeOneWayPaint(paint);
+            paint.setStrokeWidth(4.0f);
+            paint.setPathEffect(arrowDashEffect4)->unref();
+            _reverseOneWayPaints.push_back(paint);
+        }
+    }
 }
 
 void OsmAnd::RasterizerContext::refresh( const AreaD& areaGeo, uint32_t zoom, const PointI& tlOriginOffset, uint32_t tileSidePixelLength )
