@@ -728,6 +728,7 @@ bool OsmAnd::RoutePlanner::prepareResult(OsmAnd::RoutePlannerContext::Calculatio
         float mb = (1 << 20);
         log.warn("Unload context :  estimated " + sz / mb + " ?= " + (h1 - h2) / mb + " actual");
     }*/
+    return true;
 }
 
 void OsmAnd::RoutePlanner::splitRoadsAndAttachRoadSegments( OsmAnd::RoutePlannerContext::CalculationContext* context, QList< std::shared_ptr<RouteSegment> >& route )
