@@ -37,7 +37,7 @@
 
 namespace OsmAnd {
 
-    class RasterizationStyleContext;
+    class RasterizerContext;
 
     class OSMAND_CORE_API Rasterizer
     {
@@ -63,22 +63,8 @@ namespace OsmAnd {
             PrimitiveType objectType;
         };
 
-        struct Context
-        {
-            Context();
-
-            SkPaint _paint;
-            uint32_t _lastRenderedKey;
-            uint32_t _shadowLevelMin;
-            uint32_t _shadowLevelMax;
-            double _polygonMinSizeToDisplay;
-            uint32_t _roadDensityZoomTile;
-            uint32_t _roadsDensityLimitPerTile;
-        };
-
         static void obtainPrimitives(
-            Context& context,
-            const RasterizationStyleContext& styleContext,
+            RasterizerContext& context,
             const QList< std::shared_ptr<OsmAnd::Model::MapObject> >& objects,
             uint32_t zoom,
             QVector< Primitive >& polygons,
@@ -86,7 +72,7 @@ namespace OsmAnd {
             QVector< Primitive >& points,
             IQueryController* controller
             );
-        static void filterOutLinesByDensity(Context& context, uint32_t zoom, const QVector< Primitive >& in, QVector< Primitive >& out, IQueryController* controller);
+        static void filterOutLinesByDensity(RasterizerContext& context, uint32_t zoom, const QVector< Primitive >& in, QVector< Primitive >& out, IQueryController* controller);
 
         enum PrimitivesType
         {
@@ -95,17 +81,28 @@ namespace OsmAnd {
             ShadowOnlyLines,
             Points
         };
-        static void rasterizePrimitives(Context& context, SkCanvas& canvas, const RasterizationStyleContext& styleContext, uint32_t zoom, const QVector< Primitive >& primitives, PrimitivesType type, IQueryController* controller);
-        static bool updatePaint(Context& context, const RasterizationStyleEvaluator& evaluator, int idx, bool isArea);
-        static void rasterizePolygon(Context& context, SkCanvas& canvas, const RasterizationStyleContext& styleContext, uint32_t zoom, const Primitive& primitive);
+        static void rasterizePrimitives(RasterizerContext& context, SkCanvas& canvas, uint32_t zoom, const QVector< Primitive >& primitives, PrimitivesType type, IQueryController* controller);
+        enum PaintValuesSet : int
+        {
+            Set_0 = 0,
+            Set_1 = 1,
+            Set_minus1 = 2,
+            Set_minus2 = 3,
+            Set_3 = 4,
+        };
+        static bool updatePaint(RasterizerContext& context, const RasterizationStyleEvaluator& evaluator, PaintValuesSet valueSetSelector, bool isArea);
+        static void rasterizePolygon(RasterizerContext& context, SkCanvas& canvas, uint32_t zoom, const Primitive& primitive);
     public:
         virtual ~Rasterizer();
 
         static bool rasterize(
+            RasterizerContext& context,
             SkCanvas& canvas,
-            const QList< std::shared_ptr<OsmAnd::Model::MapObject> >& objects,
-            const RasterizationStyleContext& styleContext,
+            const AreaD& area,
             uint32_t zoom,
+            uint32_t tileSidePixelLength,
+            const QList< std::shared_ptr<OsmAnd::Model::MapObject> >& objects,
+            const PointI& originOffset = PointI(),
             IQueryController* controller = nullptr);
     };
 

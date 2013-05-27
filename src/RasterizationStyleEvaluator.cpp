@@ -2,21 +2,32 @@
 
 #include <cassert>
 
-#include "RasterizationStyleContext.h"
 #include "RasterizationRule.h"
 #include "MapObject.h"
 #include "Logging.h"
 
-OsmAnd::RasterizationStyleEvaluator::RasterizationStyleEvaluator( const RasterizationStyleContext& styleContext_, RasterizationStyle::RulesetType ruleset_, const std::shared_ptr<OsmAnd::Model::MapObject>& mapObject_ /*= std::shared_ptr<OsmAnd::Model::MapObject>()*/ )
-    : styleContext(styleContext_)
+OsmAnd::RasterizationStyleEvaluator::RasterizationStyleEvaluator( const std::shared_ptr<RasterizationStyle>& style_, RasterizationStyle::RulesetType ruleset_, const std::shared_ptr<OsmAnd::Model::MapObject>& mapObject_ /*= std::shared_ptr<OsmAnd::Model::MapObject>()*/ )
+    : style(style_)
     , mapObject(mapObject_)
     , ruleset(ruleset_)
 {
+}
 
+OsmAnd::RasterizationStyleEvaluator::RasterizationStyleEvaluator( const std::shared_ptr<RasterizationStyle>& style_, const std::shared_ptr<RasterizationRule>& singleRule_ )
+    : style(style_)
+    , singleRule(singleRule_)
+    , mapObject()
+    , ruleset(RasterizationStyle::RulesetType::Invalid)
+{
 }
 
 OsmAnd::RasterizationStyleEvaluator::~RasterizationStyleEvaluator()
 {
+}
+
+void OsmAnd::RasterizationStyleEvaluator::setValue( const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, const OsmAnd::RasterizationRule::Value& value )
+{
+    _values[ref.get()] = value;
 }
 
 void OsmAnd::RasterizationStyleEvaluator::setBooleanValue( const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, const bool& value )
@@ -36,7 +47,7 @@ void OsmAnd::RasterizationStyleEvaluator::setFloatValue( const std::shared_ptr<O
 
 void OsmAnd::RasterizationStyleEvaluator::setStringValue( const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, const QString& value )
 {
-    bool ok = styleContext.style->lookupStringId(value, _values[ref.get()].asUInt);
+    bool ok = style->lookupStringId(value, _values[ref.get()].asUInt);
     if(!ok)
         _values[ref.get()].asUInt = std::numeric_limits<uint32_t>::max();
 }
@@ -58,7 +69,7 @@ float OsmAnd::RasterizationStyleEvaluator::getFloatValue( const std::shared_ptr<
 
 QString OsmAnd::RasterizationStyleEvaluator::getStringValue( const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref ) const
 {
-    return styleContext.style->lookupStringValue(_values[ref.get()].asUInt);
+    return style->lookupStringValue(_values[ref.get()].asUInt);
 }
 
 void OsmAnd::RasterizationStyleEvaluator::clearValue( const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref )
@@ -68,22 +79,29 @@ void OsmAnd::RasterizationStyleEvaluator::clearValue( const std::shared_ptr<OsmA
 
 bool OsmAnd::RasterizationStyleEvaluator::evaluate( bool fillOutput /*= true*/, bool evaluateChildren /*=true*/ )
 {
-    auto tagKey = _values[RasterizationStyle::builtinValueDefinitions.INPUT_TAG.get()].asUInt;
-    auto valueKey = _values[RasterizationStyle::builtinValueDefinitions.INPUT_VALUE.get()].asUInt;
+    if(singleRule)
+    {
+        return evaluate(singleRule, fillOutput, evaluateChildren);
+    }
+    else
+    {
+        auto tagKey = _values[RasterizationStyle::builtinValueDefinitions.INPUT_TAG.get()].asUInt;
+        auto valueKey = _values[RasterizationStyle::builtinValueDefinitions.INPUT_VALUE.get()].asUInt;
 
-    auto evaluationResult = evaluate(tagKey, valueKey, fillOutput, evaluateChildren);
-    if(evaluationResult)
-        return true;
+        auto evaluationResult = evaluate(tagKey, valueKey, fillOutput, evaluateChildren);
+        if(evaluationResult)
+            return true;
 
-    evaluationResult = evaluate(tagKey, 0, fillOutput, evaluateChildren);
-    if(evaluationResult)
-        return true;
+        evaluationResult = evaluate(tagKey, 0, fillOutput, evaluateChildren);
+        if(evaluationResult)
+            return true;
 
-    evaluationResult = evaluate(0, 0, fillOutput, evaluateChildren);
-    if(evaluationResult)
-        return true;
+        evaluationResult = evaluate(0, 0, fillOutput, evaluateChildren);
+        if(evaluationResult)
+            return true;
 
-    return false;
+        return false;
+    }
 }
 
 bool OsmAnd::RasterizationStyleEvaluator::evaluate( uint32_t tagKey, uint32_t valueKey, bool fillOutput, bool evaluateChildren )
@@ -91,7 +109,7 @@ bool OsmAnd::RasterizationStyleEvaluator::evaluate( uint32_t tagKey, uint32_t va
     _values[RasterizationStyle::builtinValueDefinitions.INPUT_TAG.get()].asUInt = tagKey;
     _values[RasterizationStyle::builtinValueDefinitions.INPUT_VALUE.get()].asUInt = valueKey;
     
-    const auto& rules = static_cast<const RasterizationStyle*>(styleContext.style.get())->obtainRules(ruleset);
+    const auto& rules = static_cast<const RasterizationStyle*>(style.get())->obtainRules(ruleset);
     uint64_t ruleId = RasterizationStyle::encodeRuleId(tagKey, valueKey);
     auto itRule = rules.find(ruleId);
     if(itRule == rules.end())
@@ -128,7 +146,7 @@ bool OsmAnd::RasterizationStyleEvaluator::evaluate( const std::shared_ptr<OsmAnd
                 evaluationResult;
             else
             {
-                const auto& strValue = styleContext.style->lookupStringValue(valueData.asUInt);
+                const auto& strValue = style->lookupStringValue(valueData.asUInt);
                 auto equalSignIdx = strValue.indexOf('=');
                 if(equalSignIdx >= 0)
                 {
@@ -211,7 +229,7 @@ void OsmAnd::RasterizationStyleEvaluator::dump( bool input /*= true*/, bool outp
                 OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%f\n", value.asFloat);
                 break;
             case RasterizationStyle::ValueDefinition::String:
-                OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s\n", styleContext.style->lookupStringValue(value.asUInt).toStdString().c_str());
+                OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s\n", style->lookupStringValue(value.asUInt).toStdString().c_str());
                 break;
             case RasterizationStyle::ValueDefinition::Color:
                 OsmAnd::LogPrintf(LogSeverityLevel::Debug, "#%s\n", QString::number(value.asUInt, 16).toStdString().c_str());

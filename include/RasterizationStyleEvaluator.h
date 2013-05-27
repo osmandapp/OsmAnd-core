@@ -38,7 +38,6 @@ namespace OsmAnd {
         class MapObject;
     }
     class RasterizationRule;
-    class RasterizationStyleContext;
 
     class OSMAND_CORE_API RasterizationStyleEvaluator
     {
@@ -49,13 +48,16 @@ namespace OsmAnd {
         bool evaluate(uint32_t tagKey, uint32_t valueKey, bool fillOutput, bool evaluateChildren);
         bool evaluate(const std::shared_ptr<OsmAnd::RasterizationRule>& rule, bool fillOutput, bool evaluateChildren);
     public:
-        RasterizationStyleEvaluator(const RasterizationStyleContext& styleContext, RasterizationStyle::RulesetType ruleset, const std::shared_ptr<OsmAnd::Model::MapObject>& mapObject = std::shared_ptr<OsmAnd::Model::MapObject>());
+        RasterizationStyleEvaluator(const std::shared_ptr<RasterizationStyle>& style, RasterizationStyle::RulesetType ruleset, const std::shared_ptr<OsmAnd::Model::MapObject>& mapObject = std::shared_ptr<OsmAnd::Model::MapObject>());
+        RasterizationStyleEvaluator(const std::shared_ptr<RasterizationStyle>& style, const std::shared_ptr<RasterizationRule>& singleRule);
         virtual ~RasterizationStyleEvaluator();
 
-        const RasterizationStyleContext& styleContext;
+        const std::shared_ptr<RasterizationStyle> style;
         const std::shared_ptr<OsmAnd::Model::MapObject> mapObject;
         const RasterizationStyle::RulesetType ruleset;
+        const std::shared_ptr<RasterizationRule> singleRule;
 
+        void setValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, const OsmAnd::RasterizationRule::Value& value);
         void setBooleanValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, const bool& value);
         void setIntegerValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, const int& value);
         void setFloatValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, const float& value);

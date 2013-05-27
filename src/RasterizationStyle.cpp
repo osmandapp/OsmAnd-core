@@ -306,7 +306,7 @@ bool OsmAnd::RasterizationStyle::parse( QXmlStreamReader& xmlReader )
                 auto name = obtainValue(attribs.value("name").toString());
 
                 std::shared_ptr<RasterizationRule> attribute(new RasterizationRule(this, QHash< QString, QString >()));
-                //TODO:t->storage->renderingAttributes[name] = attribute;
+                _attributes.insert(name, attribute);
 
                 std::shared_ptr<Lexeme> selector(new Rule(attribute, this));
                 stack.push(selector);
@@ -785,20 +785,9 @@ bool OsmAnd::RasterizationStyle::mergeInherited()
 
     bool ok;
 
-    // merge results
-    // dictionary and props are already merged
-    /*map<std::string,  RenderingRule*>::iterator it = depends->renderingAttributes.begin();
-    for(;it != depends->renderingAttributes.end(); it++) {
-        map<std::string,  RenderingRule*>::iterator o = renderingAttributes.find(it->first);
-        if (o != renderingAttributes.end()) {
-            std::vector<RenderingRule*>::iterator list = it->second->ifElseChildren.begin();
-            for (;list != it->second->ifElseChildren.end(); list++) {
-                o->second->ifElseChildren.push_back(*list);
-            }
-        } else {
-            renderingAttributes[it->first] = it->second;
-        }
-    }*/
+    ok = mergeInheritedAttributes();
+    if(!ok)
+        return false;
 
     ok = mergeInheritedRules(RulesetType::Point);
     if(!ok)
@@ -848,9 +837,48 @@ bool OsmAnd::RasterizationStyle::mergeInheritedRules( RulesetType type )
     return true;
 }
 
+bool OsmAnd::RasterizationStyle::mergeInheritedAttributes()
+{
+    if(!_parent)
+        return true;
+
+    for(auto itParentAttribute = _parent->_attributes.begin(); itParentAttribute != _parent->_attributes.end(); ++itParentAttribute)
+    {
+        const auto& parentAttribute = *itParentAttribute;
+
+        auto itAttribute = _attributes.find(itParentAttribute.key());
+        if(itAttribute != _attributes.end())
+        {
+            const auto& attribute = *itAttribute;
+            for(auto itChild = parentAttribute->_ifElseChildren.begin(); itChild != parentAttribute->_ifElseChildren.end(); ++itChild)
+            {
+                attribute->_ifElseChildren.push_back(*itChild);
+            }
+        }
+        else
+        {
+            _attributes.insert(itParentAttribute.key(), parentAttribute);
+        }
+    }
+
+    return true;
+}
+
 uint64_t OsmAnd::RasterizationStyle::encodeRuleId( uint32_t tag, uint32_t value )
 {
     return (static_cast<uint64_t>(tag) << RuleIdTagShift) | value;
+}
+
+bool OsmAnd::RasterizationStyle::resolveAttribute( const QString& name, std::shared_ptr<RasterizationRule>& outAttribute )
+{
+    auto itAttribute = _attributes.find(name);
+    if(itAttribute != _attributes.end())
+    {
+        outAttribute = *itAttribute;
+        return true;
+    }
+
+    return false;
 }
 
 OsmAnd::RasterizationStyle::ValueDefinition::ValueDefinition( ValueDefinition::Type type_, ValueDefinition::DataType dataType_, const QString& name_ )

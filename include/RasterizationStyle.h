@@ -112,6 +112,7 @@ namespace OsmAnd {
         bool registerRule(RulesetType type, const std::shared_ptr<RasterizationRule>& rule);
 
         QHash< QString, QString > _parsetimeConstants;
+        QHash< QString, std::shared_ptr<RasterizationRule> > _attributes;
     protected:
         RasterizationStyle(RasterizationStyles* owner, const QString& embeddedResourceName);
         RasterizationStyle(RasterizationStyles* owner, const QFile& externalStyleFile);
@@ -135,6 +136,7 @@ namespace OsmAnd {
 
         bool mergeInherited();
         bool mergeInheritedRules(RulesetType type);
+        bool mergeInheritedAttributes();
 
         QMap< uint64_t, std::shared_ptr<RasterizationRule> > _pointRules;
         QMap< uint64_t, std::shared_ptr<RasterizationRule> > _lineRules;
@@ -177,6 +179,7 @@ namespace OsmAnd {
         static uint64_t encodeRuleId(uint32_t tag, uint32_t value);
 
         bool resolveValueDefinition(const QString& name, std::shared_ptr<ValueDefinition>& outDefinition);
+        bool resolveAttribute(const QString& name, std::shared_ptr<RasterizationRule>& outAttribute);
 
         static const struct _builtinValueDefinitions
         {

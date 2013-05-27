@@ -3,17 +3,19 @@
 #include <iostream>
 #include <sstream>
 
-#include <Common.h>
-#include <ObfReader.h>
-#include <Utilities.h>
-#include <Rasterizer.h>
-#include <RasterizationStyleContext.h>
-#include <RasterizationStyleEvaluator.h>
-
 #include <SkBitmap.h>
 #include <SkCanvas.h>
 #include <SkDevice.h>
 #include <SkImageEncoder.h>
+
+#include <QtCore/qmath.h>
+
+#include <Common.h>
+#include <ObfReader.h>
+#include <Utilities.h>
+#include <Rasterizer.h>
+#include <RasterizerContext.h>
+#include <RasterizationStyleEvaluator.h>
 
 OsmAnd::EyePiece::Configuration::Configuration()
     : verbose(false)
@@ -150,22 +152,7 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
         return;
     }
     style->dump();
-    OsmAnd::RasterizationStyleContext styleContext(style);
-    /*
-    //////////////////////////////////////////////////////////////////////////
-    OsmAnd::RasterizationStyleEvaluator evaluator(styleContext, OsmAnd::RasterizationStyle::RulesetType::Polygon);
-    evaluator.setStringValue(style->INPUT_TAG, "landuse");
-    evaluator.setStringValue(style->INPUT_VALUE, "wood");
-    evaluator.setIntegerValue(style->INPUT_LAYER, 1);
-    evaluator.setIntegerValue(style->INPUT_MINZOOM, 15);
-    evaluator.setIntegerValue(style->INPUT_MAXZOOM, 15);
-
-    auto ok = evaluator.evaluate();
-    evaluator.dump(false, true);
-
-    int a = 0;
-    //////////////////////////////////////////////////////////////////////////
-    */
+    
     QList< std::shared_ptr<OsmAnd::ObfReader> > obfData;
     for(auto itObf = cfg.obfs.begin(); itObf != cfg.obfs.end(); ++itObf)
     {
@@ -177,10 +164,10 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
     // Collect all map objects (this should be replaced by something like RasterizerViewport/RasterizerContext)
     QList< std::shared_ptr<OsmAnd::Model::MapObject> > mapObjects;
     OsmAnd::AreaI bbox31(
-            OsmAnd::Utilities::get31TileNumberY(cfg.bbox.top),
-            OsmAnd::Utilities::get31TileNumberX(cfg.bbox.left),
-            OsmAnd::Utilities::get31TileNumberY(cfg.bbox.bottom),
-            OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right)
+            qCeil(OsmAnd::Utilities::get31TileNumberY(cfg.bbox.top)),
+            qFloor(OsmAnd::Utilities::get31TileNumberX(cfg.bbox.left)),
+            qFloor(OsmAnd::Utilities::get31TileNumberY(cfg.bbox.bottom)),
+            qCeil(OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right))
         );
     OsmAnd::QueryFilter filter;
     filter._bbox31 = &bbox31;
@@ -218,8 +205,8 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
     SkCanvas canvas(&renderTarget);
 
     // Perform actual rendering
-    //canvas.drawColor(styleContext.getDefaultColor());
-    OsmAnd::Rasterizer::rasterize(canvas, mapObjects, styleContext, cfg.zoom, nullptr);
+    OsmAnd::RasterizerContext rasterizerContext(style);
+    OsmAnd::Rasterizer::rasterize(rasterizerContext, canvas, cfg.bbox, cfg.zoom, cfg.tileSide, mapObjects, OsmAnd::PointI(), nullptr);
 
     // Save rendered area
     if(!cfg.output.isEmpty())

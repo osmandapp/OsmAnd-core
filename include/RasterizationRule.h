@@ -40,17 +40,19 @@ namespace OsmAnd {
 
     class OSMAND_CORE_API RasterizationRule
     {
-    private:
-    protected:
-        RasterizationRule(RasterizationStyle* owner, const QHash< QString, QString >& attributes);
-
-        QList< std::shared_ptr<RasterizationStyle::ValueDefinition> > _valueDefinitionsRefs;
-        union Value
+    public:
+        union OSMAND_CORE_API Value
         {
             float asFloat;
             int32_t asInt;
             uint32_t asUInt;
         };
+
+    private:
+    protected:
+        RasterizationRule(RasterizationStyle* owner, const QHash< QString, QString >& attributes);
+
+        QList< std::shared_ptr<RasterizationStyle::ValueDefinition> > _valueDefinitionsRefs;
         QHash< QString, Value > _values;
         QList< std::shared_ptr<RasterizationRule> > _ifElseChildren;
         QList< std::shared_ptr<RasterizationRule> > _ifChildren;

@@ -4,9 +4,11 @@
 
 #include "Logging.h"
 #include "Utilities.h"
-#include "RasterizationStyleContext.h"
 #include "RasterizationStyleEvaluator.h"
 #include "ObfMapSection.h"
+#include "RasterizerContext.h"
+
+#include <SkBlurDrawLooper.h>
 
 OsmAnd::Rasterizer::Rasterizer()
 {
@@ -17,60 +19,31 @@ OsmAnd::Rasterizer::~Rasterizer()
 }
 
 bool OsmAnd::Rasterizer::rasterize(
+    RasterizerContext& context,
     SkCanvas& canvas,
-    const QList< std::shared_ptr<OsmAnd::Model::MapObject> >& objects,
-    const RasterizationStyleContext& styleContext,
+    const AreaD& area,
     uint32_t zoom,
+    uint32_t tileSidePixelLength,
+    const QList< std::shared_ptr<OsmAnd::Model::MapObject> >& objects,
+    const PointI& originOffset /*= PointI()*/,
     IQueryController* controller /*= nullptr*/)
 {
-    Context context;
-    context._paint.setAntiAlias(true);
-
-    // Fill atrributes
-    /*
-    TODO:attributes
-    req->clearState();
-	req->setIntFilter(req->props()->R_MINZOOM, rc.getZoom());
-	if (req->searchRenderingAttribute("defaultColor")) {
-		rc.setDefaultColor(req->getIntPropertyValue(req->props()->R_ATTR_COLOR_VALUE));
-	}
-	req->clearState();
-	req->setIntFilter(req->props()->R_MINZOOM, rc.getZoom());
-	if (req->searchRenderingAttribute("shadowRendering")) {
-		rc.setShadowRenderingMode(req->getIntPropertyValue(req->props()->R_ATTR_INT_VALUE));
-		rc.setShadowRenderingColor(req->getIntPropertyValue(req->props()->R_SHADOW_COLOR));
-	}
-	req->clearState();
-	req->setIntFilter(req->props()->R_MINZOOM, rc.getZoom());
-	if (req->searchRenderingAttribute("polygonMinSizeToDisplay")) {
-		rc.polygonMinSizeToDisplay = req->getIntPropertyValue(req->props()->R_ATTR_INT_VALUE);
-	}
-	req->clearState();
-	req->setIntFilter(req->props()->R_MINZOOM, rc.getZoom());
-	if (req->searchRenderingAttribute("roadDensityZoomTile")) {
-		rc.roadDensityZoomTile = req->getIntPropertyValue(req->props()->R_ATTR_INT_VALUE);
-	}
-	req->clearState();
-	req->setIntFilter(req->props()->R_MINZOOM, rc.getZoom());
-	if (req->searchRenderingAttribute("roadsDensityLimitPerTile")) {
-		rc.roadsDensityLimitPerTile = req->getIntPropertyValue(req->props()->R_ATTR_INT_VALUE);
-	}
-    */
+    context.refresh(zoom);
 
     QVector< Primitive > polygons, lines, points;
-    obtainPrimitives(context, styleContext, objects, zoom, polygons, lines, points, controller);
+    obtainPrimitives(context, objects, zoom, polygons, lines, points, controller);
 
     context._lastRenderedKey = 0;
-    rasterizePrimitives(context, canvas, styleContext, zoom, polygons, Polygons, controller);
+    rasterizePrimitives(context, canvas, zoom, polygons, Polygons, controller);
     context._lastRenderedKey = 5;
-    /*if (context._shadowRenderingMode > 1)
-        rasterizePrimitives(context, canvas, styleContext, zoom, lines, ShadowOnlyLines, controller);*/
+    if (context._shadowRenderingMode > 1)
+        rasterizePrimitives(context, canvas, zoom, lines, ShadowOnlyLines, controller);
 
     context._lastRenderedKey = 40;
-    rasterizePrimitives(context, canvas, styleContext, zoom, lines, Lines, controller);
+    rasterizePrimitives(context, canvas, zoom, lines, Lines, controller);
     context._lastRenderedKey = 60;
 
-    rasterizePrimitives(context, canvas, styleContext, zoom, points, Points, controller);
+    rasterizePrimitives(context, canvas, zoom, points, Points, controller);
     context._lastRenderedKey = 125;
     /*
     drawIconsOverCanvas(rc, canvas);
@@ -83,8 +56,7 @@ bool OsmAnd::Rasterizer::rasterize(
 }
 
 void OsmAnd::Rasterizer::obtainPrimitives(
-    Context& context,
-    const RasterizationStyleContext& styleContext,
+    RasterizerContext& context,
     const QList< std::shared_ptr<OsmAnd::Model::MapObject> >& objects,
     uint32_t zoom,
     QVector< Primitive >& polygons,
@@ -114,7 +86,8 @@ void OsmAnd::Rasterizer::obtainPrimitives(
             const auto& value = std::get<1>(type);
             auto layer = mapObject->getSimpleLayerValue();
 
-            RasterizationStyleEvaluator evaluator(styleContext, RasterizationStyle::RulesetType::Order, mapObject);
+            RasterizationStyleEvaluator evaluator(context.style, RasterizationStyle::RulesetType::Order, mapObject);
+            context.applyContext(evaluator);
             evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_TAG, tag);
             evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_VALUE, value);
             evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
@@ -192,7 +165,7 @@ void OsmAnd::Rasterizer::obtainPrimitives(
     });
 }
 
-void OsmAnd::Rasterizer::filterOutLinesByDensity( Context& context, uint32_t zoom, const QVector< Primitive >& in, QVector< Primitive >& out, IQueryController* controller )
+void OsmAnd::Rasterizer::filterOutLinesByDensity( RasterizerContext& context, uint32_t zoom, const QVector< Primitive >& in, QVector< Primitive >& out, IQueryController* controller )
 {
     if(context._roadDensityZoomTile == 0 || context._roadsDensityLimitPerTile == 0)
     {
@@ -248,7 +221,7 @@ void OsmAnd::Rasterizer::filterOutLinesByDensity( Context& context, uint32_t zoo
     }
 }
 
-void OsmAnd::Rasterizer::rasterizePrimitives( Context& context, SkCanvas& canvas, const RasterizationStyleContext& styleContext, uint32_t zoom, const QVector< Primitive >& primitives, PrimitivesType type, IQueryController* controller )
+void OsmAnd::Rasterizer::rasterizePrimitives( RasterizerContext& context, SkCanvas& canvas, uint32_t zoom, const QVector< Primitive >& primitives, PrimitivesType type, IQueryController* controller )
 {
     for(auto itPrimitive = primitives.begin(); itPrimitive != primitives.end(); ++itPrimitive)
     {
@@ -262,7 +235,7 @@ void OsmAnd::Rasterizer::rasterizePrimitives( Context& context, SkCanvas& canvas
             if (primitive.zOrder < context._polygonMinSizeToDisplay)
                 return;
             
-            rasterizePolygon(context, canvas, styleContext, zoom, primitive);
+            rasterizePolygon(context, canvas, zoom, primitive);
         }
         else if(type == Lines || type == ShadowOnlyLines)
         {
@@ -275,9 +248,8 @@ void OsmAnd::Rasterizer::rasterizePrimitives( Context& context, SkCanvas& canvas
     }
 }
 
-bool OsmAnd::Rasterizer::updatePaint( Context& context, const RasterizationStyleEvaluator& evaluator, int idx, bool isArea )
+bool OsmAnd::Rasterizer::updatePaint( RasterizerContext& context, const RasterizationStyleEvaluator& evaluator, PaintValuesSet valueSetSelector, bool isArea )
 {
-    /*
     struct ValueSet
     {
         const std::shared_ptr<RasterizationStyle::ValueDefinition>& color;
@@ -285,7 +257,7 @@ bool OsmAnd::Rasterizer::updatePaint( Context& context, const RasterizationStyle
         const std::shared_ptr<RasterizationStyle::ValueDefinition>& cap;
         const std::shared_ptr<RasterizationStyle::ValueDefinition>& pathEffect;
     };
-    static ValueSet sets[] =
+    static ValueSet valueSets[] =
     {
         {//0
             RasterizationStyle::builtinValueDefinitions.OUTPUT_COLOR,
@@ -318,6 +290,7 @@ bool OsmAnd::Rasterizer::updatePaint( Context& context, const RasterizationStyle
             RasterizationStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT_3
         },
     };
+    const ValueSet& valueSet = valueSets[static_cast<int>(valueSetSelector)];
 
     if(isArea)
     {
@@ -329,7 +302,7 @@ bool OsmAnd::Rasterizer::updatePaint( Context& context, const RasterizationStyle
     }
     else
     {
-        auto stroke = evaluator.getFloatValue(rStrokeW);
+        auto stroke = evaluator.getFloatValue(valueSet.strokeWidth);
         if (!(stroke > 0))
             return false;
 
@@ -339,8 +312,8 @@ bool OsmAnd::Rasterizer::updatePaint( Context& context, const RasterizationStyle
         context._paint.setStyle(SkPaint::kStroke_Style);
         context._paint.setStrokeWidth(stroke);
 
-        const auto& cap = evaluator.getStringValue(rCap);
-        const auto& pathEff = evaluator.getStringValue(rPathEff);
+        const auto& cap = evaluator.getStringValue(valueSet.cap);
+        const auto& pathEff = evaluator.getStringValue(valueSet.pathEffect);
         if (cap.isEmpty() || cap == "BUTT")
             context._paint.setStrokeCap(SkPaint::kButt_Cap);
         else if (cap == "ROUND")
@@ -352,8 +325,8 @@ bool OsmAnd::Rasterizer::updatePaint( Context& context, const RasterizationStyle
 
         if(!pathEff.isEmpty())
         {
-            SkPathEffect* p = getDashEffect(pathEff);
-            context._paint.setPathEffect(p);
+            /*TODO:SkPathEffect* p = getDashEffect(pathEff);
+            context._paint.setPathEffect(p);*/
         }
         else
         {
@@ -361,68 +334,70 @@ bool OsmAnd::Rasterizer::updatePaint( Context& context, const RasterizationStyle
         }
     }
 
-    auto color = evaluator.getIntegerValue(rColor);
+    auto color = evaluator.getIntegerValue(valueSet.color);
     context._paint.setColor(color);
 
-    if (ind == 0)
+    if (valueSetSelector == PaintValuesSet::Set_0)
     {
-        std::string shader = req->getStringPropertyValue(req->props()->R_SHADER);
-        if (shader.size() > 0)
+        const auto& shader = evaluator.getStringValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADER);
+        if(!shader.isEmpty())
         {
-            SkBitmap* bmp = getCachedBitmap(rc, shader);
+            /*TODO:SkBitmap* bmp = getCachedBitmap(rc, shader);
             if (bmp != NULL)
-                paint->setShader(new SkBitmapProcShader(*bmp, SkShader::kRepeat_TileMode, SkShader::kRepeat_TileMode))->unref();
+                paint->setShader(new SkBitmapProcShader(*bmp, SkShader::kRepeat_TileMode, SkShader::kRepeat_TileMode))->unref();*/
         }
     }
 
     // do not check shadow color here
-    if (rc->getShadowRenderingMode() == 1 && ind == 0)
+    if (context._shadowRenderingMode == 1 && valueSetSelector == PaintValuesSet::Set_0)
     {
-        int shadowColor = req->getIntPropertyValue(req->props()->R_SHADOW_COLOR);
-        int shadowLayer = req->getIntPropertyValue(req->props()->R_SHADOW_RADIUS);
-        if (shadowColor == 0) {
-            shadowColor = rc->getShadowRenderingColor();
-        }
-        if (shadowColor == 0)
+        auto shadowColor = evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADOW_COLOR);
+        auto shadowLayer = evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADOW_RADIUS);
+        if(shadowColor == 0)
+            shadowColor = context._shadowRenderingColor;
+        if(shadowColor == 0)
             shadowLayer = 0;
 
-        if (shadowLayer > 0)
-            paint->setLooper(new SkBlurDrawLooper(shadowLayer, 0, 0, shadowColor))->unref();
+        if(shadowLayer > 0)
+            context._paint.setLooper(new SkBlurDrawLooper(shadowLayer, 0, 0, shadowColor))->unref();
     }
-    return 1;*/
+
     return true;
 }
 
-void OsmAnd::Rasterizer::rasterizePolygon( Context& context, SkCanvas& canvas, const RasterizationStyleContext& styleContext, uint32_t zoom, const Primitive& primitive )
+void OsmAnd::Rasterizer::rasterizePolygon( RasterizerContext& context, SkCanvas& canvas, uint32_t zoom, const Primitive& primitive )
 {
     if(primitive.mapObject->_coordinates.size() <=2 )
     {
         OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rendered as polygon, but has %d vertices\n", primitive.mapObject->id, primitive.mapObject->_coordinates.size());
         return;
     }
-    /*
+    
     const auto& tagValuePair = primitive.mapObject->section->rules->decodingRules[ primitive.mapObject->_types[primitive.typeIndex] ];
     
-    RasterizationStyleEvaluator evaluator(styleContext, RasterizationStyle::RulesetType::Polygon, primitive.mapObject);
+    RasterizationStyleEvaluator evaluator(context.style, RasterizationStyle::RulesetType::Polygon, primitive.mapObject);
+    context.applyContext(evaluator);
     evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_TAG, std::get<0>(tagValuePair));
     evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_VALUE, std::get<1>(tagValuePair));
     evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
     evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MAXZOOM, zoom);
     if(!evaluator.evaluate())
         return;
-    if(!updatePaint(context, evaluator, 0, true))
+    if(!updatePaint(context, evaluator, Set_0, true))
         return;
-
+    /*
     float xText = 0;
     float yText = 0;
 
     rc->visible++;
+    */
     SkPath path;
-    int i = 0;
     bool containsPoint = false;
     int bounds = 0;
-    std::vector< std::pair<int,int > > ps;
-    for (; i < length; i++) {
+    for(auto itPoint = primitive.mapObject->_coordinates.begin(); itPoint != primitive.mapObject->_coordinates.end(); ++itPoint)
+    {
+        const auto& point = *itPoint;
+        /*
         calcPoint(mObj->points.at(i), rc);
         if (i == 0) {
             path.moveTo(rc->calcX, rc->calcY);
@@ -455,8 +430,9 @@ void OsmAnd::Rasterizer::rasterizePolygon( Context& context, SkCanvas& canvas, c
             bounds |= (rc->calcX >= rc->getWidth() ? 2 : 0);
             bounds |= (rc->calcY >= rc->getHeight()  ? 4 : 0);
             bounds |= (rc->calcY <= rc->getHeight() ? 8 : 0);
-        }
+        }*/
     }
+    /*
     xText /= length;
     yText /= length;
     if(!containsPoint){
@@ -497,14 +473,5 @@ void OsmAnd::Rasterizer::rasterizePolygon( Context& context, SkCanvas& canvas, c
         PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
     }
 
-    renderText(mObj, req, rc, pair.first, pair.second, xText, yText, NULL);
-    */
-}
-
-OsmAnd::Rasterizer::Context::Context()
-    : _shadowLevelMin(0)
-    , _shadowLevelMax(256)
-    , _roadDensityZoomTile(0)
-    , _roadsDensityLimitPerTile(0)
-{
+    renderText(mObj, req, rc, pair.first, pair.second, xText, yText, NULL);*/
 }
