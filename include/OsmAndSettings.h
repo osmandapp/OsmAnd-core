@@ -91,6 +91,9 @@ public:
 
     OsmAndPreference TARGET_LATITUDE; // float
     OsmAndPreference TARGET_LONGITUDE; // float
+
+    OsmAndPreference START_LATITUDE; // float
+    OsmAndPreference START_LONGITUDE; // float
     virtual ~OsmAndSettings(){}
 };
 

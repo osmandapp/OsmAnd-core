@@ -144,6 +144,21 @@ int OsmAndMapView::getMapYForPoint(double latitude) {
     return (int) ((tileY - getYTile()) * getTileSize() + getCenterPointY());
 }
 
+float OsmAndMapView::getRotatedMapLatForPoint(float x, float y) {
+    float dx = x - getCenterPointX();
+    float dy = y - getCenterPointY();
+    float fy = calcDiffTileY(dx, dy);
+    return OsmAnd::Utilities::getLatitudeFromTile(getZoom(), getYTile() + fy);
+}
+
+float OsmAndMapView::getRotatedMapLonForPoint(float x, float y) {
+    float dx = x - getCenterPointX();
+    float dy = y - getCenterPointY();
+    float fx = calcDiffTileX(dx, dy);
+    return OsmAnd::Utilities::getLongitudeFromTile(getZoom(), getXTile() + fx);
+}
+
+
 int OsmAndMapView::getRotatedMapXForPoint(double latitude, double longitude) {
     int cx = getCenterPointX();
     double xTile = OsmAnd::Utilities::getTileNumberX(getZoom(), longitude);

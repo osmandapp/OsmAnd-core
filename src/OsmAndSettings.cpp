@@ -27,13 +27,17 @@ OsmAndSettings::OsmAndSettings():
     MAP_SHOW_ZOOM(this, "show_zoom", 5),
 
     TARGET_LATITUDE(this, "target_lat", -360),
-    TARGET_LONGITUDE(this, "target_lon", -360)
+    TARGET_LONGITUDE(this, "target_lon", -360),
+    START_LATITUDE(this, "start_lat", -360),
+    START_LONGITUDE(this, "start_lon", -360)
 {
     APP_MODE = ApplicationMode::DEFAULT;
     APPLICATION_DIRECTORY.cache();
     MAP_SCALE.cache();
     TARGET_LATITUDE.cache();
     TARGET_LONGITUDE.cache();
+    START_LATITUDE.cache();
+    START_LONGITUDE.cache();
 
 }
 

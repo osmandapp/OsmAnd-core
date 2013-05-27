@@ -79,6 +79,10 @@ public:
 
     int getRotatedMapYForPoint(double latitude, double longitude);
 
+    float getRotatedMapLatForPoint(float x, float y);
+
+    float getRotatedMapLonForPoint(float x, float y);
+
     bool isPointOnTheRotatedMap(double latitude, double longitude);
 
     void moveTo(float dx, float dy);
