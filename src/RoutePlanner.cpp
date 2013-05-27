@@ -109,9 +109,9 @@ bool OsmAnd::RoutePlanner::findClosestRouteSegment( OsmAnd::RoutePlannerContext*
     if(!findClosestRoadPoint(context, latitude, longitude, &closestRoad, &closestPointIndex, nullptr, &rx31, &ry31))
         return false;
 
+    // will be bug if it is not inserted
     std::shared_ptr<Model::Road> clonedRoad(new Model::Road(closestRoad, closestPointIndex, rx31, ry31));
     routeSegment.reset(new RoutePlannerContext::RouteCalculationSegment(clonedRoad, closestPointIndex));
-    
     // Cache road in tiles it goes through
     cacheRoad(context, clonedRoad);
     
@@ -248,8 +248,7 @@ uint64_t OsmAnd::RoutePlanner::getRoutingTileId( RoutePlannerContext* context, u
     {
         auto subsectionContext = *itSubsectionContext;
 
-        if(subsectionContext->isLoaded())
-            continue;
+        if(subsectionContext->isLoaded())continue;
 
         loadSubregionContext(subsectionContext.get());
     }
@@ -301,9 +300,11 @@ void OsmAnd::RoutePlanner::loadTileHeader( RoutePlannerContext* context, uint32_
                 }
 
                 subsectionsContexts.push_back(*itSubsectionContext);
+
             }
         }
     }
+
 }
 
 void OsmAnd::RoutePlanner::loadSubregionContext( RoutePlannerContext::RoutingSubsectionContext* context )
@@ -1162,8 +1163,8 @@ void OsmAnd::RoutePlanner::calculateRouteSegment(
     QMap<uint64_t, std::shared_ptr<RoutePlannerContext::RouteCalculationSegment> >& oppositeSegments,
     bool forwardDirection )
 {
-    const auto initDirectionAllowed = checkIfInitialMovementAllowedOnSegment(context, reverseWaySearch, visitedSegments, segment, forwardDirection, segment->road);
-    auto directionAllowed = initDirectionAllowed;
+    const bool initDirectionAllowed = checkIfInitialMovementAllowedOnSegment(context, reverseWaySearch, visitedSegments, segment, forwardDirection, segment->road);
+    bool directionAllowed = initDirectionAllowed;
     
     // Go through all point of the way and find ways to continue
     //NOTE: ! Actually there is small bug when there is restriction to move forward on the way (it doesn't take into account)
@@ -1199,8 +1200,8 @@ void OsmAnd::RoutePlanner::calculateRouteSegment(
         const auto& point = segment->road->points[segmentEnd];
         const auto& prevPoint = segment->road->points[prevInd];
         
-        if(point == prevPoint)
-            continue;
+        // causing bugs in first route calculation
+        // if(point == prevPoint) continue;
         
         /*TODO:
         if(USE_BORDER_LINES) {
@@ -1259,7 +1260,7 @@ void OsmAnd::RoutePlanner::calculateRouteSegment(
             continue;
         
         // check if there are outgoing connections in that case we need to stop processing
-        auto outgoingConnections = false;
+        bool outgoingConnections = false;
         auto otherSegment = nextSegment;
         while(otherSegment)
         {
@@ -1640,7 +1641,7 @@ void OsmAnd::RoutePlanner::processIntersections(
         else if(!sameRoadFutureDirection)
         {
 #if TRACE_ROUTING
-            current->dump("\t!O ");
+            current->dump("\t!AlreadyVisited ");
 #endif
             // the segment was already visited! We need to follow better route if it exists
             // that is very strange situation and almost exception (it can happen when we underestimate distnceToEnd)
@@ -1665,7 +1666,7 @@ void OsmAnd::RoutePlanner::processIntersections(
 #if TRACE_ROUTING
         else
         {
-            current->dump("\t!S ");
+            current->dump("\t!Skip ");
         }
 #endif
 

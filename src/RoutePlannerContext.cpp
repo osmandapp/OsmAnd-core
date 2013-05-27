@@ -42,6 +42,7 @@ OsmAnd::RoutePlannerContext::~RoutePlannerContext()
 OsmAnd::RoutePlannerContext::RoutingSubsectionContext::RoutingSubsectionContext( RoutePlannerContext* owner, const std::shared_ptr<ObfReader>& origin, const std::shared_ptr<ObfRoutingSection::Subsection>& subsection )
     : subsection(subsection)
     , owner(owner)
+    ,_mixedLoadsCounter(0)
     , origin(origin)
 {
 }
@@ -77,7 +78,7 @@ void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::registerRoad( const 
 
 bool OsmAnd::RoutePlannerContext::RoutingSubsectionContext::isLoaded() const
 {
-    return (_mixedLoadsCounter & 0x80000000) == 0;
+    return _mixedLoadsCounter  > 0;
 }
 
 uint32_t OsmAnd::RoutePlannerContext::RoutingSubsectionContext::getLoadsCounter() const
