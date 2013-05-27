@@ -99,7 +99,7 @@ namespace OsmAnd {
         class OSMAND_CORE_API RoutingSubsectionContext
         {
         private:
-            uint64_t _mixedLoadsCounter;
+            uint32_t _mixedLoadsCounter;
         protected:
             RoutingSubsectionContext(RoutePlannerContext* owner, const std::shared_ptr<ObfReader>& origin, const std::shared_ptr<ObfRoutingSection::Subsection>& subsection);
 
@@ -161,13 +161,6 @@ namespace OsmAnd {
 
         QList< std::shared_ptr<RouteSegment> > _previouslyCalculatedRoute;
 
-        /*TODO:
-        [15:05:57] Victor Shcherb (OSMAND): можно кэшировать навсегда
-        [15:06:03] Victor Shcherb (OSMAND): я думаю он мало место занимает
-        [15:06:10] Victor Shcherb (OSMAND): зато при перерасчете
-        [15:06:15] Victor Shcherb (OSMAND): очень быстро используется
-        [15:06:43] Victor Shcherb (OSMAND): хотя если ты новую карту загрузишь, то его бы надо обновить...
-        */
         QMap< uint64_t, QList< std::shared_ptr<RoutingSubsectionContext> > > _indexedSubsectionsContexts;
         QMap< uint64_t, QList< std::shared_ptr<Model::Road> > > _cachedRoadsInTiles;
 
