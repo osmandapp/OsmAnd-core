@@ -42,11 +42,19 @@ namespace OsmAnd {
 
         class OSMAND_CORE_API MapObject
         {
+        public:
+            enum FoundationType
+            {
+                Unknown,
+                FullLand,
+                FullWater,
+            };
         private:
         protected:
             MapObject(ObfMapSection* section);
 
             uint64_t _id;
+            FoundationType _foundation;
             bool _isArea;
             QVector< PointI > _coordinates;
             QList< QVector< PointI > > _polygonInnerCoordinates;
@@ -58,6 +66,7 @@ namespace OsmAnd {
 
             ObfMapSection* const section;
             const uint64_t& id;
+            const FoundationType& foundation;
             const QMap<uint32_t, QString>& names;
 
             int getSimpleLayerValue() const;

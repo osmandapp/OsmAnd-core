@@ -147,7 +147,7 @@ void OsmAnd::RasterizerContext::initialize()
     }
 }
 
-void OsmAnd::RasterizerContext::update( const AreaD& areaGeo, uint32_t zoom, const PointF& tlOriginOffset, uint32_t tileSidePixelLength )
+bool OsmAnd::RasterizerContext::update( const AreaD& areaGeo, uint32_t zoom, const PointF& tlOriginOffset, uint32_t tileSidePixelLength )
 {
     bool evaluateAttributes = false;
     bool evaluateBounds = false;
@@ -227,6 +227,8 @@ void OsmAnd::RasterizerContext::update( const AreaD& areaGeo, uint32_t zoom, con
     _zoom = zoom;
     _areaGeo = areaGeo;
     _tileSidePixelLength = tileSidePixelLength;
+
+    return evaluateAttributes || evaluateBounds || evaluateRenderViewport;
 }
 
 void OsmAnd::RasterizerContext::applyContext( RasterizationStyleEvaluator& evaluator ) const

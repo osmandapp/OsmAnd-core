@@ -46,6 +46,8 @@ namespace OsmAnd {
 
         enum {
             MaxV = 75,
+            ZoomOnlyForBasemaps = 7,
+            BaseMapZoom = 11,
         };
     protected:
         enum PrimitiveType : uint32_t
@@ -103,7 +105,7 @@ namespace OsmAnd {
             const AreaD& area,
             uint32_t zoom,
             uint32_t tileSidePixelLength,
-            const QList< std::shared_ptr<OsmAnd::Model::MapObject> >& objects,
+            const QList< std::shared_ptr<OsmAnd::Model::MapObject> >* objects = nullptr,
             const PointF& tlOriginOffset = PointF(),
             IQueryController* controller = nullptr
             );

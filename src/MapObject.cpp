@@ -3,8 +3,11 @@
 #include "ObfMapSection.h"
 
 OsmAnd::Model::MapObject::MapObject(ObfMapSection* section_)
-    : section(section_)
+    : _id(std::numeric_limits<uint64_t>::max())
+    , _foundation(Unknown)
+    , section(section_)
     , id(_id)
+    , foundation(_foundation)
     , names(_names)
 {
 }
@@ -72,5 +75,5 @@ bool OsmAnd::Model::MapObject::containsType( const QString& tag, const QString& 
     if(!section->rules->obtainTagValueId(tag, value, type))
         return false;
 
-    return (checkAdditional ? _extraTypes : _extraTypes).contains(type);
+    return (checkAdditional ? _extraTypes : _types).contains(type);
 }

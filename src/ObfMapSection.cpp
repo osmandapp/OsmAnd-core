@@ -312,7 +312,6 @@ void OsmAnd::ObfMapSection::readMapLevelTreeNodes( ObfReader* reader, ObfMapSect
                 auto offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(length);
                 std::shared_ptr<LevelTreeNode> levelTree(new LevelTreeNode());
-                levelTree->_isOcean = false;
                 levelTree->_offset = offset;
                 levelTree->_length = length;
 
@@ -376,7 +375,8 @@ void OsmAnd::ObfMapSection::readTreeNode( ObfReader* reader, ObfMapSection* sect
             {
                 gpb::uint32 value;
                 cis->ReadVarint32(&value);
-                treeNode->_isOcean = (value != 0);
+
+                treeNode->_foundation = (value != 0) ? Model::MapObject::FoundationType::FullWater : Model::MapObject::FoundationType::FullLand;
             }
             return;
         default:
@@ -489,7 +489,10 @@ void OsmAnd::ObfMapSection::readMapObjectsBlock(
                 std::shared_ptr<OsmAnd::Model::MapObject> mapObject;
                 readMapObject(reader, section, tree, baseId, mapObject, filter);
                 if(mapObject)
+                {
+                    mapObject->_foundation = tree->_foundation;
                     intermediateResult.push_back(mapObject);
+                }
                 cis->PopLimit(oldLimit);
             }
             break;
@@ -701,6 +704,7 @@ OsmAnd::ObfMapSection::MapLevel::~MapLevel()
 
 OsmAnd::ObfMapSection::LevelTreeNode::LevelTreeNode()
     : _dataOffset(0)
+    , _foundation(Unknown)
 {
 }
 
@@ -713,6 +717,7 @@ OsmAnd::ObfMapSection::Rules::Rules()
     , _onewayAttribute(-1)
     , _onewayReverseAttribute(-1)
     , decodingRules(_decodingRules)
+    , coastlineEncodingType(_coastlineEncodingType)
 {
     _positiveLayers.reserve(2);
     _negativeLayers.reserve(2);

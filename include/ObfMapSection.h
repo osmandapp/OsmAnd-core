@@ -37,6 +37,7 @@
 
 #include <OsmAndCore.h>
 #include <ObfSection.h>
+#include <MapObject.h>
 #include <QueryFilter.h>
 #include <IQueryController.h>
 #include <Area.h>
@@ -45,10 +46,6 @@ namespace OsmAnd {
 
     class ObfReader;
     namespace gpb = google::protobuf;
-
-    namespace Model {
-        class MapObject;
-    } // namespace Model
 
     /**
     'Map' section of OsmAnd Binary File
@@ -63,7 +60,7 @@ namespace OsmAnd {
             uint32_t _offset;
             uint32_t _length;
             uint32_t _dataOffset;
-            bool _isOcean;
+            Model::MapObject::FoundationType _foundation;
             AreaI _area31;
         };
 
@@ -113,6 +110,8 @@ namespace OsmAnd {
 
             const QMap< uint32_t, DecodingRule >& decodingRules;
             bool obtainTagValueId(const QString& tag, const QString& value, uint32_t& outId) const;
+
+            const uint32_t& coastlineEncodingType;
 
         friend class OsmAnd::ObfMapSection;
         };

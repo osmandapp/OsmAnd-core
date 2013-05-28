@@ -25,13 +25,131 @@ void OsmAnd::Rasterizer::update(
     const AreaD& area,
     uint32_t zoom,
     uint32_t tileSidePixelLength,
-    const QList< std::shared_ptr<OsmAnd::Model::MapObject> >& objects,
+    const QList< std::shared_ptr<OsmAnd::Model::MapObject> >* objects /*= nullptr*/,
     const PointF& tlOriginOffset /*= PointF() */,
     IQueryController* controller /*= nullptr*/)
 {
-    context.update(area, zoom, tlOriginOffset, tileSidePixelLength);
+    bool doUpdate = false;
+    doUpdate = doUpdate || context.update(area, zoom, tlOriginOffset, tileSidePixelLength);
+    doUpdate = doUpdate || (objects != nullptr);
 
-    obtainPrimitives(context, objects, context._polygons, context._lines, context._points, controller);
+    if(!doUpdate)
+        return;
+
+    // Split input map objects to object, coastline, basemapObjects and basemapCoastline
+    context._hasBaseMap = false;
+    context._hasLand = false;
+    context._hasWater = false;
+    context._mapObjects.clear();
+    context._coastline.clear();
+    context._basemapMapObjects.clear();
+    context._basemapCoastline.clear();
+    for(auto itMapObject = objects->begin(); itMapObject != objects->end(); ++itMapObject)
+    {
+        if(controller && controller->isAborted())
+            return;
+
+        const auto& mapObject = *itMapObject;
+
+        context._hasLand = context._hasLand || mapObject->foundation == Model::MapObject::FullLand;
+        context._hasWater = context._hasWater || mapObject->foundation == Model::MapObject::FullWater;
+        context._hasBaseMap = context._hasBaseMap || mapObject->section->isBaseMap;
+        if(zoom < ZoomOnlyForBasemaps && !mapObject->section->isBaseMap)
+            continue;
+
+        if(mapObject->_types.contains(mapObject->section->rules->coastlineEncodingType))
+        {
+            if (mapObject->section->isBaseMap)
+                context._basemapCoastline.push_back(mapObject);
+            else
+                context._coastline.push_back(mapObject);
+        }
+        else
+        {
+            if (mapObject->section->isBaseMap)
+                context._basemapMapObjects.push_back(mapObject);
+            else
+                context._mapObjects.push_back(mapObject);
+        }
+    }
+
+/*
+    if (renderRouteDataFile >= 0 && q->zoom >= zoomOnlyForBasemaps) {
+        IDS_SET ids;
+        map<std::string, BinaryMapFile*>::iterator i = openFiles.begin();
+        for (; i != openFiles.end() && !q->publisher->isCancelled(); i++) {
+            BinaryMapFile* file = i->second;
+            if (q->req != NULL) {
+                q->req->clearState();
+            }
+            q->publisher->result.clear();
+            readRouteDataAsMapObjects(q, file, tempResult, skipDuplicates, ids);
+        }
+        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Route objects %d", tempResult.size());
+    }
+*/
+    if(controller && controller->isAborted())
+    {
+        context._mapObjects.clear();
+        context._coastline.clear();
+        context._basemapMapObjects.clear();
+        context._basemapCoastline.clear();
+        return;
+    }
+    /*
+    bool addBasemapCoastlines = true;
+    bool emptyData = q->zoom > BASEMAP_ZOOM && tempResult.empty() && coastLines.empty();
+    // determine if there are enough objects like land/lake..
+    bool basemapMissing = q->zoom <= BASEMAP_ZOOM && basemapCoastLines.empty() && !basemapExists;
+    bool detailedLandData = q->zoom >= 14 && tempResult.size() > 0 && renderRouteDataFile < 0;
+    if (!coastLines.empty()) {
+        bool coastlinesWereAdded = processCoastlines(coastLines, q->left, q->right, q->bottom, q->top, q->zoom,
+            basemapCoastLines.empty(), true, tempResult);
+        addBasemapCoastlines = (!coastlinesWereAdded && !detailedLandData) || q->zoom <= BASEMAP_ZOOM;
+    } else {
+        addBasemapCoastlines = !detailedLandData;
+    }
+    if (addBasemapCoastlines) {
+        addBasemapCoastlines = false;
+        bool coastlinesWereAdded = processCoastlines(basemapCoastLines, q->left, q->right, q->bottom, q->top, q->zoom,
+            true, true, tempResult);
+        addBasemapCoastlines = !coastlinesWereAdded;
+    }
+    // processCoastlines always create new objects
+    deleteObjects(basemapCoastLines);
+    deleteObjects(coastLines);
+    if (addBasemapCoastlines)
+    {
+        std::shared_ptr<Model::MapObject> bgMapObject(new Model::MapObject(nullptr));
+        bgMapObject->_coordinates.push_back(int_pair(q->left, q->top));
+        bgMapObject->_coordinates.push_back(int_pair(q->right, q->top));
+        bgMapObject->_coordinates.push_back(int_pair(q->right, q->bottom));
+        bgMapObject->_coordinates.push_back(int_pair(q->left, q->bottom));
+        bgMapObject->_coordinates.push_back(bgMapObject->_coordinates.first());
+        if (context._hasWater && !context._hasLand)
+            bgMapObject->_types.push_back(tag_value("natural", "coastline"));
+        else
+            bgMapObject->_types.push_back(tag_value("natural", "land"));
+        tempResult.push_back(o);
+    }
+    if (emptyData || basemapMissing) {
+        // message
+        // avoid overflow int errors
+        MapDataObject* o = new MapDataObject();
+        o->points.push_back(int_pair(q->left + (q->right - q->left) / 2, q->top + (q->bottom - q->top) / 2));
+        o->types.push_back(tag_value("natural", "coastline"));
+        o->objectNames["name"] = msgNothingFound;
+        tempResult.push_back(o);
+    }
+    if (q->zoom <= BASEMAP_ZOOM || emptyData || (renderRouteDataFile >= 0 && q->zoom < 15)) {
+        tempResult.insert(tempResult.end(), basemapResult.begin(), basemapResult.end());
+    } else {
+        deleteObjects(basemapResult);
+    }
+    q->publisher->result.clear();
+    q->publisher->publish(tempResult);
+    */
+    obtainPrimitives(context, *objects, context._polygons, context._lines, context._points, controller);
 }
 
 bool OsmAnd::Rasterizer::rasterizeMap(
