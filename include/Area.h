@@ -74,12 +74,12 @@ namespace OsmAnd {
 
         bool operator== (const PointT& r) const
         {
-            return x == r.x && y == r.y;
+            return equal(x, r.x) && equal(y, r.y);
         }
 
         bool operator!= (const PointT& r) const
         {
-            return x != r.x || y != r.y;
+            return !equal(x, r.x) || !equal(y, r.y);
         }
 
         PointT& operator=(const PointT& that)
@@ -90,6 +90,22 @@ namespace OsmAnd {
                 y = that.y;
             }
             return *this;
+        }
+
+    private:
+        static inline bool equal(const double& a, const double& b)
+        {
+            return qFuzzyCompare(a, b);
+        }
+
+        static inline bool equal(const float& a, const float& b)
+        {
+            return qFuzzyCompare(a, b);
+        }
+
+        static inline bool equal(const uint32_t& a, const uint32_t& b)
+        {
+            return a == b;
         }
     };
 
@@ -158,6 +174,16 @@ namespace OsmAnd {
                 bottomRight = that.bottomRight;
             }
             return *this;
+        }
+
+        bool operator== (const AreaT& r) const
+        {
+            return topLeft == r.topLeft && bottomRight == r.bottomRight;
+        }
+
+        bool operator!= (const AreaT& r) const
+        {
+            return topLeft != r.topLeft || bottomRight != r.bottomRight;
         }
 
         bool contains(const T& x, const T& y) const

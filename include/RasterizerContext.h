@@ -34,6 +34,7 @@
 #include <OsmAndCore.h>
 #include <RasterizationStyle.h>
 #include <RasterizationRule.h>
+#include <Rasterizer.h>
 #include <Area.h>
 
 namespace OsmAnd {
@@ -53,11 +54,11 @@ namespace OsmAnd {
         uint32_t _tileSidePixelLength;
         double _tileWidth;
         double _tileHeight;
-        AreaI _viewport;
+        AreaF _viewport;
+        QVector< Rasterizer::Primitive > _polygons, _lines, _points;
 
         SkPaint _paint;
         uint32_t _defaultColor;
-        uint32_t _lastRenderedKey;
         uint32_t _shadowLevelMin;
         uint32_t _shadowLevelMax;
         double _polygonMinSizeToDisplay;
@@ -79,7 +80,7 @@ namespace OsmAnd {
         static void initializeOneWayPaint(SkPaint& paint);
 
         void initialize();
-        void refresh(const AreaD& areaGeo, uint32_t zoom, const PointI& tlOriginOffset, uint32_t tileSidePixelLength);
+        void update(const AreaD& areaGeo, uint32_t zoom, const PointF& tlOriginOffset, uint32_t tileSidePixelLength);
 
         QHash< QString, SkPathEffect* > _pathEffects;
         SkPathEffect* obtainPathEffect(const QString& pathEffect);

@@ -147,7 +147,7 @@ void OsmAnd::RasterizerContext::initialize()
     }
 }
 
-void OsmAnd::RasterizerContext::refresh( const AreaD& areaGeo, uint32_t zoom, const PointI& tlOriginOffset, uint32_t tileSidePixelLength )
+void OsmAnd::RasterizerContext::update( const AreaD& areaGeo, uint32_t zoom, const PointF& tlOriginOffset, uint32_t tileSidePixelLength )
 {
     _areaGeo = areaGeo;
     if(_zoom != zoom)

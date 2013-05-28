@@ -61,7 +61,7 @@ namespace OsmAnd {
             const QMap<uint32_t, QString>& names;
 
             int getSimpleLayerValue() const;
-            bool isClosedFigure() const;
+            bool isClosedFigure(bool checkInner = false) const;
 
             bool containsType(const QString& tag, const QString& value, bool checkAdditional = false) const;
 

@@ -73,6 +73,8 @@ namespace OsmAnd {
         OSMAND_CORE_API int OSMAND_CORE_CALL javaDoubleCompare(double l, double r);
         OSMAND_CORE_API void OSMAND_CORE_CALL findFiles(const QDir& origin, const QStringList& masks, QList< std::shared_ptr<QFile> >& files, bool recursively = true);
         OSMAND_CORE_API double OSMAND_CORE_CALL polygonArea(const QVector<PointI>& points);
+        OSMAND_CORE_API float OSMAND_CORE_CALL rayIntersectX(const PointF& v0, const PointF& v1, float mY);
+        OSMAND_CORE_API bool OSMAND_CORE_CALL rayIntersect(const PointF& v0, const PointF& v1, const PointF& v);
     } // namespace Utilities
 
 } // namespace OsmAnd

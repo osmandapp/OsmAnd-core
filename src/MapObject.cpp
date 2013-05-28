@@ -54,9 +54,16 @@ int OsmAnd::Model::MapObject::getSimpleLayerValue() const
     return 0;
 }
 
-bool OsmAnd::Model::MapObject::isClosedFigure() const
+bool OsmAnd::Model::MapObject::isClosedFigure(bool checkInner /*= false*/) const
 {
-    return _coordinates.first() == _coordinates.last();
+    if(checkInner)
+    {
+        if(_polygonInnerCoordinates.isEmpty())
+            return true;
+        return _polygonInnerCoordinates.first() == _polygonInnerCoordinates.last();
+    }
+    else
+        return _coordinates.first() == _coordinates.last();
 }
 
 bool OsmAnd::Model::MapObject::containsType( const QString& tag, const QString& value, bool checkAdditional /*= false*/ ) const

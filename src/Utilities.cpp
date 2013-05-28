@@ -133,7 +133,7 @@ OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::parseSpeed( const QSt
 {
     if(value == "none")
         return std::numeric_limits<double>::max();
-    
+
     int first, last;
     if(!extractFirstNumberPosition(value, first, last, false, true))
         return defValue;
@@ -362,7 +362,7 @@ OSMAND_CORE_API  int OSMAND_CORE_CALL OsmAnd::Utilities::javaDoubleCompare( doub
     const auto rPos = (ri64 >> 63) == 0;
     const auto lZero = (li64 << 1) == 0;
     const auto rZero = (ri64 << 1) == 0;
-    
+
     // NaN is considered by this method to be equal to itself and greater than all other double values (including +inf).
     if(lNaN && rNaN)
         return 0;
@@ -379,7 +379,7 @@ OSMAND_CORE_API  int OSMAND_CORE_CALL OsmAnd::Utilities::javaDoubleCompare( doub
         if(!lPos && rPos)
             return +1;
     }
-    
+
     // All other cases
     return qCeil(l) - qCeil(r);
 }
@@ -411,4 +411,41 @@ OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::polygonArea( const QV
         j = i;
     }
     return qAbs(area) * 0.5;
+}
+
+OSMAND_CORE_API float OSMAND_CORE_CALL OsmAnd::Utilities::rayIntersectX( const PointF& v0_, const PointF& v1_, float mY )
+{
+    // prev node above line
+    // x,y node below line
+
+    const auto& v0 = (v0_.y > v1_.y) ? v1_ : v0_;
+    const auto& v1 = (v0_.y > v1_.y) ? v0_ : v1_;
+
+    if(qFuzzyCompare(v1.y, mY) || qFuzzyCompare(v0.y, mY))
+        mY -= 1.0f;
+
+    if(v0.y > mY || v1.y < mY)
+        return std::numeric_limits<float>::quiet_NaN();
+
+    if(v1 == v0)
+    {
+        // the node on the boundary !!!
+        return v1.x;
+    }
+
+    // that tested on all cases (left/right)
+    auto rx = v1.x + (mY - v1.y) * (v1.x - v0.x) / (v1.y - v0.y);
+    return rx;
+}
+
+OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::Utilities::rayIntersect( const PointF& v0, const PointF& v1, const PointF& v )
+{
+    auto t = rayIntersectX(v0, v1, v.y);
+    if(qIsNaN(t))
+        return false;
+
+    if(t < v.x)
+        return true;
+
+    return false;
 }

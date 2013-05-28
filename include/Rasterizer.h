@@ -78,9 +78,8 @@ namespace OsmAnd {
             Polygons,
             Lines,
             ShadowOnlyLines,
-            Points
         };
-        static void rasterizePrimitives(RasterizerContext& context, SkCanvas& canvas, const QVector< Primitive >& primitives, PrimitivesType type, IQueryController* controller);
+        static void rasterizeMapPrimitives(RasterizerContext& context, SkCanvas& canvas, const QVector< Primitive >& primitives, PrimitivesType type, IQueryController* controller);
         enum PaintValuesSet : int
         {
             Set_0 = 0,
@@ -94,21 +93,27 @@ namespace OsmAnd {
         static void rasterizeLine(RasterizerContext& context, SkCanvas& canvas, const Primitive& primitive, bool drawOnlyShadow);
         static void rasterizeLineShadow(RasterizerContext& context, SkCanvas& canvas, const SkPath& path, uint32_t shadowColor, int shadowRadius);
         static void rasterizeLine_OneWay( RasterizerContext& context, SkCanvas& canvas, const SkPath& path, int oneway );
-        static void rasterizePoint(RasterizerContext& context, SkCanvas& canvas, const Primitive& primitive);
         static void calculateVertex(RasterizerContext& context, const PointI& point, PointF& vertex);
+        static bool contains(const QVector< PointF >& vertices, const PointF& other);
     public:
         virtual ~Rasterizer();
 
-        static bool rasterize(
+        static void update(
             RasterizerContext& context,
-            bool fillBackground,
-            SkCanvas& canvas,
             const AreaD& area,
             uint32_t zoom,
             uint32_t tileSidePixelLength,
             const QList< std::shared_ptr<OsmAnd::Model::MapObject> >& objects,
-            const PointI& tlOriginOffset = PointI(),
+            const PointF& tlOriginOffset = PointF(),
+            IQueryController* controller = nullptr
+            );
+        static bool rasterizeMap(
+            RasterizerContext& context,
+            bool fillBackground,
+            SkCanvas& canvas,
             IQueryController* controller = nullptr);
+
+        friend class OsmAnd::RasterizerContext;
     };
 
 } // namespace OsmAnd
