@@ -704,7 +704,7 @@ OsmAnd::ObfMapSection::MapLevel::~MapLevel()
 
 OsmAnd::ObfMapSection::LevelTreeNode::LevelTreeNode()
     : _dataOffset(0)
-    , _foundation(Unknown)
+    , _foundation(Model::MapObject::Unknown)
 {
 }
 

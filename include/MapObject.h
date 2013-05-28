@@ -47,7 +47,7 @@ namespace OsmAnd {
             {
                 Unknown,
                 FullLand,
-                FullWater,
+                FullWater
             };
         private:
         protected:

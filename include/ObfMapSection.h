@@ -57,6 +57,7 @@ namespace OsmAnd {
         {
             LevelTreeNode();
 
+            bool _isOcean;
             uint32_t _offset;
             uint32_t _length;
             uint32_t _dataOffset;
