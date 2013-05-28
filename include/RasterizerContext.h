@@ -52,9 +52,8 @@ namespace OsmAnd {
         uint32_t _zoom;
         double _tileDivisor;
         uint32_t _tileSidePixelLength;
-        double _tileWidth;
-        double _tileHeight;
-        AreaF _viewport;
+        PointF _tlOriginOffset;
+        AreaF _renderViewport;
         QVector< Rasterizer::Primitive > _polygons, _lines, _points;
 
         SkPaint _paint;

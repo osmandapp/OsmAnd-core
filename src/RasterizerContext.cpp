@@ -149,10 +149,18 @@ void OsmAnd::RasterizerContext::initialize()
 
 void OsmAnd::RasterizerContext::update( const AreaD& areaGeo, uint32_t zoom, const PointF& tlOriginOffset, uint32_t tileSidePixelLength )
 {
-    _areaGeo = areaGeo;
-    if(_zoom != zoom)
+    bool evaluateAttributes = false;
+    bool evaluateBounds = false;
+    bool evaluateRenderViewport = false;
+    evaluateAttributes = evaluateAttributes || (_zoom != zoom);
+    evaluateBounds = evaluateBounds || (_areaGeo != areaGeo);
+    evaluateBounds = evaluateBounds || (_zoom != zoom);
+    evaluateRenderViewport = evaluateRenderViewport || evaluateBounds;
+    evaluateRenderViewport = evaluateRenderViewport || (_tileSidePixelLength != tileSidePixelLength);
+    evaluateRenderViewport = evaluateRenderViewport || (_tlOriginOffset != tlOriginOffset);
+
+    if(evaluateAttributes)
     {
-        _zoom = zoom;
         _tileDivisor = Utilities::getPowZoom(31 - zoom);
         if(attributeRule_defaultColor)
         {
@@ -198,19 +206,27 @@ void OsmAnd::RasterizerContext::update( const AreaD& areaGeo, uint32_t zoom, con
                 _roadsDensityLimitPerTile = evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_ATTR_INT_VALUE);
         }
     }
+
+    if(evaluateBounds)
+    {
+        _areaTileD.right = Utilities::getTileNumberX(zoom, areaGeo.right);
+        _areaTileD.left = Utilities::getTileNumberX(zoom, areaGeo.left);
+        _areaTileD.top = Utilities::getTileNumberY(zoom, areaGeo.top);
+        _areaTileD.bottom = Utilities::getTileNumberY(zoom, areaGeo.bottom);
+    }
+
+    if(evaluateRenderViewport)
+    {
+        const auto pixelWidth = static_cast<int32_t>(_areaTileD.width() * tileSidePixelLength);
+        const auto pixelHeight = static_cast<int32_t>(_areaTileD.height() * tileSidePixelLength);
+        _renderViewport.topLeft = tlOriginOffset;
+        _renderViewport.bottomRight.x = tlOriginOffset.x + pixelWidth;
+        _renderViewport.bottomRight.y = pixelHeight - tlOriginOffset.x;
+    }
+
+    _zoom = zoom;
+    _areaGeo = areaGeo;
     _tileSidePixelLength = tileSidePixelLength;
-    _areaTileD.right = Utilities::getTileNumberX(zoom, areaGeo.right);
-    _areaTileD.left = Utilities::getTileNumberX(zoom, areaGeo.left);
-    _areaTileD.top = Utilities::getTileNumberY(zoom, areaGeo.top);
-    _areaTileD.bottom = Utilities::getTileNumberY(zoom, areaGeo.bottom);
-    _tileWidth = _areaTileD.right - _areaTileD.left;
-    _tileHeight = _areaTileD.bottom - _areaTileD.top;
-    const auto pixelWidth = static_cast<int32_t>(_tileWidth * tileSidePixelLength);
-    const auto pixelHeight = static_cast<int32_t>(_tileHeight * tileSidePixelLength);
-    _viewport.topLeft = tlOriginOffset;
-    _viewport.bottomRight = tlOriginOffset;
-    _viewport.bottomRight.x += pixelWidth;
-    _viewport.bottomRight.y = pixelHeight - tlOriginOffset.x;
 }
 
 void OsmAnd::RasterizerContext::applyContext( RasterizationStyleEvaluator& evaluator ) const

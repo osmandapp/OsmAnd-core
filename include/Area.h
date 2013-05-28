@@ -215,6 +215,16 @@ namespace OsmAnd {
         {
             return !(a.right < left || a.left > right || a.top > bottom || a.bottom < top);
         }
+
+        T width() const
+        {
+            return left > right ? left - right : right - left;
+        }
+
+        T height() const
+        {
+            return top > bottom ? top - bottom : bottom - top;
+        }
     };
 
     typedef Point<double> PointD;

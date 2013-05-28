@@ -42,7 +42,7 @@ bool OsmAnd::Rasterizer::rasterizeMap(
 {
     context._paint.setColor(context._defaultColor);
     if(fillBackground)
-        canvas.drawRectCoords(context._viewport.top, context._viewport.left, context._viewport.right, context._viewport.bottom, context._paint);
+        canvas.drawRectCoords(context._renderViewport.top, context._renderViewport.left, context._renderViewport.right, context._renderViewport.bottom, context._paint);
 
     rasterizeMapPrimitives(context, canvas, context._polygons, Polygons, controller);
 
@@ -261,28 +261,28 @@ bool OsmAnd::Rasterizer::updatePaint( RasterizerContext& context, const Rasteriz
         },
         {//1
             RasterizationStyle::builtinValueDefinitions.OUTPUT_COLOR_2,
-                RasterizationStyle::builtinValueDefinitions.OUTPUT_STROKE_WIDTH_2,
-                RasterizationStyle::builtinValueDefinitions.OUTPUT_CAP_2,
-                RasterizationStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT_2
-            },
-            {//-1
-                RasterizationStyle::builtinValueDefinitions.OUTPUT_COLOR_0,
-                    RasterizationStyle::builtinValueDefinitions.OUTPUT_STROKE_WIDTH_0,
-                    RasterizationStyle::builtinValueDefinitions.OUTPUT_CAP_0,
-                    RasterizationStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT_0
-            },
-            {//-2
-                RasterizationStyle::builtinValueDefinitions.OUTPUT_COLOR__1,
-                    RasterizationStyle::builtinValueDefinitions.OUTPUT_STROKE_WIDTH__1,
-                    RasterizationStyle::builtinValueDefinitions.OUTPUT_CAP__1,
-                    RasterizationStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT__1
-                },
-                {//else
-                    RasterizationStyle::builtinValueDefinitions.OUTPUT_COLOR_3,
-                        RasterizationStyle::builtinValueDefinitions.OUTPUT_STROKE_WIDTH_3,
-                        RasterizationStyle::builtinValueDefinitions.OUTPUT_CAP_3,
-                        RasterizationStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT_3
-                },
+            RasterizationStyle::builtinValueDefinitions.OUTPUT_STROKE_WIDTH_2,
+            RasterizationStyle::builtinValueDefinitions.OUTPUT_CAP_2,
+            RasterizationStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT_2
+        },
+        {//-1
+            RasterizationStyle::builtinValueDefinitions.OUTPUT_COLOR_0,
+                RasterizationStyle::builtinValueDefinitions.OUTPUT_STROKE_WIDTH_0,
+                RasterizationStyle::builtinValueDefinitions.OUTPUT_CAP_0,
+                RasterizationStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT_0
+        },
+        {//-2
+            RasterizationStyle::builtinValueDefinitions.OUTPUT_COLOR__1,
+                RasterizationStyle::builtinValueDefinitions.OUTPUT_STROKE_WIDTH__1,
+                RasterizationStyle::builtinValueDefinitions.OUTPUT_CAP__1,
+                RasterizationStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT__1
+        },
+        {//else
+            RasterizationStyle::builtinValueDefinitions.OUTPUT_COLOR_3,
+            RasterizationStyle::builtinValueDefinitions.OUTPUT_STROKE_WIDTH_3,
+            RasterizationStyle::builtinValueDefinitions.OUTPUT_CAP_3,
+            RasterizationStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT_3
+        },
     };
     const ValueSet& valueSet = valueSets[static_cast<int>(valueSetSelector)];
 
@@ -415,7 +415,7 @@ void OsmAnd::Rasterizer::rasterizePolygon( RasterizerContext& context, SkCanvas&
 
         if (!containsPoint)
         {
-            if(vertex.x >= context._viewport.left && vertex.y >= context._viewport.top && vertex.x < context._viewport.right && vertex.y < context._viewport.bottom)
+            if(context._renderViewport.contains(vertex))
             {
                 containsPoint = true;
             }
@@ -423,10 +423,10 @@ void OsmAnd::Rasterizer::rasterizePolygon( RasterizerContext& context, SkCanvas&
             {
                 outsideBounds.push_back(vertex);
             }
-            bounds |= (vertex.x < context._viewport.left ? 1 : 0);
-            bounds |= (vertex.x > context._viewport.right ? 2 : 0);
-            bounds |= (vertex.y < context._viewport.top ? 4 : 0);
-            bounds |= (vertex.y > context._viewport.bottom ? 8 : 0);
+            bounds |= (vertex.x < context._renderViewport.left ? 1 : 0);
+            bounds |= (vertex.x > context._renderViewport.right ? 2 : 0);
+            bounds |= (vertex.y < context._renderViewport.top ? 4 : 0);
+            bounds |= (vertex.y > context._renderViewport.bottom ? 8 : 0);
         }
     }
 
@@ -437,10 +437,10 @@ void OsmAnd::Rasterizer::rasterizePolygon( RasterizerContext& context, SkCanvas&
             return;
 
         bool ok = true;
-        ok = ok || contains(outsideBounds, context._viewport.topLeft);
-        ok = ok || contains(outsideBounds, context._viewport.bottomRight);
-        ok = ok || contains(outsideBounds, PointF(0, context._viewport.bottom));
-        ok = ok || contains(outsideBounds, PointF(context._viewport.right, 0));
+        ok = ok || contains(outsideBounds, context._renderViewport.topLeft);
+        ok = ok || contains(outsideBounds, context._renderViewport.bottomRight);
+        ok = ok || contains(outsideBounds, PointF(0, context._renderViewport.bottom));
+        ok = ok || contains(outsideBounds, PointF(context._renderViewport.right, 0));
         if(!ok)
             return;
     }
@@ -540,17 +540,17 @@ void OsmAnd::Rasterizer::rasterizeLine( RasterizerContext& context, SkCanvas& ca
 
         if (!intersect)
         {
-            if(vertex.x >= context._viewport.left && vertex.y >= context._viewport.top && vertex.x < context._viewport.right && vertex.y < context._viewport.bottom)
+            if(context._renderViewport.contains(vertex))
             {
                 intersect = true;
             }
             else
             {
                 int cross = 0;
-                cross |= (vertex.x < context._viewport.left ? 1 : 0);
-                cross |= (vertex.x > context._viewport.right ? 2 : 0);
-                cross |= (vertex.y < context._viewport.top ? 4 : 0);
-                cross |= (vertex.y > context._viewport.bottom ? 8 : 0);
+                cross |= (vertex.x < context._renderViewport.left ? 1 : 0);
+                cross |= (vertex.x > context._renderViewport.right ? 2 : 0);
+                cross |= (vertex.y < context._renderViewport.top ? 4 : 0);
+                cross |= (vertex.y > context._renderViewport.bottom ? 8 : 0);
                 if(pointIdx > 0)
                 {
                     if((prevCross & cross) == 0)
@@ -646,8 +646,8 @@ void OsmAnd::Rasterizer::rasterizeLine_OneWay( RasterizerContext& context, SkCan
 
 void OsmAnd::Rasterizer::calculateVertex( RasterizerContext& context, const PointI& point, PointF& vertex )
 {
-    vertex.x = ((point.x / context._tileDivisor) - context._areaTileD.left) * context._tileSidePixelLength + context._viewport.left;
-    vertex.y = ((point.y / context._tileDivisor) - context._areaTileD.top) * context._tileSidePixelLength + context._viewport.top;
+    vertex.x = ((point.x / context._tileDivisor) - context._areaTileD.left) * context._tileSidePixelLength + context._renderViewport.left;
+    vertex.y = ((point.y / context._tileDivisor) - context._areaTileD.top) * context._tileSidePixelLength + context._renderViewport.top;
 }
 
 bool OsmAnd::Rasterizer::contains( const QVector< PointF >& vertices, const PointF& other )
