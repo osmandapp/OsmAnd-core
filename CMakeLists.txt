@@ -16,6 +16,7 @@ include_directories(AFTER SYSTEM
 	"${OSMAND_ROOT}/core/externals/protobuf/upstream.patched/src"
 	"${OSMAND_ROOT}/core/include"
 	"${OSMAND_ROOT}/core/src"
+        "${OSMAND_ROOT}/core/client"
 	"${OSMAND_ROOT}/core/protos"
 	"${OSMAND_ROOT}/core/native/include"
 	"${OSMAND_ROOT}/core/native/src"
@@ -60,10 +61,14 @@ endif()
 file(GLOB_RECURSE sources "src/*.c*")
 file(GLOB_RECURSE headers "src/*.h*")
 file(GLOB_RECURSE includes "include/*.h*")
+file(GLOB_RECURSE sources_client "client/*.c*")
+file(GLOB_RECURSE headers_client "client/*.h*")
 add_library(OsmAndCore SHARED
 	${includes}
 	${headers}
-	${sources}
+        ${sources}
+        ${sources_client}
+        ${headers_client}
 	${pd_sources}
 	"protos/OBF.pb.h"
 

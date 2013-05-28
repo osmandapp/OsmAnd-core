@@ -84,6 +84,7 @@ class OSMAND_CORE_API OsmAndSettings : public OsmAndSettingsBase {
 public:
     OsmAndSettings();
     OsmAndPreference APPLICATION_DIRECTORY; // string
+    OsmAndPreference TILE_SOURCE; // string (empty string offline)
     OsmAndPreference MAP_SCALE; // float
     OsmAndPreference MAP_SHOW_LATITUDE; // float
     OsmAndPreference MAP_SHOW_LONGITUDE; // float

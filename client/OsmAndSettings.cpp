@@ -21,6 +21,7 @@ QList<AppMode> ApplicationMode::getApplicationModes() {
 
 OsmAndSettings::OsmAndSettings():
     APPLICATION_DIRECTORY(this, "application_directory", QString("")),
+    TILE_SOURCE(this, "tile_source", QString("")),
     MAP_SCALE(this, "map_scale", 1.0),
     MAP_SHOW_LATITUDE(this, "show_lat", 0),
     MAP_SHOW_LONGITUDE(this, "show_lon", 0),
@@ -34,6 +35,7 @@ OsmAndSettings::OsmAndSettings():
     APP_MODE = ApplicationMode::DEFAULT;
     APPLICATION_DIRECTORY.cache();
     MAP_SCALE.cache();
+    TILE_SOURCE.cache();
     TARGET_LATITUDE.cache();
     TARGET_LONGITUDE.cache();
     START_LATITUDE.cache();
