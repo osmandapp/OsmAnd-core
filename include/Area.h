@@ -25,6 +25,8 @@
 
 #include <stdint.h>
 
+#include <QtGlobal>
+
 #include <OsmAndCore.h>
 
 namespace OsmAnd {
