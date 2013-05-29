@@ -24,6 +24,7 @@
 #define __MODEL_MAP_OBJECT_H_
 
 #include <stdint.h>
+#include <tuple>
 
 #include <QList>
 #include <QMap>
@@ -58,9 +59,9 @@ namespace OsmAnd {
             bool _isArea;
             QVector< PointI > _coordinates;
             QList< QVector< PointI > > _polygonInnerCoordinates;
-            QList<uint32_t> _types;
-            QList<uint32_t> _extraTypes;
-            QMap<uint32_t, QString> _names;
+            QVector< std::tuple< QString, QString > > _types;
+            QVector< std::tuple< QString, QString > > _extraTypes;
+            QMap< uint32_t, QString > _names;
         public:
             virtual ~MapObject();
 

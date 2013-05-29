@@ -207,7 +207,7 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
 
     // Perform actual rendering
     OsmAnd::RasterizerContext rasterizerContext(style);
-    OsmAnd::Rasterizer::update(rasterizerContext, cfg.bbox, cfg.zoom, cfg.tileSide, mapObjects, OsmAnd::PointF(), nullptr);
+    OsmAnd::Rasterizer::update(rasterizerContext, cfg.bbox, cfg.zoom, cfg.tileSide, &mapObjects, OsmAnd::PointF(), nullptr);
     OsmAnd::Rasterizer::rasterizeMap(rasterizerContext, true, canvas, nullptr);
 
     // Save rendered area

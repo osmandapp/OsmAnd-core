@@ -22,9 +22,7 @@ int OsmAnd::Model::MapObject::getSimpleLayerValue() const
     auto isBridge = false;
     for(auto itType = _extraTypes.begin(); itType != _extraTypes.end(); ++itType)
     {
-        auto typeId = *itType;
-        const auto& type = section->rules->decodingRules[typeId];
-
+        const auto& type = *itType;
         const auto& key = std::get<0>(type);
         const auto& value = std::get<1>(type);
 
@@ -71,9 +69,12 @@ bool OsmAnd::Model::MapObject::isClosedFigure(bool checkInner /*= false*/) const
 
 bool OsmAnd::Model::MapObject::containsType( const QString& tag, const QString& value, bool checkAdditional /*= false*/ ) const
 {
-    uint32_t type;
-    if(!section->rules->obtainTagValueId(tag, value, type))
-        return false;
-
-    return (checkAdditional ? _extraTypes : _types).contains(type);
+    const auto& types = (checkAdditional ? _extraTypes : _types);
+    for(auto itType = types.begin(); itType != types.end(); ++itType)
+    {
+        const auto& type = *itType;
+        if(std::get<0>(type) == tag && std::get<1>(type) == value)
+            return true;
+    }
+    return false;
 }

@@ -65,7 +65,24 @@ namespace OsmAnd {
             AreaI _area31;
         };
 
-        typedef std::tuple<QString, QString, uint32_t> DecodingRule;
+        struct Rules
+        {
+            typedef std::tuple<QString, QString, uint32_t> DecodingRule;
+
+            Rules();
+
+            QHash< QString, QHash<QString, uint32_t> > _encodingRules;
+            QMap< uint32_t, DecodingRule > _decodingRules;
+            uint32_t _nameEncodingType;
+            uint32_t _refEncodingType;
+            uint32_t _coastlineEncodingType;
+            uint32_t _coastlineBrokenEncodingType;
+            uint32_t _landEncodingType;
+            uint32_t _onewayAttribute;
+            uint32_t _onewayReverseAttribute;
+            QSet<uint32_t> _positiveLayers;
+            QSet<uint32_t> _negativeLayers;
+        };
     public:
         class OSMAND_CORE_API MapLevel
         {
@@ -87,34 +104,6 @@ namespace OsmAnd {
             const AreaI& area31;
 
             friend class OsmAnd::ObfMapSection;
-        };
-
-        class OSMAND_CORE_API Rules
-        {
-        private:
-        protected:
-            Rules();
-
-            QHash< QString, QHash<QString, uint32_t> > _encodingRules;
-            QMap< uint32_t, DecodingRule > _decodingRules;
-            uint32_t _nameEncodingType;
-            uint32_t _refEncodingType;
-            uint32_t _coastlineEncodingType;
-            uint32_t _coastlineBrokenEncodingType;
-            uint32_t _landEncodingType;
-            uint32_t _onewayAttribute;
-            uint32_t _onewayReverseAttribute;
-            QSet<uint32_t> _positiveLayers;
-            QSet<uint32_t> _negativeLayers;
-        public:
-            virtual ~Rules();
-
-            const QMap< uint32_t, DecodingRule >& decodingRules;
-            bool obtainTagValueId(const QString& tag, const QString& value, uint32_t& outId) const;
-
-            const uint32_t& coastlineEncodingType;
-
-        friend class OsmAnd::ObfMapSection;
         };
     private:
     protected:
@@ -157,7 +146,6 @@ namespace OsmAnd {
 
         const bool& isBaseMap;
         const QList< std::shared_ptr<MapLevel> >& mapLevels;
-        const std::shared_ptr< Rules >& rules;
         
         static void loadMapObjects(ObfReader* reader, ObfMapSection* section,
             QList< std::shared_ptr<OsmAnd::Model::MapObject> >* resultOut = nullptr,

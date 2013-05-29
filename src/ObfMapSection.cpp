@@ -16,7 +16,6 @@ OsmAnd::ObfMapSection::ObfMapSection( class ObfReader* owner_ )
     , _isBaseMap(false)
     , isBaseMap(_isBaseMap)
     , mapLevels(_mapLevels)
-    , rules(_rules)
 {
 }
 
@@ -190,7 +189,7 @@ void OsmAnd::ObfMapSection::createRule( Rules* rules, uint32_t ruleType, uint32_
     itEncodingRule->insert(ruleVal, ruleId);
     
     if(!rules->_decodingRules.contains(ruleId))
-        rules->_decodingRules.insert(ruleId, DecodingRule(ruleTag, ruleVal, ruleType));
+        rules->_decodingRules.insert(ruleId, Rules::DecodingRule(ruleTag, ruleVal, ruleType));
 
     if("name" == ruleTag)
         rules->_nameEncodingType = ruleId;
@@ -403,7 +402,7 @@ void OsmAnd::ObfMapSection::readTreeNodeChildren( ObfReader* reader, ObfMapSecti
                 auto offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(length);
                 std::shared_ptr<LevelTreeNode> childNode(new LevelTreeNode());
-                childNode->_isOcean = treeNode->_isOcean;
+                childNode->_foundation = treeNode->_foundation;
                 childNode->_offset = offset;
                 childNode->_length = length;
                 readTreeNode(reader, section, treeNode->_area31, childNode.get());
@@ -627,7 +626,8 @@ void OsmAnd::ObfMapSection::readMapObject(
                     gpb::uint32 type;
                     cis->ReadVarint32(&type);
 
-                    mapObject->_extraTypes.append(type);
+                    const auto& tagValue = section->_rules->_decodingRules[type];
+                    mapObject->_extraTypes.push_back(std::tuple<QString, QString>(std::get<0>(tagValue), std::get<1>(tagValue)));
                 }
                 cis->PopLimit(oldLimit);
             }
@@ -645,7 +645,8 @@ void OsmAnd::ObfMapSection::readMapObject(
                     gpb::uint32 type;
                     cis->ReadVarint32(&type);
 
-                    mapObject->_types.append(type);
+                    const auto& tagValue = section->_rules->_decodingRules[type];
+                    mapObject->_types.push_back(std::tuple<QString, QString>(std::get<0>(tagValue), std::get<1>(tagValue)));
                 }
                 cis->PopLimit(oldLimit);
             }
@@ -704,7 +705,7 @@ OsmAnd::ObfMapSection::MapLevel::~MapLevel()
 
 OsmAnd::ObfMapSection::LevelTreeNode::LevelTreeNode()
     : _dataOffset(0)
-    , _foundation(Model::MapObject::Unknown)
+    , _foundation(Model::MapObject::FoundationType::Unknown)
 {
 }
 
@@ -716,27 +717,7 @@ OsmAnd::ObfMapSection::Rules::Rules()
     , _landEncodingType(-1)
     , _onewayAttribute(-1)
     , _onewayReverseAttribute(-1)
-    , decodingRules(_decodingRules)
-    , coastlineEncodingType(_coastlineEncodingType)
 {
     _positiveLayers.reserve(2);
     _negativeLayers.reserve(2);
-}
-
-OsmAnd::ObfMapSection::Rules::~Rules()
-{
-}
-
-bool OsmAnd::ObfMapSection::Rules::obtainTagValueId( const QString& tag, const QString& value, uint32_t& outId ) const
-{
-    auto itTag = _encodingRules.find(tag);
-    if(itTag == _encodingRules.end())
-        return false;
-
-    auto itValue = itTag->find(value);
-    if(itValue == itTag->end())
-        return false;
-
-    outId = *itValue;
-    return true;
 }

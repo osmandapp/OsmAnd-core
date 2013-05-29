@@ -57,7 +57,7 @@ void OsmAnd::Rasterizer::update(
         if(zoom < ZoomOnlyForBasemaps && !mapObject->section->isBaseMap)
             continue;
 
-        if(mapObject->_types.contains(mapObject->section->rules->coastlineEncodingType))
+        if(mapObject->containsType("natural", "coastline"))
         {
             if (mapObject->section->isBaseMap)
                 context._basemapCoastline.push_back(mapObject);
@@ -196,8 +196,7 @@ void OsmAnd::Rasterizer::obtainPrimitives(
         uint32_t typeIdx = 0;
         for(auto itType = mapObject->_types.begin(); itType != mapObject->_types.end(); ++itType, typeIdx++)
         {
-            auto typeId = *itType;
-            auto type = mapObject->section->rules->decodingRules[typeId];
+            const auto& type = *itType;
             const auto& tag = std::get<0>(type);
             const auto& value = std::get<1>(type);
             auto layer = mapObject->getSimpleLayerValue();
@@ -300,8 +299,7 @@ void OsmAnd::Rasterizer::filterOutLinesByDensity( RasterizerContext& context, co
         bool accept = true;
         const auto& primitive = in[lineIdx];
 
-        auto typeId = primitive.mapObject->_types[primitive.typeIndex];
-        const auto& type = primitive.mapObject->section->rules->decodingRules[typeId];
+        const auto& type = primitive.mapObject->_types[primitive.typeIndex];
         if (std::get<0>(type) == "highway")
         {
             accept = false;
@@ -497,7 +495,7 @@ void OsmAnd::Rasterizer::rasterizePolygon( RasterizerContext& context, SkCanvas&
         return;
     }
 
-    const auto& tagValuePair = primitive.mapObject->section->rules->decodingRules[ primitive.mapObject->_types[primitive.typeIndex] ];
+    const auto& tagValuePair = primitive.mapObject->_types[primitive.typeIndex];
 
     RasterizationStyleEvaluator evaluator(context.style, RasterizationStyle::RulesetType::Polygon, primitive.mapObject);
     context.applyContext(evaluator);
@@ -601,7 +599,7 @@ void OsmAnd::Rasterizer::rasterizeLine( RasterizerContext& context, SkCanvas& ca
         return;
     }
 
-    const auto& tagValuePair = primitive.mapObject->section->rules->decodingRules[ primitive.mapObject->_types[primitive.typeIndex] ];
+    const auto& tagValuePair = primitive.mapObject->_types[primitive.typeIndex];
 
     RasterizationStyleEvaluator evaluator(context.style, RasterizationStyle::RulesetType::Line, primitive.mapObject);
     context.applyContext(evaluator);
