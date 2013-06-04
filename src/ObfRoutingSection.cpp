@@ -770,10 +770,10 @@ void OsmAnd::ObfRoutingSection::readBorderLinePoints(
         case 0:
             return;
         case OBF::OsmAndRoutingIndex_RouteBorderPointsBlock::kXFieldNumber:
-            cis->ReadVarint32(&location.x);
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&location.x));
             break;
         case OBF::OsmAndRoutingIndex_RouteBorderPointsBlock::kYFieldNumber:
-            cis->ReadVarint32(&location.y);
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&location.y));
             break;
         case OBF::OsmAndRoutingIndex_RouteBorderPointsBlock::kBaseIdFieldNumber:
             cis->ReadVarint64(&id);
@@ -818,10 +818,10 @@ void OsmAnd::ObfRoutingSection::readBorderLinePoint( ObfReader* reader, BorderLi
         case 0:
             return;
         case OBF::OsmAndRoutingIndex_RouteBorderPoint::kDxFieldNumber:
-            cis->ReadVarint32(&point->_location.x);
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&point->_location.x));
             break;
         case OBF::OsmAndRoutingIndex_RouteBorderPoint::kDyFieldNumber:
-            cis->ReadVarint32(&point->_location.y);
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&point->_location.y));
             break;
         case OBF::OsmAndRoutingIndex_RouteBorderPoint::kRoadIdFieldNumber:
             cis->ReadVarint64(&point->_id);

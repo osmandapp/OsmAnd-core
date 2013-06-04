@@ -47,17 +47,17 @@ namespace OsmAnd {
     {
     private:
     protected:
-        AreaD _areaGeo;
-        AreaD _areaTileD;
+        AreaI _area31;
         uint32_t _zoom;
         double _tileDivisor;
         uint32_t _tileSidePixelLength;
+        double _precomputed31toPixelDivisor;
         PointF _tlOriginOffset;
         AreaF _renderViewport;
-        bool _hasBaseMap;
+        bool _hasBasemap;
         bool _hasWater;
         bool _hasLand;
-        QVector< std::shared_ptr<OsmAnd::Model::MapObject> > _mapObjects, _coastline, _basemapMapObjects, _basemapCoastline;
+        QVector< std::shared_ptr<OsmAnd::Model::MapObject> > _mapObjects, _coastlineObjects, _basemapMapObjects, _basemapCoastlineObjects;
         QVector< Rasterizer::Primitive > _polygons, _lines, _points;
 
         SkPaint _paint;
@@ -83,7 +83,7 @@ namespace OsmAnd {
         static void initializeOneWayPaint(SkPaint& paint);
 
         void initialize();
-        bool update(const AreaD& areaGeo, uint32_t zoom, const PointF& tlOriginOffset, uint32_t tileSidePixelLength);
+        bool update(const AreaI& area31, uint32_t zoom, const PointF& tlOriginOffset, uint32_t tileSidePixelLength);
 
         QHash< QString, SkPathEffect* > _pathEffects;
         SkPathEffect* obtainPathEffect(const QString& pathEffect);

@@ -22,7 +22,7 @@ OsmAnd::Rasterizer::~Rasterizer()
 
 void OsmAnd::Rasterizer::update(
     RasterizerContext& context,
-    const AreaD& area,
+    const AreaI& area31,
     uint32_t zoom,
     uint32_t tileSidePixelLength,
     const QList< std::shared_ptr<OsmAnd::Model::MapObject> >* objects /*= nullptr*/,
@@ -30,20 +30,20 @@ void OsmAnd::Rasterizer::update(
     IQueryController* controller /*= nullptr*/)
 {
     bool doUpdate = false;
-    doUpdate = doUpdate || context.update(area, zoom, tlOriginOffset, tileSidePixelLength);
+    doUpdate = doUpdate || context.update(area31, zoom, tlOriginOffset, tileSidePixelLength);
     doUpdate = doUpdate || (objects != nullptr);
 
     if(!doUpdate)
         return;
 
     // Split input map objects to object, coastline, basemapObjects and basemapCoastline
-    context._hasBaseMap = false;
+    context._hasBasemap = false;
     context._hasLand = false;
     context._hasWater = false;
     context._mapObjects.clear();
-    context._coastline.clear();
+    context._coastlineObjects.clear();
     context._basemapMapObjects.clear();
-    context._basemapCoastline.clear();
+    context._basemapCoastlineObjects.clear();
     for(auto itMapObject = objects->begin(); itMapObject != objects->end(); ++itMapObject)
     {
         if(controller && controller->isAborted())
@@ -53,16 +53,16 @@ void OsmAnd::Rasterizer::update(
 
         context._hasLand = context._hasLand || mapObject->foundation == Model::MapObject::FullLand;
         context._hasWater = context._hasWater || mapObject->foundation == Model::MapObject::FullWater;
-        context._hasBaseMap = context._hasBaseMap || mapObject->section->isBaseMap;
+        context._hasBasemap = context._hasBasemap || mapObject->section->isBaseMap;
         if(zoom < ZoomOnlyForBasemaps && !mapObject->section->isBaseMap)
             continue;
 
         if(mapObject->containsType("natural", "coastline"))
         {
             if (mapObject->section->isBaseMap)
-                context._basemapCoastline.push_back(mapObject);
+                context._basemapCoastlineObjects.push_back(mapObject);
             else
-                context._coastline.push_back(mapObject);
+                context._coastlineObjects.push_back(mapObject);
         }
         else
         {
@@ -91,26 +91,30 @@ void OsmAnd::Rasterizer::update(
     if(controller && controller->isAborted())
     {
         context._mapObjects.clear();
-        context._coastline.clear();
+        context._coastlineObjects.clear();
         context._basemapMapObjects.clear();
-        context._basemapCoastline.clear();
+        context._basemapCoastlineObjects.clear();
         return;
     }
-    /*
+
     bool addBasemapCoastlines = true;
-    bool emptyData = q->zoom > BASEMAP_ZOOM && tempResult.empty() && coastLines.empty();
+    const bool emptyData = zoom > BasemapZoom && context._mapObjects.isEmpty() && context._coastlineObjects.isEmpty();
+
     // determine if there are enough objects like land/lake..
-    bool basemapMissing = q->zoom <= BASEMAP_ZOOM && basemapCoastLines.empty() && !basemapExists;
-    bool detailedLandData = q->zoom >= 14 && tempResult.size() > 0 && renderRouteDataFile < 0;
-    if (!coastLines.empty()) {
-        bool coastlinesWereAdded = processCoastlines(coastLines, q->left, q->right, q->bottom, q->top, q->zoom,
+    const bool basemapMissing = zoom <= BasemapZoom && context._basemapCoastlineObjects.isEmpty() && !context._hasBasemap;
+    const bool detailedLandData = zoom >= DetailedLandDataZoom && !context._mapObjects.isEmpty()/* && renderRouteDataFile < 0*/;
+/*    if(!context._coastlineObjects.empty())
+    {
+        const bool coastlinesWereAdded = processCoastlines(coastLines, q->left, q->right, q->bottom, q->top, q->zoom,
             basemapCoastLines.empty(), true, tempResult);
-        addBasemapCoastlines = (!coastlinesWereAdded && !detailedLandData) || q->zoom <= BASEMAP_ZOOM;
-    } else {
+        addBasemapCoastlines = (!coastlinesWereAdded && !detailedLandData) || zoom <= BasemapZoom;
+    }
+    else
+    {
         addBasemapCoastlines = !detailedLandData;
     }
-    if (addBasemapCoastlines) {
-        addBasemapCoastlines = false;
+    if (addBasemapCoastlines)
+    {
         bool coastlinesWereAdded = processCoastlines(basemapCoastLines, q->left, q->right, q->bottom, q->top, q->zoom,
             true, true, tempResult);
         addBasemapCoastlines = !coastlinesWereAdded;
@@ -371,9 +375,9 @@ bool OsmAnd::Rasterizer::updatePaint( RasterizerContext& context, const Rasteriz
     {
         {//0
             RasterizationStyle::builtinValueDefinitions.OUTPUT_COLOR,
-                RasterizationStyle::builtinValueDefinitions.OUTPUT_STROKE_WIDTH,
-                RasterizationStyle::builtinValueDefinitions.OUTPUT_CAP,
-                RasterizationStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT
+            RasterizationStyle::builtinValueDefinitions.OUTPUT_STROKE_WIDTH,
+            RasterizationStyle::builtinValueDefinitions.OUTPUT_CAP,
+            RasterizationStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT
         },
         {//1
             RasterizationStyle::builtinValueDefinitions.OUTPUT_COLOR_2,
@@ -389,9 +393,9 @@ bool OsmAnd::Rasterizer::updatePaint( RasterizerContext& context, const Rasteriz
         },
         {//-2
             RasterizationStyle::builtinValueDefinitions.OUTPUT_COLOR__1,
-                RasterizationStyle::builtinValueDefinitions.OUTPUT_STROKE_WIDTH__1,
-                RasterizationStyle::builtinValueDefinitions.OUTPUT_CAP__1,
-                RasterizationStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT__1
+            RasterizationStyle::builtinValueDefinitions.OUTPUT_STROKE_WIDTH__1,
+            RasterizationStyle::builtinValueDefinitions.OUTPUT_CAP__1,
+            RasterizationStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT__1
         },
         {//else
             RasterizationStyle::builtinValueDefinitions.OUTPUT_COLOR_3,
@@ -760,10 +764,10 @@ void OsmAnd::Rasterizer::rasterizeLine_OneWay( RasterizerContext& context, SkCan
     }
 }
 
-void OsmAnd::Rasterizer::calculateVertex( RasterizerContext& context, const PointI& point, PointF& vertex )
+void OsmAnd::Rasterizer::calculateVertex( RasterizerContext& context, const PointI& point31, PointF& vertex )
 {
-    vertex.x = ((point.x / context._tileDivisor) - context._areaTileD.left) * context._tileSidePixelLength + context._renderViewport.left;
-    vertex.y = ((point.y / context._tileDivisor) - context._areaTileD.top) * context._tileSidePixelLength + context._renderViewport.top;
+    vertex.x = static_cast<float>(point31.x - context._area31.left) / context._precomputed31toPixelDivisor + context._renderViewport.left;
+    vertex.y = static_cast<float>(point31.y - context._area31.top) / context._precomputed31toPixelDivisor + context._renderViewport.top;
 }
 
 bool OsmAnd::Rasterizer::contains( const QVector< PointF >& vertices, const PointF& other )

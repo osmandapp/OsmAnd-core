@@ -147,16 +147,16 @@ void OsmAnd::RasterizerContext::initialize()
     }
 }
 
-bool OsmAnd::RasterizerContext::update( const AreaD& areaGeo, uint32_t zoom, const PointF& tlOriginOffset, uint32_t tileSidePixelLength )
+bool OsmAnd::RasterizerContext::update( const AreaI& area31, uint32_t zoom, const PointF& tlOriginOffset, uint32_t tileSidePixelLength )
 {
     bool evaluateAttributes = false;
-    bool evaluateBounds = false;
+    bool evaluate31ToPixelDivisor = false;
     bool evaluateRenderViewport = false;
     evaluateAttributes = evaluateAttributes || (_zoom != zoom);
-    evaluateBounds = evaluateBounds || (_areaGeo != areaGeo);
-    evaluateBounds = evaluateBounds || (_zoom != zoom);
-    evaluateRenderViewport = evaluateRenderViewport || evaluateBounds;
-    evaluateRenderViewport = evaluateRenderViewport || (_tileSidePixelLength != tileSidePixelLength);
+    evaluate31ToPixelDivisor = evaluate31ToPixelDivisor || evaluateAttributes;
+    evaluate31ToPixelDivisor = evaluate31ToPixelDivisor || (_tileSidePixelLength != tileSidePixelLength);
+    evaluateRenderViewport = evaluateRenderViewport || evaluate31ToPixelDivisor;
+    evaluateRenderViewport = evaluateRenderViewport || (_area31 != area31);
     evaluateRenderViewport = evaluateRenderViewport || (_tlOriginOffset != tlOriginOffset);
 
     if(evaluateAttributes)
@@ -207,28 +207,25 @@ bool OsmAnd::RasterizerContext::update( const AreaD& areaGeo, uint32_t zoom, con
         }
     }
 
-    if(evaluateBounds)
+    if(evaluate31ToPixelDivisor)
     {
-        _areaTileD.right = Utilities::getTileNumberX(zoom, areaGeo.right);
-        _areaTileD.left = Utilities::getTileNumberX(zoom, areaGeo.left);
-        _areaTileD.top = Utilities::getTileNumberY(zoom, areaGeo.top);
-        _areaTileD.bottom = Utilities::getTileNumberY(zoom, areaGeo.bottom);
+        _precomputed31toPixelDivisor = _tileDivisor / tileSidePixelLength;
     }
 
     if(evaluateRenderViewport)
     {
-        const auto pixelWidth = static_cast<int32_t>(_areaTileD.width() * tileSidePixelLength);
-        const auto pixelHeight = static_cast<int32_t>(_areaTileD.height() * tileSidePixelLength);
+        const auto pixelWidth = static_cast<float>(area31.width()) / _precomputed31toPixelDivisor;
+        const auto pixelHeight = static_cast<float>(area31.height()) / _precomputed31toPixelDivisor;
         _renderViewport.topLeft = tlOriginOffset;
         _renderViewport.bottomRight.x = tlOriginOffset.x + pixelWidth;
         _renderViewport.bottomRight.y = pixelHeight - tlOriginOffset.x;
     }
 
     _zoom = zoom;
-    _areaGeo = areaGeo;
+    _area31 = area31;
     _tileSidePixelLength = tileSidePixelLength;
 
-    return evaluateAttributes || evaluateBounds || evaluateRenderViewport;
+    return evaluateAttributes || evaluate31ToPixelDivisor || evaluateRenderViewport;
 }
 
 void OsmAnd::RasterizerContext::applyContext( RasterizationStyleEvaluator& evaluator ) const

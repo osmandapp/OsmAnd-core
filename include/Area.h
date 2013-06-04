@@ -109,6 +109,11 @@ namespace OsmAnd {
         {
             return a == b;
         }
+
+        static inline bool equal(const int32_t& a, const int32_t& b)
+        {
+            return a == b;
+        }
     };
 
     template<typename T>
@@ -231,10 +236,10 @@ namespace OsmAnd {
 
     typedef Point<double> PointD;
     typedef Point<float> PointF;
-    typedef Point<uint32_t> PointI;
+    typedef Point<int32_t> PointI;
     typedef Area<double> AreaD;
     typedef Area<float> AreaF;
-    typedef Area<uint32_t> AreaI;
+    typedef Area<int32_t> AreaI;
 
 } // namespace OsmAnd
 

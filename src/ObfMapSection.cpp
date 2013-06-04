@@ -81,16 +81,16 @@ void OsmAnd::ObfMapSection::readMapLevelHeader( ObfReader* reader, ObfMapSection
             cis->ReadVarint32(&level->_minZoom);
             break;
         case OBF::OsmAndMapIndex_MapRootLevel::kLeftFieldNumber:
-            cis->ReadVarint32(&level->_area31.left);
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_area31.left));
             break;
         case OBF::OsmAndMapIndex_MapRootLevel::kRightFieldNumber:
-            cis->ReadVarint32(&level->_area31.right);
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_area31.right));
             break;
         case OBF::OsmAndMapIndex_MapRootLevel::kTopFieldNumber:
-            cis->ReadVarint32(&level->_area31.top);
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_area31.top));
             break;
         case OBF::OsmAndMapIndex_MapRootLevel::kBottomFieldNumber:
-            cis->ReadVarint32(&level->_area31.bottom);
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_area31.bottom));
             break;
         case OBF::OsmAndMapIndex_MapRootLevel::kBoxesFieldNumber:
             // We skip reading boxes and surely, following blocks
@@ -544,10 +544,10 @@ void OsmAnd::ObfMapSection::readMapObject(
                 auto oldLimit = cis->PushLimit(length);
                 auto px = treeNode->_area31.left & MaskToRead;
                 auto py = treeNode->_area31.top & MaskToRead;
-                uint32_t minX = std::numeric_limits<uint32_t>::max();
-                uint32_t maxX = 0;
-                uint32_t minY = std::numeric_limits<uint32_t>::max();
-                uint32_t maxY = 0;
+                int32_t minX = std::numeric_limits<int32_t>::max();
+                int32_t maxX = 0;
+                int32_t minY = std::numeric_limits<int32_t>::max();
+                int32_t maxY = 0;
                 bool contains = (filter == nullptr || filter->_bbox31 == nullptr);
                 while(cis->BytesUntilLimit() > 0)
                 {

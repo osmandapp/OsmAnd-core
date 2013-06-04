@@ -68,8 +68,8 @@ bool OsmAnd::RoutePlanner::findClosestRoadPoint(
             else
             {
                 const auto& factor = projection / sqDistance;
-                rx31 = ppx31 + (static_cast<int64_t>(cpx31) - static_cast<int64_t>(ppx31)) * factor;
-                ry31 = ppy31 + (static_cast<int64_t>(cpy31) - static_cast<int64_t>(ppy31)) * factor;
+                rx31 = ppx31 + (cpx31 - ppx31) * factor;
+                ry31 = ppy31 + (cpy31 - ppy31) * factor;
             }
             sqDistance = Utilities::squareDistance31(rx31, ry31, x31, y31);
             if (!road || sqDistance < minSqDistance)

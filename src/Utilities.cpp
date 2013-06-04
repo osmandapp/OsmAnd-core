@@ -90,11 +90,10 @@ OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::toRadians( double ang
 
 OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::getPowZoom( float zoom )
 {
-    if(zoom >= 0 && zoom - floor(zoom) < 0.05f){
-        return 1 << ((int)zoom); 
-    } else {
-        return pow(2, zoom);
-    }
+    if(zoom >= 0.0f && qFuzzyCompare(zoom, static_cast<uint8_t>(zoom)))
+        return 1 << static_cast<uint8_t>(zoom); 
+
+    return qPow(2, zoom);
 }
 
 OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::getLongitudeFromTile( float zoom, double x )
@@ -290,26 +289,38 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::Utilities::parseArbitraryBool( con
     return result;
 }
 
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::x31toMeters( int64_t x31 )
+OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::x31toMeters( int32_t x31 )
 {
     return static_cast<double>(x31) * 0.011;
 }
 
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::y31toMeters( int64_t y31 )
+OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::y31toMeters( int32_t y31 )
 {
     return static_cast<double>(y31) * 0.01863;
 }
 
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::squareDistance31( uint32_t x31a, uint32_t y31a, uint32_t x31b, uint32_t y31b )
+OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::squareDistance31( int32_t x31a, int32_t y31a, int32_t x31b, int32_t y31b )
 {
-    const auto dx = Utilities::x31toMeters(static_cast<int64_t>(x31a) - static_cast<int64_t>(x31b));
-    const auto dy = Utilities::y31toMeters(static_cast<int64_t>(y31a) - static_cast<int64_t>(y31b));
+    const auto dx = Utilities::x31toMeters(x31a - x31b);
+    const auto dy = Utilities::y31toMeters(y31a - y31b);
     return dx * dx + dy * dy;
 }
 
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::distance31( uint32_t x31a, uint32_t y31a, uint32_t x31b, uint32_t y31b )
+OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::distance31( int32_t x31a, int32_t y31a, int32_t x31b, int32_t y31b )
 {
     return qSqrt(squareDistance31(x31a, y31a, x31b, y31b));
+}
+
+OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::squareDistance31( const PointI& a, const PointI& b )
+{
+    const auto dx = Utilities::x31toMeters(a.x - b.x);
+    const auto dy = Utilities::y31toMeters(a.y - b.y);
+    return dx * dx + dy * dy;
+}
+
+OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::distance31( const PointI& a, const PointI& b )
+{
+    return qSqrt(squareDistance31(a, b));
 }
 
 OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::distance( double xLonA, double yLatA, double xLonB, double yLatB )
@@ -325,12 +336,12 @@ OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::distance( double xLon
     return R * c * 1000.0;
 }
 
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::projection31( uint32_t x31a, uint32_t y31a, uint32_t x31b, uint32_t y31b, uint32_t x31c, uint32_t y31c )
+OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::projection31( int32_t x31a, int32_t y31a, int32_t x31b, int32_t y31b, int32_t x31c, int32_t y31c )
 {
     // Scalar multiplication between (AB, AC)
     auto p =
-        Utilities::x31toMeters(static_cast<int64_t>(x31b) - static_cast<int64_t>(x31a)) * Utilities::x31toMeters(static_cast<int64_t>(x31c) - static_cast<int64_t>(x31a)) +
-        Utilities::y31toMeters(static_cast<int64_t>(y31b) - static_cast<int64_t>(y31a)) * Utilities::y31toMeters(static_cast<int64_t>(y31c) - static_cast<int64_t>(y31a));
+        Utilities::x31toMeters(x31b - x31a) * Utilities::x31toMeters(x31c - x31a) +
+        Utilities::y31toMeters(y31b - y31a) * Utilities::y31toMeters(y31c - y31a);
     return p;
 }
 

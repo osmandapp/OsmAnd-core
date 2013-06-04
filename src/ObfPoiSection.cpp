@@ -104,19 +104,19 @@ void OsmAnd::ObfPoiSection::readBoundaries( ObfReader* reader, ObfPoiSection* se
         case 0:
             return;
         case OBF::OsmAndTileBox::kLeftFieldNumber:
-            cis->ReadVarint32(&section->_area31.left);
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->_area31.left));
             section->_areaGeo.left = Utilities::get31LongitudeX(section->_area31.left);
             break;
         case OBF::OsmAndTileBox::kRightFieldNumber:
-            cis->ReadVarint32(&section->_area31.right);
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->_area31.right));
             section->_areaGeo.right = Utilities::get31LongitudeX(section->_area31.right);
             break;
         case OBF::OsmAndTileBox::kTopFieldNumber:
-            cis->ReadVarint32(&section->_area31.top);
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->_area31.top));
             section->_areaGeo.top = Utilities::get31LatitudeY(section->_area31.top);
             break;
         case OBF::OsmAndTileBox::kBottomFieldNumber:
-            cis->ReadVarint32(&section->_area31.bottom);
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->_area31.bottom));
             section->_areaGeo.bottom = Utilities::get31LatitudeY(section->_area31.bottom);
             break;
         default:

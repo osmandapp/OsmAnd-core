@@ -47,7 +47,8 @@ namespace OsmAnd {
         enum {
             MaxV = 75,
             ZoomOnlyForBasemaps = 7,
-            BaseMapZoom = 11,
+            BasemapZoom = 11,
+            DetailedLandDataZoom = 14,
         };
     protected:
         enum PrimitiveType : uint32_t
@@ -102,7 +103,7 @@ namespace OsmAnd {
 
         static void update(
             RasterizerContext& context,
-            const AreaD& area,
+            const AreaI& area31,
             uint32_t zoom,
             uint32_t tileSidePixelLength,
             const QList< std::shared_ptr<OsmAnd::Model::MapObject> >* objects = nullptr,
