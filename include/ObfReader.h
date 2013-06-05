@@ -68,8 +68,8 @@ namespace OsmAnd {
     protected:
         QString transliterate(QString input);
         static bool readQString(gpb::io::CodedInputStream* cis, QString& output);
-        static int readSInt32(gpb::io::CodedInputStream* cis);
-        static long readSInt64(gpb::io::CodedInputStream* cis);
+        static int32_t readSInt32(gpb::io::CodedInputStream* cis);
+        static int64_t readSInt64(gpb::io::CodedInputStream* cis);
         static uint32_t readBigEndianInt(gpb::io::CodedInputStream* cis);
         static void readStringTable(gpb::io::CodedInputStream* cis, QStringList& stringTableOut);
         static void skipUnknownField(gpb::io::CodedInputStream* cis, int tag);

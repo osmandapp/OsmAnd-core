@@ -40,6 +40,11 @@ void OsmAnd::RasterizationStyleEvaluator::setIntegerValue( const std::shared_ptr
     _values[ref.get()].asInt = value;
 }
 
+void OsmAnd::RasterizationStyleEvaluator::setIntegerValue( const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, const unsigned int& value )
+{
+    _values[ref.get()].asUInt = value;
+}
+
 void OsmAnd::RasterizationStyleEvaluator::setFloatValue( const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, const float& value )
 {
     _values[ref.get()].asFloat = value;
@@ -52,24 +57,49 @@ void OsmAnd::RasterizationStyleEvaluator::setStringValue( const std::shared_ptr<
         _values[ref.get()].asUInt = std::numeric_limits<uint32_t>::max();
 }
 
-bool OsmAnd::RasterizationStyleEvaluator::getBooleanValue( const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref ) const
+bool OsmAnd::RasterizationStyleEvaluator::getBooleanValue( const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, bool& value ) const
 {
-    return (_values[ref.get()].asInt == 1);
+    const auto& itValue = _values.find(ref.get());
+    if(itValue == _values.end())
+        return false;
+    value = (*itValue).asInt == 1;
+    return true;
 }
 
-int OsmAnd::RasterizationStyleEvaluator::getIntegerValue( const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref ) const
+bool OsmAnd::RasterizationStyleEvaluator::getIntegerValue( const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, int& value ) const
 {
-    return _values[ref.get()].asInt;
+    const auto& itValue = _values.find(ref.get());
+    if(itValue == _values.end())
+        return false;
+    value = (*itValue).asInt;
+    return true;
 }
 
-float OsmAnd::RasterizationStyleEvaluator::getFloatValue( const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref ) const
+bool OsmAnd::RasterizationStyleEvaluator::getIntegerValue( const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, unsigned int& value ) const
 {
-    return _values[ref.get()].asFloat;
+    const auto& itValue = _values.find(ref.get());
+    if(itValue == _values.end())
+        return false;
+    value = (*itValue).asUInt;
+    return true;
 }
 
-QString OsmAnd::RasterizationStyleEvaluator::getStringValue( const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref ) const
+bool OsmAnd::RasterizationStyleEvaluator::getFloatValue( const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, float& value ) const
 {
-    return style->lookupStringValue(_values[ref.get()].asUInt);
+    const auto& itValue = _values.find(ref.get());
+    if(itValue == _values.end())
+        return false;
+    value = (*itValue).asFloat;
+    return true;
+}
+
+bool OsmAnd::RasterizationStyleEvaluator::getStringValue( const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, QString& value ) const
+{
+    const auto& itValue = _values.find(ref.get());
+    if(itValue == _values.end())
+        return false;
+    value = style->lookupStringValue((*itValue).asUInt);
+    return true;
 }
 
 void OsmAnd::RasterizationStyleEvaluator::clearValue( const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref )
@@ -129,11 +159,12 @@ bool OsmAnd::RasterizationStyleEvaluator::evaluate( const std::shared_ptr<OsmAnd
     for(; itValueDef != rule->_valueDefinitionsRefs.end(); ++itValueDef, ++itValueData)
     {
         const auto& valueDef = *itValueDef;
-        const auto& valueData = *itValueData;
-        const auto& stackValue = _values[valueDef.get()];
 
         if(valueDef->type != RasterizationStyle::ValueDefinition::Input)
             continue;
+
+        const auto& valueData = *itValueData;
+        const auto& stackValue = _values[valueDef.get()];
 
         bool evaluationResult = false;
         if(valueDef == RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM)
@@ -193,6 +224,7 @@ bool OsmAnd::RasterizationStyleEvaluator::evaluate( const std::shared_ptr<OsmAnd
 
     if(evaluateChildren)
     {
+        //TODO: If none of children match, rule is still success
         for(auto itChild = rule->_ifElseChildren.begin(); itChild != rule->_ifElseChildren.end(); ++itChild)
         {
             auto evaluationResult = evaluate(*itChild, fillOutput, true);

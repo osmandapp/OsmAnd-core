@@ -152,6 +152,8 @@ namespace OsmAnd {
         uint32_t lookupStringId(const QString& value);
         uint32_t registerString(const QString& value);
 
+        uint32_t getTagStringId(uint64_t ruleId) const;
+        uint32_t getValueStringId(uint64_t ruleId) const;
         const QString& getTagString(uint64_t ruleId) const;
         const QString& getValueString(uint64_t ruleId) const;
 

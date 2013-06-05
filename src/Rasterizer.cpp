@@ -217,12 +217,16 @@ void OsmAnd::Rasterizer::obtainPrimitives(
             evaluator.setBooleanValue(RasterizationStyle::builtinValueDefinitions.INPUT_CYCLE, mapObject->isClosedFigure());
             if(evaluator.evaluate())
             {
-                auto objectType = static_cast<PrimitiveType>(evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_OBJECT_TYPE));
-                auto zOrder = evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_ORDER);
+                int objectType;
+                if(!evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_OBJECT_TYPE, objectType))
+                    continue;
+                int zOrder;
+                if(!evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_ORDER, zOrder))
+                    continue;
 
                 Primitive primitive;
                 primitive.mapObject = mapObject;
-                primitive.objectType = objectType;
+                primitive.objectType = static_cast<PrimitiveType>(objectType);
                 primitive.zOrder = zOrder;
                 primitive.typeIndex = typeIdx;
 
@@ -241,12 +245,18 @@ void OsmAnd::Rasterizer::obtainPrimitives(
                 {
                     points.push_back(primitive);
                 }
-                else //if(objectType == RasterizationStyle::ObjectType::Line)
+                else if(objectType == PrimitiveType::Line)
                 {
                     unfilteredLines.push_back(primitive);
                 }
+                else
+                {
+                    assert(false);
+                    continue;
+                }
 
-                if (evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADOW_LEVEL) > 0)
+                int shadowLevel;
+                if(evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADOW_LEVEL, shadowLevel) && shadowLevel > 0)
                 {
                     context._shadowLevelMin = qMin(context._shadowLevelMin, static_cast<uint32_t>(zOrder));
                     context._shadowLevelMax = qMax(context._shadowLevelMax, static_cast<uint32_t>(zOrder));
@@ -364,6 +374,7 @@ void OsmAnd::Rasterizer::rasterizeMapPrimitives( RasterizerContext& context, SkC
 
 bool OsmAnd::Rasterizer::updatePaint( RasterizerContext& context, const RasterizationStyleEvaluator& evaluator, PaintValuesSet valueSetSelector, bool isArea )
 {
+    bool ok = true;
     struct ValueSet
     {
         const std::shared_ptr<RasterizationStyle::ValueDefinition>& color;
@@ -387,9 +398,9 @@ bool OsmAnd::Rasterizer::updatePaint( RasterizerContext& context, const Rasteriz
         },
         {//-1
             RasterizationStyle::builtinValueDefinitions.OUTPUT_COLOR_0,
-                RasterizationStyle::builtinValueDefinitions.OUTPUT_STROKE_WIDTH_0,
-                RasterizationStyle::builtinValueDefinitions.OUTPUT_CAP_0,
-                RasterizationStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT_0
+            RasterizationStyle::builtinValueDefinitions.OUTPUT_STROKE_WIDTH_0,
+            RasterizationStyle::builtinValueDefinitions.OUTPUT_CAP_0,
+            RasterizationStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT_0
         },
         {//-2
             RasterizationStyle::builtinValueDefinitions.OUTPUT_COLOR__1,
@@ -416,8 +427,9 @@ bool OsmAnd::Rasterizer::updatePaint( RasterizerContext& context, const Rasteriz
     }
     else
     {
-        auto stroke = evaluator.getFloatValue(valueSet.strokeWidth);
-        if (!(stroke > 0))
+        float stroke;
+        ok = evaluator.getFloatValue(valueSet.strokeWidth, stroke);
+        if(!ok || stroke <= 0.0f)
             return false;
 
         context._paint.setColorFilter(nullptr);
@@ -426,9 +438,9 @@ bool OsmAnd::Rasterizer::updatePaint( RasterizerContext& context, const Rasteriz
         context._paint.setStyle(SkPaint::kStroke_Style);
         context._paint.setStrokeWidth(stroke);
 
-        const auto& cap = evaluator.getStringValue(valueSet.cap);
-        const auto& pathEff = evaluator.getStringValue(valueSet.pathEffect);
-        if (cap.isEmpty() || cap == "BUTT")
+        QString cap;
+        ok = evaluator.getStringValue(valueSet.cap, cap);
+        if (!ok || cap.isEmpty() || cap == "BUTT")
             context._paint.setStrokeCap(SkPaint::kButt_Cap);
         else if (cap == "ROUND")
             context._paint.setStrokeCap(SkPaint::kRound_Cap);
@@ -437,25 +449,29 @@ bool OsmAnd::Rasterizer::updatePaint( RasterizerContext& context, const Rasteriz
         else
             context._paint.setStrokeCap(SkPaint::kButt_Cap);
 
-        if(!pathEff.isEmpty())
+        QString pathEff;
+        ok = evaluator.getStringValue(valueSet.pathEffect, pathEff);
+        if(!ok || pathEff.isEmpty())
+        {
+            context._paint.setPathEffect(nullptr);
+        }
+        else
         {
             auto effect = context.obtainPathEffect(pathEff);
             context._paint.setPathEffect(effect);
         }
-        else
-        {
-            context._paint.setPathEffect(nullptr);
-        }
     }
 
-    auto color = evaluator.getIntegerValue(valueSet.color);
-    assert(color != 0);
+    int color;
+    ok = evaluator.getIntegerValue(valueSet.color, color);
+    assert(ok && color != 0);
     context._paint.setColor(color);
 
     if (valueSetSelector == PaintValuesSet::Set_0)
     {
-        const auto& shader = evaluator.getStringValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADER);
-        if(!shader.isEmpty())
+        QString shader;
+        ok = evaluator.getStringValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADER, shader);
+        if(ok && !shader.isEmpty())
         {
             int i = 5;
             /*TODO:SkBitmap* bmp = getCachedBitmap(rc, shader);
@@ -467,15 +483,17 @@ bool OsmAnd::Rasterizer::updatePaint( RasterizerContext& context, const Rasteriz
     // do not check shadow color here
     if (context._shadowRenderingMode == 1 && valueSetSelector == PaintValuesSet::Set_0)
     {
-        auto shadowColor = evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADOW_COLOR);
-        auto shadowLayer = evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADOW_RADIUS);
-        if(shadowColor == 0)
+        int shadowColor;
+        ok = evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADOW_COLOR, shadowColor);
+        int shadowRadius;
+        evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADOW_RADIUS, shadowRadius);
+        if(!ok || shadowColor == 0)
             shadowColor = context._shadowRenderingColor;
         if(shadowColor == 0)
-            shadowLayer = 0;
+            shadowRadius = 0;
 
-        if(shadowLayer > 0)
-            context._paint.setLooper(new SkBlurDrawLooper(shadowLayer, 0, 0, shadowColor))->unref();
+        if(shadowRadius > 0)
+            context._paint.setLooper(new SkBlurDrawLooper(shadowRadius, 0, 0, shadowColor))->unref();
     }
 
     return true;
@@ -485,17 +503,17 @@ void OsmAnd::Rasterizer::rasterizePolygon( RasterizerContext& context, SkCanvas&
 {
     if(primitive.mapObject->_coordinates.size() <=2)
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rendered as polygon, but has %d vertices\n", primitive.mapObject->id, primitive.mapObject->_coordinates.size());
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rendered as polygon, but has %d vertices\n", primitive.mapObject->id >> 1, primitive.mapObject->_coordinates.size());
         return;
     }
     if(!primitive.mapObject->isClosedFigure())
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rendered as polygon, but is not closed\n", primitive.mapObject->id);
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rendered as polygon, but is not closed\n", primitive.mapObject->id >> 1);
         return;
     }
     if(!primitive.mapObject->isClosedFigure(true))
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rendered as polygon, but is not closed (inner)\n", primitive.mapObject->id);
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rendered as polygon, but is not closed (inner)\n", primitive.mapObject->id >> 1);
         return;
     }
 
@@ -599,10 +617,11 @@ void OsmAnd::Rasterizer::rasterizeLine( RasterizerContext& context, SkCanvas& ca
 {
     if(primitive.mapObject->_coordinates.size() < 2 )
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rendered as line, but has %d vertices\n", primitive.mapObject->id, primitive.mapObject->_coordinates.size());
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rendered as line, but has %d vertices\n", primitive.mapObject->id >> 1, primitive.mapObject->_coordinates.size());
         return;
     }
 
+    bool ok;
     const auto& tagValuePair = primitive.mapObject->_types[primitive.typeIndex];
 
     RasterizationStyleEvaluator evaluator(context.style, RasterizationStyle::RulesetType::Line, primitive.mapObject);
@@ -617,14 +636,16 @@ void OsmAnd::Rasterizer::rasterizeLine( RasterizerContext& context, SkCanvas& ca
     if(!updatePaint(context, evaluator, Set_0, false))
         return;
 
-    auto shadowColor = evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADOW_COLOR);
-    auto shadowRadius = evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADOW_RADIUS);
-    if(drawOnlyShadow && shadowRadius == 0)
-        return;
-
-    if(shadowColor == 0)
+    int shadowColor;
+    ok = evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADOW_COLOR, shadowColor);
+    if(!ok || shadowColor == 0)
         shadowColor = context._shadowRenderingColor;
 
+    int shadowRadius;
+    ok = evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADOW_RADIUS, shadowRadius);
+    if(drawOnlyShadow && (!ok || shadowRadius == 0))
+        return;
+    
     int oneway = 0;
     if (context._zoom >= 16 && std::get<0>(tagValuePair) == "highway")
     {

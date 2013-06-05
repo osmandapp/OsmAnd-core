@@ -161,18 +161,22 @@ bool OsmAnd::ObfReader::readQString( gpb::io::CodedInputStream* cis, QString& ou
     return true;
 }
 
-int OsmAnd::ObfReader::readSInt32( gpb::io::CodedInputStream* cis )
+int32_t OsmAnd::ObfReader::readSInt32( gpb::io::CodedInputStream* cis )
 {
     gpb::uint32 value;
     cis->ReadVarint32(&value);
-    return gpb::internal::WireFormatLite::ZigZagDecode32(value);
+
+    auto decodedValue = gpb::internal::WireFormatLite::ZigZagDecode32(value);
+    return decodedValue;
 }
 
-long OsmAnd::ObfReader::readSInt64( gpb::io::CodedInputStream* cis )
+int64_t OsmAnd::ObfReader::readSInt64( gpb::io::CodedInputStream* cis )
 {
     gpb::uint64 value;
     cis->ReadVarint64(&value);
-    return gpb::internal::WireFormatLite::ZigZagDecode64(value);
+
+    auto decodedValue = gpb::internal::WireFormatLite::ZigZagDecode64(value);
+    return decodedValue;
 }
 
 QString OsmAnd::ObfReader::transliterate( QString input )

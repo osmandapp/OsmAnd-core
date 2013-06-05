@@ -644,7 +644,12 @@ void OsmAnd::RasterizationStyle::dump( RulesetType type, const QString& prefix /
         auto value = getValueString(itRuleEntry.key());
         auto rule = itRuleEntry.value();
 
-        OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sRule [%s:%s]\n", prefix.toStdString().c_str(), tag.toStdString().c_str(), value.toStdString().c_str());
+        OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sRule [%s (%d):%s (%d)]\n",
+            prefix.toStdString().c_str(),
+            tag.toStdString().c_str(),
+            getTagStringId(itRuleEntry.key()),
+            value.toStdString().c_str(),
+            getValueStringId(itRuleEntry.key()));
         rule->dump(prefix);
     }
 }
@@ -697,14 +702,24 @@ std::shared_ptr<OsmAnd::RasterizationRule> OsmAnd::RasterizationStyle::createTag
     return newRule;
 }
 
+uint32_t OsmAnd::RasterizationStyle::getTagStringId( uint64_t ruleId ) const
+{
+    return ruleId >> RuleIdTagShift;
+}
+
+uint32_t OsmAnd::RasterizationStyle::getValueStringId( uint64_t ruleId ) const
+{
+    return ruleId & ((1ull << RuleIdTagShift) - 1);
+}
+
 const QString& OsmAnd::RasterizationStyle::getTagString( uint64_t ruleId ) const
 {
-    return lookupStringValue(ruleId >> RuleIdTagShift);
+    return lookupStringValue(getTagStringId(ruleId));
 }
 
 const QString& OsmAnd::RasterizationStyle::getValueString( uint64_t ruleId ) const
 {
-    return lookupStringValue(ruleId & ((1ull << RuleIdTagShift) - 1));
+    return lookupStringValue(getValueStringId(ruleId));
 }
 
 const QString& OsmAnd::RasterizationStyle::lookupStringValue( uint32_t id ) const

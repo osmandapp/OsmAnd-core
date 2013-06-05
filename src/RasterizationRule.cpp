@@ -8,7 +8,6 @@
 OsmAnd::RasterizationRule::RasterizationRule(RasterizationStyle* owner_, const QHash< QString, QString >& attributes)
     : owner(owner_)
 {
-    //TODO:storage->childRules.push_back(this);
     _valueDefinitionsRefs.reserve(attributes.size());
     _values.reserve(attributes.size());
     
@@ -64,7 +63,7 @@ void OsmAnd::RasterizationRule::dump( const QString& prefix /*= QString()*/ ) co
         auto valueDef = *itValueDef;
 
         QString strValue;
-        switch (valueDef->type)
+        switch (valueDef->dataType)
         {
         case RasterizationStyle::ValueDefinition::Boolean:
             strValue = (getIntegerAttribute(valueDef->name) == 1) ? "true" : "false";
@@ -81,22 +80,51 @@ void OsmAnd::RasterizationRule::dump( const QString& prefix /*= QString()*/ ) co
         case RasterizationStyle::ValueDefinition::Color:
             {
                 auto color = getIntegerAttribute(valueDef->name);
-                if((color & 0xFF000000) != 0)
-                    strValue = '#' + QString::number(color, 16).mid(2);
+                if((color & 0xFF000000) == 0xFF000000)
+                    strValue = '#' + QString::number(color, 16).right(6);
                 else
-                    strValue = '#' + QString::number(color, 16);
+                    strValue = '#' + QString::number(color, 16).right(8);
             }
             break;
         }
 
-        OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s%s = %s\n", newPrefix.toStdString().c_str(), valueDef->name.toStdString().c_str(), strValue.toStdString().c_str());
+        OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s%s%s = %s\n",
+            newPrefix.toStdString().c_str(),
+            (valueDef->type == RasterizationStyle::ValueDefinition::Input) ? ">" : "<",
+            valueDef->name.toStdString().c_str(),
+            strValue.toStdString().c_str());
     }
-        
-    for(auto itChild = _ifElseChildren.begin(); itChild != _ifElseChildren.end(); ++itChild)
-    {
-        auto child = *itChild;
 
-        child->dump(newPrefix);
+    if(!_ifChildren.isEmpty())
+    {
+        OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sIf(\n",
+            newPrefix.toStdString().c_str());
+        for(auto itChild = _ifChildren.begin(); itChild != _ifChildren.end(); ++itChild)
+        {
+            auto child = *itChild;
+
+            OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sAND\n",
+                newPrefix.toStdString().c_str());
+            child->dump(newPrefix);
+        }
+        OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s)\n",
+            newPrefix.toStdString().c_str());
+    }
+
+    if(!_ifElseChildren.isEmpty())
+    {
+        OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sSelector: [\n",
+            newPrefix.toStdString().c_str());
+        for(auto itChild = _ifElseChildren.begin(); itChild != _ifElseChildren.end(); ++itChild)
+        {
+            auto child = *itChild;
+
+            OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sOR\n",
+                newPrefix.toStdString().c_str());
+            child->dump(newPrefix);
+        }
+        OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s]\n",
+            newPrefix.toStdString().c_str());
     }
 }
 

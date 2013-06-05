@@ -168,7 +168,7 @@ bool OsmAnd::RasterizerContext::update( const AreaI& area31, uint32_t zoom, cons
             applyContext(evaluator);
             evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
             if(evaluator.evaluate())
-                _defaultColor = evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_ATTR_COLOR_VALUE);
+                evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_ATTR_COLOR_VALUE, _defaultColor);
         }
         if(attributeRule_shadowRendering)
         {
@@ -177,8 +177,8 @@ bool OsmAnd::RasterizerContext::update( const AreaI& area31, uint32_t zoom, cons
             evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
             if(evaluator.evaluate())
             {
-                _shadowRenderingMode = evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_ATTR_INT_VALUE);
-                _shadowRenderingColor = evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADOW_COLOR);
+                evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_ATTR_INT_VALUE, _shadowRenderingMode);
+                evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADOW_COLOR, _shadowRenderingColor);
             }
         }
         if(attributeRule_polygonMinSizeToDisplay)
@@ -187,7 +187,11 @@ bool OsmAnd::RasterizerContext::update( const AreaI& area31, uint32_t zoom, cons
             applyContext(evaluator);
             evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
             if(evaluator.evaluate())
-                _polygonMinSizeToDisplay = evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_ATTR_INT_VALUE);
+            {
+                int polygonMinSizeToDisplay;
+                if(evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_ATTR_INT_VALUE, polygonMinSizeToDisplay))
+                    _polygonMinSizeToDisplay = polygonMinSizeToDisplay;
+            }
         }
         if(attributeRule_roadDensityZoomTile)
         {
@@ -195,7 +199,7 @@ bool OsmAnd::RasterizerContext::update( const AreaI& area31, uint32_t zoom, cons
             applyContext(evaluator);
             evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
             if(evaluator.evaluate())
-                _roadDensityZoomTile = evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_ATTR_INT_VALUE);
+                evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_ATTR_INT_VALUE, _roadDensityZoomTile);
         }
         if(attributeRule_roadsDensityLimitPerTile)
         {
@@ -203,7 +207,7 @@ bool OsmAnd::RasterizerContext::update( const AreaI& area31, uint32_t zoom, cons
             applyContext(evaluator);
             evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
             if(evaluator.evaluate())
-                _roadsDensityLimitPerTile = evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_ATTR_INT_VALUE);
+                evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_ATTR_INT_VALUE, _roadsDensityLimitPerTile);
         }
     }
 

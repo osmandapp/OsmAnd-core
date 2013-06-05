@@ -60,13 +60,15 @@ namespace OsmAnd {
         void setValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, const OsmAnd::RasterizationRule::Value& value);
         void setBooleanValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, const bool& value);
         void setIntegerValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, const int& value);
+        void setIntegerValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, const unsigned int& value);
         void setFloatValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, const float& value);
         void setStringValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, const QString& value);
 
-        bool getBooleanValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref) const;
-        int getIntegerValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref) const;
-        float getFloatValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref) const;
-        QString getStringValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref) const;
+        bool getBooleanValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, bool& value) const;
+        bool getIntegerValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, int& value) const;
+        bool getIntegerValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, unsigned int& value) const;
+        bool getFloatValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, float& value) const;
+        bool getStringValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref, QString& value) const;
 
         void clearValue(const std::shared_ptr<OsmAnd::RasterizationStyle::ValueDefinition>& ref);
 
