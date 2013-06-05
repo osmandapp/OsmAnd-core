@@ -44,6 +44,7 @@ namespace OsmAnd
             Configuration();
 
             bool verbose;
+            bool dumpRules;
             bool is32bit;
             QList< std::shared_ptr<QFile> > styleFiles;
             QList< std::shared_ptr<QFile> > obfs;

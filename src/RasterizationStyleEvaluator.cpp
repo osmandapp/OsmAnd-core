@@ -224,7 +224,6 @@ bool OsmAnd::RasterizationStyleEvaluator::evaluate( const std::shared_ptr<OsmAnd
 
     if(evaluateChildren)
     {
-        //TODO: If none of children match, rule is still success
         for(auto itChild = rule->_ifElseChildren.begin(); itChild != rule->_ifElseChildren.end(); ++itChild)
         {
             auto evaluationResult = evaluate(*itChild, fillOutput, true);

@@ -19,6 +19,7 @@
 
 OsmAnd::EyePiece::Configuration::Configuration()
     : verbose(false)
+    , dumpRules(false)
     , styleName("default")
     , bbox(90, -180, -90, 180)
     , tileSide(256)
@@ -37,6 +38,10 @@ OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::EyePiece::parseCommand
         if (arg == "-verbose")
         {
             cfg.verbose = true;
+        }
+        else if (arg == "-dumpRules")
+        {
+            cfg.dumpRules = true;
         }
         else if (arg.startsWith("-stylesPath="))
         {
@@ -151,7 +156,8 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
         output << xT("Failed to resolve style '") << QStringToStlString(cfg.styleName) << xT("'") << std::endl;
         return;
     }
-    style->dump();
+    if(cfg.dumpRules)
+        style->dump();
     
     QList< std::shared_ptr<OsmAnd::ObfReader> > obfData;
     for(auto itObf = cfg.obfs.begin(); itObf != cfg.obfs.end(); ++itObf)
