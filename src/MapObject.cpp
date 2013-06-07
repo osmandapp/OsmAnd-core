@@ -23,28 +23,26 @@ int OsmAnd::Model::MapObject::getSimpleLayerValue() const
     for(auto itType = _extraTypes.begin(); itType != _extraTypes.end(); ++itType)
     {
         const auto& type = *itType;
-        const auto& key = std::get<0>(type);
-        const auto& value = std::get<1>(type);
 
-        if (key == "layer")
+        if (type.tag == "layer")
         {
-            if(!value.isEmpty())
+            if(!type.value.isEmpty())
             {
-                if(value[0] == '-')
+                if(type.value[0] == '-')
                     return -1;
-                else if (value[0] == '0')
+                else if (type.value[0] == '0')
                     return 0;
                 else
                     return 1;
             }
         }
-        else if (key == "tunnel")
+        else if (type.tag == "tunnel")
         {
-            isTunnel = (value == "yes");
+            isTunnel = (type.value == "yes");
         }
-        else if (key == "bridge")
+        else if (type.tag == "bridge")
         {
-            isBridge = (value == "yes");
+            isBridge = (type.value == "yes");
         }
     }
 
@@ -59,12 +57,20 @@ bool OsmAnd::Model::MapObject::isClosedFigure(bool checkInner /*= false*/) const
 {
     if(checkInner)
     {
-        if(_polygonInnerCoordinates.isEmpty())
-            return true;
-        return _polygonInnerCoordinates.first() == _polygonInnerCoordinates.last();
+        for(auto itPolygon = _innerPolygonsPoints31.begin(); itPolygon != _innerPolygonsPoints31.end(); ++itPolygon)
+        {
+            const auto& polygon = *itPolygon;
+
+            if(polygon.isEmpty())
+                continue;
+
+            if(polygon.first() != polygon.last())
+                return false;
+        }
+        return true;
     }
     else
-        return _coordinates.first() == _coordinates.last();
+        return _points31.first() == _points31.last();
 }
 
 bool OsmAnd::Model::MapObject::containsType( const QString& tag, const QString& value, bool checkAdditional /*= false*/ ) const
@@ -73,7 +79,7 @@ bool OsmAnd::Model::MapObject::containsType( const QString& tag, const QString& 
     for(auto itType = types.begin(); itType != types.end(); ++itType)
     {
         const auto& type = *itType;
-        if(std::get<0>(type) == tag && std::get<1>(type) == value)
+        if(type.tag == tag && type.value == value)
             return true;
     }
     return false;

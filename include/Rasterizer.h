@@ -45,7 +45,7 @@ namespace OsmAnd {
         Rasterizer();
 
         enum {
-            MaxV = 75,
+            PolygonAreaCutoffLowerThreshold = 75,
             ZoomOnlyForBasemaps = 7,
             BasemapZoom = 11,
             DetailedLandDataZoom = 14,
@@ -75,6 +75,24 @@ namespace OsmAnd {
             IQueryController* controller
             );
         static void filterOutLinesByDensity(RasterizerContext& context, const QVector< Primitive >& in, QVector< Primitive >& out, IQueryController* controller);
+        static bool polygonizeCoastlines(
+                RasterizerContext& context,
+                const QList< std::shared_ptr<OsmAnd::Model::MapObject> >& coastlines,
+                QList< std::shared_ptr<OsmAnd::Model::MapObject> >& outVectorized,
+                bool abortIfBrokenCoastlinesExist,
+                bool includeBrokenCoastlines
+            );
+        static bool buildCoastlinePolygonSegment(
+            RasterizerContext& context,
+            bool currentInside,
+            const PointI& currentPoint31,
+            bool prevInside,
+            const PointI& previousPoint31,
+            QVector< PointI >& segmentPoints );
+        static bool calculateIntersection( const PointI& p1, const PointI& p0, const AreaI& bbox, PointI& pX );
+        static void appendCoastlinePolygons( QList< QVector< PointI > >& closedPolygons, QList< QVector< PointI > >& brokenPolygons, QVector< PointI >& polyline );
+        static void mergeBrokenPolygons( RasterizerContext& context, QList< QVector< PointI > >& brokenPolygons, QList< QVector< PointI > >& closedPolygons, uint64_t osmId );
+        static bool isClockwiseCoastlinePolygon( const QVector< PointI > & polygon );
 
         enum PrimitivesType
         {
@@ -108,6 +126,7 @@ namespace OsmAnd {
             uint32_t tileSidePixelLength,
             const QList< std::shared_ptr<OsmAnd::Model::MapObject> >* objects = nullptr,
             const PointF& tlOriginOffset = PointF(),
+            bool* nothingToRender = nullptr,
             IQueryController* controller = nullptr
             );
         static bool rasterizeMap(

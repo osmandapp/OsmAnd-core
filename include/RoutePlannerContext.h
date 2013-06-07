@@ -38,7 +38,7 @@
 #include <Road.h>
 #include <RouteSegment.h>
 #include <RoutingProfileContext.h>
-#include <Area.h>
+#include <CommonTypes.h>
 
 namespace OsmAnd {
 

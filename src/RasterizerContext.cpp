@@ -38,6 +38,7 @@ void OsmAnd::RasterizerContext::initializeOneWayPaint( SkPaint& paint )
 
 void OsmAnd::RasterizerContext::initialize()
 {
+    _wasAborted = true;
     _paint.setAntiAlias(true);
     _shadowLevelMin = 0;
     _shadowLevelMax = 256;

@@ -168,7 +168,6 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
     }
 
     // Collect all map objects (this should be replaced by something like RasterizerViewport/RasterizerContext)
-    //ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, int renderRouteDataFile, std::string msgNothingFound) {
     QList< std::shared_ptr<OsmAnd::Model::MapObject> > mapObjects;
     OsmAnd::AreaI bbox31(
             qCeil(OsmAnd::Utilities::get31TileNumberY(cfg.bbox.top)),

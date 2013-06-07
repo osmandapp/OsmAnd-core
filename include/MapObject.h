@@ -32,7 +32,7 @@
 #include <QString>
 
 #include <OsmAndCore.h>
-#include <Area.h>
+#include <CommonTypes.h>
 
 namespace OsmAnd {
 
@@ -57,10 +57,10 @@ namespace OsmAnd {
             uint64_t _id;
             FoundationType _foundation;
             bool _isArea;
-            QVector< PointI > _coordinates;
-            QList< QVector< PointI > > _polygonInnerCoordinates;
-            QVector< std::tuple< QString, QString > > _types;
-            QVector< std::tuple< QString, QString > > _extraTypes;
+            QVector< PointI > _points31;
+            QList< QVector< PointI > > _innerPolygonsPoints31;
+            QVector< TagValue > _types;
+            QVector< TagValue > _extraTypes;
             QMap< uint32_t, QString > _names;
         public:
             virtual ~MapObject();

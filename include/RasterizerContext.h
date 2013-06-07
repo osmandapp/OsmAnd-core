@@ -35,7 +35,7 @@
 #include <RasterizationStyle.h>
 #include <RasterizationRule.h>
 #include <Rasterizer.h>
-#include <Area.h>
+#include <CommonTypes.h>
 
 namespace OsmAnd {
 
@@ -47,6 +47,7 @@ namespace OsmAnd {
     {
     private:
     protected:
+        bool _wasAborted;
         AreaI _area31;
         uint32_t _zoom;
         double _tileDivisor;
@@ -57,7 +58,8 @@ namespace OsmAnd {
         bool _hasBasemap;
         bool _hasWater;
         bool _hasLand;
-        QVector< std::shared_ptr<OsmAnd::Model::MapObject> > _mapObjects, _coastlineObjects, _basemapMapObjects, _basemapCoastlineObjects;
+        QList< std::shared_ptr<OsmAnd::Model::MapObject> > _mapObjects, _coastlineObjects, _basemapMapObjects, _basemapCoastlineObjects;
+        QList< std::shared_ptr<OsmAnd::Model::MapObject> > _combinedMapObjects, _triangulatedCoastlineObjects;
         QVector< Rasterizer::Primitive > _polygons, _lines, _points;
 
         SkPaint _paint;

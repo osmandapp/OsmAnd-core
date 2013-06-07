@@ -40,7 +40,7 @@
 #include <MapObject.h>
 #include <QueryFilter.h>
 #include <IQueryController.h>
-#include <Area.h>
+#include <CommonTypes.h>
 
 namespace OsmAnd {
 

@@ -28,7 +28,7 @@
 #include <QString>
 
 #include <OsmAndCore.h>
-#include <Area.h>
+#include <CommonTypes.h>
 
 namespace OsmAnd {
 

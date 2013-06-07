@@ -304,6 +304,14 @@ add_library(skia_osmand STATIC
 	${target_specific_sources}
 )
 
+add_dependencies(skia_osmand
+	expat_osmand
+	freetype2_osmand
+	harfbuzz_osmand
+	png_osmand
+	gif_osmand
+	jpeg_osmand
+)
 target_link_libraries(skia_osmand LINK_PUBLIC
 	expat_osmand
 	freetype2_osmand

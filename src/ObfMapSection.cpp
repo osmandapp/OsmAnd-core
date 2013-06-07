@@ -538,7 +538,7 @@ void OsmAnd::ObfMapSection::readMapObject(
         case OBF::MapData::kAreaCoordinatesFieldNumber:
         case OBF::MapData::kCoordinatesFieldNumber:
             {
-                QVector< PointI > coordinates;
+                QVector< PointI > points31;
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
@@ -556,7 +556,7 @@ void OsmAnd::ObfMapSection::readMapObject(
                     auto dy = (ObfReader::readSInt32(cis) << ShiftCoordinates);
                     auto y = dy + py;
 
-                    coordinates.push_back(PointI(x, y));
+                    points31.push_back(PointI(x, y));
                     
                     px = x;
                     py = y;
@@ -583,7 +583,7 @@ void OsmAnd::ObfMapSection::readMapObject(
                 if(!mapObject)
                     mapObject.reset(new OsmAnd::Model::MapObject(section));
                 mapObject->_isArea = (tgn == OBF::MapData::kAreaCoordinatesFieldNumber);
-                mapObject->_coordinates = coordinates;
+                mapObject->_points31 = points31;
             }
             break;
         case OBF::MapData::kPolygonInnerCoordinatesFieldNumber:
@@ -596,8 +596,8 @@ void OsmAnd::ObfMapSection::readMapObject(
                 auto oldLimit = cis->PushLimit(length);
                 auto px = treeNode->_area31.left & MaskToRead;
                 auto py = treeNode->_area31.top & MaskToRead;
-                mapObject->_polygonInnerCoordinates.push_back(QVector< PointI >());
-                auto& polygon = mapObject->_polygonInnerCoordinates.last();
+                mapObject->_innerPolygonsPoints31.push_back(QVector< PointI >());
+                auto& polygon = mapObject->_innerPolygonsPoints31.last();
                 while(cis->BytesUntilLimit() > 0)
                 {
                     auto dx = (ObfReader::readSInt32(cis) << ShiftCoordinates);
@@ -627,7 +627,7 @@ void OsmAnd::ObfMapSection::readMapObject(
                     cis->ReadVarint32(&type);
 
                     const auto& tagValue = section->_rules->_decodingRules[type];
-                    mapObject->_extraTypes.push_back(std::tuple<QString, QString>(std::get<0>(tagValue), std::get<1>(tagValue)));
+                    mapObject->_extraTypes.push_back(TagValue(std::get<0>(tagValue), std::get<1>(tagValue)));
                 }
                 cis->PopLimit(oldLimit);
             }
@@ -646,7 +646,7 @@ void OsmAnd::ObfMapSection::readMapObject(
                     cis->ReadVarint32(&type);
 
                     const auto& tagValue = section->_rules->_decodingRules[type];
-                    mapObject->_types.push_back(std::tuple<QString, QString>(std::get<0>(tagValue), std::get<1>(tagValue)));
+                    mapObject->_types.push_back(TagValue(std::get<0>(tagValue), std::get<1>(tagValue)));
                 }
                 cis->PopLimit(oldLimit);
             }

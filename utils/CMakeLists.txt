@@ -28,6 +28,7 @@ add_library(OsmAndCoreUtils SHARED
 	${sources}
 	${headers}
 )
+add_dependencies(OsmAndCoreUtils OsmAndCore)
 target_link_libraries(OsmAndCoreUtils OsmAndCore)
 find_package(Qt5Core REQUIRED)
 qt5_use_modules(OsmAndCoreUtils Core)

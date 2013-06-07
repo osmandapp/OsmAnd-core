@@ -1,7 +1,9 @@
 #include "Utilities.h"
 
+#include <assert.h>
 #include <limits>
 #include <cmath>
+
 #include <QtNumeric>
 #include <QtCore>
 
@@ -411,20 +413,25 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::findFiles( const QDir& 
 
 OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::polygonArea( const QVector<PointI>& points )
 {
-    auto area = 0.0;
-    auto j = points.size() - 1;
-    for(auto i = 0; i < points.size(); i++)
-    {
-        const auto& a = points[i];
-        const auto& b = points[j];
+    double area = 0.0;
 
-        area += (b.x + a.x) * (b.y - a.y);
-        j = i;
+    assert(points.first() == points.last());
+
+    auto itPrevPoint = points.begin();
+    auto itPoint = itPrevPoint + 1;
+    for(; itPoint != points.end(); itPrevPoint = itPoint, ++itPoint)
+    {
+        const auto& p0 = *itPrevPoint;
+        const auto& p1 = *itPoint;
+
+        area += static_cast<double>(p0.x) * static_cast<double>(p1.y) - static_cast<double>(p1.x) * static_cast<double>(p0.y);
     }
-    return qAbs(area) * 0.5;
+    area = qAbs(area) * 0.5;
+
+    return area;
 }
 
-OSMAND_CORE_API float OSMAND_CORE_CALL OsmAnd::Utilities::rayIntersectX( const PointF& v0_, const PointF& v1_, float mY )
+OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::Utilities::rayIntersectX( const PointF& v0_, const PointF& v1_, float mY, float& mX )
 {
     // prev node above line
     // x,y node below line
@@ -436,23 +443,62 @@ OSMAND_CORE_API float OSMAND_CORE_CALL OsmAnd::Utilities::rayIntersectX( const P
         mY -= 1.0f;
 
     if(v0.y > mY || v1.y < mY)
-        return std::numeric_limits<float>::quiet_NaN();
+        return false;
 
     if(v1 == v0)
     {
         // the node on the boundary !!!
-        return v1.x;
+        mX = v1.x;
+        return true;
     }
 
     // that tested on all cases (left/right)
-    auto rx = v1.x + (mY - v1.y) * (v1.x - v0.x) / (v1.y - v0.y);
-    return rx;
+    mX = v1.x + (mY - v1.y) * (v1.x - v0.x) / (v1.y - v0.y);
+    return true;
 }
 
 OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::Utilities::rayIntersect( const PointF& v0, const PointF& v1, const PointF& v )
 {
-    auto t = rayIntersectX(v0, v1, v.y);
-    if(qIsNaN(t))
+    float t;
+    if(!rayIntersectX(v0, v1, v.y, t))
+        return false;
+
+    if(t < v.x)
+        return true;
+
+    return false;
+}
+
+OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::Utilities::rayIntersectX( const PointI& v0_, const PointI& v1_, int32_t mY, int32_t& mX )
+{
+    // prev node above line
+    // x,y node below line
+
+    const auto& v0 = (v0_.y > v1_.y) ? v1_ : v0_;
+    const auto& v1 = (v0_.y > v1_.y) ? v0_ : v1_;
+
+    if(v1.y == mY || v0.y == mY)
+        mY -= 1;
+
+    if(v0.y > mY || v1.y < mY)
+        return false;
+
+    if(v1 == v0)
+    {
+        // the node on the boundary !!!
+        mX = v1.x;
+        return true;
+    }
+
+    // that tested on all cases (left/right)
+    mX = static_cast<int32_t>(v1.x + static_cast<double>(mY - v1.y) * static_cast<double>(v1.x - v0.x) / static_cast<double>(v1.y - v0.y));
+    return true;
+}
+
+OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::Utilities::rayIntersect( const PointI& v0, const PointI& v1, const PointI& v )
+{
+    int32_t t;
+    if(!rayIntersectX(v0, v1, v.y, t))
         return false;
 
     if(t < v.x)

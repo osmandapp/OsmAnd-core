@@ -26,6 +26,9 @@ add_library(png_osmand STATIC
 	"upstream.patched/pngwutil.c"
 )
 
+add_dependencies(png_osmand
+	z_osmand
+)
 target_link_libraries(png_osmand LINK_PUBLIC
 	z_osmand
 )

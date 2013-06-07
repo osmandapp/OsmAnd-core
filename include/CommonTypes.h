@@ -20,16 +20,39 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __AREA_H_
-#define __AREA_H_
+#if !defined(__COMMON_TYPES_H_)
+#define __COMMON_TYPES_H_
 
 #include <stdint.h>
 
 #include <QtGlobal>
+#include <QString>
 
 #include <OsmAndCore.h>
 
-namespace OsmAnd {
+namespace OsmAnd
+{
+    struct TagValue
+    {
+        TagValue()
+        {
+        }
+
+        TagValue(const QString& tag_, const QString& value_)
+            : tag(tag_)
+            , value(value_)
+        {
+        }
+
+        TagValue(const char* tag_, const char* value_)
+            : tag(QString::fromLatin1(tag_))
+            , value(QString::fromLatin1(value_))
+        {
+        }
+
+        QString tag;
+        QString value;
+    };
 
     template<typename T>
     struct Point
@@ -240,7 +263,6 @@ namespace OsmAnd {
     typedef Area<double> AreaD;
     typedef Area<float> AreaF;
     typedef Area<int32_t> AreaI;
+}
 
-} // namespace OsmAnd
-
-#endif // __AREA_H_
+#endif // __COMMON_TYPES_H_

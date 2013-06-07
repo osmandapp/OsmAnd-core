@@ -84,6 +84,10 @@ add_library(OsmAndCore SHARED
 	"native/src/java_wrap.cpp"
 )
 
+target_link_libraries(OsmAndCore
+	skia_osmand
+	protobuf_osmand
+)
 target_link_libraries(OsmAndCore LINK_PUBLIC
 	skia_osmand
 	protobuf_osmand

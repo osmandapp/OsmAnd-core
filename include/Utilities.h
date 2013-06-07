@@ -24,6 +24,7 @@
 #define __UTILITIES_H_
 
 #include <cstdint>
+#include <limits.h>
 #include <memory>
 
 #include <QString>
@@ -34,7 +35,7 @@
 #include <QVector>
 
 #include <OsmAndCore.h>
-#include <Area.h>
+#include <CommonTypes.h>
 
 namespace OsmAnd {
 
@@ -75,8 +76,24 @@ namespace OsmAnd {
         OSMAND_CORE_API int OSMAND_CORE_CALL javaDoubleCompare(double l, double r);
         OSMAND_CORE_API void OSMAND_CORE_CALL findFiles(const QDir& origin, const QStringList& masks, QList< std::shared_ptr<QFile> >& files, bool recursively = true);
         OSMAND_CORE_API double OSMAND_CORE_CALL polygonArea(const QVector<PointI>& points);
-        OSMAND_CORE_API float OSMAND_CORE_CALL rayIntersectX(const PointF& v0, const PointF& v1, float mY);
+        OSMAND_CORE_API bool OSMAND_CORE_CALL rayIntersectX(const PointF& v0, const PointF& v1, float mY, float& mX);
         OSMAND_CORE_API bool OSMAND_CORE_CALL rayIntersect(const PointF& v0, const PointF& v1, const PointF& v);
+        OSMAND_CORE_API bool OSMAND_CORE_CALL rayIntersectX(const PointI& v0, const PointI& v1, int32_t mY, int32_t& mX);
+        OSMAND_CORE_API bool OSMAND_CORE_CALL rayIntersect(const PointI& v0, const PointI& v1, const PointI& v);
+
+        template <typename T>
+        T sumWithSaturation(const T& a, const T& b)
+        {
+            const auto& typeMax = std::numeric_limits<T>::max();
+            const auto& typeMin = std::numeric_limits<T>::min();
+
+            auto result = a + b;
+            if(b > 0 && result < a)
+                return typeMax;
+            else if(b < 0 && result > a)
+                return typeMin;
+            return result;
+        }
     } // namespace Utilities
 
 } // namespace OsmAnd

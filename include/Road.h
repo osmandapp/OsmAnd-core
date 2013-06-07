@@ -33,7 +33,7 @@
 
 #include <OsmAndCore.h>
 #include <ObfRoutingSection.h>
-#include <Area.h>
+#include <CommonTypes.h>
 
 namespace OsmAnd {
 

@@ -31,7 +31,7 @@
 #include <QFile>
 
 #include "CoreUtils.h"
-#include <Area.h>
+#include <CommonTypes.h>
 #include <RasterizationStyle.h>
 #include <RasterizationStyles.h>
 
