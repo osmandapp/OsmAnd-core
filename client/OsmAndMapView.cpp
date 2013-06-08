@@ -1,4 +1,4 @@
-#include "MapView.h"
+#include "OsmAndMapView.h"
 #include <qmath.h>
 namespace OsmAnd {
 
@@ -19,6 +19,7 @@ void OsmAndMapView::setRotate(float rotate) {
         float rad = (rotate / 180 )* M_PI;
         rotateCos = cos(rad);
         rotateSin = sin(rad);
+        updateLayersViewport();
         //			float diff = MapUtils.unifyRotationDiff(rotate, getRotate());
         //			if (Math.abs(diff) > 5) { // check smallest rotation
         //				animatedDraggingThread.startRotate(rotate);
@@ -28,6 +29,7 @@ void OsmAndMapView::setRotate(float rotate) {
 
 void OsmAndMapView::setZoom(float z) {
     this->zoom = z;
+    updateLayersViewport();
 }
 
 bool OsmAndMapView::isMapRotateEnabled(){
@@ -37,12 +39,14 @@ bool OsmAndMapView::isMapRotateEnabled(){
 void OsmAndMapView::setBounds(int w, int h) {
     width = w;
     height = h;
+    updateLayersViewport();
 }
 
 void OsmAndMapView::setLatLon(double latitiude, double longitude){
     // nanimatedDraggingThread.stopAnimating();
     this->latitude = latitiude;
     this->longitude = longitude;
+    updateLayersViewport();
 }
 
 float OsmAndMapView::getTileSize() {
@@ -105,6 +109,13 @@ QRectF OsmAndMapView::getTileRect() {
     return tilesRect;
 }
 
+void OsmAndMapView::updateLayersViewport() {
+    for(std::shared_ptr<OsmAndMapDataLayer> l : layers) {
+        l->updateViewport(this);
+    }
+
+}
+
 int OsmAndMapView::getCenterPointX() {
     return getWidth() / 2;
 }
@@ -159,28 +170,38 @@ float OsmAndMapView::getRotatedMapLonForPoint(float x, float y) {
 }
 
 
-int OsmAndMapView::getRotatedMapXForPoint(double latitude, double longitude) {
-    int cx = getCenterPointX();
-    double xTile = OsmAnd::Utilities::getTileNumberX(getZoom(), longitude);
-    double yTile = OsmAnd::Utilities::getTileNumberY(getZoom(), latitude);
-    return (int) (calcDiffPixelX((float) (xTile - getXTile()), (float) (yTile - getYTile())) + cx);
+PointI OsmAndMapView::getPixelPointForLatLon(double latitude, double longitude){
+    return getPixelPoint((int32_t)OsmAnd::Utilities::get31TileNumberX(longitude),
+                (int32_t) OsmAnd::Utilities::get31TileNumberY(latitude));
 }
 
-int OsmAndMapView::getRotatedMapYForPoint(double latitude, double longitude) {
-    int cy = getCenterPointY();
-    double xTile = OsmAnd::Utilities::getTileNumberX(getZoom(), longitude);
-    double yTile = OsmAnd::Utilities::getTileNumberY(getZoom(), latitude);
-    return (int) (calcDiffPixelY((float) (xTile - getXTile()), (float) (yTile - getYTile())) + cy);
+void OsmAndMapView::addLayer(std::shared_ptr<OsmAndMapDataLayer> layer) {
+    layer->attach(this);
+    layers.push_back(layer);
 }
 
-bool OsmAndMapView::isPointOnTheRotatedMap(double latitude, double longitude) {
+PointI OsmAndMapView::getPixelPoint(int32_t x31, int32_t y31){
     int cx = getCenterPointX();
     int cy = getCenterPointY();
-    double xTile = OsmAnd::Utilities::getTileNumberX(getZoom(), longitude);
-    double yTile = OsmAnd::Utilities::getTileNumberY(getZoom(), latitude);
-    int newX = (int) (calcDiffPixelX((float) (xTile - getXTile()), (float) (yTile - getYTile())) + cx);
-    int newY = (int) (calcDiffPixelY((float) (xTile - getXTile()), (float) (yTile - getYTile())) + cy);
-    if (newX >= 0 && newX <= getWidth() && newY >= 0 && newY <= getHeight()) {
+    auto pw = OsmAnd::Utilities::getPowZoom(31 - getZoom());
+    float diffxTile = x31 / pw - getXTile();
+    float diffyTile = y31 / pw - getYTile();
+    int newX = (int) (calcDiffPixelX(diffxTile, diffyTile) + cx);
+    int newY = (int) (calcDiffPixelY(diffxTile, diffyTile) + cy);
+    return PointI(newX, newY);
+}
+
+bool OsmAndMapView::isPoint31OnTheRotatedMap(int32_t x31, int32_t y31) {
+    PointI p = getPixelPoint(x31, y31);
+    if (p.x >= 0 && p.x <= getWidth() && p.y >= 0 && p.y <= getHeight()) {
+        return true;
+    }
+    return false;
+}
+
+bool OsmAndMapView::isLatLonPointOnTheRotatedMap(double latitude, double longitude) {
+    PointI p = getPixelPointForLatLon(latitude, longitude);
+    if (p.x >= 0 && p.x <= getWidth() && p.y >= 0 && p.y <= getHeight()) {
         return true;
     }
     return false;
@@ -191,6 +212,7 @@ void OsmAndMapView::moveTo(float dx, float dy) {
     float fx = calcDiffTileX(dx, dy);
     this->latitude = OsmAnd::Utilities::getLatitudeFromTile(getZoom(), getYTile() + fy);
     this->longitude = OsmAnd::Utilities::getLongitudeFromTile(getZoom(), getXTile() + fx);
+    updateLayersViewport();
 }
 
 }
