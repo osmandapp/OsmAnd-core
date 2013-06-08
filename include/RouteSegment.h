@@ -34,6 +34,9 @@
 
 namespace OsmAnd {
 
+    class RoutePlannerAnalyzer;
+    class RoutePlanner;
+
     class OSMAND_CORE_API RouteSegment
     {
     private:
@@ -67,6 +70,7 @@ namespace OsmAnd {
         double getBearingEnd() const;
 
         friend class OsmAnd::RoutePlanner;
+        friend class OsmAnd::RoutePlannerAnalyzer;
     };
 
 } // namespace OsmAnd

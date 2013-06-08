@@ -40,7 +40,10 @@
 #include <RoutingProfileContext.h>
 #include <CommonTypes.h>
 
+
 namespace OsmAnd {
+    class RoutePlanner;
+    class RoutePlannerAnalyzer;
 
     class OSMAND_CORE_API RoutePlannerContext
     {
@@ -75,6 +78,7 @@ namespace OsmAnd {
             int _allowedDirection;
 
             friend class OsmAnd::RoutePlanner;
+            friend class OsmAnd::RoutePlannerAnalyzer;
             friend class OsmAnd::RoutePlannerContext;
         };
 
@@ -93,6 +97,7 @@ namespace OsmAnd {
             const std::shared_ptr<RouteCalculationSegment>& opposite;
 
             friend class OsmAnd::RoutePlanner;
+            friend class OsmAnd::RoutePlannerAnalyzer;
             friend class OsmAnd::RoutePlannerContext;
         };
 
@@ -122,6 +127,7 @@ namespace OsmAnd {
             void collectRoads(QList< std::shared_ptr<Model::Road> >& output, QMap<uint64_t, std::shared_ptr<Model::Road> >* duplicatesRegistry = nullptr);
 
             friend class OsmAnd::RoutePlanner;
+            friend class OsmAnd::RoutePlannerAnalyzer;
             friend class OsmAnd::RoutePlannerContext;
         };
 
@@ -151,6 +157,7 @@ namespace OsmAnd {
             RoutePlannerContext* const owner;
 
             friend class OsmAnd::RoutePlanner;
+            friend class OsmAnd::RoutePlannerAnalyzer;
             friend class OsmAnd::RoutePlannerContext;
         };
     private:
@@ -192,6 +199,7 @@ namespace OsmAnd {
         const std::unique_ptr<RoutingProfileContext> profileContext;
 
         friend class OsmAnd::RoutePlanner;
+        friend class OsmAnd::RoutePlannerAnalyzer;
     };
 
 } // namespace OsmAnd

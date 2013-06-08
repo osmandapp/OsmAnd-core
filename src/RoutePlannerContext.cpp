@@ -1,6 +1,7 @@
+#include "RoutePlanner.h"
+#include "RoutePlannerRouteAnalyzer.h"
 #include "RoutePlannerContext.h"
 
-#include "RoutePlanner.h"
 #include "Logging.h"
 
 #include "Utilities.h"
