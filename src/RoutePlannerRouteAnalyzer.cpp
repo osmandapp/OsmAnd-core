@@ -31,7 +31,6 @@ bool OsmAnd::RoutePlannerAnalyzer::prepareResult(OsmAnd::RoutePlannerContext::Ca
     int i = 0;
     while (segment)
     {
-        LogPrintf(LogSeverityLevel::Debug, "%llu(%d, %d),\n", segment->road->id, parentSegmentStart, segment->pointIndex);
         std::shared_ptr<RouteSegment> routeSegment(new RouteSegment(segment->road, parentSegmentStart, segment->pointIndex));
         parentSegmentStart = segment->parentEndPointIndex;
         segment = segment->parent;
@@ -39,7 +38,6 @@ bool OsmAnd::RoutePlannerAnalyzer::prepareResult(OsmAnd::RoutePlannerContext::Ca
         addRouteSegmentToRoute(route, routeSegment, false);
         i++;
     }
-    LogPrintf(LogSeverityLevel::Debug, "%d-------------------------------------------------------------\n", i);
 
     // Reverse it just to attach good direction roads
     std::reverse(route.begin(), route.end());
@@ -48,16 +46,14 @@ bool OsmAnd::RoutePlannerAnalyzer::prepareResult(OsmAnd::RoutePlannerContext::Ca
     auto parentSegmentEnd = pFinalSegment->_reverseWaySearch ? pFinalSegment->opposite->parentEndPointIndex : pFinalSegment->opposite->pointIndex;
     while (segment)
     {
-        LogPrintf(LogSeverityLevel::Debug, "%llu(%d, %d),\n", segment->road->id, segment->pointIndex, parentSegmentEnd);
         std::shared_ptr<RouteSegment> routeSegment(new RouteSegment(segment->road, segment->pointIndex, parentSegmentEnd));
         parentSegmentEnd = segment->parentEndPointIndex;
         segment = segment->parent;
-
         addRouteSegmentToRoute(route, routeSegment, true);
         i++;
     }
-    LogPrintf(LogSeverityLevel::Debug, "%d\n", i);
     std::reverse(route.begin(), route.end());
+
 
     if(!validateAllPointsConnected(route))
         return false;
@@ -348,6 +344,7 @@ bool OsmAnd::RoutePlannerAnalyzer::validateAllPointsConnected( const QList< std:
 
     auto itPrevSegment = route.begin();
     bool res = true;
+    LogPrintf(LogSeverityLevel::Debug, "Segment : %llu %u %u \n", (*itPrevSegment)->road->id, (*itPrevSegment)->startPointIndex,  (*itPrevSegment)->endPointIndex);
     for(auto itSegment = ++route.begin(); itSegment != route.end(); ++itSegment, ++itPrevSegment)
     {
         auto prevSegment = *itPrevSegment;
@@ -359,11 +356,12 @@ bool OsmAnd::RoutePlannerAnalyzer::validateAllPointsConnected( const QList< std:
             Utilities::get31LongitudeX(point1.x), Utilities::get31LatitudeY(point1.y),
             Utilities::get31LongitudeX(point2.x), Utilities::get31LatitudeY(point2.y)
         );
+        LogPrintf(LogSeverityLevel::Debug, "Segment : %llu %u %u \n ", segment->road->id, segment->startPointIndex,  segment->endPointIndex);
         if(distance > 0)
         {
             res = false;
 
-            LogPrintf(LogSeverityLevel::Error, "Points are not connected : %llu(%u) -> %llu(%u) %f meters",
+            LogPrintf(LogSeverityLevel::Error, "!! Points are not connected : %llu(%u) -> %llu(%u) %f meters",
                 prevSegment->road->id, prevSegment->endPointIndex, segment->road->id, segment->startPointIndex, distance);
         }
     }
