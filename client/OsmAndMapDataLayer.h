@@ -17,6 +17,8 @@ public:
 
     virtual void updateViewport(OsmAnd::OsmAndMapView* view) = 0;
 
+    virtual void clearCache() {}
+
     virtual ~OsmAndMapDataLayer() {}
 };
 }

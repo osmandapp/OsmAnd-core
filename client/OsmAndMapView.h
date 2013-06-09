@@ -36,63 +36,63 @@ private :
 
     void updateLayersViewport();
     // deprecated
-    int getMapXForPoint(double longitude);
-    int getMapYForPoint(double latitude);
+    int getMapXForPoint(double longitude) const;
+    int getMapYForPoint(double latitude) const;
 
 
 public:
-    float calcDiffTileY(float dx, float dy);
-    float calcDiffTileX(float dx, float dy);
-    float calcDiffPixelY(float dx, float dy);
-    float calcDiffPixelX(float dx, float dy);
+    float calcDiffTileY(float dx, float dy) const;
+    float calcDiffTileX(float dx, float dy) const;
+    float calcDiffPixelY(float dx, float dy) const;
+    float calcDiffPixelX(float dx, float dy) const;
 
     OsmAndMapView(const std::shared_ptr<OsmAnd::OsmAndApplication>&);
 
-    inline float getZoom() {return zoom;}
+    inline float getZoom() const {return zoom;}
 
     void setZoom(float);
 
-    inline double getLatitude() { return latitude; }
+    inline double getLatitude() const { return latitude; }
 
-    inline double getLongitude() { return longitude; }
+    inline double getLongitude() const { return longitude; }
 
-    inline float getXTile() {return (float) OsmAnd::Utilities::getTileNumberX(getZoom(), longitude);}
+    inline float getXTile() const {return (float) OsmAnd::Utilities::getTileNumberX(getZoom(), longitude);}
 
-    inline float getYTile() {return (float) OsmAnd::Utilities::getTileNumberY(getZoom(), latitude);}
+    inline float getYTile() const {return (float) OsmAnd::Utilities::getTileNumberY(getZoom(), latitude);}
 
     void setBounds(int w, int h);
 
-    int getWidth() { return width; }
+    int getWidth() const { return width; }
 
-    int getHeight() { return  height; }
+    int getHeight() const { return  height; }
 
-    float getRotate();
+    float getRotate() const ;
 
     void setRotate(float r);
 
-    bool isMapRotateEnabled();
+    bool isMapRotateEnabled() const ;
 
-    float getTileSize();
+    float getTileSize() const ;
 
-    int getSourceTileSize();
+    int getSourceTileSize() const ;
 
-    int getCenterPointX();
+    int getCenterPointX() const ;
 
-    int getCenterPointY();
+    int getCenterPointY() const ;
 
-    QRectF getTileRect();
+    QRectF getTileRect() const;
 
-    void calculateTileRectangle(QRect& pixRect, float cx, float cy, float ctilex, float ctiley, QRectF& tileRect);
+    void calculateTileRectangle(QRect& pixRect, float cx, float cy, float ctilex, float ctiley, QRectF& tileRect) const ;
 
-    float getRotatedMapLatForPoint(float x, float y);
-    float getRotatedMapLonForPoint(float x, float y);
+    float getRotatedMapLatForPoint(float x, float y) const ;
+    float getRotatedMapLonForPoint(float x, float y) const ;
 
 
-    PointI getPixelPointForLatLon(double latitude, double longitude);
-    PointI getPixelPoint(int32_t x31, int32_t y31);
+    PointI getPixelPointForLatLon(double latitude, double longitude) const ;
+    PointI getPixelPoint(int32_t x31, int32_t y31) const ;
 
-    bool isPoint31OnTheRotatedMap(int32_t x31, int32_t y31);
-    bool isLatLonPointOnTheRotatedMap(double latitude, double longitude);
+    bool isPoint31OnTheRotatedMap(int32_t x31, int32_t y31) const;
+    bool isLatLonPointOnTheRotatedMap(double latitude, double longitude) const;
 
 
     void moveTo(float dx, float dy);
@@ -106,11 +106,18 @@ public:
 
 class OSMAND_CORE_API MapPoint {
 public:
-    const int32_t x31;
-    const int32_t y31;
+    int32_t x31;
+    int32_t y31;
+    OsmAndMapView* v;
+    MapPoint(OsmAndMapView* v, int32_t x31,int32_t y31) : x31(x31), y31(y31), v(v) {}
+    MapPoint() : x31(0), y31(0), v(nullptr) {}
 
-    PointI pixel(OsmAndMapView* v)
+
+    PointI pixel()
     {
+        if(v == nullptr) {
+            return PointI(0, 0);
+        }
         return v->getPixelPoint(x31, y31);
     }
 
