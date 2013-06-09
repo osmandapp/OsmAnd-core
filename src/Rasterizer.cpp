@@ -1431,17 +1431,18 @@ void OsmAnd::Rasterizer::rasterizeText( RasterizerContext& context, bool fillBac
     context._mapPaint.setColor(SK_ColorTRANSPARENT);
     if(fillBackground)
         canvas.drawRectCoords(context._renderViewport.top, context._renderViewport.left, context._renderViewport.right, context._renderViewport.bottom, context._mapPaint);
-
+    /*
     SkRect r = SkRect::MakeLTRB(0, 0, rc->getWidth(), rc->getHeight());
     r.inset(-100, -100);
     quad_tree<TextDrawInfo*> boundsIntersect(r, 4, 0.6);
-
+    */
+    /*
 #if defined(ANDROID)
     //TODO: This is never released because of always +1 of reference counter
     if(!sDefaultTypeface)
         sDefaultTypeface = SkTypeface::CreateFromName("Droid Serif", SkTypeface::kNormal);
 #endif
-
+        */
     SkPaint::FontMetrics fontMetrics;
     for(auto itText = context._texts.begin(); itText != context._texts.end(); ++itText)
     {
