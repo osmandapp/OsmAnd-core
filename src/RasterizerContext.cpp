@@ -39,7 +39,7 @@ void OsmAnd::RasterizerContext::initializeOneWayPaint( SkPaint& paint )
 void OsmAnd::RasterizerContext::initialize()
 {
     _wasAborted = true;
-    _paint.setAntiAlias(true);
+    _mapPaint.setAntiAlias(true);
     _shadowLevelMin = 0;
     _shadowLevelMax = 256;
     _roadDensityZoomTile = 0;
@@ -47,7 +47,7 @@ void OsmAnd::RasterizerContext::initialize()
     _shadowRenderingMode = 0;
     _shadowRenderingColor = 0xff969696;
     _polygonMinSizeToDisplay = 0.0;
-    _defaultColor = 0xfff1eee8;
+    _defaultBgColor = 0xfff1eee8;
 
     style->resolveAttribute("defaultColor", attributeRule_defaultColor);
     style->resolveAttribute("shadowRendering", attributeRule_shadowRendering);
@@ -146,6 +146,12 @@ void OsmAnd::RasterizerContext::initialize()
             _reverseOneWayPaints.push_back(paint);
         }
     }
+
+    _textPaint.setStyle(SkPaint::kFill_Style);
+    _textPaint.setStrokeWidth(1);
+    _textPaint.setColor(SK_ColorBLACK);
+    _textPaint.setTextAlign(SkPaint::kCenter_Align);
+    _textPaint.setAntiAlias(true);
 }
 
 bool OsmAnd::RasterizerContext::update( const AreaI& area31, uint32_t zoom, const PointF& tlOriginOffset, uint32_t tileSidePixelLength )
@@ -166,15 +172,15 @@ bool OsmAnd::RasterizerContext::update( const AreaI& area31, uint32_t zoom, cons
         if(attributeRule_defaultColor)
         {
             RasterizationStyleEvaluator evaluator(style, attributeRule_defaultColor);
-            applyContext(evaluator);
+            applyTo(evaluator);
             evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
             if(evaluator.evaluate())
-                evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_ATTR_COLOR_VALUE, _defaultColor);
+                evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_ATTR_COLOR_VALUE, _defaultBgColor);
         }
         if(attributeRule_shadowRendering)
         {
             RasterizationStyleEvaluator evaluator(style, attributeRule_shadowRendering);
-            applyContext(evaluator);
+            applyTo(evaluator);
             evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
             if(evaluator.evaluate())
             {
@@ -185,7 +191,7 @@ bool OsmAnd::RasterizerContext::update( const AreaI& area31, uint32_t zoom, cons
         if(attributeRule_polygonMinSizeToDisplay)
         {
             RasterizationStyleEvaluator evaluator(style, attributeRule_polygonMinSizeToDisplay);
-            applyContext(evaluator);
+            applyTo(evaluator);
             evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
             if(evaluator.evaluate())
             {
@@ -197,7 +203,7 @@ bool OsmAnd::RasterizerContext::update( const AreaI& area31, uint32_t zoom, cons
         if(attributeRule_roadDensityZoomTile)
         {
             RasterizationStyleEvaluator evaluator(style, attributeRule_roadDensityZoomTile);
-            applyContext(evaluator);
+            applyTo(evaluator);
             evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
             if(evaluator.evaluate())
                 evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_ATTR_INT_VALUE, _roadDensityZoomTile);
@@ -205,7 +211,7 @@ bool OsmAnd::RasterizerContext::update( const AreaI& area31, uint32_t zoom, cons
         if(attributeRule_roadsDensityLimitPerTile)
         {
             RasterizationStyleEvaluator evaluator(style, attributeRule_roadsDensityLimitPerTile);
-            applyContext(evaluator);
+            applyTo(evaluator);
             evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
             if(evaluator.evaluate())
                 evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_ATTR_INT_VALUE, _roadsDensityLimitPerTile);
@@ -233,7 +239,7 @@ bool OsmAnd::RasterizerContext::update( const AreaI& area31, uint32_t zoom, cons
     return evaluateAttributes || evaluate31ToPixelDivisor || evaluateRenderViewport;
 }
 
-void OsmAnd::RasterizerContext::applyContext( RasterizationStyleEvaluator& evaluator ) const
+void OsmAnd::RasterizerContext::applyTo( RasterizationStyleEvaluator& evaluator ) const
 {
     for(auto itSetting = _styleInitialSettings.begin(); itSetting != _styleInitialSettings.end(); ++itSetting)
     {

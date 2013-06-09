@@ -84,7 +84,7 @@ add_library(OsmAndCore SHARED
 	"native/src/java_wrap.cpp"
 )
 
-target_link_libraries(OsmAndCore
+add_dependencies(OsmAndCore
 	skia_osmand
 	protobuf_osmand
 )
@@ -93,4 +93,5 @@ target_link_libraries(OsmAndCore LINK_PUBLIC
 	protobuf_osmand
 )
 find_package(Qt5Core REQUIRED)
-qt5_use_modules(OsmAndCore Core)
+find_package(Qt5Network REQUIRED)
+qt5_use_modules(OsmAndCore Core Network)

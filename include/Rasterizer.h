@@ -58,6 +58,23 @@ namespace OsmAnd {
             Polygon = 3,
         };
 
+        struct TextPrimitive
+        {
+            QString content;
+            bool drawOnPath;
+            std::shared_ptr<SkPath> path;
+            PointF center;
+            int vOffset;
+            int color;
+            int size;
+            int shadowRadius;
+            int wrapWidth;
+            bool isBold;
+            int minDistance;
+            QString shieldResource;
+            int order;
+        };
+
         struct Primitive
         {
             std::shared_ptr<OsmAnd::Model::MapObject> mapObject;
@@ -66,14 +83,7 @@ namespace OsmAnd {
             PrimitiveType objectType;
         };
 
-        static void obtainPrimitives(
-            RasterizerContext& context,
-            const QList< std::shared_ptr<OsmAnd::Model::MapObject> >& objects,
-            QVector< Primitive >& polygons,
-            QVector< Primitive >& lines,
-            QVector< Primitive >& points,
-            IQueryController* controller
-            );
+        static void obtainPrimitives(RasterizerContext& context, IQueryController* controller);
         static void filterOutLinesByDensity(RasterizerContext& context, const QVector< Primitive >& in, QVector< Primitive >& out, IQueryController* controller);
         static bool polygonizeCoastlines(
             RasterizerContext& context,
@@ -116,11 +126,12 @@ namespace OsmAnd {
         static void rasterizeLineShadow(RasterizerContext& context, SkCanvas& canvas, const SkPath& path, uint32_t shadowColor, int shadowRadius);
         static void rasterizeLine_OneWay( RasterizerContext& context, SkCanvas& canvas, const SkPath& path, int oneway );
 
-        static void prepareTextPrimitives( RasterizerContext& context, SkCanvas& canvas, const QVector< Rasterizer::Primitive >& primitives, PrimitivesType type, IQueryController* controller );
-        static void preparePolygonText(RasterizerContext& context, SkCanvas& canvas, const Primitive& primitive);
-        static void prepareLineText(RasterizerContext& context, SkCanvas& canvas, const Primitive& primitive);
-        static void preparePointText(RasterizerContext& context, SkCanvas& canvas, const Primitive& primitive);
-        static void preparePrimitiveText(RasterizerContext& context, SkCanvas& canvas, const Primitive& primitive, const PointF& point, SkPath* path);
+        static void obtainPrimitivesTexts(RasterizerContext& context, IQueryController* controller);
+        static void collectPrimitivesTexts( RasterizerContext& context, const QVector< Rasterizer::Primitive >& primitives, PrimitivesType type, IQueryController* controller );
+        static void collectPolygonText(RasterizerContext& context, const Primitive& primitive);
+        static void collectLineText(RasterizerContext& context, const Primitive& primitive);
+        static void collectPointText(RasterizerContext& context, const Primitive& primitive);
+        static void preparePrimitiveText(RasterizerContext& context, const Primitive& primitive, const PointF& point, SkPath* path);
 
         static void calculateVertex(RasterizerContext& context, const PointI& point, PointF& vertex);
         static bool contains(const QVector< PointF >& vertices, const PointF& other);

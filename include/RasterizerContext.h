@@ -61,9 +61,10 @@ namespace OsmAnd {
         QList< std::shared_ptr<OsmAnd::Model::MapObject> > _mapObjects, _coastlineObjects, _basemapMapObjects, _basemapCoastlineObjects;
         QList< std::shared_ptr<OsmAnd::Model::MapObject> > _combinedMapObjects, _triangulatedCoastlineObjects;
         QVector< Rasterizer::Primitive > _polygons, _lines, _points;
+        QVector< Rasterizer::TextPrimitive > _texts;
 
-        SkPaint _paint;
-        uint32_t _defaultColor;
+        SkPaint _mapPaint;
+        uint32_t _defaultBgColor;
         uint32_t _shadowLevelMin;
         uint32_t _shadowLevelMax;
         double _polygonMinSizeToDisplay;
@@ -89,6 +90,9 @@ namespace OsmAnd {
 
         QHash< QString, SkPathEffect* > _pathEffects;
         SkPathEffect* obtainPathEffect(const QString& pathEffect);
+
+        SkPaint _textPaint;
+        std::shared_ptr<SkTypeface> _textFont;
     public:
         RasterizerContext(const std::shared_ptr<RasterizationStyle>& style);
         RasterizerContext(const std::shared_ptr<RasterizationStyle>& style, const QMap< std::shared_ptr<RasterizationStyle::ValueDefinition>, RasterizationRule::Value >& styleInitialSettings);
@@ -96,7 +100,7 @@ namespace OsmAnd {
 
         const std::shared_ptr<RasterizationStyle> style;
 
-        void applyContext(RasterizationStyleEvaluator& evaluator) const;
+        void applyTo(RasterizationStyleEvaluator& evaluator) const;
 
     friend class Rasterizer;
     };
