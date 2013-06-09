@@ -6,15 +6,20 @@
 #include <Logging.h>
 
 
+void OsmAnd::OsmAndRasterMapLayer::setTileSource(std::shared_ptr<MapTileSource> tileSource){
+    this->tileSource = tileSource;
+    clearCache();;
+}
+
+void OsmAnd::OsmAndRasterMapLayer::clearCache() {
+    cache.clear();
+    cacheValues.clear();
+}
+
 void OsmAnd::OsmAndRasterMapLayer::updateViewport(OsmAnd::OsmAndMapView *view) {
     QRectF r = view->getTileRect();
-    QString tileSource = app->getSettings()->TILE_SOURCE.get().toString();
-    QString appDir = app->getSettings()->APPLICATION_DIRECTORY.get().toString();
-    if(tileSource == "") {
-        renderRaster(view, QString("Mapnik"), appDir);
-    } else {
-        renderRaster(view, tileSource, appDir);
-    }
+//    QString tileSource = app->getSettings()->TILE_SOURCE.get().toString();
+    renderRaster(view, app->getSettings()->APPLICATION_DIRECTORY.get().toString());
     double z = OsmAnd::Utilities::getPowZoom(31 - view->getZoom());
     topLeft = new MapPoint(view,(int32_t) (z * r.left()), (int32_t) (z * r.top()));
     bottomRight = new MapPoint(view,(int32_t) (z * r.right()), (int32_t) (z * r.bottom()));
@@ -33,15 +38,16 @@ SkBitmap* OsmAnd::OsmAndRasterMapLayer::getBitmap(MapPoint* topLeft, MapPoint* b
 }
 
 
-const SkBitmap* OsmAnd::OsmAndRasterMapLayer::loadImage(QString &s) {
+std::shared_ptr<SkBitmap>  OsmAnd::OsmAndRasterMapLayer::loadImage(QString &s) {
     auto i = cache.find(s);
     if(i == cache.end()) {
-        SkBitmap* tileBitmap = new SkBitmap();
+        std::shared_ptr<SkBitmap> tileBitmap = std::shared_ptr<SkBitmap>(new SkBitmap());
         //TODO: JPEG is badly supported! At the moment it needs sdcard to be present (sic). Patch that
-        if(!SkImageDecoder::DecodeFile(s.toStdString().c_str(), tileBitmap, SkBitmap::kARGB_8888_Config,SkImageDecoder::kDecodePixels_Mode))
+        if(!SkImageDecoder::DecodeFile(s.toStdString().c_str(), tileBitmap.get(), SkBitmap::kARGB_8888_Config,SkImageDecoder::kDecodePixels_Mode))
         {
             return nullptr;
         }
+        cacheValues[s] = 3;
         return  (cache[s] = tileBitmap);
     } else {
         return *i;
@@ -49,7 +55,7 @@ const SkBitmap* OsmAnd::OsmAndRasterMapLayer::loadImage(QString &s) {
 
 }
 
-void OsmAnd::OsmAndRasterMapLayer::renderRaster(OsmAnd::OsmAndMapView *view, const QString& tileSource, const QString& appDir)
+void OsmAnd::OsmAndRasterMapLayer::renderRaster(OsmAnd::OsmAndMapView *view, const QString& appDir)
 {
     if(doubleBuffer == nullptr || ( doubleBuffer->width() != view->getWidth() || view->getHeight() != img->height())) {
         if(doubleBuffer != nullptr) {
@@ -61,7 +67,6 @@ void OsmAnd::OsmAndRasterMapLayer::renderRaster(OsmAnd::OsmAndMapView *view, con
         uchar* bitmapData = new uchar[doubleBuffer->getSize()];
         OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Allocated %d bytes at %p\n", doubleBuffer->getSize(), bitmapData);
         doubleBuffer->setPixels(bitmapData);
-
     }
     QRectF ts =  view->getTileRect();
     int left = floor(ts.x());
@@ -75,18 +80,21 @@ void OsmAnd::OsmAndRasterMapLayer::renderRaster(OsmAnd::OsmAndMapView *view, con
     float h = view->getCenterPointY();
     float ftileSize = view->getTileSize();
 
-
-    QString base =  appDir + "/tiles/" + tileSource +"/" + QString::number(view->getZoom())+"/";
-    QVector<QVector<const SkBitmap*> > images;
-    images.resize(width);
-    for (int i = 0; i < width; i++) {
-        images[i].resize(height);
-        for (int j = 0; j < height; j++) {
-            QString s = base + QString::number(left + i) +"/"+QString::number(top+j)+".png.tile";
-            images[i][j] = loadImage(s);
+    QVector<QVector<std::shared_ptr<SkBitmap> > > images;
+    if(tileSource) {
+        QString base =  appDir + "/tiles/" + tileSource->getName() +"/" + QString::number(view->getZoom())+"/";
+        images.resize(width);
+        for (int i = 0; i < width; i++) {
+            images[i].resize(height);
+            for (int j = 0; j < height; j++) {
+                QString s = base + QString::number(left + i) +"/"+QString::number(top+j)+""+tileSource->getTileFormat()+".tile";
+                images[i][j] = loadImage(s);
+                cacheValues[s] += 3;
+            }
         }
     }
     SkCanvas cvs(*doubleBuffer);
+    cvs.clear(SK_ColorTRANSPARENT);
     SkPaint pntImage;
     pntImage.setFilterBitmap(true);
     pntImage.setDither(true);
@@ -109,5 +117,22 @@ void OsmAnd::OsmAndRasterMapLayer::renderRaster(OsmAnd::OsmAndMapView *view, con
     for( int i = 0; i< sz ; i++) {
        data[i] = (data[i] & 0xff00ff00) |  ((data[i] & 0x00ff0000) >> 16 ) |  ((data[i] & 0x000000ff) << 16 );
     }
+    // end
+
+    // clear cache
+    clearCachePartially();
 }
 
+void OsmAnd::OsmAndRasterMapLayer::clearCachePartially() {
+    QMap<QString, int>::iterator cvsIterator = cacheValues.begin();
+    while(cvsIterator != cacheValues.end()) {
+        (*cvsIterator) /= 2;
+        if((*cvsIterator) <= 1) {
+            QString s = cvsIterator.key();
+            cvsIterator = cacheValues.erase(cvsIterator);
+            cache.remove(s);
+        } else {
+            cvsIterator++;
+        }
+    }
+}
