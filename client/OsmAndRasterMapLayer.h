@@ -5,13 +5,15 @@
 #include <OsmAndMapDataLayer.h>
 #include <Utilities.h>
 #include <QMap>
+#include <QSet>
 #include <SkBitmap.h>
 #include <OsmAndMapTileSource.h>
 
 namespace OsmAnd {
 
 
-class OSMAND_CORE_API OsmAndRasterMapLayer : public OsmAnd::OsmAndMapDataLayer
+class RasterMapDownloader;
+class OSMAND_CORE_API OsmAndRasterMapLayer : public OsmAndMapDataLayer
 {
 private :
     std::shared_ptr<OsmAnd::OsmAndApplication> app;
@@ -22,9 +24,10 @@ private :
     SkBitmap* doubleBuffer;
     QMap<QString, std::shared_ptr<SkBitmap> > cache;
     QMap<QString, int> cacheValues;
+    QSet<QString> requestedToDownload;
 
 
-    std::shared_ptr<SkBitmap> loadImage(QString& s);
+    std::shared_ptr<SkBitmap> loadImage(int x, int y, int z, QString& s);
     void renderRaster(OsmAnd::OsmAndMapView* view, const QString& appDir);
     void clearCachePartially();
 
@@ -41,6 +44,7 @@ public:
     void setTileSource(std::shared_ptr<MapTileSource> tileSource);
 
     SkBitmap* getBitmap(MapPoint* topLeft, MapPoint* bottomRight);
+    friend class RasterMapDownloader;
 };
 }
 #endif // OSMANDRASTERMAPLAYER_H

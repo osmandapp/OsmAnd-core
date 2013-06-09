@@ -87,7 +87,7 @@ public:
     virtual const QString& getUrlToLoad(int x, int y, int zoom) {
         // use int to QString not format numbers! (non-nls)
         if (urlToLoad == "") {
-            return QString("");
+            return "";
         }
         QString res = urlToLoad.replace("${x}", QString::number(x));
         res = res.replace("${y}", QString::number(y));
