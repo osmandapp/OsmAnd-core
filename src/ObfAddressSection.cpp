@@ -164,14 +164,14 @@ void OsmAnd::ObfAddressSection::readStreet( ObfReader* reader, Model::StreetGrou
         case OBF::StreetIndex::kXFieldNumber:
             {
                 auto dx = ObfReader::readSInt32(cis);
-                street->_tile24.x = (static_cast<uint32_t>(Utilities::get31TileNumberX(group->_longitude)) >> 7) + dx;
+                street->_tile24.x = (Utilities::get31TileNumberX(group->_longitude) >> 7) + dx;
                 street->_location.x = Utilities::getLongitudeFromTile(24, street->_tile24.x);
             }
             break;
         case OBF::StreetIndex::kYFieldNumber:
             {
                 auto dy = ObfReader::readSInt32(cis);
-                street->_tile24.y = (static_cast<uint32_t>(Utilities::get31TileNumberY(group->_latitude)) >> 7) + dy;
+                street->_tile24.y = (Utilities::get31TileNumberY(group->_latitude) >> 7) + dy;
                 street->_location.y = Utilities::getLatitudeFromTile(24, street->_tile24.y);
             }
             break;

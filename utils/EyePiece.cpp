@@ -24,7 +24,10 @@ OsmAnd::EyePiece::Configuration::Configuration()
     , bbox(90, -180, -90, 180)
     , tileSide(256)
     , zoom(15)
-    , is32bit(false)
+    , is32bit(true)
+    , drawMap(false)
+    , drawText(false)
+    , drawIcons(false)
 {
 }
 
@@ -42,6 +45,18 @@ OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::EyePiece::parseCommand
         else if (arg == "-dumpRules")
         {
             cfg.dumpRules = true;
+        }
+        else if (arg == "-map")
+        {
+            cfg.drawMap = true;
+        }
+        else if (arg == "-text")
+        {
+            cfg.drawText = true;
+        }
+        else if (arg == "-icons")
+        {
+            cfg.drawIcons = true;
         }
         else if (arg.startsWith("-stylesPath="))
         {
@@ -94,6 +109,13 @@ OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::EyePiece::parseCommand
         {
             cfg.output = arg.mid(strlen("-output="));
         }
+    }
+
+    if(!cfg.drawMap && !cfg.drawText && !cfg.drawIcons)
+    {
+        cfg.drawMap = true;
+        cfg.drawText = true;
+        cfg.drawIcons = true;
     }
 
     if(!wasObfRootSpecified)
@@ -170,10 +192,10 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
     // Collect all map objects (this should be replaced by something like RasterizerViewport/RasterizerContext)
     QList< std::shared_ptr<OsmAnd::Model::MapObject> > mapObjects;
     OsmAnd::AreaI bbox31(
-            qCeil(OsmAnd::Utilities::get31TileNumberY(cfg.bbox.top)),
-            qFloor(OsmAnd::Utilities::get31TileNumberX(cfg.bbox.left)),
-            qFloor(OsmAnd::Utilities::get31TileNumberY(cfg.bbox.bottom)),
-            qCeil(OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right))
+            OsmAnd::Utilities::get31TileNumberY(cfg.bbox.top),
+            OsmAnd::Utilities::get31TileNumberX(cfg.bbox.left),
+            OsmAnd::Utilities::get31TileNumberY(cfg.bbox.bottom),
+            OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right)
         );
     OsmAnd::QueryFilter filter;
     filter._bbox31 = &bbox31;
@@ -213,7 +235,10 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
     // Perform actual rendering
     OsmAnd::RasterizerContext rasterizerContext(style);
     OsmAnd::Rasterizer::update(rasterizerContext, bbox31, cfg.zoom, cfg.tileSide, &mapObjects, OsmAnd::PointF(), nullptr);
-    OsmAnd::Rasterizer::rasterizeMap(rasterizerContext, true, canvas, nullptr);
+    if(cfg.drawMap)
+        OsmAnd::Rasterizer::rasterizeMap(rasterizerContext, true, canvas, nullptr);
+    if(cfg.drawText)
+        OsmAnd::Rasterizer::rasterizeText(rasterizerContext, !cfg.drawMap, canvas, nullptr);
 
     // Save rendered area
     if(!cfg.output.isEmpty())

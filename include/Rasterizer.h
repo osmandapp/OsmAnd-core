@@ -76,11 +76,11 @@ namespace OsmAnd {
             );
         static void filterOutLinesByDensity(RasterizerContext& context, const QVector< Primitive >& in, QVector< Primitive >& out, IQueryController* controller);
         static bool polygonizeCoastlines(
-                RasterizerContext& context,
-                const QList< std::shared_ptr<OsmAnd::Model::MapObject> >& coastlines,
-                QList< std::shared_ptr<OsmAnd::Model::MapObject> >& outVectorized,
-                bool abortIfBrokenCoastlinesExist,
-                bool includeBrokenCoastlines
+            RasterizerContext& context,
+            const QList< std::shared_ptr<OsmAnd::Model::MapObject> >& coastlines,
+            QList< std::shared_ptr<OsmAnd::Model::MapObject> >& outVectorized,
+            bool abortIfBrokenCoastlinesExist,
+            bool includeBrokenCoastlines
             );
         static bool buildCoastlinePolygonSegment(
             RasterizerContext& context,
@@ -99,6 +99,7 @@ namespace OsmAnd {
             Polygons,
             Lines,
             ShadowOnlyLines,
+            Points,
         };
         static void rasterizeMapPrimitives(RasterizerContext& context, SkCanvas& canvas, const QVector< Primitive >& primitives, PrimitivesType type, IQueryController* controller);
         enum PaintValuesSet : int
@@ -114,6 +115,13 @@ namespace OsmAnd {
         static void rasterizeLine(RasterizerContext& context, SkCanvas& canvas, const Primitive& primitive, bool drawOnlyShadow);
         static void rasterizeLineShadow(RasterizerContext& context, SkCanvas& canvas, const SkPath& path, uint32_t shadowColor, int shadowRadius);
         static void rasterizeLine_OneWay( RasterizerContext& context, SkCanvas& canvas, const SkPath& path, int oneway );
+
+        static void prepareTextPrimitives( RasterizerContext& context, SkCanvas& canvas, const QVector< Rasterizer::Primitive >& primitives, PrimitivesType type, IQueryController* controller );
+        static void preparePolygonText(RasterizerContext& context, SkCanvas& canvas, const Primitive& primitive);
+        static void prepareLineText(RasterizerContext& context, SkCanvas& canvas, const Primitive& primitive);
+        static void preparePointText(RasterizerContext& context, SkCanvas& canvas, const Primitive& primitive);
+        static void preparePrimitiveText(RasterizerContext& context, SkCanvas& canvas, const Primitive& primitive, const PointF& point, SkPath* path);
+
         static void calculateVertex(RasterizerContext& context, const PointI& point, PointF& vertex);
         static bool contains(const QVector< PointF >& vertices, const PointF& other);
     public:
@@ -130,6 +138,11 @@ namespace OsmAnd {
             IQueryController* controller = nullptr
             );
         static bool rasterizeMap(
+            RasterizerContext& context,
+            bool fillBackground,
+            SkCanvas& canvas,
+            IQueryController* controller = nullptr);
+        static void rasterizeText(
             RasterizerContext& context,
             bool fillBackground,
             SkCanvas& canvas,

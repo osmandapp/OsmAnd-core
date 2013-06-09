@@ -673,7 +673,9 @@ void OsmAnd::ObfMapSection::readMapObject(
                     };
                     auto fakeQString = QString::fromLocal8Bit(fakeString, sizeof(fakeString));
                     assert(fakeQString.length() == 6);
-                    mapObject->_names.insert(stringTag, fakeQString);
+
+                    const auto& tagName = std::get<0>(section->_rules->_decodingRules[stringTag]);
+                    mapObject->_names.insert(tagName, fakeQString);
                 }
                 cis->PopLimit(oldLimit);
             }

@@ -395,6 +395,8 @@ void OsmAnd::Rasterizer::filterOutLinesByDensity( RasterizerContext& context, co
 
 void OsmAnd::Rasterizer::rasterizeMapPrimitives( RasterizerContext& context, SkCanvas& canvas, const QVector< Primitive >& primitives, PrimitivesType type, IQueryController* controller )
 {
+    assert(type != PrimitivesType::Points);
+
     for(auto itPrimitive = primitives.begin(); itPrimitive != primitives.end(); ++itPrimitive)
     {
         if(controller && controller->isAborted())
@@ -549,17 +551,17 @@ void OsmAnd::Rasterizer::rasterizePolygon( RasterizerContext& context, SkCanvas&
 {
     if(primitive.mapObject->_points31.size() <=2)
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rendered as polygon, but has %d vertices\n", primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized as polygon, but has %d vertices\n", primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
         return;
     }
     if(!primitive.mapObject->isClosedFigure())
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rendered as polygon, but is not closed\n", primitive.mapObject->id >> 1);
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized as polygon, but is not closed\n", primitive.mapObject->id >> 1);
         return;
     }
     if(!primitive.mapObject->isClosedFigure(true))
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rendered as polygon, but is not closed (inner)\n", primitive.mapObject->id >> 1);
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized as polygon, but is not closed (inner)\n", primitive.mapObject->id >> 1);
         return;
     }
 
@@ -663,7 +665,7 @@ void OsmAnd::Rasterizer::rasterizeLine( RasterizerContext& context, SkCanvas& ca
 {
     if(primitive.mapObject->_points31.size() < 2 )
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rendered as line, but has %d vertices\n", primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized as line, but has %d vertices\n", primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
         return;
     }
 
@@ -1412,4 +1414,318 @@ bool OsmAnd::Rasterizer::isClockwiseCoastlinePolygon( const QVector< PointI > & 
     }
 
     return clockwiseSum >= 0;
+}
+
+void OsmAnd::Rasterizer::rasterizeText( RasterizerContext& context, bool fillBackground, SkCanvas& canvas, IQueryController* controller /*= nullptr*/ )
+{
+    context._paint.setColor(SK_ColorTRANSPARENT);
+    if(fillBackground)
+        canvas.drawRectCoords(context._renderViewport.top, context._renderViewport.left, context._renderViewport.right, context._renderViewport.bottom, context._paint);
+
+    prepareTextPrimitives(context, canvas, context._polygons, Polygons, controller);
+    prepareTextPrimitives(context, canvas, context._lines, Lines, controller);
+    prepareTextPrimitives(context, canvas, context._points, Points, controller);
+}
+
+void OsmAnd::Rasterizer::prepareTextPrimitives( RasterizerContext& context, SkCanvas& canvas, const QVector< Rasterizer::Primitive >& primitives, PrimitivesType type, IQueryController* controller )
+{
+    assert(type != PrimitivesType::ShadowOnlyLines);
+
+    for(auto itPrimitive = primitives.begin(); itPrimitive != primitives.end(); ++itPrimitive)
+    {
+        if(controller && controller->isAborted())
+            return;
+
+        const auto& primitive = *itPrimitive;
+
+        // Skip primitives without names
+        if(primitive.mapObject->names.isEmpty())
+            continue;
+        bool hasNonEmptyNames = false;
+        for(auto itName = primitive.mapObject->names.begin(); itName != primitive.mapObject->names.end(); ++itName)
+        {
+            const auto& name = itName.value();
+
+            if(!name.isEmpty())
+            {
+                hasNonEmptyNames = true;
+                break;
+            }
+        }
+        if(!hasNonEmptyNames)
+            continue;
+
+        if(type == Polygons)
+        {
+            if (primitive.zOrder < context._polygonMinSizeToDisplay)
+                return;
+
+            preparePolygonText(context, canvas, primitive);
+        }
+        else if(type == Lines)
+        {
+            prepareLineText(context, canvas, primitive);
+        }
+        else if(type == Points)
+        {
+            if(primitive.typeIndex != 0)
+                continue;
+
+            preparePointText(context, canvas, primitive);
+        }
+    }
+}
+
+void OsmAnd::Rasterizer::preparePolygonText( RasterizerContext& context, SkCanvas& canvas, const Primitive& primitive )
+{
+    if(primitive.mapObject->_points31.size() <=2)
+    {
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized (text) as polygon, but has %d vertices\n", primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
+        return;
+    }
+    if(!primitive.mapObject->isClosedFigure())
+    {
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized (text) as polygon, but is not closed\n", primitive.mapObject->id >> 1);
+        return;
+    }
+    if(!primitive.mapObject->isClosedFigure(true))
+    {
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized (text) as polygon, but is not closed (inner)\n", primitive.mapObject->id >> 1);
+        return;
+    }
+
+    {
+        const auto& type = primitive.mapObject->_types[primitive.typeIndex];
+        RasterizationStyleEvaluator evaluator(context.style, RasterizationStyle::RulesetType::Polygon, primitive.mapObject);
+        context.applyContext(evaluator);
+        evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
+        evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
+        evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
+        evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
+        if(!evaluator.evaluate())
+            return;
+        if(!updatePaint(context, evaluator, Set_0, true))
+            return;
+    }
+
+    PointF textPoint;
+
+    bool containsPoint = false;
+    PointF vertex;
+    int bounds = 0;
+    QVector< PointF > outsideBounds;
+    for(auto itPoint = primitive.mapObject->_points31.begin(); itPoint != primitive.mapObject->_points31.end(); ++itPoint)
+    {
+        const auto& point = *itPoint;
+
+        calculateVertex(context, point, vertex);
+
+        textPoint.x += qMin( qMax(vertex.x, context._renderViewport.left), context._renderViewport.right);
+        textPoint.y += qMin( qMax(vertex.y, context._renderViewport.bottom), context._renderViewport.top);
+        
+        if (!containsPoint)
+        {
+            if(context._renderViewport.contains(vertex))
+            {
+                containsPoint = true;
+            }
+            else
+            {
+                outsideBounds.push_back(vertex);
+            }
+            bounds |= (vertex.x < context._renderViewport.left ? 1 : 0);
+            bounds |= (vertex.x > context._renderViewport.right ? 2 : 0);
+            bounds |= (vertex.y < context._renderViewport.top ? 4 : 0);
+            bounds |= (vertex.y > context._renderViewport.bottom ? 8 : 0);
+        }
+    }
+
+    auto verticesCount = primitive.mapObject->_points31.size();
+    textPoint.x /= verticesCount;
+    textPoint.y /= verticesCount;
+
+    if(!containsPoint)
+    {
+        // fast check for polygons
+        if((bounds & 3) != 3 || (bounds >> 2) != 3)
+            return;
+
+        bool ok = true;
+        ok = ok || contains(outsideBounds, context._renderViewport.topLeft);
+        ok = ok || contains(outsideBounds, context._renderViewport.bottomRight);
+        ok = ok || contains(outsideBounds, PointF(0, context._renderViewport.bottom));
+        ok = ok || contains(outsideBounds, PointF(context._renderViewport.right, 0));
+        if(!ok)
+            return;
+        else
+        {
+            const auto& viewportCenter = context._renderViewport.center();
+            if(contains(outsideBounds, viewportCenter))
+                textPoint = viewportCenter;
+        }
+    }
+
+    preparePrimitiveText(context, canvas, primitive, textPoint, nullptr);
+}
+
+void OsmAnd::Rasterizer::prepareLineText( RasterizerContext& context, SkCanvas& canvas, const Primitive& primitive )
+{
+    if(primitive.mapObject->_points31.size() < 2 )
+    {
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized (text) as line, but has %d vertices\n", primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
+        return;
+    }
+
+    {
+        const auto& type = primitive.mapObject->_types[primitive.typeIndex];
+        RasterizationStyleEvaluator evaluator(context.style, RasterizationStyle::RulesetType::Line, primitive.mapObject);
+        context.applyContext(evaluator);
+        evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
+        evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
+        evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
+        evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
+        evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_LAYER, primitive.mapObject->getSimpleLayerValue());
+        if(!evaluator.evaluate())
+            return;
+        if(!updatePaint(context, evaluator, Set_0, false))
+            return;
+    }
+
+    SkPath path;
+    int pointIdx = 0;
+    const auto middleIdx = primitive.mapObject->_points31.size() >> 1;
+    bool intersect = false;
+    int prevCross = 0;
+    PointF vertex, middleVertex;
+    for(auto itPoint = primitive.mapObject->_points31.begin(); itPoint != primitive.mapObject->_points31.end(); ++itPoint, pointIdx++)
+    {
+        const auto& point = *itPoint;
+
+        calculateVertex(context, point, vertex);
+
+        if(pointIdx == 0)
+        {
+            path.moveTo(vertex.x, vertex.y);
+        }
+        else
+        {
+            if(pointIdx == middleIdx)
+                middleVertex = vertex;
+
+            path.lineTo(vertex.x, vertex.y);
+        }
+
+        if (!intersect)
+        {
+            if(context._renderViewport.contains(vertex))
+            {
+                intersect = true;
+            }
+            else
+            {
+                int cross = 0;
+                cross |= (vertex.x < context._renderViewport.left ? 1 : 0);
+                cross |= (vertex.x > context._renderViewport.right ? 2 : 0);
+                cross |= (vertex.y < context._renderViewport.top ? 4 : 0);
+                cross |= (vertex.y > context._renderViewport.bottom ? 8 : 0);
+                if(pointIdx > 0)
+                {
+                    if((prevCross & cross) == 0)
+                    {
+                        intersect = true;
+                    }
+                }
+                prevCross = cross;
+            }
+        }
+    }
+
+    if (!intersect)
+        return;
+
+    if (pointIdx > 0)
+    {
+        preparePrimitiveText(context, canvas, primitive, middleVertex, &path);
+    }
+}
+
+void OsmAnd::Rasterizer::preparePointText( RasterizerContext& context, SkCanvas& canvas, const Primitive& primitive )
+{
+    if(primitive.mapObject->_points31.size() < 1 )
+    {
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized (text) as point, but has %d vertices\n", primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
+        return;
+    }
+
+    PointF textPoint;
+    if(primitive.mapObject->_points31.size() == 1)
+    {
+        const auto& p = primitive.mapObject->_points31.first();
+        textPoint.x = p.x;
+        textPoint.y = p.y;
+    }
+    else
+    {
+        auto verticesCount = primitive.mapObject->_points31.size();
+
+        PointF vertex;
+        for(auto itPoint = primitive.mapObject->_points31.begin(); itPoint != primitive.mapObject->_points31.end(); ++itPoint)
+        {
+            const auto& point = *itPoint;
+
+            calculateVertex(context, point, vertex);
+
+            textPoint += vertex;
+        }
+
+        textPoint.x /= verticesCount;
+        textPoint.y /= verticesCount;
+    }
+    
+    preparePrimitiveText(context, canvas, primitive, textPoint, nullptr);
+}
+
+void OsmAnd::Rasterizer::preparePrimitiveText( RasterizerContext& context, SkCanvas& canvas, const Primitive& primitive, const PointF& point, SkPath* path )
+{
+    const auto& type = primitive.mapObject->_types[primitive.typeIndex];
+
+    for(auto itName = primitive.mapObject->names.begin(); itName != primitive.mapObject->names.end(); ++itName)
+    {
+        const auto& name = itName.value();
+
+        //TODO:name =rc->getTranslatedString(name);
+        //TODO:name =rc->getReshapedString(name);
+
+        const auto& type = primitive.mapObject->_types[primitive.typeIndex];
+        RasterizationStyleEvaluator evaluator(context.style, RasterizationStyle::RulesetType::Text, primitive.mapObject);
+        context.applyContext(evaluator);
+        evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
+        evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
+        evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
+        evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
+        evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_TEXT_LENGTH, name.length());
+        auto nameTag = itName.key();
+        if(nameTag == "name")
+            nameTag.clear();
+        evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_NAME_TAG, nameTag);
+        if(!evaluator.evaluate())
+            continue;
+
+        bool ok;
+        int textSize;
+        ok = evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_TEXT_SIZE, textSize);
+        if(!ok || textSize == 0)
+            continue;
+
+        continue;
+        /*
+        TextDrawInfo* info = new TextDrawInfo(name);
+        info->drawOnPath = (path != NULL) && (req->getIntPropertyValue(req->props()->R_TEXT_ON_PATH, 0) > 0);
+        if (path != NULL)
+            info->path = new SkPath(*path);
+
+        fillTextProperties(info, req, xText, yText);
+        rc->textToDraw.push_back(info);
+        */
+    }
 }

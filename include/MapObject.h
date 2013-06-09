@@ -30,6 +30,7 @@
 #include <QMap>
 #include <QVector>
 #include <QString>
+#include <QHash>
 
 #include <OsmAndCore.h>
 #include <CommonTypes.h>
@@ -61,14 +62,14 @@ namespace OsmAnd {
             QList< QVector< PointI > > _innerPolygonsPoints31;
             QVector< TagValue > _types;
             QVector< TagValue > _extraTypes;
-            QMap< uint32_t, QString > _names;
+            QHash< QString, QString > _names;
         public:
             virtual ~MapObject();
 
             ObfMapSection* const section;
             const uint64_t& id;
             const FoundationType& foundation;
-            const QMap<uint32_t, QString>& names;
+            const QHash<QString, QString>& names;
 
             int getSimpleLayerValue() const;
             bool isClosedFigure(bool checkInner = false) const;

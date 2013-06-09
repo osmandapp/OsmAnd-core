@@ -9,19 +9,19 @@
 
 const uint64_t l = 1UL << 31;
 
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::get31TileNumberX( double longitude )
+OSMAND_CORE_API int32_t OSMAND_CORE_CALL OsmAnd::Utilities::get31TileNumberX( double longitude )
 {
     longitude = checkLongitude(longitude);
-    return (longitude + 180) / 360*l;
+    return static_cast<int32_t>((longitude + 180) / 360*l);
 }
 
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::get31TileNumberY( double latitude )
+OSMAND_CORE_API int32_t OSMAND_CORE_CALL OsmAnd::Utilities::get31TileNumberY( double latitude )
 {
     latitude = checkLatitude(latitude);
     double eval = log( tan(toRadians(latitude)) + 1.0/cos(toRadians(latitude)) );
     if(eval > M_PI)
         eval = M_PI;
-    return (1.0 - eval / M_PI) / 2.0*l;
+    return static_cast<int32_t>((1.0 - eval / M_PI) / 2.0*l);
 }
 
 OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::get31LongitudeX( double x )

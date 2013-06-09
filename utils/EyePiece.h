@@ -46,6 +46,9 @@ namespace OsmAnd
             bool verbose;
             bool dumpRules;
             bool is32bit;
+            bool drawMap;
+            bool drawText;
+            bool drawIcons;
             QList< std::shared_ptr<QFile> > styleFiles;
             QList< std::shared_ptr<QFile> > obfs;
             QString styleName;

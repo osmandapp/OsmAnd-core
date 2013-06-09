@@ -255,6 +255,11 @@ namespace OsmAnd
         {
             return top > bottom ? top - bottom : bottom - top;
         }
+
+        Point<T> center() const
+        {
+            return Point<T>(left + width() / 2, bottom + height() / 2);
+        }
     };
 
     typedef Point<double> PointD;

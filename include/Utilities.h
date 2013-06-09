@@ -42,8 +42,8 @@ namespace OsmAnd {
     namespace Utilities
     {
         OSMAND_CORE_API double OSMAND_CORE_CALL toRadians(double angle);
-        OSMAND_CORE_API double OSMAND_CORE_CALL get31TileNumberX(double longitude);
-        OSMAND_CORE_API double OSMAND_CORE_CALL get31TileNumberY(double latitude);
+        OSMAND_CORE_API int32_t OSMAND_CORE_CALL get31TileNumberX(double longitude);
+        OSMAND_CORE_API int32_t OSMAND_CORE_CALL get31TileNumberY(double latitude);
         OSMAND_CORE_API double OSMAND_CORE_CALL get31LongitudeX(double x);
         OSMAND_CORE_API double OSMAND_CORE_CALL get31LatitudeY(double y);
         OSMAND_CORE_API double OSMAND_CORE_CALL getTileNumberX(float zoom, double longitude);
