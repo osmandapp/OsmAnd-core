@@ -1,5 +1,4 @@
 #include "RoutePlanner.h"
-#include "RoutePlannerRouteAnalyzer.h"
 
 #include <queue>
 
@@ -656,9 +655,8 @@ bool OsmAnd::RoutePlanner::calculateRoute(
     /*
     printDebugMemoryInformation(ctx, graphDirectSegments, graphReverseSegments, visitedDirectSegments, visitedOppositeSegments);
     */
-    
 
-    return OsmAnd::RoutePlannerAnalyzer::prepareResult(context, finalSegment, outResult, leftSideNavigation);
+    return prepareResult(context, finalSegment, outResult, leftSideNavigation);
 }
 
 void OsmAnd::RoutePlanner::loadBorderPoints( OsmAnd::RoutePlannerContext::CalculationContext* context )

@@ -1,5 +1,4 @@
 #include "RoutePlanner.h"
-#include "RoutePlannerRouteAnalyzer.h"
 
 #include <queue>
 
@@ -10,17 +9,12 @@
 #include "Logging.h"
 #include "Utilities.h"
 
-OsmAnd::RoutePlannerAnalyzer::RoutePlannerAnalyzer()
+bool OsmAnd::RoutePlanner::prepareResult(
+    OsmAnd::RoutePlannerContext::CalculationContext* context,
+    std::shared_ptr<RoutePlannerContext::RouteCalculationSegment> finalSegment,
+    QList< std::shared_ptr<RouteSegment> >* outResult,
+    bool leftSideNavigation)
 {
-}
-
-OsmAnd::RoutePlannerAnalyzer::~RoutePlannerAnalyzer()
-{
-}
-bool OsmAnd::RoutePlannerAnalyzer::prepareResult(OsmAnd::RoutePlannerContext::CalculationContext* context,
-                                         std::shared_ptr<RoutePlannerContext::RouteCalculationSegment> finalSegment,
-                                         QList< std::shared_ptr<RouteSegment> >* outResult,
-                                         bool leftSideNavigation){
     // Prepare result
     QList< std::shared_ptr<RouteSegment> > route;
     auto pFinalSegment = dynamic_cast<RoutePlannerContext::RouteCalculationFinalSegment*>(finalSegment.get());
@@ -84,7 +78,7 @@ bool OsmAnd::RoutePlannerAnalyzer::prepareResult(OsmAnd::RoutePlannerContext::Ca
     return true;
 }
 
-void OsmAnd::RoutePlannerAnalyzer::splitRoadsAndAttachRoadSegments( OsmAnd::RoutePlannerContext::CalculationContext* context, QList< std::shared_ptr<RouteSegment> >& route )
+void OsmAnd::RoutePlanner::splitRoadsAndAttachRoadSegments( OsmAnd::RoutePlannerContext::CalculationContext* context, QList< std::shared_ptr<RouteSegment> >& route )
 {
     for(auto itSegment = route.begin(); itSegment != route.end(); ++itSegment)
     {
@@ -147,7 +141,7 @@ void OsmAnd::RoutePlannerAnalyzer::splitRoadsAndAttachRoadSegments( OsmAnd::Rout
     }
 }
 
-void OsmAnd::RoutePlannerAnalyzer::attachRouteSegments(
+void OsmAnd::RoutePlanner::attachRouteSegments(
     OsmAnd::RoutePlannerContext::CalculationContext* context,
     QList< std::shared_ptr<RouteSegment> >& route,
     const QList< std::shared_ptr<RouteSegment> >::iterator& itSegment,
@@ -249,7 +243,7 @@ void OsmAnd::RoutePlannerAnalyzer::attachRouteSegments(
     }
 }
 
-void OsmAnd::RoutePlannerAnalyzer::calculateTimeSpeedInRoute( OsmAnd::RoutePlannerContext::CalculationContext* context, QList< std::shared_ptr<RouteSegment> >& route )
+void OsmAnd::RoutePlanner::calculateTimeSpeedInRoute( OsmAnd::RoutePlannerContext::CalculationContext* context, QList< std::shared_ptr<RouteSegment> >& route )
 {
     for(auto itSegment = route.begin(); itSegment != route.end(); ++itSegment)
     {
@@ -287,7 +281,7 @@ void OsmAnd::RoutePlannerAnalyzer::calculateTimeSpeedInRoute( OsmAnd::RoutePlann
     }
 }
 
-void OsmAnd::RoutePlannerAnalyzer::addTurnInfoToRoute( bool leftSideNavigation, QList< std::shared_ptr<RouteSegment> >& route )
+void OsmAnd::RoutePlanner::addTurnInfoToRoute( bool leftSideNavigation, QList< std::shared_ptr<RouteSegment> >& route )
 {
     /*
     int prevSegment = -1;
@@ -338,7 +332,7 @@ void OsmAnd::RoutePlannerAnalyzer::addTurnInfoToRoute( bool leftSideNavigation, 
     */
 }
 
-bool OsmAnd::RoutePlannerAnalyzer::validateAllPointsConnected( const QList< std::shared_ptr<RouteSegment> >& route )
+bool OsmAnd::RoutePlanner::validateAllPointsConnected( const QList< std::shared_ptr<RouteSegment> >& route )
 {
     assert(route.size() > 1);
 
@@ -369,7 +363,7 @@ bool OsmAnd::RoutePlannerAnalyzer::validateAllPointsConnected( const QList< std:
     return res;
 }
 
-void OsmAnd::RoutePlannerAnalyzer::addRouteSegmentToRoute( QList< std::shared_ptr<RouteSegment> >& route, const std::shared_ptr<RouteSegment>& segment, bool reverse )
+void OsmAnd::RoutePlanner::addRouteSegmentToRoute( QList< std::shared_ptr<RouteSegment> >& route, const std::shared_ptr<RouteSegment>& segment, bool reverse )
 {
     if(segment->startPointIndex == segment->endPointIndex)
         return;
@@ -386,7 +380,7 @@ void OsmAnd::RoutePlannerAnalyzer::addRouteSegmentToRoute( QList< std::shared_pt
     route.push_back(segment);
 }
 
-bool OsmAnd::RoutePlannerAnalyzer::combineTwoSegmentResult( const std::shared_ptr<RouteSegment>& toAdd, const std::shared_ptr<RouteSegment>& previous, bool reverse )
+bool OsmAnd::RoutePlanner::combineTwoSegmentResult( const std::shared_ptr<RouteSegment>& toAdd, const std::shared_ptr<RouteSegment>& previous, bool reverse )
 {
     auto ld = previous->endPointIndex > previous->startPointIndex;
     auto rd = toAdd->endPointIndex > toAdd->startPointIndex;

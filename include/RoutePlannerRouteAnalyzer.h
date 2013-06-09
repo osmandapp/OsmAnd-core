@@ -29,28 +29,7 @@ namespace OsmAnd {
     class OSMAND_CORE_API RoutePlannerAnalyzer
     {
     public:
-        static bool prepareResult(OsmAnd::RoutePlannerContext::CalculationContext* context,
-            std::shared_ptr<RoutePlannerContext::RouteCalculationSegment> finalSegment,
-            QList< std::shared_ptr<RouteSegment> >* outResult,
-            bool leftSideNavigation);
-        enum {
-            MinTurnAngle = 45
-        };
-        RoutePlannerAnalyzer();
-
-        ~RoutePlannerAnalyzer();
-        static void addRouteSegmentToRoute(QList< std::shared_ptr<RouteSegment> >& route, const std::shared_ptr<RouteSegment>& segment, bool reverse);
-        static bool combineTwoSegmentResult(const std::shared_ptr<RouteSegment>& toAdd, const std::shared_ptr<RouteSegment>& previous, bool reverse);
-        static bool validateAllPointsConnected(const QList< std::shared_ptr<RouteSegment> >& route);
-        static void splitRoadsAndAttachRoadSegments(OsmAnd::RoutePlannerContext::CalculationContext* context, QList< std::shared_ptr<RouteSegment> >& route);
-        static void calculateTimeSpeedInRoute(OsmAnd::RoutePlannerContext::CalculationContext* context, QList< std::shared_ptr<RouteSegment> >& route);
-        static void addTurnInfoToRoute( bool leftSideNavigation, QList< std::shared_ptr<RouteSegment> >& route );
-        static void attachRouteSegments(
-            OsmAnd::RoutePlannerContext::CalculationContext* context,
-            QList< std::shared_ptr<RouteSegment> >& route,
-            const QList< std::shared_ptr<RouteSegment> >::iterator& itSegment,
-            uint32_t pointIdx,
-            bool isIncrement);
+        
 
     };
 

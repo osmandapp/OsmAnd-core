@@ -46,8 +46,9 @@ namespace OsmAnd {
             PointI _tile24;
             PointD _location;
             uint32_t _offset;
-        public:
+
             Street();
+        public:
             virtual ~Street();
 
             const uint64_t& id;
