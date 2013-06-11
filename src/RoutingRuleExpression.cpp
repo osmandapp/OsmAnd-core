@@ -9,6 +9,7 @@
 OsmAnd::RoutingRuleExpression::RoutingRuleExpression( RoutingRuleset* ruleset, const QString& value, const QString& type )
     : ruleset(ruleset)
     , _type(type)
+    , parameters(_parameters)
     , type(_type)
 {
     if(value.startsWith(":"))

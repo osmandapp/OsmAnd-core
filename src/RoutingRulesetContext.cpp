@@ -3,13 +3,40 @@
 #include <RoutingProfile.h>
 #include <RoutingProfileContext.h>
 
+bool checkParameter(std::shared_ptr<OsmAnd::RoutingRuleExpression> rt,
+                    const QHash<QString, QString>& contextValues_) {
+
+    for (QString p : rt->parameters) {
+        bool nott = false;
+        if (p.startsWith("-")) {
+            nott = true;
+            p = p.right(-1);
+        }
+        bool val = contextValues_.contains(p);
+        if (nott && val) {
+            return false;
+        } else if (!nott && !val) {
+            return false;
+        }
+    }
+    return true;
+
+}
+
 OsmAnd::RoutingRulesetContext::RoutingRulesetContext(RoutingProfileContext* owner_, const std::shared_ptr<RoutingRuleset>& ruleset_, QHash<QString, QString>* contextValues_)
-    : ruleset(ruleset_)
-    , owner(owner_)
+    : owner(owner_)
+    ,_ruleset(new RoutingRuleset(ruleset_->owner, ruleset_->type))
+    , ruleset(_ruleset)
     , contextValues(_contextValues)
 {
     if(contextValues_)
         _contextValues = *contextValues_;
+
+    for(std::shared_ptr<RoutingRuleExpression> rt : ruleset_->_expressions){
+        if(checkParameter(rt, _contextValues)){
+            _ruleset->_expressions.push_back(rt);
+        }
+    }
 }
 
 OsmAnd::RoutingRulesetContext::~RoutingRulesetContext()
@@ -55,10 +82,10 @@ bool OsmAnd::RoutingRulesetContext::evaluate( Model::Road* road, RoutingRuleExpr
 
 bool OsmAnd::RoutingRulesetContext::evaluate( const QBitArray& types, RoutingRuleExpression::ResultType type, void* result )
 {
-    uint32_t ruleIdx = 0;
-    for(auto itExpression = ruleset->expressions.begin(); itExpression != ruleset->expressions.end(); ++itExpression, ruleIdx++)
+    //for(std::shared_ptr<RoutingRuleExpression> itExpression = ruleset->expressions.begin(); itExpression != ruleset->expressions.end(); ++itExpression)
+    for(std::shared_ptr<RoutingRuleExpression>  expression  : ruleset->expressions)
     {
-        auto expression = *itExpression;
+//        auto expression = *itExpression;
         if(expression->evaluate(types, this, type, result))
             return true;
     }

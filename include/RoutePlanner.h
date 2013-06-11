@@ -38,6 +38,7 @@
 #include <IQueryController.h>
 //#define DEBUG_ROUTING 1
 //#define TRACE_ROUTING 1
+//#define TRACE_DUMP_QUEUE 1
 #if !defined(DEBUG_ROUTING)
 #   if defined(DEBUG) || defined(_DEBUG)
 #       define DEBUG_ROUTING 1

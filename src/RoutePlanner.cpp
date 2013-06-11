@@ -531,7 +531,7 @@ bool OsmAnd::RoutePlanner::calculateRoute(
     std::shared_ptr<RoutePlannerContext::RouteCalculationSegment> finalSegment;
     while (!pGraphSegments->empty())
     {
-#if TRACE_ROUTING
+#if TRACE_DUMP_QUEUE
         LogPrintf(LogSeverityLevel::Debug, "----------------------------------------\n");
         LogPrintf(LogSeverityLevel::Debug, "%s-Queue (%d):\n", reverseSearch ? "R" : "D", pGraphSegments->size());
         {
