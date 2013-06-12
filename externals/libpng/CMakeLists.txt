@@ -1,14 +1,6 @@
 project(png)
 
-include_directories(AFTER SYSTEM
-	"upstream.patched"
-	"${OSMAND_ROOT}/core/externals/zlib/upstream.patched"
-)
-add_definitions(-DPNG_CONFIGURE_LIBPNG -DZ_PREFIX)
-if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
-endif()
-add_library(png_osmand STATIC
+add_library(png_static STATIC
 	"upstream.patched/png.c"
 	"upstream.patched/pngerror.c"
 	"upstream.patched/pngget.c"
@@ -26,9 +18,19 @@ add_library(png_osmand STATIC
 	"upstream.patched/pngwutil.c"
 )
 
-add_dependencies(png_osmand
-	z_osmand
+add_dependencies(png_static
+	z_static
 )
-target_link_libraries(png_osmand LINK_PUBLIC
-	z_osmand
+
+target_compile_definitions(png_static
+	PRIVATE
+		-DPNG_CONFIGURE_LIBPNG
+)
+target_include_directories(png_static
+	PUBLIC
+		"upstream.patched"
+)
+target_link_libraries(png_static
+	LINK_PUBLIC
+		z_static
 )

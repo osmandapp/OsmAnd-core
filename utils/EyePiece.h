@@ -55,6 +55,7 @@ namespace OsmAnd
             AreaD bbox;
             uint32_t zoom;
             uint32_t tileSide;
+            float densityFactor;
             QString output;
         };
         OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL parseCommandLineArguments(const QStringList& cmdLineArgs, Configuration& cfg, QString& error);

@@ -1,14 +1,6 @@
 project(freetype2)
 
-include_directories(AFTER SYSTEM
-	"."
-	"upstream.patched/include"
-)
-add_definitions(-DFT2_BUILD_LIBRARY -DFT_CONFIG_MODULES_H=<ftmodule-override.h>)
-if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
-endif()
-add_library(freetype2_osmand STATIC
+add_library(freetype2_static STATIC
 	"upstream.patched/src/base/ftbase.c"
 	"upstream.patched/src/base/ftbbox.c"
 	"upstream.patched/src/base/ftbitmap.c"
@@ -30,4 +22,16 @@ add_library(freetype2_osmand STATIC
 	"upstream.patched/src/sfnt/sfnt.c"
 	"upstream.patched/src/smooth/smooth.c"
 	"upstream.patched/src/truetype/truetype.c"
+)
+
+target_compile_definitions(freetype2_static
+	PRIVATE
+		-DFT2_BUILD_LIBRARY
+		-DFT_CONFIG_MODULES_H=<ftmodule-override.h>
+)
+target_include_directories(freetype2_static
+	PRIVATE
+		"."
+	PUBLIC
+		"upstream.patched/include"
 )

@@ -33,7 +33,7 @@
 #include <QList>
 
 #include <OsmAndCore.h>
-#include <Common.h>
+#include <OsmAndCommon.h>
 #include <RoutingConfiguration.h>
 #include <Road.h>
 #include <RouteSegment.h>

@@ -1,6 +1,6 @@
 #include "RoutingRuleExpression_Operators.h"
 
-#include "Common.h"
+#include "OsmAndCommon.h"
 #include "RoutingConfiguration.h"
 
 OsmAnd::BinaryOperator::BinaryOperator(const QString& lvalue, const QString& rvalue, const QString& type)

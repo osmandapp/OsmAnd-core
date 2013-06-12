@@ -10,7 +10,7 @@
 
 #include <QtCore/qmath.h>
 
-#include <Common.h>
+#include <OsmAndCommon.h>
 #include <ObfReader.h>
 #include <Utilities.h>
 #include <Rasterizer.h>
@@ -23,6 +23,7 @@ OsmAnd::EyePiece::Configuration::Configuration()
     , styleName("default")
     , bbox(90, -180, -90, 180)
     , tileSide(256)
+    , densityFactor(1.0)
     , zoom(15)
     , is32bit(true)
     , drawMap(false)
@@ -100,6 +101,10 @@ OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::EyePiece::parseCommand
         else if(arg.startsWith("-tileSide="))
         {
             cfg.tileSide = arg.mid(strlen("-tileSide=")).toInt();
+        }
+        else if(arg.startsWith("-density="))
+        {
+            cfg.densityFactor = arg.mid(strlen("-density=")).toFloat();
         }
         else if(arg == "-32bit")
         {
@@ -234,7 +239,7 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
 
     // Perform actual rendering
     OsmAnd::RasterizerContext rasterizerContext(style);
-    OsmAnd::Rasterizer::update(rasterizerContext, bbox31, cfg.zoom, cfg.tileSide, &mapObjects, OsmAnd::PointF(), nullptr);
+    OsmAnd::Rasterizer::update(rasterizerContext, bbox31, cfg.zoom, cfg.tileSide, cfg.densityFactor, &mapObjects, OsmAnd::PointF(), nullptr);
     if(cfg.drawMap)
         OsmAnd::Rasterizer::rasterizeMap(rasterizerContext, true, canvas, nullptr);
     if(cfg.drawText)

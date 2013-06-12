@@ -8,7 +8,7 @@
 #include <QDateTime>
 #include <QTextStream>
 
-#include <Common.h>
+#include <OsmAndCommon.h>
 #include <ObfReader.h>
 #include <Utilities.h>
 #include <RoutePlanner.h>

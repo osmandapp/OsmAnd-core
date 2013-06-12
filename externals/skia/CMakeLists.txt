@@ -1,33 +1,5 @@
 project(skia)
 
-include_directories(AFTER SYSTEM
-	"upstream.patched/src/core"
-	"upstream.patched/include/core"
-	"upstream.patched/src/config"
-	"upstream.patched/include/config"
-	"upstream.patched/src/effects"
-	"upstream.patched/include/effects"
-	"upstream.patched/src/image"
-	"upstream.patched/src/images"
-	"upstream.patched/include/images"
-	"upstream.patched/include/pipe"
-	"upstream.patched/src/ports"
-	"upstream.patched/include/ports"
-	"upstream.patched/src/utils"
-	"upstream.patched/include/utils"
-	"upstream.patched/src/xml"
-	"upstream.patched/include/xml"
-	"upstream.patched/src/sfnt"
-	"upstream.patched/src/gpu"
-	"upstream.patched/include/gpu"
-	"${OSMAND_ROOT}/core/externals/expat/upstream.patched/lib"
-	"${OSMAND_ROOT}/core/externals/freetype/upstream.patched/include"
-	"${OSMAND_ROOT}/core/externals/giflib/upstream.patched/lib"
-	"${OSMAND_ROOT}/core/externals/jpeg/upstream.patched"
-	"${OSMAND_ROOT}/core/externals/libpng/upstream.patched"
-	"${OSMAND_ROOT}/core/externals/harfbuzz/upstream.patched/src"
-)
-add_definitions(-DSK_RELEASE -DGR_RELEASE=1 -DNDEBUG -DSK_SUPPORT_GPU=0)
 set(target_specific_sources
 	"upstream.patched/src/opts/SkBlitRow_opts_none.cpp"
 	"upstream.patched/src/opts/SkBitmapProcState_opts_none.cpp"
@@ -38,10 +10,10 @@ set(target_specific_sources
 	"upstream.patched/src/ports/SkFontHost_sandbox_none.cpp"
 )
 
+set(target_specific_include_dirs_private "")
+set(target_specific_include_dirs_public "")
+set(target_specific_definitions_public "")
 if(CMAKE_TARGET_OS STREQUAL "windows")
-	include_directories(AFTER SYSTEM
-		"${OSMAND_ROOT}/core/externals/giflib/include"
-	)
 	set(target_specific_sources "${target_specific_sources}"
 		"upstream.patched/src/ports/SkFontHost_tables.cpp"
 		"upstream.patched/src/ports/SkDebug_win.cpp"
@@ -49,9 +21,11 @@ if(CMAKE_TARGET_OS STREQUAL "windows")
 		"upstream.patched/src/ports/SkTime_win.cpp"
 		"upstream.patched/src/ports/SkThread_win.cpp"
 	)
-	add_definitions(-DSK_BUILD_FOR_WIN32)
+	set(target_specific_definitions_public ${target_specific_definitions_public}
+		-DSK_BUILD_FOR_WIN32
+	)
 elseif(CMAKE_TARGET_OS STREQUAL "darwin")
-	include_directories(AFTER SYSTEM
+	set(target_specific_include_dirs_public ${target_specific_include_dirs_public}
 		"upstream.patched/include/utils/mac"
 	)
 	set(target_specific_sources "${target_specific_sources}"
@@ -63,7 +37,10 @@ elseif(CMAKE_TARGET_OS STREQUAL "darwin")
 		"upstream.patched/src/ports/SkTime_Unix.cpp"
 		"upstream.patched/src/utils/mac/SkStream_mac.cpp"
 	)
-	add_definitions(-DSK_BUILD_FOR_MAC -DSK_USE_CORETEXT)
+	set(target_specific_definitions_public ${target_specific_definitions_public}
+		-DSK_BUILD_FOR_MAC
+		-DSK_USE_CORETEXT
+	)
 elseif(CMAKE_TARGET_OS STREQUAL "linux")
 	set(target_specific_sources "${target_specific_sources}"
 		"upstream.patched/src/ports/SkFontHost_tables.cpp"
@@ -77,13 +54,16 @@ elseif(CMAKE_TARGET_OS STREQUAL "linux")
 		"upstream.patched/src/core/SkMMapStream.cpp"
 		"upstream.patched/src/utils/SkThreadUtils_pthread.cpp"
 	)
-	add_definitions(-DSK_BUILD_FOR_UNIX)
-endif()
-if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fno-rtti -fno-exceptions")
+	set(target_specific_definitions_public ${target_specific_definitions_public}
+		-DSK_BUILD_FOR_UNIX
+	)
 endif()
 
-add_library(skia_osmand STATIC
+if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti -fno-exceptions")
+endif()
+
+add_library(skia_static STATIC
 	"upstream.patched/src/core/Sk64.cpp"
 	"upstream.patched/src/core/SkAAClip.cpp"
 	"upstream.patched/src/core/SkAdvancedTypefaceMetrics.cpp"
@@ -304,38 +284,76 @@ add_library(skia_osmand STATIC
 	${target_specific_sources}
 )
 
-add_dependencies(skia_osmand
-	expat_osmand
-	freetype2_osmand
-	harfbuzz_osmand
-	png_osmand
-	gif_osmand
-	jpeg_osmand
+add_dependencies(skia_static
+	expat_static
+	freetype2_static
+	harfbuzz_static
+	png_static
+	gif_static
+	jpeg_static
 )
-target_link_libraries(skia_osmand LINK_PUBLIC
-	expat_osmand
-	freetype2_osmand
-	harfbuzz_osmand
-	png_osmand
-	gif_osmand
-	jpeg_osmand
+
+target_compile_definitions(skia_static
+	PRIVATE
+	PUBLIC
+		-DSK_SUPPORT_GPU=0
+		-DSK_CPU_LENDIAN
+		${target_specific_definitions_public}
+)
+target_include_directories(skia_static
+	PRIVATE
+		"upstream.patched/src/core"
+		"upstream.patched/src/config"
+		"upstream.patched/src/effects"
+		"upstream.patched/src/image"
+		"upstream.patched/src/images"
+		"upstream.patched/src/ports"
+		"upstream.patched/src/utils"
+		"upstream.patched/src/xml"
+		"upstream.patched/src/sfnt"
+		"upstream.patched/src/gpu"
+		${target_specific_include_dirs_private}
+	PUBLIC
+		"upstream.patched/include/core"
+		"upstream.patched/src/core"
+		"upstream.patched/include/config"
+		"upstream.patched/include/effects"
+		"upstream.patched/include/images"
+		"upstream.patched/include/pipe"
+		"upstream.patched/include/ports"
+		"upstream.patched/include/utils"
+		"upstream.patched/include/xml"
+		"upstream.patched/include/gpu"
+		${target_specific_include_dirs_public}
+)
+target_link_libraries(skia_static
+	LINK_PUBLIC
+		expat_static
+		freetype2_static
+		harfbuzz_static
+		png_static
+		gif_static
+		jpeg_static
 )
 	
 if(CMAKE_TARGET_OS STREQUAL "linux")
-	target_link_libraries(skia_osmand LINK_PUBLIC
-		pthread
+	target_link_libraries(skia_static
+		LINK_PUBLIC
+			pthread
 	)
 elseif(CMAKE_TARGET_OS STREQUAL "darwin")
 	find_library(CORE_FOUNDATION_LIBRARY CoreFoundation)
 	find_library(CORE_TEXT_LIBRARY CoreText)
 	find_library(CORE_GRAPHICS_LIBRARY CoreGraphics)
-	target_link_libraries(skia_osmand LINK_PUBLIC
-		${CORE_FOUNDATION_LIBRARY}
-		${CORE_TEXT_LIBRARY}
-		${CORE_GRAPHICS_LIBRARY}
+	target_link_libraries(skia_static
+		LINK_PUBLIC
+			${CORE_FOUNDATION_LIBRARY}
+			${CORE_TEXT_LIBRARY}
+			${CORE_GRAPHICS_LIBRARY}
 	)	
 elseif(CMAKE_TARGET_OS STREQUAL "windows")
-	target_link_libraries(skia_osmand LINK_PUBLIC
-		Usp10
+	target_link_libraries(skia_static
+		LINK_PUBLIC
+			Usp10
 	)
 endif()

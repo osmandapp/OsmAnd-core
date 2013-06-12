@@ -9,7 +9,7 @@
 #include <QFile>
 #include <QStringList>
 
-#include <Common.h>
+#include <OsmAndCommon.h>
 #include <ObfReader.h>
 #include <Utilities.h>
 

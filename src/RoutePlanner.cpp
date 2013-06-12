@@ -5,7 +5,7 @@
 #include <QtCore>
 
 #include "ObfReader.h"
-#include "Common.h"
+#include "OsmAndCommon.h"
 #include "Logging.h"
 #include "Utilities.h"
 

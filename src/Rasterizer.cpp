@@ -27,6 +27,7 @@ void OsmAnd::Rasterizer::update(
     const AreaI& area31,
     uint32_t zoom,
     uint32_t tileSidePixelLength,
+    float densityFactor,
     const QList< std::shared_ptr<OsmAnd::Model::MapObject> >* objects /*= nullptr*/,
     const PointF& tlOriginOffset /*= PointF() */,
     bool* noDataAvailable /*= nullptr*/,
@@ -41,8 +42,9 @@ void OsmAnd::Rasterizer::update(
     repolygonizeCoastlines = repolygonizeCoastlines || (context._area31 != area31);
     reobtainPrimitives = reobtainPrimitives || updateObjectsCollections;
     reobtainPrimitives = reobtainPrimitives || repolygonizeCoastlines;
+    reobtainPrimitives = reobtainPrimitives || (context._densityFactor != densityFactor);
 
-    context.update(area31, zoom, tlOriginOffset, tileSidePixelLength);
+    context.update(area31, zoom, tlOriginOffset, tileSidePixelLength, densityFactor);
 
     context._wasAborted = false;
 
@@ -198,9 +200,13 @@ bool OsmAnd::Rasterizer::rasterizeMap(
     SkCanvas& canvas,
     IQueryController* controller /*= nullptr*/)
 {
-    context._mapPaint.setColor(context._defaultBgColor);
     if(fillBackground)
-        canvas.drawRectCoords(context._renderViewport.top, context._renderViewport.left, context._renderViewport.right, context._renderViewport.bottom, context._mapPaint);
+    {
+        SkPaint bgPaint;
+        bgPaint.setColor(context._defaultBgColor);
+        bgPaint.setStyle(SkPaint::kFill_Style);
+        canvas.drawRectCoords(context._renderViewport.top, context._renderViewport.left, context._renderViewport.right, context._renderViewport.bottom, bgPaint);
+    }
 
     rasterizeMapPrimitives(context, canvas, context._polygons, Polygons, controller);
 
@@ -277,7 +283,7 @@ void OsmAnd::Rasterizer::obtainPrimitives(RasterizerContext& context, IQueryCont
                     pointPrimitive.objectType = PrimitiveType::Point;
                     auto polygonArea31 = Utilities::polygonArea(mapObject->_points31);
                     primitive.zOrder = polygonArea31 / area31toPixelDivisor;
-                    if(primitive.zOrder > PolygonAreaCutoffLowerThreshold)
+                    if(primitive.zOrder > PolygonAreaCutoffLowerThreshold * context._densityFactor)
                     {
                         context._polygons.push_back(primitive);
                         context._points.push_back(pointPrimitive);
@@ -404,7 +410,7 @@ void OsmAnd::Rasterizer::rasterizeMapPrimitives( RasterizerContext& context, SkC
 
         if(type == Polygons)
         {
-            if (primitive.zOrder < context._polygonMinSizeToDisplay)
+            if (primitive.zOrder < context._polygonMinSizeToDisplay * context._densityFactor)
                 return;
 
             rasterizePolygon(context, canvas, primitive);
@@ -480,7 +486,7 @@ bool OsmAnd::Rasterizer::updatePaint( RasterizerContext& context, const Rasteriz
         context._mapPaint.setShader(nullptr);
         context._mapPaint.setLooper(nullptr);
         context._mapPaint.setStyle(SkPaint::kStroke_Style);
-        context._mapPaint.setStrokeWidth(stroke);
+        context._mapPaint.setStrokeWidth(stroke * context._densityFactor);
 
         QString cap;
         ok = evaluator.getStringValue(valueSet.cap, cap);
@@ -539,7 +545,7 @@ bool OsmAnd::Rasterizer::updatePaint( RasterizerContext& context, const Rasteriz
             shadowRadius = 0;
 
         if(shadowRadius > 0)
-            context._mapPaint.setLooper(new SkBlurDrawLooper(shadowRadius, 0, 0, shadowColor))->unref();
+            context._mapPaint.setLooper(new SkBlurDrawLooper(shadowRadius * context._densityFactor, 0, 0, shadowColor))->unref();
     }
 
     return true;
@@ -797,7 +803,7 @@ void OsmAnd::Rasterizer::rasterizeLineShadow( RasterizerContext& context, SkCanv
     {
         // simply draw shadow? difference from option 3 ?
         // paint->setColor(0xffffffff);
-        context._mapPaint.setLooper(new SkBlurDrawLooper(shadowRadius, 0, 0, shadowColor))->unref();
+        context._mapPaint.setLooper(new SkBlurDrawLooper(shadowRadius * context._densityFactor, 0, 0, shadowColor))->unref();
         canvas.drawPath(path, context._mapPaint);
     }
 
@@ -805,7 +811,7 @@ void OsmAnd::Rasterizer::rasterizeLineShadow( RasterizerContext& context, SkCanv
     if (context._shadowRenderingMode == 3 && shadowRadius > 0)
     {
         context._mapPaint.setLooper(nullptr);
-        context._mapPaint.setStrokeWidth(context._mapPaint.getStrokeWidth() + shadowRadius * 2);
+        context._mapPaint.setStrokeWidth((context._mapPaint.getStrokeWidth() + shadowRadius * 2) * context._densityFactor);
         //		paint->setColor(0xffbababa);
         context._mapPaint.setColorFilter(SkColorFilter::CreateModeFilter(shadowColor, SkXfermode::kSrcIn_Mode))->unref();
         //		paint->setColor(shadowColor);
@@ -1428,9 +1434,13 @@ void OsmAnd::Rasterizer::obtainPrimitivesTexts( RasterizerContext& context, IQue
 
 void OsmAnd::Rasterizer::rasterizeText( RasterizerContext& context, bool fillBackground, SkCanvas& canvas, IQueryController* controller /*= nullptr*/ )
 {
-    context._mapPaint.setColor(SK_ColorTRANSPARENT);
     if(fillBackground)
-        canvas.drawRectCoords(context._renderViewport.top, context._renderViewport.left, context._renderViewport.right, context._renderViewport.bottom, context._mapPaint);
+    {
+        SkPaint bgPaint;
+        bgPaint.setColor(SK_ColorTRANSPARENT);
+        bgPaint.setStyle(SkPaint::kFill_Style);
+        canvas.drawRectCoords(context._renderViewport.top, context._renderViewport.left, context._renderViewport.right, context._renderViewport.bottom, bgPaint);
+    }
     /*
     SkRect r = SkRect::MakeLTRB(0, 0, rc->getWidth(), rc->getHeight());
     r.inset(-100, -100);
@@ -1451,8 +1461,7 @@ void OsmAnd::Rasterizer::rasterizeText( RasterizerContext& context, bool fillBac
 
         const auto& text = *itText;
 
-        //TODO: take display density in account
-        context._textPaint.setTextSize(text.size);
+        context._textPaint.setTextSize(text.size * context._densityFactor);
         context._textPaint.setFakeBoldText(text.isBold);//TODO: use special typeface!
         context._textPaint.setColor(text.color);
         context._textPaint.getFontMetrics(&fontMetrics);
@@ -1528,7 +1537,7 @@ void OsmAnd::Rasterizer::collectPrimitivesTexts( RasterizerContext& context, con
 
         if(type == Polygons)
         {
-            if (primitive.zOrder < context._polygonMinSizeToDisplay)
+            if (primitive.zOrder < context._polygonMinSizeToDisplay * context._densityFactor)
                 return;
 
             collectPolygonText(context, primitive);

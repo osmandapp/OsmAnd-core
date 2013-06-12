@@ -1,13 +1,6 @@
 project(jpeg)
 
-include_directories(AFTER SYSTEM
-	"."
-)
-add_definitions(-DNO_GETENV)
-if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
-endif()
-add_library(jpeg_osmand STATIC
+add_library(jpeg_static STATIC
     "upstream.patched/jaricom.c"
 	"upstream.patched/jcapimin.c"
 	"upstream.patched/jcapistd.c"
@@ -54,4 +47,15 @@ add_library(jpeg_osmand STATIC
 	"upstream.patched/jquant1.c"
 	"upstream.patched/jquant2.c"
 	"upstream.patched/jutils.c"
+)
+
+target_compile_definitions(jpeg_static
+	PRIVATE
+		-DNO_GETENV
+)
+target_include_directories(jpeg_static
+	PRIVATE
+		"."
+	PUBLIC
+		"upstream.patched"
 )

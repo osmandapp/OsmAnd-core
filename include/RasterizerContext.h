@@ -52,6 +52,7 @@ namespace OsmAnd {
         uint32_t _zoom;
         double _tileDivisor;
         uint32_t _tileSidePixelLength;
+        float _densityFactor;
         double _precomputed31toPixelDivisor;
         PointF _tlOriginOffset;
         AreaF _renderViewport;
@@ -86,7 +87,7 @@ namespace OsmAnd {
         static void initializeOneWayPaint(SkPaint& paint);
 
         void initialize();
-        bool update(const AreaI& area31, uint32_t zoom, const PointF& tlOriginOffset, uint32_t tileSidePixelLength);
+        bool update(const AreaI& area31, uint32_t zoom, const PointF& tlOriginOffset, uint32_t tileSidePixelLength, float densityFactor);
 
         QHash< QString, SkPathEffect* > _pathEffects;
         SkPathEffect* obtainPathEffect(const QString& pathEffect);

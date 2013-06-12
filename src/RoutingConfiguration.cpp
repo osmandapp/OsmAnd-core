@@ -1,7 +1,7 @@
 #include "RoutingConfiguration.h"
 #include "RoutingConfiguration_private.h"
 
-#include "Common.h"
+#include "OsmAndCommon.h"
 #include "EmbeddedResources.h"
 #include "Utilities.h"
 

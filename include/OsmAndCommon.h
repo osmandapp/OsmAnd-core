@@ -20,8 +20,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#if !defined(__COMMON_H_)
-#define __COMMON_H_
+#ifndef __OSMAND_COMMON_H_
+#define __OSMAND_COMMON_H_
 
 #include <assert.h>
 #include <iostream>
@@ -43,7 +43,7 @@
 #   define xT(x) _T(x)
 #else
 #   if defined(_UNICODE) || defined(UNICODE)
-#       define xT(x) L ##x
+#       define xT(x) L##x
 #   else
 #       define xT(x) x
 #   endif
@@ -55,4 +55,4 @@
 #   define QStringToStlString(x) (x).toStdString()
 #endif
 
-#endif // __COMMON_H_
+#endif // __OSMAND_COMMON_H_

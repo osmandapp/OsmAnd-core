@@ -143,6 +143,7 @@ namespace OsmAnd {
             const AreaI& area31,
             uint32_t zoom,
             uint32_t tileSidePixelLength,
+            float densityFactor,
             const QList< std::shared_ptr<OsmAnd::Model::MapObject> >* objects = nullptr,
             const PointF& tlOriginOffset = PointF(),
             bool* nothingToRender = nullptr,

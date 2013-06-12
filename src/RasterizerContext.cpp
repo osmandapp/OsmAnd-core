@@ -154,7 +154,7 @@ void OsmAnd::RasterizerContext::initialize()
     _textPaint.setAntiAlias(true);
 }
 
-bool OsmAnd::RasterizerContext::update( const AreaI& area31, uint32_t zoom, const PointF& tlOriginOffset, uint32_t tileSidePixelLength )
+bool OsmAnd::RasterizerContext::update( const AreaI& area31, uint32_t zoom, const PointF& tlOriginOffset, uint32_t tileSidePixelLength, float densityFactor )
 {
     bool evaluateAttributes = false;
     bool evaluate31ToPixelDivisor = false;
@@ -235,6 +235,7 @@ bool OsmAnd::RasterizerContext::update( const AreaI& area31, uint32_t zoom, cons
     _zoom = zoom;
     _area31 = area31;
     _tileSidePixelLength = tileSidePixelLength;
+    _densityFactor = densityFactor;
 
     return evaluateAttributes || evaluate31ToPixelDivisor || evaluateRenderViewport;
 }

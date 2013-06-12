@@ -1,10 +1,6 @@
 project(zlib)
 
-add_definitions(-D_LARGEFILE64_SOURCE=1 -DHAVE_SYS_TYPES_H -DHAVE_STDINT_H -DHAVE_STDDEF_H -DZ_PREFIX)
-if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
-endif()
-add_library(z_osmand STATIC
+add_library(z_static STATIC
 	"upstream.patched/adler32.c"
 	"upstream.patched/compress.c"
 	"upstream.patched/crc32.c"
@@ -20,4 +16,17 @@ add_library(z_osmand STATIC
 	"upstream.patched/trees.c"
 	"upstream.patched/uncompr.c"
 	"upstream.patched/zutil.c"
+)
+
+target_compile_definitions(z_static
+	PRIVATE
+		-DHAVE_SYS_TYPES_H
+		-DHAVE_STDINT_H
+		-DHAVE_STDDEF_H
+	PUBLIC
+		-DZ_PREFIX
+)
+target_include_directories(z_static
+	PUBLIC
+		"upstream.patched"
 )

@@ -1,16 +1,25 @@
 project(gif)
 
-add_definitions(-DHAVE_CONFIG_H)
-if(CMAKE_TARGET_OS STREQUAL "windows")
-	include_directories(AFTER SYSTEM
-		"include"
-	)
-endif()
-if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
-endif()
-add_library(gif_osmand STATIC
+add_library(gif_static STATIC
 	"upstream.patched/lib/dgif_lib.c"
 	"upstream.patched/lib/gifalloc.c"
 	"upstream.patched/lib/gif_err.c"
+	"upstream.patched/lib/gif_lib.h"
+	"upstream.patched/lib/gif_lib_private.h"
+	"upstream.patched/lib/gif_hash.h"
+)
+
+target_compile_definitions(gif_static
+	PRIVATE
+		-DHAVE_CONFIG_H
+)
+if(CMAKE_TARGET_OS STREQUAL "windows")
+	target_include_directories(gif_static
+		PUBLIC
+			"include"
+	)
+endif()
+target_include_directories(gif_static
+	PUBLIC
+		"upstream.patched/lib"
 )

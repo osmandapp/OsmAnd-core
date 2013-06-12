@@ -1,17 +1,22 @@
 project(expat)
 
-include_directories(AFTER SYSTEM
-	"."
-)
-add_definitions(-DHAVE_EXPAT_CONFIG_H)
-if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
-endif()
-
-add_library(expat_osmand STATIC
+add_library(expat_static STATIC
 	"upstream.patched/lib/xmlparse.c"
 	"upstream.patched/lib/xmlrole.c"
 	"upstream.patched/lib/xmltok.c"
 	"upstream.patched/lib/xmltok_impl.c"
 	"upstream.patched/lib/xmltok_ns.c"
+)
+
+target_compile_definitions(expat_static
+	PRIVATE
+		-DHAVE_EXPAT_CONFIG_H
+	PUBLIC
+		-DXML_STATIC
+)
+target_include_directories(expat_static
+	PRIVATE
+		"."
+	PUBLIC
+		"upstream.patched/lib"
 )
