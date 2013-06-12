@@ -3,9 +3,6 @@
 
 #if defined(_WIN32)
 
-	/* Force expat to be static */
-	#define XML_STATIC
-
 	/* 1234 = LIL_ENDIAN, 4321 = BIGENDIAN */
 	#define BYTEORDER 1234
 
@@ -40,9 +37,6 @@
 	#undef size_t
 
 #elif defined(ANDROID) || defined(__ANDROID__)
-
-	/* Force expat to be static */
-	#define XML_STATIC
 
 	/* 1234 = LIL_ENDIAN, 4321 = BIGENDIAN */
 	#define BYTEORDER 1234
@@ -122,9 +116,6 @@
 
 #elif defined(__APPLE__)
 
-	/* Force expat to be static */
-	#define XML_STATIC
-
 	/* 1234 = LIL_ENDIAN, 4321 = BIGENDIAN */
 	#define BYTEORDER 1234
 
@@ -202,9 +193,6 @@
 	/* #undef size_t */
 
 #elif defined(__linux__)
-
-	/* Force expat to be static */
-	#define XML_STATIC
 
 	/* 1234 = LIL_ENDIAN, 4321 = BIGENDIAN */
 	#define BYTEORDER 1234
