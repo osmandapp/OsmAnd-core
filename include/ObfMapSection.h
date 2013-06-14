@@ -138,7 +138,7 @@ namespace OsmAnd {
             const AreaI* bbox31);
         enum {
             ShiftCoordinates = 5,
-            MaskToRead = ~((1 << ShiftCoordinates) - 1),
+            MaskToRead = ~((1u << ShiftCoordinates) - 1),
         };
     public:
         virtual ~ObfMapSection();

@@ -54,7 +54,7 @@ namespace OsmAnd {
 
         enum {
             SubcategoryIdShift = 7,
-            CategoryIdMask = (1 << SubcategoryIdShift) - 1,
+            CategoryIdMask = (1u << SubcategoryIdShift) - 1,
         };
         static void readBoundaries(ObfReader* reader, ObfPoiSection* section);
         static void readCategories(ObfReader* reader, ObfPoiSection* section, QList< std::shared_ptr<Model::Amenity::Category> >& categories);

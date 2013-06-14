@@ -181,6 +181,14 @@ void OsmAnd::Renderer_OpenGL::refreshVisibleTileset()
             _visibleTiles.insert(tileId);
         }
     }
+
+    // Compute in-tile offset
+    auto mask = ~((1u << _zoom) - 1);
+    auto tileXo31 = _target31.x & mask;
+    auto tileYo31 = _target31.y & mask;
+    auto div = static_cast<float>((1u << _zoom) - 1);
+    _targetInTile.x = static_cast<float>(_target31.x - tileXo31) / div;
+    _targetInTile.y = static_cast<float>(_target31.y - tileYo31) / div;
     
     _tilesetCacheDirty = false;
 }
@@ -205,7 +213,37 @@ void OsmAnd::Renderer_OpenGL::performRendering() const
     glPushMatrix();
     glLoadMatrixf(glm::value_ptr(_glModelview));
     
-    /*
+    // For each visible tile, render it
+    PointI centerZ;
+    centerZ.x = _target31.x >> (31 - _zoom);
+    centerZ.y = _target31.y >> (31 - _zoom);
+    for(auto itTileId = _visibleTiles.begin(); itTileId != _visibleTiles.end(); ++itTileId)
+    {
+        const auto& tileId = *itTileId;
+
+        float x = static_cast<int32_t>(tileId >> 32) - centerZ.x;
+        float y = static_cast<int32_t>(tileId & 0xFFFFFFFF) - centerZ.y;
+
+        float tx = (x + _targetInTile.x) * TileSide3D ;
+        float ty = (y + _targetInTile.y) * TileSide3D ;
+
+        glPushMatrix();
+        glTranslatef(tx, 0.0f, ty);
+        //TODO:DRAW!
+        glBegin(GL_QUADS);
+            glColor3d(1,0,0);
+            glVertex3f(0,0,TileSide3D);
+            glColor3d(1,1,0);
+            glVertex3f(TileSide3D,0,TileSide3D);
+            glColor3d(1,1,1);
+            glVertex3f(TileSide3D,0,0);
+            glColor3d(0,1,1);
+            glVertex3f(0,0,0);
+        glEnd();
+        ////////////
+        glPopMatrix();
+    }
+
     // Revert camera
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
@@ -213,7 +251,6 @@ void OsmAnd::Renderer_OpenGL::performRendering() const
     // Revert projection
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
-    */
 
     // Revert viewport
     glViewport(oldViewport[0], oldViewport[1], oldViewport[2], oldViewport[3]);
