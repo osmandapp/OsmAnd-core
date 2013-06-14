@@ -54,7 +54,7 @@ namespace OsmAnd {
         bool _viewIsDirty;
         bool _tilesetCacheDirty;
         QSet<uint64_t> _visibleTiles;
-        PointF _targetInTile;
+        PointD _targetInTile;
 
         enum {
             TileSide3D = 100,

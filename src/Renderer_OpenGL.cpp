@@ -12,6 +12,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <QtGlobal>
+#include <QtCore/qmath.h>
 
 OsmAnd::Renderer_OpenGL::Renderer_OpenGL()
 {
@@ -145,19 +146,23 @@ void OsmAnd::Renderer_OpenGL::refreshVisibleTileset()
         brP /= brLength / clip;
 
     // Get tile indices
-    PointI p0, p1, p2, p3;
-    p0.x = static_cast<int32_t>(tlP[0] / TileSide3D);
-    p0.y = static_cast<int32_t>(tlP[2] / TileSide3D);
-    p1.x = static_cast<int32_t>(trP[0] / TileSide3D);
-    p1.y = static_cast<int32_t>(trP[2] / TileSide3D);
-    p2.x = static_cast<int32_t>(blP[0] / TileSide3D);
-    p2.y = static_cast<int32_t>(blP[2] / TileSide3D);
-    p3.x = static_cast<int32_t>(brP[0] / TileSide3D);
-    p3.y = static_cast<int32_t>(brP[2] / TileSide3D);
-
+    tlP /= TileSide3D;
+    trP /= TileSide3D;
+    blP /= TileSide3D;
+    brP /= TileSide3D;
+    
     // Obtain visible tile indices in current zoom
     //TODO: it's not optimal, since dumb AABB takes a lot of unneeded tiles.
     _visibleTiles.clear();
+    PointI p0, p1, p2, p3;
+    p0.x = tlP[0] > 0.0f ? qCeil(tlP[0]) : qFloor(tlP[0]);
+    p0.y = tlP[2] > 0.0f ? qCeil(tlP[2]) : qFloor(tlP[2]);
+    p1.x = trP[0] > 0.0f ? qCeil(trP[0]) : qFloor(trP[0]);
+    p1.y = trP[2] > 0.0f ? qCeil(trP[2]) : qFloor(trP[2]);
+    p2.x = blP[0] > 0.0f ? qCeil(blP[0]) : qFloor(blP[0]);
+    p2.y = blP[2] > 0.0f ? qCeil(blP[2]) : qFloor(blP[2]);
+    p3.x = brP[0] > 0.0f ? qCeil(brP[0]) : qFloor(brP[0]);
+    p3.y = brP[2] > 0.0f ? qCeil(brP[2]) : qFloor(brP[2]);
     auto yMax = qMax(qMax(p0.y, p1.y), qMax(p2.y, p3.y));
     auto yMin = qMin(qMin(p0.y, p1.y), qMin(p2.y, p3.y));
     auto xMax = qMax(qMax(p0.x, p1.x), qMax(p2.x, p3.x));
@@ -171,10 +176,10 @@ void OsmAnd::Renderer_OpenGL::refreshVisibleTileset()
         {
             PointI tileZ;
             tileZ.x = centerZ.x + x;
-            if(tileZ.x < 0 || tileZ.x > (1 << _zoom) - 1)
+            if(tileZ.x < 0 || tileZ.x > (1u << _zoom) - 1)
                 continue;
             tileZ.y = centerZ.y + y;
-            if(tileZ.y < 0 || tileZ.y > (1 << _zoom) - 1)
+            if(tileZ.y < 0 || tileZ.y > (1u << _zoom) - 1)
                 continue;
 
             uint64_t tileId = (static_cast<uint64_t>(tileZ.x) << 32) | tileZ.y;
@@ -183,12 +188,14 @@ void OsmAnd::Renderer_OpenGL::refreshVisibleTileset()
     }
 
     // Compute in-tile offset
-    auto mask = ~((1u << _zoom) - 1);
-    auto tileXo31 = _target31.x & mask;
-    auto tileYo31 = _target31.y & mask;
-    auto div = static_cast<float>((1u << _zoom) - 1);
-    _targetInTile.x = static_cast<float>(_target31.x - tileXo31) / div;
-    _targetInTile.y = static_cast<float>(_target31.y - tileYo31) / div;
+    auto zoomTileMask = ((1u << _zoom) - 1) << (31 - _zoom);
+    auto tileXo31 = _target31.x & zoomTileMask;
+    auto tileYo31 = _target31.y & zoomTileMask;
+    auto div = 1u << (31 - _zoom);
+    if(div > 1)
+        div -= 1;
+    _targetInTile.x = static_cast<double>(_target31.x - tileXo31) / div;
+    _targetInTile.y = static_cast<double>(_target31.y - tileYo31) / div;
     
     _tilesetCacheDirty = false;
 }
@@ -224,8 +231,8 @@ void OsmAnd::Renderer_OpenGL::performRendering() const
         float x = static_cast<int32_t>(tileId >> 32) - centerZ.x;
         float y = static_cast<int32_t>(tileId & 0xFFFFFFFF) - centerZ.y;
 
-        float tx = (x + _targetInTile.x) * TileSide3D ;
-        float ty = (y + _targetInTile.y) * TileSide3D ;
+        float tx = (x - _targetInTile.x) * TileSide3D ;
+        float ty = (y - _targetInTile.y) * TileSide3D ;
 
         glPushMatrix();
         glTranslatef(tx, 0.0f, ty);
