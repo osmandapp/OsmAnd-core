@@ -28,11 +28,8 @@ void OsmAnd::Renderer_OpenGL::setSource( const std::shared_ptr<MapDataCache>& so
     IRenderer::setSource(source);
 }
 
-bool OsmAnd::Renderer_OpenGL::computeMatrices()
+void OsmAnd::Renderer_OpenGL::computeMatrices()
 {
-    if(!_matricesAreDirty)
-        return _tilesetIsDirty;
-
     // Setup projection
     GLfloat aspectRatio = static_cast<GLfloat>(viewport.width());
     auto viewportHeight = viewport.height();
@@ -48,18 +45,10 @@ bool OsmAnd::Renderer_OpenGL::computeMatrices()
     // Setup viewport and window
     _glViewport = _viewport;
     _glWindowSize = _windowSize;
-
-    _tilesetIsDirty = true;
-    _matricesAreDirty = false;
-
-    return _tilesetIsDirty;
 }
 
 void OsmAnd::Renderer_OpenGL::refreshVisibleTileset()
 {
-    if(!_tilesetIsDirty)
-        return;
-    
     glm::vec4 glViewport
     (
         _glViewport.left,
@@ -189,12 +178,12 @@ void OsmAnd::Renderer_OpenGL::refreshVisibleTileset()
         }
     }
     
-    _tilesetIsDirty = false;
+    _tilesetCacheDirty = false;
 }
 
 void OsmAnd::Renderer_OpenGL::performRendering() const
 {
-    if(_matricesAreDirty)
+    if(_viewIsDirty)
         return;
 
     // Setup viewport
@@ -238,4 +227,16 @@ bool OsmAnd::Renderer_OpenGL::rayIntersectPlane( const glm::vec3& planeN, float 
     }
 
     return false;
+}
+
+void OsmAnd::Renderer_OpenGL::refreshView()
+{
+    if(!_viewIsDirty)
+        return;
+
+    computeMatrices();
+    refreshVisibleTileset();
+
+    _tilesetCacheDirty = true;
+    _viewIsDirty = false;
 }

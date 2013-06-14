@@ -44,14 +44,16 @@ namespace OsmAnd {
         AreaI _glViewport;
         glm::mat4 _glProjection;
         glm::mat4 _glModelview;
+
+        virtual void computeMatrices();
+        virtual void refreshVisibleTileset();
     public:
         Renderer_OpenGL();
         virtual ~Renderer_OpenGL();
 
         virtual void setSource(const std::shared_ptr<MapDataCache>& source);
         
-        virtual bool computeMatrices();
-        virtual void refreshVisibleTileset();
+        virtual void refreshView();
 
         virtual void performRendering() const;
     };

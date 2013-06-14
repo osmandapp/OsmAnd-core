@@ -51,13 +51,16 @@ namespace OsmAnd {
         float _elevationAngle;
         PointI _target31;
         uint32_t _zoom;
-        bool _matricesAreDirty;
-        bool _tilesetIsDirty;
+        bool _viewIsDirty;
+        bool _tilesetCacheDirty;
         QSet<uint64_t> _visibleTiles;
 
         enum {
             TileSide3D = 100,
         };
+
+        virtual void computeMatrices() = 0;
+        virtual void refreshVisibleTileset() = 0;
     public:
         virtual ~IRenderer();
 
@@ -79,11 +82,8 @@ namespace OsmAnd {
         virtual bool updateCamera(float distanceFromTarget, float azimuth, float elevationAngle);
         virtual bool updateMap(const PointI& target31, uint32_t zoom);
 
-        const bool& matricesAreDirty;
-        virtual bool computeMatrices() = 0;
-
-        const bool& tilesetIsDirty;
-        virtual void refreshVisibleTileset() = 0;
+        const bool& viewIsDirty;
+        virtual void refreshView() = 0;
 
         virtual void performRendering() const = 0;
     };
