@@ -171,7 +171,11 @@ void OsmAnd::Renderer_OpenGL::refreshVisibleTileset()
         {
             PointI tileZ;
             tileZ.x = centerZ.x + x;
+            if(tileZ.x < 0 || tileZ.x > (1 << _zoom) - 1)
+                continue;
             tileZ.y = centerZ.y + y;
+            if(tileZ.y < 0 || tileZ.y > (1 << _zoom) - 1)
+                continue;
 
             uint64_t tileId = (static_cast<uint64_t>(tileZ.x) << 32) | tileZ.y;
             _visibleTiles.insert(tileId);
