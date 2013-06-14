@@ -24,7 +24,7 @@
 #include "textdraw.cpp"
 #include "mapObjects.h"
 #include "rendering.h"
-#include "Logging.h"
+#include "OsmAndLogging.h"
 
 const int MAX_V = 75;
 

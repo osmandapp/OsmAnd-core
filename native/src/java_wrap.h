@@ -3,7 +3,7 @@
 
 #include "jni.h"
 #include "binaryRead.h"
-#include "Logging.h"
+#include "OsmAndLogging.h"
 
 
 struct ResultJNIPublisher : ResultPublisher {

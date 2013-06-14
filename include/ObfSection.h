@@ -23,9 +23,11 @@
 #ifndef __OBF_SECTION_H_
 #define __OBF_SECTION_H_
 
+#include <stdint.h>
+#include <memory>
+
 #include <OsmAndCore.h>
 #include <QString>
-#include <stdint.h>
 
 namespace OsmAnd {
 

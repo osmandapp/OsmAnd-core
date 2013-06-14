@@ -27,6 +27,7 @@
 
 #include <QtGlobal>
 #include <QString>
+#include <QList>
 
 #include <OsmAndCore.h>
 

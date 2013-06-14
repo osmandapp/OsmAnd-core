@@ -12,10 +12,11 @@
 
 #include <OsmAndCommon.h>
 #include <ObfReader.h>
-#include <Utilities.h>
+#include <OsmAndUtilities.h>
 #include <Rasterizer.h>
 #include <RasterizerContext.h>
 #include <RasterizationStyleEvaluator.h>
+#include <MapDataCache.h>
 
 OsmAnd::EyePiece::Configuration::Configuration()
     : verbose(false)
@@ -186,12 +187,13 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
     if(cfg.dumpRules)
         style->dump();
     
-    QList< std::shared_ptr<OsmAnd::ObfReader> > obfData;
+    OsmAnd::MapDataCache mapDataCache;
     for(auto itObf = cfg.obfs.begin(); itObf != cfg.obfs.end(); ++itObf)
     {
         auto obf = *itObf;
         std::shared_ptr<OsmAnd::ObfReader> obfReader(new OsmAnd::ObfReader(obf));
-        obfData.push_back(obfReader);
+        
+        mapDataCache.addSource(obfReader);
     }
 
     // Collect all map objects (this should be replaced by something like RasterizerViewport/RasterizerContext)
@@ -202,20 +204,7 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
             OsmAnd::Utilities::get31TileNumberY(cfg.bbox.bottom),
             OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right)
         );
-    OsmAnd::QueryFilter filter;
-    filter._bbox31 = &bbox31;
-    filter._zoom = &cfg.zoom;
-    for(auto itObf = obfData.begin(); itObf != obfData.end(); ++itObf)
-    {
-        auto obf = *itObf;
-
-        for(auto itMapSection = obf->mapSections.begin(); itMapSection != obf->mapSections.end(); ++itMapSection)
-        {
-            auto mapSection = *itMapSection;
-
-            OsmAnd::ObfMapSection::loadMapObjects(obf.get(), mapSection.get(), &mapObjects, &filter, nullptr);
-        }
-    }
+    mapDataCache.obtainObjects(mapObjects, bbox31, cfg.zoom, nullptr);
     
     // Calculate output size in pixels
     const auto tileWidth = OsmAnd::Utilities::getTileNumberX(cfg.zoom, cfg.bbox.right) - OsmAnd::Utilities::getTileNumberX(cfg.zoom, cfg.bbox.left);

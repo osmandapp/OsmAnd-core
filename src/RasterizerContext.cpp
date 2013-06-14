@@ -4,7 +4,7 @@
 #include <SkDashPathEffect.h>
 
 #include "RasterizationStyleEvaluator.h"
-#include "Utilities.h"
+#include "OsmAndUtilities.h"
 
 OsmAnd::RasterizerContext::RasterizerContext( const std::shared_ptr<RasterizationStyle>& style_ )
     : style(style_)

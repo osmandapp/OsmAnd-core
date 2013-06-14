@@ -1,7 +1,7 @@
 #include "ObfRoutingSection.h"
 
-#include "Logging.h"
-#include <Utilities.h>
+#include "OsmAndLogging.h"
+#include <OsmAndUtilities.h>
 #include <ObfReader.h>
 #include <Road.h>
 #include <google/protobuf/wire_format_lite.h>
@@ -292,7 +292,7 @@ void OsmAnd::ObfRoutingSection::querySubsections(
     ObfReader* reader,
     const QList< std::shared_ptr<Subsection> >& in,
     QList< std::shared_ptr<Subsection> >* resultOut /*= nullptr*/,
-    QueryFilter* filter /*= nullptr*/,
+    IQueryFilter* filter /*= nullptr*/,
     std::function<bool (const std::shared_ptr<Subsection>&)> visitor /*= nullptr*/ )
 {
     auto cis = reader->_codedInputStream.get();
@@ -302,7 +302,7 @@ void OsmAnd::ObfRoutingSection::querySubsections(
         auto subsection = *itSubsection;
 
         // If section is completely outside of bbox, skip it
-        if(filter && filter->_bbox31 && !filter->_bbox31->intersects(subsection->_area31))
+        if(filter && !filter->acceptsArea(subsection->_area31))
             continue;
         
         // Load children if they are not yet loaded
@@ -311,7 +311,7 @@ void OsmAnd::ObfRoutingSection::querySubsections(
             cis->Seek(subsection->_offset);
             auto oldLimit = cis->PushLimit(subsection->_length);
             cis->Skip(subsection->_subsectionsOffset - subsection->_offset);
-            const auto contains = !filter || !filter->_bbox31 || filter->_bbox31->intersects(subsection->_area31);
+            const auto contains = !filter || filter->acceptsArea(subsection->_area31);
             readSubsectionChildrenHeaders(reader, subsection, contains ? std::numeric_limits<uint32_t>::max() : 1);
             cis->PopLimit(oldLimit);
         }
@@ -330,7 +330,7 @@ void OsmAnd::ObfRoutingSection::loadSubsectionData(
     ObfReader* reader, const std::shared_ptr<Subsection>& subsection,
     QList< std::shared_ptr<Model::Road> >* resultOut /*= nullptr*/,
     QMap< uint64_t, std::shared_ptr<Model::Road> >* resultMapOut /*= nullptr*/,
-    QueryFilter* filter /*= nullptr*/,
+    IQueryFilter* filter /*= nullptr*/,
     std::function<bool (const std::shared_ptr<OsmAnd::Model::Road>&)> visitor /*= nullptr*/ )
 {
     auto cis = reader->_codedInputStream.get();
@@ -347,7 +347,7 @@ void OsmAnd::ObfRoutingSection::readSubsectionData(
     ObfReader* reader, const std::shared_ptr<Subsection>& subsection,
     QList< std::shared_ptr<Model::Road> >* resultOut /*= nullptr*/,
     QMap< uint64_t, std::shared_ptr<Model::Road> >* resultMapOut /*= nullptr*/,
-    QueryFilter* filter /*= nullptr*/,
+    IQueryFilter* filter /*= nullptr*/,
     std::function<bool (const std::shared_ptr<OsmAnd::Model::Road>&)> visitor /*= nullptr*/ )
 {
     QStringList roadNamesTable;
@@ -622,7 +622,7 @@ void OsmAnd::ObfRoutingSection::loadSubsectionBorderBoxLinesPoints(
     ObfReader* reader,
     const ObfRoutingSection* section,
     QList< std::shared_ptr<BorderLinePoint> >* resultOut /*= nullptr*/,
-    QueryFilter* filter /*= nullptr*/,
+    IQueryFilter* filter /*= nullptr*/,
     std::function<bool (const std::shared_ptr<BorderLineHeader>&)> visitorLine /*= nullptr*/,
     std::function<bool (const std::shared_ptr<BorderLinePoint>&)> visitorPoint /*= nullptr*/)
 {
@@ -665,7 +665,7 @@ void OsmAnd::ObfRoutingSection::loadSubsectionBorderBoxLinesPoints(
 
 void OsmAnd::ObfRoutingSection::readBorderBoxLinesHeaders(ObfReader* reader, 
     QList< std::shared_ptr<BorderLineHeader> >* resultOut /*= nullptr*/,
-    QueryFilter* filter /*= nullptr*/,
+    IQueryFilter* filter /*= nullptr*/,
     std::function<bool (const std::shared_ptr<BorderLineHeader>&)> visitor /*= nullptr*/)
 {
     auto cis = reader->_codedInputStream.get();
@@ -686,10 +686,10 @@ void OsmAnd::ObfRoutingSection::readBorderBoxLinesHeaders(ObfReader* reader,
                 std::shared_ptr<BorderLineHeader> line(new BorderLineHeader());
                 readBorderLineHeader(reader, line.get(), offset);
                 bool isValid = true;
-                if(filter && filter->_bbox31)
+                if(filter)
                 {
                     if(line->_x2present)
-                        isValid = filter->_bbox31->intersects(line->_x, line->_y, line->_x2, line->_y);
+                        isValid = filter->acceptsArea(AreaI(line->_x, line->_y, line->_x2, line->_y));
                     else
                         isValid = false;
                     /*FIXME: borders approach
@@ -753,7 +753,7 @@ void OsmAnd::ObfRoutingSection::readBorderLineHeader( ObfReader* reader, BorderL
 void OsmAnd::ObfRoutingSection::readBorderLinePoints(
     ObfReader* reader,
     QList< std::shared_ptr<BorderLinePoint> >* resultOut /*= nullptr*/,
-    QueryFilter* filter /*= nullptr*/,
+    IQueryFilter* filter /*= nullptr*/,
     std::function<bool (const std::shared_ptr<BorderLinePoint>&)> visitor /*= nullptr*/
     )
 {
@@ -788,8 +788,8 @@ void OsmAnd::ObfRoutingSection::readBorderLinePoints(
                 point->_id += id;
                 point->_location += location;
                 bool valid = true;
-                if(filter && filter->_bbox31)
-                    valid = filter->_bbox31->contains(point->location);
+                if(filter)
+                    valid = filter->acceptsPoint(point->location);
                 if(valid && visitor)
                     valid = visitor(point);
                 if(valid && resultOut)

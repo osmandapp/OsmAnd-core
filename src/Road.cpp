@@ -2,7 +2,7 @@
 
 #include <QtCore>
 
-#include "Utilities.h"
+#include "OsmAndUtilities.h"
 
 OsmAnd::Model::Road::Road(const std::shared_ptr<ObfRoutingSection::Subsection>& subsection)
     : subsection(subsection)

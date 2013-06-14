@@ -23,42 +23,71 @@
 #ifndef __MODEL_AMENITY_H_
 #define __MODEL_AMENITY_H_
 
-#include <OsmAndCore.h>
-#include <QString>
-#include <QStringList>
 #include <stdint.h>
 
+#include <QString>
+#include <QStringList>
+
+#include <OsmAndCore.h>
+#include <CommonTypes.h>
+
 namespace OsmAnd {
+
+    class ObfPoiSection;
+    class PoiDirectory;
 
     namespace Model {
 
         class OSMAND_CORE_API Amenity
         {
         public:
-            struct OSMAND_CORE_API Category
+            class OSMAND_CORE_API Category
             {
+            private:
+            protected:
+                Category();
+
                 QString _name;
                 QStringList _subcategories;
+            public:
+                virtual ~Category();
+
+                const QString& name;
+                const QStringList& subcategories;
+
+            friend class OsmAnd::ObfPoiSection;
+            friend class OsmAnd::PoiDirectory;
             };
         private:
         protected:
-        public:
             Amenity();
-            virtual ~Amenity();
 
-            int64_t _id;
+            uint64_t _id;
             QString _name;
             QString _latinName;
-            uint32_t _x31;
-            uint32_t _y31;
-            double _longitude;
-            double _latitude;
+            PointI _point31;
             QString _openingHours;
             QString _site;
             QString _phone;
             QString _description;
             uint32_t _categoryId;
             uint32_t _subcategoryId;
+        public:
+            virtual ~Amenity();
+
+            const uint64_t& id;
+            const QString& name;
+            const QString& latinName;
+            const PointI& point31;
+            const QString& openingHours;
+            const QString& site;
+            const QString& phone;
+            const QString& description;
+            const uint32_t& categoryId;
+            const uint32_t& subcategoryId;
+
+        friend class OsmAnd::ObfPoiSection;
+        friend class OsmAnd::PoiDirectory;
         };
 
     } // namespace Model

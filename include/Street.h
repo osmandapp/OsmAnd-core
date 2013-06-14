@@ -32,7 +32,7 @@
 
 namespace OsmAnd {
 
-    struct ObfAddressSection;
+    class ObfAddressSection;
 
     namespace Model {
 
@@ -68,7 +68,7 @@ namespace OsmAnd {
                 double _latitude;
             };
 
-        friend struct OsmAnd::ObfAddressSection;
+        friend class OsmAnd::ObfAddressSection;
         };
 
     } // namespace Model

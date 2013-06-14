@@ -5,7 +5,7 @@
 #include <QList>
 
 #include "OsmAndCore.h"
-#include "Utilities.h"
+#include "OsmAndUtilities.h"
 #include "OsmAndApplication.h"
 #include <OsmAndMapDataLayer.h>
 

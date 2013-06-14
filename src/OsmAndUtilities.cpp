@@ -1,4 +1,4 @@
-#include "Utilities.h"
+#include "OsmAndUtilities.h"
 
 #include <assert.h>
 #include <limits>
@@ -505,4 +505,32 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::Utilities::rayIntersect( const Poi
         return true;
 
     return false;
+}
+
+OSMAND_CORE_API OsmAnd::AreaI OSMAND_CORE_CALL OsmAnd::Utilities::areaRightShift( const AreaI& input, uint32_t shift )
+{
+    AreaI output;
+    uint32_t tail;
+
+    output.top = input.top >> shift;
+    output.left = input.left >> shift;
+
+    tail = input.bottom & ((1 << shift) - 1);
+    output.bottom = (input.bottom >> shift) + (tail ? 1 : 0);
+    tail = input.right & ((1 << shift) - 1);
+    output.right = (input.right >> shift) + (tail ? 1 : 0);
+
+    return output;
+}
+
+OSMAND_CORE_API OsmAnd::AreaI OSMAND_CORE_CALL OsmAnd::Utilities::areaLeftShift( const AreaI& input, uint32_t shift )
+{
+    AreaI output;
+
+    output.top = input.top << shift;
+    output.left = input.left << shift;
+    output.bottom = input.bottom << shift;
+    output.right = input.right << shift;
+
+    return output;
 }

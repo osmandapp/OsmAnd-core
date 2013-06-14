@@ -2,9 +2,9 @@
 #include "RoutePlannerRouteAnalyzer.h"
 #include "RoutePlannerContext.h"
 
-#include "Logging.h"
+#include "OsmAndLogging.h"
 
-#include "Utilities.h"
+#include "OsmAndUtilities.h"
 #include "ObfReader.h"
 
 OsmAnd::RoutePlannerContext::RoutePlannerContext(

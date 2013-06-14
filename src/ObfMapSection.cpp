@@ -6,12 +6,12 @@
 #include <iostream>
 
 #include "OBF.pb.h"
-#include "Utilities.h"
+#include "OsmAndUtilities.h"
 #include "MapObject.h"
 
 namespace gpb = google::protobuf;
 
-OsmAnd::ObfMapSection::ObfMapSection( class ObfReader* owner_ )
+OsmAnd::ObfMapSection::ObfMapSection( ObfReader* owner_ )
     : ObfSection(owner_)
     , _isBaseMap(false)
     , isBaseMap(_isBaseMap)
@@ -220,13 +220,13 @@ void OsmAnd::ObfMapSection::createRule( Rules* rules, uint32_t ruleType, uint32_
 }
 
 void OsmAnd::ObfMapSection::loadMapObjects(
-    ObfReader* reader,
-    ObfMapSection* section,
+    ObfReader* reader, ObfMapSection* section,
+    uint32_t zoom, const AreaI* bbox31 /*= nullptr*/,
     QList< std::shared_ptr<OsmAnd::Model::MapObject> >* resultOut /*= nullptr*/,
-    QueryFilter* filter /*= nullptr*/,
     std::function<bool (const std::shared_ptr<OsmAnd::Model::MapObject>&)> visitor /*= nullptr*/,
     IQueryController* controller /*= nullptr*/)
 {
+    assert(zoom >= 0 && zoom <= 31);
     auto cis = reader->_codedInputStream.get();
 
     if(!section->_rules)
@@ -240,16 +240,13 @@ void OsmAnd::ObfMapSection::loadMapObjects(
 
     for(auto itMapLevel = section->_mapLevels.begin(); itMapLevel != section->_mapLevels.end(); ++itMapLevel)
     {
-        auto mapLevel = *itMapLevel;
+        const auto& mapLevel = *itMapLevel;
 
-        if(filter)
-        {
-            if(filter->_zoom && (mapLevel->_minZoom > *filter->_zoom || mapLevel->_maxZoom < *filter->_zoom))
-                continue;
+        if(mapLevel->_minZoom > zoom || mapLevel->_maxZoom < zoom)
+            continue;
 
-            if(filter->_bbox31 && !filter->_bbox31->intersects(mapLevel->_area31))
-                continue;
-        }
+        if(bbox31 && !bbox31->intersects(mapLevel->_area31))
+            continue;
 
         // If there are no tree nodes in map level, it means they are not loaded
         QList< std::shared_ptr<LevelTreeNode> > cachedTreeNodes;//TODO: these should be cached somehow
@@ -261,9 +258,9 @@ void OsmAnd::ObfMapSection::loadMapObjects(
         QList< std::shared_ptr<LevelTreeNode> > treeNodesWithData;
         for(auto itTreeNode = cachedTreeNodes.begin(); itTreeNode != cachedTreeNodes.end(); ++itTreeNode)
         {
-            auto treeNode = *itTreeNode;
+            const auto& treeNode = *itTreeNode;
 
-            if(filter && filter->_bbox31 && !filter->_bbox31->intersects(treeNode->_area31))
+            if(bbox31 && !bbox31->intersects(treeNode->_area31))
                 continue;
 
             if(treeNode->_dataOffset > 0)
@@ -271,7 +268,7 @@ void OsmAnd::ObfMapSection::loadMapObjects(
 
             cis->Seek(treeNode->_offset);
             auto oldLimit = cis->PushLimit(treeNode->_length);
-            readTreeNodeChildren(reader, section, treeNode.get(), &treeNodesWithData, filter, controller);
+            readTreeNodeChildren(reader, section, treeNode.get(), &treeNodesWithData, bbox31, controller);
             assert(cis->BytesUntilLimit() == 0);
             cis->PopLimit(oldLimit);
         }
@@ -281,7 +278,7 @@ void OsmAnd::ObfMapSection::loadMapObjects(
         });
         for(auto itTreeNode = treeNodesWithData.begin(); itTreeNode != treeNodesWithData.end(); ++itTreeNode)
         {
-            auto treeNode = *itTreeNode;
+            const auto& treeNode = *itTreeNode;
             if(controller && controller->isAborted())
                 break;
 
@@ -289,7 +286,7 @@ void OsmAnd::ObfMapSection::loadMapObjects(
             gpb::uint32 length;
             cis->ReadVarint32(&length);
             auto oldLimit = cis->PushLimit(length);
-            readMapObjectsBlock(reader, section, treeNode.get(), resultOut, filter, visitor, controller);
+            readMapObjectsBlock(reader, section, treeNode.get(), resultOut, bbox31, visitor, controller);
             cis->PopLimit(oldLimit);
         }
     }
@@ -385,7 +382,12 @@ void OsmAnd::ObfMapSection::readTreeNode( ObfReader* reader, ObfMapSection* sect
     }
 }
 
-void OsmAnd::ObfMapSection::readTreeNodeChildren( ObfReader* reader, ObfMapSection* section, LevelTreeNode* treeNode, QList< std::shared_ptr<LevelTreeNode> >* nodesWithData, QueryFilter* filter, IQueryController* controller )
+void OsmAnd::ObfMapSection::readTreeNodeChildren(
+    ObfReader* reader, ObfMapSection* section,
+    LevelTreeNode* treeNode,
+    QList< std::shared_ptr<LevelTreeNode> >* nodesWithData,
+    const AreaI* bbox31,
+    IQueryController* controller)
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -406,7 +408,7 @@ void OsmAnd::ObfMapSection::readTreeNodeChildren( ObfReader* reader, ObfMapSecti
                 childNode->_offset = offset;
                 childNode->_length = length;
                 readTreeNode(reader, section, treeNode->_area31, childNode.get());
-                if(filter && filter->_bbox31 && !filter->_bbox31->intersects(childNode->_area31))
+                if(bbox31 && !bbox31->intersects(childNode->_area31))
                 {
                     cis->Skip(cis->BytesUntilLimit());
                     cis->PopLimit(oldLimit);
@@ -417,7 +419,7 @@ void OsmAnd::ObfMapSection::readTreeNodeChildren( ObfReader* reader, ObfMapSecti
                     nodesWithData->push_back(childNode);
 
                 cis->Seek(offset);
-                readTreeNodeChildren(reader, section, childNode.get(), nodesWithData, filter, controller);
+                readTreeNodeChildren(reader, section, childNode.get(), nodesWithData, bbox31, controller);
                 assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
             }
@@ -434,7 +436,7 @@ void OsmAnd::ObfMapSection::readMapObjectsBlock(
     ObfMapSection* section, 
     LevelTreeNode* tree,
     QList< std::shared_ptr<OsmAnd::Model::MapObject> >* resultOut,
-    QueryFilter* filter,
+    const AreaI* bbox31,
     std::function<bool (const std::shared_ptr<OsmAnd::Model::MapObject>&)> visitor,
     IQueryController* controller)
 {
@@ -454,12 +456,12 @@ void OsmAnd::ObfMapSection::readMapObjectsBlock(
         case 0:
             for(auto itEntry = intermediateResult.begin(); itEntry != intermediateResult.end(); ++itEntry)
             {
-                auto entry = *itEntry;
+                const auto& entry = *itEntry;
 
                 // Fill names of roads from stringtable
                 for(auto itNameEntry = entry->_names.begin(); itNameEntry != entry->_names.end(); ++itNameEntry)
                 {
-                    auto encodedId = itNameEntry.value();
+                    const auto& encodedId = itNameEntry.value();
                     uint32_t stringId = 0;
                     stringId |= (encodedId.at(1 + 0).unicode() & 0xff) << 8*0;
                     stringId |= (encodedId.at(1 + 1).unicode() & 0xff) << 8*1;
@@ -486,7 +488,7 @@ void OsmAnd::ObfMapSection::readMapObjectsBlock(
                 auto oldLimit = cis->PushLimit(length);
                 auto pos = cis->CurrentPosition();
                 std::shared_ptr<OsmAnd::Model::MapObject> mapObject;
-                readMapObject(reader, section, tree, baseId, mapObject, filter);
+                readMapObject(reader, section, tree, baseId, mapObject, bbox31);
                 if(mapObject)
                 {
                     mapObject->_foundation = tree->_foundation;
@@ -523,7 +525,7 @@ void OsmAnd::ObfMapSection::readMapObject(
     LevelTreeNode* treeNode,
     uint64_t baseId,
     std::shared_ptr<OsmAnd::Model::MapObject>& mapObject,
-    QueryFilter* filter)
+    const AreaI* bbox31)
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -548,7 +550,7 @@ void OsmAnd::ObfMapSection::readMapObject(
                 int32_t maxX = 0;
                 int32_t minY = std::numeric_limits<int32_t>::max();
                 int32_t maxY = 0;
-                bool contains = (filter == nullptr || filter->_bbox31 == nullptr);
+                bool contains = (bbox31 == nullptr);
                 while(cis->BytesUntilLimit() > 0)
                 {
                     auto dx = (ObfReader::readSInt32(cis) << ShiftCoordinates);
@@ -560,8 +562,8 @@ void OsmAnd::ObfMapSection::readMapObject(
                     
                     px = x;
                     py = y;
-                    if(!contains && filter && filter->_bbox31)
-                        contains = filter->_bbox31->contains(x, y);
+                    if(!contains && bbox31)
+                        contains = bbox31->contains(x, y);
                     if(!contains)
                     {
                         minX = qMin(minX, x);
@@ -570,8 +572,8 @@ void OsmAnd::ObfMapSection::readMapObject(
                         maxY = qMax(maxY, y);
                     }
                 }
-                if(!contains && filter && filter->_bbox31)
-                    contains = filter->_bbox31->contains(minX, minY) && filter->_bbox31->contains(maxX, maxY);
+                if(!contains && bbox31)
+                    contains = bbox31->contains(minX, minY) && bbox31->contains(maxX, maxY);
                 cis->PopLimit(oldLimit);
                 if(!contains)
                 {
@@ -584,6 +586,10 @@ void OsmAnd::ObfMapSection::readMapObject(
                     mapObject.reset(new OsmAnd::Model::MapObject(section));
                 mapObject->_isArea = (tgn == OBF::MapData::kAreaCoordinatesFieldNumber);
                 mapObject->_points31 = points31;
+                mapObject->_bbox31.left = minX;
+                mapObject->_bbox31.right = maxX;
+                mapObject->_bbox31.top = maxY;
+                mapObject->_bbox31.bottom = minY;
             }
             break;
         case OBF::MapData::kPolygonInnerCoordinatesFieldNumber:
@@ -671,7 +677,7 @@ void OsmAnd::ObfMapSection::readMapObject(
                         static_cast<char>((stringId >> 8*3) & 0xff),
                         ']'
                     };
-                    auto fakeQString = QString::fromLocal8Bit(fakeString, sizeof(fakeString));
+                    const auto& fakeQString = QString::fromLocal8Bit(fakeString, sizeof(fakeString));
                     assert(fakeQString.length() == 6);
 
                     const auto& tagName = std::get<0>(section->_rules->_decodingRules[stringTag]);

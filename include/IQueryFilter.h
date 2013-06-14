@@ -20,8 +20,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __QUERY_FILTER_H_
-#define __QUERY_FILTER_H_
+#ifndef __I_QUERY_FILTER_H_
+#define __I_QUERY_FILTER_H_
 
 #include <stdint.h>
 
@@ -30,14 +30,19 @@
 
 namespace OsmAnd {
 
-    struct OSMAND_CORE_API QueryFilter
+    class OSMAND_CORE_API IQueryFilter
     {
-        QueryFilter();
+    private:
+    protected:
+        IQueryFilter();
+    public:
+        virtual ~IQueryFilter();
     
-        const uint32_t* _zoom;
-        const AreaI* _bbox31;
+        virtual bool acceptsZoom(uint32_t zoom) = 0;
+        virtual bool acceptsArea(const AreaI& area) = 0;
+        virtual bool acceptsPoint(const PointI& point) = 0;
     };
 
 } // namespace OsmAnd
 
-#endif // __QUERY_FILTER_H_
+#endif // __I_QUERY_FILTER_H_

@@ -4,7 +4,7 @@
 
 #include "RasterizationRule.h"
 #include "MapObject.h"
-#include "Logging.h"
+#include "OsmAndLogging.h"
 
 OsmAnd::RasterizationStyleEvaluator::RasterizationStyleEvaluator( const std::shared_ptr<RasterizationStyle>& style_, RasterizationStyle::RulesetType ruleset_, const std::shared_ptr<OsmAnd::Model::MapObject>& mapObject_ /*= std::shared_ptr<OsmAnd::Model::MapObject>()*/ )
     : style(style_)

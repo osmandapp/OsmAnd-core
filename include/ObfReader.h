@@ -91,10 +91,10 @@ namespace OsmAnd {
         const QList< ObfSection* >& sections;
 
         friend class OsmAnd::ObfMapSection;
-        friend struct OsmAnd::ObfAddressSection;
-        friend struct OsmAnd::ObfRoutingSection;
-        friend struct OsmAnd::ObfPoiSection;
-        friend struct OsmAnd::ObfTransportSection;
+        friend class OsmAnd::ObfAddressSection;
+        friend class OsmAnd::ObfRoutingSection;
+        friend class OsmAnd::ObfPoiSection;
+        friend class OsmAnd::ObfTransportSection;
     };
 } // namespace OsmAnd
 

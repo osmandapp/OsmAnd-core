@@ -65,9 +65,9 @@ const QMultiHash< QString, QString >& OsmAnd::PoiDirectory::getPoiCategories(Poi
 
 void OsmAnd::PoiDirectory::queryPoiAmenities(
     PoiDirectoryContext* context,
+    uint32_t zoom, uint32_t zoomDepth /*= 3*/, const AreaI* bbox31 /*= nullptr*/,
     QMultiHash< QString, QString >* desiredCategories /*= nullptr*/,
     QList< std::shared_ptr<OsmAnd::Model::Amenity> >* amenitiesOut /*= nullptr*/,
-    QueryFilter* filter /*= nullptr*/, uint32_t zoomToSkipFilter /*= 3*/,
     std::function<bool (const std::shared_ptr<OsmAnd::Model::Amenity>&)> visitor /*= nullptr*/,
     IQueryController* controller /*= nullptr*/ )
 {
@@ -81,7 +81,7 @@ void OsmAnd::PoiDirectory::queryPoiAmenities(
 
             if(controller && controller->isAborted())
                 break;
-            if(filter && filter->_bbox31 && !filter->_bbox31->intersects(poiSection->_area31))
+            if(bbox31 && !bbox31->intersects(poiSection->area31))
                 continue;
             
             auto itPoiData = context->_contexts.find(poiSection);
@@ -128,7 +128,7 @@ void OsmAnd::PoiDirectory::queryPoiAmenities(
                 }
             }
 
-            ObfPoiSection::loadAmenities(source.get(), poiSection.get(), desiredCategories ? &desiredCategoriesIds : nullptr, amenitiesOut, filter, zoomToSkipFilter, visitor, controller);
+            ObfPoiSection::loadAmenities(source.get(), poiSection.get(), zoom, zoomDepth, bbox31, desiredCategories ? &desiredCategoriesIds : nullptr, amenitiesOut, visitor, controller);
         }
     }
 }

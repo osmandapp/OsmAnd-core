@@ -10,7 +10,7 @@
 
 #include <OsmAndCommon.h>
 #include <ObfReader.h>
-#include <Utilities.h>
+#include <OsmAndUtilities.h>
 #include <RoutePlanner.h>
 #include <RoutePlannerContext.h>
 

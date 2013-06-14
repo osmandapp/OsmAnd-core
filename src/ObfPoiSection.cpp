@@ -3,11 +3,12 @@
 #include <ObfReader.h>
 #include <google/protobuf/wire_format_lite.h>
 
-#include "Utilities.h"
+#include "OsmAndUtilities.h"
 #include "OBF.pb.h"
 
-OsmAnd::ObfPoiSection::ObfPoiSection( class ObfReader* owner )
+OsmAnd::ObfPoiSection::ObfPoiSection( ObfReader* owner )
     : ObfSection(owner)
+    , area31(_area31)
 {
 }
 
@@ -105,19 +106,15 @@ void OsmAnd::ObfPoiSection::readBoundaries( ObfReader* reader, ObfPoiSection* se
             return;
         case OBF::OsmAndTileBox::kLeftFieldNumber:
             cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->_area31.left));
-            section->_areaGeo.left = Utilities::get31LongitudeX(section->_area31.left);
             break;
         case OBF::OsmAndTileBox::kRightFieldNumber:
             cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->_area31.right));
-            section->_areaGeo.right = Utilities::get31LongitudeX(section->_area31.right);
             break;
         case OBF::OsmAndTileBox::kTopFieldNumber:
             cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->_area31.top));
-            section->_areaGeo.top = Utilities::get31LatitudeY(section->_area31.top);
             break;
         case OBF::OsmAndTileBox::kBottomFieldNumber:
             cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->_area31.bottom));
-            section->_areaGeo.bottom = Utilities::get31LatitudeY(section->_area31.bottom);
             break;
         default:
             ObfReader::skipUnknownField(cis, tag);
@@ -165,16 +162,16 @@ void OsmAnd::ObfPoiSection::loadCategories( OsmAnd::ObfReader* reader, OsmAnd::O
 
 void OsmAnd::ObfPoiSection::loadAmenities(
     OsmAnd::ObfReader* reader, OsmAnd::ObfPoiSection* section,
+    uint32_t zoom, uint32_t zoomDepth /*= 3*/, const AreaI* bbox31 /*= nullptr*/,
     QSet<uint32_t>* desiredCategories /*= nullptr*/,
     QList< std::shared_ptr<OsmAnd::Model::Amenity> >* amenitiesOut /*= nullptr*/,
-    QueryFilter* filter /*= nullptr*/, uint32_t zoomToSkipFilter /*= 3*/,
     std::function<bool (const std::shared_ptr<OsmAnd::Model::Amenity>&)> visitor /*= nullptr*/,
     IQueryController* controller /*= nullptr*/ )
 {
     auto cis = reader->_codedInputStream.get();
     cis->Seek(section->_offset);
     auto oldLimit = cis->PushLimit(section->_length);
-    readAmenities(reader, section, desiredCategories, amenitiesOut, filter, zoomToSkipFilter, visitor, controller);
+    readAmenities(reader, section, desiredCategories, amenitiesOut, zoom, zoomDepth, bbox31, visitor, controller);
     cis->PopLimit(oldLimit);
 }
 
@@ -182,7 +179,7 @@ void OsmAnd::ObfPoiSection::readAmenities(
     ObfReader* reader, ObfPoiSection* section,
     QSet<uint32_t>* desiredCategories,
     QList< std::shared_ptr<OsmAnd::Model::Amenity> >* amenitiesOut,
-    QueryFilter* filter, uint32_t zoomToSkipFilter,
+    uint32_t zoom, uint32_t zoomDepth, const AreaI* bbox31,
     std::function<bool (const std::shared_ptr<OsmAnd::Model::Amenity>&)> visitor,
     IQueryController* controller)
 {
@@ -199,7 +196,7 @@ void OsmAnd::ObfPoiSection::readAmenities(
             {
                 auto length = ObfReader::readBigEndianInt(cis);
                 auto oldLimit = cis->PushLimit(length);
-                readTile(reader, section, tiles, nullptr, desiredCategories, filter, zoomToSkipFilter, controller, nullptr);
+                readTile(reader, section, tiles, nullptr, desiredCategories, zoom, zoomDepth, bbox31, controller, nullptr);
                 cis->PopLimit(oldLimit);
                 if(controller && controller->isAborted())
                     return;
@@ -215,12 +212,12 @@ void OsmAnd::ObfPoiSection::readAmenities(
 
                 for(auto itTile = tiles.begin(); itTile != tiles.end(); ++itTile)
                 {
-                    auto tile = *itTile;
+                    const auto& tile = *itTile;
 
                     cis->Seek(section->_offset + tile->_offset);
                     auto length = ObfReader::readBigEndianInt(cis);
                     auto oldLimit = cis->PushLimit(length);
-                    readAmenitiesFromTile(reader, section, tile.get(), desiredCategories, amenitiesOut, filter, zoomToSkipFilter, visitor, controller, nullptr);
+                    readAmenitiesFromTile(reader, section, tile.get(), desiredCategories, amenitiesOut, zoom, zoomDepth, bbox31, visitor, controller, nullptr);
                     cis->PopLimit(oldLimit);
                     if(controller && controller->isAborted())
                         return;
@@ -240,15 +237,15 @@ bool OsmAnd::ObfPoiSection::readTile(
     QList< std::shared_ptr<Tile> >& tiles,
     Tile* parent,
     QSet<uint32_t>* desiredCategories,
-    QueryFilter* filter, uint32_t zoomToSkipFilter,
+    uint32_t zoom, uint32_t zoomDepth, const AreaI* bbox31,
     IQueryController* controller,
     QSet< uint64_t >* tilesToSkip)
 {
     auto cis = reader->_codedInputStream.get();
 
-    const auto zoomToSkip = (filter && filter->_zoom) ? *filter->_zoom + zoomToSkipFilter : std::numeric_limits<uint32_t>::max();
+    const auto zoomToSkip = zoom + zoomDepth;
     QSet< uint64_t > tilesToSkip_;
-    if(parent == nullptr && filter && filter->_zoom && !tilesToSkip)
+    if(parent == nullptr && !tilesToSkip)
         tilesToSkip = &tilesToSkip_;
 
     std::shared_ptr<Tile> tile(new Tile());
@@ -290,14 +287,15 @@ bool OsmAnd::ObfPoiSection::readTile(
                     tile->_y = y;
 
                 // Check that we're inside bounding box, if requested
-                if(filter && filter->_bbox31)
+                if(bbox31)
                 {
-                    auto left31 = tile->_x << (31 - tile->_zoom);
-                    auto right31 = (tile->_x + 1) << (31 - tile->_zoom);
-                    auto top31 = tile->_y << (31 - tile->_zoom);
-                    auto bottom31 = (tile->_y + 1) << (31 - tile->_zoom);
+                    AreaI area31;
+                    area31.left = tile->_x << (31 - tile->_zoom);
+                    area31.right = (tile->_x + 1) << (31 - tile->_zoom);
+                    area31.top = tile->_y << (31 - tile->_zoom);
+                    area31.bottom = (tile->_y + 1) << (31 - tile->_zoom);
 
-                    if(!filter->_bbox31->intersects(top31, left31, bottom31, right31))
+                    if(!bbox31->intersects(area31))
                     {
                         // This tile is outside of bounding box
                         cis->Skip(cis->BytesUntilLimit());
@@ -329,7 +327,7 @@ bool OsmAnd::ObfPoiSection::readTile(
             {
                 auto length = ObfReader::readBigEndianInt(cis);
                 auto oldLimit = cis->PushLimit(length);
-                auto tileOmitted = readTile(reader, section, tiles, tile.get(), desiredCategories, filter, zoomToSkipFilter, controller, tilesToSkip);
+                auto tileOmitted = readTile(reader, section, tiles, tile.get(), desiredCategories, zoom, zoomDepth, bbox31, controller, tilesToSkip);
                 cis->PopLimit(oldLimit);
 
                 if(tilesToSkip && tile->_zoom >= zoomToSkip && tileOmitted)
@@ -404,21 +402,20 @@ void OsmAnd::ObfPoiSection::readAmenitiesFromTile(
     ObfReader* reader, ObfPoiSection* section, Tile* tile,
     QSet<uint32_t>* desiredCategories,
     QList< std::shared_ptr<OsmAnd::Model::Amenity> >* amenitiesOut,
-    QueryFilter* filter, uint32_t zoomToSkipFilter,
+    uint32_t zoom, uint32_t zoomDepth, const AreaI* bbox31,
     std::function<bool (const std::shared_ptr<OsmAnd::Model::Amenity>&)> visitor,
     IQueryController* controller,
     QSet< uint64_t >* amenitiesToSkip)
 {
     auto cis = reader->_codedInputStream.get();
 
-    const auto zoomToSkip = (filter && filter->_zoom) ? *filter->_zoom + zoomToSkipFilter : std::numeric_limits<uint32_t>::max();
+    const auto zoomToSkip = zoom + zoomDepth;
     QSet< uint64_t > amenitiesToSkip_;
-    if(filter && filter->_zoom && !amenitiesToSkip)
+    if(!amenitiesToSkip)
         amenitiesToSkip = &amenitiesToSkip_;
 
-    int32_t x = 0;
-    int32_t y = 0;
-    uint32_t zoom = 0;
+    PointI pTile;
+    uint32_t zoomTile = 0;
 
     for(;;)
     {
@@ -434,21 +431,21 @@ void OsmAnd::ObfPoiSection::readAmenitiesFromTile(
             {
                 gpb::uint32 value;
                 cis->ReadVarint32(&value);
-                zoom = value;
+                zoomTile = value;
             }
             break;
         case OBF::OsmAndPoiBoxData::kXFieldNumber:
             {
                 gpb::uint32 value;
                 cis->ReadVarint32(&value);
-                x = value;
+                pTile.x = value;
             }
             break;
         case OBF::OsmAndPoiBoxData::kYFieldNumber:
             {
                 gpb::uint32 value;
                 cis->ReadVarint32(&value);
-                y = value;
+                pTile.y = value;
             }
             break;
         case OBF::OsmAndPoiBoxData::kPoiDataFieldNumber:
@@ -457,19 +454,18 @@ void OsmAnd::ObfPoiSection::readAmenitiesFromTile(
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
                 std::shared_ptr<Model::Amenity> amenity;
-                readAmenity(reader, section, x, y, zoom, amenity, desiredCategories, filter, controller);
+                readAmenity(reader, section, pTile, zoomTile, amenity, desiredCategories, bbox31, controller);
                 cis->PopLimit(oldLimit);
                 if(!amenity)
                     break;
                 if(amenitiesToSkip)
                 {
-                    const auto xp = (uint32_t)Utilities::getTileNumberX(zoomToSkip, amenity->_longitude);
-                    const auto yp = (uint32_t)Utilities::getTileNumberY(zoomToSkip, amenity->_latitude);
+                    const auto xp = amenity->_point31.x >> (31 - zoomToSkip);
+                    const auto yp = amenity->_point31.y >> (31 - zoomToSkip);
                     const auto hash = (static_cast<uint64_t>(xp) << zoomToSkip) | static_cast<uint64_t>(yp);
                     if(!amenitiesToSkip->contains(hash))
                     {
-                        const auto visitorAgrees = visitor ? visitor(amenity) : true;
-                        if(visitorAgrees)
+                        if(!visitor || visitor(amenity))
                         {
                             amenitiesToSkip->insert(hash);
                             if(amenitiesOut)
@@ -498,14 +494,15 @@ void OsmAnd::ObfPoiSection::readAmenitiesFromTile(
 }
 
 void OsmAnd::ObfPoiSection::readAmenity(
-    ObfReader* reader, ObfPoiSection* section, int32_t px, int32_t py, uint32_t pzoom, std::shared_ptr<Model::Amenity>& amenity,
+    ObfReader* reader, ObfPoiSection* section,
+    const PointI& pTile, uint32_t pzoom,
+    std::shared_ptr<Model::Amenity>& amenity,
     QSet<uint32_t>* desiredCategories,
-    QueryFilter* filter,
+    const AreaI* bbox31,
     IQueryController* controller)
 {
     auto cis = reader->_codedInputStream.get();
-    uint32_t x31;
-    uint32_t y31;
+    PointI point;
     uint32_t catId;
     uint32_t subId;
     for(;;)
@@ -519,19 +516,16 @@ void OsmAnd::ObfPoiSection::readAmenity(
         case 0:
             if(amenity->_latinName.isEmpty())
                 amenity->_latinName = section->owner->transliterate(amenity->_name);
-            amenity->_x31 = x31;
-            amenity->_y31 = y31;
-            amenity->_longitude = Utilities::get31LongitudeX(x31);
-            amenity->_latitude = Utilities::get31LatitudeY(y31);
+            amenity->_point31 = point;
             amenity->_categoryId = catId;
             amenity->_subcategoryId = subId;
             return;
         case OBF::OsmAndPoiBoxDataAtom::kDxFieldNumber:
-            x31 = (ObfReader::readSInt32(cis) + (px << (24 - pzoom))) << 7;
+            point.x = (ObfReader::readSInt32(cis) + (pTile.x << (24 - pzoom))) << 7;
             break;
         case OBF::OsmAndPoiBoxDataAtom::kDyFieldNumber:
-            y31 = (ObfReader::readSInt32(cis) + (py << (24 - pzoom))) << 7;
-            if(filter && filter->_bbox31 && !filter->_bbox31->contains(x31, y31))
+            point.y = (ObfReader::readSInt32(cis) + (pTile.y << (24 - pzoom))) << 7;
+            if(bbox31 && !bbox31->contains(point))
             {
                 cis->Skip(cis->BytesUntilLimit());
                 return;

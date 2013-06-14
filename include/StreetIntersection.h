@@ -32,7 +32,7 @@
 
 namespace OsmAnd {
 
-    struct ObfAddressSection;
+    class ObfAddressSection;
 
     namespace Model {
 
@@ -53,7 +53,7 @@ namespace OsmAnd {
             const PointI& tile24;
             const PointD& location;
 
-        friend struct OsmAnd::ObfAddressSection;
+        friend class OsmAnd::ObfAddressSection;
         };
 
     } // namespace Model

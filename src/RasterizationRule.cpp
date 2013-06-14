@@ -2,8 +2,8 @@
 
 #include <cassert>
 
-#include "Logging.h"
-#include "Utilities.h"
+#include "OsmAndLogging.h"
+#include "OsmAndUtilities.h"
 
 OsmAnd::RasterizationRule::RasterizationRule(RasterizationStyle* owner_, const QHash< QString, QString >& attributes)
     : owner(owner_)

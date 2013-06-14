@@ -3,7 +3,7 @@
 
 #include "OsmAndCommon.h"
 #include "EmbeddedResources.h"
-#include "Utilities.h"
+#include "OsmAndUtilities.h"
 
 #include <QByteArray>
 #include <QBuffer>

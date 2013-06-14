@@ -6,8 +6,8 @@
 
 #include "ObfReader.h"
 #include "OsmAndCommon.h"
-#include "Logging.h"
-#include "Utilities.h"
+#include "OsmAndLogging.h"
+#include "OsmAndUtilities.h"
 
 bool OsmAnd::RoutePlanner::prepareResult(
     OsmAnd::RoutePlannerContext::CalculationContext* context,

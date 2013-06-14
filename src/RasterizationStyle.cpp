@@ -8,7 +8,7 @@
 #include <QFileInfo>
 #include <QStack>
 
-#include "Logging.h"
+#include "OsmAndLogging.h"
 #include "RasterizationStyles.h"
 #include "RasterizationRule.h"
 #include "EmbeddedResources.h"

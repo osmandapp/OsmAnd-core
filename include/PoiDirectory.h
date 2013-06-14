@@ -46,9 +46,9 @@ namespace OsmAnd {
         static const QMultiHash< QString, QString >& getPoiCategories(PoiDirectoryContext* context);
         static void queryPoiAmenities(
             PoiDirectoryContext* context,
+            uint32_t zoom, uint32_t zoomDepth = 3, const AreaI* bbox31 = nullptr,
             QMultiHash< QString, QString >* desiredCategories = nullptr,
             QList< std::shared_ptr<OsmAnd::Model::Amenity> >* amenitiesOut = nullptr,
-            QueryFilter* filter = nullptr, uint32_t zoomToSkipFilter = 3,
             std::function<bool (const std::shared_ptr<OsmAnd::Model::Amenity>&)> visitor = nullptr,
             IQueryController* controller = nullptr);
     };

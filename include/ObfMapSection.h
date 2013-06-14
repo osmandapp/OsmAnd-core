@@ -38,7 +38,6 @@
 #include <OsmAndCore.h>
 #include <ObfSection.h>
 #include <MapObject.h>
-#include <QueryFilter.h>
 #include <IQueryController.h>
 #include <CommonTypes.h>
 
@@ -124,19 +123,19 @@ namespace OsmAnd {
         static void readTreeNodeChildren(ObfReader* reader, ObfMapSection* section,
             LevelTreeNode* treeNode,
             QList< std::shared_ptr<LevelTreeNode> >* nodesWithData,
-            QueryFilter* filter,
+            const AreaI* bbox31,
             IQueryController* controller);
         static void readMapObjectsBlock(ObfReader* reader, ObfMapSection* section,
             LevelTreeNode* treeNode,
             QList< std::shared_ptr<OsmAnd::Model::MapObject> >* resultOut,
-            QueryFilter* filter,
+            const AreaI* bbox31,
             std::function<bool (const std::shared_ptr<OsmAnd::Model::MapObject>&)> visitor,
             IQueryController* controller);
         static void readMapObject(ObfReader* reader, ObfMapSection* section,
             LevelTreeNode* treeNode,
             uint64_t baseId,
             std::shared_ptr<OsmAnd::Model::MapObject>& mapObjectOut,
-            QueryFilter* filter);
+            const AreaI* bbox31);
         enum {
             ShiftCoordinates = 5,
             MaskToRead = ~((1 << ShiftCoordinates) - 1),
@@ -148,8 +147,8 @@ namespace OsmAnd {
         const QList< std::shared_ptr<MapLevel> >& mapLevels;
         
         static void loadMapObjects(ObfReader* reader, ObfMapSection* section,
+            uint32_t zoom, const AreaI* bbox31 = nullptr,
             QList< std::shared_ptr<OsmAnd::Model::MapObject> >* resultOut = nullptr,
-            QueryFilter* filter = nullptr,
             std::function<bool (const std::shared_ptr<OsmAnd::Model::MapObject>&)> visitor = nullptr,
             IQueryController* controller = nullptr);
 

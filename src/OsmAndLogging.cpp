@@ -1,4 +1,4 @@
-#include "Logging.h"
+#include "OsmAndLogging.h"
 
 #include <stdio.h>
 #include <stdarg.h>

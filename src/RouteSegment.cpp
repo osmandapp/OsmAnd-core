@@ -3,8 +3,8 @@
 #include <QtNumeric>
 #include <QtCore>
 
-#include "Utilities.h"
-#include "Logging.h"
+#include "OsmAndUtilities.h"
+#include "OsmAndLogging.h"
 
 OsmAnd::RouteSegment::RouteSegment(const std::shared_ptr<Model::Road>& road_, uint32_t startPointIndex_, uint32_t endPointIndex_)
     : _road(road_)

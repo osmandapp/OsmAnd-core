@@ -15,10 +15,28 @@ elseif(CMAKE_TARGET_OS STREQUAL "linux")
 	)
 endif()
 
-set(pd_sources "")
+set(target_specific_sources "")
+set(target_specific_public_definitions "")
+set(target_specific_public_includes "")
+set(target_specific_public_libraries "")
 if(CMAKE_TARGET_OS STREQUAL "linux")
 elseif(CMAKE_TARGET_OS STREQUAL "darwin")
 elseif(CMAKE_TARGET_OS STREQUAL "windows")
+endif()
+
+# 3D rendering: OpenGL, OpenGLES, Direct3D
+if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "windows")
+	find_package(OpenGL REQUIRED)
+	set(target_specific_public_definitions ${target_specific_public_definitions}
+		-DOSMAND_OPENGL_RENDERER_SUPPORTED
+		${OPENGL_DEFINITIONS}
+	)
+	set(target_specific_public_includes ${target_specific_public_includes}
+		${OPENGL_INCLUDE_DIRS}
+	)
+	set(target_specific_public_libraries ${target_specific_public_libraries}
+		${OPENGL_LIBRARIES}
+	)
 endif()
 
 file(GLOB_RECURSE sources "src/*.c*")
@@ -32,7 +50,7 @@ add_library(OsmAndCore SHARED
     ${sources}
     ${sources_client}
     ${headers_client}
-	${pd_sources}
+	${target_specific_sources}
 	"protos/OBF.pb.h"
 
 	"native/src/ElapsedTimer.cpp"
@@ -55,6 +73,8 @@ add_dependencies(OsmAndCore
 target_compile_definitions(OsmAndCore
 	PRIVATE
 		-DOSMAND_CORE_EXPORTS
+	PUBLIC
+		${target_specific_public_definitions}
 )
 target_include_directories(OsmAndCore
 	PRIVATE
@@ -67,11 +87,14 @@ target_include_directories(OsmAndCore
 		"${OSMAND_ROOT}/core/src"
 		"${OSMAND_ROOT}/core/client"
 		"${OSMAND_ROOT}/core/protos"
+		"${OSMAND_ROOT}/core/externals/glm/upstream.patched"
+		${target_specific_public_includes}
 )
 target_link_libraries(OsmAndCore
 	LINK_PUBLIC
 		skia_static
 		protobuf_static
+		${target_specific_public_libraries}
 )
 
 find_package(Qt5Core REQUIRED)

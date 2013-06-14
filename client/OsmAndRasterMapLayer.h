@@ -3,7 +3,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndMapDataLayer.h>
-#include <Utilities.h>
+#include <OsmAndUtilities.h>
 #include <QMap>
 #include <QSet>
 #include <SkBitmap.h>

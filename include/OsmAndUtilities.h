@@ -20,8 +20,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __UTILITIES_H_
-#define __UTILITIES_H_
+#ifndef __OSMAND_UTILITIES_H_
+#define __OSMAND_UTILITIES_H_
 
 #include <cstdint>
 #include <limits.h>
@@ -80,6 +80,8 @@ namespace OsmAnd {
         OSMAND_CORE_API bool OSMAND_CORE_CALL rayIntersect(const PointF& v0, const PointF& v1, const PointF& v);
         OSMAND_CORE_API bool OSMAND_CORE_CALL rayIntersectX(const PointI& v0, const PointI& v1, int32_t mY, int32_t& mX);
         OSMAND_CORE_API bool OSMAND_CORE_CALL rayIntersect(const PointI& v0, const PointI& v1, const PointI& v);
+        OSMAND_CORE_API AreaI OSMAND_CORE_CALL areaRightShift(const AreaI& input, uint32_t shift);
+        OSMAND_CORE_API AreaI OSMAND_CORE_CALL areaLeftShift(const AreaI& input, uint32_t shift);
 
         template <typename T>
         T sumWithSaturation(const T& a, const T& b)
@@ -98,4 +100,4 @@ namespace OsmAnd {
 
 } // namespace OsmAnd
 
-#endif // __UTILITIES_H_
+#endif // __OSMAND_UTILITIES_H_

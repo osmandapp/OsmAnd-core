@@ -7,12 +7,9 @@
 
 OsmAnd::ObfTransportSection::ObfTransportSection( class ObfReader* owner )
     : ObfSection(owner)
-    , _top(0)
-    , _left(0)
-    , _bottom(0)
-    , _right(0)
     , _stopsFileOffset(0)
     , _stopsFileLength(0)
+    , area24(_area24)
 {
 }
 
@@ -81,16 +78,16 @@ void OsmAnd::ObfTransportSection::readTransportBounds( ObfReader* reader, ObfTra
         case 0:
             return;
         case OBF::TransportStopsTree::kLeftFieldNumber:
-            section->_left = ObfReader::readSInt32(cis);
+            section->_area24.left = ObfReader::readSInt32(cis);
             break;
         case OBF::TransportStopsTree::kRightFieldNumber:
-            section->_right = ObfReader::readSInt32(cis);
+            section->_area24.right = ObfReader::readSInt32(cis);
             break;
         case OBF::TransportStopsTree::kTopFieldNumber:
-            section->_top = ObfReader::readSInt32(cis);
+            section->_area24.top = ObfReader::readSInt32(cis);
             break;
         case OBF::TransportStopsTree::kBottomFieldNumber:
-            section->_bottom = ObfReader::readSInt32(cis);
+            section->_area24.bottom = ObfReader::readSInt32(cis);
             break;
         default:
             ObfReader::skipUnknownField(cis, tag);

@@ -9,6 +9,7 @@ OsmAnd::Model::MapObject::MapObject(ObfMapSection* section_)
     , id(_id)
     , foundation(_foundation)
     , names(_names)
+    , bbox31(_bbox31)
 {
 }
 
@@ -83,4 +84,16 @@ bool OsmAnd::Model::MapObject::containsType( const QString& tag, const QString& 
             return true;
     }
     return false;
+}
+
+size_t OsmAnd::Model::MapObject::calculateApproxConsumedMemory() const
+{
+    size_t res = sizeof(MapObject) + _points31.size() * sizeof(PointI);
+    for(auto itPolygon = _innerPolygonsPoints31.begin(); itPolygon != _innerPolygonsPoints31.end(); ++itPolygon)
+    {
+        const auto& polygon = *itPolygon;
+
+        res += polygon.size() * sizeof(PointI);
+    }
+    return res;
 }

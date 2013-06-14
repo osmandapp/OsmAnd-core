@@ -20,51 +20,34 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __OBF_TRANSPORT_SECTION_H_
-#define __OBF_TRANSPORT_SECTION_H_
+#ifndef __PLAIN_QUERY_FILTER_H_
+#define __PLAIN_QUERY_FILTER_H_
 
-#include <memory>
-#include <string>
-
-#include <QList>
-
-#include <google/protobuf/io/coded_stream.h>
+#include <stdint.h>
 
 #include <OsmAndCore.h>
-#include <ObfSection.h>
 #include <CommonTypes.h>
+#include <IQueryFilter.h>
 
 namespace OsmAnd {
 
-    class ObfReader;
-    namespace gpb = google::protobuf;
-
-    /**
-    'Transport' section of OsmAnd Binary File
-    */
-    class OSMAND_CORE_API ObfTransportSection : public ObfSection
+    class OSMAND_CORE_API PlainQueryFilter : public IQueryFilter
     {
     private:
-        static void readTransportBounds(ObfReader* reader, ObfTransportSection* section);
     protected:
-        ObfTransportSection(class ObfReader* owner);
-
-        AreaI _area24;
-
-        int _stopsFileOffset;
-        int _stopsFileLength;
-        static void read(ObfReader* reader, ObfTransportSection* section);
+        bool _isZoomFiltered;
+        uint32_t _zoom;
+        bool _isAreaFiltered;
+        AreaI _area;
     public:
-        virtual ~ObfTransportSection();
+        PlainQueryFilter(const uint32_t* zoom, const AreaI* area);
+        virtual ~PlainQueryFilter();
 
-        enum {
-            StopZoom = 24,
-        };
-
-        const AreaI& area24;
-    friend class OsmAnd::ObfReader;
+        virtual bool acceptsZoom(uint32_t zoom);
+        virtual bool acceptsArea(const AreaI& area);
+        virtual bool acceptsPoint(const PointI& point);
     };
 
 } // namespace OsmAnd
 
-#endif // __OBF_TRANSPORT_SECTION_H_
+#endif // __PLAIN_QUERY_FILTER_H_

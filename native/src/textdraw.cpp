@@ -11,7 +11,7 @@
 
 //#include "Common.h"
 #include "common2.h"
-#include "Logging.h"
+#include "OsmAndLogging.h"
 #include "renderRules.h"
 //#include "utf8.cpp"
 #include "utf8/unchecked.h"

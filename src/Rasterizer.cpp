@@ -4,8 +4,8 @@
 
 #include <QtGlobal>
 
-#include "Logging.h"
-#include "Utilities.h"
+#include "OsmAndLogging.h"
+#include "OsmAndUtilities.h"
 #include "RasterizationStyleEvaluator.h"
 #include "ObfMapSection.h"
 #include "RasterizerContext.h"

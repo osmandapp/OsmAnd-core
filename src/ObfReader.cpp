@@ -2,7 +2,7 @@
 
 #include <stdexcept>
 
-#include "Logging.h"
+#include "OsmAndLogging.h"
 
 #include "QZeroCopyInputStream.h"
 #include <google/protobuf/wire_format_lite.h>

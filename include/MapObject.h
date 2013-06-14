@@ -63,6 +63,7 @@ namespace OsmAnd {
             QVector< TagValue > _types;
             QVector< TagValue > _extraTypes;
             QHash< QString, QString > _names;
+            AreaI _bbox31;
         public:
             virtual ~MapObject();
 
@@ -70,11 +71,14 @@ namespace OsmAnd {
             const uint64_t& id;
             const FoundationType& foundation;
             const QHash<QString, QString>& names;
+            const AreaI& bbox31;
 
             int getSimpleLayerValue() const;
             bool isClosedFigure(bool checkInner = false) const;
 
             bool containsType(const QString& tag, const QString& value, bool checkAdditional = false) const;
+
+            size_t calculateApproxConsumedMemory() const;
 
             friend class OsmAnd::ObfMapSection;
             friend class OsmAnd::Rasterizer;

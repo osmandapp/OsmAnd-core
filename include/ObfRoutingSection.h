@@ -37,7 +37,7 @@
 
 #include <OsmAndCore.h>
 #include <ObfSection.h>
-#include <QueryFilter.h>
+#include <IQueryFilter.h>
 
 namespace OsmAnd {
 
@@ -177,17 +177,17 @@ namespace OsmAnd {
 
         static void querySubsections(ObfReader* reader, const QList< std::shared_ptr<Subsection> >& in,
             QList< std::shared_ptr<Subsection> >* resultOut = nullptr,
-            QueryFilter* filter = nullptr,
+            IQueryFilter* filter = nullptr,
             std::function<bool (const std::shared_ptr<OsmAnd::ObfRoutingSection::Subsection>&)> visitor = nullptr);
         static void loadSubsectionData(ObfReader* reader, const std::shared_ptr<Subsection>& subsection,
             QList< std::shared_ptr<Model::Road> >* resultOut = nullptr,
             QMap< uint64_t, std::shared_ptr<Model::Road> >* resultMapOut = nullptr,
-            QueryFilter* filter = nullptr,
+            IQueryFilter* filter = nullptr,
             std::function<bool (const std::shared_ptr<OsmAnd::Model::Road>&)> visitor = nullptr);
 
         static void loadSubsectionBorderBoxLinesPoints(ObfReader* reader, const ObfRoutingSection* section,
             QList< std::shared_ptr<BorderLinePoint> >* resultOut = nullptr,
-            QueryFilter* filter = nullptr,
+            IQueryFilter* filter = nullptr,
             std::function<bool (const std::shared_ptr<BorderLineHeader>&)> visitorLine = nullptr,
             std::function<bool (const std::shared_ptr<BorderLinePoint>&)> visitorPoint = nullptr);
     protected:
@@ -201,7 +201,7 @@ namespace OsmAnd {
         static void readSubsectionData(ObfReader* reader, const std::shared_ptr<Subsection>& subsection,
             QList< std::shared_ptr<Model::Road> >* resultOut = nullptr,
             QMap< uint64_t, std::shared_ptr<Model::Road> >* resultMapOut = nullptr,
-            QueryFilter* filter = nullptr,
+            IQueryFilter* filter = nullptr,
             std::function<bool (const std::shared_ptr<OsmAnd::Model::Road>&)> visitor = nullptr);
         static void readSubsectionRoadsIds(ObfReader* reader, Subsection* subsection, QList<uint64_t>& ids);
         static void readSubsectionRestriction(ObfReader* reader, Subsection* subsection, const QMap< uint32_t, std::shared_ptr<Model::Road> >& roads, const QList<uint64_t>& roadsInternalIdToGlobalIdMap);
@@ -209,12 +209,12 @@ namespace OsmAnd {
 
         static void readBorderBoxLinesHeaders(ObfReader* reader,
             QList< std::shared_ptr<BorderLineHeader> >* resultOut = nullptr,
-            QueryFilter* filter = nullptr,
+            IQueryFilter* filter = nullptr,
             std::function<bool (const std::shared_ptr<BorderLineHeader>&)> visitor = nullptr);
         static void readBorderLineHeader(ObfReader* reader, BorderLineHeader* borderLine, uint32_t outerOffset);
         static void readBorderLinePoints(ObfReader* reader,
             QList< std::shared_ptr<BorderLinePoint> >* resultOut = nullptr,
-            QueryFilter* filter = nullptr,
+            IQueryFilter* filter = nullptr,
             std::function<bool (const std::shared_ptr<BorderLinePoint>&)> visitor = nullptr);
         static void readBorderLinePoint(ObfReader* reader,
             BorderLinePoint* point);

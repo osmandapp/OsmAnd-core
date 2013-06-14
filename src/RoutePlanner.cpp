@@ -6,8 +6,9 @@
 
 #include "ObfReader.h"
 #include "OsmAndCommon.h"
-#include "Logging.h"
-#include "Utilities.h"
+#include "OsmAndLogging.h"
+#include "OsmAndUtilities.h"
+#include "PlainQueryFilter.h"
 
 OsmAnd::RoutePlanner::RoutePlanner()
 {
@@ -262,13 +263,12 @@ void OsmAnd::RoutePlanner::loadTileHeader( RoutePlannerContext* context, uint32_
     auto xTileId = x31 >> (31 - context->_roadTilesLoadingZoomLevel);
     auto yTileId = y31 >> (31 - context->_roadTilesLoadingZoomLevel);
 
-    QueryFilter filter;
     AreaI bbox31;
-    filter._bbox31 = &bbox31;
     bbox31.left = xTileId << zoomToLoad;
     bbox31.right = (xTileId + 1) << zoomToLoad;
     bbox31.top = yTileId << zoomToLoad;
     bbox31.bottom = (yTileId + 1) << zoomToLoad;
+    PlainQueryFilter filter(nullptr, &bbox31);
 
     for(auto itSource = context->sources.cbegin(); itSource != context->sources.cend(); ++itSource)
     {
@@ -661,13 +661,12 @@ bool OsmAnd::RoutePlanner::calculateRoute(
 
 void OsmAnd::RoutePlanner::loadBorderPoints( OsmAnd::RoutePlannerContext::CalculationContext* context )
 {
-    QueryFilter filter;
     AreaI bbox31;
-    filter._bbox31 = &bbox31;
     bbox31.left = std::min(context->_startPoint.x, context->_targetPoint.x);
     bbox31.right = std::max(context->_startPoint.x, context->_targetPoint.x);
     bbox31.top = std::min(context->_startPoint.y, context->_targetPoint.y);
     bbox31.bottom = std::max(context->_startPoint.y, context->_targetPoint.y);
+    PlainQueryFilter filter(nullptr, &bbox31);
     
     //NOTE: one tile of 12th zoom around (?)
     const uint32_t zoomAround = 10;
