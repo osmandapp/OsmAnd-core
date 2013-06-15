@@ -26,21 +26,26 @@
 #include <memory>
 
 #include <QSet>
+#include <QMap>
+#include <QMutex>
+
+#include <SkBitmap.h>
 
 #include <OsmAndCore.h>
 #include <CommonTypes.h>
 
 namespace OsmAnd {
 
-    class MapDataCache;
+    class IMapTileProvider;
 
     class OSMAND_CORE_API IRenderer
     {
     private:
+        void tileReadyCallback(const uint64_t& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tile);
     protected:
         IRenderer();
 
-        std::shared_ptr<MapDataCache> _source;
+        std::shared_ptr<IMapTileProvider> _tileProvider;
 
         PointI _windowSize;
         AreaI _viewport;
@@ -52,7 +57,6 @@ namespace OsmAnd {
         PointI _target31;
         uint32_t _zoom;
         bool _viewIsDirty;
-        bool _tilesetCacheDirty;
         QSet<uint64_t> _visibleTiles;
         PointD _targetInTile;
 
@@ -62,11 +66,21 @@ namespace OsmAnd {
 
         virtual void computeMatrices() = 0;
         virtual void refreshVisibleTileset() = 0;
+        
+        struct OSMAND_CORE_API CachedTile
+        {
+            virtual ~CachedTile();
+        };
+        QMutex _tileCacheMutex;
+        QMap< uint64_t, std::shared_ptr<CachedTile> > _cachedTiles;
+        virtual void purgeTilesCache();
+        void cacheMissingTiles();
+        virtual void cacheTile(const uint64_t& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap) = 0;
     public:
         virtual ~IRenderer();
 
-        virtual void setSource(const std::shared_ptr<MapDataCache>& source);
-        const std::shared_ptr<MapDataCache>& source;
+        virtual void setTileProvider(const std::shared_ptr<IMapTileProvider>& tileProvider);
+        const std::shared_ptr<IMapTileProvider>& tileProvider;
 
         const PointI& windowSize;
         const AreaI& viewport;
@@ -86,7 +100,7 @@ namespace OsmAnd {
         const bool& viewIsDirty;
         virtual void refreshView() = 0;
 
-        virtual void performRendering() const = 0;
+        virtual void performRendering() = 0;
     };
 
 #if defined(OSMAND_OPENGL_RENDERER_SUPPORTED)

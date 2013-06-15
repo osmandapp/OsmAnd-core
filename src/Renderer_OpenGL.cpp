@@ -14,6 +14,8 @@
 #include <QtGlobal>
 #include <QtCore/qmath.h>
 
+#include <SkBitmap.h>
+
 OsmAnd::Renderer_OpenGL::Renderer_OpenGL()
 {
 
@@ -22,11 +24,6 @@ OsmAnd::Renderer_OpenGL::Renderer_OpenGL()
 OsmAnd::Renderer_OpenGL::~Renderer_OpenGL()
 {
 
-}
-
-void OsmAnd::Renderer_OpenGL::setSource( const std::shared_ptr<MapDataCache>& source )
-{
-    IRenderer::setSource(source);
 }
 
 void OsmAnd::Renderer_OpenGL::computeMatrices()
@@ -196,14 +193,14 @@ void OsmAnd::Renderer_OpenGL::refreshVisibleTileset()
         div -= 1;
     _targetInTile.x = static_cast<double>(_target31.x - tileXo31) / div;
     _targetInTile.y = static_cast<double>(_target31.y - tileYo31) / div;
-    
-    _tilesetCacheDirty = false;
 }
 
-void OsmAnd::Renderer_OpenGL::performRendering() const
+void OsmAnd::Renderer_OpenGL::performRendering()
 {
     if(_viewIsDirty)
         return;
+
+    cacheMissingTiles();
 
     // Setup viewport
     GLint oldViewport[4];
@@ -231,23 +228,43 @@ void OsmAnd::Renderer_OpenGL::performRendering() const
         float x = static_cast<int32_t>(tileId >> 32) - centerZ.x;
         float y = static_cast<int32_t>(tileId & 0xFFFFFFFF) - centerZ.y;
 
-        float tx = (x - _targetInTile.x) * TileSide3D ;
-        float ty = (y - _targetInTile.y) * TileSide3D ;
+        float tx = (x - _targetInTile.x) * TileSide3D;
+        float ty = (y - _targetInTile.y) * TileSide3D;
+
+        // Obtain tile from cache
+        QMap< uint64_t, std::shared_ptr<CachedTile> >::const_iterator itCachedTile;
+        bool cacheHit;
+        {
+            QMutexLocker scopeLock(&_tileCacheMutex);
+            itCachedTile = _cachedTiles.find(tileId);
+            cacheHit = (itCachedTile != _cachedTiles.end());
+        }
 
         glPushMatrix();
         glTranslatef(tx, 0.0f, ty);
+        if(!cacheHit)
+        {
+            //TODO: render stub
+            glBegin(GL_QUADS);
+                glColor3d(1,0,0);
+                glVertex3f(0,0,TileSide3D);
+                glColor3d(1,1,0);
+                glVertex3f(TileSide3D,0,TileSide3D);
+                glColor3d(1,1,1);
+                glVertex3f(TileSide3D,0,0);
+                glColor3d(0,1,1);
+                glVertex3f(0,0,0);
+            glEnd();
+        }
+        else
+        {
+            auto cachedTile = static_cast<CachedTile_OpenGL*>((*itCachedTile).get());
+            //TODO: render using in-cache texture
+        }
         //TODO:DRAW!
-        glBegin(GL_QUADS);
-            glColor3d(1,0,0);
-            glVertex3f(0,0,TileSide3D);
-            glColor3d(1,1,0);
-            glVertex3f(TileSide3D,0,TileSide3D);
-            glColor3d(1,1,1);
-            glVertex3f(TileSide3D,0,0);
-            glColor3d(0,1,1);
-            glVertex3f(0,0,0);
-        glEnd();
-        ////////////
+        //1. map data cache
+        //2. rasterized tile textures (in gpu?)
+        //3. where rasterization should take place?
         glPopMatrix();
     }
 
@@ -285,6 +302,14 @@ void OsmAnd::Renderer_OpenGL::refreshView()
     computeMatrices();
     refreshVisibleTileset();
 
-    _tilesetCacheDirty = true;
     _viewIsDirty = false;
+}
+
+void OsmAnd::Renderer_OpenGL::cacheTile( const uint64_t& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap )
+{
+    //TODO: upload bitmap as texture
+}
+
+OsmAnd::Renderer_OpenGL::CachedTile_OpenGL::~CachedTile_OpenGL()
+{
 }

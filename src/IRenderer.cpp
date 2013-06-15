@@ -2,6 +2,8 @@
 
 #include <assert.h>
 
+#include "IMapTileProvider.h"
+
 #if defined(OSMAND_OPENGL_RENDERER_SUPPORTED)
 #   include "Renderer_OpenGL.h"
 #endif // OSMAND_OPENGL_RENDERER_SUPPORTED
@@ -15,8 +17,7 @@ OsmAnd::IRenderer::IRenderer()
     , _target31( std::numeric_limits<int32_t>::max() / 2, std::numeric_limits<int32_t>::max() / 2 )
     , _zoom(15)
     , _viewIsDirty(true)
-    , _tilesetCacheDirty(true)
-    , source(_source)
+    , tileProvider(_tileProvider)
     , windowSize(_windowSize)
     , viewport(_viewport)
     , fieldOfView(_fieldOfView)
@@ -35,11 +36,10 @@ OsmAnd::IRenderer::~IRenderer()
 {
 }
 
-void OsmAnd::IRenderer::setSource( const std::shared_ptr<MapDataCache>& source )
+void OsmAnd::IRenderer::setTileProvider( const std::shared_ptr<IMapTileProvider>& source )
 {
-    _source = source;
-
-    _tilesetCacheDirty = true;
+    _tileProvider = source;
+    purgeTilesCache();
 }
 
 bool OsmAnd::IRenderer::updateViewport( const PointI& windowSize, const AreaI& viewport, float fieldOfView, float fogDistance )
@@ -81,6 +81,57 @@ bool OsmAnd::IRenderer::updateMap( const PointI& target31, uint32_t zoom )
     _zoom = zoom;
 
     return _viewIsDirty;
+}
+
+void OsmAnd::IRenderer::cacheMissingTiles()
+{
+    auto callback = std::bind(&IRenderer::tileReadyCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+
+    for(auto itTileId = _visibleTiles.begin(); itTileId != _visibleTiles.end(); ++itTileId)
+    {
+        const auto& tileId = *itTileId;
+
+        // Obtain tile from cache
+        QMap< uint64_t, std::shared_ptr<CachedTile> >::const_iterator itCachedTile;
+        bool cacheHit;
+        {
+            QMutexLocker scopeLock(&_tileCacheMutex);
+            itCachedTile = _cachedTiles.find(tileId);
+            cacheHit = (itCachedTile != _cachedTiles.end());
+        }
+
+        if(cacheHit)
+            continue;
+
+        // Try to obtain tile from provider immediately
+        std::shared_ptr<SkBitmap> tileBitmap;
+        cacheHit = _tileProvider->obtainTile(tileId, _zoom, tileBitmap);
+        if(cacheHit)
+        {
+            cacheTile(tileId, _zoom, tileBitmap);
+            continue;
+        }
+
+        // If still cache miss, order delayed
+        _tileProvider->obtainTile(tileId, _zoom, callback);
+    }
+}
+
+void OsmAnd::IRenderer::tileReadyCallback( const uint64_t& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap )
+{
+    cacheTile(tileId, zoom, tileBitmap);
+
+    _viewIsDirty = true;
+}
+
+void OsmAnd::IRenderer::purgeTilesCache()
+{
+    QMutexLocker scopeLock(&_tileCacheMutex);
+    _cachedTiles.clear();
+}
+
+OsmAnd::IRenderer::CachedTile::~CachedTile()
+{
 }
 
 #if defined(OSMAND_OPENGL_RENDERER_SUPPORTED)
