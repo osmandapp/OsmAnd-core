@@ -5,9 +5,9 @@
 #   define WIN32_LEAN_AND_MEAN
 #   include <Windows.h>
 #endif
+#include <GL/glew.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
-#include <GL/glew.h>
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -199,6 +199,9 @@ void OsmAnd::Renderer_OpenGL::performRendering()
     if(_viewIsDirty)
         return;
 
+    if(glActiveTexture == nullptr)
+        glewInit();
+
     assert(glGetError() == GL_NO_ERROR);
 
     cacheMissingTiles();
@@ -249,10 +252,13 @@ void OsmAnd::Renderer_OpenGL::performRendering()
             glBegin(GL_QUADS);
                 glColor3d(1,0,0);
                 glVertex3f(0,0,TileSide3D);
+
                 glColor3d(1,1,0);
                 glVertex3f(TileSide3D,0,TileSide3D);
+
                 glColor3d(1,1,1);
                 glVertex3f(TileSide3D,0,0);
+
                 glColor3d(0,1,1);
                 glVertex3f(0,0,0);
             glEnd();
@@ -260,7 +266,36 @@ void OsmAnd::Renderer_OpenGL::performRendering()
         else
         {
             auto cachedTile = static_cast<CachedTile_OpenGL*>((*itCachedTile).get());
-            //TODO: render using in-cache texture
+            if(cachedTile->textureId == 0)
+            {
+                //TODO: render non existent tile
+            }
+            else
+            {
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, cachedTile->textureId);
+                
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                
+                glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+                glEnable(GL_TEXTURE_2D);
+                glBegin(GL_QUADS);
+                    glTexCoord2f(0, 0);
+                    glVertex3f(0,0,TileSide3D);
+
+                    glTexCoord2f(1, 0);
+                    glVertex3f(TileSide3D,0,TileSide3D);
+
+                    glTexCoord2f(1, 1);
+                    glVertex3f(TileSide3D,0,0);
+
+                    glTexCoord2f(0, 1);
+                    glVertex3f(0,0,0);
+                glEnd();
+            }
         }
         //TODO:DRAW!
         //1. map data cache
@@ -315,16 +350,29 @@ void OsmAnd::Renderer_OpenGL::cacheTile( const uint64_t& tileId, uint32_t zoom, 
 
     assert(glGetError() == GL_NO_ERROR);
 
+    if(!tileBitmap)
+    {
+        // Non-existent tile
+        cachedTile->textureId = 0;
+        _cachedTiles.insert(tileId, cachedTile_);
+    }
+
+    const auto skConfig = tileBitmap->getConfig();
+    assert( skConfig == SkBitmap::kARGB_8888_Config || skConfig == SkBitmap::kRGB_565_Config );
+
     GLuint textureName;
     glGenTextures(1, &textureName);
+    assert(textureName != 0);
     glBindTexture(GL_TEXTURE_2D, textureName);
     glPixelStorei(GL_UNPACK_ROW_LENGTH, tileBitmap->rowBytesAsPixels());
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, (GLsizei)tileBitmap->width(), (GLsizei)tileBitmap->height(), 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8, tileBitmap->getPixels());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    if(skConfig == SkBitmap::kARGB_8888_Config)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, (GLsizei)tileBitmap->width(), (GLsizei)tileBitmap->height(), 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, tileBitmap->getPixels());
+    }
+    else if(skConfig == SkBitmap::kRGB_565_Config)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, (GLsizei)tileBitmap->width(), (GLsizei)tileBitmap->height(), 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, tileBitmap->getPixels());
+    }
 
     assert(glGetError() == GL_NO_ERROR);
 
