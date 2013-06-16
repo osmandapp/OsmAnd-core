@@ -30,6 +30,7 @@
 #include <QMutex>
 #include <QUrl>
 #include <QQueue>
+#include <QSet>
 
 #include <SkBitmap.h>
 
@@ -68,6 +69,7 @@ namespace OsmAnd {
             SkBitmap::Config preferredConfig;
         };
         QQueue< TileRequest > _tileRequestsQueue;
+        QSet< uint64_t > _pendingTileIds;
 
         void handleNetworkReply(QNetworkReply* reply, const uint64_t& tileId, uint32_t zoom, TileReceiverCallback callback, SkBitmap::Config preferredConfig);
     public:

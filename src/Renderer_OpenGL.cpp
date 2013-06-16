@@ -229,6 +229,7 @@ void OsmAnd::Renderer_OpenGL::performRendering()
             while(!_pendingTilesQueue.isEmpty())
             {
                 const auto& pendingTile = _pendingTilesQueue.dequeue();
+                _pendingTiles.remove(pendingTile.tileId);
 
                 uploadTileToTexture(pendingTile.tileId, pendingTile.zoom, pendingTile.tileBitmap);
             }
@@ -376,6 +377,8 @@ void OsmAnd::Renderer_OpenGL::refreshView()
 
 void OsmAnd::Renderer_OpenGL::cacheTile( const uint64_t& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap )
 {
+    assert(!_cachedTiles.contains(tileId));
+
     if(_glRenderThreadId != QThread::currentThreadId())
     {
         QMutexLocker scopeLock(&_pendingTilesMutex);
@@ -385,6 +388,8 @@ void OsmAnd::Renderer_OpenGL::cacheTile( const uint64_t& tileId, uint32_t zoom, 
         pendingTile.zoom = zoom;
         pendingTile.tileBitmap = tileBitmap;
         _pendingTilesQueue.enqueue(pendingTile);
+        assert(!_pendingTiles.contains(tileId));
+        _pendingTiles.insert(tileId);
 
         return;
     }

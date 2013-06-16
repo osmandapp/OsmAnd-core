@@ -108,6 +108,9 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTile( const QUrl& url, const uin
 
     {
         QMutexLocker scopeLock(&_downloadsMutex);
+        if(_pendingTileIds.contains(tileId))
+            return;
+        _pendingTileIds.insert(tileId);
         if(_maxConcurrentDownloads != 0 && _concurrentDownloadsCounter == _maxConcurrentDownloads)
         {
             TileRequest tileRequest;
@@ -117,6 +120,7 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTile( const QUrl& url, const uin
             tileRequest.callback = receiverCallback;
             tileRequest.preferredConfig = preferredConfig;
             _tileRequestsQueue.enqueue(tileRequest);
+            
             return;
         }
         _concurrentDownloadsCounter++;
@@ -139,6 +143,7 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTile( const QUrl& url, const uin
                 {
                     {
                         QMutexLocker scopeLock(&_downloadsMutex);
+                        _pendingTileIds.remove(tileId);
                         _concurrentDownloadsCounter--;
                     }
 
@@ -157,6 +162,7 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTile( const QUrl& url, const uin
                     if(!_tileRequestsQueue.isEmpty())
                     {
                         const auto& request = _tileRequestsQueue.dequeue();
+                        _pendingTileIds.remove(tileId);
                         obtainTile(request.sourceUrl, request.tileId, request.zoom, request.callback, request.preferredConfig);
                     }
                 }

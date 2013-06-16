@@ -26,6 +26,7 @@
 #include <memory>
 #include <functional>
 
+#include <QQueue>
 #include <QSet>
 #include <QMap>
 #include <QMutex>
@@ -85,6 +86,16 @@ namespace OsmAnd {
         virtual void purgeTilesCache();
         void cacheMissingTiles();
         virtual void cacheTile(const uint64_t& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap) = 0;
+
+        struct PendingTile
+        {
+            uint64_t tileId;
+            uint32_t zoom;
+            std::shared_ptr<SkBitmap> tileBitmap;
+        };
+        QMutex _pendingTilesMutex;
+        QQueue< PendingTile > _pendingTilesQueue;
+        QSet< uint64_t > _pendingTiles;
     public:
         virtual ~IRenderer();
 

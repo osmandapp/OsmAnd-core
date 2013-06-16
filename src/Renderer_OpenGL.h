@@ -27,6 +27,7 @@
 
 #include <QMap>
 #include <QQueue>
+#include <QSet>
 
 #include <glm/glm.hpp>
 
@@ -53,15 +54,6 @@ namespace OsmAnd {
         uint32_t _unfinishedAtlasFirstFreeSlot;
         QQueue<uint64_t> _freeAtlasSlots;
         Qt::HANDLE _glRenderThreadId;
-
-        struct PendingTile
-        {
-            uint64_t tileId;
-            uint32_t zoom;
-            std::shared_ptr<SkBitmap> tileBitmap;
-        };
-        QMutex _pendingTilesMutex;
-        QQueue< PendingTile > _pendingTilesQueue;
 
         virtual void computeMatrices();
         virtual void refreshVisibleTileset();

@@ -97,12 +97,12 @@ void OsmAnd::IRenderer::cacheMissingTiles()
         const auto& tileId = *itTileId;
 
         // Obtain tile from cache
-        QMap< uint64_t, std::shared_ptr<CachedTile> >::const_iterator itCachedTile;
         bool cacheHit;
         {
             QMutexLocker scopeLock(&_tileCacheMutex);
-            itCachedTile = _cachedTiles.find(tileId);
-            cacheHit = (itCachedTile != _cachedTiles.end());
+            QMutexLocker scopeLock2(&_pendingTilesMutex);
+
+            cacheHit = _cachedTiles.contains(tileId) || _pendingTiles.contains(tileId);
         }
 
         if(cacheHit)
