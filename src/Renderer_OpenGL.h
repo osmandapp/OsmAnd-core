@@ -58,6 +58,7 @@ namespace OsmAnd {
         {
             virtual ~CachedTile_OpenGL();
 
+            Renderer_OpenGL* owner;
             uint32_t textureId;
             uint32_t atlasSlotIndex;
         };

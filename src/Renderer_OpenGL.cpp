@@ -213,6 +213,11 @@ void OsmAnd::Renderer_OpenGL::performRendering()
     if(glActiveTexture == nullptr)
         glewInit();
 
+    if(_tilesCacheInvalidated)
+    {
+        purgeTilesCache();
+        _tilesCacheInvalidated = false;
+    }
     cacheMissingTiles();
 
     // Setup viewport
@@ -353,6 +358,7 @@ void OsmAnd::Renderer_OpenGL::refreshView()
 void OsmAnd::Renderer_OpenGL::cacheTile( const uint64_t& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap )
 {
     auto cachedTile = new CachedTile_OpenGL();
+    cachedTile->owner = this;
     std::shared_ptr<IRenderer::CachedTile> cachedTile_(static_cast<IRenderer::CachedTile*>(cachedTile));
 
     if(!tileBitmap)
@@ -425,12 +431,12 @@ void OsmAnd::Renderer_OpenGL::cacheTile( const uint64_t& tileId, uint32_t zoom, 
         OPENGL_CHECK_RESULT;
         if(_preferredTextureDepth == IRenderer::_32bits)
         {
-            glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, _glMaxTextureDimension, _glMaxTextureDimension);
+            glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, _tileProvider->getTileDimension(), _tileProvider->getTileDimension());
             glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, (GLsizei)_tileProvider->getTileDimension(), (GLsizei)_tileProvider->getTileDimension(), GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, tileBitmap->getPixels());
         }
         else
         {
-            glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB5, _glMaxTextureDimension, _glMaxTextureDimension);
+            glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB5, _tileProvider->getTileDimension(), _tileProvider->getTileDimension());
             glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, (GLsizei)_tileProvider->getTileDimension(), (GLsizei)_tileProvider->getTileDimension(), GL_RGB, GL_UNSIGNED_SHORT_5_6_5, tileBitmap->getPixels());
         }
         OPENGL_CHECK_RESULT;
@@ -457,5 +463,14 @@ void OsmAnd::Renderer_OpenGL::validateResult()
 
 OsmAnd::Renderer_OpenGL::CachedTile_OpenGL::~CachedTile_OpenGL()
 {
-    //TODO: remove texture from video meomry
+    const auto& itRefCnt = owner->_glTexturesRefCounts.find(textureId);
+    auto& refCnt = *itRefCnt;
+    refCnt -= 1;
+
+    if(refCnt == 0)
+    {
+        glDeleteTextures(1, &textureId);
+        OPENGL_CHECK_RESULT;
+        owner->_glTexturesRefCounts.remove(textureId);
+    }
 }

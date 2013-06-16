@@ -64,7 +64,7 @@ namespace OsmAnd {
         bool _viewIsDirty;
         QSet<uint64_t> _visibleTiles;
         PointD _targetInTile;
-
+        bool _tilesCacheInvalidated;
         TextureDepth _preferredTextureDepth;
 
         enum {

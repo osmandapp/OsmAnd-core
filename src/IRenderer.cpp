@@ -17,6 +17,7 @@ OsmAnd::IRenderer::IRenderer()
     , _target31( std::numeric_limits<int32_t>::max() / 2, std::numeric_limits<int32_t>::max() / 2 )
     , _zoom(15)
     , _viewIsDirty(true)
+    , _tilesCacheInvalidated(false)
     , _preferredTextureDepth(TextureDepth::_16bits)
     , tileProvider(_tileProvider)
     , windowSize(_windowSize)
@@ -41,7 +42,7 @@ OsmAnd::IRenderer::~IRenderer()
 void OsmAnd::IRenderer::setTileProvider( const std::shared_ptr<IMapTileProvider>& source )
 {
     _tileProvider = source;
-    purgeTilesCache();
+    _tilesCacheInvalidated = true;
 }
 
 bool OsmAnd::IRenderer::updateViewport( const PointI& windowSize, const AreaI& viewport, float fieldOfView, float fogDistance )
@@ -140,7 +141,7 @@ int OsmAnd::IRenderer::getCachedTilesCount() const
 void OsmAnd::IRenderer::setPreferredTextureDepth( TextureDepth depth )
 {
     _preferredTextureDepth = depth;
-    purgeTilesCache();
+    _tilesCacheInvalidated = true;
 }
 
 OsmAnd::IRenderer::CachedTile::~CachedTile()
