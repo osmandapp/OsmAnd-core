@@ -28,6 +28,8 @@
 
 #include <QDir>
 #include <QMutex>
+#include <QUrl>
+#include <QQueue>
 
 #include <SkBitmap.h>
 
@@ -35,6 +37,8 @@
 #include <CommonTypes.h>
 
 #include <IMapTileProvider.h>
+
+class QNetworkReply;
 
 namespace OsmAnd {
 
@@ -52,11 +56,22 @@ namespace OsmAnd {
 
         std::shared_ptr<QDir> _localCachePath;
         bool _networkAccessAllowed;
+
+        struct TileRequest
+        {
+            QUrl sourceUrl;
+            uint64_t tileId;
+            uint32_t zoom;
+            TileReceiverCallback callback;
+        };
+        QQueue< TileRequest > _tileRequestsQueue;
+
+        void handleNetworkReply(QNetworkReply* reply, const uint64_t& tileId, uint32_t zoom, TileReceiverCallback callback);
     public:
         OnlineMapRasterTileProvider(const QString& id, const QString& urlPattern, uint32_t minZoom = 0, uint32_t maxZoom = 31, uint32_t maxConcurrentDownloads = 1);
         virtual ~OnlineMapRasterTileProvider();
 
-        void setLocalCachePath(const std::shared_ptr<QDir>& localCachePath);
+        void setLocalCachePath(const QDir& localCachePath);
         const std::shared_ptr<QDir>& localCachePath;
 
         void setNetworkAccessPermission(bool allowed);
@@ -67,10 +82,15 @@ namespace OsmAnd {
             std::shared_ptr<SkBitmap>& tile);
         virtual void obtainTile(
             const uint64_t& tileId, uint32_t zoom,
-            std::function<void (const uint64_t& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tile)> receiverCallback);
+            TileReceiverCallback receiverCallback);
+        void obtainTile(
+            const QUrl& url,
+            const uint64_t& tileId, uint32_t zoom,
+            TileReceiverCallback receiverCallback);
 
-        static const std::shared_ptr<OnlineMapRasterTileProvider> Mapnik;
-        static const std::shared_ptr<OnlineMapRasterTileProvider> CycleMap;
+
+        static std::shared_ptr<OsmAnd::IMapTileProvider> createMapnikProvider();
+        static std::shared_ptr<OsmAnd::IMapTileProvider> createCycleMapProvider();
     };
 
 }
