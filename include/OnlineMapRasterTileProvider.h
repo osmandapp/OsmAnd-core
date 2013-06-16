@@ -27,6 +27,7 @@
 #include <functional>
 
 #include <QDir>
+#include <QMutex>
 
 #include <SkBitmap.h>
 
@@ -41,10 +42,18 @@ namespace OsmAnd {
     {
     private:
     protected:
+        QString _id;
+        QString _urlPattern;
+        uint32_t _minZoom;
+        uint32_t _maxZoom;
+        uint32_t _maxConcurrentDownloads;
+        QMutex _downloadsMutex;
+        uint32_t _concurrentDownloadsCounter;
+
         std::shared_ptr<QDir> _localCachePath;
         bool _networkAccessAllowed;
     public:
-        OnlineMapRasterTileProvider(const QString& urlPattern, uint32_t maxZoom = 31, uint32_t minZoom = 0);
+        OnlineMapRasterTileProvider(const QString& id, const QString& urlPattern, uint32_t minZoom = 0, uint32_t maxZoom = 31, uint32_t maxConcurrentDownloads = 1);
         virtual ~OnlineMapRasterTileProvider();
 
         void setLocalCachePath(const std::shared_ptr<QDir>& localCachePath);

@@ -64,6 +64,7 @@ add_library(OsmAndCore SHARED
 	"native/src/proto/osmand_index.pb.cc"
 	"native/src/java_wrap.cpp"
 )
+set_target_properties(OsmAndCore PROPERTIES AUTOMOC TRUE)
 
 add_dependencies(OsmAndCore
 	skia_static
