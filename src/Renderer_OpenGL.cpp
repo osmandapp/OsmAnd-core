@@ -29,7 +29,7 @@
 
 OsmAnd::Renderer_OpenGL::Renderer_OpenGL()
     : _glMaxTextureDimension(0)
-    , _glLastUnfinishedAtlas(0)
+    , _lastUnfinishedAtlas(0)
 {
 }
 
@@ -230,7 +230,7 @@ void OsmAnd::Renderer_OpenGL::performRendering()
             {
                 const auto& pendingTile = _pendingTilesQueue.dequeue();
 
-                cacheTile(pendingTile.tileId, pendingTile.zoom, pendingTile.tileBitmap);
+                uploadTileToTexture(pendingTile.tileId, pendingTile.zoom, pendingTile.tileBitmap);
             }
         }
     }
@@ -391,6 +391,11 @@ void OsmAnd::Renderer_OpenGL::cacheTile( const uint64_t& tileId, uint32_t zoom, 
         return;
     }
 
+    uploadTileToTexture(tileId, zoom, tileBitmap);
+}
+
+void OsmAnd::Renderer_OpenGL::uploadTileToTexture( const uint64_t& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap )
+{
     auto cachedTile = new CachedTile_OpenGL();
     cachedTile->owner = this;
     std::shared_ptr<IRenderer::CachedTile> cachedTile_(static_cast<IRenderer::CachedTile*>(cachedTile));
@@ -418,7 +423,15 @@ void OsmAnd::Renderer_OpenGL::cacheTile( const uint64_t& tileId, uint32_t zoom, 
         auto tilesPerRow = _glMaxTextureDimension / _tileProvider->getTileDimension();
 
         // If we have no unfinished atlas yet, create one
-        if(_glLastUnfinishedAtlas == 0 || _glUnfinishedAtlasOccupiedSlots == tilesPerRow * tilesPerRow)
+        uint32_t freeSlotIndex;
+        uint32_t atlasId;
+        if(!_freeAtlasSlots.isEmpty())
+        {
+            auto slotId = _freeAtlasSlots.dequeue();
+            atlasId = slotId >> 32;
+            freeSlotIndex = slotId & 0xFFFFFFFF;
+        }
+        else if(_lastUnfinishedAtlas == 0 || _unfinishedAtlasFirstFreeSlot == tilesPerRow * tilesPerRow)
         {
             GLuint textureName;
             glGenTextures(1, &textureName);
@@ -428,29 +441,38 @@ void OsmAnd::Renderer_OpenGL::cacheTile( const uint64_t& tileId, uint32_t zoom, 
             OPENGL_CHECK_RESULT;
             glTexStorage2D(GL_TEXTURE_2D, 1, _preferredTextureDepth == IRenderer::_32bits ? GL_RGBA8 : GL_RGB5, _glMaxTextureDimension, _glMaxTextureDimension);
             OPENGL_CHECK_RESULT;
-            _glUnfinishedAtlasOccupiedSlots = 0;
+            _unfinishedAtlasFirstFreeSlot = 0;
             _glTexturesRefCounts.insert(textureName, 0);
-            _glLastUnfinishedAtlas = textureName;
+            _lastUnfinishedAtlas = textureName;
+
+            freeSlotIndex = 0;
+            atlasId = textureName;
+            _unfinishedAtlasFirstFreeSlot++;
+        }
+        else
+        {
+            atlasId = _lastUnfinishedAtlas;
+            freeSlotIndex = _unfinishedAtlasFirstFreeSlot;
+            _unfinishedAtlasFirstFreeSlot++;
         }
 
-        glBindTexture(GL_TEXTURE_2D, _glLastUnfinishedAtlas);
+        glBindTexture(GL_TEXTURE_2D, atlasId);
         OPENGL_CHECK_RESULT;
         glPixelStorei(GL_UNPACK_ROW_LENGTH, tileBitmap->rowBytesAsPixels());
         OPENGL_CHECK_RESULT;
-        auto yOffset = (_glUnfinishedAtlasOccupiedSlots / tilesPerRow) * _tileProvider->getTileDimension();
-        auto xOffset = (_glUnfinishedAtlasOccupiedSlots % tilesPerRow) * _tileProvider->getTileDimension();
+        auto yOffset = (freeSlotIndex / tilesPerRow) * _tileProvider->getTileDimension();
+        auto xOffset = (freeSlotIndex % tilesPerRow) * _tileProvider->getTileDimension();
         glTexSubImage2D(GL_TEXTURE_2D, 0,
             xOffset, yOffset, (GLsizei)_tileProvider->getTileDimension(), (GLsizei)_tileProvider->getTileDimension(),
             _preferredTextureDepth == IRenderer::_32bits ? GL_BGRA : GL_RGB,
             _preferredTextureDepth == IRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
             tileBitmap->getPixels());
         OPENGL_CHECK_RESULT;
-        
-        cachedTile->textureId = _glLastUnfinishedAtlas;
-        cachedTile->atlasSlotIndex = _glUnfinishedAtlasOccupiedSlots;
+
+        cachedTile->textureId = atlasId;
+        cachedTile->atlasSlotIndex = freeSlotIndex;
         _cachedTiles.insert(tileId, cachedTile_);
-        _glTexturesRefCounts[_glLastUnfinishedAtlas] += 1;
-        _glUnfinishedAtlasOccupiedSlots++;
+        _glTexturesRefCounts[atlasId] += 1;
     }
     else
     {
@@ -497,9 +519,18 @@ void OsmAnd::Renderer_OpenGL::validateResult()
 
 OsmAnd::Renderer_OpenGL::CachedTile_OpenGL::~CachedTile_OpenGL()
 {
+    assert(owner->_glRenderThreadId == QThread::currentThreadId());
+
     const auto& itRefCnt = owner->_glTexturesRefCounts.find(textureId);
     auto& refCnt = *itRefCnt;
     refCnt -= 1;
+
+    if(owner->_glMaxTextureDimension != 0 && refCnt > 0)
+    {
+        // A free atlas slot
+        uint64_t slotId = (static_cast<uint64_t>(textureId) << 32) | atlasSlotIndex;
+        owner->_freeAtlasSlots.enqueue(slotId);
+    }
 
     if(refCnt == 0)
     {

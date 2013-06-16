@@ -49,8 +49,9 @@ namespace OsmAnd {
         glm::mat4 _glProjection;
         glm::mat4 _glModelview;
         uint32_t _glMaxTextureDimension;
-        uint32_t _glLastUnfinishedAtlas;
-        uint32_t _glUnfinishedAtlasOccupiedSlots;
+        uint32_t _lastUnfinishedAtlas;
+        uint32_t _unfinishedAtlasFirstFreeSlot;
+        QQueue<uint64_t> _freeAtlasSlots;
         Qt::HANDLE _glRenderThreadId;
 
         struct PendingTile
@@ -74,6 +75,7 @@ namespace OsmAnd {
             uint32_t atlasSlotIndex;
         };
         virtual void cacheTile(const uint64_t& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap);
+        void uploadTileToTexture(const uint64_t& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap);
         QMap< uint32_t, uint32_t > _glTexturesRefCounts;
     public:
         Renderer_OpenGL();
