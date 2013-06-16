@@ -25,6 +25,9 @@ add_subdirectory("${OSMAND_ROOT}/core/externals/protobuf" "core/externals/protob
 # External : skia
 add_subdirectory("${OSMAND_ROOT}/core/externals/skia" "core/externals/skia")
 
+# OpenGL GLEW
+add_subdirectory("${OSMAND_ROOT}/core/externals/glew" "core/externals/glew")
+
 # OsmAnd core
 add_subdirectory("${OSMAND_ROOT}/core" "core/OsmAndCore")
 

@@ -72,7 +72,7 @@ namespace OsmAnd {
             virtual ~CachedTile();
         };
         QMutex _tileCacheMutex;
-        QMap< uint64_t, std::shared_ptr<CachedTile> > _cachedTiles;
+        QMap< uint64_t, std::shared_ptr<CachedTile> > _cachedTiles;//TODO: caching should be done by more complex spherical caching
         virtual void purgeTilesCache();
         void cacheMissingTiles();
         virtual void cacheTile(const uint64_t& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap) = 0;

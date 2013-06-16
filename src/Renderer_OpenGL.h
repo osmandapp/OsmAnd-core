@@ -51,6 +51,8 @@ namespace OsmAnd {
         struct OSMAND_CORE_API CachedTile_OpenGL : public IRenderer::CachedTile
         {
             virtual ~CachedTile_OpenGL();
+
+            uint32_t textureId;
         };
         virtual void cacheTile(const uint64_t& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap);
     public:
