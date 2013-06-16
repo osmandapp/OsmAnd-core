@@ -14,6 +14,7 @@
 
 #include <QtGlobal>
 #include <QtCore/qmath.h>
+#include <QThread>
 
 #include <SkBitmap.h>
 
@@ -210,9 +211,29 @@ void OsmAnd::Renderer_OpenGL::performRendering()
     if(_viewIsDirty)
         return;
 
+    if(_glRenderThreadId == nullptr)
+        _glRenderThreadId = QThread::currentThreadId();
+
     if(glActiveTexture == nullptr)
         glewInit();
 
+    {
+        QMutexLocker scopeLock(&_pendingTilesMutex);
+
+        if(_tilesCacheInvalidated)
+        {
+            _pendingTilesQueue.clear();
+        }
+        else
+        {
+            while(!_pendingTilesQueue.isEmpty())
+            {
+                const auto& pendingTile = _pendingTilesQueue.dequeue();
+
+                cacheTile(pendingTile.tileId, pendingTile.zoom, pendingTile.tileBitmap);
+            }
+        }
+    }
     if(_tilesCacheInvalidated)
     {
         purgeTilesCache();
@@ -357,6 +378,19 @@ void OsmAnd::Renderer_OpenGL::refreshView()
 
 void OsmAnd::Renderer_OpenGL::cacheTile( const uint64_t& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap )
 {
+    if(_glRenderThreadId != QThread::currentThreadId())
+    {
+        QMutexLocker scopeLock(&_pendingTilesMutex);
+
+        PendingTile pendingTile;
+        pendingTile.tileId = tileId;
+        pendingTile.zoom = zoom;
+        pendingTile.tileBitmap = tileBitmap;
+        _pendingTilesQueue.enqueue(pendingTile);
+
+        return;
+    }
+
     auto cachedTile = new CachedTile_OpenGL();
     cachedTile->owner = this;
     std::shared_ptr<IRenderer::CachedTile> cachedTile_(static_cast<IRenderer::CachedTile*>(cachedTile));

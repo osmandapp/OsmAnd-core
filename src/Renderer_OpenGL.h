@@ -26,6 +26,7 @@
 #include <memory>
 
 #include <QMap>
+#include <QQueue>
 
 #include <glm/glm.hpp>
 
@@ -50,6 +51,16 @@ namespace OsmAnd {
         uint32_t _glMaxTextureDimension;
         uint32_t _glLastUnfinishedAtlas;
         uint32_t _glUnfinishedAtlasOccupiedSlots;
+        Qt::HANDLE _glRenderThreadId;
+
+        struct PendingTile
+        {
+            uint64_t tileId;
+            uint32_t zoom;
+            std::shared_ptr<SkBitmap> tileBitmap;
+        };
+        QMutex _pendingTilesMutex;
+        QQueue< PendingTile > _pendingTilesQueue;
 
         virtual void computeMatrices();
         virtual void refreshVisibleTileset();
