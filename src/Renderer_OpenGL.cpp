@@ -317,6 +317,7 @@ void OsmAnd::Renderer_OpenGL::performRendering()
                 //////////////////////////////////////////////////////////////////////////
                 glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
                 glEnable(GL_TEXTURE_2D);
+                //////////////////////////////////////////////////////////////////////////
                 glBegin(GL_QUADS);
                     glTexCoord2f(0, 0);
                     glVertex3f(0,0,TileSide3D);
@@ -330,12 +331,9 @@ void OsmAnd::Renderer_OpenGL::performRendering()
                     glTexCoord2f(0, 1);
                     glVertex3f(0,0,0);
                 glEnd();
+                //////////////////////////////////////////////////////////////////////////
             }
         }
-        //TODO:DRAW!
-        //1. map data cache
-        //2. rasterized tile textures (in gpu?)
-        //3. where rasterization should take place?
         glPopMatrix();
     }
 
@@ -396,6 +394,8 @@ void OsmAnd::Renderer_OpenGL::cacheTile( const uint64_t& tileId, uint32_t zoom, 
 
 void OsmAnd::Renderer_OpenGL::uploadTileToTexture( const uint64_t& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap )
 {
+    assert(!_cachedTiles.contains(tileId));
+
     auto cachedTile = new CachedTile_OpenGL();
     cachedTile->owner = this;
     std::shared_ptr<IRenderer::CachedTile> cachedTile_(static_cast<IRenderer::CachedTile*>(cachedTile));

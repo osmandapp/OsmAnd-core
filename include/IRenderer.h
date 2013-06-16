@@ -24,6 +24,7 @@
 
 #include <stdint.h>
 #include <memory>
+#include <functional>
 
 #include <QSet>
 #include <QMap>
@@ -45,6 +46,7 @@ namespace OsmAnd {
             _16bits,
             _32bits,
         };
+        typedef std::function<void ()> RedrawRequestCallback;
     private:
         void tileReadyCallback(const uint64_t& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tile);
     protected:
@@ -85,6 +87,8 @@ namespace OsmAnd {
         virtual void cacheTile(const uint64_t& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap) = 0;
     public:
         virtual ~IRenderer();
+
+        RedrawRequestCallback redrawRequestCallback;
 
         virtual void setTileProvider(const std::shared_ptr<IMapTileProvider>& tileProvider);
         const std::shared_ptr<IMapTileProvider>& tileProvider;

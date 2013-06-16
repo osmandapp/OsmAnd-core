@@ -92,7 +92,8 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTile( const uint64_t& tileId, ui
 
     int32_t xZ = static_cast<int32_t>(tileId >> 32);
     int32_t yZ = static_cast<int32_t>(tileId & 0xFFFFFFFF);
-    const auto& tileUrl = _urlPattern
+    auto tileUrl = _urlPattern;
+    tileUrl
         .replace(QString::fromLatin1("${zoom}"), QString::number(zoom))
         .replace(QString::fromLatin1("${x}"), QString::number(xZ))
         .replace(QString::fromLatin1("${y}"), QString::number(yZ));
@@ -127,7 +128,7 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTile( const QUrl& url, const uin
             int32_t xZ = static_cast<int32_t>(tileId >> 32);
             int32_t yZ = static_cast<int32_t>(tileId & 0xFFFFFFFF);
             LogPrintf(LogSeverityLevel::Info, "Downloading tile %dx%d@%d from %s\n", xZ, yZ, zoom, url.toString().toStdString().c_str());
-
+            
             QNetworkRequest request;
             request.setUrl(url);
             request.setRawHeader("User-Agent", "OsmAnd Core");
@@ -168,18 +169,15 @@ void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* rep
 {
     int32_t xZ = static_cast<int32_t>(tileId >> 32);
     int32_t yZ = static_cast<int32_t>(tileId & 0xFFFFFFFF);
-    const auto& tileUrl = _urlPattern
-        .replace(QString::fromLatin1("${zoom}"), QString::number(zoom))
-        .replace(QString::fromLatin1("${x}"), QString::number(xZ))
-        .replace(QString::fromLatin1("${y}"), QString::number(yZ));
 
     auto error = reply->error();
     if(error != QNetworkReply::NetworkError::NoError)
     {
-        LogPrintf(LogSeverityLevel::Warning, "Failed to download tile from %s\n", tileUrl.toStdString().c_str());
+        const auto httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+
+        LogPrintf(LogSeverityLevel::Warning, "Failed to download tile from %s (HTTP status %d)\n", reply->request().url().toString().toStdString().c_str(), httpStatus);
 
         // 404 means that this tile does not exist, so create a zero file
-        const auto httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         if(httpStatus == 404)
         {
             if(_localCachePath && _localCachePath->exists())
@@ -202,7 +200,7 @@ void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* rep
         return;
     }
 
-    LogPrintf(LogSeverityLevel::Warning, "Downloaded tile from %s\n", tileUrl.toStdString().c_str());
+    LogPrintf(LogSeverityLevel::Warning, "Downloaded tile from %s\n", reply->request().url().toString().toStdString().c_str());
     const auto& data = reply->readAll();
 
     if(_localCachePath && _localCachePath->exists())

@@ -43,6 +43,8 @@ void OsmAnd::IRenderer::setTileProvider( const std::shared_ptr<IMapTileProvider>
 {
     _tileProvider = source;
     _tilesCacheInvalidated = true;
+    if(redrawRequestCallback)
+        redrawRequestCallback();
 }
 
 bool OsmAnd::IRenderer::updateViewport( const PointI& windowSize, const AreaI& viewport, float fieldOfView, float fogDistance )
@@ -125,6 +127,8 @@ void OsmAnd::IRenderer::tileReadyCallback( const uint64_t& tileId, uint32_t zoom
     cacheTile(tileId, zoom, tileBitmap);
 
     _viewIsDirty = true;
+    if(redrawRequestCallback)
+        redrawRequestCallback();
 }
 
 void OsmAnd::IRenderer::purgeTilesCache()
@@ -142,6 +146,8 @@ void OsmAnd::IRenderer::setPreferredTextureDepth( TextureDepth depth )
 {
     _preferredTextureDepth = depth;
     _tilesCacheInvalidated = true;
+    if(redrawRequestCallback)
+        redrawRequestCallback();
 }
 
 OsmAnd::IRenderer::CachedTile::~CachedTile()

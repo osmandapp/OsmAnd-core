@@ -89,9 +89,10 @@ public:
         if (urlToLoad == "") {
             return "";
         }
-        QString res = urlToLoad.replace("${x}", QString::number(x));
-        res = res.replace("${y}", QString::number(y));
-        res = res.replace("${z}", QString::number(zoom));
+        QString res = urlToLoad;
+        res.replace("${x}", QString::number(x))
+        .replace("${y}", QString::number(y))
+        .replace("${z}", QString::number(zoom));
         return res;
     }
 
