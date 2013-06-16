@@ -320,19 +320,20 @@ void OsmAnd::Renderer_OpenGL::performRendering()
                 glEnable(GL_TEXTURE_2D);
                 //////////////////////////////////////////////////////////////////////////
                 glBegin(GL_QUADS);
-                    glTexCoord2f(0, 0);
+                    glTexCoord2f(0, 1);
                     glVertex3f(0,0,TileSide3D);
 
-                    glTexCoord2f(1, 0);
+                    glTexCoord2f(1, 1);
                     glVertex3f(TileSide3D,0,TileSide3D);
 
-                    glTexCoord2f(1, 1);
+                    glTexCoord2f(1, 0);
                     glVertex3f(TileSide3D,0,0);
 
-                    glTexCoord2f(0, 1);
+                    glTexCoord2f(0, 0);
                     glVertex3f(0,0,0);
                 glEnd();
                 //////////////////////////////////////////////////////////////////////////
+                glDisable(GL_TEXTURE_2D);
             }
         }
         glPopMatrix();
@@ -417,11 +418,11 @@ void OsmAnd::Renderer_OpenGL::uploadTileToTexture( const uint64_t& tileId, uint3
     assert( _preferredTextureDepth == IRenderer::_32bits ? skConfig == SkBitmap::kARGB_8888_Config : skConfig == SkBitmap::kRGB_565_Config );
 
     // Get maximal texture size if not yet determined
-    if(_glMaxTextureDimension == 0)
+    /*if(_glMaxTextureDimension == 0)
     {
         glGetIntegerv(GL_MAX_TEXTURE_SIZE, reinterpret_cast<GLint*>(&_glMaxTextureDimension));
         OPENGL_CHECK_RESULT;
-    }
+    }*/
 
     if(_glMaxTextureDimension != 0)
     {
