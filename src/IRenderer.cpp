@@ -17,6 +17,7 @@ OsmAnd::IRenderer::IRenderer()
     , _target31( std::numeric_limits<int32_t>::max() / 2, std::numeric_limits<int32_t>::max() / 2 )
     , _zoom(15)
     , _viewIsDirty(true)
+    , _preferredTextureDepth(TextureDepth::_16bits)
     , tileProvider(_tileProvider)
     , windowSize(_windowSize)
     , viewport(_viewport)
@@ -28,6 +29,7 @@ OsmAnd::IRenderer::IRenderer()
     , target31(_target31)
     , zoom(_zoom)
     , visibleTiles(_visibleTiles)
+    , preferredTextureDepth(_preferredTextureDepth)
     , viewIsDirty(_viewIsDirty)
 {
 }
@@ -105,7 +107,7 @@ void OsmAnd::IRenderer::cacheMissingTiles()
 
         // Try to obtain tile from provider immediately
         std::shared_ptr<SkBitmap> tileBitmap;
-        cacheHit = _tileProvider->obtainTile(tileId, _zoom, tileBitmap);
+        cacheHit = _tileProvider->obtainTile(tileId, _zoom, tileBitmap, _preferredTextureDepth == IRenderer::_32bits ? SkBitmap::kARGB_8888_Config : SkBitmap::kRGB_565_Config);
         if(cacheHit)
         {
             cacheTile(tileId, _zoom, tileBitmap);
@@ -113,7 +115,7 @@ void OsmAnd::IRenderer::cacheMissingTiles()
         }
 
         // If still cache miss, order delayed
-        _tileProvider->obtainTile(tileId, _zoom, callback);
+        _tileProvider->obtainTile(tileId, _zoom, callback, _preferredTextureDepth == IRenderer::_32bits ? SkBitmap::kARGB_8888_Config : SkBitmap::kRGB_565_Config);
     }
 }
 
@@ -128,6 +130,17 @@ void OsmAnd::IRenderer::purgeTilesCache()
 {
     QMutexLocker scopeLock(&_tileCacheMutex);
     _cachedTiles.clear();
+}
+
+int OsmAnd::IRenderer::getCachedTilesCount() const
+{
+    return _cachedTiles.size();
+}
+
+void OsmAnd::IRenderer::setPreferredTextureDepth( TextureDepth depth )
+{
+    _preferredTextureDepth = depth;
+    purgeTilesCache();
 }
 
 OsmAnd::IRenderer::CachedTile::~CachedTile()

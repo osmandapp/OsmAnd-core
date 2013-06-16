@@ -40,6 +40,11 @@ namespace OsmAnd {
 
     class OSMAND_CORE_API IRenderer
     {
+    public:
+        enum TextureDepth {
+            _16bits,
+            _32bits,
+        };
     private:
         void tileReadyCallback(const uint64_t& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tile);
     protected:
@@ -59,6 +64,8 @@ namespace OsmAnd {
         bool _viewIsDirty;
         QSet<uint64_t> _visibleTiles;
         PointD _targetInTile;
+
+        TextureDepth _preferredTextureDepth;
 
         enum {
             TileSide3D = 100,
@@ -92,6 +99,11 @@ namespace OsmAnd {
         const PointI& target31;
         const uint32_t& zoom;
         const QSet<uint64_t>& visibleTiles;
+
+        virtual void setPreferredTextureDepth(TextureDepth depth);
+        const TextureDepth& preferredTextureDepth;
+
+        virtual int getCachedTilesCount() const;
 
         virtual bool updateViewport(const PointI& windowSize, const AreaI& viewport, float fieldOfView, float viewDepth);
         virtual bool updateCamera(float distanceFromTarget, float azimuth, float elevationAngle);

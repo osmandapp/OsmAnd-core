@@ -1,5 +1,7 @@
 #include "OnlineMapRasterTileProvider.h"
 
+#include <assert.h>
+
 #include "OsmAndCore_private.h"
 #include "QMainThreadTaskEvent.h"
 #include "OsmAndLogging.h"
@@ -18,6 +20,7 @@ OsmAnd::OnlineMapRasterTileProvider::OnlineMapRasterTileProvider(const QString& 
     , _maxZoom(maxZoom_)
     , _maxConcurrentDownloads(maxConcurrentDownloads_)
     , _concurrentDownloadsCounter(0)
+    , _tileDimension(0)
     , _networkAccessAllowed(true)
     , localCachePath(_localCachePath)
     , networkAccessAllowed(_networkAccessAllowed)
@@ -40,7 +43,8 @@ void OsmAnd::OnlineMapRasterTileProvider::setNetworkAccessPermission( bool allow
 
 bool OsmAnd::OnlineMapRasterTileProvider::obtainTile(
     const uint64_t& tileId, uint32_t zoom,
-    std::shared_ptr<SkBitmap>& tileBitmap )
+    std::shared_ptr<SkBitmap>& tileBitmap,
+    SkBitmap::Config preferredConfig )
 {
     if(!_localCachePath)
         return false;
@@ -67,16 +71,21 @@ bool OsmAnd::OnlineMapRasterTileProvider::obtainTile(
     }
     
     tileBitmap.reset(new SkBitmap());
-    if(!SkImageDecoder::DecodeFile(fullPath.toStdString().c_str(), tileBitmap.get(), SkBitmap::kARGB_8888_Config, SkImageDecoder::kDecodePixels_Mode))
+    if(!SkImageDecoder::DecodeFile(fullPath.toStdString().c_str(), tileBitmap.get(), preferredConfig, SkImageDecoder::kDecodePixels_Mode))
     {
         tileBitmap.reset();
         return false;
     }
 
+    assert(tileBitmap->width() == tileBitmap->height());
+    if(_tileDimension == 0)
+        _tileDimension = tileBitmap->width();
+    assert(tileBitmap->width() == _tileDimension);
+
     return true;
 }
 
-void OsmAnd::OnlineMapRasterTileProvider::obtainTile( const uint64_t& tileId, uint32_t zoom, TileReceiverCallback receiverCallback )
+void OsmAnd::OnlineMapRasterTileProvider::obtainTile( const uint64_t& tileId, uint32_t zoom, TileReceiverCallback receiverCallback, SkBitmap::Config preferredConfig )
 {
     if(!_networkAccessAllowed)
         return;
@@ -88,23 +97,24 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTile( const uint64_t& tileId, ui
         .replace(QString::fromLatin1("${x}"), QString::number(xZ))
         .replace(QString::fromLatin1("${y}"), QString::number(yZ));
 
-    obtainTile(QUrl(tileUrl), tileId, zoom, receiverCallback);
+    obtainTile(QUrl(tileUrl), tileId, zoom, receiverCallback, preferredConfig);
 }
 
-void OsmAnd::OnlineMapRasterTileProvider::obtainTile( const QUrl& url, const uint64_t& tileId, uint32_t zoom, TileReceiverCallback receiverCallback )
+void OsmAnd::OnlineMapRasterTileProvider::obtainTile( const QUrl& url, const uint64_t& tileId, uint32_t zoom, TileReceiverCallback receiverCallback, SkBitmap::Config preferredConfig )
 {
     if(!_networkAccessAllowed)
         return;
 
     {
         QMutexLocker scopeLock(&_downloadsMutex);
-        if(_concurrentDownloadsCounter == _maxConcurrentDownloads)
+        if(_maxConcurrentDownloads != 0 && _concurrentDownloadsCounter == _maxConcurrentDownloads)
         {
             TileRequest tileRequest;
             tileRequest.sourceUrl = url;
             tileRequest.tileId = tileId;
             tileRequest.zoom = zoom;
             tileRequest.callback = receiverCallback;
+            tileRequest.preferredConfig = preferredConfig;
             _tileRequestsQueue.enqueue(tileRequest);
             return;
         }
@@ -112,7 +122,7 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTile( const QUrl& url, const uin
     }
 
     QCoreApplication::postEvent(gMainThreadTaskHost.get(), new QMainThreadTaskEvent(
-        [this, url, tileId, zoom, receiverCallback] ()
+        [this, url, tileId, zoom, receiverCallback, preferredConfig] ()
         {
             int32_t xZ = static_cast<int32_t>(tileId >> 32);
             int32_t yZ = static_cast<int32_t>(tileId & 0xFFFFFFFF);
@@ -124,7 +134,7 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTile( const QUrl& url, const uin
 
             auto reply = gNetworkAccessManager->get(request);
             QObject::connect(reply, &QNetworkReply::finished,
-                [this, tileId, zoom, reply, receiverCallback] ()
+                [this, tileId, zoom, reply, receiverCallback, preferredConfig] ()
                 {
                     {
                         QMutexLocker scopeLock(&_downloadsMutex);
@@ -134,19 +144,19 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTile( const QUrl& url, const uin
                     auto redirectUrl = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
                     if(!redirectUrl.isEmpty())
                     {
-                        obtainTile(redirectUrl, tileId, zoom, receiverCallback);
+                        obtainTile(redirectUrl, tileId, zoom, receiverCallback, preferredConfig);
 
                         reply->deleteLater();
                         return;
                     }
                     
-                    handleNetworkReply(reply, tileId, zoom, receiverCallback);
+                    handleNetworkReply(reply, tileId, zoom, receiverCallback, preferredConfig);
                     reply->deleteLater();
 
                     if(!_tileRequestsQueue.isEmpty())
                     {
                         const auto& request = _tileRequestsQueue.dequeue();
-                        obtainTile(request.sourceUrl, request.tileId, request.zoom, request.callback);
+                        obtainTile(request.sourceUrl, request.tileId, request.zoom, request.callback, request.preferredConfig);
                     }
                 }
             );
@@ -154,7 +164,7 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTile( const QUrl& url, const uin
     ));
 }
 
-void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* reply, const uint64_t& tileId, uint32_t zoom, TileReceiverCallback receiverCallback )
+void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* reply, const uint64_t& tileId, uint32_t zoom, TileReceiverCallback receiverCallback, SkBitmap::Config preferredConfig )
 {
     int32_t xZ = static_cast<int32_t>(tileId >> 32);
     int32_t yZ = static_cast<int32_t>(tileId & 0xFFFFFFFF);
@@ -215,11 +225,20 @@ void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* rep
     if(receiverCallback)
     {
         std::shared_ptr<SkBitmap> tileBitmap(new SkBitmap());
-        if(SkImageDecoder::DecodeMemory(data.data(), data.size(), tileBitmap.get(), SkBitmap::kARGB_8888_Config, SkImageDecoder::kDecodePixels_Mode))
+        if(SkImageDecoder::DecodeMemory(data.data(), data.size(), tileBitmap.get(), preferredConfig, SkImageDecoder::kDecodePixels_Mode))
         {
+            assert(tileBitmap->width() == tileBitmap->height());
+            if(_tileDimension == 0)
+                _tileDimension = tileBitmap->width();
+            assert(tileBitmap->width() == _tileDimension);
             receiverCallback(tileId, zoom, tileBitmap);
         }
     }
+}
+
+uint32_t OsmAnd::OnlineMapRasterTileProvider::getTileDimension() const
+{
+    return _tileDimension;
 }
 
 std::shared_ptr<OsmAnd::IMapTileProvider> OsmAnd::OnlineMapRasterTileProvider::createMapnikProvider()

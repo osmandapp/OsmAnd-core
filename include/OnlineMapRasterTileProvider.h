@@ -54,6 +54,8 @@ namespace OsmAnd {
         QMutex _downloadsMutex;
         uint32_t _concurrentDownloadsCounter;
 
+        uint32_t _tileDimension;
+
         std::shared_ptr<QDir> _localCachePath;
         bool _networkAccessAllowed;
 
@@ -63,10 +65,11 @@ namespace OsmAnd {
             uint64_t tileId;
             uint32_t zoom;
             TileReceiverCallback callback;
+            SkBitmap::Config preferredConfig;
         };
         QQueue< TileRequest > _tileRequestsQueue;
 
-        void handleNetworkReply(QNetworkReply* reply, const uint64_t& tileId, uint32_t zoom, TileReceiverCallback callback);
+        void handleNetworkReply(QNetworkReply* reply, const uint64_t& tileId, uint32_t zoom, TileReceiverCallback callback, SkBitmap::Config preferredConfig);
     public:
         OnlineMapRasterTileProvider(const QString& id, const QString& urlPattern, uint32_t minZoom = 0, uint32_t maxZoom = 31, uint32_t maxConcurrentDownloads = 1);
         virtual ~OnlineMapRasterTileProvider();
@@ -77,16 +80,21 @@ namespace OsmAnd {
         void setNetworkAccessPermission(bool allowed);
         const bool& networkAccessAllowed;
 
+        virtual uint32_t getTileDimension() const;
+
         virtual bool obtainTile(
             const uint64_t& tileId, uint32_t zoom,
-            std::shared_ptr<SkBitmap>& tile);
+            std::shared_ptr<SkBitmap>& tile,
+            SkBitmap::Config preferredConfig);
         virtual void obtainTile(
             const uint64_t& tileId, uint32_t zoom,
-            TileReceiverCallback receiverCallback);
+            TileReceiverCallback receiverCallback,
+            SkBitmap::Config preferredConfig);
         void obtainTile(
             const QUrl& url,
             const uint64_t& tileId, uint32_t zoom,
-            TileReceiverCallback receiverCallback);
+            TileReceiverCallback receiverCallback,
+            SkBitmap::Config preferredConfig);
 
 
         static std::shared_ptr<OsmAnd::IMapTileProvider> createMapnikProvider();

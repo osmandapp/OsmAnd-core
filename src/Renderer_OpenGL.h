@@ -25,6 +25,8 @@
 #include <stdint.h>
 #include <memory>
 
+#include <QMap>
+
 #include <glm/glm.hpp>
 
 #include <OsmAndCore.h>
@@ -39,11 +41,15 @@ namespace OsmAnd {
     {
     private:
         static bool rayIntersectPlane(const glm::vec3& planeN, float planeO, const glm::vec3& rayD, const glm::vec3& rayO, float& distance);
+        static void validateResult();
     protected:
         PointI _glWindowSize;
         AreaI _glViewport;
         glm::mat4 _glProjection;
         glm::mat4 _glModelview;
+        uint32_t _glMaxTextureDimension;
+        uint32_t _glLastUnfinishedAtlas;
+        uint32_t _glUnfinishedAtlasOccupiedSlots;
 
         virtual void computeMatrices();
         virtual void refreshVisibleTileset();
@@ -53,13 +59,17 @@ namespace OsmAnd {
             virtual ~CachedTile_OpenGL();
 
             uint32_t textureId;
+            uint32_t atlasSlotIndex;
         };
         virtual void cacheTile(const uint64_t& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap);
+        QMap< uint32_t, uint32_t > _glTexturesRefCounts;
     public:
         Renderer_OpenGL();
         virtual ~Renderer_OpenGL();
 
         virtual void refreshView();
+
+        virtual int getCachedTilesCount();
 
         virtual void performRendering();
     };

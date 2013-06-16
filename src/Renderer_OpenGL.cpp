@@ -17,7 +17,18 @@
 
 #include <SkBitmap.h>
 
+#include "IMapTileProvider.h"
+#include "OsmAndLogging.h"
+
+#if !defined(NDEBUG)
+#   define OPENGL_CHECK_RESULT validateResult()
+#else
+#   define OPENGL_CHECK_RESULT
+#endif
+
 OsmAnd::Renderer_OpenGL::Renderer_OpenGL()
+    : _glMaxTextureDimension(0)
+    , _glLastUnfinishedAtlas(0)
 {
 }
 
@@ -202,8 +213,6 @@ void OsmAnd::Renderer_OpenGL::performRendering()
     if(glActiveTexture == nullptr)
         glewInit();
 
-    assert(glGetError() == GL_NO_ERROR);
-
     cacheMissingTiles();
 
     // Setup viewport
@@ -274,12 +283,12 @@ void OsmAnd::Renderer_OpenGL::performRendering()
             {
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, cachedTile->textureId);
-                
+                //////////////////////////////////////////////////////////////////////////
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);//?
+                //////////////////////////////////////////////////////////////////////////
                 glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
                 glEnable(GL_TEXTURE_2D);
                 glBegin(GL_QUADS);
@@ -314,8 +323,6 @@ void OsmAnd::Renderer_OpenGL::performRendering()
 
     // Revert viewport
     glViewport(oldViewport[0], oldViewport[1], oldViewport[2], oldViewport[3]);
-
-    assert(glGetError() == GL_NO_ERROR);
 }
 
 bool OsmAnd::Renderer_OpenGL::rayIntersectPlane( const glm::vec3& planeN, float planeD, const glm::vec3& rayD, const glm::vec3& rayO, float& distance )
@@ -348,36 +355,104 @@ void OsmAnd::Renderer_OpenGL::cacheTile( const uint64_t& tileId, uint32_t zoom, 
     auto cachedTile = new CachedTile_OpenGL();
     std::shared_ptr<IRenderer::CachedTile> cachedTile_(static_cast<IRenderer::CachedTile*>(cachedTile));
 
-    assert(glGetError() == GL_NO_ERROR);
-
     if(!tileBitmap)
     {
         // Non-existent tile
         cachedTile->textureId = 0;
         _cachedTiles.insert(tileId, cachedTile_);
+        return;
     }
 
     const auto skConfig = tileBitmap->getConfig();
-    assert( skConfig == SkBitmap::kARGB_8888_Config || skConfig == SkBitmap::kRGB_565_Config );
+    assert( _preferredTextureDepth == IRenderer::_32bits ? skConfig == SkBitmap::kARGB_8888_Config : skConfig == SkBitmap::kRGB_565_Config );
 
-    GLuint textureName;
-    glGenTextures(1, &textureName);
-    assert(textureName != 0);
-    glBindTexture(GL_TEXTURE_2D, textureName);
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, tileBitmap->rowBytesAsPixels());
-    if(skConfig == SkBitmap::kARGB_8888_Config)
+    // Get maximal texture size if not yet determined
+    if(_glMaxTextureDimension == 0)
     {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, (GLsizei)tileBitmap->width(), (GLsizei)tileBitmap->height(), 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, tileBitmap->getPixels());
-    }
-    else if(skConfig == SkBitmap::kRGB_565_Config)
-    {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, (GLsizei)tileBitmap->width(), (GLsizei)tileBitmap->height(), 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, tileBitmap->getPixels());
+        glGetIntegerv(GL_MAX_TEXTURE_SIZE, reinterpret_cast<GLint*>(&_glMaxTextureDimension));
+        OPENGL_CHECK_RESULT;
     }
 
-    assert(glGetError() == GL_NO_ERROR);
+    if(_glMaxTextureDimension != 0)
+    {
+        auto tilesPerRow = _glMaxTextureDimension / _tileProvider->getTileDimension();
 
-    cachedTile->textureId = textureName;
-    _cachedTiles.insert(tileId, cachedTile_);
+        // If we have no unfinished atlas yet, create one
+        if(_glLastUnfinishedAtlas == 0 || _glUnfinishedAtlasOccupiedSlots == tilesPerRow * tilesPerRow)
+        {
+            GLuint textureName;
+            glGenTextures(1, &textureName);
+            OPENGL_CHECK_RESULT;
+            assert(textureName != 0);
+            glBindTexture(GL_TEXTURE_2D, textureName);
+            OPENGL_CHECK_RESULT;
+            glTexStorage2D(GL_TEXTURE_2D, 1, _preferredTextureDepth == IRenderer::_32bits ? GL_RGBA8 : GL_RGB5, _glMaxTextureDimension, _glMaxTextureDimension);
+            OPENGL_CHECK_RESULT;
+            _glUnfinishedAtlasOccupiedSlots = 0;
+            _glTexturesRefCounts.insert(textureName, 0);
+            _glLastUnfinishedAtlas = textureName;
+        }
+
+        glBindTexture(GL_TEXTURE_2D, _glLastUnfinishedAtlas);
+        OPENGL_CHECK_RESULT;
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, tileBitmap->rowBytesAsPixels());
+        OPENGL_CHECK_RESULT;
+        auto yOffset = (_glUnfinishedAtlasOccupiedSlots / tilesPerRow) * _tileProvider->getTileDimension();
+        auto xOffset = (_glUnfinishedAtlasOccupiedSlots % tilesPerRow) * _tileProvider->getTileDimension();
+        glTexSubImage2D(GL_TEXTURE_2D, 0,
+            xOffset, yOffset, (GLsizei)_tileProvider->getTileDimension(), (GLsizei)_tileProvider->getTileDimension(),
+            _preferredTextureDepth == IRenderer::_32bits ? GL_BGRA : GL_RGB,
+            _preferredTextureDepth == IRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
+            tileBitmap->getPixels());
+        OPENGL_CHECK_RESULT;
+        
+        cachedTile->textureId = _glLastUnfinishedAtlas;
+        cachedTile->atlasSlotIndex = _glUnfinishedAtlasOccupiedSlots;
+        _cachedTiles.insert(tileId, cachedTile_);
+        _glTexturesRefCounts[_glLastUnfinishedAtlas] += 1;
+        _glUnfinishedAtlasOccupiedSlots++;
+    }
+    else
+    {
+        // Fallback to 1 texture per tile
+        GLuint textureName;
+        glGenTextures(1, &textureName);
+        OPENGL_CHECK_RESULT;
+        assert(textureName != 0);
+        glBindTexture(GL_TEXTURE_2D, textureName);
+        OPENGL_CHECK_RESULT;
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, tileBitmap->rowBytesAsPixels());
+        OPENGL_CHECK_RESULT;
+        if(_preferredTextureDepth == IRenderer::_32bits)
+        {
+            glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, _glMaxTextureDimension, _glMaxTextureDimension);
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, (GLsizei)_tileProvider->getTileDimension(), (GLsizei)_tileProvider->getTileDimension(), GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, tileBitmap->getPixels());
+        }
+        else
+        {
+            glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB5, _glMaxTextureDimension, _glMaxTextureDimension);
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, (GLsizei)_tileProvider->getTileDimension(), (GLsizei)_tileProvider->getTileDimension(), GL_RGB, GL_UNSIGNED_SHORT_5_6_5, tileBitmap->getPixels());
+        }
+        OPENGL_CHECK_RESULT;
+
+        cachedTile->textureId = textureName;
+        _cachedTiles.insert(tileId, cachedTile_);
+        _glTexturesRefCounts.insert(textureName, 1);
+    }
+}
+
+int OsmAnd::Renderer_OpenGL::getCachedTilesCount()
+{
+    return _glTexturesRefCounts.size();
+}
+
+void OsmAnd::Renderer_OpenGL::validateResult()
+{
+    auto result = glGetError();
+    if(result == GL_NO_ERROR)
+        return;
+
+    LogPrintf(LogSeverityLevel::Error, "OpenGL error %08x : %s\n", result, gluErrorString(result));
 }
 
 OsmAnd::Renderer_OpenGL::CachedTile_OpenGL::~CachedTile_OpenGL()
