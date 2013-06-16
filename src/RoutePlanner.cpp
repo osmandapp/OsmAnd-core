@@ -9,6 +9,8 @@
 #include "Common.h"
 #include "Logging.h"
 #include "Utilities.h"
+#include <ctime>
+#include <chrono>
 
 OsmAnd::RoutePlanner::RoutePlanner()
 {
@@ -205,9 +207,7 @@ uint64_t OsmAnd::RoutePlanner::getRoutingTileId( RoutePlannerContext* context, u
         return tileId;
     
     //TODO: perform GC if estimated size is close to limit
-    /*if( memoryLimit == 0){
-        memoryLimit = config.memoryLimitation;
-    }
+    auto memoryLimit = config.memoryLimitation;
     if (getCurrentEstimatedSize() > 0.9 * memoryLimit) {
         int sz1 = getCurrentEstimatedSize();
         long h1 = 0;
@@ -234,7 +234,7 @@ uint64_t OsmAnd::RoutePlanner::getRoutingTileId( RoutePlannerContext* context, u
             long us2 = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
             log.warn("Used memory before " + us1 / mb + "after " + us1 / mb + " of max " + maxMemory() / mb);
         }
-    }*/
+    }
 
     auto itIndexedSubsectionContexts = context->_indexedSubsectionsContexts.find(tileId);
     if(itIndexedSubsectionContexts == context->_indexedSubsectionsContexts.end())
@@ -312,9 +312,10 @@ void OsmAnd::RoutePlanner::loadSubregionContext( RoutePlannerContext::RoutingSub
 {
     const auto wasUnloaded = !context->isLoaded();
     const auto loadsCount = context->getLoadsCounter();
-    /*TODO:
-    long now = System.nanoTime();
-    */
+    if(context->owner->_routeStatistics) {
+        context->owner->_routeStatistics = std::chrono::steady_clock::now();
+        long now = System.nanoTime();
+    }
     context->markLoaded();
     ObfRoutingSection::loadSubsectionData(context->origin.get(), context->subsection, nullptr, nullptr, nullptr,
         [=] (std::shared_ptr<OsmAnd::Model::Road> road)
@@ -448,6 +449,7 @@ bool OsmAnd::RoutePlanner::calculateRoute(
     QList< std::shared_ptr<RouteSegment> >* outResult /*= nullptr*/)
 {
     /*
+     *TODO
     if(ctx.SHOW_GC_SIZE){
         long h1 = ctx.runGCUsedMemory();
         float mb = (1 << 20);
@@ -456,16 +458,23 @@ bool OsmAnd::RoutePlanner::calculateRoute(
     */
     context->_startPoint = from->road->points[from->pointIndex];
     context->_targetPoint = to_->road->points[to_->pointIndex];
+
+    #ifndef ROUTE_STATISTICS
+        context->_routeStatistics = nullptr;
+    #endif
     /*
     refreshProgressDistance(ctx);
     */
-    /*
     // measure time
+    if(context->_routeStatistics) {
+        context->_routeStatistics->timeToLoad = 0;
+        context->_routeStatistics->timeToCalculate = 0;
     ctx.timeToLoad = 0;
     ctx.visitedSegments = 0;
     ctx.memoryOverhead  = 1000;
     ctx.timeToCalculate = System.nanoTime();
-    */
+    con
+    }
 
     if (!qIsNaN(context->owner->_initialHeading))
     {
@@ -525,9 +534,7 @@ bool OsmAnd::RoutePlanner::calculateRoute(
     RoadSegmentsPriorityQueue* pGraphSegments = reverseSearch ? &graphReverseSegments : &graphDirectSegments;
     loadBorderPoints(context);
 
-#if DEBUG_ROUTING || TRACE_ROUTING
-    uint64_t iterations = 0;
-#endif
+
     std::shared_ptr<RoutePlannerContext::RouteCalculationSegment> finalSegment;
     while (!pGraphSegments->empty())
     {

@@ -20,6 +20,7 @@ OsmAnd::RoutePlannerContext::RoutePlannerContext(
     , _initialHeading(initialHeading)
     , sources(sources)
     , configuration(routingConfig)
+    , _routeStatistics(new RouteStatistics)
     , profileContext(new RoutingProfileContext(configuration->routingProfiles[vehicle], options))
 {
     _partialRecalculationDistanceLimit = Utilities::parseArbitraryFloat(configuration->resolveAttribute(vehicle, "recalculateDistanceHelp"), 10000.0f);
@@ -54,7 +55,7 @@ OsmAnd::RoutePlannerContext::RoutingSubsectionContext::~RoutingSubsectionContext
 
 void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::registerRoad( const std::shared_ptr<Model::Road>& road )
 {
-    //TODO:tileStatistics.addObject(ro);
+    //TODO memory :tileStatistics.addObject(ro);
 
     uint32_t idx = 0;
     for(auto itPoint = road->points.begin(); itPoint != road->points.end(); ++itPoint, idx++)
@@ -109,7 +110,7 @@ void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::collectRoads( QList<
     }
 
 
-            /*TODO:
+            /*TODO: to Alexey what is this?
         if(routes != null) {
         } else if(searchResult != null) {
             RouteDataObject[] objects = searchResult.objects;
