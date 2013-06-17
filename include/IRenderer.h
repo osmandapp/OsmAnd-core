@@ -50,30 +50,40 @@ namespace OsmAnd {
             _32bits,
         };
         typedef std::function<void ()> RedrawRequestCallback;
+
+        struct OSMAND_CORE_API Configuration
+        {
+            Configuration();
+
+            std::shared_ptr<IMapTileProvider> tileProvider;
+            PointI windowSize;
+            AreaI viewport;
+            float fieldOfView;
+            float fogDistance;
+            float distanceFromTarget;
+            float azimuth;
+            float elevationAngle;
+            PointI target31;
+            uint32_t zoom;
+            TextureDepth preferredTextureDepth;
+        };
+
     private:
         void tileReadyCallback(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tile);
+        bool _viewIsDirty;
+        bool _tilesCacheInvalidated;
     protected:
         IRenderer();
 
-        std::shared_ptr<IMapTileProvider> _tileProvider;
+        virtual void invalidateConfiguration();
+        QMutex _pendingToActiveConfigMutex;
+        bool _configInvalidated;
+        Configuration _pendingConfig;
+        Configuration _activeConfig;
 
-        PointI _windowSize;
-        AreaI _viewport;
-        float _fieldOfView;
-        float _fogDistance;
-        float _distanceFromTarget;
-        float _azimuth;
-        float _elevationAngle;
-        PointI _target31;
-        uint32_t _zoom;
-        bool _viewIsDirty;
         QSet<TileId> _visibleTiles;
         PointD _targetInTile;
-        bool _tilesCacheInvalidated;
-        TextureDepth _preferredTextureDepth;
-
-        QMutex _renderFrameMutex;
-
+        
         enum {
             TileSide3D = 100,
         };
@@ -89,7 +99,7 @@ namespace OsmAnd {
         };
         TileZoomCache _tilesCache;
         virtual void purgeTilesCache();
-        void cacheMissingTiles();
+        void updateTilesCache();
         virtual void cacheTile(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap) = 0;
 
         QMutex _tilesPendingToCacheMutex;
@@ -101,38 +111,36 @@ namespace OsmAnd {
         };
         QQueue< TilePendingToCache > _tilesPendingToCacheQueue;
         std::array< QSet< TileId >, 32 > _tilesPendingToCache;
+
+        bool _isRenderingInitialized;
+
+        const bool& viewIsDirty;
+        virtual void requestRedraw();
+        
+        const bool& tilesCacheInvalidated;
+        virtual void invalidateTileCache();
+
+        virtual void updateConfiguration();
     public:
         virtual ~IRenderer();
 
         RedrawRequestCallback redrawRequestCallback;
-
-        virtual void setTileProvider(const std::shared_ptr<IMapTileProvider>& tileProvider);
-        const std::shared_ptr<IMapTileProvider>& tileProvider;
-
-        const PointI& windowSize;
-        const AreaI& viewport;
-        const float& fieldOfView;
-        const float& fogDistance;
-        const float& distanceFromTarget;
-        const float& azimuth;
-        const float& elevationAngle;
-        const PointI& target31;
-        const uint32_t& zoom;
+                
+        const Configuration& configuration;
         const QSet<TileId>& visibleTiles;
-
-        virtual void setPreferredTextureDepth(TextureDepth depth);
-        const TextureDepth& preferredTextureDepth;
-
+        
         virtual int getCachedTilesCount() const;
 
-        virtual bool updateViewport(const PointI& windowSize, const AreaI& viewport, float fieldOfView, float viewDepth);
-        virtual bool updateCamera(float distanceFromTarget, float azimuth, float elevationAngle);
-        virtual bool updateMap(const PointI& target31, uint32_t zoom);
+        virtual void setTileProvider(const std::shared_ptr<IMapTileProvider>& tileProvider);
+        virtual void setPreferredTextureDepth(TextureDepth depth);
+        virtual void updateViewport(const PointI& windowSize, const AreaI& viewport, float fieldOfView, float viewDepth);
+        virtual void updateCamera(float distanceFromTarget, float azimuth, float elevationAngle);
+        virtual void updateMap(const PointI& target31, uint32_t zoom);
 
-        const bool& viewIsDirty;
-        virtual void refreshView() = 0;
-
+        const bool& isRenderingInitialized;
+        virtual void initializeRendering() = 0;
         virtual void performRendering() = 0;
+        virtual void releaseRendering() = 0;
     };
 
 #if defined(OSMAND_OPENGL_RENDERER_SUPPORTED)

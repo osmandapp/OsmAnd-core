@@ -70,15 +70,17 @@ namespace OsmAnd {
         virtual void cacheTile(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap);
         void uploadTileToTexture(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap);
         QMap< uint32_t, uint32_t > _glTexturesRefCounts;
+
+        virtual void updateConfiguration();
     public:
         Renderer_OpenGL();
         virtual ~Renderer_OpenGL();
 
-        virtual void refreshView();
-
         virtual int getCachedTilesCount();
 
+        virtual void initializeRendering();
         virtual void performRendering();
+        virtual void releaseRendering();
     };
 
 }

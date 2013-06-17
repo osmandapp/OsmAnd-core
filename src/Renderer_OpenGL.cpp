@@ -41,20 +41,20 @@ OsmAnd::Renderer_OpenGL::~Renderer_OpenGL()
 void OsmAnd::Renderer_OpenGL::computeMatrices()
 {
     // Setup projection
-    GLfloat aspectRatio = static_cast<GLfloat>(viewport.width());
-    auto viewportHeight = viewport.height();
+    GLfloat aspectRatio = static_cast<GLfloat>(_activeConfig.viewport.width());
+    auto viewportHeight = _activeConfig.viewport.height();
     if(viewportHeight > 0)
         aspectRatio /= static_cast<GLfloat>(viewportHeight);
-    _glProjection = glm::perspective(_fieldOfView, aspectRatio, 0.1f, _fogDistance * 1.2f + _distanceFromTarget);
+    _glProjection = glm::perspective(_activeConfig.fieldOfView, aspectRatio, 0.1f, _activeConfig.fogDistance * 1.2f + _activeConfig.distanceFromTarget);
 
     // Setup camera
-    const auto& c0 = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0.0f, -_distanceFromTarget));
-    const auto& c1 = glm::rotate(c0, _elevationAngle, glm::vec3(1.0f, 0.0f, 0.0f));
-    _glModelview = glm::rotate(c1, _azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
+    const auto& c0 = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0.0f, -_activeConfig.distanceFromTarget));
+    const auto& c1 = glm::rotate(c0, _activeConfig.elevationAngle, glm::vec3(1.0f, 0.0f, 0.0f));
+    _glModelview = glm::rotate(c1, _activeConfig.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
     
     // Setup viewport and window
-    _glViewport = _viewport;
-    _glWindowSize = _windowSize;
+    _glViewport = _activeConfig.viewport;
+    _glWindowSize = _activeConfig.windowSize;
 }
 
 void OsmAnd::Renderer_OpenGL::refreshVisibleTileset()
@@ -117,7 +117,7 @@ void OsmAnd::Renderer_OpenGL::refreshVisibleTileset()
     glm::vec3 planeN(0.0f, 1.0f, 0.0f);
 
     // Intersect 4 rays with tile-plane
-    auto clip = _fogDistance * 1.2f + _distanceFromTarget;
+    auto clip = _activeConfig.fogDistance * 1.2f + _activeConfig.distanceFromTarget;
     float tlD, trD, blD, brD;
     bool intersects;
     intersects = rayIntersectPlane(planeN, 0.0f, tlRayD, tln, tlD);
@@ -177,18 +177,18 @@ void OsmAnd::Renderer_OpenGL::refreshVisibleTileset()
     auto xMax = qMax(qMax(p0.x, p1.x), qMax(p2.x, p3.x));
     auto xMin = qMin(qMin(p0.x, p1.x), qMin(p2.x, p3.x));
     PointI centerZ;
-    centerZ.x = _target31.x >> (31 - _zoom);
-    centerZ.y = _target31.y >> (31 - _zoom);
+    centerZ.x = _activeConfig.target31.x >> (31 - _activeConfig.zoom);
+    centerZ.y = _activeConfig.target31.y >> (31 - _activeConfig.zoom);
     for(int32_t y = yMin; y <= yMax; y++)
     {
         for(int32_t x = xMin; x <= xMax; x++)
         {
             TileId tileId;
             tileId.x = centerZ.x + x;
-            if(tileId.x < 0 || tileId.x > (1u << _zoom) - 1)
+            if(tileId.x < 0 || tileId.x > (1u << _activeConfig.zoom) - 1)
                 continue;
             tileId.y = centerZ.y + y;
-            if(tileId.y < 0 || tileId.y > (1u << _zoom) - 1)
+            if(tileId.y < 0 || tileId.y > (1u << _activeConfig.zoom) - 1)
                 continue;
 
             _visibleTiles.insert(tileId);
@@ -196,34 +196,26 @@ void OsmAnd::Renderer_OpenGL::refreshVisibleTileset()
     }
 
     // Compute in-tile offset
-    auto zoomTileMask = ((1u << _zoom) - 1) << (31 - _zoom);
-    auto tileXo31 = _target31.x & zoomTileMask;
-    auto tileYo31 = _target31.y & zoomTileMask;
-    auto div = 1u << (31 - _zoom);
+    auto zoomTileMask = ((1u << _activeConfig.zoom) - 1) << (31 - _activeConfig.zoom);
+    auto tileXo31 = _activeConfig.target31.x & zoomTileMask;
+    auto tileYo31 = _activeConfig.target31.y & zoomTileMask;
+    auto div = 1u << (31 - _activeConfig.zoom);
     if(div > 1)
         div -= 1;
-    _targetInTile.x = static_cast<double>(_target31.x - tileXo31) / div;
-    _targetInTile.y = static_cast<double>(_target31.y - tileYo31) / div;
+    _targetInTile.x = static_cast<double>(_activeConfig.target31.x - tileXo31) / div;
+    _targetInTile.y = static_cast<double>(_activeConfig.target31.y - tileYo31) / div;
 }
 
 void OsmAnd::Renderer_OpenGL::performRendering()
 {
-    if(_viewIsDirty)
+    assert(_isRenderingInitialized);
+
+    if(_configInvalidated)
+        updateConfiguration();
+
+    if(!viewIsDirty)
         return;
 
-    QMutexLocker scopeLock(&_renderFrameMutex);
-
-    if(_glRenderThreadId == nullptr)
-        _glRenderThreadId = QThread::currentThreadId();
-
-    if(glActiveTexture == nullptr)
-        glewInit();
-
-    if(_tilesCacheInvalidated)
-    {
-        purgeTilesCache();
-        _tilesCacheInvalidated = false;
-    }
     {
         QMutexLocker scopeLock(&_tilesPendingToCacheMutex);
 
@@ -242,7 +234,7 @@ void OsmAnd::Renderer_OpenGL::performRendering()
             uploadTileToTexture(pendingTile.tileId, pendingTile.zoom, pendingTile.tileBitmap);
         }
     }
-    cacheMissingTiles();
+    updateTilesCache();
 
     // Setup viewport
     GLint oldViewport[4];
@@ -261,8 +253,8 @@ void OsmAnd::Renderer_OpenGL::performRendering()
     
     // For each visible tile, render it
     PointI centerZ;
-    centerZ.x = _target31.x >> (31 - _zoom);
-    centerZ.y = _target31.y >> (31 - _zoom);
+    centerZ.x = _activeConfig.target31.x >> (31 - _activeConfig.zoom);
+    centerZ.y = _activeConfig.target31.y >> (31 - _activeConfig.zoom);
     for(auto itTileId = _visibleTiles.begin(); itTileId != _visibleTiles.end(); ++itTileId)
     {
         const auto& tileId = *itTileId;
@@ -279,7 +271,7 @@ void OsmAnd::Renderer_OpenGL::performRendering()
         {
             QMutexLocker scopeLock(&_tilesCacheMutex);
 
-            cacheHit = _tilesCache.getTile(_zoom, tileId, cachedTile_);
+            cacheHit = _tilesCache.getTile(_activeConfig.zoom, tileId, cachedTile_);
         }
         
         glPushMatrix();
@@ -353,6 +345,25 @@ void OsmAnd::Renderer_OpenGL::performRendering()
     glViewport(oldViewport[0], oldViewport[1], oldViewport[2], oldViewport[3]);
 }
 
+void OsmAnd::Renderer_OpenGL::initializeRendering()
+{
+    assert(!_isRenderingInitialized);
+
+    glewInit();
+    _glRenderThreadId = QThread::currentThreadId();
+
+    _isRenderingInitialized = true;
+}
+
+void OsmAnd::Renderer_OpenGL::releaseRendering()
+{
+    assert(_isRenderingInitialized);
+
+    purgeTilesCache();
+
+    _isRenderingInitialized = false;
+}
+
 bool OsmAnd::Renderer_OpenGL::rayIntersectPlane( const glm::vec3& planeN, float planeD, const glm::vec3& rayD, const glm::vec3& rayO, float& distance )
 {
     auto alpha = glm::dot(planeN, rayD);
@@ -367,17 +378,12 @@ bool OsmAnd::Renderer_OpenGL::rayIntersectPlane( const glm::vec3& planeN, float 
     return false;
 }
 
-void OsmAnd::Renderer_OpenGL::refreshView()
+void OsmAnd::Renderer_OpenGL::updateConfiguration()
 {
-    if(!_viewIsDirty)
-        return;
-
-    QMutexLocker scopeLock(&_renderFrameMutex);
+    IRenderer::updateConfiguration();
 
     computeMatrices();
     refreshVisibleTileset();
-
-    _viewIsDirty = false;
 }
 
 void OsmAnd::Renderer_OpenGL::cacheTile( const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap )
@@ -419,7 +425,7 @@ void OsmAnd::Renderer_OpenGL::uploadTileToTexture( const TileId& tileId, uint32_
     }
 
     const auto skConfig = tileBitmap->getConfig();
-    assert( _preferredTextureDepth == IRenderer::_32bits ? skConfig == SkBitmap::kARGB_8888_Config : skConfig == SkBitmap::kRGB_565_Config );
+    assert( _activeConfig.preferredTextureDepth == IRenderer::_32bits ? skConfig == SkBitmap::kARGB_8888_Config : skConfig == SkBitmap::kRGB_565_Config );
 
     // Get maximal texture size if not yet determined
     /*if(_glMaxTextureDimension == 0)
@@ -430,7 +436,7 @@ void OsmAnd::Renderer_OpenGL::uploadTileToTexture( const TileId& tileId, uint32_
 
     if(_glMaxTextureDimension != 0)
     {
-        auto tilesPerRow = _glMaxTextureDimension / _tileProvider->getTileDimension();
+        auto tilesPerRow = _glMaxTextureDimension / _activeConfig.tileProvider->getTileDimension();
 
         // If we have no unfinished atlas yet, create one
         uint32_t freeSlotIndex;
@@ -449,7 +455,7 @@ void OsmAnd::Renderer_OpenGL::uploadTileToTexture( const TileId& tileId, uint32_
             assert(textureName != 0);
             glBindTexture(GL_TEXTURE_2D, textureName);
             OPENGL_CHECK_RESULT;
-            glTexStorage2D(GL_TEXTURE_2D, 1, _preferredTextureDepth == IRenderer::_32bits ? GL_RGBA8 : GL_RGB5, _glMaxTextureDimension, _glMaxTextureDimension);
+            glTexStorage2D(GL_TEXTURE_2D, 1, _activeConfig.preferredTextureDepth == IRenderer::_32bits ? GL_RGBA8 : GL_RGB5, _glMaxTextureDimension, _glMaxTextureDimension);
             OPENGL_CHECK_RESULT;
             _unfinishedAtlasFirstFreeSlot = 0;
             _glTexturesRefCounts.insert(textureName, 0);
@@ -470,12 +476,12 @@ void OsmAnd::Renderer_OpenGL::uploadTileToTexture( const TileId& tileId, uint32_
         OPENGL_CHECK_RESULT;
         glPixelStorei(GL_UNPACK_ROW_LENGTH, tileBitmap->rowBytesAsPixels());
         OPENGL_CHECK_RESULT;
-        auto yOffset = (freeSlotIndex / tilesPerRow) * _tileProvider->getTileDimension();
-        auto xOffset = (freeSlotIndex % tilesPerRow) * _tileProvider->getTileDimension();
+        auto yOffset = (freeSlotIndex / tilesPerRow) * _activeConfig.tileProvider->getTileDimension();
+        auto xOffset = (freeSlotIndex % tilesPerRow) * _activeConfig.tileProvider->getTileDimension();
         glTexSubImage2D(GL_TEXTURE_2D, 0,
-            xOffset, yOffset, (GLsizei)_tileProvider->getTileDimension(), (GLsizei)_tileProvider->getTileDimension(),
-            _preferredTextureDepth == IRenderer::_32bits ? GL_BGRA : GL_RGB,
-            _preferredTextureDepth == IRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
+            xOffset, yOffset, (GLsizei)_activeConfig.tileProvider->getTileDimension(), (GLsizei)_activeConfig.tileProvider->getTileDimension(),
+            _activeConfig.preferredTextureDepth == IRenderer::_32bits ? GL_BGRA : GL_RGB,
+            _activeConfig.preferredTextureDepth == IRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
             tileBitmap->getPixels());
         OPENGL_CHECK_RESULT;
 
@@ -495,15 +501,15 @@ void OsmAnd::Renderer_OpenGL::uploadTileToTexture( const TileId& tileId, uint32_
         OPENGL_CHECK_RESULT;
         glPixelStorei(GL_UNPACK_ROW_LENGTH, tileBitmap->rowBytesAsPixels());
         OPENGL_CHECK_RESULT;
-        if(_preferredTextureDepth == IRenderer::_32bits)
+        if(_activeConfig.preferredTextureDepth == IRenderer::_32bits)
         {
-            glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, _tileProvider->getTileDimension(), _tileProvider->getTileDimension());
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, (GLsizei)_tileProvider->getTileDimension(), (GLsizei)_tileProvider->getTileDimension(), GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, tileBitmap->getPixels());
+            glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, _activeConfig.tileProvider->getTileDimension(), _activeConfig.tileProvider->getTileDimension());
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, (GLsizei)_activeConfig.tileProvider->getTileDimension(), (GLsizei)_activeConfig.tileProvider->getTileDimension(), GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, tileBitmap->getPixels());
         }
         else
         {
-            glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB5, _tileProvider->getTileDimension(), _tileProvider->getTileDimension());
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, (GLsizei)_tileProvider->getTileDimension(), (GLsizei)_tileProvider->getTileDimension(), GL_RGB, GL_UNSIGNED_SHORT_5_6_5, tileBitmap->getPixels());
+            glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB5, _activeConfig.tileProvider->getTileDimension(), _activeConfig.tileProvider->getTileDimension());
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, (GLsizei)_activeConfig.tileProvider->getTileDimension(), (GLsizei)_activeConfig.tileProvider->getTileDimension(), GL_RGB, GL_UNSIGNED_SHORT_5_6_5, tileBitmap->getPixels());
         }
         OPENGL_CHECK_RESULT;
 
