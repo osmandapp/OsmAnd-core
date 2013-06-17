@@ -19,9 +19,11 @@ OsmAnd::OnlineMapRasterTileProvider::OnlineMapRasterTileProvider(const QString& 
     , _minZoom(minZoom_)
     , _maxZoom(maxZoom_)
     , _maxConcurrentDownloads(maxConcurrentDownloads_)
-    , _concurrentDownloadsCounter(0)
+    , _currentDownloadsMutex(QMutex::Recursive)
     , _tileDimension(0)
+    , _localCacheAccessMutex(QMutex::Recursive)
     , _networkAccessAllowed(true)
+    , _downloadQueueMutex(QMutex::Recursive)
     , localCachePath(_localCachePath)
     , networkAccessAllowed(_networkAccessAllowed)
 {
@@ -33,6 +35,7 @@ OsmAnd::OnlineMapRasterTileProvider::~OnlineMapRasterTileProvider()
 
 void OsmAnd::OnlineMapRasterTileProvider::setLocalCachePath( const QDir& localCachePath )
 {
+    QMutexLocker scopeLock(&_localCacheAccessMutex);
     _localCachePath.reset(new QDir(localCachePath));
 }
 
@@ -46,6 +49,8 @@ bool OsmAnd::OnlineMapRasterTileProvider::obtainTile(
     std::shared_ptr<SkBitmap>& tileBitmap,
     SkBitmap::Config preferredConfig )
 {
+    QMutexLocker scopeLock(&_localCacheAccessMutex);
+
     if(!_localCachePath)
         return false;
 
@@ -103,23 +108,28 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTile( const QUrl& url, const Til
         return;
 
     {
-        QMutexLocker scopeLock(&_downloadsMutex);
-        if(_pendingTileIds.contains(tileId))
+        QMutexLocker scopeLock(&_currentDownloadsMutex);
+        if(_currentDownloads.contains(tileId))
             return;
-        _pendingTileIds.insert(tileId);
-        if(_maxConcurrentDownloads != 0 && _concurrentDownloadsCounter == _maxConcurrentDownloads)
+        if(_currentDownloads.size() == _maxConcurrentDownloads)
         {
+            QMutexLocker scopeLock(&_downloadQueueMutex);
+            if(_enqueuedTileIds.contains(tileId))
+                return;
+
             TileRequest tileRequest;
             tileRequest.sourceUrl = url;
             tileRequest.tileId = tileId;
             tileRequest.zoom = zoom;
             tileRequest.callback = receiverCallback;
             tileRequest.preferredConfig = preferredConfig;
+           
             _tileRequestsQueue.enqueue(tileRequest);
-            
+            _enqueuedTileIds.insert(tileId);
+        
             return;
         }
-        _concurrentDownloadsCounter++;
+        _currentDownloads.insert(tileId);
     }
 
     QCoreApplication::postEvent(gMainThreadTaskHost.get(), new QMainThreadTaskEvent(
@@ -135,16 +145,15 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTile( const QUrl& url, const Til
             QObject::connect(reply, &QNetworkReply::finished,
                 [this, tileId, zoom, reply, receiverCallback, preferredConfig] ()
                 {
-                    {
-                        QMutexLocker scopeLock(&_downloadsMutex);
-                        _pendingTileIds.remove(tileId);
-                        _concurrentDownloadsCounter--;
-                    }
-
                     auto redirectUrl = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
                     if(!redirectUrl.isEmpty())
                     {
-                        obtainTile(redirectUrl, tileId, zoom, receiverCallback, preferredConfig);
+                        {
+                            QMutexLocker scopeLock(&_currentDownloadsMutex);
+                            _currentDownloads.remove(tileId);
+
+                            obtainTile(redirectUrl, tileId, zoom, receiverCallback, preferredConfig);
+                        }
 
                         reply->deleteLater();
                         return;
@@ -153,11 +162,27 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTile( const QUrl& url, const Til
                     handleNetworkReply(reply, tileId, zoom, receiverCallback, preferredConfig);
                     reply->deleteLater();
 
-                    if(!_tileRequestsQueue.isEmpty())
                     {
-                        const auto& request = _tileRequestsQueue.dequeue();
-                        _pendingTileIds.remove(tileId);
-                        obtainTile(request.sourceUrl, request.tileId, request.zoom, request.callback, request.preferredConfig);
+                        QMutexLocker scopeLock(&_currentDownloadsMutex);
+                        _currentDownloads.remove(tileId);
+                    }
+
+                    {
+                        QMutexLocker scopeLock(&_downloadQueueMutex);
+                        
+                        LogPrintf(LogSeverityLevel::Info, "Tile downloading queue size %d\n", _tileRequestsQueue.size());
+                        while(!_tileRequestsQueue.isEmpty())
+                        {
+                            {
+                                QMutexLocker scopeLock(&_currentDownloadsMutex);
+                                if(_currentDownloads.size() == _maxConcurrentDownloads)
+                                    break;
+                            }
+
+                            const auto& request = _tileRequestsQueue.dequeue();
+                            _enqueuedTileIds.remove(request.tileId);
+                            obtainTile(request.sourceUrl, request.tileId, request.zoom, request.callback, request.preferredConfig);
+                        }
                     }
                 }
             );
@@ -177,6 +202,8 @@ void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* rep
         // 404 means that this tile does not exist, so create a zero file
         if(httpStatus == 404)
         {
+            QMutexLocker scopeLock(&_localCacheAccessMutex);
+
             if(_localCachePath && _localCachePath->exists())
             {
                 // Save to a file
@@ -200,19 +227,23 @@ void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* rep
     LogPrintf(LogSeverityLevel::Warning, "Downloaded tile from %s\n", reply->request().url().toString().toStdString().c_str());
     const auto& data = reply->readAll();
 
-    if(_localCachePath && _localCachePath->exists())
     {
-        // Save to a file
-        const auto& subPath = _id + QDir::separator() +
-            QString::number(zoom) + QDir::separator() +
-            QString::number(tileId.x) + QDir::separator();
-        _localCachePath->mkpath(subPath);
-        const auto& fullPath = _localCachePath->filePath(subPath + QString::number(tileId.y) + QString::fromLatin1(".tile"));
-        QFile tileFile(fullPath);
-        if(tileFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        QMutexLocker scopeLock(&_localCacheAccessMutex);
+
+        if(_localCachePath && _localCachePath->exists())
         {
-            tileFile.write(data);
-            tileFile.close();
+            // Save to a file
+            const auto& subPath = _id + QDir::separator() +
+                QString::number(zoom) + QDir::separator() +
+                QString::number(tileId.x) + QDir::separator();
+            _localCachePath->mkpath(subPath);
+            const auto& fullPath = _localCachePath->filePath(subPath + QString::number(tileId.y) + QString::fromLatin1(".tile"));
+            QFile tileFile(fullPath);
+            if(tileFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+            {
+                tileFile.write(data);
+                tileFile.close();
+            }
         }
     }
 

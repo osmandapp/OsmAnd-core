@@ -72,6 +72,8 @@ namespace OsmAnd {
         bool _tilesCacheInvalidated;
         TextureDepth _preferredTextureDepth;
 
+        QMutex _renderFrameMutex;
+
         enum {
             TileSide3D = 100,
         };
@@ -79,26 +81,26 @@ namespace OsmAnd {
         virtual void computeMatrices() = 0;
         virtual void refreshVisibleTileset() = 0;
         
+        QMutex _tilesCacheMutex;
         struct OSMAND_CORE_API CachedTile : TileZoomCache::Tile
         {
             CachedTile(const uint32_t& zoom, const TileId& id, const size_t& usedMemory);
             virtual ~CachedTile();
         };
-        QMutex _tileCacheMutex;
         TileZoomCache _tilesCache;
         virtual void purgeTilesCache();
         void cacheMissingTiles();
         virtual void cacheTile(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap) = 0;
 
-        struct OSMAND_CORE_API PendingTile
+        QMutex _tilesPendingToCacheMutex;
+        struct OSMAND_CORE_API TilePendingToCache
         {
             TileId tileId;
             uint32_t zoom;
             std::shared_ptr<SkBitmap> tileBitmap;
         };
-        QMutex _pendingTilesMutex;
-        QQueue< PendingTile > _pendingTilesQueue;
-        std::array< QSet< TileId >, 32 > _pendingTiles;
+        QQueue< TilePendingToCache > _tilesPendingToCacheQueue;
+        std::array< QSet< TileId >, 32 > _tilesPendingToCache;
     public:
         virtual ~IRenderer();
 

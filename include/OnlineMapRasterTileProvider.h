@@ -52,14 +52,17 @@ namespace OsmAnd {
         uint32_t _minZoom;
         uint32_t _maxZoom;
         uint32_t _maxConcurrentDownloads;
-        QMutex _downloadsMutex;
-        uint32_t _concurrentDownloadsCounter;
-
+        QMutex _currentDownloadsMutex;
+        QSet<TileId> _currentDownloads;
+        
         uint32_t _tileDimension;
 
+        QMutex _localCacheAccessMutex;
         std::shared_ptr<QDir> _localCachePath;
+
         bool _networkAccessAllowed;
 
+        QMutex _downloadQueueMutex;
         struct TileRequest
         {
             QUrl sourceUrl;
@@ -69,7 +72,7 @@ namespace OsmAnd {
             SkBitmap::Config preferredConfig;
         };
         QQueue< TileRequest > _tileRequestsQueue;
-        QSet< TileId > _pendingTileIds;
+        QSet< TileId > _enqueuedTileIds;
 
         void handleNetworkReply(QNetworkReply* reply, const TileId& tileId, uint32_t zoom, TileReceiverCallback callback, SkBitmap::Config preferredConfig);
     public:

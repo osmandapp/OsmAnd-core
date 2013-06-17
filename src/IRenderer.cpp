@@ -19,6 +19,9 @@ OsmAnd::IRenderer::IRenderer()
     , _viewIsDirty(true)
     , _tilesCacheInvalidated(false)
     , _preferredTextureDepth(TextureDepth::_16bits)
+    , _renderFrameMutex(QMutex::Recursive)
+    , _tilesCacheMutex(QMutex::Recursive)
+    , _tilesPendingToCacheMutex(QMutex::Recursive)
     , tileProvider(_tileProvider)
     , windowSize(_windowSize)
     , viewport(_viewport)
@@ -41,6 +44,8 @@ OsmAnd::IRenderer::~IRenderer()
 
 void OsmAnd::IRenderer::setTileProvider( const std::shared_ptr<IMapTileProvider>& source )
 {
+    QMutexLocker scopeLock(&_renderFrameMutex);
+
     _tileProvider = source;
     _tilesCacheInvalidated = true;
     if(redrawRequestCallback)
@@ -49,6 +54,8 @@ void OsmAnd::IRenderer::setTileProvider( const std::shared_ptr<IMapTileProvider>
 
 bool OsmAnd::IRenderer::updateViewport( const PointI& windowSize, const AreaI& viewport, float fieldOfView, float fogDistance )
 {
+    QMutexLocker scopeLock(&_renderFrameMutex);
+
     _viewIsDirty = _viewIsDirty || (_windowSize != windowSize);
     _viewIsDirty = _viewIsDirty || (_viewport != viewport);
     _viewIsDirty = _viewIsDirty || !qFuzzyCompare(_fieldOfView, fieldOfView);
@@ -64,6 +71,8 @@ bool OsmAnd::IRenderer::updateViewport( const PointI& windowSize, const AreaI& v
 
 bool OsmAnd::IRenderer::updateCamera( float distanceFromTarget, float azimuth, float elevationAngle )
 {
+    QMutexLocker scopeLock(&_renderFrameMutex);
+
     _viewIsDirty = _viewIsDirty || !qFuzzyCompare(_distanceFromTarget, distanceFromTarget);
     _viewIsDirty = _viewIsDirty || !qFuzzyCompare(_azimuth, azimuth);
     _viewIsDirty = _viewIsDirty || !qFuzzyCompare(_elevationAngle, elevationAngle);
@@ -79,6 +88,8 @@ bool OsmAnd::IRenderer::updateMap( const PointI& target31, uint32_t zoom )
 {
     assert(zoom >= 0 && zoom <= 31);
 
+    QMutexLocker scopeLock(&_renderFrameMutex);
+
     _viewIsDirty = _viewIsDirty || (_target31 != target31);
     _viewIsDirty = _viewIsDirty || (_zoom != zoom);
 
@@ -90,8 +101,10 @@ bool OsmAnd::IRenderer::updateMap( const PointI& target31, uint32_t zoom )
 
 void OsmAnd::IRenderer::cacheMissingTiles()
 {
-    auto callback = std::bind(&IRenderer::tileReadyCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    QMutexLocker scopeLock(&_renderFrameMutex);
 
+    auto callback = std::bind(&IRenderer::tileReadyCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    
     for(auto itTileId = _visibleTiles.begin(); itTileId != _visibleTiles.end(); ++itTileId)
     {
         const auto& tileId = *itTileId;
@@ -99,10 +112,13 @@ void OsmAnd::IRenderer::cacheMissingTiles()
         // Obtain tile from cache
         bool cacheHit;
         {
-            QMutexLocker scopeLock(&_tileCacheMutex);
-            QMutexLocker scopeLock2(&_pendingTilesMutex);
-
-            cacheHit = _tilesCache.contains(_zoom, tileId) || _pendingTiles[_zoom].contains(tileId);
+            QMutexLocker scopeLock(&_tilesCacheMutex);
+            cacheHit = _tilesCache.contains(_zoom, tileId);
+        }
+        if(!cacheHit)
+        {
+            QMutexLocker scopeLock(&_tilesPendingToCacheMutex);
+            cacheHit = _tilesPendingToCache[_zoom].contains(tileId);
         }
 
         if(cacheHit)
@@ -124,6 +140,8 @@ void OsmAnd::IRenderer::cacheMissingTiles()
 
 void OsmAnd::IRenderer::tileReadyCallback( const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap )
 {
+    QMutexLocker scopeLock(&_tilesCacheMutex);
+
     cacheTile(tileId, zoom, tileBitmap);
 
     _viewIsDirty = true;
@@ -133,8 +151,18 @@ void OsmAnd::IRenderer::tileReadyCallback( const TileId& tileId, uint32_t zoom, 
 
 void OsmAnd::IRenderer::purgeTilesCache()
 {
-    QMutexLocker scopeLock(&_tileCacheMutex);
-    _tilesCache.clearAll();
+    {
+        QMutexLocker scopeLock(&_tilesCacheMutex);
+        _tilesCache.clearAll();
+    }
+    {
+        QMutexLocker scopeLock(&_tilesPendingToCacheMutex);
+        for(auto itLevel = _tilesPendingToCache.begin(); itLevel != _tilesPendingToCache.end(); ++itLevel)
+        {
+            auto& level = *itLevel;
+            level.clear();
+        }
+    }
 }
 
 int OsmAnd::IRenderer::getCachedTilesCount() const
@@ -144,6 +172,8 @@ int OsmAnd::IRenderer::getCachedTilesCount() const
 
 void OsmAnd::IRenderer::setPreferredTextureDepth( TextureDepth depth )
 {
+    QMutexLocker scopeLock(&_renderFrameMutex);
+
     _preferredTextureDepth = depth;
     _tilesCacheInvalidated = true;
     if(redrawRequestCallback)

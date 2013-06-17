@@ -30,6 +30,7 @@
 OsmAnd::Renderer_OpenGL::Renderer_OpenGL()
     : _glMaxTextureDimension(0)
     , _lastUnfinishedAtlas(0)
+    , _glRenderThreadId(nullptr)
 {
 }
 
@@ -210,34 +211,36 @@ void OsmAnd::Renderer_OpenGL::performRendering()
     if(_viewIsDirty)
         return;
 
+    QMutexLocker scopeLock(&_renderFrameMutex);
+
     if(_glRenderThreadId == nullptr)
         _glRenderThreadId = QThread::currentThreadId();
 
     if(glActiveTexture == nullptr)
         glewInit();
 
-    {
-        QMutexLocker scopeLock(&_pendingTilesMutex);
-
-        if(_tilesCacheInvalidated)
-        {
-            _pendingTilesQueue.clear();
-        }
-        else
-        {
-            while(!_pendingTilesQueue.isEmpty())
-            {
-                const auto& pendingTile = _pendingTilesQueue.dequeue();
-                _pendingTiles[pendingTile.zoom].remove(pendingTile.tileId);
-
-                uploadTileToTexture(pendingTile.tileId, pendingTile.zoom, pendingTile.tileBitmap);
-            }
-        }
-    }
     if(_tilesCacheInvalidated)
     {
         purgeTilesCache();
         _tilesCacheInvalidated = false;
+    }
+    {
+        QMutexLocker scopeLock(&_tilesPendingToCacheMutex);
+
+        while(!_tilesPendingToCacheQueue.isEmpty())
+        {
+            const auto& pendingTile = _tilesPendingToCacheQueue.dequeue();
+            _tilesPendingToCache[pendingTile.zoom].remove(pendingTile.tileId);
+
+            // This tile may already have been loaded earlier (since it's already on disk!)
+            {
+                QMutexLocker scopeLock(&_tilesCacheMutex);
+                if(_tilesCache.contains(pendingTile.zoom, pendingTile.tileId))
+                    continue;
+            }
+            
+            uploadTileToTexture(pendingTile.tileId, pendingTile.zoom, pendingTile.tileBitmap);
+        }
     }
     cacheMissingTiles();
 
@@ -271,35 +274,36 @@ void OsmAnd::Renderer_OpenGL::performRendering()
         float ty = (y - _targetInTile.y) * TileSide3D;
 
         // Obtain tile from cache
-        std::shared_ptr<TileZoomCache::Tile> cachedtile;
+        std::shared_ptr<TileZoomCache::Tile> cachedTile_;
         bool cacheHit;
         {
-            QMutexLocker scopeLock(&_tileCacheMutex);
-            cacheHit = _tilesCache.getTile(_zoom, tileId, cachedtile);
-        }
+            QMutexLocker scopeLock(&_tilesCacheMutex);
 
+            cacheHit = _tilesCache.getTile(_zoom, tileId, cachedTile_);
+        }
+        
         glPushMatrix();
         glTranslatef(tx, 0.0f, ty);
         if(!cacheHit)
         {
             //TODO: render stub
             glBegin(GL_QUADS);
-                glColor3d(1,0,0);
-                glVertex3f(0,0,TileSide3D);
+            glColor3d(1,0,0);
+            glVertex3f(0,0,TileSide3D);
 
-                glColor3d(1,1,0);
-                glVertex3f(TileSide3D,0,TileSide3D);
+            glColor3d(1,1,0);
+            glVertex3f(TileSide3D,0,TileSide3D);
 
-                glColor3d(1,1,1);
-                glVertex3f(TileSide3D,0,0);
+            glColor3d(1,1,1);
+            glVertex3f(TileSide3D,0,0);
 
-                glColor3d(0,1,1);
-                glVertex3f(0,0,0);
+            glColor3d(0,1,1);
+            glVertex3f(0,0,0);
             glEnd();
         }
         else
         {
-            auto cachedTile = static_cast<CachedTile_OpenGL*>(cachedtile.get());
+            auto cachedTile = static_cast<CachedTile_OpenGL*>(cachedTile_.get());
             if(cachedTile->textureId == 0)
             {
                 //TODO: render non existent tile
@@ -318,17 +322,17 @@ void OsmAnd::Renderer_OpenGL::performRendering()
                 glEnable(GL_TEXTURE_2D);
                 //////////////////////////////////////////////////////////////////////////
                 glBegin(GL_QUADS);
-                    glTexCoord2f(0, 1);
-                    glVertex3f(0,0,TileSide3D);
+                glTexCoord2f(0, 1);
+                glVertex3f(0,0,TileSide3D);
 
-                    glTexCoord2f(1, 1);
-                    glVertex3f(TileSide3D,0,TileSide3D);
+                glTexCoord2f(1, 1);
+                glVertex3f(TileSide3D,0,TileSide3D);
 
-                    glTexCoord2f(1, 0);
-                    glVertex3f(TileSide3D,0,0);
+                glTexCoord2f(1, 0);
+                glVertex3f(TileSide3D,0,0);
 
-                    glTexCoord2f(0, 0);
-                    glVertex3f(0,0,0);
+                glTexCoord2f(0, 0);
+                glVertex3f(0,0,0);
                 glEnd();
                 //////////////////////////////////////////////////////////////////////////
                 glDisable(GL_TEXTURE_2D);
@@ -336,7 +340,7 @@ void OsmAnd::Renderer_OpenGL::performRendering()
         }
         glPopMatrix();
     }
-
+    
     // Revert camera
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
@@ -368,6 +372,8 @@ void OsmAnd::Renderer_OpenGL::refreshView()
     if(!_viewIsDirty)
         return;
 
+    QMutexLocker scopeLock(&_renderFrameMutex);
+
     computeMatrices();
     refreshVisibleTileset();
 
@@ -380,16 +386,16 @@ void OsmAnd::Renderer_OpenGL::cacheTile( const TileId& tileId, uint32_t zoom, co
 
     if(_glRenderThreadId != QThread::currentThreadId())
     {
-        QMutexLocker scopeLock(&_pendingTilesMutex);
+        QMutexLocker scopeLock(&_tilesPendingToCacheMutex);
 
-        assert(!_pendingTiles[zoom].contains(tileId));
+        assert(!_tilesPendingToCache[zoom].contains(tileId));
 
-        PendingTile pendingTile;
+        TilePendingToCache pendingTile;
         pendingTile.tileId = tileId;
         pendingTile.zoom = zoom;
         pendingTile.tileBitmap = tileBitmap;
-        _pendingTilesQueue.enqueue(pendingTile);
-        _pendingTiles[zoom].insert(tileId);
+        _tilesPendingToCacheQueue.enqueue(pendingTile);
+        _tilesPendingToCache[zoom].insert(tileId);
 
         return;
     }
@@ -400,6 +406,8 @@ void OsmAnd::Renderer_OpenGL::cacheTile( const TileId& tileId, uint32_t zoom, co
 void OsmAnd::Renderer_OpenGL::uploadTileToTexture( const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap )
 {
     assert(!_tilesCache.contains(zoom, tileId));
+
+    LogPrintf(LogSeverityLevel::Debug, "Uploading tile %dx%d@%d as texture\n", tileId.x, tileId.y, zoom);
 
     if(!tileBitmap)
     {
