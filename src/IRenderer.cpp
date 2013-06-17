@@ -102,7 +102,7 @@ void OsmAnd::IRenderer::cacheMissingTiles()
             QMutexLocker scopeLock(&_tileCacheMutex);
             QMutexLocker scopeLock2(&_pendingTilesMutex);
 
-            cacheHit = _cachedTiles.contains(tileId) || _pendingTiles.contains(tileId);
+            cacheHit = _tilesCache.contains(_zoom, tileId) || _pendingTiles[_zoom].contains(tileId);
         }
 
         if(cacheHit)
@@ -122,7 +122,7 @@ void OsmAnd::IRenderer::cacheMissingTiles()
     }
 }
 
-void OsmAnd::IRenderer::tileReadyCallback( const uint64_t& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap )
+void OsmAnd::IRenderer::tileReadyCallback( const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap )
 {
     cacheTile(tileId, zoom, tileBitmap);
 
@@ -134,12 +134,12 @@ void OsmAnd::IRenderer::tileReadyCallback( const uint64_t& tileId, uint32_t zoom
 void OsmAnd::IRenderer::purgeTilesCache()
 {
     QMutexLocker scopeLock(&_tileCacheMutex);
-    _cachedTiles.clear();
+    _tilesCache.clearAll();
 }
 
 int OsmAnd::IRenderer::getCachedTilesCount() const
 {
-    return _cachedTiles.size();
+    return _tilesCache.tilesCount;
 }
 
 void OsmAnd::IRenderer::setPreferredTextureDepth( TextureDepth depth )
@@ -148,6 +148,11 @@ void OsmAnd::IRenderer::setPreferredTextureDepth( TextureDepth depth )
     _tilesCacheInvalidated = true;
     if(redrawRequestCallback)
         redrawRequestCallback();
+}
+
+OsmAnd::IRenderer::CachedTile::CachedTile( const uint32_t& zoom, const TileId& id, const size_t& usedMemory )
+    : TileZoomCache::Tile(zoom, id, usedMemory)
+{
 }
 
 OsmAnd::IRenderer::CachedTile::~CachedTile()

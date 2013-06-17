@@ -59,7 +59,7 @@ namespace OsmAnd {
 
         struct CachedZoomLevel
         {
-            QMap< uint64_t, std::shared_ptr<CachedTile> > _cachedTiles;
+            QMap< TileId, std::shared_ptr<CachedTile> > _cachedTiles;
 
             void obtainObjects(QList< std::shared_ptr<OsmAnd::Model::MapObject> >& resultOut, const AreaI& area31, uint32_t zoom, IQueryController* controller) const;
         };

@@ -25,6 +25,7 @@
 #include <stdint.h>
 #include <memory>
 #include <functional>
+#include <array>
 
 #include <QQueue>
 #include <QSet>
@@ -35,6 +36,7 @@
 
 #include <OsmAndCore.h>
 #include <CommonTypes.h>
+#include <TileZoomCache.h>
 
 namespace OsmAnd {
 
@@ -49,7 +51,7 @@ namespace OsmAnd {
         };
         typedef std::function<void ()> RedrawRequestCallback;
     private:
-        void tileReadyCallback(const uint64_t& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tile);
+        void tileReadyCallback(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tile);
     protected:
         IRenderer();
 
@@ -65,7 +67,7 @@ namespace OsmAnd {
         PointI _target31;
         uint32_t _zoom;
         bool _viewIsDirty;
-        QSet<uint64_t> _visibleTiles;
+        QSet<TileId> _visibleTiles;
         PointD _targetInTile;
         bool _tilesCacheInvalidated;
         TextureDepth _preferredTextureDepth;
@@ -77,25 +79,26 @@ namespace OsmAnd {
         virtual void computeMatrices() = 0;
         virtual void refreshVisibleTileset() = 0;
         
-        struct OSMAND_CORE_API CachedTile
+        struct OSMAND_CORE_API CachedTile : TileZoomCache::Tile
         {
+            CachedTile(const uint32_t& zoom, const TileId& id, const size_t& usedMemory);
             virtual ~CachedTile();
         };
         QMutex _tileCacheMutex;
-        QMap< uint64_t, std::shared_ptr<CachedTile> > _cachedTiles;//TODO: caching should be done by more complex spherical caching
+        TileZoomCache _tilesCache;
         virtual void purgeTilesCache();
         void cacheMissingTiles();
-        virtual void cacheTile(const uint64_t& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap) = 0;
+        virtual void cacheTile(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap) = 0;
 
-        struct PendingTile
+        struct OSMAND_CORE_API PendingTile
         {
-            uint64_t tileId;
+            TileId tileId;
             uint32_t zoom;
             std::shared_ptr<SkBitmap> tileBitmap;
         };
         QMutex _pendingTilesMutex;
         QQueue< PendingTile > _pendingTilesQueue;
-        QSet< uint64_t > _pendingTiles;
+        std::array< QSet< TileId >, 32 > _pendingTiles;
     public:
         virtual ~IRenderer();
 
@@ -113,7 +116,7 @@ namespace OsmAnd {
         const float& elevationAngle;
         const PointI& target31;
         const uint32_t& zoom;
-        const QSet<uint64_t>& visibleTiles;
+        const QSet<TileId>& visibleTiles;
 
         virtual void setPreferredTextureDepth(TextureDepth depth);
         const TextureDepth& preferredTextureDepth;

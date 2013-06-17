@@ -80,8 +80,10 @@ bool OsmAnd::MapDataCache::isCached( const AreaI& area31, uint32_t zoom, IQueryC
             if(controller && controller->isAborted())
                 return false;
 
-            const uint64_t tileId = (static_cast<uint64_t>(x) << 32) | y;
-
+            TileId tileId;
+            tileId.x = x;
+            tileId.y = y;
+            
             if(!cachedLevel._cachedTiles.contains(tileId))
                 return false;
         }
@@ -126,7 +128,9 @@ void OsmAnd::MapDataCache::cacheObjects( const AreaI& area31, uint32_t zoom, IQu
             if(controller && controller->isAborted())
                 return;
 
-            const uint64_t tileId = (static_cast<uint64_t>(x) << 32) | y;
+            TileId tileId;
+            tileId.x = x;
+            tileId.y = y;
 
             if(cachedLevel._cachedTiles.contains(tileId))
                 continue;
@@ -207,7 +211,9 @@ void OsmAnd::MapDataCache::CachedZoomLevel::obtainObjects( QList< std::shared_pt
             if(controller && controller->isAborted())
                 return;
 
-            const uint64_t tileId = (static_cast<uint64_t>(x) << 32) | y;
+            TileId tileId;
+            tileId.x = x;
+            tileId.y = y;
 
             const auto& itTile = _cachedTiles.find(tileId);
             const auto& tile = *itTile;

@@ -36,7 +36,7 @@ namespace OsmAnd {
     class OSMAND_CORE_API IMapTileProvider
     {
     public:
-        typedef std::function<void (const uint64_t& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tile)> TileReceiverCallback;
+        typedef std::function<void (const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tile)> TileReceiverCallback;
     private:
     protected:
         IMapTileProvider();
@@ -46,11 +46,11 @@ namespace OsmAnd {
         virtual uint32_t getTileDimension() const = 0;
 
         virtual bool obtainTile(
-            const uint64_t& tileId, uint32_t zoom,
+            const TileId& tileId, uint32_t zoom,
             std::shared_ptr<SkBitmap>& tile,
             SkBitmap::Config preferredConfig) = 0;
         virtual void obtainTile(
-            const uint64_t& tileId, uint32_t zoom,
+            const TileId& tileId, uint32_t zoom,
             TileReceiverCallback receiverCallback,
             SkBitmap::Config preferredConfig) = 0;
     };

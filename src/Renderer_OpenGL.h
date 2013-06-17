@@ -60,14 +60,15 @@ namespace OsmAnd {
 
         struct OSMAND_CORE_API CachedTile_OpenGL : public IRenderer::CachedTile
         {
+            CachedTile_OpenGL(Renderer_OpenGL* owner, const uint32_t& zoom, const TileId& id, const size_t& usedMemory, uint32_t textureId, uint32_t atlasSlotIndex);
             virtual ~CachedTile_OpenGL();
 
-            Renderer_OpenGL* owner;
-            uint32_t textureId;
-            uint32_t atlasSlotIndex;
+            Renderer_OpenGL* const owner;
+            const uint32_t textureId;
+            const uint32_t atlasSlotIndex;
         };
-        virtual void cacheTile(const uint64_t& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap);
-        void uploadTileToTexture(const uint64_t& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap);
+        virtual void cacheTile(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap);
+        void uploadTileToTexture(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap);
         QMap< uint32_t, uint32_t > _glTexturesRefCounts;
     public:
         Renderer_OpenGL();

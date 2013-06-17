@@ -63,15 +63,15 @@ namespace OsmAnd {
         struct TileRequest
         {
             QUrl sourceUrl;
-            uint64_t tileId;
+            TileId tileId;
             uint32_t zoom;
             TileReceiverCallback callback;
             SkBitmap::Config preferredConfig;
         };
         QQueue< TileRequest > _tileRequestsQueue;
-        QSet< uint64_t > _pendingTileIds;
+        QSet< TileId > _pendingTileIds;
 
-        void handleNetworkReply(QNetworkReply* reply, const uint64_t& tileId, uint32_t zoom, TileReceiverCallback callback, SkBitmap::Config preferredConfig);
+        void handleNetworkReply(QNetworkReply* reply, const TileId& tileId, uint32_t zoom, TileReceiverCallback callback, SkBitmap::Config preferredConfig);
     public:
         OnlineMapRasterTileProvider(const QString& id, const QString& urlPattern, uint32_t minZoom = 0, uint32_t maxZoom = 31, uint32_t maxConcurrentDownloads = 1);
         virtual ~OnlineMapRasterTileProvider();
@@ -85,16 +85,16 @@ namespace OsmAnd {
         virtual uint32_t getTileDimension() const;
 
         virtual bool obtainTile(
-            const uint64_t& tileId, uint32_t zoom,
+            const TileId& tileId, uint32_t zoom,
             std::shared_ptr<SkBitmap>& tile,
             SkBitmap::Config preferredConfig);
         virtual void obtainTile(
-            const uint64_t& tileId, uint32_t zoom,
+            const TileId& tileId, uint32_t zoom,
             TileReceiverCallback receiverCallback,
             SkBitmap::Config preferredConfig);
         void obtainTile(
             const QUrl& url,
-            const uint64_t& tileId, uint32_t zoom,
+            const TileId& tileId, uint32_t zoom,
             TileReceiverCallback receiverCallback,
             SkBitmap::Config preferredConfig);
 

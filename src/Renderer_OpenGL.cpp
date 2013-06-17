@@ -182,15 +182,14 @@ void OsmAnd::Renderer_OpenGL::refreshVisibleTileset()
     {
         for(int32_t x = xMin; x <= xMax; x++)
         {
-            PointI tileZ;
-            tileZ.x = centerZ.x + x;
-            if(tileZ.x < 0 || tileZ.x > (1u << _zoom) - 1)
+            TileId tileId;
+            tileId.x = centerZ.x + x;
+            if(tileId.x < 0 || tileId.x > (1u << _zoom) - 1)
                 continue;
-            tileZ.y = centerZ.y + y;
-            if(tileZ.y < 0 || tileZ.y > (1u << _zoom) - 1)
+            tileId.y = centerZ.y + y;
+            if(tileId.y < 0 || tileId.y > (1u << _zoom) - 1)
                 continue;
 
-            uint64_t tileId = (static_cast<uint64_t>(tileZ.x) << 32) | tileZ.y;
             _visibleTiles.insert(tileId);
         }
     }
@@ -229,7 +228,7 @@ void OsmAnd::Renderer_OpenGL::performRendering()
             while(!_pendingTilesQueue.isEmpty())
             {
                 const auto& pendingTile = _pendingTilesQueue.dequeue();
-                _pendingTiles.remove(pendingTile.tileId);
+                _pendingTiles[pendingTile.zoom].remove(pendingTile.tileId);
 
                 uploadTileToTexture(pendingTile.tileId, pendingTile.zoom, pendingTile.tileBitmap);
             }
@@ -265,19 +264,18 @@ void OsmAnd::Renderer_OpenGL::performRendering()
     {
         const auto& tileId = *itTileId;
 
-        float x = static_cast<int32_t>(tileId >> 32) - centerZ.x;
-        float y = static_cast<int32_t>(tileId & 0xFFFFFFFF) - centerZ.y;
+        float x = tileId.x - centerZ.x;
+        float y = tileId.y - centerZ.y;
 
         float tx = (x - _targetInTile.x) * TileSide3D;
         float ty = (y - _targetInTile.y) * TileSide3D;
 
         // Obtain tile from cache
-        QMap< uint64_t, std::shared_ptr<CachedTile> >::const_iterator itCachedTile;
+        std::shared_ptr<TileZoomCache::Tile> cachedtile;
         bool cacheHit;
         {
             QMutexLocker scopeLock(&_tileCacheMutex);
-            itCachedTile = _cachedTiles.find(tileId);
-            cacheHit = (itCachedTile != _cachedTiles.end());
+            cacheHit = _tilesCache.getTile(_zoom, tileId, cachedtile);
         }
 
         glPushMatrix();
@@ -301,7 +299,7 @@ void OsmAnd::Renderer_OpenGL::performRendering()
         }
         else
         {
-            auto cachedTile = static_cast<CachedTile_OpenGL*>((*itCachedTile).get());
+            auto cachedTile = static_cast<CachedTile_OpenGL*>(cachedtile.get());
             if(cachedTile->textureId == 0)
             {
                 //TODO: render non existent tile
@@ -376,21 +374,22 @@ void OsmAnd::Renderer_OpenGL::refreshView()
     _viewIsDirty = false;
 }
 
-void OsmAnd::Renderer_OpenGL::cacheTile( const uint64_t& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap )
+void OsmAnd::Renderer_OpenGL::cacheTile( const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap )
 {
-    assert(!_cachedTiles.contains(tileId));
+    assert(!_tilesCache.contains(zoom, tileId));
 
     if(_glRenderThreadId != QThread::currentThreadId())
     {
         QMutexLocker scopeLock(&_pendingTilesMutex);
+
+        assert(!_pendingTiles[zoom].contains(tileId));
 
         PendingTile pendingTile;
         pendingTile.tileId = tileId;
         pendingTile.zoom = zoom;
         pendingTile.tileBitmap = tileBitmap;
         _pendingTilesQueue.enqueue(pendingTile);
-        assert(!_pendingTiles.contains(tileId));
-        _pendingTiles.insert(tileId);
+        _pendingTiles[zoom].insert(tileId);
 
         return;
     }
@@ -398,19 +397,16 @@ void OsmAnd::Renderer_OpenGL::cacheTile( const uint64_t& tileId, uint32_t zoom, 
     uploadTileToTexture(tileId, zoom, tileBitmap);
 }
 
-void OsmAnd::Renderer_OpenGL::uploadTileToTexture( const uint64_t& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap )
+void OsmAnd::Renderer_OpenGL::uploadTileToTexture( const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap )
 {
-    assert(!_cachedTiles.contains(tileId));
-
-    auto cachedTile = new CachedTile_OpenGL();
-    cachedTile->owner = this;
-    std::shared_ptr<IRenderer::CachedTile> cachedTile_(static_cast<IRenderer::CachedTile*>(cachedTile));
+    assert(!_tilesCache.contains(zoom, tileId));
 
     if(!tileBitmap)
     {
         // Non-existent tile
-        cachedTile->textureId = 0;
-        _cachedTiles.insert(tileId, cachedTile_);
+        _tilesCache.putTile(std::shared_ptr<TileZoomCache::Tile>(static_cast<TileZoomCache::Tile*>(
+            new CachedTile_OpenGL(this, zoom, tileId, 0, 0, 0)
+            )));
         return;
     }
 
@@ -475,9 +471,9 @@ void OsmAnd::Renderer_OpenGL::uploadTileToTexture( const uint64_t& tileId, uint3
             tileBitmap->getPixels());
         OPENGL_CHECK_RESULT;
 
-        cachedTile->textureId = atlasId;
-        cachedTile->atlasSlotIndex = freeSlotIndex;
-        _cachedTiles.insert(tileId, cachedTile_);
+        _tilesCache.putTile(std::shared_ptr<TileZoomCache::Tile>(static_cast<TileZoomCache::Tile*>(
+            new CachedTile_OpenGL(this, zoom, tileId, 0, atlasId, freeSlotIndex)
+            )));
         _glTexturesRefCounts[atlasId] += 1;
     }
     else
@@ -503,8 +499,9 @@ void OsmAnd::Renderer_OpenGL::uploadTileToTexture( const uint64_t& tileId, uint3
         }
         OPENGL_CHECK_RESULT;
 
-        cachedTile->textureId = textureName;
-        _cachedTiles.insert(tileId, cachedTile_);
+        _tilesCache.putTile(std::shared_ptr<TileZoomCache::Tile>(static_cast<TileZoomCache::Tile*>(
+            new CachedTile_OpenGL(this, zoom, tileId, 0, textureName, 0)
+            )));
         _glTexturesRefCounts.insert(textureName, 1);
     }
 }
@@ -521,6 +518,14 @@ void OsmAnd::Renderer_OpenGL::validateResult()
         return;
 
     LogPrintf(LogSeverityLevel::Error, "OpenGL error %08x : %s\n", result, gluErrorString(result));
+}
+
+OsmAnd::Renderer_OpenGL::CachedTile_OpenGL::CachedTile_OpenGL( Renderer_OpenGL* owner_, const uint32_t& zoom, const TileId& id, const size_t& usedMemory, uint32_t textureId_, uint32_t atlasSlotIndex_ )
+    : IRenderer::CachedTile(zoom, id, usedMemory)
+    , owner(owner_)
+    , textureId(textureId_)
+    , atlasSlotIndex(atlasSlotIndex_)
+{
 }
 
 OsmAnd::Renderer_OpenGL::CachedTile_OpenGL::~CachedTile_OpenGL()

@@ -28,11 +28,13 @@
 #include <QtGlobal>
 #include <QString>
 #include <QList>
+#include <QHash>
 
 #include <OsmAndCore.h>
 
 namespace OsmAnd
 {
+
     struct TagValue
     {
         TagValue()
@@ -269,6 +271,53 @@ namespace OsmAnd
     typedef Area<double> AreaD;
     typedef Area<float> AreaF;
     typedef Area<int32_t> AreaI;
+
+    union TileId
+    {
+        uint64_t id;
+        struct
+        {
+            int32_t x;
+            int32_t y;
+        };
+
+        inline operator uint64_t() const
+        {
+            return id;
+        }
+
+        inline TileId& operator=( const uint64_t& that )
+        {
+            id = that;
+            return *this;
+        }
+
+        inline bool operator==( const TileId& that )
+        {
+            return this->id == that.id;
+        }
+
+        inline bool operator!=( const TileId& that )
+        {
+            return this->id != that.id;
+        }
+
+        inline bool operator==( const uint64_t& that )
+        {
+            return this->id == that;
+        }
+
+        inline bool operator!=( const uint64_t& that )
+        {
+            return this->id != that;
+        }
+    };
+    inline uint qHash(TileId tileId, uint seed = 0) Q_DECL_NOTHROW
+    {
+        return ::qHash(tileId.id, seed);
+    }
+    static_assert(sizeof(TileId) == 8, "TileId must be 8 bytes in size");
+
 }
 
 #endif // __COMMON_TYPES_H_
