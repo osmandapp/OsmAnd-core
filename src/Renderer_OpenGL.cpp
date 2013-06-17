@@ -280,6 +280,10 @@ void OsmAnd::Renderer_OpenGL::performRendering()
         {
             //TODO: render stub
             glBegin(GL_QUADS);
+            
+            glColor3d(0,1,1);
+            glVertex3f(0,0,0);
+            
             glColor3d(1,0,0);
             glVertex3f(0,0,TileSide3D);
 
@@ -289,8 +293,6 @@ void OsmAnd::Renderer_OpenGL::performRendering()
             glColor3d(1,1,1);
             glVertex3f(TileSide3D,0,0);
 
-            glColor3d(0,1,1);
-            glVertex3f(0,0,0);
             glEnd();
         }
         else
@@ -314,6 +316,10 @@ void OsmAnd::Renderer_OpenGL::performRendering()
                 glEnable(GL_TEXTURE_2D);
                 //////////////////////////////////////////////////////////////////////////
                 glBegin(GL_QUADS);
+
+                glTexCoord2f(0, 0);
+                glVertex3f(0,0,0);
+
                 glTexCoord2f(0, 1);
                 glVertex3f(0,0,TileSide3D);
 
@@ -323,8 +329,6 @@ void OsmAnd::Renderer_OpenGL::performRendering()
                 glTexCoord2f(1, 0);
                 glVertex3f(TileSide3D,0,0);
 
-                glTexCoord2f(0, 0);
-                glVertex3f(0,0,0);
                 glEnd();
                 //////////////////////////////////////////////////////////////////////////
                 glDisable(GL_TEXTURE_2D);
