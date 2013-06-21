@@ -19,8 +19,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __I_RENDERER_H_
-#define __I_RENDERER_H_
+#ifndef __I_MAP_RENDERER_H_
+#define __I_MAP_RENDERER_H_
 
 #include <stdint.h>
 #include <memory>
@@ -42,7 +42,7 @@ namespace OsmAnd {
 
     class IMapTileProvider;
 
-    class OSMAND_CORE_API IRenderer
+    class OSMAND_CORE_API IMapRenderer
     {
     public:
         enum TextureDepth {
@@ -75,7 +75,7 @@ namespace OsmAnd {
         bool _viewIsDirty;
         bool _tilesCacheInvalidated;
     protected:
-        IRenderer();
+        IMapRenderer();
 
         virtual void invalidateConfiguration();
         QMutex _pendingToActiveConfigMutex;
@@ -86,10 +86,6 @@ namespace OsmAnd {
         QSet<TileId> _visibleTiles;
         PointD _targetInTile;
         
-        enum {
-            TileDimension3D = 100,
-        };
-
         virtual void computeMatrices() = 0;
         virtual void refreshVisibleTileset() = 0;
         
@@ -124,7 +120,7 @@ namespace OsmAnd {
 
         virtual void updateConfiguration();
     public:
-        virtual ~IRenderer();
+        virtual ~IMapRenderer();
 
         RedrawRequestCallback redrawRequestCallback;
                 
@@ -152,8 +148,8 @@ namespace OsmAnd {
     };
 
 #if defined(OSMAND_OPENGL_RENDERER_SUPPORTED)
-    OSMAND_CORE_API std::shared_ptr<OsmAnd::IRenderer> OSMAND_CORE_CALL createRenderer_OpenGL();
+    OSMAND_CORE_API std::shared_ptr<OsmAnd::IMapRenderer> OSMAND_CORE_CALL createAtlasMapRenderer_OpenGL();
 #endif // OSMAND_OPENGL_RENDERER_SUPPORTED
 }
 
-#endif // __I_RENDERER_H_
+#endif // __I_MAP_RENDERER_H_

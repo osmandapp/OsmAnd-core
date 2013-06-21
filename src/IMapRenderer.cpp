@@ -1,10 +1,10 @@
-#include "IRenderer.h"
+#include "IMapRenderer.h"
 
 #include <assert.h>
 
 #include "IMapTileProvider.h"
 
-OsmAnd::IRenderer::IRenderer()
+OsmAnd::IMapRenderer::IMapRenderer()
     : _viewIsDirty(true)
     , _tilesCacheInvalidated(false)
     , _pendingToActiveConfigMutex(QMutex::Recursive)
@@ -28,11 +28,11 @@ OsmAnd::IRenderer::IRenderer()
     setPreferredTextureDepth(TextureDepth::_16bits);
 }
 
-OsmAnd::IRenderer::~IRenderer()
+OsmAnd::IMapRenderer::~IMapRenderer()
 {
 }
 
-void OsmAnd::IRenderer::setTileProvider( const std::shared_ptr<IMapTileProvider>& source )
+void OsmAnd::IMapRenderer::setTileProvider( const std::shared_ptr<IMapTileProvider>& source )
 {
     QMutexLocker scopeLock(&_pendingToActiveConfigMutex);
 
@@ -46,7 +46,7 @@ void OsmAnd::IRenderer::setTileProvider( const std::shared_ptr<IMapTileProvider>
     invalidateConfiguration();
 }
 
-void OsmAnd::IRenderer::setPreferredTextureDepth( TextureDepth depth )
+void OsmAnd::IMapRenderer::setPreferredTextureDepth( TextureDepth depth )
 {
     QMutexLocker scopeLock(&_pendingToActiveConfigMutex);
 
@@ -60,7 +60,7 @@ void OsmAnd::IRenderer::setPreferredTextureDepth( TextureDepth depth )
     invalidateConfiguration();
 }
 
-void OsmAnd::IRenderer::setWindowSize( const PointI& windowSize )
+void OsmAnd::IMapRenderer::setWindowSize( const PointI& windowSize )
 {
     QMutexLocker scopeLock(&_pendingToActiveConfigMutex);
 
@@ -73,7 +73,7 @@ void OsmAnd::IRenderer::setWindowSize( const PointI& windowSize )
     invalidateConfiguration();
 }
 
-void OsmAnd::IRenderer::setDisplayDensityFactor( const float& factor )
+void OsmAnd::IMapRenderer::setDisplayDensityFactor( const float& factor )
 {
     QMutexLocker scopeLock(&_pendingToActiveConfigMutex);
 
@@ -86,7 +86,7 @@ void OsmAnd::IRenderer::setDisplayDensityFactor( const float& factor )
     invalidateConfiguration();
 }
 
-void OsmAnd::IRenderer::setViewport( const AreaI& viewport )
+void OsmAnd::IMapRenderer::setViewport( const AreaI& viewport )
 {
     QMutexLocker scopeLock(&_pendingToActiveConfigMutex);
 
@@ -99,7 +99,7 @@ void OsmAnd::IRenderer::setViewport( const AreaI& viewport )
     invalidateConfiguration();
 }
 
-void OsmAnd::IRenderer::setFieldOfView( const float& fieldOfView )
+void OsmAnd::IMapRenderer::setFieldOfView( const float& fieldOfView )
 {
     QMutexLocker scopeLock(&_pendingToActiveConfigMutex);
 
@@ -112,7 +112,7 @@ void OsmAnd::IRenderer::setFieldOfView( const float& fieldOfView )
     invalidateConfiguration();
 }
 
-void OsmAnd::IRenderer::setDistanceToFog( const float& fogDistance )
+void OsmAnd::IMapRenderer::setDistanceToFog( const float& fogDistance )
 {
     QMutexLocker scopeLock(&_pendingToActiveConfigMutex);
 
@@ -125,7 +125,7 @@ void OsmAnd::IRenderer::setDistanceToFog( const float& fogDistance )
     invalidateConfiguration();
 }
 
-void OsmAnd::IRenderer::setAzimuth( const float& azimuth )
+void OsmAnd::IMapRenderer::setAzimuth( const float& azimuth )
 {
     QMutexLocker scopeLock(&_pendingToActiveConfigMutex);
 
@@ -138,7 +138,7 @@ void OsmAnd::IRenderer::setAzimuth( const float& azimuth )
     invalidateConfiguration();
 }
 
-void OsmAnd::IRenderer::setElevationAngle( const float& elevationAngle )
+void OsmAnd::IMapRenderer::setElevationAngle( const float& elevationAngle )
 {
     QMutexLocker scopeLock(&_pendingToActiveConfigMutex);
 
@@ -151,7 +151,7 @@ void OsmAnd::IRenderer::setElevationAngle( const float& elevationAngle )
     invalidateConfiguration();
 }
 
-void OsmAnd::IRenderer::setTarget( const PointI& target31 )
+void OsmAnd::IMapRenderer::setTarget( const PointI& target31 )
 {
     QMutexLocker scopeLock(&_pendingToActiveConfigMutex);
 
@@ -164,7 +164,7 @@ void OsmAnd::IRenderer::setTarget( const PointI& target31 )
     invalidateConfiguration();
 }
 
-void OsmAnd::IRenderer::setZoom( const float& zoom )
+void OsmAnd::IMapRenderer::setZoom( const float& zoom )
 {
     QMutexLocker scopeLock(&_pendingToActiveConfigMutex);
 
@@ -179,7 +179,7 @@ void OsmAnd::IRenderer::setZoom( const float& zoom )
     invalidateConfiguration();
 }
 
-void OsmAnd::IRenderer::updateTilesCache()
+void OsmAnd::IMapRenderer::updateTilesCache()
 {
     // If tiles cache was invalidated, purge it
     if(_tilesCacheInvalidated)
@@ -195,7 +195,7 @@ void OsmAnd::IRenderer::updateTilesCache()
     }
 
     // Cache missing tiles
-    auto callback = std::bind(&IRenderer::tileReadyCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    auto callback = std::bind(&IMapRenderer::tileReadyCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     for(auto itTileId = _visibleTiles.begin(); itTileId != _visibleTiles.end(); ++itTileId)
     {
         const auto& tileId = *itTileId;
@@ -217,7 +217,7 @@ void OsmAnd::IRenderer::updateTilesCache()
 
         // Try to obtain tile from provider immediately
         std::shared_ptr<SkBitmap> tileBitmap;
-        cacheHit = _activeConfig.tileProvider->obtainTile(tileId, _activeConfig.zoomBase, tileBitmap, _activeConfig.preferredTextureDepth == IRenderer::_32bits ? SkBitmap::kARGB_8888_Config : SkBitmap::kRGB_565_Config);
+        cacheHit = _activeConfig.tileProvider->obtainTile(tileId, _activeConfig.zoomBase, tileBitmap, _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? SkBitmap::kARGB_8888_Config : SkBitmap::kRGB_565_Config);
         if(cacheHit)
         {
             cacheTile(tileId, _activeConfig.zoomBase, tileBitmap);
@@ -225,11 +225,11 @@ void OsmAnd::IRenderer::updateTilesCache()
         }
 
         // If still cache miss, order delayed
-        _activeConfig.tileProvider->obtainTile(tileId, _activeConfig.zoomBase, callback, _activeConfig.preferredTextureDepth == IRenderer::_32bits ? SkBitmap::kARGB_8888_Config : SkBitmap::kRGB_565_Config);
+        _activeConfig.tileProvider->obtainTile(tileId, _activeConfig.zoomBase, callback, _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? SkBitmap::kARGB_8888_Config : SkBitmap::kRGB_565_Config);
     }
 }
 
-void OsmAnd::IRenderer::tileReadyCallback( const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap )
+void OsmAnd::IMapRenderer::tileReadyCallback( const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap )
 {
     QMutexLocker scopeLock(&_tilesCacheMutex);
 
@@ -240,7 +240,7 @@ void OsmAnd::IRenderer::tileReadyCallback( const TileId& tileId, uint32_t zoom, 
         redrawRequestCallback();
 }
 
-void OsmAnd::IRenderer::purgeTilesCache()
+void OsmAnd::IMapRenderer::purgeTilesCache()
 {
     {
         QMutexLocker scopeLock(&_tilesCacheMutex);
@@ -256,30 +256,30 @@ void OsmAnd::IRenderer::purgeTilesCache()
     }
 }
 
-int OsmAnd::IRenderer::getCachedTilesCount() const
+int OsmAnd::IMapRenderer::getCachedTilesCount() const
 {
     return _tilesCache.tilesCount;
 }
 
-void OsmAnd::IRenderer::requestRedraw()
+void OsmAnd::IMapRenderer::requestRedraw()
 {
     _viewIsDirty = true;
     if(redrawRequestCallback)
         redrawRequestCallback();
 }
 
-void OsmAnd::IRenderer::invalidateTileCache()
+void OsmAnd::IMapRenderer::invalidateTileCache()
 {
     _tilesCacheInvalidated = true;
 }
 
-void OsmAnd::IRenderer::invalidateConfiguration()
+void OsmAnd::IMapRenderer::invalidateConfiguration()
 {
     _configInvalidated = true;
     requestRedraw();
 }
 
-void OsmAnd::IRenderer::updateConfiguration()
+void OsmAnd::IMapRenderer::updateConfiguration()
 {
     QMutexLocker scopeLock(&_pendingToActiveConfigMutex);
 
@@ -288,23 +288,23 @@ void OsmAnd::IRenderer::updateConfiguration()
     _configInvalidated = false;
 }
 
-OsmAnd::IRenderer::CachedTile::CachedTile( const uint32_t& zoom, const TileId& id, const size_t& usedMemory )
+OsmAnd::IMapRenderer::CachedTile::CachedTile( const uint32_t& zoom, const TileId& id, const size_t& usedMemory )
     : TileZoomCache::Tile(zoom, id, usedMemory)
 {
 }
 
-OsmAnd::IRenderer::CachedTile::~CachedTile()
+OsmAnd::IMapRenderer::CachedTile::~CachedTile()
 {
 }
 
-OsmAnd::IRenderer::Configuration::Configuration()
+OsmAnd::IMapRenderer::Configuration::Configuration()
 {
 }
 
 #if defined(OSMAND_OPENGL_RENDERER_SUPPORTED)
-#   include "Renderer_OpenGL.h"
-    OSMAND_CORE_API std::shared_ptr<OsmAnd::IRenderer> OSMAND_CORE_CALL OsmAnd::createRenderer_OpenGL()
+#   include "AtlasMapRenderer_OpenGL.h"
+    OSMAND_CORE_API std::shared_ptr<OsmAnd::IMapRenderer> OSMAND_CORE_CALL OsmAnd::createAtlasMapRenderer_OpenGL()
     {
-        return std::shared_ptr<OsmAnd::IRenderer>(new Renderer_OpenGL());
+        return std::shared_ptr<OsmAnd::IMapRenderer>(new AtlasMapRenderer_OpenGL());
     }
 #endif // OSMAND_OPENGL_RENDERER_SUPPORTED

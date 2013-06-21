@@ -1,4 +1,4 @@
-#include "Renderer_OpenGL.h"
+#include "AtlasMapRenderer_OpenGL.h"
 
 #include <assert.h>
 #if defined(WIN32)
@@ -28,18 +28,18 @@
 #   define OPENGL_CHECK_RESULT
 #endif
 
-OsmAnd::Renderer_OpenGL::Renderer_OpenGL()
+OsmAnd::AtlasMapRenderer_OpenGL::AtlasMapRenderer_OpenGL()
     : _glMaxTextureDimension(0)
     , _lastUnfinishedAtlas(0)
     , _glRenderThreadId(nullptr)
 {
 }
 
-OsmAnd::Renderer_OpenGL::~Renderer_OpenGL()
+OsmAnd::AtlasMapRenderer_OpenGL::~AtlasMapRenderer_OpenGL()
 {
 }
 
-void OsmAnd::Renderer_OpenGL::performRendering()
+void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
 {
     assert(_isRenderingInitialized);
 
@@ -182,7 +182,7 @@ void OsmAnd::Renderer_OpenGL::performRendering()
     glViewport(oldViewport[0], oldViewport[1], oldViewport[2], oldViewport[3]);
 }
 
-void OsmAnd::Renderer_OpenGL::initializeRendering()
+void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
 {
     assert(!_isRenderingInitialized);
 
@@ -192,7 +192,7 @@ void OsmAnd::Renderer_OpenGL::initializeRendering()
     _isRenderingInitialized = true;
 }
 
-void OsmAnd::Renderer_OpenGL::releaseRendering()
+void OsmAnd::AtlasMapRenderer_OpenGL::releaseRendering()
 {
     assert(_isRenderingInitialized);
 
@@ -201,15 +201,15 @@ void OsmAnd::Renderer_OpenGL::releaseRendering()
     _isRenderingInitialized = false;
 }
 
-void OsmAnd::Renderer_OpenGL::updateConfiguration()
+void OsmAnd::AtlasMapRenderer_OpenGL::updateConfiguration()
 {
-    IRenderer::updateConfiguration();
+    IMapRenderer::updateConfiguration();
 
     computeMatrices();
     refreshVisibleTileset();
 }
 
-float OsmAnd::Renderer_OpenGL::calculateCameraDistance( const glm::mat4& P, const AreaI& viewport, float Ax, float Sx, float k )
+float OsmAnd::AtlasMapRenderer_OpenGL::calculateCameraDistance( const glm::mat4& P, const AreaI& viewport, float Ax, float Sx, float k )
 {
     const float w = viewport.width();
     const float x = viewport.left;
@@ -221,7 +221,7 @@ float OsmAnd::Renderer_OpenGL::calculateCameraDistance( const glm::mat4& P, cons
     return d;
 }
 
-void OsmAnd::Renderer_OpenGL::computeMatrices()
+void OsmAnd::AtlasMapRenderer_OpenGL::computeMatrices()
 {
     // Setup projection with fake Z-far plane
     GLfloat aspectRatio = static_cast<GLfloat>(_activeConfig.viewport.width());
@@ -255,7 +255,7 @@ void OsmAnd::Renderer_OpenGL::computeMatrices()
 }
 
 //TODO: this should be taken out to Renderer (Mercator Projection)
-void OsmAnd::Renderer_OpenGL::refreshVisibleTileset()
+void OsmAnd::AtlasMapRenderer_OpenGL::refreshVisibleTileset()
 {
     glm::vec4 glViewport(
         _activeConfig.viewport.left,
@@ -402,7 +402,7 @@ void OsmAnd::Renderer_OpenGL::refreshVisibleTileset()
     _targetInTile.y = static_cast<double>(_activeConfig.target31.y - tileYo31) / div;
 }
 
-void OsmAnd::Renderer_OpenGL::cacheTile( const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap )
+void OsmAnd::AtlasMapRenderer_OpenGL::cacheTile( const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap )
 {
     assert(!_tilesCache.contains(zoom, tileId));
 
@@ -425,7 +425,7 @@ void OsmAnd::Renderer_OpenGL::cacheTile( const TileId& tileId, uint32_t zoom, co
     uploadTileToTexture(tileId, zoom, tileBitmap);
 }
 
-void OsmAnd::Renderer_OpenGL::uploadTileToTexture( const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap )
+void OsmAnd::AtlasMapRenderer_OpenGL::uploadTileToTexture( const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap )
 {
     assert(!_tilesCache.contains(zoom, tileId));
 
@@ -441,7 +441,7 @@ void OsmAnd::Renderer_OpenGL::uploadTileToTexture( const TileId& tileId, uint32_
     }
 
     const auto skConfig = tileBitmap->getConfig();
-    assert( _activeConfig.preferredTextureDepth == IRenderer::_32bits ? skConfig == SkBitmap::kARGB_8888_Config : skConfig == SkBitmap::kRGB_565_Config );
+    assert( _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? skConfig == SkBitmap::kARGB_8888_Config : skConfig == SkBitmap::kRGB_565_Config );
 
     // Get maximal texture size if not yet determined
     /*if(_glMaxTextureDimension == 0)
@@ -471,7 +471,7 @@ void OsmAnd::Renderer_OpenGL::uploadTileToTexture( const TileId& tileId, uint32_
             assert(textureName != 0);
             glBindTexture(GL_TEXTURE_2D, textureName);
             OPENGL_CHECK_RESULT;
-            glTexStorage2D(GL_TEXTURE_2D, 1, _activeConfig.preferredTextureDepth == IRenderer::_32bits ? GL_RGBA8 : GL_RGB5, _glMaxTextureDimension, _glMaxTextureDimension);
+            glTexStorage2D(GL_TEXTURE_2D, 1, _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_RGBA8 : GL_RGB5, _glMaxTextureDimension, _glMaxTextureDimension);
             OPENGL_CHECK_RESULT;
             _unfinishedAtlasFirstFreeSlot = 0;
             _glTexturesRefCounts.insert(textureName, 0);
@@ -496,8 +496,8 @@ void OsmAnd::Renderer_OpenGL::uploadTileToTexture( const TileId& tileId, uint32_
         auto xOffset = (freeSlotIndex % tilesPerRow) * _activeConfig.tileProvider->getTileDimension();
         glTexSubImage2D(GL_TEXTURE_2D, 0,
             xOffset, yOffset, (GLsizei)_activeConfig.tileProvider->getTileDimension(), (GLsizei)_activeConfig.tileProvider->getTileDimension(),
-            _activeConfig.preferredTextureDepth == IRenderer::_32bits ? GL_BGRA : GL_RGB,
-            _activeConfig.preferredTextureDepth == IRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
+            _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
+            _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
             tileBitmap->getPixels());
         OPENGL_CHECK_RESULT;
 
@@ -517,7 +517,7 @@ void OsmAnd::Renderer_OpenGL::uploadTileToTexture( const TileId& tileId, uint32_
         OPENGL_CHECK_RESULT;
         glPixelStorei(GL_UNPACK_ROW_LENGTH, tileBitmap->rowBytesAsPixels());
         OPENGL_CHECK_RESULT;
-        if(_activeConfig.preferredTextureDepth == IRenderer::_32bits)
+        if(_activeConfig.preferredTextureDepth == IMapRenderer::_32bits)
         {
             glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, _activeConfig.tileProvider->getTileDimension(), _activeConfig.tileProvider->getTileDimension());
             glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, (GLsizei)_activeConfig.tileProvider->getTileDimension(), (GLsizei)_activeConfig.tileProvider->getTileDimension(), GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, tileBitmap->getPixels());
@@ -536,7 +536,7 @@ void OsmAnd::Renderer_OpenGL::uploadTileToTexture( const TileId& tileId, uint32_
     }
 }
 
-bool OsmAnd::Renderer_OpenGL::rayIntersectPlane( const glm::vec3& planeN, float planeD, const glm::vec3& rayD, const glm::vec3& rayO, float& distance )
+bool OsmAnd::AtlasMapRenderer_OpenGL::rayIntersectPlane( const glm::vec3& planeN, float planeD, const glm::vec3& rayD, const glm::vec3& rayO, float& distance )
 {
     auto alpha = glm::dot(planeN, rayD);
 
@@ -550,12 +550,12 @@ bool OsmAnd::Renderer_OpenGL::rayIntersectPlane( const glm::vec3& planeN, float 
     return false;
 }
 
-int OsmAnd::Renderer_OpenGL::getCachedTilesCount()
+int OsmAnd::AtlasMapRenderer_OpenGL::getCachedTilesCount()
 {
     return _glTexturesRefCounts.size();
 }
 
-void OsmAnd::Renderer_OpenGL::validateResult()
+void OsmAnd::AtlasMapRenderer_OpenGL::validateResult()
 {
     auto result = glGetError();
     if(result == GL_NO_ERROR)
@@ -564,15 +564,15 @@ void OsmAnd::Renderer_OpenGL::validateResult()
     LogPrintf(LogSeverityLevel::Error, "OpenGL error %08x : %s\n", result, gluErrorString(result));
 }
 
-OsmAnd::Renderer_OpenGL::CachedTile_OpenGL::CachedTile_OpenGL( Renderer_OpenGL* owner_, const uint32_t& zoom, const TileId& id, const size_t& usedMemory, uint32_t textureId_, uint32_t atlasSlotIndex_ )
-    : IRenderer::CachedTile(zoom, id, usedMemory)
+OsmAnd::AtlasMapRenderer_OpenGL::CachedTile_OpenGL::CachedTile_OpenGL( AtlasMapRenderer_OpenGL* owner_, const uint32_t& zoom, const TileId& id, const size_t& usedMemory, uint32_t textureId_, uint32_t atlasSlotIndex_ )
+    : IMapRenderer::CachedTile(zoom, id, usedMemory)
     , owner(owner_)
     , textureId(textureId_)
     , atlasSlotIndex(atlasSlotIndex_)
 {
 }
 
-OsmAnd::Renderer_OpenGL::CachedTile_OpenGL::~CachedTile_OpenGL()
+OsmAnd::AtlasMapRenderer_OpenGL::CachedTile_OpenGL::~CachedTile_OpenGL()
 {
     assert(owner->_glRenderThreadId == QThread::currentThreadId());
 

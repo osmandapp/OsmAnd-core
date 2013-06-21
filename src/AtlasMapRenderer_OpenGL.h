@@ -33,13 +33,13 @@
 
 #include <OsmAndCore.h>
 #include <CommonTypes.h>
-#include <IRenderer.h>
+#include <BaseAtlasMapRenderer.h>
 
 namespace OsmAnd {
 
     class MapDataCache;
 
-    class OSMAND_CORE_API Renderer_OpenGL : public IRenderer
+    class OSMAND_CORE_API AtlasMapRenderer_OpenGL : public BaseAtlasMapRenderer
     {
     private:
         static bool rayIntersectPlane(const glm::vec3& planeN, float planeO, const glm::vec3& rayD, const glm::vec3& rayO, float& distance);
@@ -58,12 +58,12 @@ namespace OsmAnd {
         virtual void computeMatrices();
         virtual void refreshVisibleTileset();
 
-        struct OSMAND_CORE_API CachedTile_OpenGL : public IRenderer::CachedTile
+        struct OSMAND_CORE_API CachedTile_OpenGL : public IMapRenderer::CachedTile
         {
-            CachedTile_OpenGL(Renderer_OpenGL* owner, const uint32_t& zoom, const TileId& id, const size_t& usedMemory, uint32_t textureId, uint32_t atlasSlotIndex);
+            CachedTile_OpenGL(AtlasMapRenderer_OpenGL* owner, const uint32_t& zoom, const TileId& id, const size_t& usedMemory, uint32_t textureId, uint32_t atlasSlotIndex);
             virtual ~CachedTile_OpenGL();
 
-            Renderer_OpenGL* const owner;
+            AtlasMapRenderer_OpenGL* const owner;
             const uint32_t textureId;
             const uint32_t atlasSlotIndex;
         };
@@ -73,8 +73,8 @@ namespace OsmAnd {
 
         virtual void updateConfiguration();
     public:
-        Renderer_OpenGL();
-        virtual ~Renderer_OpenGL();
+        AtlasMapRenderer_OpenGL();
+        virtual ~AtlasMapRenderer_OpenGL();
 
         virtual int getCachedTilesCount();
 
