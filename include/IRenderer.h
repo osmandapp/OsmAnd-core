@@ -57,14 +57,16 @@ namespace OsmAnd {
 
             std::shared_ptr<IMapTileProvider> tileProvider;
             PointI windowSize;
+            float displayDensityFactor;
             AreaI viewport;
             float fieldOfView;
             float fogDistance;
-            float distanceFromTarget;
             float azimuth;
             float elevationAngle;
             PointI target31;
-            uint32_t zoom;
+            float requestedZoom;
+            int zoomBase;
+            float zoomFraction;
             TextureDepth preferredTextureDepth;
         };
 
@@ -85,7 +87,7 @@ namespace OsmAnd {
         PointD _targetInTile;
         
         enum {
-            TileSide3D = 100,
+            TileDimension3D = 100,
         };
 
         virtual void computeMatrices() = 0;
@@ -133,9 +135,15 @@ namespace OsmAnd {
 
         virtual void setTileProvider(const std::shared_ptr<IMapTileProvider>& tileProvider);
         virtual void setPreferredTextureDepth(TextureDepth depth);
-        virtual void updateViewport(const PointI& windowSize, const AreaI& viewport, float fieldOfView, float viewDepth);
-        virtual void updateCamera(float distanceFromTarget, float azimuth, float elevationAngle);
-        virtual void updateMap(const PointI& target31, uint32_t zoom);
+        virtual void setWindowSize(const PointI& windowSize);
+        virtual void setDisplayDensityFactor(const float& factor);
+        virtual void setViewport(const AreaI& viewport);
+        virtual void setFieldOfView(const float& fieldOfView);
+        virtual void setDistanceToFog(const float& fogDistance);
+        virtual void setAzimuth(const float& azimuth);
+        virtual void setElevationAngle(const float& elevationAngle);
+        virtual void setTarget(const PointI& target31);
+        virtual void setZoom(const float& zoom);
 
         const bool& isRenderingInitialized;
         virtual void initializeRendering() = 0;

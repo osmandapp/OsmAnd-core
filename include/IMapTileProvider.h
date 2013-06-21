@@ -43,6 +43,7 @@ namespace OsmAnd {
     public:
         virtual ~IMapTileProvider();
 
+        virtual float getTileDensity() const = 0;
         virtual uint32_t getTileDimension() const = 0;
 
         virtual bool obtainTile(

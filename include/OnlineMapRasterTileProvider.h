@@ -55,7 +55,7 @@ namespace OsmAnd {
         QMutex _currentDownloadsMutex;
         QSet<TileId> _currentDownloads;
         
-        uint32_t _tileDimension;
+        const uint32_t _tileDimension;
 
         QMutex _localCacheAccessMutex;
         std::shared_ptr<QDir> _localCachePath;
@@ -76,7 +76,7 @@ namespace OsmAnd {
 
         void handleNetworkReply(QNetworkReply* reply, const TileId& tileId, uint32_t zoom, TileReceiverCallback callback, SkBitmap::Config preferredConfig);
     public:
-        OnlineMapRasterTileProvider(const QString& id, const QString& urlPattern, uint32_t minZoom = 0, uint32_t maxZoom = 31, uint32_t maxConcurrentDownloads = 1);
+        OnlineMapRasterTileProvider(const QString& id, const QString& urlPattern, uint32_t minZoom = 0, uint32_t maxZoom = 31, uint32_t maxConcurrentDownloads = 1, uint32_t tileDimension = 256);
         virtual ~OnlineMapRasterTileProvider();
 
         void setLocalCachePath(const QDir& localCachePath);
@@ -85,6 +85,7 @@ namespace OsmAnd {
         void setNetworkAccessPermission(bool allowed);
         const bool& networkAccessAllowed;
 
+        virtual float getTileDensity() const;
         virtual uint32_t getTileDimension() const;
 
         virtual bool obtainTile(

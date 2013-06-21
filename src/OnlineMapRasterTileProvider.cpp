@@ -13,14 +13,14 @@
 
 #include <SkImageDecoder.h>
 
-OsmAnd::OnlineMapRasterTileProvider::OnlineMapRasterTileProvider(const QString& id_, const QString& urlPattern_, uint32_t maxZoom_ /*= 31*/, uint32_t minZoom_ /*= 0*/, uint32_t maxConcurrentDownloads_ /*= 1*/)
+OsmAnd::OnlineMapRasterTileProvider::OnlineMapRasterTileProvider(const QString& id_, const QString& urlPattern_, uint32_t maxZoom_ /*= 31*/, uint32_t minZoom_ /*= 0*/, uint32_t maxConcurrentDownloads_ /*= 1*/, uint32_t tileDimension /*= 256*/)
     : _id(id_)
     , _urlPattern(urlPattern_)
     , _minZoom(minZoom_)
     , _maxZoom(maxZoom_)
     , _maxConcurrentDownloads(maxConcurrentDownloads_)
     , _currentDownloadsMutex(QMutex::Recursive)
-    , _tileDimension(0)
+    , _tileDimension(tileDimension)
     , _localCacheAccessMutex(QMutex::Recursive)
     , _networkAccessAllowed(true)
     , _downloadQueueMutex(QMutex::Recursive)
@@ -81,8 +81,6 @@ bool OsmAnd::OnlineMapRasterTileProvider::obtainTile(
     }
 
     assert(tileBitmap->width() == tileBitmap->height());
-    if(_tileDimension == 0)
-        _tileDimension = tileBitmap->width();
     assert(tileBitmap->width() == _tileDimension);
 
     return true;
@@ -254,12 +252,16 @@ void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* rep
         if(SkImageDecoder::DecodeMemory(data.data(), data.size(), tileBitmap.get(), preferredConfig, SkImageDecoder::kDecodePixels_Mode))
         {
             assert(tileBitmap->width() == tileBitmap->height());
-            if(_tileDimension == 0)
-                _tileDimension = tileBitmap->width();
             assert(tileBitmap->width() == _tileDimension);
             receiverCallback(tileId, zoom, tileBitmap);
         }
     }
+}
+
+float OsmAnd::OnlineMapRasterTileProvider::getTileDensity() const
+{
+    // Online tile providers do not have any idea about our tile density
+    return 1.0f;
 }
 
 uint32_t OsmAnd::OnlineMapRasterTileProvider::getTileDimension() const

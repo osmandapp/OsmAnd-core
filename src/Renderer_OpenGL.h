@@ -44,11 +44,11 @@ namespace OsmAnd {
     private:
         static bool rayIntersectPlane(const glm::vec3& planeN, float planeO, const glm::vec3& rayD, const glm::vec3& rayO, float& distance);
         static void validateResult();
+        static float calculateCameraDistance(const glm::mat4& P, const AreaI& viewport, float Ax, float Sx, float k);
     protected:
-        PointI _glWindowSize;
-        AreaI _glViewport;
         glm::mat4 _glProjection;
         glm::mat4 _glModelview;
+        float _distanceFromCameraToTarget;
         uint32_t _glMaxTextureDimension;
         uint32_t _lastUnfinishedAtlas;
         uint32_t _unfinishedAtlasFirstFreeSlot;
