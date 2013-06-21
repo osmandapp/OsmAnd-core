@@ -26,6 +26,17 @@ endif()
 
 # 3D rendering: OpenGL, OpenGLES, Direct3D
 if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "windows")
+	file(GLOB_RECURSE sources_opengl_base "src/OpenGL_Base/*.c*")
+	file(GLOB_RECURSE headers_opengl_base "src/OpenGL_Base/*.h*")
+	set(target_specific_public_includes ${target_specific_public_includes}
+		"${OSMAND_ROOT}/core/externals/glm/upstream.patched"
+	)
+	set(target_specific_sources ${target_specific_sources}
+		${headers_opengl_base}
+		${sources_opengl_base}
+	)
+endif()
+if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "windows")
 	find_package(OpenGL REQUIRED)
 	set(target_specific_public_definitions ${target_specific_public_definitions}
 		-DOSMAND_OPENGL_RENDERER_SUPPORTED
@@ -38,19 +49,25 @@ if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAK
 		${OPENGL_LIBRARIES}
 		glew_static
 	)
+	file(GLOB_RECURSE sources_opengl "src/OpenGL/*.c*")
+	file(GLOB_RECURSE headers_opengl "src/OpenGL/*.h*")
+	set(target_specific_sources ${target_specific_sources}
+		${headers_opengl}
+		${sources_opengl}
+	)
 endif()
 
-file(GLOB_RECURSE sources "src/*.c*")
-file(GLOB_RECURSE headers "src/*.h*")
 file(GLOB_RECURSE includes "include/*.h*")
-file(GLOB_RECURSE sources_client "client/*.c*")
+file(GLOB_RECURSE headers "src/*.h*")
+file(GLOB_RECURSE sources "src/*.c*")
 file(GLOB_RECURSE headers_client "client/*.h*")
+file(GLOB_RECURSE sources_client "client/*.c*")
 add_library(OsmAndCore SHARED
 	${includes}
 	${headers}
     ${sources}
-    ${sources_client}
     ${headers_client}
+    ${sources_client}
 	${target_specific_sources}
 	"protos/OBF.pb.h"
 
@@ -90,7 +107,6 @@ target_include_directories(OsmAndCore
 		"${OSMAND_ROOT}/core/src"
 		"${OSMAND_ROOT}/core/client"
 		"${OSMAND_ROOT}/core/protos"
-		"${OSMAND_ROOT}/core/externals/glm/upstream.patched"
 		${target_specific_public_includes}
 )
 target_link_libraries(OsmAndCore

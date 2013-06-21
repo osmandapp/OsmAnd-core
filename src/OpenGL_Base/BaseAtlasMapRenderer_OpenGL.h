@@ -19,15 +19,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __RENDERER_OPENGL_H_
-#define __RENDERER_OPENGL_H_
+#ifndef __BASE_ATLAS_MAP_RENDERER_OPENGL_H_
+#define __BASE_ATLAS_MAP_RENDERER_OPENGL_H_
 
 #include <stdint.h>
 #include <memory>
 
-#include <QMap>
 #include <QQueue>
-#include <QSet>
 
 #include <glm/glm.hpp>
 
@@ -37,15 +35,13 @@
 
 namespace OsmAnd {
 
-    class MapDataCache;
-
-    class OSMAND_CORE_API AtlasMapRenderer_OpenGL : public BaseAtlasMapRenderer
+    class OSMAND_CORE_API BaseAtlasMapRenderer_OpenGL : public BaseAtlasMapRenderer
     {
+    public:
     private:
-        static bool rayIntersectPlane(const glm::vec3& planeN, float planeO, const glm::vec3& rayD, const glm::vec3& rayO, float& distance);
-        static void validateResult();
-        static float calculateCameraDistance(const glm::mat4& P, const AreaI& viewport, float Ax, float Sx, float k);
     protected:
+        BaseAtlasMapRenderer_OpenGL();
+
         glm::mat4 _glProjection;
         glm::mat4 _glModelview;
         float _distanceFromCameraToTarget;
@@ -55,34 +51,37 @@ namespace OsmAnd {
         QQueue<uint64_t> _freeAtlasSlots;
         Qt::HANDLE _glRenderThreadId;
 
-        virtual void computeMatrices();
-        virtual void refreshVisibleTileset();
+        static float calculateCameraDistance(const glm::mat4& P, const AreaI& viewport, const float& Ax, const float& Sx, const float& k);
+        static bool rayIntersectPlane(const glm::vec3& planeN, float planeO, const glm::vec3& rayD, const glm::vec3& rayO, float& distance);
+
+        void computeMatrices();
+        void computeVisibleTileset();
 
         struct OSMAND_CORE_API CachedTile_OpenGL : public IMapRenderer::CachedTile
         {
-            CachedTile_OpenGL(AtlasMapRenderer_OpenGL* owner, const uint32_t& zoom, const TileId& id, const size_t& usedMemory, uint32_t textureId, uint32_t atlasSlotIndex);
+            CachedTile_OpenGL(BaseAtlasMapRenderer_OpenGL* owner, const uint32_t& zoom, const TileId& id, const size_t& usedMemory, uint32_t textureId, uint32_t atlasSlotIndex);
             virtual ~CachedTile_OpenGL();
 
-            AtlasMapRenderer_OpenGL* const owner;
+            BaseAtlasMapRenderer_OpenGL* const owner;
             const uint32_t textureId;
             const uint32_t atlasSlotIndex;
         };
         virtual void cacheTile(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap);
-        void uploadTileToTexture(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap);
+        virtual void uploadTileToTexture(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap) = 0;
+        virtual void purgeTexture(const uint32_t& texture) = 0;
         QMap< uint32_t, uint32_t > _glTexturesRefCounts;
 
         virtual void updateConfiguration();
     public:
-        AtlasMapRenderer_OpenGL();
-        virtual ~AtlasMapRenderer_OpenGL();
-
-        virtual int getCachedTilesCount();
+        virtual ~BaseAtlasMapRenderer_OpenGL();
 
         virtual void initializeRendering();
         virtual void performRendering();
         virtual void releaseRendering();
+
+        virtual int getCachedTilesCount();
     };
 
 }
 
-#endif // __RENDERER_OPENGL_H_
+#endif // __BASE_ATLAS_MAP_RENDERER_OPENGL_H_

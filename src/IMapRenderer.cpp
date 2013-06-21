@@ -323,7 +323,7 @@ OsmAnd::IMapRenderer::Configuration::Configuration()
 }
 
 #if defined(OSMAND_OPENGL_RENDERER_SUPPORTED)
-#   include "AtlasMapRenderer_OpenGL.h"
+#   include "OpenGL/AtlasMapRenderer_OpenGL.h"
     OSMAND_CORE_API std::shared_ptr<OsmAnd::IMapRenderer> OSMAND_CORE_CALL OsmAnd::createAtlasMapRenderer_OpenGL()
     {
         return std::shared_ptr<OsmAnd::IMapRenderer>(new AtlasMapRenderer_OpenGL());

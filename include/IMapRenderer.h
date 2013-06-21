@@ -89,9 +89,6 @@ namespace OsmAnd {
         QSet<TileId> _visibleTiles;
         PointD _targetInTile;
         
-        virtual void computeMatrices() = 0;
-        virtual void refreshVisibleTileset() = 0;
-        
         QMutex _tilesCacheMutex;
         struct OSMAND_CORE_API CachedTile : TileZoomCache::Tile
         {
