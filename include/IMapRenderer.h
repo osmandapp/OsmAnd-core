@@ -41,6 +41,7 @@
 namespace OsmAnd {
 
     class IMapTileProvider;
+    class IMapElevationDataProvider;
 
     class OSMAND_CORE_API IMapRenderer
     {
@@ -56,6 +57,7 @@ namespace OsmAnd {
             Configuration();
 
             std::shared_ptr<IMapTileProvider> tileProvider;
+            std::shared_ptr<IMapElevationDataProvider> elevationDataProvider;
             PointI windowSize;
             float displayDensityFactor;
             AreaI viewport;
@@ -74,6 +76,7 @@ namespace OsmAnd {
         void tileReadyCallback(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tile);
         bool _viewIsDirty;
         bool _tilesCacheInvalidated;
+        bool _elevationDataCacheInvalidated;
     protected:
         IMapRenderer();
 
@@ -118,6 +121,9 @@ namespace OsmAnd {
         const bool& tilesCacheInvalidated;
         virtual void invalidateTileCache();
 
+        const bool& elevationDataCacheInvalidated;
+        virtual void invalidateElevationDataCache();
+
         virtual void updateConfiguration();
     public:
         virtual ~IMapRenderer();
@@ -130,6 +136,7 @@ namespace OsmAnd {
         virtual int getCachedTilesCount() const;
 
         virtual void setTileProvider(const std::shared_ptr<IMapTileProvider>& tileProvider);
+        virtual void setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& elevationDataProvider);
         virtual void setPreferredTextureDepth(TextureDepth depth);
         virtual void setWindowSize(const PointI& windowSize);
         virtual void setDisplayDensityFactor(const float& factor);

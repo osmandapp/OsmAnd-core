@@ -6,7 +6,8 @@
 
 OsmAnd::IMapRenderer::IMapRenderer()
     : _viewIsDirty(true)
-    , _tilesCacheInvalidated(false)
+    , _tilesCacheInvalidated(true)
+    , _elevationDataCacheInvalidated(true)
     , _pendingToActiveConfigMutex(QMutex::Recursive)
     , _configInvalidated(true)
     , _tilesCacheMutex(QMutex::Recursive)
@@ -14,6 +15,7 @@ OsmAnd::IMapRenderer::IMapRenderer()
     , _isRenderingInitialized(false)
     , viewIsDirty(_viewIsDirty)
     , tilesCacheInvalidated(_tilesCacheInvalidated)
+    , elevationDataCacheInvalidated(_elevationDataCacheInvalidated)
     , visibleTiles(_visibleTiles)
     , configuration(_pendingConfig)
     , isRenderingInitialized(_isRenderingInitialized)
@@ -43,6 +45,20 @@ void OsmAnd::IMapRenderer::setTileProvider( const std::shared_ptr<IMapTileProvid
     _pendingConfig.tileProvider = source;
 
     invalidateTileCache();
+    invalidateConfiguration();
+}
+
+void OsmAnd::IMapRenderer::setElevationDataProvider( const std::shared_ptr<IMapElevationDataProvider>& source )
+{
+    QMutexLocker scopeLock(&_pendingToActiveConfigMutex);
+
+    bool update = (_pendingConfig.elevationDataProvider != source);
+    if(!update)
+        return;
+
+    _pendingConfig.elevationDataProvider = source;
+
+    invalidateElevationDataCache();
     invalidateConfiguration();
 }
 
@@ -271,6 +287,11 @@ void OsmAnd::IMapRenderer::requestRedraw()
 void OsmAnd::IMapRenderer::invalidateTileCache()
 {
     _tilesCacheInvalidated = true;
+}
+
+void OsmAnd::IMapRenderer::invalidateElevationDataCache()
+{
+    _elevationDataCacheInvalidated = true;
 }
 
 void OsmAnd::IMapRenderer::invalidateConfiguration()
