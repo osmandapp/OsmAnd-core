@@ -75,12 +75,17 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
     GL_CHECK_RESULT;
 
     // Set atlas slots per row
-    auto atlastSlotsInLine = _maxTextureDimension / _activeConfig.tileProvider->getTileDimension();
-    glUniform1i(_vertexShader_param_atlasSlotsInLine, atlastSlotsInLine);
+    const auto atlasSlotsInLine = _maxTextureSize / (_activeConfig.tileProvider->getTileSize() + 2);
+    glUniform1i(_vertexShader_param_atlasSlotsInLine, atlasSlotsInLine);
     GL_CHECK_RESULT;
 
     // Set atlas size
-    glUniform1i(_vertexShader_param_atlasSize, _maxTextureDimension);
+    const auto atlasSize = atlasSlotsInLine * (_activeConfig.tileProvider->getTileSize() + 2);
+    glUniform1i(_vertexShader_param_atlasSize, atlasSize);
+    GL_CHECK_RESULT;
+
+    // Set atlas size
+    glUniform1i(_vertexShader_param_atlasTextureSize, _maxTextureSize);
     GL_CHECK_RESULT;
 
     // Set tile patch VAO
@@ -146,7 +151,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
                 GL_CHECK_RESULT;
                 glBindTexture(GL_TEXTURE_2D, cachedTile->textureId);
                 GL_CHECK_RESULT;
-                glBindSampler(0, _maxTextureDimension ? _tileTextureSampler_Atlas : _tileTextureSampler_NoAtlas);
+                glBindSampler(0, _maxTextureSize ? _tileTextureSampler_Atlas : _tileTextureSampler_NoAtlas);
                 GL_CHECK_RESULT;
 
                 glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
@@ -206,6 +211,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
         "uniform ivec2 param_targetTile;                                                                                    "
         "uniform int param_atlasSlotsInLine;                                                                                "
         "uniform int param_atlasSize;                                                                                       "
+        "uniform int param_atlasTextureSize;                                                                                "
         "                                                                                                                   "
         // Per-tile data
         "uniform ivec2 param_tile;                                                                                          "
@@ -228,27 +234,28 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
         "    g_vertexUV0 = in_vertexUV0;                                                                                    "
         "    if(param_atlasSlotsInLine > 0)                                                                                 "
         "    {                                                                                                              "
-        "        double slotLength = 1.0 / float(param_atlasSlotsInLine);                                                   "
+        "        double slotsTotalLength = double(param_atlasSize) / double(param_atlasTextureSize);                        "
+        "        double slotLength = slotsTotalLength / double(param_atlasSlotsInLine);                                     "
         "        int rowIndex = param_atlasSlotIndex / param_atlasSlotsInLine;                                              "
         "        int colIndex = int(mod(param_atlasSlotIndex, param_atlasSlotsInLine));                                     "
         "                                                                                                                   "
-        "        double indent = 0.5 / double(param_atlasSize);                                                             "
+        "        double texelSize_1d5 = 1.5 / double(param_atlasTextureSize);                                               "
         "        double xIndent = 0.0;                                                                                      "
         "        if(g_vertexUV0.x > 0.99)                                                                                   "
-        "            xIndent = -indent;                                                                                     "
+        "            xIndent = -texelSize_1d5;                                                                              "
         "        else if(g_vertexUV0.x < 0.001)                                                                             "
-        "            xIndent = indent;                                                                                      "
+        "            xIndent = texelSize_1d5;                                                                               "
         "        double yIndent = 0.0;                                                                                      "
-        "        if(g_vertexUV0.y > 0.5)                                                                                    "
-        "            yIndent = -indent;                                                                                     "
-        "        else                                                                                                       "
-        "            yIndent = indent;                                                                                      "
+        "        if(g_vertexUV0.y > 0.99)                                                                                   "
+        "            yIndent = -texelSize_1d5;                                                                              "
+        "        else if(g_vertexUV0.y < 0.001)                                                                             "
+        "            yIndent = texelSize_1d5;                                                                               "
         "                                                                                                                   "
-        "        double uBase = double(colIndex) * slotLength + double(g_vertexUV0.x) * slotLength;                         "
-        "        g_vertexUV0.x = float(uBase + xIndent);                                                                    "
+        "        double uBase = double(colIndex) * slotLength + double(g_vertexUV0.s) * slotLength;                         "
+        "        g_vertexUV0.s = float(uBase + xIndent);                                                                    "
         "                                                                                                                   "
-        "        double vBase = double(rowIndex) * slotLength + double(g_vertexUV0.y) * slotLength;                         "
-        "        g_vertexUV0.y = float(vBase + yIndent);                                                                    "
+        "        double vBase = double(rowIndex) * slotLength + double(g_vertexUV0.t) * slotLength;                         "
+        "        g_vertexUV0.t = float(vBase + yIndent);                                                                    "
         "    }                                                                                                              "
         "                                                                                                                   "
         "                                                                                                                   "
@@ -355,6 +362,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
     _vertexShader_param_atlasSize = glGetUniformLocation(_programObject, "param_atlasSize");
     GL_CHECK_RESULT;
     assert(_vertexShader_param_atlasSize != -1);
+
+    _vertexShader_param_atlasTextureSize = glGetUniformLocation(_programObject, "param_atlasTextureSize");
+    GL_CHECK_RESULT;
+    assert(_vertexShader_param_atlasTextureSize != -1);
 
     _fragmentShader_param_sampler0 = glGetUniformLocation(_programObject, "param_sampler0");
     GL_CHECK_RESULT;
@@ -475,19 +486,19 @@ void OsmAnd::AtlasMapRenderer_OpenGL::uploadTileToTexture( const TileId& tileId,
     const auto skConfig = tileBitmap->getConfig();
     assert( _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? skConfig == SkBitmap::kARGB_8888_Config : skConfig == SkBitmap::kRGB_565_Config );
 
-    //TODO: So far, http://stackoverflow.com/questions/6023400/opengl-es-texture-coordinates-slightly-off does not help
-    /*
     // Get maximal texture size if not yet determined
-    if(_maxTextureDimension == 0)
+    if(_maxTextureSize == 0)
     {
-        glGetIntegerv(GL_MAX_TEXTURE_SIZE, reinterpret_cast<GLint*>(&_maxTextureDimension));
-        _maxTextureDimension = 256;
+        glGetIntegerv(GL_MAX_TEXTURE_SIZE, reinterpret_cast<GLint*>(&_maxTextureSize));
         GL_CHECK_RESULT;
     }
-    */
-    if(_maxTextureDimension != 0)
+    
+    const auto tileSize = _activeConfig.tileProvider->getTileSize();
+
+    if(_maxTextureSize != 0)
     {
-        auto tilesPerRow = _maxTextureDimension / _activeConfig.tileProvider->getTileDimension();
+        const auto tilesPerRow = _maxTextureSize / (tileSize + 2);
+        _atlasSizeOnTexture = (tileSize + 2) * tilesPerRow;
 
         // If we have no unfinished atlas yet, create one
         uint32_t freeSlotIndex;
@@ -507,11 +518,31 @@ void OsmAnd::AtlasMapRenderer_OpenGL::uploadTileToTexture( const TileId& tileId,
             glBindTexture(GL_TEXTURE_2D, textureName);
             GL_CHECK_RESULT;
             assert(glTexStorage2D);
-            glTexStorage2D(GL_TEXTURE_2D, 1, _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_RGBA8 : GL_RGB5, _maxTextureDimension, _maxTextureDimension);
+            glTexStorage2D(GL_TEXTURE_2D, 1, _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_RGBA8 : GL_RGB5_A1, _maxTextureSize, _maxTextureSize);
             GL_CHECK_RESULT;
             _unfinishedAtlasFirstFreeSlot = 0;
             _texturesRefCounts.insert(textureName, 0);
             _lastUnfinishedAtlas = textureName;
+
+#if defined(DEBUG) || defined(_DEBUG)
+            {
+                // In debug mode, fill entire texture with single RED color
+                uint8_t* fillBuffer = new uint8_t[_maxTextureSize * _maxTextureSize * (_activeConfig.preferredTextureDepth == IMapRenderer::_32bits? 4 : 2)];
+                for(uint32_t idx = 0; idx < _maxTextureSize * _maxTextureSize; idx++)
+                {
+                    if(_activeConfig.preferredTextureDepth == IMapRenderer::_32bits)
+                        *reinterpret_cast<uint32_t*>(&fillBuffer[idx * 4]) = 0xFFFF0000;
+                    else
+                        *reinterpret_cast<uint16_t*>(&fillBuffer[idx * 2]) = 0xFC00;
+                }
+                glTexSubImage2D(GL_TEXTURE_2D, 0,
+                    0, 0, _maxTextureSize, _maxTextureSize,
+                    GL_BGRA,
+                    _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_1_5_5_5_REV,
+                    fillBuffer);
+                delete[] fillBuffer;
+            }
+#endif
 
             freeSlotIndex = 0;
             atlasId = textureName;
@@ -526,12 +557,50 @@ void OsmAnd::AtlasMapRenderer_OpenGL::uploadTileToTexture( const TileId& tileId,
 
         glBindTexture(GL_TEXTURE_2D, atlasId);
         GL_CHECK_RESULT;
+
+        // Tile area offset
+        auto yOffset = (freeSlotIndex / tilesPerRow) * (tileSize + 2);
+        auto xOffset = (freeSlotIndex % tilesPerRow) * (tileSize + 2);
+
+        // Set stride
         glPixelStorei(GL_UNPACK_ROW_LENGTH, tileBitmap->rowBytesAsPixels());
         GL_CHECK_RESULT;
-        auto yOffset = (freeSlotIndex / tilesPerRow) * _activeConfig.tileProvider->getTileDimension();
-        auto xOffset = (freeSlotIndex % tilesPerRow) * _activeConfig.tileProvider->getTileDimension();
+
+        // Left column duplicate
         glTexSubImage2D(GL_TEXTURE_2D, 0,
-            xOffset, yOffset, (GLsizei)_activeConfig.tileProvider->getTileDimension(), (GLsizei)_activeConfig.tileProvider->getTileDimension(),
+            xOffset + 0, yOffset + 1, 1, (GLsizei)tileSize,
+            _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
+            _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
+            tileBitmap->getPixels());
+        GL_CHECK_RESULT;
+
+        // Top row duplicate
+        glTexSubImage2D(GL_TEXTURE_2D, 0,
+            xOffset + 1, yOffset + 0, (GLsizei)tileSize, 1,
+            _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
+            _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
+            tileBitmap->getPixels());
+        GL_CHECK_RESULT;
+        
+        // Right column duplicate
+        glTexSubImage2D(GL_TEXTURE_2D, 0,
+            xOffset + 1 + tileSize, yOffset + 1, 1, (GLsizei)tileSize,
+            _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
+            _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
+            reinterpret_cast<uint8_t*>(tileBitmap->getPixels()) + (tileSize - 1) * (_activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? 4 : 2));
+        GL_CHECK_RESULT;
+
+        // Bottom row duplicate
+        glTexSubImage2D(GL_TEXTURE_2D, 0,
+            xOffset + 1, yOffset + 1 + tileSize, (GLsizei)tileSize, 1,
+            _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
+            _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
+            reinterpret_cast<uint8_t*>(tileBitmap->getPixels()) + (tileSize - 1) * tileBitmap->rowBytes());
+        GL_CHECK_RESULT;
+        
+        // Main data
+        glTexSubImage2D(GL_TEXTURE_2D, 0,
+            xOffset + 1, yOffset + 1, (GLsizei)tileSize, (GLsizei)tileSize,
             _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
             _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
             tileBitmap->getPixels());
@@ -553,24 +622,17 @@ void OsmAnd::AtlasMapRenderer_OpenGL::uploadTileToTexture( const TileId& tileId,
         GL_CHECK_RESULT;
         glPixelStorei(GL_UNPACK_ROW_LENGTH, tileBitmap->rowBytesAsPixels());
         GL_CHECK_RESULT;
-        if(_activeConfig.preferredTextureDepth == IMapRenderer::_32bits)
-        {
-            glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, _activeConfig.tileProvider->getTileDimension(), _activeConfig.tileProvider->getTileDimension());
-            GL_CHECK_RESULT;
-            glTexSubImage2D(GL_TEXTURE_2D, 0,
-                0, 0, (GLsizei)_activeConfig.tileProvider->getTileDimension(), (GLsizei)_activeConfig.tileProvider->getTileDimension(),
-                GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, tileBitmap->getPixels());
-            GL_CHECK_RESULT;
-        }
-        else
-        {
-            glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB5, _activeConfig.tileProvider->getTileDimension(), _activeConfig.tileProvider->getTileDimension());
-            GL_CHECK_RESULT;
-            glTexSubImage2D(GL_TEXTURE_2D, 0,
-                0, 0, (GLsizei)_activeConfig.tileProvider->getTileDimension(), (GLsizei)_activeConfig.tileProvider->getTileDimension(),
-                GL_RGB, GL_UNSIGNED_SHORT_5_6_5, tileBitmap->getPixels());
-            GL_CHECK_RESULT;
-        }
+
+        glTexStorage2D(GL_TEXTURE_2D, 1,
+            _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_RGBA8 : GL_RGB5_A1,
+            tileSize, tileSize);
+        GL_CHECK_RESULT;
+        glTexSubImage2D(GL_TEXTURE_2D, 0,
+            0, 0, (GLsizei)tileSize, (GLsizei)tileSize,
+            _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
+            _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
+            tileBitmap->getPixels());
+        GL_CHECK_RESULT;
 
         _tilesCache.putTile(std::shared_ptr<TileZoomCache::Tile>(static_cast<TileZoomCache::Tile*>(
             new CachedTile_OpenGL(this, zoom, tileId, 0, textureName, 0)

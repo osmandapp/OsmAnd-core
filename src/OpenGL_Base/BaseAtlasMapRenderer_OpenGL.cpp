@@ -15,7 +15,8 @@
 #include "OsmAndLogging.h"
 
 OsmAnd::BaseAtlasMapRenderer_OpenGL::BaseAtlasMapRenderer_OpenGL()
-    : _maxTextureDimension(0)
+    : _maxTextureSize(0)
+    , _atlasSizeOnTexture(0)
     , _lastUnfinishedAtlas(0)
     , _renderThreadId(nullptr)
 {
@@ -76,7 +77,7 @@ void OsmAnd::BaseAtlasMapRenderer_OpenGL::computeMatrices()
     _mProjection = glm::perspective(_activeConfig.fieldOfView, aspectRatio, 0.1f, 1000.0f);
 
     // Calculate limits of camera distance to target and actual distance
-    const float screenTile = _activeConfig.tileProvider->getTileDimension() * (_activeConfig.displayDensityFactor / _activeConfig.tileProvider->getTileDensity());
+    const float screenTile = _activeConfig.tileProvider->getTileSize() * (_activeConfig.displayDensityFactor / _activeConfig.tileProvider->getTileDensity());
     const float nearD = calculateCameraDistance(_mProjection, _activeConfig.viewport, TileDimension3D / 2.0f, screenTile / 2.0f, 1.5f);
     const float baseD = calculateCameraDistance(_mProjection, _activeConfig.viewport, TileDimension3D / 2.0f, screenTile / 2.0f, 1.0f);
     const float farD = calculateCameraDistance(_mProjection, _activeConfig.viewport, TileDimension3D / 2.0f, screenTile / 2.0f, 0.75f);
@@ -400,7 +401,7 @@ OsmAnd::BaseAtlasMapRenderer_OpenGL::CachedTile_OpenGL::~CachedTile_OpenGL()
     auto& refCnt = *itRefCnt;
     refCnt -= 1;
 
-    if(owner->_maxTextureDimension != 0 && refCnt > 0)
+    if(owner->_maxTextureSize != 0 && refCnt > 0)
     {
         // A free atlas slot
         owner->_freeAtlasSlots.insert(textureId, atlasSlotIndex);

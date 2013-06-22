@@ -82,7 +82,7 @@ namespace OsmAnd {
         OSMAND_CORE_API bool OSMAND_CORE_CALL rayIntersect(const PointI& v0, const PointI& v1, const PointI& v);
         OSMAND_CORE_API AreaI OSMAND_CORE_CALL areaRightShift(const AreaI& input, uint32_t shift);
         OSMAND_CORE_API AreaI OSMAND_CORE_CALL areaLeftShift(const AreaI& input, uint32_t shift);
-
+        
         template <typename T>
         T sumWithSaturation(const T& a, const T& b)
         {

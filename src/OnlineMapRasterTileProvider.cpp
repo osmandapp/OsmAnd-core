@@ -264,7 +264,7 @@ float OsmAnd::OnlineMapRasterTileProvider::getTileDensity() const
     return 1.0f;
 }
 
-uint32_t OsmAnd::OnlineMapRasterTileProvider::getTileDimension() const
+uint32_t OsmAnd::OnlineMapRasterTileProvider::getTileSize() const
 {
     return _tileDimension;
 }

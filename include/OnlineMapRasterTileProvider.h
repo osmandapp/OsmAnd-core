@@ -86,7 +86,7 @@ namespace OsmAnd {
         const bool& networkAccessAllowed;
 
         virtual float getTileDensity() const;
-        virtual uint32_t getTileDimension() const;
+        virtual uint32_t getTileSize() const;
 
         virtual bool obtainTile(
             const TileId& tileId, uint32_t zoom,

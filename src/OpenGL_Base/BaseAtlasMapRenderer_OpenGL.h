@@ -53,7 +53,8 @@ namespace OsmAnd {
         glm::mat4 _mProjection;
         glm::mat4 _mView;
         float _distanceFromCameraToTarget;
-        uint32_t _maxTextureDimension;
+        uint32_t _maxTextureSize;
+        uint32_t _atlasSizeOnTexture;
         GLuint _lastUnfinishedAtlas;
         uint32_t _unfinishedAtlasFirstFreeSlot;
         QMultiMap<GLuint, uint32_t> _freeAtlasSlots;

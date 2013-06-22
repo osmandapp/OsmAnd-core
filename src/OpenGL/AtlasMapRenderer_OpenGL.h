@@ -64,6 +64,7 @@ namespace OsmAnd {
         GLint _vertexShader_param_tile;
         GLint _vertexShader_param_atlasSlotIndex;
         GLint _vertexShader_param_atlasSize;
+        GLint _vertexShader_param_atlasTextureSize;
         GLint _fragmentShader_param_sampler0;
 
         virtual void allocateTilePatch(Vertex* vertices, size_t verticesCount, GLushort* indices, size_t indicesCount);
