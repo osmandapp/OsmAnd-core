@@ -56,7 +56,7 @@ namespace OsmAnd {
         uint32_t _maxTextureDimension;
         GLuint _lastUnfinishedAtlas;
         uint32_t _unfinishedAtlasFirstFreeSlot;
-        QQueue<uint64_t> _freeAtlasSlots;
+        QMultiMap<GLuint, uint32_t> _freeAtlasSlots;
         Qt::HANDLE _renderThreadId;
 
         static float calculateCameraDistance(const glm::mat4& P, const AreaI& viewport, const float& Ax, const float& Sx, const float& k);
@@ -93,6 +93,8 @@ namespace OsmAnd {
         virtual void releaseTilePatch() = 0;
         
         virtual void updateConfiguration();
+
+        virtual void purgeTilesCache();
     public:
         virtual ~BaseAtlasMapRenderer_OpenGL();
 

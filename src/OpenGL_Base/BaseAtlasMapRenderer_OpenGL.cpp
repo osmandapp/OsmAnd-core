@@ -376,6 +376,14 @@ void OsmAnd::BaseAtlasMapRenderer_OpenGL::createTilePatch()
     }
 }
 
+void OsmAnd::BaseAtlasMapRenderer_OpenGL::purgeTilesCache()
+{
+    BaseAtlasMapRenderer::purgeTilesCache();
+
+    assert(_freeAtlasSlots.isEmpty());
+    _lastUnfinishedAtlas = 0;
+}
+
 OsmAnd::BaseAtlasMapRenderer_OpenGL::CachedTile_OpenGL::CachedTile_OpenGL( BaseAtlasMapRenderer_OpenGL* owner_, const uint32_t& zoom, const TileId& id, const size_t& usedMemory, uint32_t textureId_, uint32_t atlasSlotIndex_ )
     : IMapRenderer::CachedTile(zoom, id, usedMemory)
     , owner(owner_)
@@ -395,12 +403,12 @@ OsmAnd::BaseAtlasMapRenderer_OpenGL::CachedTile_OpenGL::~CachedTile_OpenGL()
     if(owner->_maxTextureDimension != 0 && refCnt > 0)
     {
         // A free atlas slot
-        uint64_t slotId = (static_cast<uint64_t>(textureId) << 32) | atlasSlotIndex;
-        owner->_freeAtlasSlots.enqueue(slotId);
+        owner->_freeAtlasSlots.insert(textureId, atlasSlotIndex);
     }
 
     if(refCnt == 0)
     {
+        owner->_freeAtlasSlots.remove(textureId);
         owner->releaseTexture(textureId);
         owner->_texturesRefCounts.remove(textureId);
     }

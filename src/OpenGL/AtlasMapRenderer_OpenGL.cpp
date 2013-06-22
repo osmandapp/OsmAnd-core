@@ -409,9 +409,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::uploadTileToTexture( const TileId& tileId,
         uint32_t atlasId;
         if(!_freeAtlasSlots.isEmpty())
         {
-            auto slotId = _freeAtlasSlots.dequeue();
-            atlasId = slotId >> 32;
-            freeSlotIndex = slotId & 0xFFFFFFFF;
+            const auto& itFreeSlot = _freeAtlasSlots.begin();
+            atlasId = itFreeSlot.key();
+            freeSlotIndex = itFreeSlot.value();
         }
         else if(_lastUnfinishedAtlas == 0 || _unfinishedAtlasFirstFreeSlot == tilesPerRow * tilesPerRow)
         {
@@ -539,8 +539,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL::allocateTilePatch( Vertex* vertices, size_
     assert(glBufferData);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
-
-    //TODO: setup shader, vertex buffer options
 
     glBindVertexArray(0);
     GL_CHECK_RESULT;
