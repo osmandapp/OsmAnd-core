@@ -27,6 +27,14 @@
 
 #include <QQueue>
 
+#if defined(WIN32)
+#   define WIN32_LEAN_AND_MEAN
+#   include <Windows.h>
+#endif
+#include <GL/glew.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
+
 #include <glm/glm.hpp>
 
 #include <OsmAndCore.h>
@@ -42,14 +50,14 @@ namespace OsmAnd {
     protected:
         BaseAtlasMapRenderer_OpenGL();
 
-        glm::mat4 _glProjection;
-        glm::mat4 _glModelview;
+        glm::mat4 _mProjection;
+        glm::mat4 _mView;
         float _distanceFromCameraToTarget;
-        uint32_t _glMaxTextureDimension;
-        uint32_t _lastUnfinishedAtlas;
+        uint32_t _maxTextureDimension;
+        GLuint _lastUnfinishedAtlas;
         uint32_t _unfinishedAtlasFirstFreeSlot;
         QQueue<uint64_t> _freeAtlasSlots;
-        Qt::HANDLE _glRenderThreadId;
+        Qt::HANDLE _renderThreadId;
 
         static float calculateCameraDistance(const glm::mat4& P, const AreaI& viewport, const float& Ax, const float& Sx, const float& k);
         static bool rayIntersectPlane(const glm::vec3& planeN, float planeO, const glm::vec3& rayD, const glm::vec3& rayO, float& distance);
@@ -59,18 +67,31 @@ namespace OsmAnd {
 
         struct OSMAND_CORE_API CachedTile_OpenGL : public IMapRenderer::CachedTile
         {
-            CachedTile_OpenGL(BaseAtlasMapRenderer_OpenGL* owner, const uint32_t& zoom, const TileId& id, const size_t& usedMemory, uint32_t textureId, uint32_t atlasSlotIndex);
+            CachedTile_OpenGL(BaseAtlasMapRenderer_OpenGL* owner, const uint32_t& zoom, const TileId& id, const size_t& usedMemory, GLuint textureId, uint32_t atlasSlotIndex);
             virtual ~CachedTile_OpenGL();
 
             BaseAtlasMapRenderer_OpenGL* const owner;
-            const uint32_t textureId;
+            const GLuint textureId;
             const uint32_t atlasSlotIndex;
         };
         virtual void cacheTile(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap);
         virtual void uploadTileToTexture(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap) = 0;
-        virtual void purgeTexture(const uint32_t& texture) = 0;
-        QMap< uint32_t, uint32_t > _glTexturesRefCounts;
+        virtual void releaseTexture(const GLuint& texture) = 0;
+        QMap< GLuint, uint32_t > _texturesRefCounts;
 
+#pragma pack(push)
+#pragma pack(1)
+        struct Vertex 
+        {
+            GLfloat position[3];
+            GLfloat uv[2];
+        };
+#pragma pack(pop)
+
+        virtual void createTilePatch();
+        virtual void allocateTilePatch(Vertex* vertices, size_t verticesCount, GLushort* indices, size_t indicesCount) = 0;
+        virtual void releaseTilePatch() = 0;
+        
         virtual void updateConfiguration();
     public:
         virtual ~BaseAtlasMapRenderer_OpenGL();

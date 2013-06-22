@@ -87,7 +87,7 @@ namespace OsmAnd {
         Configuration _activeConfig;
 
         QSet<TileId> _visibleTiles;
-        PointD _targetInTile;
+        PointF _targetInTile;
         
         QMutex _tilesCacheMutex;
         struct OSMAND_CORE_API CachedTile : TileZoomCache::Tile
@@ -99,6 +99,8 @@ namespace OsmAnd {
         virtual void purgeTilesCache();
         void updateTilesCache();
         virtual void cacheTile(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap) = 0;
+
+        void updateElevationDataCache();
 
         QMutex _tilesPendingToCacheMutex;
         struct OSMAND_CORE_API TilePendingToCache

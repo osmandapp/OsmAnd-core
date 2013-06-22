@@ -6,8 +6,8 @@
 
 OsmAnd::IMapRenderer::IMapRenderer()
     : _viewIsDirty(true)
-    , _tilesCacheInvalidated(true)
-    , _elevationDataCacheInvalidated(true)
+    , _tilesCacheInvalidated(false)
+    , _elevationDataCacheInvalidated(false)
     , _pendingToActiveConfigMutex(QMutex::Recursive)
     , _configInvalidated(true)
     , _tilesCacheMutex(QMutex::Recursive)
@@ -307,6 +307,15 @@ void OsmAnd::IMapRenderer::updateConfiguration()
     _activeConfig = _pendingConfig;
 
     _configInvalidated = false;
+}
+
+void OsmAnd::IMapRenderer::updateElevationDataCache()
+{
+    if(_elevationDataCacheInvalidated)
+    {
+        //purgeTilesCache();
+        _elevationDataCacheInvalidated = false;
+    }
 }
 
 OsmAnd::IMapRenderer::CachedTile::CachedTile( const uint32_t& zoom, const TileId& id, const size_t& usedMemory )

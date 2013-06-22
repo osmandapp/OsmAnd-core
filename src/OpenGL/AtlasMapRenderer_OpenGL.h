@@ -40,15 +40,39 @@ namespace OsmAnd {
     {
     private:
         static void validateResult();
+        static GLuint compileShader(GLenum shaderType, const char* source);
     protected:
         virtual void uploadTileToTexture(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap);
-        virtual void purgeTexture(const uint32_t& texture);
+        virtual void releaseTexture(const GLuint& texture);
+
+        GLuint _tilePatchVAO;
+        GLuint _tilePatchVBO;
+        GLuint _tilePatchIBO;
+        GLuint _vertexShader;
+        GLuint _fragmentShader;
+        GLuint _programObject;
+        GLuint _sampler0;
+
+        GLint _vertexShader_in_vertexPosition;
+        GLint _vertexShader_in_vertexUV0;
+        GLint _vertexShader_param_mProjection;
+        GLint _vertexShader_param_mView;
+        GLint _vertexShader_param_centerOffset;
+        GLint _vertexShader_param_targetTile;
+        GLint _vertexShader_param_atlasSlotsInLine;
+        GLint _vertexShader_param_tile;
+        GLint _vertexShader_param_atlasSlotIndex;
+        GLint _fragmentShader_param_sampler0;
+
+        virtual void allocateTilePatch(Vertex* vertices, size_t verticesCount, GLushort* indices, size_t indicesCount);
+        virtual void releaseTilePatch();
     public:
         AtlasMapRenderer_OpenGL();
         virtual ~AtlasMapRenderer_OpenGL();
 
         virtual void initializeRendering();
         virtual void performRendering();
+        virtual void releaseRendering();
     };
 
 }

@@ -13,7 +13,7 @@ namespace OsmAnd
         Info
     };
 
-    void LogPrintf(LogSeverityLevel level, const char* format, ...);
+    OSMAND_CORE_API void OSMAND_CORE_CALL LogPrintf(LogSeverityLevel level, const char* format, ...);
 }
 
 #endif // _OSMAND_LOGGING_H_

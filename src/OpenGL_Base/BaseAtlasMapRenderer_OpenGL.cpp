@@ -1,13 +1,6 @@
 #include "BaseAtlasMapRenderer_OpenGL.h"
 
 #include <assert.h>
-#if defined(WIN32)
-#   define WIN32_LEAN_AND_MEAN
-#   include <Windows.h>
-#endif
-#include <GL/glew.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
@@ -19,11 +12,12 @@
 #include "IMapRenderer.h"
 #include "IMapTileProvider.h"
 #include "IMapElevationDataProvider.h"
+#include "OsmAndLogging.h"
 
 OsmAnd::BaseAtlasMapRenderer_OpenGL::BaseAtlasMapRenderer_OpenGL()
-    : _glMaxTextureDimension(0)
+    : _maxTextureDimension(0)
     , _lastUnfinishedAtlas(0)
-    , _glRenderThreadId(nullptr)
+    , _renderThreadId(nullptr)
 {
 }
 
@@ -57,6 +51,21 @@ bool OsmAnd::BaseAtlasMapRenderer_OpenGL::rayIntersectPlane( const glm::vec3& pl
     return false;
 }
 
+void OsmAnd::BaseAtlasMapRenderer_OpenGL::updateConfiguration()
+{
+    if(elevationDataCacheInvalidated)
+    {
+        // Recreate tile patch since elevation data influences density of tile patch
+        releaseTilePatch();
+        createTilePatch();
+    }
+
+    IMapRenderer::updateConfiguration();
+
+    computeMatrices();
+    computeVisibleTileset();
+}
+
 void OsmAnd::BaseAtlasMapRenderer_OpenGL::computeMatrices()
 {
     // Setup projection with fake Z-far plane
@@ -64,15 +73,13 @@ void OsmAnd::BaseAtlasMapRenderer_OpenGL::computeMatrices()
     auto viewportHeight = _activeConfig.viewport.height();
     if(viewportHeight > 0)
         aspectRatio /= static_cast<GLfloat>(viewportHeight);
-    _glProjection = glm::perspective(_activeConfig.fieldOfView, aspectRatio, 0.1f, 1000.0f);
+    _mProjection = glm::perspective(_activeConfig.fieldOfView, aspectRatio, 0.1f, 1000.0f);
 
     // Calculate limits of camera distance to target and actual distance
-    //TODO: this is incorrect! if tile is oversized, then calculation is incorrect
-    //TODO: screen tile size must be dependent on viewport width? Device density? Or derive from constant numer of visible tiles in a row?
     const float screenTile = _activeConfig.tileProvider->getTileDimension() * (_activeConfig.displayDensityFactor / _activeConfig.tileProvider->getTileDensity());
-    const float nearD = calculateCameraDistance(_glProjection, _activeConfig.viewport, TileDimension3D / 2.0f, screenTile / 2.0f, 1.5f);
-    const float baseD = calculateCameraDistance(_glProjection, _activeConfig.viewport, TileDimension3D / 2.0f, screenTile / 2.0f, 1.0f);
-    const float farD = calculateCameraDistance(_glProjection, _activeConfig.viewport, TileDimension3D / 2.0f, screenTile / 2.0f, 0.75f);
+    const float nearD = calculateCameraDistance(_mProjection, _activeConfig.viewport, TileDimension3D / 2.0f, screenTile / 2.0f, 1.5f);
+    const float baseD = calculateCameraDistance(_mProjection, _activeConfig.viewport, TileDimension3D / 2.0f, screenTile / 2.0f, 1.0f);
+    const float farD = calculateCameraDistance(_mProjection, _activeConfig.viewport, TileDimension3D / 2.0f, screenTile / 2.0f, 0.75f);
 
     // zoomFraction == [ 0.0 ... 0.5] scales tile [1.0x ... 1.5x]
     // zoomFraction == [-0.5 ...-0.0] scales tile [.75x ... 1.0x]
@@ -82,12 +89,12 @@ void OsmAnd::BaseAtlasMapRenderer_OpenGL::computeMatrices()
         _distanceFromCameraToTarget = baseD - (farD - baseD) * (2.0f * _activeConfig.zoomFraction);
 
     // Recalculate projection with obtained value
-    _glProjection = glm::perspective(_activeConfig.fieldOfView, aspectRatio, 0.1f, _activeConfig.fogDistance * 1.2f + _distanceFromCameraToTarget);
+    _mProjection = glm::perspective(_activeConfig.fieldOfView, aspectRatio, 0.1f, _activeConfig.fogDistance * 1.2f + _distanceFromCameraToTarget);
 
     // Setup camera
     const auto& c0 = glm::translate(0.0f, 0.0f, -_distanceFromCameraToTarget);
     const auto& c1 = glm::rotate(c0, _activeConfig.elevationAngle, glm::vec3(1.0f, 0.0f, 0.0f));
-    _glModelview = glm::rotate(c1, _activeConfig.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
+    _mView = glm::rotate(c1, _activeConfig.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
 }
 
 void OsmAnd::BaseAtlasMapRenderer_OpenGL::computeVisibleTileset()
@@ -101,42 +108,42 @@ void OsmAnd::BaseAtlasMapRenderer_OpenGL::computeVisibleTileset()
     // Top-left far
     const auto& tlf = glm::unProject(
         glm::vec3(_activeConfig.viewport.left, _activeConfig.windowSize.y - _activeConfig.viewport.bottom + _activeConfig.viewport.height(), 1.0),
-        _glModelview, _glProjection, glViewport);
+        _mView, _mProjection, glViewport);
 
     // Top-right far
     const auto& trf = glm::unProject(
         glm::vec3(_activeConfig.viewport.right, _activeConfig.windowSize.y - _activeConfig.viewport.bottom + _activeConfig.viewport.height(), 1.0),
-        _glModelview, _glProjection, glViewport);
+        _mView, _mProjection, glViewport);
 
     // Bottom-left far
     const auto& blf = glm::unProject(
         glm::vec3(_activeConfig.viewport.left, _activeConfig.windowSize.y - _activeConfig.viewport.bottom, 1.0),
-        _glModelview, _glProjection, glViewport);
+        _mView, _mProjection, glViewport);
 
     // Bottom-right far
     const auto& brf = glm::unProject(
         glm::vec3(_activeConfig.viewport.right, _activeConfig.windowSize.y - _activeConfig.viewport.bottom, 1.0),
-        _glModelview, _glProjection, glViewport);
+        _mView, _mProjection, glViewport);
 
     // Top-left near
     const auto& tln = glm::unProject(
         glm::vec3(_activeConfig.viewport.left, _activeConfig.windowSize.y - _activeConfig.viewport.bottom + _activeConfig.viewport.height(), 0.0),
-        _glModelview, _glProjection, glViewport);
+        _mView, _mProjection, glViewport);
 
     // Top-right near
     const auto& trn = glm::unProject(
         glm::vec3(_activeConfig.viewport.right, _activeConfig.windowSize.y - _activeConfig.viewport.bottom + _activeConfig.viewport.height(), 0.0),
-        _glModelview, _glProjection, glViewport);
+        _mView, _mProjection, glViewport);
 
     // Bottom-left near
     const auto& bln = glm::unProject(
         glm::vec3(_activeConfig.viewport.left, _activeConfig.windowSize.y - _activeConfig.viewport.bottom, 0.0),
-        _glModelview, _glProjection, glViewport);
+        _mView, _mProjection, glViewport);
 
     // Bottom-right near
     const auto& brn = glm::unProject(
         glm::vec3(_activeConfig.viewport.right, _activeConfig.windowSize.y - _activeConfig.viewport.bottom, 0.0),
-        _glModelview, _glProjection, glViewport);
+        _mView, _mProjection, glViewport);
 
     // Obtain 4 normalized ray directions for each side of viewport
     const auto& tlRayD = glm::normalize(tlf - tln);
@@ -241,7 +248,7 @@ void OsmAnd::BaseAtlasMapRenderer_OpenGL::cacheTile( const TileId& tileId, uint3
 {
     assert(!_tilesCache.contains(zoom, tileId));
 
-    if(_glRenderThreadId != QThread::currentThreadId())
+    if(_renderThreadId != QThread::currentThreadId())
     {
         QMutexLocker scopeLock(&_tilesPendingToCacheMutex);
 
@@ -262,21 +269,23 @@ void OsmAnd::BaseAtlasMapRenderer_OpenGL::cacheTile( const TileId& tileId, uint3
 
 int OsmAnd::BaseAtlasMapRenderer_OpenGL::getCachedTilesCount()
 {
-    return _glTexturesRefCounts.size();
+    return _texturesRefCounts.size();
 }
 
 void OsmAnd::BaseAtlasMapRenderer_OpenGL::initializeRendering()
 {
     assert(!_isRenderingInitialized);
 
-    _glRenderThreadId = QThread::currentThreadId();
-
+    _renderThreadId = QThread::currentThreadId();
+    createTilePatch();
+    
     _isRenderingInitialized = true;
 }
 
 void OsmAnd::BaseAtlasMapRenderer_OpenGL::performRendering()
 {
     assert(_isRenderingInitialized);
+    assert(_renderThreadId == QThread::currentThreadId());
 
     if(_configInvalidated)
         updateConfiguration();
@@ -303,23 +312,68 @@ void OsmAnd::BaseAtlasMapRenderer_OpenGL::performRendering()
         }
     }
     updateTilesCache();
+
+    updateElevationDataCache();
 }
 
 void OsmAnd::BaseAtlasMapRenderer_OpenGL::releaseRendering()
 {
     assert(_isRenderingInitialized);
+    assert(_renderThreadId == QThread::currentThreadId());
 
     purgeTilesCache();
+    releaseTilePatch();
 
     _isRenderingInitialized = false;
 }
 
-void OsmAnd::BaseAtlasMapRenderer_OpenGL::updateConfiguration()
+void OsmAnd::BaseAtlasMapRenderer_OpenGL::createTilePatch()
 {
-    IMapRenderer::updateConfiguration();
+    //NOTE: this can be optimized using tessellation shader and GL_PATCH
+    Vertex* pVertices = nullptr;
+    uint32_t verticesCount = 0;
+    GLushort* pIndices = nullptr;
+    uint32_t indicesCount = 0;
+    
+    if(!_activeConfig.elevationDataProvider)
+    {
+        // Simple tile patch, that consists of 4 vertices
 
-    computeMatrices();
-    computeVisibleTileset();
+        // Vertex data
+        const GLfloat tsz = static_cast<GLfloat>(TileDimension3D);
+        Vertex vertices[4] =
+        {
+            // CCW
+            { {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },
+            { {0.0f, 0.0f,  tsz}, {0.0f, 1.0f} },
+            { { tsz, 0.0f,  tsz}, {1.0f, 1.0f} },
+            { { tsz, 0.0f, 0.0f}, {1.0f, 0.0f} }
+        };
+        pVertices = &vertices[0];
+        verticesCount = 4;
+
+        // Index data
+        GLushort indices[6] =
+        {
+            0, 1, 2,
+            0, 2, 3
+        };
+        pIndices = &indices[0];
+        indicesCount = 6;
+    }
+    else
+    {
+        //TODO: complex tile patch
+        assert(false);
+    }
+    
+    allocateTilePatch(pVertices, verticesCount, pIndices, indicesCount);
+
+    if(_activeConfig.elevationDataProvider)
+    {
+        delete[] pVertices;
+        delete[] pIndices;
+    }
 }
 
 OsmAnd::BaseAtlasMapRenderer_OpenGL::CachedTile_OpenGL::CachedTile_OpenGL( BaseAtlasMapRenderer_OpenGL* owner_, const uint32_t& zoom, const TileId& id, const size_t& usedMemory, uint32_t textureId_, uint32_t atlasSlotIndex_ )
@@ -332,13 +386,13 @@ OsmAnd::BaseAtlasMapRenderer_OpenGL::CachedTile_OpenGL::CachedTile_OpenGL( BaseA
 
 OsmAnd::BaseAtlasMapRenderer_OpenGL::CachedTile_OpenGL::~CachedTile_OpenGL()
 {
-    assert(owner->_glRenderThreadId == QThread::currentThreadId());
+    assert(owner->_renderThreadId == QThread::currentThreadId());
 
-    const auto& itRefCnt = owner->_glTexturesRefCounts.find(textureId);
+    const auto& itRefCnt = owner->_texturesRefCounts.find(textureId);
     auto& refCnt = *itRefCnt;
     refCnt -= 1;
 
-    if(owner->_glMaxTextureDimension != 0 && refCnt > 0)
+    if(owner->_maxTextureDimension != 0 && refCnt > 0)
     {
         // A free atlas slot
         uint64_t slotId = (static_cast<uint64_t>(textureId) << 32) | atlasSlotIndex;
@@ -347,7 +401,7 @@ OsmAnd::BaseAtlasMapRenderer_OpenGL::CachedTile_OpenGL::~CachedTile_OpenGL()
 
     if(refCnt == 0)
     {
-        owner->purgeTexture(textureId);
-        owner->_glTexturesRefCounts.remove(textureId);
+        owner->releaseTexture(textureId);
+        owner->_texturesRefCounts.remove(textureId);
     }
 }
