@@ -278,7 +278,7 @@ void OsmAnd::BaseAtlasMapRenderer_OpenGL::initializeRendering()
 
     _renderThreadId = QThread::currentThreadId();
     createTilePatch();
-    
+ 
     _isRenderingInitialized = true;
 }
 
