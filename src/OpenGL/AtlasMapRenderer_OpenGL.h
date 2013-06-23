@@ -30,13 +30,13 @@
 
 #include <OsmAndCore.h>
 #include <CommonTypes.h>
-#include <OpenGL_Base/BaseAtlasMapRenderer_OpenGL.h>
+#include <OpenGL_Base/AtlasMapRenderer_OpenGL_Base.h>
 
 namespace OsmAnd {
 
     class MapDataCache;
 
-    class OSMAND_CORE_API AtlasMapRenderer_OpenGL : public BaseAtlasMapRenderer_OpenGL
+    class OSMAND_CORE_API AtlasMapRenderer_OpenGL : public AtlasMapRenderer_BaseOpenGL
     {
     private:
         static void validateResult();

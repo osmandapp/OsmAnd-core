@@ -19,8 +19,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __BASE_ATLAS_MAP_RENDERER_OPENGL_H_
-#define __BASE_ATLAS_MAP_RENDERER_OPENGL_H_
+#ifndef __ATLAS_MAP_RENDERER_OPENGL_BASE_H_
+#define __ATLAS_MAP_RENDERER_OPENGL_BASE_H_
 
 #include <stdint.h>
 #include <memory>
@@ -43,12 +43,12 @@
 
 namespace OsmAnd {
 
-    class OSMAND_CORE_API BaseAtlasMapRenderer_OpenGL : public BaseAtlasMapRenderer
+    class OSMAND_CORE_API AtlasMapRenderer_BaseOpenGL : public BaseAtlasMapRenderer
     {
     public:
     private:
     protected:
-        BaseAtlasMapRenderer_OpenGL();
+        AtlasMapRenderer_BaseOpenGL();
 
         glm::mat4 _mProjection;
         glm::mat4 _mView;
@@ -60,18 +60,15 @@ namespace OsmAnd {
         QMultiMap<GLuint, uint32_t> _freeAtlasSlots;
         Qt::HANDLE _renderThreadId;
 
-        static float calculateCameraDistance(const glm::mat4& P, const AreaI& viewport, const float& Ax, const float& Sx, const float& k);
-        static bool rayIntersectPlane(const glm::vec3& planeN, float planeO, const glm::vec3& rayD, const glm::vec3& rayO, float& distance);
-
-        void computeMatrices();
+        void computeProjectionAndViewMatrices();
         void computeVisibleTileset();
 
         struct OSMAND_CORE_API CachedTile_OpenGL : public IMapRenderer::CachedTile
         {
-            CachedTile_OpenGL(BaseAtlasMapRenderer_OpenGL* owner, const uint32_t& zoom, const TileId& id, const size_t& usedMemory, GLuint textureId, uint32_t atlasSlotIndex);
+            CachedTile_OpenGL(AtlasMapRenderer_BaseOpenGL* owner, const uint32_t& zoom, const TileId& id, const size_t& usedMemory, GLuint textureId, uint32_t atlasSlotIndex);
             virtual ~CachedTile_OpenGL();
 
-            BaseAtlasMapRenderer_OpenGL* const owner;
+            AtlasMapRenderer_BaseOpenGL* const owner;
             const GLuint textureId;
             const uint32_t atlasSlotIndex;
         };
@@ -97,7 +94,7 @@ namespace OsmAnd {
 
         virtual void purgeTilesCache();
     public:
-        virtual ~BaseAtlasMapRenderer_OpenGL();
+        virtual ~AtlasMapRenderer_BaseOpenGL();
 
         virtual void initializeRendering();
         virtual void performRendering();
@@ -108,4 +105,4 @@ namespace OsmAnd {
 
 }
 
-#endif // __BASE_ATLAS_MAP_RENDERER_OPENGL_H_
+#endif // __ATLAS_MAP_RENDERER_OPENGL_BASE_H_

@@ -33,7 +33,7 @@ OsmAnd::AtlasMapRenderer_OpenGL::~AtlasMapRenderer_OpenGL()
 
 void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
 {
-    BaseAtlasMapRenderer_OpenGL::performRendering();
+    AtlasMapRenderer_BaseOpenGL::performRendering();
     GL_CHECK_RESULT;
 
     if(!viewIsDirty)
@@ -243,11 +243,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
         //   TODO: process heightmap data
         "    v.y = 0.0;                                                                                                     "
         "                                                                                                                   "
-        "                                                                                                                   "
-        "                                                                                                                   "
-        "                                                                                                                   "
-        "                                                                                                                   "
-        "                                                                                                                   "
+        //   Finally output processed modified vertex
         "    gl_Position = param_mProjection * param_mView * v;                                                             "
         "}                                                                                                                  ";
     _vertexShader = compileShader(GL_VERTEX_SHADER, vertexShader);
@@ -408,7 +404,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
     glDepthFunc(GL_LEQUAL);
     GL_CHECK_RESULT;
 
-    BaseAtlasMapRenderer_OpenGL::initializeRendering();
+    AtlasMapRenderer_BaseOpenGL::initializeRendering();
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL::releaseRendering()
@@ -450,7 +446,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::releaseRendering()
         _tileTextureSampler_NoAtlas = 0;
     }
 
-    BaseAtlasMapRenderer_OpenGL::releaseRendering();
+    AtlasMapRenderer_BaseOpenGL::releaseRendering();
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL::uploadTileToTexture( const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap )
@@ -509,7 +505,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::uploadTileToTexture( const TileId& tileId,
             _texturesRefCounts.insert(textureName, 0);
             _lastUnfinishedAtlas = textureName;
 
-#if defined(DEBUG) || defined(_DEBUG)
+#if 0
             {
                 // In debug mode, fill entire texture with single RED color
                 uint8_t* fillBuffer = new uint8_t[_maxTextureSize * _maxTextureSize * (_activeConfig.preferredTextureDepth == IMapRenderer::_32bits? 4 : 2)];
@@ -598,7 +594,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::uploadTileToTexture( const TileId& tileId,
     }
     else
     {
-        // Fallback to 1 texture per tile
+        // Fallback to texture-per-tile mode
         GLuint textureName;
         glGenTextures(1, &textureName);
         GL_CHECK_RESULT;
