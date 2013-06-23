@@ -117,21 +117,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
         if(!cacheHit)
         {
             //TODO: render stub
-            glBegin(GL_QUADS);
-
-            glColor3d(0,1,1);
-            glVertex3f(0,0,0);
-
-            glColor3d(1,0,0);
-            glVertex3f(0,0,TileDimension3D);
-
-            glColor3d(1,1,0);
-            glVertex3f(TileDimension3D,0,TileDimension3D);
-
-            glColor3d(1,1,1);
-            glVertex3f(TileDimension3D,0,0);
-
-            glEnd();
         }
         else
         {
@@ -221,9 +206,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
         "{                                                                                                                  "
         "    vec4 v = vec4(in_vertexPosition, 1.0);                                                                         "
         "                                                                                                                   "
-        //   TODO: process heightmap data
-        "    v.y = 0.0;                                                                                                     "
-        "                                                                                                                   "
         //   Shift vertex to it's proper position
         "    float xOffset = float(param_tile.x - param_targetTile.x) - param_centerOffset.x;                               "
         "    v.x += xOffset * 100.0;                                                                                        "
@@ -234,29 +216,32 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
         "    g_vertexUV0 = in_vertexUV0;                                                                                    "
         "    if(param_atlasSlotsInLine > 0)                                                                                 "
         "    {                                                                                                              "
-        "        double slotsTotalLength = double(param_atlasSize) / double(param_atlasTextureSize);                        "
-        "        double slotLength = slotsTotalLength / double(param_atlasSlotsInLine);                                     "
+        "        float slotsTotalLength = float(param_atlasSize) / float(param_atlasTextureSize);                           "
+        "        float slotLength = slotsTotalLength / float(param_atlasSlotsInLine);                                       "
         "        int rowIndex = param_atlasSlotIndex / param_atlasSlotsInLine;                                              "
         "        int colIndex = int(mod(param_atlasSlotIndex, param_atlasSlotsInLine));                                     "
         "                                                                                                                   "
-        "        double texelSize_1d5 = 1.5 / double(param_atlasTextureSize);                                               "
-        "        double xIndent = 0.0;                                                                                      "
+        "        float texelSize_1d5 = 1.5 / float(param_atlasTextureSize);                                                 "
+        "        float xIndent = 0.0;                                                                                       "
         "        if(g_vertexUV0.x > 0.99)                                                                                   "
         "            xIndent = -texelSize_1d5;                                                                              "
         "        else if(g_vertexUV0.x < 0.001)                                                                             "
         "            xIndent = texelSize_1d5;                                                                               "
-        "        double yIndent = 0.0;                                                                                      "
+        "        float yIndent = 0.0;                                                                                       "
         "        if(g_vertexUV0.y > 0.99)                                                                                   "
         "            yIndent = -texelSize_1d5;                                                                              "
         "        else if(g_vertexUV0.y < 0.001)                                                                             "
         "            yIndent = texelSize_1d5;                                                                               "
         "                                                                                                                   "
-        "        double uBase = double(colIndex) * slotLength + double(g_vertexUV0.s) * slotLength;                         "
-        "        g_vertexUV0.s = float(uBase + xIndent);                                                                    "
+        "        float uBase = float(colIndex) * slotLength + float(g_vertexUV0.s) * slotLength;                            "
+        "        g_vertexUV0.s = uBase + xIndent;                                                                           "
         "                                                                                                                   "
-        "        double vBase = double(rowIndex) * slotLength + double(g_vertexUV0.t) * slotLength;                         "
-        "        g_vertexUV0.t = float(vBase + yIndent);                                                                    "
+        "        float vBase = float(rowIndex) * slotLength + float(g_vertexUV0.t) * slotLength;                            "
+        "        g_vertexUV0.t = vBase + yIndent;                                                                           "
         "    }                                                                                                              "
+        "                                                                                                                   "
+        //   TODO: process heightmap data
+        "    v.y = 0.0;                                                                                                     "
         "                                                                                                                   "
         "                                                                                                                   "
         "                                                                                                                   "
