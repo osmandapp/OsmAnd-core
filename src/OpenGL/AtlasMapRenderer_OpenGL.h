@@ -31,16 +31,16 @@
 #include <OsmAndCore.h>
 #include <CommonTypes.h>
 #include <OpenGL_Base/AtlasMapRenderer_OpenGL_Base.h>
+#include <OpenGL/MapRenderer_OpenGL.h>
 
 namespace OsmAnd {
 
     class MapDataCache;
 
-    class OSMAND_CORE_API AtlasMapRenderer_OpenGL : public AtlasMapRenderer_BaseOpenGL
+    class OSMAND_CORE_API AtlasMapRenderer_OpenGL
+        : public AtlasMapRenderer_BaseOpenGL
+        , public MapRenderer_OpenGL
     {
-    private:
-        static void validateResult();
-        static GLuint compileShader(GLenum shaderType, const char* source);
     protected:
         virtual void uploadTileToTexture(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap);
         virtual void releaseTexture(const GLuint& texture);

@@ -19,32 +19,44 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __BASE_ATLAS_MAP_RENDERER_H_
-#define __BASE_ATLAS_MAP_RENDERER_H_
+#ifndef __MAP_RENDERER_OPENGL_H_
+#define __MAP_RENDERER_OPENGL_H_
 
 #include <stdint.h>
 #include <memory>
 
+#include <QMap>
+#include <QMultiMap>
+
+#if defined(WIN32)
+#   define WIN32_LEAN_AND_MEAN
+#   include <Windows.h>
+#endif
+#include <GL/glew.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
+
+#include <glm/glm.hpp>
+
 #include <OsmAndCore.h>
 #include <CommonTypes.h>
-#include <IMapRenderer.h>
+#include <OpenGL_Base/MapRenderer_OpenGL_Base.h>
 
 namespace OsmAnd {
 
-    class OSMAND_CORE_API BaseAtlasMapRenderer : public virtual IMapRenderer
+    class OSMAND_CORE_API MapRenderer_OpenGL : public virtual MapRenderer_BaseOpenGL
     {
     public:
-        enum {
-            TileDimension3D = 100,
-        };
-
     private:
     protected:
-        BaseAtlasMapRenderer();
+        virtual void validateResult();
+        virtual GLuint compileShader(GLenum shaderType, const char* source);
+
+        MapRenderer_OpenGL();
     public:
-        virtual ~BaseAtlasMapRenderer();
+        virtual ~MapRenderer_OpenGL();
     };
 
 }
 
-#endif // __BASE_ATLAS_MAP_RENDERER_H_
+#endif // __MAP_RENDERER_OPENGL_H_

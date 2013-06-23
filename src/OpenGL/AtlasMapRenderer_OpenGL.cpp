@@ -9,12 +9,6 @@
 #include "IMapTileProvider.h"
 #include "OsmAndLogging.h"
 
-#if !defined(NDEBUG)
-#   define GL_CHECK_RESULT validateResult()
-#else
-#   define GL_CHECK_RESULT
-#endif
-
 OsmAnd::AtlasMapRenderer_OpenGL::AtlasMapRenderer_OpenGL()
     : _tilePatchVAO(0)
     , _tilePatchVBO(0)
@@ -467,13 +461,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL::uploadTileToTexture( const TileId& tileId,
     const auto skConfig = tileBitmap->getConfig();
     assert( _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? skConfig == SkBitmap::kARGB_8888_Config : skConfig == SkBitmap::kRGB_565_Config );
 
-    // Get maximal texture size if not yet determined
-    if(_maxTextureSize == 0)
-    {
-        glGetIntegerv(GL_MAX_TEXTURE_SIZE, reinterpret_cast<GLint*>(&_maxTextureSize));
-        GL_CHECK_RESULT;
-    }
-    
     const auto tileSize = _activeConfig.tileProvider->getTileSize();
 
     if(_maxTextureSize != 0)
@@ -701,57 +688,4 @@ void OsmAnd::AtlasMapRenderer_OpenGL::releaseTilePatch()
         GL_CHECK_RESULT;
         _tilePatchVAO = 0;
     }
-}
-
-GLuint OsmAnd::AtlasMapRenderer_OpenGL::compileShader( GLenum shaderType, const char* source )
-{
-    GLuint shader;
-
-    assert(glCreateShader);
-    shader = glCreateShader(shaderType);
-    GL_CHECK_RESULT;
-
-    const GLint sourceLen = static_cast<GLint>(strlen(source));
-    assert(glShaderSource);
-    glShaderSource(shader, 1, &source, &sourceLen);
-    GL_CHECK_RESULT;
-
-    assert(glCompileShader);
-    glCompileShader(shader);
-    GL_CHECK_RESULT;
-
-    // Check if compiled (if possible)
-    if(glGetObjectParameterivARB != nullptr)
-    {
-        GLint didCompile;
-        glGetObjectParameterivARB(shader, GL_COMPILE_STATUS, &didCompile);
-        GL_CHECK_RESULT;
-        if(!didCompile && glGetShaderInfoLog != nullptr)
-        {
-            GLint logBufferLen = 0;	
-            GLsizei logLen = 0;
-            assert(glGetShaderiv);
-            glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logBufferLen);       
-            GL_CHECK_RESULT;
-            if (logBufferLen > 1)
-            {
-                GLchar* log = (GLchar*)malloc(logBufferLen);
-                glGetShaderInfoLog(shader, logBufferLen, &logLen, log);
-                GL_CHECK_RESULT;
-                LogPrintf(LogSeverityLevel::Error, "Failed to compile GLSL shader: %s", log);
-                free(log);
-            }
-        }
-    }
-
-    return shader;
-}
-
-void OsmAnd::AtlasMapRenderer_OpenGL::validateResult()
-{
-    auto result = glGetError();
-    if(result == GL_NO_ERROR)
-        return;
-
-    LogPrintf(LogSeverityLevel::Error, "OpenGL error 0x%08x : %s\n", result, gluErrorString(result));
 }

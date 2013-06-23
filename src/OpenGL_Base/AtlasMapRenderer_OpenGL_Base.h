@@ -25,8 +25,6 @@
 #include <stdint.h>
 #include <memory>
 
-#include <QQueue>
-
 #if defined(WIN32)
 #   define WIN32_LEAN_AND_MEAN
 #   include <Windows.h>
@@ -40,42 +38,23 @@
 #include <OsmAndCore.h>
 #include <CommonTypes.h>
 #include <BaseAtlasMapRenderer.h>
+#include <OpenGL_Base/MapRenderer_OpenGL_Base.h>
 
 namespace OsmAnd {
 
-    class OSMAND_CORE_API AtlasMapRenderer_BaseOpenGL : public BaseAtlasMapRenderer
+    class OSMAND_CORE_API AtlasMapRenderer_BaseOpenGL
+        : public virtual BaseAtlasMapRenderer
+        , public virtual MapRenderer_BaseOpenGL
     {
     public:
     private:
     protected:
-        AtlasMapRenderer_BaseOpenGL();
-
         glm::mat4 _mProjection;
         glm::mat4 _mView;
         float _distanceFromCameraToTarget;
-        uint32_t _maxTextureSize;
-        uint32_t _atlasSizeOnTexture;
-        GLuint _lastUnfinishedAtlas;
-        uint32_t _unfinishedAtlasFirstFreeSlot;
-        QMultiMap<GLuint, uint32_t> _freeAtlasSlots;
-        Qt::HANDLE _renderThreadId;
-
+        
         void computeProjectionAndViewMatrices();
         void computeVisibleTileset();
-
-        struct OSMAND_CORE_API CachedTile_OpenGL : public IMapRenderer::CachedTile
-        {
-            CachedTile_OpenGL(AtlasMapRenderer_BaseOpenGL* owner, const uint32_t& zoom, const TileId& id, const size_t& usedMemory, GLuint textureId, uint32_t atlasSlotIndex);
-            virtual ~CachedTile_OpenGL();
-
-            AtlasMapRenderer_BaseOpenGL* const owner;
-            const GLuint textureId;
-            const uint32_t atlasSlotIndex;
-        };
-        virtual void cacheTile(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap);
-        virtual void uploadTileToTexture(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap) = 0;
-        virtual void releaseTexture(const GLuint& texture) = 0;
-        QMap< GLuint, uint32_t > _texturesRefCounts;
 
 #pragma pack(push)
 #pragma pack(1)
@@ -92,15 +71,12 @@ namespace OsmAnd {
         
         virtual void updateConfiguration();
 
-        virtual void purgeTilesCache();
+        AtlasMapRenderer_BaseOpenGL();
     public:
         virtual ~AtlasMapRenderer_BaseOpenGL();
 
         virtual void initializeRendering();
-        virtual void performRendering();
         virtual void releaseRendering();
-
-        virtual int getCachedTilesCount();
     };
 
 }

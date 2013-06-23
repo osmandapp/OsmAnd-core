@@ -16,10 +16,6 @@
 #include "OpenGL_Base/Utilities_OpenGL_Base.h"
 
 OsmAnd::AtlasMapRenderer_BaseOpenGL::AtlasMapRenderer_BaseOpenGL()
-    : _maxTextureSize(0)
-    , _atlasSizeOnTexture(0)
-    , _lastUnfinishedAtlas(0)
-    , _renderThreadId(nullptr)
 {
 }
 
@@ -220,92 +216,21 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
     _targetInTile.y = static_cast<double>(_activeConfig.target31.y - tileYo31) / div;
 }
 
-void OsmAnd::AtlasMapRenderer_BaseOpenGL::cacheTile( const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap )
-{
-    assert(!_tilesCache.contains(zoom, tileId));
-
-    if(_renderThreadId != QThread::currentThreadId())
-    {
-        QMutexLocker scopeLock(&_tilesPendingToCacheMutex);
-
-        assert(!_tilesPendingToCache[zoom].contains(tileId));
-
-        TilePendingToCache pendingTile;
-        pendingTile.tileId = tileId;
-        pendingTile.zoom = zoom;
-        pendingTile.tileBitmap = tileBitmap;
-        _tilesPendingToCacheQueue.enqueue(pendingTile);
-        _tilesPendingToCache[zoom].insert(tileId);
-
-        return;
-    }
-
-    uploadTileToTexture(tileId, zoom, tileBitmap);
-}
-
-int OsmAnd::AtlasMapRenderer_BaseOpenGL::getCachedTilesCount()
-{
-    return _texturesRefCounts.size();
-}
-
 void OsmAnd::AtlasMapRenderer_BaseOpenGL::initializeRendering()
 {
-    assert(!_isRenderingInitialized);
+    MapRenderer_BaseOpenGL::initializeRendering();
 
-    _renderThreadId = QThread::currentThreadId();
     createTilePatch();
- 
-    _isRenderingInitialized = true;
-}
-
-void OsmAnd::AtlasMapRenderer_BaseOpenGL::performRendering()
-{
-    assert(_isRenderingInitialized);
-    assert(_renderThreadId == QThread::currentThreadId());
-
-    if(_configInvalidated)
-        updateConfiguration();
-
-    if(!viewIsDirty)
-        return;
-
-    {
-        QMutexLocker scopeLock(&_tilesPendingToCacheMutex);
-
-        while(!_tilesPendingToCacheQueue.isEmpty())
-        {
-            const auto& pendingTile = _tilesPendingToCacheQueue.dequeue();
-            _tilesPendingToCache[pendingTile.zoom].remove(pendingTile.tileId);
-
-            // This tile may already have been loaded earlier (since it's already on disk!)
-            {
-                QMutexLocker scopeLock(&_tilesCacheMutex);
-                if(_tilesCache.contains(pendingTile.zoom, pendingTile.tileId))
-                    continue;
-            }
-
-            uploadTileToTexture(pendingTile.tileId, pendingTile.zoom, pendingTile.tileBitmap);
-        }
-    }
-    updateTilesCache();
-
-    updateElevationDataCache();
 }
 
 void OsmAnd::AtlasMapRenderer_BaseOpenGL::releaseRendering()
 {
-    assert(_isRenderingInitialized);
-    assert(_renderThreadId == QThread::currentThreadId());
-
-    purgeTilesCache();
+    MapRenderer_BaseOpenGL::releaseRendering();
     releaseTilePatch();
-
-    _isRenderingInitialized = false;
 }
 
 void OsmAnd::AtlasMapRenderer_BaseOpenGL::createTilePatch()
 {
-    //NOTE: this can be optimized using tessellation shader and GL_PATCH
     Vertex* pVertices = nullptr;
     uint32_t verticesCount = 0;
     GLushort* pIndices = nullptr;
@@ -349,43 +274,5 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::createTilePatch()
     {
         delete[] pVertices;
         delete[] pIndices;
-    }
-}
-
-void OsmAnd::AtlasMapRenderer_BaseOpenGL::purgeTilesCache()
-{
-    BaseAtlasMapRenderer::purgeTilesCache();
-
-    assert(_freeAtlasSlots.isEmpty());
-    _lastUnfinishedAtlas = 0;
-}
-
-OsmAnd::AtlasMapRenderer_BaseOpenGL::CachedTile_OpenGL::CachedTile_OpenGL( AtlasMapRenderer_BaseOpenGL* owner_, const uint32_t& zoom, const TileId& id, const size_t& usedMemory, uint32_t textureId_, uint32_t atlasSlotIndex_ )
-    : IMapRenderer::CachedTile(zoom, id, usedMemory)
-    , owner(owner_)
-    , textureId(textureId_)
-    , atlasSlotIndex(atlasSlotIndex_)
-{
-}
-
-OsmAnd::AtlasMapRenderer_BaseOpenGL::CachedTile_OpenGL::~CachedTile_OpenGL()
-{
-    assert(owner->_renderThreadId == QThread::currentThreadId());
-
-    const auto& itRefCnt = owner->_texturesRefCounts.find(textureId);
-    auto& refCnt = *itRefCnt;
-    refCnt -= 1;
-
-    if(owner->_maxTextureSize != 0 && refCnt > 0)
-    {
-        // A free atlas slot
-        owner->_freeAtlasSlots.insert(textureId, atlasSlotIndex);
-    }
-
-    if(refCnt == 0)
-    {
-        owner->_freeAtlasSlots.remove(textureId);
-        owner->releaseTexture(textureId);
-        owner->_texturesRefCounts.remove(textureId);
     }
 }
