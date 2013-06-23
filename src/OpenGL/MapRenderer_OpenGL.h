@@ -52,11 +52,18 @@ namespace OsmAnd {
         virtual void validateResult();
         virtual GLuint compileShader(GLenum shaderType, const char* source);
 
+        virtual void uploadTileToTexture(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap);
+        virtual void releaseTexture(const GLuint& texture);
+
+        GLuint _tileTextureSampler_Atlas;
+        GLuint _tileTextureSampler_NoAtlas;
+
         MapRenderer_OpenGL();
     public:
         virtual ~MapRenderer_OpenGL();
 
         virtual void initializeRendering();
+        virtual void releaseRendering();
     };
 
 }

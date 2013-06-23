@@ -42,18 +42,13 @@ namespace OsmAnd {
         , public MapRenderer_OpenGL
     {
     protected:
-        virtual void uploadTileToTexture(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap);
-        virtual void releaseTexture(const GLuint& texture);
-
         GLuint _tilePatchVAO;
         GLuint _tilePatchVBO;
         GLuint _tilePatchIBO;
         GLuint _vertexShader;
         GLuint _fragmentShader;
         GLuint _programObject;
-        GLuint _tileTextureSampler_Atlas;
-        GLuint _tileTextureSampler_NoAtlas;
-
+        
         GLint _vertexShader_in_vertexPosition;
         GLint _vertexShader_in_vertexUV0;
         GLint _vertexShader_param_mProjection;

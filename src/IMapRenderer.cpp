@@ -334,7 +334,7 @@ void OsmAnd::IMapRenderer::updateElevationDataCache()
 
 void OsmAnd::IMapRenderer::initializeRendering()
 {
-    assert(isRenderingInitialized);
+    assert(!_isRenderingInitialized);
 
     assert(_renderThreadId == nullptr);
     _renderThreadId = QThread::currentThreadId();
@@ -380,7 +380,7 @@ void OsmAnd::IMapRenderer::performRendering()
 
 void OsmAnd::IMapRenderer::releaseRendering()
 {
-    assert(!isRenderingInitialized);
+    assert(isRenderingInitialized);
 
     purgeTilesCache();
     assert(_renderThreadId == QThread::currentThreadId());
