@@ -58,8 +58,7 @@ namespace OsmAnd {
         GLuint _lastUnfinishedAtlas;
         uint32_t _unfinishedAtlasFirstFreeSlot;
         QMultiMap<GLuint, uint32_t> _freeAtlasSlots;
-        Qt::HANDLE _renderThreadId;
-
+        
         struct OSMAND_CORE_API CachedTile_OpenGL : public IMapRenderer::CachedTile
         {
             CachedTile_OpenGL(MapRenderer_BaseOpenGL* owner, const uint32_t& zoom, const TileId& id, const size_t& usedMemory, GLuint textureId, uint32_t atlasSlotIndex);
@@ -69,11 +68,9 @@ namespace OsmAnd {
             const GLuint textureId;
             const uint32_t atlasSlotIndex;
         };
-        virtual void cacheTile(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap);
         QMap< GLuint, uint32_t > _texturesRefCounts;
         virtual void purgeTilesCache();
 
-        virtual void uploadTileToTexture(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap) = 0;
         virtual void releaseTexture(const GLuint& texture) = 0;
 
         virtual void validateResult() = 0;
@@ -82,10 +79,6 @@ namespace OsmAnd {
         MapRenderer_BaseOpenGL();
     public:
         virtual ~MapRenderer_BaseOpenGL();
-
-        virtual void initializeRendering();
-        virtual void performRendering();
-        virtual void releaseRendering();
 
         virtual int getCachedTilesCount();
     };

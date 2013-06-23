@@ -65,3 +65,12 @@ GLuint OsmAnd::MapRenderer_OpenGL::compileShader( GLenum shaderType, const char*
 
     return shader;
 }
+
+void OsmAnd::MapRenderer_OpenGL::initializeRendering()
+{
+    MapRenderer_BaseOpenGL::initializeRendering();
+
+    // Get maximal texture size if not yet determined
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, reinterpret_cast<GLint*>(&_maxTextureSize));
+    GL_CHECK_RESULT;
+}

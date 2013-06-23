@@ -31,6 +31,7 @@
 #include <QSet>
 #include <QMap>
 #include <QMutex>
+#include <QThread>
 
 #include <SkBitmap.h>
 
@@ -77,6 +78,10 @@ namespace OsmAnd {
         bool _viewIsDirty;
         bool _tilesCacheInvalidated;
         bool _elevationDataCacheInvalidated;
+
+        bool _isRenderingInitialized;
+
+        Qt::HANDLE _renderThreadId;
     protected:
         IMapRenderer();
 
@@ -97,9 +102,12 @@ namespace OsmAnd {
         };
         TileZoomCache _tilesCache;
         virtual void purgeTilesCache();
-        void updateTilesCache();
-        virtual void cacheTile(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap) = 0;
+        void processPendingToCacheTiles();
+        void obtainMissingTiles();
+        virtual void cacheTile(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap);
 
+        virtual void uploadTileToTexture(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap) = 0;
+        
         void updateElevationDataCache();
 
         QMutex _tilesPendingToCacheMutex;
@@ -112,8 +120,6 @@ namespace OsmAnd {
         QQueue< TilePendingToCache > _tilesPendingToCacheQueue;
         std::array< QSet< TileId >, 32 > _tilesPendingToCache;
 
-        bool _isRenderingInitialized;
-
         const bool& viewIsDirty;
         virtual void requestRedraw();
         
@@ -124,6 +130,8 @@ namespace OsmAnd {
         virtual void invalidateElevationDataCache();
 
         virtual void updateConfiguration();
+
+        const Qt::HANDLE& renderThreadId;
     public:
         virtual ~IMapRenderer();
 
@@ -148,9 +156,9 @@ namespace OsmAnd {
         virtual void setZoom(const float& zoom);
 
         const bool& isRenderingInitialized;
-        virtual void initializeRendering() = 0;
-        virtual void performRendering() = 0;
-        virtual void releaseRendering() = 0;
+        virtual void initializeRendering();
+        virtual void performRendering();
+        virtual void releaseRendering();
     };
 
 #if defined(OSMAND_OPENGL_RENDERER_SUPPORTED)

@@ -13,11 +13,13 @@ OsmAnd::IMapRenderer::IMapRenderer()
     , _tilesCacheMutex(QMutex::Recursive)
     , _tilesPendingToCacheMutex(QMutex::Recursive)
     , _isRenderingInitialized(false)
+    , _renderThreadId(nullptr)
     , viewIsDirty(_viewIsDirty)
     , tilesCacheInvalidated(_tilesCacheInvalidated)
     , elevationDataCacheInvalidated(_elevationDataCacheInvalidated)
-    , visibleTiles(_visibleTiles)
+    , renderThreadId(_renderThreadId)
     , configuration(_pendingConfig)
+    , visibleTiles(_visibleTiles)
     , isRenderingInitialized(_isRenderingInitialized)
 {
     setDisplayDensityFactor(1.0f);
@@ -195,21 +197,8 @@ void OsmAnd::IMapRenderer::setZoom( const float& zoom )
     invalidateConfiguration();
 }
 
-void OsmAnd::IMapRenderer::updateTilesCache()
+void OsmAnd::IMapRenderer::obtainMissingTiles()
 {
-    // If tiles cache was invalidated, purge it
-    if(_tilesCacheInvalidated)
-    {
-        purgeTilesCache();
-        _tilesCacheInvalidated = false;
-    }
-
-    // Clean-up cache from useless tiles
-    {
-        QMutexLocker scopeLock(&_tilesCacheMutex);
-        _tilesCache.clearExceptInterestSet(_visibleTiles, _activeConfig.zoomBase, qMax(0, _activeConfig.zoomBase - 2), qMin(31, _activeConfig.zoomBase + 2));
-    }
-
     // Cache missing tiles
     auto callback = std::bind(&IMapRenderer::tileReadyCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     for(auto itTileId = _visibleTiles.begin(); itTileId != _visibleTiles.end(); ++itTileId)
@@ -231,6 +220,7 @@ void OsmAnd::IMapRenderer::updateTilesCache()
         if(cacheHit)
             continue;
 
+        //TODO: THIS NEEDS TO BE REDONE!
         // Try to obtain tile from provider immediately
         std::shared_ptr<SkBitmap> tileBitmap;
         cacheHit = _activeConfig.tileProvider->obtainTile(tileId, _activeConfig.zoomBase, tileBitmap, _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? SkBitmap::kARGB_8888_Config : SkBitmap::kRGB_565_Config);
@@ -251,17 +241,41 @@ void OsmAnd::IMapRenderer::tileReadyCallback( const TileId& tileId, uint32_t zoo
 
     cacheTile(tileId, zoom, tileBitmap);
 
-    _viewIsDirty = true;
-    if(redrawRequestCallback)
-        redrawRequestCallback();
+    requestRedraw();
+}
+
+void OsmAnd::IMapRenderer::cacheTile( const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap )
+{
+    assert(!_tilesCache.contains(zoom, tileId));
+
+    if(_renderThreadId != QThread::currentThreadId())
+    {
+        QMutexLocker scopeLock(&_tilesPendingToCacheMutex);
+
+        assert(!_tilesPendingToCache[zoom].contains(tileId));
+
+        TilePendingToCache pendingTile;
+        pendingTile.tileId = tileId;
+        pendingTile.zoom = zoom;
+        pendingTile.tileBitmap = tileBitmap;
+        _tilesPendingToCacheQueue.enqueue(pendingTile);
+        _tilesPendingToCache[zoom].insert(tileId);
+
+        return;
+    }
+
+    uploadTileToTexture(tileId, zoom, tileBitmap);
 }
 
 void OsmAnd::IMapRenderer::purgeTilesCache()
 {
+    // Purge all already cached tiles
     {
         QMutexLocker scopeLock(&_tilesCacheMutex);
         _tilesCache.clearAll();
     }
+
+    // Purge all tiles that had to be cached during this frame
     {
         QMutexLocker scopeLock(&_tilesPendingToCacheMutex);
         for(auto itLevel = _tilesPendingToCache.begin(); itLevel != _tilesPendingToCache.end(); ++itLevel)
@@ -316,6 +330,93 @@ void OsmAnd::IMapRenderer::updateElevationDataCache()
         //purgeTilesCache();
         _elevationDataCacheInvalidated = false;
     }
+}
+
+void OsmAnd::IMapRenderer::initializeRendering()
+{
+    assert(isRenderingInitialized);
+
+    assert(_renderThreadId == nullptr);
+    _renderThreadId = QThread::currentThreadId();
+
+    _isRenderingInitialized = true;
+}
+
+void OsmAnd::IMapRenderer::performRendering()
+{
+    assert(_isRenderingInitialized);
+
+    assert(_renderThreadId == QThread::currentThreadId());
+
+    if(_configInvalidated)
+        updateConfiguration();
+
+    if(!viewIsDirty)
+        return;
+
+    // If tiles cache was invalidated, purge it first
+    if(_tilesCacheInvalidated)
+    {
+        purgeTilesCache();
+        _tilesCacheInvalidated = false;
+    }
+    // Otherwise, clean-up cache from useless tiles
+    else
+    {
+        QMutexLocker scopeLock(&_tilesCacheMutex);
+        _tilesCache.clearExceptInterestSet(_visibleTiles, _activeConfig.zoomBase, qMax(0, _activeConfig.zoomBase - 2), qMin(31, _activeConfig.zoomBase + 2));
+    }
+
+    // Process tiles that are in pending-to-cache queue.
+    // These are tiles that have been loaded to main memory but not yet uploaded
+    // to GPU memory, since this can only be done in render thread.
+    processPendingToCacheTiles();
+
+    // Now we need to obtain all tiles that are still missing
+    obtainMissingTiles();
+
+    updateElevationDataCache();
+}
+
+void OsmAnd::IMapRenderer::releaseRendering()
+{
+    assert(!isRenderingInitialized);
+
+    purgeTilesCache();
+    assert(_renderThreadId == QThread::currentThreadId());
+
+    _renderThreadId = nullptr;
+
+    _isRenderingInitialized = false;
+}
+
+void OsmAnd::IMapRenderer::processPendingToCacheTiles()
+{
+    TilePendingToCache pendingTile;
+    bool morePending = false;
+
+    // Work with queue via mutex
+    {
+        QMutexLocker scopeLock(&_tilesPendingToCacheMutex);
+
+        if(_tilesPendingToCacheQueue.isEmpty())
+            return;
+
+        pendingTile = _tilesPendingToCacheQueue.dequeue();
+        _tilesPendingToCache[pendingTile.zoom].remove(pendingTile.tileId);
+
+        morePending = !_tilesPendingToCacheQueue.isEmpty();
+    }
+
+    // Upload that tile to texture
+    {
+        QMutexLocker scopeLock(&_tilesCacheMutex);
+        uploadTileToTexture(pendingTile.tileId, pendingTile.zoom, pendingTile.tileBitmap);
+    }
+    
+    // If there are more tiles, request redraw to cache new tile on next frame
+    if(morePending)
+        requestRedraw();
 }
 
 OsmAnd::IMapRenderer::CachedTile::CachedTile( const uint32_t& zoom, const TileId& id, const size_t& usedMemory )
