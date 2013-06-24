@@ -60,13 +60,14 @@ namespace OsmAnd {
         uint64_t timeToLoad;
         uint64_t timeToCalculate;
 
-        std::chrono::steady_clock::time_point timeToLoadBegin;
-        std::chrono::steady_clock::time_point timeToCalculateBegin;
-
         uint32_t loadedTiles;
         uint32_t unloadedTiles;
         uint32_t distinctLoadedTiles;
         uint32_t loadedPrevUnloadedTiles;
+
+        std::chrono::steady_clock::time_point timeToLoadBegin;
+        std::chrono::steady_clock::time_point timeToCalculateBegin;
+
 
     };
 
