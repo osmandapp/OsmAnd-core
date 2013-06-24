@@ -63,7 +63,7 @@ bool OsmAnd::RoutePlannerAnalyzer::prepareResult(OsmAnd::RoutePlannerContext::Ca
     addTurnInfoToRoute(leftSideNavigation, route);
 
 #if DEBUG_ROUTING || TRACE_ROUTING
-    LogPrintf(LogSeverityLevel::Debug, "%llu segments in route\n", route.size());
+    LogPrintf(LogSeverityLevel::Debug, "%llu segments in route", route.size());
 #endif
 
     if(outResult)
@@ -377,7 +377,7 @@ void OsmAnd::RoutePlannerAnalyzer::addRouteSegmentToRoute( QList< std::shared_pt
     if (route.size() > 0)
     {
         auto last = route.back();
-        if (last->road->id == last->road->id)
+        if (last->road->id == segment->road->id)
         {
             if (combineTwoSegmentResult(segment, last, reverse))
                 return;

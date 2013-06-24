@@ -330,7 +330,7 @@ void OsmAnd::RoutePlanner::loadSubregionContext( RoutePlannerContext::RoutingSub
 
     if(context->owner->_routeStatistics) {
         context->owner->_routeStatistics->timeToLoad += (uint64_t) (
-        std::chrono::duration<double, std::milli> (context->owner->_routeStatistics->timeToLoadBegin - std::chrono::steady_clock::now()).count());
+        std::chrono::duration<double, std::milli> (std::chrono::steady_clock::now() - context->owner->_routeStatistics->timeToLoadBegin).count());
         context->owner->_routeStatistics->loadedTiles ++;
         if (wasUnloaded) {
             if(loadsCount == 1) {
@@ -448,12 +448,12 @@ bool OsmAnd::RoutePlanner::calculateRoute(
 
 void OsmAnd::RoutePlanner::printDebugInformation(std::shared_ptr<RouteStatistics> st, int directSegmentSize, int reverseSegmentSize) {
     st->timeToCalculate += (uint64_t) (
-            std::chrono::duration<double, std::milli> (st->timeToCalculateBegin - std::chrono::steady_clock::now()).count());
+            std::chrono::duration<double, std::milli> (std::chrono::steady_clock::now() - st->timeToCalculateBegin).count());
     LogPrintf(LogSeverityLevel::Debug, "Time to calculate %llu, time to load %llu ", st->timeToCalculate, st->timeToLoad);
-    LogPrintf(LogSeverityLevel::Debug, "Forward iterations %llu, backward iterations %llu", st->forwardIterations, st->backwardIterations);
+    LogPrintf(LogSeverityLevel::Debug, "Forward iterations %u, backward iterations %u", st->forwardIterations, st->backwardIterations);
     //auto maxLoadedTiles = max(st->maxLoadedTiles, st->currentlyloadedTiles.getCurrentlyLoadedTiles());
     // LogPrintf(LogSeverityLevel::Debug, ("Current loaded tiles : " + ctx.getCurrentlyLoadedTiles() + ", maximum loaded tiles " + maxLoadedTiles);
-    LogPrintf(LogSeverityLevel::Debug, "Loaded tiles %u (distinct %u), unloaded tiles %u, loaded more than once same tiles",
+    LogPrintf(LogSeverityLevel::Debug, "Loaded tiles %u (distinct %u), unloaded tiles %u, loaded more than once same tiles %u",
               st->loadedTiles, st->distinctLoadedTiles, st->unloadedTiles, st->loadedPrevUnloadedTiles);
     LogPrintf(LogSeverityLevel::Debug, "D-Queue size %d, R-Queue size %d", directSegmentSize, reverseSegmentSize);
 }
@@ -586,7 +586,7 @@ bool OsmAnd::RoutePlanner::calculateRoute(
         if(ctx.memoryOverhead > ctx.config.memoryLimitation * 0.95) {
             throw new IllegalStateException("There is no enough memory " + ctx.config.memoryLimitation/(1<<20) + " Mb");
         }
-        ctx.visitedSegments++;*/
+        */
 
 #if TRACE_ROUTING
         LogPrintf(LogSeverityLevel::Debug, "\tFwd-search:\n");
@@ -617,6 +617,13 @@ bool OsmAnd::RoutePlanner::calculateRoute(
 
         if(graphDirectSegments.empty() || graphReverseSegments.empty())
             return false;
+        if(context->owner->_routeStatistics) {
+            if(reverseSearch) {
+                context->owner->_routeStatistics->backwardIterations++;
+            } else {
+                context->owner->_routeStatistics->forwardIterations++;
+            }
+        }
         
         if(runRecalculation)
         {
