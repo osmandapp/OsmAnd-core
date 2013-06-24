@@ -198,14 +198,14 @@ void OsmAnd::RoutePlannerContext::RouteCalculationSegment::dump(const QString& p
 {
     if(parent)
     {
-        LogPrintf(LogSeverityLevel::Debug, "%sroad(%llu), point(%d), w(%f), ds(%f), es(%f); parent = road(%llu), point(%d);\n",
+        LogPrintf(LogSeverityLevel::Debug, "%sroad(%llu), point(%d), w(%f), ds(%f), es(%f); parent = road(%llu), point(%d);",
             prefix.toStdString().c_str(),
             road->id, pointIndex, _distanceFromStart + _distanceToEnd, _distanceFromStart, _distanceToEnd,
             parent->road->id, parent->pointIndex);
     }
     else
     {
-        LogPrintf(LogSeverityLevel::Debug, "%sroad(%llu), point(%d), w(%f), ds(%f), es(%f)\n",
+        LogPrintf(LogSeverityLevel::Debug, "%sroad(%llu), point(%d), w(%f), ds(%f), es(%f)",
             prefix.toStdString().c_str(),
             road->id, pointIndex, _distanceFromStart + _distanceToEnd, _distanceFromStart, _distanceToEnd);
     }

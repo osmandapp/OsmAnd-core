@@ -39,6 +39,8 @@
 #include <RouteSegment.h>
 #include <RoutingProfileContext.h>
 #include <CommonTypes.h>
+#include <ctime>
+#include <chrono>
 
 
 namespace OsmAnd {
@@ -47,12 +49,24 @@ namespace OsmAnd {
 
     struct RouteStatistics
     {
+        RouteStatistics() {
+            memset(this, sizeof(RouteStatistics), 0);
+        }
+
         uint32_t forwardIterations;
         uint32_t backwardIterations;
         uint32_t sizeOfDQueue;
         uint32_t sizeOfRQueue;
         uint64_t timeToLoad;
         uint64_t timeToCalculate;
+
+        std::chrono::steady_clock::time_point timeToLoadBegin;
+        std::chrono::steady_clock::time_point timeToCalculateBegin;
+
+        uint32_t loadedTiles;
+        uint32_t unloadedTiles;
+        uint32_t distinctLoadedTiles;
+        uint32_t loadedPrevUnloadedTiles;
 
     };
 

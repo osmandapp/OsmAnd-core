@@ -161,6 +161,7 @@ namespace OsmAnd {
         static std::shared_ptr<RoutePlannerContext::RouteCalculationSegment> loadRouteCalculationSegment(
             OsmAnd::RoutePlannerContext* context,
             uint32_t x31, uint32_t y31);
+        static void printDebugInformation(std::shared_ptr<RouteStatistics> st, int directSegmentSize, int reverseSegmentSize);
         static double h(OsmAnd::RoutePlannerContext::CalculationContext* context,
             const PointI& start, const PointI& end,
             const std::shared_ptr<RoutePlannerContext::RouteCalculationSegment>& next);

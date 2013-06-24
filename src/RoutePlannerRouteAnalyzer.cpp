@@ -344,7 +344,7 @@ bool OsmAnd::RoutePlannerAnalyzer::validateAllPointsConnected( const QList< std:
 
     auto itPrevSegment = route.begin();
     bool res = true;
-    LogPrintf(LogSeverityLevel::Debug, "Segment : %llu %u %u \n", (*itPrevSegment)->road->id, (*itPrevSegment)->startPointIndex,  (*itPrevSegment)->endPointIndex);
+    LogPrintf(LogSeverityLevel::Debug, "Segment : %llu %u %u ", (*itPrevSegment)->road->id, (*itPrevSegment)->startPointIndex,  (*itPrevSegment)->endPointIndex);
     for(auto itSegment = ++route.begin(); itSegment != route.end(); ++itSegment, ++itPrevSegment)
     {
         auto prevSegment = *itPrevSegment;
@@ -356,7 +356,7 @@ bool OsmAnd::RoutePlannerAnalyzer::validateAllPointsConnected( const QList< std:
             Utilities::get31LongitudeX(point1.x), Utilities::get31LatitudeY(point1.y),
             Utilities::get31LongitudeX(point2.x), Utilities::get31LatitudeY(point2.y)
         );
-        LogPrintf(LogSeverityLevel::Debug, "Segment : %llu %u %u \n ", segment->road->id, segment->startPointIndex,  segment->endPointIndex);
+        LogPrintf(LogSeverityLevel::Debug, "Segment : %llu %u %u  ", segment->road->id, segment->startPointIndex,  segment->endPointIndex);
         if(distance > 0)
         {
             res = false;

@@ -619,19 +619,19 @@ const QMap< uint64_t, std::shared_ptr<OsmAnd::RasterizationRule> >& OsmAnd::Rast
 
 void OsmAnd::RasterizationStyle::dump( const QString& prefix /*= QString()*/ ) const
 {
-    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sPoint rules:\n", prefix.toStdString().c_str());
+    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sPoint rules:", prefix.toStdString().c_str());
     dump(RulesetType::Point, prefix);
 
-    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sLine rules:\n", prefix.toStdString().c_str());
+    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sLine rules:", prefix.toStdString().c_str());
     dump(RulesetType::Line, prefix);
 
-    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sPolygon rules:\n", prefix.toStdString().c_str());
+    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sPolygon rules:", prefix.toStdString().c_str());
     dump(RulesetType::Polygon, prefix);
 
-    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sText rules:\n", prefix.toStdString().c_str());
+    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sText rules:", prefix.toStdString().c_str());
     dump(RulesetType::Text, prefix);
 
-    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sOrder rules:\n", prefix.toStdString().c_str());
+    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sOrder rules:", prefix.toStdString().c_str());
     dump(RulesetType::Order, prefix);
 }
 
@@ -644,7 +644,7 @@ void OsmAnd::RasterizationStyle::dump( RulesetType type, const QString& prefix /
         auto value = getValueString(itRuleEntry.key());
         auto rule = itRuleEntry.value();
 
-        OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sRule [%s (%d):%s (%d)]\n",
+        OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sRule [%s (%d):%s (%d)]",
             prefix.toStdString().c_str(),
             tag.toStdString().c_str(),
             getTagStringId(itRuleEntry.key()),
