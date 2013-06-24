@@ -44,7 +44,7 @@ void OsmAnd::OnlineMapRasterTileProvider::setNetworkAccessPermission( bool allow
     _networkAccessAllowed = allowed;
 }
 
-bool OsmAnd::OnlineMapRasterTileProvider::obtainTile(
+bool OsmAnd::OnlineMapRasterTileProvider::obtainTileImmediate(
     const TileId& tileId, uint32_t zoom,
     std::shared_ptr<SkBitmap>& tileBitmap,
     SkBitmap::Config preferredConfig )
@@ -86,7 +86,7 @@ bool OsmAnd::OnlineMapRasterTileProvider::obtainTile(
     return true;
 }
 
-void OsmAnd::OnlineMapRasterTileProvider::obtainTile( const TileId& tileId, uint32_t zoom, TileReceiverCallback receiverCallback, SkBitmap::Config preferredConfig )
+void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const TileId& tileId, uint32_t zoom, TileReceiverCallback receiverCallback, SkBitmap::Config preferredConfig )
 {
     if(!_networkAccessAllowed)
         return;
@@ -97,10 +97,10 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTile( const TileId& tileId, uint
         .replace(QString::fromLatin1("${x}"), QString::number(tileId.x))
         .replace(QString::fromLatin1("${y}"), QString::number(tileId.y));
 
-    obtainTile(QUrl(tileUrl), tileId, zoom, receiverCallback, preferredConfig);
+    obtainTileDeffered(QUrl(tileUrl), tileId, zoom, receiverCallback, preferredConfig);
 }
 
-void OsmAnd::OnlineMapRasterTileProvider::obtainTile( const QUrl& url, const TileId& tileId, uint32_t zoom, TileReceiverCallback receiverCallback, SkBitmap::Config preferredConfig )
+void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const QUrl& url, const TileId& tileId, uint32_t zoom, TileReceiverCallback receiverCallback, SkBitmap::Config preferredConfig )
 {
     if(!_networkAccessAllowed)
         return;
@@ -150,7 +150,7 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTile( const QUrl& url, const Til
                             QMutexLocker scopeLock(&_currentDownloadsMutex);
                             _currentDownloads.remove(tileId);
 
-                            obtainTile(redirectUrl, tileId, zoom, receiverCallback, preferredConfig);
+                            obtainTileDeffered(redirectUrl, tileId, zoom, receiverCallback, preferredConfig);
                         }
 
                         reply->deleteLater();
@@ -179,7 +179,7 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTile( const QUrl& url, const Til
 
                             const auto& request = _tileRequestsQueue.dequeue();
                             _enqueuedTileIds.remove(request.tileId);
-                            obtainTile(request.sourceUrl, request.tileId, request.zoom, request.callback, request.preferredConfig);
+                            obtainTileDeffered(request.sourceUrl, request.tileId, request.zoom, request.callback, request.preferredConfig);
                         }
                     }
                 }

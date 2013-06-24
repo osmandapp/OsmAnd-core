@@ -19,8 +19,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __I_MAP_ELEVATION_DATA_PROVIDER_H_
-#define __I_MAP_ELEVATION_DATA_PROVIDER_H_
+#ifndef __ONE_DEGREE_MAP_ELEVATION_DATA_PROVIDER_FLAT_H_
+#define __ONE_DEGREE_MAP_ELEVATION_DATA_PROVIDER_FLAT_H_
 
 #include <stdint.h>
 #include <memory>
@@ -28,19 +28,20 @@
 
 #include <OsmAndCore.h>
 #include <CommonTypes.h>
+#include <OneDegreeMapElevationDataProvider.h>
 
 namespace OsmAnd {
 
-    class OSMAND_CORE_API IMapElevationDataProvider
+    class OSMAND_CORE_API OneDegreeMapElevationDataProvider_Flat : public OneDegreeMapElevationDataProvider
     {
     public:
     private:
     protected:
-        IMapElevationDataProvider();
     public:
-        virtual ~IMapElevationDataProvider();
+        OneDegreeMapElevationDataProvider_Flat();
+        virtual ~OneDegreeMapElevationDataProvider_Flat();
     };
 
 }
 
-#endif // __I_MAP_ELEVATION_DATA_PROVIDER_H_
+#endif // __ONE_DEGREE_MAP_ELEVATION_DATA_PROVIDER_FLAT_H_

@@ -30,6 +30,7 @@ OsmAnd::IMapRenderer::IMapRenderer()
     setTarget(PointI(std::numeric_limits<int32_t>::max() / 2, std::numeric_limits<int32_t>::max() / 2));
     setZoom(0);
     setPreferredTextureDepth(TextureDepth::_16bits);
+    setTextureAtlasesUsagePermit(true);
 }
 
 OsmAnd::IMapRenderer::~IMapRenderer()
@@ -197,6 +198,20 @@ void OsmAnd::IMapRenderer::setZoom( const float& zoom )
     invalidateConfiguration();
 }
 
+void OsmAnd::IMapRenderer::setTextureAtlasesUsagePermit( const bool& allow )
+{
+    QMutexLocker scopeLock(&_pendingToActiveConfigMutex);
+
+    bool update = (_pendingConfig.textureAtlasesAllowed != allow);
+    if(!update)
+        return;
+
+    _pendingConfig.textureAtlasesAllowed = allow;
+
+    invalidateTileCache();
+    invalidateConfiguration();
+}
+
 void OsmAnd::IMapRenderer::obtainMissingTiles()
 {
     // Cache missing tiles
@@ -223,7 +238,7 @@ void OsmAnd::IMapRenderer::obtainMissingTiles()
         //TODO: THIS NEEDS TO BE REDONE!
         // Try to obtain tile from provider immediately
         std::shared_ptr<SkBitmap> tileBitmap;
-        cacheHit = _activeConfig.tileProvider->obtainTile(tileId, _activeConfig.zoomBase, tileBitmap, _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? SkBitmap::kARGB_8888_Config : SkBitmap::kRGB_565_Config);
+        cacheHit = _activeConfig.tileProvider->obtainTileImmediate(tileId, _activeConfig.zoomBase, tileBitmap, _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? SkBitmap::kARGB_8888_Config : SkBitmap::kRGB_565_Config);
         if(cacheHit)
         {
             cacheTile(tileId, _activeConfig.zoomBase, tileBitmap);
@@ -231,7 +246,7 @@ void OsmAnd::IMapRenderer::obtainMissingTiles()
         }
 
         // If still cache miss, order delayed
-        _activeConfig.tileProvider->obtainTile(tileId, _activeConfig.zoomBase, callback, _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? SkBitmap::kARGB_8888_Config : SkBitmap::kRGB_565_Config);
+        _activeConfig.tileProvider->obtainTileDeffered(tileId, _activeConfig.zoomBase, callback, _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? SkBitmap::kARGB_8888_Config : SkBitmap::kRGB_565_Config);
     }
 }
 
@@ -323,13 +338,12 @@ void OsmAnd::IMapRenderer::updateConfiguration()
     _configInvalidated = false;
 }
 
+void OsmAnd::IMapRenderer::purgeElevationDataCache()
+{
+}
+
 void OsmAnd::IMapRenderer::updateElevationDataCache()
 {
-    if(_elevationDataCacheInvalidated)
-    {
-        //purgeTilesCache();
-        _elevationDataCacheInvalidated = false;
-    }
 }
 
 void OsmAnd::IMapRenderer::initializeRendering()
@@ -338,6 +352,9 @@ void OsmAnd::IMapRenderer::initializeRendering()
 
     assert(_renderThreadId == nullptr);
     _renderThreadId = QThread::currentThreadId();
+
+    if(_configInvalidated)
+        updateConfiguration();
 
     _isRenderingInitialized = true;
 }
@@ -375,6 +392,16 @@ void OsmAnd::IMapRenderer::performRendering()
     // Now we need to obtain all tiles that are still missing
     obtainMissingTiles();
 
+    // If evaluation was invalidated, we need to recreate tile patch
+    if(_elevationDataCacheInvalidated)
+    {
+        purgeElevationDataCache();
+        _elevationDataCacheInvalidated = false;
+    }
+    // Otherise, clean-up cache from useless tiles
+    {
+        //TODO: cleanup
+    }
     updateElevationDataCache();
 }
 

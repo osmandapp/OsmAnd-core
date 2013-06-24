@@ -49,6 +49,10 @@ namespace OsmAnd {
     public:
     private:
     protected:
+        enum {
+            TextureTilePixelPadding = 2,
+        };
+
         virtual void validateResult();
         virtual GLuint compileShader(GLenum shaderType, const char* source);
 

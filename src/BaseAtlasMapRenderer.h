@@ -35,7 +35,8 @@ namespace OsmAnd {
     {
     public:
         enum {
-            TileDimension3D = 100,
+            TileSize3D = 100,
+            TileElevationNodesPerSide = 24,
         };
 
     private:

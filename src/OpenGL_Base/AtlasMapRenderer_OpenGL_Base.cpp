@@ -49,9 +49,9 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeProjectionAndViewMatrices()
 
     // Calculate limits of camera distance to target and actual distance
     const float screenTile = _activeConfig.tileProvider->getTileSize() * (_activeConfig.displayDensityFactor / _activeConfig.tileProvider->getTileDensity());
-    const float nearD = Utilities_BaseOpenGL::calculateCameraDistance(_mProjection, _activeConfig.viewport, TileDimension3D / 2.0f, screenTile / 2.0f, 1.5f);
-    const float baseD = Utilities_BaseOpenGL::calculateCameraDistance(_mProjection, _activeConfig.viewport, TileDimension3D / 2.0f, screenTile / 2.0f, 1.0f);
-    const float farD = Utilities_BaseOpenGL::calculateCameraDistance(_mProjection, _activeConfig.viewport, TileDimension3D / 2.0f, screenTile / 2.0f, 0.75f);
+    const float nearD = Utilities_BaseOpenGL::calculateCameraDistance(_mProjection, _activeConfig.viewport, TileSize3D / 2.0f, screenTile / 2.0f, 1.5f);
+    const float baseD = Utilities_BaseOpenGL::calculateCameraDistance(_mProjection, _activeConfig.viewport, TileSize3D / 2.0f, screenTile / 2.0f, 1.0f);
+    const float farD = Utilities_BaseOpenGL::calculateCameraDistance(_mProjection, _activeConfig.viewport, TileSize3D / 2.0f, screenTile / 2.0f, 0.75f);
 
     // zoomFraction == [ 0.0 ... 0.5] scales tile [1.0x ... 1.5x]
     // zoomFraction == [-0.5 ...-0.0] scales tile [.75x ... 1.0x]
@@ -165,10 +165,10 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
         brP /= brLength / clip;
 
     // Get tile indices
-    tlP /= TileDimension3D;
-    trP /= TileDimension3D;
-    blP /= TileDimension3D;
-    brP /= TileDimension3D;
+    tlP /= TileSize3D;
+    trP /= TileSize3D;
+    blP /= TileSize3D;
+    brP /= TileSize3D;
 
     // Obtain visible tile indices in current zoom
     //TODO: it's not optimal, since dumb AABB takes a lot of unneeded tiles.
@@ -238,10 +238,9 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::createTilePatch()
         // Simple tile patch, that consists of 4 vertices
 
         // Vertex data
-        const GLfloat tsz = static_cast<GLfloat>(TileDimension3D);
+        const GLfloat tsz = static_cast<GLfloat>(TileSize3D);
         Vertex vertices[4] =
         {
-            // CCW
             { {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },
             { {0.0f, 0.0f,  tsz}, {0.0f, 1.0f} },
             { { tsz, 0.0f,  tsz}, {1.0f, 1.0f} },
@@ -261,8 +260,89 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::createTilePatch()
     }
     else
     {
-        //TODO: complex tile patch
-        assert(false);
+        // Complex tile patch, consisting of (TileElevationNodesPerSide*TileElevationNodesPerSide) number of
+        // height clusters.
+        const GLfloat clusterSize = static_cast<GLfloat>(TileSize3D) / static_cast<float>(TileElevationNodesPerSide);
+        const auto verticesPerLine = TileElevationNodesPerSide + 1;
+        const auto outerVertices = verticesPerLine * verticesPerLine;
+        verticesCount = outerVertices;
+        verticesCount += TileElevationNodesPerSide * TileElevationNodesPerSide; // Inner
+        pVertices = new Vertex[verticesCount];
+        indicesCount = (TileElevationNodesPerSide * TileElevationNodesPerSide) * 4 * 3;
+        pIndices = new GLushort[indicesCount];
+
+        Vertex* pV = pVertices;
+
+        // Form outer vertices
+        for(int row = 0; row < verticesPerLine; row++)
+        {
+            for(int col = 0; col < verticesPerLine; col++, pV++)
+            {
+                pV->position[0] = static_cast<float>(col) * clusterSize;
+                pV->position[1] = 0.0f;
+                pV->position[2] = static_cast<float>(row) * clusterSize;
+
+                pV->uv[0] = static_cast<float>(col) / static_cast<float>(TileElevationNodesPerSide);
+                pV->uv[1] = static_cast<float>(row) / static_cast<float>(TileElevationNodesPerSide);
+            }
+        }
+
+        // Form inner vertices
+        for(int row = 0; row < TileElevationNodesPerSide; row++)
+        {
+            for(int col = 0; col < TileElevationNodesPerSide; col++, pV++)
+            {
+                pV->position[0] = (static_cast<float>(col) + 0.5f) * clusterSize;
+                pV->position[1] = 0.0f;
+                pV->position[2] = (static_cast<float>(row) + 0.5f) * clusterSize;
+
+                pV->uv[0] = (static_cast<float>(col) + 0.5f) / static_cast<float>(TileElevationNodesPerSide);
+                pV->uv[1] = (static_cast<float>(row) + 0.5f) / static_cast<float>(TileElevationNodesPerSide);
+            }
+        }
+
+        // Form indices
+        GLushort* pI = pIndices;
+        for(int row = 0; row < TileElevationNodesPerSide; row++)
+        {
+            for(int col = 0; col < TileElevationNodesPerSide; col++, pV++)
+            {
+                // p0 - center point
+                // p1 - top left
+                // p2 - bottom left
+                // p3 - bottom right
+                // p4 - top right
+                const auto p0 = outerVertices + (row * TileElevationNodesPerSide + col);
+                const auto p1 = (row + 0) * verticesPerLine + col + 0;
+                const auto p2 = (row + 1) * verticesPerLine + col + 0;
+                const auto p3 = (row + 1) * verticesPerLine + col + 1;
+                const auto p4 = (row + 0) * verticesPerLine + col + 1;
+
+                // Triangle 0
+                pI[0] = p0;
+                pI[1] = p1;
+                pI[2] = p2;
+                pI += 3;
+
+                // Triangle 1
+                pI[0] = p0;
+                pI[1] = p2;
+                pI[2] = p3;
+                pI += 3;
+
+                // Triangle 2
+                pI[0] = p0;
+                pI[1] = p3;
+                pI[2] = p4;
+                pI += 3;
+
+                // Triangle 3
+                pI[0] = p0;
+                pI[1] = p4;
+                pI[2] = p1;
+                pI += 3;
+            }
+        }
     }
     
     allocateTilePatch(pVertices, verticesCount, pIndices, indicesCount);
@@ -272,4 +352,12 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::createTilePatch()
         delete[] pVertices;
         delete[] pIndices;
     }
+}
+
+void OsmAnd::AtlasMapRenderer_BaseOpenGL::purgeElevationDataCache()
+{
+    IMapRenderer::purgeElevationDataCache();
+
+    releaseTilePatch();
+    createTilePatch();
 }

@@ -71,6 +71,7 @@ namespace OsmAnd {
             int zoomBase;
             float zoomFraction;
             TextureDepth preferredTextureDepth;
+            bool textureAtlasesAllowed;
         };
 
     private:
@@ -108,6 +109,7 @@ namespace OsmAnd {
 
         virtual void uploadTileToTexture(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap) = 0;
         
+        virtual void purgeElevationDataCache();
         void updateElevationDataCache();
 
         QMutex _tilesPendingToCacheMutex;
@@ -154,6 +156,7 @@ namespace OsmAnd {
         virtual void setElevationAngle(const float& elevationAngle);
         virtual void setTarget(const PointI& target31);
         virtual void setZoom(const float& zoom);
+        virtual void setTextureAtlasesUsagePermit(const bool& allow);
 
         const bool& isRenderingInitialized;
         virtual void initializeRendering();

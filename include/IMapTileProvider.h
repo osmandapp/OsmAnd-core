@@ -46,11 +46,11 @@ namespace OsmAnd {
         virtual float getTileDensity() const = 0;
         virtual uint32_t getTileSize() const = 0;
 
-        virtual bool obtainTile(
+        virtual bool obtainTileImmediate(
             const TileId& tileId, uint32_t zoom,
             std::shared_ptr<SkBitmap>& tile,
             SkBitmap::Config preferredConfig) = 0;
-        virtual void obtainTile(
+        virtual void obtainTileDeffered(
             const TileId& tileId, uint32_t zoom,
             TileReceiverCallback receiverCallback,
             SkBitmap::Config preferredConfig) = 0;

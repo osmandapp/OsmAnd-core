@@ -71,6 +71,8 @@ namespace OsmAnd {
         
         virtual void updateConfiguration();
 
+        virtual void purgeElevationDataCache();
+
         AtlasMapRenderer_BaseOpenGL();
     public:
         virtual ~AtlasMapRenderer_BaseOpenGL();

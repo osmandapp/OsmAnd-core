@@ -48,7 +48,7 @@ OsmAnd::MapRenderer_BaseOpenGL::CachedTile_OpenGL::~CachedTile_OpenGL()
     auto& refCnt = *itRefCnt;
     refCnt -= 1;
 
-    if(owner->_maxTextureSize != 0 && refCnt > 0)
+    if(owner->_maxTextureSize != 0 && owner->_activeConfig.textureAtlasesAllowed && refCnt > 0)
     {
         // A free atlas slot
         owner->_freeAtlasSlots.insert(textureId, atlasSlotIndex);

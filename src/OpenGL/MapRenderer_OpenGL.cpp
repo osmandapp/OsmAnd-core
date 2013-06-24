@@ -48,21 +48,27 @@ GLuint OsmAnd::MapRenderer_OpenGL::compileShader( GLenum shaderType, const char*
         GLint didCompile;
         glGetObjectParameterivARB(shader, GL_COMPILE_STATUS, &didCompile);
         GL_CHECK_RESULT;
-        if(!didCompile && glGetShaderInfoLog != nullptr)
+        if(!didCompile)
         {
-            GLint logBufferLen = 0;	
-            GLsizei logLen = 0;
-            assert(glGetShaderiv);
-            glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logBufferLen);       
-            GL_CHECK_RESULT;
-            if (logBufferLen > 1)
+            if(glGetShaderInfoLog != nullptr)
             {
-                GLchar* log = (GLchar*)malloc(logBufferLen);
-                glGetShaderInfoLog(shader, logBufferLen, &logLen, log);
+                GLint logBufferLen = 0;	
+                GLsizei logLen = 0;
+                assert(glGetShaderiv);
+                glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logBufferLen);       
                 GL_CHECK_RESULT;
-                LogPrintf(LogSeverityLevel::Error, "Failed to compile GLSL shader: %s", log);
-                free(log);
+                if (logBufferLen > 1)
+                {
+                    GLchar* log = (GLchar*)malloc(logBufferLen);
+                    glGetShaderInfoLog(shader, logBufferLen, &logLen, log);
+                    GL_CHECK_RESULT;
+                    LogPrintf(LogSeverityLevel::Error, "Failed to compile GLSL shader: %s", log);
+                    free(log);
+                }
             }
+
+            glDeleteShader(shader);
+            shader = 0;
         }
     }
 
@@ -72,10 +78,6 @@ GLuint OsmAnd::MapRenderer_OpenGL::compileShader( GLenum shaderType, const char*
 void OsmAnd::MapRenderer_OpenGL::initializeRendering()
 {
     MapRenderer_BaseOpenGL::initializeRendering();
-
-    // Get maximal texture size if not yet determined
-    glGetIntegerv(GL_MAX_TEXTURE_SIZE, reinterpret_cast<GLint*>(&_maxTextureSize));
-    GL_CHECK_RESULT;
 
     // Get OpenGL version
     const auto glVersionString = glGetString(GL_VERSION);
@@ -87,6 +89,13 @@ void OsmAnd::MapRenderer_OpenGL::initializeRendering()
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "Using OpenGL version %d.%d [%s]\n", glVersion[0], glVersion[1], glVersionString);
     assert(glVersion[0] >= 3);
+
+    // Get maximal texture size if not yet determined
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, reinterpret_cast<GLint*>(&_maxTextureSize));
+    GL_CHECK_RESULT;
+    if(_maxTextureSize <= _activeConfig.tileProvider->getTileSize())
+        _maxTextureSize = 0;
+    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture size %dx%d\n", _maxTextureSize, _maxTextureSize);
 
     GL_CHECK_RESULT;
     glewExperimental = GL_TRUE;
@@ -187,10 +196,10 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( const TileId& tileId, uint
 
     const auto tileSize = _activeConfig.tileProvider->getTileSize();
 
-    if(_maxTextureSize != 0)
+    if(_maxTextureSize != 0 && _activeConfig.textureAtlasesAllowed)
     {
-        const auto tilesPerRow = _maxTextureSize / (tileSize + 2);
-        _atlasSizeOnTexture = (tileSize + 2) * tilesPerRow;
+        const auto tilesPerRow = _maxTextureSize / (tileSize + 2 * TextureTilePixelPadding);
+        _atlasSizeOnTexture = (tileSize + 2 * TextureTilePixelPadding) * tilesPerRow;
 
         // If we have no unfinished atlas yet, create one
         uint32_t freeSlotIndex;
@@ -251,48 +260,62 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( const TileId& tileId, uint
         GL_CHECK_RESULT;
 
         // Tile area offset
-        auto yOffset = (freeSlotIndex / tilesPerRow) * (tileSize + 2);
-        auto xOffset = (freeSlotIndex % tilesPerRow) * (tileSize + 2);
+        auto yOffset = (freeSlotIndex / tilesPerRow) * (tileSize + 2 * TextureTilePixelPadding);
+        auto xOffset = (freeSlotIndex % tilesPerRow) * (tileSize + 2 * TextureTilePixelPadding);
 
         // Set stride
         glPixelStorei(GL_UNPACK_ROW_LENGTH, tileBitmap->rowBytesAsPixels());
         GL_CHECK_RESULT;
 
-        // Left column duplicate
-        glTexSubImage2D(GL_TEXTURE_2D, 0,
-            xOffset + 0, yOffset + 1, 1, (GLsizei)tileSize,
-            _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
-            _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
-            tileBitmap->getPixels());
-        GL_CHECK_RESULT;
+        //TODO: fill corners!
 
+        // Left column duplicate
+        for(int idx = 0; idx < TextureTilePixelPadding; idx++)
+        {
+            glTexSubImage2D(GL_TEXTURE_2D, 0,
+                xOffset + idx, yOffset + TextureTilePixelPadding, 1, (GLsizei)tileSize,
+                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
+                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
+                tileBitmap->getPixels());
+            GL_CHECK_RESULT;
+        }
+        
         // Top row duplicate
-        glTexSubImage2D(GL_TEXTURE_2D, 0,
-            xOffset + 1, yOffset + 0, (GLsizei)tileSize, 1,
-            _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
-            _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
-            tileBitmap->getPixels());
-        GL_CHECK_RESULT;
+        for(int idx = 0; idx < TextureTilePixelPadding; idx++)
+        {
+            glTexSubImage2D(GL_TEXTURE_2D, 0,
+                xOffset + TextureTilePixelPadding, yOffset + idx, (GLsizei)tileSize, 1,
+                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
+                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
+                tileBitmap->getPixels());
+            GL_CHECK_RESULT;
+        }
 
         // Right column duplicate
-        glTexSubImage2D(GL_TEXTURE_2D, 0,
-            xOffset + 1 + tileSize, yOffset + 1, 1, (GLsizei)tileSize,
-            _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
-            _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
-            reinterpret_cast<uint8_t*>(tileBitmap->getPixels()) + (tileSize - 1) * (_activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? 4 : 2));
-        GL_CHECK_RESULT;
+        for(int idx = 0; idx < TextureTilePixelPadding; idx++)
+        {
+            glTexSubImage2D(GL_TEXTURE_2D, 0,
+                xOffset + TextureTilePixelPadding + tileSize + idx, yOffset + TextureTilePixelPadding, 1, (GLsizei)tileSize,
+                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
+                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
+                reinterpret_cast<uint8_t*>(tileBitmap->getPixels()) + (tileSize - 1) * (_activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? 4 : 2));
+            GL_CHECK_RESULT;
+        }
 
         // Bottom row duplicate
-        glTexSubImage2D(GL_TEXTURE_2D, 0,
-            xOffset + 1, yOffset + 1 + tileSize, (GLsizei)tileSize, 1,
-            _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
-            _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
-            reinterpret_cast<uint8_t*>(tileBitmap->getPixels()) + (tileSize - 1) * tileBitmap->rowBytes());
-        GL_CHECK_RESULT;
+        for(int idx = 0; idx < TextureTilePixelPadding; idx++)
+        {
+            glTexSubImage2D(GL_TEXTURE_2D, 0,
+                xOffset + TextureTilePixelPadding, yOffset + TextureTilePixelPadding + tileSize + idx, (GLsizei)tileSize, 1,
+                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
+                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
+                reinterpret_cast<uint8_t*>(tileBitmap->getPixels()) + (tileSize - 1) * tileBitmap->rowBytes());
+            GL_CHECK_RESULT;
+        }
 
         // Main data
         glTexSubImage2D(GL_TEXTURE_2D, 0,
-            xOffset + 1, yOffset + 1, (GLsizei)tileSize, (GLsizei)tileSize,
+            xOffset + TextureTilePixelPadding, yOffset + TextureTilePixelPadding, (GLsizei)tileSize, (GLsizei)tileSize,
             _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
             _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
             tileBitmap->getPixels());

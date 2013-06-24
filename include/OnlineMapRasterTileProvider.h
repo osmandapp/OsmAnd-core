@@ -88,20 +88,19 @@ namespace OsmAnd {
         virtual float getTileDensity() const;
         virtual uint32_t getTileSize() const;
 
-        virtual bool obtainTile(
+        virtual bool obtainTileImmediate(
             const TileId& tileId, uint32_t zoom,
             std::shared_ptr<SkBitmap>& tile,
             SkBitmap::Config preferredConfig);
-        virtual void obtainTile(
+        virtual void obtainTileDeffered(
             const TileId& tileId, uint32_t zoom,
             TileReceiverCallback receiverCallback,
             SkBitmap::Config preferredConfig);
-        void obtainTile(
+        void obtainTileDeffered(
             const QUrl& url,
             const TileId& tileId, uint32_t zoom,
             TileReceiverCallback receiverCallback,
             SkBitmap::Config preferredConfig);
-
 
         static std::shared_ptr<OsmAnd::IMapTileProvider> createMapnikProvider();
         static std::shared_ptr<OsmAnd::IMapTileProvider> createCycleMapProvider();

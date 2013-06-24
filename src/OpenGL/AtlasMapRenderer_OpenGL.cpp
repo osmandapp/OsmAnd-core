@@ -66,19 +66,36 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
     glUniform2i(_vertexShader_param_targetTile, targetTile.x, targetTile.y);
     GL_CHECK_RESULT;
 
-    // Set atlas slots per row
-    const auto atlasSlotsInLine = _maxTextureSize / (_activeConfig.tileProvider->getTileSize() + 2);
-    glUniform1i(_vertexShader_param_atlasSlotsInLine, atlasSlotsInLine);
-    GL_CHECK_RESULT;
+    if(_activeConfig.textureAtlasesAllowed && _maxTextureSize != 0)
+    {
+        // Set atlas slots per row
+        const auto atlasSlotsInLine = _maxTextureSize / (_activeConfig.tileProvider->getTileSize() + 2 * TextureTilePixelPadding);
+        glUniform1i(_vertexShader_param_atlasSlotsInLine, atlasSlotsInLine);
+        GL_CHECK_RESULT;
 
-    // Set atlas size
-    const auto atlasSize = atlasSlotsInLine * (_activeConfig.tileProvider->getTileSize() + 2);
-    glUniform1i(_vertexShader_param_atlasSize, atlasSize);
-    GL_CHECK_RESULT;
+        // Set atlas size
+        const auto atlasSize = atlasSlotsInLine * (_activeConfig.tileProvider->getTileSize() + 2 * TextureTilePixelPadding);
+        glUniform1i(_vertexShader_param_atlasSize, atlasSize);
+        GL_CHECK_RESULT;
 
-    // Set atlas size
-    glUniform1i(_vertexShader_param_atlasTextureSize, _maxTextureSize);
-    GL_CHECK_RESULT;
+        // Set atlas size
+        glUniform1i(_vertexShader_param_atlasTextureSize, _maxTextureSize);
+        GL_CHECK_RESULT;
+    }
+    else
+    {
+        // Set atlas slots per row
+        glUniform1i(_vertexShader_param_atlasSlotsInLine, 0);
+        GL_CHECK_RESULT;
+
+        // Set atlas size
+        glUniform1i(_vertexShader_param_atlasSize, 0);
+        GL_CHECK_RESULT;
+
+        // Set atlas size
+        glUniform1i(_vertexShader_param_atlasTextureSize, 0);
+        GL_CHECK_RESULT;
+    }
 
     // Set tile patch VAO
     assert(glBindVertexArray);
@@ -128,10 +145,13 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
                 GL_CHECK_RESULT;
                 glBindTexture(GL_TEXTURE_2D, cachedTile->textureId);
                 GL_CHECK_RESULT;
-                glBindSampler(0, _maxTextureSize ? _tileTextureSampler_Atlas : _tileTextureSampler_NoAtlas);
+                glBindSampler(0, (_maxTextureSize != 0 && _activeConfig.textureAtlasesAllowed) ? _tileTextureSampler_Atlas : _tileTextureSampler_NoAtlas);
                 GL_CHECK_RESULT;
 
-                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
+                const auto verticesCount = _activeConfig.elevationDataProvider
+                    ? (TileElevationNodesPerSide * TileElevationNodesPerSide) * 4 * 3
+                    : 6;
+                glDrawElements(GL_TRIANGLES, verticesCount, GL_UNSIGNED_SHORT, nullptr);
                 GL_CHECK_RESULT;
             }
         }
@@ -155,7 +175,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
     MapRenderer_OpenGL::initializeRendering();
 
     // Compile vertex shader
-    const char* const vertexShader =
+    QString vertexShader = QString::fromLatin1(
         "#version 430 core                                                                                                  ""\n"
         "                                                                                                                   "
         // Input data
@@ -184,9 +204,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
         "                                                                                                                   "
         //   Shift vertex to it's proper position
         "    float xOffset = float(param_tile.x - param_targetTile.x) - param_centerOffset.x;                               "
-        "    v.x += xOffset * 100.0;                                                                                        "
+        "    v.x += xOffset * %TileSize3D%.0;                                                                               "
         "    float yOffset = float(param_tile.y - param_targetTile.y) - param_centerOffset.y;                               "
-        "    v.z += yOffset * 100.0;                                                                                        "
+        "    v.z += yOffset * %TileSize3D%.0;                                                                               "
         "                                                                                                                   "
         //   Calculate UV. Initially they are 0..1 as if we would process non-atlas texture
         "    g_vertexUV0 = in_vertexUV0;                                                                                    "
@@ -197,23 +217,16 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
         "        int rowIndex = param_atlasSlotIndex / param_atlasSlotsInLine;                                              "
         "        int colIndex = int(mod(param_atlasSlotIndex, param_atlasSlotsInLine));                                     "
         "                                                                                                                   "
-        "        float texelSize_1d5 = 1.5 / float(param_atlasTextureSize);                                                 "
-        "        float xIndent = 0.0;                                                                                       "
-        "        if(g_vertexUV0.x > 0.99)                                                                                   "
-        "            xIndent = -texelSize_1d5;                                                                              "
-        "        else if(g_vertexUV0.x < 0.001)                                                                             "
-        "            xIndent = texelSize_1d5;                                                                               "
-        "        float yIndent = 0.0;                                                                                       "
-        "        if(g_vertexUV0.y > 0.99)                                                                                   "
-        "            yIndent = -texelSize_1d5;                                                                              "
-        "        else if(g_vertexUV0.y < 0.001)                                                                             "
-        "            yIndent = texelSize_1d5;                                                                               "
+        "        float texelSize_padding = %TextureTilePixelPadding%.0 / float(param_atlasTextureSize);                     "
+        "        float texCoordRescale = (slotLength - 2.0 * texelSize_padding) / slotLength;                               "
         "                                                                                                                   "
-        "        float uBase = float(colIndex) * slotLength + float(g_vertexUV0.s) * slotLength;                            "
-        "        g_vertexUV0.s = uBase + xIndent;                                                                           "
+        "        float s = float(colIndex) * slotLength;                                                                    "
+        "        s += texelSize_padding + (float(g_vertexUV0.s) * slotLength) * texCoordRescale;                            "
+        "        g_vertexUV0.s = s;                                                                                         "
         "                                                                                                                   "
-        "        float vBase = float(rowIndex) * slotLength + float(g_vertexUV0.t) * slotLength;                            "
-        "        g_vertexUV0.t = vBase + yIndent;                                                                           "
+        "        float t = float(rowIndex) * slotLength;                                                                    "
+        "        t += texelSize_padding + (float(g_vertexUV0.t) * slotLength) * texCoordRescale;                            "
+        "        g_vertexUV0.t = t;                                                                                         "
         "    }                                                                                                              "
         "                                                                                                                   "
         //   TODO: process heightmap data
@@ -221,8 +234,11 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
         "                                                                                                                   "
         //   Finally output processed modified vertex
         "    gl_Position = param_mProjection * param_mView * v;                                                             "
-        "}                                                                                                                  ";
-    _vertexShader = compileShader(GL_VERTEX_SHADER, vertexShader);
+        "}                                                                                                                  ");
+    QString preprocessedVertexShader = vertexShader;
+    preprocessedVertexShader.replace("%TileSize3D%", QString::number(TileSize3D));
+    preprocessedVertexShader.replace("%TextureTilePixelPadding%", QString::number(TextureTilePixelPadding));
+    _vertexShader = compileShader(GL_VERTEX_SHADER, preprocessedVertexShader.toStdString().c_str());
     assert(_vertexShader != 0);
 
     // Compile fragment shader
