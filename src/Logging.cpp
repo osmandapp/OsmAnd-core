@@ -30,12 +30,15 @@ void OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel level, const char* format, ...)
 	va_end(args);
 }
 
-void OsmAnd::LogPrintfN(OsmAnd::LogSeverityLevel level, const char* format, ...)
+void OsmAnd::LogFlush()
 {
-    LogPrintfN
 }
 
 #elif defined(__APPLE__) || defined(__linux__)
+void OsmAnd::LogFlush()
+{
+    fflush(stdout);
+}
 
 extern void OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel level, const char* msg, ...)
 {
@@ -60,7 +63,9 @@ extern void OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel level, const char* msg, .
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-
+void OsmAnd::LogFlush()
+{
+}
 void OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel level, const char* format, ...)
 {
     va_list args;

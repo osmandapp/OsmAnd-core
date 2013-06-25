@@ -49,9 +49,6 @@ namespace OsmAnd {
 
     struct RouteStatistics
     {
-        RouteStatistics() {
-            memset(this, sizeof(RouteStatistics), 0);
-        }
 
         uint32_t forwardIterations;
         uint32_t backwardIterations;
@@ -68,7 +65,9 @@ namespace OsmAnd {
         std::chrono::steady_clock::time_point timeToLoadBegin;
         std::chrono::steady_clock::time_point timeToCalculateBegin;
 
-
+        RouteStatistics() {
+            memset(this, 0, sizeof(struct RouteStatistics));
+        }
     };
 
     class OSMAND_CORE_API RoutePlannerContext

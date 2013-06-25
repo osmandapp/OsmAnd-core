@@ -446,7 +446,8 @@ bool OsmAnd::RoutePlanner::calculateRoute(
     return calculateRoute(calculationContext.get(), routeCalculationSegments[0], routeCalculationSegments[1], leftSideNavigation, controller, outResult);
 }
 
-void OsmAnd::RoutePlanner::printDebugInformation(std::shared_ptr<RouteStatistics> st, int directSegmentSize, int reverseSegmentSize) {
+void OsmAnd::RoutePlanner::printDebugInformation(std::shared_ptr<RouteStatistics> st, int directSegmentSize, int reverseSegmentSize,
+           std::shared_ptr<RoutePlannerContext::RouteCalculationSegment> finalSegment) {
     st->timeToCalculate += (uint64_t) (
             std::chrono::duration<double, std::milli> (std::chrono::steady_clock::now() - st->timeToCalculateBegin).count());
     LogPrintf(LogSeverityLevel::Debug, "Time to calculate %llu, time to load %llu ", st->timeToCalculate, st->timeToLoad);
@@ -456,6 +457,8 @@ void OsmAnd::RoutePlanner::printDebugInformation(std::shared_ptr<RouteStatistics
     LogPrintf(LogSeverityLevel::Debug, "Loaded tiles %u (distinct %u), unloaded tiles %u, loaded more than once same tiles %u",
               st->loadedTiles, st->distinctLoadedTiles, st->unloadedTiles, st->loadedPrevUnloadedTiles);
     LogPrintf(LogSeverityLevel::Debug, "D-Queue size %d, R-Queue size %d", directSegmentSize, reverseSegmentSize);
+    LogPrintf(LogSeverityLevel::Debug, "Routing calculated time distance %f", finalSegment->_distanceFromStart);
+    LogFlush();
 }
 
 bool OsmAnd::RoutePlanner::calculateRoute(
@@ -665,7 +668,7 @@ bool OsmAnd::RoutePlanner::calculateRoute(
     if(!finalSegment)
         return false;
     if(context->owner->_routeStatistics) {
-        printDebugInformation(context->owner->_routeStatistics, graphDirectSegments.size(), graphReverseSegments.size());
+        printDebugInformation(context->owner->_routeStatistics, graphDirectSegments.size(), graphReverseSegments.size(), finalSegment);
     }
 
     return OsmAnd::RoutePlannerAnalyzer::prepareResult(context, finalSegment, outResult, leftSideNavigation);
@@ -1354,7 +1357,7 @@ void OsmAnd::RoutePlanner::updateDistanceForBorderPoints( RoutePlannerContext::C
 {
     const auto positive = !context->_borderLines.isEmpty() && sPoint.y < context->_borderLines.first()->_y31;
 
-    /*TODO:if(borderLines.length > 0 && !plus && sy< borderLines[borderLines.length - 1].borderLine){
+    /*if(borderLines.length > 0 && !plus && sy< borderLines[borderLines.length - 1].borderLine){
         throw new IllegalStateException();
     }*/
 

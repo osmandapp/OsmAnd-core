@@ -62,10 +62,6 @@ bool OsmAnd::RoutePlannerAnalyzer::prepareResult(OsmAnd::RoutePlannerContext::Ca
 
     addTurnInfoToRoute(leftSideNavigation, route);
 
-#if DEBUG_ROUTING || TRACE_ROUTING
-    LogPrintf(LogSeverityLevel::Debug, "%llu segments in route", route.size());
-#endif
-
     if(outResult)
         (*outResult) = route;
     context->owner->_previouslyCalculatedRoute = route;
@@ -251,6 +247,8 @@ void OsmAnd::RoutePlannerAnalyzer::attachRouteSegments(
 
 void OsmAnd::RoutePlannerAnalyzer::calculateTimeSpeedInRoute( OsmAnd::RoutePlannerContext::CalculationContext* context, QList< std::shared_ptr<RouteSegment> >& route )
 {
+    float completeDist = 0;
+    float completeTime = 0;
     for(auto itSegment = route.begin(); itSegment != route.end(); ++itSegment)
     {
         auto segment = *itSegment;
@@ -284,7 +282,18 @@ void OsmAnd::RoutePlannerAnalyzer::calculateTimeSpeedInRoute( OsmAnd::RoutePlann
         segment->_time = distOnRoadToPass;
         segment->_speed = speed;
         segment->_distance = distanceSum;
+        completeDist += distanceSum;
+        completeTime += distOnRoadToPass;
+#ifdef DEBUG_ROUTING
+        LogPrintf(LogSeverityLevel::Debug, "Segment : %llu %u %u  time %f speed %f dist %f",
+                    segment->road->id, segment->startPointIndex,  segment->endPointIndex,
+                    segment->_time, segment->_speed, segment->_distance);
+#endif
     }
+
+    LogPrintf(LogSeverityLevel::Debug, "%u segments in route", route.size());
+    LogPrintf(LogSeverityLevel::Debug, "Complete road time %f, complete distance %f", completeTime, completeTime);
+    LogFlush();
 }
 
 void OsmAnd::RoutePlannerAnalyzer::addTurnInfoToRoute( bool leftSideNavigation, QList< std::shared_ptr<RouteSegment> >& route )
@@ -343,8 +352,7 @@ bool OsmAnd::RoutePlannerAnalyzer::validateAllPointsConnected( const QList< std:
     assert(route.size() > 1);
 
     auto itPrevSegment = route.begin();
-    bool res = true;
-    LogPrintf(LogSeverityLevel::Debug, "Segment : %llu %u %u ", (*itPrevSegment)->road->id, (*itPrevSegment)->startPointIndex,  (*itPrevSegment)->endPointIndex);
+    bool res = true;    
     for(auto itSegment = ++route.begin(); itSegment != route.end(); ++itSegment, ++itPrevSegment)
     {
         auto prevSegment = *itPrevSegment;
@@ -356,7 +364,6 @@ bool OsmAnd::RoutePlannerAnalyzer::validateAllPointsConnected( const QList< std:
             Utilities::get31LongitudeX(point1.x), Utilities::get31LatitudeY(point1.y),
             Utilities::get31LongitudeX(point2.x), Utilities::get31LatitudeY(point2.y)
         );
-        LogPrintf(LogSeverityLevel::Debug, "Segment : %llu %u %u  ", segment->road->id, segment->startPointIndex,  segment->endPointIndex);
         if(distance > 0)
         {
             res = false;

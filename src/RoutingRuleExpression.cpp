@@ -1,6 +1,7 @@
 #include "RoutingRuleExpression.h"
 #include "RoutingRuleExpression_Operators.h"
 
+#include <Logging.h>
 #include <Common.h>
 #include <RoutingConfiguration.h>
 #include <RoutingRuleset.h>
