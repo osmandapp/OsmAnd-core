@@ -267,7 +267,60 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( const TileId& tileId, uint
         glPixelStorei(GL_UNPACK_ROW_LENGTH, tileBitmap->rowBytesAsPixels());
         GL_CHECK_RESULT;
 
-        //TODO: fill corners!
+        // Fill corners
+        {
+            const size_t pixelSize = (_activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? 4 : 2);
+            const auto pixelsCount = TextureTilePixelPadding * TextureTilePixelPadding;
+            const size_t cornerDataSize = pixelSize * pixelsCount;
+            uint8_t* pCornerData = new uint8_t[cornerDataSize];
+            GLvoid* pCornerPixel;
+
+            // Top-left corner
+            pCornerPixel = tileBitmap->getPixels();
+            for(int idx = 0; idx < pixelsCount; idx++)
+                memcpy(pCornerData + (pixelSize * idx), pCornerPixel, pixelSize);
+            glTexSubImage2D(GL_TEXTURE_2D, 0,
+                xOffset, yOffset, TextureTilePixelPadding, TextureTilePixelPadding,
+                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
+                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
+                pCornerData);
+            GL_CHECK_RESULT;
+
+            // Top-right corner
+            pCornerPixel = reinterpret_cast<uint8_t*>(tileBitmap->getPixels()) + (tileSize - 1) * pixelSize;
+            for(int idx = 0; idx < pixelsCount; idx++)
+                memcpy(pCornerData + (pixelSize * idx), pCornerPixel, pixelSize);
+            glTexSubImage2D(GL_TEXTURE_2D, 0,
+                xOffset + TextureTilePixelPadding + tileSize, yOffset, TextureTilePixelPadding, TextureTilePixelPadding,
+                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
+                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
+                pCornerData);
+            GL_CHECK_RESULT;
+
+            // Bottom-left corner
+            pCornerPixel = reinterpret_cast<uint8_t*>(tileBitmap->getPixels()) + (tileSize - 1) * tileBitmap->rowBytes();
+            for(int idx = 0; idx < pixelsCount; idx++)
+                memcpy(pCornerData + (pixelSize * idx), pCornerPixel, pixelSize);
+            glTexSubImage2D(GL_TEXTURE_2D, 0,
+                xOffset, yOffset + TextureTilePixelPadding + tileSize, TextureTilePixelPadding, TextureTilePixelPadding,
+                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
+                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
+                pCornerData);
+            GL_CHECK_RESULT;
+
+            // Bottom-right corner
+            pCornerPixel = reinterpret_cast<uint8_t*>(tileBitmap->getPixels()) + (tileSize - 1) * tileBitmap->rowBytes() + (tileSize - 1) * pixelSize;
+            for(int idx = 0; idx < pixelsCount; idx++)
+                memcpy(pCornerData + (pixelSize * idx), pCornerPixel, pixelSize);
+            glTexSubImage2D(GL_TEXTURE_2D, 0,
+                xOffset + TextureTilePixelPadding + tileSize, yOffset + TextureTilePixelPadding + tileSize, TextureTilePixelPadding, TextureTilePixelPadding,
+                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
+                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
+                pCornerData);
+            GL_CHECK_RESULT;
+
+            delete[] pCornerData;
+        }
 
         // Left column duplicate
         for(int idx = 0; idx < TextureTilePixelPadding; idx++)
