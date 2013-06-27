@@ -17,6 +17,9 @@ OsmAnd::RouteSegment::RouteSegment(const std::shared_ptr<Model::Road>& road_, ui
     , distance(_distance)
     , speed(_speed)
     , time(_time)
+    , _turnType(OsmAnd::TurnType::C)
+    , turnInfo(_turnType)
+    , description(_description)
 {
     if(startPointIndex_ >= road_->points.size() || endPointIndex_ >= road_->points.size())
     {
@@ -28,6 +31,8 @@ OsmAnd::RouteSegment::RouteSegment(const std::shared_ptr<Model::Road>& road_, ui
 OsmAnd::RouteSegment::~RouteSegment()
 {
 }
+
+
 
 double OsmAnd::RouteSegment::getBearing( uint32_t pointIndex, bool isIncrement ) const
 {
