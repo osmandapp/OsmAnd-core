@@ -66,7 +66,7 @@ bool OsmAnd::RoutePlannerAnalyzer::prepareResult(OsmAnd::RoutePlannerContext::Ca
 
     printRouteInfo(route);
     QList< std::shared_ptr<RouteSegment> > rs;
-    rs = route;
+    rs = route.toList();
     if(outResult)
         (*outResult) = rs;
     context->owner->_previouslyCalculatedRoute = rs;
@@ -120,7 +120,7 @@ void OsmAnd::RoutePlannerAnalyzer::splitRoadsAndAttachRoadSegments( OsmAnd::Rout
                 continue;
             if(nextIdx >= 0 && nextIdx < segment->attachedRoutes.size() && nextIdx != segment->endPointIndex && !segment->road->isRoundabout())
             {
-                const auto& attachedRoutes = segment->attachedRoutes[nextIdx];
+                const auto& attachedRoutes = segment->attachedRoutes[qAbs(static_cast<int64_t>(nextIdx) - segment->startPointIndex)];
 
                 auto before = segment->getBearing(nextIdx, !isIncrement);
                 auto after = segment->getBearing(nextIdx, isIncrement);
@@ -193,32 +193,6 @@ void OsmAnd::RoutePlannerAnalyzer::attachRouteSegments(
                 segment->_attachedRoutes[qAbs(static_cast<int64_t>(pointIdx) - static_cast<int64_t>(segment->_startPointIndex))].push_back(attachedSegment);
         }
     }
-
-    /*TODO:
-    Iterator<RouteSegment> it;
-    if(segment->getPreAttachedRoutes(pointInd) != null) {
-        final RouteSegmentResult[] list = segment->getPreAttachedRoutes(pointInd);
-        it = new Iterator<BinaryRoutePlanner.RouteSegment>() {
-            int i = 0;
-            @Override
-                public boolean hasNext() {
-                    return i < list.length;
-            }
-
-            @Override
-                public RouteSegment next() {
-                    std::shared_ptr<RouteSegment> r = list[i++];
-                    return new RouteSegment(r.getObject(), r.getStartPointIndex());
-            }
-
-            @Override
-                public void remove() {
-            }
-        };	
-    } else {
-        RouteSegment rt = ctx.loadRouteSegment(road.getPoint31XTile(pointInd), road.getPoint31YTile(pointInd), ctx.config.memoryLimitation);
-        it = rt == null ? null : rt.getIterator();
-    }*/
 
     // Try to attach all segments except with current id
     const auto& p31 = segment->road->points[pointIdx];
@@ -392,7 +366,7 @@ OsmAnd::TurnInfo attachKeepLeftInfoAndLanes(bool leftSide,
     bool kl = false;
     bool kr = false;
 
-    QList<std::shared_ptr<OsmAnd::RouteSegment> > attachedRoutes = currentSegm->attachedRoutes[currentSegm->startPointIndex];
+    QList<std::shared_ptr<OsmAnd::RouteSegment> > attachedRoutes = currentSegm->attachedRoutes[0];
     int ls = prevSegm->road->getLanes();
     if(ls >= 0 && prevSegm->road->getDirection() == 0) {
         ls = (ls + 1) / 2;
@@ -488,7 +462,7 @@ OsmAnd::TurnInfo processRoundaboutTurn(QVector<std::shared_ptr<OsmAnd::RouteSegm
 //					k = plus ? k + 1 : k - 1;
             }
             while (k != rnext->endPointIndex) {
-                int attachedRoads = rnext->attachedRoutes[k].size();
+                int attachedRoads = rnext->attachedRoutes[qAbs(static_cast<int64_t>(k) - rnext->startPointIndex)].size();
                 if(attachedRoads > 0) {
                     exit++;
                 }
@@ -522,7 +496,7 @@ OsmAnd::TurnInfo getTurnInfo(QVector<std::shared_ptr<OsmAnd::RouteSegment> >& re
     }
     OsmAnd::TurnInfo t;
     if (prev != nullptr) {
-        bool noAttachedRoads = rr->attachedRoutes[rr->startPointIndex].size() == 0;
+        bool noAttachedRoads = rr->attachedRoutes[0].size() == 0;
         // add description about turn
         double mpi = OsmAnd::Utilities::degreesDiff(prev->getBearingEnd(), rr->getBearingBegin());
         if(noAttachedRoads){

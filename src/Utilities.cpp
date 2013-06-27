@@ -85,7 +85,7 @@ OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::checkLongitude( doubl
     return longitude;
 }
 
-OSMAND_CORE_API double OSMAND_CORE_CALL degreesDiff(double a1, double a2){
+OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::degreesDiff(double a1, double a2){
     double diff = a1 - a2;
     while(diff > 180) {
         diff -= 360;

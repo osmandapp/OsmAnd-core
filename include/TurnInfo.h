@@ -71,7 +71,7 @@ public:
     void setSkipToSpeak(bool skipToSpeak) {this->skipToSpeak = skipToSpeak; }
     const QVector<int>& getLanes() const { return lanes; }
     void setLanes(const QVector<int>& ls) { this->lanes = ls; }
-    QString toString() const { return " TODO "; }
+    QString toString() const;
 
     static TurnInfo  straight() {
         return TurnInfo (TurnType::C);
