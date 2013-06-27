@@ -63,7 +63,8 @@ void OsmAndApplication::submitTask(const QString& family, std::shared_ptr<OsmAnd
         this->threadPoolsFamily[family] = p;
     }
     p->setMaxThreadCount(maximumConcurrent);
-    p->start(new TaskRunnableWraper(this, family, task), task->getPriority());
+    // FIXME
+    //p->start(new TaskRunnableWraper(this, family, task), task->getPriority());
 }
 
 } /* namespace OsmAnd */
