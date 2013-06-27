@@ -95,6 +95,8 @@ namespace OsmAnd {
             bool isLoop() const;
             Direction getDirection() const;
             bool isRoundabout() const;
+            QString getHighway();
+            int getLanes();
 
         friend struct OsmAnd::ObfRoutingSection;
         friend class OsmAnd::RoutePlanner;

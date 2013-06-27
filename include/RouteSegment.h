@@ -31,6 +31,7 @@
 
 #include <OsmAndCore.h>
 #include <Road.h>
+#include <TurnInfo.h>
 
 namespace OsmAnd {
 
@@ -51,6 +52,9 @@ namespace OsmAnd {
         float _distance;
         float _speed;
         float _time;
+        QString _description;
+        // this make not possible to make turns in between segment result for now
+        TurnInfo _turnType;
 
         void dump(const QString& prefix = QString()) const;
     public:
@@ -60,6 +64,9 @@ namespace OsmAnd {
         const uint32_t& startPointIndex;
         const uint32_t& endPointIndex;
         const QVector< QList< std::shared_ptr<RouteSegment> > >& attachedRoutes;
+
+        const QString& description;
+        const TurnInfo& turnInfo;
 
         const float& distance;
         const float& speed;

@@ -1,5 +1,4 @@
 #include "RoutePlanner.h"
-#include "RoutePlannerRouteAnalyzer.h"
 #include "RoutePlannerContext.h"
 
 #include "Logging.h"
@@ -20,6 +19,7 @@ OsmAnd::RoutePlannerContext::RoutePlannerContext(
     , _initialHeading(initialHeading)
     , sources(sources)
     , configuration(routingConfig)
+    , _routeStatistics(new RouteStatistics)
     , profileContext(new RoutingProfileContext(configuration->routingProfiles[vehicle], options))
 {
     _partialRecalculationDistanceLimit = Utilities::parseArbitraryFloat(configuration->resolveAttribute(vehicle, "recalculateDistanceHelp"), 10000.0f);
@@ -54,7 +54,7 @@ OsmAnd::RoutePlannerContext::RoutingSubsectionContext::~RoutingSubsectionContext
 
 void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::registerRoad( const std::shared_ptr<Model::Road>& road )
 {
-    //TODO:tileStatistics.addObject(ro);
+    //TODO memory :tileStatistics.addObject(ro);
 
     uint32_t idx = 0;
     for(auto itPoint = road->points.begin(); itPoint != road->points.end(); ++itPoint, idx++)
@@ -109,7 +109,7 @@ void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::collectRoads( QList<
     }
 
 
-            /*TODO:
+            /*TODO: to Alexey what is this?
         if(routes != null) {
         } else if(searchResult != null) {
             RouteDataObject[] objects = searchResult.objects;
@@ -197,14 +197,14 @@ void OsmAnd::RoutePlannerContext::RouteCalculationSegment::dump(const QString& p
 {
     if(parent)
     {
-        LogPrintf(LogSeverityLevel::Debug, "%sroad(%llu), point(%d), w(%f), ds(%f), es(%f); parent = road(%llu), point(%d);\n",
+        LogPrintf(LogSeverityLevel::Debug, "%sroad(%llu), point(%d), w(%f), ds(%f), es(%f); parent = road(%llu), point(%d);",
             prefix.toStdString().c_str(),
             road->id, pointIndex, _distanceFromStart + _distanceToEnd, _distanceFromStart, _distanceToEnd,
             parent->road->id, parent->pointIndex);
     }
     else
     {
-        LogPrintf(LogSeverityLevel::Debug, "%sroad(%llu), point(%d), w(%f), ds(%f), es(%f)\n",
+        LogPrintf(LogSeverityLevel::Debug, "%sroad(%llu), point(%d), w(%f), ds(%f), es(%f)",
             prefix.toStdString().c_str(),
             road->id, pointIndex, _distanceFromStart + _distanceToEnd, _distanceFromStart, _distanceToEnd);
     }

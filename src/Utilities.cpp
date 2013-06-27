@@ -85,6 +85,18 @@ OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::checkLongitude( doubl
     return longitude;
 }
 
+OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::degreesDiff(double a1, double a2){
+    double diff = a1 - a2;
+    while(diff > 180) {
+        diff -= 360;
+    }
+    while(diff <=-180) {
+        diff += 360;
+    }
+    return diff;
+
+}
+
 OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::toRadians( double angle )
 {
     return angle / 180.0 * M_PI;
@@ -132,19 +144,26 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::Utilities::extractFirstNumberPosit
 
 OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::parseSpeed( const QString& value, double defValue, bool* wasParsed/* = nullptr*/ )
 {
-    if(value == "none")
-        return std::numeric_limits<double>::max();
+    if(value == "none") {
+        if(wasParsed) { *wasParsed = true; }
+        return 40;
+    }
 
     int first, last;
-    if(!extractFirstNumberPosition(value, first, last, false, true))
+    if(!extractFirstNumberPosition(value, first, last, false, true)) {
+        if(wasParsed) { *wasParsed = false;}
         return defValue;
+    }
     bool ok;
     auto result = value.mid(first, last - first + 1).toDouble(&ok);
-    if(!ok)
+    if(wasParsed){ *wasParsed = ok;}
+    if(!ok) {
         return defValue;
+    }
     result /= 3.6;
-    if(value.contains("mph"))
+    if(value.contains("mph")) {
         result *= 1.6;
+    }
     return result;
 }
 

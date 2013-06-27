@@ -113,7 +113,7 @@ void OsmAnd::OsmAndRasterMapLayer::renderRaster(OsmAnd::OsmAndMapView *view, con
         doubleBuffer = new SkBitmap();
         doubleBuffer->setConfig(SkBitmap::kARGB_8888_Config, view->getWidth(), view->getHeight());
         uchar* bitmapData = new uchar[doubleBuffer->getSize()];
-        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Allocated %d bytes at %p\n", doubleBuffer->getSize(), bitmapData);
+        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Allocated %d bytes at %p", doubleBuffer->getSize(), bitmapData);
         doubleBuffer->setPixels(bitmapData);
     }
     QRectF ts =  view->getTileRect();

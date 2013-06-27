@@ -8,6 +8,8 @@
 #include "OsmAndCommon.h"
 #include "Logging.h"
 #include "Utilities.h"
+#include <ctime>
+#include <chrono>
 
 OsmAnd::RoutePlanner::RoutePlanner()
 {
@@ -204,36 +206,35 @@ uint64_t OsmAnd::RoutePlanner::getRoutingTileId( RoutePlannerContext* context, u
         return tileId;
     
     //TODO: perform GC if estimated size is close to limit
-    /*if( memoryLimit == 0){
-        memoryLimit = config.memoryLimitation;
-    }
-    if (getCurrentEstimatedSize() > 0.9 * memoryLimit) {
-        int sz1 = getCurrentEstimatedSize();
-        long h1 = 0;
-        if (SHOW_GC_SIZE && sz1 > 0.7 * memoryLimit) {
-            runGCUsedMemory();
-            h1 = runGCUsedMemory();
-        }
-        int clt = getCurrentlyLoadedTiles();
-        long us1 = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
-        unloadUnusedTiles(memoryLimit);
-        if (h1 != 0 && getCurrentlyLoadedTiles() != clt) {
-            int sz2 = getCurrentEstimatedSize();
-            runGCUsedMemory();
-            long h2 = runGCUsedMemory();
-            float mb = (1 << 20);
-            log.warn("Unload tiles :  estimated " + (sz1 - sz2) / mb + " ?= " + (h1 - h2) / mb + " actual");
-            log.warn("Used after " + h2 / mb + " of " + Runtime.getRuntime().totalMemory() / mb + " max "
-                + maxMemory() / mb);
-        } else {
-            float mb = (1 << 20);
-            int sz2 = getCurrentEstimatedSize();
-            log.warn("Unload tiles :  occupied before " + sz1 / mb + " Mb - now  " + sz2 / mb + "MB " + 
-                memoryLimit/mb + " limit MB " + config.memoryLimitation/mb);
-            long us2 = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
-            log.warn("Used memory before " + us1 / mb + "after " + us1 / mb + " of max " + maxMemory() / mb);
-        }
-    }*/
+    // TODO VICTOR unload tiles
+//    auto memoryLimit = config.memoryLimitation;
+//    if (getCurrentEstimatedSize() > 0.9 * memoryLimit) {
+//        int sz1 = getCurrentEstimatedSize();
+//        long h1 = 0;
+//        if (SHOW_GC_SIZE && sz1 > 0.7 * memoryLimit) {
+//            runGCUsedMemory();
+//            h1 = runGCUsedMemory();
+//        }
+//        int clt = getCurrentlyLoadedTiles();
+//        long us1 = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
+//        unloadUnusedTiles(memoryLimit);
+//        if (h1 != 0 && getCurrentlyLoadedTiles() != clt) {
+//            int sz2 = getCurrentEstimatedSize();
+//            runGCUsedMemory();
+//            long h2 = runGCUsedMemory();
+//            float mb = (1 << 20);
+//            log.warn("Unload tiles :  estimated " + (sz1 - sz2) / mb + " ?= " + (h1 - h2) / mb + " actual");
+//            log.warn("Used after " + h2 / mb + " of " + Runtime.getRuntime().totalMemory() / mb + " max "
+//                + maxMemory() / mb);
+//        } else {
+//            float mb = (1 << 20);
+//            int sz2 = getCurrentEstimatedSize();
+//            log.warn("Unload tiles :  occupied before " + sz1 / mb + " Mb - now  " + sz2 / mb + "MB " +
+//                memoryLimit/mb + " limit MB " + config.memoryLimitation/mb);
+//            long us2 = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
+//            log.warn("Used memory before " + us1 / mb + "after " + us1 / mb + " of max " + maxMemory() / mb);
+//        }
+//    }
 
     auto itIndexedSubsectionContexts = context->_indexedSubsectionsContexts.find(tileId);
     if(itIndexedSubsectionContexts == context->_indexedSubsectionsContexts.end())
@@ -311,9 +312,9 @@ void OsmAnd::RoutePlanner::loadSubregionContext( RoutePlannerContext::RoutingSub
 {
     const auto wasUnloaded = !context->isLoaded();
     const auto loadsCount = context->getLoadsCounter();
-    /*TODO:
-    long now = System.nanoTime();
-    */
+    if(context->owner->_routeStatistics) {
+        context->owner->_routeStatistics->timeToLoadBegin = std::chrono::steady_clock::now();
+    }
     context->markLoaded();
     ObfRoutingSection::loadSubsectionData(context->origin.get(), context->subsection, nullptr, nullptr, nullptr,
         [=] (std::shared_ptr<OsmAnd::Model::Road> road)
@@ -325,22 +326,27 @@ void OsmAnd::RoutePlanner::loadSubregionContext( RoutePlannerContext::RoutingSub
             return false;
         }
     );
-    /*TODO:
-    timeToLoad += (System.nanoTime() - now);
-    loadedTiles++;
-    if (wasUnloaded) {
-        if(ucount == 1) {
-            loadedPrevUnloadedTiles++;
+
+    if(context->owner->_routeStatistics) {
+        context->owner->_routeStatistics->timeToLoad += (uint64_t) (
+        std::chrono::duration<double, std::milli> (std::chrono::steady_clock::now() - context->owner->_routeStatistics->timeToLoadBegin).count());
+        context->owner->_routeStatistics->loadedTiles ++;
+        if (wasUnloaded) {
+            if(loadsCount == 1) {
+                context->owner->_routeStatistics->loadedPrevUnloadedTiles++;
+            }
+        } else {
+            context->owner->_routeStatistics->distinctLoadedTiles++;
         }
-    } else {
-        if(global != null) {
-            global.allRoutes += ts.tileStatistics.allRoutes;
-            global.coordinates += ts.tileStatistics.coordinates;
-        }
-        distinctLoadedTiles++;
     }
-    global.size += ts.tileStatistics.size;
-    */
+    // TODO VICTOR : add tile size statistic
+//    if (!wasUnloaded) {
+//        if(global != null) {
+//            global.allRoutes += ts.tileStatistics.allRoutes;
+//            global.coordinates += ts.tileStatistics.coordinates;
+//        }
+//    }
+//    global.size += this->.tileStatistics.size;
 }
 
 bool OsmAnd::RoutePlanner::calculateRoute(
@@ -370,6 +376,7 @@ bool OsmAnd::RoutePlanner::calculateRoute(
     
     if(routeCalculationSegments.size() > 2)
     {
+        // TODO route recalculation
 //        std::shared_ptr< QList< std::shared_ptr<RouteSegment> > > firstPartRecalculatedRoute;
 //        QList< std::shared_ptr<RouteSegment> > restPartRecalculatedRoute;
 //
@@ -438,6 +445,21 @@ bool OsmAnd::RoutePlanner::calculateRoute(
     return calculateRoute(calculationContext.get(), routeCalculationSegments[0], routeCalculationSegments[1], leftSideNavigation, controller, outResult);
 }
 
+void OsmAnd::RoutePlanner::printDebugInformation(std::shared_ptr<RouteStatistics> st, int directSegmentSize, int reverseSegmentSize,
+           std::shared_ptr<RoutePlannerContext::RouteCalculationSegment> finalSegment) {
+    st->timeToCalculate += (uint64_t) (
+            std::chrono::duration<double, std::milli> (std::chrono::steady_clock::now() - st->timeToCalculateBegin).count());
+    LogPrintf(LogSeverityLevel::Debug, "Time to calculate %llu, time to load %llu ", st->timeToCalculate, st->timeToLoad);
+    LogPrintf(LogSeverityLevel::Debug, "Forward iterations %u, backward iterations %u", st->forwardIterations, st->backwardIterations);
+    //auto maxLoadedTiles = max(st->maxLoadedTiles, st->currentlyloadedTiles.getCurrentlyLoadedTiles());
+    // LogPrintf(LogSeverityLevel::Debug, ("Current loaded tiles : " + ctx.getCurrentlyLoadedTiles() + ", maximum loaded tiles " + maxLoadedTiles);
+    LogPrintf(LogSeverityLevel::Debug, "Loaded tiles %u (distinct %u), unloaded tiles %u, loaded more than once same tiles %u",
+              st->loadedTiles, st->distinctLoadedTiles, st->unloadedTiles, st->loadedPrevUnloadedTiles);
+    LogPrintf(LogSeverityLevel::Debug, "D-Queue size %d, R-Queue size %d", directSegmentSize, reverseSegmentSize);
+    LogPrintf(LogSeverityLevel::Debug, "Routing calculated time distance %f", finalSegment->_distanceFromStart);
+    LogFlush();
+}
+
 bool OsmAnd::RoutePlanner::calculateRoute(
     OsmAnd::RoutePlannerContext::CalculationContext* context,
     const std::shared_ptr<RoutePlannerContext::RouteCalculationSegment>& from,
@@ -447,6 +469,7 @@ bool OsmAnd::RoutePlanner::calculateRoute(
     QList< std::shared_ptr<RouteSegment> >* outResult /*= nullptr*/)
 {
     /*
+     *TODO
     if(ctx.SHOW_GC_SIZE){
         long h1 = ctx.runGCUsedMemory();
         float mb = (1 << 20);
@@ -455,16 +478,21 @@ bool OsmAnd::RoutePlanner::calculateRoute(
     */
     context->_startPoint = from->road->points[from->pointIndex];
     context->_targetPoint = to_->road->points[to_->pointIndex];
-    /*
+
+    #ifndef ROUTE_STATISTICS
+        context->_routeStatistics = nullptr;
+    #endif
+    /* TODO VICTOR progress
     refreshProgressDistance(ctx);
     */
-    /*
     // measure time
-    ctx.timeToLoad = 0;
-    ctx.visitedSegments = 0;
-    ctx.memoryOverhead  = 1000;
-    ctx.timeToCalculate = System.nanoTime();
-    */
+    if(context->owner->_routeStatistics) {
+       context->owner->_routeStatistics->timeToLoad = 0;
+       context->owner->_routeStatistics->timeToCalculate = 0;
+       context->owner->_routeStatistics->forwardIterations = 0;
+       context->owner->_routeStatistics->backwardIterations = 0;
+       context->owner->_routeStatistics->timeToCalculateBegin = std::chrono::steady_clock::now();
+    }
 
     if (!qIsNaN(context->owner->_initialHeading))
     {
@@ -524,13 +552,11 @@ bool OsmAnd::RoutePlanner::calculateRoute(
     RoadSegmentsPriorityQueue* pGraphSegments = reverseSearch ? &graphReverseSegments : &graphDirectSegments;
     loadBorderPoints(context);
 
-#if DEBUG_ROUTING || TRACE_ROUTING
-    uint64_t iterations = 0;
-#endif
+
     std::shared_ptr<RoutePlannerContext::RouteCalculationSegment> finalSegment;
     while (!pGraphSegments->empty())
     {
-#if TRACE_ROUTING
+#if TRACE_DUMP_QUEUE
         LogPrintf(LogSeverityLevel::Debug, "----------------------------------------\n");
         LogPrintf(LogSeverityLevel::Debug, "%s-Queue (%d):\n", reverseSearch ? "R" : "D", pGraphSegments->size());
         {
@@ -550,34 +576,19 @@ bool OsmAnd::RoutePlanner::calculateRoute(
         segment->dump("> ");
 #endif
 
-        /*
-        // use accumulative approach
-        ctx.memoryOverhead = (visitedDirectSegments.size() + visitedOppositeSegments.size()) * STANDARD_ROAD_VISITED_OVERHEAD + 
-            (graphDirectSegments.size() +
-            graphReverseSegments.size()) * STANDARD_ROAD_IN_QUEUE_OVERHEAD;
-*/
-        
         if(dynamic_cast<RoutePlannerContext::RouteCalculationFinalSegment*>(segment.get()))
         {
-            /*if(RoutingContext.SHOW_GC_SIZE){
-                log.warn("Estimated overhead " + (ctx.memoryOverhead / (1<<20))+ " mb");
-                printMemoryConsumption("Memory occupied after calculation : ");
-            }*/
             finalSegment = segment;
             break;
         }
-
-#if DEBUG_ROUTING || TRACE_ROUTING
-        iterations++;
-#endif
-
+        // TODO check memory consumption
         /*if (ctx.memoryOverhead > ctx.config.memoryLimitation * 0.95 && RoutingContext.SHOW_GC_SIZE) {
             printMemoryConsumption("Memory occupied before exception : ");
         }
         if(ctx.memoryOverhead > ctx.config.memoryLimitation * 0.95) {
             throw new IllegalStateException("There is no enough memory " + ctx.config.memoryLimitation/(1<<20) + " Mb");
         }
-        ctx.visitedSegments++;*/
+        */
 
 #if TRACE_ROUTING
         LogPrintf(LogSeverityLevel::Debug, "\tFwd-search:\n");
@@ -602,12 +613,19 @@ bool OsmAnd::RoutePlanner::calculateRoute(
             reverseSearch ? visitedDirectSegments : visitedOppositeSegments,
             false);
         
-        /*
+        /* TODO progress
         updateCalculationProgress(ctx, graphDirectSegments, graphReverseSegments);
         */
 
         if(graphDirectSegments.empty() || graphReverseSegments.empty())
             return false;
+        if(context->owner->_routeStatistics) {
+            if(reverseSearch) {
+                context->owner->_routeStatistics->backwardIterations++;
+            } else {
+                context->owner->_routeStatistics->forwardIterations++;
+            }
+        }
         
         if(runRecalculation)
         {
@@ -648,13 +666,9 @@ bool OsmAnd::RoutePlanner::calculateRoute(
 
     if(!finalSegment)
         return false;
-#if DEBUG_ROUTING || TRACE_ROUTING
-    LogPrintf(LogSeverityLevel::Debug, "%llu iterations\n", iterations);
-    LogPrintf(LogSeverityLevel::Debug, "D-Queue size %d, R-Queue size %d\n", graphDirectSegments.size(), graphReverseSegments.size());
-#endif
-    /*
-    printDebugMemoryInformation(ctx, graphDirectSegments, graphReverseSegments, visitedDirectSegments, visitedOppositeSegments);
-    */
+    if(context->owner->_routeStatistics) {
+        printDebugInformation(context->owner->_routeStatistics, graphDirectSegments.size(), graphReverseSegments.size(), finalSegment);
+    }
 
     return prepareResult(context, finalSegment, outResult, leftSideNavigation);
 }
@@ -1342,7 +1356,7 @@ void OsmAnd::RoutePlanner::updateDistanceForBorderPoints( RoutePlannerContext::C
 {
     const auto positive = !context->_borderLines.isEmpty() && sPoint.y < context->_borderLines.first()->_y31;
 
-    /*TODO:if(borderLines.length > 0 && !plus && sy< borderLines[borderLines.length - 1].borderLine){
+    /*if(borderLines.length > 0 && !plus && sy< borderLines[borderLines.length - 1].borderLine){
         throw new IllegalStateException();
     }*/
 

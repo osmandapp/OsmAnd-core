@@ -63,6 +63,7 @@ namespace OsmAnd {
         const QList< std::shared_ptr<RoutingRuleExpression> >& expressions;
 
         friend class OsmAnd::RoutingProfile;
+        friend class OsmAnd::RoutingRulesetContext;
         friend class OsmAnd::RoutingConfiguration;
     };
 

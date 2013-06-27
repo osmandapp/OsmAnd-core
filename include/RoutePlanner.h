@@ -38,6 +38,10 @@
 #include <IQueryController.h>
 //#define DEBUG_ROUTING 1
 //#define TRACE_ROUTING 1
+// very verbose method and needed only if there is a problem in queue store
+//#define TRACE_DUMP_QUEUE 1
+#define ROUTE_STATISTICS 1
+
 #if !defined(DEBUG_ROUTING)
 #   if defined(DEBUG) || defined(_DEBUG)
 #       define DEBUG_ROUTING 1
@@ -157,6 +161,9 @@ namespace OsmAnd {
         static std::shared_ptr<RoutePlannerContext::RouteCalculationSegment> loadRouteCalculationSegment(
             OsmAnd::RoutePlannerContext* context,
             uint32_t x31, uint32_t y31);
+        static void printDebugInformation(std::shared_ptr<RouteStatistics> st,
+            int directSegmentSize, int reverseSegmentSize,
+            std::shared_ptr<RoutePlannerContext::RouteCalculationSegment>);
         static double h(OsmAnd::RoutePlannerContext::CalculationContext* context,
             const PointI& start, const PointI& end,
             const std::shared_ptr<RoutePlannerContext::RouteCalculationSegment>& next);
@@ -169,23 +176,25 @@ namespace OsmAnd {
             std::shared_ptr<RoutePlannerContext::RouteCalculationSegment> finalSegment,
             QList< std::shared_ptr<RouteSegment> >* outResult,
             bool leftSideNavigation);
+        static void addRouteSegmentToRoute(QVector< std::shared_ptr<RouteSegment> >& route, const std::shared_ptr<RouteSegment>& segment, bool reverse);
+        static bool combineTwoSegmentResult(const std::shared_ptr<RouteSegment>& toAdd, const std::shared_ptr<RouteSegment>& previous, bool reverse);
+        static bool validateAllPointsConnected(const QVector< std::shared_ptr<RouteSegment> >& route);
+        static void splitRoadsAndAttachRoadSegments(OsmAnd::RoutePlannerContext::CalculationContext* context, QVector< std::shared_ptr<RouteSegment> >& route);
+        static void calculateTimeSpeedInRoute(OsmAnd::RoutePlannerContext::CalculationContext* context, QVector< std::shared_ptr<RouteSegment> >& route);
+        static void addTurnInfoToRoute( bool leftSideNavigation, QVector< std::shared_ptr<RouteSegment> >& route );
+        static void attachRouteSegments(
+            OsmAnd::RoutePlannerContext::CalculationContext* context,
+            QVector< std::shared_ptr<RouteSegment> >& route,
+            const QVector< std::shared_ptr<RouteSegment> >::iterator& itSegment,
+            uint32_t pointIdx,
+            bool isIncrement);
+
+        static void printRouteInfo(QVector< std::shared_ptr<RouteSegment> >& route);
+    public:
+        virtual ~RoutePlanner();
         enum {
             MinTurnAngle = 45
         };
-        static void addRouteSegmentToRoute(QList< std::shared_ptr<RouteSegment> >& route, const std::shared_ptr<RouteSegment>& segment, bool reverse);
-        static bool combineTwoSegmentResult(const std::shared_ptr<RouteSegment>& toAdd, const std::shared_ptr<RouteSegment>& previous, bool reverse);
-        static bool validateAllPointsConnected(const QList< std::shared_ptr<RouteSegment> >& route);
-        static void splitRoadsAndAttachRoadSegments(OsmAnd::RoutePlannerContext::CalculationContext* context, QList< std::shared_ptr<RouteSegment> >& route);
-        static void calculateTimeSpeedInRoute(OsmAnd::RoutePlannerContext::CalculationContext* context, QList< std::shared_ptr<RouteSegment> >& route);
-        static void addTurnInfoToRoute( bool leftSideNavigation, QList< std::shared_ptr<RouteSegment> >& route );
-        static void attachRouteSegments(
-            OsmAnd::RoutePlannerContext::CalculationContext* context,
-            QList< std::shared_ptr<RouteSegment> >& route,
-            const QList< std::shared_ptr<RouteSegment> >::iterator& itSegment,
-            uint32_t pointIdx,
-            bool isIncrement);
-    public:
-        virtual ~RoutePlanner();
 
         static bool findClosestRoadPoint(
             OsmAnd::RoutePlannerContext* context,

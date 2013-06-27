@@ -14,6 +14,7 @@ namespace OsmAnd
     };
 
     void LogPrintf(LogSeverityLevel level, const char* format, ...);
+    void LogFlush();
 }
 
 #endif // _OSMAND_LOGGING_H_
