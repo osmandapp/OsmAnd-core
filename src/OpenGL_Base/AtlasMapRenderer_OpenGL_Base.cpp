@@ -11,6 +11,7 @@
 
 #include "IMapRenderer.h"
 #include "IMapTileProvider.h"
+#include "IMapBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
 #include "OsmAndLogging.h"
 #include "OpenGL_Base/Utilities_OpenGL_Base.h"
@@ -23,16 +24,21 @@ OsmAnd::AtlasMapRenderer_BaseOpenGL::~AtlasMapRenderer_BaseOpenGL()
 {
 }
 
-void OsmAnd::AtlasMapRenderer_BaseOpenGL::updateConfiguration()
+void OsmAnd::AtlasMapRenderer_BaseOpenGL::validateTileLayerCache( const TileLayerId& layer )
 {
-    if(elevationDataCacheInvalidated)
+    IMapRenderer::validateTileLayerCache(layer);
+
+    if(layer == ElevationData)
     {
         // Recreate tile patch since elevation data influences density of tile patch
         releaseTilePatch();
         createTilePatch();
     }
+}
 
-    IMapRenderer::updateConfiguration();
+void OsmAnd::AtlasMapRenderer_BaseOpenGL::updateConfiguration()
+{
+    BaseAtlasMapRenderer::updateConfiguration();
 
     computeProjectionAndViewMatrices();
     computeVisibleTileset();
@@ -48,10 +54,12 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeProjectionAndViewMatrices()
     _mProjection = glm::perspective(_activeConfig.fieldOfView, aspectRatio, 0.1f, 1000.0f);
 
     // Calculate limits of camera distance to target and actual distance
-    const float screenTile = _activeConfig.tileProvider->getTileSize() * (_activeConfig.displayDensityFactor / _activeConfig.tileProvider->getTileDensity());
-    const float nearD = Utilities_BaseOpenGL::calculateCameraDistance(_mProjection, _activeConfig.viewport, TileSize3D / 2.0f, screenTile / 2.0f, 1.5f);
-    const float baseD = Utilities_BaseOpenGL::calculateCameraDistance(_mProjection, _activeConfig.viewport, TileSize3D / 2.0f, screenTile / 2.0f, 1.0f);
-    const float farD = Utilities_BaseOpenGL::calculateCameraDistance(_mProjection, _activeConfig.viewport, TileSize3D / 2.0f, screenTile / 2.0f, 0.75f);
+    const auto& rasterMapProvider = _activeConfig.tileProviders[RasterMap];
+    auto tileProvider = static_cast<IMapBitmapTileProvider*>(rasterMapProvider.get());
+    const float screenTile = tileProvider->getTileSize() * (_activeConfig.displayDensityFactor / tileProvider->getTileDensity());
+    const float nearD = Utilities_BaseOpenGL::calculateCameraDistance(_mProjection, _activeConfig.viewport, TileSide3D / 2.0f, screenTile / 2.0f, 1.5f);
+    const float baseD = Utilities_BaseOpenGL::calculateCameraDistance(_mProjection, _activeConfig.viewport, TileSide3D / 2.0f, screenTile / 2.0f, 1.0f);
+    const float farD = Utilities_BaseOpenGL::calculateCameraDistance(_mProjection, _activeConfig.viewport, TileSide3D / 2.0f, screenTile / 2.0f, 0.75f);
 
     // zoomFraction == [ 0.0 ... 0.5] scales tile [1.0x ... 1.5x]
     // zoomFraction == [-0.5 ...-0.0] scales tile [.75x ... 1.0x]
@@ -165,13 +173,13 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
         brP /= brLength / clip;
 
     // Get tile indices
-    tlP /= TileSize3D;
-    trP /= TileSize3D;
-    blP /= TileSize3D;
-    brP /= TileSize3D;
+    tlP /= TileSide3D;
+    trP /= TileSide3D;
+    blP /= TileSide3D;
+    brP /= TileSide3D;
 
     // Obtain visible tile indices in current zoom
-    //TODO: it's not optimal, since dumb AABB takes a lot of unneeded tiles.
+    //TODO: it's not optimal, since dumb AABB takes a lot of unneeded tiles, up to 50% of selected
     _visibleTiles.clear();
     PointI p0, p1, p2, p3;
     p0.x = tlP[0] > 0.0f ? qCeil(tlP[0]) : qFloor(tlP[0]);
@@ -212,8 +220,8 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
     auto div = 1u << (31 - _activeConfig.zoomBase);
     if(div > 1)
         div -= 1;
-    _targetInTile.x = static_cast<double>(_activeConfig.target31.x - tileXo31) / div;
-    _targetInTile.y = static_cast<double>(_activeConfig.target31.y - tileYo31) / div;
+    _normalizedTargetInTileOffset.x = static_cast<double>(_activeConfig.target31.x - tileXo31) / div;
+    _normalizedTargetInTileOffset.y = static_cast<double>(_activeConfig.target31.y - tileYo31) / div;
 }
 
 void OsmAnd::AtlasMapRenderer_BaseOpenGL::initializeRendering()
@@ -233,12 +241,12 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::createTilePatch()
     GLushort* pIndices = nullptr;
     uint32_t indicesCount = 0;
     
-    if(!_activeConfig.elevationDataProvider)
+    if(!_activeConfig.tileProviders[ElevationData])
     {
         // Simple tile patch, that consists of 4 vertices
 
         // Vertex data
-        const GLfloat tsz = static_cast<GLfloat>(TileSize3D);
+        const GLfloat tsz = static_cast<GLfloat>(TileSide3D);
         Vertex vertices[4] =
         {
             { {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },
@@ -262,7 +270,7 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::createTilePatch()
     {
         // Complex tile patch, consisting of (TileElevationNodesPerSide*TileElevationNodesPerSide) number of
         // height clusters.
-        const GLfloat clusterSize = static_cast<GLfloat>(TileSize3D) / static_cast<float>(TileElevationNodesPerSide);
+        const GLfloat clusterSize = static_cast<GLfloat>(TileSide3D) / static_cast<float>(TileElevationNodesPerSide);
         const auto verticesPerLine = TileElevationNodesPerSide + 1;
         const auto outerVertices = verticesPerLine * verticesPerLine;
         verticesCount = outerVertices;
@@ -347,17 +355,9 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::createTilePatch()
     
     allocateTilePatch(pVertices, verticesCount, pIndices, indicesCount);
 
-    if(_activeConfig.elevationDataProvider)
+    if(_activeConfig.tileProviders[ElevationData])
     {
         delete[] pVertices;
         delete[] pIndices;
     }
-}
-
-void OsmAnd::AtlasMapRenderer_BaseOpenGL::purgeElevationDataCache()
-{
-    IMapRenderer::purgeElevationDataCache();
-
-    releaseTilePatch();
-    createTilePatch();
 }

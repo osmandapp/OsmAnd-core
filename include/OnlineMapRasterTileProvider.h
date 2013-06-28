@@ -25,6 +25,7 @@
 #include <stdint.h>
 #include <memory>
 #include <functional>
+#include <array>
 
 #include <QDir>
 #include <QMutex>
@@ -32,52 +33,59 @@
 #include <QQueue>
 #include <QSet>
 
-#include <SkBitmap.h>
-
 #include <OsmAndCore.h>
 #include <CommonTypes.h>
 
-#include <IMapTileProvider.h>
+#include <IMapBitmapTileProvider.h>
 
 class QNetworkReply;
+class SkBitmap;
 
 namespace OsmAnd {
 
-    class OSMAND_CORE_API OnlineMapRasterTileProvider : public IMapTileProvider
+    class OSMAND_CORE_API OnlineMapRasterTileProvider : public IMapBitmapTileProvider
     {
     private:
     protected:
-        QString _id;
-        QString _urlPattern;
-        uint32_t _minZoom;
-        uint32_t _maxZoom;
-        uint32_t _maxConcurrentDownloads;
-        QMutex _currentDownloadsMutex;
-        QSet<TileId> _currentDownloads;
-        
-        const uint32_t _tileDimension;
+        class OSMAND_CORE_API Tile : public IMapBitmapTileProvider::Tile
+        {
+        private:
+            std::unique_ptr<SkBitmap> _skBitmap;
+        protected:
+        public:
+            Tile(SkBitmap* bitmap);
+            virtual ~Tile();
+        };
 
-        QMutex _localCacheAccessMutex;
-        std::shared_ptr<QDir> _localCachePath;
-
-        bool _networkAccessAllowed;
-
-        QMutex _downloadQueueMutex;
+        QMutex _processingMutex;
         struct TileRequest
         {
             QUrl sourceUrl;
             TileId tileId;
             uint32_t zoom;
-            TileReceiverCallback callback;
-            SkBitmap::Config preferredConfig;
+            TileReadyCallback callback;
         };
-        QQueue< TileRequest > _tileRequestsQueue;
-        QSet< TileId > _enqueuedTileIds;
+        QQueue< TileRequest > _tileDownloadRequestsQueue;
+        std::array< QSet< TileId >, 32 > _enqueuedTileIdsForDownload;
+        std::array< QSet< TileId >, 32 > _currentlyDownloadingTileIds;
+        std::shared_ptr<QDir> _localCachePath;
+        bool _networkAccessAllowed;
 
-        void handleNetworkReply(QNetworkReply* reply, const TileId& tileId, uint32_t zoom, TileReceiverCallback callback, SkBitmap::Config preferredConfig);
+        QMutex _requestsMutex;
+        std::array< QSet< TileId >, 32 > _requestedTileIds;
+
+        void obtainTileDeffered(const QUrl& url, const TileId& tileId, uint32_t zoom, TileReadyCallback readyCallback);
+        //void handleNetworkReply(QNetworkReply* reply, const TileId& tileId, uint32_t zoom, TileReceiverCallback callback, SkBitmap::Config preferredConfig);
     public:
         OnlineMapRasterTileProvider(const QString& id, const QString& urlPattern, uint32_t minZoom = 0, uint32_t maxZoom = 31, uint32_t maxConcurrentDownloads = 1, uint32_t tileDimension = 256);
         virtual ~OnlineMapRasterTileProvider();
+
+        const QString id;
+        const QString urlPattern;
+        const uint32_t minZoom;
+        const uint32_t maxZoom;
+        const uint32_t maxConcurrentDownloads;
+        const uint32_t tileDimension;
 
         void setLocalCachePath(const QDir& localCachePath);
         const std::shared_ptr<QDir>& localCachePath;
@@ -88,20 +96,9 @@ namespace OsmAnd {
         virtual float getTileDensity() const;
         virtual uint32_t getTileSize() const;
 
-        virtual bool obtainTileImmediate(
-            const TileId& tileId, uint32_t zoom,
-            std::shared_ptr<SkBitmap>& tile,
-            SkBitmap::Config preferredConfig);
-        virtual void obtainTileDeffered(
-            const TileId& tileId, uint32_t zoom,
-            TileReceiverCallback receiverCallback,
-            SkBitmap::Config preferredConfig);
-        void obtainTileDeffered(
-            const QUrl& url,
-            const TileId& tileId, uint32_t zoom,
-            TileReceiverCallback receiverCallback,
-            SkBitmap::Config preferredConfig);
-
+        virtual bool obtainTileImmediate(const TileId& tileId, uint32_t zoom, std::shared_ptr<IMapTileProvider::Tile>& tile);
+        virtual void obtainTileDeffered(const TileId& tileId, uint32_t zoom, TileReadyCallback readyCallback);
+        
         static std::shared_ptr<OsmAnd::IMapTileProvider> createMapnikProvider();
         static std::shared_ptr<OsmAnd::IMapTileProvider> createCycleMapProvider();
     };

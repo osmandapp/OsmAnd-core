@@ -50,7 +50,7 @@ namespace OsmAnd {
         GLuint _programObject;
         
         GLint _vertexShader_in_vertexPosition;
-        GLint _vertexShader_in_vertexUV0;
+        GLint _vertexShader_in_vertexTexCoords;
         GLint _vertexShader_param_mProjection;
         GLint _vertexShader_param_mView;
         GLint _vertexShader_param_centerOffset;

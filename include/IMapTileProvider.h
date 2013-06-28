@@ -26,8 +26,6 @@
 #include <memory>
 #include <functional>
 
-#include <SkBitmap.h>
-
 #include <OsmAndCore.h>
 #include <CommonTypes.h>
 
@@ -36,24 +34,39 @@ namespace OsmAnd {
     class OSMAND_CORE_API IMapTileProvider
     {
     public:
-        typedef std::function<void (const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tile)> TileReceiverCallback;
+        enum Type
+        {
+            Bitmap,
+            ElevationData
+        };
+
+        class OSMAND_CORE_API Tile
+        {
+        private:
+        protected:
+            Tile(const Type& type, const void* data, size_t rowLength, uint32_t width, uint32_t height);
+        public:
+            virtual ~Tile();
+
+            const Type type;
+
+            const void* const data;
+            const size_t rowLength;
+            const uint32_t width;
+            const uint32_t height;
+        };
+
+        typedef std::function<void (const TileId& tileId, uint32_t zoom, const std::shared_ptr<Tile>& tile, bool success)> TileReadyCallback;
     private:
     protected:
-        IMapTileProvider();
+        IMapTileProvider(const Type& type);
     public:
         virtual ~IMapTileProvider();
 
-        virtual float getTileDensity() const = 0;
-        virtual uint32_t getTileSize() const = 0;
+        const Type type;
 
-        virtual bool obtainTileImmediate(
-            const TileId& tileId, uint32_t zoom,
-            std::shared_ptr<SkBitmap>& tile,
-            SkBitmap::Config preferredConfig) = 0;
-        virtual void obtainTileDeffered(
-            const TileId& tileId, uint32_t zoom,
-            TileReceiverCallback receiverCallback,
-            SkBitmap::Config preferredConfig) = 0;
+        virtual bool obtainTileImmediate(const TileId& tileId, uint32_t zoom, std::shared_ptr<IMapTileProvider::Tile>& tile) = 0;
+        virtual void obtainTileDeffered(const TileId& tileId, uint32_t zoom, TileReadyCallback readyCallback) = 0;
     };
 
 }

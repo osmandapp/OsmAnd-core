@@ -28,10 +28,11 @@
 
 #include <OsmAndCore.h>
 #include <CommonTypes.h>
+#include <IMapTileProvider.h>
 
 namespace OsmAnd {
 
-    class OSMAND_CORE_API IMapElevationDataProvider
+    class OSMAND_CORE_API IMapElevationDataProvider : public IMapTileProvider
     {
     public:
     private:
@@ -39,6 +40,20 @@ namespace OsmAnd {
         IMapElevationDataProvider();
     public:
         virtual ~IMapElevationDataProvider();
+
+        /*virtual bool obtainTileImmediate(
+            const TileId& tileId, uint32_t zoom,
+            std::shared_ptr<IMapTileProvider::Tile>& tile);
+        virtual void obtainTileDeffered(
+            const TileId& tileId, uint32_t zoom,
+            TileReadyCallback readyCallback);
+            */
+        virtual bool obtainTileImmediate(
+            const TileId& tileId, uint32_t zoom, const uint32_t& maxValuesPerTile,
+            std::shared_ptr<IMapTileProvider::Tile>& tile) = 0;
+        virtual void obtainTileDeffered(
+            const TileId& tileId, uint32_t zoom, const uint32_t& maxValuesPerTile,
+            TileReadyCallback readyCallback) = 0;
     };
 
 }

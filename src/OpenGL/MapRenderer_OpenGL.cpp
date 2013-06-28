@@ -4,11 +4,16 @@
 
 #include "IMapRenderer.h"
 #include "IMapTileProvider.h"
+#include "IMapBitmapTileProvider.h"
+#include "IMapElevationDataProvider.h"
 #include "OsmAndLogging.h"
+#include "OsmAndUtilities.h"
 
 OsmAnd::MapRenderer_OpenGL::MapRenderer_OpenGL()
-    : _tileTextureSampler_Atlas(0)
-    , _tileTextureSampler_NoAtlas(0)
+    : _textureSampler_Bitmap_NoAtlas(0)
+    , _textureSampler_Bitmap_Atlas(0)
+    , _textureSampler_ElevationData_NoAtlas(0)
+    , _textureSampler_ElevationData_Atlas(0)
 {
 }
 
@@ -42,37 +47,77 @@ GLuint OsmAnd::MapRenderer_OpenGL::compileShader( GLenum shaderType, const char*
     glCompileShader(shader);
     GL_CHECK_RESULT;
 
-    // Check if compiled (if possible)
-    if(glGetObjectParameterivARB != nullptr)
+    // Check if compiled
+    GLint didCompile;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &didCompile);
+    GL_CHECK_RESULT;
+    if(didCompile != GL_TRUE)
     {
-        GLint didCompile;
-        glGetObjectParameterivARB(shader, GL_COMPILE_STATUS, &didCompile);
+        GLint logBufferLen = 0;	
+        GLsizei logLen = 0;
+        assert(glGetShaderiv);
+        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logBufferLen);       
         GL_CHECK_RESULT;
-        if(!didCompile)
+        if (logBufferLen > 1)
         {
-            if(glGetShaderInfoLog != nullptr)
-            {
-                GLint logBufferLen = 0;	
-                GLsizei logLen = 0;
-                assert(glGetShaderiv);
-                glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logBufferLen);       
-                GL_CHECK_RESULT;
-                if (logBufferLen > 1)
-                {
-                    GLchar* log = (GLchar*)malloc(logBufferLen);
-                    glGetShaderInfoLog(shader, logBufferLen, &logLen, log);
-                    GL_CHECK_RESULT;
-                    LogPrintf(LogSeverityLevel::Error, "Failed to compile GLSL shader: %s", log);
-                    free(log);
-                }
-            }
-
-            glDeleteShader(shader);
-            shader = 0;
+            GLchar* log = (GLchar*)malloc(logBufferLen);
+            glGetShaderInfoLog(shader, logBufferLen, &logLen, log);
+            GL_CHECK_RESULT;
+            LogPrintf(LogSeverityLevel::Error, "Failed to compile GLSL shader: %s", log);
+            free(log);
         }
+
+        glDeleteShader(shader);
+        shader = 0;
     }
 
     return shader;
+}
+
+GLuint OsmAnd::MapRenderer_OpenGL::linkProgram( GLuint shadersCount, GLuint *shaders )
+{
+    GLuint program = 0;
+
+    assert(glCreateProgram);
+    program = glCreateProgram();
+    GL_CHECK_RESULT;
+
+    assert(glAttachShader);
+    for(int shaderIdx = 0; shaderIdx < shadersCount; shaderIdx++)
+    {
+        glAttachShader(program, shaders[shaderIdx]);
+        GL_CHECK_RESULT;
+    }
+    
+    assert(glLinkProgram);
+    glLinkProgram(program);
+    GL_CHECK_RESULT;
+
+    GLint linkSuccessful;
+    assert(glGetProgramiv);
+    glGetProgramiv(program, GL_LINK_STATUS, &linkSuccessful);
+    GL_CHECK_RESULT;
+    if(linkSuccessful != GL_TRUE)
+    {
+        GLint logBufferLen = 0;	
+        GLsizei logLen = 0;
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logBufferLen);       
+        GL_CHECK_RESULT;
+        if (logBufferLen > 1)
+        {
+            GLchar* log = (GLchar*)malloc(logBufferLen);
+            glGetShaderInfoLog(program, logBufferLen, &logLen, log);
+            GL_CHECK_RESULT;
+            LogPrintf(LogSeverityLevel::Error, "Failed to link GLSL program: %s", log);
+            free(log);
+        }
+
+        glDeleteProgram(program);
+        GL_CHECK_RESULT;
+        program = 0;
+    }
+
+    return program;
 }
 
 void OsmAnd::MapRenderer_OpenGL::initializeRendering()
@@ -93,9 +138,14 @@ void OsmAnd::MapRenderer_OpenGL::initializeRendering()
     // Get maximal texture size if not yet determined
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, reinterpret_cast<GLint*>(&_maxTextureSize));
     GL_CHECK_RESULT;
-    if(_maxTextureSize <= _activeConfig.tileProvider->getTileSize())
-        _maxTextureSize = 0;
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture size %dx%d\n", _maxTextureSize, _maxTextureSize);
+
+    // Get maximal number of texture units
+    GLint maxTextureUnits;
+    glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureUnits);
+    GL_CHECK_RESULT;
+    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units count %d\n", maxTextureUnits);
+    assert(maxTextureUnits >= IMapRenderer::TileLayerId::IdsCount);
 
     GL_CHECK_RESULT;
     glewExperimental = GL_TRUE;
@@ -104,26 +154,52 @@ void OsmAnd::MapRenderer_OpenGL::initializeRendering()
     (void)glGetError();
     //GL_CHECK_RESULT;
 
-    glGenSamplers(1, &_tileTextureSampler_NoAtlas);
+    // Bitmap (Atlas)
+    glGenSamplers(1, &_textureSampler_Bitmap_Atlas);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_tileTextureSampler_NoAtlas, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glSamplerParameteri(_textureSampler_Bitmap_Atlas, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_tileTextureSampler_NoAtlas, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glSamplerParameteri(_textureSampler_Bitmap_Atlas, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_tileTextureSampler_NoAtlas, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glSamplerParameteri(_textureSampler_Bitmap_Atlas, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_tileTextureSampler_NoAtlas, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glSamplerParameteri(_textureSampler_Bitmap_Atlas, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     GL_CHECK_RESULT;
 
-    glGenSamplers(1, &_tileTextureSampler_Atlas);
+    // ElevationData (Atlas)
+    glGenSamplers(1, &_textureSampler_ElevationData_Atlas);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_tileTextureSampler_Atlas, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glSamplerParameteri(_textureSampler_ElevationData_Atlas, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_tileTextureSampler_Atlas, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glSamplerParameteri(_textureSampler_ElevationData_Atlas, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_tileTextureSampler_Atlas, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glSamplerParameteri(_textureSampler_ElevationData_Atlas, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_tileTextureSampler_Atlas, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glSamplerParameteri(_textureSampler_ElevationData_Atlas, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    GL_CHECK_RESULT;
+
+    // Bitmap (No atlas)
+    glGenSamplers(1, &_textureSampler_Bitmap_NoAtlas);
+    GL_CHECK_RESULT;
+    glSamplerParameteri(_textureSampler_Bitmap_NoAtlas, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    GL_CHECK_RESULT;
+    glSamplerParameteri(_textureSampler_Bitmap_NoAtlas, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    GL_CHECK_RESULT;
+    glSamplerParameteri(_textureSampler_Bitmap_NoAtlas, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    GL_CHECK_RESULT;
+    glSamplerParameteri(_textureSampler_Bitmap_NoAtlas, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    GL_CHECK_RESULT;
+
+    // ElevationData (No atlas)
+    glGenSamplers(1, &_textureSampler_ElevationData_NoAtlas);
+    GL_CHECK_RESULT;
+    glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    GL_CHECK_RESULT;
+    glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    GL_CHECK_RESULT;
+    glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    GL_CHECK_RESULT;
+    glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     GL_CHECK_RESULT;
 
     glShadeModel(GL_SMOOTH); 
@@ -159,258 +235,369 @@ void OsmAnd::MapRenderer_OpenGL::initializeRendering()
 
 void OsmAnd::MapRenderer_OpenGL::releaseRendering()
 {
-    if(_tileTextureSampler_Atlas)
+    if(_textureSampler_Bitmap_NoAtlas != 0)
     {
-        glDeleteSamplers(1, &_tileTextureSampler_Atlas);
+        glDeleteSamplers(1, &_textureSampler_Bitmap_NoAtlas);
         GL_CHECK_RESULT;
-        _tileTextureSampler_Atlas = 0;
+        _textureSampler_Bitmap_NoAtlas = 0;
+    }
+    
+    if(_textureSampler_Bitmap_Atlas != 0)
+    {
+        glDeleteSamplers(1, &_textureSampler_Bitmap_Atlas);
+        GL_CHECK_RESULT;
+        _textureSampler_Bitmap_Atlas = 0;
     }
 
-    if(_tileTextureSampler_NoAtlas)
+    if(_textureSampler_ElevationData_NoAtlas != 0)
     {
-        glDeleteSamplers(1, &_tileTextureSampler_NoAtlas);
+        glDeleteSamplers(1, &_textureSampler_ElevationData_NoAtlas);
         GL_CHECK_RESULT;
-        _tileTextureSampler_NoAtlas = 0;
+        _textureSampler_ElevationData_NoAtlas = 0;
+    }
+
+    if(_textureSampler_ElevationData_Atlas != 0)
+    {
+        glDeleteSamplers(1, &_textureSampler_ElevationData_Atlas);
+        GL_CHECK_RESULT;
+        _textureSampler_ElevationData_Atlas = 0;
     }
 
     MapRenderer_BaseOpenGL::releaseRendering();
 }
 
-void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap )
+void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const TileId& tileId, uint32_t zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile, uint64_t& outAtlasPoolId, void*& outTextureRef, int& outAtlasSlotIndex, size_t& outUsedMemory )
 {
-    assert(!_tilesCache.contains(zoom, tileId));
+    auto& tileLayer = _tileLayers[layerId];
 
-    LogPrintf(LogSeverityLevel::Debug, "Uploading tile %dx%d@%d as texture\n", tileId.x, tileId.y, zoom);
-
-    if(!tileBitmap)
+    GLenum textureFormat = GL_INVALID_ENUM;
+    uint32_t tileSize = GL_INVALID_ENUM;
+    uint32_t padding = GL_INVALID_ENUM;
+    GLenum sourceFormat = GL_INVALID_ENUM;
+    GLenum sourceFormatType = GL_INVALID_ENUM;
+    size_t sourcePixelByteSize = 0;
+    if(tile->type == IMapTileProvider::Bitmap)
     {
-        // Non-existent tile
-        _tilesCache.putTile(std::shared_ptr<TileZoomCache::Tile>(static_cast<TileZoomCache::Tile*>(
-            new CachedTile_OpenGL(this, zoom, tileId, 0, 0, 0)
-            )));
-        return;
-    }
+        auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
 
-    const auto skConfig = tileBitmap->getConfig();
-    assert( _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? skConfig == SkBitmap::kARGB_8888_Config : skConfig == SkBitmap::kRGB_565_Config );
-
-    const auto tileSize = _activeConfig.tileProvider->getTileSize();
-
-    if(_maxTextureSize != 0 && _activeConfig.textureAtlasesAllowed)
-    {
-        const auto tilesPerRow = _maxTextureSize / (tileSize + 2 * TextureTilePixelPadding);
-        _atlasSizeOnTexture = (tileSize + 2 * TextureTilePixelPadding) * tilesPerRow;
-
-        // If we have no unfinished atlas yet, create one
-        uint32_t freeSlotIndex;
-        uint32_t atlasId;
-        if(!_freeAtlasSlots.isEmpty())
+        switch (bitmapTile->format)
         {
-            const auto& itFreeSlot = _freeAtlasSlots.begin();
-            atlasId = itFreeSlot.key();
-            freeSlotIndex = itFreeSlot.value();
+        case IMapBitmapTileProvider::ARGB_8888:
+            textureFormat = _activeConfig.force16bitColorDepthLimit ? GL_RGB5_A1 /* or GL_RGBA4? */ : GL_RGBA8;
+            sourceFormat = GL_BGRA;
+            sourceFormatType = GL_UNSIGNED_INT_8_8_8_8_REV;
+            sourcePixelByteSize = 4;
+            break;
+        case IMapBitmapTileProvider::ARGB_4444:
+            textureFormat = GL_RGBA4;
+            sourceFormat = GL_BGRA;
+            sourceFormatType = GL_UNSIGNED_SHORT_4_4_4_4_REV;
+            sourcePixelByteSize = 2;
+            break;
+        case IMapBitmapTileProvider::RGB_565:
+            textureFormat = GL_RGB5;
+            sourceFormat = GL_RGB;
+            sourceFormatType = GL_UNSIGNED_SHORT_5_6_5;
+            sourcePixelByteSize = 2;
+            break;
         }
-        else if(_lastUnfinishedAtlas == 0 || _unfinishedAtlasFirstFreeSlot == tilesPerRow * tilesPerRow)
-        {
-            GLuint textureName;
-            glGenTextures(1, &textureName);
-            GL_CHECK_RESULT;
-            assert(textureName != 0);
-            glBindTexture(GL_TEXTURE_2D, textureName);
-            GL_CHECK_RESULT;
-            assert(glTexStorage2D);
-            glTexStorage2D(GL_TEXTURE_2D, 1, _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_RGBA8 : GL_RGB5_A1, _maxTextureSize, _maxTextureSize);
-            GL_CHECK_RESULT;
-            _unfinishedAtlasFirstFreeSlot = 0;
-            _texturesRefCounts.insert(textureName, 0);
-            _lastUnfinishedAtlas = textureName;
+        tileSize = bitmapTile->width;
+        assert(bitmapTile->width == bitmapTile->height);
+        padding = BitmapTileTexelPadding;
+    }
+    else if(tile->type == IMapTileProvider::ElevationData)
+    {
+        //TODO: set proper format for elevation data
+        textureFormat = GL_R16I;
+        tileSize = 100500;
+        padding = 0;
 
-#if 0
+        assert(false);
+    }
+    const auto fullTileSize = tileSize + 2*padding;
+
+    outAtlasPoolId = (static_cast<uint64_t>(textureFormat) << 32) | fullTileSize;
+    outUsedMemory = fullTileSize * fullTileSize * sourcePixelByteSize;
+
+    auto itAtlasPool = tileLayer._atlasTexturePools.find(outAtlasPoolId);
+    
+    if(_activeConfig.textureAtlasesAllowed)
+    {
+        if(itAtlasPool == tileLayer._atlasTexturePools.end())
+            itAtlasPool = tileLayer._atlasTexturePools.insert(outAtlasPoolId, IMapRenderer::AtlasTexturePool());
+        auto& atlasPool = *itAtlasPool;
+
+        if(atlasPool._textureSize == 0)
+        {
+            const auto idealSize = MaxTilesPerTextureAtlasSide * fullTileSize;
+            const auto largerSize = Utilities::getNextPowerOfTwo(idealSize);
+            const auto smallerSize = largerSize >> 1;
+
+            // If larger texture is more than ideal over 15%, select reduced size
+            if(static_cast<float>(largerSize) > idealSize * 1.15f)
+                atlasPool._textureSize = qMin(_maxTextureSize, smallerSize);
+            else
+                atlasPool._textureSize = qMin(_maxTextureSize, largerSize);
+        }
+    }
+    else
+    {
+        const auto tileSizeNPOT = Utilities::getNextPowerOfTwo(tileSize);
+        if(tileSizeNPOT != tileSize)
+        {
+            if(itAtlasPool == tileLayer._atlasTexturePools.end())
+                itAtlasPool = tileLayer._atlasTexturePools.insert(outAtlasPoolId, IMapRenderer::AtlasTexturePool());
+            auto& atlasPool = *itAtlasPool;
+
+            atlasPool._textureSize = Utilities::getNextPowerOfTwo(fullTileSize);
+            outUsedMemory = atlasPool._textureSize * atlasPool._textureSize * sourcePixelByteSize;
+        }
+    }
+    
+    // Use atlas textures if possible
+    if(itAtlasPool != tileLayer._atlasTexturePools.end() && itAtlasPool->_textureSize != 0)
+    {
+        auto& atlasPool = *itAtlasPool;
+        atlasPool._padding = padding;
+
+        const auto tilesPerSide = atlasPool._textureSize / fullTileSize;
+
+        GLuint atlasTexture = 0;
+        int atlasSlotIndex = -1;
+
+        // If we have freed slots on previous atlases, let's use them
+        if(!atlasPool._freedSlots.isEmpty())
+        {
+            const auto& itFreeSlot = atlasPool._freedSlots.begin();
+            atlasTexture = reinterpret_cast<GLuint>(itFreeSlot.key());
+            atlasSlotIndex = itFreeSlot.value();
+
+            // Mark slot as occupied
+            atlasPool._freedSlots.erase(itFreeSlot);
+            tileLayer._textureRefCount[itFreeSlot.key()]++;
+        }
+        // If we've never allocated any atlas yet, or free slot is beyond allowed range - allocate new
+        else if(atlasPool._lastNonFullTextureRef == nullptr || atlasPool._firstFreeSlotIndex == tilesPerSide * tilesPerSide)
+        {
+            // Allocate texture id
+            GLuint texture;
+            glGenTextures(1, &texture);
+            GL_CHECK_RESULT;
+            assert(texture != 0);
+
+            // Select this texture
+            glBindTexture(GL_TEXTURE_2D, texture);
+            GL_CHECK_RESULT;
+
+            // Allocate space for this texture
+            assert(glTexStorage2D);
+            glTexStorage2D(GL_TEXTURE_2D, 1, textureFormat, atlasPool._textureSize, atlasPool._textureSize);
+            GL_CHECK_RESULT;
+
+            // Deselect texture
+            glBindTexture(GL_TEXTURE_2D, 0);
+            GL_CHECK_RESULT;
+
+            atlasPool._lastNonFullTextureRef = reinterpret_cast<void*>(texture);
+            atlasPool._firstFreeSlotIndex = 1;
+            tileLayer._textureRefCount.insert(atlasPool._lastNonFullTextureRef, 1);
+
+            atlasTexture = texture;
+            atlasSlotIndex = 0;
+
+#if 1
+            if(tile->type == IMapTileProvider::Bitmap)
             {
-                // In debug mode, fill entire texture with single RED color
-                uint8_t* fillBuffer = new uint8_t[_maxTextureSize * _maxTextureSize * (_activeConfig.preferredTextureDepth == IMapRenderer::_32bits? 4 : 2)];
-                for(uint32_t idx = 0; idx < _maxTextureSize * _maxTextureSize; idx++)
+                // In debug mode, fill entire texture with single RED color if this is bitmap
+                uint8_t* fillBuffer = new uint8_t[atlasPool._textureSize * atlasPool._textureSize * 4];
+                for(uint32_t idx = 0; idx < atlasPool._textureSize * atlasPool._textureSize; idx++)
                 {
-                    if(_activeConfig.preferredTextureDepth == IMapRenderer::_32bits)
-                        *reinterpret_cast<uint32_t*>(&fillBuffer[idx * 4]) = 0xFFFF0000;
-                    else
-                        *reinterpret_cast<uint16_t*>(&fillBuffer[idx * 2]) = 0xFC00;
+                    *reinterpret_cast<uint32_t*>(&fillBuffer[idx * 4]) = 0xFFFF0000;
                 }
-                glTexSubImage2D(GL_TEXTURE_2D, 0,
-                    0, 0, _maxTextureSize, _maxTextureSize,
-                    GL_BGRA,
-                    _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_1_5_5_5_REV,
-                    fillBuffer);
+                glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, atlasPool._textureSize, atlasPool._textureSize, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, fillBuffer);
                 delete[] fillBuffer;
             }
 #endif
-
-            freeSlotIndex = 0;
-            atlasId = textureName;
-            _unfinishedAtlasFirstFreeSlot++;
         }
+        // Or let's just continue using current atlas
         else
         {
-            atlasId = _lastUnfinishedAtlas;
-            freeSlotIndex = _unfinishedAtlasFirstFreeSlot;
-            _unfinishedAtlasFirstFreeSlot++;
+            atlasTexture = (GLuint)atlasPool._lastNonFullTextureRef;
+            atlasSlotIndex = atlasPool._firstFreeSlotIndex;
+            atlasPool._firstFreeSlotIndex++;
+            tileLayer._textureRefCount[atlasPool._lastNonFullTextureRef]++;
         }
 
-        glBindTexture(GL_TEXTURE_2D, atlasId);
+        // Select atlas as active texture
+        glBindTexture(GL_TEXTURE_2D, atlasTexture);
         GL_CHECK_RESULT;
 
         // Tile area offset
-        auto yOffset = (freeSlotIndex / tilesPerRow) * (tileSize + 2 * TextureTilePixelPadding);
-        auto xOffset = (freeSlotIndex % tilesPerRow) * (tileSize + 2 * TextureTilePixelPadding);
+        const auto yOffset = (atlasSlotIndex / tilesPerSide) * fullTileSize;
+        const auto xOffset = (atlasSlotIndex % tilesPerSide) * fullTileSize;
 
         // Set stride
-        glPixelStorei(GL_UNPACK_ROW_LENGTH, tileBitmap->rowBytesAsPixels());
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, tile->rowLength / sourcePixelByteSize);
         GL_CHECK_RESULT;
 
-        // Fill corners
+        if(padding > 0)
         {
-            const size_t pixelSize = (_activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? 4 : 2);
-            const auto pixelsCount = TextureTilePixelPadding * TextureTilePixelPadding;
-            const size_t cornerDataSize = pixelSize * pixelsCount;
+            // Fill corners
+            const auto pixelsCount = padding * padding;
+            const size_t cornerDataSize = sourcePixelByteSize * pixelsCount;
             uint8_t* pCornerData = new uint8_t[cornerDataSize];
-            GLvoid* pCornerPixel;
+            const GLvoid* pCornerPixel;
 
             // Top-left corner
-            pCornerPixel = tileBitmap->getPixels();
+            pCornerPixel = tile->data;
             for(int idx = 0; idx < pixelsCount; idx++)
-                memcpy(pCornerData + (pixelSize * idx), pCornerPixel, pixelSize);
+                memcpy(pCornerData + (sourcePixelByteSize * idx), pCornerPixel, sourcePixelByteSize);
             glTexSubImage2D(GL_TEXTURE_2D, 0,
-                xOffset, yOffset, TextureTilePixelPadding, TextureTilePixelPadding,
-                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
-                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
+                xOffset, yOffset, padding, padding,
+                sourceFormat,
+                sourceFormatType,
                 pCornerData);
             GL_CHECK_RESULT;
 
             // Top-right corner
-            pCornerPixel = reinterpret_cast<uint8_t*>(tileBitmap->getPixels()) + (tileSize - 1) * pixelSize;
+            pCornerPixel = reinterpret_cast<const uint8_t*>(tile->data) + (tileSize - 1) * sourcePixelByteSize;
             for(int idx = 0; idx < pixelsCount; idx++)
-                memcpy(pCornerData + (pixelSize * idx), pCornerPixel, pixelSize);
+                memcpy(pCornerData + (sourcePixelByteSize * idx), pCornerPixel, sourcePixelByteSize);
             glTexSubImage2D(GL_TEXTURE_2D, 0,
-                xOffset + TextureTilePixelPadding + tileSize, yOffset, TextureTilePixelPadding, TextureTilePixelPadding,
-                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
-                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
+                xOffset + padding + tileSize, yOffset, padding, padding,
+                sourceFormat,
+                sourceFormatType,
                 pCornerData);
             GL_CHECK_RESULT;
 
             // Bottom-left corner
-            pCornerPixel = reinterpret_cast<uint8_t*>(tileBitmap->getPixels()) + (tileSize - 1) * tileBitmap->rowBytes();
+            pCornerPixel = reinterpret_cast<const uint8_t*>(tile->data) + (tileSize - 1) * tile->rowLength;
             for(int idx = 0; idx < pixelsCount; idx++)
-                memcpy(pCornerData + (pixelSize * idx), pCornerPixel, pixelSize);
+                memcpy(pCornerData + (sourcePixelByteSize * idx), pCornerPixel, sourcePixelByteSize);
             glTexSubImage2D(GL_TEXTURE_2D, 0,
-                xOffset, yOffset + TextureTilePixelPadding + tileSize, TextureTilePixelPadding, TextureTilePixelPadding,
-                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
-                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
+                xOffset, yOffset + padding + tileSize, padding, padding,
+                sourceFormat,
+                sourceFormatType,
                 pCornerData);
             GL_CHECK_RESULT;
 
             // Bottom-right corner
-            pCornerPixel = reinterpret_cast<uint8_t*>(tileBitmap->getPixels()) + (tileSize - 1) * tileBitmap->rowBytes() + (tileSize - 1) * pixelSize;
+            pCornerPixel = reinterpret_cast<const uint8_t*>(tile->data) + (tileSize - 1) * tile->rowLength + (tileSize - 1) * sourcePixelByteSize;
             for(int idx = 0; idx < pixelsCount; idx++)
-                memcpy(pCornerData + (pixelSize * idx), pCornerPixel, pixelSize);
+                memcpy(pCornerData + (sourcePixelByteSize * idx), pCornerPixel, sourcePixelByteSize);
             glTexSubImage2D(GL_TEXTURE_2D, 0,
-                xOffset + TextureTilePixelPadding + tileSize, yOffset + TextureTilePixelPadding + tileSize, TextureTilePixelPadding, TextureTilePixelPadding,
-                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
-                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
+                xOffset + padding + tileSize, yOffset + padding + tileSize, padding, padding,
+                sourceFormat,
+                sourceFormatType,
                 pCornerData);
             GL_CHECK_RESULT;
 
             delete[] pCornerData;
-        }
 
-        // Left column duplicate
-        for(int idx = 0; idx < TextureTilePixelPadding; idx++)
-        {
-            glTexSubImage2D(GL_TEXTURE_2D, 0,
-                xOffset + idx, yOffset + TextureTilePixelPadding, 1, (GLsizei)tileSize,
-                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
-                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
-                tileBitmap->getPixels());
-            GL_CHECK_RESULT;
-        }
-        
-        // Top row duplicate
-        for(int idx = 0; idx < TextureTilePixelPadding; idx++)
-        {
-            glTexSubImage2D(GL_TEXTURE_2D, 0,
-                xOffset + TextureTilePixelPadding, yOffset + idx, (GLsizei)tileSize, 1,
-                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
-                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
-                tileBitmap->getPixels());
-            GL_CHECK_RESULT;
-        }
+            // Left column duplicate
+            for(int idx = 0; idx < padding; idx++)
+            {
+                glTexSubImage2D(GL_TEXTURE_2D, 0,
+                    xOffset + idx, yOffset + padding, 1, (GLsizei)tileSize,
+                    sourceFormat,
+                    sourceFormatType,
+                    tile->data);
+                GL_CHECK_RESULT;
+            }
 
-        // Right column duplicate
-        for(int idx = 0; idx < TextureTilePixelPadding; idx++)
-        {
-            glTexSubImage2D(GL_TEXTURE_2D, 0,
-                xOffset + TextureTilePixelPadding + tileSize + idx, yOffset + TextureTilePixelPadding, 1, (GLsizei)tileSize,
-                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
-                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
-                reinterpret_cast<uint8_t*>(tileBitmap->getPixels()) + (tileSize - 1) * (_activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? 4 : 2));
-            GL_CHECK_RESULT;
-        }
+            // Top row duplicate
+            for(int idx = 0; idx < padding; idx++)
+            {
+                glTexSubImage2D(GL_TEXTURE_2D, 0,
+                    xOffset + padding, yOffset + idx, (GLsizei)tileSize, 1,
+                    sourceFormat,
+                    sourceFormatType,
+                    tile->data);
+                GL_CHECK_RESULT;
+            }
 
-        // Bottom row duplicate
-        for(int idx = 0; idx < TextureTilePixelPadding; idx++)
-        {
-            glTexSubImage2D(GL_TEXTURE_2D, 0,
-                xOffset + TextureTilePixelPadding, yOffset + TextureTilePixelPadding + tileSize + idx, (GLsizei)tileSize, 1,
-                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
-                _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
-                reinterpret_cast<uint8_t*>(tileBitmap->getPixels()) + (tileSize - 1) * tileBitmap->rowBytes());
-            GL_CHECK_RESULT;
+            // Right column duplicate
+            for(int idx = 0; idx < padding; idx++)
+            {
+                glTexSubImage2D(GL_TEXTURE_2D, 0,
+                    xOffset + padding + tileSize + idx, yOffset + padding, 1, (GLsizei)tileSize,
+                    sourceFormat,
+                    sourceFormatType,
+                    reinterpret_cast<const uint8_t*>(tile->data) + (tileSize - 1) * sourcePixelByteSize);
+                GL_CHECK_RESULT;
+            }
+
+            // Bottom row duplicate
+            for(int idx = 0; idx < padding; idx++)
+            {
+                glTexSubImage2D(GL_TEXTURE_2D, 0,
+                    xOffset + padding, yOffset + padding + tileSize + idx, (GLsizei)tileSize, 1,
+                    sourceFormat,
+                    sourceFormatType,
+                    reinterpret_cast<const uint8_t*>(tile->data) + (tileSize - 1) * tile->rowLength);
+                GL_CHECK_RESULT;
+            }
         }
 
         // Main data
         glTexSubImage2D(GL_TEXTURE_2D, 0,
-            xOffset + TextureTilePixelPadding, yOffset + TextureTilePixelPadding, (GLsizei)tileSize, (GLsizei)tileSize,
-            _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
-            _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
-            tileBitmap->getPixels());
+            xOffset + padding, yOffset + padding, (GLsizei)tileSize, (GLsizei)tileSize,
+            sourceFormat,
+            sourceFormatType,
+            tile->data);
         GL_CHECK_RESULT;
 
-        _tilesCache.putTile(std::shared_ptr<TileZoomCache::Tile>(static_cast<TileZoomCache::Tile*>(
-            new CachedTile_OpenGL(this, zoom, tileId, 0, atlasId, freeSlotIndex)
-            )));
-        _texturesRefCounts[atlasId] += 1;
+        // Deselect atlas as active texture
+        glBindTexture(GL_TEXTURE_2D, 0);
+        GL_CHECK_RESULT;
+
+        outTextureRef = reinterpret_cast<void*>(atlasTexture);
+        outAtlasSlotIndex = atlasSlotIndex;
     }
+    // If not, fall back to use of one texture per tile. This will only happen in case if atlases are prohibited and tiles are POT
     else
     {
-        // Fallback to texture-per-tile mode
-        GLuint textureName;
-        glGenTextures(1, &textureName);
+        // Create texture id
+        GLuint texture;
+        glGenTextures(1, &texture);
         GL_CHECK_RESULT;
-        assert(textureName != 0);
-        glBindTexture(GL_TEXTURE_2D, textureName);
-        GL_CHECK_RESULT;
-        glPixelStorei(GL_UNPACK_ROW_LENGTH, tileBitmap->rowBytesAsPixels());
+        assert(texture != 0);
+
+        // Activate texture
+        glBindTexture(GL_TEXTURE_2D, texture);
         GL_CHECK_RESULT;
 
+        // Set texture packing
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, tile->rowLength / sourcePixelByteSize);
+        GL_CHECK_RESULT;
+
+        // Allocate data
         glTexStorage2D(GL_TEXTURE_2D, 1,
-            _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_RGBA8 : GL_RGB5_A1,
+            textureFormat,
             tileSize, tileSize);
         GL_CHECK_RESULT;
+
+        // Upload data
         glTexSubImage2D(GL_TEXTURE_2D, 0,
             0, 0, (GLsizei)tileSize, (GLsizei)tileSize,
-            _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_BGRA : GL_RGB,
-            _activeConfig.preferredTextureDepth == IMapRenderer::_32bits ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_SHORT_5_6_5,
-            tileBitmap->getPixels());
+            sourceFormat,
+            sourceFormatType,
+            tile->data);
         GL_CHECK_RESULT;
 
-        _tilesCache.putTile(std::shared_ptr<TileZoomCache::Tile>(static_cast<TileZoomCache::Tile*>(
-            new CachedTile_OpenGL(this, zoom, tileId, 0, textureName, 0)
-            )));
-        _texturesRefCounts.insert(textureName, 1);
+        // Deselect atlas as active texture
+        glBindTexture(GL_TEXTURE_2D, 0);
+        GL_CHECK_RESULT;
+
+        outTextureRef = reinterpret_cast<void*>(texture);
+        outAtlasSlotIndex = -1;
     }
 }
 
-void OsmAnd::MapRenderer_OpenGL::releaseTexture( const GLuint& texture )
+void OsmAnd::MapRenderer_OpenGL::releaseTexture( void* textureRef )
 {
+    GLuint texture = reinterpret_cast<GLuint>(textureRef);
+
     glDeleteTextures(1, &texture);
     GL_CHECK_RESULT;
 }

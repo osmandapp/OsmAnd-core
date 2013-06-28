@@ -69,9 +69,9 @@ namespace OsmAnd {
         virtual void allocateTilePatch(Vertex* vertices, size_t verticesCount, GLushort* indices, size_t indicesCount) = 0;
         virtual void releaseTilePatch() = 0;
         
-        virtual void updateConfiguration();
+        virtual void validateTileLayerCache(const TileLayerId& layer);
 
-        virtual void purgeElevationDataCache();
+        virtual void updateConfiguration();
 
         AtlasMapRenderer_BaseOpenGL();
     public:

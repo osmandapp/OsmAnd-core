@@ -57,6 +57,8 @@ namespace OsmAnd {
 
             void requestCancellation();
             bool isCancellationRequested() const;
+
+            virtual void run();
         };
     private:
     protected:
@@ -65,6 +67,8 @@ namespace OsmAnd {
         static std::unique_ptr<Concurrent> _instance;
     public:
         virtual ~Concurrent();
+
+        static const std::unique_ptr<Concurrent>& instance();
 
         const std::unique_ptr<QThreadPool> localStoragePool;
         const std::unique_ptr<QThreadPool> networkPool;

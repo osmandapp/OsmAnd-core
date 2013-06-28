@@ -534,3 +534,21 @@ OSMAND_CORE_API OsmAnd::AreaI OSMAND_CORE_CALL OsmAnd::Utilities::areaLeftShift(
 
     return output;
 }
+
+OSMAND_CORE_API uint32_t OSMAND_CORE_CALL OsmAnd::Utilities::getNextPowerOfTwo( const uint32_t& value )
+{
+    if(value == 0)
+        return 0;
+
+    auto n = value;
+
+    n--;
+    n |= n >> 1;
+    n |= n >> 2;
+    n |= n >> 4;
+    n |= n >> 8;
+    n |= n >> 16;
+    n++;
+
+    return n;
+}

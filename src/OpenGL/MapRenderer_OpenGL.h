@@ -24,6 +24,7 @@
 
 #include <stdint.h>
 #include <memory>
+#include <array>
 
 #include <QMap>
 #include <QMultiMap>
@@ -50,17 +51,20 @@ namespace OsmAnd {
     private:
     protected:
         enum {
-            TextureTilePixelPadding = 2,
+            BitmapTileTexelPadding = 2,
         };
 
         virtual void validateResult();
         virtual GLuint compileShader(GLenum shaderType, const char* source);
+        virtual GLuint linkProgram(GLuint shadersCount, GLuint *shaders);
 
-        virtual void uploadTileToTexture(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap);
-        virtual void releaseTexture(const GLuint& texture);
+        virtual void uploadTileToTexture(TileLayerId layerId, const TileId& tileId, uint32_t zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile, uint64_t& atlasPoolId, void*& textureRef, int& atlasSlotIndex, size_t& usedMemory);
+        virtual void releaseTexture(void* textureRef);
 
-        GLuint _tileTextureSampler_Atlas;
-        GLuint _tileTextureSampler_NoAtlas;
+        GLuint _textureSampler_Bitmap_NoAtlas;
+        GLuint _textureSampler_Bitmap_Atlas;
+        GLuint _textureSampler_ElevationData_NoAtlas;
+        GLuint _textureSampler_ElevationData_Atlas;
 
         MapRenderer_OpenGL();
     public:

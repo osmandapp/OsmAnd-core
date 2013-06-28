@@ -23,14 +23,162 @@ OsmAnd::AtlasMapRenderer_OpenGL::~AtlasMapRenderer_OpenGL()
 {
 }
 
+void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
+{
+    MapRenderer_OpenGL::initializeRendering();
+    /*
+    // Compile vertex shader
+    QString vertexShader = QString::fromLatin1(
+        "#version 430 core                                                                                                  ""\n"
+        "                                                                                                                   "
+        // Input data
+        "in vec3 in_vertexPosition;                                                                                         "
+        "in vec2 in_vertexTexCoords;                                                                                        "
+        "                                                                                                                   "
+        // Output data to next shader stages
+        "out vec2 g_vertexUV0;                                                                                              "
+        "                                                                                                                   "
+        // Common data
+        "uniform mat4 param_mProjection;                                                                                    "
+        "uniform mat4 param_mView;                                                                                          "
+        "uniform vec2 param_centerOffset;                                                                                   "
+        "uniform ivec2 param_targetTile;                                                                                    "
+        "                                                                                                                   "
+        "uniform int param_atlasSlotsInLine;                                                                                "
+        "uniform int param_atlasSize;                                                                                       "
+        "uniform int param_atlasTextureSize;                                                                                "
+        "                                                                                                                   "
+        // Per-tile data
+        "uniform ivec2 param_tile;                                                                                          "
+        "uniform int param_atlasSlotIndex;                                                                                  "
+        "                                                                                                                   "
+        "void main()                                                                                                        "
+        "{                                                                                                                  "
+        "    vec4 v = vec4(in_vertexPosition, 1.0);                                                                         "
+        "                                                                                                                   "
+        //   Shift vertex to it's proper position
+        "    float xOffset = float(param_tile.x - param_targetTile.x) - param_centerOffset.x;                               "
+        "    v.x += xOffset * %TileSize3D%.0;                                                                               "
+        "    float yOffset = float(param_tile.y - param_targetTile.y) - param_centerOffset.y;                               "
+        "    v.z += yOffset * %TileSize3D%.0;                                                                               "
+        "                                                                                                                   "
+        //   Calculate UV. Initially they are 0..1 as if we would process non-atlas texture
+        "    g_vertexUV0 = in_vertexTexCoords;                                                                              "
+        "    if(param_atlasSlotsInLine > 0)                                                                                 "
+        "    {                                                                                                              "
+        "        float slotsTotalLength = float(param_atlasSize) / float(param_atlasTextureSize);                           "
+        "        float slotLength = slotsTotalLength / float(param_atlasSlotsInLine);                                       "
+        "        int rowIndex = param_atlasSlotIndex / param_atlasSlotsInLine;                                              "
+        "        int colIndex = int(mod(param_atlasSlotIndex, param_atlasSlotsInLine));                                     "
+        "                                                                                                                   "
+        "        float texelSize_padding = %TextureTilePixelPadding%.0 / float(param_atlasTextureSize);                     "
+        "        float texCoordRescale = (slotLength - 2.0 * texelSize_padding) / slotLength;                               "
+        "                                                                                                                   "
+        "        float s = float(colIndex) * slotLength;                                                                    "
+        "        s += texelSize_padding + (float(g_vertexUV0.s) * slotLength) * texCoordRescale;                            "
+        "        g_vertexUV0.s = s;                                                                                         "
+        "                                                                                                                   "
+        "        float t = float(rowIndex) * slotLength;                                                                    "
+        "        t += texelSize_padding + (float(g_vertexUV0.t) * slotLength) * texCoordRescale;                            "
+        "        g_vertexUV0.t = t;                                                                                         "
+        "    }                                                                                                              "
+        "                                                                                                                   "
+        //   TODO: process heightmap data
+        "    v.y = 0.0;                                                                                                     "
+        "                                                                                                                   "
+        //   Finally output processed modified vertex
+        "    gl_Position = param_mProjection * param_mView * v;                                                             "
+        "}                                                                                                                  ");
+    QString preprocessedVertexShader = vertexShader;
+    preprocessedVertexShader.replace("%TileSize3D%", QString::number(TileSide3D));
+    preprocessedVertexShader.replace("%TextureTilePixelPadding%", QString::number(BitmapTileTexelPadding));
+    _vertexShader = compileShader(GL_VERTEX_SHADER, preprocessedVertexShader.toStdString().c_str());
+    assert(_vertexShader != 0);
+
+    // Compile fragment shader
+    const char* const fragmentShader =
+        "#version 430 core                                                                                                  ""\n"
+        "                                                                                                                   "
+        // Input data
+        "in vec2 g_vertexUV0;                                                                                               "
+        "                                                                                                                   "
+        // Output data
+        "out vec4 out_color;                                                                                                "
+        "                                                                                                                   "
+        // Arguments
+        "uniform sampler2D param_sampler0;                                                                                  "
+        "                                                                                                                   "
+        "void main()                                                                                                        "
+        "{                                                                                                                  "
+        "    out_color = texture(param_sampler0, g_vertexUV0);                                                              "
+        "}                                                                                                                  ";
+    _fragmentShader = compileShader(GL_FRAGMENT_SHADER, fragmentShader);
+    assert(_fragmentShader != 0);
+
+    // Link everything into program object
+    GLuint shaders[] = {
+        _vertexShader,
+        _fragmentShader
+    };
+    _programObject = linkProgram(2, shaders);
+    assert(_programObject != 0);
+
+    _vertexShader_in_vertexPosition = glGetAttribLocation(_programObject, "in_vertexPosition");
+    GL_CHECK_RESULT;
+    assert(_vertexShader_in_vertexPosition != -1);
+
+    _vertexShader_in_vertexTexCoords = glGetAttribLocation(_programObject, "in_vertexUV0");
+    GL_CHECK_RESULT;
+    assert(_vertexShader_in_vertexTexCoords != -1);
+
+    _vertexShader_param_mProjection = glGetUniformLocation(_programObject, "param_mProjection");
+    GL_CHECK_RESULT;
+    assert(_vertexShader_param_mProjection != -1);
+
+    _vertexShader_param_mView = glGetUniformLocation(_programObject, "param_mView");
+    GL_CHECK_RESULT;
+    assert(_vertexShader_param_mView != -1);
+
+    _vertexShader_param_centerOffset = glGetUniformLocation(_programObject, "param_centerOffset");
+    GL_CHECK_RESULT;
+    assert(_vertexShader_param_centerOffset != -1);
+
+    _vertexShader_param_targetTile = glGetUniformLocation(_programObject, "param_targetTile");
+    GL_CHECK_RESULT;
+    assert(_vertexShader_param_targetTile != -1);
+
+    _vertexShader_param_atlasSlotsInLine = glGetUniformLocation(_programObject, "param_atlasSlotsInLine");
+    GL_CHECK_RESULT;
+    assert(_vertexShader_param_atlasSlotsInLine != -1);
+
+    _vertexShader_param_tile = glGetUniformLocation(_programObject, "param_tile");
+    GL_CHECK_RESULT;
+    assert(_vertexShader_param_tile != -1);
+
+    _vertexShader_param_atlasSlotIndex = glGetUniformLocation(_programObject, "param_atlasSlotIndex");
+    GL_CHECK_RESULT;
+    assert(_vertexShader_param_atlasSlotIndex != -1);
+
+    _vertexShader_param_atlasSize = glGetUniformLocation(_programObject, "param_atlasSize");
+    GL_CHECK_RESULT;
+    assert(_vertexShader_param_atlasSize != -1);
+
+    _vertexShader_param_atlasTextureSize = glGetUniformLocation(_programObject, "param_atlasTextureSize");
+    GL_CHECK_RESULT;
+    assert(_vertexShader_param_atlasTextureSize != -1);
+
+    _fragmentShader_param_sampler0 = glGetUniformLocation(_programObject, "param_sampler0");
+    GL_CHECK_RESULT;
+    assert(_fragmentShader_param_sampler0 != -1);
+    */
+    AtlasMapRenderer_BaseOpenGL::initializeRendering();
+}
+
 void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
 {
     AtlasMapRenderer_BaseOpenGL::performRendering();
     GL_CHECK_RESULT;
-
-    if(!viewIsDirty)
-        return;
-
+    /*
     // Setup viewport
     GLint oldViewport[4];
     glGetIntegerv(GL_VIEWPORT, oldViewport);
@@ -56,7 +204,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
     GL_CHECK_RESULT;
 
     // Set center offset
-    glUniform2f(_vertexShader_param_centerOffset, _targetInTile.x, _targetInTile.y);
+    glUniform2f(_vertexShader_param_centerOffset, _normalizedTargetInTileOffset.x, _normalizedTargetInTileOffset.y);
     GL_CHECK_RESULT;
 
     // Set target tile
@@ -65,16 +213,16 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
     targetTile.y = _activeConfig.target31.y >> (31 - _activeConfig.zoomBase);
     glUniform2i(_vertexShader_param_targetTile, targetTile.x, targetTile.y);
     GL_CHECK_RESULT;
-
+    /*
     if(_activeConfig.textureAtlasesAllowed && _maxTextureSize != 0)
     {
         // Set atlas slots per row
-        const auto atlasSlotsInLine = _maxTextureSize / (_activeConfig.tileProvider->getTileSize() + 2 * TextureTilePixelPadding);
+        const auto atlasSlotsInLine = _maxTextureSize / (_activeConfig.tileProvider->getTileSize() + 2 * BitmapTileTexelPadding);
         glUniform1i(_vertexShader_param_atlasSlotsInLine, atlasSlotsInLine);
         GL_CHECK_RESULT;
 
         // Set atlas size
-        const auto atlasSize = atlasSlotsInLine * (_activeConfig.tileProvider->getTileSize() + 2 * TextureTilePixelPadding);
+        const auto atlasSize = atlasSlotsInLine * (_activeConfig.tileProvider->getTileSize() + 2 * BitmapTileTexelPadding);
         glUniform1i(_vertexShader_param_atlasSize, atlasSize);
         GL_CHECK_RESULT;
 
@@ -95,8 +243,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
         // Set atlas size
         glUniform1i(_vertexShader_param_atlasTextureSize, 0);
         GL_CHECK_RESULT;
-    }
-
+    }*/
+    /*
     // Set tile patch VAO
     assert(glBindVertexArray);
     glBindVertexArray(_tilePatchVAO);
@@ -104,7 +252,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
 
     // Set sampler index
     glUniform1i(_fragmentShader_param_sampler0, 0);
-
+    /*
     // For each visible tile, render it
     for(auto itTileId = _visibleTiles.begin(); itTileId != _visibleTiles.end(); ++itTileId)
     {
@@ -113,6 +261,13 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
         // Set tile id
         glUniform2i(_vertexShader_param_tile, tileId.x, tileId.y);
         GL_CHECK_RESULT;
+
+        // We need to pass each layer of this tile to shader
+        for(int layerId = 0; layerId < TileLayerId::IdsCount; layerId++)
+        {
+
+        }
+
 
         // Obtain tile from cache
         std::shared_ptr<TileZoomCache::Tile> cachedTile_;
@@ -156,7 +311,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
             }
         }
     }
-
+    *//*
     // Deselect VAO
     glBindVertexArray(0);
     GL_CHECK_RESULT;
@@ -167,184 +322,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
 
     // Revert viewport
     glViewport(oldViewport[0], oldViewport[1], oldViewport[2], oldViewport[3]);
-    GL_CHECK_RESULT;
-}
-
-void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
-{
-    MapRenderer_OpenGL::initializeRendering();
-
-    // Compile vertex shader
-    QString vertexShader = QString::fromLatin1(
-        "#version 430 core                                                                                                  ""\n"
-        "                                                                                                                   "
-        // Input data
-        "in vec3 in_vertexPosition;                                                                                         "
-        "in vec2 in_vertexUV0;                                                                                              "
-        "                                                                                                                   "
-        // Output data to next shader stages
-        "out vec2 g_vertexUV0;                                                                                              "
-        "                                                                                                                   "
-        // Common data
-        "uniform mat4 param_mProjection;                                                                                    "
-        "uniform mat4 param_mView;                                                                                          "
-        "uniform vec2 param_centerOffset;                                                                                   "
-        "uniform ivec2 param_targetTile;                                                                                    "
-        "uniform int param_atlasSlotsInLine;                                                                                "
-        "uniform int param_atlasSize;                                                                                       "
-        "uniform int param_atlasTextureSize;                                                                                "
-        "                                                                                                                   "
-        // Per-tile data
-        "uniform ivec2 param_tile;                                                                                          "
-        "uniform int param_atlasSlotIndex;                                                                                  "
-        "                                                                                                                   "
-        "void main()                                                                                                        "
-        "{                                                                                                                  "
-        "    vec4 v = vec4(in_vertexPosition, 1.0);                                                                         "
-        "                                                                                                                   "
-        //   Shift vertex to it's proper position
-        "    float xOffset = float(param_tile.x - param_targetTile.x) - param_centerOffset.x;                               "
-        "    v.x += xOffset * %TileSize3D%.0;                                                                               "
-        "    float yOffset = float(param_tile.y - param_targetTile.y) - param_centerOffset.y;                               "
-        "    v.z += yOffset * %TileSize3D%.0;                                                                               "
-        "                                                                                                                   "
-        //   Calculate UV. Initially they are 0..1 as if we would process non-atlas texture
-        "    g_vertexUV0 = in_vertexUV0;                                                                                    "
-        "    if(param_atlasSlotsInLine > 0)                                                                                 "
-        "    {                                                                                                              "
-        "        float slotsTotalLength = float(param_atlasSize) / float(param_atlasTextureSize);                           "
-        "        float slotLength = slotsTotalLength / float(param_atlasSlotsInLine);                                       "
-        "        int rowIndex = param_atlasSlotIndex / param_atlasSlotsInLine;                                              "
-        "        int colIndex = int(mod(param_atlasSlotIndex, param_atlasSlotsInLine));                                     "
-        "                                                                                                                   "
-        "        float texelSize_padding = %TextureTilePixelPadding%.0 / float(param_atlasTextureSize);                     "
-        "        float texCoordRescale = (slotLength - 2.0 * texelSize_padding) / slotLength;                               "
-        "                                                                                                                   "
-        "        float s = float(colIndex) * slotLength;                                                                    "
-        "        s += texelSize_padding + (float(g_vertexUV0.s) * slotLength) * texCoordRescale;                            "
-        "        g_vertexUV0.s = s;                                                                                         "
-        "                                                                                                                   "
-        "        float t = float(rowIndex) * slotLength;                                                                    "
-        "        t += texelSize_padding + (float(g_vertexUV0.t) * slotLength) * texCoordRescale;                            "
-        "        g_vertexUV0.t = t;                                                                                         "
-        "    }                                                                                                              "
-        "                                                                                                                   "
-        //   TODO: process heightmap data
-        "    v.y = 0.0;                                                                                                     "
-        "                                                                                                                   "
-        //   Finally output processed modified vertex
-        "    gl_Position = param_mProjection * param_mView * v;                                                             "
-        "}                                                                                                                  ");
-    QString preprocessedVertexShader = vertexShader;
-    preprocessedVertexShader.replace("%TileSize3D%", QString::number(TileSize3D));
-    preprocessedVertexShader.replace("%TextureTilePixelPadding%", QString::number(TextureTilePixelPadding));
-    _vertexShader = compileShader(GL_VERTEX_SHADER, preprocessedVertexShader.toStdString().c_str());
-    assert(_vertexShader != 0);
-
-    // Compile fragment shader
-    const char* const fragmentShader =
-        "#version 430 core                                                                                                  ""\n"
-        "                                                                                                                   "
-        // Input data
-        "in vec2 g_vertexUV0;                                                                                               "
-        "                                                                                                                   "
-        // Output data
-        "out vec4 out_color;                                                                                                "
-        "                                                                                                                   "
-        // Arguments
-        "uniform sampler2D param_sampler0;                                                                                  "
-        "                                                                                                                   "
-        "void main()                                                                                                        "
-        "{                                                                                                                  "
-        "    out_color = texture(param_sampler0, g_vertexUV0);                                                              "
-        "}                                                                                                                  ";
-    _fragmentShader = compileShader(GL_FRAGMENT_SHADER, fragmentShader);
-    assert(_fragmentShader != 0);
-
-    // Link everything into program object
-    assert(glCreateProgram);
-    _programObject = glCreateProgram();
-    GL_CHECK_RESULT;
-
-    assert(glAttachShader);
-    glAttachShader(_programObject, _vertexShader);
-    GL_CHECK_RESULT;
-    glAttachShader(_programObject, _fragmentShader);
-    GL_CHECK_RESULT;
-
-    assert(glLinkProgram);
-    glLinkProgram(_programObject);
-    GL_CHECK_RESULT;
-
-    GLint linkSuccessful;
-    assert(glGetProgramiv);
-    glGetProgramiv(_programObject, GL_LINK_STATUS, &linkSuccessful);
-    GL_CHECK_RESULT;
-    if(!linkSuccessful && glGetShaderInfoLog != nullptr)
-    {
-        GLint logBufferLen = 0;	
-        GLsizei logLen = 0;
-        glGetProgramiv(_programObject, GL_INFO_LOG_LENGTH, &logBufferLen);       
-        GL_CHECK_RESULT;
-        if (logBufferLen > 1)
-        {
-            GLchar* log = (GLchar*)malloc(logBufferLen);
-            glGetShaderInfoLog(_programObject, logBufferLen, &logLen, log);
-            GL_CHECK_RESULT;
-            LogPrintf(LogSeverityLevel::Error, "Failed to link GLSL shader: %s", log);
-            free(log);
-        }
-    }
-
-    _vertexShader_in_vertexPosition = glGetAttribLocation(_programObject, "in_vertexPosition");
-    GL_CHECK_RESULT;
-    assert(_vertexShader_in_vertexPosition != -1);
-
-    _vertexShader_in_vertexUV0 = glGetAttribLocation(_programObject, "in_vertexUV0");
-    GL_CHECK_RESULT;
-    assert(_vertexShader_in_vertexUV0 != -1);
-
-    _vertexShader_param_mProjection = glGetUniformLocation(_programObject, "param_mProjection");
-    GL_CHECK_RESULT;
-    assert(_vertexShader_param_mProjection != -1);
-
-    _vertexShader_param_mView = glGetUniformLocation(_programObject, "param_mView");
-    GL_CHECK_RESULT;
-    assert(_vertexShader_param_mView != -1);
-
-    _vertexShader_param_centerOffset = glGetUniformLocation(_programObject, "param_centerOffset");
-    GL_CHECK_RESULT;
-    assert(_vertexShader_param_centerOffset != -1);
-
-    _vertexShader_param_targetTile = glGetUniformLocation(_programObject, "param_targetTile");
-    GL_CHECK_RESULT;
-    assert(_vertexShader_param_targetTile != -1);
-
-    _vertexShader_param_atlasSlotsInLine = glGetUniformLocation(_programObject, "param_atlasSlotsInLine");
-    GL_CHECK_RESULT;
-    assert(_vertexShader_param_atlasSlotsInLine != -1);
-
-    _vertexShader_param_tile = glGetUniformLocation(_programObject, "param_tile");
-    GL_CHECK_RESULT;
-    assert(_vertexShader_param_tile != -1);
-
-    _vertexShader_param_atlasSlotIndex = glGetUniformLocation(_programObject, "param_atlasSlotIndex");
-    GL_CHECK_RESULT;
-    assert(_vertexShader_param_atlasSlotIndex != -1);
-
-    _vertexShader_param_atlasSize = glGetUniformLocation(_programObject, "param_atlasSize");
-    GL_CHECK_RESULT;
-    assert(_vertexShader_param_atlasSize != -1);
-
-    _vertexShader_param_atlasTextureSize = glGetUniformLocation(_programObject, "param_atlasTextureSize");
-    GL_CHECK_RESULT;
-    assert(_vertexShader_param_atlasTextureSize != -1);
-
-    _fragmentShader_param_sampler0 = glGetUniformLocation(_programObject, "param_sampler0");
-    GL_CHECK_RESULT;
-    assert(_fragmentShader_param_sampler0 != -1);
-
-    AtlasMapRenderer_BaseOpenGL::initializeRendering();
+    GL_CHECK_RESULT;*/
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL::releaseRendering()
@@ -403,10 +381,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL::allocateTilePatch( Vertex* vertices, size_
     glVertexAttribPointer(_vertexShader_in_vertexPosition, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, position)));
     GL_CHECK_RESULT;
     assert(glEnableVertexAttribArray);
-    glEnableVertexAttribArray(_vertexShader_in_vertexUV0);
+    glEnableVertexAttribArray(_vertexShader_in_vertexTexCoords);
     GL_CHECK_RESULT;
     assert(glVertexAttribPointer);
-    glVertexAttribPointer(_vertexShader_in_vertexUV0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, uv)));
+    glVertexAttribPointer(_vertexShader_in_vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, uv)));
     GL_CHECK_RESULT;
 
     // Create index buffer and associate it with VAO

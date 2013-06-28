@@ -19,51 +19,49 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __MAP_RENDERER_OPENGL_BASE_H_
-#define __MAP_RENDERER_OPENGL_BASE_H_
+#ifndef __I_MAP_BITMAP_TILE_PROVIDER_H_
+#define __I_MAP_BITMAP_TILE_PROVIDER_H_
 
 #include <stdint.h>
 #include <memory>
-
-#include <QMap>
-#include <QMultiMap>
-
-#if defined(WIN32)
-#   define WIN32_LEAN_AND_MEAN
-#   include <Windows.h>
-#endif
-#include <GL/gl.h>
-
-#include <glm/glm.hpp>
+#include <functional>
 
 #include <OsmAndCore.h>
 #include <CommonTypes.h>
-#include <IMapRenderer.h>
-
-#if !defined(NDEBUG)
-#   define GL_CHECK_RESULT validateResult()
-#else
-#   define GL_CHECK_RESULT
-#endif
+#include <IMapTileProvider.h>
 
 namespace OsmAnd {
 
-    class OSMAND_CORE_API MapRenderer_BaseOpenGL : public virtual IMapRenderer
+    class OSMAND_CORE_API IMapBitmapTileProvider : public IMapTileProvider
     {
     public:
+        enum BitmapFormat
+        {
+            ARGB_8888,
+            ARGB_4444,
+            RGB_565,
+        };
+
+        class OSMAND_CORE_API Tile : public IMapTileProvider::Tile
+        {
+        private:
+        protected:
+            Tile(const void* data, size_t rowLength, uint32_t width, uint32_t height, const BitmapFormat& format);
+        public:
+            virtual ~Tile();
+
+            const BitmapFormat format;
+        };
     private:
     protected:
-        uint32_t _maxTextureSize;
-        
-        virtual void validateResult() = 0;
-        virtual GLuint compileShader(GLenum shaderType, const char* source) = 0;
-        virtual GLuint linkProgram(GLuint shadersCount, GLuint *shaders) = 0;
-
-        MapRenderer_BaseOpenGL();
+        IMapBitmapTileProvider();
     public:
-        virtual ~MapRenderer_BaseOpenGL();
+        virtual ~IMapBitmapTileProvider();
+
+        virtual float getTileDensity() const = 0;
+        virtual uint32_t getTileSize() const = 0;
     };
 
 }
 
-#endif // __MAP_RENDERER_OPENGL_BASE_H_
+#endif // __I_MAP_BITMAP_TILE_PROVIDER_H_

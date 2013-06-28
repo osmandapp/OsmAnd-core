@@ -30,35 +30,41 @@
 #include <QQueue>
 #include <QSet>
 #include <QMap>
+#include <QMultiMap>
 #include <QMutex>
 #include <QThread>
-
-#include <SkBitmap.h>
 
 #include <OsmAndCore.h>
 #include <CommonTypes.h>
 #include <TileZoomCache.h>
+#include <IMapTileProvider.h>
 
 namespace OsmAnd {
-
-    class IMapTileProvider;
-    class IMapElevationDataProvider;
 
     class OSMAND_CORE_API IMapRenderer
     {
     public:
-        enum TextureDepth {
-            _16bits,
-            _32bits,
+        enum TileLayerId : int
+        {
+            Invalid = -1,
+
+            ElevationData,
+            RasterMap,
+            MapOverlay0,
+            MapOverlay1,
+            MapOverlay2,
+            MapOverlay3,
+
+            IdsCount,
         };
+
         typedef std::function<void ()> RedrawRequestCallback;
 
         struct OSMAND_CORE_API Configuration
         {
             Configuration();
 
-            std::shared_ptr<IMapTileProvider> tileProvider;
-            std::shared_ptr<IMapElevationDataProvider> elevationDataProvider;
+            std::array< std::shared_ptr<IMapTileProvider>, TileLayerId::IdsCount > tileProviders;
             PointI windowSize;
             float displayDensityFactor;
             AreaI viewport;
@@ -70,66 +76,109 @@ namespace OsmAnd {
             float requestedZoom;
             int zoomBase;
             float zoomFraction;
-            TextureDepth preferredTextureDepth;
+
+            bool force16bitColorDepthLimit;
             bool textureAtlasesAllowed;
         };
 
     private:
-        void tileReadyCallback(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tile);
-        bool _viewIsDirty;
-        bool _tilesCacheInvalidated;
-        bool _elevationDataCacheInvalidated;
+        void tileReadyCallback(const TileLayerId& layerId, const TileId& tileId, uint32_t zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile, bool success);
 
-        bool _isRenderingInitialized;
+        QMutex _tileLayersCacheInvalidatedMaskMutex;
+        volatile uint32_t _tileLayersCacheInvalidatedMask;
+
+        volatile bool _isRenderingInitialized;
 
         Qt::HANDLE _renderThreadId;
+
+        void purgeTileLayerCache(const TileLayerId& layerId);
+        void cacheTile(TileLayerId layerId, const TileId& tileId, uint32_t zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile);
+
+        void validateConfiguration();
     protected:
         IMapRenderer();
 
+        enum {
+            MaxTilesPerTextureAtlasSide = 16,
+        };
+
         virtual void invalidateConfiguration();
-        QMutex _pendingToActiveConfigMutex;
-        bool _configInvalidated;
+        volatile bool _configInvalidated;
+        QMutex _pendingConfigModificationMutex;
         Configuration _pendingConfig;
         Configuration _activeConfig;
 
         QSet<TileId> _visibleTiles;
-        PointF _targetInTile;
+        PointF _normalizedTargetInTileOffset;
         
-        QMutex _tilesCacheMutex;
+        struct OSMAND_CORE_API PendingToCacheTile
+        {
+            PendingToCacheTile(IMapRenderer* const renderer, TileLayerId layerId, const uint32_t& zoom, const TileId& tileId, const std::shared_ptr<IMapTileProvider::Tile>& tile);
+
+            IMapRenderer* const renderer;
+            const TileLayerId layerId;
+
+            const TileId tileId;
+            const uint32_t zoom;
+            const std::shared_ptr<IMapTileProvider::Tile> tile;
+        };
         struct OSMAND_CORE_API CachedTile : TileZoomCache::Tile
         {
-            CachedTile(const uint32_t& zoom, const TileId& id, const size_t& usedMemory);
+            CachedTile(IMapRenderer* const renderer, TileLayerId layerId, const uint32_t& zoom, const TileId& id, const uint64_t& atlasPoolId, void* textureRef, int atlasSlotIndex, const size_t& usedMemory);
             virtual ~CachedTile();
+
+            IMapRenderer* const renderer;
+            const TileLayerId layerId;
+
+            const uint64_t atlasPoolId;
+
+            void* const textureRef;
+            const int atlasSlotIndex;
         };
-        TileZoomCache _tilesCache;
-        virtual void purgeTilesCache();
-        void processPendingToCacheTiles();
-        void obtainMissingTiles();
-        virtual void cacheTile(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap);
-
-        virtual void uploadTileToTexture(const TileId& tileId, uint32_t zoom, const std::shared_ptr<SkBitmap>& tileBitmap) = 0;
-        
-        virtual void purgeElevationDataCache();
-        void updateElevationDataCache();
-
-        QMutex _tilesPendingToCacheMutex;
-        struct OSMAND_CORE_API TilePendingToCache
+        struct OSMAND_CORE_API AtlasTexturePool
         {
-            TileId tileId;
-            uint32_t zoom;
-            std::shared_ptr<SkBitmap> tileBitmap;
-        };
-        QQueue< TilePendingToCache > _tilesPendingToCacheQueue;
-        std::array< QSet< TileId >, 32 > _tilesPendingToCache;
+            AtlasTexturePool();
 
-        const bool& viewIsDirty;
+            uint32_t _textureSize;
+            uint32_t _padding;
+            void* _lastNonFullTextureRef;
+            int _firstFreeSlotIndex;
+            QMultiMap< void*, int > _freedSlots;
+        };
+        struct OSMAND_CORE_API TileLayer
+        {
+            TileLayer();
+
+            QMutex _cacheModificationMutex;
+            TileZoomCache _cache;
+
+            QMap< uint64_t, AtlasTexturePool > _atlasTexturePools;
+            QMap< void*, uint32_t > _textureRefCount;
+
+            QMutex _pendingToCacheMutex;
+            QQueue< PendingToCacheTile > _pendingToCacheQueue;
+            std::array< QSet< TileId >, 32 > _pendingToCache;
+
+            QMutex _requestedTilesMutex;
+            std::array< QSet< TileId >, 32 > _requestedTiles;
+
+            void purgeCache();
+            bool uploadPending();
+        };
+        std::array< TileLayer, TileLayerId::IdsCount > _tileLayers;
+        void requestCacheMissTiles();
+        
+        virtual void uploadTileToTexture(TileLayerId layerId, const TileId& tileId, uint32_t zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile, uint64_t& atlasPoolId, void*& textureRef, int& atlasSlotIndex, size_t& usedMemory) = 0;
+        virtual void releaseTexture(void* textureRef) = 0;
+
+        virtual uint32_t getMaxHeightmapResolutionPerTile() = 0;
+
         virtual void requestRedraw();
         
-        const bool& tilesCacheInvalidated;
-        virtual void invalidateTileCache();
-
-        const bool& elevationDataCacheInvalidated;
-        virtual void invalidateElevationDataCache();
+        const volatile uint32_t& tilesCacheInvalidatedMask;
+        virtual void invalidateTileLayerCache(const TileLayerId& layerId);
+        void invalidateTileLayersCache();
+        virtual void validateTileLayerCache(const TileLayerId& layerId);
 
         virtual void updateConfiguration();
 
@@ -142,11 +191,8 @@ namespace OsmAnd {
         const Configuration& configuration;
         const QSet<TileId>& visibleTiles;
         
-        virtual int getCachedTilesCount() const;
-
-        virtual void setTileProvider(const std::shared_ptr<IMapTileProvider>& tileProvider);
-        virtual void setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& elevationDataProvider);
-        virtual void setPreferredTextureDepth(TextureDepth depth);
+        virtual void setTileProvider(const TileLayerId& layerId, const std::shared_ptr<IMapTileProvider>& tileProvider);
+        virtual void set16bitColorDepthLimit(const bool& forced);
         virtual void setWindowSize(const PointI& windowSize);
         virtual void setDisplayDensityFactor(const float& factor);
         virtual void setViewport(const AreaI& viewport);
@@ -158,7 +204,7 @@ namespace OsmAnd {
         virtual void setZoom(const float& zoom);
         virtual void setTextureAtlasesUsagePermit(const bool& allow);
 
-        const bool& isRenderingInitialized;
+        const volatile bool& isRenderingInitialized;
         virtual void initializeRendering();
         virtual void performRendering();
         virtual void releaseRendering();
