@@ -79,6 +79,7 @@ namespace OsmAnd {
 
             bool force16bitColorDepthLimit;
             bool textureAtlasesAllowed;
+            uint32_t heightmapPatchesPerSide;
         };
 
     private:
@@ -175,8 +176,6 @@ namespace OsmAnd {
         virtual void uploadTileToTexture(TileLayerId layerId, const TileId& tileId, uint32_t zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile, uint64_t& atlasPoolId, void*& textureRef, int& atlasSlotIndex, size_t& usedMemory) = 0;
         virtual void releaseTexture(void* textureRef) = 0;
 
-        virtual uint32_t getMaxHeightmapResolutionPerTile() = 0;
-
         virtual void requestRedraw();
         
         const volatile uint32_t& tilesCacheInvalidatedMask;
@@ -207,6 +206,7 @@ namespace OsmAnd {
         virtual void setTarget(const PointI& target31);
         virtual void setZoom(const float& zoom);
         virtual void setTextureAtlasesUsagePermit(const bool& allow);
+        virtual void setHeightmapPatchesPerSide(const uint32_t& patchesCount);
 
         const volatile bool& isRenderingInitialized;
         virtual void initializeRendering();

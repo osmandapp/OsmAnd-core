@@ -60,7 +60,7 @@ namespace OsmAnd {
 #pragma pack(1)
         struct Vertex 
         {
-            GLfloat position[3];
+            GLfloat position[2];
             GLfloat uv[2];
         };
 #pragma pack(pop)

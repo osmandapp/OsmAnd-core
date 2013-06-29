@@ -249,10 +249,10 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::createTilePatch()
         const GLfloat tsz = static_cast<GLfloat>(TileSide3D);
         Vertex vertices[4] =
         {
-            { {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },
-            { {0.0f, 0.0f,  tsz}, {0.0f, 1.0f} },
-            { { tsz, 0.0f,  tsz}, {1.0f, 1.0f} },
-            { { tsz, 0.0f, 0.0f}, {1.0f, 0.0f} }
+            { {0.0f, 0.0f}, {0.0f, 0.0f} },
+            { {0.0f,  tsz}, {0.0f, 1.0f} },
+            { { tsz,  tsz}, {1.0f, 1.0f} },
+            { { tsz, 0.0f}, {1.0f, 0.0f} }
         };
         pVertices = &vertices[0];
         verticesCount = 4;
@@ -270,13 +270,13 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::createTilePatch()
     {
         // Complex tile patch, consisting of (TileElevationNodesPerSide*TileElevationNodesPerSide) number of
         // height clusters.
-        const GLfloat clusterSize = static_cast<GLfloat>(TileSide3D) / static_cast<float>(TileElevationNodesPerSide);
-        const auto verticesPerLine = TileElevationNodesPerSide + 1;
+        const GLfloat clusterSize = static_cast<GLfloat>(TileSide3D) / static_cast<float>(_activeConfig.heightmapPatchesPerSide);
+        const auto verticesPerLine = _activeConfig.heightmapPatchesPerSide + 1;
         const auto outerVertices = verticesPerLine * verticesPerLine;
         verticesCount = outerVertices;
-        verticesCount += TileElevationNodesPerSide * TileElevationNodesPerSide; // Inner
+        verticesCount += _activeConfig.heightmapPatchesPerSide * _activeConfig.heightmapPatchesPerSide; // Inner
         pVertices = new Vertex[verticesCount];
-        indicesCount = (TileElevationNodesPerSide * TileElevationNodesPerSide) * 4 * 3;
+        indicesCount = (_activeConfig.heightmapPatchesPerSide * _activeConfig.heightmapPatchesPerSide) * 4 * 3;
         pIndices = new GLushort[indicesCount];
 
         Vertex* pV = pVertices;
@@ -287,40 +287,38 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::createTilePatch()
             for(int col = 0; col < verticesPerLine; col++, pV++)
             {
                 pV->position[0] = static_cast<float>(col) * clusterSize;
-                pV->position[1] = 0.0f;
-                pV->position[2] = static_cast<float>(row) * clusterSize;
+                pV->position[1] = static_cast<float>(row) * clusterSize;
 
-                pV->uv[0] = static_cast<float>(col) / static_cast<float>(TileElevationNodesPerSide);
-                pV->uv[1] = static_cast<float>(row) / static_cast<float>(TileElevationNodesPerSide);
+                pV->uv[0] = static_cast<float>(col) / static_cast<float>(_activeConfig.heightmapPatchesPerSide);
+                pV->uv[1] = static_cast<float>(row) / static_cast<float>(_activeConfig.heightmapPatchesPerSide);
             }
         }
 
         // Form inner vertices
-        for(int row = 0; row < TileElevationNodesPerSide; row++)
+        for(int row = 0; row < _activeConfig.heightmapPatchesPerSide; row++)
         {
-            for(int col = 0; col < TileElevationNodesPerSide; col++, pV++)
+            for(int col = 0; col < _activeConfig.heightmapPatchesPerSide; col++, pV++)
             {
                 pV->position[0] = (static_cast<float>(col) + 0.5f) * clusterSize;
-                pV->position[1] = 0.0f;
-                pV->position[2] = (static_cast<float>(row) + 0.5f) * clusterSize;
+                pV->position[1] = (static_cast<float>(row) + 0.5f) * clusterSize;
 
-                pV->uv[0] = (static_cast<float>(col) + 0.5f) / static_cast<float>(TileElevationNodesPerSide);
-                pV->uv[1] = (static_cast<float>(row) + 0.5f) / static_cast<float>(TileElevationNodesPerSide);
+                pV->uv[0] = (static_cast<float>(col) + 0.5f) / static_cast<float>(_activeConfig.heightmapPatchesPerSide);
+                pV->uv[1] = (static_cast<float>(row) + 0.5f) / static_cast<float>(_activeConfig.heightmapPatchesPerSide);
             }
         }
 
         // Form indices
         GLushort* pI = pIndices;
-        for(int row = 0; row < TileElevationNodesPerSide; row++)
+        for(int row = 0; row < _activeConfig.heightmapPatchesPerSide; row++)
         {
-            for(int col = 0; col < TileElevationNodesPerSide; col++, pV++)
+            for(int col = 0; col < _activeConfig.heightmapPatchesPerSide; col++, pV++)
             {
                 // p0 - center point
                 // p1 - top left
                 // p2 - bottom left
                 // p3 - bottom right
                 // p4 - top right
-                const auto p0 = outerVertices + (row * TileElevationNodesPerSide + col);
+                const auto p0 = outerVertices + (row * _activeConfig.heightmapPatchesPerSide + col);
                 const auto p1 = (row + 0) * verticesPerLine + col + 0;
                 const auto p2 = (row + 1) * verticesPerLine + col + 0;
                 const auto p3 = (row + 1) * verticesPerLine + col + 1;

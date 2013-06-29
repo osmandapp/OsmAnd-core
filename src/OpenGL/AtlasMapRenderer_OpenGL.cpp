@@ -40,7 +40,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
         "const float floatEpsilon = 0.000001;                                                                               ""\n"
         "                                                                                                                   ""\n"
         // Input data
-        "in vec3 in_vs_vertexPosition;                                                                                      ""\n"
+        "in vec2 in_vs_vertexPosition;                                                                                      ""\n"
         "in vec2 in_vs_vertexTexCoords;                                                                                     ""\n"
         "                                                                                                                   ""\n"
         // Output data to next shader stages
@@ -90,7 +90,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
-        "    vec4 v = vec4(in_vs_vertexPosition, 1.0);                                                                      ""\n"
+        "    vec4 v = vec4(in_vs_vertexPosition.x, 0.0, in_vs_vertexPosition.y, 1.0);                                       ""\n"
         "                                                                                                                   ""\n"
         //   Shift vertex to it's proper position
         "    float xOffset = float(param_vs_tile.x - param_vs_targetTile.x) - param_vs_centerOffset.x;                      ""\n"
@@ -437,7 +437,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
         }
 
         const auto verticesCount = _activeConfig.tileProviders[TileLayerId::ElevationData]
-            ? (TileElevationNodesPerSide * TileElevationNodesPerSide) * 4 * 3
+            ? (_activeConfig.heightmapPatchesPerSide * _activeConfig.heightmapPatchesPerSide) * 4 * 3
             : 6;
         glDrawElements(GL_TRIANGLES, verticesCount, GL_UNSIGNED_SHORT, nullptr);
         GL_CHECK_RESULT;
@@ -519,7 +519,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::allocateTilePatch( Vertex* vertices, size_
     glEnableVertexAttribArray(_vertexShader_in_vertexPosition);
     GL_CHECK_RESULT;
     assert(glVertexAttribPointer);
-    glVertexAttribPointer(_vertexShader_in_vertexPosition, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, position)));
+    glVertexAttribPointer(_vertexShader_in_vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, position)));
     GL_CHECK_RESULT;
     assert(glEnableVertexAttribArray);
     glEnableVertexAttribArray(_vertexShader_in_vertexTexCoords);

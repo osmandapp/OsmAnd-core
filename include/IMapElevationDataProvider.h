@@ -37,23 +37,11 @@ namespace OsmAnd {
     public:
     private:
     protected:
-        IMapElevationDataProvider();
+        IMapElevationDataProvider(const uint32_t& valuesPerSide);
     public:
         virtual ~IMapElevationDataProvider();
 
-        /*virtual bool obtainTileImmediate(
-            const TileId& tileId, uint32_t zoom,
-            std::shared_ptr<IMapTileProvider::Tile>& tile);
-        virtual void obtainTileDeffered(
-            const TileId& tileId, uint32_t zoom,
-            TileReadyCallback readyCallback);
-            */
-        virtual bool obtainTileImmediate(
-            const TileId& tileId, uint32_t zoom, const uint32_t& maxValuesPerTile,
-            std::shared_ptr<IMapTileProvider::Tile>& tile) = 0;
-        virtual void obtainTileDeffered(
-            const TileId& tileId, uint32_t zoom, const uint32_t& maxValuesPerTile,
-            TileReadyCallback readyCallback) = 0;
+        const uint32_t valuesPerSide;
     };
 
 }

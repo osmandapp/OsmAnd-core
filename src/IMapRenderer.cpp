@@ -27,6 +27,7 @@ OsmAnd::IMapRenderer::IMapRenderer()
     setZoom(0);
     set16bitColorDepthLimit(false);
     setTextureAtlasesUsagePermit(true);
+    setHeightmapPatchesPerSide(24);
 }
 
 OsmAnd::IMapRenderer::~IMapRenderer()
@@ -202,6 +203,20 @@ void OsmAnd::IMapRenderer::setTextureAtlasesUsagePermit( const bool& allow )
     invalidateConfiguration();
 }
 
+void OsmAnd::IMapRenderer::setHeightmapPatchesPerSide( const uint32_t& patchesCount )
+{
+    QMutexLocker scopeLock(&_pendingConfigModificationMutex);
+
+    bool update = (_pendingConfig.heightmapPatchesPerSide != patchesCount);
+    if(!update)
+        return;
+
+    _pendingConfig.heightmapPatchesPerSide = patchesCount;
+
+    invalidateTileLayerCache(TileLayerId::ElevationData);
+    invalidateConfiguration();
+}
+
 void OsmAnd::IMapRenderer::initializeRendering()
 {
     assert(!_isRenderingInitialized);
@@ -290,8 +305,6 @@ void OsmAnd::IMapRenderer::releaseRendering()
 
 void OsmAnd::IMapRenderer::requestCacheMissTiles()
 {
-    const auto maxHeightmapResolutionPerTile = getMaxHeightmapResolutionPerTile();
-    
     for(auto itTileId = _visibleTiles.begin(); itTileId != _visibleTiles.end(); ++itTileId)
     {
         const auto& tileId = *itTileId;
@@ -321,60 +334,27 @@ void OsmAnd::IMapRenderer::requestCacheMissTiles()
                 const auto& tileProvider = _activeConfig.tileProviders[layerId];
                 const auto callback = std::bind(&IMapRenderer::handleProvidedTile, this, static_cast<TileLayerId>(layerId), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
 
-                if(tileProvider->type == IMapTileProvider::Bitmap)
+                // Try to obtain tile from provider immediately. Immediately means that data is available in-memory
+                std::shared_ptr<IMapTileProvider::Tile> tile;
+                bool availableImmediately = tileProvider->obtainTileImmediate(tileId, _activeConfig.zoomBase, tile);
+                if(availableImmediately)
                 {
-                    auto bitmapTileProvider = static_cast<IMapBitmapTileProvider*>(tileProvider.get());
-
-                    // Try to obtain tile from provider immediately. Immediately means that data is available in-memory
-                    std::shared_ptr<IMapTileProvider::Tile> tile;
-                    bool availableImmediately = bitmapTileProvider->obtainTileImmediate(tileId, _activeConfig.zoomBase, tile);
-                    if(availableImmediately)
-                    {
-                        //LogPrintf(LogSeverityLevel::Debug, "Uploading tile %dx%d@%d of layer %d to cache immediately\n", tileId.x, tileId.y, _activeConfig.zoomBase, layerId);
-                        cacheTile(static_cast<TileLayerId>(layerId), tileId, _activeConfig.zoomBase, tile);
-                        tileLayer._cacheModificationMutex.unlock();
-                        continue;
-                    }
+                    //LogPrintf(LogSeverityLevel::Debug, "Uploading tile %dx%d@%d of layer %d to cache immediately\n", tileId.x, tileId.y, _activeConfig.zoomBase, layerId);
+                    cacheTile(static_cast<TileLayerId>(layerId), tileId, _activeConfig.zoomBase, tile);
                     tileLayer._cacheModificationMutex.unlock();
-
-                    // If still cache miss, order delayed
-                    {
-                        QMutexLocker scopeLock(&tileLayer._requestedTilesMutex);
-                        if(tileLayer._requestedTiles[_activeConfig.zoomBase].contains(tileId))
-                            continue;
-                        tileLayer._requestedTiles[_activeConfig.zoomBase].insert(tileId);
-
-                        //LogPrintf(LogSeverityLevel::Debug, "Ordering tile %dx%d@%d of layer %d\n", tileId.x, tileId.y, _activeConfig.zoomBase, layerId);
-                        bitmapTileProvider->obtainTileDeffered(tileId, _activeConfig.zoomBase, callback);
-                    }
+                    continue;
                 }
-                else if(tileProvider->type == IMapTileProvider::ElevationData)
+                tileLayer._cacheModificationMutex.unlock();
+
+                // If still cache miss, order delayed
                 {
-                    auto elevationDataTileProvider = static_cast<IMapElevationDataProvider*>(tileProvider.get());
-
-                    // Try to obtain tile from provider immediately. Immediately means that data is available in-memory
-                    std::shared_ptr<IMapTileProvider::Tile> tile;
-                    bool availableImmediately = elevationDataTileProvider->obtainTileImmediate(tileId, _activeConfig.zoomBase, maxHeightmapResolutionPerTile, tile);
-                    if(availableImmediately)
-                    {
-                        //LogPrintf(LogSeverityLevel::Debug, "Uploading tile %dx%d@%d of layer %d to cache immediately\n", tileId.x, tileId.y, _activeConfig.zoomBase, layerId);
-                        cacheTile(static_cast<TileLayerId>(layerId), tileId, _activeConfig.zoomBase, tile);
-                        tileLayer._cacheModificationMutex.unlock();
+                    QMutexLocker scopeLock(&tileLayer._requestedTilesMutex);
+                    if(tileLayer._requestedTiles[_activeConfig.zoomBase].contains(tileId))
                         continue;
-                    }
-                    tileLayer._cacheModificationMutex.unlock();
+                    tileLayer._requestedTiles[_activeConfig.zoomBase].insert(tileId);
 
-                    // If still cache miss, order delayed
-                    {
-                        QMutexLocker scopeLock(&tileLayer._requestedTilesMutex);
-                        if(tileLayer._requestedTiles[_activeConfig.zoomBase].contains(tileId))
-                            continue;
-                        tileLayer._requestedTiles[_activeConfig.zoomBase].insert(tileId);
-
-                        //LogPrintf(LogSeverityLevel::Debug, "Ordering tile %dx%d@%d of layer %d\n", tileId.x, tileId.y, _activeConfig.zoomBase, layerId);
-                        elevationDataTileProvider->obtainTileDeffered(tileId, _activeConfig.zoomBase, maxHeightmapResolutionPerTile, callback);
-                    }
-                    
+                    //LogPrintf(LogSeverityLevel::Debug, "Ordering tile %dx%d@%d of layer %d\n", tileId.x, tileId.y, _activeConfig.zoomBase, layerId);
+                    tileProvider->obtainTileDeffered(tileId, _activeConfig.zoomBase, callback);
                 }
             }
         }

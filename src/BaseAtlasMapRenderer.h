@@ -36,14 +36,11 @@ namespace OsmAnd {
     public:
         enum {
             TileSide3D = 100,
-            TileElevationNodesPerSide = 24,
         };
 
     private:
     protected:
         BaseAtlasMapRenderer();
-
-        virtual uint32_t getMaxHeightmapResolutionPerTile();
     public:
         virtual ~BaseAtlasMapRenderer();
     };

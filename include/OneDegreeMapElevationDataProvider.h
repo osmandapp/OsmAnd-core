@@ -37,9 +37,12 @@ namespace OsmAnd {
     public:
     private:
     protected:
-        OneDegreeMapElevationDataProvider();
+        OneDegreeMapElevationDataProvider(const uint32_t& valuesPerSide);
     public:
         virtual ~OneDegreeMapElevationDataProvider();
+
+        virtual bool obtainTileImmediate(const TileId& tileId, uint32_t zoom, std::shared_ptr<IMapTileProvider::Tile>& tile);
+        virtual void obtainTileDeffered(const TileId& tileId, uint32_t zoom, TileReadyCallback readyCallback);
     };
 
 }

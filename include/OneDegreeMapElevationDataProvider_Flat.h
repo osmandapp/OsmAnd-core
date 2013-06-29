@@ -38,7 +38,7 @@ namespace OsmAnd {
     private:
     protected:
     public:
-        OneDegreeMapElevationDataProvider_Flat();
+        OneDegreeMapElevationDataProvider_Flat(const uint32_t& valuesPerSide);
         virtual ~OneDegreeMapElevationDataProvider_Flat();
     };
 
