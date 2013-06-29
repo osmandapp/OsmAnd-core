@@ -320,7 +320,7 @@ void OsmAnd::IMapRenderer::requestCacheMissTiles()
                     continue;
 
                 const auto& tileProvider = _activeConfig.tileProviders[layerId];
-                auto callback = std::bind(&IMapRenderer::tileReadyCallback, this, static_cast<TileLayerId>(layerId), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
+                const auto callback = std::bind(&IMapRenderer::handleProvidedTile, this, static_cast<TileLayerId>(layerId), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
 
                 if(tileProvider->type == IMapTileProvider::Bitmap)
                 {
@@ -398,17 +398,17 @@ void OsmAnd::IMapRenderer::cacheTile( TileLayerId layerId, const TileId& tileId,
     
     // Actually upload tile to texture
     //TODO: Uploading texture may fail. In this case we do not need to mark tile as cached
-    uint64_t atlasPoolId;
-    void* textureRef;
-    int atlasSlotIndex;
-    size_t usedMemory;
+    uint64_t atlasPoolId = 0;
+    void* textureRef = nullptr;
+    int atlasSlotIndex = -1;
+    size_t usedMemory = 0;
     uploadTileToTexture(layerId, tileId, zoom, tile, atlasPoolId, textureRef, atlasSlotIndex, usedMemory);
 
     tileLayer._cache.putTile(std::shared_ptr<TileZoomCache::Tile>(static_cast<TileZoomCache::Tile*>(
         new CachedTile(this, layerId, zoom, tileId, atlasPoolId, textureRef, atlasSlotIndex, usedMemory))));
 }
 
-void OsmAnd::IMapRenderer::tileReadyCallback( const TileLayerId& layerId, const TileId& tileId, uint32_t zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile, bool success )
+void OsmAnd::IMapRenderer::handleProvidedTile( const TileLayerId& layerId, const TileId& tileId, uint32_t zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile, bool success )
 {
     auto& tileLayer = _tileLayers[layerId];
     
@@ -533,6 +533,9 @@ OsmAnd::IMapRenderer::AtlasTexturePool::AtlasTexturePool()
     , _padding(0)
     , _lastNonFullTextureRef(nullptr)
     , _firstFreeSlotIndex(-1)
+    , _tileSizeN(0.0f)
+    , _tilePaddingN(0.0f)
+    , _slotsPerSide(0)
 {
 }
 
@@ -576,12 +579,15 @@ bool OsmAnd::IMapRenderer::TileLayer::uploadPending()
     const auto& pendingTile = _pendingToCacheQueue.dequeue();
     _pendingToCache[pendingTile.zoom].remove(pendingTile.tileId);
 
-    LogPrintf(LogSeverityLevel::Debug, "Uploading tile %dx%d@%d of layer %d to cache from queue\n", pendingTile.tileId.x, pendingTile.tileId.y, pendingTile.zoom, pendingTile.layerId);
+    LogPrintf(LogSeverityLevel::Debug, "Going to upload tile %dx%d@%d of layer %d to cache from queue\n", pendingTile.tileId.x, pendingTile.tileId.y, pendingTile.zoom, pendingTile.layerId);
 
     {
         // Upload that tile to texture
         QMutexLocker scopeLock(&_cacheModificationMutex);
+
+        LogPrintf(LogSeverityLevel::Debug, "Uploading tile %dx%d@%d of layer %d to cache from queue\n", pendingTile.tileId.x, pendingTile.tileId.y, pendingTile.zoom, pendingTile.layerId);
         pendingTile.renderer->cacheTile(pendingTile.layerId, pendingTile.tileId, pendingTile.zoom, pendingTile.tile);
+        LogPrintf(LogSeverityLevel::Debug, "Uploaded tile %dx%d@%d of layer %d to cache from queue\n", pendingTile.tileId.x, pendingTile.tileId.y, pendingTile.zoom, pendingTile.layerId);
     }
 
     return !_pendingToCacheQueue.isEmpty();

@@ -10,8 +10,3 @@ OsmAnd::MapRenderer_BaseOpenGL::MapRenderer_BaseOpenGL()
 OsmAnd::MapRenderer_BaseOpenGL::~MapRenderer_BaseOpenGL()
 {
 }
-
-void OsmAnd::MapRenderer_BaseOpenGL::validateResult()
-{
-    assert(false);
-}

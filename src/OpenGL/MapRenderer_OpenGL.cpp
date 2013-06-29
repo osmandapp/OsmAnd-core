@@ -21,13 +21,15 @@ OsmAnd::MapRenderer_OpenGL::~MapRenderer_OpenGL()
 {
 }
 
-void OsmAnd::MapRenderer_OpenGL::validateResult()
+GLenum OsmAnd::MapRenderer_OpenGL::validateResult()
 {
     auto result = glGetError();
     if(result == GL_NO_ERROR)
-        return;
+        return result;
 
     LogPrintf(LogSeverityLevel::Error, "OpenGL error 0x%08x : %s\n", result, gluErrorString(result));
+
+    return result;
 }
 
 GLuint OsmAnd::MapRenderer_OpenGL::compileShader( GLenum shaderType, const char* source )
@@ -63,12 +65,14 @@ GLuint OsmAnd::MapRenderer_OpenGL::compileShader( GLenum shaderType, const char*
             GLchar* log = (GLchar*)malloc(logBufferLen);
             glGetShaderInfoLog(shader, logBufferLen, &logLen, log);
             GL_CHECK_RESULT;
-            LogPrintf(LogSeverityLevel::Error, "Failed to compile GLSL shader: %s", log);
+            assert(logLen + 1 == logBufferLen);
+            LogPrintf(LogSeverityLevel::Error, "Failed to compile GLSL shader:\n%s\n", log);
             free(log);
         }
 
         glDeleteShader(shader);
         shader = 0;
+        return shader;
     }
 
     return shader;
@@ -106,16 +110,31 @@ GLuint OsmAnd::MapRenderer_OpenGL::linkProgram( GLuint shadersCount, GLuint *sha
         if (logBufferLen > 1)
         {
             GLchar* log = (GLchar*)malloc(logBufferLen);
-            glGetShaderInfoLog(program, logBufferLen, &logLen, log);
+            glGetProgramInfoLog(program, logBufferLen, &logLen, log);
             GL_CHECK_RESULT;
-            LogPrintf(LogSeverityLevel::Error, "Failed to link GLSL program: %s", log);
+            assert(logLen + 1 == logBufferLen);
+            LogPrintf(LogSeverityLevel::Error, "Failed to link GLSL program:\n%s\n", log);
             free(log);
         }
 
         glDeleteProgram(program);
         GL_CHECK_RESULT;
         program = 0;
+        return program;
     }
+
+    // Show some info
+    assert(glGetProgramiv);
+    GLint attributesCount;
+    glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &attributesCount);
+    GL_CHECK_RESULT;
+    LogPrintf(LogSeverityLevel::Info, "GLSL program %d has %d input variable(s)\n", program, attributesCount);
+
+    assert(glGetProgramiv);
+    GLint uniformsCount;
+    glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &uniformsCount);
+    GL_CHECK_RESULT;
+    LogPrintf(LogSeverityLevel::Info, "GLSL program %d has %d parameter variable(s)\n", program, uniformsCount);
 
     return program;
 }
@@ -124,7 +143,6 @@ void OsmAnd::MapRenderer_OpenGL::initializeRendering()
 {
     MapRenderer_BaseOpenGL::initializeRendering();
 
-    // Get OpenGL version
     const auto glVersionString = glGetString(GL_VERSION);
     GL_CHECK_RESULT;
     GLint glVersion[2];
@@ -135,17 +153,26 @@ void OsmAnd::MapRenderer_OpenGL::initializeRendering()
     LogPrintf(LogSeverityLevel::Info, "Using OpenGL version %d.%d [%s]\n", glVersion[0], glVersion[1], glVersionString);
     assert(glVersion[0] >= 3);
 
-    // Get maximal texture size if not yet determined
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, reinterpret_cast<GLint*>(&_maxTextureSize));
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture size %dx%d\n", _maxTextureSize, _maxTextureSize);
 
-    // Get maximal number of texture units
-    GLint maxTextureUnits;
-    glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureUnits);
+    GLint maxTextureUnitsInFragmentShader;
+    glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureUnitsInFragmentShader);
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units count %d\n", maxTextureUnits);
-    assert(maxTextureUnits >= IMapRenderer::TileLayerId::IdsCount);
+    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units in fragment shader %d\n", maxTextureUnitsInFragmentShader);
+    assert(maxTextureUnitsInFragmentShader >= (IMapRenderer::TileLayerId::IdsCount - IMapRenderer::RasterMap));
+
+    GLint maxTextureUnitsInVertexShader;
+    glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, &maxTextureUnitsInVertexShader);
+    GL_CHECK_RESULT;
+    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units in vertex shader %d\n", maxTextureUnitsInVertexShader);
+    assert(maxTextureUnitsInVertexShader >= IMapRenderer::RasterMap);
+    
+    GLint maxUniformsPerProgram;
+    glGetIntegerv(GL_MAX_UNIFORM_LOCATIONS, &maxUniformsPerProgram);
+    GL_CHECK_RESULT;
+    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal parameter variables per program %d\n", maxUniformsPerProgram);
 
     GL_CHECK_RESULT;
     glewExperimental = GL_TRUE;
@@ -157,9 +184,9 @@ void OsmAnd::MapRenderer_OpenGL::initializeRendering()
     // Bitmap (Atlas)
     glGenSamplers(1, &_textureSampler_Bitmap_Atlas);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_textureSampler_Bitmap_Atlas, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glSamplerParameteri(_textureSampler_Bitmap_Atlas, GL_TEXTURE_WRAP_S, GL_CLAMP);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_textureSampler_Bitmap_Atlas, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glSamplerParameteri(_textureSampler_Bitmap_Atlas, GL_TEXTURE_WRAP_T, GL_CLAMP);
     GL_CHECK_RESULT;
     glSamplerParameteri(_textureSampler_Bitmap_Atlas, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     GL_CHECK_RESULT;
@@ -169,9 +196,9 @@ void OsmAnd::MapRenderer_OpenGL::initializeRendering()
     // ElevationData (Atlas)
     glGenSamplers(1, &_textureSampler_ElevationData_Atlas);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_textureSampler_ElevationData_Atlas, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glSamplerParameteri(_textureSampler_ElevationData_Atlas, GL_TEXTURE_WRAP_S, GL_CLAMP);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_textureSampler_ElevationData_Atlas, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glSamplerParameteri(_textureSampler_ElevationData_Atlas, GL_TEXTURE_WRAP_T, GL_CLAMP);
     GL_CHECK_RESULT;
     glSamplerParameteri(_textureSampler_ElevationData_Atlas, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     GL_CHECK_RESULT;
@@ -181,9 +208,9 @@ void OsmAnd::MapRenderer_OpenGL::initializeRendering()
     // Bitmap (No atlas)
     glGenSamplers(1, &_textureSampler_Bitmap_NoAtlas);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_textureSampler_Bitmap_NoAtlas, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glSamplerParameteri(_textureSampler_Bitmap_NoAtlas, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_textureSampler_Bitmap_NoAtlas, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glSamplerParameteri(_textureSampler_Bitmap_NoAtlas, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     GL_CHECK_RESULT;
     glSamplerParameteri(_textureSampler_Bitmap_NoAtlas, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     GL_CHECK_RESULT;
@@ -193,9 +220,9 @@ void OsmAnd::MapRenderer_OpenGL::initializeRendering()
     // ElevationData (No atlas)
     glGenSamplers(1, &_textureSampler_ElevationData_NoAtlas);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     GL_CHECK_RESULT;
     glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     GL_CHECK_RESULT;
@@ -359,8 +386,10 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
     {
         auto& atlasPool = *itAtlasPool;
         atlasPool._padding = padding;
-
-        const auto tilesPerSide = atlasPool._textureSize / fullTileSize;
+        
+        atlasPool._tilePaddingN = static_cast<float>(padding) / static_cast<float>(atlasPool._textureSize);
+        atlasPool._tileSizeN = static_cast<float>(fullTileSize) / static_cast<float>(atlasPool._textureSize);
+        atlasPool._slotsPerSide = atlasPool._textureSize / fullTileSize;
 
         GLuint atlasTexture = 0;
         int atlasSlotIndex = -1;
@@ -377,7 +406,7 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
             tileLayer._textureRefCount[itFreeSlot.key()]++;
         }
         // If we've never allocated any atlas yet, or free slot is beyond allowed range - allocate new
-        else if(atlasPool._lastNonFullTextureRef == nullptr || atlasPool._firstFreeSlotIndex == tilesPerSide * tilesPerSide)
+        else if(atlasPool._lastNonFullTextureRef == nullptr || atlasPool._firstFreeSlotIndex == atlasPool._slotsPerSide * atlasPool._slotsPerSide)
         {
             // Allocate texture id
             GLuint texture;
@@ -405,7 +434,7 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
             atlasTexture = texture;
             atlasSlotIndex = 0;
 
-#if 1
+#if 0
             if(tile->type == IMapTileProvider::Bitmap)
             {
                 // In debug mode, fill entire texture with single RED color if this is bitmap
@@ -433,8 +462,8 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
         GL_CHECK_RESULT;
 
         // Tile area offset
-        const auto yOffset = (atlasSlotIndex / tilesPerSide) * fullTileSize;
-        const auto xOffset = (atlasSlotIndex % tilesPerSide) * fullTileSize;
+        const auto yOffset = (atlasSlotIndex / atlasPool._slotsPerSide) * fullTileSize;
+        const auto xOffset = (atlasSlotIndex % atlasPool._slotsPerSide) * fullTileSize;
 
         // Set stride
         glPixelStorei(GL_UNPACK_ROW_LENGTH, tile->rowLength / sourcePixelByteSize);
@@ -600,4 +629,18 @@ void OsmAnd::MapRenderer_OpenGL::releaseTexture( void* textureRef )
 
     glDeleteTextures(1, &texture);
     GL_CHECK_RESULT;
+}
+
+void OsmAnd::MapRenderer_OpenGL::findVariableLocation( GLuint program, GLint& location, const QString& name, const VariableType& type )
+{
+    if(type == VariableType::In)
+        location = glGetAttribLocation(program, name.toStdString().c_str());
+    else if(type == VariableType::Uniform)
+        location = glGetUniformLocation(program, name.toStdString().c_str());
+    GL_CHECK_RESULT;
+    if(location == -1)
+        LogPrintf(LogSeverityLevel::Error, "Variable '%s' (%s) was not found in GLSL program %d\n", name.toStdString().c_str(), type == In ? "In" : "Uniform", program);
+    assert(location != -1);
+    assert(!_programVariables[program].contains(type, location));
+    _programVariables[program].insert(type, location);
 }

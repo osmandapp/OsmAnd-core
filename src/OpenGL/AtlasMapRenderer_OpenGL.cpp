@@ -26,93 +26,187 @@ OsmAnd::AtlasMapRenderer_OpenGL::~AtlasMapRenderer_OpenGL()
 void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
 {
     MapRenderer_OpenGL::initializeRendering();
-    /*
+
     // Compile vertex shader
-    QString vertexShader = QString::fromLatin1(
+    const QString vertexShader_perTileLayerTexCoordsProcessing = QString::fromLatin1(
+        "    calculateTextureCoordinates(                                                                                   ""\n"
+        "        param_vs_perTileLayer[%layerId%],                                                                          ""\n"
+        "        v2f_texCoordsPerLayer[%layerLinearIndex%]);                                                                ""\n"
+        "                                                                                                                   ""\n");
+    const QString vertexShader = QString::fromLatin1(
         "#version 430 core                                                                                                  ""\n"
-        "                                                                                                                   "
+        "                                                                                                                   ""\n"
+        // Constants
+        "const float floatEpsilon = 0.000001;                                                                               ""\n"
+        "                                                                                                                   ""\n"
         // Input data
-        "in vec3 in_vertexPosition;                                                                                         "
-        "in vec2 in_vertexTexCoords;                                                                                        "
-        "                                                                                                                   "
+        "in vec3 in_vs_vertexPosition;                                                                                      ""\n"
+        "in vec2 in_vs_vertexTexCoords;                                                                                     ""\n"
+        "                                                                                                                   ""\n"
         // Output data to next shader stages
-        "out vec2 g_vertexUV0;                                                                                              "
-        "                                                                                                                   "
-        // Common data
-        "uniform mat4 param_mProjection;                                                                                    "
-        "uniform mat4 param_mView;                                                                                          "
-        "uniform vec2 param_centerOffset;                                                                                   "
-        "uniform ivec2 param_targetTile;                                                                                    "
-        "                                                                                                                   "
-        "uniform int param_atlasSlotsInLine;                                                                                "
-        "uniform int param_atlasSize;                                                                                       "
-        "uniform int param_atlasTextureSize;                                                                                "
-        "                                                                                                                   "
-        // Per-tile data
-        "uniform ivec2 param_tile;                                                                                          "
-        "uniform int param_atlasSlotIndex;                                                                                  "
-        "                                                                                                                   "
-        "void main()                                                                                                        "
-        "{                                                                                                                  "
-        "    vec4 v = vec4(in_vertexPosition, 1.0);                                                                         "
-        "                                                                                                                   "
+        "out vec2 v2f_texCoordsPerLayer[%RasterTileLayersCount%];                                                           ""\n"
+        "                                                                                                                   ""\n"
+        // Parameters: common data
+        "uniform mat4 param_vs_mProjection;                                                                                 ""\n"
+        "uniform mat4 param_vs_mView;                                                                                       ""\n"
+        "uniform vec2 param_vs_centerOffset;                                                                                ""\n"
+        "uniform ivec2 param_vs_targetTile;                                                                                 ""\n"
+        "                                                                                                                   ""\n"
+        // Parameters: per-tile data
+        "uniform ivec2 param_vs_tile;                                                                                       ""\n"
+        "uniform float param_vs_elevationData_k;                                                                            ""\n"
+        "uniform sampler2D param_vs_elevationData_sampler;                                                                  ""\n"
+        "                                                                                                                   ""\n"
+        // Parameters: per-layer-in-tile data
+        "struct LayerInputPerTile                                                                                           ""\n"
+        "{                                                                                                                  ""\n"
+        "    float tileSizeN;                                                                                               ""\n"
+        "    float tilePaddingN;                                                                                            ""\n"
+        "    int slotsPerSide;                                                                                              ""\n"
+        "    int slotIndex;                                                                                                 ""\n"
+        "};                                                                                                                 ""\n"
+        "uniform LayerInputPerTile param_vs_perTileLayer[%TileLayersCount%];                                                ""\n"
+        "                                                                                                                   ""\n"
+        "void calculateTextureCoordinates(in LayerInputPerTile perTile, out vec2 outTexCoords)                              ""\n"
+        "{                                                                                                                  ""\n"
+        "    if(perTile.slotIndex >= 0)                                                                                     ""\n"
+        "    {                                                                                                              ""\n"
+        "        const int rowIndex = perTile.slotIndex / perTile.slotsPerSide;                                             ""\n"
+        "        const int colIndex = int(mod(perTile.slotIndex, perTile.slotsPerSide));                                    ""\n"
+        "                                                                                                                   ""\n"
+        "        const float texCoordRescale = (perTile.tileSizeN - 2.0 * perTile.tilePaddingN) / perTile.tileSizeN;        ""\n"
+        "                                                                                                                   ""\n"
+        "        outTexCoords.s = float(colIndex) * perTile.tileSizeN;                                                      ""\n"
+        "        outTexCoords.s += perTile.tilePaddingN + (in_vs_vertexTexCoords.s * perTile.tileSizeN) * texCoordRescale;  ""\n"
+        "                                                                                                                   ""\n"
+        "        outTexCoords.t = float(rowIndex) * perTile.tileSizeN;                                                      ""\n"
+        "        outTexCoords.t += perTile.tilePaddingN + (in_vs_vertexTexCoords.t * perTile.tileSizeN) * texCoordRescale;  ""\n"
+        "    }                                                                                                              ""\n"
+        "    else                                                                                                           ""\n"
+        "    {                                                                                                              ""\n"
+        "        outTexCoords = in_vs_vertexTexCoords;                                                                      ""\n"
+        "    }                                                                                                              ""\n"
+        "}                                                                                                                  ""\n"
+        "                                                                                                                   ""\n"
+        "void main()                                                                                                        ""\n"
+        "{                                                                                                                  ""\n"
+        "    vec4 v = vec4(in_vs_vertexPosition, 1.0);                                                                      ""\n"
+        "                                                                                                                   ""\n"
         //   Shift vertex to it's proper position
-        "    float xOffset = float(param_tile.x - param_targetTile.x) - param_centerOffset.x;                               "
-        "    v.x += xOffset * %TileSize3D%.0;                                                                               "
-        "    float yOffset = float(param_tile.y - param_targetTile.y) - param_centerOffset.y;                               "
-        "    v.z += yOffset * %TileSize3D%.0;                                                                               "
-        "                                                                                                                   "
-        //   Calculate UV. Initially they are 0..1 as if we would process non-atlas texture
-        "    g_vertexUV0 = in_vertexTexCoords;                                                                              "
-        "    if(param_atlasSlotsInLine > 0)                                                                                 "
-        "    {                                                                                                              "
-        "        float slotsTotalLength = float(param_atlasSize) / float(param_atlasTextureSize);                           "
-        "        float slotLength = slotsTotalLength / float(param_atlasSlotsInLine);                                       "
-        "        int rowIndex = param_atlasSlotIndex / param_atlasSlotsInLine;                                              "
-        "        int colIndex = int(mod(param_atlasSlotIndex, param_atlasSlotsInLine));                                     "
-        "                                                                                                                   "
-        "        float texelSize_padding = %TextureTilePixelPadding%.0 / float(param_atlasTextureSize);                     "
-        "        float texCoordRescale = (slotLength - 2.0 * texelSize_padding) / slotLength;                               "
-        "                                                                                                                   "
-        "        float s = float(colIndex) * slotLength;                                                                    "
-        "        s += texelSize_padding + (float(g_vertexUV0.s) * slotLength) * texCoordRescale;                            "
-        "        g_vertexUV0.s = s;                                                                                         "
-        "                                                                                                                   "
-        "        float t = float(rowIndex) * slotLength;                                                                    "
-        "        t += texelSize_padding + (float(g_vertexUV0.t) * slotLength) * texCoordRescale;                            "
-        "        g_vertexUV0.t = t;                                                                                         "
-        "    }                                                                                                              "
-        "                                                                                                                   "
-        //   TODO: process heightmap data
-        "    v.y = 0.0;                                                                                                     "
-        "                                                                                                                   "
+        "    float xOffset = float(param_vs_tile.x - param_vs_targetTile.x) - param_vs_centerOffset.x;                      ""\n"
+        "    v.x += xOffset * %TileSize3D%.0;                                                                               ""\n"
+        "    float yOffset = float(param_vs_tile.y - param_vs_targetTile.y) - param_vs_centerOffset.y;                      ""\n"
+        "    v.z += yOffset * %TileSize3D%.0;                                                                               ""\n"
+        "                                                                                                                   ""\n"
+        //   Process each tile layer texture coordinates (except elevation)
+        "%UnrolledPerLayerTexCoordsProcessingCode%                                                                          ""\n"
+        "                                                                                                                   ""\n"
+        //   If elevation data is active, use it
+        "    if(abs(param_vs_elevationData_k) > floatEpsilon)                                                               ""\n"
+        "    {                                                                                                              ""\n"
+        "        vec2 elevationDataTexCoords;                                                                               ""\n"
+        "        calculateTextureCoordinates(                                                                               ""\n"
+        "            param_vs_perTileLayer[0],                                                                              ""\n"
+        "            elevationDataTexCoords);                                                                               ""\n"
+        "                                                                                                                   ""\n"
+        "        float height = texture(param_vs_elevationData_sampler, elevationDataTexCoords).r;                          ""\n"
+        //TODO: remap meters to units 
+        "        v.y = height * 1.0;                                                                                            ""\n"
+        "        v.y *= param_vs_elevationData_k;                                                                           ""\n"
+        "    }                                                                                                              ""\n"
+        "    else                                                                                                           ""\n"
+        "    {                                                                                                              ""\n"
+        "        v.y = 0.0;                                                                                                 ""\n"
+        "    }                                                                                                              ""\n"
+        "                                                                                                                   ""\n"
         //   Finally output processed modified vertex
-        "    gl_Position = param_mProjection * param_mView * v;                                                             "
-        "}                                                                                                                  ");
+        "    gl_Position = param_vs_mProjection * param_vs_mView * v;                                                       ""\n"
+        "}                                                                                                                  ""\n");
     QString preprocessedVertexShader = vertexShader;
+    QString preprocessedVertexShader_UnrolledPerLayerTexCoordsProcessingCode;
+    for(int layerId = TileLayerId::RasterMap, linearIdx = 0; layerId < TileLayerId::IdsCount; layerId++, linearIdx++)
+    {
+        QString preprocessedVertexShader_perTileLayerTexCoordsProcessing = vertexShader_perTileLayerTexCoordsProcessing;
+        preprocessedVertexShader_perTileLayerTexCoordsProcessing.replace("%layerId%", QString::number(layerId));
+        preprocessedVertexShader_perTileLayerTexCoordsProcessing.replace("%layerLinearIndex%", QString::number(linearIdx));
+
+        preprocessedVertexShader_UnrolledPerLayerTexCoordsProcessingCode +=
+            preprocessedVertexShader_perTileLayerTexCoordsProcessing;
+    }
+    preprocessedVertexShader.replace("%UnrolledPerLayerTexCoordsProcessingCode%",
+        preprocessedVertexShader_UnrolledPerLayerTexCoordsProcessingCode);
     preprocessedVertexShader.replace("%TileSize3D%", QString::number(TileSide3D));
     preprocessedVertexShader.replace("%TextureTilePixelPadding%", QString::number(BitmapTileTexelPadding));
+    preprocessedVertexShader.replace("%TileLayersCount%", QString::number(TileLayerId::IdsCount));
+    preprocessedVertexShader.replace("%RasterTileLayersCount%", QString::number(TileLayerId::IdsCount - TileLayerId::RasterMap));
+    preprocessedVertexShader.replace("%Layer_ElevationData%", QString::number(TileLayerId::ElevationData));
+    preprocessedVertexShader.replace("%Layer_RasterMap%", QString::number(TileLayerId::RasterMap));
     _vertexShader = compileShader(GL_VERTEX_SHADER, preprocessedVertexShader.toStdString().c_str());
     assert(_vertexShader != 0);
 
     // Compile fragment shader
-    const char* const fragmentShader =
+    const QString fragmentShader_perTileLayer = QString::fromLatin1(
+        "    if(param_fs_perTileLayer[%layerLinearIdx%].k > floatEpsilon)                                                   ""\n"
+        "    {                                                                                                              ""\n"
+        "        vec4 color = texture(                                                                                      ""\n"
+        "            param_fs_perTileLayer[%layerLinearIdx%].sampler,                                                       ""\n"
+        "            v2f_texCoordsPerLayer[%layerLinearIdx%]);                                                              ""\n"
+        "                                                                                                                   ""\n"
+        //TODO: alpha*k is the proper alpha for mixing
+        "        out_color += color;                                                                                        ""\n"
+        "                                                                                                                   ""\n"
+        "                                                                                                                   ""\n"
+        "                                                                                                                   ""\n"
+        "    }                                                                                                              ""\n");
+    const QString fragmentShader = QString::fromLatin1(
         "#version 430 core                                                                                                  ""\n"
-        "                                                                                                                   "
+        "                                                                                                                   ""\n"
+        // Constants
+        "const float floatEpsilon = 0.000001;                                                                               ""\n"
+        "                                                                                                                   ""\n"
         // Input data
-        "in vec2 g_vertexUV0;                                                                                               "
-        "                                                                                                                   "
+        "in vec2 v2f_texCoordsPerLayer[%RasterTileLayersCount%];                                                            ""\n"
+        "                                                                                                                   ""\n"
         // Output data
-        "out vec4 out_color;                                                                                                "
-        "                                                                                                                   "
-        // Arguments
-        "uniform sampler2D param_sampler0;                                                                                  "
-        "                                                                                                                   "
-        "void main()                                                                                                        "
-        "{                                                                                                                  "
-        "    out_color = texture(param_sampler0, g_vertexUV0);                                                              "
-        "}                                                                                                                  ";
-    _fragmentShader = compileShader(GL_FRAGMENT_SHADER, fragmentShader);
+        "out vec4 out_color;                                                                                                ""\n"
+        "                                                                                                                   ""\n"
+        // Parameters: per-layer data
+        "struct LayerInputPerTile                                                                                           ""\n"
+        "{                                                                                                                  ""\n"
+        "    float k;                                                                                                       ""\n"
+        "    sampler2D sampler;                                                                                             ""\n"
+        "};                                                                                                                 ""\n"
+        "uniform LayerInputPerTile param_fs_perTileLayer[%RasterTileLayersCount%];                                          ""\n"
+        "                                                                                                                   ""\n"
+        "void main()                                                                                                        ""\n"
+        "{                                                                                                                  ""\n"
+        //   Take base color from RasterMap layer
+        "    out_color = texture(                                                                                           ""\n"
+        "        param_fs_perTileLayer[0].sampler,                                                                          ""\n"
+        "        v2f_texCoordsPerLayer[0]);                                                                                 ""\n"
+        "    out_color.a *= param_fs_perTileLayer[0].k;                                                                     ""\n"
+        "%UnrolledPerLayerProcessingCode%                                                                                   ""\n"
+        "                                                                                                                   ""\n"
+        //   Remove pixel if it's completely transparent
+        "    if(out_color.a < floatEpsilon)                                                                                 ""\n"
+        "        discard;                                                                                                   ""\n"
+        "                                                                                                                   ""\n"
+        "}                                                                                                                  ""\n");
+    QString preprocessedFragmentShader = fragmentShader;
+    QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
+    for(int layerId = TileLayerId::MapOverlay0; layerId <= TileLayerId::MapOverlay3; layerId++)
+    {
+        auto linearIdx = layerId - TileLayerId::RasterMap;
+        QString preprocessedFragmentShader_perTileLayer = fragmentShader_perTileLayer;
+        preprocessedFragmentShader_perTileLayer.replace("%layerLinearIdx%", QString::number(linearIdx));
+
+        preprocessedFragmentShader_UnrolledPerLayerProcessingCode += preprocessedFragmentShader_perTileLayer;
+    }
+    preprocessedFragmentShader.replace("%UnrolledPerLayerProcessingCode%", preprocessedFragmentShader_UnrolledPerLayerProcessingCode);
+    preprocessedFragmentShader.replace("%TileLayersCount%", QString::number(TileLayerId::IdsCount));
+    preprocessedFragmentShader.replace("%RasterTileLayersCount%", QString::number(TileLayerId::IdsCount - TileLayerId::RasterMap));
+    preprocessedFragmentShader.replace("%Layer_RasterMap%", QString::number(TileLayerId::RasterMap));
+    _fragmentShader = compileShader(GL_FRAGMENT_SHADER, preprocessedFragmentShader.toStdString().c_str());
     assert(_fragmentShader != 0);
 
     // Link everything into program object
@@ -123,54 +217,40 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
     _programObject = linkProgram(2, shaders);
     assert(_programObject != 0);
 
-    _vertexShader_in_vertexPosition = glGetAttribLocation(_programObject, "in_vertexPosition");
-    GL_CHECK_RESULT;
-    assert(_vertexShader_in_vertexPosition != -1);
+    _programVariables.clear();
+    findVariableLocation(_programObject, _vertexShader_in_vertexPosition, "in_vs_vertexPosition", In);
+    findVariableLocation(_programObject, _vertexShader_in_vertexTexCoords, "in_vs_vertexTexCoords", In);
+    findVariableLocation(_programObject, _vertexShader_param_mProjection, "param_vs_mProjection", Uniform);
+    findVariableLocation(_programObject, _vertexShader_param_mView, "param_vs_mView", Uniform);
+    findVariableLocation(_programObject, _vertexShader_param_centerOffset, "param_vs_centerOffset", Uniform);
+    findVariableLocation(_programObject, _vertexShader_param_targetTile, "param_vs_targetTile", Uniform);
+    findVariableLocation(_programObject, _vertexShader_param_tile, "param_vs_tile", Uniform);
+    findVariableLocation(_programObject, _vertexShader_param_elevationData_sampler, "param_vs_elevationData_sampler", Uniform);
+    findVariableLocation(_programObject, _vertexShader_param_elevationData_k, "param_vs_elevationData_k", Uniform);
+    for(int layerId = 0; layerId < TileLayerId::IdsCount; layerId++)
+    {
+        const auto layerStructName =
+            QString::fromLatin1("param_vs_perTileLayer[%layerId%]")
+            .replace(QString::fromLatin1("%layerId%"), QString::number(layerId));
+        auto& layerStruct = _vertexShader_param_perTileLayer[layerId];
 
-    _vertexShader_in_vertexTexCoords = glGetAttribLocation(_programObject, "in_vertexUV0");
-    GL_CHECK_RESULT;
-    assert(_vertexShader_in_vertexTexCoords != -1);
+        findVariableLocation(_programObject, layerStruct.tileSizeN, layerStructName + ".tileSizeN", Uniform);
+        findVariableLocation(_programObject, layerStruct.tilePaddingN, layerStructName + ".tilePaddingN", Uniform);
+        findVariableLocation(_programObject, layerStruct.slotsPerSide, layerStructName + ".slotsPerSide", Uniform);
+        findVariableLocation(_programObject, layerStruct.slotIndex, layerStructName + ".slotIndex", Uniform);
+    }
+    for(int layerId = TileLayerId::RasterMap, linearIdx = 0; layerId < TileLayerId::IdsCount; layerId++, linearIdx++)
+    {
+        const auto layerStructName =
+            QString::fromLatin1("param_fs_perTileLayer[%linearIdx%]")
+            .replace(QString::fromLatin1("%linearIdx%"), QString::number(linearIdx));
+        auto& layerStruct = _fragmentShader_param_perTileLayer[linearIdx];
 
-    _vertexShader_param_mProjection = glGetUniformLocation(_programObject, "param_mProjection");
-    GL_CHECK_RESULT;
-    assert(_vertexShader_param_mProjection != -1);
+        findVariableLocation(_programObject, layerStruct.k, layerStructName + ".k", Uniform);
+        findVariableLocation(_programObject, layerStruct.sampler, layerStructName + ".sampler", Uniform);
+    }
+    _programVariables.clear();
 
-    _vertexShader_param_mView = glGetUniformLocation(_programObject, "param_mView");
-    GL_CHECK_RESULT;
-    assert(_vertexShader_param_mView != -1);
-
-    _vertexShader_param_centerOffset = glGetUniformLocation(_programObject, "param_centerOffset");
-    GL_CHECK_RESULT;
-    assert(_vertexShader_param_centerOffset != -1);
-
-    _vertexShader_param_targetTile = glGetUniformLocation(_programObject, "param_targetTile");
-    GL_CHECK_RESULT;
-    assert(_vertexShader_param_targetTile != -1);
-
-    _vertexShader_param_atlasSlotsInLine = glGetUniformLocation(_programObject, "param_atlasSlotsInLine");
-    GL_CHECK_RESULT;
-    assert(_vertexShader_param_atlasSlotsInLine != -1);
-
-    _vertexShader_param_tile = glGetUniformLocation(_programObject, "param_tile");
-    GL_CHECK_RESULT;
-    assert(_vertexShader_param_tile != -1);
-
-    _vertexShader_param_atlasSlotIndex = glGetUniformLocation(_programObject, "param_atlasSlotIndex");
-    GL_CHECK_RESULT;
-    assert(_vertexShader_param_atlasSlotIndex != -1);
-
-    _vertexShader_param_atlasSize = glGetUniformLocation(_programObject, "param_atlasSize");
-    GL_CHECK_RESULT;
-    assert(_vertexShader_param_atlasSize != -1);
-
-    _vertexShader_param_atlasTextureSize = glGetUniformLocation(_programObject, "param_atlasTextureSize");
-    GL_CHECK_RESULT;
-    assert(_vertexShader_param_atlasTextureSize != -1);
-
-    _fragmentShader_param_sampler0 = glGetUniformLocation(_programObject, "param_sampler0");
-    GL_CHECK_RESULT;
-    assert(_fragmentShader_param_sampler0 != -1);
-    */
     AtlasMapRenderer_BaseOpenGL::initializeRendering();
 }
 
@@ -178,7 +258,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
 {
     AtlasMapRenderer_BaseOpenGL::performRendering();
     GL_CHECK_RESULT;
-    /*
+ 
     // Setup viewport
     GLint oldViewport[4];
     glGetIntegerv(GL_VIEWPORT, oldViewport);
@@ -213,46 +293,21 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
     targetTile.y = _activeConfig.target31.y >> (31 - _activeConfig.zoomBase);
     glUniform2i(_vertexShader_param_targetTile, targetTile.x, targetTile.y);
     GL_CHECK_RESULT;
-    /*
-    if(_activeConfig.textureAtlasesAllowed && _maxTextureSize != 0)
-    {
-        // Set atlas slots per row
-        const auto atlasSlotsInLine = _maxTextureSize / (_activeConfig.tileProvider->getTileSize() + 2 * BitmapTileTexelPadding);
-        glUniform1i(_vertexShader_param_atlasSlotsInLine, atlasSlotsInLine);
-        GL_CHECK_RESULT;
-
-        // Set atlas size
-        const auto atlasSize = atlasSlotsInLine * (_activeConfig.tileProvider->getTileSize() + 2 * BitmapTileTexelPadding);
-        glUniform1i(_vertexShader_param_atlasSize, atlasSize);
-        GL_CHECK_RESULT;
-
-        // Set atlas size
-        glUniform1i(_vertexShader_param_atlasTextureSize, _maxTextureSize);
-        GL_CHECK_RESULT;
-    }
-    else
-    {
-        // Set atlas slots per row
-        glUniform1i(_vertexShader_param_atlasSlotsInLine, 0);
-        GL_CHECK_RESULT;
-
-        // Set atlas size
-        glUniform1i(_vertexShader_param_atlasSize, 0);
-        GL_CHECK_RESULT;
-
-        // Set atlas size
-        glUniform1i(_vertexShader_param_atlasTextureSize, 0);
-        GL_CHECK_RESULT;
-    }*/
-    /*
+    
     // Set tile patch VAO
     assert(glBindVertexArray);
     glBindVertexArray(_tilePatchVAO);
     GL_CHECK_RESULT;
 
-    // Set sampler index
-    glUniform1i(_fragmentShader_param_sampler0, 0);
-    /*
+    // Set samplers
+    glUniform1i(_vertexShader_param_elevationData_sampler, TileLayerId::ElevationData);
+    GL_CHECK_RESULT;
+    for(int layerId = TileLayerId::RasterMap; layerId < TileLayerId::IdsCount; layerId++)
+    {
+        glUniform1i(_fragmentShader_param_perTileLayer[layerId - TileLayerId::RasterMap].sampler, layerId);
+        GL_CHECK_RESULT;
+    }
+
     // For each visible tile, render it
     for(auto itTileId = _visibleTiles.begin(); itTileId != _visibleTiles.end(); ++itTileId)
     {
@@ -262,56 +317,142 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
         glUniform2i(_vertexShader_param_tile, tileId.x, tileId.y);
         GL_CHECK_RESULT;
 
-        // We need to pass each layer of this tile to shader
-        for(int layerId = 0; layerId < TileLayerId::IdsCount; layerId++)
+        // Set elevation data
         {
+            auto& tileLayer = _tileLayers[TileLayerId::ElevationData];
 
-        }
+            QMutexLocker scopeLock(&tileLayer._cacheModificationMutex);
 
-
-        // Obtain tile from cache
-        std::shared_ptr<TileZoomCache::Tile> cachedTile_;
-        bool cacheHit;
-        {
-            QMutexLocker scopeLock(&_tilesCacheMutex);
-
-            cacheHit = _tilesCache.getTile(_activeConfig.zoomBase, tileId, cachedTile_);
-        }
-
-        if(!cacheHit)
-        {
-            //TODO: render stub
-        }
-        else
-        {
-            auto cachedTile = static_cast<CachedTile_OpenGL*>(cachedTile_.get());
-            if(cachedTile->textureId == 0)
+            std::shared_ptr<TileZoomCache::Tile> cachedTile_;
+            bool cacheHit = tileLayer._cache.getTile(_activeConfig.zoomBase, tileId, cachedTile_);
+            if(cacheHit)
             {
-                //TODO: render non existent tile
+                auto cachedTile = static_cast<CachedTile*>(cachedTile_.get());
+
+                glUniform1f(_vertexShader_param_elevationData_k, 1.0f);
+                GL_CHECK_RESULT;
+
+                glActiveTexture(GL_TEXTURE0 + TileLayerId::ElevationData);
+                GL_CHECK_RESULT;
+
+                glEnable(GL_TEXTURE_2D);
+                GL_CHECK_RESULT;
+
+                glBindTexture(GL_TEXTURE_2D, reinterpret_cast<GLuint>(cachedTile->textureRef));
+                GL_CHECK_RESULT;
+
+                const auto& perTile_vs = _vertexShader_param_perTileLayer[TileLayerId::ElevationData];
+                glUniform1i(perTile_vs.slotIndex, cachedTile->atlasSlotIndex);
+                GL_CHECK_RESULT;
+                if(cachedTile->atlasSlotIndex >= 0)
+                {
+                    const auto& atlas = tileLayer._atlasTexturePools[cachedTile->atlasPoolId];
+                    glUniform1f(perTile_vs.tileSizeN, atlas._tileSizeN);
+                    GL_CHECK_RESULT;
+                    glUniform1f(perTile_vs.tilePaddingN, atlas._tilePaddingN);
+                    GL_CHECK_RESULT;
+                    glUniform1i(perTile_vs.slotsPerSide, atlas._slotsPerSide);
+                    GL_CHECK_RESULT;
+
+                    glBindSampler(TileLayerId::ElevationData, _textureSampler_ElevationData_Atlas);
+                    GL_CHECK_RESULT;
+                }
+                else
+                {
+                    glBindSampler(TileLayerId::ElevationData, _textureSampler_ElevationData_NoAtlas);
+                    GL_CHECK_RESULT;
+                }
             }
             else
             {
-                // Set atlas slot index
-                glUniform1i(_vertexShader_param_atlasSlotIndex, cachedTile->atlasSlotIndex);
-                GL_CHECK_RESULT;
-
-                // Bind to texture
-                glActiveTexture(GL_TEXTURE0);
-                GL_CHECK_RESULT;
-                glBindTexture(GL_TEXTURE_2D, cachedTile->textureId);
-                GL_CHECK_RESULT;
-                glBindSampler(0, (_maxTextureSize != 0 && _activeConfig.textureAtlasesAllowed) ? _tileTextureSampler_Atlas : _tileTextureSampler_NoAtlas);
-                GL_CHECK_RESULT;
-
-                const auto verticesCount = _activeConfig.elevationDataProvider
-                    ? (TileElevationNodesPerSide * TileElevationNodesPerSide) * 4 * 3
-                    : 6;
-                glDrawElements(GL_TRIANGLES, verticesCount, GL_UNSIGNED_SHORT, nullptr);
+                glUniform1f(_vertexShader_param_elevationData_k, 0.0f);
                 GL_CHECK_RESULT;
             }
         }
+        
+        // We need to pass each layer of this tile to shader
+        for(int layerId = TileLayerId::RasterMap; layerId < TileLayerId::IdsCount; layerId++)
+        {
+            auto& tileLayer = _tileLayers[layerId];
+            const auto& perTile_vs = _vertexShader_param_perTileLayer[layerId];
+            const auto& perTile_fs = _fragmentShader_param_perTileLayer[layerId];
+
+            QMutexLocker scopeLock(&tileLayer._cacheModificationMutex);
+
+            std::shared_ptr<TileZoomCache::Tile> cachedTile_;
+            bool cacheHit = tileLayer._cache.getTile(_activeConfig.zoomBase, tileId, cachedTile_);
+            if(cacheHit)
+            {
+                auto cachedTile = static_cast<CachedTile*>(cachedTile_.get());
+
+                if(cachedTile->textureRef == nullptr)
+                {
+                    //TODO: render "not available" stub
+                    glUniform1f(perTile_fs.k, 0.0f);
+                    GL_CHECK_RESULT;
+                }
+                else
+                {
+                    glUniform1f(perTile_fs.k, 1.0f);
+                    GL_CHECK_RESULT;
+
+                    glActiveTexture(GL_TEXTURE0 + layerId);
+                    GL_CHECK_RESULT;
+
+                    glEnable(GL_TEXTURE_2D);
+                    GL_CHECK_RESULT;
+
+                    glBindTexture(GL_TEXTURE_2D, reinterpret_cast<GLuint>(cachedTile->textureRef));
+                    GL_CHECK_RESULT;
+
+                    glUniform1i(perTile_vs.slotIndex, cachedTile->atlasSlotIndex);
+                    GL_CHECK_RESULT;
+                    if(cachedTile->atlasSlotIndex >= 0)
+                    {
+                        const auto& atlas = tileLayer._atlasTexturePools[cachedTile->atlasPoolId];
+
+                        glUniform1f(perTile_vs.tileSizeN, atlas._tileSizeN);
+                        GL_CHECK_RESULT;
+                        glUniform1f(perTile_vs.tilePaddingN, atlas._tilePaddingN);
+                        GL_CHECK_RESULT;
+                        glUniform1i(perTile_vs.slotsPerSide, atlas._slotsPerSide);
+                        GL_CHECK_RESULT;
+
+                        glBindSampler(layerId, _textureSampler_Bitmap_Atlas);
+                        GL_CHECK_RESULT;
+                    }
+                    else
+                    {
+                        glBindSampler(layerId, _textureSampler_Bitmap_NoAtlas);
+                        GL_CHECK_RESULT;
+                    }
+                }
+            }
+            else
+            {
+                //TODO: render "in-progress" stub
+                glUniform1f(perTile_fs.k, 0.0f);
+                GL_CHECK_RESULT;
+            }
+        }
+
+        const auto verticesCount = _activeConfig.tileProviders[TileLayerId::ElevationData]
+            ? (TileElevationNodesPerSide * TileElevationNodesPerSide) * 4 * 3
+            : 6;
+        glDrawElements(GL_TRIANGLES, verticesCount, GL_UNSIGNED_SHORT, nullptr);
+        GL_CHECK_RESULT;
     }
-    *//*
+
+    // Disable textures
+    for(int layerId = 0; layerId < TileLayerId::IdsCount; layerId++)
+    {
+        glActiveTexture(GL_TEXTURE0 + layerId);
+        GL_CHECK_RESULT;
+
+        glDisable(GL_TEXTURE_2D);
+        GL_CHECK_RESULT;
+    }
+    
     // Deselect VAO
     glBindVertexArray(0);
     GL_CHECK_RESULT;
@@ -322,7 +463,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
 
     // Revert viewport
     glViewport(oldViewport[0], oldViewport[1], oldViewport[2], oldViewport[3]);
-    GL_CHECK_RESULT;*/
+    GL_CHECK_RESULT;
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL::releaseRendering()

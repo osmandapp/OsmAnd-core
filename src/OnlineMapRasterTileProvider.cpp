@@ -159,7 +159,9 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const TileId& tile
                     _processingMutex.unlock();
                     
                     std::shared_ptr<Tile> tile(new Tile(skBitmap));
+                    LogPrintf(LogSeverityLevel::Debug, "CB[");
                     readyCallback(tileId, zoom, tile, true);
+                    LogPrintf(LogSeverityLevel::Debug, "]CB");
                     return;
                 }
             }

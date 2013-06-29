@@ -82,7 +82,7 @@ namespace OsmAnd {
         };
 
     private:
-        void tileReadyCallback(const TileLayerId& layerId, const TileId& tileId, uint32_t zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile, bool success);
+        void handleProvidedTile(const TileLayerId& layerId, const TileId& tileId, uint32_t zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile, bool success);
 
         QMutex _tileLayersCacheInvalidatedMaskMutex;
         volatile uint32_t _tileLayersCacheInvalidatedMask;
@@ -144,6 +144,10 @@ namespace OsmAnd {
             void* _lastNonFullTextureRef;
             int _firstFreeSlotIndex;
             QMultiMap< void*, int > _freedSlots;
+
+            float _tileSizeN;
+            float _tilePaddingN;
+            uint32_t _slotsPerSide;
         };
         struct OSMAND_CORE_API TileLayer
         {

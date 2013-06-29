@@ -42,8 +42,10 @@
 
 #if !defined(NDEBUG)
 #   define GL_CHECK_RESULT validateResult()
+#   define GL_GET_RESULT validateResult()
 #else
 #   define GL_CHECK_RESULT
+#   define GL_GET_RESULT glGetError()
 #endif
 
 namespace OsmAnd {
@@ -55,7 +57,7 @@ namespace OsmAnd {
     protected:
         uint32_t _maxTextureSize;
         
-        virtual void validateResult() = 0;
+        virtual GLenum validateResult() = 0;
         virtual GLuint compileShader(GLenum shaderType, const char* source) = 0;
         virtual GLuint linkProgram(GLuint shadersCount, GLuint *shaders) = 0;
 

@@ -28,6 +28,7 @@
 
 #include <QMap>
 #include <QMultiMap>
+#include <QSet>
 
 #if defined(WIN32)
 #   define WIN32_LEAN_AND_MEAN
@@ -54,9 +55,17 @@ namespace OsmAnd {
             BitmapTileTexelPadding = 2,
         };
 
-        virtual void validateResult();
+        virtual GLenum validateResult();
         virtual GLuint compileShader(GLenum shaderType, const char* source);
         virtual GLuint linkProgram(GLuint shadersCount, GLuint *shaders);
+
+        enum VariableType
+        {
+            In,
+            Uniform
+        };
+        QMap< GLuint, QMultiMap< VariableType, GLint > > _programVariables;
+        void findVariableLocation(GLuint program, GLint& location, const QString& name, const VariableType& type);
 
         virtual void uploadTileToTexture(TileLayerId layerId, const TileId& tileId, uint32_t zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile, uint64_t& atlasPoolId, void*& textureRef, int& atlasSlotIndex, size_t& usedMemory);
         virtual void releaseTexture(void* textureRef);

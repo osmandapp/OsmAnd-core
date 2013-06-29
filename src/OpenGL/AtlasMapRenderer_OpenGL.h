@@ -26,7 +26,6 @@
 #include <memory>
 
 #include <QMap>
-#include <QSet>
 
 #include <OsmAndCore.h>
 #include <CommonTypes.h>
@@ -49,18 +48,34 @@ namespace OsmAnd {
         GLuint _fragmentShader;
         GLuint _programObject;
         
+        // Input data
         GLint _vertexShader_in_vertexPosition;
         GLint _vertexShader_in_vertexTexCoords;
+
+        // Parameters: common data
         GLint _vertexShader_param_mProjection;
         GLint _vertexShader_param_mView;
         GLint _vertexShader_param_centerOffset;
         GLint _vertexShader_param_targetTile;
-        GLint _vertexShader_param_atlasSlotsInLine;
+        
+        // Parameters: per-tile data
         GLint _vertexShader_param_tile;
-        GLint _vertexShader_param_atlasSlotIndex;
-        GLint _vertexShader_param_atlasSize;
-        GLint _vertexShader_param_atlasTextureSize;
-        GLint _fragmentShader_param_sampler0;
+        GLint _vertexShader_param_elevationData_k;
+        GLint _vertexShader_param_elevationData_sampler;
+
+        // Parameters: per-tile-per-layer data
+        struct
+        {
+            GLint tileSizeN;
+            GLint tilePaddingN;
+            GLint slotsPerSide;
+            GLint slotIndex;
+        } _vertexShader_param_perTileLayer[IMapRenderer::TileLayerId::IdsCount];
+        struct
+        {
+            GLint k;
+            GLint sampler;
+        } _fragmentShader_param_perTileLayer[IMapRenderer::TileLayerId::IdsCount - IMapRenderer::TileLayerId::RasterMap];
 
         virtual void allocateTilePatch(Vertex* vertices, size_t verticesCount, GLushort* indices, size_t indicesCount);
         virtual void releaseTilePatch();
