@@ -61,7 +61,7 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const TileId& tile
         QMutexLocker scopeLock(&_requestsMutex);
         if(_requestedTileIds[zoom].contains(tileId))
         {
-            LogPrintf(LogSeverityLevel::Debug, "Request for tile %dx%d@%d ignored: already requested\n", tileId.x, tileId.y, zoom);
+            //LogPrintf(LogSeverityLevel::Debug, "Request for tile %dx%d@%d ignored: already requested\n", tileId.x, tileId.y, zoom);
             return;
         }
         _requestedTileIds[zoom].insert(tileId);
@@ -72,13 +72,13 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const TileId& tile
         {
             _processingMutex.lock();
 
-            LogPrintf(LogSeverityLevel::Debug, "Processing order of tile %dx%d@%d : local-lookup\n", tileId.x, tileId.y, zoom);
+            //LogPrintf(LogSeverityLevel::Debug, "Processing order of tile %dx%d@%d : local-lookup\n", tileId.x, tileId.y, zoom);
 
             // Check if we're already in process of downloading this tile, or
             // if this tile is in pending-download state
             if(_enqueuedTileIdsForDownload[zoom].contains(tileId) || _currentlyDownloadingTileIds[zoom].contains(tileId))
             {
-                LogPrintf(LogSeverityLevel::Debug, "Ignoring order of tile %dx%d@%d : already in pending-download or downloading state\n", tileId.x, tileId.y, zoom);
+                //LogPrintf(LogSeverityLevel::Debug, "Ignoring order of tile %dx%d@%d : already in pending-download or downloading state\n", tileId.x, tileId.y, zoom);
                 _processingMutex.unlock();
                 return;
             }
@@ -97,7 +97,7 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const TileId& tile
                     // 0-sized tile means there is no data at all
                     if(tileFile.size() == 0)
                     {
-                        LogPrintf(LogSeverityLevel::Debug, "Order processed of tile %dx%d@%d : local-lookup 0 tile\n", tileId.x, tileId.y, zoom);
+                        //LogPrintf(LogSeverityLevel::Debug, "Order processed of tile %dx%d@%d : local-lookup 0 tile\n", tileId.x, tileId.y, zoom);
                         {
                             QMutexLocker scopeLock(&_requestsMutex);
                             _requestedTileIds[zoom].remove(tileId);
@@ -151,7 +151,7 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const TileId& tile
                     assert(skBitmap->width() == tileDimension);
 
                     // Construct tile response
-                    LogPrintf(LogSeverityLevel::Debug, "Order processed of tile %dx%d@%d : local-lookup\n", tileId.x, tileId.y, zoom);
+                    //LogPrintf(LogSeverityLevel::Debug, "Order processed of tile %dx%d@%d : local-lookup\n", tileId.x, tileId.y, zoom);
                     {
                         QMutexLocker scopeLock(&_requestsMutex);
                         _requestedTileIds[zoom].remove(tileId);
@@ -159,9 +159,7 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const TileId& tile
                     _processingMutex.unlock();
                     
                     std::shared_ptr<Tile> tile(new Tile(skBitmap));
-                    LogPrintf(LogSeverityLevel::Debug, "CB[");
                     readyCallback(tileId, zoom, tile, true);
-                    LogPrintf(LogSeverityLevel::Debug, "]CB");
                     return;
                 }
             }

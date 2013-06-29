@@ -415,7 +415,7 @@ void OsmAnd::IMapRenderer::handleProvidedTile( const TileLayerId& layerId, const
     {
         QMutexLocker scopeLock(&tileLayer._pendingToCacheMutex);
 
-        LogPrintf(LogSeverityLevel::Debug, "Putting tile %dx%d@%d of layer %d to cache queue\n", tileId.x, tileId.y, zoom, layerId);
+        //LogPrintf(LogSeverityLevel::Debug, "Putting tile %dx%d@%d of layer %d to cache queue\n", tileId.x, tileId.y, zoom, layerId);
 
         assert(!tileLayer._pendingToCache[zoom].contains(tileId));
 
@@ -579,15 +579,15 @@ bool OsmAnd::IMapRenderer::TileLayer::uploadPending()
     const auto& pendingTile = _pendingToCacheQueue.dequeue();
     _pendingToCache[pendingTile.zoom].remove(pendingTile.tileId);
 
-    LogPrintf(LogSeverityLevel::Debug, "Going to upload tile %dx%d@%d of layer %d to cache from queue\n", pendingTile.tileId.x, pendingTile.tileId.y, pendingTile.zoom, pendingTile.layerId);
+    //LogPrintf(LogSeverityLevel::Debug, "Going to upload tile %dx%d@%d of layer %d to cache from queue\n", pendingTile.tileId.x, pendingTile.tileId.y, pendingTile.zoom, pendingTile.layerId);
 
     {
         // Upload that tile to texture
         QMutexLocker scopeLock(&_cacheModificationMutex);
 
-        LogPrintf(LogSeverityLevel::Debug, "Uploading tile %dx%d@%d of layer %d to cache from queue\n", pendingTile.tileId.x, pendingTile.tileId.y, pendingTile.zoom, pendingTile.layerId);
+        //LogPrintf(LogSeverityLevel::Debug, "Uploading tile %dx%d@%d of layer %d to cache from queue\n", pendingTile.tileId.x, pendingTile.tileId.y, pendingTile.zoom, pendingTile.layerId);
         pendingTile.renderer->cacheTile(pendingTile.layerId, pendingTile.tileId, pendingTile.zoom, pendingTile.tile);
-        LogPrintf(LogSeverityLevel::Debug, "Uploaded tile %dx%d@%d of layer %d to cache from queue\n", pendingTile.tileId.x, pendingTile.tileId.y, pendingTile.zoom, pendingTile.layerId);
+        //LogPrintf(LogSeverityLevel::Debug, "Uploaded tile %dx%d@%d of layer %d to cache from queue\n", pendingTile.tileId.x, pendingTile.tileId.y, pendingTile.zoom, pendingTile.layerId);
     }
 
     return !_pendingToCacheQueue.isEmpty();
