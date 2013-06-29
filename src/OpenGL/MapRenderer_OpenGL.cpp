@@ -441,6 +441,7 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
                 {
                     *reinterpret_cast<uint32_t*>(&fillBuffer[idx * 4]) = 0xFFFF0000;
                 }
+                glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
                 glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, atlasPool._textureSize, atlasPool._textureSize, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, fillBuffer);
                 delete[] fillBuffer;
             }
