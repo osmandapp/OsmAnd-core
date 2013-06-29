@@ -218,7 +218,6 @@ void OsmAnd::IMapRenderer::initializeRendering()
 void OsmAnd::IMapRenderer::performRendering()
 {
     assert(_isRenderingInitialized);
-
     assert(_renderThreadId == QThread::currentThreadId());
 
     if(_configInvalidated)
@@ -251,7 +250,7 @@ void OsmAnd::IMapRenderer::performRendering()
         //TODO: Use smarter clear condition
         tileLayer._cache.clearExceptInterestSet(_visibleTiles, _activeConfig.zoomBase, qMax(0, _activeConfig.zoomBase - 2), qMin(31, _activeConfig.zoomBase + 2));
     }
-    
+
     // Process tiles that are in pending-to-cache queue.
     // These are tiles that have been loaded to main memory but not yet uploaded
     // to GPU memory, since this can only be done in render thread.
@@ -331,7 +330,7 @@ void OsmAnd::IMapRenderer::requestCacheMissTiles()
                     bool availableImmediately = bitmapTileProvider->obtainTileImmediate(tileId, _activeConfig.zoomBase, tile);
                     if(availableImmediately)
                     {
-                        LogPrintf(LogSeverityLevel::Debug, "Uploading tile %dx%d@%d of layer %d to cache immediately\n", tileId.x, tileId.y, _activeConfig.zoomBase, layerId);
+                        //LogPrintf(LogSeverityLevel::Debug, "Uploading tile %dx%d@%d of layer %d to cache immediately\n", tileId.x, tileId.y, _activeConfig.zoomBase, layerId);
                         cacheTile(static_cast<TileLayerId>(layerId), tileId, _activeConfig.zoomBase, tile);
                         tileLayer._cacheModificationMutex.unlock();
                         continue;
@@ -345,7 +344,7 @@ void OsmAnd::IMapRenderer::requestCacheMissTiles()
                             continue;
                         tileLayer._requestedTiles[_activeConfig.zoomBase].insert(tileId);
 
-                        LogPrintf(LogSeverityLevel::Debug, "Ordering tile %dx%d@%d of layer %d\n", tileId.x, tileId.y, _activeConfig.zoomBase, layerId);
+                        //LogPrintf(LogSeverityLevel::Debug, "Ordering tile %dx%d@%d of layer %d\n", tileId.x, tileId.y, _activeConfig.zoomBase, layerId);
                         bitmapTileProvider->obtainTileDeffered(tileId, _activeConfig.zoomBase, callback);
                     }
                 }
@@ -358,7 +357,7 @@ void OsmAnd::IMapRenderer::requestCacheMissTiles()
                     bool availableImmediately = elevationDataTileProvider->obtainTileImmediate(tileId, _activeConfig.zoomBase, maxHeightmapResolutionPerTile, tile);
                     if(availableImmediately)
                     {
-                        LogPrintf(LogSeverityLevel::Debug, "Uploading tile %dx%d@%d of layer %d to cache immediately\n", tileId.x, tileId.y, _activeConfig.zoomBase, layerId);
+                        //LogPrintf(LogSeverityLevel::Debug, "Uploading tile %dx%d@%d of layer %d to cache immediately\n", tileId.x, tileId.y, _activeConfig.zoomBase, layerId);
                         cacheTile(static_cast<TileLayerId>(layerId), tileId, _activeConfig.zoomBase, tile);
                         tileLayer._cacheModificationMutex.unlock();
                         continue;
@@ -372,7 +371,7 @@ void OsmAnd::IMapRenderer::requestCacheMissTiles()
                             continue;
                         tileLayer._requestedTiles[_activeConfig.zoomBase].insert(tileId);
 
-                        LogPrintf(LogSeverityLevel::Debug, "Ordering tile %dx%d@%d of layer %d\n", tileId.x, tileId.y, _activeConfig.zoomBase, layerId);
+                        //LogPrintf(LogSeverityLevel::Debug, "Ordering tile %dx%d@%d of layer %d\n", tileId.x, tileId.y, _activeConfig.zoomBase, layerId);
                         elevationDataTileProvider->obtainTileDeffered(tileId, _activeConfig.zoomBase, maxHeightmapResolutionPerTile, callback);
                     }
                     
@@ -403,7 +402,7 @@ void OsmAnd::IMapRenderer::cacheTile( TileLayerId layerId, const TileId& tileId,
     int atlasSlotIndex = -1;
     size_t usedMemory = 0;
     uploadTileToTexture(layerId, tileId, zoom, tile, atlasPoolId, textureRef, atlasSlotIndex, usedMemory);
-
+    
     tileLayer._cache.putTile(std::shared_ptr<TileZoomCache::Tile>(static_cast<TileZoomCache::Tile*>(
         new CachedTile(this, layerId, zoom, tileId, atlasPoolId, textureRef, atlasSlotIndex, usedMemory))));
 }
@@ -580,7 +579,6 @@ bool OsmAnd::IMapRenderer::TileLayer::uploadPending()
     _pendingToCache[pendingTile.zoom].remove(pendingTile.tileId);
 
     //LogPrintf(LogSeverityLevel::Debug, "Going to upload tile %dx%d@%d of layer %d to cache from queue\n", pendingTile.tileId.x, pendingTile.tileId.y, pendingTile.zoom, pendingTile.layerId);
-
     {
         // Upload that tile to texture
         QMutexLocker scopeLock(&_cacheModificationMutex);

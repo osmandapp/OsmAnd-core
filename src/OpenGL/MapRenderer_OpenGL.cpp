@@ -347,7 +347,6 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
     outUsedMemory = fullTileSize * fullTileSize * sourcePixelByteSize;
 
     auto itAtlasPool = tileLayer._atlasTexturePools.find(outAtlasPoolId);
-    
     if(_activeConfig.textureAtlasesAllowed)
     {
         if(itAtlasPool == tileLayer._atlasTexturePools.end())
@@ -380,7 +379,6 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
             outUsedMemory = atlasPool._textureSize * atlasPool._textureSize * sourcePixelByteSize;
         }
     }
-    
     // Use atlas textures if possible
     if(itAtlasPool != tileLayer._atlasTexturePools.end() && itAtlasPool->_textureSize != 0)
     {
@@ -465,10 +463,6 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
         const auto yOffset = (atlasSlotIndex / atlasPool._slotsPerSide) * fullTileSize;
         const auto xOffset = (atlasSlotIndex % atlasPool._slotsPerSide) * fullTileSize;
 
-        // Set stride
-        glPixelStorei(GL_UNPACK_ROW_LENGTH, tile->rowLength / sourcePixelByteSize);
-        GL_CHECK_RESULT;
-
         if(padding > 0)
         {
             // Fill corners
@@ -476,6 +470,10 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
             const size_t cornerDataSize = sourcePixelByteSize * pixelsCount;
             uint8_t* pCornerData = new uint8_t[cornerDataSize];
             const GLvoid* pCornerPixel;
+            
+            // Set stride
+            glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+            GL_CHECK_RESULT;
 
             // Top-left corner
             pCornerPixel = tile->data;
@@ -523,6 +521,10 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
 
             delete[] pCornerData;
 
+            // Set stride
+            glPixelStorei(GL_UNPACK_ROW_LENGTH, tile->rowLength / sourcePixelByteSize);
+            GL_CHECK_RESULT;
+
             // Left column duplicate
             for(int idx = 0; idx < padding; idx++)
             {
@@ -568,12 +570,20 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
             }
         }
 
+        // Set stride
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, tile->rowLength / sourcePixelByteSize);
+        GL_CHECK_RESULT;
+
         // Main data
         glTexSubImage2D(GL_TEXTURE_2D, 0,
             xOffset + padding, yOffset + padding, (GLsizei)tileSize, (GLsizei)tileSize,
             sourceFormat,
             sourceFormatType,
             tile->data);
+        GL_CHECK_RESULT;
+
+        // Set stride
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
         GL_CHECK_RESULT;
 
         // Deselect atlas as active texture
@@ -612,6 +622,10 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
             sourceFormat,
             sourceFormatType,
             tile->data);
+        GL_CHECK_RESULT;
+
+        // Set stride
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
         GL_CHECK_RESULT;
 
         // Deselect atlas as active texture
