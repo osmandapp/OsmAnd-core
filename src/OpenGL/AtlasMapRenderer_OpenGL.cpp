@@ -375,7 +375,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
         {
             auto& tileLayer = _tileLayers[layerId];
             const auto& perTile_vs = _vertexShader_param_perTileLayer[layerId];
-            const auto& perTile_fs = _fragmentShader_param_perTileLayer[layerId];
+            const auto& perTile_fs = _fragmentShader_param_perTileLayer[layerId - TileLayerId::RasterMap];
 
             QMutexLocker scopeLock(&tileLayer._cacheModificationMutex);
 
