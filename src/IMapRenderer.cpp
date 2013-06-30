@@ -515,6 +515,7 @@ OsmAnd::IMapRenderer::AtlasTexturePool::AtlasTexturePool()
     , _tileSizeN(0.0f)
     , _tilePaddingN(0.0f)
     , _slotsPerSide(0)
+    , _mipmapLevels(0)
 {
 }
 

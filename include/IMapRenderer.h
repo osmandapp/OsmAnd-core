@@ -149,6 +149,7 @@ namespace OsmAnd {
             float _tileSizeN;
             float _tilePaddingN;
             uint32_t _slotsPerSide;
+            uint32_t _mipmapLevels;
         };
         struct OSMAND_CORE_API TileLayer
         {

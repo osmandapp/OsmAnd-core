@@ -136,7 +136,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
     preprocessedVertexShader.replace("%UnrolledPerLayerTexCoordsProcessingCode%",
         preprocessedVertexShader_UnrolledPerLayerTexCoordsProcessingCode);
     preprocessedVertexShader.replace("%TileSize3D%", QString::number(TileSide3D));
-    preprocessedVertexShader.replace("%TextureTilePixelPadding%", QString::number(BitmapAtlasTilePadding));
     preprocessedVertexShader.replace("%TileLayersCount%", QString::number(TileLayerId::IdsCount));
     preprocessedVertexShader.replace("%RasterTileLayersCount%", QString::number(TileLayerId::IdsCount - TileLayerId::RasterMap));
     preprocessedVertexShader.replace("%Layer_ElevationData%", QString::number(TileLayerId::ElevationData));

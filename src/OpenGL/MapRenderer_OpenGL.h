@@ -52,8 +52,8 @@ namespace OsmAnd {
     private:
     protected:
         enum {
-            // This helps a bit to avoid bleeding on far camera distances, but does not eliminate it completely.
-            BitmapAtlasTilePadding = 15,
+            BaseBitmapAtlasTilePadding = 2,
+            MinMipmapLevel = 4,
         };
 
         virtual GLenum validateResult();
@@ -75,6 +75,8 @@ namespace OsmAnd {
         GLuint _textureSampler_Bitmap_Atlas;
         GLuint _textureSampler_ElevationData_NoAtlas;
         GLuint _textureSampler_ElevationData_Atlas;
+
+        int _maxAnisotropy;
 
         MapRenderer_OpenGL();
     public:
