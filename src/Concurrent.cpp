@@ -9,6 +9,9 @@ OsmAnd::Concurrent::Concurrent()
     , networkPool(new QThreadPool())
 {
     assert(!_instance);
+
+    localStoragePool->setMaxThreadCount(1);
+    networkPool->setMaxThreadCount(1);
 }
 
 OsmAnd::Concurrent::~Concurrent()
