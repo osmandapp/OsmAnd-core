@@ -173,26 +173,6 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const TileId& tile
                 .replace(QString::fromLatin1("${y}"), QString::number(tileId.y));
             obtainTileDeffered(QUrl(tileUrl), tileId, zoom, readyCallback);
         }));
-
-    /*
-    QMutexLocker scopeLock(&_localCacheAccessMutex);
-
-    if(!_localCachePath)
-        return false;
-
-    if(!_localCachePath->exists())
-        return false;
-
-    
-
-    return true;
-    */
-    /*if(!_networkAccessAllowed)
-        return;
-
-    
-
-    obtainTileDeffered(QUrl(tileUrl), tileId, zoom, receiverCallback, preferredConfig);*/
 }
 
 void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const QUrl& url, const TileId& tileId, uint32_t zoom, TileReadyCallback readyCallback )

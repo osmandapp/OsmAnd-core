@@ -9,6 +9,11 @@
 #include "OsmAndLogging.h"
 #include "OsmAndUtilities.h"
 
+#if 0
+#   include <SkBitmap.h>
+#   include <SkImageEncoder.h>
+#endif
+
 OsmAnd::MapRenderer_OpenGL::MapRenderer_OpenGL()
     : _textureSampler_Bitmap_NoAtlas(0)
     , _textureSampler_Bitmap_Atlas(0)
@@ -330,7 +335,7 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
         }
         tileSize = bitmapTile->width;
         assert(bitmapTile->width == bitmapTile->height);
-        padding = BitmapTileTexelPadding;
+        padding = BitmapAtlasTilePadding;
     }
     else if(tile->type == IMapTileProvider::ElevationData)
     {
@@ -432,18 +437,26 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
             atlasTexture = texture;
             atlasSlotIndex = 0;
 
-#if 0
+#if 1
+            // In debug mode, fill entire texture with single RED color if this is bitmap
             if(tile->type == IMapTileProvider::Bitmap)
             {
-                // In debug mode, fill entire texture with single RED color if this is bitmap
+                glBindTexture(GL_TEXTURE_2D, texture);
+                GL_CHECK_RESULT;
+
                 uint8_t* fillBuffer = new uint8_t[atlasPool._textureSize * atlasPool._textureSize * 4];
                 for(uint32_t idx = 0; idx < atlasPool._textureSize * atlasPool._textureSize; idx++)
                 {
                     *reinterpret_cast<uint32_t*>(&fillBuffer[idx * 4]) = 0xFFFF0000;
                 }
                 glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+                GL_CHECK_RESULT;
                 glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, atlasPool._textureSize, atlasPool._textureSize, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, fillBuffer);
+                GL_CHECK_RESULT;
                 delete[] fillBuffer;
+
+                glBindTexture(GL_TEXTURE_2D, 0);
+                GL_CHECK_RESULT;
             }
 #endif
         }
@@ -586,6 +599,26 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
         // Set stride
         glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
         GL_CHECK_RESULT;
+
+#if 0
+        if(tile->type == IMapTileProvider::Bitmap)
+        {
+            SkBitmap bitmap;
+            bitmap.setConfig(SkBitmap::kARGB_8888_Config, atlasPool._textureSize, atlasPool._textureSize);
+            bitmap.allocPixels();
+            
+            glPixelStorei(GL_PACK_ROW_LENGTH, bitmap.rowBytesAsPixels());
+            GL_CHECK_RESULT;
+
+            glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, bitmap.getPixels());
+            GL_CHECK_RESULT;
+
+            glPixelStorei(GL_PACK_ROW_LENGTH, 0);
+            GL_CHECK_RESULT;
+
+            SkImageEncoder::EncodeFile(QString("opengl_texture_atlas_%1.png").arg(atlasTexture).toStdString().c_str(), bitmap, SkImageEncoder::kPNG_Type, 100);
+        }
+#endif
 
         // Deselect atlas as active texture
         glBindTexture(GL_TEXTURE_2D, 0);

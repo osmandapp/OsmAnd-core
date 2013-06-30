@@ -25,6 +25,9 @@
 #include <stdint.h>
 #include <memory>
 #include <functional>
+#include <array>
+
+#include <QSet>
 
 #include <OsmAndCore.h>
 #include <CommonTypes.h>
@@ -38,6 +41,10 @@ namespace OsmAnd {
     private:
     protected:
         OneDegreeMapElevationDataProvider(const uint32_t& valuesPerSide);
+
+        QMutex _processingMutex;
+        QMutex _requestsMutex;
+        std::array< QSet< TileId >, 32 > _requestedTileIds;
     public:
         virtual ~OneDegreeMapElevationDataProvider();
 

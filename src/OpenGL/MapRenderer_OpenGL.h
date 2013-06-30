@@ -52,7 +52,8 @@ namespace OsmAnd {
     private:
     protected:
         enum {
-            BitmapTileTexelPadding = 2,
+            // This helps a bit to avoid bleeding on far camera distances, but does not eliminate it completely.
+            BitmapAtlasTilePadding = 15,
         };
 
         virtual GLenum validateResult();
