@@ -20,7 +20,9 @@ OsmAnd::IMapRenderer::IMapRenderer()
 {
     setDisplayDensityFactor(1.0f);
     setFieldOfView(45.0f);
-    setDistanceToFog(1000.0f);
+    setDistanceToFog(400.0f);
+    setFogDensity(0.01f);
+    setFogColor(0.5f, 0.5f, 0.5f);
     setAzimuth(0.0f);
     setElevationAngle(45.0f);
     setTarget(PointI(std::numeric_limits<int32_t>::max() / 2, std::numeric_limits<int32_t>::max() / 2));
@@ -131,6 +133,36 @@ void OsmAnd::IMapRenderer::setDistanceToFog( const float& fogDistance )
         return;
 
     _pendingConfig.fogDistance = fogDistance;
+
+    invalidateConfiguration();
+}
+
+void OsmAnd::IMapRenderer::setFogDensity( const float& fogDensity )
+{
+    QMutexLocker scopeLock(&_pendingConfigModificationMutex);
+
+    bool update = !qFuzzyCompare(_pendingConfig.fogDensity, fogDensity);
+    if(!update)
+        return;
+
+    _pendingConfig.fogDensity = fogDensity;
+
+    invalidateConfiguration();
+}
+
+void OsmAnd::IMapRenderer::setFogColor( const float& r, const float& g, const float& b )
+{
+    QMutexLocker scopeLock(&_pendingConfigModificationMutex);
+
+    bool update = !qFuzzyCompare(_pendingConfig.fogColor[0], r);
+    update = update || !qFuzzyCompare(_pendingConfig.fogColor[1], g);
+    update = update || !qFuzzyCompare(_pendingConfig.fogColor[2], b);
+    if(!update)
+        return;
+
+    _pendingConfig.fogColor[0] = r;
+    _pendingConfig.fogColor[1] = g;
+    _pendingConfig.fogColor[2] = b;
 
     invalidateConfiguration();
 }

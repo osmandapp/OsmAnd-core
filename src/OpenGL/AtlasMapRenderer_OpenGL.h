@@ -59,6 +59,9 @@ namespace OsmAnd {
         GLint _vertexShader_param_targetTile;
         GLint _fragmentShader_param_distanceFromCameraToTarget;
         GLint _fragmentShader_param_cameraElevationAngle;
+        GLint _fragmentShader_param_fogColor;
+        GLint _fragmentShader_param_fogDistance;
+        GLint _fragmentShader_param_fogDensity;
         
         // Parameters: per-tile data
         GLint _vertexShader_param_tile;

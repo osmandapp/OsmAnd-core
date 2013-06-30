@@ -69,7 +69,9 @@ namespace OsmAnd {
             float displayDensityFactor;
             AreaI viewport;
             float fieldOfView;
+            float fogColor[3];
             float fogDistance;
+            float fogDensity;
             float azimuth;
             float elevationAngle;
             PointI target31;
@@ -202,6 +204,8 @@ namespace OsmAnd {
         virtual void setViewport(const AreaI& viewport);
         virtual void setFieldOfView(const float& fieldOfView);
         virtual void setDistanceToFog(const float& fogDistance);
+        virtual void setFogDensity(const float& fogDensity);
+        virtual void setFogColor(const float& r, const float& g, const float& b);
         virtual void setAzimuth(const float& azimuth);
         virtual void setElevationAngle(const float& elevationAngle);
         virtual void setTarget(const PointI& target31);

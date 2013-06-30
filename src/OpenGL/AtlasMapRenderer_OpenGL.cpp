@@ -150,12 +150,12 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
     const QString fragmentShader_perTileLayer = QString::fromLatin1(
         "    if(param_fs_perTileLayer[%layerLinearIdx%].k > floatEpsilon)                                                   ""\n"
         "    {                                                                                                              ""\n"
-        "        vec4 color = textureLod(                                                                                   ""\n"
+        "        vec4 layerColor = textureLod(                                                                              ""\n"
         "            param_fs_perTileLayer[%layerLinearIdx%].sampler,                                                       ""\n"
         "            v2f_texCoordsPerLayer[%layerLinearIdx%], mipmapLod);                                                   ""\n"
         "                                                                                                                   ""\n"
         //TODO: alpha*k is the proper alpha for mixing
-        "        out_color += color;                                                                                        ""\n"
+        "        baseColor += layerColor;                                                                                   ""\n"
         "                                                                                                                   ""\n"
         "                                                                                                                   ""\n"
         "                                                                                                                   ""\n"
@@ -176,6 +176,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
         // Parameters: common data
         "uniform float param_fs_distanceFromCameraToTarget;                                                                 ""\n"
         "uniform float param_fs_cameraElevationAngle;                                                                       ""\n"
+        "uniform vec3 param_fs_fogColor;                                                                                    ""\n"
+        "uniform float param_fs_fogDistance;                                                                                ""\n"
+        "uniform float param_fs_fogDensity;                                                                                 ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-layer data
         "struct LayerInputPerTile                                                                                           ""\n"
@@ -206,11 +209,25 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
         "    }                                                                                                              ""\n"
         "                                                                                                                   ""\n"
         //   Take base color from RasterMap layer
-        "    out_color = textureLod(                                                                                        ""\n"
+        "    vec4 baseColor = textureLod(                                                                                   ""\n"
         "        param_fs_perTileLayer[0].sampler,                                                                          ""\n"
         "        v2f_texCoordsPerLayer[0], mipmapLod);                                                                      ""\n"
-        "    out_color.a *= param_fs_perTileLayer[0].k;                                                                     ""\n"
+        "    baseColor.a *= param_fs_perTileLayer[0].k;                                                                     ""\n"
         "%UnrolledPerLayerProcessingCode%                                                                                   ""\n"
+        "                                                                                                                   ""\n"
+        //   Apply fog (square exponential)
+        "    if(v2f_distanceFromCamera > param_fs_fogDistance)                                                              ""\n"
+        "    {                                                                                                              ""\n"
+        "        const float fogDistance = v2f_distanceFromCamera - param_fs_fogDistance;                                   ""\n"
+        "        const float fogFactorBase = fogDistance * param_fs_fogDensity;                                             ""\n"
+        "        const float fogFactor = clamp(exp(- fogFactorBase*fogFactorBase), 0.0, 1.0);                               ""\n"
+        "                                                                                                                   ""\n"
+        "        out_color = mix(baseColor, vec4(param_fs_fogColor, 1.0), 1.0 - fogFactor);                                 ""\n"
+        "    }                                                                                                              ""\n"
+        "    else                                                                                                           ""\n"
+        "    {                                                                                                              ""\n"
+        "        out_color = baseColor;                                                                                     ""\n"
+        "    }                                                                                                              ""\n"
         "                                                                                                                   ""\n"
         //   Remove pixel if it's completely transparent
         "    if(out_color.a < floatEpsilon)                                                                                 ""\n"
@@ -266,6 +283,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
     }
     findVariableLocation(_programObject, _fragmentShader_param_distanceFromCameraToTarget, "param_fs_distanceFromCameraToTarget", Uniform);
     findVariableLocation(_programObject, _fragmentShader_param_cameraElevationAngle, "param_fs_cameraElevationAngle", Uniform);
+    findVariableLocation(_programObject, _fragmentShader_param_fogColor, "param_fs_fogColor", Uniform);
+    findVariableLocation(_programObject, _fragmentShader_param_fogDistance, "param_fs_fogDistance", Uniform);
+    findVariableLocation(_programObject, _fragmentShader_param_fogDensity, "param_fs_fogDensity", Uniform);
     for(int layerId = TileLayerId::RasterMap, linearIdx = 0; layerId < TileLayerId::IdsCount; layerId++, linearIdx++)
     {
         const auto layerStructName =
@@ -327,6 +347,14 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
 
     // Set camera elevation angle
     glUniform1f(_fragmentShader_param_cameraElevationAngle, _activeConfig.elevationAngle);
+    GL_CHECK_RESULT;
+
+    // Set fog parameters
+    glUniform3f(_fragmentShader_param_fogColor, _activeConfig.fogColor[0], _activeConfig.fogColor[1], _activeConfig.fogColor[2]);
+    GL_CHECK_RESULT;
+    glUniform1f(_fragmentShader_param_fogDistance, _activeConfig.fogDistance);
+    GL_CHECK_RESULT;
+    glUniform1f(_fragmentShader_param_fogDensity, _activeConfig.fogDensity);
     GL_CHECK_RESULT;
     
     // Set tile patch VAO
