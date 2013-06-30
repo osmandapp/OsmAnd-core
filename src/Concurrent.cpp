@@ -35,12 +35,15 @@ OsmAnd::Concurrent::Task::~Task()
 
 void OsmAnd::Concurrent::Task::run()
 {
+    // This local event loop
+    QEventLoop localLoop;
+
     if(preExecute)
         _isCancellationRequested = preExecute(this);
     if(_isCancellationRequested)
         return;
 
-    execute(this);
+    execute(this, localLoop);
 
     if(postExecute)
         postExecute(this);

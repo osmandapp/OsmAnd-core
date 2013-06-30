@@ -38,6 +38,8 @@
 
 #include <IMapBitmapTileProvider.h>
 
+class QNetworkAccessManager;
+class QEventLoop;
 class QNetworkReply;
 class SkBitmap;
 
@@ -68,6 +70,7 @@ namespace OsmAnd {
         QQueue< TileRequest > _tileDownloadRequestsQueue;
         std::array< QSet< TileId >, 32 > _enqueuedTileIdsForDownload;
         std::array< QSet< TileId >, 32 > _currentlyDownloadingTileIds;
+        uint32_t _currentDownloadsCount;
         std::shared_ptr<QDir> _localCachePath;
         bool _networkAccessAllowed;
 
@@ -75,7 +78,8 @@ namespace OsmAnd {
         std::array< QSet< TileId >, 32 > _requestedTileIds;
 
         void obtainTileDeffered(const QUrl& url, const TileId& tileId, uint32_t zoom, TileReadyCallback readyCallback);
-        //void handleNetworkReply(QNetworkReply* reply, const TileId& tileId, uint32_t zoom, TileReceiverCallback callback, SkBitmap::Config preferredConfig);
+        void replyFinishedHandler(QNetworkReply* reply, const TileId& tileId, uint32_t zoom, TileReadyCallback readyCallback, QEventLoop& eventLoop, QNetworkAccessManager& networkAccessManager);
+        void handleNetworkReply(QNetworkReply* reply, const TileId& tileId, uint32_t zoom, TileReadyCallback readyCallback);
     public:
         OnlineMapRasterTileProvider(const QString& id, const QString& urlPattern, uint32_t minZoom = 0, uint32_t maxZoom = 31, uint32_t maxConcurrentDownloads = 1, uint32_t tileDimension = 256);
         virtual ~OnlineMapRasterTileProvider();

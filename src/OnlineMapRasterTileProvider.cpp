@@ -2,7 +2,6 @@
 
 #include <assert.h>
 
-#include "OsmAndCore_private.h"
 #include "QMainThreadTaskEvent.h"
 #include "OsmAndLogging.h"
 #include "Concurrent.h"
@@ -17,6 +16,7 @@
 
 OsmAnd::OnlineMapRasterTileProvider::OnlineMapRasterTileProvider(const QString& id_, const QString& urlPattern_, uint32_t maxZoom_ /*= 31*/, uint32_t minZoom_ /*= 0*/, uint32_t maxConcurrentDownloads_ /*= 1*/, uint32_t tileDimension_ /*= 256*/)
     : _processingMutex(QMutex::Recursive)
+    , _currentDownloadsCount(0)
     , _localCachePath(new QDir(QDir::current()))
     , _networkAccessAllowed(true)
     , _requestsMutex(QMutex::Recursive)
@@ -68,7 +68,7 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const TileId& tile
     }
 
     Concurrent::instance()->localStoragePool->start(new Concurrent::Task(
-        [this, tileId, zoom, readyCallback](const Concurrent::Task* task)
+        [this, tileId, zoom, readyCallback](const Concurrent::Task* task, QEventLoop& eventLoop)
         {
             _processingMutex.lock();
 
@@ -165,24 +165,22 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const TileId& tile
             }
         
             // Well, tile is not in local cache, we need to download it
-            assert(false);
             auto tileUrl = urlPattern;
             tileUrl
                 .replace(QString::fromLatin1("${zoom}"), QString::number(zoom))
                 .replace(QString::fromLatin1("${x}"), QString::number(tileId.x))
                 .replace(QString::fromLatin1("${y}"), QString::number(tileId.y));
             obtainTileDeffered(QUrl(tileUrl), tileId, zoom, readyCallback);
+            _processingMutex.unlock();
         }));
 }
 
 void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const QUrl& url, const TileId& tileId, uint32_t zoom, TileReadyCallback readyCallback )
 {
-    QMutexLocker scopeLock(&_processingMutex);
-
     if(!_networkAccessAllowed)
         return;
     
-    if(_currentlyDownloadingTileIds.size() == maxConcurrentDownloads)
+    if(_currentDownloadsCount == maxConcurrentDownloads)
     {
         // All slots are taken, enqueue
         TileRequest tileRequest;
@@ -194,75 +192,92 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const QUrl& url, c
         _tileDownloadRequestsQueue.enqueue(tileRequest);
         _enqueuedTileIdsForDownload[zoom].insert(tileId);
 
+        // Remove from requests
+        {
+            QMutexLocker scopeLock(&_requestsMutex);
+            _requestedTileIds[zoom].remove(tileId);
+        }
+        
         return;
     }
-    _currentlyDownloadingTileIds[zoom].insert(tileId);
-    Concurrent::instance()->networkPool->start(new Concurrent::Task(
-        [this, tileId, zoom, readyCallback](const Concurrent::Task* task)
-    {
 
-    }));
-    /*
-    QCoreApplication::postEvent(gMainThreadTaskHost.get(), new QMainThreadTaskEvent(
-        [this, url, tileId, zoom, receiverCallback, preferredConfig] ()
+    // Add to downloading and unblock processing
+    _currentlyDownloadingTileIds[zoom].insert(tileId);
+    _currentDownloadsCount++;
+    {
+        QMutexLocker scopeLock(&_requestsMutex);
+        _requestedTileIds[zoom].remove(tileId);
+    }
+    
+    Concurrent::instance()->networkPool->start(new Concurrent::Task(
+        [this, url, tileId, zoom, readyCallback](const Concurrent::Task* task, QEventLoop& eventLoop)
         {
-            LogPrintf(LogSeverityLevel::Info, "Downloading tile %dx%d@%d from %s\n", tileId.x, tileId.y, zoom, url.toString().toStdString().c_str());
-            
+            //LogPrintf(LogSeverityLevel::Info, "Downloading tile %dx%d@%d from %s\n", tileId.x, tileId.y, zoom, url.toString().toStdString().c_str());
+
+            QNetworkAccessManager networkAccessManager;
             QNetworkRequest request;
             request.setUrl(url);
             request.setRawHeader("User-Agent", "OsmAnd Core");
 
-            auto reply = gNetworkAccessManager->get(request);
+            auto reply = networkAccessManager.get(request);
             QObject::connect(reply, &QNetworkReply::finished,
-                [this, tileId, zoom, reply, receiverCallback, preferredConfig] ()
+                [this, reply, tileId, zoom, readyCallback, &eventLoop, &networkAccessManager]()
                 {
-                    auto redirectUrl = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
-                    if(!redirectUrl.isEmpty())
-                    {
-                        {
-                            QMutexLocker scopeLock(&_currentDownloadsMutex);
-                            _currentDownloads.remove(tileId);
-
-                            obtainTileDeffered(redirectUrl, tileId, zoom, receiverCallback, preferredConfig);
-                        }
-
-                        reply->deleteLater();
-                        return;
-                    }
-                    
-                    handleNetworkReply(reply, tileId, zoom, receiverCallback, preferredConfig);
-                    reply->deleteLater();
-
-                    {
-                        QMutexLocker scopeLock(&_currentDownloadsMutex);
-                        _currentDownloads.remove(tileId);
-                    }
-
-                    {
-                        QMutexLocker scopeLock(&_downloadQueueMutex);
-                        
-                        LogPrintf(LogSeverityLevel::Info, "Tile downloading queue size %d\n", _tileRequestsQueue.size());
-                        while(!_tileRequestsQueue.isEmpty())
-                        {
-                            {
-                                QMutexLocker scopeLock(&_currentDownloadsMutex);
-                                if(_currentDownloads.size() == _maxConcurrentDownloads)
-                                    break;
-                            }
-
-                            const auto& request = _tileRequestsQueue.dequeue();
-                            _enqueuedTileIds.remove(request.tileId);
-                            obtainTileDeffered(request.sourceUrl, request.tileId, request.zoom, request.callback, request.preferredConfig);
-                        }
-                    }
-                }
-            );
-        }
-    ));*/
+                    replyFinishedHandler(reply, tileId, zoom, readyCallback, eventLoop, networkAccessManager);
+                });
+            eventLoop.exec();
+            return;
+        }));
 }
-/*
-void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* reply, const TileId& tileId, uint32_t zoom, TileReceiverCallback receiverCallback, SkBitmap::Config preferredConfig )
+
+void OsmAnd::OnlineMapRasterTileProvider::replyFinishedHandler( QNetworkReply* reply, const TileId& tileId, uint32_t zoom, TileReadyCallback readyCallback, QEventLoop& eventLoop, QNetworkAccessManager& networkAccessManager )
 {
+    auto redirectUrl = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+    if(!redirectUrl.isEmpty())
+    {
+        reply->deleteLater();
+
+        QNetworkRequest newRequest;
+        newRequest.setUrl(redirectUrl);
+        newRequest.setRawHeader("User-Agent", "OsmAnd Core");
+        auto newReply = networkAccessManager.get(newRequest);
+        QObject::connect(newReply, &QNetworkReply::finished,
+            [this, newReply, tileId, zoom, readyCallback, &eventLoop, &networkAccessManager]()
+            {
+                replyFinishedHandler(newReply, tileId, zoom, readyCallback, eventLoop, networkAccessManager);
+            });
+        return;
+    }
+
+    _processingMutex.lock();
+
+    // Remove current download and process pending queue
+    _currentlyDownloadingTileIds[zoom].remove(tileId);
+    _currentDownloadsCount--;
+
+    LogPrintf(LogSeverityLevel::Info, "Tile downloading queue size %d\n", _tileDownloadRequestsQueue.size());
+    while(!_tileDownloadRequestsQueue.isEmpty() && _currentDownloadsCount < maxConcurrentDownloads)
+    {
+        const auto& request = _tileDownloadRequestsQueue.dequeue();
+        _enqueuedTileIdsForDownload[request.zoom].remove(request.tileId);
+
+        obtainTileDeffered(request.sourceUrl, request.tileId, request.zoom, request.callback);
+    }
+    
+    handleNetworkReply(reply, tileId, zoom, readyCallback);
+    
+    reply->deleteLater();
+    eventLoop.exit();
+}
+
+void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* reply, const TileId& tileId, uint32_t zoom, TileReadyCallback readyCallback )
+{
+    const auto& subPath = id + QDir::separator() +
+        QString::number(zoom) + QDir::separator() +
+        QString::number(tileId.x) + QDir::separator();
+    _localCachePath->mkpath(subPath);
+    const auto& fullPath = _localCachePath->filePath(subPath + QString::number(tileId.y) + QString::fromLatin1(".tile"));
+
     auto error = reply->error();
     if(error != QNetworkReply::NetworkError::NoError)
     {
@@ -273,16 +288,9 @@ void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* rep
         // 404 means that this tile does not exist, so create a zero file
         if(httpStatus == 404)
         {
-            QMutexLocker scopeLock(&_localCacheAccessMutex);
-
             if(_localCachePath && _localCachePath->exists())
             {
                 // Save to a file
-                const auto& subPath = _id + QDir::separator() +
-                    QString::number(zoom) + QDir::separator() +
-                    QString::number(tileId.x) + QDir::separator();
-                _localCachePath->mkpath(subPath);
-                const auto& fullPath = _localCachePath->filePath(subPath + QString::number(tileId.y) + QString::fromLatin1(".tile"));
                 QFile tileFile(fullPath);
                 if(tileFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
                 {
@@ -291,46 +299,59 @@ void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* rep
             }
         }
         
-        reply->deleteLater();
+        _processingMutex.unlock();
         return;
     }
 
     LogPrintf(LogSeverityLevel::Warning, "Downloaded tile from %s\n", reply->request().url().toString().toStdString().c_str());
     const auto& data = reply->readAll();
 
+    if(_localCachePath && _localCachePath->exists())
     {
-        QMutexLocker scopeLock(&_localCacheAccessMutex);
-
-        if(_localCachePath && _localCachePath->exists())
+        // Save to a file
+        QFile tileFile(fullPath);
+        if(tileFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
         {
-            // Save to a file
-            const auto& subPath = _id + QDir::separator() +
-                QString::number(zoom) + QDir::separator() +
-                QString::number(tileId.x) + QDir::separator();
-            _localCachePath->mkpath(subPath);
-            const auto& fullPath = _localCachePath->filePath(subPath + QString::number(tileId.y) + QString::fromLatin1(".tile"));
-            QFile tileFile(fullPath);
-            if(tileFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
-            {
-                tileFile.write(data);
-                tileFile.close();
-            }
+            tileFile.write(data);
+            tileFile.close();
         }
     }
+    _processingMutex.unlock();
 
-    // Decode in-memory
-    if(receiverCallback)
+    // Decode in-memory if we have receiver
+    if(readyCallback)
     {
-        std::shared_ptr<SkBitmap> tileBitmap(new SkBitmap());
-        if(SkImageDecoder::DecodeMemory(data.data(), data.size(), tileBitmap.get(), preferredConfig, SkImageDecoder::kDecodePixels_Mode))
+        // Determine mode
+        auto skBitmap = new SkBitmap();
+        if(!SkImageDecoder::DecodeMemory(data.data(), data.size(), skBitmap, SkBitmap::kNo_Config, SkImageDecoder::kDecodeBounds_Mode))
         {
-            assert(tileBitmap->width() == tileBitmap->height());
-            assert(tileBitmap->width() == _tileDimension);
-            receiverCallback(tileId, zoom, tileBitmap);
+            LogPrintf(LogSeverityLevel::Error, "Failed to decode header of tile file '%s'\n", fullPath.toStdString().c_str());
+
+            delete skBitmap;
+            std::shared_ptr<IMapTileProvider::Tile> emptyTile;
+            readyCallback(tileId, zoom, emptyTile, false);
+            return;
         }
+
+        const bool force32bit = (skBitmap->getConfig() != SkBitmap::kRGB_565_Config) && (skBitmap->getConfig() != SkBitmap::kARGB_4444_Config);
+        if(!SkImageDecoder::DecodeMemory(data.data(), data.size(), skBitmap, force32bit ? SkBitmap::kARGB_8888_Config : skBitmap->getConfig(), SkImageDecoder::kDecodePixels_Mode))
+        {
+            LogPrintf(LogSeverityLevel::Error, "Failed to decode tile file '%s'\n", fullPath.toStdString().c_str());
+
+            delete skBitmap;
+            std::shared_ptr<IMapTileProvider::Tile> emptyTile;
+            readyCallback(tileId, zoom, emptyTile, false);
+            return;
+        }
+
+        assert(skBitmap->width() == skBitmap->height());
+        assert(skBitmap->width() == tileDimension);
+
+        std::shared_ptr<Tile> tile(new Tile(skBitmap));
+        readyCallback(tileId, zoom, tile, true);
     }
 }
-*/
+
 float OsmAnd::OnlineMapRasterTileProvider::getTileDensity() const
 {
     // Online tile providers do not have any idea about our tile density

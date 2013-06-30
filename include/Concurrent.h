@@ -28,6 +28,7 @@
 #include <functional>
 
 #include <QThreadPool>
+#include <QEventLoop>
 #include <QRunnable>
 
 #include <OsmAndCore.h>
@@ -42,7 +43,7 @@ namespace OsmAnd {
         {
         public:
             typedef std::function<bool (const Task*)> PreExecuteSignature;
-            typedef std::function<void (const Task*)> ExecuteSignature;
+            typedef std::function<void (const Task*, QEventLoop& eventLoop)> ExecuteSignature;
             typedef std::function<void (const Task*)> PostExecuteSignature;
         private:
         protected:

@@ -25,11 +25,9 @@
 #include <memory>
 
 #include <QObject>
-#include <QNetworkAccessManager>
 
 namespace OsmAnd {
     extern std::shared_ptr<QObject> gMainThreadTaskHost;
-    extern std::shared_ptr<QNetworkAccessManager> gNetworkAccessManager;
 }
 
 #endif // __OSMAND_CORE_PRIVATE_H_

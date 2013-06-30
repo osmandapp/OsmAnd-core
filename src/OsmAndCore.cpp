@@ -15,7 +15,6 @@
 namespace OsmAnd {
     void initializeGlobal();
     void releaseGlobal();
-    std::shared_ptr<QNetworkAccessManager> gNetworkAccessManager;
     std::shared_ptr<QObject> gMainThreadTaskHost;
 }
 
@@ -75,11 +74,9 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::ReleaseCore()
 void OsmAnd::initializeGlobal()
 {
     gMainThreadTaskHost.reset(new QMainThreadTaskHost());
-    gNetworkAccessManager.reset(new QNetworkAccessManager());
 }
 
 void OsmAnd::releaseGlobal()
 {
-    gNetworkAccessManager.reset();
     gMainThreadTaskHost.reset();
 }
