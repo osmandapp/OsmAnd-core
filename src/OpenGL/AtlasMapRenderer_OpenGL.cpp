@@ -372,9 +372,21 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
     }
 
     // For each visible tile, render it
+    const auto maxTileIndex = static_cast<signed>(1u << _activeConfig.zoomBase);
     for(auto itTileId = _visibleTiles.begin(); itTileId != _visibleTiles.end(); ++itTileId)
     {
         const auto& tileId = *itTileId;
+
+        // Get normalized tile index
+        TileId tileIdN = tileId;
+        while(tileIdN.x < 0)
+            tileIdN.x += maxTileIndex;
+        while(tileIdN.x >= maxTileIndex)
+            tileIdN.x -= maxTileIndex;
+        while(tileIdN.y < 0)
+            tileIdN.y += maxTileIndex;
+        while(tileIdN.y >= maxTileIndex)
+            tileIdN.y -= maxTileIndex;
 
         // Set tile id
         glUniform2i(_vertexShader_param_tile, tileId.x, tileId.y);
@@ -387,7 +399,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
             QMutexLocker scopeLock(&tileLayer._cacheModificationMutex);
 
             std::shared_ptr<TileZoomCache::Tile> cachedTile_;
-            bool cacheHit = tileLayer._cache.getTile(_activeConfig.zoomBase, tileId, cachedTile_);
+            bool cacheHit = tileLayer._cache.getTile(_activeConfig.zoomBase, tileIdN, cachedTile_);
             if(cacheHit)
             {
                 auto cachedTile = static_cast<CachedTile*>(cachedTile_.get());
@@ -443,7 +455,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
             QMutexLocker scopeLock(&tileLayer._cacheModificationMutex);
 
             std::shared_ptr<TileZoomCache::Tile> cachedTile_;
-            bool cacheHit = tileLayer._cache.getTile(_activeConfig.zoomBase, tileId, cachedTile_);
+            bool cacheHit = tileLayer._cache.getTile(_activeConfig.zoomBase, tileIdN, cachedTile_);
             if(cacheHit)
             {
                 auto cachedTile = static_cast<CachedTile*>(cachedTile_.get());

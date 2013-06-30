@@ -288,6 +288,25 @@ void OsmAnd::IMapRenderer::performRendering()
     }
 
     // Keep cache fresh and throw away outdated tiles
+    QSet<TileId> normalizedVisibleTiles;
+    const auto maxTileIndex = static_cast<signed>(1u << _activeConfig.zoomBase);
+    for(auto itTileId = _visibleTiles.begin(); itTileId != _visibleTiles.end(); ++itTileId)
+    {
+        const auto& tileId = *itTileId;
+
+        // Get normalized tile index
+        TileId tileIdN = tileId;
+        while(tileIdN.x < 0)
+            tileIdN.x += maxTileIndex;
+        while(tileIdN.x >= maxTileIndex)
+            tileIdN.x -= maxTileIndex;
+        while(tileIdN.y < 0)
+            tileIdN.y += maxTileIndex;
+        while(tileIdN.y >= maxTileIndex)
+            tileIdN.y -= maxTileIndex;
+
+        normalizedVisibleTiles.insert(tileIdN);
+    }
     for(int layerId = 0; layerId < TileLayerId::IdsCount; layerId++)
     {
         auto& tileLayer = _tileLayers[layerId];
@@ -295,7 +314,7 @@ void OsmAnd::IMapRenderer::performRendering()
         QMutexLocker scopeLock(&tileLayer._cacheModificationMutex);
 
         //TODO: Use smarter clear condition
-        tileLayer._cache.clearExceptInterestSet(_visibleTiles, _activeConfig.zoomBase, qMax(0, _activeConfig.zoomBase - 2), qMin(31, _activeConfig.zoomBase + 2));
+        tileLayer._cache.clearExceptInterestSet(normalizedVisibleTiles, _activeConfig.zoomBase, qMax(0, _activeConfig.zoomBase - 2), qMin(31, _activeConfig.zoomBase + 2));
     }
 
     // Process tiles that are in pending-to-cache queue.
@@ -337,9 +356,21 @@ void OsmAnd::IMapRenderer::releaseRendering()
 
 void OsmAnd::IMapRenderer::requestCacheMissTiles()
 {
+    const auto maxTileIndex = static_cast<signed>(1u << _activeConfig.zoomBase);
     for(auto itTileId = _visibleTiles.begin(); itTileId != _visibleTiles.end(); ++itTileId)
     {
         const auto& tileId = *itTileId;
+
+        // Get normalized tile index
+        TileId tileIdN = tileId;
+        while(tileIdN.x < 0)
+            tileIdN.x += maxTileIndex;
+        while(tileIdN.x >= maxTileIndex)
+            tileIdN.x -= maxTileIndex;
+        while(tileIdN.y < 0)
+            tileIdN.y += maxTileIndex;
+        while(tileIdN.y >= maxTileIndex)
+            tileIdN.y -= maxTileIndex;
 
         for(int layerId = 0; layerId < TileLayerId::IdsCount; layerId++)
         {
@@ -350,14 +381,14 @@ void OsmAnd::IMapRenderer::requestCacheMissTiles()
             // Obtain tile from cache
             {
                 QMutexLocker scopeLock(&tileLayer._pendingToCacheMutex);
-                bool cacheHit = tileLayer._pendingToCache[_activeConfig.zoomBase].contains(tileId);
+                bool cacheHit = tileLayer._pendingToCache[_activeConfig.zoomBase].contains(tileIdN);
                 if(cacheHit)
                     continue;
             }
             {
                 tileLayer._cacheModificationMutex.lock();
 
-                bool cacheHit = tileLayer._cache.contains(_activeConfig.zoomBase, tileId);
+                bool cacheHit = tileLayer._cache.contains(_activeConfig.zoomBase, tileIdN);
             
                 // If tile is already in cache, or is pending to cache, do not request it
                 if(cacheHit)
@@ -368,11 +399,11 @@ void OsmAnd::IMapRenderer::requestCacheMissTiles()
 
                 // Try to obtain tile from provider immediately. Immediately means that data is available in-memory
                 std::shared_ptr<IMapTileProvider::Tile> tile;
-                bool availableImmediately = tileProvider->obtainTileImmediate(tileId, _activeConfig.zoomBase, tile);
+                bool availableImmediately = tileProvider->obtainTileImmediate(tileIdN, _activeConfig.zoomBase, tile);
                 if(availableImmediately)
                 {
                     //LogPrintf(LogSeverityLevel::Debug, "Uploading tile %dx%d@%d of layer %d to cache immediately\n", tileId.x, tileId.y, _activeConfig.zoomBase, layerId);
-                    cacheTile(static_cast<TileLayerId>(layerId), tileId, _activeConfig.zoomBase, tile);
+                    cacheTile(static_cast<TileLayerId>(layerId), tileIdN, _activeConfig.zoomBase, tile);
                     tileLayer._cacheModificationMutex.unlock();
                     continue;
                 }
@@ -381,12 +412,12 @@ void OsmAnd::IMapRenderer::requestCacheMissTiles()
                 // If still cache miss, order delayed
                 {
                     QMutexLocker scopeLock(&tileLayer._requestedTilesMutex);
-                    if(tileLayer._requestedTiles[_activeConfig.zoomBase].contains(tileId))
+                    if(tileLayer._requestedTiles[_activeConfig.zoomBase].contains(tileIdN))
                         continue;
-                    tileLayer._requestedTiles[_activeConfig.zoomBase].insert(tileId);
+                    tileLayer._requestedTiles[_activeConfig.zoomBase].insert(tileIdN);
 
                     //LogPrintf(LogSeverityLevel::Debug, "Ordering tile %dx%d@%d of layer %d\n", tileId.x, tileId.y, _activeConfig.zoomBase, layerId);
-                    tileProvider->obtainTileDeffered(tileId, _activeConfig.zoomBase, callback);
+                    tileProvider->obtainTileDeffered(tileIdN, _activeConfig.zoomBase, callback);
                 }
             }
         }
@@ -527,6 +558,15 @@ OsmAnd::IMapRenderer::CachedTile::~CachedTile()
 }
 
 OsmAnd::IMapRenderer::Configuration::Configuration()
+    : displayDensityFactor(-1.0f)
+    , fieldOfView(-1.0f)
+    , fogDistance(-1.0f)
+    , fogDensity(-1.0f)
+    , azimuth(-1.0f)
+    , elevationAngle(-1.0f)
+    , requestedZoom(-1.0f)
+    , zoomBase(-1)
+    , zoomFraction(-1.0f)
 {
 }
 

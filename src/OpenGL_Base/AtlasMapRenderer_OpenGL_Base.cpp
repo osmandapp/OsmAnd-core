@@ -203,11 +203,7 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
         {
             TileId tileId;
             tileId.x = centerZ.x + x;
-            if(tileId.x < 0 || tileId.x > (1u << _activeConfig.zoomBase) - 1)
-                continue;
             tileId.y = centerZ.y + y;
-            if(tileId.y < 0 || tileId.y > (1u << _activeConfig.zoomBase) - 1)
-                continue;
 
             _visibleTiles.insert(tileId);
         }
@@ -282,9 +278,9 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::createTilePatch()
         Vertex* pV = pVertices;
 
         // Form outer vertices
-        for(int row = 0; row < verticesPerLine; row++)
+        for(auto row = 0u; row < verticesPerLine; row++)
         {
-            for(int col = 0; col < verticesPerLine; col++, pV++)
+            for(auto col = 0u; col < verticesPerLine; col++, pV++)
             {
                 pV->position[0] = static_cast<float>(col) * clusterSize;
                 pV->position[1] = static_cast<float>(row) * clusterSize;
@@ -295,9 +291,9 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::createTilePatch()
         }
 
         // Form inner vertices
-        for(int row = 0; row < _activeConfig.heightmapPatchesPerSide; row++)
+        for(auto row = 0u; row < _activeConfig.heightmapPatchesPerSide; row++)
         {
-            for(int col = 0; col < _activeConfig.heightmapPatchesPerSide; col++, pV++)
+            for(auto col = 0u; col < _activeConfig.heightmapPatchesPerSide; col++, pV++)
             {
                 pV->position[0] = (static_cast<float>(col) + 0.5f) * clusterSize;
                 pV->position[1] = (static_cast<float>(row) + 0.5f) * clusterSize;
@@ -309,9 +305,9 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::createTilePatch()
 
         // Form indices
         GLushort* pI = pIndices;
-        for(int row = 0; row < _activeConfig.heightmapPatchesPerSide; row++)
+        for(auto row = 0u; row < _activeConfig.heightmapPatchesPerSide; row++)
         {
-            for(int col = 0; col < _activeConfig.heightmapPatchesPerSide; col++, pV++)
+            for(auto col = 0u; col < _activeConfig.heightmapPatchesPerSide; col++, pV++)
             {
                 // p0 - center point
                 // p1 - top left
