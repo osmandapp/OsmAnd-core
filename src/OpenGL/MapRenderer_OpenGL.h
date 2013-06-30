@@ -53,7 +53,7 @@ namespace OsmAnd {
     protected:
         enum {
             BaseBitmapAtlasTilePadding = 2,
-            MinMipmapLevel = 4,
+            MipmapLodLevelsMax = 4,
         };
 
         virtual GLenum validateResult();

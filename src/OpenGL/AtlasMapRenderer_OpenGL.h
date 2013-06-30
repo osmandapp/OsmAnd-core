@@ -57,6 +57,8 @@ namespace OsmAnd {
         GLint _vertexShader_param_mView;
         GLint _vertexShader_param_centerOffset;
         GLint _vertexShader_param_targetTile;
+        GLint _fragmentShader_param_distanceFromCameraToTarget;
+        GLint _fragmentShader_param_cameraElevationAngle;
         
         // Parameters: per-tile data
         GLint _vertexShader_param_tile;

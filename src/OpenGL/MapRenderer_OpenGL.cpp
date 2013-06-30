@@ -193,7 +193,7 @@ void OsmAnd::MapRenderer_OpenGL::initializeRendering()
         GLfloat maxAnisotropy;
         glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnisotropy);
         GL_CHECK_RESULT;
-        //_maxAnisotropy = static_cast<int>(maxAnisotropy);
+        _maxAnisotropy = static_cast<int>(maxAnisotropy);
         LogPrintf(LogSeverityLevel::Info, "OpenGL anisotropic filtering: %dx max\n", _maxAnisotropy);
     }
     else
@@ -209,14 +209,15 @@ void OsmAnd::MapRenderer_OpenGL::initializeRendering()
     GL_CHECK_RESULT;
     glSamplerParameteri(_textureSampler_Bitmap_Atlas, GL_TEXTURE_WRAP_T, GL_CLAMP);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_textureSampler_Bitmap_Atlas, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);//GL_LINEAR);
-    //GL_NEAREST_MIPMAP_NEAREST - squares
-    //GL_LINEAR_MIPMAP_NEAREST - well, ok
-    //GL_NEAREST_MIPMAP_LINEAR - squares
-    //GL_LINEAR_MIPMAP_LINEAR - ok if to change lod bias probably
+    glSamplerParameteri(_textureSampler_Bitmap_Atlas, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     GL_CHECK_RESULT;
     glSamplerParameteri(_textureSampler_Bitmap_Atlas, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     GL_CHECK_RESULT;
+    if(_maxAnisotropy > 0)
+    {
+        glSamplerParameterf(_textureSampler_Bitmap_Atlas, GL_TEXTURE_MAX_ANISOTROPY_EXT, static_cast<GLfloat>(_maxAnisotropy));
+        GL_CHECK_RESULT;
+    }
 
     // ElevationData (Atlas)
     glGenSamplers(1, &_textureSampler_ElevationData_Atlas);
@@ -237,10 +238,15 @@ void OsmAnd::MapRenderer_OpenGL::initializeRendering()
     GL_CHECK_RESULT;
     glSamplerParameteri(_textureSampler_Bitmap_NoAtlas, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_textureSampler_Bitmap_NoAtlas, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glSamplerParameteri(_textureSampler_Bitmap_NoAtlas, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     GL_CHECK_RESULT;
     glSamplerParameteri(_textureSampler_Bitmap_NoAtlas, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     GL_CHECK_RESULT;
+    if(_maxAnisotropy > 0)
+    {
+        glSamplerParameterf(_textureSampler_Bitmap_NoAtlas, GL_TEXTURE_MAX_ANISOTROPY_EXT, static_cast<GLfloat>(_maxAnisotropy));
+        GL_CHECK_RESULT;
+    }
 
     // ElevationData (No atlas)
     glGenSamplers(1, &_textureSampler_ElevationData_NoAtlas);
@@ -358,7 +364,7 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
         tileSize = bitmapTile->width;
         assert(bitmapTile->width == bitmapTile->height);
         basePadding = BaseBitmapAtlasTilePadding;
-        //generateMipmap = true;
+        generateMipmap = true;
     }
     else if(tile->type == IMapTileProvider::ElevationData)
     {
@@ -392,16 +398,7 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
 
         if(_activeConfig.textureAtlasesAllowed)
         {
-            uint32_t mipmapLevelsProbe = 1;
-            auto idealSize = 0u;
-            for(;;)
-            {
-                idealSize = MaxTilesPerTextureAtlasSide * (tileSize + 2 * basePadding * mipmapLevelsProbe);
-                uint32_t actualMipmapLevels = 1 + qLn(idealSize) / M_LN2;
-                if(mipmapLevelsProbe == actualMipmapLevels)
-                    break;
-                mipmapLevelsProbe = actualMipmapLevels;
-            }
+            auto idealSize = MaxTilesPerTextureAtlasSide * (tileSize + 2 * basePadding * MipmapLodLevelsMax);
             const auto largerSize = Utilities::getNextPowerOfTwo(idealSize);
             const auto smallerSize = largerSize >> 1;
 
@@ -413,18 +410,7 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
         }
         else //if(Utilities::getNextPowerOfTwo(tileSize) != tileSize) // Tile is of NPOT size
         {
-            uint32_t mipmapLevelsProbe = 1;
-            auto idealSize = 0u;
-            for(;;)
-            {
-                idealSize = Utilities::getNextPowerOfTwo(tileSize + 2 * basePadding * mipmapLevelsProbe);
-                uint32_t actualMipmapLevels = 1 + qLn(idealSize) / M_LN2;
-                if(mipmapLevelsProbe == actualMipmapLevels)
-                    break;
-                mipmapLevelsProbe = actualMipmapLevels;
-            }
-
-            atlasPool._textureSize = idealSize;
+            atlasPool._textureSize = Utilities::getNextPowerOfTwo(tileSize + 2 * basePadding * MipmapLodLevelsMax);
             outUsedMemory = atlasPool._textureSize * atlasPool._textureSize * sourcePixelByteSize;
         }
 
@@ -432,8 +418,8 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
         if(generateMipmap)
         {
             atlasPool._mipmapLevels += qLn(atlasPool._textureSize) / M_LN2;
-            if(atlasPool._mipmapLevels > MinMipmapLevel)
-                atlasPool._mipmapLevels -= MinMipmapLevel;
+            if(atlasPool._mipmapLevels > MipmapLodLevelsMax)
+                atlasPool._mipmapLevels = MipmapLodLevelsMax;
         }
         atlasPool._padding = basePadding * atlasPool._mipmapLevels;
         const auto fullTileSize = tileSize + 2 * atlasPool._padding;
@@ -475,13 +461,6 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
             // Select this texture
             glBindTexture(GL_TEXTURE_2D, texture);
             GL_CHECK_RESULT;
-
-            // Use anisotropic filtering if possible
-            if(atlasPool._mipmapLevels > 1 && _maxAnisotropy > 0)
-            {
-                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, static_cast<GLfloat>(_maxAnisotropy));
-                GL_CHECK_RESULT;
-            }
 
             // Allocate space for this texture
             assert(glTexStorage2D);
@@ -705,8 +684,8 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
         if(generateMipmap)
         {
             mipmapLevels += qLn(tileSize) / M_LN2;
-            if(mipmapLevels > MinMipmapLevel)
-                mipmapLevels -= MinMipmapLevel;
+            if(mipmapLevels > MipmapLodLevelsMax)
+                mipmapLevels = MipmapLodLevelsMax;
         }
 
         // Create texture id
@@ -722,13 +701,6 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
         // Set texture packing
         glPixelStorei(GL_UNPACK_ROW_LENGTH, tile->rowLength / sourcePixelByteSize);
         GL_CHECK_RESULT;
-
-        // Use anisotropic filtering if possible
-        if(mipmapLevels > 1 && _maxAnisotropy > 0)
-        {
-            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, static_cast<GLfloat>(_maxAnisotropy));
-            GL_CHECK_RESULT;
-        }
 
         // Allocate data
         glTexStorage2D(GL_TEXTURE_2D, mipmapLevels,
