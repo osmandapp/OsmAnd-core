@@ -3,6 +3,8 @@
 #include <assert.h>
 
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/transform.hpp>
 
 #include <SkBitmap.h>
 
@@ -15,6 +17,7 @@ OsmAnd::AtlasMapRenderer_OpenGL::AtlasMapRenderer_OpenGL()
     , _tilePatchIBO(0)
 {
     memset(&_mapStage, 0, sizeof(_mapStage));
+    memset(&_skyStage, 0, sizeof(_skyStage));
 }
 
 OsmAnd::AtlasMapRenderer_OpenGL::~AtlasMapRenderer_OpenGL()
@@ -25,6 +28,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
 {
     MapRenderer_OpenGL::initializeRendering();
 
+    initializeRendering_SkyStage();
     initializeRendering_MapStage();
 
     AtlasMapRenderer_BaseOpenGL::initializeRendering();
@@ -51,9 +55,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
         // Output data to next shader stages
         "out vec2 v2f_texCoordsPerLayer[%RasterTileLayersCount%];                                                           ""\n"
         "out float v2f_distanceFromCamera;                                                                                  ""\n"
+        "out float v2f_distanceFromTarget;                                                                                  ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
-        "uniform mat4 param_vs_mProjection;                                                                                 ""\n"
+        "uniform mat4 param_vs_mProjectionView;                                                                             ""\n"
         "uniform mat4 param_vs_mView;                                                                                       ""\n"
         "uniform vec2 param_vs_centerOffset;                                                                                ""\n"
         "uniform ivec2 param_vs_targetTile;                                                                                 ""\n"
@@ -117,7 +122,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
         "                                                                                                                   ""\n"
         "        float height = texture(param_vs_elevationData_sampler, elevationDataTexCoords).r;                          ""\n"
         //TODO: remap meters to units 
-        "        v.y = height * 1.0;                                                                                            ""\n"
+        "        v.y = height * 1.0;                                                                                        ""\n"
         "        v.y *= param_vs_elevationData_k;                                                                           ""\n"
         "    }                                                                                                              ""\n"
         "    else                                                                                                           ""\n"
@@ -126,9 +131,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
         "    }                                                                                                              ""\n"
         "                                                                                                                   ""\n"
         //   Finally output processed modified vertex
-        "    vec4 vInCamera = param_vs_mView * v;                                                                           ""\n"
-        "    v2f_distanceFromCamera = -vInCamera.z;                                                                         ""\n"
-        "    gl_Position = param_vs_mProjection * vInCamera;                                                                ""\n"
+        "    v2f_distanceFromTarget = abs(v.z);                                                                             ""\n"
+        "    v2f_distanceFromCamera = abs((param_vs_mView * v).z);                                                          ""\n"
+        "    gl_Position = param_vs_mProjectionView * v;                                                                    ""\n"
         "}                                                                                                                  ""\n");
     QString preprocessedVertexShader = vertexShader;
     QString preprocessedVertexShader_UnrolledPerLayerTexCoordsProcessingCode;
@@ -169,6 +174,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
         "                                                                                                                   ""\n"
         // Input data
         "in vec2 v2f_texCoordsPerLayer[%RasterTileLayersCount%];                                                            ""\n"
+        "in float v2f_distanceFromTarget;                                                                                   ""\n"
         "in float v2f_distanceFromCamera;                                                                                   ""\n"
         "                                                                                                                   ""\n"
         // Output data
@@ -180,6 +186,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
         "uniform vec3 param_fs_fogColor;                                                                                    ""\n"
         "uniform float param_fs_fogDistance;                                                                                ""\n"
         "uniform float param_fs_fogDensity;                                                                                 ""\n"
+        "uniform float param_fs_fogOriginFactor;                                                                            ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-layer data
         "struct LayerInputPerTile                                                                                           ""\n"
@@ -203,9 +210,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
         "    {                                                                                                              ""\n"
         //       Calculate distance factor that is in range (0.0 ... +inf)
         "        const float distanceF = 1.0 - cameraDistanceLOD0 / v2f_distanceFromCamera;                                 ""\n"
-        "                                                                                                                   ""\n"
         "        mipmapLod = distanceF * ((1.0 - cameraElevationN) * 10.0);                                                 ""\n"
-        "                                                                                                                   ""\n"
         "        mipmapLod = clamp(mipmapLod, 0.0, %MipmapLodLevelsMax%.0 - 1.0);                                           ""\n"
         "    }                                                                                                              ""\n"
         "                                                                                                                   ""\n"
@@ -217,18 +222,12 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
         "%UnrolledPerLayerProcessingCode%                                                                                   ""\n"
         "                                                                                                                   ""\n"
         //   Apply fog (square exponential)
-        "    if(v2f_distanceFromCamera > param_fs_fogDistance)                                                              ""\n"
-        "    {                                                                                                              ""\n"
-        "        const float fogDistance = v2f_distanceFromCamera - param_fs_fogDistance;                                   ""\n"
-        "        const float fogFactorBase = fogDistance * param_fs_fogDensity;                                             ""\n"
-        "        const float fogFactor = clamp(exp(- fogFactorBase*fogFactorBase), 0.0, 1.0);                               ""\n"
-        "                                                                                                                   ""\n"
-        "        out_color = mix(baseColor, vec4(param_fs_fogColor, 1.0), 1.0 - fogFactor);                                 ""\n"
-        "    }                                                                                                              ""\n"
-        "    else                                                                                                           ""\n"
-        "    {                                                                                                              ""\n"
-        "        out_color = baseColor;                                                                                     ""\n"
-        "    }                                                                                                              ""\n"
+        "    const float fogStartDistance = param_fs_fogDistance * ( 1.0 - param_fs_fogOriginFactor);                       ""\n"
+        "    const float fogLinearFactor = min(max(v2f_distanceFromTarget - fogStartDistance, 0.0) /                        ""\n"
+        "        (param_fs_fogDistance - fogStartDistance), 1.0);                                                           ""\n"
+        "    const float fogFactorBase = fogLinearFactor * param_fs_fogDensity;                                             ""\n"
+        "    const float fogFactor = clamp(exp(-fogFactorBase*fogFactorBase), 0.0, 1.0);                                    ""\n"
+        "    out_color = mix(baseColor, vec4(param_fs_fogColor, 1.0), 1.0 - fogFactor);                                     ""\n"
         "                                                                                                                   ""\n"
         //   Remove pixel if it's completely transparent
         "    if(out_color.a < floatEpsilon)                                                                                 ""\n"
@@ -263,7 +262,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
     _programVariables.clear();
     findVariableLocation(_mapStage.program, _mapStage.vs.in.vertexPosition, "in_vs_vertexPosition", In);
     findVariableLocation(_mapStage.program, _mapStage.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", In);
-    findVariableLocation(_mapStage.program, _mapStage.vs.param.mProjection, "param_vs_mProjection", Uniform);
+    findVariableLocation(_mapStage.program, _mapStage.vs.param.mProjectionView, "param_vs_mProjectionView", Uniform);
     findVariableLocation(_mapStage.program, _mapStage.vs.param.mView, "param_vs_mView", Uniform);
     findVariableLocation(_mapStage.program, _mapStage.vs.param.centerOffset, "param_vs_centerOffset", Uniform);
     findVariableLocation(_mapStage.program, _mapStage.vs.param.targetTile, "param_vs_targetTile", Uniform);
@@ -287,6 +286,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
     findVariableLocation(_mapStage.program, _mapStage.fs.param.fogColor, "param_fs_fogColor", Uniform);
     findVariableLocation(_mapStage.program, _mapStage.fs.param.fogDistance, "param_fs_fogDistance", Uniform);
     findVariableLocation(_mapStage.program, _mapStage.fs.param.fogDensity, "param_fs_fogDensity", Uniform);
+    findVariableLocation(_mapStage.program, _mapStage.fs.param.fogOriginFactor, "param_fs_fogOriginFactor", Uniform);
     for(int layerId = TileLayerId::RasterMap, linearIdx = 0; layerId < TileLayerId::IdsCount; layerId++, linearIdx++)
     {
         const auto layerStructName =
@@ -316,6 +316,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
         _activeConfig.viewport.height());
     GL_CHECK_RESULT;
 
+    performRendering_SkyStage();
     performRendering_MapStage();
 
     // Revert viewport
@@ -325,16 +326,20 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
 
 void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_MapStage()
 {
+    // Set tile patch VAO
+    assert(glBindVertexArray);
+    glBindVertexArray(_tilePatchVAO);
+    GL_CHECK_RESULT;
+
     // Activate program
     assert(glUseProgram);
     glUseProgram(_mapStage.program);
     GL_CHECK_RESULT;
 
-    // Set projection matrix
-    glUniformMatrix4fv(_mapStage.vs.param.mProjection, 1, GL_FALSE, glm::value_ptr(_mProjection));
+    // Set matrices
+    auto mProjectionView = _mProjection * _mView;
+    glUniformMatrix4fv(_mapStage.vs.param.mProjectionView, 1, GL_FALSE, glm::value_ptr(mProjectionView));
     GL_CHECK_RESULT;
-
-    // Set view matrix
     glUniformMatrix4fv(_mapStage.vs.param.mView, 1, GL_FALSE, glm::value_ptr(_mView));
     GL_CHECK_RESULT;
 
@@ -364,10 +369,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_MapStage()
     GL_CHECK_RESULT;
     glUniform1f(_mapStage.fs.param.fogDensity, _activeConfig.fogDensity);
     GL_CHECK_RESULT;
-
-    // Set tile patch VAO
-    assert(glBindVertexArray);
-    glBindVertexArray(_tilePatchVAO);
+    glUniform1f(_mapStage.fs.param.fogOriginFactor, _activeConfig.fogOriginFactor);
     GL_CHECK_RESULT;
 
     // Set samplers
@@ -539,18 +541,19 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_MapStage()
         GL_CHECK_RESULT;
     }
 
-    // Deselect VAO
-    glBindVertexArray(0);
-    GL_CHECK_RESULT;
-
     // Deactivate program
     glUseProgram(0);
+    GL_CHECK_RESULT;
+
+    // Deselect VAO
+    glBindVertexArray(0);
     GL_CHECK_RESULT;
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL::releaseRendering()
 {
     releaseRendering_MapStage();
+    releaseRendering_SkyStage();
 
     AtlasMapRenderer_BaseOpenGL::releaseRendering();
     MapRenderer_OpenGL::releaseRendering();
@@ -578,7 +581,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::releaseRendering_MapStage()
     memset(&_mapStage, 0, sizeof(_mapStage));
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGL::allocateTilePatch( Vertex* vertices, size_t verticesCount, GLushort* indices, size_t indicesCount )
+void OsmAnd::AtlasMapRenderer_OpenGL::allocateTilePatch( MapTileVertex* vertices, size_t verticesCount, GLushort* indices, size_t indicesCount )
 {
     // Create Vertex Array Object
     assert(glGenVertexArrays);
@@ -596,19 +599,19 @@ void OsmAnd::AtlasMapRenderer_OpenGL::allocateTilePatch( Vertex* vertices, size_
     glBindBuffer(GL_ARRAY_BUFFER, _tilePatchVBO);
     GL_CHECK_RESULT;
     assert(glBufferData);
-    glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(Vertex), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(MapTileVertex), vertices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
     assert(glEnableVertexAttribArray);
     glEnableVertexAttribArray(_mapStage.vs.in.vertexPosition);
     GL_CHECK_RESULT;
     assert(glVertexAttribPointer);
-    glVertexAttribPointer(_mapStage.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, position)));
+    glVertexAttribPointer(_mapStage.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(MapTileVertex), reinterpret_cast<GLvoid*>(offsetof(MapTileVertex, position)));
     GL_CHECK_RESULT;
     assert(glEnableVertexAttribArray);
     glEnableVertexAttribArray(_mapStage.vs.in.vertexTexCoords);
     GL_CHECK_RESULT;
     assert(glVertexAttribPointer);
-    glVertexAttribPointer(_mapStage.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, uv)));
+    glVertexAttribPointer(_mapStage.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(MapTileVertex), reinterpret_cast<GLvoid*>(offsetof(MapTileVertex, uv)));
     GL_CHECK_RESULT;
 
     // Create index buffer and associate it with VAO
@@ -651,4 +654,238 @@ void OsmAnd::AtlasMapRenderer_OpenGL::releaseTilePatch()
         GL_CHECK_RESULT;
         _tilePatchVAO = 0;
     }
+}
+
+void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_SkyStage()
+{
+    // Vertex data (x,y)
+    float vertices[4][2] =
+    {
+        {-1.0f,-1.0f},
+        {-1.0f, 1.0f},
+        { 1.0f, 1.0f},
+        { 1.0f,-1.0f}
+    };
+    const auto verticesCount = 4;
+
+    // Index data
+    GLushort indices[6] =
+    {
+        0, 1, 2,
+        0, 2, 3
+    };
+    const auto indicesCount = 6;
+
+    // Create Vertex Array Object
+    assert(glGenVertexArrays);
+    glGenVertexArrays(1, &_skyStage.vao);
+    GL_CHECK_RESULT;
+    assert(glBindVertexArray);
+    glBindVertexArray(_skyStage.vao);
+    GL_CHECK_RESULT;
+
+    // Create vertex buffer and associate it with VAO
+    assert(glGenBuffers);
+    glGenBuffers(1, &_skyStage.vbo);
+    GL_CHECK_RESULT;
+    assert(glBindBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, _skyStage.vbo);
+    GL_CHECK_RESULT;
+    assert(glBufferData);
+    glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(float) * 2, vertices, GL_STATIC_DRAW);
+    GL_CHECK_RESULT;
+    assert(glEnableVertexAttribArray);
+    glEnableVertexAttribArray(_skyStage.vs.in.vertexPosition);
+    GL_CHECK_RESULT;
+    assert(glVertexAttribPointer);
+    glVertexAttribPointer(_skyStage.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, nullptr);
+    GL_CHECK_RESULT;
+        
+    // Create index buffer and associate it with VAO
+    assert(glGenBuffers);
+    glGenBuffers(1, &_skyStage.ibo);
+    GL_CHECK_RESULT;
+    assert(glBindBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _skyStage.ibo);
+    GL_CHECK_RESULT;
+    assert(glBufferData);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
+    GL_CHECK_RESULT;
+
+    glBindVertexArray(0);
+    GL_CHECK_RESULT;
+
+    // Compile vertex shader
+    const QString vertexShader = QString::fromLatin1(
+        "#version 430 core                                                                                                  ""\n"
+        "                                                                                                                   ""\n"
+        // Constants
+        "const float floatEpsilon = 0.000001;                                                                               ""\n"
+        "                                                                                                                   ""\n"
+        // Input data
+        "in vec2 in_vs_vertexPosition;                                                                                      ""\n"
+        "                                                                                                                   ""\n"
+        // Output data
+        "out float v2f_horizonOffsetN;                                                                                      ""\n"
+        "                                                                                                                   ""\n"
+        // Parameters: common data
+        "uniform mat4 param_vs_mProjectionViewModel;                                                                        ""\n"
+        "uniform vec2 param_vs_halfSize;                                                                                    ""\n"
+        "                                                                                                                   ""\n"
+        "void main()                                                                                                        ""\n"
+        "{                                                                                                                  ""\n"
+        "    vec4 v = vec4(in_vs_vertexPosition.x * param_vs_halfSize.x,                                                    ""\n"
+        "        in_vs_vertexPosition.y * param_vs_halfSize.y, 0.0, 1.0);                                                   ""\n"
+        "                                                                                                                   ""\n"
+        //   Horizon offset is in range [-1.0 ... +1.0], what is the same as input vertex data
+        "    v2f_horizonOffsetN = in_vs_vertexPosition.y;                                                                   ""\n"
+        "    gl_Position = param_vs_mProjectionViewModel * v;                                                               ""\n"
+        "}                                                                                                                  ""\n");
+    QString preprocessedVertexShader = vertexShader;
+    _skyStage.vs.id = compileShader(GL_VERTEX_SHADER, preprocessedVertexShader.toStdString().c_str());
+    assert(_skyStage.vs.id != 0);
+
+    // Compile fragment shader
+    const QString fragmentShader = QString::fromLatin1(
+        "#version 430 core                                                                                                  ""\n"
+        "                                                                                                                   ""\n"
+        // Constants
+        "const float floatEpsilon = 0.000001;                                                                               ""\n"
+        "                                                                                                                   ""\n"
+        // Input data
+        "in float v2f_horizonOffsetN;                                                                                       ""\n"
+        "                                                                                                                   ""\n"
+        // Output data
+        "out vec4 out_color;                                                                                                ""\n"
+        "                                                                                                                   ""\n"
+        // Parameters: common data
+        "uniform vec3 param_fs_skyColor;                                                                                    ""\n"
+        "uniform vec3 param_fs_fogColor;                                                                                    ""\n"
+        "uniform float param_fs_fogDensity;                                                                                 ""\n"
+        "uniform float param_fs_fogOriginFactor;                                                                            ""\n"
+        "                                                                                                                   ""\n"
+        "void main()                                                                                                        ""\n"
+        "{                                                                                                                  ""\n"
+        //   Height is considered [0.0 ... 2.0]
+        "    const float fogHeight = 1.0;                                                                                   ""\n"
+        "    const float fogStartHeight = fogHeight * (1.0 - param_fs_fogOriginFactor);                                     ""\n"
+        "    const float fragmentHeight = 1.0 - v2f_horizonOffsetN;                                                         ""\n"
+        //   Fog linear is factor in range [0.0 ... 1.0]
+        "    const float fogLinearFactor = min(max(fragmentHeight - fogStartHeight, 0.0) /                                  ""\n"
+        "        (fogHeight - fogStartHeight), 1.0);                                                                        ""\n"
+        "    const float fogFactorBase = fogLinearFactor * param_fs_fogDensity;                                             ""\n"
+        "    const float fogFactor = clamp(exp(-fogFactorBase*fogFactorBase), 0.0, 1.0);                                    ""\n"
+        "    const vec3 mixedColor = mix(param_fs_skyColor, param_fs_fogColor, 1.0 - fogFactor);                            ""\n"
+        "    out_color.rgba = vec4(mixedColor, 1.0);                                                                        ""\n"
+        "}                                                                                                                  ""\n");
+    QString preprocessedFragmentShader = fragmentShader;
+    QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
+    _skyStage.fs.id = compileShader(GL_FRAGMENT_SHADER, preprocessedFragmentShader.toStdString().c_str());
+    assert(_skyStage.fs.id != 0);
+
+    // Link everything into program object
+    GLuint shaders[] = {
+        _skyStage.vs.id,
+        _skyStage.fs.id
+    };
+    _skyStage.program = linkProgram(2, shaders);
+    assert(_skyStage.program != 0);
+
+    _programVariables.clear();
+    findVariableLocation(_skyStage.program, _skyStage.vs.in.vertexPosition, "in_vs_vertexPosition", In);
+    findVariableLocation(_skyStage.program, _skyStage.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", Uniform);
+    findVariableLocation(_skyStage.program, _skyStage.vs.param.halfSize, "param_vs_halfSize", Uniform);
+    findVariableLocation(_skyStage.program, _skyStage.fs.param.fogColor, "param_fs_fogColor", Uniform);
+    findVariableLocation(_skyStage.program, _skyStage.fs.param.skyColor, "param_fs_skyColor", Uniform);
+    findVariableLocation(_skyStage.program, _skyStage.fs.param.fogDensity, "param_fs_fogDensity", Uniform);
+    findVariableLocation(_skyStage.program, _skyStage.fs.param.fogOriginFactor, "param_fs_fogOriginFactor", Uniform);
+    _programVariables.clear();
+}
+
+void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_SkyStage()
+{
+    // Set tile patch VAO
+    assert(glBindVertexArray);
+    glBindVertexArray(_skyStage.vao);
+    GL_CHECK_RESULT;
+
+    // Activate program
+    assert(glUseProgram);
+    glUseProgram(_skyStage.program);
+    GL_CHECK_RESULT;
+
+    // Set projection*view*model matrix
+    auto mModelTranslate = glm::translate(0.0f, 0.0f, -_activeConfig.fogDistance);
+    auto mModelRotate = glm::rotate(-_activeConfig.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
+    auto mProjectionViewModel = _mProjection * _mView * (mModelRotate * mModelTranslate);
+    glUniformMatrix4fv(_skyStage.vs.param.mProjectionViewModel, 1, GL_FALSE, glm::value_ptr(mProjectionViewModel));
+    GL_CHECK_RESULT;
+
+    // Set halfsize
+    glUniform2f(_skyStage.vs.param.halfSize, _skyplaneHalfSize[0] * 1.1f, _skyplaneHalfSize[1] * 1.1f);
+    GL_CHECK_RESULT;
+
+    // Set fog and sky parameters
+    glUniform3f(_skyStage.fs.param.skyColor, _activeConfig.skyColor[0], _activeConfig.skyColor[1], _activeConfig.skyColor[2]);
+    GL_CHECK_RESULT;
+    glUniform3f(_skyStage.fs.param.fogColor, _activeConfig.fogColor[0], _activeConfig.fogColor[1], _activeConfig.fogColor[2]);
+    GL_CHECK_RESULT;
+    glUniform1f(_skyStage.fs.param.fogDensity, _activeConfig.fogDensity);
+    GL_CHECK_RESULT;
+    glUniform1f(_skyStage.fs.param.fogOriginFactor, _activeConfig.fogOriginFactor);
+    GL_CHECK_RESULT;
+
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
+    GL_CHECK_RESULT;
+
+    // Deactivate program
+    glUseProgram(0);
+    GL_CHECK_RESULT;
+
+    // Deselect VAO
+    glBindVertexArray(0);
+    GL_CHECK_RESULT;
+}
+
+void OsmAnd::AtlasMapRenderer_OpenGL::releaseRendering_SkyStage()
+{
+    if(_skyStage.ibo)
+    {
+        assert(glDeleteBuffers);
+        glDeleteBuffers(1, &_skyStage.ibo);
+        GL_CHECK_RESULT;
+    }
+
+    if(_skyStage.vbo)
+    {
+        assert(glDeleteBuffers);
+        glDeleteBuffers(1, &_skyStage.vbo);
+        GL_CHECK_RESULT;
+    }
+
+    if(_skyStage.vao)
+    {
+        assert(glDeleteVertexArrays);
+        glDeleteVertexArrays(1, &_skyStage.vao);
+        GL_CHECK_RESULT;
+    }
+
+    if(_skyStage.program)
+    {
+        assert(glDeleteProgram);
+        glDeleteProgram(_skyStage.program);
+        GL_CHECK_RESULT;
+    }
+    if(_skyStage.fs.id)
+    {
+        assert(glDeleteShader);
+        glDeleteShader(_skyStage.fs.id);
+        GL_CHECK_RESULT;
+    }
+    if(_skyStage.vs.id)
+    {
+        glDeleteShader(_skyStage.vs.id);
+        GL_CHECK_RESULT;
+    }
+    memset(&_skyStage, 0, sizeof(_skyStage));
 }

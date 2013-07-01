@@ -50,10 +50,6 @@ namespace OsmAnd {
 
             struct {
                 GLuint id;
-            } _environmentStage;
-
-            struct {
-                GLuint id;
 
                 // Input data
                 struct {
@@ -64,7 +60,7 @@ namespace OsmAnd {
                 // Parameters
                 struct {
                     // Common data
-                    GLint mProjection;
+                    GLint mProjectionView;
                     GLint mView;
                     GLint centerOffset;
                     GLint targetTile;
@@ -96,6 +92,7 @@ namespace OsmAnd {
                     GLint fogColor;
                     GLint fogDistance;
                     GLint fogDensity;
+                    GLint fogOriginFactor;
 
                     // Per-tile-per-layer data
                     struct
@@ -107,12 +104,53 @@ namespace OsmAnd {
             } fs;
         } _mapStage;
 
-        virtual void allocateTilePatch(Vertex* vertices, size_t verticesCount, GLushort* indices, size_t indicesCount);
+        virtual void allocateTilePatch(MapTileVertex* vertices, size_t verticesCount, GLushort* indices, size_t indicesCount);
         virtual void releaseTilePatch();
 
         void initializeRendering_MapStage();
         void performRendering_MapStage();
         void releaseRendering_MapStage();
+
+        struct {
+            GLuint vao;
+            GLuint vbo;
+            GLuint ibo;
+
+            GLuint program;
+
+            struct {
+                GLuint id;
+
+                // Input data
+                struct {
+                    GLint vertexPosition;
+                } in;
+
+                // Parameters
+                struct {
+                    // Common data
+                    GLint mProjectionViewModel;
+                    GLint halfSize;
+                } param;
+            } vs;
+
+            struct {
+                GLuint id;
+
+                // Parameters
+                struct {
+                    // Common data
+                    GLint skyColor;
+                    GLint fogColor;
+                    GLint fogDensity;
+                    GLint fogOriginFactor;
+                } param;
+            } fs;
+        } _skyStage;
+        
+        void initializeRendering_SkyStage();
+        void performRendering_SkyStage();
+        void releaseRendering_SkyStage();
     public:
         AtlasMapRenderer_OpenGL();
         virtual ~AtlasMapRenderer_OpenGL();

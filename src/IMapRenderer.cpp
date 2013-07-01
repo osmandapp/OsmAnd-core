@@ -18,29 +18,31 @@ OsmAnd::IMapRenderer::IMapRenderer()
     , visibleTiles(_visibleTiles)
     , isRenderingInitialized(_isRenderingInitialized)
 {
-    setDisplayDensityFactor(1.0f);
-    setFieldOfView(45.0f);
-    setDistanceToFog(400.0f);
-    setFogDensity(0.01f);
-    setFogColor(0.5f, 0.5f, 0.5f);
-    setAzimuth(0.0f);
-    setElevationAngle(45.0f);
-    setTarget(PointI(std::numeric_limits<int32_t>::max() / 2, std::numeric_limits<int32_t>::max() / 2));
-    setZoom(0);
-    set16bitColorDepthLimit(false);
-    setTextureAtlasesUsagePermit(true);
-    setHeightmapPatchesPerSide(24);
+    setDisplayDensityFactor(1.0f, true);
+    setFieldOfView(45.0f, true);
+    setDistanceToFog(400.0f, true);
+    setFogOriginFactor(0.36f, true);
+    setFogDensity(1.9f, true);
+    setFogColor(1.0f, 0.0f, 0.0f, true);
+    setSkyColor(140.0f / 255.0f, 190.0f / 255.0f, 214.0f / 255.0f, true);
+    setAzimuth(0.0f, true);
+    setElevationAngle(45.0f, true);
+    setTarget(PointI(std::numeric_limits<int32_t>::max() / 2, std::numeric_limits<int32_t>::max() / 2), true);
+    setZoom(0, true);
+    set16bitColorDepthLimit(false, true);
+    setTextureAtlasesUsagePermit(true, true);
+    setHeightmapPatchesPerSide(24, true);
 }
 
 OsmAnd::IMapRenderer::~IMapRenderer()
 {
 }
 
-void OsmAnd::IMapRenderer::setTileProvider( const TileLayerId& layerId, const std::shared_ptr<IMapTileProvider>& tileProvider )
+void OsmAnd::IMapRenderer::setTileProvider( const TileLayerId& layerId, const std::shared_ptr<IMapTileProvider>& tileProvider, bool forcedUpdate/* = false*/ )
 {
     QMutexLocker scopeLock(&_pendingConfigModificationMutex);
 
-    bool update = (_pendingConfig.tileProviders[layerId] != tileProvider);
+    bool update = forcedUpdate || (_pendingConfig.tileProviders[layerId] != tileProvider);
     if(!update)
         return;
 
@@ -50,11 +52,11 @@ void OsmAnd::IMapRenderer::setTileProvider( const TileLayerId& layerId, const st
     invalidateConfiguration();
 }
 
-void OsmAnd::IMapRenderer::set16bitColorDepthLimit( const bool& forced )
+void OsmAnd::IMapRenderer::set16bitColorDepthLimit( const bool& forced, bool forcedUpdate/* = false*/ )
 {
     QMutexLocker scopeLock(&_pendingConfigModificationMutex);
 
-    bool update = (_pendingConfig.force16bitColorDepthLimit != forced);
+    bool update = forcedUpdate || (_pendingConfig.force16bitColorDepthLimit != forced);
     if(!update)
         return;
 
@@ -72,11 +74,11 @@ void OsmAnd::IMapRenderer::set16bitColorDepthLimit( const bool& forced )
     invalidateConfiguration();
 }
 
-void OsmAnd::IMapRenderer::setWindowSize( const PointI& windowSize )
+void OsmAnd::IMapRenderer::setWindowSize( const PointI& windowSize, bool forcedUpdate/* = false*/ )
 {
     QMutexLocker scopeLock(&_pendingConfigModificationMutex);
 
-    bool update = (_pendingConfig.windowSize != windowSize);
+    bool update = forcedUpdate || (_pendingConfig.windowSize != windowSize);
     if(!update)
         return;
 
@@ -85,11 +87,11 @@ void OsmAnd::IMapRenderer::setWindowSize( const PointI& windowSize )
     invalidateConfiguration();
 }
 
-void OsmAnd::IMapRenderer::setDisplayDensityFactor( const float& factor )
+void OsmAnd::IMapRenderer::setDisplayDensityFactor( const float& factor, bool forcedUpdate/* = false*/ )
 {
     QMutexLocker scopeLock(&_pendingConfigModificationMutex);
 
-    bool update = !qFuzzyCompare(_pendingConfig.displayDensityFactor, factor);
+    bool update = forcedUpdate || !qFuzzyCompare(_pendingConfig.displayDensityFactor, factor);
     if(!update)
         return;
 
@@ -98,11 +100,11 @@ void OsmAnd::IMapRenderer::setDisplayDensityFactor( const float& factor )
     invalidateConfiguration();
 }
 
-void OsmAnd::IMapRenderer::setViewport( const AreaI& viewport )
+void OsmAnd::IMapRenderer::setViewport( const AreaI& viewport, bool forcedUpdate/* = false*/ )
 {
     QMutexLocker scopeLock(&_pendingConfigModificationMutex);
 
-    bool update = (_pendingConfig.viewport != viewport);
+    bool update = forcedUpdate || (_pendingConfig.viewport != viewport);
     if(!update)
         return;
 
@@ -111,13 +113,13 @@ void OsmAnd::IMapRenderer::setViewport( const AreaI& viewport )
     invalidateConfiguration();
 }
 
-void OsmAnd::IMapRenderer::setFieldOfView( const float& fieldOfView )
+void OsmAnd::IMapRenderer::setFieldOfView( const float& fieldOfView, bool forcedUpdate/* = false*/ )
 {
     QMutexLocker scopeLock(&_pendingConfigModificationMutex);
 
     const auto clampedValue = qMax(std::numeric_limits<float>::epsilon(), qMin(fieldOfView, 90.0f));
 
-    bool update = !qFuzzyCompare(_pendingConfig.fieldOfView, clampedValue);
+    bool update = forcedUpdate || !qFuzzyCompare(_pendingConfig.fieldOfView, clampedValue);
     if(!update)
         return;
 
@@ -126,13 +128,13 @@ void OsmAnd::IMapRenderer::setFieldOfView( const float& fieldOfView )
     invalidateConfiguration();
 }
 
-void OsmAnd::IMapRenderer::setDistanceToFog( const float& fogDistance )
+void OsmAnd::IMapRenderer::setDistanceToFog( const float& fogDistance, bool forcedUpdate/* = false*/ )
 {
     QMutexLocker scopeLock(&_pendingConfigModificationMutex);
 
     const auto clampedValue = qMax(std::numeric_limits<float>::epsilon(), fogDistance);
 
-    bool update = !qFuzzyCompare(_pendingConfig.fogDistance, clampedValue);
+    bool update = forcedUpdate || !qFuzzyCompare(_pendingConfig.fogDistance, clampedValue);
     if(!update)
         return;
 
@@ -141,24 +143,41 @@ void OsmAnd::IMapRenderer::setDistanceToFog( const float& fogDistance )
     invalidateConfiguration();
 }
 
-void OsmAnd::IMapRenderer::setFogDensity( const float& fogDensity )
+void OsmAnd::IMapRenderer::setFogOriginFactor( const float& factor, bool forcedUpdate /*= false*/ )
 {
     QMutexLocker scopeLock(&_pendingConfigModificationMutex);
 
-    bool update = !qFuzzyCompare(_pendingConfig.fogDensity, fogDensity);
+    const auto clampedValue = qMax(std::numeric_limits<float>::epsilon(), qMin(factor, 1.0f));
+
+    bool update = forcedUpdate || !qFuzzyCompare(_pendingConfig.fogOriginFactor, clampedValue);
     if(!update)
         return;
 
-    _pendingConfig.fogDensity = fogDensity;
+    _pendingConfig.fogOriginFactor = clampedValue;
 
     invalidateConfiguration();
 }
 
-void OsmAnd::IMapRenderer::setFogColor( const float& r, const float& g, const float& b )
+void OsmAnd::IMapRenderer::setFogDensity( const float& fogDensity, bool forcedUpdate/* = false*/ )
 {
     QMutexLocker scopeLock(&_pendingConfigModificationMutex);
 
-    bool update = !qFuzzyCompare(_pendingConfig.fogColor[0], r);
+    const auto clampedValue = qMax(std::numeric_limits<float>::epsilon(), fogDensity);
+
+    bool update = forcedUpdate || !qFuzzyCompare(_pendingConfig.fogDensity, clampedValue);
+    if(!update)
+        return;
+
+    _pendingConfig.fogDensity = clampedValue;
+
+    invalidateConfiguration();
+}
+
+void OsmAnd::IMapRenderer::setFogColor( const float& r, const float& g, const float& b, bool forcedUpdate/* = false*/ )
+{
+    QMutexLocker scopeLock(&_pendingConfigModificationMutex);
+
+    bool update = forcedUpdate || !qFuzzyCompare(_pendingConfig.fogColor[0], r);
     update = update || !qFuzzyCompare(_pendingConfig.fogColor[1], g);
     update = update || !qFuzzyCompare(_pendingConfig.fogColor[2], b);
     if(!update)
@@ -171,7 +190,24 @@ void OsmAnd::IMapRenderer::setFogColor( const float& r, const float& g, const fl
     invalidateConfiguration();
 }
 
-void OsmAnd::IMapRenderer::setAzimuth( const float& azimuth )
+void OsmAnd::IMapRenderer::setSkyColor( const float& r, const float& g, const float& b, bool forcedUpdate/* = false*/ )
+{
+    QMutexLocker scopeLock(&_pendingConfigModificationMutex);
+
+    bool update = forcedUpdate || !qFuzzyCompare(_pendingConfig.skyColor[0], r);
+    update = update || !qFuzzyCompare(_pendingConfig.skyColor[1], g);
+    update = update || !qFuzzyCompare(_pendingConfig.skyColor[2], b);
+    if(!update)
+        return;
+
+    _pendingConfig.skyColor[0] = r;
+    _pendingConfig.skyColor[1] = g;
+    _pendingConfig.skyColor[2] = b;
+
+    invalidateConfiguration();
+}
+
+void OsmAnd::IMapRenderer::setAzimuth( const float& azimuth, bool forcedUpdate/* = false*/ )
 {
     QMutexLocker scopeLock(&_pendingConfigModificationMutex);
 
@@ -181,7 +217,7 @@ void OsmAnd::IMapRenderer::setAzimuth( const float& azimuth )
     while(normalizedAzimuth < 0.0f)
         normalizedAzimuth += 360.0f;
 
-    bool update = !qFuzzyCompare(_pendingConfig.azimuth, normalizedAzimuth);
+    bool update = forcedUpdate || !qFuzzyCompare(_pendingConfig.azimuth, normalizedAzimuth);
     if(!update)
         return;
 
@@ -190,13 +226,13 @@ void OsmAnd::IMapRenderer::setAzimuth( const float& azimuth )
     invalidateConfiguration();
 }
 
-void OsmAnd::IMapRenderer::setElevationAngle( const float& elevationAngle )
+void OsmAnd::IMapRenderer::setElevationAngle( const float& elevationAngle, bool forcedUpdate/* = false*/ )
 {
     QMutexLocker scopeLock(&_pendingConfigModificationMutex);
 
     const auto clampedValue = qMax(std::numeric_limits<float>::epsilon(), qMin(elevationAngle, 90.0f));
 
-    bool update = !qFuzzyCompare(_pendingConfig.elevationAngle, clampedValue);
+    bool update = forcedUpdate || !qFuzzyCompare(_pendingConfig.elevationAngle, clampedValue);
     if(!update)
         return;
 
@@ -205,7 +241,7 @@ void OsmAnd::IMapRenderer::setElevationAngle( const float& elevationAngle )
     invalidateConfiguration();
 }
 
-void OsmAnd::IMapRenderer::setTarget( const PointI& target31 )
+void OsmAnd::IMapRenderer::setTarget( const PointI& target31, bool forcedUpdate/* = false*/ )
 {
     QMutexLocker scopeLock(&_pendingConfigModificationMutex);
 
@@ -216,7 +252,7 @@ void OsmAnd::IMapRenderer::setTarget( const PointI& target31 )
     if(wrappedTarget31.y < 0)
         wrappedTarget31.y += maxTile31Index;
 
-    bool update = (_pendingConfig.target31 != wrappedTarget31);
+    bool update = forcedUpdate || (_pendingConfig.target31 != wrappedTarget31);
     if(!update)
         return;
 
@@ -225,13 +261,13 @@ void OsmAnd::IMapRenderer::setTarget( const PointI& target31 )
     invalidateConfiguration();
 }
 
-void OsmAnd::IMapRenderer::setZoom( const float& zoom )
+void OsmAnd::IMapRenderer::setZoom( const float& zoom, bool forcedUpdate/* = false*/ )
 {
     QMutexLocker scopeLock(&_pendingConfigModificationMutex);
 
     const auto clampedValue = qMax(std::numeric_limits<float>::epsilon(), qMin(zoom, 31.49999f));
 
-    bool update = !qFuzzyCompare(_pendingConfig.requestedZoom, clampedValue);
+    bool update = forcedUpdate || !qFuzzyCompare(_pendingConfig.requestedZoom, clampedValue);
     if(!update)
         return;
 
@@ -243,11 +279,11 @@ void OsmAnd::IMapRenderer::setZoom( const float& zoom )
     invalidateConfiguration();
 }
 
-void OsmAnd::IMapRenderer::setTextureAtlasesUsagePermit( const bool& allow )
+void OsmAnd::IMapRenderer::setTextureAtlasesUsagePermit( const bool& allow, bool forcedUpdate/* = false*/ )
 {
     QMutexLocker scopeLock(&_pendingConfigModificationMutex);
 
-    bool update = (_pendingConfig.textureAtlasesAllowed != allow);
+    bool update = forcedUpdate || (_pendingConfig.textureAtlasesAllowed != allow);
     if(!update)
         return;
 
@@ -257,11 +293,11 @@ void OsmAnd::IMapRenderer::setTextureAtlasesUsagePermit( const bool& allow )
     invalidateConfiguration();
 }
 
-void OsmAnd::IMapRenderer::setHeightmapPatchesPerSide( const uint32_t& patchesCount )
+void OsmAnd::IMapRenderer::setHeightmapPatchesPerSide( const uint32_t& patchesCount, bool forcedUpdate/* = false*/ )
 {
     QMutexLocker scopeLock(&_pendingConfigModificationMutex);
 
-    bool update = (_pendingConfig.heightmapPatchesPerSide != patchesCount);
+    bool update = forcedUpdate || (_pendingConfig.heightmapPatchesPerSide != patchesCount);
     if(!update)
         return;
 

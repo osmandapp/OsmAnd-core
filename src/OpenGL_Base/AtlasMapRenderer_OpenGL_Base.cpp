@@ -42,6 +42,7 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::updateConfiguration()
 
     computeProjectionAndViewMatrices();
     computeVisibleTileset();
+    compuleSkyplaneSize();
 }
 
 void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeProjectionAndViewMatrices()
@@ -69,7 +70,7 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeProjectionAndViewMatrices()
         _distanceFromCameraToTarget = baseD - (farD - baseD) * (2.0f * _activeConfig.zoomFraction);
 
     // Recalculate projection with obtained value
-    _mProjection = glm::perspective(_activeConfig.fieldOfView, aspectRatio, 0.1f, _activeConfig.fogDistance * 1.2f + _distanceFromCameraToTarget);
+    _mProjection = glm::perspective(_activeConfig.fieldOfView, aspectRatio, 0.1f, _activeConfig.fogDistance + _distanceFromCameraToTarget);
 
     // Setup camera
     const auto& c0 = glm::translate(0.0f, 0.0f, -_distanceFromCameraToTarget);
@@ -135,24 +136,24 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
     glm::vec3 planeN(0.0f, 1.0f, 0.0f);
 
     // Intersect 4 rays with tile-plane
-    auto clip = _activeConfig.fogDistance * 1.2f + _distanceFromCameraToTarget;
+    auto clip = _activeConfig.fogDistance  + _distanceFromCameraToTarget;
     float tlD, trD, blD, brD;
     bool intersects;
     intersects = Utilities_BaseOpenGL::rayIntersectPlane(planeN, 0.0f, tlRayD, tln, tlD);
     if(!intersects)
-        tlD = clip * 1.5f;
+        tlD = clip;
     auto tlP = tln + tlRayD * tlD;
     intersects = Utilities_BaseOpenGL::rayIntersectPlane(planeN, 0.0f, trRayD, trn, trD);
     if(!intersects)
-        trD = clip * 1.5f;
+        trD = clip;
     auto trP = trn + trRayD * trD;
     intersects = Utilities_BaseOpenGL::rayIntersectPlane(planeN, 0.0f, blRayD, bln, blD);
     if(!intersects)
-        blD = clip * 1.5f;
+        blD = clip;
     auto blP = bln + blRayD * blD;
     intersects = Utilities_BaseOpenGL::rayIntersectPlane(planeN, 0.0f, brRayD, brn, brD);
     if(!intersects)
-        brD = clip * 1.5f;
+        brD = clip;
     auto brP = brn + brRayD * brD;
 
     // Limit all I-points using clip distance
@@ -232,7 +233,7 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::releaseRendering()
 
 void OsmAnd::AtlasMapRenderer_BaseOpenGL::createTilePatch()
 {
-    Vertex* pVertices = nullptr;
+    MapTileVertex* pVertices = nullptr;
     uint32_t verticesCount = 0;
     GLushort* pIndices = nullptr;
     uint32_t indicesCount = 0;
@@ -243,7 +244,7 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::createTilePatch()
 
         // Vertex data
         const GLfloat tsz = static_cast<GLfloat>(TileSide3D);
-        Vertex vertices[4] =
+        MapTileVertex vertices[4] =
         {
             { {0.0f, 0.0f}, {0.0f, 0.0f} },
             { {0.0f,  tsz}, {0.0f, 1.0f} },
@@ -271,11 +272,11 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::createTilePatch()
         const auto outerVertices = verticesPerLine * verticesPerLine;
         verticesCount = outerVertices;
         verticesCount += _activeConfig.heightmapPatchesPerSide * _activeConfig.heightmapPatchesPerSide; // Inner
-        pVertices = new Vertex[verticesCount];
+        pVertices = new MapTileVertex[verticesCount];
         indicesCount = (_activeConfig.heightmapPatchesPerSide * _activeConfig.heightmapPatchesPerSide) * 4 * 3;
         pIndices = new GLushort[indicesCount];
 
-        Vertex* pV = pVertices;
+        MapTileVertex* pV = pVertices;
 
         // Form outer vertices
         for(auto row = 0u; row < verticesPerLine; row++)
@@ -354,4 +355,24 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::createTilePatch()
         delete[] pVertices;
         delete[] pIndices;
     }
+}
+
+void OsmAnd::AtlasMapRenderer_BaseOpenGL::compuleSkyplaneSize()
+{
+    // Setup fake camera
+    auto mView = glm::translate(0.0f, 0.0f, -_distanceFromCameraToTarget);
+
+    glm::vec4 glViewport(
+        _activeConfig.viewport.left,
+        _activeConfig.windowSize.y - _activeConfig.viewport.bottom,
+        _activeConfig.viewport.width(),
+        _activeConfig.viewport.height());
+
+    // Top-left far
+    const auto& tlf = glm::unProject(
+        glm::vec3(_activeConfig.viewport.left, _activeConfig.windowSize.y - _activeConfig.viewport.bottom + _activeConfig.viewport.height(), 1.0),
+        mView, _mProjection, glViewport);
+
+    _skyplaneHalfSize[0] = qAbs(tlf.x);
+    _skyplaneHalfSize[1] = qAbs(tlf.y);
 }

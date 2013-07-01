@@ -52,13 +52,15 @@ namespace OsmAnd {
         glm::mat4 _mProjection;
         glm::mat4 _mView;
         float _distanceFromCameraToTarget;
+        float _skyplaneHalfSize[2];
         
         void computeProjectionAndViewMatrices();
         void computeVisibleTileset();
+        void compuleSkyplaneSize();
 
 #pragma pack(push)
 #pragma pack(1)
-        struct Vertex 
+        struct MapTileVertex 
         {
             GLfloat position[2];
             GLfloat uv[2];
@@ -66,7 +68,7 @@ namespace OsmAnd {
 #pragma pack(pop)
 
         virtual void createTilePatch();
-        virtual void allocateTilePatch(Vertex* vertices, size_t verticesCount, GLushort* indices, size_t indicesCount) = 0;
+        virtual void allocateTilePatch(MapTileVertex* vertices, size_t verticesCount, GLushort* indices, size_t indicesCount) = 0;
         virtual void releaseTilePatch() = 0;
         
         virtual void validateTileLayerCache(const TileLayerId& layer);

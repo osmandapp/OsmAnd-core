@@ -533,7 +533,7 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
 
             // Top-left corner
             pCornerPixel = tile->data;
-            for(int idx = 0; idx < pixelsCount; idx++)
+            for(auto idx = 0u; idx < pixelsCount; idx++)
                 memcpy(pCornerData + (sourcePixelByteSize * idx), pCornerPixel, sourcePixelByteSize);
             glTexSubImage2D(GL_TEXTURE_2D, 0,
                 xOffset, yOffset, atlasPool._padding, atlasPool._padding,
@@ -544,7 +544,7 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
 
             // Top-right corner
             pCornerPixel = reinterpret_cast<const uint8_t*>(tile->data) + (tileSize - 1) * sourcePixelByteSize;
-            for(int idx = 0; idx < pixelsCount; idx++)
+            for(auto idx = 0u; idx < pixelsCount; idx++)
                 memcpy(pCornerData + (sourcePixelByteSize * idx), pCornerPixel, sourcePixelByteSize);
             glTexSubImage2D(GL_TEXTURE_2D, 0,
                 xOffset + atlasPool._padding + tileSize, yOffset, atlasPool._padding, atlasPool._padding,
@@ -555,7 +555,7 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
 
             // Bottom-left corner
             pCornerPixel = reinterpret_cast<const uint8_t*>(tile->data) + (tileSize - 1) * tile->rowLength;
-            for(int idx = 0; idx < pixelsCount; idx++)
+            for(auto idx = 0u; idx < pixelsCount; idx++)
                 memcpy(pCornerData + (sourcePixelByteSize * idx), pCornerPixel, sourcePixelByteSize);
             glTexSubImage2D(GL_TEXTURE_2D, 0,
                 xOffset, yOffset + atlasPool._padding + tileSize, atlasPool._padding, atlasPool._padding,
@@ -566,7 +566,7 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
 
             // Bottom-right corner
             pCornerPixel = reinterpret_cast<const uint8_t*>(tile->data) + (tileSize - 1) * tile->rowLength + (tileSize - 1) * sourcePixelByteSize;
-            for(int idx = 0; idx < pixelsCount; idx++)
+            for(auto idx = 0u; idx < pixelsCount; idx++)
                 memcpy(pCornerData + (sourcePixelByteSize * idx), pCornerPixel, sourcePixelByteSize);
             glTexSubImage2D(GL_TEXTURE_2D, 0,
                 xOffset + atlasPool._padding + tileSize, yOffset + atlasPool._padding + tileSize, atlasPool._padding, atlasPool._padding,
@@ -582,7 +582,7 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
             GL_CHECK_RESULT;
 
             // Left column duplicate
-            for(int idx = 0; idx < atlasPool._padding; idx++)
+            for(auto idx = 0u; idx < atlasPool._padding; idx++)
             {
                 glTexSubImage2D(GL_TEXTURE_2D, 0,
                     xOffset + idx, yOffset + atlasPool._padding, 1, (GLsizei)tileSize,
@@ -593,7 +593,7 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
             }
 
             // Top row duplicate
-            for(int idx = 0; idx < atlasPool._padding; idx++)
+            for(auto idx = 0u; idx < atlasPool._padding; idx++)
             {
                 glTexSubImage2D(GL_TEXTURE_2D, 0,
                     xOffset + atlasPool._padding, yOffset + idx, (GLsizei)tileSize, 1,
@@ -604,7 +604,7 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
             }
 
             // Right column duplicate
-            for(int idx = 0; idx < atlasPool._padding; idx++)
+            for(auto idx = 0u; idx < atlasPool._padding; idx++)
             {
                 glTexSubImage2D(GL_TEXTURE_2D, 0,
                     xOffset + atlasPool._padding + tileSize + idx, yOffset + atlasPool._padding, 1, (GLsizei)tileSize,
@@ -615,7 +615,7 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
             }
 
             // Bottom row duplicate
-            for(int idx = 0; idx < atlasPool._padding; idx++)
+            for(auto idx = 0u; idx < atlasPool._padding; idx++)
             {
                 glTexSubImage2D(GL_TEXTURE_2D, 0,
                     xOffset + atlasPool._padding, yOffset + atlasPool._padding + tileSize + idx, (GLsizei)tileSize, 1,
