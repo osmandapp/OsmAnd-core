@@ -381,12 +381,15 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
         TileId tileIdN = tileId;
         while(tileIdN.x < 0)
             tileIdN.x += maxTileIndex;
-        while(tileIdN.x >= maxTileIndex)
-            tileIdN.x -= maxTileIndex;
         while(tileIdN.y < 0)
             tileIdN.y += maxTileIndex;
-        while(tileIdN.y >= maxTileIndex)
-            tileIdN.y -= maxTileIndex;
+        if(_activeConfig.zoomBase < 31)
+        {
+            while(tileIdN.x >= maxTileIndex)
+                tileIdN.x -= maxTileIndex;
+            while(tileIdN.y >= maxTileIndex)
+                tileIdN.y -= maxTileIndex;
+        }
 
         // Set tile id
         glUniform2i(_vertexShader_param_tile, tileId.x, tileId.y);

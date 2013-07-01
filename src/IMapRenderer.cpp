@@ -115,11 +115,13 @@ void OsmAnd::IMapRenderer::setFieldOfView( const float& fieldOfView )
 {
     QMutexLocker scopeLock(&_pendingConfigModificationMutex);
 
-    bool update = !qFuzzyCompare(_pendingConfig.fieldOfView, fieldOfView);
+    const auto clampedValue = qMax(std::numeric_limits<float>::epsilon(), qMin(fieldOfView, 90.0f));
+
+    bool update = !qFuzzyCompare(_pendingConfig.fieldOfView, clampedValue);
     if(!update)
         return;
 
-    _pendingConfig.fieldOfView = fieldOfView;
+    _pendingConfig.fieldOfView = clampedValue;
 
     invalidateConfiguration();
 }
@@ -128,11 +130,13 @@ void OsmAnd::IMapRenderer::setDistanceToFog( const float& fogDistance )
 {
     QMutexLocker scopeLock(&_pendingConfigModificationMutex);
 
-    bool update = !qFuzzyCompare(_pendingConfig.fogDistance, fogDistance);
+    const auto clampedValue = qMax(std::numeric_limits<float>::epsilon(), fogDistance);
+
+    bool update = !qFuzzyCompare(_pendingConfig.fogDistance, clampedValue);
     if(!update)
         return;
 
-    _pendingConfig.fogDistance = fogDistance;
+    _pendingConfig.fogDistance = clampedValue;
 
     invalidateConfiguration();
 }
@@ -171,11 +175,17 @@ void OsmAnd::IMapRenderer::setAzimuth( const float& azimuth )
 {
     QMutexLocker scopeLock(&_pendingConfigModificationMutex);
 
-    bool update = !qFuzzyCompare(_pendingConfig.azimuth, azimuth);
+    float normalizedAzimuth = azimuth;
+    while(normalizedAzimuth >= 360.0f)
+        normalizedAzimuth -= 360.0f;
+    while(normalizedAzimuth < 0.0f)
+        normalizedAzimuth += 360.0f;
+
+    bool update = !qFuzzyCompare(_pendingConfig.azimuth, normalizedAzimuth);
     if(!update)
         return;
 
-    _pendingConfig.azimuth = azimuth;
+    _pendingConfig.azimuth = normalizedAzimuth;
 
     invalidateConfiguration();
 }
@@ -184,11 +194,13 @@ void OsmAnd::IMapRenderer::setElevationAngle( const float& elevationAngle )
 {
     QMutexLocker scopeLock(&_pendingConfigModificationMutex);
 
-    bool update = !qFuzzyCompare(_pendingConfig.elevationAngle, elevationAngle);
+    const auto clampedValue = qMax(std::numeric_limits<float>::epsilon(), qMin(elevationAngle, 90.0f));
+
+    bool update = !qFuzzyCompare(_pendingConfig.elevationAngle, clampedValue);
     if(!update)
         return;
 
-    _pendingConfig.elevationAngle = elevationAngle;
+    _pendingConfig.elevationAngle = clampedValue;
 
     invalidateConfiguration();
 }
@@ -197,11 +209,18 @@ void OsmAnd::IMapRenderer::setTarget( const PointI& target31 )
 {
     QMutexLocker scopeLock(&_pendingConfigModificationMutex);
 
-    bool update = (_pendingConfig.target31 != target31);
+    auto wrappedTarget31 = target31;
+    const auto maxTile31Index = static_cast<signed>(1u << 31);
+    if(wrappedTarget31.x < 0)
+        wrappedTarget31.x += maxTile31Index;
+    if(wrappedTarget31.y < 0)
+        wrappedTarget31.y += maxTile31Index;
+
+    bool update = (_pendingConfig.target31 != wrappedTarget31);
     if(!update)
         return;
 
-    _pendingConfig.target31 = target31;
+    _pendingConfig.target31 = wrappedTarget31;
 
     invalidateConfiguration();
 }
@@ -210,12 +229,15 @@ void OsmAnd::IMapRenderer::setZoom( const float& zoom )
 {
     QMutexLocker scopeLock(&_pendingConfigModificationMutex);
 
-    bool update = !qFuzzyCompare(_pendingConfig.requestedZoom, zoom);
+    const auto clampedValue = qMax(std::numeric_limits<float>::epsilon(), qMin(zoom, 31.49999f));
+
+    bool update = !qFuzzyCompare(_pendingConfig.requestedZoom, clampedValue);
     if(!update)
         return;
 
-    _pendingConfig.requestedZoom = zoom;
-    _pendingConfig.zoomBase = qRound(zoom);
+    _pendingConfig.requestedZoom = clampedValue;
+    _pendingConfig.zoomBase = qRound(clampedValue);
+    assert(_pendingConfig.zoomBase >= 0 && _pendingConfig.zoomBase <= 31);
     _pendingConfig.zoomFraction = _pendingConfig.requestedZoom - _pendingConfig.zoomBase;
 
     invalidateConfiguration();
@@ -298,12 +320,15 @@ void OsmAnd::IMapRenderer::performRendering()
         TileId tileIdN = tileId;
         while(tileIdN.x < 0)
             tileIdN.x += maxTileIndex;
-        while(tileIdN.x >= maxTileIndex)
-            tileIdN.x -= maxTileIndex;
         while(tileIdN.y < 0)
             tileIdN.y += maxTileIndex;
-        while(tileIdN.y >= maxTileIndex)
-            tileIdN.y -= maxTileIndex;
+        if(_activeConfig.zoomBase < 31)
+        {
+            while(tileIdN.x >= maxTileIndex)
+                tileIdN.x -= maxTileIndex;
+            while(tileIdN.y >= maxTileIndex)
+                tileIdN.y -= maxTileIndex;
+        }
 
         normalizedVisibleTiles.insert(tileIdN);
     }
@@ -365,12 +390,15 @@ void OsmAnd::IMapRenderer::requestCacheMissTiles()
         TileId tileIdN = tileId;
         while(tileIdN.x < 0)
             tileIdN.x += maxTileIndex;
-        while(tileIdN.x >= maxTileIndex)
-            tileIdN.x -= maxTileIndex;
         while(tileIdN.y < 0)
             tileIdN.y += maxTileIndex;
-        while(tileIdN.y >= maxTileIndex)
-            tileIdN.y -= maxTileIndex;
+        if(_activeConfig.zoomBase < 31)
+        {
+            while(tileIdN.x >= maxTileIndex)
+                tileIdN.x -= maxTileIndex;
+            while(tileIdN.y >= maxTileIndex)
+                tileIdN.y -= maxTileIndex;
+        }
 
         for(int layerId = 0; layerId < TileLayerId::IdsCount; layerId++)
         {
