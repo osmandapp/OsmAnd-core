@@ -296,14 +296,14 @@ void OsmAnd::IMapRenderer::performRendering()
     {
         QMutexLocker scopeLock(&_tileLayersCacheInvalidatedMaskMutex);
 
-        if(_tileLayersCacheInvalidatedMask)
+        for(int layerId = 0; layerId < TileLayerId::IdsCount; layerId++)
         {
-            for(int layerId = 0; layerId < TileLayerId::IdsCount; layerId++)
-            {
-                validateTileLayerCache(static_cast<TileLayerId>(layerId));
+            if((_tileLayersCacheInvalidatedMask & (1 << layerId)) == 0)
+                continue;
 
-                _tileLayersCacheInvalidatedMask &= ~(1 << layerId);
-            }
+            validateTileLayerCache(static_cast<TileLayerId>(layerId));
+
+            _tileLayersCacheInvalidatedMask &= ~(1 << layerId);
         }
         
         assert(_tileLayersCacheInvalidatedMask == 0);
