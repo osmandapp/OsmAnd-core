@@ -44,46 +44,75 @@ namespace OsmAnd {
         GLuint _tilePatchVAO;
         GLuint _tilePatchVBO;
         GLuint _tilePatchIBO;
-        GLuint _vertexShader;
-        GLuint _fragmentShader;
-        GLuint _programObject;
         
-        // Input data
-        GLint _vertexShader_in_vertexPosition;
-        GLint _vertexShader_in_vertexTexCoords;
+        struct {
+            GLuint program;
 
-        // Parameters: common data
-        GLint _vertexShader_param_mProjection;
-        GLint _vertexShader_param_mView;
-        GLint _vertexShader_param_centerOffset;
-        GLint _vertexShader_param_targetTile;
-        GLint _fragmentShader_param_distanceFromCameraToTarget;
-        GLint _fragmentShader_param_cameraElevationAngle;
-        GLint _fragmentShader_param_fogColor;
-        GLint _fragmentShader_param_fogDistance;
-        GLint _fragmentShader_param_fogDensity;
-        
-        // Parameters: per-tile data
-        GLint _vertexShader_param_tile;
-        GLint _vertexShader_param_elevationData_k;
-        GLint _vertexShader_param_elevationData_sampler;
+            struct {
+                GLuint id;
+            } _environmentStage;
 
-        // Parameters: per-tile-per-layer data
-        struct
-        {
-            GLint tileSizeN;
-            GLint tilePaddingN;
-            GLint slotsPerSide;
-            GLint slotIndex;
-        } _vertexShader_param_perTileLayer[IMapRenderer::TileLayerId::IdsCount];
-        struct
-        {
-            GLint k;
-            GLint sampler;
-        } _fragmentShader_param_perTileLayer[IMapRenderer::TileLayerId::IdsCount - IMapRenderer::TileLayerId::RasterMap];
+            struct {
+                GLuint id;
+
+                // Input data
+                struct {
+                    GLint vertexPosition;
+                    GLint vertexTexCoords;
+                } in;
+
+                // Parameters
+                struct {
+                    // Common data
+                    GLint mProjection;
+                    GLint mView;
+                    GLint centerOffset;
+                    GLint targetTile;
+
+                    // Per-tile data
+                    GLint tile;
+                    GLint elevationData_k;
+                    GLint elevationData_sampler;
+
+                    // Per-tile-per-layer data
+                    struct
+                    {
+                        GLint tileSizeN;
+                        GLint tilePaddingN;
+                        GLint slotsPerSide;
+                        GLint slotIndex;
+                    } perTileLayer[IMapRenderer::TileLayerId::IdsCount];
+                } param;
+            } vs;
+
+            struct {
+                GLuint id;
+
+                // Parameters
+                struct {
+                    // Common data
+                    GLint distanceFromCameraToTarget;
+                    GLint cameraElevationAngle;
+                    GLint fogColor;
+                    GLint fogDistance;
+                    GLint fogDensity;
+
+                    // Per-tile-per-layer data
+                    struct
+                    {
+                        GLint k;
+                        GLint sampler;
+                    } perTileLayer[IMapRenderer::TileLayerId::IdsCount - IMapRenderer::TileLayerId::RasterMap];
+                } param;
+            } fs;
+        } _mapStage;
 
         virtual void allocateTilePatch(Vertex* vertices, size_t verticesCount, GLushort* indices, size_t indicesCount);
         virtual void releaseTilePatch();
+
+        void initializeRendering_MapStage();
+        void performRendering_MapStage();
+        void releaseRendering_MapStage();
     public:
         AtlasMapRenderer_OpenGL();
         virtual ~AtlasMapRenderer_OpenGL();

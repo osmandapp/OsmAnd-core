@@ -13,10 +13,8 @@ OsmAnd::AtlasMapRenderer_OpenGL::AtlasMapRenderer_OpenGL()
     : _tilePatchVAO(0)
     , _tilePatchVBO(0)
     , _tilePatchIBO(0)
-    , _vertexShader(0)
-    , _fragmentShader(0)
-    , _programObject(0)
 {
+    memset(&_mapStage, 0, sizeof(_mapStage));
 }
 
 OsmAnd::AtlasMapRenderer_OpenGL::~AtlasMapRenderer_OpenGL()
@@ -27,6 +25,13 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
 {
     MapRenderer_OpenGL::initializeRendering();
 
+    initializeRendering_MapStage();
+
+    AtlasMapRenderer_BaseOpenGL::initializeRendering();
+}
+
+void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
+{
     // Compile vertex shader
     const QString vertexShader_perTileLayerTexCoordsProcessing = QString::fromLatin1(
         "    calculateTextureCoordinates(                                                                                   ""\n"
@@ -143,8 +148,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
     preprocessedVertexShader.replace("%RasterTileLayersCount%", QString::number(TileLayerId::IdsCount - TileLayerId::RasterMap));
     preprocessedVertexShader.replace("%Layer_ElevationData%", QString::number(TileLayerId::ElevationData));
     preprocessedVertexShader.replace("%Layer_RasterMap%", QString::number(TileLayerId::RasterMap));
-    _vertexShader = compileShader(GL_VERTEX_SHADER, preprocessedVertexShader.toStdString().c_str());
-    assert(_vertexShader != 0);
+    _mapStage.vs.id = compileShader(GL_VERTEX_SHADER, preprocessedVertexShader.toStdString().c_str());
+    assert(_mapStage.vs.id != 0);
 
     // Compile fragment shader
     const QString fragmentShader_perTileLayer = QString::fromLatin1(
@@ -244,57 +249,55 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
     preprocessedFragmentShader.replace("%RasterTileLayersCount%", QString::number(TileLayerId::IdsCount - TileLayerId::RasterMap));
     preprocessedFragmentShader.replace("%Layer_RasterMap%", QString::number(TileLayerId::RasterMap));
     preprocessedFragmentShader.replace("%MipmapLodLevelsMax%", QString::number(MipmapLodLevelsMax));
-    _fragmentShader = compileShader(GL_FRAGMENT_SHADER, preprocessedFragmentShader.toStdString().c_str());
-    assert(_fragmentShader != 0);
+    _mapStage.fs.id = compileShader(GL_FRAGMENT_SHADER, preprocessedFragmentShader.toStdString().c_str());
+    assert(_mapStage.fs.id != 0);
 
     // Link everything into program object
     GLuint shaders[] = {
-        _vertexShader,
-        _fragmentShader
+        _mapStage.vs.id,
+        _mapStage.fs.id
     };
-    _programObject = linkProgram(2, shaders);
-    assert(_programObject != 0);
+    _mapStage.program = linkProgram(2, shaders);
+    assert(_mapStage.program != 0);
 
     _programVariables.clear();
-    findVariableLocation(_programObject, _vertexShader_in_vertexPosition, "in_vs_vertexPosition", In);
-    findVariableLocation(_programObject, _vertexShader_in_vertexTexCoords, "in_vs_vertexTexCoords", In);
-    findVariableLocation(_programObject, _vertexShader_param_mProjection, "param_vs_mProjection", Uniform);
-    findVariableLocation(_programObject, _vertexShader_param_mView, "param_vs_mView", Uniform);
-    findVariableLocation(_programObject, _vertexShader_param_centerOffset, "param_vs_centerOffset", Uniform);
-    findVariableLocation(_programObject, _vertexShader_param_targetTile, "param_vs_targetTile", Uniform);
-    findVariableLocation(_programObject, _vertexShader_param_tile, "param_vs_tile", Uniform);
-    findVariableLocation(_programObject, _vertexShader_param_elevationData_sampler, "param_vs_elevationData_sampler", Uniform);
-    findVariableLocation(_programObject, _vertexShader_param_elevationData_k, "param_vs_elevationData_k", Uniform);
+    findVariableLocation(_mapStage.program, _mapStage.vs.in.vertexPosition, "in_vs_vertexPosition", In);
+    findVariableLocation(_mapStage.program, _mapStage.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", In);
+    findVariableLocation(_mapStage.program, _mapStage.vs.param.mProjection, "param_vs_mProjection", Uniform);
+    findVariableLocation(_mapStage.program, _mapStage.vs.param.mView, "param_vs_mView", Uniform);
+    findVariableLocation(_mapStage.program, _mapStage.vs.param.centerOffset, "param_vs_centerOffset", Uniform);
+    findVariableLocation(_mapStage.program, _mapStage.vs.param.targetTile, "param_vs_targetTile", Uniform);
+    findVariableLocation(_mapStage.program, _mapStage.vs.param.tile, "param_vs_tile", Uniform);
+    findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_sampler, "param_vs_elevationData_sampler", Uniform);
+    findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_k, "param_vs_elevationData_k", Uniform);
     for(int layerId = 0; layerId < TileLayerId::IdsCount; layerId++)
     {
         const auto layerStructName =
             QString::fromLatin1("param_vs_perTileLayer[%layerId%]")
             .replace(QString::fromLatin1("%layerId%"), QString::number(layerId));
-        auto& layerStruct = _vertexShader_param_perTileLayer[layerId];
+        auto& layerStruct = _mapStage.vs.param.perTileLayer[layerId];
 
-        findVariableLocation(_programObject, layerStruct.tileSizeN, layerStructName + ".tileSizeN", Uniform);
-        findVariableLocation(_programObject, layerStruct.tilePaddingN, layerStructName + ".tilePaddingN", Uniform);
-        findVariableLocation(_programObject, layerStruct.slotsPerSide, layerStructName + ".slotsPerSide", Uniform);
-        findVariableLocation(_programObject, layerStruct.slotIndex, layerStructName + ".slotIndex", Uniform);
+        findVariableLocation(_mapStage.program, layerStruct.tileSizeN, layerStructName + ".tileSizeN", Uniform);
+        findVariableLocation(_mapStage.program, layerStruct.tilePaddingN, layerStructName + ".tilePaddingN", Uniform);
+        findVariableLocation(_mapStage.program, layerStruct.slotsPerSide, layerStructName + ".slotsPerSide", Uniform);
+        findVariableLocation(_mapStage.program, layerStruct.slotIndex, layerStructName + ".slotIndex", Uniform);
     }
-    findVariableLocation(_programObject, _fragmentShader_param_distanceFromCameraToTarget, "param_fs_distanceFromCameraToTarget", Uniform);
-    findVariableLocation(_programObject, _fragmentShader_param_cameraElevationAngle, "param_fs_cameraElevationAngle", Uniform);
-    findVariableLocation(_programObject, _fragmentShader_param_fogColor, "param_fs_fogColor", Uniform);
-    findVariableLocation(_programObject, _fragmentShader_param_fogDistance, "param_fs_fogDistance", Uniform);
-    findVariableLocation(_programObject, _fragmentShader_param_fogDensity, "param_fs_fogDensity", Uniform);
+    findVariableLocation(_mapStage.program, _mapStage.fs.param.distanceFromCameraToTarget, "param_fs_distanceFromCameraToTarget", Uniform);
+    findVariableLocation(_mapStage.program, _mapStage.fs.param.cameraElevationAngle, "param_fs_cameraElevationAngle", Uniform);
+    findVariableLocation(_mapStage.program, _mapStage.fs.param.fogColor, "param_fs_fogColor", Uniform);
+    findVariableLocation(_mapStage.program, _mapStage.fs.param.fogDistance, "param_fs_fogDistance", Uniform);
+    findVariableLocation(_mapStage.program, _mapStage.fs.param.fogDensity, "param_fs_fogDensity", Uniform);
     for(int layerId = TileLayerId::RasterMap, linearIdx = 0; layerId < TileLayerId::IdsCount; layerId++, linearIdx++)
     {
         const auto layerStructName =
             QString::fromLatin1("param_fs_perTileLayer[%linearIdx%]")
             .replace(QString::fromLatin1("%linearIdx%"), QString::number(linearIdx));
-        auto& layerStruct = _fragmentShader_param_perTileLayer[linearIdx];
+        auto& layerStruct = _mapStage.fs.param.perTileLayer[linearIdx];
 
-        findVariableLocation(_programObject, layerStruct.k, layerStructName + ".k", Uniform);
-        findVariableLocation(_programObject, layerStruct.sampler, layerStructName + ".sampler", Uniform);
+        findVariableLocation(_mapStage.program, layerStruct.k, layerStructName + ".k", Uniform);
+        findVariableLocation(_mapStage.program, layerStruct.sampler, layerStructName + ".sampler", Uniform);
     }
     _programVariables.clear();
-
-    AtlasMapRenderer_BaseOpenGL::initializeRendering();
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
@@ -313,57 +316,66 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
         _activeConfig.viewport.height());
     GL_CHECK_RESULT;
 
+    performRendering_MapStage();
+
+    // Revert viewport
+    glViewport(oldViewport[0], oldViewport[1], oldViewport[2], oldViewport[3]);
+    GL_CHECK_RESULT;
+}
+
+void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_MapStage()
+{
     // Activate program
     assert(glUseProgram);
-    glUseProgram(_programObject);
+    glUseProgram(_mapStage.program);
     GL_CHECK_RESULT;
 
     // Set projection matrix
-    glUniformMatrix4fv(_vertexShader_param_mProjection, 1, GL_FALSE, glm::value_ptr(_mProjection));
+    glUniformMatrix4fv(_mapStage.vs.param.mProjection, 1, GL_FALSE, glm::value_ptr(_mProjection));
     GL_CHECK_RESULT;
 
     // Set view matrix
-    glUniformMatrix4fv(_vertexShader_param_mView, 1, GL_FALSE, glm::value_ptr(_mView));
+    glUniformMatrix4fv(_mapStage.vs.param.mView, 1, GL_FALSE, glm::value_ptr(_mView));
     GL_CHECK_RESULT;
 
     // Set center offset
-    glUniform2f(_vertexShader_param_centerOffset, _normalizedTargetInTileOffset.x, _normalizedTargetInTileOffset.y);
+    glUniform2f(_mapStage.vs.param.centerOffset, _normalizedTargetInTileOffset.x, _normalizedTargetInTileOffset.y);
     GL_CHECK_RESULT;
 
     // Set target tile
     PointI targetTile;
     targetTile.x = _activeConfig.target31.x >> (31 - _activeConfig.zoomBase);
     targetTile.y = _activeConfig.target31.y >> (31 - _activeConfig.zoomBase);
-    glUniform2i(_vertexShader_param_targetTile, targetTile.x, targetTile.y);
+    glUniform2i(_mapStage.vs.param.targetTile, targetTile.x, targetTile.y);
     GL_CHECK_RESULT;
 
     // Set distance to camera from target
-    glUniform1f(_fragmentShader_param_distanceFromCameraToTarget, _distanceFromCameraToTarget);
+    glUniform1f(_mapStage.fs.param.distanceFromCameraToTarget, _distanceFromCameraToTarget);
     GL_CHECK_RESULT;
 
     // Set camera elevation angle
-    glUniform1f(_fragmentShader_param_cameraElevationAngle, _activeConfig.elevationAngle);
+    glUniform1f(_mapStage.fs.param.cameraElevationAngle, _activeConfig.elevationAngle);
     GL_CHECK_RESULT;
 
     // Set fog parameters
-    glUniform3f(_fragmentShader_param_fogColor, _activeConfig.fogColor[0], _activeConfig.fogColor[1], _activeConfig.fogColor[2]);
+    glUniform3f(_mapStage.fs.param.fogColor, _activeConfig.fogColor[0], _activeConfig.fogColor[1], _activeConfig.fogColor[2]);
     GL_CHECK_RESULT;
-    glUniform1f(_fragmentShader_param_fogDistance, _activeConfig.fogDistance);
+    glUniform1f(_mapStage.fs.param.fogDistance, _activeConfig.fogDistance);
     GL_CHECK_RESULT;
-    glUniform1f(_fragmentShader_param_fogDensity, _activeConfig.fogDensity);
+    glUniform1f(_mapStage.fs.param.fogDensity, _activeConfig.fogDensity);
     GL_CHECK_RESULT;
-    
+
     // Set tile patch VAO
     assert(glBindVertexArray);
     glBindVertexArray(_tilePatchVAO);
     GL_CHECK_RESULT;
 
     // Set samplers
-    glUniform1i(_vertexShader_param_elevationData_sampler, TileLayerId::ElevationData);
+    glUniform1i(_mapStage.vs.param.elevationData_sampler, TileLayerId::ElevationData);
     GL_CHECK_RESULT;
     for(int layerId = TileLayerId::RasterMap; layerId < TileLayerId::IdsCount; layerId++)
     {
-        glUniform1i(_fragmentShader_param_perTileLayer[layerId - TileLayerId::RasterMap].sampler, layerId);
+        glUniform1i(_mapStage.fs.param.perTileLayer[layerId - TileLayerId::RasterMap].sampler, layerId);
         GL_CHECK_RESULT;
     }
 
@@ -388,7 +400,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
         }
 
         // Set tile id
-        glUniform2i(_vertexShader_param_tile, tileId.x, tileId.y);
+        glUniform2i(_mapStage.vs.param.tile, tileId.x, tileId.y);
         GL_CHECK_RESULT;
 
         // Set elevation data
@@ -403,7 +415,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
             {
                 auto cachedTile = static_cast<CachedTile*>(cachedTile_.get());
 
-                glUniform1f(_vertexShader_param_elevationData_k, 1.0f);
+                glUniform1f(_mapStage.vs.param.elevationData_k, 1.0f);
                 GL_CHECK_RESULT;
 
                 glActiveTexture(GL_TEXTURE0 + TileLayerId::ElevationData);
@@ -415,7 +427,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
                 glBindTexture(GL_TEXTURE_2D, reinterpret_cast<GLuint>(cachedTile->textureRef));
                 GL_CHECK_RESULT;
 
-                const auto& perTile_vs = _vertexShader_param_perTileLayer[TileLayerId::ElevationData];
+                const auto& perTile_vs = _mapStage.vs.param.perTileLayer[TileLayerId::ElevationData];
                 glUniform1i(perTile_vs.slotIndex, cachedTile->atlasSlotIndex);
                 GL_CHECK_RESULT;
                 if(cachedTile->atlasSlotIndex >= 0)
@@ -439,17 +451,17 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
             }
             else
             {
-                glUniform1f(_vertexShader_param_elevationData_k, 0.0f);
+                glUniform1f(_mapStage.vs.param.elevationData_k, 0.0f);
                 GL_CHECK_RESULT;
             }
         }
-        
+
         // We need to pass each layer of this tile to shader
         for(int layerId = TileLayerId::RasterMap; layerId < TileLayerId::IdsCount; layerId++)
         {
             auto& tileLayer = _tileLayers[layerId];
-            const auto& perTile_vs = _vertexShader_param_perTileLayer[layerId];
-            const auto& perTile_fs = _fragmentShader_param_perTileLayer[layerId - TileLayerId::RasterMap];
+            const auto& perTile_vs = _mapStage.vs.param.perTileLayer[layerId];
+            const auto& perTile_fs = _mapStage.fs.param.perTileLayer[layerId - TileLayerId::RasterMap];
 
             QMutexLocker scopeLock(&tileLayer._cacheModificationMutex);
 
@@ -511,7 +523,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
         }
 
         const auto verticesCount = _activeConfig.tileProviders[TileLayerId::ElevationData]
-            ? (_activeConfig.heightmapPatchesPerSide * _activeConfig.heightmapPatchesPerSide) * 4 * 3
+        ? (_activeConfig.heightmapPatchesPerSide * _activeConfig.heightmapPatchesPerSide) * 4 * 3
             : 6;
         glDrawElements(GL_TRIANGLES, verticesCount, GL_UNSIGNED_SHORT, nullptr);
         GL_CHECK_RESULT;
@@ -526,7 +538,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
         glDisable(GL_TEXTURE_2D);
         GL_CHECK_RESULT;
     }
-    
+
     // Deselect VAO
     glBindVertexArray(0);
     GL_CHECK_RESULT;
@@ -534,39 +546,36 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
     // Deactivate program
     glUseProgram(0);
     GL_CHECK_RESULT;
-
-    // Revert viewport
-    glViewport(oldViewport[0], oldViewport[1], oldViewport[2], oldViewport[3]);
-    GL_CHECK_RESULT;
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL::releaseRendering()
 {
-    if(_programObject)
-    {
-        assert(glDeleteProgram);
-        glDeleteProgram(_programObject);
-        GL_CHECK_RESULT;
-        _programObject = 0;
-    }
-
-    if(_fragmentShader)
-    {
-        assert(glDeleteShader);
-        glDeleteShader(_fragmentShader);
-        GL_CHECK_RESULT;
-        _fragmentShader = 0;
-    }
-
-    if(_vertexShader)
-    {
-        glDeleteShader(_vertexShader);
-        GL_CHECK_RESULT;
-        _vertexShader = 0;
-    }
+    releaseRendering_MapStage();
 
     AtlasMapRenderer_BaseOpenGL::releaseRendering();
     MapRenderer_OpenGL::releaseRendering();
+}
+
+void OsmAnd::AtlasMapRenderer_OpenGL::releaseRendering_MapStage()
+{
+    if(_mapStage.program)
+    {
+        assert(glDeleteProgram);
+        glDeleteProgram(_mapStage.program);
+        GL_CHECK_RESULT;
+    }
+    if(_mapStage.fs.id)
+    {
+        assert(glDeleteShader);
+        glDeleteShader(_mapStage.fs.id);
+        GL_CHECK_RESULT;
+    }
+    if(_mapStage.vs.id)
+    {
+        glDeleteShader(_mapStage.vs.id);
+        GL_CHECK_RESULT;
+    }
+    memset(&_mapStage, 0, sizeof(_mapStage));
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL::allocateTilePatch( Vertex* vertices, size_t verticesCount, GLushort* indices, size_t indicesCount )
@@ -590,16 +599,16 @@ void OsmAnd::AtlasMapRenderer_OpenGL::allocateTilePatch( Vertex* vertices, size_
     glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(Vertex), vertices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
     assert(glEnableVertexAttribArray);
-    glEnableVertexAttribArray(_vertexShader_in_vertexPosition);
+    glEnableVertexAttribArray(_mapStage.vs.in.vertexPosition);
     GL_CHECK_RESULT;
     assert(glVertexAttribPointer);
-    glVertexAttribPointer(_vertexShader_in_vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, position)));
+    glVertexAttribPointer(_mapStage.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, position)));
     GL_CHECK_RESULT;
     assert(glEnableVertexAttribArray);
-    glEnableVertexAttribArray(_vertexShader_in_vertexTexCoords);
+    glEnableVertexAttribArray(_mapStage.vs.in.vertexTexCoords);
     GL_CHECK_RESULT;
     assert(glVertexAttribPointer);
-    glVertexAttribPointer(_vertexShader_in_vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, uv)));
+    glVertexAttribPointer(_mapStage.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, uv)));
     GL_CHECK_RESULT;
 
     // Create index buffer and associate it with VAO
