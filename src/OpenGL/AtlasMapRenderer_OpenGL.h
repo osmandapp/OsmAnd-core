@@ -93,6 +93,7 @@ namespace OsmAnd {
                     GLint fogDistance;
                     GLint fogDensity;
                     GLint fogOriginFactor;
+                    GLint tileScaleFactor;
 
                     // Per-tile-per-layer data
                     struct

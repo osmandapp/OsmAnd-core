@@ -53,9 +53,11 @@ namespace OsmAnd {
         glm::mat4 _mView;
         float _distanceFromCameraToTarget;
         float _skyplaneHalfSize[2];
+        float _tileScaleFactor;
         
         void computeProjectionAndViewMatrices();
         void computeVisibleTileset();
+        void computeFog();
         void compuleSkyplaneSize();
 
 #pragma pack(push)

@@ -41,6 +41,7 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::updateConfiguration()
     BaseAtlasMapRenderer::updateConfiguration();
 
     computeProjectionAndViewMatrices();
+    computeFog();
     computeVisibleTileset();
     compuleSkyplaneSize();
 }
@@ -68,9 +69,10 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeProjectionAndViewMatrices()
         _distanceFromCameraToTarget = baseD - (baseD - nearD) * (2.0f * _activeConfig.zoomFraction);
     else
         _distanceFromCameraToTarget = baseD - (farD - baseD) * (2.0f * _activeConfig.zoomFraction);
-
+    _tileScaleFactor = ((_activeConfig.zoomFraction >= 0.0f) ? (1.0f + _activeConfig.zoomFraction) : (1.0f + 0.5f * _activeConfig.zoomFraction));
+    
     // Recalculate projection with obtained value
-    _mProjection = glm::perspective(_activeConfig.fieldOfView, aspectRatio, 0.1f, _activeConfig.fogDistance + _distanceFromCameraToTarget);
+    _mProjection = glm::perspective(_activeConfig.fieldOfView, aspectRatio, 0.1f, _activeConfig.fogDistance * 1.5f + _distanceFromCameraToTarget);
 
     // Setup camera
     const auto& c0 = glm::translate(0.0f, 0.0f, -_distanceFromCameraToTarget);
@@ -375,4 +377,8 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::compuleSkyplaneSize()
 
     _skyplaneHalfSize[0] = qAbs(tlf.x);
     _skyplaneHalfSize[1] = qAbs(tlf.y);
+}
+
+void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeFog()
+{
 }

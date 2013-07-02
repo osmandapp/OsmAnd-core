@@ -2,6 +2,8 @@
 
 #include <assert.h>
 
+#include <QtCore/qmath.h>
+
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
@@ -55,7 +57,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
         // Output data to next shader stages
         "out vec2 v2f_texCoordsPerLayer[%RasterTileLayersCount%];                                                           ""\n"
         "out float v2f_distanceFromCamera;                                                                                  ""\n"
-        "out float v2f_distanceFromTarget;                                                                                  ""\n"
+        "out vec2 v2f_positionRelativeToTarget;                                                                            ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
         "uniform mat4 param_vs_mProjectionView;                                                                             ""\n"
@@ -131,8 +133,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
         "    }                                                                                                              ""\n"
         "                                                                                                                   ""\n"
         //   Finally output processed modified vertex
-        "    v2f_distanceFromTarget = abs(v.z);                                                                             ""\n"
-        "    v2f_distanceFromCamera = abs((param_vs_mView * v).z);                                                          ""\n"
+        "    v2f_positionRelativeToTarget = v.xz;                                                                           ""\n"
+        "    v2f_distanceFromCamera = length((param_vs_mView * v).xz);                                                      ""\n"
         "    gl_Position = param_vs_mProjectionView * v;                                                                    ""\n"
         "}                                                                                                                  ""\n");
     QString preprocessedVertexShader = vertexShader;
@@ -174,7 +176,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
         "                                                                                                                   ""\n"
         // Input data
         "in vec2 v2f_texCoordsPerLayer[%RasterTileLayersCount%];                                                            ""\n"
-        "in float v2f_distanceFromTarget;                                                                                   ""\n"
+        "in vec2 v2f_positionRelativeToTarget;                                                                              ""\n"
         "in float v2f_distanceFromCamera;                                                                                   ""\n"
         "                                                                                                                   ""\n"
         // Output data
@@ -187,6 +189,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
         "uniform float param_fs_fogDistance;                                                                                ""\n"
         "uniform float param_fs_fogDensity;                                                                                 ""\n"
         "uniform float param_fs_fogOriginFactor;                                                                            ""\n"
+        "uniform float param_fs_tileScaleFactor;                                                                            ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-layer data
         "struct LayerInputPerTile                                                                                           ""\n"
@@ -221,12 +224,24 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
         "    baseColor.a *= param_fs_perTileLayer[0].k;                                                                     ""\n"
         "%UnrolledPerLayerProcessingCode%                                                                                   ""\n"
         "                                                                                                                   ""\n"
+        //"    baseColor = mix(baseColor, vec4(0.0, 0.0, 0.0, 1.0), 0.998);                                                                                                               ""\n"
+        "                                                                                                                   ""\n"
         //   Apply fog (square exponential)
-        "    const float fogStartDistance = param_fs_fogDistance * ( 1.0 - param_fs_fogOriginFactor);                       ""\n"
-        "    const float fogLinearFactor = min(max(v2f_distanceFromTarget - fogStartDistance, 0.0) /                        ""\n"
-        "        (param_fs_fogDistance - fogStartDistance), 1.0);                                                           ""\n"
+        /*"    float fogCenterShift = param_fs_fogDistance / param_fs_tileScaleFactor - param_fs_fogDistance;                 ""\n"
+        "    float fragmentRadiusInFog = length(v2f_positionRelativeToTarget - vec2(0.0, fogCenterShift));                  ""\n"
+        "    float fogDepthFactor = param_fs_fogOriginFactor / param_fs_tileScaleFactor;                                    ""\n"
+        "    float fogStartRadius = param_fs_fogDistance * (1.0 - fogDepthFactor);                                          ""\n"
+        "    float fragmentFogFactor = (fragmentRadiusInFog - fogStartRadius) / (param_fs_fogDistance * fogDepthFactor);    ""\n"
+        "    float fogLinearFactor = clamp(fragmentFogFactor, 0.0, 1.0);                                                    ""\n"*/
+        "    const float fogDistanceScaled = param_fs_fogDistance / param_fs_tileScaleFactor;                               ""\n"
+        "    const float fogStartDistance = fogDistanceScaled * ( 1.0 - param_fs_fogOriginFactor);                          ""\n"
+        "    const float fogLinearFactor = min(max(length(v2f_positionRelativeToTarget) - fogStartDistance, 0.0) /          ""\n"
+        "        (fogDistanceScaled - fogStartDistance), 1.0);                                                              ""\n"
+
         "    const float fogFactorBase = fogLinearFactor * param_fs_fogDensity;                                             ""\n"
         "    const float fogFactor = clamp(exp(-fogFactorBase*fogFactorBase), 0.0, 1.0);                                    ""\n"
+        //"    out_color = mix(baseColor, vec4(param_fs_fogColor, 1.0), (1.0 - fogFactor) * 0.000001 + clamp(fogLinearFactor*100.0, 0.0, 1.0) );                                     ""\n"
+        //"    out_color = mix(baseColor, vec4(param_fs_fogColor, 1.0), (1.0 - fogFactor) * 0.000001 + fogLinearFactor );                                     ""\n"
         "    out_color = mix(baseColor, vec4(param_fs_fogColor, 1.0), 1.0 - fogFactor);                                     ""\n"
         "                                                                                                                   ""\n"
         //   Remove pixel if it's completely transparent
@@ -287,6 +302,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
     findVariableLocation(_mapStage.program, _mapStage.fs.param.fogDistance, "param_fs_fogDistance", Uniform);
     findVariableLocation(_mapStage.program, _mapStage.fs.param.fogDensity, "param_fs_fogDensity", Uniform);
     findVariableLocation(_mapStage.program, _mapStage.fs.param.fogOriginFactor, "param_fs_fogOriginFactor", Uniform);
+    findVariableLocation(_mapStage.program, _mapStage.fs.param.tileScaleFactor, "param_fs_tileScaleFactor", Uniform);
     for(int layerId = TileLayerId::RasterMap, linearIdx = 0; layerId < TileLayerId::IdsCount; layerId++, linearIdx++)
     {
         const auto layerStructName =
@@ -370,6 +386,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_MapStage()
     glUniform1f(_mapStage.fs.param.fogDensity, _activeConfig.fogDensity);
     GL_CHECK_RESULT;
     glUniform1f(_mapStage.fs.param.fogOriginFactor, _activeConfig.fogOriginFactor);
+    GL_CHECK_RESULT;
+    glUniform1f(_mapStage.fs.param.tileScaleFactor, _tileScaleFactor);
     GL_CHECK_RESULT;
 
     // Set samplers
@@ -804,6 +822,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_SkyStage()
 
 void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_SkyStage()
 {
+    return;
+
     // Set tile patch VAO
     assert(glBindVertexArray);
     glBindVertexArray(_skyStage.vao);
@@ -814,10 +834,13 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_SkyStage()
     glUseProgram(_skyStage.program);
     GL_CHECK_RESULT;
 
-    // Set projection*view*model matrix
-    auto mModelTranslate = glm::translate(0.0f, 0.0f, -_activeConfig.fogDistance);
-    auto mModelRotate = glm::rotate(-_activeConfig.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
-    auto mProjectionViewModel = _mProjection * _mView * (mModelRotate * mModelTranslate);
+    // Set projection*view*model matrix:
+    // zoomFraction == [ 0.0 ... 0.5] scales tile [1.0x ... 1.5x]
+    // zoomFraction == [-0.5 ...-0.0] scales tile [.75x ... 1.0x]
+    const auto fogDistanceFactor = 1.0f / ((_activeConfig.zoomFraction >= 0.0f) ? (1.0f + _activeConfig.zoomFraction) : (1.0f + 0.5f * _activeConfig.zoomFraction));
+    const auto mTranslate = glm::translate(0.0f, 0.0f, -_activeConfig.fogDistance*fogDistanceFactor);
+    const auto mAntiAzimuth = glm::rotate(-_activeConfig.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
+    const auto mProjectionViewModel = _mProjection * _mView * (mAntiAzimuth * mTranslate);
     glUniformMatrix4fv(_skyStage.vs.param.mProjectionViewModel, 1, GL_FALSE, glm::value_ptr(mProjectionViewModel));
     GL_CHECK_RESULT;
 
@@ -832,7 +855,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_SkyStage()
     GL_CHECK_RESULT;
     glUniform1f(_skyStage.fs.param.fogDensity, _activeConfig.fogDensity);
     GL_CHECK_RESULT;
-    glUniform1f(_skyStage.fs.param.fogOriginFactor, _activeConfig.fogOriginFactor);
+    glUniform1f(_skyStage.fs.param.fogOriginFactor, _activeConfig.fogOriginFactor * fogDistanceFactor);
     GL_CHECK_RESULT;
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
