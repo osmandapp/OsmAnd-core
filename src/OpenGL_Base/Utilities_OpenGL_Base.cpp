@@ -5,9 +5,9 @@ OSMAND_CORE_API float OSMAND_CORE_CALL OsmAnd::Utilities_BaseOpenGL::calculateCa
     const float w = viewport.width();
     const float x = viewport.left;
 
-    const float fw = (Sx*k) / (0.5f * viewport.width());
+    const float fw = (Sx*k) / (0.5f * w);
 
-    float d = (P[3][0] + Ax*P[0][0] - fw*(P[3][3] + Ax*P[0][3]))/(P[2][0] - fw*P[2][3]);
+    float d = (Ax * P[0][0])/fw;
 
     return d;
 }

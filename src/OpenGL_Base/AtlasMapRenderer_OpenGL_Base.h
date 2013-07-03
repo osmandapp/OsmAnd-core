@@ -51,13 +51,20 @@ namespace OsmAnd {
     protected:
         glm::mat4 _mProjection;
         glm::mat4 _mView;
+        glm::mat4 _mDistance;
+        glm::mat4 _mElevation;
+        glm::mat4 _mAzimuth;
+        GLfloat _aspectRatio;
+        float _nearDistanceFromCameraToTarget;
+        float _baseDistanceFromCameraToTarget;
+        float _farDistanceFromCameraToTarget;
         float _distanceFromCameraToTarget;
         float _skyplaneHalfSize[2];
         float _tileScaleFactor;
+        float _scaleToRetainProjectedSize;
         
         void computeProjectionAndViewMatrices();
         void computeVisibleTileset();
-        void computeFog();
         void compuleSkyplaneSize();
 
 #pragma pack(push)

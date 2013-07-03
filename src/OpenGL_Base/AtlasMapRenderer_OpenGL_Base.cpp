@@ -41,7 +41,6 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::updateConfiguration()
     BaseAtlasMapRenderer::updateConfiguration();
 
     computeProjectionAndViewMatrices();
-    computeFog();
     computeVisibleTileset();
     compuleSkyplaneSize();
 }
@@ -49,35 +48,37 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::updateConfiguration()
 void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeProjectionAndViewMatrices()
 {
     // Setup projection with fake Z-far plane
-    GLfloat aspectRatio = static_cast<GLfloat>(_activeConfig.viewport.width());
+    _aspectRatio = static_cast<float>(_activeConfig.viewport.width());
     auto viewportHeight = _activeConfig.viewport.height();
     if(viewportHeight > 0)
-        aspectRatio /= static_cast<GLfloat>(viewportHeight);
-    _mProjection = glm::perspective(_activeConfig.fieldOfView, aspectRatio, 0.1f, 1000.0f);
+        _aspectRatio /= static_cast<float>(viewportHeight);
+    _mProjection = glm::perspective(_activeConfig.fieldOfView, _aspectRatio, 0.1f, 1000.0f);
 
     // Calculate limits of camera distance to target and actual distance
     const auto& rasterMapProvider = _activeConfig.tileProviders[RasterMap];
     auto tileProvider = static_cast<IMapBitmapTileProvider*>(rasterMapProvider.get());
     const float screenTile = tileProvider->getTileSize() * (_activeConfig.displayDensityFactor / tileProvider->getTileDensity());
-    const float nearD = Utilities_BaseOpenGL::calculateCameraDistance(_mProjection, _activeConfig.viewport, TileSide3D / 2.0f, screenTile / 2.0f, 1.5f);
-    const float baseD = Utilities_BaseOpenGL::calculateCameraDistance(_mProjection, _activeConfig.viewport, TileSide3D / 2.0f, screenTile / 2.0f, 1.0f);
-    const float farD = Utilities_BaseOpenGL::calculateCameraDistance(_mProjection, _activeConfig.viewport, TileSide3D / 2.0f, screenTile / 2.0f, 0.75f);
+    _nearDistanceFromCameraToTarget = Utilities_BaseOpenGL::calculateCameraDistance(_mProjection, _activeConfig.viewport, TileSide3D / 2.0f, screenTile / 2.0f, 1.5f);
+    _baseDistanceFromCameraToTarget = Utilities_BaseOpenGL::calculateCameraDistance(_mProjection, _activeConfig.viewport, TileSide3D / 2.0f, screenTile / 2.0f, 1.0f);
+    _farDistanceFromCameraToTarget = Utilities_BaseOpenGL::calculateCameraDistance(_mProjection, _activeConfig.viewport, TileSide3D / 2.0f, screenTile / 2.0f, 0.75f);
 
     // zoomFraction == [ 0.0 ... 0.5] scales tile [1.0x ... 1.5x]
     // zoomFraction == [-0.5 ...-0.0] scales tile [.75x ... 1.0x]
     if(_activeConfig.zoomFraction >= 0.0f)
-        _distanceFromCameraToTarget = baseD - (baseD - nearD) * (2.0f * _activeConfig.zoomFraction);
+        _distanceFromCameraToTarget = _baseDistanceFromCameraToTarget - (_baseDistanceFromCameraToTarget - _nearDistanceFromCameraToTarget) * (2.0f * _activeConfig.zoomFraction);
     else
-        _distanceFromCameraToTarget = baseD - (farD - baseD) * (2.0f * _activeConfig.zoomFraction);
+        _distanceFromCameraToTarget = _baseDistanceFromCameraToTarget - (_farDistanceFromCameraToTarget - _baseDistanceFromCameraToTarget) * (2.0f * _activeConfig.zoomFraction);
     _tileScaleFactor = ((_activeConfig.zoomFraction >= 0.0f) ? (1.0f + _activeConfig.zoomFraction) : (1.0f + 0.5f * _activeConfig.zoomFraction));
+    _scaleToRetainProjectedSize = _distanceFromCameraToTarget / _baseDistanceFromCameraToTarget;
     
     // Recalculate projection with obtained value
-    _mProjection = glm::perspective(_activeConfig.fieldOfView, aspectRatio, 0.1f, _activeConfig.fogDistance * 1.5f + _distanceFromCameraToTarget);
+    _mProjection = glm::perspective(_activeConfig.fieldOfView, _aspectRatio, 0.1f, _activeConfig.fogDistance * 1.5f + _distanceFromCameraToTarget);
 
     // Setup camera
-    const auto& c0 = glm::translate(0.0f, 0.0f, -_distanceFromCameraToTarget);
-    const auto& c1 = glm::rotate(c0, _activeConfig.elevationAngle, glm::vec3(1.0f, 0.0f, 0.0f));
-    _mView = glm::rotate(c1, _activeConfig.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
+    _mDistance = glm::translate(0.0f, 0.0f, -_distanceFromCameraToTarget);
+    _mElevation = glm::rotate(_activeConfig.elevationAngle, glm::vec3(1.0f, 0.0f, 0.0f));
+    _mAzimuth = glm::rotate(_activeConfig.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
+    _mView = _mDistance * _mElevation * _mAzimuth;
 }
 
 void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
@@ -377,8 +378,4 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::compuleSkyplaneSize()
 
     _skyplaneHalfSize[0] = qAbs(tlf.x);
     _skyplaneHalfSize[1] = qAbs(tlf.y);
-}
-
-void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeFog()
-{
 }
