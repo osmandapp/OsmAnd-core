@@ -226,7 +226,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
         "                                                                                                                   ""\n"
         //   Apply fog (square exponential)
         "    const float fogDistanceScaled = param_fs_fogDistance * param_fs_scaleToRetainProjectedSize;                    ""\n"
-        "    const float fogStartDistance = fogDistanceScaled * ( 1.0 - param_fs_fogOriginFactor);                          ""\n"
+        "    const float fogStartDistance = fogDistanceScaled * (1.0 - param_fs_fogOriginFactor);                           ""\n"
         "    const float fogLinearFactor = min(max(length(v2f_positionRelativeToTarget) - fogStartDistance, 0.0) /          ""\n"
         "        (fogDistanceScaled - fogStartDistance), 1.0);                                                              ""\n"
 
@@ -495,9 +495,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_MapStage()
                     glActiveTexture(GL_TEXTURE0 + layerId);
                     GL_CHECK_RESULT;
 
-                    glEnable(GL_TEXTURE_2D);
-                    GL_CHECK_RESULT;
-
                     glBindTexture(GL_TEXTURE_2D, reinterpret_cast<GLuint>(cachedTile->textureRef));
                     GL_CHECK_RESULT;
 
@@ -545,7 +542,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_MapStage()
         glActiveTexture(GL_TEXTURE0 + layerId);
         GL_CHECK_RESULT;
 
-        glDisable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, 0);
         GL_CHECK_RESULT;
     }
 
@@ -771,11 +768,11 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_SkyStage()
         "uniform vec3 param_fs_fogColor;                                                                                    ""\n"
         "uniform float param_fs_fogDensity;                                                                                 ""\n"
         "uniform float param_fs_fogOriginFactor;                                                                            ""\n"
+        "uniform float param_fs_scaleToRetainProjectedSize;                                                                 ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
-        //   Height is considered [0.0 ... 2.0]
-        "    const float fogHeight = 1.0;                                                                                   ""\n"
+        "    const float fogHeight = 1.0 * param_fs_scaleToRetainProjectedSize;                                                                                   ""\n"
         "    const float fogStartHeight = fogHeight * (1.0 - param_fs_fogOriginFactor);                                     ""\n"
         "    const float fragmentHeight = 1.0 - v2f_horizonOffsetN;                                                         ""\n"
         //   Fog linear is factor in range [0.0 ... 1.0]
@@ -807,6 +804,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_SkyStage()
     findVariableLocation(_skyStage.program, _skyStage.fs.param.skyColor, "param_fs_skyColor", Uniform);
     findVariableLocation(_skyStage.program, _skyStage.fs.param.fogDensity, "param_fs_fogDensity", Uniform);
     findVariableLocation(_skyStage.program, _skyStage.fs.param.fogOriginFactor, "param_fs_fogOriginFactor", Uniform);
+    findVariableLocation(_skyStage.program, _skyStage.fs.param.scaleToRetainProjectedSize, "param_fs_scaleToRetainProjectedSize", Uniform);
     _programVariables.clear();
 }
 
@@ -841,6 +839,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_SkyStage()
     glUniform1f(_skyStage.fs.param.fogDensity, _activeConfig.fogDensity);
     GL_CHECK_RESULT;
     glUniform1f(_skyStage.fs.param.fogOriginFactor, _activeConfig.fogOriginFactor);
+    GL_CHECK_RESULT;
+    glUniform1f(_skyStage.fs.param.scaleToRetainProjectedSize, _scaleToRetainProjectedSize);
     GL_CHECK_RESULT;
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);

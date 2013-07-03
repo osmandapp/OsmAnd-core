@@ -268,11 +268,6 @@ void OsmAnd::MapRenderer_OpenGL::initializeRendering()
     glEnable(GL_POLYGON_SMOOTH);
     GL_CHECK_RESULT;
 
-    glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
-    GL_CHECK_RESULT;
-    glEnable(GL_POINT_SMOOTH);
-    GL_CHECK_RESULT;
-
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     GL_CHECK_RESULT;
     glEnable(GL_LINE_SMOOTH);

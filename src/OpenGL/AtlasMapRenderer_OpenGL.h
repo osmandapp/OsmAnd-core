@@ -145,6 +145,7 @@ namespace OsmAnd {
                     GLint fogColor;
                     GLint fogDensity;
                     GLint fogOriginFactor;
+                    GLint scaleToRetainProjectedSize;
                 } param;
             } fs;
         } _skyStage;
