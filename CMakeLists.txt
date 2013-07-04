@@ -91,6 +91,10 @@ add_dependencies(OsmAndCore
 	${target_specific_public_libraries}
 )
 
+find_package(Qt5Core REQUIRED)
+find_package(Qt5Network REQUIRED)
+find_package(Qt5Sql REQUIRED)
+
 target_compile_definitions(OsmAndCore
 	PRIVATE
 		-DOSMAND_CORE_EXPORTS
@@ -109,6 +113,9 @@ target_include_directories(OsmAndCore
 		"${OSMAND_ROOT}/core/client"
 		"${OSMAND_ROOT}/core/protos"
 		${target_specific_public_includes}
+		${Qt5Core_INCLUDE_DIRS}
+		${Qt5Network_INCLUDE_DIRS}
+		${Qt5Sql_INCLUDE_DIRS}
 )
 target_link_libraries(OsmAndCore
 	LINK_PUBLIC
@@ -117,7 +124,9 @@ target_link_libraries(OsmAndCore
 		gdal_static
 		${target_specific_public_libraries}
 )
-
-find_package(Qt5Core REQUIRED)
-find_package(Qt5Network REQUIRED)
-qt5_use_modules(OsmAndCore Core Network)
+qt5_use_modules(OsmAndCore
+	LINK_PUBLIC
+		Core
+		Network
+		Sql
+)

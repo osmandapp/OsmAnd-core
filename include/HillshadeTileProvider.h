@@ -19,34 +19,53 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __ONE_DEGREE_MAP_ELEVATION_DATA_PROVIDER_H_
-#define __ONE_DEGREE_MAP_ELEVATION_DATA_PROVIDER_H_
+#ifndef __HILLSHADE_TILE_PROVIDER_H_
+#define __HILLSHADE_TILE_PROVIDER_H_
 
 #include <stdint.h>
 #include <memory>
 #include <functional>
 #include <array>
 
-#include <QSet>
+#include <QString>
+#include <QDir>
+#include <QSqlDatabase>
 
 #include <OsmAndCore.h>
 #include <CommonTypes.h>
-#include <IMapElevationDataProvider.h>
+
+#include <IMapBitmapTileProvider.h>
 
 namespace OsmAnd {
 
-    class OSMAND_CORE_API OneDegreeMapElevationDataProvider : public IMapElevationDataProvider
+    class OSMAND_CORE_API HillshadeTileProvider : public IMapBitmapTileProvider
     {
-    public:
     private:
     protected:
-        OneDegreeMapElevationDataProvider(const uint32_t& valuesPerSide);
+        class OSMAND_CORE_API Tile : public IMapBitmapTileProvider::Tile
+        {
+        private:
+            std::unique_ptr<SkBitmap> _skBitmap;
+        protected:
+        public:
+            Tile(SkBitmap* bitmap);
+            virtual ~Tile();
+        };
 
-        QMutex _processingMutex;
-        QMutex _requestsMutex;
-        std::array< QSet< TileId >, 32 > _requestedTileIds;
+        QString _indexFilePath;
     public:
-        virtual ~OneDegreeMapElevationDataProvider();
+        HillshadeTileProvider(const QDir& storagePath);
+        virtual ~HillshadeTileProvider();
+
+        const QDir storagePath;
+        
+        void setIndexFilePath(const QString& indexFilePath);
+        const QString& indexFilePath;
+
+        void rebuildIndex();
+
+        virtual float getTileDensity() const;
+        virtual uint32_t getTileSize() const;
 
         virtual bool obtainTileImmediate(const TileId& tileId, uint32_t zoom, std::shared_ptr<IMapTileProvider::Tile>& tile);
         virtual void obtainTileDeffered(const TileId& tileId, uint32_t zoom, TileReadyCallback readyCallback);
@@ -54,4 +73,4 @@ namespace OsmAnd {
 
 }
 
-#endif // __ONE_DEGREE_MAP_ELEVATION_DATA_PROVIDER_H_
+#endif // __HILLSHADE_TILE_PROVIDER_H_
