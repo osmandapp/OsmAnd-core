@@ -80,7 +80,7 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeProjectionAndViewMatrices()
     
     // Recalculate projection with obtained value
     _zSkyplane = _activeConfig.fogDistance + _distanceFromCameraToTarget;
-    _zFar = _activeConfig.fogDistance * 1.5f + _distanceFromCameraToTarget;
+    _zFar = glm::length(glm::vec3(_projectionPlaneHalfWidth * (_zSkyplane / _zNear), _projectionPlaneHalfHeight * (_zSkyplane / _zNear), _zSkyplane));
     _mProjection = glm::frustum(-_projectionPlaneHalfWidth, _projectionPlaneHalfWidth, -_projectionPlaneHalfHeight, _projectionPlaneHalfHeight, _zNear, _zFar);
 
     // Setup camera
@@ -97,121 +97,72 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
     const glm::vec4 nTR_c(+_projectionPlaneHalfWidth, +_projectionPlaneHalfHeight, -_zNear, 1.0f);
     const glm::vec4 nBL_c(-_projectionPlaneHalfWidth, -_projectionPlaneHalfHeight, -_zNear, 1.0f);
     const glm::vec4 nBR_c(+_projectionPlaneHalfWidth, -_projectionPlaneHalfHeight, -_zNear, 1.0f);
-    const float zFarK = _zFar / _zNear;
-    const glm::vec4 fTL_c = zFarK * nTL_c;
-    const glm::vec4 fTR_c = zFarK * nTR_c;
-    const glm::vec4 fBL_c = zFarK * nBL_c;
-    const glm::vec4 fBR_c = zFarK * nBR_c;
 
-    int i = 4;
-    /*
-    glm::vec4 glViewport(
-        _activeConfig.viewport.left,
-        _activeConfig.windowSize.y - _activeConfig.viewport.bottom,
-        _activeConfig.viewport.width(),
-        _activeConfig.viewport.height());
+    // 4 points of frustum far clipping box in camera coordinate space
+    const auto zFarK = _zFar / _zNear;// probably _zSkyplane is better
+    const glm::vec4 fTL_c(zFarK * nTL_c.x, zFarK * nTL_c.y, zFarK * nTL_c.z, 1.0f);
+    const glm::vec4 fTR_c(zFarK * nTR_c.x, zFarK * nTR_c.y, zFarK * nTR_c.z, 1.0f);
+    const glm::vec4 fBL_c(zFarK * nBL_c.x, zFarK * nBL_c.y, zFarK * nBL_c.z, 1.0f);
+    const glm::vec4 fBR_c(zFarK * nBR_c.x, zFarK * nBR_c.y, zFarK * nBR_c.z, 1.0f);
 
-    // Top-left far
-    const auto& tlf = glm::unProject(
-        glm::vec3(_activeConfig.viewport.left, glViewport[1] + _activeConfig.viewport.height(), 1.0),
-        _mView, _mProjection, glViewport);
+    // Get matrix that transforms from camera to global space
+    const auto mAntiDistance = glm::translate(0.0f, 0.0f, _distanceFromCameraToTarget);
+    const auto mAntiElevation = glm::rotate(-_activeConfig.elevationAngle, glm::vec3(1.0f, 0.0f, 0.0f));
+    const auto mAntiAzimuth = glm::rotate(-_activeConfig.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
+    const auto mCameraToGlobal = mAntiAzimuth * mAntiElevation * mAntiDistance;
 
-    // Top-right far
-    const auto& trf = glm::unProject(
-        glm::vec3(_activeConfig.viewport.right, glViewport[1] + _activeConfig.viewport.height(), 1.0),
-        _mView, _mProjection, glViewport);
+    // Transform 4 far frustum vertices + camera center to global space
+    const auto eye_g = mCameraToGlobal * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    const auto fTL_g = mCameraToGlobal * fTL_c;
+    const auto fTR_g = mCameraToGlobal * fTR_c;
+    const auto fBL_g = mCameraToGlobal * fBL_c;
+    const auto fBR_g = mCameraToGlobal * fBR_c;
 
-    // Bottom-left far
-    const auto& blf = glm::unProject(
-        glm::vec3(_activeConfig.viewport.left, glViewport[1], 1.0),
-        _mView, _mProjection, glViewport);
+    const auto nTL_g = mCameraToGlobal * nTL_c;
+    const auto nTR_g = mCameraToGlobal * nTR_c;
+    const auto nBL_g = mCameraToGlobal * nBL_c;
+    const auto nBR_g = mCameraToGlobal * nBR_c;
 
-    // Bottom-right far
-    const auto& brf = glm::unProject(
-        glm::vec3(_activeConfig.viewport.right, glViewport[1], 1.0),
-        _mView, _mProjection, glViewport);
+    // Get 4 points of frustum & plane intersection
+    glm::vec2 xTL(
+        (eye_g.x*fTL_g.y - fTL_g.x*eye_g.y) / (fTL_g.y - eye_g.y),
+        (eye_g.z*fTL_g.y - fTL_g.z*eye_g.y) / (fTL_g.y - eye_g.y)
+    );
+    glm::vec2 xTR(
+        (eye_g.x*fTR_g.y - fTR_g.x*eye_g.y) / (fTR_g.y - eye_g.y),
+        (eye_g.z*fTR_g.y - fTR_g.z*eye_g.y) / (fTR_g.y - eye_g.y)
+    );
+    glm::vec2 xBL(
+        (eye_g.x*fBL_g.y - fBL_g.x*eye_g.y) / (fBL_g.y - eye_g.y),
+        (eye_g.z*fBL_g.y - fBL_g.z*eye_g.y) / (fBL_g.y - eye_g.y)
+    );
+    glm::vec2 xBR(
+        (eye_g.x*fBR_g.y - fBR_g.x*eye_g.y) / (fBR_g.y - eye_g.y),
+        (eye_g.z*fBR_g.y - fBR_g.z*eye_g.y) / (fBR_g.y - eye_g.y)
+    );
 
-    // Top-left near
-    const auto& tln = glm::unProject(
-        glm::vec3(_activeConfig.viewport.left, glViewport[1] + _activeConfig.viewport.height(), 0.0),
-        _mView, _mProjection, glViewport);
+    glm::vec2 xTL_(
+        (eye_g.x*nTL_g.y - nTL_g.x*eye_g.y) / (nTL_g.y - eye_g.y),
+        (eye_g.z*nTL_g.y - nTL_g.z*eye_g.y) / (nTL_g.y - eye_g.y)
+        );
+    glm::vec2 xTR_(
+        (eye_g.x*nTR_g.y - nTR_g.x*eye_g.y) / (nTR_g.y - eye_g.y),
+        (eye_g.z*nTR_g.y - nTR_g.z*eye_g.y) / (nTR_g.y - eye_g.y)
+        );
+    glm::vec2 xBL_(
+        (eye_g.x*nBL_g.y - nBL_g.x*eye_g.y) / (nBL_g.y - eye_g.y),
+        (eye_g.z*nBL_g.y - nBL_g.z*eye_g.y) / (nBL_g.y - eye_g.y)
+        );
+    glm::vec2 xBR_(
+        (eye_g.x*nBR_g.y - nBR_g.x*eye_g.y) / (nBR_g.y - eye_g.y),
+        (eye_g.z*nBR_g.y - nBR_g.z*eye_g.y) / (nBR_g.y - eye_g.y)
+        );
 
-    // Top-right near
-    const auto& trn = glm::unProject(
-        glm::vec3(_activeConfig.viewport.right, glViewport[1] + _activeConfig.viewport.height(), 0.0),
-        _mView, _mProjection, glViewport);
-
-    // Bottom-left near
-    const auto& bln = glm::unProject(
-        glm::vec3(_activeConfig.viewport.left, glViewport[1], 0.0),
-        _mView, _mProjection, glViewport);
-
-    // Bottom-right near
-    const auto& brn = glm::unProject(
-        glm::vec3(_activeConfig.viewport.right, glViewport[1], 0.0),
-        _mView, _mProjection, glViewport);
-
-    // Obtain 4 normalized ray directions for each side of viewport
-    const auto& tlRayD = glm::normalize(tlf - tln);
-    const auto& trRayD = glm::normalize(trf - trn);
-    const auto& blRayD = glm::normalize(blf - bln);
-    const auto& brRayD = glm::normalize(brf - brn);
-
-    // Our plane normal is always Y-up and plane origin is 0
-    glm::vec3 planeN(0.0f, 1.0f, 0.0f);
-
-    // Intersect 4 rays with tile-plane
-    auto clip = _activeConfig.fogDistance + _distanceFromCameraToTarget;
-    float tlD, trD, blD, brD;
-    bool intersects;
-    intersects = Utilities_BaseOpenGL::rayIntersectPlane(planeN, 0.0f, tlRayD, tln, tlD);
-    if(!intersects)
-        tlD = clip;
-    auto tlP = tln + tlRayD * tlD;
-    intersects = Utilities_BaseOpenGL::rayIntersectPlane(planeN, 0.0f, trRayD, trn, trD);
-    if(!intersects)
-        trD = clip;
-    auto trP = trn + trRayD * trD;
-    intersects = Utilities_BaseOpenGL::rayIntersectPlane(planeN, 0.0f, blRayD, bln, blD);
-    if(!intersects)
-        blD = clip;
-    auto blP = bln + blRayD * blD;
-    intersects = Utilities_BaseOpenGL::rayIntersectPlane(planeN, 0.0f, brRayD, brn, brD);
-    if(!intersects)
-        brD = clip;
-    auto brP = brn + brRayD * brD;
-
-    LogPrintf(LogSeverityLevel::Debug, "tlD = %f\n", tlD);
-    glMatrixMode(GL_PROJECTION);
-    glLoadMatrixf(glm::value_ptr(_mProjection));
-    glMatrixMode(GL_MODELVIEW);
-    glLoadMatrixf(glm::value_ptr(_mView));
-    glLineWidth(10.0f);
-    glColor4f(0, 1, 1, 1);
-    glBegin(GL_LINES);
-        glVertex3f(0,0 + 5.0f,0);
-        glVertex3f(tlP[0],tlP[1] + 5.0f,tlP[2]);
-    glEnd();
+    auto tlP = xTL_;
+    auto trP = xTR_;
+    auto blP = xBL_;
+    auto brP = xBR_;
     
-    // Limit all I-points using clip distance
-    auto tlLength = glm::length(tlP);
-    if(tlLength > clip)
-        tlP /= tlLength / clip;
-
-    auto trLength = glm::length(trP);
-    if(trLength > clip)
-        trP /= trLength / clip;
-
-    auto blLength = glm::length(blP);
-    if(blLength > clip)
-        blP /= blLength / clip;
-
-    auto brLength = glm::length(brP);
-    if(brLength > clip)
-        brP /= brLength / clip;
-    */
-
-        /*
     // Get tile indices
     tlP /= TileSide3D;
     trP /= TileSide3D;
@@ -222,14 +173,14 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
     //TODO: it's not optimal, since dumb AABB takes a lot of unneeded tiles, up to 50% of selected
     _visibleTiles.clear();
     PointI p0, p1, p2, p3;
-    p0.x = tlP[0] > 0.0f ? qCeil(tlP[0]) : qFloor(tlP[0]);
-    p0.y = tlP[2] > 0.0f ? qCeil(tlP[2]) : qFloor(tlP[2]);
-    p1.x = trP[0] > 0.0f ? qCeil(trP[0]) : qFloor(trP[0]);
-    p1.y = trP[2] > 0.0f ? qCeil(trP[2]) : qFloor(trP[2]);
-    p2.x = blP[0] > 0.0f ? qCeil(blP[0]) : qFloor(blP[0]);
-    p2.y = blP[2] > 0.0f ? qCeil(blP[2]) : qFloor(blP[2]);
-    p3.x = brP[0] > 0.0f ? qCeil(brP[0]) : qFloor(brP[0]);
-    p3.y = brP[2] > 0.0f ? qCeil(brP[2]) : qFloor(brP[2]);
+    p0.x = tlP.x > 0.0f ? qCeil(tlP.x) : qFloor(tlP.x);
+    p0.y = tlP.y > 0.0f ? qCeil(tlP.y) : qFloor(tlP.y);
+    p1.x = trP.x > 0.0f ? qCeil(trP.x) : qFloor(trP.x);
+    p1.y = trP.y > 0.0f ? qCeil(trP.y) : qFloor(trP.y);
+    p2.x = blP.x > 0.0f ? qCeil(blP.x) : qFloor(blP.x);
+    p2.y = blP.y > 0.0f ? qCeil(blP.y) : qFloor(blP.y);
+    p3.x = brP.x > 0.0f ? qCeil(brP.x) : qFloor(brP.x);
+    p3.y = brP.y > 0.0f ? qCeil(brP.y) : qFloor(brP.y);
     auto yMax = qMax(qMax(p0.y, p1.y), qMax(p2.y, p3.y));
     auto yMin = qMin(qMin(p0.y, p1.y), qMin(p2.y, p3.y));
     auto xMax = qMax(qMax(p0.x, p1.x), qMax(p2.x, p3.x));
@@ -259,7 +210,6 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
         div -= 1;
     _normalizedTargetInTileOffset.x = static_cast<double>(_activeConfig.target31.x - tileXo31) / div;
     _normalizedTargetInTileOffset.y = static_cast<double>(_activeConfig.target31.y - tileYo31) / div;
-    */
 }
 
 void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeSkyplaneSize()
