@@ -87,7 +87,6 @@ set_target_properties(OsmAndCore PROPERTIES AUTOMOC TRUE)
 add_dependencies(OsmAndCore
 	skia_static
 	protobuf_static
-	gdal_static
 	${target_specific_public_libraries}
 )
 
@@ -121,7 +120,6 @@ target_link_libraries(OsmAndCore
 	LINK_PUBLIC
 		skia_static
 		protobuf_static
-		gdal_static
 		${target_specific_public_libraries}
 )
 qt5_use_modules(OsmAndCore
