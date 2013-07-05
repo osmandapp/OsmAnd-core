@@ -7,6 +7,8 @@
 #include <QtNumeric>
 #include <QtCore>
 
+#include "OsmAndLogging.h"
+
 const uint64_t l = 1UL << 31;
 
 OSMAND_CORE_API int32_t OSMAND_CORE_CALL OsmAnd::Utilities::get31TileNumberX( double longitude )
@@ -551,4 +553,171 @@ OSMAND_CORE_API uint32_t OSMAND_CORE_CALL OsmAnd::Utilities::getNextPowerOfTwo( 
     n++;
 
     return n;
+}
+
+OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( const unsigned int& verticesCount, const PointI* vertices, std::function<void (const PointI&)> fillPoint, unsigned int subpixelResolution/* = 1*/ )
+{
+    // Find min-max of Y
+    int yMin, yMax;
+    yMin = yMax = vertices[0].y;
+    for(auto idx = 1u; idx < verticesCount; idx++)
+    {
+        const auto& y = vertices[idx].y;
+        if(y > yMax)
+            yMax = y;
+        if(y < yMin)
+            yMin = y;
+    }
+
+    // Build set of edges
+    struct Edge
+    {
+        const PointI* v0;
+        const PointI* v1;
+        float slope;
+        int yNext;
+    };
+    QVector<Edge*> edges;
+    edges.reserve(verticesCount);
+    auto edgeIdx = 0u;
+    for(auto idx = 0u, prevIdx = verticesCount - 1; idx < verticesCount; prevIdx = idx++)
+    {
+        auto v0 = &vertices[prevIdx];
+        auto v1 = &vertices[idx];
+
+        if(v0->y == v1->y)
+        {
+            // Horizontal edge
+            auto pEdge = new Edge();
+            pEdge->v0 = v0;
+            pEdge->v1 = v1;
+            pEdge->slope = 0;
+            pEdge->yNext = pEdge->v0->y + 1;
+            edges.push_back(pEdge);
+
+            continue;
+        }
+
+        const PointI* pLower = nullptr;
+        const PointI* pUpper = nullptr;
+        if(v0->y < v1->y)
+        {
+            // Up-going edge
+            pLower = v0;
+            pUpper = v1;
+        }
+        else if(v0->y > v1->y)
+        {
+            // Down-going edge
+            pLower = v1;
+            pUpper = v0;
+        }
+        
+        // Fill edge 
+        auto pEdge = new Edge();
+        pEdge->v0 = pLower;
+        pEdge->v1 = pUpper;
+        pEdge->slope = static_cast<float>(pEdge->v1->x - pEdge->v0->x) / (pEdge->v1->y - pEdge->v0->y);
+        pEdge->yNext = pEdge->v1->y;
+        for(auto vertexIdx = 0u; vertexIdx < verticesCount; vertexIdx++)
+        {
+            const auto& v = vertices[vertexIdx];
+
+            if(v.y > pEdge->v0->y && v.y < pEdge->yNext)
+                pEdge->yNext = v.y;
+        }
+        edges.push_back(pEdge);
+    }
+
+    // Sort edges by ascending Y
+    qSort(edges.begin(), edges.end(), [](Edge* l, Edge* r) -> bool
+    {
+        return l->v0->y > r->v0->y;
+    });
+
+    // Loop in [yMin .. yMax]
+    QVector<Edge*> aet;
+    aet.reserve(edges.size());
+    for(auto y = yMin; y <= yMax;)
+    {
+        // Find active edges
+        int yNext = yMax;
+        for(auto itEdge = edges.begin(); itEdge != edges.end(); ++itEdge)
+        {
+            auto edge = *itEdge;
+
+            const auto isHorizontal = edge->v0->y == edge->v1->y;
+            if(yNext > edge->yNext && edge->yNext > y && !isHorizontal)
+                yNext = edge->yNext;
+
+            if(edge->v0->y != y)
+                continue;
+
+            if(isHorizontal)
+            {
+                // Fill horizontal edge
+                const auto xMin = qMin(edge->v0->x, edge->v1->x);
+                const auto xMax = qMax(edge->v0->x, edge->v1->x);
+                for(auto x = xMin; x <= xMax; x++)
+                    fillPoint(PointI(x, y));
+                continue;
+            }
+
+            aet.push_back(edge);
+            continue;
+        }
+
+        // If there are no active edges, we've finished filling
+        if(aet.isEmpty())
+            break;
+        assert(aet.size() % 2 == 0);
+
+        // Sort aet by X
+        qSort(aet.begin(), aet.end(), [](Edge* l, Edge* r) -> bool
+        {
+            return l->v0->x > r->v0->x;
+        });
+        
+        // Find next Y
+        for(; y <= yNext; y++)
+        {
+            const unsigned int pairsCount = aet.size() / 2;
+
+            auto itEdgeR = aet.begin();
+            auto itEdgeL = itEdgeR + 1;
+
+            for(auto pairIdx = 0u; pairIdx < pairsCount; pairIdx++, itEdgeR = ++itEdgeL, ++itEdgeL)
+            {
+                auto rEdge = *itEdgeR;
+                auto lEdge = *itEdgeL;
+
+                // Fill from l to r
+                auto lXf = lEdge->v0->x + (y - lEdge->v0->y) * lEdge->slope;
+                auto rXf = rEdge->v0->x + (y - rEdge->v0->y) * rEdge->slope;
+                auto lX = lXf > 0.0f ? qCeil(lXf) : qFloor(lXf);
+                auto rX = rXf > 0.0f ? qCeil(rXf) : qFloor(rXf);
+                auto xMin = qMin(lX, rX);
+                auto xMax = qMax(lX, rX);
+
+                for(auto x = xMin; x <= xMax; x++)
+                    fillPoint(PointI(x, y));
+            }
+        }
+        y = yNext;
+
+        // Deactivate those edges that have end at yNext
+        for(auto itEdge = aet.begin(); itEdge != aet.end();)
+        {
+            auto edge = *itEdge;
+
+            if(edge->v1->y == yNext)
+                itEdge = aet.erase(itEdge);
+            else
+                ++itEdge;
+        }
+    }
+
+    // Cleanup
+    for(auto itEdge = edges.begin(); itEdge != edges.end(); ++itEdge)
+        delete *itEdge;
 }

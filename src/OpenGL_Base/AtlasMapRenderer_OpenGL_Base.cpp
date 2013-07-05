@@ -15,6 +15,7 @@
 #include "IMapBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
 #include "OsmAndLogging.h"
+#include "OsmAndUtilities.h"
 #include "OpenGL_Base/Utilities_OpenGL_Base.h"
 
 OsmAnd::AtlasMapRenderer_BaseOpenGL::AtlasMapRenderer_BaseOpenGL()
@@ -111,96 +112,101 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
     const auto mAntiAzimuth = glm::rotate(-_activeConfig.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
     const auto mCameraToGlobal = mAntiAzimuth * mAntiElevation * mAntiDistance;
 
-    // Transform 4 far frustum vertices + camera center to global space
+    // Transform 8 frustum vertices + camera center to global space
     const auto eye_g = mCameraToGlobal * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
     const auto fTL_g = mCameraToGlobal * fTL_c;
     const auto fTR_g = mCameraToGlobal * fTR_c;
     const auto fBL_g = mCameraToGlobal * fBL_c;
     const auto fBR_g = mCameraToGlobal * fBR_c;
-
     const auto nTL_g = mCameraToGlobal * nTL_c;
     const auto nTR_g = mCameraToGlobal * nTR_c;
     const auto nBL_g = mCameraToGlobal * nBL_c;
     const auto nBR_g = mCameraToGlobal * nBR_c;
 
-    // Get 4 points of frustum & plane intersection
-    glm::vec2 xTL(
-        (eye_g.x*fTL_g.y - fTL_g.x*eye_g.y) / (fTL_g.y - eye_g.y),
-        (eye_g.z*fTL_g.y - fTL_g.z*eye_g.y) / (fTL_g.y - eye_g.y)
-    );
-    glm::vec2 xTR(
-        (eye_g.x*fTR_g.y - fTR_g.x*eye_g.y) / (fTR_g.y - eye_g.y),
-        (eye_g.z*fTR_g.y - fTR_g.z*eye_g.y) / (fTR_g.y - eye_g.y)
-    );
-    glm::vec2 xBL(
-        (eye_g.x*fBL_g.y - fBL_g.x*eye_g.y) / (fBL_g.y - eye_g.y),
-        (eye_g.z*fBL_g.y - fBL_g.z*eye_g.y) / (fBL_g.y - eye_g.y)
-    );
-    glm::vec2 xBR(
-        (eye_g.x*fBR_g.y - fBR_g.x*eye_g.y) / (fBR_g.y - eye_g.y),
-        (eye_g.z*fBR_g.y - fBR_g.z*eye_g.y) / (fBR_g.y - eye_g.y)
-    );
-
-    glm::vec2 xTL_(
-        (eye_g.x*nTL_g.y - nTL_g.x*eye_g.y) / (nTL_g.y - eye_g.y),
-        (eye_g.z*nTL_g.y - nTL_g.z*eye_g.y) / (nTL_g.y - eye_g.y)
-        );
-    glm::vec2 xTR_(
-        (eye_g.x*nTR_g.y - nTR_g.x*eye_g.y) / (nTR_g.y - eye_g.y),
-        (eye_g.z*nTR_g.y - nTR_g.z*eye_g.y) / (nTR_g.y - eye_g.y)
-        );
-    glm::vec2 xBL_(
-        (eye_g.x*nBL_g.y - nBL_g.x*eye_g.y) / (nBL_g.y - eye_g.y),
-        (eye_g.z*nBL_g.y - nBL_g.z*eye_g.y) / (nBL_g.y - eye_g.y)
-        );
-    glm::vec2 xBR_(
-        (eye_g.x*nBR_g.y - nBR_g.x*eye_g.y) / (nBR_g.y - eye_g.y),
-        (eye_g.z*nBR_g.y - nBR_g.z*eye_g.y) / (nBR_g.y - eye_g.y)
-        );
-
-    auto tlP = xTL_;
-    auto trP = xTR_;
-    auto blP = xBL_;
-    auto brP = xBR_;
-    
-    // Get tile indices
-    tlP /= TileSide3D;
-    trP /= TileSide3D;
-    blP /= TileSide3D;
-    brP /= TileSide3D;
-
-    // Obtain visible tile indices in current zoom
-    //TODO: it's not optimal, since dumb AABB takes a lot of unneeded tiles, up to 50% of selected
-    _visibleTiles.clear();
-    PointI p0, p1, p2, p3;
-    p0.x = tlP.x > 0.0f ? qCeil(tlP.x) : qFloor(tlP.x);
-    p0.y = tlP.y > 0.0f ? qCeil(tlP.y) : qFloor(tlP.y);
-    p1.x = trP.x > 0.0f ? qCeil(trP.x) : qFloor(trP.x);
-    p1.y = trP.y > 0.0f ? qCeil(trP.y) : qFloor(trP.y);
-    p2.x = blP.x > 0.0f ? qCeil(blP.x) : qFloor(blP.x);
-    p2.y = blP.y > 0.0f ? qCeil(blP.y) : qFloor(blP.y);
-    p3.x = brP.x > 0.0f ? qCeil(brP.x) : qFloor(brP.x);
-    p3.y = brP.y > 0.0f ? qCeil(brP.y) : qFloor(brP.y);
-    auto yMax = qMax(qMax(p0.y, p1.y), qMax(p2.y, p3.y));
-    auto yMin = qMin(qMin(p0.y, p1.y), qMin(p2.y, p3.y));
-    auto xMax = qMax(qMax(p0.x, p1.x), qMax(p2.x, p3.x));
-    auto xMin = qMin(qMin(p0.x, p1.x), qMin(p2.x, p3.x));
-    PointI centerZ;
-    centerZ.x = _activeConfig.target31.x >> (31 - _activeConfig.zoomBase);
-    centerZ.y = _activeConfig.target31.y >> (31 - _activeConfig.zoomBase);
-    LogPrintf(LogSeverityLevel::Debug, "X = [%d .. %d]; Y = [%d .. %d]\n", xMin, xMax, yMin, yMax);
-    for(auto y = yMin; y <= yMax; y++)
+    // Get (up to) 4 points of frustum edges & plane intersection
+    const glm::vec3 planeN(0.0f, 1.0f, 0.0f);
+    const glm::vec3 planeO(0.0f, 0.0f, 0.0f);
+    auto intersectionPointsCounter = 0u;
+    glm::vec3 intersectionPoint;
+    glm::vec2 intersectionPoints[4];
+    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, glm::vec3(nBL_g.x, nBL_g.y, nBL_g.z), glm::vec3(fBL_g.x, fBL_g.y, fBL_g.z), intersectionPoint))
     {
-        for(auto x = xMin; x <= xMax; x++)
+        intersectionPoints[intersectionPointsCounter] = glm::vec2(intersectionPoint.x, intersectionPoint.z);
+        intersectionPointsCounter++;
+    }
+    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, glm::vec3(nBR_g.x, nBR_g.y, nBR_g.z), glm::vec3(fBR_g.x, fBR_g.y, fBR_g.z), intersectionPoint))
+    {
+        intersectionPoints[intersectionPointsCounter] = glm::vec2(intersectionPoint.x, intersectionPoint.z);
+        intersectionPointsCounter++;
+    }
+    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, glm::vec3(nTR_g.x, nTR_g.y, nTR_g.z), glm::vec3(fTR_g.x, fTR_g.y, fTR_g.z), intersectionPoint))
+    {
+        intersectionPoints[intersectionPointsCounter] = glm::vec2(intersectionPoint.x, intersectionPoint.z);
+        intersectionPointsCounter++;
+    }
+    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, glm::vec3(nTL_g.x, nTL_g.y, nTL_g.z), glm::vec3(fTL_g.x, fTL_g.y, fTL_g.z), intersectionPoint))
+    {
+        intersectionPoints[intersectionPointsCounter] = glm::vec2(intersectionPoint.x, intersectionPoint.z);
+        intersectionPointsCounter++;
+    }
+    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, glm::vec3(fTR_g.x, fTR_g.y, fTR_g.z), glm::vec3(fBR_g.x, fBR_g.y, fBR_g.z), intersectionPoint))
+    {
+        intersectionPoints[intersectionPointsCounter] = glm::vec2(intersectionPoint.x, intersectionPoint.z);
+        intersectionPointsCounter++;
+    }
+    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, glm::vec3(fTL_g.x, fTL_g.y, fTL_g.z), glm::vec3(fBL_g.x, fBL_g.y, fBL_g.z), intersectionPoint))
+    {
+        intersectionPoints[intersectionPointsCounter] = glm::vec2(intersectionPoint.x, intersectionPoint.z);
+        intersectionPointsCounter++;
+    }
+    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, glm::vec3(nTR_g.x, nTR_g.y, nTR_g.z), glm::vec3(nBR_g.x, nBR_g.y, nBR_g.z), intersectionPoint))
+    {
+        intersectionPoints[intersectionPointsCounter] = glm::vec2(intersectionPoint.x, intersectionPoint.z);
+        intersectionPointsCounter++;
+    }
+    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, glm::vec3(nTL_g.x, nTL_g.y, nTL_g.z), glm::vec3(nBL_g.x, nBL_g.y, nBL_g.z), intersectionPoint))
+    {
+        intersectionPoints[intersectionPointsCounter] = glm::vec2(intersectionPoint.x, intersectionPoint.z);
+        intersectionPointsCounter++;
+    }
+    
+    assert(intersectionPointsCounter == 4);
+
+    // Normalize intersection points to tiles
+    intersectionPoints[0] /= static_cast<float>(TileSide3D);
+    intersectionPoints[1] /= static_cast<float>(TileSide3D);
+    intersectionPoints[2] /= static_cast<float>(TileSide3D);
+    intersectionPoints[3] /= static_cast<float>(TileSide3D);
+
+    // "Round"-up tile indices
+    const auto& ip = intersectionPoints;
+    PointI p[4];
+    p[0].x = ip[0].x > 0.0f ? qCeil(ip[0].x) : qFloor(ip[0].x);
+    p[0].y = ip[0].y > 0.0f ? qCeil(ip[0].y) : qFloor(ip[0].y);
+    p[1].x = ip[1].x > 0.0f ? qCeil(ip[1].x) : qFloor(ip[1].x);
+    p[1].y = ip[1].y > 0.0f ? qCeil(ip[1].y) : qFloor(ip[1].y);
+    p[2].x = ip[2].x > 0.0f ? qCeil(ip[2].x) : qFloor(ip[2].x);
+    p[2].y = ip[2].y > 0.0f ? qCeil(ip[2].y) : qFloor(ip[2].y);
+    p[3].x = ip[3].x > 0.0f ? qCeil(ip[3].x) : qFloor(ip[3].x);
+    p[3].y = ip[3].y > 0.0f ? qCeil(ip[3].y) : qFloor(ip[3].y);
+
+    // Get center tile index
+    PointI pC;
+    pC.x = _activeConfig.target31.x >> (31 - _activeConfig.zoomBase);
+    pC.y = _activeConfig.target31.y >> (31 - _activeConfig.zoomBase);
+
+    // Find visible tiles using scanline fill
+    _visibleTiles.clear();
+    Utilities::scanlineFillPolygon(4, &p[0],
+        [this, pC](const PointI& point)
         {
             TileId tileId;
-            tileId.x = centerZ.x + x;
-            tileId.y = centerZ.y + y;
+            tileId.x = point.x + pC.x;
+            tileId.y = point.y + pC.y;
 
             _visibleTiles.insert(tileId);
-        }
-    }
-
+        });
+    
     // Compute in-tile offset
     auto zoomTileMask = ((1u << _activeConfig.zoomBase) - 1) << (31 - _activeConfig.zoomBase);
     auto tileXo31 = _activeConfig.target31.x & zoomTileMask;
