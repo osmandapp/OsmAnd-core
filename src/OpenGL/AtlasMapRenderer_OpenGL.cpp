@@ -350,7 +350,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_MapStage()
     GL_CHECK_RESULT;
 
     // Set center offset
-    glUniform2f(_mapStage.vs.param.centerOffset, _normalizedTargetInTileOffset.x, _normalizedTargetInTileOffset.y);
+    glUniform2f(_mapStage.vs.param.centerOffset, _targetOffsetInTileN.x, _targetOffsetInTileN.y);
     GL_CHECK_RESULT;
 
     // Set target tile

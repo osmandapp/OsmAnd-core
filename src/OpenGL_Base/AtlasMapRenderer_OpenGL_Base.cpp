@@ -93,6 +93,18 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeProjectionAndViewMatrices()
 
 void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
 {
+    // Compute in-tile offset
+    auto zoomTileMask = ((1u << _activeConfig.zoomBase) - 1) << (31 - _activeConfig.zoomBase);
+    auto tileXo31 = _activeConfig.target31.x & zoomTileMask;
+    auto tileYo31 = _activeConfig.target31.y & zoomTileMask;
+    auto div = 1u << (31 - _activeConfig.zoomBase);
+    if(div > 1)
+        div -= 1;
+    _targetOffsetInTileN.x = static_cast<double>(_activeConfig.target31.x - tileXo31) / div;
+    _targetOffsetInTileN.y = static_cast<double>(_activeConfig.target31.y - tileYo31) / div;
+    //NOTE: _targetOffsetInTileN is sometimes 1!
+    //LogPrintf(LogSeverityLevel::Debug, "offset = %f %f\n", _targetOffsetInTileN.x, _targetOffsetInTileN.y);
+
     // 4 points of frustum near clipping box in camera coordinate space
     const glm::vec4 nTL_c(-_projectionPlaneHalfWidth, +_projectionPlaneHalfHeight, -_zNear, 1.0f);
     const glm::vec4 nTR_c(+_projectionPlaneHalfWidth, +_projectionPlaneHalfHeight, -_zNear, 1.0f);
@@ -180,15 +192,15 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
 
     // "Round"-up tile indices
     const auto& ip = intersectionPoints;
-    PointI p[4];
-    p[0].x = ip[0].x > 0.0f ? qCeil(ip[0].x) : qFloor(ip[0].x);
-    p[0].y = ip[0].y > 0.0f ? qCeil(ip[0].y) : qFloor(ip[0].y);
-    p[1].x = ip[1].x > 0.0f ? qCeil(ip[1].x) : qFloor(ip[1].x);
-    p[1].y = ip[1].y > 0.0f ? qCeil(ip[1].y) : qFloor(ip[1].y);
-    p[2].x = ip[2].x > 0.0f ? qCeil(ip[2].x) : qFloor(ip[2].x);
-    p[2].y = ip[2].y > 0.0f ? qCeil(ip[2].y) : qFloor(ip[2].y);
-    p[3].x = ip[3].x > 0.0f ? qCeil(ip[3].x) : qFloor(ip[3].x);
-    p[3].y = ip[3].y > 0.0f ? qCeil(ip[3].y) : qFloor(ip[3].y);
+    const PointI p[4] = {
+//#       define TILE(x) ((x) + ((x) > 0.0f ? 0.5f : -0.5f))
+#       define TILE(x) ((x) > 0.0f ? qCeil(x) : qFloor(x))
+        PointI(TILE(ip[0].x), TILE(ip[0].y)),
+        PointI(TILE(ip[1].x), TILE(ip[1].y)),
+        PointI(TILE(ip[2].x), TILE(ip[2].y)),
+        PointI(TILE(ip[3].x), TILE(ip[3].y)),
+#       undef TILE
+    };
 
     // Get center tile index
     PointI pC;
@@ -205,17 +217,7 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
             tileId.y = point.y + pC.y;
 
             _visibleTiles.insert(tileId);
-        });
-    
-    // Compute in-tile offset
-    auto zoomTileMask = ((1u << _activeConfig.zoomBase) - 1) << (31 - _activeConfig.zoomBase);
-    auto tileXo31 = _activeConfig.target31.x & zoomTileMask;
-    auto tileYo31 = _activeConfig.target31.y & zoomTileMask;
-    auto div = 1u << (31 - _activeConfig.zoomBase);
-    if(div > 1)
-        div -= 1;
-    _normalizedTargetInTileOffset.x = static_cast<double>(_activeConfig.target31.x - tileXo31) / div;
-    _normalizedTargetInTileOffset.y = static_cast<double>(_activeConfig.target31.y - tileYo31) / div;
+        }, 1000);
 }
 
 void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeSkyplaneSize()

@@ -85,7 +85,7 @@ namespace OsmAnd {
         OSMAND_CORE_API AreaI OSMAND_CORE_CALL areaRightShift(const AreaI& input, uint32_t shift);
         OSMAND_CORE_API AreaI OSMAND_CORE_CALL areaLeftShift(const AreaI& input, uint32_t shift);
         OSMAND_CORE_API uint32_t OSMAND_CORE_CALL getNextPowerOfTwo(const uint32_t& value);
-        OSMAND_CORE_API void OSMAND_CORE_CALL scanlineFillPolygon(const unsigned int& verticesCount, const PointI* vertices, std::function<void (const PointI&)> fillPoint, unsigned int subpixelResolution = 1);
+        OSMAND_CORE_API void OSMAND_CORE_CALL scanlineFillPolygon(const unsigned int& verticesCount, const PointI* vertices, std::function<void (const PointI&)> fillPoint, unsigned int heightSubdivision = 0);
         
         template <typename T>
         T sumWithSaturation(const T& a, const T& b)

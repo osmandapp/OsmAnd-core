@@ -555,7 +555,7 @@ OSMAND_CORE_API uint32_t OSMAND_CORE_CALL OsmAnd::Utilities::getNextPowerOfTwo( 
     return n;
 }
 
-OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( const unsigned int& verticesCount, const PointI* vertices, std::function<void (const PointI&)> fillPoint, unsigned int subpixelResolution/* = 1*/ )
+OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( const unsigned int& verticesCount, const PointI* vertices, std::function<void (const PointI&)> fillPoint, unsigned int heightSubdivision/* = 0*/ )
 {
     // Find min-max of Y
     int yMin, yMax;
@@ -638,6 +638,9 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
     // Loop in [yMin .. yMax]
     QVector<Edge*> aet;
     aet.reserve(edges.size());
+    auto heightSubOffset = 0.0f;
+    if(heightSubdivision > 0)
+        heightSubOffset = 1.0f / heightSubdivision;
     for(auto y = yMin; y <= yMax;)
     {
         // Find active edges
@@ -679,26 +682,46 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
         });
         
         // Find next Y
-        for(; y <= yNext; y++)
+        for(auto step = 0u; y <= yNext; y++, step++)
         {
             const unsigned int pairsCount = aet.size() / 2;
 
-            auto itEdgeR = aet.begin();
-            auto itEdgeL = itEdgeR + 1;
+            auto itEdgeL = aet.begin();
+            auto itEdgeR = itEdgeL + 1;
 
-            for(auto pairIdx = 0u; pairIdx < pairsCount; pairIdx++, itEdgeR = ++itEdgeL, ++itEdgeL)
+            for(auto pairIdx = 0u; pairIdx < pairsCount; pairIdx++, itEdgeL = ++itEdgeR, ++itEdgeR)
             {
-                auto rEdge = *itEdgeR;
                 auto lEdge = *itEdgeL;
+                auto rEdge = *itEdgeR;
 
                 // Fill from l to r
                 auto lXf = lEdge->v0->x + (y - lEdge->v0->y) * lEdge->slope;
                 auto rXf = rEdge->v0->x + (y - rEdge->v0->y) * rEdge->slope;
-                auto lX = lXf > 0.0f ? qCeil(lXf) : qFloor(lXf);
-                auto rX = rXf > 0.0f ? qCeil(rXf) : qFloor(rXf);
-                auto xMin = qMin(lX, rX);
-                auto xMax = qMax(lX, rX);
+                auto xMinF = qMin(lXf, rXf);
+                auto xMaxF = qMax(lXf, rXf);
+                //LogPrintf(LogSeverityLevel::Debug, "\txMaxF = %f\n", xMaxF);
+                if(step > 0 && heightSubdivision > 0)
+                {
+                    auto subStep = heightSubOffset;
+                    for(auto subStepIdx = 1u; subStepIdx < heightSubdivision; subStepIdx++, subStep += heightSubOffset)
+                    {
+                        auto sublXf = lEdge->v0->x + (y - lEdge->v0->y - subStep) * lEdge->slope;
+                        auto subrXf = rEdge->v0->x + (y - rEdge->v0->y - subStep) * rEdge->slope;
 
+                        auto subxMinF = qMin(sublXf, subrXf);
+                        auto subxMaxF = qMax(sublXf, subrXf);
+
+                        //LogPrintf(LogSeverityLevel::Debug, "\tsubxMaxF = %f\n", subxMaxF);
+                        if(subxMaxF > xMaxF)
+                            xMaxF = subxMaxF;
+                        if(subxMinF < xMinF)
+                            xMinF = subxMinF;
+                    }
+                }
+                auto xMin = qFloor(xMinF);
+                auto xMax = qCeil(xMaxF);
+                
+                LogPrintf(LogSeverityLevel::Debug, "line %d from %d(%f) to %d(%f)\n", y, xMin, xMinF, xMax, xMaxF);
                 for(auto x = xMin; x <= xMax; x++)
                     fillPoint(PointI(x, y));
             }
