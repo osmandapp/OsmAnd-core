@@ -355,8 +355,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_MapStage()
 
     // Set target tile
     PointI targetTile;
-    targetTile.x = _activeConfig.target31.x >> (31 - _activeConfig.zoomBase);
-    targetTile.y = _activeConfig.target31.y >> (31 - _activeConfig.zoomBase);
+    //targetTile.x = _activeConfig.target31.x >> (31 - _activeConfig.zoomBase);
+    //targetTile.y = _activeConfig.target31.y >> (31 - _activeConfig.zoomBase);
     glUniform2i(_mapStage.vs.param.targetTile, targetTile.x, targetTile.y);
     GL_CHECK_RESULT;
 

@@ -94,17 +94,14 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeProjectionAndViewMatrices()
 void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
 {
     // Compute in-tile offset
-    auto zoomTileMask = ((1u << _activeConfig.zoomBase) - 1) << (31 - _activeConfig.zoomBase);
-    auto tileXo31 = _activeConfig.target31.x & zoomTileMask;
-    auto tileYo31 = _activeConfig.target31.y & zoomTileMask;
+    auto tileXn31 = (_activeConfig.target31.x >> (31 - _activeConfig.zoomBase)) << (31 - _activeConfig.zoomBase);
+    auto tileYn31 = (_activeConfig.target31.y >> (31 - _activeConfig.zoomBase)) << (31 - _activeConfig.zoomBase);
     auto div = 1u << (31 - _activeConfig.zoomBase);
     if(div > 1)
         div -= 1;
-    _targetOffsetInTileN.x = static_cast<double>(_activeConfig.target31.x - tileXo31) / div;
-    _targetOffsetInTileN.y = static_cast<double>(_activeConfig.target31.y - tileYo31) / div;
-    //NOTE: _targetOffsetInTileN is sometimes 1!
-    //LogPrintf(LogSeverityLevel::Debug, "offset = %f %f\n", _targetOffsetInTileN.x, _targetOffsetInTileN.y);
-
+    _targetOffsetInTileN.x = 0;//static_cast<double>(_activeConfig.target31.x - tileXn31) / div;
+    _targetOffsetInTileN.y = 0;//static_cast<double>(_activeConfig.target31.y - tileYn31) / div;
+    
     // 4 points of frustum near clipping box in camera coordinate space
     const glm::vec4 nTL_c(-_projectionPlaneHalfWidth, +_projectionPlaneHalfHeight, -_zNear, 1.0f);
     const glm::vec4 nTR_c(+_projectionPlaneHalfWidth, +_projectionPlaneHalfHeight, -_zNear, 1.0f);
@@ -112,7 +109,7 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
     const glm::vec4 nBR_c(+_projectionPlaneHalfWidth, -_projectionPlaneHalfHeight, -_zNear, 1.0f);
 
     // 4 points of frustum far clipping box in camera coordinate space
-    const auto zFarK = _zFar / _zNear;// probably _zSkyplane is better
+    const auto zFarK = _zSkyplane / _zNear;
     const glm::vec4 fTL_c(zFarK * nTL_c.x, zFarK * nTL_c.y, zFarK * nTL_c.z, 1.0f);
     const glm::vec4 fTR_c(zFarK * nTR_c.x, zFarK * nTR_c.y, zFarK * nTR_c.z, 1.0f);
     const glm::vec4 fBL_c(zFarK * nBL_c.x, zFarK * nBL_c.y, zFarK * nBL_c.z, 1.0f);
@@ -184,6 +181,23 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
     
     assert(intersectionPointsCounter == 4);
 
+    //////////////////////////////////////////////////////////////////////////
+    
+    glMatrixMode(GL_PROJECTION);
+    glLoadMatrixf(glm::value_ptr(_mProjection));
+    glMatrixMode(GL_MODELVIEW);
+    glLoadMatrixf(glm::value_ptr(_mView));
+    glLineWidth(5.0f);
+    glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
+    glBegin(GL_LINE_LOOP);
+        glVertex3f(intersectionPoints[0].x, 0.5f, intersectionPoints[0].y);
+        glVertex3f(intersectionPoints[1].x, 0.5f, intersectionPoints[1].y);
+        glVertex3f(intersectionPoints[2].x, 0.5f, intersectionPoints[2].y);
+        glVertex3f(intersectionPoints[3].x, 0.5f, intersectionPoints[3].y);
+    glEnd();
+    
+    //////////////////////////////////////////////////////////////////////////
+
     // Normalize intersection points to tiles
     intersectionPoints[0] /= static_cast<float>(TileSide3D);
     intersectionPoints[1] /= static_cast<float>(TileSide3D);
@@ -192,14 +206,11 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
 
     // "Round"-up tile indices
     const auto& ip = intersectionPoints;
-    const PointI p[4] = {
-//#       define TILE(x) ((x) + ((x) > 0.0f ? 0.5f : -0.5f))
-#       define TILE(x) ((x) > 0.0f ? qCeil(x) : qFloor(x))
-        PointI(TILE(ip[0].x), TILE(ip[0].y)),
-        PointI(TILE(ip[1].x), TILE(ip[1].y)),
-        PointI(TILE(ip[2].x), TILE(ip[2].y)),
-        PointI(TILE(ip[3].x), TILE(ip[3].y)),
-#       undef TILE
+    const PointF p[4] = {
+        PointF(ip[0].x, ip[0].y),
+        PointF(ip[1].x, ip[1].y),
+        PointF(ip[2].x, ip[2].y),
+        PointF(ip[3].x, ip[3].y),
     };
 
     // Get center tile index
@@ -213,11 +224,11 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
         [this, pC](const PointI& point)
         {
             TileId tileId;
-            tileId.x = point.x + pC.x;
-            tileId.y = point.y + pC.y;
-
+            tileId.x = point.x;// + pC.x;
+            tileId.y = point.y;// + pC.y;
+            
             _visibleTiles.insert(tileId);
-        }, 1000);
+        }, 2);
 }
 
 void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeSkyplaneSize()

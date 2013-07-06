@@ -629,7 +629,7 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
         edge->startRow = qFloor(edge->v0->y);
         edge->endRow = qFloor(edge->v1->y);
         edge->slope = (edge->v1->x - edge->v0->x) / (edge->v1->y - edge->v0->y);
-        edge->xOrigin = edge->v0->x - (edge->v0->x - qFloor(edge->v0->x)) * edge->slope;
+        edge->xOrigin = edge->v0->x - edge->slope * (edge->v0->y - qFloor(edge->v0->y));
         //edge->slope = (edge->v1->x - edge->v0->x) / (edge->endRow - edge->startRow);
         edge->nextRow = qFloor(edge->v1->y) + 1;
         for(auto vertexIdx = 0u; vertexIdx < verticesCount; vertexIdx++)
@@ -718,10 +718,10 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
                 auto xMaxF = qMax(lXf, rXf);
                 LogPrintf(LogSeverityLevel::Debug, "\txMaxF = %f\n", xMaxF);
                 LogPrintf(LogSeverityLevel::Debug, "\txMinF = %f\n", xMinF);
-                if(step > 0 && heightSubdivision > 0)
+                if(heightSubdivision > 0)
                 {
-                    auto subStep = heightSubOffset;
-                    for(auto subStepIdx = 1u; subStepIdx < heightSubdivision; subStepIdx++, subStep += heightSubOffset)
+                    auto subStep = 0.0f;
+                    for(auto subStepIdx = 0u; subStepIdx <= heightSubdivision; subStepIdx++, subStep += heightSubOffset)
                     {
                         auto sublXf = lEdge->xOrigin + (rowIdx - lEdge->startRow + subStep) * lEdge->slope;
                         auto subrXf = rEdge->xOrigin + (rowIdx - rEdge->startRow + subStep) * rEdge->slope;
@@ -729,7 +729,10 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
                         auto subxMinF = qMin(sublXf, subrXf);
                         auto subxMaxF = qMax(sublXf, subrXf);
 
-                        LogPrintf(LogSeverityLevel::Debug, "\tsub = %f\n", subStep);
+                        LogPrintf(LogSeverityLevel::Debug, "\trsub = %d + %f\n", rowIdx - rEdge->startRow, subStep);
+                        LogPrintf(LogSeverityLevel::Debug, "\tlsub = %d + %f\n", rowIdx - lEdge->startRow, subStep);
+                        LogPrintf(LogSeverityLevel::Debug, "\t\tsubrXf = %f\n", subrXf);
+                        LogPrintf(LogSeverityLevel::Debug, "\t\tsublXf = %f\n", sublXf);
                         LogPrintf(LogSeverityLevel::Debug, "\t\tsubxMaxF = %f\n", subxMaxF);
                         LogPrintf(LogSeverityLevel::Debug, "\t\tsubxMinF = %f\n", subxMinF);
                         if(subxMaxF > xMaxF)
@@ -744,7 +747,7 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
                 LogPrintf(LogSeverityLevel::Debug, "line %d(s%d) from %d(%f) to %d(%f)\n", rowIdx, step, xMin, xMinF, xMax, xMaxF);
                 for(auto x = xMin; x <= xMax; x++)
                 {
-                    if(rowIdx != 1)
+                    if(rowIdx != 1/* && rowIdx != 0*/)
                         continue;
                     fillPoint(PointI(x, rowIdx));
                 }
