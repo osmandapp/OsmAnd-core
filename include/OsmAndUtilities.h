@@ -28,6 +28,7 @@
 #include <memory>
 #include <functional>
 
+#include <QtCore/qmath.h>
 #include <QString>
 #include <QStringList>
 #include <QList>
@@ -85,7 +86,16 @@ namespace OsmAnd {
         OSMAND_CORE_API AreaI OSMAND_CORE_CALL areaRightShift(const AreaI& input, uint32_t shift);
         OSMAND_CORE_API AreaI OSMAND_CORE_CALL areaLeftShift(const AreaI& input, uint32_t shift);
         OSMAND_CORE_API uint32_t OSMAND_CORE_CALL getNextPowerOfTwo(const uint32_t& value);
-        OSMAND_CORE_API void OSMAND_CORE_CALL scanlineFillPolygon(const unsigned int& verticesCount, const PointI* vertices, std::function<void (const PointI&)> fillPoint, unsigned int heightSubdivision = 0);
+        OSMAND_CORE_API void OSMAND_CORE_CALL scanlineFillPolygon(const unsigned int& verticesCount, const PointF* vertices, std::function<void (const PointI&)> fillPoint, unsigned int heightSubdivision = 0);
+
+        inline int qAbsCeil(qreal v)
+        {
+            return v > 0 ? qCeil(v) : qFloor(v);
+        }
+        inline int qAbsFloor(qreal v)
+        {
+            return v > 0 ? qFloor(v) : qCeil(v);
+        }
         
         template <typename T>
         T sumWithSaturation(const T& a, const T& b)
