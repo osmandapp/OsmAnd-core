@@ -602,7 +602,7 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
             edge->slope = 0;
             edge->nextRow = qFloor(edge->v0->y) + 1;
             edges.push_back(edge);
-            LogPrintf(LogSeverityLevel::Debug, "Edge %p y(%d %d)(%f %f), next row = %d\n", edge, edge->startRow, edge->endRow, edge->v0->y, edge->v1->y, edge->nextRow);
+            //LogPrintf(LogSeverityLevel::Debug, "Edge %p y(%d %d)(%f %f), next row = %d\n", edge, edge->startRow, edge->endRow, edge->v0->y, edge->v1->y, edge->nextRow);
 
             continue;
         }
@@ -630,7 +630,6 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
         edge->endRow = qFloor(edge->v1->y);
         edge->slope = (edge->v1->x - edge->v0->x) / (edge->v1->y - edge->v0->y);
         edge->xOrigin = edge->v0->x - edge->slope * (edge->v0->y - qFloor(edge->v0->y));
-        //edge->slope = (edge->v1->x - edge->v0->x) / (edge->endRow - edge->startRow);
         edge->nextRow = qFloor(edge->v1->y) + 1;
         for(auto vertexIdx = 0u; vertexIdx < verticesCount; vertexIdx++)
         {
@@ -639,7 +638,7 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
             if(v.y > edge->v0->y && qFloor(v.y) < edge->nextRow)
                 edge->nextRow = qFloor(v.y);
         }
-        LogPrintf(LogSeverityLevel::Debug, "Edge %p y(%d %d)(%f %f), next row = %d\n", edge, edge->startRow, edge->endRow, edge->v0->y, edge->v1->y, edge->nextRow);
+        //LogPrintf(LogSeverityLevel::Debug, "Edge %p y(%d %d)(%f %f), next row = %d\n", edge, edge->startRow, edge->endRow, edge->v0->y, edge->v1->y, edge->nextRow);
         edges.push_back(edge);
     }
 
@@ -657,7 +656,7 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
         heightSubOffset = 1.0f / heightSubdivision;
     for(auto rowIdx = rowMin; rowIdx <= rowMax;)
     {
-        LogPrintf(LogSeverityLevel::Debug, "------------------ %d -----------------\n", rowIdx);
+        //LogPrintf(LogSeverityLevel::Debug, "------------------ %d -----------------\n", rowIdx);
 
         // Find active edges
         int nextRow = rowMax;
@@ -677,12 +676,12 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
                 // Fill horizontal edge
                 const auto xMin = qFloor(qMin(edge->v0->x, edge->v1->x));
                 const auto xMax = qFloor(qMax(edge->v0->x, edge->v1->x));
-                /*for(auto x = xMin; x <= xMax; x++)
-                    fillPoint(PointI(x, rowIdx));*/
+                for(auto x = xMin; x <= xMax; x++)
+                    fillPoint(PointI(x, rowIdx));
                 continue;
             }
 
-            LogPrintf(LogSeverityLevel::Debug, "line %d. Adding edge %p y(%f %f)\n", rowIdx, edge, edge->v0->y, edge->v1->y);
+            //LogPrintf(LogSeverityLevel::Debug, "line %d. Adding edge %p y(%f %f)\n", rowIdx, edge, edge->v0->y, edge->v1->y);
             aet.push_back(edge);
             continue;
         }
@@ -716,8 +715,8 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
                 auto rXf = rEdge->xOrigin + (rowIdx - rEdge->startRow + 0.5f) * rEdge->slope;
                 auto xMinF = qMin(lXf, rXf);
                 auto xMaxF = qMax(lXf, rXf);
-                LogPrintf(LogSeverityLevel::Debug, "\txMaxF = %f\n", xMaxF);
-                LogPrintf(LogSeverityLevel::Debug, "\txMinF = %f\n", xMinF);
+                //LogPrintf(LogSeverityLevel::Debug, "\txMaxF = %f\n", xMaxF);
+                //LogPrintf(LogSeverityLevel::Debug, "\txMinF = %f\n", xMinF);
                 if(heightSubdivision > 0)
                 {
                     auto subStep = 0.0f;
@@ -729,12 +728,12 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
                         auto subxMinF = qMin(sublXf, subrXf);
                         auto subxMaxF = qMax(sublXf, subrXf);
 
-                        LogPrintf(LogSeverityLevel::Debug, "\trsub = %d + %f\n", rowIdx - rEdge->startRow, subStep);
+                        /*LogPrintf(LogSeverityLevel::Debug, "\trsub = %d + %f\n", rowIdx - rEdge->startRow, subStep);
                         LogPrintf(LogSeverityLevel::Debug, "\tlsub = %d + %f\n", rowIdx - lEdge->startRow, subStep);
                         LogPrintf(LogSeverityLevel::Debug, "\t\tsubrXf = %f\n", subrXf);
                         LogPrintf(LogSeverityLevel::Debug, "\t\tsublXf = %f\n", sublXf);
                         LogPrintf(LogSeverityLevel::Debug, "\t\tsubxMaxF = %f\n", subxMaxF);
-                        LogPrintf(LogSeverityLevel::Debug, "\t\tsubxMinF = %f\n", subxMinF);
+                        LogPrintf(LogSeverityLevel::Debug, "\t\tsubxMinF = %f\n", subxMinF);*/
                         if(subxMaxF > xMaxF)
                             xMaxF = subxMaxF;
                         if(subxMinF < xMinF)
@@ -744,16 +743,15 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
                 auto xMin = qFloor(xMinF);
                 auto xMax = qFloor(xMaxF);
                 
-                LogPrintf(LogSeverityLevel::Debug, "line %d(s%d) from %d(%f) to %d(%f)\n", rowIdx, step, xMin, xMinF, xMax, xMaxF);
+                //LogPrintf(LogSeverityLevel::Debug, "line %d(s%d) from %d(%f) to %d(%f)\n", rowIdx, step, xMin, xMinF, xMax, xMaxF);
                 for(auto x = xMin; x <= xMax; x++)
                 {
-                    if(rowIdx != 1/* && rowIdx != 0*/)
-                        continue;
+                    //if(rowIdx != 1/* && rowIdx != 0*/)
+                    //    continue;
                     fillPoint(PointI(x, rowIdx));
                 }
             }
         }
-        //rowIdx = nextRow;
 
         // Deactivate those edges that have end at yNext
         for(auto itEdge = aet.begin(); itEdge != aet.end();)
@@ -762,7 +760,7 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
 
             if(edge->endRow <= nextRow)
             {
-                LogPrintf(LogSeverityLevel::Debug, "line %d. Removing edge %p y(%f %f)\n", rowIdx, edge, edge->v0->y, edge->v1->y);
+                //LogPrintf(LogSeverityLevel::Debug, "line %d. Removing edge %p y(%f %f)\n", rowIdx, edge, edge->v0->y, edge->v1->y);
                 itEdge = aet.erase(itEdge);
             }
             else

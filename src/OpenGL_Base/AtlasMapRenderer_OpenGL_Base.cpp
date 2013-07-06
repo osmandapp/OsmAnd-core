@@ -182,7 +182,7 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
     assert(intersectionPointsCounter == 4);
 
     //////////////////////////////////////////////////////////////////////////
-    
+    /*
     glMatrixMode(GL_PROJECTION);
     glLoadMatrixf(glm::value_ptr(_mProjection));
     glMatrixMode(GL_MODELVIEW);
@@ -190,12 +190,12 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
     glLineWidth(5.0f);
     glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
     glBegin(GL_LINE_LOOP);
-        glVertex3f(intersectionPoints[0].x, 0.5f, intersectionPoints[0].y);
-        glVertex3f(intersectionPoints[1].x, 0.5f, intersectionPoints[1].y);
-        glVertex3f(intersectionPoints[2].x, 0.5f, intersectionPoints[2].y);
-        glVertex3f(intersectionPoints[3].x, 0.5f, intersectionPoints[3].y);
+    glVertex3f(intersectionPoints[0].x, 0.5f, intersectionPoints[0].y);
+    glVertex3f(intersectionPoints[1].x, 0.5f, intersectionPoints[1].y);
+    glVertex3f(intersectionPoints[2].x, 0.5f, intersectionPoints[2].y);
+    glVertex3f(intersectionPoints[3].x, 0.5f, intersectionPoints[3].y);
     glEnd();
-    
+    */
     //////////////////////////////////////////////////////////////////////////
 
     // Normalize intersection points to tiles
