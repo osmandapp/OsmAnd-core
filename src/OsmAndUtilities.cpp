@@ -576,10 +576,8 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
     {
         const PointF* v0;
         int startRow;
-        int startCol;
         const PointF* v1;
         int endRow;
-        int endCol;
         float xOrigin;
         float slope;
         int nextRow;
@@ -600,8 +598,6 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
             edge->v1 = v1;
             edge->startRow = qFloor(edge->v0->y);
             edge->endRow = qFloor(edge->v1->y);
-            edge->startCol = qFloor(edge->v0->x);
-            edge->endCol = qFloor(edge->v1->x);
             edge->xOrigin = edge->v0->x;
             edge->slope = 0;
             edge->nextRow = qFloor(edge->v0->y) + 1;
@@ -632,8 +628,6 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
         edge->v1 = pUpper;
         edge->startRow = qFloor(edge->v0->y);
         edge->endRow = qFloor(edge->v1->y);
-        edge->startCol = qFloor(edge->v0->x);
-        edge->endCol = qFloor(edge->v1->x);
         edge->slope = (edge->v1->x - edge->v0->x) / (edge->v1->y - edge->v0->y);
         edge->xOrigin = edge->v0->x - edge->slope * (edge->v0->y - qFloor(edge->v0->y));
         edge->nextRow = qFloor(edge->v1->y) + 1;
@@ -679,8 +673,8 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
                 // Fill horizontal edge
                 const auto xMin = qFloor(qMin(edge->v0->x, edge->v1->x));
                 const auto xMax = qFloor(qMax(edge->v0->x, edge->v1->x));
-                for(auto x = xMin; x <= xMax; x++)
-                    fillPoint(PointI(x, rowIdx));
+                /*for(auto x = xMin; x <= xMax; x++)
+                    fillPoint(PointI(x, rowIdx));*/
                 continue;
             }
 
@@ -701,7 +695,7 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
         });
         
         // Find next row
-        for(auto step = 0u; rowIdx < nextRow; rowIdx++, step++)
+        for(; rowIdx < nextRow; rowIdx++)
         {
             const unsigned int pairsCount = aet.size() / 2;
 
@@ -721,13 +715,9 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
                 auto xMin = qFloor(xMinF);
                 auto xMax = qFloor(xMaxF);
                 
-                //LogPrintf(LogSeverityLevel::Debug, "line %d(s%d) from %d(%f) to %d(%f)\n", rowIdx, step, xMin, xMinF, xMax, xMaxF);
-                for(auto x = xMin; x <= xMax; x++)
-                {
-                    //if(rowIdx != 1/* && rowIdx != 0*/)
-                    //    continue;
-                    fillPoint(PointI(x, rowIdx));
-                }
+                LogPrintf(LogSeverityLevel::Debug, "line %d from %d(%f) to %d(%f)\n", rowIdx, xMin, xMinF, xMax, xMaxF);
+                /*for(auto x = xMin; x <= xMax; x++)
+                    fillPoint(PointI(x, rowIdx));*/
             }
         }
 
@@ -738,6 +728,35 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
 
             if(edge->endRow <= nextRow)
             {
+                // When we're done processing the edge, fill it Y-by-X
+                auto startCol = qFloor(edge->v0->x);
+                auto endCol = qFloor(edge->v1->x);
+                auto revSlope = 1.0f / edge->slope;
+                auto yOrigin = edge->v0->y - revSlope * (edge->v0->x - qFloor(edge->v0->x));
+                auto xMax = qMax(startCol, endCol);
+                auto xMin = qMin(startCol, endCol);
+                for(auto colIdx = xMin; colIdx <= xMax; colIdx++)
+                {
+                    auto yf = yOrigin + (colIdx - startCol + 0.5f) * revSlope;
+                    auto y = qFloor(yf);
+
+                    LogPrintf(LogSeverityLevel::Debug, "col %d(s%d) added Y = %d (%f)\n", colIdx, colIdx - startCol, y, yf);
+                    fillPoint(PointI(colIdx, y));
+                }
+
+                //////////////////////////////////////////////////////////////////////////
+                auto yMax = qMax(edge->startRow, edge->endRow);
+                auto yMin = qMin(edge->startRow, edge->endRow);
+                for(auto rowIdx_ = yMin; rowIdx_ <= yMax; rowIdx_++)
+                {
+                    auto xf = edge->xOrigin + (rowIdx_ - edge->startRow + 0.5f) * edge->slope;
+                    auto x = qFloor(xf);
+
+                    LogPrintf(LogSeverityLevel::Debug, "row %d(s%d) added Y = %d (%f)\n", rowIdx_, rowIdx_ - edge->startRow, x, xf);
+                    fillPoint(PointI(x, rowIdx_));
+                }
+                //////////////////////////////////////////////////////////////////////////
+
                 //LogPrintf(LogSeverityLevel::Debug, "line %d. Removing edge %p y(%f %f)\n", rowIdx, edge, edge->v0->y, edge->v1->y);
                 itEdge = aet.erase(itEdge);
             }
