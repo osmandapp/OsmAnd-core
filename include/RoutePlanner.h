@@ -60,6 +60,11 @@
 
 namespace OsmAnd {
 
+    struct RouteCalculationResult {
+        QList< std::shared_ptr<RouteSegment> >  list;
+        QString warnMessage;
+    };
+
     class OSMAND_CORE_API RoutePlanner
     {
 
@@ -75,6 +80,7 @@ namespace OsmAnd {
         static void loadRoads(RoutePlannerContext* context, uint32_t x31, uint32_t y31, uint32_t zoomAround, QList< std::shared_ptr<Model::Road> >& roads);
         static void loadRoadsFromTile(RoutePlannerContext* context, uint64_t tileId, QList< std::shared_ptr<Model::Road> >& roads);
         static uint64_t getRoutingTileId(RoutePlannerContext* context, uint32_t x31, uint32_t y31, bool dontLoad);
+        static uint32_t getCurrentEstimatedSize(RoutePlannerContext* context);
         static void cacheRoad(RoutePlannerContext* context, const std::shared_ptr<Model::Road>& road);
         static void loadTileHeader(RoutePlannerContext* context, uint32_t x31, uint32_t y31, QList< std::shared_ptr<RoutePlannerContext::RoutingSubsectionContext> >& subsectionsContexts);
         static void loadSubregionContext(RoutePlannerContext::RoutingSubsectionContext* context);
@@ -161,7 +167,7 @@ namespace OsmAnd {
         static std::shared_ptr<RoutePlannerContext::RouteCalculationSegment> loadRouteCalculationSegment(
             OsmAnd::RoutePlannerContext* context,
             uint32_t x31, uint32_t y31);
-        static void printDebugInformation(std::shared_ptr<RouteStatistics> st,
+        static void printDebugInformation(OsmAnd::RoutePlannerContext::CalculationContext* ctx,
             int directSegmentSize, int reverseSegmentSize,
             std::shared_ptr<RoutePlannerContext::RouteCalculationSegment>);
         static double h(OsmAnd::RoutePlannerContext::CalculationContext* context,
@@ -204,12 +210,11 @@ namespace OsmAnd {
             double* sqDistanceToClosestPoint = nullptr,
             uint32_t* rx31 = nullptr, uint32_t* ry31 = nullptr);
 
-        static bool calculateRoute(
+        static RouteCalculationResult calculateRoute(
             OsmAnd::RoutePlannerContext* context,
             const QList< std::pair<double, double> >& points,
             bool leftSideNavigation,
-            IQueryController* controller = nullptr,
-            QList< std::shared_ptr<RouteSegment> >* outResult = nullptr);
+            IQueryController* controller = nullptr);
 
         friend class OsmAnd::RoutePlannerContext;
         friend class OsmAnd::RoutePlannerAnalyzer;
