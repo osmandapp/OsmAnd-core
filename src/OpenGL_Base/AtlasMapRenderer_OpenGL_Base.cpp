@@ -228,7 +228,7 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
             tileId.y = point.y;// + pC.y;
             
             _visibleTiles.insert(tileId);
-        }, 2);
+        });
 }
 
 void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeSkyplaneSize()

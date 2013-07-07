@@ -555,7 +555,7 @@ OSMAND_CORE_API uint32_t OSMAND_CORE_CALL OsmAnd::Utilities::getNextPowerOfTwo( 
     return n;
 }
 
-OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( const unsigned int& verticesCount, const PointF* vertices, std::function<void (const PointI&)> fillPoint, unsigned int heightSubdivision/* = 0*/ )
+OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( const unsigned int& verticesCount, const PointF* vertices, std::function<void (const PointI&)> fillPoint )
 {
     // Find min-max of Y
     float yMinF, yMaxF;
@@ -576,8 +576,10 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
     {
         const PointF* v0;
         int startRow;
+        int startCol;
         const PointF* v1;
         int endRow;
+        int endCol;
         float xOrigin;
         float slope;
         int nextRow;
@@ -598,6 +600,8 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
             edge->v1 = v1;
             edge->startRow = qFloor(edge->v0->y);
             edge->endRow = qFloor(edge->v1->y);
+            edge->startCol = qFloor(edge->v0->x);
+            edge->endCol = qFloor(edge->v1->x);
             edge->xOrigin = edge->v0->x;
             edge->slope = 0;
             edge->nextRow = qFloor(edge->v0->y) + 1;
@@ -628,6 +632,8 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
         edge->v1 = pUpper;
         edge->startRow = qFloor(edge->v0->y);
         edge->endRow = qFloor(edge->v1->y);
+        edge->startCol = qFloor(edge->v0->x);
+        edge->endCol = qFloor(edge->v1->x);
         edge->slope = (edge->v1->x - edge->v0->x) / (edge->v1->y - edge->v0->y);
         edge->xOrigin = edge->v0->x - edge->slope * (edge->v0->y - qFloor(edge->v0->y));
         edge->nextRow = qFloor(edge->v1->y) + 1;
@@ -651,9 +657,6 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
     // Loop in [yMin .. yMax]
     QVector<Edge*> aet;
     aet.reserve(edges.size());
-    auto heightSubOffset = 0.0f;
-    if(heightSubdivision > 0)
-        heightSubOffset = 1.0f / heightSubdivision;
     for(auto rowIdx = rowMin; rowIdx <= rowMax;)
     {
         //LogPrintf(LogSeverityLevel::Debug, "------------------ %d -----------------\n", rowIdx);
@@ -715,31 +718,6 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
                 auto rXf = rEdge->xOrigin + (rowIdx - rEdge->startRow + 0.5f) * rEdge->slope;
                 auto xMinF = qMin(lXf, rXf);
                 auto xMaxF = qMax(lXf, rXf);
-                //LogPrintf(LogSeverityLevel::Debug, "\txMaxF = %f\n", xMaxF);
-                //LogPrintf(LogSeverityLevel::Debug, "\txMinF = %f\n", xMinF);
-                if(heightSubdivision > 0)
-                {
-                    auto subStep = 0.0f;
-                    for(auto subStepIdx = 0u; subStepIdx <= heightSubdivision; subStepIdx++, subStep += heightSubOffset)
-                    {
-                        auto sublXf = lEdge->xOrigin + (rowIdx - lEdge->startRow + subStep) * lEdge->slope;
-                        auto subrXf = rEdge->xOrigin + (rowIdx - rEdge->startRow + subStep) * rEdge->slope;
-
-                        auto subxMinF = qMin(sublXf, subrXf);
-                        auto subxMaxF = qMax(sublXf, subrXf);
-
-                        /*LogPrintf(LogSeverityLevel::Debug, "\trsub = %d + %f\n", rowIdx - rEdge->startRow, subStep);
-                        LogPrintf(LogSeverityLevel::Debug, "\tlsub = %d + %f\n", rowIdx - lEdge->startRow, subStep);
-                        LogPrintf(LogSeverityLevel::Debug, "\t\tsubrXf = %f\n", subrXf);
-                        LogPrintf(LogSeverityLevel::Debug, "\t\tsublXf = %f\n", sublXf);
-                        LogPrintf(LogSeverityLevel::Debug, "\t\tsubxMaxF = %f\n", subxMaxF);
-                        LogPrintf(LogSeverityLevel::Debug, "\t\tsubxMinF = %f\n", subxMinF);*/
-                        if(subxMaxF > xMaxF)
-                            xMaxF = subxMaxF;
-                        if(subxMinF < xMinF)
-                            xMinF = subxMinF;
-                    }
-                }
                 auto xMin = qFloor(xMinF);
                 auto xMax = qFloor(xMaxF);
                 
