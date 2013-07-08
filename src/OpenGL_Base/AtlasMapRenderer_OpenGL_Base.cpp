@@ -150,44 +150,45 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
     auto intersectionPointsCounter = 0u;
     glm::vec3 intersectionPoint;
     glm::vec2 intersectionPoints[4];
-    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, glm::vec3(nBL_g.x, nBL_g.y, nBL_g.z), glm::vec3(fBL_g.x, fBL_g.y, fBL_g.z), intersectionPoint))
+
+    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, nBL_g.xyz(), fBL_g.xyz(), intersectionPoint))
     {
-        intersectionPoints[intersectionPointsCounter] = glm::vec2(intersectionPoint.x, intersectionPoint.z);
+        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
         intersectionPointsCounter++;
     }
-    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, glm::vec3(nBR_g.x, nBR_g.y, nBR_g.z), glm::vec3(fBR_g.x, fBR_g.y, fBR_g.z), intersectionPoint))
+    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, nBR_g.xyz(), fBR_g.xyz(), intersectionPoint))
     {
-        intersectionPoints[intersectionPointsCounter] = glm::vec2(intersectionPoint.x, intersectionPoint.z);
+        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
         intersectionPointsCounter++;
     }
-    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, glm::vec3(nTR_g.x, nTR_g.y, nTR_g.z), glm::vec3(fTR_g.x, fTR_g.y, fTR_g.z), intersectionPoint))
+    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, nTR_g.xyz(), fTR_g.xyz(), intersectionPoint))
     {
-        intersectionPoints[intersectionPointsCounter] = glm::vec2(intersectionPoint.x, intersectionPoint.z);
+        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
         intersectionPointsCounter++;
     }
-    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, glm::vec3(nTL_g.x, nTL_g.y, nTL_g.z), glm::vec3(fTL_g.x, fTL_g.y, fTL_g.z), intersectionPoint))
+    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, nTL_g.xyz(), fTL_g.xyz(), intersectionPoint))
     {
-        intersectionPoints[intersectionPointsCounter] = glm::vec2(intersectionPoint.x, intersectionPoint.z);
+        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
         intersectionPointsCounter++;
     }
-    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, glm::vec3(fTR_g.x, fTR_g.y, fTR_g.z), glm::vec3(fBR_g.x, fBR_g.y, fBR_g.z), intersectionPoint))
+    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, fTR_g.xyz(), fBR_g.xyz(), intersectionPoint))
     {
-        intersectionPoints[intersectionPointsCounter] = glm::vec2(intersectionPoint.x, intersectionPoint.z);
+        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
         intersectionPointsCounter++;
     }
-    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, glm::vec3(fTL_g.x, fTL_g.y, fTL_g.z), glm::vec3(fBL_g.x, fBL_g.y, fBL_g.z), intersectionPoint))
+    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, fTL_g.xyz(), fBL_g.xyz(), intersectionPoint))
     {
-        intersectionPoints[intersectionPointsCounter] = glm::vec2(intersectionPoint.x, intersectionPoint.z);
+        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
         intersectionPointsCounter++;
     }
-    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, glm::vec3(nTR_g.x, nTR_g.y, nTR_g.z), glm::vec3(nBR_g.x, nBR_g.y, nBR_g.z), intersectionPoint))
+    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, nTR_g.xyz(), nBR_g.xyz(), intersectionPoint))
     {
-        intersectionPoints[intersectionPointsCounter] = glm::vec2(intersectionPoint.x, intersectionPoint.z);
+        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
         intersectionPointsCounter++;
     }
-    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, glm::vec3(nTL_g.x, nTL_g.y, nTL_g.z), glm::vec3(nBL_g.x, nBL_g.y, nBL_g.z), intersectionPoint))
+    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, nTL_g.xyz(), nBL_g.xyz(), intersectionPoint))
     {
-        intersectionPoints[intersectionPointsCounter] = glm::vec2(intersectionPoint.x, intersectionPoint.z);
+        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
         intersectionPointsCounter++;
     }
     

@@ -28,6 +28,9 @@ endif()
 if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "windows")
 	file(GLOB_RECURSE sources_opengl_base "src/OpenGL_Base/*.c*")
 	file(GLOB_RECURSE headers_opengl_base "src/OpenGL_Base/*.h*")
+	set(target_specific_public_definitions ${target_specific_public_definitions}
+		-DGLM_SWIZZLE
+	)
 	set(target_specific_public_includes ${target_specific_public_includes}
 		"${OSMAND_ROOT}/core/externals/glm/upstream.patched"
 	)
