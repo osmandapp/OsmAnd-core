@@ -62,7 +62,7 @@ namespace OsmAnd {
                     // Common data
                     GLint mProjectionView;
                     GLint mView;
-                    GLint centerOffset;
+                    GLint targetInTilePosN;
                     GLint targetTile;
 
                     // Per-tile data

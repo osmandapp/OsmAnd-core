@@ -57,12 +57,12 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
         // Output data to next shader stages
         "out vec2 v2f_texCoordsPerLayer[%RasterTileLayersCount%];                                                           ""\n"
         "out float v2f_distanceFromCamera;                                                                                  ""\n"
-        "out vec2 v2f_positionRelativeToTarget;                                                                            ""\n"
+        "out vec2 v2f_positionRelativeToTarget;                                                                             ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
         "uniform mat4 param_vs_mProjectionView;                                                                             ""\n"
         "uniform mat4 param_vs_mView;                                                                                       ""\n"
-        "uniform vec2 param_vs_centerOffset;                                                                                ""\n"
+        "uniform vec2 param_vs_targetInTilePosN;                                                                            ""\n"
         "uniform ivec2 param_vs_targetTile;                                                                                 ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-tile data
@@ -106,9 +106,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
         "    vec4 v = vec4(in_vs_vertexPosition.x, 0.0, in_vs_vertexPosition.y, 1.0);                                       ""\n"
         "                                                                                                                   ""\n"
         //   Shift vertex to it's proper position
-        "    float xOffset = float(param_vs_tile.x - param_vs_targetTile.x) - param_vs_centerOffset.x;                      ""\n"
+        "    float xOffset = float(param_vs_tile.x - param_vs_targetTile.x) - param_vs_targetInTilePosN.x;                  ""\n"
         "    v.x += xOffset * %TileSize3D%.0;                                                                               ""\n"
-        "    float yOffset = float(param_vs_tile.y - param_vs_targetTile.y) - param_vs_centerOffset.y;                      ""\n"
+        "    float yOffset = float(param_vs_tile.y - param_vs_targetTile.y) - param_vs_targetInTilePosN.y;                  ""\n"
         "    v.z += yOffset * %TileSize3D%.0;                                                                               ""\n"
         "                                                                                                                   ""\n"
         //   Process each tile layer texture coordinates (except elevation)
@@ -269,7 +269,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
     findVariableLocation(_mapStage.program, _mapStage.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", In);
     findVariableLocation(_mapStage.program, _mapStage.vs.param.mProjectionView, "param_vs_mProjectionView", Uniform);
     findVariableLocation(_mapStage.program, _mapStage.vs.param.mView, "param_vs_mView", Uniform);
-    findVariableLocation(_mapStage.program, _mapStage.vs.param.centerOffset, "param_vs_centerOffset", Uniform);
+    findVariableLocation(_mapStage.program, _mapStage.vs.param.targetInTilePosN, "param_vs_targetInTilePosN", Uniform);
     findVariableLocation(_mapStage.program, _mapStage.vs.param.targetTile, "param_vs_targetTile", Uniform);
     findVariableLocation(_mapStage.program, _mapStage.vs.param.tile, "param_vs_tile", Uniform);
     findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_sampler, "param_vs_elevationData_sampler", Uniform);
@@ -350,14 +350,11 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_MapStage()
     GL_CHECK_RESULT;
 
     // Set center offset
-    glUniform2f(_mapStage.vs.param.centerOffset, _targetOffsetInTileN.x, _targetOffsetInTileN.y);
+    glUniform2f(_mapStage.vs.param.targetInTilePosN, _targetInTilePosN.x, _targetInTilePosN.y);
     GL_CHECK_RESULT;
 
     // Set target tile
-    PointI targetTile;
-    //targetTile.x = _activeConfig.target31.x >> (31 - _activeConfig.zoomBase);
-    //targetTile.y = _activeConfig.target31.y >> (31 - _activeConfig.zoomBase);
-    glUniform2i(_mapStage.vs.param.targetTile, targetTile.x, targetTile.y);
+    glUniform2i(_mapStage.vs.param.targetTile, _targetTile.x, _targetTile.y);
     GL_CHECK_RESULT;
 
     // Set distance to camera from target
@@ -772,7 +769,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_SkyStage()
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
-        "    const float fogHeight = 1.0 * param_fs_scaleToRetainProjectedSize;                                                                                   ""\n"
+        "    const float fogHeight = 1.0 * param_fs_scaleToRetainProjectedSize;                                             ""\n"
         "    const float fogStartHeight = fogHeight * (1.0 - param_fs_fogOriginFactor);                                     ""\n"
         "    const float fragmentHeight = 1.0 - v2f_horizonOffsetN;                                                         ""\n"
         //   Fog linear is factor in range [0.0 ... 1.0]
@@ -821,14 +818,14 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_SkyStage()
     GL_CHECK_RESULT;
 
     // Set projection*view*model matrix:
-    const auto mTranslate = glm::translate(0.0f, 0.0f, -_activeConfig.fogDistance * _scaleToRetainProjectedSize);
-    const auto mAntiAzimuth = glm::rotate(-_activeConfig.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
-    const auto mProjectionViewModel = _mProjection * _mView * (mAntiAzimuth * mTranslate);
+    const auto mFogTranslate = glm::translate(0.0f, 0.0f, -_activeConfig.fogDistance);
+    const auto mModel = _mAzimuthInv * mFogTranslate;
+    const auto mProjectionViewModel = _mProjection * _mView * mModel;
     glUniformMatrix4fv(_skyStage.vs.param.mProjectionViewModel, 1, GL_FALSE, glm::value_ptr(mProjectionViewModel));
     GL_CHECK_RESULT;
 
     // Set halfsize
-    glUniform2f(_skyStage.vs.param.halfSize, _skyplaneHalfSize[0] * 1.1f, _skyplaneHalfSize[1] * 1.1f);
+    glUniform2f(_skyStage.vs.param.halfSize, _skyplaneHalfSize.x, _skyplaneHalfSize.y);
     GL_CHECK_RESULT;
 
     // Set fog and sky parameters

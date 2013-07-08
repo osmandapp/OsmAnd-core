@@ -54,6 +54,10 @@ namespace OsmAnd {
         glm::mat4 _mDistance;
         glm::mat4 _mElevation;
         glm::mat4 _mAzimuth;
+        glm::mat4 _mViewInv;
+        glm::mat4 _mDistanceInv;
+        glm::mat4 _mElevationInv;
+        glm::mat4 _mAzimuthInv;
         const float _zNear;
         float _zSkyplane;
         float _zFar;
@@ -65,7 +69,7 @@ namespace OsmAnd {
         float _baseDistanceFromCameraToTarget;
         float _farDistanceFromCameraToTarget;
         float _distanceFromCameraToTarget;
-        float _skyplaneHalfSize[2];
+        PointF _skyplaneHalfSize;
         float _tileScaleFactor;
         float _scaleToRetainProjectedSize;
         

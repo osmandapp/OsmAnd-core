@@ -89,18 +89,35 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeProjectionAndViewMatrices()
     _mElevation = glm::rotate(_activeConfig.elevationAngle, glm::vec3(1.0f, 0.0f, 0.0f));
     _mAzimuth = glm::rotate(_activeConfig.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
     _mView = _mDistance * _mElevation * _mAzimuth;
+
+    // Get inverse camera
+    _mDistanceInv = glm::translate(0.0f, 0.0f, _distanceFromCameraToTarget);
+    _mElevationInv = glm::rotate(-_activeConfig.elevationAngle, glm::vec3(1.0f, 0.0f, 0.0f));
+    _mAzimuthInv = glm::rotate(-_activeConfig.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
+    _mViewInv = _mAzimuthInv * _mElevationInv * _mDistanceInv;
 }
 
 void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
 {
+    // Get target tile
+    _targetTile.x = _activeConfig.target31.x >> (31 - _activeConfig.zoomBase);
+    _targetTile.y = _activeConfig.target31.y >> (31 - _activeConfig.zoomBase);
+
     // Compute in-tile offset
-    auto tileXn31 = (_activeConfig.target31.x >> (31 - _activeConfig.zoomBase)) << (31 - _activeConfig.zoomBase);
-    auto tileYn31 = (_activeConfig.target31.y >> (31 - _activeConfig.zoomBase)) << (31 - _activeConfig.zoomBase);
-    auto div = 1u << (31 - _activeConfig.zoomBase);
-    if(div > 1)
-        div -= 1;
-    _targetOffsetInTileN.x = 0;//static_cast<double>(_activeConfig.target31.x - tileXn31) / div;
-    _targetOffsetInTileN.y = 0;//static_cast<double>(_activeConfig.target31.y - tileYn31) / div;
+    if(_activeConfig.zoomBase == 31)
+    {
+        _targetInTilePosN.x = 0;
+        _targetInTilePosN.y = 0;
+    }
+    else
+    {
+        PointI tileOrigin31;
+        tileOrigin31.x = _targetTile.x << (31 - _activeConfig.zoomBase);
+        tileOrigin31.y = _targetTile.y << (31 - _activeConfig.zoomBase);
+        auto tileWidth31 = (1u << (31 - _activeConfig.zoomBase)) - 1;
+        _targetInTilePosN.x = static_cast<double>(_activeConfig.target31.x - tileOrigin31.x) / tileWidth31;
+        _targetInTilePosN.y = static_cast<double>(_activeConfig.target31.y - tileOrigin31.y) / tileWidth31;
+    }
     
     // 4 points of frustum near clipping box in camera coordinate space
     const glm::vec4 nTL_c(-_projectionPlaneHalfWidth, +_projectionPlaneHalfHeight, -_zNear, 1.0f);
@@ -109,28 +126,23 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
     const glm::vec4 nBR_c(+_projectionPlaneHalfWidth, -_projectionPlaneHalfHeight, -_zNear, 1.0f);
 
     // 4 points of frustum far clipping box in camera coordinate space
-    const auto zFarK = _zSkyplane / _zNear;
+    const auto zFar = _zSkyplane + 0.5f * TileSide3D;
+    const auto zFarK = zFar / _zNear;
     const glm::vec4 fTL_c(zFarK * nTL_c.x, zFarK * nTL_c.y, zFarK * nTL_c.z, 1.0f);
     const glm::vec4 fTR_c(zFarK * nTR_c.x, zFarK * nTR_c.y, zFarK * nTR_c.z, 1.0f);
     const glm::vec4 fBL_c(zFarK * nBL_c.x, zFarK * nBL_c.y, zFarK * nBL_c.z, 1.0f);
     const glm::vec4 fBR_c(zFarK * nBR_c.x, zFarK * nBR_c.y, zFarK * nBR_c.z, 1.0f);
 
-    // Get matrix that transforms from camera to global space
-    const auto mAntiDistance = glm::translate(0.0f, 0.0f, _distanceFromCameraToTarget);
-    const auto mAntiElevation = glm::rotate(-_activeConfig.elevationAngle, glm::vec3(1.0f, 0.0f, 0.0f));
-    const auto mAntiAzimuth = glm::rotate(-_activeConfig.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
-    const auto mCameraToGlobal = mAntiAzimuth * mAntiElevation * mAntiDistance;
-
     // Transform 8 frustum vertices + camera center to global space
-    const auto eye_g = mCameraToGlobal * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-    const auto fTL_g = mCameraToGlobal * fTL_c;
-    const auto fTR_g = mCameraToGlobal * fTR_c;
-    const auto fBL_g = mCameraToGlobal * fBL_c;
-    const auto fBR_g = mCameraToGlobal * fBR_c;
-    const auto nTL_g = mCameraToGlobal * nTL_c;
-    const auto nTR_g = mCameraToGlobal * nTR_c;
-    const auto nBL_g = mCameraToGlobal * nBL_c;
-    const auto nBR_g = mCameraToGlobal * nBR_c;
+    const auto eye_g = _mViewInv * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    const auto fTL_g = _mViewInv * fTL_c;
+    const auto fTR_g = _mViewInv * fTR_c;
+    const auto fBL_g = _mViewInv * fBL_c;
+    const auto fBR_g = _mViewInv * fBR_c;
+    const auto nTL_g = _mViewInv * nTL_c;
+    const auto nTR_g = _mViewInv * nTR_c;
+    const auto nBL_g = _mViewInv * nBL_c;
+    const auto nBR_g = _mViewInv * nBR_c;
 
     // Get (up to) 4 points of frustum edges & plane intersection
     const glm::vec3 planeN(0.0f, 1.0f, 0.0f);
@@ -181,23 +193,6 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
     
     assert(intersectionPointsCounter == 4);
 
-    //////////////////////////////////////////////////////////////////////////
-    /*
-    glMatrixMode(GL_PROJECTION);
-    glLoadMatrixf(glm::value_ptr(_mProjection));
-    glMatrixMode(GL_MODELVIEW);
-    glLoadMatrixf(glm::value_ptr(_mView));
-    glLineWidth(5.0f);
-    glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
-    glBegin(GL_LINE_LOOP);
-    glVertex3f(intersectionPoints[0].x, 0.5f, intersectionPoints[0].y);
-    glVertex3f(intersectionPoints[1].x, 0.5f, intersectionPoints[1].y);
-    glVertex3f(intersectionPoints[2].x, 0.5f, intersectionPoints[2].y);
-    glVertex3f(intersectionPoints[3].x, 0.5f, intersectionPoints[3].y);
-    glEnd();
-    */
-    //////////////////////////////////////////////////////////////////////////
-
     // Normalize intersection points to tiles
     intersectionPoints[0] /= static_cast<float>(TileSide3D);
     intersectionPoints[1] /= static_cast<float>(TileSide3D);
@@ -205,40 +200,61 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
     intersectionPoints[3] /= static_cast<float>(TileSide3D);
 
     // "Round"-up tile indices
+    // In-tile normalized position is added, since all tiles are going to be
+    // translated in opposite direction during rendering
     const auto& ip = intersectionPoints;
-    const PointF p[4] = {
-        PointF(ip[0].x, ip[0].y),
-        PointF(ip[1].x, ip[1].y),
-        PointF(ip[2].x, ip[2].y),
-        PointF(ip[3].x, ip[3].y),
+    const PointF p[4] =
+    {
+        PointF(ip[0].x + _targetInTilePosN.x, ip[0].y + _targetInTilePosN.y),
+        PointF(ip[1].x + _targetInTilePosN.x, ip[1].y + _targetInTilePosN.y),
+        PointF(ip[2].x + _targetInTilePosN.x, ip[2].y + _targetInTilePosN.y),
+        PointF(ip[3].x + _targetInTilePosN.x, ip[3].y + _targetInTilePosN.y),
     };
 
-    // Get center tile index
-    PointI pC;
-    pC.x = _activeConfig.target31.x >> (31 - _activeConfig.zoomBase);
-    pC.y = _activeConfig.target31.y >> (31 - _activeConfig.zoomBase);
+    //NOTE: so far scanline does not work exactly as expected, so temporary switch to old implementation
+    {
+        _visibleTiles.clear();
+        PointI p0(qFloor(p[0].x), qFloor(p[0].y));
+        PointI p1(qFloor(p[1].x), qFloor(p[1].y));
+        PointI p2(qFloor(p[2].x), qFloor(p[2].y));
+        PointI p3(qFloor(p[3].x), qFloor(p[3].y));
 
+        const auto xMin = qMin(qMin(p0.x, p1.x), qMin(p2.x, p3.x));
+        const auto xMax = qMax(qMax(p0.x, p1.x), qMax(p2.x, p3.x));
+        const auto yMin = qMin(qMin(p0.y, p1.y), qMin(p2.y, p3.y));
+        const auto yMax = qMax(qMax(p0.y, p1.y), qMax(p2.y, p3.y));
+        for(auto x = xMin; x <= xMax; x++)
+        {
+            for(auto y = yMin; y <= yMax; y++)
+            {
+                TileId tileId;
+                tileId.x = x + _targetTile.x;
+                tileId.y = y + _targetTile.y;
+
+                _visibleTiles.insert(tileId);
+            }
+        }
+    }
+    /*
     // Find visible tiles using scanline fill
     _visibleTiles.clear();
     Utilities::scanlineFillPolygon(4, &p[0],
         [this, pC](const PointI& point)
         {
             TileId tileId;
-            tileId.x = point.x;// + pC.x;
-            tileId.y = point.y;// + pC.y;
+            tileId.x = point.x;// + _targetTile.x;
+            tileId.y = point.y;// + _targetTile.y;
             
             _visibleTiles.insert(tileId);
         });
+    */
 }
 
 void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeSkyplaneSize()
 {
-    const glm::vec4 nTR_c(+_projectionPlaneHalfWidth, +_projectionPlaneHalfHeight, -_zNear, 1.0f);
-    const float zSkyplaneK = _zSkyplane / _zNear;
-    const glm::vec4 sTR_c = zSkyplaneK * nTR_c;
-
-    _skyplaneHalfSize[0] = sTR_c.x;
-    _skyplaneHalfSize[1] = sTR_c.y;
+    float zSkyplaneK = _zSkyplane / _zNear;
+    _skyplaneHalfSize.x = zSkyplaneK * _projectionPlaneHalfWidth;
+    _skyplaneHalfSize.y = zSkyplaneK * _projectionPlaneHalfHeight;
 }
 
 void OsmAnd::AtlasMapRenderer_BaseOpenGL::initializeRendering()

@@ -114,7 +114,8 @@ namespace OsmAnd {
         Configuration _activeConfig;
 
         QSet<TileId> _visibleTiles;
-        PointF _targetOffsetInTileN;
+        PointI _targetTile;
+        PointF _targetInTilePosN;
         
         struct OSMAND_CORE_API PendingToCacheTile
         {
