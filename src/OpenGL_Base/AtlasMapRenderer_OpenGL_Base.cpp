@@ -43,13 +43,6 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::updateConfiguration()
 {
     BaseAtlasMapRenderer::updateConfiguration();
 
-    computeProjectionAndViewMatrices();
-    computeVisibleTileset();
-    computeSkyplaneSize();
-}
-
-void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeProjectionAndViewMatrices()
-{
     // Prepare values for projection matrix
     _aspectRatio = static_cast<float>(_activeConfig.viewport.width());
     auto viewportHeight = _activeConfig.viewport.height();
@@ -58,7 +51,7 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeProjectionAndViewMatrices()
     _fovInRadians = qDegreesToRadians(_activeConfig.fieldOfView);
     _projectionPlaneHalfHeight = _zNear * _fovInRadians;
     _projectionPlaneHalfWidth = _projectionPlaneHalfHeight * _aspectRatio;
-    
+
     // Setup projection with fake Z-far plane
     _mProjection = glm::frustum(-_projectionPlaneHalfWidth, _projectionPlaneHalfWidth, -_projectionPlaneHalfHeight, _projectionPlaneHalfHeight, _zNear, 1000.0f);
 
@@ -76,13 +69,15 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeProjectionAndViewMatrices()
         _distanceFromCameraToTarget = _baseDistanceFromCameraToTarget - (_baseDistanceFromCameraToTarget - _nearDistanceFromCameraToTarget) * (2.0f * _activeConfig.zoomFraction);
     else
         _distanceFromCameraToTarget = _baseDistanceFromCameraToTarget - (_farDistanceFromCameraToTarget - _baseDistanceFromCameraToTarget) * (2.0f * _activeConfig.zoomFraction);
+    _groundDistanceFromCameraToTarget = _distanceFromCameraToTarget * qCos(qDegreesToRadians(_activeConfig.elevationAngle));
     _tileScaleFactor = ((_activeConfig.zoomFraction >= 0.0f) ? (1.0f + _activeConfig.zoomFraction) : (1.0f + 0.5f * _activeConfig.zoomFraction));
     _scaleToRetainProjectedSize = _distanceFromCameraToTarget / _baseDistanceFromCameraToTarget;
-    
+
     // Recalculate projection with obtained value
-    _zSkyplane = _activeConfig.fogDistance + _distanceFromCameraToTarget;
+    _zSkyplane = _activeConfig.fogDistance * _scaleToRetainProjectedSize + _distanceFromCameraToTarget;
     _zFar = glm::length(glm::vec3(_projectionPlaneHalfWidth * (_zSkyplane / _zNear), _projectionPlaneHalfHeight * (_zSkyplane / _zNear), _zSkyplane));
     _mProjection = glm::frustum(-_projectionPlaneHalfWidth, _projectionPlaneHalfWidth, -_projectionPlaneHalfHeight, _projectionPlaneHalfHeight, _zNear, _zFar);
+    _mProjectionInv = glm::inverse(_mProjection);
 
     // Setup camera
     _mDistance = glm::translate(0.0f, 0.0f, -_distanceFromCameraToTarget);
@@ -95,6 +90,17 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeProjectionAndViewMatrices()
     _mElevationInv = glm::rotate(-_activeConfig.elevationAngle, glm::vec3(1.0f, 0.0f, 0.0f));
     _mAzimuthInv = glm::rotate(-_activeConfig.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
     _mViewInv = _mAzimuthInv * _mElevationInv * _mDistanceInv;
+
+    // Correct fog distance
+    _correctedFogDistance = _activeConfig.fogDistance * _scaleToRetainProjectedSize + (_distanceFromCameraToTarget - _groundDistanceFromCameraToTarget);
+
+    // Calculate skyplane size
+    float zSkyplaneK = _zSkyplane / _zNear;
+    _skyplaneHalfSize.x = zSkyplaneK * _projectionPlaneHalfWidth;
+    _skyplaneHalfSize.y = zSkyplaneK * _projectionPlaneHalfHeight;
+
+    // Compute visible tileset
+    computeVisibleTileset();
 }
 
 void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
@@ -126,7 +132,7 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
     const glm::vec4 nBR_c(+_projectionPlaneHalfWidth, -_projectionPlaneHalfHeight, -_zNear, 1.0f);
 
     // 4 points of frustum far clipping box in camera coordinate space
-    const auto zFar = _zSkyplane + 0.5f * TileSide3D;
+    const auto zFar = _zSkyplane;
     const auto zFarK = zFar / _zNear;
     const glm::vec4 fTL_c(zFarK * nTL_c.x, zFarK * nTL_c.y, zFarK * nTL_c.z, 1.0f);
     const glm::vec4 fTR_c(zFarK * nTR_c.x, zFarK * nTR_c.y, zFarK * nTR_c.z, 1.0f);
@@ -249,13 +255,6 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
             _visibleTiles.insert(tileId);
         });
     */
-}
-
-void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeSkyplaneSize()
-{
-    float zSkyplaneK = _zSkyplane / _zNear;
-    _skyplaneHalfSize.x = zSkyplaneK * _projectionPlaneHalfWidth;
-    _skyplaneHalfSize.y = zSkyplaneK * _projectionPlaneHalfHeight;
 }
 
 void OsmAnd::AtlasMapRenderer_BaseOpenGL::initializeRendering()

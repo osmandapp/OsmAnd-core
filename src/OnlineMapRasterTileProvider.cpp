@@ -33,6 +33,7 @@ OsmAnd::OnlineMapRasterTileProvider::OnlineMapRasterTileProvider(const QString& 
 
 OsmAnd::OnlineMapRasterTileProvider::~OnlineMapRasterTileProvider()
 {
+    //TODO: on destruction, cancel all downloading things, since provider will be no longer valid
 }
 
 void OsmAnd::OnlineMapRasterTileProvider::setLocalCachePath( const QDir& localCachePath )

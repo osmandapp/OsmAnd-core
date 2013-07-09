@@ -769,7 +769,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_SkyStage()
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
-        "    const float fogHeight = 1.0 * param_fs_scaleToRetainProjectedSize;                                             ""\n"
+        "    const float fogHeight = 1.0 * param_fs_scaleToRetainProjectedSize / param_fs_scaleToRetainProjectedSize;                                             ""\n"
         "    const float fogStartHeight = fogHeight * (1.0 - param_fs_fogOriginFactor);                                     ""\n"
         "    const float fragmentHeight = 1.0 - v2f_horizonOffsetN;                                                         ""\n"
         //   Fog linear is factor in range [0.0 ... 1.0]
@@ -807,6 +807,23 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_SkyStage()
 
 void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_SkyStage()
 {
+#if 0
+    {
+        const auto mFogTranslate = glm::translate(0.0f, 0.0f, -_correctedFogDistance);
+        const auto mModel = _mAzimuthInv * mFogTranslate;
+
+        glMatrixMode(GL_PROJECTION);
+        glLoadMatrixf(glm::value_ptr(_mProjection));
+        glMatrixMode(GL_MODELVIEW);
+        glLoadMatrixf(glm::value_ptr(_mView * mModel));
+        glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
+        glBegin(GL_LINES);
+            glVertex3f(-100.0f, 0.5f, 0.0f);
+            glVertex3f(+100.0f, 0.5f, 0.0f);
+        glEnd();
+    }
+#endif
+
     // Set tile patch VAO
     assert(glBindVertexArray);
     glBindVertexArray(_skyStage.vao);
@@ -818,7 +835,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_SkyStage()
     GL_CHECK_RESULT;
 
     // Set projection*view*model matrix:
-    const auto mFogTranslate = glm::translate(0.0f, 0.0f, -_activeConfig.fogDistance);
+    const auto mFogTranslate = glm::translate(0.0f, 0.0f, -_correctedFogDistance);
     const auto mModel = _mAzimuthInv * mFogTranslate;
     const auto mProjectionViewModel = _mProjection * _mView * mModel;
     glUniformMatrix4fv(_skyStage.vs.param.mProjectionViewModel, 1, GL_FALSE, glm::value_ptr(mProjectionViewModel));
