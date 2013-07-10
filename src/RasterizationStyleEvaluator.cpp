@@ -255,19 +255,19 @@ void OsmAnd::RasterizationStyleEvaluator::dump( bool input /*= true*/, bool outp
             switch (pValueDef->dataType)
             {
             case RasterizationStyle::ValueDefinition::Boolean:
-                OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s\n", value.asUInt == 1 ? "true" : "false");
+                OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s", value.asUInt == 1 ? "true" : "false");
                 break;
             case RasterizationStyle::ValueDefinition::Integer:
-                OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%d\n", value.asInt);
+                OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%d", value.asInt);
                 break;
             case RasterizationStyle::ValueDefinition::Float:
-                OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%f\n", value.asFloat);
+                OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%f", value.asFloat);
                 break;
             case RasterizationStyle::ValueDefinition::String:
-                OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s\n", style->lookupStringValue(value.asUInt).toStdString().c_str());
+                OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s", style->lookupStringValue(value.asUInt).toStdString().c_str());
                 break;
             case RasterizationStyle::ValueDefinition::Color:
-                OsmAnd::LogPrintf(LogSeverityLevel::Debug, "#%s\n", QString::number(value.asUInt, 16).toStdString().c_str());
+                OsmAnd::LogPrintf(LogSeverityLevel::Debug, "#%s", QString::number(value.asUInt, 16).toStdString().c_str());
                 break;
             }
         }

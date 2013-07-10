@@ -3,6 +3,7 @@
 #include <QtCore>
 
 #include "OsmAndUtilities.h"
+#include "ObfRoutingSection.h"
 
 OsmAnd::Model::Road::Road(const std::shared_ptr<ObfRoutingSection::Subsection>& subsection)
     : subsection(subsection)
@@ -115,6 +116,31 @@ bool OsmAnd::Model::Road::isRoundabout() const
     }
 
     return false;
+}
+
+int OsmAnd::Model::Road::getLanes() {
+    for(auto itType = types.begin(); itType != types.end(); ++itType)
+    {
+        auto rule = subsection->section->_encodingRules[*itType];
+        if(rule->_type == OsmAnd::ObfRoutingSection::EncodingRule::Lanes){
+            return rule->_parsedValue.asUnsignedInt;
+        }
+
+    }
+    return -1;
+}
+
+QString OsmAnd::Model::Road::getHighway()
+{
+    for(auto itType = types.begin(); itType != types.end(); ++itType)
+    {
+        auto rule = subsection->section->_encodingRules[*itType];
+        if(rule->_type == OsmAnd::ObfRoutingSection::EncodingRule::Highway){
+            return rule->_value;
+        }
+
+    }
+    return "";
 }
 
 bool OsmAnd::Model::Road::isLoop() const

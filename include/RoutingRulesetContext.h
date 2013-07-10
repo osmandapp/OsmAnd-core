@@ -42,6 +42,7 @@ namespace OsmAnd {
     {
     private:
         QHash<QString, QString> _contextValues;
+        std::shared_ptr<RoutingRuleset> _ruleset;
     protected:
         bool evaluate(Model::Road* road, RoutingRuleExpression::ResultType type, void* result);
         bool evaluate(const QBitArray& types, RoutingRuleExpression::ResultType type, void* result);

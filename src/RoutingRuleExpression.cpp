@@ -2,6 +2,7 @@
 #include "RoutingRuleExpression_Operators.h"
 
 #include <OsmAndCommon.h>
+#include <OsmAndLogging.h>
 #include <RoutingConfiguration.h>
 #include <RoutingRuleset.h>
 #include <RoutingProfile.h>
@@ -9,6 +10,7 @@
 OsmAnd::RoutingRuleExpression::RoutingRuleExpression( RoutingRuleset* ruleset, const QString& value, const QString& type )
     : ruleset(ruleset)
     , _type(type)
+    , parameters(_parameters)
     , type(_type)
 {
     if(value.startsWith(":"))

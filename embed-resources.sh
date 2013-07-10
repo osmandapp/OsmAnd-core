@@ -1,6 +1,10 @@
 #!/bin/bash
 
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# overwrite existing resources
+cp -f $SRCLOC/../resources/rendering_styles/default.render.xml  $SRCLOC/embeddable-resources/
+
 export LC_ALL=C
 
 bundle="$SRCLOC/src/EmbeddedResources_bundle.cpp"
@@ -15,6 +19,7 @@ echo -e "namespace OsmAnd {" >&3
 
 resourceCounter=0
 rm -f $SRCLOC/embeddable-resources/*.qz
+
 for resource in $SRCLOC/embeddable-resources/* ; do
 	echo -n "Packing '$(basename $resource)' "
 	originalSize=`stat --printf="%s" $resource`

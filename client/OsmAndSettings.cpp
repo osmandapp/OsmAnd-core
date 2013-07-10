@@ -5,7 +5,7 @@ ApplicationMode::ApplicationMode(QString name, QString id): defaultName(name), _
 ApplicationMode::ApplicationMode(const ApplicationMode& am): defaultName(am.defaultName), _id(am._id) {
 }
 
-AppMode ApplicationMode::DEFAULT(new ApplicationMode("Default", "DEFAULT"));
+AppMode ApplicationMode::DEFAULT(new ApplicationMode("Browse map", "DEFAULT"));
 AppMode ApplicationMode::PEDESTRIAN(new ApplicationMode("Pedestrian", "PEDESTRIAN"));
 AppMode ApplicationMode::CAR(new ApplicationMode("Car", "CAR"));
 AppMode ApplicationMode::BICYCLE(new ApplicationMode("Bicycle", "BICYCLE"));

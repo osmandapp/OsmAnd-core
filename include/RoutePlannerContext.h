@@ -39,11 +39,36 @@
 #include <RouteSegment.h>
 #include <RoutingProfileContext.h>
 #include <CommonTypes.h>
+#include <ctime>
+#include <chrono>
 
 
 namespace OsmAnd {
     class RoutePlanner;
     class RoutePlannerAnalyzer;
+
+    struct RouteStatistics
+    {
+
+        uint32_t forwardIterations;
+        uint32_t backwardIterations;
+        uint32_t sizeOfDQueue;
+        uint32_t sizeOfRQueue;
+        uint64_t timeToLoad;
+        uint64_t timeToCalculate;
+
+        uint32_t loadedTiles;
+        uint32_t unloadedTiles;
+        uint32_t distinctLoadedTiles;
+        uint32_t loadedPrevUnloadedTiles;
+
+        std::chrono::steady_clock::time_point timeToLoadBegin;
+        std::chrono::steady_clock::time_point timeToCalculateBegin;
+
+        RouteStatistics() {
+            memset(this, 0, sizeof(struct RouteStatistics));
+        }
+    };
 
     class OSMAND_CORE_API RoutePlannerContext
     {
@@ -178,6 +203,7 @@ namespace OsmAnd {
         int _planRoadDirection;
         float _heuristicCoefficient;
         float _partialRecalculationDistanceLimit;
+        std::shared_ptr<RouteStatistics> _routeStatistics;
 
         enum {
             DefaultRoadTilesLoadingZoomLevel = 16,
@@ -194,7 +220,6 @@ namespace OsmAnd {
         virtual ~RoutePlannerContext();
 
         const QList< std::shared_ptr<ObfReader> > sources;
-
         const std::shared_ptr<RoutingConfiguration> configuration;
         const std::unique_ptr<RoutingProfileContext> profileContext;
 

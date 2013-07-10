@@ -83,6 +83,7 @@ namespace OsmAnd {
         OSMAND_CORE_API bool OSMAND_CORE_CALL rayIntersect(const PointF& v0, const PointF& v1, const PointF& v);
         OSMAND_CORE_API bool OSMAND_CORE_CALL rayIntersectX(const PointI& v0, const PointI& v1, int32_t mY, int32_t& mX);
         OSMAND_CORE_API bool OSMAND_CORE_CALL rayIntersect(const PointI& v0, const PointI& v1, const PointI& v);
+        OSMAND_CORE_API double OSMAND_CORE_CALL degreesDiff(double a1, double a2);
         OSMAND_CORE_API AreaI OSMAND_CORE_CALL areaRightShift(const AreaI& input, uint32_t shift);
         OSMAND_CORE_API AreaI OSMAND_CORE_CALL areaLeftShift(const AreaI& input, uint32_t shift);
         OSMAND_CORE_API uint32_t OSMAND_CORE_CALL getNextPowerOfTwo(const uint32_t& value);

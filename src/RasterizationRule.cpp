@@ -88,7 +88,7 @@ void OsmAnd::RasterizationRule::dump( const QString& prefix /*= QString()*/ ) co
             break;
         }
 
-        OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s%s%s = %s\n",
+        OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s%s%s = %s",
             newPrefix.toStdString().c_str(),
             (valueDef->type == RasterizationStyle::ValueDefinition::Input) ? ">" : "<",
             valueDef->name.toStdString().c_str(),
@@ -97,33 +97,33 @@ void OsmAnd::RasterizationRule::dump( const QString& prefix /*= QString()*/ ) co
 
     if(!_ifChildren.isEmpty())
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sIf(\n",
+        OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sIf(",
             newPrefix.toStdString().c_str());
         for(auto itChild = _ifChildren.begin(); itChild != _ifChildren.end(); ++itChild)
         {
             auto child = *itChild;
 
-            OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sAND\n",
+            OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sAND",
                 newPrefix.toStdString().c_str());
             child->dump(newPrefix);
         }
-        OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s)\n",
+        OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s)",
             newPrefix.toStdString().c_str());
     }
 
     if(!_ifElseChildren.isEmpty())
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sSelector: [\n",
+        OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sSelector: [",
             newPrefix.toStdString().c_str());
         for(auto itChild = _ifElseChildren.begin(); itChild != _ifElseChildren.end(); ++itChild)
         {
             auto child = *itChild;
 
-            OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sOR\n",
+            OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sOR",
                 newPrefix.toStdString().c_str());
             child->dump(newPrefix);
         }
-        OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s]\n",
+        OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s]",
             newPrefix.toStdString().c_str());
     }
 }

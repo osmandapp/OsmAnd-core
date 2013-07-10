@@ -204,11 +204,14 @@ void OsmAnd::RoutingConfiguration::parseRoutingRuleset( QXmlStreamReader* xmlPar
     routingRule->_value1 = attribs.value("value1").toString();
     routingRule->_value2 = attribs.value("value2").toString();
     routingRule->_type = attribs.value("type").toString();
+    if(routingRule->_type == "" && rulesetType == RoutingRuleset::Type::RoadSpeed ) {
+        routingRule->_type = "speed";
+    }
 
     auto context = routingProfile->getRuleset(rulesetType);
     if(routingRule->_tagName == "select")
     {
-        context->registerSelectExpression(attribs.value("value").toString(), attribs.value("type").toString());
+        context->registerSelectExpression(attribs.value("value").toString(), routingRule->_type);
         addRulesetSubclause(routingRule.get(), context.get());
 
         for(auto itItem = ruleset.begin(); itItem != ruleset.end(); ++itItem)

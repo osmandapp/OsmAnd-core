@@ -89,6 +89,7 @@ namespace OsmAnd {
 
         RoutingRuleset* const ruleset;
         const QString& type;
+        const QList<QString>& parameters;
 
         enum ResultType
         {

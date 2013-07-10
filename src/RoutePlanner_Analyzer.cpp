@@ -3,11 +3,13 @@
 #include <queue>
 
 #include <QtCore>
+#include <QtCore/qmath.h>
 
 #include "ObfReader.h"
 #include "OsmAndCommon.h"
 #include "OsmAndLogging.h"
 #include "OsmAndUtilities.h"
+#include "TurnInfo.h"
 
 bool OsmAnd::RoutePlanner::prepareResult(
     OsmAnd::RoutePlannerContext::CalculationContext* context,
@@ -16,7 +18,7 @@ bool OsmAnd::RoutePlanner::prepareResult(
     bool leftSideNavigation)
 {
     // Prepare result
-    QList< std::shared_ptr<RouteSegment> > route;
+    QVector< std::shared_ptr<RouteSegment> > route;
     auto pFinalSegment = dynamic_cast<RoutePlannerContext::RouteCalculationFinalSegment*>(finalSegment.get());
 
     // Get results from opposite direction roads
@@ -56,29 +58,36 @@ bool OsmAnd::RoutePlanner::prepareResult(
 
     addTurnInfoToRoute(leftSideNavigation, route);
 
-#if DEBUG_ROUTING || TRACE_ROUTING
-    LogPrintf(LogSeverityLevel::Debug, "%llu segments in route\n", route.size());
-#endif
-
+    printRouteInfo(route);
+    QList< std::shared_ptr<RouteSegment> > rs;
+    rs = route.toList();
     if(outResult)
-        (*outResult) = route;
-    context->owner->_previouslyCalculatedRoute = route;
-    /*
-    if (RoutingContext.SHOW_GC_SIZE) {
-        int sz = ctx.global.size;
-        log.warn("Subregion size " + ctx.subregionTiles.size() + " " + " tiles " + ctx.indexedSubregions.size());
-        ctx.runGCUsedMemory();
-        long h1 = ctx.runGCUsedMemory();
-        ctx.unloadAllData();
-        ctx.runGCUsedMemory();
-        long h2 = ctx.runGCUsedMemory();
-        float mb = (1 << 20);
-        log.warn("Unload context :  estimated " + sz / mb + " ?= " + (h1 - h2) / mb + " actual");
-    }*/
+        (*outResult) = rs;
+    context->owner->_previouslyCalculatedRoute = rs;
     return true;
 }
 
-void OsmAnd::RoutePlanner::splitRoadsAndAttachRoadSegments( OsmAnd::RoutePlannerContext::CalculationContext* context, QList< std::shared_ptr<RouteSegment> >& route )
+void OsmAnd::RoutePlanner::printRouteInfo(QVector< std::shared_ptr<RouteSegment> >& route) {
+    float completeDist = 0;
+    float completeTime = 0;
+    for(auto itSegment = route.begin(); itSegment != route.end(); ++itSegment)
+    {
+        auto segment = *itSegment;
+        completeDist += segment->distance;
+        completeTime += segment->time;
+#ifdef DEBUG_ROUTING
+        LogPrintf(LogSeverityLevel::Debug, "Segment : %llu %u %u  time %f speed %f dist %f",
+                  segment->road->id, segment->startPointIndex,  segment->endPointIndex,
+                  segment->_time, segment->_speed, segment->_distance);
+#endif
+    }
+
+    LogPrintf(LogSeverityLevel::Debug, "%u segments in route", route.size());
+    LogPrintf(LogSeverityLevel::Debug, "Complete road time %f, complete distance %f", completeTime, completeDist);
+    LogFlush();
+}
+
+void OsmAnd::RoutePlanner::splitRoadsAndAttachRoadSegments( OsmAnd::RoutePlannerContext::CalculationContext* context, QVector< std::shared_ptr<RouteSegment> >& route )
 {
     for(auto itSegment = route.begin(); itSegment != route.end(); ++itSegment)
     {
@@ -105,7 +114,7 @@ void OsmAnd::RoutePlanner::splitRoadsAndAttachRoadSegments( OsmAnd::RoutePlanner
                 continue;
             if(nextIdx >= 0 && nextIdx < segment->attachedRoutes.size() && nextIdx != segment->endPointIndex && !segment->road->isRoundabout())
             {
-                const auto& attachedRoutes = segment->attachedRoutes[nextIdx];
+                const auto& attachedRoutes = segment->attachedRoutes[qAbs(static_cast<int64_t>(nextIdx) - segment->startPointIndex)];
 
                 auto before = segment->getBearing(nextIdx, !isIncrement);
                 auto after = segment->getBearing(nextIdx, isIncrement);
@@ -143,8 +152,8 @@ void OsmAnd::RoutePlanner::splitRoadsAndAttachRoadSegments( OsmAnd::RoutePlanner
 
 void OsmAnd::RoutePlanner::attachRouteSegments(
     OsmAnd::RoutePlannerContext::CalculationContext* context,
-    QList< std::shared_ptr<RouteSegment> >& route,
-    const QList< std::shared_ptr<RouteSegment> >::iterator& itSegment,
+    QVector< std::shared_ptr<RouteSegment> >& route,
+    const QVector< std::shared_ptr<RouteSegment> >::iterator& itSegment,
     uint32_t pointIdx, bool isIncrement)
 {
     auto segment = *itSegment;
@@ -178,32 +187,6 @@ void OsmAnd::RoutePlanner::attachRouteSegments(
                 segment->_attachedRoutes[qAbs(static_cast<int64_t>(pointIdx) - static_cast<int64_t>(segment->_startPointIndex))].push_back(attachedSegment);
         }
     }
-
-    /*TODO:
-    Iterator<RouteSegment> it;
-    if(segment->getPreAttachedRoutes(pointInd) != null) {
-        final RouteSegmentResult[] list = segment->getPreAttachedRoutes(pointInd);
-        it = new Iterator<BinaryRoutePlanner.RouteSegment>() {
-            int i = 0;
-            @Override
-                public boolean hasNext() {
-                    return i < list.length;
-            }
-
-            @Override
-                public RouteSegment next() {
-                    RouteSegmentResult r = list[i++];
-                    return new RouteSegment(r.getObject(), r.getStartPointIndex());
-            }
-
-            @Override
-                public void remove() {
-            }
-        };	
-    } else {
-        RouteSegment rt = ctx.loadRouteSegment(road.getPoint31XTile(pointInd), road.getPoint31YTile(pointInd), ctx.config.memoryLimitation);
-        it = rt == null ? null : rt.getIterator();
-    }*/
 
     // Try to attach all segments except with current id
     const auto& p31 = segment->road->points[pointIdx];
@@ -243,7 +226,7 @@ void OsmAnd::RoutePlanner::attachRouteSegments(
     }
 }
 
-void OsmAnd::RoutePlanner::calculateTimeSpeedInRoute( OsmAnd::RoutePlannerContext::CalculationContext* context, QList< std::shared_ptr<RouteSegment> >& route )
+void OsmAnd::RoutePlanner::calculateTimeSpeedInRoute( OsmAnd::RoutePlannerContext::CalculationContext* context, QVector< std::shared_ptr<RouteSegment> >& route )
 {
     for(auto itSegment = route.begin(); itSegment != route.end(); ++itSegment)
     {
@@ -280,69 +263,15 @@ void OsmAnd::RoutePlanner::calculateTimeSpeedInRoute( OsmAnd::RoutePlannerContex
         segment->_distance = distanceSum;
     }
 }
-
-void OsmAnd::RoutePlanner::addTurnInfoToRoute( bool leftSideNavigation, QList< std::shared_ptr<RouteSegment> >& route )
-{
-    /*
-    int prevSegment = -1;
-    float dist = 0;
-    int next = 1;
-    for (int i = 0; i <= result.size(); i = next) {
-        TurnType t = null;
-        next = i + 1;
-        if (i < result.size()) {
-            t = getTurnInfo(result, i, leftside);
-            // justify turn
-            if(t != null && i < result.size() - 1) {
-                boolean tl = TurnType.TL.equals(t.getValue());
-                boolean tr = TurnType.TR.equals(t.getValue());
-                if(tl || tr) {
-                    TurnType tnext = getTurnInfo(result, i + 1, leftside);
-                    if(tnext != null && result.get(i).getDistance() < 35) {
-                        if(tl && TurnType.TL.equals(tnext.getValue()) ) {
-                            next = i + 2;
-                            t = TurnType.valueOf(TurnType.TU, false);
-                        } else if(tr && TurnType.TR.equals(tnext.getValue()) ) {
-                            next = i + 2;
-                            t = TurnType.valueOf(TurnType.TU, true);
-                        }
-                    }
-                }
-            }
-            result.get(i).setTurnType(t);
-        }
-        if (t != null || i == result.size()) {
-            if (prevSegment >= 0) {
-                String turn = result.get(prevSegment).getTurnType().toString();
-                if (result.get(prevSegment).getTurnType().getLanes() != null) {
-                    turn += Arrays.toString(result.get(prevSegment).getTurnType().getLanes());
-                }
-                result.get(prevSegment).setDescription(turn + MessageFormat.format(" and go {0,number,#.##} meters", dist));
-                if(result.get(prevSegment).getTurnType().isSkipToSpeak()) {
-                    result.get(prevSegment).setDescription("-*"+result.get(prevSegment).getDescription());
-                }
-            }
-            prevSegment = i;
-            dist = 0;
-        }
-        if (i < result.size()) {
-            dist += result.get(i).getDistance();
-        }
-    }
-    */
-}
-
-bool OsmAnd::RoutePlanner::validateAllPointsConnected( const QList< std::shared_ptr<RouteSegment> >& route )
+bool OsmAnd::RoutePlanner::validateAllPointsConnected( const QVector< std::shared_ptr<RouteSegment> >& route )
 {
     assert(route.size() > 1);
 
-    auto itPrevSegment = route.begin();
-    bool res = true;
-    LogPrintf(LogSeverityLevel::Debug, "Segment : %llu %u %u \n", (*itPrevSegment)->road->id, (*itPrevSegment)->startPointIndex,  (*itPrevSegment)->endPointIndex);
-    for(auto itSegment = ++route.begin(); itSegment != route.end(); ++itSegment, ++itPrevSegment)
+    bool res = true;    
+    for(int i = 1; i < route.size(); i++)
     {
-        auto prevSegment = *itPrevSegment;
-        auto segment = *itSegment;
+        auto prevSegment = route[i-1];
+        auto segment = route[i];
 
         const auto& point1 = prevSegment->road->points[prevSegment->endPointIndex];
         const auto& point2 = segment->road->points[segment->startPointIndex];
@@ -350,7 +279,6 @@ bool OsmAnd::RoutePlanner::validateAllPointsConnected( const QList< std::shared_
             Utilities::get31LongitudeX(point1.x), Utilities::get31LatitudeY(point1.y),
             Utilities::get31LongitudeX(point2.x), Utilities::get31LatitudeY(point2.y)
         );
-        LogPrintf(LogSeverityLevel::Debug, "Segment : %llu %u %u \n ", segment->road->id, segment->startPointIndex,  segment->endPointIndex);
         if(distance > 0)
         {
             res = false;
@@ -363,7 +291,8 @@ bool OsmAnd::RoutePlanner::validateAllPointsConnected( const QList< std::shared_
     return res;
 }
 
-void OsmAnd::RoutePlanner::addRouteSegmentToRoute( QList< std::shared_ptr<RouteSegment> >& route, const std::shared_ptr<RouteSegment>& segment, bool reverse )
+void OsmAnd::RoutePlanner::addRouteSegmentToRoute( QVector< std::shared_ptr<RouteSegment> >& route, const std::shared_ptr<RouteSegment>& segment, bool reverse )
+
 {
     if(segment->startPointIndex == segment->endPointIndex)
         return;
@@ -371,7 +300,7 @@ void OsmAnd::RoutePlanner::addRouteSegmentToRoute( QList< std::shared_ptr<RouteS
     if (route.size() > 0)
     {
         auto last = route.back();
-        if (last->road->id == last->road->id)
+        if (last->road->id == segment->road->id)
         {
             if (combineTwoSegmentResult(segment, last, reverse))
                 return;
@@ -401,4 +330,254 @@ bool OsmAnd::RoutePlanner::combineTwoSegmentResult( const std::shared_ptr<RouteS
     }
 
     return false;
+}
+
+static const int MAX_SPEAK_PRIORITY = 5;
+int highwaySpeakPriority(QString highway) {
+    if(highway == "" || highway.endsWith("track") || highway.endsWith("services") || highway.endsWith("service")
+            || highway.endsWith("path")) {
+        return MAX_SPEAK_PRIORITY;
+    }
+    if (highway.endsWith("_link")  || highway.endsWith("unclassified") || highway.endsWith("road")
+            || highway.endsWith("living_street") || highway.endsWith("residential") )  {
+        return 1;
+    }
+    return 0;
+}
+
+bool isMotorway(std::shared_ptr<OsmAnd::RouteSegment> s){
+    QString h = s->road->getHighway();
+    return "motorway"==h || "motorway_link"==h  ||
+            "trunk"==h || "trunk_link"==h;
+
+}
+
+
+OsmAnd::TurnInfo attachKeepLeftInfoAndLanes(bool leftSide,
+                                            std::shared_ptr<OsmAnd::RouteSegment>  prevSegm, std::shared_ptr<OsmAnd::RouteSegment>  currentSegm, OsmAnd::TurnInfo t) {
+    // keep left/right
+    QVector<int> lanes ;
+    bool kl = false;
+    bool kr = false;
+
+    QList<std::shared_ptr<OsmAnd::RouteSegment> > attachedRoutes = currentSegm->attachedRoutes[0];
+    int ls = prevSegm->road->getLanes();
+    if(ls >= 0 && prevSegm->road->getDirection() == 0) {
+        ls = (ls + 1) / 2;
+    }
+    int left = 0;
+    int right = 0;
+    bool speak = false;
+    int speakPriority = qMax(highwaySpeakPriority(prevSegm->road->getHighway()), highwaySpeakPriority(currentSegm->road->getHighway()));
+    if (!attachedRoutes.isEmpty()) {
+        for (std::shared_ptr<OsmAnd::RouteSegment> attached : attachedRoutes) {
+            double ex = OsmAnd::Utilities::degreesDiff(attached->getBearingBegin(), currentSegm->getBearingBegin());
+            double mpi = abs(OsmAnd::Utilities::degreesDiff(prevSegm->getBearingEnd(), attached->getBearingBegin()));
+            int rsSpeakPriority = highwaySpeakPriority(attached->road->getHighway());
+            if (rsSpeakPriority != MAX_SPEAK_PRIORITY || speakPriority == MAX_SPEAK_PRIORITY) {
+                if ((ex < OsmAnd::RoutePlanner::MinTurnAngle || mpi < OsmAnd::RoutePlanner::MinTurnAngle) && ex >= 0) {
+                    kl = true;
+                    int lns = attached->road->getLanes();
+                    if(attached->road->getDirection() == 0) {
+                        lns = (lns + 1) / 2;
+                    }
+                    if (lns > 0) {
+                        right += lns;
+                    }
+                    speak = speak || rsSpeakPriority <= speakPriority;
+                } else if ((ex > -OsmAnd::RoutePlanner::MinTurnAngle || mpi < OsmAnd::RoutePlanner::MinTurnAngle) && ex <= 0) {
+                    kr = true;
+                    int lns = attached->road->getLanes();
+                    if(attached->road->getDirection() == 0) {
+                        lns = (lns + 1) / 2;
+                    }
+                    if (lns > 0) {
+                        left += lns;
+                    }
+                    speak = speak || rsSpeakPriority <= speakPriority;
+                }
+            }
+        }
+    }
+    if(kr && left == 0) {
+        left = 1;
+    } else if(kl && right == 0) {
+        right = 1;
+    }
+    int current = currentSegm->road->getLanes();
+    if(currentSegm->road->getDirection() == 0) {
+        current = (current + 1) / 2;
+    }
+    if (current <= 0) {
+        current = 1;
+    }
+//		if(ls >= 0 /*&& current + left + right >= ls*/){
+        lanes.resize(current + left + right);
+        ls = current + left + right;
+        for(int it=0; it< ls; it++) {
+            if(it < left || it >= left + current) {
+                lanes[it] = 0;
+            } else {
+                lanes[it] = 1;
+            }
+        }
+        // sometimes links are
+        if ((current <= left + right) && (left > 1 || right > 1)) {
+            speak = true;
+        }
+//		}
+
+    double devation = abs(OsmAnd::Utilities::degreesDiff(prevSegm->getBearingEnd(), currentSegm->getBearingBegin()));
+    bool makeSlightTurn = devation > 5 && (!isMotorway(prevSegm) || !isMotorway(currentSegm));
+    if (kl) {
+        t = OsmAnd::TurnInfo(devation > 5 ? OsmAnd::TurnType::TSLL : OsmAnd::TurnType::KL);
+        t.setSkipToSpeak(!speak);
+    }
+    if (kr) {
+        t = OsmAnd::TurnInfo(devation > 5 ? OsmAnd::TurnType::TSLR : OsmAnd::TurnType::KR);
+        t.setSkipToSpeak(!speak);
+    }
+    t.setLanes(lanes);
+    return t;
+}
+
+OsmAnd::TurnInfo processRoundaboutTurn(QVector<std::shared_ptr<OsmAnd::RouteSegment> >& result, int i, bool leftSide,
+                               std::shared_ptr<OsmAnd::RouteSegment> prev,std::shared_ptr<OsmAnd::RouteSegment>  rr) {
+    int exit = 1;
+    std::shared_ptr<OsmAnd::RouteSegment> last = rr;
+    for (int j = i; j < result.size(); j++) {
+        std::shared_ptr<OsmAnd::RouteSegment> rnext = result[j];
+        last = rnext;
+        if (rnext->road->isRoundabout()) {
+            bool plus = rnext->startPointIndex < rnext->endPointIndex;
+            int k = rnext->startPointIndex;
+            if (j == i) {
+                // first exit could be immediately after roundabout enter
+//					k = plus ? k + 1 : k - 1;
+            }
+            while (k != rnext->endPointIndex) {
+                int attachedRoads = rnext->attachedRoutes[qAbs(static_cast<int64_t>(k) - rnext->startPointIndex)].size();
+                if(attachedRoads > 0) {
+                    exit++;
+                }
+                k = plus ? k + 1 : k - 1;
+            }
+        } else {
+            break;
+        }
+    }
+    // combine all roundabouts
+    OsmAnd::TurnInfo t = OsmAnd::TurnInfo(leftSide? OsmAnd::RD_LEFT : OsmAnd::RD_RIGHT, exit);
+    t.setTurnAngle((float) OsmAnd::Utilities::degreesDiff(last->getBearingBegin(), prev->getBearingEnd())) ;
+    return t;
+}
+
+
+
+
+OsmAnd::TurnInfo getTurnInfo(QVector<std::shared_ptr<OsmAnd::RouteSegment> >& result, int i, bool leftSide) {
+    if (i == 0) {
+        return OsmAnd::TurnInfo::straight();
+    }
+    std::shared_ptr<OsmAnd::RouteSegment> prev = result[i - 1];
+    if(prev->road->isRoundabout()) {
+        // already analyzed!
+        return OsmAnd::TurnInfo();
+    }
+    std::shared_ptr<OsmAnd::RouteSegment> rr = result[i];
+    if (rr->road->isRoundabout()) {
+        return processRoundaboutTurn(result, i, leftSide, prev, rr);
+    }
+    OsmAnd::TurnInfo t;
+    if (prev != nullptr) {
+        bool noAttachedRoads = rr->attachedRoutes[0].size() == 0;
+        // add description about turn
+        double mpi = OsmAnd::Utilities::degreesDiff(prev->getBearingEnd(), rr->getBearingBegin());
+        if(noAttachedRoads){
+            // TODO VICTOR : look at the comment inside direction route
+//				double begin = rr.getObject().directionRoute(rr.getStartPointIndex(), rr.getStartPointIndex() <
+//						rr.getEndPointIndex(), 25);
+//				mpi = MapUtils.degreesDiff(prev.getBearingEnd(), begin);
+        }
+        if (mpi >= OsmAnd::RoutePlanner::MinTurnAngle) {
+            if (mpi < 60) {
+                t = OsmAnd::TurnInfo(OsmAnd::TurnType::TSLL);
+            } else if (mpi < 120) {
+                t = OsmAnd::TurnInfo(OsmAnd::TurnType::TL);
+            } else if (mpi < 135 || leftSide) {
+                t = OsmAnd::TurnInfo(OsmAnd::TurnType::TSHL);
+            } else {
+                t = OsmAnd::TurnInfo(OsmAnd::TurnType::TU);
+            }
+        } else if (mpi < -OsmAnd::RoutePlanner::MinTurnAngle) {
+            if (mpi > -60) {
+                t = OsmAnd::TurnInfo(OsmAnd::TurnType::TSLR);
+            } else if (mpi > -120) {
+                t = OsmAnd::TurnInfo(OsmAnd::TurnType::TR);
+            } else if (mpi > -135 || !leftSide) {
+                t = OsmAnd::TurnInfo(OsmAnd::TurnType::TSHR);
+            } else {
+                t = OsmAnd::TurnInfo(OsmAnd::TurnType::TRU);
+            }
+        } else {
+            t = attachKeepLeftInfoAndLanes(leftSide, prev, rr, t);
+        }
+        if (t.getType() != OsmAnd::UKNOWN) {
+            t.setTurnAngle((float) -mpi);
+        }
+    }
+    return t;
+}
+
+
+void OsmAnd::RoutePlanner::addTurnInfoToRoute( bool leftside, QVector< std::shared_ptr<RouteSegment> >& result ) {
+    int prevSegment = -1;
+    float dist = 0;
+    int next = 1;
+    for (int i = 0; i <= result.size(); i = next) {
+        TurnInfo t;
+        next = i + 1;
+        if (i < result.size()) {
+            t = getTurnInfo(result, i, leftside);
+            // justify turn
+            if(t.getType() != UKNOWN && i < result.size() - 1) {
+                bool tl = OsmAnd::TurnType::TL == t.getType();
+                bool tr = OsmAnd::TurnType::TR == t.getType();
+                if(tl || tr) {
+                    TurnInfo tnext = getTurnInfo(result, i + 1, leftside);
+                    if(tnext.getType() != OsmAnd::UKNOWN && result[i]->distance < 35) {
+                        if(tl && TurnType::TL == tnext.getType() ) {
+                            next = i + 2;
+                            t = TurnInfo(OsmAnd::TurnType::TU);
+                        } else if(tr && OsmAnd::TurnType::TR == tnext.getType() ) {
+                            next = i + 2;
+                            t = TurnInfo(OsmAnd::TurnType::TRU);
+                        }
+                    }
+                }
+            }
+            result[i]->_turnType = t;
+        }
+        if (t.getType() != UKNOWN || i == result.size()) {
+            if (prevSegment >= 0) {
+                QString turn = result[prevSegment]->turnInfo.toString();
+                if (result[prevSegment]->turnInfo.getLanes().size() > 0) {
+                    turn += "{";
+                    for(int li : result[prevSegment]->turnInfo.getLanes()) {
+                        turn += QString::number(li) + " ";
+                    }
+                    turn += "} ";
+                }
+                result[prevSegment]->_description =  turn + " and go " + QString::number(dist) + " meters";
+                if(result[prevSegment]->turnInfo.isSkipToSpeak()) {
+                    result[prevSegment]->_description = "-*"+result[prevSegment]->description;
+                }
+            }
+            prevSegment = i;
+            dist = 0;
+        }
+        if (i < result.size()) {
+            dist += result[i]->distance;
+        }
+    }
 }
