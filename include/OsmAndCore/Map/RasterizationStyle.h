@@ -28,7 +28,7 @@
 
 #include <QString>
 #include <QStringList>
-#include <QFile>
+#include <QFileInfo>
 #include <QXmlStreamReader>
 #include <QHash>
 #include <QMap>
@@ -115,7 +115,7 @@ namespace OsmAnd {
         QHash< QString, std::shared_ptr<RasterizationRule> > _attributes;
     protected:
         RasterizationStyle(RasterizationStyles* owner, const QString& embeddedResourceName);
-        RasterizationStyle(RasterizationStyles* owner, const QFile& externalStyleFile);
+        RasterizationStyle(RasterizationStyles* owner, const QFileInfo& externalStyleFile);
 
         QString _resourceName;
         QString _externalFileName;

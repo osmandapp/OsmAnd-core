@@ -59,7 +59,6 @@ namespace OsmAnd {
         virtual ~IMapBitmapTileProvider();
 
         virtual float getTileDensity() const = 0;
-        virtual uint32_t getTileSize() const = 0;
     };
 
 }

@@ -19,25 +19,32 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __I_MAP_ELEVATION_DATA_PROVIDER_H_
-#define __I_MAP_ELEVATION_DATA_PROVIDER_H_
+#ifndef __HEIGHTMAP_TILE_PROVIDER_H_
+#define __HEIGHTMAP_TILE_PROVIDER_H_
 
 #include <stdint.h>
 #include <memory>
 #include <functional>
+#include <array>
+
+#include <QDir>
+#include <QMutex>
+#include <QQueue>
+#include <QSet>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/IMapTileProvider.h>
+#include <OsmAndCore/Map/IMapElevationDataProvider.h>
+#include <OsmAndCore/TileDB.h>
 
 namespace OsmAnd {
 
-    class OSMAND_CORE_API IMapElevationDataProvider : public IMapTileProvider
+    class OSMAND_CORE_API HeightmapTileProvider : public IMapElevationDataProvider
     {
     public:
     private:
     protected:
-        class OSMAND_CORE_API Tile : public IMapTileProvider::Tile
+        class OSMAND_CORE_API Tile : public IMapElevationDataProvider::Tile
         {
         private:
         protected:
@@ -46,11 +53,24 @@ namespace OsmAnd {
             virtual ~Tile();
         };
 
-        IMapElevationDataProvider();
+        TileDB _db;
+
+        QMutex _processingMutex;
+        QMutex _requestsMutex;
+        std::array< QSet< TileId >, 32 > _requestedTileIds;
     public:
-        virtual ~IMapElevationDataProvider();      
+        HeightmapTileProvider(const QDir& dataPath, const QDir& cachePath);
+        virtual ~HeightmapTileProvider();
+
+        const QDir dataPath;
+        const QDir cachePath;
+
+        virtual uint32_t getTileSize() const;
+
+        virtual bool obtainTileImmediate(const TileId& tileId, uint32_t zoom, std::shared_ptr<IMapTileProvider::Tile>& tile);
+        virtual void obtainTileDeffered(const TileId& tileId, uint32_t zoom, TileReadyCallback readyCallback);
     };
 
 }
 
-#endif // __I_MAP_ELEVATION_DATA_PROVIDER_H_
+#endif // __HEIGHTMAP_TILE_PROVIDER_H_

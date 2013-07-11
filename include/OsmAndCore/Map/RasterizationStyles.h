@@ -27,7 +27,7 @@
 #include <memory>
 
 #include <QString>
-#include <QFile>
+#include <QFileInfo>
 #include <QHash>
 
 #include <OsmAndCore.h>
@@ -46,7 +46,7 @@ namespace OsmAnd {
         RasterizationStyles();
         virtual ~RasterizationStyles();
 
-        bool registerStyle(const QFile& file);
+        bool registerStyle(const QFileInfo& file);
         bool obtainStyle(const QString& name, std::shared_ptr<OsmAnd::RasterizationStyle>& outStyle);
 
     friend class OsmAnd::RasterizationStyle;

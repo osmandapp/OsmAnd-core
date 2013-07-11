@@ -419,11 +419,11 @@ OSMAND_CORE_API  int OSMAND_CORE_CALL OsmAnd::Utilities::javaDoubleCompare( doub
     return qCeil(l) - qCeil(r);
 }
 
-OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::findFiles( const QDir& origin, const QStringList& masks, QList< std::shared_ptr<QFile> >& files, bool recursively /*= true */ )
+OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::findFiles( const QDir& origin, const QStringList& masks, QList< std::shared_ptr<QFileInfo> >& files, bool recursively /*= true */ )
 {
     auto fileList = origin.entryInfoList(masks, QDir::Files);
     for(auto itFile = fileList.begin(); itFile != fileList.end(); ++itFile)
-        files.push_back(std::shared_ptr<QFile>(new QFile(itFile->absoluteFilePath())));
+        files.push_back(std::shared_ptr<QFileInfo>(new QFileInfo(*itFile)));
 
     if(recursively)
     {

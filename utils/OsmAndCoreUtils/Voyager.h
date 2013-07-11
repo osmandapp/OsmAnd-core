@@ -44,7 +44,7 @@ namespace OsmAnd
             bool verbose;
             bool generateXml;
             bool doRecalculate;
-            QList< std::shared_ptr<QFile> > obfs;
+            QList< std::shared_ptr<QFileInfo> > obfs;
             QString vehicle;
             int memoryLimit;
             double startLatitude;

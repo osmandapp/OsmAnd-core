@@ -191,7 +191,7 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
     for(auto itObf = cfg.obfs.begin(); itObf != cfg.obfs.end(); ++itObf)
     {
         auto obf = *itObf;
-        std::shared_ptr<OsmAnd::ObfReader> obfReader(new OsmAnd::ObfReader(obf));
+        std::shared_ptr<OsmAnd::ObfReader> obfReader(new OsmAnd::ObfReader(std::shared_ptr<QIODevice>(new QFile(obf->absoluteFilePath()))));
         
         mapDataCache.addSource(obfReader);
     }

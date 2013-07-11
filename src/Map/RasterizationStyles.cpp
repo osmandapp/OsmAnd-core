@@ -29,7 +29,7 @@ bool OsmAnd::RasterizationStyles::registerEmbeddedStyle( const QString& resource
     return true;
 }
 
-bool OsmAnd::RasterizationStyles::registerStyle( const QFile& file )
+bool OsmAnd::RasterizationStyles::registerStyle( const QFileInfo& file )
 {
     std::shared_ptr<RasterizationStyle> style(new RasterizationStyle(this, file));
     if(!style->parseMetadata())

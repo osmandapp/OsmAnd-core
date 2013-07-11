@@ -28,18 +28,18 @@ OsmAnd::RasterizationStyle::RasterizationStyle( RasterizationStyles* owner, cons
     registerBuiltinValueDefinitions();
 }
 
-OsmAnd::RasterizationStyle::RasterizationStyle( RasterizationStyles* owner, const QFile& externalStyleFile )
+OsmAnd::RasterizationStyle::RasterizationStyle( RasterizationStyles* owner, const QFileInfo& externalStyleFile )
     : owner(owner)
     , _firstNonBuiltinValueDefinitionIndex(0)
     , _stringsIdBase(0)
     , resourceName(_resourceName)
-    , _externalFileName(externalStyleFile.fileName())
+    , _externalFileName(externalStyleFile.absoluteFilePath())
     , externalFileName(_externalFileName)
     , title(_title)
     , name(_name)
     , parentName(_parentName)
 {
-    _name = QFileInfo(externalStyleFile.fileName()).fileName().replace(".render.xml", "");
+    _name = externalStyleFile.fileName().replace(".render.xml", "");
     registerBuiltinValueDefinitions();
 }
 
