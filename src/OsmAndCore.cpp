@@ -7,7 +7,7 @@
 #include <QMutex>
 #include <QWaitCondition>
 
-#include "OsmAndLogging.h"
+#include "OsmAndCore/Logging.h"
 #include "OsmAndCore_private.h"
 #include "QMainThreadTaskHost.h"
 #include "QMainThreadTaskEvent.h"

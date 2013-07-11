@@ -6,7 +6,7 @@
 #include "Common_.h"
 #include "common2.h"
 #include "renderRules.h"
-#include "OsmAndLogging.h"
+#include "OsmAndCore/Logging.h"
 
 
 /**

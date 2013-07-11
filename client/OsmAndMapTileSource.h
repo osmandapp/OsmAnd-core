@@ -2,7 +2,7 @@
 #define MAPTILESOURCE_H
 
 #include <OsmAndCore.h>
-#include <OsmAndUtilities.h>
+#include <OsmAndCore/Utilities.h>
 #include <QString>
 
 

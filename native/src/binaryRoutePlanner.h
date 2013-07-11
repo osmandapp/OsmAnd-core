@@ -4,7 +4,7 @@
 #include "common2.h"
 #include "binaryRead.h"
 #include <algorithm>
-#include "OsmAndLogging.h"
+#include "OsmAndCore/Logging.h"
 
 typedef UNORDERED(map)<string, float> MAP_STR_FLOAT;
 typedef UNORDERED(map)<string, string> MAP_STR_STR;

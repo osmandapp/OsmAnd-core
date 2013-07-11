@@ -12,7 +12,7 @@
 #include "binaryRead.h"
 #include "rendering.h"
 #include "binaryRoutePlanner.h"
-#include "OsmAndLogging.h"
+#include "OsmAndCore/Logging.h"
 
 JavaVM* globalJVM = NULL;
 void loadJniRenderingContext(JNIEnv* env);

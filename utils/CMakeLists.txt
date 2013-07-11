@@ -1,10 +1,8 @@
 project(OsmAndCoreUtils)
 
-file(GLOB_RECURSE includes "*.h*")
 file(GLOB_RECURSE sources "*.c*")
 file(GLOB_RECURSE headers "*.h*")
 add_library(OsmAndCoreUtils SHARED
-	${includes}
 	${sources}
 	${headers}
 )

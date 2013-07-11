@@ -3,7 +3,7 @@
 #include <SkImageDecoder.h>
 #include <SkBitmapFactory.h>
 #include <SkCanvas.h>
-#include <OsmAndLogging.h>
+#include <OsmAndCore/Logging.h>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkRequest>
 #include <QtNetwork/QNetworkReply>

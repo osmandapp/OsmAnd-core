@@ -1,7 +1,7 @@
 #ifndef _MULTIPOLYGONS_CPP
 #define _MULTIPOLYGONS_CPP
 
-#include "OsmAndLogging.h"
+#include "OsmAndCore/Logging.h"
 #include "multipolygons.h"
 
 // returns true if coastlines were added!

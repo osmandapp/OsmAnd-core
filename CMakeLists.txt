@@ -26,8 +26,8 @@ endif()
 
 # 3D rendering: OpenGL, OpenGLES, Direct3D
 if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "windows")
-	file(GLOB_RECURSE sources_opengl_base "src/OpenGL_Base/*.c*")
-	file(GLOB_RECURSE headers_opengl_base "src/OpenGL_Base/*.h*")
+	file(GLOB_RECURSE sources_opengl_base "src/Map/OpenGL_Base/*.c*")
+	file(GLOB_RECURSE headers_opengl_base "src/Map/OpenGL_Base/*.h*")
 	set(target_specific_public_definitions ${target_specific_public_definitions}
 		-DGLM_SWIZZLE
 	)
@@ -52,8 +52,8 @@ if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAK
 		${OPENGL_LIBRARIES}
 		glew_static
 	)
-	file(GLOB_RECURSE sources_opengl "src/OpenGL/*.c*")
-	file(GLOB_RECURSE headers_opengl "src/OpenGL/*.h*")
+	file(GLOB_RECURSE sources_opengl "src/Map/OpenGL/*.c*")
+	file(GLOB_RECURSE headers_opengl "src/Map/OpenGL/*.h*")
 	set(target_specific_sources ${target_specific_sources}
 		${headers_opengl}
 		${sources_opengl}
@@ -64,7 +64,7 @@ file(GLOB_RECURSE includes "include/*.h*")
 file(GLOB_RECURSE headers "src/*.h*")
 file(GLOB_RECURSE sources "src/*.c*")
 file(GLOB_RECURSE headers_client "client/*.h*")
-file(GLOB_RECURSE sources_client "client/*.c*")
+file(GLOB_RECURSE sources_client  "client/*.c*")
 add_library(OsmAndCore SHARED
 	${includes}
 	${headers}
@@ -105,6 +105,17 @@ target_compile_definitions(OsmAndCore
 )
 target_include_directories(OsmAndCore
 	PRIVATE
+		"${OSMAND_ROOT}/core/include"
+		"${OSMAND_ROOT}/core/include/OsmAndCore"
+		"${OSMAND_ROOT}/core/include/OsmAndCore/Data"
+		"${OSMAND_ROOT}/core/include/OsmAndCore/Data/Model"
+		"${OSMAND_ROOT}/core/include/OsmAndCore/Routing"
+		"${OSMAND_ROOT}/core/include/OsmAndCore/Map"
+		"${OSMAND_ROOT}/core/src"
+		"${OSMAND_ROOT}/core/src/Data"
+		"${OSMAND_ROOT}/core/src/Data/Model"
+		"${OSMAND_ROOT}/core/src/Routing"
+		"${OSMAND_ROOT}/core/src/Map"
 		"${OSMAND_ROOT}/core/native/include"
 		"${OSMAND_ROOT}/core/native/src"
 		"$ENV{JAVA_HOME}/include"

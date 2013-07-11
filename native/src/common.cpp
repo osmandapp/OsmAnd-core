@@ -4,7 +4,7 @@
 #include <SkPath.h>
 #include <SkBitmap.h>
 #include <SkImageDecoder.h>
-#include "OsmAndLogging.h"
+#include "OsmAndCore/Logging.h"
 
 #if defined(_WIN32)
 //#	include <windows.h>

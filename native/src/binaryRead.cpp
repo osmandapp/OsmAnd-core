@@ -1,4 +1,4 @@
-#include "OsmAndLogging.h"
+#include "OsmAndCore/Logging.h"
 #include "binaryRead.h"
 
 #include <fcntl.h>

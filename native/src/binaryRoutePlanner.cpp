@@ -5,7 +5,7 @@
 #include "binaryRoutePlanner.h"
 #include <functional>
 
-#include "OsmAndLogging.h"
+#include "OsmAndCore/Logging.h"
 
 static bool PRINT_TO_CONSOLE_ROUTE_INFORMATION_TO_TEST = true;
 static const int REVERSE_WAY_RESTRICTION_ONLY = 1024;
