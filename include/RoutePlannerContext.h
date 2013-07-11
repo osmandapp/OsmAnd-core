@@ -128,6 +128,7 @@ namespace OsmAnd {
         {
         private:
             uint32_t _mixedLoadsCounter;
+            uint32_t _access;
         protected:
             RoutingSubsectionContext(RoutePlannerContext* owner, const std::shared_ptr<ObfReader>& origin, const std::shared_ptr<ObfRoutingSection::Subsection>& subsection);
 
@@ -135,7 +136,7 @@ namespace OsmAnd {
 
             void markLoaded();
             void unload();
-            std::shared_ptr<RouteCalculationSegment> loadRouteCalculationSegment(uint32_t x31, uint32_t y31, QMap<uint64_t, std::shared_ptr<Model::Road> >& processed, const std::shared_ptr<RouteCalculationSegment>& original) const;
+            std::shared_ptr<RouteCalculationSegment> loadRouteCalculationSegment(uint32_t x31, uint32_t y31, QMap<uint64_t, std::shared_ptr<Model::Road> >& processed, const std::shared_ptr<RouteCalculationSegment>& original);
         public:
             virtual ~RoutingSubsectionContext();
 
@@ -145,6 +146,7 @@ namespace OsmAnd {
 
             bool isLoaded() const;
             uint32_t getLoadsCounter() const;
+            uint32_t getAccessCounter() const {return _access;}
 
             void registerRoad(const std::shared_ptr<Model::Road>& road);
             void collectRoads(QList< std::shared_ptr<Model::Road> >& output, QMap<uint64_t, std::shared_ptr<Model::Road> >* duplicatesRegistry = nullptr);
@@ -222,7 +224,7 @@ namespace OsmAnd {
         const std::unique_ptr<RoutingProfileContext> profileContext;
 
         uint32_t getCurrentlyLoadedTiles();
-
+        uint32_t getCurrentEstimatedSize();
         void unloadUnusedTiles(size_t memoryTarget);
 
         friend class OsmAnd::RoutePlanner;

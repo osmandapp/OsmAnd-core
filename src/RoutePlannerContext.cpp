@@ -66,16 +66,24 @@ int intpow(int base, int pw) {
     }
     return r;
 }
+
+
+uint32_t OsmAnd::RoutePlannerContext::getCurrentEstimatedSize() {
+    // TODO proper clculation
+    return getCurrentlyLoadedTiles()*1000;
+}
+
 int compareSections(std::shared_ptr<OsmAnd::RoutePlannerContext::RoutingSubsectionContext> o1,
                     std::shared_ptr<OsmAnd::RoutePlannerContext::RoutingSubsectionContext> o2) {
-    int v1 = (o1->access + 1) * intpow(10, o1->getLoadsCounter() -1);
-    int v2 = (o2->access + 1) * intpow(10, o1->getLoadsCounter() -1);
-    return v1 < v2 ? -1 : (v1 == v2 ? 0 : 1);
+    int v1 = (o1->getAccessCounter() + 1) * intpow(10, o1->getLoadsCounter() -1);
+    int v2 = (o2->getAccessCounter() + 1) * intpow(10, o1->getLoadsCounter() -1);
+    //return v1 < v2 ? -1 : (v1 == v2 ? 0 : 1);
+    return v1 < v2;
 }
 
 
 void OsmAnd::RoutePlannerContext::unloadUnusedTiles(size_t memoryTarget) {
-    float desirableSize = memoryLimit * 0.7f;
+    float desirableSize = memoryTarget * 0.7f;
     QList< std::shared_ptr<RoutingSubsectionContext> > list;
     int loaded = 0;
     for(std::shared_ptr<RoutingSubsectionContext>  t : this->_subsectionsContexts) {
@@ -87,22 +95,21 @@ void OsmAnd::RoutePlannerContext::unloadUnusedTiles(size_t memoryTarget) {
     if(_routeStatistics) {
         _routeStatistics->maxLoadedTiles = qMax(_routeStatistics->maxLoadedTiles , getCurrentlyLoadedTiles());
     }
+    qSort(list.begin(), list.end(), compareSections);
 
-    qSort(list, compareSections);
+    int i = 0;
+    while(getCurrentEstimatedSize() >= desirableSize && (list.size() - i) > loaded / 5 && i < list.size()) {
+        std::shared_ptr<RoutingSubsectionContext>  unload = list[i];
+        i++;
+        unload->unload();
+        if(_routeStatistics) {
+            _routeStatistics->unloadedTiles ++;
+        }
 
-            int i = 0;
-            while(getCurrentEstimatedSize() >= desirableSize && (list.size() - i) > loaded / 5 && i < list.size()) {
-                std::shared_ptr<RoutingSubsectionContext>  unload = list[i];
-                i++;
-                unload->unload();
-                unloadedTiles ++;
-                global.size -= unload.tileStatistics.size;
-                // tile could be cleaned from routing tiles and deleted from whole list
-
-            }
-            for(RoutingSubregionTile t : subregionTiles) {
-                t.access /= 3;
-            }
+    }
+    for(std::shared_ptr<OsmAnd::RoutePlannerContext::RoutingSubsectionContext> t : _subsectionsContexts) {
+        t->_access /= 3;
+    }
 }
 
 void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::registerRoad( const std::shared_ptr<Model::Road>& road )
@@ -189,12 +196,13 @@ void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::unload()
 std::shared_ptr<OsmAnd::RoutePlannerContext::RouteCalculationSegment> OsmAnd::RoutePlannerContext::RoutingSubsectionContext::loadRouteCalculationSegment(
     uint32_t x31, uint32_t y31,
     QMap<uint64_t, std::shared_ptr<Model::Road> >& processed,
-    const std::shared_ptr<RouteCalculationSegment>& original_) const
+    const std::shared_ptr<RouteCalculationSegment>& original_)
 {
     uint64_t id = (static_cast<uint64_t>(x31) << 31) | y31;
     auto itSegment = _roadSegments.find(id);
     if(itSegment == _roadSegments.end())
         return original_;
+    this->_access++;
 
     auto original = original_;
     auto segment = *itSegment;

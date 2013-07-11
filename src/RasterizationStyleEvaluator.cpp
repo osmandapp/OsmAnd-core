@@ -247,7 +247,7 @@ void OsmAnd::RasterizationStyleEvaluator::dump( bool input /*= true*/, bool outp
         auto pValueDef = itValue.key();
         const auto& value = itValue.value();
 
-        if(pValueDef->type == RasterizationStyle::ValueDefinition::Input && input || pValueDef->type == RasterizationStyle::ValueDefinition::Output && output)
+        if((pValueDef->type == RasterizationStyle::ValueDefinition::Input && input) || (pValueDef->type == RasterizationStyle::ValueDefinition::Output && output))
         {
             auto strType = pValueDef->type == RasterizationStyle::ValueDefinition::Input ? ">" : "<";
             OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s%s%s = ", prefix.toStdString().c_str(), strType, pValueDef->name.toStdString().c_str());

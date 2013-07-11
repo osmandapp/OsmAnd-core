@@ -63,6 +63,9 @@ namespace OsmAnd {
     struct RouteCalculationResult {
         QList< std::shared_ptr<RouteSegment> >  list;
         QString warnMessage;
+        RouteCalculationResult(QString warn=""){
+            warnMessage=warn;
+        }
     };
 
     class OSMAND_CORE_API RoutePlanner
@@ -87,13 +90,12 @@ namespace OsmAnd {
 
         static bool findClosestRouteSegment(OsmAnd::RoutePlannerContext* context, double latitude, double longitude, std::shared_ptr<OsmAnd::RoutePlannerContext::RouteCalculationSegment>& routeSegment);
 
-        static bool calculateRoute(
+        static OsmAnd::RouteCalculationResult calculateRoute(
             OsmAnd::RoutePlannerContext::CalculationContext* context,
             const std::shared_ptr<RoutePlannerContext::RouteCalculationSegment>& from,
             const std::shared_ptr<RoutePlannerContext::RouteCalculationSegment>& to,
             bool leftSideNavigation,
-            IQueryController* controller = nullptr,
-            QList< std::shared_ptr<RouteSegment> >* outResult = nullptr);
+            IQueryController* controller = nullptr);
         static void loadBorderPoints(OsmAnd::RoutePlannerContext::CalculationContext* context);
         static void updateDistanceForBorderPoints(OsmAnd::RoutePlannerContext::CalculationContext* context, const PointI& sPoint, bool isDistanceToStart);
         static uint64_t encodeRoutePointId(const std::shared_ptr<Model::Road>& road, uint64_t pointIndex, bool positive);
@@ -178,9 +180,8 @@ namespace OsmAnd {
             RoutePointsBitSpace = 11,
         };
 
-        static bool prepareResult(OsmAnd::RoutePlannerContext::CalculationContext* context,
+        static OsmAnd::RouteCalculationResult prepareResult(OsmAnd::RoutePlannerContext::CalculationContext* context,
             std::shared_ptr<RoutePlannerContext::RouteCalculationSegment> finalSegment,
-            QList< std::shared_ptr<RouteSegment> >* outResult,
             bool leftSideNavigation);
         static void addRouteSegmentToRoute(QVector< std::shared_ptr<RouteSegment> >& route, const std::shared_ptr<RouteSegment>& segment, bool reverse);
         static bool combineTwoSegmentResult(const std::shared_ptr<RouteSegment>& toAdd, const std::shared_ptr<RouteSegment>& previous, bool reverse);

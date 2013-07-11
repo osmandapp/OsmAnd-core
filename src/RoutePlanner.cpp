@@ -350,8 +350,16 @@ OsmAnd::RouteCalculationResult OsmAnd::RoutePlanner::calculateRoute(
     for(auto itPoint = points.begin(); itPoint != points.end(); ++itPoint)
     {
         std::shared_ptr<RoutePlannerContext::RouteCalculationSegment> segment;
-        if(!findClosestRouteSegment(context, itPoint->first, itPoint->second, segment))
-            return false;
+        if(!findClosestRouteSegment(context, itPoint->first, itPoint->second, segment)) {
+            OsmAnd::RouteCalculationResult r;
+            if(itPoint == points.begin()) {
+                return OsmAnd::RouteCalculationResult("Start point was not found");
+            } else if(itPoint == points.end()) {
+                return OsmAnd::RouteCalculationResult("End point was not found");
+            } else {
+                return OsmAnd::RouteCalculationResult("Intermediate point was not found");
+            }
+        }
         routeCalculationSegments.push_back(segment);
     }
     
@@ -435,8 +443,8 @@ void OsmAnd::RoutePlanner::printDebugInformation(OsmAnd::RoutePlannerContext::Ca
                     std::chrono::duration<double, std::milli> (std::chrono::steady_clock::now() - st->timeToCalculateBegin).count());
         LogPrintf(LogSeverityLevel::Debug, "Time to calculate %llu, time to load %llu ", st->timeToCalculate, st->timeToLoad);
         LogPrintf(LogSeverityLevel::Debug, "Forward iterations %u, backward iterations %u", st->forwardIterations, st->backwardIterations);
-        auto maxLoadedTiles = max(st->maxLoadedTiles, ctx->owner->getCurrentlyLoadedTiles());
-        LogPrintf(LogSeverityLevel::Debug, ("Current loaded tiles %d, maximum %d : " , ctx->getCurrentlyLoadedTiles(), st->maxLoadedTiles);
+        auto maxLoadedTiles = qMax(st->maxLoadedTiles, ctx->owner->getCurrentlyLoadedTiles());
+        LogPrintf(LogSeverityLevel::Debug, "Current loaded tiles %d, maximum %d : " , ctx->owner->getCurrentlyLoadedTiles(), st->maxLoadedTiles);
                 LogPrintf(LogSeverityLevel::Debug, "Loaded tiles %u (distinct %u), unloaded tiles %u, loaded more than once same tiles %u",
                           st->loadedTiles, st->distinctLoadedTiles, st->unloadedTiles, st->loadedPrevUnloadedTiles);
         LogPrintf(LogSeverityLevel::Debug, "D-Queue size %d, R-Queue size %d", directSegmentSize, reverseSegmentSize);
@@ -445,13 +453,12 @@ void OsmAnd::RoutePlanner::printDebugInformation(OsmAnd::RoutePlannerContext::Ca
     }
 }
 
-bool OsmAnd::RoutePlanner::calculateRoute(
+OsmAnd::RouteCalculationResult OsmAnd::RoutePlanner::calculateRoute(
     OsmAnd::RoutePlannerContext::CalculationContext* context,
     const std::shared_ptr<RoutePlannerContext::RouteCalculationSegment>& from,
     const std::shared_ptr<RoutePlannerContext::RouteCalculationSegment>& to_,
     bool leftSideNavigation,
-    IQueryController* controller /*= nullptr*/,
-    QList< std::shared_ptr<RouteSegment> >* outResult /*= nullptr*/)
+    IQueryController* controller /*= nullptr*/)
 {
 
     context->_startPoint = from->road->points[from->pointIndex];
@@ -559,12 +566,9 @@ bool OsmAnd::RoutePlanner::calculateRoute(
             finalSegment = segment;
             break;
         }
-        // TODO check memory consumption
-        if (ctx.memoryOverhead > ctx.config.memoryLimitation * 0.95 && RoutingContext.SHOW_GC_SIZE) {
-            printMemoryConsumption("Memory occupied before exception : ");
-        }
-        if(ctx.memoryOverhead > ctx.config.memoryLimitation * 0.95) {
-            throw new IllegalStateException("There is no enough memory " + ctx.config.memoryLimitation/(1<<20) + " Mb");
+        if(context->owner->getCurrentEstimatedSize() > context->owner->_memoryUsageLimit) {
+            return OsmAnd::RouteCalculationResult("There is no enough memory " +
+                                                  QString::number(context->owner->_memoryUsageLimit/(1<<20)) + " Mb");
         }
 
 
@@ -594,14 +598,12 @@ bool OsmAnd::RoutePlanner::calculateRoute(
         /* TODO progress
         updateCalculationProgress(ctx, graphDirectSegments, graphReverseSegments);
         */
-        if(graphReverseSegments.isEmpty()){
-                        throw new IllegalArgumentException("Route is not found to selected target point.");
-                    }
-                    if(graphDirectSegments.isEmpty()){
-                        throw new IllegalArgumentException("Route is not found from selected start point.");
-                    }
-        if(graphDirectSegments.empty() || graphReverseSegments.empty())
-            return false;
+        if(graphReverseSegments.size() == 0){
+            return OsmAnd::RouteCalculationResult("Route is not found to selected target point.");
+        }
+        if(graphDirectSegments.size() == 0){
+            return OsmAnd::RouteCalculationResult("Route is not found from selected start point.");
+        }
         if(context->owner->_routeStatistics) {
             if(reverseSearch) {
                 context->owner->_routeStatistics->backwardIterations++;
@@ -644,14 +646,14 @@ bool OsmAnd::RoutePlanner::calculateRoute(
 
         // Check if route calculation has been aborted
         if(controller && controller->isAborted())
-            return false;
+            return OsmAnd::RouteCalculationResult("Aborted");
     }
 
     if(!finalSegment)
-        return false;
+        return OsmAnd::RouteCalculationResult("Route could not be calculated");
     printDebugInformation(context, graphDirectSegments.size(), graphReverseSegments.size(), finalSegment);
 
-    return prepareResult(context, finalSegment, outResult, leftSideNavigation);
+    return prepareResult(context, finalSegment, leftSideNavigation);
 }
 
 void OsmAnd::RoutePlanner::loadBorderPoints( OsmAnd::RoutePlannerContext::CalculationContext* context )

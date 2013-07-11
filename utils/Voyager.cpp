@@ -281,7 +281,9 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
             output << xT("-->");
         output << std::endl;
     }
-    auto routeFound = OsmAnd::RoutePlanner::calculateRoute(&plannerContext, points, cfg.leftSide, nullptr, &route);
+    OsmAnd::RouteCalculationResult routeFound =
+            OsmAnd::RoutePlanner::calculateRoute(&plannerContext, points, cfg.leftSide, nullptr);
+    route = routeFound.list;
     auto routeCalculationFinish = std::chrono::steady_clock::now();
     if(cfg.verbose)
     {
@@ -304,7 +306,8 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
                 output << xT("-->");
             output << std::endl;
         }
-        routeFound = OsmAnd::RoutePlanner::calculateRoute(&plannerContext, points, cfg.leftSide, nullptr, &route);
+        routeFound = OsmAnd::RoutePlanner::calculateRoute(&plannerContext, points, cfg.leftSide, nullptr);
+        route = routeFound.list;
         auto routeRecalculationFinish = std::chrono::steady_clock::now();
         if(cfg.verbose)
         {
@@ -316,11 +319,11 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
             output << std::endl;
         }
     }
-    if(!routeFound)
+    if(routeFound.warnMessage == "")
     {
         if(cfg.generateXml)
             output << xT("<!--");
-        output << xT("FAILED TO FIND ROUTE!");
+        output << xT("FAILED TO FIND ROUTE!") << xT(routeFound.warnMessage.toStdString().c_str());
         if(cfg.generateXml)
             output << xT("-->");
         output << std::endl;
