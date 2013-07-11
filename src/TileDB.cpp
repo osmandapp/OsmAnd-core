@@ -9,10 +9,15 @@
 
 OsmAnd::TileDB::TileDB( const QDir& dataPath_, const QString& indexFilename_/* = QString()*/ )
     : _indexMutex(QMutex::Recursive)
-    , _indexDb(QSqlDatabase::addDatabase("QSQLITE"))
     , dataPath(dataPath_)
     , indexFilename(indexFilename_)
 {
+    auto indexConnectionName = QString::fromLatin1("tiledb-sqlite-index:") + dataPath_.absolutePath();
+
+    if(!QSqlDatabase::contains(indexConnectionName))
+        _indexDb = QSqlDatabase::addDatabase("QSQLITE", indexConnectionName);
+    else
+        _indexDb = QSqlDatabase::database(indexConnectionName);
 }
 
 OsmAnd::TileDB::~TileDB()
@@ -26,6 +31,7 @@ bool OsmAnd::TileDB::openIndex()
     QMutexLocker scopeLock(&_indexMutex);
 
     bool ok;
+    bool shouldRebuild = indexFilename.isEmpty() || !QFile(indexFilename).exists();
 
     _indexDb.setDatabaseName(indexFilename.isEmpty() ? ":memory:" : indexFilename);
     ok = _indexDb.open();
@@ -35,7 +41,7 @@ bool OsmAnd::TileDB::openIndex()
         return false;
     }
 
-    if(indexFilename.isEmpty())
+    if(shouldRebuild)
         rebuildIndex();
 
     return true;
@@ -101,7 +107,12 @@ bool OsmAnd::TileDB::rebuildIndex()
         const auto& file = *itFile;
         const auto dbFilename = file->absoluteFilePath();
 
-        auto db = QSqlDatabase::addDatabase("QSQLITE");
+        const auto connectionName = QString::fromLatin1("tiledb-sqlite:") + file->absoluteFilePath();
+        QSqlDatabase db;
+        if(!QSqlDatabase::contains(connectionName))
+            db = QSqlDatabase::addDatabase("QSQLITE", connectionName);
+        else
+            db = QSqlDatabase::database(connectionName);
         db.setDatabaseName(dbFilename);
         if(!db.open())
         {
@@ -134,8 +145,9 @@ bool OsmAnd::TileDB::rebuildIndex()
         }
 
         db.close();
-        _indexDb.commit();
     }
+
+    _indexDb.commit();
 
     return true;
 }
@@ -159,7 +171,7 @@ bool OsmAnd::TileDB::obtainTileData( const TileId& tileId, const uint32_t& zoom,
         query.addBindValue(tileId.x);
         query.addBindValue(tileId.y);
         query.addBindValue(zoom);
-        if(!query.next())
+        if(!query.exec() || !query.next())
             return false;
         dbFilename = query.value(0).toString();
     }
@@ -169,7 +181,12 @@ bool OsmAnd::TileDB::obtainTileData( const TileId& tileId, const uint32_t& zoom,
         //QMutexLocker scopeLock(&dbEntry->mutex);
 
         // Open database
-        auto db = QSqlDatabase::addDatabase("QSQLITE");
+        const auto connectionName = QString::fromLatin1("tiledb-sqlite:") + dbFilename;
+        QSqlDatabase db;
+        if(!QSqlDatabase::contains(connectionName))
+            db = QSqlDatabase::addDatabase("QSQLITE", connectionName);
+        else
+            db = QSqlDatabase::database(connectionName);
         db.setDatabaseName(dbFilename);
         if(!db.open())
         {
@@ -178,12 +195,13 @@ bool OsmAnd::TileDB::obtainTileData( const TileId& tileId, const uint32_t& zoom,
         }
 
         // Get tile from
-        QSqlQuery query("SELECT data FROM tiles WHERE x=? AND y=? AND zoom=?", db);
+        QSqlQuery query(db);
+        query.prepare("SELECT data FROM tiles WHERE x=? AND y=? AND zoom=?");
         query.addBindValue(tileId.x);
         query.addBindValue(tileId.y);
         query.addBindValue(zoom);
         bool hit = false;
-        if(query.next())
+        if(query.exec() && query.next())
         {
             data = query.value(0).toByteArray();
             hit = true;

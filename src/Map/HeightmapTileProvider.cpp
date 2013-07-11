@@ -4,16 +4,22 @@
 
 #include "Concurrent.h"
 
-OsmAnd::HeightmapTileProvider::HeightmapTileProvider( const QDir& dataPath_, const QDir& cachePath_ )
-    : _db(dataPath_)
-    , dataPath(dataPath_)
-    , cachePath(cachePath_)
+const QString OsmAnd::HeightmapTileProvider::defaultIndexFilename("heightmap.index");
+
+OsmAnd::HeightmapTileProvider::HeightmapTileProvider( const QDir& dataPath, const QString& indexFilepath/* = QString()*/ )
+    : _tileDb(dataPath, indexFilepath)
+    , tileDb(_tileDb)
 {
 }
 
 OsmAnd::HeightmapTileProvider::~HeightmapTileProvider()
 {
     //TODO: on destruction, cancel all tasks
+}
+
+void OsmAnd::HeightmapTileProvider::rebuildTileDbIndex()
+{
+    _tileDb.rebuildIndex();
 }
 
 uint32_t OsmAnd::HeightmapTileProvider::getTileSize() const
@@ -47,7 +53,7 @@ void OsmAnd::HeightmapTileProvider::obtainTileDeffered( const TileId& tileId, ui
 
             // Obtain raw data from DB
             QByteArray data;
-            bool ok = _db.obtainTileData(tileId, zoom, data);
+            bool ok = _tileDb.obtainTileData(tileId, zoom, data);
             if(!ok || data.length() == 0)
             {
                 {

@@ -53,17 +53,18 @@ namespace OsmAnd {
             virtual ~Tile();
         };
 
-        TileDB _db;
+        TileDB _tileDb;
 
         QMutex _processingMutex;
         QMutex _requestsMutex;
         std::array< QSet< TileId >, 32 > _requestedTileIds;
     public:
-        HeightmapTileProvider(const QDir& dataPath, const QDir& cachePath);
+        HeightmapTileProvider(const QDir& dataPath, const QString& indexFilepath = QString());
         virtual ~HeightmapTileProvider();
 
-        const QDir dataPath;
-        const QDir cachePath;
+        const TileDB& tileDb;
+        void rebuildTileDbIndex();
+        static const QString defaultIndexFilename;
 
         virtual uint32_t getTileSize() const;
 
