@@ -1,8 +1,7 @@
 #include "IMapElevationDataProvider.h"
 
-OsmAnd::IMapElevationDataProvider::IMapElevationDataProvider(const uint32_t& valuesPerSide_)
+OsmAnd::IMapElevationDataProvider::IMapElevationDataProvider()
     : IMapTileProvider(IMapTileProvider::ElevationData)
-    , valuesPerSide(valuesPerSide_)
 {
 }
 

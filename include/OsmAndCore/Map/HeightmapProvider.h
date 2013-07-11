@@ -19,29 +19,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __I_MAP_ELEVATION_DATA_PROVIDER_H_
-#define __I_MAP_ELEVATION_DATA_PROVIDER_H_
+#ifndef __HEIGHTMAP_PROVIDER_H_
+#define __HEIGHTMAP_PROVIDER_H_
 
 #include <stdint.h>
 #include <memory>
 #include <functional>
 
+#include <QDir>
+
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/IMapTileProvider.h>
+#include <OsmAndCore/Map/IMapElevationDataProvider.h>
 
 namespace OsmAnd {
 
-    class OSMAND_CORE_API IMapElevationDataProvider : public IMapTileProvider
+    class OSMAND_CORE_API HeightmapProvider : public IMapElevationDataProvider
     {
     public:
     private:
     protected:
-        IMapElevationDataProvider();
     public:
-        virtual ~IMapElevationDataProvider();      
+        HeightmapProvider(const QDir& dataPath, const QDir& cachePath);
+        virtual ~HeightmapProvider();
     };
 
 }
 
-#endif // __I_MAP_ELEVATION_DATA_PROVIDER_H_
+#endif // __HEIGHTMAP_PROVIDER_H_

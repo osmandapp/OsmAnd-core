@@ -19,7 +19,7 @@ OsmAnd::IMapRenderer::IMapRenderer()
     , isRenderingInitialized(_isRenderingInitialized)
 {
     setDisplayDensityFactor(1.0f, true);
-    setFieldOfView(45.0f, true);
+    setFieldOfView(16.5f, true);
     setDistanceToFog(400.0f, true);
     setFogOriginFactor(0.36f, true);
     setFogDensity(1.9f, true);
