@@ -1,0 +1,159 @@
+diff -rupN upstream.original/gcore/gdalclientserver.cpp upstream.patched/gcore/gdalclientserver.cpp
+--- upstream.original/gcore/gdalclientserver.cpp	2013-04-24 21:55:25.000000000 +0300
++++ upstream.patched/gcore/gdalclientserver.cpp	2013-07-12 06:05:31.333776700 +0300
+@@ -370,7 +370,11 @@ class EnterObject
+ static void MyChdir(const char* pszCWD)
+ {
+ #ifdef WIN32
++#ifdef UNICODE
++    SetCurrentDirectoryA(pszCWD);
++#else
+     SetCurrentDirectory(pszCWD);
++#endif
+ #else
+     chdir(pszCWD);
+ #endif
+@@ -383,7 +387,11 @@ static void MyChdir(const char* pszCWD)
+ static void MyChdirRootDirectory()
+ {
+ #ifdef WIN32
++#ifdef UNICODE
++    SetCurrentDirectoryA("C:\\");
++#else
+     SetCurrentDirectory("C:\\");
++#endif
+ #else
+     chdir("/");
+ #endif
+diff -rupN upstream.original/gcore/gdaldllmain.cpp upstream.patched/gcore/gdaldllmain.cpp
+--- upstream.original/gcore/gdaldllmain.cpp	2013-04-24 21:55:25.000000000 +0300
++++ upstream.patched/gcore/gdaldllmain.cpp	2013-07-12 06:50:28.622872600 +0300
+@@ -84,6 +84,7 @@ static void GDALDestroy(void)
+ /*  The library set-up/clean-up routine implemented as DllMain entry    */
+ /*  point specific for Windows.                                         */
+ /************************************************************************/
++/*
+ #ifdef _MSC_VER
+ 
+ #include <windows.h>
+@@ -118,4 +119,5 @@ extern "C" int WINAPI DllMain(HINSTANCE
+ }
+ 
+ #endif // _MSC_VER
++*/
+ 
+diff -rupN upstream.original/port/cpl_getexecpath.cpp upstream.patched/port/cpl_getexecpath.cpp
+--- upstream.original/port/cpl_getexecpath.cpp	2013-04-24 21:55:17.000000000 +0300
++++ upstream.patched/port/cpl_getexecpath.cpp	2013-07-12 06:21:22.268700200 +0300
+@@ -73,7 +73,11 @@ int CPLGetExecPath( char *pszPathBuf, in
+     }
+     else
+     {
++#ifdef UNICODE
++        if( GetModuleFileNameA( NULL, pszPathBuf, nMaxLength ) == 0 )
++#else
+         if( GetModuleFileName( NULL, pszPathBuf, nMaxLength ) == 0 )
++#endif
+             return FALSE;
+         else
+             return TRUE;
+diff -rupN upstream.original/port/cpl_multiproc.cpp upstream.patched/port/cpl_multiproc.cpp
+--- upstream.original/port/cpl_multiproc.cpp	2013-04-24 21:55:17.000000000 +0300
++++ upstream.patched/port/cpl_multiproc.cpp	2013-07-12 07:00:02.043399700 +0300
+@@ -826,9 +826,15 @@ void *CPLLockFile( const char *pszPath,
+     pszLockFilename = (char *) CPLMalloc(strlen(pszPath) + 30);
+     sprintf( pszLockFilename, "%s.lock", pszPath );
+ 
++#ifdef UNICODE
++    hLockFile = 
++        CreateFileA( pszLockFilename, GENERIC_WRITE, 0, NULL,CREATE_NEW, 
++                    FILE_ATTRIBUTE_NORMAL|FILE_FLAG_DELETE_ON_CLOSE, NULL );
++#else
+     hLockFile = 
+         CreateFile( pszLockFilename, GENERIC_WRITE, 0, NULL,CREATE_NEW, 
+                     FILE_ATTRIBUTE_NORMAL|FILE_FLAG_DELETE_ON_CLOSE, NULL );
++#endif
+ 
+     while( GetLastError() == ERROR_ALREADY_EXISTS
+            && dfWaitInSeconds > 0.0 )
+@@ -837,10 +843,17 @@ void *CPLLockFile( const char *pszPath,
+         CPLSleep( MIN(dfWaitInSeconds,0.125) );
+         dfWaitInSeconds -= 0.125;
+ 
++#ifdef UNICODE
++        hLockFile = 
++            CreateFileA( pszLockFilename, GENERIC_WRITE, 0, NULL, CREATE_NEW, 
++                        FILE_ATTRIBUTE_NORMAL|FILE_FLAG_DELETE_ON_CLOSE, 
++                        NULL );
++#else
+         hLockFile = 
+             CreateFile( pszLockFilename, GENERIC_WRITE, 0, NULL, CREATE_NEW, 
+                         FILE_ATTRIBUTE_NORMAL|FILE_FLAG_DELETE_ON_CLOSE, 
+                         NULL );
++#endif
+     }
+ 
+     CPLFree( pszLockFilename );
+diff -rupN upstream.original/port/cpl_spawn.cpp upstream.patched/port/cpl_spawn.cpp
+--- upstream.original/port/cpl_spawn.cpp	2013-04-24 21:55:17.000000000 +0300
++++ upstream.patched/port/cpl_spawn.cpp	2013-07-12 06:27:42.026381400 +0300
+@@ -273,7 +273,11 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*p
+     HANDLE pipe_err[2] = {NULL, NULL};
+     SECURITY_ATTRIBUTES saAttr;
+     PROCESS_INFORMATION piProcInfo;
++#ifdef UNICODE
++    STARTUPINFOA siStartInfo;
++#else
+     STARTUPINFO siStartInfo;
++#endif
+     CPLString osCommandLine;
+     int i;
+     CPLSpawnedProcess* p = NULL;
+@@ -331,7 +335,11 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*p
+         osCommandLine += papszArgv[i];
+     }
+ 
++#ifdef UNICODE
++    if (!CreateProcessA(NULL, 
++#else
+     if (!CreateProcess(NULL, 
++#endif
+                        (CHAR*)osCommandLine.c_str(),
+                        NULL,          // process security attributes 
+                        NULL,          // primary thread security attributes 
+diff -rupN upstream.original/port/cpl_vsil_win32.cpp upstream.patched/port/cpl_vsil_win32.cpp
+--- upstream.original/port/cpl_vsil_win32.cpp	2013-04-24 21:55:17.000000000 +0300
++++ upstream.patched/port/cpl_vsil_win32.cpp	2013-07-12 07:00:47.955208500 +0300
+@@ -405,10 +405,17 @@ VSIVirtualHandle *VSIWin32FilesystemHand
+     }
+     else
+     {
++#ifdef UNICODE
++        hFile = CreateFileA( pszFilename, dwDesiredAccess, 
++                            FILE_SHARE_READ | FILE_SHARE_WRITE, 
++                            NULL, dwCreationDisposition,  dwFlagsAndAttributes,
++                            NULL );
++#else
+         hFile = CreateFile( pszFilename, dwDesiredAccess, 
+                             FILE_SHARE_READ | FILE_SHARE_WRITE, 
+                             NULL, dwCreationDisposition,  dwFlagsAndAttributes,
+                             NULL );
++#endif
+     }
+ 
+ /* -------------------------------------------------------------------- */
+diff -rupN upstream.original/port/cplgetsymbol.cpp upstream.patched/port/cplgetsymbol.cpp
+--- upstream.original/port/cplgetsymbol.cpp	2013-04-24 21:55:17.000000000 +0300
++++ upstream.patched/port/cplgetsymbol.cpp	2013-07-12 06:20:54.798471300 +0300
+@@ -141,7 +141,11 @@ void *CPLGetSymbol( const char * pszLibr
+     void        *pLibrary;
+     void        *pSymbol;
+ 
++#ifdef UNICODE
++    pLibrary = LoadLibraryA(pszLibrary);
++#else
+     pLibrary = LoadLibrary(pszLibrary);
++#endif
+     if( pLibrary == NULL )
+     {
+         LPVOID      lpMsgBuf = NULL;

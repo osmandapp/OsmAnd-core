@@ -7,7 +7,9 @@
 #include <QMutex>
 #include <QWaitCondition>
 
-#include "OsmAndCore/Logging.h"
+#include <gdal.h>
+
+#include "Logging.h"
 #include "OsmAndCore_private.h"
 #include "QMainThreadTaskHost.h"
 #include "QMainThreadTaskEvent.h"
@@ -74,6 +76,7 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::ReleaseCore()
 void OsmAnd::initializeGlobal()
 {
     gMainThreadTaskHost.reset(new QMainThreadTaskHost());
+    GDALAllRegister();
 }
 
 void OsmAnd::releaseGlobal()

@@ -4,6 +4,10 @@
 
 #include "Concurrent.h"
 
+#include <gdal.h>
+#include <gdal_priv.h>
+#include <cpl_vsi.h>
+
 const QString OsmAnd::HeightmapTileProvider::defaultIndexFilename("heightmap.index");
 
 OsmAnd::HeightmapTileProvider::HeightmapTileProvider( const QDir& dataPath, const QString& indexFilepath/* = QString()*/ )
@@ -70,7 +74,19 @@ void OsmAnd::HeightmapTileProvider::obtainTileDeffered( const TileId& tileId, ui
             }
 
             // We have the data, use GDAL to decode this GeoTIFF
-            assert(false);
+            bool success = false;
+            std::shared_ptr<IMapTileProvider::Tile> tile;
+            QString vmemFilename;
+            vmemFilename.sprintf("/vsimem/heightmapTile@%p", data.data());
+            VSIFileFromMemBuffer(vmemFilename.toStdString().c_str(), reinterpret_cast<GByte*>(data.data()), data.length(), FALSE);
+            auto dataset = reinterpret_cast<GDALDataset*>(GDALOpen(vmemFilename.toStdString().c_str(), GA_ReadOnly));
+            if(dataset != nullptr)
+            {
+                int i = 5;
+
+                GDALClose(dataset);
+            }
+            VSIUnlink(vmemFilename.toStdString().c_str());
 
             // Construct tile response
             {
@@ -79,8 +95,7 @@ void OsmAnd::HeightmapTileProvider::obtainTileDeffered( const TileId& tileId, ui
             }
             _processingMutex.unlock();
 
-            std::shared_ptr<IMapTileProvider::Tile> tile;//(new Tile());
-            readyCallback(tileId, zoom, tile, true);
+            readyCallback(tileId, zoom, tile, success);
         }));
 }
 
