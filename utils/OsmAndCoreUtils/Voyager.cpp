@@ -323,7 +323,7 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
     {
         if(cfg.generateXml)
             output << xT("<!--");
-        output << xT("FAILED TO FIND ROUTE!") << xT(routeFound.warnMessage.toStdString().c_str());
+        output << xT("FAILED TO FIND ROUTE!") << QStringToStlString(routeFound.warnMessage);
         if(cfg.generateXml)
             output << xT("-->");
         output << std::endl;
