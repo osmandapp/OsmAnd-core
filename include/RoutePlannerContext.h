@@ -216,7 +216,7 @@ namespace OsmAnd {
             bool useBasemap,
             float initialHeading = std::numeric_limits<float>::quiet_NaN(),
             QHash<QString, QString>* options = nullptr,
-            size_t memoryLimit = 100000);
+            size_t memoryLimit = 1000000);
         virtual ~RoutePlannerContext();
 
         const QList< std::shared_ptr<ObfReader> > sources;
