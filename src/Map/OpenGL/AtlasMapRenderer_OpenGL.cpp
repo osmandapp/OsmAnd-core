@@ -123,8 +123,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
         "            elevationDataTexCoords);                                                                               ""\n"
         "                                                                                                                   ""\n"
         "        float height = texture(param_vs_elevationData_sampler, elevationDataTexCoords).r;                          ""\n"
-        //TODO: remap meters to units 
-        "        v.y = height * 1.0;                                                                                        ""\n"
+        //TODO: remap meters to units
+        //TODO: pixel is point vs pixel is area, and coordinate shift
+        //TODO: cap no-data values
+        "        v.y = height / 100.0;                                                                                        ""\n"
         "        v.y *= param_vs_elevationData_k;                                                                           ""\n"
         "    }                                                                                                              ""\n"
         "    else                                                                                                           ""\n"

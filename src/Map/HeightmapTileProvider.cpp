@@ -32,6 +32,13 @@ uint32_t OsmAnd::HeightmapTileProvider::getTileSize() const
     return 258;
 }
 
+uint32_t OsmAnd::HeightmapTileProvider::getMaxResolutionPatchesCount() const
+{
+    // Our heightmap uses pixel-is-area format. Thus, if we have
+    // n=258 heixels, we can generate n-1 height patches
+    return 257;
+}
+
 bool OsmAnd::HeightmapTileProvider::obtainTileImmediate( const TileId& tileId, uint32_t zoom, std::shared_ptr<IMapTileProvider::Tile>& tile )
 {
     // Heightmap tiles are not available immediately, since none of them are stored in memory unless they are just

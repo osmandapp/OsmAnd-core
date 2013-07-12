@@ -302,19 +302,17 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::createTilePatch()
     else
     {
         // Complex tile patch, consisting of (TileElevationNodesPerSide*TileElevationNodesPerSide) number of
-        // height clusters.
+        // height clusters. Height cluster itself consists of 4 vertices, 6 indices and 2 polygons
         const GLfloat clusterSize = static_cast<GLfloat>(TileSide3D) / static_cast<float>(_activeConfig.heightmapPatchesPerSide);
         const auto verticesPerLine = _activeConfig.heightmapPatchesPerSide + 1;
-        const auto outerVertices = verticesPerLine * verticesPerLine;
-        verticesCount = outerVertices;
-        verticesCount += _activeConfig.heightmapPatchesPerSide * _activeConfig.heightmapPatchesPerSide; // Inner
+        verticesCount = verticesPerLine * verticesPerLine;
         pVertices = new MapTileVertex[verticesCount];
-        indicesCount = (_activeConfig.heightmapPatchesPerSide * _activeConfig.heightmapPatchesPerSide) * 4 * 3;
+        indicesCount = (_activeConfig.heightmapPatchesPerSide * _activeConfig.heightmapPatchesPerSide) * 6;
         pIndices = new GLushort[indicesCount];
 
         MapTileVertex* pV = pVertices;
 
-        // Form outer vertices
+        // Form vertices
         for(auto row = 0u; row < verticesPerLine; row++)
         {
             for(auto col = 0u; col < verticesPerLine; col++, pV++)
@@ -327,58 +325,31 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::createTilePatch()
             }
         }
 
-        // Form inner vertices
-        for(auto row = 0u; row < _activeConfig.heightmapPatchesPerSide; row++)
-        {
-            for(auto col = 0u; col < _activeConfig.heightmapPatchesPerSide; col++, pV++)
-            {
-                pV->position[0] = (static_cast<float>(col) + 0.5f) * clusterSize;
-                pV->position[1] = (static_cast<float>(row) + 0.5f) * clusterSize;
-
-                pV->uv[0] = (static_cast<float>(col) + 0.5f) / static_cast<float>(_activeConfig.heightmapPatchesPerSide);
-                pV->uv[1] = (static_cast<float>(row) + 0.5f) / static_cast<float>(_activeConfig.heightmapPatchesPerSide);
-            }
-        }
-
         // Form indices
         GLushort* pI = pIndices;
         for(auto row = 0u; row < _activeConfig.heightmapPatchesPerSide; row++)
         {
-            for(auto col = 0u; col < _activeConfig.heightmapPatchesPerSide; col++, pV++)
+            for(auto col = 0u; col < _activeConfig.heightmapPatchesPerSide; col++)
             {
-                // p0 - center point
                 // p1 - top left
                 // p2 - bottom left
                 // p3 - bottom right
                 // p4 - top right
-                const auto p0 = outerVertices + (row * _activeConfig.heightmapPatchesPerSide + col);
                 const auto p1 = (row + 0) * verticesPerLine + col + 0;
                 const auto p2 = (row + 1) * verticesPerLine + col + 0;
                 const auto p3 = (row + 1) * verticesPerLine + col + 1;
                 const auto p4 = (row + 0) * verticesPerLine + col + 1;
 
                 // Triangle 0
-                pI[0] = p0;
-                pI[1] = p1;
-                pI[2] = p2;
-                pI += 3;
-
-                // Triangle 1
-                pI[0] = p0;
+                pI[0] = p1;
                 pI[1] = p2;
                 pI[2] = p3;
                 pI += 3;
 
-                // Triangle 2
-                pI[0] = p0;
+                // Triangle 1
+                pI[0] = p1;
                 pI[1] = p3;
                 pI[2] = p4;
-                pI += 3;
-
-                // Triangle 3
-                pI[0] = p0;
-                pI[1] = p4;
-                pI[2] = p1;
                 pI += 3;
             }
         }

@@ -68,6 +68,7 @@ namespace OsmAnd {
         static const QString defaultIndexFilename;
 
         virtual uint32_t getTileSize() const;
+        virtual uint32_t getMaxResolutionPatchesCount() const;
 
         virtual bool obtainTileImmediate(const TileId& tileId, uint32_t zoom, std::shared_ptr<IMapTileProvider::Tile>& tile);
         virtual void obtainTileDeffered(const TileId& tileId, uint32_t zoom, TileReadyCallback readyCallback);

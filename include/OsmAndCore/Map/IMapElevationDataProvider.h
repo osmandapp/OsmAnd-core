@@ -49,6 +49,8 @@ namespace OsmAnd {
         IMapElevationDataProvider();
     public:
         virtual ~IMapElevationDataProvider();      
+
+        virtual uint32_t getMaxResolutionPatchesCount() const = 0;
     };
 
 }
