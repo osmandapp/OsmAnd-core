@@ -127,8 +127,8 @@ namespace OsmAnd {
         class OSMAND_CORE_API RoutingSubsectionContext
         {
         private:
-            uint32_t _mixedLoadsCounter;
-            uint32_t _access;
+            int _mixedLoadsCounter;
+            int _access;
         protected:
             RoutingSubsectionContext(RoutePlannerContext* owner, const std::shared_ptr<ObfReader>& origin, const std::shared_ptr<ObfRoutingSection::Subsection>& subsection);
 
