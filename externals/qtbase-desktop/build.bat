@@ -5,10 +5,10 @@ set PATH=%PATH%;%~dp0\tools.windows\bin
 set QTBASE_CONFIGURATION=^
 	-opensource -confirm-license ^
 	-xplatform win32-msvc2012 ^
-	-nomake examples -nomake demos -nomake tests -nomake docs ^
-	-qt-sql-sqlite -opengl desktop ^
+	-nomake examples -nomake tools ^
+	-qt-sql-sqlite -no-opengl ^
+	-no-widgets -no-gui -no-accessibility -no-nis ^
 	-no-style-windowsvista ^
-	-no-accessibility -no-nis ^
 	-c++11 -shared -debug-and-release
 
 REM Determine target processor (x86 or x64) of environment

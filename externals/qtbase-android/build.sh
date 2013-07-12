@@ -42,9 +42,9 @@ fi
 
 QTBASE_CONFIGURATION=\
 "-opensource -confirm-license -xplatform android-g++ "\
-"-nomake examples -nomake demos -nomake tests -nomake docs "\
+"-nomake examples -nomake tools "\
 "-qt-sql-sqlite "\
-"-no-gui -no-widgets -no-opengl -no-accessibility -no-linuxfb -no-directfb -no-eglfs -no-xcb -no-qml-debug -no-javascript-jit "\
+"-no-accessibility -no-gui -no-widgets -no-nis -no-opengl -no-kms -no-linuxfb -no-directfb -no-eglfs -no-xcb -no-qml-debug -no-javascript-jit "\
 "-c++11 -shared -release "\
 "-v"
 

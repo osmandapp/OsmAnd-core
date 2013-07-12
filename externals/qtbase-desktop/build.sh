@@ -5,9 +5,9 @@ NAME=$(basename $SRCLOC)
 
 QTBASE_CONFIGURATION=\
 "-opensource -confirm-license "\
-"-nomake examples -nomake demos -nomake tests -nomake docs "\
+"-nomake examples -nomake tools "\
 "-qt-sql-sqlite "\
-"-no-accessibility -no-opengl -no-kms -no-linuxfb -no-directfb -no-eglfs -no-xcb -no-qml-debug -no-javascript-jit "\
+"-no-accessibility -no-gui -no-widgets -no-nis -no-opengl -no-kms -no-linuxfb -no-directfb -no-eglfs -no-xcb -no-qml-debug -no-javascript-jit "\
 "-c++11 -shared -release "\
 "-v"
 
@@ -36,14 +36,14 @@ if [[ "$(uname -a)" == *Darwin* ]]; then
 	if [ ! -d "$SRCLOC/upstream.patched.darwin.i386" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.darwin.i386"
 		(cd "$SRCLOC/upstream.patched.darwin.i386" && \
-			./configure -xplatform macx-clang-libc++-32 $QTBASE_CONFIGURATION -accessibility -opengl)
+			./configure -xplatform macx-clang-libc++-32 $QTBASE_CONFIGURATION -debug-and-release)
 	fi
 	(cd "$SRCLOC/upstream.patched.darwin.i386" && make -j`nproc`)
 
 	if [ ! -d "$SRCLOC/upstream.patched.darwin.x86_64" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.darwin.x86_64"
 		(cd "$SRCLOC/upstream.patched.darwin.x86_64" && \
-			./configure -xplatform macx-clang-libc++-64 $QTBASE_CONFIGURATION -accessibility -opengl)
+			./configure -xplatform macx-clang-libc++-64 $QTBASE_CONFIGURATION -debug-and-release)
 	fi
 	(cd "$SRCLOC/upstream.patched.darwin.x86_64" && make -j`nproc`)
 fi
