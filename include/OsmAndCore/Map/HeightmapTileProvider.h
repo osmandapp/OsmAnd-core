@@ -48,8 +48,9 @@ namespace OsmAnd {
         {
         private:
         protected:
+            const float* const _buffer;
         public:
-            Tile(const float* data, size_t rowLength, uint32_t width, uint32_t height);
+            Tile(const float* buffer, uint32_t tileSize);
             virtual ~Tile();
         };
 
