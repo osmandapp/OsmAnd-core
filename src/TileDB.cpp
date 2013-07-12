@@ -1,6 +1,7 @@
 #include "TileDB.h"
 
 #include <assert.h>
+#include <chrono>
 
 #include <QtSql>
 
@@ -61,6 +62,9 @@ bool OsmAnd::TileDB::rebuildIndex()
     }
     QSqlQuery q(_indexDb);
 
+    LogPrintf(LogSeverityLevel::Info, "Rebuilding index of '%s' tiledb...", dataPath.absolutePath().toStdString().c_str());
+    auto beginTimestamp = std::chrono::steady_clock::now();
+
     // Recreate index db structure
     if(!indexFilename.isEmpty())
     {
@@ -79,15 +83,17 @@ bool OsmAnd::TileDB::rebuildIndex()
     assert(ok);
     ok = q.exec(
         "CREATE TABLE tiledb_index ("
-        "    x INTEGER,"
-        "    y INTEGER,"
+        "    xMin INTEGER,"
+        "    yMin INTEGER,"
+        "    xMax INTEGER,"
+        "    yMax INTEGER,"
         "    zoom INTEGER,"
         "    id INTEGER"
         ")");
     assert(ok);
     ok = q.exec(
         "CREATE INDEX _tiledb_index"
-        "    ON tiledb_index(x, y, zoom)");
+        "    ON tiledb_index(xMin, yMin, xMax, yMax, zoom)");
     assert(ok);
     _indexDb.commit();
 
@@ -96,7 +102,7 @@ bool OsmAnd::TileDB::rebuildIndex()
     assert(ok);
 
     QSqlQuery insertTileQuery(_indexDb);
-    ok = insertTileQuery.prepare("INSERT INTO tiledb_index (x, y, zoom, id) VALUES ( ?, ?, ?, ? )");
+    ok = insertTileQuery.prepare("INSERT INTO tiledb_index (xMin, yMin, xMax, yMax, zoom, id) VALUES ( ?, ?, ?, ?, ?, ? )");
     assert(ok);
 
     // Index TileDBs
@@ -126,21 +132,26 @@ bool OsmAnd::TileDB::rebuildIndex()
         assert(ok);
         auto fileId = registerFileQuery.lastInsertId();
 
-        // Query all tiles and add them
-        QSqlQuery query("SELECT x, y, zoom FROM tiles", db);
-        while(query.next())
+        // For each zoom, query min-max of tile coordinates
+        QSqlQuery minMaxQuery("SELECT zoom, xMin, yMin, xMax, yMax FROM bounds", db);
+        ok = minMaxQuery.exec();
+        assert(ok);
+        while(minMaxQuery.next())
         {
-            int32_t x = query.value(0).toInt();
-            int32_t y = query.value(1).toInt();
-            int32_t zoom = query.value(2).toInt();
+            int32_t zoom = minMaxQuery.value(0).toInt();
+            int32_t xMin = minMaxQuery.value(1).toInt();
+            int32_t yMin = minMaxQuery.value(2).toInt();
+            int32_t xMax = minMaxQuery.value(3).toInt();
+            int32_t yMax = minMaxQuery.value(4).toInt();
 
-            insertTileQuery.addBindValue(x);
-            insertTileQuery.addBindValue(y);
+            insertTileQuery.addBindValue(xMin);
+            insertTileQuery.addBindValue(yMin);
+            insertTileQuery.addBindValue(xMax);
+            insertTileQuery.addBindValue(yMax);
             insertTileQuery.addBindValue(zoom);
             insertTileQuery.addBindValue(fileId);
 
             ok = insertTileQuery.exec();
-            auto e = insertTileQuery.lastError().text();
             assert(ok);
         }
 
@@ -149,34 +160,39 @@ bool OsmAnd::TileDB::rebuildIndex()
 
     _indexDb.commit();
 
+    auto endTimestamp = std::chrono::steady_clock::now();
+    auto duration = std::chrono::duration_cast< std::chrono::duration<uint64_t, std::milli> >(endTimestamp - beginTimestamp).count();
+    LogPrintf(LogSeverityLevel::Info, "Finished indexing '%s', took %lldms, average %lldms/db", dataPath.absolutePath().toStdString().c_str(), duration, duration / files.length());
+
     return true;
 }
 
 bool OsmAnd::TileDB::obtainTileData( const TileId& tileId, const uint32_t& zoom, QByteArray& data )
 {
-    QString dbFilename;
+    QMutexLocker scopeLock(&_indexMutex);
 
+    // Check that index is available
+    if(!_indexDb.isOpen())
     {
-        QMutexLocker scopeLock(&_indexMutex);
-
-        // Check that index is available
-        if(!_indexDb.isOpen())
-        {
-            if(!openIndex())
-                return false;
-        }
-
-        QSqlQuery query(_indexDb);
-        query.prepare("SELECT filename FROM tiledb_files WHERE id IN (SELECT id FROM tiledb_index WHERE x=? AND y=? AND zoom=?)");
-        query.addBindValue(tileId.x);
-        query.addBindValue(tileId.y);
-        query.addBindValue(zoom);
-        if(!query.exec() || !query.next())
+        if(!openIndex())
             return false;
-        dbFilename = query.value(0).toString();
     }
 
+    QSqlQuery query(_indexDb);
+    query.prepare("SELECT filename FROM tiledb_files WHERE id IN (SELECT id FROM tiledb_index WHERE xMin<=? AND xMax>=? AND yMin<=? AND yMax>=? AND zoom=?)");
+    query.addBindValue(tileId.x);
+    query.addBindValue(tileId.x);
+    query.addBindValue(tileId.y);
+    query.addBindValue(tileId.y);
+    query.addBindValue(zoom);
+    if(!query.exec())
+        return false;
+
+    bool hit = false;
+    while(!hit && query.next())
     {
+        const auto dbFilename = query.value(0).toString();
+
         //TODO: manage access to database
         //QMutexLocker scopeLock(&dbEntry->mutex);
 
@@ -200,7 +216,6 @@ bool OsmAnd::TileDB::obtainTileData( const TileId& tileId, const uint32_t& zoom,
         query.addBindValue(tileId.x);
         query.addBindValue(tileId.y);
         query.addBindValue(zoom);
-        bool hit = false;
         if(query.exec() && query.next())
         {
             data = query.value(0).toByteArray();
@@ -209,7 +224,7 @@ bool OsmAnd::TileDB::obtainTileData( const TileId& tileId, const uint32_t& zoom,
 
         // Close database
         db.close();
-
-        return hit;
     }
+    
+    return hit;
 }
