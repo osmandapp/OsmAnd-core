@@ -341,7 +341,7 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
             textureFormat = _activeConfig.force16bitColorDepthLimit ? GL_RGB5_A1 /* or GL_RGBA4? */ : GL_RGBA8;
             sourceFormat = GL_BGRA;
             sourceFormatType = GL_UNSIGNED_INT_8_8_8_8_REV;
-            sourcePixelByteSize = 4;
+            sourcePixelByteSize = _activeConfig.force16bitColorDepthLimit ? 2 : 4;
             break;
         case IMapBitmapTileProvider::ARGB_4444:
             textureFormat = GL_RGBA4;
@@ -356,22 +356,20 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
             sourcePixelByteSize = 2;
             break;
         }
-        tileSize = bitmapTile->width;
-        assert(bitmapTile->width == bitmapTile->height);
+        tileSize = tile->width;
+        assert(tile->width == tile->height);
         basePadding = BaseBitmapAtlasTilePadding;
         generateMipmap = true;
     }
     else if(tile->type == IMapTileProvider::ElevationData)
     {
-        //TODO: set proper format for elevation data
-        textureFormat = GL_R16I;
-        tileSize = 100500;
+        textureFormat = GL_R32F;
+        tileSize = tile->width;
+        assert(tile->width == tile->height);
+        sourcePixelByteSize = 4;
         basePadding = 0;
         generateMipmap = false;
-
-        assert(false);
     }
-    //const auto fullTileSize = tileSize + 2*padding;
 
     // Find out if we need atlas or not. We need atlas in following cases:
     // 1. Atlases are allowed
@@ -406,7 +404,6 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
         else //if(Utilities::getNextPowerOfTwo(tileSize) != tileSize) // Tile is of NPOT size
         {
             atlasPool._textureSize = Utilities::getNextPowerOfTwo(tileSize + 2 * basePadding * MipmapLodLevelsMax);
-            outUsedMemory = atlasPool._textureSize * atlasPool._textureSize * sourcePixelByteSize;
         }
 
         atlasPool._mipmapLevels = 1;
@@ -422,7 +419,7 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
         atlasPool._tileSizeN = static_cast<float>(fullTileSize) / static_cast<float>(atlasPool._textureSize);
         atlasPool._slotsPerSide = atlasPool._textureSize / fullTileSize;
 
-        outUsedMemory = fullTileSize * fullTileSize * (_activeConfig.force16bitColorDepthLimit ? 2 : sourcePixelByteSize);
+        outUsedMemory = fullTileSize * fullTileSize * sourcePixelByteSize;
     }
 
     // Use atlas textures if possible
@@ -727,7 +724,7 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
         GL_CHECK_RESULT;
 
         outAtlasPoolId = 0;
-        outUsedMemory = tileSize * tileSize * (_activeConfig.force16bitColorDepthLimit ? 2 : sourcePixelByteSize);
+        outUsedMemory = tileSize * tileSize * sourcePixelByteSize;
         outTextureRef = reinterpret_cast<void*>(texture);
         outAtlasSlotIndex = -1;
     }
