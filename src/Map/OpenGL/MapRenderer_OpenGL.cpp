@@ -366,6 +366,8 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
         textureFormat = GL_R32F;
         tileSize = tile->width;
         assert(tile->width == tile->height);
+        sourceFormat = GL_RED;
+        sourceFormatType = GL_FLOAT;
         sourcePixelByteSize = 4;
         basePadding = 0;
         generateMipmap = false;
