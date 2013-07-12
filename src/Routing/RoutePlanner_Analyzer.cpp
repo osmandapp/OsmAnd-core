@@ -11,10 +11,9 @@
 #include "Utilities.h"
 #include "TurnInfo.h"
 
-bool OsmAnd::RoutePlanner::prepareResult(
+OsmAnd::RouteCalculationResult OsmAnd::RoutePlanner::prepareResult(
     OsmAnd::RoutePlannerContext::CalculationContext* context,
     std::shared_ptr<RoutePlannerContext::RouteCalculationSegment> finalSegment,
-    QList< std::shared_ptr<RouteSegment> >* outResult,
     bool leftSideNavigation)
 {
     // Prepare result
@@ -52,19 +51,17 @@ bool OsmAnd::RoutePlanner::prepareResult(
 
 
     if(!validateAllPointsConnected(route))
-        return false;
+        return OsmAnd::RouteCalculationResult("Calculated route has broken paths");
     splitRoadsAndAttachRoadSegments(context, route);
     calculateTimeSpeedInRoute(context, route);
 
     addTurnInfoToRoute(leftSideNavigation, route);
 
     printRouteInfo(route);
-    QList< std::shared_ptr<RouteSegment> > rs;
-    rs = route.toList();
-    if(outResult)
-        (*outResult) = rs;
-    context->owner->_previouslyCalculatedRoute = rs;
-    return true;
+    OsmAnd::RouteCalculationResult result;
+    result.list = route.toList();
+    context->owner->_previouslyCalculatedRoute = result.list;
+    return result;
 }
 
 void OsmAnd::RoutePlanner::printRouteInfo(QVector< std::shared_ptr<RouteSegment> >& route) {

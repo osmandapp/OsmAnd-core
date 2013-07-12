@@ -13,9 +13,10 @@ OsmAnd::RoutePlannerContext::RoutePlannerContext(
     bool useBasemap,
     float initialHeading /*= std::numeric_limits<float>::quiet_NaN()*/,
     QHash<QString, QString>* options /*=nullptr*/,
-    size_t memoryLimit /*= std::numeric_limits<size_t>::max()*/ )
+    size_t memoryLimit  )
     : _useBasemap(useBasemap)
     , _memoryUsageLimit(memoryLimit)
+    , _loadedTiles(0)
     , _initialHeading(initialHeading)
     , sources(sources)
     , configuration(routingConfig)
@@ -52,10 +53,67 @@ OsmAnd::RoutePlannerContext::RoutingSubsectionContext::~RoutingSubsectionContext
 {
 }
 
+
+
+uint32_t OsmAnd::RoutePlannerContext::getCurrentlyLoadedTiles() {
+    return _loadedTiles;
+}
+
+int intpow(int base, int pw) {
+    int r = 1;
+    for (int i = 0; i < pw; i++) {
+        r *= base;
+    }
+    return r;
+}
+
+
+uint32_t OsmAnd::RoutePlannerContext::getCurrentEstimatedSize() {
+    // TODO proper clculation
+    return getCurrentlyLoadedTiles()*1000;
+}
+
+int compareSections(std::shared_ptr<OsmAnd::RoutePlannerContext::RoutingSubsectionContext> o1,
+                    std::shared_ptr<OsmAnd::RoutePlannerContext::RoutingSubsectionContext> o2) {
+    int v1 = (o1->getAccessCounter() + 1) * intpow(10, o1->getLoadsCounter() -1);
+    int v2 = (o2->getAccessCounter() + 1) * intpow(10, o1->getLoadsCounter() -1);
+    //return v1 < v2 ? -1 : (v1 == v2 ? 0 : 1);
+    return v1 < v2;
+}
+
+
+void OsmAnd::RoutePlannerContext::unloadUnusedTiles(size_t memoryTarget) {
+    float desirableSize = memoryTarget * 0.7f;
+    QList< std::shared_ptr<RoutingSubsectionContext> > list;
+    int loaded = 0;
+    for(std::shared_ptr<RoutingSubsectionContext>  t : this->_subsectionsContexts) {
+        if(t->isLoaded()) {
+            list.append(t);
+            loaded++;
+        }
+    }
+    if(_routeStatistics) {
+        _routeStatistics->maxLoadedTiles = qMax(_routeStatistics->maxLoadedTiles , getCurrentlyLoadedTiles());
+    }
+    qSort(list.begin(), list.end(), compareSections);
+
+    int i = 0;
+    while(getCurrentEstimatedSize() >= desirableSize && (list.size() - i) > loaded / 5 && i < list.size()) {
+        std::shared_ptr<RoutingSubsectionContext>  unload = list[i];
+        i++;
+        unload->unload();
+        if(_routeStatistics) {
+            _routeStatistics->unloadedTiles ++;
+        }
+
+    }
+    for(std::shared_ptr<OsmAnd::RoutePlannerContext::RoutingSubsectionContext> t : _subsectionsContexts) {
+        t->_access /= 3;
+    }
+}
+
 void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::registerRoad( const std::shared_ptr<Model::Road>& road )
 {
-    //TODO memory :tileStatistics.addObject(ro);
-
     uint32_t idx = 0;
     for(auto itPoint = road->points.begin(); itPoint != road->points.end(); ++itPoint, idx++)
     {
@@ -138,12 +196,13 @@ void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::unload()
 std::shared_ptr<OsmAnd::RoutePlannerContext::RouteCalculationSegment> OsmAnd::RoutePlannerContext::RoutingSubsectionContext::loadRouteCalculationSegment(
     uint32_t x31, uint32_t y31,
     QMap<uint64_t, std::shared_ptr<Model::Road> >& processed,
-    const std::shared_ptr<RouteCalculationSegment>& original_) const
+    const std::shared_ptr<RouteCalculationSegment>& original_)
 {
     uint64_t id = (static_cast<uint64_t>(x31) << 31) | y31;
     auto itSegment = _roadSegments.find(id);
     if(itSegment == _roadSegments.end())
         return original_;
+    this->_access++;
 
     auto original = original_;
     auto segment = *itSegment;
