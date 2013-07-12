@@ -20,6 +20,10 @@ if [[ "$(uname -a)" == *Cygwin* ]]; then
 	else
 		export ANDROID_NDK_HOST=windows
 	fi
+
+	if [[ -z "$OSMAND_BUILD_CPU_CORES_NUM" ]]; then
+		OSMAND_BUILD_CPU_CORES_NUM=1
+	fi
 fi
 if [[ "$(uname -a)" == *Linux* ]]; then
 	if [[ "$(uname -m)" == x86_64 ]] && [ -d $ANDROID_NDK/prebuilt/linux-x86_64 ]; then
@@ -29,6 +33,10 @@ if [[ "$(uname -a)" == *Linux* ]]; then
 	else
 		export ANDROID_NDK_HOST=linux
 	fi
+
+	if [[ -z "$OSMAND_BUILD_CPU_CORES_NUM" ]]; then
+		OSMAND_BUILD_CPU_CORES_NUM=`nproc`
+	fi
 fi
 if [[ "$(uname -a)" == *Darwin* ]]; then
 	if [[ "$(uname -m)" == x86_64 ]] && [ -d $ANDROID_NDK/prebuilt/darwin-x86_64 ]; then
@@ -37,6 +45,10 @@ if [[ "$(uname -a)" == *Darwin* ]]; then
 		export ANDROID_NDK_HOST=darwin-x86
 	else
 		export ANDROID_NDK_HOST=darwin
+	fi
+
+	if [[ -z "$OSMAND_BUILD_CPU_CORES_NUM" ]]; then
+		OSMAND_BUILD_CPU_CORES_NUM=`sysctl hw.ncpu | awk '{print $2}'`
 	fi
 fi
 
@@ -49,7 +61,7 @@ QTBASE_CONFIGURATION=\
 "-v"
 
 if [[ "$(uname -a)" == *Cygwin* ]]; then
-	$QTBASE_CONFIGURATION="$QTBASE_CONFIGURATION -no-c++11"
+	QTBASE_CONFIGURATION="$QTBASE_CONFIGURATION -no-c++11"
 fi
 
 if [ ! -d "$SRCLOC/upstream.patched.armeabi" ]; then
@@ -60,7 +72,7 @@ if [ ! -d "$SRCLOC/upstream.patched.armeabi" ]; then
 		./configure $QTBASE_CONFIGURATION \
 		-no-neon)
 fi
-(cd "$SRCLOC/upstream.patched.armeabi" && make -j`nproc`)
+(cd "$SRCLOC/upstream.patched.armeabi" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 
 if [ ! -d "$SRCLOC/upstream.patched.armeabi-v7a" ]; then
 	cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi-v7a"
@@ -70,7 +82,7 @@ if [ ! -d "$SRCLOC/upstream.patched.armeabi-v7a" ]; then
 		./configure $QTBASE_CONFIGURATION \
 		-no-neon)
 fi
-(cd "$SRCLOC/upstream.patched.armeabi-v7a" && make -j`nproc`)
+(cd "$SRCLOC/upstream.patched.armeabi-v7a" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 
 if [ ! -d "$SRCLOC/upstream.patched.armeabi-v7a-neon" ]; then
 	cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi-v7a-neon"
@@ -80,7 +92,7 @@ if [ ! -d "$SRCLOC/upstream.patched.armeabi-v7a-neon" ]; then
 		./configure $QTBASE_CONFIGURATION \
 		-qtlibinfix _neon)
 fi
-(cd "$SRCLOC/upstream.patched.armeabi-v7a-neon" && make -j`nproc`)
+(cd "$SRCLOC/upstream.patched.armeabi-v7a-neon" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 
 if [ ! -d "$SRCLOC/upstream.patched.x86" ]; then
 	cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.x86"
@@ -89,7 +101,7 @@ if [ ! -d "$SRCLOC/upstream.patched.x86" ]; then
 	(cd "$SRCLOC/upstream.patched.x86" && \
 		./configure $QTBASE_CONFIGURATION)
 fi
-(cd "$SRCLOC/upstream.patched.x86" && make -j`nproc`)
+(cd "$SRCLOC/upstream.patched.x86" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 
 if [ ! -d "$SRCLOC/upstream.patched.mips" ]; then
 	cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.mips"
@@ -98,4 +110,4 @@ if [ ! -d "$SRCLOC/upstream.patched.mips" ]; then
 	(cd "$SRCLOC/upstream.patched.mips" && \
 		./configure $QTBASE_CONFIGURATION)
 fi
-(cd "$SRCLOC/upstream.patched.mips" && make -j`nproc`)
+(cd "$SRCLOC/upstream.patched.mips" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
