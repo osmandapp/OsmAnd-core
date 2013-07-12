@@ -14,17 +14,6 @@ fi
 export ANDROID_SDK_ROOT=`echo $ANDROID_SDK | sed 's/\\\\/\//g'`
 export ANDROID_NDK_ROOT=`echo $ANDROID_NDK | sed 's/\\\\/\//g'`
 export ANDROID_NDK_TOOLCHAIN_VERSION=4.7
-if [[ "$(uname -a)" == *Cygwin* ]]; then
-	if [[ "$(uname -a)" == *WOW64* ]] && [ -d $ANDROID_NDK/prebuilt/windows-x86_64 ]; then
-		export ANDROID_NDK_HOST=windows-x86_64
-	else
-		export ANDROID_NDK_HOST=windows
-	fi
-
-	if [[ -z "$OSMAND_BUILD_CPU_CORES_NUM" ]]; then
-		OSMAND_BUILD_CPU_CORES_NUM=1
-	fi
-fi
 if [[ "$(uname -a)" == *Linux* ]]; then
 	if [[ "$(uname -m)" == x86_64 ]] && [ -d $ANDROID_NDK/prebuilt/linux-x86_64 ]; then
 		export ANDROID_NDK_HOST=linux-x86_64;
@@ -61,7 +50,8 @@ QTBASE_CONFIGURATION=\
 "-v"
 
 if [[ "$(uname -a)" == *Cygwin* ]]; then
-	QTBASE_CONFIGURATION="$QTBASE_CONFIGURATION -no-c++11"
+	echo "Building for Android under Cygwin is not supported"
+	exit 1
 fi
 
 if [ ! -d "$SRCLOC/upstream.patched.armeabi" ]; then
