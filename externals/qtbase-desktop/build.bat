@@ -28,8 +28,8 @@ REM WORKAROUND: -no-style-windowsvista is needed when -no-accessibility is selec
 if not exist "%~dp0upstream.patched.windows.%envArch%" (
 	mkdir "%~dp0upstream.patched.windows.%envArch%"
 	xcopy "%~dp0upstream.patched" "%~dp0upstream.patched.windows.%envArch%" /E
-	(cd %~dp0upstream.patched.windows.%envArch% && cmd /C "configure.bat %QTBASE_CONFIGURATION%")
+	(pushd %~dp0upstream.patched.windows.%envArch% && (cmd /C "configure.bat %QTBASE_CONFIGURATION%" & popd))
 )
 
 REM Perform build
-(cd %~dp0upstream.patched.windows.%envArch% && cmd /C "nmake")
+(pushd %~dp0upstream.patched.windows.%envArch% && (cmd /C "nmake" & popd))

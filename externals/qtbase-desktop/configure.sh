@@ -13,6 +13,7 @@ if [[ "$(uname -a)" == *Cygwin* ]]; then
 		echo "Extracting '$NAME' tools for Windows..."
 		mkdir -p "$SRCLOC/tools.windows"
 		tar -xf "$SRCLOC/tools.windows.pack" -C "$SRCLOC/tools.windows" "qt-qt5/gnuwin32" --strip=2
+		chmod +x "$SRCLOC/tools.windows/bin"/*
 	fi
 fi
 
