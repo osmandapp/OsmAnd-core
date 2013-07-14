@@ -10,7 +10,7 @@ elseif(CMAKE_TARGET_OS STREQUAL "windows")
 endif()
 
 # 3D rendering: OpenGL, OpenGLES, Direct3D
-if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "windows")
+if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "windows" OR CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android")
 	file(GLOB_RECURSE sources_opengl_base "src/Map/OpenGL_Base/*.c*")
 	file(GLOB_RECURSE headers_opengl_base "src/Map/OpenGL_Base/*.h*")
 	set(target_specific_public_definitions ${target_specific_public_definitions}
