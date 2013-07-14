@@ -553,9 +553,9 @@ void OsmAnd::ObfMapSection::readMapObject(
                 bool contains = (bbox31 == nullptr);
                 while(cis->BytesUntilLimit() > 0)
                 {
-                    auto dx = (ObfReader::readSInt32(cis) << ShiftCoordinates);
+                    int32_t dx = (ObfReader::readSInt32(cis) << ShiftCoordinates);
                     auto x = dx + px;
-                    auto dy = (ObfReader::readSInt32(cis) << ShiftCoordinates);
+                    int32_t dy = (ObfReader::readSInt32(cis) << ShiftCoordinates);
                     auto y = dy + py;
 
                     points31.push_back(PointI(x, y));
