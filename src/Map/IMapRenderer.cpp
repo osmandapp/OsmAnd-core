@@ -734,7 +734,7 @@ bool OsmAnd::IMapRenderer::TileLayer::uploadPending()
         QMutexLocker scopeLock(&_cacheModificationMutex);
 
         //LogPrintf(LogSeverityLevel::Debug, "Uploading tile %dx%d@%d of layer %d to cache from queue\n", pendingTile.tileId.x, pendingTile.tileId.y, pendingTile.zoom, pendingTile.layerId);
-        pendingTile.renderer->cacheTile(pendingTile->layerId, pendingTile->tileId, pendingTile->zoom, pendingTile->tile);
+        pendingTile->renderer->cacheTile(pendingTile->layerId, pendingTile->tileId, pendingTile->zoom, pendingTile->tile);
         //LogPrintf(LogSeverityLevel::Debug, "Uploaded tile %dx%d@%d of layer %d to cache from queue\n", pendingTile.tileId.x, pendingTile.tileId.y, pendingTile.zoom, pendingTile.layerId);
     }
 
