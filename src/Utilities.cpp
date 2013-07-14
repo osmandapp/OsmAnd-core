@@ -575,6 +575,18 @@ OSMAND_CORE_API uint32_t OSMAND_CORE_CALL OsmAnd::Utilities::getNextPowerOfTwo( 
     return n;
 }
 
+OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::getMetersPerTileUnit( const float& zoom, const double& yTile, const double& unitsPerTile )
+{
+    // Equatorial circumference of the Earth in meters
+    const static double C = 40075017.0;
+
+    const auto powZoom = getPowZoom(zoom);
+    const auto sinhValue = sinh( (2.0 * M_PI * yTile)/powZoom - M_PI );
+    auto res = C / (powZoom * unitsPerTile * qSqrt(sinhValue*sinhValue + 1.0));
+
+    return res;
+}
+
 OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( const unsigned int& verticesCount, const PointF* vertices, std::function<void (const PointI&)> fillPoint )
 {
     // Find min-max of Y

@@ -11,7 +11,8 @@
 #include <SkBitmap.h>
 
 #include "IMapTileProvider.h"
-#include "OsmAndCore/Logging.h"
+#include "Utilities.h"
+#include "Logging.h"
 
 OsmAnd::AtlasMapRenderer_OpenGL::AtlasMapRenderer_OpenGL()
     : _tilePatchVAO(0)

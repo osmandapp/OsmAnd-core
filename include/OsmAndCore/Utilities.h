@@ -87,6 +87,7 @@ namespace OsmAnd {
         OSMAND_CORE_API AreaI OSMAND_CORE_CALL areaRightShift(const AreaI& input, uint32_t shift);
         OSMAND_CORE_API AreaI OSMAND_CORE_CALL areaLeftShift(const AreaI& input, uint32_t shift);
         OSMAND_CORE_API uint32_t OSMAND_CORE_CALL getNextPowerOfTwo(const uint32_t& value);
+        OSMAND_CORE_API double OSMAND_CORE_CALL getMetersPerTileUnit(const float& zoom, const double& yTile, const double& unitsPerTile);
         OSMAND_CORE_API void OSMAND_CORE_CALL scanlineFillPolygon(const unsigned int& verticesCount, const PointF* vertices, std::function<void (const PointI&)> fillPoint);
 
         inline int qAbsCeil(qreal v)
