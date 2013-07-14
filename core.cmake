@@ -28,8 +28,10 @@ add_subdirectory("${OSMAND_ROOT}/core/externals/skia" "core/externals/skia")
 # External : GDAL
 add_subdirectory("${OSMAND_ROOT}/core/externals/gdal" "core/externals/gdal")
 
-# External : OpenGL GLEW
-add_subdirectory("${OSMAND_ROOT}/core/externals/glew" "core/externals/glew")
+if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "windows")
+	# External : OpenGL GLEW
+	add_subdirectory("${OSMAND_ROOT}/core/externals/glew" "core/externals/glew")
+endif()
 
 # OsmAnd Core
 add_subdirectory("${OSMAND_ROOT}/core" "core/OsmAndCore")
