@@ -69,6 +69,8 @@ namespace OsmAnd {
                     GLint tile;
                     GLint elevationData_k;
                     GLint elevationData_sampler;
+                    GLint elevationData_upperMetersPerUnit;
+                    GLint elevationData_lowerMetersPerUnit;
 
                     // Per-tile-per-layer data
                     struct

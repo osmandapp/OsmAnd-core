@@ -70,6 +70,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
         "uniform ivec2 param_vs_tile;                                                                                       ""\n"
         "uniform float param_vs_elevationData_k;                                                                            ""\n"
         "uniform sampler2D param_vs_elevationData_sampler;                                                                  ""\n"
+        "uniform float param_vs_elevationData_upperMetersPerUnit;                                                           ""\n"
+        "uniform float param_vs_elevationData_lowerMetersPerUnit;                                                           ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-layer-in-tile data
         "struct LayerInputPerTile                                                                                           ""\n"
@@ -118,16 +120,18 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
         //   If elevation data is active, use it
         "    if(abs(param_vs_elevationData_k) > floatEpsilon)                                                               ""\n"
         "    {                                                                                                              ""\n"
+        "        float metersToUnits = mix(param_vs_elevationData_upperMetersPerUnit,                                       ""\n"
+        "            param_vs_elevationData_lowerMetersPerUnit, in_vs_vertexTexCoords.t);                                   ""\n"
+        "                                                                                                                   ""\n"
         "        vec2 elevationDataTexCoords;                                                                               ""\n"
         "        calculateTextureCoordinates(                                                                               ""\n"
         "            param_vs_perTileLayer[0],                                                                              ""\n"
         "            elevationDataTexCoords);                                                                               ""\n"
         "                                                                                                                   ""\n"
-        "        float height = texture(param_vs_elevationData_sampler, elevationDataTexCoords).r;                          ""\n"
-        //TODO: remap meters to units
+        "        float heightInMeters = texture(param_vs_elevationData_sampler, elevationDataTexCoords).r;                  ""\n"
         //TODO: pixel is point vs pixel is area, and coordinate shift
         //TODO: cap no-data values
-        "        v.y = height / 100.0;                                                                                        ""\n"
+        "        v.y = heightInMeters / metersToUnits;                                                                      ""\n"
         "        v.y *= param_vs_elevationData_k;                                                                           ""\n"
         "    }                                                                                                              ""\n"
         "    else                                                                                                           ""\n"
@@ -277,6 +281,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
     findVariableLocation(_mapStage.program, _mapStage.vs.param.tile, "param_vs_tile", Uniform);
     findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_sampler, "param_vs_elevationData_sampler", Uniform);
     findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_k, "param_vs_elevationData_k", Uniform);
+    findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_upperMetersPerUnit, "param_vs_elevationData_upperMetersPerUnit", Uniform);
+    findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_lowerMetersPerUnit, "param_vs_elevationData_lowerMetersPerUnit", Uniform);
     for(int layerId = 0; layerId < TileLayerId::IdsCount; layerId++)
     {
         const auto layerStructName =
@@ -427,6 +433,11 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_MapStage()
 
                 glUniform1f(_mapStage.vs.param.elevationData_k, 1.0f);
                 GL_CHECK_RESULT;
+
+                auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(_activeConfig.zoomBase, tileIdN.y, TileSide3D);
+                glUniform1f(_mapStage.vs.param.elevationData_upperMetersPerUnit, upperMetersPerUnit);
+                auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(_activeConfig.zoomBase, tileIdN.y + 1, TileSide3D);
+                glUniform1f(_mapStage.vs.param.elevationData_lowerMetersPerUnit, lowerMetersPerUnit);
 
                 glActiveTexture(GL_TEXTURE0 + TileLayerId::ElevationData);
                 GL_CHECK_RESULT;
