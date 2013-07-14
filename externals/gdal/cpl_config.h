@@ -14,14 +14,11 @@
 	/* Define to 1 if you have the `PTHREAD_MUTEX_RECURSIVE' constant. */
 #	define HAVE_PTHREAD_MUTEX_RECURSIVE 1
 
-	/* --prefix directory for GDAL install */
-#	undef GDAL_PREFIX
-
 	/* Define to 1 if you have the <assert.h> header file. */
-#	undef HAVE_ASSERT_H
+#	define HAVE_ASSERT_H 1
 
 	/* Define to 1 if you have the `atoll' function. */
-#	undef HAVE_ATOLL
+#	define HAVE_ATOLL 1
 
 	/* Define to 1 if you have the <csf.h> header file. */
 #	undef HAVE_CSF_H
@@ -37,16 +34,16 @@
 #	undef HAVE_DIRECT_H
 
 	/* Define to 1 if you have the <dlfcn.h> header file. */
-#	undef HAVE_DLFCN_H
+#	define HAVE_DLFCN_H 1
 
 	/* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
 #	undef HAVE_DOPRNT
 
 	/* Define to 1 if you have the <errno.h> header file. */
-#	undef HAVE_ERRNO_H
+#	define HAVE_ERRNO_H 1
 
 	/* Define to 1 if you have the <fcntl.h> header file. */
-#	undef HAVE_FCNTL_H
+#	define HAVE_FCNTL_H 1
 
 	/* Define to 1 if you have the <float.h> header file. */
 #	undef HAVE_FLOAT_H
@@ -89,34 +86,34 @@
 #	undef HAVE_LIBRT
 
 	/* Define to 1 if you have the <limits.h> header file. */
-#	undef HAVE_LIMITS_H
+#	define HAVE_LIMITS_H 1
 
 	/* Define to 1 if you have the <locale.h> header file. */
-#	undef HAVE_LOCALE_H
+#	define HAVE_LOCALE_H 1
 
 	/* Define to 1, if your compiler supports long long data type */
 #	undef HAVE_LONG_LONG
 
 	/* Define to 1 if you have the <memory.h> header file. */
-#	undef HAVE_MEMORY_H
+#	define HAVE_MEMORY_H 1
 
 	/* Define to 1 if you have the <png.h> header file. */
-#	undef HAVE_PNG_H
+#	define HAVE_PNG_H 1
 
 	/* Define to 1 if you have the `snprintf' function. */
 #	undef HAVE_SNPRINTF
 
 	/* Define to 1 if you have the <stdint.h> header file. */
-#	undef HAVE_STDINT_H
+#	define HAVE_STDINT_H 1
 
 	/* Define to 1 if you have the <stdlib.h> header file. */
-#	undef HAVE_STDLIB_H
+#	define HAVE_STDLIB_H 1
 
 	/* Define to 1 if you have the <strings.h> header file. */
-#	undef HAVE_STRINGS_H
+#	define HAVE_STRINGS_H 1
 
 	/* Define to 1 if you have the <string.h> header file. */
-#	undef HAVE_STRING_H
+#	define HAVE_STRING_H 1
 
 	/* Define to 1 if you have the `strtof' function. */
 #	undef HAVE_STRTOF
@@ -152,7 +149,11 @@
 #	undef HAVE_LSTAT
 
 	/* Set the native cpu bit order (FILLORDER_LSB2MSB or FILLORDER_MSB2LSB) */
-#	undef HOST_FILLORDER
+#	ifdef __BIG_ENDIAN__
+#		define HOST_FILLORDER FILLORDER_MSB2LSB
+#	else
+#		define HOST_FILLORDER FILLORDER_LSB2MSB
+#	endif
 
 	/* Define as const if the declaration of iconv() needs const. */
 #	undef ICONV_CONST
@@ -168,16 +169,16 @@
 #	undef MACOSX_FRAMEWORK
 
 	/* The size of `int', as computed by sizeof. */
-#	undef SIZEOF_INT
+#	define SIZEOF_INT 4
 
 	/* The size of `long', as computed by sizeof. */
-#	undef SIZEOF_LONG
+#	define SIZEOF_LONG 4
 
 	/* The size of `unsigned long', as computed by sizeof. */
-#	undef SIZEOF_UNSIGNED_LONG
+#	define SIZEOF_UNSIGNED_LONG 4
 
 	/* The size of `void*', as computed by sizeof. */
-#	undef SIZEOF_VOIDP
+#	define SIZEOF_VOIDP 4
 
 	/* Define to 1 if you have the ANSI C header files. */
 #	undef STDC_HEADERS
@@ -220,12 +221,7 @@
 #	undef WORDS_BIGENDIAN
 
 	/* Define to 1 if you have the `getaddrinfo' function. */
-#	undef HAVE_GETADDRINFO
-
-	/* Use this file to override settings in instances where you're doing FAT compiles
-	   on Apple.  It is currently off by default because it doesn't seem to work with 
-	   newish ( XCode >= 3/28/11) XCodes */
-#	include "cpl_config_extras.h" */
+#	define HAVE_GETADDRINFO 1
 
 #elif defined(__linux__)
 #endif
