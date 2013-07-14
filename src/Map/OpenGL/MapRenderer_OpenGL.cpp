@@ -474,7 +474,8 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
             atlasTexture = texture;
             atlasSlotIndex = 0;
 
-#if 1
+            //TODO: Texture atlases still suffer from texture bleeding as as they are used far from camera
+#if 0
             // In debug mode, fill entire texture with single RED color if this is bitmap
             if(tile->type == IMapTileProvider::Bitmap)
             {

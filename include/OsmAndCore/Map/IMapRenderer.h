@@ -73,6 +73,7 @@ namespace OsmAnd {
             float fogColor[3];
             float fogDistance;
             float fogOriginFactor;
+            float fogHeightOriginFactor;
             float fogDensity;
             float azimuth;
             float elevationAngle;
@@ -211,6 +212,7 @@ namespace OsmAnd {
         virtual void setFieldOfView(const float& fieldOfView, bool forcedUpdate = false);
         virtual void setDistanceToFog(const float& fogDistance, bool forcedUpdate = false);
         virtual void setFogOriginFactor(const float& factor, bool forcedUpdate = false);
+        virtual void setFogHeightOriginFactor(const float& factor, bool forcedUpdate = false);
         virtual void setFogDensity(const float& fogDensity, bool forcedUpdate = false);
         virtual void setFogColor(const float& r, const float& g, const float& b, bool forcedUpdate = false);
         virtual void setSkyColor(const float& r, const float& g, const float& b, bool forcedUpdate = false);

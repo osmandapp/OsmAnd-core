@@ -22,6 +22,7 @@ OsmAnd::IMapRenderer::IMapRenderer()
     setFieldOfView(16.5f, true);
     setDistanceToFog(400.0f, true);
     setFogOriginFactor(0.36f, true);
+    setFogHeightOriginFactor(0.05f, true);
     setFogDensity(1.9f, true);
     setFogColor(1.0f, 0.0f, 0.0f, true);
     setSkyColor(140.0f / 255.0f, 190.0f / 255.0f, 214.0f / 255.0f, true);
@@ -155,6 +156,21 @@ void OsmAnd::IMapRenderer::setFogOriginFactor( const float& factor, bool forcedU
         return;
 
     _pendingConfig.fogOriginFactor = clampedValue;
+
+    invalidateConfiguration();
+}
+
+void OsmAnd::IMapRenderer::setFogHeightOriginFactor( const float& factor, bool forcedUpdate /*= false*/ )
+{
+    QMutexLocker scopeLock(&_pendingConfigModificationMutex);
+
+    const auto clampedValue = qMax(std::numeric_limits<float>::epsilon(), qMin(factor, 1.0f));
+
+    bool update = forcedUpdate || !qFuzzyCompare(_pendingConfig.fogHeightOriginFactor, clampedValue);
+    if(!update)
+        return;
+
+    _pendingConfig.fogHeightOriginFactor = clampedValue;
 
     invalidateConfiguration();
 }
@@ -645,7 +661,7 @@ OsmAnd::IMapRenderer::Configuration::Configuration()
     , requestedZoom(-1.0f)
     , zoomBase(-1)
     , zoomFraction(-1.0f)
-    , heightScaleFactor(1.0f)
+    , heightScaleFactor(-1.0f)
 {
 }
 
