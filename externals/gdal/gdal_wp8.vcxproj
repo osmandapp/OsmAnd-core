@@ -213,7 +213,6 @@
     <ClCompile Include="upstream.patched\frmts\hfa\hfatype.cpp" />
     <ClCompile Include="upstream.patched\frmts\hfa\hfa_overviews.cpp" />
     <ClCompile Include="upstream.patched\gcore\gdalallvalidmaskband.cpp" />
-    <ClCompile Include="upstream.patched\gcore\gdalclientserver.cpp" />
     <ClCompile Include="upstream.patched\gcore\gdalcolortable.cpp" />
     <ClCompile Include="upstream.patched\gcore\gdaldataset.cpp" />
     <ClCompile Include="upstream.patched\gcore\gdaldefaultasync.cpp" />
@@ -270,7 +269,6 @@
     <ClCompile Include="upstream.patched\ogr\ogr_api.cpp" />
     <ClCompile Include="upstream.patched\ogr\ogr_expat.cpp" />
     <ClCompile Include="upstream.patched\ogr\ogr_fromepsg.cpp" />
-    <ClCompile Include="upstream.patched\ogr\ogr_geocoding.cpp" />
     <ClCompile Include="upstream.patched\ogr\ogr_opt.cpp" />
     <ClCompile Include="upstream.patched\ogr\ogr_srsnode.cpp" />
     <ClCompile Include="upstream.patched\ogr\ogr_srs_dict.cpp" />
