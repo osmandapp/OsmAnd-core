@@ -555,7 +555,7 @@ void OsmAnd::IMapRenderer::handleProvidedTile( const TileLayerId& layerId, const
 
         assert(!tileLayer._pendingToCache[zoom].contains(tileId));
 
-        PendingToCacheTile pendingTile(this, layerId, zoom, tileId, tile);
+        std::shared_ptr<PendingToCacheTile> pendingTile(new PendingToCacheTile(this, layerId, zoom, tileId, tile));
         tileLayer._pendingToCacheQueue.enqueue(pendingTile);
         tileLayer._pendingToCache[zoom].insert(tileId);
     }

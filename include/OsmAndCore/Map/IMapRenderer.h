@@ -171,7 +171,7 @@ namespace OsmAnd {
             QMap< void*, uint32_t > _textureRefCount;
 
             QMutex _pendingToCacheMutex;
-            QQueue< PendingToCacheTile > _pendingToCacheQueue;
+            QQueue< std::shared_ptr<PendingToCacheTile> > _pendingToCacheQueue;
             std::array< QSet< TileId >, 32 > _pendingToCache;
 
             QMutex _requestedTilesMutex;
