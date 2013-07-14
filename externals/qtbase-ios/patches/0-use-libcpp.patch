@@ -1,0 +1,13 @@
+diff --git a/mkspecs/unsupported/macx-ios-clang/qmake.conf b/mkspecs/unsupported/macx-ios-clang/qmake.conf
+index 3dc2715..ef2643c 100644
+--- a/mkspecs/unsupported/macx-ios-clang/qmake.conf
++++ b/mkspecs/unsupported/macx-ios-clang/qmake.conf
+@@ -22,4 +22,8 @@ include(../../common/clang-mac.conf)
+ include(../../common/ios/clang.conf)
+ include(../../common/ios/qmake.conf)
+ 
++QMAKE_OBJECTIVE_CFLAGS += -stdlib=libc++
++QMAKE_CXXFLAGS         += -stdlib=libc++
++QMAKE_LFLAGS           += -stdlib=libc++
++
+ load(qt_config)
