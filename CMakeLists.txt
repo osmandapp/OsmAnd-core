@@ -1,20 +1,5 @@
 project(OsmAndCore)
 
-set(pd_includes_private "")
-if(CMAKE_TARGET_OS STREQUAL "windows")
-	set(pd_includes_private ${pd_includes_private}
-		"$ENV{JAVA_HOME}/include/win32"
-	)
-elseif(CMAKE_TARGET_OS STREQUAL "darwin")
-	set(pd_includes_private ${pd_includes_private}
-		"$ENV{JAVA_HOME}/include/darwin"
-	)
-elseif(CMAKE_TARGET_OS STREQUAL "linux")
-	set(pd_includes_private ${pd_includes_private}
-		"$ENV{JAVA_HOME}/include/linux"
-	)
-endif()
-
 set(target_specific_sources "")
 set(target_specific_public_definitions "")
 set(target_specific_public_includes "")
@@ -68,22 +53,11 @@ file(GLOB_RECURSE sources_client  "client/*.c*")
 add_library(OsmAndCore SHARED
 	${includes}
 	${headers}
-    ${sources}
-    ${headers_client}
-    ${sources_client}
+	${sources}
+	${headers_client}
+	${sources_client}
 	${target_specific_sources}
 	"protos/OBF.pb.h"
-
-	"native/src/ElapsedTimer.cpp"
-	"native/src/common.cpp"
-	"native/src/mapObjects.cpp"
-	"native/src/multipolygons.cpp"
-	"native/src/renderRules.cpp"
-	"native/src/rendering.cpp"
-	"native/src/binaryRead.cpp"
-	"native/src/binaryRoutePlanner.cpp"
-	"native/src/proto/osmand_index.pb.cc"
-	"native/src/java_wrap.cpp"
 )
 set_target_properties(OsmAndCore PROPERTIES AUTOMOC TRUE)
 
@@ -117,10 +91,6 @@ target_include_directories(OsmAndCore
 		"${OSMAND_ROOT}/core/src/Data/Model"
 		"${OSMAND_ROOT}/core/src/Routing"
 		"${OSMAND_ROOT}/core/src/Map"
-		"${OSMAND_ROOT}/core/native/include"
-		"${OSMAND_ROOT}/core/native/src"
-		"$ENV{JAVA_HOME}/include"
-		${pd_includes_private}
 	PUBLIC
 		"${OSMAND_ROOT}/core/include"
 		"${OSMAND_ROOT}/core/src"

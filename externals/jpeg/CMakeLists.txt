@@ -1,7 +1,7 @@
 project(jpeg)
 
 add_library(jpeg_static STATIC
-    "upstream.patched/jaricom.c"
+	"upstream.patched/jaricom.c"
 	"upstream.patched/jcapimin.c"
 	"upstream.patched/jcapistd.c"
 	"upstream.patched/jcarith.c"

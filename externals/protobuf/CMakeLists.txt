@@ -1,7 +1,7 @@
 project(protobuf)
 
 add_library(protobuf_static STATIC
-    "upstream.patched/src/google/protobuf/extension_set.cc"
+	"upstream.patched/src/google/protobuf/extension_set.cc"
 	"upstream.patched/src/google/protobuf/generated_message_util.cc"
 	"upstream.patched/src/google/protobuf/io/coded_stream.cc"
 	"upstream.patched/src/google/protobuf/io/zero_copy_stream.cc"
