@@ -56,7 +56,13 @@ OsmAnd::RoutePlannerContext::RoutingSubsectionContext::~RoutingSubsectionContext
 
 
 uint32_t OsmAnd::RoutePlannerContext::getCurrentlyLoadedTiles() {
-    return _loadedTiles;
+    uint32_t cnt = 0;
+    for(std::shared_ptr<RoutingSubsectionContext> t : this->_subsectionsContexts){
+        if(t->isLoaded()) {
+            cnt++;
+        }
+    }
+    return cnt;
 }
 
 int intpow(int base, int pw) {
@@ -107,6 +113,10 @@ void OsmAnd::RoutePlannerContext::unloadUnusedTiles(size_t memoryTarget) {
         }
 
     }
+    if(_routeStatistics) {
+        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Unloaded tiles %d (loaded prevUnloaded %d, currently loaded %d)",  _routeStatistics->unloadedTiles,  _routeStatistics->loadedPrevUnloadedTiles, getCurrentlyLoadedTiles());
+        OsmAnd::LogFlush();
+    }
     for(std::shared_ptr<OsmAnd::RoutePlannerContext::RoutingSubsectionContext> t : _subsectionsContexts) {
         t->_access /= 3;
     }
@@ -142,7 +152,7 @@ bool OsmAnd::RoutePlannerContext::RoutingSubsectionContext::isLoaded() const
 
 uint32_t OsmAnd::RoutePlannerContext::RoutingSubsectionContext::getLoadsCounter() const
 {
-    return _mixedLoadsCounter & 0x7fffffff;
+    return qAbs(_mixedLoadsCounter);
 }
 
 void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::collectRoads( QList< std::shared_ptr<Model::Road> >& output, QMap<uint64_t, std::shared_ptr<Model::Road> >* duplicatesRegistry /*= nullptr*/ )
@@ -185,12 +195,13 @@ void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::collectRoads( QList<
 
 void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::markLoaded()
 {
-    _mixedLoadsCounter = (_mixedLoadsCounter & 0x7fffffff) + 1;
+    _mixedLoadsCounter = qAbs(_mixedLoadsCounter) + 1;
 }
 
 void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::unload()
 {
-    _mixedLoadsCounter |= 0x80000000;
+    _mixedLoadsCounter = -qAbs(_mixedLoadsCounter);
+    _roadSegments.clear();
 }
 
 std::shared_ptr<OsmAnd::RoutePlannerContext::RouteCalculationSegment> OsmAnd::RoutePlannerContext::RoutingSubsectionContext::loadRouteCalculationSegment(

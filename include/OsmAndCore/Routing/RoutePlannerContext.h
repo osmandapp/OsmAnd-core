@@ -127,8 +127,8 @@ namespace OsmAnd {
         class OSMAND_CORE_API RoutingSubsectionContext
         {
         private:
-            uint32_t _mixedLoadsCounter;
-            uint32_t _access;
+            int _mixedLoadsCounter;
+            int _access;
         protected:
             RoutingSubsectionContext(RoutePlannerContext* owner, const std::shared_ptr<ObfReader>& origin, const std::shared_ptr<ObfRoutingSection::Subsection>& subsection);
 
@@ -216,7 +216,7 @@ namespace OsmAnd {
             bool useBasemap,
             float initialHeading = std::numeric_limits<float>::quiet_NaN(),
             QHash<QString, QString>* options = nullptr,
-            size_t memoryLimit = 100000);
+            size_t memoryLimit = 1000000);
         virtual ~RoutePlannerContext();
 
         const QList< std::shared_ptr<ObfReader> > sources;

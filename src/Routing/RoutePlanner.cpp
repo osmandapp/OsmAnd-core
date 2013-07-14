@@ -201,7 +201,7 @@ void OsmAnd::RoutePlanner::loadRoadsFromTile( RoutePlannerContext* context, uint
 uint32_t OsmAnd::RoutePlanner::getCurrentEstimatedSize(RoutePlannerContext* context)
 {
     // TODO Victor
-    return context->getCurrentlyLoadedTiles() * 2000; //+ current queue size
+    return context->getCurrentEstimatedSize(); // + current stack size  * 2000; //+ current queue size
 }
 
 uint64_t OsmAnd::RoutePlanner::getRoutingTileId( RoutePlannerContext* context, uint32_t x31, uint32_t y31, bool dontLoad )
