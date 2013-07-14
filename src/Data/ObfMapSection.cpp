@@ -546,13 +546,14 @@ void OsmAnd::ObfMapSection::readMapObject(
                 auto oldLimit = cis->PushLimit(length);
                 auto px = treeNode->_area31.left & MaskToRead;
                 auto py = treeNode->_area31.top & MaskToRead;
-                int32_t minX = std::numeric_limits<int32_t>::max();
-                int32_t maxX = 0;
-                int32_t minY = std::numeric_limits<int32_t>::max();
-                int32_t maxY = 0;
+                auto minX = std::numeric_limits<int32_t>::max();
+                auto maxX = 0;
+                auto minY = std::numeric_limits<int32_t>::max();
+                auto maxY = 0;
                 bool contains = (bbox31 == nullptr);
                 while(cis->BytesUntilLimit() > 0)
                 {
+                    //NOTE: Here was 'auto', but Apple LLVM didn't like it
                     int32_t dx = (ObfReader::readSInt32(cis) << ShiftCoordinates);
                     int32_t x = dx + px;
                     int32_t dy = (ObfReader::readSInt32(cis) << ShiftCoordinates);
