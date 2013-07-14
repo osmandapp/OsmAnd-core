@@ -16,7 +16,7 @@ endif()
 file(GLOB_RECURSE gdal_gcore_sources "upstream.patched/gcore/*.cpp")
 file(GLOB_RECURSE gdal_alg_sources "upstream.patched/alg/*.cpp")
 file(GLOB gdal_ogr_sources "upstream.patched/ogr/*.cpp")
-file(GLOB_RECURSE gdal_ogr_frmts_mem_sources "upstream.patched/ogr/frmts/mem/*.cpp")
+file(GLOB_RECURSE gdal_ogr_frmts_mem_sources "upstream.patched/ogr/ogrsf_frmts/mem/*.cpp")
 file(GLOB gdal_frmts_sources "upstream.patched/frmts/*.c*")
 file(GLOB_RECURSE gdal_frmts_gtiff_sources "upstream.patched/frmts/gtiff/*.c*")
 
