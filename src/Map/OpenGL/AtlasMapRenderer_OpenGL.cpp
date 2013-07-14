@@ -85,23 +85,16 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
         "                                                                                                                   ""\n"
         "void calculateTextureCoordinates(in LayerInputPerTile perTile, out vec2 outTexCoords)                              ""\n"
         "{                                                                                                                  ""\n"
-        "    if(perTile.slotIndex >= 0)                                                                                     ""\n"
-        "    {                                                                                                              ""\n"
-        "        const int rowIndex = perTile.slotIndex / perTile.slotsPerSide;                                             ""\n"
-        "        const int colIndex = int(mod(perTile.slotIndex, perTile.slotsPerSide));                                    ""\n"
+        "    const int rowIndex = perTile.slotIndex / perTile.slotsPerSide;                                                 ""\n"
+        "    const int colIndex = int(mod(perTile.slotIndex, perTile.slotsPerSide));                                        ""\n"
         "                                                                                                                   ""\n"
-        "        const float texCoordRescale = (perTile.tileSizeN - 2.0 * perTile.tilePaddingN) / perTile.tileSizeN;        ""\n"
+        "    const float texCoordRescale = (perTile.tileSizeN - 2.0 * perTile.tilePaddingN) / perTile.tileSizeN;            ""\n"
         "                                                                                                                   ""\n"
-        "        outTexCoords.s = float(colIndex) * perTile.tileSizeN;                                                      ""\n"
-        "        outTexCoords.s += perTile.tilePaddingN + (in_vs_vertexTexCoords.s * perTile.tileSizeN) * texCoordRescale;  ""\n"
+        "    outTexCoords.s = float(colIndex) * perTile.tileSizeN;                                                          ""\n"
+        "    outTexCoords.s += perTile.tilePaddingN + (in_vs_vertexTexCoords.s * perTile.tileSizeN) * texCoordRescale;      ""\n"
         "                                                                                                                   ""\n"
-        "        outTexCoords.t = float(rowIndex) * perTile.tileSizeN;                                                      ""\n"
-        "        outTexCoords.t += perTile.tilePaddingN + (in_vs_vertexTexCoords.t * perTile.tileSizeN) * texCoordRescale;  ""\n"
-        "    }                                                                                                              ""\n"
-        "    else                                                                                                           ""\n"
-        "    {                                                                                                              ""\n"
-        "        outTexCoords = in_vs_vertexTexCoords;                                                                      ""\n"
-        "    }                                                                                                              ""\n"
+        "    outTexCoords.t = float(rowIndex) * perTile.tileSizeN;                                                          ""\n"
+        "    outTexCoords.t += perTile.tilePaddingN + (in_vs_vertexTexCoords.t * perTile.tileSizeN) * texCoordRescale;      ""\n"
         "}                                                                                                                  ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
@@ -234,6 +227,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
         //   Apply fog (square exponential)
         "    const float fogDistanceScaled = param_fs_fogDistance * param_fs_scaleToRetainProjectedSize;                    ""\n"
         "    const float fogStartDistance = fogDistanceScaled * (1.0 - param_fs_fogOriginFactor);                           ""\n"
+        //TODO: take into account that v2f_positionRelativeToTarget also makes fog in reverse area
         "    const float fogLinearFactor = min(max(length(v2f_positionRelativeToTarget) - fogStartDistance, 0.0) /          ""\n"
         "        (fogDistanceScaled - fogStartDistance), 1.0);                                                              ""\n"
 
@@ -466,6 +460,13 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_MapStage()
                 }
                 else
                 {
+                    glUniform1f(perTile_vs.tileSizeN, 1.0f);
+                    GL_CHECK_RESULT;
+                    glUniform1f(perTile_vs.tilePaddingN, 0.0f);
+                    GL_CHECK_RESULT;
+                    glUniform1i(perTile_vs.slotsPerSide, 1);
+                    GL_CHECK_RESULT;
+
                     glBindSampler(TileLayerId::ElevationData, _textureSampler_ElevationData_NoAtlas);
                     GL_CHECK_RESULT;
                 }
@@ -514,7 +515,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_MapStage()
                     if(cachedTile->atlasSlotIndex >= 0)
                     {
                         const auto& atlas = tileLayer._atlasTexturePools[cachedTile->atlasPoolId];
-
                         glUniform1f(perTile_vs.tileSizeN, atlas._tileSizeN);
                         GL_CHECK_RESULT;
                         glUniform1f(perTile_vs.tilePaddingN, atlas._tilePaddingN);
@@ -527,6 +527,13 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_MapStage()
                     }
                     else
                     {
+                        glUniform1f(perTile_vs.tileSizeN, 1.0f);
+                        GL_CHECK_RESULT;
+                        glUniform1f(perTile_vs.tilePaddingN, 0.0f);
+                        GL_CHECK_RESULT;
+                        glUniform1i(perTile_vs.slotsPerSide, 1);
+                        GL_CHECK_RESULT;
+
                         glBindSampler(layerId, _textureSampler_Bitmap_NoAtlas);
                         GL_CHECK_RESULT;
                     }
