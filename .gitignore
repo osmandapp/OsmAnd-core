@@ -6,7 +6,6 @@
 /*.sdf
 /*.opensdf
 *.user
-*.filters
 
 *.render.xml
 # VisualStudio specific folders
