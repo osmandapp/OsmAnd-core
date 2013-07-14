@@ -419,6 +419,8 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
         const auto fullTileSize = tileSize + 2 * atlasPool._padding;
         atlasPool._tilePaddingN = static_cast<float>(atlasPool._padding) / static_cast<float>(atlasPool._textureSize);
         atlasPool._tileSizeN = static_cast<float>(fullTileSize) / static_cast<float>(atlasPool._textureSize);
+        atlasPool._texelSizeN = 1.0f / static_cast<float>(atlasPool._textureSize);
+        atlasPool._halfTexelSizeN = 0.5f / static_cast<float>(atlasPool._textureSize);
         atlasPool._slotsPerSide = atlasPool._textureSize / fullTileSize;
 
         outUsedMemory = fullTileSize * fullTileSize * sourcePixelByteSize;

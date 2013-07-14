@@ -151,6 +151,8 @@ namespace OsmAnd {
             int _firstFreeSlotIndex;
             QMultiMap< void*, int > _freedSlots;
 
+            float _texelSizeN;
+            float _halfTexelSizeN;
             float _tileSizeN;
             float _tilePaddingN;
             uint32_t _slotsPerSide;

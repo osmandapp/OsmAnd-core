@@ -116,14 +116,13 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
         "        float metersToUnits = mix(param_vs_elevationData_upperMetersPerUnit,                                       ""\n"
         "            param_vs_elevationData_lowerMetersPerUnit, in_vs_vertexTexCoords.t);                                   ""\n"
         "                                                                                                                   ""\n"
+        //       Calculate texcoords for elevation data (pixel-is-area)
         "        vec2 elevationDataTexCoords;                                                                               ""\n"
         "        calculateTextureCoordinates(                                                                               ""\n"
         "            param_vs_perTileLayer[0],                                                                              ""\n"
         "            elevationDataTexCoords);                                                                               ""\n"
         "                                                                                                                   ""\n"
         "        float heightInMeters = texture(param_vs_elevationData_sampler, elevationDataTexCoords).r;                  ""\n"
-        //TODO: pixel is point vs pixel is area, and coordinate shift
-        //TODO: cap no-data values
         "        v.y = heightInMeters / metersToUnits;                                                                      ""\n"
         "        v.y *= param_vs_elevationData_k;                                                                           ""\n"
         "    }                                                                                                              ""\n"
@@ -414,8 +413,11 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_MapStage()
         GL_CHECK_RESULT;
 
         // Set elevation data
+        if(_activeConfig.tileProviders[TileLayerId::ElevationData])
         {
             auto& tileLayer = _tileLayers[TileLayerId::ElevationData];
+            float nonAtlasHalfTexelSizeN;
+            bool nonAtlasHalfTexelSizeAvailable = false;
 
             QMutexLocker scopeLock(&tileLayer._cacheModificationMutex);
 
@@ -450,7 +452,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_MapStage()
                     const auto& atlas = tileLayer._atlasTexturePools[cachedTile->atlasPoolId];
                     glUniform1f(perTile_vs.tileSizeN, atlas._tileSizeN);
                     GL_CHECK_RESULT;
-                    glUniform1f(perTile_vs.tilePaddingN, atlas._tilePaddingN);
+                    glUniform1f(perTile_vs.tilePaddingN, atlas._halfTexelSizeN);
                     GL_CHECK_RESULT;
                     glUniform1i(perTile_vs.slotsPerSide, atlas._slotsPerSide);
                     GL_CHECK_RESULT;
@@ -460,9 +462,15 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_MapStage()
                 }
                 else
                 {
+                    if(!nonAtlasHalfTexelSizeAvailable)
+                    {
+                        nonAtlasHalfTexelSizeN = 0.5f / static_cast<float>(_activeConfig.tileProviders[TileLayerId::ElevationData]->getTileSize());
+                        nonAtlasHalfTexelSizeAvailable = true;
+                    }
+
                     glUniform1f(perTile_vs.tileSizeN, 1.0f);
                     GL_CHECK_RESULT;
-                    glUniform1f(perTile_vs.tilePaddingN, 0.0f);
+                    glUniform1f(perTile_vs.tilePaddingN, nonAtlasHalfTexelSizeN);
                     GL_CHECK_RESULT;
                     glUniform1i(perTile_vs.slotsPerSide, 1);
                     GL_CHECK_RESULT;
@@ -481,6 +489,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_MapStage()
         // We need to pass each layer of this tile to shader
         for(int layerId = TileLayerId::RasterMap; layerId < TileLayerId::IdsCount; layerId++)
         {
+            if(!_activeConfig.tileProviders[layerId])
+                continue;
+
             auto& tileLayer = _tileLayers[layerId];
             const auto& perTile_vs = _mapStage.vs.param.perTileLayer[layerId];
             const auto& perTile_fs = _mapStage.fs.param.perTileLayer[layerId - TileLayerId::RasterMap];
