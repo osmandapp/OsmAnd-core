@@ -46,14 +46,30 @@ if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAK
 endif()
 
 file(GLOB_RECURSE includes "include/*.h*")
-file(GLOB_RECURSE headers "src/*.h*")
-file(GLOB_RECURSE sources "src/*.c*")
+file(GLOB headers "src/*.h*")
+file(GLOB headers_data "src/Data/*.h*")
+file(GLOB headers_data_model "src/Data/Model/*.h*")
+file(GLOB headers_routing "src/Routing/*.h*")
+file(GLOB headers_map "src/Routing/*.h*")
+file(GLOB sources "src/*.c*")
+file(GLOB sources_data "src/Data/*.c*")
+file(GLOB sources_data_model "src/Data/Model/*.c*")
+file(GLOB sources_routing "src/Routing/*.c*")
+file(GLOB sources_map "src/Routing/*.c*")
 file(GLOB_RECURSE headers_client "client/*.h*")
 file(GLOB_RECURSE sources_client  "client/*.c*")
 add_library(OsmAndCore SHARED
 	${includes}
 	${headers}
+	${headers_data}
+	${headers_data_model}
+	${headers_routing}
+	${headers_map}
 	${sources}
+	${sources_data}
+	${sources_data_model}
+	${sources_routing}
+	${sources_map}
 	${headers_client}
 	${sources_client}
 	${target_specific_sources}
