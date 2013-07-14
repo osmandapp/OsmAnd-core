@@ -32,6 +32,7 @@ OsmAnd::IMapRenderer::IMapRenderer()
     set16bitColorDepthLimit(false, true);
     setTextureAtlasesUsagePermit(true, true);
     setHeightmapPatchesPerSide(24, true);
+    setHeightScaleFactor(1.0f, true);
 }
 
 OsmAnd::IMapRenderer::~IMapRenderer()
@@ -304,6 +305,19 @@ void OsmAnd::IMapRenderer::setHeightmapPatchesPerSide( const uint32_t& patchesCo
     _pendingConfig.heightmapPatchesPerSide = patchesCount;
 
     invalidateTileLayerCache(TileLayerId::ElevationData);
+    invalidateConfiguration();
+}
+
+void OsmAnd::IMapRenderer::setHeightScaleFactor( const float& factor, bool forcedUpdate /*= false*/ )
+{
+    QMutexLocker scopeLock(&_pendingConfigModificationMutex);
+
+    bool update = forcedUpdate || !qFuzzyCompare(_pendingConfig.heightScaleFactor, factor);
+    if(!update)
+        return;
+
+    _pendingConfig.heightScaleFactor = factor;
+
     invalidateConfiguration();
 }
 
@@ -631,6 +645,7 @@ OsmAnd::IMapRenderer::Configuration::Configuration()
     , requestedZoom(-1.0f)
     , zoomBase(-1)
     , zoomFraction(-1.0f)
+    , heightScaleFactor(1.0f)
 {
 }
 

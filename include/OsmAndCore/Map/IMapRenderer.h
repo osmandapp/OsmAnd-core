@@ -80,6 +80,7 @@ namespace OsmAnd {
             float requestedZoom;
             int zoomBase;
             float zoomFraction;
+            float heightScaleFactor;
 
             bool force16bitColorDepthLimit;
             bool textureAtlasesAllowed;
@@ -219,6 +220,7 @@ namespace OsmAnd {
         virtual void setZoom(const float& zoom, bool forcedUpdate = false);
         virtual void setTextureAtlasesUsagePermit(const bool& allow, bool forcedUpdate = false);
         virtual void setHeightmapPatchesPerSide(const uint32_t& patchesCount, bool forcedUpdate = false);
+        virtual void setHeightScaleFactor(const float& factor, bool forcedUpdate = false);
 
         const volatile bool& isRenderingInitialized;
         virtual void initializeRendering();

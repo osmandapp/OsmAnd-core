@@ -427,7 +427,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_MapStage()
             {
                 auto cachedTile = static_cast<CachedTile*>(cachedTile_.get());
 
-                glUniform1f(_mapStage.vs.param.elevationData_k, 1.0f);
+                glUniform1f(_mapStage.vs.param.elevationData_k, _activeConfig.heightScaleFactor);
                 GL_CHECK_RESULT;
 
                 auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(_activeConfig.zoomBase, tileIdN.y, TileSide3D);
