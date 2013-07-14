@@ -554,9 +554,9 @@ void OsmAnd::ObfMapSection::readMapObject(
                 while(cis->BytesUntilLimit() > 0)
                 {
                     int32_t dx = (ObfReader::readSInt32(cis) << ShiftCoordinates);
-                    auto x = dx + px;
+                    int32_t x = dx + px;
                     int32_t dy = (ObfReader::readSInt32(cis) << ShiftCoordinates);
-                    auto y = dy + py;
+                    int32_t y = dy + py;
 
                     points31.push_back(PointI(x, y));
                     
