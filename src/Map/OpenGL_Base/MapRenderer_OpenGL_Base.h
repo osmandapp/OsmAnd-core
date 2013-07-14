@@ -32,8 +32,13 @@
 #   define WIN32_LEAN_AND_MEAN
 #   include <Windows.h>
 #endif
-#if __APPLE__
+#if defined(OSMAND_OPENGL_RENDERER_SUPPORTED)
+#   include <GL/glew.h>
+#endif
+#if defined(__APPLE__) && !defined(__arm__)
 #   include <OpenGL/gl.h>
+#elif defined(__APPLE__) && defined(__arm__)
+#   include <OpenGLES/ES2/gl.h>
 #else
 #   include <GL/gl.h>
 #endif

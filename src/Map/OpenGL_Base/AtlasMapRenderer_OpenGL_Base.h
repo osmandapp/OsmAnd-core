@@ -25,21 +25,6 @@
 #include <stdint.h>
 #include <memory>
 
-#if defined(WIN32)
-#   define WIN32_LEAN_AND_MEAN
-#   include <Windows.h>
-#endif
-#if defined(OSMAND_OPENGL_RENDERER_SUPPORTED)
-#   include <GL/glew.h>
-#endif
-#if __APPLE__
-#   include <OpenGL/gl.h>
-#   include <OpenGL/glu.h>
-#else
-#   include <GL/gl.h>
-#   include <GL/glu.h>
-#endif
-
 #include <glm/glm.hpp>
 
 #include <OsmAndCore.h>
