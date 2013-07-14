@@ -44,14 +44,14 @@ if [[ "$(uname -a)" == *Darwin* ]]; then
 	if [ ! -d "$SRCLOC/upstream.patched.darwin.i386" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.darwin.i386"
 		(cd "$SRCLOC/upstream.patched.darwin.i386" && \
-			./configure -xplatform macx-clang-libc++-32 $QTBASE_CONFIGURATION -debug-and-release)
+			./configure -xplatform macx-clang-libc++-32 $QTBASE_CONFIGURATION -debug-and-release -no-framework)
 	fi
 	(cd "$SRCLOC/upstream.patched.darwin.i386" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 
 	if [ ! -d "$SRCLOC/upstream.patched.darwin.x86_64" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.darwin.x86_64"
 		(cd "$SRCLOC/upstream.patched.darwin.x86_64" && \
-			./configure -xplatform macx-clang-libc++-64 $QTBASE_CONFIGURATION -debug-and-release)
+			./configure -xplatform macx-clang-libc++-64 $QTBASE_CONFIGURATION -debug-and-release -no-framework)
 	fi
 	(cd "$SRCLOC/upstream.patched.darwin.x86_64" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 fi
