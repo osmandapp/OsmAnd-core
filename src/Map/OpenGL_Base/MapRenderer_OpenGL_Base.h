@@ -35,9 +35,9 @@
 #if defined(OSMAND_OPENGL_RENDERER_SUPPORTED)
 #   include <GL/glew.h>
 #endif
-#if defined(__APPLE__) && !defined(__arm__)
+#if defined(OSMAND_TARGET_OS_darwin)
 #   include <OpenGL/gl.h>
-#elif defined(__APPLE__) && defined(__arm__)
+#elif defined(OSMAND_TARGET_OS_ios)
 #   include <OpenGLES/ES2/gl.h>
 #else
 #   include <GL/gl.h>
