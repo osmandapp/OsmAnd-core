@@ -9,7 +9,7 @@ set QTBASE_CONFIGURATION=^
 	-qt-sql-sqlite -no-opengl ^
 	-no-widgets -no-gui -no-accessibility -no-nis ^
 	-no-style-windowsvista ^
-	-c++11 -shared -debug-and-release
+	-c++11 -static -debug-and-release
 
 REM Determine target processor (x86 or x64) of environment
 for /f "tokens=9 delims= " %%l in ('cl 2^>^&1') do (

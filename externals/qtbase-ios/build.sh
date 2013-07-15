@@ -8,7 +8,7 @@ QTBASE_CONFIGURATION=\
 "-nomake examples -nomake tools "\
 "-qt-sql-sqlite "\
 "-no-accessibility -no-gui -no-widgets -no-nis -no-opengl -no-kms -no-linuxfb -no-directfb -no-eglfs -no-xcb -no-qml-debug -no-javascript-jit "\
-"-c++11 -shared -debug-and-release "\
+"-c++11 -static -debug-and-release "\
 "-v"
 
 if [[ "$(uname -a)" == *Darwin* ]]; then

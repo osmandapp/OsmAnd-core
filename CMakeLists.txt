@@ -61,9 +61,14 @@ file(GLOB sources_routing "src/Routing/*.c*")
 file(GLOB sources_map "src/Map/*.c*")
 file(GLOB_RECURSE headers_client "client/*.h*")
 file(GLOB_RECURSE sources_client  "client/*.c*")
-add_library(OsmAndCore SHARED
-	${includes}
+
+find_package(Qt5Core REQUIRED)
+find_package(Qt5Network REQUIRED)
+find_package(Qt5Sql REQUIRED)
+
+set(merged_sources
 	${headers}
+	${includes}
 	${headers_data}
 	${headers_data_model}
 	${headers_routing}
@@ -78,58 +83,101 @@ add_library(OsmAndCore SHARED
 	${target_specific_sources}
 	"protos/OBF.pb.h"
 )
-set_target_properties(OsmAndCore PROPERTIES AUTOMOC TRUE)
-
-add_dependencies(OsmAndCore
+set(merged_dependencies
 	skia_static
 	protobuf_static
 	gdal_static
 	${target_specific_public_libraries}
 )
+set(merged_compile_definitions_private
+	-DOSMAND_CORE_EXPORTS
+)
+set(merged_compile_definitions_public
+	${target_specific_public_definitions}
+)
+set(merged_include_dirs_private
+	"${OSMAND_ROOT}/core/include"
+	"${OSMAND_ROOT}/core/include/OsmAndCore"
+	"${OSMAND_ROOT}/core/include/OsmAndCore/Data"
+	"${OSMAND_ROOT}/core/include/OsmAndCore/Data/Model"
+	"${OSMAND_ROOT}/core/include/OsmAndCore/Routing"
+	"${OSMAND_ROOT}/core/include/OsmAndCore/Map"
+	"${OSMAND_ROOT}/core/src"
+	"${OSMAND_ROOT}/core/src/Data"
+	"${OSMAND_ROOT}/core/src/Data/Model"
+	"${OSMAND_ROOT}/core/src/Routing"
+	"${OSMAND_ROOT}/core/src/Map"
+)
+set(merged_include_dirs_public
+	"${OSMAND_ROOT}/core/include"
+	"${OSMAND_ROOT}/core/src"
+	"${OSMAND_ROOT}/core/client"
+	"${OSMAND_ROOT}/core/protos"
+	${target_specific_public_includes}
+	${Qt5Core_INCLUDE_DIRS}
+	${Qt5Network_INCLUDE_DIRS}
+	${Qt5Sql_INCLUDE_DIRS}
+)
+set(merged_link_libs_public
+	skia_static
+	protobuf_static
+	gdal_static
+	${target_specific_public_libraries}
+)
+set(merged_qt5_modules
+	Core
+	Network
+	Sql
+)
 
-find_package(Qt5Core REQUIRED)
-find_package(Qt5Network REQUIRED)
-find_package(Qt5Sql REQUIRED)
+if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
+	add_library(OsmAndCore_shared SHARED ${merged_sources})
+	set_target_properties(OsmAndCore_shared PROPERTIES AUTOMOC TRUE)
+	add_dependencies(OsmAndCore_shared ${merged_dependencies})
+	target_compile_definitions(OsmAndCore_shared
+		PRIVATE
+			${merged_compile_definitions_private}
+		PUBLIC
+			${merged_compile_definitions_public}
+	)
+	target_include_directories(OsmAndCore_shared
+		PRIVATE
+			${merged_include_dirs_private}
+		PUBLIC
+			${merged_include_dirs_public}
+	)
+	target_link_libraries(OsmAndCore_shared
+		LINK_PUBLIC
+			${merged_link_libs_public}
+	)
+	qt5_use_modules(OsmAndCore_shared
+		LINK_PUBLIC
+			${merged_qt5_modules}
+	)
+endif()
 
-target_compile_definitions(OsmAndCore
-	PRIVATE
-		-DOSMAND_CORE_EXPORTS
-	PUBLIC
-		${target_specific_public_definitions}
-)
-target_include_directories(OsmAndCore
-	PRIVATE
-		"${OSMAND_ROOT}/core/include"
-		"${OSMAND_ROOT}/core/include/OsmAndCore"
-		"${OSMAND_ROOT}/core/include/OsmAndCore/Data"
-		"${OSMAND_ROOT}/core/include/OsmAndCore/Data/Model"
-		"${OSMAND_ROOT}/core/include/OsmAndCore/Routing"
-		"${OSMAND_ROOT}/core/include/OsmAndCore/Map"
-		"${OSMAND_ROOT}/core/src"
-		"${OSMAND_ROOT}/core/src/Data"
-		"${OSMAND_ROOT}/core/src/Data/Model"
-		"${OSMAND_ROOT}/core/src/Routing"
-		"${OSMAND_ROOT}/core/src/Map"
-	PUBLIC
-		"${OSMAND_ROOT}/core/include"
-		"${OSMAND_ROOT}/core/src"
-		"${OSMAND_ROOT}/core/client"
-		"${OSMAND_ROOT}/core/protos"
-		${target_specific_public_includes}
-		${Qt5Core_INCLUDE_DIRS}
-		${Qt5Network_INCLUDE_DIRS}
-		${Qt5Sql_INCLUDE_DIRS}
-)
-target_link_libraries(OsmAndCore
-	LINK_PUBLIC
-		skia_static
-		protobuf_static
-		gdal_static
-		${target_specific_public_libraries}
-)
-qt5_use_modules(OsmAndCore
-	LINK_PUBLIC
-		Core
-		Network
-		Sql
-)
+if(CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
+	add_library(OsmAndCore_static SHARED ${merged_sources})
+	set_target_properties(OsmAndCore_static PROPERTIES AUTOMOC TRUE)
+	add_dependencies(OsmAndCore_static ${merged_dependencies})
+	target_compile_definitions(OsmAndCore_static
+		PRIVATE
+			${merged_compile_definitions_private}
+		PUBLIC
+			${merged_compile_definitions_public}
+	)
+	target_include_directories(OsmAndCore_static
+		PRIVATE
+			${merged_include_dirs_private}
+		PUBLIC
+			${merged_include_dirs_public}
+	)
+	target_link_libraries(OsmAndCore_static
+		LINK_PUBLIC
+			${merged_link_libs_public}
+	)
+	qt5_use_modules(OsmAndCore_static
+		LINK_PUBLIC
+			${merged_qt5_modules}
+	)
+endif()

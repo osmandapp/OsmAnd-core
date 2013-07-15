@@ -9,7 +9,7 @@ set QTBASE_CONFIGURATION=^
 	-no-widgets -no-accessibility -no-nis ^
 	-no-angle ^
 	-no-style-windowsvista ^
-	-c++11 -shared -debug-and-release
+	-c++11 -static -debug-and-release
 
 REM Determine target architecture of environment
 for /f "tokens=9 delims= " %%l in ('cl 2^>^&1') do (

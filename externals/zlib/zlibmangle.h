@@ -109,6 +109,7 @@
 #  endif
 #define z_zlibCompileFlags      osmand_zlib_zlibCompileFlags
 #define z_zlibVersion           osmand_zlib_zlibVersion
+#define z_errmsg                osmand_zlib_errmsg
 
 /* all zlib typedefs in zlib.h and zconf.h */
 #define z_Byte                  osmand_zlib_Byte
