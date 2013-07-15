@@ -32,7 +32,7 @@ if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 endif()
 
 if(CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
-	add_library(OsmAndCoreUtils_static SHARED ${merged_sources})
+	add_library(OsmAndCoreUtils_static STATIC ${merged_sources})
 	add_dependencies(OsmAndCoreUtils_static OsmAndCore_static)
 	target_compile_definitions(OsmAndCoreUtils_static
 		PRIVATE

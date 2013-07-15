@@ -157,7 +157,7 @@ if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 endif()
 
 if(CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
-	add_library(OsmAndCore_static SHARED ${merged_sources})
+	add_library(OsmAndCore_static STATIC ${merged_sources})
 	set_target_properties(OsmAndCore_static PROPERTIES AUTOMOC TRUE)
 	add_dependencies(OsmAndCore_static ${merged_dependencies})
 	target_compile_definitions(OsmAndCore_static
