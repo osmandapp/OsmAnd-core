@@ -43,20 +43,19 @@ elseif(CMAKE_TARGET_OS STREQUAL "darwin")
 	)
 elseif(CMAKE_TARGET_OS STREQUAL "ios")
 	set(target_specific_include_dirs_public ${target_specific_include_dirs_public}
-		"upstream.patched/include/utils/mac"
+		"upstream.patched/include/utils/ios"
 	)
 	set(target_specific_sources "${target_specific_sources}"
 		"upstream.patched/src/ports/SkDebug_stdio.cpp"
 		"upstream.patched/src/ports/SkThread_pthread.cpp"
-		"upstream.patched/src/ports/SkFontHost_mac.cpp"
-		"upstream.patched/src/ports/SkFontHost_mac_coretext.cpp"
-		"upstream.patched/src/ports/SkFontHost_freetype_mac.cpp"
 		"upstream.patched/src/ports/SkTime_Unix.cpp"
-		"upstream.patched/src/utils/mac/SkStream_mac.cpp"
+		"upstream.patched/src/utils/ios/SkFontHost_iOS.mm"
+		"upstream.patched/src/utils/ios/SkImageDecoder_iOS.mm"
+		"upstream.patched/src/utils/ios/SkOSFile_iOS.mm"
+		"upstream.patched/src/utils/ios/SkStream_NSData.mm"
 	)
 	set(target_specific_definitions_public ${target_specific_definitions_public}
 		-DSK_BUILD_FOR_IOS
-		-DSK_USE_CORETEXT
 	)
 elseif(CMAKE_TARGET_OS STREQUAL "linux")
 	set(target_specific_sources "${target_specific_sources}"
@@ -358,7 +357,7 @@ if(CMAKE_TARGET_OS STREQUAL "linux")
 		LINK_PUBLIC
 			pthread
 	)
-elseif(CMAKE_TARGET_OS STREQUAL "darwin")
+elseif(CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "ios")
 	find_library(CORE_FOUNDATION_LIBRARY CoreFoundation)
 	find_library(CORE_TEXT_LIBRARY CoreText)
 	find_library(CORE_GRAPHICS_LIBRARY CoreGraphics)
@@ -367,7 +366,7 @@ elseif(CMAKE_TARGET_OS STREQUAL "darwin")
 			${CORE_FOUNDATION_LIBRARY}
 			${CORE_TEXT_LIBRARY}
 			${CORE_GRAPHICS_LIBRARY}
-	)	
+	)
 elseif(CMAKE_TARGET_OS STREQUAL "windows")
 	target_link_libraries(skia_static
 		LINK_PUBLIC
