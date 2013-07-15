@@ -4,9 +4,12 @@ set(target_specific_sources "")
 set(target_specific_public_definitions "")
 set(target_specific_public_includes "")
 set(target_specific_public_libraries "")
-if(CMAKE_TARGET_OS STREQUAL "linux")
-elseif(CMAKE_TARGET_OS STREQUAL "darwin")
-elseif(CMAKE_TARGET_OS STREQUAL "windows")
+
+# Target specific
+if(CMAKE_TARGET_OS STREQUAL "ios")
+	set(target_specific_public_libraries ${target_specific_public_libraries}
+		"-framework CoreFoundation"
+	)
 endif()
 
 # 3D rendering: OpenGL, OpenGLES, Direct3D
