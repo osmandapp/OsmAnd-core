@@ -139,7 +139,7 @@
 #   define HAVE_READLINK 1
 
     /* Define to 1 if you have the `posix_spawnp' function. */
-#   define HAVE_POSIX_SPAWNP 1
+#   undef HAVE_POSIX_SPAWNP
 
     /* Define to 1 if you have the `vfork' function. */
 #   define HAVE_VFORK 1
