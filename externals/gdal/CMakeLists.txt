@@ -72,7 +72,6 @@ add_library(gdal_static STATIC
 	"upstream.patched/port/cpl_recode.cpp"
 	"upstream.patched/port/cpl_recode_iconv.cpp"
 	"upstream.patched/port/cpl_recode_stub.cpp"
-	"upstream.patched/port/cpl_spawn.cpp"
 	"upstream.patched/port/cpl_string.cpp"
 	"upstream.patched/port/cpl_strtod.cpp"
 	"upstream.patched/port/cpl_time.cpp"
