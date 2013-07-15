@@ -6,12 +6,11 @@ set(target_specific_public_includes "")
 set(target_specific_public_libraries "")
 
 # Target specific
-#if(CMAKE_TARGET_OS STREQUAL "ios")
-#	set(target_specific_public_libraries ${target_specific_public_libraries}
-#		"-framework CoreFoundation"
-#		z
-#	)
-#endif()
+if(CMAKE_TARGET_OS STREQUAL "ios")
+	set(target_specific_public_libraries ${target_specific_public_libraries}
+		z
+	)
+endif()
 
 # 3D rendering: OpenGL, OpenGLES, Direct3D
 if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "windows" OR CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android")
