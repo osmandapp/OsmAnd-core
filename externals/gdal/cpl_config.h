@@ -155,10 +155,10 @@
 #   endif
 
     /* Define as const if the declaration of iconv() needs const. */
-#   undef ICONV_CONST
+#   define ICONV_CONST
 
     /* For .cpp files, define as const if the declaration of iconv() needs const. */
-#   undef ICONV_CPP_CONST
+#   define ICONV_CPP_CONST
 
     /* Define to the sub-directory in which libtool stores uninstalled libraries.
        */
