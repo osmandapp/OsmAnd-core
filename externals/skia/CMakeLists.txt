@@ -43,6 +43,7 @@ elseif(CMAKE_TARGET_OS STREQUAL "darwin")
 	)
 elseif(CMAKE_TARGET_OS STREQUAL "ios")
 	set(target_specific_include_dirs_public ${target_specific_include_dirs_public}
+		"upstream.patched/include/utils/mac"
 		"upstream.patched/include/utils/ios"
 	)
 	set(target_specific_sources "${target_specific_sources}"
