@@ -2,21 +2,19 @@ project(gdal)
 
 set(target_specific_sources "")
 set(target_specific_public_libraries "")
-if(CMAKE_TARGET_OS STREQUAL "linux")
-	set(target_specific_sources ${target_specific_sources}
-		"upstream.patched/port/cpl_vsil_unix_stdio_64.cpp"
-	)
-elseif(CMAKE_TARGET_OS STREQUAL "darwin")
-	set(target_specific_sources ${target_specific_sources}
-		"upstream.patched/port/cpl_vsil_unix_stdio_64.cpp"
-	)
-elseif(CMAKE_TARGET_OS STREQUAL "windows")
+
+# Target specific
+if(CMAKE_TARGET_OS STREQUAL "windows")
 	set(target_specific_sources ${target_specific_sources}
 		"upstream.patched/port/cpl_vsil_win32.cpp"
 	)
 	set(target_specific_public_libraries ${target_specific_public_libraries}
 		Ws2_32
 	)
+else()
+        set(target_specific_sources ${target_specific_sources}
+                "upstream.patched/port/cpl_vsil_unix_stdio_64.cpp"
+        )
 endif()
 
 file(GLOB_RECURSE gdal_gcore_sources "upstream.patched/gcore/*.cpp")

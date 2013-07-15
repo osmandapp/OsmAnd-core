@@ -9,6 +9,7 @@ set(target_specific_public_libraries "")
 if(CMAKE_TARGET_OS STREQUAL "ios")
 	set(target_specific_public_libraries ${target_specific_public_libraries}
 		"-framework CoreFoundation"
+		z
 	)
 endif()
 

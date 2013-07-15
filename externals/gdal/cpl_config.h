@@ -46,7 +46,7 @@
 #	define HAVE_FCNTL_H 1
 
 	/* Define to 1 if you have the <float.h> header file. */
-#	undef HAVE_FLOAT_H
+#	define HAVE_FLOAT_H 1
 
 	/* Define to 1 if you have the `getcwd' function. */
 #	undef HAVE_GETCWD
@@ -56,7 +56,7 @@
 
 	/* Define as 0 or 1 according to the floating point format suported by the
 	   machine */
-#	undef HAVE_IEEEFP
+#	define HAVE_IEEEFP 1
 
 	/* Define to 1 if the system has the type `int16'. */
 #	undef HAVE_INT16
@@ -92,7 +92,7 @@
 #	define HAVE_LOCALE_H 1
 
 	/* Define to 1, if your compiler supports long long data type */
-#	undef HAVE_LONG_LONG
+#	define HAVE_LONG_LONG 1
 
 	/* Define to 1 if you have the <memory.h> header file. */
 #	define HAVE_MEMORY_H 1
@@ -122,10 +122,10 @@
 #	undef HAVE_SYS_STAT_H
 
 	/* Define to 1 if you have the <sys/types.h> header file. */
-#	undef HAVE_SYS_TYPES_H
+#	define HAVE_SYS_TYPES_H 1
 
 	/* Define to 1 if you have the <unistd.h> header file. */
-#	undef HAVE_UNISTD_H
+#	define HAVE_UNISTD_H 1
 
 	/* Define to 1 if you have the <values.h> header file. */
 #	undef HAVE_VALUES_H
@@ -178,16 +178,20 @@
 #	define SIZEOF_UNSIGNED_LONG 4
 
 	/* The size of `void*', as computed by sizeof. */
-#	define SIZEOF_VOIDP 4
+#	ifdef __LP64__
+#		define SIZEOF_VOIDP 8
+#	else
+#		define SIZEOF_VOIDP 4
+#	endif
 
 	/* Define to 1 if you have the ANSI C header files. */
-#	undef STDC_HEADERS
+#	define STDC_HEADERS 1
 
 	/* Define to 1 if you have fseek64, ftell64 */
 #	undef UNIX_STDIO_64
 
 	/* Define to 1 if you want to use the -fvisibility GCC flag */
-#	undef USE_GCC_VISIBILITY_FLAG
+#	define USE_GCC_VISIBILITY_FLAG 1
 
 	/* Define to 1 if GCC atomic builtins are available */
 #	undef HAVE_GCC_ATOMIC_BUILTINS
@@ -205,7 +209,7 @@
 #	undef VSI_FTELL64
 
 	/* Define to 1, if you have 64 bit STDIO API */
-#	undef VSI_LARGE_API_SUPPORTED
+#	define VSI_LARGE_API_SUPPORTED 1
 
 	/* Define to 1, if you have LARGEFILE64_SOURCE */
 #	undef VSI_NEED_LARGEFILE64_SOURCE
@@ -218,7 +222,11 @@
 
 	/* Define to 1 if your processor stores words with the most significant byte
 	   first (like Motorola and SPARC, unlike Intel and VAX). */
-#	undef WORDS_BIGENDIAN
+#	ifdef __BIG_ENDIAN__
+#		define WORDS_BIGENDIAN 1
+#	else
+#		undef WORDS_BIGENDIAN
+#	endif
 
 	/* Define to 1 if you have the `getaddrinfo' function. */
 #	define HAVE_GETADDRINFO 1
