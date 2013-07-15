@@ -41,6 +41,23 @@ elseif(CMAKE_TARGET_OS STREQUAL "darwin")
 		-DSK_BUILD_FOR_MAC
 		-DSK_USE_CORETEXT
 	)
+elseif(CMAKE_TARGET_OS STREQUAL "ios")
+	set(target_specific_include_dirs_public ${target_specific_include_dirs_public}
+		"upstream.patched/include/utils/mac"
+	)
+	set(target_specific_sources "${target_specific_sources}"
+		"upstream.patched/src/ports/SkDebug_stdio.cpp"
+		"upstream.patched/src/ports/SkThread_pthread.cpp"
+		"upstream.patched/src/ports/SkFontHost_mac.cpp"
+		"upstream.patched/src/ports/SkFontHost_mac_coretext.cpp"
+		"upstream.patched/src/ports/SkFontHost_freetype_mac.cpp"
+		"upstream.patched/src/ports/SkTime_Unix.cpp"
+		"upstream.patched/src/utils/mac/SkStream_mac.cpp"
+	)
+	set(target_specific_definitions_public ${target_specific_definitions_public}
+		-DSK_BUILD_FOR_IOS
+		-DSK_USE_CORETEXT
+	)
 elseif(CMAKE_TARGET_OS STREQUAL "linux")
 	set(target_specific_sources "${target_specific_sources}"
 		"upstream.patched/src/ports/SkFontHost_tables.cpp"
