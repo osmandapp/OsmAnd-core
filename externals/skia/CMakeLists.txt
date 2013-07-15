@@ -52,6 +52,7 @@ elseif(CMAKE_TARGET_OS STREQUAL "ios")
 		"upstream.patched/src/ports/SkTime_Unix.cpp"
 		"upstream.patched/src/ports/SkImageDecoder_CG.cpp"
 		"upstream.patched/src/ports/SkFontHost_mac.cpp"
+		"upstream.patched/src/utils/mac/SkStream_mac.cpp"
 	)
 	set(target_specific_definitions_public ${target_specific_definitions_public}
 		-DSK_BUILD_FOR_IOS
