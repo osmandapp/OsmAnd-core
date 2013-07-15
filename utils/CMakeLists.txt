@@ -7,9 +7,6 @@ set(merged_sources
 	${sources}
 	${headers}
 )
-set(merged_compile_definitions_private
-	-DOSMAND_CORE_UTILS_EXPORTS
-)
 set(merged_include_dirs_public
 	"${OSMAND_ROOT}/core/utils"
 )
@@ -19,7 +16,7 @@ if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 	add_dependencies(OsmAndCoreUtils_shared OsmAndCore_shared)
 	target_compile_definitions(OsmAndCoreUtils_shared
 		PRIVATE
-			${merged_compile_definitions_private}
+			-DOSMAND_CORE_UTILS_EXPORTS
 	)
 	target_include_directories(OsmAndCoreUtils_shared
 		PUBLIC
@@ -35,8 +32,8 @@ if(CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 	add_library(OsmAndCoreUtils_static STATIC ${merged_sources})
 	add_dependencies(OsmAndCoreUtils_static OsmAndCore_static)
 	target_compile_definitions(OsmAndCoreUtils_static
-		PRIVATE
-			${merged_compile_definitions_private}
+		PUBLIC
+			-DOSMAND_CORE_UTILS_STATIC
 	)
 	target_include_directories(OsmAndCoreUtils_static
 		PUBLIC
