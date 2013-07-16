@@ -1,15 +1,6 @@
 %module OsmAndCore
 
-%include <typemaps.i>
-%include <stdint.i>
-%include <std_shared_ptr.i>
-shared_ptr(IMapTileProvider);
-
 %{
-
-#define OSMAND_CORE_API
-#define OSMAND_CORE_API_DL
-#define OSMAND_CORE_CALL
 
 // Common
 #include "OsmAndCore.h"
@@ -34,6 +25,19 @@ shared_ptr(IMapTileProvider);
 #include "OsmAndCore/Routing/RoutePlannerContext.h"
 
 %}
+
+%include <typemaps.i>
+%include <stdint.i>
+%include <std_shared_ptr.i>
+%shared_ptr(OsmAnd::Model::Road)
+%shared_ptr(OsmAnd::RoutingConfiguration)
+%shared_ptr(OsmAnd::RoutingProfileContext)
+%shared_ptr(OsmAnd::RoutingRuleset)
+%shared_ptr(OsmAnd::IMapTileProvider)
+%shared_ptr(OsmAnd::IMapBitmapTileProvider)
+%shared_ptr(OsmAnd::IMapElevationDataProvider)
+%shared_ptr(OsmAnd::HeightmapTileProvider)
+%shared_ptr(OsmAnd::OnlineMapRasterTileProvider)
 
 // Common
 %include "OsmAndCore.h"
