@@ -38,6 +38,37 @@ namespace OsmAnd {
 
     class OSMAND_CORE_API RoutingProfile
     {
+    public:
+        class OSMAND_CORE_API Parameter
+        {
+        public:
+            enum Type
+            {
+                Numeric,
+                Boolean,
+            };
+        private:
+        protected:
+            QString _id;
+            QString _name;
+            QString _description;
+            Type _type;
+            QList<double> _possibleValues;
+            QList<QString> _possibleValueDescriptions;
+
+            Parameter();
+        public:
+            virtual ~Parameter();
+
+            const QString& id;
+            const QString& name;
+            const QString& description;
+            const Type& type;
+            const QList<double>& possibleValues;
+            const QList<QString>& possibleValueDescriptions;
+
+        friend class OsmAnd::RoutingProfile;
+        };
     private:
         QString _name;
         QHash<QString, QString> _attributes;
@@ -58,21 +89,6 @@ namespace OsmAnd {
         float _minDefaultSpeed;
         float _maxDefaultSpeed;
     protected:
-        struct Parameter
-        {
-            enum Type
-            {
-                Numeric,
-                Boolean,
-            };
-
-            QString _id;
-            QString _name;
-            QString _description;
-            Type _type;
-            QList<double> _possibleValues;
-            QList<QString> _possibleValueDescriptions;
-        };
         QHash< QString, std::shared_ptr<Parameter> > _parameters;
 
         void registerBooleanParameter(const QString& id, const QString& name, const QString& description);
@@ -92,7 +108,7 @@ namespace OsmAnd {
 
         const QString& name;
         const QHash<QString, QString>& attributes;
-        const QHash< QString, std::shared_ptr<Parameter> >& parameters;
+        const QHash< QString, std::shared_ptr<OsmAnd::RoutingProfile::Parameter> >& parameters;
 
         const bool& restrictionsAware;
         const float& leftTurn;
@@ -101,7 +117,7 @@ namespace OsmAnd {
         const float& minDefaultSpeed;
         const float& maxDefaultSpeed;
 
-        std::shared_ptr<RoutingRuleset> getRuleset(RoutingRuleset::Type type) const;
+        std::shared_ptr<OsmAnd::RoutingRuleset> getRuleset(OsmAnd::RoutingRuleset::Type type) const;
         void addAttribute(const QString& key, const QString& value);
 
     friend class OsmAnd::RoutingConfiguration;

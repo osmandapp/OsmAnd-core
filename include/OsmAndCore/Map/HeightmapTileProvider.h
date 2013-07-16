@@ -63,15 +63,15 @@ namespace OsmAnd {
         HeightmapTileProvider(const QDir& dataPath, const QString& indexFilepath = QString());
         virtual ~HeightmapTileProvider();
 
-        const TileDB& tileDb;
+        const OsmAnd::TileDB& tileDb;
         void rebuildTileDbIndex();
         static const QString defaultIndexFilename;
 
         virtual uint32_t getTileSize() const;
         virtual uint32_t getMaxResolutionPatchesCount() const;
 
-        virtual bool obtainTileImmediate(const TileId& tileId, uint32_t zoom, std::shared_ptr<IMapTileProvider::Tile>& tile);
-        virtual void obtainTileDeffered(const TileId& tileId, uint32_t zoom, TileReadyCallback readyCallback);
+        virtual bool obtainTileImmediate(const OsmAnd::TileId& tileId, uint32_t zoom, std::shared_ptr<IMapTileProvider::Tile>& tile);
+        virtual void obtainTileDeffered(const OsmAnd::TileId& tileId, uint32_t zoom, TileReadyCallback readyCallback);
     };
 
 }

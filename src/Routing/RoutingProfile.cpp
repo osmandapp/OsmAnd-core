@@ -144,3 +144,17 @@ bool OsmAnd::RoutingProfile::parseTypedValueFromTag( uint32_t id, const QString&
         parsedValue = *itCachedValue;
     return ok;
 }
+
+OsmAnd::RoutingProfile::Parameter::Parameter()
+    : id(_id)
+    , name(_name)
+    , description(_description)
+    , type(_type)
+    , possibleValues(_possibleValues)
+    , possibleValueDescriptions(_possibleValueDescriptions)
+{
+}
+
+OsmAnd::RoutingProfile::Parameter::~Parameter()
+{
+}

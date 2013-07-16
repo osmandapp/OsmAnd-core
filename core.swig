@@ -8,6 +8,7 @@
 #include "OsmAndCore.h"
 #include "OsmAndCore/Utilities.h"
 #include "OsmAndCore/EmbeddedResources.h"
+#include "OsmAndCore/CommonTypes.h"
 
 // Map-related
 #include "OsmAndCore/Map/IMapTileProvider.h"
@@ -31,6 +32,7 @@
 %include "OsmAndCore.h"
 %include "OsmAndCore/Utilities.h"
 %include "OsmAndCore/EmbeddedResources.h"
+%include "OsmAndCore/CommonTypes.h"
 
 // Map-related
 %include "OsmAndCore/Map/IMapTileProvider.h"

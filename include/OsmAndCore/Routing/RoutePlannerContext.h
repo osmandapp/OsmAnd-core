@@ -204,14 +204,13 @@ namespace OsmAnd {
         int _loadedTiles;
         std::shared_ptr<RouteStatistics> _routeStatistics;
 
-
         enum {
             DefaultRoadTilesLoadingZoomLevel = 16,
         };
     public:
         RoutePlannerContext(
-            const QList< std::shared_ptr<ObfReader> >& sources,
-            const std::shared_ptr<RoutingConfiguration>& routingConfig,
+            const QList< std::shared_ptr<OsmAnd::ObfReader> >& sources,
+            const std::shared_ptr<OsmAnd::RoutingConfiguration>& routingConfig,
             const QString& vehicle,
             bool useBasemap,
             float initialHeading = std::numeric_limits<float>::quiet_NaN(),
@@ -219,9 +218,9 @@ namespace OsmAnd {
             size_t memoryLimit = 1000000);
         virtual ~RoutePlannerContext();
 
-        const QList< std::shared_ptr<ObfReader> > sources;
-        const std::shared_ptr<RoutingConfiguration> configuration;
-        const std::unique_ptr<RoutingProfileContext> profileContext;
+        const QList< std::shared_ptr<OsmAnd::ObfReader> > sources;
+        const std::shared_ptr<OsmAnd::RoutingConfiguration> configuration;
+        const std::shared_ptr<OsmAnd::RoutingProfileContext> profileContext;
 
         uint32_t getCurrentlyLoadedTiles();
         uint32_t getCurrentEstimatedSize();

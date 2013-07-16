@@ -61,7 +61,7 @@
 namespace OsmAnd {
 
     struct RouteCalculationResult {
-        QList< std::shared_ptr<RouteSegment> >  list;
+        QList< std::shared_ptr<OsmAnd::RouteSegment> >  list;
         QString warnMessage;
         RouteCalculationResult(QString warn=""){
             warnMessage=warn;
@@ -215,7 +215,7 @@ namespace OsmAnd {
             OsmAnd::RoutePlannerContext* context,
             const QList< std::pair<double, double> >& points,
             bool leftSideNavigation,
-            IQueryController* controller = nullptr);
+            OsmAnd::IQueryController* controller = nullptr);
 
         friend class OsmAnd::RoutePlannerContext;
         friend class OsmAnd::RoutePlannerAnalyzer;

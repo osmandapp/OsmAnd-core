@@ -57,14 +57,14 @@ namespace OsmAnd {
         RoutingConfiguration();
         virtual ~RoutingConfiguration();
 
-        const QMap< QString, std::shared_ptr<RoutingProfile> >& routingProfiles;
+        const QMap< QString, std::shared_ptr<OsmAnd::RoutingProfile> >& routingProfiles;
 
         QString resolveAttribute(const QString& vehicle, const QString& name);
 
         static bool parseTypedValue(const QString& value, const QString& type, float& parsedValue);
 
-        static bool parseConfiguration(QIODevice* data, RoutingConfiguration& outConfig);
-        static void loadDefault(RoutingConfiguration& outConfig);
+        static bool parseConfiguration(QIODevice* data, OsmAnd::RoutingConfiguration& outConfig);
+        static void loadDefault(OsmAnd::RoutingConfiguration& outConfig);
     };
 
 } // namespace OsmAnd
