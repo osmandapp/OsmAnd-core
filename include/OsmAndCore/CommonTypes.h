@@ -312,11 +312,14 @@ namespace OsmAnd
             return this->id != that;
         }
     };
+
+#ifndef SWIG
     inline uint qHash(TileId tileId, uint seed = 0) Q_DECL_NOTHROW
     {
         return ::qHash(tileId.id, seed);
     }
     static_assert(sizeof(TileId) == 8, "TileId must be 8 bytes in size");
+#endif
 
 }
 

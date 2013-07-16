@@ -44,7 +44,10 @@ namespace OsmAnd {
     class OSMAND_CORE_API IMapRenderer
     {
     public:
-        enum TileLayerId : int
+        enum TileLayerId
+#ifndef SWIG
+            : int32_t
+#endif
         {
             Invalid = -1,
 

@@ -44,7 +44,10 @@ namespace OsmAnd {
     class OSMAND_CORE_API RasterizationStyle
     {
     public:
-        enum RulesetType : uint32_t
+        enum RulesetType
+#ifndef SWIG
+            : uint32_t
+#endif
         {
             Invalid = 0,
 

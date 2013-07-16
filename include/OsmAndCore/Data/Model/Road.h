@@ -44,14 +44,20 @@ namespace OsmAnd {
         class OSMAND_CORE_API Road
         {
         public:
-            enum Direction : int32_t
+            enum Direction
+#ifndef SWIG
+                : int32_t
+#endif
             {
                 OneWayForward = -1,
                 TwoWay = 0,
                 OneWayReverse = +1
             };
 
-            enum Restriction : int32_t
+            enum Restriction
+#ifndef SWIG
+                : int32_t
+#endif
             {
                 Special_ReverseWayOnly = -1,
 
