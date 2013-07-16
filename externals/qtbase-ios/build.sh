@@ -42,6 +42,9 @@ if [[ "$(uname -a)" == *Darwin* ]]; then
 		# Make universal libraries using lipo
 		for sourcePath in "$SRCLOC/upstream.patched.ios.simulator/lib"/lib*.a ; do
 			libName=$(basename "$sourcePath")
+			if [[ "$libName" == *Bootstrap* ]]; then
+				continue
+			fi
 
 			echo "Packing '$libName'..."
 			lipo -create "$SRCLOC/upstream.patched.ios.simulator/lib/$libName" "$SRCLOC/upstream.patched.ios.device/lib/$libName" -output "$SRCLOC/upstream.patched.ios.universal/lib/$libName"
