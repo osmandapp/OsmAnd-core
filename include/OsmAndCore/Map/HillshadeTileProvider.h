@@ -36,6 +36,8 @@
 
 #include <OsmAndCore/Map/IMapBitmapTileProvider.h>
 
+class SkBitmap;
+
 namespace OsmAnd {
 
     class OSMAND_CORE_API HillshadeTileProvider : public IMapBitmapTileProvider
