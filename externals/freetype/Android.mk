@@ -1,54 +1,51 @@
-LOCAL_PATH:= $(call my-dir)
-
 include $(CLEAR_VARS)
 
-PROJECT_ROOT_RELATIVE := ../../../platforms/android/OsmAnd
-OSMAND_FREETYPE_ROOT_RELATIVE := .
-OSMAND_FREETYPE_ROOT := $(LOCAL_PATH)/$(OSMAND_FREETYPE_ROOT_RELATIVE)
-OSMAND_FREETYPE_RELATIVE := ./upstream.patched
-OSMAND_FREETYPE := $(LOCAL_PATH)/$(OSMAND_FREETYPE_RELATIVE)
-
-LOCAL_SRC_FILES:= \
-	$(OSMAND_FREETYPE_RELATIVE)/src/base/ftbase.c \
-	$(OSMAND_FREETYPE_RELATIVE)/src/base/ftbbox.c \
-	$(OSMAND_FREETYPE_RELATIVE)/src/base/ftbitmap.c \
-	$(OSMAND_FREETYPE_RELATIVE)/src/base/ftfstype.c \
-	$(OSMAND_FREETYPE_RELATIVE)/src/base/ftgasp.c \
-	$(OSMAND_FREETYPE_RELATIVE)/src/base/ftglyph.c \
-	$(OSMAND_FREETYPE_RELATIVE)/src/base/ftinit.c \
-	$(OSMAND_FREETYPE_RELATIVE)/src/base/ftlcdfil.c \
-	$(OSMAND_FREETYPE_RELATIVE)/src/base/ftstroke.c \
-	$(OSMAND_FREETYPE_RELATIVE)/src/base/ftsystem.c \
-	$(OSMAND_FREETYPE_RELATIVE)/src/base/fttype1.c \
-	$(OSMAND_FREETYPE_RELATIVE)/src/base/ftxf86.c \
-	$(OSMAND_FREETYPE_RELATIVE)/src/autofit/autofit.c \
-	$(OSMAND_FREETYPE_RELATIVE)/src/bdf/bdf.c \
-	$(OSMAND_FREETYPE_RELATIVE)/src/cff/cff.c \
-	$(OSMAND_FREETYPE_RELATIVE)/src/pshinter/pshinter.c \
-	$(OSMAND_FREETYPE_RELATIVE)/src/psnames/psnames.c \
-	$(OSMAND_FREETYPE_RELATIVE)/src/raster/raster.c \
-	$(OSMAND_FREETYPE_RELATIVE)/src/sfnt/sfnt.c \
-	$(OSMAND_FREETYPE_RELATIVE)/src/smooth/smooth.c \
-	$(OSMAND_FREETYPE_RELATIVE)/src/truetype/truetype.c
-
-LOCAL_C_INCLUDES += \
-	$(OSMAND_FREETYPE_ROOT) \
-	$(OSMAND_FREETYPE)/include
-
-LOCAL_CFLAGS += -DFT2_BUILD_LIBRARY -DFT_CONFIG_MODULES_H="<ftmodule-override.h>" -fPIC
-LOCAL_ARM_MODE := arm
+LOCAL_PATH := $(call my-dir)
 
 ifneq ($(OSMAND_BUILDING_NEON_LIBRARY),true)
-	LOCAL_MODULE := osmand_ft2
+    LOCAL_MODULE := osmand_ft2
 else
-	LOCAL_MODULE := osmand_ft2_neon
-	LOCAL_ARM_NEON := true
+    LOCAL_MODULE := osmand_ft2_neon
+    LOCAL_ARM_NEON := true
 endif
 
+LOCAL_EXPORT_C_INCLUDES := \
+    $(LOCAL_PATH)/upstream.patched/include
+
 ifneq ($(OSMAND_USE_PREBUILT),true)
-	include $(BUILD_STATIC_LIBRARY)
+    LOCAL_CFLAGS := \
+        -DFT2_BUILD_LIBRARY
+        -DFT_CONFIG_MODULES_H=<ftmodule-override.h>
+
+    LOCAL_C_INCLUDES := \
+        $(LOCAL_PATH)
+
+    LOCAL_SRC_FILES:= \
+        upstream.patched/src/base/ftbase.c \
+        upstream.patched/src/base/ftbbox.c \
+        upstream.patched/src/base/ftbitmap.c \
+        upstream.patched/src/base/ftfstype.c \
+        upstream.patched/src/base/ftgasp.c \
+        upstream.patched/src/base/ftglyph.c \
+        upstream.patched/src/base/ftinit.c \
+        upstream.patched/src/base/ftlcdfil.c \
+        upstream.patched/src/base/ftstroke.c \
+        upstream.patched/src/base/ftsystem.c \
+        upstream.patched/src/base/fttype1.c \
+        upstream.patched/src/base/ftxf86.c \
+        upstream.patched/src/autofit/autofit.c \
+        upstream.patched/src/bdf/bdf.c \
+        upstream.patched/src/cff/cff.c \
+        upstream.patched/src/pshinter/pshinter.c \
+        upstream.patched/src/psnames/psnames.c \
+        upstream.patched/src/raster/raster.c \
+        upstream.patched/src/sfnt/sfnt.c \
+        upstream.patched/src/smooth/smooth.c \
+        upstream.patched/src/truetype/truetype.c
+
+    include $(BUILD_STATIC_LIBRARY)
 else
-	LOCAL_SRC_FILES := \
-		$(PROJECT_ROOT_RELATIVE)/libs/$(TARGET_ARCH_ABI)/lib$(LOCAL_MODULE).a
-	include $(PREBUILT_STATIC_LIBRARY)
+    LOCAL_SRC_FILES := \
+        $(OSMAND_ANDROID_PREBUILT_ROOT)/$(TARGET_ARCH_ABI)/lib$(LOCAL_MODULE).a
+    include $(PREBUILT_STATIC_LIBRARY)
 endif

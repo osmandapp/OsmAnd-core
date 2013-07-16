@@ -93,7 +93,6 @@ set(merged_compile_definitions_public
 	${target_specific_public_definitions}
 )
 set(merged_include_dirs_private
-	"${OSMAND_ROOT}/core/include"
 	"${OSMAND_ROOT}/core/include/OsmAndCore"
 	"${OSMAND_ROOT}/core/include/OsmAndCore/Data"
 	"${OSMAND_ROOT}/core/include/OsmAndCore/Data/Model"
@@ -107,7 +106,6 @@ set(merged_include_dirs_private
 )
 set(merged_include_dirs_public
 	"${OSMAND_ROOT}/core/include"
-	"${OSMAND_ROOT}/core/src"
 	"${OSMAND_ROOT}/core/client"
 	"${OSMAND_ROOT}/core/protos"
 	${target_specific_public_includes}
