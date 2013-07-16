@@ -44,7 +44,7 @@ if [[ "$(uname -a)" == *Darwin* ]]; then
 			libName=$(basename "$sourcePath")
 
 			echo "Packing '$libName'..."
-			#lipo -create "$SRCLOC/upstream.patched.ios.simulator/lib/$libName" "$SRCLOC/upstream.patched.ios.device/lib/$libName" -output "$SRCLOC/upstream.patched.ios.universal/lib/$libName"
+			lipo -create "$SRCLOC/upstream.patched.ios.simulator/lib/$libName" "$SRCLOC/upstream.patched.ios.device/lib/$libName" -output "$SRCLOC/upstream.patched.ios.universal/lib/$libName"
 		done
 	fi
 fi
