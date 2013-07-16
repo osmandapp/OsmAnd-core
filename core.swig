@@ -1,8 +1,15 @@
 %module OsmAndCore
 
-%include "typemaps.i"
+%include <typemaps.i>
+%include <stdint.i>
+%include <std_shared_ptr.i>
+shared_ptr(IMapTileProvider);
 
 %{
+
+#define OSMAND_CORE_API
+#define OSMAND_CORE_API_DL
+#define OSMAND_CORE_CALL
 
 // Common
 #include "OsmAndCore.h"
