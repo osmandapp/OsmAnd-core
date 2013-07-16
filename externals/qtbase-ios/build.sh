@@ -29,4 +29,22 @@ if [[ "$(uname -a)" == *Darwin* ]]; then
 			./configure -xplatform unsupported/macx-ios-clang $QTBASE_CONFIGURATION -sdk iphoneos)
 	fi
 	(cd "$SRCLOC/upstream.patched.ios.device" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
+
+	if [ ! -d "$SRCLOC/upstream.patched.ios.universal" ]; then
+
+		# Copy headers from patched version
+		mkdir -p "$SRCLOC/upstream.patched.ios.universal"
+		cp -rpf "$SRCLOC/upstream.patched/include" "$SRCLOC/upstream.patched.ios.universal/include"
+
+		# Copy cmake-related stuff from already built target (any is suitable)
+		mkdir -p "$SRCLOC/upstream.patched.ios.universal/lib"
+		cp -rpf "$SRCLOC/upstream.patched.ios.simulator/lib/cmake" "$SRCLOC/upstream.patched.ios.universal/lib/cmake"
+
+		# Make universal libraries using lipo
+		for sourcePath in "$SRCLOC/upstream.patched.ios.simulator/lib"/lib*.a ; do
+			libName = $(basename "$sourcePath")
+
+			echo "Packing $libName"
+		done
+	fi
 fi
