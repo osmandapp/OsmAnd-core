@@ -31,10 +31,9 @@ if [[ "$(uname -a)" == *Darwin* ]]; then
 	(cd "$SRCLOC/upstream.patched.ios.device" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 
 	if [ ! -d "$SRCLOC/upstream.patched.ios.universal" ]; then
-
-		# Copy headers from patched version
+		# Copy headers from already built target (any is suitable)
 		mkdir -p "$SRCLOC/upstream.patched.ios.universal"
-		cp -rpf "$SRCLOC/upstream.patched/include" "$SRCLOC/upstream.patched.ios.universal/include"
+		cp -rpf "$SRCLOC/upstream.patched.ios.simulator/include" "$SRCLOC/upstream.patched.ios.universal/include"
 
 		# Copy cmake-related stuff from already built target (any is suitable)
 		mkdir -p "$SRCLOC/upstream.patched.ios.universal/lib"
@@ -44,7 +43,8 @@ if [[ "$(uname -a)" == *Darwin* ]]; then
 		for sourcePath in "$SRCLOC/upstream.patched.ios.simulator/lib"/lib*.a ; do
 			libName = $(basename "$sourcePath")
 
-			echo "Packing $libName"
+			echo "Packing '$libName'..."
+			#lipo -create "$SRCLOC/upstream.patched.ios.simulator/lib/$libName" "$SRCLOC/upstream.patched.ios.device/lib/$libName" -output "$SRCLOC/upstream.patched.ios.universal/lib/$libName"
 		done
 	fi
 fi
