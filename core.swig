@@ -16,7 +16,7 @@
 #include "OsmAndCore/Map/IMapElevationDataProvider.h"
 #include "OsmAndCore/Map/IMapRenderer.h"
 #include "OsmAndCore/Map/HeightmapTileProvider.h"
-#include "OsmAndCore/Map/HillshadeTileProvider.h"
+//#include "OsmAndCore/Map/HillshadeTileProvider.h"
 #include "OsmAndCore/Map/OnlineMapRasterTileProvider.h"
 #include "OsmAndCore/Map/VectorMapTileProvider.h"
 
@@ -40,7 +40,7 @@
 %include "OsmAndCore/Map/IMapElevationDataProvider.h"
 %include "OsmAndCore/Map/IMapRenderer.h"
 %include "OsmAndCore/Map/HeightmapTileProvider.h"
-%include "OsmAndCore/Map/HillshadeTileProvider.h"
+//%include "OsmAndCore/Map/HillshadeTileProvider.h"
 %include "OsmAndCore/Map/OnlineMapRasterTileProvider.h"
 %include "OsmAndCore/Map/VectorMapTileProvider.h"
 
