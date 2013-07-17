@@ -145,13 +145,13 @@ if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 		PUBLIC
 			${merged_include_dirs_public}
 	)
-	target_link_libraries(OsmAndCore_shared
-		LINK_PUBLIC
-			${merged_link_libs_public}
-	)
 	qt5_use_modules(OsmAndCore_shared
 		LINK_PUBLIC
 			${merged_qt5_modules}
+	)
+	target_link_libraries(OsmAndCore_shared
+		LINK_PUBLIC
+			${merged_link_libs_public}
 	)
 endif()
 
@@ -170,12 +170,12 @@ if(CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 		PUBLIC
 			${merged_include_dirs_public}
 	)
-	target_link_libraries(OsmAndCore_static
-		LINK_PUBLIC
-			${merged_link_libs_public}
-	)
 	qt5_use_modules(OsmAndCore_static
 		LINK_PUBLIC
 			${merged_qt5_modules}
+	)
+	target_link_libraries(OsmAndCore_static
+		LINK_PUBLIC
+			${merged_link_libs_public}
 	)
 endif()
