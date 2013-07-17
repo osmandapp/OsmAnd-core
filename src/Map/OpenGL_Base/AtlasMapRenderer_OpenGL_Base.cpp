@@ -7,7 +7,7 @@
 #include <glm/gtx/transform.hpp>
 
 #include <QtGlobal>
-#include <QtCore>
+#include <QtMath>
 #include <QThread>
 
 #include "IMapRenderer.h"

@@ -2,7 +2,7 @@
 
 #include <assert.h>
 
-#include <QtCore>
+#include <QtMath>
 
 #include "IMapRenderer.h"
 #include "IMapTileProvider.h"

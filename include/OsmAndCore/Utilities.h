@@ -28,7 +28,7 @@
 #include <memory>
 #include <functional>
 
-#include <QtCore>
+#include <QtMath>
 #include <QString>
 #include <QStringList>
 #include <QList>
