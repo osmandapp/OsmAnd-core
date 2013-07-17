@@ -10,6 +10,10 @@ if(CMAKE_TARGET_OS STREQUAL "ios")
 	set(target_specific_public_libraries ${target_specific_public_libraries}
 		z
 	)
+elseif(CMAKE_TARGET_OS STREQUAL "linux")
+	set(target_specific_public_libraries ${target_specific_public_libraries}
+		dl
+	)
 endif()
 
 # 3D rendering: OpenGL, OpenGLES, Direct3D
