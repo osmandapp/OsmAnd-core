@@ -3,7 +3,7 @@
 #include <queue>
 
 #include <QtCore>
-#include <QtCore/qmath.h>
+#include <QtMath>
 
 #include "ObfReader.h"
 #include "Common.h"
