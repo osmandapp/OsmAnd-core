@@ -15,9 +15,6 @@ else()
 	set(target_specific_sources ${target_specific_sources}
 		"upstream.patched/port/cpl_vsil_unix_stdio_64.cpp"
 	)
-	set(target_specific_public_libraries ${target_specific_public_libraries}
-		iconv
-	)
 endif()
 
 file(GLOB_RECURSE gdal_gcore_sources "upstream.patched/gcore/*.cpp")
