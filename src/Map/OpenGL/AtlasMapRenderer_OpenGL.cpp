@@ -441,7 +441,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_MapStage()
                 glEnable(GL_TEXTURE_2D);
                 GL_CHECK_RESULT;
 
-                glBindTexture(GL_TEXTURE_2D, reinterpret_cast<GLuint>(cachedTile->textureRef));
+                glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(cachedTile->textureRef)));
                 GL_CHECK_RESULT;
 
                 const auto& perTile_vs = _mapStage.vs.param.perTileLayer[TileLayerId::ElevationData];
@@ -518,7 +518,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_MapStage()
                     glActiveTexture(GL_TEXTURE0 + layerId);
                     GL_CHECK_RESULT;
 
-                    glBindTexture(GL_TEXTURE_2D, reinterpret_cast<GLuint>(cachedTile->textureRef));
+                    glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(cachedTile->textureRef)));
                     GL_CHECK_RESULT;
 
                     glUniform1i(perTile_vs.slotIndex, cachedTile->atlasSlotIndex);

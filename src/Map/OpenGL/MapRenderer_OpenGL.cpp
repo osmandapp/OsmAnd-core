@@ -63,10 +63,10 @@ GLuint OsmAnd::MapRenderer_OpenGL::compileShader( GLenum shaderType, const char*
     GL_CHECK_RESULT;
     if(didCompile != GL_TRUE)
     {
-        GLint logBufferLen = 0;	
+        GLint logBufferLen = 0;
         GLsizei logLen = 0;
         assert(glGetShaderiv);
-        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logBufferLen);       
+        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logBufferLen);
         GL_CHECK_RESULT;
         if (logBufferLen > 1)
         {
@@ -100,7 +100,7 @@ GLuint OsmAnd::MapRenderer_OpenGL::linkProgram( GLuint shadersCount, GLuint *sha
         glAttachShader(program, shaders[shaderIdx]);
         GL_CHECK_RESULT;
     }
-    
+
     assert(glLinkProgram);
     glLinkProgram(program);
     GL_CHECK_RESULT;
@@ -111,9 +111,9 @@ GLuint OsmAnd::MapRenderer_OpenGL::linkProgram( GLuint shadersCount, GLuint *sha
     GL_CHECK_RESULT;
     if(linkSuccessful != GL_TRUE)
     {
-        GLint logBufferLen = 0;	
+        GLint logBufferLen = 0;
         GLsizei logLen = 0;
-        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logBufferLen);       
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logBufferLen);
         GL_CHECK_RESULT;
         if (logBufferLen > 1)
         {
@@ -182,7 +182,7 @@ void OsmAnd::MapRenderer_OpenGL::initializeRendering()
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units in vertex shader %d\n", maxTextureUnitsInVertexShader);
     assert(maxTextureUnitsInVertexShader >= IMapRenderer::RasterMap);
-    
+
     GLint maxUniformsPerProgram;
     glGetIntegerv(GL_MAX_UNIFORM_LOCATIONS, &maxUniformsPerProgram);
     GL_CHECK_RESULT;
@@ -260,7 +260,7 @@ void OsmAnd::MapRenderer_OpenGL::initializeRendering()
     glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     GL_CHECK_RESULT;
 
-    glShadeModel(GL_SMOOTH); 
+    glShadeModel(GL_SMOOTH);
     GL_CHECK_RESULT;
 
     glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
@@ -294,7 +294,7 @@ void OsmAnd::MapRenderer_OpenGL::releaseRendering()
         GL_CHECK_RESULT;
         _textureSampler_Bitmap_NoAtlas = 0;
     }
-    
+
     if(_textureSampler_Bitmap_Atlas != 0)
     {
         glDeleteSamplers(1, &_textureSampler_Bitmap_Atlas);
@@ -430,7 +430,7 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
     if(itAtlasPool != tileLayer._atlasTexturePools.end())
     {
         auto& atlasPool = *itAtlasPool;
-        
+
         GLuint atlasTexture = 0;
         int atlasSlotIndex = -1;
 
@@ -438,7 +438,7 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
         if(!atlasPool._freedSlots.isEmpty())
         {
             const auto& itFreeSlot = atlasPool._freedSlots.begin();
-            atlasTexture = reinterpret_cast<GLuint>(itFreeSlot.key());
+            atlasTexture = static_cast<GLuint>(reinterpret_cast<intptr_t>(itFreeSlot.key()));
             atlasSlotIndex = itFreeSlot.value();
 
             // Mark slot as occupied
@@ -501,7 +501,7 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
         // Or let's just continue using current atlas
         else
         {
-            atlasTexture = (GLuint)atlasPool._lastNonFullTextureRef;
+            atlasTexture = static_cast<GLuint>(reinterpret_cast<intptr_t>(atlasPool._lastNonFullTextureRef));
             atlasSlotIndex = atlasPool._firstFreeSlotIndex;
             atlasPool._firstFreeSlotIndex++;
             tileLayer._textureRefCount[atlasPool._lastNonFullTextureRef]++;
@@ -523,7 +523,7 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
             const size_t cornerDataSize = sourcePixelByteSize * pixelsCount;
             uint8_t* pCornerData = new uint8_t[cornerDataSize];
             const GLvoid* pCornerPixel;
-            
+
             // Set stride
             glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
             GL_CHECK_RESULT;
@@ -652,7 +652,7 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
             SkBitmap bitmap;
             bitmap.setConfig(SkBitmap::kARGB_8888_Config, atlasPool._textureSize, atlasPool._textureSize);
             bitmap.allocPixels();
-            
+
             glPixelStorei(GL_PACK_ROW_LENGTH, bitmap.rowBytesAsPixels());
             GL_CHECK_RESULT;
 
@@ -737,7 +737,7 @@ void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const
 
 void OsmAnd::MapRenderer_OpenGL::releaseTexture( void* textureRef )
 {
-    GLuint texture = reinterpret_cast<GLuint>(textureRef);
+    GLuint texture = static_cast<GLuint>(reinterpret_cast<intptr_t>(textureRef));
 
     glDeleteTextures(1, &texture);
     GL_CHECK_RESULT;
