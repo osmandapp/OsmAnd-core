@@ -8,7 +8,7 @@
 #include <SkDevice.h>
 #include <SkImageEncoder.h>
 
-#include <QtMath>
+#include <QtCore>
 
 #include <OsmAndCore/Common.h>
 #include <OsmAndCore/Data/ObfReader.h>
