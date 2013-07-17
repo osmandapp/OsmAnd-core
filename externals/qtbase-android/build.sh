@@ -15,7 +15,7 @@ fi
 export ANDROID_SDK_ROOT=`echo $ANDROID_SDK | sed 's/\\\\/\//g'`
 export ANDROID_NDK_ROOT=`echo $ANDROID_NDK | sed 's/\\\\/\//g'`
 export ANDROID_NDK_TOOLCHAIN_VERSION=4.7
-if [[ "$(uname -a)" == *Linux* ]]; then
+if [[ "$(uname -a)" =~ Linux ]]; then
 	if [[ "$(uname -m)" == x86_64 ]] && [ -d $ANDROID_NDK/prebuilt/linux-x86_64 ]; then
 		export ANDROID_NDK_HOST=linux-x86_64;
 	elif [ -d $ANDROID_NDK/prebuilt/linux-x86 ]; then
@@ -28,7 +28,7 @@ if [[ "$(uname -a)" == *Linux* ]]; then
 		OSMAND_BUILD_CPU_CORES_NUM=`nproc`
 	fi
 fi
-if [[ "$(uname -a)" == *Darwin* ]]; then
+if [[ "$(uname -a)" =~ Darwin ]]; then
 	if [[ "$(uname -m)" == x86_64 ]] && [ -d $ANDROID_NDK/prebuilt/darwin-x86_64 ]; then
 		export ANDROID_NDK_HOST=darwin-x86_64;
 	elif [ -d $ANDROID_NDK/prebuilt/darwin-x86 ]; then
@@ -50,12 +50,12 @@ QTBASE_CONFIGURATION=\
 "-c++11 -static -release "\
 "-v"
 
-if [[ "$(uname -a)" == *Cygwin* ]]; then
+if [[ "$(uname -a)" =~ Cygwin ]]; then
 	echo "Building for Android under Cygwin is not supported"
 	exit 1
 fi
 
-if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv5 ]]; then
+if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv5 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
 	if [ ! -d "$SRCLOC/upstream.patched.armeabi" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi"
 		export ANDROID_TARGET_ARCH=armeabi
@@ -67,7 +67,7 @@ if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[
 	(cd "$SRCLOC/upstream.patched.armeabi" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 fi
 
-if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv7 ]]; then
+if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv7 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
 	if [ ! -d "$SRCLOC/upstream.patched.armeabi-v7a" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi-v7a"
 		export ANDROID_TARGET_ARCH=armeabi-v7a
@@ -79,7 +79,7 @@ if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[
 	(cd "$SRCLOC/upstream.patched.armeabi-v7a" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 fi
 
-if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv7-neon ]]; then
+if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv7-neon ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
 	if [ ! -d "$SRCLOC/upstream.patched.armeabi-v7a-neon" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi-v7a-neon"
 		export ANDROID_TARGET_ARCH=armeabi-v7a
@@ -91,7 +91,7 @@ if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[
 	(cd "$SRCLOC/upstream.patched.armeabi-v7a-neon" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 fi
 
-if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x86 ]]; then
+if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x86 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
 	if [ ! -d "$SRCLOC/upstream.patched.x86" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.x86"
 		export ANDROID_TARGET_ARCH=x86
@@ -102,7 +102,7 @@ if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x86 ]]; then
 	(cd "$SRCLOC/upstream.patched.x86" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 fi
 
-if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ mips ]]; then
+if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ mips ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
 	if [ ! -d "$SRCLOC/upstream.patched.mips" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.mips"
 		export ANDROID_TARGET_ARCH=mips

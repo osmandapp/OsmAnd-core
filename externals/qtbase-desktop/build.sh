@@ -12,17 +12,17 @@ QTBASE_CONFIGURATION=\
 "-c++11 -static -release "\
 "-v"
 
-if [[ "$(uname -a)" == *Cygwin* ]]; then
+if [[ "$(uname -a)" =~ Cygwin ]]; then
 	echo "Please execute build.bat from required environments for i686 and amd64"
 	exit
 fi
 
-if [[ "$(uname -a)" == *Linux* ]]; then
+if [[ "$(uname -a)" =~ Linux ]]; then
 	if [[ -z "$OSMAND_BUILD_CPU_CORES_NUM" ]]; then
 		OSMAND_BUILD_CPU_CORES_NUM=`nproc`
 	fi
 
-	if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x86 ]]; then
+	if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x86 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
 		if [ ! -d "$SRCLOC/upstream.patched.linux.i686" ]; then
 			cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.linux.i686"
 			(cd "$SRCLOC/upstream.patched.linux.i686" && \
@@ -31,7 +31,7 @@ if [[ "$(uname -a)" == *Linux* ]]; then
 		(cd "$SRCLOC/upstream.patched.linux.i686" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 	fi
 
-	if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x64 ]]; then
+	if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x64 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
 		if [ ! -d "$SRCLOC/upstream.patched.linux.amd64" ]; then
 			cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.linux.amd64"
 			(cd "$SRCLOC/upstream.patched.linux.amd64" && \
@@ -41,12 +41,12 @@ if [[ "$(uname -a)" == *Linux* ]]; then
 	fi
 fi
 
-if [[ "$(uname -a)" == *Darwin* ]]; then
+if [[ "$(uname -a)" =~ Darwin ]]; then
 	if [[ -z "$OSMAND_BUILD_CPU_CORES_NUM" ]]; then
 		OSMAND_BUILD_CPU_CORES_NUM=`sysctl hw.ncpu | awk '{print $2}'`
 	fi
 
-	if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x86 ]]; then
+	if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x86 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
 		if [ ! -d "$SRCLOC/upstream.patched.darwin.i386" ]; then
 			cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.darwin.i386"
 			(cd "$SRCLOC/upstream.patched.darwin.i386" && \
@@ -55,7 +55,7 @@ if [[ "$(uname -a)" == *Darwin* ]]; then
 		(cd "$SRCLOC/upstream.patched.darwin.i386" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 	fi
 
-	if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x64 ]]; then
+	if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x64 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
 		if [ ! -d "$SRCLOC/upstream.patched.darwin.x86_64" ]; then
 			cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.darwin.x86_64"
 			(cd "$SRCLOC/upstream.patched.darwin.x86_64" && \

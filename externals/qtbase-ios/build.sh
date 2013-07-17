@@ -11,7 +11,7 @@ QTBASE_CONFIGURATION=\
 "-c++11 -static -debug-and-release "\
 "-v"
 
-if [[ "$(uname -a)" == *Darwin* ]]; then
+if [[ "$(uname -a)" =~ Darwin ]]; then
 	if [[ -z "$OSMAND_BUILD_CPU_CORES_NUM" ]]; then
 		OSMAND_BUILD_CPU_CORES_NUM=`sysctl hw.ncpu | awk '{print $2}'`
 	fi
