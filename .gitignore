@@ -7,6 +7,12 @@
 /*.opensdf
 *.user
 
-*.render.xml
 # VisualStudio specific folders
 /ipch
+
+# MacOSX
+.DS_Store
+
+# XCode
+*.pbxuser
+xcuserdata
