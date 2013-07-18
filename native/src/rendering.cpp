@@ -657,6 +657,7 @@ void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* c
 		ico.x = px;
 		ico.y = py;
 		ico.bmp = bmp;
+		ico.order = req->getIntPropertyValue(req-> props()-> R_ICON_ORDER, 100);
 		rc->iconsToDraw.push_back(ico);
 	}
 	if (renderTxt) {
@@ -690,15 +691,18 @@ void drawObject(RenderingContext* rc,  SkCanvas* cv, RenderingRuleSearchRequest*
 		}
 	}
 }
-
+bool iconOrder(IconDrawInfo* text1, IconDrawInfo* text2) {
+	return text1->order < text2->order;
+}
 
 void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 {
+	std::sort(rc->iconsToDraw.begin(), rc->iconsToDraw.end(), iconOrder);
 	int skewConstant = (int) rc->getDensityValue(16);
 	int iconsW = rc -> getWidth() / skewConstant;
 	int iconsH = rc -> getHeight() / skewConstant;
 	int len = (iconsW * iconsH) / 32;
-	int* alreadyDrawnIcons = new int[len];// NEVER DEALLOCATED
+	int* alreadyDrawnIcons = new int[len];
 	memset(alreadyDrawnIcons, 0, sizeof(int)*len);
 	size_t ji = 0;
 	SkPaint p;
@@ -731,6 +735,7 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 			return;
 		}
 	}
+	delete alreadyDrawnIcons;
 }
 
 double polygonArea(MapDataObject* obj, float mult) {
