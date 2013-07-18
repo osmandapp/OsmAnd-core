@@ -6,11 +6,7 @@ set(target_specific_public_includes "")
 set(target_specific_public_libraries "")
 
 # Target specific
-if(CMAKE_TARGET_OS STREQUAL "ios")
-	set(target_specific_public_libraries ${target_specific_public_libraries}
-		z
-	)
-elseif(CMAKE_TARGET_OS STREQUAL "linux")
+if(CMAKE_TARGET_OS STREQUAL "linux")
 	set(target_specific_public_libraries ${target_specific_public_libraries}
 		dl
 	)
