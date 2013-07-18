@@ -209,6 +209,7 @@ public:
 	RenderingRuleProperty* R_COLOR__1;
 	RenderingRuleProperty* R_TEXT_BOLD;
 	RenderingRuleProperty* R_TEXT_ORDER;
+	RenderingRuleProperty* R_ICON_ORDER;
 	RenderingRuleProperty* R_TEXT_MIN_DISTANCE;
 	RenderingRuleProperty* R_TEXT_ON_PATH;
 	RenderingRuleProperty* R_ICON;
@@ -339,6 +340,7 @@ public:
 
 		// point
 		R_ICON = registerRuleInternal(RenderingRuleProperty::createOutputStringProperty("icon"));
+		R_ICON_ORDER = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("iconOrder"));
 
 		// polygon/way
 		R_COLOR = registerRuleInternal(RenderingRuleProperty::createOutputColorProperty("color"));
