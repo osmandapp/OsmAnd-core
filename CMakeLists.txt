@@ -47,6 +47,17 @@ if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAK
 		${sources_opengl}
 	)
 endif()
+if(CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android")
+	set(target_specific_public_definitions ${target_specific_public_definitions}
+		-DOSMAND_OPENGLES_RENDERER_SUPPORTED
+	)
+	file(GLOB_RECURSE sources_opengles "src/Map/OpenGLES/*.c*")
+	file(GLOB_RECURSE headers_opengles "src/Map/OpenGLES/*.h*")
+	set(target_specific_sources ${target_specific_sources}
+		${headers_opengles}
+		${sources_opengles}
+	)
+endif()
 
 file(GLOB_RECURSE includes "include/*.h*")
 file(GLOB headers "src/*.h*")
