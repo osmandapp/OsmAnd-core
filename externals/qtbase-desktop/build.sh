@@ -10,12 +10,13 @@ if [[ "$(uname -a)" =~ Cygwin ]]; then
 fi
 
 if [[ "$(uname -a)" =~ Linux ]]; then
-	QTBASE_CONFIGURATION=\
-		"-release -opensource -confirm-license -c++11 -static -largefile -no-accessibility -qt-sql-sqlite -no-javascript-jit -no-qml-debug "\
-		"-qt-zlib -no-gif -no-libpng -no-libjpeg -openssl-linked -qt-pcre -nomake examples -nomake tools "\
-		"-no-gui -no-widgets -no-nis -no-cups -no-iconv -no-icu -no-dbus -no-xcb -no-eglfs -no-directfb "\
-		"-no-linuxfb -no-kms -no-opengl -no-glib "\
-		"-v"
+	QTBASE_CONFIGURATION=$(echo "
+		-release -opensource -confirm-license -c++11 -static -largefile -no-accessibility -qt-sql-sqlite
+		-no-javascript-jit -no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
+		-nomake examples -nomake tools -no-gui -no-widgets -no-nis -no-cups -no-iconv -no-icu -no-dbus
+		-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib
+		-v
+	" | tr '\n' ' ')
 
 	if [[ -z "$OSMAND_BUILD_CPU_CORES_NUM" ]]; then
 		OSMAND_BUILD_CPU_CORES_NUM=`nproc`
