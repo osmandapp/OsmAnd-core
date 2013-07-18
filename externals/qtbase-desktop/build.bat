@@ -3,13 +3,13 @@
 REM Prepare environment
 set PATH=%PATH%;%~dp0\tools.windows\bin
 set QTBASE_CONFIGURATION=^
-	-opensource -confirm-license ^
 	-xplatform win32-msvc2012 ^
-	-nomake examples -nomake tools ^
-	-qt-sql-sqlite -no-opengl ^
-	-no-widgets -no-gui -no-accessibility -no-nis ^
-	-no-style-windowsvista ^
-	-c++11 -static -debug-and-release
+	-debug-and-release -opensource -confirm-license -c++11 -static -no-gui -no-widgets -no-accessibility ^
+	-qt-sql-sqlite -no-opengl -no-nis -no-iconv -no-inotify -no-eventfd -largefile -no-fontconfig ^
+	-qt-zlib -qt-pcre -no-icu -no-gif -no-libpng -no-libjpeg -no-freetype -no-angle -no-openssl ^
+	-no-dbus -no-audio-backend -no-qml-debug -no-directwrite -no-style-windows -no-style-windowsxp ^
+	-no-style-windowsvista -no-style-fusion -no-style-windowsce -no-style-windowsmobile ^
+	-no-native-gestures
 
 REM Determine target processor (x86 or x64) of environment
 for /f "tokens=9 delims= " %%l in ('cl 2^>^&1') do (
@@ -24,7 +24,6 @@ for /f "tokens=9 delims= " %%l in ('cl 2^>^&1') do (
 :envDetected:
 
 REM Check if we have a build directory
-REM WORKAROUND: -no-style-windowsvista is needed when -no-accessibility is selected
 if not exist "%~dp0upstream.patched.windows.%envArch%" (
 	mkdir "%~dp0upstream.patched.windows.%envArch%"
 	xcopy "%~dp0upstream.patched" "%~dp0upstream.patched.windows.%envArch%" /E

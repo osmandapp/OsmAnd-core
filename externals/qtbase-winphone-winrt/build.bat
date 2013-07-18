@@ -3,13 +3,12 @@
 REM Prepare environment
 set PATH=%PATH%;%~dp0\tools.windows\bin
 set QTBASE_CONFIGURATION=^
-	-opensource -confirm-license ^
-	-nomake examples -nomake tools ^
-	-qt-sql-sqlite -no-opengl ^
-	-no-widgets -no-accessibility -no-nis ^
-	-no-angle ^
-	-no-style-windowsvista ^
-	-c++11 -static -debug-and-release
+	-debug-and-release -opensource -confirm-license -c++11 -static -no-widgets -no-accessibility ^
+	-qt-sql-sqlite -no-opengl -no-nis -no-iconv -no-inotify -largefile -no-fontconfig ^
+	-qt-zlib -qt-pcre -no-icu -no-gif -no-libpng -no-libjpeg -no-freetype -no-angle -no-openssl ^
+	-no-dbus -no-audio-backend -no-qml-debug -no-directwrite -no-style-windows -no-style-windowsxp ^
+	-no-style-windowsvista -no-style-fusion -no-style-windowsce -no-style-windowsmobile ^
+	-no-native-gestures
 
 REM Determine target architecture of environment
 for /f "tokens=9 delims= " %%l in ('cl 2^>^&1') do (
