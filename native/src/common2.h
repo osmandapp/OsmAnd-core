@@ -63,6 +63,7 @@ struct IconDrawInfo
 	SkBitmap* bmp;
 	float x;
 	float y;
+	int order;
 };
 
 static const int TILE_SIZE = 256;
