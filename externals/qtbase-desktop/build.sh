@@ -42,6 +42,14 @@ if [[ "$(uname -a)" =~ Linux ]]; then
 fi
 
 if [[ "$(uname -a)" =~ Darwin ]]; then
+	QTBASE_CONFIGURATION=$(echo "
+		-debug-and-release -opensource -confirm-license -c++11 -static -largefile -no-accessibility -qt-sql-sqlite
+		-no-javascript-jit -no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
+		-nomake examples -nomake tools -no-gui -no-widgets -no-nis -no-cups -no-iconv -no-icu -no-dbus
+		-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib -no-framework
+		-v
+	" | tr '\n' ' ')
+
 	if [[ -z "$OSMAND_BUILD_CPU_CORES_NUM" ]]; then
 		OSMAND_BUILD_CPU_CORES_NUM=`sysctl hw.ncpu | awk '{print $2}'`
 	fi
@@ -50,7 +58,7 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 		if [ ! -d "$SRCLOC/upstream.patched.darwin.i386" ]; then
 			cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.darwin.i386"
 			(cd "$SRCLOC/upstream.patched.darwin.i386" && \
-				./configure -xplatform macx-clang-libc++-32 $QTBASE_CONFIGURATION -debug-and-release -no-framework)
+				./configure -xplatform macx-clang-libc++-32 $QTBASE_CONFIGURATION)
 		fi
 		(cd "$SRCLOC/upstream.patched.darwin.i386" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 	fi
@@ -59,7 +67,7 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 		if [ ! -d "$SRCLOC/upstream.patched.darwin.x86_64" ]; then
 			cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.darwin.x86_64"
 			(cd "$SRCLOC/upstream.patched.darwin.x86_64" && \
-				./configure -xplatform macx-clang-libc++-64 $QTBASE_CONFIGURATION -debug-and-release -no-framework)
+				./configure -xplatform macx-clang-libc++-64 $QTBASE_CONFIGURATION)
 		fi
 		(cd "$SRCLOC/upstream.patched.darwin.x86_64" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 	fi
