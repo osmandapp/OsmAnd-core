@@ -620,7 +620,7 @@ bool RenderingRuleSearchRequest::visitRule(RenderingRule* rule, bool loadOutput)
 				return false;
 			}
 		} else if (rp == PROPS->R_DISABLE) {
-			values[storage.PROPS.R_DISABLE->id] = rule->intProperties[i];
+			values[PROPS->R_DISABLE->id] = rule->intProperties[i];
 		}
 	}
 	if (!loadOutput) {
