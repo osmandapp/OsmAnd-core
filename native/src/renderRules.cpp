@@ -576,11 +576,15 @@ bool RenderingRuleSearchRequest::search(int state, bool loadOutput) {
 bool RenderingRuleSearchRequest::searchInternal(int state, int tagKey, int valueKey, bool loadOutput) {
 	values[PROPS->R_TAG->id] = tagKey;
 	values[PROPS->R_VALUE->id] = valueKey;
+	values[PROPS->R_DISABLE->id] = 0;
 	RenderingRule* accept = storage->getRule(state, tagKey, valueKey);
 	if (accept == NULL) {
 		return false;
 	}
 	bool match = visitRule(accept, loadOutput);
+	if(match && values[PROPS->R_DISABLE->id] != 0) {
+		return false;
+	}
 	return match;
 }
 
@@ -615,6 +619,8 @@ bool RenderingRuleSearchRequest::visitRule(RenderingRule* rule, bool loadOutput)
 			if (!match) {
 				return false;
 			}
+		} else if (rp == PROPS->R_DISABLE) {
+			values[storage.PROPS.R_DISABLE->id] = rule->intProperties[i];
 		}
 	}
 	if (!loadOutput) {
