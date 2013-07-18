@@ -180,6 +180,7 @@ class RenderingRulesStorageProperties
 {
 public:
 	RenderingRuleProperty* R_TEST;
+	RenderingRuleProperty* R_DISABLE;
 	RenderingRuleProperty* R_TEXT_LENGTH;
 	RenderingRuleProperty* R_REF;
 	RenderingRuleProperty* R_TEXT_SHIELD;
@@ -297,6 +298,7 @@ public:
 
 	void createDefaultProperties() {
 		R_TEST = registerRuleInternal(RenderingRuleProperty::createInputBooleanProperty("test"));
+		R_DISABLE = registerRuleInternal(RenderingRuleProperty::createOutputBooleanProperty("disable"));
 		R_TAG = registerRuleInternal(RenderingRuleProperty::createInputStringProperty("tag"));
 		R_VALUE = registerRuleInternal(RenderingRuleProperty::createInputStringProperty("value"));
 		R_ADDITIONAL = registerRuleInternal(RenderingRuleProperty::createInputStringProperty("additional"));
