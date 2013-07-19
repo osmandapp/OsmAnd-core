@@ -9,8 +9,7 @@ set QTBASE_CONFIGURATION=^
 	-qt-zlib -qt-pcre -no-icu -no-gif -no-libpng -no-libjpeg -no-freetype -no-angle -no-openssl ^
 	-no-dbus -no-audio-backend -no-qml-debug -no-directwrite -no-style-windows -no-style-windowsxp ^
 	-no-style-windowsvista -no-style-fusion -no-style-windowsce -no-style-windowsmobile ^
-	-nomake examples -nomake tools ^
-	-no-native-gestures
+	-nomake examples -nomake tools -no-vcproj -no-native-gestures
 
 REM Determine target processor (x86 or x64) of environment
 for /f "tokens=9 delims= " %%l in ('cl 2^>^&1') do (
