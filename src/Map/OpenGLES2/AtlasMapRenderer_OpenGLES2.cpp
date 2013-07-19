@@ -29,7 +29,7 @@ OsmAnd::AtlasMapRenderer_OpenGLES2::~AtlasMapRenderer_OpenGLES2()
 
 void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering()
 {
-    MapRenderer_OpenGLES::initializeRendering();
+    MapRenderer_OpenGLES2::initializeRendering();
 
     initializeRendering_SkyStage();
     initializeRendering_MapStage();
@@ -335,12 +335,11 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering()
 void OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering_MapStage()
 {
     // Set tile patch VAO
-    assert(glBindVertexArray);
-    glBindVertexArray(_tilePatchVAO);
+    assert(glBindVertexArrayOES);
+    glBindVertexArrayOES(_tilePatchVAO);
     GL_CHECK_RESULT;
 
     // Activate program
-    assert(glUseProgram);
     glUseProgram(_mapStage.program);
     GL_CHECK_RESULT;
 
@@ -580,7 +579,8 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering_MapStage()
     GL_CHECK_RESULT;
 
     // Deselect VAO
-    glBindVertexArray(0);
+    assert(glBindVertexArrayOES);
+    glBindVertexArrayOES(0);
     GL_CHECK_RESULT;
 }
 
@@ -597,13 +597,11 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::releaseRendering_MapStage()
 {
     if(_mapStage.program)
     {
-        assert(glDeleteProgram);
         glDeleteProgram(_mapStage.program);
         GL_CHECK_RESULT;
     }
     if(_mapStage.fs.id)
     {
-        assert(glDeleteShader);
         glDeleteShader(_mapStage.fs.id);
         GL_CHECK_RESULT;
     }
@@ -618,48 +616,39 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::releaseRendering_MapStage()
 void OsmAnd::AtlasMapRenderer_OpenGLES2::allocateTilePatch( MapTileVertex* vertices, size_t verticesCount, GLushort* indices, size_t indicesCount )
 {
     // Create Vertex Array Object
-    assert(glGenVertexArrays);
-    glGenVertexArrays(1, &_tilePatchVAO);
+    assert(glGenVertexArraysOES);
+    glGenVertexArraysOES(1, &_tilePatchVAO);
     GL_CHECK_RESULT;
-    assert(glBindVertexArray);
-    glBindVertexArray(_tilePatchVAO);
+    assert(glBindVertexArrayOES);
+    glBindVertexArrayOES(_tilePatchVAO);
     GL_CHECK_RESULT;
 
     // Create vertex buffer and associate it with VAO
-    assert(glGenBuffers);
     glGenBuffers(1, &_tilePatchVBO);
     GL_CHECK_RESULT;
-    assert(glBindBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, _tilePatchVBO);
     GL_CHECK_RESULT;
-    assert(glBufferData);
     glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(MapTileVertex), vertices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
-    assert(glEnableVertexAttribArray);
     glEnableVertexAttribArray(_mapStage.vs.in.vertexPosition);
     GL_CHECK_RESULT;
-    assert(glVertexAttribPointer);
     glVertexAttribPointer(_mapStage.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(MapTileVertex), reinterpret_cast<GLvoid*>(offsetof(MapTileVertex, position)));
     GL_CHECK_RESULT;
-    assert(glEnableVertexAttribArray);
     glEnableVertexAttribArray(_mapStage.vs.in.vertexTexCoords);
     GL_CHECK_RESULT;
-    assert(glVertexAttribPointer);
     glVertexAttribPointer(_mapStage.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(MapTileVertex), reinterpret_cast<GLvoid*>(offsetof(MapTileVertex, uv)));
     GL_CHECK_RESULT;
 
     // Create index buffer and associate it with VAO
-    assert(glGenBuffers);
     glGenBuffers(1, &_tilePatchIBO);
     GL_CHECK_RESULT;
-    assert(glBindBuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _tilePatchIBO);
     GL_CHECK_RESULT;
-    assert(glBufferData);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
 
-    glBindVertexArray(0);
+    assert(glBindVertexArrayOES);
+    glBindVertexArrayOES(0);
     GL_CHECK_RESULT;
 }
 
@@ -667,7 +656,6 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::releaseTilePatch()
 {
     if(_tilePatchIBO)
     {
-        assert(glDeleteBuffers);
         glDeleteBuffers(1, &_tilePatchIBO);
         GL_CHECK_RESULT;
         _tilePatchIBO = 0;
@@ -675,7 +663,6 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::releaseTilePatch()
 
     if(_tilePatchVBO)
     {
-        assert(glDeleteBuffers);
         glDeleteBuffers(1, &_tilePatchVBO);
         GL_CHECK_RESULT;
         _tilePatchVBO = 0;
@@ -683,8 +670,8 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::releaseTilePatch()
 
     if(_tilePatchVAO)
     {
-        assert(glDeleteVertexArrays);
-        glDeleteVertexArrays(1, &_tilePatchVAO);
+        assert(glDeleteVertexArraysOES);
+        glDeleteVertexArraysOES(1, &_tilePatchVAO);
         GL_CHECK_RESULT;
         _tilePatchVAO = 0;
     }
@@ -711,42 +698,35 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_SkyStage()
     const auto indicesCount = 6;
 
     // Create Vertex Array Object
-    assert(glGenVertexArrays);
-    glGenVertexArrays(1, &_skyStage.vao);
+    assert(glGenVertexArraysOES);
+    glGenVertexArraysOES(1, &_skyStage.vao);
     GL_CHECK_RESULT;
-    assert(glBindVertexArray);
-    glBindVertexArray(_skyStage.vao);
+    assert(glBindVertexArrayOES);
+    glBindVertexArrayOES(_skyStage.vao);
     GL_CHECK_RESULT;
 
     // Create vertex buffer and associate it with VAO
-    assert(glGenBuffers);
     glGenBuffers(1, &_skyStage.vbo);
     GL_CHECK_RESULT;
-    assert(glBindBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, _skyStage.vbo);
     GL_CHECK_RESULT;
-    assert(glBufferData);
     glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(float) * 2, vertices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
-    assert(glEnableVertexAttribArray);
     glEnableVertexAttribArray(_skyStage.vs.in.vertexPosition);
     GL_CHECK_RESULT;
-    assert(glVertexAttribPointer);
     glVertexAttribPointer(_skyStage.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, nullptr);
     GL_CHECK_RESULT;
         
     // Create index buffer and associate it with VAO
-    assert(glGenBuffers);
     glGenBuffers(1, &_skyStage.ibo);
     GL_CHECK_RESULT;
-    assert(glBindBuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _skyStage.ibo);
     GL_CHECK_RESULT;
-    assert(glBufferData);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
 
-    glBindVertexArray(0);
+    assert(glBindVertexArrayOES);
+    glBindVertexArrayOES(0);
     GL_CHECK_RESULT;
 
     // Compile vertex shader
@@ -837,30 +817,12 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_SkyStage()
 
 void OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering_SkyStage()
 {
-#if 0
-    {
-        const auto mFogTranslate = glm::translate(0.0f, 0.0f, -_correctedFogDistance);
-        const auto mModel = _mAzimuthInv * mFogTranslate;
-
-        glMatrixMode(GL_PROJECTION);
-        glLoadMatrixf(glm::value_ptr(_mProjection));
-        glMatrixMode(GL_MODELVIEW);
-        glLoadMatrixf(glm::value_ptr(_mView * mModel));
-        glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
-        glBegin(GL_LINES);
-            glVertex3f(-100.0f, 0.5f, 0.0f);
-            glVertex3f(+100.0f, 0.5f, 0.0f);
-        glEnd();
-    }
-#endif
-
     // Set tile patch VAO
-    assert(glBindVertexArray);
-    glBindVertexArray(_skyStage.vao);
+    assert(glBindVertexArrayOES);
+    glBindVertexArrayOES(_skyStage.vao);
     GL_CHECK_RESULT;
 
     // Activate program
-    assert(glUseProgram);
     glUseProgram(_skyStage.program);
     GL_CHECK_RESULT;
 
@@ -893,7 +855,8 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering_SkyStage()
     GL_CHECK_RESULT;
 
     // Deselect VAO
-    glBindVertexArray(0);
+    assert(glBindVertexArrayOES);
+    glBindVertexArrayOES(0);
     GL_CHECK_RESULT;
 }
 
@@ -901,34 +864,30 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::releaseRendering_SkyStage()
 {
     if(_skyStage.ibo)
     {
-        assert(glDeleteBuffers);
         glDeleteBuffers(1, &_skyStage.ibo);
         GL_CHECK_RESULT;
     }
 
     if(_skyStage.vbo)
     {
-        assert(glDeleteBuffers);
         glDeleteBuffers(1, &_skyStage.vbo);
         GL_CHECK_RESULT;
     }
 
     if(_skyStage.vao)
     {
-        assert(glDeleteVertexArrays);
-        glDeleteVertexArrays(1, &_skyStage.vao);
+        assert(glDeleteVertexArraysOES);
+        glDeleteVertexArraysOES(1, &_skyStage.vao);
         GL_CHECK_RESULT;
     }
 
     if(_skyStage.program)
     {
-        assert(glDeleteProgram);
         glDeleteProgram(_skyStage.program);
         GL_CHECK_RESULT;
     }
     if(_skyStage.fs.id)
     {
-        assert(glDeleteShader);
         glDeleteShader(_skyStage.fs.id);
         GL_CHECK_RESULT;
     }

@@ -32,13 +32,17 @@
 #   define WIN32_LEAN_AND_MEAN
 #   include <Windows.h>
 #endif
+
 #if defined(OSMAND_OPENGL_RENDERER_SUPPORTED)
 #   include <GL/glew.h>
 #endif
+
 #if defined(OSMAND_TARGET_OS_darwin)
 #   include <OpenGL/gl.h>
 #elif defined(OSMAND_TARGET_OS_ios)
 #   include <OpenGLES/ES2/gl.h>
+#elif defined(OSMAND_TARGET_OS_android)
+#   include <GLES2/gl2.h>
 #else
 #   include <GL/gl.h>
 #endif
@@ -64,11 +68,35 @@ namespace OsmAnd {
     public:
     private:
     protected:
+        enum {
+            BaseBitmapAtlasTilePadding = 2,
+            MipmapLodLevelsMax = 4,
+        };
+
         uint32_t _maxTextureSize;
         
         virtual GLenum validateResult() = 0;
-        virtual GLuint compileShader(GLenum shaderType, const char* source) = 0;
-        virtual GLuint linkProgram(GLuint shadersCount, GLuint *shaders) = 0;
+        virtual GLuint compileShader(GLenum shaderType, const char* source);
+        virtual GLuint linkProgram(GLuint shadersCount, GLuint *shaders);
+
+        virtual void uploadTileToTexture(
+            TileLayerId layerId,
+            const TileId& tileId,
+            uint32_t zoom,
+            const std::shared_ptr<IMapTileProvider::Tile>& tile,
+            uint64_t& atlasPoolId,
+            void*& textureRef,
+            int& atlasSlotIndex,
+            size_t& usedMemory);
+        virtual void releaseTexture(void* textureRef);
+
+        enum VariableType
+        {
+            In,
+            Uniform
+        };
+        QMap< GLuint, QMultiMap< VariableType, GLint > > _programVariables;
+        virtual void findVariableLocation(GLuint program, GLint& location, const QString& name, const VariableType& type);
 
         MapRenderer_BaseOpenGL();
     public:
