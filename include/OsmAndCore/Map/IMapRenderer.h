@@ -236,6 +236,9 @@ namespace OsmAnd {
 #if defined(OSMAND_OPENGL_RENDERER_SUPPORTED)
     OSMAND_CORE_API std::shared_ptr<OsmAnd::IMapRenderer> OSMAND_CORE_CALL createAtlasMapRenderer_OpenGL();
 #endif // OSMAND_OPENGL_RENDERER_SUPPORTED
+#if defined(OSMAND_OPENGLES_RENDERER_SUPPORTED)
+        OSMAND_CORE_API std::shared_ptr<OsmAnd::IMapRenderer> OSMAND_CORE_CALL createAtlasMapRenderer_OpenGLES();
+#endif // OSMAND_OPENGLES_RENDERER_SUPPORTED
 }
 
 #endif // __I_MAP_RENDERER_H_
