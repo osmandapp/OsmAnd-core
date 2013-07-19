@@ -30,7 +30,7 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OpenGL_Base/AtlasMapRenderer_OpenGL_Base.h>
-#include <OpenGLES/MapRenderer_OpenGLES2.h>
+#include <OpenGLES2/MapRenderer_OpenGLES2.h>
 
 namespace OsmAnd {
 
