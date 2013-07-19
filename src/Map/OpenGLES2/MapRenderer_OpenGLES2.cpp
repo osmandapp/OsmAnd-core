@@ -107,6 +107,8 @@ void OsmAnd::MapRenderer_OpenGLES2::initializeRendering()
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGLES2 extensions: %s\n", qPrintable(glesExtensions));
     assert(glesExtensions.contains(QString::fromLatin1("OES_vertex_array_object")));
+    assert(glesExtensions.contains(QString::fromLatin1("OES_texture_float")));
+    
     //assert(glesExtensions.contains(QString::fromLatin1("OES_vertex_array_object")));
 
     /*NOT SUPPORTED in ES2.0
