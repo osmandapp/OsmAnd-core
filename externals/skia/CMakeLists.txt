@@ -314,7 +314,6 @@ target_compile_definitions(skia_static
 	PRIVATE
 	PUBLIC
 		-DSK_SUPPORT_GPU=0
-		-DSK_CPU_LENDIAN
 		${target_specific_definitions_public}
 )
 target_include_directories(skia_static
