@@ -11,6 +11,7 @@ endif
 
 LOCAL_EXPORT_CFLAGS := \
     -DOSMAND_TARGET_OS_android \
+	-DOSMAND_OPENGLES2_RENDERER_SUPPORTED \
     -DGLM_SWIZZLE
 
 LOCAL_EXPORT_C_INCLUDES := \
@@ -66,7 +67,7 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
         $(wildcard $(LOCAL_PATH)/src/Routing/*.c*) \
         $(wildcard $(LOCAL_PATH)/src/Map/*.c*) \
         $(wildcard $(LOCAL_PATH)/src/Map/OpenGL_Base/*.c*) \
-        $(wildcard $(LOCAL_PATH)/src/Map/OpenGLES/*.c*) \
+        $(wildcard $(LOCAL_PATH)/src/Map/OpenGLES2/*.c*) \
         $(wildcard $(LOCAL_PATH)/client/*.c*) \
         $(wildcard $(LOCAL_PATH)/protos/*.c*)
     LOCAL_CPP_EXTENSION := .cc .cpp
