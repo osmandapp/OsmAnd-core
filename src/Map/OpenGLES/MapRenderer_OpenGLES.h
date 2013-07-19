@@ -63,16 +63,9 @@ namespace OsmAnd {
         virtual void uploadTileToTexture(TileLayerId layerId, const TileId& tileId, uint32_t zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile, uint64_t& atlasPoolId, void*& textureRef, int& atlasSlotIndex, size_t& usedMemory);
         virtual void releaseTexture(void* textureRef);
 
-        GLuint _textureSampler_Bitmap_NoAtlas;
-        GLuint _textureSampler_Bitmap_Atlas;
-        GLuint _textureSampler_ElevationData_NoAtlas;
-        GLuint _textureSampler_ElevationData_Atlas;
-
-        int _maxAnisotropy;
-
-        MapRenderer_OpenGL();
+        MapRenderer_OpenGLES();
     public:
-        virtual ~MapRenderer_OpenGL();
+        virtual ~MapRenderer_OpenGLES();
 
         virtual void initializeRendering();
         virtual void releaseRendering();

@@ -29,7 +29,7 @@ OsmAnd::AtlasMapRenderer_OpenGLES::~AtlasMapRenderer_OpenGLES()
 
 void OsmAnd::AtlasMapRenderer_OpenGLES::initializeRendering()
 {
-    MapRenderer_OpenGL::initializeRendering();
+    MapRenderer_OpenGLES::initializeRendering();
 
     initializeRendering_SkyStage();
     initializeRendering_MapStage();

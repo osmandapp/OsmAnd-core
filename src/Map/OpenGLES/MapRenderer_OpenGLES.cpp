@@ -35,7 +35,35 @@ GLenum OsmAnd::MapRenderer_OpenGLES::validateResult()
     if(result == GL_NO_ERROR)
         return result;
 
-    LogPrintf(LogSeverityLevel::Error, "OpenGL error 0x%08x : %s\n", result, gluErrorString(result));
+    const char* errorString = nullptr;
+    switch(result)
+    {
+        case GL_NO_ERROR:
+            errorString = "no error";
+            break;
+        case GL_INVALID_ENUM:
+            errorString = "invalid enumerant";
+            break;
+        case GL_INVALID_VALUE:
+            errorString = "invalid value";
+            break;
+        case GL_INVALID_OPERATION:
+            errorString = "invalid operation";
+            break;
+        case GL_STACK_OVERFLOW:
+            errorString = "stack overflow";
+            break;
+        case GL_STACK_UNDERFLOW:
+            errorString = "stack underflow";
+            break;
+        case GL_OUT_OF_MEMORY:
+            errorString = "out of memory";
+            break;
+        default:
+            errorString = "(unknown)";
+            break;
+    }
+    LogPrintf(LogSeverityLevel::Error, "OpenGL error 0x%08x : %s\n", result, errorString);
 
     return result;
 }
@@ -44,16 +72,13 @@ GLuint OsmAnd::MapRenderer_OpenGLES::compileShader( GLenum shaderType, const cha
 {
     GLuint shader;
 
-    assert(glCreateShader);
     shader = glCreateShader(shaderType);
     GL_CHECK_RESULT;
 
     const GLint sourceLen = static_cast<GLint>(strlen(source));
-    assert(glShaderSource);
     glShaderSource(shader, 1, &source, &sourceLen);
     GL_CHECK_RESULT;
 
-    assert(glCompileShader);
     glCompileShader(shader);
     GL_CHECK_RESULT;
 
@@ -65,7 +90,6 @@ GLuint OsmAnd::MapRenderer_OpenGLES::compileShader( GLenum shaderType, const cha
     {
         GLint logBufferLen = 0;
         GLsizei logLen = 0;
-        assert(glGetShaderiv);
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logBufferLen);
         GL_CHECK_RESULT;
         if (logBufferLen > 1)
@@ -90,23 +114,19 @@ GLuint OsmAnd::MapRenderer_OpenGLES::linkProgram( GLuint shadersCount, GLuint *s
 {
     GLuint program = 0;
 
-    assert(glCreateProgram);
     program = glCreateProgram();
     GL_CHECK_RESULT;
 
-    assert(glAttachShader);
     for(auto shaderIdx = 0u; shaderIdx < shadersCount; shaderIdx++)
     {
         glAttachShader(program, shaders[shaderIdx]);
         GL_CHECK_RESULT;
     }
 
-    assert(glLinkProgram);
     glLinkProgram(program);
     GL_CHECK_RESULT;
 
     GLint linkSuccessful;
-    assert(glGetProgramiv);
     glGetProgramiv(program, GL_LINK_STATUS, &linkSuccessful);
     GL_CHECK_RESULT;
     if(linkSuccessful != GL_TRUE)
@@ -132,13 +152,11 @@ GLuint OsmAnd::MapRenderer_OpenGLES::linkProgram( GLuint shadersCount, GLuint *s
     }
 
     // Show some info
-    assert(glGetProgramiv);
     GLint attributesCount;
     glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &attributesCount);
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "GLSL program %d has %d input variable(s)\n", program, attributesCount);
 
-    assert(glGetProgramiv);
     GLint uniformsCount;
     glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &uniformsCount);
     GL_CHECK_RESULT;
@@ -151,12 +169,6 @@ void OsmAnd::MapRenderer_OpenGLES::initializeRendering()
 {
     MapRenderer_BaseOpenGL::initializeRendering();
 
-    glewExperimental = GL_TRUE;
-    glewInit();
-    // For now, silence OpenGL error here, it's inside GLEW, so it's not ours
-    (void)glGetError();
-    //GL_CHECK_RESULT;
-
     const auto glVersionString = glGetString(GL_VERSION);
     GL_CHECK_RESULT;
     GLint glVersion[2];
@@ -164,44 +176,31 @@ void OsmAnd::MapRenderer_OpenGLES::initializeRendering()
     GL_CHECK_RESULT;
     glGetIntegerv(GL_MINOR_VERSION, &glVersion[1]);
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "Using OpenGL version %d.%d [%s]\n", glVersion[0], glVersion[1], glVersionString);
+    LogPrintf(LogSeverityLevel::Info, "Using OpenGLES version %d.%d [%s]\n", glVersion[0], glVersion[1], glVersionString);
     assert(glVersion[0] >= 3);
 
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, reinterpret_cast<GLint*>(&_maxTextureSize));
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture size %dx%d\n", _maxTextureSize, _maxTextureSize);
+    LogPrintf(LogSeverityLevel::Info, "OpenGLES maximal texture size %dx%d\n", _maxTextureSize, _maxTextureSize);
 
     GLint maxTextureUnitsInFragmentShader;
     glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureUnitsInFragmentShader);
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units in fragment shader %d\n", maxTextureUnitsInFragmentShader);
+    LogPrintf(LogSeverityLevel::Info, "OpenGLES maximal texture units in fragment shader %d\n", maxTextureUnitsInFragmentShader);
     assert(maxTextureUnitsInFragmentShader >= (IMapRenderer::TileLayerId::IdsCount - IMapRenderer::RasterMap));
 
     GLint maxTextureUnitsInVertexShader;
     glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, &maxTextureUnitsInVertexShader);
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units in vertex shader %d\n", maxTextureUnitsInVertexShader);
+    LogPrintf(LogSeverityLevel::Info, "OpenGLES maximal texture units in vertex shader %d\n", maxTextureUnitsInVertexShader);
     assert(maxTextureUnitsInVertexShader >= IMapRenderer::RasterMap);
 
     GLint maxUniformsPerProgram;
     glGetIntegerv(GL_MAX_UNIFORM_LOCATIONS, &maxUniformsPerProgram);
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal parameter variables per program %d\n", maxUniformsPerProgram);
+    LogPrintf(LogSeverityLevel::Info, "OpenGLES maximal parameter variables per program %d\n", maxUniformsPerProgram);
 
-    if(GLEW_EXT_texture_filter_anisotropic)
-    {
-        GLfloat maxAnisotropy;
-        glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnisotropy);
-        GL_CHECK_RESULT;
-        _maxAnisotropy = static_cast<int>(maxAnisotropy);
-        LogPrintf(LogSeverityLevel::Info, "OpenGL anisotropic filtering: %dx max\n", _maxAnisotropy);
-    }
-    else
-    {
-        LogPrintf(LogSeverityLevel::Info, "OpenGL anisotropic filtering: not supported\n");
-        _maxAnisotropy = -1;
-    }
-
+    /*NOT SUPPORTED in ES2.0
     // Bitmap (Atlas)
     glGenSamplers(1, &_textureSampler_Bitmap_Atlas);
     GL_CHECK_RESULT;
@@ -213,11 +212,6 @@ void OsmAnd::MapRenderer_OpenGLES::initializeRendering()
     GL_CHECK_RESULT;
     glSamplerParameteri(_textureSampler_Bitmap_Atlas, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     GL_CHECK_RESULT;
-    if(_maxAnisotropy > 0)
-    {
-        glSamplerParameterf(_textureSampler_Bitmap_Atlas, GL_TEXTURE_MAX_ANISOTROPY_EXT, static_cast<GLfloat>(_maxAnisotropy));
-        GL_CHECK_RESULT;
-    }
 
     // ElevationData (Atlas)
     glGenSamplers(1, &_textureSampler_ElevationData_Atlas);
@@ -242,12 +236,7 @@ void OsmAnd::MapRenderer_OpenGLES::initializeRendering()
     GL_CHECK_RESULT;
     glSamplerParameteri(_textureSampler_Bitmap_NoAtlas, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     GL_CHECK_RESULT;
-    if(_maxAnisotropy > 0)
-    {
-        glSamplerParameterf(_textureSampler_Bitmap_NoAtlas, GL_TEXTURE_MAX_ANISOTROPY_EXT, static_cast<GLfloat>(_maxAnisotropy));
-        GL_CHECK_RESULT;
-    }
-
+    
     // ElevationData (No atlas)
     glGenSamplers(1, &_textureSampler_ElevationData_NoAtlas);
     GL_CHECK_RESULT;
@@ -259,10 +248,11 @@ void OsmAnd::MapRenderer_OpenGLES::initializeRendering()
     GL_CHECK_RESULT;
     glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     GL_CHECK_RESULT;
-
-    glShadeModel(GL_SMOOTH);
-    GL_CHECK_RESULT;
-
+*/
+    //NOT in ES
+    //glShadeModel(GL_SMOOTH);
+    //GL_CHECK_RESULT;
+/*
     glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
     GL_CHECK_RESULT;
     glEnable(GL_POLYGON_SMOOTH);
@@ -283,11 +273,12 @@ void OsmAnd::MapRenderer_OpenGLES::initializeRendering()
     GL_CHECK_RESULT;
 
     glDepthFunc(GL_LEQUAL);
-    GL_CHECK_RESULT;
+    GL_CHECK_RESULT;*/
 }
 
 void OsmAnd::MapRenderer_OpenGLES::releaseRendering()
 {
+    /*
     if(_textureSampler_Bitmap_NoAtlas != 0)
     {
         glDeleteSamplers(1, &_textureSampler_Bitmap_NoAtlas);
@@ -315,11 +306,19 @@ void OsmAnd::MapRenderer_OpenGLES::releaseRendering()
         GL_CHECK_RESULT;
         _textureSampler_ElevationData_Atlas = 0;
     }
-
+*/
     MapRenderer_BaseOpenGL::releaseRendering();
 }
 
-void OsmAnd::MapRenderer_OpenGLES::uploadTileToTexture( TileLayerId layerId, const TileId& tileId, uint32_t zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile, uint64_t& outAtlasPoolId, void*& outTextureRef, int& outAtlasSlotIndex, size_t& outUsedMemory )
+void OsmAnd::MapRenderer_OpenGLES::uploadTileToTexture(
+    TileLayerId layerId,
+    const TileId& tileId,
+    uint32_t zoom,
+    const std::shared_ptr<IMapTileProvider::Tile>& tile,
+    uint64_t& outAtlasPoolId,
+    void*& outTextureRef,
+    int& outAtlasSlotIndex,
+    size_t& outUsedMemory)
 {
     auto& tileLayer = _tileLayers[layerId];
 
