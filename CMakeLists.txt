@@ -12,7 +12,7 @@ if(CMAKE_TARGET_OS STREQUAL "linux")
 	)
 endif()
 
-# 3D rendering: OpenGL, OpenGLES, Direct3D
+# 3D rendering: OpenGL, OpenGLES2, Direct3D
 if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "windows" OR CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android")
 	file(GLOB_RECURSE sources_opengl_base "src/Map/OpenGL_Base/*.c*")
 	file(GLOB_RECURSE headers_opengl_base "src/Map/OpenGL_Base/*.h*")
@@ -49,10 +49,10 @@ if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAK
 endif()
 if(CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android")
 	set(target_specific_public_definitions ${target_specific_public_definitions}
-		-DOSMAND_OPENGLES_RENDERER_SUPPORTED
+		-DOSMAND_OPENGLES2_RENDERER_SUPPORTED
 	)
-	file(GLOB_RECURSE sources_opengles "src/Map/OpenGLES/*.c*")
-	file(GLOB_RECURSE headers_opengles "src/Map/OpenGLES/*.h*")
+	file(GLOB_RECURSE sources_opengles "src/Map/OpenGLES2/*.c*")
+	file(GLOB_RECURSE headers_opengles "src/Map/OpenGLES2/*.h*")
 	set(target_specific_sources ${target_specific_sources}
 		${headers_opengles}
 		${sources_opengles}

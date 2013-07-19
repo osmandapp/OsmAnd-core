@@ -19,8 +19,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __MAP_RENDERER_OPENGLES_H_
-#define __MAP_RENDERER_OPENGLES_H_
+#ifndef __MAP_RENDERER_OPENGLES2_H_
+#define __MAP_RENDERER_OPENGLES2_H_
 
 #include <stdint.h>
 #include <memory>
@@ -38,7 +38,7 @@
 
 namespace OsmAnd {
 
-    class OSMAND_CORE_API MapRenderer_OpenGLES : public virtual MapRenderer_BaseOpenGL
+    class OSMAND_CORE_API MapRenderer_OpenGLES2 : public virtual MapRenderer_BaseOpenGL
     {
     public:
     private:
@@ -63,9 +63,9 @@ namespace OsmAnd {
         virtual void uploadTileToTexture(TileLayerId layerId, const TileId& tileId, uint32_t zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile, uint64_t& atlasPoolId, void*& textureRef, int& atlasSlotIndex, size_t& usedMemory);
         virtual void releaseTexture(void* textureRef);
 
-        MapRenderer_OpenGLES();
+        MapRenderer_OpenGLES2();
     public:
-        virtual ~MapRenderer_OpenGLES();
+        virtual ~MapRenderer_OpenGLES2();
 
         virtual void initializeRendering();
         virtual void releaseRendering();
@@ -73,4 +73,4 @@ namespace OsmAnd {
 
 }
 
-#endif // __MAP_RENDERER_OPENGLES_H_
+#endif // __MAP_RENDERER_OPENGLES2_H_

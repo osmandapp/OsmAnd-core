@@ -319,7 +319,15 @@ void OsmAnd::MapRenderer_OpenGL::releaseRendering()
     MapRenderer_BaseOpenGL::releaseRendering();
 }
 
-void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture( TileLayerId layerId, const TileId& tileId, uint32_t zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile, uint64_t& outAtlasPoolId, void*& outTextureRef, int& outAtlasSlotIndex, size_t& outUsedMemory )
+void OsmAnd::MapRenderer_OpenGL::uploadTileToTexture(
+    TileLayerId layerId,
+    const TileId& tileId,
+    uint32_t zoom,
+    const std::shared_ptr<IMapTileProvider::Tile>& tile,
+    uint64_t& outAtlasPoolId,
+    void*& outTextureRef,
+    int& outAtlasSlotIndex,
+    size_t& outUsedMemory)
 {
     auto& tileLayer = _tileLayers[layerId];
 

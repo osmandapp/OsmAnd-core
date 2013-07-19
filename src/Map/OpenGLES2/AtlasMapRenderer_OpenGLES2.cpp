@@ -1,4 +1,4 @@
-#include "AtlasMapRenderer_OpenGLES.h"
+#include "AtlasMapRenderer_OpenGLES2.h"
 
 #include <assert.h>
 
@@ -14,7 +14,7 @@
 #include "Utilities.h"
 #include "Logging.h"
 
-OsmAnd::AtlasMapRenderer_OpenGLES::AtlasMapRenderer_OpenGLES()
+OsmAnd::AtlasMapRenderer_OpenGLES2::AtlasMapRenderer_OpenGLES2()
     : _tilePatchVAO(0)
     , _tilePatchVBO(0)
     , _tilePatchIBO(0)
@@ -23,11 +23,11 @@ OsmAnd::AtlasMapRenderer_OpenGLES::AtlasMapRenderer_OpenGLES()
     memset(&_skyStage, 0, sizeof(_skyStage));
 }
 
-OsmAnd::AtlasMapRenderer_OpenGLES::~AtlasMapRenderer_OpenGLES()
+OsmAnd::AtlasMapRenderer_OpenGLES2::~AtlasMapRenderer_OpenGLES2()
 {
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGLES::initializeRendering()
+void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering()
 {
     MapRenderer_OpenGLES::initializeRendering();
 
@@ -37,7 +37,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES::initializeRendering()
     AtlasMapRenderer_BaseOpenGL::initializeRendering();
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGLES::initializeRendering_MapStage()
+void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
 {
     // Compile vertex shader
     const QString vertexShader_perTileLayerTexCoordsProcessing = QString::fromLatin1(
@@ -308,7 +308,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES::initializeRendering_MapStage()
     _programVariables.clear();
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGLES::performRendering()
+void OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering()
 {
     AtlasMapRenderer_BaseOpenGL::performRendering();
     GL_CHECK_RESULT;
@@ -332,7 +332,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES::performRendering()
     GL_CHECK_RESULT;
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGLES::performRendering_MapStage()
+void OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering_MapStage()
 {
     // Set tile patch VAO
     assert(glBindVertexArray);
@@ -584,7 +584,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES::performRendering_MapStage()
     GL_CHECK_RESULT;
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGLES::releaseRendering()
+void OsmAnd::AtlasMapRenderer_OpenGLES2::releaseRendering()
 {
     releaseRendering_MapStage();
     releaseRendering_SkyStage();
@@ -593,7 +593,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES::releaseRendering()
     MapRenderer_OpenGL::releaseRendering();
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGLES::releaseRendering_MapStage()
+void OsmAnd::AtlasMapRenderer_OpenGLES2::releaseRendering_MapStage()
 {
     if(_mapStage.program)
     {
@@ -615,7 +615,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES::releaseRendering_MapStage()
     memset(&_mapStage, 0, sizeof(_mapStage));
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGLES::allocateTilePatch( MapTileVertex* vertices, size_t verticesCount, GLushort* indices, size_t indicesCount )
+void OsmAnd::AtlasMapRenderer_OpenGLES2::allocateTilePatch( MapTileVertex* vertices, size_t verticesCount, GLushort* indices, size_t indicesCount )
 {
     // Create Vertex Array Object
     assert(glGenVertexArrays);
@@ -663,7 +663,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES::allocateTilePatch( MapTileVertex* vertic
     GL_CHECK_RESULT;
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGLES::releaseTilePatch()
+void OsmAnd::AtlasMapRenderer_OpenGLES2::releaseTilePatch()
 {
     if(_tilePatchIBO)
     {
@@ -690,7 +690,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES::releaseTilePatch()
     }
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGLES::initializeRendering_SkyStage()
+void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_SkyStage()
 {
     // Vertex data (x,y)
     float vertices[4][2] =
@@ -835,7 +835,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES::initializeRendering_SkyStage()
     _programVariables.clear();
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGLES::performRendering_SkyStage()
+void OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering_SkyStage()
 {
 #if 0
     {
@@ -897,7 +897,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES::performRendering_SkyStage()
     GL_CHECK_RESULT;
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGLES::releaseRendering_SkyStage()
+void OsmAnd::AtlasMapRenderer_OpenGLES2::releaseRendering_SkyStage()
 {
     if(_skyStage.ibo)
     {

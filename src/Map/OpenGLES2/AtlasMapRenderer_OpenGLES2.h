@@ -19,8 +19,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __ATLAS_MAP_RENDERER_OPENGLES_H_
-#define __ATLAS_MAP_RENDERER_OPENGLES_H_
+#ifndef __ATLAS_MAP_RENDERER_OPENGLES2_H_
+#define __ATLAS_MAP_RENDERER_OPENGLES2_H_
 
 #include <stdint.h>
 #include <memory>
@@ -30,15 +30,15 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OpenGL_Base/AtlasMapRenderer_OpenGL_Base.h>
-#include <OpenGLES/MapRenderer_OpenGLES.h>
+#include <OpenGLES/MapRenderer_OpenGLES2.h>
 
 namespace OsmAnd {
 
     class MapDataCache;
 
-    class OSMAND_CORE_API AtlasMapRenderer_OpenGLES
+    class OSMAND_CORE_API AtlasMapRenderer_OpenGLES2
         : public AtlasMapRenderer_BaseOpenGL
-        , public MapRenderer_OpenGLES
+        , public MapRenderer_OpenGLES2
     {
     protected:
         GLuint _tilePatchVAO;
@@ -155,8 +155,8 @@ namespace OsmAnd {
         void performRendering_SkyStage();
         void releaseRendering_SkyStage();
     public:
-        AtlasMapRenderer_OpenGLES();
-        virtual ~AtlasMapRenderer_OpenGLES();
+        AtlasMapRenderer_OpenGLES2();
+        virtual ~AtlasMapRenderer_OpenGLES2();
 
         virtual void initializeRendering();
         virtual void performRendering();

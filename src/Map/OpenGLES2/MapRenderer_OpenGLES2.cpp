@@ -1,4 +1,4 @@
-#include "MapRenderer_OpenGLES.h"
+#include "MapRenderer_OpenGLES2.h"
 
 #include <assert.h>
 
@@ -16,7 +16,7 @@
 #   include <SkImageEncoder.h>
 #endif
 
-OsmAnd::MapRenderer_OpenGLES::MapRenderer_OpenGLES()
+OsmAnd::MapRenderer_OpenGLES2::MapRenderer_OpenGLES2()
     : _textureSampler_Bitmap_NoAtlas(0)
     , _textureSampler_Bitmap_Atlas(0)
     , _textureSampler_ElevationData_NoAtlas(0)
@@ -25,11 +25,11 @@ OsmAnd::MapRenderer_OpenGLES::MapRenderer_OpenGLES()
 {
 }
 
-OsmAnd::MapRenderer_OpenGLES::~MapRenderer_OpenGLES()
+OsmAnd::MapRenderer_OpenGLES2::~MapRenderer_OpenGLES2()
 {
 }
 
-GLenum OsmAnd::MapRenderer_OpenGLES::validateResult()
+GLenum OsmAnd::MapRenderer_OpenGLES2::validateResult()
 {
     auto result = glGetError();
     if(result == GL_NO_ERROR)
@@ -63,12 +63,12 @@ GLenum OsmAnd::MapRenderer_OpenGLES::validateResult()
             errorString = "(unknown)";
             break;
     }
-    LogPrintf(LogSeverityLevel::Error, "OpenGL error 0x%08x : %s\n", result, errorString);
+    LogPrintf(LogSeverityLevel::Error, "OpenGLES2 error 0x%08x : %s\n", result, errorString);
 
     return result;
 }
 
-GLuint OsmAnd::MapRenderer_OpenGLES::compileShader( GLenum shaderType, const char* source )
+GLuint OsmAnd::MapRenderer_OpenGLES2::compileShader( GLenum shaderType, const char* source )
 {
     GLuint shader;
 
@@ -110,7 +110,7 @@ GLuint OsmAnd::MapRenderer_OpenGLES::compileShader( GLenum shaderType, const cha
     return shader;
 }
 
-GLuint OsmAnd::MapRenderer_OpenGLES::linkProgram( GLuint shadersCount, GLuint *shaders )
+GLuint OsmAnd::MapRenderer_OpenGLES2::linkProgram( GLuint shadersCount, GLuint *shaders )
 {
     GLuint program = 0;
 
@@ -165,7 +165,7 @@ GLuint OsmAnd::MapRenderer_OpenGLES::linkProgram( GLuint shadersCount, GLuint *s
     return program;
 }
 
-void OsmAnd::MapRenderer_OpenGLES::initializeRendering()
+void OsmAnd::MapRenderer_OpenGLES2::initializeRendering()
 {
     MapRenderer_BaseOpenGL::initializeRendering();
 
@@ -276,7 +276,7 @@ void OsmAnd::MapRenderer_OpenGLES::initializeRendering()
     GL_CHECK_RESULT;*/
 }
 
-void OsmAnd::MapRenderer_OpenGLES::releaseRendering()
+void OsmAnd::MapRenderer_OpenGLES2::releaseRendering()
 {
     /*
     if(_textureSampler_Bitmap_NoAtlas != 0)
@@ -310,7 +310,7 @@ void OsmAnd::MapRenderer_OpenGLES::releaseRendering()
     MapRenderer_BaseOpenGL::releaseRendering();
 }
 
-void OsmAnd::MapRenderer_OpenGLES::uploadTileToTexture(
+void OsmAnd::MapRenderer_OpenGLES2::uploadTileToTexture(
     TileLayerId layerId,
     const TileId& tileId,
     uint32_t zoom,
@@ -734,7 +734,7 @@ void OsmAnd::MapRenderer_OpenGLES::uploadTileToTexture(
     }
 }
 
-void OsmAnd::MapRenderer_OpenGLES::releaseTexture( void* textureRef )
+void OsmAnd::MapRenderer_OpenGLES2::releaseTexture( void* textureRef )
 {
     GLuint texture = static_cast<GLuint>(reinterpret_cast<intptr_t>(textureRef));
 
@@ -742,7 +742,7 @@ void OsmAnd::MapRenderer_OpenGLES::releaseTexture( void* textureRef )
     GL_CHECK_RESULT;
 }
 
-void OsmAnd::MapRenderer_OpenGLES::findVariableLocation( GLuint program, GLint& location, const QString& name, const VariableType& type )
+void OsmAnd::MapRenderer_OpenGLES2::findVariableLocation( GLuint program, GLint& location, const QString& name, const VariableType& type )
 {
     if(type == VariableType::In)
         location = glGetAttribLocation(program, name.toStdString().c_str());
