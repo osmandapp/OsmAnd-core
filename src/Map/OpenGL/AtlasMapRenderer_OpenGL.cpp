@@ -334,13 +334,22 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
 
 void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_MapStage()
 {
+    GL_CHECK_PRESENT(glBindVertexArray);
+    GL_CHECK_PRESENT(glUseProgram);
+    GL_CHECK_PRESENT(glUniformMatrix4fv);
+    GL_CHECK_PRESENT(glUniform1f);
+    GL_CHECK_PRESENT(glUniform2f);
+    GL_CHECK_PRESENT(glUniform3f);
+    GL_CHECK_PRESENT(glUniform1i);
+    GL_CHECK_PRESENT(glUniform2i);
+    GL_CHECK_PRESENT(glActiveTexture);
+    GL_CHECK_PRESENT(glBindSampler);
+
     // Set tile patch VAO
-    assert(glBindVertexArray);
     glBindVertexArray(_tilePatchVAO);
     GL_CHECK_RESULT;
 
     // Activate program
-    assert(glUseProgram);
     glUseProgram(_mapStage.program);
     GL_CHECK_RESULT;
 
@@ -595,15 +604,16 @@ void OsmAnd::AtlasMapRenderer_OpenGL::releaseRendering()
 
 void OsmAnd::AtlasMapRenderer_OpenGL::releaseRendering_MapStage()
 {
+    GL_CHECK_PRESENT(glDeleteProgram);
+    GL_CHECK_PRESENT(glDeleteShader);
+
     if(_mapStage.program)
     {
-        assert(glDeleteProgram);
         glDeleteProgram(_mapStage.program);
         GL_CHECK_RESULT;
     }
     if(_mapStage.fs.id)
     {
-        assert(glDeleteShader);
         glDeleteShader(_mapStage.fs.id);
         GL_CHECK_RESULT;
     }
@@ -617,45 +627,41 @@ void OsmAnd::AtlasMapRenderer_OpenGL::releaseRendering_MapStage()
 
 void OsmAnd::AtlasMapRenderer_OpenGL::allocateTilePatch( MapTileVertex* vertices, size_t verticesCount, GLushort* indices, size_t indicesCount )
 {
+    GL_CHECK_PRESENT(glGenVertexArrays);
+    GL_CHECK_PRESENT(glBindVertexArray);
+    GL_CHECK_PRESENT(glGenBuffers);
+    GL_CHECK_PRESENT(glBindBuffer);
+    GL_CHECK_PRESENT(glBufferData);
+    GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glVertexAttribPointer);
+
     // Create Vertex Array Object
-    assert(glGenVertexArrays);
     glGenVertexArrays(1, &_tilePatchVAO);
     GL_CHECK_RESULT;
-    assert(glBindVertexArray);
     glBindVertexArray(_tilePatchVAO);
     GL_CHECK_RESULT;
 
     // Create vertex buffer and associate it with VAO
-    assert(glGenBuffers);
     glGenBuffers(1, &_tilePatchVBO);
     GL_CHECK_RESULT;
-    assert(glBindBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, _tilePatchVBO);
     GL_CHECK_RESULT;
-    assert(glBufferData);
     glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(MapTileVertex), vertices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
-    assert(glEnableVertexAttribArray);
     glEnableVertexAttribArray(_mapStage.vs.in.vertexPosition);
     GL_CHECK_RESULT;
-    assert(glVertexAttribPointer);
     glVertexAttribPointer(_mapStage.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(MapTileVertex), reinterpret_cast<GLvoid*>(offsetof(MapTileVertex, position)));
     GL_CHECK_RESULT;
-    assert(glEnableVertexAttribArray);
     glEnableVertexAttribArray(_mapStage.vs.in.vertexTexCoords);
     GL_CHECK_RESULT;
-    assert(glVertexAttribPointer);
     glVertexAttribPointer(_mapStage.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(MapTileVertex), reinterpret_cast<GLvoid*>(offsetof(MapTileVertex, uv)));
     GL_CHECK_RESULT;
 
     // Create index buffer and associate it with VAO
-    assert(glGenBuffers);
     glGenBuffers(1, &_tilePatchIBO);
     GL_CHECK_RESULT;
-    assert(glBindBuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _tilePatchIBO);
     GL_CHECK_RESULT;
-    assert(glBufferData);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
 
@@ -665,9 +671,11 @@ void OsmAnd::AtlasMapRenderer_OpenGL::allocateTilePatch( MapTileVertex* vertices
 
 void OsmAnd::AtlasMapRenderer_OpenGL::releaseTilePatch()
 {
+    GL_CHECK_PRESENT(glDeleteBuffers);
+    GL_CHECK_PRESENT(glDeleteVertexArrays);
+
     if(_tilePatchIBO)
     {
-        assert(glDeleteBuffers);
         glDeleteBuffers(1, &_tilePatchIBO);
         GL_CHECK_RESULT;
         _tilePatchIBO = 0;
@@ -675,7 +683,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL::releaseTilePatch()
 
     if(_tilePatchVBO)
     {
-        assert(glDeleteBuffers);
         glDeleteBuffers(1, &_tilePatchVBO);
         GL_CHECK_RESULT;
         _tilePatchVBO = 0;
@@ -683,7 +690,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL::releaseTilePatch()
 
     if(_tilePatchVAO)
     {
-        assert(glDeleteVertexArrays);
         glDeleteVertexArrays(1, &_tilePatchVAO);
         GL_CHECK_RESULT;
         _tilePatchVAO = 0;
@@ -692,6 +698,14 @@ void OsmAnd::AtlasMapRenderer_OpenGL::releaseTilePatch()
 
 void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_SkyStage()
 {
+    GL_CHECK_PRESENT(glGenVertexArrays);
+    GL_CHECK_PRESENT(glBindVertexArray);
+    GL_CHECK_PRESENT(glGenBuffers);
+    GL_CHECK_PRESENT(glBindBuffer);
+    GL_CHECK_PRESENT(glBufferData);
+    GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glVertexAttribPointer);
+
     // Vertex data (x,y)
     float vertices[4][2] =
     {
@@ -711,38 +725,28 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_SkyStage()
     const auto indicesCount = 6;
 
     // Create Vertex Array Object
-    assert(glGenVertexArrays);
     glGenVertexArrays(1, &_skyStage.vao);
     GL_CHECK_RESULT;
-    assert(glBindVertexArray);
     glBindVertexArray(_skyStage.vao);
     GL_CHECK_RESULT;
 
     // Create vertex buffer and associate it with VAO
-    assert(glGenBuffers);
     glGenBuffers(1, &_skyStage.vbo);
     GL_CHECK_RESULT;
-    assert(glBindBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, _skyStage.vbo);
     GL_CHECK_RESULT;
-    assert(glBufferData);
     glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(float) * 2, vertices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
-    assert(glEnableVertexAttribArray);
     glEnableVertexAttribArray(_skyStage.vs.in.vertexPosition);
     GL_CHECK_RESULT;
-    assert(glVertexAttribPointer);
     glVertexAttribPointer(_skyStage.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, nullptr);
     GL_CHECK_RESULT;
         
     // Create index buffer and associate it with VAO
-    assert(glGenBuffers);
     glGenBuffers(1, &_skyStage.ibo);
     GL_CHECK_RESULT;
-    assert(glBindBuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _skyStage.ibo);
     GL_CHECK_RESULT;
-    assert(glBufferData);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
 
@@ -854,13 +858,19 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_SkyStage()
     }
 #endif
 
+    GL_CHECK_PRESENT(glBindVertexArray);
+    GL_CHECK_PRESENT(glUseProgram);
+    GL_CHECK_PRESENT(glUniformMatrix4fv);
+    GL_CHECK_PRESENT(glUniform1f);
+    GL_CHECK_PRESENT(glUniform2f);
+    GL_CHECK_PRESENT(glUniform3f);
+    GL_CHECK_PRESENT(glDrawElements);
+    
     // Set tile patch VAO
-    assert(glBindVertexArray);
     glBindVertexArray(_skyStage.vao);
     GL_CHECK_RESULT;
 
     // Activate program
-    assert(glUseProgram);
     glUseProgram(_skyStage.program);
     GL_CHECK_RESULT;
 
@@ -899,36 +909,36 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_SkyStage()
 
 void OsmAnd::AtlasMapRenderer_OpenGL::releaseRendering_SkyStage()
 {
+    GL_CHECK_PRESENT(glDeleteBuffers);
+    GL_CHECK_PRESENT(glDeleteVertexArrays);
+    GL_CHECK_PRESENT(glDeleteProgram);
+    GL_CHECK_PRESENT(glDeleteShader);
+
     if(_skyStage.ibo)
     {
-        assert(glDeleteBuffers);
         glDeleteBuffers(1, &_skyStage.ibo);
         GL_CHECK_RESULT;
     }
 
     if(_skyStage.vbo)
     {
-        assert(glDeleteBuffers);
         glDeleteBuffers(1, &_skyStage.vbo);
         GL_CHECK_RESULT;
     }
 
     if(_skyStage.vao)
     {
-        assert(glDeleteVertexArrays);
         glDeleteVertexArrays(1, &_skyStage.vao);
         GL_CHECK_RESULT;
     }
 
     if(_skyStage.program)
     {
-        assert(glDeleteProgram);
         glDeleteProgram(_skyStage.program);
         GL_CHECK_RESULT;
     }
     if(_skyStage.fs.id)
     {
-        assert(glDeleteShader);
         glDeleteShader(_skyStage.fs.id);
         GL_CHECK_RESULT;
     }

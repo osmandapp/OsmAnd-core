@@ -27,6 +27,13 @@ OsmAnd::MapRenderer_BaseOpenGL::~MapRenderer_BaseOpenGL()
 
 GLuint OsmAnd::MapRenderer_BaseOpenGL::compileShader( GLenum shaderType, const char* source )
 {
+    GL_CHECK_PRESENT(glCreateShader);
+    GL_CHECK_PRESENT(glShaderSource);
+    GL_CHECK_PRESENT(glCompileShader);
+    GL_CHECK_PRESENT(glGetShaderiv);
+    GL_CHECK_PRESENT(glGetShaderInfoLog);
+    GL_CHECK_PRESENT(glDeleteShader);
+
     GLuint shader;
 
     shader = glCreateShader(shaderType);
@@ -69,6 +76,13 @@ GLuint OsmAnd::MapRenderer_BaseOpenGL::compileShader( GLenum shaderType, const c
 
 GLuint OsmAnd::MapRenderer_BaseOpenGL::linkProgram( GLuint shadersCount, GLuint *shaders )
 {
+    GL_CHECK_PRESENT(glCreateProgram);
+    GL_CHECK_PRESENT(glAttachShader);
+    GL_CHECK_PRESENT(glLinkProgram);
+    GL_CHECK_PRESENT(glGetProgramiv);
+    GL_CHECK_PRESENT(glGetProgramInfoLog);
+    GL_CHECK_PRESENT(glDeleteProgram);
+
     GLuint program = 0;
 
     program = glCreateProgram();
@@ -132,7 +146,13 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
     int& outAtlasSlotIndex,
     size_t& outUsedMemory)
 {
-/*
+    GL_CHECK_PRESENT(glGenTextures);
+    GL_CHECK_PRESENT(glBindTexture);
+    GL_CHECK_PRESENT(glTexStorage2D);
+    GL_CHECK_PRESENT(glPixelStorei);
+    GL_CHECK_PRESENT(glTexSubImage2D);
+    GL_CHECK_PRESENT(glGenerateMipmap);
+
     auto& tileLayer = _tileLayers[layerId];
 
     // Depending on tile type, determine texture properties
@@ -544,11 +564,12 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
         outTextureRef = reinterpret_cast<void*>(texture);
         outAtlasSlotIndex = -1;
     }
-*/
 }
 
 void OsmAnd::MapRenderer_BaseOpenGL::releaseTexture( void* textureRef )
 {
+    GL_CHECK_PRESENT(glDeleteTextures);
+
     GLuint texture = static_cast<GLuint>(reinterpret_cast<intptr_t>(textureRef));
 
     glDeleteTextures(1, &texture);
@@ -557,6 +578,9 @@ void OsmAnd::MapRenderer_BaseOpenGL::releaseTexture( void* textureRef )
 
 void OsmAnd::MapRenderer_BaseOpenGL::findVariableLocation( GLuint program, GLint& location, const QString& name, const VariableType& type )
 {
+    GL_CHECK_PRESENT(glGetAttribLocation);
+    GL_CHECK_PRESENT(glGetUniformLocation);
+
     if(type == VariableType::In)
         location = glGetAttribLocation(program, name.toStdString().c_str());
     else if(type == VariableType::Uniform)

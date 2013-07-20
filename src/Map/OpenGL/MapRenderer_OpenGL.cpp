@@ -19,6 +19,8 @@ OsmAnd::MapRenderer_OpenGL::~MapRenderer_OpenGL()
 
 GLenum OsmAnd::MapRenderer_OpenGL::validateResult()
 {
+    GL_CHECK_PRESENT(glGetError);
+
     auto result = glGetError();
     if(result == GL_NO_ERROR)
         return result;
@@ -30,6 +32,20 @@ GLenum OsmAnd::MapRenderer_OpenGL::validateResult()
 
 void OsmAnd::MapRenderer_OpenGL::initializeRendering()
 {
+    GL_CHECK_PRESENT(glGetError);
+    GL_CHECK_PRESENT(glGetString);
+    GL_CHECK_PRESENT(glGetFloatv);
+    GL_CHECK_PRESENT(glGetIntegerv);
+    GL_CHECK_PRESENT(glGenSamplers);
+    GL_CHECK_PRESENT(glSamplerParameteri);
+    GL_CHECK_PRESENT(glSamplerParameterf);
+    GL_CHECK_PRESENT(glShadeModel);
+    GL_CHECK_PRESENT(glHint);
+    GL_CHECK_PRESENT(glEnable);
+    GL_CHECK_PRESENT(glClearColor);
+    GL_CHECK_PRESENT(glClearDepth);
+    GL_CHECK_PRESENT(glDepthFunc);
+    
     MapRenderer_BaseOpenGL::initializeRendering();
 
     glewExperimental = GL_TRUE;
@@ -169,6 +185,8 @@ void OsmAnd::MapRenderer_OpenGL::initializeRendering()
 
 void OsmAnd::MapRenderer_OpenGL::releaseRendering()
 {
+    GL_CHECK_PRESENT(glDeleteSamplers);
+
     if(_textureSampler_Bitmap_NoAtlas != 0)
     {
         glDeleteSamplers(1, &_textureSampler_Bitmap_NoAtlas);

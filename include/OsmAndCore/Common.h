@@ -26,7 +26,7 @@
 #include <assert.h>
 #include <iostream>
 
-#ifndef NDEBUG
+#if defined(DEBUG) || defined(_DEBUG)
 #   define OSMAND_ASSERT(condition, message) \
     do { \
         if (! (condition)) { \

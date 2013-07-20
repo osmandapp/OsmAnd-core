@@ -24,6 +24,7 @@
 
 #include <stdint.h>
 #include <memory>
+#include <type_traits>
 
 #include <QMap>
 #include <QMultiMap>
@@ -44,6 +45,7 @@
 #   include <OpenGLES/ES2/glext.h>
 #elif defined(OSMAND_TARGET_OS_android)
 #   include <GLES2/gl2.h>
+#   include <GLES2/gl2ext.h>
 #else
 #   include <GL/gl.h>
 #endif
@@ -54,12 +56,22 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <IMapRenderer.h>
 
-#if !defined(NDEBUG)
+#if defined(_DEBUG) || defined(DEBUG)
 #   define GL_CHECK_RESULT validateResult()
 #   define GL_GET_RESULT validateResult()
+#   define GL_CHECK_PRESENT(x)                                                                     \
+        {                                                                                          \
+            static bool __checked_presence_of_##x = std::is_function<decltype(x)>::value;          \
+            if(!__checked_presence_of_##x)                                                         \
+            {                                                                                      \
+                assert(x);                                                                         \
+                __checked_presence_of_##x = true;                                                  \
+            }                                                                                      \
+        }
 #else
 #   define GL_CHECK_RESULT
 #   define GL_GET_RESULT glGetError()
+#   define GL_CHECK_PRESENT(x)
 #endif
 
 namespace OsmAnd {
