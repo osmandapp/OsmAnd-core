@@ -692,7 +692,7 @@ void drawObject(RenderingContext* rc,  SkCanvas* cv, RenderingRuleSearchRequest*
 	}
 }
 bool iconOrder(IconDrawInfo text1, IconDrawInfo text2) {
-	return text1->order < text2->order;
+	return text1.order < text2.order;
 }
 
 void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
