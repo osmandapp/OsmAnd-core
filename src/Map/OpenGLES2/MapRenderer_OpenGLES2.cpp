@@ -12,11 +12,6 @@
 #include "OsmAndCore/Utilities.h"
 
 OsmAnd::MapRenderer_OpenGLES2::MapRenderer_OpenGLES2()
-    : _textureSampler_Bitmap_NoAtlas(0)
-    , _textureSampler_Bitmap_Atlas(0)
-    , _textureSampler_ElevationData_NoAtlas(0)
-    , _textureSampler_ElevationData_Atlas(0)
-    , _maxAnisotropy(-1)
 {
 }
 
@@ -45,12 +40,6 @@ GLenum OsmAnd::MapRenderer_OpenGLES2::validateResult()
         case GL_INVALID_OPERATION:
             errorString = "invalid operation";
             break;
-        case GL_STACK_OVERFLOW:
-            errorString = "stack overflow";
-            break;
-        case GL_STACK_UNDERFLOW:
-            errorString = "stack underflow";
-            break;
         case GL_OUT_OF_MEMORY:
             errorString = "out of memory";
             break;
@@ -69,13 +58,7 @@ void OsmAnd::MapRenderer_OpenGLES2::initializeRendering()
 
     const auto glVersionString = glGetString(GL_VERSION);
     GL_CHECK_RESULT;
-    GLint glVersion[2];
-    glGetIntegerv(GL_MAJOR_VERSION, &glVersion[0]);
-    GL_CHECK_RESULT;
-    glGetIntegerv(GL_MINOR_VERSION, &glVersion[1]);
-    GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "Using OpenGLES2 version %d.%d [%s]\n", glVersion[0], glVersion[1], glVersionString);
-    assert(glVersion[0] >= 3);
+    LogPrintf(LogSeverityLevel::Info, "Using OpenGLES2 version %s\n", glVersionString);
 
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, reinterpret_cast<GLint*>(&_maxTextureSize));
     GL_CHECK_RESULT;
