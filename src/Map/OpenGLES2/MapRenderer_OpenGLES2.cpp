@@ -86,7 +86,7 @@ void OsmAnd::MapRenderer_OpenGLES2::initializeRendering()
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal 4-component parameters in vertex shader %d\n", maxVertexUniformVectors);
 
-    const auto glesExtensions = QString::fromLatin1(static_cast<const char*>(glGetString(GL_EXTENSIONS)));
+    const auto glesExtensions = QString::fromLatin1(reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS)));
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGLES2 extensions: %s\n", qPrintable(glesExtensions));
     assert(glesExtensions.contains(QString::fromLatin1("OES_vertex_array_object")));
@@ -96,7 +96,7 @@ void OsmAnd::MapRenderer_OpenGLES2::initializeRendering()
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     GL_CHECK_RESULT;
 
-    glClearDepth(1.0f);
+    glClearDepthf(1.0f);
     GL_CHECK_RESULT;
 
     glEnable(GL_DEPTH_TEST);
