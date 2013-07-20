@@ -11,6 +11,34 @@
 #include "OsmAndCore/Logging.h"
 #include "OsmAndCore/Utilities.h"
 
+#ifndef GL_LUMINANCE8_EXT
+#   define GL_LUMINANCE8_EXT                                            0x8040
+#endif //!GL_LUMINANCE8_EXT
+
+#ifndef GL_RGBA4_OES
+#   if defined(GL_RGBA4)
+#       define GL_RGBA4_OES GL_RGBA4
+#   else
+#       define GL_RGBA4_OES                                             0x8056
+#   endif
+#endif //!GL_RGBA4_OES
+
+#ifndef GL_RGB5_A1_OES
+#   if defined(GL_RGB5_A1)
+#       define GL_RGB5_A1_OES GL_RGB5_A1
+#   else
+#       define GL_RGB5_A1_OES                                           0x8057
+#   endif
+#endif //!GL_RGB5_A1_OES
+
+#ifndef GL_RGB565_OES
+#   if defined(GL_RGB565)
+#       define GL_RGB565_OES GL_RGB565
+#   else
+#       define GL_RGB565_OES                                            0x8D62
+#   endif
+#endif //!GL_RGB565_OES
+
 OsmAnd::MapRenderer_OpenGLES2::P_glTexStorage2DEXT_PROC OsmAnd::MapRenderer_OpenGLES2::glTexStorage2DEXT = nullptr;
 
 OsmAnd::MapRenderer_OpenGLES2::MapRenderer_OpenGLES2()
@@ -142,19 +170,19 @@ void OsmAnd::MapRenderer_OpenGLES2::allocateTexture2D( GLenum target, GLsizei le
         if(sourceFormat == GL_RGBA && sourcePixelDataType == GL_UNSIGNED_BYTE)
         {
             //TODO: here in theory we can handle forcing texture to be 16bit RGB5A1
-            textureFormat = GL_RGBA8;
+            textureFormat = GL_RGBA8_OES;
         }
         else if(sourceFormat == GL_RGBA && sourcePixelDataType == GL_UNSIGNED_SHORT_4_4_4_4)
         {
-            textureFormat = GL_RGBA4;
+            textureFormat = GL_RGBA4_OES;
         }
         else if(sourceFormat == GL_RGB && sourcePixelDataType == GL_UNSIGNED_SHORT_5_6_5)
         {
-            textureFormat = GL_RGB5;
+            textureFormat = GL_RGB565_OES;
         }
         else if(sourceFormat == GL_LUMINANCE && sourcePixelDataType == GL_FLOAT)
         {
-            textureFormat = GL_R32F;
+            textureFormat = GL_LUMINANCE8_EXT;
         }
 
         glTexStorage2DEXT(target, levels, textureFormat, width, height);

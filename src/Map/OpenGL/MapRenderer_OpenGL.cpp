@@ -225,7 +225,7 @@ void OsmAnd::MapRenderer_OpenGL::allocateTexture2D( GLenum target, GLsizei level
     }
     else if(sourceFormat == GL_LUMINANCE && sourcePixelDataType == GL_FLOAT)
     {
-        textureFormat = GL_R32F;
+        textureFormat = GL_LUMINANCE8;
     }
 
     glTexStorage2D(target, levels, textureFormat, width, height);
