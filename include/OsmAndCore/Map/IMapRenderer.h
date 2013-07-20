@@ -86,7 +86,6 @@ namespace OsmAnd {
             float zoomFraction;
             float heightScaleFactor;
 
-            bool force16bitColorDepthLimit;
             bool textureAtlasesAllowed;
             uint32_t heightmapPatchesPerSide;
         };
@@ -208,7 +207,6 @@ namespace OsmAnd {
         const QSet<TileId>& visibleTiles;
         
         virtual void setTileProvider(const TileLayerId& layerId, const std::shared_ptr<IMapTileProvider>& tileProvider, bool forcedUpdate = false);
-        virtual void set16bitColorDepthLimit(const bool& forced, bool forcedUpdate = false);
         virtual void setWindowSize(const PointI& windowSize, bool forcedUpdate = false);
         virtual void setDisplayDensityFactor(const float& factor, bool forcedUpdate = false);
         virtual void setViewport(const AreaI& viewport, bool forcedUpdate = false);

@@ -32,6 +32,12 @@ GLenum OsmAnd::MapRenderer_OpenGL::validateResult()
 
 void OsmAnd::MapRenderer_OpenGL::initializeRendering()
 {
+    glewExperimental = GL_TRUE;
+    glewInit();
+    // For now, silence OpenGL error here, it's inside GLEW, so it's not ours
+    (void)glGetError();
+    //GL_CHECK_RESULT;
+
     GL_CHECK_PRESENT(glGetError);
     GL_CHECK_PRESENT(glGetString);
     GL_CHECK_PRESENT(glGetFloatv);
@@ -47,12 +53,6 @@ void OsmAnd::MapRenderer_OpenGL::initializeRendering()
     GL_CHECK_PRESENT(glDepthFunc);
     
     MapRenderer_BaseOpenGL::initializeRendering();
-
-    glewExperimental = GL_TRUE;
-    glewInit();
-    // For now, silence OpenGL error here, it's inside GLEW, so it's not ours
-    (void)glGetError();
-    //GL_CHECK_RESULT;
 
     const auto glVersionString = glGetString(GL_VERSION);
     GL_CHECK_RESULT;
@@ -216,4 +216,30 @@ void OsmAnd::MapRenderer_OpenGL::releaseRendering()
     }
 
     MapRenderer_BaseOpenGL::releaseRendering();
+}
+
+void OsmAnd::MapRenderer_OpenGL::allocateTexture2D( GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType )
+{
+    GL_CHECK_PRESENT(glTexStorage2D);
+
+    GLenum textureFormat = GL_INVALID_ENUM;
+    if(sourceFormat == GL_RGBA && sourcePixelDataType == GL_UNSIGNED_BYTE)
+    {
+        //TODO: here in theory we can handle forcing texture to be 16bit RGB5A1
+        textureFormat = GL_RGBA8;
+    }
+    else if(sourceFormat == GL_RGBA && sourcePixelDataType == GL_UNSIGNED_SHORT_4_4_4_4)
+    {
+        textureFormat = GL_RGBA4;
+    }
+    else if(sourceFormat == GL_RGB && sourcePixelDataType == GL_UNSIGNED_SHORT_5_6_5)
+    {
+        textureFormat = GL_RGB5;
+    }
+    else if(sourceFormat == GL_LUMINANCE && sourcePixelDataType == GL_FLOAT)
+    {
+        textureFormat = GL_R32F;
+    }
+
+    glTexStorage2D(target, levels, textureFormat, width, height);
 }

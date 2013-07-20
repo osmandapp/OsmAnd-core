@@ -106,7 +106,6 @@ void OsmAnd::MapRenderer_OpenGLES2::initializeRendering()
     const auto glesExtensions = QString::fromLatin1(glGetString(GL_EXTENSIONS));
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGLES2 extensions: %s\n", qPrintable(glesExtensions));
-    assert(glesExtensions.contains(QString::fromLatin1("OES_depth24")));
     assert(glesExtensions.contains(QString::fromLatin1("OES_vertex_array_object")));
     assert(glesExtensions.contains(QString::fromLatin1("OES_texture_float")));
     assert(glesExtensions.contains(QString::fromLatin1("EXT_unpack_subimage")));
@@ -221,4 +220,32 @@ void OsmAnd::MapRenderer_OpenGLES2::releaseRendering()
     }
 */
     MapRenderer_BaseOpenGL::releaseRendering();
+}
+
+void OsmAnd::MapRenderer_OpenGLES2::allocateTexture2D( GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType )
+{
+    GL_CHECK_PRESENT(glTexImage2D);
+    GL_CHECK_PRESENT(glTexParameteri);
+
+    size_t pixelSize = 0;
+    if(sourceFormat == GL_RGBA && sourcePixelDataType == GL_UNSIGNED_BYTE)
+    {
+        pixelSize = 4;
+    }
+    else if(sourceFormat == GL_RGBA && sourcePixelDataType == GL_UNSIGNED_SHORT_4_4_4_4)
+    {
+        pixelSize = 2;
+    }
+    else if(sourceFormat == GL_RGB && sourcePixelDataType == GL_UNSIGNED_SHORT_5_6_5)
+    {
+        pixelSize = 2;
+    }
+    else if(sourceFormat == GL_LUMINANCE && sourcePixelDataType == GL_FLOAT)
+    {
+        pixelSize = 4;
+    }
+
+    uint8_t* dummyBuffer = new uint8_t[width * height * pixelSize];
+    glTexImage2D(target, 0, sourceFormat, width, height, 0, sourceFormat, sourcePixelDataType, dummyBuffer);
+    delete[] dummyBuffer;
 }

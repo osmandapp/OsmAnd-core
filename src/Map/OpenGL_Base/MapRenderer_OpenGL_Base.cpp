@@ -74,6 +74,14 @@ GLuint OsmAnd::MapRenderer_BaseOpenGL::compileShader( GLenum shaderType, const c
     return shader;
 }
 
+uint32_t OsmAnd::MapRenderer_BaseOpenGL::getTextureFormatId( GLenum sourceFormat, GLenum sourcePixelDataType )
+{
+    assert((sourceFormat >> 16) == 0);
+    assert((sourcePixelDataType >> 16) == 0);
+
+    return (sourceFormat << 16) | sourcePixelDataType;
+}
+
 GLuint OsmAnd::MapRenderer_BaseOpenGL::linkProgram( GLuint shadersCount, GLuint *shaders )
 {
     GL_CHECK_PRESENT(glCreateProgram);
@@ -148,7 +156,6 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
 {
     GL_CHECK_PRESENT(glGenTextures);
     GL_CHECK_PRESENT(glBindTexture);
-    GL_CHECK_PRESENT(glTexStorage2D);
     GL_CHECK_PRESENT(glPixelStorei);
     GL_CHECK_PRESENT(glTexSubImage2D);
     GL_CHECK_PRESENT(glGenerateMipmap);
@@ -156,11 +163,10 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
     auto& tileLayer = _tileLayers[layerId];
 
     // Depending on tile type, determine texture properties
-    GLenum textureFormat = GL_INVALID_ENUM;
     uint32_t tileSize = -1;
     uint32_t basePadding = 0;
     GLenum sourceFormat = GL_INVALID_ENUM;
-    GLenum sourceFormatType = GL_INVALID_ENUM;
+    GLenum sourcePixelDataType = GL_INVALID_ENUM;
     size_t sourcePixelByteSize = 0;
     bool generateMipmap = false;
     if(tile->type == IMapTileProvider::Bitmap)
@@ -169,22 +175,19 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
 
         switch (bitmapTile->format)
         {
-        case IMapBitmapTileProvider::ARGB_8888:
-            textureFormat = _activeConfig.force16bitColorDepthLimit ? GL_RGB5_A1 : GL_RGBA8;
-            sourceFormat = GL_BGRA;
-            sourceFormatType = GL_UNSIGNED_INT_8_8_8_8_REV;
-            sourcePixelByteSize = _activeConfig.force16bitColorDepthLimit ? 2 : 4;
+        case IMapBitmapTileProvider::RGBA_8888:
+            sourceFormat = GL_RGBA;
+            sourcePixelDataType = GL_UNSIGNED_BYTE;
+            sourcePixelByteSize = 4;
             break;
-        case IMapBitmapTileProvider::ARGB_4444:
-            textureFormat = GL_RGBA4;
-            sourceFormat = GL_BGRA;
-            sourceFormatType = GL_UNSIGNED_SHORT_4_4_4_4_REV;
+        case IMapBitmapTileProvider::RGBA_4444:
+            sourceFormat = GL_RGBA;
+            sourcePixelDataType = GL_UNSIGNED_SHORT_4_4_4_4;
             sourcePixelByteSize = 2;
             break;
         case IMapBitmapTileProvider::RGB_565:
-            textureFormat = GL_RGB5;
             sourceFormat = GL_RGB;
-            sourceFormatType = GL_UNSIGNED_SHORT_5_6_5;
+            sourcePixelDataType = GL_UNSIGNED_SHORT_5_6_5;
             sourcePixelByteSize = 2;
             break;
         }
@@ -195,11 +198,10 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
     }
     else if(tile->type == IMapTileProvider::ElevationData)
     {
-        textureFormat = GL_R32F;
         tileSize = tile->width;
         assert(tile->width == tile->height);
-        sourceFormat = GL_RED;
-        sourceFormatType = GL_FLOAT;
+        sourceFormat = GL_LUMINANCE;
+        sourcePixelDataType = GL_FLOAT;
         sourcePixelByteSize = 4;
         basePadding = 0;
         generateMipmap = false;
@@ -212,7 +214,7 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
     if(_activeConfig.textureAtlasesAllowed || Utilities::getNextPowerOfTwo(tileSize) != tileSize)
     {
         // Try to find proper atlas tile id
-        outAtlasPoolId = (static_cast<uint64_t>(textureFormat) << 32) | tileSize;
+        outAtlasPoolId = (static_cast<uint64_t>(getTextureFormatId(sourceFormat, sourcePixelDataType)) << 32) | tileSize;
         itAtlasPool = tileLayer._atlasTexturePools.find(outAtlasPoolId);
         if(itAtlasPool == tileLayer._atlasTexturePools.end())
             itAtlasPool = tileLayer._atlasTexturePools.insert(outAtlasPoolId, IMapRenderer::AtlasTexturePool());
@@ -291,7 +293,7 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
             GL_CHECK_RESULT;
 
             // Allocate space for this texture
-            glTexStorage2D(GL_TEXTURE_2D, atlasPool._mipmapLevels, textureFormat, atlasPool._textureSize, atlasPool._textureSize);
+            allocateTexture2D(GL_TEXTURE_2D, atlasPool._mipmapLevels, atlasPool._textureSize, atlasPool._textureSize, sourceFormat, sourcePixelDataType);
             GL_CHECK_RESULT;
 
             // Deselect texture
@@ -316,11 +318,11 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
                 uint8_t* fillBuffer = new uint8_t[atlasPool._textureSize * atlasPool._textureSize * 4];
                 for(uint32_t idx = 0; idx < atlasPool._textureSize * atlasPool._textureSize; idx++)
                 {
-                    *reinterpret_cast<uint32_t*>(&fillBuffer[idx * 4]) = 0xFFFF0000;
+                    *reinterpret_cast<uint32_t*>(&fillBuffer[idx * 4]) = SkPackARGB32(0xff, 0xff, 0x00, 0x00);
                 }
                 glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
                 GL_CHECK_RESULT;
-                glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, atlasPool._textureSize, atlasPool._textureSize, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, fillBuffer);
+                glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, atlasPool._textureSize, atlasPool._textureSize, GL_RGBA, GL_UNSIGNED_BYTE, fillBuffer);
                 GL_CHECK_RESULT;
                 delete[] fillBuffer;
 
@@ -366,7 +368,7 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
             glTexSubImage2D(GL_TEXTURE_2D, 0,
                 xOffset, yOffset, atlasPool._padding, atlasPool._padding,
                 sourceFormat,
-                sourceFormatType,
+                sourcePixelDataType,
                 pCornerData);
             GL_CHECK_RESULT;
 
@@ -377,7 +379,7 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
             glTexSubImage2D(GL_TEXTURE_2D, 0,
                 xOffset + atlasPool._padding + tileSize, yOffset, atlasPool._padding, atlasPool._padding,
                 sourceFormat,
-                sourceFormatType,
+                sourcePixelDataType,
                 pCornerData);
             GL_CHECK_RESULT;
 
@@ -388,7 +390,7 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
             glTexSubImage2D(GL_TEXTURE_2D, 0,
                 xOffset, yOffset + atlasPool._padding + tileSize, atlasPool._padding, atlasPool._padding,
                 sourceFormat,
-                sourceFormatType,
+                sourcePixelDataType,
                 pCornerData);
             GL_CHECK_RESULT;
 
@@ -399,7 +401,7 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
             glTexSubImage2D(GL_TEXTURE_2D, 0,
                 xOffset + atlasPool._padding + tileSize, yOffset + atlasPool._padding + tileSize, atlasPool._padding, atlasPool._padding,
                 sourceFormat,
-                sourceFormatType,
+                sourcePixelDataType,
                 pCornerData);
             GL_CHECK_RESULT;
 
@@ -415,7 +417,7 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
                 glTexSubImage2D(GL_TEXTURE_2D, 0,
                     xOffset + idx, yOffset + atlasPool._padding, 1, (GLsizei)tileSize,
                     sourceFormat,
-                    sourceFormatType,
+                    sourcePixelDataType,
                     tile->data);
                 GL_CHECK_RESULT;
             }
@@ -426,7 +428,7 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
                 glTexSubImage2D(GL_TEXTURE_2D, 0,
                     xOffset + atlasPool._padding, yOffset + idx, (GLsizei)tileSize, 1,
                     sourceFormat,
-                    sourceFormatType,
+                    sourcePixelDataType,
                     tile->data);
                 GL_CHECK_RESULT;
             }
@@ -437,7 +439,7 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
                 glTexSubImage2D(GL_TEXTURE_2D, 0,
                     xOffset + atlasPool._padding + tileSize + idx, yOffset + atlasPool._padding, 1, (GLsizei)tileSize,
                     sourceFormat,
-                    sourceFormatType,
+                    sourcePixelDataType,
                     reinterpret_cast<const uint8_t*>(tile->data) + (tileSize - 1) * sourcePixelByteSize);
                 GL_CHECK_RESULT;
             }
@@ -448,7 +450,7 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
                 glTexSubImage2D(GL_TEXTURE_2D, 0,
                     xOffset + atlasPool._padding, yOffset + atlasPool._padding + tileSize + idx, (GLsizei)tileSize, 1,
                     sourceFormat,
-                    sourceFormatType,
+                    sourcePixelDataType,
                     reinterpret_cast<const uint8_t*>(tile->data) + (tileSize - 1) * tile->rowLength);
                 GL_CHECK_RESULT;
             }
@@ -462,7 +464,7 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
         glTexSubImage2D(GL_TEXTURE_2D, 0,
             xOffset + atlasPool._padding, yOffset + atlasPool._padding, (GLsizei)tileSize, (GLsizei)tileSize,
             sourceFormat,
-            sourceFormatType,
+            sourcePixelDataType,
             tile->data);
         GL_CHECK_RESULT;
 
@@ -531,16 +533,14 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
         GL_CHECK_RESULT;
 
         // Allocate data
-        glTexStorage2D(GL_TEXTURE_2D, mipmapLevels,
-            textureFormat,
-            tileSize, tileSize);
+        allocateTexture2D(GL_TEXTURE_2D, mipmapLevels, tileSize, tileSize, sourceFormat, sourcePixelDataType);
         GL_CHECK_RESULT;
 
         // Upload data
         glTexSubImage2D(GL_TEXTURE_2D, 0,
             0, 0, (GLsizei)tileSize, (GLsizei)tileSize,
             sourceFormat,
-            sourceFormatType,
+            sourcePixelDataType,
             tile->data);
         GL_CHECK_RESULT;
 

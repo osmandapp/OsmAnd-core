@@ -29,7 +29,7 @@ OsmAnd::AtlasMapRenderer_OpenGLES2::~AtlasMapRenderer_OpenGLES2()
 
 void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering()
 {
-    MapRenderer_OpenGLES2::initializeRendering();
+    MapRenderer_OpenGL::initializeRendering();
 
     initializeRendering_SkyStage();
     initializeRendering_MapStage();
@@ -334,8 +334,18 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering()
 
 void OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering_MapStage()
 {
+    GL_CHECK_PRESENT(glBindVertexArrayOES);
+    GL_CHECK_PRESENT(glUseProgram);
+    GL_CHECK_PRESENT(glUniformMatrix4fv);
+    GL_CHECK_PRESENT(glUniform1f);
+    GL_CHECK_PRESENT(glUniform2f);
+    GL_CHECK_PRESENT(glUniform3f);
+    GL_CHECK_PRESENT(glUniform1i);
+    GL_CHECK_PRESENT(glUniform2i);
+    GL_CHECK_PRESENT(glActiveTexture);
+    GL_CHECK_PRESENT(glBindSampler);
+
     // Set tile patch VAO
-    assert(glBindVertexArrayOES);
     glBindVertexArrayOES(_tilePatchVAO);
     GL_CHECK_RESULT;
 
@@ -579,7 +589,6 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering_MapStage()
     GL_CHECK_RESULT;
 
     // Deselect VAO
-    assert(glBindVertexArrayOES);
     glBindVertexArrayOES(0);
     GL_CHECK_RESULT;
 }
@@ -595,6 +604,9 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::releaseRendering()
 
 void OsmAnd::AtlasMapRenderer_OpenGLES2::releaseRendering_MapStage()
 {
+    GL_CHECK_PRESENT(glDeleteProgram);
+    GL_CHECK_PRESENT(glDeleteShader);
+
     if(_mapStage.program)
     {
         glDeleteProgram(_mapStage.program);
@@ -615,11 +627,17 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::releaseRendering_MapStage()
 
 void OsmAnd::AtlasMapRenderer_OpenGLES2::allocateTilePatch( MapTileVertex* vertices, size_t verticesCount, GLushort* indices, size_t indicesCount )
 {
+    GL_CHECK_PRESENT(glGenVertexArraysOES);
+    GL_CHECK_PRESENT(glBindVertexArrayOES);
+    GL_CHECK_PRESENT(glGenBuffers);
+    GL_CHECK_PRESENT(glBindBuffer);
+    GL_CHECK_PRESENT(glBufferData);
+    GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glVertexAttribPointer);
+
     // Create Vertex Array Object
-    assert(glGenVertexArraysOES);
     glGenVertexArraysOES(1, &_tilePatchVAO);
     GL_CHECK_RESULT;
-    assert(glBindVertexArrayOES);
     glBindVertexArrayOES(_tilePatchVAO);
     GL_CHECK_RESULT;
 
@@ -647,13 +665,15 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::allocateTilePatch( MapTileVertex* verti
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
 
-    assert(glBindVertexArrayOES);
     glBindVertexArrayOES(0);
     GL_CHECK_RESULT;
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGLES2::releaseTilePatch()
 {
+    GL_CHECK_PRESENT(glDeleteBuffers);
+    GL_CHECK_PRESENT(glDeleteVertexArraysOES);
+
     if(_tilePatchIBO)
     {
         glDeleteBuffers(1, &_tilePatchIBO);
@@ -670,7 +690,6 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::releaseTilePatch()
 
     if(_tilePatchVAO)
     {
-        assert(glDeleteVertexArraysOES);
         glDeleteVertexArraysOES(1, &_tilePatchVAO);
         GL_CHECK_RESULT;
         _tilePatchVAO = 0;
@@ -679,6 +698,14 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::releaseTilePatch()
 
 void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_SkyStage()
 {
+    GL_CHECK_PRESENT(glGenVertexArraysOES);
+    GL_CHECK_PRESENT(glBindVertexArrayOES);
+    GL_CHECK_PRESENT(glGenBuffers);
+    GL_CHECK_PRESENT(glBindBuffer);
+    GL_CHECK_PRESENT(glBufferData);
+    GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glVertexAttribPointer);
+
     // Vertex data (x,y)
     float vertices[4][2] =
     {
@@ -698,10 +725,8 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_SkyStage()
     const auto indicesCount = 6;
 
     // Create Vertex Array Object
-    assert(glGenVertexArraysOES);
     glGenVertexArraysOES(1, &_skyStage.vao);
     GL_CHECK_RESULT;
-    assert(glBindVertexArrayOES);
     glBindVertexArrayOES(_skyStage.vao);
     GL_CHECK_RESULT;
 
@@ -725,7 +750,6 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_SkyStage()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
 
-    assert(glBindVertexArrayOES);
     glBindVertexArrayOES(0);
     GL_CHECK_RESULT;
 
@@ -817,8 +841,32 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_SkyStage()
 
 void OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering_SkyStage()
 {
+#if 0
+    {
+        const auto mFogTranslate = glm::translate(0.0f, 0.0f, -_correctedFogDistance);
+        const auto mModel = _mAzimuthInv * mFogTranslate;
+
+        glMatrixMode(GL_PROJECTION);
+        glLoadMatrixf(glm::value_ptr(_mProjection));
+        glMatrixMode(GL_MODELVIEW);
+        glLoadMatrixf(glm::value_ptr(_mView * mModel));
+        glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
+        glBegin(GL_LINES);
+            glVertex3f(-100.0f, 0.5f, 0.0f);
+            glVertex3f(+100.0f, 0.5f, 0.0f);
+        glEnd();
+    }
+#endif
+
+    GL_CHECK_PRESENT(glBindVertexArrayOES);
+    GL_CHECK_PRESENT(glUseProgram);
+    GL_CHECK_PRESENT(glUniformMatrix4fv);
+    GL_CHECK_PRESENT(glUniform1f);
+    GL_CHECK_PRESENT(glUniform2f);
+    GL_CHECK_PRESENT(glUniform3f);
+    GL_CHECK_PRESENT(glDrawElements);
+    
     // Set tile patch VAO
-    assert(glBindVertexArrayOES);
     glBindVertexArrayOES(_skyStage.vao);
     GL_CHECK_RESULT;
 
@@ -855,13 +903,17 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering_SkyStage()
     GL_CHECK_RESULT;
 
     // Deselect VAO
-    assert(glBindVertexArrayOES);
     glBindVertexArrayOES(0);
     GL_CHECK_RESULT;
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGLES2::releaseRendering_SkyStage()
 {
+    GL_CHECK_PRESENT(glDeleteBuffers);
+    GL_CHECK_PRESENT(glDeleteVertexArraysOES);
+    GL_CHECK_PRESENT(glDeleteProgram);
+    GL_CHECK_PRESENT(glDeleteShader);
+
     if(_skyStage.ibo)
     {
         glDeleteBuffers(1, &_skyStage.ibo);
@@ -876,7 +928,6 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::releaseRendering_SkyStage()
 
     if(_skyStage.vao)
     {
-        assert(glDeleteVertexArraysOES);
         glDeleteVertexArraysOES(1, &_skyStage.vao);
         GL_CHECK_RESULT;
     }

@@ -30,7 +30,6 @@ OsmAnd::IMapRenderer::IMapRenderer()
     setElevationAngle(45.0f, true);
     setTarget(PointI(std::numeric_limits<int32_t>::max() / 2, std::numeric_limits<int32_t>::max() / 2), true);
     setZoom(0, true);
-    set16bitColorDepthLimit(false, true);
     setTextureAtlasesUsagePermit(true, true);
     setHeightmapPatchesPerSide(24, true);
     setHeightScaleFactor(1.0f, true);
@@ -51,28 +50,6 @@ void OsmAnd::IMapRenderer::setTileProvider( const TileLayerId& layerId, const st
     _pendingConfig.tileProviders[layerId] = tileProvider;
 
     invalidateTileLayerCache(layerId);
-    invalidateConfiguration();
-}
-
-void OsmAnd::IMapRenderer::set16bitColorDepthLimit( const bool& forced, bool forcedUpdate/* = false*/ )
-{
-    QMutexLocker scopeLock(&_pendingConfigModificationMutex);
-
-    bool update = forcedUpdate || (_pendingConfig.force16bitColorDepthLimit != forced);
-    if(!update)
-        return;
-
-    _pendingConfig.force16bitColorDepthLimit = forced;
-
-    for(int layerId = 0; layerId < TileLayerId::IdsCount; layerId++)
-    {
-        const auto& provider = _pendingConfig.tileProviders[layerId];
-        if(!provider)
-            continue;
-
-        if(provider->type == IMapTileProvider::Bitmap)
-            invalidateTileLayerCache(static_cast<TileLayerId>(layerId));
-    }
     invalidateConfiguration();
 }
 

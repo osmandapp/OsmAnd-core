@@ -92,6 +92,8 @@ namespace OsmAnd {
         virtual GLuint compileShader(GLenum shaderType, const char* source);
         virtual GLuint linkProgram(GLuint shadersCount, GLuint *shaders);
 
+        virtual uint32_t getTextureFormatId(GLenum sourceFormat, GLenum sourcePixelDataType);
+        virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType) = 0;
         virtual void uploadTileToTexture(
             TileLayerId layerId,
             const TileId& tileId,

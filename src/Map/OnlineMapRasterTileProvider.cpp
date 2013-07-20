@@ -366,7 +366,7 @@ uint32_t OsmAnd::OnlineMapRasterTileProvider::getTileSize() const
 
 OsmAnd::OnlineMapRasterTileProvider::Tile::Tile( SkBitmap* bitmap )
     : IMapBitmapTileProvider::Tile(bitmap->getPixels(), bitmap->rowBytes(), bitmap->width(), bitmap->height(),
-        bitmap->getConfig() == SkBitmap::kARGB_8888_Config ? IMapBitmapTileProvider::ARGB_8888 : (bitmap->getConfig() == SkBitmap::kARGB_4444_Config ? IMapBitmapTileProvider::ARGB_4444 : IMapBitmapTileProvider::RGB_565 ) )
+        bitmap->getConfig() == SkBitmap::kARGB_8888_Config ? IMapBitmapTileProvider::RGBA_8888 : (bitmap->getConfig() == SkBitmap::kARGB_4444_Config ? IMapBitmapTileProvider::RGBA_4444 : IMapBitmapTileProvider::RGB_565 ) )
     , _skBitmap(bitmap)
 {
 }

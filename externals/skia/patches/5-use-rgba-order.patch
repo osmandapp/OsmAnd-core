@@ -1,0 +1,25 @@
+diff --git a/include/config/SkUserConfig.h b/include/config/SkUserConfig.h
+index 63fc90d..01b6221 100644
+--- a/include/config/SkUserConfig.h
++++ b/include/config/SkUserConfig.h
+@@ -201,4 +201,20 @@
+  */
+ //#define SK_SUPPORT_GPU 1
+ 
++/*
++ *  Default to OpenGL/DirectX order
++ *  order (in memory: r,g,b,a)
++ */
++#ifdef SK_CPU_BENDIAN
++    #define SK_R32_SHIFT    24
++    #define SK_G32_SHIFT    16
++    #define SK_B32_SHIFT    8
++    #define SK_A32_SHIFT    0
++#else
++    #define SK_R32_SHIFT    0
++    #define SK_G32_SHIFT    8
++    #define SK_B32_SHIFT    16
++    #define SK_A32_SHIFT    24
++#endif
++
+ #endif

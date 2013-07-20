@@ -37,8 +37,8 @@ namespace OsmAnd {
     public:
         enum BitmapFormat
         {
-            ARGB_8888,
-            ARGB_4444,
+            RGBA_8888,
+            RGBA_4444,
             RGB_565,
         };
 
