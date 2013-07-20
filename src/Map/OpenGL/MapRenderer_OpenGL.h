@@ -57,8 +57,8 @@ namespace OsmAnd {
     public:
         virtual ~MapRenderer_OpenGL();
 
-        virtual void initializeRendering();
-        virtual void releaseRendering();
+        virtual bool initializeRendering();
+        virtual bool releaseRendering();
     };
 
 }

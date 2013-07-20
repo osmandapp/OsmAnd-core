@@ -226,9 +226,9 @@ namespace OsmAnd {
         virtual void setHeightScaleFactor(const float& factor, bool forcedUpdate = false);
 
         const volatile bool& isRenderingInitialized;
-        virtual void initializeRendering();
-        virtual void performRendering();
-        virtual void releaseRendering();
+        virtual bool initializeRendering();
+        virtual bool performRendering();
+        virtual bool releaseRendering();
     };
 
 #if defined(OSMAND_OPENGL_RENDERER_SUPPORTED)

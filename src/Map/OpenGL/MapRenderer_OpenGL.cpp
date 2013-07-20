@@ -30,8 +30,10 @@ GLenum OsmAnd::MapRenderer_OpenGL::validateResult()
     return result;
 }
 
-void OsmAnd::MapRenderer_OpenGL::initializeRendering()
+bool OsmAnd::MapRenderer_OpenGL::initializeRendering()
 {
+    bool ok;
+
     glewExperimental = GL_TRUE;
     glewInit();
     // For now, silence OpenGL error here, it's inside GLEW, so it's not ours
@@ -52,7 +54,9 @@ void OsmAnd::MapRenderer_OpenGL::initializeRendering()
     GL_CHECK_PRESENT(glClearDepth);
     GL_CHECK_PRESENT(glDepthFunc);
     
-    MapRenderer_BaseOpenGL::initializeRendering();
+    ok = MapRenderer_BaseOpenGL::initializeRendering();
+    if(!ok)
+        return false;
 
     const auto glVersionString = glGetString(GL_VERSION);
     GL_CHECK_RESULT;
@@ -168,10 +172,14 @@ void OsmAnd::MapRenderer_OpenGL::initializeRendering()
 
     glDepthFunc(GL_LEQUAL);
     GL_CHECK_RESULT;
+
+    return true;
 }
 
-void OsmAnd::MapRenderer_OpenGL::releaseRendering()
+bool OsmAnd::MapRenderer_OpenGL::releaseRendering()
 {
+    bool ok;
+
     GL_CHECK_PRESENT(glDeleteSamplers);
 
     if(_textureSampler_Bitmap_NoAtlas != 0)
@@ -202,7 +210,11 @@ void OsmAnd::MapRenderer_OpenGL::releaseRendering()
         _textureSampler_ElevationData_Atlas = 0;
     }
 
-    MapRenderer_BaseOpenGL::releaseRendering();
+    ok = MapRenderer_BaseOpenGL::releaseRendering();
+    if(!ok)
+        return false;
+
+    return true;
 }
 
 void OsmAnd::MapRenderer_OpenGL::allocateTexture2D( GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType )

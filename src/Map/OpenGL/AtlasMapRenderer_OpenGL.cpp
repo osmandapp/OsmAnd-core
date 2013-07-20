@@ -27,14 +27,22 @@ OsmAnd::AtlasMapRenderer_OpenGL::~AtlasMapRenderer_OpenGL()
 {
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
+bool OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
 {
-    MapRenderer_OpenGL::initializeRendering();
+    bool ok;
+
+    ok = MapRenderer_OpenGL::initializeRendering();
+    if(!ok)
+        return false;
 
     initializeRendering_SkyStage();
     initializeRendering_MapStage();
 
-    AtlasMapRenderer_BaseOpenGL::initializeRendering();
+    ok = AtlasMapRenderer_BaseOpenGL::initializeRendering();
+    if(!ok)
+        return false;
+
+    return true;
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
@@ -308,11 +316,14 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
     _programVariables.clear();
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
+bool OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
 {
-    AtlasMapRenderer_BaseOpenGL::performRendering();
-    GL_CHECK_RESULT;
- 
+    bool ok;
+
+    ok = AtlasMapRenderer_BaseOpenGL::performRendering();
+    if(!ok)
+        return false;
+
     // Setup viewport
     GLint oldViewport[4];
     glGetIntegerv(GL_VIEWPORT, oldViewport);
@@ -330,6 +341,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering()
     // Revert viewport
     glViewport(oldViewport[0], oldViewport[1], oldViewport[2], oldViewport[3]);
     GL_CHECK_RESULT;
+
+    return true;
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_MapStage()
@@ -568,7 +581,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_MapStage()
         }
 
         const auto verticesCount = _activeConfig.tileProviders[TileLayerId::ElevationData]
-        ? (_activeConfig.heightmapPatchesPerSide * _activeConfig.heightmapPatchesPerSide) * 4 * 3
+            ? (_activeConfig.heightmapPatchesPerSide * _activeConfig.heightmapPatchesPerSide) * 4 * 3
             : 6;
         glDrawElements(GL_TRIANGLES, verticesCount, GL_UNSIGNED_SHORT, nullptr);
         GL_CHECK_RESULT;
@@ -593,13 +606,21 @@ void OsmAnd::AtlasMapRenderer_OpenGL::performRendering_MapStage()
     GL_CHECK_RESULT;
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGL::releaseRendering()
+bool OsmAnd::AtlasMapRenderer_OpenGL::releaseRendering()
 {
+    bool ok;
+
     releaseRendering_MapStage();
     releaseRendering_SkyStage();
 
-    AtlasMapRenderer_BaseOpenGL::releaseRendering();
-    MapRenderer_OpenGL::releaseRendering();
+    ok = AtlasMapRenderer_BaseOpenGL::releaseRendering();
+    if(!ok)
+        return false;
+    ok = MapRenderer_OpenGL::releaseRendering();
+    if(!ok)
+        return false;
+
+    return true;
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL::releaseRendering_MapStage()

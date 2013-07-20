@@ -314,7 +314,7 @@ void OsmAnd::IMapRenderer::setHeightScaleFactor( const float& factor, bool force
     invalidateConfiguration();
 }
 
-void OsmAnd::IMapRenderer::initializeRendering()
+bool OsmAnd::IMapRenderer::initializeRendering()
 {
     assert(!_isRenderingInitialized);
 
@@ -325,9 +325,11 @@ void OsmAnd::IMapRenderer::initializeRendering()
         validateConfiguration();
 
     _isRenderingInitialized = true;
+
+    return true;
 }
 
-void OsmAnd::IMapRenderer::performRendering()
+bool OsmAnd::IMapRenderer::performRendering()
 {
     assert(_isRenderingInitialized);
     assert(_renderThreadId == QThread::currentThreadId());
@@ -403,9 +405,11 @@ void OsmAnd::IMapRenderer::performRendering()
 
     // Now we need to obtain all tiles that are still missing
     requestCacheMissTiles();
+
+    return true;
 }
 
-void OsmAnd::IMapRenderer::releaseRendering()
+bool OsmAnd::IMapRenderer::releaseRendering()
 {
     assert(_isRenderingInitialized);
     assert(_renderThreadId == QThread::currentThreadId());
@@ -420,6 +424,8 @@ void OsmAnd::IMapRenderer::releaseRendering()
     _renderThreadId = nullptr;
 
     _isRenderingInitialized = false;
+
+    return true;
 }
 
 void OsmAnd::IMapRenderer::requestCacheMissTiles()

@@ -61,8 +61,8 @@ namespace OsmAnd {
 
         const QList<QString>& glesExtensions;
 
-        virtual void initializeRendering();
-        virtual void releaseRendering();
+        virtual bool initializeRendering();
+        virtual bool releaseRendering();
     };
 
 }

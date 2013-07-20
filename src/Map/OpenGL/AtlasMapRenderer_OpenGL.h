@@ -158,9 +158,9 @@ namespace OsmAnd {
         AtlasMapRenderer_OpenGL();
         virtual ~AtlasMapRenderer_OpenGL();
 
-        virtual void initializeRendering();
-        virtual void performRendering();
-        virtual void releaseRendering();
+        virtual bool initializeRendering();
+        virtual bool performRendering();
+        virtual bool releaseRendering();
     };
 
 }

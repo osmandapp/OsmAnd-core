@@ -257,14 +257,18 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
     */
 }
 
-void OsmAnd::AtlasMapRenderer_BaseOpenGL::initializeRendering()
+bool OsmAnd::AtlasMapRenderer_BaseOpenGL::initializeRendering()
 {
     createTilePatch();
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRenderer_BaseOpenGL::releaseRendering()
+bool OsmAnd::AtlasMapRenderer_BaseOpenGL::releaseRendering()
 {
     releaseTilePatch();
+
+    return true;
 }
 
 void OsmAnd::AtlasMapRenderer_BaseOpenGL::createTilePatch()

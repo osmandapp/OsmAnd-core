@@ -39,7 +39,9 @@
 #   endif
 #endif //!GL_RGB565_OES
 
+#if !defined(OSMAND_TARGET_OS_ios)
 OsmAnd::MapRenderer_OpenGLES2::P_glTexStorage2DEXT_PROC OsmAnd::MapRenderer_OpenGLES2::glTexStorage2DEXT = nullptr;
+#endif //!OSMAND_TARGET_OS_ios
 
 OsmAnd::MapRenderer_OpenGLES2::MapRenderer_OpenGLES2()
     : glesExtensions(_glesExtensions)
@@ -83,9 +85,13 @@ GLenum OsmAnd::MapRenderer_OpenGLES2::validateResult()
     return result;
 }
 
-void OsmAnd::MapRenderer_OpenGLES2::initializeRendering()
+bool OsmAnd::MapRenderer_OpenGLES2::initializeRendering()
 {
-    MapRenderer_BaseOpenGL::initializeRendering();
+    bool ok;
+
+    ok = MapRenderer_BaseOpenGL::initializeRendering();
+    if(!ok)
+        return false;
 
     const auto glVersionString = glGetString(GL_VERSION);
     GL_CHECK_RESULT;
@@ -153,11 +159,19 @@ void OsmAnd::MapRenderer_OpenGLES2::initializeRendering()
 
     glDepthFunc(GL_LEQUAL);
     GL_CHECK_RESULT;
+
+    return true;
 }
 
-void OsmAnd::MapRenderer_OpenGLES2::releaseRendering()
+bool OsmAnd::MapRenderer_OpenGLES2::releaseRendering()
 {
-    MapRenderer_BaseOpenGL::releaseRendering();
+    bool ok;
+
+    ok = MapRenderer_BaseOpenGL::releaseRendering();
+    if(!ok)
+        return false;
+
+    return true;
 }
 
 void OsmAnd::MapRenderer_OpenGLES2::allocateTexture2D( GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType )
