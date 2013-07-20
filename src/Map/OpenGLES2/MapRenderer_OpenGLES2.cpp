@@ -76,12 +76,17 @@ void OsmAnd::MapRenderer_OpenGLES2::initializeRendering()
     LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal texture units in vertex shader %d\n", maxTextureUnitsInVertexShader);
     assert(maxTextureUnitsInVertexShader >= IMapRenderer::RasterMap);
 
-    GLint maxUniformsPerProgram;
-    glGetIntegerv(GL_MAX_UNIFORM_LOCATIONS, &maxUniformsPerProgram);
+    GLint maxFragmentUniformVectors;
+    glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_VECTORS, &maxFragmentUniformVectors);
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal parameter variables per program %d\n", maxUniformsPerProgram);
+    LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal 4-component parameters in fragment shader %d\n", maxFragmentUniformVectors);
 
-    const auto glesExtensions = QString::fromLatin1(glGetString(GL_EXTENSIONS));
+    GLint maxVertexUniformVectors;
+    glGetIntegerv(GL_MAX_VERTEX_UNIFORM_VECTORS, &maxVertexUniformVectors);
+    GL_CHECK_RESULT;
+    LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal 4-component parameters in vertex shader %d\n", maxVertexUniformVectors);
+
+    const auto glesExtensions = QString::fromLatin1(static_cast<const char*>(glGetString(GL_EXTENSIONS)));
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGLES2 extensions: %s\n", qPrintable(glesExtensions));
     assert(glesExtensions.contains(QString::fromLatin1("OES_vertex_array_object")));
