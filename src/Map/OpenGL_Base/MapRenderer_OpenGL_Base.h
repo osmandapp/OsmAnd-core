@@ -74,6 +74,18 @@
 #   define GL_CHECK_PRESENT(x)
 #endif
 
+#if defined(OSMAND_OPENGLES2_RENDERER_SUPPORTED)
+#   ifndef GL_UNPACK_ROW_LENGTH
+#       define GL_UNPACK_ROW_LENGTH              0x0CF2
+#   endif // !GL_UNPACK_ROW_LENGTH
+#   ifndef GL_UNPACK_SKIP_ROWS
+#       define GL_UNPACK_SKIP_ROWS               0x0CF3
+#   endif // !GL_UNPACK_SKIP_ROWS
+#   ifndef GL_UNPACK_SKIP_PIXELS
+#       define GL_UNPACK_SKIP_PIXELS             0x0CF4
+#   endif // !GL_UNPACK_SKIP_PIXELS
+#endif // OSMAND_OPENGLES2_RENDERER_SUPPORTED
+
 namespace OsmAnd {
 
     class OSMAND_CORE_API MapRenderer_BaseOpenGL : public virtual IMapRenderer
