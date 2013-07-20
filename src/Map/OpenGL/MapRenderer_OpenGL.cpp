@@ -157,7 +157,7 @@ void OsmAnd::MapRenderer_OpenGL::initializeRendering()
     glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     GL_CHECK_RESULT;
 
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     GL_CHECK_RESULT;
 
     glClearDepth(1.0f);

@@ -41,7 +41,16 @@ namespace OsmAnd {
     class OSMAND_CORE_API MapRenderer_OpenGLES2 : public virtual MapRenderer_BaseOpenGL
     {
     public:
+#if !defined(OSMAND_TARGET_OS_ios)
+        typedef void (GL_APIENTRYP P_glTexStorage2DEXT_PROC)(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
+        static P_glTexStorage2DEXT_PROC glTexStorage2DEXT;
+#endif // !OSMAND_TARGET_OS_ios
     private:
+        QList<QString> _glesExtensions;
+
+        bool _isSupported_EXT_unpack_subimage;
+        bool _isSupported_EXT_texture_storage;
+        bool _isSupported_APPLE_texture_max_level;
     protected:
         virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType);
         virtual GLenum validateResult();
@@ -49,6 +58,8 @@ namespace OsmAnd {
         MapRenderer_OpenGLES2();
     public:
         virtual ~MapRenderer_OpenGLES2();
+
+        const QList<QString>& glesExtensions;
 
         virtual void initializeRendering();
         virtual void releaseRendering();
