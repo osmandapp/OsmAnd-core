@@ -132,6 +132,7 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
     int& outAtlasSlotIndex,
     size_t& outUsedMemory)
 {
+/*
     auto& tileLayer = _tileLayers[layerId];
 
     // Depending on tile type, determine texture properties
@@ -149,7 +150,7 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
         switch (bitmapTile->format)
         {
         case IMapBitmapTileProvider::ARGB_8888:
-            textureFormat = _activeConfig.force16bitColorDepthLimit ? GL_RGB5_A1 /* or GL_RGBA4? */ : GL_RGBA8;
+            textureFormat = _activeConfig.force16bitColorDepthLimit ? GL_RGB5_A1 : GL_RGBA8;
             sourceFormat = GL_BGRA;
             sourceFormatType = GL_UNSIGNED_INT_8_8_8_8_REV;
             sourcePixelByteSize = _activeConfig.force16bitColorDepthLimit ? 2 : 4;
@@ -543,6 +544,7 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
         outTextureRef = reinterpret_cast<void*>(texture);
         outAtlasSlotIndex = -1;
     }
+*/
 }
 
 void OsmAnd::MapRenderer_BaseOpenGL::releaseTexture( void* textureRef )
