@@ -157,19 +157,6 @@ void OsmAnd::MapRenderer_OpenGL::initializeRendering()
     glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     GL_CHECK_RESULT;
 
-    glShadeModel(GL_SMOOTH);
-    GL_CHECK_RESULT;
-
-    glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
-    GL_CHECK_RESULT;
-    glEnable(GL_POLYGON_SMOOTH);
-    GL_CHECK_RESULT;
-
-    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-    GL_CHECK_RESULT;
-    glEnable(GL_LINE_SMOOTH);
-    GL_CHECK_RESULT;
-
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     GL_CHECK_RESULT;
 
