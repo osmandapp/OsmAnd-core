@@ -77,7 +77,9 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
         "                                                                                                                   ""\n"
         // Parameters: common data
         "uniform mat4 param_vs_mProjectionView;                                                                             ""\n"
+        "#ifdef EXT_shader_texture_lod                                                                                      ""\n"
         "uniform mat4 param_vs_mView;                                                                                       ""\n"
+        "#endif                                                                                                             ""\n"
         "uniform vec2 param_vs_targetInTilePosN;                                                                            ""\n"
         "uniform ivec2 param_vs_targetTile;                                                                                 ""\n"
         "                                                                                                                   ""\n"
@@ -311,7 +313,8 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
     findVariableLocation(_mapStage.program, _mapStage.vs.in.vertexPosition, "in_vs_vertexPosition", In);
     findVariableLocation(_mapStage.program, _mapStage.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", In);
     findVariableLocation(_mapStage.program, _mapStage.vs.param.mProjectionView, "param_vs_mProjectionView", Uniform);
-    findVariableLocation(_mapStage.program, _mapStage.vs.param.mView, "param_vs_mView", Uniform);
+    if(isSupported_EXT_shader_texture_lod)
+        findVariableLocation(_mapStage.program, _mapStage.vs.param.mView, "param_vs_mView", Uniform);
     findVariableLocation(_mapStage.program, _mapStage.vs.param.targetInTilePosN, "param_vs_targetInTilePosN", Uniform);
     findVariableLocation(_mapStage.program, _mapStage.vs.param.targetTile, "param_vs_targetTile", Uniform);
     findVariableLocation(_mapStage.program, _mapStage.vs.param.tile, "param_vs_tile", Uniform);
@@ -408,9 +411,12 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering_MapStage()
     auto mProjectionView = _mProjection * _mView;
     glUniformMatrix4fv(_mapStage.vs.param.mProjectionView, 1, GL_FALSE, glm::value_ptr(mProjectionView));
     GL_CHECK_RESULT;
-    glUniformMatrix4fv(_mapStage.vs.param.mView, 1, GL_FALSE, glm::value_ptr(_mView));
-    GL_CHECK_RESULT;
-
+    if(isSupported_EXT_shader_texture_lod)
+    {
+        glUniformMatrix4fv(_mapStage.vs.param.mView, 1, GL_FALSE, glm::value_ptr(_mView));
+        GL_CHECK_RESULT;
+    }
+    
     // Set center offset
     glUniform2f(_mapStage.vs.param.targetInTilePosN, _targetInTilePosN.x, _targetInTilePosN.y);
     GL_CHECK_RESULT;
