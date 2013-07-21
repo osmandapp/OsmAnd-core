@@ -297,6 +297,10 @@ void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* rep
                 {
                     tileFile.close();
                 }
+                else
+                {
+                    LogPrintf(LogSeverityLevel::Error, "Failed to mark tile as non-existent with empty file '%s'\n", fullPath.toStdString().c_str());
+                }
             }
         }
         
@@ -315,6 +319,10 @@ void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* rep
         {
             tileFile.write(data);
             tileFile.close();
+        }
+        else
+        {
+            LogPrintf(LogSeverityLevel::Error, "Failed to save tile to '%s'\n", fullPath.toStdString().c_str());
         }
     }
     _processingMutex.unlock();
