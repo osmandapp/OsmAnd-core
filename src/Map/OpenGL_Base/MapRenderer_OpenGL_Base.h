@@ -106,7 +106,11 @@ namespace OsmAnd {
         virtual GLuint linkProgram(GLuint shadersCount, GLuint *shaders);
 
         virtual uint32_t getTextureFormatId(GLenum sourceFormat, GLenum sourcePixelDataType);
-        virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType) = 0;
+        virtual void wrapper_glTexStorage2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType) = 0;
+        virtual void wrapperEx_glTexSubImage2D(GLenum target, GLint level,
+            GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
+            GLenum format, GLenum type,
+            const GLvoid *pixels, GLsizei rowLengthInPixels = 0);
         virtual void uploadTileToTexture(
             TileLayerId layerId,
             const TileId& tileId,

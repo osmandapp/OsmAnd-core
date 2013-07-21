@@ -174,7 +174,7 @@ bool OsmAnd::MapRenderer_OpenGLES2::releaseRendering()
     return true;
 }
 
-void OsmAnd::MapRenderer_OpenGLES2::allocateTexture2D( GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType )
+void OsmAnd::MapRenderer_OpenGLES2::wrapper_glTexStorage2D( GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType )
 {
     if(_isSupported_EXT_texture_storage)
     {
@@ -198,6 +198,7 @@ void OsmAnd::MapRenderer_OpenGLES2::allocateTexture2D( GLenum target, GLsizei le
         {
             textureFormat = GL_LUMINANCE8_EXT;
         }
+        assert(textureFormat != GL_INVALID_ENUM);
 
         glTexStorage2DEXT(target, levels, textureFormat, width, height);
     }
@@ -222,6 +223,7 @@ void OsmAnd::MapRenderer_OpenGLES2::allocateTexture2D( GLenum target, GLsizei le
         {
             pixelSize = 4;
         }
+        assert(pixelSize != 0);
 
         uint8_t* dummyBuffer = new uint8_t[width * height * pixelSize];
         glTexImage2D(target, 0, sourceFormat, width, height, 0, sourceFormat, sourcePixelDataType, dummyBuffer);
@@ -236,5 +238,67 @@ void OsmAnd::MapRenderer_OpenGLES2::allocateTexture2D( GLenum target, GLsizei le
             GL_CHECK_RESULT;
         }
 #endif //OSMAND_TARGET_OS_ios
+    }
+}
+
+void OsmAnd::MapRenderer_OpenGLES2::wrapperEx_glTexSubImage2D(
+    GLenum target,
+    GLint level,
+    GLint xoffset,
+    GLint yoffset,
+    GLsizei width,
+    GLsizei height,
+    GLenum format,
+    GLenum type,
+    const GLvoid *pixels,
+    GLsizei rowLengthInPixels /*= 0*/)
+{
+    if(_isSupported_EXT_unpack_subimage)
+    {
+        MapRenderer_BaseOpenGL::wrapperEx_glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, type, pixels, rowLengthInPixels);
+        return;
+    }
+
+    GL_CHECK_PRESENT(glTexSubImage2D);
+
+    // In case our row length is 0 or equals to image width (has no extra pixels, just load as is)
+    if(rowLengthInPixels == 0 || rowLengthInPixels == width)
+    {
+        // Upload data
+        glTexSubImage2D(target, level,
+            xoffset, yoffset, width, height,
+            format, type,
+            pixels);
+        return;
+    }
+
+    // Otherwise we need to or load row by row
+    size_t pixelSize = 0;
+    if(sourceFormat == GL_RGBA && sourcePixelDataType == GL_UNSIGNED_BYTE)
+    {
+        pixelSize = 4;
+    }
+    else if(sourceFormat == GL_RGBA && sourcePixelDataType == GL_UNSIGNED_SHORT_4_4_4_4)
+    {
+        pixelSize = 2;
+    }
+    else if(sourceFormat == GL_RGB && sourcePixelDataType == GL_UNSIGNED_SHORT_5_6_5)
+    {
+        pixelSize = 2;
+    }
+    else if(sourceFormat == GL_LUMINANCE && sourcePixelDataType == GL_FLOAT)
+    {
+        pixelSize = 4;
+    }
+    assert(pixelSize != 0);
+    uint8_t* pRow = reinterpret_cast<uint8_t*>(pixels);
+    for(auto rowIdx = 0; rowIdx < height; rowIdx++)
+    {
+        glTexSubImage2D(target, level,
+            xoffset, yoffset + rowIdx, width, 1,
+            format, type,
+            pRow);
+
+        pRow += rowLengthInPixels * pixelSize;
     }
 }

@@ -52,7 +52,11 @@ namespace OsmAnd {
         bool _isSupported_EXT_texture_storage;
         bool _isSupported_APPLE_texture_max_level;
     protected:
-        virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType);
+        virtual void wrapper_glTexStorage2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType);
+        virtual void wrapperEx_glTexSubImage2D(GLenum target, GLint level,
+            GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
+            GLenum format, GLenum type,
+            const GLvoid *pixels, GLsizei rowLengthInPixels = 0);
         virtual GLenum validateResult();
 
         MapRenderer_OpenGLES2();

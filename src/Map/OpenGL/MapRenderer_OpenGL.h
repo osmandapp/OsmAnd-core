@@ -43,7 +43,7 @@ namespace OsmAnd {
     public:
     private:
     protected:
-        virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType);
+        virtual void wrapper_glTexStorage2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType);
         virtual GLenum validateResult();
         
         GLuint _textureSampler_Bitmap_NoAtlas;

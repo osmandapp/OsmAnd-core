@@ -74,14 +74,6 @@ GLuint OsmAnd::MapRenderer_BaseOpenGL::compileShader( GLenum shaderType, const c
     return shader;
 }
 
-uint32_t OsmAnd::MapRenderer_BaseOpenGL::getTextureFormatId( GLenum sourceFormat, GLenum sourcePixelDataType )
-{
-    assert((sourceFormat >> 16) == 0);
-    assert((sourcePixelDataType >> 16) == 0);
-
-    return (sourceFormat << 16) | sourcePixelDataType;
-}
-
 GLuint OsmAnd::MapRenderer_BaseOpenGL::linkProgram( GLuint shadersCount, GLuint *shaders )
 {
     GL_CHECK_PRESENT(glCreateProgram);
@@ -144,6 +136,45 @@ GLuint OsmAnd::MapRenderer_BaseOpenGL::linkProgram( GLuint shadersCount, GLuint 
     return program;
 }
 
+uint32_t OsmAnd::MapRenderer_BaseOpenGL::getTextureFormatId( GLenum sourceFormat, GLenum sourcePixelDataType )
+{
+    assert((sourceFormat >> 16) == 0);
+    assert((sourcePixelDataType >> 16) == 0);
+
+    return (sourceFormat << 16) | sourcePixelDataType;
+}
+
+void OsmAnd::MapRenderer_BaseOpenGL::wrapperEx_glTexSubImage2D(
+    GLenum target,
+    GLint level,
+    GLint xoffset,
+    GLint yoffset,
+    GLsizei width,
+    GLsizei height,
+    GLenum format,
+    GLenum type,
+    const GLvoid *pixels,
+    GLsizei rowLengthInPixels /*= 0*/)
+{
+    GL_CHECK_PRESENT(glPixelStorei);
+    GL_CHECK_PRESENT(glTexSubImage2D);
+
+    // Set texture data row length (including stride) in pixels
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, rowLengthInPixels);
+    GL_CHECK_RESULT;
+
+    // Upload data
+    glTexSubImage2D(target, level,
+        xoffset, yoffset, width, height,
+        format, type,
+        pixels);
+    GL_CHECK_RESULT;
+
+    // Reset texture data row length (including stride) in pixels
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+    GL_CHECK_RESULT;
+}
+
 void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
     TileLayerId layerId,
     const TileId& tileId,
@@ -156,8 +187,6 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
 {
     GL_CHECK_PRESENT(glGenTextures);
     GL_CHECK_PRESENT(glBindTexture);
-    GL_CHECK_PRESENT(glPixelStorei);
-    GL_CHECK_PRESENT(glTexSubImage2D);
     GL_CHECK_PRESENT(glGenerateMipmap);
 
     auto& tileLayer = _tileLayers[layerId];
@@ -293,7 +322,7 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
             GL_CHECK_RESULT;
 
             // Allocate space for this texture
-            allocateTexture2D(GL_TEXTURE_2D, atlasPool._mipmapLevels, atlasPool._textureSize, atlasPool._textureSize, sourceFormat, sourcePixelDataType);
+            wrapper_glTexStorage2D(GL_TEXTURE_2D, atlasPool._mipmapLevels, atlasPool._textureSize, atlasPool._textureSize, sourceFormat, sourcePixelDataType);
             GL_CHECK_RESULT;
 
             // Deselect texture
@@ -320,8 +349,6 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
                 {
                     *reinterpret_cast<uint32_t*>(&fillBuffer[idx * 4]) = SkPackARGB32(0xff, 0xff, 0x00, 0x00);
                 }
-                glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-                GL_CHECK_RESULT;
                 glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, atlasPool._textureSize, atlasPool._textureSize, GL_RGBA, GL_UNSIGNED_BYTE, fillBuffer);
                 GL_CHECK_RESULT;
                 delete[] fillBuffer;
@@ -348,6 +375,7 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
         const auto fullTileSize = tileSize + 2 * atlasPool._padding;
         const auto yOffset = (atlasSlotIndex / atlasPool._slotsPerSide) * fullTileSize;
         const auto xOffset = (atlasSlotIndex % atlasPool._slotsPerSide) * fullTileSize;
+        const auto tileRowLengthInPixels = tile->rowLength / sourcePixelByteSize;
 
         if(atlasPool._padding > 0)
         {
@@ -357,18 +385,13 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
             uint8_t* pCornerData = new uint8_t[cornerDataSize];
             const GLvoid* pCornerPixel;
 
-            // Set stride
-            glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-            GL_CHECK_RESULT;
-
             // Top-left corner
             pCornerPixel = tile->data;
             for(auto idx = 0u; idx < pixelsCount; idx++)
                 memcpy(pCornerData + (sourcePixelByteSize * idx), pCornerPixel, sourcePixelByteSize);
-            glTexSubImage2D(GL_TEXTURE_2D, 0,
+            wrapperEx_glTexSubImage2D(GL_TEXTURE_2D, 0,
                 xOffset, yOffset, atlasPool._padding, atlasPool._padding,
-                sourceFormat,
-                sourcePixelDataType,
+                sourceFormat, sourcePixelDataType,
                 pCornerData);
             GL_CHECK_RESULT;
 
@@ -376,10 +399,9 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
             pCornerPixel = reinterpret_cast<const uint8_t*>(tile->data) + (tileSize - 1) * sourcePixelByteSize;
             for(auto idx = 0u; idx < pixelsCount; idx++)
                 memcpy(pCornerData + (sourcePixelByteSize * idx), pCornerPixel, sourcePixelByteSize);
-            glTexSubImage2D(GL_TEXTURE_2D, 0,
+            wrapperEx_glTexSubImage2D(GL_TEXTURE_2D, 0,
                 xOffset + atlasPool._padding + tileSize, yOffset, atlasPool._padding, atlasPool._padding,
-                sourceFormat,
-                sourcePixelDataType,
+                sourceFormat, sourcePixelDataType,
                 pCornerData);
             GL_CHECK_RESULT;
 
@@ -387,10 +409,9 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
             pCornerPixel = reinterpret_cast<const uint8_t*>(tile->data) + (tileSize - 1) * tile->rowLength;
             for(auto idx = 0u; idx < pixelsCount; idx++)
                 memcpy(pCornerData + (sourcePixelByteSize * idx), pCornerPixel, sourcePixelByteSize);
-            glTexSubImage2D(GL_TEXTURE_2D, 0,
+            wrapperEx_glTexSubImage2D(GL_TEXTURE_2D, 0,
                 xOffset, yOffset + atlasPool._padding + tileSize, atlasPool._padding, atlasPool._padding,
-                sourceFormat,
-                sourcePixelDataType,
+                sourceFormat, sourcePixelDataType,
                 pCornerData);
             GL_CHECK_RESULT;
 
@@ -398,74 +419,60 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
             pCornerPixel = reinterpret_cast<const uint8_t*>(tile->data) + (tileSize - 1) * tile->rowLength + (tileSize - 1) * sourcePixelByteSize;
             for(auto idx = 0u; idx < pixelsCount; idx++)
                 memcpy(pCornerData + (sourcePixelByteSize * idx), pCornerPixel, sourcePixelByteSize);
-            glTexSubImage2D(GL_TEXTURE_2D, 0,
+            wrapperEx_glTexSubImage2D(GL_TEXTURE_2D, 0,
                 xOffset + atlasPool._padding + tileSize, yOffset + atlasPool._padding + tileSize, atlasPool._padding, atlasPool._padding,
-                sourceFormat,
-                sourcePixelDataType,
+                sourceFormat, sourcePixelDataType,
                 pCornerData);
             GL_CHECK_RESULT;
 
             delete[] pCornerData;
 
-            // Set stride
-            glPixelStorei(GL_UNPACK_ROW_LENGTH, tile->rowLength / sourcePixelByteSize);
-            GL_CHECK_RESULT;
-
             // Left column duplicate
             for(auto idx = 0u; idx < atlasPool._padding; idx++)
             {
-                glTexSubImage2D(GL_TEXTURE_2D, 0,
+                wrapperEx_glTexSubImage2D(GL_TEXTURE_2D, 0,
                     xOffset + idx, yOffset + atlasPool._padding, 1, (GLsizei)tileSize,
-                    sourceFormat,
-                    sourcePixelDataType,
-                    tile->data);
+                    sourceFormat, sourcePixelDataType,
+                    tile->data, tileRowLengthInPixels);
                 GL_CHECK_RESULT;
             }
 
             // Top row duplicate
             for(auto idx = 0u; idx < atlasPool._padding; idx++)
             {
-                glTexSubImage2D(GL_TEXTURE_2D, 0,
+                wrapperEx_glTexSubImage2D(GL_TEXTURE_2D, 0,
                     xOffset + atlasPool._padding, yOffset + idx, (GLsizei)tileSize, 1,
-                    sourceFormat,
-                    sourcePixelDataType,
-                    tile->data);
+                    sourceFormat, sourcePixelDataType,
+                    tile->data, tileRowLengthInPixels);
                 GL_CHECK_RESULT;
             }
 
             // Right column duplicate
             for(auto idx = 0u; idx < atlasPool._padding; idx++)
             {
-                glTexSubImage2D(GL_TEXTURE_2D, 0,
+                wrapperEx_glTexSubImage2D(GL_TEXTURE_2D, 0,
                     xOffset + atlasPool._padding + tileSize + idx, yOffset + atlasPool._padding, 1, (GLsizei)tileSize,
-                    sourceFormat,
-                    sourcePixelDataType,
-                    reinterpret_cast<const uint8_t*>(tile->data) + (tileSize - 1) * sourcePixelByteSize);
+                    sourceFormat, sourcePixelDataType,
+                    reinterpret_cast<const uint8_t*>(tile->data) + (tileSize - 1) * sourcePixelByteSize, tileRowLengthInPixels);
                 GL_CHECK_RESULT;
             }
 
             // Bottom row duplicate
             for(auto idx = 0u; idx < atlasPool._padding; idx++)
             {
-                glTexSubImage2D(GL_TEXTURE_2D, 0,
+                wrapperEx_glTexSubImage2D(GL_TEXTURE_2D, 0,
                     xOffset + atlasPool._padding, yOffset + atlasPool._padding + tileSize + idx, (GLsizei)tileSize, 1,
-                    sourceFormat,
-                    sourcePixelDataType,
-                    reinterpret_cast<const uint8_t*>(tile->data) + (tileSize - 1) * tile->rowLength);
+                    sourceFormat, sourcePixelDataType,
+                    reinterpret_cast<const uint8_t*>(tile->data) + (tileSize - 1) * tile->rowLength, tileRowLengthInPixels);
                 GL_CHECK_RESULT;
             }
         }
 
-        // Set stride
-        glPixelStorei(GL_UNPACK_ROW_LENGTH, tile->rowLength / sourcePixelByteSize);
-        GL_CHECK_RESULT;
-
         // Main data
-        glTexSubImage2D(GL_TEXTURE_2D, 0,
+        wrapperEx_glTexSubImage2D(GL_TEXTURE_2D, 0,
             xOffset + atlasPool._padding, yOffset + atlasPool._padding, (GLsizei)tileSize, (GLsizei)tileSize,
-            sourceFormat,
-            sourcePixelDataType,
-            tile->data);
+            sourceFormat, sourcePixelDataType,
+            tile->data, tileRowLengthInPixels);
         GL_CHECK_RESULT;
 
         // [Re]generate mipmap
@@ -474,10 +481,6 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
             glGenerateMipmap(GL_TEXTURE_2D);
             GL_CHECK_RESULT;
         }
-
-        // Set stride
-        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-        GL_CHECK_RESULT;
 
 #if 0
         if(tile->type == IMapTileProvider::Bitmap)
@@ -528,20 +531,17 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
         glBindTexture(GL_TEXTURE_2D, texture);
         GL_CHECK_RESULT;
 
-        // Set texture packing
-        glPixelStorei(GL_UNPACK_ROW_LENGTH, tile->rowLength / sourcePixelByteSize);
-        GL_CHECK_RESULT;
-
         // Allocate data
-        allocateTexture2D(GL_TEXTURE_2D, mipmapLevels, tileSize, tileSize, sourceFormat, sourcePixelDataType);
+        wrapper_glTexStorage2D(GL_TEXTURE_2D, mipmapLevels, tileSize, tileSize, sourceFormat, sourcePixelDataType);
         GL_CHECK_RESULT;
 
         // Upload data
-        glTexSubImage2D(GL_TEXTURE_2D, 0,
+        wrapperEx_glTexSubImage2D(GL_TEXTURE_2D, 0,
             0, 0, (GLsizei)tileSize, (GLsizei)tileSize,
             sourceFormat,
             sourcePixelDataType,
-            tile->data);
+            tile->data,
+            tile->rowLength / sourcePixelByteSize);
         GL_CHECK_RESULT;
 
         // Generate mipmap
@@ -550,10 +550,6 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
             glGenerateMipmap(GL_TEXTURE_2D);
             GL_CHECK_RESULT;
         }
-
-        // Set stride
-        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-        GL_CHECK_RESULT;
 
         // Deselect atlas as active texture
         glBindTexture(GL_TEXTURE_2D, 0);

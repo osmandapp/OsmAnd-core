@@ -217,7 +217,7 @@ bool OsmAnd::MapRenderer_OpenGL::releaseRendering()
     return true;
 }
 
-void OsmAnd::MapRenderer_OpenGL::allocateTexture2D( GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType )
+void OsmAnd::MapRenderer_OpenGL::wrapper_glTexStorage2D( GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType )
 {
     GL_CHECK_PRESENT(glTexStorage2D);
 
