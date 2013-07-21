@@ -70,7 +70,9 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
         "                                                                                                                   ""\n"
         // Output data to next shader stages
         "varying vec2 v2f_texCoordsPerLayer[%RasterTileLayersCount%];                                                       ""\n"
+        "#ifdef EXT_shader_texture_lod                                                                                      ""\n"
         "varying float v2f_distanceFromCamera;                                                                              ""\n"
+        "#endif                                                                                                             ""\n"
         "varying vec2 v2f_positionRelativeToTarget;                                                                         ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
@@ -150,7 +152,9 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
         "                                                                                                                   ""\n"
         //   Finally output processed modified vertex
         "    v2f_positionRelativeToTarget = v.xz;                                                                           ""\n"
+        "#ifdef EXT_shader_texture_lod                                                                                      ""\n"
         "    v2f_distanceFromCamera = length((param_vs_mView * v).xz);                                                      ""\n"
+        "#endif                                                                                                             ""\n"
         "    gl_Position = param_vs_mProjectionView * v;                                                                    ""\n"
         "}                                                                                                                  ""\n");
     QString preprocessedVertexShader = vertexShader;
@@ -208,7 +212,9 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
         // Input data
         "varying vec2 v2f_texCoordsPerLayer[%RasterTileLayersCount%];                                                       ""\n"
         "varying vec2 v2f_positionRelativeToTarget;                                                                         ""\n"
+        "#ifdef EXT_shader_texture_lod                                                                                      ""\n"
         "varying float v2f_distanceFromCamera;                                                                              ""\n"
+        "#endif                                                                                                             ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
         "uniform float param_fs_distanceFromCameraToTarget;                                                                 ""\n"
@@ -229,13 +235,13 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
+        "#ifdef EXT_shader_texture_lod                                                                                      ""\n"
         //   Calculate normalized camera elevation and recalculate lod0 distance
         "    float cameraElevationN = param_fs_cameraElevationAngle / 90.0;                                                 ""\n"
         "    float cameraBaseDistance = param_fs_distanceFromCameraToTarget * 1.25;                                         ""\n"
         "    float zeroLodDistanceShift = 4.0 * (0.2 - cameraElevationN) * param_fs_distanceFromCameraToTarget;             ""\n"
         "    float cameraDistanceLOD0 = cameraBaseDistance - zeroLodDistanceShift;                                          ""\n"
         "                                                                                                                   ""\n"
-        "#ifdef EXT_shader_texture_lod                                                                                      ""\n"
         //   Calculate mipmap LOD
         "    float mipmapLod = 0.0;                                                                                         ""\n"
         "    if(v2f_distanceFromCamera > cameraDistanceLOD0)                                                                ""\n"
