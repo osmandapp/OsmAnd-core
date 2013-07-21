@@ -291,7 +291,7 @@ void OsmAnd::MapRenderer_OpenGLES2::wrapperEx_glTexSubImage2D(
         pixelSize = 4;
     }
     assert(pixelSize != 0);
-    uint8_t* pRow = reinterpret_cast<uint8_t*>(pixels);
+    auto pRow = reinterpret_cast<const uint8_t*>(pixels);
     for(auto rowIdx = 0; rowIdx < height; rowIdx++)
     {
         glTexSubImage2D(target, level,
