@@ -27,14 +27,22 @@ OsmAnd::AtlasMapRenderer_OpenGLES2::~AtlasMapRenderer_OpenGLES2()
 {
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering()
+bool OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering()
 {
-    MapRenderer_OpenGLES2::initializeRendering();
+    bool ok;
+
+    ok = MapRenderer_OpenGLES2::initializeRendering();
+    if(!ok)
+        return false;
 
     initializeRendering_SkyStage();
     initializeRendering_MapStage();
 
-    AtlasMapRenderer_BaseOpenGL::initializeRendering();
+    ok = AtlasMapRenderer_BaseOpenGL::initializeRendering();
+    if(!ok)
+        return false;
+
+    return true;
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
@@ -308,10 +316,13 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
     _programVariables.clear();
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering()
+bool OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering()
 {
-    AtlasMapRenderer_BaseOpenGL::performRendering();
-    GL_CHECK_RESULT;
+    bool ok;
+
+    ok = AtlasMapRenderer_BaseOpenGL::performRendering();
+    if(!ok)
+        return false;
  
     // Setup viewport
     GLint oldViewport[4];
@@ -330,6 +341,8 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering()
     // Revert viewport
     glViewport(oldViewport[0], oldViewport[1], oldViewport[2], oldViewport[3]);
     GL_CHECK_RESULT;
+
+    return true;
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering_MapStage()
@@ -645,13 +658,21 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering_MapStage()
     GL_CHECK_RESULT;
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGLES2::releaseRendering()
+bool OsmAnd::AtlasMapRenderer_OpenGLES2::releaseRendering()
 {
+    bool ok;
+
     releaseRendering_MapStage();
     releaseRendering_SkyStage();
 
-    AtlasMapRenderer_BaseOpenGL::releaseRendering();
-    MapRenderer_OpenGLES2::releaseRendering();
+    ok = AtlasMapRenderer_BaseOpenGL::releaseRendering();
+    if(!ok)
+        return false;
+    ok = MapRenderer_OpenGLES2::releaseRendering();
+    if(!ok)
+        return false;
+
+    return true;
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGLES2::releaseRendering_MapStage()
