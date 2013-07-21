@@ -825,15 +825,15 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_SkyStage()
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
-        "    const float fogHeight = 1.0;                                                                                   ""\n"
-        "    const float fogStartHeight = fogHeight * (1.0 - param_fs_fogHeightOriginFactor);                               ""\n"
-        "    const float fragmentHeight = 1.0 - v2f_horizonOffsetN;                                                         ""\n"
+        "    float fogHeight = 1.0;                                                                                         ""\n"
+        "    float fogStartHeight = fogHeight * (1.0 - param_fs_fogHeightOriginFactor);                                     ""\n"
+        "    float fragmentHeight = 1.0 - v2f_horizonOffsetN;                                                               ""\n"
         //   Fog linear is factor in range [0.0 ... 1.0]
-        "    const float fogLinearFactor = min(max(fragmentHeight - fogStartHeight, 0.0) /                                  ""\n"
+        "    float fogLinearFactor = min(max(fragmentHeight - fogStartHeight, 0.0) /                                        ""\n"
         "        (fogHeight - fogStartHeight), 1.0);                                                                        ""\n"
-        "    const float fogFactorBase = fogLinearFactor * param_fs_fogDensity;                                             ""\n"
-        "    const float fogFactor = clamp(exp(-fogFactorBase*fogFactorBase), 0.0, 1.0);                                    ""\n"
-        "    const vec3 mixedColor = mix(param_fs_skyColor, param_fs_fogColor, 1.0 - fogFactor);                            ""\n"
+        "    float fogFactorBase = fogLinearFactor * param_fs_fogDensity;                                                   ""\n"
+        "    float fogFactor = clamp(exp(-fogFactorBase*fogFactorBase), 0.0, 1.0);                                          ""\n"
+        "    vec3 mixedColor = mix(param_fs_skyColor, param_fs_fogColor, 1.0 - fogFactor);                                  ""\n"
         "    out_color.rgba = vec4(mixedColor, 1.0);                                                                        ""\n"
         "}                                                                                                                  ""\n");
     QString preprocessedFragmentShader = fragmentShader;
