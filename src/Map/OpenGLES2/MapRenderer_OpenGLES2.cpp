@@ -107,13 +107,13 @@ bool OsmAnd::MapRenderer_OpenGLES2::initializeRendering()
     LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal texture units in fragment shader %d\n", maxTextureUnitsInFragmentShader);
     assert(maxTextureUnitsInFragmentShader >= (IMapRenderer::TileLayerId::IdsCount - IMapRenderer::RasterMap));
 
-// Skip this check for iOS, at least for now
-// http://stackoverflow.com/questions/4187784/texture-lookup-in-vertex-shader-behaves-differently-on-ipad-device-vs-ipad-simul
-#if !defined(OSMAND_TARGET_OS_ios)
     GLint maxTextureUnitsInVertexShader;
     glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, &maxTextureUnitsInVertexShader);
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal texture units in vertex shader %d\n", maxTextureUnitsInVertexShader);
+    // Skip this check for iOS, at least for now
+    // http://stackoverflow.com/questions/4187784/texture-lookup-in-vertex-shader-behaves-differently-on-ipad-device-vs-ipad-simul
+#if !defined(OSMAND_TARGET_OS_ios)
     assert(maxTextureUnitsInVertexShader >= IMapRenderer::RasterMap);
 #endif
 
