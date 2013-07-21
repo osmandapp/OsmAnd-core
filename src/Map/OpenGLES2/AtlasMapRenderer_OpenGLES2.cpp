@@ -830,6 +830,17 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_SkyStage()
     const QString vertexShader = QString::fromLatin1(
         "#version 100                                                                                                       ""\n"
         "                                                                                                                   ""\n"
+        // Set default precisions
+        "precision highp float;                                                                                             ""\n"
+        "precision highp int;                                                                                               ""\n"
+        "precision highp sampler2D;                                                                                         ""\n"
+        "precision highp vec2;                                                                                              ""\n"
+        "precision highp vec3;                                                                                              ""\n"
+        "precision highp vec4;                                                                                              ""\n"
+        "precision highp mat2;                                                                                              ""\n"
+        "precision highp mat3;                                                                                              ""\n"
+        "precision highp mat4;                                                                                              ""\n"
+        "                                                                                                                   ""\n"
         // Constants
         "const float floatEpsilon = 0.000001;                                                                               ""\n"
         "                                                                                                                   ""\n"
@@ -859,6 +870,17 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_SkyStage()
     // Compile fragment shader
     const QString fragmentShader = QString::fromLatin1(
         "#version 100                                                                                                       ""\n"
+        "                                                                                                                   ""\n"
+        // Set default precisions
+        "precision highp float;                                                                                             ""\n"
+        "precision highp int;                                                                                               ""\n"
+        "precision highp sampler2D;                                                                                         ""\n"
+        "precision highp vec2;                                                                                              ""\n"
+        "precision highp vec3;                                                                                              ""\n"
+        "precision highp vec4;                                                                                              ""\n"
+        "precision highp mat2;                                                                                              ""\n"
+        "precision highp mat3;                                                                                              ""\n"
+        "precision highp mat4;                                                                                              ""\n"
         "                                                                                                                   ""\n"
         // Constants
         "const float floatEpsilon = 0.000001;                                                                               ""\n"
