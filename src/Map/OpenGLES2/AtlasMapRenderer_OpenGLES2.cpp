@@ -178,7 +178,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
     const QString fragmentShader_perTileLayer = QString::fromLatin1(
         "    if(param_fs_perTileLayer[%layerLinearIdx%].k > floatEpsilon)                                                   ""\n"
         "    {                                                                                                              ""\n"
-        "        vec4 layerColor = textureLod(                                                                              ""\n"
+        "        vec4 layerColor = texture2DLod(                                                                            ""\n"
         "            param_fs_perTileLayer[%layerLinearIdx%].sampler,                                                       ""\n"
         "            v2f_texCoordsPerLayer[%layerLinearIdx%], mipmapLod);                                                   ""\n"
         "                                                                                                                   ""\n"
