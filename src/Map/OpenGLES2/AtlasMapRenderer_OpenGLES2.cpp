@@ -36,7 +36,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering()
         return false;
 
     initializeRendering_SkyStage();
-    initializeRendering_MapStage();
+    //initializeRendering_MapStage();
 
     ok = AtlasMapRenderer_BaseOpenGL::initializeRendering();
     if(!ok)
@@ -336,7 +336,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering()
     GL_CHECK_RESULT;
 
     performRendering_SkyStage();
-    performRendering_MapStage();
+    //performRendering_MapStage();
 
     // Revert viewport
     glViewport(oldViewport[0], oldViewport[1], oldViewport[2], oldViewport[3]);
@@ -663,7 +663,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGLES2::releaseRendering()
     bool ok;
 
     releaseRendering_MapStage();
-    releaseRendering_SkyStage();
+    //releaseRendering_SkyStage();
 
     ok = AtlasMapRenderer_BaseOpenGL::releaseRendering();
     if(!ok)
@@ -828,16 +828,19 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_SkyStage()
 
     // Compile vertex shader
     const QString vertexShader = QString::fromLatin1(
-        "#version 430 core                                                                                                  ""\n"
+        "#version 100                                                                                                       ""\n"
+        "                                                                                                                   ""\n"
+        // Set default precision
+        "precision mediump float;                                                                                           ""\n"
         "                                                                                                                   ""\n"
         // Constants
         "const float floatEpsilon = 0.000001;                                                                               ""\n"
         "                                                                                                                   ""\n"
         // Input data
-        "in vec2 in_vs_vertexPosition;                                                                                      ""\n"
+        "attribute vec2 in_vs_vertexPosition;                                                                               ""\n"
         "                                                                                                                   ""\n"
         // Output data
-        "out float v2f_horizonOffsetN;                                                                                      ""\n"
+        "varying float v2f_horizonOffsetN;                                                                                  ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
         "uniform mat4 param_vs_mProjectionViewModel;                                                                        ""\n"
@@ -858,16 +861,16 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_SkyStage()
 
     // Compile fragment shader
     const QString fragmentShader = QString::fromLatin1(
-        "#version 430 core                                                                                                  ""\n"
+        "#version 100                                                                                                       ""\n"
+        "                                                                                                                   ""\n"
+        // Set default precision
+        "precision mediump float;                                                                                           ""\n"
         "                                                                                                                   ""\n"
         // Constants
         "const float floatEpsilon = 0.000001;                                                                               ""\n"
         "                                                                                                                   ""\n"
         // Input data
-        "in float v2f_horizonOffsetN;                                                                                       ""\n"
-        "                                                                                                                   ""\n"
-        // Output data
-        "out vec4 out_color;                                                                                                ""\n"
+        "varying float v2f_horizonOffsetN;                                                                                  ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
         "uniform vec3 param_fs_skyColor;                                                                                    ""\n"
@@ -886,7 +889,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_SkyStage()
         "    const float fogFactorBase = fogLinearFactor * param_fs_fogDensity;                                             ""\n"
         "    const float fogFactor = clamp(exp(-fogFactorBase*fogFactorBase), 0.0, 1.0);                                    ""\n"
         "    const vec3 mixedColor = mix(param_fs_skyColor, param_fs_fogColor, 1.0 - fogFactor);                            ""\n"
-        "    out_color.rgba = vec4(mixedColor, 1.0);                                                                        ""\n"
+        "    gl_FragColor.rgba = vec4(mixedColor, 1.0);                                                                     ""\n"
         "}                                                                                                                  ""\n");
     QString preprocessedFragmentShader = fragmentShader;
     QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;

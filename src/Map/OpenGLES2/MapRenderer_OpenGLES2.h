@@ -48,6 +48,7 @@ namespace OsmAnd {
     private:
         QList<QString> _glesExtensions;
 
+        bool _isSupported_vertexShaderTextureLookup;
         bool _isSupported_EXT_unpack_subimage;
         bool _isSupported_EXT_texture_storage;
         bool _isSupported_APPLE_texture_max_level;
