@@ -101,7 +101,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
         "void calculateTextureCoordinates(in LayerInputPerTile perTile, out vec2 outTexCoords)                              ""\n"
         "{                                                                                                                  ""\n"
         "    int rowIndex = perTile.slotIndex / perTile.slotsPerSide;                                                       ""\n"
-        "    int colIndex = int(mod(perTile.slotIndex, perTile.slotsPerSide));                                              ""\n"
+        "    int colIndex = perTile.slotIndex - rowIndex * perTile.slotsPerSide;                                            ""\n"
         "                                                                                                                   ""\n"
         "    float texCoordRescale = (perTile.tileSizeN - 2.0 * perTile.tilePaddingN) / perTile.tileSizeN;                  ""\n"
         "                                                                                                                   ""\n"
