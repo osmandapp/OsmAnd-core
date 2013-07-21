@@ -70,16 +70,16 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
         "                                                                                                                   ""\n"
         // Output data to next shader stages
         "varying vec2 v2f_texCoordsPerLayer[%RasterTileLayersCount%];                                                       ""\n"
-        "#ifdef EXT_shader_texture_lod                                                                                      ""\n"
+        //ifdef EXT_shader_texture_lod
         "varying float v2f_distanceFromCamera;                                                                              ""\n"
-        "#endif                                                                                                             ""\n"
+        //endif
         "varying vec2 v2f_positionRelativeToTarget;                                                                         ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
         "uniform mat4 param_vs_mProjectionView;                                                                             ""\n"
-        "#ifdef EXT_shader_texture_lod                                                                                      ""\n"
+        //ifdef EXT_shader_texture_lod
         "uniform mat4 param_vs_mView;                                                                                       ""\n"
-        "#endif                                                                                                             ""\n"
+        //endif
         "uniform vec2 param_vs_targetInTilePosN;                                                                            ""\n"
         "uniform ivec2 param_vs_targetTile;                                                                                 ""\n"
         "                                                                                                                   ""\n"
@@ -154,9 +154,9 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
         "                                                                                                                   ""\n"
         //   Finally output processed modified vertex
         "    v2f_positionRelativeToTarget = v.xz;                                                                           ""\n"
-        "#ifdef EXT_shader_texture_lod                                                                                      ""\n"
+        //ifdef EXT_shader_texture_lod
         "    v2f_distanceFromCamera = length((param_vs_mView * v).xz);                                                      ""\n"
-        "#endif                                                                                                             ""\n"
+        //endif
         "    gl_Position = param_vs_mProjectionView * v;                                                                    ""\n"
         "}                                                                                                                  ""\n");
     QString preprocessedVertexShader = vertexShader;
