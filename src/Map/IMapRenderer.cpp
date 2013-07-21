@@ -321,9 +321,6 @@ bool OsmAnd::IMapRenderer::initializeRendering()
     assert(_renderThreadId == nullptr);
     _renderThreadId = QThread::currentThreadId();
 
-    if(_configInvalidated)
-        validateConfiguration();
-
     _isRenderingInitialized = true;
 
     return true;
