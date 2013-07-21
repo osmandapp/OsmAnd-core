@@ -219,8 +219,10 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
         "#endif                                                                                                             ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
+        "#ifdef EXT_shader_texture_lod                                                                                      ""\n"
         "uniform float param_fs_distanceFromCameraToTarget;                                                                 ""\n"
         "uniform float param_fs_cameraElevationAngle;                                                                       ""\n"
+        "#endif                                                                                                             ""\n"
         "uniform vec3 param_fs_fogColor;                                                                                    ""\n"
         "uniform float param_fs_fogDistance;                                                                                ""\n"
         "uniform float param_fs_fogDensity;                                                                                 ""\n"
@@ -337,8 +339,11 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
         findVariableLocation(_mapStage.program, layerStruct.slotsPerSide, layerStructName + ".slotsPerSide", Uniform);
         findVariableLocation(_mapStage.program, layerStruct.slotIndex, layerStructName + ".slotIndex", Uniform);
     }
-    findVariableLocation(_mapStage.program, _mapStage.fs.param.distanceFromCameraToTarget, "param_fs_distanceFromCameraToTarget", Uniform);
-    findVariableLocation(_mapStage.program, _mapStage.fs.param.cameraElevationAngle, "param_fs_cameraElevationAngle", Uniform);
+    if(isSupported_EXT_shader_texture_lod)
+    {
+        findVariableLocation(_mapStage.program, _mapStage.fs.param.distanceFromCameraToTarget, "param_fs_distanceFromCameraToTarget", Uniform);
+        findVariableLocation(_mapStage.program, _mapStage.fs.param.cameraElevationAngle, "param_fs_cameraElevationAngle", Uniform);
+    }
     findVariableLocation(_mapStage.program, _mapStage.fs.param.fogColor, "param_fs_fogColor", Uniform);
     findVariableLocation(_mapStage.program, _mapStage.fs.param.fogDistance, "param_fs_fogDistance", Uniform);
     findVariableLocation(_mapStage.program, _mapStage.fs.param.fogDensity, "param_fs_fogDensity", Uniform);
@@ -425,14 +430,17 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering_MapStage()
     glUniform2i(_mapStage.vs.param.targetTile, _targetTile.x, _targetTile.y);
     GL_CHECK_RESULT;
 
-    // Set distance to camera from target
-    glUniform1f(_mapStage.fs.param.distanceFromCameraToTarget, _distanceFromCameraToTarget);
-    GL_CHECK_RESULT;
+    if(isSupported_EXT_shader_texture_lod)
+    {
+        // Set distance to camera from target
+        glUniform1f(_mapStage.fs.param.distanceFromCameraToTarget, _distanceFromCameraToTarget);
+        GL_CHECK_RESULT;
 
-    // Set camera elevation angle
-    glUniform1f(_mapStage.fs.param.cameraElevationAngle, _activeConfig.elevationAngle);
-    GL_CHECK_RESULT;
-
+        // Set camera elevation angle
+        glUniform1f(_mapStage.fs.param.cameraElevationAngle, _activeConfig.elevationAngle);
+        GL_CHECK_RESULT;
+    }
+    
     // Set fog parameters
     glUniform3f(_mapStage.fs.param.fogColor, _activeConfig.fogColor[0], _activeConfig.fogColor[1], _activeConfig.fogColor[2]);
     GL_CHECK_RESULT;
