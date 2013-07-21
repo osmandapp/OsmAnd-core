@@ -70,16 +70,16 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
         "                                                                                                                   ""\n"
         // Output data to next shader stages
         "varying vec2 v2f_texCoordsPerLayer[%RasterTileLayersCount%];                                                       ""\n"
-        //ifdef EXT_shader_texture_lod
+        "#ifdef GL_EXT_shader_texture_lod                                                                                   ""\n"
         "varying float v2f_distanceFromCamera;                                                                              ""\n"
-        //endif
+        "#endif                                                                                                             ""\n"
         "varying vec2 v2f_positionRelativeToTarget;                                                                         ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
         "uniform mat4 param_vs_mProjectionView;                                                                             ""\n"
-        //ifdef EXT_shader_texture_lod
+        "#ifdef GL_EXT_shader_texture_lod                                                                                   ""\n"
         "uniform mat4 param_vs_mView;                                                                                       ""\n"
-        //endif
+        "#endif                                                                                                             ""\n"
         "uniform vec2 param_vs_targetInTilePosN;                                                                            ""\n"
         "uniform ivec2 param_vs_targetTile;                                                                                 ""\n"
         "                                                                                                                   ""\n"
@@ -154,9 +154,9 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
         "                                                                                                                   ""\n"
         //   Finally output processed modified vertex
         "    v2f_positionRelativeToTarget = v.xz;                                                                           ""\n"
-        //ifdef EXT_shader_texture_lod
+        "#ifdef GL_EXT_shader_texture_lod                                                                                   ""\n"
         "    v2f_distanceFromCamera = length((param_vs_mView * v).xz);                                                      ""\n"
-        //endif
+        "#endif                                                                                                             ""\n"
         "    gl_Position = param_vs_mProjectionView * v;                                                                    ""\n"
         "}                                                                                                                  ""\n");
     QString preprocessedVertexShader = vertexShader;
@@ -184,7 +184,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
     const QString fragmentShader_perTileLayer = QString::fromLatin1(
         "    if(param_fs_perTileLayer[%layerLinearIdx%].k > floatEpsilon)                                                   ""\n"
         "    {                                                                                                              ""\n"
-        "#ifdef EXT_shader_texture_lod                                                                                      ""\n"
+        "#ifdef GL_EXT_shader_texture_lod                                                                                   ""\n"
         "        vec4 layerColor = texture2DLodEXT(                                                                         ""\n"
         "            param_fs_perTileLayer[%layerLinearIdx%].sampler,                                                       ""\n"
         "            v2f_texCoordsPerLayer[%layerLinearIdx%], mipmapLod);                                                   ""\n"
@@ -199,8 +199,8 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
     const QString fragmentShader = QString::fromLatin1(
         "#version 100                                                                                                       ""\n"
         "                                                                                                                   ""\n"
-        "#ifdef EXT_shader_texture_lod                                                                                      ""\n"
-        "    #extension EXT_shader_texture_lod : enable                                                                     ""\n"
+        "#ifdef GL_EXT_shader_texture_lod                                                                                   ""\n"
+        "    #extension GL_EXT_shader_texture_lod : enable                                                                  ""\n"
         "#endif                                                                                                             ""\n"
         "                                                                                                                   ""\n"
         // Set default precisions
@@ -214,12 +214,12 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
         // Input data
         "varying vec2 v2f_texCoordsPerLayer[%RasterTileLayersCount%];                                                       ""\n"
         "varying vec2 v2f_positionRelativeToTarget;                                                                         ""\n"
-        "#ifdef EXT_shader_texture_lod                                                                                      ""\n"
+        "#ifdef GL_EXT_shader_texture_lod                                                                                   ""\n"
         "varying float v2f_distanceFromCamera;                                                                              ""\n"
         "#endif                                                                                                             ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
-        "#ifdef EXT_shader_texture_lod                                                                                      ""\n"
+        "#ifdef GL_EXT_shader_texture_lod                                                                                   ""\n"
         "uniform float param_fs_distanceFromCameraToTarget;                                                                 ""\n"
         "uniform float param_fs_cameraElevationAngle;                                                                       ""\n"
         "#endif                                                                                                             ""\n"
@@ -239,7 +239,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
-        "#ifdef EXT_shader_texture_lod                                                                                      ""\n"
+        "#ifdef GL_EXT_shader_texture_lod                                                                                   ""\n"
         //   Calculate normalized camera elevation and recalculate lod0 distance
         "    float cameraElevationN = param_fs_cameraElevationAngle / 90.0;                                                 ""\n"
         "    float cameraBaseDistance = param_fs_distanceFromCameraToTarget * 1.25;                                         ""\n"
@@ -258,7 +258,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
         "#endif                                                                                                             ""\n"
         "                                                                                                                   ""\n"
         //   Take base color from RasterMap layer
-        "#ifdef EXT_shader_texture_lod                                                                                      ""\n"
+        "#ifdef GL_EXT_shader_texture_lod                                                                                   ""\n"
         "    vec4 baseColor = texture2DLodEXT(                                                                              ""\n"
         "        param_fs_perTileLayer[0].sampler,                                                                          ""\n"
         "        v2f_texCoordsPerLayer[0], mipmapLod);                                                                      ""\n"
