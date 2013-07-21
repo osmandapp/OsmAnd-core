@@ -274,19 +274,19 @@ void OsmAnd::MapRenderer_OpenGLES2::wrapperEx_glTexSubImage2D(
 
     // Otherwise we need to or load row by row
     size_t pixelSize = 0;
-    if(sourceFormat == GL_RGBA && sourcePixelDataType == GL_UNSIGNED_BYTE)
+    if(format == GL_RGBA && type == GL_UNSIGNED_BYTE)
     {
         pixelSize = 4;
     }
-    else if(sourceFormat == GL_RGBA && sourcePixelDataType == GL_UNSIGNED_SHORT_4_4_4_4)
+    else if(format == GL_RGBA && type == GL_UNSIGNED_SHORT_4_4_4_4)
     {
         pixelSize = 2;
     }
-    else if(sourceFormat == GL_RGB && sourcePixelDataType == GL_UNSIGNED_SHORT_5_6_5)
+    else if(format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5)
     {
         pixelSize = 2;
     }
-    else if(sourceFormat == GL_LUMINANCE && sourcePixelDataType == GL_FLOAT)
+    else if(format == GL_LUMINANCE && type == GL_FLOAT)
     {
         pixelSize = 4;
     }
