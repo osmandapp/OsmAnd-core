@@ -45,6 +45,10 @@ OsmAnd::MapRenderer_OpenGLES2::P_glTexStorage2DEXT_PROC OsmAnd::MapRenderer_Open
 
 OsmAnd::MapRenderer_OpenGLES2::MapRenderer_OpenGLES2()
     : glesExtensions(_glesExtensions)
+    , isSupported_vertexShaderTextureLookup(_isSupported_vertexShaderTextureLookup)
+    , isSupported_EXT_unpack_subimage(_isSupported_EXT_unpack_subimage)
+    , isSupported_EXT_texture_storage(_isSupported_EXT_texture_storage)
+    , isSupported_APPLE_texture_max_level(_isSupported_APPLE_texture_max_level)
 {
 }
 

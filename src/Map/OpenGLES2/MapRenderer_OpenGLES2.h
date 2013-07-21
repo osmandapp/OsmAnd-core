@@ -66,6 +66,11 @@ namespace OsmAnd {
 
         const QList<QString>& glesExtensions;
 
+        const bool& isSupported_vertexShaderTextureLookup;
+        const bool& isSupported_EXT_unpack_subimage;
+        const bool& isSupported_EXT_texture_storage;
+        const bool& isSupported_APPLE_texture_max_level;
+
         virtual bool initializeRendering();
         virtual bool releaseRendering();
     };

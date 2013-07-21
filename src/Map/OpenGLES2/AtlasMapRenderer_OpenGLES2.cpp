@@ -291,7 +291,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
     findVariableLocation(_mapStage.program, _mapStage.vs.param.targetInTilePosN, "param_vs_targetInTilePosN", Uniform);
     findVariableLocation(_mapStage.program, _mapStage.vs.param.targetTile, "param_vs_targetTile", Uniform);
     findVariableLocation(_mapStage.program, _mapStage.vs.param.tile, "param_vs_tile", Uniform);
-    if(_isSupported_vertexShaderTextureLookup)
+    if(isSupported_vertexShaderTextureLookup)
     {
         findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_sampler, "param_vs_elevationData_sampler", Uniform);
         findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_k, "param_vs_elevationData_k", Uniform);
@@ -449,7 +449,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering_MapStage()
         GL_CHECK_RESULT;
 
         // Set elevation data
-        if(_isSupported_vertexShaderTextureLookup)
+        if(isSupported_vertexShaderTextureLookup)
         {
             if(_activeConfig.tileProviders[TileLayerId::ElevationData])
             {
