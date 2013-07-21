@@ -1,17 +1,22 @@
+#include "ExplicitReferences.h"
+
 #include <SkImageDecoder.h>
 #include <SkImageEncoder.h>
 
-struct ExplicitReferences
+void OsmAnd::InflateExplicitReferences()
 {
-    ExplicitReferences()
+    struct ExplicitReferences
     {
-        // SKIA
-        delete CreateGIFImageDecoder();
-        delete CreateJPEGImageDecoder();
-        delete CreateJPEGImageEncoder();
-        delete CreatePNGImageDecoder();
-        delete CreatePNGImageEncoder();
-    }
-};
+        ExplicitReferences()
+        {
+            // SKIA
+            delete CreateGIFImageDecoder();
+            delete CreateJPEGImageDecoder();
+            delete CreateJPEGImageEncoder();
+            delete CreatePNGImageDecoder();
+            delete CreatePNGImageEncoder();
+        }
+    };
 
-static ExplicitReferences _explicitReferences;
+    static ExplicitReferences _explicitReferences;
+}

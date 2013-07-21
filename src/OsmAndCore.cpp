@@ -11,6 +11,7 @@
 
 #include "Logging.h"
 #include "OsmAndCore_private.h"
+#include "ExplicitReferences.h"
 #include "QMainThreadTaskHost.h"
 #include "QMainThreadTaskEvent.h"
 
@@ -40,6 +41,8 @@ std::shared_ptr<QCoreApplicationThread> _qCoreApplicationThread;
 
 OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::InitializeCore()
 {
+    InflateExplicitReferences();
+
     if(!QCoreApplication::instance())
     {
         _qCoreApplicationThread.reset(new QCoreApplicationThread());
