@@ -36,7 +36,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering()
         return false;
 
     initializeRendering_SkyStage();
-    //initializeRendering_MapStage();
+    initializeRendering_MapStage();
 
     ok = AtlasMapRenderer_BaseOpenGL::initializeRendering();
     if(!ok)
@@ -54,19 +54,24 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
         "        v2f_texCoordsPerLayer[%layerLinearIndex%]);                                                                ""\n"
         "                                                                                                                   ""\n");
     const QString vertexShader = QString::fromLatin1(
-        "#version 430 core                                                                                                  ""\n"
+        "#version 100                                                                                                       ""\n"
+        "                                                                                                                   ""\n"
+        // Set default precisions
+        "precision highp float;                                                                                             ""\n"
+        "precision highp int;                                                                                               ""\n"
+        "precision highp sampler2D;                                                                                         ""\n"
         "                                                                                                                   ""\n"
         // Constants
         "const float floatEpsilon = 0.000001;                                                                               ""\n"
         "                                                                                                                   ""\n"
         // Input data
-        "in vec2 in_vs_vertexPosition;                                                                                      ""\n"
-        "in vec2 in_vs_vertexTexCoords;                                                                                     ""\n"
+        "attribute vec2 in_vs_vertexPosition;                                                                               ""\n"
+        "attribute vec2 in_vs_vertexTexCoords;                                                                              ""\n"
         "                                                                                                                   ""\n"
         // Output data to next shader stages
-        "out vec2 v2f_texCoordsPerLayer[%RasterTileLayersCount%];                                                           ""\n"
-        "out float v2f_distanceFromCamera;                                                                                  ""\n"
-        "out vec2 v2f_positionRelativeToTarget;                                                                             ""\n"
+        "varying vec2 v2f_texCoordsPerLayer[%RasterTileLayersCount%];                                                       ""\n"
+        "varying float v2f_distanceFromCamera;                                                                              ""\n"
+        "varying vec2 v2f_positionRelativeToTarget;                                                                         ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
         "uniform mat4 param_vs_mProjectionView;                                                                             ""\n"
@@ -93,10 +98,10 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
         "                                                                                                                   ""\n"
         "void calculateTextureCoordinates(in LayerInputPerTile perTile, out vec2 outTexCoords)                              ""\n"
         "{                                                                                                                  ""\n"
-        "    const int rowIndex = perTile.slotIndex / perTile.slotsPerSide;                                                 ""\n"
-        "    const int colIndex = int(mod(perTile.slotIndex, perTile.slotsPerSide));                                        ""\n"
+        "    int rowIndex = perTile.slotIndex / perTile.slotsPerSide;                                                       ""\n"
+        "    int colIndex = int(mod(perTile.slotIndex, perTile.slotsPerSide));                                              ""\n"
         "                                                                                                                   ""\n"
-        "    const float texCoordRescale = (perTile.tileSizeN - 2.0 * perTile.tilePaddingN) / perTile.tileSizeN;            ""\n"
+        "    float texCoordRescale = (perTile.tileSizeN - 2.0 * perTile.tilePaddingN) / perTile.tileSizeN;                  ""\n"
         "                                                                                                                   ""\n"
         "    outTexCoords.s = float(colIndex) * perTile.tileSizeN;                                                          ""\n"
         "    outTexCoords.s += perTile.tilePaddingN + (in_vs_vertexTexCoords.s * perTile.tileSizeN) * texCoordRescale;      ""\n"
@@ -176,18 +181,20 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
         "        baseColor = mix(baseColor, layerColor, layerColor.a * param_fs_perTileLayer[%layerLinearIdx%].k);          ""\n"
         "    }                                                                                                              ""\n");
     const QString fragmentShader = QString::fromLatin1(
-        "#version 430 core                                                                                                  ""\n"
+        "#version 100                                                                                                       ""\n"
+        "                                                                                                                   ""\n"
+        // Set default precisions
+        "precision highp float;                                                                                             ""\n"
+        "precision highp int;                                                                                               ""\n"
+        "precision highp sampler2D;                                                                                         ""\n"
         "                                                                                                                   ""\n"
         // Constants
         "const float floatEpsilon = 0.000001;                                                                               ""\n"
         "                                                                                                                   ""\n"
         // Input data
-        "in vec2 v2f_texCoordsPerLayer[%RasterTileLayersCount%];                                                            ""\n"
-        "in vec2 v2f_positionRelativeToTarget;                                                                              ""\n"
-        "in float v2f_distanceFromCamera;                                                                                   ""\n"
-        "                                                                                                                   ""\n"
-        // Output data
-        "out vec4 out_color;                                                                                                ""\n"
+        "varying vec2 v2f_texCoordsPerLayer[%RasterTileLayersCount%];                                                       ""\n"
+        "varying vec2 v2f_positionRelativeToTarget;                                                                         ""\n"
+        "varying float v2f_distanceFromCamera;                                                                              ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
         "uniform float param_fs_distanceFromCameraToTarget;                                                                 ""\n"
@@ -209,17 +216,17 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
         //   Calculate normalized camera elevation and recalculate lod0 distance
-        "    const float cameraElevationN = param_fs_cameraElevationAngle / 90.0;                                           ""\n"
-        "    const float cameraBaseDistance = param_fs_distanceFromCameraToTarget * 1.25;                                   ""\n"
-        "    const float zeroLodDistanceShift = 4.0 * (0.2 - cameraElevationN) * param_fs_distanceFromCameraToTarget;       ""\n"
-        "    const float cameraDistanceLOD0 = cameraBaseDistance - zeroLodDistanceShift;                                    ""\n"
+        "    float cameraElevationN = param_fs_cameraElevationAngle / 90.0;                                                 ""\n"
+        "    float cameraBaseDistance = param_fs_distanceFromCameraToTarget * 1.25;                                         ""\n"
+        "    float zeroLodDistanceShift = 4.0 * (0.2 - cameraElevationN) * param_fs_distanceFromCameraToTarget;             ""\n"
+        "    float cameraDistanceLOD0 = cameraBaseDistance - zeroLodDistanceShift;                                          ""\n"
         "                                                                                                                   ""\n"
         //   Calculate mipmap LOD
         "    float mipmapLod = 0.0;                                                                                         ""\n"
         "    if(v2f_distanceFromCamera > cameraDistanceLOD0)                                                                ""\n"
         "    {                                                                                                              ""\n"
         //       Calculate distance factor that is in range (0.0 ... +inf)
-        "        const float distanceF = 1.0 - cameraDistanceLOD0 / v2f_distanceFromCamera;                                 ""\n"
+        "        float distanceF = 1.0 - cameraDistanceLOD0 / v2f_distanceFromCamera;                                       ""\n"
         "        mipmapLod = distanceF * ((1.0 - cameraElevationN) * 10.0);                                                 ""\n"
         "        mipmapLod = clamp(mipmapLod, 0.0, %MipmapLodLevelsMax%.0 - 1.0);                                           ""\n"
         "    }                                                                                                              ""\n"
@@ -232,18 +239,18 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
         "%UnrolledPerLayerProcessingCode%                                                                                   ""\n"
         "                                                                                                                   ""\n"
         //   Apply fog (square exponential)
-        "    const float fogDistanceScaled = param_fs_fogDistance * param_fs_scaleToRetainProjectedSize;                    ""\n"
-        "    const float fogStartDistance = fogDistanceScaled * (1.0 - param_fs_fogOriginFactor);                           ""\n"
+        "    float fogDistanceScaled = param_fs_fogDistance * param_fs_scaleToRetainProjectedSize;                          ""\n"
+        "    float fogStartDistance = fogDistanceScaled * (1.0 - param_fs_fogOriginFactor);                                 ""\n"
         //TODO: take into account that v2f_positionRelativeToTarget also makes fog in reverse area
-        "    const float fogLinearFactor = min(max(length(v2f_positionRelativeToTarget) - fogStartDistance, 0.0) /          ""\n"
+        "    float fogLinearFactor = min(max(length(v2f_positionRelativeToTarget) - fogStartDistance, 0.0) /                ""\n"
         "        (fogDistanceScaled - fogStartDistance), 1.0);                                                              ""\n"
 
-        "    const float fogFactorBase = fogLinearFactor * param_fs_fogDensity;                                             ""\n"
-        "    const float fogFactor = clamp(exp(-fogFactorBase*fogFactorBase), 0.0, 1.0);                                    ""\n"
-        "    out_color = mix(baseColor, vec4(param_fs_fogColor, 1.0), 1.0 - fogFactor);                                     ""\n"
+        "    float fogFactorBase = fogLinearFactor * param_fs_fogDensity;                                                   ""\n"
+        "    float fogFactor = clamp(exp(-fogFactorBase*fogFactorBase), 0.0, 1.0);                                          ""\n"
+        "    gl_FragColor = mix(baseColor, vec4(param_fs_fogColor, 1.0), 1.0 - fogFactor);                                  ""\n"
         "                                                                                                                   ""\n"
         //   Remove pixel if it's completely transparent
-        "    if(out_color.a < floatEpsilon)                                                                                 ""\n"
+        "    if(gl_FragColor.a < floatEpsilon)                                                                              ""\n"
         "        discard;                                                                                                   ""\n"
         "}                                                                                                                  ""\n");
     QString preprocessedFragmentShader = fragmentShader;
@@ -336,7 +343,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering()
     GL_CHECK_RESULT;
 
     performRendering_SkyStage();
-    //performRendering_MapStage();
+    performRendering_MapStage();
 
     // Revert viewport
     glViewport(oldViewport[0], oldViewport[1], oldViewport[2], oldViewport[3]);
@@ -663,7 +670,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGLES2::releaseRendering()
     bool ok;
 
     releaseRendering_MapStage();
-    //releaseRendering_SkyStage();
+    releaseRendering_SkyStage();
 
     ok = AtlasMapRenderer_BaseOpenGL::releaseRendering();
     if(!ok)
