@@ -319,6 +319,8 @@ void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* rep
         {
             tileFile.write(data);
             tileFile.close();
+
+            LogPrintf(LogSeverityLevel::Info, "Saved tile from %s to %s\n", reply->request().url().toString().toStdString().c_str(), fullPath.toStdString().c_str());
         }
         else
         {
@@ -334,7 +336,7 @@ void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* rep
         auto skBitmap = new SkBitmap();
         if(!SkImageDecoder::DecodeMemory(data.data(), data.size(), skBitmap, SkBitmap::kNo_Config, SkImageDecoder::kDecodeBounds_Mode))
         {
-            LogPrintf(LogSeverityLevel::Error, "Failed to decode header of tile file '%s'\n", fullPath.toStdString().c_str());
+            LogPrintf(LogSeverityLevel::Error, "Failed to decode header of tile from '%s'\n", reply->request().url().toString().toStdString().c_str());
 
             delete skBitmap;
             std::shared_ptr<IMapTileProvider::Tile> emptyTile;
@@ -345,7 +347,7 @@ void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* rep
         const bool force32bit = (skBitmap->getConfig() != SkBitmap::kRGB_565_Config) && (skBitmap->getConfig() != SkBitmap::kARGB_4444_Config);
         if(!SkImageDecoder::DecodeMemory(data.data(), data.size(), skBitmap, force32bit ? SkBitmap::kARGB_8888_Config : skBitmap->getConfig(), SkImageDecoder::kDecodePixels_Mode))
         {
-            LogPrintf(LogSeverityLevel::Error, "Failed to decode tile file '%s'\n", fullPath.toStdString().c_str());
+            LogPrintf(LogSeverityLevel::Error, "Failed to decode tile file from '%s'\n", reply->request().url().toString().toStdString().c_str());
 
             delete skBitmap;
             std::shared_ptr<IMapTileProvider::Tile> emptyTile;
