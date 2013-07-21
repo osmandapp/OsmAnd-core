@@ -304,7 +304,7 @@ void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* rep
         return;
     }
 
-    LogPrintf(LogSeverityLevel::Warning, "Downloaded tile from %s\n", reply->request().url().toString().toStdString().c_str());
+    LogPrintf(LogSeverityLevel::Info, "Downloaded tile from %s\n", reply->request().url().toString().toStdString().c_str());
     const auto& data = reply->readAll();
 
     if(_localCachePath && _localCachePath->exists())
