@@ -49,6 +49,7 @@ OsmAnd::MapRenderer_OpenGLES2::MapRenderer_OpenGLES2()
     , isSupported_EXT_unpack_subimage(_isSupported_EXT_unpack_subimage)
     , isSupported_EXT_texture_storage(_isSupported_EXT_texture_storage)
     , isSupported_APPLE_texture_max_level(_isSupported_APPLE_texture_max_level)
+    , isSupported_EXT_shader_texture_lod(_isSupported_EXT_shader_texture_lod)
 {
 }
 
@@ -144,6 +145,7 @@ bool OsmAnd::MapRenderer_OpenGLES2::initializeRendering()
     _isSupported_EXT_unpack_subimage = _glesExtensions.contains("GL_EXT_unpack_subimage");
     _isSupported_EXT_texture_storage = _glesExtensions.contains("GL_EXT_texture_storage");
     _isSupported_APPLE_texture_max_level = _glesExtensions.contains("GL_APPLE_texture_max_level");
+    _isSupported_EXT_shader_texture_lod = _glesExtensions.contains("GL_EXT_shader_texture_lod");
 #if !defined(OSMAND_TARGET_OS_ios)
     if(_isSupported_EXT_texture_storage && !glTexStorage2DEXT)
     {

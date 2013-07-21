@@ -52,6 +52,7 @@ namespace OsmAnd {
         bool _isSupported_EXT_unpack_subimage;
         bool _isSupported_EXT_texture_storage;
         bool _isSupported_APPLE_texture_max_level;
+        bool _isSupported_EXT_shader_texture_lod;
     protected:
         virtual void wrapper_glTexStorage2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType);
         virtual void wrapperEx_glTexSubImage2D(GLenum target, GLint level,
@@ -70,6 +71,7 @@ namespace OsmAnd {
         const bool& isSupported_EXT_unpack_subimage;
         const bool& isSupported_EXT_texture_storage;
         const bool& isSupported_APPLE_texture_max_level;
+        const bool& isSupported_EXT_shader_texture_lod;
 
         virtual bool initializeRendering();
         virtual bool releaseRendering();
