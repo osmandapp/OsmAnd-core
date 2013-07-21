@@ -81,10 +81,12 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
         "                                                                                                                   ""\n"
         // Parameters: per-tile data
         "uniform ivec2 param_vs_tile;                                                                                       ""\n"
+/*
         "uniform float param_vs_elevationData_k;                                                                            ""\n"
         "uniform sampler2D param_vs_elevationData_sampler;                                                                  ""\n"
         "uniform float param_vs_elevationData_upperMetersPerUnit;                                                           ""\n"
         "uniform float param_vs_elevationData_lowerMetersPerUnit;                                                           ""\n"
+*/
         "                                                                                                                   ""\n"
         // Parameters: per-layer-in-tile data
         "struct LayerInputPerTile                                                                                           ""\n"
@@ -124,6 +126,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
         "%UnrolledPerLayerTexCoordsProcessingCode%                                                                          ""\n"
         "                                                                                                                   ""\n"
         //   If elevation data is active, use it
+/*
         "    if(abs(param_vs_elevationData_k) > floatEpsilon)                                                               ""\n"
         "    {                                                                                                              ""\n"
         "        float metersToUnits = mix(param_vs_elevationData_upperMetersPerUnit,                                       ""\n"
@@ -143,6 +146,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
         "    {                                                                                                              ""\n"
         "        v.y = 0.0;                                                                                                 ""\n"
         "    }                                                                                                              ""\n"
+*/
         "                                                                                                                   ""\n"
         //   Finally output processed modified vertex
         "    v2f_positionRelativeToTarget = v.xz;                                                                           ""\n"
@@ -287,10 +291,13 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
     findVariableLocation(_mapStage.program, _mapStage.vs.param.targetInTilePosN, "param_vs_targetInTilePosN", Uniform);
     findVariableLocation(_mapStage.program, _mapStage.vs.param.targetTile, "param_vs_targetTile", Uniform);
     findVariableLocation(_mapStage.program, _mapStage.vs.param.tile, "param_vs_tile", Uniform);
-    findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_sampler, "param_vs_elevationData_sampler", Uniform);
-    findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_k, "param_vs_elevationData_k", Uniform);
-    findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_upperMetersPerUnit, "param_vs_elevationData_upperMetersPerUnit", Uniform);
-    findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_lowerMetersPerUnit, "param_vs_elevationData_lowerMetersPerUnit", Uniform);
+    if(_isSupported_vertexShaderTextureLookup)
+    {
+        findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_sampler, "param_vs_elevationData_sampler", Uniform);
+        findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_k, "param_vs_elevationData_k", Uniform);
+        findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_upperMetersPerUnit, "param_vs_elevationData_upperMetersPerUnit", Uniform);
+        findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_lowerMetersPerUnit, "param_vs_elevationData_lowerMetersPerUnit", Uniform);
+    }
     for(int layerId = 0; layerId < TileLayerId::IdsCount; layerId++)
     {
         const auto layerStructName =
@@ -442,102 +449,105 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering_MapStage()
         GL_CHECK_RESULT;
 
         // Set elevation data
-        if(_activeConfig.tileProviders[TileLayerId::ElevationData])
+        if(_isSupported_vertexShaderTextureLookup)
         {
-            auto& tileLayer = _tileLayers[TileLayerId::ElevationData];
-            float nonAtlasHalfTexelSizeN;
-            bool nonAtlasHalfTexelSizeAvailable = false;
-
-            QMutexLocker scopeLock(&tileLayer._cacheModificationMutex);
-
-            std::shared_ptr<TileZoomCache::Tile> cachedTile_;
-            bool cacheHit = tileLayer._cache.getTile(_activeConfig.zoomBase, tileIdN, cachedTile_);
-            if(cacheHit)
+            if(_activeConfig.tileProviders[TileLayerId::ElevationData])
             {
-                auto cachedTile = static_cast<CachedTile*>(cachedTile_.get());
+                auto& tileLayer = _tileLayers[TileLayerId::ElevationData];
+                float nonAtlasHalfTexelSizeN;
+                bool nonAtlasHalfTexelSizeAvailable = false;
 
-                glUniform1f(_mapStage.vs.param.elevationData_k, _activeConfig.heightScaleFactor);
-                GL_CHECK_RESULT;
+                QMutexLocker scopeLock(&tileLayer._cacheModificationMutex);
 
-                auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(_activeConfig.zoomBase, tileIdN.y, TileSide3D);
-                glUniform1f(_mapStage.vs.param.elevationData_upperMetersPerUnit, upperMetersPerUnit);
-                auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(_activeConfig.zoomBase, tileIdN.y + 1, TileSide3D);
-                glUniform1f(_mapStage.vs.param.elevationData_lowerMetersPerUnit, lowerMetersPerUnit);
-
-                glActiveTexture(GL_TEXTURE0 + TileLayerId::ElevationData);
-                GL_CHECK_RESULT;
-
-                glEnable(GL_TEXTURE_2D);
-                GL_CHECK_RESULT;
-
-                glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(cachedTile->textureRef)));
-                GL_CHECK_RESULT;
-
-                const auto& perTile_vs = _mapStage.vs.param.perTileLayer[TileLayerId::ElevationData];
-                glUniform1i(perTile_vs.slotIndex, cachedTile->atlasSlotIndex);
-                GL_CHECK_RESULT;
-                if(cachedTile->atlasSlotIndex >= 0)
+                std::shared_ptr<TileZoomCache::Tile> cachedTile_;
+                bool cacheHit = tileLayer._cache.getTile(_activeConfig.zoomBase, tileIdN, cachedTile_);
+                if(cacheHit)
                 {
-                    const auto& atlas = tileLayer._atlasTexturePools[cachedTile->atlasPoolId];
-                    glUniform1f(perTile_vs.tileSizeN, atlas._tileSizeN);
-                    GL_CHECK_RESULT;
-                    glUniform1f(perTile_vs.tilePaddingN, atlas._halfTexelSizeN);
-                    GL_CHECK_RESULT;
-                    glUniform1i(perTile_vs.slotsPerSide, atlas._slotsPerSide);
+                    auto cachedTile = static_cast<CachedTile*>(cachedTile_.get());
+
+                    glUniform1f(_mapStage.vs.param.elevationData_k, _activeConfig.heightScaleFactor);
                     GL_CHECK_RESULT;
 
-                    //glBindSampler(TileLayerId::ElevationData, _textureSampler_ElevationData_Atlas);
-                    /*
-                    // ElevationData (Atlas)
-                    glGenSamplers(1, &_textureSampler_ElevationData_Atlas);
+                    auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(_activeConfig.zoomBase, tileIdN.y, TileSide3D);
+                    glUniform1f(_mapStage.vs.param.elevationData_upperMetersPerUnit, upperMetersPerUnit);
+                    auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(_activeConfig.zoomBase, tileIdN.y + 1, TileSide3D);
+                    glUniform1f(_mapStage.vs.param.elevationData_lowerMetersPerUnit, lowerMetersPerUnit);
+
+                    glActiveTexture(GL_TEXTURE0 + TileLayerId::ElevationData);
                     GL_CHECK_RESULT;
-                    glSamplerParameteri(_textureSampler_ElevationData_Atlas, GL_TEXTURE_WRAP_S, GL_CLAMP);
+
+                    glEnable(GL_TEXTURE_2D);
                     GL_CHECK_RESULT;
-                    glSamplerParameteri(_textureSampler_ElevationData_Atlas, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
+                    glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(cachedTile->textureRef)));
                     GL_CHECK_RESULT;
-                    glSamplerParameteri(_textureSampler_ElevationData_Atlas, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+                    const auto& perTile_vs = _mapStage.vs.param.perTileLayer[TileLayerId::ElevationData];
+                    glUniform1i(perTile_vs.slotIndex, cachedTile->atlasSlotIndex);
                     GL_CHECK_RESULT;
-                    glSamplerParameteri(_textureSampler_ElevationData_Atlas, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-                    GL_CHECK_RESULT;
-                    */
-                    GL_CHECK_RESULT;
+                    if(cachedTile->atlasSlotIndex >= 0)
+                    {
+                        const auto& atlas = tileLayer._atlasTexturePools[cachedTile->atlasPoolId];
+                        glUniform1f(perTile_vs.tileSizeN, atlas._tileSizeN);
+                        GL_CHECK_RESULT;
+                        glUniform1f(perTile_vs.tilePaddingN, atlas._halfTexelSizeN);
+                        GL_CHECK_RESULT;
+                        glUniform1i(perTile_vs.slotsPerSide, atlas._slotsPerSide);
+                        GL_CHECK_RESULT;
+
+                        //glBindSampler(TileLayerId::ElevationData, _textureSampler_ElevationData_Atlas);
+                        /*
+                        // ElevationData (Atlas)
+                        glGenSamplers(1, &_textureSampler_ElevationData_Atlas);
+                        GL_CHECK_RESULT;
+                        glSamplerParameteri(_textureSampler_ElevationData_Atlas, GL_TEXTURE_WRAP_S, GL_CLAMP);
+                        GL_CHECK_RESULT;
+                        glSamplerParameteri(_textureSampler_ElevationData_Atlas, GL_TEXTURE_WRAP_T, GL_CLAMP);
+                        GL_CHECK_RESULT;
+                        glSamplerParameteri(_textureSampler_ElevationData_Atlas, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                        GL_CHECK_RESULT;
+                        glSamplerParameteri(_textureSampler_ElevationData_Atlas, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                        GL_CHECK_RESULT;
+                        */
+                        GL_CHECK_RESULT;
+                    }
+                    else
+                    {
+                        if(!nonAtlasHalfTexelSizeAvailable)
+                        {
+                            nonAtlasHalfTexelSizeN = 0.5f / static_cast<float>(_activeConfig.tileProviders[TileLayerId::ElevationData]->getTileSize());
+                            nonAtlasHalfTexelSizeAvailable = true;
+                        }
+
+                        glUniform1f(perTile_vs.tileSizeN, 1.0f);
+                        GL_CHECK_RESULT;
+                        glUniform1f(perTile_vs.tilePaddingN, nonAtlasHalfTexelSizeN);
+                        GL_CHECK_RESULT;
+                        glUniform1i(perTile_vs.slotsPerSide, 1);
+                        GL_CHECK_RESULT;
+
+                        //glBindSampler(TileLayerId::ElevationData, _textureSampler_ElevationData_NoAtlas);
+                        /*
+                        // ElevationData (No atlas)
+                        glGenSamplers(1, &_textureSampler_ElevationData_NoAtlas);
+                        GL_CHECK_RESULT;
+                        glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                        GL_CHECK_RESULT;
+                        glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                        GL_CHECK_RESULT;
+                        glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                        GL_CHECK_RESULT;
+                        glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                        GL_CHECK_RESULT;
+                        */
+                        GL_CHECK_RESULT;
+                    }
                 }
                 else
                 {
-                    if(!nonAtlasHalfTexelSizeAvailable)
-                    {
-                        nonAtlasHalfTexelSizeN = 0.5f / static_cast<float>(_activeConfig.tileProviders[TileLayerId::ElevationData]->getTileSize());
-                        nonAtlasHalfTexelSizeAvailable = true;
-                    }
-
-                    glUniform1f(perTile_vs.tileSizeN, 1.0f);
-                    GL_CHECK_RESULT;
-                    glUniform1f(perTile_vs.tilePaddingN, nonAtlasHalfTexelSizeN);
-                    GL_CHECK_RESULT;
-                    glUniform1i(perTile_vs.slotsPerSide, 1);
-                    GL_CHECK_RESULT;
-
-                    //glBindSampler(TileLayerId::ElevationData, _textureSampler_ElevationData_NoAtlas);
-                    /*
-                    // ElevationData (No atlas)
-                    glGenSamplers(1, &_textureSampler_ElevationData_NoAtlas);
-                    GL_CHECK_RESULT;
-                    glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                    GL_CHECK_RESULT;
-                    glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-                    GL_CHECK_RESULT;
-                    glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-                    GL_CHECK_RESULT;
-                    glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-                    GL_CHECK_RESULT;
-                    */
+                    glUniform1f(_mapStage.vs.param.elevationData_k, 0.0f);
                     GL_CHECK_RESULT;
                 }
-            }
-            else
-            {
-                glUniform1f(_mapStage.vs.param.elevationData_k, 0.0f);
-                GL_CHECK_RESULT;
             }
         }
 
