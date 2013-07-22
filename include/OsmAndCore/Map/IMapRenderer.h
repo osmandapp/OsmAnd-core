@@ -61,7 +61,7 @@ namespace OsmAnd {
             IdsCount,
         };
 
-        typedef std::function<void ()> RedrawRequestCallback;
+        typedef std::function<void ()> FrameRequestCallback;
 
         struct OSMAND_CORE_API Configuration
         {
@@ -181,7 +181,7 @@ namespace OsmAnd {
             std::array< QSet< TileId >, 32 > _requestedTiles;
 
             void purgeCache();
-            bool uploadPending();
+            bool uploadPending(bool& outDidUpload);
         };
         std::array< TileLayer, TileLayerId::IdsCount > _tileLayers;
         void requestCacheMissTiles();
@@ -202,7 +202,7 @@ namespace OsmAnd {
     public:
         virtual ~IMapRenderer();
 
-        RedrawRequestCallback redrawRequestCallback;
+        FrameRequestCallback frameRequestCallback;
                 
         const Configuration& configuration;
         volatile const bool& frameInvalidated;

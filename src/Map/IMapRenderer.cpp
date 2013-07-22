@@ -396,8 +396,9 @@ bool OsmAnd::IMapRenderer::processRendering()
     {
         auto& tileLayer = _tileLayers[layerId];
 
-        bool hasMore = tileLayer.uploadPending();
-        if(hasMore)
+        bool didUpload;
+        bool hasMore = tileLayer.uploadPending(didUpload);
+        if(hasMore || didUpload)
         {
             // Schedule one more render pass to upload more pending
             invalidateFrame();
@@ -566,8 +567,8 @@ void OsmAnd::IMapRenderer::handleProvidedTile( const TileLayerId& layerId, const
 void OsmAnd::IMapRenderer::invalidateFrame()
 {
     _frameInvalidated = true;
-    if(redrawRequestCallback)
-        redrawRequestCallback();
+    if(frameRequestCallback)
+        frameRequestCallback();
 }
 
 void OsmAnd::IMapRenderer::invalidateTileLayerCache( const TileLayerId& layerId )
@@ -714,9 +715,11 @@ void OsmAnd::IMapRenderer::TileLayer::purgeCache()
     _atlasTexturePools.clear();
 }
 
-bool OsmAnd::IMapRenderer::TileLayer::uploadPending()
+bool OsmAnd::IMapRenderer::TileLayer::uploadPending(bool& outDidUpload)
 {
     QMutexLocker scopeLock(&_pendingToCacheMutex);
+
+    outDidUpload = false;
 
     if(_pendingToCacheQueue.isEmpty())
         return false;
@@ -734,6 +737,7 @@ bool OsmAnd::IMapRenderer::TileLayer::uploadPending()
         //LogPrintf(LogSeverityLevel::Debug, "Uploaded tile %dx%d@%d of layer %d to cache from queue\n", pendingTile.tileId.x, pendingTile.tileId.y, pendingTile.zoom, pendingTile.layerId);
     }
 
+    outDidUpload = true;
     return !_pendingToCacheQueue.isEmpty();
 }
 
