@@ -9,12 +9,14 @@
 OsmAnd::IMapRenderer::IMapRenderer()
     : _tileLayersCacheInvalidatedMask(0)
     , _configInvalidated(true)
+    , _frameInvalidated(false)
     , _pendingConfigModificationMutex(QMutex::Recursive)
     , _isRenderingInitialized(false)
     , _renderThreadId(nullptr)
     , tilesCacheInvalidatedMask(_tileLayersCacheInvalidatedMask)
     , renderThreadId(_renderThreadId)
     , configuration(_pendingConfig)
+    , frameInvalidated(_frameInvalidated)
     , visibleTiles(_visibleTiles)
     , isRenderingInitialized(_isRenderingInitialized)
 {
@@ -326,13 +328,16 @@ bool OsmAnd::IMapRenderer::initializeRendering()
     return true;
 }
 
-bool OsmAnd::IMapRenderer::performRendering()
+bool OsmAnd::IMapRenderer::processRendering()
 {
     assert(_isRenderingInitialized);
     assert(_renderThreadId == QThread::currentThreadId());
 
     if(_configInvalidated)
+    {
         validateConfiguration();
+        _frameInvalidated = true;
+    }
 
     // Check if we have invalidated cache layers
     {
@@ -347,7 +352,7 @@ bool OsmAnd::IMapRenderer::performRendering()
 
             _tileLayersCacheInvalidatedMask &= ~(1 << layerId);
         }
-        
+
         assert(_tileLayersCacheInvalidatedMask == 0);
     }
 
@@ -377,7 +382,7 @@ bool OsmAnd::IMapRenderer::performRendering()
     for(int layerId = 0; layerId < TileLayerId::IdsCount; layerId++)
     {
         auto& tileLayer = _tileLayers[layerId];
-        
+
         QMutexLocker scopeLock(&tileLayer._cacheModificationMutex);
 
         //TODO: Use smarter clear condition
@@ -402,6 +407,16 @@ bool OsmAnd::IMapRenderer::performRendering()
 
     // Now we need to obtain all tiles that are still missing
     requestCacheMissTiles();
+
+    return true;
+}
+
+bool OsmAnd::IMapRenderer::renderFrame()
+{
+    assert(_isRenderingInitialized);
+    assert(_renderThreadId == QThread::currentThreadId());
+
+    _frameInvalidated = false;
 
     return true;
 }

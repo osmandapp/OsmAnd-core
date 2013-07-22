@@ -362,11 +362,11 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
     _programVariables.clear();
 }
 
-bool OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering()
+bool OsmAnd::AtlasMapRenderer_OpenGLES2::renderFrame()
 {
     bool ok;
 
-    ok = AtlasMapRenderer_BaseOpenGL::performRendering();
+    ok = AtlasMapRenderer_BaseOpenGL::renderFrame();
     if(!ok)
         return false;
  
@@ -381,8 +381,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering()
         _activeConfig.viewport.height());
     GL_CHECK_RESULT;
 
-    performRendering_SkyStage();
-    performRendering_MapStage();
+    renderFrame_SkyStage();
+    renderFrame_MapStage();
 
     // Revert viewport
     glViewport(oldViewport[0], oldViewport[1], oldViewport[2], oldViewport[3]);
@@ -391,7 +391,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering()
     return true;
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering_MapStage()
+void OsmAnd::AtlasMapRenderer_OpenGLES2::renderFrame_MapStage()
 {
     GL_CHECK_PRESENT(glBindVertexArrayOES);
     GL_CHECK_PRESENT(glUseProgram);
@@ -974,7 +974,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_SkyStage()
     _programVariables.clear();
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGLES2::performRendering_SkyStage()
+void OsmAnd::AtlasMapRenderer_OpenGLES2::renderFrame_SkyStage()
 {
 #if 0
     {

@@ -111,7 +111,7 @@ namespace OsmAnd {
         virtual void releaseTilePatch();
 
         void initializeRendering_MapStage();
-        void performRendering_MapStage();
+        void renderFrame_MapStage();
         void releaseRendering_MapStage();
 
         struct {
@@ -152,14 +152,14 @@ namespace OsmAnd {
         } _skyStage;
         
         void initializeRendering_SkyStage();
-        void performRendering_SkyStage();
+        void renderFrame_SkyStage();
         void releaseRendering_SkyStage();
     public:
         AtlasMapRenderer_OpenGLES2();
         virtual ~AtlasMapRenderer_OpenGLES2();
 
         virtual bool initializeRendering();
-        virtual bool performRendering();
+        virtual bool renderFrame();
         virtual bool releaseRendering();
     };
 

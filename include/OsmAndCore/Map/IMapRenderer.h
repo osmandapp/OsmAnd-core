@@ -113,6 +113,7 @@ namespace OsmAnd {
 
         virtual void invalidateConfiguration();
         volatile bool _configInvalidated;
+        volatile bool _frameInvalidated;
         QMutex _pendingConfigModificationMutex;
         Configuration _pendingConfig;
         Configuration _activeConfig;
@@ -204,6 +205,7 @@ namespace OsmAnd {
         RedrawRequestCallback redrawRequestCallback;
                 
         const Configuration& configuration;
+        volatile const bool& frameInvalidated;
         const QSet<TileId>& visibleTiles;
         
         virtual void setTileProvider(const TileLayerId& layerId, const std::shared_ptr<IMapTileProvider>& tileProvider, bool forcedUpdate = false);
@@ -227,7 +229,8 @@ namespace OsmAnd {
 
         const volatile bool& isRenderingInitialized;
         virtual bool initializeRendering();
-        virtual bool performRendering();
+        virtual bool processRendering();
+        virtual bool renderFrame();
         virtual bool releaseRendering();
     };
 
