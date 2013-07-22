@@ -1,0 +1,44 @@
+diff -rupN upstream.patched/mkspecs/unsupported/macx-ios-clang-device/qmake.conf upstream.patched2/mkspecs/unsupported/macx-ios-clang-device/qmake.conf
+--- upstream.patched/mkspecs/unsupported/macx-ios-clang-device/qmake.conf	2013-07-14 16:15:59.409236900 +0300
++++ upstream.patched2/mkspecs/unsupported/macx-ios-clang-device/qmake.conf	2013-07-22 12:08:05.965401600 +0300
+@@ -7,7 +7,7 @@ CONFIG                 += app_bundle red
+ QMAKE_INCREMENTAL_STYLE = sublib
+ 
+ QMAKE_MACOSX_DEPLOYMENT_TARGET  =
+-QMAKE_IOS_DEPLOYMENT_TARGET     = 4.3
++QMAKE_IOS_DEPLOYMENT_TARGET     = 5.0
+ 
+ INCLUDEPATH            += $$PWD/ios
+ DEFINES                += DARWIN_NO_CARBON QT_NO_CORESERVICES QT_NO_PRINTER QT_NO_PRINTDIALOG
+@@ -22,4 +22,9 @@ include(../../common/clang-mac.conf)
+ include(../../common/ios/clang.conf)
+ include(../../common/ios/qmake.conf)
+ 
++QMAKE_OBJECTIVE_CFLAGS += -stdlib=libc++ -arch armv7 -arch armv7s
++QMAKE_CFLAGS           += -stdlib=libc++ -arch armv7 -arch armv7s
++QMAKE_CXXFLAGS         += -stdlib=libc++ -arch armv7 -arch armv7s
++QMAKE_LFLAGS           += -stdlib=libc++ -arch armv7 -arch armv7s
++
+ load(qt_config)
+diff -rupN upstream.patched/mkspecs/unsupported/macx-ios-clang-simulator/qmake.conf upstream.patched2/mkspecs/unsupported/macx-ios-clang-simulator/qmake.conf
+--- upstream.patched/mkspecs/unsupported/macx-ios-clang-simulator/qmake.conf	2013-07-14 16:15:59.409236900 +0300
++++ upstream.patched2/mkspecs/unsupported/macx-ios-clang-simulator/qmake.conf	2013-07-22 12:08:10.533453900 +0300
+@@ -7,7 +7,7 @@ CONFIG                 += app_bundle red
+ QMAKE_INCREMENTAL_STYLE = sublib
+ 
+ QMAKE_MACOSX_DEPLOYMENT_TARGET  =
+-QMAKE_IOS_DEPLOYMENT_TARGET     = 4.3
++QMAKE_IOS_DEPLOYMENT_TARGET     = 5.0
+ 
+ INCLUDEPATH            += $$PWD/ios
+ DEFINES                += DARWIN_NO_CARBON QT_NO_CORESERVICES QT_NO_PRINTER QT_NO_PRINTDIALOG
+@@ -22,4 +22,9 @@ include(../../common/clang-mac.conf)
+ include(../../common/ios/clang.conf)
+ include(../../common/ios/qmake.conf)
+ 
++QMAKE_OBJECTIVE_CFLAGS += -stdlib=libc++
++QMAKE_CFLAGS           += -stdlib=libc++
++QMAKE_CXXFLAGS         += -stdlib=libc++
++QMAKE_LFLAGS           += -stdlib=libc++
++
+ load(qt_config)
