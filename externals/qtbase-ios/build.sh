@@ -23,6 +23,10 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 	fi
 	(cd "$SRCLOC/upstream.patched.ios.simulator.i386" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 
+	if [ ! -h "$SRCLOC/upstream.patched.ios.simulator" ]; then
+		ln -s "$SRCLOC/upstream.patched.ios.simulator.i386" "$SRCLOC/upstream.patched.ios.simulator"
+	fi
+
 	if [ ! -d "$SRCLOC/upstream.patched.ios.device.armv7" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.ios.device.armv7"
 		(cd "$SRCLOC/upstream.patched.ios.device.armv7" && \
@@ -37,11 +41,11 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 	fi
 	(cd "$SRCLOC/upstream.patched.ios.device.armv7s" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 
+	if [ ! -h "$SRCLOC/upstream.patched.ios.device" ]; then
+		ln -s "$SRCLOC/upstream.patched.ios.device.armv7" "$SRCLOC/upstream.patched.ios.device"
+	fi
+
 	if [ ! -d "$SRCLOC/upstream.patched.ios" ]; then
-		# Copy headers from already built target (any is suitable)
-		mkdir -p "$SRCLOC/upstream.patched.ios"
-		cp -rpf "$SRCLOC/upstream.patched.ios.simulator.i386/include" "$SRCLOC/upstream.patched.ios/include"
-	
 		# Copy cmake-related stuff from already built target (any is suitable)
 		mkdir -p "$SRCLOC/upstream.patched.ios/lib"
 		cp -rpf "$SRCLOC/upstream.patched.ios.simulator.i386/lib/cmake" "$SRCLOC/upstream.patched.ios/lib/cmake"
