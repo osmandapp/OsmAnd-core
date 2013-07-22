@@ -336,7 +336,7 @@ bool OsmAnd::IMapRenderer::processRendering()
     if(_configInvalidated)
     {
         validateConfiguration();
-        _frameInvalidated = true;
+        invalidateFrame();
     }
 
     // Check if we have invalidated cache layers
@@ -400,7 +400,7 @@ bool OsmAnd::IMapRenderer::processRendering()
         if(hasMore)
         {
             // Schedule one more render pass to upload more pending
-            requestFrameRender();
+            invalidateFrame();
             break;
         }
     }
@@ -560,10 +560,10 @@ void OsmAnd::IMapRenderer::handleProvidedTile( const TileLayerId& layerId, const
         tileLayer._requestedTiles[zoom].remove(tileId);
     }
 
-    requestFrameRender();
+    invalidateFrame();
 }
 
-void OsmAnd::IMapRenderer::requestFrameRender()
+void OsmAnd::IMapRenderer::invalidateFrame()
 {
     _frameInvalidated = true;
     if(redrawRequestCallback)
@@ -591,7 +591,7 @@ void OsmAnd::IMapRenderer::invalidateTileLayersCache()
 void OsmAnd::IMapRenderer::invalidateConfiguration()
 {
     _configInvalidated = true;
-    requestFrameRender();
+    invalidateFrame();
 }
 
 void OsmAnd::IMapRenderer::validateConfiguration()
