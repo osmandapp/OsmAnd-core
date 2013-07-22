@@ -1,6 +1,6 @@
 diff -rupN upstream.patched/mkspecs/unsupported/macx-ios-clang-device-armv7/qmake.conf upstream.patched2/mkspecs/unsupported/macx-ios-clang-device-armv7/qmake.conf
 --- upstream.patched/mkspecs/unsupported/macx-ios-clang-device-armv7/qmake.conf	2013-07-14 16:15:59.409236900 +0300
-+++ upstream.patched2/mkspecs/unsupported/macx-ios-clang-device-armv7/qmake.conf	2013-07-22 12:08:05.965401600 +0300
++++ upstream.patched2/mkspecs/unsupported/macx-ios-clang-device-armv7/qmake.conf	2013-07-22 14:20:52.890899000 +0300
 @@ -7,7 +7,7 @@ CONFIG                 += app_bundle red
  QMAKE_INCREMENTAL_STYLE = sublib
  
@@ -10,7 +10,7 @@ diff -rupN upstream.patched/mkspecs/unsupported/macx-ios-clang-device-armv7/qmak
  
  INCLUDEPATH            += $$PWD/ios
  DEFINES                += DARWIN_NO_CARBON QT_NO_CORESERVICES QT_NO_PRINTER QT_NO_PRINTDIALOG
-@@ -22,4 +22,10 @@ include(../../common/clang-mac.conf)
+@@ -22,4 +22,11 @@ include(../../common/clang-mac.conf)
  include(../../common/ios/clang.conf)
  include(../../common/ios/qmake.conf)
  
@@ -18,12 +18,13 @@ diff -rupN upstream.patched/mkspecs/unsupported/macx-ios-clang-device-armv7/qmak
 +QMAKE_CFLAGS           += -stdlib=libc++
 +QMAKE_CXXFLAGS         += -stdlib=libc++
 +QMAKE_LFLAGS           += -stdlib=libc++
-+QT_ARCH                 = armv7
 +
  load(qt_config)
++
++QT_ARCH                 = armv7
 diff -rupN upstream.patched/mkspecs/unsupported/macx-ios-clang-device-armv7s/qmake.conf upstream.patched2/mkspecs/unsupported/macx-ios-clang-device-armv7s/qmake.conf
 --- upstream.patched/mkspecs/unsupported/macx-ios-clang-device-armv7s/qmake.conf	2013-07-14 16:15:59.409236900 +0300
-+++ upstream.patched2/mkspecs/unsupported/macx-ios-clang-device-armv7s/qmake.conf	2013-07-22 12:08:05.965401600 +0300
++++ upstream.patched2/mkspecs/unsupported/macx-ios-clang-device-armv7s/qmake.conf	2013-07-22 14:21:04.818867200 +0300
 @@ -7,7 +7,7 @@ CONFIG                 += app_bundle red
  QMAKE_INCREMENTAL_STYLE = sublib
  
@@ -33,7 +34,7 @@ diff -rupN upstream.patched/mkspecs/unsupported/macx-ios-clang-device-armv7s/qma
  
  INCLUDEPATH            += $$PWD/ios
  DEFINES                += DARWIN_NO_CARBON QT_NO_CORESERVICES QT_NO_PRINTER QT_NO_PRINTDIALOG
-@@ -22,4 +22,10 @@ include(../../common/clang-mac.conf)
+@@ -22,4 +22,11 @@ include(../../common/clang-mac.conf)
  include(../../common/ios/clang.conf)
  include(../../common/ios/qmake.conf)
  
@@ -41,12 +42,13 @@ diff -rupN upstream.patched/mkspecs/unsupported/macx-ios-clang-device-armv7s/qma
 +QMAKE_CFLAGS           += -stdlib=libc++
 +QMAKE_CXXFLAGS         += -stdlib=libc++
 +QMAKE_LFLAGS           += -stdlib=libc++
-+QT_ARCH                 = armv7s
 +
  load(qt_config)
++
++QT_ARCH                 = armv7s
 diff -rupN upstream.patched/mkspecs/unsupported/macx-ios-clang-simulator-i386/qmake.conf upstream.patched2/mkspecs/unsupported/macx-ios-clang-simulator-i386/qmake.conf
 --- upstream.patched/mkspecs/unsupported/macx-ios-clang-simulator-i386/qmake.conf	2013-07-14 16:15:59.409236900 +0300
-+++ upstream.patched2/mkspecs/unsupported/macx-ios-clang-simulator-i386/qmake.conf	2013-07-22 12:08:10.533453900 +0300
++++ upstream.patched2/mkspecs/unsupported/macx-ios-clang-simulator-i386/qmake.conf	2013-07-22 14:21:18.779193100 +0300
 @@ -7,7 +7,7 @@ CONFIG                 += app_bundle red
  QMAKE_INCREMENTAL_STYLE = sublib
  
@@ -56,7 +58,7 @@ diff -rupN upstream.patched/mkspecs/unsupported/macx-ios-clang-simulator-i386/qm
  
  INCLUDEPATH            += $$PWD/ios
  DEFINES                += DARWIN_NO_CARBON QT_NO_CORESERVICES QT_NO_PRINTER QT_NO_PRINTDIALOG
-@@ -22,4 +22,10 @@ include(../../common/clang-mac.conf)
+@@ -22,4 +22,11 @@ include(../../common/clang-mac.conf)
  include(../../common/ios/clang.conf)
  include(../../common/ios/qmake.conf)
  
@@ -64,6 +66,7 @@ diff -rupN upstream.patched/mkspecs/unsupported/macx-ios-clang-simulator-i386/qm
 +QMAKE_CFLAGS           += -stdlib=libc++
 +QMAKE_CXXFLAGS         += -stdlib=libc++
 +QMAKE_LFLAGS           += -stdlib=libc++
-+QT_ARCH                 = i386
 +
  load(qt_config)
++
++QT_ARCH                 = i386
