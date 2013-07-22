@@ -45,6 +45,14 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 		ln -s "$SRCLOC/upstream.patched.ios.device.armv7" "$SRCLOC/upstream.patched.ios.device"
 	fi
 
+	if [ ! -h "$SRCLOC/upstream.patched.ios-iphoneos" ]; then
+		ln -s "$SRCLOC/upstream.patched.ios.device.armv7" "$SRCLOC/upstream.patched.ios-iphoneos"
+	fi
+
+	if [ ! -h "$SRCLOC/upstream.patched.ios-iphonesimulator" ]; then
+		ln -s "$SRCLOC/upstream.patched.ios.simulator.i386" "$SRCLOC/upstream.patched.ios-iphonesimulator"
+	fi
+
 	if [ ! -d "$SRCLOC/upstream.patched.ios" ]; then
 		# Copy cmake-related stuff from already built target (any is suitable)
 		mkdir -p "$SRCLOC/upstream.patched.ios/lib"
