@@ -19,22 +19,18 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 	if [ ! -d "$SRCLOC/upstream.patched.ios.simulator" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.ios.simulator"
 		(cd "$SRCLOC/upstream.patched.ios.simulator" && \
-			./configure -xplatform unsupported/macx-ios-clang $QTBASE_CONFIGURATION -sdk iphonesimulator)
+			./configure -xplatform unsupported/macx-ios-clang-simulator $QTBASE_CONFIGURATION -sdk iphonesimulator)
 	fi
 	(cd "$SRCLOC/upstream.patched.ios.simulator" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 
 	if [ ! -d "$SRCLOC/upstream.patched.ios.device" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.ios.device"
 		(cd "$SRCLOC/upstream.patched.ios.device" && \
-			./configure -xplatform unsupported/macx-ios-clang $QTBASE_CONFIGURATION -sdk iphoneos)
+			./configure -xplatform unsupported/macx-ios-clang-device $QTBASE_CONFIGURATION -sdk iphoneos)
 	fi
 	(cd "$SRCLOC/upstream.patched.ios.device" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 
 	if [ ! -d "$SRCLOC/upstream.patched.ios.universal" ]; then
-#		# Copy headers from already built target (any is suitable)
-#		mkdir -p "$SRCLOC/upstream.patched.ios.universal"
-#		cp -rpf "$SRCLOC/upstream.patched.ios.simulator/include" "$SRCLOC/upstream.patched.ios.universal/include"
-
 		# Copy cmake-related stuff from already built target (any is suitable)
 		mkdir -p "$SRCLOC/upstream.patched.ios.universal/lib"
 		cp -rpf "$SRCLOC/upstream.patched.ios.simulator/lib/cmake" "$SRCLOC/upstream.patched.ios.universal/lib/cmake"
