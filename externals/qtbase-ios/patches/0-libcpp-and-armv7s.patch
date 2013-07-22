@@ -10,14 +10,15 @@ diff -rupN upstream.patched/mkspecs/unsupported/macx-ios-clang-device-armv7/qmak
  
  INCLUDEPATH            += $$PWD/ios
  DEFINES                += DARWIN_NO_CARBON QT_NO_CORESERVICES QT_NO_PRINTER QT_NO_PRINTDIALOG
-@@ -22,4 +22,9 @@ include(../../common/clang-mac.conf)
+@@ -22,4 +22,10 @@ include(../../common/clang-mac.conf)
  include(../../common/ios/clang.conf)
  include(../../common/ios/qmake.conf)
  
-+QMAKE_OBJECTIVE_CFLAGS += -stdlib=libc++ -arch armv7
-+QMAKE_CFLAGS           += -stdlib=libc++ -arch armv7
-+QMAKE_CXXFLAGS         += -stdlib=libc++ -arch armv7
-+QMAKE_LFLAGS           += -stdlib=libc++ -arch armv7
++QMAKE_OBJECTIVE_CFLAGS += -stdlib=libc++
++QMAKE_CFLAGS           += -stdlib=libc++
++QMAKE_CXXFLAGS         += -stdlib=libc++
++QMAKE_LFLAGS           += -stdlib=libc++
++QT_ARCH                 = armv7
 +
  load(qt_config)
 diff -rupN upstream.patched/mkspecs/unsupported/macx-ios-clang-device-armv7s/qmake.conf upstream.patched2/mkspecs/unsupported/macx-ios-clang-device-armv7s/qmake.conf
@@ -32,14 +33,15 @@ diff -rupN upstream.patched/mkspecs/unsupported/macx-ios-clang-device-armv7s/qma
  
  INCLUDEPATH            += $$PWD/ios
  DEFINES                += DARWIN_NO_CARBON QT_NO_CORESERVICES QT_NO_PRINTER QT_NO_PRINTDIALOG
-@@ -22,4 +22,9 @@ include(../../common/clang-mac.conf)
+@@ -22,4 +22,10 @@ include(../../common/clang-mac.conf)
  include(../../common/ios/clang.conf)
  include(../../common/ios/qmake.conf)
  
-+QMAKE_OBJECTIVE_CFLAGS += -stdlib=libc++ -arch armv7s
-+QMAKE_CFLAGS           += -stdlib=libc++ -arch armv7s
-+QMAKE_CXXFLAGS         += -stdlib=libc++ -arch armv7s
-+QMAKE_LFLAGS           += -stdlib=libc++ -arch armv7s
++QMAKE_OBJECTIVE_CFLAGS += -stdlib=libc++
++QMAKE_CFLAGS           += -stdlib=libc++
++QMAKE_CXXFLAGS         += -stdlib=libc++
++QMAKE_LFLAGS           += -stdlib=libc++
++QT_ARCH                 = armv7s
 +
  load(qt_config)
 diff -rupN upstream.patched/mkspecs/unsupported/macx-ios-clang-simulator-i386/qmake.conf upstream.patched2/mkspecs/unsupported/macx-ios-clang-simulator-i386/qmake.conf
@@ -54,13 +56,14 @@ diff -rupN upstream.patched/mkspecs/unsupported/macx-ios-clang-simulator-i386/qm
  
  INCLUDEPATH            += $$PWD/ios
  DEFINES                += DARWIN_NO_CARBON QT_NO_CORESERVICES QT_NO_PRINTER QT_NO_PRINTDIALOG
-@@ -22,4 +22,9 @@ include(../../common/clang-mac.conf)
+@@ -22,4 +22,10 @@ include(../../common/clang-mac.conf)
  include(../../common/ios/clang.conf)
  include(../../common/ios/qmake.conf)
  
-+QMAKE_OBJECTIVE_CFLAGS += -stdlib=libc++ -arch i386
-+QMAKE_CFLAGS           += -stdlib=libc++ -arch i386
-+QMAKE_CXXFLAGS         += -stdlib=libc++ -arch i386
-+QMAKE_LFLAGS           += -stdlib=libc++ -arch i386
++QMAKE_OBJECTIVE_CFLAGS += -stdlib=libc++
++QMAKE_CFLAGS           += -stdlib=libc++
++QMAKE_CXXFLAGS         += -stdlib=libc++
++QMAKE_LFLAGS           += -stdlib=libc++
++QT_ARCH                 = i386
 +
  load(qt_config)
