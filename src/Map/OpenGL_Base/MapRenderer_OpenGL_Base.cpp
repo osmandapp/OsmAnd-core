@@ -175,21 +175,19 @@ void OsmAnd::MapRenderer_BaseOpenGL::wrapperEx_glTexSubImage2D(
     GL_CHECK_RESULT;
 }
 
-void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
-    TileLayerId layerId,
-    const TileId& tileId,
-    uint32_t zoom,
-    const std::shared_ptr<IMapTileProvider::Tile>& tile,
-    uint64_t& outAtlasPoolId,
-    void*& outTextureRef,
-    int& outAtlasSlotIndex,
-    size_t& outUsedMemory)
+OsmAnd::IMapRenderer::CachedTile* OsmAnd::MapRenderer_BaseOpenGL::uploadTileToGPU( TileLayerId layerId, const TileId& tileId, uint32_t zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile )
 {
     GL_CHECK_PRESENT(glGenTextures);
     GL_CHECK_PRESENT(glBindTexture);
     GL_CHECK_PRESENT(glGenerateMipmap);
 
     auto& tileLayer = _tileLayers[layerId];
+
+    // Information for creating cached tile
+    uint64_t outAtlasPoolId = 0;
+    void* outTextureRef = nullptr;
+    int outAtlasSlotIndex = -1;
+    size_t outUsedMemory = 0;
 
     // Depending on tile type, determine texture properties
     uint32_t tileSize = -1;
@@ -560,16 +558,22 @@ void OsmAnd::MapRenderer_BaseOpenGL::uploadTileToTexture(
         outTextureRef = reinterpret_cast<void*>(texture);
         outAtlasSlotIndex = -1;
     }
+
+    return new CachedTile_Texture(this, layerId, zoom, tileId, outUsedMemory, outAtlasPoolId, outTextureRef, outAtlasSlotIndex);
 }
 
-void OsmAnd::MapRenderer_BaseOpenGL::releaseTexture( void* textureRef )
+void OsmAnd::MapRenderer_BaseOpenGL::releaseTileInGPU( CachedTile* tile )
 {
-    GL_CHECK_PRESENT(glDeleteTextures);
+    auto tileAsTexture = dynamic_cast<CachedTile_Texture*>(tile);
+    if(tileAsTexture)
+    {
+        GL_CHECK_PRESENT(glDeleteTextures);
 
-    GLuint texture = static_cast<GLuint>(reinterpret_cast<intptr_t>(textureRef));
+        GLuint texture = static_cast<GLuint>(reinterpret_cast<intptr_t>(tileAsTexture->textureRef));
 
-    glDeleteTextures(1, &texture);
-    GL_CHECK_RESULT;
+        glDeleteTextures(1, &texture);
+        GL_CHECK_RESULT;
+    }
 }
 
 void OsmAnd::MapRenderer_BaseOpenGL::findVariableLocation( GLuint program, GLint& location, const QString& name, const VariableType& type )

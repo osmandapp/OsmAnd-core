@@ -524,20 +524,19 @@ void OsmAnd::IMapRenderer::cacheTile( TileLayerId layerId, const TileId& tileId,
     {
         // Non-existent tile, simply put marker into cache
         tileLayer._cache.putTile(std::shared_ptr<TileZoomCache::Tile>(static_cast<TileZoomCache::Tile*>(
-            new CachedTile(this, layerId, zoom, tileId, 0, nullptr, -1, 0))));
+            new CachedTile(this, layerId, zoom, tileId, 0))));
         return;
     }
     
-    // Actually upload tile to texture
-    //TODO: Uploading texture may fail. In this case we do not need to mark tile as cached
-    uint64_t atlasPoolId = 0;
-    void* textureRef = nullptr;
-    int atlasSlotIndex = -1;
-    size_t usedMemory = 0;
-    uploadTileToTexture(layerId, tileId, zoom, tile, atlasPoolId, textureRef, atlasSlotIndex, usedMemory);
+    // Actually upload tile to GPU
+    auto gpuTile = uploadTileToGPU(layerId, tileId, zoom, tile);
+    if(!gpuTile)
+    {
+        LogPrintf(LogSeverityLevel::Warning, "Failed to upload tile %dx%d@%d[%d] to GPU", tileId.x, tileId.y, zoom, layerId);
+        return;
+    }
     
-    tileLayer._cache.putTile(std::shared_ptr<TileZoomCache::Tile>(static_cast<TileZoomCache::Tile*>(
-        new CachedTile(this, layerId, zoom, tileId, atlasPoolId, textureRef, atlasSlotIndex, usedMemory))));
+    tileLayer._cache.putTile(std::shared_ptr<TileZoomCache::Tile>(static_cast<TileZoomCache::Tile*>(gpuTile)));
 }
 
 void OsmAnd::IMapRenderer::handleProvidedTile( const TileLayerId& layerId, const TileId& tileId, uint32_t zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile, bool success )
@@ -609,17 +608,34 @@ void OsmAnd::IMapRenderer::updateConfiguration()
 {
 }
 
-OsmAnd::IMapRenderer::CachedTile::CachedTile( IMapRenderer* const renderer_, TileLayerId layerId_, const uint32_t& zoom_, const TileId& id_, const uint64_t& atlasPoolId_, void* textureRef_, int atlasSlotIndex_, const size_t& usedMemory_ )
+OsmAnd::IMapRenderer::CachedTile::CachedTile( IMapRenderer* const renderer_, TileLayerId layerId_, const uint32_t& zoom_, const TileId& id_, const size_t& usedMemory_ )
     : TileZoomCache::Tile(zoom_, id_, usedMemory_)
     , renderer(renderer_)
     , layerId(layerId_)
+{
+}
+
+OsmAnd::IMapRenderer::CachedTile::~CachedTile()
+{
+}
+
+OsmAnd::IMapRenderer::CachedTile_Texture::CachedTile_Texture(
+    IMapRenderer* const renderer_,
+    TileLayerId layerId_,
+    const uint32_t& zoom_,
+    const TileId& id_,
+    const size_t& usedMemory_,
+    const uint64_t& atlasPoolId_,
+    void* textureRef_,
+    int atlasSlotIndex_)
+    : CachedTile(renderer_, layerId_, zoom_, id_, usedMemory_)
     , atlasPoolId(atlasPoolId_)
     , textureRef(textureRef_)
     , atlasSlotIndex(atlasSlotIndex_)
 {
 }
 
-OsmAnd::IMapRenderer::CachedTile::~CachedTile()
+OsmAnd::IMapRenderer::CachedTile_Texture::~CachedTile_Texture()
 {
     assert(renderer->renderThreadId == QThread::currentThreadId());
 
@@ -642,9 +658,16 @@ OsmAnd::IMapRenderer::CachedTile::~CachedTile()
         {
             // Oh well, last slot on atlas. Destroy atlas
             renderer->_tileLayers[layerId]._atlasTexturePools[atlasPoolId]._freedSlots.remove(textureRef);
-            renderer->releaseTexture(textureRef);
             renderer->_tileLayers[layerId]._textureRefCount.remove(textureRef);
+
+            renderer->releaseTileInGPU(this);
         }
+    }
+    else
+    {
+        // This tile is not on atlas, so just destroy it
+        renderer->_tileLayers[layerId]._textureRefCount.remove(textureRef);
+        renderer->releaseTileInGPU(this);
     }
 }
 

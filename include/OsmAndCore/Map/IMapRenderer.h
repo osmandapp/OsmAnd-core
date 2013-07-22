@@ -135,11 +135,16 @@ namespace OsmAnd {
         };
         struct OSMAND_CORE_API CachedTile : TileZoomCache::Tile
         {
-            CachedTile(IMapRenderer* const renderer, TileLayerId layerId, const uint32_t& zoom, const TileId& id, const uint64_t& atlasPoolId, void* textureRef, int atlasSlotIndex, const size_t& usedMemory);
+            CachedTile(IMapRenderer* const renderer, TileLayerId layerId, const uint32_t& zoom, const TileId& id, const size_t& usedMemory);
             virtual ~CachedTile();
 
             IMapRenderer* const renderer;
             const TileLayerId layerId;
+        };
+        struct OSMAND_CORE_API CachedTile_Texture : CachedTile
+        {
+            CachedTile_Texture(IMapRenderer* const renderer, TileLayerId layerId, const uint32_t& zoom, const TileId& id, const size_t& usedMemory, const uint64_t& atlasPoolId, void* textureRef, int atlasSlotIndex);
+            virtual ~CachedTile_Texture();
 
             const uint64_t atlasPoolId;
 
@@ -186,8 +191,8 @@ namespace OsmAnd {
         std::array< TileLayer, TileLayerId::IdsCount > _tileLayers;
         void requestCacheMissTiles();
         
-        virtual void uploadTileToTexture(TileLayerId layerId, const TileId& tileId, uint32_t zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile, uint64_t& atlasPoolId, void*& textureRef, int& atlasSlotIndex, size_t& usedMemory) = 0;
-        virtual void releaseTexture(void* textureRef) = 0;
+        virtual CachedTile* uploadTileToGPU(TileLayerId layerId, const TileId& tileId, uint32_t zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile) = 0;
+        virtual void releaseTileInGPU(CachedTile* tile) = 0;
 
         virtual void invalidateFrame();
         

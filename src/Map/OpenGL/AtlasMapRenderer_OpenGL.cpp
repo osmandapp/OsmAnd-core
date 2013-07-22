@@ -447,7 +447,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::renderFrame_MapStage()
             bool cacheHit = tileLayer._cache.getTile(_activeConfig.zoomBase, tileIdN, cachedTile_);
             if(cacheHit)
             {
-                auto cachedTile = static_cast<CachedTile*>(cachedTile_.get());
+                auto cachedTile = static_cast<CachedTile_Texture*>(cachedTile_.get());
 
                 glUniform1f(_mapStage.vs.param.elevationData_k, _activeConfig.heightScaleFactor);
                 GL_CHECK_RESULT;
@@ -524,7 +524,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::renderFrame_MapStage()
             bool cacheHit = tileLayer._cache.getTile(_activeConfig.zoomBase, tileIdN, cachedTile_);
             if(cacheHit)
             {
-                auto cachedTile = static_cast<CachedTile*>(cachedTile_.get());
+                auto cachedTile = static_cast<CachedTile_Texture*>(cachedTile_.get());
 
                 if(cachedTile->textureRef == nullptr)
                 {

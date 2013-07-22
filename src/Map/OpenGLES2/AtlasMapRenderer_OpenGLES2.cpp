@@ -402,7 +402,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::renderFrame_MapStage()
     GL_CHECK_PRESENT(glUniform1i);
     GL_CHECK_PRESENT(glUniform2i);
     GL_CHECK_PRESENT(glActiveTexture);
-    GL_CHECK_PRESENT(glBindSampler);
+    GL_CHECK_PRESENT(glTexParameteri);
 
     // Set tile patch VAO
     glBindVertexArrayOES(_tilePatchVAO);
@@ -490,9 +490,9 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::renderFrame_MapStage()
         GL_CHECK_RESULT;
 
         // Set elevation data
-        if(isSupported_vertexShaderTextureLookup)
+        if(_activeConfig.tileProviders[TileLayerId::ElevationData])
         {
-            if(_activeConfig.tileProviders[TileLayerId::ElevationData])
+            if(isSupported_vertexShaderTextureLookup)
             {
                 auto& tileLayer = _tileLayers[TileLayerId::ElevationData];
                 float nonAtlasHalfTexelSizeN;
@@ -504,7 +504,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::renderFrame_MapStage()
                 bool cacheHit = tileLayer._cache.getTile(_activeConfig.zoomBase, tileIdN, cachedTile_);
                 if(cacheHit)
                 {
-                    auto cachedTile = static_cast<CachedTile*>(cachedTile_.get());
+                    auto cachedTile = static_cast<CachedTile_Texture*>(cachedTile_.get());
 
                     glUniform1f(_mapStage.vs.param.elevationData_k, _activeConfig.heightScaleFactor);
                     GL_CHECK_RESULT;
@@ -536,20 +536,14 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::renderFrame_MapStage()
                         glUniform1i(perTile_vs.slotsPerSide, atlas._slotsPerSide);
                         GL_CHECK_RESULT;
 
-                        //glBindSampler(TileLayerId::ElevationData, _textureSampler_ElevationData_Atlas);
-                        /*
                         // ElevationData (Atlas)
-                        glGenSamplers(1, &_textureSampler_ElevationData_Atlas);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
                         GL_CHECK_RESULT;
-                        glSamplerParameteri(_textureSampler_ElevationData_Atlas, GL_TEXTURE_WRAP_S, GL_CLAMP);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
                         GL_CHECK_RESULT;
-                        glSamplerParameteri(_textureSampler_ElevationData_Atlas, GL_TEXTURE_WRAP_T, GL_CLAMP);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
                         GL_CHECK_RESULT;
-                        glSamplerParameteri(_textureSampler_ElevationData_Atlas, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-                        GL_CHECK_RESULT;
-                        glSamplerParameteri(_textureSampler_ElevationData_Atlas, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-                        GL_CHECK_RESULT;
-                        */
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
                         GL_CHECK_RESULT;
                     }
                     else
@@ -567,20 +561,14 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::renderFrame_MapStage()
                         glUniform1i(perTile_vs.slotsPerSide, 1);
                         GL_CHECK_RESULT;
 
-                        //glBindSampler(TileLayerId::ElevationData, _textureSampler_ElevationData_NoAtlas);
-                        /*
                         // ElevationData (No atlas)
-                        glGenSamplers(1, &_textureSampler_ElevationData_NoAtlas);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
                         GL_CHECK_RESULT;
-                        glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
                         GL_CHECK_RESULT;
-                        glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
                         GL_CHECK_RESULT;
-                        glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-                        GL_CHECK_RESULT;
-                        glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-                        GL_CHECK_RESULT;
-                        */
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
                         GL_CHECK_RESULT;
                     }
                 }
@@ -608,7 +596,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::renderFrame_MapStage()
             bool cacheHit = tileLayer._cache.getTile(_activeConfig.zoomBase, tileIdN, cachedTile_);
             if(cacheHit)
             {
-                auto cachedTile = static_cast<CachedTile*>(cachedTile_.get());
+                auto cachedTile = static_cast<CachedTile_Texture*>(cachedTile_.get());
 
                 if(cachedTile->textureRef == nullptr)
                 {
@@ -639,20 +627,14 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::renderFrame_MapStage()
                         glUniform1i(perTile_vs.slotsPerSide, atlas._slotsPerSide);
                         GL_CHECK_RESULT;
 
-                        //glBindSampler(layerId, _textureSampler_Bitmap_Atlas);
-                        /*
                         // Bitmap (Atlas)
-                        glGenSamplers(1, &_textureSampler_Bitmap_Atlas);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
                         GL_CHECK_RESULT;
-                        glSamplerParameteri(_textureSampler_Bitmap_Atlas, GL_TEXTURE_WRAP_S, GL_CLAMP);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
                         GL_CHECK_RESULT;
-                        glSamplerParameteri(_textureSampler_Bitmap_Atlas, GL_TEXTURE_WRAP_T, GL_CLAMP);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
                         GL_CHECK_RESULT;
-                        glSamplerParameteri(_textureSampler_Bitmap_Atlas, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-                        GL_CHECK_RESULT;
-                        glSamplerParameteri(_textureSampler_Bitmap_Atlas, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                        GL_CHECK_RESULT;
-                        */
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
                         GL_CHECK_RESULT;
                     }
                     else
@@ -664,20 +646,14 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::renderFrame_MapStage()
                         glUniform1i(perTile_vs.slotsPerSide, 1);
                         GL_CHECK_RESULT;
 
-                        //glBindSampler(layerId, _textureSampler_Bitmap_NoAtlas);
-                        /*
                         // Bitmap (No atlas)
-                        glGenSamplers(1, &_textureSampler_Bitmap_NoAtlas);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
                         GL_CHECK_RESULT;
-                        glSamplerParameteri(_textureSampler_Bitmap_NoAtlas, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
                         GL_CHECK_RESULT;
-                        glSamplerParameteri(_textureSampler_Bitmap_NoAtlas, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
                         GL_CHECK_RESULT;
-                        glSamplerParameteri(_textureSampler_Bitmap_NoAtlas, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-                        GL_CHECK_RESULT;
-                        glSamplerParameteri(_textureSampler_Bitmap_NoAtlas, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                        GL_CHECK_RESULT;
-                        */
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
                         GL_CHECK_RESULT;
                     }
                 }

@@ -111,16 +111,9 @@ namespace OsmAnd {
             GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
             GLenum format, GLenum type,
             const GLvoid *pixels, GLsizei rowLengthInPixels = 0);
-        virtual void uploadTileToTexture(
-            TileLayerId layerId,
-            const TileId& tileId,
-            uint32_t zoom,
-            const std::shared_ptr<IMapTileProvider::Tile>& tile,
-            uint64_t& atlasPoolId,
-            void*& textureRef,
-            int& atlasSlotIndex,
-            size_t& usedMemory);
-        virtual void releaseTexture(void* textureRef);
+
+        virtual CachedTile* uploadTileToGPU(TileLayerId layerId, const TileId& tileId, uint32_t zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile);
+        virtual void releaseTileInGPU(CachedTile* tile);
 
         enum VariableType
         {
