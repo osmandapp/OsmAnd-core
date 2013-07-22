@@ -537,9 +537,9 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::renderFrame_MapStage()
                         GL_CHECK_RESULT;
 
                         // ElevationData (Atlas)
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, /*GL_CLAMP*/GL_CLAMP_TO_EDGE);
                         GL_CHECK_RESULT;
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, /*GL_CLAMP*/GL_CLAMP_TO_EDGE);
                         GL_CHECK_RESULT;
                         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
                         GL_CHECK_RESULT;
@@ -628,9 +628,9 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::renderFrame_MapStage()
                         GL_CHECK_RESULT;
 
                         // Bitmap (Atlas)
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, /*GL_CLAMP*/GL_CLAMP_TO_EDGE);
                         GL_CHECK_RESULT;
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, /*GL_CLAMP*/GL_CLAMP_TO_EDGE);
                         GL_CHECK_RESULT;
                         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
                         GL_CHECK_RESULT;
