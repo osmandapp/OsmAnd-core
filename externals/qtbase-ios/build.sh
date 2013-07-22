@@ -38,6 +38,10 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 	(cd "$SRCLOC/upstream.patched.ios.device.armv7s" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 
 	if [ ! -d "$SRCLOC/upstream.patched.ios" ]; then
+		# Copy headers from already built target (any is suitable)
+		mkdir -p "$SRCLOC/upstream.patched.ios"
+		cp -rpf "$SRCLOC/upstream.patched.ios.simulator.i386/include" "$SRCLOC/upstream.patched.ios/include"
+	
 		# Copy cmake-related stuff from already built target (any is suitable)
 		mkdir -p "$SRCLOC/upstream.patched.ios/lib"
 		cp -rpf "$SRCLOC/upstream.patched.ios.simulator.i386/lib/cmake" "$SRCLOC/upstream.patched.ios/lib/cmake"
