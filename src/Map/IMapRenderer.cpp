@@ -400,7 +400,7 @@ bool OsmAnd::IMapRenderer::processRendering()
         if(hasMore)
         {
             // Schedule one more render pass to upload more pending
-            requestRedraw();
+            requestFrameRender();
             break;
         }
     }
@@ -560,11 +560,12 @@ void OsmAnd::IMapRenderer::handleProvidedTile( const TileLayerId& layerId, const
         tileLayer._requestedTiles[zoom].remove(tileId);
     }
 
-    requestRedraw();
+    requestFrameRender();
 }
 
-void OsmAnd::IMapRenderer::requestRedraw()
+void OsmAnd::IMapRenderer::requestFrameRender()
 {
+    _frameInvalidated = true;
     if(redrawRequestCallback)
         redrawRequestCallback();
 }
@@ -590,7 +591,7 @@ void OsmAnd::IMapRenderer::invalidateTileLayersCache()
 void OsmAnd::IMapRenderer::invalidateConfiguration()
 {
     _configInvalidated = true;
-    requestRedraw();
+    requestFrameRender();
 }
 
 void OsmAnd::IMapRenderer::validateConfiguration()

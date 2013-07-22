@@ -189,7 +189,7 @@ namespace OsmAnd {
         virtual void uploadTileToTexture(TileLayerId layerId, const TileId& tileId, uint32_t zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile, uint64_t& atlasPoolId, void*& textureRef, int& atlasSlotIndex, size_t& usedMemory) = 0;
         virtual void releaseTexture(void* textureRef) = 0;
 
-        virtual void requestRedraw();
+        virtual void requestFrameRender();
         
         const volatile uint32_t& tilesCacheInvalidatedMask;
         virtual void invalidateTileLayerCache(const TileLayerId& layerId);
