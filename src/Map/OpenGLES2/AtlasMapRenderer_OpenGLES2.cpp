@@ -454,8 +454,11 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::renderFrame_MapStage()
     GL_CHECK_RESULT;
 
     // Set samplers
-    glUniform1i(_mapStage.vs.param.elevationData_sampler, TileLayerId::ElevationData);
-    GL_CHECK_RESULT;
+    if(isSupported_vertexShaderTextureLookup)
+    {
+        glUniform1i(_mapStage.vs.param.elevationData_sampler, TileLayerId::ElevationData);
+        GL_CHECK_RESULT;
+    }
     for(int layerId = TileLayerId::RasterMap; layerId < TileLayerId::IdsCount; layerId++)
     {
         glUniform1i(_mapStage.fs.param.perTileLayer[layerId - TileLayerId::RasterMap].sampler, layerId);
