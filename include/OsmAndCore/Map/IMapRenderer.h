@@ -233,6 +233,7 @@ namespace OsmAnd {
         virtual void setHeightScaleFactor(const float& factor, bool forcedUpdate = false);
 
         virtual float getTileSizeInPixels() = 0;
+        virtual float getTileSizeInPoints() = 0;
 
         const volatile bool& isRenderingInitialized;
         virtual bool initializeRendering();

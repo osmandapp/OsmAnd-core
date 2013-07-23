@@ -92,6 +92,7 @@ namespace OsmAnd {
         virtual ~AtlasMapRenderer_BaseOpenGL();
 
         virtual float getTileSizeInPixels();
+        virtual float getTileSizeInPoints();
 
         virtual bool initializeRendering();
         virtual bool releaseRendering();

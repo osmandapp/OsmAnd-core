@@ -29,6 +29,11 @@ OsmAnd::AtlasMapRenderer_BaseOpenGL::~AtlasMapRenderer_BaseOpenGL()
 
 float OsmAnd::AtlasMapRenderer_BaseOpenGL::getTileSizeInPixels()
 {
+    return TileSide3D * _pendingConfig.displayDensityFactor * _tileScaleFactor;
+}
+
+float OsmAnd::AtlasMapRenderer_BaseOpenGL::getTileSizeInPoints()
+{
     return TileSide3D * _tileScaleFactor;
 }
 
