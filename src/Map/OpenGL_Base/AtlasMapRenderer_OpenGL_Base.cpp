@@ -27,6 +27,11 @@ OsmAnd::AtlasMapRenderer_BaseOpenGL::~AtlasMapRenderer_BaseOpenGL()
 {
 }
 
+float OsmAnd::AtlasMapRenderer_BaseOpenGL::getTileSizeInPixels()
+{
+    return TileSide3D * _tileScaleFactor;
+}
+
 void OsmAnd::AtlasMapRenderer_BaseOpenGL::validateTileLayerCache( const TileLayerId& layer )
 {
     IMapRenderer::validateTileLayerCache(layer);
