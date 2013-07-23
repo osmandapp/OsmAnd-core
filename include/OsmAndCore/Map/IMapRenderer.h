@@ -232,8 +232,8 @@ namespace OsmAnd {
         virtual void setHeightmapPatchesPerSide(const uint32_t& patchesCount, bool forcedUpdate = false);
         virtual void setHeightScaleFactor(const float& factor, bool forcedUpdate = false);
 
-        virtual float getTileSizeInPixels() = 0;
-        virtual float getTileSizeInPoints() = 0;
+        virtual float getReferenceTileSizeOnScreen() = 0;
+        virtual float getScaledTileSizeOnScreen() = 0;
 
         const volatile bool& isRenderingInitialized;
         virtual bool initializeRendering();

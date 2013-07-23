@@ -27,14 +27,19 @@ OsmAnd::AtlasMapRenderer_BaseOpenGL::~AtlasMapRenderer_BaseOpenGL()
 {
 }
 
-float OsmAnd::AtlasMapRenderer_BaseOpenGL::getTileSizeInPixels()
+float OsmAnd::AtlasMapRenderer_BaseOpenGL::getReferenceTileSizeOnScreen()
 {
-    return TileSide3D * _pendingConfig.displayDensityFactor * _tileScaleFactor;
+    const auto& rasterMapProvider = _pendingConfig.tileProviders[RasterMap];
+    if(!rasterMapProvider)
+        return std::numeric_limits<float>::quiet_NaN();
+
+    auto tileProvider = static_cast<IMapBitmapTileProvider*>(rasterMapProvider.get());
+    return tileProvider->getTileSize() * (_pendingConfig.displayDensityFactor / tileProvider->getTileDensity());
 }
 
-float OsmAnd::AtlasMapRenderer_BaseOpenGL::getTileSizeInPoints()
+float OsmAnd::AtlasMapRenderer_BaseOpenGL::getScaledTileSizeOnScreen()
 {
-    return TileSide3D * _tileScaleFactor;
+    return getReferenceTileSizeOnScreen() * _tileScaleFactor;
 }
 
 void OsmAnd::AtlasMapRenderer_BaseOpenGL::validateTileLayerCache( const TileLayerId& layer )
@@ -66,9 +71,7 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::updateConfiguration()
     _mProjection = glm::frustum(-_projectionPlaneHalfWidth, _projectionPlaneHalfWidth, -_projectionPlaneHalfHeight, _projectionPlaneHalfHeight, _zNear, 1000.0f);
 
     // Calculate limits of camera distance to target and actual distance
-    const auto& rasterMapProvider = _activeConfig.tileProviders[RasterMap];
-    auto tileProvider = static_cast<IMapBitmapTileProvider*>(rasterMapProvider.get());
-    const float screenTile = tileProvider->getTileSize() * (_activeConfig.displayDensityFactor / tileProvider->getTileDensity());
+    const float& screenTile = getReferenceTileSizeOnScreen();
     _nearDistanceFromCameraToTarget = Utilities_BaseOpenGL::calculateCameraDistance(_mProjection, _activeConfig.viewport, TileSide3D / 2.0f, screenTile / 2.0f, 1.5f);
     _baseDistanceFromCameraToTarget = Utilities_BaseOpenGL::calculateCameraDistance(_mProjection, _activeConfig.viewport, TileSide3D / 2.0f, screenTile / 2.0f, 1.0f);
     _farDistanceFromCameraToTarget = Utilities_BaseOpenGL::calculateCameraDistance(_mProjection, _activeConfig.viewport, TileSide3D / 2.0f, screenTile / 2.0f, 0.75f);
