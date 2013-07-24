@@ -370,9 +370,6 @@ bool OsmAnd::AtlasMapRenderer_OpenGLES2::renderFrame()
         return false;
  
     // Setup viewport
-    GLint oldViewport[4];
-    glGetIntegerv(GL_VIEWPORT, oldViewport);
-    GL_CHECK_RESULT;
     glViewport(
         _activeConfig.viewport.left,
         _activeConfig.windowSize.y - _activeConfig.viewport.bottom,
@@ -382,10 +379,6 @@ bool OsmAnd::AtlasMapRenderer_OpenGLES2::renderFrame()
 
     renderFrame_SkyStage();
     renderFrame_MapStage();
-
-    // Revert viewport
-    glViewport(oldViewport[0], oldViewport[1], oldViewport[2], oldViewport[3]);
-    GL_CHECK_RESULT;
 
     return true;
 }
