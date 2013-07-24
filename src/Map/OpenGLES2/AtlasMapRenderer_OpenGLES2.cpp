@@ -280,10 +280,6 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeRendering_MapStage()
         "    float fogFactorBase = fogLinearFactor * param_fs_fogDensity;                                                   ""\n"
         "    float fogFactor = clamp(exp(-fogFactorBase*fogFactorBase), 0.0, 1.0);                                          ""\n"
         "    gl_FragColor = mix(baseColor, vec4(param_fs_fogColor, 1.0), 1.0 - fogFactor);                                  ""\n"
-        "                                                                                                                   ""\n"
-        //   Remove pixel if it's completely transparent
-        "    if(gl_FragColor.a < floatEpsilon)                                                                              ""\n"
-        "        discard;                                                                                                   ""\n"
         "}                                                                                                                  ""\n");
     QString preprocessedFragmentShader = fragmentShader;
     QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;

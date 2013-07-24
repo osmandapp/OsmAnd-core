@@ -43,6 +43,8 @@ namespace OsmAnd {
         BaseAtlasMapRenderer();
     public:
         virtual ~BaseAtlasMapRenderer();
+
+        //?virtual void dragViewportBy
     };
 
 }
