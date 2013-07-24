@@ -67,6 +67,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
         "out vec2 v2f_texCoordsPerLayer[%RasterTileLayersCount%];                                                           ""\n"
         "out float v2f_distanceFromCamera;                                                                                  ""\n"
         "out vec2 v2f_positionRelativeToTarget;                                                                             ""\n"
+        "out float v2f_distanceFromTarget;                                                                                  ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
         "uniform mat4 param_vs_mProjectionView;                                                                             ""\n"
@@ -141,6 +142,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
         "                                                                                                                   ""\n"
         //   Finally output processed modified vertex
         "    v2f_positionRelativeToTarget = v.xz;                                                                           ""\n"
+        "    v2f_distanceFromTarget = length(v2f_positionRelativeToTarget);                                                 ""\n"
         "    v2f_distanceFromCamera = length((param_vs_mView * v).xz);                                                      ""\n"
         "    gl_Position = param_vs_mProjectionView * v;                                                                    ""\n"
         "}                                                                                                                  ""\n");
@@ -185,6 +187,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
         "in vec2 v2f_texCoordsPerLayer[%RasterTileLayersCount%];                                                            ""\n"
         "in vec2 v2f_positionRelativeToTarget;                                                                              ""\n"
         "in float v2f_distanceFromCamera;                                                                                   ""\n"
+        "in float v2f_distanceFromTarget;                                                                                   ""\n"
         "                                                                                                                   ""\n"
         // Output data
         "out vec4 out_color;                                                                                                ""\n"
@@ -235,7 +238,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
         "    float fogDistanceScaled = param_fs_fogDistance * param_fs_scaleToRetainProjectedSize;                          ""\n"
         "    float fogStartDistance = fogDistanceScaled * (1.0 - param_fs_fogOriginFactor);                                 ""\n"
         //TODO: take into account that v2f_positionRelativeToTarget also makes fog in reverse area
-        "    float fogLinearFactor = min(max(length(v2f_positionRelativeToTarget) - fogStartDistance, 0.0) /                ""\n"
+        "    float fogLinearFactor = min(max(v2f_distanceFromTarget - fogStartDistance, 0.0) /                              ""\n"
         "        (fogDistanceScaled - fogStartDistance), 1.0);                                                              ""\n"
 
         "    float fogFactorBase = fogLinearFactor * param_fs_fogDensity;                                                   ""\n"
