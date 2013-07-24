@@ -67,6 +67,7 @@ namespace OsmAnd {
         float _scaleToRetainProjectedSize;
         PointF _skyplaneHalfSize;
         float _correctedFogDistance;
+        float _mipmapK;
         
         void computeVisibleTileset();
 

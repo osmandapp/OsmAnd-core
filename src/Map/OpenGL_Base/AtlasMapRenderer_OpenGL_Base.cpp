@@ -112,6 +112,9 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::updateConfiguration()
     _skyplaneHalfSize.x = zSkyplaneK * _projectionPlaneHalfWidth;
     _skyplaneHalfSize.y = zSkyplaneK * _projectionPlaneHalfHeight;
 
+    // Update mipmap K
+    _mipmapK = static_cast<float>(_activeConfig.viewport.height()) / (4.6f * _activeConfig.displayDensityFactor);
+
     // Compute visible tileset
     computeVisibleTileset();
 }

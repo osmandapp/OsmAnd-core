@@ -61,9 +61,11 @@ namespace OsmAnd {
                 struct {
                     // Common data
                     GLint mProjectionView;
-                    GLint mView;
                     GLint targetInTilePosN;
                     GLint targetTile;
+                    GLint mView;
+                    GLint cameraElevationAngle;
+                    GLint mipmapK;
 
                     // Per-tile data
                     GLint tile;
@@ -89,8 +91,6 @@ namespace OsmAnd {
                 // Parameters
                 struct {
                     // Common data
-                    GLint distanceFromCameraToTarget;
-                    GLint cameraElevationAngle;
                     GLint fogColor;
                     GLint fogDistance;
                     GLint fogDensity;
