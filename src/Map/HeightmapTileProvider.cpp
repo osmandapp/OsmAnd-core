@@ -58,7 +58,7 @@ void OsmAnd::HeightmapTileProvider::obtainTileDeffered( const TileId& tileId, ui
         _requestedTileIds[zoom].insert(tileId);
     }
 
-    Concurrent::instance()->localStoragePool->start(new Concurrent::Task(
+    Concurrent::pools->localStorage->start(new Concurrent::Task(
         [this, tileId, zoom, readyCallback](const Concurrent::Task* task, QEventLoop& eventLoop)
         {
             _processingMutex.lock();

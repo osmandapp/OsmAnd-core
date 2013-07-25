@@ -2,25 +2,19 @@
 
 #include <assert.h>
 
-std::unique_ptr<OsmAnd::Concurrent> OsmAnd::Concurrent::_instance(new OsmAnd::Concurrent());
+const std::shared_ptr<OsmAnd::Concurrent::Pools> OsmAnd::Concurrent::Pools::instance(new OsmAnd::Concurrent::Pools());
+const std::shared_ptr<OsmAnd::Concurrent::Pools> OsmAnd::Concurrent::pools(OsmAnd::Concurrent::Pools::instance);
 
-OsmAnd::Concurrent::Concurrent()
-    : localStoragePool(new QThreadPool())
-    , networkPool(new QThreadPool())
+OsmAnd::Concurrent::Pools::Pools()
+    : localStorage(new QThreadPool())
+    , network(new QThreadPool())
 {
-    assert(!_instance);
-
-    localStoragePool->setMaxThreadCount(1);
-    networkPool->setMaxThreadCount(1);
+    localStorage->setMaxThreadCount(1);
+    network->setMaxThreadCount(1);
 }
 
-OsmAnd::Concurrent::~Concurrent()
+OsmAnd::Concurrent::Pools::~Pools()
 {
-}
-
-const std::unique_ptr<OsmAnd::Concurrent>& OsmAnd::Concurrent::instance()
-{
-    return _instance;
 }
 
 OsmAnd::Concurrent::Task::Task( ExecuteSignature executeMethod, PreExecuteSignature preExecuteMethod /*= nullptr*/, PostExecuteSignature postExecuteMethod /*= nullptr*/ )
@@ -50,4 +44,22 @@ void OsmAnd::Concurrent::Task::run()
 
     if(postExecute)
         postExecute(this);
+}
+
+OsmAnd::Concurrent::Thread::Thread( ThreadProcedureSignature threadProcedure_ )
+    : QThread(nullptr)
+    , threadProcedure(threadProcedure_)
+{
+}
+
+OsmAnd::Concurrent::Thread::~Thread()
+{
+}
+
+void OsmAnd::Concurrent::Thread::run()
+{
+    assert(threadProcedure);
+
+    // Simply execute procedure
+    threadProcedure();
 }

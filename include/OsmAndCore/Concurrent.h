@@ -36,9 +36,23 @@
 
 namespace OsmAnd {
 
-    class OSMAND_CORE_API Concurrent
-    {
-    public:
+    namespace Concurrent {
+
+        class OSMAND_CORE_API Pools
+        {
+        private:
+        protected:
+            Pools();
+        public:
+            virtual ~Pools();
+
+            static const std::shared_ptr<Pools> instance;
+
+            const std::unique_ptr<QThreadPool> localStorage;
+            const std::unique_ptr<QThreadPool> network;
+        };
+        const extern OSMAND_CORE_API std::shared_ptr<Pools> pools;
+
         class OSMAND_CORE_API Task : public QRunnable
         {
         public:
@@ -61,19 +75,23 @@ namespace OsmAnd {
 
             virtual void run();
         };
-    private:
-    protected:
-        Concurrent();
 
-        static std::unique_ptr<Concurrent> _instance;
-    public:
-        virtual ~Concurrent();
+        class OSMAND_CORE_API Thread : public QThread
+        {
+            Q_OBJECT
 
-        static const std::unique_ptr<Concurrent>& instance();
+        public:
+            typedef std::function<void ()> ThreadProcedureSignature;
+        private:
+        protected:
+            virtual void run();
+        public:
+            Thread(ThreadProcedureSignature threadProcedure);
+            virtual ~Thread();
 
-        const std::unique_ptr<QThreadPool> localStoragePool;
-        const std::unique_ptr<QThreadPool> networkPool;
-    };
+            const ThreadProcedureSignature threadProcedure;
+        };
+    } // namespace concurrent
 
 } // namespace OsmAnd
 

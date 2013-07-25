@@ -68,7 +68,7 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const TileId& tile
         _requestedTileIds[zoom].insert(tileId);
     }
 
-    Concurrent::instance()->localStoragePool->start(new Concurrent::Task(
+    Concurrent::pools->localStorage->start(new Concurrent::Task(
         [this, tileId, zoom, readyCallback](const Concurrent::Task* task, QEventLoop& eventLoop)
         {
             _processingMutex.lock();
@@ -210,7 +210,7 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const QUrl& url, c
         _requestedTileIds[zoom].remove(tileId);
     }
     
-    Concurrent::instance()->networkPool->start(new Concurrent::Task(
+    Concurrent::pools->network->start(new Concurrent::Task(
         [this, url, tileId, zoom, readyCallback](const Concurrent::Task* task, QEventLoop& eventLoop)
         {
             //LogPrintf(LogSeverityLevel::Info, "Downloading tile %dx%d@%d from %s\n", tileId.x, tileId.y, zoom, url.toString().toStdString().c_str());
