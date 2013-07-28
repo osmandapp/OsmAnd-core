@@ -19,8 +19,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __MAP_RENDERER_OPENGLES2_H_
-#define __MAP_RENDERER_OPENGLES2_H_
+#ifndef __RENDER_API__OPENGLES2_H_
+#define __RENDER_API__OPENGLES2_H_
 
 #include <stdint.h>
 #include <memory>
@@ -34,11 +34,11 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OpenGL_Base/MapRenderer_OpenGL_Base.h>
+#include <OpenGL_Base/RenderAPI_OpenGL_Base.h>
 
 namespace OsmAnd {
 
-    class OSMAND_CORE_API MapRenderer_OpenGLES2 : public virtual MapRenderer_BaseOpenGL
+    class OSMAND_CORE_API RenderAPI_OpenGLES2 : public RenderAPI_OpenGL_Base
     {
     public:
 #if !defined(OSMAND_TARGET_OS_ios)
@@ -60,10 +60,12 @@ namespace OsmAnd {
             GLenum format, GLenum type,
             const GLvoid *pixels, GLsizei rowLengthInPixels = 0);
         virtual GLenum validateResult();
-
-        MapRenderer_OpenGLES2();
     public:
-        virtual ~MapRenderer_OpenGLES2();
+        RenderAPI_OpenGLES2();
+        virtual ~RenderAPI_OpenGLES2();
+
+        virtual bool initialize();
+        virtual bool release();
 
         const QList<QString>& glesExtensions;
 
@@ -72,11 +74,8 @@ namespace OsmAnd {
         const bool& isSupported_EXT_texture_storage;
         const bool& isSupported_APPLE_texture_max_level;
         const bool& isSupported_EXT_shader_texture_lod;
-
-        virtual bool initializeRendering();
-        virtual bool releaseRendering();
     };
 
 }
 
-#endif // __MAP_RENDERER_OPENGLES2_H_
+#endif // __RENDER_API__OPENGLES2_H_

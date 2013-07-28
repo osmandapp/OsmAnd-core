@@ -19,48 +19,35 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __MAP_RENDERER_OPENGL_H_
-#define __MAP_RENDERER_OPENGL_H_
+#ifndef __ATLAS_MAP_RENDERER_H_
+#define __ATLAS_MAP_RENDERER_H_
 
 #include <stdint.h>
 #include <memory>
-#include <array>
-
-#include <QMap>
-#include <QMultiMap>
-#include <QSet>
-
-#include <glm/glm.hpp>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OpenGL_Base/MapRenderer_OpenGL_Base.h>
+#include <MapRenderer.h>
 
 namespace OsmAnd {
 
-    class OSMAND_CORE_API MapRenderer_OpenGL : public virtual MapRenderer_BaseOpenGL
+    class OSMAND_CORE_API AtlasMapRenderer : public MapRenderer
     {
     public:
+        enum {
+            TileSide3D = 100,
+            OptimalTilesPerAtlasTextureSqrt = 16, // 256 per atlas texture
+        };
+
     private:
     protected:
-        virtual void wrapper_glTexStorage2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType);
-        virtual GLenum validateResult();
-        
-        GLuint _textureSampler_Bitmap_NoAtlas;
-        GLuint _textureSampler_Bitmap_Atlas;
-        GLuint _textureSampler_ElevationData_NoAtlas;
-        GLuint _textureSampler_ElevationData_Atlas;
-
-        int _maxAnisotropy;
-
-        MapRenderer_OpenGL();
+        AtlasMapRenderer();
     public:
-        virtual ~MapRenderer_OpenGL();
+        virtual ~AtlasMapRenderer();
 
-        virtual bool initializeRendering();
-        virtual bool releaseRendering();
+        //?virtual void dragViewportBy
     };
 
 }
 
-#endif // __MAP_RENDERER_OPENGL_H_
+#endif // __ATLAS_MAP_RENDERER_H_

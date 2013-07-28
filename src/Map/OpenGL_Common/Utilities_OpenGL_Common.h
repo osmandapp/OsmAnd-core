@@ -19,34 +19,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __BASE_ATLAS_MAP_RENDERER_H_
-#define __BASE_ATLAS_MAP_RENDERER_H_
+#ifndef __UTILITIES_OPENGL_COMMON_H_
+#define __UTILITIES_OPENGL_COMMON_H_
 
 #include <stdint.h>
 #include <memory>
 
+#include <glm/glm.hpp>
+
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <IMapRenderer.h>
 
 namespace OsmAnd {
 
-    class OSMAND_CORE_API BaseAtlasMapRenderer : public virtual IMapRenderer
+    namespace Utilities_OpenGL_Common
     {
-    public:
-        enum {
-            TileSide3D = 100,
-        };
-
-    private:
-    protected:
-        BaseAtlasMapRenderer();
-    public:
-        virtual ~BaseAtlasMapRenderer();
-
-        //?virtual void dragViewportBy
-    };
+        OSMAND_CORE_API float OSMAND_CORE_CALL calculateCameraDistance( const glm::mat4& P, const AreaI& viewport, const float& Ax, const float& Sx, const float& k );
+        OSMAND_CORE_API bool OSMAND_CORE_CALL rayIntersectPlane( const glm::vec3& planeN, const glm::vec3& planeO, const glm::vec3& rayD, const glm::vec3& rayO, float& distance );
+        OSMAND_CORE_API bool OSMAND_CORE_CALL lineSegmentIntersectPlane( const glm::vec3& planeN, const glm::vec3& planeO, const glm::vec3& line0, const glm::vec3& line1, glm::vec3& lineX );
+    }
 
 }
 
-#endif // __BASE_ATLAS_MAP_RENDERER_H_
+#endif // __UTILITIES_OPENGL_COMMON_H_

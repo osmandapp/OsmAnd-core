@@ -64,7 +64,7 @@ namespace OsmAnd {
         {
             QUrl sourceUrl;
             TileId tileId;
-            uint32_t zoom;
+            ZoomLevel zoom;
             TileReadyCallback callback;
         };
         QQueue< TileRequest > _tileDownloadRequestsQueue;
@@ -77,11 +77,11 @@ namespace OsmAnd {
         QMutex _requestsMutex;
         std::array< QSet< TileId >, 32 > _requestedTileIds;
 
-        void obtainTileDeffered(const QUrl& url, const TileId& tileId, uint32_t zoom, TileReadyCallback readyCallback);
-        void replyFinishedHandler(QNetworkReply* reply, const TileId& tileId, uint32_t zoom, TileReadyCallback readyCallback, QEventLoop& eventLoop, QNetworkAccessManager& networkAccessManager);
-        void handleNetworkReply(QNetworkReply* reply, const TileId& tileId, uint32_t zoom, TileReadyCallback readyCallback);
+        void obtainTileDeffered(const QUrl& url, const TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback);
+        void replyFinishedHandler(QNetworkReply* reply, const TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback, QEventLoop& eventLoop, QNetworkAccessManager& networkAccessManager);
+        void handleNetworkReply(QNetworkReply* reply, const TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback);
     public:
-        OnlineMapRasterTileProvider(const QString& id, const QString& urlPattern, uint32_t minZoom = 0, uint32_t maxZoom = 31, uint32_t maxConcurrentDownloads = 1, uint32_t tileDimension = 256);
+        OnlineMapRasterTileProvider(const QString& id, const QString& urlPattern, const ZoomLevel& minZoom = ZoomLevel0, const ZoomLevel& maxZoom = ZoomLevel31, uint32_t maxConcurrentDownloads = 1, uint32_t tileDimension = 256);
         virtual ~OnlineMapRasterTileProvider();
 
         const QString id;
@@ -100,8 +100,8 @@ namespace OsmAnd {
         virtual float getTileDensity() const;
         virtual uint32_t getTileSize() const;
 
-        virtual bool obtainTileImmediate(const TileId& tileId, uint32_t zoom, std::shared_ptr<IMapTileProvider::Tile>& tile);
-        virtual void obtainTileDeffered(const TileId& tileId, uint32_t zoom, TileReadyCallback readyCallback);
+        virtual bool obtainTileImmediate(const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<IMapTileProvider::Tile>& tile);
+        virtual void obtainTileDeffered(const TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback);
         
         static std::shared_ptr<OsmAnd::IMapTileProvider> createMapnikProvider();
         static std::shared_ptr<OsmAnd::IMapTileProvider> createCycleMapProvider();

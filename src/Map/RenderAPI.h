@@ -1,0 +1,212 @@
+/**
+ * @file
+ *
+ * @section LICENSE
+ *
+ * OsmAnd - Android navigation software based on OSM maps.
+ * Copyright (C) 2010-2013  OsmAnd Authors listed in AUTHORS file
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+#ifndef __RENDER_API_H_
+#define __RENDER_API_H_
+
+#include <stdint.h>
+#include <memory>
+
+#include <QHash>
+#include <QMultiMap>
+#include <QReadWriteLock>
+#include <QMutex>
+#include <QSet>
+
+#include <OsmAndCore.h>
+#include <CommonTypes.h>
+#include <MapTypes.h>
+#include <IMapTileProvider.h>
+
+namespace OsmAnd {
+
+    class OSMAND_CORE_API RenderAPI
+    {
+    public:
+        typedef void* RefInGPU;
+
+        class OSMAND_CORE_API ResourceInGPU
+        {
+        public:
+            enum Type
+            {
+                Texture,
+                TileOnAtlasTexture,
+            };
+        private:
+        protected:
+            ResourceInGPU(const Type& type, RenderAPI* api, const RefInGPU& refInGPU);
+
+            RefInGPU _refInGPU;
+        public:
+            virtual ~ResourceInGPU();
+
+            RenderAPI* const api;
+            const Type type;
+            const RefInGPU& refInGPU;
+        };
+
+        class OSMAND_CORE_API TextureInGPU : public ResourceInGPU
+        {
+        private:
+        protected:
+        public:
+            TextureInGPU(RenderAPI* api, const RefInGPU& refInGPU, const uint32_t& textureSize, const uint32_t& mipmapLevels);
+            virtual ~TextureInGPU();
+
+            const uint32_t textureSize;
+            const uint32_t mipmapLevels;
+            const float texelSizeN;
+            const float halfTexelSizeN;
+        };
+
+        union AtlasTypeId
+        {
+            uint64_t id;
+            struct
+            {
+                uint16_t format;
+                uint16_t pixelType;
+                uint16_t tileSize;
+                uint16_t tilePadding;
+            };
+
+            inline operator uint64_t() const
+            {
+                return id;
+            }
+
+            inline AtlasTypeId& operator=( const uint64_t& that )
+            {
+                id = that;
+                return *this;
+            }
+
+            inline bool operator==( const AtlasTypeId& that )
+            {
+                return this->id == that.id;
+            }
+
+            inline bool operator!=( const AtlasTypeId& that )
+            {
+                return this->id != that.id;
+            }
+
+            inline bool operator==( const uint64_t& that )
+            {
+                return this->id == that;
+            }
+
+            inline bool operator!=( const uint64_t& that )
+            {
+                return this->id != that;
+            }
+        };
+        static_assert(sizeof(AtlasTypeId) == 8, "AtlasTypeId must be 8 bytes in size");
+
+        class TileOnAtlasTextureInGPU;
+        class AtlasTextureInGPU;
+        class OSMAND_CORE_API AtlasTexturesPool
+        {
+        public:
+            typedef std::function< AtlasTextureInGPU*() > AtlasTextureAllocatorSignature;
+        private:
+            QMutex _freedSlotsMutex;
+            QList< std::tuple<AtlasTextureInGPU*, uint32_t> > _freedSlots;
+
+            QMutex _unusedSlotsMutex;
+            std::shared_ptr<AtlasTextureInGPU> _lastNonFullAtlasTexture;
+            uint32_t _firstUnusedSlotIndex;
+        protected:
+            AtlasTexturesPool(RenderAPI* api, const AtlasTypeId& typeId);
+
+            std::shared_ptr<TileOnAtlasTextureInGPU> allocateTile(AtlasTextureAllocatorSignature atlasTextureAllocator);
+        public:
+            virtual ~AtlasTexturesPool();
+
+            RenderAPI* const api;
+            const AtlasTypeId typeId;
+
+            friend OsmAnd::RenderAPI;
+        };
+
+        class OSMAND_CORE_API AtlasTextureInGPU : public TextureInGPU
+        {
+        private:
+        protected:
+            QMutex _tilesMutex;
+            QSet< TileOnAtlasTextureInGPU* > _tiles;
+        public:
+            AtlasTextureInGPU(RenderAPI* api, const RefInGPU& refInGPU, const uint32_t& textureSize, const uint32_t& mipmapLevels, const std::shared_ptr<AtlasTexturesPool>& pool);
+            virtual ~AtlasTextureInGPU();
+
+            const QSet< TileOnAtlasTextureInGPU* >& tiles;
+
+            const uint16_t tileSize;
+            const uint16_t padding;
+            const uint32_t slotsPerSide;
+            const float tileSizeN;
+            const float tilePaddingN;
+
+            const std::shared_ptr<AtlasTexturesPool> pool;
+
+        friend OsmAnd::RenderAPI::TileOnAtlasTextureInGPU;
+        };
+
+        class OSMAND_CORE_API TileOnAtlasTextureInGPU : public ResourceInGPU
+        {
+        private:
+        protected:
+        public:
+            TileOnAtlasTextureInGPU(AtlasTextureInGPU* const atlas, const uint32_t& slotIndex);
+            virtual ~TileOnAtlasTextureInGPU();
+
+            AtlasTextureInGPU* const atlasTexture;
+            const uint32_t slotIndex;
+        };
+    
+    private:
+        uint32_t _optimalTilesPerAtlasSqrt;
+
+        QHash< AtlasTypeId, std::shared_ptr<AtlasTexturesPool> > _atlasTexturesPools;
+    protected:
+        QList< std::shared_ptr<ResourceInGPU> > _allocatedResources;
+
+        std::shared_ptr<AtlasTexturesPool> obtainAtlasTexturesPool(const AtlasTypeId& atlasTypeId);
+        std::shared_ptr<TileOnAtlasTextureInGPU> allocateTile(const std::shared_ptr<AtlasTexturesPool>& pool, AtlasTexturesPool::AtlasTextureAllocatorSignature atlasTextureAllocator );
+
+        virtual bool releaseResourceInGPU(const ResourceInGPU::Type& type, const RefInGPU& refInGPU) = 0;
+    public:
+        RenderAPI();
+        virtual ~RenderAPI();
+
+        const uint32_t& optimalTilesPerAtlasSqrt;
+
+        virtual bool initialize(const uint32_t& optimalTilesPerAtlasSqrt) = 0;
+        virtual bool release() = 0;
+
+        virtual bool uploadTileToGPU(const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr< IMapTileProvider::Tile >& tile, std::shared_ptr< ResourceInGPU >& resourceInGPU) = 0;
+
+    friend OsmAnd::RenderAPI::ResourceInGPU;
+    };
+}
+
+#endif // __RENDER_API_H_

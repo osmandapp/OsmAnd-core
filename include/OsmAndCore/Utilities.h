@@ -70,25 +70,26 @@ namespace OsmAnd {
         OSMAND_CORE_API double OSMAND_CORE_CALL y31toMeters(int32_t y31);
         OSMAND_CORE_API double OSMAND_CORE_CALL squareDistance31(int32_t x31a, int32_t y31a, int32_t x31b, int32_t y31b);
         OSMAND_CORE_API double OSMAND_CORE_CALL distance31(int32_t x31a, int32_t y31a, int32_t x31b, int32_t y31b);
-        OSMAND_CORE_API double OSMAND_CORE_CALL squareDistance31(const OsmAnd::PointI& a, const OsmAnd::PointI& b);
-        OSMAND_CORE_API double OSMAND_CORE_CALL distance31(const OsmAnd::PointI& a, const OsmAnd::PointI& b);
+        OSMAND_CORE_API double OSMAND_CORE_CALL squareDistance31(const PointI& a, const PointI& b);
+        OSMAND_CORE_API double OSMAND_CORE_CALL distance31(const PointI& a, const PointI& b);
         OSMAND_CORE_API double OSMAND_CORE_CALL distance(double xLonA, double yLatA, double xLonB, double yLatB);
         OSMAND_CORE_API double OSMAND_CORE_CALL projection31(int32_t x31a, int32_t y31a, int32_t x31b, int32_t y31b, int32_t x31c, int32_t y31c);
         OSMAND_CORE_API double OSMAND_CORE_CALL normalizedAngleRadians(double angle);
         OSMAND_CORE_API double OSMAND_CORE_CALL normalizedAngleDegrees(double angle);
         OSMAND_CORE_API int OSMAND_CORE_CALL javaDoubleCompare(double l, double r);
         OSMAND_CORE_API void OSMAND_CORE_CALL findFiles(const QDir& origin, const QStringList& masks, QList< std::shared_ptr<QFileInfo> >& files, bool recursively = true);
-        OSMAND_CORE_API double OSMAND_CORE_CALL polygonArea(const QVector<OsmAnd::PointI>& points);
-        OSMAND_CORE_API bool OSMAND_CORE_CALL rayIntersectX(const OsmAnd::PointF& v0, const OsmAnd::PointF& v1, float mY, float& mX);
-        OSMAND_CORE_API bool OSMAND_CORE_CALL rayIntersect(const OsmAnd::PointF& v0, const OsmAnd::PointF& v1, const OsmAnd::PointF& v);
-        OSMAND_CORE_API bool OSMAND_CORE_CALL rayIntersectX(const OsmAnd::PointI& v0, const OsmAnd::PointI& v1, int32_t mY, int32_t& mX);
-        OSMAND_CORE_API bool OSMAND_CORE_CALL rayIntersect(const OsmAnd::PointI& v0, const OsmAnd::PointI& v1, const OsmAnd::PointI& v);
+        OSMAND_CORE_API double OSMAND_CORE_CALL polygonArea(const QVector<PointI>& points);
+        OSMAND_CORE_API bool OSMAND_CORE_CALL rayIntersectX(const PointF& v0, const PointF& v1, float mY, float& mX);
+        OSMAND_CORE_API bool OSMAND_CORE_CALL rayIntersect(const PointF& v0, const PointF& v1, const PointF& v);
+        OSMAND_CORE_API bool OSMAND_CORE_CALL rayIntersectX(const PointI& v0, const PointI& v1, int32_t mY, int32_t& mX);
+        OSMAND_CORE_API bool OSMAND_CORE_CALL rayIntersect(const PointI& v0, const PointI& v1, const PointI& v);
         OSMAND_CORE_API double OSMAND_CORE_CALL degreesDiff(double a1, double a2);
-        OSMAND_CORE_API OsmAnd::AreaI OSMAND_CORE_CALL areaRightShift(const OsmAnd::AreaI& input, uint32_t shift);
-        OSMAND_CORE_API OsmAnd::AreaI OSMAND_CORE_CALL areaLeftShift(const OsmAnd::AreaI& input, uint32_t shift);
+        OSMAND_CORE_API AreaI OSMAND_CORE_CALL areaRightShift(const AreaI& input, uint32_t shift);
+        OSMAND_CORE_API AreaI OSMAND_CORE_CALL areaLeftShift(const AreaI& input, uint32_t shift);
         OSMAND_CORE_API uint32_t OSMAND_CORE_CALL getNextPowerOfTwo(const uint32_t& value);
         OSMAND_CORE_API double OSMAND_CORE_CALL getMetersPerTileUnit(const float& zoom, const double& yTile, const double& unitsPerTile);
-        OSMAND_CORE_API void OSMAND_CORE_CALL scanlineFillPolygon(const unsigned int& verticesCount, const OsmAnd::PointF* vertices, std::function<void (const OsmAnd::PointI&)> fillPoint);
+        OSMAND_CORE_API TileId OSMAND_CORE_CALL normalizeTileId(const TileId& input, const ZoomLevel& zoom);
+        OSMAND_CORE_API void OSMAND_CORE_CALL scanlineFillPolygon(const unsigned int& verticesCount, const PointF* vertices, std::function<void (const PointI&)> fillPoint);
 
         inline int qAbsCeil(qreal v)
         {

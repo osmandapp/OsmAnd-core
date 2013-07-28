@@ -56,7 +56,7 @@ namespace OsmAnd {
             const uint32_t height;
         };
 
-        typedef std::function<void (const TileId& tileId, uint32_t zoom, const std::shared_ptr<Tile>& tile, bool success)> TileReadyCallback;
+        typedef std::function<void (const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr<Tile>& tile, bool success)> TileReadyCallback;
     private:
     protected:
         IMapTileProvider(const Type& type);
@@ -66,8 +66,8 @@ namespace OsmAnd {
         const Type type;
         virtual uint32_t getTileSize() const = 0;
 
-        virtual bool obtainTileImmediate(const TileId& tileId, uint32_t zoom, std::shared_ptr<IMapTileProvider::Tile>& tile) = 0;
-        virtual void obtainTileDeffered(const TileId& tileId, uint32_t zoom, TileReadyCallback readyCallback) = 0;
+        virtual bool obtainTileImmediate(const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<IMapTileProvider::Tile>& tile) = 0;
+        virtual void obtainTileDeffered(const TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback) = 0;
     };
 
 }

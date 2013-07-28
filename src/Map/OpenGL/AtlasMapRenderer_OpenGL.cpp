@@ -27,26 +27,31 @@ OsmAnd::AtlasMapRenderer_OpenGL::~AtlasMapRenderer_OpenGL()
 {
 }
 
-bool OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering()
+OsmAnd::RenderAPI* OsmAnd::AtlasMapRenderer_OpenGL::allocateRenderAPI()
+{
+    auto api = new RenderAPI_OpenGL();
+    api->initialize(configuration.textureAtlasesAllowed ? OptimalTilesPerAtlasTextureSqrt : 1);
+    return api;
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::doInitializeRendering()
 {
     bool ok;
 
-    ok = MapRenderer_OpenGL::initializeRendering();
+    ok = AtlasMapRenderer_OpenGL_Common::doInitializeRendering();
     if(!ok)
         return false;
 
-    initializeRendering_SkyStage();
-    initializeRendering_MapStage();
-
-    ok = AtlasMapRenderer_BaseOpenGL::initializeRendering();
-    if(!ok)
-        return false;
+    initializeSkyStage();
+    initializeMapStage();
 
     return true;
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
+void OsmAnd::AtlasMapRenderer_OpenGL::initializeMapStage()
 {
+    auto renderAPI = getRenderAPI();
+
     // Compile vertex shader
     const QString vertexShader_perTileLayerTexCoordsProcessing = QString::fromLatin1(
         "    calculateTextureCoordinates(                                                                                   ""\n"
@@ -154,7 +159,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
         "}                                                                                                                  ""\n");
     QString preprocessedVertexShader = vertexShader;
     QString preprocessedVertexShader_UnrolledPerLayerTexCoordsProcessingCode;
-    for(int layerId = TileLayerId::RasterMap, linearIdx = 0; layerId < TileLayerId::IdsCount; layerId++, linearIdx++)
+    for(int layerId = MapTileLayerId::RasterMap, linearIdx = 0; layerId < MapTileLayerIdsCount; layerId++, linearIdx++)
     {
         QString preprocessedVertexShader_perTileLayerTexCoordsProcessing = vertexShader_perTileLayerTexCoordsProcessing;
         preprocessedVertexShader_perTileLayerTexCoordsProcessing.replace("%layerId%", QString::number(layerId));
@@ -166,12 +171,12 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
     preprocessedVertexShader.replace("%UnrolledPerLayerTexCoordsProcessingCode%",
         preprocessedVertexShader_UnrolledPerLayerTexCoordsProcessingCode);
     preprocessedVertexShader.replace("%TileSize3D%", QString::number(TileSide3D));
-    preprocessedVertexShader.replace("%TileLayersCount%", QString::number(TileLayerId::IdsCount));
-    preprocessedVertexShader.replace("%RasterTileLayersCount%", QString::number(TileLayerId::IdsCount - TileLayerId::RasterMap));
-    preprocessedVertexShader.replace("%Layer_ElevationData%", QString::number(TileLayerId::ElevationData));
-    preprocessedVertexShader.replace("%Layer_RasterMap%", QString::number(TileLayerId::RasterMap));
-    preprocessedVertexShader.replace("%MipmapLodLevelsMax%", QString::number(MipmapLodLevelsMax));
-    _mapStage.vs.id = compileShader(GL_VERTEX_SHADER, preprocessedVertexShader.toStdString().c_str());
+    preprocessedVertexShader.replace("%TileLayersCount%", QString::number(MapTileLayerIdsCount));
+    preprocessedVertexShader.replace("%RasterTileLayersCount%", QString::number(MapTileLayerIdsCount - MapTileLayerId::RasterMap));
+    preprocessedVertexShader.replace("%Layer_ElevationData%", QString::number(MapTileLayerId::ElevationData));
+    preprocessedVertexShader.replace("%Layer_RasterMap%", QString::number(MapTileLayerId::RasterMap));
+    preprocessedVertexShader.replace("%MipmapLodLevelsMax%", QString::number(RenderAPI_OpenGL::MipmapLodLevelsMax));
+    _mapStage.vs.id = renderAPI->compileShader(GL_VERTEX_SHADER, preprocessedVertexShader.toStdString().c_str());
     assert(_mapStage.vs.id != 0);
 
     // Compile fragment shader
@@ -234,20 +239,20 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
         "}                                                                                                                  ""\n");
     QString preprocessedFragmentShader = fragmentShader;
     QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
-    for(int layerId = TileLayerId::MapOverlay0; layerId <= TileLayerId::MapOverlay3; layerId++)
+    for(int layerId = MapTileLayerId::MapOverlay0; layerId <= MapTileLayerId::MapOverlay3; layerId++)
     {
-        auto linearIdx = layerId - TileLayerId::RasterMap;
+        auto linearIdx = layerId - MapTileLayerId::RasterMap;
         QString preprocessedFragmentShader_perTileLayer = fragmentShader_perTileLayer;
         preprocessedFragmentShader_perTileLayer.replace("%layerLinearIdx%", QString::number(linearIdx));
 
         preprocessedFragmentShader_UnrolledPerLayerProcessingCode += preprocessedFragmentShader_perTileLayer;
     }
     preprocessedFragmentShader.replace("%UnrolledPerLayerProcessingCode%", preprocessedFragmentShader_UnrolledPerLayerProcessingCode);
-    preprocessedFragmentShader.replace("%TileLayersCount%", QString::number(TileLayerId::IdsCount));
-    preprocessedFragmentShader.replace("%RasterTileLayersCount%", QString::number(TileLayerId::IdsCount - TileLayerId::RasterMap));
-    preprocessedFragmentShader.replace("%Layer_RasterMap%", QString::number(TileLayerId::RasterMap));
-    preprocessedFragmentShader.replace("%MipmapLodLevelsMax%", QString::number(MipmapLodLevelsMax));
-    _mapStage.fs.id = compileShader(GL_FRAGMENT_SHADER, preprocessedFragmentShader.toStdString().c_str());
+    preprocessedFragmentShader.replace("%TileLayersCount%", QString::number(MapTileLayerIdsCount));
+    preprocessedFragmentShader.replace("%RasterTileLayersCount%", QString::number(MapTileLayerIdsCount - MapTileLayerId::RasterMap));
+    preprocessedFragmentShader.replace("%Layer_RasterMap%", QString::number(MapTileLayerId::RasterMap));
+    preprocessedFragmentShader.replace("%MipmapLodLevelsMax%", QString::number(RenderAPI_OpenGL::MipmapLodLevelsMax));
+    _mapStage.fs.id = renderAPI->compileShader(GL_FRAGMENT_SHADER, preprocessedFragmentShader.toStdString().c_str());
     assert(_mapStage.fs.id != 0);
 
     // Link everything into program object
@@ -255,77 +260,73 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_MapStage()
         _mapStage.vs.id,
         _mapStage.fs.id
     };
-    _mapStage.program = linkProgram(2, shaders);
+    _mapStage.program = getRenderAPI()->linkProgram(2, shaders);
     assert(_mapStage.program != 0);
 
-    _programVariables.clear();
-    findVariableLocation(_mapStage.program, _mapStage.vs.in.vertexPosition, "in_vs_vertexPosition", In);
-    findVariableLocation(_mapStage.program, _mapStage.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", In);
-    findVariableLocation(_mapStage.program, _mapStage.vs.param.mProjectionView, "param_vs_mProjectionView", Uniform);
-    findVariableLocation(_mapStage.program, _mapStage.vs.param.targetInTilePosN, "param_vs_targetInTilePosN", Uniform);
-    findVariableLocation(_mapStage.program, _mapStage.vs.param.targetTile, "param_vs_targetTile", Uniform);
-    findVariableLocation(_mapStage.program, _mapStage.vs.param.mView, "param_vs_mView", Uniform);
-    findVariableLocation(_mapStage.program, _mapStage.vs.param.cameraElevationAngle, "param_vs_cameraElevationAngle", Uniform);
-    findVariableLocation(_mapStage.program, _mapStage.vs.param.mipmapK, "param_vs_mipmapK", Uniform);
-    findVariableLocation(_mapStage.program, _mapStage.vs.param.tile, "param_vs_tile", Uniform);
-    findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_sampler, "param_vs_elevationData_sampler", Uniform);
-    findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_k, "param_vs_elevationData_k", Uniform);
-    findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_upperMetersPerUnit, "param_vs_elevationData_upperMetersPerUnit", Uniform);
-    findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_lowerMetersPerUnit, "param_vs_elevationData_lowerMetersPerUnit", Uniform);
-    for(int layerId = 0; layerId < TileLayerId::IdsCount; layerId++)
+    renderAPI->clearVariablesLookup();
+    renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.in.vertexPosition, "in_vs_vertexPosition", RenderAPI_OpenGL::In);
+    renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", RenderAPI_OpenGL::In);
+    renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.mProjectionView, "param_vs_mProjectionView", RenderAPI_OpenGL::Uniform);
+    renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.targetInTilePosN, "param_vs_targetInTilePosN", RenderAPI_OpenGL::Uniform);
+    renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.targetTile, "param_vs_targetTile", RenderAPI_OpenGL::Uniform);
+    renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.mView, "param_vs_mView", RenderAPI_OpenGL::Uniform);
+    renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.cameraElevationAngle, "param_vs_cameraElevationAngle", RenderAPI_OpenGL::Uniform);
+    renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.mipmapK, "param_vs_mipmapK", RenderAPI_OpenGL::Uniform);
+    renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.tile, "param_vs_tile", RenderAPI_OpenGL::Uniform);
+    renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_sampler, "param_vs_elevationData_sampler", RenderAPI_OpenGL::Uniform);
+    renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_k, "param_vs_elevationData_k", RenderAPI_OpenGL::Uniform);
+    renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_upperMetersPerUnit, "param_vs_elevationData_upperMetersPerUnit", RenderAPI_OpenGL::Uniform);
+    renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_lowerMetersPerUnit, "param_vs_elevationData_lowerMetersPerUnit", RenderAPI_OpenGL::Uniform);
+    for(int layerId = 0; layerId < MapTileLayerIdsCount; layerId++)
     {
         const auto layerStructName =
             QString::fromLatin1("param_vs_perTileLayer[%layerId%]")
             .replace(QString::fromLatin1("%layerId%"), QString::number(layerId));
         auto& layerStruct = _mapStage.vs.param.perTileLayer[layerId];
 
-        findVariableLocation(_mapStage.program, layerStruct.tileSizeN, layerStructName + ".tileSizeN", Uniform);
-        findVariableLocation(_mapStage.program, layerStruct.tilePaddingN, layerStructName + ".tilePaddingN", Uniform);
-        findVariableLocation(_mapStage.program, layerStruct.slotsPerSide, layerStructName + ".slotsPerSide", Uniform);
-        findVariableLocation(_mapStage.program, layerStruct.slotIndex, layerStructName + ".slotIndex", Uniform);
+        renderAPI->findVariableLocation(_mapStage.program, layerStruct.tileSizeN, layerStructName + ".tileSizeN", RenderAPI_OpenGL::Uniform);
+        renderAPI->findVariableLocation(_mapStage.program, layerStruct.tilePaddingN, layerStructName + ".tilePaddingN", RenderAPI_OpenGL::Uniform);
+        renderAPI->findVariableLocation(_mapStage.program, layerStruct.slotsPerSide, layerStructName + ".slotsPerSide", RenderAPI_OpenGL::Uniform);
+        renderAPI->findVariableLocation(_mapStage.program, layerStruct.slotIndex, layerStructName + ".slotIndex", RenderAPI_OpenGL::Uniform);
     }
-    findVariableLocation(_mapStage.program, _mapStage.fs.param.fogColor, "param_fs_fogColor", Uniform);
-    findVariableLocation(_mapStage.program, _mapStage.fs.param.fogDistance, "param_fs_fogDistance", Uniform);
-    findVariableLocation(_mapStage.program, _mapStage.fs.param.fogDensity, "param_fs_fogDensity", Uniform);
-    findVariableLocation(_mapStage.program, _mapStage.fs.param.fogOriginFactor, "param_fs_fogOriginFactor", Uniform);
-    findVariableLocation(_mapStage.program, _mapStage.fs.param.scaleToRetainProjectedSize, "param_fs_scaleToRetainProjectedSize", Uniform);
-    for(int layerId = TileLayerId::RasterMap, linearIdx = 0; layerId < TileLayerId::IdsCount; layerId++, linearIdx++)
+    renderAPI->findVariableLocation(_mapStage.program, _mapStage.fs.param.fogColor, "param_fs_fogColor", RenderAPI_OpenGL::Uniform);
+    renderAPI->findVariableLocation(_mapStage.program, _mapStage.fs.param.fogDistance, "param_fs_fogDistance", RenderAPI_OpenGL::Uniform);
+    renderAPI->findVariableLocation(_mapStage.program, _mapStage.fs.param.fogDensity, "param_fs_fogDensity", RenderAPI_OpenGL::Uniform);
+    renderAPI->findVariableLocation(_mapStage.program, _mapStage.fs.param.fogOriginFactor, "param_fs_fogOriginFactor", RenderAPI_OpenGL::Uniform);
+    renderAPI->findVariableLocation(_mapStage.program, _mapStage.fs.param.scaleToRetainProjectedSize, "param_fs_scaleToRetainProjectedSize", RenderAPI_OpenGL::Uniform);
+    for(int layerId = MapTileLayerId::RasterMap, linearIdx = 0; layerId < MapTileLayerIdsCount; layerId++, linearIdx++)
     {
         const auto layerStructName =
             QString::fromLatin1("param_fs_perTileLayer[%linearIdx%]")
             .replace(QString::fromLatin1("%linearIdx%"), QString::number(linearIdx));
         auto& layerStruct = _mapStage.fs.param.perTileLayer[linearIdx];
 
-        findVariableLocation(_mapStage.program, layerStruct.k, layerStructName + ".k", Uniform);
-        findVariableLocation(_mapStage.program, layerStruct.sampler, layerStructName + ".sampler", Uniform);
+        renderAPI->findVariableLocation(_mapStage.program, layerStruct.k, layerStructName + ".k", RenderAPI_OpenGL::Uniform);
+        renderAPI->findVariableLocation(_mapStage.program, layerStruct.sampler, layerStructName + ".sampler", RenderAPI_OpenGL::Uniform);
     }
-    _programVariables.clear();
+    renderAPI->clearVariablesLookup();
 }
 
-bool OsmAnd::AtlasMapRenderer_OpenGL::renderFrame()
+bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame()
 {
-    bool ok;
-
-    ok = AtlasMapRenderer_BaseOpenGL::renderFrame();
-    if(!ok)
-        return false;
-
     // Setup viewport
     glViewport(
-        _activeConfig.viewport.left,
-        _activeConfig.windowSize.y - _activeConfig.viewport.bottom,
-        _activeConfig.viewport.width(),
-        _activeConfig.viewport.height());
+        currentState.viewport.left,
+        currentState.windowSize.y - currentState.viewport.bottom,
+        currentState.viewport.width(),
+        currentState.viewport.height());
     GL_CHECK_RESULT;
 
-    renderFrame_SkyStage();
-    renderFrame_MapStage();
+    renderSkyStage();
+    renderMapStage();
 
     return true;
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGL::renderFrame_MapStage()
+void OsmAnd::AtlasMapRenderer_OpenGL::renderMapStage()
 {
+    auto renderAPI = static_cast<RenderAPI_OpenGL*>(getRenderAPI());
+
     GL_CHECK_PRESENT(glBindVertexArray);
     GL_CHECK_PRESENT(glUseProgram);
     GL_CHECK_PRESENT(glUniformMatrix4fv);
@@ -353,220 +354,206 @@ void OsmAnd::AtlasMapRenderer_OpenGL::renderFrame_MapStage()
     GL_CHECK_RESULT;
 
     // Set center offset
-    glUniform2f(_mapStage.vs.param.targetInTilePosN, _targetInTilePosN.x, _targetInTilePosN.y);
+    glUniform2f(_mapStage.vs.param.targetInTilePosN, _targetInTileOffsetN.x, _targetInTileOffsetN.y);
     GL_CHECK_RESULT;
 
     // Set target tile
-    glUniform2i(_mapStage.vs.param.targetTile, _targetTile.x, _targetTile.y);
+    glUniform2i(_mapStage.vs.param.targetTile, _targetTileId.x, _targetTileId.y);
     GL_CHECK_RESULT;
 
     // Set camera elevation angle
-    glUniform1f(_mapStage.vs.param.cameraElevationAngle, _activeConfig.elevationAngle);
+    glUniform1f(_mapStage.vs.param.cameraElevationAngle, currentState.elevationAngle);
     GL_CHECK_RESULT;
 
     // Set mipmap K factor
     glUniform1f(_mapStage.vs.param.mipmapK, _mipmapK);
 
     // Set fog parameters
-    glUniform3f(_mapStage.fs.param.fogColor, _activeConfig.fogColor[0], _activeConfig.fogColor[1], _activeConfig.fogColor[2]);
+    glUniform3f(_mapStage.fs.param.fogColor, currentState.fogColor[0], currentState.fogColor[1], currentState.fogColor[2]);
     GL_CHECK_RESULT;
-    glUniform1f(_mapStage.fs.param.fogDistance, _activeConfig.fogDistance);
+    glUniform1f(_mapStage.fs.param.fogDistance, currentState.fogDistance);
     GL_CHECK_RESULT;
-    glUniform1f(_mapStage.fs.param.fogDensity, _activeConfig.fogDensity);
+    glUniform1f(_mapStage.fs.param.fogDensity, currentState.fogDensity);
     GL_CHECK_RESULT;
-    glUniform1f(_mapStage.fs.param.fogOriginFactor, _activeConfig.fogOriginFactor);
+    glUniform1f(_mapStage.fs.param.fogOriginFactor, currentState.fogOriginFactor);
     GL_CHECK_RESULT;
     glUniform1f(_mapStage.fs.param.scaleToRetainProjectedSize, _scaleToRetainProjectedSize);
     GL_CHECK_RESULT;
 
     // Set samplers
-    glUniform1i(_mapStage.vs.param.elevationData_sampler, TileLayerId::ElevationData);
+    glUniform1i(_mapStage.vs.param.elevationData_sampler, MapTileLayerId::ElevationData);
     GL_CHECK_RESULT;
-    for(int layerId = TileLayerId::RasterMap; layerId < TileLayerId::IdsCount; layerId++)
+    for(int layerId = MapTileLayerId::RasterMap; layerId < MapTileLayerIdsCount; layerId++)
     {
-        glUniform1i(_mapStage.fs.param.perTileLayer[layerId - TileLayerId::RasterMap].sampler, layerId);
+        glUniform1i(_mapStage.fs.param.perTileLayer[layerId - MapTileLayerId::RasterMap].sampler, layerId);
         GL_CHECK_RESULT;
     }
-
+    
     // For each visible tile, render it
-    const auto maxTileIndex = static_cast<signed>(1u << _activeConfig.zoomBase);
+    const auto maxTileIndex = static_cast<signed>(1u << currentState.zoomBase);
     for(auto itTileId = _visibleTiles.begin(); itTileId != _visibleTiles.end(); ++itTileId)
     {
         const auto& tileId = *itTileId;
 
         // Get normalized tile index
-        TileId tileIdN = tileId;
-        while(tileIdN.x < 0)
-            tileIdN.x += maxTileIndex;
-        while(tileIdN.y < 0)
-            tileIdN.y += maxTileIndex;
-        if(_activeConfig.zoomBase < 31)
-        {
-            while(tileIdN.x >= maxTileIndex)
-                tileIdN.x -= maxTileIndex;
-            while(tileIdN.y >= maxTileIndex)
-                tileIdN.y -= maxTileIndex;
-        }
-
+        auto tileIdN = Utilities::normalizeTileId(tileId, currentState.zoomBase);
+        
         // Set tile id
         glUniform2i(_mapStage.vs.param.tile, tileId.x, tileId.y);
         GL_CHECK_RESULT;
 
         // Set elevation data
-        if(_activeConfig.tileProviders[TileLayerId::ElevationData])
+        if(currentState.tileProviders[MapTileLayerId::ElevationData])
         {
-            auto& tileLayer = _tileLayers[TileLayerId::ElevationData];
-            float nonAtlasHalfTexelSizeN;
-            bool nonAtlasHalfTexelSizeAvailable = false;
+            const auto& layer = layers[MapTileLayerId::ElevationData];
 
-            QMutexLocker scopeLock(&tileLayer._cacheModificationMutex);
-
-            std::shared_ptr<TileZoomCache::Tile> cachedTile_;
-            bool cacheHit = tileLayer._cache.getTile(_activeConfig.zoomBase, tileIdN, cachedTile_);
-            if(cacheHit)
+            // We're obtaining tile entry by normalized tile coordinates, since tile may repeat several times
+            const auto& tileEntry = layer->obtainTileEntry(tileIdN, currentState.zoomBase);
+            
+            // Try lock tile entry for reading state and obtaining GPU resource
+            std::shared_ptr< RenderAPI::ResourceInGPU > gpuResource;
+            if(tileEntry && tileEntry->stateLock.tryLockForRead())
             {
-                auto cachedTile = static_cast<CachedTile_Texture*>(cachedTile_.get());
-
-                glUniform1f(_mapStage.vs.param.elevationData_k, _activeConfig.heightScaleFactor);
+                if(tileEntry->state == MapRendererTileLayer::TileEntry::State::Uploaded)
+                    gpuResource = tileEntry->resourceInGPU;
+                tileEntry->stateLock.unlock();
+            }
+            
+            if(!gpuResource)
+            {
+                // We have no elevation data, so we can not do anything
+                glUniform1f(_mapStage.vs.param.elevationData_k, 0.0f);
+                GL_CHECK_RESULT;
+            }
+            else
+            {
+                glUniform1f(_mapStage.vs.param.elevationData_k, currentState.heightScaleFactor);
                 GL_CHECK_RESULT;
 
-                auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(_activeConfig.zoomBase, tileIdN.y, TileSide3D);
+                auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomBase, tileIdN.y, TileSide3D);
                 glUniform1f(_mapStage.vs.param.elevationData_upperMetersPerUnit, upperMetersPerUnit);
-                auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(_activeConfig.zoomBase, tileIdN.y + 1, TileSide3D);
+                auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomBase, tileIdN.y + 1, TileSide3D);
                 glUniform1f(_mapStage.vs.param.elevationData_lowerMetersPerUnit, lowerMetersPerUnit);
 
-                glActiveTexture(GL_TEXTURE0 + TileLayerId::ElevationData);
+                glActiveTexture(GL_TEXTURE0 + MapTileLayerId::ElevationData);
                 GL_CHECK_RESULT;
 
-                glEnable(GL_TEXTURE_2D);
+                glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
                 GL_CHECK_RESULT;
 
-                glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(cachedTile->textureRef)));
-                GL_CHECK_RESULT;
-
-                const auto& perTile_vs = _mapStage.vs.param.perTileLayer[TileLayerId::ElevationData];
-                glUniform1i(perTile_vs.slotIndex, cachedTile->atlasSlotIndex);
-                GL_CHECK_RESULT;
-                if(cachedTile->atlasSlotIndex >= 0)
+                const auto& perTile_vs = _mapStage.vs.param.perTileLayer[MapTileLayerId::ElevationData];
+                if(gpuResource->type == RenderAPI::ResourceInGPU::TileOnAtlasTexture)
                 {
-                    const auto& atlas = tileLayer._atlasTexturePools[cachedTile->atlasPoolId];
-                    glUniform1f(perTile_vs.tileSizeN, atlas._tileSizeN);
+                    const auto& tileOnAtlasTexture = static_cast<RenderAPI::TileOnAtlasTextureInGPU*>(gpuResource.get());
+
+                    glUniform1i(perTile_vs.slotIndex, tileOnAtlasTexture->slotIndex);
                     GL_CHECK_RESULT;
-                    glUniform1f(perTile_vs.tilePaddingN, atlas._halfTexelSizeN);
+                    glUniform1f(perTile_vs.tileSizeN, tileOnAtlasTexture->atlasTexture->tileSizeN);
                     GL_CHECK_RESULT;
-                    glUniform1i(perTile_vs.slotsPerSide, atlas._slotsPerSide);
+                    glUniform1f(perTile_vs.tilePaddingN, tileOnAtlasTexture->atlasTexture->halfTexelSizeN);
+                    GL_CHECK_RESULT;
+                    glUniform1i(perTile_vs.slotsPerSide, tileOnAtlasTexture->atlasTexture->slotsPerSide);
                     GL_CHECK_RESULT;
 
-                    glBindSampler(TileLayerId::ElevationData, _textureSampler_ElevationData_Atlas);
+                    glBindSampler(MapTileLayerId::ElevationData, renderAPI->textureSampler_ElevationData_Atlas);
                     GL_CHECK_RESULT;
                 }
                 else
                 {
-                    if(!nonAtlasHalfTexelSizeAvailable)
-                    {
-                        nonAtlasHalfTexelSizeN = 0.5f / static_cast<float>(_activeConfig.tileProviders[TileLayerId::ElevationData]->getTileSize());
-                        nonAtlasHalfTexelSizeAvailable = true;
-                    }
+                    const auto& texture = static_cast<RenderAPI::TextureInGPU*>(gpuResource.get());
 
+                    glUniform1i(perTile_vs.slotIndex, -1);
+                    GL_CHECK_RESULT;
                     glUniform1f(perTile_vs.tileSizeN, 1.0f);
                     GL_CHECK_RESULT;
-                    glUniform1f(perTile_vs.tilePaddingN, nonAtlasHalfTexelSizeN);
+                    glUniform1f(perTile_vs.tilePaddingN, texture->halfTexelSizeN);
                     GL_CHECK_RESULT;
                     glUniform1i(perTile_vs.slotsPerSide, 1);
                     GL_CHECK_RESULT;
 
-                    glBindSampler(TileLayerId::ElevationData, _textureSampler_ElevationData_NoAtlas);
+                    glBindSampler(MapTileLayerId::ElevationData, renderAPI->textureSampler_ElevationData_NoAtlas);
                     GL_CHECK_RESULT;
                 }
-            }
-            else
-            {
-                glUniform1f(_mapStage.vs.param.elevationData_k, 0.0f);
-                GL_CHECK_RESULT;
             }
         }
 
         // We need to pass each layer of this tile to shader
-        for(int layerId = TileLayerId::RasterMap; layerId < TileLayerId::IdsCount; layerId++)
+        for(int layerId = MapTileLayerId::RasterMap; layerId < MapTileLayerIdsCount; layerId++)
         {
-            if(!_activeConfig.tileProviders[layerId])
+            if(!currentState.tileProviders[layerId])
                 continue;
 
-            auto& tileLayer = _tileLayers[layerId];
+            const auto& layer = layers[layerId];
             const auto& perTile_vs = _mapStage.vs.param.perTileLayer[layerId];
-            const auto& perTile_fs = _mapStage.fs.param.perTileLayer[layerId - TileLayerId::RasterMap];
+            const auto& perTile_fs = _mapStage.fs.param.perTileLayer[layerId - MapTileLayerId::RasterMap];
 
-            QMutexLocker scopeLock(&tileLayer._cacheModificationMutex);
+            // We're obtaining tile entry by normalized tile coordinates, since tile may repeat several times
+            const auto& tileEntry = layer->obtainTileEntry(tileIdN, currentState.zoomBase);
 
-            std::shared_ptr<TileZoomCache::Tile> cachedTile_;
-            bool cacheHit = tileLayer._cache.getTile(_activeConfig.zoomBase, tileIdN, cachedTile_);
-            if(cacheHit)
+            // Try lock tile entry for reading state and obtaining GPU resource
+            std::shared_ptr< RenderAPI::ResourceInGPU > gpuResource;
+            if(tileEntry && tileEntry->stateLock.tryLockForRead())
             {
-                auto cachedTile = static_cast<CachedTile_Texture*>(cachedTile_.get());
-
-                if(cachedTile->textureRef == nullptr)
-                {
-                    //TODO: render "not available" stub
-                    glUniform1f(perTile_fs.k, 0.0f);
-                    GL_CHECK_RESULT;
-                }
+                if(tileEntry->state == MapRendererTileLayer::TileEntry::State::Uploaded)
+                    gpuResource = tileEntry->resourceInGPU;
+                else if(tileEntry->state == MapRendererTileLayer::TileEntry::State::Unavailable)
+                    gpuResource.reset();//TODO: use texture that indicates "NO DATA"
                 else
-                {
-                    glUniform1f(perTile_fs.k, 1.0f);
-                    GL_CHECK_RESULT;
+                    gpuResource.reset();//TODO: use texture that indicates "PROCESSING"
 
-                    glActiveTexture(GL_TEXTURE0 + layerId);
-                    GL_CHECK_RESULT;
+                tileEntry->stateLock.unlock();
+            }
 
-                    glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(cachedTile->textureRef)));
-                    GL_CHECK_RESULT;
+            glUniform1f(perTile_fs.k, 1.0f);//TODO: layer transparency
+            GL_CHECK_RESULT;
 
-                    glUniform1i(perTile_vs.slotIndex, cachedTile->atlasSlotIndex);
-                    GL_CHECK_RESULT;
-                    if(cachedTile->atlasSlotIndex >= 0)
-                    {
-                        const auto& atlas = tileLayer._atlasTexturePools[cachedTile->atlasPoolId];
-                        glUniform1f(perTile_vs.tileSizeN, atlas._tileSizeN);
-                        GL_CHECK_RESULT;
-                        glUniform1f(perTile_vs.tilePaddingN, atlas._tilePaddingN);
-                        GL_CHECK_RESULT;
-                        glUniform1i(perTile_vs.slotsPerSide, atlas._slotsPerSide);
-                        GL_CHECK_RESULT;
+            glActiveTexture(GL_TEXTURE0 + layerId);
+            GL_CHECK_RESULT;
 
-                        glBindSampler(layerId, _textureSampler_Bitmap_Atlas);
-                        GL_CHECK_RESULT;
-                    }
-                    else
-                    {
-                        glUniform1f(perTile_vs.tileSizeN, 1.0f);
-                        GL_CHECK_RESULT;
-                        glUniform1f(perTile_vs.tilePaddingN, 0.0f);
-                        GL_CHECK_RESULT;
-                        glUniform1i(perTile_vs.slotsPerSide, 1);
-                        GL_CHECK_RESULT;
+            glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
+            GL_CHECK_RESULT;
 
-                        glBindSampler(layerId, _textureSampler_Bitmap_NoAtlas);
-                        GL_CHECK_RESULT;
-                    }
-                }
+            if(gpuResource->type == RenderAPI::ResourceInGPU::TileOnAtlasTexture)
+            {
+                const auto& tileOnAtlasTexture = static_cast<RenderAPI::TileOnAtlasTextureInGPU*>(gpuResource.get());
+
+                glUniform1i(perTile_vs.slotIndex, tileOnAtlasTexture->slotIndex);
+                GL_CHECK_RESULT;
+                glUniform1f(perTile_vs.tileSizeN, tileOnAtlasTexture->atlasTexture->tileSizeN);
+                GL_CHECK_RESULT;
+                glUniform1f(perTile_vs.tilePaddingN, tileOnAtlasTexture->atlasTexture->tilePaddingN);
+                GL_CHECK_RESULT;
+                glUniform1i(perTile_vs.slotsPerSide, tileOnAtlasTexture->atlasTexture->slotsPerSide);
+                GL_CHECK_RESULT;
+
+                glBindSampler(layerId, renderAPI->textureSampler_Bitmap_Atlas);
+                GL_CHECK_RESULT;
             }
             else
             {
-                //TODO: render "in-progress" stub
-                glUniform1f(perTile_fs.k, 0.0f);
+                glUniform1i(perTile_vs.slotIndex, -1);
+                GL_CHECK_RESULT;
+                glUniform1f(perTile_vs.tileSizeN, 1.0f);
+                GL_CHECK_RESULT;
+                glUniform1f(perTile_vs.tilePaddingN, 0.0f);
+                GL_CHECK_RESULT;
+                glUniform1i(perTile_vs.slotsPerSide, 1);
+                GL_CHECK_RESULT;
+
+                glBindSampler(layerId, renderAPI->textureSampler_Bitmap_NoAtlas);
                 GL_CHECK_RESULT;
             }
         }
 
-        const auto verticesCount = _activeConfig.tileProviders[TileLayerId::ElevationData]
-            ? (_activeConfig.heightmapPatchesPerSide * _activeConfig.heightmapPatchesPerSide) * 4 * 3
+        const auto verticesCount = currentState.tileProviders[MapTileLayerId::ElevationData]
+            ? (configuration.heightmapPatchesPerSide * configuration.heightmapPatchesPerSide) * 4 * 3
             : 6;
         glDrawElements(GL_TRIANGLES, verticesCount, GL_UNSIGNED_SHORT, nullptr);
         GL_CHECK_RESULT;
     }
-
+    
     // Disable textures
-    for(int layerId = 0; layerId < TileLayerId::IdsCount; layerId++)
+    for(int layerId = 0; layerId < MapTileLayerIdsCount; layerId++)
     {
         glActiveTexture(GL_TEXTURE0 + layerId);
         GL_CHECK_RESULT;
@@ -584,24 +571,21 @@ void OsmAnd::AtlasMapRenderer_OpenGL::renderFrame_MapStage()
     GL_CHECK_RESULT;
 }
 
-bool OsmAnd::AtlasMapRenderer_OpenGL::releaseRendering()
+bool OsmAnd::AtlasMapRenderer_OpenGL::doReleaseRendering()
 {
     bool ok;
 
-    releaseRendering_MapStage();
-    releaseRendering_SkyStage();
+    releaseMapStage();
+    releaseSkyStage();
 
-    ok = AtlasMapRenderer_BaseOpenGL::releaseRendering();
-    if(!ok)
-        return false;
-    ok = MapRenderer_OpenGL::releaseRendering();
+    ok = AtlasMapRenderer_OpenGL_Common::doReleaseRendering();
     if(!ok)
         return false;
 
     return true;
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGL::releaseRendering_MapStage()
+void OsmAnd::AtlasMapRenderer_OpenGL::releaseMapStage()
 {
     GL_CHECK_PRESENT(glDeleteProgram);
     GL_CHECK_PRESENT(glDeleteShader);
@@ -695,8 +679,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL::releaseTilePatch()
     }
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_SkyStage()
+void OsmAnd::AtlasMapRenderer_OpenGL::initializeSkyStage()
 {
+    auto renderAPI = getRenderAPI();
+
     GL_CHECK_PRESENT(glGenVertexArrays);
     GL_CHECK_PRESENT(glBindVertexArray);
     GL_CHECK_PRESENT(glGenBuffers);
@@ -779,7 +765,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_SkyStage()
         "    gl_Position = param_vs_mProjectionViewModel * v;                                                               ""\n"
         "}                                                                                                                  ""\n");
     QString preprocessedVertexShader = vertexShader;
-    _skyStage.vs.id = compileShader(GL_VERTEX_SHADER, preprocessedVertexShader.toStdString().c_str());
+    _skyStage.vs.id = renderAPI->compileShader(GL_VERTEX_SHADER, preprocessedVertexShader.toStdString().c_str());
     assert(_skyStage.vs.id != 0);
 
     // Compile fragment shader
@@ -816,7 +802,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_SkyStage()
         "}                                                                                                                  ""\n");
     QString preprocessedFragmentShader = fragmentShader;
     QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
-    _skyStage.fs.id = compileShader(GL_FRAGMENT_SHADER, preprocessedFragmentShader.toStdString().c_str());
+    _skyStage.fs.id = renderAPI->compileShader(GL_FRAGMENT_SHADER, preprocessedFragmentShader.toStdString().c_str());
     assert(_skyStage.fs.id != 0);
 
     // Link everything into program object
@@ -824,21 +810,21 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeRendering_SkyStage()
         _skyStage.vs.id,
         _skyStage.fs.id
     };
-    _skyStage.program = linkProgram(2, shaders);
+    _skyStage.program = renderAPI->linkProgram(2, shaders);
     assert(_skyStage.program != 0);
 
-    _programVariables.clear();
-    findVariableLocation(_skyStage.program, _skyStage.vs.in.vertexPosition, "in_vs_vertexPosition", In);
-    findVariableLocation(_skyStage.program, _skyStage.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", Uniform);
-    findVariableLocation(_skyStage.program, _skyStage.vs.param.halfSize, "param_vs_halfSize", Uniform);
-    findVariableLocation(_skyStage.program, _skyStage.fs.param.fogColor, "param_fs_fogColor", Uniform);
-    findVariableLocation(_skyStage.program, _skyStage.fs.param.skyColor, "param_fs_skyColor", Uniform);
-    findVariableLocation(_skyStage.program, _skyStage.fs.param.fogDensity, "param_fs_fogDensity", Uniform);
-    findVariableLocation(_skyStage.program, _skyStage.fs.param.fogHeightOriginFactor, "param_fs_fogHeightOriginFactor", Uniform);
-    _programVariables.clear();
+    renderAPI->clearVariablesLookup();
+    renderAPI->findVariableLocation(_skyStage.program, _skyStage.vs.in.vertexPosition, "in_vs_vertexPosition", RenderAPI_OpenGL::In);
+    renderAPI->findVariableLocation(_skyStage.program, _skyStage.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", RenderAPI_OpenGL::Uniform);
+    renderAPI->findVariableLocation(_skyStage.program, _skyStage.vs.param.halfSize, "param_vs_halfSize", RenderAPI_OpenGL::Uniform);
+    renderAPI->findVariableLocation(_skyStage.program, _skyStage.fs.param.fogColor, "param_fs_fogColor", RenderAPI_OpenGL::Uniform);
+    renderAPI->findVariableLocation(_skyStage.program, _skyStage.fs.param.skyColor, "param_fs_skyColor", RenderAPI_OpenGL::Uniform);
+    renderAPI->findVariableLocation(_skyStage.program, _skyStage.fs.param.fogDensity, "param_fs_fogDensity", RenderAPI_OpenGL::Uniform);
+    renderAPI->findVariableLocation(_skyStage.program, _skyStage.fs.param.fogHeightOriginFactor, "param_fs_fogHeightOriginFactor", RenderAPI_OpenGL::Uniform);
+    renderAPI->clearVariablesLookup();
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGL::renderFrame_SkyStage()
+void OsmAnd::AtlasMapRenderer_OpenGL::renderSkyStage()
 {
     GL_CHECK_PRESENT(glBindVertexArray);
     GL_CHECK_PRESENT(glUseProgram);
@@ -868,13 +854,13 @@ void OsmAnd::AtlasMapRenderer_OpenGL::renderFrame_SkyStage()
     GL_CHECK_RESULT;
 
     // Set fog and sky parameters
-    glUniform3f(_skyStage.fs.param.skyColor, _activeConfig.skyColor[0], _activeConfig.skyColor[1], _activeConfig.skyColor[2]);
+    glUniform3f(_skyStage.fs.param.skyColor, currentState.skyColor[0], currentState.skyColor[1], currentState.skyColor[2]);
     GL_CHECK_RESULT;
-    glUniform3f(_skyStage.fs.param.fogColor, _activeConfig.fogColor[0], _activeConfig.fogColor[1], _activeConfig.fogColor[2]);
+    glUniform3f(_skyStage.fs.param.fogColor, currentState.fogColor[0], currentState.fogColor[1], currentState.fogColor[2]);
     GL_CHECK_RESULT;
-    glUniform1f(_skyStage.fs.param.fogDensity, _activeConfig.fogDensity);
+    glUniform1f(_skyStage.fs.param.fogDensity, currentState.fogDensity);
     GL_CHECK_RESULT;
-    glUniform1f(_skyStage.fs.param.fogHeightOriginFactor, _activeConfig.fogHeightOriginFactor);
+    glUniform1f(_skyStage.fs.param.fogHeightOriginFactor, currentState.fogHeightOriginFactor);
     GL_CHECK_RESULT;
     
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
@@ -889,7 +875,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::renderFrame_SkyStage()
     GL_CHECK_RESULT;
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGL::releaseRendering_SkyStage()
+void OsmAnd::AtlasMapRenderer_OpenGL::releaseSkyStage()
 {
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteVertexArrays);

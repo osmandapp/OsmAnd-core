@@ -1,4 +1,4 @@
-#include "MapRenderer_OpenGLES2.h"
+#include "RenderAPI_OpenGLES2.h"
 
 #include <assert.h>
 
@@ -40,10 +40,10 @@
 #endif //!GL_RGB565_OES
 
 #if !defined(OSMAND_TARGET_OS_ios)
-OsmAnd::MapRenderer_OpenGLES2::P_glTexStorage2DEXT_PROC OsmAnd::MapRenderer_OpenGLES2::glTexStorage2DEXT = nullptr;
+OsmAnd::RenderAPI_OpenGLES2::P_glTexStorage2DEXT_PROC OsmAnd::RenderAPI_OpenGLES2::glTexStorage2DEXT = nullptr;
 #endif //!OSMAND_TARGET_OS_ios
 
-OsmAnd::MapRenderer_OpenGLES2::MapRenderer_OpenGLES2()
+OsmAnd::RenderAPI_OpenGLES2::RenderAPI_OpenGLES2()
     : glesExtensions(_glesExtensions)
     , isSupported_vertexShaderTextureLookup(_isSupported_vertexShaderTextureLookup)
     , isSupported_EXT_unpack_subimage(_isSupported_EXT_unpack_subimage)
@@ -53,11 +53,11 @@ OsmAnd::MapRenderer_OpenGLES2::MapRenderer_OpenGLES2()
 {
 }
 
-OsmAnd::MapRenderer_OpenGLES2::~MapRenderer_OpenGLES2()
+OsmAnd::RenderAPI_OpenGLES2::~RenderAPI_OpenGLES2()
 {
 }
 
-GLenum OsmAnd::MapRenderer_OpenGLES2::validateResult()
+GLenum OsmAnd::RenderAPI_OpenGLES2::validateResult()
 {
     auto result = glGetError();
     if(result == GL_NO_ERROR)
@@ -90,11 +90,11 @@ GLenum OsmAnd::MapRenderer_OpenGLES2::validateResult()
     return result;
 }
 
-bool OsmAnd::MapRenderer_OpenGLES2::initializeRendering()
+bool OsmAnd::RenderAPI_OpenGLES2::doInitializeRendering()
 {
     bool ok;
 
-    ok = MapRenderer_BaseOpenGL::initializeRendering();
+    ok = MapRenderer_OpenGL_Base::doInitializeRendering();
     if(!ok)
         return false;
 
@@ -169,18 +169,7 @@ bool OsmAnd::MapRenderer_OpenGLES2::initializeRendering()
     return true;
 }
 
-bool OsmAnd::MapRenderer_OpenGLES2::releaseRendering()
-{
-    bool ok;
-
-    ok = MapRenderer_BaseOpenGL::releaseRendering();
-    if(!ok)
-        return false;
-
-    return true;
-}
-
-void OsmAnd::MapRenderer_OpenGLES2::wrapper_glTexStorage2D( GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType )
+void OsmAnd::RenderAPI_OpenGLES2::wrapper_glTexStorage2D( GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType )
 {
     if(_isSupported_EXT_texture_storage)
     {
@@ -247,7 +236,7 @@ void OsmAnd::MapRenderer_OpenGLES2::wrapper_glTexStorage2D( GLenum target, GLsiz
     }
 }
 
-void OsmAnd::MapRenderer_OpenGLES2::wrapperEx_glTexSubImage2D(
+void OsmAnd::RenderAPI_OpenGLES2::wrapperEx_glTexSubImage2D(
     GLenum target,
     GLint level,
     GLint xoffset,

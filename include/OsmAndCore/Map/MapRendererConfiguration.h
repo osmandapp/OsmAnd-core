@@ -19,27 +19,48 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __OPENGL_BASE_UTILITIES_H_
-#define __OPENGL_BASE_UTILITIES_H_
+#ifndef __MAP_RENDERER_CONFIGURATION_H_
+#define __MAP_RENDERER_CONFIGURATION_H_
 
 #include <stdint.h>
 #include <memory>
-
-#include <glm/glm.hpp>
+#include <functional>
+#include <array>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 
-
 namespace OsmAnd {
 
-    namespace Utilities_BaseOpenGL
+    class IMapRenderer;
+    class MapRenderer;
+    struct OSMAND_CORE_API MapRendererConfiguration
     {
-        OSMAND_CORE_API float OSMAND_CORE_CALL calculateCameraDistance( const glm::mat4& P, const AreaI& viewport, const float& Ax, const float& Sx, const float& k );
-        OSMAND_CORE_API bool OSMAND_CORE_CALL rayIntersectPlane( const glm::vec3& planeN, const glm::vec3& planeO, const glm::vec3& rayD, const glm::vec3& rayO, float& distance );
-        OSMAND_CORE_API bool OSMAND_CORE_CALL lineSegmentIntersectPlane( const glm::vec3& planeN, const glm::vec3& planeO, const glm::vec3& line0, const glm::vec3& line1, glm::vec3& lineX );
-    }
+        MapRendererConfiguration();
+        ~MapRendererConfiguration();
+
+        typedef std::function<void ()> FrameRequestCallback;
+
+        typedef std::function<void ()> BackgroundWorkerPrologue;
+        typedef std::function<void ()> BackgroundWorkerEpilogue;
+
+        float displayDensityFactor;
+
+        bool textureAtlasesAllowed;
+        uint32_t heightmapPatchesPerSide;
+
+        struct {
+            bool enabled;
+            BackgroundWorkerPrologue prologue;
+            BackgroundWorkerEpilogue epilogue;
+        } backgroundWorker;
+
+        FrameRequestCallback frameRequestCallback;
+
+    friend class OsmAnd::IMapRenderer;
+    friend class OsmAnd::MapRenderer;
+    };
 
 }
 
-#endif // __OPENGL_BASE_UTILITIES_H_
+#endif // __MAP_RENDERER_CONFIGURATION_H_

@@ -14,7 +14,7 @@
 #include <SkStream.h>
 #include <SkImageDecoder.h>
 
-OsmAnd::OnlineMapRasterTileProvider::OnlineMapRasterTileProvider(const QString& id_, const QString& urlPattern_, uint32_t maxZoom_ /*= 31*/, uint32_t minZoom_ /*= 0*/, uint32_t maxConcurrentDownloads_ /*= 1*/, uint32_t tileDimension_ /*= 256*/)
+OsmAnd::OnlineMapRasterTileProvider::OnlineMapRasterTileProvider(const QString& id_, const QString& urlPattern_, const ZoomLevel& maxZoom_ /*= 31*/, const ZoomLevel& minZoom_ /*= 0*/, uint32_t maxConcurrentDownloads_ /*= 1*/, uint32_t tileDimension_ /*= 256*/)
     : _processingMutex(QMutex::Recursive)
     , _currentDownloadsCount(0)
     , _localCachePath(new QDir(QDir::current()))
@@ -47,14 +47,14 @@ void OsmAnd::OnlineMapRasterTileProvider::setNetworkAccessPermission( bool allow
     _networkAccessAllowed = allowed;
 }
 
-bool OsmAnd::OnlineMapRasterTileProvider::obtainTileImmediate( const TileId& tileId, uint32_t zoom, std::shared_ptr<IMapTileProvider::Tile>& tile )
+bool OsmAnd::OnlineMapRasterTileProvider::obtainTileImmediate( const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<IMapTileProvider::Tile>& tile )
 {
     // Raster tiles are not available immediately, since none of them are stored in memory unless they are just
     // downloaded. In that case, a callback will be called
     return false;
 }
 
-void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const TileId& tileId, uint32_t zoom, TileReadyCallback readyCallback )
+void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback )
 {
     assert(readyCallback != nullptr);
 
@@ -176,7 +176,7 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const TileId& tile
         }));
 }
 
-void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const QUrl& url, const TileId& tileId, uint32_t zoom, TileReadyCallback readyCallback )
+void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const QUrl& url, const TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback )
 {
     if(!_networkAccessAllowed)
         return;
@@ -231,7 +231,7 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const QUrl& url, c
         }));
 }
 
-void OsmAnd::OnlineMapRasterTileProvider::replyFinishedHandler( QNetworkReply* reply, const TileId& tileId, uint32_t zoom, TileReadyCallback readyCallback, QEventLoop& eventLoop, QNetworkAccessManager& networkAccessManager )
+void OsmAnd::OnlineMapRasterTileProvider::replyFinishedHandler( QNetworkReply* reply, const TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback, QEventLoop& eventLoop, QNetworkAccessManager& networkAccessManager )
 {
     auto redirectUrl = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
     if(!redirectUrl.isEmpty())
@@ -271,7 +271,7 @@ void OsmAnd::OnlineMapRasterTileProvider::replyFinishedHandler( QNetworkReply* r
     eventLoop.exit();
 }
 
-void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* reply, const TileId& tileId, uint32_t zoom, TileReadyCallback readyCallback )
+void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* reply, const TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback )
 {
     const auto& subPath = id + QDir::separator() +
         QString::number(zoom) + QDir::separator() +
@@ -388,13 +388,13 @@ OsmAnd::OnlineMapRasterTileProvider::Tile::~Tile()
 std::shared_ptr<OsmAnd::IMapTileProvider> OsmAnd::OnlineMapRasterTileProvider::createMapnikProvider()
 {
     auto provider = new OsmAnd::OnlineMapRasterTileProvider(
-        "mapnik", "http://mapnik.osmand.net/${zoom}/${x}/${y}.png", 0, 18, 2);
+        "mapnik", "http://mapnik.osmand.net/${zoom}/${x}/${y}.png", ZoomLevel0, ZoomLevel18, 2);
     return std::shared_ptr<OsmAnd::IMapTileProvider>(static_cast<OsmAnd::IMapTileProvider*>(provider));
 }
 
 std::shared_ptr<OsmAnd::IMapTileProvider> OsmAnd::OnlineMapRasterTileProvider::createCycleMapProvider()
 {
     auto provider = new OsmAnd::OnlineMapRasterTileProvider(
-        "cyclemap", "http://b.tile.opencyclemap.org/cycle/${zoom}/${x}/${y}.png", 0, 18, 2);
+        "cyclemap", "http://b.tile.opencyclemap.org/cycle/${zoom}/${x}/${y}.png", ZoomLevel0, ZoomLevel18, 2);
     return std::shared_ptr<OsmAnd::IMapTileProvider>(static_cast<OsmAnd::IMapTileProvider*>(provider));
 }

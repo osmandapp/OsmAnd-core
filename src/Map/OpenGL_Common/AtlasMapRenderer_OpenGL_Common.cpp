@@ -1,4 +1,4 @@
-#include "AtlasMapRenderer_OpenGL_Base.h"
+#include "AtlasMapRenderer_OpenGL_Common.h"
 
 #include <assert.h>
 
@@ -16,35 +16,35 @@
 #include "IMapElevationDataProvider.h"
 #include "OsmAndCore/Logging.h"
 #include "OsmAndCore/Utilities.h"
-#include "OpenGL_Base/Utilities_OpenGL_Base.h"
+#include "OpenGL_Common/Utilities_OpenGL_Common.h"
 
-OsmAnd::AtlasMapRenderer_BaseOpenGL::AtlasMapRenderer_BaseOpenGL()
+OsmAnd::AtlasMapRenderer_OpenGL_Common::AtlasMapRenderer_OpenGL_Common()
     : _zNear(0.1f)
 {
 }
 
-OsmAnd::AtlasMapRenderer_BaseOpenGL::~AtlasMapRenderer_BaseOpenGL()
+OsmAnd::AtlasMapRenderer_OpenGL_Common::~AtlasMapRenderer_OpenGL_Common()
 {
 }
 
-float OsmAnd::AtlasMapRenderer_BaseOpenGL::getReferenceTileSizeOnScreen()
+float OsmAnd::AtlasMapRenderer_OpenGL_Common::getReferenceTileSizeOnScreen()
 {
-    const auto& rasterMapProvider = _pendingConfig.tileProviders[RasterMap];
+    const auto& rasterMapProvider = currentState.tileProviders[RasterMap];
     if(!rasterMapProvider)
         return std::numeric_limits<float>::quiet_NaN();
 
     auto tileProvider = static_cast<IMapBitmapTileProvider*>(rasterMapProvider.get());
-    return tileProvider->getTileSize() * (_pendingConfig.displayDensityFactor / tileProvider->getTileDensity());
+    return tileProvider->getTileSize() * (configuration.displayDensityFactor / tileProvider->getTileDensity());
 }
 
-float OsmAnd::AtlasMapRenderer_BaseOpenGL::getScaledTileSizeOnScreen()
+float OsmAnd::AtlasMapRenderer_OpenGL_Common::getScaledTileSizeOnScreen()
 {
     return getReferenceTileSizeOnScreen() * _tileScaleFactor;
 }
 
-void OsmAnd::AtlasMapRenderer_BaseOpenGL::validateTileLayerCache( const TileLayerId& layer )
+void OsmAnd::AtlasMapRenderer_OpenGL_Common::validateLayer( const MapTileLayerId& layer )
 {
-    IMapRenderer::validateTileLayerCache(layer);
+    MapRenderer::validateLayer(layer);
 
     if(layer == ElevationData)
     {
@@ -54,16 +54,20 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::validateTileLayerCache( const TileLaye
     }
 }
 
-void OsmAnd::AtlasMapRenderer_BaseOpenGL::updateConfiguration()
+bool OsmAnd::AtlasMapRenderer_OpenGL_Common::updateCurrentState()
 {
-    BaseAtlasMapRenderer::updateConfiguration();
+    bool ok;
+    ok = AtlasMapRenderer::updateCurrentState();
+    if(!ok)
+        return false;
 
     // Prepare values for projection matrix
-    _aspectRatio = static_cast<float>(_activeConfig.viewport.width());
-    auto viewportHeight = _activeConfig.viewport.height();
-    if(viewportHeight > 0)
-        _aspectRatio /= static_cast<float>(viewportHeight);
-    _fovInRadians = qDegreesToRadians(_activeConfig.fieldOfView);
+    const auto viewportWidth = currentState.viewport.width();
+    const auto viewportHeight = currentState.viewport.height();
+    if(viewportWidth == 0 || viewportHeight == 0)
+        return false;
+    _aspectRatio = static_cast<float>(viewportWidth) / static_cast<float>(viewportHeight);
+    _fovInRadians = qDegreesToRadians(currentState.fieldOfView);
     _projectionPlaneHalfHeight = _zNear * _fovInRadians;
     _projectionPlaneHalfWidth = _projectionPlaneHalfHeight * _aspectRatio;
 
@@ -72,40 +76,40 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::updateConfiguration()
 
     // Calculate limits of camera distance to target and actual distance
     const float& screenTile = getReferenceTileSizeOnScreen();
-    _nearDistanceFromCameraToTarget = Utilities_BaseOpenGL::calculateCameraDistance(_mProjection, _activeConfig.viewport, TileSide3D / 2.0f, screenTile / 2.0f, 1.5f);
-    _baseDistanceFromCameraToTarget = Utilities_BaseOpenGL::calculateCameraDistance(_mProjection, _activeConfig.viewport, TileSide3D / 2.0f, screenTile / 2.0f, 1.0f);
-    _farDistanceFromCameraToTarget = Utilities_BaseOpenGL::calculateCameraDistance(_mProjection, _activeConfig.viewport, TileSide3D / 2.0f, screenTile / 2.0f, 0.75f);
+    _nearDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(_mProjection, currentState.viewport, TileSide3D / 2.0f, screenTile / 2.0f, 1.5f);
+    _baseDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(_mProjection, currentState.viewport, TileSide3D / 2.0f, screenTile / 2.0f, 1.0f);
+    _farDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(_mProjection, currentState.viewport, TileSide3D / 2.0f, screenTile / 2.0f, 0.75f);
 
     // zoomFraction == [ 0.0 ... 0.5] scales tile [1.0x ... 1.5x]
     // zoomFraction == [-0.5 ...-0.0] scales tile [.75x ... 1.0x]
-    if(_activeConfig.zoomFraction >= 0.0f)
-        _distanceFromCameraToTarget = _baseDistanceFromCameraToTarget - (_baseDistanceFromCameraToTarget - _nearDistanceFromCameraToTarget) * (2.0f * _activeConfig.zoomFraction);
+    if(currentState.zoomFraction >= 0.0f)
+        _distanceFromCameraToTarget = _baseDistanceFromCameraToTarget - (_baseDistanceFromCameraToTarget - _nearDistanceFromCameraToTarget) * (2.0f * currentState.zoomFraction);
     else
-        _distanceFromCameraToTarget = _baseDistanceFromCameraToTarget - (_farDistanceFromCameraToTarget - _baseDistanceFromCameraToTarget) * (2.0f * _activeConfig.zoomFraction);
-    _groundDistanceFromCameraToTarget = _distanceFromCameraToTarget * qCos(qDegreesToRadians(_activeConfig.elevationAngle));
-    _tileScaleFactor = ((_activeConfig.zoomFraction >= 0.0f) ? (1.0f + _activeConfig.zoomFraction) : (1.0f + 0.5f * _activeConfig.zoomFraction));
+        _distanceFromCameraToTarget = _baseDistanceFromCameraToTarget - (_farDistanceFromCameraToTarget - _baseDistanceFromCameraToTarget) * (2.0f * currentState.zoomFraction);
+    _groundDistanceFromCameraToTarget = _distanceFromCameraToTarget * qCos(qDegreesToRadians(currentState.elevationAngle));
+    _tileScaleFactor = ((currentState.zoomFraction >= 0.0f) ? (1.0f + currentState.zoomFraction) : (1.0f + 0.5f * currentState.zoomFraction));
     _scaleToRetainProjectedSize = _distanceFromCameraToTarget / _baseDistanceFromCameraToTarget;
 
     // Recalculate projection with obtained value
-    _zSkyplane = _activeConfig.fogDistance * _scaleToRetainProjectedSize + _distanceFromCameraToTarget;
+    _zSkyplane = currentState.fogDistance * _scaleToRetainProjectedSize + _distanceFromCameraToTarget;
     _zFar = glm::length(glm::vec3(_projectionPlaneHalfWidth * (_zSkyplane / _zNear), _projectionPlaneHalfHeight * (_zSkyplane / _zNear), _zSkyplane));
     _mProjection = glm::frustum(-_projectionPlaneHalfWidth, _projectionPlaneHalfWidth, -_projectionPlaneHalfHeight, _projectionPlaneHalfHeight, _zNear, _zFar);
     _mProjectionInv = glm::inverse(_mProjection);
 
     // Setup camera
     _mDistance = glm::translate(0.0f, 0.0f, -_distanceFromCameraToTarget);
-    _mElevation = glm::rotate(_activeConfig.elevationAngle, glm::vec3(1.0f, 0.0f, 0.0f));
-    _mAzimuth = glm::rotate(_activeConfig.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
+    _mElevation = glm::rotate(currentState.elevationAngle, glm::vec3(1.0f, 0.0f, 0.0f));
+    _mAzimuth = glm::rotate(currentState.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
     _mView = _mDistance * _mElevation * _mAzimuth;
 
     // Get inverse camera
     _mDistanceInv = glm::translate(0.0f, 0.0f, _distanceFromCameraToTarget);
-    _mElevationInv = glm::rotate(-_activeConfig.elevationAngle, glm::vec3(1.0f, 0.0f, 0.0f));
-    _mAzimuthInv = glm::rotate(-_activeConfig.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
+    _mElevationInv = glm::rotate(-currentState.elevationAngle, glm::vec3(1.0f, 0.0f, 0.0f));
+    _mAzimuthInv = glm::rotate(-currentState.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
     _mViewInv = _mAzimuthInv * _mElevationInv * _mDistanceInv;
 
     // Correct fog distance
-    _correctedFogDistance = _activeConfig.fogDistance * _scaleToRetainProjectedSize + (_distanceFromCameraToTarget - _groundDistanceFromCameraToTarget);
+    _correctedFogDistance = currentState.fogDistance * _scaleToRetainProjectedSize + (_distanceFromCameraToTarget - _groundDistanceFromCameraToTarget);
 
     // Calculate skyplane size
     float zSkyplaneK = _zSkyplane / _zNear;
@@ -113,34 +117,16 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::updateConfiguration()
     _skyplaneHalfSize.y = zSkyplaneK * _projectionPlaneHalfHeight;
 
     // Update mipmap K
-    _mipmapK = static_cast<float>(_activeConfig.viewport.height()) / (4.6f * _activeConfig.displayDensityFactor);
+    _mipmapK = static_cast<float>(viewportHeight) / (4.6f * configuration.displayDensityFactor);
 
     // Compute visible tileset
     computeVisibleTileset();
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
+void OsmAnd::AtlasMapRenderer_OpenGL_Common::computeVisibleTileset()
 {
-    // Get target tile
-    _targetTile.x = _activeConfig.target31.x >> (31 - _activeConfig.zoomBase);
-    _targetTile.y = _activeConfig.target31.y >> (31 - _activeConfig.zoomBase);
-
-    // Compute in-tile offset
-    if(_activeConfig.zoomBase == 31)
-    {
-        _targetInTilePosN.x = 0;
-        _targetInTilePosN.y = 0;
-    }
-    else
-    {
-        PointI tileOrigin31;
-        tileOrigin31.x = _targetTile.x << (31 - _activeConfig.zoomBase);
-        tileOrigin31.y = _targetTile.y << (31 - _activeConfig.zoomBase);
-        auto tileWidth31 = (1u << (31 - _activeConfig.zoomBase)) - 1;
-        _targetInTilePosN.x = static_cast<double>(_activeConfig.target31.x - tileOrigin31.x) / tileWidth31;
-        _targetInTilePosN.y = static_cast<double>(_activeConfig.target31.y - tileOrigin31.y) / tileWidth31;
-    }
-    
     // 4 points of frustum near clipping box in camera coordinate space
     const glm::vec4 nTL_c(-_projectionPlaneHalfWidth, +_projectionPlaneHalfHeight, -_zNear, 1.0f);
     const glm::vec4 nTR_c(+_projectionPlaneHalfWidth, +_projectionPlaneHalfHeight, -_zNear, 1.0f);
@@ -173,42 +159,42 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
     glm::vec3 intersectionPoint;
     glm::vec2 intersectionPoints[4];
 
-    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, nBL_g.xyz(), fBL_g.xyz(), intersectionPoint))
+    if(intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nBL_g.xyz, fBL_g.xyz, intersectionPoint))
     {
         intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
         intersectionPointsCounter++;
     }
-    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, nBR_g.xyz(), fBR_g.xyz(), intersectionPoint))
+    if(intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nBR_g.xyz, fBR_g.xyz, intersectionPoint))
     {
         intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
         intersectionPointsCounter++;
     }
-    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, nTR_g.xyz(), fTR_g.xyz(), intersectionPoint))
+    if(intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTR_g.xyz, fTR_g.xyz, intersectionPoint))
     {
         intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
         intersectionPointsCounter++;
     }
-    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, nTL_g.xyz(), fTL_g.xyz(), intersectionPoint))
+    if(intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTL_g.xyz, fTL_g.xyz, intersectionPoint))
     {
         intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
         intersectionPointsCounter++;
     }
-    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, fTR_g.xyz(), fBR_g.xyz(), intersectionPoint))
+    if(intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, fTR_g.xyz, fBR_g.xyz, intersectionPoint))
     {
         intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
         intersectionPointsCounter++;
     }
-    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, fTL_g.xyz(), fBL_g.xyz(), intersectionPoint))
+    if(intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, fTL_g.xyz, fBL_g.xyz, intersectionPoint))
     {
         intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
         intersectionPointsCounter++;
     }
-    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, nTR_g.xyz(), nBR_g.xyz(), intersectionPoint))
+    if(intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTR_g.xyz, nBR_g.xyz, intersectionPoint))
     {
         intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
         intersectionPointsCounter++;
     }
-    if(intersectionPointsCounter < 4 && Utilities_BaseOpenGL::lineSegmentIntersectPlane(planeN, planeO, nTL_g.xyz(), nBL_g.xyz(), intersectionPoint))
+    if(intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTL_g.xyz, nBL_g.xyz, intersectionPoint))
     {
         intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
         intersectionPointsCounter++;
@@ -228,15 +214,15 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
     const auto& ip = intersectionPoints;
     const PointF p[4] =
     {
-        PointF(ip[0].x + _targetInTilePosN.x, ip[0].y + _targetInTilePosN.y),
-        PointF(ip[1].x + _targetInTilePosN.x, ip[1].y + _targetInTilePosN.y),
-        PointF(ip[2].x + _targetInTilePosN.x, ip[2].y + _targetInTilePosN.y),
-        PointF(ip[3].x + _targetInTilePosN.x, ip[3].y + _targetInTilePosN.y),
+        PointF(ip[0].x + _targetInTileOffsetN.x, ip[0].y + _targetInTileOffsetN.y),
+        PointF(ip[1].x + _targetInTileOffsetN.x, ip[1].y + _targetInTileOffsetN.y),
+        PointF(ip[2].x + _targetInTileOffsetN.x, ip[2].y + _targetInTileOffsetN.y),
+        PointF(ip[3].x + _targetInTileOffsetN.x, ip[3].y + _targetInTileOffsetN.y),
     };
 
     //NOTE: so far scanline does not work exactly as expected, so temporary switch to old implementation
     {
-        _visibleTiles.clear();
+        QSet<TileId> visibleTiles;
         PointI p0(qFloor(p[0].x), qFloor(p[0].y));
         PointI p1(qFloor(p[1].x), qFloor(p[1].y));
         PointI p2(qFloor(p[2].x), qFloor(p[2].y));
@@ -251,15 +237,17 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
             for(auto y = yMin; y <= yMax; y++)
             {
                 TileId tileId;
-                tileId.x = x + _targetTile.x;
-                tileId.y = y + _targetTile.y;
+                tileId.x = x + _targetTileId.x;
+                tileId.y = y + _targetTileId.y;
 
-                _visibleTiles.insert(tileId);
+                visibleTiles.insert(tileId);
             }
         }
+
+        _visibleTiles = visibleTiles.toList();
     }
     /*
-    // Find visible tiles using scanline fill
+    //TODO: Find visible tiles using scanline fill
     _visibleTiles.clear();
     Utilities::scanlineFillPolygon(4, &p[0],
         [this, pC](const PointI& point)
@@ -273,28 +261,28 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::computeVisibleTileset()
     */
 }
 
-bool OsmAnd::AtlasMapRenderer_BaseOpenGL::initializeRendering()
+bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doInitializeRendering()
 {
     createTilePatch();
 
     return true;
 }
 
-bool OsmAnd::AtlasMapRenderer_BaseOpenGL::releaseRendering()
+bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doReleaseRendering()
 {
     releaseTilePatch();
 
     return true;
 }
 
-void OsmAnd::AtlasMapRenderer_BaseOpenGL::createTilePatch()
+void OsmAnd::AtlasMapRenderer_OpenGL_Common::createTilePatch()
 {
     MapTileVertex* pVertices = nullptr;
     uint32_t verticesCount = 0;
     GLushort* pIndices = nullptr;
     uint32_t indicesCount = 0;
     
-    if(!_activeConfig.tileProviders[ElevationData])
+    if(!currentState.tileProviders[ElevationData])
     {
         // Simple tile patch, that consists of 4 vertices
 
@@ -321,13 +309,13 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::createTilePatch()
     }
     else
     {
-        // Complex tile patch, consisting of (TileElevationNodesPerSide*TileElevationNodesPerSide) number of
+        // Complex tile patch, that consists of (TileElevationNodesPerSide*TileElevationNodesPerSide) number of
         // height clusters. Height cluster itself consists of 4 vertices, 6 indices and 2 polygons
-        const GLfloat clusterSize = static_cast<GLfloat>(TileSide3D) / static_cast<float>(_activeConfig.heightmapPatchesPerSide);
-        const auto verticesPerLine = _activeConfig.heightmapPatchesPerSide + 1;
+        const GLfloat clusterSize = static_cast<GLfloat>(TileSide3D) / static_cast<float>(configuration.heightmapPatchesPerSide);
+        const auto verticesPerLine = configuration.heightmapPatchesPerSide + 1;
         verticesCount = verticesPerLine * verticesPerLine;
         pVertices = new MapTileVertex[verticesCount];
-        indicesCount = (_activeConfig.heightmapPatchesPerSide * _activeConfig.heightmapPatchesPerSide) * 6;
+        indicesCount = (configuration.heightmapPatchesPerSide * configuration.heightmapPatchesPerSide) * 6;
         pIndices = new GLushort[indicesCount];
 
         MapTileVertex* pV = pVertices;
@@ -340,16 +328,16 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::createTilePatch()
                 pV->position[0] = static_cast<float>(col) * clusterSize;
                 pV->position[1] = static_cast<float>(row) * clusterSize;
 
-                pV->uv[0] = static_cast<float>(col) / static_cast<float>(_activeConfig.heightmapPatchesPerSide);
-                pV->uv[1] = static_cast<float>(row) / static_cast<float>(_activeConfig.heightmapPatchesPerSide);
+                pV->uv[0] = static_cast<float>(col) / static_cast<float>(configuration.heightmapPatchesPerSide);
+                pV->uv[1] = static_cast<float>(row) / static_cast<float>(configuration.heightmapPatchesPerSide);
             }
         }
 
         // Form indices
         GLushort* pI = pIndices;
-        for(auto row = 0u; row < _activeConfig.heightmapPatchesPerSide; row++)
+        for(auto row = 0u; row < configuration.heightmapPatchesPerSide; row++)
         {
-            for(auto col = 0u; col < _activeConfig.heightmapPatchesPerSide; col++)
+            for(auto col = 0u; col < configuration.heightmapPatchesPerSide; col++)
             {
                 // p1 - top left
                 // p2 - bottom left
@@ -377,9 +365,14 @@ void OsmAnd::AtlasMapRenderer_BaseOpenGL::createTilePatch()
     
     allocateTilePatch(pVertices, verticesCount, pIndices, indicesCount);
 
-    if(_activeConfig.tileProviders[ElevationData])
+    if(currentState.tileProviders[ElevationData])
     {
         delete[] pVertices;
         delete[] pIndices;
     }
+}
+
+OsmAnd::RenderAPI_OpenGL_Common* OsmAnd::AtlasMapRenderer_OpenGL_Common::getRenderAPI() const
+{
+    return static_cast<OsmAnd::RenderAPI_OpenGL_Common*>(renderAPI.get());
 }

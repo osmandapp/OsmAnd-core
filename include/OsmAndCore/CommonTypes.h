@@ -321,6 +321,48 @@ namespace OsmAnd
     static_assert(sizeof(TileId) == 8, "TileId must be 8 bytes in size");
 #endif
 
+    WEAK_ENUM_EX(ZoomLevel, int32_t)
+    {
+        ZoomLevel0 = 0,
+        ZoomLevel1,
+        ZoomLevel2,
+        ZoomLevel3,
+        ZoomLevel4,
+        ZoomLevel5,
+        ZoomLevel6,
+        ZoomLevel7,
+        ZoomLevel8,
+        ZoomLevel9,
+        ZoomLevel10,
+        ZoomLevel11,
+        ZoomLevel12,
+        ZoomLevel13,
+        ZoomLevel14,
+        ZoomLevel15,
+        ZoomLevel16,
+        ZoomLevel17,
+        ZoomLevel18,
+        ZoomLevel19,
+        ZoomLevel20,
+        ZoomLevel21,
+        ZoomLevel22,
+        ZoomLevel23,
+        ZoomLevel24,
+        ZoomLevel25,
+        ZoomLevel26,
+        ZoomLevel27,
+        ZoomLevel28,
+        ZoomLevel29,
+        ZoomLevel30,
+        ZoomLevel31 = 31,
+
+        InvalidZoom = -1,
+        MinZoomLevel = ZoomLevel0,
+        MaxZoomLevel = ZoomLevel31,
+    };
+    enum {
+        ZoomLevelsCount = static_cast<unsigned>(ZoomLevel::MaxZoomLevel) + 1u
+    };
 }
 
 #endif // __COMMON_TYPES_H_

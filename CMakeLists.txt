@@ -14,8 +14,8 @@ endif()
 
 # 3D rendering: OpenGL, OpenGLES2, Direct3D
 if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "windows" OR CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android")
-	file(GLOB_RECURSE sources_opengl_base "src/Map/OpenGL_Base/*.c*")
-	file(GLOB_RECURSE headers_opengl_base "src/Map/OpenGL_Base/*.h*")
+	file(GLOB_RECURSE sources_opengl_common "src/Map/OpenGL_Common/*.c*")
+	file(GLOB_RECURSE headers_opengl_common "src/Map/OpenGL_Common/*.h*")
 	set(target_specific_public_definitions ${target_specific_public_definitions}
 		-DGLM_SWIZZLE
 	)
@@ -23,8 +23,8 @@ if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAK
 		"${OSMAND_ROOT}/core/externals/glm/upstream.patched"
 	)
 	set(target_specific_sources ${target_specific_sources}
-		${headers_opengl_base}
-		${sources_opengl_base}
+		${headers_opengl_common}
+		${sources_opengl_common}
 	)
 endif()
 if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "windows")

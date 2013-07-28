@@ -70,8 +70,8 @@ namespace OsmAnd {
         virtual uint32_t getTileSize() const;
         virtual uint32_t getMaxResolutionPatchesCount() const;
 
-        virtual bool obtainTileImmediate(const OsmAnd::TileId& tileId, uint32_t zoom, std::shared_ptr<IMapTileProvider::Tile>& tile);
-        virtual void obtainTileDeffered(const OsmAnd::TileId& tileId, uint32_t zoom, TileReadyCallback readyCallback);
+        virtual bool obtainTileImmediate(const OsmAnd::TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<IMapTileProvider::Tile>& tile);
+        virtual void obtainTileDeffered(const OsmAnd::TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback);
     };
 
 }

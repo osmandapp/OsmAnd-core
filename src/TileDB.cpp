@@ -167,7 +167,7 @@ bool OsmAnd::TileDB::rebuildIndex()
     return true;
 }
 
-bool OsmAnd::TileDB::obtainTileData( const TileId& tileId, const uint32_t& zoom, QByteArray& data )
+bool OsmAnd::TileDB::obtainTileData( const TileId& tileId, const ZoomLevel& zoom, QByteArray& data )
 {
     QMutexLocker scopeLock(&_indexMutex);
 
@@ -215,7 +215,7 @@ bool OsmAnd::TileDB::obtainTileData( const TileId& tileId, const uint32_t& zoom,
         query.prepare("SELECT data FROM tiles WHERE x=? AND y=? AND zoom=?");
         query.addBindValue(tileId.x);
         query.addBindValue(tileId.y);
-        query.addBindValue(zoom);
+        query.addBindValue(static_cast<int>(zoom));
         if(query.exec() && query.next())
         {
             data = query.value(0).toByteArray();

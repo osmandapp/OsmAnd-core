@@ -70,6 +70,18 @@
 #   define OSMAND_CORE_API
 #endif
 
+#if !defined(SWIG)
+#   define STRONG_ENUM(name) enum class name
+#   define STRONG_ENUM_EX(name, basetype) enum class name : basetype
+#   define WEAK_ENUM(name) enum name
+#   define WEAK_ENUM_EX(name, basetype) enum name : basetype
+#else
+#   define STRONG_ENUM(name) enum name
+#   define STRONG_ENUM_EX(name, basetype) enum name
+#   define WEAK_ENUM(name) enum name
+#   define WEAK_ENUM_EX(name, basetype) enum name
+#endif
+
 namespace OsmAnd {
     OSMAND_CORE_API void OSMAND_CORE_CALL InitializeCore();
     OSMAND_CORE_API void OSMAND_CORE_CALL ReleaseCore();

@@ -19,8 +19,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __MAP_RENDERER_OPENGL_BASE_H_
-#define __MAP_RENDERER_OPENGL_BASE_H_
+#ifndef __RENDER_API__OPENGL_BASE_H_
+#define __RENDER_API__OPENGL_BASE_H_
 
 #include <stdint.h>
 #include <memory>
@@ -54,12 +54,15 @@
 #include <glm/glm.hpp>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/CommonTypes.h>
-#include <IMapRenderer.h>
+#include <CommonTypes.h>
+#include <RenderAPI.h>
+#include <MapRendererTileLayer.h>
 
 #if defined(_DEBUG) || defined(DEBUG)
-#   define GL_CHECK_RESULT validateResult()
-#   define GL_GET_RESULT validateResult()
+#   define GL_CHECK_RESULT \
+        static_cast<RenderAPI_OpenGL_Common*>(this->renderAPI.get())->validateResult()
+#   define GL_GET_RESULT \
+        static_cast<RenderAPI_OpenGL_Common*>(this->renderAPI.get())->validateResult()
 #   define GL_CHECK_PRESENT(x)                                                                     \
         {                                                                                          \
             static bool __checked_presence_of_##x = std::is_function<decltype(x)>::value;          \
@@ -76,58 +79,65 @@
 #endif
 
 #if defined(OSMAND_OPENGLES2_RENDERER_SUPPORTED)
-#   ifndef GL_UNPACK_ROW_LENGTH
+#   if !defined(GL_UNPACK_ROW_LENGTH)
 #       define GL_UNPACK_ROW_LENGTH              0x0CF2
 #   endif // !GL_UNPACK_ROW_LENGTH
-#   ifndef GL_UNPACK_SKIP_ROWS
+#   if !defined(GL_UNPACK_SKIP_ROWS)
 #       define GL_UNPACK_SKIP_ROWS               0x0CF3
 #   endif // !GL_UNPACK_SKIP_ROWS
-#   ifndef GL_UNPACK_SKIP_PIXELS
+#   if !defined(GL_UNPACK_SKIP_PIXELS)
 #       define GL_UNPACK_SKIP_PIXELS             0x0CF4
 #   endif // !GL_UNPACK_SKIP_PIXELS
+#   if !defined(GL_TEXTURE_MAX_LEVEL) && defined(OSMAND_TARGET_OS_ios)
+#       define GL_TEXTURE_MAX_LEVEL GL_TEXTURE_MAX_LEVEL_APPLE
+#   endif
 #endif // OSMAND_OPENGLES2_RENDERER_SUPPORTED
 
 namespace OsmAnd {
 
-    class OSMAND_CORE_API MapRenderer_BaseOpenGL : public virtual IMapRenderer
+    class OSMAND_CORE_API RenderAPI_OpenGL_Common : public RenderAPI
     {
     public:
-    private:
-    protected:
-        enum {
-            BaseBitmapAtlasTilePadding = 2,
-            MipmapLodLevelsMax = 4,
-        };
-
-        uint32_t _maxTextureSize;
-        
-        virtual GLenum validateResult() = 0;
-        virtual GLuint compileShader(GLenum shaderType, const char* source);
-        virtual GLuint linkProgram(GLuint shadersCount, GLuint *shaders);
-
-        virtual uint32_t getTextureFormatId(GLenum sourceFormat, GLenum sourcePixelDataType);
-        virtual void wrapper_glTexStorage2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType) = 0;
-        virtual void wrapperEx_glTexSubImage2D(GLenum target, GLint level,
-            GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
-            GLenum format, GLenum type,
-            const GLvoid *pixels, GLsizei rowLengthInPixels = 0);
-
-        virtual CachedTile* uploadTileToGPU(TileLayerId layerId, const TileId& tileId, uint32_t zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile);
-        virtual void releaseTileInGPU(CachedTile* tile);
-
         enum VariableType
         {
             In,
             Uniform
         };
+
+    private:
+        bool uploadTileAsTextureToGPU(const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr< IMapTileProvider::Tile >& tile, std::shared_ptr< ResourceInGPU >& resourceInGPU);
+    protected:
+        GLint _maxTextureSize;
         QMap< GLuint, QMultiMap< VariableType, GLint > > _programVariables;
+
+        virtual bool releaseResourceInGPU(const ResourceInGPU::Type& type, const RefInGPU& refInGPU);
+    public:
+        RenderAPI_OpenGL_Common();
+        virtual ~RenderAPI_OpenGL_Common();
+
+        enum {
+            BaseBitmapAtlasTilePadding = 2,
+            MipmapLodLevelsMax = 4,
+        };
+
+        const GLint& maxTextureSize;
+
+        virtual GLenum validateResult() = 0;
+        virtual GLuint compileShader(GLenum shaderType, const char* source);
+        virtual GLuint linkProgram(GLuint shadersCount, GLuint *shaders);
+
+        virtual void glTexStorage2D_wrapper(GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType) = 0;
+        virtual void glTexSubImage2D_wrapperEx(GLenum target, GLint level,
+            GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
+            GLenum format, GLenum type,
+            const GLvoid *pixels, GLsizei rowLengthInPixels = 0);
+
+        virtual void clearVariablesLookup();
         virtual void findVariableLocation(GLuint program, GLint& location, const QString& name, const VariableType& type);
 
-        MapRenderer_BaseOpenGL();
-    public:
-        virtual ~MapRenderer_BaseOpenGL();
+        virtual bool uploadTileToGPU(const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr< IMapTileProvider::Tile >& tile, std::shared_ptr< ResourceInGPU >& resourceInGPU);
     };
 
 }
 
-#endif // __MAP_RENDERER_OPENGL_BASE_H_
+#endif // __RENDER_API__OPENGL_BASE_H_

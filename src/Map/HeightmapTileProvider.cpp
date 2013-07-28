@@ -39,20 +39,20 @@ uint32_t OsmAnd::HeightmapTileProvider::getMaxResolutionPatchesCount() const
     return 257;
 }
 
-bool OsmAnd::HeightmapTileProvider::obtainTileImmediate( const TileId& tileId, uint32_t zoom, std::shared_ptr<IMapTileProvider::Tile>& tile )
+bool OsmAnd::HeightmapTileProvider::obtainTileImmediate( const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<IMapTileProvider::Tile>& tile )
 {
     // Heightmap tiles are not available immediately, since none of them are stored in memory unless they are just
     // downloaded. In that case, a callback will be called
     return false;
 }
 
-void OsmAnd::HeightmapTileProvider::obtainTileDeffered( const TileId& tileId, uint32_t zoom, TileReadyCallback readyCallback )
+void OsmAnd::HeightmapTileProvider::obtainTileDeffered( const TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback )
 {
     assert(readyCallback != nullptr);
 
     {
         QMutexLocker scopeLock(&_requestsMutex);
-        if(_requestedTileIds[zoom].contains(tileId))
+        if(_requestedTileIds[static_cast<unsigned>(zoom)].contains(tileId))
             return;
 
         _requestedTileIds[zoom].insert(tileId);

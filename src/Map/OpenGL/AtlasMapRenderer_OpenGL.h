@@ -29,16 +29,14 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OpenGL_Base/AtlasMapRenderer_OpenGL_Base.h>
-#include <OpenGL/MapRenderer_OpenGL.h>
+#include <OpenGL_Common/AtlasMapRenderer_OpenGL_Common.h>
+#include <OpenGL/RenderAPI_OpenGL.h>
 
 namespace OsmAnd {
 
     class MapDataCache;
 
-    class OSMAND_CORE_API AtlasMapRenderer_OpenGL
-        : public AtlasMapRenderer_BaseOpenGL
-        , public MapRenderer_OpenGL
+    class OSMAND_CORE_API AtlasMapRenderer_OpenGL : public AtlasMapRenderer_OpenGL_Common
     {
     protected:
         GLuint _tilePatchVAO;
@@ -81,7 +79,7 @@ namespace OsmAnd {
                         GLint tilePaddingN;
                         GLint slotsPerSide;
                         GLint slotIndex;
-                    } perTileLayer[IMapRenderer::TileLayerId::IdsCount];
+                    } perTileLayer[MapTileLayerIdsCount];
                 } param;
             } vs;
 
@@ -102,7 +100,7 @@ namespace OsmAnd {
                     {
                         GLint k;
                         GLint sampler;
-                    } perTileLayer[IMapRenderer::TileLayerId::IdsCount - IMapRenderer::TileLayerId::RasterMap];
+                    } perTileLayer[MapTileLayerIdsCount - MapTileLayerId::RasterMap];
                 } param;
             } fs;
         } _mapStage;
@@ -110,9 +108,9 @@ namespace OsmAnd {
         virtual void allocateTilePatch(MapTileVertex* vertices, size_t verticesCount, GLushort* indices, size_t indicesCount);
         virtual void releaseTilePatch();
 
-        void initializeRendering_MapStage();
-        void renderFrame_MapStage();
-        void releaseRendering_MapStage();
+        void initializeMapStage();
+        void renderMapStage();
+        void releaseMapStage();
 
         struct {
             GLuint vao;
@@ -151,16 +149,18 @@ namespace OsmAnd {
             } fs;
         } _skyStage;
         
-        void initializeRendering_SkyStage();
-        void renderFrame_SkyStage();
-        void releaseRendering_SkyStage();
+        void initializeSkyStage();
+        void renderSkyStage();
+        void releaseSkyStage();
+
+        virtual bool doInitializeRendering();
+        virtual bool doRenderFrame();
+        virtual bool doReleaseRendering();
+
+        virtual RenderAPI* allocateRenderAPI();
     public:
         AtlasMapRenderer_OpenGL();
         virtual ~AtlasMapRenderer_OpenGL();
-
-        virtual bool initializeRendering();
-        virtual bool renderFrame();
-        virtual bool releaseRendering();
     };
 
 }

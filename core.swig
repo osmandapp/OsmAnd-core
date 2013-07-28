@@ -24,6 +24,9 @@
 #include "OsmAndCore/Routing/RoutePlanner.h"
 #include "OsmAndCore/Routing/RoutePlannerContext.h"
 
+// To omit 'OsmAnd::' prefixes inside namespace itself, use that namespace
+using namespace OsmAnd;
+
 %}
 
 %include <typemaps.i>

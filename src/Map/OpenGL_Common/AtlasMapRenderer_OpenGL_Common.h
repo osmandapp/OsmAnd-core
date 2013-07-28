@@ -19,8 +19,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __ATLAS_MAP_RENDERER_OPENGL_BASE_H_
-#define __ATLAS_MAP_RENDERER_OPENGL_BASE_H_
+#ifndef __ATLAS_MAP_RENDERER_OPENGL_COMMON_H_
+#define __ATLAS_MAP_RENDERER_OPENGL_COMMON_H_
 
 #include <stdint.h>
 #include <memory>
@@ -29,18 +29,18 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <BaseAtlasMapRenderer.h>
-#include <OpenGL_Base/MapRenderer_OpenGL_Base.h>
+#include <AtlasMapRenderer.h>
+#include <OpenGL_Common/RenderAPI_OpenGL_Common.h>
 
 namespace OsmAnd {
 
-    class OSMAND_CORE_API AtlasMapRenderer_BaseOpenGL
-        : public virtual BaseAtlasMapRenderer
-        , public virtual MapRenderer_BaseOpenGL
+    class OSMAND_CORE_API AtlasMapRenderer_OpenGL_Common : public AtlasMapRenderer
     {
     public:
     private:
     protected:
+        AtlasMapRenderer_OpenGL_Common();
+
         glm::mat4 _mProjection;
         glm::mat4 _mProjectionInv;
         glm::mat4 _mView;
@@ -84,21 +84,21 @@ namespace OsmAnd {
         virtual void allocateTilePatch(MapTileVertex* vertices, size_t verticesCount, GLushort* indices, size_t indicesCount) = 0;
         virtual void releaseTilePatch() = 0;
         
-        virtual void validateTileLayerCache(const TileLayerId& layer);
+        virtual void validateLayer(const MapTileLayerId& layer);
 
-        virtual void updateConfiguration();
+        virtual bool updateCurrentState();
 
-        AtlasMapRenderer_BaseOpenGL();
+        virtual bool doInitializeRendering();
+        virtual bool doReleaseRendering();
+
+        RenderAPI_OpenGL_Common* getRenderAPI() const;
     public:
-        virtual ~AtlasMapRenderer_BaseOpenGL();
+        virtual ~AtlasMapRenderer_OpenGL_Common();
 
         virtual float getReferenceTileSizeOnScreen();
         virtual float getScaledTileSizeOnScreen();
-
-        virtual bool initializeRendering();
-        virtual bool releaseRendering();
     };
 
 }
 
-#endif // __ATLAS_MAP_RENDERER_OPENGL_BASE_H_
+#endif // __ATLAS_MAP_RENDERER_OPENGL_COMMON_H_

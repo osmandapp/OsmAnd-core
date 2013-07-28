@@ -1,23 +1,37 @@
-#include "MapRenderer_OpenGL.h"
+#include "RenderAPI_OpenGL.h"
 
 #include <assert.h>
 
 #include "Logging.h"
 
-OsmAnd::MapRenderer_OpenGL::MapRenderer_OpenGL()
+#undef GL_CHECK_RESULT
+#undef GL_GET_RESULT
+#if defined(_DEBUG) || defined(DEBUG)
+#   define GL_CHECK_RESULT validateResult()
+#   define GL_GET_RESULT validateResult()
+#else
+#   define GL_CHECK_RESULT
+#   define GL_GET_RESULT glGetError()
+#endif
+
+OsmAnd::RenderAPI_OpenGL::RenderAPI_OpenGL()
     : _textureSampler_Bitmap_NoAtlas(0)
     , _textureSampler_Bitmap_Atlas(0)
     , _textureSampler_ElevationData_NoAtlas(0)
     , _textureSampler_ElevationData_Atlas(0)
     , _maxAnisotropy(-1)
+    , textureSampler_Bitmap_NoAtlas(_textureSampler_Bitmap_NoAtlas)
+    , textureSampler_Bitmap_Atlas(_textureSampler_Bitmap_Atlas)
+    , textureSampler_ElevationData_NoAtlas(_textureSampler_ElevationData_NoAtlas)
+    , textureSampler_ElevationData_Atlas(_textureSampler_ElevationData_Atlas)
 {
 }
 
-OsmAnd::MapRenderer_OpenGL::~MapRenderer_OpenGL()
+OsmAnd::RenderAPI_OpenGL::~RenderAPI_OpenGL()
 {
 }
 
-GLenum OsmAnd::MapRenderer_OpenGL::validateResult()
+GLenum OsmAnd::RenderAPI_OpenGL::validateResult()
 {
     GL_CHECK_PRESENT(glGetError);
 
@@ -30,9 +44,13 @@ GLenum OsmAnd::MapRenderer_OpenGL::validateResult()
     return result;
 }
 
-bool OsmAnd::MapRenderer_OpenGL::initializeRendering()
+bool OsmAnd::RenderAPI_OpenGL::initialize( const uint32_t& optimalTilesPerAtlasSqrt_ )
 {
     bool ok;
+
+    ok = RenderAPI_OpenGL_Common::initialize(optimalTilesPerAtlasSqrt_);
+    if(!ok)
+        return false;
 
     glewExperimental = GL_TRUE;
     glewInit();
@@ -54,10 +72,6 @@ bool OsmAnd::MapRenderer_OpenGL::initializeRendering()
     GL_CHECK_PRESENT(glClearDepth);
     GL_CHECK_PRESENT(glDepthFunc);
     
-    ok = MapRenderer_BaseOpenGL::initializeRendering();
-    if(!ok)
-        return false;
-
     const auto glVersionString = glGetString(GL_VERSION);
     GL_CHECK_RESULT;
     GLint glVersion[2];
@@ -76,13 +90,13 @@ bool OsmAnd::MapRenderer_OpenGL::initializeRendering()
     glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureUnitsInFragmentShader);
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units in fragment shader %d\n", maxTextureUnitsInFragmentShader);
-    assert(maxTextureUnitsInFragmentShader >= (IMapRenderer::TileLayerId::IdsCount - IMapRenderer::RasterMap));
+    assert(maxTextureUnitsInFragmentShader >= (MapTileLayerIdsCount - MapTileLayerId::RasterMap));
 
     GLint maxTextureUnitsInVertexShader;
     glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, &maxTextureUnitsInVertexShader);
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units in vertex shader %d\n", maxTextureUnitsInVertexShader);
-    assert(maxTextureUnitsInVertexShader >= IMapRenderer::RasterMap);
+    assert(maxTextureUnitsInVertexShader >= MapTileLayerId::RasterMap);
 
     GLint maxUniformsPerProgram;
     glGetIntegerv(GL_MAX_UNIFORM_LOCATIONS, &maxUniformsPerProgram);
@@ -176,7 +190,7 @@ bool OsmAnd::MapRenderer_OpenGL::initializeRendering()
     return true;
 }
 
-bool OsmAnd::MapRenderer_OpenGL::releaseRendering()
+bool OsmAnd::RenderAPI_OpenGL::release()
 {
     bool ok;
 
@@ -210,14 +224,14 @@ bool OsmAnd::MapRenderer_OpenGL::releaseRendering()
         _textureSampler_ElevationData_Atlas = 0;
     }
 
-    ok = MapRenderer_BaseOpenGL::releaseRendering();
+    ok = RenderAPI_OpenGL_Common::release();
     if(!ok)
         return false;
 
     return true;
 }
 
-void OsmAnd::MapRenderer_OpenGL::wrapper_glTexStorage2D( GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType )
+void OsmAnd::RenderAPI_OpenGL::glTexStorage2D_wrapper( GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType )
 {
     GL_CHECK_PRESENT(glTexStorage2D);
 

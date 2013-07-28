@@ -19,44 +19,53 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __TILE_DB_H_
-#define __TILE_DB_H_
+#ifndef __MAP_RENDERER_STATE_H_
+#define __MAP_RENDERER_STATE_H_
 
 #include <stdint.h>
 #include <memory>
+#include <functional>
 #include <array>
-
-#include <QDir>
-#include <QFile>
-#include <QString>
-#include <QMutex>
-#include <QSqlDatabase>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Map/MapTypes.h>
 
 namespace OsmAnd {
 
-    class OSMAND_CORE_API TileDB
+    class IMapTileProvider;
+    class IMapRenderer;
+    class MapRenderer;
+    class OSMAND_CORE_API MapRendererState
     {
-    public:
     private:
     protected:
-        QMutex _indexMutex;
-        QSqlDatabase _indexDb;
-
-        bool openIndex();
+        MapRendererState();
     public:
-        TileDB(const QDir& dataPath, const QString& indexFilename = QString());
-        virtual ~TileDB();
+        virtual ~MapRendererState();
 
-        const QDir dataPath;
-        const QString indexFilename;
+        std::array< std::shared_ptr<IMapTileProvider>, MapTileLayerIdsCount > tileProviders;
+        PointI windowSize;
+        AreaI viewport;
+        float fieldOfView;
+        float skyColor[3];
+        float fogColor[3];
+        float fogDistance;
+        float fogOriginFactor;
+        float fogHeightOriginFactor;
+        float fogDensity;
+        float azimuth;
+        float elevationAngle;
+        PointI target31;
+        float requestedZoom;
+        ZoomLevel zoomBase;
+        float zoomFraction;
+        float heightScaleFactor;
 
-        bool rebuildIndex();
-        bool obtainTileData(const TileId& tileId, const ZoomLevel& zoom, QByteArray& data);
+    friend class OsmAnd::IMapRenderer;
+    friend class OsmAnd::MapRenderer;
     };
 
 }
 
-#endif // __TILE_DB_H_
+#endif // __MAP_RENDERER_STATE_H_

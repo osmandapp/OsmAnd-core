@@ -5,11 +5,7 @@
 
 namespace OsmAnd
 {
-#ifndef SWIG
-    enum class LogSeverityLevel
-#else
-    enum LogSeverityLevel
-#endif
+    STRONG_ENUM(LogSeverityLevel)
     {
         Error = 1,
         Warning,
