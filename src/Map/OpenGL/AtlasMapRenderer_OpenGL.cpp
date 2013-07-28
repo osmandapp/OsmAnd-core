@@ -504,6 +504,13 @@ void OsmAnd::AtlasMapRenderer_OpenGL::renderMapStage()
                 tileEntry->stateLock.unlock();
             }
 
+            if(!gpuResource)
+            {
+                glUniform1f(perTile_fs.k, 0.0f);//TODO: layer transparency
+                GL_CHECK_RESULT;
+                continue;
+            }
+
             glUniform1f(perTile_fs.k, 1.0f);//TODO: layer transparency
             GL_CHECK_RESULT;
 

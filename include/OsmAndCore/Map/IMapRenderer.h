@@ -59,6 +59,7 @@ namespace OsmAnd {
         virtual bool initializeRendering() = 0;
         virtual bool processRendering() = 0;
         virtual bool renderFrame() = 0;
+        virtual bool postprocessRendering() = 0;
         virtual bool releaseRendering() = 0;
 
         const MapRendererState& state;
