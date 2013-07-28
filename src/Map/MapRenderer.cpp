@@ -144,10 +144,12 @@ bool OsmAnd::MapRenderer::preProcessRendering()
             QReadLocker scopedLocker(&_stateLock);
 
             _currentState = _requestedState;
-            bool ok = updateCurrentState();
-            if(ok)
-                _currentStateInvalidated = false;
         }
+
+        bool ok = updateCurrentState();
+        if(ok)
+            _currentStateInvalidated = false;
+
         invalidateFrame();
 
         // If state is still invalidated, abort processing
@@ -169,27 +171,6 @@ bool OsmAnd::MapRenderer::preProcessRendering()
             
             _invalidatedLayers &= ~(1 << layerId);
         }
-    }
-
-    // Get target tile id
-    _targetTileId.x = _currentState.target31.x >> (ZoomLevel::MaxZoomLevel - _currentState.zoomBase);
-    _targetTileId.y = _currentState.target31.y >> (ZoomLevel::MaxZoomLevel - _currentState.zoomBase);
-
-    // Compute in-tile offset
-    if(_currentState.zoomBase == ZoomLevel::MaxZoomLevel)
-    {
-        _targetInTileOffsetN.x = 0;
-        _targetInTileOffsetN.y = 0;
-    }
-    else
-    {
-        PointI targetTile31;
-        targetTile31.x = _targetTileId.x << (ZoomLevel::MaxZoomLevel - _currentState.zoomBase);
-        targetTile31.y = _targetTileId.y << (ZoomLevel::MaxZoomLevel - _currentState.zoomBase);
-
-        auto tileWidth31 = (1u << (ZoomLevel::MaxZoomLevel - _currentState.zoomBase)) - 1;
-        _targetInTileOffsetN.x = static_cast<float>(_currentState.target31.x - targetTile31.x) / tileWidth31;
-        _targetInTileOffsetN.y = static_cast<float>(_currentState.target31.y - targetTile31.y) / tileWidth31;
     }
 
     // Sort visible tiles by distance from target
@@ -219,6 +200,32 @@ bool OsmAnd::MapRenderer::preProcessRendering()
 
 bool OsmAnd::MapRenderer::doProcessRendering()
 {
+    return true;
+}
+
+bool OsmAnd::MapRenderer::updateCurrentState()
+{
+    // Get target tile id
+    _targetTileId.x = _currentState.target31.x >> (ZoomLevel::MaxZoomLevel - _currentState.zoomBase);
+    _targetTileId.y = _currentState.target31.y >> (ZoomLevel::MaxZoomLevel - _currentState.zoomBase);
+
+    // Compute in-tile offset
+    if(_currentState.zoomBase == ZoomLevel::MaxZoomLevel)
+    {
+        _targetInTileOffsetN.x = 0;
+        _targetInTileOffsetN.y = 0;
+    }
+    else
+    {
+        PointI targetTile31;
+        targetTile31.x = _targetTileId.x << (ZoomLevel::MaxZoomLevel - _currentState.zoomBase);
+        targetTile31.y = _targetTileId.y << (ZoomLevel::MaxZoomLevel - _currentState.zoomBase);
+
+        auto tileWidth31 = (1u << (ZoomLevel::MaxZoomLevel - _currentState.zoomBase)) - 1;
+        _targetInTileOffsetN.x = static_cast<float>(_currentState.target31.x - targetTile31.x) / tileWidth31;
+        _targetInTileOffsetN.y = static_cast<float>(_currentState.target31.y - targetTile31.y) / tileWidth31;
+    }
+
     return true;
 }
 
@@ -425,11 +432,6 @@ bool OsmAnd::MapRenderer::postReleaseRendering()
     return true;
 }
 
-bool OsmAnd::MapRenderer::updateCurrentState()
-{
-    return true;
-}
-
 void OsmAnd::MapRenderer::invalidateCurrentState()
 {
     _currentStateInvalidated = true;
@@ -456,7 +458,27 @@ void OsmAnd::MapRenderer::invalidateLayer( const MapTileLayerId& layerId )
 
 void OsmAnd::MapRenderer::validateLayer( const MapTileLayerId& layerId )
 {
-    _layers[layerId]->removeAllEntries();
+    const auto& layer = layers[layerId];
+
+    // Collect all tiles that are uploaded to GPU and release them
+    QList< std::shared_ptr<MapRendererTileLayer::TileEntry> > tilesInGPU;
+    layer->obtainTileEntries(tilesInGPU, 0, MapRendererTileLayer::TileEntry::State::Uploaded);
+    for(auto itUploadedTileEntry = tilesInGPU.begin(); itUploadedTileEntry != tilesInGPU.end(); ++itUploadedTileEntry)
+    {
+        const auto& tileEntry = *itUploadedTileEntry;
+
+        QWriteLocker scopedLock(&tileEntry->stateLock);
+        if(tileEntry->state != MapRendererTileLayer::TileEntry::Uploaded)
+            continue;
+
+        // This should be last reference, so assert on that
+        assert(tileEntry->_resourceInGPU.use_count() == 1);
+        tileEntry->_resourceInGPU.reset();
+
+        tileEntry->_state = MapRendererTileLayer::TileEntry::Unloaded;
+    }
+
+    layer->removeAllEntries();
 }
 
 void OsmAnd::MapRenderer::backgroundWorkerProcedure()
@@ -558,7 +580,7 @@ void OsmAnd::MapRenderer::requestMissingTiles()
                 if(availableImmediately)
                 {
                     tileEntry->_sourceData = tile;
-                    tileEntry->_state = MapRendererTileLayer::TileEntry::Ready;
+                    tileEntry->_state = tile ? MapRendererTileLayer::TileEntry::Ready : MapRendererTileLayer::TileEntry::Unavailable;
                     continue;
                 }
 
@@ -583,7 +605,7 @@ void OsmAnd::MapRenderer::processRequestedTile( const MapTileLayerId& layerId, c
         assert(tileEntry->state == MapRendererTileLayer::TileEntry::Requested);
 
         tileEntry->_sourceData = tile;
-        tileEntry->_state = MapRendererTileLayer::TileEntry::Ready;
+        tileEntry->_state = tile ? MapRendererTileLayer::TileEntry::Ready : MapRendererTileLayer::TileEntry::Unavailable;
     }
 }
 

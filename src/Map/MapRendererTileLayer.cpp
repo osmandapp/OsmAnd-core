@@ -93,7 +93,7 @@ void OsmAnd::MapRendererTileLayer::removeAllEntries()
     QList< std::shared_ptr<TileEntry> > stillUploadedTiles;
     obtainTileEntries(stillUploadedTiles, 1, TileEntry::State::Uploaded);
     if(!stillUploadedTiles.isEmpty())
-        LogPrintf(LogSeverityLevel::Error, "One or more tiles still reside in GPU memory. This may cause GPU memory leak");
+        LogPrintf(LogSeverityLevel::Error, "One or more tiles still reside in GPU memory. This may cause GPU memory leak!");
     assert(stillUploadedTiles.isEmpty());
 
     for(int zoom = ZoomLevel::MinZoomLevel; zoom != ZoomLevel::MaxZoomLevel; zoom++)

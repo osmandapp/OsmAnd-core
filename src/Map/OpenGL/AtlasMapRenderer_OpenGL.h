@@ -105,7 +105,7 @@ namespace OsmAnd {
             } fs;
         } _mapStage;
 
-        virtual void allocateTilePatch(MapTileVertex* vertices, size_t verticesCount, GLushort* indices, size_t indicesCount);
+        virtual void allocateTilePatch(MapTileVertex* vertices, GLsizei verticesCount, GLushort* indices, GLsizei indicesCount);
         virtual void releaseTilePatch();
 
         void initializeMapStage();

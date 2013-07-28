@@ -130,7 +130,7 @@ namespace OsmAnd {
             typedef std::function< AtlasTextureInGPU*() > AtlasTextureAllocatorSignature;
         private:
             QMutex _freedSlotsMutex;
-            QList< std::tuple<AtlasTextureInGPU*, uint32_t> > _freedSlots;
+            QMultiMap< AtlasTextureInGPU*, uint32_t > _freedSlots;
 
             QMutex _unusedSlotsMutex;
             std::shared_ptr<AtlasTextureInGPU> _lastNonFullAtlasTexture;

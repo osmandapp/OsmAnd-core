@@ -91,6 +91,19 @@ OsmAnd::RenderAPI::AtlasTextureInGPU::~AtlasTextureInGPU()
     if(!_tiles.isEmpty())
         LogPrintf(LogSeverityLevel::Error, "By the time of atlas texture destruction, it still contained %d allocated tiles", _tiles.size());
     assert(_tiles.isEmpty());
+
+    // Clear all references to this atlas
+    {
+        QMutexLocker scopedLock(&pool->_freedSlotsMutex);
+
+        pool->_freedSlots.remove(this);
+    }
+    {
+        QMutexLocker scopedLock(&pool->_unusedSlotsMutex);
+
+        if(pool->_lastNonFullAtlasTexture.get() == this)
+            pool->_lastNonFullAtlasTexture.reset();
+    }
 }
 
 OsmAnd::RenderAPI::TileOnAtlasTextureInGPU::TileOnAtlasTextureInGPU( AtlasTextureInGPU* const atlas_, const uint32_t& slotIndex_ )
@@ -117,7 +130,7 @@ OsmAnd::RenderAPI::TileOnAtlasTextureInGPU::~TileOnAtlasTextureInGPU()
     {
         QMutexLocker scopedLock(&atlasTexture->pool->_freedSlotsMutex);
 
-        atlasTexture->pool->_freedSlots.push_back( std::tuple<AtlasTextureInGPU*, uint32_t>(atlasTexture, slotIndex) );
+        atlasTexture->pool->_freedSlots.insert(atlasTexture, slotIndex);
     }
 
     // Clear reference to GPU resource to avoid removal in base class
@@ -143,29 +156,33 @@ std::shared_ptr<OsmAnd::RenderAPI::TileOnAtlasTextureInGPU> OsmAnd::RenderAPI::A
 
         if(!_freedSlots.isEmpty())
         {
-            const auto& freedSlotEntry = _freedSlots.first();
+            const auto& itFreedSlotEntry = _freedSlots.begin();
 
             // Mark slot as occupied
-            _freedSlots.removeFirst();
+            const auto atlasTexture = itFreedSlotEntry.key();
+            const auto slotIndex = itFreedSlotEntry.value();
+            _freedSlots.remove(atlasTexture, slotIndex);
 
             // Return allocated slot
-            const auto& atlasTexture = std::get<0>(freedSlotEntry);
-            const auto& slotIndex = std::get<1>(freedSlotEntry);
             return std::shared_ptr<TileOnAtlasTextureInGPU>(new TileOnAtlasTextureInGPU(atlasTexture, slotIndex));
         }
     }
     
-    // If we've never allocated any atlases yet or next unused slot is beyond allocated spaced - allocate new atlas texture then
-    if(!_lastNonFullAtlasTexture || _firstUnusedSlotIndex == _lastNonFullAtlasTexture->slotsPerSide * _lastNonFullAtlasTexture->slotsPerSide)
     {
-         std::shared_ptr<AtlasTextureInGPU> atlasTexture(atlasTextureAllocator());
+        QMutexLocker scopedLock(&_unusedSlotsMutex);
 
-         api->_allocatedResources.push_back(atlasTexture);
+        // If we've never allocated any atlases yet or next unused slot is beyond allocated spaced - allocate new atlas texture then
+        if(!_lastNonFullAtlasTexture || _firstUnusedSlotIndex == _lastNonFullAtlasTexture->slotsPerSide * _lastNonFullAtlasTexture->slotsPerSide)
+        {
+            std::shared_ptr<AtlasTextureInGPU> atlasTexture(atlasTextureAllocator());
 
-        _lastNonFullAtlasTexture = atlasTexture;
-        _firstUnusedSlotIndex = 0;
+            api->_allocatedResources.push_back(atlasTexture);
+
+            _lastNonFullAtlasTexture = atlasTexture;
+            _firstUnusedSlotIndex = 0;
+        }
+
+        // Or let's just continue using current atlas texture
+        return std::shared_ptr<TileOnAtlasTextureInGPU>(new TileOnAtlasTextureInGPU(_lastNonFullAtlasTexture.get(), _firstUnusedSlotIndex++));
     }
-
-    // Or let's just continue using current atlas texture
-    return std::shared_ptr<TileOnAtlasTextureInGPU>(new TileOnAtlasTextureInGPU(_lastNonFullAtlasTexture.get(), _firstUnusedSlotIndex++));
 }

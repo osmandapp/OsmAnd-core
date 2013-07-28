@@ -20,6 +20,7 @@
 
 OsmAnd::AtlasMapRenderer_OpenGL_Common::AtlasMapRenderer_OpenGL_Common()
     : _zNear(0.1f)
+    , _tilePatchIndicesCount(0)
 {
 }
 
@@ -278,9 +279,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doReleaseRendering()
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::createTilePatch()
 {
     MapTileVertex* pVertices = nullptr;
-    uint32_t verticesCount = 0;
+    GLsizei verticesCount = 0;
     GLushort* pIndices = nullptr;
-    uint32_t indicesCount = 0;
+    GLsizei indicesCount = 0;
     
     if(!currentState.tileProviders[ElevationData])
     {
@@ -363,6 +364,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::createTilePatch()
         }
     }
     
+    _tilePatchIndicesCount = indicesCount;
     allocateTilePatch(pVertices, verticesCount, pIndices, indicesCount);
 
     if(currentState.tileProviders[ElevationData])

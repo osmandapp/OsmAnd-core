@@ -80,8 +80,9 @@ namespace OsmAnd {
         };
 #pragma pack(pop)
 
+        GLsizei _tilePatchIndicesCount;
         virtual void createTilePatch();
-        virtual void allocateTilePatch(MapTileVertex* vertices, size_t verticesCount, GLushort* indices, size_t indicesCount) = 0;
+        virtual void allocateTilePatch(MapTileVertex* vertices, GLsizei verticesCount, GLushort* indices, GLsizei indicesCount) = 0;
         virtual void releaseTilePatch() = 0;
         
         virtual void validateLayer(const MapTileLayerId& layer);

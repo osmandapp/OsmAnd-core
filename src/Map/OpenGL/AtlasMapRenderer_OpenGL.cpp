@@ -552,10 +552,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::renderMapStage()
             }
         }
 
-        const auto verticesCount = currentState.tileProviders[MapTileLayerId::ElevationData]
-            ? (configuration.heightmapPatchesPerSide * configuration.heightmapPatchesPerSide) * 4 * 3
-            : 6;
-        glDrawElements(GL_TRIANGLES, verticesCount, GL_UNSIGNED_SHORT, nullptr);
+        glDrawElements(GL_TRIANGLES, _tilePatchIndicesCount, GL_UNSIGNED_SHORT, nullptr);
         GL_CHECK_RESULT;
     }
     
@@ -615,7 +612,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::releaseMapStage()
     memset(&_mapStage, 0, sizeof(_mapStage));
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGL::allocateTilePatch( MapTileVertex* vertices, size_t verticesCount, GLushort* indices, size_t indicesCount )
+void OsmAnd::AtlasMapRenderer_OpenGL::allocateTilePatch( MapTileVertex* vertices, GLsizei verticesCount, GLushort* indices, GLsizei indicesCount )
 {
     GL_CHECK_PRESENT(glGenVertexArrays);
     GL_CHECK_PRESENT(glBindVertexArray);
