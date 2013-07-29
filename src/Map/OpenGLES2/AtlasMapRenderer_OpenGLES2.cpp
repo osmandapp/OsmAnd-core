@@ -458,8 +458,9 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::renderMapStage()
     }
 
     // Check if we need to process elevation data
-    const bool elevationDataEnabled = renderAPI->isSupported_vertexShaderTextureLookup && currentState.tileProviders[MapTileLayerId::ElevationData];
-    if(!elevationDataEnabled)
+    const bool elevationDataSupported = renderAPI->isSupported_vertexShaderTextureLookup;
+    const bool elevationDataEnabled = elevationDataSupported && currentState.tileProviders[MapTileLayerId::ElevationData];
+    if(elevationDataSupported && !elevationDataEnabled)
     {
         // We have no elevation data provider, so we can not do anything
         glUniform1f(_mapStage.vs.param.elevationData_k, 0.0f);
