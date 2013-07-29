@@ -3,6 +3,7 @@
 #include <assert.h>
 
 #include <QRegExp>
+#include <QStringList>
 
 #include "Logging.h"
 
