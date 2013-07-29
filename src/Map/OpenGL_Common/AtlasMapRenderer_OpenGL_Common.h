@@ -89,8 +89,8 @@ namespace OsmAnd {
 
         virtual bool updateCurrentState();
 
-        virtual bool doInitializeRendering();
-        virtual bool doReleaseRendering();
+        virtual bool postInitializeRendering();
+        virtual bool preReleaseRendering();
 
         RenderAPI_OpenGL_Common* getRenderAPI() const;
     public:
