@@ -24,6 +24,7 @@
 #define __OSMAND_COMMON_H_
 
 #include <assert.h>
+#include <memory>
 #include <iostream>
 
 #if defined(DEBUG) || defined(_DEBUG)

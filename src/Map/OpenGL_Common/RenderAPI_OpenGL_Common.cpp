@@ -334,9 +334,6 @@ bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU( const TileId& ti
         auto textureInGPU = new TextureInGPU(this, reinterpret_cast<RefInGPU>(texture), tileSize, mipmapLevels);
         resourceInGPU.reset(static_cast<ResourceInGPU*>(textureInGPU));
 
-        // Save reference to allocated resource
-        _allocatedResources.push_back(resourceInGPU);
-
         return true;
     }
 

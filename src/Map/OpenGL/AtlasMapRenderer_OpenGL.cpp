@@ -114,7 +114,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeMapStage()
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
-        "    vec4 v = vec4(in_vs_vertexPosition.x, 0.0, in_vs_vertexPosition.y, 1.0);                                       ""\n"
+        "    vec4 v = vec4(in_vs_vertexPosition.x * 50.0, 0.0, in_vs_vertexPosition.y* 50.0, 1.0);                                       ""\n"
         "                                                                                                                   ""\n"
         //   Shift vertex to it's proper position
         "    float xOffset = float(param_vs_tile.x - param_vs_targetTile.x) - param_vs_targetInTilePosN.x;                  ""\n"

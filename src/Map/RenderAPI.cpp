@@ -12,9 +12,15 @@ OsmAnd::RenderAPI::RenderAPI()
 
 OsmAnd::RenderAPI::~RenderAPI()
 {
-    if(!_allocatedResources.isEmpty())
-        LogPrintf(LogSeverityLevel::Error, "By the time of RenderAPI destruction, it still contained %d allocated resources that will probably leak", _allocatedResources.size());
-    assert(_allocatedResources.isEmpty());
+    const int resourcesRemaining = 
+#if defined(DEBUG) || defined(_DEBUG)
+        _allocatedResources.size();
+#else
+        _allocatedResourcesCounter.load();
+#endif
+    if(resourcesRemaining > 0)
+        LogPrintf(LogSeverityLevel::Error, "By the time of RenderAPI destruction, it still contained %d allocated resources that will probably leak", resourcesRemaining);
+    assert(resourcesRemaining == 0);
 }
 
 bool OsmAnd::RenderAPI::initialize( const uint32_t& optimalTilesPerAtlasSqrt_ )
@@ -52,6 +58,15 @@ OsmAnd::RenderAPI::ResourceInGPU::ResourceInGPU( const Type& type_, RenderAPI* a
     , type(type_)
     , refInGPU(_refInGPU)
 {
+    // Add this object to allocated resources list
+    {
+#if defined(DEBUG) || defined(_DEBUG)
+        QMutexLocker scopedLock(&api->_allocatedResourcesMutex);
+        api->_allocatedResources.push_back(this);
+#else
+        api->_allocatedResourcesCounter.fetchAndAddRelaxed(1);
+#endif
+    }
 }
 
 OsmAnd::RenderAPI::ResourceInGPU::~ResourceInGPU()
@@ -59,6 +74,16 @@ OsmAnd::RenderAPI::ResourceInGPU::~ResourceInGPU()
     // If we have reference to 
     if(_refInGPU)
         api->releaseResourceInGPU(type, _refInGPU);
+
+    // Remove this object from allocated resources list
+    {
+#if defined(DEBUG) || defined(_DEBUG)
+        QMutexLocker scopedLock(&api->_allocatedResourcesMutex);
+        api->_allocatedResources.removeOne(this);
+#else
+        api->_allocatedResourcesCounter.fetchAndAddRelaxed(-1);
+#endif
+    }
 }
 
 OsmAnd::RenderAPI::TextureInGPU::TextureInGPU( RenderAPI* api_, const RefInGPU& refInGPU_, const uint32_t& textureSize_, const uint32_t& mipmapLevels_ )
@@ -76,7 +101,6 @@ OsmAnd::RenderAPI::TextureInGPU::~TextureInGPU()
 
 OsmAnd::RenderAPI::AtlasTextureInGPU::AtlasTextureInGPU( RenderAPI* api_, const RefInGPU& refInGPU_, const uint32_t& textureSize_, const uint32_t& mipmapLevels_, const std::shared_ptr<AtlasTexturesPool>& pool_ )
     : TextureInGPU(api_, refInGPU_, textureSize_, mipmapLevels_)
-    , tiles(_tiles)
     , tileSize(pool_->typeId.tileSize)
     , padding(pool_->typeId.tilePadding)
     , slotsPerSide(textureSize_ / (tileSize + 2*padding))
@@ -88,9 +112,15 @@ OsmAnd::RenderAPI::AtlasTextureInGPU::AtlasTextureInGPU( RenderAPI* api_, const 
 
 OsmAnd::RenderAPI::AtlasTextureInGPU::~AtlasTextureInGPU()
 {
-    if(!_tiles.isEmpty())
-        LogPrintf(LogSeverityLevel::Error, "By the time of atlas texture destruction, it still contained %d allocated tiles", _tiles.size());
-    assert(_tiles.isEmpty());
+    const int tilesRemaining = 
+#if defined(DEBUG) || defined(_DEBUG)
+        _tiles.size();
+#else
+        _tilesCounter.load();
+#endif
+    if(tilesRemaining > 0)
+        LogPrintf(LogSeverityLevel::Error, "By the time of atlas texture destruction, it still contained %d allocated tiles", tilesRemaining);
+    assert(tilesRemaining == 0);
 
     // Clear all references to this atlas
     {
@@ -101,20 +131,27 @@ OsmAnd::RenderAPI::AtlasTextureInGPU::~AtlasTextureInGPU()
     {
         QMutexLocker scopedLock(&pool->_unusedSlotsMutex);
 
-        if(pool->_lastNonFullAtlasTexture.get() == this)
-            pool->_lastNonFullAtlasTexture.reset();
+        if(pool->_lastNonFullAtlasTexture == this)
+        {
+            pool->_lastNonFullAtlasTexture = nullptr;
+            pool->_lastNonFullAtlasTextureWeak.reset();
+        }
     }
 }
 
-OsmAnd::RenderAPI::TileOnAtlasTextureInGPU::TileOnAtlasTextureInGPU( AtlasTextureInGPU* const atlas_, const uint32_t& slotIndex_ )
+OsmAnd::RenderAPI::TileOnAtlasTextureInGPU::TileOnAtlasTextureInGPU( const std::shared_ptr<AtlasTextureInGPU>& atlas_, const uint32_t& slotIndex_ )
     : ResourceInGPU(Type::TileOnAtlasTexture, atlas_->api, atlas_->refInGPU)
     , atlasTexture(atlas_)
     , slotIndex(slotIndex_)
 {
     // Add reference of this tile to atlas texture
     {
+#if defined(DEBUG) || defined(_DEBUG)
         QMutexLocker scopedLock(&atlasTexture->_tilesMutex);
         atlasTexture->_tiles.insert(this);
+#else
+        atlasTexture->_tilesCounter.fetchAndAddRelaxed(1);
+#endif
     }
 }
 
@@ -122,15 +159,19 @@ OsmAnd::RenderAPI::TileOnAtlasTextureInGPU::~TileOnAtlasTextureInGPU()
 {
     // Remove reference of this tile to atlas texture
     {
+#if defined(DEBUG) || defined(_DEBUG)
         QMutexLocker scopedLock(&atlasTexture->_tilesMutex);
         atlasTexture->_tiles.remove(this);
+#else
+        atlasTexture->_tilesCounter.fetchAndAddRelaxed(-1);
+#endif
     }
 
     // Publish slot that was occupied by this tile as freed
     {
         QMutexLocker scopedLock(&atlasTexture->pool->_freedSlotsMutex);
 
-        atlasTexture->pool->_freedSlots.insert(atlasTexture, slotIndex);
+        atlasTexture->pool->_freedSlots.insert(atlasTexture.get(), std::tuple< std::weak_ptr<AtlasTextureInGPU>, uint32_t >(atlasTexture, slotIndex));
     }
 
     // Clear reference to GPU resource to avoid removal in base class
@@ -138,7 +179,8 @@ OsmAnd::RenderAPI::TileOnAtlasTextureInGPU::~TileOnAtlasTextureInGPU()
 }
 
 OsmAnd::RenderAPI::AtlasTexturesPool::AtlasTexturesPool( RenderAPI* api_, const AtlasTypeId& typeId_ )
-    : _firstUnusedSlotIndex(0)
+    : _lastNonFullAtlasTexture(nullptr)
+    , _firstUnusedSlotIndex(0)
     , api(api_)
     , typeId(typeId_)
 {
@@ -154,35 +196,43 @@ std::shared_ptr<OsmAnd::RenderAPI::TileOnAtlasTextureInGPU> OsmAnd::RenderAPI::A
     {
         QMutexLocker scopedLock(&_freedSlotsMutex);
 
-        if(!_freedSlots.isEmpty())
+        while(!_freedSlots.isEmpty())
         {
             const auto& itFreedSlotEntry = _freedSlots.begin();
 
             // Mark slot as occupied
-            const auto atlasTexture = itFreedSlotEntry.key();
-            const auto slotIndex = itFreedSlotEntry.value();
-            _freedSlots.remove(atlasTexture, slotIndex);
+            const auto freedSlotEntry = itFreedSlotEntry.value();
+            _freedSlots.erase(itFreedSlotEntry);
 
             // Return allocated slot
-            return std::shared_ptr<TileOnAtlasTextureInGPU>(new TileOnAtlasTextureInGPU(atlasTexture, slotIndex));
+            const auto& atlasTexture = std::get<0>(freedSlotEntry);
+            const auto& slotIndex = std::get<1>(freedSlotEntry);
+            return std::shared_ptr<TileOnAtlasTextureInGPU>(new TileOnAtlasTextureInGPU(atlasTexture.lock(), slotIndex));
         }
     }
     
     {
         QMutexLocker scopedLock(&_unusedSlotsMutex);
 
+        std::shared_ptr<AtlasTextureInGPU> atlasTexture;
+        
         // If we've never allocated any atlases yet or next unused slot is beyond allocated spaced - allocate new atlas texture then
-        if(!_lastNonFullAtlasTexture || _firstUnusedSlotIndex == _lastNonFullAtlasTexture->slotsPerSide * _lastNonFullAtlasTexture->slotsPerSide)
+        if(!_lastNonFullAtlasTexture || _firstUnusedSlotIndex == _lastNonFullAtlasTexture->slotsPerSide*_lastNonFullAtlasTexture->slotsPerSide)
         {
-            std::shared_ptr<AtlasTextureInGPU> atlasTexture(atlasTextureAllocator());
+            atlasTexture.reset(atlasTextureAllocator());
 
-            api->_allocatedResources.push_back(atlasTexture);
-
-            _lastNonFullAtlasTexture = atlasTexture;
+            _lastNonFullAtlasTexture = atlasTexture.get();
+            _lastNonFullAtlasTextureWeak = atlasTexture;
             _firstUnusedSlotIndex = 0;
+        }
+        else
+        {
+            atlasTexture = _lastNonFullAtlasTextureWeak.lock();
         }
 
         // Or let's just continue using current atlas texture
-        return std::shared_ptr<TileOnAtlasTextureInGPU>(new TileOnAtlasTextureInGPU(_lastNonFullAtlasTexture.get(), _firstUnusedSlotIndex++));
+        return std::shared_ptr<TileOnAtlasTextureInGPU>(new TileOnAtlasTextureInGPU(atlasTexture, _firstUnusedSlotIndex++));
     }
+
+    return nullptr;
 }

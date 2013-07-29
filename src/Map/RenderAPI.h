@@ -30,8 +30,10 @@
 #include <QReadWriteLock>
 #include <QMutex>
 #include <QSet>
+#include <QAtomicInt>
 
 #include <OsmAndCore.h>
+#include <Common.h>
 #include <CommonTypes.h>
 #include <MapTypes.h>
 #include <IMapTileProvider.h>
@@ -130,10 +132,11 @@ namespace OsmAnd {
             typedef std::function< AtlasTextureInGPU*() > AtlasTextureAllocatorSignature;
         private:
             QMutex _freedSlotsMutex;
-            QMultiMap< AtlasTextureInGPU*, uint32_t > _freedSlots;
+            QMultiMap< AtlasTextureInGPU*, std::tuple< std::weak_ptr<AtlasTextureInGPU>, uint32_t > > _freedSlots;
 
             QMutex _unusedSlotsMutex;
-            std::shared_ptr<AtlasTextureInGPU> _lastNonFullAtlasTexture;
+            AtlasTextureInGPU* _lastNonFullAtlasTexture;
+            std::weak_ptr<AtlasTextureInGPU> _lastNonFullAtlasTextureWeak;
             uint32_t _firstUnusedSlotIndex;
         protected:
             AtlasTexturesPool(RenderAPI* api, const AtlasTypeId& typeId);
@@ -152,13 +155,15 @@ namespace OsmAnd {
         {
         private:
         protected:
+#if defined(DEBUG) || defined(_DEBUG)
             QMutex _tilesMutex;
             QSet< TileOnAtlasTextureInGPU* > _tiles;
+#else
+            QAtomicInt _tilesCounter;
+#endif
         public:
             AtlasTextureInGPU(RenderAPI* api, const RefInGPU& refInGPU, const uint32_t& textureSize, const uint32_t& mipmapLevels, const std::shared_ptr<AtlasTexturesPool>& pool);
             virtual ~AtlasTextureInGPU();
-
-            const QSet< TileOnAtlasTextureInGPU* >& tiles;
 
             const uint16_t tileSize;
             const uint16_t padding;
@@ -176,20 +181,25 @@ namespace OsmAnd {
         private:
         protected:
         public:
-            TileOnAtlasTextureInGPU(AtlasTextureInGPU* const atlas, const uint32_t& slotIndex);
+            TileOnAtlasTextureInGPU(const std::shared_ptr<AtlasTextureInGPU>& atlas, const uint32_t& slotIndex);
             virtual ~TileOnAtlasTextureInGPU();
 
-            AtlasTextureInGPU* const atlasTexture;
+            const std::shared_ptr<AtlasTextureInGPU> atlasTexture;
             const uint32_t slotIndex;
         };
     
     private:
         uint32_t _optimalTilesPerAtlasSqrt;
 
+#if defined(DEBUG) || defined(_DEBUG)
+        QMutex _allocatedResourcesMutex;
+        QList< ResourceInGPU* > _allocatedResources;
+#else
+        QAtomicInt _allocatedResourcesCounter;
+#endif
+
         QHash< AtlasTypeId, std::shared_ptr<AtlasTexturesPool> > _atlasTexturesPools;
     protected:
-        QList< std::shared_ptr<ResourceInGPU> > _allocatedResources;
-
         std::shared_ptr<AtlasTexturesPool> obtainAtlasTexturesPool(const AtlasTypeId& atlasTypeId);
         std::shared_ptr<TileOnAtlasTextureInGPU> allocateTile(const std::shared_ptr<AtlasTexturesPool>& pool, AtlasTexturesPool::AtlasTextureAllocatorSignature atlasTextureAllocator );
 

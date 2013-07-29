@@ -90,6 +90,8 @@ namespace OsmAnd {
 
         void invalidateFrame();
 
+        void requestUploadDataToGPU();
+
         QSet<TileId> _uniqueTiles;
         void requestMissingTiles();
         void processRequestedTile(const MapTileLayerId& layerId, const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile, bool success);

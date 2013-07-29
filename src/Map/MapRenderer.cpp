@@ -449,6 +449,14 @@ void OsmAnd::MapRenderer::invalidateFrame()
         _configuration.frameRequestCallback();
 }
 
+void OsmAnd::MapRenderer::requestUploadDataToGPU()
+{
+    if(configuration.backgroundWorker.enabled)
+        _backgroundWorkerWakeup.wakeAll();
+    else
+        invalidateFrame();
+}
+
 void OsmAnd::MapRenderer::invalidateLayer( const MapTileLayerId& layerId )
 {
     QWriteLocker scopedLocker(&_invalidatedLayersLock);
@@ -546,6 +554,7 @@ void OsmAnd::MapRenderer::backgroundWorkerProcedure()
 void OsmAnd::MapRenderer::requestMissingTiles()
 {
     uint32_t requestedProvidersMask = 0;
+    bool wasImmediateDataObtained = true;
 
     for(auto itTileId = _uniqueTiles.begin(); itTileId != _uniqueTiles.end(); ++itTileId)
     {
@@ -581,6 +590,8 @@ void OsmAnd::MapRenderer::requestMissingTiles()
                 {
                     tileEntry->_sourceData = tile;
                     tileEntry->_state = tile ? MapRendererTileLayer::TileEntry::Ready : MapRendererTileLayer::TileEntry::Unavailable;
+
+                    wasImmediateDataObtained = true;
                     continue;
                 }
 
@@ -592,6 +603,9 @@ void OsmAnd::MapRenderer::requestMissingTiles()
             }
         }
     }
+
+    if(wasImmediateDataObtained)
+        requestUploadDataToGPU();
 
     //TODO: sort requests in all requestedProvidersMask so that closest tiles would be downloaded first
 }
@@ -607,6 +621,9 @@ void OsmAnd::MapRenderer::processRequestedTile( const MapTileLayerId& layerId, c
         tileEntry->_sourceData = tile;
         tileEntry->_state = tile ? MapRendererTileLayer::TileEntry::Ready : MapRendererTileLayer::TileEntry::Unavailable;
     }
+
+    // We have data to upload, so request that
+    requestUploadDataToGPU();
 }
 
 void OsmAnd::MapRenderer::setTileProvider( const MapTileLayerId& layerId, const std::shared_ptr<IMapTileProvider>& tileProvider, bool forcedUpdate /*= false*/ )
