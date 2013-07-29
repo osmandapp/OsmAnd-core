@@ -113,13 +113,13 @@ bool OsmAnd::RenderAPI_OpenGLES2::initialize( const uint32_t& optimalTilesPerAtl
     glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureUnitsInFragmentShader);
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal texture units in fragment shader %d\n", maxTextureUnitsInFragmentShader);
-    assert(maxTextureUnitsInFragmentShader >= (IMapRenderer::TileLayerId::IdsCount - IMapRenderer::RasterMap));
+    assert(maxTextureUnitsInFragmentShader >= (MapTileLayerIdsCount - MapTileLayerId::RasterMap));
 
     GLint maxTextureUnitsInVertexShader;
     glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, &maxTextureUnitsInVertexShader);
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal texture units in vertex shader %d\n", maxTextureUnitsInVertexShader);
-    _isSupported_vertexShaderTextureLookup = maxTextureUnitsInVertexShader >= IMapRenderer::RasterMap;
+    _isSupported_vertexShaderTextureLookup = maxTextureUnitsInVertexShader >= MapTileLayerId::RasterMap;
 
     GLint maxFragmentUniformVectors;
     glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_VECTORS, &maxFragmentUniformVectors);
