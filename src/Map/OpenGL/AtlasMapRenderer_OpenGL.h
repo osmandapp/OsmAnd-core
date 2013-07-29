@@ -34,8 +34,6 @@
 
 namespace OsmAnd {
 
-    class MapDataCache;
-
     class OSMAND_CORE_API AtlasMapRenderer_OpenGL : public AtlasMapRenderer_OpenGL_Common
     {
     protected:

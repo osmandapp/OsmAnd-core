@@ -48,6 +48,36 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doInitializeRendering()
     return true;
 }
 
+bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame()
+{
+    // Setup viewport
+    glViewport(
+        currentState.viewport.left,
+        currentState.windowSize.y - currentState.viewport.bottom,
+        currentState.viewport.width(),
+        currentState.viewport.height());
+    GL_CHECK_RESULT;
+
+    renderSkyStage();
+    renderMapStage();
+
+    return true;
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::doReleaseRendering()
+{
+    bool ok;
+
+    releaseMapStage();
+    releaseSkyStage();
+
+    ok = AtlasMapRenderer_OpenGL_Common::doReleaseRendering();
+    if(!ok)
+        return false;
+
+    return true;
+}
+
 void OsmAnd::AtlasMapRenderer_OpenGL::initializeMapStage()
 {
     auto renderAPI = getRenderAPI();
@@ -307,22 +337,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeMapStage()
     renderAPI->clearVariablesLookup();
 }
 
-bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame()
-{
-    // Setup viewport
-    glViewport(
-        currentState.viewport.left,
-        currentState.windowSize.y - currentState.viewport.bottom,
-        currentState.viewport.width(),
-        currentState.viewport.height());
-    GL_CHECK_RESULT;
-
-    renderSkyStage();
-    renderMapStage();
-
-    return true;
-}
-
 void OsmAnd::AtlasMapRenderer_OpenGL::renderMapStage()
 {
     auto renderAPI = static_cast<RenderAPI_OpenGL*>(getRenderAPI());
@@ -399,7 +413,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL::renderMapStage()
     }
     
     // For each visible tile, render it
-    const auto maxTileIndex = static_cast<signed>(1u << currentState.zoomBase);
     for(auto itTileId = _visibleTiles.begin(); itTileId != _visibleTiles.end(); ++itTileId)
     {
         const auto& tileId = *itTileId;
@@ -582,20 +595,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL::renderMapStage()
     // Deselect VAO
     glBindVertexArray(0);
     GL_CHECK_RESULT;
-}
-
-bool OsmAnd::AtlasMapRenderer_OpenGL::doReleaseRendering()
-{
-    bool ok;
-
-    releaseMapStage();
-    releaseSkyStage();
-
-    ok = AtlasMapRenderer_OpenGL_Common::doReleaseRendering();
-    if(!ok)
-        return false;
-
-    return true;
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL::releaseMapStage()
