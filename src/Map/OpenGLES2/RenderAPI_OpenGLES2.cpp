@@ -2,6 +2,8 @@
 
 #include <assert.h>
 
+#include <QRegExp>
+
 #include "Logging.h"
 
 #undef GL_CHECK_RESULT
