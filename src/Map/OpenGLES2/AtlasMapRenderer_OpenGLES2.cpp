@@ -661,7 +661,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::renderMapStage()
     }
 
     // Disable textures
-    for(int layerId = 0; layerId < TileLayerId::IdsCount; layerId++)
+    for(int layerId = 0; layerId < MapTileLayerIdsCount; layerId++)
     {
         glActiveTexture(GL_TEXTURE0 + layerId);
         GL_CHECK_RESULT;
