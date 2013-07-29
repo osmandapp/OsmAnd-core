@@ -114,7 +114,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::initializeMapStage()
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
-        "    vec4 v = vec4(in_vs_vertexPosition.x * 50.0, 0.0, in_vs_vertexPosition.y* 50.0, 1.0);                                       ""\n"
+        "    vec4 v = vec4(in_vs_vertexPosition.x, 0.0, in_vs_vertexPosition.y, 1.0);                                       ""\n"
         "                                                                                                                   ""\n"
         //   Shift vertex to it's proper position
         "    float xOffset = float(param_vs_tile.x - param_vs_targetTile.x) - param_vs_targetInTilePosN.x;                  ""\n"
@@ -388,6 +388,15 @@ void OsmAnd::AtlasMapRenderer_OpenGL::renderMapStage()
         glUniform1i(_mapStage.fs.param.perTileLayer[layerId - MapTileLayerId::RasterMap].sampler, layerId);
         GL_CHECK_RESULT;
     }
+
+    // Check if we need to process elevation data
+    const bool elevationDataEnabled = currentState.tileProviders[MapTileLayerId::ElevationData];
+    if(!elevationDataEnabled)
+    {
+        // We have no elevation data provider, so we can not do anything
+        glUniform1f(_mapStage.vs.param.elevationData_k, 0.0f);
+        GL_CHECK_RESULT;
+    }
     
     // For each visible tile, render it
     const auto maxTileIndex = static_cast<signed>(1u << currentState.zoomBase);
@@ -403,7 +412,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::renderMapStage()
         GL_CHECK_RESULT;
 
         // Set elevation data
-        if(currentState.tileProviders[MapTileLayerId::ElevationData])
+        if(elevationDataEnabled)
         {
             const auto& layer = layers[MapTileLayerId::ElevationData];
 
