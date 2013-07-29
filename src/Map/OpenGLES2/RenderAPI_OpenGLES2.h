@@ -34,7 +34,7 @@
 
 namespace OsmAnd {
 
-    class OSMAND_CORE_API RenderAPI_OpenGLES2 : public RenderAPI_OpenGL_Base
+    class OSMAND_CORE_API RenderAPI_OpenGLES2 : public RenderAPI_OpenGL_Common
     {
     public:
 #if !defined(OSMAND_TARGET_OS_ios)
