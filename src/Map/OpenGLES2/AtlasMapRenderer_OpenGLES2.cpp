@@ -340,14 +340,14 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeMapStage()
     renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.mProjectionView, "param_vs_mProjectionView", RenderAPI_OpenGLES2::Uniform);
     renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.targetInTilePosN, "param_vs_targetInTilePosN", RenderAPI_OpenGLES2::Uniform);
     renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.targetTile, "param_vs_targetTile", RenderAPI_OpenGLES2::Uniform);
-    if(isSupported_EXT_shader_texture_lod)
+    if(renderAPI->isSupported_EXT_shader_texture_lod)
     {
         renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.mView, "param_vs_mView", RenderAPI_OpenGLES2::Uniform);
         renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.cameraElevationAngle, "param_vs_cameraElevationAngle", RenderAPI_OpenGLES2::Uniform);
         renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.mipmapK, "param_vs_mipmapK", RenderAPI_OpenGLES2::Uniform);
     }
     renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.tile, "param_vs_tile", RenderAPI_OpenGLES2::Uniform);
-    if(isSupported_vertexShaderTextureLookup)
+    if(renderAPI->isSupported_vertexShaderTextureLookup)
     {
         renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_sampler, "param_vs_elevationData_sampler", RenderAPI_OpenGLES2::Uniform);
         renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_k, "param_vs_elevationData_k", RenderAPI_OpenGLES2::Uniform);
@@ -386,7 +386,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeMapStage()
 
 void OsmAnd::AtlasMapRenderer_OpenGLES2::renderMapStage()
 {
-    auto renderAPI = static_cast<RenderAPI_OpenGL*>(getRenderAPI());
+    auto renderAPI = static_cast<RenderAPI_OpenGLES2*>(getRenderAPI());
 
     GL_CHECK_PRESENT(glBindVertexArrayOES);
     GL_CHECK_PRESENT(glUseProgram);
@@ -413,14 +413,14 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::renderMapStage()
     GL_CHECK_RESULT;
     
     // Set center offset
-    glUniform2f(_mapStage.vs.param.targetInTilePosN, _targetInTilePosN.x, _targetInTilePosN.y);
+    glUniform2f(_mapStage.vs.param.targetInTilePosN, _targetInTileOffsetN.x, _targetInTileOffsetN.y);
     GL_CHECK_RESULT;
 
     // Set target tile
-    glUniform2i(_mapStage.vs.param.targetTile, _targetTile.x, _targetTile.y);
+    glUniform2i(_mapStage.vs.param.targetTile, _targetTileId.x, _targetTileId.y);
     GL_CHECK_RESULT;
 
-    if(isSupported_EXT_shader_texture_lod)
+    if(renderAPI->isSupported_EXT_shader_texture_lod)
     {
         glUniformMatrix4fv(_mapStage.vs.param.mView, 1, GL_FALSE, glm::value_ptr(_mView));
         GL_CHECK_RESULT;
@@ -446,7 +446,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::renderMapStage()
     GL_CHECK_RESULT;
 
     // Set samplers
-    if(isSupported_vertexShaderTextureLookup)
+    if(renderAPI->isSupported_vertexShaderTextureLookup)
     {
         glUniform1i(_mapStage.vs.param.elevationData_sampler, MapTileLayerId::ElevationData);
         GL_CHECK_RESULT;
@@ -458,7 +458,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::renderMapStage()
     }
 
     // Check if we need to process elevation data
-    const bool elevationDataEnabled = isSupported_vertexShaderTextureLookup && currentState.tileProviders[MapTileLayerId::ElevationData];
+    const bool elevationDataEnabled = renderAPI->isSupported_vertexShaderTextureLookup && currentState.tileProviders[MapTileLayerId::ElevationData];
     if(!elevationDataEnabled)
     {
         // We have no elevation data provider, so we can not do anything
