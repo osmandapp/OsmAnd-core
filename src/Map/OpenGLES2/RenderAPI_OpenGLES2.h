@@ -26,15 +26,11 @@
 #include <memory>
 #include <array>
 
-#include <QMap>
-#include <QMultiMap>
-#include <QSet>
-
 #include <glm/glm.hpp>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OpenGL_Base/RenderAPI_OpenGL_Base.h>
+#include <OpenGL_Common/RenderAPI_OpenGL_Common.h>
 
 namespace OsmAnd {
 
@@ -54,8 +50,8 @@ namespace OsmAnd {
         bool _isSupported_APPLE_texture_max_level;
         bool _isSupported_EXT_shader_texture_lod;
     protected:
-        virtual void wrapper_glTexStorage2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType);
-        virtual void wrapperEx_glTexSubImage2D(GLenum target, GLint level,
+        virtual void glTexStorage2D_wrapper(GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType);
+        virtual void glTexSubImage2D_wrapperEx(GLenum target, GLint level,
             GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
             GLenum format, GLenum type,
             const GLvoid *pixels, GLsizei rowLengthInPixels = 0);
@@ -64,7 +60,7 @@ namespace OsmAnd {
         RenderAPI_OpenGLES2();
         virtual ~RenderAPI_OpenGLES2();
 
-        virtual bool initialize();
+        virtual bool initialize(const uint32_t& optimalTilesPerAtlasSqrt);
         virtual bool release();
 
         const QList<QString>& glesExtensions;

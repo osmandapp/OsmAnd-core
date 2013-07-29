@@ -19,7 +19,6 @@ OsmAnd::RenderAPI_OpenGL::RenderAPI_OpenGL()
     , _textureSampler_Bitmap_Atlas(0)
     , _textureSampler_ElevationData_NoAtlas(0)
     , _textureSampler_ElevationData_Atlas(0)
-    , _maxAnisotropy(-1)
     , textureSampler_Bitmap_NoAtlas(_textureSampler_Bitmap_NoAtlas)
     , textureSampler_Bitmap_Atlas(_textureSampler_Bitmap_Atlas)
     , textureSampler_ElevationData_NoAtlas(_textureSampler_ElevationData_NoAtlas)
@@ -103,20 +102,6 @@ bool OsmAnd::RenderAPI_OpenGL::initialize( const uint32_t& optimalTilesPerAtlasS
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal parameter variables per program %d\n", maxUniformsPerProgram);
 
-    if(GLEW_EXT_texture_filter_anisotropic)
-    {
-        GLfloat maxAnisotropy;
-        glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnisotropy);
-        GL_CHECK_RESULT;
-        _maxAnisotropy = static_cast<int>(maxAnisotropy);
-        LogPrintf(LogSeverityLevel::Info, "OpenGL anisotropic filtering: %dx max\n", _maxAnisotropy);
-    }
-    else
-    {
-        LogPrintf(LogSeverityLevel::Info, "OpenGL anisotropic filtering: not supported\n");
-        _maxAnisotropy = -1;
-    }
-
     // Bitmap (Atlas)
     glGenSamplers(1, &_textureSampler_Bitmap_Atlas);
     GL_CHECK_RESULT;
@@ -128,11 +113,6 @@ bool OsmAnd::RenderAPI_OpenGL::initialize( const uint32_t& optimalTilesPerAtlasS
     GL_CHECK_RESULT;
     glSamplerParameteri(_textureSampler_Bitmap_Atlas, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     GL_CHECK_RESULT;
-    if(_maxAnisotropy > 0)
-    {
-        glSamplerParameterf(_textureSampler_Bitmap_Atlas, GL_TEXTURE_MAX_ANISOTROPY_EXT, static_cast<GLfloat>(_maxAnisotropy));
-        GL_CHECK_RESULT;
-    }
 
     // ElevationData (Atlas)
     glGenSamplers(1, &_textureSampler_ElevationData_Atlas);
@@ -157,12 +137,7 @@ bool OsmAnd::RenderAPI_OpenGL::initialize( const uint32_t& optimalTilesPerAtlasS
     GL_CHECK_RESULT;
     glSamplerParameteri(_textureSampler_Bitmap_NoAtlas, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     GL_CHECK_RESULT;
-    if(_maxAnisotropy > 0)
-    {
-        glSamplerParameterf(_textureSampler_Bitmap_NoAtlas, GL_TEXTURE_MAX_ANISOTROPY_EXT, static_cast<GLfloat>(_maxAnisotropy));
-        GL_CHECK_RESULT;
-    }
-
+    
     // ElevationData (No atlas)
     glGenSamplers(1, &_textureSampler_ElevationData_NoAtlas);
     GL_CHECK_RESULT;

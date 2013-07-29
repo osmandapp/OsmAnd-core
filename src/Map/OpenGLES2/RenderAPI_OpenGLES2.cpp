@@ -2,14 +2,17 @@
 
 #include <assert.h>
 
-#include <QtMath>
+#include "Logging.h"
 
-#include "IMapRenderer.h"
-#include "IMapTileProvider.h"
-#include "IMapBitmapTileProvider.h"
-#include "IMapElevationDataProvider.h"
-#include "OsmAndCore/Logging.h"
-#include "OsmAndCore/Utilities.h"
+#undef GL_CHECK_RESULT
+#undef GL_GET_RESULT
+#if defined(_DEBUG) || defined(DEBUG)
+#   define GL_CHECK_RESULT validateResult()
+#   define GL_GET_RESULT validateResult()
+#else
+#   define GL_CHECK_RESULT
+#   define GL_GET_RESULT glGetError()
+#endif
 
 #ifndef GL_LUMINANCE8_EXT
 #   define GL_LUMINANCE8_EXT                                            0x8040
@@ -90,11 +93,11 @@ GLenum OsmAnd::RenderAPI_OpenGLES2::validateResult()
     return result;
 }
 
-bool OsmAnd::RenderAPI_OpenGLES2::doInitializeRendering()
+bool OsmAnd::RenderAPI_OpenGLES2::initialize( const uint32_t& optimalTilesPerAtlasSqrt_ )
 {
     bool ok;
 
-    ok = MapRenderer_OpenGL_Base::doInitializeRendering();
+    ok = RenderAPI_OpenGL_Common::initialize(optimalTilesPerAtlasSqrt_);
     if(!ok)
         return false;
 
@@ -169,7 +172,18 @@ bool OsmAnd::RenderAPI_OpenGLES2::doInitializeRendering()
     return true;
 }
 
-void OsmAnd::RenderAPI_OpenGLES2::wrapper_glTexStorage2D( GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType )
+bool OsmAnd::RenderAPI_OpenGLES2::release()
+{
+    bool ok;
+
+    ok = RenderAPI_OpenGL_Common::release();
+    if(!ok)
+        return false;
+
+    return true;
+}
+
+void OsmAnd::RenderAPI_OpenGLES2::glTexStorage2D_wrapper( GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType )
 {
     if(_isSupported_EXT_texture_storage)
     {
@@ -236,7 +250,7 @@ void OsmAnd::RenderAPI_OpenGLES2::wrapper_glTexStorage2D( GLenum target, GLsizei
     }
 }
 
-void OsmAnd::RenderAPI_OpenGLES2::wrapperEx_glTexSubImage2D(
+void OsmAnd::RenderAPI_OpenGLES2::glTexSubImage2D_wrapperEx(
     GLenum target,
     GLint level,
     GLint xoffset,
@@ -250,7 +264,7 @@ void OsmAnd::RenderAPI_OpenGLES2::wrapperEx_glTexSubImage2D(
 {
     if(_isSupported_EXT_unpack_subimage)
     {
-        MapRenderer_BaseOpenGL::wrapperEx_glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, type, pixels, rowLengthInPixels);
+        RenderAPI_OpenGL_Common::glTexSubImage2D_wrapperEx(target, level, xoffset, yoffset, width, height, format, type, pixels, rowLengthInPixels);
         return;
     }
 

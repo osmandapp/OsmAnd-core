@@ -26,10 +26,6 @@
 #include <memory>
 #include <array>
 
-#include <QMap>
-#include <QMultiMap>
-#include <QSet>
-
 #include <glm/glm.hpp>
 
 #include <OsmAndCore.h>
@@ -49,8 +45,6 @@ namespace OsmAnd {
         GLuint _textureSampler_Bitmap_Atlas;
         GLuint _textureSampler_ElevationData_NoAtlas;
         GLuint _textureSampler_ElevationData_Atlas;
-
-        int _maxAnisotropy;
     public:
         RenderAPI_OpenGL();
         virtual ~RenderAPI_OpenGL();
