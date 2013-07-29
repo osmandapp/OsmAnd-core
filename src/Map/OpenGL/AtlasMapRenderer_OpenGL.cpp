@@ -80,7 +80,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doReleaseRendering()
 
 void OsmAnd::AtlasMapRenderer_OpenGL::initializeMapStage()
 {
-    auto renderAPI = getRenderAPI();
+    auto renderAPI = static_cast<RenderAPI_OpenGL*>(getRenderAPI());
 
     // Compile vertex shader
     const QString vertexShader_perTileLayerTexCoordsProcessing = QString::fromLatin1(

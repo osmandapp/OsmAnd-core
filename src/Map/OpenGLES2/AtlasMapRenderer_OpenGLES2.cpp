@@ -81,7 +81,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGLES2::doReleaseRendering()
 
 void OsmAnd::AtlasMapRenderer_OpenGLES2::initializeMapStage()
 {
-    auto renderAPI = getRenderAPI();
+    auto renderAPI = static_cast<RenderAPI_OpenGLES2*>(getRenderAPI());
 
     // Compile vertex shader
     const QString vertexShader_perTileLayerTexCoordsProcessing = QString::fromLatin1(
@@ -426,7 +426,7 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::renderMapStage()
         GL_CHECK_RESULT;
 
         // Set camera elevation angle
-        glUniform1f(_mapStage.vs.param.cameraElevationAngle, _activeConfig.elevationAngle);
+        glUniform1f(_mapStage.vs.param.cameraElevationAngle, currentState.elevationAngle);
         GL_CHECK_RESULT;
 
         // Set mipmap K factor
@@ -434,13 +434,13 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::renderMapStage()
     }
     
     // Set fog parameters
-    glUniform3f(_mapStage.fs.param.fogColor, _activeConfig.fogColor[0], _activeConfig.fogColor[1], _activeConfig.fogColor[2]);
+    glUniform3f(_mapStage.fs.param.fogColor, currentState.fogColor[0], currentState.fogColor[1], currentState.fogColor[2]);
     GL_CHECK_RESULT;
-    glUniform1f(_mapStage.fs.param.fogDistance, _activeConfig.fogDistance);
+    glUniform1f(_mapStage.fs.param.fogDistance, currentState.fogDistance);
     GL_CHECK_RESULT;
-    glUniform1f(_mapStage.fs.param.fogDensity, _activeConfig.fogDensity);
+    glUniform1f(_mapStage.fs.param.fogDensity, currentState.fogDensity);
     GL_CHECK_RESULT;
-    glUniform1f(_mapStage.fs.param.fogOriginFactor, _activeConfig.fogOriginFactor);
+    glUniform1f(_mapStage.fs.param.fogOriginFactor, currentState.fogOriginFactor);
     GL_CHECK_RESULT;
     glUniform1f(_mapStage.fs.param.scaleToRetainProjectedSize, _scaleToRetainProjectedSize);
     GL_CHECK_RESULT;
@@ -955,13 +955,13 @@ void OsmAnd::AtlasMapRenderer_OpenGLES2::renderSkyStage()
     GL_CHECK_RESULT;
 
     // Set fog and sky parameters
-    glUniform3f(_skyStage.fs.param.skyColor, _activeConfig.skyColor[0], _activeConfig.skyColor[1], _activeConfig.skyColor[2]);
+    glUniform3f(_skyStage.fs.param.skyColor, currentState.skyColor[0], currentState.skyColor[1], currentState.skyColor[2]);
     GL_CHECK_RESULT;
-    glUniform3f(_skyStage.fs.param.fogColor, _activeConfig.fogColor[0], _activeConfig.fogColor[1], _activeConfig.fogColor[2]);
+    glUniform3f(_skyStage.fs.param.fogColor, currentState.fogColor[0], currentState.fogColor[1], currentState.fogColor[2]);
     GL_CHECK_RESULT;
-    glUniform1f(_skyStage.fs.param.fogDensity, _activeConfig.fogDensity);
+    glUniform1f(_skyStage.fs.param.fogDensity, currentState.fogDensity);
     GL_CHECK_RESULT;
-    glUniform1f(_skyStage.fs.param.fogHeightOriginFactor, _activeConfig.fogHeightOriginFactor);
+    glUniform1f(_skyStage.fs.param.fogHeightOriginFactor, currentState.fogHeightOriginFactor);
     GL_CHECK_RESULT;
     
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
