@@ -5,6 +5,7 @@
 #include <QRegExp>
 #include <QStringList>
 
+#include "IMapBitmapTileProvider.h"
 #include "Logging.h"
 
 #undef GL_CHECK_RESULT
@@ -21,22 +22,6 @@
 #   define GL_LUMINANCE8_EXT                                            0x8040
 #endif //!GL_LUMINANCE8_EXT
 
-#ifndef GL_RGBA4_OES
-#   if defined(GL_RGBA4)
-#       define GL_RGBA4_OES GL_RGBA4
-#   else
-#       define GL_RGBA4_OES                                             0x8056
-#   endif
-#endif //!GL_RGBA4_OES
-
-#ifndef GL_RGB5_A1_OES
-#   if defined(GL_RGB5_A1)
-#       define GL_RGB5_A1_OES GL_RGB5_A1
-#   else
-#       define GL_RGB5_A1_OES                                           0x8057
-#   endif
-#endif //!GL_RGB5_A1_OES
-
 #ifndef GL_RGB565_OES
 #   if defined(GL_RGB565)
 #       define GL_RGB565_OES GL_RGB565
@@ -45,24 +30,13 @@
 #   endif
 #endif //!GL_RGB565_OES
 
+#ifndef GL_R8_EXT
+#   define GL_R8_EXT                                                    0x8229
+#endif //!GL_R8_EXT
 
-/*
-#if defined(OSMAND_OPENGLES2_RENDERER_SUPPORTED)
-#   if !defined(GL_UNPACK_ROW_LENGTH)
-#       define GL_UNPACK_ROW_LENGTH              0x0CF2
-#   endif // !GL_UNPACK_ROW_LENGTH
-#   if !defined(GL_UNPACK_SKIP_ROWS)
-#       define GL_UNPACK_SKIP_ROWS               0x0CF3
-#   endif // !GL_UNPACK_SKIP_ROWS
-#   if !defined(GL_UNPACK_SKIP_PIXELS)
-#       define GL_UNPACK_SKIP_PIXELS             0x0CF4
-#   endif // !GL_UNPACK_SKIP_PIXELS
-#   if !defined(GL_TEXTURE_MAX_LEVEL) && defined(OSMAND_TARGET_OS_ios)
-#       define GL_TEXTURE_MAX_LEVEL GL_TEXTURE_MAX_LEVEL_APPLE
-#   endif
-#endif // OSMAND_OPENGLES2_RENDERER_SUPPORTED
-*/
-
+#ifndef GL_R32F_EXT
+#   define GL_R32F_EXT                                                  0x822E
+#endif //!GL_R32F_EXT
 
 #if !defined(OSMAND_TARGET_OS_ios)
 OsmAnd::RenderAPI_OpenGLES2::P_glTexStorage2DEXT_PROC OsmAnd::RenderAPI_OpenGLES2::glTexStorage2DEXT = nullptr;
@@ -75,6 +49,10 @@ OsmAnd::RenderAPI_OpenGLES2::RenderAPI_OpenGLES2()
     , isSupported_EXT_texture_storage(_isSupported_EXT_texture_storage)
     , isSupported_APPLE_texture_max_level(_isSupported_APPLE_texture_max_level)
     , isSupported_EXT_shader_texture_lod(_isSupported_EXT_shader_texture_lod)
+    , isSupported_OES_vertex_array_object(_isSupported_OES_vertex_array_object)
+    , isSupported_OES_rgb8_rgba8(_isSupported_OES_rgb8_rgba8)
+    , isSupported_OES_texture_float(_isSupported_OES_texture_float)
+    , isSupported_EXT_texture_rg(_isSupported_EXT_texture_rg)
 {
 }
 
@@ -162,11 +140,20 @@ bool OsmAnd::RenderAPI_OpenGLES2::initialize()
         LogPrintf(LogSeverityLevel::Error, "This device does not support required 'GL_OES_vertex_array_object' extension");
         return false;
     }
+    _isSupported_OES_vertex_array_object = true;
+    if(!_glesExtensions.contains("GL_OES_rgb8_rgba8"))
+    {
+        LogPrintf(LogSeverityLevel::Error, "This device does not support required 'GL_OES_rgb8_rgba8' extension");
+        return false;
+    }
+    _isSupported_OES_rgb8_rgba8 = true;
     if(!_glesExtensions.contains("GL_OES_texture_float"))
     {
         LogPrintf(LogSeverityLevel::Error, "This device does not support required 'GL_OES_texture_float' extension");
         return false;
     }
+    _isSupported_OES_texture_float = true;
+    _isSupported_EXT_texture_rg = _glesExtensions.contains("GL_EXT_texture_rg");
     _isSupported_EXT_unpack_subimage = _glesExtensions.contains("GL_EXT_unpack_subimage");
     _isSupported_EXT_texture_storage = _glesExtensions.contains("GL_EXT_texture_storage");
     _isSupported_APPLE_texture_max_level = _glesExtensions.contains("GL_APPLE_texture_max_level");
@@ -224,33 +211,27 @@ uint32_t OsmAnd::RenderAPI_OpenGLES2::getTileTextureFormat( const std::shared_pt
             switch (bitmapTile->format)
             {
             case IMapBitmapTileProvider::RGBA_8888:
-                textureFormat = force16bitBitmapColorDepth ? GL_RGB5_A1_OES : GL_RGBA8_OES;
+                textureFormat = force16bitBitmapColorDepth ? GL_RGB5_A1 : GL_RGBA8_OES;
                 break;
             case IMapBitmapTileProvider::RGBA_4444:
-                textureFormat = GL_RGBA4_OES;
+                textureFormat = GL_RGBA4;
                 break;
             case IMapBitmapTileProvider::RGB_565:
-                textureFormat = GL_RGB5_OES;
+                textureFormat = GL_RGB565;
                 break;
             }
         }
         else if(tile->type == IMapTileProvider::ElevationData)
         {
-            textureFormat = GL_LUMINANCE8_EXT;
-            /*
-            //TODO:
-            (if EXT_texture_rg is supported)
-                R8_EXT                         0x8229 
-                RG8_EXT                        0x822B
-
-            (if EXT_texture_rg and OES_texture_float are supported)
-                R32F_EXT                       0x822E
-                RG32F_EXT                      0x8230
-
-            (if EXT_texture_rg and OES_texture_half_float are supported)
-                R16F_EXT                       0x822D
-                RG16F_EXT                      0x822F
-            */
+            if(isSupported_vertexShaderTextureLookup)
+            {
+                if(isSupported_OES_texture_float && isSupported_EXT_texture_rg)
+                    textureFormat = GL_R32F_EXT;
+                else if(isSupported_EXT_texture_rg)
+                    textureFormat = GL_R8_EXT;
+                else
+                    textureFormat = GL_LUMINANCE8_EXT;
+            }
         }
 
         assert(textureFormat != GL_INVALID_ENUM);
@@ -284,12 +265,17 @@ uint32_t OsmAnd::RenderAPI_OpenGLES2::getTileTextureFormat( const std::shared_pt
     }
     else if(tile->type == IMapTileProvider::ElevationData)
     {
-        format = GL_LUMINANCE;
-        type = GL_UNSIGNED_BYTE;
+        if(isSupported_vertexShaderTextureLookup)
+        {
+            format = GL_LUMINANCE;
+            type = GL_UNSIGNED_BYTE;
+        }
     }
 
-    assert( (format >> 16) == 0 );
-    assert( (type >> 16) == 0 );
+    assert(format != GL_INVALID_ENUM);
+    assert(format != GL_INVALID_ENUM);
+    assert((format >> 16) == 0);
+    assert((type >> 16) == 0);
 
     return (static_cast<uint32_t>(format) << 16) | type;
 }
@@ -398,7 +384,7 @@ void OsmAnd::RenderAPI_OpenGLES2::uploadDataToTexture2D(
     }
 
     // Otherwise fallback to manual unpacking
-    // In case our row length is 0 or equals to image width (has no extra pixels, just load as is)
+    // In case our row length is 0 or equals to image width (has no extra stride, just load as-is)
     if(rowLengthInPixels == 0 || rowLengthInPixels == width)
     {
         // Upload data

@@ -229,7 +229,7 @@ uint32_t OsmAnd::RenderAPI_OpenGL::getTileTextureFormat( const std::shared_ptr< 
             textureFormat = GL_RGBA4;
             break;
         case IMapBitmapTileProvider::RGB_565:
-            textureFormat = GL_RGB5;
+            textureFormat = GL_RGB565;
             break;
         }
     }

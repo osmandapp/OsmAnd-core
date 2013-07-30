@@ -49,6 +49,10 @@ namespace OsmAnd {
         bool _isSupported_EXT_texture_storage;
         bool _isSupported_APPLE_texture_max_level;
         bool _isSupported_EXT_shader_texture_lod;
+        bool _isSupported_OES_vertex_array_object;
+        bool _isSupported_OES_rgb8_rgba8;
+        bool _isSupported_OES_texture_float;
+        bool _isSupported_EXT_texture_rg;
     protected:
         virtual GLenum validateResult();
 
@@ -73,6 +77,10 @@ namespace OsmAnd {
         const bool& isSupported_EXT_texture_storage;
         const bool& isSupported_APPLE_texture_max_level;
         const bool& isSupported_EXT_shader_texture_lod;
+        const bool& isSupported_OES_vertex_array_object;
+        const bool& isSupported_OES_rgb8_rgba8;
+        const bool& isSupported_OES_texture_float;
+        const bool& isSupported_EXT_texture_rg;
     };
 
 }
