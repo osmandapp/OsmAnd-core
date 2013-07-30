@@ -2,6 +2,9 @@
 
 #include <assert.h>
 
+#include <SkBitmap.h>
+
+#include "IMapBitmapTileProvider.h"
 #include "RenderAPI.h"
 #include "Logging.h"
 #include "Utilities.h"
@@ -959,4 +962,39 @@ void OsmAnd::MapRenderer::setHeightScaleFactor( const float& factor, bool forced
     _requestedState.heightScaleFactor = factor;
 
     invalidateCurrentState();
+}
+
+std::shared_ptr<OsmAnd::IMapTileProvider::Tile> OsmAnd::MapRenderer::prepareTileForUploadingToGPU( const std::shared_ptr<IMapTileProvider::Tile>& tile )
+{
+    if(tile->type == IMapTileProvider::Type::Bitmap)
+    {
+        auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
+
+        // If we have limit of 16bits per pixel in bitmaps, convert to ARGB(4444) or RGB(565)
+        if(currentConfiguration.limitTextureColorDepthBy16bits && bitmapTile->bitmap->getConfig() == SkBitmap::kARGB_8888_Config)
+        {
+            auto convertedBitmap = new SkBitmap();
+            //TODO: will loose alpha or color here
+            bitmapTile->bitmap->deepCopyTo(convertedBitmap, SkBitmap::kARGB_4444_Config);
+
+            auto convertedTile = new IMapBitmapTileProvider::Tile(convertedBitmap);
+            return std::shared_ptr<IMapTileProvider::Tile>(convertedTile);
+        }
+
+        // If we have any other unsupported format, convert to proper 16bit or 32bit
+        const bool unsupportedFormat =
+            (bitmapTile->bitmap->getConfig() != SkBitmap::kARGB_8888_Config) ||
+            (bitmapTile->bitmap->getConfig() != SkBitmap::kARGB_4444_Config) ||
+            (bitmapTile->bitmap->getConfig() != SkBitmap::kRGB_565_Config);
+        if(unsupportedFormat)
+        {
+            auto convertedBitmap = new SkBitmap();
+            bitmapTile->bitmap->deepCopyTo(convertedBitmap, currentConfiguration.limitTextureColorDepthBy16bits ? SkBitmap::kARGB_4444_Config : SkBitmap::kARGB_8888_Config);
+
+            auto convertedTile = new IMapBitmapTileProvider::Tile(convertedBitmap);
+            return std::shared_ptr<IMapTileProvider::Tile>(convertedTile);
+        }
+    }
+
+    return tile;
 }

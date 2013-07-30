@@ -95,8 +95,6 @@ namespace OsmAnd {
         virtual bool preReleaseRendering();
 
         RenderAPI_OpenGL_Common* getRenderAPI() const;
-
-        virtual std::shared_ptr<IMapTileProvider::Tile> prepareTileForUploadingToGPU(const std::shared_ptr<IMapTileProvider::Tile>& tile);
     public:
         virtual ~AtlasMapRenderer_OpenGL_Common();
 
