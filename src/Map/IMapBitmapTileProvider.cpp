@@ -25,10 +25,11 @@ OsmAnd::IMapBitmapTileProvider::~IMapBitmapTileProvider()
 {
 }
 
-OsmAnd::IMapBitmapTileProvider::Tile::Tile( SkBitmap* bitmap_ )
+OsmAnd::IMapBitmapTileProvider::Tile::Tile( SkBitmap* bitmap_, const AlphaChannelData& alphaChannelData_ )
     : IMapTileProvider::Tile(IMapTileProvider::Bitmap, bitmap_->getPixels(), bitmap_->rowBytes(), bitmap_->width(), bitmap_->height())
     , _bitmap(bitmap_)
     , bitmap(_bitmap)
+    , alphaChannelData(alphaChannelData_)
 {
 }
 

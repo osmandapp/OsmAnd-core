@@ -37,16 +37,25 @@ namespace OsmAnd {
     class OSMAND_CORE_API IMapBitmapTileProvider : public IMapTileProvider
     {
     public:
+        enum class AlphaChannelData
+        {
+            Present,
+            NotPresent,
+            Undefined
+        };
+
         class OSMAND_CORE_API Tile : public IMapTileProvider::Tile
         {
         private:
             std::unique_ptr<SkBitmap> _bitmap;
         protected:
         public:
-            Tile(SkBitmap* bitmap);
+            Tile(SkBitmap* bitmap, const AlphaChannelData& alphaChannelData);
             virtual ~Tile();
 
             const std::unique_ptr<SkBitmap>& bitmap;
+
+            const AlphaChannelData alphaChannelData;
         };
     private:
     protected:

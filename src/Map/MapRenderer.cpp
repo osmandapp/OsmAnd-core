@@ -710,7 +710,7 @@ void OsmAnd::MapRenderer::processRequestedTile( const MapTileLayerId& layerId, c
         QWriteLocker scopedLock(&tileEntry->stateLock);
 
         assert(tileEntry->state == MapRendererTileLayer::TileEntry::Requested);
-        
+
         tileEntry->_sourceData = tile;
         tileEntry->_state = tile ? MapRendererTileLayer::TileEntry::Ready : MapRendererTileLayer::TileEntry::Unavailable;
     }
@@ -970,28 +970,46 @@ std::shared_ptr<OsmAnd::IMapTileProvider::Tile> OsmAnd::MapRenderer::prepareTile
     {
         auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
 
+        // Check if we're going to convert
+        bool doConvert = false;
+        const bool force16bit = (currentConfiguration.limitTextureColorDepthBy16bits && bitmapTile->bitmap->getConfig() == SkBitmap::kARGB_8888_Config);
+        const bool unsupportedFormat =
+            (bitmapTile->bitmap->getConfig() != SkBitmap::kARGB_8888_Config) ||
+            (bitmapTile->bitmap->getConfig() != SkBitmap::kARGB_4444_Config) ||
+            (bitmapTile->bitmap->getConfig() != SkBitmap::kRGB_565_Config);//TODO: eventually support OES_compressed_paletted_texture to reduce GPU memory footprint
+        doConvert = doConvert || force16bit;
+        doConvert = doConvert || unsupportedFormat;
+
+        // Check if we need alpha
+        auto convertedAlphaChannelData = bitmapTile->alphaChannelData;
+        if(doConvert && (convertedAlphaChannelData == IMapBitmapTileProvider::AlphaChannelData::Undefined))
+        {
+            //TODO: check if there is any alpha
+            assert(false);
+        }
+
         // If we have limit of 16bits per pixel in bitmaps, convert to ARGB(4444) or RGB(565)
-        if(currentConfiguration.limitTextureColorDepthBy16bits && bitmapTile->bitmap->getConfig() == SkBitmap::kARGB_8888_Config)
+        if(force16bit)
         {
             auto convertedBitmap = new SkBitmap();
-            //TODO: will loose alpha or color here
-            bitmapTile->bitmap->deepCopyTo(convertedBitmap, SkBitmap::kARGB_4444_Config);
 
-            auto convertedTile = new IMapBitmapTileProvider::Tile(convertedBitmap);
+            bitmapTile->bitmap->deepCopyTo(convertedBitmap, convertedAlphaChannelData == IMapBitmapTileProvider::AlphaChannelData::Present ? SkBitmap::kARGB_4444_Config : SkBitmap::kRGB_565_Config);
+
+            auto convertedTile = new IMapBitmapTileProvider::Tile(convertedBitmap, convertedAlphaChannelData);
             return std::shared_ptr<IMapTileProvider::Tile>(convertedTile);
         }
 
         // If we have any other unsupported format, convert to proper 16bit or 32bit
-        const bool unsupportedFormat =
-            (bitmapTile->bitmap->getConfig() != SkBitmap::kARGB_8888_Config) ||
-            (bitmapTile->bitmap->getConfig() != SkBitmap::kARGB_4444_Config) ||
-            (bitmapTile->bitmap->getConfig() != SkBitmap::kRGB_565_Config);
         if(unsupportedFormat)
         {
             auto convertedBitmap = new SkBitmap();
-            bitmapTile->bitmap->deepCopyTo(convertedBitmap, currentConfiguration.limitTextureColorDepthBy16bits ? SkBitmap::kARGB_4444_Config : SkBitmap::kARGB_8888_Config);
 
-            auto convertedTile = new IMapBitmapTileProvider::Tile(convertedBitmap);
+            bitmapTile->bitmap->deepCopyTo(convertedBitmap,
+                currentConfiguration.limitTextureColorDepthBy16bits
+                    ? (convertedAlphaChannelData == IMapBitmapTileProvider::AlphaChannelData::Present ? SkBitmap::kARGB_4444_Config : SkBitmap::kRGB_565_Config)
+                    : SkBitmap::kARGB_8888_Config);
+
+            auto convertedTile = new IMapBitmapTileProvider::Tile(convertedBitmap, convertedAlphaChannelData);
             return std::shared_ptr<IMapTileProvider::Tile>(convertedTile);
         }
     }

@@ -70,7 +70,10 @@ namespace OsmAnd {
         void replyFinishedHandler(QNetworkReply* reply, const TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback, QEventLoop& eventLoop, QNetworkAccessManager& networkAccessManager);
         void handleNetworkReply(QNetworkReply* reply, const TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback);
     public:
-        OnlineMapRasterTileProvider(const QString& id, const QString& urlPattern, const ZoomLevel& minZoom = ZoomLevel0, const ZoomLevel& maxZoom = ZoomLevel31, uint32_t maxConcurrentDownloads = 1, uint32_t tileDimension = 256);
+        OnlineMapRasterTileProvider(const QString& id, const QString& urlPattern,
+            const ZoomLevel& minZoom = ZoomLevel0, const ZoomLevel& maxZoom = ZoomLevel31,
+            const uint32_t& maxConcurrentDownloads = 1, const uint32_t& tileDimension = 256,
+            const AlphaChannelData& alphaChannelData = AlphaChannelData::Undefined);
         virtual ~OnlineMapRasterTileProvider();
 
         const QString id;
@@ -79,6 +82,7 @@ namespace OsmAnd {
         const uint32_t maxZoom;
         const uint32_t maxConcurrentDownloads;
         const uint32_t tileDimension;
+        const AlphaChannelData alphaChannelData;
 
         void setLocalCachePath(const QDir& localCachePath);
         const std::shared_ptr<QDir>& localCachePath;

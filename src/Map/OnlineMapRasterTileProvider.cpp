@@ -14,7 +14,14 @@
 #include <SkStream.h>
 #include <SkImageDecoder.h>
 
-OsmAnd::OnlineMapRasterTileProvider::OnlineMapRasterTileProvider(const QString& id_, const QString& urlPattern_, const ZoomLevel& maxZoom_ /*= 31*/, const ZoomLevel& minZoom_ /*= 0*/, uint32_t maxConcurrentDownloads_ /*= 1*/, uint32_t tileDimension_ /*= 256*/)
+OsmAnd::OnlineMapRasterTileProvider::OnlineMapRasterTileProvider(
+    const QString& id_,
+    const QString& urlPattern_,
+    const ZoomLevel& maxZoom_ /*= 31*/,
+    const ZoomLevel& minZoom_ /*= 0*/,
+    const uint32_t& maxConcurrentDownloads_ /*= 1*/,
+    const uint32_t& tileDimension_ /*= 256*/,
+    const AlphaChannelData& alphaChannelData_ /*= AlphaChannelData::Undefined*/)
     : _processingMutex(QMutex::Recursive)
     , _currentDownloadsCount(0)
     , _localCachePath(new QDir(QDir::current()))
@@ -28,6 +35,7 @@ OsmAnd::OnlineMapRasterTileProvider::OnlineMapRasterTileProvider(const QString& 
     , maxZoom(maxZoom_)
     , maxConcurrentDownloads(maxConcurrentDownloads_)
     , tileDimension(tileDimension_)
+    , alphaChannelData(alphaChannelData_)
 {
 }
 
@@ -132,7 +140,7 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const TileId& tile
                     }
                     _processingMutex.unlock();
                     
-                    std::shared_ptr<Tile> tile(new Tile(skBitmap));
+                    std::shared_ptr<Tile> tile(new Tile(skBitmap, alphaChannelData));
                     readyCallback(tileId, zoom, tile, true);
                     return;
                 }
@@ -323,7 +331,7 @@ void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* rep
         assert(skBitmap->width() == skBitmap->height());
         assert(skBitmap->width() == tileDimension);
 
-        std::shared_ptr<Tile> tile(new Tile(skBitmap));
+        std::shared_ptr<Tile> tile(new Tile(skBitmap, alphaChannelData));
         readyCallback(tileId, zoom, tile, true);
     }
 }
@@ -342,13 +350,17 @@ uint32_t OsmAnd::OnlineMapRasterTileProvider::getTileSize() const
 std::shared_ptr<OsmAnd::IMapTileProvider> OsmAnd::OnlineMapRasterTileProvider::createMapnikProvider()
 {
     auto provider = new OsmAnd::OnlineMapRasterTileProvider(
-        "mapnik", "http://mapnik.osmand.net/${zoom}/${x}/${y}.png", ZoomLevel0, ZoomLevel18, 2);
+        "mapnik", "http://mapnik.osmand.net/${zoom}/${x}/${y}.png",
+        ZoomLevel0, ZoomLevel18, 2,
+        256, AlphaChannelData::NotPresent);
     return std::shared_ptr<OsmAnd::IMapTileProvider>(static_cast<OsmAnd::IMapTileProvider*>(provider));
 }
 
 std::shared_ptr<OsmAnd::IMapTileProvider> OsmAnd::OnlineMapRasterTileProvider::createCycleMapProvider()
 {
     auto provider = new OsmAnd::OnlineMapRasterTileProvider(
-        "cyclemap", "http://b.tile.opencyclemap.org/cycle/${zoom}/${x}/${y}.png", ZoomLevel0, ZoomLevel18, 2);
+        "cyclemap", "http://b.tile.opencyclemap.org/cycle/${zoom}/${x}/${y}.png",
+        ZoomLevel0, ZoomLevel18, 2,
+        256, AlphaChannelData::NotPresent);
     return std::shared_ptr<OsmAnd::IMapTileProvider>(static_cast<OsmAnd::IMapTileProvider*>(provider));
 }
