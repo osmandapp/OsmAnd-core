@@ -50,17 +50,20 @@ namespace OsmAnd {
         bool _isSupported_APPLE_texture_max_level;
         bool _isSupported_EXT_shader_texture_lod;
     protected:
-        virtual void glTexStorage2D_wrapper(GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType);
-        virtual void glTexSubImage2D_wrapperEx(GLenum target, GLint level,
-            GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
-            GLenum format, GLenum type,
-            const GLvoid *pixels, GLsizei rowLengthInPixels = 0);
         virtual GLenum validateResult();
+
+        virtual uint32_t getTileTextureFormat(const std::shared_ptr< IMapTileProvider::Tile >& tile);
+        virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const std::shared_ptr< IMapTileProvider::Tile >& forTile);
+        virtual void uploadDataToTexture2D(GLenum target, GLint level,
+            GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
+            const GLvoid *data, GLsizei dataRowLengthInElements,
+            const std::shared_ptr< IMapTileProvider::Tile >& fromTile);
+        virtual void setMipMapLevelsLimit(GLenum target, const uint32_t& mipmapLevelsCount);
     public:
         RenderAPI_OpenGLES2();
         virtual ~RenderAPI_OpenGLES2();
 
-        virtual bool initialize(const uint32_t& optimalTilesPerAtlasSqrt);
+        virtual bool initialize();
         virtual bool release();
 
         const QList<QString>& glesExtensions;
