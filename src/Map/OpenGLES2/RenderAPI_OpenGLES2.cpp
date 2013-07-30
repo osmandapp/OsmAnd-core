@@ -444,7 +444,7 @@ void OsmAnd::RenderAPI_OpenGLES2::uploadDataToTexture2D(
         pixelSizeInBytes = 1;
     }
     assert(pixelSizeInBytes != 0);
-    auto pRow = reinterpret_cast<const uint8_t*>(pixels);
+    auto pRow = reinterpret_cast<const uint8_t*>(data);
     for(auto rowIdx = 0; rowIdx < height; rowIdx++)
     {
         glTexSubImage2D(target, level,
