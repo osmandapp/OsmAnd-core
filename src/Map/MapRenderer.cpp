@@ -77,7 +77,7 @@ void OsmAnd::MapRenderer::setConfiguration( const MapRendererConfiguration& conf
         return;
 
     _requestedConfiguration = configuration;
-    uint32_t mask;
+    uint32_t mask = 0;
     if(colorDepthForcingChanged)
         mask |= ConfigurationChange::ColorDepthForcing;
     if(atlasTexturesUsageChanged)
@@ -270,7 +270,7 @@ bool OsmAnd::MapRenderer::preProcessRendering()
         const auto rx = r.x - _targetTileId.x;
         const auto ry = r.y - _targetTileId.y;
 
-        return (l.x*l.x + l.y*l.y) < (r.x*r.x + r.y*r.y);
+        return (lx*lx + ly*ly) < (rx*rx + ry*ry);
     });
 
     // Get set of tiles that are unique: visible tiles may contain same tiles, but wrapped
