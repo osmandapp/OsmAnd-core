@@ -38,6 +38,22 @@
 #   define GL_R32F_EXT                                                  0x822E
 #endif //!GL_R32F_EXT
 
+#ifndef GL_RED_EXT
+#   define GL_RED_EXT                                                   0x1903
+#endif //!GL_RED_EXT
+
+#ifndef GL_UNPACK_ROW_LENGTH
+#    define GL_UNPACK_ROW_LENGTH                                        0x0CF2
+#endif // !GL_UNPACK_ROW_LENGTH
+
+#ifndef GL_UNPACK_SKIP_ROWS
+#    define GL_UNPACK_SKIP_ROWS                                         0x0CF3
+#endif // !GL_UNPACK_SKIP_ROWS
+
+#ifndef GL_UNPACK_SKIP_PIXELS
+#   define GL_UNPACK_SKIP_PIXELS                                        0x0CF4
+#endif // !GL_UNPACK_SKIP_PIXELS
+
 #if !defined(OSMAND_TARGET_OS_ios)
 OsmAnd::RenderAPI_OpenGLES2::P_glTexStorage2DEXT_PROC OsmAnd::RenderAPI_OpenGLES2::glTexStorage2DEXT = nullptr;
 #endif //!OSMAND_TARGET_OS_ios
@@ -323,7 +339,7 @@ void OsmAnd::RenderAPI_OpenGLES2::allocateTexture2D( GLenum target, GLsizei leve
 
     uint8_t* dummyBuffer = new uint8_t[width * height * pixelSizeInBytes];
     
-    glTexImage2D(target, 0, sourceFormat, width, height, 0, sourceFormat, sourcePixelDataType, dummyBuffer);
+    glTexImage2D(target, 0, format, width, height, 0, format, type, dummyBuffer);
     GL_CHECK_RESULT;
 
     delete[] dummyBuffer;
@@ -333,7 +349,7 @@ void OsmAnd::RenderAPI_OpenGLES2::uploadDataToTexture2D(
     GLenum target, GLint level,
     GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
     const GLvoid *data, GLsizei dataRowLengthInElements,
-    const std::shared_ptr< IMapTileProvider::Tile >& fromTile )
+    const std::shared_ptr< IMapTileProvider::Tile >& tile )
 {
     GL_CHECK_PRESENT(glTexSubImage2D);
 
@@ -366,7 +382,10 @@ void OsmAnd::RenderAPI_OpenGLES2::uploadDataToTexture2D(
         }
         else if(tile->type == IMapTileProvider::ElevationData)
         {
-            sourceFormat = GL_RED;
+            if(isSupported_EXT_texture_rg)
+                sourceFormat = GL_RED_EXT;
+            else
+                sourceFormat = GL_LUMINANCE;
             sourceFormatType = GL_FLOAT;
         }
 
@@ -384,8 +403,13 @@ void OsmAnd::RenderAPI_OpenGLES2::uploadDataToTexture2D(
     }
 
     // Otherwise fallback to manual unpacking
+    const auto encodedFormat = getTileTextureFormat(tile);
+    GLenum format = static_cast<GLenum>(encodedFormat >> 16);
+    GLenum type = static_cast<GLenum>(encodedFormat & 0xFFFF);
+    GLsizei pixelSizeInBytes = 0;
+    
     // In case our row length is 0 or equals to image width (has no extra stride, just load as-is)
-    if(rowLengthInPixels == 0 || rowLengthInPixels == width)
+    if(dataRowLengthInElements == 0 || dataRowLengthInElements == width)
     {
         // Upload data
         glTexSubImage2D(target, level,
@@ -397,10 +421,6 @@ void OsmAnd::RenderAPI_OpenGLES2::uploadDataToTexture2D(
     }
 
     // Otherwise we need to or load row by row
-    const auto encodedFormat = getTileTextureFormat(tile);
-    GLenum format = static_cast<GLenum>(encodedFormat >> 16);
-    GLenum type = static_cast<GLenum>(encodedFormat & 0xFFFF);
-    GLsizei pixelSizeInBytes = 0;
     if(tile->type == IMapTileProvider::Bitmap)
     {
         auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
