@@ -404,9 +404,36 @@ void OsmAnd::RenderAPI_OpenGLES2::uploadDataToTexture2D(
 
     // Otherwise fallback to manual unpacking
     const auto encodedFormat = getTileTextureFormat(tile);
-    GLenum format = static_cast<GLenum>(encodedFormat >> 16);
-    GLenum type = static_cast<GLenum>(encodedFormat & 0xFFFF);
-    GLsizei pixelSizeInBytes = 0;
+    GLenum format = GL_INVALID_ENUM;
+    GLenum type = GL_INVALID_ENUM;
+    if(tile->type == IMapTileProvider::Bitmap)
+    {
+        auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
+
+        switch (bitmapTile->format)
+        {
+        case IMapBitmapTileProvider::RGBA_8888:
+            format = GL_RGBA;
+            type = GL_UNSIGNED_BYTE;
+            break;
+        case IMapBitmapTileProvider::RGBA_4444:
+            format = GL_RGBA;
+            type = GL_UNSIGNED_SHORT_4_4_4_4;
+            break;
+        case IMapBitmapTileProvider::RGB_565:
+            format = GL_RGB;
+            type = GL_UNSIGNED_SHORT_5_6_5;
+            break;
+        }
+    }
+    else if(tile->type == IMapTileProvider::ElevationData)
+    {
+        if(isSupported_vertexShaderTextureLookup)
+        {
+            format = isSupported_EXT_texture_rg ? GL_RED_EXT : GL_LUMINANCE;
+            type = GL_UNSIGNED_BYTE;
+        }
+    }
     
     // In case our row length is 0 or equals to image width (has no extra stride, just load as-is)
     if(dataRowLengthInElements == 0 || dataRowLengthInElements == width)
@@ -421,6 +448,7 @@ void OsmAnd::RenderAPI_OpenGLES2::uploadDataToTexture2D(
     }
 
     // Otherwise we need to or load row by row
+    GLsizei pixelSizeInBytes = 0;
     if(tile->type == IMapTileProvider::Bitmap)
     {
         auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
