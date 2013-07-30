@@ -2,6 +2,7 @@
 
 #include <assert.h>
 
+#include "IMapBitmapTileProvider.h"
 #include "Logging.h"
 
 #undef GL_CHECK_RESULT
@@ -211,28 +212,97 @@ bool OsmAnd::RenderAPI_OpenGL::release()
     return true;
 }
 
-void OsmAnd::RenderAPI_OpenGL::glTexStorage2D_wrapper( GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType )
+uint32_t OsmAnd::RenderAPI_OpenGL::getTileTextureFormat( const std::shared_ptr< IMapTileProvider::Tile >& tile )
 {
-    GL_CHECK_PRESENT(glTexStorage2D);
-
     GLenum textureFormat = GL_INVALID_ENUM;
-    if(sourceFormat == GL_RGBA && sourcePixelDataType == GL_UNSIGNED_BYTE)
+
+    if(tile->type == IMapTileProvider::Bitmap)
     {
-        //TODO: here in theory we can handle forcing texture to be 16bit RGB5A1
-        textureFormat = GL_RGBA8;
+        auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
+
+        switch (bitmapTile->format)
+        {
+        case IMapBitmapTileProvider::RGBA_8888:
+            textureFormat = force16bitBitmapColorDepth ? GL_RGB5_A1 : GL_RGBA8;
+            break;
+        case IMapBitmapTileProvider::RGBA_4444:
+            textureFormat = GL_RGBA4;
+            break;
+        case IMapBitmapTileProvider::RGB_565:
+            textureFormat = GL_RGB5;
+            break;
+        }
     }
-    else if(sourceFormat == GL_RGBA && sourcePixelDataType == GL_UNSIGNED_SHORT_4_4_4_4)
+    else if(tile->type == IMapTileProvider::ElevationData)
     {
-        textureFormat = GL_RGBA4;
+        textureFormat = GL_R32F;
     }
-    else if(sourceFormat == GL_RGB && sourcePixelDataType == GL_UNSIGNED_SHORT_5_6_5)
-    {
-        textureFormat = GL_RGB5;
-    }
-    else if(sourceFormat == GL_LUMINANCE && sourcePixelDataType == GL_FLOAT)
-    {
-        textureFormat = GL_LUMINANCE8;
-    }
+
+    assert(textureFormat != GL_INVALID_ENUM);
+
+    return static_cast<uint32_t>(textureFormat);
+}
+
+void OsmAnd::RenderAPI_OpenGL::allocateTexture2D( GLenum target, GLsizei levels, GLsizei width, GLsizei height, const std::shared_ptr< IMapTileProvider::Tile >& forTile )
+{
+    GLenum textureFormat = static_cast<GLenum>(getTileTextureFormat(forTile));
 
     glTexStorage2D(target, levels, textureFormat, width, height);
+    GL_CHECK_RESULT;
+}
+
+void OsmAnd::RenderAPI_OpenGL::uploadDataToTexture2D(
+    GLenum target, GLint level,
+    GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
+    const GLvoid *data, GLsizei dataRowLengthInElements,
+    const std::shared_ptr< IMapTileProvider::Tile >& tile )
+{
+    GL_CHECK_PRESENT(glPixelStorei);
+    GL_CHECK_PRESENT(glTexSubImage2D);
+
+    GLenum sourceFormat = GL_INVALID_ENUM;
+    GLenum sourceFormatType = GL_INVALID_ENUM;
+    if(tile->type == IMapTileProvider::Bitmap)
+    {
+        auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
+
+        switch (bitmapTile->format)
+        {
+        case IMapBitmapTileProvider::RGBA_8888:
+            sourceFormat = GL_RGBA;
+            sourceFormatType = GL_UNSIGNED_BYTE;
+            break;
+        case IMapBitmapTileProvider::RGBA_4444:
+            sourceFormat = GL_RGBA;
+            sourceFormatType = GL_UNSIGNED_SHORT_4_4_4_4;
+            break;
+        case IMapBitmapTileProvider::RGB_565:
+            sourceFormat = GL_RGB;
+            sourceFormatType = GL_UNSIGNED_SHORT_5_6_5;
+            break;
+        }
+    }
+    else if(tile->type == IMapTileProvider::ElevationData)
+    {
+        sourceFormat = GL_RED;
+        sourceFormatType = GL_FLOAT;
+    }
+
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, dataRowLengthInElements);
+    GL_CHECK_RESULT;
+
+    glTexSubImage2D(target, level,
+        xoffset, yoffset, width, height,
+        sourceFormat,
+        sourceFormatType,
+        data);
+    GL_CHECK_RESULT;
+}
+
+void OsmAnd::RenderAPI_OpenGL::setMipMapLevelsLimit( GLenum target, const uint32_t& mipmapLevelsCount )
+{
+    GL_CHECK_PRESENT(glTexParameteri);
+
+    glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, mipmapLevelsCount);
+    GL_CHECK_RESULT;
 }

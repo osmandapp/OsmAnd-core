@@ -78,6 +78,7 @@
 #   define GL_CHECK_PRESENT(x)
 #endif
 
+/*
 #if defined(OSMAND_OPENGLES2_RENDERER_SUPPORTED)
 #   if !defined(GL_UNPACK_ROW_LENGTH)
 #       define GL_UNPACK_ROW_LENGTH              0x0CF2
@@ -92,6 +93,7 @@
 #       define GL_TEXTURE_MAX_LEVEL GL_TEXTURE_MAX_LEVEL_APPLE
 #   endif
 #endif // OSMAND_OPENGLES2_RENDERER_SUPPORTED
+*/
 
 namespace OsmAnd {
 
@@ -126,11 +128,13 @@ namespace OsmAnd {
         virtual GLuint compileShader(GLenum shaderType, const char* source);
         virtual GLuint linkProgram(GLuint shadersCount, GLuint *shaders);
 
-        virtual void glTexStorage2D_wrapper(GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType) = 0;
-        virtual void glTexSubImage2D_wrapperEx(GLenum target, GLint level,
+        virtual uint32_t getTileTextureFormat(const std::shared_ptr< IMapTileProvider::Tile >& tile) = 0;
+        virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const std::shared_ptr< IMapTileProvider::Tile >& forTile) = 0;
+        virtual void uploadDataToTexture2D(GLenum target, GLint level,
             GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
-            GLenum format, GLenum type,
-            const GLvoid *pixels, GLsizei rowLengthInPixels = 0);
+            const GLvoid *data, GLsizei dataRowLengthInElements,
+            const std::shared_ptr< IMapTileProvider::Tile >& fromTile) = 0;
+        virtual void setMipMapLevelsLimit(GLenum target, const uint32_t& mipmapLevelsCount) = 0;
 
         virtual void clearVariablesLookup();
         virtual void findVariableLocation(GLuint program, GLint& location, const QString& name, const VariableType& type);

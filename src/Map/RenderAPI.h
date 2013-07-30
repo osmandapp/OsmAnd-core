@@ -85,8 +85,7 @@ namespace OsmAnd {
             uint64_t id;
             struct
             {
-                uint16_t format;
-                uint16_t pixelType;
+                uint32_t format;
                 uint16_t tileSize;
                 uint16_t tilePadding;
             };

@@ -38,8 +38,15 @@ namespace OsmAnd {
     {
     private:
     protected:
-        virtual void glTexStorage2D_wrapper(GLenum target, GLsizei levels, GLsizei width, GLsizei height, GLenum sourceFormat, GLenum sourcePixelDataType);
         virtual GLenum validateResult();
+
+        virtual uint32_t getTileTextureFormat(const std::shared_ptr< IMapTileProvider::Tile >& tile);
+        virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const std::shared_ptr< IMapTileProvider::Tile >& forTile);
+        virtual void uploadDataToTexture2D(GLenum target, GLint level,
+            GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
+            const GLvoid *data, GLsizei dataRowLengthInElements,
+            const std::shared_ptr< IMapTileProvider::Tile >& fromTile);
+        virtual void setMipMapLevelsLimit(GLenum target, const uint32_t& mipmapLevelsCount);
         
         GLuint _textureSampler_Bitmap_NoAtlas;
         GLuint _textureSampler_Bitmap_Atlas;
