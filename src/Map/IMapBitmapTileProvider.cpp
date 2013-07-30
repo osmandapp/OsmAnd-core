@@ -23,9 +23,10 @@ OsmAnd::IMapBitmapTileProvider::~IMapBitmapTileProvider()
 {
 }
 
-OsmAnd::IMapBitmapTileProvider::Tile::Tile( const void* data, size_t rowLength, uint32_t width, uint32_t height, const BitmapFormat& format_ )
-    : IMapTileProvider::Tile(IMapTileProvider::Bitmap, data, rowLength, width, height)
-    , format(format_)
+OsmAnd::IMapBitmapTileProvider::Tile::Tile( SkBitmap* bitmap_ )
+    : IMapTileProvider::Tile(IMapTileProvider::Bitmap, bitmap_->getPixels(), bitmap_->rowBytes(), bitmap_->width(), bitmap_->height())
+    , _bitmap(bitmap_)
+    , bitmap(_bitmap)
 {
 }
 

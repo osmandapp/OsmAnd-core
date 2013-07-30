@@ -55,13 +55,13 @@ bool OsmAnd::MapRenderer::setup( const MapRendererSetupOptions& setupOptions )
     return true;
 }
 
-void OsmAnd::MapRenderer::setConfiguration( const MapRendererConfiguration& configuration, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setConfiguration( const MapRendererConfiguration& configuration_, bool forcedUpdate /*= false*/ )
 {
     QWriteLocker scopedLocker(&_configurationLock);
 
-    const bool colorDepthForcingChanged = (_requestedConfiguration.force16bitTextureBitmapColorDepth != configuration.force16bitTextureBitmapColorDepth);
-    const bool atlasTexturesUsageChanged = (_requestedConfiguration.textureAtlasesAllowed != configuration.textureAtlasesAllowed);
-    const bool elevationDataResolutionChanged = (_requestedConfiguration.heightmapPatchesPerSide != configuration.heightmapPatchesPerSide);
+    const bool colorDepthForcingChanged = (_requestedConfiguration.limitTextureColorDepthBy16bits != configuration_.limitTextureColorDepthBy16bits);
+    const bool atlasTexturesUsageChanged = (_requestedConfiguration.textureAtlasesAllowed != configuration_.textureAtlasesAllowed);
+    const bool elevationDataResolutionChanged = (_requestedConfiguration.heightmapPatchesPerSide != configuration_.heightmapPatchesPerSide);
 
     bool invalidateRasterTextures = false;
     invalidateRasterTextures = invalidateRasterTextures || colorDepthForcingChanged;
@@ -76,7 +76,7 @@ void OsmAnd::MapRenderer::setConfiguration( const MapRendererConfiguration& conf
     if(!update)
         return;
 
-    _requestedConfiguration = configuration;
+    _requestedConfiguration = configuration_;
     uint32_t mask = 0;
     if(colorDepthForcingChanged)
         mask |= ConfigurationChange::ColorDepthForcing;
@@ -652,7 +652,7 @@ void OsmAnd::MapRenderer::requestMissingTiles()
         {
             const auto& provider = _currentState.tileProviders[layerId];
 
-            // Slip layers that do not have tile providers
+            // Skip layers that do not have tile providers
             if(!provider)
                 continue;
 
@@ -676,7 +676,7 @@ void OsmAnd::MapRenderer::requestMissingTiles()
                 bool availableImmediately = provider->obtainTileImmediate(tileId, _currentState.zoomBase, tile);
                 if(availableImmediately)
                 {
-                    tileEntry->_sourceData = tile;
+                    tileEntry->_sourceData = prepareTileForUploadingToGPU(tile);
                     tileEntry->_state = tile ? MapRendererTileLayer::TileEntry::Ready : MapRendererTileLayer::TileEntry::Unavailable;
 
                     wasImmediateDataObtained = true;
@@ -705,8 +705,8 @@ void OsmAnd::MapRenderer::processRequestedTile( const MapTileLayerId& layerId, c
         QWriteLocker scopedLock(&tileEntry->stateLock);
 
         assert(tileEntry->state == MapRendererTileLayer::TileEntry::Requested);
-
-        tileEntry->_sourceData = tile;
+        
+        tileEntry->_sourceData = prepareTileForUploadingToGPU(tile);
         tileEntry->_state = tile ? MapRendererTileLayer::TileEntry::Ready : MapRendererTileLayer::TileEntry::Unavailable;
     }
 

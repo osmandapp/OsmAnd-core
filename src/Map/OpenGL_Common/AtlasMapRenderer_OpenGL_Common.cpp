@@ -268,11 +268,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::validateConfigurationChange( const 
     
     if(change == ConfigurationChange::AtlasTexturesUsage)
     {
-        renderAPI->tilesPerAtlasTextureLimit = configuration.textureAtlasesAllowed ? OptimalTilesPerAtlasTextureSqrt : 1;
-    }
-    else if(change == ConfigurationChange::ColorDepthForcing)
-    {
-        renderAPI->force16bitBitmapColorDepth = configuration.force16bitTextureBitmapColorDepth;
+        renderAPI->tilesPerAtlasTextureLimit = currentConfiguration.textureAtlasesAllowed ? OptimalTilesPerAtlasTextureSqrt : 1;
     }
 }
 
@@ -338,11 +334,11 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::createTilePatch()
     {
         // Complex tile patch, that consists of (TileElevationNodesPerSide*TileElevationNodesPerSide) number of
         // height clusters. Height cluster itself consists of 4 vertices, 6 indices and 2 polygons
-        const GLfloat clusterSize = static_cast<GLfloat>(TileSide3D) / static_cast<float>(configuration.heightmapPatchesPerSide);
-        const auto verticesPerLine = configuration.heightmapPatchesPerSide + 1;
+        const GLfloat clusterSize = static_cast<GLfloat>(TileSide3D) / static_cast<float>(currentConfiguration.heightmapPatchesPerSide);
+        const auto verticesPerLine = currentConfiguration.heightmapPatchesPerSide + 1;
         verticesCount = verticesPerLine * verticesPerLine;
         pVertices = new MapTileVertex[verticesCount];
-        indicesCount = (configuration.heightmapPatchesPerSide * configuration.heightmapPatchesPerSide) * 6;
+        indicesCount = (currentConfiguration.heightmapPatchesPerSide * currentConfiguration.heightmapPatchesPerSide) * 6;
         pIndices = new GLushort[indicesCount];
 
         MapTileVertex* pV = pVertices;
@@ -355,16 +351,16 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::createTilePatch()
                 pV->position[0] = static_cast<float>(col) * clusterSize;
                 pV->position[1] = static_cast<float>(row) * clusterSize;
 
-                pV->uv[0] = static_cast<float>(col) / static_cast<float>(configuration.heightmapPatchesPerSide);
-                pV->uv[1] = static_cast<float>(row) / static_cast<float>(configuration.heightmapPatchesPerSide);
+                pV->uv[0] = static_cast<float>(col) / static_cast<float>(currentConfiguration.heightmapPatchesPerSide);
+                pV->uv[1] = static_cast<float>(row) / static_cast<float>(currentConfiguration.heightmapPatchesPerSide);
             }
         }
 
         // Form indices
         GLushort* pI = pIndices;
-        for(auto row = 0u; row < configuration.heightmapPatchesPerSide; row++)
+        for(auto row = 0u; row < currentConfiguration.heightmapPatchesPerSide; row++)
         {
-            for(auto col = 0u; col < configuration.heightmapPatchesPerSide; col++)
+            for(auto col = 0u; col < currentConfiguration.heightmapPatchesPerSide; col++)
             {
                 // p1 - top left
                 // p2 - bottom left
@@ -403,4 +399,39 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::createTilePatch()
 OsmAnd::RenderAPI_OpenGL_Common* OsmAnd::AtlasMapRenderer_OpenGL_Common::getRenderAPI() const
 {
     return static_cast<OsmAnd::RenderAPI_OpenGL_Common*>(renderAPI.get());
+}
+
+std::shared_ptr<OsmAnd::IMapTileProvider::Tile> OsmAnd::AtlasMapRenderer_OpenGL_Common::prepareTileForUploadingToGPU( const std::shared_ptr<IMapTileProvider::Tile>& tile )
+{
+    if(tile->type == IMapTileProvider::Type::Bitmap)
+    {
+        auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
+
+        // If we have limit of 16bits per pixel in bitmaps, convert to ARGB(4444) or RGB(565)
+        if(currentConfiguration.limitTextureColorDepthBy16bits && bitmapTile->bitmap->getConfig() == SkBitmap::kARGB_8888_Config)
+        {
+            auto convertedBitmap = new SkBitmap();
+            //TODO: will loose alpha or color here
+            bitmapTile->bitmap->deepCopyTo(convertedBitmap, SkBitmap::kARGB_4444_Config);
+
+            auto convertedTile = new IMapBitmapTileProvider::Tile(convertedBitmap);
+            return std::shared_ptr<IMapTileProvider::Tile>(convertedTile);
+        }
+
+        // If we have any other unsupported format, convert to proper 16bit or 32bit
+        const bool unsupportedFormat =
+            (bitmapTile->bitmap->getConfig() != SkBitmap::kARGB_8888_Config) ||
+            (bitmapTile->bitmap->getConfig() != SkBitmap::kARGB_4444_Config) ||
+            (bitmapTile->bitmap->getConfig() != SkBitmap::kRGB_565_Config);
+        if(unsupportedFormat)
+        {
+            auto convertedBitmap = new SkBitmap();
+            bitmapTile->bitmap->deepCopyTo(convertedBitmap, currentConfiguration.limitTextureColorDepthBy16bits ? SkBitmap::kARGB_4444_Config : SkBitmap::kARGB_8888_Config);
+
+            auto convertedTile = new IMapBitmapTileProvider::Tile(convertedBitmap);
+            return std::shared_ptr<IMapTileProvider::Tile>(convertedTile);
+        }
+    }
+
+    return tile;
 }

@@ -220,15 +220,15 @@ uint32_t OsmAnd::RenderAPI_OpenGL::getTileTextureFormat( const std::shared_ptr< 
     {
         auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
 
-        switch (bitmapTile->format)
+        switch (bitmapTile->bitmap->getConfig())
         {
-        case IMapBitmapTileProvider::RGBA_8888:
-            textureFormat = force16bitBitmapColorDepth ? GL_RGB5_A1 : GL_RGBA8;
+        case SkBitmap::Config::kARGB_8888_Config:
+            textureFormat = GL_RGBA8;
             break;
-        case IMapBitmapTileProvider::RGBA_4444:
+        case SkBitmap::Config::kARGB_4444_Config:
             textureFormat = GL_RGBA4;
             break;
-        case IMapBitmapTileProvider::RGB_565:
+        case SkBitmap::Config::kRGB_565_Config:
             textureFormat = GL_RGB565;
             break;
         }
@@ -266,17 +266,17 @@ void OsmAnd::RenderAPI_OpenGL::uploadDataToTexture2D(
     {
         auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
 
-        switch (bitmapTile->format)
+        switch (bitmapTile->bitmap->getConfig())
         {
-        case IMapBitmapTileProvider::RGBA_8888:
+        case SkBitmap::Config::kARGB_8888_Config:
             sourceFormat = GL_RGBA;
             sourceFormatType = GL_UNSIGNED_BYTE;
             break;
-        case IMapBitmapTileProvider::RGBA_4444:
+        case SkBitmap::Config::kARGB_4444_Config:
             sourceFormat = GL_RGBA;
             sourceFormatType = GL_UNSIGNED_SHORT_4_4_4_4;
             break;
-        case IMapBitmapTileProvider::RGB_565:
+        case SkBitmap::Config::kRGB_565_Config:
             sourceFormat = GL_RGB;
             sourceFormatType = GL_UNSIGNED_SHORT_5_6_5;
             break;

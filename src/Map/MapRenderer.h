@@ -108,6 +108,7 @@ namespace OsmAnd {
 
         QSet<TileId> _uniqueTiles;
         void requestMissingTiles();
+        virtual std::shared_ptr<IMapTileProvider::Tile> prepareTileForUploadingToGPU(const std::shared_ptr<IMapTileProvider::Tile>& tile) = 0;
         void processRequestedTile(const MapTileLayerId& layerId, const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile, bool success);
 
         Qt::HANDLE _renderThreadId;

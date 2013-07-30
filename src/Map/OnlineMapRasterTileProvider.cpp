@@ -61,10 +61,7 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const TileId& tile
     {
         QMutexLocker scopeLock(&_requestsMutex);
         if(_requestedTileIds[zoom].contains(tileId))
-        {
-            //LogPrintf(LogSeverityLevel::Debug, "Request for tile %dx%d@%d ignored: already requested\n", tileId.x, tileId.y, zoom);
             return;
-        }
         _requestedTileIds[zoom].insert(tileId);
     }
 
@@ -73,13 +70,10 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const TileId& tile
         {
             _processingMutex.lock();
 
-            //LogPrintf(LogSeverityLevel::Debug, "Processing order of tile %dx%d@%d : local-lookup\n", tileId.x, tileId.y, zoom);
-
             // Check if we're already in process of downloading this tile, or
             // if this tile is in pending-download state
             if(_enqueuedTileIdsForDownload[zoom].contains(tileId) || _currentlyDownloadingTileIds[zoom].contains(tileId))
             {
-                //LogPrintf(LogSeverityLevel::Debug, "Ignoring order of tile %dx%d@%d : already in pending-download or downloading state\n", tileId.x, tileId.y, zoom);
                 _processingMutex.unlock();
                 return;
             }
@@ -98,7 +92,6 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const TileId& tile
                     // 0-sized tile means there is no data at all
                     if(tileFile.size() == 0)
                     {
-                        //LogPrintf(LogSeverityLevel::Debug, "Order processed of tile %dx%d@%d : local-lookup 0 tile\n", tileId.x, tileId.y, zoom);
                         {
                             QMutexLocker scopeLock(&_requestsMutex);
                             _requestedTileIds[zoom].remove(tileId);
@@ -111,29 +104,10 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const TileId& tile
                         return;
                     }
 
-                    //TODO: Here may be issue that SKIA can not handle opening files on different platforms correctly
-
-                    // Determine mode
+                    //NOTE: Here may be issue that SKIA can not handle opening files on different platforms correctly
                     auto skBitmap = new SkBitmap();
                     SkFILEStream fileStream(fullPath.toStdString().c_str());
-                    if(!SkImageDecoder::DecodeStream(&fileStream, skBitmap, SkBitmap::kNo_Config, SkImageDecoder::kDecodeBounds_Mode))
-                    {
-                        LogPrintf(LogSeverityLevel::Error, "Failed to decode header of tile file '%s'\n", fullPath.toStdString().c_str());
-                        {
-                            QMutexLocker scopeLock(&_requestsMutex);
-                            _requestedTileIds[zoom].remove(tileId);
-                        }
-                        _processingMutex.unlock();
-
-                        delete skBitmap;
-                        std::shared_ptr<IMapTileProvider::Tile> emptyTile;
-                        readyCallback(tileId, zoom, emptyTile, false);
-                        return;
-                    }
-
-                    const bool force32bit = (skBitmap->getConfig() != SkBitmap::kRGB_565_Config) && (skBitmap->getConfig() != SkBitmap::kARGB_4444_Config);
-                    fileStream.rewind();
-                    if(!SkImageDecoder::DecodeStream(&fileStream, skBitmap, force32bit ? SkBitmap::kARGB_8888_Config : skBitmap->getConfig(), SkImageDecoder::kDecodePixels_Mode))
+                    if(!SkImageDecoder::DecodeStream(&fileStream, skBitmap,  SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
                     {
                         LogPrintf(LogSeverityLevel::Error, "Failed to decode tile file '%s'\n", fullPath.toStdString().c_str());
                         {
@@ -152,7 +126,6 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const TileId& tile
                     assert(skBitmap->width() == tileDimension);
 
                     // Construct tile response
-                    //LogPrintf(LogSeverityLevel::Debug, "Order processed of tile %dx%d@%d : local-lookup\n", tileId.x, tileId.y, zoom);
                     {
                         QMutexLocker scopeLock(&_requestsMutex);
                         _requestedTileIds[zoom].remove(tileId);
@@ -213,8 +186,6 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const QUrl& url, c
     Concurrent::pools->network->start(new Concurrent::Task(
         [this, url, tileId, zoom, readyCallback](const Concurrent::Task* task, QEventLoop& eventLoop)
         {
-            //LogPrintf(LogSeverityLevel::Info, "Downloading tile %dx%d@%d from %s\n", tileId.x, tileId.y, zoom, url.toString().toStdString().c_str());
-
             QNetworkAccessManager networkAccessManager;
             QNetworkRequest request;
             request.setUrl(url);
@@ -256,7 +227,9 @@ void OsmAnd::OnlineMapRasterTileProvider::replyFinishedHandler( QNetworkReply* r
     _currentlyDownloadingTileIds[zoom].remove(tileId);
     _currentDownloadsCount--;
 
+#if defined(_DEBUG) || defined(DEBUG)
     LogPrintf(LogSeverityLevel::Info, "Tile downloading queue size %d\n", _tileDownloadRequestsQueue.size());
+#endif
     while(!_tileDownloadRequestsQueue.isEmpty() && _currentDownloadsCount < maxConcurrentDownloads)
     {
         const auto& request = _tileDownloadRequestsQueue.dequeue();
@@ -308,7 +281,9 @@ void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* rep
         return;
     }
 
+#if defined(_DEBUG) || defined(DEBUG)
     LogPrintf(LogSeverityLevel::Info, "Downloaded tile from %s\n", reply->request().url().toString().toStdString().c_str());
+#endif
     const auto& data = reply->readAll();
 
     if(_localCachePath && _localCachePath->exists())
@@ -320,7 +295,9 @@ void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* rep
             tileFile.write(data);
             tileFile.close();
 
+#if defined(_DEBUG) || defined(DEBUG)
             LogPrintf(LogSeverityLevel::Info, "Saved tile from %s to %s\n", reply->request().url().toString().toStdString().c_str(), fullPath.toStdString().c_str());
+#endif
         }
         else
         {
@@ -332,20 +309,8 @@ void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* rep
     // Decode in-memory if we have receiver
     if(readyCallback)
     {
-        // Determine mode
         auto skBitmap = new SkBitmap();
-        if(!SkImageDecoder::DecodeMemory(data.data(), data.size(), skBitmap, SkBitmap::kNo_Config, SkImageDecoder::kDecodeBounds_Mode))
-        {
-            LogPrintf(LogSeverityLevel::Error, "Failed to decode header of tile from '%s'\n", reply->request().url().toString().toStdString().c_str());
-
-            delete skBitmap;
-            std::shared_ptr<IMapTileProvider::Tile> emptyTile;
-            readyCallback(tileId, zoom, emptyTile, false);
-            return;
-        }
-
-        const bool force32bit = (skBitmap->getConfig() != SkBitmap::kRGB_565_Config) && (skBitmap->getConfig() != SkBitmap::kARGB_4444_Config);
-        if(!SkImageDecoder::DecodeMemory(data.data(), data.size(), skBitmap, force32bit ? SkBitmap::kARGB_8888_Config : skBitmap->getConfig(), SkImageDecoder::kDecodePixels_Mode))
+        if(!SkImageDecoder::DecodeMemory(data.data(), data.size(), skBitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
         {
             LogPrintf(LogSeverityLevel::Error, "Failed to decode tile file from '%s'\n", reply->request().url().toString().toStdString().c_str());
 
@@ -372,17 +337,6 @@ float OsmAnd::OnlineMapRasterTileProvider::getTileDensity() const
 uint32_t OsmAnd::OnlineMapRasterTileProvider::getTileSize() const
 {
     return tileDimension;
-}
-
-OsmAnd::OnlineMapRasterTileProvider::Tile::Tile( SkBitmap* bitmap )
-    : IMapBitmapTileProvider::Tile(bitmap->getPixels(), bitmap->rowBytes(), bitmap->width(), bitmap->height(),
-        bitmap->getConfig() == SkBitmap::kARGB_8888_Config ? IMapBitmapTileProvider::RGBA_8888 : (bitmap->getConfig() == SkBitmap::kARGB_4444_Config ? IMapBitmapTileProvider::RGBA_4444 : IMapBitmapTileProvider::RGB_565 ) )
-    , _skBitmap(bitmap)
-{
-}
-
-OsmAnd::OnlineMapRasterTileProvider::Tile::~Tile()
-{
 }
 
 std::shared_ptr<OsmAnd::IMapTileProvider> OsmAnd::OnlineMapRasterTileProvider::createMapnikProvider()

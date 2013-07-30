@@ -206,15 +206,13 @@ bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU( const TileId& ti
     {
         auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
 
-        switch (bitmapTile->format)
+        switch (bitmapTile->bitmap->getConfig())
         {
-        case IMapBitmapTileProvider::RGBA_8888:
+        case SkBitmap::Config::kARGB_8888_Config:
             sourcePixelByteSize = 4;
             break;
-        case IMapBitmapTileProvider::RGBA_4444:
-            sourcePixelByteSize = 2;
-            break;
-        case IMapBitmapTileProvider::RGB_565:
+        case SkBitmap::Config::kARGB_4444_Config:
+        case SkBitmap::Config::kRGB_565_Config:
             sourcePixelByteSize = 2;
             break;
         }

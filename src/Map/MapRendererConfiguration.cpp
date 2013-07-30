@@ -3,7 +3,7 @@
 OsmAnd::MapRendererConfiguration::MapRendererConfiguration()
 {
     textureAtlasesAllowed = false;
-    force16bitTextureBitmapColorDepth = false;
+    limitTextureColorDepthBy16bits = false;
     heightmapPatchesPerSide = 24;
 }
 

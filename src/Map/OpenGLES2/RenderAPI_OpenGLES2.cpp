@@ -224,15 +224,15 @@ uint32_t OsmAnd::RenderAPI_OpenGLES2::getTileTextureFormat( const std::shared_pt
         {
             auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
 
-            switch (bitmapTile->format)
+            switch (bitmapTile->bitmap->getConfig())
             {
-            case IMapBitmapTileProvider::RGBA_8888:
-                textureFormat = force16bitBitmapColorDepth ? GL_RGB5_A1 : GL_RGBA8_OES;
+            case SkBitmap::Config::kARGB_8888_Config:
+                textureFormat = GL_RGBA8_OES;
                 break;
-            case IMapBitmapTileProvider::RGBA_4444:
+            case SkBitmap::Config::kARGB_4444_Config:
                 textureFormat = GL_RGBA4;
                 break;
-            case IMapBitmapTileProvider::RGB_565:
+            case SkBitmap::Config::kRGB_565_Config:
                 textureFormat = GL_RGB565;
                 break;
             }
@@ -262,18 +262,17 @@ uint32_t OsmAnd::RenderAPI_OpenGLES2::getTileTextureFormat( const std::shared_pt
     {
         auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
 
-        switch (bitmapTile->format)
+        switch (bitmapTile->bitmap->getConfig())
         {
-        case IMapBitmapTileProvider::RGBA_8888:
-            //TODO: test if we still can convert textures into 16bit by force
+        case SkBitmap::Config::kARGB_8888_Config:
             format = GL_RGBA;
             type = GL_UNSIGNED_BYTE;
             break;
-        case IMapBitmapTileProvider::RGBA_4444:
+        case SkBitmap::Config::kARGB_4444_Config:
             format = GL_RGBA;
             type = GL_UNSIGNED_SHORT_4_4_4_4;
             break;
-        case IMapBitmapTileProvider::RGB_565:
+        case SkBitmap::Config::kRGB_565_Config:
             format = GL_RGB;
             type = GL_UNSIGNED_SHORT_5_6_5;
             break;
@@ -314,29 +313,17 @@ void OsmAnd::RenderAPI_OpenGLES2::allocateTexture2D( GLenum target, GLsizei leve
     GLenum format = static_cast<GLenum>(encodedFormat >> 16);
     GLenum type = static_cast<GLenum>(encodedFormat & 0xFFFF);
     GLsizei pixelSizeInBytes = 0;
-    if(tile->type == IMapTileProvider::Bitmap)
-    {
-        auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
-
-        switch (bitmapTile->format)
-        {
-        case IMapBitmapTileProvider::RGBA_8888:
-            //TODO: test if we still can convert textures into 16bit by force
-            pixelSizeInBytes = 4;
-            break;
-        case IMapBitmapTileProvider::RGBA_4444:
-            pixelSizeInBytes = 2;
-            break;
-        case IMapBitmapTileProvider::RGB_565:
-            pixelSizeInBytes = 2;
-            break;
-        }
-    }
-    else if(tile->type == IMapTileProvider::ElevationData)
-    {
+    if(format == GL_RGBA && type == GL_UNSIGNED_BYTE)
+        pixelSizeInBytes = 4;
+    else if(format == GL_RGBA && type == GL_UNSIGNED_BYTE)
+        pixelSizeInBytes = 4;
+    else if(format == GL_RGBA && type == GL_UNSIGNED_SHORT_4_4_4_4)
+        pixelSizeInBytes = 2;
+    else if(format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5)
+        pixelSizeInBytes = 2;
+    else if(format == GL_LUMINANCE && type == GL_UNSIGNED_BYTE)
         pixelSizeInBytes = 1;
-    }
-
+    
     uint8_t* dummyBuffer = new uint8_t[width * height * pixelSizeInBytes];
     
     glTexImage2D(target, 0, format, width, height, 0, format, type, dummyBuffer);
@@ -364,17 +351,17 @@ void OsmAnd::RenderAPI_OpenGLES2::uploadDataToTexture2D(
         {
             auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
 
-            switch (bitmapTile->format)
+            switch (bitmapTile->bitmap->getConfig())
             {
-            case IMapBitmapTileProvider::RGBA_8888:
+            case SkBitmap::Config::kARGB_8888_Config:
                 sourceFormat = GL_RGBA;
                 sourceFormatType = GL_UNSIGNED_BYTE;
                 break;
-            case IMapBitmapTileProvider::RGBA_4444:
+            case SkBitmap::Config::kARGB_4444_Config:
                 sourceFormat = GL_RGBA;
                 sourceFormatType = GL_UNSIGNED_SHORT_4_4_4_4;
                 break;
-            case IMapBitmapTileProvider::RGB_565:
+            case SkBitmap::Config::kRGB_565_Config:
                 sourceFormat = GL_RGB;
                 sourceFormatType = GL_UNSIGNED_SHORT_5_6_5;
                 break;
@@ -410,17 +397,17 @@ void OsmAnd::RenderAPI_OpenGLES2::uploadDataToTexture2D(
     {
         auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
 
-        switch (bitmapTile->format)
+        switch (bitmapTile->bitmap->getConfig())
         {
-        case IMapBitmapTileProvider::RGBA_8888:
+        case SkBitmap::Config::kARGB_8888_Config:
             format = GL_RGBA;
             type = GL_UNSIGNED_BYTE;
             break;
-        case IMapBitmapTileProvider::RGBA_4444:
+        case SkBitmap::Config::kARGB_4444_Config:
             format = GL_RGBA;
             type = GL_UNSIGNED_SHORT_4_4_4_4;
             break;
-        case IMapBitmapTileProvider::RGB_565:
+        case SkBitmap::Config::kRGB_565_Config:
             format = GL_RGB;
             type = GL_UNSIGNED_SHORT_5_6_5;
             break;
@@ -453,16 +440,13 @@ void OsmAnd::RenderAPI_OpenGLES2::uploadDataToTexture2D(
     {
         auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
 
-        switch (bitmapTile->format)
+        switch (bitmapTile->bitmap->getConfig())
         {
-        case IMapBitmapTileProvider::RGBA_8888:
-            //TODO: test if we still can convert textures into 16bit by force
+        case SkBitmap::Config::kARGB_8888_Config:
             pixelSizeInBytes = 4;
             break;
-        case IMapBitmapTileProvider::RGBA_4444:
-            pixelSizeInBytes = 2;
-            break;
-        case IMapBitmapTileProvider::RGB_565:
+        case SkBitmap::Config::kARGB_4444_Config:
+        case SkBitmap::Config::kRGB_565_Config:
             pixelSizeInBytes = 2;
             break;
         }

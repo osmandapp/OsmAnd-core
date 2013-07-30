@@ -38,7 +38,7 @@ namespace OsmAnd {
         ~MapRendererConfiguration();
 
         bool textureAtlasesAllowed;
-        bool force16bitTextureBitmapColorDepth;
+        bool limitTextureColorDepthBy16bits;
         uint32_t heightmapPatchesPerSide;
     };
 

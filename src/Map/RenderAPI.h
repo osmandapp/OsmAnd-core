@@ -209,7 +209,6 @@ namespace OsmAnd {
         // 1 - don't use atlas textures
         // N - allow up to N*N tiles per atlas texture
         volatile uint32_t tilesPerAtlasTextureLimit;
-        volatile bool force16bitBitmapColorDepth;
 
         virtual bool initialize() = 0;
         virtual bool release() = 0;

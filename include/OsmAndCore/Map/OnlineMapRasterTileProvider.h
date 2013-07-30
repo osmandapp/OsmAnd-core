@@ -41,7 +41,6 @@
 class QNetworkAccessManager;
 class QEventLoop;
 class QNetworkReply;
-class SkBitmap;
 
 namespace OsmAnd {
 
@@ -49,16 +48,6 @@ namespace OsmAnd {
     {
     private:
     protected:
-        class OSMAND_CORE_API Tile : public IMapBitmapTileProvider::Tile
-        {
-        private:
-            std::unique_ptr<SkBitmap> _skBitmap;
-        protected:
-        public:
-            Tile(SkBitmap* bitmap);
-            virtual ~Tile();
-        };
-
         QMutex _processingMutex;
         struct TileRequest
         {

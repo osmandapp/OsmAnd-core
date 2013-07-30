@@ -26,6 +26,8 @@
 #include <memory>
 #include <functional>
 
+#include <SkBitmap.h>
+
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/IMapTileProvider.h>
@@ -35,22 +37,16 @@ namespace OsmAnd {
     class OSMAND_CORE_API IMapBitmapTileProvider : public IMapTileProvider
     {
     public:
-        enum BitmapFormat
-        {
-            RGBA_8888,
-            RGBA_4444,
-            RGB_565,
-        };
-
         class OSMAND_CORE_API Tile : public IMapTileProvider::Tile
         {
         private:
+            std::unique_ptr<SkBitmap> _bitmap;
         protected:
-            Tile(const void* data, size_t rowLength, uint32_t width, uint32_t height, const BitmapFormat& format);
         public:
+            Tile(SkBitmap* bitmap);
             virtual ~Tile();
 
-            const BitmapFormat format;
+            const std::unique_ptr<SkBitmap>& bitmap;
         };
     private:
     protected:
@@ -60,7 +56,6 @@ namespace OsmAnd {
 
         virtual float getTileDensity() const = 0;
     };
-
 }
 
 #endif // __I_MAP_BITMAP_TILE_PROVIDER_H_

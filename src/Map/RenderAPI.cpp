@@ -6,7 +6,6 @@
 
 OsmAnd::RenderAPI::RenderAPI()
     : tilesPerAtlasTextureLimit(1)
-    , force16bitBitmapColorDepth(false)
 {
 }
 
