@@ -172,6 +172,11 @@ bool OsmAnd::RenderAPI_OpenGLES2::initialize( const uint32_t& optimalTilesPerAtl
     glDepthFunc(GL_LEQUAL);
     GL_CHECK_RESULT;
 
+    glEnable(GL_BLEND);
+    GL_CHECK_RESULT;
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    GL_CHECK_RESULT;
+
     return true;
 }
 
