@@ -30,7 +30,7 @@ OsmAnd::AtlasMapRenderer_OpenGLES2::~AtlasMapRenderer_OpenGLES2()
 OsmAnd::RenderAPI* OsmAnd::AtlasMapRenderer_OpenGLES2::allocateRenderAPI()
 {
     auto api = new RenderAPI_OpenGLES2();
-    api->initialize(configuration.textureAtlasesAllowed ? OptimalTilesPerAtlasTextureSqrt : 1);
+    api->initialize();
     return api;
 }
 

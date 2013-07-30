@@ -415,7 +415,7 @@ void OsmAnd::RenderAPI_OpenGLES2::uploadDataToTexture2D(
         glTexSubImage2D(target, level,
             xoffset, yoffset, width, height,
             format, type,
-            pixels);
+            data);
         GL_CHECK_RESULT;
         return;
     }

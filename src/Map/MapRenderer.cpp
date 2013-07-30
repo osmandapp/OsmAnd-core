@@ -8,9 +8,9 @@
 
 OsmAnd::MapRenderer::MapRenderer()
     : currentConfiguration(_currentConfiguration)
-    , _currentConfigurationInvalidatedMask(false)
+    , _currentConfigurationInvalidatedMask(0xFFFFFFFF)
     , currentState(_currentState)
-    , _currentStateInvalidated(false)
+    , _currentStateInvalidated(true)
     , _invalidatedLayers(0)
     , _renderThreadId(nullptr)
     , _workerThreadId(nullptr)
