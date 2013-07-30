@@ -109,7 +109,7 @@ bool OsmAnd::MapRenderer::updateCurrentConfiguration()
     uint32_t bitIndex = 0;
     while(_currentConfigurationInvalidatedMask)
     {
-        if((_currentConfigurationInvalidatedMask >> bitIndex) & 0x1)
+        if(_currentConfigurationInvalidatedMask & 0x1)
             validateConfigurationChange(static_cast<ConfigurationChange>(1 << bitIndex));
 
         bitIndex++;
