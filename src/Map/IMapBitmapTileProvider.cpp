@@ -1,5 +1,7 @@
 #include "IMapBitmapTileProvider.h"
 
+#include <SkBitmap.h>
+
 // Ensure that SKIA is using RGBA order
 #include <SkColor.h>
 #ifdef SK_CPU_LENDIAN

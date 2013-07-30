@@ -5,6 +5,8 @@
 #include <QRegExp>
 #include <QStringList>
 
+#include <SkBitmap.h>
+
 #include "IMapBitmapTileProvider.h"
 #include "Logging.h"
 

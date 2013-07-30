@@ -2,6 +2,8 @@
 
 #include <assert.h>
 
+#include <SkBitmap.h>
+
 #include "IMapBitmapTileProvider.h"
 #include "Logging.h"
 

@@ -26,11 +26,11 @@
 #include <memory>
 #include <functional>
 
-#include <SkBitmap.h>
-
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/IMapTileProvider.h>
+
+class SkBitmap;
 
 namespace OsmAnd {
 

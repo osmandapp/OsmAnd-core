@@ -4,6 +4,8 @@
 
 #include <QtMath>
 
+#include <SkBitmap.h>
+
 #include "IMapRenderer.h"
 #include "IMapTileProvider.h"
 #include "IMapBitmapTileProvider.h"
