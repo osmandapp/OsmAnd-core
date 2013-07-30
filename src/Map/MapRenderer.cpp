@@ -412,7 +412,8 @@ bool OsmAnd::MapRenderer::doPostprocessRendering()
                 if(tileEntry->state != MapRendererTileLayer::TileEntry::Ready)
                     continue;
 
-                bool ok = renderAPI->uploadTileToGPU(tileEntry->tileId, tileEntry->zoom, tileEntry->sourceData, tileEntry->_resourceInGPU);
+                const auto& preparedSourceData = prepareTileForUploadingToGPU(tileEntry->sourceData);
+                bool ok = renderAPI->uploadTileToGPU(tileEntry->tileId, tileEntry->zoom, preparedSourceData, tileEntry->_resourceInGPU);
                 if(!ok)
                 {
                     LogPrintf(LogSeverityLevel::Error, "Failed to upload tile %dx%d@%d[%d] to GPU", tileEntry->tileId.x, tileEntry->tileId.y, tileEntry->zoom, tileEntry->layerId);
@@ -613,7 +614,8 @@ void OsmAnd::MapRenderer::backgroundWorkerProcedure()
                     if(tileEntry->state != MapRendererTileLayer::TileEntry::Ready)
                         continue;
 
-                    bool ok = renderAPI->uploadTileToGPU(tileEntry->tileId, tileEntry->zoom, tileEntry->sourceData, tileEntry->_resourceInGPU);
+                    const auto& preparedSourceData = prepareTileForUploadingToGPU(tileEntry->sourceData);
+                    bool ok = renderAPI->uploadTileToGPU(tileEntry->tileId, tileEntry->zoom, preparedSourceData, tileEntry->_resourceInGPU);
                     if(!ok)
                     {
                         LogPrintf(LogSeverityLevel::Error, "Failed to upload tile %dx%d@%d[%d] to GPU", tileEntry->tileId.x, tileEntry->tileId.y, tileEntry->zoom, tileEntry->layerId);
@@ -676,7 +678,7 @@ void OsmAnd::MapRenderer::requestMissingTiles()
                 bool availableImmediately = provider->obtainTileImmediate(tileId, _currentState.zoomBase, tile);
                 if(availableImmediately)
                 {
-                    tileEntry->_sourceData = prepareTileForUploadingToGPU(tile);
+                    tileEntry->_sourceData = tile;
                     tileEntry->_state = tile ? MapRendererTileLayer::TileEntry::Ready : MapRendererTileLayer::TileEntry::Unavailable;
 
                     wasImmediateDataObtained = true;
@@ -706,7 +708,7 @@ void OsmAnd::MapRenderer::processRequestedTile( const MapTileLayerId& layerId, c
 
         assert(tileEntry->state == MapRendererTileLayer::TileEntry::Requested);
         
-        tileEntry->_sourceData = prepareTileForUploadingToGPU(tile);
+        tileEntry->_sourceData = tile;
         tileEntry->_state = tile ? MapRendererTileLayer::TileEntry::Ready : MapRendererTileLayer::TileEntry::Unavailable;
     }
 
