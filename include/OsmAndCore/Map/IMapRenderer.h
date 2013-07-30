@@ -33,6 +33,7 @@
 #include <OsmAndCore/Map/MapTypes.h>
 #include <OsmAndCore/Map/MapRendererState.h>
 #include <OsmAndCore/Map/MapRendererConfiguration.h>
+#include <OsmAndCore/Map/MapRendererSetupOptions.h>
 
 namespace OsmAnd {
 
@@ -40,8 +41,11 @@ namespace OsmAnd {
     class OSMAND_CORE_API IMapRenderer
     {
     private:
-        MapRendererConfiguration _configuration;
         bool _isRenderingInitialized;
+
+        MapRendererSetupOptions _setupOptions;
+
+        MapRendererConfiguration _requestedConfiguration;
 
         volatile bool _frameInvalidated;
     protected:
@@ -52,8 +56,11 @@ namespace OsmAnd {
     public:
         virtual ~IMapRenderer();
 
+        const MapRendererSetupOptions& setupOptions;
+        virtual bool setup(const MapRendererSetupOptions& setupOptions) = 0;
+
         const MapRendererConfiguration& configuration;
-        virtual bool configure(const MapRendererConfiguration& configuration) = 0;
+        virtual void setConfiguration(const MapRendererConfiguration& configuration, bool forcedUpdate = false) = 0;
 
         const bool& isRenderingInitialized;
         virtual bool initializeRendering() = 0;
@@ -67,6 +74,7 @@ namespace OsmAnd {
         const QList<TileId>& visibleTiles;
 
         virtual void setTileProvider(const MapTileLayerId& layerId, const std::shared_ptr<IMapTileProvider>& tileProvider, bool forcedUpdate = false) = 0;
+        virtual void setTileLayerOpacity(const MapTileLayerId& layerId, const float& opacity, bool forcedUpdate = false) = 0;
         virtual void setWindowSize(const PointI& windowSize, bool forcedUpdate = false) = 0;
         virtual void setViewport(const AreaI& viewport, bool forcedUpdate = false) = 0;
         virtual void setFieldOfView(const float& fieldOfView, bool forcedUpdate = false) = 0;

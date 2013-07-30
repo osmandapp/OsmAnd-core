@@ -5,8 +5,8 @@
 #include "Logging.h"
 
 OsmAnd::RenderAPI::RenderAPI()
-    : _optimalTilesPerAtlasSqrt(0)
-    , optimalTilesPerAtlasSqrt(_optimalTilesPerAtlasSqrt)
+    : tilesPerAtlasTextureLimit(1)
+    , force16bitBitmapColorDepth(false)
 {
 }
 
@@ -23,10 +23,8 @@ OsmAnd::RenderAPI::~RenderAPI()
     assert(resourcesRemaining == 0);
 }
 
-bool OsmAnd::RenderAPI::initialize( const uint32_t& optimalTilesPerAtlasSqrt_ )
+bool OsmAnd::RenderAPI::initialize()
 {
-    _optimalTilesPerAtlasSqrt = optimalTilesPerAtlasSqrt_;
-
     return true;
 }
 

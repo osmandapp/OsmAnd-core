@@ -7,8 +7,10 @@
 #include "Utilities.h"
 
 OsmAnd::MapRenderer::MapRenderer()
-    : currentState(_currentState)
-    , _currentStateInvalidated(true)
+    : currentConfiguration(_currentConfiguration)
+    , _currentConfigurationInvalidatedMask(false)
+    , currentState(_currentState)
+    , _currentStateInvalidated(false)
     , _invalidatedLayers(0)
     , _renderThreadId(nullptr)
     , _workerThreadId(nullptr)
@@ -20,6 +22,8 @@ OsmAnd::MapRenderer::MapRenderer()
         _layers[layerId].reset(new MapRendererTileLayer(static_cast<MapTileLayerId>(layerId)));
 
     // Fill-up default state
+    for(auto layerId = 0u; layerId < MapTileLayerIdsCount; layerId++)
+        setTileLayerOpacity(static_cast<MapTileLayerId>(layerId), 1.0f);
     setFieldOfView(16.5f, true);
     setDistanceToFog(400.0f, true);
     setFogOriginFactor(0.36f, true);
@@ -40,14 +44,77 @@ OsmAnd::MapRenderer::~MapRenderer()
     releaseRendering();
 }
 
-bool OsmAnd::MapRenderer::configure( const MapRendererConfiguration& configuration )
+bool OsmAnd::MapRenderer::setup( const MapRendererSetupOptions& setupOptions )
 {
-    // We can not configure renderer once rendering has been initialized
+    // We can not change setup options renderer once rendering has been initialized
     if(_isRenderingInitialized)
         return false;
 
-    // Simply copy configuration
-    _configuration = configuration;
+    _setupOptions = setupOptions;
+
+    return true;
+}
+
+void OsmAnd::MapRenderer::setConfiguration( const MapRendererConfiguration& configuration, bool forcedUpdate /*= false*/ )
+{
+    QWriteLocker scopedLocker(&_configurationLock);
+
+    const bool colorDepthForcingChanged = (_requestedConfiguration.force16bitTextureBitmapColorDepth != configuration.force16bitTextureBitmapColorDepth);
+    const bool atlasTexturesUsageChanged = (_requestedConfiguration.textureAtlasesAllowed != configuration.textureAtlasesAllowed);
+    const bool elevationDataResolutionChanged = (_requestedConfiguration.heightmapPatchesPerSide != configuration.heightmapPatchesPerSide);
+
+    bool invalidateRasterTextures = false;
+    invalidateRasterTextures = invalidateRasterTextures || colorDepthForcingChanged;
+    invalidateRasterTextures = invalidateRasterTextures || atlasTexturesUsageChanged;
+
+    bool invalidateElevationData = false;
+    invalidateElevationData = invalidateElevationData || elevationDataResolutionChanged;
+
+    bool update = forcedUpdate;
+    update = update || invalidateRasterTextures;
+    update = update || invalidateElevationData;
+    if(!update)
+        return;
+
+    _requestedConfiguration = configuration;
+    uint32_t mask;
+    if(colorDepthForcingChanged)
+        mask |= ConfigurationChange::ColorDepthForcing;
+    if(atlasTexturesUsageChanged)
+        mask |= ConfigurationChange::AtlasTexturesUsage;
+    if(elevationDataResolutionChanged)
+        mask |= ConfigurationChange::ElevationDataResolution;
+    if(invalidateRasterTextures)
+    {
+        for(int layerId = MapTileLayerId::RasterMap; layerId < MapTileLayerIdsCount; layerId++)
+            invalidateLayer(static_cast<MapTileLayerId>(layerId));
+    }
+    if(invalidateElevationData)
+    {
+        invalidateLayer(MapTileLayerId::ElevationData);
+    }
+    invalidateCurrentConfiguration(mask);
+}
+
+void OsmAnd::MapRenderer::invalidateCurrentConfiguration(const uint32_t& changesMask)
+{
+    _currentConfigurationInvalidatedMask = changesMask;
+
+    // Since our current configuration is invalid, frame is also invalidated
+    invalidateFrame();
+}
+
+bool OsmAnd::MapRenderer::updateCurrentConfiguration()
+{
+    uint32_t bitIndex = 0;
+    while(_currentConfigurationInvalidatedMask)
+    {
+        if((_currentConfigurationInvalidatedMask >> bitIndex) & 0x1)
+            validateConfigurationChange(static_cast<ConfigurationChange>(1 << bitIndex));
+
+        bitIndex++;
+        _currentConfigurationInvalidatedMask >>= 1;
+    }
 
     return true;
 }
@@ -61,7 +128,7 @@ bool OsmAnd::MapRenderer::initializeRendering()
     if(!apiObject)
         return false;
     _renderAPI.reset(apiObject);
-    
+
     ok = preInitializeRendering();
     if(!ok)
         return false;
@@ -94,7 +161,7 @@ bool OsmAnd::MapRenderer::preInitializeRendering()
 
 bool OsmAnd::MapRenderer::doInitializeRendering()
 {
-    if(_configuration.backgroundWorker.enabled)
+    if(setupOptions.backgroundWorker.enabled)
         _backgroundWorker.reset(new Concurrent::Thread(std::bind(&MapRenderer::backgroundWorkerProcedure, this)));
 
     return true;
@@ -136,6 +203,27 @@ bool OsmAnd::MapRenderer::preProcessRendering()
     if(!_isRenderingInitialized)
         return false;
 
+    // If we have current configuration invalidated, we need to update it
+    // and invalidate frame
+    if(_currentConfigurationInvalidatedMask)
+    {
+        {
+            QReadLocker scopedLocker(&_configurationLock);
+
+            _currentConfiguration = _requestedConfiguration;
+        }
+
+        bool ok = updateCurrentConfiguration();
+        if(ok)
+            _currentConfigurationInvalidatedMask = 0;
+
+        invalidateFrame();
+
+        // If configuration is still invalidated, abort processing
+        if(_currentConfigurationInvalidatedMask)
+            return false;
+    }
+
     // If we have current state invalidated, we need to update it
     // and invalidate frame
     if(_currentStateInvalidated)
@@ -168,7 +256,7 @@ bool OsmAnd::MapRenderer::preProcessRendering()
                 continue;
 
             validateLayer(static_cast<MapTileLayerId>(layerId));
-            
+
             _invalidatedLayers &= ~(1 << layerId);
         }
     }
@@ -305,7 +393,7 @@ bool OsmAnd::MapRenderer::doPostprocessRendering()
     // If background worked is was not enabled, upload tiles to GPU in render thread
     // To reduce FPS drop, upload not more than 1 tile per frame, and do that before end of the frame
     // to avoid forcing driver to upload data on current frame presentation.
-    if(!_configuration.backgroundWorker.enabled)
+    if(!setupOptions.backgroundWorker.enabled)
     {
         QList< std::shared_ptr<MapRendererTileLayer::TileEntry> > tileEntries;
 
@@ -394,7 +482,7 @@ bool OsmAnd::MapRenderer::doReleaseRendering()
 bool OsmAnd::MapRenderer::postReleaseRendering()
 {
     _isRenderingInitialized = false;
-    
+
     // Stop worker
     if(_backgroundWorker)
     {
@@ -445,13 +533,13 @@ void OsmAnd::MapRenderer::invalidateFrame()
     _frameInvalidated = true;
 
     // Request frame, if such callback is defined
-    if(_configuration.frameRequestCallback)
-        _configuration.frameRequestCallback();
+    if(setupOptions.frameRequestCallback)
+        setupOptions.frameRequestCallback();
 }
 
 void OsmAnd::MapRenderer::requestUploadDataToGPU()
 {
-    if(configuration.backgroundWorker.enabled)
+    if(setupOptions.backgroundWorker.enabled)
         _backgroundWorkerWakeup.wakeAll();
     else
         invalidateFrame();
@@ -493,11 +581,11 @@ void OsmAnd::MapRenderer::backgroundWorkerProcedure()
 {
     QMutex wakeupMutex;
     _workerThreadId = QThread::currentThreadId();
-    
+
     // Call prologue if such exists
-    if(_configuration.backgroundWorker.prologue)
-        _configuration.backgroundWorker.prologue();
-    
+    if(setupOptions.backgroundWorker.prologue)
+        setupOptions.backgroundWorker.prologue();
+
     while(_isRenderingInitialized)
     {
         // Wait until we're unblocked by host
@@ -508,7 +596,7 @@ void OsmAnd::MapRenderer::backgroundWorkerProcedure()
         }
         if(!_isRenderingInitialized)
             break;
-    
+
         // In every layer we have, upload pending tiles to GPU
         QList< std::shared_ptr<MapRendererTileLayer::TileEntry> > tileEntries;
         for(int layerId = 0; layerId < MapTileLayerIdsCount; layerId++)
@@ -543,10 +631,10 @@ void OsmAnd::MapRenderer::backgroundWorkerProcedure()
             break;
         }
     }
-    
+
     // Call epilogue
-    if(_configuration.backgroundWorker.epilogue)
-        _configuration.backgroundWorker.epilogue();
+    if(setupOptions.backgroundWorker.epilogue)
+        setupOptions.backgroundWorker.epilogue();
 
     _workerThreadId = nullptr;
 }
@@ -637,6 +725,21 @@ void OsmAnd::MapRenderer::setTileProvider( const MapTileLayerId& layerId, const 
     _requestedState.tileProviders[layerId] = tileProvider;
 
     invalidateLayer(layerId);
+    invalidateCurrentState();
+}
+
+void OsmAnd::MapRenderer::setTileLayerOpacity( const MapTileLayerId& layerId, const float& opacity, bool forcedUpdate /*= false*/ )
+{
+    QWriteLocker scopedLocker(&_stateLock);
+
+    const auto clampedValue = qMax(0.0f, qMin(opacity, 1.0f));
+
+    bool update = forcedUpdate || !qFuzzyCompare(_requestedState.tileLayerOpacity[layerId], clampedValue);
+    if(!update)
+        return;
+
+    _requestedState.tileLayerOpacity[layerId] = clampedValue;
+
     invalidateCurrentState();
 }
 

@@ -45,6 +45,7 @@ namespace OsmAnd {
         virtual ~MapRendererState();
 
         std::array< std::shared_ptr<IMapTileProvider>, MapTileLayerIdsCount > tileProviders;
+        std::array< float, MapTileLayerIdsCount > tileLayerOpacity;
         PointI windowSize;
         AreaI viewport;
         float fieldOfView;

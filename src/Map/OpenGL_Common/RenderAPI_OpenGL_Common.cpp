@@ -275,10 +275,43 @@ bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU( const TileId& ti
     assert((textureFormat >> 16) == 0);
     assert((texturePixelType >> 16) == 0);
 
+    // Get texture size
+    uint32_t textureSize = tileSize;
+    const auto maxTilesPerAtlas = tilesPerAtlasTextureLimit;
+    if(maxTilesPerAtlas == 0)
+    {
+        textureSize = _maxTextureSize;
+    }
+    else if(maxTilesPerAtlas != 1)
+    {
+        auto idealSize = maxTilesPerAtlas * (tileSize + 2*basePadding*MipmapLodLevelsMax);
+        const auto largerSize = Utilities::getNextPowerOfTwo(idealSize);
+        const auto smallerSize = largerSize >> 1;
+
+        // If larger texture is more than ideal over 15%, select reduced size
+        if(static_cast<float>(largerSize) > idealSize * 1.15f)
+            textureSize = qMin(static_cast<uint32_t>(_maxTextureSize), smallerSize);
+        else
+            textureSize = qMin(static_cast<uint32_t>(_maxTextureSize), largerSize);
+    }
+    else if(Utilities::getNextPowerOfTwo(tileSize) != tileSize) // Tile is of NPOT size
+    {
+        textureSize = Utilities::getNextPowerOfTwo(tileSize + 2*basePadding*MipmapLodLevelsMax);
+    }
+
+    // Get number of mipmap levels
+    uint32_t mipmapLevels = 1;
+    if(generateMipmap)
+    {
+        mipmapLevels += qLn(textureSize) / M_LN2;
+        if(mipmapLevels > MipmapLodLevelsMax)
+            mipmapLevels = MipmapLodLevelsMax;
+    }
+
     // Find out if tile will be uploaded to atlas or not. Atlases are used in following cases:
     // 1. Atlases usage is requested.
     // 2. Atlases usage is not requested, but tile size is NPOT. In this case only 1 tile will be placed on a texture that is next POT
-    const bool uploadToAtlas = (optimalTilesPerAtlasSqrt != 1) || (Utilities::getNextPowerOfTwo(tileSize) != tileSize);
+    const bool uploadToAtlas = (textureSize != tileSize);
     if(!uploadToAtlas)
     {
         // Create texture id
@@ -290,15 +323,6 @@ bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU( const TileId& ti
         // Activate texture
         glBindTexture(GL_TEXTURE_2D, texture);
         GL_CHECK_RESULT;
-
-        // Get number of mipmap levels
-        uint32_t mipmapLevels = 1;
-        if(generateMipmap)
-        {
-            mipmapLevels += qLn(tileSize) / M_LN2;
-            if(mipmapLevels > MipmapLodLevelsMax)
-                mipmapLevels = MipmapLodLevelsMax;
-        }
 
         // Allocate data
         glTexStorage2D_wrapper(GL_TEXTURE_2D, mipmapLevels, tileSize, tileSize, textureFormat, texturePixelType);
@@ -352,35 +376,8 @@ bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU( const TileId& ti
 
     // Get free slot from that pool
     const auto& tileInGPU = allocateTile(atlasTexturesPool,
-        [this, atlasTexturesPool, textureFormat, texturePixelType, generateMipmap]() -> AtlasTextureInGPU*
+        [this, textureSize, mipmapLevels, atlasTexturesPool, textureFormat, texturePixelType]() -> AtlasTextureInGPU*
         {
-            uint32_t textureSize;
-
-            if(optimalTilesPerAtlasSqrt != 1)
-            {
-                auto idealSize = optimalTilesPerAtlasSqrt * (atlasTexturesPool->typeId.tileSize + 2*atlasTexturesPool->typeId.tilePadding*MipmapLodLevelsMax);
-                const auto largerSize = Utilities::getNextPowerOfTwo(idealSize);
-                const auto smallerSize = largerSize >> 1;
-
-                // If larger texture is more than ideal over 15%, select reduced size
-                if(static_cast<float>(largerSize) > idealSize * 1.15f)
-                    textureSize = qMin(static_cast<uint32_t>(_maxTextureSize), smallerSize);
-                else
-                    textureSize = qMin(static_cast<uint32_t>(_maxTextureSize), largerSize);
-            }
-            else //if(Utilities::getNextPowerOfTwo(tileSize) != tileSize) // Tile is of NPOT size
-            {
-                textureSize = Utilities::getNextPowerOfTwo(atlasTexturesPool->typeId.tileSize + 2*atlasTexturesPool->typeId.tilePadding*MipmapLodLevelsMax);
-            }
-
-            uint32_t mipmapLevels = 1;
-            if(generateMipmap)
-            {
-                mipmapLevels += qLn(textureSize) / M_LN2;
-                if(mipmapLevels > MipmapLodLevelsMax)
-                    mipmapLevels = MipmapLodLevelsMax;
-            }
-
             // Allocate texture id
             GLuint texture;
             glGenTextures(1, &texture);

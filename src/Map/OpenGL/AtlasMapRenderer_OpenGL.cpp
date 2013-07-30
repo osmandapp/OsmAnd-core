@@ -30,7 +30,7 @@ OsmAnd::AtlasMapRenderer_OpenGL::~AtlasMapRenderer_OpenGL()
 OsmAnd::RenderAPI* OsmAnd::AtlasMapRenderer_OpenGL::allocateRenderAPI()
 {
     auto api = new RenderAPI_OpenGL();
-    api->initialize(configuration.textureAtlasesAllowed ? OptimalTilesPerAtlasTextureSqrt : 1);
+    api->initialize();
     return api;
 }
 
@@ -484,7 +484,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::renderMapStage()
                 {
                     const auto& texture = static_cast<RenderAPI::TextureInGPU*>(gpuResource.get());
 
-                    glUniform1i(perTile_vs.slotIndex, -1);
+                    glUniform1i(perTile_vs.slotIndex, 0);
                     GL_CHECK_RESULT;
                     glUniform1f(perTile_vs.tileSizeN, 1.0f);
                     GL_CHECK_RESULT;
@@ -560,7 +560,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::renderMapStage()
             }
             else
             {
-                glUniform1i(perTile_vs.slotIndex, -1);
+                glUniform1i(perTile_vs.slotIndex, 0);
                 GL_CHECK_RESULT;
                 glUniform1f(perTile_vs.tileSizeN, 1.0f);
                 GL_CHECK_RESULT;

@@ -19,8 +19,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __MAP_RENDERER_CONFIGURATION_H_
-#define __MAP_RENDERER_CONFIGURATION_H_
+#ifndef __MAP_RENDERER_SETUP_OPTIONS_H_
+#define __MAP_RENDERER_SETUP_OPTIONS_H_
 
 #include <stdint.h>
 #include <memory>
@@ -32,16 +32,27 @@
 
 namespace OsmAnd {
 
-    struct OSMAND_CORE_API MapRendererConfiguration
+    struct OSMAND_CORE_API MapRendererSetupOptions
     {
-        MapRendererConfiguration();
-        ~MapRendererConfiguration();
+        MapRendererSetupOptions();
+        ~MapRendererSetupOptions();
 
-        bool textureAtlasesAllowed;
-        bool force16bitTextureBitmapColorDepth;
-        uint32_t heightmapPatchesPerSide;
+        typedef std::function<void ()> FrameRequestCallback;
+
+        typedef std::function<void ()> BackgroundWorkerPrologue;
+        typedef std::function<void ()> BackgroundWorkerEpilogue;
+
+        struct {
+            bool enabled;
+            BackgroundWorkerPrologue prologue;
+            BackgroundWorkerEpilogue epilogue;
+        } backgroundWorker;
+
+        FrameRequestCallback frameRequestCallback;
+
+        float displayDensityFactor;
     };
 
 }
 
-#endif // __MAP_RENDERER_CONFIGURATION_H_
+#endif // __MAP_RENDERER_SETUP_OPTIONS_H_

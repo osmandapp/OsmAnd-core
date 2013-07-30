@@ -49,7 +49,7 @@ namespace OsmAnd {
         RenderAPI_OpenGL();
         virtual ~RenderAPI_OpenGL();
 
-        virtual bool initialize(const uint32_t& optimalTilesPerAtlasSqrt);
+        virtual bool initialize();
         virtual bool release();
 
         const GLuint& textureSampler_Bitmap_NoAtlas;

@@ -46,6 +46,10 @@ namespace OsmAnd {
     class OSMAND_CORE_API MapRenderer : public IMapRenderer
     {
     private:
+        QReadWriteLock _configurationLock;
+        MapRendererConfiguration _currentConfiguration;
+        volatile uint32_t _currentConfigurationInvalidatedMask;
+
         QReadWriteLock _stateLock;
         MapRendererState _currentState;
         volatile bool _currentStateInvalidated;
@@ -55,6 +59,16 @@ namespace OsmAnd {
         std::unique_ptr<RenderAPI> _renderAPI;
     protected:
         MapRenderer();
+
+        const MapRendererConfiguration& currentConfiguration;
+        enum ConfigurationChange {
+            ColorDepthForcing = 1 << 0,
+            AtlasTexturesUsage = 1 << 1,
+            ElevationDataResolution = 1 << 2,
+        };
+        void invalidateCurrentConfiguration(const uint32_t& changesMask);
+        virtual void validateConfigurationChange(const ConfigurationChange& change) = 0;
+        bool updateCurrentConfiguration();
 
         virtual bool preInitializeRendering();
         virtual bool doInitializeRendering();
@@ -110,7 +124,9 @@ namespace OsmAnd {
     public:
         virtual ~MapRenderer();
 
-        virtual bool configure(const MapRendererConfiguration& configuration);
+        virtual bool setup(const MapRendererSetupOptions& setupOptions);
+
+        virtual void setConfiguration(const MapRendererConfiguration& configuration, bool forcedUpdate = false);
 
         virtual bool initializeRendering();
         virtual bool processRendering();
@@ -119,6 +135,7 @@ namespace OsmAnd {
         virtual bool releaseRendering();
 
         virtual void setTileProvider(const MapTileLayerId& layerId, const std::shared_ptr<IMapTileProvider>& tileProvider, bool forcedUpdate = false);
+        virtual void setTileLayerOpacity(const MapTileLayerId& layerId, const float& opacity, bool forcedUpdate = false);
         virtual void setWindowSize(const PointI& windowSize, bool forcedUpdate = false);
         virtual void setViewport(const AreaI& viewport, bool forcedUpdate = false);
         virtual void setFieldOfView(const float& fieldOfView, bool forcedUpdate = false);

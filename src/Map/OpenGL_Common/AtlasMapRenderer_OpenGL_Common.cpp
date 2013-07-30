@@ -35,7 +35,7 @@ float OsmAnd::AtlasMapRenderer_OpenGL_Common::getReferenceTileSizeOnScreen()
         return std::numeric_limits<float>::quiet_NaN();
 
     auto tileProvider = static_cast<IMapBitmapTileProvider*>(rasterMapProvider.get());
-    return tileProvider->getTileSize() * (configuration.displayDensityFactor / tileProvider->getTileDensity());
+    return tileProvider->getTileSize() * (setupOptions.displayDensityFactor / tileProvider->getTileDensity());
 }
 
 float OsmAnd::AtlasMapRenderer_OpenGL_Common::getScaledTileSizeOnScreen()
@@ -118,7 +118,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::updateCurrentState()
     _skyplaneHalfSize.y = zSkyplaneK * _projectionPlaneHalfHeight;
 
     // Update mipmap K
-    _mipmapK = static_cast<float>(viewportHeight) / (4.6f * configuration.displayDensityFactor);
+    _mipmapK = static_cast<float>(viewportHeight) / (4.6f * setupOptions.displayDensityFactor);
 
     // Compute visible tileset
     computeVisibleTileset();
@@ -260,6 +260,20 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::computeVisibleTileset()
             _visibleTiles.insert(tileId);
         });
     */
+}
+
+void OsmAnd::AtlasMapRenderer_OpenGL_Common::validateConfigurationChange( const ConfigurationChange& change )
+{
+    auto renderAPI = getRenderAPI();
+    
+    if(change == ConfigurationChange::AtlasTexturesUsage)
+    {
+        renderAPI->tilesPerAtlasTextureLimit = configuration.textureAtlasesAllowed ? OptimalTilesPerAtlasTextureSqrt : 1;
+    }
+    else if(change == ConfigurationChange::ColorDepthForcing)
+    {
+        renderAPI->force16bitBitmapColorDepth = configuration.force16bitTextureBitmapColorDepth;
+    }
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL_Common::postInitializeRendering()

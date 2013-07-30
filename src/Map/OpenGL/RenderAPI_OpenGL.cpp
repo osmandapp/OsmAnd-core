@@ -43,11 +43,11 @@ GLenum OsmAnd::RenderAPI_OpenGL::validateResult()
     return result;
 }
 
-bool OsmAnd::RenderAPI_OpenGL::initialize( const uint32_t& optimalTilesPerAtlasSqrt_ )
+bool OsmAnd::RenderAPI_OpenGL::initialize()
 {
     bool ok;
 
-    ok = RenderAPI_OpenGL_Common::initialize(optimalTilesPerAtlasSqrt_);
+    ok = RenderAPI_OpenGL_Common::initialize();
     if(!ok)
         return false;
 
@@ -160,6 +160,11 @@ bool OsmAnd::RenderAPI_OpenGL::initialize( const uint32_t& optimalTilesPerAtlasS
     GL_CHECK_RESULT;
 
     glDepthFunc(GL_LEQUAL);
+    GL_CHECK_RESULT;
+
+    glEnable(GL_BLEND);
+    GL_CHECK_RESULT;
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     GL_CHECK_RESULT;
 
     return true;

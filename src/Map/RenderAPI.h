@@ -189,8 +189,6 @@ namespace OsmAnd {
         };
     
     private:
-        uint32_t _optimalTilesPerAtlasSqrt;
-
 #if defined(DEBUG) || defined(_DEBUG)
         QMutex _allocatedResourcesMutex;
         QList< ResourceInGPU* > _allocatedResources;
@@ -208,9 +206,13 @@ namespace OsmAnd {
         RenderAPI();
         virtual ~RenderAPI();
 
-        const uint32_t& optimalTilesPerAtlasSqrt;
+        // 0 - unlimited
+        // 1 - don't use atlas textures
+        // N - allow up to N*N tiles per atlas texture
+        volatile uint32_t tilesPerAtlasTextureLimit;
+        volatile bool force16bitBitmapColorDepth;
 
-        virtual bool initialize(const uint32_t& optimalTilesPerAtlasSqrt) = 0;
+        virtual bool initialize() = 0;
         virtual bool release() = 0;
 
         virtual bool uploadTileToGPU(const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr< IMapTileProvider::Tile >& tile, std::shared_ptr< ResourceInGPU >& resourceInGPU) = 0;

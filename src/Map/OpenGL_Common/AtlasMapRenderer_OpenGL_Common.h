@@ -80,6 +80,8 @@ namespace OsmAnd {
         };
 #pragma pack(pop)
 
+        virtual void validateConfigurationChange(const ConfigurationChange& change);
+
         GLsizei _tilePatchIndicesCount;
         virtual void createTilePatch();
         virtual void allocateTilePatch(MapTileVertex* vertices, GLsizei verticesCount, GLushort* indices, GLsizei indicesCount) = 0;
