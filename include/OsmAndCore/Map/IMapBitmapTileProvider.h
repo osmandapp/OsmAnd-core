@@ -37,7 +37,7 @@ namespace OsmAnd {
     class OSMAND_CORE_API IMapBitmapTileProvider : public IMapTileProvider
     {
     public:
-        enum class AlphaChannelData
+        STRONG_ENUM(AlphaChannelData)
         {
             Present,
             NotPresent,

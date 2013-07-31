@@ -166,11 +166,11 @@ void OsmAnd::RenderAPI_OpenGL_Common::findVariableLocation( GLuint program, GLin
     _programVariables[program].insert(type, location);
 }
 
-bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileToGPU( const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr< IMapTileProvider::Tile >& tile, std::shared_ptr< ResourceInGPU >& resourceInGPU )
+bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileToGPU( const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr< IMapTileProvider::Tile >& tile, const uint32_t& tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU )
 {
     if(tile->type == IMapTileProvider::Type::Bitmap || tile->type == IMapTileProvider::Type::ElevationData)
     {
-        return uploadTileAsTextureToGPU(tileId, zoom, tile, resourceInGPU);
+        return uploadTileAsTextureToGPU(tileId, zoom, tile, tilesPerAtlasTextureLimit, resourceInGPU);
     }
 
     return false;
@@ -192,7 +192,7 @@ bool OsmAnd::RenderAPI_OpenGL_Common::releaseResourceInGPU( const ResourceInGPU:
     return false;
 }
 
-bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU( const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr< IMapTileProvider::Tile >& tile, std::shared_ptr< ResourceInGPU >& resourceInGPU )
+bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU( const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr< IMapTileProvider::Tile >& tile, const uint32_t& tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU )
 {
     GL_CHECK_PRESENT(glGenTextures);
     GL_CHECK_PRESENT(glBindTexture);
@@ -239,7 +239,7 @@ bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU( const TileId& ti
     {
         textureSize = _maxTextureSize;
     }
-    else if(maxTilesPerAtlas != 1)
+    else if(maxTilesPerAtlas > 1)
     {
         auto idealSize = maxTilesPerAtlas * (tileSize + 2*basePadding*MipmapLodLevelsMax);
         const auto largerSize = Utilities::getNextPowerOfTwo(idealSize);

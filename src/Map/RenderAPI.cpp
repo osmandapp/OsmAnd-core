@@ -5,7 +5,6 @@
 #include "Logging.h"
 
 OsmAnd::RenderAPI::RenderAPI()
-    : tilesPerAtlasTextureLimit(1)
 {
 }
 

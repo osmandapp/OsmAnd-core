@@ -65,6 +65,7 @@ void OsmAnd::MapRenderer::setConfiguration( const MapRendererConfiguration& conf
     const bool colorDepthForcingChanged = (_requestedConfiguration.limitTextureColorDepthBy16bits != configuration_.limitTextureColorDepthBy16bits);
     const bool atlasTexturesUsageChanged = (_requestedConfiguration.textureAtlasesAllowed != configuration_.textureAtlasesAllowed);
     const bool elevationDataResolutionChanged = (_requestedConfiguration.heightmapPatchesPerSide != configuration_.heightmapPatchesPerSide);
+    const bool texturesFilteringChanged = (_requestedConfiguration.texturesFiltering != configuration_.texturesFiltering);
 
     bool invalidateRasterTextures = false;
     invalidateRasterTextures = invalidateRasterTextures || colorDepthForcingChanged;
@@ -76,6 +77,7 @@ void OsmAnd::MapRenderer::setConfiguration( const MapRendererConfiguration& conf
     bool update = forcedUpdate;
     update = update || invalidateRasterTextures;
     update = update || invalidateElevationData;
+    update = update || texturesFilteringChanged;
     if(!update)
         return;
 
@@ -87,6 +89,8 @@ void OsmAnd::MapRenderer::setConfiguration( const MapRendererConfiguration& conf
         mask |= ConfigurationChange::AtlasTexturesUsage;
     if(elevationDataResolutionChanged)
         mask |= ConfigurationChange::ElevationDataResolution;
+    if(texturesFilteringChanged)
+        mask |= ConfigurationChange::TexturesFilteringMode;
     if(invalidateRasterTextures)
     {
         for(int layerId = MapTileLayerId::RasterMap; layerId < MapTileLayerIdsCount; layerId++)
@@ -415,8 +419,9 @@ bool OsmAnd::MapRenderer::doPostprocessRendering()
                 if(tileEntry->state != MapRendererTileLayer::TileEntry::Ready)
                     continue;
 
-                const auto& preparedSourceData = prepareTileForUploadingToGPU(tileEntry->sourceData);
-                bool ok = renderAPI->uploadTileToGPU(tileEntry->tileId, tileEntry->zoom, preparedSourceData, tileEntry->_resourceInGPU);
+                const auto& preparedSourceData = prepareTileForUploadingToGPU(static_cast<MapTileLayerId>(layerId), tileEntry->sourceData);
+                const auto tilesPerAtlasTextureLimit = getTilesPerAtlasTextureLimit(static_cast<MapTileLayerId>(layerId), tileEntry->sourceData);
+                bool ok = renderAPI->uploadTileToGPU(tileEntry->tileId, tileEntry->zoom, preparedSourceData, tilesPerAtlasTextureLimit, tileEntry->_resourceInGPU);
                 if(!ok)
                 {
                     LogPrintf(LogSeverityLevel::Error, "Failed to upload tile %dx%d@%d[%d] to GPU", tileEntry->tileId.x, tileEntry->tileId.y, tileEntry->zoom, tileEntry->layerId);
@@ -617,8 +622,9 @@ void OsmAnd::MapRenderer::backgroundWorkerProcedure()
                     if(tileEntry->state != MapRendererTileLayer::TileEntry::Ready)
                         continue;
 
-                    const auto& preparedSourceData = prepareTileForUploadingToGPU(tileEntry->sourceData);
-                    bool ok = renderAPI->uploadTileToGPU(tileEntry->tileId, tileEntry->zoom, preparedSourceData, tileEntry->_resourceInGPU);
+                    const auto& preparedSourceData = prepareTileForUploadingToGPU(static_cast<MapTileLayerId>(layerId), tileEntry->sourceData);
+                    const auto tilesPerAtlasTextureLimit = getTilesPerAtlasTextureLimit(static_cast<MapTileLayerId>(layerId), tileEntry->sourceData);
+                    bool ok = renderAPI->uploadTileToGPU(tileEntry->tileId, tileEntry->zoom, preparedSourceData, tilesPerAtlasTextureLimit, tileEntry->_resourceInGPU);
                     if(!ok)
                     {
                         LogPrintf(LogSeverityLevel::Error, "Failed to upload tile %dx%d@%d[%d] to GPU", tileEntry->tileId.x, tileEntry->tileId.y, tileEntry->zoom, tileEntry->layerId);
@@ -964,7 +970,7 @@ void OsmAnd::MapRenderer::setHeightScaleFactor( const float& factor, bool forced
     invalidateCurrentState();
 }
 
-std::shared_ptr<OsmAnd::IMapTileProvider::Tile> OsmAnd::MapRenderer::prepareTileForUploadingToGPU( const std::shared_ptr<IMapTileProvider::Tile>& tile )
+std::shared_ptr<OsmAnd::IMapTileProvider::Tile> OsmAnd::MapRenderer::prepareTileForUploadingToGPU( const MapTileLayerId& layerId, const std::shared_ptr<IMapTileProvider::Tile>& tile )
 {
     if(tile->type == IMapTileProvider::Type::Bitmap)
     {
@@ -973,10 +979,13 @@ std::shared_ptr<OsmAnd::IMapTileProvider::Tile> OsmAnd::MapRenderer::prepareTile
         // Check if we're going to convert
         bool doConvert = false;
         const bool force16bit = (currentConfiguration.limitTextureColorDepthBy16bits && bitmapTile->bitmap->getConfig() == SkBitmap::kARGB_8888_Config);
+        //TODO: eventually support OES_compressed_paletted_texture to reduce GPU memory footprint, but paletted
+        //      textures require manual mipmap levels generation (what is obvious), thus not recommended unless
+        //      really needed.
         const bool unsupportedFormat =
             (bitmapTile->bitmap->getConfig() != SkBitmap::kARGB_8888_Config) ||
             (bitmapTile->bitmap->getConfig() != SkBitmap::kARGB_4444_Config) ||
-            (bitmapTile->bitmap->getConfig() != SkBitmap::kRGB_565_Config);//TODO: eventually support OES_compressed_paletted_texture to reduce GPU memory footprint
+            (bitmapTile->bitmap->getConfig() != SkBitmap::kRGB_565_Config);
         doConvert = doConvert || force16bit;
         doConvert = doConvert || unsupportedFormat;
 
@@ -984,7 +993,7 @@ std::shared_ptr<OsmAnd::IMapTileProvider::Tile> OsmAnd::MapRenderer::prepareTile
         auto convertedAlphaChannelData = bitmapTile->alphaChannelData;
         if(doConvert && (convertedAlphaChannelData == IMapBitmapTileProvider::AlphaChannelData::Undefined))
         {
-            //TODO: check if there is any alpha
+            //TODO: check if there is any alpha, and if alpha data is present, use 4444 format.
             assert(false);
         }
 

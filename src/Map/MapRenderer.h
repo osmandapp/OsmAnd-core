@@ -65,6 +65,7 @@ namespace OsmAnd {
             ColorDepthForcing = 1 << 0,
             AtlasTexturesUsage = 1 << 1,
             ElevationDataResolution = 1 << 2,
+            TexturesFilteringMode = 1 << 3,
         };
         void invalidateCurrentConfiguration(const uint32_t& changesMask);
         virtual void validateConfigurationChange(const ConfigurationChange& change) = 0;
@@ -108,7 +109,8 @@ namespace OsmAnd {
 
         QSet<TileId> _uniqueTiles;
         void requestMissingTiles();
-        virtual std::shared_ptr<IMapTileProvider::Tile> prepareTileForUploadingToGPU(const std::shared_ptr<IMapTileProvider::Tile>& tile);
+        virtual std::shared_ptr<IMapTileProvider::Tile> prepareTileForUploadingToGPU(const MapTileLayerId& layerId, const std::shared_ptr<IMapTileProvider::Tile>& tile);
+        virtual uint32_t getTilesPerAtlasTextureLimit(const MapTileLayerId& layerId, const std::shared_ptr<IMapTileProvider::Tile>& tile) = 0;
         void processRequestedTile(const MapTileLayerId& layerId, const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile, bool success);
 
         Qt::HANDLE _renderThreadId;

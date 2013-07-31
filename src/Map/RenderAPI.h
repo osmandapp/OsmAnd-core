@@ -205,15 +205,14 @@ namespace OsmAnd {
         RenderAPI();
         virtual ~RenderAPI();
 
-        // 0 - unlimited
-        // 1 - don't use atlas textures
-        // N - allow up to N*N tiles per atlas texture
-        volatile uint32_t tilesPerAtlasTextureLimit;
-
         virtual bool initialize() = 0;
         virtual bool release() = 0;
 
-        virtual bool uploadTileToGPU(const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr< IMapTileProvider::Tile >& tile, std::shared_ptr< ResourceInGPU >& resourceInGPU) = 0;
+        // tilesPerAtlasTextureLimit:
+        //   0 - unlimited
+        //   1 - don't use atlas textures
+        //   N - allow up to N*N tiles per atlas texture
+        virtual bool uploadTileToGPU(const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr< IMapTileProvider::Tile >& tile, const uint32_t& tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU) = 0;
 
     friend OsmAnd::RenderAPI::ResourceInGPU;
     };

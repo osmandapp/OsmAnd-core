@@ -266,12 +266,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::computeVisibleTileset()
 
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::validateConfigurationChange( const ConfigurationChange& change )
 {
-    auto renderAPI = getRenderAPI();
-    
-    if(change == ConfigurationChange::AtlasTexturesUsage)
-    {
-        renderAPI->tilesPerAtlasTextureLimit = currentConfiguration.textureAtlasesAllowed ? OptimalTilesPerAtlasTextureSqrt : 1;
-    }
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL_Common::postInitializeRendering()

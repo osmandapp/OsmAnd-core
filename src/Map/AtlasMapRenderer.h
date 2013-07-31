@@ -36,12 +36,14 @@ namespace OsmAnd {
     public:
         enum {
             TileSide3D = 100,
-            OptimalTilesPerAtlasTextureSqrt = 16, // 256 per atlas texture
+            OptimalTilesPerAtlasTextureSide = 16, // 256 per atlas texture
         };
 
     private:
     protected:
         AtlasMapRenderer();
+
+        virtual uint32_t getTilesPerAtlasTextureLimit(const MapTileLayerId& layerId, const std::shared_ptr<IMapTileProvider::Tile>& tile);
     public:
         virtual ~AtlasMapRenderer();
 
