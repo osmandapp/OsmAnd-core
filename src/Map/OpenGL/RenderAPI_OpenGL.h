@@ -39,6 +39,14 @@ namespace OsmAnd {
     private:
         void preprocessShader(QString& code);
     protected:
+        std::array< GLuint, SamplerTypesCount > _textureSamplers;
+    public:
+        RenderAPI_OpenGL();
+        virtual ~RenderAPI_OpenGL();
+
+        virtual bool initialize();
+        virtual bool release();
+
         virtual GLenum validateResult();
 
         virtual uint32_t getTileTextureFormat(const std::shared_ptr< IMapTileProvider::Tile >& tile);
@@ -57,14 +65,6 @@ namespace OsmAnd {
         virtual void preprocessFragmentShader(QString& code);
 
         virtual void setSampler(GLenum texture, const SamplerType& samplerType);
-        
-        std::array< GLuint, SamplerTypesCount > _textureSamplers;
-    public:
-        RenderAPI_OpenGL();
-        virtual ~RenderAPI_OpenGL();
-
-        virtual bool initialize();
-        virtual bool release();
     };
 
 }

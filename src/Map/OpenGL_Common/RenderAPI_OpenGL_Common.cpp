@@ -26,10 +26,8 @@
 OsmAnd::RenderAPI_OpenGL_Common::RenderAPI_OpenGL_Common()
     : _maxTextureSize(0)
     , _isSupported_vertexShaderTextureLookup(false)
-    , _isSupported_shaderTextureLOD(false)
     , maxTextureSize(_maxTextureSize)
     , isSupported_vertexShaderTextureLookup(_isSupported_vertexShaderTextureLookup)
-    , isSupported_shaderTextureLOD(_isSupported_shaderTextureLOD)
 {
 }
 

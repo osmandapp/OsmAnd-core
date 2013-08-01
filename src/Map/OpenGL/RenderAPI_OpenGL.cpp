@@ -103,9 +103,6 @@ bool OsmAnd::RenderAPI_OpenGL::initialize()
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal parameter variables per program %d\n", maxUniformsPerProgram);
 
-    // This is always true for GLSL 4.3
-    _isSupported_shaderTextureLOD = true;
-
     // Allocate samplers
     glGenSamplers(SamplerTypesCount, _textureSamplers.data());
     GL_CHECK_RESULT;
@@ -323,10 +320,10 @@ void OsmAnd::RenderAPI_OpenGL::preprocessShader( QString& code )
         "#define PARAM_INPUT in                                                                                             ""\n"
         "                                                                                                                   ""\n"
         // Features definitions
-        "#define MIPMAPS_SUPPORTED 1                                                                                        ""\n"
         "#define VERTEX_TEXTURE_FETCH_SUPPORTED 1                                                                           ""\n"
-        "#define SAMPLE_TEXTURE texture                                                                                     ""\n"
-        "#define SAMPLE_TEXTURE_LOD textureLod                                                                              ""\n");
+        "#define SAMPLE_TEXTURE_2D texture                                                                                  ""\n"
+        "#define SAMPLE_TEXTURE_2D_LOD textureLod                                                                           ""\n"
+        "                                                                                                                   ""\n");
 
     code.prepend(shaderSource);
 }
@@ -344,7 +341,8 @@ void OsmAnd::RenderAPI_OpenGL::preprocessFragmentShader( QString& code )
     const auto& shaderSource = QString::fromLatin1(
         // Fragment shader output declaration
         "#define FRAGMENT_COLOR_OUTPUT out_FragColor                                                                        ""\n"
-        "out vec4 out_FragColor;                                                                                            ""\n");
+        "out vec4 out_FragColor;                                                                                            ""\n"
+        "                                                                                                                   ""\n");
 
     code.prepend(shaderSource);
     code.prepend(common);

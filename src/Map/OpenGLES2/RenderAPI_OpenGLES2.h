@@ -51,16 +51,10 @@ namespace OsmAnd {
         bool _isSupported_OES_rgb8_rgba8;
         bool _isSupported_OES_texture_float;
         bool _isSupported_EXT_texture_rg;
-    protected:
-        virtual GLenum validateResult();
+        bool _isSupported_EXT_shader_texture_lod;
 
-        virtual uint32_t getTileTextureFormat(const std::shared_ptr< IMapTileProvider::Tile >& tile);
-        virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const std::shared_ptr< IMapTileProvider::Tile >& forTile);
-        virtual void uploadDataToTexture2D(GLenum target, GLint level,
-            GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
-            const GLvoid *data, GLsizei dataRowLengthInElements,
-            const std::shared_ptr< IMapTileProvider::Tile >& fromTile);
-        virtual void setMipMapLevelsLimit(GLenum target, const uint32_t& mipmapLevelsCount);
+        void preprocessShader(QString& code);
+    protected:
     public:
         RenderAPI_OpenGLES2();
         virtual ~RenderAPI_OpenGLES2();
@@ -77,6 +71,24 @@ namespace OsmAnd {
         const bool& isSupported_OES_rgb8_rgba8;
         const bool& isSupported_OES_texture_float;
         const bool& isSupported_EXT_texture_rg;
+        const bool& isSupported_EXT_shader_texture_lod;
+
+        virtual uint32_t getTileTextureFormat(const std::shared_ptr< IMapTileProvider::Tile >& tile);
+        virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const std::shared_ptr< IMapTileProvider::Tile >& forTile);
+        virtual void uploadDataToTexture2D(GLenum target, GLint level,
+            GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
+            const GLvoid *data, GLsizei dataRowLengthInElements,
+            const std::shared_ptr< IMapTileProvider::Tile >& fromTile);
+        virtual void setMipMapLevelsLimit(GLenum target, const uint32_t& mipmapLevelsCount);
+
+        virtual void glGenVertexArrays_wrapper(GLsizei n, GLuint* arrays);
+        virtual void glBindVertexArray_wrapper(GLuint array);
+        virtual void glDeleteVertexArrays_wrapper(GLsizei n, const GLuint* arrays);
+
+        virtual void preprocessVertexShader(QString& code);
+        virtual void preprocessFragmentShader(QString& code);
+
+        virtual void setSampler(GLenum texture, const SamplerType& samplerType);
     };
 
 }

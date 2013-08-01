@@ -127,19 +127,16 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         // Output data to next shader stages
         "PARAM_OUTPUT vec2 v2f_texCoordsPerLayer[%RasterTileLayersCount%];                                                  ""\n"
         "PARAM_OUTPUT float v2f_distanceFromTarget;                                                                         ""\n"
-        "#if MIPMAPS_SUPPORTED                                                                                              ""\n"
-        "    PARAM_OUTPUT float v2f_mipmapLOD;                                                                              ""\n"
-        "#endif // MIPMAPS_SUPPORTED                                                                                        ""\n"
+        "PARAM_OUTPUT float v2f_mipmapLOD;                                                                                  ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
         "uniform mat4 param_vs_mProjectionView;                                                                             ""\n"
         "uniform vec2 param_vs_targetInTilePosN;                                                                            ""\n"
         "uniform ivec2 param_vs_targetTile;                                                                                 ""\n"
-        "#if MIPMAPS_SUPPORTED                                                                                              ""\n"
-        "    uniform mat4 param_vs_mView;                                                                                   ""\n"
-        "    uniform float param_vs_cameraElevationAngle;                                                                   ""\n"
-        "    uniform float param_vs_mipmapK;                                                                                ""\n"
-        "#endif // MIPMAPS_SUPPORTED                                                                                        ""\n"
+        "uniform float param_vs_distanceFromCameraToTarget;                                                                 ""\n"
+        "uniform float param_vs_cameraElevationAngleN;                                                                      ""\n"
+        "uniform vec2 param_vs_groundCameraPosition;                                                                        ""\n"
+        "uniform float param_vs_scaleToRetainProjectedSize;                                                                 ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-tile data
         "uniform ivec2 param_vs_tile;                                                                                       ""\n"
@@ -204,21 +201,19 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         "        v.y = heightInMeters / metersToUnits;                                                                      ""\n"
         "        v.y *= param_vs_elevationData_k;                                                                           ""\n"
         "    }                                                                                                              ""\n"
-        "    else                                                                                                           ""\n"
-        "    {                                                                                                              ""\n"
-        "        v.y = 0.0;                                                                                                 ""\n"
-        "    }                                                                                                              ""\n"
         "#endif // VERTEX_TEXTURE_FETCH_SUPPORTED                                                                           ""\n"
         "                                                                                                                   ""\n"
         //   Calculate mipmap LOD
-        "#if MIPMAPS_SUPPORTED                                                                                              ""\n"
-        "    float distanceFromVertexToCamera = length( (param_vs_mView * v).xz );                                          ""\n"
-        "    float mipmapThresholdDistance = param_vs_mipmapK * log(param_vs_cameraElevationAngle + 1.0);                   ""\n"
-        "    v2f_mipmapLOD = distanceFromVertexToCamera / mipmapThresholdDistance - 1.0;                                    ""\n"
-        "    v2f_mipmapLOD = clamp(v2f_mipmapLOD, 0.0, %MipmapLodLevelsMax%.0 - 1.0);                                       ""\n"
-        "#endif // MIPMAPS_SUPPORTED                                                                                        ""\n"
+        "    vec2 groundVertex = v.xz;                                                                                      ""\n"
+        "    vec2 groundCameraToVertex = groundVertex - param_vs_groundCameraPosition;                                      ""\n"
+        "    float mipmapK = log(1.0 + 10.0 * log2(1.0 + param_vs_cameraElevationAngleN));                                  ""\n"
+        "    float mipmapBaseLevelEndDistance = mipmapK * param_vs_distanceFromCameraToTarget;                              ""\n"
+        "    v2f_mipmapLOD = 1.0 + (length(groundCameraToVertex) - mipmapBaseLevelEndDistance)                              ""\n"
+        "        / (param_vs_scaleToRetainProjectedSize * %TileSize3D%.0);                                                  ""\n"
         "                                                                                                                   ""\n"
+        //   Different supplemental pre-calculated data
         "    v2f_distanceFromTarget = length(v.xz);                                                                         ""\n"
+        "                                                                                                                   ""\n"
         "                                                                                                                   ""\n"
         //   Finally output processed modified vertex
         "    gl_Position = param_vs_mProjectionView * v;                                                                    ""\n"
@@ -236,12 +231,11 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
     }
     preprocessedVertexShader.replace("%UnrolledPerLayerTexCoordsProcessingCode%",
         preprocessedVertexShader_UnrolledPerLayerTexCoordsProcessingCode);
-    preprocessedVertexShader.replace("%TileSize3D%", QString::number(TileSide3D));
+    preprocessedVertexShader.replace("%TileSize3D%", QString::number(TileSize3D));
     preprocessedVertexShader.replace("%TileLayersCount%", QString::number(MapTileLayerIdsCount));
     preprocessedVertexShader.replace("%RasterTileLayersCount%", QString::number(MapTileLayerIdsCount - MapTileLayerId::RasterMap));
     preprocessedVertexShader.replace("%Layer_ElevationData%", QString::number(MapTileLayerId::ElevationData));
     preprocessedVertexShader.replace("%Layer_RasterMap%", QString::number(MapTileLayerId::RasterMap));
-    preprocessedVertexShader.replace("%MipmapLodLevelsMax%", QString::number(RenderAPI_OpenGL_Common::MipmapLodLevelsMax));
     renderAPI->preprocessVertexShader(preprocessedVertexShader);
     _mapStage.vs.id = renderAPI->compileShader(GL_VERTEX_SHADER, preprocessedVertexShader.toStdString().c_str());
     assert(_mapStage.vs.id != 0);
@@ -250,15 +244,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
     const auto& fragmentShader_perTileLayer = QString::fromLatin1(
         "    if(param_fs_perTileLayer[%layerLinearIdx%].k > floatEpsilon)                                                   ""\n"
         "    {                                                                                                              ""\n"
-        "#if MIPMAPS_SUPPORTED                                                                                              ""\n"
-        "        vec4 layerColor = SAMPLE_TEXTURE_LOD(                                                                      ""\n"
+        "        vec4 layerColor = SAMPLE_TEXTURE_2D_LOD(                                                                   ""\n"
         "            param_fs_perTileLayer[%layerLinearIdx%].sampler,                                                       ""\n"
         "            v2f_texCoordsPerLayer[%layerLinearIdx%], v2f_mipmapLOD);                                               ""\n"
-        "#else //!MIPMAPS_SUPPORTED                                                                                         ""\n"
-        "        vec4 layerColor = SAMPLE_TEXTURE(                                                                          ""\n"
-        "            param_fs_perTileLayer[%layerLinearIdx%].sampler,                                                       ""\n"
-        "            v2f_texCoordsPerLayer[%layerLinearIdx%]);                                                              ""\n"
-        "#endif //MIPMAPS_SUPPORTED                                                                                         ""\n"
         "                                                                                                                   ""\n"
         "        baseColor = mix(baseColor, layerColor, layerColor.a * param_fs_perTileLayer[%layerLinearIdx%].k);          ""\n"
         "    }                                                                                                              ""\n");
@@ -269,16 +257,14 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         // Input data
         "PARAM_INPUT vec2 v2f_texCoordsPerLayer[%RasterTileLayersCount%];                                                   ""\n"
         "PARAM_INPUT float v2f_distanceFromTarget;                                                                          ""\n"
-        "#if MIPMAPS_SUPPORTED                                                                                              ""\n"
-        "    PARAM_INPUT float v2f_mipmapLOD;                                                                               ""\n"
-        "#endif // MIPMAPS_SUPPORTED                                                                                        ""\n"
+        "PARAM_INPUT float v2f_mipmapLOD;                                                                                   ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
         "uniform vec3 param_fs_fogColor;                                                                                    ""\n"
         "uniform float param_fs_fogDistance;                                                                                ""\n"
         "uniform float param_fs_fogDensity;                                                                                 ""\n"
         "uniform float param_fs_fogOriginFactor;                                                                            ""\n"
-        "uniform float param_fs_scaleToRetainProjectedSize;                                                                 ""\n"
+        "uniform float param_vs_scaleToRetainProjectedSize;                                                                 ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-layer data
         "struct LayerInputPerTile                                                                                           ""\n"
@@ -291,27 +277,39 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
         //   Mix colors of all layers
-        "#if MIPMAPS_SUPPORTED                                                                                              ""\n"
-        "    vec4 baseColor = SAMPLE_TEXTURE_LOD(                                                                           ""\n"
+        "    vec4 baseColor = SAMPLE_TEXTURE_2D_LOD(                                                                        ""\n"
         "        param_fs_perTileLayer[0].sampler,                                                                          ""\n"
         "        v2f_texCoordsPerLayer[0], v2f_mipmapLOD);                                                                  ""\n"
-        "#else //!MIPMAPS_SUPPORTED                                                                                         ""\n"
-        "    vec4 layerColor = SAMPLE_TEXTURE(                                                                              ""\n"
-        "        param_fs_perTileLayer[0].sampler,                                                                          ""\n"
-        "        v2f_texCoordsPerLayer[0]);                                                                                 ""\n"
-        "#endif //MIPMAPS_SUPPORTED                                                                                         ""\n"
         "    baseColor.a *= param_fs_perTileLayer[0].k;                                                                     ""\n"
         "%UnrolledPerLayerProcessingCode%                                                                                   ""\n"
+        "    FRAGMENT_COLOR_OUTPUT = baseColor;                                                                             ""\n"
         "                                                                                                                   ""\n"
         //   Apply fog (square exponential)
-        "    float fogDistanceScaled = param_fs_fogDistance * param_fs_scaleToRetainProjectedSize;                          ""\n"
-        "    float fogStartDistance = fogDistanceScaled * (1.0 - param_fs_fogOriginFactor);                                 ""\n"
-        "    float fogLinearFactor = min(max(v2f_distanceFromTarget - fogStartDistance, 0.0) /                              ""\n"
-        "        (fogDistanceScaled - fogStartDistance), 1.0);                                                              ""\n"
+        "    if(param_fs_fogDistance > 0.0)                                                                                 ""\n"
+        "    {                                                                                                              ""\n"
+        "        float fogDistanceScaled = param_fs_fogDistance * param_vs_scaleToRetainProjectedSize;                      ""\n"
+        "        float fogStartDistance = fogDistanceScaled * (1.0 - param_fs_fogOriginFactor);                             ""\n"
+        "        float fogLinearFactor = min(max(v2f_distanceFromTarget - fogStartDistance, 0.0) /                          ""\n"
+        "            (fogDistanceScaled - fogStartDistance), 1.0);                                                          ""\n"
 
-        "    float fogFactorBase = fogLinearFactor * param_fs_fogDensity;                                                   ""\n"
-        "    float fogFactor = clamp(exp(-fogFactorBase*fogFactorBase), 0.0, 1.0);                                          ""\n"
-        "    FRAGMENT_COLOR_OUTPUT = mix(baseColor, vec4(param_fs_fogColor, 1.0), 1.0 - fogFactor);                         ""\n"
+        "        float fogFactorBase = fogLinearFactor * param_fs_fogDensity;                                               ""\n"
+        "        float fogFactor = clamp(exp(-fogFactorBase*fogFactorBase), 0.0, 1.0);                                      ""\n"
+        "        FRAGMENT_COLOR_OUTPUT = mix(FRAGMENT_COLOR_OUTPUT, vec4(param_fs_fogColor, 1.0), 1.0 - fogFactor);         ""\n"
+        "    }                                                                                                              ""\n"
+#if 0
+        //   NOTE: Useful for debugging mipmap levels
+        "    {                                                                                                              ""\n"
+        "        vec4 mipmapDebugColor;                                                                                     ""\n"
+        "        mipmapDebugColor.a = 1.0;                                                                                  ""\n"
+        "        float value = v2f_mipmapLOD;                                                                               ""\n"
+        "        mipmapDebugColor.r = clamp(value, 0.0, 1.0);                                                               ""\n"
+        "        value -= 1.0;                                                                                              ""\n"
+        "        mipmapDebugColor.g = clamp(value, 0.0, 1.0);                                                               ""\n"
+        "        value -= 1.0;                                                                                              ""\n"
+        "        mipmapDebugColor.b = clamp(value, 0.0, 1.0);                                                               ""\n"
+        "        FRAGMENT_COLOR_OUTPUT = mix(FRAGMENT_COLOR_OUTPUT, mipmapDebugColor, 0.5);                                 ""\n"
+        "    }                                                                                                              ""\n"
+#endif
         "}                                                                                                                  ""\n");
     auto preprocessedFragmentShader = fragmentShader;
     QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
@@ -327,7 +325,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
     preprocessedFragmentShader.replace("%TileLayersCount%", QString::number(MapTileLayerIdsCount));
     preprocessedFragmentShader.replace("%RasterTileLayersCount%", QString::number(MapTileLayerIdsCount - MapTileLayerId::RasterMap));
     preprocessedFragmentShader.replace("%Layer_RasterMap%", QString::number(MapTileLayerId::RasterMap));
-    preprocessedFragmentShader.replace("%MipmapLodLevelsMax%", QString::number(RenderAPI_OpenGL_Common::MipmapLodLevelsMax));
     renderAPI->preprocessFragmentShader(preprocessedFragmentShader);
     _mapStage.fs.id = renderAPI->compileShader(GL_FRAGMENT_SHADER, preprocessedFragmentShader.toStdString().c_str());
     assert(_mapStage.fs.id != 0);
@@ -346,9 +343,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
     renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.mProjectionView, "param_vs_mProjectionView", GLShaderVariableType::Uniform);
     renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.targetInTilePosN, "param_vs_targetInTilePosN", GLShaderVariableType::Uniform);
     renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.targetTile, "param_vs_targetTile", GLShaderVariableType::Uniform);
-    renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.mView, "param_vs_mView", GLShaderVariableType::Uniform);
-    renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.cameraElevationAngle, "param_vs_cameraElevationAngle", GLShaderVariableType::Uniform);
-    renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.mipmapK, "param_vs_mipmapK", GLShaderVariableType::Uniform);
+    renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.distanceFromCameraToTarget, "param_vs_distanceFromCameraToTarget", GLShaderVariableType::Uniform);
+    renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.cameraElevationAngleN, "param_vs_cameraElevationAngleN", GLShaderVariableType::Uniform);
+    renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.groundCameraPosition, "param_vs_groundCameraPosition", GLShaderVariableType::Uniform);
+    renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.scaleToRetainProjectedSize, "param_vs_scaleToRetainProjectedSize", GLShaderVariableType::Uniform);
     renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.tile, "param_vs_tile", GLShaderVariableType::Uniform);
     if(renderAPI->isSupported_vertexShaderTextureLookup)
     {
@@ -373,7 +371,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
     renderAPI->findVariableLocation(_mapStage.program, _mapStage.fs.param.fogDistance, "param_fs_fogDistance", GLShaderVariableType::Uniform);
     renderAPI->findVariableLocation(_mapStage.program, _mapStage.fs.param.fogDensity, "param_fs_fogDensity", GLShaderVariableType::Uniform);
     renderAPI->findVariableLocation(_mapStage.program, _mapStage.fs.param.fogOriginFactor, "param_fs_fogOriginFactor", GLShaderVariableType::Uniform);
-    renderAPI->findVariableLocation(_mapStage.program, _mapStage.fs.param.scaleToRetainProjectedSize, "param_fs_scaleToRetainProjectedSize", GLShaderVariableType::Uniform);
     for(int layerId = MapTileLayerId::RasterMap, linearIdx = 0; layerId < MapTileLayerIdsCount; layerId++, linearIdx++)
     {
         auto layerStructName =
@@ -398,6 +395,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderMapStage()
     GL_CHECK_PRESENT(glUniform3f);
     GL_CHECK_PRESENT(glUniform1i);
     GL_CHECK_PRESENT(glUniform2i);
+    GL_CHECK_PRESENT(glUniform2fv);
     GL_CHECK_PRESENT(glActiveTexture);
     GL_CHECK_PRESENT(glBindSampler);
 
@@ -413,8 +411,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderMapStage()
     auto mProjectionView = _mProjection * _mView;
     glUniformMatrix4fv(_mapStage.vs.param.mProjectionView, 1, GL_FALSE, glm::value_ptr(mProjectionView));
     GL_CHECK_RESULT;
-    glUniformMatrix4fv(_mapStage.vs.param.mView, 1, GL_FALSE, glm::value_ptr(_mView));
-    GL_CHECK_RESULT;
 
     // Set center offset
     glUniform2f(_mapStage.vs.param.targetInTilePosN, _targetInTileOffsetN.x, _targetInTileOffsetN.y);
@@ -424,32 +420,30 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderMapStage()
     glUniform2i(_mapStage.vs.param.targetTile, _targetTileId.x, _targetTileId.y);
     GL_CHECK_RESULT;
 
-    // Mipmap support
-    if(renderAPI->isSupported_shaderTextureLOD)
-    {
-        // View matrix
-        glUniformMatrix4fv(_mapStage.vs.param.mView, 1, GL_FALSE, glm::value_ptr(_mView));
-        GL_CHECK_RESULT;
+    // Set distance from camera to target
+    glUniform1f(_mapStage.vs.param.distanceFromCameraToTarget, _distanceFromCameraToTarget);
+    GL_CHECK_RESULT;
 
-        // Set camera elevation angle
-        glUniform1f(_mapStage.vs.param.cameraElevationAngle, currentState.elevationAngle);
-        GL_CHECK_RESULT;
+    // Set normalized [0.0 .. 1.0] angle of camera elevation
+    glUniform1f(_mapStage.vs.param.cameraElevationAngleN, currentState.elevationAngle / 90.0f);
+    GL_CHECK_RESULT;
 
-        // Set mipmap K factor
-        glUniform1f(_mapStage.vs.param.mipmapK, _mipmapK);
-        GL_CHECK_RESULT;
-    }
+    // Set position of camera in ground place
+    glUniform2fv(_mapStage.vs.param.groundCameraPosition, 1, glm::value_ptr(_groundCameraPosition));
+    GL_CHECK_RESULT;
+
+    // Set scale to retain projected size
+    glUniform1f(_mapStage.vs.param.scaleToRetainProjectedSize, _scaleToRetainProjectedSize);
+    GL_CHECK_RESULT;
 
     // Set fog parameters
-    glUniform3f(_mapStage.fs.param.fogColor, currentState.fogColor[0], currentState.fogColor[1], currentState.fogColor[2]);
+    glUniform3fv(_mapStage.fs.param.fogColor, 1, currentState.fogColor);
     GL_CHECK_RESULT;
     glUniform1f(_mapStage.fs.param.fogDistance, currentState.fogDistance);
     GL_CHECK_RESULT;
     glUniform1f(_mapStage.fs.param.fogDensity, currentState.fogDensity);
     GL_CHECK_RESULT;
     glUniform1f(_mapStage.fs.param.fogOriginFactor, currentState.fogOriginFactor);
-    GL_CHECK_RESULT;
-    glUniform1f(_mapStage.fs.param.scaleToRetainProjectedSize, _scaleToRetainProjectedSize);
     GL_CHECK_RESULT;
 
     // Configure samplers
@@ -526,9 +520,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderMapStage()
                 glUniform1f(_mapStage.vs.param.elevationData_k, currentState.heightScaleFactor);
                 GL_CHECK_RESULT;
 
-                auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomBase, tileIdN.y, TileSide3D);
+                auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomBase, tileIdN.y, TileSize3D);
                 glUniform1f(_mapStage.vs.param.elevationData_upperMetersPerUnit, upperMetersPerUnit);
-                auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomBase, tileIdN.y + 1, TileSide3D);
+                auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomBase, tileIdN.y + 1, TileSize3D);
                 glUniform1f(_mapStage.vs.param.elevationData_lowerMetersPerUnit, lowerMetersPerUnit);
 
                 glActiveTexture(GL_TEXTURE0 + MapTileLayerId::ElevationData);
@@ -1013,9 +1007,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::updateCurrentState()
 
     // Calculate limits of camera distance to target and actual distance
     const float& screenTile = getReferenceTileSizeOnScreen();
-    _nearDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(_mProjection, currentState.viewport, TileSide3D / 2.0f, screenTile / 2.0f, 1.5f);
-    _baseDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(_mProjection, currentState.viewport, TileSide3D / 2.0f, screenTile / 2.0f, 1.0f);
-    _farDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(_mProjection, currentState.viewport, TileSide3D / 2.0f, screenTile / 2.0f, 0.75f);
+    _nearDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(_mProjection, currentState.viewport, TileSize3D / 2.0f, screenTile / 2.0f, 1.5f);
+    _baseDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(_mProjection, currentState.viewport, TileSize3D / 2.0f, screenTile / 2.0f, 1.0f);
+    _farDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(_mProjection, currentState.viewport, TileSize3D / 2.0f, screenTile / 2.0f, 0.75f);
 
     // zoomFraction == [ 0.0 ... 0.5] scales tile [1.0x ... 1.5x]
     // zoomFraction == [-0.5 ...-0.0] scales tile [.75x ... 1.0x]
@@ -1045,6 +1039,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::updateCurrentState()
     _mAzimuthInv = glm::rotate(-currentState.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
     _mViewInv = _mAzimuthInv * _mElevationInv * _mDistanceInv;
 
+    // Get camera position on the ground
+    _groundCameraPosition = (_mAzimuthInv * glm::vec4(0.0f, 0.0f, _distanceFromCameraToTarget, 1.0f)).xz;
+
     // Correct fog distance
     _correctedFogDistance = currentState.fogDistance * _scaleToRetainProjectedSize + (_distanceFromCameraToTarget - _groundDistanceFromCameraToTarget);
 
@@ -1052,9 +1049,6 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::updateCurrentState()
     float zSkyplaneK = _zSkyplane / _zNear;
     _skyplaneHalfSize.x = zSkyplaneK * _projectionPlaneHalfWidth;
     _skyplaneHalfSize.y = zSkyplaneK * _projectionPlaneHalfHeight;
-
-    // Update mipmap K
-    _mipmapK = static_cast<float>(viewportHeight) / (4.6f * setupOptions.displayDensityFactor);
 
     // Compute visible tileset
     computeVisibleTileset();
@@ -1140,10 +1134,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::computeVisibleTileset()
     assert(intersectionPointsCounter == 4);
 
     // Normalize intersection points to tiles
-    intersectionPoints[0] /= static_cast<float>(TileSide3D);
-    intersectionPoints[1] /= static_cast<float>(TileSide3D);
-    intersectionPoints[2] /= static_cast<float>(TileSide3D);
-    intersectionPoints[3] /= static_cast<float>(TileSide3D);
+    intersectionPoints[0] /= static_cast<float>(TileSize3D);
+    intersectionPoints[1] /= static_cast<float>(TileSize3D);
+    intersectionPoints[2] /= static_cast<float>(TileSize3D);
+    intersectionPoints[3] /= static_cast<float>(TileSize3D);
 
     // "Round"-up tile indices
     // In-tile normalized position is added, since all tiles are going to be
@@ -1240,7 +1234,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::createTilePatch()
         // Simple tile patch, that consists of 4 vertices
 
         // Vertex data
-        const GLfloat tsz = static_cast<GLfloat>(TileSide3D);
+        const GLfloat tsz = static_cast<GLfloat>(TileSize3D);
         MapTileVertex vertices[4] =
         {
             { {0.0f, 0.0f}, {0.0f, 0.0f} },
@@ -1264,7 +1258,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::createTilePatch()
     {
         // Complex tile patch, that consists of (TileElevationNodesPerSide*TileElevationNodesPerSide) number of
         // height clusters. Height cluster itself consists of 4 vertices, 6 indices and 2 polygons
-        const GLfloat clusterSize = static_cast<GLfloat>(TileSide3D) / static_cast<float>(currentConfiguration.heightmapPatchesPerSide);
+        const GLfloat clusterSize = static_cast<GLfloat>(TileSize3D) / static_cast<float>(currentConfiguration.heightmapPatchesPerSide);
         const auto verticesPerLine = currentConfiguration.heightmapPatchesPerSide + 1;
         verticesCount = verticesPerLine * verticesPerLine;
         pVertices = new MapTileVertex[verticesCount];

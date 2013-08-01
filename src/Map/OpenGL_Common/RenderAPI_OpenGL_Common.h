@@ -95,7 +95,6 @@ namespace OsmAnd {
         QMap< GLuint, QMultiMap< GLShaderVariableType, GLint > > _programVariables;
 
         bool _isSupported_vertexShaderTextureLookup;
-        bool _isSupported_shaderTextureLOD;
 
         virtual bool releaseResourceInGPU(const ResourceInGPU::Type& type, const RefInGPU& refInGPU);
     public:
@@ -109,7 +108,6 @@ namespace OsmAnd {
 
         const GLint& maxTextureSize;
         const bool& isSupported_vertexShaderTextureLookup;
-        const bool& isSupported_shaderTextureLOD;
 
         virtual GLenum validateResult() = 0;
         virtual GLuint compileShader(GLenum shaderType, const char* source);

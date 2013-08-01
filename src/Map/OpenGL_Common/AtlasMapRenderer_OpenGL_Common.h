@@ -51,6 +51,7 @@ namespace OsmAnd {
         glm::mat4 _mDistanceInv;
         glm::mat4 _mElevationInv;
         glm::mat4 _mAzimuthInv;
+        glm::vec2 _groundCameraPosition;
         const float _zNear;
         float _zSkyplane;
         float _zFar;
@@ -67,7 +68,6 @@ namespace OsmAnd {
         float _scaleToRetainProjectedSize;
         PointF _skyplaneHalfSize;
         float _correctedFogDistance;
-        float _mipmapK;
         
         void computeVisibleTileset();
 
@@ -103,11 +103,13 @@ namespace OsmAnd {
                 struct {
                     // Common data
                     GLint mProjectionView;
+                    GLint mapScale;
                     GLint targetInTilePosN;
                     GLint targetTile;
-                    GLint mView;
-                    GLint cameraElevationAngle;
-                    GLint mipmapK;
+                    GLint distanceFromCameraToTarget;
+                    GLint cameraElevationAngleN;
+                    GLint groundCameraPosition;
+                    GLint scaleToRetainProjectedSize;
 
                     // Per-tile data
                     GLint tile;
@@ -137,7 +139,6 @@ namespace OsmAnd {
                     GLint fogDistance;
                     GLint fogDensity;
                     GLint fogOriginFactor;
-                    GLint scaleToRetainProjectedSize;
 
                     // Per-tile-per-layer data
                     struct

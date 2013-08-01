@@ -69,6 +69,7 @@ OsmAnd::RenderAPI_OpenGLES2::RenderAPI_OpenGLES2()
     , isSupported_OES_rgb8_rgba8(_isSupported_OES_rgb8_rgba8)
     , isSupported_OES_texture_float(_isSupported_OES_texture_float)
     , isSupported_EXT_texture_rg(_isSupported_EXT_texture_rg)
+    , isSupported_EXT_shader_texture_lod(_isSupported_EXT_shader_texture_lod)
 {
 }
 
@@ -169,11 +170,16 @@ bool OsmAnd::RenderAPI_OpenGLES2::initialize()
         return false;
     }
     _isSupported_OES_texture_float = true;
+    if(!_glesExtensions.contains("GL_EXT_shader_texture_lod"))
+    {
+        LogPrintf(LogSeverityLevel::Error, "This device does not support required 'GL_EXT_shader_texture_lod' extension");
+        return false;
+    }
+    _isSupported_EXT_shader_texture_lod = true;
     _isSupported_EXT_texture_rg = _glesExtensions.contains("GL_EXT_texture_rg");
     _isSupported_EXT_unpack_subimage = _glesExtensions.contains("GL_EXT_unpack_subimage");
     _isSupported_EXT_texture_storage = _glesExtensions.contains("GL_EXT_texture_storage");
     _isSupported_APPLE_texture_max_level = _glesExtensions.contains("GL_APPLE_texture_max_level");
-    _isSupported_EXT_shader_texture_lod = _glesExtensions.contains("GL_EXT_shader_texture_lod");
 #if !defined(OSMAND_TARGET_OS_ios)
     if(_isSupported_EXT_texture_storage && !glTexStorage2DEXT)
     {
@@ -502,30 +508,104 @@ void OsmAnd::RenderAPI_OpenGLES2::glDeleteVertexArrays_wrapper( GLsizei n, const
     glDeleteVertexArraysOES(n, arrays);
 }
 
-void OsmAnd::RenderAPI_OpenGLES2::preprocessVertexShader( QString& code )
+void OsmAnd::RenderAPI_OpenGLES2::preprocessFragmentShader( QString& code )
 {
-    const QString vertexShader = QString::fromLatin1(
+
+}
+
+void OsmAnd::RenderAPI_OpenGLES2::preprocessShader( QString& code )
+{
+    const auto& shaderSource = QString::fromLatin1(
         // Declare version of GLSL used
         "#version 100                                                                                                       ""\n"
         "                                                                                                                   ""\n"
         // General definitions
         "#define INPUT attribute                                                                                            ""\n"
-        "#define OUTPUT varying                                                                                             ""\n"
-        "                                                                                                                   ""\n"
-        "                                                                                                                   ""\n"
+        "#define PARAM_OUTPUT varying                                                                                       ""\n"
+        "#define PARAM_INPUT varying                                                                                        ""\n"
         "                                                                                                                   ""\n"
         // Set default precisions
         "precision highp float;                                                                                             ""\n"
         "precision highp int;                                                                                               ""\n"
         "precision highp sampler2D;                                                                                         ""\n"
-        );
+        "                                                                                                                   ""\n"
+        // Features definitions
+        "#define VERTEX_TEXTURE_FETCH_SUPPORTED 0                                                                           ""\n"
+        "#define SAMPLE_TEXTURE_2D texture2D                                                                                ""\n"
+        "#define SAMPLE_TEXTURE_2D_LOD texture2DLodEXT                                                                      ""\n"
+        "                                                                                                                   ""\n");
 
-    "#ifdef GL_EXT_shader_texture_lod                                                                                   ""\n"
-        "    #extension GL_EXT_shader_texture_lod : enable                                                                  ""\n"
-        "#endif                                                                                                             ""\n"
+    code.prepend(shaderSource);
+}
+
+void OsmAnd::RenderAPI_OpenGLES2::preprocessVertexShader( QString& code )
+{
+    preprocessShader(code);
 }
 
 void OsmAnd::RenderAPI_OpenGLES2::preprocessFragmentShader( QString& code )
 {
+    QString common;
+    preprocessShader(common);
 
+    const auto& shaderSource = QString::fromLatin1(
+        // Make some extensions required
+        "#extension GL_EXT_shader_texture_lod : require                                                                     ""\n"
+        "                                                                                                                   ""\n"
+        // Fragment shader output declaration
+        "#define FRAGMENT_COLOR_OUTPUT gl_FragColor                                                                         ""\n"
+        "                                                                                                                   ""\n");
+
+    code.prepend(shaderSource);
+    code.prepend(common);
+}
+
+void OsmAnd::RenderAPI_OpenGLES2::setSampler( GLenum texture, const SamplerType& samplerType )
+{
+    GL_CHECK_PRESENT(glTexParameteri);
+
+    if(samplerType == SamplerType::ElevationDataTile)
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        GL_CHECK_RESULT;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        GL_CHECK_RESULT;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        GL_CHECK_RESULT;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        GL_CHECK_RESULT;
+    }
+    else if(samplerType == SamplerType::BitmapTile_Bilinear)
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        GL_CHECK_RESULT;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        GL_CHECK_RESULT;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        GL_CHECK_RESULT;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        GL_CHECK_RESULT;
+    }
+    else if(samplerType == SamplerType::BitmapTile_BilinearMipmap)
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        GL_CHECK_RESULT;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        GL_CHECK_RESULT;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+        GL_CHECK_RESULT;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        GL_CHECK_RESULT;
+    }
+    else if(samplerType == SamplerType::BitmapTile_TrilinearMipmap)
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        GL_CHECK_RESULT;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        GL_CHECK_RESULT;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        GL_CHECK_RESULT;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        GL_CHECK_RESULT;
+    }
 }

@@ -35,7 +35,7 @@ namespace OsmAnd {
     {
     public:
         enum {
-            TileSide3D = 100,
+            TileSize3D = 100,
             OptimalTilesPerAtlasTextureSide = 16, // 256 per atlas texture
         };
 
