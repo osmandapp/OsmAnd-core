@@ -460,13 +460,13 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderMapStage()
 
         renderAPI->setSampler(GL_TEXTURE0 + MapTileLayerId::ElevationData, RenderAPI_OpenGL_Common::SamplerType::ElevationDataTile);
     }
-    auto bitmapTileSamplerType = RenderAPI_OpenGL_Common::SamplerType::BitmapTile_NoFiltering;
+    auto bitmapTileSamplerType = RenderAPI_OpenGL_Common::SamplerType::BitmapTile_Bilinear;
     switch(currentConfiguration.texturesFilteringQuality)
     {
     case MapRendererConfiguration::TextureFilteringQuality::Good:
-        bitmapTileSamplerType = RenderAPI_OpenGL_Common::SamplerType::BitmapTile_BilinearFiltering;
+        bitmapTileSamplerType = RenderAPI_OpenGL_Common::SamplerType::BitmapTile_BilinearMipmap;
     case MapRendererConfiguration::TextureFilteringQuality::Best:
-        bitmapTileSamplerType = RenderAPI_OpenGL_Common::SamplerType::BitmapTile_TrilinearFiltering;
+        bitmapTileSamplerType = RenderAPI_OpenGL_Common::SamplerType::BitmapTile_TrilinearMipmap;
     }
     for(int layerId = MapTileLayerId::RasterMap; layerId < MapTileLayerIdsCount; layerId++)
     {

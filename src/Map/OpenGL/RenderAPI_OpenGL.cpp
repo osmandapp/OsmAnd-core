@@ -122,19 +122,19 @@ bool OsmAnd::RenderAPI_OpenGL::initialize()
     glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     GL_CHECK_RESULT;
 
-    // BitmapTile_NoFiltering sampler
-    sampler = _textureSamplers[SamplerType::BitmapTile_NoFiltering];
+    // BitmapTile_Bilinear sampler
+    sampler = _textureSamplers[SamplerType::BitmapTile_Bilinear];
     glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     GL_CHECK_RESULT;
     glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     GL_CHECK_RESULT;
-    glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+    glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     GL_CHECK_RESULT;
-    glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     GL_CHECK_RESULT;
 
-    // BitmapTile_BilinearFiltering sampler
-    sampler = _textureSamplers[SamplerType::BitmapTile_BilinearFiltering];
+    // BitmapTile_BilinearMipmap sampler
+    sampler = _textureSamplers[SamplerType::BitmapTile_BilinearMipmap];
     glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     GL_CHECK_RESULT;
     glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -144,8 +144,8 @@ bool OsmAnd::RenderAPI_OpenGL::initialize()
     glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     GL_CHECK_RESULT;
 
-    // BitmapTile_TrilinearFiltering sampler
-    sampler = _textureSamplers[SamplerType::BitmapTile_TrilinearFiltering];
+    // BitmapTile_TrilinearMipmap sampler
+    sampler = _textureSamplers[SamplerType::BitmapTile_TrilinearMipmap];
     glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     GL_CHECK_RESULT;
     glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);

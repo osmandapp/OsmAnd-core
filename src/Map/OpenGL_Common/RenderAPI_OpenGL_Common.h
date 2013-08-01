@@ -135,9 +135,9 @@ namespace OsmAnd {
             Invalid = -1,
 
             ElevationDataTile,
-            BitmapTile_NoFiltering,
-            BitmapTile_BilinearFiltering,
-            BitmapTile_TrilinearFiltering,
+            BitmapTile_Bilinear,
+            BitmapTile_BilinearMipmap,
+            BitmapTile_TrilinearMipmap,
 
             __LAST
         };
