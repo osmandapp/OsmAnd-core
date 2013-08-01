@@ -508,11 +508,6 @@ void OsmAnd::RenderAPI_OpenGLES2::glDeleteVertexArrays_wrapper( GLsizei n, const
     glDeleteVertexArraysOES(n, arrays);
 }
 
-void OsmAnd::RenderAPI_OpenGLES2::preprocessFragmentShader( QString& code )
-{
-
-}
-
 void OsmAnd::RenderAPI_OpenGLES2::preprocessShader( QString& code )
 {
     const auto& shaderSource = QString::fromLatin1(
