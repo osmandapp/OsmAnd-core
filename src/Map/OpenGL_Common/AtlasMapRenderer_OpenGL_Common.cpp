@@ -282,17 +282,17 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         "    FRAGMENT_COLOR_OUTPUT = baseColor;                                                                             ""\n"
         "                                                                                                                   ""\n"
         //   Apply fog (square exponential)
-        "    if(param_fs_fogDistance > 0.0)                                                                                 ""\n"
-        "    {                                                                                                              ""\n"
-        "        float fogDistanceScaled = param_fs_fogDistance * param_vs_scaleToRetainProjectedSize;                      ""\n"
-        "        float fogStartDistance = fogDistanceScaled * (1.0 - param_fs_fogOriginFactor);                             ""\n"
-        "        float fogLinearFactor = min(max(v2f_distanceFromTarget - fogStartDistance, 0.0) /                          ""\n"
-        "            (fogDistanceScaled - fogStartDistance), 1.0);                                                          ""\n"
+#ifdef FOG_NOT_DISABLED
+        "    float fogDistanceScaled = param_fs_fogDistance * param_vs_scaleToRetainProjectedSize;                          ""\n"
+        "    float fogStartDistance = fogDistanceScaled * (1.0 - param_fs_fogOriginFactor);                                 ""\n"
+        "    float fogLinearFactor = min(max(v2f_distanceFromTarget - fogStartDistance, 0.0) /                              ""\n"
+        "        (fogDistanceScaled - fogStartDistance), 1.0);                                                              ""\n"
 
-        "        float fogFactorBase = fogLinearFactor * param_fs_fogDensity;                                               ""\n"
-        "        float fogFactor = clamp(exp(-fogFactorBase*fogFactorBase), 0.0, 1.0);                                      ""\n"
-        "        FRAGMENT_COLOR_OUTPUT = mix(FRAGMENT_COLOR_OUTPUT, vec4(param_fs_fogColor, 1.0), 1.0 - fogFactor);         ""\n"
-        "    }                                                                                                              ""\n"
+        "    float fogFactorBase = fogLinearFactor * param_fs_fogDensity;                                                   ""\n"
+        "    float fogFactor = clamp(exp(-fogFactorBase*fogFactorBase), 0.0, 1.0);                                          ""\n"
+        "    FRAGMENT_COLOR_OUTPUT = mix(FRAGMENT_COLOR_OUTPUT, vec4(param_fs_fogColor, 1.0), 1.0 - fogFactor);             ""\n"
+        "                                                                                                                   ""\n"
+#endif
 #if 0
         //   NOTE: Useful for debugging mipmap levels
         "    {                                                                                                              ""\n"
@@ -364,10 +364,12 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         renderAPI->findVariableLocation(_mapStage.program, layerStruct.slotsPerSide, layerStructName + ".slotsPerSide", GLShaderVariableType::Uniform);
         renderAPI->findVariableLocation(_mapStage.program, layerStruct.slotIndex, layerStructName + ".slotIndex", GLShaderVariableType::Uniform);
     }
+#ifdef FOG_NOT_DISABLED
     renderAPI->findVariableLocation(_mapStage.program, _mapStage.fs.param.fogColor, "param_fs_fogColor", GLShaderVariableType::Uniform);
     renderAPI->findVariableLocation(_mapStage.program, _mapStage.fs.param.fogDistance, "param_fs_fogDistance", GLShaderVariableType::Uniform);
     renderAPI->findVariableLocation(_mapStage.program, _mapStage.fs.param.fogDensity, "param_fs_fogDensity", GLShaderVariableType::Uniform);
     renderAPI->findVariableLocation(_mapStage.program, _mapStage.fs.param.fogOriginFactor, "param_fs_fogOriginFactor", GLShaderVariableType::Uniform);
+#endif
     for(int layerId = MapTileLayerId::RasterMap, linearIdx = 0; layerId < MapTileLayerIdsCount; layerId++, linearIdx++)
     {
         auto layerStructName =
@@ -432,6 +434,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderMapStage()
     glUniform1f(_mapStage.vs.param.scaleToRetainProjectedSize, _scaleToRetainProjectedSize);
     GL_CHECK_RESULT;
 
+#ifdef FOG_NOT_DISABLED
     // Set fog parameters
     glUniform3fv(_mapStage.fs.param.fogColor, 1, currentState.fogColor);
     GL_CHECK_RESULT;
@@ -441,6 +444,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderMapStage()
     GL_CHECK_RESULT;
     glUniform1f(_mapStage.fs.param.fogOriginFactor, currentState.fogOriginFactor);
     GL_CHECK_RESULT;
+#endif
 
     // Configure samplers
     if(renderAPI->isSupported_vertexShaderTextureLookup)
