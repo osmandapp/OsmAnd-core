@@ -277,7 +277,7 @@ bool OsmAnd::MapRenderer::preProcessRendering()
         const auto rx = r.x - _targetTileId.x;
         const auto ry = r.y - _targetTileId.y;
 
-        return (lx*lx + ly*ly) < (rx*rx + ry*ry);
+        return (lx*lx + ly*ly) > (rx*rx + ry*ry);
     });
 
     // Get set of tiles that are unique: visible tiles may contain same tiles, but wrapped
