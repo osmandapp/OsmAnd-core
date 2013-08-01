@@ -36,8 +36,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::allocateTilePatch( MapTileVertex* v
 {
     const auto renderAPI = getRenderAPI();
 
-    GL_CHECK_PRESENT(glGenVertexArrays);
-    GL_CHECK_PRESENT(glBindVertexArray);
     GL_CHECK_PRESENT(glGenBuffers);
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
