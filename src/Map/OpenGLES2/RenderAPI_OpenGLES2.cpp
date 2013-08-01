@@ -317,8 +317,6 @@ void OsmAnd::RenderAPI_OpenGLES2::allocateTexture2D( GLenum target, GLsizei leve
     GLsizei pixelSizeInBytes = 0;
     if(format == GL_RGBA && type == GL_UNSIGNED_BYTE)
         pixelSizeInBytes = 4;
-    else if(format == GL_RGBA && type == GL_UNSIGNED_BYTE)
-        pixelSizeInBytes = 4;
     else if(format == GL_RGBA && type == GL_UNSIGNED_SHORT_4_4_4_4)
         pixelSizeInBytes = 2;
     else if(format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5)
