@@ -62,11 +62,9 @@ OsmAnd::RenderAPI_OpenGLES2::P_glTexStorage2DEXT_PROC OsmAnd::RenderAPI_OpenGLES
 
 OsmAnd::RenderAPI_OpenGLES2::RenderAPI_OpenGLES2()
     : glesExtensions(_glesExtensions)
-    , isSupported_vertexShaderTextureLookup(_isSupported_vertexShaderTextureLookup)
     , isSupported_EXT_unpack_subimage(_isSupported_EXT_unpack_subimage)
     , isSupported_EXT_texture_storage(_isSupported_EXT_texture_storage)
     , isSupported_APPLE_texture_max_level(_isSupported_APPLE_texture_max_level)
-    , isSupported_EXT_shader_texture_lod(_isSupported_EXT_shader_texture_lod)
     , isSupported_OES_vertex_array_object(_isSupported_OES_vertex_array_object)
     , isSupported_OES_rgb8_rgba8(_isSupported_OES_rgb8_rgba8)
     , isSupported_OES_texture_float(_isSupported_OES_texture_float)
@@ -483,4 +481,53 @@ void OsmAnd::RenderAPI_OpenGLES2::setMipMapLevelsLimit( GLenum target, const uin
         GL_CHECK_RESULT;
     }
 #endif //OSMAND_TARGET_OS_ios
+}
+
+void OsmAnd::RenderAPI_OpenGLES2::glGenVertexArrays_wrapper( GLsizei n, GLuint* arrays )
+{
+    GL_CHECK_PRESENT(glGenVertexArraysOES);
+
+    glGenVertexArraysOES(n, arrays);
+}
+
+void OsmAnd::RenderAPI_OpenGLES2::glBindVertexArray_wrapper( GLuint array )
+{
+    GL_CHECK_PRESENT(glBindVertexArrayOES);
+
+    glBindVertexArrayOES(array);
+}
+
+void OsmAnd::RenderAPI_OpenGLES2::glDeleteVertexArrays_wrapper( GLsizei n, const GLuint* arrays )
+{
+    GL_CHECK_PRESENT(glDeleteVertexArraysOES);
+
+    glDeleteVertexArraysOES(n, arrays);
+}
+
+void OsmAnd::RenderAPI_OpenGLES2::preprocessVertexShader( QString& code )
+{
+    const QString vertexShader = QString::fromLatin1(
+        // Declare version of GLSL used
+        "#version 100                                                                                                       ""\n"
+        "                                                                                                                   ""\n"
+        // General definitions
+        "#define INPUT attribute                                                                                            ""\n"
+        "#define OUTPUT varying                                                                                             ""\n"
+        "                                                                                                                   ""\n"
+        "                                                                                                                   ""\n"
+        "                                                                                                                   ""\n"
+        // Set default precisions
+        "precision highp float;                                                                                             ""\n"
+        "precision highp int;                                                                                               ""\n"
+        "precision highp sampler2D;                                                                                         ""\n"
+        );
+
+    "#ifdef GL_EXT_shader_texture_lod                                                                                   ""\n"
+        "    #extension GL_EXT_shader_texture_lod : enable                                                                  ""\n"
+        "#endif                                                                                                             ""\n"
+}
+
+void OsmAnd::RenderAPI_OpenGLES2::preprocessFragmentShader( QString& code )
+{
+
 }

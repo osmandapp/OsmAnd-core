@@ -80,12 +80,126 @@ namespace OsmAnd {
         };
 #pragma pack(pop)
 
+        void allocateTilePatch(MapTileVertex* vertices, GLsizei verticesCount, GLushort* indices, GLsizei indicesCount);
+        void releaseTilePatch();
+
+        struct {
+            GLuint program;
+
+            GLuint tilePatchVAO;
+            GLuint tilePatchVBO;
+            GLuint tilePatchIBO;
+
+            struct {
+                GLuint id;
+
+                // Input data
+                struct {
+                    GLint vertexPosition;
+                    GLint vertexTexCoords;
+                } in;
+
+                // Parameters
+                struct {
+                    // Common data
+                    GLint mProjectionView;
+                    GLint targetInTilePosN;
+                    GLint targetTile;
+                    GLint mView;
+                    GLint cameraElevationAngle;
+                    GLint mipmapK;
+
+                    // Per-tile data
+                    GLint tile;
+                    GLint elevationData_k;
+                    GLint elevationData_sampler;
+                    GLint elevationData_upperMetersPerUnit;
+                    GLint elevationData_lowerMetersPerUnit;
+
+                    // Per-tile-per-layer data
+                    struct
+                    {
+                        GLint tileSizeN;
+                        GLint tilePaddingN;
+                        GLint slotsPerSide;
+                        GLint slotIndex;
+                    } perTileLayer[MapTileLayerIdsCount];
+                } param;
+            } vs;
+
+            struct {
+                GLuint id;
+
+                // Parameters
+                struct {
+                    // Common data
+                    GLint fogColor;
+                    GLint fogDistance;
+                    GLint fogDensity;
+                    GLint fogOriginFactor;
+                    GLint scaleToRetainProjectedSize;
+
+                    // Per-tile-per-layer data
+                    struct
+                    {
+                        GLint k;
+                        GLint sampler;
+                    } perTileLayer[MapTileLayerIdsCount - MapTileLayerId::RasterMap];
+                } param;
+            } fs;
+        } _mapStage;
+        void initializeMapStage();
+        void renderMapStage();
+        void releaseMapStage();
+
+        struct {
+            GLuint skyplaneVAO;
+            GLuint skyplaneVBO;
+            GLuint skyplaneIBO;
+
+            GLuint program;
+
+            struct {
+                GLuint id;
+
+                // Input data
+                struct {
+                    GLint vertexPosition;
+                } in;
+
+                // Parameters
+                struct {
+                    // Common data
+                    GLint mProjectionViewModel;
+                    GLint halfSize;
+                } param;
+            } vs;
+
+            struct {
+                GLuint id;
+
+                // Parameters
+                struct {
+                    // Common data
+                    GLint skyColor;
+                    GLint fogColor;
+                    GLint fogDensity;
+                    GLint fogHeightOriginFactor;
+                } param;
+            } fs;
+        } _skyStage;
+        void initializeSkyStage();
+        void renderSkyStage();
+        void releaseSkyStage();
+
+        virtual bool doInitializeRendering();
+        virtual bool doRenderFrame();
+        virtual bool doReleaseRendering();
+
         virtual void validateConfigurationChange(const ConfigurationChange& change);
 
         GLsizei _tilePatchIndicesCount;
         virtual void createTilePatch();
-        virtual void allocateTilePatch(MapTileVertex* vertices, GLsizei verticesCount, GLushort* indices, GLsizei indicesCount) = 0;
-        virtual void releaseTilePatch() = 0;
         
         virtual void validateLayer(const MapTileLayerId& layer);
 

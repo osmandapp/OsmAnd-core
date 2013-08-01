@@ -37,6 +37,7 @@ namespace OsmAnd {
     class OSMAND_CORE_API RenderAPI_OpenGL : public RenderAPI_OpenGL_Common
     {
     private:
+        void preprocessShader(QString& code);
     protected:
         virtual GLenum validateResult();
 
@@ -47,22 +48,23 @@ namespace OsmAnd {
             const GLvoid *data, GLsizei dataRowLengthInElements,
             const std::shared_ptr< IMapTileProvider::Tile >& fromTile);
         virtual void setMipMapLevelsLimit(GLenum target, const uint32_t& mipmapLevelsCount);
+
+        virtual void glGenVertexArrays_wrapper(GLsizei n, GLuint* arrays);
+        virtual void glBindVertexArray_wrapper(GLuint array);
+        virtual void glDeleteVertexArrays_wrapper(GLsizei n, const GLuint* arrays);
+
+        virtual void preprocessVertexShader(QString& code);
+        virtual void preprocessFragmentShader(QString& code);
+
+        virtual void setSampler(GLenum texture, const SamplerType& samplerType);
         
-        GLuint _textureSampler_Bitmap_NoAtlas;
-        GLuint _textureSampler_Bitmap_Atlas;
-        GLuint _textureSampler_ElevationData_NoAtlas;
-        GLuint _textureSampler_ElevationData_Atlas;
+        std::array< GLuint, SamplerTypesCount > _textureSamplers;
     public:
         RenderAPI_OpenGL();
         virtual ~RenderAPI_OpenGL();
 
         virtual bool initialize();
         virtual bool release();
-
-        const GLuint& textureSampler_Bitmap_NoAtlas;
-        const GLuint& textureSampler_Bitmap_Atlas;
-        const GLuint& textureSampler_ElevationData_NoAtlas;
-        const GLuint& textureSampler_ElevationData_Atlas;
     };
 
 }

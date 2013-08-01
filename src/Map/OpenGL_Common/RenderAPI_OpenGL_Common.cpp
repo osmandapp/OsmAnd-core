@@ -25,7 +25,11 @@
 
 OsmAnd::RenderAPI_OpenGL_Common::RenderAPI_OpenGL_Common()
     : _maxTextureSize(0)
+    , _isSupported_vertexShaderTextureLookup(false)
+    , _isSupported_shaderTextureLOD(false)
     , maxTextureSize(_maxTextureSize)
+    , isSupported_vertexShaderTextureLookup(_isSupported_vertexShaderTextureLookup)
+    , isSupported_shaderTextureLOD(_isSupported_shaderTextureLOD)
 {
 }
 
@@ -149,18 +153,18 @@ void OsmAnd::RenderAPI_OpenGL_Common::clearVariablesLookup()
     _programVariables.clear();
 }
 
-void OsmAnd::RenderAPI_OpenGL_Common::findVariableLocation( GLuint program, GLint& location, const QString& name, const VariableType& type )
+void OsmAnd::RenderAPI_OpenGL_Common::findVariableLocation( GLuint program, GLint& location, const QString& name, const GLShaderVariableType& type )
 {
     GL_CHECK_PRESENT(glGetAttribLocation);
     GL_CHECK_PRESENT(glGetUniformLocation);
 
-    if(type == VariableType::In)
+    if(type == GLShaderVariableType::In)
         location = glGetAttribLocation(program, name.toStdString().c_str());
-    else if(type == VariableType::Uniform)
+    else if(type == GLShaderVariableType::Uniform)
         location = glGetUniformLocation(program, name.toStdString().c_str());
     GL_CHECK_RESULT;
     if(location == -1)
-        LogPrintf(LogSeverityLevel::Error, "Variable '%s' (%s) was not found in GLSL program %d\n", name.toStdString().c_str(), type == In ? "In" : "Uniform", program);
+        LogPrintf(LogSeverityLevel::Error, "Variable '%s' (%s) was not found in GLSL program %d\n", name.toStdString().c_str(), type == GLShaderVariableType::In ? "In" : "Uniform", program);
     assert(location != -1);
     assert(!_programVariables[program].contains(type, location));
     _programVariables[program].insert(type, location);

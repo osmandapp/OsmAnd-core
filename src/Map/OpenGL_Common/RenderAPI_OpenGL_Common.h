@@ -80,20 +80,22 @@
 
 namespace OsmAnd {
 
+    enum class GLShaderVariableType
+    {
+        In,
+        Uniform
+    };
+
     class OSMAND_CORE_API RenderAPI_OpenGL_Common : public RenderAPI
     {
-    public:
-        enum VariableType
-        {
-            In,
-            Uniform
-        };
-
     private:
         bool uploadTileAsTextureToGPU(const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr< IMapTileProvider::Tile >& tile, const uint32_t& tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU);
     protected:
         GLint _maxTextureSize;
-        QMap< GLuint, QMultiMap< VariableType, GLint > > _programVariables;
+        QMap< GLuint, QMultiMap< GLShaderVariableType, GLint > > _programVariables;
+
+        bool _isSupported_vertexShaderTextureLookup;
+        bool _isSupported_shaderTextureLOD;
 
         virtual bool releaseResourceInGPU(const ResourceInGPU::Type& type, const RefInGPU& refInGPU);
     public:
@@ -106,6 +108,8 @@ namespace OsmAnd {
         };
 
         const GLint& maxTextureSize;
+        const bool& isSupported_vertexShaderTextureLookup;
+        const bool& isSupported_shaderTextureLOD;
 
         virtual GLenum validateResult() = 0;
         virtual GLuint compileShader(GLenum shaderType, const char* source);
@@ -119,8 +123,31 @@ namespace OsmAnd {
             const std::shared_ptr< IMapTileProvider::Tile >& fromTile) = 0;
         virtual void setMipMapLevelsLimit(GLenum target, const uint32_t& mipmapLevelsCount) = 0;
 
+        virtual void glGenVertexArrays_wrapper(GLsizei n, GLuint* arrays) = 0;
+        virtual void glBindVertexArray_wrapper(GLuint array) = 0;
+        virtual void glDeleteVertexArrays_wrapper(GLsizei n, const GLuint* arrays) = 0;
+
+        virtual void preprocessVertexShader(QString& code) = 0;
+        virtual void preprocessFragmentShader(QString& code) = 0;
+
+        enum SamplerType : int32_t
+        {
+            Invalid = -1,
+
+            ElevationDataTile,
+            BitmapTile_NoFiltering,
+            BitmapTile_BilinearFiltering,
+            BitmapTile_TrilinearFiltering,
+
+            __LAST
+        };
+        enum {
+            SamplerTypesCount = SamplerType::__LAST,
+        };
+        virtual void setSampler(GLenum texture, const SamplerType& samplerType) = 0;
+
         virtual void clearVariablesLookup();
-        virtual void findVariableLocation(GLuint program, GLint& location, const QString& name, const VariableType& type);
+        virtual void findVariableLocation(GLuint program, GLint& location, const QString& name, const GLShaderVariableType& type);
 
         virtual bool uploadTileToGPU(const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr< IMapTileProvider::Tile >& tile, const uint32_t& tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU);
     };

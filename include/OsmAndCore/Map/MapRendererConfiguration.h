@@ -37,14 +37,14 @@ namespace OsmAnd {
         MapRendererConfiguration();
         ~MapRendererConfiguration();
 
-        STRONG_ENUM(TextureFiltering)
+        STRONG_ENUM(TextureFilteringQuality)
         {
-            None,
-            Bilinear,
-            Trilinear
+            Normal,
+            Good,
+            Best
         };
 
-        TextureFiltering texturesFiltering;
+        TextureFilteringQuality texturesFilteringQuality;
         bool textureAtlasesAllowed;
         bool limitTextureColorDepthBy16bits;
         uint32_t heightmapPatchesPerSide;

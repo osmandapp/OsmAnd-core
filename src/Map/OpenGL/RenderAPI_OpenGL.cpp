@@ -18,15 +18,8 @@
 #endif
 
 OsmAnd::RenderAPI_OpenGL::RenderAPI_OpenGL()
-    : _textureSampler_Bitmap_NoAtlas(0)
-    , _textureSampler_Bitmap_Atlas(0)
-    , _textureSampler_ElevationData_NoAtlas(0)
-    , _textureSampler_ElevationData_Atlas(0)
-    , textureSampler_Bitmap_NoAtlas(_textureSampler_Bitmap_NoAtlas)
-    , textureSampler_Bitmap_Atlas(_textureSampler_Bitmap_Atlas)
-    , textureSampler_ElevationData_NoAtlas(_textureSampler_ElevationData_NoAtlas)
-    , textureSampler_ElevationData_Atlas(_textureSampler_ElevationData_Atlas)
 {
+    _textureSamplers.fill(0);
 }
 
 OsmAnd::RenderAPI_OpenGL::~RenderAPI_OpenGL()
@@ -98,59 +91,68 @@ bool OsmAnd::RenderAPI_OpenGL::initialize()
     glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, &maxTextureUnitsInVertexShader);
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units in vertex shader %d\n", maxTextureUnitsInVertexShader);
-    assert(maxTextureUnitsInVertexShader >= MapTileLayerId::RasterMap);
+    _isSupported_vertexShaderTextureLookup = (maxTextureUnitsInVertexShader >= MapTileLayerId::RasterMap);
+
+    GLint maxTextureUnitsCombined;
+    glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTextureUnitsCombined);
+    GL_CHECK_RESULT;
+    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units (combined) %d\n", maxTextureUnitsCombined);
 
     GLint maxUniformsPerProgram;
     glGetIntegerv(GL_MAX_UNIFORM_LOCATIONS, &maxUniformsPerProgram);
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal parameter variables per program %d\n", maxUniformsPerProgram);
 
-    // Bitmap (Atlas)
-    glGenSamplers(1, &_textureSampler_Bitmap_Atlas);
+    // This is always true for GLSL 4.3
+    _isSupported_shaderTextureLOD = true;
+
+    // Allocate samplers
+    glGenSamplers(SamplerTypesCount, _textureSamplers.data());
     GL_CHECK_RESULT;
-    glSamplerParameteri(_textureSampler_Bitmap_Atlas, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    GLuint sampler;
+
+    // ElevationDataTile sampler
+    sampler = _textureSamplers[SamplerType::ElevationDataTile];
+    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_textureSampler_Bitmap_Atlas, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_textureSampler_Bitmap_Atlas, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_textureSampler_Bitmap_Atlas, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     GL_CHECK_RESULT;
 
-    // ElevationData (Atlas)
-    glGenSamplers(1, &_textureSampler_ElevationData_Atlas);
+    // BitmapTile_NoFiltering sampler
+    sampler = _textureSamplers[SamplerType::BitmapTile_NoFiltering];
+    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_textureSampler_ElevationData_Atlas, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_textureSampler_ElevationData_Atlas, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_textureSampler_ElevationData_Atlas, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    GL_CHECK_RESULT;
-    glSamplerParameteri(_textureSampler_ElevationData_Atlas, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     GL_CHECK_RESULT;
 
-    // Bitmap (No atlas)
-    glGenSamplers(1, &_textureSampler_Bitmap_NoAtlas);
+    // BitmapTile_BilinearFiltering sampler
+    sampler = _textureSamplers[SamplerType::BitmapTile_BilinearFiltering];
+    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_textureSampler_Bitmap_NoAtlas, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_textureSampler_Bitmap_NoAtlas, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_textureSampler_Bitmap_NoAtlas, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_textureSampler_Bitmap_NoAtlas, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // BitmapTile_TrilinearFiltering sampler
+    sampler = _textureSamplers[SamplerType::BitmapTile_TrilinearFiltering];
+    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     GL_CHECK_RESULT;
-    
-    // ElevationData (No atlas)
-    glGenSamplers(1, &_textureSampler_ElevationData_NoAtlas);
+    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     GL_CHECK_RESULT;
-    glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    GL_CHECK_RESULT;
-    glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    GL_CHECK_RESULT;
-    glSamplerParameteri(_textureSampler_ElevationData_NoAtlas, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     GL_CHECK_RESULT;
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -179,34 +181,13 @@ bool OsmAnd::RenderAPI_OpenGL::release()
 
     GL_CHECK_PRESENT(glDeleteSamplers);
 
-    if(_textureSampler_Bitmap_NoAtlas != 0)
+    if(_textureSamplers[0] != 0)
     {
-        glDeleteSamplers(1, &_textureSampler_Bitmap_NoAtlas);
+        glDeleteSamplers(1, _textureSamplers.data());
         GL_CHECK_RESULT;
-        _textureSampler_Bitmap_NoAtlas = 0;
+        _textureSamplers.fill(0);
     }
-
-    if(_textureSampler_Bitmap_Atlas != 0)
-    {
-        glDeleteSamplers(1, &_textureSampler_Bitmap_Atlas);
-        GL_CHECK_RESULT;
-        _textureSampler_Bitmap_Atlas = 0;
-    }
-
-    if(_textureSampler_ElevationData_NoAtlas != 0)
-    {
-        glDeleteSamplers(1, &_textureSampler_ElevationData_NoAtlas);
-        GL_CHECK_RESULT;
-        _textureSampler_ElevationData_NoAtlas = 0;
-    }
-
-    if(_textureSampler_ElevationData_Atlas != 0)
-    {
-        glDeleteSamplers(1, &_textureSampler_ElevationData_Atlas);
-        GL_CHECK_RESULT;
-        _textureSampler_ElevationData_Atlas = 0;
-    }
-
+    
     ok = RenderAPI_OpenGL_Common::release();
     if(!ok)
         return false;
@@ -306,5 +287,73 @@ void OsmAnd::RenderAPI_OpenGL::setMipMapLevelsLimit( GLenum target, const uint32
     GL_CHECK_PRESENT(glTexParameteri);
 
     glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, mipmapLevelsCount);
+    GL_CHECK_RESULT;
+}
+
+void OsmAnd::RenderAPI_OpenGL::glGenVertexArrays_wrapper( GLsizei n, GLuint* arrays )
+{
+    GL_CHECK_PRESENT(glGenVertexArrays);
+
+    glGenVertexArrays(n, arrays);
+}
+
+void OsmAnd::RenderAPI_OpenGL::glBindVertexArray_wrapper( GLuint array )
+{
+    GL_CHECK_PRESENT(glBindVertexArray);
+
+    glBindVertexArray(array);
+}
+
+void OsmAnd::RenderAPI_OpenGL::glDeleteVertexArrays_wrapper( GLsizei n, const GLuint* arrays )
+{
+    GL_CHECK_PRESENT(glDeleteVertexArrays);
+
+    glDeleteVertexArrays(n, arrays);
+}
+
+void OsmAnd::RenderAPI_OpenGL::preprocessShader( QString& code )
+{
+    const auto& shaderSource = QString::fromLatin1(
+        // Declare version of GLSL used
+        "#version 430 core                                                                                                  ""\n"
+        "                                                                                                                   ""\n"
+        // General definitions
+        "#define INPUT in                                                                                                   ""\n"
+        "#define PARAM_OUTPUT out                                                                                           ""\n"
+        "#define PARAM_INPUT in                                                                                             ""\n"
+        "                                                                                                                   ""\n"
+        // Features definitions
+        "#define MIPMAPS_SUPPORTED 1                                                                                        ""\n"
+        "#define VERTEX_TEXTURE_FETCH_SUPPORTED 1                                                                           ""\n"
+        "#define SAMPLE_TEXTURE texture                                                                                     ""\n"
+        "#define SAMPLE_TEXTURE_LOD textureLod                                                                              ""\n");
+
+    code.prepend(shaderSource);
+}
+
+void OsmAnd::RenderAPI_OpenGL::preprocessVertexShader( QString& code )
+{
+    preprocessShader(code);
+}
+
+void OsmAnd::RenderAPI_OpenGL::preprocessFragmentShader( QString& code )
+{
+    QString common;
+    preprocessShader(common);
+
+    const auto& shaderSource = QString::fromLatin1(
+        // Fragment shader output declaration
+        "#define FRAGMENT_COLOR_OUTPUT out_FragColor                                                                        ""\n"
+        "out vec4 out_FragColor;                                                                                            ""\n");
+
+    code.prepend(shaderSource);
+    code.prepend(common);
+}
+
+void OsmAnd::RenderAPI_OpenGL::setSampler( GLenum texture, const SamplerType& samplerType )
+{
+    GL_CHECK_PRESENT(glBindSampler);
+
+    glBindSampler(texture - GL_TEXTURE0, _textureSamplers[samplerType]);
     GL_CHECK_RESULT;
 }

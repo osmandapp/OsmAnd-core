@@ -1,7 +1,7 @@
 #include "MapRendererConfiguration.h"
 
 OsmAnd::MapRendererConfiguration::MapRendererConfiguration()
-    : texturesFiltering(TextureFiltering::Trilinear)
+    : texturesFilteringQuality(TextureFilteringQuality::Best)
     , textureAtlasesAllowed(false)
     , limitTextureColorDepthBy16bits(false)
     , heightmapPatchesPerSide(24)
