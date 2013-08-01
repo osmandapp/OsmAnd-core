@@ -212,7 +212,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         //   Different supplemental pre-calculated data
         "    v2f_distanceFromTarget = length(v.xz);                                                                         ""\n"
         "                                                                                                                   ""\n"
-        "                                                                                                                   ""\n"
         //   Finally output processed modified vertex
         "    gl_Position = param_vs_mProjectionView * v;                                                                    ""\n"
         "}                                                                                                                  ""\n");

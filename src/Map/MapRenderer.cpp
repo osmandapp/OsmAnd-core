@@ -799,7 +799,7 @@ void OsmAnd::MapRenderer::setDistanceToFog( const float& fogDistance, bool force
 {
     QWriteLocker scopedLocker(&_stateLock);
 
-    const auto clampedValue = qMax(std::numeric_limits<float>::epsilon(), fogDistance);
+    const auto clampedValue = fogDistance;
 
     bool update = forcedUpdate || !qFuzzyCompare(_requestedState.fogDistance, clampedValue);
     if(!update)
