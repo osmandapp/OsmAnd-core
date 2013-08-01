@@ -397,7 +397,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderMapStage()
     GL_CHECK_PRESENT(glUniform2i);
     GL_CHECK_PRESENT(glUniform2fv);
     GL_CHECK_PRESENT(glActiveTexture);
-    GL_CHECK_PRESENT(glBindSampler);
 
     // Set tile patch VAO
     renderAPI->glBindVertexArray_wrapper(_mapStage.tilePatchVAO);

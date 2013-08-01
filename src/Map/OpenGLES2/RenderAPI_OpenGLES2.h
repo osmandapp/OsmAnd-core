@@ -73,6 +73,8 @@ namespace OsmAnd {
         const bool& isSupported_EXT_texture_rg;
         const bool& isSupported_EXT_shader_texture_lod;
 
+        virtual GLenum validateResult();
+
         virtual uint32_t getTileTextureFormat(const std::shared_ptr< IMapTileProvider::Tile >& tile);
         virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const std::shared_ptr< IMapTileProvider::Tile >& forTile);
         virtual void uploadDataToTexture2D(GLenum target, GLint level,
