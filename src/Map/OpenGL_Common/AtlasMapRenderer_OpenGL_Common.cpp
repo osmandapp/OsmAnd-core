@@ -236,9 +236,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
 
     // Compile fragment shader
     const auto& fragmentShader_perTileLayer = QString::fromLatin1(
-        "    if(param_fs_perTileLayer[%layerLinearIdx%].k > 0.0)                                                            ""\n"
         "    {                                                                                                              ""\n"
-        "        vec4 layerColor = SAMPLE_TEXTURE_2D_LOD(                                                                   ""\n"
+        "        lowp vec4 layerColor = SAMPLE_TEXTURE_2D_LOD(                                                              ""\n"
         "            param_fs_perTileLayer[%layerLinearIdx%].sampler,                                                       ""\n"
         "            v2f_texCoordsPerLayer[%layerLinearIdx%], v2f_mipmapLOD);                                               ""\n"
         "                                                                                                                   ""\n"
@@ -260,15 +259,15 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         // Parameters: per-layer data
         "struct LayerInputPerTile                                                                                           ""\n"
         "{                                                                                                                  ""\n"
-        "    float k;                                                                                                       ""\n"
-        "    sampler2D sampler;                                                                                             ""\n"
+        "    lowp float k;                                                                                                  ""\n"
+        "    lowp sampler2D sampler;                                                                                        ""\n"
         "};                                                                                                                 ""\n"
         "uniform LayerInputPerTile param_fs_perTileLayer[%RasterTileLayersCount%];                                          ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
         //   Mix colors of all layers
-        "    vec4 baseColor = SAMPLE_TEXTURE_2D_LOD(                                                                        ""\n"
+        "    lowp vec4 baseColor = SAMPLE_TEXTURE_2D_LOD(                                                                   ""\n"
         "        param_fs_perTileLayer[0].sampler,                                                                          ""\n"
         "        v2f_texCoordsPerLayer[0], v2f_mipmapLOD);                                                                  ""\n"
         "    baseColor.a *= param_fs_perTileLayer[0].k;                                                                     ""\n"
