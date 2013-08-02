@@ -901,7 +901,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::releaseSkyStage()
 bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doInitializeRendering()
 {
     GL_CHECK_PRESENT(glClearColor);
-    GL_CHECK_PRESENT(glClearDepth);
+    GL_CHECK_PRESENT(glClearDepthf);
 
     bool ok;
 
@@ -912,7 +912,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doInitializeRendering()
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     GL_CHECK_RESULT;
 
-    glClearDepth(1.0f);
+    glClearDepthf(1.0f);
     GL_CHECK_RESULT;
 
     initializeSkyStage();
