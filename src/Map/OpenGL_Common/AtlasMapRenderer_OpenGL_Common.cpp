@@ -278,9 +278,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         //   Apply fog (square exponential)
         "    float fogDistanceScaled = param_fs_fogDistance * param_vs_scaleToRetainProjectedSize;                          ""\n"
         "    float fogStartDistance = fogDistanceScaled * (1.0 - param_fs_fogOriginFactor);                                 ""\n"
-        "    float fogLinearFactor = min(max(v2f_distanceFromTarget - fogStartDistance, 0.0) /                              ""\n"
-        "        (fogDistanceScaled - fogStartDistance), 1.0);                                                              ""\n"
-
+        "    float fogLinearFactor = (v2f_distanceFromTarget - fogStartDistance) / (fogDistanceScaled - fogStartDistance);  ""\n"
+        "    fogLinearFactor = clamp(fogLinearFactor, 0.0, 1.0);                                                            ""\n"
         "    float fogFactorBase = fogLinearFactor * param_fs_fogDensity;                                                   ""\n"
         "    lowp float fogFactor = clamp(exp(-fogFactorBase*fogFactorBase), 0.0, 1.0);                                     ""\n"
         "    finalColor = mix(param_fs_fogColor, finalColor, fogFactor);                                                    ""\n"
