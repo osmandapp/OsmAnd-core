@@ -188,23 +188,6 @@ bool OsmAnd::RenderAPI_OpenGLES2::initialize()
     }
 #endif // !OSMAND_TARGET_OS_ios
 
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    GL_CHECK_RESULT;
-
-    glClearDepthf(1.0f);
-    GL_CHECK_RESULT;
-
-    glEnable(GL_DEPTH_TEST);
-    GL_CHECK_RESULT;
-
-    glDepthFunc(GL_LEQUAL);
-    GL_CHECK_RESULT;
-
-    glEnable(GL_BLEND);
-    GL_CHECK_RESULT;
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    GL_CHECK_RESULT;
-
     return true;
 }
 

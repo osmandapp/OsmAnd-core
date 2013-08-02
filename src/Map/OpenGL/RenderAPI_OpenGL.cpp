@@ -152,23 +152,6 @@ bool OsmAnd::RenderAPI_OpenGL::initialize()
     glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     GL_CHECK_RESULT;
 
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    GL_CHECK_RESULT;
-
-    glClearDepth(1.0f);
-    GL_CHECK_RESULT;
-
-    glEnable(GL_DEPTH_TEST);
-    GL_CHECK_RESULT;
-
-    glDepthFunc(GL_LEQUAL);
-    GL_CHECK_RESULT;
-
-    glEnable(GL_BLEND);
-    GL_CHECK_RESULT;
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    GL_CHECK_RESULT;
-
     return true;
 }
 

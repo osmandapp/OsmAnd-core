@@ -901,11 +901,20 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::releaseSkyStage()
 
 bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doInitializeRendering()
 {
+    GL_CHECK_PRESENT(glClearColor);
+    GL_CHECK_PRESENT(glClearDepth);
+
     bool ok;
 
     ok = AtlasMapRenderer::doInitializeRendering();
     if(!ok)
         return false;
+
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    GL_CHECK_RESULT;
+
+    glClearDepth(1.0f);
+    GL_CHECK_RESULT;
 
     initializeSkyStage();
     initializeMapStage();
@@ -916,6 +925,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doInitializeRendering()
 bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doRenderFrame()
 {
     GL_CHECK_PRESENT(glViewport);
+    GL_CHECK_PRESENT(glEnable);
+    GL_CHECK_PRESENT(glDisable);
+    GL_CHECK_PRESENT(glBlendFunc);
+    GL_CHECK_PRESENT(glClear);
 
     // Setup viewport
     glViewport(
@@ -925,8 +938,35 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doRenderFrame()
         currentState.viewport.height());
     GL_CHECK_RESULT;
 
+    // Clear buffers
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    GL_CHECK_RESULT;
+
+    // Turn off blending for sky and map stages
+    glDisable(GL_BLEND);
+    GL_CHECK_RESULT;
+
+    // Turn off depth testing for sky stage
+    glEnable(GL_DEPTH_TEST);
+    GL_CHECK_RESULT;
+    glDepthFunc(GL_LEQUAL);
+    GL_CHECK_RESULT;
+
     renderSkyStage();
+
+    // Turn on depth testing due to heightmaps
+    glEnable(GL_DEPTH_TEST);
+    GL_CHECK_RESULT;
+    glDepthFunc(GL_LEQUAL);
+    GL_CHECK_RESULT;
+
     renderMapStage();
+
+    // Turn on blending since now objects with transparency will be rendered
+    glEnable(GL_BLEND);
+    GL_CHECK_RESULT;
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    GL_CHECK_RESULT;
 
     return true;
 }
