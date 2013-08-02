@@ -115,9 +115,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         "        v2f_texCoordsPerLayer[%layerLinearIndex%]);                                                                ""\n"
         "                                                                                                                   ""\n");
     const auto& vertexShader = QString::fromLatin1(
-        // Constants
-        "const float floatEpsilon = 0.000001;                                                                               ""\n"
-        "                                                                                                                   ""\n"
         // Input data
         "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
         "INPUT vec2 in_vs_vertexTexCoords;                                                                                  ""\n"
@@ -184,7 +181,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         "                                                                                                                   ""\n"
         "#if VERTEX_TEXTURE_FETCH_SUPPORTED                                                                                 ""\n"
         //   If elevation data is active, use it
-        "    if(abs(param_vs_elevationData_k) > floatEpsilon)                                                               ""\n"
+        "    if(abs(param_vs_elevationData_k) > 0.0)                                                                        ""\n"
         "    {                                                                                                              ""\n"
         "        float metersToUnits = mix(param_vs_elevationData_upperMetersPerUnit,                                       ""\n"
         "            param_vs_elevationData_lowerMetersPerUnit, in_vs_vertexTexCoords.t);                                   ""\n"
@@ -239,7 +236,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
 
     // Compile fragment shader
     const auto& fragmentShader_perTileLayer = QString::fromLatin1(
-        "    if(param_fs_perTileLayer[%layerLinearIdx%].k > floatEpsilon)                                                   ""\n"
+        "    if(param_fs_perTileLayer[%layerLinearIdx%].k > 0.0)                                                            ""\n"
         "    {                                                                                                              ""\n"
         "        vec4 layerColor = SAMPLE_TEXTURE_2D_LOD(                                                                   ""\n"
         "            param_fs_perTileLayer[%layerLinearIdx%].sampler,                                                       ""\n"
@@ -248,9 +245,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         "        baseColor = mix(baseColor, layerColor, layerColor.a * param_fs_perTileLayer[%layerLinearIdx%].k);          ""\n"
         "    }                                                                                                              ""\n");
     const auto& fragmentShader = QString::fromLatin1(
-        // Constants
-        "const float floatEpsilon = 0.000001;                                                                               ""\n"
-        "                                                                                                                   ""\n"
         // Input data
         "PARAM_INPUT vec2 v2f_texCoordsPerLayer[%RasterTileLayersCount%];                                                   ""\n"
         "PARAM_INPUT float v2f_distanceFromTarget;                                                                          ""\n"
@@ -734,9 +728,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSkyStage()
 
     // Compile vertex shader
     const QString vertexShader = QString::fromLatin1(
-        // Constants
-        "const float floatEpsilon = 0.000001;                                                                               ""\n"
-        "                                                                                                                   ""\n"
         // Input data
         "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
         "                                                                                                                   ""\n"
@@ -763,9 +754,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSkyStage()
 
     // Compile fragment shader
     const QString fragmentShader = QString::fromLatin1(
-        // Constants
-        "const float floatEpsilon = 0.000001;                                                                               ""\n"
-        "                                                                                                                   ""\n"
         // Input data
         "PARAM_INPUT float v2f_horizonOffsetN;                                                                              ""\n"
         "                                                                                                                   ""\n"
