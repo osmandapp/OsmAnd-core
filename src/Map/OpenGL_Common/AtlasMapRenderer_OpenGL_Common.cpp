@@ -115,49 +115,52 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         "        v2f_texCoordsPerLayer[%layerLinearIndex%]);                                                                ""\n"
         "                                                                                                                   ""\n");
     const auto& vertexShader = QString::fromLatin1(
+        // Constants
+        "const float floatEpsilon = 0.000001;                                                                               ""\n"
+        "                                                                                                                   ""\n"
         // Input data
-        "INPUT mediump vec2 in_vs_vertexPosition;                                                                           ""\n"
-        "INPUT lowp vec2 in_vs_vertexTexCoords;                                                                             ""\n"
+        "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
+        "INPUT vec2 in_vs_vertexTexCoords;                                                                                  ""\n"
         "                                                                                                                   ""\n"
         // Output data to next shader stages
-        "PARAM_OUTPUT lowp vec2 v2f_texCoordsPerLayer[%RasterTileLayersCount%];                                             ""\n"
-        "PARAM_OUTPUT mediump float v2f_distanceFromTarget;                                                                 ""\n"
-        "PARAM_OUTPUT mediump float v2f_mipmapLOD;                                                                          ""\n"
+        "PARAM_OUTPUT vec2 v2f_texCoordsPerLayer[%RasterTileLayersCount%];                                                  ""\n"
+        "PARAM_OUTPUT float v2f_distanceFromTarget;                                                                         ""\n"
+        "PARAM_OUTPUT float v2f_mipmapLOD;                                                                                  ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
-        "uniform lowp mat4 param_vs_mProjectionView;                                                                        ""\n"
-        "uniform lowp vec2 param_vs_targetInTilePosN;                                                                       ""\n"
-        "uniform highp ivec2 param_vs_targetTile;                                                                           ""\n"
-        "uniform mediump float param_vs_distanceFromCameraToTarget;                                                         ""\n"
-        "uniform lowp float param_vs_cameraElevationAngleN;                                                                 ""\n"
-        "uniform mediump vec2 param_vs_groundCameraPosition;                                                                ""\n"
-        "uniform mediump float param_vs_scaleToRetainProjectedSize;                                                         ""\n"
+        "uniform mat4 param_vs_mProjectionView;                                                                             ""\n"
+        "uniform vec2 param_vs_targetInTilePosN;                                                                            ""\n"
+        "uniform ivec2 param_vs_targetTile;                                                                                 ""\n"
+        "uniform float param_vs_distanceFromCameraToTarget;                                                                 ""\n"
+        "uniform float param_vs_cameraElevationAngleN;                                                                      ""\n"
+        "uniform vec2 param_vs_groundCameraPosition;                                                                        ""\n"
+        "uniform float param_vs_scaleToRetainProjectedSize;                                                                 ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-tile data
-        "uniform highp ivec2 param_vs_tile;                                                                                 ""\n"
+        "uniform ivec2 param_vs_tile;                                                                                       ""\n"
         "#if VERTEX_TEXTURE_FETCH_SUPPORTED                                                                                 ""\n"
-        "    uniform lowp float param_vs_elevationData_k;                                                                   ""\n"
-        "    uniform highp sampler2D param_vs_elevationData_sampler;                                                        ""\n"
-        "    uniform highp float param_vs_elevationData_upperMetersPerUnit;                                                 ""\n"
-        "    uniform highp float param_vs_elevationData_lowerMetersPerUnit;                                                 ""\n"
+        "    uniform float param_vs_elevationData_k;                                                                        ""\n"
+        "    uniform sampler2D param_vs_elevationData_sampler;                                                              ""\n"
+        "    uniform float param_vs_elevationData_upperMetersPerUnit;                                                       ""\n"
+        "    uniform float param_vs_elevationData_lowerMetersPerUnit;                                                       ""\n"
         "#endif // VERTEX_TEXTURE_FETCH_SUPPORTED                                                                           ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-layer-in-tile data
         "struct LayerInputPerTile                                                                                           ""\n"
         "{                                                                                                                  ""\n"
-        "    lowp float tileSizeN;                                                                                          ""\n"
-        "    lowp float tilePaddingN;                                                                                       ""\n"
-        "    mediump uint slotsPerSide;                                                                                     ""\n"
-        "    highp uint slotIndex;                                                                                          ""\n"
+        "    float tileSizeN;                                                                                               ""\n"
+        "    float tilePaddingN;                                                                                            ""\n"
+        "    int slotsPerSide;                                                                                              ""\n"
+        "    int slotIndex;                                                                                                 ""\n"
         "};                                                                                                                 ""\n"
         "uniform LayerInputPerTile param_vs_perTileLayer[%TileLayersCount%];                                                ""\n"
         "                                                                                                                   ""\n"
-        "void calculateTextureCoordinates(in LayerInputPerTile perTile, out lowp vec2 outTexCoords)                         ""\n"
+        "void calculateTextureCoordinates(in LayerInputPerTile perTile, out vec2 outTexCoords)                              ""\n"
         "{                                                                                                                  ""\n"
-        "    highp uint rowIndex = perTile.slotIndex / perTile.slotsPerSide;                                                ""\n"
-        "    highp uint colIndex = perTile.slotIndex - rowIndex * perTile.slotsPerSide;                                     ""\n"
+        "    int rowIndex = perTile.slotIndex / perTile.slotsPerSide;                                                       ""\n"
+        "    int colIndex = perTile.slotIndex - rowIndex * perTile.slotsPerSide;                                            ""\n"
         "                                                                                                                   ""\n"
-        "    lowp float texCoordRescale = (perTile.tileSizeN - 2.0 * perTile.tilePaddingN) / perTile.tileSizeN;             ""\n"
+        "    float texCoordRescale = (perTile.tileSizeN - 2.0 * perTile.tilePaddingN) / perTile.tileSizeN;                  ""\n"
         "                                                                                                                   ""\n"
         "    outTexCoords.s = float(colIndex) * perTile.tileSizeN;                                                          ""\n"
         "    outTexCoords.s += perTile.tilePaddingN + (in_vs_vertexTexCoords.s * perTile.tileSizeN) * texCoordRescale;      ""\n"
@@ -168,12 +171,12 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
-        "    mediump vec4 v = vec4(in_vs_vertexPosition.x, 0.0, in_vs_vertexPosition.y, 1.0);                               ""\n"
+        "    vec4 v = vec4(in_vs_vertexPosition.x, 0.0, in_vs_vertexPosition.y, 1.0);                                       ""\n"
         "                                                                                                                   ""\n"
         //   Shift vertex to it's proper position
-        "    mediump float xOffset = float(param_vs_tile.x - param_vs_targetTile.x) - param_vs_targetInTilePosN.x;          ""\n"
+        "    float xOffset = float(param_vs_tile.x - param_vs_targetTile.x) - param_vs_targetInTilePosN.x;                  ""\n"
         "    v.x += xOffset * %TileSize3D%.0;                                                                               ""\n"
-        "    mediump float yOffset = float(param_vs_tile.y - param_vs_targetTile.y) - param_vs_targetInTilePosN.y;          ""\n"
+        "    float yOffset = float(param_vs_tile.y - param_vs_targetTile.y) - param_vs_targetInTilePosN.y;                  ""\n"
         "    v.z += yOffset * %TileSize3D%.0;                                                                               ""\n"
         "                                                                                                                   ""\n"
         //   Process each tile layer texture coordinates (except elevation)
@@ -181,28 +184,28 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         "                                                                                                                   ""\n"
         "#if VERTEX_TEXTURE_FETCH_SUPPORTED                                                                                 ""\n"
         //   If elevation data is active, use it
-        "    if(abs(param_vs_elevationData_k) > 0.0)                                                                        ""\n"
+        "    if(abs(param_vs_elevationData_k) > floatEpsilon)                                                               ""\n"
         "    {                                                                                                              ""\n"
-        "        highp float metersToUnits = mix(param_vs_elevationData_upperMetersPerUnit,                                 ""\n"
+        "        float metersToUnits = mix(param_vs_elevationData_upperMetersPerUnit,                                       ""\n"
         "            param_vs_elevationData_lowerMetersPerUnit, in_vs_vertexTexCoords.t);                                   ""\n"
         "                                                                                                                   ""\n"
         //       Calculate texcoords for elevation data (pixel-is-area)
-        "        lowp vec2 elevationDataTexCoords;                                                                          ""\n"
+        "        vec2 elevationDataTexCoords;                                                                               ""\n"
         "        calculateTextureCoordinates(                                                                               ""\n"
         "            param_vs_perTileLayer[0],                                                                              ""\n"
         "            elevationDataTexCoords);                                                                               ""\n"
         "                                                                                                                   ""\n"
-        "        highp float heightInMeters = SAMPLE_TEXTURE_2D(param_vs_elevationData_sampler, elevationDataTexCoords).r;  ""\n"
+        "        float heightInMeters = texture(param_vs_elevationData_sampler, elevationDataTexCoords).r;                  ""\n"
         "        v.y = heightInMeters / metersToUnits;                                                                      ""\n"
         "        v.y *= param_vs_elevationData_k;                                                                           ""\n"
         "    }                                                                                                              ""\n"
         "#endif // VERTEX_TEXTURE_FETCH_SUPPORTED                                                                           ""\n"
         "                                                                                                                   ""\n"
         //   Calculate mipmap LOD
-        "    mediump vec2 groundVertex = v.xz;                                                                              ""\n"
-        "    mediump vec2 groundCameraToVertex = groundVertex - param_vs_groundCameraPosition;                              ""\n"
-        "    mediump float mipmapK = log(1.0 + 10.0 * log2(1.0 + param_vs_cameraElevationAngleN));                          ""\n"
-        "    mediump float mipmapBaseLevelEndDistance = mipmapK * param_vs_distanceFromCameraToTarget;                      ""\n"
+        "    vec2 groundVertex = v.xz;                                                                                      ""\n"
+        "    vec2 groundCameraToVertex = groundVertex - param_vs_groundCameraPosition;                                      ""\n"
+        "    float mipmapK = log(1.0 + 10.0 * log2(1.0 + param_vs_cameraElevationAngleN));                                  ""\n"
+        "    float mipmapBaseLevelEndDistance = mipmapK * param_vs_distanceFromCameraToTarget;                              ""\n"
         "    v2f_mipmapLOD = 1.0 + (length(groundCameraToVertex) - mipmapBaseLevelEndDistance)                              ""\n"
         "        / (param_vs_scaleToRetainProjectedSize * %TileSize3D%.0);                                                  ""\n"
         "                                                                                                                   ""\n"
@@ -236,39 +239,42 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
 
     // Compile fragment shader
     const auto& fragmentShader_perTileLayer = QString::fromLatin1(
-        "    if(param_fs_perTileLayer[%layerLinearIdx%].k > 0.0)                                                            ""\n"
+        "    if(param_fs_perTileLayer[%layerLinearIdx%].k > floatEpsilon)                                                   ""\n"
         "    {                                                                                                              ""\n"
-        "        lowp vec4 layerColor = SAMPLE_TEXTURE_2D_LOD(                                                              ""\n"
+        "        vec4 layerColor = SAMPLE_TEXTURE_2D_LOD(                                                                   ""\n"
         "            param_fs_perTileLayer[%layerLinearIdx%].sampler,                                                       ""\n"
         "            v2f_texCoordsPerLayer[%layerLinearIdx%], v2f_mipmapLOD);                                               ""\n"
         "                                                                                                                   ""\n"
         "        baseColor = mix(baseColor, layerColor, layerColor.a * param_fs_perTileLayer[%layerLinearIdx%].k);          ""\n"
         "    }                                                                                                              ""\n");
     const auto& fragmentShader = QString::fromLatin1(
+        // Constants
+        "const float floatEpsilon = 0.000001;                                                                               ""\n"
+        "                                                                                                                   ""\n"
         // Input data
-        "PARAM_INPUT lowp vec2 v2f_texCoordsPerLayer[%RasterTileLayersCount%];                                              ""\n"
-        "PARAM_INPUT mediump float v2f_distanceFromTarget;                                                                  ""\n"
-        "PARAM_INPUT mediump float v2f_mipmapLOD;                                                                           ""\n"
+        "PARAM_INPUT vec2 v2f_texCoordsPerLayer[%RasterTileLayersCount%];                                                   ""\n"
+        "PARAM_INPUT float v2f_distanceFromTarget;                                                                          ""\n"
+        "PARAM_INPUT float v2f_mipmapLOD;                                                                                   ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
-        "uniform lowp vec3 param_fs_fogColor;                                                                               ""\n"
-        "uniform mediump float param_fs_fogDistance;                                                                        ""\n"
-        "uniform mediump float param_fs_fogDensity;                                                                         ""\n"
-        "uniform lowp float param_fs_fogOriginFactor;                                                                       ""\n"
-        "uniform mediump float param_vs_scaleToRetainProjectedSize;                                                         ""\n"
+        "uniform vec3 param_fs_fogColor;                                                                                    ""\n"
+        "uniform float param_fs_fogDistance;                                                                                ""\n"
+        "uniform float param_fs_fogDensity;                                                                                 ""\n"
+        "uniform float param_fs_fogOriginFactor;                                                                            ""\n"
+        "uniform float param_vs_scaleToRetainProjectedSize;                                                                 ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-layer data
         "struct LayerInputPerTile                                                                                           ""\n"
         "{                                                                                                                  ""\n"
-        "    lowp float k;                                                                                                  ""\n"
-        "    lowp sampler2D sampler;                                                                                        ""\n"
+        "    float k;                                                                                                       ""\n"
+        "    sampler2D sampler;                                                                                             ""\n"
         "};                                                                                                                 ""\n"
         "uniform LayerInputPerTile param_fs_perTileLayer[%RasterTileLayersCount%];                                          ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
         //   Mix colors of all layers
-        "    lowp vec4 baseColor = SAMPLE_TEXTURE_2D_LOD(                                                                   ""\n"
+        "    vec4 baseColor = SAMPLE_TEXTURE_2D_LOD(                                                                        ""\n"
         "        param_fs_perTileLayer[0].sampler,                                                                          ""\n"
         "        v2f_texCoordsPerLayer[0], v2f_mipmapLOD);                                                                  ""\n"
         "    baseColor.a *= param_fs_perTileLayer[0].k;                                                                     ""\n"
@@ -290,7 +296,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
 #if 0
         //   NOTE: Useful for debugging mipmap levels
         "    {                                                                                                              ""\n"
-        "        lowp vec4 mipmapDebugColor;                                                                                ""\n"
+        "        vec4 mipmapDebugColor;                                                                                     ""\n"
         "        mipmapDebugColor.a = 1.0;                                                                                  ""\n"
         "        float value = v2f_mipmapLOD;                                                                               ""\n"
         "        mipmapDebugColor.r = clamp(value, 0.0, 1.0);                                                               ""\n"
@@ -387,7 +393,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderMapStage()
     GL_CHECK_PRESENT(glUniform2f);
     GL_CHECK_PRESENT(glUniform3f);
     GL_CHECK_PRESENT(glUniform1i);
-    GL_CHECK_PRESENT(glUniform1ui);
     GL_CHECK_PRESENT(glUniform2i);
     GL_CHECK_PRESENT(glUniform2fv);
     GL_CHECK_PRESENT(glActiveTexture);
@@ -531,26 +536,26 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderMapStage()
                 {
                     const auto& tileOnAtlasTexture = static_cast<RenderAPI::TileOnAtlasTextureInGPU*>(gpuResource.get());
 
-                    glUniform1ui(perTile_vs.slotIndex, tileOnAtlasTexture->slotIndex);
+                    glUniform1i(perTile_vs.slotIndex, tileOnAtlasTexture->slotIndex);
                     GL_CHECK_RESULT;
                     glUniform1f(perTile_vs.tileSizeN, tileOnAtlasTexture->atlasTexture->tileSizeN);
                     GL_CHECK_RESULT;
                     glUniform1f(perTile_vs.tilePaddingN, tileOnAtlasTexture->atlasTexture->halfTexelSizeN);
                     GL_CHECK_RESULT;
-                    glUniform1ui(perTile_vs.slotsPerSide, tileOnAtlasTexture->atlasTexture->slotsPerSide);
+                    glUniform1i(perTile_vs.slotsPerSide, tileOnAtlasTexture->atlasTexture->slotsPerSide);
                     GL_CHECK_RESULT;
                 }
                 else
                 {
                     const auto& texture = static_cast<RenderAPI::TextureInGPU*>(gpuResource.get());
 
-                    glUniform1ui(perTile_vs.slotIndex, 0);
+                    glUniform1i(perTile_vs.slotIndex, 0);
                     GL_CHECK_RESULT;
                     glUniform1f(perTile_vs.tileSizeN, 1.0f);
                     GL_CHECK_RESULT;
                     glUniform1f(perTile_vs.tilePaddingN, texture->halfTexelSizeN);
                     GL_CHECK_RESULT;
-                    glUniform1ui(perTile_vs.slotsPerSide, 1);
+                    glUniform1i(perTile_vs.slotsPerSide, 1);
                     GL_CHECK_RESULT;
                 }
             }
@@ -599,24 +604,24 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderMapStage()
             {
                 const auto& tileOnAtlasTexture = static_cast<RenderAPI::TileOnAtlasTextureInGPU*>(gpuResource.get());
 
-                glUniform1ui(perTile_vs.slotIndex, tileOnAtlasTexture->slotIndex);
+                glUniform1i(perTile_vs.slotIndex, tileOnAtlasTexture->slotIndex);
                 GL_CHECK_RESULT;
                 glUniform1f(perTile_vs.tileSizeN, tileOnAtlasTexture->atlasTexture->tileSizeN);
                 GL_CHECK_RESULT;
                 glUniform1f(perTile_vs.tilePaddingN, tileOnAtlasTexture->atlasTexture->tilePaddingN);
                 GL_CHECK_RESULT;
-                glUniform1ui(perTile_vs.slotsPerSide, tileOnAtlasTexture->atlasTexture->slotsPerSide);
+                glUniform1i(perTile_vs.slotsPerSide, tileOnAtlasTexture->atlasTexture->slotsPerSide);
                 GL_CHECK_RESULT;
             }
             else
             {
-                glUniform1ui(perTile_vs.slotIndex, 0);
+                glUniform1i(perTile_vs.slotIndex, 0);
                 GL_CHECK_RESULT;
                 glUniform1f(perTile_vs.tileSizeN, 1.0f);
                 GL_CHECK_RESULT;
                 glUniform1f(perTile_vs.tilePaddingN, 0.0f);
                 GL_CHECK_RESULT;
-                glUniform1ui(perTile_vs.slotsPerSide, 1);
+                glUniform1i(perTile_vs.slotsPerSide, 1);
                 GL_CHECK_RESULT;
             }
         }
@@ -729,19 +734,22 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSkyStage()
 
     // Compile vertex shader
     const QString vertexShader = QString::fromLatin1(
+        // Constants
+        "const float floatEpsilon = 0.000001;                                                                               ""\n"
+        "                                                                                                                   ""\n"
         // Input data
-        "INPUT lowp vec2 in_vs_vertexPosition;                                                                              ""\n"
+        "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
         "                                                                                                                   ""\n"
         // Output data
-        "PARAM_OUTPUT lowp float v2f_horizonOffsetN;                                                                        ""\n"
+        "PARAM_OUTPUT float v2f_horizonOffsetN;                                                                             ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
-        "uniform lowp mat4 param_vs_mProjectionViewModel;                                                                   ""\n"
-        "uniform mediump vec2 param_vs_halfSize;                                                                            ""\n"
+        "uniform mat4 param_vs_mProjectionViewModel;                                                                        ""\n"
+        "uniform vec2 param_vs_halfSize;                                                                                    ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
-        "    mediump vec4 v = vec4(in_vs_vertexPosition.x * param_vs_halfSize.x,                                            ""\n"
+        "    vec4 v = vec4(in_vs_vertexPosition.x * param_vs_halfSize.x,                                                    ""\n"
         "        in_vs_vertexPosition.y * param_vs_halfSize.y, 0.0, 1.0);                                                   ""\n"
         "                                                                                                                   ""\n"
         //   Horizon offset is in range [-1.0 ... +1.0], what is the same as input vertex data
@@ -755,25 +763,29 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSkyStage()
 
     // Compile fragment shader
     const QString fragmentShader = QString::fromLatin1(
+        // Constants
+        "const float floatEpsilon = 0.000001;                                                                               ""\n"
+        "                                                                                                                   ""\n"
         // Input data
-        "PARAM_INPUT lowp float v2f_horizonOffsetN;                                                                         ""\n"
+        "PARAM_INPUT float v2f_horizonOffsetN;                                                                              ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
-        "uniform lowp vec3 param_fs_skyColor;                                                                               ""\n"
-        "uniform lowp vec3 param_fs_fogColor;                                                                               ""\n"
-        "uniform mediump float param_fs_fogDensity;                                                                         ""\n"
-        "uniform lowp float param_fs_fogHeightOriginFactor;                                                                 ""\n"
+        "uniform vec3 param_fs_skyColor;                                                                                    ""\n"
+        "uniform vec3 param_fs_fogColor;                                                                                    ""\n"
+        "uniform float param_fs_fogDensity;                                                                                 ""\n"
+        "uniform float param_fs_fogHeightOriginFactor;                                                                      ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
-        "    lowp float fogStartHeight = 1.0 - param_fs_fogHeightOriginFactor;                                              ""\n"
-        "    lowp float fragmentHeight = 1.0 - v2f_horizonOffsetN;                                                          ""\n"
+        "    float fogHeight = 1.0;                                                                                         ""\n"
+        "    float fogStartHeight = fogHeight * (1.0 - param_fs_fogHeightOriginFactor);                                     ""\n"
+        "    float fragmentHeight = 1.0 - v2f_horizonOffsetN;                                                               ""\n"
         //   Fog linear is factor in range [0.0 ... 1.0]
-        "    lowp float fogLinearFactor = min(max(fragmentHeight - fogStartHeight, 0.0) /                                   ""\n"
-        "        (1.0 - fogStartHeight), 1.0);                                                                              ""\n"
-        "    mediump float fogFactorBase = fogLinearFactor * param_fs_fogDensity;                                           ""\n"
-        "    mediump float fogFactor = clamp(exp(-fogFactorBase*fogFactorBase), 0.0, 1.0);                                  ""\n"
-        "    lowp vec3 mixedColor = mix(param_fs_skyColor, param_fs_fogColor, 1.0 - fogFactor);                             ""\n"
+        "    float fogLinearFactor = min(max(fragmentHeight - fogStartHeight, 0.0) /                                        ""\n"
+        "        (fogHeight - fogStartHeight), 1.0);                                                                        ""\n"
+        "    float fogFactorBase = fogLinearFactor * param_fs_fogDensity;                                                   ""\n"
+        "    float fogFactor = clamp(exp(-fogFactorBase*fogFactorBase), 0.0, 1.0);                                          ""\n"
+        "    vec3 mixedColor = mix(param_fs_skyColor, param_fs_fogColor, 1.0 - fogFactor);                                  ""\n"
         "                                                                                                                   ""\n"
         "    FRAGMENT_COLOR_OUTPUT.rgba = vec4(mixedColor, 1.0);                                                            ""\n"
         "}                                                                                                                  ""\n");
@@ -810,7 +822,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSkyStage()
     GL_CHECK_PRESENT(glUniformMatrix4fv);
     GL_CHECK_PRESENT(glUniform1f);
     GL_CHECK_PRESENT(glUniform2f);
-    GL_CHECK_PRESENT(glUniform3fv);
+    GL_CHECK_PRESENT(glUniform3f);
     GL_CHECK_PRESENT(glDrawElements);
 
     // Set tile patch VAO
@@ -833,9 +845,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSkyStage()
     GL_CHECK_RESULT;
 
     // Set fog and sky parameters
-    glUniform3fv(_skyStage.fs.param.skyColor, 1, currentState.skyColor);
+    glUniform3f(_skyStage.fs.param.skyColor, currentState.skyColor[0], currentState.skyColor[1], currentState.skyColor[2]);
     GL_CHECK_RESULT;
-    glUniform3fv(_skyStage.fs.param.fogColor, 1, currentState.fogColor);
+    glUniform3f(_skyStage.fs.param.fogColor, currentState.fogColor[0], currentState.fogColor[1], currentState.fogColor[2]);
     GL_CHECK_RESULT;
     glUniform1f(_skyStage.fs.param.fogDensity, currentState.fogDensity);
     GL_CHECK_RESULT;
