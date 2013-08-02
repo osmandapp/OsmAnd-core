@@ -241,7 +241,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         "            param_fs_perTileLayer[%layerLinearIdx%].sampler,                                                       ""\n"
         "            v2f_texCoordsPerLayer[%layerLinearIdx%], v2f_mipmapLOD);                                               ""\n"
         "                                                                                                                   ""\n"
-        "        baseColor = mix(baseColor, layerColor, layerColor.a * param_fs_perTileLayer[%layerLinearIdx%].k);          ""\n"
+        "        finalColor = mix(finalColor, layerColor, layerColor.a * param_fs_perTileLayer[%layerLinearIdx%].k);        ""\n"
         "    }                                                                                                              ""\n");
     const auto& fragmentShader = QString::fromLatin1(
         // Input data
@@ -250,7 +250,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         "PARAM_INPUT float v2f_mipmapLOD;                                                                                   ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
-        "uniform vec3 param_fs_fogColor;                                                                                    ""\n"
+        "uniform lowp vec4 param_fs_fogColor;                                                                               ""\n"
         "uniform float param_fs_fogDistance;                                                                                ""\n"
         "uniform float param_fs_fogDensity;                                                                                 ""\n"
         "uniform float param_fs_fogOriginFactor;                                                                            ""\n"
@@ -266,26 +266,25 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
+        "    lowp vec4 finalColor;                                                                                          ""\n"
+        "                                                                                                                   ""\n"
         //   Mix colors of all layers
-        "    lowp vec4 baseColor = SAMPLE_TEXTURE_2D_LOD(                                                                   ""\n"
+        "    finalColor = SAMPLE_TEXTURE_2D_LOD(                                                                            ""\n"
         "        param_fs_perTileLayer[0].sampler,                                                                          ""\n"
         "        v2f_texCoordsPerLayer[0], v2f_mipmapLOD);                                                                  ""\n"
-        "    baseColor.a *= param_fs_perTileLayer[0].k;                                                                     ""\n"
+        "    finalColor.a *= param_fs_perTileLayer[0].k;                                                                    ""\n"
         "%UnrolledPerLayerProcessingCode%                                                                                   ""\n"
-        "    FRAGMENT_COLOR_OUTPUT = baseColor;                                                                             ""\n"
         "                                                                                                                   ""\n"
         //   Apply fog (square exponential)
-#ifdef FOG_NOT_DISABLED
         "    float fogDistanceScaled = param_fs_fogDistance * param_vs_scaleToRetainProjectedSize;                          ""\n"
         "    float fogStartDistance = fogDistanceScaled * (1.0 - param_fs_fogOriginFactor);                                 ""\n"
         "    float fogLinearFactor = min(max(v2f_distanceFromTarget - fogStartDistance, 0.0) /                              ""\n"
         "        (fogDistanceScaled - fogStartDistance), 1.0);                                                              ""\n"
 
         "    float fogFactorBase = fogLinearFactor * param_fs_fogDensity;                                                   ""\n"
-        "    float fogFactor = clamp(exp(-fogFactorBase*fogFactorBase), 0.0, 1.0);                                          ""\n"
-        "    FRAGMENT_COLOR_OUTPUT = mix(FRAGMENT_COLOR_OUTPUT, vec4(param_fs_fogColor, 1.0), 1.0 - fogFactor);             ""\n"
+        "    lowp float fogFactor = clamp(exp(-fogFactorBase*fogFactorBase), 0.0, 1.0);                                     ""\n"
+        "    finalColor = mix(param_fs_fogColor, finalColor, fogFactor);                                                    ""\n"
         "                                                                                                                   ""\n"
-#endif
 #if 0
         //   NOTE: Useful for debugging mipmap levels
         "    {                                                                                                              ""\n"
@@ -297,9 +296,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         "        mipmapDebugColor.g = clamp(value, 0.0, 1.0);                                                               ""\n"
         "        value -= 1.0;                                                                                              ""\n"
         "        mipmapDebugColor.b = clamp(value, 0.0, 1.0);                                                               ""\n"
-        "        FRAGMENT_COLOR_OUTPUT = mix(FRAGMENT_COLOR_OUTPUT, mipmapDebugColor, 0.5);                                 ""\n"
+        "        finalColor = mix(finalColor, mipmapDebugColor, 0.5);                                                       ""\n"
         "    }                                                                                                              ""\n"
 #endif
+        "    FRAGMENT_COLOR_OUTPUT = finalColor;                                                                            ""\n"
         "}                                                                                                                  ""\n");
     auto preprocessedFragmentShader = fragmentShader;
     QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
@@ -357,12 +357,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         renderAPI->findVariableLocation(_mapStage.program, layerStruct.slotsPerSide, layerStructName + ".slotsPerSide", GLShaderVariableType::Uniform);
         renderAPI->findVariableLocation(_mapStage.program, layerStruct.slotIndex, layerStructName + ".slotIndex", GLShaderVariableType::Uniform);
     }
-#ifdef FOG_NOT_DISABLED
     renderAPI->findVariableLocation(_mapStage.program, _mapStage.fs.param.fogColor, "param_fs_fogColor", GLShaderVariableType::Uniform);
     renderAPI->findVariableLocation(_mapStage.program, _mapStage.fs.param.fogDistance, "param_fs_fogDistance", GLShaderVariableType::Uniform);
     renderAPI->findVariableLocation(_mapStage.program, _mapStage.fs.param.fogDensity, "param_fs_fogDensity", GLShaderVariableType::Uniform);
     renderAPI->findVariableLocation(_mapStage.program, _mapStage.fs.param.fogOriginFactor, "param_fs_fogOriginFactor", GLShaderVariableType::Uniform);
-#endif
     for(int layerId = MapTileLayerId::RasterMap, linearIdx = 0; layerId < MapTileLayerIdsCount; layerId++, linearIdx++)
     {
         auto layerStructName =
@@ -385,6 +383,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderMapStage()
     GL_CHECK_PRESENT(glUniform1f);
     GL_CHECK_PRESENT(glUniform2f);
     GL_CHECK_PRESENT(glUniform3f);
+    GL_CHECK_PRESENT(glUniform4f);
     GL_CHECK_PRESENT(glUniform1i);
     GL_CHECK_PRESENT(glUniform2i);
     GL_CHECK_PRESENT(glUniform2fv);
@@ -427,9 +426,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderMapStage()
     glUniform1f(_mapStage.vs.param.scaleToRetainProjectedSize, _scaleToRetainProjectedSize);
     GL_CHECK_RESULT;
 
-#ifdef FOG_NOT_DISABLED
     // Set fog parameters
-    glUniform3fv(_mapStage.fs.param.fogColor, 1, currentState.fogColor);
+    glUniform4f(_mapStage.fs.param.fogColor, currentState.fogColor[0], currentState.fogColor[1], currentState.fogColor[2], 1.0f);
     GL_CHECK_RESULT;
     glUniform1f(_mapStage.fs.param.fogDistance, currentState.fogDistance);
     GL_CHECK_RESULT;
@@ -437,7 +435,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderMapStage()
     GL_CHECK_RESULT;
     glUniform1f(_mapStage.fs.param.fogOriginFactor, currentState.fogOriginFactor);
     GL_CHECK_RESULT;
-#endif
 
     // Configure samplers
     if(renderAPI->isSupported_vertexShaderTextureLookup)
