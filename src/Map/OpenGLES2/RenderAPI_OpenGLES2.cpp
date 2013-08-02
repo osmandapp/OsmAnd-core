@@ -519,11 +519,6 @@ void OsmAnd::RenderAPI_OpenGLES2::preprocessShader( QString& code )
         "#define PARAM_OUTPUT varying                                                                                       ""\n"
         "#define PARAM_INPUT varying                                                                                        ""\n"
         "                                                                                                                   ""\n"
-        // Set default precisions
-        "precision highp float;                                                                                             ""\n"
-        "precision highp int;                                                                                               ""\n"
-        "precision highp sampler2D;                                                                                         ""\n"
-        "                                                                                                                   ""\n"
         // Features definitions
         "#define VERTEX_TEXTURE_FETCH_SUPPORTED 0                                                                           ""\n"
         "#define SAMPLE_TEXTURE_2D texture2D                                                                                ""\n"
