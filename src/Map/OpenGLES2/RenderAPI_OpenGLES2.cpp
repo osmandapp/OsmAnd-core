@@ -190,6 +190,9 @@ bool OsmAnd::RenderAPI_OpenGLES2::initialize()
     }
 #endif // !OSMAND_TARGET_OS_ios
 
+    glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
+    GL_CHECK_RESULT;
+
     return true;
 }
 

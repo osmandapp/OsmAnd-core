@@ -62,12 +62,7 @@ bool OsmAnd::RenderAPI_OpenGL::initialize()
     GL_CHECK_PRESENT(glGenSamplers);
     GL_CHECK_PRESENT(glSamplerParameteri);
     GL_CHECK_PRESENT(glSamplerParameterf);
-    GL_CHECK_PRESENT(glShadeModel);
     GL_CHECK_PRESENT(glHint);
-    GL_CHECK_PRESENT(glEnable);
-    GL_CHECK_PRESENT(glClearColor);
-    GL_CHECK_PRESENT(glClearDepth);
-    GL_CHECK_PRESENT(glDepthFunc);
     
     const auto glVersionString = glGetString(GL_VERSION);
     GL_CHECK_RESULT;
@@ -104,6 +99,9 @@ bool OsmAnd::RenderAPI_OpenGL::initialize()
     glGetIntegerv(GL_MAX_UNIFORM_LOCATIONS, &maxUniformsPerProgram);
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal parameter variables per program %d\n", maxUniformsPerProgram);
+
+    glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
+    GL_CHECK_RESULT;
 
     // Allocate samplers
     glGenSamplers(SamplerTypesCount, _textureSamplers.data());
