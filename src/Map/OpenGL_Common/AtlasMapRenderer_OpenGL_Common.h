@@ -134,12 +134,6 @@ namespace OsmAnd {
 
                 // Parameters
                 struct {
-                    // Common data
-                    GLint fogColor;
-                    GLint fogDistanceScale;
-                    GLint fogOriginFactorInvMinus1;
-                    GLint fogDensity;
-
                     // Per-tile-per-layer data
                     struct
                     {
@@ -183,9 +177,6 @@ namespace OsmAnd {
                 struct {
                     // Common data
                     GLint skyColor;
-                    GLint fogColor;
-                    GLint fogDensity;
-                    GLint fogHeightOriginFactor;
                 } param;
             } fs;
         } _skyStage;

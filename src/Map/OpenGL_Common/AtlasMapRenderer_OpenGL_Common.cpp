@@ -121,7 +121,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         "                                                                                                                   ""\n"
         // Output data to next shader stages
         "PARAM_OUTPUT vec2 v2f_texCoordsPerLayer[%RasterTileLayersCount%];                                                  ""\n"
-        "PARAM_OUTPUT float v2f_distanceFromTarget;                                                                         ""\n"
         "PARAM_OUTPUT float v2f_mipmapLOD;                                                                                  ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
@@ -206,9 +205,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         "    v2f_mipmapLOD = 1.0 + (length(groundCameraToVertex) - mipmapBaseLevelEndDistance)                              ""\n"
         "        / (param_vs_scaleToRetainProjectedSize * %TileSize3D%.0);                                                  ""\n"
         "                                                                                                                   ""\n"
-        //   Different supplemental pre-calculated data
-        "    v2f_distanceFromTarget = length(v.xz);                                                                         ""\n"
-        "                                                                                                                   ""\n"
         //   Finally output processed modified vertex
         "    gl_Position = param_vs_mProjectionView * v;                                                                    ""\n"
         "}                                                                                                                  ""\n");
@@ -248,14 +244,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
     const auto& fragmentShader = QString::fromLatin1(
         // Input data
         "PARAM_INPUT vec2 v2f_texCoordsPerLayer[%RasterTileLayersCount%];                                                   ""\n"
-        "PARAM_INPUT float v2f_distanceFromTarget;                                                                          ""\n"
         "PARAM_INPUT float v2f_mipmapLOD;                                                                                   ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: common data
-        "uniform lowp vec4 param_fs_fogColor;                                                                               ""\n"
-        "uniform float param_fs_fogDistanceScale;                                                                           ""\n"
-        "uniform float param_fs_fogOriginFactorInvMinus1;                                                                   ""\n"
-        "uniform float param_fs_fogDensity;                                                                                 ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-layer data
         "struct LayerInputPerTile                                                                                           ""\n"
@@ -276,15 +265,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         "    finalColor.a *= param_fs_perTileLayer[0].k;                                                                    ""\n"
         "%UnrolledPerLayerProcessingCode%                                                                                   ""\n"
         "                                                                                                                   ""\n"
-        //   Apply fog (square exponential)
-        "    {                                                                                                              ""\n"
-        "        float fogLinearFactor = (v2f_distanceFromTarget * param_fs_fogDistanceScale)                               ""\n"
-        "             - param_fs_fogOriginFactorInvMinus1;                                                                  ""\n"
-        "        fogLinearFactor = clamp(fogLinearFactor, 0.0, 1.0);                                                        ""\n"
-        "        float fogFactorBase = fogLinearFactor * param_fs_fogDensity;                                               ""\n"
-        "        lowp float fogFactor = clamp(exp(-fogFactorBase*fogFactorBase), 0.0, 1.0);                                 ""\n"
-        "        finalColor = mix(param_fs_fogColor, finalColor, fogFactor);                                                ""\n"
-        "    }                                                                                                              ""\n"
 #if 0
         //   NOTE: Useful for debugging mipmap levels
         "    {                                                                                                              ""\n"
@@ -358,10 +338,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         renderAPI->findVariableLocation(_mapStage.program, layerStruct.slotsPerSide, layerStructName + ".slotsPerSide", GLShaderVariableType::Uniform);
         renderAPI->findVariableLocation(_mapStage.program, layerStruct.slotIndex, layerStructName + ".slotIndex", GLShaderVariableType::Uniform);
     }
-    renderAPI->findVariableLocation(_mapStage.program, _mapStage.fs.param.fogColor, "param_fs_fogColor", GLShaderVariableType::Uniform);
-    renderAPI->findVariableLocation(_mapStage.program, _mapStage.fs.param.fogDistanceScale, "param_fs_fogDistanceScale", GLShaderVariableType::Uniform);
-    renderAPI->findVariableLocation(_mapStage.program, _mapStage.fs.param.fogDensity, "param_fs_fogDensity", GLShaderVariableType::Uniform);
-    renderAPI->findVariableLocation(_mapStage.program, _mapStage.fs.param.fogOriginFactorInvMinus1, "param_fs_fogOriginFactorInvMinus1", GLShaderVariableType::Uniform);
     for(int layerId = MapTileLayerId::RasterMap, linearIdx = 0; layerId < MapTileLayerIdsCount; layerId++, linearIdx++)
     {
         auto layerStructName =
@@ -425,16 +401,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderMapStage()
 
     // Set scale to retain projected size
     glUniform1f(_mapStage.vs.param.scaleToRetainProjectedSize, _scaleToRetainProjectedSize);
-    GL_CHECK_RESULT;
-
-    // Set fog parameters
-    glUniform4f(_mapStage.fs.param.fogColor, currentState.fogColor[0], currentState.fogColor[1], currentState.fogColor[2], 1.0f);
-    GL_CHECK_RESULT;
-    glUniform1f(_mapStage.fs.param.fogDistanceScale, 1.0f / (currentState.fogDistance * _scaleToRetainProjectedSize * currentState.fogOriginFactor));
-    GL_CHECK_RESULT;
-    glUniform1f(_mapStage.fs.param.fogDensity, currentState.fogDensity);
-    GL_CHECK_RESULT;
-    glUniform1f(_mapStage.fs.param.fogOriginFactorInvMinus1, (1.0f / currentState.fogOriginFactor) - 1.0f);
     GL_CHECK_RESULT;
 
     // Configure samplers
@@ -758,24 +724,11 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSkyStage()
         "PARAM_INPUT float v2f_horizonOffsetN;                                                                              ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
-        "uniform vec3 param_fs_skyColor;                                                                                    ""\n"
-        "uniform vec3 param_fs_fogColor;                                                                                    ""\n"
-        "uniform float param_fs_fogDensity;                                                                                 ""\n"
-        "uniform float param_fs_fogHeightOriginFactor;                                                                      ""\n"
+        "uniform lowp vec4 param_fs_skyColor;                                                                               ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
-        "    float fogHeight = 1.0;                                                                                         ""\n"
-        "    float fogStartHeight = fogHeight * (1.0 - param_fs_fogHeightOriginFactor);                                     ""\n"
-        "    float fragmentHeight = 1.0 - v2f_horizonOffsetN;                                                               ""\n"
-        //   Fog linear is factor in range [0.0 ... 1.0]
-        "    float fogLinearFactor = min(max(fragmentHeight - fogStartHeight, 0.0) /                                        ""\n"
-        "        (fogHeight - fogStartHeight), 1.0);                                                                        ""\n"
-        "    float fogFactorBase = fogLinearFactor * param_fs_fogDensity;                                                   ""\n"
-        "    float fogFactor = clamp(exp(-fogFactorBase*fogFactorBase), 0.0, 1.0);                                          ""\n"
-        "    vec3 mixedColor = mix(param_fs_skyColor, param_fs_fogColor, 1.0 - fogFactor);                                  ""\n"
-        "                                                                                                                   ""\n"
-        "    FRAGMENT_COLOR_OUTPUT.rgba = vec4(mixedColor, 1.0);                                                            ""\n"
+        "    FRAGMENT_COLOR_OUTPUT = param_fs_skyColor;                                                                     ""\n"
         "}                                                                                                                  ""\n");
     QString preprocessedFragmentShader = fragmentShader;
     QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
@@ -796,10 +749,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSkyStage()
     renderAPI->findVariableLocation(_skyStage.program, _skyStage.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
     renderAPI->findVariableLocation(_skyStage.program, _skyStage.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GLShaderVariableType::Uniform);
     renderAPI->findVariableLocation(_skyStage.program, _skyStage.vs.param.halfSize, "param_vs_halfSize", GLShaderVariableType::Uniform);
-    renderAPI->findVariableLocation(_skyStage.program, _skyStage.fs.param.fogColor, "param_fs_fogColor", GLShaderVariableType::Uniform);
     renderAPI->findVariableLocation(_skyStage.program, _skyStage.fs.param.skyColor, "param_fs_skyColor", GLShaderVariableType::Uniform);
-    renderAPI->findVariableLocation(_skyStage.program, _skyStage.fs.param.fogDensity, "param_fs_fogDensity", GLShaderVariableType::Uniform);
-    renderAPI->findVariableLocation(_skyStage.program, _skyStage.fs.param.fogHeightOriginFactor, "param_fs_fogHeightOriginFactor", GLShaderVariableType::Uniform);
     renderAPI->clearVariablesLookup();
 }
 
@@ -833,14 +783,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSkyStage()
     glUniform2f(_skyStage.vs.param.halfSize, _skyplaneHalfSize.x, _skyplaneHalfSize.y);
     GL_CHECK_RESULT;
 
-    // Set fog and sky parameters
-    glUniform3f(_skyStage.fs.param.skyColor, currentState.skyColor[0], currentState.skyColor[1], currentState.skyColor[2]);
-    GL_CHECK_RESULT;
-    glUniform3f(_skyStage.fs.param.fogColor, currentState.fogColor[0], currentState.fogColor[1], currentState.fogColor[2]);
-    GL_CHECK_RESULT;
-    glUniform1f(_skyStage.fs.param.fogDensity, currentState.fogDensity);
-    GL_CHECK_RESULT;
-    glUniform1f(_skyStage.fs.param.fogHeightOriginFactor, currentState.fogHeightOriginFactor);
+    // Set sky parameters
+    glUniform4f(_skyStage.fs.param.skyColor, currentState.skyColor[0], currentState.skyColor[1], currentState.skyColor[2], 1.0f);
     GL_CHECK_RESULT;
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
@@ -968,6 +912,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doRenderFrame()
     GL_CHECK_RESULT;
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     GL_CHECK_RESULT;
+
+    //TODO: render special fog object some day
 
     return true;
 }
