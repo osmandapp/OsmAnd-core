@@ -89,6 +89,8 @@ namespace OsmAnd {
 
         virtual void preprocessVertexShader(QString& code);
         virtual void preprocessFragmentShader(QString& code);
+        virtual void optimizeVertexShader(QString& code);
+        virtual void optimizeFragmentShader(QString& code);
 
         virtual void setSampler(GLenum texture, const SamplerType& samplerType);
     };

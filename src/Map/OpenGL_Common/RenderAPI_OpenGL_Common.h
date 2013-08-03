@@ -127,6 +127,8 @@ namespace OsmAnd {
 
         virtual void preprocessVertexShader(QString& code) = 0;
         virtual void preprocessFragmentShader(QString& code) = 0;
+        virtual void optimizeVertexShader(QString& code) = 0;
+        virtual void optimizeFragmentShader(QString& code) = 0;
 
         enum SamplerType : int32_t
         {

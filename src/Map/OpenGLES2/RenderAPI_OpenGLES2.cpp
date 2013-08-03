@@ -7,6 +7,8 @@
 
 #include <SkBitmap.h>
 
+#include <GLSLOptimizer.h>
+
 #include "IMapBitmapTileProvider.h"
 #include "Logging.h"
 
@@ -586,4 +588,36 @@ void OsmAnd::RenderAPI_OpenGLES2::setSampler( GLenum texture, const SamplerType&
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         GL_CHECK_RESULT;
     }
+}
+
+void OsmAnd::RenderAPI_OpenGLES2::optimizeVertexShader( QString& code )
+{
+    auto context = glslopt_initialize(true);
+
+    auto optimizedShader = glslopt_optimize(context, kGlslOptShaderVertex, qPrintable(code), 0);
+    if(!glslopt_get_status(optimizedShader))
+    {
+        LogPrintf(LogSeverityLevel::Error, "%s", glslopt_get_log(optimizedShader));
+        assert(false);
+    }
+    code = QString::fromLocal8Bit(glslopt_get_output(optimizedShader));
+    glslopt_shader_delete(optimizedShader);
+
+    glslopt_cleanup(context);
+}
+
+void OsmAnd::RenderAPI_OpenGLES2::optimizeFragmentShader( QString& code )
+{
+    auto context = glslopt_initialize(true);
+
+    auto optimizedShader = glslopt_optimize(context, kGlslOptShaderFragment, qPrintable(code), 0);
+    if(!glslopt_get_status(optimizedShader))
+    {
+        LogPrintf(LogSeverityLevel::Error, "%s", glslopt_get_log(optimizedShader));
+        assert(false);
+    }
+    code = QString::fromLocal8Bit(glslopt_get_output(optimizedShader));
+    glslopt_shader_delete(optimizedShader);
+
+    glslopt_cleanup(context);
 }

@@ -22,6 +22,9 @@ if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAK
 	set(target_specific_public_includes ${target_specific_public_includes}
 		"${OSMAND_ROOT}/core/externals/glm/upstream.patched"
 	)
+	set(target_specific_public_libraries ${target_specific_public_libraries}
+		glsl_optimizer
+	)
 	set(target_specific_sources ${target_specific_sources}
 		${headers_opengl_common}
 		${sources_opengl_common}

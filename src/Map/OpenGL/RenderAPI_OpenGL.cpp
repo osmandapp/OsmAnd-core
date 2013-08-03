@@ -338,3 +338,13 @@ void OsmAnd::RenderAPI_OpenGL::setSampler( GLenum texture, const SamplerType& sa
     glBindSampler(texture - GL_TEXTURE0, _textureSamplers[samplerType]);
     GL_CHECK_RESULT;
 }
+
+void OsmAnd::RenderAPI_OpenGL::optimizeVertexShader( QString& code )
+{
+    // On Desktop, we do nothing
+}
+
+void OsmAnd::RenderAPI_OpenGL::optimizeFragmentShader( QString& code )
+{
+    // On Desktop, we do nothing
+}
