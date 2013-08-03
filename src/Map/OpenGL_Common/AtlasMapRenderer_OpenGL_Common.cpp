@@ -453,8 +453,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderMapStage()
     {
     case MapRendererConfiguration::TextureFilteringQuality::Good:
         bitmapTileSamplerType = RenderAPI_OpenGL_Common::SamplerType::BitmapTile_BilinearMipmap;
+        break;
     case MapRendererConfiguration::TextureFilteringQuality::Best:
         bitmapTileSamplerType = RenderAPI_OpenGL_Common::SamplerType::BitmapTile_TrilinearMipmap;
+        break;
     }
     for(int layerId = MapTileLayerId::RasterMap; layerId < MapTileLayerIdsCount; layerId++)
     {
