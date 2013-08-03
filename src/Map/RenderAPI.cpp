@@ -5,6 +5,8 @@
 #include "Logging.h"
 
 OsmAnd::RenderAPI::RenderAPI()
+    : _isSupported_8bitPaletteRGBA8(false)
+    , isSupported_8bitPaletteRGBA8(_isSupported_8bitPaletteRGBA8)
 {
 }
 

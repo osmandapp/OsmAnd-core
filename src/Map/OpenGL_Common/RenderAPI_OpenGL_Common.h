@@ -28,6 +28,10 @@
 
 #include <QMap>
 #include <QMultiMap>
+#include <QList>
+#include <QStringList>
+#include <QString>
+#include <QVector>
 
 #if defined(WIN32)
 #   define WIN32_LEAN_AND_MEAN
@@ -93,9 +97,11 @@ namespace OsmAnd {
     protected:
         GLint _maxTextureSize;
         QMap< GLuint, QMultiMap< GLShaderVariableType, GLint > > _programVariables;
+        QStringList _extensions;
+        QVector<GLint> _compressedFormats;
 
         bool _isSupported_vertexShaderTextureLookup;
-
+        
         virtual bool releaseResourceInGPU(const ResourceInGPU::Type& type, const RefInGPU& refInGPU);
     public:
         RenderAPI_OpenGL_Common();
@@ -106,9 +112,12 @@ namespace OsmAnd {
             MipmapLodLevelsMax = 4,
         };
 
+        const QStringList& extensions;
+        const QVector<GLint>& compressedFormats;
+
         const GLint& maxTextureSize;
         const bool& isSupported_vertexShaderTextureLookup;
-
+        
         virtual GLenum validateResult() = 0;
         virtual GLuint compileShader(GLenum shaderType, const char* source);
         virtual GLuint linkProgram(GLuint shadersCount, GLuint *shaders);

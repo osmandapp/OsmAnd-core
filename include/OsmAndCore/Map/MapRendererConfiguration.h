@@ -45,9 +45,10 @@ namespace OsmAnd {
         };
 
         TextureFilteringQuality texturesFilteringQuality;
-        bool textureAtlasesAllowed;
+        bool altasTexturesAllowed;
         bool limitTextureColorDepthBy16bits;
         uint32_t heightmapPatchesPerSide;
+        bool paletteTexturesAllowed;
     };
 
 }

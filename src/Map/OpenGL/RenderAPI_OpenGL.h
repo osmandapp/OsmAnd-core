@@ -26,6 +26,8 @@
 #include <memory>
 #include <array>
 
+#include <QString>
+
 #include <glm/glm.hpp>
 
 #include <OsmAndCore.h>

@@ -66,6 +66,7 @@ namespace OsmAnd {
             AtlasTexturesUsage = 1 << 1,
             ElevationDataResolution = 1 << 2,
             TexturesFilteringMode = 1 << 3,
+            PaletteTexturesUsage = 1 << 4,
         };
         void invalidateCurrentConfiguration(const uint32_t& changesMask);
         virtual void validateConfigurationChange(const ConfigurationChange& change) = 0;

@@ -26,6 +26,8 @@
 #include <memory>
 #include <array>
 
+#include <QString>
+
 #include <glm/glm.hpp>
 
 #include <OsmAndCore.h>
@@ -42,8 +44,6 @@ namespace OsmAnd {
         static P_glTexStorage2DEXT_PROC glTexStorage2DEXT;
 #endif // !OSMAND_TARGET_OS_ios
     private:
-        QList<QString> _glesExtensions;
-
         bool _isSupported_EXT_unpack_subimage;
         bool _isSupported_EXT_texture_storage;
         bool _isSupported_APPLE_texture_max_level;
@@ -61,8 +61,6 @@ namespace OsmAnd {
 
         virtual bool initialize();
         virtual bool release();
-
-        const QList<QString>& glesExtensions;
 
         const bool& isSupported_EXT_unpack_subimage;
         const bool& isSupported_EXT_texture_storage;

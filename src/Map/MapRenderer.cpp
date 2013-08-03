@@ -63,13 +63,15 @@ void OsmAnd::MapRenderer::setConfiguration( const MapRendererConfiguration& conf
     QWriteLocker scopedLocker(&_configurationLock);
 
     const bool colorDepthForcingChanged = (_requestedConfiguration.limitTextureColorDepthBy16bits != configuration_.limitTextureColorDepthBy16bits);
-    const bool atlasTexturesUsageChanged = (_requestedConfiguration.textureAtlasesAllowed != configuration_.textureAtlasesAllowed);
+    const bool atlasTexturesUsageChanged = (_requestedConfiguration.altasTexturesAllowed != configuration_.altasTexturesAllowed);
     const bool elevationDataResolutionChanged = (_requestedConfiguration.heightmapPatchesPerSide != configuration_.heightmapPatchesPerSide);
     const bool texturesFilteringChanged = (_requestedConfiguration.texturesFilteringQuality != configuration_.texturesFilteringQuality);
+    const bool paletteTexturesUsageChanged = (_requestedConfiguration.paletteTexturesAllowed != configuration_.paletteTexturesAllowed);
 
     bool invalidateRasterTextures = false;
     invalidateRasterTextures = invalidateRasterTextures || colorDepthForcingChanged;
     invalidateRasterTextures = invalidateRasterTextures || atlasTexturesUsageChanged;
+    invalidateRasterTextures = invalidateRasterTextures || paletteTexturesUsageChanged;
 
     bool invalidateElevationData = false;
     invalidateElevationData = invalidateElevationData || elevationDataResolutionChanged;
@@ -91,6 +93,8 @@ void OsmAnd::MapRenderer::setConfiguration( const MapRendererConfiguration& conf
         mask |= ConfigurationChange::ElevationDataResolution;
     if(texturesFilteringChanged)
         mask |= ConfigurationChange::TexturesFilteringMode;
+    if(paletteTexturesUsageChanged)
+        mask |= ConfigurationChange::PaletteTexturesUsage;
     if(invalidateRasterTextures)
     {
         for(int layerId = MapTileLayerId::RasterMap; layerId < MapTileLayerIdsCount; layerId++)
@@ -978,23 +982,28 @@ std::shared_ptr<OsmAnd::IMapTileProvider::Tile> OsmAnd::MapRenderer::prepareTile
 
         // Check if we're going to convert
         bool doConvert = false;
-        const bool force16bit = (currentConfiguration.limitTextureColorDepthBy16bits && bitmapTile->bitmap->getConfig() == SkBitmap::kARGB_8888_Config);
-        //TODO: eventually support OES_compressed_paletted_texture to reduce GPU memory footprint, but paletted
-        //      textures require manual mipmap levels generation (what is obvious), thus not recommended unless
-        //      really needed.
+        const bool force16bit = (currentConfiguration.limitTextureColorDepthBy16bits && bitmapTile->bitmap->getConfig() == SkBitmap::Config::kARGB_8888_Config);
+        const bool canUsePaletteTextures = currentConfiguration.paletteTexturesAllowed && renderAPI->isSupported_8bitPaletteRGBA8;
+        const bool paletteTexture = (bitmapTile->bitmap->getConfig() == SkBitmap::Config::kIndex8_Config);
         const bool unsupportedFormat =
-            (bitmapTile->bitmap->getConfig() != SkBitmap::kARGB_8888_Config) ||
-            (bitmapTile->bitmap->getConfig() != SkBitmap::kARGB_4444_Config) ||
-            (bitmapTile->bitmap->getConfig() != SkBitmap::kRGB_565_Config);
+            ( canUsePaletteTextures ? !paletteTexture : paletteTexture) ||
+            (bitmapTile->bitmap->getConfig() != SkBitmap::Config::kARGB_8888_Config) ||
+            (bitmapTile->bitmap->getConfig() != SkBitmap::Config::kARGB_4444_Config) ||
+            (bitmapTile->bitmap->getConfig() != SkBitmap::Config::kRGB_565_Config);
         doConvert = doConvert || force16bit;
         doConvert = doConvert || unsupportedFormat;
+
+        // Pass palette texture as-is
+        if(paletteTexture && canUsePaletteTextures)
+            return tile;
 
         // Check if we need alpha
         auto convertedAlphaChannelData = bitmapTile->alphaChannelData;
         if(doConvert && (convertedAlphaChannelData == IMapBitmapTileProvider::AlphaChannelData::Undefined))
         {
-            //TODO: check if there is any alpha, and if alpha data is present, use 4444 format.
-            assert(false);
+            convertedAlphaChannelData = SkBitmap::ComputeIsOpaque(*bitmapTile->bitmap.get())
+                ? IMapBitmapTileProvider::AlphaChannelData::NotPresent
+                : IMapBitmapTileProvider::AlphaChannelData::Present;
         }
 
         // If we have limit of 16bits per pixel in bitmaps, convert to ARGB(4444) or RGB(565)
@@ -1002,7 +1011,10 @@ std::shared_ptr<OsmAnd::IMapTileProvider::Tile> OsmAnd::MapRenderer::prepareTile
         {
             auto convertedBitmap = new SkBitmap();
 
-            bitmapTile->bitmap->deepCopyTo(convertedBitmap, convertedAlphaChannelData == IMapBitmapTileProvider::AlphaChannelData::Present ? SkBitmap::kARGB_4444_Config : SkBitmap::kRGB_565_Config);
+            bitmapTile->bitmap->deepCopyTo(convertedBitmap,
+                convertedAlphaChannelData == IMapBitmapTileProvider::AlphaChannelData::Present
+                    ? SkBitmap::Config::kARGB_4444_Config
+                    : SkBitmap::Config::kRGB_565_Config);
 
             auto convertedTile = new IMapBitmapTileProvider::Tile(convertedBitmap, convertedAlphaChannelData);
             return std::shared_ptr<IMapTileProvider::Tile>(convertedTile);
@@ -1015,7 +1027,7 @@ std::shared_ptr<OsmAnd::IMapTileProvider::Tile> OsmAnd::MapRenderer::prepareTile
 
             bitmapTile->bitmap->deepCopyTo(convertedBitmap,
                 currentConfiguration.limitTextureColorDepthBy16bits
-                    ? (convertedAlphaChannelData == IMapBitmapTileProvider::AlphaChannelData::Present ? SkBitmap::kARGB_4444_Config : SkBitmap::kRGB_565_Config)
+                    ? (convertedAlphaChannelData == IMapBitmapTileProvider::AlphaChannelData::Present ? SkBitmap::Config::kARGB_4444_Config : SkBitmap::Config::kRGB_565_Config)
                     : SkBitmap::kARGB_8888_Config);
 
             auto convertedTile = new IMapBitmapTileProvider::Tile(convertedBitmap, convertedAlphaChannelData);

@@ -26,6 +26,8 @@
 OsmAnd::RenderAPI_OpenGL_Common::RenderAPI_OpenGL_Common()
     : _maxTextureSize(0)
     , _isSupported_vertexShaderTextureLookup(false)
+    , extensions(_extensions)
+    , compressedFormats(_compressedFormats)
     , maxTextureSize(_maxTextureSize)
     , isSupported_vertexShaderTextureLookup(_isSupported_vertexShaderTextureLookup)
 {
@@ -206,6 +208,7 @@ bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU( const TileId& ti
     uint32_t basePadding = 0;
     size_t sourcePixelByteSize = 0;
     bool generateMipmap = false;
+    bool paletteTexture = false;
     if(tile->type == IMapTileProvider::Bitmap)
     {
         auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
@@ -218,6 +221,10 @@ bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU( const TileId& ti
         case SkBitmap::Config::kARGB_4444_Config:
         case SkBitmap::Config::kRGB_565_Config:
             sourcePixelByteSize = 2;
+            break;
+        case SkBitmap::Config::kIndex8_Config:
+            sourcePixelByteSize = 1;
+            paletteTexture = true;
             break;
         }
         tileSize = tile->width;
@@ -283,25 +290,66 @@ bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU( const TileId& ti
         glBindTexture(GL_TEXTURE_2D, texture);
         GL_CHECK_RESULT;
 
-        // Allocate data
-        allocateTexture2D(GL_TEXTURE_2D, mipmapLevels, tileSize, tileSize, tile);
-
-        // Upload data
-        uploadDataToTexture2D(GL_TEXTURE_2D, 0,
-            0, 0, (GLsizei)tileSize, (GLsizei)tileSize,
-            tile->data, tile->rowLength / sourcePixelByteSize,
-            tile);
-
-        // Set maximal mipmap level
-        setMipMapLevelsLimit(GL_TEXTURE_2D, mipmapLevels - 1);
-
-        // Generate mipmap levels
-        if(mipmapLevels > 1)
+        if(!paletteTexture)
         {
-            glGenerateMipmap(GL_TEXTURE_2D);
-            GL_CHECK_RESULT;
-        }
+            // Allocate data
+            allocateTexture2D(GL_TEXTURE_2D, mipmapLevels, tileSize, tileSize, tile);
 
+            // Upload data
+            uploadDataToTexture2D(GL_TEXTURE_2D, 0,
+                0, 0, (GLsizei)tileSize, (GLsizei)tileSize,
+                tile->data, tile->rowLength / sourcePixelByteSize,
+                tile);
+
+            // Set maximal mipmap level
+            setMipMapLevelsLimit(GL_TEXTURE_2D, mipmapLevels - 1);
+
+            // Generate mipmap levels
+            if(mipmapLevels > 1)
+            {
+                glGenerateMipmap(GL_TEXTURE_2D);
+                GL_CHECK_RESULT;
+            }
+        }
+        else
+        {
+            auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
+            
+            // Decompress to 32bit color texture
+            SkBitmap decompressedTexture;
+            bitmapTile->bitmap->deepCopyTo(&decompressedTexture, SkBitmap::Config::kARGB_8888_Config);
+
+            // Generate mipmaps
+            decompressedTexture.buildMipMap();
+            auto generatedLevels = decompressedTexture.extractMipLevel(nullptr, SK_FixedMax, SK_FixedMax);
+            if(mipmapLevels > generatedLevels)
+                mipmapLevels = generatedLevels;
+
+            // For each mipmap level starting from 0, copy data to packed array
+            // and prepare merged palette
+            for(auto mipmapLevel = 0; mipmapLevel < mipmapLevels; mipmapLevel++)
+            {
+                
+            }
+            
+            //TEST:
+            auto datasize = 256*sizeof(uint32_t) + bitmapTile->bitmap->getSize();
+            uint8_t* buf = new uint8_t[datasize];
+            memset(buf, 0xFF, datasize);
+            buf[0] = buf[1] = buf[2] = buf[3] = 0xFF;
+            glCompressedTexImage2D(
+                GL_TEXTURE_2D, 0, GL_PALETTE8_RGBA8_OES,
+                tileSize, tileSize, 0,
+                datasize, buf);
+            GL_CHECK_RESULT;
+            delete[] buf;
+
+            //TODO:
+            // 1. convert to full RGBA8
+            // 2. generate required amount of mipmap levels
+            // 3. glCompressedTexImage2D to load all mipmap levels at once
+        }
+        
         // Deselect atlas as active texture
         glBindTexture(GL_TEXTURE_2D, 0);
         GL_CHECK_RESULT;
@@ -313,6 +361,9 @@ bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU( const TileId& ti
         return true;
     }
 
+    //NOTE: No support for palette atlas textures
+    assert(!paletteTexture);
+    
     // If we've got here, this tile has to be uploaded to an atlas texture, so
     // find that atlas texture to upload to
 

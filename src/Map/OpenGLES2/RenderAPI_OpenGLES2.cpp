@@ -107,7 +107,7 @@ GLenum OsmAnd::RenderAPI_OpenGLES2::validateResult()
             errorString = "(unknown)";
             break;
     }
-    LogPrintf(LogSeverityLevel::Error, "OpenGLES2 error 0x%08x : %s\n", result, errorString);
+    LogPrintf(LogSeverityLevel::Error, "OpenGLES2 error 0x%08x : %s", result, errorString);
 
     return result;
 }
@@ -122,38 +122,38 @@ bool OsmAnd::RenderAPI_OpenGLES2::initialize()
 
     const auto glVersionString = glGetString(GL_VERSION);
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "Using OpenGLES2 version %s\n", glVersionString);
+    LogPrintf(LogSeverityLevel::Info, "Using OpenGLES2 version %s", glVersionString);
 
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, reinterpret_cast<GLint*>(&_maxTextureSize));
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal texture size %dx%d\n", _maxTextureSize, _maxTextureSize);
+    LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal texture size %dx%d", _maxTextureSize, _maxTextureSize);
 
     GLint maxTextureUnitsInFragmentShader;
     glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureUnitsInFragmentShader);
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal texture units in fragment shader %d\n", maxTextureUnitsInFragmentShader);
+    LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal texture units in fragment shader %d", maxTextureUnitsInFragmentShader);
     assert(maxTextureUnitsInFragmentShader >= (MapTileLayerIdsCount - MapTileLayerId::RasterMap));
 
     GLint maxTextureUnitsInVertexShader;
     glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, &maxTextureUnitsInVertexShader);
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal texture units in vertex shader %d\n", maxTextureUnitsInVertexShader);
+    LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal texture units in vertex shader %d", maxTextureUnitsInVertexShader);
     _isSupported_vertexShaderTextureLookup = maxTextureUnitsInVertexShader >= MapTileLayerId::RasterMap;
 
     GLint maxFragmentUniformVectors;
     glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_VECTORS, &maxFragmentUniformVectors);
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal 4-component parameters in fragment shader %d\n", maxFragmentUniformVectors);
+    LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal 4-component parameters in fragment shader %d", maxFragmentUniformVectors);
 
     GLint maxVertexUniformVectors;
     glGetIntegerv(GL_MAX_VERTEX_UNIFORM_VECTORS, &maxVertexUniformVectors);
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal 4-component parameters in vertex shader %d\n", maxVertexUniformVectors);
+    LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal 4-component parameters in vertex shader %d", maxVertexUniformVectors);
 
-    const auto& glesExtensionsString = QString::fromLatin1(reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS)));
+    const auto& extensionsString = QString::fromLatin1(reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS)));
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGLES2 extensions: %s\n", qPrintable(glesExtensionsString));
-    _glesExtensions = glesExtensionsString.split(QRegExp("\\s+"), QString::SkipEmptyParts);
+    LogPrintf(LogSeverityLevel::Info, "OpenGLES2 extensions: %s", qPrintable(extensionsString));
+    _extensions = extensionsString.split(QRegExp("\\s+"), QString::SkipEmptyParts);
     if(!_glesExtensions.contains("GL_OES_vertex_array_object"))
     {
         LogPrintf(LogSeverityLevel::Error, "This device does not support required 'GL_OES_vertex_array_object' extension");
@@ -189,6 +189,18 @@ bool OsmAnd::RenderAPI_OpenGLES2::initialize()
         assert(glTexStorage2DEXT);
     }
 #endif // !OSMAND_TARGET_OS_ios
+
+    GLint compressedFormatsLength = 0;
+    glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &compressedFormatsLength);
+    GL_CHECK_RESULT;
+    _compressedFormats.resize(compressedFormatsLength);
+    if(compressedFormatsLength > 0)
+    {
+        glGetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS, _compressedFormats.data());
+        GL_CHECK_RESULT;
+    }
+    _isSupported_8bitPaletteRGBA8 = compressedFormats.contains(GL_PALETTE8_RGBA8_OES);
+    LogPrintf(LogSeverityLevel::Info, "OpenGLES2 8-bit palette RGBA8 textures: %s", isSupported_8bitPaletteRGBA8 ? "supported" : "not supported");
 
     glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
     GL_CHECK_RESULT;

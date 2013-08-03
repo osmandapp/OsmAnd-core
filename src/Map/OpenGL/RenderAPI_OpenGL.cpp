@@ -2,6 +2,9 @@
 
 #include <assert.h>
 
+#include <QRegExp>
+#include <QStringList>
+
 #include <SkBitmap.h>
 
 #include <GLSLOptimizer.h>
@@ -57,6 +60,7 @@ bool OsmAnd::RenderAPI_OpenGL::initialize()
 
     GL_CHECK_PRESENT(glGetError);
     GL_CHECK_PRESENT(glGetString);
+    GL_CHECK_PRESENT(glGetStringi);
     GL_CHECK_PRESENT(glGetFloatv);
     GL_CHECK_PRESENT(glGetIntegerv);
     GL_CHECK_PRESENT(glGenSamplers);
@@ -100,8 +104,30 @@ bool OsmAnd::RenderAPI_OpenGL::initialize()
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal parameter variables per program %d", maxUniformsPerProgram);
 
-    glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
+    GLint numExtensions = 0;
+    glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
     GL_CHECK_RESULT;
+    _extensions.clear();
+    for(auto extensionIdx = 0; extensionIdx < numExtensions; extensionIdx++)
+    {
+        const auto& extension = QString::fromLatin1(reinterpret_cast<const char*>(glGetStringi(GL_EXTENSIONS, extensionIdx)));
+        GL_CHECK_RESULT;
+
+        _extensions.push_back(extension);
+    }
+    LogPrintf(LogSeverityLevel::Info, "OpenGL extensions: %s", _extensions.join(' '));
+
+    GLint compressedFormatsLength = 0;
+    glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &compressedFormatsLength);
+    GL_CHECK_RESULT;
+    _compressedFormats.resize(compressedFormatsLength);
+    if(compressedFormatsLength > 0)
+    {
+        glGetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS, _compressedFormats.data());
+        GL_CHECK_RESULT;
+    }
+    _isSupported_8bitPaletteRGBA8 = compressedFormats.contains(GL_PALETTE8_RGBA8_OES);
+    LogPrintf(LogSeverityLevel::Info, "OpenGL 8-bit palette RGBA8 textures: %s", isSupported_8bitPaletteRGBA8 ? "supported" : "not supported");
 
     // Allocate samplers
     glGenSamplers(SamplerTypesCount, _textureSamplers.data());

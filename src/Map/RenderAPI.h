@@ -201,9 +201,13 @@ namespace OsmAnd {
         std::shared_ptr<TileOnAtlasTextureInGPU> allocateTile(const std::shared_ptr<AtlasTexturesPool>& pool, AtlasTexturesPool::AtlasTextureAllocatorSignature atlasTextureAllocator );
 
         virtual bool releaseResourceInGPU(const ResourceInGPU::Type& type, const RefInGPU& refInGPU) = 0;
+
+        bool _isSupported_8bitPaletteRGBA8;
     public:
         RenderAPI();
         virtual ~RenderAPI();
+
+        const bool& isSupported_8bitPaletteRGBA8;
 
         virtual bool initialize() = 0;
         virtual bool release() = 0;
