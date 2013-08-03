@@ -115,7 +115,7 @@ bool OsmAnd::RenderAPI_OpenGL::initialize()
 
         _extensions.push_back(extension);
     }
-    LogPrintf(LogSeverityLevel::Info, "OpenGL extensions: %s", _extensions.join(' '));
+    LogPrintf(LogSeverityLevel::Info, "OpenGL extensions: %s", qPrintable(_extensions.join(' ')));
 
     GLint compressedFormatsLength = 0;
     glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &compressedFormatsLength);
@@ -126,7 +126,7 @@ bool OsmAnd::RenderAPI_OpenGL::initialize()
         glGetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS, _compressedFormats.data());
         GL_CHECK_RESULT;
     }
-    _isSupported_8bitPaletteRGBA8 = compressedFormats.contains(GL_PALETTE8_RGBA8_OES);
+    _isSupported_8bitPaletteRGBA8 = extensions.contains("GL_OES_compressed_paletted_texture") || compressedFormats.contains(GL_PALETTE8_RGBA8_OES);
     LogPrintf(LogSeverityLevel::Info, "OpenGL 8-bit palette RGBA8 textures: %s", isSupported_8bitPaletteRGBA8 ? "supported" : "not supported");
 
     // Allocate samplers

@@ -5,7 +5,7 @@ OsmAnd::MapRendererConfiguration::MapRendererConfiguration()
     , altasTexturesAllowed(false)
     , limitTextureColorDepthBy16bits(false)
     , heightmapPatchesPerSide(24)
-    , paletteTexturesAllowed(true)
+    , paletteTexturesAllowed(false)
 {
 }
 

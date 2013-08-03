@@ -5,6 +5,7 @@
 #include <QtMath>
 
 #include <SkBitmap.h>
+#include <SkCanvas.h>
 
 #include "IMapRenderer.h"
 #include "IMapTileProvider.h"
@@ -313,6 +314,8 @@ bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU( const TileId& ti
         }
         else
         {
+            assert(false);
+            /*
             auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
             
             // Decompress to 32bit color texture
@@ -325,25 +328,42 @@ bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU( const TileId& ti
             if(mipmapLevels > generatedLevels)
                 mipmapLevels = generatedLevels;
 
+            LogPrintf(LogSeverityLevel::Info, "colors = %d", bitmapTile->bitmap->getColorTable()->count());
+
             // For each mipmap level starting from 0, copy data to packed array
             // and prepare merged palette
-            for(auto mipmapLevel = 0; mipmapLevel < mipmapLevels; mipmapLevel++)
+            for(auto mipmapLevel = 1; mipmapLevel < mipmapLevels; mipmapLevel++)
             {
-                
+                SkBitmap mipmapLevelData;
+
+                auto test22 = decompressedTexture.extractMipLevel(&mipmapLevelData, SK_Fixed1<<mipmapLevel, SK_Fixed1<<mipmapLevel);
+
+                SkBitmap recomressed;
+                recomressed.setConfig(SkBitmap::kIndex8_Config, tileSize >> mipmapLevel, tileSize >> mipmapLevel);
+                recomressed.allocPixels();
+
+                LogPrintf(LogSeverityLevel::Info, "\tcolors = %d", recomressed.getColorTable()->count());
             }
             
             //TEST:
             auto datasize = 256*sizeof(uint32_t) + bitmapTile->bitmap->getSize();
             uint8_t* buf = new uint8_t[datasize];
-            memset(buf, 0xFF, datasize);
-            buf[0] = buf[1] = buf[2] = buf[3] = 0xFF;
+            for(auto colorIdx = 0; colorIdx < 256; colorIdx++)
+            {
+                buf[colorIdx*4 + 0] = colorIdx;
+                buf[colorIdx*4 + 1] = colorIdx;
+                buf[colorIdx*4 + 2] = colorIdx;
+                buf[colorIdx*4 + 3] = 0xFF;
+            }
+            for(auto pixelIdx = 0; pixelIdx < tileSize*tileSize; pixelIdx++)
+                buf[256*4 + pixelIdx] = pixelIdx % 256;
             glCompressedTexImage2D(
                 GL_TEXTURE_2D, 0, GL_PALETTE8_RGBA8_OES,
                 tileSize, tileSize, 0,
                 datasize, buf);
             GL_CHECK_RESULT;
             delete[] buf;
-
+            */
             //TODO:
             // 1. convert to full RGBA8
             // 2. generate required amount of mipmap levels
