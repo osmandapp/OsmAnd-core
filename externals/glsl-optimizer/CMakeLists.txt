@@ -1,13 +1,13 @@
 project(glsl_optimizer)
 
 file(GLOB libglcpp_sources "upstream.patched/src/glsl/glcpp/*.c")
-file(GLOB mesa_sources "upstream.patched/src/mesa/program/*.c")
+file(GLOB_RECURSE mesa_sources "upstream.patched/src/mesa/*.c")
 file(GLOB glsl_sources "upstream.patched/src/glsl/*.c*")
 
 file(GLOB glsl_source_remove "upstream.patched/src/glsl/main.cpp")
 list(REMOVE_ITEM glsl_sources ${glsl_source_remove})
 
-add_library(glsl_optimizer STATIC
+add_library(glsl-optimizer_static STATIC
 	${libglcpp_sources}
 	${mesa_sources}
 	${glsl_sources}
@@ -25,12 +25,14 @@ if(MSVC)
 	)
 endif()
 
-target_compile_definitions(gif_static
-	PRIVATE
-		${target_specific_private_definitions}
-)
+if(target_specific_private_definitions)
+	target_compile_definitions(glsl-optimizer_static
+		PRIVATE
+			${target_specific_private_definitions}
+	)
+endif()
 
-target_include_directories(glsl_optimizer
+target_include_directories(glsl-optimizer_static
 	PRIVATE
 		"upstream.patched/src/mesa"
 		"upstream.patched/src/mapi"

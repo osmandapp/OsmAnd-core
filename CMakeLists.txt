@@ -23,7 +23,7 @@ if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAK
 		"${OSMAND_ROOT}/core/externals/glm/upstream.patched"
 	)
 	set(target_specific_public_libraries ${target_specific_public_libraries}
-		glsl_optimizer
+		glsl-optimizer_static
 	)
 	set(target_specific_sources ${target_specific_sources}
 		${headers_opengl_common}
