@@ -697,20 +697,16 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSkyStage()
         // Input data
         "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
         "                                                                                                                   ""\n"
-        // Output data
-        "PARAM_OUTPUT float v2f_horizonOffsetN;                                                                             ""\n"
-        "                                                                                                                   ""\n"
         // Parameters: common data
         "uniform mat4 param_vs_mProjectionViewModel;                                                                        ""\n"
         "uniform vec2 param_vs_halfSize;                                                                                    ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
-        "    vec4 v = vec4(in_vs_vertexPosition.x * param_vs_halfSize.x,                                                    ""\n"
-        "        in_vs_vertexPosition.y * param_vs_halfSize.y, 0.0, 1.0);                                                   ""\n"
+        "    vec4 v;                                                                                                        ""\n"
+        "    v.xy = in_vs_vertexPosition * param_vs_halfSize;                                                               ""\n"
+        "    v.w = 1.0;                                                                                                     ""\n"
         "                                                                                                                   ""\n"
-        //   Horizon offset is in range [-1.0 ... +1.0], what is the same as input vertex data
-        "    v2f_horizonOffsetN = in_vs_vertexPosition.y;                                                                   ""\n"
         "    gl_Position = param_vs_mProjectionViewModel * v;                                                               ""\n"
         "}                                                                                                                  ""\n");
     auto preprocessedVertexShader = vertexShader;
@@ -721,9 +717,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSkyStage()
 
     // Compile fragment shader
     const QString fragmentShader = QString::fromLatin1(
-        // Input data
-        "PARAM_INPUT float v2f_horizonOffsetN;                                                                              ""\n"
-        "                                                                                                                   ""\n"
         // Parameters: common data
         "uniform lowp vec4 param_fs_skyColor;                                                                               ""\n"
         "                                                                                                                   ""\n"
