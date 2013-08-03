@@ -117,7 +117,7 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const TileId& tile
                     SkFILEStream fileStream(fullPath.toStdString().c_str());
                     if(!SkImageDecoder::DecodeStream(&fileStream, skBitmap,  SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
                     {
-                        LogPrintf(LogSeverityLevel::Error, "Failed to decode tile file '%s'\n", fullPath.toStdString().c_str());
+                        LogPrintf(LogSeverityLevel::Error, "Failed to decode tile file '%s'", fullPath.toStdString().c_str());
                         {
                             QMutexLocker scopeLock(&_requestsMutex);
                             _requestedTileIds[zoom].remove(tileId);
@@ -236,7 +236,7 @@ void OsmAnd::OnlineMapRasterTileProvider::replyFinishedHandler( QNetworkReply* r
     _currentDownloadsCount--;
 
 #if defined(_DEBUG) || defined(DEBUG)
-    LogPrintf(LogSeverityLevel::Info, "Tile downloading queue size %d\n", _tileDownloadRequestsQueue.size());
+    LogPrintf(LogSeverityLevel::Info, "Tile downloading queue size %d", _tileDownloadRequestsQueue.size());
 #endif
     while(!_tileDownloadRequestsQueue.isEmpty() && _currentDownloadsCount < maxConcurrentDownloads)
     {
@@ -265,7 +265,7 @@ void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* rep
     {
         const auto httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
 
-        LogPrintf(LogSeverityLevel::Warning, "Failed to download tile from %s (HTTP status %d)\n", reply->request().url().toString().toStdString().c_str(), httpStatus);
+        LogPrintf(LogSeverityLevel::Warning, "Failed to download tile from %s (HTTP status %d)", reply->request().url().toString().toStdString().c_str(), httpStatus);
 
         // 404 means that this tile does not exist, so create a zero file
         if(httpStatus == 404)
@@ -280,7 +280,7 @@ void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* rep
                 }
                 else
                 {
-                    LogPrintf(LogSeverityLevel::Error, "Failed to mark tile as non-existent with empty file '%s'\n", fullPath.toStdString().c_str());
+                    LogPrintf(LogSeverityLevel::Error, "Failed to mark tile as non-existent with empty file '%s'", fullPath.toStdString().c_str());
                 }
             }
         }
@@ -290,7 +290,7 @@ void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* rep
     }
 
 #if defined(_DEBUG) || defined(DEBUG)
-    LogPrintf(LogSeverityLevel::Info, "Downloaded tile from %s\n", reply->request().url().toString().toStdString().c_str());
+    LogPrintf(LogSeverityLevel::Info, "Downloaded tile from %s", reply->request().url().toString().toStdString().c_str());
 #endif
     const auto& data = reply->readAll();
 
@@ -304,12 +304,12 @@ void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* rep
             tileFile.close();
 
 #if defined(_DEBUG) || defined(DEBUG)
-            LogPrintf(LogSeverityLevel::Info, "Saved tile from %s to %s\n", reply->request().url().toString().toStdString().c_str(), fullPath.toStdString().c_str());
+            LogPrintf(LogSeverityLevel::Info, "Saved tile from %s to %s", reply->request().url().toString().toStdString().c_str(), fullPath.toStdString().c_str());
 #endif
         }
         else
         {
-            LogPrintf(LogSeverityLevel::Error, "Failed to save tile to '%s'\n", fullPath.toStdString().c_str());
+            LogPrintf(LogSeverityLevel::Error, "Failed to save tile to '%s'", fullPath.toStdString().c_str());
         }
     }
     _processingMutex.unlock();
@@ -320,7 +320,7 @@ void OsmAnd::OnlineMapRasterTileProvider::handleNetworkReply( QNetworkReply* rep
         auto skBitmap = new SkBitmap();
         if(!SkImageDecoder::DecodeMemory(data.data(), data.size(), skBitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
         {
-            LogPrintf(LogSeverityLevel::Error, "Failed to decode tile file from '%s'\n", reply->request().url().toString().toStdString().c_str());
+            LogPrintf(LogSeverityLevel::Error, "Failed to decode tile file from '%s'", reply->request().url().toString().toStdString().c_str());
 
             delete skBitmap;
             std::shared_ptr<IMapTileProvider::Tile> emptyTile;

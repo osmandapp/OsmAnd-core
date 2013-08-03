@@ -542,8 +542,8 @@ OsmAnd::RouteCalculationResult OsmAnd::RoutePlanner::calculateRoute(
     while (!pGraphSegments->empty())
     {
 #if TRACE_DUMP_QUEUE
-        LogPrintf(LogSeverityLevel::Debug, "----------------------------------------\n");
-        LogPrintf(LogSeverityLevel::Debug, "%s-Queue (%d):\n", reverseSearch ? "R" : "D", pGraphSegments->size());
+        LogPrintf(LogSeverityLevel::Debug, "---------------------------------------");
+        LogPrintf(LogSeverityLevel::Debug, "%s-Queue (%d):", reverseSearch ? "R" : "D", pGraphSegments->size());
         {
             auto queueDuplicate = *pGraphSegments;
             while(queueDuplicate.size() > 0)
@@ -573,7 +573,7 @@ OsmAnd::RouteCalculationResult OsmAnd::RoutePlanner::calculateRoute(
 
 
 #if TRACE_ROUTING
-        LogPrintf(LogSeverityLevel::Debug, "\tFwd-search:\n");
+        LogPrintf(LogSeverityLevel::Debug, "\tFwd-search:");
 #endif
         calculateRouteSegment(
             context,
@@ -584,7 +584,7 @@ OsmAnd::RouteCalculationResult OsmAnd::RoutePlanner::calculateRoute(
             reverseSearch ? visitedDirectSegments : visitedOppositeSegments,
             true);
 #if TRACE_ROUTING
-        LogPrintf(LogSeverityLevel::Debug, "\tRev-search:\n");
+        LogPrintf(LogSeverityLevel::Debug, "\tRev-search:");
 #endif
         calculateRouteSegment(
             context,
@@ -1156,7 +1156,7 @@ void OsmAnd::RoutePlanner::processIntersections(
 
 #if TRACE_ROUTING
     if(restrictionsPresent)
-        LogPrintf(LogSeverityLevel::Debug, "\t[Restrictions present]\n");
+        LogPrintf(LogSeverityLevel::Debug, "\t[Restrictions present]");
 #endif
 
     // Calculate possible ways to put into priority queue

@@ -75,6 +75,7 @@ void OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel level, const char* format, ...)
     vsnprintf(buffer, len, format, args);
     buffer[len] = 0;
     OutputDebugStringA(buffer);
+    OutputDebugStringA("\n");
 	delete[] buffer;
 	va_end(args);
 }

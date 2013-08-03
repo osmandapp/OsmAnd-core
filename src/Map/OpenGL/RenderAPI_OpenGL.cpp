@@ -36,7 +36,7 @@ GLenum OsmAnd::RenderAPI_OpenGL::validateResult()
     if(result == GL_NO_ERROR)
         return result;
 
-    LogPrintf(LogSeverityLevel::Error, "OpenGL error 0x%08x : %s\n", result, gluErrorString(result));
+    LogPrintf(LogSeverityLevel::Error, "OpenGL error 0x%08x : %s", result, gluErrorString(result));
 
     return result;
 }
@@ -71,34 +71,34 @@ bool OsmAnd::RenderAPI_OpenGL::initialize()
     GL_CHECK_RESULT;
     glGetIntegerv(GL_MINOR_VERSION, &glVersion[1]);
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "Using OpenGL version %d.%d [%s]\n", glVersion[0], glVersion[1], glVersionString);
+    LogPrintf(LogSeverityLevel::Info, "Using OpenGL version %d.%d [%s]", glVersion[0], glVersion[1], glVersionString);
     assert(glVersion[0] >= 3);
 
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, reinterpret_cast<GLint*>(&_maxTextureSize));
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture size %dx%d\n", _maxTextureSize, _maxTextureSize);
+    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture size %dx%d", _maxTextureSize, _maxTextureSize);
 
     GLint maxTextureUnitsInFragmentShader;
     glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureUnitsInFragmentShader);
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units in fragment shader %d\n", maxTextureUnitsInFragmentShader);
+    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units in fragment shader %d", maxTextureUnitsInFragmentShader);
     assert(maxTextureUnitsInFragmentShader >= (MapTileLayerIdsCount - MapTileLayerId::RasterMap));
 
     GLint maxTextureUnitsInVertexShader;
     glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, &maxTextureUnitsInVertexShader);
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units in vertex shader %d\n", maxTextureUnitsInVertexShader);
+    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units in vertex shader %d", maxTextureUnitsInVertexShader);
     _isSupported_vertexShaderTextureLookup = (maxTextureUnitsInVertexShader >= MapTileLayerId::RasterMap);
 
     GLint maxTextureUnitsCombined;
     glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTextureUnitsCombined);
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units (combined) %d\n", maxTextureUnitsCombined);
+    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units (combined) %d", maxTextureUnitsCombined);
 
     GLint maxUniformsPerProgram;
     glGetIntegerv(GL_MAX_UNIFORM_LOCATIONS, &maxUniformsPerProgram);
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal parameter variables per program %d\n", maxUniformsPerProgram);
+    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal parameter variables per program %d", maxUniformsPerProgram);
 
     glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
     GL_CHECK_RESULT;

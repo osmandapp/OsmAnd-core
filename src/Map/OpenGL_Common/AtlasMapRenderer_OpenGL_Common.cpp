@@ -265,7 +265,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         "    finalColor.a *= param_fs_perTileLayer[0].k;                                                                    ""\n"
         "%UnrolledPerLayerProcessingCode%                                                                                   ""\n"
         "                                                                                                                   ""\n"
-#if 0
+#if 1
         //   NOTE: Useful for debugging mipmap levels
         "    {                                                                                                              ""\n"
         "        vec4 mipmapDebugColor;                                                                                     ""\n"
@@ -986,6 +986,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::updateCurrentState()
         _distanceFromCameraToTarget = _baseDistanceFromCameraToTarget - (_baseDistanceFromCameraToTarget - _nearDistanceFromCameraToTarget) * (2.0f * currentState.zoomFraction);
     else
         _distanceFromCameraToTarget = _baseDistanceFromCameraToTarget - (_farDistanceFromCameraToTarget - _baseDistanceFromCameraToTarget) * (2.0f * currentState.zoomFraction);
+    LogPrintf(LogSeverityLevel::Debug, "_distanceFromCameraToTarget = %f", _distanceFromCameraToTarget);
     _groundDistanceFromCameraToTarget = _distanceFromCameraToTarget * qCos(qDegreesToRadians(currentState.elevationAngle));
     _tileScaleFactor = ((currentState.zoomFraction >= 0.0f) ? (1.0f + currentState.zoomFraction) : (1.0f + 0.5f * currentState.zoomFraction));
     _scaleToRetainProjectedSize = _distanceFromCameraToTarget / _baseDistanceFromCameraToTarget;

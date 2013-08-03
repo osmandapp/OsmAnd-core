@@ -669,7 +669,7 @@ void OsmAnd::Rasterizer::rasterizeLine( RasterizerContext& context, SkCanvas& ca
 {
     if(primitive.mapObject->_points31.size() < 2 )
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized as line, but has %d vertices\n", primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized as line, but has %d vertices", primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
         return;
     }
 
@@ -1560,17 +1560,17 @@ void OsmAnd::Rasterizer::collectPolygonText( RasterizerContext& context, const P
 {
     if(primitive.mapObject->_points31.size() <=2)
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized (text) as polygon, but has %d vertices\n", primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized (text) as polygon, but has %d vertices", primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
         return;
     }
     if(!primitive.mapObject->isClosedFigure())
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized (text) as polygon, but is not closed\n", primitive.mapObject->id >> 1);
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized (text) as polygon, but is not closed", primitive.mapObject->id >> 1);
         return;
     }
     if(!primitive.mapObject->isClosedFigure(true))
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized (text) as polygon, but is not closed (inner)\n", primitive.mapObject->id >> 1);
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized (text) as polygon, but is not closed (inner)", primitive.mapObject->id >> 1);
         return;
     }
 
@@ -1652,7 +1652,7 @@ void OsmAnd::Rasterizer::collectLineText( RasterizerContext& context, const Prim
 {
     if(primitive.mapObject->_points31.size() < 2 )
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized (text) as line, but has %d vertices\n", primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized (text) as line, but has %d vertices", primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
         return;
     }
 
@@ -1733,7 +1733,7 @@ void OsmAnd::Rasterizer::collectPointText( RasterizerContext& context, const Pri
 {
     if(primitive.mapObject->_points31.size() < 1 )
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized (text) as point, but has %d vertices\n", primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized (text) as point, but has %d vertices", primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
         return;
     }
 

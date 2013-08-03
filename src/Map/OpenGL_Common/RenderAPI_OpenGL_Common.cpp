@@ -72,7 +72,7 @@ GLuint OsmAnd::RenderAPI_OpenGL_Common::compileShader( GLenum shaderType, const 
             glGetShaderInfoLog(shader, logBufferLen, &logLen, log);
             GL_CHECK_RESULT;
             assert(logLen + 1 == logBufferLen);
-            LogPrintf(LogSeverityLevel::Error, "Failed to compile GLSL shader:\n%s\n", log);
+            LogPrintf(LogSeverityLevel::Error, "Failed to compile GLSL shader:\n%s", log);
             free(log);
         }
 
@@ -122,7 +122,7 @@ GLuint OsmAnd::RenderAPI_OpenGL_Common::linkProgram( GLuint shadersCount, GLuint
             glGetProgramInfoLog(program, logBufferLen, &logLen, log);
             GL_CHECK_RESULT;
             assert(logLen + 1 == logBufferLen);
-            LogPrintf(LogSeverityLevel::Error, "Failed to link GLSL program:\n%s\n", log);
+            LogPrintf(LogSeverityLevel::Error, "Failed to link GLSL program:\n%s", log);
             free(log);
         }
 
@@ -136,12 +136,12 @@ GLuint OsmAnd::RenderAPI_OpenGL_Common::linkProgram( GLuint shadersCount, GLuint
     GLint attributesCount;
     glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &attributesCount);
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "GLSL program %d has %d input variable(s)\n", program, attributesCount);
+    LogPrintf(LogSeverityLevel::Info, "GLSL program %d has %d input variable(s)", program, attributesCount);
 
     GLint uniformsCount;
     glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &uniformsCount);
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "GLSL program %d has %d parameter variable(s)\n", program, uniformsCount);
+    LogPrintf(LogSeverityLevel::Info, "GLSL program %d has %d parameter variable(s)", program, uniformsCount);
 
     return program;
 }
@@ -162,7 +162,7 @@ void OsmAnd::RenderAPI_OpenGL_Common::findVariableLocation( GLuint program, GLin
         location = glGetUniformLocation(program, name.toStdString().c_str());
     GL_CHECK_RESULT;
     if(location == -1)
-        LogPrintf(LogSeverityLevel::Error, "Variable '%s' (%s) was not found in GLSL program %d\n", name.toStdString().c_str(), type == GLShaderVariableType::In ? "In" : "Uniform", program);
+        LogPrintf(LogSeverityLevel::Error, "Variable '%s' (%s) was not found in GLSL program %d", name.toStdString().c_str(), type == GLShaderVariableType::In ? "In" : "Uniform", program);
     assert(location != -1);
     assert(!_programVariables[program].contains(type, location));
     _programVariables[program].insert(type, location);
