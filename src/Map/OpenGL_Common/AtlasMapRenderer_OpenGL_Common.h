@@ -136,9 +136,9 @@ namespace OsmAnd {
                 struct {
                     // Common data
                     GLint fogColor;
-                    GLint fogDistance;
+                    GLint fogDistanceScale;
+                    GLint fogOriginFactorInvMinus1;
                     GLint fogDensity;
-                    GLint fogOriginFactor;
 
                     // Per-tile-per-layer data
                     struct
