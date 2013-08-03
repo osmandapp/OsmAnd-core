@@ -241,7 +241,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         "            param_fs_perTileLayer[%layerLinearIdx%].sampler,                                                       ""\n"
         "            v2f_texCoordsPerLayer[%layerLinearIdx%], v2f_mipmapLOD);                                               ""\n"
         "                                                                                                                   ""\n"
-        "        finalColor = mix(finalColor, layerColor, layerColor.a * param_fs_perTileLayer[%layerLinearIdx%].k);        ""\n"
+        "        layerColor.a *= param_fs_perTileLayer[%layerLinearIdx%].k;                                                 ""\n"
+        "        finalColor = mix(finalColor, layerColor, layerColor.a);                                                    ""\n"
         "    }                                                                                                              ""\n");
     const auto& fragmentShader = QString::fromLatin1(
         // Input data
