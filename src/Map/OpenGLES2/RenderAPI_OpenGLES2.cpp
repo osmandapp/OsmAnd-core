@@ -493,12 +493,14 @@ void OsmAnd::RenderAPI_OpenGLES2::glDeleteVertexArrays_wrapper( GLsizei n, const
     glDeleteVertexArraysOES(n, arrays);
 }
 
-void OsmAnd::RenderAPI_OpenGLES2::preprocessShader( QString& code )
+void OsmAnd::RenderAPI_OpenGLES2::preprocessShader( QString& code, const QString& extraHeader /*= QString()*/ )
 {
-    const auto& shaderSource = QString::fromLatin1(
+    const auto& shaderHeader = QString::fromLatin1(
         // Declare version of GLSL used
         "#version 100                                                                                                       ""\n"
-        "                                                                                                                   ""\n"
+        "                                                                                                                   ""\n");
+
+    const auto& shaderSource = QString::fromLatin1(
         // General definitions
         "#define INPUT attribute                                                                                            ""\n"
         "#define PARAM_OUTPUT varying                                                                                       ""\n"
@@ -516,6 +518,8 @@ void OsmAnd::RenderAPI_OpenGLES2::preprocessShader( QString& code )
         "                                                                                                                   ""\n");
 
     code.prepend(shaderSource);
+    code.prepend(extraHeader);
+    code.prepend(shaderHeader);
 }
 
 void OsmAnd::RenderAPI_OpenGLES2::preprocessVertexShader( QString& code )
@@ -525,9 +529,6 @@ void OsmAnd::RenderAPI_OpenGLES2::preprocessVertexShader( QString& code )
 
 void OsmAnd::RenderAPI_OpenGLES2::preprocessFragmentShader( QString& code )
 {
-    QString common;
-    preprocessShader(common);
-
     const auto& shaderSource = QString::fromLatin1(
         // Make some extensions required
         "#extension GL_EXT_shader_texture_lod : require                                                                     ""\n"
@@ -536,8 +537,7 @@ void OsmAnd::RenderAPI_OpenGLES2::preprocessFragmentShader( QString& code )
         "#define FRAGMENT_COLOR_OUTPUT gl_FragColor                                                                         ""\n"
         "                                                                                                                   ""\n");
 
-    code.prepend(shaderSource);
-    code.prepend(common);
+    preprocessShader(code, shaderSource);
 }
 
 void OsmAnd::RenderAPI_OpenGLES2::setSampler( GLenum texture, const SamplerType& samplerType )

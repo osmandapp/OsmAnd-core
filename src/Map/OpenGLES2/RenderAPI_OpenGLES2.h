@@ -53,7 +53,7 @@ namespace OsmAnd {
         bool _isSupported_EXT_texture_rg;
         bool _isSupported_EXT_shader_texture_lod;
 
-        void preprocessShader(QString& code);
+        void preprocessShader(QString& code, const QString& extraHeader = QString());
     protected:
     public:
         RenderAPI_OpenGLES2();

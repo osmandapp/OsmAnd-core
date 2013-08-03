@@ -4,6 +4,8 @@
 
 #include <SkBitmap.h>
 
+#include <GLSLOptimizer.h>
+
 #include "IMapBitmapTileProvider.h"
 #include "Logging.h"
 
@@ -341,10 +343,38 @@ void OsmAnd::RenderAPI_OpenGL::setSampler( GLenum texture, const SamplerType& sa
 
 void OsmAnd::RenderAPI_OpenGL::optimizeVertexShader( QString& code )
 {
-    // On Desktop, we do nothing
+    // GLSL 4.30 not yet supported by upstream
+    /*
+    auto context = glslopt_initialize(false);
+
+    auto optimizedShader = glslopt_optimize(context, kGlslOptShaderVertex, qPrintable(code), 0);
+    if(!glslopt_get_status(optimizedShader))
+    {
+        LogPrintf(LogSeverityLevel::Error, "%s", glslopt_get_log(optimizedShader));
+        assert(false);
+    }
+    code = QString::fromLocal8Bit(glslopt_get_output(optimizedShader));
+    glslopt_shader_delete(optimizedShader);
+
+    glslopt_cleanup(context);
+    */
 }
 
 void OsmAnd::RenderAPI_OpenGL::optimizeFragmentShader( QString& code )
 {
-    // On Desktop, we do nothing
+    // GLSL 4.30 not yet supported by upstream
+    /*
+    auto context = glslopt_initialize(false);
+
+    auto optimizedShader = glslopt_optimize(context, kGlslOptShaderFragment, qPrintable(code), 0);
+    if(!glslopt_get_status(optimizedShader))
+    {
+        LogPrintf(LogSeverityLevel::Error, "%s", glslopt_get_log(optimizedShader));
+        assert(false);
+    }
+    code = QString::fromLocal8Bit(glslopt_get_output(optimizedShader));
+    glslopt_shader_delete(optimizedShader);
+
+    glslopt_cleanup(context);
+    */
 }

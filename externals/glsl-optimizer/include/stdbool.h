@@ -1,15 +1,11 @@
-#if defined(_WIN32)
+#if defined(_MSC_VER)
 
 #ifndef _OSMAND_WINDOWS_STDBOOL_H_
 #define _OSMAND_WINDOWS_STDBOOL_H_
 
 #ifndef __cplusplus
 
-#if !defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L)
-# if !defined(__GNUC__) ||(__GNUC__ < 3)
-  typedef char _Bool;		/* For C compilers without _Bool */
-# endif
-#endif
+typedef char _Bool;
 
 #define bool  _Bool
 #define true  1
@@ -28,4 +24,4 @@
 
 #endif // _OSMAND_WINDOWS_STDBOOL_H_
 
-#endif // defined(_WIN32)
+#endif // defined(_MSC_VER)
