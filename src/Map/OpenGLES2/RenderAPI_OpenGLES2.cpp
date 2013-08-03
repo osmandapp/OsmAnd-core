@@ -592,6 +592,7 @@ void OsmAnd::RenderAPI_OpenGLES2::setSampler( GLenum texture, const SamplerType&
 
 void OsmAnd::RenderAPI_OpenGLES2::optimizeVertexShader( QString& code )
 {
+    /*
     auto context = glslopt_initialize(true);
 
     auto optimizedShader = glslopt_optimize(context, kGlslOptShaderVertex, qPrintable(code), 0);
@@ -604,10 +605,12 @@ void OsmAnd::RenderAPI_OpenGLES2::optimizeVertexShader( QString& code )
     glslopt_shader_delete(optimizedShader);
 
     glslopt_cleanup(context);
+    */
 }
 
 void OsmAnd::RenderAPI_OpenGLES2::optimizeFragmentShader( QString& code )
 {
+    /*
     auto context = glslopt_initialize(true);
 
     auto optimizedShader = glslopt_optimize(context, kGlslOptShaderFragment, qPrintable(code), 0);
@@ -620,4 +623,5 @@ void OsmAnd::RenderAPI_OpenGLES2::optimizeFragmentShader( QString& code )
     glslopt_shader_delete(optimizedShader);
 
     glslopt_cleanup(context);
+    */
 }
