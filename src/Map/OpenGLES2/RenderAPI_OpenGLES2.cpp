@@ -67,8 +67,7 @@ OsmAnd::RenderAPI_OpenGLES2::P_glTexStorage2DEXT_PROC OsmAnd::RenderAPI_OpenGLES
 #endif //!OSMAND_TARGET_OS_ios
 
 OsmAnd::RenderAPI_OpenGLES2::RenderAPI_OpenGLES2()
-    : glesExtensions(_glesExtensions)
-    , isSupported_EXT_unpack_subimage(_isSupported_EXT_unpack_subimage)
+    : isSupported_EXT_unpack_subimage(_isSupported_EXT_unpack_subimage)
     , isSupported_EXT_texture_storage(_isSupported_EXT_texture_storage)
     , isSupported_APPLE_texture_max_level(_isSupported_APPLE_texture_max_level)
     , isSupported_OES_vertex_array_object(_isSupported_OES_vertex_array_object)
@@ -158,34 +157,34 @@ bool OsmAnd::RenderAPI_OpenGLES2::initialize()
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGLES2 extensions: %s", qPrintable(extensionsString));
     _extensions = extensionsString.split(QRegExp("\\s+"), QString::SkipEmptyParts);
-    if(!_glesExtensions.contains("GL_OES_vertex_array_object"))
+    if(!extensions.contains("GL_OES_vertex_array_object"))
     {
         LogPrintf(LogSeverityLevel::Error, "This device does not support required 'GL_OES_vertex_array_object' extension");
         return false;
     }
     _isSupported_OES_vertex_array_object = true;
-    if(!_glesExtensions.contains("GL_OES_rgb8_rgba8"))
+    if(!extensions.contains("GL_OES_rgb8_rgba8"))
     {
         LogPrintf(LogSeverityLevel::Error, "This device does not support required 'GL_OES_rgb8_rgba8' extension");
         return false;
     }
     _isSupported_OES_rgb8_rgba8 = true;
-    if(!_glesExtensions.contains("GL_OES_texture_float"))
+    if(!extensions.contains("GL_OES_texture_float"))
     {
         LogPrintf(LogSeverityLevel::Error, "This device does not support required 'GL_OES_texture_float' extension");
         return false;
     }
     _isSupported_OES_texture_float = true;
-    if(!_glesExtensions.contains("GL_EXT_shader_texture_lod"))
+    if(!extensions.contains("GL_EXT_shader_texture_lod"))
     {
         LogPrintf(LogSeverityLevel::Error, "This device does not support required 'GL_EXT_shader_texture_lod' extension");
         return false;
     }
     _isSupported_EXT_shader_texture_lod = true;
-    _isSupported_EXT_texture_rg = _glesExtensions.contains("GL_EXT_texture_rg");
-    _isSupported_EXT_unpack_subimage = _glesExtensions.contains("GL_EXT_unpack_subimage");
-    _isSupported_EXT_texture_storage = _glesExtensions.contains("GL_EXT_texture_storage");
-    _isSupported_APPLE_texture_max_level = _glesExtensions.contains("GL_APPLE_texture_max_level");
+    _isSupported_EXT_texture_rg = extensions.contains("GL_EXT_texture_rg");
+    _isSupported_EXT_unpack_subimage = extensions.contains("GL_EXT_unpack_subimage");
+    _isSupported_EXT_texture_storage = extensions.contains("GL_EXT_texture_storage");
+    _isSupported_APPLE_texture_max_level = extensions.contains("GL_APPLE_texture_max_level");
 #if !defined(OSMAND_TARGET_OS_ios)
     if(_isSupported_EXT_texture_storage && !glTexStorage2DEXT)
     {
