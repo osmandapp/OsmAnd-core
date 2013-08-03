@@ -58,6 +58,10 @@
 #   define GL_UNPACK_SKIP_PIXELS                                        0x0CF4
 #endif // !GL_UNPACK_SKIP_PIXELS
 
+#ifndef GL_PALETTE8_RGBA8_OES
+#   define GL_PALETTE8_RGBA8_OES                                        0x8B96
+#endif // !GL_PALETTE8_RGBA8_OES
+
 #if !defined(OSMAND_TARGET_OS_ios)
 OsmAnd::RenderAPI_OpenGLES2::P_glTexStorage2DEXT_PROC OsmAnd::RenderAPI_OpenGLES2::glTexStorage2DEXT = nullptr;
 #endif //!OSMAND_TARGET_OS_ios
