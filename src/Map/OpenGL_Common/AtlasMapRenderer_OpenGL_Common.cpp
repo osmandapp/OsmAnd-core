@@ -265,7 +265,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         "    finalColor.a *= param_fs_perTileLayer[0].k;                                                                    ""\n"
         "%UnrolledPerLayerProcessingCode%                                                                                   ""\n"
         "                                                                                                                   ""\n"
-#if 1
+#if 0
         //   NOTE: Useful for debugging mipmap levels
         "    {                                                                                                              ""\n"
         "        vec4 mipmapDebugColor;                                                                                     ""\n"
