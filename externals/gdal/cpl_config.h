@@ -51,7 +51,7 @@
 #   define HAVE_GETCWD 1
 
     /* Define if you have the iconv() function and it works. */
-#   define HAVE_ICONV 0
+#   undef HAVE_ICONV
 
     /* Define as 0 or 1 according to the floating point format suported by the
        machine */
