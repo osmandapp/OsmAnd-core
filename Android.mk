@@ -73,6 +73,11 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
 
     HEADER_FILES := \
         $(wildcard $(LOCAL_PATH)/include/*.h) \
+        $(wildcard $(LOCAL_PATH)/include/OsmAndCore/*.h) \
+        $(wildcard $(LOCAL_PATH)/include/OsmAndCore/Data/*.h) \
+        $(wildcard $(LOCAL_PATH)/include/OsmAndCore/Data/Model/*.h) \
+        $(wildcard $(LOCAL_PATH)/include/OsmAndCore/Routing/*.h) \
+        $(wildcard $(LOCAL_PATH)/include/OsmAndCore/Map/*.h) \
         $(wildcard $(LOCAL_PATH)/src/*.h) \
         $(wildcard $(LOCAL_PATH)/src/Data/*.h) \
         $(wildcard $(LOCAL_PATH)/src/Data/Model/*.h) \
