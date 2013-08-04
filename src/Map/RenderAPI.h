@@ -52,6 +52,7 @@ namespace OsmAnd {
             {
                 Texture,
                 TileOnAtlasTexture,
+                ArrayBuffer,
             };
         private:
         protected:
@@ -78,6 +79,17 @@ namespace OsmAnd {
             const uint32_t mipmapLevels;
             const float texelSizeN;
             const float halfTexelSizeN;
+        };
+
+        class OSMAND_CORE_API ArrayBufferInGPU : public ResourceInGPU
+        {
+        private:
+        protected:
+        public:
+            ArrayBufferInGPU(RenderAPI* api, const RefInGPU& refInGPU, const uint32_t& itemsCount);
+            virtual ~ArrayBufferInGPU();
+
+            const uint32_t itemsCount;
         };
 
         union AtlasTypeId

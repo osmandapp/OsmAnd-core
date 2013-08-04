@@ -97,6 +97,16 @@ OsmAnd::RenderAPI::TextureInGPU::~TextureInGPU()
 {
 }
 
+OsmAnd::RenderAPI::ArrayBufferInGPU::ArrayBufferInGPU( RenderAPI* api_, const RefInGPU& refInGPU_, const uint32_t& itemsCount_ )
+    : ResourceInGPU(Type::ArrayBuffer, api_, refInGPU_)
+    , itemsCount(itemsCount_)
+{
+}
+
+OsmAnd::RenderAPI::ArrayBufferInGPU::~ArrayBufferInGPU()
+{
+}
+
 OsmAnd::RenderAPI::AtlasTextureInGPU::AtlasTextureInGPU( RenderAPI* api_, const RefInGPU& refInGPU_, const uint32_t& textureSize_, const uint32_t& mipmapLevels_, const std::shared_ptr<AtlasTexturesPool>& pool_ )
     : TextureInGPU(api_, refInGPU_, textureSize_, mipmapLevels_)
     , tileSize(pool_->typeId.tileSize)

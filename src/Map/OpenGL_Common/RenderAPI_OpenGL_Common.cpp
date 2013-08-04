@@ -173,9 +173,21 @@ void OsmAnd::RenderAPI_OpenGL_Common::findVariableLocation( GLuint program, GLin
 
 bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileToGPU( const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr< IMapTileProvider::Tile >& tile, const uint32_t& tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU )
 {
-    if(tile->type == IMapTileProvider::Type::Bitmap || tile->type == IMapTileProvider::Type::ElevationData)
+    // Upload bitmap tiles
+    if(tile->type == IMapTileProvider::Type::Bitmap)
     {
         return uploadTileAsTextureToGPU(tileId, zoom, tile, tilesPerAtlasTextureLimit, resourceInGPU);
+    }
+    else if(tile->type == IMapTileProvider::Type::ElevationData)
+    {
+        if(isSupported_vertexShaderTextureLookup)
+        {
+            return uploadTileAsTextureToGPU(tileId, zoom, tile, tilesPerAtlasTextureLimit, resourceInGPU);
+        }
+        else
+        {
+            return uploadTileAsArrayBufferToGPU(tile, resourceInGPU);
+        }
     }
 
     return false;
@@ -183,15 +195,28 @@ bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileToGPU( const TileId& tileId, con
 
 bool OsmAnd::RenderAPI_OpenGL_Common::releaseResourceInGPU( const ResourceInGPU::Type& type, const RefInGPU& refInGPU )
 {
-    if(type == ResourceInGPU::Type::Texture)
+    switch (type)
     {
-        GL_CHECK_PRESENT(glDeleteTextures);
+    case ResourceInGPU::Type::Texture:
+        {
+            GL_CHECK_PRESENT(glDeleteTextures);
 
-        GLuint texture = static_cast<GLuint>(reinterpret_cast<intptr_t>(refInGPU));
-        glDeleteTextures(1, &texture);
-        GL_CHECK_RESULT;
+            GLuint texture = static_cast<GLuint>(reinterpret_cast<intptr_t>(refInGPU));
+            glDeleteTextures(1, &texture);
+            GL_CHECK_RESULT;
 
-        return true;
+            return true;
+        }
+    case ResourceInGPU::Type::ArrayBuffer:
+        {
+            GL_CHECK_PRESENT(glDeleteBuffers);
+
+            GLuint arrayBuffer = static_cast<GLuint>(reinterpret_cast<intptr_t>(refInGPU));
+            glDeleteBuffers(1, &arrayBuffer);
+            GL_CHECK_RESULT;
+
+            return true;
+        }
     }
 
     return false;
@@ -547,6 +572,39 @@ bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU( const TileId& ti
     GL_CHECK_RESULT;
 
     resourceInGPU = tileInGPU;
+
+    return true;
+}
+
+bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsArrayBufferToGPU( const std::shared_ptr< IMapTileProvider::Tile >& tile, std::shared_ptr< ResourceInGPU >& resourceInGPU )
+{
+    GL_CHECK_PRESENT(glBindBuffer);
+    GL_CHECK_PRESENT(glBufferData);
+
+    assert(tile->type == IMapTileProvider::Type::ElevationData);
+    auto elevationTile = static_cast<IMapElevationDataProvider::Tile*>(tile.get());
+    
+    // Create array buffer
+    GLuint buffer;
+    glGenBuffers(1, &buffer);
+    GL_CHECK_RESULT;
+
+    // Bind it
+    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    GL_CHECK_RESULT;
+
+    // Upload data
+    const auto itemsCount = tile->width * tile->height;
+    assert(tile->width*sizeof(float) == tile->rowLength);
+    glBufferData(GL_ARRAY_BUFFER, itemsCount * sizeof(float), tile->data, GL_STATIC_DRAW);
+    GL_CHECK_RESULT;
+
+    // Unbind it
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+
+    auto arrayBufferInGPU = new ArrayBufferInGPU(this, reinterpret_cast<RefInGPU>(buffer), itemsCount);
+    resourceInGPU.reset(static_cast<ResourceInGPU*>(arrayBufferInGPU));
 
     return true;
 }

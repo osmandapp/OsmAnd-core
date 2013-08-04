@@ -47,7 +47,7 @@ namespace OsmAnd {
         TextureFilteringQuality texturesFilteringQuality;
         bool altasTexturesAllowed;
         bool limitTextureColorDepthBy16bits;
-        uint32_t heightmapPatchesPerSide;
+        uint32_t heixelsPerTileSide;
         bool paletteTexturesAllowed;
     };
 

@@ -64,7 +64,7 @@ void OsmAnd::MapRenderer::setConfiguration( const MapRendererConfiguration& conf
 
     const bool colorDepthForcingChanged = (_requestedConfiguration.limitTextureColorDepthBy16bits != configuration_.limitTextureColorDepthBy16bits);
     const bool atlasTexturesUsageChanged = (_requestedConfiguration.altasTexturesAllowed != configuration_.altasTexturesAllowed);
-    const bool elevationDataResolutionChanged = (_requestedConfiguration.heightmapPatchesPerSide != configuration_.heightmapPatchesPerSide);
+    const bool elevationDataResolutionChanged = (_requestedConfiguration.heixelsPerTileSide != configuration_.heixelsPerTileSide);
     const bool texturesFilteringChanged = (_requestedConfiguration.texturesFilteringQuality != configuration_.texturesFilteringQuality);
     const bool paletteTexturesUsageChanged = (_requestedConfiguration.paletteTexturesAllowed != configuration_.paletteTexturesAllowed);
 

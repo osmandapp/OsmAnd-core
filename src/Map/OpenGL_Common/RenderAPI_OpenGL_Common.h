@@ -94,6 +94,7 @@ namespace OsmAnd {
     {
     private:
         bool uploadTileAsTextureToGPU(const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr< IMapTileProvider::Tile >& tile, const uint32_t& tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU);
+        bool uploadTileAsArrayBufferToGPU(const std::shared_ptr< IMapTileProvider::Tile >& tile, std::shared_ptr< ResourceInGPU >& resourceInGPU);
     protected:
         GLint _maxTextureSize;
         QMap< GLuint, QMultiMap< GLShaderVariableType, GLint > > _programVariables;

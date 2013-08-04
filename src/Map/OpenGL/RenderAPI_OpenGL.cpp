@@ -92,6 +92,9 @@ bool OsmAnd::RenderAPI_OpenGL::initialize()
     glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, &maxTextureUnitsInVertexShader);
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units in vertex shader %d", maxTextureUnitsInVertexShader);
+    //////////////////////////////////////////////////////////////////////////
+    maxTextureUnitsInVertexShader = 0;
+    //////////////////////////////////////////////////////////////////////////
     _isSupported_vertexShaderTextureLookup = (maxTextureUnitsInVertexShader >= MapTileLayerId::RasterMap);
 
     GLint maxTextureUnitsCombined;
@@ -329,12 +332,15 @@ void OsmAnd::RenderAPI_OpenGL::preprocessShader( QString& code )
         "#define PARAM_INPUT in                                                                                             ""\n"
         "                                                                                                                   ""\n"
         // Features definitions
-        "#define VERTEX_TEXTURE_FETCH_SUPPORTED 1                                                                           ""\n"
+        "#define VERTEX_TEXTURE_FETCH_SUPPORTED %VertexTextureFetchSupported%                                               ""\n"
         "#define SAMPLE_TEXTURE_2D texture                                                                                  ""\n"
         "#define SAMPLE_TEXTURE_2D_LOD textureLod                                                                           ""\n"
         "                                                                                                                   ""\n");
 
-    code.prepend(shaderSource);
+    auto shaderSourcePreprocessed = shaderSource;
+    shaderSourcePreprocessed.replace("%VertexTextureFetchSupported%", QString::number(isSupported_vertexShaderTextureLookup ? 1 : 0));
+
+    code.prepend(shaderSourcePreprocessed);
 }
 
 void OsmAnd::RenderAPI_OpenGL::preprocessVertexShader( QString& code )

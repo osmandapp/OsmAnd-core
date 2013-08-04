@@ -97,6 +97,7 @@ namespace OsmAnd {
                 struct {
                     GLint vertexPosition;
                     GLint vertexTexCoords;
+                    GLint vertexElevation;
                 } in;
 
                 // Parameters

@@ -35,8 +35,6 @@ namespace OsmAnd {
     class OSMAND_CORE_API IMapElevationDataProvider : public IMapTileProvider
     {
     public:
-    private:
-    protected:
         class OSMAND_CORE_API Tile : public IMapTileProvider::Tile
         {
         private:
@@ -46,6 +44,8 @@ namespace OsmAnd {
             virtual ~Tile();
         };
 
+    private:
+    protected:
         IMapElevationDataProvider();
     public:
         virtual ~IMapElevationDataProvider();      

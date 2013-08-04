@@ -118,6 +118,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         // Input data
         "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
         "INPUT vec2 in_vs_vertexTexCoords;                                                                                  ""\n"
+        "#if !VERTEX_TEXTURE_FETCH_SUPPORTED                                                                                ""\n"
+        "    INPUT float in_vs_vertexElevation;                                                                             ""\n"
+        "#endif // !VERTEX_TEXTURE_FETCH_SUPPORTED                                                                          ""\n"
         "                                                                                                                   ""\n"
         // Output data to next shader stages
         "PARAM_OUTPUT vec2 v2f_texCoordsPerLayer[%RasterTileLayersCount%];                                                  ""\n"
@@ -134,11 +137,11 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         "                                                                                                                   ""\n"
         // Parameters: per-tile data
         "uniform ivec2 param_vs_tile;                                                                                       ""\n"
+        "uniform float param_vs_elevationData_k;                                                                            ""\n"
+        "uniform float param_vs_elevationData_upperMetersPerUnit;                                                           ""\n"
+        "uniform float param_vs_elevationData_lowerMetersPerUnit;                                                           ""\n"
         "#if VERTEX_TEXTURE_FETCH_SUPPORTED                                                                                 ""\n"
-        "    uniform float param_vs_elevationData_k;                                                                        ""\n"
         "    uniform sampler2D param_vs_elevationData_sampler;                                                              ""\n"
-        "    uniform float param_vs_elevationData_upperMetersPerUnit;                                                       ""\n"
-        "    uniform float param_vs_elevationData_lowerMetersPerUnit;                                                       ""\n"
         "#endif // VERTEX_TEXTURE_FETCH_SUPPORTED                                                                           ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-layer-in-tile data
@@ -178,7 +181,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         //   Process each tile layer texture coordinates (except elevation)
         "%UnrolledPerLayerTexCoordsProcessingCode%                                                                          ""\n"
         "                                                                                                                   ""\n"
-        "#if VERTEX_TEXTURE_FETCH_SUPPORTED                                                                                 ""\n"
         //   If elevation data is active, use it
         "    if(abs(param_vs_elevationData_k) > 0.0)                                                                        ""\n"
         "    {                                                                                                              ""\n"
@@ -186,16 +188,21 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
         "            param_vs_elevationData_lowerMetersPerUnit, in_vs_vertexTexCoords.t);                                   ""\n"
         "                                                                                                                   ""\n"
         //       Calculate texcoords for elevation data (pixel-is-area)
+        "        float heightInMeters;                                                                                      ""\n"
+        "#if VERTEX_TEXTURE_FETCH_SUPPORTED                                                                                 ""\n"
         "        vec2 elevationDataTexCoords;                                                                               ""\n"
+        //TODO: here a 0.5 shift is needed
         "        calculateTextureCoordinates(                                                                               ""\n"
         "            param_vs_perTileLayer[0],                                                                              ""\n"
         "            elevationDataTexCoords);                                                                               ""\n"
+        "        heightInMeters = texture(param_vs_elevationData_sampler, elevationDataTexCoords).r;                        ""\n"
+        "#else // !VERTEX_TEXTURE_FETCH_SUPPORTED                                                                           ""\n"
+        "        heightInMeters = in_vs_vertexElevation;                                                                    ""\n"
+        "#endif // VERTEX_TEXTURE_FETCH_SUPPORTED                                                                           ""\n"
         "                                                                                                                   ""\n"
-        "        float heightInMeters = texture(param_vs_elevationData_sampler, elevationDataTexCoords).r;                  ""\n"
         "        v.y = heightInMeters / metersToUnits;                                                                      ""\n"
         "        v.y *= param_vs_elevationData_k;                                                                           ""\n"
         "    }                                                                                                              ""\n"
-        "#endif // VERTEX_TEXTURE_FETCH_SUPPORTED                                                                           ""\n"
         "                                                                                                                   ""\n"
         //   Calculate mipmap LOD
         "    vec2 groundVertex = v.xz;                                                                                      ""\n"
@@ -312,6 +319,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
     renderAPI->clearVariablesLookup();
     renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
     renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
+    if(!renderAPI->isSupported_vertexShaderTextureLookup)
+    {
+        renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.in.vertexElevation, "in_vs_vertexElevation", GLShaderVariableType::In);
+    }
     renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.mProjectionView, "param_vs_mProjectionView", GLShaderVariableType::Uniform);
     renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.targetInTilePosN, "param_vs_targetInTilePosN", GLShaderVariableType::Uniform);
     renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.targetTile, "param_vs_targetTile", GLShaderVariableType::Uniform);
@@ -320,14 +331,14 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeMapStage()
     renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.groundCameraPosition, "param_vs_groundCameraPosition", GLShaderVariableType::Uniform);
     renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.scaleToRetainProjectedSize, "param_vs_scaleToRetainProjectedSize", GLShaderVariableType::Uniform);
     renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.tile, "param_vs_tile", GLShaderVariableType::Uniform);
+    renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_k, "param_vs_elevationData_k", GLShaderVariableType::Uniform);
+    renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_upperMetersPerUnit, "param_vs_elevationData_upperMetersPerUnit", GLShaderVariableType::Uniform);
+    renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_lowerMetersPerUnit, "param_vs_elevationData_lowerMetersPerUnit", GLShaderVariableType::Uniform);
     if(renderAPI->isSupported_vertexShaderTextureLookup)
     {
         renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_sampler, "param_vs_elevationData_sampler", GLShaderVariableType::Uniform);
-        renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_k, "param_vs_elevationData_k", GLShaderVariableType::Uniform);
-        renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_upperMetersPerUnit, "param_vs_elevationData_upperMetersPerUnit", GLShaderVariableType::Uniform);
-        renderAPI->findVariableLocation(_mapStage.program, _mapStage.vs.param.elevationData_lowerMetersPerUnit, "param_vs_elevationData_lowerMetersPerUnit", GLShaderVariableType::Uniform);
     }
-    for(int layerId = 0; layerId < MapTileLayerIdsCount; layerId++)
+    for(int layerId = renderAPI->isSupported_vertexShaderTextureLookup ? MapTileLayerId::ElevationData : MapTileLayerId::RasterMap; layerId < MapTileLayerIdsCount; layerId++)
     {
         auto layerStructName =
             QString::fromLatin1("param_vs_perTileLayer[%layerId%]")
@@ -366,6 +377,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderMapStage()
     GL_CHECK_PRESENT(glUniform2i);
     GL_CHECK_PRESENT(glUniform2fv);
     GL_CHECK_PRESENT(glActiveTexture);
+    GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glVertexAttribPointer);
+    GL_CHECK_PRESENT(glDisableVertexAttribArray);
 
     // Set tile patch VAO
     renderAPI->glBindVertexArray_wrapper(_mapStage.tilePatchVAO);
@@ -431,15 +445,17 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderMapStage()
     }
 
     // Check if we need to process elevation data
-    const bool elevationDataSupported = renderAPI->isSupported_vertexShaderTextureLookup;
-    const bool elevationDataEnabled = elevationDataSupported && currentState.tileProviders[MapTileLayerId::ElevationData];
-    if(elevationDataSupported && !elevationDataEnabled)
+    const bool elevationDataEnabled = static_cast<bool>(currentState.tileProviders[MapTileLayerId::ElevationData]);
+    if(!elevationDataEnabled)
     {
         // We have no elevation data provider, so we can not do anything
         glUniform1f(_mapStage.vs.param.elevationData_k, 0.0f);
         GL_CHECK_RESULT;
     }
-
+    bool elevationVertexAttribArrayEnabled = false;
+    glDisableVertexAttribArray(_mapStage.vs.in.vertexElevation);
+    GL_CHECK_RESULT;
+    
     // For each visible tile, render it
     for(auto itTileId = _visibleTiles.begin(); itTileId != _visibleTiles.end(); ++itTileId)
     {
@@ -453,6 +469,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderMapStage()
         GL_CHECK_RESULT;
 
         // Set elevation data
+        bool appliedElevationVertexAttribArray = false;
         if(elevationDataEnabled)
         {
             const auto& layer = layers[MapTileLayerId::ElevationData];
@@ -485,38 +502,64 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderMapStage()
                 auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomBase, tileIdN.y + 1, TileSize3D);
                 glUniform1f(_mapStage.vs.param.elevationData_lowerMetersPerUnit, lowerMetersPerUnit);
 
-                glActiveTexture(GL_TEXTURE0 + MapTileLayerId::ElevationData);
-                GL_CHECK_RESULT;
-
-                glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
-                GL_CHECK_RESULT;
-
                 const auto& perTile_vs = _mapStage.vs.param.perTileLayer[MapTileLayerId::ElevationData];
-                if(gpuResource->type == RenderAPI::ResourceInGPU::TileOnAtlasTexture)
-                {
-                    const auto& tileOnAtlasTexture = static_cast<RenderAPI::TileOnAtlasTextureInGPU*>(gpuResource.get());
 
-                    glUniform1i(perTile_vs.slotIndex, tileOnAtlasTexture->slotIndex);
+                if(renderAPI->isSupported_vertexShaderTextureLookup)
+                {
+                    glActiveTexture(GL_TEXTURE0 + MapTileLayerId::ElevationData);
                     GL_CHECK_RESULT;
-                    glUniform1f(perTile_vs.tileSizeN, tileOnAtlasTexture->atlasTexture->tileSizeN);
+
+                    glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
                     GL_CHECK_RESULT;
-                    glUniform1f(perTile_vs.tilePaddingN, tileOnAtlasTexture->atlasTexture->halfTexelSizeN);
-                    GL_CHECK_RESULT;
-                    glUniform1i(perTile_vs.slotsPerSide, tileOnAtlasTexture->atlasTexture->slotsPerSide);
-                    GL_CHECK_RESULT;
+
+                    if(gpuResource->type == RenderAPI::ResourceInGPU::TileOnAtlasTexture)
+                    {
+                        const auto& tileOnAtlasTexture = static_cast<RenderAPI::TileOnAtlasTextureInGPU*>(gpuResource.get());
+
+                        glUniform1i(perTile_vs.slotIndex, tileOnAtlasTexture->slotIndex);
+                        GL_CHECK_RESULT;
+                        glUniform1f(perTile_vs.tileSizeN, tileOnAtlasTexture->atlasTexture->tileSizeN);
+                        GL_CHECK_RESULT;
+                        glUniform1f(perTile_vs.tilePaddingN, tileOnAtlasTexture->atlasTexture->halfTexelSizeN);
+                        GL_CHECK_RESULT;
+                        glUniform1i(perTile_vs.slotsPerSide, tileOnAtlasTexture->atlasTexture->slotsPerSide);
+                        GL_CHECK_RESULT;
+                    }
+                    else
+                    {
+                        const auto& texture = static_cast<RenderAPI::TextureInGPU*>(gpuResource.get());
+
+                        glUniform1i(perTile_vs.slotIndex, 0);
+                        GL_CHECK_RESULT;
+                        glUniform1f(perTile_vs.tileSizeN, 1.0f);
+                        GL_CHECK_RESULT;
+                        glUniform1f(perTile_vs.tilePaddingN, texture->halfTexelSizeN);
+                        GL_CHECK_RESULT;
+                        glUniform1i(perTile_vs.slotsPerSide, 1);
+                        GL_CHECK_RESULT;
+                    }
                 }
                 else
                 {
-                    const auto& texture = static_cast<RenderAPI::TextureInGPU*>(gpuResource.get());
+                    assert(gpuResource->type == RenderAPI::ResourceInGPU::ArrayBuffer);
 
-                    glUniform1i(perTile_vs.slotIndex, 0);
+                    const auto& arrayBuffer = static_cast<RenderAPI::ArrayBufferInGPU*>(gpuResource.get());
+                    assert(arrayBuffer->itemsCount == currentConfiguration.heixelsPerTileSide*currentConfiguration.heixelsPerTileSide);
+
+                    if(!elevationVertexAttribArrayEnabled)
+                    {
+                        glEnableVertexAttribArray(_mapStage.vs.in.vertexElevation);
+                        GL_CHECK_RESULT;
+
+                        elevationVertexAttribArrayEnabled = true;
+                    }
+
+                    glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
                     GL_CHECK_RESULT;
-                    glUniform1f(perTile_vs.tileSizeN, 1.0f);
+                    
+                    glVertexAttribPointer(_mapStage.vs.in.vertexElevation, 1, GL_FLOAT, GL_FALSE, sizeof(float), nullptr);
                     GL_CHECK_RESULT;
-                    glUniform1f(perTile_vs.tilePaddingN, texture->halfTexelSizeN);
-                    GL_CHECK_RESULT;
-                    glUniform1i(perTile_vs.slotsPerSide, 1);
-                    GL_CHECK_RESULT;
+                    appliedElevationVertexAttribArray = true;
                 }
             }
         }
@@ -586,6 +629,14 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderMapStage()
             }
         }
 
+        if(!appliedElevationVertexAttribArray && elevationVertexAttribArrayEnabled)
+        {
+            elevationVertexAttribArrayEnabled = false;
+
+            glDisableVertexAttribArray(_mapStage.vs.in.vertexElevation);
+            GL_CHECK_RESULT;
+        }
+
         glDrawElements(GL_TRIANGLES, _tilePatchIndicesCount, GL_UNSIGNED_SHORT, nullptr);
         GL_CHECK_RESULT;
     }
@@ -597,6 +648,17 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderMapStage()
         GL_CHECK_RESULT;
 
         glBindTexture(GL_TEXTURE_2D, 0);
+        GL_CHECK_RESULT;
+    }
+
+    // Unbind any binded buffer
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+
+    // Disable elevation vertex attrib array (if enabled)
+    if(elevationVertexAttribArrayEnabled)
+    {
+        glDisableVertexAttribArray(_mapStage.vs.in.vertexElevation);
         GL_CHECK_RESULT;
     }
 
@@ -1227,42 +1289,43 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::createTilePatch()
     {
         // Complex tile patch, that consists of (TileElevationNodesPerSide*TileElevationNodesPerSide) number of
         // height clusters. Height cluster itself consists of 4 vertices, 6 indices and 2 polygons
-        const GLfloat clusterSize = static_cast<GLfloat>(TileSize3D) / static_cast<float>(currentConfiguration.heightmapPatchesPerSide);
-        const auto verticesPerLine = currentConfiguration.heightmapPatchesPerSide + 1;
-        verticesCount = verticesPerLine * verticesPerLine;
+        const auto heightPrimitivesPerSide = currentConfiguration.heixelsPerTileSide - 1;
+        const GLfloat clusterSize = static_cast<GLfloat>(TileSize3D) / static_cast<float>(heightPrimitivesPerSide);
+        verticesCount = currentConfiguration.heixelsPerTileSide * currentConfiguration.heixelsPerTileSide;
         pVertices = new MapTileVertex[verticesCount];
-        indicesCount = (currentConfiguration.heightmapPatchesPerSide * currentConfiguration.heightmapPatchesPerSide) * 6;
+        indicesCount = (heightPrimitivesPerSide * heightPrimitivesPerSide) * 6;
         pIndices = new GLushort[indicesCount];
 
         MapTileVertex* pV = pVertices;
 
         // Form vertices
-        for(auto row = 0u; row < verticesPerLine; row++)
+        assert(verticesCount <= std::numeric_limits<GLushort>::max());
+        for(auto row = 0u; row < currentConfiguration.heixelsPerTileSide; row++)
         {
-            for(auto col = 0u; col < verticesPerLine; col++, pV++)
+            for(auto col = 0u; col < currentConfiguration.heixelsPerTileSide; col++, pV++)
             {
                 pV->position[0] = static_cast<float>(col) * clusterSize;
                 pV->position[1] = static_cast<float>(row) * clusterSize;
 
-                pV->uv[0] = static_cast<float>(col) / static_cast<float>(currentConfiguration.heightmapPatchesPerSide);
-                pV->uv[1] = static_cast<float>(row) / static_cast<float>(currentConfiguration.heightmapPatchesPerSide);
+                pV->uv[0] = static_cast<float>(col) / static_cast<float>(heightPrimitivesPerSide);
+                pV->uv[1] = static_cast<float>(row) / static_cast<float>(heightPrimitivesPerSide);
             }
         }
 
         // Form indices
         GLushort* pI = pIndices;
-        for(auto row = 0u; row < currentConfiguration.heightmapPatchesPerSide; row++)
+        for(auto row = 0u; row < currentConfiguration.heixelsPerTileSide; row++)
         {
-            for(auto col = 0u; col < currentConfiguration.heightmapPatchesPerSide; col++)
+            for(auto col = 0u; col < currentConfiguration.heixelsPerTileSide; col++)
             {
                 // p1 - top left
                 // p2 - bottom left
                 // p3 - bottom right
                 // p4 - top right
-                const auto p1 = (row + 0) * verticesPerLine + col + 0;
-                const auto p2 = (row + 1) * verticesPerLine + col + 0;
-                const auto p3 = (row + 1) * verticesPerLine + col + 1;
-                const auto p4 = (row + 0) * verticesPerLine + col + 1;
+                const auto p1 = (row + 0) * currentConfiguration.heixelsPerTileSide + col + 0;
+                const auto p2 = (row + 1) * currentConfiguration.heixelsPerTileSide + col + 0;
+                const auto p3 = (row + 1) * currentConfiguration.heixelsPerTileSide + col + 1;
+                const auto p4 = (row + 0) * currentConfiguration.heixelsPerTileSide + col + 1;
 
                 // Triangle 0
                 pI[0] = p1;
