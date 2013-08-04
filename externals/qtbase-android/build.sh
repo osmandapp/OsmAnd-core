@@ -14,11 +14,10 @@ if [ ! -d "$ANDROID_NDK" ]; then
 fi
 export ANDROID_SDK_ROOT=`echo $ANDROID_SDK | sed 's/\\\\/\//g'`
 export ANDROID_NDK_ROOT=`echo $ANDROID_NDK | sed 's/\\\\/\//g'`
-if [ -d "$ANDROID_NDK/toolchains/arm-linux-androideabi-4.8" ]; then
-	export ANDROID_NDK_TOOLCHAIN_VERSION=4.8
-fi
 if [ -d "$ANDROID_NDK/toolchains/arm-linux-androideabi-4.7" ]; then
 	export ANDROID_NDK_TOOLCHAIN_VERSION=4.7
+elif [ -d "$ANDROID_NDK/toolchains/arm-linux-androideabi-4.8" ]; then
+	export ANDROID_NDK_TOOLCHAIN_VERSION=4.8
 fi
 if [[ "$(uname -a)" =~ Linux ]]; then
 	if [[ "$(uname -m)" == x86_64 ]] && [ -d "$ANDROID_NDK/prebuilt/linux-x86_64" ]; then

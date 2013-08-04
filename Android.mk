@@ -103,6 +103,7 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
             )))
     $(info $(shell (rm -rf $(LOCAL_PATH)/moc)))
     $(foreach header_file,$(HEADER_FILES),$(call run_moc,$(header_file)))
+    $(info $(shell (find $(LOCAL_PATH)/moc -type f -size 0 -print0 | xargs -0 rm)))
     MOC_FILES := \
         $(shell (find $(LOCAL_PATH)/moc -type f))
 
