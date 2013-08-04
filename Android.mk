@@ -36,6 +36,7 @@ LOCAL_STATIC_LIBRARIES := \
     osmand_expat$(OSMAND_BINARY_SUFFIX) \
     osmand_skia$(OSMAND_BINARY_SUFFIX) \
     osmand_gdal$(OSMAND_BINARY_SUFFIX) \
+    osmand_glsl-optimizer$(OSMAND_BINARY_SUFFIX) \
     Qt5Core$(OSMAND_BINARY_SUFFIX) \
     Qt5Network$(OSMAND_BINARY_SUFFIX) \
     Qt5Sql$(OSMAND_BINARY_SUFFIX)
