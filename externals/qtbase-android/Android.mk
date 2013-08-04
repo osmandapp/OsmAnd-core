@@ -16,7 +16,7 @@ LOCAL_SRC_FILES := $(LOCAL_PATH)/$(QT)/lib/lib$(LOCAL_MODULE).so
 LOCAL_EXPORT_C_INCLUDES := \
     $(QT)/include \
     $(QT)/include/QtCore
-include $(PREBUILT_SHARED_LIBRARY)
+include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_ARM_NEON := $(OSMAND_BUILDING_NEON_LIBRARY)
@@ -25,7 +25,7 @@ LOCAL_SRC_FILES := $(LOCAL_PATH)/$(QT)/lib/lib$(LOCAL_MODULE).so
 LOCAL_EXPORT_C_INCLUDES := \
     $(QT)/include \
     $(QT)/include/QtNetwork
-include $(PREBUILT_SHARED_LIBRARY)
+include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_ARM_NEON := $(OSMAND_BUILDING_NEON_LIBRARY)
@@ -34,4 +34,4 @@ LOCAL_SRC_FILES := $(LOCAL_PATH)/$(QT)/lib/lib$(LOCAL_MODULE).so
 LOCAL_EXPORT_C_INCLUDES := \
     $(QT)/include \
     $(QT)/include/QtSql
-include $(PREBUILT_SHARED_LIBRARY)
+include $(PREBUILT_STATIC_LIBRARY)
