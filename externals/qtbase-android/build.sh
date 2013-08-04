@@ -14,11 +14,16 @@ if [ ! -d "$ANDROID_NDK" ]; then
 fi
 export ANDROID_SDK_ROOT=`echo $ANDROID_SDK | sed 's/\\\\/\//g'`
 export ANDROID_NDK_ROOT=`echo $ANDROID_NDK | sed 's/\\\\/\//g'`
-export ANDROID_NDK_TOOLCHAIN_VERSION=4.7
+if [ -d "$ANDROID_NDK/toolchains/arm-linux-androideabi-4.8" ]; then
+	export ANDROID_NDK_TOOLCHAIN_VERSION=4.8
+fi
+if [ -d "$ANDROID_NDK/toolchains/arm-linux-androideabi-4.7" ]; then
+	export ANDROID_NDK_TOOLCHAIN_VERSION=4.7
+fi
 if [[ "$(uname -a)" =~ Linux ]]; then
-	if [[ "$(uname -m)" == x86_64 ]] && [ -d $ANDROID_NDK/prebuilt/linux-x86_64 ]; then
+	if [[ "$(uname -m)" == x86_64 ]] && [ -d "$ANDROID_NDK/prebuilt/linux-x86_64" ]; then
 		export ANDROID_NDK_HOST=linux-x86_64;
-	elif [ -d $ANDROID_NDK/prebuilt/linux-x86 ]; then
+	elif [ -d "$ANDROID_NDK/prebuilt/linux-x86" ]; then
 		export ANDROID_NDK_HOST=linux-x86
 	else
 		export ANDROID_NDK_HOST=linux
@@ -29,9 +34,9 @@ if [[ "$(uname -a)" =~ Linux ]]; then
 	fi
 fi
 if [[ "$(uname -a)" =~ Darwin ]]; then
-	if [[ "$(uname -m)" == x86_64 ]] && [ -d $ANDROID_NDK/prebuilt/darwin-x86_64 ]; then
+	if [[ "$(uname -m)" == x86_64 ]] && [ -d "$ANDROID_NDK/prebuilt/darwin-x86_64" ]; then
 		export ANDROID_NDK_HOST=darwin-x86_64;
-	elif [ -d $ANDROID_NDK/prebuilt/darwin-x86 ]; then
+	elif [ -d "$ANDROID_NDK/prebuilt/darwin-x86" ]; then
 		export ANDROID_NDK_HOST=darwin-x86
 	else
 		export ANDROID_NDK_HOST=darwin
