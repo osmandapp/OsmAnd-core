@@ -48,7 +48,7 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 fi
 
 QTBASE_CONFIGURATION=$(echo "
-	-xplatform android-g++
+	-xplatform android-g++ -android-toolchain-version $ANDROID_NDK_TOOLCHAIN_VERSION
 	-release -opensource -confirm-license -c++11 -static -largefile -no-accessibility -qt-sql-sqlite
 	-no-javascript-jit -no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
 	-nomake examples -nomake tools -no-gui -no-widgets -no-nis -no-cups -no-iconv -no-icu -no-dbus
