@@ -23,8 +23,10 @@ LOCAL_EXPORT_C_INCLUDES := \
 
 ifeq ($(LOCAL_ARM_NEON),true)
     OSMAND_BINARY_SUFFIX := _neon
+    OSMAND_QT_PATH_SUFFIX := -neon
 else
     OSMAND_BINARY_SUFFIX :=
+    OSMAND_QT_PATH_SUFFIX :=
 endif
 
 LOCAL_STATIC_LIBRARIES := \
@@ -69,7 +71,7 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
         $(wildcard $(LOCAL_PATH)/client/*.c*) \
         $(wildcard $(LOCAL_PATH)/protos/*.c*)
 
-    $(info $(shell ($(LOCAL_PATH)/externals/qtbase-android/upstream.patched.BUILD/bin/moc --help)))
+    $(info $(shell ($(LOCAL_PATH)/externals/qtbase-android/upstream.patched.$(TARGET_ARCH_ABI)$(OSMAND_QT_PATH_SUFFIX)/bin/moc --help)))
 
     LOCAL_SRC_FILES := \
         $(SRC_FILES:$(LOCAL_PATH)/%=%)
