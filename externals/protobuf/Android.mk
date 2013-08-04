@@ -12,14 +12,15 @@ endif
 LOCAL_EXPORT_CFLAGS := \
     -DGOOGLE_PROTOBUF_NO_RTTI
 LOCAL_EXPORT_C_INCLUDES := \
-    upstream.patched/src
+    $(LOCAL_PATH)/upstream.patched/src
 
 ifneq ($(OSMAND_USE_PREBUILT),true)
     LOCAL_CFLAGS := \
         $(LOCAL_EXPORT_CFLAGS)
 
     LOCAL_C_INCLUDES := \
-        .
+        . \
+        upstream.patched/src
 
     LOCAL_CPP_EXTENSION := .cc
     LOCAL_SRC_FILES := \
