@@ -11,7 +11,7 @@ include $(CLEAR_VARS)
 LOCAL_PATH := $(call my-dir)
 LOCAL_ARM_NEON := $(OSMAND_BUILDING_NEON_LIBRARY)
 LOCAL_MODULE := Qt5Core$(MODULE_SUFFIX)
-LOCAL_SRC_FILES := $(QT)/lib/lib$(LOCAL_MODULE).so
+LOCAL_SRC_FILES := $(LOCAL_PATH)/$(QT)/lib/lib$(LOCAL_MODULE).so
 LOCAL_EXPORT_C_INCLUDES := \
     $(QT)/include \
     $(QT)/include/QtCore
@@ -21,7 +21,7 @@ include $(CLEAR_VARS)
 LOCAL_PATH := $(call my-dir)
 LOCAL_ARM_NEON := $(OSMAND_BUILDING_NEON_LIBRARY)
 LOCAL_MODULE := Qt5Network$(MODULE_SUFFIX)
-LOCAL_SRC_FILES := $(QT)/lib/lib$(LOCAL_MODULE).so
+LOCAL_SRC_FILES := $(LOCAL_PATH)/$(QT)/lib/lib$(LOCAL_MODULE).so
 LOCAL_EXPORT_C_INCLUDES := \
     $(QT)/include \
     $(QT)/include/QtNetwork
@@ -31,7 +31,7 @@ include $(CLEAR_VARS)
 LOCAL_PATH := $(call my-dir)
 LOCAL_ARM_NEON := $(OSMAND_BUILDING_NEON_LIBRARY)
 LOCAL_MODULE := Qt5Sql$(MODULE_SUFFIX)
-LOCAL_SRC_FILES := $(QT)/lib/lib$(LOCAL_MODULE).so
+LOCAL_SRC_FILES := $(LOCAL_PATH)/$(QT)/lib/lib$(LOCAL_MODULE).so
 LOCAL_EXPORT_C_INCLUDES := \
     $(QT)/include \
     $(QT)/include/QtSql
