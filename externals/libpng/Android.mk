@@ -12,9 +12,6 @@ endif
 LOCAL_EXPORT_C_INCLUDES := \
     $(LOCAL_PATH)/upstream.patched
 
-LOCAL_SHARED_LIBRARIES := \
-    libz
-
 LOCAL_EXPORT_LDLIBS := \
     -lz
 

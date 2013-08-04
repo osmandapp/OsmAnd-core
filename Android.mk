@@ -32,18 +32,9 @@ LOCAL_STATIC_LIBRARIES := \
     osmand_skia$(OSMAND_BINARY_SUFFIX) \
     osmand_gdal$(OSMAND_BINARY_SUFFIX) \
     osmand_glsl-optimizer$(OSMAND_BINARY_SUFFIX) \
-    Qt5Core$(OSMAND_BINARY_SUFFIX) \
+    Qt5Sql$(OSMAND_BINARY_SUFFIX) \
     Qt5Network$(OSMAND_BINARY_SUFFIX) \
-    Qt5Sql$(OSMAND_BINARY_SUFFIX)
-
-LOCAL_EXPORT_LDLIBS := \
-    -losmand_protobuf$(OSMAND_BINARY_SUFFIX) \
-    -losmand_skia$(OSMAND_BINARY_SUFFIX) \
-    -losmand_gdal$(OSMAND_BINARY_SUFFIX) \
-    -losmand_glsl-optimizer$(OSMAND_BINARY_SUFFIX) \
-    -lQt5Core$(OSMAND_BINARY_SUFFIX) \
-    -lQt5Network$(OSMAND_BINARY_SUFFIX) \
-    -lQt5Sql$(OSMAND_BINARY_SUFFIX)
+    Qt5Core$(OSMAND_BINARY_SUFFIX)
 
 ifneq ($(OSMAND_USE_PREBUILT),true)
     LOCAL_CFLAGS := \
@@ -77,7 +68,9 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
         $(wildcard $(LOCAL_PATH)/src/Map/OpenGLES2/*.c*) \
         $(wildcard $(LOCAL_PATH)/client/*.c*) \
         $(wildcard $(LOCAL_PATH)/protos/*.c*)
-    LOCAL_CPP_EXTENSION := .cc .cpp
+
+    $(info $(shell ($(LOCAL_PATH)/externals/qtbase-android/upstream.patched.BUILD/bin/moc --help)))
+
     LOCAL_SRC_FILES := \
         $(SRC_FILES:$(LOCAL_PATH)/%=%)
 

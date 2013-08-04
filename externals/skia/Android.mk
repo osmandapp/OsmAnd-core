@@ -43,13 +43,7 @@ LOCAL_SHARED_LIBRARIES := \
     osmand_expat$(OSMAND_BINARY_SUFFIX)
 
 LOCAL_EXPORT_LDLIBS := \
-    -llog \
-    -lutils \
-    -losmand_jpeg$(OSMAND_BINARY_SUFFIX) \
-    -losmand_ft2$(OSMAND_BINARY_SUFFIX) \
-    -losmand_png$(OSMAND_BINARY_SUFFIX) \
-    -losmand_gif$(OSMAND_BINARY_SUFFIX) \
-    -losmand_expat$(OSMAND_BINARY_SUFFIX)
+    -llog
 
 ifneq ($(OSMAND_USE_PREBUILT),true)
     LOCAL_CFLAGS := \
