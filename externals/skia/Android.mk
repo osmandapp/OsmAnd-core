@@ -54,6 +54,7 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
         $(LOCAL_EXPORT_CFLAGS)
 
     LOCAL_C_INCLUDES := \
+        $(LOCAL_EXPORT_C_INCLUDES) \
         $(LOCAL_PATH)/upstream.patched/src/core \
         $(LOCAL_PATH)/upstream.patched/src/config \
         $(LOCAL_PATH)/upstream.patched/src/effects \

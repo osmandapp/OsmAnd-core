@@ -17,6 +17,7 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
         -DNO_GETENV
 
     LOCAL_C_INCLUDES := \
+        $(LOCAL_EXPORT_C_INCLUDES) \
         $(LOCAL_PATH)
 
     LOCAL_SRC_FILES := \

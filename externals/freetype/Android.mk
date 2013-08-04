@@ -18,6 +18,7 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
         -DFT_CONFIG_MODULES_H=<ftmodule-override.h>
 
     LOCAL_C_INCLUDES := \
+        $(LOCAL_EXPORT_C_INCLUDES) \
         $(LOCAL_PATH)
 
     LOCAL_SRC_FILES:= \

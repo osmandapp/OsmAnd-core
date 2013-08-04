@@ -49,6 +49,7 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
     endif
 
     LOCAL_C_INCLUDES := \
+        $(LOCAL_EXPORT_C_INCLUDES) \
         $(LOCAL_PATH)/include/OsmAndCore \
         $(LOCAL_PATH)/include/OsmAndCore/Data \
         $(LOCAL_PATH)/include/OsmAndCore/Data/Model \

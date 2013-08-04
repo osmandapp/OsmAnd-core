@@ -26,6 +26,7 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
         -DFRMT_gtiff
 
     LOCAL_C_INCLUDES := \
+        $(LOCAL_EXPORT_C_INCLUDES) \
         $(LOCAL_PATH)/upstream.patched/frmts/gtiff \
         $(LOCAL_PATH)/upstream.patched/frmts/gtiff/libtiff \
         $(LOCAL_PATH)/upstream.patched/frmts/gtiff/libgeotiff \

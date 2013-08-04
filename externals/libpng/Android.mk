@@ -19,6 +19,9 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
     LOCAL_CFLAGS := \
         -DPNG_CONFIGURE_LIBPNG
 
+    LOCAL_C_INCLUDES := \
+        $(LOCAL_EXPORT_C_INCLUDES)
+
     LOCAL_SRC_FILES := \
         upstream.patched/png.c \
         upstream.patched/pngerror.c \

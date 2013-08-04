@@ -19,8 +19,8 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
         $(LOCAL_EXPORT_CFLAGS)
 
     LOCAL_C_INCLUDES := \
+        $(LOCAL_EXPORT_C_INCLUDES) \
         $(LOCAL_PATH) \
-        $(LOCAL_PATH)/upstream.patched/src
 
     LOCAL_CPP_EXTENSION := .cc
     LOCAL_SRC_FILES := \
