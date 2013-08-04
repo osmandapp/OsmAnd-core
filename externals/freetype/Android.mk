@@ -14,7 +14,7 @@ LOCAL_EXPORT_C_INCLUDES := \
 
 ifneq ($(OSMAND_USE_PREBUILT),true)
     LOCAL_CFLAGS := \
-        -DFT2_BUILD_LIBRARY
+        -DFT2_BUILD_LIBRARY \
         -DFT_CONFIG_MODULES_H=<ftmodule-override.h>
 
     LOCAL_C_INCLUDES := \
