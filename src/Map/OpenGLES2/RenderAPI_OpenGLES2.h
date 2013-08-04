@@ -42,6 +42,10 @@ namespace OsmAnd {
 #if !defined(OSMAND_TARGET_OS_ios)
         typedef void (GL_APIENTRYP P_glTexStorage2DEXT_PROC)(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
         static P_glTexStorage2DEXT_PROC glTexStorage2DEXT;
+
+        static PFNGLBINDVERTEXARRAYOESPROC glBindVertexArrayOES;
+        static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArraysOES;
+        static PFNGLGENVERTEXARRAYSOESPROC glGenVertexArraysOES;
 #endif // !OSMAND_TARGET_OS_ios
     private:
         bool _isSupported_EXT_unpack_subimage;

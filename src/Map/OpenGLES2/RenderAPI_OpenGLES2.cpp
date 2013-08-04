@@ -188,8 +188,23 @@ bool OsmAnd::RenderAPI_OpenGLES2::initialize()
 #if !defined(OSMAND_TARGET_OS_ios)
     if(_isSupported_EXT_texture_storage && !glTexStorage2DEXT)
     {
-        glTexStorage2DEXT = static_cast<P_glTexStorage2DEXT_PROC>(eglGetProcAddress(glTexStorage2DEXT));
+        glTexStorage2DEXT = static_cast<P_glTexStorage2DEXT_PROC>(eglGetProcAddress("glTexStorage2DEXT"));
         assert(glTexStorage2DEXT);
+    }
+    if(_isSupported_OES_vertex_array_object && !glBindVertexArrayOES)
+    {
+        glBindVertexArrayOES = static_cast<PFNGLBINDVERTEXARRAYOESPROC>(eglGetProcAddress("glBindVertexArrayOES"));
+        assert(glBindVertexArrayOES);
+    }
+    if(_isSupported_OES_vertex_array_object && !glDeleteVertexArraysOES)
+    {
+        glDeleteVertexArraysOES = static_cast<PFNGLDELETEVERTEXARRAYSOESPROC>(eglGetProcAddress("glDeleteVertexArraysOES"));
+        assert(glDeleteVertexArraysOES);
+    }
+    if(_isSupported_OES_vertex_array_object && !glGenVertexArraysOES)
+    {
+        glGenVertexArraysOES = static_cast<PFNGLGENVERTEXARRAYSOESPROC>(eglGetProcAddress("glGenVertexArraysOES"));
+        assert(glGenVertexArraysOES);
     }
 #endif // !OSMAND_TARGET_OS_ios
 
@@ -530,12 +545,15 @@ void OsmAnd::RenderAPI_OpenGLES2::preprocessShader( QString& code, const QString
         "precision highp sampler2D;                                                                                         ""\n"
         "                                                                                                                   ""\n"
         // Features definitions
-        "#define VERTEX_TEXTURE_FETCH_SUPPORTED 0                                                                           ""\n"
+        "#define VERTEX_TEXTURE_FETCH_SUPPORTED %VertexTextureFetchSupported%                                               ""\n"
         "#define SAMPLE_TEXTURE_2D texture2D                                                                                ""\n"
         "#define SAMPLE_TEXTURE_2D_LOD texture2DLodEXT                                                                      ""\n"
         "                                                                                                                   ""\n");
 
-    code.prepend(shaderSource);
+    auto shaderSourcePreprocessed = shaderSource;
+    shaderSourcePreprocessed.replace("%VertexTextureFetchSupported%", QString::number(isSupported_vertexShaderTextureLookup ? 1 : 0));
+
+    code.prepend(shaderSourcePreprocessed);
     code.prepend(extraHeader);
     code.prepend(shaderHeader);
 }
