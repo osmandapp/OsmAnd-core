@@ -67,7 +67,7 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
         $(wildcard $(LOCAL_PATH)/src/Data/Model/*.c*) \
         $(wildcard $(LOCAL_PATH)/src/Routing/*.c*) \
         $(wildcard $(LOCAL_PATH)/src/Map/*.c*) \
-        $(wildcard $(LOCAL_PATH)/src/Map/OpenGL_Base/*.c*) \
+        $(wildcard $(LOCAL_PATH)/src/Map/OpenGL_Common/*.c*) \
         $(wildcard $(LOCAL_PATH)/src/Map/OpenGLES2/*.c*) \
         $(wildcard $(LOCAL_PATH)/client/*.c*) \
         $(wildcard $(LOCAL_PATH)/protos/*.c*)
