@@ -16,3 +16,6 @@
 # XCode
 *.pbxuser
 xcuserdata
+
+# Qt moc'ed files
+/moc

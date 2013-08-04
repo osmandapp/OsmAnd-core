@@ -71,10 +71,38 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
         $(wildcard $(LOCAL_PATH)/client/*.c*) \
         $(wildcard $(LOCAL_PATH)/protos/*.c*)
 
-    $(info $(shell ($(LOCAL_PATH)/externals/qtbase-android/upstream.patched.$(TARGET_ARCH_ABI)$(OSMAND_QT_PATH_SUFFIX)/bin/moc --help)))
+	HEADER_FILES := \
+        $(wildcard $(LOCAL_PATH)/src/*.h) \
+        $(wildcard $(LOCAL_PATH)/src/Data/*.h) \
+        $(wildcard $(LOCAL_PATH)/src/Data/Model/*.h) \
+        $(wildcard $(LOCAL_PATH)/src/Routing/*.h) \
+        $(wildcard $(LOCAL_PATH)/src/Map/*.h) \
+        $(wildcard $(LOCAL_PATH)/src/Map/OpenGL_Common/*.h) \
+        $(wildcard $(LOCAL_PATH)/src/Map/OpenGLES2/*.h) \
+        $(wildcard $(LOCAL_PATH)/client/*.h) \
+        $(wildcard $(LOCAL_PATH)/protos/*.h)
+    mkdirp_ = \
+        $(info $(shell ( \
+            mkdir -p `dirname $(1)` \
+        )))
+    mkdirp = \
+        $(call mkdirp_,$(1))
+    run_moc = \
+        $(call mkdirp,$(1:$(LOCAL_PATH)/%=$(LOCAL_PATH)/moc/%)) \
+        $(info $(shell ( \
+            $(LOCAL_PATH)/externals/qtbase-android/upstream.patched.$(TARGET_ARCH_ABI)$(OSMAND_QT_PATH_SUFFIX)/bin/moc \
+                $(1) \
+                -f \
+                -o $(1:$(LOCAL_PATH)/%.h=$(LOCAL_PATH)/moc/%.cpp) \
+            )))
+    $(info $(shell (rm -rf $(LOCAL_PATH)/moc)))
+    $(foreach header_file,$(HEADER_FILES),$(call run_moc,$(header_file)))
+    MOC_FILES := \
+        $(shell (find $(LOCAL_PATH)/moc -type f))
 
     LOCAL_SRC_FILES := \
-        $(SRC_FILES:$(LOCAL_PATH)/%=%)
+        $(SRC_FILES:$(LOCAL_PATH)/%=%) \
+        $(MOC_FILES:$(LOCAL_PATH)/%=%)
 
     include $(BUILD_STATIC_LIBRARY)
 else
