@@ -188,22 +188,22 @@ bool OsmAnd::RenderAPI_OpenGLES2::initialize()
 #if !defined(OSMAND_TARGET_OS_ios)
     if(_isSupported_EXT_texture_storage && !glTexStorage2DEXT)
     {
-        glTexStorage2DEXT = static_cast<P_glTexStorage2DEXT_PROC>(eglGetProcAddress("glTexStorage2DEXT"));
+        glTexStorage2DEXT = reinterpret_cast<P_glTexStorage2DEXT_PROC>(eglGetProcAddress("glTexStorage2DEXT"));
         assert(glTexStorage2DEXT);
     }
     if(_isSupported_OES_vertex_array_object && !glBindVertexArrayOES)
     {
-        glBindVertexArrayOES = static_cast<PFNGLBINDVERTEXARRAYOESPROC>(eglGetProcAddress("glBindVertexArrayOES"));
+        glBindVertexArrayOES = reinterpret_cast<PFNGLBINDVERTEXARRAYOESPROC>(eglGetProcAddress("glBindVertexArrayOES"));
         assert(glBindVertexArrayOES);
     }
     if(_isSupported_OES_vertex_array_object && !glDeleteVertexArraysOES)
     {
-        glDeleteVertexArraysOES = static_cast<PFNGLDELETEVERTEXARRAYSOESPROC>(eglGetProcAddress("glDeleteVertexArraysOES"));
+        glDeleteVertexArraysOES = reinterpret_cast<PFNGLDELETEVERTEXARRAYSOESPROC>(eglGetProcAddress("glDeleteVertexArraysOES"));
         assert(glDeleteVertexArraysOES);
     }
     if(_isSupported_OES_vertex_array_object && !glGenVertexArraysOES)
     {
-        glGenVertexArraysOES = static_cast<PFNGLGENVERTEXARRAYSOESPROC>(eglGetProcAddress("glGenVertexArraysOES"));
+        glGenVertexArraysOES = reinterpret_cast<PFNGLGENVERTEXARRAYSOESPROC>(eglGetProcAddress("glGenVertexArraysOES"));
         assert(glGenVertexArraysOES);
     }
 #endif // !OSMAND_TARGET_OS_ios
