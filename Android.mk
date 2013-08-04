@@ -71,7 +71,8 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
         $(wildcard $(LOCAL_PATH)/client/*.c*) \
         $(wildcard $(LOCAL_PATH)/protos/*.c*)
 
-	HEADER_FILES := \
+    HEADER_FILES := \
+        $(wildcard $(LOCAL_PATH)/include/*.h) \
         $(wildcard $(LOCAL_PATH)/src/*.h) \
         $(wildcard $(LOCAL_PATH)/src/Data/*.h) \
         $(wildcard $(LOCAL_PATH)/src/Data/Model/*.h) \
