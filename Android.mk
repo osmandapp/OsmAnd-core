@@ -29,17 +29,21 @@ endif
 
 LOCAL_STATIC_LIBRARIES := \
     osmand_protobuf$(OSMAND_BINARY_SUFFIX) \
-    osmand_jpeg$(OSMAND_BINARY_SUFFIX) \
-    osmand_ft2$(OSMAND_BINARY_SUFFIX) \
-    osmand_png$(OSMAND_BINARY_SUFFIX) \
-    osmand_gif$(OSMAND_BINARY_SUFFIX) \
-    osmand_expat$(OSMAND_BINARY_SUFFIX) \
     osmand_skia$(OSMAND_BINARY_SUFFIX) \
     osmand_gdal$(OSMAND_BINARY_SUFFIX) \
     osmand_glsl-optimizer$(OSMAND_BINARY_SUFFIX) \
     Qt5Core$(OSMAND_BINARY_SUFFIX) \
     Qt5Network$(OSMAND_BINARY_SUFFIX) \
     Qt5Sql$(OSMAND_BINARY_SUFFIX)
+
+LOCAL_EXPORT_LDLIBS := \
+    -losmand_protobuf$(OSMAND_BINARY_SUFFIX) \
+    -losmand_skia$(OSMAND_BINARY_SUFFIX) \
+    -losmand_gdal$(OSMAND_BINARY_SUFFIX) \
+    -losmand_glsl-optimizer$(OSMAND_BINARY_SUFFIX) \
+    -lQt5Core$(OSMAND_BINARY_SUFFIX) \
+    -lQt5Network$(OSMAND_BINARY_SUFFIX) \
+    -lQt5Sql$(OSMAND_BINARY_SUFFIX)
 
 ifneq ($(OSMAND_USE_PREBUILT),true)
     LOCAL_CFLAGS := \

@@ -28,26 +28,28 @@ LOCAL_EXPORT_C_INCLUDES := \
     $(LOCAL_PATH)/upstream.patched/include/gpu \
     $(LOCAL_PATH)/upstream.patched/include/utils/android
 
-LOCAL_SHARED_LIBRARIES := \
-    libutils
-
 ifeq ($(LOCAL_ARM_NEON),true)
-    LOCAL_STATIC_LIBRARIES := \
-        osmand_jpeg_neon \
-        osmand_ft2_neon \
-        osmand_png_neon \
-        osmand_gif_neon \
-        osmand_expat_neon
+    OSMAND_BINARY_SUFFIX := _neon
 else
-    LOCAL_STATIC_LIBRARIES := \
-        osmand_jpeg \
-        osmand_ft2 \
-        osmand_png \
-        osmand_gif \
-        osmand_expat
+    OSMAND_BINARY_SUFFIX :=
 endif
 
-LOCAL_EXPORT_LDLIBS := -llog
+LOCAL_SHARED_LIBRARIES := \
+    libutils \
+    osmand_jpeg$(OSMAND_BINARY_SUFFIX) \
+    osmand_ft2$(OSMAND_BINARY_SUFFIX) \
+    osmand_png$(OSMAND_BINARY_SUFFIX) \
+    osmand_gif$(OSMAND_BINARY_SUFFIX) \
+    osmand_expat$(OSMAND_BINARY_SUFFIX)
+
+LOCAL_EXPORT_LDLIBS := \
+    -llog \
+    -lutils \
+    -losmand_jpeg$(OSMAND_BINARY_SUFFIX) \
+    -losmand_ft2$(OSMAND_BINARY_SUFFIX) \
+    -losmand_png$(OSMAND_BINARY_SUFFIX) \
+    -losmand_gif$(OSMAND_BINARY_SUFFIX) \
+    -losmand_expat$(OSMAND_BINARY_SUFFIX)
 
 ifneq ($(OSMAND_USE_PREBUILT),true)
     LOCAL_CFLAGS := \
