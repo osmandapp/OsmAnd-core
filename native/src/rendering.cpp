@@ -229,6 +229,13 @@ void renderText(MapDataObject* obj, RenderingRuleSearchRequest* req, RenderingCo
 			if (req->searchRule(RenderingRulesStorage::TEXT_RULES)
 					&& req->getIntPropertyValue(req->props()->R_TEXT_SIZE) > 0) {
 				TextDrawInfo* info = new TextDrawInfo(name);
+				std::string tagName2 = req->getStringPropertyValue(req->props()->R_NAME_TAG2);
+				if(tagName2 != "") {
+					std::string tv = obj->objectNames[tagName2];
+					if(tv != "") {
+						info->text = name + " " + tv;
+					}
+				}
 				info->drawOnPath = (path != NULL) && (req->getIntPropertyValue(req->props()->R_TEXT_ON_PATH, 0) > 0);
 				if (path != NULL)
 					info->path = new SkPath(*path);

@@ -232,6 +232,7 @@ public:
 	RenderingRuleProperty* R_AREA;
 	RenderingRuleProperty* R_CYCLE;
 	RenderingRuleProperty* R_NAME_TAG;
+	RenderingRuleProperty* R_NAME_TAG2;
 	RenderingRuleProperty* R_ATTR_INT_VALUE;
 	RenderingRuleProperty* R_ATTR_COLOR_VALUE;
 	RenderingRuleProperty* R_ATTR_BOOL_VALUE;
@@ -313,6 +314,7 @@ public:
 
 		R_TEXT_LENGTH = registerRuleInternal(RenderingRuleProperty::createInputIntProperty("textLength"));
 		R_NAME_TAG = registerRuleInternal(RenderingRuleProperty::createInputStringProperty("nameTag"));
+		R_NAME_TAG2 = registerRuleInternal(RenderingRuleProperty::createOutputStringProperty("nameTag2"));
 
 		R_ATTR_INT_VALUE = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("attrIntValue"));
 		R_ATTR_BOOL_VALUE = registerRuleInternal(RenderingRuleProperty::createOutputBooleanProperty("attrBoolValue"));
