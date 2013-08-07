@@ -195,7 +195,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeRasterMapStage()
         "        float heightInMeters;                                                                                      ""\n"
         "#if VERTEX_TEXTURE_FETCH_SUPPORTED                                                                                 ""\n"
         "        vec2 elevationDataTexCoords;                                                                               ""\n"
-        //TODO: here a 0.5 shift is needed
         "        calculateTextureCoordinates(                                                                               ""\n"
         "            param_vs_elevationTileLayer,                                                                           ""\n"
         "            elevationDataTexCoords);                                                                               ""\n"

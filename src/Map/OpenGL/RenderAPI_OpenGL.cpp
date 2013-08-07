@@ -93,7 +93,8 @@ bool OsmAnd::RenderAPI_OpenGL::initialize()
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units in vertex shader %d", maxTextureUnitsInVertexShader);
     //////////////////////////////////////////////////////////////////////////
-    maxTextureUnitsInVertexShader = 0;
+    //NOTE: for testing
+    //maxTextureUnitsInVertexShader = 0;
     //////////////////////////////////////////////////////////////////////////
     _isSupported_vertexShaderTextureLookup = (maxTextureUnitsInVertexShader >= 1);
 
