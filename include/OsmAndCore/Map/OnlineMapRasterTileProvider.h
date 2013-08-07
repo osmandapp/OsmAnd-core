@@ -35,7 +35,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-
+#include <OsmAndCore/Concurrent.h>
 #include <OsmAndCore/Map/IMapBitmapTileProvider.h>
 
 class QNetworkAccessManager;
@@ -65,6 +65,8 @@ namespace OsmAnd {
 
         QMutex _requestsMutex;
         std::array< QSet< TileId >, 32 > _requestedTileIds;
+
+        const Concurrent::TaskHost::Bridge _taskHostBridge;
 
         void obtainTileDeffered(const QUrl& url, const TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback);
         void replyFinishedHandler(QNetworkReply* reply, const TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback, QEventLoop& eventLoop, QNetworkAccessManager& networkAccessManager);
@@ -96,8 +98,8 @@ namespace OsmAnd {
         virtual bool obtainTileImmediate(const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<IMapTileProvider::Tile>& tile);
         virtual void obtainTileDeffered(const TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback);
         
-        static std::shared_ptr<OsmAnd::IMapTileProvider> createMapnikProvider();
-        static std::shared_ptr<OsmAnd::IMapTileProvider> createCycleMapProvider();
+        static std::shared_ptr<OsmAnd::IMapBitmapTileProvider> createMapnikProvider();
+        static std::shared_ptr<OsmAnd::IMapBitmapTileProvider> createCycleMapProvider();
     };
 
 }

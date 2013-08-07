@@ -29,21 +29,20 @@
 
 namespace OsmAnd
 {
-    WEAK_ENUM_EX(MapTileLayerId, int32_t)
+    WEAK_ENUM_EX(RasterMapLayerId, int32_t)
     {
         Invalid = -1,
 
-        ElevationData,
-        RasterMap,
-        MapOverlay0,
-        MapOverlay1,
-        MapOverlay2,
-        MapOverlay3,
+        BaseLayer,
+        Overlay0,
+        Overlay1,
+        Overlay2,
+        Overlay3,
 
         __LAST,
     };
     enum {
-        MapTileLayerIdsCount = static_cast<unsigned>(MapTileLayerId::__LAST)
+        RasterMapLayersCount = static_cast<unsigned>(RasterMapLayerId::__LAST)
     };
 }
 

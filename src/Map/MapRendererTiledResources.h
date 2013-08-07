@@ -19,8 +19,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __MAP_RENDERER_TILE_LAYER_H_
-#define __MAP_RENDERER_TILE_LAYER_H_
+#ifndef __MAP_RENDERER_TILED_RESOURCES_H_
+#define __MAP_RENDERER_TILED_RESOURCES_H_
 
 #include <stdint.h>
 #include <memory>
@@ -34,11 +34,11 @@
 #include <MapTypes.h>
 #include <IMapTileProvider.h>
 #include <RenderAPI.h>
+#include <MapRenderer.h>
 
 namespace OsmAnd {
 
-    class MapRenderer;
-    class OSMAND_CORE_API MapRendererTileLayer
+    class OSMAND_CORE_API MapRendererTiledResources
     {
     public:
         class OSMAND_CORE_API TileEntry
@@ -67,7 +67,7 @@ namespace OsmAnd {
 
         private:
         protected:
-            TileEntry(const TileId& tileId, const ZoomLevel& zoom, const MapTileLayerId& layerId);
+            TileEntry(const TileId& tileId, const ZoomLevel& zoom);
 
             volatile State _state;
             std::shared_ptr<IMapTileProvider::Tile> _sourceData;
@@ -77,7 +77,6 @@ namespace OsmAnd {
 
             const TileId tileId;
             const ZoomLevel zoom;
-            const MapTileLayerId layerId;
 
             const volatile State& state;
             QReadWriteLock stateLock;
@@ -85,7 +84,7 @@ namespace OsmAnd {
             const std::shared_ptr<IMapTileProvider::Tile>& sourceData;
             const std::shared_ptr<RenderAPI::ResourceInGPU>& resourceInGPU;
 
-        friend class OsmAnd::MapRendererTileLayer;
+        friend class OsmAnd::MapRendererTiledResources;
         friend class OsmAnd::MapRenderer;
         };
 
@@ -93,11 +92,11 @@ namespace OsmAnd {
         QMutex _tilesCollectionMutex;
         std::array< QMap< TileId, std::shared_ptr<TileEntry> > , ZoomLevelsCount > _tilesCollection;
     protected:
-        MapRendererTileLayer(const MapTileLayerId& layerId);
+        MapRendererTiledResources(const MapRenderer::TiledResourceType& type);
     public:
-        virtual ~MapRendererTileLayer();
+        virtual ~MapRendererTiledResources();
 
-        const MapTileLayerId layerId;
+        const MapRenderer::TiledResourceType type;
 
         std::shared_ptr<TileEntry> obtainTileEntry(const TileId& tileId, const ZoomLevel& zoom, bool createEmptyIfUnexistent = false);
         void obtainTileEntries(QList< std::shared_ptr<TileEntry> >& outList, unsigned int limit = 0u, const TileEntry::State& withState = TileEntry::State::Unknown, const ZoomLevel& andZoom = ZoomLevel::InvalidZoom);
@@ -108,4 +107,4 @@ namespace OsmAnd {
 
 }
 
-#endif // __MAP_RENDERER_TILE_LAYER_H_
+#endif // __MAP_RENDERER_TILED_RESOURCES_H_

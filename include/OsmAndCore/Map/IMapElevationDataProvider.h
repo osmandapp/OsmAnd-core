@@ -40,7 +40,7 @@ namespace OsmAnd {
         private:
         protected:
         public:
-            Tile(const float* data, size_t rowLength, uint32_t width, uint32_t height);
+            Tile(const float* data, size_t rowLength, uint32_t size);
             virtual ~Tile();
         };
 
@@ -49,8 +49,6 @@ namespace OsmAnd {
         IMapElevationDataProvider();
     public:
         virtual ~IMapElevationDataProvider();      
-
-        virtual uint32_t getMaxResolutionPatchesCount() const = 0;
     };
 
 }

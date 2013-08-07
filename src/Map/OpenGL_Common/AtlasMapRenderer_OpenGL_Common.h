@@ -126,7 +126,7 @@ namespace OsmAnd {
                         GLint tilePaddingN;
                         GLint slotsPerSide;
                         GLint slotIndex;
-                    } perTileLayer[MapTileLayerIdsCount];
+                    } elevationTileLayer, rasterTileLayers[RasterMapLayersCount];
                 } param;
             } vs;
 
@@ -140,13 +140,13 @@ namespace OsmAnd {
                     {
                         GLint k;
                         GLint sampler;
-                    } perTileLayer[MapTileLayerIdsCount - MapTileLayerId::RasterMap];
+                    } rasterTileLayers[RasterMapLayersCount];
                 } param;
             } fs;
-        } _mapStage;
-        void initializeMapStage();
-        void renderMapStage();
-        void releaseMapStage();
+        } _rasterMapStage;
+        void initializeRasterMapStage();
+        void renderRasterMapStage();
+        void releaseRasterMapStage();
 
         struct {
             GLuint skyplaneVAO;
@@ -194,7 +194,7 @@ namespace OsmAnd {
         GLsizei _tilePatchIndicesCount;
         virtual void createTilePatch();
         
-        virtual void validateLayer(const MapTileLayerId& layer);
+        virtual void validateElevationDataResources();
 
         virtual bool updateCurrentState();
 

@@ -34,8 +34,9 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/IMapElevationDataProvider.h>
+#include <OsmAndCore/Concurrent.h>
 #include <OsmAndCore/TileDB.h>
+#include <OsmAndCore/Map/IMapElevationDataProvider.h>
 
 namespace OsmAnd {
 
@@ -59,6 +60,8 @@ namespace OsmAnd {
         QMutex _processingMutex;
         QMutex _requestsMutex;
         std::array< QSet< TileId >, 32 > _requestedTileIds;
+
+        const Concurrent::TaskHost::Bridge _taskHostBridge;
     public:
         HeightmapTileProvider(const QDir& dataPath, const QString& indexFilepath = QString());
         virtual ~HeightmapTileProvider();
@@ -68,7 +71,6 @@ namespace OsmAnd {
         static const QString defaultIndexFilename;
 
         virtual uint32_t getTileSize() const;
-        virtual uint32_t getMaxResolutionPatchesCount() const;
 
         virtual bool obtainTileImmediate(const OsmAnd::TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<IMapTileProvider::Tile>& tile);
         virtual void obtainTileDeffered(const OsmAnd::TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback);

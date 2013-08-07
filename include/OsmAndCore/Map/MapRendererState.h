@@ -33,7 +33,8 @@
 
 namespace OsmAnd {
 
-    class IMapTileProvider;
+    class IMapBitmapTileProvider;
+    class IMapElevationDataProvider;
     class IMapRenderer;
     class MapRenderer;
     class OSMAND_CORE_API MapRendererState
@@ -44,13 +45,15 @@ namespace OsmAnd {
     public:
         virtual ~MapRendererState();
 
-        std::array< std::shared_ptr<IMapTileProvider>, MapTileLayerIdsCount > tileProviders;
-        std::array< float, MapTileLayerIdsCount > tileLayerOpacity;
+        std::array< std::shared_ptr<IMapBitmapTileProvider>, RasterMapLayersCount > rasterLayerProviders;
+        std::array< float, RasterMapLayersCount > rasterLayerOpacity;
+        std::shared_ptr<IMapElevationDataProvider> elevationDataProvider;
+        float elevationDataScaleFactor;
         PointI windowSize;
         AreaI viewport;
         float fieldOfView;
-        float skyColor[3];
-        float fogColor[3];
+        FColorRGB skyColor;
+        FColorRGB fogColor;
         float fogDistance;
         float fogOriginFactor;
         float fogHeightOriginFactor;
@@ -61,7 +64,6 @@ namespace OsmAnd {
         float requestedZoom;
         ZoomLevel zoomBase;
         float zoomFraction;
-        float heightScaleFactor;
 
     friend class OsmAnd::IMapRenderer;
     friend class OsmAnd::MapRenderer;

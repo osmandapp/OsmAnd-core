@@ -13,13 +13,14 @@ const QString OsmAnd::HeightmapTileProvider::defaultIndexFilename("heightmap.ind
 
 OsmAnd::HeightmapTileProvider::HeightmapTileProvider( const QDir& dataPath, const QString& indexFilepath/* = QString()*/ )
     : _tileDb(dataPath, indexFilepath)
+    , _taskHostBridge(this)
     , tileDb(_tileDb)
 {
 }
 
 OsmAnd::HeightmapTileProvider::~HeightmapTileProvider()
 {
-    //TODO: on destruction, cancel all tasks
+    _taskHostBridge.onOwnerIsBeingDestructed();
 }
 
 void OsmAnd::HeightmapTileProvider::rebuildTileDbIndex()
@@ -29,14 +30,7 @@ void OsmAnd::HeightmapTileProvider::rebuildTileDbIndex()
 
 uint32_t OsmAnd::HeightmapTileProvider::getTileSize() const
 {
-    return 258;
-}
-
-uint32_t OsmAnd::HeightmapTileProvider::getMaxResolutionPatchesCount() const
-{
-    // Our heightmap uses pixel-is-area format. Thus, if we have
-    // n=258 heixels, we can generate n-1 height patches
-    return 257;
+    return 32;
 }
 
 bool OsmAnd::HeightmapTileProvider::obtainTileImmediate( const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<IMapTileProvider::Tile>& tile )
@@ -58,21 +52,23 @@ void OsmAnd::HeightmapTileProvider::obtainTileDeffered( const TileId& tileId, co
         _requestedTileIds[zoom].insert(tileId);
     }
 
-    Concurrent::pools->localStorage->start(new Concurrent::Task(
-        [this, tileId, zoom, readyCallback](const Concurrent::Task* task, QEventLoop& eventLoop)
+    Concurrent::pools->localStorage->start(new Concurrent::HostedTask(_taskHostBridge,
+        [tileId, zoom, readyCallback](const Concurrent::Task* task, QEventLoop& eventLoop)
         {
-            _processingMutex.lock();
+            const auto pThis = reinterpret_cast<HeightmapTileProvider*>(static_cast<const Concurrent::HostedTask*>(task)->lockedOwner);
+
+            pThis->_processingMutex.lock();
 
             // Obtain raw data from DB
             QByteArray data;
-            bool ok = _tileDb.obtainTileData(tileId, zoom, data);
+            bool ok = pThis->_tileDb.obtainTileData(tileId, zoom, data);
             if(!ok || data.length() == 0)
             {
                 {
-                    QMutexLocker scopeLock(&_requestsMutex);
-                    _requestedTileIds[zoom].remove(tileId);
+                    QMutexLocker scopeLock(&pThis->_requestsMutex);
+                    pThis->_requestedTileIds[zoom].remove(tileId);
                 }
-                _processingMutex.unlock();
+                pThis->_processingMutex.unlock();
 
                 // There was no data at all, to avoid further requests, mark this tile as empty
                 std::shared_ptr<IMapTileProvider::Tile> emptyTile;
@@ -80,6 +76,8 @@ void OsmAnd::HeightmapTileProvider::obtainTileDeffered( const TileId& tileId, co
 
                 return;
             }
+
+            const auto tileSize = pThis->getTileSize();
 
             // We have the data, use GDAL to decode this GeoTIFF
             bool success = false;
@@ -92,16 +90,16 @@ void OsmAnd::HeightmapTileProvider::obtainTileDeffered( const TileId& tileId, co
             {
                 bool bad = false;
                 bad = bad || dataset->GetRasterCount() != 1;
-                bad = bad || dataset->GetRasterXSize() != getTileSize();
-                bad = bad || dataset->GetRasterYSize() != getTileSize();
+                bad = bad || dataset->GetRasterXSize() != tileSize;
+                bad = bad || dataset->GetRasterYSize() != tileSize;
                 if(bad)
                 {
                     if(dataset->GetRasterCount() != 1)
                         LogPrintf(LogSeverityLevel::Error, "Height tile %dx%d@%d has %d bands instead of 1", tileId.x, tileId.y, zoom, dataset->GetRasterCount());
-                    if(dataset->GetRasterXSize() != getTileSize() != 1 || dataset->GetRasterYSize() != getTileSize())
+                    if(dataset->GetRasterXSize() != tileSize || dataset->GetRasterYSize() != tileSize)
                     {
                         LogPrintf(LogSeverityLevel::Error, "Height tile %dx%d@%d has %dx%x size instead of %d", tileId.x, tileId.y, zoom,
-                            dataset->GetRasterXSize(), dataset->GetRasterYSize(), getTileSize());
+                            dataset->GetRasterXSize(), dataset->GetRasterYSize(), tileSize);
                     }
                 }
                 else
@@ -120,9 +118,9 @@ void OsmAnd::HeightmapTileProvider::obtainTileDeffered( const TileId& tileId, co
                     }
                     else
                     {
-                        auto buffer = new float[getTileSize() * getTileSize()];
+                        auto buffer = new float[tileSize*tileSize];
 
-                        auto res = dataset->RasterIO(GF_Read, 0, 0, getTileSize(), getTileSize(), buffer, getTileSize(), getTileSize(), GDT_Float32, 1, nullptr, 0, 0, 0);
+                        auto res = dataset->RasterIO(GF_Read, 0, 0, tileSize, tileSize, buffer, tileSize, tileSize, GDT_Float32, 1, nullptr, 0, 0, 0);
                         if(res != CE_None)
                         {
                             delete[] buffer;
@@ -130,7 +128,7 @@ void OsmAnd::HeightmapTileProvider::obtainTileDeffered( const TileId& tileId, co
                         }
                         else
                         {
-                            tile.reset(new Tile(buffer, getTileSize()));
+                            tile.reset(new Tile(buffer, tileSize));
                             success = true;
                         }
                     }
@@ -142,17 +140,17 @@ void OsmAnd::HeightmapTileProvider::obtainTileDeffered( const TileId& tileId, co
 
             // Construct tile response
             {
-                QMutexLocker scopeLock(&_requestsMutex);
-                _requestedTileIds[zoom].remove(tileId);
+                QMutexLocker scopeLock(&pThis->_requestsMutex);
+                pThis->_requestedTileIds[zoom].remove(tileId);
             }
-            _processingMutex.unlock();
+            pThis->_processingMutex.unlock();
 
             readyCallback(tileId, zoom, tile, success);
         }));
 }
 
 OsmAnd::HeightmapTileProvider::Tile::Tile( const float* buffer, uint32_t tileSize )
-    : IMapElevationDataProvider::Tile(buffer, tileSize * sizeof(float), tileSize, tileSize)
+    : IMapElevationDataProvider::Tile(buffer, tileSize * sizeof(float), tileSize)
     , _buffer(buffer)
 {
 }

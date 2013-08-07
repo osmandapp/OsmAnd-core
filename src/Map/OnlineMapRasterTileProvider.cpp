@@ -27,6 +27,7 @@ OsmAnd::OnlineMapRasterTileProvider::OnlineMapRasterTileProvider(
     , _localCachePath(new QDir(QDir::current()))
     , _networkAccessAllowed(true)
     , _requestsMutex(QMutex::Recursive)
+    , _taskHostBridge(this)
     , localCachePath(_localCachePath)
     , networkAccessAllowed(_networkAccessAllowed)
     , id(id_)
@@ -41,7 +42,7 @@ OsmAnd::OnlineMapRasterTileProvider::OnlineMapRasterTileProvider(
 
 OsmAnd::OnlineMapRasterTileProvider::~OnlineMapRasterTileProvider()
 {
-    //TODO: on destruction, cancel all downloading things, since provider will be no longer valid
+    _taskHostBridge.onOwnerIsBeingDestructed();
 }
 
 void OsmAnd::OnlineMapRasterTileProvider::setLocalCachePath( const QDir& localCachePath )
@@ -73,27 +74,29 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const TileId& tile
         _requestedTileIds[zoom].insert(tileId);
     }
 
-    Concurrent::pools->localStorage->start(new Concurrent::Task(
-        [this, tileId, zoom, readyCallback](const Concurrent::Task* task, QEventLoop& eventLoop)
+    Concurrent::pools->localStorage->start(new Concurrent::HostedTask(_taskHostBridge,
+        [tileId, zoom, readyCallback](const Concurrent::Task* task, QEventLoop& eventLoop)
         {
-            _processingMutex.lock();
+            const auto pThis = reinterpret_cast<OnlineMapRasterTileProvider*>(static_cast<const Concurrent::HostedTask*>(task)->lockedOwner);
+
+            pThis->_processingMutex.lock();
 
             // Check if we're already in process of downloading this tile, or
             // if this tile is in pending-download state
-            if(_enqueuedTileIdsForDownload[zoom].contains(tileId) || _currentlyDownloadingTileIds[zoom].contains(tileId))
+            if(pThis->_enqueuedTileIdsForDownload[zoom].contains(tileId) || pThis->_currentlyDownloadingTileIds[zoom].contains(tileId))
             {
-                _processingMutex.unlock();
+                pThis->_processingMutex.unlock();
                 return;
             }
 
             // Check if file is already in local storage
-            if(_localCachePath && _localCachePath->exists())
+            if(pThis->_localCachePath && pThis->_localCachePath->exists())
             {
-                const auto& subPath = id + QDir::separator() +
+                const auto& subPath = pThis->id + QDir::separator() +
                     QString::number(zoom) + QDir::separator() +
                     QString::number(tileId.x) + QDir::separator() +
                     QString::number(tileId.y) + QString::fromLatin1(".tile");
-                const auto& fullPath = _localCachePath->filePath(subPath);
+                const auto& fullPath = pThis->_localCachePath->filePath(subPath);
                 QFile tileFile(fullPath);
                 if(tileFile.exists())
                 {
@@ -101,10 +104,10 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const TileId& tile
                     if(tileFile.size() == 0)
                     {
                         {
-                            QMutexLocker scopeLock(&_requestsMutex);
-                            _requestedTileIds[zoom].remove(tileId);
+                            QMutexLocker scopeLock(&pThis->_requestsMutex);
+                            pThis->_requestedTileIds[zoom].remove(tileId);
                         }
-                        _processingMutex.unlock();
+                        pThis->_processingMutex.unlock();
 
                         std::shared_ptr<IMapTileProvider::Tile> emptyTile;
                         readyCallback(tileId, zoom, emptyTile, true);
@@ -119,10 +122,10 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const TileId& tile
                     {
                         LogPrintf(LogSeverityLevel::Error, "Failed to decode tile file '%s'", fullPath.toStdString().c_str());
                         {
-                            QMutexLocker scopeLock(&_requestsMutex);
-                            _requestedTileIds[zoom].remove(tileId);
+                            QMutexLocker scopeLock(&pThis->_requestsMutex);
+                            pThis->_requestedTileIds[zoom].remove(tileId);
                         }
-                        _processingMutex.unlock();
+                        pThis->_processingMutex.unlock();
 
                         delete skBitmap;
                         std::shared_ptr<IMapTileProvider::Tile> emptyTile;
@@ -131,29 +134,29 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const TileId& tile
                     }
 
                     assert(skBitmap->width() == skBitmap->height());
-                    assert(skBitmap->width() == tileDimension);
+                    assert(skBitmap->width() == pThis->tileDimension);
 
                     // Construct tile response
                     {
-                        QMutexLocker scopeLock(&_requestsMutex);
-                        _requestedTileIds[zoom].remove(tileId);
+                        QMutexLocker scopeLock(&pThis->_requestsMutex);
+                        pThis->_requestedTileIds[zoom].remove(tileId);
                     }
-                    _processingMutex.unlock();
+                    pThis->_processingMutex.unlock();
                     
-                    std::shared_ptr<Tile> tile(new Tile(skBitmap, alphaChannelData));
+                    std::shared_ptr<Tile> tile(new Tile(skBitmap, pThis->alphaChannelData));
                     readyCallback(tileId, zoom, tile, true);
                     return;
                 }
             }
         
             // Well, tile is not in local cache, we need to download it
-            auto tileUrl = urlPattern;
+            auto tileUrl = pThis->urlPattern;
             tileUrl
                 .replace(QString::fromLatin1("${zoom}"), QString::number(zoom))
                 .replace(QString::fromLatin1("${x}"), QString::number(tileId.x))
                 .replace(QString::fromLatin1("${y}"), QString::number(tileId.y));
-            obtainTileDeffered(QUrl(tileUrl), tileId, zoom, readyCallback);
-            _processingMutex.unlock();
+            pThis->obtainTileDeffered(QUrl(tileUrl), tileId, zoom, readyCallback);
+            pThis->_processingMutex.unlock();
         }));
 }
 
@@ -191,9 +194,11 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const QUrl& url, c
         _requestedTileIds[zoom].remove(tileId);
     }
     
-    Concurrent::pools->network->start(new Concurrent::Task(
-        [this, url, tileId, zoom, readyCallback](const Concurrent::Task* task, QEventLoop& eventLoop)
+    Concurrent::pools->network->start(new Concurrent::HostedTask(_taskHostBridge,
+        [url, tileId, zoom, readyCallback](const Concurrent::Task* task, QEventLoop& eventLoop)
         {
+            const auto pThis = reinterpret_cast<OnlineMapRasterTileProvider*>(static_cast<const Concurrent::HostedTask*>(task)->lockedOwner);
+
             QNetworkAccessManager networkAccessManager;
             QNetworkRequest request;
             request.setUrl(url);
@@ -201,9 +206,9 @@ void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const QUrl& url, c
 
             auto reply = networkAccessManager.get(request);
             QObject::connect(reply, &QNetworkReply::finished,
-                [this, reply, tileId, zoom, readyCallback, &eventLoop, &networkAccessManager]()
+                [pThis, reply, tileId, zoom, readyCallback, &eventLoop, &networkAccessManager]()
                 {
-                    replyFinishedHandler(reply, tileId, zoom, readyCallback, eventLoop, networkAccessManager);
+                    pThis->replyFinishedHandler(reply, tileId, zoom, readyCallback, eventLoop, networkAccessManager);
                 });
             eventLoop.exec();
             return;
@@ -347,20 +352,20 @@ uint32_t OsmAnd::OnlineMapRasterTileProvider::getTileSize() const
     return tileDimension;
 }
 
-std::shared_ptr<OsmAnd::IMapTileProvider> OsmAnd::OnlineMapRasterTileProvider::createMapnikProvider()
+std::shared_ptr<OsmAnd::IMapBitmapTileProvider> OsmAnd::OnlineMapRasterTileProvider::createMapnikProvider()
 {
     auto provider = new OsmAnd::OnlineMapRasterTileProvider(
         "mapnik", "http://mapnik.osmand.net/${zoom}/${x}/${y}.png",
         ZoomLevel0, ZoomLevel18, 2,
         256, AlphaChannelData::NotPresent);
-    return std::shared_ptr<OsmAnd::IMapTileProvider>(static_cast<OsmAnd::IMapTileProvider*>(provider));
+    return std::shared_ptr<OsmAnd::IMapBitmapTileProvider>(static_cast<OsmAnd::IMapBitmapTileProvider*>(provider));
 }
 
-std::shared_ptr<OsmAnd::IMapTileProvider> OsmAnd::OnlineMapRasterTileProvider::createCycleMapProvider()
+std::shared_ptr<OsmAnd::IMapBitmapTileProvider> OsmAnd::OnlineMapRasterTileProvider::createCycleMapProvider()
 {
     auto provider = new OsmAnd::OnlineMapRasterTileProvider(
         "cyclemap", "http://b.tile.opencyclemap.org/cycle/${zoom}/${x}/${y}.png",
         ZoomLevel0, ZoomLevel18, 2,
         256, AlphaChannelData::NotPresent);
-    return std::shared_ptr<OsmAnd::IMapTileProvider>(static_cast<OsmAnd::IMapTileProvider*>(provider));
+    return std::shared_ptr<OsmAnd::IMapBitmapTileProvider>(static_cast<OsmAnd::IMapBitmapTileProvider*>(provider));
 }

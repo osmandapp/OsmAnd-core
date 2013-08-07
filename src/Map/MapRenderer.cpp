@@ -4,7 +4,9 @@
 
 #include <SkBitmap.h>
 
+#include "MapRendererTiledResources.h"
 #include "IMapBitmapTileProvider.h"
+#include "IMapElevationDataProvider.h"
 #include "RenderAPI.h"
 #include "Logging.h"
 #include "Utilities.h"
@@ -14,32 +16,36 @@ OsmAnd::MapRenderer::MapRenderer()
     , _currentConfigurationInvalidatedMask(0xFFFFFFFF)
     , currentState(_currentState)
     , _currentStateInvalidated(true)
-    , _invalidatedLayers(0)
+    , _invalidatedRasterLayerResourcesMask(0)
+    , _invalidatedElevationDataResources(false)
+    , tiledResources(_tiledResources)
     , _renderThreadId(nullptr)
     , _workerThreadId(nullptr)
-    , layers(_layers)
     , renderAPI(_renderAPI)
 {
-    // Create all layers
-    for(auto layerId = 0u; layerId < MapTileLayerIdsCount; layerId++)
-        _layers[layerId].reset(new MapRendererTileLayer(static_cast<MapTileLayerId>(layerId)));
+    // Create all tiled resources
+    for(auto resourceType = 0u; resourceType < TiledResourceTypesCount; resourceType++)
+    {
+        auto collection = new MapRendererTiledResources(static_cast<TiledResourceType>(resourceType));
+        _tiledResources[resourceType].reset(collection);
+    }
 
     // Fill-up default state
-    for(auto layerId = 0u; layerId < MapTileLayerIdsCount; layerId++)
-        setTileLayerOpacity(static_cast<MapTileLayerId>(layerId), 1.0f);
+    for(auto layerId = 0u; layerId < RasterMapLayersCount; layerId++)
+        setRasterLayerOpacity(static_cast<RasterMapLayerId>(layerId), 1.0f);
+    setElevationDataScaleFactor(1.0f, true);
     setFieldOfView(16.5f, true);
     setDistanceToFog(400.0f, true);
     setFogOriginFactor(0.36f, true);
     setFogHeightOriginFactor(0.05f, true);
     setFogDensity(1.9f, true);
-    setFogColor(1.0f, 0.0f, 0.0f, true);
-    setSkyColor(140.0f / 255.0f, 190.0f / 255.0f, 214.0f / 255.0f, true);
+    setFogColor(FColorRGB(1.0f, 0.0f, 0.0f), true);
+    setSkyColor(FColorRGB(140.0f / 255.0f, 190.0f / 255.0f, 214.0f / 255.0f), true);
     setAzimuth(0.0f, true);
     setElevationAngle(45.0f, true);
     const auto centerIndex = 1u << (ZoomLevel::MaxZoomLevel - 1);
     setTarget(PointI(centerIndex, centerIndex), true);
     setZoom(0, true);
-    setHeightScaleFactor(1.0f, true);
 }
 
 OsmAnd::MapRenderer::~MapRenderer()
@@ -97,12 +103,12 @@ void OsmAnd::MapRenderer::setConfiguration( const MapRendererConfiguration& conf
         mask |= ConfigurationChange::PaletteTexturesUsage;
     if(invalidateRasterTextures)
     {
-        for(int layerId = MapTileLayerId::RasterMap; layerId < MapTileLayerIdsCount; layerId++)
-            invalidateLayer(static_cast<MapTileLayerId>(layerId));
+        for(int layerId = RasterMapLayerId::BaseLayer; layerId < RasterMapLayersCount; layerId++)
+            invalidateRasterLayerResources(static_cast<RasterMapLayerId>(layerId));
     }
     if(invalidateElevationData)
     {
-        invalidateLayer(MapTileLayerId::ElevationData);
+        invalidateElevationDataResources();
     }
     invalidateCurrentConfiguration(mask);
 }
@@ -256,20 +262,25 @@ bool OsmAnd::MapRenderer::preProcessRendering()
             return false;
     }
 
-    // If we have invalidated layers, purge them
-    if(_invalidatedLayers)
+    // If we have invalidated resources, purge them
+    if(_invalidatedRasterLayerResourcesMask)
     {
-        QReadLocker scopedLocker(&_invalidatedLayersLock);
+        QReadLocker scopedLocker(&_invalidatedRasterLayerResourcesMaskLock);
 
-        for(int layerId = 0; layerId < MapTileLayerIdsCount; layerId++)
+        for(int layerId = 0; layerId < RasterMapLayersCount; layerId++)
         {
-            if((_invalidatedLayers & (1 << layerId)) == 0)
+            if((_invalidatedRasterLayerResourcesMask & (1 << layerId)) == 0)
                 continue;
 
-            validateLayer(static_cast<MapTileLayerId>(layerId));
+            validateRasterLayerResources(static_cast<RasterMapLayerId>(layerId));
 
-            _invalidatedLayers &= ~(1 << layerId);
+            _invalidatedRasterLayerResourcesMask &= ~(1 << layerId);
         }
+    }
+    if(_invalidatedElevationDataResources)
+    {
+        validateElevationDataResources();
+        _invalidatedElevationDataResources = false;
     }
 
     // Sort visible tiles by distance from target
@@ -332,7 +343,7 @@ bool OsmAnd::MapRenderer::postProcessRendering()
 {
     // In the end of rendering processing, request tiles that are neither present in
     // requested list, nor in pending, nor in uploaded
-    requestMissingTiles();
+    requestMissingTiledResources();
 
     return true;
 }
@@ -405,45 +416,8 @@ bool OsmAnd::MapRenderer::doPostprocessRendering()
     // To reduce FPS drop, upload not more than 1 tile per frame, and do that before end of the frame
     // to avoid forcing driver to upload data on current frame presentation.
     if(!setupOptions.backgroundWorker.enabled)
-    {
-        QList< std::shared_ptr<MapRendererTileLayer::TileEntry> > tileEntries;
-
-        for(int layerId = 0; layerId < MapTileLayerIdsCount; layerId++)
-        {
-            // Obtain as maximum 1 
-            tileEntries.clear();
-            _layers[layerId]->obtainTileEntries(tileEntries, 1, MapRendererTileLayer::TileEntry::Ready);
-
-            if(tileEntries.isEmpty())
-                continue;
-            const auto& tileEntry = tileEntries.first();
-
-            {
-                QWriteLocker scopedLock(&tileEntry->stateLock);
-                if(tileEntry->state != MapRendererTileLayer::TileEntry::Ready)
-                    continue;
-
-                const auto& preparedSourceData = prepareTileForUploadingToGPU(static_cast<MapTileLayerId>(layerId), tileEntry->sourceData);
-                const auto tilesPerAtlasTextureLimit = getTilesPerAtlasTextureLimit(static_cast<MapTileLayerId>(layerId), tileEntry->sourceData);
-                bool ok = renderAPI->uploadTileToGPU(tileEntry->tileId, tileEntry->zoom, preparedSourceData, tilesPerAtlasTextureLimit, tileEntry->_resourceInGPU);
-                if(!ok)
-                {
-                    LogPrintf(LogSeverityLevel::Error, "Failed to upload tile %dx%d@%d[%d] to GPU", tileEntry->tileId.x, tileEntry->tileId.y, tileEntry->zoom, tileEntry->layerId);
-                    continue;
-                }
-
-                tileEntry->_sourceData.reset();
-                tileEntry->_state = MapRendererTileLayer::TileEntry::Uploaded;
-            }
-
-            // Schedule one more render pass to upload more pending
-            // or we've just uploaded a tile and need refresh
-            invalidateFrame();
-
-            break;
-        }
-    }
-
+        uploadTiledResources();
+    
     return true;
 }
 
@@ -504,31 +478,9 @@ bool OsmAnd::MapRenderer::postReleaseRendering()
         _backgroundWorker.reset();
     }
 
-    // Remove all tiles from all layers
-    for(auto itLayer = _layers.begin(); itLayer != _layers.end(); ++itLayer)
-    {
-        const auto& layer = *itLayer;
-
-        // Collect all tiles that are uploaded to GPU and release them
-        QList< std::shared_ptr<MapRendererTileLayer::TileEntry> > tilesInGPU;
-        layer->obtainTileEntries(tilesInGPU, 0, MapRendererTileLayer::TileEntry::State::Uploaded);
-        for(auto itUploadedTileEntry = tilesInGPU.begin(); itUploadedTileEntry != tilesInGPU.end(); ++itUploadedTileEntry)
-        {
-            const auto& tileEntry = *itUploadedTileEntry;
-
-            QWriteLocker scopedLock(&tileEntry->stateLock);
-            if(tileEntry->state != MapRendererTileLayer::TileEntry::Uploaded)
-                continue;
-
-            // This should be last reference, so assert on that
-            assert(tileEntry->_resourceInGPU.use_count() == 1);
-            tileEntry->_resourceInGPU.reset();
-
-            tileEntry->_state = MapRendererTileLayer::TileEntry::Unloaded;
-        }
-
-        layer->removeAllEntries();
-    }
+    // Release all tiled resources
+    for(auto itResourcesCollection = _tiledResources.begin(); itResourcesCollection != _tiledResources.end(); ++itResourcesCollection)
+        releaseTiledResources(*itResourcesCollection);
 
     return true;
 }
@@ -558,36 +510,26 @@ void OsmAnd::MapRenderer::requestUploadDataToGPU()
         invalidateFrame();
 }
 
-void OsmAnd::MapRenderer::invalidateLayer( const MapTileLayerId& layerId )
+void OsmAnd::MapRenderer::invalidateRasterLayerResources( const RasterMapLayerId& layerId )
 {
-    QWriteLocker scopedLocker(&_invalidatedLayersLock);
+    QWriteLocker scopedLocker(&_invalidatedRasterLayerResourcesMaskLock);
 
-    _invalidatedLayers |= 1 << layerId;
+    _invalidatedRasterLayerResourcesMask |= 1 << layerId;
 }
 
-void OsmAnd::MapRenderer::validateLayer( const MapTileLayerId& layerId )
+void OsmAnd::MapRenderer::validateRasterLayerResources( const RasterMapLayerId& layerId )
 {
-    const auto& layer = layers[layerId];
+    releaseTiledResources(_tiledResources[TiledResourceType::RasterBaseLayer + layerId]);
+}
 
-    // Collect all tiles that are uploaded to GPU and release them
-    QList< std::shared_ptr<MapRendererTileLayer::TileEntry> > tilesInGPU;
-    layer->obtainTileEntries(tilesInGPU, 0, MapRendererTileLayer::TileEntry::State::Uploaded);
-    for(auto itUploadedTileEntry = tilesInGPU.begin(); itUploadedTileEntry != tilesInGPU.end(); ++itUploadedTileEntry)
-    {
-        const auto& tileEntry = *itUploadedTileEntry;
+void OsmAnd::MapRenderer::invalidateElevationDataResources()
+{
+    _invalidatedElevationDataResources = true;
+}
 
-        QWriteLocker scopedLock(&tileEntry->stateLock);
-        if(tileEntry->state != MapRendererTileLayer::TileEntry::Uploaded)
-            continue;
-
-        // This should be last reference, so assert on that
-        assert(tileEntry->_resourceInGPU.use_count() == 1);
-        tileEntry->_resourceInGPU.reset();
-
-        tileEntry->_state = MapRendererTileLayer::TileEntry::Unloaded;
-    }
-
-    layer->removeAllEntries();
+void OsmAnd::MapRenderer::validateElevationDataResources()
+{
+    releaseTiledResources(_tiledResources[TiledResourceType::ElevationData]);
 }
 
 void OsmAnd::MapRenderer::backgroundWorkerProcedure()
@@ -611,40 +553,7 @@ void OsmAnd::MapRenderer::backgroundWorkerProcedure()
             break;
 
         // In every layer we have, upload pending tiles to GPU
-        QList< std::shared_ptr<MapRendererTileLayer::TileEntry> > tileEntries;
-        for(int layerId = 0; layerId < MapTileLayerIdsCount; layerId++)
-        {
-            // Obtain all tiles that are ready
-            tileEntries.clear();
-            _layers[layerId]->obtainTileEntries(tileEntries, 0, MapRendererTileLayer::TileEntry::Ready);
-
-            for(auto itTileEntry = tileEntries.begin(); itTileEntry != tileEntries.end(); ++itTileEntry)
-            {
-                {
-                    const auto& tileEntry = *itTileEntry;
-                    QWriteLocker scopedLock(&tileEntry->stateLock);
-                    if(tileEntry->state != MapRendererTileLayer::TileEntry::Ready)
-                        continue;
-
-                    const auto& preparedSourceData = prepareTileForUploadingToGPU(static_cast<MapTileLayerId>(layerId), tileEntry->sourceData);
-                    const auto tilesPerAtlasTextureLimit = getTilesPerAtlasTextureLimit(static_cast<MapTileLayerId>(layerId), tileEntry->sourceData);
-                    bool ok = renderAPI->uploadTileToGPU(tileEntry->tileId, tileEntry->zoom, preparedSourceData, tilesPerAtlasTextureLimit, tileEntry->_resourceInGPU);
-                    if(!ok)
-                    {
-                        LogPrintf(LogSeverityLevel::Error, "Failed to upload tile %dx%d@%d[%d] to GPU", tileEntry->tileId.x, tileEntry->tileId.y, tileEntry->zoom, tileEntry->layerId);
-                        continue;
-                    }
-
-                    tileEntry->_sourceData.reset();
-                    tileEntry->_state = MapRendererTileLayer::TileEntry::Uploaded;
-                }
-
-                // We have additional tile to show
-                invalidateFrame();
-            }
-
-            break;
-        }
+        uploadTiledResources();
     }
 
     // Call epilogue
@@ -654,7 +563,21 @@ void OsmAnd::MapRenderer::backgroundWorkerProcedure()
     _workerThreadId = nullptr;
 }
 
-void OsmAnd::MapRenderer::requestMissingTiles()
+OsmAnd::IMapTileProvider* OsmAnd::MapRenderer::getTileProviderFor( const TiledResourceType& resourceType ) const
+{
+    if(resourceType >= TiledResourceType::RasterBaseLayer && resourceType < (TiledResourceType::RasterBaseLayer + RasterMapLayersCount))
+    {
+        return static_cast<IMapTileProvider*>(_currentState.rasterLayerProviders[resourceType - TiledResourceType::RasterBaseLayer].get());
+    }
+    else if(resourceType == TiledResourceType::ElevationData)
+    {
+        return static_cast<IMapTileProvider*>(_currentState.elevationDataProvider.get());
+    }
+
+    return nullptr;
+}
+
+void OsmAnd::MapRenderer::requestMissingTiledResources()
 {
     uint32_t requestedProvidersMask = 0;
     bool wasImmediateDataObtained = true;
@@ -663,24 +586,25 @@ void OsmAnd::MapRenderer::requestMissingTiles()
     {
         const auto& tileId = *itTileId;
 
-        for(int layerId = 0; layerId < MapTileLayerIdsCount; layerId++)
+        for(auto itTiledResources = _tiledResources.begin(); itTiledResources != _tiledResources.end(); ++itTiledResources)
         {
-            const auto& provider = _currentState.tileProviders[layerId];
+            const auto& tiledResources = *itTiledResources;
+            const auto& provider = getTileProviderFor(tiledResources->type);
 
             // Skip layers that do not have tile providers
             if(!provider)
                 continue;
 
-            const auto& tileEntry = _layers[layerId]->obtainTileEntry(tileId, _currentState.zoomBase, true);
+            const auto& tileEntry = tiledResources->obtainTileEntry(tileId, _currentState.zoomBase, true);
             {
                 QWriteLocker scopedLock(&tileEntry->stateLock);
 
-                if(tileEntry->state != MapRendererTileLayer::TileEntry::Unknown)
+                if(tileEntry->state != MapRendererTiledResources::TileEntry::Unknown)
                     continue;
 
                 const auto callback = std::bind(&MapRenderer::processRequestedTile,
                     this,
-                    static_cast<MapTileLayerId>(layerId),
+                    tiledResources->type,
                     std::placeholders::_1,
                     std::placeholders::_2,
                     std::placeholders::_3,
@@ -692,7 +616,7 @@ void OsmAnd::MapRenderer::requestMissingTiles()
                 if(availableImmediately)
                 {
                     tileEntry->_sourceData = tile;
-                    tileEntry->_state = tile ? MapRendererTileLayer::TileEntry::Ready : MapRendererTileLayer::TileEntry::Unavailable;
+                    tileEntry->_state = tile ? MapRendererTiledResources::TileEntry::Ready : MapRendererTiledResources::TileEntry::Unavailable;
 
                     wasImmediateDataObtained = true;
                     continue;
@@ -700,9 +624,9 @@ void OsmAnd::MapRenderer::requestMissingTiles()
 
                 // If tile was not available immediately, request it
                 provider->obtainTileDeffered(tileId, _currentState.zoomBase, callback);
-                tileEntry->_state = MapRendererTileLayer::TileEntry::Requested;
+                tileEntry->_state = MapRendererTiledResources::TileEntry::Requested;
 
-                requestedProvidersMask |= (1 << layerId);
+                requestedProvidersMask |= (1 << tiledResources->type);
             }
         }
     }
@@ -713,47 +637,220 @@ void OsmAnd::MapRenderer::requestMissingTiles()
     //TODO: sort requests in all requestedProvidersMask so that closest tiles would be downloaded first
 }
 
-void OsmAnd::MapRenderer::processRequestedTile( const MapTileLayerId& layerId, const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile, bool success )
+void OsmAnd::MapRenderer::processRequestedTile( const TiledResourceType& resourceType, const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile, bool success )
 {
-    const auto& tileEntry = _layers[layerId]->obtainTileEntry(tileId, zoom);
+    const auto& tileEntry = _tiledResources[resourceType]->obtainTileEntry(tileId, zoom);
     {
         QWriteLocker scopedLock(&tileEntry->stateLock);
 
-        assert(tileEntry->state == MapRendererTileLayer::TileEntry::Requested);
+        assert(tileEntry->state == MapRendererTiledResources::TileEntry::Requested);
 
         tileEntry->_sourceData = tile;
-        tileEntry->_state = tile ? MapRendererTileLayer::TileEntry::Ready : MapRendererTileLayer::TileEntry::Unavailable;
+        tileEntry->_state = tile ? MapRendererTiledResources::TileEntry::Ready : MapRendererTiledResources::TileEntry::Unavailable;
     }
 
     // We have data to upload, so request that
     requestUploadDataToGPU();
 }
 
-void OsmAnd::MapRenderer::setTileProvider( const MapTileLayerId& layerId, const std::shared_ptr<IMapTileProvider>& tileProvider, bool forcedUpdate /*= false*/ )
+std::shared_ptr<OsmAnd::IMapTileProvider::Tile> OsmAnd::MapRenderer::prepareTileForUploadingToGPU( const std::shared_ptr<IMapTileProvider::Tile>& tile )
+{
+    if(tile->type == IMapTileProvider::Type::Bitmap)
+    {
+        auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
+
+        // Check if we're going to convert
+        bool doConvert = false;
+        const bool force16bit = (currentConfiguration.limitTextureColorDepthBy16bits && bitmapTile->bitmap->getConfig() == SkBitmap::Config::kARGB_8888_Config);
+        const bool canUsePaletteTextures = currentConfiguration.paletteTexturesAllowed && renderAPI->isSupported_8bitPaletteRGBA8;
+        const bool paletteTexture = (bitmapTile->bitmap->getConfig() == SkBitmap::Config::kIndex8_Config);
+        const bool unsupportedFormat =
+            ( canUsePaletteTextures ? !paletteTexture : paletteTexture) ||
+            (bitmapTile->bitmap->getConfig() != SkBitmap::Config::kARGB_8888_Config) ||
+            (bitmapTile->bitmap->getConfig() != SkBitmap::Config::kARGB_4444_Config) ||
+            (bitmapTile->bitmap->getConfig() != SkBitmap::Config::kRGB_565_Config);
+        doConvert = doConvert || force16bit;
+        doConvert = doConvert || unsupportedFormat;
+
+        // Pass palette texture as-is
+        if(paletteTexture && canUsePaletteTextures)
+            return tile;
+
+        // Check if we need alpha
+        auto convertedAlphaChannelData = bitmapTile->alphaChannelData;
+        if(doConvert && (convertedAlphaChannelData == IMapBitmapTileProvider::AlphaChannelData::Undefined))
+        {
+            convertedAlphaChannelData = SkBitmap::ComputeIsOpaque(*bitmapTile->bitmap.get())
+                ? IMapBitmapTileProvider::AlphaChannelData::NotPresent
+                : IMapBitmapTileProvider::AlphaChannelData::Present;
+        }
+
+        // If we have limit of 16bits per pixel in bitmaps, convert to ARGB(4444) or RGB(565)
+        if(force16bit)
+        {
+            auto convertedBitmap = new SkBitmap();
+
+            bitmapTile->bitmap->deepCopyTo(convertedBitmap,
+                convertedAlphaChannelData == IMapBitmapTileProvider::AlphaChannelData::Present
+                ? SkBitmap::Config::kARGB_4444_Config
+                : SkBitmap::Config::kRGB_565_Config);
+
+            auto convertedTile = new IMapBitmapTileProvider::Tile(convertedBitmap, convertedAlphaChannelData);
+            return std::shared_ptr<IMapTileProvider::Tile>(convertedTile);
+        }
+
+        // If we have any other unsupported format, convert to proper 16bit or 32bit
+        if(unsupportedFormat)
+        {
+            auto convertedBitmap = new SkBitmap();
+
+            bitmapTile->bitmap->deepCopyTo(convertedBitmap,
+                currentConfiguration.limitTextureColorDepthBy16bits
+                ? (convertedAlphaChannelData == IMapBitmapTileProvider::AlphaChannelData::Present ? SkBitmap::Config::kARGB_4444_Config : SkBitmap::Config::kRGB_565_Config)
+                : SkBitmap::kARGB_8888_Config);
+
+            auto convertedTile = new IMapBitmapTileProvider::Tile(convertedBitmap, convertedAlphaChannelData);
+            return std::shared_ptr<IMapTileProvider::Tile>(convertedTile);
+        }
+    }
+
+    return tile;
+}
+
+void OsmAnd::MapRenderer::uploadTiledResources()
+{
+    const auto isOnRenderThread = (QThread::currentThreadId() == _renderThreadId);
+    bool didUpload = false;
+
+    for(auto itTiledResources = _tiledResources.begin(); itTiledResources != _tiledResources.end(); ++itTiledResources)
+    {
+        const auto& tiledResources = *itTiledResources;
+
+        // If we're uploading from render thread, limit to 1 tile per frame
+        QList< std::shared_ptr<MapRendererTiledResources::TileEntry> > tileEntries;
+        tiledResources->obtainTileEntries(tileEntries, isOnRenderThread ? 1 : 0, MapRendererTiledResources::TileEntry::Ready);
+        if(tileEntries.isEmpty())
+            continue;
+
+        for(auto itTileEntry = tileEntries.begin(); itTileEntry != tileEntries.end(); ++itTileEntry)
+        {
+            const auto& tileEntry = *itTileEntry;
+
+            {
+                QWriteLocker scopedLock(&tileEntry->stateLock);
+                if(tileEntry->state != MapRendererTiledResources::TileEntry::Ready)
+                    continue;
+
+                const auto& preparedSourceData = prepareTileForUploadingToGPU(tileEntry->sourceData);
+                //TODO: This is weird, and probably should not be here. RenderAPI knows how to upload what, but on contrary - does not know the limits
+                const auto tilesPerAtlasTextureLimit = getTilesPerAtlasTextureLimit(tiledResources->type, tileEntry->sourceData);
+                bool ok = renderAPI->uploadTileToGPU(tileEntry->tileId, tileEntry->zoom, preparedSourceData, tilesPerAtlasTextureLimit, tileEntry->_resourceInGPU);
+                if(!ok)
+                {
+                    LogPrintf(LogSeverityLevel::Error, "Failed to upload tile %dx%d@%d to GPU", tileEntry->tileId.x, tileEntry->tileId.y, tileEntry->zoom);
+                    continue;
+                }
+
+                tileEntry->_sourceData.reset();
+                tileEntry->_state = MapRendererTiledResources::TileEntry::Uploaded;
+                didUpload = true;
+
+                // If we're not on render thread, and we've just uploaded a tile, invalidate frame
+                if(!isOnRenderThread)
+                    invalidateFrame();
+            }
+
+            // If we're on render thread, limit to 1 tile per frame
+            if(isOnRenderThread)
+                break;
+        }
+
+        // If we're on render thread, limit to 1 tile per frame
+        if(isOnRenderThread)
+            break;
+    }
+
+    // Schedule one more render pass to upload more pending
+    // or we've just uploaded a tile and need refresh
+    if(didUpload)
+        invalidateFrame();
+}
+
+void OsmAnd::MapRenderer::releaseTiledResources( const std::unique_ptr<MapRendererTiledResources>& collection )
+{
+    // Collect all tiles that are uploaded to GPU and release them
+    QList< std::shared_ptr<MapRendererTiledResources::TileEntry> > tilesInGPU;
+    collection->obtainTileEntries(tilesInGPU, 0, MapRendererTiledResources::TileEntry::State::Uploaded);
+    for(auto itUploadedTileEntry = tilesInGPU.begin(); itUploadedTileEntry != tilesInGPU.end(); ++itUploadedTileEntry)
+    {
+        const auto& tileEntry = *itUploadedTileEntry;
+
+        QWriteLocker scopedLock(&tileEntry->stateLock);
+        if(tileEntry->state != MapRendererTiledResources::TileEntry::Uploaded)
+            continue;
+
+        // This should be last reference, so assert on that
+        assert(tileEntry->_resourceInGPU.use_count() == 1);
+        tileEntry->_resourceInGPU.reset();
+
+        tileEntry->_state = MapRendererTiledResources::TileEntry::Unloaded;
+    }
+
+    collection->removeAllEntries();
+}
+
+void OsmAnd::MapRenderer::setRasterLayerProvider( const RasterMapLayerId& layerId, const std::shared_ptr<IMapBitmapTileProvider>& tileProvider, bool forcedUpdate /*= false*/ )
 {
     QWriteLocker scopedLocker(&_stateLock);
 
-    bool update = forcedUpdate || (_requestedState.tileProviders[layerId] != tileProvider);
+    bool update = forcedUpdate || (_requestedState.rasterLayerProviders[layerId] != tileProvider);
     if(!update)
         return;
 
-    _requestedState.tileProviders[layerId] = tileProvider;
+    _requestedState.rasterLayerProviders[layerId] = tileProvider;
 
-    invalidateLayer(layerId);
+    invalidateRasterLayerResources(layerId);
     invalidateCurrentState();
 }
 
-void OsmAnd::MapRenderer::setTileLayerOpacity( const MapTileLayerId& layerId, const float& opacity, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setRasterLayerOpacity( const RasterMapLayerId& layerId, const float& opacity, bool forcedUpdate /*= false*/ )
 {
     QWriteLocker scopedLocker(&_stateLock);
 
     const auto clampedValue = qMax(0.0f, qMin(opacity, 1.0f));
 
-    bool update = forcedUpdate || !qFuzzyCompare(_requestedState.tileLayerOpacity[layerId], clampedValue);
+    bool update = forcedUpdate || !qFuzzyCompare(_requestedState.rasterLayerOpacity[layerId], clampedValue);
     if(!update)
         return;
 
-    _requestedState.tileLayerOpacity[layerId] = clampedValue;
+    _requestedState.rasterLayerOpacity[layerId] = clampedValue;
+
+    invalidateCurrentState();
+}
+
+void OsmAnd::MapRenderer::setElevationDataProvider( const std::shared_ptr<IMapElevationDataProvider>& tileProvider, bool forcedUpdate /*= false*/ )
+{
+    QWriteLocker scopedLocker(&_stateLock);
+
+    bool update = forcedUpdate || (_requestedState.elevationDataProvider != tileProvider);
+    if(!update)
+        return;
+
+    _requestedState.elevationDataProvider = tileProvider;
+
+    invalidateElevationDataResources();
+    invalidateCurrentState();
+}
+
+void OsmAnd::MapRenderer::setElevationDataScaleFactor( const float& factor, bool forcedUpdate /*= false*/ )
+{
+    QWriteLocker scopedLocker(&_stateLock);
+
+    bool update = forcedUpdate || !qFuzzyCompare(_requestedState.elevationDataScaleFactor, factor);
+    if(!update)
+        return;
+
+    _requestedState.elevationDataScaleFactor = factor;
 
     invalidateCurrentState();
 }
@@ -859,36 +956,28 @@ void OsmAnd::MapRenderer::setFogDensity( const float& fogDensity, bool forcedUpd
     invalidateCurrentState();
 }
 
-void OsmAnd::MapRenderer::setFogColor( const float& r, const float& g, const float& b, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setFogColor( const FColorRGB& color, bool forcedUpdate /*= false*/ )
 {
     QWriteLocker scopedLocker(&_stateLock);
 
-    bool update = forcedUpdate || !qFuzzyCompare(_requestedState.fogColor[0], r);
-    update = update || !qFuzzyCompare(_requestedState.fogColor[1], g);
-    update = update || !qFuzzyCompare(_requestedState.fogColor[2], b);
+    bool update = forcedUpdate || _requestedState.fogColor != color;
     if(!update)
         return;
 
-    _requestedState.fogColor[0] = r;
-    _requestedState.fogColor[1] = g;
-    _requestedState.fogColor[2] = b;
+    _requestedState.fogColor = color;
 
     invalidateCurrentState();
 }
 
-void OsmAnd::MapRenderer::setSkyColor( const float& r, const float& g, const float& b, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setSkyColor( const FColorRGB& color, bool forcedUpdate /*= false*/ )
 {
     QWriteLocker scopedLocker(&_stateLock);
 
-    bool update = forcedUpdate || !qFuzzyCompare(_requestedState.skyColor[0], r);
-    update = update || !qFuzzyCompare(_requestedState.skyColor[1], g);
-    update = update || !qFuzzyCompare(_requestedState.skyColor[2], b);
+    bool update = forcedUpdate || _requestedState.skyColor != color;
     if(!update)
         return;
 
-    _requestedState.skyColor[0] = r;
-    _requestedState.skyColor[1] = g;
-    _requestedState.skyColor[2] = b;
+    _requestedState.skyColor = color;
 
     invalidateCurrentState();
 }
@@ -959,81 +1048,4 @@ void OsmAnd::MapRenderer::setZoom( const float& zoom, bool forcedUpdate /*= fals
     _requestedState.zoomFraction = _requestedState.requestedZoom - _requestedState.zoomBase;
 
     invalidateCurrentState();
-}
-
-void OsmAnd::MapRenderer::setHeightScaleFactor( const float& factor, bool forcedUpdate /*= false*/ )
-{
-    QWriteLocker scopedLocker(&_stateLock);
-
-    bool update = forcedUpdate || !qFuzzyCompare(_requestedState.heightScaleFactor, factor);
-    if(!update)
-        return;
-
-    _requestedState.heightScaleFactor = factor;
-
-    invalidateCurrentState();
-}
-
-std::shared_ptr<OsmAnd::IMapTileProvider::Tile> OsmAnd::MapRenderer::prepareTileForUploadingToGPU( const MapTileLayerId& layerId, const std::shared_ptr<IMapTileProvider::Tile>& tile )
-{
-    if(tile->type == IMapTileProvider::Type::Bitmap)
-    {
-        auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
-
-        // Check if we're going to convert
-        bool doConvert = false;
-        const bool force16bit = (currentConfiguration.limitTextureColorDepthBy16bits && bitmapTile->bitmap->getConfig() == SkBitmap::Config::kARGB_8888_Config);
-        const bool canUsePaletteTextures = currentConfiguration.paletteTexturesAllowed && renderAPI->isSupported_8bitPaletteRGBA8;
-        const bool paletteTexture = (bitmapTile->bitmap->getConfig() == SkBitmap::Config::kIndex8_Config);
-        const bool unsupportedFormat =
-            ( canUsePaletteTextures ? !paletteTexture : paletteTexture) ||
-            (bitmapTile->bitmap->getConfig() != SkBitmap::Config::kARGB_8888_Config) ||
-            (bitmapTile->bitmap->getConfig() != SkBitmap::Config::kARGB_4444_Config) ||
-            (bitmapTile->bitmap->getConfig() != SkBitmap::Config::kRGB_565_Config);
-        doConvert = doConvert || force16bit;
-        doConvert = doConvert || unsupportedFormat;
-
-        // Pass palette texture as-is
-        if(paletteTexture && canUsePaletteTextures)
-            return tile;
-
-        // Check if we need alpha
-        auto convertedAlphaChannelData = bitmapTile->alphaChannelData;
-        if(doConvert && (convertedAlphaChannelData == IMapBitmapTileProvider::AlphaChannelData::Undefined))
-        {
-            convertedAlphaChannelData = SkBitmap::ComputeIsOpaque(*bitmapTile->bitmap.get())
-                ? IMapBitmapTileProvider::AlphaChannelData::NotPresent
-                : IMapBitmapTileProvider::AlphaChannelData::Present;
-        }
-
-        // If we have limit of 16bits per pixel in bitmaps, convert to ARGB(4444) or RGB(565)
-        if(force16bit)
-        {
-            auto convertedBitmap = new SkBitmap();
-
-            bitmapTile->bitmap->deepCopyTo(convertedBitmap,
-                convertedAlphaChannelData == IMapBitmapTileProvider::AlphaChannelData::Present
-                    ? SkBitmap::Config::kARGB_4444_Config
-                    : SkBitmap::Config::kRGB_565_Config);
-
-            auto convertedTile = new IMapBitmapTileProvider::Tile(convertedBitmap, convertedAlphaChannelData);
-            return std::shared_ptr<IMapTileProvider::Tile>(convertedTile);
-        }
-
-        // If we have any other unsupported format, convert to proper 16bit or 32bit
-        if(unsupportedFormat)
-        {
-            auto convertedBitmap = new SkBitmap();
-
-            bitmapTile->bitmap->deepCopyTo(convertedBitmap,
-                currentConfiguration.limitTextureColorDepthBy16bits
-                    ? (convertedAlphaChannelData == IMapBitmapTileProvider::AlphaChannelData::Present ? SkBitmap::Config::kARGB_4444_Config : SkBitmap::Config::kRGB_565_Config)
-                    : SkBitmap::kARGB_8888_Config);
-
-            auto convertedTile = new IMapBitmapTileProvider::Tile(convertedBitmap, convertedAlphaChannelData);
-            return std::shared_ptr<IMapTileProvider::Tile>(convertedTile);
-        }
-    }
-
-    return tile;
 }

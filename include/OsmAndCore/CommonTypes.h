@@ -363,6 +363,39 @@ namespace OsmAnd
     enum {
         ZoomLevelsCount = static_cast<unsigned>(ZoomLevel::MaxZoomLevel) + 1u
     };
+
+    union FColorRGB
+    {
+        FColorRGB()
+            : r(1.0f)
+            , g(1.0f)
+            , b(1.0f)
+        {}
+
+        FColorRGB(const float& r_, const float& g_, const float& b_)
+            : r(r_)
+            , g(g_)
+            , b(b_)
+        {}
+
+        float value[3];
+        struct
+        {
+            float r;
+            float g;
+            float b;
+        };
+
+        bool operator== (const FColorRGB& other) const
+        {
+            return qFuzzyCompare(r, other.r) && qFuzzyCompare(g, other.g) && qFuzzyCompare(b, other.b);
+        }
+
+        bool operator!= (const FColorRGB& other) const
+        {
+            return !qFuzzyCompare(r, other.r) || !qFuzzyCompare(g, other.g) || !qFuzzyCompare(b, other.b);
+        }
+    };
 }
 
 #endif // __COMMON_TYPES_H_

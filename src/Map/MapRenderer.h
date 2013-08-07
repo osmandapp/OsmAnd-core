@@ -37,14 +37,30 @@
 #include <Concurrent.h>
 #include <IMapRenderer.h>
 #include <IMapTileProvider.h>
-#include <MapRendererTileLayer.h>
-#include <TileZoomCache.h>
 
 namespace OsmAnd {
 
     class RenderAPI;
+    class MapRendererTiledResources;
     class OSMAND_CORE_API MapRenderer : public IMapRenderer
     {
+    public:
+        enum TiledResourceType : int32_t
+        {
+            InvalidId = -1,
+
+            // Elevation data
+            ElevationData,
+
+            // Raster layers (MapRasterLayersCount)
+            RasterBaseLayer,
+            __RasterLayer_LAST = RasterBaseLayer + (RasterMapLayersCount-1),
+
+            __LAST
+        };
+        enum {
+            TiledResourceTypesCount = static_cast<unsigned>(TiledResourceType::__LAST)
+        };
     private:
         QReadWriteLock _configurationLock;
         MapRendererConfiguration _currentConfiguration;
@@ -54,7 +70,17 @@ namespace OsmAnd {
         MapRendererState _currentState;
         volatile bool _currentStateInvalidated;
 
-        std::array< std::unique_ptr<MapRendererTileLayer>, MapTileLayerIdsCount > _layers;
+        volatile uint32_t _invalidatedRasterLayerResourcesMask;
+        QReadWriteLock _invalidatedRasterLayerResourcesMaskLock;
+        
+        volatile bool _invalidatedElevationDataResources;
+
+        std::array< std::unique_ptr<MapRendererTiledResources>, TiledResourceTypesCount > _tiledResources;
+        void uploadTiledResources();
+        void releaseTiledResources(const std::unique_ptr<MapRendererTiledResources>& collection);
+        IMapTileProvider* getTileProviderFor(const TiledResourceType& resourceType) const;
+
+        QSet<TileId> _uniqueTiles;
 
         std::unique_ptr<RenderAPI> _renderAPI;
     protected:
@@ -99,20 +125,21 @@ namespace OsmAnd {
         TileId _targetTileId;
         PointF _targetInTileOffsetN;
 
-        QReadWriteLock _invalidatedLayersLock;
-        volatile uint32_t _invalidatedLayers;
-        void invalidateLayer(const MapTileLayerId& layerId);
-        virtual void validateLayer(const MapTileLayerId& layerId);
+        void invalidateRasterLayerResources(const RasterMapLayerId& layerId);
+        virtual void validateRasterLayerResources(const RasterMapLayerId& layerId);
+
+        void invalidateElevationDataResources();
+        virtual void validateElevationDataResources();
 
         void invalidateFrame();
 
         void requestUploadDataToGPU();
 
-        QSet<TileId> _uniqueTiles;
-        void requestMissingTiles();
-        virtual std::shared_ptr<IMapTileProvider::Tile> prepareTileForUploadingToGPU(const MapTileLayerId& layerId, const std::shared_ptr<IMapTileProvider::Tile>& tile);
-        virtual uint32_t getTilesPerAtlasTextureLimit(const MapTileLayerId& layerId, const std::shared_ptr<IMapTileProvider::Tile>& tile) = 0;
-        void processRequestedTile(const MapTileLayerId& layerId, const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile, bool success);
+        const std::array< std::unique_ptr<MapRendererTiledResources>, TiledResourceTypesCount >& tiledResources;
+        void requestMissingTiledResources();
+        virtual std::shared_ptr<IMapTileProvider::Tile> prepareTileForUploadingToGPU(const std::shared_ptr<IMapTileProvider::Tile>& tile);
+        virtual uint32_t getTilesPerAtlasTextureLimit(const TiledResourceType& resourceType, const std::shared_ptr<IMapTileProvider::Tile>& tile) = 0;
+        void processRequestedTile(const TiledResourceType& resourceType, const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr<IMapTileProvider::Tile>& tile, bool success);
 
         Qt::HANDLE _renderThreadId;
         Qt::HANDLE _workerThreadId;
@@ -120,8 +147,6 @@ namespace OsmAnd {
         std::unique_ptr<Concurrent::Thread> _backgroundWorker;
         QWaitCondition _backgroundWorkerWakeup;
         void backgroundWorkerProcedure();
-
-        const std::array< std::unique_ptr<MapRendererTileLayer>, MapTileLayerIdsCount >& layers;
 
         const std::unique_ptr<RenderAPI>& renderAPI;
         virtual RenderAPI* allocateRenderAPI() = 0;
@@ -138,8 +163,10 @@ namespace OsmAnd {
         virtual bool postprocessRendering();
         virtual bool releaseRendering();
 
-        virtual void setTileProvider(const MapTileLayerId& layerId, const std::shared_ptr<IMapTileProvider>& tileProvider, bool forcedUpdate = false);
-        virtual void setTileLayerOpacity(const MapTileLayerId& layerId, const float& opacity, bool forcedUpdate = false);
+        virtual void setRasterLayerProvider(const RasterMapLayerId& layerId, const std::shared_ptr<IMapBitmapTileProvider>& tileProvider, bool forcedUpdate = false);
+        virtual void setRasterLayerOpacity(const RasterMapLayerId& layerId, const float& opacity, bool forcedUpdate = false);
+        virtual void setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& tileProvider, bool forcedUpdate = false);
+        virtual void setElevationDataScaleFactor(const float& factor, bool forcedUpdate = false);
         virtual void setWindowSize(const PointI& windowSize, bool forcedUpdate = false);
         virtual void setViewport(const AreaI& viewport, bool forcedUpdate = false);
         virtual void setFieldOfView(const float& fieldOfView, bool forcedUpdate = false);
@@ -147,13 +174,12 @@ namespace OsmAnd {
         virtual void setFogOriginFactor(const float& factor, bool forcedUpdate = false);
         virtual void setFogHeightOriginFactor(const float& factor, bool forcedUpdate = false);
         virtual void setFogDensity(const float& fogDensity, bool forcedUpdate = false);
-        virtual void setFogColor(const float& r, const float& g, const float& b, bool forcedUpdate = false);
-        virtual void setSkyColor(const float& r, const float& g, const float& b, bool forcedUpdate = false);
+        virtual void setFogColor(const FColorRGB& color, bool forcedUpdate = false);
+        virtual void setSkyColor(const FColorRGB& color, bool forcedUpdate = false);
         virtual void setAzimuth(const float& azimuth, bool forcedUpdate = false);
         virtual void setElevationAngle(const float& elevationAngle, bool forcedUpdate = false);
         virtual void setTarget(const PointI& target31, bool forcedUpdate = false);
         virtual void setZoom(const float& zoom, bool forcedUpdate = false);
-        virtual void setHeightScaleFactor(const float& factor, bool forcedUpdate = false);
     };
 
 }

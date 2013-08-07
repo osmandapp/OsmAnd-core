@@ -1,16 +1,16 @@
-#include "MapRendererTileLayer.h"
+#include "MapRendererTiledResources.h"
 
 #include <assert.h>
 
 #include "Logging.h"
 
-OsmAnd::MapRendererTileLayer::MapRendererTileLayer(const MapTileLayerId& layerId_)
+OsmAnd::MapRendererTiledResources::MapRendererTiledResources(const MapRenderer::TiledResourceType& type_)
     : _tilesCollectionMutex(QMutex::Recursive)
-    , layerId(layerId_)
+    , type(type_)
 {
 }
 
-OsmAnd::MapRendererTileLayer::~MapRendererTileLayer()
+OsmAnd::MapRendererTiledResources::~MapRendererTiledResources()
 {
     QMutexLocker scopedLock(&_tilesCollectionMutex);
 
@@ -22,7 +22,7 @@ OsmAnd::MapRendererTileLayer::~MapRendererTileLayer()
     assert(stillUploadedTiles.isEmpty());
 }
 
-std::shared_ptr<OsmAnd::MapRendererTileLayer::TileEntry> OsmAnd::MapRendererTileLayer::obtainTileEntry( const TileId& tileId, const ZoomLevel& zoom, bool createEmptyIfUnexistent /*= false*/ )
+std::shared_ptr<OsmAnd::MapRendererTiledResources::TileEntry> OsmAnd::MapRendererTiledResources::obtainTileEntry( const TileId& tileId, const ZoomLevel& zoom, bool createEmptyIfUnexistent /*= false*/ )
 {
     QMutexLocker scopedLock(&_tilesCollectionMutex);
 
@@ -34,12 +34,12 @@ std::shared_ptr<OsmAnd::MapRendererTileLayer::TileEntry> OsmAnd::MapRendererTile
     if(!createEmptyIfUnexistent)
         return std::shared_ptr<TileEntry>();
 
-    std::shared_ptr<TileEntry> entry(new TileEntry(tileId, zoom, layerId));
+    std::shared_ptr<TileEntry> entry(new TileEntry(tileId, zoom));
     itEntry = zoomLevel.insert(tileId, entry);
     return entry;
 }
 
-void OsmAnd::MapRendererTileLayer::obtainTileEntries( QList< std::shared_ptr<TileEntry> >& outList, unsigned int limit /*= 0u*/, const TileEntry::State& withState /*= TileEntry::State::Unknown*/, const ZoomLevel& andZoom /*= ZoomLevel::InvalidZoom*/ )
+void OsmAnd::MapRendererTiledResources::obtainTileEntries( QList< std::shared_ptr<TileEntry> >& outList, unsigned int limit /*= 0u*/, const TileEntry::State& withState /*= TileEntry::State::Unknown*/, const ZoomLevel& andZoom /*= ZoomLevel::InvalidZoom*/ )
 {
     QMutexLocker scopedLock(&_tilesCollectionMutex);
 
@@ -85,7 +85,7 @@ void OsmAnd::MapRendererTileLayer::obtainTileEntries( QList< std::shared_ptr<Til
     return;
 }
 
-void OsmAnd::MapRendererTileLayer::removeAllEntries()
+void OsmAnd::MapRendererTiledResources::removeAllEntries()
 {
     QMutexLocker scopedLock(&_tilesCollectionMutex);
 
@@ -100,22 +100,21 @@ void OsmAnd::MapRendererTileLayer::removeAllEntries()
         _tilesCollection[zoom].clear();
 }
 
-OsmAnd::MapRendererTileLayer::TileEntry::TileEntry( const TileId& tileId_, const ZoomLevel& zoom_, const MapTileLayerId& layerId_ )
+OsmAnd::MapRendererTiledResources::TileEntry::TileEntry( const TileId& tileId_, const ZoomLevel& zoom_ )
     : _state(Unknown)
     , tileId(tileId_)
     , zoom(zoom_)
-    , layerId(layerId_)
     , state(_state)
     , sourceData(_sourceData)
     , resourceInGPU(_resourceInGPU)
 {
 }
 
-OsmAnd::MapRendererTileLayer::TileEntry::~TileEntry()
+OsmAnd::MapRendererTiledResources::TileEntry::~TileEntry()
 {
     QReadLocker scopedLock(&stateLock);
 
     if(state == State::Uploaded)
-        LogPrintf(LogSeverityLevel::Error, "Tile %dx%d@%d[%d] still resides in GPU memory. This may cause GPU memory leak", tileId.x, tileId.y, zoom, layerId);
+        LogPrintf(LogSeverityLevel::Error, "Tile %dx%d@%d still resides in GPU memory. This may cause GPU memory leak", tileId.x, tileId.y, zoom);
     assert(state != State::Uploaded);
 }

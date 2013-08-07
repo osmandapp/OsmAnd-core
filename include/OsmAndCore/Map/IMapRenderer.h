@@ -38,6 +38,8 @@
 namespace OsmAnd {
 
     class MapRenderer;
+    class IMapBitmapTileProvider;
+    class IMapElevationDataProvider;
     class OSMAND_CORE_API IMapRenderer
     {
     private:
@@ -73,8 +75,10 @@ namespace OsmAnd {
         const volatile bool& frameInvalidated;
         const QList<TileId>& visibleTiles;
 
-        virtual void setTileProvider(const MapTileLayerId& layerId, const std::shared_ptr<IMapTileProvider>& tileProvider, bool forcedUpdate = false) = 0;
-        virtual void setTileLayerOpacity(const MapTileLayerId& layerId, const float& opacity, bool forcedUpdate = false) = 0;
+        virtual void setRasterLayerProvider(const RasterMapLayerId& layerId, const std::shared_ptr<IMapBitmapTileProvider>& tileProvider, bool forcedUpdate = false) = 0;
+        virtual void setRasterLayerOpacity(const RasterMapLayerId& layerId, const float& opacity, bool forcedUpdate = false) = 0;
+        virtual void setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& tileProvider, bool forcedUpdate = false) = 0;
+        virtual void setElevationDataScaleFactor(const float& factor, bool forcedUpdate = false) = 0;
         virtual void setWindowSize(const PointI& windowSize, bool forcedUpdate = false) = 0;
         virtual void setViewport(const AreaI& viewport, bool forcedUpdate = false) = 0;
         virtual void setFieldOfView(const float& fieldOfView, bool forcedUpdate = false) = 0;
@@ -82,13 +86,12 @@ namespace OsmAnd {
         virtual void setFogOriginFactor(const float& factor, bool forcedUpdate = false) = 0;
         virtual void setFogHeightOriginFactor(const float& factor, bool forcedUpdate = false) = 0;
         virtual void setFogDensity(const float& fogDensity, bool forcedUpdate = false) = 0;
-        virtual void setFogColor(const float& r, const float& g, const float& b, bool forcedUpdate = false) = 0;
-        virtual void setSkyColor(const float& r, const float& g, const float& b, bool forcedUpdate = false) = 0;
+        virtual void setFogColor(const FColorRGB& color, bool forcedUpdate = false) = 0;
+        virtual void setSkyColor(const FColorRGB& color, bool forcedUpdate = false) = 0;
         virtual void setAzimuth(const float& azimuth, bool forcedUpdate = false) = 0;
         virtual void setElevationAngle(const float& elevationAngle, bool forcedUpdate = false) = 0;
         virtual void setTarget(const PointI& target31, bool forcedUpdate = false) = 0;
         virtual void setZoom(const float& zoom, bool forcedUpdate = false) = 0;
-        virtual void setHeightScaleFactor(const float& factor, bool forcedUpdate = false) = 0;
 
         virtual float getReferenceTileSizeOnScreen() = 0;
         virtual float getScaledTileSizeOnScreen() = 0;

@@ -62,7 +62,7 @@ OsmAnd::RenderAPI::ResourceInGPU::ResourceInGPU( const Type& type_, RenderAPI* a
         QMutexLocker scopedLock(&api->_allocatedResourcesMutex);
         api->_allocatedResources.push_back(this);
 #else
-        api->_allocatedResourcesCounter.fetchAndAddRelaxed(1);
+        api->_allocatedResourcesCounter.ref();
 #endif
     }
 }
@@ -79,7 +79,7 @@ OsmAnd::RenderAPI::ResourceInGPU::~ResourceInGPU()
         QMutexLocker scopedLock(&api->_allocatedResourcesMutex);
         api->_allocatedResources.removeOne(this);
 #else
-        api->_allocatedResourcesCounter.fetchAndAddRelaxed(-1);
+        api->_allocatedResourcesCounter.deref();
 #endif
     }
 }
@@ -158,7 +158,7 @@ OsmAnd::RenderAPI::TileOnAtlasTextureInGPU::TileOnAtlasTextureInGPU( const std::
         QMutexLocker scopedLock(&atlasTexture->_tilesMutex);
         atlasTexture->_tiles.insert(this);
 #else
-        atlasTexture->_tilesCounter.fetchAndAddRelaxed(1);
+        atlasTexture->_tilesCounter.ref();
 #endif
     }
 }
@@ -171,7 +171,7 @@ OsmAnd::RenderAPI::TileOnAtlasTextureInGPU::~TileOnAtlasTextureInGPU()
         QMutexLocker scopedLock(&atlasTexture->_tilesMutex);
         atlasTexture->_tiles.remove(this);
 #else
-        atlasTexture->_tilesCounter.fetchAndAddRelaxed(-1);
+        atlasTexture->_tilesCounter.deref();
 #endif
     }
 

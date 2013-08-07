@@ -30,6 +30,9 @@
 #include <QThreadPool>
 #include <QEventLoop>
 #include <QRunnable>
+#include <QWaitCondition>
+#include <QReadWriteLock>
+#include <QAtomicInt>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
@@ -76,10 +79,63 @@ namespace OsmAnd {
             virtual void run();
         };
 
+        class HostedTask;
+        class OSMAND_CORE_API TaskHost : public std::enable_shared_from_this<TaskHost>
+        {
+            Q_DISABLE_COPY(TaskHost)
+        public:
+            typedef void* OwnerPtr;
+
+            class OSMAND_CORE_API Bridge
+            {
+                Q_DISABLE_COPY(Bridge)
+            private:
+            protected:
+                std::shared_ptr<TaskHost> _host;
+            public:
+                Bridge(const OwnerPtr& owner);
+                ~Bridge();
+
+                void onOwnerIsBeingDestructed() const;
+
+            friend class OsmAnd::Concurrent::HostedTask;
+            };
+        private:
+        protected:
+            const OwnerPtr _ownerPtr;
+            QList< HostedTask* > _hostedTasks;
+            QReadWriteLock _hostedTasksLock;
+            QWaitCondition _unlockedCondition;
+            volatile bool _ownerIsBeingDestructed;
+
+            TaskHost(const OwnerPtr& owner);
+            void onOwnerIsBeingDestructed();
+        public:
+            ~TaskHost();
+
+        friend class OsmAnd::Concurrent::TaskHost::Bridge;
+        friend class OsmAnd::Concurrent::HostedTask;
+        };
+
+        class OSMAND_CORE_API HostedTask : public Task
+        {
+        private:
+        protected:
+            std::shared_ptr<TaskHost> _host;
+
+            TaskHost::OwnerPtr _lockedOwner;
+        public:
+            HostedTask(const TaskHost::Bridge& bridge, ExecuteSignature executeMethod, PreExecuteSignature preExecuteMethod = nullptr, PostExecuteSignature postExecuteMethod = nullptr);
+            virtual ~HostedTask();
+
+            virtual void run();
+
+            const TaskHost::OwnerPtr& lockedOwner;
+        };
+
         class OSMAND_CORE_API Thread : public QThread
         {
             Q_OBJECT
-
         public:
             typedef std::function<void ()> ThreadProcedureSignature;
         private:

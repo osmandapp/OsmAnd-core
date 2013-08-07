@@ -86,7 +86,7 @@ bool OsmAnd::RenderAPI_OpenGL::initialize()
     glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureUnitsInFragmentShader);
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units in fragment shader %d", maxTextureUnitsInFragmentShader);
-    assert(maxTextureUnitsInFragmentShader >= (MapTileLayerIdsCount - MapTileLayerId::RasterMap));
+    assert(maxTextureUnitsInFragmentShader >= RasterMapLayersCount);
 
     GLint maxTextureUnitsInVertexShader;
     glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, &maxTextureUnitsInVertexShader);
@@ -95,7 +95,7 @@ bool OsmAnd::RenderAPI_OpenGL::initialize()
     //////////////////////////////////////////////////////////////////////////
     maxTextureUnitsInVertexShader = 0;
     //////////////////////////////////////////////////////////////////////////
-    _isSupported_vertexShaderTextureLookup = (maxTextureUnitsInVertexShader >= MapTileLayerId::RasterMap);
+    _isSupported_vertexShaderTextureLookup = (maxTextureUnitsInVertexShader >= 1);
 
     GLint maxTextureUnitsCombined;
     glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTextureUnitsCombined);

@@ -4,7 +4,7 @@ OsmAnd::MapRendererConfiguration::MapRendererConfiguration()
     : texturesFilteringQuality(TextureFilteringQuality::Good)
     , altasTexturesAllowed(false)
     , limitTextureColorDepthBy16bits(false)
-    , heixelsPerTileSide(24)
+    , heixelsPerTileSide(32)
     , paletteTexturesAllowed(false)
 {
 }
