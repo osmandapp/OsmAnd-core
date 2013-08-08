@@ -42,6 +42,7 @@ if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAK
 	)
 	set(target_specific_public_libraries ${target_specific_public_libraries}
 		${OPENGL_gl_LIBRARY}
+		${OPENGL_glu_LIBRARY}
 		glew_static
 	)
 	file(GLOB_RECURSE sources_opengl "src/Map/OpenGL/*.c*")

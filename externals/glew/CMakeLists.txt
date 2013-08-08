@@ -22,4 +22,5 @@ target_include_directories(glew_static
 target_link_libraries(glew_static
 	LINK_PUBLIC
 		${OPENGL_gl_LIBRARY}
+		${OPENGL_glu_LIBRARY}
 )
