@@ -106,14 +106,14 @@ bool OsmAnd::TileDB::rebuildIndex()
     assert(ok);
 
     // Index TileDBs
-    QList< std::shared_ptr<QFileInfo> > files;
+    QFileInfoList files;
     Utilities::findFiles(dataPath, QStringList() << "*", files);
     for(auto itFile = files.begin(); itFile != files.end(); ++itFile)
     {
         const auto& file = *itFile;
-        const auto dbFilename = file->absoluteFilePath();
+        const auto dbFilename = file.absoluteFilePath();
 
-        const auto connectionName = QString::fromLatin1("tiledb-sqlite:") + file->absoluteFilePath();
+        const auto connectionName = QString::fromLatin1("tiledb-sqlite:") + dbFilename;
         QSqlDatabase db;
         if(!QSqlDatabase::contains(connectionName))
             db = QSqlDatabase::addDatabase("QSQLITE", connectionName);

@@ -16,50 +16,50 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 		OSMAND_BUILD_CPU_CORES_NUM=`sysctl hw.ncpu | awk '{print $2}'`
 	fi
 
-	if [ ! -d "$SRCLOC/upstream.patched.ios.simulator.i386" ]; then
-		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.ios.simulator.i386"
-		(cd "$SRCLOC/upstream.patched.ios.simulator.i386" && \
+	if [ ! -d "$SRCLOC/upstream.patched.ios.simulator.i386.static" ]; then
+		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.ios.simulator.i386.static"
+		(cd "$SRCLOC/upstream.patched.ios.simulator.i386.static" && \
 			./configure -xplatform unsupported/macx-ios-clang-simulator-i386 $QTBASE_CONFIGURATION -sdk iphonesimulator)
 	fi
-	(cd "$SRCLOC/upstream.patched.ios.simulator.i386" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
+	(cd "$SRCLOC/upstream.patched.ios.simulator.i386.static" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 
-	if [ ! -h "$SRCLOC/upstream.patched.ios.simulator" ]; then
-		ln -s "$SRCLOC/upstream.patched.ios.simulator.i386" "$SRCLOC/upstream.patched.ios.simulator"
-	fi
-
-	if [ ! -d "$SRCLOC/upstream.patched.ios.device.armv7" ]; then
-		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.ios.device.armv7"
-		(cd "$SRCLOC/upstream.patched.ios.device.armv7" && \
+	if [ ! -d "$SRCLOC/upstream.patched.ios.device.armv7.static" ]; then
+		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.ios.device.armv7.static"
+		(cd "$SRCLOC/upstream.patched.ios.device.armv7.static" && \
 			./configure -xplatform unsupported/macx-ios-clang-device-armv7 $QTBASE_CONFIGURATION -sdk iphoneos)
 	fi
-	(cd "$SRCLOC/upstream.patched.ios.device.armv7" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
+	(cd "$SRCLOC/upstream.patched.ios.device.armv7.static" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 	
-	if [ ! -d "$SRCLOC/upstream.patched.ios.device.armv7s" ]; then
-		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.ios.device.armv7s"
-		(cd "$SRCLOC/upstream.patched.ios.device.armv7s" && \
+	if [ ! -d "$SRCLOC/upstream.patched.ios.device.armv7s.static" ]; then
+		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.ios.device.armv7s.static"
+		(cd "$SRCLOC/upstream.patched.ios.device.armv7s.static" && \
 			./configure -xplatform unsupported/macx-ios-clang-device-armv7s $QTBASE_CONFIGURATION -sdk iphoneos)
 	fi
-	(cd "$SRCLOC/upstream.patched.ios.device.armv7s" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
+	(cd "$SRCLOC/upstream.patched.ios.device.armv7s.static" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
+
+	if [ ! -h "$SRCLOC/upstream.patched.ios.simulator" ]; then
+		ln -s "$SRCLOC/upstream.patched.ios.simulator.i386.static" "$SRCLOC/upstream.patched.ios.simulator"
+	fi
 
 	if [ ! -h "$SRCLOC/upstream.patched.ios.device" ]; then
-		ln -s "$SRCLOC/upstream.patched.ios.device.armv7" "$SRCLOC/upstream.patched.ios.device"
+		ln -s "$SRCLOC/upstream.patched.ios.device.armv7.static" "$SRCLOC/upstream.patched.ios.device"
 	fi
 
 	if [ ! -h "$SRCLOC/upstream.patched.ios-iphoneos" ]; then
-		ln -s "$SRCLOC/upstream.patched.ios.device.armv7" "$SRCLOC/upstream.patched.ios-iphoneos"
+		ln -s "$SRCLOC/upstream.patched.ios.device.armv7.static" "$SRCLOC/upstream.patched.ios-iphoneos"
 	fi
 
 	if [ ! -h "$SRCLOC/upstream.patched.ios-iphonesimulator" ]; then
-		ln -s "$SRCLOC/upstream.patched.ios.simulator.i386" "$SRCLOC/upstream.patched.ios-iphonesimulator"
+		ln -s "$SRCLOC/upstream.patched.ios.simulator.i386.static" "$SRCLOC/upstream.patched.ios-iphonesimulator"
 	fi
 
 	if [ ! -d "$SRCLOC/upstream.patched.ios" ]; then
 		# Copy cmake-related stuff from already built target (any is suitable)
 		mkdir -p "$SRCLOC/upstream.patched.ios/lib"
-		cp -rpf "$SRCLOC/upstream.patched.ios.simulator.i386/lib/cmake" "$SRCLOC/upstream.patched.ios/lib/cmake"
+		cp -rpf "$SRCLOC/upstream.patched.ios.simulator.i386.static/lib/cmake" "$SRCLOC/upstream.patched.ios/lib/cmake"
 
 		# Make universal libraries using lipo
-		for sourcePath in "$SRCLOC/upstream.patched.ios.simulator.i386/lib"/lib*.a ; do
+		for sourcePath in "$SRCLOC/upstream.patched.ios.simulator.i386.static/lib"/lib*.a ; do
 			libName=$(basename "$sourcePath")
 			if [[ "$libName" == *Bootstrap* ]]; then
 				continue
@@ -67,9 +67,9 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 
 			echo "Packing '$libName'..."
 			lipo -create \
-				"$SRCLOC/upstream.patched.ios.simulator.i386/lib/$libName" \
-				"$SRCLOC/upstream.patched.ios.device.armv7/lib/$libName" \
-				"$SRCLOC/upstream.patched.ios.device.armv7s/lib/$libName" \
+				"$SRCLOC/upstream.patched.ios.simulator.i386.static/lib/$libName" \
+				"$SRCLOC/upstream.patched.ios.device.armv7.static/lib/$libName" \
+				"$SRCLOC/upstream.patched.ios.device.armv7s.static/lib/$libName" \
 				-output "$SRCLOC/upstream.patched.ios/lib/$libName"
 		done
 	fi

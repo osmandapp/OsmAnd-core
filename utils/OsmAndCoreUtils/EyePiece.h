@@ -49,8 +49,8 @@ namespace OsmAnd
             bool drawMap;
             bool drawText;
             bool drawIcons;
-            QList< std::shared_ptr<QFileInfo> > styleFiles;
-            QList< std::shared_ptr<QFileInfo> > obfs;
+            QFileInfoList styleFiles;
+            QFileInfoList obfs;
             QString styleName;
             AreaD bbox;
             uint32_t zoom;

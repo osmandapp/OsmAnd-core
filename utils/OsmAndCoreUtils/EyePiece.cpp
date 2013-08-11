@@ -173,10 +173,10 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
     OsmAnd::RasterizationStyles stylesCollection;
     for(auto itStyleFile = cfg.styleFiles.begin(); itStyleFile != cfg.styleFiles.end(); ++itStyleFile)
     {
-        auto styleFile = *itStyleFile;
+        const auto& styleFile = *itStyleFile;
 
-        if(!stylesCollection.registerStyle(*styleFile))
-            output << xT("Failed to parse metadata of '") << QStringToStlString(styleFile->fileName()) << xT("' or duplicate style") << std::endl;
+        if(!stylesCollection.registerStyle(styleFile))
+            output << xT("Failed to parse metadata of '") << QStringToStlString(styleFile.fileName()) << xT("' or duplicate style") << std::endl;
     }
     std::shared_ptr<OsmAnd::RasterizationStyle> style;
     if(!stylesCollection.obtainStyle(cfg.styleName, style))
@@ -190,8 +190,8 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
     OsmAnd::MapDataCache mapDataCache;
     for(auto itObf = cfg.obfs.begin(); itObf != cfg.obfs.end(); ++itObf)
     {
-        auto obf = *itObf;
-        std::shared_ptr<OsmAnd::ObfReader> obfReader(new OsmAnd::ObfReader(std::shared_ptr<QIODevice>(new QFile(obf->absoluteFilePath()))));
+        const auto& obf = *itObf;
+        std::shared_ptr<OsmAnd::ObfReader> obfReader(new OsmAnd::ObfReader(std::shared_ptr<QIODevice>(new QFile(obf.absoluteFilePath()))));
         
         mapDataCache.addSource(obfReader);
     }

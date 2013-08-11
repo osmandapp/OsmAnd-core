@@ -61,59 +61,59 @@ if [[ "$(uname -a)" =~ Cygwin ]]; then
 fi
 
 if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv5 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-	if [ ! -d "$SRCLOC/upstream.patched.armeabi" ]; then
-		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi"
+	if [ ! -d "$SRCLOC/upstream.patched.armeabi.static" ]; then
+		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi.static"
 		export ANDROID_TARGET_ARCH=armeabi
 		export ANDROID_NDK_PLATFORM=android-8
-		(cd "$SRCLOC/upstream.patched.armeabi" && \
+		(cd "$SRCLOC/upstream.patched.armeabi.static" && \
 			./configure $QTBASE_CONFIGURATION \
 			-no-neon)
 	fi
-	(cd "$SRCLOC/upstream.patched.armeabi" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
+	(cd "$SRCLOC/upstream.patched.armeabi.static" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 fi
 
 if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv7 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-	if [ ! -d "$SRCLOC/upstream.patched.armeabi-v7a" ]; then
-		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi-v7a"
+	if [ ! -d "$SRCLOC/upstream.patched.armeabi-v7a.static" ]; then
+		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi-v7a.static"
 		export ANDROID_TARGET_ARCH=armeabi-v7a
 		export ANDROID_NDK_PLATFORM=android-8
-		(cd "$SRCLOC/upstream.patched.armeabi-v7a" && \
+		(cd "$SRCLOC/upstream.patched.armeabi-v7a.static" && \
 			./configure $QTBASE_CONFIGURATION \
 			-no-neon)
 	fi
-	(cd "$SRCLOC/upstream.patched.armeabi-v7a" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
+	(cd "$SRCLOC/upstream.patched.armeabi-v7a.static" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 fi
 
 if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv7-neon ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-	if [ ! -d "$SRCLOC/upstream.patched.armeabi-v7a-neon" ]; then
-		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi-v7a-neon"
+	if [ ! -d "$SRCLOC/upstream.patched.armeabi-v7a-neon.static" ]; then
+		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi-v7a-neon.static"
 		export ANDROID_TARGET_ARCH=armeabi-v7a
 		export ANDROID_NDK_PLATFORM=android-8
-		(cd "$SRCLOC/upstream.patched.armeabi-v7a-neon" && \
+		(cd "$SRCLOC/upstream.patched.armeabi-v7a-neon.static" && \
 			./configure $QTBASE_CONFIGURATION \
 			-qtlibinfix _neon)
 	fi
-	(cd "$SRCLOC/upstream.patched.armeabi-v7a-neon" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
+	(cd "$SRCLOC/upstream.patched.armeabi-v7a-neon.static" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 fi
 
 if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x86 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-	if [ ! -d "$SRCLOC/upstream.patched.x86" ]; then
-		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.x86"
+	if [ ! -d "$SRCLOC/upstream.patched.x86.static" ]; then
+		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.x86.static"
 		export ANDROID_TARGET_ARCH=x86
 		export ANDROID_NDK_PLATFORM=android-9
-		(cd "$SRCLOC/upstream.patched.x86" && \
+		(cd "$SRCLOC/upstream.patched.x86.static" && \
 			./configure $QTBASE_CONFIGURATION)
 	fi
-	(cd "$SRCLOC/upstream.patched.x86" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
+	(cd "$SRCLOC/upstream.patched.x86.static" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 fi
 
 if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ mips ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-	if [ ! -d "$SRCLOC/upstream.patched.mips" ]; then
-		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.mips"
+	if [ ! -d "$SRCLOC/upstream.patched.mips.static" ]; then
+		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.mips.static"
 		export ANDROID_TARGET_ARCH=mips
 		export ANDROID_NDK_PLATFORM=android-9
-		(cd "$SRCLOC/upstream.patched.mips" && \
+		(cd "$SRCLOC/upstream.patched.mips.static" && \
 			./configure $QTBASE_CONFIGURATION)
 	fi
-	(cd "$SRCLOC/upstream.patched.mips" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
+	(cd "$SRCLOC/upstream.patched.mips.static" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 fi

@@ -78,10 +78,6 @@ file(GLOB sources_map "src/Map/*.c*")
 file(GLOB_RECURSE headers_client "client/*.h*")
 file(GLOB_RECURSE sources_client  "client/*.c*")
 
-find_package(Qt5Core REQUIRED)
-find_package(Qt5Network REQUIRED)
-find_package(Qt5Sql REQUIRED)
-
 set(merged_sources
 	${headers}
 	${includes}
@@ -125,9 +121,6 @@ set(merged_include_dirs_public
 	"${OSMAND_ROOT}/core/client"
 	"${OSMAND_ROOT}/core/protos"
 	${target_specific_public_includes}
-	${Qt5Core_INCLUDE_DIRS}
-	${Qt5Network_INCLUDE_DIRS}
-	${Qt5Sql_INCLUDE_DIRS}
 )
 set(merged_link_libs_public
 	skia_static
@@ -135,11 +128,20 @@ set(merged_link_libs_public
 	gdal_static
 	${target_specific_public_libraries}
 )
-set(merged_qt5_modules
-	Core
-	Network
-	Sql
-)
+
+if(OSMAND_EMBEDDED_QT)
+	# When using embedded Qt, we need to use tools from either static or shared
+	# version of qt.
+	find_package(Qt5Core PATHS "${OSMAND_EMBEDDED_QT_SHARED}/lib" NO_DEFAULT_PATH)
+	if(NOT Qt5Core_FOUND)
+		find_package(Qt5Core REQUIRED PATHS "${OSMAND_EMBEDDED_QT_STATIC}/lib" NO_DEFAULT_PATH)
+	endif()
+else()
+	# If not using embedded QT, find packages it as usual
+	find_package(Qt5Core REQUIRED)
+	find_package(Qt5Network REQUIRED)
+	find_package(Qt5Sql REQUIRED)
+endif()
 
 if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 	add_library(OsmAndCore_shared SHARED ${merged_sources})
@@ -157,14 +159,75 @@ if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 		PUBLIC
 			${merged_include_dirs_public}
 	)
-	qt5_use_modules(OsmAndCore_shared
-		LINK_PUBLIC
-			${merged_qt5_modules}
-	)
 	target_link_libraries(OsmAndCore_shared
 		LINK_PUBLIC
 			${merged_link_libs_public}
 	)
+
+	if(OSMAND_EMBEDDED_QT)
+		find_library(Qt5Core_SHARED_LIBRARY "Qt5Core" PATHS "${OSMAND_EMBEDDED_QT_SHARED}/lib" NO_DEFAULT_PATH)
+		find_library(Qt5Cored_SHARED_LIBRARY "Qt5Cored" PATHS "${OSMAND_EMBEDDED_QT_SHARED}/lib" NO_DEFAULT_PATH)
+		set(Qt5Core_SHARED_LIBRARIES "")
+		if(Qt5Core_SHARED_LIBRARY)
+			set(Qt5Core_SHARED_LIBRARIES ${Qt5Core_SHARED_LIBRARIES}
+				optimized ${Qt5Core_SHARED_LIBRARY}
+			)
+		endif()
+		if(Qt5Cored_SHARED_LIBRARY)
+			set(Qt5Core_SHARED_LIBRARIES ${Qt5Core_SHARED_LIBRARIES}
+				debug ${Qt5Cored_SHARED_LIBRARY}
+			)
+		endif()
+
+		find_library(Qt5Network_SHARED_LIBRARY "Qt5Network" PATHS "${OSMAND_EMBEDDED_QT_SHARED}/lib" NO_DEFAULT_PATH)
+		find_library(Qt5Networkd_SHARED_LIBRARY "Qt5Networkd" PATHS "${OSMAND_EMBEDDED_QT_SHARED}/lib" NO_DEFAULT_PATH)
+		set(Qt5Network_SHARED_LIBRARIES "")
+		if(Qt5Network_SHARED_LIBRARY)
+			set(Qt5Network_SHARED_LIBRARIES ${Qt5Network_SHARED_LIBRARIES}
+				optimized ${Qt5Network_SHARED_LIBRARY}
+			)
+		endif()
+		if(Qt5Networkd_SHARED_LIBRARY)
+			set(Qt5Network_SHARED_LIBRARIES ${Qt5Network_SHARED_LIBRARIES}
+				debug ${Qt5Networkd_SHARED_LIBRARY}
+			)
+		endif()
+
+		find_library(Qt5Sql_SHARED_LIBRARY "Qt5Sql" PATHS "${OSMAND_EMBEDDED_QT_SHARED}/lib" NO_DEFAULT_PATH)
+		find_library(Qt5Sqld_SHARED_LIBRARY "Qt5Sqld" PATHS "${OSMAND_EMBEDDED_QT_SHARED}/lib" NO_DEFAULT_PATH)
+		set(Qt5Sql_SHARED_LIBRARIES "")
+		if(Qt5Sql_SHARED_LIBRARY)
+			set(Qt5Sql_SHARED_LIBRARIES ${Qt5Sql_SHARED_LIBRARIES}
+				optimized ${Qt5Sql_SHARED_LIBRARY}
+			)
+		endif()
+		if(Qt5Sqld_SHARED_LIBRARY)
+			set(Qt5Sql_SHARED_LIBRARIES ${Qt5Sql_SHARED_LIBRARIES}
+				debug ${Qt5Sqld_SHARED_LIBRARY}
+			)
+		endif()
+
+		target_include_directories(OsmAndCore_shared
+			PUBLIC
+				"${OSMAND_EMBEDDED_QT_SHARED}/include"
+				"${OSMAND_EMBEDDED_QT_SHARED}/include/QtCore"
+				"${OSMAND_EMBEDDED_QT_SHARED}/include/QtNetwork"
+				"${OSMAND_EMBEDDED_QT_SHARED}/include/QtSql"
+		)
+		target_link_libraries(OsmAndCore_shared
+			LINK_PUBLIC
+				${Qt5Core_SHARED_LIBRARIES}
+				${Qt5Network_SHARED_LIBRARIES}
+				${Qt5Sql_SHARED_LIBRARIES}
+		)
+	else()
+		target_link_libraries(OsmAndCore_shared
+			LINK_PUBLIC
+				Qt5::Core
+				Qt5::Network
+				Qt5::Sql
+		)
+	endif()
 endif()
 
 if(CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
@@ -182,12 +245,73 @@ if(CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 		PUBLIC
 			${merged_include_dirs_public}
 	)
-	qt5_use_modules(OsmAndCore_static
-		LINK_PUBLIC
-			${merged_qt5_modules}
-	)
 	target_link_libraries(OsmAndCore_static
 		LINK_PUBLIC
 			${merged_link_libs_public}
 	)
+
+	if(OSMAND_EMBEDDED_QT)
+		find_library(Qt5Core_STATIC_LIBRARY "Qt5Core" PATHS "${OSMAND_EMBEDDED_QT_STATIC}/lib" NO_DEFAULT_PATH)
+		find_library(Qt5Cored_STATIC_LIBRARY "Qt5Cored" PATHS "${OSMAND_EMBEDDED_QT_STATIC}/lib" NO_DEFAULT_PATH)
+		set(Qt5Core_STATIC_LIBRARIES "")
+		if(Qt5Core_STATIC_LIBRARY)
+			set(Qt5Core_STATIC_LIBRARIES ${Qt5Core_STATIC_LIBRARIES}
+				optimized ${Qt5Core_STATIC_LIBRARY}
+			)
+		endif()
+		if(Qt5Cored_STATIC_LIBRARY)
+			set(Qt5Core_STATIC_LIBRARIES ${Qt5Core_STATIC_LIBRARIES}
+				debug ${Qt5Cored_STATIC_LIBRARY}
+			)
+		endif()
+
+		find_library(Qt5Network_STATIC_LIBRARY "Qt5Network" PATHS "${OSMAND_EMBEDDED_QT_STATIC}/lib" NO_DEFAULT_PATH)
+		find_library(Qt5Networkd_STATIC_LIBRARY "Qt5Networkd" PATHS "${OSMAND_EMBEDDED_QT_STATIC}/lib" NO_DEFAULT_PATH)
+		set(Qt5Network_STATIC_LIBRARIES "")
+		if(Qt5Network_STATIC_LIBRARY)
+			set(Qt5Network_STATIC_LIBRARIES ${Qt5Network_STATIC_LIBRARIES}
+				optimized ${Qt5Network_STATIC_LIBRARY}
+			)
+		endif()
+		if(Qt5Networkd_STATIC_LIBRARY)
+			set(Qt5Network_STATIC_LIBRARIES ${Qt5Network_STATIC_LIBRARIES}
+				debug ${Qt5Networkd_STATIC_LIBRARY}
+			)
+		endif()
+
+		find_library(Qt5Sql_STATIC_LIBRARY "Qt5Sql" PATHS "${OSMAND_EMBEDDED_QT_STATIC}/lib" NO_DEFAULT_PATH)
+		find_library(Qt5Sqld_STATIC_LIBRARY "Qt5Sqld" PATHS "${OSMAND_EMBEDDED_QT_STATIC}/lib" NO_DEFAULT_PATH)
+		set(Qt5Sql_STATIC_LIBRARIES "")
+		if(Qt5Sql_STATIC_LIBRARY)
+			set(Qt5Sql_STATIC_LIBRARIES ${Qt5Sql_STATIC_LIBRARIES}
+				optimized ${Qt5Sql_STATIC_LIBRARY}
+			)
+		endif()
+		if(Qt5Sqld_STATIC_LIBRARY)
+			set(Qt5Sql_STATIC_LIBRARIES ${Qt5Sql_STATIC_LIBRARIES}
+				debug ${Qt5Sqld_STATIC_LIBRARY}
+			)
+		endif()
+
+		target_include_directories(OsmAndCore_static
+			PUBLIC
+				"${OSMAND_EMBEDDED_QT_STATIC}/include"
+				"${OSMAND_EMBEDDED_QT_STATIC}/include/QtCore"
+				"${OSMAND_EMBEDDED_QT_STATIC}/include/QtNetwork"
+				"${OSMAND_EMBEDDED_QT_STATIC}/include/QtSql"
+		)
+		target_link_libraries(OsmAndCore_static
+			LINK_PUBLIC
+				${Qt5Core_STATIC_LIBRARIES}
+				${Qt5Network_STATIC_LIBRARIES}
+				${Qt5Sql_STATIC_LIBRARIES}
+		)
+	else()
+		target_link_libraries(OsmAndCore_static
+			LINK_PUBLIC
+				Qt5::Core
+				Qt5::Network
+				Qt5::Sql
+		)
+	endif()
 endif()

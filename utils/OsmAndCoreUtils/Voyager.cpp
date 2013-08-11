@@ -178,8 +178,8 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
     QList< std::shared_ptr<OsmAnd::ObfReader> > obfData;
     for(auto itObf = cfg.obfs.begin(); itObf != cfg.obfs.end(); ++itObf)
     {
-        auto obf = *itObf;
-        std::shared_ptr<OsmAnd::ObfReader> obfReader(new OsmAnd::ObfReader(std::shared_ptr<QIODevice>(new QFile(obf->absoluteFilePath()))));
+        const auto& obf = *itObf;
+        std::shared_ptr<OsmAnd::ObfReader> obfReader(new OsmAnd::ObfReader(std::shared_ptr<QIODevice>(new QFile(obf.absoluteFilePath()))));
         obfData.push_back(obfReader);
     }
 

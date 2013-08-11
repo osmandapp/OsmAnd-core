@@ -12,26 +12,26 @@ QT := upstream.patched$(OSMAND_QTBASE_SUFFIX)
 include $(CLEAR_VARS)
 LOCAL_ARM_NEON := $(OSMAND_BUILDING_NEON_LIBRARY)
 LOCAL_MODULE := Qt5Core$(MODULE_SUFFIX)
-LOCAL_SRC_FILES := $(QT)/lib/lib$(LOCAL_MODULE).a
+LOCAL_SRC_FILES := $(QT).static/lib/lib$(LOCAL_MODULE).a
 LOCAL_EXPORT_C_INCLUDES := \
-    $(LOCAL_PATH)/$(QT)/include \
-    $(LOCAL_PATH)/$(QT)/include/QtCore
+    $(LOCAL_PATH)/$(QT).static/include \
+    $(LOCAL_PATH)/$(QT).static/include/QtCore
 include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_ARM_NEON := $(OSMAND_BUILDING_NEON_LIBRARY)
 LOCAL_MODULE := Qt5Network$(MODULE_SUFFIX)
-LOCAL_SRC_FILES := $(QT)/lib/lib$(LOCAL_MODULE).a
+LOCAL_SRC_FILES := $(QT).static/lib/lib$(LOCAL_MODULE).a
 LOCAL_EXPORT_C_INCLUDES := \
-    $(LOCAL_PATH)/$(QT)/include \
-    $(LOCAL_PATH)/$(QT)/include/QtNetwork
+    $(LOCAL_PATH)/$(QT).static/include \
+    $(LOCAL_PATH)/$(QT).static/include/QtNetwork
 include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_ARM_NEON := $(OSMAND_BUILDING_NEON_LIBRARY)
 LOCAL_MODULE := Qt5Sql$(MODULE_SUFFIX)
-LOCAL_SRC_FILES := $(QT)/lib/lib$(LOCAL_MODULE).a
+LOCAL_SRC_FILES := $(QT).static/lib/lib$(LOCAL_MODULE).a
 LOCAL_EXPORT_C_INCLUDES := \
-    $(LOCAL_PATH)/$(QT)/include \
-    $(LOCAL_PATH)/$(QT)/include/QtSql
+    $(LOCAL_PATH)/$(QT).static/include \
+    $(LOCAL_PATH)/$(QT).static/include/QtSql
 include $(PREBUILT_STATIC_LIBRARY)
