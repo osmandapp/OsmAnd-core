@@ -96,7 +96,7 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
     run_moc = \
         $(call mkdirp,$(1:$(LOCAL_PATH)/%=$(LOCAL_PATH)/moc/%)) \
         $(info $(shell ( \
-            $(LOCAL_PATH)/externals/qtbase-android/upstream.patched.$(TARGET_ARCH_ABI)$(OSMAND_QT_PATH_SUFFIX)/bin/moc \
+            $(LOCAL_PATH)/externals/qtbase-android/upstream.patched.$(TARGET_ARCH_ABI)$(OSMAND_QT_PATH_SUFFIX).static/bin/moc \
                 $(1) \
                 -f \
                 -o $(1:$(LOCAL_PATH)/%.h=$(LOCAL_PATH)/moc/%.cpp) \
