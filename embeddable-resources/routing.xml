@@ -568,6 +568,7 @@
 			<select value="1" t="highway" v="pedestrian"/>
 			<select value="1" t="highway" v="footway"/>
 			<select value="1" t="highway" v="byway"/>
+			<select value="1" t="highway" v="platform"/>
 			<select value="1" t="highway" v="services"/>
 			<select value="1" t="highway" v="bridleway"/>
 			<select value="1" t="highway" v="steps"/>
