@@ -33,6 +33,8 @@ using namespace OsmAnd;
 %include <stdint.i>
 %include <std_shared_ptr.i>
 %include <std_pair.i>
+%include <std_string.i>
+%include <qstring.i>
 %shared_ptr(OsmAnd::Model::Road)
 %shared_ptr(OsmAnd::RoutingConfiguration)
 %shared_ptr(OsmAnd::RoutingProfileContext)
@@ -66,6 +68,7 @@ public:
 };
 
 
+%apply QString { std::string  };     
 // Common
 %include "OsmAndCore.h"
 %include "OsmAndCore/Utilities.h"
