@@ -4,6 +4,8 @@ SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # overwrite existing resources
 cp -f $SRCLOC/../resources/rendering_styles/default.render.xml  $SRCLOC/embeddable-resources/
+cp -f $SRCLOC/../resources/routing/routing.xml  $SRCLOC/embeddable-resources/
+
 
 export LC_ALL=C
 

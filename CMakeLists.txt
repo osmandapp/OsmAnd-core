@@ -161,7 +161,7 @@ if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 	)
 	target_link_libraries(OsmAndCore_shared
 		LINK_PUBLIC
-			${merged_link_libs_public}
+			${merged_link_libs_public}     
 	)
 
 	if(OSMAND_EMBEDDED_QT)
@@ -219,10 +219,14 @@ if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 				${Qt5Core_SHARED_LIBRARIES}
 				${Qt5Network_SHARED_LIBRARIES}
 				${Qt5Sql_SHARED_LIBRARIES}
+				rt
+				dl
 		)
 	else()
 		target_link_libraries(OsmAndCore_shared
 			LINK_PUBLIC
+			    rt dl
+                OsmAndCore_static
 				Qt5::Core
 				Qt5::Network
 				Qt5::Sql
@@ -305,10 +309,14 @@ if(CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 				${Qt5Core_STATIC_LIBRARIES}
 				${Qt5Network_STATIC_LIBRARIES}
 				${Qt5Sql_STATIC_LIBRARIES}
+				rt
+				dl
 		)
 	else()
 		target_link_libraries(OsmAndCore_static
 			LINK_PUBLIC
+				rt dl
+                OsmAndCore_static
 				Qt5::Core
 				Qt5::Network
 				Qt5::Sql
