@@ -57,7 +57,8 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
         $(LOCAL_PATH)/src/Data \
         $(LOCAL_PATH)/src/Data/Model \
         $(LOCAL_PATH)/src/Routing \
-        $(LOCAL_PATH)/src/Map
+        $(LOCAL_PATH)/src/Map \
+        $(LOCAL_PATH)/protos
 
     SRC_FILES := \
         $(wildcard $(LOCAL_PATH)/src/*.c*) \
