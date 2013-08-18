@@ -157,9 +157,7 @@ else()
 		COMMAND "${CMAKE_CURRENT_LIST_DIR}/embed-resources.py"
 		COMMENT "Embedding resources...")
 endif()
-add_custom_target(OsmAndCore_resources
-	DEPENDS "gen/EmbeddedResources_bundle.cpp"
-)
+add_custom_target(OsmAndCore_resources)
 set(merged_dependencies ${merged_dependencies}
 	OsmAndCore_resources
 )
