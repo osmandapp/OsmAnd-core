@@ -65,16 +65,8 @@ if(CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android")
 endif()
 
 file(GLOB_RECURSE includes "include/*.h*")
-file(GLOB headers "src/*.h*")
-file(GLOB headers_data "src/Data/*.h*")
-file(GLOB headers_data_model "src/Data/Model/*.h*")
-file(GLOB headers_routing "src/Routing/*.h*")
-file(GLOB headers_map "src/Map/*.h*")
-file(GLOB sources "src/*.c*")
-file(GLOB sources_data "src/Data/*.c*")
-file(GLOB sources_data_model "src/Data/Model/*.c*")
-file(GLOB sources_routing "src/Routing/*.c*")
-file(GLOB sources_map "src/Map/*.c*")
+file(GLOB_RECURSE headers "src/*.h*")
+file(GLOB_RECURSE sources "src/*.c*")
 file(GLOB_RECURSE headers_client "client/*.h*")
 file(GLOB_RECURSE sources_client  "client/*.c*")
 
@@ -85,15 +77,8 @@ set_source_files_properties(${generated_sources} PROPERTIES GENERATED TRUE)
 set(merged_sources
 	${headers}
 	${includes}
-	${headers_data}
-	${headers_data_model}
-	${headers_routing}
-	${headers_map}
+	${headers}
 	${sources}
-	${sources_data}
-	${sources_data_model}
-	${sources_routing}
-	${sources_map}
 	${headers_client}
 	${sources_client}
 	${target_specific_sources}
@@ -148,22 +133,28 @@ else()
 	find_package(Qt5Sql REQUIRED)
 endif()
 
+set(OsmAndCore_resources
+	"${OSMAND_ROOT}/resources/rendering_styles/default.render.xml"
+	"${OSMAND_ROOT}/resources/routing/routing.xml"
+)
 if(CMAKE_HOST_WIN32 AND NOT CYGWIN)
 	add_custom_command(OUTPUT "${CMAKE_CURRENT_LIST_DIR}/gen/EmbeddedResources_bundle.cpp"
 		COMMAND bash ARGS --login "${CMAKE_CURRENT_LIST_DIR}/embed-resources.sh"
+		DEPENDS ${OsmAndCore_resources}
 		COMMENT "Embedding resources...")
 else()
 	add_custom_command(OUTPUT "${CMAKE_CURRENT_LIST_DIR}/gen/EmbeddedResources_bundle.cpp"
 		COMMAND "${CMAKE_CURRENT_LIST_DIR}/embed-resources.py"
+		DEPENDS ${OsmAndCore_resources}
 		COMMENT "Embedding resources...")
 endif()
-add_custom_target(OsmAndCore_resources
+add_custom_target(OsmAndCore_embed_resources
 	ALL
 	DEPENDS
 		"${CMAKE_CURRENT_LIST_DIR}/gen/EmbeddedResources_bundle.cpp"
 )
 set(merged_dependencies ${merged_dependencies}
-	OsmAndCore_resources
+	OsmAndCore_embed_resources
 )
 
 if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
