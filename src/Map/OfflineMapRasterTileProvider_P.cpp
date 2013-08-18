@@ -90,7 +90,7 @@ void OsmAnd::OfflineMapRasterTileProvider_P::obtainTileDeffered( const TileId& t
         // Perform actual rendering
         bool nothingToRasterize = false;
         RasterizerContext rasterizerContext(pThis->owner->dataProvider->mapStyle);
-//        Rasterizer::update(rasterizerContext, tileBBox31, zoom, pThis->owner->tileSize, pThis->owner->displayDensity, &mapObjects, OsmAnd::PointF(), &nothingToRasterize, nullptr);
+        Rasterizer::update(rasterizerContext, tileBBox31, zoom, pThis->owner->tileSize, pThis->owner->displayDensity, &mapObjects, OsmAnd::PointF(), &nothingToRasterize, nullptr);
         Rasterizer::rasterizeMap(rasterizerContext, true, canvas, nullptr);
 
         // If there is no data to rasterize, tell that this tile is not available

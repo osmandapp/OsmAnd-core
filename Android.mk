@@ -18,8 +18,7 @@ LOCAL_EXPORT_CFLAGS := \
 LOCAL_EXPORT_C_INCLUDES := \
     $(LOCAL_PATH)/externals/glm/upstream.patched \
     $(LOCAL_PATH)/include \
-    $(LOCAL_PATH)/client \
-    $(LOCAL_PATH)/protos
+    $(LOCAL_PATH)/client
 
 ifeq ($(LOCAL_ARM_NEON),true)
     OSMAND_BINARY_SUFFIX := _neon
@@ -107,9 +106,14 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
     MOC_FILES := \
         $(shell (find $(LOCAL_PATH)/moc -type f))
 
+    $(info $(shell $(LOCAL_PATH)/embed-resources.sh))
+    GEN_FILES := \
+        $(shell (find $(LOCAL_PATH)/gen -type f))
+
     LOCAL_SRC_FILES := \
         $(SRC_FILES:$(LOCAL_PATH)/%=%) \
-        $(MOC_FILES:$(LOCAL_PATH)/%=%)
+        $(MOC_FILES:$(LOCAL_PATH)/%=%) \
+        $(GEN_FILES:$(LOCAL_PATH)/%=%) \
 
     include $(BUILD_STATIC_LIBRARY)
 else
