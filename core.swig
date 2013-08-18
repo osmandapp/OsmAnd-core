@@ -16,8 +16,8 @@
 #include <OsmAndCore/Map/HeightmapTileProvider.h>
 //#include <OsmAndCore/Map/HillshadeTileProvider.h>
 #include <OsmAndCore/Map/OnlineMapRasterTileProvider.h>
-#include <OsmAndCore/Map/MapStyles.h>
-#include <OsmAndCore/Map/MapStyle.h>
+//#include <OsmAndCore/Map/MapStyles.h>
+//#include <OsmAndCore/Map/MapStyle.h>
 
 // Routing-related
 #include <OsmAndCore/Routing/RoutingConfiguration.h>
@@ -35,7 +35,7 @@ using namespace OsmAnd;
 %include <std_shared_ptr.i>
 %include <std_pair.i>
 %include <std_string.i>
-%include <qstring.i>
+%include <swig/qstring.i>
 %shared_ptr(OsmAnd::Model::Road)
 %shared_ptr(OsmAnd::RoutingConfiguration)
 %shared_ptr(OsmAnd::RoutingProfileContext)
@@ -84,8 +84,8 @@ public:
 %include "OsmAndCore/Map/HeightmapTileProvider.h"
 //%include "OsmAndCore/Map/HillshadeTileProvider.h"
 %include "OsmAndCore/Map/OnlineMapRasterTileProvider.h"
-%include "OsmAndCore/Map/MapStyles.h"
-%include "OsmAndCore/Map/MapStyle.h"
+//%include "OsmAndCore/Map/MapStyles.h"
+//%include "OsmAndCore/Map/MapStyle.h"
 
 // Routing-related
 %include "OsmAndCore/Routing/RoutingConfiguration.h"
