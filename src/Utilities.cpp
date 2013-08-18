@@ -14,7 +14,7 @@ const uint64_t l = 1UL << 31;
 OSMAND_CORE_API int32_t OSMAND_CORE_CALL OsmAnd::Utilities::get31TileNumberX( double longitude )
 {
     longitude = normalizeLongitude(longitude);
-    return static_cast<int32_t>((longitude + 180) / 360*l);
+    return static_cast<int32_t>((longitude + 180.0) / 360.0*l);
 }
 
 OSMAND_CORE_API int32_t OSMAND_CORE_CALL OsmAnd::Utilities::get31TileNumberY( double latitude )
@@ -78,7 +78,7 @@ OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::normalizeLatitude( do
 
 OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::normalizeLongitude( double longitude )
 {
-    while (longitude < -180.0 || longitude > 180.0)
+    while (longitude < -180.0 || longitude >= 180.0)
     {
         if (longitude < 0.0)
             longitude += 360.0;
@@ -90,11 +90,13 @@ OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::normalizeLongitude( d
 
 OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::degreesDiff(double a1, double a2){
     double diff = a1 - a2;
-    while(diff > 180) {
-        diff -= 360;
+    while(diff > 180.0)
+    {
+        diff -= 360.0;
     }
-    while(diff <=-180) {
-        diff += 360;
+    while(diff <= -180.0)
+    {
+        diff += 360.0;
     }
     return diff;
 
@@ -526,6 +528,20 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::Utilities::rayIntersect( const Poi
         return true;
 
     return false;
+}
+
+OSMAND_CORE_API OsmAnd::AreaI OSMAND_CORE_CALL OsmAnd::Utilities::tileBoundingBox31( const TileId& tileId, const ZoomLevel& zoom )
+{
+    AreaI output;
+
+    const auto zoomShift = ZoomLevel31 - zoom;
+
+    output.top = tileId.y << zoomShift;
+    output.left = tileId.x << zoomShift;
+    output.bottom = (tileId.y + 1)<< zoomShift;
+    output.right = (tileId.x + 1)<< zoomShift;
+
+    return output;
 }
 
 OSMAND_CORE_API OsmAnd::AreaI OSMAND_CORE_CALL OsmAnd::Utilities::areaRightShift( const AreaI& input, uint32_t shift )

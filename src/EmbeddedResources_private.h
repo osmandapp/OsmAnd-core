@@ -32,8 +32,8 @@ namespace OsmAnd {
         const uint8_t* data;
     };
 
-    extern EmbeddedResource __bundled_resources[];
-    extern uint32_t __bundled_resources_count;
+    extern const EmbeddedResource __bundled_resources[];
+    extern const uint32_t __bundled_resources_count;
 
 } // namespace OsmAnd
 

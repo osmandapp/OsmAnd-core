@@ -27,50 +27,21 @@
 #include <functional>
 #include <array>
 
+#include <QString>
 #include <QDir>
-#include <QMutex>
-#include <QUrl>
-#include <QQueue>
-#include <QSet>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Concurrent.h>
 #include <OsmAndCore/Map/IMapBitmapTileProvider.h>
-
-class QNetworkAccessManager;
-class QEventLoop;
-class QNetworkReply;
 
 namespace OsmAnd {
 
+    class OnlineMapRasterTileProvider_P;
     class OSMAND_CORE_API OnlineMapRasterTileProvider : public IMapBitmapTileProvider
     {
     private:
+        const std::unique_ptr<OnlineMapRasterTileProvider_P> _d;
     protected:
-        QMutex _processingMutex;
-        struct TileRequest
-        {
-            QUrl sourceUrl;
-            TileId tileId;
-            ZoomLevel zoom;
-            TileReadyCallback callback;
-        };
-        QQueue< TileRequest > _tileDownloadRequestsQueue;
-        std::array< QSet< TileId >, 32 > _enqueuedTileIdsForDownload;
-        std::array< QSet< TileId >, 32 > _currentlyDownloadingTileIds;
-        uint32_t _currentDownloadsCount;
-        std::shared_ptr<QDir> _localCachePath;
-        bool _networkAccessAllowed;
-
-        QMutex _requestsMutex;
-        std::array< QSet< TileId >, 32 > _requestedTileIds;
-
-        const Concurrent::TaskHost::Bridge _taskHostBridge;
-
-        void obtainTileDeffered(const QUrl& url, const TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback);
-        void replyFinishedHandler(QNetworkReply* reply, const TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback, QEventLoop& eventLoop, QNetworkAccessManager& networkAccessManager);
-        void handleNetworkReply(QNetworkReply* reply, const TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback);
     public:
         OnlineMapRasterTileProvider(const QString& id, const QString& urlPattern,
             const ZoomLevel& minZoom = ZoomLevel0, const ZoomLevel& maxZoom = ZoomLevel31,
@@ -87,7 +58,7 @@ namespace OsmAnd {
         const AlphaChannelData alphaChannelData;
 
         void setLocalCachePath(const QDir& localCachePath);
-        const std::shared_ptr<QDir>& localCachePath;
+        const QDir& localCachePath;
 
         void setNetworkAccessPermission(bool allowed);
         const bool& networkAccessAllowed;

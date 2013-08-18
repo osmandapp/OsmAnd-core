@@ -7,6 +7,9 @@
 #include <QtCore>
 
 #include "ObfReader.h"
+#include "ObfRoutingSectionReader.h"
+#include "ObfRoutingSectionInfo.h"
+#include "ObfRoutingSectionInfo_P.h"
 #include "Common.h"
 #include "Logging.h"
 #include "Utilities.h"
@@ -23,7 +26,7 @@ OsmAnd::RoutePlanner::~RoutePlanner()
 bool OsmAnd::RoutePlanner::findClosestRoadPoint(
     OsmAnd::RoutePlannerContext* context,
     double latitude, double longitude,
-    std::shared_ptr<OsmAnd::Model::Road>* closestRoad /*= nullptr*/,
+    std::shared_ptr<const OsmAnd::Model::Road>* closestRoad /*= nullptr*/,
     uint32_t* closestPointIndex /*= nullptr*/,
     double* sqDistanceToClosestPoint /*= nullptr*/,
     uint32_t* _rx31 /*= nullptr*/, uint32_t* _ry31 /*= nullptr*/ )
@@ -31,12 +34,12 @@ bool OsmAnd::RoutePlanner::findClosestRoadPoint(
     const auto x31 = Utilities::get31TileNumberX(longitude);
     const auto y31 = Utilities::get31TileNumberY(latitude);
 
-    QList< std::shared_ptr<Model::Road> > roads;
+    QList< std::shared_ptr<const Model::Road> > roads;
     loadRoads(context, x31, y31, 17, roads);
     if(roads.isEmpty())
         loadRoads(context, x31, y31, 15, roads);
 
-    std::shared_ptr<OsmAnd::Model::Road> minDistanceRoad;
+    std::shared_ptr<const OsmAnd::Model::Road> minDistanceRoad;
     uint32_t minDistancePointIdx;
     double minSqDistance = std::numeric_limits<double>::max();
     uint32_t min31x, min31y;
@@ -105,7 +108,7 @@ bool OsmAnd::RoutePlanner::findClosestRoadPoint(
 
 bool OsmAnd::RoutePlanner::findClosestRouteSegment( OsmAnd::RoutePlannerContext* context, double latitude, double longitude, std::shared_ptr<OsmAnd::RoutePlannerContext::RouteCalculationSegment>& routeSegment )
 {
-    std::shared_ptr<OsmAnd::Model::Road> closestRoad;
+    std::shared_ptr<const OsmAnd::Model::Road> closestRoad;
     uint32_t closestPointIndex;
     uint32_t rx31, ry31;
 
@@ -123,7 +126,7 @@ bool OsmAnd::RoutePlanner::findClosestRouteSegment( OsmAnd::RoutePlannerContext*
 
 void OsmAnd::RoutePlanner::cacheRoad( RoutePlannerContext* context, const std::shared_ptr<Model::Road>& road )
 {
-    if(!context->profileContext->acceptsRoad(road.get()))
+    if(!context->profileContext->acceptsRoad(road))
         return;
 
     for(auto itPoint = road->points.begin(); itPoint != road->points.end(); ++itPoint)
@@ -142,7 +145,7 @@ void OsmAnd::RoutePlanner::cacheRoad( RoutePlannerContext* context, const std::s
     }
 }
 
-void OsmAnd::RoutePlanner::loadRoads( RoutePlannerContext* context, uint32_t x31, uint32_t y31, uint32_t zoomAround, QList< std::shared_ptr<Model::Road> >& roads )
+void OsmAnd::RoutePlanner::loadRoads( RoutePlannerContext* context, uint32_t x31, uint32_t y31, uint32_t zoomAround, QList< std::shared_ptr<const Model::Road> >& roads )
 {
     auto coordinatesShift = 1 << (31 - context->_roadTilesLoadingZoomLevel);
     uint32_t t;
@@ -170,9 +173,9 @@ void OsmAnd::RoutePlanner::loadRoads( RoutePlannerContext* context, uint32_t x31
     }
 }
 
-void OsmAnd::RoutePlanner::loadRoadsFromTile( RoutePlannerContext* context, uint64_t tileId, QList< std::shared_ptr<Model::Road> >& roads )
+void OsmAnd::RoutePlanner::loadRoadsFromTile( RoutePlannerContext* context, uint64_t tileId, QList< std::shared_ptr<const Model::Road> >& roads )
 {
-    QMap<uint64_t, std::shared_ptr<Model::Road> > duplicates;
+    QMap<uint64_t, std::shared_ptr<const Model::Road> > duplicates;
 
     auto itRoadsInTile = context->_cachedRoadsInTiles.find(tileId);
     if (itRoadsInTile != context->_cachedRoadsInTiles.end())
@@ -262,19 +265,20 @@ void OsmAnd::RoutePlanner::loadTileHeader( RoutePlannerContext* context, uint32_
 
     for(auto itSource = context->sources.cbegin(); itSource != context->sources.cend(); ++itSource)
     {
-        auto source = *itSource;
+        const auto& source = *itSource;
         
-        for(auto itRoutingSection = source->routingSections.cbegin(); itRoutingSection != source->routingSections.cend(); ++itRoutingSection)
+        const auto& obfInfo = source->obtainInfo();
+        for(auto itRoutingSection = obfInfo->routingSections.cbegin(); itRoutingSection != obfInfo->routingSections.cend(); ++itRoutingSection)
         {
-            auto routingSection = *itRoutingSection;
+            const auto& routingSection = *itRoutingSection;
 
-            QList< std::shared_ptr<ObfRoutingSection::Subsection> > subsections;
-            ObfRoutingSection::querySubsections(
-                source.get(),
-                context->_useBasemap ? routingSection->_baseSubsections : routingSection->_subsections,
+            QList< std::shared_ptr<const ObfRoutingSubsectionInfo> > subsections;
+            ObfRoutingSectionReader::querySubsections(
+                source,
+                context->_useBasemap ? routingSection->baseSubsections : routingSection->subsections,
                 &subsections,
                 &filter,
-                [=] (std::shared_ptr<OsmAnd::ObfRoutingSection::Subsection> subsection)
+                [](const std::shared_ptr<const ObfRoutingSubsectionInfo>& subsection)
                 {
                     return subsection->containsData();
                 }
@@ -305,10 +309,10 @@ void OsmAnd::RoutePlanner::loadSubregionContext( RoutePlannerContext::RoutingSub
         context->owner->_routeStatistics->timeToLoadBegin = std::chrono::steady_clock::now();
     }
     context->markLoaded();
-    ObfRoutingSection::loadSubsectionData(context->origin.get(), context->subsection, nullptr, nullptr, nullptr,
-        [=] (std::shared_ptr<OsmAnd::Model::Road> road)
+    ObfRoutingSectionReader::loadSubsectionData(context->origin, context->subsection, nullptr, nullptr, nullptr,
+        [=] (const std::shared_ptr<const OsmAnd::Model::Road>& road)
         {
-            if(!context->owner->profileContext->acceptsRoad(road.get()))
+            if(!context->owner->profileContext->acceptsRoad(road))
                 return false;
 
             context->registerRoad(road);
@@ -677,13 +681,13 @@ void OsmAnd::RoutePlanner::loadBorderPoints( OsmAnd::RoutePlannerContext::Calcul
         auto subsection = itEntry.key();
         auto source = context->owner->_sourcesLUT[subsection->section.get()];
 
-        ObfRoutingSection::loadSubsectionBorderBoxLinesPoints(source.get(), subsection->section.get(), nullptr, &filter, nullptr,
-            [&] (std::shared_ptr<OsmAnd::ObfRoutingSection::BorderLinePoint> point)
+        ObfRoutingSectionReader::loadSubsectionBorderBoxLinesPoints(source, subsection->section, nullptr, &filter, nullptr,
+            [&] (const std::shared_ptr<const OsmAnd::ObfRoutingBorderLinePoint>& point)
             {
                 if(point->location.x <= leftBorderBoundary || point->location.x >= rightBorderBoundary)
                     return false;
 
-                if(!context->owner->profileContext->acceptsBorderLinePoint(subsection->section.get(), point.get()))
+                if(!context->owner->profileContext->acceptsBorderLinePoint(subsection->section, point))
                     return false;
 
                 auto itBorderLine = borderLinesLUT.find(point->location.y);
@@ -732,13 +736,13 @@ void OsmAnd::RoutePlanner::loadBorderPoints( OsmAnd::RoutePlannerContext::Calcul
     updateDistanceForBorderPoints(context, context->_targetPoint, false);
 }
 
-uint64_t OsmAnd::RoutePlanner::encodeRoutePointId( const std::shared_ptr<Model::Road>& road, uint64_t pointIndex, bool positive )
+uint64_t OsmAnd::RoutePlanner::encodeRoutePointId( const std::shared_ptr<const Model::Road>& road, uint64_t pointIndex, bool positive )
 {
     assert((pointIndex >> RoutePointsBitSpace) == 0);
     return (road->id << RoutePointsBitSpace) | (pointIndex << 1) | (positive ? 1 : 0);
 }
 
-uint64_t OsmAnd::RoutePlanner::encodeRoutePointId( const std::shared_ptr<Model::Road>& road, uint64_t pointIndex)
+uint64_t OsmAnd::RoutePlanner::encodeRoutePointId( const std::shared_ptr<const Model::Road>& road, uint64_t pointIndex)
 {
     return (road->id << 10) | pointIndex;
 }
@@ -836,7 +840,7 @@ void OsmAnd::RoutePlanner::calculateRouteSegment(
             prevPoint.x, prevPoint.y);
 
         // 2.1 calculate possible obstacle plus time
-        auto obstacleTime = context->owner->profileContext->getRoutingObstaclesExtraTime(segment->road.get(), segmentEnd);
+        auto obstacleTime = context->owner->profileContext->getRoutingObstaclesExtraTime(segment->road, segmentEnd);
         if (obstacleTime < 0)
         {
             directionAllowed = false;
@@ -866,7 +870,7 @@ void OsmAnd::RoutePlanner::calculateRouteSegment(
         auto otherSegment = nextSegment;
         while(otherSegment)
         {
-            if(otherSegment->road->id != segment->road->id || otherSegment->pointIndex != 0 || otherSegment->road->getDirection() != Model::Road::OneWayForward)
+            if(otherSegment->road->id != segment->road->id || otherSegment->pointIndex != 0 || otherSegment->road->getDirection() != Model::RoadDirection::OneWayForward)
             {
                 outgoingConnections = true;
                 break;
@@ -905,7 +909,7 @@ float OsmAnd::RoutePlanner::calculateTurnTime(
         // Check that there are no traffic signals, since they don't add turn info
         for(auto itPointType = pointTypesB.begin(); itPointType != pointTypesB.end(); ++itPointType)
         {
-            auto rule = b->road->subsection->section->_encodingRules[*itPointType];
+            auto rule = b->road->subsection->section->_d->_encodingRules[*itPointType];
             if(rule->_tag == "highway" && rule->_value == "traffic_signals")
                 return 0;
         }
@@ -942,27 +946,27 @@ bool OsmAnd::RoutePlanner::checkIfInitialMovementAllowedOnSegment(
     std::shared_ptr<RoutePlannerContext::RouteCalculationSegment> >& visitedSegments,
     const std::shared_ptr<RoutePlannerContext::RouteCalculationSegment>& segment,
     bool forwardDirection,
-    const std::shared_ptr<Model::Road>& road )
+    const std::shared_ptr<const Model::Road>& road )
 {
     bool directionAllowed;
 
     const auto middle = segment->pointIndex;
-    const auto direction = context->owner->profileContext->getDirection(road.get());
+    const auto direction = context->owner->profileContext->getDirection(road);
 
     // use positive direction as agreed
     if (!reverseWaySearch)
     {
         if(forwardDirection)
-            directionAllowed = (direction == Model::Road::Direction::TwoWay || direction == Model::Road::Direction::OneWayReverse);
+            directionAllowed = (direction == Model::RoadDirection::TwoWay || direction == Model::RoadDirection::OneWayReverse);
         else
-            directionAllowed = (direction == Model::Road::Direction::TwoWay || direction == Model::Road::Direction::OneWayForward);
+            directionAllowed = (direction == Model::RoadDirection::TwoWay || direction == Model::RoadDirection::OneWayForward);
     }
     else
     {
         if(forwardDirection)
-            directionAllowed = (direction == Model::Road::Direction::TwoWay || direction == Model::Road::Direction::OneWayForward);
+            directionAllowed = (direction == Model::RoadDirection::TwoWay || direction == Model::RoadDirection::OneWayForward);
         else
-            directionAllowed = (direction == Model::Road::Direction::TwoWay || direction == Model::Road::Direction::OneWayReverse);
+            directionAllowed = (direction == Model::RoadDirection::TwoWay || direction == Model::RoadDirection::OneWayReverse);
     }
     if(forwardDirection)
     {
@@ -988,7 +992,7 @@ bool OsmAnd::RoutePlanner::checkIfOppositeSegmentWasVisited(
     RoadSegmentsPriorityQueue& graphSegments,
     const std::shared_ptr<RoutePlannerContext::RouteCalculationSegment>& segment,
     QMap<uint64_t, std::shared_ptr<RoutePlannerContext::RouteCalculationSegment> >& oppositeSegments,
-    const std::shared_ptr<Model::Road>& road,
+    const std::shared_ptr<const Model::Road>& road,
     uint32_t segmentEnd,
     bool forwardDirection,
     uint32_t intervalId,
@@ -1022,12 +1026,12 @@ bool OsmAnd::RoutePlanner::checkIfOppositeSegmentWasVisited(
 
 float OsmAnd::RoutePlanner::calculateTimeWithObstacles(
     OsmAnd::RoutePlannerContext::CalculationContext* context,
-    const std::shared_ptr<Model::Road>& road,
+    const std::shared_ptr<const Model::Road>& road,
     float distOnRoadToPass,
     float obstaclesTime)
 {
-    auto priority = context->owner->profileContext->getSpeedPriority(road.get());
-    auto speed = context->owner->profileContext->getSpeed(road.get()) * priority;
+    auto priority = context->owner->profileContext->getSpeedPriority(road);
+    auto speed = context->owner->profileContext->getSpeed(road) * priority;
     if(qFuzzyCompare(speed, 0.0f))
         speed = context->owner->profileContext->profile->minDefaultSpeed * priority;
 
@@ -1042,7 +1046,7 @@ float OsmAnd::RoutePlanner::calculateTimeWithObstacles(
 bool OsmAnd::RoutePlanner::processRestrictions(
     OsmAnd::RoutePlannerContext::CalculationContext* context,
     QList< std::shared_ptr<RoutePlannerContext::RouteCalculationSegment> >& prescripted,
-    const std::shared_ptr<Model::Road>& road,
+    const std::shared_ptr<const Model::Road>& road,
     const std::shared_ptr<RoutePlannerContext::RouteCalculationSegment>& inputNext,
     bool reverseWay)
 {
@@ -1058,7 +1062,7 @@ bool OsmAnd::RoutePlanner::processRestrictions(
     
     while(next)
     {
-        Model::Road::Restriction type = Model::Road::Invalid;
+        Model::RoadRestriction type = Model::RoadRestriction::Invalid;
         if (!reverseWay)
         {
             auto itRestriction = road->restrictions.find(next->road->id);
@@ -1079,7 +1083,7 @@ bool OsmAnd::RoutePlanner::processRestrictions(
                 }
 
                 // Check if there is restriction only to the other than current road
-                if (crt == Model::Road::OnlyRightTurn || crt == Model::Road::OnlyLeftTurn || crt == Model::Road::OnlyStraightOn)
+                if (crt == Model::RoadRestriction::OnlyRightTurn || crt == Model::RoadRestriction::OnlyLeftTurn || crt == Model::RoadRestriction::OnlyStraightOn)
                 {
                     // check if that restriction applies to considered junction
                     auto foundNext = inputNext;
@@ -1091,24 +1095,24 @@ bool OsmAnd::RoutePlanner::processRestrictions(
                         foundNext = foundNext->next;
                     }
                     if (foundNext)
-                        type = Model::Road::Special_ReverseWayOnly; // special constant
+                        type = Model::RoadRestriction::Special_ReverseWayOnly; // special constant
                 }
             }
         }
 
-        if (type == Model::Road::Special_ReverseWayOnly)
+        if (type == Model::RoadRestriction::Special_ReverseWayOnly)
         {
             // next = next.next; continue;
         }
-        else if (type == Model::Road::Invalid && exclusiveRestriction)
+        else if (type == Model::RoadRestriction::Invalid && exclusiveRestriction)
         {
             // next = next.next; continue;
         }
-        else if (type == Model::Road::NoLeftTurn || type == Model::Road::NoRightTurn || type == Model::Road::NoUTurn || type == Model::Road::NoStraightOn)
+        else if (type == Model::RoadRestriction::NoLeftTurn || type == Model::RoadRestriction::NoRightTurn || type == Model::RoadRestriction::NoUTurn || type == Model::RoadRestriction::NoStraightOn)
         {
             // next = next.next; continue;
         }
-        else if (type == Model::Road::Invalid)
+        else if (type == Model::RoadRestriction::Invalid)
         {
             // case no restriction
             notForbidden.push_back(next);
@@ -1385,7 +1389,7 @@ std::shared_ptr<OsmAnd::RoutePlannerContext::RouteCalculationSegment> OsmAnd::Ro
 {
     auto tileId = getRoutingTileId(context, x31, y31, false);
 
-    QMap<uint64_t, std::shared_ptr<Model::Road> > processed;
+    QMap<uint64_t, std::shared_ptr<const Model::Road> > processed;
     std::shared_ptr<RoutePlannerContext::RouteCalculationSegment> original;
 
     const auto& itCachedRoads = context->_cachedRoadsInTiles.find(tileId);

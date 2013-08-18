@@ -70,7 +70,7 @@ bool OsmAnd::RenderAPI_OpenGL::initialize()
     
     const auto glVersionString = glGetString(GL_VERSION);
     GL_CHECK_RESULT;
-    GLint glVersion[2];
+    GLint glVersion[2] = {0, 0};
     glGetIntegerv(GL_MAJOR_VERSION, &glVersion[0]);
     GL_CHECK_RESULT;
     glGetIntegerv(GL_MINOR_VERSION, &glVersion[1]);

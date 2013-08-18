@@ -1,14 +1,15 @@
 #include "Rasterizer.h"
 
+#include <assert.h>
 #include <set>
 
 #include <QtGlobal>
 
-#include "OsmAndCore/Logging.h"
-#include "OsmAndCore/Utilities.h"
-#include "RasterizationStyleEvaluator.h"
-#include "ObfMapSection.h"
+#include "ObfMapSectionInfo.h"
+#include "MapStyleEvaluator.h"
 #include "RasterizerContext.h"
+#include "Logging.h"
+#include "Utilities.h"
 
 #include <SkBlurDrawLooper.h>
 #include <SkColorFilter.h>
@@ -28,7 +29,7 @@ void OsmAnd::Rasterizer::update(
     uint32_t zoom,
     uint32_t tileSidePixelLength,
     float densityFactor,
-    const QList< std::shared_ptr<OsmAnd::Model::MapObject> >* objects /*= nullptr*/,
+    const QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* objects /*= nullptr*/,
     const PointF& tlOriginOffset /*= PointF() */,
     bool* noDataAvailable /*= nullptr*/,
     IQueryController* controller /*= nullptr*/)
@@ -65,22 +66,22 @@ void OsmAnd::Rasterizer::update(
 
             const auto& mapObject = *itMapObject;
 
-            context._hasLand = context._hasLand || mapObject->foundation == Model::MapObject::FullLand;
-            context._hasWater = context._hasWater || mapObject->foundation == Model::MapObject::FullWater;
-            context._hasBasemap = context._hasBasemap || mapObject->section->isBaseMap;
-            if(zoom < ZoomOnlyForBasemaps && !mapObject->section->isBaseMap)
+            context._hasLand = context._hasLand || mapObject->foundation == MapFoundationType::FullLand;
+            context._hasWater = context._hasWater || mapObject->foundation == MapFoundationType::FullWater;
+            context._hasBasemap = context._hasBasemap || mapObject->section->isBasemap;
+            if(zoom < ZoomOnlyForBasemaps && !mapObject->section->isBasemap)
                 continue;
 
-            if(mapObject->containsType("natural", "coastline"))
+            if(mapObject->containsType(QString::fromLatin1("natural"), QString::fromLatin1("coastline")))
             {
-                if (mapObject->section->isBaseMap)
+                if (mapObject->section->isBasemap)
                     context._basemapCoastlineObjects.push_back(mapObject);
                 else
                     context._coastlineObjects.push_back(mapObject);
             }
             else
             {
-                if (mapObject->section->isBaseMap)
+                if (mapObject->section->isBasemap)
                     context._basemapMapObjects.push_back(mapObject);
                 else
                     context._mapObjects.push_back(mapObject);
@@ -133,9 +134,9 @@ void OsmAnd::Rasterizer::update(
             bgMapObject->_points31.push_back(PointI(area31.left, area31.bottom));
             bgMapObject->_points31.push_back(bgMapObject->_points31.first());
             if (context._hasWater && !context._hasLand)
-                bgMapObject->_types.push_back(TagValue("natural", "coastline"));
+                bgMapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline")));
             else
-                bgMapObject->_types.push_back(TagValue("natural", "land"));
+                bgMapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("land")));
 
             context._triangulatedCoastlineObjects.push_back(bgMapObject);
         }
@@ -236,23 +237,23 @@ void OsmAnd::Rasterizer::obtainPrimitives(RasterizerContext& context, IQueryCont
             const auto& type = *itType;
             auto layer = mapObject->getSimpleLayerValue();
 
-            RasterizationStyleEvaluator evaluator(context.style, RasterizationStyle::RulesetType::Order, mapObject);
+            MapStyleEvaluator evaluator(context.style, MapStyle::RulesetType::Order, mapObject);
             context.applyTo(evaluator);
-            evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
-            evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
-            evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
-            evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
-            evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_LAYER, layer);
-            evaluator.setBooleanValue(RasterizationStyle::builtinValueDefinitions.INPUT_AREA, mapObject->_isArea);
-            evaluator.setBooleanValue(RasterizationStyle::builtinValueDefinitions.INPUT_POINT, mapObject->_points31.size() == 1);
-            evaluator.setBooleanValue(RasterizationStyle::builtinValueDefinitions.INPUT_CYCLE, mapObject->isClosedFigure());
+            evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
+            evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
+            evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
+            evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
+            evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_LAYER, layer);
+            evaluator.setBooleanValue(MapStyle::builtinValueDefinitions.INPUT_AREA, mapObject->_isArea);
+            evaluator.setBooleanValue(MapStyle::builtinValueDefinitions.INPUT_POINT, mapObject->_points31.size() == 1);
+            evaluator.setBooleanValue(MapStyle::builtinValueDefinitions.INPUT_CYCLE, mapObject->isClosedFigure());
             if(evaluator.evaluate())
             {
                 int objectType;
-                if(!evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_OBJECT_TYPE, objectType))
+                if(!evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_OBJECT_TYPE, objectType))
                     continue;
                 int zOrder;
-                if(!evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_ORDER, zOrder))
+                if(!evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_ORDER, zOrder))
                     continue;
 
                 Primitive primitive;
@@ -304,7 +305,7 @@ void OsmAnd::Rasterizer::obtainPrimitives(RasterizerContext& context, IQueryCont
                 }
 
                 int shadowLevel;
-                if(evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADOW_LEVEL, shadowLevel) && shadowLevel > 0)
+                if(evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_SHADOW_LEVEL, shadowLevel) && shadowLevel > 0)
                 {
                     context._shadowLevelMin = qMin(context._shadowLevelMin, static_cast<uint32_t>(zOrder));
                     context._shadowLevelMax = qMax(context._shadowLevelMax, static_cast<uint32_t>(zOrder));
@@ -362,7 +363,7 @@ void OsmAnd::Rasterizer::filterOutLinesByDensity( RasterizerContext& context, co
         const auto& primitive = in[lineIdx];
 
         const auto& type = primitive.mapObject->_types[primitive.typeIndex];
-        if (type.tag == "highway")
+        if(type.tag == QString::fromLatin1("highway"))
         {
             accept = false;
 
@@ -422,47 +423,47 @@ void OsmAnd::Rasterizer::rasterizeMapPrimitives( RasterizerContext& context, SkC
     }
 }
 
-bool OsmAnd::Rasterizer::updatePaint( RasterizerContext& context, const RasterizationStyleEvaluator& evaluator, PaintValuesSet valueSetSelector, bool isArea )
+bool OsmAnd::Rasterizer::updatePaint( RasterizerContext& context, const MapStyleEvaluator& evaluator, PaintValuesSet valueSetSelector, bool isArea )
 {
     bool ok = true;
     struct ValueSet
     {
-        const std::shared_ptr<RasterizationStyle::ValueDefinition>& color;
-        const std::shared_ptr<RasterizationStyle::ValueDefinition>& strokeWidth;
-        const std::shared_ptr<RasterizationStyle::ValueDefinition>& cap;
-        const std::shared_ptr<RasterizationStyle::ValueDefinition>& pathEffect;
+        const std::shared_ptr<MapStyle::ValueDefinition>& color;
+        const std::shared_ptr<MapStyle::ValueDefinition>& strokeWidth;
+        const std::shared_ptr<MapStyle::ValueDefinition>& cap;
+        const std::shared_ptr<MapStyle::ValueDefinition>& pathEffect;
     };
     static ValueSet valueSets[] =
     {
         {//0
-            RasterizationStyle::builtinValueDefinitions.OUTPUT_COLOR,
-            RasterizationStyle::builtinValueDefinitions.OUTPUT_STROKE_WIDTH,
-            RasterizationStyle::builtinValueDefinitions.OUTPUT_CAP,
-            RasterizationStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT
+            MapStyle::builtinValueDefinitions.OUTPUT_COLOR,
+            MapStyle::builtinValueDefinitions.OUTPUT_STROKE_WIDTH,
+            MapStyle::builtinValueDefinitions.OUTPUT_CAP,
+            MapStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT
         },
         {//1
-            RasterizationStyle::builtinValueDefinitions.OUTPUT_COLOR_2,
-            RasterizationStyle::builtinValueDefinitions.OUTPUT_STROKE_WIDTH_2,
-            RasterizationStyle::builtinValueDefinitions.OUTPUT_CAP_2,
-            RasterizationStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT_2
+            MapStyle::builtinValueDefinitions.OUTPUT_COLOR_2,
+            MapStyle::builtinValueDefinitions.OUTPUT_STROKE_WIDTH_2,
+            MapStyle::builtinValueDefinitions.OUTPUT_CAP_2,
+            MapStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT_2
         },
         {//-1
-            RasterizationStyle::builtinValueDefinitions.OUTPUT_COLOR_0,
-            RasterizationStyle::builtinValueDefinitions.OUTPUT_STROKE_WIDTH_0,
-            RasterizationStyle::builtinValueDefinitions.OUTPUT_CAP_0,
-            RasterizationStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT_0
+            MapStyle::builtinValueDefinitions.OUTPUT_COLOR_0,
+            MapStyle::builtinValueDefinitions.OUTPUT_STROKE_WIDTH_0,
+            MapStyle::builtinValueDefinitions.OUTPUT_CAP_0,
+            MapStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT_0
         },
         {//-2
-            RasterizationStyle::builtinValueDefinitions.OUTPUT_COLOR__1,
-            RasterizationStyle::builtinValueDefinitions.OUTPUT_STROKE_WIDTH__1,
-            RasterizationStyle::builtinValueDefinitions.OUTPUT_CAP__1,
-            RasterizationStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT__1
+            MapStyle::builtinValueDefinitions.OUTPUT_COLOR__1,
+            MapStyle::builtinValueDefinitions.OUTPUT_STROKE_WIDTH__1,
+            MapStyle::builtinValueDefinitions.OUTPUT_CAP__1,
+            MapStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT__1
         },
         {//else
-            RasterizationStyle::builtinValueDefinitions.OUTPUT_COLOR_3,
-            RasterizationStyle::builtinValueDefinitions.OUTPUT_STROKE_WIDTH_3,
-            RasterizationStyle::builtinValueDefinitions.OUTPUT_CAP_3,
-            RasterizationStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT_3
+            MapStyle::builtinValueDefinitions.OUTPUT_COLOR_3,
+            MapStyle::builtinValueDefinitions.OUTPUT_STROKE_WIDTH_3,
+            MapStyle::builtinValueDefinitions.OUTPUT_CAP_3,
+            MapStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT_3
         },
     };
     const ValueSet& valueSet = valueSets[static_cast<int>(valueSetSelector)];
@@ -521,7 +522,7 @@ bool OsmAnd::Rasterizer::updatePaint( RasterizerContext& context, const Rasteriz
     if (valueSetSelector == PaintValuesSet::Set_0)
     {
         QString shader;
-        ok = evaluator.getStringValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADER, shader);
+        ok = evaluator.getStringValue(MapStyle::builtinValueDefinitions.OUTPUT_SHADER, shader);
         if(ok && !shader.isEmpty())
         {
             assert(false);
@@ -536,9 +537,9 @@ bool OsmAnd::Rasterizer::updatePaint( RasterizerContext& context, const Rasteriz
     if (context._shadowRenderingMode == 1 && valueSetSelector == PaintValuesSet::Set_0)
     {
         int shadowColor;
-        ok = evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADOW_COLOR, shadowColor);
+        ok = evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_SHADOW_COLOR, shadowColor);
         int shadowRadius;
-        evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADOW_RADIUS, shadowRadius);
+        evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_SHADOW_RADIUS, shadowRadius);
         if(!ok || shadowColor == 0)
             shadowColor = context._shadowRenderingColor;
         if(shadowColor == 0)
@@ -571,12 +572,12 @@ void OsmAnd::Rasterizer::rasterizePolygon( RasterizerContext& context, SkCanvas&
 
     const auto& type = primitive.mapObject->_types[primitive.typeIndex];
 
-    RasterizationStyleEvaluator evaluator(context.style, RasterizationStyle::RulesetType::Polygon, primitive.mapObject);
+    MapStyleEvaluator evaluator(context.style, MapStyle::RulesetType::Polygon, primitive.mapObject);
     context.applyTo(evaluator);
-    evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
-    evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
-    evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
-    evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
+    evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
+    evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
+    evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
+    evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
     if(!evaluator.evaluate())
         return;
     if(!updatePaint(context, evaluator, Set_0, true))
@@ -676,25 +677,25 @@ void OsmAnd::Rasterizer::rasterizeLine( RasterizerContext& context, SkCanvas& ca
     bool ok;
     const auto& type = primitive.mapObject->_types[primitive.typeIndex];
 
-    RasterizationStyleEvaluator evaluator(context.style, RasterizationStyle::RulesetType::Line, primitive.mapObject);
+    MapStyleEvaluator evaluator(context.style, MapStyle::RulesetType::Line, primitive.mapObject);
     context.applyTo(evaluator);
-    evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
-    evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
-    evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
-    evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
-    evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_LAYER, primitive.mapObject->getSimpleLayerValue());
+    evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
+    evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
+    evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
+    evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
+    evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_LAYER, primitive.mapObject->getSimpleLayerValue());
     if(!evaluator.evaluate())
         return;
     if(!updatePaint(context, evaluator, Set_0, false))
         return;
 
     int shadowColor;
-    ok = evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADOW_COLOR, shadowColor);
+    ok = evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_SHADOW_COLOR, shadowColor);
     if(!ok || shadowColor == 0)
         shadowColor = context._shadowRenderingColor;
 
     int shadowRadius;
-    ok = evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADOW_RADIUS, shadowRadius);
+    ok = evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_SHADOW_RADIUS, shadowRadius);
     if(drawOnlyShadow && (!ok || shadowRadius == 0))
         return;
     
@@ -870,8 +871,8 @@ bool OsmAnd::Rasterizer::contains( const QVector< PointF >& vertices, const Poin
 
 bool OsmAnd::Rasterizer::polygonizeCoastlines(
     RasterizerContext& context,
-    const QList< std::shared_ptr<OsmAnd::Model::MapObject> >& coastlines,
-    QList< std::shared_ptr<OsmAnd::Model::MapObject> >& outVectorized,
+    const QList< std::shared_ptr<const OsmAnd::Model::MapObject> >& coastlines,
+    QList< std::shared_ptr<const OsmAnd::Model::MapObject> >& outVectorized,
     bool abortIfBrokenCoastlinesExist,
     bool includeBrokenCoastlines )
 {
@@ -1576,12 +1577,12 @@ void OsmAnd::Rasterizer::collectPolygonText( RasterizerContext& context, const P
 
     {
         const auto& type = primitive.mapObject->_types[primitive.typeIndex];
-        RasterizationStyleEvaluator evaluator(context.style, RasterizationStyle::RulesetType::Polygon, primitive.mapObject);
+        MapStyleEvaluator evaluator(context.style, MapStyle::RulesetType::Polygon, primitive.mapObject);
         context.applyTo(evaluator);
-        evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
-        evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
-        evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
-        evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
+        evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
+        evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
+        evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
+        evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
         if(!evaluator.evaluate())
             return;
         if(!updatePaint(context, evaluator, Set_0, true))
@@ -1658,13 +1659,13 @@ void OsmAnd::Rasterizer::collectLineText( RasterizerContext& context, const Prim
 
     {
         const auto& type = primitive.mapObject->_types[primitive.typeIndex];
-        RasterizationStyleEvaluator evaluator(context.style, RasterizationStyle::RulesetType::Line, primitive.mapObject);
+        MapStyleEvaluator evaluator(context.style, MapStyle::RulesetType::Line, primitive.mapObject);
         context.applyTo(evaluator);
-        evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
-        evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
-        evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
-        evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
-        evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_LAYER, primitive.mapObject->getSimpleLayerValue());
+        evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
+        evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
+        evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
+        evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
+        evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_LAYER, primitive.mapObject->getSimpleLayerValue());
         if(!evaluator.evaluate())
             return;
         if(!updatePaint(context, evaluator, Set_0, false))
@@ -1777,23 +1778,23 @@ void OsmAnd::Rasterizer::preparePrimitiveText( RasterizerContext& context, const
         //TODO:name =rc->getReshapedString(name);
 
         const auto& type = primitive.mapObject->_types[primitive.typeIndex];
-        RasterizationStyleEvaluator evaluator(context.style, RasterizationStyle::RulesetType::Text, primitive.mapObject);
+        MapStyleEvaluator evaluator(context.style, MapStyle::RulesetType::Text, primitive.mapObject);
         context.applyTo(evaluator);
-        evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
-        evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
-        evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
-        evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
-        evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_TEXT_LENGTH, name.length());
+        evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
+        evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
+        evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
+        evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
+        evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_TEXT_LENGTH, name.length());
         auto nameTag = itName.key();
         if(nameTag == "name")
             nameTag.clear();
-        evaluator.setStringValue(RasterizationStyle::builtinValueDefinitions.INPUT_NAME_TAG, nameTag);
+        evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_NAME_TAG, nameTag);
         if(!evaluator.evaluate())
             continue;
 
         bool ok;
         int textSize;
-        ok = evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_TEXT_SIZE, textSize);
+        ok = evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_SIZE, textSize);
         if(!ok || textSize == 0)
             continue;
 
@@ -1802,30 +1803,30 @@ void OsmAnd::Rasterizer::preparePrimitiveText( RasterizerContext& context, const
         text.drawOnPath = false;
         if(path)
         {
-            ok = evaluator.getBooleanValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_TEXT_ON_PATH, text.drawOnPath);
+            ok = evaluator.getBooleanValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_ON_PATH, text.drawOnPath);
             if(ok && text.drawOnPath)
                 text.path.reset(new SkPath(*path));
         }
         text.center = point;
         text.vOffset = 0;
-        evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_TEXT_DY, text.vOffset);
-        ok = evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_TEXT_COLOR, text.color);
+        evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_DY, text.vOffset);
+        ok = evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_COLOR, text.color);
         if(!ok || !text.color)
             text.color = SK_ColorBLACK;
-        ok = evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_TEXT_SIZE, text.size);
+        ok = evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_SIZE, text.size);
         if(!ok)
             continue;
         text.shadowRadius = 0;
-        evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_TEXT_HALO_RADIUS, text.shadowRadius);
+        evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_HALO_RADIUS, text.shadowRadius);
         text.wrapWidth = 0;
-        evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_TEXT_WRAP_WIDTH, text.wrapWidth);
+        evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_WRAP_WIDTH, text.wrapWidth);
         text.isBold = false;
-        evaluator.getBooleanValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_TEXT_BOLD, text.isBold);
+        evaluator.getBooleanValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_BOLD, text.isBold);
         text.minDistance = 0;
-        evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_TEXT_MIN_DISTANCE, text.minDistance);
-        evaluator.getStringValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_TEXT_SHIELD, text.shieldResource);
+        evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_MIN_DISTANCE, text.minDistance);
+        evaluator.getStringValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_SHIELD, text.shieldResource);
         text.order = 100;
-        evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_TEXT_ORDER, text.order);
+        evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_ORDER, text.order);
 
         context._texts.push_back(text);
     }

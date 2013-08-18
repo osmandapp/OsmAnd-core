@@ -1,10 +1,10 @@
 #include "MapObject.h"
 
-#include "ObfMapSection.h"
+#include "ObfMapSectionReader.h"
 
-OsmAnd::Model::MapObject::MapObject(ObfMapSection* section_)
+OsmAnd::Model::MapObject::MapObject(const std::shared_ptr<const ObfMapSectionInfo>& section_)
     : _id(std::numeric_limits<uint64_t>::max())
-    , _foundation(Unknown)
+    , _foundation(MapFoundationType::Unknown)
     , section(section_)
     , id(_id)
     , foundation(_foundation)

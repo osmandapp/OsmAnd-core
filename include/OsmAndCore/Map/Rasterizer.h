@@ -33,7 +33,7 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/Data/Model/MapObject.h>
 #include <OsmAndCore/IQueryController.h>
-#include <OsmAndCore/Map/RasterizationStyleEvaluator.h>
+#include <OsmAndCore/Map/MapStyleEvaluator.h>
 
 namespace OsmAnd {
 
@@ -77,7 +77,7 @@ namespace OsmAnd {
 
         struct Primitive
         {
-            std::shared_ptr<OsmAnd::Model::MapObject> mapObject;
+            std::shared_ptr<const Model::MapObject> mapObject;
             double zOrder;
             uint32_t typeIndex;
             PrimitiveType objectType;
@@ -87,8 +87,8 @@ namespace OsmAnd {
         static void filterOutLinesByDensity(RasterizerContext& context, const QVector< Primitive >& in, QVector< Primitive >& out, IQueryController* controller);
         static bool polygonizeCoastlines(
             RasterizerContext& context,
-            const QList< std::shared_ptr<OsmAnd::Model::MapObject> >& coastlines,
-            QList< std::shared_ptr<OsmAnd::Model::MapObject> >& outVectorized,
+            const QList< std::shared_ptr<const OsmAnd::Model::MapObject> >& coastlines,
+            QList< std::shared_ptr<const OsmAnd::Model::MapObject> >& outVectorized,
             bool abortIfBrokenCoastlinesExist,
             bool includeBrokenCoastlines
             );
@@ -120,7 +120,7 @@ namespace OsmAnd {
             Set_minus2 = 3,
             Set_3 = 4,
         };
-        static bool updatePaint(RasterizerContext& context, const RasterizationStyleEvaluator& evaluator, PaintValuesSet valueSetSelector, bool isArea);
+        static bool updatePaint(RasterizerContext& context, const MapStyleEvaluator& evaluator, PaintValuesSet valueSetSelector, bool isArea);
         static void rasterizePolygon(RasterizerContext& context, SkCanvas& canvas, const Primitive& primitive);
         static void rasterizeLine(RasterizerContext& context, SkCanvas& canvas, const Primitive& primitive, bool drawOnlyShadow);
         static void rasterizeLineShadow(RasterizerContext& context, SkCanvas& canvas, const SkPath& path, uint32_t shadowColor, int shadowRadius);
@@ -144,7 +144,7 @@ namespace OsmAnd {
             uint32_t zoom,
             uint32_t tileSidePixelLength,
             float densityFactor,
-            const QList< std::shared_ptr<OsmAnd::Model::MapObject> >* objects = nullptr,
+            const QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* objects = nullptr,
             const PointF& tlOriginOffset = PointF(),
             bool* nothingToRender = nullptr,
             IQueryController* controller = nullptr

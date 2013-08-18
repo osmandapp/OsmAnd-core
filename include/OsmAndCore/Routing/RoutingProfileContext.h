@@ -30,12 +30,14 @@
 #include <QHash>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/Data/ObfRoutingSection.h>
 #include <OsmAndCore/Routing/RoutingProfile.h>
 #include <OsmAndCore/Routing/RoutingRulesetContext.h>
 #include <OsmAndCore/Data/Model/Road.h>
 
 namespace OsmAnd {
+
+    class ObfRoutingSectionInfo;
+    class ObfRoutingBorderLinePoint;
 
     class OSMAND_CORE_API RoutingProfileContext
     {
@@ -43,7 +45,7 @@ namespace OsmAnd {
     protected:
         std::shared_ptr<RoutingRulesetContext> _rulesetContexts[RoutingRuleset::TypesCount];
 
-        QMap< ObfRoutingSection*, QMap<uint32_t, uint32_t> > _tagValueAttribIdCache;
+        QMap< std::shared_ptr<const ObfRoutingSectionInfo>, QMap<uint32_t, uint32_t> > _tagValueAttribIdCache;
     public:
         RoutingProfileContext(const std::shared_ptr<RoutingProfile>& profile, QHash<QString, QString>* contextValues = nullptr);
         virtual ~RoutingProfileContext();
@@ -52,13 +54,13 @@ namespace OsmAnd {
 
         std::shared_ptr<RoutingRulesetContext> getRulesetContext(RoutingRuleset::Type type);
 
-        Model::Road::Direction getDirection(Model::Road* road);
-        bool acceptsRoad(Model::Road* road);
-        bool acceptsBorderLinePoint(ObfRoutingSection* section, ObfRoutingSection::BorderLinePoint* point);
-        float getSpeedPriority(Model::Road* road);
-        float getSpeed(Model::Road* road);
-        float getObstaclesExtraTime(Model::Road* road, uint32_t pointIndex);
-        float getRoutingObstaclesExtraTime(Model::Road* road, uint32_t pointIndex);
+        Model::RoadDirection getDirection(const std::shared_ptr<const OsmAnd::Model::Road>& road);
+        bool acceptsRoad(const std::shared_ptr<const OsmAnd::Model::Road>& road);
+        bool acceptsBorderLinePoint(const std::shared_ptr<const ObfRoutingSectionInfo>& section, const std::shared_ptr<const ObfRoutingBorderLinePoint>& point);
+        float getSpeedPriority(const std::shared_ptr<const OsmAnd::Model::Road>& road);
+        float getSpeed(const std::shared_ptr<const OsmAnd::Model::Road>& road);
+        float getObstaclesExtraTime(const std::shared_ptr<const OsmAnd::Model::Road>& road, uint32_t pointIndex);
+        float getRoutingObstaclesExtraTime(const std::shared_ptr<const OsmAnd::Model::Road>& road, uint32_t pointIndex);
 
         friend class OsmAnd::RoutingRulesetContext;
     };

@@ -44,6 +44,13 @@ namespace OsmAnd
     enum {
         RasterMapLayersCount = static_cast<unsigned>(RasterMapLayerId::__LAST)
     };
+
+    STRONG_ENUM(MapFoundationType)
+    {
+        Unknown,
+        FullLand,
+        FullWater
+    };
 }
 
 #endif // __MAP_TYPES_H_

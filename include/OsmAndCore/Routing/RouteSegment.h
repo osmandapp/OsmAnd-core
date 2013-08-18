@@ -42,9 +42,9 @@ namespace OsmAnd {
     {
     private:
     protected:
-        RouteSegment(const std::shared_ptr<Model::Road>& road, uint32_t startPointIndex, uint32_t endPointIndex);
+        RouteSegment(const std::shared_ptr<const Model::Road>& road, uint32_t startPointIndex, uint32_t endPointIndex);
 
-        const std::shared_ptr<Model::Road> _road;
+        const std::shared_ptr<const Model::Road> _road;
         uint32_t _startPointIndex;
         uint32_t _endPointIndex;
         QVector< QList< std::shared_ptr<RouteSegment> > > _attachedRoutes;
@@ -60,7 +60,7 @@ namespace OsmAnd {
     public:
         virtual ~RouteSegment();
 
-        const std::shared_ptr<Model::Road>& road;
+        const std::shared_ptr<const Model::Road>& road;
         const uint32_t& startPointIndex;
         const uint32_t& endPointIndex;
         const QVector< QList< std::shared_ptr<RouteSegment> > >& attachedRoutes;

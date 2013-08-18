@@ -33,7 +33,6 @@
 #include <QXmlStreamReader>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/Data/ObfRoutingSection.h>
 #include <OsmAndCore/Routing/RoutingProfile.h>
 #include <OsmAndCore/Routing/RoutingRulesetContext.h>
 

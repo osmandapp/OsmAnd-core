@@ -184,7 +184,7 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
     }
 
     OsmAnd::RoutePlannerContext plannerContext(obfData, cfg.routingConfig, cfg.vehicle, false);
-    std::shared_ptr<OsmAnd::Model::Road> startRoad;
+    std::shared_ptr<const OsmAnd::Model::Road> startRoad;
     if(!OsmAnd::RoutePlanner::findClosestRoadPoint(&plannerContext, cfg.startLatitude, cfg.startLongitude, &startRoad))
     {
         if(cfg.generateXml)
@@ -195,7 +195,7 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
         output << std::endl;
         return;
     }
-    std::shared_ptr<OsmAnd::Model::Road> endRoad;
+    std::shared_ptr<const OsmAnd::Model::Road> endRoad;
     if(!OsmAnd::RoutePlanner::findClosestRoadPoint(&plannerContext, cfg.endLatitude, cfg.endLongitude, &endRoad))
     {
         if(cfg.generateXml)

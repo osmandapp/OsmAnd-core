@@ -16,7 +16,8 @@
 #include <OsmAndCore/Map/HeightmapTileProvider.h>
 //#include <OsmAndCore/Map/HillshadeTileProvider.h>
 #include <OsmAndCore/Map/OnlineMapRasterTileProvider.h>
-#include <OsmAndCore/Map/VectorMapTileProvider.h>
+#include <OsmAndCore/Map/MapStyles.h>
+#include <OsmAndCore/Map/MapStyle.h>
 
 // Routing-related
 #include <OsmAndCore/Routing/RoutingConfiguration.h>
@@ -56,7 +57,8 @@ using namespace OsmAnd;
 %include "OsmAndCore/Map/HeightmapTileProvider.h"
 //%include "OsmAndCore/Map/HillshadeTileProvider.h"
 %include "OsmAndCore/Map/OnlineMapRasterTileProvider.h"
-%include "OsmAndCore/Map/VectorMapTileProvider.h"
+%include "OsmAndCore/Map/MapStyles.h"
+%include "OsmAndCore/Map/MapStyle.h"
 
 // Routing-related
 %include "OsmAndCore/Routing/RoutingConfiguration.h"

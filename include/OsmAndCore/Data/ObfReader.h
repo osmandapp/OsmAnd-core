@@ -25,76 +25,47 @@
 
 #include <stdint.h>
 #include <memory>
-#include <functional>
 
-#include <QIODevice>
-#include <QList>
-#include <QMultiHash>
-
-#include <google/protobuf/io/coded_stream.h>
+#include <QString>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/Data/ObfReader.h>
-#include <OsmAndCore/Data/ObfSection.h>
-#include <OsmAndCore/Data/ObfMapSection.h>
-#include <OsmAndCore/Data/ObfAddressSection.h>
-#include <OsmAndCore/Data/ObfRoutingSection.h>
-#include <OsmAndCore/Data/ObfPoiSection.h>
-#include <OsmAndCore/Data/ObfTransportSection.h>
-#include <OsmAndCore/IQueryController.h>
+#include <OsmAndCore/Data/ObfInfo.h>
+
+class QIODevice;
 
 namespace OsmAnd {
 
-    namespace gpb = google::protobuf;
+    class ObfFile;
 
-    /**
-    OsmAnd Binary File reader
-    */
+    class ObfMapSectionReader;
+    class ObfAddressSectionReader;
+    class ObfRoutingSectionReader;
+    class ObfPoiSectionReader;
+    class ObfTransportSectionReader;
+
+    class ObfReader_P;
     class OSMAND_CORE_API ObfReader
     {
+        Q_DISABLE_COPY(ObfReader)
     private:
-        const std::shared_ptr<gpb::io::CodedInputStream> _codedInputStream;
-
-        int _version;
-        long _creationTimestamp;
-        bool _isBasemap;
-        QList< std::shared_ptr<ObfMapSection> > _mapSections;
-        QList< std::shared_ptr<ObfAddressSection> > _addressSections;
-        QList< std::shared_ptr<ObfRoutingSection> > _routingSections;
-        QList< std::shared_ptr<ObfPoiSection> > _poiSections;
-        QList< std::shared_ptr<ObfTransportSection> > _transportSections;
-        QList< ObfSection* > _sections;
+        const std::unique_ptr<ObfReader_P> _d;
     protected:
-        QString transliterate(QString input);
-        static bool readQString(gpb::io::CodedInputStream* cis, QString& output);
-        static int32_t readSInt32(gpb::io::CodedInputStream* cis);
-        static int64_t readSInt64(gpb::io::CodedInputStream* cis);
-        static uint32_t readBigEndianInt(gpb::io::CodedInputStream* cis);
-        static void readStringTable(gpb::io::CodedInputStream* cis, QStringList& stringTableOut);
-        static void skipUnknownField(gpb::io::CodedInputStream* cis, int tag);
     public:
+        ObfReader(const std::shared_ptr<const ObfFile>& obfFile);
         ObfReader(const std::shared_ptr<QIODevice>& input);
         virtual ~ObfReader();
 
-        const std::shared_ptr<QIODevice> source;
+        const std::shared_ptr<const ObfFile> obfFile;
 
-        const int& version;
-        const long& creationTimestamp;
-        const bool& isBaseMap;
+        std::shared_ptr<ObfInfo> obtainInfo() const;
 
-        const QList< std::shared_ptr<ObfMapSection> >& mapSections;
-        const QList< std::shared_ptr<ObfAddressSection> >& addressSections;
-        const QList< std::shared_ptr<ObfRoutingSection> >& routingSections;
-        const QList< std::shared_ptr<ObfPoiSection> >& poiSections;
-        const QList< std::shared_ptr<ObfTransportSection> >& transportSections;
-        const QList< ObfSection* >& sections;
-
-        friend class OsmAnd::ObfMapSection;
-        friend class OsmAnd::ObfAddressSection;
-        friend class OsmAnd::ObfRoutingSection;
-        friend class OsmAnd::ObfPoiSection;
-        friend class OsmAnd::ObfTransportSection;
+    friend class OsmAnd::ObfMapSectionReader;
+    friend class OsmAnd::ObfAddressSectionReader;
+    friend class OsmAnd::ObfRoutingSectionReader;
+    friend class OsmAnd::ObfPoiSectionReader;
+    friend class OsmAnd::ObfTransportSectionReader;
     };
+
 } // namespace OsmAnd
 
 #endif // __OBF_READER_H_

@@ -78,6 +78,10 @@ file(GLOB sources_map "src/Map/*.c*")
 file(GLOB_RECURSE headers_client "client/*.h*")
 file(GLOB_RECURSE sources_client  "client/*.c*")
 
+set(generated_sources
+	"${CMAKE_CURRENT_LIST_DIR}/gen/EmbeddedResources_bundle.cpp"
+)
+set_source_files_properties(${generated_sources} PROPERTIES GENERATED TRUE)
 set(merged_sources
 	${headers}
 	${includes}
@@ -94,6 +98,7 @@ set(merged_sources
 	${sources_client}
 	${target_specific_sources}
 	"protos/OBF.pb.h"
+	${generated_sources}
 )
 set(merged_dependencies
 	skia_static
@@ -115,11 +120,11 @@ set(merged_include_dirs_private
 	"${OSMAND_ROOT}/core/src/Data/Model"
 	"${OSMAND_ROOT}/core/src/Routing"
 	"${OSMAND_ROOT}/core/src/Map"
+	"${OSMAND_ROOT}/core/protos"
 )
 set(merged_include_dirs_public
 	"${OSMAND_ROOT}/core/include"
 	"${OSMAND_ROOT}/core/client"
-	"${OSMAND_ROOT}/core/protos"
 	${target_specific_public_includes}
 )
 set(merged_link_libs_public
@@ -143,6 +148,22 @@ else()
 	find_package(Qt5Sql REQUIRED)
 endif()
 
+if(CMAKE_HOST_WIN32 AND NOT CYGWIN)
+	add_custom_command(OUTPUT "gen/EmbeddedResources_bundle.cpp"
+		COMMAND bash ARGS --login "${CMAKE_CURRENT_LIST_DIR}/embed-resources.sh"
+		COMMENT "Embedding resources...")
+else()
+	add_custom_command(OUTPUT "gen/EmbeddedResources_bundle.cpp"
+		COMMAND "${CMAKE_CURRENT_LIST_DIR}/embed-resources.py"
+		COMMENT "Embedding resources...")
+endif()
+add_custom_target(OsmAndCore_resources
+	DEPENDS "gen/EmbeddedResources_bundle.cpp"
+)
+set(merged_dependencies ${merged_dependencies}
+	OsmAndCore_resources
+)
+
 if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 	add_library(OsmAndCore_shared SHARED ${merged_sources})
 	set_target_properties(OsmAndCore_shared PROPERTIES AUTOMOC TRUE)
@@ -158,10 +179,6 @@ if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 			${merged_include_dirs_private}
 		PUBLIC
 			${merged_include_dirs_public}
-	)
-	target_link_libraries(OsmAndCore_shared
-		LINK_PUBLIC
-			${merged_link_libs_public}
 	)
 
 	if(OSMAND_EMBEDDED_QT)
@@ -228,6 +245,11 @@ if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 				Qt5::Sql
 		)
 	endif()
+
+	target_link_libraries(OsmAndCore_shared
+		LINK_PUBLIC
+			${merged_link_libs_public}
+	)
 endif()
 
 if(CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
@@ -244,10 +266,6 @@ if(CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 			${merged_include_dirs_private}
 		PUBLIC
 			${merged_include_dirs_public}
-	)
-	target_link_libraries(OsmAndCore_static
-		LINK_PUBLIC
-			${merged_link_libs_public}
 	)
 
 	if(OSMAND_EMBEDDED_QT)
@@ -314,4 +332,9 @@ if(CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 				Qt5::Sql
 		)
 	endif()
+
+	target_link_libraries(OsmAndCore_static
+		LINK_PUBLIC
+			${merged_link_libs_public}
+	)
 endif()

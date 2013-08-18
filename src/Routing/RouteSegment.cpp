@@ -6,7 +6,7 @@
 #include "OsmAndCore/Utilities.h"
 #include "OsmAndCore/Logging.h"
 
-OsmAnd::RouteSegment::RouteSegment(const std::shared_ptr<Model::Road>& road_, uint32_t startPointIndex_, uint32_t endPointIndex_)
+OsmAnd::RouteSegment::RouteSegment(const std::shared_ptr<const Model::Road>& road_, uint32_t startPointIndex_, uint32_t endPointIndex_)
     : _road(road_)
     , _startPointIndex(startPointIndex_)
     , _endPointIndex(endPointIndex_)
@@ -31,8 +31,6 @@ OsmAnd::RouteSegment::RouteSegment(const std::shared_ptr<Model::Road>& road_, ui
 OsmAnd::RouteSegment::~RouteSegment()
 {
 }
-
-
 
 double OsmAnd::RouteSegment::getBearing( uint32_t pointIndex, bool isIncrement ) const
 {

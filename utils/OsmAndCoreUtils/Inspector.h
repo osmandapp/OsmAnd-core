@@ -50,7 +50,7 @@ namespace OsmAnd
             bool verboseAmenities;
             bool verboseTrasport;
             AreaD bbox;
-            uint32_t zoom;
+            ZoomLevel zoom;
         };
         OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL parseCommandLineArguments(const QStringList& cmdLineArgs, Configuration& cfg, QString& error);
         OSMAND_CORE_UTILS_API void OSMAND_CORE_UTILS_CALL dumpToStdOut(const Configuration& cfg);

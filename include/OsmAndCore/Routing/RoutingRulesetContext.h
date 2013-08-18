@@ -32,11 +32,14 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/Routing/RoutingRuleset.h>
-#include <OsmAndCore/Data/Model/Road.h>
 
 namespace OsmAnd {
 
     class RoutingProfileContext;
+    class ObfRoutingSectionInfo;
+    namespace Model {
+        class Road;
+    } // namespace Model
 
     class OSMAND_CORE_API RoutingRulesetContext
     {
@@ -44,9 +47,9 @@ namespace OsmAnd {
         QHash<QString, QString> _contextValues;
         std::shared_ptr<RoutingRuleset> _ruleset;
     protected:
-        bool evaluate(Model::Road* road, RoutingRuleExpression::ResultType type, void* result);
+        bool evaluate(const std::shared_ptr<const Model::Road>& road, RoutingRuleExpression::ResultType type, void* result);
         bool evaluate(const QBitArray& types, RoutingRuleExpression::ResultType type, void* result);
-        QBitArray encode(ObfRoutingSection* section, const QVector<uint32_t>& roadTypes);
+        QBitArray encode(const std::shared_ptr<const ObfRoutingSectionInfo>& section, const QVector<uint32_t>& roadTypes);
     public:
         RoutingRulesetContext(RoutingProfileContext* owner, const std::shared_ptr<RoutingRuleset>& ruleset, QHash<QString, QString>* contextValues);
         virtual ~RoutingRulesetContext();
@@ -55,11 +58,11 @@ namespace OsmAnd {
         const std::shared_ptr<RoutingRuleset> ruleset;
         const QHash<QString, QString>& contextValues;
 
-        int evaluateAsInteger(Model::Road* road, int defaultValue);
-        float evaluateAsFloat(Model::Road* road, float defaultValue);
+        int evaluateAsInteger(const std::shared_ptr<const Model::Road>& road, int defaultValue);
+        float evaluateAsFloat(const std::shared_ptr<const Model::Road>& road, float defaultValue);
 
-        int evaluateAsInteger(ObfRoutingSection* section, const QVector<uint32_t>& roadTypes, int defaultValue);
-        float evaluateAsFloat(ObfRoutingSection* section, const QVector<uint32_t>& roadTypes, float defaultValue);
+        int evaluateAsInteger(const std::shared_ptr<const ObfRoutingSectionInfo>& section, const QVector<uint32_t>& roadTypes, int defaultValue);
+        float evaluateAsFloat(const std::shared_ptr<const ObfRoutingSectionInfo>& section, const QVector<uint32_t>& roadTypes, float defaultValue);
     };
 
 } // namespace OsmAnd

@@ -36,11 +36,12 @@
 #include <MapTypes.h>
 #include <Concurrent.h>
 #include <IMapRenderer.h>
+#include <RenderAPI.h>
 #include <IMapTileProvider.h>
+#include <TilesCollection.h>
 
 namespace OsmAnd {
 
-    class RenderAPI;
     class MapRendererTiledResources;
     class OSMAND_CORE_API MapRenderer : public IMapRenderer
     {
@@ -56,10 +57,62 @@ namespace OsmAnd {
             RasterBaseLayer,
             __RasterLayer_LAST = RasterBaseLayer + (RasterMapLayersCount-1),
 
+            //TODO: mapmarkers? icons+poi+custom?
+
             __LAST
         };
         enum {
             TiledResourceTypesCount = static_cast<unsigned>(TiledResourceType::__LAST)
+        };
+
+        STRONG_ENUM(ResourceState)
+        {
+            // Resource is not in any determined state (resource entry did not exist)
+            Unknown = 0,
+
+            // Resource is not available at all
+            Unavailable,
+
+            // Resource was requested and should arrive soon
+            Requested,
+
+            // Resource data is in main memory, but not yet uploaded into GPU
+            Ready,
+
+            // Resource data is already in GPU
+            Uploaded,
+
+            // Resource is unloaded, next state is death by deallocation
+            Unloaded,
+        };
+        class OSMAND_CORE_API TiledResourceEntry : public TilesCollectionEntryWithState<ResourceState, ResourceState::Unknown>
+        {
+        private:
+        protected:
+            std::shared_ptr<IMapTileProvider::Tile> _sourceData;
+            std::shared_ptr<RenderAPI::ResourceInGPU> _resourceInGPU;
+        public:
+            TiledResourceEntry(const TileId& tileId, const ZoomLevel& zoom);
+            virtual ~TiledResourceEntry();
+
+            const std::shared_ptr<IMapTileProvider::Tile>& sourceData;
+            const std::shared_ptr<RenderAPI::ResourceInGPU>& resourceInGPU;
+
+        friend class OsmAnd::MapRenderer;
+        };
+        class OSMAND_CORE_API TiledResources : public TilesCollection<TiledResourceEntry>
+        {
+        private:
+        protected:
+        public:
+            TiledResources(const TiledResourceType& type);
+            virtual ~TiledResources();
+
+            const MapRenderer::TiledResourceType type;
+
+            virtual void removeAllEntries();
+
+            friend class OsmAnd::MapRenderer;
         };
     private:
         QReadWriteLock _configurationLock;
@@ -75,9 +128,9 @@ namespace OsmAnd {
         
         volatile bool _invalidatedElevationDataResources;
 
-        std::array< std::unique_ptr<MapRendererTiledResources>, TiledResourceTypesCount > _tiledResources;
+        std::array< std::unique_ptr<TiledResources>, TiledResourceTypesCount > _tiledResources;
         void uploadTiledResources();
-        void releaseTiledResources(const std::unique_ptr<MapRendererTiledResources>& collection);
+        void releaseTiledResources(const std::unique_ptr<TiledResources>& collection);
         IMapTileProvider* getTileProviderFor(const TiledResourceType& resourceType) const;
 
         QSet<TileId> _uniqueTiles;
@@ -87,7 +140,8 @@ namespace OsmAnd {
         MapRenderer();
 
         const MapRendererConfiguration& currentConfiguration;
-        enum ConfigurationChange {
+        enum ConfigurationChange
+        {
             ColorDepthForcing = 1 << 0,
             AtlasTexturesUsage = 1 << 1,
             ElevationDataResolution = 1 << 2,
@@ -135,7 +189,7 @@ namespace OsmAnd {
 
         void requestUploadDataToGPU();
 
-        const std::array< std::unique_ptr<MapRendererTiledResources>, TiledResourceTypesCount >& tiledResources;
+        const std::array< std::unique_ptr<TiledResources>, TiledResourceTypesCount >& tiledResources;
         void requestMissingTiledResources();
         virtual std::shared_ptr<IMapTileProvider::Tile> prepareTileForUploadingToGPU(const std::shared_ptr<IMapTileProvider::Tile>& tile);
         virtual uint32_t getTilesPerAtlasTextureLimit(const TiledResourceType& resourceType, const std::shared_ptr<IMapTileProvider::Tile>& tile) = 0;

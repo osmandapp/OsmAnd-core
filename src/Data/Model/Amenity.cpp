@@ -17,13 +17,3 @@ OsmAnd::Model::Amenity::Amenity()
 OsmAnd::Model::Amenity::~Amenity()
 {
 }
-
-OsmAnd::Model::Amenity::Category::Category()
-    : name(_name)
-    , subcategories(_subcategories)
-{
-}
-
-OsmAnd::Model::Amenity::Category::~Category()
-{
-}

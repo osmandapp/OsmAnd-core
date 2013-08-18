@@ -60,7 +60,6 @@
 #include <OsmAndCore.h>
 #include <CommonTypes.h>
 #include <RenderAPI.h>
-#include <MapRendererTiledResources.h>
 
 #if defined(_DEBUG) || defined(DEBUG)
 #   define GL_CHECK_RESULT \

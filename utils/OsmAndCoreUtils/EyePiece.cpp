@@ -13,10 +13,11 @@
 #include <OsmAndCore/Common.h>
 #include <OsmAndCore/Data/ObfReader.h>
 #include <OsmAndCore/Utilities.h>
+#include <OsmAndCore/Data/ObfsCollection.h>
+#include <OsmAndCore/Data/ObfDataInterface.h>
 #include <OsmAndCore/Map/Rasterizer.h>
 #include <OsmAndCore/Map/RasterizerContext.h>
-#include <OsmAndCore/Map/RasterizationStyleEvaluator.h>
-#include <OsmAndCore/Map/MapDataCache.h>
+#include <OsmAndCore/Map/MapStyleEvaluator.h>
 
 OsmAnd::EyePiece::Configuration::Configuration()
     : verbose(false)
@@ -25,7 +26,7 @@ OsmAnd::EyePiece::Configuration::Configuration()
     , bbox(90, -180, -90, 180)
     , tileSide(256)
     , densityFactor(1.0)
-    , zoom(15)
+    , zoom(ZoomLevel15)
     , is32bit(true)
     , drawMap(false)
     , drawText(false)
@@ -84,7 +85,7 @@ OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::EyePiece::parseCommand
                 error = "OBF directory does not exist";
                 return false;
             }
-            Utilities::findFiles(obfRoot, QStringList() << "*.obf", cfg.obfs);
+            cfg.obfsDir = obfRoot;
             wasObfRootSpecified = true;
         }
         else if(arg.startsWith("-bbox="))
@@ -97,7 +98,7 @@ OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::EyePiece::parseCommand
         }
         else if(arg.startsWith("-zoom="))
         {
-            cfg.zoom = arg.mid(strlen("-zoom=")).toInt();
+            cfg.zoom = static_cast<ZoomLevel>(arg.mid(strlen("-zoom=")).toInt());
         }
         else if(arg.startsWith("-tileSide="))
         {
@@ -125,12 +126,7 @@ OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::EyePiece::parseCommand
     }
 
     if(!wasObfRootSpecified)
-        Utilities::findFiles(QDir::current(), QStringList() << "*.obf", cfg.obfs);
-    if(cfg.obfs.isEmpty())
-    {
-        error = "No OBF files loaded";
-        return false;
-    }
+        cfg.obfsDir = QDir::current();
 
     return true;
 }
@@ -170,7 +166,7 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
 #endif
 {
     // Obtain and configure rasterization style context
-    OsmAnd::RasterizationStyles stylesCollection;
+    OsmAnd::MapStyles stylesCollection;
     for(auto itStyleFile = cfg.styleFiles.begin(); itStyleFile != cfg.styleFiles.end(); ++itStyleFile)
     {
         const auto& styleFile = *itStyleFile;
@@ -178,7 +174,7 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
         if(!stylesCollection.registerStyle(styleFile))
             output << xT("Failed to parse metadata of '") << QStringToStlString(styleFile.fileName()) << xT("' or duplicate style") << std::endl;
     }
-    std::shared_ptr<OsmAnd::RasterizationStyle> style;
+    std::shared_ptr<OsmAnd::MapStyle> style;
     if(!stylesCollection.obtainStyle(cfg.styleName, style))
     {
         output << xT("Failed to resolve style '") << QStringToStlString(cfg.styleName) << xT("'") << std::endl;
@@ -187,24 +183,17 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
     if(cfg.dumpRules)
         style->dump();
     
-    OsmAnd::MapDataCache mapDataCache;
-    for(auto itObf = cfg.obfs.begin(); itObf != cfg.obfs.end(); ++itObf)
-    {
-        const auto& obf = *itObf;
-        std::shared_ptr<OsmAnd::ObfReader> obfReader(new OsmAnd::ObfReader(std::shared_ptr<QIODevice>(new QFile(obf.absoluteFilePath()))));
-        
-        mapDataCache.addSource(obfReader);
-    }
+    OsmAnd::ObfsCollection obfsCollection(cfg.obfsDir);
 
     // Collect all map objects (this should be replaced by something like RasterizerViewport/RasterizerContext)
-    QList< std::shared_ptr<OsmAnd::Model::MapObject> > mapObjects;
+    QList< std::shared_ptr<const OsmAnd::Model::MapObject> > mapObjects;
     OsmAnd::AreaI bbox31(
             OsmAnd::Utilities::get31TileNumberY(cfg.bbox.top),
             OsmAnd::Utilities::get31TileNumberX(cfg.bbox.left),
             OsmAnd::Utilities::get31TileNumberY(cfg.bbox.bottom),
             OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right)
         );
-    mapDataCache.obtainObjects(mapObjects, bbox31, cfg.zoom, nullptr);
+    obfsCollection.obtainDataInterface()->obtainMapObjects(&mapObjects, bbox31, cfg.zoom, nullptr);
     
     // Calculate output size in pixels
     const auto tileWidth = OsmAnd::Utilities::getTileNumberX(cfg.zoom, cfg.bbox.right) - OsmAnd::Utilities::getTileNumberX(cfg.zoom, cfg.bbox.left);

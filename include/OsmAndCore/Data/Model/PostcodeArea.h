@@ -28,15 +28,19 @@
 
 namespace OsmAnd {
 
+    class ObfAddressSectionReader_P;
+
     namespace Model {
 
         class OSMAND_CORE_API PostcodeArea : public StreetGroup
         {
         private:
         protected:
-        public:
             PostcodeArea();
+        public:
             virtual ~PostcodeArea();
+
+        friend class OsmAnd::ObfAddressSectionReader_P;
         };
 
     } // namespace Model

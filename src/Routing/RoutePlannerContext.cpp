@@ -30,9 +30,10 @@ OsmAnd::RoutePlannerContext::RoutePlannerContext(
 
     for(auto itSource = sources.begin(); itSource != sources.end(); ++itSource)
     {
-        auto source = *itSource;
+        const auto& source = *itSource;
 
-        for(auto itRoutingSection = source->routingSections.begin(); itRoutingSection != source->routingSections.end(); ++itRoutingSection)
+        const auto& obfInfo = source->obtainInfo();
+        for(auto itRoutingSection = obfInfo->routingSections.begin(); itRoutingSection != obfInfo->routingSections.end(); ++itRoutingSection)
             _sourcesLUT.insert((*itRoutingSection).get(), source);
     }
 }
@@ -41,7 +42,7 @@ OsmAnd::RoutePlannerContext::~RoutePlannerContext()
 {
 }
 
-OsmAnd::RoutePlannerContext::RoutingSubsectionContext::RoutingSubsectionContext( RoutePlannerContext* owner, const std::shared_ptr<ObfReader>& origin, const std::shared_ptr<ObfRoutingSection::Subsection>& subsection )
+OsmAnd::RoutePlannerContext::RoutingSubsectionContext::RoutingSubsectionContext( RoutePlannerContext* owner, const std::shared_ptr<ObfReader>& origin, const std::shared_ptr<const ObfRoutingSubsectionInfo>& subsection )
     : subsection(subsection)
     , owner(owner)
     ,_mixedLoadsCounter(0)
@@ -122,7 +123,7 @@ void OsmAnd::RoutePlannerContext::unloadUnusedTiles(size_t memoryTarget) {
     }
 }
 
-void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::registerRoad( const std::shared_ptr<Model::Road>& road )
+void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::registerRoad( const std::shared_ptr<const Model::Road>& road )
 {
     uint32_t idx = 0;
     for(auto itPoint = road->points.begin(); itPoint != road->points.end(); ++itPoint, idx++)
@@ -155,7 +156,7 @@ uint32_t OsmAnd::RoutePlannerContext::RoutingSubsectionContext::getLoadsCounter(
     return qAbs(_mixedLoadsCounter);
 }
 
-void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::collectRoads( QList< std::shared_ptr<Model::Road> >& output, QMap<uint64_t, std::shared_ptr<Model::Road> >* duplicatesRegistry /*= nullptr*/ )
+void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::collectRoads( QList< std::shared_ptr<const Model::Road> >& output, QMap<uint64_t, std::shared_ptr<const Model::Road> >* duplicatesRegistry /*= nullptr*/ )
 {
     for(auto itRouteSegment = _roadSegments.begin(); itRouteSegment != _roadSegments.end(); ++itRouteSegment)
     {
@@ -206,7 +207,7 @@ void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::unload()
 
 std::shared_ptr<OsmAnd::RoutePlannerContext::RouteCalculationSegment> OsmAnd::RoutePlannerContext::RoutingSubsectionContext::loadRouteCalculationSegment(
     uint32_t x31, uint32_t y31,
-    QMap<uint64_t, std::shared_ptr<Model::Road> >& processed,
+    QMap<uint64_t, std::shared_ptr<const Model::Road> >& processed,
     const std::shared_ptr<RouteCalculationSegment>& original_)
 {
     uint64_t id = (static_cast<uint64_t>(x31) << 31) | y31;
@@ -246,13 +247,13 @@ OsmAnd::RoutePlannerContext::CalculationContext::~CalculationContext()
 {
 }
 
-OsmAnd::RoutePlannerContext::RouteCalculationSegment::RouteCalculationSegment( const std::shared_ptr<Model::Road>& road, uint32_t pointIndex )
+OsmAnd::RoutePlannerContext::RouteCalculationSegment::RouteCalculationSegment( const std::shared_ptr<const Model::Road>& road_, uint32_t pointIndex )
     : _distanceFromStart(0)
     , _distanceToEnd(0)
     , next(_next)
     , parent(_parent)
     , parentEndPointIndex(_parentEndPointIndex)
-    , road(road)
+    , road(road_)
     , pointIndex(pointIndex)
     , _allowedDirection(0)
     , _assignedDirection(0)
@@ -280,7 +281,7 @@ void OsmAnd::RoutePlannerContext::RouteCalculationSegment::dump(const QString& p
     }
 }
 
-OsmAnd::RoutePlannerContext::RouteCalculationFinalSegment::RouteCalculationFinalSegment( const std::shared_ptr<Model::Road>& road, uint32_t pointIndex )
+OsmAnd::RoutePlannerContext::RouteCalculationFinalSegment::RouteCalculationFinalSegment( const std::shared_ptr<const Model::Road>& road, uint32_t pointIndex )
     : RouteCalculationSegment(road, pointIndex)
     , reverseWaySearch(_reverseWaySearch)
     , opposite(_opposite)

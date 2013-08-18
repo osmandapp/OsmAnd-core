@@ -1,7 +1,12 @@
 #include "RoutingRulesetContext.h"
 
-#include <RoutingProfile.h>
-#include <RoutingProfileContext.h>
+#include <assert.h>
+
+#include "Road.h"
+#include "ObfRoutingSectionInfo.h"
+#include "ObfRoutingSectionInfo_P.h"
+#include "RoutingProfile.h"
+#include "RoutingProfileContext.h"
 
 bool checkParameter(std::shared_ptr<OsmAnd::RoutingRuleExpression> rt,
                     const QHash<QString, QString>& contextValues_) {
@@ -43,7 +48,7 @@ OsmAnd::RoutingRulesetContext::~RoutingRulesetContext()
 {
 }
 
-int OsmAnd::RoutingRulesetContext::evaluateAsInteger( Model::Road* road, int defaultValue )
+int OsmAnd::RoutingRulesetContext::evaluateAsInteger( const std::shared_ptr<const Model::Road>& road, int defaultValue )
 {
     int result;
     if(!evaluate(road, RoutingRuleExpression::ResultType::Integer, &result))
@@ -51,7 +56,7 @@ int OsmAnd::RoutingRulesetContext::evaluateAsInteger( Model::Road* road, int def
     return result;
 }
 
-float OsmAnd::RoutingRulesetContext::evaluateAsFloat( Model::Road* road, float defaultValue )
+float OsmAnd::RoutingRulesetContext::evaluateAsFloat( const std::shared_ptr<const Model::Road>& road, float defaultValue )
 {
     float result;
     if(!evaluate(road, RoutingRuleExpression::ResultType::Float, &result))
@@ -59,7 +64,7 @@ float OsmAnd::RoutingRulesetContext::evaluateAsFloat( Model::Road* road, float d
     return result;
 }
 
-int OsmAnd::RoutingRulesetContext::evaluateAsInteger( ObfRoutingSection* section, const QVector<uint32_t>& roadTypes, int defaultValue )
+int OsmAnd::RoutingRulesetContext::evaluateAsInteger( const std::shared_ptr<const ObfRoutingSectionInfo>& section, const QVector<uint32_t>& roadTypes, int defaultValue )
 {
     int result;
     if(!evaluate(encode(section, roadTypes), RoutingRuleExpression::ResultType::Integer, &result))
@@ -67,7 +72,7 @@ int OsmAnd::RoutingRulesetContext::evaluateAsInteger( ObfRoutingSection* section
     return result;
 }
 
-float OsmAnd::RoutingRulesetContext::evaluateAsFloat( ObfRoutingSection* section, const QVector<uint32_t>& roadTypes, float defaultValue )
+float OsmAnd::RoutingRulesetContext::evaluateAsFloat( const std::shared_ptr<const ObfRoutingSectionInfo>& section, const QVector<uint32_t>& roadTypes, float defaultValue )
 {
     float result;
     if(!evaluate(encode(section, roadTypes), RoutingRuleExpression::ResultType::Float, &result))
@@ -75,9 +80,9 @@ float OsmAnd::RoutingRulesetContext::evaluateAsFloat( ObfRoutingSection* section
     return result;
 }
 
-bool OsmAnd::RoutingRulesetContext::evaluate( Model::Road* road, RoutingRuleExpression::ResultType type, void* result )
+bool OsmAnd::RoutingRulesetContext::evaluate( const std::shared_ptr<const Model::Road>& road, RoutingRuleExpression::ResultType type, void* result )
 {
-    return evaluate(encode(road->subsection->section.get(), road->types), type, result);
+    return evaluate(encode(road->subsection->section, road->types), type, result);
 }
 
 bool OsmAnd::RoutingRulesetContext::evaluate( const QBitArray& types, RoutingRuleExpression::ResultType type, void* result )
@@ -92,7 +97,7 @@ bool OsmAnd::RoutingRulesetContext::evaluate( const QBitArray& types, RoutingRul
     return false;
 }
 
-QBitArray OsmAnd::RoutingRulesetContext::encode( ObfRoutingSection* section, const QVector<uint32_t>& roadTypes )
+QBitArray OsmAnd::RoutingRulesetContext::encode( const std::shared_ptr<const ObfRoutingSectionInfo>& section, const QVector<uint32_t>& roadTypes )
 {
     QBitArray bitset(ruleset->owner->_universalRules.size());
     
@@ -107,7 +112,7 @@ QBitArray OsmAnd::RoutingRulesetContext::encode( ObfRoutingSection* section, con
         auto itId = itTagValueAttribIdCache->find(type);
         if(itId == itTagValueAttribIdCache->end())
         {
-            auto encodingRule = section->_encodingRules[type];
+            const auto& encodingRule = section->_d->_encodingRules[type];
             assert(encodingRule);
 
             auto id = ruleset->owner->registerTagValueAttribute(encodingRule->_tag, encodingRule->_value);

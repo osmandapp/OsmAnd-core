@@ -16,7 +16,7 @@ QByteArray OsmAnd::EmbeddedResources::decompressResource( const QString& id )
 
 QByteArray OsmAnd::EmbeddedResources::getRawResource( const QString& id )
 {
-    for(uint32_t idx = 0; idx < __bundled_resources_count; idx++)
+    for(auto idx = 0u; idx < __bundled_resources_count; idx++)
     {
         if(__bundled_resources[idx].id != id)
             continue;
@@ -28,7 +28,7 @@ QByteArray OsmAnd::EmbeddedResources::getRawResource( const QString& id )
 
 bool OsmAnd::EmbeddedResources::containsResource( const QString& id )
 {
-    for(uint32_t idx = 0; idx < __bundled_resources_count; idx++)
+    for(auto idx = 0u; idx < __bundled_resources_count; idx++)
     {
         if(__bundled_resources[idx].id != id)
             continue;

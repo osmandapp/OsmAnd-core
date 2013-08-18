@@ -1,7 +1,9 @@
 #include "RoutingProfile.h"
 
+#include <assert.h>
+
 #include "RoutingConfiguration.h"
-#include "OsmAndCore/Utilities.h"
+#include "Utilities.h"
 
 OsmAnd::RoutingProfile::RoutingProfile()
     : _restrictionsAware(true)

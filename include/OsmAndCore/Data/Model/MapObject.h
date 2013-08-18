@@ -24,7 +24,7 @@
 #define __MODEL_MAP_OBJECT_H_
 
 #include <stdint.h>
-#include <tuple>
+#include <memory>
 
 #include <QList>
 #include <QMap>
@@ -34,29 +34,24 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Map/MapTypes.h>
 
 namespace OsmAnd {
 
-    class ObfMapSection;
+    class ObfMapSectionInfo;
+    class ObfMapSectionReader_P;
     class Rasterizer;
 
     namespace Model {
 
         class OSMAND_CORE_API MapObject
         {
-        public:
-            enum FoundationType
-            {
-                Unknown,
-                FullLand,
-                FullWater
-            };
         private:
         protected:
-            MapObject(ObfMapSection* section);
+            MapObject(const std::shared_ptr<const ObfMapSectionInfo>& section);
 
             uint64_t _id;
-            FoundationType _foundation;
+            MapFoundationType _foundation;
             bool _isArea;
             QVector< PointI > _points31;
             QList< QVector< PointI > > _innerPolygonsPoints31;
@@ -67,9 +62,9 @@ namespace OsmAnd {
         public:
             virtual ~MapObject();
 
-            ObfMapSection* const section;
+            const std::shared_ptr<const ObfMapSectionInfo> section;
             const uint64_t& id;
-            const FoundationType& foundation;
+            const MapFoundationType& foundation;
             const QHash<QString, QString>& names;
             const AreaI& bbox31;
 
@@ -80,7 +75,7 @@ namespace OsmAnd {
 
             size_t calculateApproxConsumedMemory() const;
 
-            friend class OsmAnd::ObfMapSection;
+            friend class OsmAnd::ObfMapSectionReader_P;
             friend class OsmAnd::Rasterizer;
         };
 

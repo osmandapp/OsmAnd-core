@@ -5,7 +5,6 @@ OsmAnd::Model::Street::Street()
     , name(_name)
     , latinName(_name)
     , tile24(_tile24)
-    , location(_location)
 {
 }
 

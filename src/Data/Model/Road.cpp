@@ -1,11 +1,12 @@
 #include "Road.h"
 
-#include <QtCore>
+#include <assert.h>
 
-#include "OsmAndCore/Utilities.h"
-#include "ObfRoutingSection.h"
+#include "ObfRoutingSectionInfo.h"
+#include "ObfRoutingSectionInfo_P.h"
+#include "Utilities.h"
 
-OsmAnd::Model::Road::Road(const std::shared_ptr<ObfRoutingSection::Subsection>& subsection)
+OsmAnd::Model::Road::Road(const std::shared_ptr<const ObfRoutingSubsectionInfo>& subsection)
     : subsection(subsection)
     , id(_id)
     , names(_names)
@@ -16,7 +17,7 @@ OsmAnd::Model::Road::Road(const std::shared_ptr<ObfRoutingSection::Subsection>& 
 {
 }
 
-OsmAnd::Model::Road::Road( const std::shared_ptr<Road>& that, int insertIdx, uint32_t x31, uint32_t y31 )
+OsmAnd::Model::Road::Road( const std::shared_ptr<const Road>& that, int insertIdx, uint32_t x31, uint32_t y31 )
     : _ref(that)
     , _id(0)
     , _points(_ref->_points.size() + 1)
@@ -88,59 +89,56 @@ double OsmAnd::Model::Road::getDirectionDelta( uint32_t originIdx, bool forward,
     return -qAtan2(itOriginPoint->x - itPoint->x, itOriginPoint->y - itPoint->y);
 }
 
-OsmAnd::Model::Road::Direction OsmAnd::Model::Road::getDirection() const
+OsmAnd::Model::RoadDirection OsmAnd::Model::Road::getDirection() const
 {
     for(auto itType = types.begin(); itType != types.end(); ++itType)
     {
-        auto rule = subsection->section->_encodingRules[*itType];
+        const auto& rule = subsection->section->_d->_encodingRules[*itType];
 
-        if(rule->_type == ObfRoutingSection::EncodingRule::OneWay)
-            return static_cast<Direction>(rule->_parsedValue.asSignedInt);
-        else if(rule->_type == ObfRoutingSection::EncodingRule::Roundabout)
-            return Direction::OneWayForward;
+        if(rule->_type == ObfRoutingSectionInfo_P::EncodingRule::OneWay)
+            return static_cast<Model::RoadDirection>(rule->_parsedValue.asSignedInt);
+        else if(rule->_type == ObfRoutingSectionInfo_P::EncodingRule::Roundabout)
+            return Model::RoadDirection::OneWayForward;
     }
     
-    return Direction::TwoWay;
+    return Model::RoadDirection::TwoWay;
 }
 
 bool OsmAnd::Model::Road::isRoundabout() const
 {
     for(auto itType = types.begin(); itType != types.end(); ++itType)
     {
-        auto rule = subsection->section->_encodingRules[*itType];
+        const auto& rule = subsection->section->_d->_encodingRules[*itType];
 
         if(rule->isRoundabout())
             return true;
-        else if(rule->getDirection() != Model::Road::TwoWay && isLoop())
+        else if(rule->getDirection() != Model::RoadDirection::TwoWay && isLoop())
             return true;
     }
 
     return false;
 }
 
-int OsmAnd::Model::Road::getLanes() {
+int OsmAnd::Model::Road::getLanes() const
+{
     for(auto itType = types.begin(); itType != types.end(); ++itType)
     {
-        auto rule = subsection->section->_encodingRules[*itType];
-        if(rule->_type == OsmAnd::ObfRoutingSection::EncodingRule::Lanes){
+        const auto& rule = subsection->section->_d->_encodingRules[*itType];
+        if(rule->_type == ObfRoutingSectionInfo_P::EncodingRule::Lanes)
             return rule->_parsedValue.asUnsignedInt;
-        }
-
     }
     return -1;
 }
 
-QString OsmAnd::Model::Road::getHighway()
+QString OsmAnd::Model::Road::getHighway() const
 {
     for(auto itType = types.begin(); itType != types.end(); ++itType)
     {
-        auto rule = subsection->section->_encodingRules[*itType];
-        if(rule->_type == OsmAnd::ObfRoutingSection::EncodingRule::Highway){
+        const auto& rule = subsection->section->_d->_encodingRules[*itType];
+        if(rule->_type == ObfRoutingSectionInfo_P::EncodingRule::Highway)
             return rule->_value;
-        }
-
     }
-    return "";
+    return QString();
 }
 
 bool OsmAnd::Model::Road::isLoop() const

@@ -32,8 +32,8 @@
 
 #include <OsmAndCoreUtils.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/RasterizationStyle.h>
-#include <OsmAndCore/Map/RasterizationStyles.h>
+#include <OsmAndCore/Map/MapStyle.h>
+#include <OsmAndCore/Map/MapStyles.h>
 
 namespace OsmAnd
 {
@@ -50,10 +50,10 @@ namespace OsmAnd
             bool drawText;
             bool drawIcons;
             QFileInfoList styleFiles;
-            QFileInfoList obfs;
+            QDir obfsDir;
             QString styleName;
             AreaD bbox;
-            uint32_t zoom;
+            ZoomLevel zoom;
             uint32_t tileSide;
             float densityFactor;
             QString output;

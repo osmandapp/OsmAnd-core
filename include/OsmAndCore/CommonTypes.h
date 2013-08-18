@@ -314,9 +314,9 @@ namespace OsmAnd
     };
 
 #ifndef SWIG
-    inline uint qHash(TileId tileId, uint seed = 0) Q_DECL_NOTHROW
+    inline uint qHash(TileId value, uint seed = 0) Q_DECL_NOTHROW
     {
-        return ::qHash(tileId.id, seed);
+        return ::qHash(value.id, seed);
     }
     static_assert(sizeof(TileId) == 8, "TileId must be 8 bytes in size");
 #endif

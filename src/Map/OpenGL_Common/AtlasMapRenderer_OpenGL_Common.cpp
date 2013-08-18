@@ -17,8 +17,8 @@
 #include "IMapTileProvider.h"
 #include "IMapBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
-#include "OsmAndCore/Logging.h"
-#include "OsmAndCore/Utilities.h"
+#include "Logging.h"
+#include "Utilities.h"
 #include "OpenGL_Common/Utilities_OpenGL_Common.h"
 
 OsmAnd::AtlasMapRenderer_OpenGL_Common::AtlasMapRenderer_OpenGL_Common()
@@ -483,13 +483,14 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
         if(elevationDataEnabled)
         {
             // We're obtaining tile entry by normalized tile coordinates, since tile may repeat several times
-            const auto& tileEntry = tiledResources[TiledResourceType::ElevationData]->obtainTileEntry(tileIdN, currentState.zoomBase);
+            std::shared_ptr<TiledResourceEntry> tileEntry;
+            tiledResources[TiledResourceType::ElevationData]->obtainTileEntry(tileEntry, tileIdN, currentState.zoomBase);
 
             // Try lock tile entry for reading state and obtaining GPU resource
             std::shared_ptr< RenderAPI::ResourceInGPU > gpuResource;
             if(tileEntry && tileEntry->stateLock.tryLockForRead())
             {
-                if(tileEntry->state == MapRendererTiledResources::TileEntry::State::Uploaded)
+                if(tileEntry->state == ResourceState::Uploaded)
                     gpuResource = tileEntry->resourceInGPU;
                 tileEntry->stateLock.unlock();
             }
@@ -584,15 +585,16 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
             const auto samplerIndex = (renderAPI->isSupported_vertexShaderTextureLookup ? 1 : 0) + layerId;
 
             // We're obtaining tile entry by normalized tile coordinates, since tile may repeat several times
-            const auto& tileEntry = layerResources->obtainTileEntry(tileIdN, currentState.zoomBase);
+            std::shared_ptr<TiledResourceEntry> tileEntry;
+            layerResources->obtainTileEntry(tileEntry, tileIdN, currentState.zoomBase);
 
             // Try lock tile entry for reading state and obtaining GPU resource
             std::shared_ptr< RenderAPI::ResourceInGPU > gpuResource;
             if(tileEntry && tileEntry->stateLock.tryLockForRead())
             {
-                if(tileEntry->state == MapRendererTiledResources::TileEntry::State::Uploaded)
+                if(tileEntry->state == ResourceState::Uploaded)
                     gpuResource = tileEntry->resourceInGPU;
-                else if(tileEntry->state == MapRendererTiledResources::TileEntry::State::Unavailable)
+                else if(tileEntry->state == ResourceState::Unavailable)
                     gpuResource.reset();//TODO: use texture that indicates "NO DATA"
                 else
                     gpuResource.reset();//TODO: use texture that indicates "PROCESSING"
@@ -964,21 +966,25 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doRenderFrame()
 
     renderSkyStage();
 
-    // Turn on depth testing due to heightmaps
+    // Turn on depth prior to raster map stage and further stages
     glEnable(GL_DEPTH_TEST);
     GL_CHECK_RESULT;
     glDepthFunc(GL_LEQUAL);
     GL_CHECK_RESULT;
 
+    // Raster map stage is rendered without blending, since it's done in fragment shader
     renderRasterMapStage();
 
-    // Turn on blending since now objects with transparency will be rendered
+    // Turn on blending since now objects with transparency are going to be rendered
     glEnable(GL_BLEND);
     GL_CHECK_RESULT;
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     GL_CHECK_RESULT;
 
     //TODO: render special fog object some day
+
+    // If we have offline map data provider, render text?, icons? (actually, map markers should be available w/o offline data - favorites, etc.)
+
 
     return true;
 }

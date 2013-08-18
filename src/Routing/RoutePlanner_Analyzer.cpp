@@ -6,6 +6,7 @@
 #include <QtMath>
 
 #include "ObfReader.h"
+#include "Road.h"
 #include "Common.h"
 #include "Logging.h"
 #include "Utilities.h"
@@ -195,8 +196,8 @@ void OsmAnd::RoutePlanner::attachRouteSegments(
             std::shared_ptr<RouteSegment> attachedSegment;
             //TODO:GC:checkAndInitRouteRegion(ctx, rt->road);
             // TODO restrictions can be considered as well
-            auto direction = context->owner->profileContext->getDirection(rt->road.get());
-            if ((direction == Model::Road::TwoWay || direction == Model::Road::OneWayReverse) && rt->pointIndex < rt->road->points.size() - 1)
+            auto direction = context->owner->profileContext->getDirection(rt->road);
+            if ((direction == Model::RoadDirection::TwoWay || direction == Model::RoadDirection::OneWayReverse) && rt->pointIndex < rt->road->points.size() - 1)
             {
                 const auto& otherPoint = rt->road->points[rt->pointIndex + 1];
                 if(otherPoint != nextL && otherPoint != prevL)
@@ -205,7 +206,7 @@ void OsmAnd::RoutePlanner::attachRouteSegments(
                     attachedSegment.reset(new RouteSegment(rt->road, rt->pointIndex, rt->road->points.size() - 1));
                 }
             }
-            if ((direction == Model::Road::TwoWay || direction == Model::Road::OneWayForward) && rt->pointIndex > 0)
+            if ((direction == Model::RoadDirection::TwoWay || direction == Model::RoadDirection::OneWayForward) && rt->pointIndex > 0)
             {
                 const auto& otherPoint = rt->road->points[rt->pointIndex - 1];
                 if(otherPoint != nextL && otherPoint != prevL)
@@ -230,7 +231,7 @@ void OsmAnd::RoutePlanner::calculateTimeSpeedInRoute( OsmAnd::RoutePlannerContex
         auto segment = *itSegment;
 
         float distOnRoadToPass = 0;
-        float speed = context->owner->profileContext->getSpeed(segment->road.get());
+        float speed = context->owner->profileContext->getSpeed(segment->road);
         if (qFuzzyCompare(speed, 0))
             speed = context->owner->profileContext->profile->minDefaultSpeed;
 
@@ -247,7 +248,7 @@ void OsmAnd::RoutePlanner::calculateTimeSpeedInRoute( OsmAnd::RoutePlannerContex
             );
             
             distanceSum += distance;
-            auto obstacle = context->owner->profileContext->getObstaclesExtraTime(segment->road.get(), pointIdx);
+            auto obstacle = context->owner->profileContext->getObstaclesExtraTime(segment->road, pointIdx);
             if (obstacle < 0)
                 obstacle = 0;
             distOnRoadToPass += distance / speed + obstacle;
@@ -359,7 +360,7 @@ OsmAnd::TurnInfo attachKeepLeftInfoAndLanes(bool leftSide,
 
     QList<std::shared_ptr<OsmAnd::RouteSegment> > attachedRoutes = currentSegm->attachedRoutes[0];
     int ls = prevSegm->road->getLanes();
-    if(ls >= 0 && prevSegm->road->getDirection() == 0) {
+    if(ls >= 0 && prevSegm->road->getDirection() == OsmAnd::Model::RoadDirection::TwoWay) {
         ls = (ls + 1) / 2;
     }
     int left = 0;
@@ -375,7 +376,7 @@ OsmAnd::TurnInfo attachKeepLeftInfoAndLanes(bool leftSide,
                 if ((ex < OsmAnd::RoutePlanner::MinTurnAngle || mpi < OsmAnd::RoutePlanner::MinTurnAngle) && ex >= 0) {
                     kl = true;
                     int lns = attached->road->getLanes();
-                    if(attached->road->getDirection() == 0) {
+                    if(attached->road->getDirection() == OsmAnd::Model::RoadDirection::TwoWay) {
                         lns = (lns + 1) / 2;
                     }
                     if (lns > 0) {
@@ -385,7 +386,7 @@ OsmAnd::TurnInfo attachKeepLeftInfoAndLanes(bool leftSide,
                 } else if ((ex > -OsmAnd::RoutePlanner::MinTurnAngle || mpi < OsmAnd::RoutePlanner::MinTurnAngle) && ex <= 0) {
                     kr = true;
                     int lns = attached->road->getLanes();
-                    if(attached->road->getDirection() == 0) {
+                    if(attached->road->getDirection() == OsmAnd::Model::RoadDirection::TwoWay) {
                         lns = (lns + 1) / 2;
                     }
                     if (lns > 0) {
@@ -402,7 +403,7 @@ OsmAnd::TurnInfo attachKeepLeftInfoAndLanes(bool leftSide,
         right = 1;
     }
     int current = currentSegm->road->getLanes();
-    if(currentSegm->road->getDirection() == 0) {
+    if(currentSegm->road->getDirection() == OsmAnd::Model::RoadDirection::TwoWay) {
         current = (current + 1) / 2;
     }
     if (current <= 0) {

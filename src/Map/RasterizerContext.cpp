@@ -3,16 +3,16 @@
 #include <limits>
 #include <SkDashPathEffect.h>
 
-#include "RasterizationStyleEvaluator.h"
+#include "MapStyleEvaluator.h"
 #include "OsmAndCore/Utilities.h"
 
-OsmAnd::RasterizerContext::RasterizerContext( const std::shared_ptr<RasterizationStyle>& style_ )
+OsmAnd::RasterizerContext::RasterizerContext( const std::shared_ptr<const MapStyle>& style_ )
     : style(style_)
 {
     initialize();
 }
 
-OsmAnd::RasterizerContext::RasterizerContext( const std::shared_ptr<RasterizationStyle>& style_, const QMap< std::shared_ptr<RasterizationStyle::ValueDefinition>, RasterizationRule::Value >& styleInitialSettings )
+OsmAnd::RasterizerContext::RasterizerContext( const std::shared_ptr<const MapStyle>& style_, const QMap< std::shared_ptr<MapStyle::ValueDefinition>, MapStyleRule::Value >& styleInitialSettings )
     : style(style_)
     , _zoom(std::numeric_limits<uint32_t>::max())
     , _styleInitialSettings(styleInitialSettings)
@@ -171,50 +171,50 @@ bool OsmAnd::RasterizerContext::update( const AreaI& area31, uint32_t zoom, cons
         _tileDivisor = Utilities::getPowZoom(31 - zoom);
         if(attributeRule_defaultColor)
         {
-            RasterizationStyleEvaluator evaluator(style, attributeRule_defaultColor);
+            MapStyleEvaluator evaluator(style, attributeRule_defaultColor);
             applyTo(evaluator);
-            evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
+            evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
             if(evaluator.evaluate())
-                evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_ATTR_COLOR_VALUE, _defaultBgColor);
+                evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_ATTR_COLOR_VALUE, _defaultBgColor);
         }
         if(attributeRule_shadowRendering)
         {
-            RasterizationStyleEvaluator evaluator(style, attributeRule_shadowRendering);
+            MapStyleEvaluator evaluator(style, attributeRule_shadowRendering);
             applyTo(evaluator);
-            evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
+            evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
             if(evaluator.evaluate())
             {
-                evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_ATTR_INT_VALUE, _shadowRenderingMode);
-                evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_SHADOW_COLOR, _shadowRenderingColor);
+                evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_ATTR_INT_VALUE, _shadowRenderingMode);
+                evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_SHADOW_COLOR, _shadowRenderingColor);
             }
         }
         if(attributeRule_polygonMinSizeToDisplay)
         {
-            RasterizationStyleEvaluator evaluator(style, attributeRule_polygonMinSizeToDisplay);
+            MapStyleEvaluator evaluator(style, attributeRule_polygonMinSizeToDisplay);
             applyTo(evaluator);
-            evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
+            evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
             if(evaluator.evaluate())
             {
                 int polygonMinSizeToDisplay;
-                if(evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_ATTR_INT_VALUE, polygonMinSizeToDisplay))
+                if(evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_ATTR_INT_VALUE, polygonMinSizeToDisplay))
                     _polygonMinSizeToDisplay = polygonMinSizeToDisplay;
             }
         }
         if(attributeRule_roadDensityZoomTile)
         {
-            RasterizationStyleEvaluator evaluator(style, attributeRule_roadDensityZoomTile);
+            MapStyleEvaluator evaluator(style, attributeRule_roadDensityZoomTile);
             applyTo(evaluator);
-            evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
+            evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
             if(evaluator.evaluate())
-                evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_ATTR_INT_VALUE, _roadDensityZoomTile);
+                evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_ATTR_INT_VALUE, _roadDensityZoomTile);
         }
         if(attributeRule_roadsDensityLimitPerTile)
         {
-            RasterizationStyleEvaluator evaluator(style, attributeRule_roadsDensityLimitPerTile);
+            MapStyleEvaluator evaluator(style, attributeRule_roadsDensityLimitPerTile);
             applyTo(evaluator);
-            evaluator.setIntegerValue(RasterizationStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
+            evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
             if(evaluator.evaluate())
-                evaluator.getIntegerValue(RasterizationStyle::builtinValueDefinitions.OUTPUT_ATTR_INT_VALUE, _roadsDensityLimitPerTile);
+                evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_ATTR_INT_VALUE, _roadsDensityLimitPerTile);
         }
     }
 
@@ -240,7 +240,7 @@ bool OsmAnd::RasterizerContext::update( const AreaI& area31, uint32_t zoom, cons
     return evaluateAttributes || evaluate31ToPixelDivisor || evaluateRenderViewport;
 }
 
-void OsmAnd::RasterizerContext::applyTo( RasterizationStyleEvaluator& evaluator ) const
+void OsmAnd::RasterizerContext::applyTo( MapStyleEvaluator& evaluator ) const
 {
     for(auto itSetting = _styleInitialSettings.begin(); itSetting != _styleInitialSettings.end(); ++itSetting)
     {

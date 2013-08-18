@@ -33,31 +33,12 @@
 
 namespace OsmAnd {
 
-    class ObfPoiSection;
-    class PoiDirectory;
+    class ObfPoiSectionReader_P;
 
     namespace Model {
 
         class OSMAND_CORE_API Amenity
         {
-        public:
-            class OSMAND_CORE_API Category
-            {
-            private:
-            protected:
-                Category();
-
-                QString _name;
-                QStringList _subcategories;
-            public:
-                virtual ~Category();
-
-                const QString& name;
-                const QStringList& subcategories;
-
-            friend class OsmAnd::ObfPoiSection;
-            friend class OsmAnd::PoiDirectory;
-            };
         private:
         protected:
             Amenity();
@@ -86,8 +67,7 @@ namespace OsmAnd {
             const uint32_t& categoryId;
             const uint32_t& subcategoryId;
 
-        friend class OsmAnd::ObfPoiSection;
-        friend class OsmAnd::PoiDirectory;
+        friend class OsmAnd::ObfPoiSectionReader_P;
         };
 
     } // namespace Model

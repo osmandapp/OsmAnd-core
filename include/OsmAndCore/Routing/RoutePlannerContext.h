@@ -44,11 +44,15 @@
 #include <OsmAndCore/CommonTypes.h>
 
 namespace OsmAnd {
+
+    class ObfReader;
+    class ObfRoutingSectionInfo;
+    class ObfRoutingSubsectionInfo;
+    class ObfRoutingBorderLinePoint;
     class RoutePlanner;
 
     struct RouteStatistics
     {
-
         uint32_t forwardIterations;
         uint32_t backwardIterations;
         uint32_t sizeOfDQueue;
@@ -66,6 +70,7 @@ namespace OsmAnd {
         std::chrono::steady_clock::time_point timeToCalculateBegin;
 
         RouteStatistics() {
+            //TODO: very dangerous to zeroify non-POD types (timeToLoadBegin, timeToCalculateBegin)
             memset(this, 0, sizeof(struct RouteStatistics));
         }
     };
@@ -86,13 +91,13 @@ namespace OsmAnd {
 
             int _assignedDirection;
 
-            RouteCalculationSegment(const std::shared_ptr<Model::Road>& road, uint32_t pointIndex);
+            RouteCalculationSegment(const std::shared_ptr<const Model::Road>& road, uint32_t pointIndex);
 
             void dump(const QString& prefix = QString()) const;
         public:
             virtual ~RouteCalculationSegment();
 
-            const std::shared_ptr<Model::Road> road;
+            const std::shared_ptr<const Model::Road> road;
             const uint32_t pointIndex;
 
             const std::shared_ptr<RouteCalculationSegment>& next;
@@ -110,7 +115,7 @@ namespace OsmAnd {
         {
         private:
         protected:
-            RouteCalculationFinalSegment(const std::shared_ptr<Model::Road>& road, uint32_t pointIndex);
+            RouteCalculationFinalSegment(const std::shared_ptr<const Model::Road>& road, uint32_t pointIndex);
 
             bool _reverseWaySearch;
             std::shared_ptr<RouteCalculationSegment> _opposite;
@@ -130,17 +135,17 @@ namespace OsmAnd {
             int _mixedLoadsCounter;
             int _access;
         protected:
-            RoutingSubsectionContext(RoutePlannerContext* owner, const std::shared_ptr<ObfReader>& origin, const std::shared_ptr<ObfRoutingSection::Subsection>& subsection);
+            RoutingSubsectionContext(RoutePlannerContext* owner, const std::shared_ptr<ObfReader>& origin, const std::shared_ptr<const ObfRoutingSubsectionInfo>& subsection);
 
             QMap< uint64_t, std::shared_ptr<RouteCalculationSegment> > _roadSegments;
 
             void markLoaded();
             void unload();
-            std::shared_ptr<RouteCalculationSegment> loadRouteCalculationSegment(uint32_t x31, uint32_t y31, QMap<uint64_t, std::shared_ptr<Model::Road> >& processed, const std::shared_ptr<RouteCalculationSegment>& original);
+            std::shared_ptr<RouteCalculationSegment> loadRouteCalculationSegment(uint32_t x31, uint32_t y31, QMap<uint64_t, std::shared_ptr<const Model::Road> >& processed, const std::shared_ptr<RouteCalculationSegment>& original);
         public:
             virtual ~RoutingSubsectionContext();
 
-            const std::shared_ptr<ObfRoutingSection::Subsection> subsection;
+            const std::shared_ptr<const ObfRoutingSubsectionInfo> subsection;
             RoutePlannerContext* const owner;
             const std::shared_ptr<ObfReader> origin;
 
@@ -148,8 +153,8 @@ namespace OsmAnd {
             uint32_t getLoadsCounter() const;
             uint32_t getAccessCounter() const {return _access;}
 
-            void registerRoad(const std::shared_ptr<Model::Road>& road);
-            void collectRoads(QList< std::shared_ptr<Model::Road> >& output, QMap<uint64_t, std::shared_ptr<Model::Road> >* duplicatesRegistry = nullptr);
+            void registerRoad(const std::shared_ptr<const Model::Road>& road);
+            void collectRoads(QList< std::shared_ptr<const Model::Road> >& output, QMap<uint64_t, std::shared_ptr<const Model::Road> >* duplicatesRegistry = nullptr);
 
             friend class OsmAnd::RoutePlanner;
             friend class OsmAnd::RoutePlannerContext;
@@ -158,7 +163,7 @@ namespace OsmAnd {
         struct OSMAND_CORE_API BorderLine
         {
             uint32_t _y31;
-            QList< std::shared_ptr<OsmAnd::ObfRoutingSection::BorderLinePoint> > _borderPoints;
+            QList< std::shared_ptr<const ObfRoutingBorderLinePoint> > _borderPoints;
         };
 
         class OSMAND_CORE_API CalculationContext
@@ -186,8 +191,8 @@ namespace OsmAnd {
     private:
     protected:
         QList< std::shared_ptr<RoutingSubsectionContext> > _subsectionsContexts;
-        QMap< ObfRoutingSection::Subsection*, std::shared_ptr<RoutingSubsectionContext> > _subsectionsContextsLUT;
-        QMap< ObfRoutingSection*, std::shared_ptr<ObfReader> > _sourcesLUT;
+        QMap< const ObfRoutingSubsectionInfo*, std::shared_ptr<RoutingSubsectionContext> > _subsectionsContextsLUT;
+        QMap< const ObfRoutingSectionInfo*, std::shared_ptr<ObfReader> > _sourcesLUT;
 
         QList< std::shared_ptr<RouteSegment> > _previouslyCalculatedRoute;
 

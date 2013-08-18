@@ -83,6 +83,9 @@ namespace OsmAnd {
         void allocateTilePatch(MapTileVertex* vertices, GLsizei verticesCount, GLushort* indices, GLsizei indicesCount);
         void releaseTilePatch();
 
+        /*enum {
+            RasterMapStageProgramVariationsCount = 1 << (RasterMapLayersCount - 1),
+        };*/
         struct {
             GLuint program;
 

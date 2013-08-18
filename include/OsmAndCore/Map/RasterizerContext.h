@@ -32,15 +32,15 @@
 #include <SkPathEffect.h>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/Map/RasterizationStyle.h>
-#include <OsmAndCore/Map/RasterizationRule.h>
+#include <OsmAndCore/Map/MapStyle.h>
+#include <OsmAndCore/Map/MapStyleRule.h>
 #include <OsmAndCore/Map/Rasterizer.h>
 #include <OsmAndCore/CommonTypes.h>
 
 namespace OsmAnd {
 
-    class RasterizationStyle;
-    class RasterizationStyleEvaluator;
+    class MapStyle;
+    class MapStyleEvaluator;
     class Rasterizer;
     
     class OSMAND_CORE_API RasterizerContext
@@ -59,8 +59,8 @@ namespace OsmAnd {
         bool _hasBasemap;
         bool _hasWater;
         bool _hasLand;
-        QList< std::shared_ptr<OsmAnd::Model::MapObject> > _mapObjects, _coastlineObjects, _basemapMapObjects, _basemapCoastlineObjects;
-        QList< std::shared_ptr<OsmAnd::Model::MapObject> > _combinedMapObjects, _triangulatedCoastlineObjects;
+        QList< std::shared_ptr<const OsmAnd::Model::MapObject> > _mapObjects, _coastlineObjects, _basemapMapObjects, _basemapCoastlineObjects;
+        QList< std::shared_ptr<const OsmAnd::Model::MapObject> > _combinedMapObjects, _triangulatedCoastlineObjects;
         QVector< Rasterizer::Primitive > _polygons, _lines, _points;
         QVector< Rasterizer::TextPrimitive > _texts;
 
@@ -74,13 +74,13 @@ namespace OsmAnd {
         int _shadowRenderingMode;
         uint32_t _shadowRenderingColor;
 
-        const QMap< std::shared_ptr<RasterizationStyle::ValueDefinition>, RasterizationRule::Value > _styleInitialSettings;
+        const QMap< std::shared_ptr<MapStyle::ValueDefinition>, MapStyleRule::Value > _styleInitialSettings;
 
-        std::shared_ptr<RasterizationRule> attributeRule_defaultColor;
-        std::shared_ptr<RasterizationRule> attributeRule_shadowRendering;
-        std::shared_ptr<RasterizationRule> attributeRule_polygonMinSizeToDisplay;
-        std::shared_ptr<RasterizationRule> attributeRule_roadDensityZoomTile;
-        std::shared_ptr<RasterizationRule> attributeRule_roadsDensityLimitPerTile;
+        std::shared_ptr<MapStyleRule> attributeRule_defaultColor;
+        std::shared_ptr<MapStyleRule> attributeRule_shadowRendering;
+        std::shared_ptr<MapStyleRule> attributeRule_polygonMinSizeToDisplay;
+        std::shared_ptr<MapStyleRule> attributeRule_roadDensityZoomTile;
+        std::shared_ptr<MapStyleRule> attributeRule_roadsDensityLimitPerTile;
 
         QVector< SkPaint > _oneWayPaints;
         QVector< SkPaint > _reverseOneWayPaints;
@@ -95,13 +95,13 @@ namespace OsmAnd {
         SkPaint _textPaint;
         std::shared_ptr<SkTypeface> _textFont;
     public:
-        RasterizerContext(const std::shared_ptr<RasterizationStyle>& style);
-        RasterizerContext(const std::shared_ptr<RasterizationStyle>& style, const QMap< std::shared_ptr<RasterizationStyle::ValueDefinition>, RasterizationRule::Value >& styleInitialSettings);
+        RasterizerContext(const std::shared_ptr<const MapStyle>& style);
+        RasterizerContext(const std::shared_ptr<const MapStyle>& style, const QMap< std::shared_ptr<MapStyle::ValueDefinition>, MapStyleRule::Value >& styleInitialSettings);
         virtual ~RasterizerContext();
 
-        const std::shared_ptr<RasterizationStyle> style;
+        const std::shared_ptr<const MapStyle> style;
 
-        void applyTo(RasterizationStyleEvaluator& evaluator) const;
+        void applyTo(MapStyleEvaluator& evaluator) const;
 
     friend class Rasterizer;
     };

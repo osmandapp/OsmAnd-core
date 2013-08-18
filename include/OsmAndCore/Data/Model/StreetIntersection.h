@@ -32,7 +32,7 @@
 
 namespace OsmAnd {
 
-    class ObfAddressSection;
+    class ObfAddressSectionReader_P;
 
     namespace Model {
 
@@ -43,7 +43,6 @@ namespace OsmAnd {
             QString _name;
             QString _latinName;
             PointI _tile24;
-            PointD _location;
         public:
             StreetIntersection();
             virtual ~StreetIntersection();
@@ -51,9 +50,8 @@ namespace OsmAnd {
             const QString& name;
             const QString& latinName;
             const PointI& tile24;
-            const PointD& location;
 
-        friend class OsmAnd::ObfAddressSection;
+        friend class OsmAnd::ObfAddressSectionReader_P;
         };
 
     } // namespace Model

@@ -26,6 +26,7 @@
 #include <limits>
 #include <memory>
 #include <queue>
+#include <functional>
 
 #include <QString>
 #include <QHash>
@@ -80,8 +81,8 @@ namespace OsmAnd {
             std::function< bool(const std::shared_ptr<RoutePlannerContext::RouteCalculationSegment>&, const std::shared_ptr<RoutePlannerContext::RouteCalculationSegment>&) >
         >  RoadSegmentsPriorityQueue;
 
-        static void loadRoads(RoutePlannerContext* context, uint32_t x31, uint32_t y31, uint32_t zoomAround, QList< std::shared_ptr<Model::Road> >& roads);
-        static void loadRoadsFromTile(RoutePlannerContext* context, uint64_t tileId, QList< std::shared_ptr<Model::Road> >& roads);
+        static void loadRoads(RoutePlannerContext* context, uint32_t x31, uint32_t y31, uint32_t zoomAround, QList< std::shared_ptr<const Model::Road> >& roads);
+        static void loadRoadsFromTile(RoutePlannerContext* context, uint64_t tileId, QList< std::shared_ptr<const Model::Road> >& roads);
         static uint64_t getRoutingTileId(RoutePlannerContext* context, uint32_t x31, uint32_t y31, bool dontLoad);
         static uint32_t getCurrentEstimatedSize(RoutePlannerContext* context);
         static void cacheRoad(RoutePlannerContext* context, const std::shared_ptr<Model::Road>& road);
@@ -98,8 +99,8 @@ namespace OsmAnd {
             IQueryController* controller = nullptr);
         static void loadBorderPoints(OsmAnd::RoutePlannerContext::CalculationContext* context);
         static void updateDistanceForBorderPoints(OsmAnd::RoutePlannerContext::CalculationContext* context, const PointI& sPoint, bool isDistanceToStart);
-        static uint64_t encodeRoutePointId(const std::shared_ptr<Model::Road>& road, uint64_t pointIndex, bool positive);
-        static uint64_t encodeRoutePointId(const std::shared_ptr<Model::Road>& road, uint64_t pointIndex);
+        static uint64_t encodeRoutePointId(const std::shared_ptr<const Model::Road>& road, uint64_t pointIndex, bool positive);
+        static uint64_t encodeRoutePointId(const std::shared_ptr<const Model::Road>& road, uint64_t pointIndex);
         static float estimateTimeDistance(
             OsmAnd::RoutePlannerContext::CalculationContext* context,
             const PointI& from,
@@ -128,14 +129,14 @@ namespace OsmAnd {
             QMap<uint64_t, std::shared_ptr<RoutePlannerContext::RouteCalculationSegment> >& visitedSegments,
             const std::shared_ptr<RoutePlannerContext::RouteCalculationSegment>& segment,
             bool forwardDirection,
-            const std::shared_ptr<Model::Road>& road);
+            const std::shared_ptr<const Model::Road>& road);
         static bool checkIfOppositeSegmentWasVisited(
             OsmAnd::RoutePlannerContext::CalculationContext* context,
             bool reverseWaySearch,
             RoadSegmentsPriorityQueue& graphSegments,
             const std::shared_ptr<RoutePlannerContext::RouteCalculationSegment>& segment,
             QMap<uint64_t, std::shared_ptr<RoutePlannerContext::RouteCalculationSegment> >& oppositeSegments,
-            const std::shared_ptr<Model::Road>& road,
+            const std::shared_ptr<const Model::Road>& road,
             uint32_t segmentEnd,
             bool forwardDirection,
             uint32_t intervalId,
@@ -143,13 +144,13 @@ namespace OsmAnd {
             float obstaclesTime);
         static float calculateTimeWithObstacles(
             OsmAnd::RoutePlannerContext::CalculationContext* context,
-            const std::shared_ptr<Model::Road>& road,
+            const std::shared_ptr<const Model::Road>& road,
             float distOnRoadToPass,
             float obstaclesTime);
         static bool processRestrictions(
             OsmAnd::RoutePlannerContext::CalculationContext* context,
             QList< std::shared_ptr<RoutePlannerContext::RouteCalculationSegment> >& prescripted,
-            const std::shared_ptr<Model::Road>& road,
+            const std::shared_ptr<const Model::Road>& road,
             const std::shared_ptr<RoutePlannerContext::RouteCalculationSegment>& inputNext,
             bool reverseWay);
         static void processIntersections(
@@ -206,7 +207,7 @@ namespace OsmAnd {
         static bool findClosestRoadPoint(
             OsmAnd::RoutePlannerContext* context,
             double latitude, double longitude,
-            std::shared_ptr<OsmAnd::Model::Road>* closestRoad = nullptr,
+            std::shared_ptr<const OsmAnd::Model::Road>* closestRoad = nullptr,
             uint32_t* closestPointIndex = nullptr,
             double* sqDistanceToClosestPoint = nullptr,
             uint32_t* rx31 = nullptr, uint32_t* ry31 = nullptr);

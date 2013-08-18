@@ -28,15 +28,19 @@
 
 namespace OsmAnd {
 
+    class ObfAddressSectionReader_P;
+
     namespace Model {
 
         class OSMAND_CORE_API Settlement : public StreetGroup
         {
         private:
         protected:
-        public:
             Settlement();
+        public:
             virtual ~Settlement();
+
+        friend class OsmAnd::ObfAddressSectionReader_P;
         };
 
     } // namespace Model
