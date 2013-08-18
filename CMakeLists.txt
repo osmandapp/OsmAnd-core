@@ -149,15 +149,19 @@ else()
 endif()
 
 if(CMAKE_HOST_WIN32 AND NOT CYGWIN)
-	add_custom_command(OUTPUT "gen/EmbeddedResources_bundle.cpp"
+	add_custom_command(OUTPUT "${CMAKE_CURRENT_LIST_DIR}/gen/EmbeddedResources_bundle.cpp"
 		COMMAND bash ARGS --login "${CMAKE_CURRENT_LIST_DIR}/embed-resources.sh"
 		COMMENT "Embedding resources...")
 else()
-	add_custom_command(OUTPUT "gen/EmbeddedResources_bundle.cpp"
+	add_custom_command(OUTPUT "${CMAKE_CURRENT_LIST_DIR}/gen/EmbeddedResources_bundle.cpp"
 		COMMAND "${CMAKE_CURRENT_LIST_DIR}/embed-resources.py"
 		COMMENT "Embedding resources...")
 endif()
-add_custom_target(OsmAndCore_resources)
+add_custom_target(OsmAndCore_resources
+	ALL
+	DEPENDS
+		"${CMAKE_CURRENT_LIST_DIR}/gen/EmbeddedResources_bundle.cpp"
+)
 set(merged_dependencies ${merged_dependencies}
 	OsmAndCore_resources
 )
