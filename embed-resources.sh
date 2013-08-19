@@ -19,4 +19,4 @@ if [ ! -f "$PYTHON3" ]; then
 	exit
 fi
 
-"$$PYTHON3" "$SRCLOC/embed-resources.py" "$@"
+"$PYTHON3" "$SRCLOC/embed-resources.py" "$@"
