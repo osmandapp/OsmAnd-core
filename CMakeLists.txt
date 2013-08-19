@@ -143,10 +143,9 @@ else()
 	find_package(Qt5Sql REQUIRED)
 endif()
 
-file(GLOB_RECURSE OsmAndCore_resources
-	"${OSMAND_ROOT}/resources/rendering_styles/*"
-	"${OSMAND_ROOT}/resources/routing/*"
-)
+file(GLOB_RECURSE OsmAndCore_resources "${OSMAND_ROOT}/resources/*")
+file(GLOB_RECURSE OsmAndCore_resources_exclude_git "${OSMAND_ROOT}/resources/.git/*")
+list(REMOVE_ITEM OsmAndCore_resources ${OsmAndCore_resources_exclude_git})
 if(CMAKE_HOST_WIN32 AND NOT CYGWIN)
 	add_custom_command(OUTPUT "${CMAKE_CURRENT_LIST_DIR}/gen/EmbeddedResources_bundle.cpp"
 		COMMAND bash ARGS --login "${CMAKE_CURRENT_LIST_DIR}/embed-resources.sh"
