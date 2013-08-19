@@ -525,8 +525,9 @@ bool OsmAnd::Rasterizer::updatePaint( RasterizerContext& context, const MapStyle
         ok = evaluator.getStringValue(MapStyle::builtinValueDefinitions.OUTPUT_SHADER, shader);
         if(ok && !shader.isEmpty())
         {
-            assert(false);
-            int i = 5;
+            OsmAnd::LogPrintf(LogSeverityLevel::Warning, "RASTERIZER NEEDS '%s' FILL TEXTURE!!!!!", qPrintable(shader));
+            //assert(false);
+            //int i = 5;
             /*TODO:SkBitmap* bmp = getCachedBitmap(rc, shader);
             if (bmp != NULL)
             paint->setShader(new SkBitmapProcShader(*bmp, SkShader::kRepeat_TileMode, SkShader::kRepeat_TileMode))->unref();*/
