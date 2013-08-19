@@ -144,9 +144,12 @@ else()
 	find_package(Qt5Sql REQUIRED)
 endif()
 
-file(GLOB_RECURSE OsmAndCore_resources "${OSMAND_ROOT}/resources/*")
-file(GLOB_RECURSE OsmAndCore_resources_exclude_git "${OSMAND_ROOT}/resources/.git/*")
-list(REMOVE_ITEM OsmAndCore_resources ${OsmAndCore_resources_exclude_git})
+file(STRINGS "${CMAKE_CURRENT_LIST_DIR}/embed-resources.list" OsmAndCore_resources_list)
+set(OsmAndCore_resources)
+foreach(OsmAndCore_resourceEntry IN LISTS OsmAndCore_resources_list)
+	string(REGEX REPLACE ":.+" "" _OsmAndCore_resourceEntry ${OsmAndCore_resourceEntry})
+	list(APPEND OsmAndCore_resources "${OSMAND_ROOT}${_OsmAndCore_resourceEntry}")
+endforeach(OsmAndCore_resourceEntry)
 set(OsmAndCore_resources_bundle
 	"${CMAKE_CURRENT_LIST_DIR}/gen/EmbeddedResources_bundle.cpp"
 )

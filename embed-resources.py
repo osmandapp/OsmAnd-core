@@ -32,7 +32,7 @@ class OsmAndCoreResourcesPacker(object):
         # For each resource in collection, pack it
         for (idx, resource) in enumerate(resources):
             originalSize = os.path.getsize(resource[0])
-            with open(resource[0], 'rb') as resourceFile:
+            with open(resource[0], "rb") as resourceFile:
                 resourceContent = resourceFile.read()
             
             packedContent = zlib.compress(resourceContent, 9)
@@ -86,10 +86,14 @@ if __name__=='__main__':
     embeddedFilename = rootDir + "/core/gen/EmbeddedResources_bundle.cpp";
 
     # Embedded resources
-    embeddedResources = [
-        (rootDir + "/resources/rendering_styles/default.render.xml", "map_styles/default.render.xml"),
-        (rootDir + "/resources/routing/routing.xml", "routing/routing.xml"),
-    ]
-
+    with open(rootDir + "/core/embed-resources.list", "r") as embedResourcesListFile:
+        embedResourcesList = embedResourcesListFile.readlines()
+    embeddedResources = []
+    for embedResourcesListEntry in embedResourcesList:
+        embedResourcesListEntryParts = embedResourcesListEntry.split(':')
+        originalPath = embedResourcesListEntryParts[0].strip()
+        packedPath = embedResourcesListEntryParts[1].strip()
+        embeddedResources.append((rootDir + originalPath, packedPath))
+    
     packer = OsmAndCoreResourcesPacker()
     sys.exit(packer.pack(embeddedResources, embeddedFilename))
