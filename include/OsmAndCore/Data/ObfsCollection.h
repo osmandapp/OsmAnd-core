@@ -45,6 +45,7 @@ namespace OsmAnd {
         ObfsCollection(const QDir& dataDir);
         virtual ~ObfsCollection();
 
+        //TODO: make changes thread-safe
         QDir dataDir;
         QList< QDir > extraDataDirs;
 

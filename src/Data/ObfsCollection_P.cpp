@@ -22,6 +22,8 @@ void OsmAnd::ObfsCollection_P::refreshSources()
     // Find all files that are present if data path
     QFileInfoList obfs;
     Utilities::findFiles(owner->dataDir, QStringList() << "*.obf", obfs, true);
+    for(auto itExtraDataDir = owner->extraDataDirs.begin(); itExtraDataDir != owner->extraDataDirs.end(); ++itExtraDataDir)
+        Utilities::findFiles(*itExtraDataDir, QStringList() << "*.obf", obfs, true);
 
     // For each file in registry, ...
     {
