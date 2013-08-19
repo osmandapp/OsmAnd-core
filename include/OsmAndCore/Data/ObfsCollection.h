@@ -26,7 +26,9 @@
 #include <stdint.h>
 #include <memory>
 
+#include <QList>
 #include <QDir>
+#include <QString>
 
 #include <OsmAndCore.h>
 
@@ -40,15 +42,13 @@ namespace OsmAnd {
     protected:
         const std::unique_ptr<ObfsCollection_P> _d;
     public:
-        ObfsCollection(const QDir& dataPath/*, const QDir& indexPath = QDir::current()*/);
+        ObfsCollection(const QDir& dataDir);
         virtual ~ObfsCollection();
 
-        const QDir dataPath;
-        //const QDir indexPath;
+        QDir dataDir;
+        QList< QDir > extraDataDirs;
 
         std::shared_ptr<ObfDataInterface> obtainDataInterface() const;
-
-        //static const QString indexFileName;
     };
 
 } // namespace OsmAnd

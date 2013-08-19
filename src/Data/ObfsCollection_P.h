@@ -35,7 +35,8 @@
 
 namespace OsmAnd {
 
-    class ObfReader;
+    class ObfFile;
+
     class ObfsCollection;
     class ObfsCollection_P
     {
@@ -46,7 +47,7 @@ namespace OsmAnd {
         ObfsCollection* const owner;
 
         QMutex _sourcesMutex;
-        QHash< QString, std::shared_ptr<ObfReader> > _sources;
+        QHash< QString, std::shared_ptr<ObfFile> > _sources;
         bool _sourcesRefreshedOnce;
         void refreshSources();
     public:
