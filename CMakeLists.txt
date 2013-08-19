@@ -132,8 +132,9 @@ set(merged_link_libs_public
 if(OSMAND_EMBEDDED_QT)
 	# When using embedded Qt, we need to use tools from either static or shared
 	# version of qt.
-	find_package(Qt5Core PATHS "${OSMAND_EMBEDDED_QT_SHARED}/lib/cmake" NO_DEFAULT_PATH)
-	if(NOT Qt5Core_FOUND)
+	if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
+		find_package(Qt5Core REQUIRED PATHS "${OSMAND_EMBEDDED_QT_SHARED}/lib/cmake" NO_DEFAULT_PATH)
+	elseif(CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 		find_package(Qt5Core REQUIRED PATHS "${OSMAND_EMBEDDED_QT_STATIC}/lib/cmake" NO_DEFAULT_PATH)
 	endif()
 else()
