@@ -78,10 +78,6 @@ file(GLOB sources_map "src/Map/*.c*")
 file(GLOB_RECURSE headers_client "client/*.h*")
 file(GLOB_RECURSE sources_client  "client/*.c*")
 
-set(generated_sources
-	"${CMAKE_CURRENT_LIST_DIR}/gen/EmbeddedResources_bundle.cpp"
-)
-set_source_files_properties(${generated_sources} PROPERTIES GENERATED TRUE)
 set(merged_sources
 	${headers}
 	${includes}
@@ -98,7 +94,6 @@ set(merged_sources
 	${sources_client}
 	${target_specific_sources}
 	"protos/OBF.pb.h"
-	${generated_sources}
 )
 set(merged_dependencies
 	skia_static
@@ -152,21 +147,30 @@ file(GLOB_RECURSE OsmAndCore_resources "${OSMAND_ROOT}/resources/*")
 if(CMAKE_HOST_WIN32 AND NOT CYGWIN)
 	add_custom_command(OUTPUT "${CMAKE_CURRENT_LIST_DIR}/gen/EmbeddedResources_bundle.cpp"
 		COMMAND bash ARGS --login "${CMAKE_CURRENT_LIST_DIR}/embed-resources.sh"
-		DEPENDS ${OsmAndCore_resources}
+		DEPENDS
+			${OsmAndCore_resources}
 		COMMENT "Embedding resources...")
 else()
 	add_custom_command(OUTPUT "${CMAKE_CURRENT_LIST_DIR}/gen/EmbeddedResources_bundle.cpp"
 		COMMAND "${CMAKE_CURRENT_LIST_DIR}/embed-resources.py"
-		DEPENDS ${OsmAndCore_resources}
+		DEPENDS
+			${OsmAndCore_resources}
 		COMMENT "Embedding resources...")
 endif()
+file(GLOB OsmAndCore_resources_bundle "gen/EmbeddedResources_bundle.cpp")
 add_custom_target(OsmAndCore_embed_resources
 	ALL
-	DEPENDS
-		"${CMAKE_CURRENT_LIST_DIR}/gen/EmbeddedResources_bundle.cpp"
+#	DEPENDS
+#		${OsmAndCore_resources_bundle}
 )
 set(merged_dependencies ${merged_dependencies}
 	OsmAndCore_embed_resources
+)
+set_source_files_properties(${OsmAndCore_resources_bundle}
+	PROPERTIES
+		GENERATED TRUE)
+set(merged_sources ${merged_sources}
+	${OsmAndCore_resources_bundle}
 )
 
 if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
