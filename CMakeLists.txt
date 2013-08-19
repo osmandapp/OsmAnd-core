@@ -148,24 +148,23 @@ file(GLOB_RECURSE OsmAndCore_resources "${OSMAND_ROOT}/resources/*")
 file(GLOB_RECURSE OsmAndCore_resources_exclude_git "${OSMAND_ROOT}/resources/.git/*")
 list(REMOVE_ITEM OsmAndCore_resources ${OsmAndCore_resources_exclude_git})
 if(CMAKE_HOST_WIN32 AND NOT CYGWIN)
-	add_custom_command(OUTPUT "${CMAKE_CURRENT_LIST_DIR}/gen/EmbeddedResources_bundle.cpp"
-		COMMAND bash ARGS --login "${CMAKE_CURRENT_LIST_DIR}/embed-resources.sh"
+	add_custom_target(OsmAndCore_embed_resources
+		ALL
+		bash --login "${CMAKE_CURRENT_LIST_DIR}/embed-resources.sh"
 		DEPENDS
 			${OsmAndCore_resources}
-		COMMENT "Embedding resources...")
+		COMMENT "Embedding resources..."
+	)
 else()
-	add_custom_command(OUTPUT "${CMAKE_CURRENT_LIST_DIR}/gen/EmbeddedResources_bundle.cpp"
-		COMMAND "${CMAKE_CURRENT_LIST_DIR}/embed-resources.py"
+	add_custom_target(OsmAndCore_embed_resources
+		ALL
+		"${CMAKE_CURRENT_LIST_DIR}/embed-resources.sh"
 		DEPENDS
 			${OsmAndCore_resources}
-		COMMENT "Embedding resources...")
+		COMMENT "Embedding resources..."
+	)
 endif()
 file(GLOB OsmAndCore_resources_bundle "gen/EmbeddedResources_bundle.cpp")
-add_custom_target(OsmAndCore_embed_resources
-	ALL
-#	DEPENDS
-#		${OsmAndCore_resources_bundle}
-)
 set(merged_dependencies ${merged_dependencies}
 	OsmAndCore_embed_resources
 )
