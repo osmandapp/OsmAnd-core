@@ -37,12 +37,12 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 	fi
 	(cd "$SRCLOC/upstream.patched.ios.device.armv7s.static" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 
-	if [ ! -h "$SRCLOC/upstream.patched.ios.simulator" ]; then
-		ln -s "$SRCLOC/upstream.patched.ios.simulator.i386.static" "$SRCLOC/upstream.patched.ios.simulator"
+	if [ ! -h "$SRCLOC/upstream.patched.ios.simulator.static" ]; then
+		ln -s "$SRCLOC/upstream.patched.ios.simulator.i386.static" "$SRCLOC/upstream.patched.ios.simulator.static"
 	fi
 
-	if [ ! -h "$SRCLOC/upstream.patched.ios.device" ]; then
-		ln -s "$SRCLOC/upstream.patched.ios.device.armv7.static" "$SRCLOC/upstream.patched.ios.device"
+	if [ ! -h "$SRCLOC/upstream.patched.ios.device.static" ]; then
+		ln -s "$SRCLOC/upstream.patched.ios.device.armv7.static" "$SRCLOC/upstream.patched.ios.device.static"
 	fi
 
 	if [ ! -h "$SRCLOC/upstream.patched.ios-iphoneos" ]; then
