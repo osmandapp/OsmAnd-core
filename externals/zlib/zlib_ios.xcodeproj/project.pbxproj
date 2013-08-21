@@ -147,7 +147,7 @@
 				LastUpgradeCheck = 0460;
 				ORGANIZATIONNAME = OsmAnd;
 			};
-			buildConfigurationList = BBB34EAE179BC0C5004C5567 /* Build configuration list for PBXProject "z_ios" */;
+			buildConfigurationList = BBB34EAE179BC0C5004C5567 /* Build configuration list for PBXProject "zlib_ios" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -200,7 +200,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 			};
@@ -223,7 +223,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				SDKROOT = iphoneos;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -270,7 +270,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		BBB34EAE179BC0C5004C5567 /* Build configuration list for PBXProject "z_ios" */ = {
+		BBB34EAE179BC0C5004C5567 /* Build configuration list for PBXProject "zlib_ios" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				BBB34EBF179BC0C5004C5567 /* Debug */,
