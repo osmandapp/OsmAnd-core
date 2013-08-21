@@ -271,12 +271,12 @@ void OsmAnd::Rasterizer::obtainPrimitives(RasterizerContext& context, IQueryCont
                     }
                     if(!mapObject->isClosedFigure())
                     {
-                        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu primitives are as polygon, but are not closed", mapObject->id >> 1);
+                        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu primitives are processed as polygon, but are not closed", mapObject->id >> 1);
                         continue;
                     }
                     if(!mapObject->isClosedFigure(true))
                     {
-                        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu primitives are as polygon, but are not closed (inner)", mapObject->id >> 1);
+                        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu primitives are processed as polygon, but are not closed (inner)", mapObject->id >> 1);
                         continue;
                     }
 
