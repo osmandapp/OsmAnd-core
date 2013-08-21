@@ -32,17 +32,17 @@
 
 namespace OsmAnd {
 
+    STRONG_ENUM(TextureFilteringQuality)
+    {
+        Normal,
+        Good,
+        Best
+    };
+
     struct OSMAND_CORE_API MapRendererConfiguration
     {
         MapRendererConfiguration();
         ~MapRendererConfiguration();
-
-        STRONG_ENUM(TextureFilteringQuality)
-        {
-            Normal,
-            Good,
-            Best
-        };
 
         TextureFilteringQuality texturesFilteringQuality;
         bool altasTexturesAllowed;

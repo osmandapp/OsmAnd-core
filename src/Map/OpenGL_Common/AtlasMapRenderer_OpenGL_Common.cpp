@@ -434,10 +434,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
     auto bitmapTileSamplerType = RenderAPI_OpenGL_Common::SamplerType::BitmapTile_Bilinear;
     switch(currentConfiguration.texturesFilteringQuality)
     {
-    case MapRendererConfiguration::TextureFilteringQuality::Good:
+    case TextureFilteringQuality::Good:
         bitmapTileSamplerType = RenderAPI_OpenGL_Common::SamplerType::BitmapTile_BilinearMipmap;
         break;
-    case MapRendererConfiguration::TextureFilteringQuality::Best:
+    case TextureFilteringQuality::Best:
         bitmapTileSamplerType = RenderAPI_OpenGL_Common::SamplerType::BitmapTile_TrilinearMipmap;
         break;
     }

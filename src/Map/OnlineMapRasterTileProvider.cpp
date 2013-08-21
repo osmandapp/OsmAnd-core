@@ -22,6 +22,7 @@ OsmAnd::OnlineMapRasterTileProvider::OnlineMapRasterTileProvider(
     , tileDimension(tileDimension_)
     , alphaChannelData(alphaChannelData_)
 {
+    _d->_localCachePath = QDir(QDir::current().filePath(id));
 }
 
 OsmAnd::OnlineMapRasterTileProvider::~OnlineMapRasterTileProvider()

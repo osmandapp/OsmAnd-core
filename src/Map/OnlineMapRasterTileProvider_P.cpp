@@ -17,7 +17,6 @@ OsmAnd::OnlineMapRasterTileProvider_P::OnlineMapRasterTileProvider_P( OnlineMapR
     : owner(owner_)
     , _currentDownloadsCounterMutex(QMutex::Recursive)
     , _currentDownloadsCount(0)
-    , _localCachePath(QDir::current())
     , _networkAccessAllowed(true)
     , _taskHostBridge(this)
 {
