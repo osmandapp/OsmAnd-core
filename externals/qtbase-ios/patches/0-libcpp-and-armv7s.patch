@@ -6,7 +6,7 @@ diff -rupN upstream.patched/mkspecs/unsupported/macx-ios-clang-device-armv7/qmak
  
  QMAKE_MACOSX_DEPLOYMENT_TARGET  =
 -QMAKE_IOS_DEPLOYMENT_TARGET     = 4.3
-+QMAKE_IOS_DEPLOYMENT_TARGET     = 5.0
++QMAKE_IOS_DEPLOYMENT_TARGET     = 6.0
  
  INCLUDEPATH            += $$PWD/ios
  DEFINES                += DARWIN_NO_CARBON QT_NO_CORESERVICES QT_NO_PRINTER QT_NO_PRINTDIALOG
@@ -30,7 +30,7 @@ diff -rupN upstream.patched/mkspecs/unsupported/macx-ios-clang-device-armv7s/qma
  
  QMAKE_MACOSX_DEPLOYMENT_TARGET  =
 -QMAKE_IOS_DEPLOYMENT_TARGET     = 4.3
-+QMAKE_IOS_DEPLOYMENT_TARGET     = 5.0
++QMAKE_IOS_DEPLOYMENT_TARGET     = 6.0
  
  INCLUDEPATH            += $$PWD/ios
  DEFINES                += DARWIN_NO_CARBON QT_NO_CORESERVICES QT_NO_PRINTER QT_NO_PRINTDIALOG
@@ -54,7 +54,7 @@ diff -rupN upstream.patched/mkspecs/unsupported/macx-ios-clang-simulator-i386/qm
  
  QMAKE_MACOSX_DEPLOYMENT_TARGET  =
 -QMAKE_IOS_DEPLOYMENT_TARGET     = 4.3
-+QMAKE_IOS_DEPLOYMENT_TARGET     = 5.0
++QMAKE_IOS_DEPLOYMENT_TARGET     = 6.0
  
  INCLUDEPATH            += $$PWD/ios
  DEFINES                += DARWIN_NO_CARBON QT_NO_CORESERVICES QT_NO_PRINTER QT_NO_PRINTDIALOG
