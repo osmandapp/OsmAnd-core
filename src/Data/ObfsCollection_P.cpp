@@ -6,6 +6,8 @@
 
 OsmAnd::ObfsCollection_P::ObfsCollection_P( ObfsCollection* owner_ )
     : owner(owner_)
+    , _watchedCollectionMutex(QMutex::Recursive)
+    , _watchedCollectionChanged(false)
     , _sourcesMutex(QMutex::Recursive)
     , _sourcesRefreshedOnce(false)
 {
@@ -19,11 +21,30 @@ void OsmAnd::ObfsCollection_P::refreshSources()
 {
     QMutexLocker scopedLock(&_sourcesMutex);
 
-    // Find all files that are present if data path
+    // Find all files that are present in watched entries
     QFileInfoList obfs;
-    Utilities::findFiles(owner->dataDir, QStringList() << "*.obf", obfs, true);
-    for(auto itExtraDataDir = owner->extraDataDirs.begin(); itExtraDataDir != owner->extraDataDirs.end(); ++itExtraDataDir)
-        Utilities::findFiles(*itExtraDataDir, QStringList() << "*.obf", obfs, true);
+    {
+        QMutexLocker scopedLock(&_watchedCollectionMutex);
+
+        for(auto itEntry = _watchedCollection.begin(); itEntry != _watchedCollection.end(); ++itEntry)
+        {
+            const auto& entry = *itEntry;
+
+            if(entry->type == WatchEntry::WatchedDirectory)
+            {
+                auto watchedDirEntry = static_cast<WatchedDirectoryEntry*>(entry.get());
+
+                Utilities::findFiles(watchedDirEntry->dir, QStringList() << "*.obf", obfs, watchedDirEntry->recursive);
+            }
+            else if(entry->type == WatchEntry::ExplicitFile)
+            {
+                auto explicitFileEntry = static_cast<ExplicitFileEntry*>(entry.get());
+
+                if(explicitFileEntry->fileInfo.exists())
+                    obfs.push_back(explicitFileEntry->fileInfo);
+            }
+        }
+    }
 
     // For each file in registry, ...
     {

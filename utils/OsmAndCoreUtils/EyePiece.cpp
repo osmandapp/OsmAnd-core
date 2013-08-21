@@ -183,7 +183,8 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
     if(cfg.dumpRules)
         style->dump();
     
-    OsmAnd::ObfsCollection obfsCollection(cfg.obfsDir);
+    OsmAnd::ObfsCollection obfsCollection;
+    obfsCollection.watchDirectory(cfg.obfsDir);
 
     // Collect all map objects (this should be replaced by something like RasterizerViewport/RasterizerContext)
     QList< std::shared_ptr<const OsmAnd::Model::MapObject> > mapObjects;
