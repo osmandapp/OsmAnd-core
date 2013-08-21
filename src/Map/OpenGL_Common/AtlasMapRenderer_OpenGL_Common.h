@@ -41,6 +41,10 @@ namespace OsmAnd {
     protected:
         AtlasMapRenderer_OpenGL_Common();
 
+        enum {
+            DefaultReferenceTileSizeOnScreen = 256,
+        };
+
         glm::mat4 _mProjection;
         glm::mat4 _mProjectionInv;
         glm::mat4 _mView;

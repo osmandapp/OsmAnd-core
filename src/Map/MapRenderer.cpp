@@ -193,28 +193,28 @@ bool OsmAnd::MapRenderer::postInitializeRendering()
     return true;
 }
 
-bool OsmAnd::MapRenderer::processRendering()
+bool OsmAnd::MapRenderer::prepareFrame()
 {
     assert(_renderThreadId == QThread::currentThreadId());
 
     bool ok;
 
-    ok = preProcessRendering();
+    ok = prePrepareFrame();
     if(!ok)
         return false;
 
-    ok = doProcessRendering();
+    ok = doPrepareFrame();
     if(!ok)
         return false;
 
-    ok = postProcessRendering();
+    ok = postPrepareFrame();
     if(!ok)
         return false;
 
     return true;
 }
 
-bool OsmAnd::MapRenderer::preProcessRendering()
+bool OsmAnd::MapRenderer::prePrepareFrame()
 {
     if(!_isRenderingInitialized)
         return false;
@@ -307,7 +307,7 @@ bool OsmAnd::MapRenderer::preProcessRendering()
     return true;
 }
 
-bool OsmAnd::MapRenderer::doProcessRendering()
+bool OsmAnd::MapRenderer::doPrepareFrame()
 {
     return true;
 }
@@ -338,7 +338,7 @@ bool OsmAnd::MapRenderer::updateCurrentState()
     return true;
 }
 
-bool OsmAnd::MapRenderer::postProcessRendering()
+bool OsmAnd::MapRenderer::postPrepareFrame()
 {
     // In the end of rendering processing, request tiles that are neither present in
     // requested list, nor in pending, nor in uploaded
@@ -383,33 +383,33 @@ bool OsmAnd::MapRenderer::postRenderFrame()
     return true;
 }
 
-bool OsmAnd::MapRenderer::postprocessRendering()
+bool OsmAnd::MapRenderer::processRendering()
 {
     assert(_renderThreadId == QThread::currentThreadId());
 
     bool ok;
 
-    ok = prePostprocessRendering();
+    ok = preProcessRendering();
     if(!ok)
         return false;
 
-    ok = doPostprocessRendering();
+    ok = doProcessRendering();
     if(!ok)
         return false;
 
-    ok = postPostprocessRendering();
+    ok = postProcessRendering();
     if(!ok)
         return false;
 
     return true;
 }
 
-bool OsmAnd::MapRenderer::prePostprocessRendering()
+bool OsmAnd::MapRenderer::preProcessRendering()
 {
     return true;
 }
 
-bool OsmAnd::MapRenderer::doPostprocessRendering()
+bool OsmAnd::MapRenderer::doProcessRendering()
 {
     // If background worked is was not enabled, upload tiles to GPU in render thread
     // To reduce FPS drop, upload not more than 1 tile per frame, and do that before end of the frame
@@ -420,7 +420,7 @@ bool OsmAnd::MapRenderer::doPostprocessRendering()
     return true;
 }
 
-bool OsmAnd::MapRenderer::postPostprocessRendering()
+bool OsmAnd::MapRenderer::postProcessRendering()
 {
     return true;
 }

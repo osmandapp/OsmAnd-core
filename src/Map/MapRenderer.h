@@ -156,17 +156,17 @@ namespace OsmAnd {
         virtual bool doInitializeRendering();
         virtual bool postInitializeRendering();
 
-        virtual bool preProcessRendering();
-        virtual bool doProcessRendering();
-        virtual bool postProcessRendering();
+        virtual bool prePrepareFrame();
+        virtual bool doPrepareFrame();
+        virtual bool postPrepareFrame();
 
         virtual bool preRenderFrame();
         virtual bool doRenderFrame() = 0;
         virtual bool postRenderFrame();
 
-        virtual bool prePostprocessRendering();
-        virtual bool doPostprocessRendering();
-        virtual bool postPostprocessRendering();
+        virtual bool preProcessRendering();
+        virtual bool doProcessRendering();
+        virtual bool postProcessRendering();
 
         virtual bool preReleaseRendering();
         virtual bool doReleaseRendering();
@@ -212,9 +212,9 @@ namespace OsmAnd {
         virtual void setConfiguration(const MapRendererConfiguration& configuration, bool forcedUpdate = false);
 
         virtual bool initializeRendering();
-        virtual bool processRendering();
+        virtual bool prepareFrame();
         virtual bool renderFrame();
-        virtual bool postprocessRendering();
+        virtual bool processRendering();
         virtual bool releaseRendering();
 
         virtual void setRasterLayerProvider(const RasterMapLayerId& layerId, const std::shared_ptr<IMapBitmapTileProvider>& tileProvider, bool forcedUpdate = false);
