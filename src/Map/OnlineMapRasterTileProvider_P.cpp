@@ -44,7 +44,7 @@ void OsmAnd::OnlineMapRasterTileProvider_P::obtainTileDeffered( const TileId& ti
             .replace(QString::fromLatin1("${y}"), QString::number(tileId.y));
         tileEntry->sourceUrl = QUrl(tileUrl);
 
-        const auto& subPath = owner->id + QDir::separator() +
+        const auto& subPath =
             QString::number(zoom) + QDir::separator() +
             QString::number(tileId.x) + QDir::separator() +
             QString::number(tileId.y) + QString::fromLatin1(".tile");
