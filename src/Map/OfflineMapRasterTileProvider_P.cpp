@@ -74,7 +74,6 @@ void OsmAnd::OfflineMapRasterTileProvider_P::obtainTileDeffered( const TileId& t
 #if defined(_DEBUG) || defined(DEBUG)
         const auto dataRead_End = std::chrono::high_resolution_clock::now();
         const std::chrono::duration<float> dataRead_Elapsed = dataRead_End - dataRead_Begin;
-        LogPrintf(LogSeverityLevel::Info, "Read %d map objects from %dx%d@%d in %f seconds", mapObjects.count(), tileId.x, tileId.y, zoom, dataRead_Elapsed.count());
 #endif
 
 #if defined(_DEBUG) || defined(DEBUG)
@@ -105,7 +104,7 @@ void OsmAnd::OfflineMapRasterTileProvider_P::obtainTileDeffered( const TileId& t
 #if defined(_DEBUG) || defined(DEBUG)
         const auto dataRasterization_End = std::chrono::high_resolution_clock::now();
         const std::chrono::duration<float> dataRasterization_Elapsed = dataRasterization_End - dataRasterization_Begin;
-        LogPrintf(LogSeverityLevel::Info, "Rasterized %d map objects from %dx%d@%d in %f seconds", mapObjects.count(), tileId.x, tileId.y, zoom, dataRasterization_Elapsed.count());
+        LogPrintf(LogSeverityLevel::Info, "%d map objects from %dx%d@%d: rasterization %fs, reading %fs", mapObjects.count(), tileId.x, tileId.y, zoom, dataRasterization_Elapsed.count(), dataRead_Elapsed.count());
 #endif
 
         // If there is no data to rasterize, tell that this tile is not available
