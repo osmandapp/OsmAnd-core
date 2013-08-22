@@ -2,6 +2,7 @@
 #include "OfflineMapRasterTileProvider.h"
 
 #include <assert.h>
+#include <chrono>
 
 #include <SkStream.h>
 #include <SkBitmap.h>
@@ -66,10 +67,18 @@ void OsmAnd::OfflineMapRasterTileProvider_P::obtainTileDeffered( const TileId& t
 
         // Get map objects from data proxy
         QList< std::shared_ptr<const Model::MapObject> > mapObjects;
+#if defined(_DEBUG) || defined(DEBUG)
+        const auto dataRead_Begin = std::chrono::high_resolution_clock::now();
+#endif
         dataInterface->obtainMapObjects(&mapObjects, tileBBox31, zoom, nullptr);
+#if defined(_DEBUG) || defined(DEBUG)
+        const auto dataRead_End = std::chrono::high_resolution_clock::now();
+        const std::chrono::duration<float> dataRead_Elapsed = dataRead_End - dataRead_Begin;
+        LogPrintf(LogSeverityLevel::Info, "Read %d map objects from %dx%d@%d in %f seconds", mapObjects.count(), tileId.x, tileId.y, zoom, dataRead_Elapsed.count());
+#endif
 
 #if defined(_DEBUG) || defined(DEBUG)
-        LogPrintf(LogSeverityLevel::Info, "Rasterizing %d map objects from %dx%d@%d", mapObjects.count(), tileId.x, tileId.y, zoom);
+        const auto dataRasterization_Begin = std::chrono::high_resolution_clock::now();
 #endif
 
         // Allocate rasterization target
@@ -92,6 +101,12 @@ void OsmAnd::OfflineMapRasterTileProvider_P::obtainTileDeffered( const TileId& t
         RasterizerContext rasterizerContext(pThis->owner->dataProvider->mapStyle);
         Rasterizer::update(rasterizerContext, tileBBox31, zoom, pThis->owner->tileSize, pThis->owner->displayDensity, &mapObjects, OsmAnd::PointF(), &nothingToRasterize, nullptr);
         Rasterizer::rasterizeMap(rasterizerContext, true, canvas, nullptr);
+
+#if defined(_DEBUG) || defined(DEBUG)
+        const auto dataRasterization_End = std::chrono::high_resolution_clock::now();
+        const std::chrono::duration<float> dataRasterization_Elapsed = dataRasterization_End - dataRasterization_Begin;
+        LogPrintf(LogSeverityLevel::Info, "Rasterized %d map objects from %dx%d@%d in %f seconds", mapObjects.count(), tileId.x, tileId.y, zoom, dataRasterization_Elapsed.count());
+#endif
 
         // If there is no data to rasterize, tell that this tile is not available
         if(nothingToRasterize)
