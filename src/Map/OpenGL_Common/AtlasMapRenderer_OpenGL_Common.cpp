@@ -43,12 +43,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::allocateTilePatch( MapTileVertex* v
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
 
-    // Create Vertex Array Object
-    renderAPI->glGenVertexArrays_wrapper(1, &_rasterMapStage.tilePatchVAO);
-    GL_CHECK_RESULT;
-    renderAPI->glBindVertexArray_wrapper(_rasterMapStage.tilePatchVAO);
-    GL_CHECK_RESULT;
-
     // Create vertex buffer and associate it with VAO
     glGenBuffers(1, &_rasterMapStage.tilePatchVBO);
     GL_CHECK_RESULT;
@@ -56,15 +50,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::allocateTilePatch( MapTileVertex* v
     GL_CHECK_RESULT;
     glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(MapTileVertex), vertices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
-    glEnableVertexAttribArray(0/* = vs.in.vertexPosition*/);
-    GL_CHECK_RESULT;
-    glVertexAttribPointer(0/* = vs.in.vertexPosition*/, 2, GL_FLOAT, GL_FALSE, sizeof(MapTileVertex), reinterpret_cast<GLvoid*>(offsetof(MapTileVertex, position)));
-    GL_CHECK_RESULT;
-    glEnableVertexAttribArray(1/* = vs.in.vertexTexCoords*/);
-    GL_CHECK_RESULT;
-    glVertexAttribPointer(1/* = vs.in.vertexTexCoords*/, 2, GL_FLOAT, GL_FALSE, sizeof(MapTileVertex), reinterpret_cast<GLvoid*>(offsetof(MapTileVertex, uv)));
-    GL_CHECK_RESULT;
-
+    
     // Create index buffer and associate it with VAO
     glGenBuffers(1, &_rasterMapStage.tilePatchIBO);
     GL_CHECK_RESULT;
@@ -73,7 +59,38 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::allocateTilePatch( MapTileVertex* v
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
 
+    for(auto variationId = 0u, maxActiveMapLayers = 1u; variationId < RasterMapLayersCount; variationId++, maxActiveMapLayers++)
+    {
+        auto& stageVariation = _rasterMapStage.variations[variationId];
+
+        // Create Vertex Array Object
+        renderAPI->glGenVertexArrays_wrapper(1, &stageVariation.tilePatchVAO);
+        GL_CHECK_RESULT;
+        renderAPI->glBindVertexArray_wrapper(stageVariation.tilePatchVAO);
+        GL_CHECK_RESULT;
+
+        // Bind VBO
+        glBindBuffer(GL_ARRAY_BUFFER, _rasterMapStage.tilePatchVBO);
+        GL_CHECK_RESULT;
+        glEnableVertexAttribArray(stageVariation.vs.in.vertexPosition);
+        GL_CHECK_RESULT;
+        glVertexAttribPointer(stageVariation.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(MapTileVertex), reinterpret_cast<GLvoid*>(offsetof(MapTileVertex, position)));
+        GL_CHECK_RESULT;
+        glEnableVertexAttribArray(stageVariation.vs.in.vertexTexCoords);
+        GL_CHECK_RESULT;
+        glVertexAttribPointer(stageVariation.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(MapTileVertex), reinterpret_cast<GLvoid*>(offsetof(MapTileVertex, uv)));
+        GL_CHECK_RESULT;
+
+        // Bind IBO
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _rasterMapStage.tilePatchIBO);
+        GL_CHECK_RESULT;
+    }
+
     renderAPI->glBindVertexArray_wrapper(0);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
 }
 
@@ -82,6 +99,18 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::releaseTilePatch()
     const auto renderAPI = getRenderAPI();
 
     GL_CHECK_PRESENT(glDeleteBuffers);
+
+    for(auto variationId = 0u, maxActiveMapLayers = 1u; variationId < RasterMapLayersCount; variationId++, maxActiveMapLayers++)
+    {
+        auto& stageVariation = _rasterMapStage.variations[variationId];
+
+        if(stageVariation.tilePatchVAO)
+        {
+            renderAPI->glDeleteVertexArrays_wrapper(1, &stageVariation.tilePatchVAO);
+            GL_CHECK_RESULT;
+            stageVariation.tilePatchVAO = 0;
+        }
+    }
 
     if(_rasterMapStage.tilePatchIBO)
     {
@@ -95,13 +124,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::releaseTilePatch()
         glDeleteBuffers(1, &_rasterMapStage.tilePatchVBO);
         GL_CHECK_RESULT;
         _rasterMapStage.tilePatchVBO = 0;
-    }
-
-    if(_rasterMapStage.tilePatchVAO)
-    {
-        renderAPI->glDeleteVertexArrays_wrapper(1, &_rasterMapStage.tilePatchVAO);
-        GL_CHECK_RESULT;
-        _rasterMapStage.tilePatchVAO = 0;
     }
 }
 
@@ -392,10 +414,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
     GL_CHECK_PRESENT(glVertexAttribPointer);
     GL_CHECK_PRESENT(glDisableVertexAttribArray);
 
-    // Set tile patch VAO
-    renderAPI->glBindVertexArray_wrapper(_rasterMapStage.tilePatchVAO);
-    GL_CHECK_RESULT;
-    
     // Count active raster tile providers
     auto activeRasterTileProvidersCount = 1;
     for(int layerIdx = 1, layerId = RasterMapLayerId::BaseLayer + 1; layerIdx < RasterMapLayersCount; layerIdx++, layerId++)
@@ -408,8 +426,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
 
     // Get proper program variation
     const auto& stageVariation = _rasterMapStage.variations[activeRasterTileProvidersCount - 1];
-    assert(stageVariation.vs.in.vertexPosition == 0);
-    assert(stageVariation.vs.in.vertexTexCoords == 1);
+    
+    // Set tile patch VAO
+    renderAPI->glBindVertexArray_wrapper(stageVariation.tilePatchVAO);
+    GL_CHECK_RESULT;
 
     // Activate program
     glUseProgram(stageVariation.program);

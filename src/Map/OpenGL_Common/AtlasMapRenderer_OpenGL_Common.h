@@ -88,7 +88,6 @@ namespace OsmAnd {
         void releaseTilePatch();
 
         struct {
-            GLuint tilePatchVAO;
             GLuint tilePatchVBO;
             GLuint tilePatchIBO;
 
@@ -96,6 +95,8 @@ namespace OsmAnd {
             // Variations are generated according to number of active raster tile providers.
             struct {
                 GLuint program;
+
+                GLuint tilePatchVAO;
 
                 struct {
                     GLuint id;
