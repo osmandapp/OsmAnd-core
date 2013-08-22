@@ -56,13 +56,13 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::allocateTilePatch( MapTileVertex* v
     GL_CHECK_RESULT;
     glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(MapTileVertex), vertices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
-    glEnableVertexAttribArray(_rasterMapStage.vs.in.vertexPosition);
+    glEnableVertexAttribArray(0/* = vs.in.vertexPosition*/);
     GL_CHECK_RESULT;
-    glVertexAttribPointer(_rasterMapStage.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(MapTileVertex), reinterpret_cast<GLvoid*>(offsetof(MapTileVertex, position)));
+    glVertexAttribPointer(0/* = vs.in.vertexPosition*/, 2, GL_FLOAT, GL_FALSE, sizeof(MapTileVertex), reinterpret_cast<GLvoid*>(offsetof(MapTileVertex, position)));
     GL_CHECK_RESULT;
-    glEnableVertexAttribArray(_rasterMapStage.vs.in.vertexTexCoords);
+    glEnableVertexAttribArray(1/* = vs.in.vertexTexCoords*/);
     GL_CHECK_RESULT;
-    glVertexAttribPointer(_rasterMapStage.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(MapTileVertex), reinterpret_cast<GLvoid*>(offsetof(MapTileVertex, uv)));
+    glVertexAttribPointer(1/* = vs.in.vertexTexCoords*/, 2, GL_FLOAT, GL_FALSE, sizeof(MapTileVertex), reinterpret_cast<GLvoid*>(offsetof(MapTileVertex, uv)));
     GL_CHECK_RESULT;
 
     // Create index buffer and associate it with VAO
@@ -109,12 +109,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeRasterMapStage()
 {
     const auto renderAPI = getRenderAPI();
 
-    // Compile vertex shader
-    const auto& vertexShader_perRasterLayerTexCoordsProcessing = QString::fromLatin1(
-        "    calculateTextureCoordinates(                                                                                   ""\n"
-        "        param_vs_rasterTileLayers[%rasterLayerId%],                                                                ""\n"
-        "        v2f_texCoordsPerLayer[%rasterLayerId%]);                                                                   ""\n"
-        "                                                                                                                   ""\n");
     const auto& vertexShader = QString::fromLatin1(
         // Input data
         "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
@@ -218,35 +212,12 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeRasterMapStage()
         //   Finally output processed modified vertex
         "    gl_Position = param_vs_mProjectionView * v;                                                                    ""\n"
         "}                                                                                                                  ""\n");
-    auto preprocessedVertexShader = vertexShader;
-    QString preprocessedVertexShader_UnrolledPerRasterLayerTexCoordsProcessingCode;
-    for(int layerId = 0; layerId < RasterMapLayersCount; layerId++)
-    {
-        auto preprocessedVertexShader_perRasterLayerTexCoordsProcessing = vertexShader_perRasterLayerTexCoordsProcessing;
-        preprocessedVertexShader_perRasterLayerTexCoordsProcessing.replace("%rasterLayerId%", QString::number(layerId));
+    const auto& vertexShader_perRasterLayerTexCoordsProcessing = QString::fromLatin1(
+        "    calculateTextureCoordinates(                                                                                   ""\n"
+        "        param_vs_rasterTileLayers[%rasterLayerId%],                                                                ""\n"
+        "        v2f_texCoordsPerLayer[%rasterLayerId%]);                                                                   ""\n"
+        "                                                                                                                   ""\n");
 
-        preprocessedVertexShader_UnrolledPerRasterLayerTexCoordsProcessingCode +=
-            preprocessedVertexShader_perRasterLayerTexCoordsProcessing;
-    }
-    preprocessedVertexShader.replace("%UnrolledPerRasterLayerTexCoordsProcessingCode%",
-        preprocessedVertexShader_UnrolledPerRasterLayerTexCoordsProcessingCode);
-    preprocessedVertexShader.replace("%TileSize3D%", QString::number(TileSize3D));
-    preprocessedVertexShader.replace("%RasterLayersCount%", QString::number(RasterMapLayersCount));
-    renderAPI->preprocessVertexShader(preprocessedVertexShader);
-    renderAPI->optimizeVertexShader(preprocessedVertexShader);
-    _rasterMapStage.vs.id = renderAPI->compileShader(GL_VERTEX_SHADER, preprocessedVertexShader.toStdString().c_str());
-    assert(_rasterMapStage.vs.id != 0);
-
-    // Compile fragment shader
-    const auto& fragmentShader_perRasterLayer = QString::fromLatin1(
-        "    {                                                                                                              ""\n"
-        "        lowp vec4 layerColor = SAMPLE_TEXTURE_2D_LOD(                                                              ""\n"
-        "            param_fs_rasterTileLayers[%rasterLayerId%].sampler,                                                    ""\n"
-        "            v2f_texCoordsPerLayer[%rasterLayerId%], v2f_mipmapLOD);                                                ""\n"
-        "                                                                                                                   ""\n"
-        "        layerColor.a *= param_fs_rasterTileLayers[%rasterLayerId%].k;                                              ""\n"
-        "        finalColor = mix(finalColor, layerColor, layerColor.a);                                                    ""\n"
-        "    }                                                                                                              ""\n");
     const auto& fragmentShader = QString::fromLatin1(
         // Input data
         "PARAM_INPUT vec2 v2f_texCoordsPerLayer[%RasterLayersCount%];                                                       ""\n"
@@ -288,84 +259,119 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeRasterMapStage()
 #endif
         "    FRAGMENT_COLOR_OUTPUT = finalColor;                                                                            ""\n"
         "}                                                                                                                  ""\n");
-    auto preprocessedFragmentShader = fragmentShader;
-    QString preprocessedFragmentShader_UnrolledPerRasterLayerProcessingCode;
-    for(int layerId = 0; layerId < RasterMapLayersCount; layerId++)
+    const auto& fragmentShader_perRasterLayer = QString::fromLatin1(
+        "    {                                                                                                              ""\n"
+        "        lowp vec4 layerColor = SAMPLE_TEXTURE_2D_LOD(                                                              ""\n"
+        "            param_fs_rasterTileLayers[%rasterLayerId%].sampler,                                                    ""\n"
+        "            v2f_texCoordsPerLayer[%rasterLayerId%], v2f_mipmapLOD);                                                ""\n"
+        "                                                                                                                   ""\n"
+        "        layerColor.a *= param_fs_rasterTileLayers[%rasterLayerId%].k;                                              ""\n"
+        "        finalColor = mix(finalColor, layerColor, layerColor.a);                                                    ""\n"
+        "    }                                                                                                              ""\n");
+    for(auto variationId = 0u, maxActiveMapLayers = 1u; variationId < RasterMapLayersCount; variationId++, maxActiveMapLayers++)
     {
-        auto linearIdx = layerId - RasterMapLayerId::BaseLayer;
-        auto preprocessedFragmentShader_perRasterLayer = fragmentShader_perRasterLayer;
-        preprocessedFragmentShader_perRasterLayer.replace("%rasterLayerId%", QString::number(linearIdx));
+        auto& stageVariation = _rasterMapStage.variations[variationId];
 
-        preprocessedFragmentShader_UnrolledPerRasterLayerProcessingCode += preprocessedFragmentShader_perRasterLayer;
-    }
-    preprocessedFragmentShader.replace("%UnrolledPerRasterLayerProcessingCode%", preprocessedFragmentShader_UnrolledPerRasterLayerProcessingCode);
-    preprocessedFragmentShader.replace("%RasterLayersCount%", QString::number(RasterMapLayersCount));
-    renderAPI->preprocessFragmentShader(preprocessedFragmentShader);
-    renderAPI->optimizeFragmentShader(preprocessedFragmentShader);
-    _rasterMapStage.fs.id = renderAPI->compileShader(GL_FRAGMENT_SHADER, preprocessedFragmentShader.toStdString().c_str());
-    assert(_rasterMapStage.fs.id != 0);
-
-    // Link everything into program object
-    GLuint shaders[] = {
-        _rasterMapStage.vs.id,
-        _rasterMapStage.fs.id
-    };
-    _rasterMapStage.program = getRenderAPI()->linkProgram(2, shaders);
-    assert(_rasterMapStage.program != 0);
-
-    renderAPI->clearVariablesLookup();
-    renderAPI->findVariableLocation(_rasterMapStage.program, _rasterMapStage.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-    renderAPI->findVariableLocation(_rasterMapStage.program, _rasterMapStage.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
-    if(!renderAPI->isSupported_vertexShaderTextureLookup)
-    {
-        renderAPI->findVariableLocation(_rasterMapStage.program, _rasterMapStage.vs.in.vertexElevation, "in_vs_vertexElevation", GLShaderVariableType::In);
-    }
-    renderAPI->findVariableLocation(_rasterMapStage.program, _rasterMapStage.vs.param.mProjectionView, "param_vs_mProjectionView", GLShaderVariableType::Uniform);
-    renderAPI->findVariableLocation(_rasterMapStage.program, _rasterMapStage.vs.param.targetInTilePosN, "param_vs_targetInTilePosN", GLShaderVariableType::Uniform);
-    renderAPI->findVariableLocation(_rasterMapStage.program, _rasterMapStage.vs.param.targetTile, "param_vs_targetTile", GLShaderVariableType::Uniform);
-    renderAPI->findVariableLocation(_rasterMapStage.program, _rasterMapStage.vs.param.distanceFromCameraToTarget, "param_vs_distanceFromCameraToTarget", GLShaderVariableType::Uniform);
-    renderAPI->findVariableLocation(_rasterMapStage.program, _rasterMapStage.vs.param.cameraElevationAngleN, "param_vs_cameraElevationAngleN", GLShaderVariableType::Uniform);
-    renderAPI->findVariableLocation(_rasterMapStage.program, _rasterMapStage.vs.param.groundCameraPosition, "param_vs_groundCameraPosition", GLShaderVariableType::Uniform);
-    renderAPI->findVariableLocation(_rasterMapStage.program, _rasterMapStage.vs.param.scaleToRetainProjectedSize, "param_vs_scaleToRetainProjectedSize", GLShaderVariableType::Uniform);
-    renderAPI->findVariableLocation(_rasterMapStage.program, _rasterMapStage.vs.param.tile, "param_vs_tile", GLShaderVariableType::Uniform);
-    renderAPI->findVariableLocation(_rasterMapStage.program, _rasterMapStage.vs.param.elevationData_k, "param_vs_elevationData_k", GLShaderVariableType::Uniform);
-    renderAPI->findVariableLocation(_rasterMapStage.program, _rasterMapStage.vs.param.elevationData_upperMetersPerUnit, "param_vs_elevationData_upperMetersPerUnit", GLShaderVariableType::Uniform);
-    renderAPI->findVariableLocation(_rasterMapStage.program, _rasterMapStage.vs.param.elevationData_lowerMetersPerUnit, "param_vs_elevationData_lowerMetersPerUnit", GLShaderVariableType::Uniform);
-    if(renderAPI->isSupported_vertexShaderTextureLookup)
-    {
-        renderAPI->findVariableLocation(_rasterMapStage.program, _rasterMapStage.vs.param.elevationData_sampler, "param_vs_elevationData_sampler", GLShaderVariableType::Uniform);
-        renderAPI->findVariableLocation(_rasterMapStage.program, _rasterMapStage.vs.param.elevationTileLayer.tileSizeN, "param_vs_elevationTileLayer.tileSizeN", GLShaderVariableType::Uniform);
-        renderAPI->findVariableLocation(_rasterMapStage.program, _rasterMapStage.vs.param.elevationTileLayer.tilePaddingN, "param_vs_elevationTileLayer.tilePaddingN", GLShaderVariableType::Uniform);
-        renderAPI->findVariableLocation(_rasterMapStage.program, _rasterMapStage.vs.param.elevationTileLayer.slotsPerSide, "param_vs_elevationTileLayer.slotsPerSide", GLShaderVariableType::Uniform);
-        renderAPI->findVariableLocation(_rasterMapStage.program, _rasterMapStage.vs.param.elevationTileLayer.slotIndex, "param_vs_elevationTileLayer.slotIndex", GLShaderVariableType::Uniform);
-    }
-    for(int layerId = 0; layerId < RasterMapLayersCount; layerId++)
-    {
-        // Vertex shader
+        // Compile vertex shader
+        auto preprocessedVertexShader = vertexShader;
+        QString preprocessedVertexShader_UnrolledPerRasterLayerTexCoordsProcessingCode;
+        for(int layerId = 0; layerId < maxActiveMapLayers; layerId++)
         {
-            auto layerStructName =
-                QString::fromLatin1("param_vs_rasterTileLayers[%layerId%]")
-                .replace(QString::fromLatin1("%layerId%"), QString::number(layerId));
-            auto& layerStruct = _rasterMapStage.vs.param.rasterTileLayers[layerId];
+            auto preprocessedVertexShader_perRasterLayerTexCoordsProcessing = vertexShader_perRasterLayerTexCoordsProcessing;
+            preprocessedVertexShader_perRasterLayerTexCoordsProcessing.replace("%rasterLayerId%", QString::number(layerId));
 
-            renderAPI->findVariableLocation(_rasterMapStage.program, layerStruct.tileSizeN, layerStructName + ".tileSizeN", GLShaderVariableType::Uniform);
-            renderAPI->findVariableLocation(_rasterMapStage.program, layerStruct.tilePaddingN, layerStructName + ".tilePaddingN", GLShaderVariableType::Uniform);
-            renderAPI->findVariableLocation(_rasterMapStage.program, layerStruct.slotsPerSide, layerStructName + ".slotsPerSide", GLShaderVariableType::Uniform);
-            renderAPI->findVariableLocation(_rasterMapStage.program, layerStruct.slotIndex, layerStructName + ".slotIndex", GLShaderVariableType::Uniform);
+            preprocessedVertexShader_UnrolledPerRasterLayerTexCoordsProcessingCode +=
+                preprocessedVertexShader_perRasterLayerTexCoordsProcessing;
         }
-        
-        // Fragment shader
+        preprocessedVertexShader.replace("%UnrolledPerRasterLayerTexCoordsProcessingCode%",
+            preprocessedVertexShader_UnrolledPerRasterLayerTexCoordsProcessingCode);
+        preprocessedVertexShader.replace("%TileSize3D%", QString::number(TileSize3D));
+        preprocessedVertexShader.replace("%RasterLayersCount%", QString::number(maxActiveMapLayers));
+        renderAPI->preprocessVertexShader(preprocessedVertexShader);
+        renderAPI->optimizeVertexShader(preprocessedVertexShader);
+        stageVariation.vs.id = renderAPI->compileShader(GL_VERTEX_SHADER, preprocessedVertexShader.toStdString().c_str());
+        assert(stageVariation.vs.id != 0);
+
+        // Compile fragment shader
+        auto preprocessedFragmentShader = fragmentShader;
+        QString preprocessedFragmentShader_UnrolledPerRasterLayerProcessingCode;
+        for(int layerId = RasterMapLayerId::BaseLayer + 1; layerId < maxActiveMapLayers; layerId++)
         {
-            auto layerStructName =
-                QString::fromLatin1("param_fs_rasterTileLayers[%layerId%]")
-                .replace(QString::fromLatin1("%layerId%"), QString::number(layerId));
-            auto& layerStruct = _rasterMapStage.fs.param.rasterTileLayers[layerId];
+            auto linearIdx = layerId - RasterMapLayerId::BaseLayer;
+            auto preprocessedFragmentShader_perRasterLayer = fragmentShader_perRasterLayer;
+            preprocessedFragmentShader_perRasterLayer.replace("%rasterLayerId%", QString::number(linearIdx));
 
-            renderAPI->findVariableLocation(_rasterMapStage.program, layerStruct.k, layerStructName + ".k", GLShaderVariableType::Uniform);
-            renderAPI->findVariableLocation(_rasterMapStage.program, layerStruct.sampler, layerStructName + ".sampler", GLShaderVariableType::Uniform);
+            preprocessedFragmentShader_UnrolledPerRasterLayerProcessingCode += preprocessedFragmentShader_perRasterLayer;
         }
+        preprocessedFragmentShader.replace("%UnrolledPerRasterLayerProcessingCode%", preprocessedFragmentShader_UnrolledPerRasterLayerProcessingCode);
+        preprocessedFragmentShader.replace("%RasterLayersCount%", QString::number(maxActiveMapLayers));
+        renderAPI->preprocessFragmentShader(preprocessedFragmentShader);
+        renderAPI->optimizeFragmentShader(preprocessedFragmentShader);
+        stageVariation.fs.id = renderAPI->compileShader(GL_FRAGMENT_SHADER, preprocessedFragmentShader.toStdString().c_str());
+        assert(stageVariation.fs.id != 0);
+
+        // Link everything into program object
+        GLuint shaders[] = {
+            stageVariation.vs.id,
+            stageVariation.fs.id
+        };
+        stageVariation.program = getRenderAPI()->linkProgram(2, shaders);
+        assert(stageVariation.program != 0);
+
+        renderAPI->clearVariablesLookup();
+        renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
+        renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
+        if(!renderAPI->isSupported_vertexShaderTextureLookup)
+        {
+            renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.in.vertexElevation, "in_vs_vertexElevation", GLShaderVariableType::In);
+        }
+        renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.mProjectionView, "param_vs_mProjectionView", GLShaderVariableType::Uniform);
+        renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.targetInTilePosN, "param_vs_targetInTilePosN", GLShaderVariableType::Uniform);
+        renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.targetTile, "param_vs_targetTile", GLShaderVariableType::Uniform);
+        renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.distanceFromCameraToTarget, "param_vs_distanceFromCameraToTarget", GLShaderVariableType::Uniform);
+        renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.cameraElevationAngleN, "param_vs_cameraElevationAngleN", GLShaderVariableType::Uniform);
+        renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.groundCameraPosition, "param_vs_groundCameraPosition", GLShaderVariableType::Uniform);
+        renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.scaleToRetainProjectedSize, "param_vs_scaleToRetainProjectedSize", GLShaderVariableType::Uniform);
+        renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.tile, "param_vs_tile", GLShaderVariableType::Uniform);
+        renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationData_k, "param_vs_elevationData_k", GLShaderVariableType::Uniform);
+        renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationData_upperMetersPerUnit, "param_vs_elevationData_upperMetersPerUnit", GLShaderVariableType::Uniform);
+        renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationData_lowerMetersPerUnit, "param_vs_elevationData_lowerMetersPerUnit", GLShaderVariableType::Uniform);
+        if(renderAPI->isSupported_vertexShaderTextureLookup)
+        {
+            renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationData_sampler, "param_vs_elevationData_sampler", GLShaderVariableType::Uniform);
+            renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationTileLayer.tileSizeN, "param_vs_elevationTileLayer.tileSizeN", GLShaderVariableType::Uniform);
+            renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationTileLayer.tilePaddingN, "param_vs_elevationTileLayer.tilePaddingN", GLShaderVariableType::Uniform);
+            renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationTileLayer.slotsPerSide, "param_vs_elevationTileLayer.slotsPerSide", GLShaderVariableType::Uniform);
+            renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationTileLayer.slotIndex, "param_vs_elevationTileLayer.slotIndex", GLShaderVariableType::Uniform);
+        }
+        for(int layerId = 0; layerId < maxActiveMapLayers; layerId++)
+        {
+            // Vertex shader
+            {
+                auto layerStructName =
+                    QString::fromLatin1("param_vs_rasterTileLayers[%layerId%]")
+                    .replace(QString::fromLatin1("%layerId%"), QString::number(layerId));
+                auto& layerStruct = stageVariation.vs.param.rasterTileLayers[layerId];
+
+                renderAPI->findVariableLocation(stageVariation.program, layerStruct.tileSizeN, layerStructName + ".tileSizeN", GLShaderVariableType::Uniform);
+                renderAPI->findVariableLocation(stageVariation.program, layerStruct.tilePaddingN, layerStructName + ".tilePaddingN", GLShaderVariableType::Uniform);
+                renderAPI->findVariableLocation(stageVariation.program, layerStruct.slotsPerSide, layerStructName + ".slotsPerSide", GLShaderVariableType::Uniform);
+                renderAPI->findVariableLocation(stageVariation.program, layerStruct.slotIndex, layerStructName + ".slotIndex", GLShaderVariableType::Uniform);
+            }
+
+            // Fragment shader
+            {
+                auto layerStructName =
+                    QString::fromLatin1("param_fs_rasterTileLayers[%layerId%]")
+                    .replace(QString::fromLatin1("%layerId%"), QString::number(layerId));
+                auto& layerStruct = stageVariation.fs.param.rasterTileLayers[layerId];
+
+                renderAPI->findVariableLocation(stageVariation.program, layerStruct.k, layerStructName + ".k", GLShaderVariableType::Uniform);
+                renderAPI->findVariableLocation(stageVariation.program, layerStruct.sampler, layerStructName + ".sampler", GLShaderVariableType::Uniform);
+            }
+        }
+        renderAPI->clearVariablesLookup();
     }
-    renderAPI->clearVariablesLookup();
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
@@ -389,44 +395,59 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
     // Set tile patch VAO
     renderAPI->glBindVertexArray_wrapper(_rasterMapStage.tilePatchVAO);
     GL_CHECK_RESULT;
+    
+    // Count active raster tile providers
+    auto activeRasterTileProvidersCount = 1;
+    for(int layerIdx = 1, layerId = RasterMapLayerId::BaseLayer + 1; layerIdx < RasterMapLayersCount; layerIdx++, layerId++)
+    {
+        if(!currentState.rasterLayerProviders[layerId])
+            continue;
+
+        activeRasterTileProvidersCount++;
+    }
+
+    // Get proper program variation
+    const auto& stageVariation = _rasterMapStage.variations[activeRasterTileProvidersCount - 1];
+    assert(stageVariation.vs.in.vertexPosition == 0);
+    assert(stageVariation.vs.in.vertexTexCoords == 1);
 
     // Activate program
-    glUseProgram(_rasterMapStage.program);
+    glUseProgram(stageVariation.program);
     GL_CHECK_RESULT;
 
     // Set matrices
     auto mProjectionView = _mProjection * _mView;
-    glUniformMatrix4fv(_rasterMapStage.vs.param.mProjectionView, 1, GL_FALSE, glm::value_ptr(mProjectionView));
+    glUniformMatrix4fv(stageVariation.vs.param.mProjectionView, 1, GL_FALSE, glm::value_ptr(mProjectionView));
     GL_CHECK_RESULT;
 
     // Set center offset
-    glUniform2f(_rasterMapStage.vs.param.targetInTilePosN, _targetInTileOffsetN.x, _targetInTileOffsetN.y);
+    glUniform2f(stageVariation.vs.param.targetInTilePosN, _targetInTileOffsetN.x, _targetInTileOffsetN.y);
     GL_CHECK_RESULT;
 
     // Set target tile
-    glUniform2i(_rasterMapStage.vs.param.targetTile, _targetTileId.x, _targetTileId.y);
+    glUniform2i(stageVariation.vs.param.targetTile, _targetTileId.x, _targetTileId.y);
     GL_CHECK_RESULT;
 
     // Set distance from camera to target
-    glUniform1f(_rasterMapStage.vs.param.distanceFromCameraToTarget, _distanceFromCameraToTarget);
+    glUniform1f(stageVariation.vs.param.distanceFromCameraToTarget, _distanceFromCameraToTarget);
     GL_CHECK_RESULT;
 
     // Set normalized [0.0 .. 1.0] angle of camera elevation
-    glUniform1f(_rasterMapStage.vs.param.cameraElevationAngleN, currentState.elevationAngle / 90.0f);
+    glUniform1f(stageVariation.vs.param.cameraElevationAngleN, currentState.elevationAngle / 90.0f);
     GL_CHECK_RESULT;
 
     // Set position of camera in ground place
-    glUniform2fv(_rasterMapStage.vs.param.groundCameraPosition, 1, glm::value_ptr(_groundCameraPosition));
+    glUniform2fv(stageVariation.vs.param.groundCameraPosition, 1, glm::value_ptr(_groundCameraPosition));
     GL_CHECK_RESULT;
 
     // Set scale to retain projected size
-    glUniform1f(_rasterMapStage.vs.param.scaleToRetainProjectedSize, _scaleToRetainProjectedSize);
+    glUniform1f(stageVariation.vs.param.scaleToRetainProjectedSize, _scaleToRetainProjectedSize);
     GL_CHECK_RESULT;
 
     // Configure samplers
     if(renderAPI->isSupported_vertexShaderTextureLookup)
     {
-        glUniform1i(_rasterMapStage.vs.param.elevationData_sampler, 0);
+        glUniform1i(stageVariation.vs.param.elevationData_sampler, 0);
         GL_CHECK_RESULT;
 
         renderAPI->setSampler(GL_TEXTURE0, RenderAPI_OpenGL_Common::SamplerType::ElevationDataTile);
@@ -441,11 +462,11 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
         bitmapTileSamplerType = RenderAPI_OpenGL_Common::SamplerType::BitmapTile_TrilinearMipmap;
         break;
     }
-    for(int layerId = RasterMapLayerId::BaseLayer; layerId < RasterMapLayersCount; layerId++)
+    for(int layerIdx = 0, layerId = RasterMapLayerId::BaseLayer; layerIdx < activeRasterTileProvidersCount; layerIdx++, layerId++)
     {
         const auto samplerIndex = (renderAPI->isSupported_vertexShaderTextureLookup ? 1 : 0) + layerId;
 
-        glUniform1i(_rasterMapStage.fs.param.rasterTileLayers[layerId].sampler, samplerIndex);
+        glUniform1i(stageVariation.fs.param.rasterTileLayers[layerId].sampler, samplerIndex);
         GL_CHECK_RESULT;
 
         renderAPI->setSampler(GL_TEXTURE0 + samplerIndex, bitmapTileSamplerType);
@@ -456,13 +477,13 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
     if(!elevationDataEnabled)
     {
         // We have no elevation data provider, so we can not do anything
-        glUniform1f(_rasterMapStage.vs.param.elevationData_k, 0.0f);
+        glUniform1f(stageVariation.vs.param.elevationData_k, 0.0f);
         GL_CHECK_RESULT;
     }
     bool elevationVertexAttribArrayEnabled = false;
     if(!renderAPI->isSupported_vertexShaderTextureLookup)
     {
-        glDisableVertexAttribArray(_rasterMapStage.vs.in.vertexElevation);
+        glDisableVertexAttribArray(stageVariation.vs.in.vertexElevation);
         GL_CHECK_RESULT;
     }
 
@@ -475,7 +496,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
         auto tileIdN = Utilities::normalizeTileId(tileId, currentState.zoomBase);
 
         // Set tile id
-        glUniform2i(_rasterMapStage.vs.param.tile, tileId.x, tileId.y);
+        glUniform2i(stageVariation.vs.param.tile, tileId.x, tileId.y);
         GL_CHECK_RESULT;
 
         // Set elevation data
@@ -498,20 +519,20 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
             if(!gpuResource)
             {
                 // We have no elevation data, so we can not do anything
-                glUniform1f(_rasterMapStage.vs.param.elevationData_k, 0.0f);
+                glUniform1f(stageVariation.vs.param.elevationData_k, 0.0f);
                 GL_CHECK_RESULT;
             }
             else
             {
-                glUniform1f(_rasterMapStage.vs.param.elevationData_k, currentState.elevationDataScaleFactor);
+                glUniform1f(stageVariation.vs.param.elevationData_k, currentState.elevationDataScaleFactor);
                 GL_CHECK_RESULT;
 
                 auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomBase, tileIdN.y, TileSize3D);
-                glUniform1f(_rasterMapStage.vs.param.elevationData_upperMetersPerUnit, upperMetersPerUnit);
+                glUniform1f(stageVariation.vs.param.elevationData_upperMetersPerUnit, upperMetersPerUnit);
                 auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomBase, tileIdN.y + 1, TileSize3D);
-                glUniform1f(_rasterMapStage.vs.param.elevationData_lowerMetersPerUnit, lowerMetersPerUnit);
+                glUniform1f(stageVariation.vs.param.elevationData_lowerMetersPerUnit, lowerMetersPerUnit);
 
-                const auto& perTile_vs = _rasterMapStage.vs.param.elevationTileLayer;
+                const auto& perTile_vs = stageVariation.vs.param.elevationTileLayer;
 
                 if(renderAPI->isSupported_vertexShaderTextureLookup)
                 {
@@ -557,7 +578,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
 
                     if(!elevationVertexAttribArrayEnabled)
                     {
-                        glEnableVertexAttribArray(_rasterMapStage.vs.in.vertexElevation);
+                        glEnableVertexAttribArray(stageVariation.vs.in.vertexElevation);
                         GL_CHECK_RESULT;
 
                         elevationVertexAttribArrayEnabled = true;
@@ -566,7 +587,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
                     glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
                     GL_CHECK_RESULT;
                     
-                    glVertexAttribPointer(_rasterMapStage.vs.in.vertexElevation, 1, GL_FLOAT, GL_FALSE, sizeof(float), nullptr);
+                    glVertexAttribPointer(stageVariation.vs.in.vertexElevation, 1, GL_FLOAT, GL_FALSE, sizeof(float), nullptr);
                     GL_CHECK_RESULT;
                     appliedElevationVertexAttribArray = true;
                 }
@@ -574,15 +595,16 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
         }
 
         // We need to pass each layer of this tile to shader
-        for(int layerId = RasterMapLayerId::BaseLayer; layerId < RasterMapLayersCount; layerId++)
+        for(int layerIdx = 0, layerId = RasterMapLayerId::BaseLayer, layerLinearIdx = -1; layerIdx < RasterMapLayersCount; layerIdx++, layerId++)
         {
             if(!currentState.rasterLayerProviders[layerId])
                 continue;
+            layerLinearIdx++;
 
-            const auto& layerResources = tiledResources[TiledResourceType::RasterBaseLayer + layerId];
-            const auto& perTile_vs = _rasterMapStage.vs.param.rasterTileLayers[layerId];
-            const auto& perTile_fs = _rasterMapStage.fs.param.rasterTileLayers[layerId];
-            const auto samplerIndex = (renderAPI->isSupported_vertexShaderTextureLookup ? 1 : 0) + layerId;
+            const auto& layerResources = tiledResources[RasterBaseLayer + layerId];
+            const auto& perTile_vs = stageVariation.vs.param.rasterTileLayers[layerLinearIdx];
+            const auto& perTile_fs = stageVariation.fs.param.rasterTileLayers[layerLinearIdx];
+            const auto samplerIndex = (renderAPI->isSupported_vertexShaderTextureLookup ? 1 : 0) + layerLinearIdx;
 
             // We're obtaining tile entry by normalized tile coordinates, since tile may repeat several times
             std::shared_ptr<TiledResourceEntry> tileEntry;
@@ -644,7 +666,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
         {
             elevationVertexAttribArrayEnabled = false;
 
-            glDisableVertexAttribArray(_rasterMapStage.vs.in.vertexElevation);
+            glDisableVertexAttribArray(stageVariation.vs.in.vertexElevation);
             GL_CHECK_RESULT;
         }
 
@@ -653,9 +675,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
     }
 
     // Disable textures
-    for(int layerId = 0; layerId < RasterMapLayersCount; layerId++)
+    for(int layerIdx = 0; layerIdx < (renderAPI->isSupported_vertexShaderTextureLookup ? 1 : 0) + activeRasterTileProvidersCount; layerIdx++)
     {
-        glActiveTexture(GL_TEXTURE0 + layerId);
+        glActiveTexture(GL_TEXTURE0 + layerIdx);
         GL_CHECK_RESULT;
 
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -669,7 +691,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
     // Disable elevation vertex attrib array (if enabled)
     if(elevationVertexAttribArrayEnabled)
     {
-        glDisableVertexAttribArray(_rasterMapStage.vs.in.vertexElevation);
+        glDisableVertexAttribArray(stageVariation.vs.in.vertexElevation);
         GL_CHECK_RESULT;
     }
 
@@ -687,20 +709,25 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::releaseRasterMapStage()
     GL_CHECK_PRESENT(glDeleteProgram);
     GL_CHECK_PRESENT(glDeleteShader);
 
-    if(_rasterMapStage.program)
+    for(auto variationId = 0u, maxActiveMapLayers = 1u; variationId < RasterMapLayersCount; variationId++, maxActiveMapLayers++)
     {
-        glDeleteProgram(_rasterMapStage.program);
-        GL_CHECK_RESULT;
-    }
-    if(_rasterMapStage.fs.id)
-    {
-        glDeleteShader(_rasterMapStage.fs.id);
-        GL_CHECK_RESULT;
-    }
-    if(_rasterMapStage.vs.id)
-    {
-        glDeleteShader(_rasterMapStage.vs.id);
-        GL_CHECK_RESULT;
+        auto& stageVariation = _rasterMapStage.variations[variationId];
+    
+        if(stageVariation.program)
+        {
+            glDeleteProgram(stageVariation.program);
+            GL_CHECK_RESULT;
+        }
+        if(stageVariation.fs.id)
+        {
+            glDeleteShader(stageVariation.fs.id);
+            GL_CHECK_RESULT;
+        }
+        if(stageVariation.vs.id)
+        {
+            glDeleteShader(stageVariation.vs.id);
+            GL_CHECK_RESULT;
+        }
     }
 
     releaseTilePatch();

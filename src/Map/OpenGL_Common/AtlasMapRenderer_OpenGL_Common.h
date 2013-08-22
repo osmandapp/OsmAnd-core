@@ -87,69 +87,70 @@ namespace OsmAnd {
         void allocateTilePatch(MapTileVertex* vertices, GLsizei verticesCount, GLushort* indices, GLsizei indicesCount);
         void releaseTilePatch();
 
-        /*enum {
-            RasterMapStageProgramVariationsCount = 1 << (RasterMapLayersCount - 1),
-        };*/
         struct {
-            GLuint program;
-
             GLuint tilePatchVAO;
             GLuint tilePatchVBO;
             GLuint tilePatchIBO;
 
+            // Multiple variations of RasterStage program.
+            // Variations are generated according to number of active raster tile providers.
             struct {
-                GLuint id;
+                GLuint program;
 
-                // Input data
                 struct {
-                    GLint vertexPosition;
-                    GLint vertexTexCoords;
-                    GLint vertexElevation;
-                } in;
+                    GLuint id;
 
-                // Parameters
+                    // Input data
+                    struct {
+                        GLint vertexPosition;
+                        GLint vertexTexCoords;
+                        GLint vertexElevation;
+                    } in;
+
+                    // Parameters
+                    struct {
+                        // Common data
+                        GLint mProjectionView;
+                        GLint mapScale;
+                        GLint targetInTilePosN;
+                        GLint targetTile;
+                        GLint distanceFromCameraToTarget;
+                        GLint cameraElevationAngleN;
+                        GLint groundCameraPosition;
+                        GLint scaleToRetainProjectedSize;
+
+                        // Per-tile data
+                        GLint tile;
+                        GLint elevationData_k;
+                        GLint elevationData_sampler;
+                        GLint elevationData_upperMetersPerUnit;
+                        GLint elevationData_lowerMetersPerUnit;
+
+                        // Per-tile-per-layer data
+                        struct
+                        {
+                            GLint tileSizeN;
+                            GLint tilePaddingN;
+                            GLint slotsPerSide;
+                            GLint slotIndex;
+                        } elevationTileLayer, rasterTileLayers[RasterMapLayersCount];
+                    } param;
+                } vs;
+
                 struct {
-                    // Common data
-                    GLint mProjectionView;
-                    GLint mapScale;
-                    GLint targetInTilePosN;
-                    GLint targetTile;
-                    GLint distanceFromCameraToTarget;
-                    GLint cameraElevationAngleN;
-                    GLint groundCameraPosition;
-                    GLint scaleToRetainProjectedSize;
+                    GLuint id;
 
-                    // Per-tile data
-                    GLint tile;
-                    GLint elevationData_k;
-                    GLint elevationData_sampler;
-                    GLint elevationData_upperMetersPerUnit;
-                    GLint elevationData_lowerMetersPerUnit;
-
-                    // Per-tile-per-layer data
-                    struct
-                    {
-                        GLint tileSizeN;
-                        GLint tilePaddingN;
-                        GLint slotsPerSide;
-                        GLint slotIndex;
-                    } elevationTileLayer, rasterTileLayers[RasterMapLayersCount];
-                } param;
-            } vs;
-
-            struct {
-                GLuint id;
-
-                // Parameters
-                struct {
-                    // Per-tile-per-layer data
-                    struct
-                    {
-                        GLint k;
-                        GLint sampler;
-                    } rasterTileLayers[RasterMapLayersCount];
-                } param;
-            } fs;
+                    // Parameters
+                    struct {
+                        // Per-tile-per-layer data
+                        struct
+                        {
+                            GLint k;
+                            GLint sampler;
+                        } rasterTileLayers[RasterMapLayersCount];
+                    } param;
+                } fs;
+            } variations[RasterMapLayersCount];
         } _rasterMapStage;
         void initializeRasterMapStage();
         void renderRasterMapStage();

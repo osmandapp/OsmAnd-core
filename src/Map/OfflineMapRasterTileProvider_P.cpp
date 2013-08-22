@@ -80,6 +80,7 @@ void OsmAnd::OfflineMapRasterTileProvider_P::obtainTileDeffered( const TileId& t
         const auto dataRasterization_Begin = std::chrono::high_resolution_clock::now();
 #endif
 
+        //TODO: SkGpuDevice?
         // Allocate rasterization target
         auto rasterizationSurface = new SkBitmap();
         rasterizationSurface->setConfig(SkBitmap::kARGB_8888_Config, pThis->owner->tileSize, pThis->owner->tileSize);
