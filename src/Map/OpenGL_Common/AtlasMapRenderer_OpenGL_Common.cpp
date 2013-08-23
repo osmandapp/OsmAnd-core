@@ -1050,22 +1050,6 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doReleaseRendering()
     return true;
 }
 
-
-float OsmAnd::AtlasMapRenderer_OpenGL_Common::getReferenceTileSizeOnScreen()
-{
-    const auto& rasterMapProvider = currentState.rasterLayerProviders[BaseLayer];
-    if(!rasterMapProvider)
-        return static_cast<float>(DefaultReferenceTileSizeOnScreen) * setupOptions.displayDensityFactor;
-
-    auto tileProvider = static_cast<IMapBitmapTileProvider*>(rasterMapProvider.get());
-    return tileProvider->getTileSize() * (setupOptions.displayDensityFactor / tileProvider->getTileDensity());
-}
-
-float OsmAnd::AtlasMapRenderer_OpenGL_Common::getScaledTileSizeOnScreen()
-{
-    return getReferenceTileSizeOnScreen() * _tileScaleFactor;
-}
-
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::validateElevationDataResources()
 {
     MapRenderer::validateElevationDataResources();
@@ -1097,8 +1081,6 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::updateCurrentState()
 
     // Calculate limits of camera distance to target and actual distance
     const auto screenTileSize = getReferenceTileSizeOnScreen();
-    if(qIsNaN(screenTileSize))
-        return false;
     _nearDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(_mProjection, currentState.viewport, TileSize3D / 2.0f, screenTileSize / 2.0f, 1.5f);
     _baseDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(_mProjection, currentState.viewport, TileSize3D / 2.0f, screenTileSize / 2.0f, 1.0f);
     _farDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(_mProjection, currentState.viewport, TileSize3D / 2.0f, screenTileSize / 2.0f, 0.75f);
@@ -1420,4 +1402,47 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::createTilePatch()
 OsmAnd::RenderAPI_OpenGL_Common* OsmAnd::AtlasMapRenderer_OpenGL_Common::getRenderAPI() const
 {
     return static_cast<OsmAnd::RenderAPI_OpenGL_Common*>(renderAPI.get());
+}
+
+float OsmAnd::AtlasMapRenderer_OpenGL_Common::getReferenceTileSizeOnScreen()
+{
+    const auto& rasterMapProvider = currentState.rasterLayerProviders[BaseLayer];
+    if(!rasterMapProvider)
+        return static_cast<float>(DefaultReferenceTileSizeOnScreen) * setupOptions.displayDensityFactor;
+
+    auto tileProvider = static_cast<IMapBitmapTileProvider*>(rasterMapProvider.get());
+    return tileProvider->getTileSize() * (setupOptions.displayDensityFactor / tileProvider->getTileDensity());
+}
+
+float OsmAnd::AtlasMapRenderer_OpenGL_Common::getScaledTileSizeOnScreen()
+{
+    return getReferenceTileSizeOnScreen() * _tileScaleFactor;
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL_Common::getLocationFromScreenPoint( const PointI& screenPoint, PointI& location31 )
+{
+    glm::vec4 viewport(
+        currentState.viewport.left,
+        currentState.windowSize.y - currentState.viewport.bottom,
+        currentState.viewport.width(),
+        currentState.viewport.height());
+    const auto nearInWorld = glm::unProject(glm::vec3(screenPoint.x, screenPoint.y, 0.0f), _mView, _mProjection, viewport);
+    const auto farInWorld = glm::unProject(glm::vec3(screenPoint.x, screenPoint.y, 1.0f), _mView, _mProjection, viewport);
+    const auto rayD = glm::normalize(farInWorld - nearInWorld);
+
+    const glm::vec3 planeN(0.0f, 1.0f, 0.0f);
+    const glm::vec3 planeO(0.0f, 0.0f, 0.0f);
+    float distance;
+    const auto intersects = Utilities_OpenGL_Common::rayIntersectPlane(planeN, planeO, rayD, nearInWorld, distance);
+    if(!intersects)
+        return false;
+
+    auto intersection = nearInWorld + distance*rayD;
+    intersection /= static_cast<float>(TileSize3D);
+    auto tileWidth31 = (1u << (ZoomLevel::MaxZoomLevel - currentState.zoomBase)) - 1;
+    intersection.x = (intersection.x + _targetInTileOffsetN.x + _targetTileId.x) * tileWidth31;
+    intersection.z = (intersection.z + _targetInTileOffsetN.y + _targetTileId.y) * tileWidth31;
+    location31.x = static_cast<int32_t>(intersection.x);
+    location31.y = static_cast<int32_t>(intersection.z);
+    return true;
 }

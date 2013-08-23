@@ -216,6 +216,7 @@ namespace OsmAnd {
 
         virtual float getReferenceTileSizeOnScreen();
         virtual float getScaledTileSizeOnScreen();
+        virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31);
     };
 
 }
