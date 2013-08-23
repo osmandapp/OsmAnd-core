@@ -587,7 +587,7 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 					if (ico != NULL) {
 						float left = textDrawInfo->centerX - ico->width() / 2 - 0.5f;
 						float top = textDrawInfo->centerY - ico->height() / 2
-								- 4.5f;
+								- - rc->getDensityValue(4.5f);
 						SkRect r = SkRect::MakeXYWH(left, top, ico->width(),
 								ico->height());
 						PROFILE_NATIVE_OPERATION(rc, cv->drawBitmapRect(*ico, (SkIRect*) NULL, r, &paintIcon));
