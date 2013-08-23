@@ -95,6 +95,7 @@ namespace OsmAnd {
 
         virtual float getReferenceTileSizeOnScreen() = 0;
         virtual float getScaledTileSizeOnScreen() = 0;
+        //NOTE: screen points origin from top-left
         virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31) = 0;
 
     friend class OsmAnd::MapRenderer;

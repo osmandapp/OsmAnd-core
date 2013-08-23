@@ -1426,8 +1426,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::getLocationFromScreenPoint( const P
         currentState.windowSize.y - currentState.viewport.bottom,
         currentState.viewport.width(),
         currentState.viewport.height());
-    const auto nearInWorld = glm::unProject(glm::vec3(screenPoint.x, screenPoint.y, 0.0f), _mView, _mProjection, viewport);
-    const auto farInWorld = glm::unProject(glm::vec3(screenPoint.x, screenPoint.y, 1.0f), _mView, _mProjection, viewport);
+    const auto nearInWorld = glm::unProject(glm::vec3(screenPoint.x, currentState.windowSize.y - screenPoint.y, 0.0f), _mView, _mProjection, viewport);
+    const auto farInWorld = glm::unProject(glm::vec3(screenPoint.x, currentState.windowSize.y - screenPoint.y, 1.0f), _mView, _mProjection, viewport);
     const auto rayD = glm::normalize(farInWorld - nearInWorld);
 
     const glm::vec3 planeN(0.0f, 1.0f, 0.0f);
