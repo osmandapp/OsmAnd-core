@@ -68,7 +68,7 @@ void OsmAnd::Rasterizer::update(
 
             context._hasLand = context._hasLand || mapObject->foundation == MapFoundationType::FullLand;
             context._hasWater = context._hasWater || mapObject->foundation == MapFoundationType::FullWater;
-            context._hasBasemap = context._hasBasemap || mapObject->section->isBasemap;
+            context._hasBasemap = context._hasBasemap || mapObject->section->isBasemap;// WRONG! this means "any objects from basemap present" instead if "basemap OBF opened"
             if(zoom < ZoomOnlyForBasemaps && !mapObject->section->isBasemap)
                 continue;
 

@@ -49,6 +49,7 @@ namespace OsmAnd {
     public:
         virtual ~ObfDataInterface();
 
+        void obtainBasemapPresenceFlag(bool& basemapPresent, IQueryController* controller = nullptr);
         void obtainMapObjects(QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut, const AreaI& area31, const ZoomLevel& zoom, IQueryController* controller = nullptr);
         
     friend class OsmAnd::ObfsCollection;

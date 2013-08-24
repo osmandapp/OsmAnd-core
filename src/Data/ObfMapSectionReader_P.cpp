@@ -34,7 +34,7 @@ void OsmAnd::ObfMapSectionReader_P::read(
         case OBF::OsmAndMapIndex::kNameFieldNumber:
             {
                 ObfReaderUtilities::readQString(cis, section->_name);
-                section->_isBasemap = QString::compare(section->_name, QString::fromLatin1("basemap"), Qt::CaseInsensitive);
+                section->_isBasemap = (QString::compare(section->_name, QString::fromLatin1("basemap"), Qt::CaseInsensitive) == 0);
             }
             break;
         case OBF::OsmAndMapIndex::kRulesFieldNumber:
