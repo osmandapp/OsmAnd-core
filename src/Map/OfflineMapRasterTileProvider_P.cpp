@@ -100,12 +100,24 @@ void OsmAnd::OfflineMapRasterTileProvider_P::obtainTileDeffered( const TileId& t
         bool nothingToRasterize = false;
         RasterizerContext rasterizerContext(pThis->owner->dataProvider->mapStyle);
         Rasterizer::update(rasterizerContext, tileBBox31, zoom, pThis->owner->tileSize, pThis->owner->displayDensity, &mapObjects, OsmAnd::PointF(), &nothingToRasterize, nullptr);
-        Rasterizer::rasterizeMap(rasterizerContext, true, canvas, nullptr);
+        if(!nothingToRasterize)
+            Rasterizer::rasterizeMap(rasterizerContext, true, canvas, nullptr);
 
 #if defined(_DEBUG) || defined(DEBUG)
         const auto dataRasterization_End = std::chrono::high_resolution_clock::now();
         const std::chrono::duration<float> dataRasterization_Elapsed = dataRasterization_End - dataRasterization_Begin;
-        LogPrintf(LogSeverityLevel::Info, "%d map objects from %dx%d@%d: rasterization %fs, reading %fs", mapObjects.count(), tileId.x, tileId.y, zoom, dataRasterization_Elapsed.count(), dataRead_Elapsed.count());
+        if(!nothingToRasterize)
+        {
+            LogPrintf(LogSeverityLevel::Info,
+                "%d map objects from %dx%d@%d: reading %fs, rasterization %fs",
+                mapObjects.count(), tileId.x, tileId.y, zoom, dataRead_Elapsed.count(), dataRasterization_Elapsed.count());
+        }
+        else
+        {
+            LogPrintf(LogSeverityLevel::Info,
+                "%d map objects from %dx%d@%d: reading %fs, nothing to rasterize (%fs)",
+                mapObjects.count(), tileId.x, tileId.y, zoom, dataRead_Elapsed.count(), dataRasterization_Elapsed.count());
+        }
 #endif
 
         // If there is no data to rasterize, tell that this tile is not available

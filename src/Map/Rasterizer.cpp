@@ -929,7 +929,7 @@ bool OsmAnd::Rasterizer::polygonizeCoastlines(
 
     if(!brokenPolygons.isEmpty())
     {
-        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Broken polygons found during polygonization of coastlines in area [%d, %d, %d, %d] @ zoom %d",
+        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Broken polygons found during polygonization of coastlines in area [%d, %d, %d, %d]@%d",
             context._area31.top,
             context._area31.left,
             context._area31.bottom,
@@ -945,7 +945,7 @@ bool OsmAnd::Rasterizer::polygonizeCoastlines(
 
             std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr));
             mapObject->_points31 = polygon;
-            mapObject->_types.push_back(TagValue("natural", "coastline_broken"));
+            mapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline_broken")));
 
             outVectorized.push_back(mapObject);
         }
@@ -956,7 +956,7 @@ bool OsmAnd::Rasterizer::polygonizeCoastlines(
 
             std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr));
             mapObject->_points31 = polygon;
-            mapObject->_types.push_back(TagValue("natural", "coastline_line"));
+            mapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline_line")));
 
             outVectorized.push_back(mapObject);
         }
@@ -985,7 +985,7 @@ bool OsmAnd::Rasterizer::polygonizeCoastlines(
 
     if (!clockwiseFound && brokenPolygons.isEmpty())
     {
-        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Isolated islands found during polygonization of coastlines in area [%d, %d, %d, %d] @ zoom %d",
+        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Isolated islands found during polygonization of coastlines in area [%d, %d, %d, %d]@%d",
             context._area31.top,
             context._area31.left,
             context._area31.bottom,
@@ -1209,108 +1209,133 @@ void OsmAnd::Rasterizer::appendCoastlinePolygons( QList< QVector< PointI > >& cl
     }
 }
 
-void OsmAnd::Rasterizer::mergeBrokenPolygons( RasterizerContext& context, QList< QVector< PointI > >& brokenPolygons_, QList< QVector< PointI > >& closedPolygons, uint64_t osmId )
+void OsmAnd::Rasterizer::mergeBrokenPolygons( RasterizerContext& context, QList< QVector< PointI > >& brokenPolygons, QList< QVector< PointI > >& closedPolygons, uint64_t osmId )
 {
-    std::set< QList< QVector< PointI > >::iterator > nonvisistedPolygons;
-    QList< QVector< PointI > > brokenPolygons(brokenPolygons_);
-    brokenPolygons_.clear();
-    int idx;
+    std::set< QList< QVector< PointI > >::iterator > nonvisitedPolygons;
+    QList< QVector< PointI > > fixablePolygons;
 
-    idx = 0;
-    for(auto itPolygon = brokenPolygons.begin(); itPolygon != brokenPolygons.end(); ++itPolygon, idx++)
+    // Check if polygon has been cut by rasterization viewport
+    QMutableListIterator< QVector< PointI > > itBrokenPolygon(brokenPolygons);
+    while(itBrokenPolygon.hasNext())
     {
-        const auto& polygon = *itPolygon;
-        assert(!polygon.isEmpty());
+        const auto& brokenPolygon = itBrokenPolygon.next();
+        assert(!brokenPolygon.isEmpty());
 
-        const auto& bp = polygon.first();
-        const auto& ep = polygon.last();
+        const auto& head = brokenPolygon.first();
+        const auto& tail = brokenPolygon.last();
 
-        const bool st = bp.y == context._area31.top || bp.x == context._area31.right || bp.y == context._area31.bottom || bp.x == context._area31.left;
-        const bool end = ep.y == context._area31.top || ep.x == context._area31.right || ep.y == context._area31.bottom || ep.x == context._area31.left;
+        const bool headCutted =
+            (head.y == context._area31.top) ||
+            (head.x == context._area31.right) ||
+            (head.y == context._area31.bottom) ||
+            (head.x == context._area31.left);
+        const bool tailCutted =
+            (tail.y == context._area31.top) ||
+            (tail.x == context._area31.right) ||
+            (tail.y == context._area31.bottom) ||
+            (tail.x == context._area31.left);
 
-        // something goes wrong
-        // These exceptions are used to check logic about processing multipolygons
-        // However this situation could happen because of broken multipolygons (so it should data causes app error)
-        // that's why these exceptions could be replaced with return; statement.
-        if (!end || !st)
-        {
-            OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Error processing multipolygon");
-            brokenPolygons_.push_back(polygon);
-        }
-        else
-        {
-            nonvisistedPolygons.insert(itPolygon);
-        }
+        // This multipolygon has not been cut by rasterization viewport, so it's
+        // impossible to fix it
+        if (!headCutted || !tailCutted)
+            continue;
+
+        fixablePolygons.push_back(brokenPolygon);
+        itBrokenPolygon.remove();
     }
-    
-    idx = 0;
-    for(auto itPolygon0 = brokenPolygons.begin(); itPolygon0 != brokenPolygons.end(); ++itPolygon0, idx++)
+    for(auto itFixablePolygon = fixablePolygons.begin(); itFixablePolygon != fixablePolygons.end(); ++itFixablePolygon)
+        nonvisitedPolygons.insert(itFixablePolygon);
+
+    enum Side
     {
-        if (nonvisistedPolygons.find(itPolygon0) == nonvisistedPolygons.end())
+        Invalid = -1,
+
+        Top = 0,
+        Right = 1,
+        Bottom = 2,
+        Left = 3
+    };
+
+    for(auto itPolygon0 = fixablePolygons.begin(); itPolygon0 != fixablePolygons.end(); ++itPolygon0)
+    {
+        if (nonvisitedPolygons.find(itPolygon0) == nonvisitedPolygons.end())
             continue;
 
         auto& polygon0 = *itPolygon0;
         assert(!polygon0.isEmpty());
 
-        auto ep = polygon0.last();
+        auto tail = polygon0.last();
         
         // 31 - (zoom + 8)
         const int EVAL_DELTA = 6 << (23 - context._zoom);
         const int UNDEFINED_MIN_DIFF = -1 - EVAL_DELTA;
-        while (true) {
-            int st = 0; // st already checked to be one of the four
-            if (ep.y == context._area31.top) {
-                st = 0;
-            } else if (ep.x == context._area31.right) {
-                st = 1;
-            } else if (ep.y == context._area31.bottom) {
-                st = 2;
-            } else if (ep.x == context._area31.left) {
-                st = 3;
-            }
-            auto itNextPolygon = brokenPolygons.end();
-            // BEGIN go clockwise around rectangle
-            for (int h = st; h < st + 4; h++) {
+        while (true)
+        {
+            int tailCutter = Side::Invalid;
+            if (tail.y == context._area31.top)
+                tailCutter = Side::Top;
+            else if (tail.x == context._area31.right)
+                tailCutter = Side::Right;
+            else if (tail.y == context._area31.bottom)
+                tailCutter = Side::Bottom;
+            else if (tail.x == context._area31.left)
+                tailCutter = Side::Left;
+            assert(tailCutter != Side::Invalid);
 
+            auto itNextPolygon = fixablePolygons.end();
+            // BEGIN go clockwise around rectangle
+            for (int side = tailCutter; side < tailCutter + 4; side++)
+            {
                 // BEGIN find closest nonvisited start (including current)
                 int mindiff = UNDEFINED_MIN_DIFF;
-                for(auto itPolygon1 = brokenPolygons.begin(); itPolygon1 != brokenPolygons.end(); ++itPolygon1)
+                for(auto itPolygon1 = fixablePolygons.begin(); itPolygon1 != fixablePolygons.end(); ++itPolygon1)
                 {
-                    if(nonvisistedPolygons.find(itPolygon1) == nonvisistedPolygons.end())
+                    if(nonvisitedPolygons.find(itPolygon1) == nonvisitedPolygons.end())
                         continue;
 
                     const auto& polygon1 = *itPolygon1;
                     assert(!polygon1.isEmpty());
                     const auto& bp = polygon1.first();
-                    if (h % 4 == 0) {
-                        // top
-                        if (bp.y == context._area31.top && bp.x >= Utilities::sumWithSaturation(ep.x, -EVAL_DELTA)) {
-                            if (mindiff == UNDEFINED_MIN_DIFF || (bp.x - ep.x) <= mindiff) {
-                                mindiff = (bp.x - ep.x);
+                    if (side % 4 == Side::Top)
+                    {
+                        if (bp.y == context._area31.top && bp.x >= Utilities::sumWithSaturation(tail.x, -EVAL_DELTA))
+                        {
+                            if (mindiff == UNDEFINED_MIN_DIFF || (bp.x - tail.x) <= mindiff)
+                            {
+                                mindiff = (bp.x - tail.x);
                                 itNextPolygon = itPolygon1;
                             }
                         }
-                    } else if (h % 4 == 1) {
-                        // right
-                        if (bp.x == context._area31.right && bp.y >= Utilities::sumWithSaturation(ep.y, -EVAL_DELTA)) {
-                            if (mindiff == UNDEFINED_MIN_DIFF || (bp.y - ep.y) <= mindiff) {
-                                mindiff = (bp.y - ep.y);
+                    }
+                    else if (side % 4 == Side::Right)
+                    {
+                        if (bp.x == context._area31.right && bp.y >= Utilities::sumWithSaturation(tail.y, -EVAL_DELTA))
+                        {
+                            if (mindiff == UNDEFINED_MIN_DIFF || (bp.y - tail.y) <= mindiff)
+                            {
+                                mindiff = (bp.y - tail.y);
                                 itNextPolygon = itPolygon1;
                             }
                         }
-                    } else if (h % 4 == 2) {
-                        // bottom
-                        if (bp.y == context._area31.bottom && bp.x <= Utilities::sumWithSaturation(ep.x, EVAL_DELTA)) {
-                            if (mindiff == UNDEFINED_MIN_DIFF || (ep.x - bp.x) <= mindiff) {
-                                mindiff = (ep.x - bp.x);
+                    }
+                    else if (side % 4 == Side::Bottom)
+                    {
+                        if (bp.y == context._area31.bottom && bp.x <= Utilities::sumWithSaturation(tail.x, EVAL_DELTA))
+                        {
+                            if (mindiff == UNDEFINED_MIN_DIFF || (tail.x - bp.x) <= mindiff)
+                            {
+                                mindiff = (tail.x - bp.x);
                                 itNextPolygon = itPolygon1;
                             }
                         }
-                    } else if (h % 4 == 3) {
-                        // left
-                        if (bp.x == context._area31.left && bp.y <= Utilities::sumWithSaturation(ep.y, EVAL_DELTA)) {
-                            if (mindiff == UNDEFINED_MIN_DIFF || (ep.y - bp.y) <= mindiff) {
-                                mindiff = (ep.y - bp.y);
+                    }
+                    else if (side % 4 == Side::Left)
+                    {
+                        if (bp.x == context._area31.left && bp.y <= Utilities::sumWithSaturation(tail.y, EVAL_DELTA))
+                        {
+                            if (mindiff == UNDEFINED_MIN_DIFF || (tail.y - bp.y) <= mindiff)
+                            {
+                                mindiff = (tail.y - bp.y);
                                 itNextPolygon = itPolygon1;
                             }
                         }
@@ -1318,44 +1343,50 @@ void OsmAnd::Rasterizer::mergeBrokenPolygons( RasterizerContext& context, QList<
                 } // END find closest start (including current)
 
                 // we found start point
-                if (mindiff != UNDEFINED_MIN_DIFF) {
+                if (mindiff != UNDEFINED_MIN_DIFF)
                     break;
-                } else {
-                    if (h % 4 == 0) {
-                        // top
-                        ep.y = context._area31.top;
-                        ep.x = context._area31.right;
-                    } else if (h % 4 == 1) {
-                        // right
-                        ep.y = context._area31.bottom;
-                        ep.x = context._area31.right;
-                    } else if (h % 4 == 2) {
-                        // bottom
-                        ep.y = context._area31.bottom;
-                        ep.x = context._area31.left;
-                    } else if (h % 4 == 3) {
-                        ep.y = context._area31.top;
-                        ep.x = context._area31.left;
-                    }
-
-                    polygon0.push_back(ep);
+                
+                if (side % 4 == Side::Top)
+                {
+                    tail.y = context._area31.top;
+                    tail.x = context._area31.right;
+                }
+                else if (side % 4 == Side::Right)
+                {
+                    tail.y = context._area31.bottom;
+                    tail.x = context._area31.right;
+                }
+                else if (side % 4 == Side::Bottom)
+                {
+                    tail.y = context._area31.bottom;
+                    tail.x = context._area31.left;
+                }
+                else if (side % 4 == Side::Left)
+                {
+                    tail.y = context._area31.top;
+                    tail.x = context._area31.left;
                 }
 
+                polygon0.push_back(tail);
             } // END go clockwise around rectangle
 
-            assert(itNextPolygon != brokenPolygons.end());
+            if(itNextPolygon == fixablePolygons.end())
+                continue;
+
             if(itNextPolygon == itPolygon0)
             {
                 polygon0.push_back(polygon0.first());
-                nonvisistedPolygons.erase(itPolygon0);
+                nonvisitedPolygons.erase(itPolygon0);
                 break;
-            } else {
+            }
+            else
+            {
                 const auto& otherPolygon = *itNextPolygon;
                 polygon0 << otherPolygon;
-                nonvisistedPolygons.erase(itNextPolygon);
+                nonvisitedPolygons.erase(itNextPolygon);
 
                 // get last point and start again going clockwise
-                ep = polygon0.last();
+                tail = polygon0.last();
             }
         }
 
