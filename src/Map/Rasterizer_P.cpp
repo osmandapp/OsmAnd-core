@@ -569,7 +569,7 @@ bool OsmAnd::Rasterizer_P::updatePaint(
         }
     }
 
-    int color;
+    SkColor color;
     ok = evaluator.getIntegerValue(valueSet.color, color);
     if(!ok || !color)
         return false;
@@ -667,7 +667,7 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
     PointF vertex;
     int bounds = 0;
     QVector< PointF > outsideBounds;
-    for(auto itPoint = primitive.mapObject->_points31.begin(); itPoint != primitive.mapObject->_points31.end(); ++itPoint, pointIdx++)
+    for(auto itPoint = primitive.mapObject->points31.begin(); itPoint != primitive.mapObject->points31.end(); ++itPoint, pointIdx++)
     {
         const auto& point = *itPoint;
 
@@ -714,10 +714,10 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
             return;
     }
 
-    if(!primitive.mapObject->_innerPolygonsPoints31.isEmpty())
+    if(!primitive.mapObject->innerPolygonsPoints31.isEmpty())
     {
         path.setFillType(SkPath::kEvenOdd_FillType);
-        for(auto itPolygon = primitive.mapObject->_innerPolygonsPoints31.begin(); itPolygon != primitive.mapObject->_innerPolygonsPoints31.end(); ++itPolygon)
+        for(auto itPolygon = primitive.mapObject->innerPolygonsPoints31.begin(); itPolygon != primitive.mapObject->innerPolygonsPoints31.end(); ++itPolygon)
         {
             const auto& polygon = *itPolygon;
 
