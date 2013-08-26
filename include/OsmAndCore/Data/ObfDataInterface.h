@@ -49,6 +49,7 @@ namespace OsmAnd {
     public:
         virtual ~ObfDataInterface();
 
+        //TODO: add method to read headers from all files
         void obtainBasemapPresenceFlag(bool& basemapPresent, IQueryController* controller = nullptr);
         void obtainMapObjects(QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut, const AreaI& area31, const ZoomLevel& zoom, IQueryController* controller = nullptr);
         

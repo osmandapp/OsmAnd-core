@@ -27,7 +27,6 @@
 #include <memory>
 
 #include <QString>
-#include <QFileInfo>
 #include <QHash>
 
 #include <OsmAndCore.h>
@@ -35,18 +34,18 @@
 namespace OsmAnd {
 
     class MapStyle;
+    class MapStyles_P;
     class OSMAND_CORE_API MapStyles
     {
     private:
-        bool registerEmbeddedStyle(const QString& resourceName);
+        const std::unique_ptr<MapStyles_P> _d;
     protected:
-        QHash< QString, std::shared_ptr<MapStyle> > _styles;
     public:
         MapStyles();
         virtual ~MapStyles();
 
-        bool registerStyle(const QFileInfo& file);
-        bool obtainStyle(const QString& name, std::shared_ptr<OsmAnd::MapStyle>& outStyle);
+        bool registerStyle(const QString& filePath);
+        bool obtainStyle(const QString& name, std::shared_ptr<const OsmAnd::MapStyle>& outStyle);
 
     friend class OsmAnd::MapStyle;
     };

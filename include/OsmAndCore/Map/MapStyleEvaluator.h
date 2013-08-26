@@ -20,8 +20,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __RASTERIZATION_STYLE_EVALUATOR_H_
-#define __RASTERIZATION_STYLE_EVALUATOR_H_
+#ifndef __MAP_STYLE_EVALUATOR_H_
+#define __MAP_STYLE_EVALUATOR_H_
 
 #include <stdint.h>
 #include <memory>
@@ -30,54 +30,53 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/Map/MapStyle.h>
-#include <OsmAndCore/Map/MapStyleRule.h>
 
 namespace OsmAnd {
 
     namespace Model {
         class MapObject;
-    }
+    } // namespace Model
     class MapStyleRule;
+    class MapStyleValueDefinition;
 
     class OSMAND_CORE_API MapStyleEvaluator
     {
     private:
     protected:
-        QMap< OsmAnd::MapStyle::ValueDefinition*, OsmAnd::MapStyleRule::Value > _values;
+        QMap< std::shared_ptr<const OsmAnd::MapStyleValueDefinition>, OsmAnd::MapStyleValue > _values;
         
         bool evaluate(uint32_t tagKey, uint32_t valueKey, bool fillOutput, bool evaluateChildren);
-        bool evaluate(const std::shared_ptr<OsmAnd::MapStyleRule>& rule, bool fillOutput, bool evaluateChildren);
+        bool evaluate(const std::shared_ptr<const MapStyleRule>& rule, bool fillOutput, bool evaluateChildren);
     public:
-        MapStyleEvaluator(const std::shared_ptr<const MapStyle>& style, MapStyle::RulesetType ruleset, const std::shared_ptr<const OsmAnd::Model::MapObject>& mapObject = std::shared_ptr<const OsmAnd::Model::MapObject>());
-        MapStyleEvaluator(const std::shared_ptr<const MapStyle>& style, const std::shared_ptr<MapStyleRule>& singleRule);
+        MapStyleEvaluator(const std::shared_ptr<const MapStyle>& style, MapStyleRulesetType ruleset, const std::shared_ptr<const OsmAnd::Model::MapObject>& mapObject = std::shared_ptr<const OsmAnd::Model::MapObject>());
+        MapStyleEvaluator(const std::shared_ptr<const MapStyle>& style, const std::shared_ptr<const MapStyleRule>& singleRule);
         virtual ~MapStyleEvaluator();
 
         const std::shared_ptr<const MapStyle> style;
         const std::shared_ptr<const OsmAnd::Model::MapObject> mapObject;
-        const MapStyle::RulesetType ruleset;
-        const std::shared_ptr<MapStyleRule> singleRule;
+        const MapStyleRulesetType ruleset;
+        const std::shared_ptr<const MapStyleRule> singleRule;
 
-        void setValue(const std::shared_ptr<OsmAnd::MapStyle::ValueDefinition>& ref, const OsmAnd::MapStyleRule::Value& value);
-        void setBooleanValue(const std::shared_ptr<OsmAnd::MapStyle::ValueDefinition>& ref, const bool& value);
-        void setIntegerValue(const std::shared_ptr<OsmAnd::MapStyle::ValueDefinition>& ref, const int& value);
-        void setIntegerValue(const std::shared_ptr<OsmAnd::MapStyle::ValueDefinition>& ref, const unsigned int& value);
-        void setFloatValue(const std::shared_ptr<OsmAnd::MapStyle::ValueDefinition>& ref, const float& value);
-        void setStringValue(const std::shared_ptr<OsmAnd::MapStyle::ValueDefinition>& ref, const QString& value);
+        void setValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, const OsmAnd::MapStyleValue& value);
+        void setBooleanValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, const bool& value);
+        void setIntegerValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, const int& value);
+        void setIntegerValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, const unsigned int& value);
+        void setFloatValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, const float& value);
+        void setStringValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, const QString& value);
 
-        bool getBooleanValue(const std::shared_ptr<OsmAnd::MapStyle::ValueDefinition>& ref, bool& value) const;
-        bool getIntegerValue(const std::shared_ptr<OsmAnd::MapStyle::ValueDefinition>& ref, int& value) const;
-        bool getIntegerValue(const std::shared_ptr<OsmAnd::MapStyle::ValueDefinition>& ref, unsigned int& value) const;
-        bool getFloatValue(const std::shared_ptr<OsmAnd::MapStyle::ValueDefinition>& ref, float& value) const;
-        bool getStringValue(const std::shared_ptr<OsmAnd::MapStyle::ValueDefinition>& ref, QString& value) const;
+        bool getBooleanValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, bool& value) const;
+        bool getIntegerValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, int& value) const;
+        bool getIntegerValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, unsigned int& value) const;
+        bool getFloatValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, float& value) const;
+        bool getStringValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, QString& value) const;
 
-        void clearValue(const std::shared_ptr<OsmAnd::MapStyle::ValueDefinition>& ref);
+        void clearValue(const std::shared_ptr<const MapStyleValueDefinition>& ref);
 
         bool evaluate(bool fillOutput = true, bool evaluateChildren = true);
 
         void dump(bool input = true, bool output = true, const QString& prefix = QString()) const;
     };
 
-
 } // namespace OsmAnd
 
-#endif // __RASTERIZATION_STYLE_EVALUATOR_H_
+#endif // __MAP_STYLE_EVALUATOR_H_

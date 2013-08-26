@@ -20,8 +20,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __RASTERIZATION_RULE_H_
-#define __RASTERIZATION_RULE_H_
+#ifndef __MAP_STYLE_RULE_H_
+#define __MAP_STYLE_RULE_H_
 
 #include <stdint.h>
 #include <memory>
@@ -31,29 +31,24 @@
 #include <QList>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/MapStyle.h>
 
 namespace OsmAnd {
 
     class MapStyle;
+    class MapStyle_P;
     class MapStyleEvaluator;
+    class MapStyleValueDefinition;
 
     class OSMAND_CORE_API MapStyleRule
     {
-    public:
-        union OSMAND_CORE_API Value
-        {
-            float asFloat;
-            int32_t asInt;
-            uint32_t asUInt;
-        };
-
     private:
     protected:
         MapStyleRule(MapStyle* owner, const QHash< QString, QString >& attributes);
 
-        QList< std::shared_ptr<MapStyle::ValueDefinition> > _valueDefinitionsRefs;
-        QHash< QString, Value > _values;
+        QList< std::shared_ptr<const MapStyleValueDefinition> > _valueDefinitionsRefs;
+        QHash< QString, MapStyleValue > _values;
         QList< std::shared_ptr<MapStyleRule> > _ifElseChildren;
         QList< std::shared_ptr<MapStyleRule> > _ifChildren;
     public:
@@ -68,10 +63,10 @@ namespace OsmAnd {
         void dump(const QString& prefix = QString()) const;
 
     friend class OsmAnd::MapStyle;
+    friend class OsmAnd::MapStyle_P;
     friend class OsmAnd::MapStyleEvaluator;
     };
 
-
 } // namespace OsmAnd
 
-#endif // __RASTERIZATION_RULE_H_
+#endif // __MAP_STYLE_RULE_H_

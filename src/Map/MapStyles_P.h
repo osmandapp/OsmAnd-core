@@ -20,31 +20,41 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __RASTERIZER_CONTEXT_H_
-#define __RASTERIZER_CONTEXT_H_
+#ifndef __MAP_STYLES_P_H_
+#define __MAP_STYLES_P_H_
 
 #include <stdint.h>
 #include <memory>
+
+#include <QString>
+#include <QHash>
 
 #include <OsmAndCore.h>
 
 namespace OsmAnd {
 
-    class Rasterizer;
+    class MapStyle;
 
-    class RasterizerContext_P;
-    class OSMAND_CORE_API RasterizerContext
+    class MapStyles;
+    class MapStyles_P
     {
     private:
-        const std::unique_ptr<RasterizerContext_P> _d;
     protected:
-    public:
-        RasterizerContext();
-        virtual ~RasterizerContext();
+        MapStyles_P(MapStyles* owner);
 
-    friend class OsmAnd::Rasterizer;
+        MapStyles* const owner;
+
+        QHash< QString, std::shared_ptr<MapStyle> > _styles;
+
+        bool registerEmbeddedStyle(const QString& resourceName);
+        bool registerStyle(const QString& filePath);
+        bool obtainStyle(const QString& name, std::shared_ptr<const OsmAnd::MapStyle>& outStyle);
+    public:
+        virtual ~MapStyles_P();
+
+    friend class OsmAnd::MapStyles;
     };
 
 } // namespace OsmAnd
 
-#endif // __RASTERIZER_CONTEXT_H_
+#endif // __MAP_STYLES_P_H_

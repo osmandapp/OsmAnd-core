@@ -40,7 +40,7 @@ namespace OsmAnd {
 
     class ObfMapSectionInfo;
     class ObfMapSectionReader_P;
-    class Rasterizer;
+    class Rasterizer_P;
 
     namespace Model {
 
@@ -63,7 +63,13 @@ namespace OsmAnd {
             virtual ~MapObject();
 
             const std::shared_ptr<const ObfMapSectionInfo> section;
+
             const uint64_t& id;
+            const bool& isArea;
+            const QVector< PointI >& points31;
+            const QList< QVector< PointI > >& innerPolygonsPoints31;
+            const QVector< TagValue >& types;
+            const QVector< TagValue >& extraTypes;
             const MapFoundationType& foundation;
             const QHash<QString, QString>& names;
             const AreaI& bbox31;
@@ -76,7 +82,7 @@ namespace OsmAnd {
             size_t calculateApproxConsumedMemory() const;
 
             friend class OsmAnd::ObfMapSectionReader_P;
-            friend class OsmAnd::Rasterizer;
+            friend class OsmAnd::Rasterizer_P;
         };
 
     } // namespace Model

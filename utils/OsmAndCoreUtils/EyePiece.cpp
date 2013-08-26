@@ -17,6 +17,7 @@
 #include <OsmAndCore/Data/ObfDataInterface.h>
 #include <OsmAndCore/Map/Rasterizer.h>
 #include <OsmAndCore/Map/RasterizerContext.h>
+#include <OsmAndCore/Map/RasterizerEnvironment.h>
 #include <OsmAndCore/Map/MapStyleEvaluator.h>
 
 OsmAnd::EyePiece::Configuration::Configuration()
@@ -171,10 +172,10 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
     {
         const auto& styleFile = *itStyleFile;
 
-        if(!stylesCollection.registerStyle(styleFile))
+        if(!stylesCollection.registerStyle(styleFile.absoluteFilePath()))
             output << xT("Failed to parse metadata of '") << QStringToStlString(styleFile.fileName()) << xT("' or duplicate style") << std::endl;
     }
-    std::shared_ptr<OsmAnd::MapStyle> style;
+    std::shared_ptr<const OsmAnd::MapStyle> style;
     if(!stylesCollection.obtainStyle(cfg.styleName, style))
     {
         output << xT("Failed to resolve style '") << QStringToStlString(cfg.styleName) << xT("'") << std::endl;
@@ -194,7 +195,10 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
             OsmAnd::Utilities::get31TileNumberY(cfg.bbox.bottom),
             OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right)
         );
-    obfsCollection.obtainDataInterface()->obtainMapObjects(&mapObjects, bbox31, cfg.zoom, nullptr);
+    const auto& obfDI = obfsCollection.obtainDataInterface();
+    obfDI->obtainMapObjects(&mapObjects, bbox31, cfg.zoom, nullptr);
+    bool basemapAvailable;
+    obfDI->obtainBasemapPresenceFlag(basemapAvailable);
     
     // Calculate output size in pixels
     const auto tileWidth = OsmAnd::Utilities::getTileNumberX(cfg.zoom, cfg.bbox.right) - OsmAnd::Utilities::getTileNumberX(cfg.zoom, cfg.bbox.left);
@@ -217,12 +221,13 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
     SkCanvas canvas(&renderTarget);
 
     // Perform actual rendering
-    OsmAnd::RasterizerContext rasterizerContext(style);
-    OsmAnd::Rasterizer::update(rasterizerContext, bbox31, cfg.zoom, cfg.tileSide, cfg.densityFactor, &mapObjects, OsmAnd::PointF(), nullptr);
+    OsmAnd::RasterizerEnvironment rasterizerEnv(style, basemapAvailable);
+    OsmAnd::RasterizerContext rasterizerContext;
+    OsmAnd::Rasterizer::prepareContext(rasterizerEnv, rasterizerContext, bbox31, cfg.zoom, cfg.tileSide, cfg.densityFactor, mapObjects, OsmAnd::PointF(), nullptr);
     if(cfg.drawMap)
-        OsmAnd::Rasterizer::rasterizeMap(rasterizerContext, true, canvas, nullptr);
-    if(cfg.drawText)
-        OsmAnd::Rasterizer::rasterizeText(rasterizerContext, !cfg.drawMap, canvas, nullptr);
+        OsmAnd::Rasterizer::rasterizeMap(rasterizerEnv, rasterizerContext, true, canvas, nullptr);
+    /*if(cfg.drawText)
+        OsmAnd::Rasterizer::rasterizeText(rasterizerContext, !cfg.drawMap, canvas, nullptr);*/
 
     // Save rendered area
     if(!cfg.output.isEmpty())

@@ -20,153 +20,60 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __RASTERIZATION_STYLE_H_
-#define __RASTERIZATION_STYLE_H_
+#ifndef __MAP_STYLE_H_
+#define __MAP_STYLE_H_
 
 #include <stdint.h>
 #include <memory>
 
 #include <QString>
-#include <QStringList>
-#include <QFileInfo>
-#include <QXmlStreamReader>
-#include <QHash>
-#include <QMap>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/Map/MapStyleBuiltinValueDefinitions.h>
 
 namespace OsmAnd {
 
     class MapStyles;
-    class MapStyle;
+    class MapStyles_P;
+    class MapStyleEvaluator;
+
+    class MapStyleValueDefinition;
     class MapStyleRule;
 
+    union MapStyleValue
+    {
+        float asFloat;
+        int32_t asInt;
+        uint32_t asUInt;
+    };
+
+    STRONG_ENUM_EX(MapStyleRulesetType, uint32_t)
+    {
+        Invalid = 0,
+
+        Point = 1,
+        Line = 2,
+        Polygon = 3,
+        Text = 4,
+        Order = 5,
+    };
+
+    class MapStyle_P;
     class OSMAND_CORE_API MapStyle
     {
-    public:
-        WEAK_ENUM_EX(RulesetType, uint32_t)
-        {
-            Invalid = 0,
-
-            Point = 1,
-            Line = 2,
-            Polygon = 3,
-            Text = 4,
-            Order = 5,
-        };
-
-        class OSMAND_CORE_API ValueDefinition
-        {
-        public:
-            enum DataType
-            {
-                Boolean,
-                Integer,
-                Float,
-                String,
-                Color,
-            };
-
-            enum Type
-            {
-                Input,
-                Output,
-            };
-        private:
-        protected:
-            ValueDefinition(ValueDefinition::Type type, ValueDefinition::DataType dataType, const QString& name);
-        public:
-            virtual ~ValueDefinition();
-
-            const Type type;
-            const DataType dataType;
-            const QString name;
-
-        friend class OsmAnd::MapStyle;
-        };
-
-        class OSMAND_CORE_API ConfigurableInputValue : public ValueDefinition
-        {
-        private:
-        protected:
-            ConfigurableInputValue(ValueDefinition::DataType type, const QString& name, const QString& title, const QString& description, const QStringList& possibleValues);
-        public:
-            virtual ~ConfigurableInputValue();
-
-            const QString title;
-            const QString description;
-            const QStringList possibleValues;
-
-            friend class OsmAnd::MapStyle;
-        };
     private:
-        bool parseMetadata(QXmlStreamReader& xmlReader);
-        bool parse(QXmlStreamReader& xmlReader);
-
-        void registerBuiltinValueDefinitions();
-        void registerBuiltinValue(const std::shared_ptr<ValueDefinition>& pValueDefinition);
-        std::shared_ptr<ValueDefinition> registerValue(ValueDefinition* pValueDefinition);
-        QHash< QString, std::shared_ptr<ValueDefinition> > _valuesDefinitions;
-        uint32_t _firstNonBuiltinValueDefinitionIndex;
-
-        bool registerRule(RulesetType type, const std::shared_ptr<MapStyleRule>& rule);
-
-        QHash< QString, QString > _parsetimeConstants;
-        QHash< QString, std::shared_ptr<MapStyleRule> > _attributes;
+        const std::unique_ptr<MapStyle_P> _d;
     protected:
-        MapStyle(MapStyles* owner, const QString& embeddedResourceName);
-        MapStyle(MapStyles* owner, const QFileInfo& externalStyleFile);
-
-        QString _resourceName;
-        QString _externalFileName;
-
-        bool parseMetadata();
-        bool parse();
-
-        QString _title;
+        MapStyle(MapStyles* styles, const QString& resourcePath, const bool& isEmbedded);
 
         QString _name;
-        QString _parentName;
-        std::shared_ptr<MapStyle> _parent;
-
-        bool resolveDependencies();
-        bool resolveConstantValue(const QString& name, QString& value);
-        QString obtainValue(const QString& value);
-
-        bool mergeInherited();
-        bool mergeInheritedRules(RulesetType type);
-        bool mergeInheritedAttributes();
-
-        QMap< uint64_t, std::shared_ptr<MapStyleRule> > _pointRules;
-        QMap< uint64_t, std::shared_ptr<MapStyleRule> > _lineRules;
-        QMap< uint64_t, std::shared_ptr<MapStyleRule> > _polygonRules;
-        QMap< uint64_t, std::shared_ptr<MapStyleRule> > _textRules;
-        QMap< uint64_t, std::shared_ptr<MapStyleRule> > _orderRules;
-        QMap< uint64_t, std::shared_ptr<MapStyleRule> >& obtainRules(RulesetType type);
-
-        std::shared_ptr<MapStyleRule> createTagValueRootWrapperRule(uint64_t id, const std::shared_ptr<MapStyleRule>& rule);
-
-        uint32_t _stringsIdBase;
-        QList< QString > _stringsLUT;
-        QHash< QString, uint32_t > _stringsRevLUT;
-        uint32_t lookupStringId(const QString& value);
-        uint32_t registerString(const QString& value);
-
-        uint32_t getTagStringId(uint64_t ruleId) const;
-        uint32_t getValueStringId(uint64_t ruleId) const;
-        const QString& getTagString(uint64_t ruleId) const;
-        const QString& getValueString(uint64_t ruleId) const;
-
-        enum {
-            RuleIdTagShift = 32,
-        };
     public:
         virtual ~MapStyle();
 
-        MapStyles* const owner;
+        MapStyles* const styles;
 
-        const QString& resourceName;
-        const QString& externalFileName;
+        const QString resourcePath;
+        const bool isEmbedded;
 
         const QString& title;
 
@@ -176,89 +83,20 @@ namespace OsmAnd {
         bool isStandalone() const;
         bool areDependenciesResolved() const;
 
-        const QMap< uint64_t, std::shared_ptr<MapStyleRule> >& obtainRules(RulesetType type) const;
-        static uint64_t encodeRuleId(uint32_t tag, uint32_t value);
-
-        bool resolveValueDefinition(const QString& name, std::shared_ptr<ValueDefinition>& outDefinition) const;
-        bool resolveAttribute(const QString& name, std::shared_ptr<MapStyleRule>& outAttribute) const;
-
-        static const struct _builtinValueDefinitions
-        {
-            const std::shared_ptr<ValueDefinition> INPUT_TEST;
-            const std::shared_ptr<ValueDefinition> INPUT_TEXT_LENGTH;
-            const std::shared_ptr<ValueDefinition> INPUT_TAG;
-            const std::shared_ptr<ValueDefinition> INPUT_VALUE;
-            const std::shared_ptr<ValueDefinition> INPUT_MINZOOM;
-            const std::shared_ptr<ValueDefinition> INPUT_MAXZOOM;
-            const std::shared_ptr<ValueDefinition> INPUT_NIGHT_MODE;
-            const std::shared_ptr<ValueDefinition> INPUT_LAYER;
-            const std::shared_ptr<ValueDefinition> INPUT_POINT;
-            const std::shared_ptr<ValueDefinition> INPUT_AREA;
-            const std::shared_ptr<ValueDefinition> INPUT_CYCLE;
-            const std::shared_ptr<ValueDefinition> INPUT_NAME_TAG;
-            const std::shared_ptr<ValueDefinition> INPUT_ADDITIONAL;
-            const std::shared_ptr<ValueDefinition> OUTPUT_DISABLE;
-            const std::shared_ptr<ValueDefinition> OUTPUT_NAME_TAG2;
-            const std::shared_ptr<ValueDefinition> OUTPUT_TEXT_SHIELD;
-            const std::shared_ptr<ValueDefinition> OUTPUT_SHADOW_RADIUS;
-            const std::shared_ptr<ValueDefinition> OUTPUT_SHADOW_COLOR;
-            const std::shared_ptr<ValueDefinition> OUTPUT_SHADER;
-            const std::shared_ptr<ValueDefinition> OUTPUT_CAP_3;
-            const std::shared_ptr<ValueDefinition> OUTPUT_CAP_2;
-            const std::shared_ptr<ValueDefinition> OUTPUT_CAP;
-            const std::shared_ptr<ValueDefinition> OUTPUT_CAP_0;
-            const std::shared_ptr<ValueDefinition> OUTPUT_CAP__1;
-            const std::shared_ptr<ValueDefinition> OUTPUT_PATH_EFFECT_3;
-            const std::shared_ptr<ValueDefinition> OUTPUT_PATH_EFFECT_2;
-            const std::shared_ptr<ValueDefinition> OUTPUT_PATH_EFFECT;
-            const std::shared_ptr<ValueDefinition> OUTPUT_PATH_EFFECT_0;
-            const std::shared_ptr<ValueDefinition> OUTPUT_PATH_EFFECT__1;
-            const std::shared_ptr<ValueDefinition> OUTPUT_STROKE_WIDTH_3;
-            const std::shared_ptr<ValueDefinition> OUTPUT_STROKE_WIDTH_2;
-            const std::shared_ptr<ValueDefinition> OUTPUT_STROKE_WIDTH;
-            const std::shared_ptr<ValueDefinition> OUTPUT_STROKE_WIDTH_0;
-            const std::shared_ptr<ValueDefinition> OUTPUT_STROKE_WIDTH__1;
-            const std::shared_ptr<ValueDefinition> OUTPUT_COLOR_3;
-            const std::shared_ptr<ValueDefinition> OUTPUT_COLOR;
-            const std::shared_ptr<ValueDefinition> OUTPUT_COLOR_2;
-            const std::shared_ptr<ValueDefinition> OUTPUT_COLOR_0;
-            const std::shared_ptr<ValueDefinition> OUTPUT_COLOR__1;
-            const std::shared_ptr<ValueDefinition> OUTPUT_TEXT_BOLD;
-            const std::shared_ptr<ValueDefinition> OUTPUT_TEXT_ORDER;
-            const std::shared_ptr<ValueDefinition> OUTPUT_TEXT_MIN_DISTANCE;
-            const std::shared_ptr<ValueDefinition> OUTPUT_TEXT_ON_PATH;
-            const std::shared_ptr<ValueDefinition> OUTPUT_ICON;
-            const std::shared_ptr<ValueDefinition> OUTPUT_ICON_ORDER;
-            const std::shared_ptr<ValueDefinition> OUTPUT_ORDER;
-            const std::shared_ptr<ValueDefinition> OUTPUT_SHADOW_LEVEL;
-            const std::shared_ptr<ValueDefinition> OUTPUT_TEXT_DY;
-            const std::shared_ptr<ValueDefinition> OUTPUT_TEXT_SIZE;
-            const std::shared_ptr<ValueDefinition> OUTPUT_TEXT_COLOR;
-            const std::shared_ptr<ValueDefinition> OUTPUT_TEXT_HALO_RADIUS;
-            const std::shared_ptr<ValueDefinition> OUTPUT_TEXT_WRAP_WIDTH;
-            const std::shared_ptr<ValueDefinition> OUTPUT_OBJECT_TYPE;
-            const std::shared_ptr<ValueDefinition> OUTPUT_ATTR_INT_VALUE;
-            const std::shared_ptr<ValueDefinition> OUTPUT_ATTR_COLOR_VALUE;
-            const std::shared_ptr<ValueDefinition> OUTPUT_ATTR_BOOL_VALUE;
-            const std::shared_ptr<ValueDefinition> OUTPUT_ATTR_STRING_VALUE;
-
-            protected:
-                _builtinValueDefinitions();
-
-            friend class OsmAnd::MapStyle;
-        } builtinValueDefinitions;
-
-        bool lookupStringId(const QString& value, uint32_t& id) const;
-        const QString& lookupStringValue(uint32_t id) const;
+        static const MapStyleBuiltinValueDefinitions builtinValueDefinitions;
+        bool resolveValueDefinition(const QString& name, std::shared_ptr<const MapStyleValueDefinition>& outDefinition) const;
+        bool resolveAttribute(const QString& name, std::shared_ptr<const MapStyleRule>& outAttribute) const;
 
         void dump(const QString& prefix = QString()) const;
-        void dump(RulesetType type, const QString& prefix = QString()) const;
+        void dump(MapStyleRulesetType type, const QString& prefix = QString()) const;
 
     friend class OsmAnd::MapStyles;
+    friend class OsmAnd::MapStyles_P;
+    friend class OsmAnd::MapStyle_P;
+    friend class OsmAnd::MapStyleEvaluator;
     friend class OsmAnd::MapStyleRule;
     };
 
-
 } // namespace OsmAnd
 
-#endif // __RASTERIZATION_STYLE_H_
+#endif // __MAP_STYLE_H_

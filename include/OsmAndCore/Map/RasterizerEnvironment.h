@@ -20,31 +20,41 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __RASTERIZER_CONTEXT_H_
-#define __RASTERIZER_CONTEXT_H_
+#ifndef __RASTERIZER_ENVIRONMENT_H_
+#define __RASTERIZER_ENVIRONMENT_H_
 
 #include <stdint.h>
 #include <memory>
 
+#include <QMap>
+
 #include <OsmAndCore.h>
+#include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Map/MapStyle.h>
 
 namespace OsmAnd {
 
+    class MapStyleValueDefinition;
     class Rasterizer;
 
-    class RasterizerContext_P;
-    class OSMAND_CORE_API RasterizerContext
+    class RasterizerEnvironment_P;
+    class OSMAND_CORE_API RasterizerEnvironment
     {
     private:
-        const std::unique_ptr<RasterizerContext_P> _d;
+        const std::unique_ptr<RasterizerEnvironment_P> _d;
     protected:
     public:
-        RasterizerContext();
-        virtual ~RasterizerContext();
+        RasterizerEnvironment(const std::shared_ptr<const MapStyle>& style, const bool& basemapAvailable);
+        RasterizerEnvironment(const std::shared_ptr<const MapStyle>& style, const bool& basemapAvailable, const QMap< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue >& settings);
+        virtual ~RasterizerEnvironment();
+
+        const std::shared_ptr<const MapStyle> style;
+        const bool basemapAvailable;
+        QMap< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > settings;
 
     friend class OsmAnd::Rasterizer;
     };
 
 } // namespace OsmAnd
 
-#endif // __RASTERIZER_CONTEXT_H_
+#endif // __RASTERIZER_ENVIRONMENT_H_

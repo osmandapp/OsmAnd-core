@@ -20,31 +20,37 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __RASTERIZER_CONTEXT_H_
-#define __RASTERIZER_CONTEXT_H_
+#ifndef __MAP_STYLE_CONFIGURABLE_INPUT_VALUE_H_
+#define __MAP_STYLE_CONFIGURABLE_INPUT_VALUE_H_
 
 #include <stdint.h>
 #include <memory>
 
+#include <QString>
+#include <QStringList>
+
 #include <OsmAndCore.h>
+#include <OsmAndCore/Map/MapStyleValueDefinition.h>
 
 namespace OsmAnd {
 
-    class Rasterizer;
+    class MapStyle_P;
 
-    class RasterizerContext_P;
-    class OSMAND_CORE_API RasterizerContext
+    class OSMAND_CORE_API MapStyleConfigurableInputValue : public MapStyleValueDefinition
     {
     private:
-        const std::unique_ptr<RasterizerContext_P> _d;
     protected:
+        MapStyleConfigurableInputValue(const MapStyleValueDataType& dataType, const QString& name, const QString& title, const QString& description, const QStringList& possibleValues);
     public:
-        RasterizerContext();
-        virtual ~RasterizerContext();
+        virtual ~MapStyleConfigurableInputValue();
 
-    friend class OsmAnd::Rasterizer;
+        const QString title;
+        const QString description;
+        const QStringList possibleValues;
+
+    friend class OsmAnd::MapStyle_P;
     };
 
 } // namespace OsmAnd
 
-#endif // __RASTERIZER_CONTEXT_H_
+#endif // __MAP_STYLE_CONFIGURABLE_INPUT_VALUE_H_

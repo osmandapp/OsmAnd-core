@@ -2,8 +2,11 @@
 
 #include <cassert>
 
-#include "OsmAndCore/Logging.h"
-#include "OsmAndCore/Utilities.h"
+#include "MapStyle.h"
+#include "MapStyle_P.h"
+#include "MapStyleValueDefinition.h"
+#include "Logging.h"
+#include "Utilities.h"
 
 OsmAnd::MapStyleRule::MapStyleRule(MapStyle* owner_, const QHash< QString, QString >& attributes)
     : owner(owner_)
@@ -16,27 +19,27 @@ OsmAnd::MapStyleRule::MapStyleRule(MapStyle* owner_, const QHash< QString, QStri
         const auto& key = itAttribute.key();
         const auto& value = itAttribute.value();
 
-        std::shared_ptr<MapStyle::ValueDefinition> valueDef;
+        std::shared_ptr<const MapStyleValueDefinition> valueDef;
         bool ok = owner->resolveValueDefinition(key, valueDef);
         assert(ok);
 
         _valueDefinitionsRefs.push_back(valueDef);
-        Value parsedValue;
+        MapStyleValue parsedValue;
         switch (valueDef->dataType)
         {
-        case MapStyle::ValueDefinition::Boolean:
+        case MapStyleValueDataType::Boolean:
             parsedValue.asInt = (value == "true") ? 1 : 0;
             break;
-        case MapStyle::ValueDefinition::Integer:
+        case MapStyleValueDataType::Integer:
             parsedValue.asInt = Utilities::parseArbitraryInt(value, -1);
             break;
-        case MapStyle::ValueDefinition::Float:
+        case MapStyleValueDataType::Float:
             parsedValue.asFloat = Utilities::parseArbitraryFloat(value, -1.0f);
             break;
-        case MapStyle::ValueDefinition::String:
-            parsedValue.asUInt = owner->lookupStringId(value);
+        case MapStyleValueDataType::String:
+            parsedValue.asUInt = owner->_d->lookupStringId(value);
             break;
-        case MapStyle::ValueDefinition::Color:
+        case MapStyleValueDataType::Color:
             {
                 assert(value[0] == '#');
                 parsedValue.asUInt = value.mid(1).toUInt(nullptr, 16);
@@ -65,19 +68,19 @@ void OsmAnd::MapStyleRule::dump( const QString& prefix /*= QString()*/ ) const
         QString strValue;
         switch (valueDef->dataType)
         {
-        case MapStyle::ValueDefinition::Boolean:
+        case MapStyleValueDataType::Boolean:
             strValue = (getIntegerAttribute(valueDef->name) == 1) ? "true" : "false";
             break;
-        case MapStyle::ValueDefinition::Integer:
+        case MapStyleValueDataType::Integer:
             strValue = QString("%1").arg(getIntegerAttribute(valueDef->name));
             break;
-        case MapStyle::ValueDefinition::Float:
+        case MapStyleValueDataType::Float:
             strValue = QString("%1").arg(getFloatAttribute(valueDef->name));
             break;
-        case MapStyle::ValueDefinition::String:
+        case MapStyleValueDataType::String:
             strValue = getStringAttribute(valueDef->name);
             break;
-        case MapStyle::ValueDefinition::Color:
+        case MapStyleValueDataType::Color:
             {
                 auto color = getIntegerAttribute(valueDef->name);
                 if((color & 0xFF000000) == 0xFF000000)
@@ -90,7 +93,7 @@ void OsmAnd::MapStyleRule::dump( const QString& prefix /*= QString()*/ ) const
 
         OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s%s%s = %s",
             newPrefix.toStdString().c_str(),
-            (valueDef->type == MapStyle::ValueDefinition::Input) ? ">" : "<",
+            (valueDef->valueClass == MapStyleValueClass::Input) ? ">" : "<",
             valueDef->name.toStdString().c_str(),
             strValue.toStdString().c_str());
     }
@@ -142,7 +145,7 @@ const QString& OsmAnd::MapStyleRule::getStringAttribute( const QString& key, boo
 
     if(ok)
         *ok = true;
-    return owner->lookupStringValue(itValue->asUInt);
+    return owner->_d->lookupStringValue(itValue->asUInt);
 }
 
 int OsmAnd::MapStyleRule::getIntegerAttribute( const QString& key, bool* ok /*= nullptr*/ ) const

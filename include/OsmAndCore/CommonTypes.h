@@ -20,7 +20,7 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#if !defined(__COMMON_TYPES_H_)
+#ifndef __COMMON_TYPES_H_
 #define __COMMON_TYPES_H_
 
 #include <stdint.h>
