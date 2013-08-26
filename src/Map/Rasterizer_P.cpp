@@ -132,6 +132,7 @@ void OsmAnd::Rasterizer_P::prepareContext(
         else
             bgMapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("land")));
 
+        assert(bgMapObject->isClosedFigure());
         context._triangulatedCoastlineObjects.push_back(bgMapObject);
     }
     
@@ -1058,10 +1059,11 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
 
         std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr));
         mapObject->_points31 = polygon;
-        mapObject->_types.push_back(TagValue("natural", clockwise ? "coastline" : "land"));
+        mapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), clockwise ? QString::fromLatin1("coastline") : QString::fromLatin1("land")));
         mapObject->_id = osmId;
         mapObject->_isArea = true;
 
+        assert(mapObject->isClosedFigure());
         outVectorized.push_back(mapObject);
     }
 
@@ -1082,10 +1084,11 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
         mapObject->_points31.push_back(PointI(context._area31.left, context._area31.bottom));
         mapObject->_points31.push_back(PointI(context._area31.left, context._area31.top));
 
-        mapObject->_types.push_back(TagValue("natural", "coastline"));
+        mapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline")));
         mapObject->_id = osmId;
         mapObject->_isArea = true;
 
+        assert(mapObject->isClosedFigure());
         outVectorized.push_back(mapObject);
     }
 
