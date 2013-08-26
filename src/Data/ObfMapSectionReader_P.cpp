@@ -68,6 +68,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapLevelHeader(
 
     for(;;)
     {
+        auto lastTagOffset = cis->CurrentPosition();
         auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
@@ -92,8 +93,13 @@ void OsmAnd::ObfMapSectionReader_P::readMapLevelHeader(
             cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_area31.bottom));
             break;
         case OBF::OsmAndMapIndex_MapRootLevel::kBoxesFieldNumber:
-            // Skip reading boxes and surely, following blocks
-            cis->Skip(cis->BytesUntilLimit());
+            {
+                // Save boxes offset
+                level->_boxesOffset = lastTagOffset;
+
+                // Skip reading boxes and surely, following blocks
+                cis->Skip(cis->BytesUntilLimit());
+            }
             return;
         default:
             ObfReaderUtilities::skipUnknownField(cis, tag);
@@ -239,8 +245,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapLevelTreeNodes(
                 levelTree->_length = length;
 
                 readTreeNode(reader, section, level->area31, levelTree);
-                cis->Skip(cis->BytesUntilLimit());
-
+                
                 cis->PopLimit(oldLimit);
                 trees.push_back(levelTree);
             }
@@ -263,7 +268,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNode(
 
     for(;;)
     {
-        auto tagPos = cis->CurrentPosition();
+        const auto tagPos = cis->CurrentPosition();
         auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
@@ -302,6 +307,13 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNode(
                 cis->ReadVarint32(&value);
 
                 treeNode->_foundation = (value != 0) ? MapFoundationType::FullWater : MapFoundationType::FullLand;
+            }
+            break;
+        case OBF::OsmAndMapIndex_MapDataBox::kBoxesFieldNumber:
+            {
+                // Save children relative offset and skip their data
+                treeNode->_childrenInnerOffset = tagPos - treeNode->_offset;
+                cis->Skip(cis->BytesUntilLimit());
             }
             return;
         default:
@@ -343,11 +355,14 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                     cis->PopLimit(oldLimit);
                     break;
                 }
+                cis->PopLimit(oldLimit);
                 
                 if(nodesWithData && childNode->_dataOffset > 0)
                     nodesWithData->push_back(childNode);
 
                 cis->Seek(offset);
+                oldLimit = cis->PushLimit(length);
+                cis->Skip(childNode->_childrenInnerOffset);
                 readTreeNodeChildren(reader, section, childNode, nodesWithData, bbox31, controller);
                 assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
@@ -680,6 +695,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
 
             cis->Seek(treeNode->_offset);
             auto oldLimit = cis->PushLimit(treeNode->_length);
+            cis->Skip(treeNode->_childrenInnerOffset);
             readTreeNodeChildren(reader, section, treeNode, &treeNodesWithData, bbox31, controller);
             assert(cis->BytesUntilLimit() == 0);
             cis->PopLimit(oldLimit);
@@ -705,7 +721,8 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
 }
 
 OsmAnd::ObfMapSectionReader_P::LevelTreeNode::LevelTreeNode()
-    : _dataOffset(0)
+    : _childrenInnerOffset(0)
+    , _dataOffset(0)
     , _foundation(MapFoundationType::Unknown)
 {
 }

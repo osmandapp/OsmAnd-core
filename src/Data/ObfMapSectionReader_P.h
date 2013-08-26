@@ -61,6 +61,7 @@ namespace OsmAnd {
             bool _isOcean;
             uint32_t _offset;
             uint32_t _length;
+            uint32_t _childrenInnerOffset;
             uint32_t _dataOffset;
             MapFoundationType _foundation;
             AreaI _area31;

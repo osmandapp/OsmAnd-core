@@ -45,8 +45,8 @@ void OsmAnd::Rasterizer_P::prepareContext(
     const auto pixelWidth = static_cast<float>(area31.width()) / context._precomputed31toPixelDivisor;
     const auto pixelHeight = static_cast<float>(area31.height()) / context._precomputed31toPixelDivisor;
     context._renderViewport.topLeft = tlOriginOffset;
-    context._renderViewport.bottomRight.x = tlOriginOffset.x + pixelWidth;
-    context._renderViewport.bottomRight.y = pixelHeight - tlOriginOffset.x;
+    context._renderViewport.right = tlOriginOffset.x + pixelWidth;
+    context._renderViewport.bottom = pixelHeight - tlOriginOffset.x;
 
     context._zoom = zoom;
     context._area31 = area31;

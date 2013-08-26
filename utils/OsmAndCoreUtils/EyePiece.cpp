@@ -24,7 +24,7 @@ OsmAnd::EyePiece::Configuration::Configuration()
     : verbose(false)
     , dumpRules(false)
     , styleName("default")
-    , bbox(90, -180, -90, 180)
+    , bbox(90, -180, -90, 179.9999999999)
     , tileSide(256)
     , densityFactor(1.0)
     , zoom(ZoomLevel15)
@@ -202,7 +202,7 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
     
     // Calculate output size in pixels
     const auto tileWidth = OsmAnd::Utilities::getTileNumberX(cfg.zoom, cfg.bbox.right) - OsmAnd::Utilities::getTileNumberX(cfg.zoom, cfg.bbox.left);
-    const auto tileHeight = OsmAnd::Utilities::getTileNumberX(cfg.zoom, cfg.bbox.top) - OsmAnd::Utilities::getTileNumberX(cfg.zoom, cfg.bbox.bottom);
+    const auto tileHeight = OsmAnd::Utilities::getTileNumberY(cfg.zoom, cfg.bbox.bottom) - OsmAnd::Utilities::getTileNumberY(cfg.zoom, cfg.bbox.top);
     const auto pixelWidth = static_cast<int32_t>(tileWidth * cfg.tileSide);
     const auto pixelHeight = static_cast<int32_t>(tileHeight * cfg.tileSide);
     output << xT("Will rasterize ") << mapObjects.count() << xT(" objects onto ") << pixelWidth << xT("x") << pixelHeight << xT(" bitmap") << std::endl;
