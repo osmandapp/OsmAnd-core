@@ -538,8 +538,15 @@ OSMAND_CORE_API OsmAnd::AreaI OSMAND_CORE_CALL OsmAnd::Utilities::tileBoundingBo
 
     output.top = tileId.y << zoomShift;
     output.left = tileId.x << zoomShift;
-    output.bottom = (tileId.y + 1)<< zoomShift;
-    output.right = (tileId.x + 1)<< zoomShift;
+    output.bottom = ((tileId.y + 1) << zoomShift) - 1;
+    output.right = ((tileId.x + 1) << zoomShift) - 1;
+
+    assert(output.top >= 0 && output.top <= std::numeric_limits<int32_t>::max());
+    assert(output.left >= 0 && output.left <= std::numeric_limits<int32_t>::max());
+    assert(output.bottom >= 0 && output.bottom <= std::numeric_limits<int32_t>::max());
+    assert(output.right >= 0 && output.right <= std::numeric_limits<int32_t>::max());
+    assert(output.right >= output.left);
+    assert(output.bottom >= output.top);
 
     return output;
 }
@@ -557,6 +564,13 @@ OSMAND_CORE_API OsmAnd::AreaI OSMAND_CORE_CALL OsmAnd::Utilities::areaRightShift
     tail = input.right & ((1 << shift) - 1);
     output.right = (input.right >> shift) + (tail ? 1 : 0);
 
+    assert(output.top >= 0 && output.top <= std::numeric_limits<int32_t>::max());
+    assert(output.left >= 0 && output.left <= std::numeric_limits<int32_t>::max());
+    assert(output.bottom >= 0 && output.bottom <= std::numeric_limits<int32_t>::max());
+    assert(output.right >= 0 && output.right <= std::numeric_limits<int32_t>::max());
+    assert(output.right >= output.left);
+    assert(output.bottom >= output.top);
+
     return output;
 }
 
@@ -568,6 +582,13 @@ OSMAND_CORE_API OsmAnd::AreaI OSMAND_CORE_CALL OsmAnd::Utilities::areaLeftShift(
     output.left = input.left << shift;
     output.bottom = input.bottom << shift;
     output.right = input.right << shift;
+
+    assert(output.top >= 0 && output.top <= std::numeric_limits<int32_t>::max());
+    assert(output.left >= 0 && output.left <= std::numeric_limits<int32_t>::max());
+    assert(output.bottom >= 0 && output.bottom <= std::numeric_limits<int32_t>::max());
+    assert(output.right >= 0 && output.right <= std::numeric_limits<int32_t>::max());
+    assert(output.right >= output.left);
+    assert(output.bottom >= output.top);
 
     return output;
 }
