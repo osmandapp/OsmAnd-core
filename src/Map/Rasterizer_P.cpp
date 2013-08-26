@@ -110,7 +110,7 @@ void OsmAnd::Rasterizer_P::prepareContext(
     {
         addBasemapCoastlines = !detailedLandData;
     }
-    if (addBasemapCoastlines)
+    if(addBasemapCoastlines)
     {
         const bool coastlinesWereAdded = polygonizeCoastlines(env, context,
             context._basemapCoastlineObjects,
@@ -120,7 +120,7 @@ void OsmAnd::Rasterizer_P::prepareContext(
         addBasemapCoastlines = !coastlinesWereAdded;
     }
 
-    if (addBasemapCoastlines)
+    if(addBasemapCoastlines)
     {
         std::shared_ptr<Model::MapObject> bgMapObject(new Model::MapObject(nullptr));
         bgMapObject->_isArea = true;
@@ -129,9 +129,9 @@ void OsmAnd::Rasterizer_P::prepareContext(
         bgMapObject->_points31.push_back(PointI(area31.right, area31.bottom));
         bgMapObject->_points31.push_back(PointI(area31.left, area31.bottom));
         bgMapObject->_points31.push_back(bgMapObject->_points31.first());
-        if (context._hasWater && !context._hasLand)
+        if(context._hasWater && !context._hasLand)
             bgMapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline")));
-        else
+        else//TODO: ?if(!context._hasWater && context._hasLand)
             bgMapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("land")));
 
         assert(bgMapObject->isClosedFigure());
