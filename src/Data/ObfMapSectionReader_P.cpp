@@ -225,7 +225,7 @@ void OsmAnd::ObfMapSectionReader_P::createRule( const std::shared_ptr<ObfMapSect
 
 void OsmAnd::ObfMapSectionReader_P::readMapLevelTreeNodes(
     const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
-    const std::shared_ptr<const ObfMapSectionLevel>& level, QList< std::shared_ptr<LevelTreeNode> >& trees )
+    const std::shared_ptr<const ObfMapSectionLevel>& level, QList< std::shared_ptr<ObfMapSectionLevelTreeNode> >& trees )
 {
     auto cis = reader->_codedInputStream.get();
     for(;;)
@@ -240,7 +240,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapLevelTreeNodes(
                 auto length = ObfReaderUtilities::readBigEndianInt(cis);
                 auto offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(length);
-                std::shared_ptr<LevelTreeNode> levelTree(new LevelTreeNode());
+                std::shared_ptr<ObfMapSectionLevelTreeNode> levelTree(new ObfMapSectionLevelTreeNode());
                 levelTree->_offset = offset;
                 levelTree->_length = length;
 
@@ -262,7 +262,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapLevelTreeNodes(
 
 void OsmAnd::ObfMapSectionReader_P::readTreeNode(
     const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
-    const AreaI& parentArea, const std::shared_ptr<LevelTreeNode>& treeNode )
+    const AreaI& parentArea, const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode )
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -325,8 +325,8 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNode(
 
 void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
     const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
-    const std::shared_ptr<LevelTreeNode>& treeNode,
-    QList< std::shared_ptr<LevelTreeNode> >* nodesWithData,
+    const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode,
+    QList< std::shared_ptr<ObfMapSectionLevelTreeNode> >* nodesWithData,
     const AreaI* bbox31,
     IQueryController* controller)
 {
@@ -344,7 +344,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                 auto length = ObfReaderUtilities::readBigEndianInt(cis);
                 auto offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(length);
-                std::shared_ptr<LevelTreeNode> childNode(new LevelTreeNode());
+                std::shared_ptr<ObfMapSectionLevelTreeNode> childNode(new ObfMapSectionLevelTreeNode());
                 childNode->_foundation = treeNode->_foundation;
                 childNode->_offset = offset;
                 childNode->_length = length;
@@ -377,7 +377,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
 
 void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
     const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
-    LevelTreeNode* tree,
+    ObfMapSectionLevelTreeNode* tree,
     QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut,
     const AreaI* bbox31,
     std::function<bool (const std::shared_ptr<const OsmAnd::Model::MapObject>&)> visitor,
@@ -464,7 +464,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
 
 void OsmAnd::ObfMapSectionReader_P::readMapObject(
     const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
-    LevelTreeNode* treeNode,
+    ObfMapSectionLevelTreeNode* treeNode,
     uint64_t baseId,
     std::shared_ptr<OsmAnd::Model::MapObject>& mapObject,
     const AreaI* bbox31)
@@ -676,15 +676,22 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             continue;
 
         // If there are no tree nodes in map level, it means they are not loaded
-        QList< std::shared_ptr<LevelTreeNode> > cachedTreeNodes;//TODO: these should be cached inside level
-        cis->Seek(mapLevel->_offset);
-        auto oldLimit = cis->PushLimit(mapLevel->_length);
-        cis->Skip(mapLevel->_boxesInnerOffset);
-        readMapLevelTreeNodes(reader, section, mapLevel, cachedTreeNodes);
-        cis->PopLimit(oldLimit);
+        {
+            QMutexLocker scopedLock(&mapLevel->_d->_rootNodesMutex);
 
-        QList< std::shared_ptr<LevelTreeNode> > treeNodesWithData;
-        for(auto itTreeNode = cachedTreeNodes.begin(); itTreeNode != cachedTreeNodes.end(); ++itTreeNode)
+            if(!mapLevel->_d->_rootNodes)
+            {
+                cis->Seek(mapLevel->_offset);
+                auto oldLimit = cis->PushLimit(mapLevel->_length);
+                cis->Skip(mapLevel->_boxesInnerOffset);
+                mapLevel->_d->_rootNodes.reset(new ObfMapSectionLevel_P::RootNodes());
+                readMapLevelTreeNodes(reader, section, mapLevel, mapLevel->_d->_rootNodes->nodes);
+                cis->PopLimit(oldLimit);
+            }
+        }
+        
+        QList< std::shared_ptr<ObfMapSectionLevelTreeNode> > treeNodesWithData;
+        for(auto itTreeNode = mapLevel->_d->_rootNodes->nodes.begin(); itTreeNode != mapLevel->_d->_rootNodes->nodes.end(); ++itTreeNode)
         {
             const auto& treeNode = *itTreeNode;
 
@@ -701,7 +708,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             assert(cis->BytesUntilLimit() == 0);
             cis->PopLimit(oldLimit);
         }
-        qSort(treeNodesWithData.begin(), treeNodesWithData.end(), [](const std::shared_ptr<LevelTreeNode>& l, const std::shared_ptr<LevelTreeNode>& r) -> bool
+        qSort(treeNodesWithData.begin(), treeNodesWithData.end(), [](const std::shared_ptr<ObfMapSectionLevelTreeNode>& l, const std::shared_ptr<ObfMapSectionLevelTreeNode>& r) -> bool
         {
             return l->_dataOffset < r->_dataOffset;
         });
@@ -719,11 +726,4 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             cis->PopLimit(oldLimit);
         }
     }
-}
-
-OsmAnd::ObfMapSectionReader_P::LevelTreeNode::LevelTreeNode()
-    : _childrenInnerOffset(0)
-    , _dataOffset(0)
-    , _foundation(MapFoundationType::Unknown)
-{
 }

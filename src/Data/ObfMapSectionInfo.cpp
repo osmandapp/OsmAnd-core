@@ -14,7 +14,8 @@ OsmAnd::ObfMapSectionInfo::~ObfMapSectionInfo()
 }
 
 OsmAnd::ObfMapSectionLevel::ObfMapSectionLevel()
-    : offset(_offset)
+    : _d(new ObfMapSectionLevel_P(this))
+    , offset(_offset)
     , length(_length)
     , minZoom(_minZoom)
     , maxZoom(_maxZoom)

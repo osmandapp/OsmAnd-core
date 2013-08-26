@@ -122,6 +122,7 @@ void OsmAnd::Rasterizer_P::prepareContext(
     if (addBasemapCoastlines)
     {
         std::shared_ptr<Model::MapObject> bgMapObject(new Model::MapObject(nullptr));
+        bgMapObject->_isArea = true;
         bgMapObject->_points31.push_back(PointI(area31.left, area31.top));
         bgMapObject->_points31.push_back(PointI(area31.right, area31.top));
         bgMapObject->_points31.push_back(PointI(area31.right, area31.bottom));
@@ -1027,6 +1028,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
             const auto& polygon = *itPolygon;
 
             std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr));
+            mapObject->_isArea = false;
             mapObject->_points31 = polygon;
             mapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline_broken")));
 
@@ -1038,6 +1040,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
             const auto& polygon = *itPolygon;
 
             std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr));
+            mapObject->_isArea = false;
             mapObject->_points31 = polygon;
             mapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline_line")));
 

@@ -37,9 +37,11 @@ namespace OsmAnd {
     class ObfMapSectionReader_P;
     class ObfReader_P;
 
+    class ObfMapSectionLevel_P;
     class OSMAND_CORE_API ObfMapSectionLevel
     {
     private:
+        const std::unique_ptr<ObfMapSectionLevel_P> _d;
     protected:
         ObfMapSectionLevel();
 

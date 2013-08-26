@@ -30,7 +30,7 @@ int OsmAnd::Model::MapObject::getSimpleLayerValue() const
     {
         const auto& type = *itType;
 
-        if (type.tag == "layer")
+        if (type.tag == QString::fromLatin1("layer"))
         {
             if(!type.value.isEmpty())
             {
@@ -42,13 +42,13 @@ int OsmAnd::Model::MapObject::getSimpleLayerValue() const
                     return 1;
             }
         }
-        else if (type.tag == "tunnel")
+        else if (type.tag == QString::fromLatin1("tunnel"))
         {
-            isTunnel = (type.value == "yes");
+            isTunnel = (type.value == QString::fromLatin1("yes"));
         }
-        else if (type.tag == "bridge")
+        else if (type.tag == QString::fromLatin1("bridge"))
         {
-            isBridge = (type.value == "yes");
+            isBridge = (type.value == QString::fromLatin1("yes"));
         }
     }
 
