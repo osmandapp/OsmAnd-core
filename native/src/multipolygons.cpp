@@ -46,7 +46,8 @@ bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int 
 	if (completedRings.size() == 0 && uncompletedRings.size() == 0) {
 		return false;
 	}
-	if (uncompletedRings.size() > 0) {
+	bool coastlineCrossScreen = uncompletedRings.size() > 0; 
+	if (coastlineCrossScreen) {
 		unifyIncompletedRings(uncompletedRings, completedRings, leftX, rightX, bottomY, topY, dbId, zoom);
 	}
 	if (addDebugIncompleted) {
@@ -69,15 +70,17 @@ bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int 
 	if (!showIfThereIncompleted && uncompletedRings.size() > 0) {
 		return false;
 	}
-	bool clockwiseFound = false;
+	bool landFound = false;
+	bool waterFound = false;
 	for (int i = 0; i < completedRings.size(); i++) {
 		bool clockwise = isClockwiseWay(completedRings[i]);
-		clockwiseFound = clockwiseFound || clockwise;
 		MapDataObject* o = new MapDataObject();
 		o->points = completedRings[i];
 		if (clockwise) {
+			waterFound = true;
 			o->types.push_back(tag_value("natural", "coastline"));
 		} else {
+		 	landFound = true;
 			o->types.push_back(tag_value("natural", "land"));
 		}
 		o->id = dbId;
@@ -85,7 +88,7 @@ bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int 
 		res.push_back(o);
 	}
 
-	if (!clockwiseFound && uncompletedRings.size() == 0) {
+	if (!waterFound && !coastlineCrossScreen) {
 		// add complete water tile
 		MapDataObject* o = new MapDataObject();
 		o->points.push_back(int_pair(leftX, topY));

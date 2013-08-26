@@ -1215,16 +1215,18 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 		} else {
 			addBasemapCoastlines = !detailedLandData;
 		}
+		bool fillCompleteArea = false;
 		if (addBasemapCoastlines) {
-			addBasemapCoastlines = false;
 			bool coastlinesWereAdded = processCoastlines(basemapCoastLines, q->left, q->right, q->bottom, q->top, q->zoom,
 					true, true, tempResult);
-			addBasemapCoastlines = !coastlinesWereAdded;
+			fillCompleteArea = !coastlinesWereAdded;
 		}
 		// processCoastlines always create new objects
 		deleteObjects(basemapCoastLines);
 		deleteObjects(coastLines);
-		if (addBasemapCoastlines) {
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,"Land %d ocean %d fillCompleteArea %d", 
+							land, ocean, fillCompleteArea);
+		if (fillCompleteArea) {
 			MapDataObject* o = new MapDataObject();
 			o->points.push_back(int_pair(q->left, q->top));
 			o->points.push_back(int_pair(q->right, q->top));
