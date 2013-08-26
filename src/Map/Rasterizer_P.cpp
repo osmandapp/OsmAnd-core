@@ -2,6 +2,7 @@
 #include "Rasterizer.h"
 
 #include <cassert>
+#include <cinttypes>
 #include <set>
 
 #include "RasterizerEnvironment.h"
@@ -315,17 +316,17 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                 {
                     if(mapObject->points31.size() <=2)
                     {
-                        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu primitives are processed as polygon, but only %d vertices present", mapObject->id >> 1, mapObject->points31.size());
+                        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%" PRIu64 " (%" PRIi64 ") primitives are processed as polygon, but only %d vertices present", mapObject->id >> 1, mapObject->id >> 1, mapObject->points31.size());
                         continue;
                     }
                     if(!mapObject->isClosedFigure())
                     {
-                        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu primitives are processed as polygon, but are not closed", mapObject->id >> 1);
+                        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%" PRIu64 " (%" PRIi64 ") primitives are processed as polygon, but are not closed", mapObject->id >> 1, mapObject->id >> 1);
                         continue;
                     }
                     if(!mapObject->isClosedFigure(true))
                     {
-                        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu primitives are processed as polygon, but are not closed (inner)", mapObject->id >> 1);
+                        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%" PRIu64 " (%" PRIi64 ") primitives are processed as polygon, but are not closed (inner)", mapObject->id >> 1, mapObject->id >> 1);
                         continue;
                     }
 
@@ -633,17 +634,17 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
 {
     if(primitive.mapObject->_points31.size() <=2)
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized as polygon, but has %d vertices", primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized as polygon, but has %d vertices", primitive.mapObject->id >> 1, primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
         return;
     }
     if(!primitive.mapObject->isClosedFigure())
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized as polygon, but is not closed", primitive.mapObject->id >> 1);
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized as polygon, but is not closed", primitive.mapObject->id >> 1, primitive.mapObject->id >> 1);
         return;
     }
     if(!primitive.mapObject->isClosedFigure(true))
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized as polygon, but is not closed (inner)", primitive.mapObject->id >> 1);
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized as polygon, but is not closed (inner)", primitive.mapObject->id >> 1, primitive.mapObject->id >> 1);
         return;
     }
 
@@ -749,7 +750,7 @@ void OsmAnd::Rasterizer_P::rasterizeLine(
 {
     if(primitive.mapObject->_points31.size() < 2 )
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized as line, but has %d vertices", primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized as line, but has %d vertices", primitive.mapObject->id >> 1, primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
         return;
     }
 
@@ -972,7 +973,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
 
         if(coastline->_points31.size() < 2)
         {
-            OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is polygonized as coastline, but has %d vertices", coastline->id >> 1, coastline->_points31.size());
+            OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%" PRIu64 " (%" PRIi64 ") is polygonized as coastline, but has %d vertices", coastline->id >> 1, coastline->id >> 1, coastline->_points31.size());
             continue;
         }
 
@@ -1691,17 +1692,17 @@ void OsmAnd::Rasterizer_P::collectPolygonText(
 {
     if(primitive.mapObject->_points31.size() <=2)
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized (text) as polygon, but has %d vertices", primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized (text) as polygon, but has %d vertices", primitive.mapObject->id >> 1, primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
         return;
     }
     if(!primitive.mapObject->isClosedFigure())
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized (text) as polygon, but is not closed", primitive.mapObject->id >> 1);
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized (text) as polygon, but is not closed", primitive.mapObject->id >> 1, primitive.mapObject->id >> 1);
         return;
     }
     if(!primitive.mapObject->isClosedFigure(true))
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized (text) as polygon, but is not closed (inner)", primitive.mapObject->id >> 1);
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized (text) as polygon, but is not closed (inner)", primitive.mapObject->id >> 1, primitive.mapObject->id >> 1);
         return;
     }
 
@@ -1785,7 +1786,7 @@ void OsmAnd::Rasterizer_P::collectLineText(
 {
     if(primitive.mapObject->_points31.size() < 2 )
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized (text) as line, but has %d vertices", primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized (text) as line, but has %d vertices", primitive.mapObject->id >> 1, primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
         return;
     }
 
@@ -1868,7 +1869,7 @@ void OsmAnd::Rasterizer_P::collectPointText(
 {
     if(primitive.mapObject->_points31.size() < 1 )
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%llu is rasterized (text) as point, but has %d vertices", primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized (text) as point, but has %d vertices", primitive.mapObject->id >> 1, primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
         return;
     }
 

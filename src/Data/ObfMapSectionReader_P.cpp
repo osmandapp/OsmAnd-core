@@ -1,5 +1,7 @@
 #include "ObfMapSectionReader_P.h"
 
+#include <cinttypes>
+
 #include "ObfReader.h"
 #include "ObfReader_P.h"
 #include "ObfMapSectionInfo.h"
@@ -414,7 +416,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
 
                     if(stringId >= mapObjectsNamesTable.size())
                     {
-                        LogPrintf(LogSeverityLevel::Error, "Data mismatch: string #%d (map object #%llu) not found in string table(%d) in section '%s'", stringId, entry->id, mapObjectsNamesTable.size(), qPrintable(section->name));
+                        LogPrintf(LogSeverityLevel::Error, "Data mismatch: string #%d (map object #%" PRIu64 " (%" PRIi64 ") not found in string table(%d) in section '%s'", stringId, entry->id, entry->id, mapObjectsNamesTable.size(), qPrintable(section->name));
                         itNameEntry.value() = QString::fromLatin1("#%1 NOT FOUND").arg(QString::number(stringId));
                         continue;
                     }
@@ -485,6 +487,11 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
         switch(tgn)
         {
         case 0:
+            if(mapObject && mapObject->points31.isEmpty())
+            {
+                LogPrintf(LogSeverityLevel::Warning, "Empty MapObject #%" PRIu64 "(%" PRIi64 ") detected in section '%s'", mapObject->id, mapObject->id, qPrintable(section->name));
+                mapObject.reset();
+            }
             return;
         case OBF::MapData::kAreaCoordinatesFieldNumber:
         case OBF::MapData::kCoordinatesFieldNumber:
@@ -518,6 +525,13 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                     maxX = qMax(maxX, x);
                     minY = qMin(minY, y);
                     maxY = qMax(maxY, y);
+                }
+                if(points31.isEmpty())
+                {
+                    // Fake that this object is inside bbox
+                    contains = true;
+                    minX = maxX = 0;
+                    minY = maxY = 0;
                 }
                 if(!contains && bbox31)
                     contains = bbox31->contains(minX, minY) && bbox31->contains(maxX, maxY);
