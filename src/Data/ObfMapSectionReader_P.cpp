@@ -507,13 +507,10 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                     py = y;
                     if(!contains && bbox31)
                         contains = bbox31->contains(x, y);
-                    if(!contains)
-                    {
-                        minX = qMin(minX, x);
-                        maxX = qMax(maxX, x);
-                        minY = qMin(minY, y);
-                        maxY = qMax(maxY, y);
-                    }
+                    minX = qMin(minX, x);
+                    maxX = qMax(maxX, x);
+                    minY = qMin(minY, y);
+                    maxY = qMax(maxY, y);
                 }
                 if(!contains && bbox31)
                     contains = bbox31->contains(minX, minY) && bbox31->contains(maxX, maxY);
@@ -531,8 +528,10 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 mapObject->_points31 = points31;
                 mapObject->_bbox31.left = minX;
                 mapObject->_bbox31.right = maxX;
-                mapObject->_bbox31.top = maxY;
-                mapObject->_bbox31.bottom = minY;
+                mapObject->_bbox31.top = minY;
+                mapObject->_bbox31.bottom = maxY;
+                assert(mapObject->_bbox31.right >= mapObject->_bbox31.left);
+                assert(mapObject->_bbox31.bottom >= mapObject->_bbox31.top);
             }
             break;
         case OBF::MapData::kPolygonInnerCoordinatesFieldNumber:
