@@ -203,8 +203,8 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
     // Calculate output size in pixels
     const auto tileWidth = OsmAnd::Utilities::getTileNumberX(cfg.zoom, cfg.bbox.right) - OsmAnd::Utilities::getTileNumberX(cfg.zoom, cfg.bbox.left);
     const auto tileHeight = OsmAnd::Utilities::getTileNumberY(cfg.zoom, cfg.bbox.bottom) - OsmAnd::Utilities::getTileNumberY(cfg.zoom, cfg.bbox.top);
-    const auto pixelWidth = static_cast<int32_t>(tileWidth * cfg.tileSide);
-    const auto pixelHeight = static_cast<int32_t>(tileHeight * cfg.tileSide);
+    const auto pixelWidth = qCeil(tileWidth * cfg.tileSide);
+    const auto pixelHeight = qCeil(tileHeight * cfg.tileSide);
     output << xT("Will rasterize ") << mapObjects.count() << xT(" objects onto ") << pixelWidth << xT("x") << pixelHeight << xT(" bitmap") << std::endl;
 
     // Allocate render target
