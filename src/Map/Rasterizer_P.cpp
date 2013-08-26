@@ -1086,7 +1086,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
         mapObject->_points31.push_back(PointI(context._area31.right, context._area31.top));
         mapObject->_points31.push_back(PointI(context._area31.right, context._area31.bottom));
         mapObject->_points31.push_back(PointI(context._area31.left, context._area31.bottom));
-        mapObject->_points31.push_back(PointI(context._area31.left, context._area31.top));
+        mapObject->_points31.push_back(mapObject->_points31.first());
 
         mapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline")));
         mapObject->_id = osmId;
