@@ -414,7 +414,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
 
                     if(stringId >= mapObjectsNamesTable.size())
                     {
-                        LogPrintf(LogSeverityLevel::Error, "Data mismatch: string #%d not found in string table(%d) in section '%s'", stringId, mapObjectsNamesTable.size(), qPrintable(section->name));
+                        LogPrintf(LogSeverityLevel::Error, "Data mismatch: string #%d (map object #%llu) not found in string table(%d) in section '%s'", stringId, entry->id, mapObjectsNamesTable.size(), qPrintable(section->name));
                         itNameEntry.value() = QString::fromLatin1("#%1 NOT FOUND").arg(QString::number(stringId));
                         continue;
                     }
