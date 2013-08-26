@@ -6,6 +6,7 @@
 #include "ObfMapSectionInfo_P.h"
 #include "ObfReaderUtilities.h"
 #include "MapObject.h"
+#include "Logging.h"
 #include "Utilities.h"
 
 #include "OBF.pb.h"
@@ -411,6 +412,12 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                     stringId |= (encodedId.at(1 + 2).unicode() & 0xff) << 8*2;
                     stringId |= (encodedId.at(1 + 3).unicode() & 0xff) << 8*3;
 
+                    if(stringId >= mapObjectsNamesTable.size())
+                    {
+                        LogPrintf(LogSeverityLevel::Error, "Data mismatch: string #%d not found in string table(%d) in section '%s'", stringId, mapObjectsNamesTable.size(), qPrintable(section->name));
+                        itNameEntry.value() = QString::fromLatin1("#%1 NOT FOUND").arg(QString::number(stringId));
+                        continue;
+                    }
                     itNameEntry.value() = mapObjectsNamesTable[stringId];
                 }
 
