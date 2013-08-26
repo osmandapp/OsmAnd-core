@@ -49,7 +49,7 @@ namespace OsmAnd {
         ZoomLevel _maxZoom;
         AreaI _area31;
 
-        uint32_t _boxesOffset;
+        uint32_t _boxesInnerOffset;
     public:
         virtual ~ObfMapSectionLevel();
 

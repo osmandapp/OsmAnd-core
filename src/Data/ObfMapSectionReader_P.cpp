@@ -46,9 +46,9 @@ void OsmAnd::ObfMapSectionReader_P::read(
                 auto offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(length);
                 std::shared_ptr<ObfMapSectionLevel> levelRoot(new ObfMapSectionLevel());
-                readMapLevelHeader(reader, section, levelRoot);
                 levelRoot->_length = length;
                 levelRoot->_offset = offset;
+                readMapLevelHeader(reader, section, levelRoot);
                 section->_levels.push_back(levelRoot);
                 cis->PopLimit(oldLimit);
             }
@@ -68,8 +68,8 @@ void OsmAnd::ObfMapSectionReader_P::readMapLevelHeader(
 
     for(;;)
     {
-        auto lastTagOffset = cis->CurrentPosition();
-        auto tag = cis->ReadTag();
+        const auto tagPos = cis->CurrentPosition();
+        const auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
@@ -95,7 +95,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapLevelHeader(
         case OBF::OsmAndMapIndex_MapRootLevel::kBoxesFieldNumber:
             {
                 // Save boxes offset
-                level->_boxesOffset = lastTagOffset;
+                level->_boxesInnerOffset = tagPos - level->_offset;
 
                 // Skip reading boxes and surely, following blocks
                 cis->Skip(cis->BytesUntilLimit());
@@ -676,9 +676,10 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             continue;
 
         // If there are no tree nodes in map level, it means they are not loaded
-        QList< std::shared_ptr<LevelTreeNode> > cachedTreeNodes;//TODO: these should be cached somehow
+        QList< std::shared_ptr<LevelTreeNode> > cachedTreeNodes;//TODO: these should be cached inside level
         cis->Seek(mapLevel->_offset);
         auto oldLimit = cis->PushLimit(mapLevel->_length);
+        cis->Skip(mapLevel->_boxesInnerOffset);
         readMapLevelTreeNodes(reader, section, mapLevel, cachedTreeNodes);
         cis->PopLimit(oldLimit);
 
