@@ -1013,7 +1013,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
 
     if(!brokenPolygons.isEmpty())
     {
-        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Broken polygons found during polygonization of coastlines in area [%d, %d, %d, %d]@%d",
+        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Broken unfixable polygons found during polygonization of coastlines in area [%d, %d, %d, %d]@%d",
             context._area31.top,
             context._area31.left,
             context._area31.bottom,
