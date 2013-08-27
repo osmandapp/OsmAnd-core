@@ -62,8 +62,6 @@ namespace OsmAnd {
     public:
         virtual ~ObfInfo();
 
-        ObfInfo obtainObfInfo() const;
-
         const int& version;
         const uint64_t& creationTimestamp;
         const bool& isBasemap;

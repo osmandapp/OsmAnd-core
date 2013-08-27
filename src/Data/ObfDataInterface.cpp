@@ -15,6 +15,23 @@ OsmAnd::ObfDataInterface::~ObfDataInterface()
 {
 }
 
+void OsmAnd::ObfDataInterface::obtainObfFiles( QList< std::shared_ptr<const ObfFile> >* outFiles /*= nullptr*/, IQueryController* controller /*= nullptr*/ )
+{
+    for(auto itObfReader = _d->readers.begin(); itObfReader != _d->readers.end(); ++itObfReader)
+    {
+        if(controller && controller->isAborted())
+            return;
+
+        const auto& obfReader = *itObfReader;
+
+        // Initialize OBF file
+        obfReader->obtainInfo();
+
+        if(outFiles)
+            outFiles->push_back(obfReader->obfFile);
+    }
+}
+
 void OsmAnd::ObfDataInterface::obtainBasemapPresenceFlag( bool& basemapPresent, IQueryController* controller /*= nullptr*/ )
 {
     basemapPresent = false;
@@ -23,7 +40,6 @@ void OsmAnd::ObfDataInterface::obtainBasemapPresenceFlag( bool& basemapPresent, 
         if(controller && controller->isAborted())
             return;
 
-        // Iterate over all map sections of each OBF reader
         const auto& obfReader = *itObfReader;
         const auto& obfInfo = obfReader->obtainInfo();
         basemapPresent = basemapPresent || obfInfo->isBasemap;
