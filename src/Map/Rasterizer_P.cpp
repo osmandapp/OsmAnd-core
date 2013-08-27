@@ -90,7 +90,7 @@ void OsmAnd::Rasterizer_P::prepareContext(
     }
 
     // Polygonize coastlines
-    bool fillEntireArea = false;
+    bool fillEntireArea = true;
     bool addBasemapCoastlines = true;
     const bool detailedLandData = zoom >= DetailedLandDataZoom && !context._mapObjects.isEmpty();
     if(!context._coastlineObjects.empty())
