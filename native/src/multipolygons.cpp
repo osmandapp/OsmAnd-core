@@ -70,24 +70,25 @@ bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int 
 	if (!showIfThereIncompleted && uncompletedRings.size() > 0) {
 		return false;
 	}
-	bool landFound = false;
-	bool waterFound = false;
+	int landFound = 0;
+	int waterFound = 0;
 	for (int i = 0; i < completedRings.size(); i++) {
 		bool clockwise = isClockwiseWay(completedRings[i]);
 		MapDataObject* o = new MapDataObject();
 		o->points = completedRings[i];
 		if (clockwise) {
-			waterFound = true;
+			waterFound ++;
 			o->types.push_back(tag_value("natural", "coastline"));
 		} else {
-		 	landFound = true;
+		 	landFound ++;
 			o->types.push_back(tag_value("natural", "land"));
 		}
 		o->id = dbId;
 		o->area = true;
 		res.push_back(o);
 	}
-
+	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,  "Islands %d, closed water %d, coastline touches screen %d",
+			landFound, waterFound, coastlineCrossScreen);
 	if (!waterFound && !coastlineCrossScreen) {
 		// add complete water tile
 		MapDataObject* o = new MapDataObject();
@@ -98,7 +99,6 @@ bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int 
 		o->points.push_back(int_pair(leftX, topY));
 		o->id = dbId;
 		o->types.push_back(tag_value("natural", "coastline"));
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error,  "!!! Isolated islands !!!");
 		res.push_back(o);
 
 	}
