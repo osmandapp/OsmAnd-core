@@ -8,11 +8,12 @@ void OsmAnd::Rasterizer::prepareContext(
     const RasterizerEnvironment& env, RasterizerContext& context,
     const AreaI& area31, const ZoomLevel& zoom,
     uint32_t tileSize, float densityFactor,
+    const MapFoundationType& foundation,
     const QList< std::shared_ptr<const OsmAnd::Model::MapObject> >& objects,
     const PointF& tlOriginOffset /*= PointF()*/,
     bool* nothingToRasterize /*= nullptr*/, IQueryController* controller /*= nullptr*/ )
 {
-    Rasterizer_P::prepareContext(*env._d.get(), *context._d.get(), area31, zoom, tileSize, densityFactor, objects, tlOriginOffset, nothingToRasterize, controller);
+    Rasterizer_P::prepareContext(*env._d.get(), *context._d.get(), area31, zoom, tileSize, densityFactor, foundation, objects, tlOriginOffset, nothingToRasterize, controller);
 }
 
 bool OsmAnd::Rasterizer::rasterizeMap(

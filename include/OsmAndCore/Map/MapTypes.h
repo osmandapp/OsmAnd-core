@@ -47,9 +47,11 @@ namespace OsmAnd
 
     STRONG_ENUM(MapFoundationType)
     {
-        Unknown,
+        Undefined = -1,
+
+        Mixed,
         FullLand,
-        FullWater
+        FullWater,
     };
 }
 

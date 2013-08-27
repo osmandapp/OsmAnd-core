@@ -30,6 +30,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Map/MapTypes.h>
 
 namespace OsmAnd {
 
@@ -54,7 +55,7 @@ namespace OsmAnd {
 
         void obtainObfFiles(QList< std::shared_ptr<const ObfFile> >* outFiles = nullptr, IQueryController* controller = nullptr);
         void obtainBasemapPresenceFlag(bool& basemapPresent, IQueryController* controller = nullptr);
-        void obtainMapObjects(QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut, const AreaI& area31, const ZoomLevel& zoom, IQueryController* controller = nullptr);
+        void obtainMapObjects(QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut, MapFoundationType* foundationOut, const AreaI& area31, const ZoomLevel& zoom, IQueryController* controller = nullptr);
         
     friend class OsmAnd::ObfsCollection;
     };

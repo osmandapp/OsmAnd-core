@@ -265,7 +265,8 @@ void OsmAnd::ObfMapSectionReader_P::readMapLevelTreeNodes(
 
 void OsmAnd::ObfMapSectionReader_P::readTreeNode(
     const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
-    const AreaI& parentArea, const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode )
+    const AreaI& parentArea,
+    const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode )
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -329,6 +330,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNode(
 void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
     const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
     const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode,
+    MapFoundationType& foundation,
     QList< std::shared_ptr<ObfMapSectionLevelTreeNode> >* nodesWithData,
     const AreaI* bbox31,
     IQueryController* controller)
@@ -359,6 +361,14 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                     break;
                 }
                 cis->PopLimit(oldLimit);
+
+                if(childNode->_foundation != MapFoundationType::Undefined)
+                {
+                    if(foundation == MapFoundationType::Undefined)
+                        foundation = childNode->_foundation;
+                    else if(foundation != childNode->_foundation)
+                        foundation = MapFoundationType::Mixed;
+                }
                 
                 if(nodesWithData && childNode->_dataOffset > 0)
                     nodesWithData->push_back(childNode);
@@ -366,7 +376,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                 cis->Seek(offset);
                 oldLimit = cis->PushLimit(length);
                 cis->Skip(childNode->_childrenInnerOffset);
-                readTreeNodeChildren(reader, section, childNode, nodesWithData, bbox31, controller);
+                readTreeNodeChildren(reader, section, childNode, foundation, nodesWithData, bbox31, controller);
                 assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
             }
@@ -380,7 +390,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
 
 void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
     const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
-    ObfMapSectionLevelTreeNode* tree,
+    const std::shared_ptr<ObfMapSectionLevelTreeNode>& tree,
     QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut,
     const AreaI* bbox31,
     std::function<bool (const std::shared_ptr<const OsmAnd::Model::MapObject>&)> visitor,
@@ -473,7 +483,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
 
 void OsmAnd::ObfMapSectionReader_P::readMapObject(
     const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
-    ObfMapSectionLevelTreeNode* treeNode,
+    const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode,
     uint64_t baseId,
     std::shared_ptr<OsmAnd::Model::MapObject>& mapObject,
     const AreaI* bbox31)
@@ -664,10 +674,10 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
 
 void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
-    ZoomLevel zoom, const AreaI* bbox31 /*= nullptr*/,
-    QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut /*= nullptr*/,
-    std::function<bool (const std::shared_ptr<const OsmAnd::Model::MapObject>&)> visitor /*= nullptr*/,
-    IQueryController* controller /*= nullptr*/)
+    ZoomLevel zoom, const AreaI* bbox31,
+    QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut, MapFoundationType* foundationOut,
+    std::function<bool (const std::shared_ptr<const OsmAnd::Model::MapObject>&)> visitor,
+    IQueryController* controller)
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -685,6 +695,9 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
         }
     }
     
+    auto foundation = MapFoundationType::Undefined;
+    if(foundationOut)
+        foundation = *foundationOut;
     for(auto itMapLevel = section->_levels.begin(); itMapLevel != section->_levels.end(); ++itMapLevel)
     {
         const auto& mapLevel = *itMapLevel;
@@ -711,20 +724,28 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
         }
         
         QList< std::shared_ptr<ObfMapSectionLevelTreeNode> > treeNodesWithData;
-        for(auto itTreeNode = mapLevel->_d->_rootNodes->nodes.begin(); itTreeNode != mapLevel->_d->_rootNodes->nodes.end(); ++itTreeNode)
+        for(auto itRootNode = mapLevel->_d->_rootNodes->nodes.begin(); itRootNode != mapLevel->_d->_rootNodes->nodes.end(); ++itRootNode)
         {
-            const auto& treeNode = *itTreeNode;
+            const auto& rootNode = *itRootNode;
 
-            if(bbox31 && !bbox31->intersects(treeNode->_area31))
+            if(bbox31 && !bbox31->intersects(rootNode->_area31))
                 continue;
 
-            if(treeNode->_dataOffset > 0)
-                treeNodesWithData.push_back(treeNode);
+            if(rootNode->_foundation != MapFoundationType::Undefined)
+            {
+                if(foundation == MapFoundationType::Undefined)
+                    foundation = rootNode->_foundation;
+                else if(foundation != rootNode->_foundation)
+                    foundation = MapFoundationType::Mixed;
+            }
 
-            cis->Seek(treeNode->_offset);
-            auto oldLimit = cis->PushLimit(treeNode->_length);
-            cis->Skip(treeNode->_childrenInnerOffset);
-            readTreeNodeChildren(reader, section, treeNode, &treeNodesWithData, bbox31, controller);
+            if(rootNode->_dataOffset > 0)
+                treeNodesWithData.push_back(rootNode);
+
+            cis->Seek(rootNode->_offset);
+            auto oldLimit = cis->PushLimit(rootNode->_length);
+            cis->Skip(rootNode->_childrenInnerOffset);
+            readTreeNodeChildren(reader, section, rootNode, foundation, &treeNodesWithData, bbox31, controller);
             assert(cis->BytesUntilLimit() == 0);
             cis->PopLimit(oldLimit);
         }
@@ -742,8 +763,11 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             gpb::uint32 length;
             cis->ReadVarint32(&length);
             auto oldLimit = cis->PushLimit(length);
-            readMapObjectsBlock(reader, section, treeNode.get(), resultOut, bbox31, visitor, controller);
+            readMapObjectsBlock(reader, section, treeNode, resultOut, bbox31, visitor, controller);
             cis->PopLimit(oldLimit);
         }
     }
+
+    if(foundationOut)
+        *foundationOut = foundation;
 }

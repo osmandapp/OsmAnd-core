@@ -33,6 +33,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Map/MapTypes.h>
 
 namespace OsmAnd {
 
@@ -188,6 +189,7 @@ namespace OsmAnd {
             const ZoomLevel& zoom,
             const uint32_t& tileSize,
             float densityFactor,
+            const MapFoundationType& foundation,
             const QList< std::shared_ptr<const OsmAnd::Model::MapObject> >& objects,
             const PointF& tlOriginOffset,
             bool* nothingToRasterize,
@@ -196,7 +198,7 @@ namespace OsmAnd {
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
             bool fillBackground,
             SkCanvas& canvas,
-            IQueryController* controller = nullptr);
+            IQueryController* controller);
         /*static void rasterizeText(
             RasterizerEnvironment& context,
             bool fillBackground,

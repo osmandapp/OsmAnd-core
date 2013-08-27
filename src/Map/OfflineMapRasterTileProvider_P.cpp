@@ -72,8 +72,9 @@ void OsmAnd::OfflineMapRasterTileProvider_P::obtainTileDeffered( const TileId& t
         const auto dataRead_Begin = std::chrono::high_resolution_clock::now();
 #endif
         bool basemapAvailable;
+        MapFoundationType tileFoundation;
         dataInterface->obtainBasemapPresenceFlag(basemapAvailable, nullptr);
-        dataInterface->obtainMapObjects(&mapObjects, tileBBox31, zoom, nullptr);
+        dataInterface->obtainMapObjects(&mapObjects, &tileFoundation, tileBBox31, zoom, nullptr);
 #if defined(_DEBUG) || defined(DEBUG)
         const auto dataRead_End = std::chrono::high_resolution_clock::now();
         const std::chrono::duration<float> dataRead_Elapsed = dataRead_End - dataRead_Begin;
@@ -103,7 +104,7 @@ void OsmAnd::OfflineMapRasterTileProvider_P::obtainTileDeffered( const TileId& t
         bool nothingToRasterize = false;
         RasterizerEnvironment rasterizerEnv(pThis->owner->dataProvider->mapStyle, basemapAvailable);
         RasterizerContext rasterizerContext;
-        Rasterizer::prepareContext(rasterizerEnv, rasterizerContext, tileBBox31, zoom, pThis->owner->tileSize, pThis->owner->displayDensity, mapObjects, OsmAnd::PointF(), &nothingToRasterize, nullptr);
+        Rasterizer::prepareContext(rasterizerEnv, rasterizerContext, tileBBox31, zoom, pThis->owner->tileSize, pThis->owner->displayDensity, tileFoundation, mapObjects, OsmAnd::PointF(), &nothingToRasterize, nullptr);
         if(!nothingToRasterize)
             Rasterizer::rasterizeMap(rasterizerEnv, rasterizerContext, true, canvas, nullptr);
 

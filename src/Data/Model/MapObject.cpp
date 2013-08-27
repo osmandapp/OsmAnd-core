@@ -4,7 +4,7 @@
 
 OsmAnd::Model::MapObject::MapObject(const std::shared_ptr<const ObfMapSectionInfo>& section_)
     : _id(std::numeric_limits<uint64_t>::max())
-    , _foundation(MapFoundationType::Unknown)
+    , _foundation(MapFoundationType::Undefined)
     , section(section_)
     , id(_id)
     , isArea(_isArea)

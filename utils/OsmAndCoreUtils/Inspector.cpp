@@ -274,7 +274,7 @@ void printMapDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
     else
     {
         uint32_t mapObjectsCount = 0;
-        OsmAnd::ObfMapSectionReader::loadMapObjects(reader, section, cfg.zoom, &bbox31, nullptr, [&mapObjectsCount](const std::shared_ptr<const OsmAnd::Model::MapObject>& mapObject) -> bool
+        OsmAnd::ObfMapSectionReader::loadMapObjects(reader, section, cfg.zoom, &bbox31, nullptr, nullptr, [&mapObjectsCount](const std::shared_ptr<const OsmAnd::Model::MapObject>& mapObject) -> bool
         {
             mapObjectsCount++;
             return false;

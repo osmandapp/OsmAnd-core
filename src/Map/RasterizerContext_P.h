@@ -63,8 +63,6 @@ namespace OsmAnd {
         double _precomputed31toPixelDivisor;
         PointF _tlOriginOffset;
         AreaF _renderViewport;
-        bool _hasWater;
-        bool _hasLand;
         uint32_t _shadowLevelMin;
         uint32_t _shadowLevelMax;
 

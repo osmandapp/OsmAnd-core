@@ -196,7 +196,8 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
             OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right)
         );
     const auto& obfDI = obfsCollection.obtainDataInterface();
-    obfDI->obtainMapObjects(&mapObjects, bbox31, cfg.zoom, nullptr);
+    OsmAnd::MapFoundationType mapFoundation;
+    obfDI->obtainMapObjects(&mapObjects, &mapFoundation, bbox31, cfg.zoom, nullptr);
     bool basemapAvailable;
     obfDI->obtainBasemapPresenceFlag(basemapAvailable);
     
@@ -223,7 +224,7 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
     // Perform actual rendering
     OsmAnd::RasterizerEnvironment rasterizerEnv(style, basemapAvailable);
     OsmAnd::RasterizerContext rasterizerContext;
-    OsmAnd::Rasterizer::prepareContext(rasterizerEnv, rasterizerContext, bbox31, cfg.zoom, cfg.tileSide, cfg.densityFactor, mapObjects, OsmAnd::PointF(), nullptr);
+    OsmAnd::Rasterizer::prepareContext(rasterizerEnv, rasterizerContext, bbox31, cfg.zoom, cfg.tileSide, cfg.densityFactor, mapFoundation, mapObjects, OsmAnd::PointF(), nullptr);
     if(cfg.drawMap)
         OsmAnd::Rasterizer::rasterizeMap(rasterizerEnv, rasterizerContext, true, canvas, nullptr);
     /*if(cfg.drawText)

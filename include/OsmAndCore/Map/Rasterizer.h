@@ -30,6 +30,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Map/MapTypes.h>
 
 class SkCanvas;
 
@@ -55,6 +56,7 @@ namespace OsmAnd {
             const ZoomLevel& zoom,
             uint32_t tileSize,
             float densityFactor,
+            const MapFoundationType& foundation,
             const QList< std::shared_ptr<const OsmAnd::Model::MapObject> >& objects,
             const PointF& tlOriginOffset = PointF(),
             bool* nothingToRasterize = nullptr,

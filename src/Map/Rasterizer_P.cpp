@@ -32,6 +32,7 @@ OsmAnd::Rasterizer_P::~Rasterizer_P()
 void OsmAnd::Rasterizer_P::prepareContext(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
     const AreaI& area31, const ZoomLevel& zoom, const uint32_t& tileSize, float densityFactor,
+    const MapFoundationType& foundation,
     const QList< std::shared_ptr<const OsmAnd::Model::MapObject> >& objects,
     const PointF& tlOriginOffset, bool* nothingToRasterize,
     IQueryController* controller)
@@ -55,8 +56,6 @@ void OsmAnd::Rasterizer_P::prepareContext(
     context._densityFactor = densityFactor;
 
     // Split input map objects to object, coastline, basemapObjects and basemapCoastline
-    context._hasLand = false;
-    context._hasWater = false;
     for(auto itMapObject = objects.begin(); itMapObject != objects.end(); ++itMapObject)
     {
         if(controller && controller->isAborted())
@@ -64,8 +63,6 @@ void OsmAnd::Rasterizer_P::prepareContext(
 
         const auto& mapObject = *itMapObject;
 
-        context._hasLand = context._hasLand || mapObject->foundation == MapFoundationType::FullLand;
-        context._hasWater = context._hasWater || mapObject->foundation == MapFoundationType::FullWater;
         if(zoom < ZoomOnlyForBasemaps && !mapObject->section->isBasemap)
             continue;
 
@@ -93,9 +90,8 @@ void OsmAnd::Rasterizer_P::prepareContext(
     }
 
     // Polygonize coastlines
+    bool fillEntireArea = false;
     bool addBasemapCoastlines = true;
-        
-    // determine if there are enough objects like land/lake..
     const bool detailedLandData = zoom >= DetailedLandDataZoom && !context._mapObjects.isEmpty();
     if(!context._coastlineObjects.empty())
     {
@@ -104,6 +100,7 @@ void OsmAnd::Rasterizer_P::prepareContext(
             context._triangulatedCoastlineObjects,
             !context._basemapCoastlineObjects.isEmpty(),
             true);
+        fillEntireArea = !coastlinesWereAdded && fillEntireArea;
         addBasemapCoastlines = (!coastlinesWereAdded && !detailedLandData) || zoom <= BasemapZoom;
     }
     else
@@ -117,11 +114,13 @@ void OsmAnd::Rasterizer_P::prepareContext(
             context._triangulatedCoastlineObjects,
             false,
             true);
-        addBasemapCoastlines = !coastlinesWereAdded;
+        fillEntireArea = !coastlinesWereAdded && fillEntireArea;
     }
 
-    if(addBasemapCoastlines)
+    if(fillEntireArea)
     {
+        assert(foundation != MapFoundationType::Mixed && foundation != MapFoundationType::Undefined);
+
         std::shared_ptr<Model::MapObject> bgMapObject(new Model::MapObject(nullptr));
         bgMapObject->_isArea = true;
         bgMapObject->_points31.push_back(PointI(area31.left, area31.top));
@@ -129,9 +128,9 @@ void OsmAnd::Rasterizer_P::prepareContext(
         bgMapObject->_points31.push_back(PointI(area31.right, area31.bottom));
         bgMapObject->_points31.push_back(PointI(area31.left, area31.bottom));
         bgMapObject->_points31.push_back(bgMapObject->_points31.first());
-        if(context._hasWater && !context._hasLand)
+        if(foundation == MapFoundationType::FullWater)
             bgMapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline")));
-        else//TODO: ?if(!context._hasWater && context._hasLand)
+        else if(foundation == MapFoundationType::FullLand)
             bgMapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("land")));
 
         assert(bgMapObject->isClosedFigure());
@@ -1009,6 +1008,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
     if (closedPolygons.isEmpty() && brokenPolygons.isEmpty())
         return false;
 
+    const bool coastlineCrossesBounds = !brokenPolygons.isEmpty();
     if (!brokenPolygons.isEmpty())
         mergeBrokenPolygons(env, context, brokenPolygons, closedPolygons, osmId);
 
@@ -1053,17 +1053,25 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
     if (abortIfBrokenCoastlinesExist && !brokenPolygons.isEmpty())
         return false;
 
-    bool clockwiseFound = false;
+    auto foundation = MapFoundationType::Undefined;
     for(auto itPolygon = closedPolygons.begin(); itPolygon != closedPolygons.end(); ++itPolygon)
     {
         const auto& polygon = *itPolygon;
 
         bool clockwise = isClockwiseCoastlinePolygon(polygon);
-        clockwiseFound = clockwiseFound || clockwise;
 
         std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr));
         mapObject->_points31 = polygon;
-        mapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), clockwise ? QString::fromLatin1("coastline") : QString::fromLatin1("land")));
+        if(clockwise)
+        {
+            mapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline")));
+            foundation = MapFoundationType::FullWater;
+        }
+        else
+        {
+            mapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("land")));
+            foundation = MapFoundationType::FullLand;
+        }
         mapObject->_id = osmId;
         mapObject->_isArea = true;
 
@@ -1071,7 +1079,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
         outVectorized.push_back(mapObject);
     }
 
-    if (!clockwiseFound && brokenPolygons.isEmpty())
+    if(foundation != MapFoundationType::FullWater && coastlineCrossesBounds)
     {
         OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Isolated islands found during polygonization of coastlines in area [%d, %d, %d, %d]@%d",
             context._area31.top,
