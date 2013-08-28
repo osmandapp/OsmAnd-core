@@ -544,7 +544,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                     minY = maxY = 0;
                 }
                 if(!contains && bbox31)
-                    contains = bbox31->contains(minX, minY) && bbox31->contains(maxX, maxY);
+                    contains = bbox31->intersects(minY, minX, maxY, maxX);
                 cis->PopLimit(oldLimit);
                 if(!contains)
                 {
