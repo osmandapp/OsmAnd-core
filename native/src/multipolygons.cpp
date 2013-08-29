@@ -7,6 +7,11 @@
 // returns true if coastlines were added!
 bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int rightX, int bottomY, int topY, int zoom,
 		bool showIfThereIncompleted, bool addDebugIncompleted, std::vector<MapDataObject*>& res) {
+	// try out (quite dirty fix to align boundaries to grid)
+	leftX = (leftX >> 5) << 5;
+	rightX = (rightX >> 5) << 5;
+	
+	
 	std::vector<coordinates> completedRings;
 	std::vector<coordinates > uncompletedRings;
 	std::vector<MapDataObject*>::iterator val = coastLines.begin();
