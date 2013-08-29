@@ -10,6 +10,8 @@ bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int 
 	// try out (quite dirty fix to align boundaries to grid)
 	leftX = (leftX >> 5) << 5;
 	rightX = (rightX >> 5) << 5;
+	bottomY = (bottomY >> 5) << 5;
+	topY = (topY >> 5) << 5;
 	
 	
 	std::vector<coordinates> completedRings;
