@@ -263,6 +263,24 @@ namespace OsmAnd
         {
             return Point<T>(left + width() / 2, bottom + height() / 2);
         }
+
+        AreaT& enlargeToInclude(const PointT& p)
+        {
+            top = std::min(top, p.y);
+            left = std::min(left, p.x);
+            bottom = std::max(bottom, p.y);
+            right = std::max(right, p.x);
+
+            return *this;
+        }
+
+        static AreaT largest()
+        {
+            AreaT res;
+            res.top = res.left = std::numeric_limits<T>::min();
+            res.bottom = res.right = std::numeric_limits<T>::max();
+            return res;
+        }
     };
 
     typedef Point<double> PointD;
