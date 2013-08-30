@@ -58,6 +58,9 @@ namespace OsmAnd
     };
 
     template<typename T>
+    struct Area;
+
+    template<typename T>
     struct Point
     {
         typedef Point<T> PointT;
@@ -140,6 +143,8 @@ namespace OsmAnd
         {
             return a == b;
         }
+
+    friend struct OsmAnd::Area<T>;
     };
 
     template<typename T>
@@ -262,6 +267,15 @@ namespace OsmAnd
         Point<T> center() const
         {
             return Point<T>(left + width() / 2, bottom + height() / 2);
+        }
+
+        bool isOnEdge(const PointT& p) const
+        {
+            return
+                PointT::equal(p.x, left) ||
+                PointT::equal(p.x, right) ||
+                PointT::equal(p.y, top) ||
+                PointT::equal(p.y, bottom);
         }
 
         AreaT& enlargeToInclude(const PointT& p)
