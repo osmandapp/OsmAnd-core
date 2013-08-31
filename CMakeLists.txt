@@ -156,6 +156,8 @@ set(OsmAndCore_resources_bundle
 if(CMAKE_HOST_WIN32 AND NOT CYGWIN)
 	add_custom_command(OUTPUT ${OsmAndCore_resources_bundle}
 		COMMAND bash ARGS --login "${CMAKE_CURRENT_LIST_DIR}/embed-resources.sh"
+		MAIN_DEPENDENCY
+			"${CMAKE_CURRENT_LIST_DIR}/embed-resources.list"
 		DEPENDS
 			${OsmAndCore_resources}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
@@ -163,6 +165,8 @@ if(CMAKE_HOST_WIN32 AND NOT CYGWIN)
 else()
 	add_custom_command(OUTPUT ${OsmAndCore_resources_bundle}
 		COMMAND "${CMAKE_CURRENT_LIST_DIR}/embed-resources.sh"
+		MAIN_DEPENDENCY
+			"${CMAKE_CURRENT_LIST_DIR}/embed-resources.list"
 		DEPENDS
 			${OsmAndCore_resources}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
