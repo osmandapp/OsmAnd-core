@@ -102,9 +102,9 @@ void OsmAnd::OfflineMapRasterTileProvider_P::obtainTileDeffered( const TileId& t
 
         // Perform actual rendering
         bool nothingToRasterize = false;
-        RasterizerEnvironment rasterizerEnv(pThis->owner->dataProvider->mapStyle, basemapAvailable);
+        RasterizerEnvironment rasterizerEnv(pThis->owner->dataProvider->mapStyle, basemapAvailable, pThis->owner->displayDensity);
         RasterizerContext rasterizerContext;
-        Rasterizer::prepareContext(rasterizerEnv, rasterizerContext, tileBBox31, zoom, pThis->owner->tileSize, pThis->owner->displayDensity, tileFoundation, mapObjects, OsmAnd::PointF(), &nothingToRasterize, nullptr);
+        Rasterizer::prepareContext(rasterizerEnv, rasterizerContext, tileBBox31, zoom, pThis->owner->tileSize, tileFoundation, mapObjects, OsmAnd::PointF(), &nothingToRasterize, nullptr);
         if(!nothingToRasterize)
             Rasterizer::rasterizeMap(rasterizerEnv, rasterizerContext, true, canvas, nullptr);
 

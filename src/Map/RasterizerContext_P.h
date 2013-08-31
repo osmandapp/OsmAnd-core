@@ -59,7 +59,6 @@ namespace OsmAnd {
         ZoomLevel _zoom;
         double _tileDivisor;
         uint32_t _tileSize;
-        float _densityFactor;
         double _precomputed31toPixelDivisor;
         PointF _tlOriginOffset;
         AreaF _renderViewport;

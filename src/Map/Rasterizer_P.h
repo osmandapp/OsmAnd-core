@@ -188,7 +188,6 @@ namespace OsmAnd {
             const AreaI& area31,
             const ZoomLevel& zoom,
             const uint32_t& tileSize,
-            float densityFactor,
             const MapFoundationType& foundation,
             const QList< std::shared_ptr<const OsmAnd::Model::MapObject> >& objects,
             const PointF& tlOriginOffset,

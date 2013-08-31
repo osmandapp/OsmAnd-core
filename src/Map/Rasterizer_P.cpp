@@ -20,6 +20,7 @@
 #include <SkBlurDrawLooper.h>
 #include <SkColorFilter.h>
 #include <SkDashPathEffect.h>
+#include <SkBitmapProcShader.h>
 
 OsmAnd::Rasterizer_P::Rasterizer_P()
 {
@@ -31,7 +32,7 @@ OsmAnd::Rasterizer_P::~Rasterizer_P()
 
 void OsmAnd::Rasterizer_P::prepareContext(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    const AreaI& area31, const ZoomLevel& zoom, const uint32_t& tileSize, float densityFactor,
+    const AreaI& area31, const ZoomLevel& zoom, const uint32_t& tileSize,
     const MapFoundationType& foundation,
     const QList< std::shared_ptr<const OsmAnd::Model::MapObject> >& objects,
     const PointF& tlOriginOffset, bool* nothingToRasterize,
@@ -53,7 +54,6 @@ void OsmAnd::Rasterizer_P::prepareContext(
     context._zoom = zoom;
     context._area31 = area31;
     context._tileSize = tileSize;
-    context._densityFactor = densityFactor;
 
     // Split input map objects to object, coastline, basemapObjects and basemapCoastline
     for(auto itMapObject = objects.begin(); itMapObject != objects.end(); ++itMapObject)
@@ -345,7 +345,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                     pointPrimitive.objectType = PrimitiveType::Point;
                     auto polygonArea31 = Utilities::polygonArea(mapObject->points31);
                     primitive.zOrder = polygonArea31 / area31toPixelDivisor;
-                    if(primitive.zOrder > PolygonAreaCutoffLowerThreshold * context._densityFactor)
+                    if(primitive.zOrder > PolygonAreaCutoffLowerThreshold * env.owner->density)
                     {
                         context._polygons.push_back(primitive);
                         context._points.push_back(pointPrimitive);
@@ -476,7 +476,7 @@ void OsmAnd::Rasterizer_P::rasterizeMapPrimitives(
 
         if(type == Polygons)
         {
-            if (primitive.zOrder < context._polygonMinSizeToDisplay * context._densityFactor)
+            if (primitive.zOrder < context._polygonMinSizeToDisplay * env.owner->density)
                 return;
 
             rasterizePolygon(env, context, canvas, primitive);
@@ -554,7 +554,7 @@ bool OsmAnd::Rasterizer_P::updatePaint(
         context._mapPaint.setShader(nullptr);
         context._mapPaint.setLooper(nullptr);
         context._mapPaint.setStyle(SkPaint::kStroke_Style);
-        context._mapPaint.setStrokeWidth(stroke * context._densityFactor);
+        context._mapPaint.setStrokeWidth(stroke * env.owner->density);
 
         QString cap;
         ok = evaluator.getStringValue(valueSet.cap, cap);
@@ -592,12 +592,11 @@ bool OsmAnd::Rasterizer_P::updatePaint(
         ok = evaluator.getStringValue(MapStyle::builtinValueDefinitions.OUTPUT_SHADER, shader);
         if(ok && !shader.isEmpty())
         {
-            OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Rasterizer_P NEEDS '%s' FILL TEXTURE!!!!!", qPrintable(shader));
-            //assert(false);
-            //int i = 5;
-            /*TODO:SkBitmap* bmp = getCachedBitmap(rc, shader);
-            if (bmp != NULL)
-            paint->setShader(new SkBitmapProcShader(*bmp, SkShader::kRepeat_TileMode, SkShader::kRepeat_TileMode))->unref();*/
+            SkBitmapProcShader* shaderObj = nullptr;
+            if(env.obtainBitmapShader(shader, shaderObj) && shaderObj)
+            {
+                context._mapPaint.setShader(static_cast<SkShader*>(shaderObj));
+            }
         }
     }
 
@@ -614,7 +613,7 @@ bool OsmAnd::Rasterizer_P::updatePaint(
             shadowRadius = 0;
 
         if(shadowRadius > 0)
-            context._mapPaint.setLooper(new SkBlurDrawLooper(shadowRadius * context._densityFactor, 0, 0, shadowColor))->unref();
+            context._mapPaint.setLooper(new SkBlurDrawLooper(shadowRadius * env.owner->density, 0, 0, shadowColor))->unref();
     }
 
     return true;
@@ -907,7 +906,7 @@ void OsmAnd::Rasterizer_P::rasterizeLineShadow(
     {
         // simply draw shadow? difference from option 3 ?
         // paint->setColor(0xffffffff);
-        context._mapPaint.setLooper(new SkBlurDrawLooper(shadowRadius * context._densityFactor, 0, 0, shadowColor))->unref();
+        context._mapPaint.setLooper(new SkBlurDrawLooper(shadowRadius * env.owner->density, 0, 0, shadowColor))->unref();
         canvas.drawPath(path, context._mapPaint);
     }
 
@@ -915,7 +914,7 @@ void OsmAnd::Rasterizer_P::rasterizeLineShadow(
     if (context._shadowRenderingMode == 3 && shadowRadius > 0)
     {
         context._mapPaint.setLooper(nullptr);
-        context._mapPaint.setStrokeWidth((context._mapPaint.getStrokeWidth() + shadowRadius * 2) * context._densityFactor);
+        context._mapPaint.setStrokeWidth((context._mapPaint.getStrokeWidth() + shadowRadius * 2) * env.owner->density);
         //		paint->setColor(0xffbababa);
         context._mapPaint.setColorFilter(SkColorFilter::CreateModeFilter(shadowColor, SkXfermode::kSrcIn_Mode))->unref();
         //		paint->setColor(shadowColor);
@@ -1703,7 +1702,7 @@ void OsmAnd::Rasterizer_P::collectPrimitivesTexts(
 
         if(type == Polygons)
         {
-            if (primitive.zOrder < context._polygonMinSizeToDisplay * context._densityFactor)
+            if (primitive.zOrder < context._polygonMinSizeToDisplay * env.owner->density)
                 return;
 
             collectPolygonText(env, context, primitive);

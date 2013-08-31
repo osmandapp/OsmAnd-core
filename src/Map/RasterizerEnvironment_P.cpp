@@ -4,9 +4,14 @@
 #include <limits>
 
 #include <SkDashPathEffect.h>
+#include <SkBitmapProcShader.h>
+#include <SkImageDecoder.h>
+#include <SkStream.h>
 
 #include "MapStyleEvaluator.h"
+#include "EmbeddedResources.h"
 #include "Utilities.h"
+#include "Logging.h"
 
 OsmAnd::RasterizerEnvironment_P::RasterizerEnvironment_P( RasterizerEnvironment* owner_ )
     : owner(owner_)
@@ -31,6 +36,13 @@ OsmAnd::RasterizerEnvironment_P::RasterizerEnvironment_P( RasterizerEnvironment*
 
 OsmAnd::RasterizerEnvironment_P::~RasterizerEnvironment_P()
 {
+    {
+        QMutexLocker scopedLock(&_bitmapShadersMutex);
+
+        for(auto itShaderEntry = _bitmapShaders.begin(); itShaderEntry != _bitmapShaders.end(); ++itShaderEntry)
+            (*itShaderEntry)->unref();
+        _bitmapShaders.clear();
+    }
 }
 
 void OsmAnd::RasterizerEnvironment_P::initializeOneWayPaint( SkPaint& paint )
@@ -163,4 +175,30 @@ void OsmAnd::RasterizerEnvironment_P::applyTo( MapStyleEvaluator& evaluator ) co
     {
         evaluator.setValue(itSetting.key(), *itSetting);
     }
+}
+
+bool OsmAnd::RasterizerEnvironment_P::obtainBitmapShader( const QString& name, SkBitmapProcShader* &outShader ) const
+{
+    //TODO: I'm not sure that it should be const_cast, like that...
+    QMutexLocker scopedLock(&const_cast<RasterizerEnvironment_P*>(this)->_bitmapShadersMutex);
+
+    auto itShader = _bitmapShaders.find(name);
+    if(itShader == _bitmapShaders.end())
+    {
+        // Get data from embedded resources
+        auto data = EmbeddedResources::decompressResource(QString::fromLatin1("map/shaders-%1/%2.png").arg(QString::number(owner->density, 'f', 1)).arg(name));
+
+        // Decode data
+        SkBitmap shaderBitmap;
+        SkMemoryStream dataStream(data.constData(), data.length(), false);
+        if(!SkImageDecoder::DecodeStream(&dataStream, &shaderBitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
+            return false;
+
+        // Create shader from that bitmap
+        auto shader = new SkBitmapProcShader(shaderBitmap, SkShader::kRepeat_TileMode, SkShader::kRepeat_TileMode);
+        itShader = const_cast<RasterizerEnvironment_P*>(this)->_bitmapShaders.insert(name, shader);
+    }
+
+    outShader = *itShader;
+    return true;
 }

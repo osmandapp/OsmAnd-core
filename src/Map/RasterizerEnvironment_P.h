@@ -28,15 +28,18 @@
 
 #include <QMap>
 #include <QVector>
+#include <QHash>
+#include <QMutex>
 
 #include <SkPaint.h>
-#include <SkPathEffect.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/Map/MapStyle.h>
 #include <OsmAndCore/Map/MapStyleRule.h>
 #include <OsmAndCore/Map/Rasterizer.h>
 #include <OsmAndCore/CommonTypes.h>
+
+class SkBitmapProcShader;
 
 namespace OsmAnd {
 
@@ -72,6 +75,9 @@ namespace OsmAnd {
         QVector< SkPaint > _oneWayPaints;
         QVector< SkPaint > _reverseOneWayPaints;
         static void initializeOneWayPaint(SkPaint& paint);
+
+        QMutex _bitmapShadersMutex;
+        QHash< QString, SkBitmapProcShader* > _bitmapShaders;
     public:
         virtual ~RasterizerEnvironment_P();
 
@@ -98,6 +104,8 @@ namespace OsmAnd {
         const QVector< SkPaint >& reverseOneWayPaints;
 
         void applyTo(MapStyleEvaluator& evaluator) const;
+
+        bool obtainBitmapShader(const QString& name, SkBitmapProcShader* &outShader) const;
 
     friend class OsmAnd::RasterizerEnvironment;
     };
