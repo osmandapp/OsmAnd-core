@@ -1077,7 +1077,8 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
     if (abortIfBrokenCoastlinesExist && !brokenPolygons.isEmpty())
         return false;
 
-    auto foundation = MapFoundationType::Undefined;
+    auto fullWaterObjects = 0u;
+    auto fullLandObjects = 0u;
     for(auto itPolygon = closedPolygons.begin(); itPolygon != closedPolygons.end(); ++itPolygon)
     {
         const auto& polygon = *itPolygon;
@@ -1089,12 +1090,12 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
         if(clockwise)
         {
             mapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline")));
-            foundation = MapFoundationType::FullWater;
+            fullWaterObjects++;
         }
         else
         {
             mapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("land")));
-            foundation = MapFoundationType::FullLand;
+            fullLandObjects++;
         }
         mapObject->_id = osmId;
         mapObject->_isArea = true;
@@ -1103,7 +1104,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
         outVectorized.push_back(mapObject);
     }
 
-    if(foundation != MapFoundationType::FullWater && coastlineCrossesBounds)
+    if(fullWaterObjects == 0u && !coastlineCrossesBounds)
     {
         OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Isolated islands found during polygonization of coastlines in area [%d, %d, %d, %d]@%d",
             context._area31.top,
