@@ -127,11 +127,11 @@ void OsmAnd::ObfMapSectionReader_P::readRules(
             {
                 auto free = rules->_decodingRules.size() * 2 + 1;
                 rules->_coastlineBrokenEncodingType = free++;
-                createRule(rules, 0, rules->_coastlineBrokenEncodingType, "natural", "coastline_broken");
+                createRule(rules, 0, rules->_coastlineBrokenEncodingType, QString::fromLatin1("natural"), QString::fromLatin1("coastline_broken"));
                 if(rules->_landEncodingType == -1)
                 {
                     rules->_landEncodingType = free++;
-                    createRule(rules, 0, rules->_landEncodingType, "natural", "land");
+                    createRule(rules, 0, rules->_landEncodingType, QString::fromLatin1("natural"), QString::fromLatin1("land"));
                 }
             }
             return;
@@ -426,8 +426,12 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
 
                     if(stringId >= mapObjectsNamesTable.size())
                     {
-                        LogPrintf(LogSeverityLevel::Error, "Data mismatch: string #%d (map object #%" PRIu64 " (%" PRIi64 ") not found in string table(%d) in section '%s'", stringId, entry->id, entry->id, mapObjectsNamesTable.size(), qPrintable(section->name));
-                        itNameEntry.value() = QString::fromLatin1("#%1 NOT FOUND").arg(QString::number(stringId));
+                        LogPrintf(LogSeverityLevel::Error,
+                            "Data mismatch: string #%d (map object #%" PRIu64 " (%" PRIi64 ") not found in string table(%d) in section '%s'",
+                            stringId,
+                            entry->id >> 1, static_cast<int64_t>(entry->id) / 2,
+                            mapObjectsNamesTable.size(), qPrintable(section->name));
+                        itNameEntry.value() = QString::fromLatin1("#%1 NOT FOUND").arg(stringId);
                         continue;
                     }
                     itNameEntry.value() = mapObjectsNamesTable[stringId];
@@ -499,7 +503,10 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
         case 0:
             if(mapObject && mapObject->points31.isEmpty())
             {
-                LogPrintf(LogSeverityLevel::Warning, "Empty MapObject #%" PRIu64 "(%" PRIi64 ") detected in section '%s'", mapObject->id, mapObject->id, qPrintable(section->name));
+                LogPrintf(LogSeverityLevel::Warning,
+                    "Empty MapObject #%" PRIu64 "(%" PRIi64 ") detected in section '%s'",
+                    mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2,
+                    qPrintable(section->name));
                 mapObject.reset();
             }
             return;
@@ -510,41 +517,43 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
-                auto px = treeNode->_area31.left & MaskToRead;
-                auto py = treeNode->_area31.top & MaskToRead;
-                auto minX = std::numeric_limits<int32_t>::max();
-                auto maxX = 0;
-                auto minY = std::numeric_limits<int32_t>::max();
-                auto maxY = 0;
+
+                PointI p;
+                p.x = treeNode->_area31.left & MaskToRead;
+                p.y = treeNode->_area31.top & MaskToRead;
+
+                AreaI objectBBox;
+                objectBBox.top = objectBBox.left = std::numeric_limits<int32_t>::max();
+                objectBBox.bottom = objectBBox.right = 0;
+
                 bool contains = (bbox31 == nullptr);
                 while(cis->BytesUntilLimit() > 0)
                 {
-                    //NOTE: Here was 'auto', but Apple LLVM didn't like it
-                    int32_t dx = (ObfReaderUtilities::readSInt32(cis) << ShiftCoordinates);
-                    int32_t x = dx + px;
-                    int32_t dy = (ObfReaderUtilities::readSInt32(cis) << ShiftCoordinates);
-                    int32_t y = dy + py;
+                    PointI d;
+                    d.x = (ObfReaderUtilities::readSInt32(cis) << ShiftCoordinates);
+                    d.y = (ObfReaderUtilities::readSInt32(cis) << ShiftCoordinates);
 
-                    points31.push_back(PointI(x, y));
-                    
-                    px = x;
-                    py = y;
+                    p += d;
+                    points31.push_back(p);
+
                     if(!contains && bbox31)
-                        contains = bbox31->contains(x, y);
-                    minX = qMin(minX, x);
-                    maxX = qMax(maxX, x);
-                    minY = qMin(minY, y);
-                    maxY = qMax(maxY, y);
+                        contains = bbox31->contains(p);
+                    objectBBox.enlargeToInclude(p);
                 }
                 if(points31.isEmpty())
                 {
                     // Fake that this object is inside bbox
                     contains = true;
-                    minX = maxX = 0;
-                    minY = maxY = 0;
+                    objectBBox = treeNode->_area31;
                 }
                 if(!contains && bbox31)
-                    contains = bbox31->intersects(minY, minX, maxY, maxX);
+                {
+                    contains = bbox31->intersects(objectBBox);
+                    if(contains)
+                    {
+                        //TODO: Check by per-line intersection, 'contains' may be cancelled
+                    }
+                }
                 cis->PopLimit(oldLimit);
                 if(!contains)
                 {
@@ -557,10 +566,11 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                     mapObject.reset(new OsmAnd::Model::MapObject(section));
                 mapObject->_isArea = (tgn == OBF::MapData::kAreaCoordinatesFieldNumber);
                 mapObject->_points31 = points31;
-                mapObject->_bbox31.left = minX;
-                mapObject->_bbox31.right = maxX;
-                mapObject->_bbox31.top = minY;
-                mapObject->_bbox31.bottom = maxY;
+                mapObject->_bbox31 = objectBBox;
+                assert(treeNode->_area31.top - mapObject->_bbox31.top <= 32);
+                assert(treeNode->_area31.left - mapObject->_bbox31.left <= 32);
+                assert(mapObject->_bbox31.bottom - treeNode->_area31.bottom <= 1);
+                assert(mapObject->_bbox31.right - treeNode->_area31.right <= 1);
                 assert(mapObject->_bbox31.right >= mapObject->_bbox31.left);
                 assert(mapObject->_bbox31.bottom >= mapObject->_bbox31.top);
             }
