@@ -119,7 +119,7 @@ void OsmAnd::Rasterizer_P::prepareContext(
 
     if(fillEntireArea)
     {
-        assert(foundation != MapFoundationType::Mixed && foundation != MapFoundationType::Undefined);
+        //assert(foundation != MapFoundationType::Mixed && foundation != MapFoundationType::Undefined);
 
         std::shared_ptr<Model::MapObject> bgMapObject(new Model::MapObject(nullptr));
         bgMapObject->_isArea = true;
@@ -132,6 +132,11 @@ void OsmAnd::Rasterizer_P::prepareContext(
             bgMapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline")));
         else if(foundation == MapFoundationType::FullLand)
             bgMapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("land")));
+        else
+        {
+            bgMapObject->_isArea = false;
+            bgMapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline_broken")));
+        }
 
         assert(bgMapObject->isClosedFigure());
         context._triangulatedCoastlineObjects.push_back(bgMapObject);
@@ -315,17 +320,24 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                 {
                     if(mapObject->points31.size() <=2)
                     {
-                        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%" PRIu64 " (%" PRIi64 ") primitives are processed as polygon, but only %d vertices present", mapObject->id >> 1, mapObject->id >> 1, mapObject->points31.size());
+                        OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+                            "Map object #%" PRIu64 " (%" PRIi64 ") primitives are processed as polygon, but only %d vertices present",
+                            mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2,
+                            mapObject->points31.size());
                         continue;
                     }
                     if(!mapObject->isClosedFigure())
                     {
-                        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%" PRIu64 " (%" PRIi64 ") primitives are processed as polygon, but are not closed", mapObject->id >> 1, mapObject->id >> 1);
+                        OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+                            "Map object #%" PRIu64 " (%" PRIi64 ") primitives are processed as polygon, but are not closed",
+                            mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2);
                         continue;
                     }
                     if(!mapObject->isClosedFigure(true))
                     {
-                        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%" PRIu64 " (%" PRIi64 ") primitives are processed as polygon, but are not closed (inner)", mapObject->id >> 1, mapObject->id >> 1);
+                        OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+                            "Map object #%" PRIu64 " (%" PRIi64 ") primitives are processed as polygon, but are not closed (inner)",
+                            mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2);
                         continue;
                     }
 
@@ -633,17 +645,24 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
 {
     if(primitive.mapObject->_points31.size() <=2)
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized as polygon, but has %d vertices", primitive.mapObject->id >> 1, primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+            "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized as polygon, but has %d vertices",
+            primitive.mapObject->id >> 1, static_cast<int64_t>(primitive.mapObject->id) / 2,
+            primitive.mapObject->_points31.size());
         return;
     }
     if(!primitive.mapObject->isClosedFigure())
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized as polygon, but is not closed", primitive.mapObject->id >> 1, primitive.mapObject->id >> 1);
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+            "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized as polygon, but is not closed",
+            primitive.mapObject->id >> 1, static_cast<int64_t>(primitive.mapObject->id) / 2);
         return;
     }
     if(!primitive.mapObject->isClosedFigure(true))
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized as polygon, but is not closed (inner)", primitive.mapObject->id >> 1, primitive.mapObject->id >> 1);
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+            "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized as polygon, but is not closed (inner)",
+            primitive.mapObject->id >> 1, static_cast<int64_t>(primitive.mapObject->id) / 2);
         return;
     }
 
@@ -749,7 +768,10 @@ void OsmAnd::Rasterizer_P::rasterizeLine(
 {
     if(primitive.mapObject->_points31.size() < 2 )
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized as line, but has %d vertices", primitive.mapObject->id >> 1, primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+            "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized as line, but has %d vertices",
+            primitive.mapObject->id >> 1, static_cast<int64_t>(primitive.mapObject->id) / 2,
+            primitive.mapObject->_points31.size());
         return;
     }
 
@@ -972,7 +994,10 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
 
         if(coastline->_points31.size() < 2)
         {
-            OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%" PRIu64 " (%" PRIi64 ") is polygonized as coastline, but has %d vertices", coastline->id >> 1, coastline->id >> 1, coastline->_points31.size());
+            OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+                "Map object #%" PRIu64 " (%" PRIi64 ") is polygonized as coastline, but has %d vertices",
+                coastline->id >> 1, static_cast<int64_t>(coastline->id) / 2,
+                coastline->_points31.size());
             continue;
         }
 
@@ -1088,7 +1113,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
             context._area31.right,
             context._zoom);
 
-        // add complete water tile
+        // Add complete water tile
         std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr));
         mapObject->_points31.push_back(PointI(context._area31.left, context._area31.top));
         mapObject->_points31.push_back(PointI(context._area31.right, context._area31.top));
@@ -1117,12 +1142,19 @@ bool OsmAnd::Rasterizer_P::buildCoastlinePolygonSegment(
 {
     bool lineEnded = false;
 
+    // Align area to 32: this fixes coastlines and specifically Antarctica
+    auto alignedArea31 = context._area31;
+    alignedArea31.top &= ~((1u << 5) - 1);
+    alignedArea31.left &= ~((1u << 5) - 1);
+    alignedArea31.bottom &= ~((1u << 5) - 1);
+    alignedArea31.right &= ~((1u << 5) - 1);
+
     auto point = currentPoint31;
     if (prevInside)
     {
         if (!currentInside)
         {
-            bool hasIntersection = calculateIntersection(currentPoint31, previousPoint31, context._area31, point);
+            bool hasIntersection = calculateIntersection(currentPoint31, previousPoint31, alignedArea31, point);
             if (!hasIntersection)
                 point = previousPoint31;
             segmentPoints.push_back(point);
@@ -1135,7 +1167,7 @@ bool OsmAnd::Rasterizer_P::buildCoastlinePolygonSegment(
     }
     else
     {
-        bool hasIntersection = calculateIntersection(currentPoint31, previousPoint31, context._area31, point);
+        bool hasIntersection = calculateIntersection(currentPoint31, previousPoint31, alignedArea31, point);
         if (currentInside)
         {
             assert(hasIntersection);
@@ -1145,7 +1177,7 @@ bool OsmAnd::Rasterizer_P::buildCoastlinePolygonSegment(
         else if (hasIntersection)
         {
             segmentPoints.push_back(point);
-            calculateIntersection(currentPoint31, point, context._area31, point);
+            calculateIntersection(currentPoint31, point, alignedArea31, point);
             segmentPoints.push_back(point);
             lineEnded = true;
         }
@@ -1313,6 +1345,13 @@ void OsmAnd::Rasterizer_P::mergeBrokenPolygons(
     std::set< QList< QVector< PointI > >::iterator > nonvisitedPolygons;
     QList< QVector< PointI > > fixablePolygons;
 
+    // Align area to 32: this fixes coastlines and specifically Antarctica
+    auto alignedArea31 = context._area31;
+    alignedArea31.top &= ~((1u << 5) - 1);
+    alignedArea31.left &= ~((1u << 5) - 1);
+    alignedArea31.bottom &= ~((1u << 5) - 1);
+    alignedArea31.right &= ~((1u << 5) - 1);
+
     // Check if polygon has been cut by rasterization viewport
     QMutableListIterator< QVector< PointI > > itBrokenPolygon(brokenPolygons);
     while(itBrokenPolygon.hasNext())
@@ -1323,20 +1362,9 @@ void OsmAnd::Rasterizer_P::mergeBrokenPolygons(
         const auto& head = brokenPolygon.first();
         const auto& tail = brokenPolygon.last();
 
-        const bool headCutted =
-            (head.y == context._area31.top) ||
-            (head.x == context._area31.right) ||
-            (head.y == context._area31.bottom) ||
-            (head.x == context._area31.left);
-        const bool tailCutted =
-            (tail.y == context._area31.top) ||
-            (tail.x == context._area31.right) ||
-            (tail.y == context._area31.bottom) ||
-            (tail.x == context._area31.left);
-
         // This multipolygon has not been cut by rasterization viewport, so it's
         // impossible to fix it
-        if (!headCutted || !tailCutted)
+        if (!alignedArea31.isOnEdge(head) || !alignedArea31.isOnEdge(tail))
             continue;
 
         fixablePolygons.push_back(brokenPolygon);
@@ -1371,13 +1399,13 @@ void OsmAnd::Rasterizer_P::mergeBrokenPolygons(
         while (true)
         {
             int tailCutter = Side::Invalid;
-            if (tail.y == context._area31.top)
+            if (tail.y == alignedArea31.top)
                 tailCutter = Side::Top;
-            else if (tail.x == context._area31.right)
+            else if (tail.x == alignedArea31.right)
                 tailCutter = Side::Right;
-            else if (tail.y == context._area31.bottom)
+            else if (tail.y == alignedArea31.bottom)
                 tailCutter = Side::Bottom;
-            else if (tail.x == context._area31.left)
+            else if (tail.x == alignedArea31.left)
                 tailCutter = Side::Left;
             assert(tailCutter != Side::Invalid);
 
@@ -1397,7 +1425,7 @@ void OsmAnd::Rasterizer_P::mergeBrokenPolygons(
                     const auto& bp = polygon1.first();
                     if (side % 4 == Side::Top)
                     {
-                        if (bp.y == context._area31.top && bp.x >= Utilities::sumWithSaturation(tail.x, -EVAL_DELTA))
+                        if (bp.y == alignedArea31.top && bp.x >= Utilities::sumWithSaturation(tail.x, -EVAL_DELTA))
                         {
                             if (mindiff == UNDEFINED_MIN_DIFF || (bp.x - tail.x) <= mindiff)
                             {
@@ -1408,7 +1436,7 @@ void OsmAnd::Rasterizer_P::mergeBrokenPolygons(
                     }
                     else if (side % 4 == Side::Right)
                     {
-                        if (bp.x == context._area31.right && bp.y >= Utilities::sumWithSaturation(tail.y, -EVAL_DELTA))
+                        if (bp.x == alignedArea31.right && bp.y >= Utilities::sumWithSaturation(tail.y, -EVAL_DELTA))
                         {
                             if (mindiff == UNDEFINED_MIN_DIFF || (bp.y - tail.y) <= mindiff)
                             {
@@ -1419,7 +1447,7 @@ void OsmAnd::Rasterizer_P::mergeBrokenPolygons(
                     }
                     else if (side % 4 == Side::Bottom)
                     {
-                        if (bp.y == context._area31.bottom && bp.x <= Utilities::sumWithSaturation(tail.x, EVAL_DELTA))
+                        if (bp.y == alignedArea31.bottom && bp.x <= Utilities::sumWithSaturation(tail.x, EVAL_DELTA))
                         {
                             if (mindiff == UNDEFINED_MIN_DIFF || (tail.x - bp.x) <= mindiff)
                             {
@@ -1430,7 +1458,7 @@ void OsmAnd::Rasterizer_P::mergeBrokenPolygons(
                     }
                     else if (side % 4 == Side::Left)
                     {
-                        if (bp.x == context._area31.left && bp.y <= Utilities::sumWithSaturation(tail.y, EVAL_DELTA))
+                        if (bp.x == alignedArea31.left && bp.y <= Utilities::sumWithSaturation(tail.y, EVAL_DELTA))
                         {
                             if (mindiff == UNDEFINED_MIN_DIFF || (tail.y - bp.y) <= mindiff)
                             {
@@ -1447,23 +1475,23 @@ void OsmAnd::Rasterizer_P::mergeBrokenPolygons(
                 
                 if (side % 4 == Side::Top)
                 {
-                    tail.y = context._area31.top;
-                    tail.x = context._area31.right;
+                    tail.y = alignedArea31.top;
+                    tail.x = alignedArea31.right;
                 }
                 else if (side % 4 == Side::Right)
                 {
-                    tail.y = context._area31.bottom;
-                    tail.x = context._area31.right;
+                    tail.y = alignedArea31.bottom;
+                    tail.x = alignedArea31.right;
                 }
                 else if (side % 4 == Side::Bottom)
                 {
-                    tail.y = context._area31.bottom;
-                    tail.x = context._area31.left;
+                    tail.y = alignedArea31.bottom;
+                    tail.x = alignedArea31.left;
                 }
                 else if (side % 4 == Side::Left)
                 {
-                    tail.y = context._area31.top;
-                    tail.x = context._area31.left;
+                    tail.y = alignedArea31.top;
+                    tail.x = alignedArea31.left;
                 }
 
                 polygon0.push_back(tail);
@@ -1700,17 +1728,24 @@ void OsmAnd::Rasterizer_P::collectPolygonText(
 {
     if(primitive.mapObject->_points31.size() <=2)
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized (text) as polygon, but has %d vertices", primitive.mapObject->id >> 1, primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+            "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized (text) as polygon, but has %d vertices",
+            primitive.mapObject->id >> 1, static_cast<int64_t>(primitive.mapObject->id) / 2,
+            primitive.mapObject->_points31.size());
         return;
     }
     if(!primitive.mapObject->isClosedFigure())
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized (text) as polygon, but is not closed", primitive.mapObject->id >> 1, primitive.mapObject->id >> 1);
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+            "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized (text) as polygon, but is not closed",
+            primitive.mapObject->id >> 1, static_cast<int64_t>(primitive.mapObject->id) / 2);
         return;
     }
     if(!primitive.mapObject->isClosedFigure(true))
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized (text) as polygon, but is not closed (inner)", primitive.mapObject->id >> 1, primitive.mapObject->id >> 1);
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+            "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized (text) as polygon, but is not closed (inner)",
+            primitive.mapObject->id >> 1, static_cast<int64_t>(primitive.mapObject->id) / 2);
         return;
     }
 
@@ -1794,7 +1829,10 @@ void OsmAnd::Rasterizer_P::collectLineText(
 {
     if(primitive.mapObject->_points31.size() < 2 )
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized (text) as line, but has %d vertices", primitive.mapObject->id >> 1, primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+            "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized (text) as line, but has %d vertices",
+            primitive.mapObject->id >> 1, static_cast<int64_t>(primitive.mapObject->id) / 2,
+            primitive.mapObject->_points31.size());
         return;
     }
 
@@ -1877,7 +1915,10 @@ void OsmAnd::Rasterizer_P::collectPointText(
 {
     if(primitive.mapObject->_points31.size() < 1 )
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning, "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized (text) as point, but has %d vertices", primitive.mapObject->id >> 1, primitive.mapObject->id >> 1, primitive.mapObject->_points31.size());
+        OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+            "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized (text) as point, but has %d vertices",
+            primitive.mapObject->id >> 1, static_cast<int64_t>(primitive.mapObject->id) / 2,
+            primitive.mapObject->_points31.size());
         return;
     }
 
