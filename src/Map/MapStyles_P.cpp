@@ -11,7 +11,7 @@ OsmAnd::MapStyles_P::MapStyles_P( MapStyles* owner_ )
 {
     bool ok = true;
 
-    ok = registerEmbeddedStyle("map_styles/default.render.xml") || ok;
+    ok = registerEmbeddedStyle("map/styles/default.render.xml") || ok;
 
     assert(ok);
 }
