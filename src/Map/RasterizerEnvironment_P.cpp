@@ -185,8 +185,10 @@ bool OsmAnd::RasterizerEnvironment_P::obtainBitmapShader( const QString& name, S
     auto itShader = _bitmapShaders.find(name);
     if(itShader == _bitmapShaders.end())
     {
+        const auto shaderBitmapPath = QString::fromLatin1("map/shaders/%1.png").arg(name);
+
         // Get data from embedded resources
-        auto data = EmbeddedResources::decompressResource(QString::fromLatin1("map/shaders-%1/%2.png").arg(QString::number(owner->density, 'f', 1)).arg(name));
+        auto data = EmbeddedResources::decompressResource(shaderBitmapPath);
 
         // Decode data
         SkBitmap shaderBitmap;
