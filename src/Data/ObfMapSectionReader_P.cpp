@@ -198,25 +198,25 @@ void OsmAnd::ObfMapSectionReader_P::createRule( const std::shared_ptr<ObfMapSect
     if(!rules->_decodingRules.contains(ruleId))
         rules->_decodingRules.insert(ruleId, ObfMapSectionInfo_P::Rules::DecodingRule(ruleTag, ruleVal, ruleType));
 
-    if(QString::fromLatin1("name") == ruleTag)
+    if(QLatin1String("name") == ruleTag)
         rules->_nameEncodingType = ruleId;
-    else if(QString::fromLatin1("natural") == ruleTag && QString::fromLatin1("coastline") == ruleVal)
+    else if(QLatin1String("natural") == ruleTag && QLatin1String("coastline") == ruleVal)
         rules->_coastlineEncodingType = ruleId;
-    else if(QString::fromLatin1("natural") == ruleTag && QString::fromLatin1("land") == ruleVal)
+    else if(QLatin1String("natural") == ruleTag && QLatin1String("land") == ruleVal)
         rules->_landEncodingType = ruleId;
-    else if(QString::fromLatin1("oneway") == ruleTag && QString::fromLatin1("yes") == ruleVal)
+    else if(QLatin1String("oneway") == ruleTag && QLatin1String("yes") == ruleVal)
         rules->_onewayAttribute = ruleId;
-    else if(QString::fromLatin1("oneway") == ruleTag && QString::fromLatin1("-1") == ruleVal)
+    else if(QLatin1String("oneway") == ruleTag && QLatin1String("-1") == ruleVal)
         rules->_onewayReverseAttribute = ruleId;
-    else if(QString::fromLatin1("ref") == ruleTag)
+    else if(QLatin1String("ref") == ruleTag)
         rules->_refEncodingType = ruleId;
-    else if(QString::fromLatin1("tunnel") == ruleTag)
+    else if(QLatin1String("tunnel") == ruleTag)
         rules->_negativeLayers.insert(ruleId);
-    else if(QString::fromLatin1("bridge") == ruleTag)
+    else if(QLatin1String("bridge") == ruleTag)
         rules->_positiveLayers.insert(ruleId);
-    else if(QString::fromLatin1("layer") == ruleTag)
+    else if(QLatin1String("layer") == ruleTag)
     {
-        if(!ruleVal.isEmpty() && ruleVal != QString::fromLatin1("0"))
+        if(!ruleVal.isEmpty() && ruleVal != QLatin1String("0"))
         {
             if (ruleVal[0] == '-')
                 rules->_negativeLayers.insert(ruleId);

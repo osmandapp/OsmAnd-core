@@ -102,7 +102,7 @@ void OsmAnd::MapRenderer::setConfiguration( const MapRendererConfiguration& conf
         mask |= ConfigurationChange::PaletteTexturesUsage;
     if(invalidateRasterTextures)
     {
-        for(int layerId = RasterMapLayerId::BaseLayer; layerId < RasterMapLayersCount; layerId++)
+        for(int layerId = static_cast<int>(RasterMapLayerId::BaseLayer); layerId < RasterMapLayersCount; layerId++)
             invalidateRasterLayerResources(static_cast<RasterMapLayerId>(layerId));
     }
     if(invalidateElevationData)
@@ -513,12 +513,12 @@ void OsmAnd::MapRenderer::invalidateRasterLayerResources( const RasterMapLayerId
 {
     QWriteLocker scopedLocker(&_invalidatedRasterLayerResourcesMaskLock);
 
-    _invalidatedRasterLayerResourcesMask |= 1 << layerId;
+    _invalidatedRasterLayerResourcesMask |= 1 << static_cast<int>(layerId);
 }
 
 void OsmAnd::MapRenderer::validateRasterLayerResources( const RasterMapLayerId& layerId )
 {
-    releaseTiledResources(_tiledResources[TiledResourceType::RasterBaseLayer + layerId]);
+    releaseTiledResources(_tiledResources[TiledResourceType::RasterBaseLayer + static_cast<int>(layerId)]);
 }
 
 void OsmAnd::MapRenderer::invalidateElevationDataResources()
@@ -823,11 +823,11 @@ void OsmAnd::MapRenderer::setRasterLayerProvider( const RasterMapLayerId& layerI
 {
     QWriteLocker scopedLocker(&_stateLock);
 
-    bool update = forcedUpdate || (_requestedState.rasterLayerProviders[layerId] != tileProvider);
+    bool update = forcedUpdate || (_requestedState.rasterLayerProviders[static_cast<int>(layerId)] != tileProvider);
     if(!update)
         return;
 
-    _requestedState.rasterLayerProviders[layerId] = tileProvider;
+    _requestedState.rasterLayerProviders[static_cast<int>(layerId)] = tileProvider;
 
     invalidateRasterLayerResources(layerId);
     invalidateCurrentState();
@@ -839,11 +839,11 @@ void OsmAnd::MapRenderer::setRasterLayerOpacity( const RasterMapLayerId& layerId
 
     const auto clampedValue = qMax(0.0f, qMin(opacity, 1.0f));
 
-    bool update = forcedUpdate || !qFuzzyCompare(_requestedState.rasterLayerOpacity[layerId], clampedValue);
+    bool update = forcedUpdate || !qFuzzyCompare(_requestedState.rasterLayerOpacity[static_cast<int>(layerId)], clampedValue);
     if(!update)
         return;
 
-    _requestedState.rasterLayerOpacity[layerId] = clampedValue;
+    _requestedState.rasterLayerOpacity[static_cast<int>(layerId)] = clampedValue;
 
     invalidateCurrentState();
 }

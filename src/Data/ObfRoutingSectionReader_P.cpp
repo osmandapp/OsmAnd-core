@@ -114,18 +114,18 @@ void OsmAnd::ObfRoutingSectionReader_P::readEncodingRule(
                 if(rule->_tag.compare(QString::fromLatin1("oneway"), Qt::CaseInsensitive) == 0)
                 {
                     rule->_type = ObfRoutingSectionInfo_P::EncodingRule::OneWay;
-                    if(rule->_value == QString::fromLatin1("-1") || rule->_value == QString::fromLatin1("reverse"))
+                    if(rule->_value == QLatin1String("-1") || rule->_value == QLatin1String("reverse"))
                         rule->_parsedValue.asSignedInt = -1;
-                    else if(rule->_value == QString::fromLatin1("1") || rule->_value == QString::fromLatin1("yes"))
+                    else if(rule->_value == QLatin1String("1") || rule->_value == QLatin1String("yes"))
                         rule->_parsedValue.asSignedInt = 1;
                     else
                         rule->_parsedValue.asSignedInt = 0;
                 }
-                else if(rule->_tag.compare(QString::fromLatin1("highway"), Qt::CaseInsensitive) == 0 && rule->_value == QString::fromLatin1("traffic_signals"))
+                else if(rule->_tag.compare(QString::fromLatin1("highway"), Qt::CaseInsensitive) == 0 && rule->_value == QLatin1String("traffic_signals"))
                 {
                     rule->_type = ObfRoutingSectionInfo_P::EncodingRule::TrafficSignals;
                 }
-                else if(rule->_tag.compare(QString::fromLatin1("railway"), Qt::CaseInsensitive) == 0 && (rule->_value == QString::fromLatin1("crossing") || rule->_value == QString::fromLatin1("level_crossing")))
+                else if(rule->_tag.compare(QString::fromLatin1("railway"), Qt::CaseInsensitive) == 0 && (rule->_value == QLatin1String("crossing") || rule->_value == QLatin1String("level_crossing")))
                 {
                     rule->_type = ObfRoutingSectionInfo_P::EncodingRule::RailwayCrossing;
                 }

@@ -29,7 +29,7 @@
 
 namespace OsmAnd
 {
-    WEAK_ENUM_EX(RasterMapLayerId, int32_t)
+    STRONG_ENUM_EX(RasterMapLayerId, int32_t)
     {
         Invalid = -1,
 

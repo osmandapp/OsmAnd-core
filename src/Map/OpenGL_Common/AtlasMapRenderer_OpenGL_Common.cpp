@@ -317,9 +317,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeRasterMapStage()
         // Compile fragment shader
         auto preprocessedFragmentShader = fragmentShader;
         QString preprocessedFragmentShader_UnrolledPerRasterLayerProcessingCode;
-        for(int layerId = RasterMapLayerId::BaseLayer + 1; layerId < maxActiveMapLayers; layerId++)
+        for(int layerId = static_cast<int>(RasterMapLayerId::BaseLayer) + 1; layerId < maxActiveMapLayers; layerId++)
         {
-            auto linearIdx = layerId - RasterMapLayerId::BaseLayer;
+            auto linearIdx = layerId - static_cast<int>(RasterMapLayerId::BaseLayer);
             auto preprocessedFragmentShader_perRasterLayer = fragmentShader_perRasterLayer;
             preprocessedFragmentShader_perRasterLayer.replace("%rasterLayerId%", QString::number(linearIdx));
 
@@ -416,7 +416,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
 
     // Count active raster tile providers
     auto activeRasterTileProvidersCount = 1;
-    for(int layerIdx = 1, layerId = RasterMapLayerId::BaseLayer + 1; layerIdx < RasterMapLayersCount; layerIdx++, layerId++)
+    for(int layerIdx = 1, layerId = static_cast<int>(RasterMapLayerId::BaseLayer) + 1; layerIdx < RasterMapLayersCount; layerIdx++, layerId++)
     {
         if(!currentState.rasterLayerProviders[layerId])
             continue;
@@ -482,7 +482,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
         bitmapTileSamplerType = RenderAPI_OpenGL_Common::SamplerType::BitmapTile_TrilinearMipmap;
         break;
     }
-    for(int layerIdx = 0, layerId = RasterMapLayerId::BaseLayer; layerIdx < activeRasterTileProvidersCount; layerIdx++, layerId++)
+    for(int layerIdx = 0, layerId = static_cast<int>(RasterMapLayerId::BaseLayer); layerIdx < activeRasterTileProvidersCount; layerIdx++, layerId++)
     {
         const auto samplerIndex = (renderAPI->isSupported_vertexShaderTextureLookup ? 1 : 0) + layerId;
 
@@ -615,7 +615,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
         }
 
         // We need to pass each layer of this tile to shader
-        for(int layerIdx = 0, layerId = RasterMapLayerId::BaseLayer, layerLinearIdx = -1; layerIdx < RasterMapLayersCount; layerIdx++, layerId++)
+        for(int layerIdx = 0, layerId = static_cast<int>(RasterMapLayerId::BaseLayer), layerLinearIdx = -1; layerIdx < RasterMapLayersCount; layerIdx++, layerId++)
         {
             if(!currentState.rasterLayerProviders[layerId])
                 continue;
@@ -1406,7 +1406,7 @@ OsmAnd::RenderAPI_OpenGL_Common* OsmAnd::AtlasMapRenderer_OpenGL_Common::getRend
 
 float OsmAnd::AtlasMapRenderer_OpenGL_Common::getReferenceTileSizeOnScreen()
 {
-    const auto& rasterMapProvider = currentState.rasterLayerProviders[BaseLayer];
+    const auto& rasterMapProvider = currentState.rasterLayerProviders[static_cast<int>(RasterMapLayerId::BaseLayer)];
     if(!rasterMapProvider)
         return static_cast<float>(DefaultReferenceTileSizeOnScreen) * setupOptions.displayDensityFactor;
 

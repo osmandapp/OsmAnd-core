@@ -426,7 +426,7 @@ void OsmAnd::Rasterizer_P::filterOutLinesByDensity(
         const auto& primitive = in[lineIdx];
 
         const auto& type = primitive.mapObject->_types[primitive.typeIndex];
-        if(type.tag == QString::fromLatin1("highway"))
+        if(type.tag == QLatin1String("highway"))
         {
             accept = false;
 
@@ -558,11 +558,11 @@ bool OsmAnd::Rasterizer_P::updatePaint(
 
         QString cap;
         ok = evaluator.getStringValue(valueSet.cap, cap);
-        if (!ok || cap.isEmpty() || cap == QString::fromLatin1("BUTT"))
+        if (!ok || cap.isEmpty() || cap == QLatin1String("BUTT"))
             context._mapPaint.setStrokeCap(SkPaint::kButt_Cap);
-        else if (cap == QString::fromLatin1("ROUND"))
+        else if (cap == QLatin1String("ROUND"))
             context._mapPaint.setStrokeCap(SkPaint::kRound_Cap);
-        else if (cap == QString::fromLatin1("SQUARE"))
+        else if (cap == QLatin1String("SQUARE"))
             context._mapPaint.setStrokeCap(SkPaint::kSquare_Cap);
         else
             context._mapPaint.setStrokeCap(SkPaint::kButt_Cap);
@@ -800,11 +800,11 @@ void OsmAnd::Rasterizer_P::rasterizeLine(
         return;
     
     int oneway = 0;
-    if (context._zoom >= 16 && type.tag == "highway")
+    if (context._zoom >= 16 && type.tag == QLatin1String("highway"))
     {
-        if (primitive.mapObject->containsType("oneway", "yes", true))
+        if (primitive.mapObject->containsType(QLatin1String("oneway"), QLatin1String("yes"), true))
             oneway = 1;
-        else if (primitive.mapObject->containsType("oneway", "-1", true))
+        else if (primitive.mapObject->containsType(QLatin1String("oneway"), QLatin1String("-1"), true))
             oneway = -1;
     }
 
@@ -983,7 +983,14 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
     bool includeBrokenCoastlines )
 {
     QList< QVector< PointI > > closedPolygons;
-    QList< QVector< PointI > > brokenPolygons; // Broken == not closed in this case
+    QList< QVector< PointI > > coastlinePolylines; // Broken == not closed in this case
+
+    // Align area to 32: this fixes coastlines and specifically Antarctica
+    auto alignedArea31 = context._area31;
+    alignedArea31.top &= ~((1u << 5) - 1);
+    alignedArea31.left &= ~((1u << 5) - 1);
+    alignedArea31.bottom &= ~((1u << 5) - 1);
+    alignedArea31.right &= ~((1u << 5) - 1);
 
     uint64_t osmId = 0;
     QVector< PointI > linePoints31;
@@ -1005,18 +1012,18 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
         auto itPoint = coastline->_points31.begin();
         auto pp = *itPoint;
         auto cp = pp;
-        auto prevInside = context._area31.contains(cp);
+        auto prevInside = alignedArea31.contains(cp);
         if(prevInside)
             linePoints31.push_back(cp);
         for(++itPoint; itPoint != coastline->_points31.end(); ++itPoint)
         {
             cp = *itPoint;
 
-            const auto inside = context._area31.contains(cp);
+            const auto inside = alignedArea31.contains(cp);
             const auto lineEnded = buildCoastlinePolygonSegment(env, context, inside, cp, prevInside, pp, linePoints31);
             if (lineEnded)
             {
-                appendCoastlinePolygons(closedPolygons, brokenPolygons, linePoints31);
+                appendCoastlinePolygons(closedPolygons, coastlinePolylines, linePoints31);
 
                 // Create new line if it goes outside
                 linePoints31.clear();
@@ -1026,19 +1033,36 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
             prevInside = inside;
         }
 
-        appendCoastlinePolygons(closedPolygons, brokenPolygons, linePoints31);
+        appendCoastlinePolygons(closedPolygons, coastlinePolylines, linePoints31);
     }
 
-    if (closedPolygons.isEmpty() && brokenPolygons.isEmpty())
+    if (closedPolygons.isEmpty() && coastlinePolylines.isEmpty())
         return false;
 
-    const bool coastlineCrossesBounds = !brokenPolygons.isEmpty();
-    if (!brokenPolygons.isEmpty())
-        mergeBrokenPolygons(env, context, brokenPolygons, closedPolygons, osmId);
-
-    if(!brokenPolygons.isEmpty())
+    const bool coastlineCrossesBounds = !coastlinePolylines.isEmpty();
+    if(!coastlinePolylines.isEmpty())
     {
-        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Broken unfixable polygons found during polygonization of coastlines in area [%d, %d, %d, %d]@%d",
+        // Add complete water tile with holes
+        std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr));
+        mapObject->_points31.push_back(PointI(context._area31.left, context._area31.top));
+        mapObject->_points31.push_back(PointI(context._area31.right, context._area31.top));
+        mapObject->_points31.push_back(PointI(context._area31.right, context._area31.bottom));
+        mapObject->_points31.push_back(PointI(context._area31.left, context._area31.bottom));
+        mapObject->_points31.push_back(mapObject->_points31.first());
+        convertCoastlinePolylinesToPolygons(env, context, coastlinePolylines, mapObject->_innerPolygonsPoints31, osmId);
+
+        mapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline")));
+        mapObject->_id = osmId;
+        mapObject->_isArea = true;
+
+        assert(mapObject->isClosedFigure());
+        assert(mapObject->isClosedFigure(true));
+        outVectorized.push_back(mapObject);
+    }
+
+    if(!coastlinePolylines.isEmpty())
+    {
+        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Invalid polylines found during polygonization of coastlines in area [%d, %d, %d, %d]@%d",
             context._area31.top,
             context._area31.left,
             context._area31.bottom,
@@ -1048,7 +1072,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
 
     if (includeBrokenCoastlines)
     {
-        for(auto itPolygon = brokenPolygons.begin(); itPolygon != brokenPolygons.end(); ++itPolygon)
+        for(auto itPolygon = coastlinePolylines.begin(); itPolygon != coastlinePolylines.end(); ++itPolygon)
         {
             const auto& polygon = *itPolygon;
 
@@ -1074,7 +1098,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
 
     }
 
-    if (abortIfBrokenCoastlinesExist && !brokenPolygons.isEmpty())
+    if (abortIfBrokenCoastlinesExist && !coastlinePolylines.isEmpty())
         return false;
 
     auto fullWaterObjects = 0u;
@@ -1082,6 +1106,10 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
     for(auto itPolygon = closedPolygons.begin(); itPolygon != closedPolygons.end(); ++itPolygon)
     {
         const auto& polygon = *itPolygon;
+
+        // If polygon has less than 4 points, it's invalid
+        if(polygon.size() < 4)
+            continue;
 
         bool clockwise = isClockwiseCoastlinePolygon(polygon);
 
@@ -1280,7 +1308,7 @@ bool OsmAnd::Rasterizer_P::calculateIntersection( const PointI& p1, const PointI
     return false;
 }
 
-void OsmAnd::Rasterizer_P::appendCoastlinePolygons( QList< QVector< PointI > >& closedPolygons, QList< QVector< PointI > >& brokenPolygons, QVector< PointI >& polyline )
+void OsmAnd::Rasterizer_P::appendCoastlinePolygons( QList< QVector< PointI > >& closedPolygons, QList< QVector< PointI > >& coastlinePolylines, QVector< PointI >& polyline )
 {
     if(polyline.isEmpty())
         return;
@@ -1293,7 +1321,7 @@ void OsmAnd::Rasterizer_P::appendCoastlinePolygons( QList< QVector< PointI > >& 
     
     bool add = true;
 
-    for(auto itPolygon = brokenPolygons.begin(); itPolygon != brokenPolygons.end();)
+    for(auto itPolygon = coastlinePolylines.begin(); itPolygon != coastlinePolylines.end();)
     {
         auto& polygon = *itPolygon;
 
@@ -1317,7 +1345,7 @@ void OsmAnd::Rasterizer_P::appendCoastlinePolygons( QList< QVector< PointI > >& 
 
         if (remove)
         {
-            itPolygon = brokenPolygons.erase(itPolygon);
+            itPolygon = coastlinePolylines.erase(itPolygon);
         }
         else
         {
@@ -1334,17 +1362,14 @@ void OsmAnd::Rasterizer_P::appendCoastlinePolygons( QList< QVector< PointI > >& 
 
     if (add)
     {
-        brokenPolygons.push_back(polyline);
+        coastlinePolylines.push_back(polyline);
     }
 }
 
-void OsmAnd::Rasterizer_P::mergeBrokenPolygons(
+void OsmAnd::Rasterizer_P::convertCoastlinePolylinesToPolygons(
     const RasterizerEnvironment_P& env, const RasterizerContext_P& context,
-    QList< QVector< PointI > >& brokenPolygons, QList< QVector< PointI > >& closedPolygons, uint64_t osmId )
+    QList< QVector< PointI > >& coastlinePolylines, QList< QVector< PointI > >& coastlinePolygons, uint64_t osmId )
 {
-    std::set< QList< QVector< PointI > >::iterator > nonvisitedPolygons;
-    QList< QVector< PointI > > fixablePolygons;
-
     // Align area to 32: this fixes coastlines and specifically Antarctica
     auto alignedArea31 = context._area31;
     alignedArea31.top &= ~((1u << 5) - 1);
@@ -1352,172 +1377,171 @@ void OsmAnd::Rasterizer_P::mergeBrokenPolygons(
     alignedArea31.bottom &= ~((1u << 5) - 1);
     alignedArea31.right &= ~((1u << 5) - 1);
 
-    // Check if polygon has been cut by rasterization viewport
-    QMutableListIterator< QVector< PointI > > itBrokenPolygon(brokenPolygons);
-    while(itBrokenPolygon.hasNext())
+    QList< QVector< PointI > > validPolylines;
+
+    // Check if polylines has been cut by rasterization viewport
+    QMutableListIterator< QVector< PointI > > itPolyline(coastlinePolylines);
+    while(itPolyline.hasNext())
     {
-        const auto& brokenPolygon = itBrokenPolygon.next();
-        assert(!brokenPolygon.isEmpty());
+        const auto& polyline = itPolyline.next();
+        assert(!polyline.isEmpty());
 
-        const auto& head = brokenPolygon.first();
-        const auto& tail = brokenPolygon.last();
+        const auto& head = polyline.first();
+        const auto& tail = polyline.last();
 
-        // This multipolygon has not been cut by rasterization viewport, so it's
+        // This curve has not been cut by rasterization viewport, so it's
         // impossible to fix it
         if (!alignedArea31.isOnEdge(head) || !alignedArea31.isOnEdge(tail))
             continue;
 
-        fixablePolygons.push_back(brokenPolygon);
-        itBrokenPolygon.remove();
+        validPolylines.push_back(polyline);
+        itPolyline.remove();
     }
-    for(auto itFixablePolygon = fixablePolygons.begin(); itFixablePolygon != fixablePolygons.end(); ++itFixablePolygon)
-        nonvisitedPolygons.insert(itFixablePolygon);
 
-    enum Side
+    std::set< QList< QVector< PointI > >::iterator > processedPolylines;
+    while(processedPolylines.size() != validPolylines.size())
     {
-        Invalid = -1,
-
-        Top = 0,
-        Right = 1,
-        Bottom = 2,
-        Left = 3
-    };
-
-    for(auto itPolygon0 = fixablePolygons.begin(); itPolygon0 != fixablePolygons.end(); ++itPolygon0)
-    {
-        if (nonvisitedPolygons.find(itPolygon0) == nonvisitedPolygons.end())
-            continue;
-
-        auto& polygon0 = *itPolygon0;
-        assert(!polygon0.isEmpty());
-
-        auto tail = polygon0.last();
-        
-        // 31 - (zoom + 8)
-        const int EVAL_DELTA = 6 << (23 - context._zoom);
-        const int UNDEFINED_MIN_DIFF = -1 - EVAL_DELTA;
-        while (true)
+        for(auto itPolyline = validPolylines.begin(); itPolyline != validPolylines.end(); ++itPolyline)
         {
-            int tailCutter = Side::Invalid;
-            if (tail.y == alignedArea31.top)
-                tailCutter = Side::Top;
-            else if (tail.x == alignedArea31.right)
-                tailCutter = Side::Right;
-            else if (tail.y == alignedArea31.bottom)
-                tailCutter = Side::Bottom;
-            else if (tail.x == alignedArea31.left)
-                tailCutter = Side::Left;
-            assert(tailCutter != Side::Invalid);
-
-            auto itNextPolygon = fixablePolygons.end();
-            // BEGIN go clockwise around rectangle
-            for (int side = tailCutter; side < tailCutter + 4; side++)
-            {
-                // BEGIN find closest nonvisited start (including current)
-                int mindiff = UNDEFINED_MIN_DIFF;
-                for(auto itPolygon1 = fixablePolygons.begin(); itPolygon1 != fixablePolygons.end(); ++itPolygon1)
-                {
-                    if(nonvisitedPolygons.find(itPolygon1) == nonvisitedPolygons.end())
-                        continue;
-
-                    const auto& polygon1 = *itPolygon1;
-                    assert(!polygon1.isEmpty());
-                    const auto& bp = polygon1.first();
-                    if (side % 4 == Side::Top)
-                    {
-                        if (bp.y == alignedArea31.top && bp.x >= Utilities::sumWithSaturation(tail.x, -EVAL_DELTA))
-                        {
-                            if (mindiff == UNDEFINED_MIN_DIFF || (bp.x - tail.x) <= mindiff)
-                            {
-                                mindiff = (bp.x - tail.x);
-                                itNextPolygon = itPolygon1;
-                            }
-                        }
-                    }
-                    else if (side % 4 == Side::Right)
-                    {
-                        if (bp.x == alignedArea31.right && bp.y >= Utilities::sumWithSaturation(tail.y, -EVAL_DELTA))
-                        {
-                            if (mindiff == UNDEFINED_MIN_DIFF || (bp.y - tail.y) <= mindiff)
-                            {
-                                mindiff = (bp.y - tail.y);
-                                itNextPolygon = itPolygon1;
-                            }
-                        }
-                    }
-                    else if (side % 4 == Side::Bottom)
-                    {
-                        if (bp.y == alignedArea31.bottom && bp.x <= Utilities::sumWithSaturation(tail.x, EVAL_DELTA))
-                        {
-                            if (mindiff == UNDEFINED_MIN_DIFF || (tail.x - bp.x) <= mindiff)
-                            {
-                                mindiff = (tail.x - bp.x);
-                                itNextPolygon = itPolygon1;
-                            }
-                        }
-                    }
-                    else if (side % 4 == Side::Left)
-                    {
-                        if (bp.x == alignedArea31.left && bp.y <= Utilities::sumWithSaturation(tail.y, EVAL_DELTA))
-                        {
-                            if (mindiff == UNDEFINED_MIN_DIFF || (tail.y - bp.y) <= mindiff)
-                            {
-                                mindiff = (tail.y - bp.y);
-                                itNextPolygon = itPolygon1;
-                            }
-                        }
-                    }
-                } // END find closest start (including current)
-
-                // we found start point
-                if (mindiff != UNDEFINED_MIN_DIFF)
-                    break;
-                
-                if (side % 4 == Side::Top)
-                {
-                    tail.y = alignedArea31.top;
-                    tail.x = alignedArea31.right;
-                }
-                else if (side % 4 == Side::Right)
-                {
-                    tail.y = alignedArea31.bottom;
-                    tail.x = alignedArea31.right;
-                }
-                else if (side % 4 == Side::Bottom)
-                {
-                    tail.y = alignedArea31.bottom;
-                    tail.x = alignedArea31.left;
-                }
-                else if (side % 4 == Side::Left)
-                {
-                    tail.y = alignedArea31.top;
-                    tail.x = alignedArea31.left;
-                }
-
-                polygon0.push_back(tail);
-            } // END go clockwise around rectangle
-
-            if(itNextPolygon == fixablePolygons.end())
+            // If this polyline was already processed, skip it
+            if(processedPolylines.find(itPolyline) != processedPolylines.end())
                 continue;
 
-            if(itNextPolygon == itPolygon0)
+            // Start from tail of the polyline and search for it's continuation in CCV order
+            auto& polyline = *itPolyline;
+            const auto& tail = polyline.last();
+            auto tailEdge = AreaEdge::Invalid;
+            alignedArea31.isOnEdge(tail, &tailEdge);
+            auto itNearestPolyline = validPolylines.end();
+            auto firstIteration = true;
+            for(int idx = static_cast<int>(tailEdge) + 4; (idx >= static_cast<int>(tailEdge)) && (itNearestPolyline == validPolylines.end()); idx--, firstIteration = false)
             {
-                polygon0.push_back(polygon0.first());
-                nonvisitedPolygons.erase(itPolygon0);
-                break;
+                const auto currentEdge = static_cast<AreaEdge>(idx % 4);
+
+                for(auto itOtherPolyline = validPolylines.begin(); itOtherPolyline != validPolylines.end(); ++itOtherPolyline)
+                {
+                    // If this polyline was already processed, skip it
+                    if(processedPolylines.find(itOtherPolyline) != processedPolylines.end())
+                        continue;
+
+                    // Skip polylines that are on other edges
+                    const auto& otherHead = itOtherPolyline->first();
+                    auto otherHeadEdge = AreaEdge::Invalid;
+                    alignedArea31.isOnEdge(otherHead, &otherHeadEdge);
+                    if(otherHeadEdge != currentEdge)
+                        continue;
+
+                    // Skip polyline that is not next in CCV order
+                    if(firstIteration)
+                    {
+                        bool isNextByCCV = false;
+                        if(currentEdge == AreaEdge::Top)
+                            isNextByCCV = (otherHead.x <= tail.x);
+                        else if(currentEdge == AreaEdge::Right)
+                            isNextByCCV = (otherHead.y <= tail.y);
+                        else if(currentEdge == AreaEdge::Bottom)
+                            isNextByCCV = (tail.x <= otherHead.x);
+                        else if(currentEdge == AreaEdge::Left)
+                            isNextByCCV = (tail.y <= otherHead.y);
+                        if(!isNextByCCV)
+                            continue;
+                    }
+
+                    // If nearest was not yet set, set this
+                    if(itNearestPolyline == validPolylines.end())
+                    {
+                        itNearestPolyline = itOtherPolyline;
+                        continue;
+                    }
+
+                    // Check if current polyline's head is closer (by CCV) that previously selected
+                    const auto& previouslySelectedHead = itNearestPolyline->first();
+                    bool isCloserByCCV = false;
+                    if(currentEdge == AreaEdge::Top)
+                        isCloserByCCV = (otherHead.x > previouslySelectedHead.x);
+                    else if(currentEdge == AreaEdge::Right)
+                        isCloserByCCV = (otherHead.y > previouslySelectedHead.y);
+                    else if(currentEdge == AreaEdge::Bottom)
+                        isCloserByCCV = (otherHead.x < previouslySelectedHead.x);
+                    else if(currentEdge == AreaEdge::Left)
+                        isCloserByCCV = (otherHead.y < previouslySelectedHead.y);
+                
+                    // If closer-by-CCV, then select this
+                    if(isCloserByCCV)
+                        itNearestPolyline = itOtherPolyline;
+                }
             }
+            assert(itNearestPolyline != validPolylines.end());
+
+            // Get edge of nearest-by-CCV head
+            auto nearestHeadEdge = AreaEdge::Invalid;
+            const auto& nearestHead = itNearestPolyline->first();
+            alignedArea31.isOnEdge(nearestHead, &nearestHeadEdge);
+
+            // Fill by edges of area, if required
+            int loopShift = 0;
+            if( static_cast<int>(tailEdge) - static_cast<int>(nearestHeadEdge) < 0 )
+                loopShift = 4;
+            else if(tailEdge == nearestHeadEdge)
+            {
+                bool skipAddingSides = false;
+                if(tailEdge == AreaEdge::Top)
+                    skipAddingSides = (tail.x >= nearestHead.x);
+                else if(tailEdge == AreaEdge::Right)
+                    skipAddingSides = (tail.y >= nearestHead.y);
+                else if(tailEdge == AreaEdge::Bottom)
+                    skipAddingSides = (tail.x <= nearestHead.x);
+                else if(tailEdge == AreaEdge::Left)
+                    skipAddingSides = (tail.y <= nearestHead.y);
+
+                if(!skipAddingSides)
+                    loopShift = 4;
+            }
+            for(int idx = static_cast<int>(tailEdge) + loopShift; idx > static_cast<int>(nearestHeadEdge); idx--)
+            {
+                const auto side = static_cast<AreaEdge>(idx % 4);
+                PointI p;
+
+                if(side == AreaEdge::Top)
+                {
+                    p.y = alignedArea31.top;
+                    p.x = alignedArea31.left;
+                }
+                else if(side == AreaEdge::Right)
+                {
+                    p.y = alignedArea31.top;
+                    p.x = alignedArea31.right;
+                }
+                else if(side == AreaEdge::Bottom)
+                {
+                    p.y = alignedArea31.bottom;
+                    p.x = alignedArea31.right;
+                }
+                else if(side == AreaEdge::Left)
+                {
+                    p.y = alignedArea31.bottom;
+                    p.x = alignedArea31.left;
+                }
+
+                polyline.push_back(p);
+            }
+
+            // If nearest-by-CCV is head of current polyline, cap it and add to polygons, ...
+            if(itNearestPolyline == itPolyline)
+            {
+                polyline.push_back(polyline.first());
+                coastlinePolygons.push_back(polyline);
+            }
+            // ... otherwise join them. Joined will never be visited, and current will remain unmarked as processed
             else
             {
-                const auto& otherPolygon = *itNextPolygon;
-                polygon0 << otherPolygon;
-                nonvisitedPolygons.erase(itNextPolygon);
-
-                // get last point and start again going clockwise
-                tail = polygon0.last();
+                const auto& otherPolyline = *itNearestPolyline;
+                polyline << otherPolyline;
             }
-        }
 
-        closedPolygons.push_back(polygon0);
+            // After we've selected nearest-by-CCV polyline, mark it as processed
+            processedPolylines.insert(itNearestPolyline);
+        }
     }
 }
 

@@ -112,10 +112,10 @@ namespace OsmAnd {
             const PointI& previousPoint31,
             QVector< PointI >& segmentPoints );
         static bool calculateIntersection( const PointI& p1, const PointI& p0, const AreaI& bbox, PointI& pX );
-        static void appendCoastlinePolygons( QList< QVector< PointI > >& closedPolygons, QList< QVector< PointI > >& brokenPolygons, QVector< PointI >& polyline );
-        static void mergeBrokenPolygons(
+        static void appendCoastlinePolygons( QList< QVector< PointI > >& closedPolygons, QList< QVector< PointI > >& coastlinePolylines, QVector< PointI >& polyline );
+        static void convertCoastlinePolylinesToPolygons(
             const RasterizerEnvironment_P& env, const RasterizerContext_P& context,
-            QList< QVector< PointI > >& brokenPolygons, QList< QVector< PointI > >& closedPolygons, uint64_t osmId );
+            QList< QVector< PointI > >& coastlinePolylines, QList< QVector< PointI > >& coastlinePolygons, uint64_t osmId );
         static bool isClockwiseCoastlinePolygon( const QVector< PointI > & polygon );
 
         enum PrimitivesType

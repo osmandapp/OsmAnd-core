@@ -147,6 +147,16 @@ namespace OsmAnd
     friend struct OsmAnd::Area<T>;
     };
 
+    STRONG_ENUM(AreaEdge)
+    {
+        Invalid = -1,
+
+        Left = 0,
+        Top = 1,
+        Right = 2,
+        Bottom = 3
+    };
+
     template<typename T>
     struct Area
     {
@@ -269,13 +279,39 @@ namespace OsmAnd
             return Point<T>(left + width() / 2, bottom + height() / 2);
         }
 
-        bool isOnEdge(const PointT& p) const
+        bool isOnEdge(const PointT& p, AreaEdge* edge = nullptr) const
         {
-            return
-                PointT::equal(p.x, left) ||
-                PointT::equal(p.x, right) ||
-                PointT::equal(p.y, top) ||
-                PointT::equal(p.y, bottom);
+            bool res = false;
+
+            if(!res && PointT::equal(p.x, left))
+            {
+                res = true;
+                if(edge)
+                    *edge = AreaEdge::Left;
+            }
+
+            if(!res && PointT::equal(p.x, right))
+            {
+                res = true;
+                if(edge)
+                    *edge = AreaEdge::Right;
+            }
+
+            if(!res && PointT::equal(p.y, top))
+            {
+                res = true;
+                if(edge)
+                    *edge = AreaEdge::Top;
+            }
+
+            if(!res && PointT::equal(p.y, bottom))
+            {
+                res = true;
+                if(edge)
+                    *edge = AreaEdge::Bottom;
+            }
+
+            return res;
         }
 
         AreaT& enlargeToInclude(const PointT& p)

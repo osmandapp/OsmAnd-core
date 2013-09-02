@@ -100,20 +100,7 @@ namespace OsmAnd {
         {
             return v > 0 ? qFloor(v) : qCeil(v);
         }
-        
-        template <typename T>
-        T sumWithSaturation(const T& a, const T& b)
-        {
-            const auto& typeMax = std::numeric_limits<T>::max();
-            const auto& typeMin = std::numeric_limits<T>::min();
 
-            auto result = a + b;
-            if(b > 0 && result < a)
-                return typeMax;
-            else if(b < 0 && result > a)
-                return typeMin;
-            return result;
-        }
     } // namespace Utilities
 
 } // namespace OsmAnd
