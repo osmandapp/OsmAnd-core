@@ -1083,19 +1083,18 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
 
             outVectorized.push_back(mapObject);
         }
+    }
 
-        for(auto itPolygon = closedPolygons.begin(); itPolygon != closedPolygons.end(); ++itPolygon)
-        {
-            const auto& polygon = *itPolygon;
+    for(auto itPolygon = closedPolygons.begin(); itPolygon != closedPolygons.end(); ++itPolygon)
+    {
+        const auto& polygon = *itPolygon;
 
-            std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr));
-            mapObject->_isArea = false;
-            mapObject->_points31 = polygon;
-            mapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline_line")));
+        std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr));
+        mapObject->_isArea = false;
+        mapObject->_points31 = polygon;
+        mapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline_line")));
 
-            outVectorized.push_back(mapObject);
-        }
-
+        outVectorized.push_back(mapObject);
     }
 
     if (abortIfBrokenCoastlinesExist && !coastlinePolylines.isEmpty())
