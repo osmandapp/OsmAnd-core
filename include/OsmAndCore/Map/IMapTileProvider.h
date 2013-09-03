@@ -66,9 +66,7 @@ namespace OsmAnd {
         const Type type;
         virtual uint32_t getTileSize() const = 0;
 
-        //TODO: immediate is not suitable to any situation so far, why it exists?
-        virtual bool obtainTileImmediate(const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<IMapTileProvider::Tile>& tile) = 0;
-        virtual void obtainTileDeffered(const TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback) = 0;
+        virtual void obtainTile(const TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback) = 0;
     };
 
 }

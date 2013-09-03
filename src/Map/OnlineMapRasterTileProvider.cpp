@@ -40,16 +40,9 @@ void OsmAnd::OnlineMapRasterTileProvider::setNetworkAccessPermission( bool allow
     _d->_networkAccessAllowed = allowed;
 }
 
-bool OsmAnd::OnlineMapRasterTileProvider::obtainTileImmediate( const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<IMapTileProvider::Tile>& tile )
+void OsmAnd::OnlineMapRasterTileProvider::obtainTile( const TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback )
 {
-    // Raster tiles are not available immediately, since none of them are stored in memory unless they are just
-    // downloaded. In that case, a callback will be called
-    return false;
-}
-
-void OsmAnd::OnlineMapRasterTileProvider::obtainTileDeffered( const TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback )
-{
-    _d->obtainTileDeffered(tileId, zoom, readyCallback);
+    _d->obtainTile(tileId, zoom, readyCallback);
 }
 
 float OsmAnd::OnlineMapRasterTileProvider::getTileDensity() const

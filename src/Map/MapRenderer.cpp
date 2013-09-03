@@ -579,8 +579,6 @@ OsmAnd::IMapTileProvider* OsmAnd::MapRenderer::getTileProviderFor( const TiledRe
 void OsmAnd::MapRenderer::requestMissingTiledResources()
 {
     uint32_t requestedProvidersMask = 0;
-    bool wasImmediateDataObtained = true;
-
     for(auto itTileId = _uniqueTiles.begin(); itTileId != _uniqueTiles.end(); ++itTileId)
     {
         const auto& tileId = *itTileId;
@@ -610,29 +608,14 @@ void OsmAnd::MapRenderer::requestMissingTiledResources()
                     std::placeholders::_3,
                     std::placeholders::_4);
 
-                // Try to obtain tile from provider immediately. Immediately means that data is available in-memory
-                std::shared_ptr<IMapTileProvider::Tile> tile;
-                bool availableImmediately = provider->obtainTileImmediate(tileId, _currentState.zoomBase, tile);
-                if(availableImmediately)
-                {
-                    tileEntry->_sourceData = tile;
-                    tileEntry->state = tile ? ResourceState::Ready : ResourceState::Unavailable;
-
-                    wasImmediateDataObtained = true;
-                    continue;
-                }
-
-                // If tile was not available immediately, request it
-                provider->obtainTileDeffered(tileId, _currentState.zoomBase, callback);
+                // Request tile
+                provider->obtainTile(tileId, _currentState.zoomBase, callback);
                 tileEntry->state = ResourceState::Requested;
 
                 requestedProvidersMask |= (1 << tiledResources->type);
             }
         }
     }
-
-    if(wasImmediateDataObtained)
-        requestUploadDataToGPU();
 
     //TODO: sort requests in all requestedProvidersMask so that closest tiles would be downloaded first
 }

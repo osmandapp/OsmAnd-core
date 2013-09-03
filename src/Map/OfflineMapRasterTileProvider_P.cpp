@@ -30,7 +30,7 @@ OsmAnd::OfflineMapRasterTileProvider_P::~OfflineMapRasterTileProvider_P()
 {
 }
 
-void OsmAnd::OfflineMapRasterTileProvider_P::obtainTileDeffered( const TileId& tileId, const ZoomLevel& zoom, IMapTileProvider::TileReadyCallback readyCallback )
+void OsmAnd::OfflineMapRasterTileProvider_P::obtainTile( const TileId& tileId, const ZoomLevel& zoom, IMapTileProvider::TileReadyCallback readyCallback )
 {
     assert(readyCallback != nullptr);
 

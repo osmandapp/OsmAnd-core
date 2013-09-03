@@ -91,8 +91,8 @@ namespace OsmAnd {
         QDir _localCachePath;
         bool _networkAccessAllowed;
 
-        void obtainTileDeffered(const TileId& tileId, const ZoomLevel& zoom, IMapTileProvider::TileReadyCallback readyCallback);
-        void obtainTileDeffered(const std::shared_ptr<TileEntry>& tileEntry);
+        void obtainTile(const TileId& tileId, const ZoomLevel& zoom, IMapTileProvider::TileReadyCallback readyCallback);
+        void obtainTile(const std::shared_ptr<TileEntry>& tileEntry);
         void replyFinishedHandler(QNetworkReply* reply, const std::shared_ptr<TileEntry>& tileEntry, QEventLoop& eventLoop, QNetworkAccessManager& networkAccessManager);
         void handleNetworkReply(QNetworkReply* reply, const std::shared_ptr<TileEntry>& tileEntry);
 

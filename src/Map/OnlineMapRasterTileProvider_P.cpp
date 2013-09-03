@@ -26,7 +26,7 @@ OsmAnd::OnlineMapRasterTileProvider_P::~OnlineMapRasterTileProvider_P()
 {
 }
 
-void OsmAnd::OnlineMapRasterTileProvider_P::obtainTileDeffered( const TileId& tileId, const ZoomLevel& zoom, IMapTileProvider::TileReadyCallback readyCallback )
+void OsmAnd::OnlineMapRasterTileProvider_P::obtainTile( const TileId& tileId, const ZoomLevel& zoom, IMapTileProvider::TileReadyCallback readyCallback )
 {
     assert(readyCallback != nullptr);
 
@@ -114,11 +114,11 @@ void OsmAnd::OnlineMapRasterTileProvider_P::obtainTileDeffered( const TileId& ti
         }
 
         // Well, tile is not in local cache, we need to download it
-        pThis->obtainTileDeffered(tileEntry);
+        pThis->obtainTile(tileEntry);
     }));
 }
 
-void OsmAnd::OnlineMapRasterTileProvider_P::obtainTileDeffered( const std::shared_ptr<TileEntry>& tileEntry )
+void OsmAnd::OnlineMapRasterTileProvider_P::obtainTile( const std::shared_ptr<TileEntry>& tileEntry )
 {
     if(!_networkAccessAllowed)
         return;
@@ -197,7 +197,7 @@ void OsmAnd::OnlineMapRasterTileProvider_P::replyFinishedHandler( QNetworkReply*
         }
 
         if(entry->state == TileState::EnqueuedForDownload)
-            obtainTileDeffered(entry);
+            obtainTile(entry);
 
         return false;
     });

@@ -72,8 +72,7 @@ namespace OsmAnd {
 
         virtual uint32_t getTileSize() const;
 
-        virtual bool obtainTileImmediate(const OsmAnd::TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<IMapTileProvider::Tile>& tile);
-        virtual void obtainTileDeffered(const OsmAnd::TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback);
+        virtual void obtainTile(const OsmAnd::TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback);
     };
 
 }

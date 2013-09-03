@@ -60,7 +60,7 @@ namespace OsmAnd {
         const Concurrent::TaskHost::Bridge _taskHostBridge;
         TilesCollection<TileEntry> _tiles;
 
-        void obtainTileDeffered(const TileId& tileId, const ZoomLevel& zoom, IMapTileProvider::TileReadyCallback readyCallback);
+        void obtainTile(const TileId& tileId, const ZoomLevel& zoom, IMapTileProvider::TileReadyCallback readyCallback);
     public:
         virtual ~OfflineMapRasterTileProvider_P();
 

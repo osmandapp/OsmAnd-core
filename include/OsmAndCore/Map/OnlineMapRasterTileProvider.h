@@ -66,8 +66,7 @@ namespace OsmAnd {
         virtual float getTileDensity() const;
         virtual uint32_t getTileSize() const;
 
-        virtual bool obtainTileImmediate(const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<IMapTileProvider::Tile>& tile);
-        virtual void obtainTileDeffered(const TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback);
+        virtual void obtainTile(const TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback);
         
         static std::shared_ptr<OsmAnd::IMapBitmapTileProvider> createMapnikProvider();
         static std::shared_ptr<OsmAnd::IMapBitmapTileProvider> createCycleMapProvider();
