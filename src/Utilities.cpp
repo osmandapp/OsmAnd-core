@@ -645,6 +645,28 @@ OSMAND_CORE_API OsmAnd::TileId OSMAND_CORE_CALL OsmAnd::Utilities::normalizeTile
     return output;
 }
 
+OSMAND_CORE_API OsmAnd::PointI OSMAND_CORE_CALL OsmAnd::Utilities::normalizeCoordinates( const PointI& input, const ZoomLevel& zoom )
+{
+    PointI output = input;
+
+    const auto maxTileIndex = static_cast<signed>(1u << zoom);
+
+    while(output.x < 0)
+        output.x += maxTileIndex;
+    while(output.y < 0)
+        output.y += maxTileIndex;
+
+    if(zoom < 31)
+    {
+        while(output.x >= maxTileIndex)
+            output.x -= maxTileIndex;
+        while(output.y >= maxTileIndex)
+            output.y -= maxTileIndex;
+    }
+
+    return output;
+}
+
 OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( const unsigned int& verticesCount, const PointF* vertices, std::function<void (const PointI&)> fillPoint )
 {
     // Find min-max of Y

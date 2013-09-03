@@ -1444,5 +1444,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::getLocationFromScreenPoint( const P
     intersection.z = (intersection.z + _targetInTileOffsetN.y + _targetTileId.y) * tileWidth31;
     location31.x = static_cast<int32_t>(intersection.x);
     location31.y = static_cast<int32_t>(intersection.z);
+    location31 = Utilities::normalizeCoordinates(location31, ZoomLevel31);
+
     return true;
 }
