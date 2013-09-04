@@ -844,8 +844,9 @@ void sortObjectsByProperOrder(std::vector <MapDataObject* > mapDataObjects,
 					if(objectType == 3) {
 						MapDataObjectPrimitive pointObj = mapObj;
 						pointObj.objectType = 1;
-						mapObj.order = polygonArea(mobj, mult);
-						if(mapObj.order > MAX_V) { 
+						double area = polygonArea(mobj, mult);
+						if(area > MAX_V) { 
+							mapObj.order = mapObj.order + 1f / polygonArea(mobj, mult);
 							polygonsArray.push_back(mapObj);
 							pointsArray.push_back(pointObj);
 						}
@@ -863,7 +864,7 @@ void sortObjectsByProperOrder(std::vector <MapDataObject* > mapDataObjects,
 
 			}
 		}
-		sort(polygonsArray.begin(), polygonsArray.end(), sortPolygonsOrder);
+		sort(polygonsArray.begin(), polygonsArray.end(), sortByOrder);
 		sort(pointsArray.begin(), pointsArray.end(), sortByOrder);
 		sort(linesArray.begin(), linesArray.end(), sortByOrder);
 		filterLinesByDensity(rc, linesResArray, linesArray);
