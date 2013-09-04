@@ -119,7 +119,7 @@ void OsmAnd::Rasterizer_P::prepareContext(
 
     if(fillEntireArea)
     {
-        //assert(foundation != MapFoundationType::Mixed && foundation != MapFoundationType::Undefined);
+        assert(foundation != MapFoundationType::Undefined);
 
         std::shared_ptr<Model::MapObject> bgMapObject(new Model::MapObject(nullptr));
         bgMapObject->_isArea = true;
@@ -130,13 +130,14 @@ void OsmAnd::Rasterizer_P::prepareContext(
         bgMapObject->_points31.push_back(bgMapObject->_points31.first());
         if(foundation == MapFoundationType::FullWater)
             bgMapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline")));
-        else if(foundation == MapFoundationType::FullLand)
+        else if(foundation == MapFoundationType::FullLand || foundation == MapFoundationType::Mixed)
             bgMapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("land")));
         else
         {
             bgMapObject->_isArea = false;
             bgMapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline_broken")));
         }
+        bgMapObject->_extraTypes.push_back(TagValue(QString::fromLatin1("layer"), QString::fromLatin1("-5")));
 
         assert(bgMapObject->isClosedFigure());
         context._triangulatedCoastlineObjects.push_back(bgMapObject);
@@ -344,9 +345,9 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                     Primitive pointPrimitive = primitive;
                     pointPrimitive.objectType = PrimitiveType::Point;
                     auto polygonArea31 = Utilities::polygonArea(mapObject->points31);
-                    primitive.zOrder = polygonArea31 / area31toPixelDivisor;
-                    if(primitive.zOrder > PolygonAreaCutoffLowerThreshold * env.owner->density)
+                    if(polygonArea31 > PolygonAreaCutoffLowerThreshold * env.owner->density)
                     {
+                        primitive.zOrder += 1.0 / (polygonArea31/area31toPixelDivisor);
                         context._polygons.push_back(primitive);
                         context._points.push_back(pointPrimitive);
                     }
@@ -375,13 +376,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
         }
     }
 
-    qSort(context._polygons.begin(), context._polygons.end(), [](const Primitive& l, const Primitive& r) -> bool
-    {
-        if( qFuzzyCompare(l.zOrder, r.zOrder) )
-            return l.typeIndex < r.typeIndex;
-        return l.zOrder > r.zOrder;
-    });
-    qSort(unfilteredLines.begin(), unfilteredLines.end(), [](const Primitive& l, const Primitive& r) -> bool
+    const auto privitivesSort = [](const Primitive& l, const Primitive& r) -> bool
     {
         if(qFuzzyCompare(l.zOrder, r.zOrder))
         {
@@ -390,18 +385,12 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
             return l.typeIndex < r.typeIndex;
         }
         return l.zOrder < r.zOrder;
-    });
+    };
+
+    qSort(context._polygons.begin(), context._polygons.end(), privitivesSort);
+    qSort(unfilteredLines.begin(), unfilteredLines.end(), privitivesSort);
     filterOutLinesByDensity(env, context, unfilteredLines, context._lines, controller);
-    qSort(context._points.begin(), context._points.end(), [](const Primitive& l, const Primitive& r) -> bool
-    {
-        if(qFuzzyCompare(l.zOrder, r.zOrder))
-        {
-            if(l.typeIndex == r.typeIndex)
-                return l.mapObject->_points31.size() < r.mapObject->_points31.size();
-            return l.typeIndex < r.typeIndex;
-        }
-        return l.zOrder < r.zOrder;
-    });
+    qSort(context._points.begin(), context._points.end(), privitivesSort);
 }
 
 void OsmAnd::Rasterizer_P::filterOutLinesByDensity(
@@ -467,6 +456,7 @@ void OsmAnd::Rasterizer_P::rasterizeMapPrimitives(
 {
     assert(type != PrimitivesType::Points);
 
+    const auto polygonSizeThreshold = 1.0 / (context._polygonMinSizeToDisplay * env.owner->density);
     for(auto itPrimitive = primitives.begin(); itPrimitive != primitives.end(); ++itPrimitive)
     {
         if(controller && controller->isAborted())
@@ -476,8 +466,8 @@ void OsmAnd::Rasterizer_P::rasterizeMapPrimitives(
 
         if(type == Polygons)
         {
-            if (primitive.zOrder < context._polygonMinSizeToDisplay * env.owner->density)
-                return;
+            if (primitive.zOrder > polygonSizeThreshold + static_cast<int>(primitive.zOrder))
+                continue;
 
             rasterizePolygon(env, context, canvas, primitive);
         }
@@ -679,7 +669,7 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
         return;
 
     SkPath path;
-    bool containsPoint = false;
+    bool containsAtLeastOnePoint = false;
     int pointIdx = 0;
     PointF vertex;
     int bounds = 0;
@@ -699,11 +689,11 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
             path.lineTo(vertex.x, vertex.y);
         }
 
-        if (!containsPoint)
+        if(!containsAtLeastOnePoint)
         {
             if(context._renderViewport.contains(vertex))
             {
-                containsPoint = true;
+                containsAtLeastOnePoint = true;
             }
             else
             {
@@ -716,7 +706,7 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
         }
     }
 
-    if(!containsPoint)
+    if(!containsAtLeastOnePoint)
     {
         // fast check for polygons
         if((bounds & 3) != 3 || (bounds >> 2) != 3)
@@ -1788,7 +1778,7 @@ void OsmAnd::Rasterizer_P::collectPolygonText(
 
     PointF textPoint;
 
-    bool containsPoint = false;
+    bool containsAtLeastOnePoint = false;
     PointF vertex;
     int bounds = 0;
     QVector< PointF > outsideBounds;
@@ -1801,11 +1791,11 @@ void OsmAnd::Rasterizer_P::collectPolygonText(
         textPoint.x += qMin( qMax(vertex.x, context._renderViewport.left), context._renderViewport.right);
         textPoint.y += qMin( qMax(vertex.y, context._renderViewport.bottom), context._renderViewport.top);
         
-        if (!containsPoint)
+        if(!containsAtLeastOnePoint)
         {
             if(context._renderViewport.contains(vertex))
             {
-                containsPoint = true;
+                containsAtLeastOnePoint = true;
             }
             else
             {
@@ -1822,7 +1812,7 @@ void OsmAnd::Rasterizer_P::collectPolygonText(
     textPoint.x /= verticesCount;
     textPoint.y /= verticesCount;
 
-    if(!containsPoint)
+    if(!containsAtLeastOnePoint)
     {
         // fast check for polygons
         if((bounds & 3) != 3 || (bounds >> 2) != 3)

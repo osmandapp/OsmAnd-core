@@ -289,7 +289,11 @@ bool OsmAnd::ObfPoiSectionReader_P::readTile(
                     area31.top = tile->_y << (31 - tile->_zoom);
                     area31.bottom = (tile->_y + 1) << (31 - tile->_zoom);
 
-                    if(!bbox31->intersects(area31))
+                    const auto shouldSkip =
+                        !bbox31->contains(area31) &&
+                        !area31.contains(*bbox31) &&
+                        !bbox31->intersects(area31);
+                    if(shouldSkip)
                     {
                         // This tile is outside of bounding box
                         cis->Skip(cis->BytesUntilLimit());

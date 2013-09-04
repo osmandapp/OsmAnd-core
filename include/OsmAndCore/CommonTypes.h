@@ -236,22 +236,38 @@ namespace OsmAnd
 
         bool contains(const T& t, const T& l, const T& b, const T& r) const
         {
-            return !(left > l || right < r || top > t || bottom < b);
+            return
+                l >= left &&
+                r <= right &&
+                t >= top &&
+                b <= bottom;
         }
 
-        bool contains(const AreaT& a) const
+        bool contains(const AreaT& that) const
         {
-            return !(left > a.left || right < a.right || top > a.top|| bottom < a.bottom);
+            return
+                that.left >= this->left &&
+                that.right <= this->right &&
+                that.top >= this->top &&
+                that.bottom <= this->bottom;
         }
 
         bool intersects(const T& t, const T& l, const T& b, const T& r) const
         {
-            return !(r < left || l > right || t > bottom || b < top);
+            return !(
+                l > this->right ||
+                r < this->left ||
+                t > this->bottom ||
+                b < this->top);
         }
 
-        bool intersects(const AreaT& a) const
+        bool intersects(const AreaT& that) const
         {
-            return !(a.right < left || a.left > right || a.top > bottom || a.bottom < top);
+            return !(
+                that.left > this->right ||
+                that.right < this->left ||
+                that.top > this->bottom ||
+                that.bottom < this->top);
         }
 
         T width() const

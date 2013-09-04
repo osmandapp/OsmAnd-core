@@ -336,6 +336,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
     IQueryController* controller)
 {
     auto cis = reader->_codedInputStream.get();
+    foundation = MapFoundationType::Undefined;
 
     for(;;)
     {
@@ -354,31 +355,43 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                 childNode->_offset = offset;
                 childNode->_length = length;
                 readTreeNode(reader, section, treeNode->_area31, childNode);
-                if(bbox31 && !bbox31->intersects(childNode->_area31))
+                if(bbox31)
                 {
-                    cis->Skip(cis->BytesUntilLimit());
-                    cis->PopLimit(oldLimit);
-                    break;
+                    const auto shouldSkip =
+                        !bbox31->contains(childNode->_area31) &&
+                        !childNode->_area31.contains(*bbox31) &&
+                        !bbox31->intersects(childNode->_area31);
+                    if(shouldSkip)
+                    {
+                        cis->Skip(cis->BytesUntilLimit());
+                        cis->PopLimit(oldLimit);
+                        break;
+                    }
                 }
                 cis->PopLimit(oldLimit);
 
-                if(childNode->_foundation != MapFoundationType::Undefined)
-                {
-                    if(foundation == MapFoundationType::Undefined)
-                        foundation = childNode->_foundation;
-                    else if(foundation != childNode->_foundation)
-                        foundation = MapFoundationType::Mixed;
-                }
-                
                 if(nodesWithData && childNode->_dataOffset > 0)
                     nodesWithData->push_back(childNode);
 
-                cis->Seek(offset);
-                oldLimit = cis->PushLimit(length);
-                cis->Skip(childNode->_childrenInnerOffset);
-                readTreeNodeChildren(reader, section, childNode, foundation, nodesWithData, bbox31, controller);
-                assert(cis->BytesUntilLimit() == 0);
-                cis->PopLimit(oldLimit);
+                auto childrenFoundation = MapFoundationType::Undefined;
+                if(childNode->_childrenInnerOffset > 0)
+                {
+                    cis->Seek(offset);
+                    oldLimit = cis->PushLimit(length);
+                    cis->Skip(childNode->_childrenInnerOffset);
+                    readTreeNodeChildren(reader, section, childNode, childrenFoundation, nodesWithData, bbox31, controller);
+                    assert(cis->BytesUntilLimit() == 0);
+                    cis->PopLimit(oldLimit);
+                }
+
+                const auto foundationToMerge = (childrenFoundation != MapFoundationType::Undefined) ? childrenFoundation : childNode->_foundation;
+                if(foundationToMerge != MapFoundationType::Undefined)
+                {
+                    if(foundation == MapFoundationType::Undefined)
+                        foundation = foundationToMerge;
+                    else if(foundation != foundationToMerge)
+                        foundation = MapFoundationType::Mixed;
+                }
             }
             break;
         default:
@@ -427,7 +440,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                     if(stringId >= mapObjectsNamesTable.size())
                     {
                         LogPrintf(LogSeverityLevel::Error,
-                            "Data mismatch: string #%d (map object #%" PRIu64 " (%" PRIi64 ") not found in string table(%d) in section '%s'",
+                            "Data mismatch: string #%d (map object #%" PRIu64 " (%" PRIi64 ") not found in string table (size %d) in section '%s'",
                             stringId,
                             entry->id >> 1, static_cast<int64_t>(entry->id) / 2,
                             mapObjectsNamesTable.size(), qPrintable(section->name));
@@ -460,6 +473,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                     mapObject->_foundation = tree->_foundation;
                     intermediateResult.push_back(mapObject);
                 }
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
             }
             break;
@@ -475,6 +489,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                     break;
                 }
                 ObfReaderUtilities::readStringTable(cis, mapObjectsNamesTable);
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
             }
             break;
@@ -526,7 +541,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 objectBBox.top = objectBBox.left = std::numeric_limits<int32_t>::max();
                 objectBBox.bottom = objectBBox.right = 0;
 
-                bool contains = (bbox31 == nullptr);
+                bool shouldNotSkip = (bbox31 == nullptr);
                 while(cis->BytesUntilLimit() > 0)
                 {
                     PointI d;
@@ -536,29 +551,27 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                     p += d;
                     points31.push_back(p);
 
-                    if(!contains && bbox31)
-                        contains = bbox31->contains(p);
+                    if(!shouldNotSkip && bbox31)
+                        shouldNotSkip = bbox31->contains(p);
                     objectBBox.enlargeToInclude(p);
                 }
                 if(points31.isEmpty())
                 {
                     // Fake that this object is inside bbox
-                    contains = true;
+                    shouldNotSkip = true;
                     objectBBox = treeNode->_area31;
                 }
-                if(!contains && bbox31)
+                if(!shouldNotSkip && bbox31)
                 {
-                    contains = bbox31->intersects(objectBBox);
-                    if(contains)
-                    {
-                        //TODO: Check by per-line intersection, 'contains' may be cancelled
-                    }
+                    shouldNotSkip =
+                        objectBBox.contains(*bbox31) ||
+                        bbox31->intersects(objectBBox);
                 }
                 cis->PopLimit(oldLimit);
-                if(!contains)
+                if(!shouldNotSkip)
                 {
                     cis->Skip(cis->BytesUntilLimit());
-                    return;
+                    break;
                 }
 
                 // Finally, create the object
@@ -715,8 +728,15 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
         if(mapLevel->_minZoom > zoom || mapLevel->_maxZoom < zoom)
             continue;
 
-        if(bbox31 && !bbox31->intersects(mapLevel->_area31))
-            continue;
+        if(bbox31)
+        {
+            const auto shouldSkip =
+                !bbox31->contains(mapLevel->_area31) &&
+                !mapLevel->_area31.contains(*bbox31) &&
+                !bbox31->intersects(mapLevel->_area31);
+            if(shouldSkip)
+                continue;
+        }
 
         // If there are no tree nodes in map level, it means they are not loaded
         {
@@ -738,26 +758,38 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
         {
             const auto& rootNode = *itRootNode;
 
-            if(bbox31 && !bbox31->intersects(rootNode->_area31))
-                continue;
-
-            if(rootNode->_foundation != MapFoundationType::Undefined)
+            if(bbox31)
             {
-                if(foundation == MapFoundationType::Undefined)
-                    foundation = rootNode->_foundation;
-                else if(foundation != rootNode->_foundation)
-                    foundation = MapFoundationType::Mixed;
+                const auto shouldSkip =
+                    !bbox31->contains(rootNode->_area31) &&
+                    !rootNode->_area31.contains(*bbox31) &&
+                    !bbox31->intersects(rootNode->_area31);
+                if(shouldSkip)
+                    continue;
             }
 
             if(rootNode->_dataOffset > 0)
                 treeNodesWithData.push_back(rootNode);
 
-            cis->Seek(rootNode->_offset);
-            auto oldLimit = cis->PushLimit(rootNode->_length);
-            cis->Skip(rootNode->_childrenInnerOffset);
-            readTreeNodeChildren(reader, section, rootNode, foundation, &treeNodesWithData, bbox31, controller);
-            assert(cis->BytesUntilLimit() == 0);
-            cis->PopLimit(oldLimit);
+            auto childrenFoundation = MapFoundationType::Undefined;
+            if(rootNode->_childrenInnerOffset > 0)
+            {
+                cis->Seek(rootNode->_offset);
+                auto oldLimit = cis->PushLimit(rootNode->_length);
+                cis->Skip(rootNode->_childrenInnerOffset);
+                readTreeNodeChildren(reader, section, rootNode, childrenFoundation, &treeNodesWithData, bbox31, controller);
+                assert(cis->BytesUntilLimit() == 0);
+                cis->PopLimit(oldLimit);
+            }
+
+            const auto foundationToMerge = (childrenFoundation != MapFoundationType::Undefined) ? childrenFoundation : rootNode->_foundation;
+            if(foundationToMerge != MapFoundationType::Undefined)
+            {
+                if(foundation == MapFoundationType::Undefined)
+                    foundation = foundationToMerge;
+                else if(foundation != foundationToMerge)
+                    foundation = MapFoundationType::Mixed;
+            }
         }
         qSort(treeNodesWithData.begin(), treeNodesWithData.end(), [](const std::shared_ptr<ObfMapSectionLevelTreeNode>& l, const std::shared_ptr<ObfMapSectionLevelTreeNode>& r) -> bool
         {
@@ -774,6 +806,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             cis->ReadVarint32(&length);
             auto oldLimit = cis->PushLimit(length);
             readMapObjectsBlock(reader, section, treeNode, resultOut, bbox31, visitor, controller);
+            assert(cis->BytesUntilLimit() == 0);
             cis->PopLimit(oldLimit);
         }
     }

@@ -25,7 +25,10 @@ bool OsmAnd::PlainQueryFilter::acceptsArea( const AreaI& area )
 {
     if(!_isAreaFiltered)
         return true;
-    return _area.intersects(area);
+    return
+        _area.intersects(area) ||
+        _area.contains(area) ||
+        area.contains(_area);
 }
 
 bool OsmAnd::PlainQueryFilter::acceptsPoint( const PointI& point )

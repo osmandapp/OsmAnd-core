@@ -579,18 +579,22 @@ OsmAnd::IMapTileProvider* OsmAnd::MapRenderer::getTileProviderFor( const TiledRe
 void OsmAnd::MapRenderer::requestMissingTiledResources()
 {
     uint32_t requestedProvidersMask = 0;
-    for(auto itTileId = _uniqueTiles.begin(); itTileId != _uniqueTiles.end(); ++itTileId)
+
+    for(auto itTiledResources = _tiledResources.begin(); itTiledResources != _tiledResources.end(); ++itTiledResources)
     {
-        const auto& tileId = *itTileId;
+        const auto& tiledResources = *itTiledResources;
+        const auto& provider = getTileProviderFor(tiledResources->type);
 
-        for(auto itTiledResources = _tiledResources.begin(); itTiledResources != _tiledResources.end(); ++itTiledResources)
+        // Skip layers that do not have tile providers
+        if(!provider)
+            continue;
+
+        //TODO: clear all previously requested tiles?
+
+        // Actually place requests for tiles that are not in requested state
+        for(auto itTileId = _uniqueTiles.begin(); itTileId != _uniqueTiles.end(); ++itTileId)
         {
-            const auto& tiledResources = *itTiledResources;
-            const auto& provider = getTileProviderFor(tiledResources->type);
-
-            // Skip layers that do not have tile providers
-            if(!provider)
-                continue;
+            const auto& tileId = *itTileId;
 
             std::shared_ptr<TiledResourceEntry> tileEntry;
             tiledResources->obtainTileEntry(tileEntry, tileId, _currentState.zoomBase, true);
@@ -600,6 +604,7 @@ void OsmAnd::MapRenderer::requestMissingTiledResources()
                 if(tileEntry->state != ResourceState::Unknown)
                     continue;
 
+                // Request tile
                 const auto callback = std::bind(&MapRenderer::processRequestedTile,
                     this,
                     tiledResources->type,
@@ -607,8 +612,6 @@ void OsmAnd::MapRenderer::requestMissingTiledResources()
                     std::placeholders::_2,
                     std::placeholders::_3,
                     std::placeholders::_4);
-
-                // Request tile
                 provider->obtainTile(tileId, _currentState.zoomBase, callback);
                 tileEntry->state = ResourceState::Requested;
 
