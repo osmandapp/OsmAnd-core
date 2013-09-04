@@ -846,7 +846,7 @@ void sortObjectsByProperOrder(std::vector <MapDataObject* > mapDataObjects,
 						pointObj.objectType = 1;
 						double area = polygonArea(mobj, mult);
 						if(area > MAX_V) { 
-							mapObj.order = mapObj.order + 1f / polygonArea(mobj, mult);
+							mapObj.order = mapObj.order + 1. / polygonArea(mobj, mult);
 							polygonsArray.push_back(mapObj);
 							pointsArray.push_back(pointObj);
 						}
