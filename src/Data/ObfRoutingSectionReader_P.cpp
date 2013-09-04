@@ -374,11 +374,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readSubsectionData(
                     for(auto itNameEntry = road->_names.begin(); itNameEntry != road->_names.end(); ++itNameEntry)
                     {
                         auto encodedId = itNameEntry.value();
-                        uint32_t stringId = 0;
-                        stringId |= (encodedId.at(1 + 0).unicode() & 0xff) << 8*0;
-                        stringId |= (encodedId.at(1 + 1).unicode() & 0xff) << 8*1;
-                        stringId |= (encodedId.at(1 + 2).unicode() & 0xff) << 8*2;
-                        stringId |= (encodedId.at(1 + 3).unicode() & 0xff) << 8*3;
+                        uint32_t stringId = ObfReaderUtilities::decodeIntegerFromString(encodedId);
 
                         itNameEntry.value() = roadNamesTable[stringId];
                     }
@@ -606,17 +602,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
                     gpb::uint32 stringId;
                     cis->ReadVarint32(&stringId);
 
-                    char fakeString[] = {
-                        '[',
-                        static_cast<char>((stringId >> 8*0) & 0xff),
-                        static_cast<char>((stringId >> 8*1) & 0xff),
-                        static_cast<char>((stringId >> 8*2) & 0xff),
-                        static_cast<char>((stringId >> 8*3) & 0xff),
-                        ']'
-                    };
-                    auto fakeQString = QString::fromLocal8Bit(fakeString, sizeof(fakeString));
-                    assert(fakeQString.length() == 6);
-                    road->_names.insert(stringTag, fakeQString);
+                    road->_names.insert(stringTag, ObfReaderUtilities::encodeIntegerToString(stringId));
                 }
                 cis->PopLimit(oldLimit);
             }

@@ -431,11 +431,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                 for(auto itNameEntry = entry->_names.begin(); itNameEntry != entry->_names.end(); ++itNameEntry)
                 {
                     const auto& encodedId = itNameEntry.value();
-                    uint32_t stringId = 0;
-                    stringId |= (encodedId.at(1 + 0).unicode() & 0xff) << 8*0;
-                    stringId |= (encodedId.at(1 + 1).unicode() & 0xff) << 8*1;
-                    stringId |= (encodedId.at(1 + 2).unicode() & 0xff) << 8*2;
-                    stringId |= (encodedId.at(1 + 3).unicode() & 0xff) << 8*3;
+                    uint32_t stringId = ObfReaderUtilities::decodeIntegerFromString(encodedId);
 
                     if(stringId >= mapObjectsNamesTable.size())
                     {
@@ -660,25 +656,19 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 auto oldLimit = cis->PushLimit(length);
                 while(cis->BytesUntilLimit() > 0)
                 {
-                    gpb::uint32 stringTag;
-                    cis->ReadVarint32(&stringTag);
-                    gpb::uint32 stringId;
-                    cis->ReadVarint32(&stringId);
+                    bool ok;
 
-                    char fakeString[] = {
-                        '[',
-                        static_cast<char>((stringId >> 8*0) & 0xff),
-                        static_cast<char>((stringId >> 8*1) & 0xff),
-                        static_cast<char>((stringId >> 8*2) & 0xff),
-                        static_cast<char>((stringId >> 8*3) & 0xff),
-                        ']'
-                    };
-                    const auto& fakeQString = QString::fromLocal8Bit(fakeString, sizeof(fakeString));
-                    assert(fakeQString.length() == 6);
+                    gpb::uint32 stringTag;
+                    ok = cis->ReadVarint32(&stringTag);
+                    assert(ok);
+                    gpb::uint32 stringId;
+                    ok = cis->ReadVarint32(&stringId);
+                    assert(ok);
 
                     const auto& tagName = std::get<0>(section->_d->_rules->_decodingRules[stringTag]);
-                    mapObject->_names.insert(tagName, fakeQString);
+                    mapObject->_names.insert(tagName, ObfReaderUtilities::encodeIntegerToString(stringId));
                 }
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
             }
             break;

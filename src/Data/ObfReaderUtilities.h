@@ -43,6 +43,8 @@ namespace OsmAnd {
         uint32_t readBigEndianInt(gpb::io::CodedInputStream* cis);
         void readStringTable(gpb::io::CodedInputStream* cis, QStringList& stringTableOut);
         void skipUnknownField(gpb::io::CodedInputStream* cis, int tag);
+        QString encodeIntegerToString(const uint32_t& value);
+        uint32_t decodeIntegerFromString(const QString& container);
 
     } // namespace ObfReaderUtilities
     

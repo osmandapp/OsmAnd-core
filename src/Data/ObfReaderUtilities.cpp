@@ -77,3 +77,45 @@ void OsmAnd::ObfReaderUtilities::skipUnknownField( gpb::io::CodedInputStream* ci
         gpb::internal::WireFormatLite::SkipField(cis, tag);
 }
 
+QString OsmAnd::ObfReaderUtilities::encodeIntegerToString( const uint32_t& value )
+{
+    QChar fakeString[] =
+    {
+        QChar('['),
+        QChar(0x0001 + static_cast<ushort>((value >> 8*0) & 0xff)),
+        QChar(0x0001 + static_cast<ushort>((value >> 8*1) & 0xff)),
+        QChar(0x0001 + static_cast<ushort>((value >> 8*2) & 0xff)),
+        QChar(0x0001 + static_cast<ushort>((value >> 8*3) & 0xff)),
+        QChar(']')
+    };
+    const QString fakeQString(fakeString);
+
+    assert(fakeQString.length() == 36);
+    assert(decodeIntegerFromString(fakeQString) == value);
+
+    return fakeQString;
+}
+
+uint32_t OsmAnd::ObfReaderUtilities::decodeIntegerFromString( const QString& container )
+{
+    uint32_t res = 0;
+
+    assert(container.length() == 36);
+
+    ushort value;
+
+    value = container.at(1 + 0).unicode() - 0x0001;
+    res |= (value & 0xff) << 8*0;
+
+    value = container.at(1 + 1).unicode() - 0x0001;
+    res |= (value & 0xff) << 8*1;
+
+    value = container.at(1 + 2).unicode() - 0x0001;
+    res |= (value & 0xff) << 8*2;
+
+    value = container.at(1 + 3).unicode() - 0x0001;
+    res |= (value & 0xff) << 8*3;
+
+    return res;
+}
+
