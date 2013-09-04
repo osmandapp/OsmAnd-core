@@ -35,7 +35,7 @@ const int MAX_V = 75;
 struct MapDataObjectPrimitive {
 	MapDataObject* obj;
 	int typeInd;
-	float order;
+	double order;
 	int objectType;
 };
 
@@ -683,7 +683,8 @@ void drawObject(RenderingContext* rc,  SkCanvas* cv, RenderingRuleSearchRequest*
 		MapDataObject* mObj = array[i].obj;
 		tag_value pair = mObj->types.at(array[i].typeInd);
 		if (objOrder == 0) {
-			if (array[i].order < rc->polygonMinSizeToDisplay) {
+			double minPolygonSize = 1. / rc->polygonMinSizeToDisplay;
+			if (array[i].order - (int) array[i].order > minPolygonSize) {
 				return;
 			}
 			// polygon
@@ -846,7 +847,7 @@ void sortObjectsByProperOrder(std::vector <MapDataObject* > mapDataObjects,
 						pointObj.objectType = 1;
 						double area = polygonArea(mobj, mult);
 						if(area > MAX_V) { 
-							mapObj.order = mapObj.order + 1. / polygonArea(mobj, mult);
+							mapObj.order = mapObj.order + (1. / area);
 							polygonsArray.push_back(mapObj);
 							pointsArray.push_back(pointObj);
 						}
