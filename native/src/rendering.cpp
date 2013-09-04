@@ -678,14 +678,14 @@ void drawObject(RenderingContext* rc,  SkCanvas* cv, RenderingRuleSearchRequest*
 
 	double polygonLimit = 100;
 	float orderToSwitch = 0;
+	double minPolygonSize = 1. / rc->polygonMinSizeToDisplay;
 	for (int i = 0; i < array.size(); i++) {
 		rc->allObjects++;
 		MapDataObject* mObj = array[i].obj;
 		tag_value pair = mObj->types.at(array[i].typeInd);
 		if (objOrder == 0) {
-			double minPolygonSize = 1. / rc->polygonMinSizeToDisplay;
-			if (array[i].order - (int) array[i].order > minPolygonSize) {
-				return;
+			if (array[i].order > minPolygonSize + ((int) array[i].order)) {
+				continue;
 			}
 			// polygon
 			drawPolygon(mObj, req, cv, paint, rc, pair);
@@ -836,6 +836,7 @@ void sortObjectsByProperOrder(std::vector <MapDataObject* > mapDataObjects,
 				if (req->searchRule(RenderingRulesStorage::ORDER_RULES)) {
 					int objectType = req->getIntPropertyValue(req->props()->R_OBJECT_TYPE);
 					int order = req->getIntPropertyValue(req->props()->R_ORDER);
+					int l = req->getIntPropertyValue(req->props()->R_LAYER);
 					MapDataObjectPrimitive mapObj;
 					mapObj.objectType = objectType;
 					mapObj.order = order;

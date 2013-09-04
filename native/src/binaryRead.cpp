@@ -1238,6 +1238,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 			} else {
 				o->types.push_back(tag_value("natural", "land"));
 			}
+			o->area = true;
 			o->additionalTypes.push_back(tag_value("layer", "-5"));
 			tempResult.push_back(o);
 		}
