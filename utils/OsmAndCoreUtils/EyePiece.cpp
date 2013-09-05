@@ -234,7 +234,6 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
     if(!cfg.output.isEmpty())
     {
         std::unique_ptr<SkImageEncoder> encoder(CreatePNGImageEncoder());
-        std::unique_ptr<SkImageEncoder> outputStream(CreatePNGImageEncoder());
         encoder->encodeFile(cfg.output.toLocal8Bit(), renderSurface, 100);
     }
 
