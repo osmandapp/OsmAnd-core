@@ -22,7 +22,7 @@
 #ifndef __MAP_RENDERER_SETUP_OPTIONS_H_
 #define __MAP_RENDERER_SETUP_OPTIONS_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 #include <functional>
 #include <array>

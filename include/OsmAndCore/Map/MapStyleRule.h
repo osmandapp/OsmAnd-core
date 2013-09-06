@@ -23,7 +23,7 @@
 #ifndef __MAP_STYLE_RULE_H_
 #define __MAP_STYLE_RULE_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 
 #include <QString>

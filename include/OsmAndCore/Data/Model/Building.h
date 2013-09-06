@@ -25,7 +25,7 @@
 
 #include <OsmAndCore.h>
 #include <QString>
-#include <stdint.h>
+#include <cstdint>
 
 namespace OsmAnd {
 

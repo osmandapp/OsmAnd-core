@@ -23,7 +23,7 @@
 #ifndef __MODEL_AMENITY_CATEGORY_H_
 #define __MODEL_AMENITY_CATEGORY_H_
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <QString>
 #include <QStringList>

@@ -22,7 +22,7 @@
 #ifndef __OFFLINE_MAP_RASTER_TILE_PROVIDER_P_H_
 #define __OFFLINE_MAP_RASTER_TILE_PROVIDER_P_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 #include <functional>
 #include <array>

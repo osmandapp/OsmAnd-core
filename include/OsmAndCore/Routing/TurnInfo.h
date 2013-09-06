@@ -23,7 +23,7 @@
 #ifndef TURNTYPE_H
 #define TURNTYPE_H
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>

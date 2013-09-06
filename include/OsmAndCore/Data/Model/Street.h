@@ -23,7 +23,7 @@
 #ifndef __MODEL_STREET_H_
 #define __MODEL_STREET_H_
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <QString>
 

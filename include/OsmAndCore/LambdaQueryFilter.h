@@ -23,7 +23,7 @@
 #ifndef __LAMBDA_QUERY_FILTER_H_
 #define __LAMBDA_QUERY_FILTER_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <functional>
 
 #include <OsmAndCore.h>

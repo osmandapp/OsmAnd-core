@@ -22,7 +22,7 @@
 #ifndef __TILE_DB_H_
 #define __TILE_DB_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 #include <array>
 

@@ -23,7 +23,7 @@
 #if !defined(__MAP_TYPES_H_)
 #define __MAP_TYPES_H_
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <OsmAndCore.h>
 

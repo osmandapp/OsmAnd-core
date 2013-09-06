@@ -23,7 +23,7 @@
 #ifndef __RASTERIZER_CONTEXT_H_
 #define __RASTERIZER_CONTEXT_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 
 #include <OsmAndCore.h>

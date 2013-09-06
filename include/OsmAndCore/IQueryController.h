@@ -24,7 +24,7 @@
 #define __I_QUERY_CONTROLLER_H_
 
 #include <OsmAndCore.h>
-#include <stdint.h>
+#include <cstdint>
 
 namespace OsmAnd {
 

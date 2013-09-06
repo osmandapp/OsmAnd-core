@@ -23,7 +23,7 @@
 #ifndef __MODEL_MAP_OBJECT_H_
 #define __MODEL_MAP_OBJECT_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 
 #include <QList>

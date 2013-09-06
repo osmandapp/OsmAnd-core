@@ -23,7 +23,7 @@
 #ifndef __OBF_POI_SECTION_READER_P_H_
 #define __OBF_POI_SECTION_READER_P_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 #include <functional>
 

@@ -22,7 +22,7 @@
 #ifndef __HILLSHADE_TILE_PROVIDER_H_
 #define __HILLSHADE_TILE_PROVIDER_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 #include <functional>
 #include <array>

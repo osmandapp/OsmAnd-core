@@ -23,7 +23,7 @@
 #ifndef __OBFS_COLLECTION_P_H_
 #define __OBFS_COLLECTION_P_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 
 #include <QDir>

@@ -23,7 +23,7 @@
 #ifndef __MAP_STYLE_CONFIGURABLE_INPUT_VALUE_H_
 #define __MAP_STYLE_CONFIGURABLE_INPUT_VALUE_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 
 #include <QString>

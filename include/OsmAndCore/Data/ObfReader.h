@@ -23,7 +23,7 @@
 #ifndef __OBF_READER_H_
 #define __OBF_READER_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 
 #include <QString>

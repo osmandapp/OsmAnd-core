@@ -23,7 +23,7 @@
 #ifndef __ROUTING_PROFILE_H_
 #define __ROUTING_PROFILE_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 
 #include <QString>

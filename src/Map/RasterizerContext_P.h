@@ -23,7 +23,7 @@
 #ifndef __RASTERIZER_CONTEXT_P_H_
 #define __RASTERIZER_CONTEXT_P_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 
 #include <QList>

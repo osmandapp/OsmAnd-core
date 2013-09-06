@@ -23,7 +23,7 @@
 #ifndef __OBF_ROUTING_SECTION_INFO_H_
 #define __OBF_ROUTING_SECTION_INFO_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 
 #include <QList>

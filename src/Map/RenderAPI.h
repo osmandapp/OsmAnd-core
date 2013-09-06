@@ -22,7 +22,7 @@
 #ifndef __RENDER_API_H_
 #define __RENDER_API_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 
 #include <QHash>

@@ -22,7 +22,7 @@
 #ifndef __UTILITIES_OPENGL_COMMON_H_
 #define __UTILITIES_OPENGL_COMMON_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 
 #include <glm/glm.hpp>

@@ -23,7 +23,7 @@
 #ifndef __ROUTING_CONFIGURATION_H_
 #define __ROUTING_CONFIGURATION_H_
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <QIODevice>
 #include <QString>

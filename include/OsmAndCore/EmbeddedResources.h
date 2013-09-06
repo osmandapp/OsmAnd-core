@@ -23,7 +23,7 @@
 #ifndef __EMBEDDED_RESOURCES_H_
 #define __EMBEDDED_RESOURCES_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 
 #include <QString>

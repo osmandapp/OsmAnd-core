@@ -23,7 +23,7 @@
 #ifndef __CONCURRENT_H_
 #define __CONCURRENT_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 #include <functional>
 

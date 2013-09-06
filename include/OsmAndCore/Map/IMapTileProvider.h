@@ -22,7 +22,7 @@
 #ifndef __I_MAP_TILE_PROVIDER_H_
 #define __I_MAP_TILE_PROVIDER_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 #include <functional>
 

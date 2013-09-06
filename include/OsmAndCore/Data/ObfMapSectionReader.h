@@ -23,7 +23,7 @@
 #ifndef __OBF_MAP_SECTION_READER_H_
 #define __OBF_MAP_SECTION_READER_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 #include <functional>
 

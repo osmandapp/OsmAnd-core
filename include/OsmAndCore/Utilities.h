@@ -24,7 +24,7 @@
 #define __UTILITIES_H_
 
 #include <cstdint>
-#include <limits.h>
+#include <climits>
 #include <memory>
 #include <functional>
 

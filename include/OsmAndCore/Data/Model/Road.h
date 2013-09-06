@@ -23,7 +23,7 @@
 #ifndef __ROAD_H_
 #define __ROAD_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 
 #include <QVector>

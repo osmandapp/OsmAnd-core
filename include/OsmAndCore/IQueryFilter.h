@@ -23,7 +23,7 @@
 #ifndef __I_QUERY_FILTER_H_
 #define __I_QUERY_FILTER_H_
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>

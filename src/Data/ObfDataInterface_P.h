@@ -22,7 +22,7 @@
 #ifndef __OBF_DATA_INTERFACE_P_H_
 #define __OBF_DATA_INTERFACE_P_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 #include <array>
 

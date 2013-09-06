@@ -22,7 +22,7 @@
 #ifndef __ATLAS_MAP_RENDERER_H_
 #define __ATLAS_MAP_RENDERER_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 
 #include <OsmAndCore.h>

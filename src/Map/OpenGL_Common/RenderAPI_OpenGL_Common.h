@@ -22,7 +22,7 @@
 #ifndef __RENDER_API__OPENGL_BASE_H_
 #define __RENDER_API__OPENGL_BASE_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 #include <type_traits>
 

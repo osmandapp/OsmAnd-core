@@ -23,7 +23,7 @@
 #ifndef __MAP_STYLE_BUILTIN_VALUE_DEFINITIONS_H_
 #define __MAP_STYLE_BUILTIN_VALUE_DEFINITIONS_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 
 #include <OsmAndCore.h>

@@ -23,7 +23,7 @@
 #ifndef __OFFLINE_MAP_DATA_PROVIDER_H_
 #define __OFFLINE_MAP_DATA_PROVIDER_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 
 #include <OsmAndCore.h>
@@ -33,9 +33,11 @@ namespace OsmAnd {
 
     class ObfsCollection;
     class MapStyle;
+    class OfflineMapDataProvider_P;
     class OSMAND_CORE_API OfflineMapDataProvider
     {
     private:
+        const std::unique_ptr<OfflineMapDataProvider_P> _d;
     protected:
     public:
         OfflineMapDataProvider(const std::shared_ptr<const ObfsCollection>& obfsCollection, const std::shared_ptr<const MapStyle>& mapStyle);
