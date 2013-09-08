@@ -237,16 +237,16 @@ bool OsmAnd::RenderAPI_OpenGLES2::release()
     return true;
 }
 
-uint32_t OsmAnd::RenderAPI_OpenGLES2::getTileTextureFormat( const std::shared_ptr< IMapTileProvider::Tile >& tile )
+uint32_t OsmAnd::RenderAPI_OpenGLES2::getTileTextureFormat( const std::shared_ptr< MapTile >& tile )
 {
     // If current device supports glTexStorage2D, lets use sized format
     if(isSupported_EXT_texture_storage)
     {
         GLenum textureFormat = GL_INVALID_ENUM;
 
-        if(tile->type == IMapTileProvider::Bitmap)
+        if(tile->dataType == MapTileDataType::Bitmap)
         {
-            auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
+            const auto& bitmapTile = std::static_pointer_cast<MapBitmapTile>(tile);
 
             switch (bitmapTile->bitmap->getConfig())
             {
@@ -261,7 +261,7 @@ uint32_t OsmAnd::RenderAPI_OpenGLES2::getTileTextureFormat( const std::shared_pt
                 break;
             }
         }
-        else if(tile->type == IMapTileProvider::ElevationData)
+        else if(tile->dataType == MapTileDataType::ElevationData)
         {
             if(isSupported_vertexShaderTextureLookup)
             {
@@ -282,9 +282,9 @@ uint32_t OsmAnd::RenderAPI_OpenGLES2::getTileTextureFormat( const std::shared_pt
     // But if glTexStorage2D is not supported, we need to fallback to pixel type and format specification
     GLenum format = GL_INVALID_ENUM;
     GLenum type = GL_INVALID_ENUM;
-    if(tile->type == IMapTileProvider::Bitmap)
+    if(tile->dataType == MapTileDataType::Bitmap)
     {
-        auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
+        const auto& bitmapTile = std::static_pointer_cast<MapBitmapTile>(tile);
 
         switch (bitmapTile->bitmap->getConfig())
         {
@@ -302,7 +302,7 @@ uint32_t OsmAnd::RenderAPI_OpenGLES2::getTileTextureFormat( const std::shared_pt
             break;
         }
     }
-    else if(tile->type == IMapTileProvider::ElevationData)
+    else if(tile->dataType == MapTileDataType::ElevationData)
     {
         if(isSupported_vertexShaderTextureLookup)
         {
@@ -319,7 +319,7 @@ uint32_t OsmAnd::RenderAPI_OpenGLES2::getTileTextureFormat( const std::shared_pt
     return (static_cast<uint32_t>(format) << 16) | type;
 }
 
-void OsmAnd::RenderAPI_OpenGLES2::allocateTexture2D( GLenum target, GLsizei levels, GLsizei width, GLsizei height, const std::shared_ptr< IMapTileProvider::Tile >& tile )
+void OsmAnd::RenderAPI_OpenGLES2::allocateTexture2D( GLenum target, GLsizei levels, GLsizei width, GLsizei height, const std::shared_ptr< MapTile >& tile )
 {
     const auto encodedFormat = getTileTextureFormat(tile);
 
@@ -358,7 +358,7 @@ void OsmAnd::RenderAPI_OpenGLES2::uploadDataToTexture2D(
     GLenum target, GLint level,
     GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
     const GLvoid *data, GLsizei dataRowLengthInElements,
-    const std::shared_ptr< IMapTileProvider::Tile >& tile )
+    const std::shared_ptr< MapTile >& tile )
 {
     GL_CHECK_PRESENT(glTexSubImage2D);
 
@@ -369,9 +369,9 @@ void OsmAnd::RenderAPI_OpenGLES2::uploadDataToTexture2D(
 
         GLenum sourceFormat = GL_INVALID_ENUM;
         GLenum sourceFormatType = GL_INVALID_ENUM;
-        if(tile->type == IMapTileProvider::Bitmap)
+        if(tile->dataType == MapTileDataType::Bitmap)
         {
-            auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
+            const auto& bitmapTile = std::static_pointer_cast<MapBitmapTile>(tile);
 
             switch (bitmapTile->bitmap->getConfig())
             {
@@ -389,7 +389,7 @@ void OsmAnd::RenderAPI_OpenGLES2::uploadDataToTexture2D(
                 break;
             }
         }
-        else if(tile->type == IMapTileProvider::ElevationData)
+        else if(tile->dataType == MapTileDataType::ElevationData)
         {
             if(isSupported_EXT_texture_rg)
                 sourceFormat = GL_RED_EXT;
@@ -415,9 +415,9 @@ void OsmAnd::RenderAPI_OpenGLES2::uploadDataToTexture2D(
     const auto encodedFormat = getTileTextureFormat(tile);
     GLenum format = GL_INVALID_ENUM;
     GLenum type = GL_INVALID_ENUM;
-    if(tile->type == IMapTileProvider::Bitmap)
+    if(tile->dataType == MapTileDataType::Bitmap)
     {
-        auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
+        const auto& bitmapTile = std::static_pointer_cast<MapBitmapTile>(tile);
 
         switch (bitmapTile->bitmap->getConfig())
         {
@@ -435,7 +435,7 @@ void OsmAnd::RenderAPI_OpenGLES2::uploadDataToTexture2D(
             break;
         }
     }
-    else if(tile->type == IMapTileProvider::ElevationData)
+    else if(tile->dataType == MapTileDataType::ElevationData)
     {
         if(isSupported_vertexShaderTextureLookup)
         {
@@ -458,9 +458,9 @@ void OsmAnd::RenderAPI_OpenGLES2::uploadDataToTexture2D(
 
     // Otherwise we need to or load row by row
     GLsizei pixelSizeInBytes = 0;
-    if(tile->type == IMapTileProvider::Bitmap)
+    if(tile->dataType == MapTileDataType::Bitmap)
     {
-        auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
+        const auto& bitmapTile = std::static_pointer_cast<MapBitmapTile>(tile);
 
         switch (bitmapTile->bitmap->getConfig())
         {
@@ -473,7 +473,7 @@ void OsmAnd::RenderAPI_OpenGLES2::uploadDataToTexture2D(
             break;
         }
     }
-    else if(tile->type == IMapTileProvider::ElevationData)
+    else if(tile->dataType == MapTileDataType::ElevationData)
     {
         pixelSizeInBytes = 1;
     }
