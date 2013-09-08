@@ -19,52 +19,41 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __I_MAP_TILE_PROVIDER_H_
-#define __I_MAP_TILE_PROVIDER_H_
+#ifndef __HEIGHTMAP_TILE_PROVIDER_P_H_
+#define __HEIGHTMAP_TILE_PROVIDER_P_H_
 
 #include <cstdint>
 #include <memory>
 
+#include <QDir>
+#include <QMutex>
+#include <QQueue>
+#include <QSet>
+
 #include <OsmAndCore.h>
-#include <OsmAndCore/CommonTypes.h>
+#include <CommonTypes.h>
+#include <TileDB.h>
+#include <IMapElevationDataProvider.h>
 
 namespace OsmAnd {
 
-    STRONG_ENUM(MapTileDataType)
-    {
-        Bitmap,
-        ElevationData
-    };
-
-    class OSMAND_CORE_API MapTile
+    class HeightmapTileProvider;
+    class HeightmapTileProvider_P
     {
     private:
     protected:
-        MapTile(const MapTileDataType& dataType, const void* data, size_t rowLength, uint32_t size);
+        HeightmapTileProvider_P(HeightmapTileProvider* owner, const QDir& dataPath, const QString& indexFilepath);
+
+        HeightmapTileProvider* const owner;
+        TileDB _tileDb;
+
+        bool obtainTile(const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<MapTile>& outTile);
     public:
-        virtual ~MapTile();
+        ~HeightmapTileProvider_P();
 
-        const MapTileDataType dataType;
-
-        const void* const data;
-        const size_t rowLength;
-        const uint32_t size;
-    };
-
-    class OSMAND_CORE_API IMapTileProvider
-    {
-    private:
-    protected:
-        IMapTileProvider(const MapTileDataType& dataType);
-    public:
-        virtual ~IMapTileProvider();
-
-        const MapTileDataType dataType;
-        virtual uint32_t getTileSize() const = 0;
-
-        virtual bool obtainTile(const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<MapTile>& outTile) = 0;
+    friend class OsmAnd::HeightmapTileProvider;
     };
 
 }
 
-#endif // __I_MAP_TILE_PROVIDER_H_
+#endif // __HEIGHTMAP_TILE_PROVIDER_P_H_

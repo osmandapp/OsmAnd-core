@@ -1,5 +1,7 @@
 #include "IMapBitmapTileProvider.h"
 
+#include <cassert>
+
 #include <SkBitmap.h>
 
 // Ensure that SKIA is using RGBA order
@@ -17,7 +19,7 @@
 #endif
 
 OsmAnd::IMapBitmapTileProvider::IMapBitmapTileProvider()
-    : IMapTileProvider(IMapTileProvider::Bitmap)
+    : IMapTileProvider(MapTileDataType::Bitmap)
 {
 }
 
@@ -25,14 +27,15 @@ OsmAnd::IMapBitmapTileProvider::~IMapBitmapTileProvider()
 {
 }
 
-OsmAnd::IMapBitmapTileProvider::Tile::Tile( SkBitmap* bitmap_, const AlphaChannelData& alphaChannelData_ )
-    : IMapTileProvider::Tile(IMapTileProvider::Bitmap, bitmap_->getPixels(), bitmap_->rowBytes(), bitmap_->width(), bitmap_->height())
+OsmAnd::MapBitmapTile::MapBitmapTile( SkBitmap* bitmap_, const AlphaChannelData& alphaChannelData_ )
+    : MapTile(MapTileDataType::Bitmap, bitmap_->getPixels(), bitmap_->rowBytes(), bitmap_->width())
     , _bitmap(bitmap_)
     , bitmap(_bitmap)
     , alphaChannelData(alphaChannelData_)
 {
+    assert(bitmap_->width() == bitmap_->height());
 }
 
-OsmAnd::IMapBitmapTileProvider::Tile::~Tile()
+OsmAnd::MapBitmapTile::~MapBitmapTile()
 {
 }

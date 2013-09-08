@@ -24,7 +24,6 @@
 
 #include <cstdint>
 #include <memory>
-#include <functional>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
@@ -34,7 +33,7 @@ class SkBitmap;
 
 namespace OsmAnd {
 
-    class OSMAND_CORE_API IMapBitmapTileProvider : public IMapTileProvider
+    class OSMAND_CORE_API MapBitmapTile : public MapTile
     {
     public:
         STRONG_ENUM(AlphaChannelData)
@@ -43,20 +42,21 @@ namespace OsmAnd {
             NotPresent,
             Undefined
         };
+    private:
+        const std::unique_ptr<SkBitmap> _bitmap;
+    protected:
+    public:
+        MapBitmapTile(SkBitmap* bitmap, const AlphaChannelData& alphaChannelData);
+        virtual ~MapBitmapTile();
 
-        class OSMAND_CORE_API Tile : public IMapTileProvider::Tile
-        {
-        private:
-            std::unique_ptr<SkBitmap> _bitmap;
-        protected:
-        public:
-            Tile(SkBitmap* bitmap, const AlphaChannelData& alphaChannelData);
-            virtual ~Tile();
+        const std::unique_ptr<SkBitmap>& bitmap;
 
-            const std::unique_ptr<SkBitmap>& bitmap;
+        const AlphaChannelData alphaChannelData;
+    };
 
-            const AlphaChannelData alphaChannelData;
-        };
+    class OSMAND_CORE_API IMapBitmapTileProvider : public IMapTileProvider
+    {
+    public:
     private:
     protected:
         IMapBitmapTileProvider();

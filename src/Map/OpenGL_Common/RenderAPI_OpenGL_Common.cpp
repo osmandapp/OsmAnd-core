@@ -171,14 +171,14 @@ void OsmAnd::RenderAPI_OpenGL_Common::findVariableLocation( GLuint program, GLin
     _programVariables[program].insert(type, location);
 }
 
-bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileToGPU( const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr< IMapTileProvider::Tile >& tile, const uint32_t& tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU )
+bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileToGPU( const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr< MapTile >& tile, const uint32_t& tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU )
 {
     // Upload bitmap tiles
-    if(tile->type == IMapTileProvider::Type::Bitmap)
+    if(tile->dataType == MapTileDataType::Bitmap)
     {
         return uploadTileAsTextureToGPU(tileId, zoom, tile, tilesPerAtlasTextureLimit, resourceInGPU);
     }
-    else if(tile->type == IMapTileProvider::Type::ElevationData)
+    else if(tile->dataType == MapTileDataType::ElevationData)
     {
         if(isSupported_vertexShaderTextureLookup)
         {
@@ -222,7 +222,7 @@ bool OsmAnd::RenderAPI_OpenGL_Common::releaseResourceInGPU( const ResourceInGPU:
     return false;
 }
 
-bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU( const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr< IMapTileProvider::Tile >& tile, const uint32_t& tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU )
+bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU( const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr< MapTile >& tile, const uint32_t& tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU )
 {
     GL_CHECK_PRESENT(glGenTextures);
     GL_CHECK_PRESENT(glBindTexture);
@@ -235,9 +235,9 @@ bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU( const TileId& ti
     size_t sourcePixelByteSize = 0;
     bool generateMipmap = false;
     bool paletteTexture = false;
-    if(tile->type == IMapTileProvider::Bitmap)
+    if(tile->dataType == MapTileDataType::Bitmap)
     {
-        auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
+        const auto& bitmapTile = std::static_pointer_cast<MapBitmapTile>(tile);
 
         switch (bitmapTile->bitmap->getConfig())
         {
@@ -253,15 +253,13 @@ bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU( const TileId& ti
             paletteTexture = true;
             break;
         }
-        tileSize = tile->width;
-        assert(tile->width == tile->height);
+        tileSize = tile->size;
         basePadding = BaseBitmapAtlasTilePadding;
         generateMipmap = true;
     }
-    else if(tile->type == IMapTileProvider::ElevationData)
+    else if(tile->dataType == MapTileDataType::ElevationData)
     {
-        tileSize = tile->width;
-        assert(tile->width == tile->height);
+        tileSize = tile->size;
         sourcePixelByteSize = 4;
         basePadding = 0;
         generateMipmap = false;
@@ -576,13 +574,13 @@ bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU( const TileId& ti
     return true;
 }
 
-bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsArrayBufferToGPU( const std::shared_ptr< IMapTileProvider::Tile >& tile, std::shared_ptr< ResourceInGPU >& resourceInGPU )
+bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsArrayBufferToGPU( const std::shared_ptr< MapTile >& tile, std::shared_ptr< ResourceInGPU >& resourceInGPU )
 {
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
 
-    assert(tile->type == IMapTileProvider::Type::ElevationData);
-    auto elevationTile = static_cast<IMapElevationDataProvider::Tile*>(tile.get());
+    assert(tile->dataType == MapTileDataType::ElevationData);
+    const auto& elevationTile = std::static_pointer_cast<MapElevationDataTile>(tile);
     
     // Create array buffer
     GLuint buffer;
@@ -594,9 +592,9 @@ bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsArrayBufferToGPU( const std::s
     GL_CHECK_RESULT;
 
     // Upload data
-    const auto itemsCount = tile->width * tile->height;
-    assert(tile->width*sizeof(float) == tile->rowLength);
-    glBufferData(GL_ARRAY_BUFFER, itemsCount * sizeof(float), tile->data, GL_STATIC_DRAW);
+    const auto itemsCount = tile->size*tile->size;
+    assert(tile->size*sizeof(float) == tile->rowLength);
+    glBufferData(GL_ARRAY_BUFFER, itemsCount*sizeof(float), tile->data, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
 
     // Unbind it

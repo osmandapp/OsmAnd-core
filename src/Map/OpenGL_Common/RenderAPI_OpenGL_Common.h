@@ -92,8 +92,8 @@ namespace OsmAnd {
     class OSMAND_CORE_API RenderAPI_OpenGL_Common : public RenderAPI
     {
     private:
-        bool uploadTileAsTextureToGPU(const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr< IMapTileProvider::Tile >& tile, const uint32_t& tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU);
-        bool uploadTileAsArrayBufferToGPU(const std::shared_ptr< IMapTileProvider::Tile >& tile, std::shared_ptr< ResourceInGPU >& resourceInGPU);
+        bool uploadTileAsTextureToGPU(const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr< MapTile >& tile, const uint32_t& tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU);
+        bool uploadTileAsArrayBufferToGPU(const std::shared_ptr< MapTile >& tile, std::shared_ptr< ResourceInGPU >& resourceInGPU);
     protected:
         GLint _maxTextureSize;
         QMap< GLuint, QMultiMap< GLShaderVariableType, GLint > > _programVariables;
@@ -122,12 +122,12 @@ namespace OsmAnd {
         virtual GLuint compileShader(GLenum shaderType, const char* source);
         virtual GLuint linkProgram(GLuint shadersCount, GLuint *shaders);
 
-        virtual uint32_t getTileTextureFormat(const std::shared_ptr< IMapTileProvider::Tile >& tile) = 0;
-        virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const std::shared_ptr< IMapTileProvider::Tile >& forTile) = 0;
+        virtual uint32_t getTileTextureFormat(const std::shared_ptr< MapTile >& tile) = 0;
+        virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const std::shared_ptr< MapTile >& forTile) = 0;
         virtual void uploadDataToTexture2D(GLenum target, GLint level,
             GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
             const GLvoid *data, GLsizei dataRowLengthInElements,
-            const std::shared_ptr< IMapTileProvider::Tile >& fromTile) = 0;
+            const std::shared_ptr< MapTile >& fromTile) = 0;
         virtual void setMipMapLevelsLimit(GLenum target, const uint32_t& mipmapLevelsCount) = 0;
 
         virtual void glGenVertexArrays_wrapper(GLsizei n, GLuint* arrays) = 0;
@@ -158,7 +158,7 @@ namespace OsmAnd {
         virtual void clearVariablesLookup();
         virtual void findVariableLocation(GLuint program, GLint& location, const QString& name, const GLShaderVariableType& type);
 
-        virtual bool uploadTileToGPU(const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr< IMapTileProvider::Tile >& tile, const uint32_t& tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU);
+        virtual bool uploadTileToGPU(const TileId& tileId, const ZoomLevel& zoom, const std::shared_ptr< MapTile >& tile, const uint32_t& tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU);
     };
 
 }

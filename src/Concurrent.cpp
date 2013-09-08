@@ -9,8 +9,8 @@ OsmAnd::Concurrent::Pools::Pools()
     : localStorage(new QThreadPool())
     , network(new QThreadPool())
 {
-    localStorage->setMaxThreadCount(1);
-    network->setMaxThreadCount(1);
+    localStorage->setMaxThreadCount(4);
+    network->setMaxThreadCount(4);
 }
 
 OsmAnd::Concurrent::Pools::~Pools()
@@ -18,7 +18,9 @@ OsmAnd::Concurrent::Pools::~Pools()
 }
 
 OsmAnd::Concurrent::Task::Task( ExecuteSignature executeMethod, PreExecuteSignature preExecuteMethod /*= nullptr*/, PostExecuteSignature postExecuteMethod /*= nullptr*/ )
-    : _isCancellationRequested(false)
+    : _cancellationRequestedByTask(false)
+    , _cancellationRequestedByExternal(false)
+    , _cancellationMutex(QMutex::Recursive)
     , preExecute(preExecuteMethod)
     , execute(executeMethod)
     , postExecute(postExecuteMethod)
@@ -32,27 +34,39 @@ OsmAnd::Concurrent::Task::~Task()
 
 void OsmAnd::Concurrent::Task::run()
 {
+    QMutexLocker scopedLocker(&_cancellationMutex);
+
     // This local event loop
     QEventLoop localLoop;
 
-    // If already requested for cancellation, do nothing
-    if(_isCancellationRequested)
-        return;
+    // Check if task wants to cancel itself
+    if(preExecute && !_cancellationRequestedByExternal)
+        preExecute(this, _cancellationRequestedByTask);
 
-    if(preExecute)
-        _isCancellationRequested = preExecute(this);
-    if(_isCancellationRequested)
-        return;
+    // If cancellation was not requested by task itself nor by
+    // external call
+    if(!_cancellationRequestedByTask && !_cancellationRequestedByExternal)
+        execute(this, localLoop);
 
-    execute(this, localLoop);
-
+    // Report that execution had finished
     if(postExecute)
-        postExecute(this);
+        postExecute(this, _cancellationRequestedByTask || _cancellationRequestedByExternal);
 }
 
-void OsmAnd::Concurrent::Task::requestCancellation()
+bool OsmAnd::Concurrent::Task::requestCancellation()
 {
-    _isCancellationRequested = true;
+    if(!_cancellationMutex.tryLock())
+        return false;
+
+    _cancellationRequestedByExternal = true;
+
+    _cancellationMutex.unlock();
+    return true;
+}
+
+bool OsmAnd::Concurrent::Task::isCancellationRequested() const
+{
+    return _cancellationRequestedByTask || _cancellationRequestedByExternal;
 }
 
 OsmAnd::Concurrent::TaskHost::TaskHost( const OwnerPtr& owner )
@@ -122,7 +136,7 @@ OsmAnd::Concurrent::HostedTask::HostedTask( const TaskHost::Bridge& bridge, Exec
     // Ensure that owner is not being destructed
     if(_host->_ownerIsBeingDestructed)
     {
-        _isCancellationRequested = true;
+        requestCancellation();
         return;
     }
 
@@ -148,7 +162,7 @@ void OsmAnd::Concurrent::HostedTask::run()
 {
     // Do nothing if owner is being destructed
     if(_host->_ownerIsBeingDestructed)
-        _isCancellationRequested = true;
+        requestCancellation();
 
     // Execute task itself
     Task::run();

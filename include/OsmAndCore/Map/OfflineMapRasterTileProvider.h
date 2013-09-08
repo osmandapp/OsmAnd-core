@@ -55,7 +55,7 @@ namespace OsmAnd {
         virtual float getTileDensity() const;
         virtual uint32_t getTileSize() const;
 
-        virtual void obtainTile(const TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback);
+        virtual bool obtainTile(const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<MapTile>& outTile);
     };
 
 }

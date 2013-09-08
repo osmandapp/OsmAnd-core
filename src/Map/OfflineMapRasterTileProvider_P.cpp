@@ -30,119 +30,84 @@ OsmAnd::OfflineMapRasterTileProvider_P::~OfflineMapRasterTileProvider_P()
 {
 }
 
-void OsmAnd::OfflineMapRasterTileProvider_P::obtainTile( const TileId& tileId, const ZoomLevel& zoom, IMapTileProvider::TileReadyCallback readyCallback )
+bool OsmAnd::OfflineMapRasterTileProvider_P::obtainTile(const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<MapTile>& outTile)
 {
-    assert(readyCallback != nullptr);
+    // Get bounding box that covers this tile
+    const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
 
-    std::shared_ptr<TileEntry> tileEntry;
-    _tiles.obtainTileEntry(tileEntry, tileId, zoom, true);
+    // Obtain OBF data interface
+    const auto& dataInterface = owner->dataProvider->obfsCollection->obtainDataInterface();
+
+    // Get map objects from data proxy
+    QList< std::shared_ptr<const Model::MapObject> > mapObjects;
+#if defined(_DEBUG) || defined(DEBUG)
+    const auto dataRead_Begin = std::chrono::high_resolution_clock::now();
+#endif
+    bool basemapAvailable;
+    MapFoundationType tileFoundation;
+    dataInterface->obtainBasemapPresenceFlag(basemapAvailable, nullptr);
+    dataInterface->obtainMapObjects(&mapObjects, &tileFoundation, tileBBox31, zoom, nullptr);
+#if defined(_DEBUG) || defined(DEBUG)
+    const auto dataRead_End = std::chrono::high_resolution_clock::now();
+    const std::chrono::duration<float> dataRead_Elapsed = dataRead_End - dataRead_Begin;
+#endif
+
+#if defined(_DEBUG) || defined(DEBUG)
+    const auto dataRasterization_Begin = std::chrono::high_resolution_clock::now();
+#endif
+
+    //TODO: SkGpuDevice?
+    // Allocate rasterization target
+    auto rasterizationSurface = new SkBitmap();
+    rasterizationSurface->setConfig(SkBitmap::kARGB_8888_Config, owner->tileSize, owner->tileSize);
+    if(!rasterizationSurface->allocPixels())
     {
-        QWriteLocker scopeLock(&tileEntry->stateLock);
-        if(tileEntry->state != TileState::Unknown)
-            return;
+        delete rasterizationSurface;
 
-        tileEntry->state = TileState::Requested;
+        LogPrintf(LogSeverityLevel::Error, "Failed to allocate buffer for ARGB8888 rasterization surface %dx%d", owner->tileSize, owner->tileSize);
+        return false;
+    }
+    SkDevice rasterizationTarget(*rasterizationSurface);
+
+    // Create rasterization canvas
+    SkCanvas canvas(&rasterizationTarget);
+
+    // Perform actual rendering
+    bool nothingToRasterize = false;
+    RasterizerEnvironment rasterizerEnv(owner->dataProvider->mapStyle, basemapAvailable, owner->displayDensity);
+    RasterizerContext rasterizerContext;
+    Rasterizer::prepareContext(rasterizerEnv, rasterizerContext, tileBBox31, zoom, owner->tileSize, tileFoundation, mapObjects, OsmAnd::PointF(), &nothingToRasterize, nullptr);
+    if(!nothingToRasterize)
+        Rasterizer::rasterizeMap(rasterizerEnv, rasterizerContext, true, canvas, nullptr);
+
+#if defined(_DEBUG) || defined(DEBUG)
+    const auto dataRasterization_End = std::chrono::high_resolution_clock::now();
+    const std::chrono::duration<float> dataRasterization_Elapsed = dataRasterization_End - dataRasterization_Begin;
+    if(!nothingToRasterize)
+    {
+        LogPrintf(LogSeverityLevel::Info,
+            "%d map objects from %dx%d@%d: reading %fs, rasterization %fs",
+            mapObjects.count(), tileId.x, tileId.y, zoom, dataRead_Elapsed.count(), dataRasterization_Elapsed.count());
+    }
+    else
+    {
+        LogPrintf(LogSeverityLevel::Info,
+            "%d map objects from %dx%d@%d: reading %fs, nothing to rasterize (%fs)",
+            mapObjects.count(), tileId.x, tileId.y, zoom, dataRead_Elapsed.count(), dataRasterization_Elapsed.count());
+    }
+#endif
+
+    // If there is no data to rasterize, tell that this tile is not available
+    if(nothingToRasterize)
+    {
+        delete rasterizationSurface;
+
+        outTile.reset();
+        return true;
     }
 
-    Concurrent::pools->localStorage->start(new Concurrent::HostedTask(_taskHostBridge,
-        [tileId, zoom, readyCallback](const Concurrent::Task* task, QEventLoop& eventLoop)
-    {
-        const auto pThis = reinterpret_cast<OfflineMapRasterTileProvider_P*>(static_cast<const Concurrent::HostedTask*>(task)->lockedOwner);
-
-        // Get tile entry
-        std::shared_ptr<TileEntry> tileEntry;
-        pThis->_tiles.obtainTileEntry(tileEntry, tileId, zoom, true);
-        {
-            QWriteLocker scopeLock(&tileEntry->stateLock);
-            if(tileEntry->state != TileState::Requested)
-                return;
-
-            tileEntry->state = TileState::Processing;
-        }
-
-        // Get bounding box that covers this tile
-        const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
-
-        // Obtain OBF data interface
-        const auto& dataInterface = pThis->owner->dataProvider->obfsCollection->obtainDataInterface();
-
-        // Get map objects from data proxy
-        QList< std::shared_ptr<const Model::MapObject> > mapObjects;
-#if defined(_DEBUG) || defined(DEBUG)
-        const auto dataRead_Begin = std::chrono::high_resolution_clock::now();
-#endif
-        bool basemapAvailable;
-        MapFoundationType tileFoundation;
-        dataInterface->obtainBasemapPresenceFlag(basemapAvailable, nullptr);
-        dataInterface->obtainMapObjects(&mapObjects, &tileFoundation, tileBBox31, zoom, nullptr);
-#if defined(_DEBUG) || defined(DEBUG)
-        const auto dataRead_End = std::chrono::high_resolution_clock::now();
-        const std::chrono::duration<float> dataRead_Elapsed = dataRead_End - dataRead_Begin;
-#endif
-
-#if defined(_DEBUG) || defined(DEBUG)
-        const auto dataRasterization_Begin = std::chrono::high_resolution_clock::now();
-#endif
-
-        //TODO: SkGpuDevice?
-        // Allocate rasterization target
-        auto rasterizationSurface = new SkBitmap();
-        rasterizationSurface->setConfig(SkBitmap::kARGB_8888_Config, pThis->owner->tileSize, pThis->owner->tileSize);
-        if(!rasterizationSurface->allocPixels())
-        {
-            delete rasterizationSurface;
-
-            LogPrintf(LogSeverityLevel::Error, "Failed to allocate buffer for ARGB8888 rasterization surface %dx%d", pThis->owner->tileSize, pThis->owner->tileSize);
-            return;
-        }
-        SkDevice rasterizationTarget(*rasterizationSurface);
-
-        // Create rasterization canvas
-        SkCanvas canvas(&rasterizationTarget);
-
-        // Perform actual rendering
-        bool nothingToRasterize = false;
-        RasterizerEnvironment rasterizerEnv(pThis->owner->dataProvider->mapStyle, basemapAvailable, pThis->owner->displayDensity);
-        RasterizerContext rasterizerContext;
-        Rasterizer::prepareContext(rasterizerEnv, rasterizerContext, tileBBox31, zoom, pThis->owner->tileSize, tileFoundation, mapObjects, OsmAnd::PointF(), &nothingToRasterize, nullptr);
-        if(!nothingToRasterize)
-            Rasterizer::rasterizeMap(rasterizerEnv, rasterizerContext, true, canvas, nullptr);
-
-#if defined(_DEBUG) || defined(DEBUG)
-        const auto dataRasterization_End = std::chrono::high_resolution_clock::now();
-        const std::chrono::duration<float> dataRasterization_Elapsed = dataRasterization_End - dataRasterization_Begin;
-        if(!nothingToRasterize)
-        {
-            LogPrintf(LogSeverityLevel::Info,
-                "%d map objects from %dx%d@%d: reading %fs, rasterization %fs",
-                mapObjects.count(), tileId.x, tileId.y, zoom, dataRead_Elapsed.count(), dataRasterization_Elapsed.count());
-        }
-        else
-        {
-            LogPrintf(LogSeverityLevel::Info,
-                "%d map objects from %dx%d@%d: reading %fs, nothing to rasterize (%fs)",
-                mapObjects.count(), tileId.x, tileId.y, zoom, dataRead_Elapsed.count(), dataRasterization_Elapsed.count());
-        }
-#endif
-
-        // If there is no data to rasterize, tell that this tile is not available
-        if(nothingToRasterize)
-        {
-            delete rasterizationSurface;
-
-            std::shared_ptr<IMapTileProvider::Tile> emptyTile;
-            readyCallback(tileId, zoom, emptyTile, false);
-
-            pThis->_tiles.removeEntry(tileEntry);
-
-            return;
-        }
-
-        // Or supply newly rasterized tile
-        std::shared_ptr<OfflineMapRasterTileProvider::Tile> tile(new OfflineMapRasterTileProvider::Tile(rasterizationSurface, IMapBitmapTileProvider::AlphaChannelData::NotPresent));
-        readyCallback(tileId, zoom, tile, true);
-
-        pThis->_tiles.removeEntry(tileEntry);
-    }));
+    // Or supply newly rasterized tile
+    auto tile = new MapBitmapTile(rasterizationSurface, MapBitmapTile::AlphaChannelData::NotPresent);
+    outTile.reset(tile);
+    return true;
 }
-

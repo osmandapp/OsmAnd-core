@@ -24,37 +24,23 @@
 
 #include <cstdint>
 #include <memory>
-#include <functional>
-#include <array>
 
 #include <QString>
 #include <QDir>
-#include <QSqlDatabase>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 
 #include <OsmAndCore/Map/IMapBitmapTileProvider.h>
 
-class SkBitmap;
-
 namespace OsmAnd {
 
+    class HillshadeTileProvider_P;
     class OSMAND_CORE_API HillshadeTileProvider : public IMapBitmapTileProvider
     {
     private:
+        const std::unique_ptr<HillshadeTileProvider> _d;
     protected:
-        class OSMAND_CORE_API Tile : public IMapBitmapTileProvider::Tile
-        {
-        private:
-            std::unique_ptr<SkBitmap> _skBitmap;
-        protected:
-        public:
-            Tile(SkBitmap* bitmap);
-            virtual ~Tile();
-        };
-
-        QString _indexFilePath;
     public:
         HillshadeTileProvider(const QDir& storagePath);
         virtual ~HillshadeTileProvider();
@@ -69,7 +55,7 @@ namespace OsmAnd {
         virtual float getTileDensity() const;
         virtual uint32_t getTileSize() const;
 
-        virtual void obtainTile(const TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback);
+        virtual bool obtainTile(const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<MapTile>& outTile);
     };
 
 }

@@ -173,7 +173,7 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
                 auto subgroup = *itSubgroup;
 
                 assert(subgroup->type == Lexeme::Group);
-                static_cast<Group*>(subgroup.get())->addGroupFilter(rule);
+                std::static_pointer_cast<Group>(subgroup)->addGroupFilter(rule);
             }
         }
 
@@ -192,7 +192,7 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
                 auto subgroup = *itSubgroup;
 
                 assert(subgroup->type == Lexeme::Group);
-                if(!static_cast<Group*>(subgroup.get())->registerGlobalRules(type))
+                if(!std::static_pointer_cast<Group>(subgroup)->registerGlobalRules(type))
                     return false;
             }
 
@@ -289,7 +289,7 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
                     auto lexeme = stack.top();
 
                     if(lexeme->type == Lexeme::Group)
-                        ruleAttributes.unite(static_cast<Group*>(lexeme.get())->attributes);
+                        ruleAttributes.unite(std::static_pointer_cast<Group>(lexeme)->attributes);
                 }
 
                 const auto& attribs = xmlReader.attributes();
@@ -310,11 +310,11 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
 
                     if(lexeme->type == Lexeme::Group)
                     {
-                        static_cast<Group*>(lexeme.get())->children.push_back(rule);
+                        std::static_pointer_cast<Group>(lexeme)->children.push_back(rule);
                     }
                     else if(lexeme->type == Lexeme::Rule)
                     {
-                        static_cast<Rule*>(lexeme.get())->rule->_ifElseChildren.push_back(rule);
+                        std::static_pointer_cast<Rule>(lexeme)->rule->_ifElseChildren.push_back(rule);
                     }
                 }
                 else
@@ -350,11 +350,11 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
                 auto lexeme = stack.top();
                 if(lexeme->type == Lexeme::Group)
                 {
-                    static_cast<Group*>(lexeme.get())->addGroupFilter(rule);
+                    std::static_pointer_cast<Group>(lexeme)->addGroupFilter(rule);
                 }
                 else if(lexeme->type == Lexeme::Rule)
                 {
-                    static_cast<Rule*>(lexeme.get())->rule->_ifChildren.push_back(rule);
+                    std::static_pointer_cast<Rule>(lexeme)->rule->_ifChildren.push_back(rule);
                 }
 
                 stack.push(std::shared_ptr<Lexeme>(new Rule(rule, this)));
@@ -366,7 +366,7 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
                 {
                     auto lexeme = stack.top();
                     if(lexeme->type == Lexeme::Group)
-                        group->attributes.unite(static_cast<Group*>(lexeme.get())->attributes);
+                        group->attributes.unite(std::static_pointer_cast<Group>(lexeme)->attributes);
                 }
 
                 const auto& attribs = xmlReader.attributes();
@@ -415,14 +415,14 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
                 if (stack.isEmpty())
                 {
                     assert(lexeme->type == Lexeme::Group);
-                    if(!static_cast<Group*>(lexeme.get())->registerGlobalRules(rulesetType))
+                    if(!std::static_pointer_cast<Group>(lexeme)->registerGlobalRules(rulesetType))
                         return false;
                 }
                 else
                 {
                     auto group = stack.top();
                     if(group->type == Lexeme::Group)
-                        static_cast<Group*>(group.get())->subgroups.push_back(lexeme);
+                        std::static_pointer_cast<Group>(group)->subgroups.push_back(lexeme);
                 }
             }
             else if(tagName == "groupFilter")

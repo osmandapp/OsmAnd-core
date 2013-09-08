@@ -171,13 +171,13 @@ void OsmAnd::Rasterizer_P::prepareContext(
         return;
     }
 
-    context._texts.clear();
+    /*context._texts.clear();
     obtainPrimitivesTexts(env, context, controller);
     if(controller && controller->isAborted())
     {
         context.clear();
         return;
-    }
+    }*/
 }
 
 void OsmAnd::Rasterizer_P::adjustContextFromEnvironment(
@@ -190,6 +190,7 @@ void OsmAnd::Rasterizer_P::adjustContextFromEnvironment(
     if(env.attributeRule_defaultColor)
     {
         MapStyleEvaluator evaluator(env.owner->style, env.attributeRule_defaultColor);
+
         env.applyTo(evaluator);
         evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
         if(evaluator.evaluate())
@@ -201,6 +202,8 @@ void OsmAnd::Rasterizer_P::adjustContextFromEnvironment(
     if(env.attributeRule_shadowRendering)
     {
         MapStyleEvaluator evaluator(env.owner->style, env.attributeRule_shadowRendering);
+
+
         env.applyTo(evaluator);
         evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
         if(evaluator.evaluate())

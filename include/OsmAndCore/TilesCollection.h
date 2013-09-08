@@ -28,7 +28,6 @@
 #include <functional>
 
 #include <QMap>
-#include <QMutex>
 #include <QReadWriteLock>
 
 #include <OsmAndCore.h>
@@ -40,11 +39,10 @@ namespace OsmAnd {
     {
     private:
         std::array< QMap< TileId, std::shared_ptr<ENTRY> >, ZoomLevelsCount > _zoomLevels;
+        QReadWriteLock _tilesCollectionLock;
     protected:
-        QMutex _tilesCollectionMutex;
     public:
         TilesCollection()
-            : _tilesCollectionMutex(QMutex::Recursive)
         {
         }
         virtual ~TilesCollection()
@@ -53,27 +51,38 @@ namespace OsmAnd {
 
         virtual bool obtainTileEntry(std::shared_ptr<ENTRY>& outEntry, const TileId& tileId, const ZoomLevel& zoom, bool createEmptyIfUnexistent = false)
         {
-            QMutexLocker scopedLock(&_tilesCollectionMutex);
+            if(createEmptyIfUnexistent)
+                _tilesCollectionLock.lockForWrite();
+            else
+                _tilesCollectionLock.lockForRead();
 
             auto& zoomLevel = _zoomLevels[zoom];
             auto itEntry = zoomLevel.find(tileId);
             if(itEntry != zoomLevel.end())
             {
                 outEntry = *itEntry;
+
+                _tilesCollectionLock.unlock();
                 return true;
             }
 
             if(!createEmptyIfUnexistent)
+            {
+                _tilesCollectionLock.unlock();
                 return false;
+            }
 
             auto newEntry = new ENTRY(tileId, zoom);
             outEntry.reset(newEntry);
             itEntry = zoomLevel.insert(tileId, outEntry);
+
+            _tilesCollectionLock.unlock();
             return true;
         }
+
         virtual void obtainTileEntries(QList< std::shared_ptr<ENTRY> >* outList, std::function<bool (const std::shared_ptr<ENTRY>& entry, bool& cancel)> filter = nullptr)
         {
-            QMutexLocker scopedLock(&_tilesCollectionMutex);
+            QReadLocker scopedLocker(&_tilesCollectionLock);
 
             bool doCancel = false;
             for(auto itZoomLevel = _zoomLevels.begin(); itZoomLevel != _zoomLevels.end(); ++itZoomLevel)
@@ -95,24 +104,51 @@ namespace OsmAnd {
                 }
             }
         }
+
         virtual void removeAllEntries()
         {
-            QMutexLocker scopedLock(&_tilesCollectionMutex);
+            QWriteLocker scopedLocker(&_tilesCollectionLock);
 
             for(int zoom = ZoomLevel::MinZoomLevel; zoom != ZoomLevel::MaxZoomLevel; zoom++)
                 _zoomLevels[zoom].clear();
         }
+
         virtual void removeEntry(const std::shared_ptr<ENTRY>& entry)
         {
-            QMutexLocker scopedLock(&_tilesCollectionMutex);
+            QWriteLocker scopedLock(&_tilesCollectionLock);
 
             _zoomLevels[entry->zoom].remove(entry->tileId);
         }
+
         virtual void removeEntry(const TileId& tileId, const ZoomLevel& zoom)
         {
-            QMutexLocker scopedLock(&_tilesCollectionMutex);
+            QWriteLocker scopedLock(&_tilesCollectionLock);
 
             _zoomLevels[zoom].remove(tileId);
+        }
+
+        virtual void removeTileEntries(std::function<bool (const std::shared_ptr<ENTRY>& entry, bool& cancel)> filter = nullptr)
+        {
+            QWriteLocker scopedLock(&_tilesCollectionLock);
+
+            bool doCancel = false;
+            for(auto itZoomLevel = _zoomLevels.begin(); itZoomLevel != _zoomLevels.end(); ++itZoomLevel)
+            {
+                auto& zoomLevel = *itZoomLevel;
+
+                QMutableMapIterator< TileId, std::shared_ptr<ENTRY> > itEntryPair(zoomLevel);
+                while(itEntryPair.hasNext())
+                {
+                    itEntryPair.next();
+
+                    const auto doRemove = (filter == nullptr) || filter(itEntryPair.value(), doCancel);
+                    if(doRemove)
+                        itEntryPair.remove();
+
+                    if(doCancel)
+                        return;
+                }
+            }
         }
     };
 

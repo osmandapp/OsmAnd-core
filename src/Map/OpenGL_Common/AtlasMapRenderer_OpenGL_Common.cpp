@@ -564,7 +564,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
 
                     if(gpuResource->type == RenderAPI::ResourceInGPU::TileOnAtlasTexture)
                     {
-                        const auto& tileOnAtlasTexture = static_cast<RenderAPI::TileOnAtlasTextureInGPU*>(gpuResource.get());
+                        const auto& tileOnAtlasTexture = std::static_pointer_cast<RenderAPI::TileOnAtlasTextureInGPU>(gpuResource);
 
                         glUniform1i(perTile_vs.slotIndex, tileOnAtlasTexture->slotIndex);
                         GL_CHECK_RESULT;
@@ -577,7 +577,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
                     }
                     else
                     {
-                        const auto& texture = static_cast<RenderAPI::TextureInGPU*>(gpuResource.get());
+                        const auto& texture = std::static_pointer_cast<RenderAPI::TextureInGPU>(gpuResource);
 
                         glUniform1i(perTile_vs.slotIndex, 0);
                         GL_CHECK_RESULT;
@@ -593,7 +593,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
                 {
                     assert(gpuResource->type == RenderAPI::ResourceInGPU::ArrayBuffer);
 
-                    const auto& arrayBuffer = static_cast<RenderAPI::ArrayBufferInGPU*>(gpuResource.get());
+                    const auto& arrayBuffer = std::static_pointer_cast<RenderAPI::ArrayBufferInGPU>(gpuResource);
                     assert(arrayBuffer->itemsCount == currentConfiguration.heixelsPerTileSide*currentConfiguration.heixelsPerTileSide);
 
                     if(!elevationVertexAttribArrayEnabled)
@@ -658,7 +658,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
 
             if(gpuResource->type == RenderAPI::ResourceInGPU::TileOnAtlasTexture)
             {
-                const auto& tileOnAtlasTexture = static_cast<RenderAPI::TileOnAtlasTextureInGPU*>(gpuResource.get());
+                const auto& tileOnAtlasTexture = std::static_pointer_cast<RenderAPI::TileOnAtlasTextureInGPU>(gpuResource);
 
                 glUniform1i(perTile_vs.slotIndex, tileOnAtlasTexture->slotIndex);
                 GL_CHECK_RESULT;
@@ -1410,7 +1410,7 @@ float OsmAnd::AtlasMapRenderer_OpenGL_Common::getReferenceTileSizeOnScreen()
     if(!rasterMapProvider)
         return static_cast<float>(DefaultReferenceTileSizeOnScreen) * setupOptions.displayDensityFactor;
 
-    auto tileProvider = static_cast<IMapBitmapTileProvider*>(rasterMapProvider.get());
+    auto tileProvider = std::static_pointer_cast<IMapBitmapTileProvider>(rasterMapProvider);
     return tileProvider->getTileSize() * (setupOptions.displayDensityFactor / tileProvider->getTileDensity());
 }
 

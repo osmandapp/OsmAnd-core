@@ -24,22 +24,19 @@
 
 #include <cstdint>
 #include <memory>
-#include <functional>
 #include <array>
 
+#include <QSet>
 #include <QDir>
 #include <QUrl>
-#include <QFileInfo>
-#include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QEventLoop>
+#include <QMutex>
+#include <QWaitCondition>
 
 #include <OsmAndCore.h>
 #include <CommonTypes.h>
-#include <TilesCollection.h>
-#include <Concurrent.h>
-#include <IMapTileProvider.h>
-#include <IMapTileProvider.h>
+#include <IMapBitmapTileProvider.h>
 
 namespace OsmAnd {
 
@@ -50,53 +47,22 @@ namespace OsmAnd {
     protected:
         OnlineMapRasterTileProvider_P(OnlineMapRasterTileProvider* owner);
 
-        STRONG_ENUM(TileState)
-        {
-            // Tile is not in any determined state (tile entry did not exist)
-            Unknown = 0,
-
-            // Tile is requested
-            Requested,
-
-            // Tile is being searched locally
-            LocalLookup,
-
-            // Tile is enqueued for download
-            EnqueuedForDownload,
-
-            // Tile is being downloaded
-            Downloading,
-        };
-
-        class TileEntry : public TilesCollectionEntryWithState<TileState, TileState::Unknown>
-        {
-        private:
-        protected:
-            QUrl sourceUrl;
-            QFileInfo localPath;
-            IMapTileProvider::TileReadyCallback callback;
-        public:
-            TileEntry(const TileId& tileId, const ZoomLevel& zoom);
-            virtual ~TileEntry();
-
-            friend class OsmAnd::OnlineMapRasterTileProvider;
-            friend class OsmAnd::OnlineMapRasterTileProvider_P;
-        };
-
         const OnlineMapRasterTileProvider* owner;
-        const Concurrent::TaskHost::Bridge _taskHostBridge;
 
         QMutex _currentDownloadsCounterMutex;
-        uint32_t _currentDownloadsCount;
+        uint32_t _currentDownloadsCounter;
+        QWaitCondition _currentDownloadsCounterChanged;
+
         QDir _localCachePath;
         bool _networkAccessAllowed;
 
-        void obtainTile(const TileId& tileId, const ZoomLevel& zoom, IMapTileProvider::TileReadyCallback readyCallback);
-        void obtainTile(const std::shared_ptr<TileEntry>& tileEntry);
-        void replyFinishedHandler(QNetworkReply* reply, const std::shared_ptr<TileEntry>& tileEntry, QEventLoop& eventLoop, QNetworkAccessManager& networkAccessManager);
-        void handleNetworkReply(QNetworkReply* reply, const std::shared_ptr<TileEntry>& tileEntry);
+        QMutex _tilesInProcessMutex;
+        std::array< QSet< TileId >, ZoomLevelsCount > _tilesInProcess;
+        QWaitCondition _waitUntilAnyTileIsProcessed;
 
-        TilesCollection<TileEntry> _tiles;
+        bool obtainTile(const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<MapTile>& outTile);
+        void lockTile(const TileId& tileId, const ZoomLevel& zoom);
+        void unlockTile(const TileId& tileId, const ZoomLevel& zoom);
     public:
         virtual ~OnlineMapRasterTileProvider_P();
 

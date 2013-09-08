@@ -31,7 +31,7 @@
 #include <CommonTypes.h>
 #include <Concurrent.h>
 #include <TilesCollection.h>
-#include <IMapTileProvider.h>
+#include <IMapBitmapTileProvider.h>
 
 namespace OsmAnd {
 
@@ -60,7 +60,7 @@ namespace OsmAnd {
         const Concurrent::TaskHost::Bridge _taskHostBridge;
         TilesCollection<TileEntry> _tiles;
 
-        void obtainTile(const TileId& tileId, const ZoomLevel& zoom, IMapTileProvider::TileReadyCallback readyCallback);
+        bool obtainTile(const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<MapTile>& outTile);
     public:
         virtual ~OfflineMapRasterTileProvider_P();
 

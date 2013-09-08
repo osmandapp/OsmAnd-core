@@ -8,7 +8,7 @@ OsmAnd::AtlasMapRenderer::~AtlasMapRenderer()
 {
 }
 
-uint32_t OsmAnd::AtlasMapRenderer::getTilesPerAtlasTextureLimit( const TiledResourceType& resourceType, const std::shared_ptr<IMapTileProvider::Tile>& tile )
+uint32_t OsmAnd::AtlasMapRenderer::getTilesPerAtlasTextureLimit( const TiledResourceType& resourceType, const std::shared_ptr<MapTile>& tile )
 {
     return currentConfiguration.altasTexturesAllowed ? OptimalTilesPerAtlasTextureSide : 1;
 }

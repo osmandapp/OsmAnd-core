@@ -32,6 +32,7 @@
 #include <QRunnable>
 #include <QWaitCondition>
 #include <QReadWriteLock>
+#include <QMutex>
 #include <QAtomicInt>
 
 #include <OsmAndCore.h>
@@ -59,12 +60,14 @@ namespace OsmAnd {
         class OSMAND_CORE_API Task : public QRunnable
         {
         public:
-            typedef std::function<bool (const Task*)> PreExecuteSignature;
+            typedef std::function<void (const Task*, bool& requestCancellation)> PreExecuteSignature;
             typedef std::function<void (const Task*, QEventLoop& eventLoop)> ExecuteSignature;
-            typedef std::function<void (const Task*)> PostExecuteSignature;
+            typedef std::function<void (const Task*, bool wasCancelled)> PostExecuteSignature;
         private:
+            bool _cancellationRequestedByTask;
+            bool _cancellationRequestedByExternal;
+            QMutex _cancellationMutex;
         protected:
-            volatile bool _isCancellationRequested;
         public:
             Task(ExecuteSignature executeMethod, PreExecuteSignature preExecuteMethod = nullptr, PostExecuteSignature postExecuteMethod = nullptr);
             virtual ~Task();
@@ -73,7 +76,7 @@ namespace OsmAnd {
             const ExecuteSignature execute;
             const PostExecuteSignature postExecute;
 
-            void requestCancellation();
+            bool requestCancellation();
             bool isCancellationRequested() const;
 
             virtual void run();
@@ -147,7 +150,7 @@ namespace OsmAnd {
 
             const ThreadProcedureSignature threadProcedure;
         };
-    } // namespace concurrent
+    } // namespace Concurrent
 
 } // namespace OsmAnd
 

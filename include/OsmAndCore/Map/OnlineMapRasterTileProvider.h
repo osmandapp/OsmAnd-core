@@ -24,8 +24,6 @@
 
 #include <cstdint>
 #include <memory>
-#include <functional>
-#include <array>
 
 #include <QString>
 #include <QDir>
@@ -45,8 +43,8 @@ namespace OsmAnd {
     public:
         OnlineMapRasterTileProvider(const QString& id, const QString& urlPattern,
             const ZoomLevel& minZoom = ZoomLevel0, const ZoomLevel& maxZoom = ZoomLevel31,
-            const uint32_t& maxConcurrentDownloads = 1, const uint32_t& tileDimension = 256,
-            const AlphaChannelData& alphaChannelData = AlphaChannelData::Undefined);
+            const uint32_t& maxConcurrentDownloads = 1, const uint32_t& tileSize = 256,
+            const MapBitmapTile::AlphaChannelData& alphaChannelData = MapBitmapTile::AlphaChannelData::Undefined);
         virtual ~OnlineMapRasterTileProvider();
 
         const QString id;
@@ -54,8 +52,8 @@ namespace OsmAnd {
         const uint32_t minZoom;
         const uint32_t maxZoom;
         const uint32_t maxConcurrentDownloads;
-        const uint32_t tileDimension;
-        const AlphaChannelData alphaChannelData;
+        const uint32_t tileSize;
+        const MapBitmapTile::AlphaChannelData alphaChannelData;
 
         void setLocalCachePath(const QDir& localCachePath);
         const QDir& localCachePath;
@@ -66,7 +64,7 @@ namespace OsmAnd {
         virtual float getTileDensity() const;
         virtual uint32_t getTileSize() const;
 
-        virtual void obtainTile(const TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback);
+        virtual bool obtainTile(const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<MapTile>& outTile);
         
         static std::shared_ptr<OsmAnd::IMapBitmapTileProvider> createMapnikProvider();
         static std::shared_ptr<OsmAnd::IMapBitmapTileProvider> createCycleMapProvider();

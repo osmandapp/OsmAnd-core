@@ -24,7 +24,6 @@
 
 #include <cstdint>
 #include <memory>
-#include <functional>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
@@ -32,18 +31,17 @@
 
 namespace OsmAnd {
 
+    class OSMAND_CORE_API MapElevationDataTile : public MapTile
+    {
+    private:
+    protected:
+    public:
+        MapElevationDataTile(const float* data, size_t rowLength, uint32_t size);
+        virtual ~MapElevationDataTile();
+    };
+
     class OSMAND_CORE_API IMapElevationDataProvider : public IMapTileProvider
     {
-    public:
-        class OSMAND_CORE_API Tile : public IMapTileProvider::Tile
-        {
-        private:
-        protected:
-        public:
-            Tile(const float* data, size_t rowLength, uint32_t size);
-            virtual ~Tile();
-        };
-
     private:
     protected:
         IMapElevationDataProvider();

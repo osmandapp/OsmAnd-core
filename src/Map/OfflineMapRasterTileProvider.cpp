@@ -24,7 +24,7 @@ uint32_t OsmAnd::OfflineMapRasterTileProvider::getTileSize() const
     return tileSize;
 }
 
-void OsmAnd::OfflineMapRasterTileProvider::obtainTile( const TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback )
+bool OsmAnd::OfflineMapRasterTileProvider::obtainTile(const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<MapTile>& outTile)
 {
-    _d->obtainTile(tileId, zoom, readyCallback);
+    return _d->obtainTile(tileId, zoom, outTile);
 }

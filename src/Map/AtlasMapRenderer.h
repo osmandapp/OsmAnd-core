@@ -43,7 +43,7 @@ namespace OsmAnd {
     protected:
         AtlasMapRenderer();
 
-        virtual uint32_t getTilesPerAtlasTextureLimit(const TiledResourceType& resourceType, const std::shared_ptr<IMapTileProvider::Tile>& tile);
+        virtual uint32_t getTilesPerAtlasTextureLimit(const TiledResourceType& resourceType, const std::shared_ptr<MapTile>& tile);
     public:
         virtual ~AtlasMapRenderer();
 

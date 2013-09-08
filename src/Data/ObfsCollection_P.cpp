@@ -32,13 +32,13 @@ void OsmAnd::ObfsCollection_P::refreshSources()
 
             if(entry->type == WatchEntry::WatchedDirectory)
             {
-                auto watchedDirEntry = static_cast<WatchedDirectoryEntry*>(entry.get());
+                const auto& watchedDirEntry = std::static_pointer_cast<WatchedDirectoryEntry>(entry);
 
                 Utilities::findFiles(watchedDirEntry->dir, QStringList() << "*.obf", obfs, watchedDirEntry->recursive);
             }
             else if(entry->type == WatchEntry::ExplicitFile)
             {
-                auto explicitFileEntry = static_cast<ExplicitFileEntry*>(entry.get());
+                const auto& explicitFileEntry = std::static_pointer_cast<ExplicitFileEntry>(entry);
 
                 if(explicitFileEntry->fileInfo.exists())
                     obfs.push_back(explicitFileEntry->fileInfo);

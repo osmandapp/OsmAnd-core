@@ -6,19 +6,17 @@
 #include <QCoreApplication>
 #include <QNetworkRequest>
 #include <QNetworkReply>
-#include <QUrl>
+#include <QFile>
 
 #include <SkStream.h>
 #include <SkImageDecoder.h>
 
+#include "Network.h"
 #include "Logging.h"
 
 OsmAnd::OnlineMapRasterTileProvider_P::OnlineMapRasterTileProvider_P( OnlineMapRasterTileProvider* owner_ )
     : owner(owner_)
-    , _currentDownloadsCounterMutex(QMutex::Recursive)
-    , _currentDownloadsCount(0)
-    , _networkAccessAllowed(true)
-    , _taskHostBridge(this)
+    , _currentDownloadsCounter(0)
 {
 }
 
@@ -26,266 +24,189 @@ OsmAnd::OnlineMapRasterTileProvider_P::~OnlineMapRasterTileProvider_P()
 {
 }
 
-void OsmAnd::OnlineMapRasterTileProvider_P::obtainTile( const TileId& tileId, const ZoomLevel& zoom, IMapTileProvider::TileReadyCallback readyCallback )
+bool OsmAnd::OnlineMapRasterTileProvider_P::obtainTile( const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<MapTile>& outTile )
 {
-    assert(readyCallback != nullptr);
+    // Check if requested tile is already being processed, and wait until that's done
+    // to mark that as being processed.
+    lockTile(tileId, zoom);
 
-    std::shared_ptr<TileEntry> tileEntry;
-    _tiles.obtainTileEntry(tileEntry, tileId, zoom, true);
+    //TODO: access to _localCachePath should be atomic, and a check is needed if local cache is available at all
+    // Check if requested tile is already in local storage.
+    const auto tileLocalRelativePath =
+        QString::number(zoom) + QDir::separator() +
+        QString::number(tileId.x) + QDir::separator() +
+        QString::number(tileId.y) + QString::fromLatin1(".tile");
+    QFileInfo localFile(_localCachePath.filePath(tileLocalRelativePath));
+    if(localFile.exists())
     {
-        QWriteLocker scopeLock(&tileEntry->stateLock);
-        if(tileEntry->state != TileState::Unknown)
-            return;
+        // Since tile is in local storage, it's safe to unmark it as being processed
+        unlockTile(tileId, zoom);
 
-        auto tileUrl = owner->urlPattern;
-        tileUrl
-            .replace(QString::fromLatin1("${zoom}"), QString::number(zoom))
-            .replace(QString::fromLatin1("${x}"), QString::number(tileId.x))
-            .replace(QString::fromLatin1("${y}"), QString::number(tileId.y));
-        tileEntry->sourceUrl = QUrl(tileUrl);
-
-        const auto& subPath =
-            QString::number(zoom) + QDir::separator() +
-            QString::number(tileId.x) + QDir::separator() +
-            QString::number(tileId.y) + QString::fromLatin1(".tile");
-        tileEntry->localPath = QFileInfo(_localCachePath.filePath(subPath));
-
-        tileEntry->callback = readyCallback;
-
-        tileEntry->state = TileState::Requested;
-    }
-
-    Concurrent::pools->localStorage->start(new Concurrent::HostedTask(_taskHostBridge,
-        [tileId, zoom, readyCallback](const Concurrent::Task* task, QEventLoop& eventLoop)
-    {
-        const auto pThis = reinterpret_cast<OnlineMapRasterTileProvider_P*>(static_cast<const Concurrent::HostedTask*>(task)->lockedOwner);
-
-        // Check if this tile is only in requested state
-        std::shared_ptr<TileEntry> tileEntry;
-        pThis->_tiles.obtainTileEntry(tileEntry, tileId, zoom, true);
+        // If local file is empty, it means that requested tile does not exist (has no data)
+        if(localFile.size() == 0)
         {
-            QWriteLocker scopeLock(&tileEntry->stateLock);
-            if(tileEntry->state != TileState::Requested)
-                return;
-
-            tileEntry->state = TileState::LocalLookup;
+            outTile.reset();
+            return true;
         }
 
-        // Check if file is already in local storage
-        if(tileEntry->localPath.exists())
+        //NOTE: Here may be issue that SKIA can not handle opening files on different platforms correctly
+        auto bitmap = new SkBitmap();
+        SkFILEStream fileStream(qPrintable(localFile.absoluteFilePath()));
+        if(!SkImageDecoder::DecodeStream(&fileStream, bitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
         {
-            // 0-sized tile means there is no data at all
-            if(tileEntry->localPath.size() == 0)
-            {
-                std::shared_ptr<IMapTileProvider::Tile> emptyTile;
-                readyCallback(tileId, zoom, emptyTile, true);
+            LogPrintf(LogSeverityLevel::Error, "Failed to decode tile file '%s'", qPrintable(localFile.absoluteFilePath()));
 
-                pThis->_tiles.removeEntry(tileEntry);
+            delete bitmap;
 
-                return;
-            }
-
-            //NOTE: Here may be issue that SKIA can not handle opening files on different platforms correctly
-            auto skBitmap = new SkBitmap();
-            SkFILEStream fileStream(qPrintable(tileEntry->localPath.absoluteFilePath()));
-            if(!SkImageDecoder::DecodeStream(&fileStream, skBitmap,  SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
-            {
-                LogPrintf(LogSeverityLevel::Error, "Failed to decode tile file '%s'", qPrintable(tileEntry->localPath.absoluteFilePath()));
-
-                delete skBitmap;
-                std::shared_ptr<IMapTileProvider::Tile> emptyTile;
-                readyCallback(tileId, zoom, emptyTile, false);
-
-                pThis->_tiles.removeEntry(tileEntry);
-
-                return;
-            }
-
-            assert(skBitmap->width() == skBitmap->height());
-            assert(skBitmap->width() == pThis->owner->tileDimension);
-
-            // Construct tile response
-            std::shared_ptr<OnlineMapRasterTileProvider::Tile> tile(new OnlineMapRasterTileProvider::Tile(skBitmap, pThis->owner->alphaChannelData));
-            readyCallback(tileId, zoom, tile, true);
-
-            pThis->_tiles.removeEntry(tileEntry);
-
-            return;
-        }
-
-        // Well, tile is not in local cache, we need to download it
-        pThis->obtainTile(tileEntry);
-    }));
-}
-
-void OsmAnd::OnlineMapRasterTileProvider_P::obtainTile( const std::shared_ptr<TileEntry>& tileEntry )
-{
-    if(!_networkAccessAllowed)
-        return;
-
-    {
-        QMutexLocker scopedLock(&_currentDownloadsCounterMutex);
-        QWriteLocker scopeLock(&tileEntry->stateLock);
-        if(tileEntry->state != TileState::LocalLookup && tileEntry->state != TileState::EnqueuedForDownload)
-            return;
-
-        // If all download slots are taken, enqueue
-        if(_currentDownloadsCount == owner->maxConcurrentDownloads)
-        {
-            tileEntry->state = TileState::EnqueuedForDownload;
-            return;
-        }
-
-        // Else, simply increment counter
-        _currentDownloadsCount++;
-        tileEntry->state = TileState::Downloading;
-    }
-
-    Concurrent::pools->network->start(new Concurrent::HostedTask(_taskHostBridge,
-        [tileEntry](const Concurrent::Task* task, QEventLoop& eventLoop)
-    {
-        const auto pThis = reinterpret_cast<OnlineMapRasterTileProvider_P*>(static_cast<const Concurrent::HostedTask*>(task)->lockedOwner);
-
-        QNetworkAccessManager networkAccessManager;
-        QNetworkRequest request;
-        request.setUrl(tileEntry->sourceUrl);
-        request.setRawHeader("User-Agent", "OsmAnd Core");
-
-        auto reply = networkAccessManager.get(request);
-        QObject::connect(reply, &QNetworkReply::finished,
-            [pThis, reply, tileEntry, &eventLoop, &networkAccessManager]()
-        {
-            pThis->replyFinishedHandler(reply, tileEntry, eventLoop, networkAccessManager);
-        });
-        eventLoop.exec();
-        return;
-    }));
-}
-
-void OsmAnd::OnlineMapRasterTileProvider_P::replyFinishedHandler( QNetworkReply* reply, const std::shared_ptr<TileEntry>& tileEntry, QEventLoop& eventLoop, QNetworkAccessManager& networkAccessManager )
-{
-    auto redirectUrl = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
-    if(!redirectUrl.isEmpty())
-    {
-        reply->deleteLater();
-
-        QNetworkRequest newRequest;
-        newRequest.setUrl(redirectUrl);
-        newRequest.setRawHeader("User-Agent", "OsmAnd Core");
-        auto newReply = networkAccessManager.get(newRequest);
-        QObject::connect(newReply, &QNetworkReply::finished,
-            [this, newReply, tileEntry, &eventLoop, &networkAccessManager]()
-        {
-            replyFinishedHandler(newReply, tileEntry, eventLoop, networkAccessManager);
-        });
-        return;
-    }
-
-    // Remove current download and process pending queue
-    {
-        QMutexLocker scopedLock(&_currentDownloadsCounterMutex);
-        _currentDownloadsCount--;
-    }
-
-    // Enqueue other downloads
-    _tiles.obtainTileEntries(nullptr, [this](const std::shared_ptr<TileEntry>& entry, bool& cancel) -> bool
-    {
-        if(_currentDownloadsCount == owner->maxConcurrentDownloads)
-        {
-            cancel = true;
             return false;
         }
 
-        if(entry->state == TileState::EnqueuedForDownload)
-            obtainTile(entry);
+        assert(bitmap->width() == bitmap->height());
+        assert(bitmap->width() == owner->tileSize);
+
+        // Return tile
+        auto tile = new MapBitmapTile(bitmap, owner->alphaChannelData);
+        outTile.reset(tile);
+        return true;
+    }
+
+    // Since tile is not in local cache (or cache is disabled, which is the same),
+    // the tile must be downloaded from network:
+
+    // If network access is disallowed, return failure
+    if(!_networkAccessAllowed)
+    {
+        // Before returning, unlock tile
+        unlockTile(tileId, zoom);
 
         return false;
-    });
+    }
 
-    handleNetworkReply(reply, tileEntry);
-
-    reply->deleteLater();
-    eventLoop.exit();
-}
-
-void OsmAnd::OnlineMapRasterTileProvider_P::handleNetworkReply( QNetworkReply* reply, const std::shared_ptr<TileEntry>& tileEntry )
-{
-    tileEntry->localPath.dir().mkpath(tileEntry->localPath.dir().absolutePath());
-
-    auto error = reply->error();
-    if(error != QNetworkReply::NetworkError::NoError)
+    // Check if there is free download slot. If all download slots are used, wait for one to be freed
+    if(owner->maxConcurrentDownloads > 0)
     {
-        const auto httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        QMutexLocker scopedLocker(&_currentDownloadsCounterMutex);
 
-        LogPrintf(LogSeverityLevel::Warning, "Failed to download tile from %s (HTTP status %d)", qPrintable(reply->request().url().toString()), httpStatus);
+        while(_currentDownloadsCounter >= owner->maxConcurrentDownloads)
+            _currentDownloadsCounterChanged.wait(&_currentDownloadsCounterMutex);
+
+        _currentDownloadsCounter++;
+    }
+
+    // Perform synchronous download
+    auto tileUrl = owner->urlPattern;
+    tileUrl
+        .replace(QString::fromLatin1("${zoom}"), QString::number(zoom))
+        .replace(QString::fromLatin1("${x}"), QString::number(tileId.x))
+        .replace(QString::fromLatin1("${y}"), QString::number(tileId.y));
+    const auto networkReply = Network::Downloader::download(tileUrl).get();
+
+    // Free download slot
+    {
+        QMutexLocker scopedLocker(&_currentDownloadsCounterMutex);
+
+        _currentDownloadsCounter--;
+        _currentDownloadsCounterChanged.wakeAll();
+    }
+
+    // Ensure that all directories are created in path to local tile
+    localFile.dir().mkpath(localFile.dir().absolutePath());
+
+    // If there was error, check what the error was
+    auto networkError = networkReply->error();
+    if(networkError != QNetworkReply::NetworkError::NoError)
+    {
+        const auto httpStatus = networkReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+
+        LogPrintf(LogSeverityLevel::Warning, "Failed to download tile from %s (HTTP status %d)", qPrintable(tileUrl), httpStatus);
 
         // 404 means that this tile does not exist, so create a zero file
         if(httpStatus == 404)
         {
             // Save to a file
-            QFile tileFile(tileEntry->localPath.absoluteFilePath());
+            QFile tileFile(localFile.absoluteFilePath());
             if(tileFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+            {
                 tileFile.close();
+
+                // Unlock the tile
+                unlockTile(tileId, zoom);
+                networkReply->deleteLater();
+                return true;
+            }
             else
-                LogPrintf(LogSeverityLevel::Error, "Failed to mark tile as non-existent with empty file '%s'", qPrintable(tileEntry->localPath.absoluteFilePath()));
+            {
+                LogPrintf(LogSeverityLevel::Error, "Failed to mark tile as non-existent with empty file '%s'", qPrintable(localFile.absoluteFilePath()));
+
+                // Unlock the tile
+                unlockTile(tileId, zoom);
+                return false;
+            }
         }
 
-        _tiles.removeEntry(tileEntry);
-
-        return;
+        // Unlock the tile
+        unlockTile(tileId, zoom);
+        return false;
     }
 
+    // Save data to a file
 #if defined(_DEBUG) || defined(DEBUG)
-    LogPrintf(LogSeverityLevel::Info, "Downloaded tile from %s", reply->request().url().toString().toStdString().c_str());
+    LogPrintf(LogSeverityLevel::Info, "Downloaded tile from %s", qPrintable(tileUrl));
 #endif
-    const auto& data = reply->readAll();
+    const auto& data = networkReply->readAll();
 
     // Save to a file
-    QFile tileFile(tileEntry->localPath.absoluteFilePath());
+    QFile tileFile(localFile.absoluteFilePath());
     if(tileFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
     {
         tileFile.write(data);
         tileFile.close();
 
 #if defined(_DEBUG) || defined(DEBUG)
-        LogPrintf(LogSeverityLevel::Info, "Saved tile from %s to %s", qPrintable(reply->request().url().toString()), qPrintable(tileEntry->localPath.absoluteFilePath()));
+        LogPrintf(LogSeverityLevel::Info, "Saved tile from %s to %s", qPrintable(tileUrl), qPrintable(localFile.absoluteFilePath()));
 #endif
     }
     else
-        LogPrintf(LogSeverityLevel::Error, "Failed to save tile to '%s'", qPrintable(tileEntry->localPath.absoluteFilePath()));
+        LogPrintf(LogSeverityLevel::Error, "Failed to save tile to '%s'", qPrintable(localFile.absoluteFilePath()));
 
-    // Decode in-memory if we have receiver
-    if(tileEntry->callback)
+    // Unlock tile, since local storage work is done
+    unlockTile(tileId, zoom);
+
+    // Decode in-memory
+    auto bitmap = new SkBitmap();
+    if(!SkImageDecoder::DecodeMemory(data.data(), data.size(), bitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
     {
-        auto skBitmap = new SkBitmap();
-        if(!SkImageDecoder::DecodeMemory(data.data(), data.size(), skBitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
-        {
-            LogPrintf(LogSeverityLevel::Error, "Failed to decode tile file from '%s'", reply->request().url().toString().toStdString().c_str());
+        LogPrintf(LogSeverityLevel::Error, "Failed to decode tile file from '%s'", qPrintable(tileUrl));
 
-            delete skBitmap;
-            std::shared_ptr<IMapTileProvider::Tile> emptyTile;
-            tileEntry->callback(tileEntry->tileId, tileEntry->zoom, emptyTile, false);
+        delete bitmap;
 
-            _tiles.removeEntry(tileEntry);
-
-            return;
-        }
-
-        assert(skBitmap->width() == skBitmap->height());
-        assert(skBitmap->width() == owner->tileDimension);
-
-        std::shared_ptr<OnlineMapRasterTileProvider::Tile> tile(new OnlineMapRasterTileProvider::Tile(skBitmap, owner->alphaChannelData));
-        tileEntry->callback(tileEntry->tileId, tileEntry->zoom, tile, true);
-
-        _tiles.removeEntry(tileEntry);
+        return false;
     }
+
+    assert(bitmap->width() == bitmap->height());
+    assert(bitmap->width() == owner->tileSize);
+
+    // Return tile
+    auto tile = new MapBitmapTile(bitmap, owner->alphaChannelData);
+    outTile.reset(tile);
+    return true;
 }
 
-OsmAnd::OnlineMapRasterTileProvider_P::TileEntry::TileEntry( const TileId& tileId, const ZoomLevel& zoom )
-    : TilesCollectionEntryWithState(tileId, zoom)
+void OsmAnd::OnlineMapRasterTileProvider_P::lockTile( const TileId& tileId, const ZoomLevel& zoom )
 {
+    QMutexLocker scopedLocker(&_tilesInProcessMutex);
+
+    while(_tilesInProcess[zoom].contains(tileId))
+        _waitUntilAnyTileIsProcessed.wait(&_tilesInProcessMutex);
+
+    _tilesInProcess[zoom].insert(tileId);
 }
 
-OsmAnd::OnlineMapRasterTileProvider_P::TileEntry::~TileEntry()
+void OsmAnd::OnlineMapRasterTileProvider_P::unlockTile( const TileId& tileId, const ZoomLevel& zoom )
 {
+    QMutexLocker scopedLocker(&_tilesInProcessMutex);
+
+    _tilesInProcess[zoom].remove(tileId);
+
+    _waitUntilAnyTileIsProcessed.wakeAll();
 }

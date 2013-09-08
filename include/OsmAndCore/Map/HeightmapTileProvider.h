@@ -24,55 +24,32 @@
 
 #include <cstdint>
 #include <memory>
-#include <functional>
-#include <array>
 
 #include <QDir>
-#include <QMutex>
-#include <QQueue>
-#include <QSet>
+#include <QString>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Concurrent.h>
-#include <OsmAndCore/TileDB.h>
 #include <OsmAndCore/Map/IMapElevationDataProvider.h>
 
 namespace OsmAnd {
 
+    class HeightmapTileProvider_P;
     class OSMAND_CORE_API HeightmapTileProvider : public IMapElevationDataProvider
     {
-    public:
     private:
+        const std::unique_ptr<HeightmapTileProvider_P> _d;
     protected:
-        class OSMAND_CORE_API Tile : public IMapElevationDataProvider::Tile
-        {
-        private:
-        protected:
-            const float* const _buffer;
-        public:
-            Tile(const float* buffer, uint32_t tileSize);
-            virtual ~Tile();
-        };
-
-        TileDB _tileDb;
-
-        QMutex _processingMutex;
-        QMutex _requestsMutex;
-        std::array< QSet< TileId >, 32 > _requestedTileIds;
-
-        const Concurrent::TaskHost::Bridge _taskHostBridge;
     public:
         HeightmapTileProvider(const QDir& dataPath, const QString& indexFilepath = QString());
         virtual ~HeightmapTileProvider();
 
-        const OsmAnd::TileDB& tileDb;
         void rebuildTileDbIndex();
+
         static const QString defaultIndexFilename;
 
         virtual uint32_t getTileSize() const;
-
-        virtual void obtainTile(const OsmAnd::TileId& tileId, const ZoomLevel& zoom, TileReadyCallback readyCallback);
+        virtual bool obtainTile(const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<MapTile>& outTile);
     };
 
 }

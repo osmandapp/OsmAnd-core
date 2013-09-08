@@ -146,7 +146,7 @@ bool OsmAnd::MapStyleEvaluator::evaluate( uint32_t tagKey, uint32_t valueKey, bo
     _values[MapStyle::builtinValueDefinitions.INPUT_TAG].asUInt = tagKey;
     _values[MapStyle::builtinValueDefinitions.INPUT_VALUE].asUInt = valueKey;
     
-    const auto& rules = style.get()->_d->obtainRules(ruleset);
+    const auto& rules = style->_d->obtainRules(ruleset);
     uint64_t ruleId = MapStyle_P::encodeRuleId(tagKey, valueKey);
     auto itRule = rules.find(ruleId);
     if(itRule == rules.end())
