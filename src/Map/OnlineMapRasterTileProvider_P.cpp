@@ -17,6 +17,8 @@
 OsmAnd::OnlineMapRasterTileProvider_P::OnlineMapRasterTileProvider_P( OnlineMapRasterTileProvider* owner_ )
     : owner(owner_)
     , _currentDownloadsCounter(0)
+    , _localCachePath(QDir::current())
+    , _networkAccessAllowed(true)
 {
 }
 
