@@ -1,6 +1,6 @@
 #include "RoutingProfile.h"
 
-#include <assert.h>
+#include <cassert>
 
 #include "RoutingConfiguration.h"
 #include "Utilities.h"

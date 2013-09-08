@@ -1,13 +1,13 @@
-#include "OsmAndCore/Utilities.h"
+#include "Utilities.h"
 
-#include <assert.h>
+#include <cassert>
 #include <limits>
 #include <cmath>
 
 #include <QtNumeric>
 #include <QtCore>
 
-#include "OsmAndCore/Logging.h"
+#include "Logging.h"
 
 const uint64_t l = 1UL << 31;
 

@@ -1,6 +1,6 @@
 #include "MapRenderer.h"
 
-#include <assert.h>
+#include <cassert>
 
 #include <QMutableMapIterator>
 

@@ -1,7 +1,7 @@
 #include "OnlineMapRasterTileProvider_P.h"
 #include "OnlineMapRasterTileProvider.h"
 
-#include <assert.h>
+#include <cassert>
 
 #include <QCoreApplication>
 #include <QNetworkRequest>

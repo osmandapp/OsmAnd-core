@@ -1,6 +1,6 @@
 #include "Concurrent.h"
 
-#include <assert.h>
+#include <cassert>
 
 const std::shared_ptr<OsmAnd::Concurrent::Pools> OsmAnd::Concurrent::Pools::instance(new OsmAnd::Concurrent::Pools());
 const std::shared_ptr<OsmAnd::Concurrent::Pools> OsmAnd::Concurrent::pools(OsmAnd::Concurrent::Pools::instance);

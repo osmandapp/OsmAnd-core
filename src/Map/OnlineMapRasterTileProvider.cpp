@@ -1,7 +1,7 @@
 #include "OnlineMapRasterTileProvider.h"
 #include "OnlineMapRasterTileProvider_P.h"
 
-#include <assert.h>
+#include <cassert>
 
 #include "Logging.h"
 

@@ -1,6 +1,6 @@
 #include "RoutingRulesetContext.h"
 
-#include <assert.h>
+#include <cassert>
 
 #include "Road.h"
 #include "ObfRoutingSectionInfo.h"

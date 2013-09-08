@@ -1,7 +1,7 @@
 #include "OfflineMapRasterTileProvider_P.h"
 #include "OfflineMapRasterTileProvider.h"
 
-#include <assert.h>
+#include <cassert>
 #include <chrono>
 
 #include <SkStream.h>

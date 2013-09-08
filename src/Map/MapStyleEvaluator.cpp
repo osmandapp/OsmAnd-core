@@ -1,6 +1,6 @@
 #include "MapStyleEvaluator.h"
 
-#include <assert.h>
+#include <cassert>
 
 #include "MapStyle.h"
 #include "MapStyle_P.h"

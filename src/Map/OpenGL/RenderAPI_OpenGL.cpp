@@ -1,6 +1,6 @@
 #include "RenderAPI_OpenGL.h"
 
-#include <assert.h>
+#include <cassert>
 
 #include <QRegExp>
 #include <QStringList>

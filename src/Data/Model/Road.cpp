@@ -1,6 +1,6 @@
 #include "Road.h"
 
-#include <assert.h>
+#include <cassert>
 
 #include "ObfRoutingSectionInfo.h"
 #include "ObfRoutingSectionInfo_P.h"

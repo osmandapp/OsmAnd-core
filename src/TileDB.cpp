@@ -1,6 +1,6 @@
 #include "TileDB.h"
 
-#include <assert.h>
+#include <cassert>
 #include <chrono>
 
 #include <QtSql>

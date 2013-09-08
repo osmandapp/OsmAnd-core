@@ -1,6 +1,6 @@
 #include "RenderAPI_OpenGL_Common.h"
 
-#include <assert.h>
+#include <cassert>
 
 #include <QtMath>
 

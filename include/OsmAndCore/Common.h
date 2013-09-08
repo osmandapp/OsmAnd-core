@@ -23,7 +23,7 @@
 #ifndef __OSMAND_COMMON_H_
 #define __OSMAND_COMMON_H_
 
-#include <assert.h>
+#include <cassert>
 #include <memory>
 #include <iostream>
 

@@ -1,6 +1,6 @@
 #include "AtlasMapRenderer_OpenGL_Common.h"
 
-#include <assert.h>
+#include <cassert>
 
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>

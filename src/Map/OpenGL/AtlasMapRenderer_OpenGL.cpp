@@ -1,6 +1,6 @@
 #include "AtlasMapRenderer_OpenGL.h"
 
-#include <assert.h>
+#include <cassert>
 
 #include <QtMath>
 

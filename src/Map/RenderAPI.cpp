@@ -1,6 +1,6 @@
 #include "RenderAPI.h"
 
-#include <assert.h>
+#include <cassert>
 
 #include "Logging.h"
 
