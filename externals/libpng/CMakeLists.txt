@@ -1,6 +1,13 @@
 project(png)
 
-enable_language(ASM)
+set(target_specific_sources "")
+if((CMAKE_TARGET_CPU_ARCH STREQUAL "arm") OR (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_CPU_ARCH STREQUAL "device"))
+	enable_language(ASM)
+	set(target_specific_sources ${target_specific_sources}
+		"upstream.patched/arm/arm_init.c"
+		"upstream.patched/arm/filter_neon.S"
+	)
+endif()
 
 add_library(png_static STATIC
 	"upstream.patched/png.c"
@@ -18,8 +25,7 @@ add_library(png_static STATIC
 	"upstream.patched/pngwrite.c"
 	"upstream.patched/pngwtran.c"
 	"upstream.patched/pngwutil.c"
-	"upstream.patched/arm/arm_init.c"
-	"upstream.patched/arm/filter_neon.S"
+	${target_specific_sources}
 )
 
 add_dependencies(png_static
