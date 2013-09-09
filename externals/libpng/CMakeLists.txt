@@ -16,6 +16,8 @@ add_library(png_static STATIC
 	"upstream.patched/pngwrite.c"
 	"upstream.patched/pngwtran.c"
 	"upstream.patched/pngwutil.c"
+	"upstream.patched/arm/arm_init.c"
+	"upstream.patched/arm/filter_neon.S"
 )
 
 add_dependencies(png_static
