@@ -12,7 +12,7 @@ fi
 # Download upstream if needed
 if [ ! -f "$SRCLOC/upstream.pack" ]; then
 	echo "Downloading '$NAME' upstream..."
-	curl -L http://download.osmand.net/prebuilt/freetype-2.4.10.tar.bz2 > "$SRCLOC/upstream.pack" || { echo "Failure" 1>&2; exit; }
+	curl -L http://download.osmand.net/prebuilt/freetype-2.5.0.1.tar.bz2 > "$SRCLOC/upstream.pack" || { echo "Failure" 1>&2; exit; }
 fi
 
 # Extract upstream if needed
