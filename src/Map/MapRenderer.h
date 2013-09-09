@@ -225,6 +225,9 @@ namespace OsmAnd {
 
         const std::unique_ptr<RenderAPI>& renderAPI;
         virtual RenderAPI* allocateRenderAPI() = 0;
+
+        std::shared_ptr<RenderAPI::ResourceInGPU> _processingTileStub;
+        std::shared_ptr<RenderAPI::ResourceInGPU> _unavailableTileStub;
     public:
         virtual ~MapRenderer();
 

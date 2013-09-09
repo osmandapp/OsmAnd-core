@@ -35,6 +35,7 @@ namespace OsmAnd {
 
     class OSMAND_CORE_API MapBitmapTile : public MapTile
     {
+        Q_DISABLE_COPY(MapBitmapTile)
     public:
         STRONG_ENUM(AlphaChannelData)
         {

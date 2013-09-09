@@ -5,10 +5,12 @@
 #include <QMutableMapIterator>
 
 #include <SkBitmap.h>
+#include <SkImageDecoder.h>
 
 #include "IMapBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
 #include "RenderAPI.h"
+#include "EmbeddedResources.h"
 #include "Logging.h"
 #include "Utilities.h"
 
@@ -184,8 +186,39 @@ bool OsmAnd::MapRenderer::preInitializeRendering()
 
 bool OsmAnd::MapRenderer::doInitializeRendering()
 {
+    // Create background worker if enabled
     if(setupOptions.backgroundWorker.enabled)
         _backgroundWorker.reset(new Concurrent::Thread(std::bind(&MapRenderer::backgroundWorkerProcedure, this)));
+
+    // Upload stubs
+    {
+        {
+            const auto& data = EmbeddedResources::decompressResource(QLatin1String("map/stubs/processing_tile.png"));
+            auto bitmap = new SkBitmap();
+            if(!SkImageDecoder::DecodeMemory(data.data(), data.size(), bitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
+            {
+                delete bitmap;
+            }
+            else
+            {
+                auto bitmapTile = new MapBitmapTile(bitmap, MapBitmapTile::AlphaChannelData::Undefined);
+                _renderAPI->uploadTileToGPU(std::shared_ptr< MapTile >(bitmapTile), 1, _processingTileStub);
+            }
+        }
+        {
+            const auto& data = EmbeddedResources::decompressResource(QLatin1String("map/stubs/unavailable_tile.png"));
+            auto bitmap = new SkBitmap();
+            if(!SkImageDecoder::DecodeMemory(data.data(), data.size(), bitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
+            {
+                delete bitmap;
+            }
+            else
+            {
+                auto bitmapTile = new MapBitmapTile(bitmap, MapBitmapTile::AlphaChannelData::Undefined);
+                _renderAPI->uploadTileToGPU(std::shared_ptr< MapTile >(bitmapTile), 1, _unavailableTileStub);
+            }
+        }
+    }
 
     return true;
 }
@@ -488,6 +521,16 @@ bool OsmAnd::MapRenderer::postReleaseRendering()
     // Release all tiled resources
     for(auto itResourcesCollection = _tiledResources.begin(); itResourcesCollection != _tiledResources.end(); ++itResourcesCollection)
         releaseTiledResources(*itResourcesCollection);
+
+    // Release all embedded resources
+    {
+        assert(_unavailableTileStub.use_count() == 1);
+        _unavailableTileStub.reset();
+    }
+    {
+        assert(_processingTileStub.use_count() == 1);
+        _processingTileStub.reset();
+    }
 
     return true;
 }
@@ -843,7 +886,7 @@ void OsmAnd::MapRenderer::uploadTiledResources()
                 const auto& preparedSourceData = prepareTileForUploadingToGPU(tileEntry->sourceData);
                 //TODO: This is weird, and probably should not be here. RenderAPI knows how to upload what, but on contrary - does not know the limits
                 const auto tilesPerAtlasTextureLimit = getTilesPerAtlasTextureLimit(tiledResources->type, tileEntry->sourceData);
-                bool ok = renderAPI->uploadTileToGPU(tileEntry->tileId, tileEntry->zoom, preparedSourceData, tilesPerAtlasTextureLimit, tileEntry->_resourceInGPU);
+                bool ok = renderAPI->uploadTileToGPU(preparedSourceData, tilesPerAtlasTextureLimit, tileEntry->_resourceInGPU);
                 if(!ok)
                 {
                     LogPrintf(LogSeverityLevel::Error, "Failed to upload tile %dx%d@%d to GPU", tileEntry->tileId.x, tileEntry->tileId.y, tileEntry->zoom);

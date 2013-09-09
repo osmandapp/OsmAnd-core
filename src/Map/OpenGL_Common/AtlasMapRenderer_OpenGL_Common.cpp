@@ -637,9 +637,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
                 if(tileEntry->state == ResourceState::Uploaded)
                     gpuResource = tileEntry->resourceInGPU;
                 else if(tileEntry->state == ResourceState::Unavailable)
-                    gpuResource.reset();//TODO: use texture that indicates "NO DATA"
+                    gpuResource = _unavailableTileStub;
                 else
-                    gpuResource.reset();//TODO: use texture that indicates "PROCESSING"
+                    gpuResource = _processingTileStub;
 
                 tileEntry->stateLock.unlock();
             }

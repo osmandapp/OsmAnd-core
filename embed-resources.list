@@ -71,4 +71,6 @@
 /resources/rendering_styles/style-icons/drawable-mdpi/h_vineyard1.png:map/shaders/vineyard1.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_zoo.png:map/shaders/zoo.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_zoo1.png:map/shaders/zoo1.png
+/resources/rendering_styles/stubs/processing_tile.png:map/stubs/processing_tile.png
+/resources/rendering_styles/stubs/unavailable_tile.png:map/stubs/unavailable_tile.png
 /resources/routing/routing.xml:routing/routing.xml
