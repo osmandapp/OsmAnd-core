@@ -1,5 +1,7 @@
 project(png)
 
+enable_language(ASM)
+
 add_library(png_static STATIC
 	"upstream.patched/png.c"
 	"upstream.patched/pngerror.c"
