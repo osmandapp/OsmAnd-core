@@ -25,6 +25,8 @@
 #include <cstdint>
 #include <memory>
 
+#include <QtGlobal>
+
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/IMapTileProvider.h>
@@ -35,7 +37,7 @@ namespace OsmAnd {
 
     class OSMAND_CORE_API MapBitmapTile : public MapTile
     {
-        Q_DISABLE_COPY(MapBitmapTile)
+        Q_DISABLE_COPY(MapBitmapTile);
     public:
         STRONG_ENUM(AlphaChannelData)
         {
