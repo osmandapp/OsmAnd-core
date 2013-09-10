@@ -32,13 +32,16 @@ bool OsmAnd::OnlineMapRasterTileProvider_P::obtainTile( const TileId& tileId, co
     // to mark that as being processed.
     lockTile(tileId, zoom);
 
-    //TODO: access to _localCachePath should be atomic, and a check is needed if local cache is available at all
     // Check if requested tile is already in local storage.
     const auto tileLocalRelativePath =
         QString::number(zoom) + QDir::separator() +
         QString::number(tileId.x) + QDir::separator() +
         QString::number(tileId.y) + QString::fromLatin1(".tile");
-    QFileInfo localFile(_localCachePath.filePath(tileLocalRelativePath));
+    QFileInfo localFile;
+    {
+        QMutexLocker scopedLocker(&_localCachePathMutex);
+        localFile.setFile(_localCachePath.filePath(tileLocalRelativePath));
+    }
     if(localFile.exists())
     {
         // Since tile is in local storage, it's safe to unmark it as being processed

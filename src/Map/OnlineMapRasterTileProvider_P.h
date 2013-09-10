@@ -53,6 +53,7 @@ namespace OsmAnd {
         uint32_t _currentDownloadsCounter;
         QWaitCondition _currentDownloadsCounterChanged;
 
+        QMutex _localCachePathMutex;
         QDir _localCachePath;
         bool _networkAccessAllowed;
 

@@ -33,6 +33,7 @@ OsmAnd::OnlineMapRasterTileProvider::~OnlineMapRasterTileProvider()
 
 void OsmAnd::OnlineMapRasterTileProvider::setLocalCachePath( const QDir& localCachePath )
 {
+    QMutexLocker scopedLocker(&_d->_localCachePathMutex);
     _d->_localCachePath = localCachePath;
 }
 
