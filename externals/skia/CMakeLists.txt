@@ -75,7 +75,6 @@ elseif(CMAKE_TARGET_OS STREQUAL "ios")
 	)
 elseif(CMAKE_TARGET_OS STREQUAL "linux")
 	set(target_specific_sources "${target_specific_sources}"
-		"upstream.patched/src/ports/SkFontHost_tables.cpp"
 		"upstream.patched/src/ports/SkDebug_stdio.cpp"
 		"upstream.patched/src/ports/SkFontHost_sandbox_none.cpp"
 		"upstream.patched/src/ports/SkThread_pthread.cpp"
@@ -83,7 +82,6 @@ elseif(CMAKE_TARGET_OS STREQUAL "linux")
 		"upstream.patched/src/ports/SkFontHost_FreeType_common.cpp"
 		"upstream.patched/src/ports/SkFontHost_FreeType.cpp"
 		"upstream.patched/src/ports/SkFontHost_linux.cpp"
-		"upstream.patched/src/core/SkMMapStream.cpp"
 		"upstream.patched/src/utils/SkThreadUtils_pthread.cpp"
 		"upstream.patched/src/ports/SkOSFile_posix.cpp"
 		"upstream.patched/src/ports/SkTLS_pthread.cpp"
