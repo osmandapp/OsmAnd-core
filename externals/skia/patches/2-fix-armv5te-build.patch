@@ -1,6 +1,8 @@
---- upstream.original/src/opts/SkBlitRow_opts_arm.cpp	2013-01-03 18:21:32.755525300 +0200
-+++ upstream.patched/src/opts/SkBlitRow_opts_arm.cpp	2013-01-03 18:21:38.385361300 +0200
-@@ -45,7 +45,7 @@ static void S32A_D565_Opaque(uint16_t* S
+diff --git a/src/opts/SkBlitRow_opts_arm.cpp b/src/opts/SkBlitRow_opts_arm.cpp
+index e8e544e..92402c3 100644
+--- a/src/opts/SkBlitRow_opts_arm.cpp
++++ b/src/opts/SkBlitRow_opts_arm.cpp
+@@ -53,7 +53,7 @@ static void S32A_D565_Opaque(uint16_t* SK_RESTRICT dst,
                    "ldrh    r4, [%[dst]]                 \n\t"
                    "rsb     r7, r7, #255                 \n\t"
                    "and     r6, r4, #0x001f              \n\t"
@@ -9,7 +11,7 @@
                    "lsl     r5, r4, #21                  \n\t"
                    "lsr     r5, r5, #26                  \n\t"
  #else
-@@ -62,8 +62,15 @@ static void S32A_D565_Opaque(uint16_t* S
+@@ -70,8 +70,15 @@ static void S32A_D565_Opaque(uint16_t* SK_RESTRICT dst,
                    "mul     r5, r5, r7                   \n\t"
                    "mul     r4, r4, r7                   \n\t"
  #endif

@@ -1,9 +1,9 @@
-diff --git a/src/ports/FontHostConfiguration_android.cpp b/src/ports/FontHostConfiguration_android.cpp
-index 6d03414..0a7f093 100644
---- a/src/ports/FontHostConfiguration_android.cpp
-+++ b/src/ports/FontHostConfiguration_android.cpp
-@@ -281,6 +281,89 @@ void getFontFamilies(SkTDArray<FontFamily*> &fontFamilies) {
-     for (int i = 0; i < fallbackFonts.count(); ++i) {
+diff --git a/src/ports/SkFontConfigParser_android.cpp b/src/ports/SkFontConfigParser_android.cpp
+index e8692e9..80e2fce 100644
+--- a/src/ports/SkFontConfigParser_android.cpp
++++ b/src/ports/SkFontConfigParser_android.cpp
+@@ -270,6 +270,89 @@ void SkFontConfigParser::GetFontFamilies(SkTDArray<FontFamily*> &fontFamilies) {
+         fallbackFonts[i]->fIsFallbackFont = true;
          *fontFamilies.append() = fallbackFonts[i];
      }
 +
@@ -91,4 +91,4 @@ index 6d03414..0a7f093 100644
 +    //}OSMAND
  }
  
- void getTestFontFamilies(SkTDArray<FontFamily*> &fontFamilies,
+ void SkFontConfigParser::GetTestFontFamilies(SkTDArray<FontFamily*> &fontFamilies,

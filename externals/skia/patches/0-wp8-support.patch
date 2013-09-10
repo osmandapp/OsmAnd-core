@@ -1,6 +1,7 @@
-diff -rupN upstream.original/src/core/SkAdvancedTypefaceMetrics.cpp upstream.patched/src/core/SkAdvancedTypefaceMetrics.cpp
---- upstream.original/src/core/SkAdvancedTypefaceMetrics.cpp	2012-12-02 20:16:39.213684200 +0200
-+++ upstream.patched/src/core/SkAdvancedTypefaceMetrics.cpp	2012-12-02 20:16:45.579433000 +0200
+diff --git a/src/core/SkAdvancedTypefaceMetrics.cpp b/src/core/SkAdvancedTypefaceMetrics.cpp
+index c7ed34d..d1e8e58 100644
+--- a/src/core/SkAdvancedTypefaceMetrics.cpp
++++ b/src/core/SkAdvancedTypefaceMetrics.cpp
 @@ -12,6 +12,15 @@
  
  SK_DEFINE_INST_COUNT(SkAdvancedTypefaceMetrics)
@@ -10,15 +11,15 @@ diff -rupN upstream.original/src/core/SkAdvancedTypefaceMetrics.cpp upstream.pat
 +#if defined(_WIN32) && defined(WINAPI_FAMILY) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
 +#   undef SK_BUILD_FOR_WIN
 +#   define SK_BUILD_FOR_UNIX
-+#	define generic _generic_renamed_due_to_winrt_reserved_work
++#	define generic _generic_renamed_due_to_winrt_reserved_word
 +#endif
 +//}OSMAND
 +
  #if defined(SK_BUILD_FOR_WIN)
  #include <dwrite.h>
  #endif
-@@ -21,6 +30,12 @@ SK_DEFINE_INST_COUNT(SkAdvancedTypefaceM
- #include FT_FREETYPE_H
+@@ -22,6 +31,12 @@ struct FT_FaceRec;
+ typedef struct FT_FaceRec_* FT_Face;
  #endif
  
 +//OSMAND{
@@ -30,17 +31,18 @@ diff -rupN upstream.original/src/core/SkAdvancedTypefaceMetrics.cpp upstream.pat
  #ifdef SK_BUILD_FOR_MAC
  #import <ApplicationServices/ApplicationServices.h>
  #endif
-diff -rupN upstream.original/src/ports/SkFontHost_FreeType.cpp upstream.patched/src/ports/SkFontHost_FreeType.cpp
---- upstream.original/src/ports/SkFontHost_FreeType.cpp	2012-12-02 20:16:40.166732900 +0200
-+++ upstream.patched/src/ports/SkFontHost_FreeType.cpp	2012-12-02 20:16:45.595434900 +0200
-@@ -27,7 +27,18 @@
+diff --git a/src/ports/SkFontHost_FreeType.cpp b/src/ports/SkFontHost_FreeType.cpp
+index 8d6c4d0..962b9e9 100644
+--- a/src/ports/SkFontHost_FreeType.cpp
++++ b/src/ports/SkFontHost_FreeType.cpp
+@@ -28,7 +28,18 @@
  #if defined(SK_CAN_USE_DLOPEN)
  #include <dlfcn.h>
  #endif
 +
 +//OSMAND{
 +#if defined(_WIN32) && defined(WINAPI_FAMILY) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
-+#	define generic _generic_renamed_due_to_winrt_reserved_work
++#	define generic _generic_renamed_due_to_winrt_reserved_word
 +#   if defined(ERROR)
 +#       undef ERROR
 +#   endif
@@ -52,7 +54,7 @@ diff -rupN upstream.original/src/ports/SkFontHost_FreeType.cpp upstream.patched/
  #include FT_FREETYPE_H
  #include FT_OUTLINE_H
  #include FT_SIZES_H
-@@ -57,6 +68,12 @@
+@@ -58,6 +69,12 @@
  #include <freetype/ftsynth.h>
  #endif
  
@@ -65,16 +67,17 @@ diff -rupN upstream.original/src/ports/SkFontHost_FreeType.cpp upstream.patched/
  //#define ENABLE_GLYPH_SPEW     // for tracing calls
  //#define DUMP_STRIKE_CREATION
  
-diff -rupN upstream.original/src/ports/SkFontHost_FreeType_common.cpp upstream.patched/src/ports/SkFontHost_FreeType_common.cpp
---- upstream.original/src/ports/SkFontHost_FreeType_common.cpp	2012-12-02 20:16:40.168733700 +0200
-+++ upstream.patched/src/ports/SkFontHost_FreeType_common.cpp	2012-12-02 20:16:45.604455400 +0200
+diff --git a/src/ports/SkFontHost_FreeType_common.cpp b/src/ports/SkFontHost_FreeType_common.cpp
+index 2c48684..633d11c 100644
+--- a/src/ports/SkFontHost_FreeType_common.cpp
++++ b/src/ports/SkFontHost_FreeType_common.cpp
 @@ -11,12 +11,27 @@
  #include "SkFontHost_FreeType_common.h"
  #include "SkPath.h"
  
 +//OSMAND{
 +#if defined(_WIN32) && defined(WINAPI_FAMILY) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
-+#	define generic _generic_renamed_due_to_winrt_reserved_work
++#	define generic _generic_renamed_due_to_winrt_reserved_word
 +#   if defined(ERROR)
 +#       undef ERROR
 +#   endif
@@ -96,17 +99,17 @@ diff -rupN upstream.original/src/ports/SkFontHost_FreeType_common.cpp upstream.p
  static FT_Pixel_Mode compute_pixel_mode(SkMask::Format format) {
      switch (format) {
          case SkMask::kBW_Format:
-diff -rupN upstream.original/src/ports/SkFontHost_FreeType_common.h upstream.patched/src/ports/SkFontHost_FreeType_common.h
---- upstream.original/src/ports/SkFontHost_FreeType_common.h	2012-12-02 20:16:40.170734600 +0200
-+++ upstream.patched/src/ports/SkFontHost_FreeType_common.h	2012-12-02 20:16:45.611624800 +0200
-@@ -11,9 +11,25 @@
- 
- #include "SkGlyph.h"
+diff --git a/src/ports/SkFontHost_FreeType_common.h b/src/ports/SkFontHost_FreeType_common.h
+index c0f2dc7..c3362eb 100644
+--- a/src/ports/SkFontHost_FreeType_common.h
++++ b/src/ports/SkFontHost_FreeType_common.h
+@@ -13,9 +13,24 @@
  #include "SkScalerContext.h"
-+
+ #include "SkTypeface.h"
+ 
 +//OSMAND{
 +#if defined(_WIN32) && defined(WINAPI_FAMILY) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
-+#	define generic _generic_renamed_due_to_winrt_reserved_work
++#   define generic _generic_renamed_due_to_winrt_reserved_word
 +#   if defined(ERROR)
 +#       undef ERROR
 +#   endif
@@ -118,19 +121,20 @@ diff -rupN upstream.original/src/ports/SkFontHost_FreeType_common.h upstream.pat
  
 +//OSMAND{
 +#if defined(_WIN32) && defined(WINAPI_FAMILY) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
-+#	undef generic
++#   undef generic
 +#endif
 +//}OSMAND
 +
  #ifdef SK_DEBUG
      #define SkASSERT_CONTINUE(pred)                                                         \
          do {                                                                                \
-diff -rupN upstream.original/src/ports/SkThread_win.cpp upstream.patched/src/ports/SkThread_win.cpp
---- upstream.original/src/ports/SkThread_win.cpp	2012-12-02 20:16:40.222740200 +0200
-+++ upstream.patched/src/ports/SkThread_win.cpp	2012-12-02 20:16:45.620623800 +0200
-@@ -12,6 +12,15 @@
+diff --git a/src/ports/SkThread_win.cpp b/src/ports/SkThread_win.cpp
+index 708db24..ad6e8bd 100644
+--- a/src/ports/SkThread_win.cpp
++++ b/src/ports/SkThread_win.cpp
+@@ -9,6 +9,15 @@
+ #include <intrin.h>
  #include "SkThread.h"
- #include "SkTLS.h"
  
 +//OSMAND{
 +#if defined(_WIN32) && defined(WINAPI_FAMILY) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
@@ -144,9 +148,10 @@ diff -rupN upstream.original/src/ports/SkThread_win.cpp upstream.patched/src/por
  //MSDN says in order to declare an interlocked function for use as an
  //intrinsic, include intrin.h and put the function in a #pragma intrinsic
  //directive.
-diff -rupN upstream.original/src/utils/SkCondVar.cpp upstream.patched/src/utils/SkCondVar.cpp
---- upstream.original/src/utils/SkCondVar.cpp	2012-12-02 20:16:40.374562000 +0200
-+++ upstream.patched/src/utils/SkCondVar.cpp	2012-12-02 20:16:45.630624900 +0200
+diff --git a/src/utils/SkCondVar.cpp b/src/utils/SkCondVar.cpp
+index 5d001c0..37e458d 100644
+--- a/src/utils/SkCondVar.cpp
++++ b/src/utils/SkCondVar.cpp
 @@ -7,6 +7,15 @@
  
  #include "SkCondVar.h"
@@ -163,10 +168,11 @@ diff -rupN upstream.original/src/utils/SkCondVar.cpp upstream.patched/src/utils/
  SkCondVar::SkCondVar() {
  #ifdef SK_USE_POSIX_THREADS
      pthread_mutex_init(&fMutex, NULL /* default mutex attr */);
-diff -rupN upstream.original/src/utils/SkOSFile.cpp upstream.patched/src/utils/SkOSFile.cpp
---- upstream.original/src/utils/SkOSFile.cpp	2012-12-02 20:16:40.402565400 +0200
-+++ upstream.patched/src/utils/SkOSFile.cpp	2012-12-02 20:42:54.163294200 +0200
-@@ -9,6 +9,13 @@
+diff --git a/src/utils/SkOSFile.cpp b/src/utils/SkOSFile.cpp
+index 0a40375..a95d8e4 100644
+--- a/src/utils/SkOSFile.cpp
++++ b/src/utils/SkOSFile.cpp
+@@ -30,6 +30,13 @@ SkString SkOSPath::SkBasename(const char* fullPath) {
  
  #ifdef SK_BUILD_FOR_WIN
  
@@ -180,9 +186,10 @@ diff -rupN upstream.original/src/utils/SkOSFile.cpp upstream.patched/src/utils/S
  static uint16_t* concat_to_16(const char src[], const char suffix[])
  {
      size_t  i, len = strlen(src);
-diff -rupN upstream.original/src/utils/SkThreadUtils_win.cpp upstream.patched/src/utils/SkThreadUtils_win.cpp
---- upstream.original/src/utils/SkThreadUtils_win.cpp	2012-12-02 20:16:40.423567900 +0200
-+++ upstream.patched/src/utils/SkThreadUtils_win.cpp	2012-12-02 21:06:20.897260400 +0200
+diff --git a/src/utils/SkThreadUtils_win.cpp b/src/utils/SkThreadUtils_win.cpp
+index a064d3b..2d9ed7a 100644
+--- a/src/utils/SkThreadUtils_win.cpp
++++ b/src/utils/SkThreadUtils_win.cpp
 @@ -10,6 +10,20 @@
  #include "SkThreadUtils.h"
  #include "SkThreadUtils_win.h"

@@ -7,7 +7,7 @@
 #include <SkStream.h>
 #include <SkBitmap.h>
 #include <SkCanvas.h>
-#include <SkDevice.h>
+#include <SkBitmapDevice.h>
 #include <SkImageDecoder.h>
 #include <SkImageEncoder.h>
 
@@ -67,7 +67,7 @@ bool OsmAnd::OfflineMapRasterTileProvider_P::obtainTile(const TileId& tileId, co
         LogPrintf(LogSeverityLevel::Error, "Failed to allocate buffer for ARGB8888 rasterization surface %dx%d", owner->tileSize, owner->tileSize);
         return false;
     }
-    SkDevice rasterizationTarget(*rasterizationSurface);
+    SkBitmapDevice rasterizationTarget(*rasterizationSurface);
 
     // Create rasterization canvas
     SkCanvas canvas(&rasterizationTarget);

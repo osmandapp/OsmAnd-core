@@ -5,7 +5,7 @@
 
 #include <SkBitmap.h>
 #include <SkCanvas.h>
-#include <SkDevice.h>
+#include <SkBitmapDevice.h>
 #include <SkImageEncoder.h>
 
 #include <QtMath>
@@ -216,7 +216,7 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
         output << xT("Failed to allocated render target ") << pixelWidth << xT("x") << pixelHeight;
         return;
     }
-    SkDevice renderTarget(renderSurface);
+    SkBitmapDevice renderTarget(renderSurface);
 
     // Create render canvas
     SkCanvas canvas(&renderTarget);
