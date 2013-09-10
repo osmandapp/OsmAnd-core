@@ -22,6 +22,7 @@ if(CMAKE_TARGET_OS STREQUAL "windows")
 		"upstream.patched/include/utils/win"
 	)
 	file(GLOB src_utils_win "upstream.patched/src/utils/win/*")
+	file(GLOB src_gpu_gl_win "upstream.patched/src/gpu/gl/win/*")
 	set(target_specific_sources "${target_specific_sources}"
 		"upstream.patched/src/ports/SkDebug_win.cpp"
 		"upstream.patched/src/ports/SkFontHost_win_dw.cpp"
@@ -31,9 +32,11 @@ if(CMAKE_TARGET_OS STREQUAL "windows")
 		"upstream.patched/src/ports/SkOSFile_win.cpp"
 		"upstream.patched/src/ports/SkTLS_win.cpp"
 		${src_utils_win}
+		${src_gpu_gl_win}
 	)
 	set(target_specific_definitions_public ${target_specific_definitions_public}
 		-DSK_BUILD_FOR_WIN32
+		-DSK_SUPPORT_GPU=1
 	)
 elseif(CMAKE_TARGET_OS STREQUAL "darwin")
 	set(target_specific_include_dirs_public ${target_specific_include_dirs_public}
@@ -52,6 +55,7 @@ elseif(CMAKE_TARGET_OS STREQUAL "darwin")
 	set(target_specific_definitions_public ${target_specific_definitions_public}
 		-DSK_BUILD_FOR_MAC
 		-DSK_USE_CORETEXT
+		-DSK_SUPPORT_GPU=0
 	)
 elseif(CMAKE_TARGET_OS STREQUAL "ios")
 	set(target_specific_include_dirs_public ${target_specific_include_dirs_public}
@@ -71,6 +75,7 @@ elseif(CMAKE_TARGET_OS STREQUAL "ios")
 	set(target_specific_definitions_public ${target_specific_definitions_public}
 		-DSK_BUILD_FOR_IOS
 		-DSK_USE_CORETEXT
+		-DSK_SUPPORT_GPU=0
 	)
 elseif(CMAKE_TARGET_OS STREQUAL "linux")
 	set(target_specific_sources "${target_specific_sources}"
@@ -87,6 +92,7 @@ elseif(CMAKE_TARGET_OS STREQUAL "linux")
 	)
 	set(target_specific_definitions_public ${target_specific_definitions_public}
 		-DSK_BUILD_FOR_UNIX
+		-DSK_SUPPORT_GPU=0
 	)
 endif()
 
@@ -104,6 +110,19 @@ file(GLOB src_pathops "upstream.patched/src/pathops/*")
 file(GLOB src_pathops__remove
 	"upstream.patched/src/pathops/main.cpp")
 list(REMOVE_ITEM src_pathops ${src_pathops__remove})
+file(GLOB src_gpu "upstream.patched/src/gpu/*")
+file(GLOB src_gpu__remove
+	"upstream.patched/src/gpu/GrAddPathRenderers*"
+	"upstream.patched/src/gpu/gr_unittests.cpp"
+	"upstream.patched/src/gpu/FlingState.cpp"
+	"upstream.patched/src/gpu/GrRectanizer_fifo.cpp")
+list(REMOVE_ITEM src_gpu ${src_gpu__remove})
+file(GLOB src_gpu_effects "upstream.patched/src/gpu/effects/*")
+file(GLOB src_gpu_gl "upstream.patched/src/gpu/gl/*")
+file(GLOB src_gpu_gl__remove
+	"upstream.patched/src/gpu/gl/GrGLCreateNativeInterface_none.cpp"
+	"upstream.patched/src/gpu/gl/GrGLDefaultInterface_none.cpp")
+list(REMOVE_ITEM src_gpu_gl ${src_gpu_gl__remove})
 
 add_library(skia_static STATIC
 	${src_core}
@@ -113,6 +132,10 @@ add_library(skia_static STATIC
 	${src_images}
 	${src_sfnt}
 	${src_pathops}
+	${src_gpu}
+	"upstream.patched/src/gpu/GrAddPathRenderers_default.cpp"
+	${src_gpu_effects}
+	${src_gpu_gl}
 	"upstream.patched/src/utils/SkBase64.cpp"
 	"upstream.patched/src/utils/SkBitSet.cpp"
 	"upstream.patched/src/utils/SkBoundaryPatch.cpp"
@@ -156,7 +179,6 @@ add_dependencies(skia_static
 target_compile_definitions(skia_static
 	PRIVATE
 	PUBLIC
-		-DSK_SUPPORT_GPU=0
 		${target_specific_definitions_public}
 )
 target_include_directories(skia_static
