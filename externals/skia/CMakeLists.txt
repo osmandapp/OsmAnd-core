@@ -62,6 +62,7 @@ elseif(CMAKE_TARGET_OS STREQUAL "ios")
 		"upstream.patched/include/utils/mac"
 		"upstream.patched/include/utils/ios"
 	)
+	file(GLOB src_gpu_gl_ios "upstream.patched/src/gpu/gl/iOS/*")
 	set(target_specific_sources "${target_specific_sources}"
 		"upstream.patched/src/ports/SkDebug_stdio.cpp"
 		"upstream.patched/src/ports/SkThread_pthread.cpp"
@@ -71,11 +72,11 @@ elseif(CMAKE_TARGET_OS STREQUAL "ios")
 		"upstream.patched/src/ports/SkOSFile_posix.cpp"
 		"upstream.patched/src/ports/SkTLS_pthread.cpp"
 		"upstream.patched/src/utils/mac/SkStream_mac.cpp"
+		${src_gpu_gl_ios}
 	)
 	set(target_specific_definitions_public ${target_specific_definitions_public}
 		-DSK_BUILD_FOR_IOS
 		-DSK_USE_CORETEXT
-		-DSK_SUPPORT_GPU=0
 	)
 elseif(CMAKE_TARGET_OS STREQUAL "linux")
 	file(GLOB src_gpu_gl_unix "upstream.patched/src/gpu/gl/unix/*")
