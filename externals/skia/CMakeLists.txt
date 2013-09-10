@@ -36,7 +36,6 @@ if(CMAKE_TARGET_OS STREQUAL "windows")
 	)
 	set(target_specific_definitions_public ${target_specific_definitions_public}
 		-DSK_BUILD_FOR_WIN32
-		-DSK_SUPPORT_GPU=1
 	)
 elseif(CMAKE_TARGET_OS STREQUAL "darwin")
 	set(target_specific_include_dirs_public ${target_specific_include_dirs_public}
@@ -78,6 +77,7 @@ elseif(CMAKE_TARGET_OS STREQUAL "ios")
 		-DSK_SUPPORT_GPU=0
 	)
 elseif(CMAKE_TARGET_OS STREQUAL "linux")
+	file(GLOB src_gpu_gl_unix "upstream.patched/src/gpu/gl/unix/*")
 	set(target_specific_sources "${target_specific_sources}"
 		"upstream.patched/src/ports/SkDebug_stdio.cpp"
 		"upstream.patched/src/ports/SkFontHost_sandbox_none.cpp"
@@ -89,10 +89,10 @@ elseif(CMAKE_TARGET_OS STREQUAL "linux")
 		"upstream.patched/src/utils/SkThreadUtils_pthread.cpp"
 		"upstream.patched/src/ports/SkOSFile_posix.cpp"
 		"upstream.patched/src/ports/SkTLS_pthread.cpp"
+		${src_gpu_gl_unix}
 	)
 	set(target_specific_definitions_public ${target_specific_definitions_public}
 		-DSK_BUILD_FOR_UNIX
-		-DSK_SUPPORT_GPU=0
 	)
 endif()
 
