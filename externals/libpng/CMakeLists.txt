@@ -1,7 +1,12 @@
 project(png)
 
 set(target_specific_sources "")
-if((CMAKE_TARGET_CPU_ARCH STREQUAL "arm") OR (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_CPU_ARCH STREQUAL "device"))
+#HACK: Apple clang-llvm currently can not compile that assembler code. Maybe toolchain in XCode 5.0 will fix that
+if(CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_CPU_ARCH STREQUAL "device")
+	add_definitions(-DPNG_ARM_NEON_OPT=0)
+endif()
+#if((CMAKE_TARGET_CPU_ARCH STREQUAL "arm") OR (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_CPU_ARCH STREQUAL "device"))
+if(CMAKE_TARGET_CPU_ARCH STREQUAL "arm")
 	enable_language(ASM)
 	set(target_specific_sources ${target_specific_sources}
 		"upstream.patched/arm/arm_init.c"
