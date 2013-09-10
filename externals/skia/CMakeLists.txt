@@ -45,7 +45,6 @@ elseif(CMAKE_TARGET_OS STREQUAL "darwin")
 		"upstream.patched/src/ports/SkTime_Unix.cpp"
 		"upstream.patched/src/ports/SkImageDecoder_CG.cpp"
 		"upstream.patched/src/ports/SkFontHost_mac.cpp"
-		"upstream.patched/src/ports/SkFontHost_freetype_mac.cpp"
 		"upstream.patched/src/utils/mac/SkStream_mac.cpp"
 		"upstream.patched/src/ports/SkOSFile_posix.cpp"
 		"upstream.patched/src/ports/SkTLS_pthread.cpp"

@@ -12,6 +12,20 @@ if(CMAKE_TARGET_OS STREQUAL "linux")
 		rt
 	)
 endif()
+if(CMAKE_TARGET_OS STREQUAL "darwin")
+	find_library(CORESERVICES_LIBRARY CoreServices)
+	find_library(SYSTEMCONFIGURATION_LIBRARY SystemConfiguration)
+	find_library(CFNETWORK_LIBRARY CFNetwork)
+	find_library(SECURITY_LIBRARY Security)
+	find_library(ZLIB_LIBRARY z)
+	set(target_specific_public_libraries ${target_specific_public_libraries}
+		${CORESERVICES_LIBRARY}
+		${SYSTEMCONFIGURATION_LIBRARY}
+		${CFNETWORK_LIBRARY}
+		${SECURITY_LIBRARY}
+		${ZLIB_LIBRARY}
+	)
+endif()
 
 # 3D rendering: OpenGL, OpenGLES2, Direct3D
 if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "windows" OR CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android")
