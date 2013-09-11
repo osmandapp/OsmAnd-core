@@ -33,6 +33,14 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 
+#if defined(_GLIBCXX_HAS_GTHREADS) && defined(_GLIBCXX_USE_C99_STDINT_TR1) \
+  && (ATOMIC_INT_LOCK_FREE > 1)
+#error OK
+#else
+#pragma message STRING(ATOMIC_INT_LOCK_FREE) " " STRING(_GLIBCXX_USE_C99_STDINT_TR1) " " STRING(_GLIBCXX_HAS_GTHREADS) 
+#error NOT OK
+#endif
+
 namespace OsmAnd {
 
     namespace Network {
@@ -58,5 +66,7 @@ namespace OsmAnd {
     } // namespace Network
 
 } // namespace OsmAnd
+
+
 
 #endif // __NETWORK_H_
