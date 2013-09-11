@@ -23,6 +23,10 @@
 #ifndef __NETWORK_H_
 #define __NETWORK_H_
 
+#ifndef ATOMIC_INT_LOCK_FREE
+#define ATOMIC_INT_LOCK_FREE 2
+#endif
+
 #include <cstdint>
 #include <memory>
 #include <future>
@@ -32,16 +36,6 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-
-#ifndef _GLIBCXX_HAS_GTHREADS
-#error Missing _GLIBCXX_HAS_GTHREADS
-#endif
-#ifndef _GLIBCXX_USE_C99_STDINT_TR1
-#error Missing _GLIBCXX_USE_C99_STDINT_TR1
-#endif
-#if ATOMIC_INT_LOCK_FREE < 2
-#error ATOMIC_INT_LOCK_FREE
-#endif
 
 namespace OsmAnd {
 
