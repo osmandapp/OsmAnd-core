@@ -23,9 +23,7 @@
 #ifndef __NETWORK_H_
 #define __NETWORK_H_
 
-#ifndef ATOMIC_INT_LOCK_FREE
 #define ATOMIC_INT_LOCK_FREE 2
-#endif
 
 #include <cstdint>
 #include <memory>
