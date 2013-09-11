@@ -33,6 +33,16 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 
+#ifndef _GLIBCXX_HAS_GTHREADS
+#error Missing _GLIBCXX_HAS_GTHREADS
+#endif
+#ifndef _GLIBCXX_USE_C99_STDINT_TR1
+#error Missing _GLIBCXX_USE_C99_STDINT_TR1
+#endif
+#if ATOMIC_INT_LOCK_FREE < 2
+#error ATOMIC_INT_LOCK_FREE
+#endif
+
 namespace OsmAnd {
 
     namespace Network {
@@ -58,5 +68,7 @@ namespace OsmAnd {
     } // namespace Network
 
 } // namespace OsmAnd
+
+
 
 #endif // __NETWORK_H_
