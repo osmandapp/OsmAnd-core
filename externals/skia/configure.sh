@@ -10,13 +10,15 @@ if [ -d "$SRCLOC/upstream.patched" ]; then
 fi
 
 # Extract upstream if needed
+VERSION="chromium-31.0.1626.2"
 if [ ! -d "$SRCLOC/upstream.original" ]; then
 	echo "Downloading '$NAME' upstream..."
 	mkdir -p "$SRCLOC/upstream.original"
 	(cd "$SRCLOC/upstream.original" && \
 		git init && \
-		git remote add origin -t chromium-31.0.1626.2 https://github.com/osmandapp/OsmAnd-external-skia.git && \
+		git remote add origin -t $VERSION https://github.com/osmandapp/OsmAnd-external-skia.git && \
 		git fetch --depth=1
+		git checkout $VERSION
 	)
 fi
 
