@@ -73,7 +73,7 @@ public:
 
 	int parseIntValue(string value) {
 		if (type == INT_TYPE) {
-			size_t colon = find_first_of(value, ':');
+			size_t colon = value.find_first_of(':');
 			if(colon != std::string::npos) {
 				int res = 0;
 				if(colon > 0) {
@@ -97,7 +97,7 @@ public:
 
 	float parseFloatValue(string value) {
 		if (type == FLOAT_TYPE) {
-			size_t colon = find_first_of(value, ':');
+			size_t colon = value.find_first_of(':');
 			if(colon != std::string::npos) {
 				float res = 0;
 				if(colon > 0) {
