@@ -12,7 +12,12 @@ fi
 # Extract upstream if needed
 if [ ! -d "$SRCLOC/upstream.original" ]; then
 	echo "Downloading '$NAME' upstream..."
-	git clone https://github.com/osmandapp/OsmAnd-external-skia.git "$SRCLOC/upstream.original" --depth=1
+	mkdir -p "$SRCLOC/upstream.original"
+	(cd "$SRCLOC/upstream.original" && \
+		git init && \
+		git remote add origin -t chromium-31.0.1626.2 https://github.com/osmandapp/OsmAnd-external-skia.git && \
+		git fetch --depth=1
+	)
 fi
 
 # Patch
