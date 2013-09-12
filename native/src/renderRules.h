@@ -73,6 +73,15 @@ public:
 
 	int parseIntValue(string value) {
 		if (type == INT_TYPE) {
+			size_t colon = find_first_of(value, ':');
+			if(colon != std::string::npos) {
+				int res = 0;
+				if(colon > 0) {
+					res += atoi(value.substr(0, colon).c_str());
+				}
+				res += atoi(value.substr(colon + 1).c_str());
+				return res;
+			}
 			return atoi(value.c_str());
 		} else if (type == BOOLEAN_TYPE) {
 			return value == "true" ? TRUE_VALUE : FALSE_VALUE;
@@ -88,6 +97,15 @@ public:
 
 	float parseFloatValue(string value) {
 		if (type == FLOAT_TYPE) {
+			size_t colon = find_first_of(value, ':');
+			if(colon != std::string::npos) {
+				float res = 0;
+				if(colon > 0) {
+					res += atof(value.substr(0, colon).c_str());
+				}
+				res += atof(value.substr(colon + 1).c_str());
+				return res;
+			}
 			return atof(value.c_str());
 		} else {
 			return -1;
