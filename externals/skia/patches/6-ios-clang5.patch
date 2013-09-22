@@ -1,0 +1,12 @@
+diff -rupN upstream.original/src/gpu/gl/iOS/GrGLCreateNativeInterface_iOS.cpp upstream.patched/src/gpu/gl/iOS/GrGLCreateNativeInterface_iOS.cpp
+--- upstream.original/src/gpu/gl/iOS/GrGLCreateNativeInterface_iOS.cpp	2013-09-12 08:16:00.960871400 +0300
++++ upstream.patched/src/gpu/gl/iOS/GrGLCreateNativeInterface_iOS.cpp	2013-09-22 20:53:14.088952200 +0300
+@@ -71,7 +71,7 @@ const GrGLInterface* GrGLCreateNativeInt
+         interface->fReadBuffer = NULL;
+         interface->fReadPixels = glReadPixels;
+         interface->fScissor = glScissor;
+-        interface->fShaderSource = glShaderSource;
++        interface->fShaderSource = (GrGLShaderSourceProc)glShaderSource;
+         interface->fStencilFunc = glStencilFunc;
+         interface->fStencilFuncSeparate = glStencilFuncSeparate;
+         interface->fStencilMask = glStencilMask;
