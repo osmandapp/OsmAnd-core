@@ -10,7 +10,7 @@ fi
 for external in ${OSMAND_EXTERNALS_SET[@]/#/$SRCLOC/} ; do
 	if [ -d "$external" ]; then
 		if [ -e "$external/configure.sh" ]; then
-			$external/configure.sh
+			"$external/configure.sh"
 		fi
 	fi
 done
