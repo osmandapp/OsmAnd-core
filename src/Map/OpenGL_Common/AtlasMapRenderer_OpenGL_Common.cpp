@@ -214,7 +214,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeRasterMapStage()
         "        calculateTextureCoordinates(                                                                               ""\n"
         "            param_vs_elevationTileLayer,                                                                           ""\n"
         "            elevationDataTexCoords);                                                                               ""\n"
-        "        heightInMeters = texture(param_vs_elevationData_sampler, elevationDataTexCoords).r;                        ""\n"
+        "        heightInMeters = SAMPLE_TEXTURE_2D(param_vs_elevationData_sampler, elevationDataTexCoords).r;              ""\n"
         "#else // !VERTEX_TEXTURE_FETCH_SUPPORTED                                                                           ""\n"
         "        heightInMeters = in_vs_vertexElevation;                                                                    ""\n"
         "#endif // VERTEX_TEXTURE_FETCH_SUPPORTED                                                                           ""\n"
