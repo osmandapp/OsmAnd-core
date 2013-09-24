@@ -50,7 +50,6 @@ OsmAnd::RouteCalculationResult OsmAnd::RoutePlanner::prepareResult(
     }
     std::reverse(route.begin(), route.end());
 
-
     if(!validateAllPointsConnected(route))
         return OsmAnd::RouteCalculationResult("Calculated route has broken paths");
     splitRoadsAndAttachRoadSegments(context, route);
@@ -68,7 +67,7 @@ OsmAnd::RouteCalculationResult OsmAnd::RoutePlanner::prepareResult(
 void OsmAnd::RoutePlanner::printRouteInfo(QVector< std::shared_ptr<RouteSegment> >& route) {
     float completeDist = 0;
     float completeTime = 0;
-    for(auto itSegment = route.begin(); itSegment != route.end(); ++itSegment)
+    for(auto itSegment = route.cbegin(); itSegment != route.cend(); ++itSegment)
     {
         auto segment = *itSegment;
         completeDist += segment->distance;
@@ -120,7 +119,7 @@ void OsmAnd::RoutePlanner::splitRoadsAndAttachRoadSegments( OsmAnd::RoutePlanner
                 auto isSplit = false;
 
                 // split if needed
-                for(auto itAttachedSegment = attachedRoutes.begin(); itAttachedSegment != attachedRoutes.end(); ++itAttachedSegment)
+                for(auto itAttachedSegment = attachedRoutes.cbegin(); itAttachedSegment != attachedRoutes.cend(); ++itAttachedSegment)
                 {
                     auto attachedSegment = *itAttachedSegment;
 
@@ -167,7 +166,7 @@ void OsmAnd::RoutePlanner::attachRouteSegments(
 
     // by default make same as this road id
     auto previousRoadId = segment->road->id;
-    if (pointIdx == segment->startPointIndex && itSegment != route.begin())
+    if (pointIdx == segment->startPointIndex && itSegment != route.cbegin())
     {
         previousResult = *(itSegment - 1);
         previousRoadId = previousResult->road->id;
@@ -226,7 +225,7 @@ void OsmAnd::RoutePlanner::attachRouteSegments(
 
 void OsmAnd::RoutePlanner::calculateTimeSpeedInRoute( OsmAnd::RoutePlannerContext::CalculationContext* context, QVector< std::shared_ptr<RouteSegment> >& route )
 {
-    for(auto itSegment = route.begin(); itSegment != route.end(); ++itSegment)
+    for(auto itSegment = route.cbegin(); itSegment != route.cend(); ++itSegment)
     {
         auto segment = *itSegment;
 

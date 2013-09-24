@@ -96,7 +96,7 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetGroups(
 {
     auto cis = reader->_codedInputStream.get();
 
-    for(auto itAddressBlocksSection = section->addressBlocksSections.begin(); itAddressBlocksSection != section->addressBlocksSections.end(); ++itAddressBlocksSection)
+    for(auto itAddressBlocksSection = section->addressBlocksSections.cbegin(); itAddressBlocksSection != section->addressBlocksSections.cend(); ++itAddressBlocksSection)
     {
         if(controller && controller->isAborted())
             break;

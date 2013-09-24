@@ -144,10 +144,10 @@ bool OsmAnd::RoutingRuleExpression::validateAllTypesShouldNotBePresent( const QB
 
 bool OsmAnd::RoutingRuleExpression::validateFreeTags( const QBitArray& types ) const
 {
-    for(auto itOnlyTag = _onlyTags.begin(); itOnlyTag != _onlyTags.end(); ++itOnlyTag)
+    for(auto itOnlyTag = _onlyTags.cbegin(); itOnlyTag != _onlyTags.cend(); ++itOnlyTag)
     {
         auto itBitset = ruleset->owner->_tagRuleMask.find(*itOnlyTag);
-        if(itBitset == ruleset->owner->_tagRuleMask.end())
+        if(itBitset == ruleset->owner->_tagRuleMask.cend())
             return false;
         if( (*itBitset & types).count(true) == 0 )
             return false;
@@ -158,10 +158,10 @@ bool OsmAnd::RoutingRuleExpression::validateFreeTags( const QBitArray& types ) c
 
 bool OsmAnd::RoutingRuleExpression::validateNotFreeTags( const QBitArray& types ) const
 {
-    for(auto itOnlyNotTag = _onlyNotTags.begin(); itOnlyNotTag != _onlyNotTags.end(); ++itOnlyNotTag)
+    for(auto itOnlyNotTag = _onlyNotTags.cbegin(); itOnlyNotTag != _onlyNotTags.cend(); ++itOnlyNotTag)
     {
         auto itBitset = ruleset->owner->_tagRuleMask.find(*itOnlyNotTag);
-        if(itBitset == ruleset->owner->_tagRuleMask.end())
+        if(itBitset == ruleset->owner->_tagRuleMask.cend())
             return false;
         if( (*itBitset & types).count(true) > 0 )
             return false;
@@ -172,7 +172,7 @@ bool OsmAnd::RoutingRuleExpression::validateNotFreeTags( const QBitArray& types 
 
 bool OsmAnd::RoutingRuleExpression::evaluateExpressions( const QBitArray& types, RoutingRulesetContext* context ) const
 {
-    for(auto itOperator = _operators.begin(); itOperator != _operators.end(); ++itOperator)
+    for(auto itOperator = _operators.cbegin(); itOperator != _operators.cend(); ++itOperator)
     {
         auto operator_ = *itOperator;
         if(!operator_->evaluate(types, context))
@@ -186,7 +186,7 @@ bool OsmAnd::RoutingRuleExpression::resolveVariableReferenceValue( RoutingRulese
 {
     bool ok = false;
     auto itVariable = context->contextValues.find(variableRef);
-    if(itVariable != context->contextValues.end())
+    if(itVariable != context->contextValues.cend())
         ok = RoutingConfiguration::parseTypedValue(itVariable.value(), type, value);
     return ok;
 }
@@ -195,7 +195,7 @@ bool OsmAnd::RoutingRuleExpression::resolveTagReferenceValue( RoutingRulesetCont
 {
     bool ok = false;
     auto itMask = context->ruleset->owner->_tagRuleMask.find(tagRef);
-    if(itMask != context->ruleset->owner->_tagRuleMask.end())
+    if(itMask != context->ruleset->owner->_tagRuleMask.cend())
     {
         const auto& mask = *itMask;
         auto foundBits = (mask & types);

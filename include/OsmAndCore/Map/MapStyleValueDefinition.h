@@ -56,13 +56,14 @@ namespace OsmAnd {
 
     private:
     protected:
-        MapStyleValueDefinition(const MapStyleValueClass& valueClass, const MapStyleValueDataType& dataType, const QString& name);
+        MapStyleValueDefinition(const MapStyleValueClass& valueClass, const MapStyleValueDataType& dataType, const QString& name, const bool& isComplex);
     public:
         virtual ~MapStyleValueDefinition();
 
         const MapStyleValueClass valueClass;
         const MapStyleValueDataType dataType;
         const QString name;
+        const bool isComplex;
 
     friend class OsmAnd::MapStyle_P;
     friend class OsmAnd::MapStyleBuiltinValueDefinitions;

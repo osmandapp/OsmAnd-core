@@ -40,7 +40,7 @@ bool OsmAnd::MapStyle::areDependenciesResolved() const
 bool OsmAnd::MapStyle::resolveValueDefinition( const QString& name, std::shared_ptr<const MapStyleValueDefinition>& outDefinition ) const
 {
     auto itValueDefinition = _d->_valuesDefinitions.find(name);
-    if(itValueDefinition != _d->_valuesDefinitions.end())
+    if(itValueDefinition != _d->_valuesDefinitions.cend())
     {
         outDefinition = *itValueDefinition;
         return true;
@@ -55,7 +55,7 @@ bool OsmAnd::MapStyle::resolveValueDefinition( const QString& name, std::shared_
 bool OsmAnd::MapStyle::resolveAttribute( const QString& name, std::shared_ptr<const MapStyleRule>& outAttribute ) const
 {
     auto itAttribute = _d->_attributes.find(name);
-    if(itAttribute != _d->_attributes.end())
+    if(itAttribute != _d->_attributes.cend())
     {
         outAttribute = *itAttribute;
         return true;
@@ -85,7 +85,7 @@ void OsmAnd::MapStyle::dump( const QString& prefix /*= QString()*/ ) const
 void OsmAnd::MapStyle::dump( MapStyleRulesetType type, const QString& prefix /*= QString()*/ ) const
 {
     const auto& rules = _d->obtainRules(type);
-    for(auto itRuleEntry = rules.begin(); itRuleEntry != rules.end(); ++itRuleEntry)
+    for(auto itRuleEntry = rules.cbegin(); itRuleEntry != rules.cend(); ++itRuleEntry)
     {
         auto tag = _d->getTagString(itRuleEntry.key());
         auto value = _d->getValueString(itRuleEntry.key());

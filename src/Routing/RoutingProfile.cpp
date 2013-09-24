@@ -106,7 +106,7 @@ uint32_t OsmAnd::RoutingProfile::registerTagValueAttribute( const QString& tag, 
     auto key = tag + "$" + value;
 
     auto itId = _universalRules.find(key);
-    if(itId != _universalRules.end())
+    if(itId != _universalRules.cend())
         return *itId;
     
     auto id = _universalRules.size();
@@ -114,7 +114,7 @@ uint32_t OsmAnd::RoutingProfile::registerTagValueAttribute( const QString& tag, 
     _universalRules.insert(key, id);
 
     auto itTagRuleMask = _tagRuleMask.find(tag);
-    if(itTagRuleMask == _tagRuleMask.end())
+    if(itTagRuleMask == _tagRuleMask.cend())
         itTagRuleMask = _tagRuleMask.insert(tag, QBitArray());
     
     if(itTagRuleMask->size() <= id)
@@ -132,7 +132,7 @@ bool OsmAnd::RoutingProfile::parseTypedValueFromTag( uint32_t id, const QString&
     bool ok = true;
 
     auto itCachedValue = _ruleToValueCache.find(id);
-    if(itCachedValue == _ruleToValueCache.end())
+    if(itCachedValue == _ruleToValueCache.cend())
     {
         const auto& key = _universalRulesKeysById[id];
         const auto& valueName = key.mid(key.indexOf('$') + 1);

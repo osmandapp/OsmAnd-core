@@ -54,7 +54,6 @@ namespace OsmAnd {
     protected:
         enum {
             PolygonAreaCutoffLowerThreshold = 75,
-            ZoomOnlyForBasemaps = 7,
             BasemapZoom = 11,
             DetailedLandDataZoom = 14,
         };

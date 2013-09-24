@@ -38,26 +38,29 @@ namespace OsmAnd {
     } // namespace Model
     class MapStyleRule;
     class MapStyleValueDefinition;
+    struct MapStyleValue;
 
+    class MapStyleEvaluator_P;
     class OSMAND_CORE_API MapStyleEvaluator
     {
+        Q_DISABLE_COPY(MapStyleEvaluator);
     private:
+        const std::unique_ptr<MapStyleEvaluator_P> _d;
     protected:
-        QMap< std::shared_ptr<const OsmAnd::MapStyleValueDefinition>, OsmAnd::MapStyleValue > _values;
-        
         bool evaluate(uint32_t tagKey, uint32_t valueKey, bool fillOutput, bool evaluateChildren);
         bool evaluate(const std::shared_ptr<const MapStyleRule>& rule, bool fillOutput, bool evaluateChildren);
     public:
-        MapStyleEvaluator(const std::shared_ptr<const MapStyle>& style, MapStyleRulesetType ruleset, const std::shared_ptr<const OsmAnd::Model::MapObject>& mapObject = std::shared_ptr<const OsmAnd::Model::MapObject>());
-        MapStyleEvaluator(const std::shared_ptr<const MapStyle>& style, const std::shared_ptr<const MapStyleRule>& singleRule);
+        MapStyleEvaluator(const std::shared_ptr<const MapStyle>& style, const float& displayDensityFactor, MapStyleRulesetType ruleset, const std::shared_ptr<const Model::MapObject>& mapObject = std::shared_ptr<const Model::MapObject>());
+        MapStyleEvaluator(const std::shared_ptr<const MapStyle>& style, const float& displayDensityFactor, const std::shared_ptr<const MapStyleRule>& singleRule);
         virtual ~MapStyleEvaluator();
 
         const std::shared_ptr<const MapStyle> style;
-        const std::shared_ptr<const OsmAnd::Model::MapObject> mapObject;
+        const float displayDensityFactor;
+        const std::shared_ptr<const Model::MapObject> mapObject;
         const MapStyleRulesetType ruleset;
         const std::shared_ptr<const MapStyleRule> singleRule;
 
-        void setValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, const OsmAnd::MapStyleValue& value);
+        void setValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, const MapStyleValue& value);
         void setBooleanValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, const bool& value);
         void setIntegerValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, const int& value);
         void setIntegerValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, const unsigned int& value);

@@ -108,7 +108,7 @@ bool OsmAnd::TileDB::rebuildIndex()
     // Index TileDBs
     QFileInfoList files;
     Utilities::findFiles(dataPath, QStringList() << "*", files);
-    for(auto itFile = files.begin(); itFile != files.end(); ++itFile)
+    for(auto itFile = files.cbegin(); itFile != files.cend(); ++itFile)
     {
         const auto& file = *itFile;
         const auto dbFilename = file.absoluteFilePath();

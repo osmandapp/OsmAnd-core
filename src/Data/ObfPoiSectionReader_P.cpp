@@ -204,7 +204,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
                     return l->_hash < r->_hash;
                 });
 
-                for(auto itTile = tiles.begin(); itTile != tiles.end(); ++itTile)
+                for(auto itTile = tiles.cbegin(); itTile != tiles.cend(); ++itTile)
                 {
                     const auto& tile = *itTile;
 

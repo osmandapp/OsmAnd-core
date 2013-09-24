@@ -58,7 +58,7 @@ namespace OsmAnd {
 
             auto& zoomLevel = _zoomLevels[zoom];
             auto itEntry = zoomLevel.find(tileId);
-            if(itEntry != zoomLevel.end())
+            if(itEntry != zoomLevel.cend())
             {
                 outEntry = *itEntry;
 
@@ -85,11 +85,11 @@ namespace OsmAnd {
             QReadLocker scopedLocker(&_tilesCollectionLock);
 
             bool doCancel = false;
-            for(auto itZoomLevel = _zoomLevels.begin(); itZoomLevel != _zoomLevels.end(); ++itZoomLevel)
+            for(auto itZoomLevel = _zoomLevels.cbegin(); itZoomLevel != _zoomLevels.cend(); ++itZoomLevel)
             {
                 const auto& zoomLevel = *itZoomLevel;
 
-                for(auto itEntryPair = zoomLevel.begin(); itEntryPair != zoomLevel.end(); ++itEntryPair)
+                for(auto itEntryPair = zoomLevel.cbegin(); itEntryPair != zoomLevel.cend(); ++itEntryPair)
                 {
                     const auto& entry = itEntryPair.value();
                     

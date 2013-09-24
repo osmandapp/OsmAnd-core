@@ -191,7 +191,7 @@ void OsmAnd::ObfMapSectionReader_P::readRule(
 void OsmAnd::ObfMapSectionReader_P::createRule( const std::shared_ptr<ObfMapSectionInfo_P::Rules>& rules, uint32_t ruleType, uint32_t ruleId, const QString& ruleTag, const QString& ruleVal )
 {
     auto itEncodingRule = rules->_encodingRules.find(ruleTag);
-    if(itEncodingRule == rules->_encodingRules.end())
+    if(itEncodingRule == rules->_encodingRules.cend())
         itEncodingRule = rules->_encodingRules.insert(ruleTag, QHash<QString, uint32_t>());
     itEncodingRule->insert(ruleVal, ruleId);
     
@@ -423,7 +423,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
-            for(auto itEntry = intermediateResult.begin(); itEntry != intermediateResult.end(); ++itEntry)
+            for(auto itEntry = intermediateResult.cbegin(); itEntry != intermediateResult.cend(); ++itEntry)
             {
                 const auto& entry = *itEntry;
 
@@ -711,7 +711,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     auto foundation = MapFoundationType::Undefined;
     if(foundationOut)
         foundation = *foundationOut;
-    for(auto itMapLevel = section->_levels.begin(); itMapLevel != section->_levels.end(); ++itMapLevel)
+    for(auto itMapLevel = section->_levels.cbegin(); itMapLevel != section->_levels.cend(); ++itMapLevel)
     {
         const auto& mapLevel = *itMapLevel;
 
@@ -744,7 +744,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
         }
         
         QList< std::shared_ptr<ObfMapSectionLevelTreeNode> > treeNodesWithData;
-        for(auto itRootNode = mapLevel->_d->_rootNodes->nodes.begin(); itRootNode != mapLevel->_d->_rootNodes->nodes.end(); ++itRootNode)
+        for(auto itRootNode = mapLevel->_d->_rootNodes->nodes.cbegin(); itRootNode != mapLevel->_d->_rootNodes->nodes.cend(); ++itRootNode)
         {
             const auto& rootNode = *itRootNode;
 
@@ -785,7 +785,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
         {
             return l->_dataOffset < r->_dataOffset;
         });
-        for(auto itTreeNode = treeNodesWithData.begin(); itTreeNode != treeNodesWithData.end(); ++itTreeNode)
+        for(auto itTreeNode = treeNodesWithData.cbegin(); itTreeNode != treeNodesWithData.cend(); ++itTreeNode)
         {
             const auto& treeNode = *itTreeNode;
             if(controller && controller->isAborted())

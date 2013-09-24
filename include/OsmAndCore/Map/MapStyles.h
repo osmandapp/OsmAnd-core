@@ -34,6 +34,8 @@
 namespace OsmAnd {
 
     class MapStyle;
+    class MapStyle_P;
+
     class MapStyles_P;
     class OSMAND_CORE_API MapStyles
     {
@@ -48,6 +50,7 @@ namespace OsmAnd {
         bool obtainStyle(const QString& name, std::shared_ptr<const OsmAnd::MapStyle>& outStyle);
 
     friend class OsmAnd::MapStyle;
+    friend class OsmAnd::MapStyle_P;
     };
 
 } // namespace OsmAnd

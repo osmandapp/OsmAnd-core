@@ -19,8 +19,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __OFFLINE_MAP_RASTER_TILE_PROVIDER_H_
-#define __OFFLINE_MAP_RASTER_TILE_PROVIDER_H_
+#ifndef __OFFLINE_MAP_RASTER_TILE_PROVIDER_SOFTWARE_H_
+#define __OFFLINE_MAP_RASTER_TILE_PROVIDER_SOFTWARE_H_
 
 #include <cstdint>
 #include <memory>
@@ -37,15 +37,15 @@
 namespace OsmAnd {
 
     class OfflineMapDataProvider;
-    class OfflineMapRasterTileProvider_P;
-    class OSMAND_CORE_API OfflineMapRasterTileProvider : public IMapBitmapTileProvider
+    class OfflineMapRasterTileProvider_Software_P;
+    class OSMAND_CORE_API OfflineMapRasterTileProvider_Software : public IMapBitmapTileProvider
     {
     private:
-        const std::unique_ptr<OfflineMapRasterTileProvider_P> _d;
+        const std::unique_ptr<OfflineMapRasterTileProvider_Software_P> _d;
     protected:
     public:
-        OfflineMapRasterTileProvider(const std::shared_ptr<OfflineMapDataProvider>& dataProvider, const float& displayDensity);
-        virtual ~OfflineMapRasterTileProvider();
+        OfflineMapRasterTileProvider_Software(const std::shared_ptr<OfflineMapDataProvider>& dataProvider, const float& displayDensity);
+        virtual ~OfflineMapRasterTileProvider_Software();
 
         const std::shared_ptr<OfflineMapDataProvider> dataProvider;
 
@@ -60,4 +60,4 @@ namespace OsmAnd {
 
 }
 
-#endif // __OFFLINE_MAP_RASTER_TILE_PROVIDER_H_
+#endif // __OFFLINE_MAP_RASTER_TILE_PROVIDER_SOFTWARE_H_

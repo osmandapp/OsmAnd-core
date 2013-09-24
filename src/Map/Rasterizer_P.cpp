@@ -56,14 +56,14 @@ void OsmAnd::Rasterizer_P::prepareContext(
     context._tileSize = tileSize;
 
     // Split input map objects to object, coastline, basemapObjects and basemapCoastline
-    for(auto itMapObject = objects.begin(); itMapObject != objects.end(); ++itMapObject)
+    for(auto itMapObject = objects.cbegin(); itMapObject != objects.cend(); ++itMapObject)
     {
         if(controller && controller->isAborted())
             break;
 
         const auto& mapObject = *itMapObject;
 
-        if(zoom < ZoomOnlyForBasemaps && !mapObject->section->isBasemap)
+        if(zoom < BasemapZoom && !mapObject->section->isBasemap)
             continue;
 
         if(mapObject->containsType(QString::fromLatin1("natural"), QString::fromLatin1("coastline")))
@@ -115,6 +115,16 @@ void OsmAnd::Rasterizer_P::prepareContext(
             false,
             true);
         fillEntireArea = !coastlinesWereAdded && fillEntireArea;
+    }
+
+    if(context._basemapMapObjects.isEmpty() && context._mapObjects.isEmpty() && foundation == MapFoundationType::Undefined)
+    {
+        // We simply have no data to render. Report, clean-up and exit
+        if(nothingToRasterize)
+            *nothingToRasterize = true;
+
+        context.clear();
+        return;
     }
 
     if(fillEntireArea)
@@ -189,7 +199,7 @@ void OsmAnd::Rasterizer_P::adjustContextFromEnvironment(
     context._defaultBgColor = env.defaultBgColor;
     if(env.attributeRule_defaultColor)
     {
-        MapStyleEvaluator evaluator(env.owner->style, env.attributeRule_defaultColor);
+        MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, env.attributeRule_defaultColor);
 
         env.applyTo(evaluator);
         evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
@@ -201,7 +211,7 @@ void OsmAnd::Rasterizer_P::adjustContextFromEnvironment(
     context._shadowRenderingColor = env.shadowRenderingColor;
     if(env.attributeRule_shadowRendering)
     {
-        MapStyleEvaluator evaluator(env.owner->style, env.attributeRule_shadowRendering);
+        MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, env.attributeRule_shadowRendering);
 
 
         env.applyTo(evaluator);
@@ -216,7 +226,7 @@ void OsmAnd::Rasterizer_P::adjustContextFromEnvironment(
     context._polygonMinSizeToDisplay = env.polygonMinSizeToDisplay;
     if(env.attributeRule_polygonMinSizeToDisplay)
     {
-        MapStyleEvaluator evaluator(env.owner->style, env.attributeRule_polygonMinSizeToDisplay);
+        MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, env.attributeRule_polygonMinSizeToDisplay);
         env.applyTo(evaluator);
         evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
         if(evaluator.evaluate())
@@ -230,7 +240,7 @@ void OsmAnd::Rasterizer_P::adjustContextFromEnvironment(
     context._roadDensityZoomTile = env.roadDensityZoomTile;
     if(env.attributeRule_roadDensityZoomTile)
     {
-        MapStyleEvaluator evaluator(env.owner->style, env.attributeRule_roadDensityZoomTile);
+        MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, env.attributeRule_roadDensityZoomTile);
         env.applyTo(evaluator);
         evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
         if(evaluator.evaluate())
@@ -240,7 +250,7 @@ void OsmAnd::Rasterizer_P::adjustContextFromEnvironment(
     context._roadsDensityLimitPerTile = env.roadsDensityLimitPerTile;
     if(env.attributeRule_roadsDensityLimitPerTile)
     {
-        MapStyleEvaluator evaluator(env.owner->style, env.attributeRule_roadsDensityLimitPerTile);
+        MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, env.attributeRule_roadsDensityLimitPerTile);
         env.applyTo(evaluator);
         evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
         if(evaluator.evaluate())
@@ -282,7 +292,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
     const auto area31toPixelDivisor = context._precomputed31toPixelDivisor * context._precomputed31toPixelDivisor;
     
     QVector< Primitive > unfilteredLines;
-    for(auto itMapObject = context._combinedMapObjects.begin(); itMapObject != context._combinedMapObjects.end(); ++itMapObject)
+    for(auto itMapObject = context._combinedMapObjects.cbegin(); itMapObject != context._combinedMapObjects.cend(); ++itMapObject)
     {
         if(controller && controller->isAborted())
             return;
@@ -290,12 +300,12 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
         auto mapObject = *itMapObject;
         
         uint32_t typeIdx = 0;
-        for(auto itType = mapObject->types.begin(); itType != mapObject->types.end(); ++itType, typeIdx++)
+        for(auto itType = mapObject->types.cbegin(); itType != mapObject->types.cend(); ++itType, typeIdx++)
         {
             const auto& type = *itType;
             auto layer = mapObject->getSimpleLayerValue();
 
-            MapStyleEvaluator evaluator(env.owner->style, MapStyleRulesetType::Order, mapObject);
+            MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Order, mapObject);
             env.applyTo(evaluator);
             evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
             evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
@@ -305,76 +315,76 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
             evaluator.setBooleanValue(MapStyle::builtinValueDefinitions.INPUT_AREA, mapObject->isArea);
             evaluator.setBooleanValue(MapStyle::builtinValueDefinitions.INPUT_POINT, mapObject->points31.size() == 1);
             evaluator.setBooleanValue(MapStyle::builtinValueDefinitions.INPUT_CYCLE, mapObject->isClosedFigure());
-            if(evaluator.evaluate())
+            if(!evaluator.evaluate())
+                continue;
+
+            int objectType;
+            if(!evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_OBJECT_TYPE, objectType))
+                continue;
+            int zOrder;
+            if(!evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_ORDER, zOrder))
+                continue;
+
+            Primitive primitive;
+            primitive.mapObject = mapObject;
+            primitive.objectType = static_cast<PrimitiveType>(objectType);
+            primitive.zOrder = zOrder;
+            primitive.typeIndex = typeIdx;
+
+            if(objectType == PrimitiveType::Polygon)
             {
-                int objectType;
-                if(!evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_OBJECT_TYPE, objectType))
+                if(mapObject->points31.size() <=2)
+                {
+                    OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+                        "Map object #%" PRIu64 " (%" PRIi64 ") primitives are processed as polygon, but only %d vertices present",
+                        mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2,
+                        mapObject->points31.size());
                     continue;
-                int zOrder;
-                if(!evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_ORDER, zOrder))
+                }
+                if(!mapObject->isClosedFigure())
+                {
+                    OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+                        "Map object #%" PRIu64 " (%" PRIi64 ") primitives are processed as polygon, but are not closed",
+                        mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2);
                     continue;
-
-                Primitive primitive;
-                primitive.mapObject = mapObject;
-                primitive.objectType = static_cast<PrimitiveType>(objectType);
-                primitive.zOrder = zOrder;
-                primitive.typeIndex = typeIdx;
-
-                if(objectType == PrimitiveType::Polygon)
-                {
-                    if(mapObject->points31.size() <=2)
-                    {
-                        OsmAnd::LogPrintf(LogSeverityLevel::Warning,
-                            "Map object #%" PRIu64 " (%" PRIi64 ") primitives are processed as polygon, but only %d vertices present",
-                            mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2,
-                            mapObject->points31.size());
-                        continue;
-                    }
-                    if(!mapObject->isClosedFigure())
-                    {
-                        OsmAnd::LogPrintf(LogSeverityLevel::Warning,
-                            "Map object #%" PRIu64 " (%" PRIi64 ") primitives are processed as polygon, but are not closed",
-                            mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2);
-                        continue;
-                    }
-                    if(!mapObject->isClosedFigure(true))
-                    {
-                        OsmAnd::LogPrintf(LogSeverityLevel::Warning,
-                            "Map object #%" PRIu64 " (%" PRIi64 ") primitives are processed as polygon, but are not closed (inner)",
-                            mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2);
-                        continue;
-                    }
-
-                    Primitive pointPrimitive = primitive;
-                    pointPrimitive.objectType = PrimitiveType::Point;
-                    auto polygonArea31 = Utilities::polygonArea(mapObject->points31);
-                    if(polygonArea31 > PolygonAreaCutoffLowerThreshold * env.owner->density)
-                    {
-                        primitive.zOrder += 1.0 / (polygonArea31/area31toPixelDivisor);
-                        context._polygons.push_back(primitive);
-                        context._points.push_back(pointPrimitive);
-                    }
                 }
-                else if(objectType == PrimitiveType::Point)
+                if(!mapObject->isClosedFigure(true))
                 {
-                    context._points.push_back(primitive);
-                }
-                else if(objectType == PrimitiveType::Line)
-                {
-                    unfilteredLines.push_back(primitive);
-                }
-                else
-                {
-                    assert(false);
+                    OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+                        "Map object #%" PRIu64 " (%" PRIi64 ") primitives are processed as polygon, but are not closed (inner)",
+                        mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2);
                     continue;
                 }
 
-                int shadowLevel;
-                if(evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_SHADOW_LEVEL, shadowLevel) && shadowLevel > 0)
+                Primitive pointPrimitive = primitive;
+                pointPrimitive.objectType = PrimitiveType::Point;
+                auto polygonArea31 = Utilities::polygonArea(mapObject->points31);
+                if(polygonArea31 > PolygonAreaCutoffLowerThreshold)
                 {
-                    context._shadowLevelMin = qMin(context._shadowLevelMin, static_cast<uint32_t>(zOrder));
-                    context._shadowLevelMax = qMax(context._shadowLevelMax, static_cast<uint32_t>(zOrder));
+                    primitive.zOrder += 1.0 / (polygonArea31/area31toPixelDivisor);
+                    context._polygons.push_back(primitive);
+                    context._points.push_back(pointPrimitive);
                 }
+            }
+            else if(objectType == PrimitiveType::Point)
+            {
+                context._points.push_back(primitive);
+            }
+            else if(objectType == PrimitiveType::Line)
+            {
+                unfilteredLines.push_back(primitive);
+            }
+            else
+            {
+                assert(false);
+                continue;
+            }
+
+            int shadowLevel;
+            if(evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_SHADOW_LEVEL, shadowLevel) && shadowLevel > 0)
+            {
+                context._shadowLevelMin = qMin(context._shadowLevelMin, static_cast<uint32_t>(zOrder));
+                context._shadowLevelMax = qMax(context._shadowLevelMax, static_cast<uint32_t>(zOrder));
             }
         }
     }
@@ -423,7 +433,7 @@ void OsmAnd::Rasterizer_P::filterOutLinesByDensity(
             accept = false;
 
             uint64_t prevId = 0;
-            for(auto itPoint = primitive.mapObject->_points31.begin(); itPoint != primitive.mapObject->_points31.end(); ++itPoint)
+            for(auto itPoint = primitive.mapObject->_points31.cbegin(); itPoint != primitive.mapObject->_points31.cend(); ++itPoint)
             {
                 if(controller && controller->isAborted())
                     return;
@@ -459,8 +469,8 @@ void OsmAnd::Rasterizer_P::rasterizeMapPrimitives(
 {
     assert(type != PrimitivesType::Points);
 
-    const auto polygonSizeThreshold = 1.0 / (context._polygonMinSizeToDisplay * env.owner->density);
-    for(auto itPrimitive = primitives.begin(); itPrimitive != primitives.end(); ++itPrimitive)
+    const auto polygonSizeThreshold = 1.0 / (context._polygonMinSizeToDisplay * env.owner->displayDensityFactor*env.owner->displayDensityFactor);
+    for(auto itPrimitive = primitives.cbegin(); itPrimitive != primitives.cend(); ++itPrimitive)
     {
         if(controller && controller->isAborted())
             return;
@@ -547,7 +557,7 @@ bool OsmAnd::Rasterizer_P::updatePaint(
         context._mapPaint.setShader(nullptr);
         context._mapPaint.setLooper(nullptr);
         context._mapPaint.setStyle(SkPaint::kStroke_Style);
-        context._mapPaint.setStrokeWidth(stroke * env.owner->density);
+        context._mapPaint.setStrokeWidth(stroke);
 
         QString cap;
         ok = evaluator.getStringValue(valueSet.cap, cap);
@@ -606,7 +616,7 @@ bool OsmAnd::Rasterizer_P::updatePaint(
             shadowRadius = 0;
 
         if(shadowRadius > 0)
-            context._mapPaint.setLooper(new SkBlurDrawLooper(shadowRadius * env.owner->density, 0, 0, shadowColor))->unref();
+            context._mapPaint.setLooper(new SkBlurDrawLooper(static_cast<SkScalar>(shadowRadius), 0, 0, shadowColor))->unref();
     }
 
     return true;
@@ -615,14 +625,14 @@ bool OsmAnd::Rasterizer_P::updatePaint(
 SkPathEffect* OsmAnd::Rasterizer_P::obtainPathEffect( const RasterizerEnvironment_P& env, RasterizerContext_P& context, const QString& pathEffect )
 {
     auto itEffect = context._pathEffects.find(pathEffect);
-    if(itEffect != context._pathEffects.end())
+    if(itEffect != context._pathEffects.cend())
         return *itEffect;
 
     const auto& strIntervals = pathEffect.split('_', QString::SkipEmptyParts);
 
     SkScalar* intervals = new SkScalar[strIntervals.size()];
     uint32_t idx = 0;
-    for(auto itInterval = strIntervals.begin(); itInterval != strIntervals.end(); ++itInterval, idx++)
+    for(auto itInterval = strIntervals.cbegin(); itInterval != strIntervals.cend(); ++itInterval, idx++)
         intervals[idx] = itInterval->toFloat();
 
     SkPathEffect* pPathEffect = new SkDashPathEffect(intervals, strIntervals.size(), 0);
@@ -660,7 +670,7 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
 
     const auto& type = primitive.mapObject->_types[primitive.typeIndex];
 
-    MapStyleEvaluator evaluator(env.owner->style, MapStyleRulesetType::Polygon, primitive.mapObject);
+    MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Polygon, primitive.mapObject);
     env.applyTo(evaluator);
     evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
     evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
@@ -677,7 +687,7 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
     PointF vertex;
     int bounds = 0;
     QVector< PointF > outsideBounds;
-    for(auto itPoint = primitive.mapObject->points31.begin(); itPoint != primitive.mapObject->points31.end(); ++itPoint, pointIdx++)
+    for(auto itPoint = primitive.mapObject->points31.cbegin(); itPoint != primitive.mapObject->points31.cend(); ++itPoint, pointIdx++)
     {
         const auto& point = *itPoint;
 
@@ -727,12 +737,12 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
     if(!primitive.mapObject->innerPolygonsPoints31.isEmpty())
     {
         path.setFillType(SkPath::kEvenOdd_FillType);
-        for(auto itPolygon = primitive.mapObject->innerPolygonsPoints31.begin(); itPolygon != primitive.mapObject->innerPolygonsPoints31.end(); ++itPolygon)
+        for(auto itPolygon = primitive.mapObject->innerPolygonsPoints31.cbegin(); itPolygon != primitive.mapObject->innerPolygonsPoints31.cend(); ++itPolygon)
         {
             const auto& polygon = *itPolygon;
 
             pointIdx = 0;
-            for(auto itVertex = polygon.begin(); itVertex != polygon.end(); ++itVertex, pointIdx++)
+            for(auto itVertex = polygon.cbegin(); itVertex != polygon.cend(); ++itVertex, pointIdx++)
             {
                 const auto& point = *itVertex;
                 calculateVertex(env, context, point, vertex);
@@ -770,7 +780,7 @@ void OsmAnd::Rasterizer_P::rasterizeLine(
     bool ok;
     const auto& type = primitive.mapObject->_types[primitive.typeIndex];
 
-    MapStyleEvaluator evaluator(env.owner->style, MapStyleRulesetType::Line, primitive.mapObject);
+    MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Line, primitive.mapObject);
     env.applyTo(evaluator);
     evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
     evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
@@ -807,7 +817,7 @@ void OsmAnd::Rasterizer_P::rasterizeLine(
     bool intersect = false;
     int prevCross = 0;
     PointF vertex, middleVertex;
-    for(auto itPoint = primitive.mapObject->_points31.begin(); itPoint != primitive.mapObject->_points31.end(); ++itPoint, pointIdx++)
+    for(auto itPoint = primitive.mapObject->_points31.cbegin(); itPoint != primitive.mapObject->_points31.cend(); ++itPoint, pointIdx++)
     {
         const auto& point = *itPoint;
 
@@ -899,7 +909,7 @@ void OsmAnd::Rasterizer_P::rasterizeLineShadow(
     {
         // simply draw shadow? difference from option 3 ?
         // paint->setColor(0xffffffff);
-        context._mapPaint.setLooper(new SkBlurDrawLooper(shadowRadius * env.owner->density, 0, 0, shadowColor))->unref();
+        context._mapPaint.setLooper(new SkBlurDrawLooper(shadowRadius, 0, 0, shadowColor))->unref();
         canvas.drawPath(path, context._mapPaint);
     }
 
@@ -907,7 +917,7 @@ void OsmAnd::Rasterizer_P::rasterizeLineShadow(
     if (context._shadowRenderingMode == 3 && shadowRadius > 0)
     {
         context._mapPaint.setLooper(nullptr);
-        context._mapPaint.setStrokeWidth((context._mapPaint.getStrokeWidth() + shadowRadius * 2) * env.owner->density);
+        context._mapPaint.setStrokeWidth(context._mapPaint.getStrokeWidth() + shadowRadius*2);
         //		paint->setColor(0xffbababa);
         context._mapPaint.setColorFilter(SkColorFilter::CreateModeFilter(shadowColor, SkXfermode::kSrcIn_Mode))->unref();
         //		paint->setColor(shadowColor);
@@ -921,14 +931,14 @@ void OsmAnd::Rasterizer_P::rasterizeLine_OneWay(
 {
     if (oneway > 0)
     {
-        for(auto itPaint = env.oneWayPaints.begin(); itPaint != env.oneWayPaints.end(); ++itPaint)
+        for(auto itPaint = env.oneWayPaints.cbegin(); itPaint != env.oneWayPaints.cend(); ++itPaint)
         {
             canvas.drawPath(path, *itPaint);
         }
     }
     else
     {
-        for(auto itPaint = env.reverseOneWayPaints.begin(); itPaint != env.reverseOneWayPaints.end(); ++itPaint)
+        for(auto itPaint = env.reverseOneWayPaints.cbegin(); itPaint != env.reverseOneWayPaints.cend(); ++itPaint)
         {
             canvas.drawPath(path, *itPaint);
         }
@@ -947,9 +957,9 @@ bool OsmAnd::Rasterizer_P::contains( const QVector< PointF >& vertices, const Po
 {
     uint32_t intersections = 0;
 
-    auto itPrevVertex = vertices.begin();
+    auto itPrevVertex = vertices.cbegin();
     auto itVertex = itPrevVertex + 1;
-    for(; itVertex != vertices.end(); itPrevVertex = itVertex, ++itVertex)
+    for(; itVertex != vertices.cend(); itPrevVertex = itVertex, ++itVertex)
     {
         const auto& vertex0 = *itPrevVertex;
         const auto& vertex1 = *itVertex;
@@ -987,7 +997,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
 
     uint64_t osmId = 0;
     QVector< PointI > linePoints31;
-    for(auto itCoastline = coastlines.begin(); itCoastline != coastlines.end(); ++itCoastline)
+    for(auto itCoastline = coastlines.cbegin(); itCoastline != coastlines.cend(); ++itCoastline)
     {
         const auto& coastline = *itCoastline;
 
@@ -1002,13 +1012,13 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
 
         osmId = coastline->id >> 1;
         linePoints31.clear();
-        auto itPoint = coastline->_points31.begin();
+        auto itPoint = coastline->_points31.cbegin();
         auto pp = *itPoint;
         auto cp = pp;
         auto prevInside = alignedArea31.contains(cp);
         if(prevInside)
             linePoints31.push_back(cp);
-        for(++itPoint; itPoint != coastline->_points31.end(); ++itPoint)
+        for(++itPoint; itPoint != coastline->_points31.cend(); ++itPoint)
         {
             cp = *itPoint;
 
@@ -1065,7 +1075,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
 
     if (includeBrokenCoastlines)
     {
-        for(auto itPolygon = coastlinePolylines.begin(); itPolygon != coastlinePolylines.end(); ++itPolygon)
+        for(auto itPolygon = coastlinePolylines.cbegin(); itPolygon != coastlinePolylines.cend(); ++itPolygon)
         {
             const auto& polygon = *itPolygon;
 
@@ -1078,7 +1088,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
         }
     }
 
-    for(auto itPolygon = closedPolygons.begin(); itPolygon != closedPolygons.end(); ++itPolygon)
+    for(auto itPolygon = closedPolygons.cbegin(); itPolygon != closedPolygons.cend(); ++itPolygon)
     {
         const auto& polygon = *itPolygon;
 
@@ -1095,7 +1105,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
 
     auto fullWaterObjects = 0u;
     auto fullLandObjects = 0u;
-    for(auto itPolygon = closedPolygons.begin(); itPolygon != closedPolygons.end(); ++itPolygon)
+    for(auto itPolygon = closedPolygons.cbegin(); itPolygon != closedPolygons.cend(); ++itPolygon)
     {
         const auto& polygon = *itPolygon;
 
@@ -1440,7 +1450,7 @@ void OsmAnd::Rasterizer_P::convertCoastlinePolylinesToPolygons(
                     }
 
                     // If nearest was not yet set, set this
-                    if(itNearestPolyline == validPolylines.end())
+                    if(itNearestPolyline == validPolylines.cend())
                     {
                         itNearestPolyline = itOtherPolyline;
                         continue;
@@ -1463,7 +1473,7 @@ void OsmAnd::Rasterizer_P::convertCoastlinePolylinesToPolygons(
                         itNearestPolyline = itOtherPolyline;
                 }
             }
-            assert(itNearestPolyline != validPolylines.end());
+            assert(itNearestPolyline != validPolylines.cend());
 
             // Get edge of nearest-by-CCV head
             auto nearestHeadEdge = AreaI::Edge::Invalid;
@@ -1544,7 +1554,7 @@ bool OsmAnd::Rasterizer_P::isClockwiseCoastlinePolygon( const QVector< PointI > 
 
     // calculate middle Y
     int64_t middleY = 0;
-    for(auto itVertex = polygon.begin(); itVertex != polygon.end(); ++itVertex)
+    for(auto itVertex = polygon.cbegin(); itVertex != polygon.cend(); ++itVertex)
         middleY += itVertex->y;
     middleY /= polygon.size();
 
@@ -1554,9 +1564,9 @@ bool OsmAnd::Rasterizer_P::isClockwiseCoastlinePolygon( const QVector< PointI > 
     int previousX = INT_MIN;
     int firstX = INT_MIN;
 
-    auto itPrevVertex = polygon.begin();
+    auto itPrevVertex = polygon.cbegin();
     auto itVertex = itPrevVertex + 1;
-    for(; itVertex != polygon.end(); itPrevVertex = itVertex, ++itVertex)
+    for(; itVertex != polygon.cend(); itPrevVertex = itVertex, ++itVertex)
     {
         const auto& vertex0 = *itPrevVertex;
         const auto& vertex1 = *itVertex;
@@ -1634,7 +1644,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesTexts(
 //#endif
 //        */
 //    SkPaint::FontMetrics fontMetrics;
-//    for(auto itText = context._texts.begin(); itText != context._texts.end(); ++itText)
+//    for(auto itText = context._texts.cbegin(); itText != context._texts.cend(); ++itText)
 //    {
 //        if(controller && controller->isAborted())
 //            break;
@@ -1693,7 +1703,7 @@ void OsmAnd::Rasterizer_P::collectPrimitivesTexts(
 {
     assert(type != PrimitivesType::ShadowOnlyLines);
 
-    for(auto itPrimitive = primitives.begin(); itPrimitive != primitives.end(); ++itPrimitive)
+    for(auto itPrimitive = primitives.cbegin(); itPrimitive != primitives.cend(); ++itPrimitive)
     {
         if(controller && controller->isAborted())
             return;
@@ -1704,7 +1714,7 @@ void OsmAnd::Rasterizer_P::collectPrimitivesTexts(
         if(primitive.mapObject->names.isEmpty())
             continue;
         bool hasNonEmptyNames = false;
-        for(auto itName = primitive.mapObject->names.begin(); itName != primitive.mapObject->names.end(); ++itName)
+        for(auto itName = primitive.mapObject->names.cbegin(); itName != primitive.mapObject->names.cend(); ++itName)
         {
             const auto& name = itName.value();
 
@@ -1719,7 +1729,7 @@ void OsmAnd::Rasterizer_P::collectPrimitivesTexts(
 
         if(type == Polygons)
         {
-            if (primitive.zOrder < context._polygonMinSizeToDisplay * env.owner->density)
+            if (primitive.zOrder < context._polygonMinSizeToDisplay * env.owner->displayDensityFactor*env.owner->displayDensityFactor)
                 return;
 
             collectPolygonText(env, context, primitive);
@@ -1767,7 +1777,7 @@ void OsmAnd::Rasterizer_P::collectPolygonText(
 
     {
         const auto& type = primitive.mapObject->_types[primitive.typeIndex];
-        MapStyleEvaluator evaluator(env.owner->style, MapStyleRulesetType::Polygon, primitive.mapObject);
+        MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Polygon, primitive.mapObject);
         env.applyTo(evaluator);
         evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
         evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
@@ -1785,7 +1795,7 @@ void OsmAnd::Rasterizer_P::collectPolygonText(
     PointF vertex;
     int bounds = 0;
     QVector< PointF > outsideBounds;
-    for(auto itPoint = primitive.mapObject->_points31.begin(); itPoint != primitive.mapObject->_points31.end(); ++itPoint)
+    for(auto itPoint = primitive.mapObject->_points31.cbegin(); itPoint != primitive.mapObject->_points31.cend(); ++itPoint)
     {
         const auto& point = *itPoint;
 
@@ -1854,7 +1864,7 @@ void OsmAnd::Rasterizer_P::collectLineText(
 
     {
         const auto& type = primitive.mapObject->_types[primitive.typeIndex];
-        MapStyleEvaluator evaluator(env.owner->style, MapStyleRulesetType::Line, primitive.mapObject);
+        MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Line, primitive.mapObject);
         env.applyTo(evaluator);
         evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
         evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
@@ -1873,7 +1883,7 @@ void OsmAnd::Rasterizer_P::collectLineText(
     bool intersect = false;
     int prevCross = 0;
     PointF vertex, middleVertex;
-    for(auto itPoint = primitive.mapObject->_points31.begin(); itPoint != primitive.mapObject->_points31.end(); ++itPoint, pointIdx++)
+    for(auto itPoint = primitive.mapObject->_points31.cbegin(); itPoint != primitive.mapObject->_points31.cend(); ++itPoint, pointIdx++)
     {
         const auto& point = *itPoint;
 
@@ -1950,7 +1960,7 @@ void OsmAnd::Rasterizer_P::collectPointText(
         auto verticesCount = primitive.mapObject->_points31.size();
 
         PointF vertex;
-        for(auto itPoint = primitive.mapObject->_points31.begin(); itPoint != primitive.mapObject->_points31.end(); ++itPoint)
+        for(auto itPoint = primitive.mapObject->_points31.cbegin(); itPoint != primitive.mapObject->_points31.cend(); ++itPoint)
         {
             const auto& point = *itPoint;
 
@@ -1972,7 +1982,7 @@ void OsmAnd::Rasterizer_P::preparePrimitiveText(
 {
     const auto& type = primitive.mapObject->_types[primitive.typeIndex];
 
-    for(auto itName = primitive.mapObject->names.begin(); itName != primitive.mapObject->names.end(); ++itName)
+    for(auto itName = primitive.mapObject->names.cbegin(); itName != primitive.mapObject->names.cend(); ++itName)
     {
         const auto& name = itName.value();
 
@@ -1980,7 +1990,7 @@ void OsmAnd::Rasterizer_P::preparePrimitiveText(
         //TODO:name =rc->getReshapedString(name);
 
         const auto& type = primitive.mapObject->_types[primitive.typeIndex];
-        MapStyleEvaluator evaluator(env.owner->style, MapStyleRulesetType::Text, primitive.mapObject);
+        MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Text, primitive.mapObject);
         env.applyTo(evaluator);
         evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
         evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, type.value);

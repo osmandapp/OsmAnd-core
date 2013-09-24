@@ -83,7 +83,7 @@ SkBitmap* OsmAnd::OsmAndRasterMapLayer::getBitmap(MapPoint* topLeft, MapPoint* b
 
 std::shared_ptr<SkBitmap>  OsmAnd::OsmAndRasterMapLayer::loadImage(int x, int y, int z, QString &file) {
     auto i = cache.find(file);
-    if(i == cache.end()) {
+    if(i == cache.cend()) {
         std::shared_ptr<SkBitmap> tileBitmap = std::shared_ptr<SkBitmap>(new SkBitmap());
         //TODO: JPEG is badly supported! At the moment it needs sdcard to be present (sic). Patch that
         if(!SkImageDecoder::DecodeFile(file.toStdString().c_str(), tileBitmap.get(), SkBitmap::kARGB_8888_Config,SkImageDecoder::kDecodePixels_Mode))

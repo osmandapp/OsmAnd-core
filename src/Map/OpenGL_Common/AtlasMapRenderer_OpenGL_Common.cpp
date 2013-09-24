@@ -508,7 +508,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
     }
 
     // For each visible tile, render it
-    for(auto itTileId = _visibleTiles.begin(); itTileId != _visibleTiles.end(); ++itTileId)
+    for(auto itTileId = _visibleTiles.cbegin(); itTileId != _visibleTiles.cend(); ++itTileId)
     {
         const auto& tileId = *itTileId;
 

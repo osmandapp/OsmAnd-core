@@ -11,7 +11,29 @@ set QTBASE_CONFIGURATION=^
 	-no-style-windowsvista -no-style-fusion -no-style-windowsce -no-style-windowsmobile ^
 	-nomake examples -nomake tools -no-vcproj -no-native-gestures
 
-REM Determine target processor (x86 or x64) of environment
+REM Initialize VisualC variables
+call "%VS110COMNTOOLS%\VCVarsQueryRegistry.bat"
+
+REM Build for x86
+setlocal
+call "%VCINSTALLDIR%\vcvarsall.bat" x86
+call :build
+endlocal
+
+REM Build for amd64
+setlocal
+call "%VCINSTALLDIR%\vcvarsall.bat" x86_amd64
+call :build
+endlocal
+
+REM Quit from script
+exit /B
+
+REM >>> 'build' function
+:build
+setlocal
+
+REM Determine target architecture (x86 or x64) of environment
 for /f "tokens=9 delims= " %%l in ('cl 2^>^&1') do (
 	if "%%l"=="x86" (
 		set envArch=i686
@@ -22,6 +44,7 @@ for /f "tokens=9 delims= " %%l in ('cl 2^>^&1') do (
 	goto envDetected
 )
 :envDetected:
+echo Building for %envArch%
 
 REM Check if we have a build directory (shared)
 if not exist "%~dp0upstream.patched.windows.%envArch%.shared" (
@@ -42,3 +65,7 @@ if not exist "%~dp0upstream.patched.windows.%envArch%.static" (
 
 REM Perform build (static)
 (pushd %~dp0upstream.patched.windows.%envArch%.static && (cmd /C "nmake" & popd))
+
+endlocal
+exit /B
+REM <<< 'build' function

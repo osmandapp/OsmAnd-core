@@ -301,7 +301,7 @@ void OsmAnd::ObfRoutingSectionReader_P::querySubsections(
 {
     auto cis = reader->_codedInputStream.get();
 
-    for(auto itSubsection = in.begin(); itSubsection != in.end(); ++itSubsection)
+    for(auto itSubsection = in.cbegin(); itSubsection != in.cend(); ++itSubsection)
     {
         auto subsection = *itSubsection;
 
@@ -366,7 +366,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readSubsectionData(
         {
         case 0:
             {
-                for(auto itEntry = resultsByInternalId.begin(); itEntry != resultsByInternalId.end(); ++itEntry)
+                for(auto itEntry = resultsByInternalId.cbegin(); itEntry != resultsByInternalId.cend(); ++itEntry)
                 {
                     auto road = itEntry.value();
 
@@ -645,7 +645,7 @@ void OsmAnd::ObfRoutingSectionReader_P::loadSubsectionBorderBoxLinesPoints(
     cis->PopLimit(oldLimit);
 
     qSort(pointsOffsets);
-    for(auto itOffset = pointsOffsets.begin(); itOffset != pointsOffsets.end(); ++itOffset)
+    for(auto itOffset = pointsOffsets.cbegin(); itOffset != pointsOffsets.cend(); ++itOffset)
     {
         cis->Seek(*itOffset);
         gpb::uint32 length;

@@ -26,7 +26,7 @@ int OsmAnd::Model::MapObject::getSimpleLayerValue() const
 {
     auto isTunnel = false;
     auto isBridge = false;
-    for(auto itType = _extraTypes.begin(); itType != _extraTypes.end(); ++itType)
+    for(auto itType = _extraTypes.cbegin(); itType != _extraTypes.cend(); ++itType)
     {
         const auto& type = *itType;
 
@@ -63,7 +63,7 @@ bool OsmAnd::Model::MapObject::isClosedFigure(bool checkInner /*= false*/) const
 {
     if(checkInner)
     {
-        for(auto itPolygon = _innerPolygonsPoints31.begin(); itPolygon != _innerPolygonsPoints31.end(); ++itPolygon)
+        for(auto itPolygon = _innerPolygonsPoints31.cbegin(); itPolygon != _innerPolygonsPoints31.cend(); ++itPolygon)
         {
             const auto& polygon = *itPolygon;
 
@@ -82,7 +82,7 @@ bool OsmAnd::Model::MapObject::isClosedFigure(bool checkInner /*= false*/) const
 bool OsmAnd::Model::MapObject::containsType( const QString& tag, const QString& value, bool checkAdditional /*= false*/ ) const
 {
     const auto& types = (checkAdditional ? _extraTypes : _types);
-    for(auto itType = types.begin(); itType != types.end(); ++itType)
+    for(auto itType = types.cbegin(); itType != types.cend(); ++itType)
     {
         const auto& type = *itType;
         if(type.tag == tag && type.value == value)
@@ -94,7 +94,7 @@ bool OsmAnd::Model::MapObject::containsType( const QString& tag, const QString& 
 size_t OsmAnd::Model::MapObject::calculateApproxConsumedMemory() const
 {
     size_t res = sizeof(MapObject) + _points31.size() * sizeof(PointI);
-    for(auto itPolygon = _innerPolygonsPoints31.begin(); itPolygon != _innerPolygonsPoints31.end(); ++itPolygon)
+    for(auto itPolygon = _innerPolygonsPoints31.cbegin(); itPolygon != _innerPolygonsPoints31.cend(); ++itPolygon)
     {
         const auto& polygon = *itPolygon;
 

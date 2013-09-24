@@ -1,20 +1,23 @@
 #include "MapStyleRule.h"
+#include "MapStyleRule_P.h"
 
 #include <cassert>
 
 #include "MapStyle.h"
 #include "MapStyle_P.h"
 #include "MapStyleValueDefinition.h"
+#include "MapStyleValue.h"
 #include "Logging.h"
 #include "Utilities.h"
 
 OsmAnd::MapStyleRule::MapStyleRule(MapStyle* owner_, const QHash< QString, QString >& attributes)
-    : owner(owner_)
+    : _d(new MapStyleRule_P(this))
+    , owner(owner_)
 {
-    _valueDefinitionsRefs.reserve(attributes.size());
-    _values.reserve(attributes.size());
+    _d->_valueDefinitionsRefs.reserve(attributes.size());
+    _d->_values.reserve(attributes.size());
     
-    for(auto itAttribute = attributes.begin(); itAttribute != attributes.end(); ++itAttribute)
+    for(auto itAttribute = attributes.cbegin(); itAttribute != attributes.cend(); ++itAttribute)
     {
         const auto& key = itAttribute.key();
         const auto& value = itAttribute.value();
@@ -23,33 +26,79 @@ OsmAnd::MapStyleRule::MapStyleRule(MapStyle* owner_, const QHash< QString, QStri
         bool ok = owner->resolveValueDefinition(key, valueDef);
         assert(ok);
 
-        _valueDefinitionsRefs.push_back(valueDef);
+        _d->_valueDefinitionsRefs.push_back(valueDef);
         MapStyleValue parsedValue;
         switch (valueDef->dataType)
         {
         case MapStyleValueDataType::Boolean:
-            parsedValue.asInt = (value == "true") ? 1 : 0;
+            parsedValue.asSimple.asInt = (value == QLatin1String("true")) ? 1 : 0;
             break;
         case MapStyleValueDataType::Integer:
-            parsedValue.asInt = Utilities::parseArbitraryInt(value, -1);
+            {
+                if(valueDef->isComplex)
+                {
+                    parsedValue.isComplex = true;
+                    if(!value.contains(':'))
+                    {
+                        parsedValue.asComplex.asInt.dip = Utilities::parseArbitraryInt(value, -1);
+                        parsedValue.asComplex.asInt.px = 0.0;
+                    }
+                    else
+                    {
+                        // 'dip:px' format
+                        const auto& complexValue = value.split(':', QString::KeepEmptyParts);
+
+                        parsedValue.asComplex.asInt.dip = Utilities::parseArbitraryInt(complexValue[0], 0);
+                        parsedValue.asComplex.asInt.px = Utilities::parseArbitraryInt(complexValue[1], 0);
+                    }
+                }
+                else
+                {
+                    assert(!value.contains(':'));
+                    parsedValue.asSimple.asInt = Utilities::parseArbitraryInt(value, -1);
+                }
+            }
             break;
         case MapStyleValueDataType::Float:
-            parsedValue.asFloat = Utilities::parseArbitraryFloat(value, -1.0f);
+            {
+                if(valueDef->isComplex)
+                {
+                    parsedValue.isComplex = true;
+                    if(!value.contains(':'))
+                    {
+                        parsedValue.asComplex.asFloat.dip = Utilities::parseArbitraryFloat(value, -1.0f);
+                        parsedValue.asComplex.asFloat.px = 0.0f;
+                    }
+                    else
+                    {
+                        // 'dip:px' format
+                        const auto& complexValue = value.split(':', QString::KeepEmptyParts);
+
+                        parsedValue.asComplex.asFloat.dip = Utilities::parseArbitraryFloat(complexValue[0], 0);
+                        parsedValue.asComplex.asFloat.px = Utilities::parseArbitraryFloat(complexValue[1], 0);
+                    }
+                }
+                else
+                {
+                    assert(!value.contains(':'));
+                    parsedValue.asSimple.asFloat = Utilities::parseArbitraryFloat(value, -1.0f);
+                }
+            }
             break;
         case MapStyleValueDataType::String:
-            parsedValue.asUInt = owner->_d->lookupStringId(value);
+            parsedValue.asSimple.asUInt = owner->_d->lookupStringId(value);
             break;
         case MapStyleValueDataType::Color:
             {
                 assert(value[0] == '#');
-                parsedValue.asUInt = value.mid(1).toUInt(nullptr, 16);
+                parsedValue.asSimple.asUInt = value.mid(1).toUInt(nullptr, 16);
                 if(value.size() <= 7)
-                    parsedValue.asUInt |= 0xFF000000;
+                    parsedValue.asSimple.asUInt |= 0xFF000000;
             }
             break;
         }
         
-        _values.insert(key, parsedValue);
+        _d->_values.insert(key, parsedValue);
     }
 }
 
@@ -57,32 +106,71 @@ OsmAnd::MapStyleRule::~MapStyleRule()
 {
 }
 
+bool OsmAnd::MapStyleRule::getAttribute( const QString& key, MapStyleValue& value ) const
+{
+    auto itValue = _d->_values.find(key);
+    if(itValue == _d->_values.cend())
+        return false;
+
+    value = *itValue;
+    return true;
+}
+
 void OsmAnd::MapStyleRule::dump( const QString& prefix /*= QString()*/ ) const
 {
     auto newPrefix = prefix + "\t";
     
-    for(auto itValueDef = _valueDefinitionsRefs.begin(); itValueDef != _valueDefinitionsRefs.end(); ++itValueDef)
+    for(auto itValueDef = _d->_valueDefinitionsRefs.cbegin(); itValueDef != _d->_valueDefinitionsRefs.cend(); ++itValueDef)
     {
         auto valueDef = *itValueDef;
+
+        MapStyleValue value;
+        if(!getAttribute(valueDef->name, value))
+        {
+            switch (valueDef->dataType)
+            {
+            case MapStyleValueDataType::Boolean:
+                value.asSimple.asInt = 0;
+                break;
+            case MapStyleValueDataType::Integer:
+                value.asSimple.asInt = -1;
+                break;
+            case MapStyleValueDataType::Float:
+                value.asSimple.asFloat = -1.0f;
+                break;
+            case MapStyleValueDataType::String:
+                value.asSimple.asUInt = std::numeric_limits<unsigned int>::max();
+                break;
+            case MapStyleValueDataType::Color:
+                value.asSimple.asUInt = 0;
+                break;
+            }
+        }
 
         QString strValue;
         switch (valueDef->dataType)
         {
         case MapStyleValueDataType::Boolean:
-            strValue = (getIntegerAttribute(valueDef->name) == 1) ? "true" : "false";
+            strValue = (value.asSimple.asInt == 1) ? "true" : "false";
             break;
         case MapStyleValueDataType::Integer:
-            strValue = QString("%1").arg(getIntegerAttribute(valueDef->name));
+            if(value.isComplex)
+                strValue = QString("%1:%2").arg(value.asComplex.asInt.dip).arg(value.asComplex.asInt.px);
+            else
+                strValue = QString("%1").arg(value.asSimple.asInt);
             break;
         case MapStyleValueDataType::Float:
-            strValue = QString("%1").arg(getFloatAttribute(valueDef->name));
+            if(value.isComplex)
+                strValue = QString("%1:%2").arg(value.asComplex.asFloat.dip).arg(value.asComplex.asFloat.px);
+            else
+                strValue = QString("%1").arg(value.asSimple.asFloat);
             break;
         case MapStyleValueDataType::String:
-            strValue = getStringAttribute(valueDef->name);
+            strValue = owner->_d->lookupStringValue(value.asSimple.asUInt);
             break;
         case MapStyleValueDataType::Color:
             {
-                auto color = getIntegerAttribute(valueDef->name);
+                auto color = value.asSimple.asUInt;
                 if((color & 0xFF000000) == 0xFF000000)
                     strValue = '#' + QString::number(color, 16).right(6);
                 else
@@ -98,11 +186,11 @@ void OsmAnd::MapStyleRule::dump( const QString& prefix /*= QString()*/ ) const
             strValue.toStdString().c_str());
     }
 
-    if(!_ifChildren.isEmpty())
+    if(!_d->_ifChildren.empty())
     {
         OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sIf(",
             newPrefix.toStdString().c_str());
-        for(auto itChild = _ifChildren.begin(); itChild != _ifChildren.end(); ++itChild)
+        for(auto itChild = _d->_ifChildren.cbegin(); itChild != _d->_ifChildren.cend(); ++itChild)
         {
             auto child = *itChild;
 
@@ -114,11 +202,11 @@ void OsmAnd::MapStyleRule::dump( const QString& prefix /*= QString()*/ ) const
             newPrefix.toStdString().c_str());
     }
 
-    if(!_ifElseChildren.isEmpty())
+    if(!_d->_ifElseChildren.empty())
     {
         OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sSelector: [",
             newPrefix.toStdString().c_str());
-        for(auto itChild = _ifElseChildren.begin(); itChild != _ifElseChildren.end(); ++itChild)
+        for(auto itChild = _d->_ifElseChildren.cbegin(); itChild != _d->_ifElseChildren.cend(); ++itChild)
         {
             auto child = *itChild;
 
@@ -129,51 +217,4 @@ void OsmAnd::MapStyleRule::dump( const QString& prefix /*= QString()*/ ) const
         OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s]",
             newPrefix.toStdString().c_str());
     }
-}
-
-const QString& OsmAnd::MapStyleRule::getStringAttribute( const QString& key, bool* ok /*= nullptr*/ ) const
-{
-    auto itValue = _values.find(key);
-    if(itValue == _values.end())
-    {
-        if(ok)
-            *ok = false;
-
-        static QString stub;
-        return stub;
-    }
-
-    if(ok)
-        *ok = true;
-    return owner->_d->lookupStringValue(itValue->asUInt);
-}
-
-int OsmAnd::MapStyleRule::getIntegerAttribute( const QString& key, bool* ok /*= nullptr*/ ) const
-{
-    auto itValue = _values.find(key);
-    if(itValue == _values.end())
-    {
-        if(ok)
-            *ok = false;
-        return -1;
-    }
-
-    if(ok)
-        *ok = true;
-    return itValue->asInt;
-}
-
-float OsmAnd::MapStyleRule::getFloatAttribute( const QString& key, bool* ok /*= nullptr*/ ) const
-{
-    auto itValue = _values.find(key);
-    if(itValue == _values.end())
-    {
-        if(ok)
-            *ok = false;
-        return -1;
-    }
-
-    if(ok)
-        *ok = true;
-    return itValue->asFloat;
 }

@@ -40,13 +40,6 @@ namespace OsmAnd {
     class MapStyleValueDefinition;
     class MapStyleRule;
 
-    union MapStyleValue
-    {
-        float asFloat;
-        int32_t asInt;
-        uint32_t asUInt;
-    };
-
     STRONG_ENUM_EX(MapStyleRulesetType, uint32_t)
     {
         Invalid = 0,

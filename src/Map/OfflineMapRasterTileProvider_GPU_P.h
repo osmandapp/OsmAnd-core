@@ -19,8 +19,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __OFFLINE_MAP_RASTER_TILE_PROVIDER_P_H_
-#define __OFFLINE_MAP_RASTER_TILE_PROVIDER_P_H_
+#ifndef __OFFLINE_MAP_RASTER_TILE_PROVIDER_GPU_P_H_
+#define __OFFLINE_MAP_RASTER_TILE_PROVIDER_GPU_P_H_
 
 #include <cstdint>
 #include <memory>
@@ -35,12 +35,12 @@
 
 namespace OsmAnd {
 
-    class OfflineMapRasterTileProvider;
-    class OfflineMapRasterTileProvider_P
+    class OfflineMapRasterTileProvider_GPU;
+    class OfflineMapRasterTileProvider_GPU_P
     {
     private:
     protected:
-        OfflineMapRasterTileProvider_P(OfflineMapRasterTileProvider* owner);
+        OfflineMapRasterTileProvider_GPU_P(OfflineMapRasterTileProvider_GPU* owner);
 
         STRONG_ENUM(TileState)
         {
@@ -55,18 +55,18 @@ namespace OsmAnd {
         };
         typedef TilesCollectionEntryWithState<TileState, TileState::Unknown> TileEntry;
 
-        OfflineMapRasterTileProvider* const owner; 
+        OfflineMapRasterTileProvider_GPU* const owner;
 
         const Concurrent::TaskHost::Bridge _taskHostBridge;
         TilesCollection<TileEntry> _tiles;
 
         bool obtainTile(const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<MapTile>& outTile);
     public:
-        virtual ~OfflineMapRasterTileProvider_P();
+        virtual ~OfflineMapRasterTileProvider_GPU_P();
 
-    friend class OsmAnd::OfflineMapRasterTileProvider;
+    friend class OsmAnd::OfflineMapRasterTileProvider_GPU;
     };
 
 }
 
-#endif // __OFFLINE_MAP_RASTER_TILE_PROVIDER_P_H_
+#endif // __OFFLINE_MAP_RASTER_TILE_PROVIDER_GPU_P_H_

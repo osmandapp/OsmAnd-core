@@ -20,40 +20,45 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __OBF_FILE_H_
-#define __OBF_FILE_H_
+#ifndef __MAP_STYLE_RULE_P_H_
+#define __MAP_STYLE_RULE_P_H_
 
 #include <cstdint>
 #include <memory>
 
 #include <QString>
-#include <QFileInfo>
+#include <QHash>
+#include <QList>
 
 #include <OsmAndCore.h>
+#include <MapStyleValue.h>
 
 namespace OsmAnd {
 
-    class ObfInfo;
-    class ObfReader;
+    class MapStyle_P;
+    class MapStyleEvaluator;
 
-    class ObfFile_P;
-    class OSMAND_CORE_API ObfFile
+    class MapStyleRule;
+    class MapStyleRule_P
     {
-        Q_DISABLE_COPY(ObfFile)
     private:
-        const std::unique_ptr<ObfFile_P> _d;
     protected:
+        MapStyleRule_P(MapStyleRule* owner);
+
+        MapStyleRule* const owner;
+
+        QList< std::shared_ptr<const MapStyleValueDefinition> > _valueDefinitionsRefs;
+        QHash< QString, MapStyleValue > _values;
+        QList< std::shared_ptr<MapStyleRule> > _ifElseChildren;
+        QList< std::shared_ptr<MapStyleRule> > _ifChildren;
     public:
-        ObfFile(const QString& filePath);
-        virtual ~ObfFile();
+        virtual ~MapStyleRule_P();
 
-        const QString filePath;
-
-        const std::shared_ptr<ObfInfo>& obfInfo;
-
-    friend class OsmAnd::ObfReader;
+    friend class OsmAnd::MapStyleRule;
+    friend class OsmAnd::MapStyle_P;
+    friend class OsmAnd::MapStyleEvaluator;
     };
 
 } // namespace OsmAnd
 
-#endif // __OBF_FILE_H_
+#endif // __MAP_STYLE_RULE_P_H_

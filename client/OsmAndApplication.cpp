@@ -47,8 +47,8 @@ std::shared_ptr<OsmAndApplication> OsmAndApplication::getAndInitializeApplicatio
 }
 
 const QString& OsmAndApplication::getRunningFamily() {
-    auto a = this->threadPoolsFamily.begin();
-    while(a != this->threadPoolsFamily.end()) {
+    auto a = this->threadPoolsFamily.cbegin();
+    while(a != this->threadPoolsFamily.cend()) {
         if((*a)->activeThreadCount() > 0 && running[a.key()].size() > 0) {
             return a.key();
         }

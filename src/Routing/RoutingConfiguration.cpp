@@ -130,7 +130,7 @@ void OsmAnd::RoutingConfiguration::parseRoutingParameter( QXmlStreamReader* xmlP
         auto valueDescriptions = attribs.value("valueDescriptions");
         const auto& stringifiedValues = combinedValues.toString().split(',');
         QList<double> values;
-        for(auto itValue = stringifiedValues.begin(); itValue != stringifiedValues.end(); ++itValue)
+        for(auto itValue = stringifiedValues.cbegin(); itValue != stringifiedValues.cend(); ++itValue)
         {
             bool ok;
             auto value = itValue->trimmed().toDouble(&ok);
@@ -165,7 +165,7 @@ void OsmAnd::RoutingConfiguration::parseRoutingProfile( QXmlStreamReader* xmlPar
 {
     const auto& attribs = xmlParser->attributes();
     routingProfile->_name = attribs.value("name").toString();
-    for (auto itAttrib = attribs.begin(); itAttrib != attribs.end(); ++itAttrib)
+    for (auto itAttrib = attribs.cbegin(); itAttrib != attribs.cend(); ++itAttrib)
     {
         const auto& attrib = *itAttrib;
         auto name = attrib.name();
@@ -214,7 +214,7 @@ void OsmAnd::RoutingConfiguration::parseRoutingRuleset( QXmlStreamReader* xmlPar
         context->registerSelectExpression(attribs.value("value").toString(), routingRule->_type);
         addRulesetSubclause(routingRule.get(), context.get());
 
-        for(auto itItem = ruleset.begin(); itItem != ruleset.end(); ++itItem)
+        for(auto itItem = ruleset.cbegin(); itItem != ruleset.cend(); ++itItem)
             addRulesetSubclause((*itItem).get(), context.get());
     }
     else if (!ruleset.isEmpty() && ruleset.top()->_tagName == "select")
@@ -253,15 +253,15 @@ bool OsmAnd::RoutingConfiguration::isConditionTag( const QStringRef& tagName )
 QString OsmAnd::RoutingConfiguration::resolveAttribute( const QString& vehicle, const QString& name )
 {
     auto itProfile = _routingProfiles.find(vehicle);
-    if(itProfile != _routingProfiles.end())
+    if(itProfile != _routingProfiles.cend())
     {
         auto itProfileAttribute = (*itProfile)->_attributes.find(name);
-        if(itProfileAttribute != (*itProfile)->_attributes.end())
+        if(itProfileAttribute != (*itProfile)->_attributes.cend())
             return (*itProfileAttribute);
     }
 
     auto itAttribute = _attributes.find(name);
-    if(itAttribute != _attributes.end())
+    if(itAttribute != _attributes.cend())
         return *itAttribute;
     return QString();
 }

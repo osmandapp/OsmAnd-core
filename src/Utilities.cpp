@@ -132,7 +132,7 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::Utilities::extractFirstNumberPosit
     first = -1;
     last = -1;
     int curPos = 0;
-    for(auto itChr = value.begin(); itChr != value.end() && (first == -1 || last == -1); ++itChr, curPos++)
+    for(auto itChr = value.cbegin(); itChr != value.cend() && (first == -1 || last == -1); ++itChr, curPos++)
     {
         auto chr = *itChr;
         if(first == -1 && chr.isDigit())
@@ -429,7 +429,7 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::findFiles( const QDir& 
     if(recursively)
     {
         const auto& subdirs = origin.entryInfoList(QStringList(), QDir::AllDirs | QDir::NoDotAndDotDot);
-        for(auto itSubdir = subdirs.begin(); itSubdir != subdirs.end(); ++itSubdir)
+        for(auto itSubdir = subdirs.cbegin(); itSubdir != subdirs.cend(); ++itSubdir)
             findFiles(QDir(itSubdir->absoluteFilePath()), masks, files, recursively);
     }
 }
@@ -440,9 +440,9 @@ OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::polygonArea( const QV
 
     assert(points.first() == points.last());
 
-    auto itPrevPoint = points.begin();
+    auto itPrevPoint = points.cbegin();
     auto itPoint = itPrevPoint + 1;
-    for(; itPoint != points.end(); itPrevPoint = itPoint, ++itPoint)
+    for(; itPoint != points.cend(); itPrevPoint = itPoint, ++itPoint)
     {
         const auto& p0 = *itPrevPoint;
         const auto& p1 = *itPoint;
@@ -769,7 +769,7 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
 
         // Find active edges
         int nextRow = rowMax;
-        for(auto itEdge = edges.begin(); itEdge != edges.end(); ++itEdge)
+        for(auto itEdge = edges.cbegin(); itEdge != edges.cend(); ++itEdge)
         {
             auto edge = *itEdge;
 
@@ -811,7 +811,7 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
         {
             const unsigned int pairsCount = aet.size() / 2;
 
-            auto itEdgeL = aet.begin();
+            auto itEdgeL = aet.cbegin();
             auto itEdgeR = itEdgeL + 1;
 
             for(auto pairIdx = 0u; pairIdx < pairsCount; pairIdx++, itEdgeL = ++itEdgeR, ++itEdgeR)
@@ -878,6 +878,6 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
     }
 
     // Cleanup
-    for(auto itEdge = edges.begin(); itEdge != edges.end(); ++itEdge)
+    for(auto itEdge = edges.cbegin(); itEdge != edges.cend(); ++itEdge)
         delete *itEdge;
 }

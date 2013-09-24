@@ -57,7 +57,7 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection::obtainDataInte
     }
 
     QList< std::shared_ptr<ObfReader> > obfReaders;
-    for(auto itSource = _d->_sources.begin(); itSource != _d->_sources.end(); ++itSource)
+    for(auto itSource = _d->_sources.cbegin(); itSource != _d->_sources.cend(); ++itSource)
     {
         const auto& obfFile = itSource.value();
 

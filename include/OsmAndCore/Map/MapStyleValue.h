@@ -20,8 +20,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __MAP_STYLE_RULE_H_
-#define __MAP_STYLE_RULE_H_
+#ifndef __MAP_STYLE_VALUE_H_
+#define __MAP_STYLE_VALUE_H_
 
 #include <cstdint>
 #include <memory>
@@ -29,38 +29,53 @@
 #include <QString>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Map/MapStyleBuiltinValueDefinitions.h>
 
 namespace OsmAnd {
 
-    class MapStyle;
-    class MapStyle_P;
+    class MapStyles;
+    class MapStyles_P;
     class MapStyleEvaluator;
+
     class MapStyleValueDefinition;
-    struct MapStyleValue;
+    class MapStyleRule;
 
-    class MapStyleRule_P;
-    class OSMAND_CORE_API MapStyleRule
+    struct OSMAND_CORE_API MapStyleValue
     {
-        Q_DISABLE_COPY(MapStyleRule);
-    private:
-        const std::unique_ptr<MapStyleRule_P> _d;
-    protected:
-        MapStyleRule(MapStyle* owner, const QHash< QString, QString >& attributes);
+        MapStyleValue();
 
-        bool getAttribute(const QString& key, MapStyleValue& value) const;
-    public:
-        virtual ~MapStyleRule();
+        bool isComplex;
 
-        MapStyle* const owner;
+        template<typename T> struct ComplexData
+        {
+            T dip;
+            T px;
 
-        void dump(const QString& prefix = QString()) const;
+            T evaluate(const float& densityFactor) const
+            {
+                return dip*densityFactor + px;
+            }
+        };
 
-    friend class OsmAnd::MapStyle;
-    friend class OsmAnd::MapStyle_P;
-    friend class OsmAnd::MapStyleEvaluator;
+        union {
+            union {
+                float asFloat;
+                int32_t asInt;
+                uint32_t asUInt;
+
+                double asDouble;
+                int64_t asInt64;
+                uint64_t asUInt64;
+            } asSimple;
+
+            union {
+                ComplexData<float> asFloat;
+                ComplexData<int32_t> asInt;
+                ComplexData<uint32_t> asUInt;
+            } asComplex;
+        };
     };
 
 } // namespace OsmAnd
 
-#endif // __MAP_STYLE_RULE_H_
+#endif // __MAP_STYLE_VALUE_H_

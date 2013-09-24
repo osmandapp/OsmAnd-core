@@ -17,7 +17,7 @@ OsmAnd::ObfDataInterface::~ObfDataInterface()
 
 void OsmAnd::ObfDataInterface::obtainObfFiles( QList< std::shared_ptr<const ObfFile> >* outFiles /*= nullptr*/, IQueryController* controller /*= nullptr*/ )
 {
-    for(auto itObfReader = _d->readers.begin(); itObfReader != _d->readers.end(); ++itObfReader)
+    for(auto itObfReader = _d->readers.cbegin(); itObfReader != _d->readers.cend(); ++itObfReader)
     {
         if(controller && controller->isAborted())
             return;
@@ -35,7 +35,7 @@ void OsmAnd::ObfDataInterface::obtainObfFiles( QList< std::shared_ptr<const ObfF
 void OsmAnd::ObfDataInterface::obtainBasemapPresenceFlag( bool& basemapPresent, IQueryController* controller /*= nullptr*/ )
 {
     basemapPresent = false;
-    for(auto itObfReader = _d->readers.begin(); itObfReader != _d->readers.end(); ++itObfReader)
+    for(auto itObfReader = _d->readers.cbegin(); itObfReader != _d->readers.cend(); ++itObfReader)
     {
         if(controller && controller->isAborted())
             return;
@@ -52,7 +52,7 @@ void OsmAnd::ObfDataInterface::obtainMapObjects( QList< std::shared_ptr<const Os
         *foundationOut = MapFoundationType::Undefined;
 
     // Iterate through all OBF readers
-    for(auto itObfReader = _d->readers.begin(); itObfReader != _d->readers.end(); ++itObfReader)
+    for(auto itObfReader = _d->readers.cbegin(); itObfReader != _d->readers.cend(); ++itObfReader)
     {
         // Check if request is aborted
         if(controller && controller->isAborted())
@@ -61,7 +61,7 @@ void OsmAnd::ObfDataInterface::obtainMapObjects( QList< std::shared_ptr<const Os
         // Iterate over all map sections of each OBF reader
         const auto& obfReader = *itObfReader;
         const auto& obfInfo = obfReader->obtainInfo();
-        for(auto itMapSection = obfInfo->mapSections.begin(); itMapSection != obfInfo->mapSections.end(); ++itMapSection)
+        for(auto itMapSection = obfInfo->mapSections.cbegin(); itMapSection != obfInfo->mapSections.cend(); ++itMapSection)
         {
             // Check if request is aborted
             if(controller && controller->isAborted())

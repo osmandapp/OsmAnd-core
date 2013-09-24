@@ -28,12 +28,12 @@ OsmAnd::RoutePlannerContext::RoutePlannerContext(
     _planRoadDirection = Utilities::parseArbitraryInt(configuration->resolveAttribute(vehicle, "planRoadDirection"), 0);
     _roadTilesLoadingZoomLevel = Utilities::parseArbitraryUInt(configuration->resolveAttribute(vehicle, "zoomToLoadTiles"), DefaultRoadTilesLoadingZoomLevel);
 
-    for(auto itSource = sources.begin(); itSource != sources.end(); ++itSource)
+    for(auto itSource = sources.cbegin(); itSource != sources.cend(); ++itSource)
     {
         const auto& source = *itSource;
 
         const auto& obfInfo = source->obtainInfo();
-        for(auto itRoutingSection = obfInfo->routingSections.begin(); itRoutingSection != obfInfo->routingSections.end(); ++itRoutingSection)
+        for(auto itRoutingSection = obfInfo->routingSections.cbegin(); itRoutingSection != obfInfo->routingSections.cend(); ++itRoutingSection)
             _sourcesLUT.insert((*itRoutingSection).get(), source);
     }
 }
@@ -126,7 +126,7 @@ void OsmAnd::RoutePlannerContext::unloadUnusedTiles(size_t memoryTarget) {
 void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::registerRoad( const std::shared_ptr<const Model::Road>& road )
 {
     uint32_t idx = 0;
-    for(auto itPoint = road->points.begin(); itPoint != road->points.end(); ++itPoint, idx++)
+    for(auto itPoint = road->points.cbegin(); itPoint != road->points.cend(); ++itPoint, idx++)
     {
         const auto& x31 = itPoint->x;
         const auto& y31 = itPoint->y;
@@ -134,7 +134,7 @@ void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::registerRoad( const 
         
         std::shared_ptr<RouteCalculationSegment> routeSegment(new RouteCalculationSegment(road, idx));
         auto itRouteSegment = _roadSegments.find(id);
-        if(itRouteSegment == _roadSegments.end())
+        if(itRouteSegment == _roadSegments.cend())
             _roadSegments.insert(id, routeSegment);
         else
         {
@@ -158,7 +158,7 @@ uint32_t OsmAnd::RoutePlannerContext::RoutingSubsectionContext::getLoadsCounter(
 
 void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::collectRoads( QList< std::shared_ptr<const Model::Road> >& output, QMap<uint64_t, std::shared_ptr<const Model::Road> >* duplicatesRegistry /*= nullptr*/ )
 {
-    for(auto itRouteSegment = _roadSegments.begin(); itRouteSegment != _roadSegments.end(); ++itRouteSegment)
+    for(auto itRouteSegment = _roadSegments.cbegin(); itRouteSegment != _roadSegments.cend(); ++itRouteSegment)
     {
         auto routeSegment = itRouteSegment.value();
         while(routeSegment)
@@ -212,7 +212,7 @@ std::shared_ptr<OsmAnd::RoutePlannerContext::RouteCalculationSegment> OsmAnd::Ro
 {
     uint64_t id = (static_cast<uint64_t>(x31) << 31) | y31;
     auto itSegment = _roadSegments.find(id);
-    if(itSegment == _roadSegments.end())
+    if(itSegment == _roadSegments.cend())
         return original_;
     this->_access++;
 
@@ -223,7 +223,7 @@ std::shared_ptr<OsmAnd::RoutePlannerContext::RouteCalculationSegment> OsmAnd::Ro
         auto road = segment->road;
         auto roadPointId = RoutePlanner::encodeRoutePointId(road, segment->pointIndex);
         auto itOtherRoad = processed.find(roadPointId);
-        if(itOtherRoad == processed.end() || (*itOtherRoad)->points.size() < road->points.size())
+        if(itOtherRoad == processed.cend() || (*itOtherRoad)->points.size() < road->points.size())
         {
             processed.insert(roadPointId, road);
 

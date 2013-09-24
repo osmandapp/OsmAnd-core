@@ -39,7 +39,7 @@ OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::EyePiece::parseCommand
 {
     bool wasObfRootSpecified = false;
     
-    for(auto itArg = cmdLineArgs.begin(); itArg != cmdLineArgs.end(); ++itArg)
+    for(auto itArg = cmdLineArgs.cbegin(); itArg != cmdLineArgs.cend(); ++itArg)
     {
         auto arg = *itArg;
         if (arg == "-verbose")
@@ -168,7 +168,7 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
 {
     // Obtain and configure rasterization style context
     OsmAnd::MapStyles stylesCollection;
-    for(auto itStyleFile = cfg.styleFiles.begin(); itStyleFile != cfg.styleFiles.end(); ++itStyleFile)
+    for(auto itStyleFile = cfg.styleFiles.cbegin(); itStyleFile != cfg.styleFiles.cend(); ++itStyleFile)
     {
         const auto& styleFile = *itStyleFile;
 

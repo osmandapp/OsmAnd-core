@@ -336,7 +336,7 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
 
     // Get set of tiles that are unique: visible tiles may contain same tiles, but wrapped
     _uniqueTiles.clear();
-    for(auto itTileId = _visibleTiles.begin(); itTileId != _visibleTiles.end(); ++itTileId)
+    for(auto itTileId = _visibleTiles.cbegin(); itTileId != _visibleTiles.cend(); ++itTileId)
     {
         const auto& tileId = *itTileId;
         _uniqueTiles.insert(Utilities::normalizeTileId(tileId, _currentState.zoomBase));
@@ -519,7 +519,7 @@ bool OsmAnd::MapRenderer::postReleaseRendering()
     }
 
     // Release all tiled resources
-    for(auto itResourcesCollection = _tiledResources.begin(); itResourcesCollection != _tiledResources.end(); ++itResourcesCollection)
+    for(auto itResourcesCollection = _tiledResources.cbegin(); itResourcesCollection != _tiledResources.cend(); ++itResourcesCollection)
         releaseTiledResources(*itResourcesCollection);
 
     // Release all embedded resources
@@ -633,7 +633,7 @@ std::shared_ptr<OsmAnd::IMapTileProvider> OsmAnd::MapRenderer::getTileProviderFo
 void OsmAnd::MapRenderer::cleanUpTiledResourcesCache()
 {
     // Use aggressive cache cleaning: remove all tiles that are not needed
-    for(auto itTiledResources = _tiledResources.begin(); itTiledResources != _tiledResources.end(); ++itTiledResources)
+    for(auto itTiledResources = _tiledResources.cbegin(); itTiledResources != _tiledResources.cend(); ++itTiledResources)
     {
         const auto& tiledResources = *itTiledResources;
         const auto providerAvailable = static_cast<bool>(getTileProviderFor(tiledResources->type));
@@ -676,11 +676,11 @@ void OsmAnd::MapRenderer::requestMissingTiledResources()
 {
     // Request all missing tiles
     const auto requestedZoom = _currentState.zoomBase;
-    for(auto itTileId = _uniqueTiles.begin(); itTileId != _uniqueTiles.end(); ++itTileId)
+    for(auto itTileId = _uniqueTiles.cbegin(); itTileId != _uniqueTiles.cend(); ++itTileId)
     {
         const auto& tileId = *itTileId;
 
-        for(auto itTiledResources = _tiledResources.begin(); itTiledResources != _tiledResources.end(); ++itTiledResources)
+        for(auto itTiledResources = _tiledResources.cbegin(); itTiledResources != _tiledResources.cend(); ++itTiledResources)
         {
             const auto& tiledResources = *itTiledResources;
             const auto resourceType = tiledResources->type;
@@ -851,7 +851,7 @@ void OsmAnd::MapRenderer::uploadTiledResources()
     const auto isOnRenderThread = (QThread::currentThreadId() == _renderThreadId);
     bool didUpload = false;
 
-    for(auto itTiledResources = _tiledResources.begin(); itTiledResources != _tiledResources.end(); ++itTiledResources)
+    for(auto itTiledResources = _tiledResources.cbegin(); itTiledResources != _tiledResources.cend(); ++itTiledResources)
     {
         const auto& tiledResources = *itTiledResources;
 
@@ -872,7 +872,7 @@ void OsmAnd::MapRenderer::uploadTiledResources()
         if(tileEntries.isEmpty())
             continue;
 
-        for(auto itTileEntry = tileEntries.begin(); itTileEntry != tileEntries.end(); ++itTileEntry)
+        for(auto itTileEntry = tileEntries.cbegin(); itTileEntry != tileEntries.cend(); ++itTileEntry)
         {
             const auto& tileEntry = *itTileEntry;
 

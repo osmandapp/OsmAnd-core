@@ -44,6 +44,7 @@ namespace OsmAnd {
 
         class OSMAND_CORE_API Pools
         {
+            Q_DISABLE_COPY(Pools);
         private:
         protected:
             Pools();
@@ -59,6 +60,7 @@ namespace OsmAnd {
 
         class OSMAND_CORE_API Task : public QRunnable
         {
+            Q_DISABLE_COPY(Task);
         public:
             typedef std::function<void (const Task*, bool& requestCancellation)> PreExecuteSignature;
             typedef std::function<void (const Task*, QEventLoop& eventLoop)> ExecuteSignature;
@@ -122,6 +124,7 @@ namespace OsmAnd {
 
         class OSMAND_CORE_API HostedTask : public Task
         {
+            Q_DISABLE_COPY(HostedTask);
         private:
         protected:
             std::shared_ptr<TaskHost> _host;

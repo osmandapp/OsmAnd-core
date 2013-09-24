@@ -1,5 +1,5 @@
-#include "OfflineMapRasterTileProvider_P.h"
-#include "OfflineMapRasterTileProvider.h"
+#include "OfflineMapRasterTileProvider_Software_P.h"
+#include "OfflineMapRasterTileProvider_Software.h"
 
 #include <cassert>
 #include <chrono>
@@ -20,17 +20,17 @@
 #include "Utilities.h"
 #include "Logging.h"
 
-OsmAnd::OfflineMapRasterTileProvider_P::OfflineMapRasterTileProvider_P( OfflineMapRasterTileProvider* owner_ )
+OsmAnd::OfflineMapRasterTileProvider_Software_P::OfflineMapRasterTileProvider_Software_P( OfflineMapRasterTileProvider_Software* owner_ )
     : owner(owner_)
     , _taskHostBridge(this)
 {
 }
 
-OsmAnd::OfflineMapRasterTileProvider_P::~OfflineMapRasterTileProvider_P()
+OsmAnd::OfflineMapRasterTileProvider_Software_P::~OfflineMapRasterTileProvider_Software_P()
 {
 }
 
-bool OsmAnd::OfflineMapRasterTileProvider_P::obtainTile(const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<MapTile>& outTile)
+bool OsmAnd::OfflineMapRasterTileProvider_Software_P::obtainTile(const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<MapTile>& outTile)
 {
     // Get bounding box that covers this tile
     const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
@@ -56,7 +56,6 @@ bool OsmAnd::OfflineMapRasterTileProvider_P::obtainTile(const TileId& tileId, co
     const auto dataRasterization_Begin = std::chrono::high_resolution_clock::now();
 #endif
 
-    //TODO: SkGpuDevice?
     // Allocate rasterization target
     auto rasterizationSurface = new SkBitmap();
     rasterizationSurface->setConfig(SkBitmap::kARGB_8888_Config, owner->tileSize, owner->tileSize);

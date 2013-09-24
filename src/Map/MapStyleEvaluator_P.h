@@ -20,40 +20,38 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __OBF_FILE_H_
-#define __OBF_FILE_H_
+#ifndef __MAP_STYLE_EVALUATOR_P_H_
+#define __MAP_STYLE_EVALUATOR_P_H_
 
 #include <cstdint>
 #include <memory>
 
-#include <QString>
-#include <QFileInfo>
+#include <QMap>
 
 #include <OsmAndCore.h>
+#include <MapStyle.h>
 
 namespace OsmAnd {
 
-    class ObfInfo;
-    class ObfReader;
-
-    class ObfFile_P;
-    class OSMAND_CORE_API ObfFile
+    class MapStyleValueDefinition;
+    struct MapStyleValue;
+    
+    class MapStyleEvaluator;
+    class MapStyleEvaluator_P
     {
-        Q_DISABLE_COPY(ObfFile)
     private:
-        const std::unique_ptr<ObfFile_P> _d;
     protected:
+        MapStyleEvaluator_P(MapStyleEvaluator* owner);
+
+        MapStyleEvaluator* const owner;
+
+        QMap< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > _values;
     public:
-        ObfFile(const QString& filePath);
-        virtual ~ObfFile();
+        ~MapStyleEvaluator_P();
 
-        const QString filePath;
-
-        const std::shared_ptr<ObfInfo>& obfInfo;
-
-    friend class OsmAnd::ObfReader;
+    friend class OsmAnd::MapStyleEvaluator;
     };
 
 } // namespace OsmAnd
 
-#endif // __OBF_FILE_H_
+#endif // __MAP_STYLE_EVALUATOR_P_H_

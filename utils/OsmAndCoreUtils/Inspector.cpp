@@ -108,7 +108,7 @@ OSMAND_CORE_UTILS_API QString OSMAND_CORE_UTILS_CALL OsmAnd::Inspector::dumpToSt
 
 OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::Inspector::parseCommandLineArguments( const QStringList& cmdLineArgs, Configuration& cfg, QString& error )
 {
-    for(auto itArg = cmdLineArgs.begin(); itArg != cmdLineArgs.end(); ++itArg)
+    for(auto itArg = cmdLineArgs.cbegin(); itArg != cmdLineArgs.cend(); ++itArg)
     {
         auto arg = *itArg;
         if(arg == "-vaddress")
@@ -179,13 +179,13 @@ void dump(std::ostream &output, const QString& filePath, const OsmAnd::Inspector
 
     output << xT("OBF '") << QStringToStlString(file->fileName()) << xT("' version = ") << obfInfo->version << std::endl;
     int idx = 1;
-    for(auto itSection = obfInfo->mapSections.begin(); itSection != obfInfo->mapSections.end(); ++itSection, idx++)
+    for(auto itSection = obfInfo->mapSections.cbegin(); itSection != obfInfo->mapSections.cend(); ++itSection, idx++)
     {
         const auto& section = *itSection;
 
         output << idx << xT(". Map data '") << QStringToStlString(section->name) << xT("' - ") << section->length << xT(" bytes") << std::endl;
         int levelIdx = 1;
-        for(auto itLevel = section->levels.begin(); itLevel != section->levels.end(); ++itLevel, levelIdx++)
+        for(auto itLevel = section->levels.cbegin(); itLevel != section->levels.cend(); ++itLevel, levelIdx++)
         {
             auto level = (*itLevel);
             output << xT("\t") << idx << xT(".") << levelIdx << xT(" Map level minZoom = ") << level->minZoom << xT(", maxZoom = ") << level->maxZoom << std::endl;
@@ -195,14 +195,14 @@ void dump(std::ostream &output, const QString& filePath, const OsmAnd::Inspector
         if(cfg.verboseMap)
             printMapDetailInfo(output, cfg, obfReader, section);
     }
-    for(auto itSection = obfInfo->transportSections.begin(); itSection != obfInfo->transportSections.end(); ++itSection, idx++)
+    for(auto itSection = obfInfo->transportSections.cbegin(); itSection != obfInfo->transportSections.cend(); ++itSection, idx++)
     {
         const auto& section = *itSection;
 
         output << idx << xT(". Transport data '") << QStringToStlString(section->name) << xT("' - ") << section->length << xT(" bytes") << std::endl;
         output << "\tBounds " << formatBounds(section->area24.left << (31 - 24), section->area24.right << (31 - 24), section->area24.top << (31 - 24), section->area24.bottom << (31 - 24)) << std::endl;
     }
-    for(auto itSection = obfInfo->routingSections.begin(); itSection != obfInfo->routingSections.end(); ++itSection, idx++)
+    for(auto itSection = obfInfo->routingSections.cbegin(); itSection != obfInfo->routingSections.cend(); ++itSection, idx++)
     {
         const auto& section = *itSection;
 
@@ -211,7 +211,7 @@ void dump(std::ostream &output, const QString& filePath, const OsmAnd::Inspector
         double lonRight = -180;
         double latTop = -90;
         double latBottom = 90;
-        for(auto itSubsection = section->subsections.begin(); itSubsection != section->subsections.end(); ++itSubsection)
+        for(auto itSubsection = section->subsections.cbegin(); itSubsection != section->subsections.cend(); ++itSubsection)
         {
             auto subsection = itSubsection->get();
 
@@ -222,14 +222,14 @@ void dump(std::ostream &output, const QString& filePath, const OsmAnd::Inspector
         }
         output << xT("\tBounds ") << formatGeoBounds(lonLeft, lonRight, latTop, latBottom) << std::endl;
     }
-    for(auto itSection = obfInfo->poiSections.begin(); itSection != obfInfo->poiSections.end(); ++itSection, idx++)
+    for(auto itSection = obfInfo->poiSections.cbegin(); itSection != obfInfo->poiSections.cend(); ++itSection, idx++)
     {
         const auto& section = *itSection;
 
         output << idx << xT(". POI data '") << QStringToStlString(section->name) << xT("' - ") << section->length << xT(" bytes") << std::endl;
         printPOIDetailInfo(output, cfg, obfReader, section);
     }
-    for(auto itSection = obfInfo->addressSections.begin(); itSection != obfInfo->addressSections.end(); ++itSection, idx++)
+    for(auto itSection = obfInfo->addressSections.cbegin(); itSection != obfInfo->addressSections.cend(); ++itSection, idx++)
     {
         const auto& section = *itSection;
 
@@ -256,14 +256,14 @@ void printMapDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
         QList< std::shared_ptr<const OsmAnd::Model::MapObject> > mapObjects;
         OsmAnd::ObfMapSectionReader::loadMapObjects(reader, section, cfg.zoom, &bbox31, &mapObjects);
         output << xT("\tTotal map objects: ") << mapObjects.count() << std::endl;
-        for(auto itMapObject = mapObjects.begin(); itMapObject != mapObjects.end(); ++itMapObject)
+        for(auto itMapObject = mapObjects.cbegin(); itMapObject != mapObjects.cend(); ++itMapObject)
         {
             auto mapObject = *itMapObject;
             output << xT("\t\t") << mapObject->id << std::endl;
             if(mapObject->names.count() > 0)
             {
                 output << xT("\t\t\tNames:");
-                for(auto itName = mapObject->names.begin(); itName != mapObject->names.end(); ++itName)
+                for(auto itName = mapObject->names.cbegin(); itName != mapObject->names.cend(); ++itName)
                     output << QStringToStlString(itName.value()) << xT(", ");
                 output << std::endl;
             }
@@ -293,11 +293,11 @@ void printPOIDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
     QList< std::shared_ptr<const OsmAnd::Model::AmenityCategory> > categories;
     OsmAnd::ObfPoiSectionReader::loadCategories(reader, section, categories);
     output << xT("\tCategories:") << std::endl;
-    for(auto itCategory = categories.begin(); itCategory != categories.end(); ++itCategory)
+    for(auto itCategory = categories.cbegin(); itCategory != categories.cend(); ++itCategory)
     {
         auto category = *itCategory;
         output << xT("\t\t") << QStringToStlString(category->name) << std::endl;
-        for(auto itSubcategory = category->subcategories.begin(); itSubcategory != category->subcategories.end(); ++itSubcategory)
+        for(auto itSubcategory = category->subcategories.cbegin(); itSubcategory != category->subcategories.cend(); ++itSubcategory)
             output << xT("\t\t\t") << QStringToStlString(*itSubcategory) << std::endl;
     }
 
@@ -315,7 +315,7 @@ void printPOIDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
         return;
     }
     output << ":" << std::endl;;
-    for(auto itAmenity = amenities.begin(); itAmenity != amenities.end(); ++itAmenity)
+    for(auto itAmenity = amenities.cbegin(); itAmenity != amenities.cend(); ++itAmenity)
     {
         auto amenity = *itAmenity;
 
@@ -358,7 +358,7 @@ void printAddressDetailedInfo(std::ostream& output, const OsmAnd::Inspector::Con
             continue;
         }
         output << ":" << std::endl;
-        for(auto itStreetGroup = streetGroups.begin(); itStreetGroup != streetGroups.end(); itStreetGroup++)
+        for(auto itStreetGroup = streetGroups.cbegin(); itStreetGroup != streetGroups.cend(); itStreetGroup++)
         {
             auto g = *itStreetGroup;
 
@@ -371,7 +371,7 @@ void printAddressDetailedInfo(std::ostream& output, const OsmAnd::Inspector::Con
                 continue;
             }
             output << xT(":") << std::endl;
-            for(auto itStreet = streets.begin(); itStreet != streets.end(); ++itStreet)
+            for(auto itStreet = streets.cbegin(); itStreet != streets.cend(); ++itStreet)
             {
                 auto s = *itStreet;
                 //TODO: proper filter
@@ -391,7 +391,7 @@ void printAddressDetailedInfo(std::ostream& output, const OsmAnd::Inspector::Con
                 if(cfg.verboseBuildings && buildings.size() > 0)
                 {
                     output << xT("\t\t\t\tBuildings:") << std::endl;
-                    for(auto itBuilding = buildings.begin(); itBuilding != buildings.end(); ++itBuilding)
+                    for(auto itBuilding = buildings.cbegin(); itBuilding != buildings.cend(); ++itBuilding)
                     {
                         auto building = *itBuilding;
 
@@ -404,7 +404,7 @@ void printAddressDetailedInfo(std::ostream& output, const OsmAnd::Inspector::Con
                 if(cfg.verboseIntersections && intersections.size() > 0)
                 {
                     output << xT("\t\t\t\tIntersects with:") << std::endl;
-                    for(auto itIntersection = intersections.begin(); itIntersection != intersections.end(); ++itIntersection)
+                    for(auto itIntersection = intersections.cbegin(); itIntersection != intersections.cend(); ++itIntersection)
                     {
                         auto intersection = *itIntersection;
 

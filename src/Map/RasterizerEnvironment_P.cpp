@@ -9,6 +9,7 @@
 #include <SkStream.h>
 
 #include "MapStyleEvaluator.h"
+#include "MapStyleValue.h"
 #include "EmbeddedResources.h"
 #include "Utilities.h"
 #include "Logging.h"
@@ -39,7 +40,7 @@ OsmAnd::RasterizerEnvironment_P::~RasterizerEnvironment_P()
     {
         QMutexLocker scopedLock(&_bitmapShadersMutex);
 
-        for(auto itShaderEntry = _bitmapShaders.begin(); itShaderEntry != _bitmapShaders.end(); ++itShaderEntry)
+        for(auto itShaderEntry = _bitmapShaders.cbegin(); itShaderEntry != _bitmapShaders.cend(); ++itShaderEntry)
             (*itShaderEntry)->unref();
         _bitmapShaders.clear();
     }
@@ -171,7 +172,7 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
 
 void OsmAnd::RasterizerEnvironment_P::applyTo( MapStyleEvaluator& evaluator ) const
 {
-    for(auto itSetting = owner->settings.begin(); itSetting != owner->settings.end(); ++itSetting)
+    for(auto itSetting = owner->settings.cbegin(); itSetting != owner->settings.cend(); ++itSetting)
     {
         evaluator.setValue(itSetting.key(), *itSetting);
     }
@@ -183,7 +184,7 @@ bool OsmAnd::RasterizerEnvironment_P::obtainBitmapShader( const QString& name, S
     QMutexLocker scopedLock(&const_cast<RasterizerEnvironment_P*>(this)->_bitmapShadersMutex);
 
     auto itShader = _bitmapShaders.find(name);
-    if(itShader == _bitmapShaders.end())
+    if(itShader == _bitmapShaders.cend())
     {
         const auto shaderBitmapPath = QString::fromLatin1("map/shaders/%1.png").arg(name);
 

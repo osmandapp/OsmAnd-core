@@ -59,6 +59,4 @@ namespace OsmAnd {
 
 } // namespace OsmAnd
 
-
-
 #endif // __NETWORK_H_

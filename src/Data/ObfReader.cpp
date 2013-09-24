@@ -33,11 +33,11 @@ std::shared_ptr<OsmAnd::ObfInfo> OsmAnd::ObfReader::obtainInfo() const
     {
         if(obfFile)
         {
-            std::shared_ptr<QIODevice> input(new QFile(obfFile->fileInfo.absoluteFilePath()));
-            _d->_input = input;
+            auto input = new QFile(obfFile->filePath);
+            _d->_input.reset(input);
         }
 
-        gpb::io::CodedInputStream* cis = new gpb::io::CodedInputStream(new QZeroCopyInputStream(_d->_input));
+        auto cis = new gpb::io::CodedInputStream(new QZeroCopyInputStream(_d->_input));
         cis->SetTotalBytesLimit(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
         _d->_codedInputStream.reset(cis);
     }

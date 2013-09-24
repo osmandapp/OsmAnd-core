@@ -59,7 +59,7 @@ double OsmAnd::Model::Road::getDirectionDelta( uint32_t originIdx, bool forward 
 
 double OsmAnd::Model::Road::getDirectionDelta( uint32_t originIdx, bool forward, float distance ) const
 {
-    auto itPoint = (_points.begin() + originIdx);
+    auto itPoint = (_points.cbegin() + originIdx);
     const auto itOriginPoint = itPoint;
     float scannedDistance = 0.0;
     do
@@ -67,7 +67,7 @@ double OsmAnd::Model::Road::getDirectionDelta( uint32_t originIdx, bool forward,
         if(forward)
         {
             itPoint++;
-            if(itPoint == _points.end())
+            if(itPoint == _points.cend())
             {
                 itPoint--;
                 break;
@@ -75,7 +75,7 @@ double OsmAnd::Model::Road::getDirectionDelta( uint32_t originIdx, bool forward,
         }
         else
         {
-            if(itPoint == _points.begin())
+            if(itPoint == _points.cbegin())
                 break;
             itPoint--;
         }
@@ -91,7 +91,7 @@ double OsmAnd::Model::Road::getDirectionDelta( uint32_t originIdx, bool forward,
 
 OsmAnd::Model::RoadDirection OsmAnd::Model::Road::getDirection() const
 {
-    for(auto itType = types.begin(); itType != types.end(); ++itType)
+    for(auto itType = types.cbegin(); itType != types.cend(); ++itType)
     {
         const auto& rule = subsection->section->_d->_encodingRules[*itType];
 
@@ -106,7 +106,7 @@ OsmAnd::Model::RoadDirection OsmAnd::Model::Road::getDirection() const
 
 bool OsmAnd::Model::Road::isRoundabout() const
 {
-    for(auto itType = types.begin(); itType != types.end(); ++itType)
+    for(auto itType = types.cbegin(); itType != types.cend(); ++itType)
     {
         const auto& rule = subsection->section->_d->_encodingRules[*itType];
 
@@ -121,7 +121,7 @@ bool OsmAnd::Model::Road::isRoundabout() const
 
 int OsmAnd::Model::Road::getLanes() const
 {
-    for(auto itType = types.begin(); itType != types.end(); ++itType)
+    for(auto itType = types.cbegin(); itType != types.cend(); ++itType)
     {
         const auto& rule = subsection->section->_d->_encodingRules[*itType];
         if(rule->_type == ObfRoutingSectionInfo_P::EncodingRule::Lanes)
@@ -132,7 +132,7 @@ int OsmAnd::Model::Road::getLanes() const
 
 QString OsmAnd::Model::Road::getHighway() const
 {
-    for(auto itType = types.begin(); itType != types.end(); ++itType)
+    for(auto itType = types.cbegin(); itType != types.cend(); ++itType)
     {
         const auto& rule = subsection->section->_d->_encodingRules[*itType];
         if(rule->_type == ObfRoutingSectionInfo_P::EncodingRule::Highway)

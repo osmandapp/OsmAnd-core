@@ -33,7 +33,7 @@ OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::Voyager::parseCommandL
 {
     bool wasObfRootSpecified = false;
     bool wasRouterConfigSpecified = false;
-    for(auto itArg = cmdLineArgs.begin(); itArg != cmdLineArgs.end(); ++itArg)
+    for(auto itArg = cmdLineArgs.cbegin(); itArg != cmdLineArgs.cend(); ++itArg)
     {
         auto arg = *itArg;
         if (arg.startsWith("-config="))
@@ -176,7 +176,7 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
     }
 
     QList< std::shared_ptr<OsmAnd::ObfReader> > obfData;
-    for(auto itObf = cfg.obfs.begin(); itObf != cfg.obfs.end(); ++itObf)
+    for(auto itObf = cfg.obfs.cbegin(); itObf != cfg.obfs.cend(); ++itObf)
     {
         const auto& obf = *itObf;
         std::shared_ptr<OsmAnd::ObfReader> obfReader(new OsmAnd::ObfReader(std::shared_ptr<QIODevice>(new QFile(obf.absoluteFilePath()))));
@@ -227,7 +227,7 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
         }
         else
         {
-            for(auto itName = startRoad->names.begin(); itName != startRoad->names.end(); ++itName)
+            for(auto itName = startRoad->names.cbegin(); itName != startRoad->names.cend(); ++itName)
                 output << QStringToStlString(itName.value()) << xT("; ");
             output << xT(" (") << startRoad->id << xT(")");
             if(cfg.generateXml)
@@ -254,7 +254,7 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
         }
         else
         {
-            for(auto itName = endRoad->names.begin(); itName != endRoad->names.end(); ++itName)
+            for(auto itName = endRoad->names.cbegin(); itName != endRoad->names.cend(); ++itName)
                 output << QStringToStlString(itName.value()) << xT("; ");
             output << xT(" (") << endRoad->id << xT(")");
             if(cfg.generateXml)
@@ -266,7 +266,7 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
 
     QList< std::pair<double, double> > points;
     points.push_back(std::pair<double, double>(cfg.startLatitude, cfg.startLongitude));
-    for(auto itIntermediatePoint = cfg.waypoints.begin(); itIntermediatePoint != cfg.waypoints.end(); ++itIntermediatePoint)
+    for(auto itIntermediatePoint = cfg.waypoints.cbegin(); itIntermediatePoint != cfg.waypoints.cend(); ++itIntermediatePoint)
         points.push_back(*itIntermediatePoint);
     points.push_back(std::pair<double, double>(cfg.endLatitude, cfg.endLongitude));
 
@@ -331,7 +331,7 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
 
     float totalTime = 0.0f;
     float totalDistance = 0.0f;
-    for(auto itSegment = route.begin(); itSegment != route.end(); ++itSegment)
+    for(auto itSegment = route.cbegin(); itSegment != route.cend(); ++itSegment)
     {
         auto segment = *itSegment;
 
@@ -378,7 +378,7 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
         *(gpxStream.get()) << "\t<trk>\n";
         *(gpxStream.get()) << "\t\t<trkseg>\n";
     }
-    for(auto itSegment = route.begin(); itSegment != route.end(); ++itSegment)
+    for(auto itSegment = route.cbegin(); itSegment != route.cend(); ++itSegment)
     {
         auto segment = *itSegment;
 
@@ -393,7 +393,7 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
 
         QString name;
         if(!segment->road->names.isEmpty())
-            name += segment->road->names.begin().value();
+            name += segment->road->names.cbegin().value();
         /*String ref = res.getObject().getRef();
         if (ref != null) {
             name += " (" + ref + ") ";

@@ -26,7 +26,7 @@ void OsmAnd::ObfsCollection_P::refreshSources()
     {
         QMutexLocker scopedLock(&_watchedCollectionMutex);
 
-        for(auto itEntry = _watchedCollection.begin(); itEntry != _watchedCollection.end(); ++itEntry)
+        for(auto itEntry = _watchedCollection.cbegin(); itEntry != _watchedCollection.cend(); ++itEntry)
         {
             const auto& entry = *itEntry;
 
@@ -64,7 +64,7 @@ void OsmAnd::ObfsCollection_P::refreshSources()
     }
 
     // For each file, ...
-    for(auto itObfFileInfo = obfs.begin(); itObfFileInfo != obfs.end(); ++itObfFileInfo)
+    for(auto itObfFileInfo = obfs.cbegin(); itObfFileInfo != obfs.cend(); ++itObfFileInfo)
     {
         const auto& obfFileInfo = *itObfFileInfo;
 
@@ -72,7 +72,7 @@ void OsmAnd::ObfsCollection_P::refreshSources()
         auto itObfFileEntry = _sources.find(obfFilePath);
 
         // ... which is not yet present in registry, ...
-        if(itObfFileEntry == _sources.end())
+        if(itObfFileEntry == _sources.cend())
         {
             // ... create ObfFile
             auto obfFile = new ObfFile(obfFilePath);
