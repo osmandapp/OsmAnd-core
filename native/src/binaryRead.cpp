@@ -24,7 +24,7 @@ using google::protobuf::internal::WireFormatLite;
 //using namespace google::protobuf::internal;
 
 static int zoomForBaseRouteRendering  = 14;
-static int zoomOnlyForBasemaps  = 7;
+static int zoomOnlyForBasemaps  = 11;
 std::map< std::string, BinaryMapFile* > openFiles;
 OsmAndStoredIndex* cache = NULL;
 typedef UNORDERED(set)<long long> IDS_SET;
