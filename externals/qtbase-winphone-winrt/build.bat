@@ -3,27 +3,16 @@
 REM Prepare environment
 set PATH=%PATH%;%~dp0\tools.windows\bin
 set QTBASE_CONFIGURATION=^
-	-debug-and-release -opensource -confirm-license -c++11 -static -no-widgets -no-accessibility ^
+	-debug-and-release -opensource -confirm-license -static -no-widgets -no-accessibility ^
 	-qt-sql-sqlite -no-opengl -no-nis -no-iconv -no-inotify -largefile -no-fontconfig ^
 	-qt-zlib -qt-pcre -no-icu -no-gif -qt-libpng -no-libjpeg -no-freetype -no-angle -no-openssl ^
 	-no-dbus -no-audio-backend -no-qml-debug -no-directwrite -no-style-windows -no-style-windowsxp ^
 	-no-style-windowsvista -no-style-fusion -no-style-windowsce -no-style-windowsmobile ^
 	-nomake examples -nomake tools -no-vcproj -no-native-gestures
 
-REM Determine target architecture of environment
-for /f "tokens=9 delims= " %%l in ('cl 2^>^&1') do (
-	if "%%l"=="x86" (
-		set envArch=i686
-	)
-	if "%%l"=="x64" (
-		set envArch=amd64
-	)
-	if "%%l"=="ARM" (
-		set envArch=arm
-	)
-	goto envDetected
-)
-:envDetected:
+REM Initialize VisualC
+call "%VS110COMNTOOLS%\VCVarsQueryRegistry.bat"
+call "%VCINSTALLDIR%\vcvarsall.bat" x86
 	
 REM Build for WinPhone(arm and x86) and WinRT(arm, x86 and x64)
 set target=winphone
