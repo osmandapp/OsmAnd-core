@@ -154,9 +154,14 @@ void OsmAnd::Rasterizer_P::prepareContext(
     }
     
     // Obtain primitives
-    const bool emptyData = zoom > BasemapZoom && context._mapObjects.isEmpty() && context._coastlineObjects.isEmpty();
-    const bool basemapMissing = zoom <= BasemapZoom && context._basemapCoastlineObjects.isEmpty() && !env.owner->basemapAvailable;
-    if (emptyData || basemapMissing)
+    const bool detailedDataMissing = zoom > BasemapZoom && context._mapObjects.isEmpty() && context._coastlineObjects.isEmpty();
+
+    context._combinedMapObjects << context._mapObjects;
+    if(zoom <= BasemapZoom || detailedDataMissing)
+        context._combinedMapObjects << context._basemapMapObjects;
+    context._combinedMapObjects << context._triangulatedCoastlineObjects;
+
+    if(context._combinedMapObjects.isEmpty())
     {
         // We simply have no data to render. Report, clean-up and exit
         if(nothingToRasterize)
@@ -165,14 +170,8 @@ void OsmAnd::Rasterizer_P::prepareContext(
         context.clear();
         return;
     }
-
     if(nothingToRasterize)
         *nothingToRasterize = false;
-
-    context._combinedMapObjects << context._mapObjects;
-    if(zoom <= BasemapZoom || emptyData)
-        context._combinedMapObjects << context._basemapMapObjects;
-    context._combinedMapObjects << context._triangulatedCoastlineObjects;
 
     obtainPrimitives(env, context, controller);
     if(controller && controller->isAborted())
