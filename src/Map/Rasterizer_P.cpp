@@ -1042,6 +1042,19 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
     if (closedPolygons.isEmpty() && coastlinePolylines.isEmpty())
         return false;
 
+    // Draw coastlines
+    for(auto itPolyline = coastlinePolylines.cbegin(); itPolyline != coastlinePolylines.cend(); ++itPolyline)
+    {
+        const auto& polyline = *itPolyline;
+
+        std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr));
+        mapObject->_isArea = false;
+        mapObject->_points31 = polyline;
+        mapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline_line")));
+
+        outVectorized.push_back(mapObject);
+    }
+
     const bool coastlineCrossesBounds = !coastlinePolylines.isEmpty();
     if(!coastlinePolylines.isEmpty())
     {
@@ -1088,6 +1101,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
         }
     }
 
+    // Draw coastlines
     for(auto itPolygon = closedPolygons.cbegin(); itPolygon != closedPolygons.cend(); ++itPolygon)
     {
         const auto& polygon = *itPolygon;
