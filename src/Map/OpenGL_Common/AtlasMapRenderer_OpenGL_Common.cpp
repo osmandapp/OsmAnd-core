@@ -1309,23 +1309,25 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::createTilePatch()
 
         // Vertex data
         const GLfloat tsz = static_cast<GLfloat>(TileSize3D);
-        MapTileVertex vertices[4] =
+        static MapTileVertex vertices[4] =
         {
             { {0.0f, 0.0f}, {0.0f, 0.0f} },
             { {0.0f,  tsz}, {0.0f, 1.0f} },
             { { tsz,  tsz}, {1.0f, 1.0f} },
             { { tsz, 0.0f}, {1.0f, 0.0f} }
         };
-        pVertices = &vertices[0];
+        pVertices = new MapTileVertex[4];
+        memcpy(pVertices, vertices, 4*sizeof(MapTileVertex));
         verticesCount = 4;
 
         // Index data
-        GLushort indices[6] =
+        static GLushort indices[6] =
         {
             0, 1, 2,
             0, 2, 3
         };
-        pIndices = &indices[0];
+        pIndices = new GLushort[6];
+        memcpy(pIndices, indices, 6*sizeof(GLushort));
         indicesCount = 6;
     }
     else
@@ -1392,11 +1394,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::createTilePatch()
     _tilePatchIndicesCount = indicesCount;
     allocateTilePatch(pVertices, verticesCount, pIndices, indicesCount);
 
-    if(currentState.elevationDataProvider)
-    {
-        delete[] pVertices;
-        delete[] pIndices;
-    }
+    delete[] pVertices;
+    delete[] pIndices;
 }
 
 OsmAnd::RenderAPI_OpenGL_Common* OsmAnd::AtlasMapRenderer_OpenGL_Common::getRenderAPI() const
