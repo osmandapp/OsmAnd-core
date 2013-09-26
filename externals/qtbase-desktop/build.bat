@@ -1,5 +1,7 @@
 @echo off
 
+setlocal
+
 REM Prepare environment
 set PATH=%PATH%;%~dp0\tools.windows\bin
 set QTBASE_CONFIGURATION=^
@@ -27,6 +29,7 @@ call :build
 endlocal
 
 REM Quit from script
+endlocal
 exit /B
 
 REM >>> 'build' function

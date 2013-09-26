@@ -1,5 +1,7 @@
 @echo off
 
+setlocal
+
 REM Prepare environment
 set PATH=%PATH%;%~dp0\tools.windows\bin
 set QTBASE_CONFIGURATION=^
@@ -40,6 +42,7 @@ set arch=arm
 set xPlatform=winrt-arm-msvc2012
 call :BUILD
 
+endlocal
 goto :EOF
 
 REM ### Function start : BUILD
