@@ -20,8 +20,10 @@
 #include "Utilities.h"
 #include "Logging.h"
 
-OsmAnd::OfflineMapRasterTileProvider_GPU_P::OfflineMapRasterTileProvider_GPU_P( OfflineMapRasterTileProvider_GPU* owner_ )
+OsmAnd::OfflineMapRasterTileProvider_GPU_P::OfflineMapRasterTileProvider_GPU_P( OfflineMapRasterTileProvider_GPU* owner_, const uint32_t& outputTileSize_, const float& density_ )
     : owner(owner_)
+    , outputTileSize(outputTileSize_)
+    , density(density_)
     , _taskHostBridge(this)
 {
 }
@@ -59,12 +61,12 @@ bool OsmAnd::OfflineMapRasterTileProvider_GPU_P::obtainTile(const TileId& tileId
     //TODO: SkGpuDevice
     // Allocate rasterization target
     auto rasterizationSurface = new SkBitmap();
-    rasterizationSurface->setConfig(SkBitmap::kARGB_8888_Config, owner->tileSize, owner->tileSize);
+    rasterizationSurface->setConfig(SkBitmap::kARGB_8888_Config, outputTileSize, outputTileSize);
     if(!rasterizationSurface->allocPixels())
     {
         delete rasterizationSurface;
 
-        LogPrintf(LogSeverityLevel::Error, "Failed to allocate buffer for ARGB8888 rasterization surface %dx%d", owner->tileSize, owner->tileSize);
+        LogPrintf(LogSeverityLevel::Error, "Failed to allocate buffer for ARGB8888 rasterization surface %dx%d", outputTileSize, outputTileSize);
         return false;
     }
     SkBitmapDevice rasterizationTarget(*rasterizationSurface);
@@ -74,9 +76,9 @@ bool OsmAnd::OfflineMapRasterTileProvider_GPU_P::obtainTile(const TileId& tileId
 
     // Perform actual rendering
     bool nothingToRasterize = false;
-    RasterizerEnvironment rasterizerEnv(owner->dataProvider->mapStyle, basemapAvailable, owner->displayDensity);
+    RasterizerEnvironment rasterizerEnv(owner->dataProvider->mapStyle, basemapAvailable, density);
     RasterizerContext rasterizerContext;
-    Rasterizer::prepareContext(rasterizerEnv, rasterizerContext, tileBBox31, zoom, owner->tileSize, tileFoundation, mapObjects, OsmAnd::PointF(), &nothingToRasterize, nullptr);
+    Rasterizer::prepareContext(rasterizerEnv, rasterizerContext, tileBBox31, zoom, outputTileSize, tileFoundation, mapObjects, OsmAnd::PointF(), &nothingToRasterize, nullptr);
     if(!nothingToRasterize)
         Rasterizer::rasterizeMap(rasterizerEnv, rasterizerContext, true, canvas, nullptr);
 

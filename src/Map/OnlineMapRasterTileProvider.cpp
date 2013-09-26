@@ -11,7 +11,7 @@ OsmAnd::OnlineMapRasterTileProvider::OnlineMapRasterTileProvider(
     const ZoomLevel& maxZoom_ /*= 31*/,
     const ZoomLevel& minZoom_ /*= 0*/,
     const uint32_t& maxConcurrentDownloads_ /*= 1*/,
-    const uint32_t& tileSize_ /*= 256*/,
+    const uint32_t& providerTileSize_ /*= 256*/,
     const MapBitmapTile::AlphaChannelData& alphaChannelData_ /*= MapBitmapTile::AlphaChannelData::Undefined*/)
     : _d(new OnlineMapRasterTileProvider_P(this))
     , localCachePath(_d->_localCachePath)
@@ -21,7 +21,7 @@ OsmAnd::OnlineMapRasterTileProvider::OnlineMapRasterTileProvider(
     , minZoom(minZoom_)
     , maxZoom(maxZoom_)
     , maxConcurrentDownloads(maxConcurrentDownloads_)
-    , tileSize(tileSize_)
+    , providerTileSize(providerTileSize_)
     , alphaChannelData(alphaChannelData_)
 {
     _d->_localCachePath = QDir(QDir::current().filePath(id));
@@ -55,7 +55,7 @@ float OsmAnd::OnlineMapRasterTileProvider::getTileDensity() const
 
 uint32_t OsmAnd::OnlineMapRasterTileProvider::getTileSize() const
 {
-    return tileSize;
+    return providerTileSize;
 }
 
 std::shared_ptr<OsmAnd::IMapBitmapTileProvider> OsmAnd::OnlineMapRasterTileProvider::createMapnikProvider()

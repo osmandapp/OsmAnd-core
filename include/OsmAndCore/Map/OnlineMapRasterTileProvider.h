@@ -43,7 +43,7 @@ namespace OsmAnd {
     public:
         OnlineMapRasterTileProvider(const QString& id, const QString& urlPattern,
             const ZoomLevel& minZoom = ZoomLevel0, const ZoomLevel& maxZoom = ZoomLevel31,
-            const uint32_t& maxConcurrentDownloads = 1, const uint32_t& tileSize = 256,
+            const uint32_t& maxConcurrentDownloads = 1, const uint32_t& providerTileSize = 256,
             const MapBitmapTile::AlphaChannelData& alphaChannelData = MapBitmapTile::AlphaChannelData::Undefined);
         virtual ~OnlineMapRasterTileProvider();
 
@@ -52,7 +52,7 @@ namespace OsmAnd {
         const uint32_t minZoom;
         const uint32_t maxZoom;
         const uint32_t maxConcurrentDownloads;
-        const uint32_t tileSize;
+        const uint32_t providerTileSize;
         const MapBitmapTile::AlphaChannelData alphaChannelData;
 
         void setLocalCachePath(const QDir& localCachePath);

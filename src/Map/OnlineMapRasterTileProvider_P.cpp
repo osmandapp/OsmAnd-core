@@ -67,7 +67,7 @@ bool OsmAnd::OnlineMapRasterTileProvider_P::obtainTile( const TileId& tileId, co
         }
 
         assert(bitmap->width() == bitmap->height());
-        assert(bitmap->width() == owner->tileSize);
+        assert(bitmap->width() == owner->providerTileSize);
 
         // Return tile
         auto tile = new MapBitmapTile(bitmap, owner->alphaChannelData);
@@ -189,7 +189,7 @@ bool OsmAnd::OnlineMapRasterTileProvider_P::obtainTile( const TileId& tileId, co
     }
 
     assert(bitmap->width() == bitmap->height());
-    assert(bitmap->width() == owner->tileSize);
+    assert(bitmap->width() == owner->providerTileSize);
 
     // Return tile
     auto tile = new MapBitmapTile(bitmap, owner->alphaChannelData);

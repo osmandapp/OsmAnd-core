@@ -40,7 +40,7 @@ namespace OsmAnd {
     {
     private:
     protected:
-        OfflineMapRasterTileProvider_Software_P(OfflineMapRasterTileProvider_Software* owner);
+        OfflineMapRasterTileProvider_Software_P(OfflineMapRasterTileProvider_Software* owner, const uint32_t& outputTileSize, const float& density);
 
         STRONG_ENUM(TileState)
         {
@@ -56,6 +56,8 @@ namespace OsmAnd {
         typedef TilesCollectionEntryWithState<TileState, TileState::Unknown> TileEntry;
 
         OfflineMapRasterTileProvider_Software* const owner;
+        const uint32_t outputTileSize;
+        const float density;
 
         const Concurrent::TaskHost::Bridge _taskHostBridge;
         TilesCollection<TileEntry> _tiles;

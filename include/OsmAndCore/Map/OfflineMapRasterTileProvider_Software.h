@@ -44,13 +44,10 @@ namespace OsmAnd {
         const std::unique_ptr<OfflineMapRasterTileProvider_Software_P> _d;
     protected:
     public:
-        OfflineMapRasterTileProvider_Software(const std::shared_ptr<OfflineMapDataProvider>& dataProvider, const float& displayDensity);
+        OfflineMapRasterTileProvider_Software(const std::shared_ptr<OfflineMapDataProvider>& dataProvider, const uint32_t& outputTileSize = 256, const float& density = 1.0f);
         virtual ~OfflineMapRasterTileProvider_Software();
 
         const std::shared_ptr<OfflineMapDataProvider> dataProvider;
-
-        const float displayDensity;
-        const uint32_t tileSize;
 
         virtual float getTileDensity() const;
         virtual uint32_t getTileSize() const;
