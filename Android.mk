@@ -19,6 +19,9 @@ LOCAL_EXPORT_C_INCLUDES := \
     $(LOCAL_PATH)/externals/glm/upstream.patched \
     $(LOCAL_PATH)/include \
     $(LOCAL_PATH)/client
+	
+LOCAL_EXPORT_LDLIBS := \
+    -lGLESv2
 
 ifeq ($(LOCAL_ARM_NEON),true)
     OSMAND_BINARY_SUFFIX := _neon

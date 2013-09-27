@@ -34,7 +34,6 @@ else
 endif
 
 LOCAL_STATIC_LIBRARIES := \
-    libutils \
     osmand_jpeg$(OSMAND_BINARY_SUFFIX) \
     osmand_ft2$(OSMAND_BINARY_SUFFIX) \
     osmand_png$(OSMAND_BINARY_SUFFIX) \
@@ -42,7 +41,8 @@ LOCAL_STATIC_LIBRARIES := \
     osmand_expat$(OSMAND_BINARY_SUFFIX)
 
 LOCAL_EXPORT_LDLIBS := \
-    -llog
+    -llog \
+    -lGLESv2
 
 ifneq ($(OSMAND_USE_PREBUILT),true)
     LOCAL_CFLAGS := \
