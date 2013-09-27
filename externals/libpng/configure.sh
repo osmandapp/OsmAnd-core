@@ -12,7 +12,7 @@ fi
 # Download upstream if needed
 if [ ! -f "$SRCLOC/upstream.pack" ]; then
 	echo "Downloading '$NAME' upstream..."
-	curl -L http://download.osmand.net/prebuilt/libpng-1.6.3.tar.xz > "$SRCLOC/upstream.pack" || { echo "Failure" 1>&2; exit; }
+	curl -L http://download.osmand.net/prebuilt/libpng-1.6.6.tar.xz > "$SRCLOC/upstream.pack" || { echo "Failure" 1>&2; exit; }
 fi
 
 # Extract upstream if needed
