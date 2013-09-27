@@ -452,17 +452,14 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
     LOCAL_SRC_FILES += \
         upstream.patched/src/ports/SkDebug_android.cpp \
         upstream.patched/src/ports/SkGlobalInitialization_default.cpp \
-        upstream.patched/src/ports/SkFontHost_FreeType.cpp \
-        upstream.patched/src/ports/SkFontHost_FreeType_common.cpp \
-        upstream.patched/src/ports/SkFontHost_sandbox_none.cpp    \
-        upstream.patched/src/ports/SkFontHost_android.cpp \
-        upstream.patched/src/ports/SkFontHost_tables.cpp \
-        upstream.patched/src/ports/SkMemory_malloc.cpp \
-        upstream.patched/src/ports/SkOSFile_stdio.cpp \
+        upstream.patched/src/ports/SkFontHost_sandbox_none.cpp \
         upstream.patched/src/ports/SkThread_pthread.cpp \
         upstream.patched/src/ports/SkTime_Unix.cpp \
-        upstream.patched/src/ports/FontHostConfiguration_android.cpp \
         upstream.patched/src/utils/SkThreadUtils_pthread.cpp \
+        upstream.patched/src/utils/SkFontConfigParser_android.cpp \
+        upstream.patched/src/utils/SkFontConfigInterface_android.cpp \
+        upstream.patched/src/ports/SkOSFile_posix.cpp \
+        upstream.patched/src/ports/SkTLS_pthread.cpp \
         upstream.patched/src/gpu/gl/android/GrGLCreateNativeInterface_android.cpp \
         upstream.patched/src/gpu/gl/android/SkNativeGLContext_android.cpp
 
