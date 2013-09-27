@@ -104,7 +104,7 @@ bool OsmAnd::OnlineMapRasterTileProvider_P::obtainTile( const TileId& tileId, co
         .replace(QString::fromLatin1("${zoom}"), QString::number(zoom))
         .replace(QString::fromLatin1("${x}"), QString::number(tileId.x))
         .replace(QString::fromLatin1("${y}"), QString::number(tileId.y));
-    const auto networkReply = Network::Downloader::download(tileUrl).get();
+    const auto networkReply = Network::Downloader::download(tileUrl);
 
     // Free download slot
     {

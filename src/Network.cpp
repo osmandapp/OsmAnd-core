@@ -22,14 +22,16 @@ OsmAnd::Network::Downloader::~Downloader()
 {
 }
 
-std::future< std::shared_ptr<QNetworkReply> > OsmAnd::Network::Downloader::download( const QUrl& url_, const DownloadSettings& settings_ /*= DownloadSettings()*/ )
+std::shared_ptr<QNetworkReply> OsmAnd::Network::Downloader::download( const QUrl& url_, const DownloadSettings& settings_ /*= DownloadSettings()*/ )
 {
-    auto promise = new std::promise< std::shared_ptr<QNetworkReply> >();
-
+    QWaitCondition resultWaitCondition;
+    QMutex resultMutex;
+    std::shared_ptr<QNetworkReply> result;
     const auto url = url_;
     const auto settings = settings_;
 
-    Concurrent::pools->network->start(new Concurrent::Task([url, settings, promise](const Concurrent::Task* task, QEventLoop& eventLoop)
+    resultMutex.lock();
+    Concurrent::pools->network->start(new Concurrent::Task([url, settings, &result, &resultMutex, &resultWaitCondition](const Concurrent::Task* task, QEventLoop& eventLoop)
         {
             QNetworkAccessManager networkAccessManager;
 
@@ -70,11 +72,18 @@ std::future< std::shared_ptr<QNetworkReply> > OsmAnd::Network::Downloader::downl
 
             // Propagate final reply
             reply->setParent(nullptr);
-            promise->set_value(std::shared_ptr<QNetworkReply>(reply));
-            delete promise;
+            {
+                QMutexLocker scopedLocker(&resultMutex);
+                result.reset(reply);
+                resultWaitCondition.wakeAll();
+            }
 
             return;
         }));
 
-    return promise->get_future();
+    // Wait for condition
+    resultWaitCondition.wait(&resultMutex);
+    resultMutex.unlock();
+
+    return result;
 }

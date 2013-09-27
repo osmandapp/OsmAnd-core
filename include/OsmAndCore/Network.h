@@ -25,7 +25,6 @@
 
 #include <cstdint>
 #include <memory>
-#include <future>
 
 #include <QUrl>
 #include <QNetworkReply>
@@ -53,7 +52,7 @@ namespace OsmAnd {
             ~Downloader();
         protected:
         public:
-            static std::future< std::shared_ptr<QNetworkReply> > download(const QUrl& url, const DownloadSettings& settings = DownloadSettings());
+            static std::shared_ptr<QNetworkReply> download(const QUrl& url, const DownloadSettings& settings = DownloadSettings());
         };
     } // namespace Network
 
