@@ -9,6 +9,9 @@ else
     LOCAL_ARM_NEON := true
 endif
 
+LOCAL_EXPORT_CFLAGS := \
+    -DPNG_ARM_NEON_OPT=0
+
 LOCAL_EXPORT_C_INCLUDES := \
     $(LOCAL_PATH)/upstream.patched
 
