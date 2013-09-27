@@ -456,7 +456,7 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
         upstream.patched/src/ports/SkThread_pthread.cpp \
         upstream.patched/src/ports/SkTime_Unix.cpp \
         upstream.patched/src/utils/SkThreadUtils_pthread.cpp \
-        upstream.patched/src/utils/SkFontConfigParser_android.cpp \
+        upstream.patched/src/ports/SkFontConfigParser_android.cpp \
         upstream.patched/src/utils/SkFontConfigInterface_android.cpp \
         upstream.patched/src/ports/SkOSFile_posix.cpp \
         upstream.patched/src/ports/SkTLS_pthread.cpp \
