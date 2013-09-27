@@ -70,7 +70,7 @@
 +
 +            // Append file name
 +            FontFileInfo* newFileInfo = new FontFileInfo();
-+            newFileInfo.fFileName = rec[i].fFileName;
++            newFileInfo->fFileName = rec[i].fFileName;
 +            *(newFontFamily->fFileNames.append()) = newFileInfo;
 +
 +            // Append names
