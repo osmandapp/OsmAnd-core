@@ -63,16 +63,6 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
         $(LOCAL_PATH)/upstream.patched/src/gpu \
         $(LOCAL_PATH)/upstream.patched/src/utils/android
 
-    # need a flag to tell the C side when we're on devices with large memory
-    # budgets (i.e. larger than the low-end devices that initially shipped)
-    ifeq ($(ARCH_ARM_HAVE_VFP),true)
-        LOCAL_CFLAGS += -DANDROID_LARGE_MEMORY_DEVICE
-    endif
-
-    ifneq ($(ARCH_ARM_HAVE_VFP),true)
-        LOCAL_CFLAGS += -DSK_SOFTWARE_FLOAT
-    endif
-
     ifeq ($(LOCAL_ARM_NEON),true)
         LOCAL_CFLAGS += -D__ARM_HAVE_NEON
     endif
