@@ -461,6 +461,7 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
         upstream.patched/src/ports/SkFontConfigInterface_android.cpp \
         upstream.patched/src/ports/SkFontHost_fontconfig.cpp \
         upstream.patched/src/ports/SkFontHost_FreeType.cpp \
+        upstream.patched/src/ports/SkFontHost_FreeType_common.cpp \
         upstream.patched/src/ports/SkOSFile_posix.cpp \
         upstream.patched/src/ports/SkOSFile_stdio.cpp \
         upstream.patched/src/ports/SkTLS_pthread.cpp \
