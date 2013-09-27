@@ -21,6 +21,7 @@ LOCAL_EXPORT_C_INCLUDES := \
     $(LOCAL_PATH)/client
 	
 LOCAL_EXPORT_LDLIBS := \
+    -lEGL \
     -lGLESv2
 
 ifeq ($(LOCAL_ARM_NEON),true)

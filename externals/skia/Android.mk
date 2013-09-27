@@ -42,6 +42,7 @@ LOCAL_STATIC_LIBRARIES := \
 
 LOCAL_EXPORT_LDLIBS := \
     -llog \
+    -lEGL \
     -lGLESv2
 
 ifneq ($(OSMAND_USE_PREBUILT),true)
@@ -479,14 +480,16 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
             upstream.patched/src/opts/opts_check_arm.cpp \
             upstream.patched/src/opts/memset.arm.S \
             upstream.patched/src/opts/SkBitmapProcState_opts_arm.cpp \
-            upstream.patched/src/opts/SkBlitRow_opts_arm.cpp
+            upstream.patched/src/opts/SkBlitRow_opts_arm.cpp \
+            upstream.patched/src/opts/SkBlitMask_opts_arm.cpp
 
     else
 
         LOCAL_SRC_FILES += \
             upstream.patched/src/opts/SkBlitRow_opts_none.cpp \
             upstream.patched/src/opts/SkBitmapProcState_opts_none.cpp \
-            upstream.patched/src/opts/SkUtils_opts_none.cpp
+            upstream.patched/src/opts/SkUtils_opts_none.cpp \
+            upstream.patched/src/opts/SkBlitMask_opts_none.cpp
 
     endif
 
