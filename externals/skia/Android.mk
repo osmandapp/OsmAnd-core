@@ -33,7 +33,7 @@ else
     OSMAND_BINARY_SUFFIX :=
 endif
 
-LOCAL_SHARED_LIBRARIES := \
+LOCAL_STATIC_LIBRARIES := \
     libutils \
     osmand_jpeg$(OSMAND_BINARY_SUFFIX) \
     osmand_ft2$(OSMAND_BINARY_SUFFIX) \
