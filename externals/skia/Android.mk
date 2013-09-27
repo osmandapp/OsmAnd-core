@@ -450,7 +450,6 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
 
     # Android specific files
     LOCAL_SRC_FILES += \
-        upstream.patched/src/core/SkMMapStream.cpp \
         upstream.patched/src/ports/SkDebug_android.cpp \
         upstream.patched/src/ports/SkGlobalInitialization_default.cpp \
         upstream.patched/src/ports/SkFontHost_FreeType.cpp \
