@@ -17,6 +17,7 @@
 #include "Utilities.h"
 #include "Logging.h"
 
+#include <SkError.h>
 #include <SkBlurDrawLooper.h>
 #include <SkColorFilter.h>
 #include <SkDashPathEffect.h>
@@ -280,6 +281,18 @@ bool OsmAnd::Rasterizer_P::rasterizeMap(
         rasterizeMapPrimitives(env, context, canvas, context._lines, ShadowOnlyLines, controller);
 
     rasterizeMapPrimitives(env, context, canvas, context._lines, Lines, controller);
+
+    //////////////////////////////////////////////////////////////////////////
+    SkPaint textPaint;
+    textPaint.setColor(0xFFFF0000);
+    textPaint.setAntiAlias(true);
+    textPaint.setTextEncoding(SkPaint::kUTF16_TextEncoding);
+    textPaint.setTextSize(24);
+    const auto data = L"\u043a\u043e\u0449\u0435\u0439";
+    QString text = QString::fromUtf16(reinterpret_cast<const ushort*>(data), wcslen(data));
+    canvas.drawText(text.data(), text.size(), 100, 100, textPaint);
+    auto lr = SkGetLastError();
+    //////////////////////////////////////////////////////////////////////////
 
     return true;
 }
