@@ -288,7 +288,7 @@ bool OsmAnd::Rasterizer_P::rasterizeMap(
     textPaint.setAntiAlias(true);
     textPaint.setTextEncoding(SkPaint::kUTF8_TextEncoding);
     textPaint.setTextSize(24);
-    const auto data = L"\u043a\u043e AB \u4f0b\u500b\u50e5";
+    const auto data = L"\u043a\u043e AB \u0636\u30BA\u4E14";
     QString text = QString::fromWCharArray(data, wcslen(data));
     auto convertexText = text.toUtf8();
     canvas.drawText(convertexText.data(), convertexText.length(), 100, 100, textPaint);
