@@ -286,11 +286,12 @@ bool OsmAnd::Rasterizer_P::rasterizeMap(
     SkPaint textPaint;
     textPaint.setColor(0xFFFF0000);
     textPaint.setAntiAlias(true);
-    textPaint.setTextEncoding(SkPaint::kUTF16_TextEncoding);
+    textPaint.setTextEncoding(SkPaint::kUTF8_TextEncoding);
     textPaint.setTextSize(24);
-    const auto data = L"\u043a\u043e\u0449\u0435\u0439";
-    QString text = QString::fromUtf16(reinterpret_cast<const ushort*>(data), wcslen(data));
-    canvas.drawText(text.data(), text.size(), 100, 100, textPaint);
+    const auto data = L"\u043a\u043e AB \u4f0b\u500b\u50e5";
+    QString text = QString::fromWCharArray(data, wcslen(data));
+    auto convertexText = text.toUtf8();
+    canvas.drawText(convertexText.data(), convertexText.length(), 100, 100, textPaint);
     auto lr = SkGetLastError();
     //////////////////////////////////////////////////////////////////////////
 
