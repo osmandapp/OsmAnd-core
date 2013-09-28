@@ -286,12 +286,28 @@ bool OsmAnd::Rasterizer_P::rasterizeMap(
     SkPaint textPaint;
     textPaint.setColor(0xFFFF0000);
     textPaint.setAntiAlias(true);
-    textPaint.setTextEncoding(SkPaint::kUTF8_TextEncoding);
+    textPaint.setTextEncoding(SkPaint::kUTF16_TextEncoding);
     textPaint.setTextSize(24);
-    const auto data = L"\u043a\u043e AB \u0636\u30BA\u4E14";
-    QString text = QString::fromWCharArray(data, wcslen(data));
-    auto convertexText = text.toUtf8();
-    canvas.drawText(convertexText.data(), convertexText.length(), 100, 100, textPaint);
+    {
+        const auto data = L"Tokyo [\u6771\u4eac]";
+        canvas.drawText(data, wcslen(data) * sizeof(wchar_t), 10, 20, textPaint);
+    }
+    {
+        const auto data = L"al-Qahira [\u0627\u0644\u0642\u0627\u0647\u0631\u0629]";
+        canvas.drawText(data, wcslen(data) * sizeof(wchar_t), 10, 40, textPaint);
+    }
+    {
+        const auto data = L"Beijing [\u5317\u4eac]";
+        canvas.drawText(data, wcslen(data) * sizeof(wchar_t), 10, 60, textPaint);
+    }
+    {
+        const auto data = L"Kanada [\u0c95\u0ca8\u0ccd\u0ca8\u0ca1]";
+        canvas.drawText(data, wcslen(data) * sizeof(wchar_t), 10, 80, textPaint);
+    }
+    {
+        const auto data = L"Jerusalem [\u05d9\u05b0\u05e8\u05d5\u05bc\u05e9\u05b8\u05c1\u05dc\u05b7\u05d9\u05b4\u05dd]";
+        canvas.drawText(data, wcslen(data) * sizeof(wchar_t), 10, 100, textPaint);
+    }
     auto lr = SkGetLastError();
     //////////////////////////////////////////////////////////////////////////
 
