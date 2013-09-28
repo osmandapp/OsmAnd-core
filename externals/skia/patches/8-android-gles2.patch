@@ -1,0 +1,73 @@
+--- upstream.original/src/gpu/gl/android/GrGLCreateNativeInterface_android.cpp	2013-09-27 17:22:47.392743700 +0300
++++ upstream.patched/src/gpu/gl/android/GrGLCreateNativeInterface_android.cpp	2013-09-28 11:33:22.948799200 +0300
+@@ -12,6 +12,10 @@
+ #define GL_GLEXT_PROTOTYPES
+ #endif
+ 
++#define GL_OES_vertex_array_object 0
++#define GL_EXT_discard_framebuffer 0
++#define GL_IMG_multisampled_render_to_texture 0
++
+ #include <GLES2/gl2.h>
+ #include <GLES2/gl2ext.h>
+ 
+@@ -31,7 +35,13 @@ static const GrGLInterface* create_es_in
+     interface->fBindAttribLocation = glBindAttribLocation;
+     interface->fBindBuffer = glBindBuffer;
+     interface->fBindTexture = glBindTexture;
+-    interface->fBindVertexArray = glBindVertexArrayOES;
++    if (extensions.has("GL_OES_vertex_array_object")) {
++#if GL_OES_vertex_array_object
++        interface->fBindVertexArray = glBindVertexArrayOES;
++#else
++        interface->fBindVertexArray = (GrGLBindVertexArrayProc) eglGetProcAddress("glBindVertexArrayOES");
++#endif
++    }
+     interface->fBlendColor = glBlendColor;
+     interface->fBlendFunc = glBlendFunc;
+     interface->fBufferData = glBufferData;
+@@ -50,7 +60,13 @@ static const GrGLInterface* create_es_in
+     interface->fDeleteProgram = glDeleteProgram;
+     interface->fDeleteShader = glDeleteShader;
+     interface->fDeleteTextures = glDeleteTextures;
+-    interface->fDeleteVertexArrays = glDeleteVertexArraysOES;
++    if (extensions.has("GL_OES_vertex_array_object")) {
++#if GL_OES_vertex_array_object
++        interface->fDeleteVertexArrays = glDeleteVertexArraysOES;
++#else
++        interface->fDeleteVertexArrays = (GrGLDeleteVertexArraysProc) eglGetProcAddress("glDeleteVertexArraysOES");
++#endif
++    }
+     interface->fDepthMask = glDepthMask;
+     interface->fDisable = glDisable;
+     interface->fDisableVertexAttribArray = glDisableVertexAttribArray;
+@@ -64,7 +80,13 @@ static const GrGLInterface* create_es_in
+     interface->fGenBuffers = glGenBuffers;
+     interface->fGenerateMipmap = glGenerateMipmap;
+     interface->fGenTextures = glGenTextures;
+-    interface->fGenVertexArrays = glGenVertexArraysOES;
++    if (extensions.has("GL_OES_vertex_array_object")) {
++#if GL_OES_vertex_array_object
++        interface->fGenVertexArrays = glGenVertexArraysOES;
++#else
++        interface->fGenVertexArrays = (GrGLGenVertexArraysProc) eglGetProcAddress("glGenVertexArraysOES");
++#endif
++    }
+     interface->fGetBufferParameteriv = glGetBufferParameteriv;
+     interface->fGetError = glGetError;
+     interface->fGetIntegerv = glGetIntegerv;
+@@ -114,9 +136,13 @@ static const GrGLInterface* create_es_in
+ #endif
+     }
+ 
++    if (extensions.has("GL_EXT_discard_framebuffer")) {
+ #if GL_EXT_discard_framebuffer
+-    interface->fDiscardFramebuffer = glDiscardFramebufferEXT;
++        interface->fDiscardFramebuffer = glDiscardFramebufferEXT;
++#else
++        interface->fDiscardFramebuffer = (GrGLDiscardFramebufferProc) eglGetProcAddress("glDiscardFramebufferEXT");
+ #endif
++    }
+     interface->fUniform1f = glUniform1f;
+     interface->fUniform1i = glUniform1i;
+     interface->fUniform1fv = glUniform1fv;
