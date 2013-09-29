@@ -443,7 +443,6 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
     LOCAL_SRC_FILES += \
         upstream.patched/src/ports/SkDebug_android.cpp \
         upstream.patched/src/ports/SkGlobalInitialization_default.cpp \
-        upstream.patched/src/ports/SkFontHost_sandbox_none.cpp \
         upstream.patched/src/ports/SkThread_pthread.cpp \
         upstream.patched/src/ports/SkTime_Unix.cpp \
         upstream.patched/src/utils/SkThreadUtils_pthread.cpp \

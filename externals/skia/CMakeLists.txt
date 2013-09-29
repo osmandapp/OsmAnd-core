@@ -8,7 +8,6 @@ set(target_specific_sources
 	"upstream.patched/src/opts/SkUtils_opts_none.cpp"
 	"upstream.patched/src/ports/SkGlobalInitialization_default.cpp"
 	"upstream.patched/src/ports/SkOSFile_stdio.cpp"
-	"upstream.patched/src/ports/SkFontHost_sandbox_none.cpp"
 )
 
 set(target_specific_include_dirs_private "")
@@ -37,6 +36,8 @@ if(CMAKE_TARGET_OS STREQUAL "windows")
 	set(target_specific_definitions_public ${target_specific_definitions_public}
 		-DSK_BUILD_FOR_WIN32
 		-DSK_FONTHOST_USES_FONTMGR
+		-D_CRT_SECURE_NO_WARNINGS
+		-DGR_GL_FUNCTION_TYPE=__stdcall
 	)
 elseif(CMAKE_TARGET_OS STREQUAL "darwin")
 	set(target_specific_include_dirs_public ${target_specific_include_dirs_public}
@@ -58,8 +59,6 @@ elseif(CMAKE_TARGET_OS STREQUAL "darwin")
 	set(target_specific_definitions_public ${target_specific_definitions_public}
 		-DSK_BUILD_FOR_MAC
 		-DSK_FONTHOST_USES_FONTMGR
-		-D_CRT_SECURE_NO_WARNINGS
-		-DGR_GL_FUNCTION_TYPE=__stdcall
 	)
 elseif(CMAKE_TARGET_OS STREQUAL "ios")
 	set(target_specific_include_dirs_public ${target_specific_include_dirs_public}
@@ -174,7 +173,6 @@ add_library(skia_static STATIC
 add_dependencies(skia_static
 	expat_static
 	freetype2_static
-	harfbuzz_static
 	png_static
 	gif_static
 	jpeg_static
@@ -217,7 +215,6 @@ target_link_libraries(skia_static
 	LINK_PUBLIC
 		expat_static
 		freetype2_static
-		harfbuzz_static
 		png_static
 		gif_static
 		jpeg_static

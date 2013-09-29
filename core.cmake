@@ -13,9 +13,6 @@ add_subdirectory("${OSMAND_ROOT}/core/externals/freetype" "core/externals/freety
 # External : gif
 add_subdirectory("${OSMAND_ROOT}/core/externals/giflib" "core/externals/giflib")
 
-# External : harfbuzz
-add_subdirectory("${OSMAND_ROOT}/core/externals/harfbuzz" "core/externals/harfbuzz")
-
 # External : jpeg
 add_subdirectory("${OSMAND_ROOT}/core/externals/jpeg" "core/externals/jpeg")
 
