@@ -6,9 +6,9 @@ set(target_specific_sources
 	"upstream.patched/src/opts/SkBlitMask_opts_none.cpp"
 	"upstream.patched/src/opts/SkBitmapProcState_opts_none.cpp"
 	"upstream.patched/src/opts/SkUtils_opts_none.cpp"
-	"upstream.patched/src/ports/SkGlobalInitialization_default.cpp"
-	"upstream.patched/src/ports/SkOSFile_stdio.cpp"
 )
+set(target_specific_dependencies "")
+set(target_specific_libraries_public "")
 
 set(target_specific_include_dirs_private "")
 set(target_specific_include_dirs_public "")
@@ -39,6 +39,9 @@ if(CMAKE_TARGET_OS STREQUAL "windows")
 		-D_CRT_SECURE_NO_WARNINGS
 		-DGR_GL_FUNCTION_TYPE=__stdcall
 	)
+	set(target_specific_libraries_public ${target_specific_libraries_public}
+		Usp10
+	)
 elseif(CMAKE_TARGET_OS STREQUAL "darwin")
 	set(target_specific_include_dirs_public ${target_specific_include_dirs_public}
 		"upstream.patched/include/utils/mac"
@@ -60,6 +63,14 @@ elseif(CMAKE_TARGET_OS STREQUAL "darwin")
 		-DSK_BUILD_FOR_MAC
 		-DSK_FONTHOST_USES_FONTMGR
 	)
+	find_library(CORE_FOUNDATION_LIBRARY CoreFoundation)
+	find_library(CORE_TEXT_LIBRARY CoreText)
+	find_library(CORE_GRAPHICS_LIBRARY CoreGraphics)
+	set(target_specific_libraries_public ${target_specific_libraries_public}
+		${CORE_FOUNDATION_LIBRARY}
+		${CORE_TEXT_LIBRARY}
+		${CORE_GRAPHICS_LIBRARY}
+	)
 elseif(CMAKE_TARGET_OS STREQUAL "ios")
 	set(target_specific_include_dirs_public ${target_specific_include_dirs_public}
 		"upstream.patched/include/utils/mac"
@@ -79,11 +90,18 @@ elseif(CMAKE_TARGET_OS STREQUAL "ios")
 	set(target_specific_definitions_public ${target_specific_definitions_public}
 		-DSK_BUILD_FOR_IOS
 	)
+	find_library(CORE_FOUNDATION_LIBRARY CoreFoundation)
+	find_library(CORE_TEXT_LIBRARY CoreText)
+	find_library(CORE_GRAPHICS_LIBRARY CoreGraphics)
+	set(target_specific_libraries_public ${target_specific_libraries_public}
+		${CORE_FOUNDATION_LIBRARY}
+		${CORE_TEXT_LIBRARY}
+		${CORE_GRAPHICS_LIBRARY}
+	)
 elseif(CMAKE_TARGET_OS STREQUAL "linux")
 	file(GLOB src_gpu_gl_unix "upstream.patched/src/gpu/gl/unix/*")
 	set(target_specific_sources "${target_specific_sources}"
 		"upstream.patched/src/ports/SkDebug_stdio.cpp"
-		"upstream.patched/src/ports/SkFontHost_sandbox_none.cpp"
 		"upstream.patched/src/ports/SkThread_pthread.cpp"
 		"upstream.patched/src/ports/SkTime_Unix.cpp"
 		"upstream.patched/src/ports/SkFontHost_FreeType_common.cpp"
@@ -96,6 +114,13 @@ elseif(CMAKE_TARGET_OS STREQUAL "linux")
 	)
 	set(target_specific_definitions_public ${target_specific_definitions_public}
 		-DSK_BUILD_FOR_UNIX
+	)
+	set(target_specific_dependencies ${target_specific_dependencies}
+		freetype2_static
+	)
+	set(target_specific_libraries_public ${target_specific_libraries_public}
+		freetype2_static
+		pthread
 	)
 endif()
 
@@ -167,15 +192,17 @@ add_library(skia_static STATIC
 	"upstream.patched/src/utils/SkUnitMappers.cpp"
 	"upstream.patched/src/pipe/SkGPipeRead.cpp"
 	"upstream.patched/src/pipe/SkGPipeWrite.cpp"
+	"upstream.patched/src/ports/SkGlobalInitialization_default.cpp"
+	"upstream.patched/src/ports/SkOSFile_stdio.cpp"
 	${target_specific_sources}
 )
 
 add_dependencies(skia_static
 	expat_static
-	freetype2_static
 	png_static
 	gif_static
 	jpeg_static
+	${target_specific_dependencies}
 )
 
 target_compile_definitions(skia_static
@@ -214,30 +241,8 @@ target_include_directories(skia_static
 target_link_libraries(skia_static
 	LINK_PUBLIC
 		expat_static
-		freetype2_static
 		png_static
 		gif_static
 		jpeg_static
+		${target_specific_libraries_public}
 )
-	
-if(CMAKE_TARGET_OS STREQUAL "linux")
-	target_link_libraries(skia_static
-		LINK_PUBLIC
-			pthread
-	)
-elseif(CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "ios")
-	find_library(CORE_FOUNDATION_LIBRARY CoreFoundation)
-	find_library(CORE_TEXT_LIBRARY CoreText)
-	find_library(CORE_GRAPHICS_LIBRARY CoreGraphics)
-	target_link_libraries(skia_static
-		LINK_PUBLIC
-			${CORE_FOUNDATION_LIBRARY}
-			${CORE_TEXT_LIBRARY}
-			${CORE_GRAPHICS_LIBRARY}
-	)
-elseif(CMAKE_TARGET_OS STREQUAL "windows")
-	target_link_libraries(skia_static
-		LINK_PUBLIC
-			Usp10
-	)
-endif()
