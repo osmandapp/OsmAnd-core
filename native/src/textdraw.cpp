@@ -584,11 +584,13 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 				if (textDrawInfo->shieldRes.length() > 0) {
 					SkBitmap* ico = getCachedBitmap(rc, textDrawInfo->shieldRes);
 					if (ico != NULL) {
-						float left = textDrawInfo->centerX - ico->width() / 2 - 0.5f;
-						float top = textDrawInfo->centerY - ico->height() / 2
+						float left = textDrawInfo->centerX - ico->width() / 2 * rc->getScreenDensityRatio() 
+								- 0.5f;
+						float top = textDrawInfo->centerY - ico->height() / 2  * rc->getScreenDensityRatio() 
 								- rc->getDensityValue(4.5f);
-						SkRect r = SkRect::MakeXYWH(left, top, ico->width(),
-								ico->height());
+						// SkIRect src =  SkIRect::MakeXYWH(0, 0, ico->width(), ico->height())
+						SkRect r = SkRect::MakeXYWH(left, top, ico->width() * rc->getScreenDensityRatio(),
+						 		ico->height() * rc->getScreenDensityRatio());
 						PROFILE_NATIVE_OPERATION(rc, cv->drawBitmapRect(*ico, (SkIRect*) NULL, r, &paintIcon));
 					}
 				}

@@ -73,6 +73,7 @@ private :
 	// parameters
 	bool useEnglishNames;
 	float density;
+	float screenDensityRatio;
 
 	float leftX;
 	float topY;
@@ -128,6 +129,7 @@ public:
 		setZoom(15);
 		setDefaultColor(0xfff1eee8);
 		roadsDensityLimitPerTile = 0;
+		screenDensityRatio = 1;
 		roadDensityZoomTile = 0;
 		polygonMinSizeToDisplay = 0;
 	}
@@ -213,6 +215,14 @@ public:
 
 	void setDensityScale(float val) {
 		density = val;
+	}
+
+	void setScreenDensityRatio(float v)  {
+		screenDensityRatio = v;
+	}
+
+	float getScreenDensityRatio() {
+		return screenDensityRatio;
 	}
 
 	float getDensityValue(float val) {
