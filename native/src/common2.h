@@ -219,6 +219,10 @@ public:
 		return val * density;
 	}
 
+	float getDensityValue(float val, int pxValues) {
+		return val * density + pxValues;
+	}
+
 	void setUseEnglishNames(bool b){
 		this->useEnglishNames = b;
 	}

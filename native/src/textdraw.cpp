@@ -124,21 +124,20 @@ inline float absFloat(float a){
 	return a > 0 ? a : -a;
 }
 
-
-void fillTextProperties(TextDrawInfo* info, RenderingRuleSearchRequest* render, float cx, float cy) {
+void fillTextProperties(RenderingContext* rc, TextDrawInfo* info, RenderingRuleSearchRequest* render, float cx, float cy) {
 	info->centerX = cx;
-	info->centerY = cy + render->getIntPropertyValue(render->props()->R_TEXT_DY, 0);
 	// used only for draw on path where centerY doesn't play role
-	info->vOffset = render->getIntPropertyValue(render->props()->R_TEXT_DY, 0);
+	info->vOffset = getDensityValue(rc, render, render->props()->R_TEXT_DY);
+	info->centerY = cy + info->vOffset;
 	info->textColor = render->getIntPropertyValue(render->props()->R_TEXT_COLOR);
 	if (info->textColor == 0) {
 		info->textColor = 0xff000000;
 	}
-	info->textSize = render->getIntPropertyValue(render->props()->R_TEXT_SIZE);
-	info->textShadow = render->getIntPropertyValue(render->props()->R_TEXT_HALO_RADIUS, 0);
-	info->textWrap = render->getIntPropertyValue(render->props()->R_TEXT_WRAP_WIDTH, 0);
+	info->textSize = getDensityValue(rc, render, render->props()->R_TEXT_SIZE);
+	info->textShadow = getDensityValue(rc, render, render->props()->R_TEXT_HALO_RADIUS);
+	info->textWrap = getDensityValue(rc, render, render->props()->R_TEXT_WRAP_WIDTH);
 	info->bold = render->getIntPropertyValue(render->props()->R_TEXT_BOLD, 0) > 0;
-	info->minDistance = render->getIntPropertyValue(render->props()->R_TEXT_MIN_DISTANCE, 0);
+	info->minDistance = getDensityValue(rc, render, render->props()->R_TEXT_MIN_DISTANCE);
 	info->shieldRes = render->getStringPropertyValue(render->props()->R_TEXT_SHIELD);
 	info->textOrder = render->getIntPropertyValue(render->props()->R_TEXT_ORDER, 100);
 }
@@ -478,7 +477,7 @@ bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<TextDraw
 	}
 	if(text->minDistance > 0) {
 		SkRect boundsSearch = text->bounds;
-		boundsSearch.inset(-rc->getDensityValue(max(5.0f, text->minDistance)), -rc->getDensityValue(15));
+		boundsSearch.inset(-max(rc->getDensityValue(5.0f), text->minDistance), -rc->getDensityValue(15));
 		boundIntersections.query_in_box(boundsSearch, searchText);
 //		drawTestBox(cv, &boundsSearch, text->pathRotate, paintIcon, text->text, paintText);
 		for (uint32_t i = 0; i < searchText.size(); i++) {
@@ -549,7 +548,7 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
             paintText.setTypeface(properTypeface);
 
 		// sest text size before finding intersection (it is used there)
-		float textSize = rc->getDensityValue(textDrawInfo->textSize);
+		float textSize = textDrawInfo->textSize;
 		paintText.setTextSize(textSize);
 		paintText.setFakeBoldText(textDrawInfo->bold);
 		paintText.setColor(textDrawInfo->textColor);

@@ -8,6 +8,10 @@
 #include "renderRules.h"
 #include "Logging.h"
 
+float getDensityValue(RenderingContext* rc, RenderingRuleSearchRequest* render, RenderingRuleProperty* prop) {
+	return rc->getDensityValue(render->getFloatPropertyValue(prop, 0),
+		render->getIntPropertyValue(prop, 0));
+}
 
 /**
  * Parse the color string, and return the corresponding color-int.
@@ -491,6 +495,13 @@ std::string RenderingRuleSearchRequest::getStringPropertyValue(RenderingRuleProp
 	return storage->getDictionaryValue(s);
 }
 
+float RenderingRuleSearchRequest::getFloatPropertyValue(RenderingRuleProperty* prop, float def) {
+	if (prop == NULL || fvalues[prop->id] == 0) {
+		return def;
+	}
+	return fvalues[prop->id];
+}
+
 float RenderingRuleSearchRequest::getFloatPropertyValue(RenderingRuleProperty* prop) {
 	if (prop == NULL) {
 		return 0;
@@ -633,6 +644,7 @@ bool RenderingRuleSearchRequest::visitRule(RenderingRule* rule, bool loadOutput)
 			searchResult = true;
 			if (rp->isFloat()) {
 				fvalues[rp->id] = rule->floatProperties[i];
+				values[rp->id] = rule->intProperties[i];
 			} else {
 				values[rp->id] = rule->intProperties[i];
 			}
@@ -678,7 +690,7 @@ void RenderingRuleSearchRequest::setTagValueZoomLayer(std::string tag, std::stri
 
 bool RenderingRuleSearchRequest::isSpecified(RenderingRuleProperty* p) {
 	if (p->isFloat()) {
-		return fvalues[p->id] != 0;
+		return fvalues[p->id] != 0 || values[p->id] != -1;
 	} else {
 		int val = values[p->id];
 		if (p->isColor()) {

@@ -151,7 +151,7 @@ int updatePaint(RenderingRuleSearchRequest* req, SkPaint* paint, int ind, int ar
     }
     else
     {
-        float stroke = req->getFloatPropertyValue(rStrokeW);
+        float stroke = getDensityValue(rc, req, rStrokeW);
         if (!(stroke > 0))
             return 0;
         paint->setColorFilter(NULL);
@@ -201,7 +201,7 @@ int updatePaint(RenderingRuleSearchRequest* req, SkPaint* paint, int ind, int ar
     if (rc->getShadowRenderingMode() == 1 && ind == 0)
     {
         int shadowColor = req->getIntPropertyValue(req->props()->R_SHADOW_COLOR);
-        int shadowLayer = req->getIntPropertyValue(req->props()->R_SHADOW_RADIUS);
+        int shadowLayer = getDensityValue(rc, req, req->props()->R_SHADOW_RADIUS);
         if (shadowColor == 0) {
 			shadowColor = rc->getShadowRenderingColor();
 		}
@@ -227,7 +227,7 @@ void renderText(MapDataObject* obj, RenderingRuleSearchRequest* req, RenderingCo
 			std::string tagName = it->first == "name" ? "" : it->first;
 			req->setStringFilter(req->props()->R_NAME_TAG, tagName);
 			if (req->searchRule(RenderingRulesStorage::TEXT_RULES)
-					&& req->getIntPropertyValue(req->props()->R_TEXT_SIZE) > 0) {
+					&& req->isSpecified(req->props()->R_TEXT_SIZE)) {
 				TextDrawInfo* info = new TextDrawInfo(name);
 				std::string tagName2 = req->getStringPropertyValue(req->props()->R_NAME_TAG2);
 				if(tagName2 != "") {
@@ -240,7 +240,7 @@ void renderText(MapDataObject* obj, RenderingRuleSearchRequest* req, RenderingCo
 				if (path != NULL)
 					info->path = new SkPath(*path);
 
-				fillTextProperties(info, req, xText, yText);
+				fillTextProperties(rc, info, req, xText, yText);
 				rc->textToDraw.push_back(info);
 			}
 		}

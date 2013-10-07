@@ -521,6 +521,8 @@ public:
 
 	float getFloatPropertyValue(RenderingRuleProperty* prop);
 
+	float getFloatPropertyValue(RenderingRuleProperty* prop, float def);
+
 	void setStringFilter(RenderingRuleProperty* p, std::string filter);
 
 	void setIntFilter(RenderingRuleProperty* p, int filter);
@@ -573,5 +575,7 @@ public:
 	}
 	virtual ~BasePathRenderingRulesStorageResolver() {}
 };
+
+float getDensityValue(RenderingContext* rc, RenderingRuleSearchRequest* render, RenderingRuleProperty* prop); 
 
 #endif
