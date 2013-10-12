@@ -83,7 +83,7 @@ namespace OsmAnd {
             GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
             const GLvoid *data, GLsizei dataRowLengthInElements,
             const std::shared_ptr< MapTile >& fromTile);
-        virtual void setMipMapLevelsLimit(GLenum target, const uint32_t& mipmapLevelsCount);
+        virtual void setMipMapLevelsLimit(GLenum target, const uint32_t mipmapLevelsCount);
 
         virtual void glGenVertexArrays_wrapper(GLsizei n, GLuint* arrays);
         virtual void glBindVertexArray_wrapper(GLuint array);
@@ -94,7 +94,7 @@ namespace OsmAnd {
         virtual void optimizeVertexShader(QString& code);
         virtual void optimizeFragmentShader(QString& code);
 
-        virtual void setSampler(GLenum texture, const SamplerType& samplerType);
+        virtual void setSampler(GLenum texture, const SamplerType samplerType);
     };
 
 }

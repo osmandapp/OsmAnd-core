@@ -364,7 +364,7 @@ void OsmAnd::RenderAPI_OpenGL::preprocessFragmentShader( QString& code )
     code.prepend(common);
 }
 
-void OsmAnd::RenderAPI_OpenGL::setSampler( GLenum texture, const SamplerType& samplerType )
+void OsmAnd::RenderAPI_OpenGL::setSampler( GLenum texture, const SamplerType samplerType )
 {
     GL_CHECK_PRESENT(glBindSampler);
 

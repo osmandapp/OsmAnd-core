@@ -491,7 +491,7 @@ void OsmAnd::RenderAPI_OpenGLES2::uploadDataToTexture2D(
     }
 }
 
-void OsmAnd::RenderAPI_OpenGLES2::setMipMapLevelsLimit( GLenum target, const uint32_t& mipmapLevelsCount )
+void OsmAnd::RenderAPI_OpenGLES2::setMipMapLevelsLimit( GLenum target, const uint32_t mipmapLevelsCount )
 {
 #if defined(OSMAND_TARGET_OS_ios)
     // Limit MipMap max level if possible
