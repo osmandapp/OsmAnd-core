@@ -576,7 +576,7 @@ void OsmAnd::RenderAPI_OpenGLES2::preprocessFragmentShader( QString& code )
     preprocessShader(code, shaderSource);
 }
 
-void OsmAnd::RenderAPI_OpenGLES2::setSampler( GLenum texture, const SamplerType& samplerType )
+void OsmAnd::RenderAPI_OpenGLES2::setSampler( GLenum texture, const SamplerType samplerType )
 {
     GL_CHECK_PRESENT(glTexParameteri);
 
