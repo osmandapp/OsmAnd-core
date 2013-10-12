@@ -8,7 +8,6 @@ OsmAnd::IMapRenderer::IMapRenderer()
     , isRenderingInitialized(_isRenderingInitialized)
     , state(_requestedState)
     , frameInvalidated(_frameInvalidated)
-    , visibleTiles(_visibleTiles)
 {
 }
 

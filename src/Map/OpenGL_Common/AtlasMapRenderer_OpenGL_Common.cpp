@@ -21,9 +21,10 @@
 #include "Utilities.h"
 #include "OpenGL_Common/Utilities_OpenGL_Common.h"
 
+const float OsmAnd::AtlasMapRenderer_OpenGL_Common::_zNear = 0.1f;
+
 OsmAnd::AtlasMapRenderer_OpenGL_Common::AtlasMapRenderer_OpenGL_Common()
-    : _zNear(0.1f)
-    , _tilePatchIndicesCount(0)
+    : _tilePatchIndicesCount(0)
 {
     memset(&_rasterMapStage, 0, sizeof(_rasterMapStage));
     memset(&_skyStage, 0, sizeof(_skyStage));
@@ -50,7 +51,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::allocateTilePatch( MapTileVertex* v
     GL_CHECK_RESULT;
     glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(MapTileVertex), vertices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
-    
+
     // Create index buffer and associate it with VAO
     glGenBuffers(1, &_rasterMapStage.tilePatchIBO);
     GL_CHECK_RESULT;
@@ -426,7 +427,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
 
     // Get proper program variation
     const auto& stageVariation = _rasterMapStage.variations[activeRasterTileProvidersCount - 1];
-    
+
     // Set tile patch VAO
     renderAPI->glBindVertexArray_wrapper(stageVariation.tilePatchVAO);
     GL_CHECK_RESULT;
@@ -436,20 +437,20 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
     GL_CHECK_RESULT;
 
     // Set matrices
-    auto mProjectionView = _mProjection * _mView;
+    auto mProjectionView = _internalState.mProjection * _internalState.mView;
     glUniformMatrix4fv(stageVariation.vs.param.mProjectionView, 1, GL_FALSE, glm::value_ptr(mProjectionView));
     GL_CHECK_RESULT;
 
     // Set center offset
-    glUniform2f(stageVariation.vs.param.targetInTilePosN, _targetInTileOffsetN.x, _targetInTileOffsetN.y);
+    glUniform2f(stageVariation.vs.param.targetInTilePosN, _internalState.targetInTileOffsetN.x, _internalState.targetInTileOffsetN.y);
     GL_CHECK_RESULT;
 
     // Set target tile
-    glUniform2i(stageVariation.vs.param.targetTile, _targetTileId.x, _targetTileId.y);
+    glUniform2i(stageVariation.vs.param.targetTile, _internalState.targetTileId.x, _internalState.targetTileId.y);
     GL_CHECK_RESULT;
 
     // Set distance from camera to target
-    glUniform1f(stageVariation.vs.param.distanceFromCameraToTarget, _distanceFromCameraToTarget);
+    glUniform1f(stageVariation.vs.param.distanceFromCameraToTarget, _internalState.distanceFromCameraToTarget);
     GL_CHECK_RESULT;
 
     // Set normalized [0.0 .. 1.0] angle of camera elevation
@@ -457,11 +458,11 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
     GL_CHECK_RESULT;
 
     // Set position of camera in ground place
-    glUniform2fv(stageVariation.vs.param.groundCameraPosition, 1, glm::value_ptr(_groundCameraPosition));
+    glUniform2fv(stageVariation.vs.param.groundCameraPosition, 1, glm::value_ptr(_internalState.groundCameraPosition));
     GL_CHECK_RESULT;
 
     // Set scale to retain projected size
-    glUniform1f(stageVariation.vs.param.scaleToRetainProjectedSize, _scaleToRetainProjectedSize);
+    glUniform1f(stageVariation.vs.param.scaleToRetainProjectedSize, _internalState.scaleToRetainProjectedSize);
     GL_CHECK_RESULT;
 
     // Configure samplers
@@ -508,7 +509,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
     }
 
     // For each visible tile, render it
-    for(auto itTileId = _visibleTiles.cbegin(); itTileId != _visibleTiles.cend(); ++itTileId)
+    for(auto itTileId = _internalState.visibleTiles.cbegin(); itTileId != _internalState.visibleTiles.cend(); ++itTileId)
     {
         const auto& tileId = *itTileId;
 
@@ -606,7 +607,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
 
                     glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
                     GL_CHECK_RESULT;
-                    
+
                     glVertexAttribPointer(stageVariation.vs.in.vertexElevation, 1, GL_FLOAT, GL_FALSE, sizeof(float), nullptr);
                     GL_CHECK_RESULT;
                     appliedElevationVertexAttribArray = true;
@@ -649,7 +650,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
 
             if(!gpuResource)
                 continue;
-            
+
             glActiveTexture(GL_TEXTURE0 + samplerIndex);
             GL_CHECK_RESULT;
 
@@ -732,7 +733,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::releaseRasterMapStage()
     for(auto variationId = 0u, maxActiveMapLayers = 1u; variationId < RasterMapLayersCount; variationId++, maxActiveMapLayers++)
     {
         auto& stageVariation = _rasterMapStage.variations[variationId];
-    
+
         if(stageVariation.program)
         {
             glDeleteProgram(stageVariation.program);
@@ -887,14 +888,14 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSkyStage()
     GL_CHECK_RESULT;
 
     // Set projection*view*model matrix:
-    const auto mFogTranslate = glm::translate(0.0f, 0.0f, -_correctedFogDistance);
-    const auto mModel = _mAzimuthInv * mFogTranslate;
-    const auto mProjectionViewModel = _mProjection * _mView * mModel;
+    const auto mFogTranslate = glm::translate(0.0f, 0.0f, -_internalState.correctedFogDistance);
+    const auto mModel = _internalState.mAzimuthInv * mFogTranslate;
+    const auto mProjectionViewModel = _internalState.mProjection * _internalState.mView * mModel;
     glUniformMatrix4fv(_skyStage.vs.param.mProjectionViewModel, 1, GL_FALSE, glm::value_ptr(mProjectionViewModel));
     GL_CHECK_RESULT;
 
     // Set halfsize
-    glUniform2f(_skyStage.vs.param.halfSize, _skyplaneHalfSize.x, _skyplaneHalfSize.y);
+    glUniform2f(_skyStage.vs.param.halfSize, _internalState.skyplaneHalfSize.x, _internalState.skyplaneHalfSize.y);
     GL_CHECK_RESULT;
 
     // Set sky parameters
@@ -1059,87 +1060,103 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::validateElevationDataResources()
     createTilePatch();
 }
 
-bool OsmAnd::AtlasMapRenderer_OpenGL_Common::updateCurrentState()
+bool OsmAnd::AtlasMapRenderer_OpenGL_Common::updateInternalState(MapRenderer::InternalState* internalState_, const MapRendererState& state)
 {
     bool ok;
-    ok = AtlasMapRenderer::updateCurrentState();
+    ok = AtlasMapRenderer::updateInternalState(internalState_, state);
     if(!ok)
         return false;
 
+    const auto internalState = static_cast<InternalState*>(internalState_);
+
     // Prepare values for projection matrix
-    const auto viewportWidth = currentState.viewport.width();
-    const auto viewportHeight = currentState.viewport.height();
+    const auto viewportWidth = state.viewport.width();
+    const auto viewportHeight = state.viewport.height();
     if(viewportWidth == 0 || viewportHeight == 0)
         return false;
-    _aspectRatio = static_cast<float>(viewportWidth) / static_cast<float>(viewportHeight);
-    _fovInRadians = qDegreesToRadians(currentState.fieldOfView);
-    _projectionPlaneHalfHeight = _zNear * _fovInRadians;
-    _projectionPlaneHalfWidth = _projectionPlaneHalfHeight * _aspectRatio;
+    internalState->aspectRatio = static_cast<float>(viewportWidth) / static_cast<float>(viewportHeight);
+    internalState->fovInRadians = qDegreesToRadians(state.fieldOfView);
+    internalState->projectionPlaneHalfHeight = _zNear * internalState->fovInRadians;
+    internalState->projectionPlaneHalfWidth = internalState->projectionPlaneHalfHeight * internalState->aspectRatio;
 
     // Setup projection with fake Z-far plane
-    _mProjection = glm::frustum(-_projectionPlaneHalfWidth, _projectionPlaneHalfWidth, -_projectionPlaneHalfHeight, _projectionPlaneHalfHeight, _zNear, 1000.0f);
+    internalState->mProjection = glm::frustum(
+        -internalState->projectionPlaneHalfWidth, internalState->projectionPlaneHalfWidth,
+        -internalState->projectionPlaneHalfHeight, internalState->projectionPlaneHalfHeight,
+        _zNear, 1000.0f);
 
     // Calculate limits of camera distance to target and actual distance
-    const auto screenTileSize = getReferenceTileSizeOnScreen();
-    _nearDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(_mProjection, currentState.viewport, TileSize3D / 2.0f, screenTileSize / 2.0f, 1.5f);
-    _baseDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(_mProjection, currentState.viewport, TileSize3D / 2.0f, screenTileSize / 2.0f, 1.0f);
-    _farDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(_mProjection, currentState.viewport, TileSize3D / 2.0f, screenTileSize / 2.0f, 0.75f);
+    const auto screenTileSize = getReferenceTileSizeOnScreen(state);
+    internalState->nearDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(internalState->mProjection, state.viewport, TileSize3D / 2.0f, screenTileSize / 2.0f, 1.5f);
+    internalState->baseDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(internalState->mProjection, state.viewport, TileSize3D / 2.0f, screenTileSize / 2.0f, 1.0f);
+    internalState->farDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(internalState->mProjection, state.viewport, TileSize3D / 2.0f, screenTileSize / 2.0f, 0.75f);
 
     // zoomFraction == [ 0.0 ... 0.5] scales tile [1.0x ... 1.5x]
     // zoomFraction == [-0.5 ...-0.0] scales tile [.75x ... 1.0x]
-    if(currentState.zoomFraction >= 0.0f)
-        _distanceFromCameraToTarget = _baseDistanceFromCameraToTarget - (_baseDistanceFromCameraToTarget - _nearDistanceFromCameraToTarget) * (2.0f * currentState.zoomFraction);
+    if(state.zoomFraction >= 0.0f)
+        internalState->distanceFromCameraToTarget = internalState->baseDistanceFromCameraToTarget - (internalState->baseDistanceFromCameraToTarget - internalState->nearDistanceFromCameraToTarget) * (2.0f * state.zoomFraction);
     else
-        _distanceFromCameraToTarget = _baseDistanceFromCameraToTarget - (_farDistanceFromCameraToTarget - _baseDistanceFromCameraToTarget) * (2.0f * currentState.zoomFraction);
-    _groundDistanceFromCameraToTarget = _distanceFromCameraToTarget * qCos(qDegreesToRadians(currentState.elevationAngle));
-    _tileScaleFactor = ((currentState.zoomFraction >= 0.0f) ? (1.0f + currentState.zoomFraction) : (1.0f + 0.5f * currentState.zoomFraction));
-    _scaleToRetainProjectedSize = _distanceFromCameraToTarget / _baseDistanceFromCameraToTarget;
+        internalState->distanceFromCameraToTarget = internalState->baseDistanceFromCameraToTarget - (internalState->farDistanceFromCameraToTarget - internalState->baseDistanceFromCameraToTarget) * (2.0f * state.zoomFraction);
+    internalState->groundDistanceFromCameraToTarget = internalState->distanceFromCameraToTarget * qCos(qDegreesToRadians(state.elevationAngle));
+    internalState->tileScaleFactor = ((state.zoomFraction >= 0.0f) ? (1.0f + state.zoomFraction) : (1.0f + 0.5f * state.zoomFraction));
+    internalState->scaleToRetainProjectedSize = internalState->distanceFromCameraToTarget / internalState->baseDistanceFromCameraToTarget;
 
     // Recalculate projection with obtained value
-    _zSkyplane = currentState.fogDistance * _scaleToRetainProjectedSize + _distanceFromCameraToTarget;
-    _zFar = glm::length(glm::vec3(_projectionPlaneHalfWidth * (_zSkyplane / _zNear), _projectionPlaneHalfHeight * (_zSkyplane / _zNear), _zSkyplane));
-    _mProjection = glm::frustum(-_projectionPlaneHalfWidth, _projectionPlaneHalfWidth, -_projectionPlaneHalfHeight, _projectionPlaneHalfHeight, _zNear, _zFar);
-    _mProjectionInv = glm::inverse(_mProjection);
+    internalState->zSkyplane = state.fogDistance * internalState->scaleToRetainProjectedSize + internalState->distanceFromCameraToTarget;
+    internalState->zFar = glm::length(glm::vec3(
+        internalState->projectionPlaneHalfWidth * (internalState->zSkyplane / _zNear),
+        internalState->projectionPlaneHalfHeight * (internalState->zSkyplane / _zNear),
+        internalState->zSkyplane));
+    internalState->mProjection = glm::frustum(
+        -internalState->projectionPlaneHalfWidth, internalState->projectionPlaneHalfWidth,
+        -internalState->projectionPlaneHalfHeight, internalState->projectionPlaneHalfHeight,
+        _zNear, internalState->zFar);
+    internalState->mProjectionInv = glm::inverse(internalState->mProjection);
 
     // Setup camera
-    _mDistance = glm::translate(0.0f, 0.0f, -_distanceFromCameraToTarget);
-    _mElevation = glm::rotate(currentState.elevationAngle, glm::vec3(1.0f, 0.0f, 0.0f));
-    _mAzimuth = glm::rotate(currentState.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
-    _mView = _mDistance * _mElevation * _mAzimuth;
+    internalState->mDistance = glm::translate(0.0f, 0.0f, -internalState->distanceFromCameraToTarget);
+    internalState->mElevation = glm::rotate(state.elevationAngle, glm::vec3(1.0f, 0.0f, 0.0f));
+    internalState->mAzimuth = glm::rotate(state.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
+    internalState->mView = internalState->mDistance * internalState->mElevation * internalState->mAzimuth;
 
     // Get inverse camera
-    _mDistanceInv = glm::translate(0.0f, 0.0f, _distanceFromCameraToTarget);
-    _mElevationInv = glm::rotate(-currentState.elevationAngle, glm::vec3(1.0f, 0.0f, 0.0f));
-    _mAzimuthInv = glm::rotate(-currentState.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
-    _mViewInv = _mAzimuthInv * _mElevationInv * _mDistanceInv;
+    internalState->mDistanceInv = glm::translate(0.0f, 0.0f, internalState->distanceFromCameraToTarget);
+    internalState->mElevationInv = glm::rotate(-state.elevationAngle, glm::vec3(1.0f, 0.0f, 0.0f));
+    internalState->mAzimuthInv = glm::rotate(-state.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
+    internalState->mViewInv = internalState->mAzimuthInv * internalState->mElevationInv * internalState->mDistanceInv;
 
     // Get camera position on the ground
-    _groundCameraPosition = (_mAzimuthInv * glm::vec4(0.0f, 0.0f, _distanceFromCameraToTarget, 1.0f)).xz;
+    internalState->groundCameraPosition = (internalState->mAzimuthInv * glm::vec4(0.0f, 0.0f, internalState->distanceFromCameraToTarget, 1.0f)).xz;
 
     // Correct fog distance
-    _correctedFogDistance = currentState.fogDistance * _scaleToRetainProjectedSize + (_distanceFromCameraToTarget - _groundDistanceFromCameraToTarget);
+    internalState->correctedFogDistance = state.fogDistance * internalState->scaleToRetainProjectedSize + (internalState->distanceFromCameraToTarget - internalState->groundDistanceFromCameraToTarget);
 
     // Calculate skyplane size
-    float zSkyplaneK = _zSkyplane / _zNear;
-    _skyplaneHalfSize.x = zSkyplaneK * _projectionPlaneHalfWidth;
-    _skyplaneHalfSize.y = zSkyplaneK * _projectionPlaneHalfHeight;
+    float zSkyplaneK = internalState->zSkyplane / _zNear;
+    internalState->skyplaneHalfSize.x = zSkyplaneK * internalState->projectionPlaneHalfWidth;
+    internalState->skyplaneHalfSize.y = zSkyplaneK * internalState->projectionPlaneHalfHeight;
 
     // Compute visible tileset
-    computeVisibleTileset();
+    computeVisibleTileset(internalState, state);
 
     return true;
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGL_Common::computeVisibleTileset()
+OsmAnd::MapRenderer::InternalState* OsmAnd::AtlasMapRenderer_OpenGL_Common::getInternalState()
+{
+    return &_internalState;
+}
+
+void OsmAnd::AtlasMapRenderer_OpenGL_Common::computeVisibleTileset(InternalState* internalState, const MapRendererState& state)
 {
     // 4 points of frustum near clipping box in camera coordinate space
-    const glm::vec4 nTL_c(-_projectionPlaneHalfWidth, +_projectionPlaneHalfHeight, -_zNear, 1.0f);
-    const glm::vec4 nTR_c(+_projectionPlaneHalfWidth, +_projectionPlaneHalfHeight, -_zNear, 1.0f);
-    const glm::vec4 nBL_c(-_projectionPlaneHalfWidth, -_projectionPlaneHalfHeight, -_zNear, 1.0f);
-    const glm::vec4 nBR_c(+_projectionPlaneHalfWidth, -_projectionPlaneHalfHeight, -_zNear, 1.0f);
+    const glm::vec4 nTL_c(-internalState->projectionPlaneHalfWidth, +internalState->projectionPlaneHalfHeight, -_zNear, 1.0f);
+    const glm::vec4 nTR_c(+internalState->projectionPlaneHalfWidth, +internalState->projectionPlaneHalfHeight, -_zNear, 1.0f);
+    const glm::vec4 nBL_c(-internalState->projectionPlaneHalfWidth, -internalState->projectionPlaneHalfHeight, -_zNear, 1.0f);
+    const glm::vec4 nBR_c(+internalState->projectionPlaneHalfWidth, -internalState->projectionPlaneHalfHeight, -_zNear, 1.0f);
 
     // 4 points of frustum far clipping box in camera coordinate space
-    const auto zFar = _zSkyplane;
+    const auto zFar = internalState->zSkyplane;
     const auto zFarK = zFar / _zNear;
     const glm::vec4 fTL_c(zFarK * nTL_c.x, zFarK * nTL_c.y, zFarK * nTL_c.z, 1.0f);
     const glm::vec4 fTR_c(zFarK * nTR_c.x, zFarK * nTR_c.y, zFarK * nTR_c.z, 1.0f);
@@ -1147,15 +1164,15 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::computeVisibleTileset()
     const glm::vec4 fBR_c(zFarK * nBR_c.x, zFarK * nBR_c.y, zFarK * nBR_c.z, 1.0f);
 
     // Transform 8 frustum vertices + camera center to global space
-    const auto eye_g = _mViewInv * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-    const auto fTL_g = _mViewInv * fTL_c;
-    const auto fTR_g = _mViewInv * fTR_c;
-    const auto fBL_g = _mViewInv * fBL_c;
-    const auto fBR_g = _mViewInv * fBR_c;
-    const auto nTL_g = _mViewInv * nTL_c;
-    const auto nTR_g = _mViewInv * nTR_c;
-    const auto nBL_g = _mViewInv * nBL_c;
-    const auto nBR_g = _mViewInv * nBR_c;
+    const auto eye_g = internalState->mViewInv * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    const auto fTL_g = internalState->mViewInv * fTL_c;
+    const auto fTR_g = internalState->mViewInv * fTR_c;
+    const auto fBL_g = internalState->mViewInv * fBL_c;
+    const auto fBR_g = internalState->mViewInv * fBR_c;
+    const auto nTL_g = internalState->mViewInv * nTL_c;
+    const auto nTR_g = internalState->mViewInv * nTR_c;
+    const auto nBL_g = internalState->mViewInv * nBL_c;
+    const auto nBR_g = internalState->mViewInv * nBR_c;
 
     // Get (up to) 4 points of frustum edges & plane intersection
     const glm::vec3 planeN(0.0f, 1.0f, 0.0f);
@@ -1204,7 +1221,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::computeVisibleTileset()
         intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
         intersectionPointsCounter++;
     }
-    
+
     assert(intersectionPointsCounter == 4);
 
     // Normalize intersection points to tiles
@@ -1219,10 +1236,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::computeVisibleTileset()
     const auto& ip = intersectionPoints;
     const PointF p[4] =
     {
-        PointF(ip[0].x + _targetInTileOffsetN.x, ip[0].y + _targetInTileOffsetN.y),
-        PointF(ip[1].x + _targetInTileOffsetN.x, ip[1].y + _targetInTileOffsetN.y),
-        PointF(ip[2].x + _targetInTileOffsetN.x, ip[2].y + _targetInTileOffsetN.y),
-        PointF(ip[3].x + _targetInTileOffsetN.x, ip[3].y + _targetInTileOffsetN.y),
+        PointF(ip[0].x + internalState->targetInTileOffsetN.x, ip[0].y + internalState->targetInTileOffsetN.y),
+        PointF(ip[1].x + internalState->targetInTileOffsetN.x, ip[1].y + internalState->targetInTileOffsetN.y),
+        PointF(ip[2].x + internalState->targetInTileOffsetN.x, ip[2].y + internalState->targetInTileOffsetN.y),
+        PointF(ip[3].x + internalState->targetInTileOffsetN.x, ip[3].y + internalState->targetInTileOffsetN.y),
     };
 
     //NOTE: so far scanline does not work exactly as expected, so temporary switch to old implementation
@@ -1242,27 +1259,27 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::computeVisibleTileset()
             for(auto y = yMin; y <= yMax; y++)
             {
                 TileId tileId;
-                tileId.x = x + _targetTileId.x;
-                tileId.y = y + _targetTileId.y;
+                tileId.x = x + internalState->targetTileId.x;
+                tileId.y = y + internalState->targetTileId.y;
 
                 visibleTiles.insert(tileId);
             }
         }
 
-        _visibleTiles = visibleTiles.toList();
+        internalState->visibleTiles = visibleTiles.toList();
     }
     /*
     //TODO: Find visible tiles using scanline fill
     _visibleTiles.clear();
     Utilities::scanlineFillPolygon(4, &p[0],
-        [this, pC](const PointI& point)
-        {
-            TileId tileId;
-            tileId.x = point.x;// + _targetTile.x;
-            tileId.y = point.y;// + _targetTile.y;
-            
-            _visibleTiles.insert(tileId);
-        });
+    [this, pC](const PointI& point)
+    {
+    TileId tileId;
+    tileId.x = point.x;// + _targetTile.x;
+    tileId.y = point.y;// + _targetTile.y;
+
+    _visibleTiles.insert(tileId);
+    });
     */
 }
 
@@ -1302,7 +1319,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::createTilePatch()
     GLsizei verticesCount = 0;
     GLushort* pIndices = nullptr;
     GLsizei indicesCount = 0;
-    
+
     if(!currentState.elevationDataProvider)
     {
         // Simple tile patch, that consists of 4 vertices
@@ -1390,7 +1407,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::createTilePatch()
             }
         }
     }
-    
+
     _tilePatchIndicesCount = indicesCount;
     allocateTilePatch(pVertices, verticesCount, pIndices, indicesCount);
 
@@ -1403,9 +1420,9 @@ OsmAnd::RenderAPI_OpenGL_Common* OsmAnd::AtlasMapRenderer_OpenGL_Common::getRend
     return static_cast<OsmAnd::RenderAPI_OpenGL_Common*>(renderAPI.get());
 }
 
-float OsmAnd::AtlasMapRenderer_OpenGL_Common::getReferenceTileSizeOnScreen()
+float OsmAnd::AtlasMapRenderer_OpenGL_Common::getReferenceTileSizeOnScreen( const MapRendererState& state )
 {
-    const auto& rasterMapProvider = currentState.rasterLayerProviders[static_cast<int>(RasterMapLayerId::BaseLayer)];
+    const auto& rasterMapProvider = state.rasterLayerProviders[static_cast<int>(RasterMapLayerId::BaseLayer)];
     if(!rasterMapProvider)
         return static_cast<float>(DefaultReferenceTileSizeOnScreen) * setupOptions.displayDensityFactor;
 
@@ -1413,20 +1430,33 @@ float OsmAnd::AtlasMapRenderer_OpenGL_Common::getReferenceTileSizeOnScreen()
     return tileProvider->getTileSize() * (setupOptions.displayDensityFactor / tileProvider->getTileDensity());
 }
 
+float OsmAnd::AtlasMapRenderer_OpenGL_Common::getReferenceTileSizeOnScreen()
+{
+    return getReferenceTileSizeOnScreen(state);
+}
+
 float OsmAnd::AtlasMapRenderer_OpenGL_Common::getScaledTileSizeOnScreen()
 {
-    return getReferenceTileSizeOnScreen() * _tileScaleFactor;
+    InternalState internalState;
+    bool ok = updateInternalState(&internalState, state);
+
+    return getReferenceTileSizeOnScreen(state) * internalState.tileScaleFactor;
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL_Common::getLocationFromScreenPoint( const PointI& screenPoint, PointI& location31 )
 {
+    InternalState internalState;
+    bool ok = updateInternalState(&internalState, state);
+    if(!ok)
+        return false;
+
     glm::vec4 viewport(
-        currentState.viewport.left,
-        currentState.windowSize.y - currentState.viewport.bottom,
-        currentState.viewport.width(),
-        currentState.viewport.height());
-    const auto nearInWorld = glm::unProject(glm::vec3(screenPoint.x, currentState.windowSize.y - screenPoint.y, 0.0f), _mView, _mProjection, viewport);
-    const auto farInWorld = glm::unProject(glm::vec3(screenPoint.x, currentState.windowSize.y - screenPoint.y, 1.0f), _mView, _mProjection, viewport);
+        state.viewport.left,
+        state.windowSize.y - state.viewport.bottom,
+        state.viewport.width(),
+        state.viewport.height());
+    const auto nearInWorld = glm::unProject(glm::vec3(screenPoint.x, state.windowSize.y - screenPoint.y, 0.0f), internalState.mView, internalState.mProjection, viewport);
+    const auto farInWorld = glm::unProject(glm::vec3(screenPoint.x, state.windowSize.y - screenPoint.y, 1.0f), internalState.mView, internalState.mProjection, viewport);
     const auto rayD = glm::normalize(farInWorld - nearInWorld);
 
     const glm::vec3 planeN(0.0f, 1.0f, 0.0f);
@@ -1438,9 +1468,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::getLocationFromScreenPoint( const P
 
     auto intersection = nearInWorld + distance*rayD;
     intersection /= static_cast<float>(TileSize3D);
-    auto tileWidth31 = (1u << (ZoomLevel::MaxZoomLevel - currentState.zoomBase)) - 1;
-    intersection.x = (intersection.x + _targetInTileOffsetN.x + _targetTileId.x) * tileWidth31;
-    intersection.z = (intersection.z + _targetInTileOffsetN.y + _targetTileId.y) * tileWidth31;
+    auto tileWidth31 = (1u << (ZoomLevel::MaxZoomLevel - state.zoomBase)) - 1;
+    intersection.x = (intersection.x + internalState.targetInTileOffsetN.x + internalState.targetTileId.x) * tileWidth31;
+    intersection.z = (intersection.z + internalState.targetInTileOffsetN.y + internalState.targetTileId.y) * tileWidth31;
     location31.x = static_cast<int32_t>(intersection.x);
     location31.y = static_cast<int32_t>(intersection.z);
     location31 = Utilities::normalizeCoordinates(location31, ZoomLevel31);

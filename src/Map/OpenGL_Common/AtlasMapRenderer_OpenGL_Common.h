@@ -34,7 +34,7 @@
 
 namespace OsmAnd {
 
-    class OSMAND_CORE_API AtlasMapRenderer_OpenGL_Common : public AtlasMapRenderer
+    class AtlasMapRenderer_OpenGL_Common : public AtlasMapRenderer
     {
     public:
     private:
@@ -45,35 +45,41 @@ namespace OsmAnd {
             DefaultReferenceTileSizeOnScreen = 256,
         };
 
-        glm::mat4 _mProjection;
-        glm::mat4 _mProjectionInv;
-        glm::mat4 _mView;
-        glm::mat4 _mDistance;
-        glm::mat4 _mElevation;
-        glm::mat4 _mAzimuth;
-        glm::mat4 _mViewInv;
-        glm::mat4 _mDistanceInv;
-        glm::mat4 _mElevationInv;
-        glm::mat4 _mAzimuthInv;
-        glm::vec2 _groundCameraPosition;
-        const float _zNear;
-        float _zSkyplane;
-        float _zFar;
-        float _projectionPlaneHalfHeight;
-        float _projectionPlaneHalfWidth;
-        float _aspectRatio;
-        float _fovInRadians;
-        float _nearDistanceFromCameraToTarget;
-        float _baseDistanceFromCameraToTarget;
-        float _farDistanceFromCameraToTarget;
-        float _distanceFromCameraToTarget;
-        float _groundDistanceFromCameraToTarget;
-        float _tileScaleFactor;
-        float _scaleToRetainProjectedSize;
-        PointF _skyplaneHalfSize;
-        float _correctedFogDistance;
-        
-        void computeVisibleTileset();
+        const static float _zNear;
+
+        struct InternalState : public AtlasMapRenderer::InternalState
+        {
+            glm::mat4 mProjection;
+            glm::mat4 mProjectionInv;
+            glm::mat4 mView;
+            glm::mat4 mDistance;
+            glm::mat4 mElevation;
+            glm::mat4 mAzimuth;
+            glm::mat4 mViewInv;
+            glm::mat4 mDistanceInv;
+            glm::mat4 mElevationInv;
+            glm::mat4 mAzimuthInv;
+            glm::vec2 groundCameraPosition;
+            float zSkyplane;
+            float zFar;
+            float projectionPlaneHalfHeight;
+            float projectionPlaneHalfWidth;
+            float aspectRatio;
+            float fovInRadians;
+            float nearDistanceFromCameraToTarget;
+            float baseDistanceFromCameraToTarget;
+            float farDistanceFromCameraToTarget;
+            float distanceFromCameraToTarget;
+            float groundDistanceFromCameraToTarget;
+            float tileScaleFactor;
+            float scaleToRetainProjectedSize;
+            PointF skyplaneHalfSize;
+            float correctedFogDistance;
+        };
+        InternalState _internalState;
+        virtual AtlasMapRenderer::InternalState* getInternalState();
+
+        void computeVisibleTileset(InternalState* internalState, const MapRendererState& state);
 
 #pragma pack(push)
 #pragma pack(1)
@@ -205,12 +211,14 @@ namespace OsmAnd {
         
         virtual void validateElevationDataResources();
 
-        virtual bool updateCurrentState();
+        virtual bool updateInternalState(MapRenderer::InternalState* internalState, const MapRendererState& state);
 
         virtual bool postInitializeRendering();
         virtual bool preReleaseRendering();
 
         RenderAPI_OpenGL_Common* getRenderAPI() const;
+
+        float getReferenceTileSizeOnScreen(const MapRendererState& state);
     public:
         virtual ~AtlasMapRenderer_OpenGL_Common();
 

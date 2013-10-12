@@ -54,7 +54,6 @@ namespace OsmAnd {
         IMapRenderer();
 
         MapRendererState _requestedState;
-        QList<TileId> _visibleTiles;
     public:
         virtual ~IMapRenderer();
 
@@ -73,7 +72,7 @@ namespace OsmAnd {
 
         const MapRendererState& state;
         const volatile bool& frameInvalidated;
-        const QList<TileId>& visibleTiles;
+        virtual unsigned int getVisibleTilesCount() = 0;
 
         virtual void setRasterLayerProvider(const RasterMapLayerId& layerId, const std::shared_ptr<IMapBitmapTileProvider>& tileProvider, bool forcedUpdate = false) = 0;
         virtual void setRasterLayerOpacity(const RasterMapLayerId& layerId, const float& opacity, bool forcedUpdate = false) = 0;

@@ -19,7 +19,7 @@ OsmAnd::MapRenderer::MapRenderer()
     , currentConfiguration(_currentConfiguration)
     , _currentConfigurationInvalidatedMask(0xFFFFFFFF)
     , currentState(_currentState)
-    , _currentStateInvalidated(true)
+    , _currentStateOutdated(true)
     , _invalidatedRasterLayerResourcesMask(0)
     , _invalidatedElevationDataResources(false)
     , tiledResources(_tiledResources)
@@ -280,25 +280,56 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
             return false;
     }
 
-    // If we have current state invalidated, we need to update it
-    // and invalidate frame
-    if(_currentStateInvalidated)
+    // If current state is outdated in comparison to requested state,
+    // it needs to be refreshed, internal state must be recalculated
+    // and frame must be invalidated
+    const auto internalState = getInternalState();
+    if(_currentStateOutdated)
     {
-        {
-            QReadLocker scopedLocker(&_stateLock);
+        bool ok;
+        QWriteLocker scopedLocker(&_internalStateLock);
 
+        // Atomically copy requested state
+        {
+            QReadLocker scopedLocker(&_requestedStateLock);
             _currentState = _requestedState;
         }
 
-        bool ok = updateCurrentState();
-        if(ok)
-            _currentStateInvalidated = false;
+        // Update internal state, that is derived from current state
+        ok = updateInternalState(internalState, _currentState);
 
+        // Postprocess internal state
+        if(ok)
+        {
+            // Sort visible tiles by distance from target
+            qSort(internalState->visibleTiles.begin(), internalState->visibleTiles.end(), [this, internalState](const TileId& l, const TileId& r) -> bool
+            {
+                const auto lx = l.x - internalState->targetTileId.x;
+                const auto ly = l.y - internalState->targetTileId.y;
+
+                const auto rx = r.x - internalState->targetTileId.x;
+                const auto ry = r.y - internalState->targetTileId.y;
+
+                return (lx*lx + ly*ly) > (rx*rx + ry*ry);
+            });
+        }
+
+        // Frame is being invalidated anyways, since a refresh is needed due to state change (successful or not)
         invalidateFrame();
 
-        // If state is still invalidated, abort processing
-        if(_currentStateInvalidated)
+        // If there was an error, keep current state outdated and terminate processing
+        if(!ok)
             return false;
+
+        _currentStateOutdated = false;
+    }
+
+    // Get set of tiles that are unique: visible tiles may contain same tiles, but wrapped
+    _uniqueTiles.clear();
+    for(auto itTileId = internalState->visibleTiles.cbegin(); itTileId != internalState->visibleTiles.cend(); ++itTileId)
+    {
+        const auto& tileId = *itTileId;
+        _uniqueTiles.insert(Utilities::normalizeTileId(tileId, _currentState.zoomBase));
     }
 
     // If we have invalidated resources, purge them
@@ -322,26 +353,6 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
         _invalidatedElevationDataResources = false;
     }
 
-    // Sort visible tiles by distance from target
-    qSort(_visibleTiles.begin(), _visibleTiles.end(), [this](const TileId& l, const TileId& r) -> bool
-    {
-        const auto lx = l.x - _targetTileId.x;
-        const auto ly = l.y - _targetTileId.y;
-
-        const auto rx = r.x - _targetTileId.x;
-        const auto ry = r.y - _targetTileId.y;
-
-        return (lx*lx + ly*ly) > (rx*rx + ry*ry);
-    });
-
-    // Get set of tiles that are unique: visible tiles may contain same tiles, but wrapped
-    _uniqueTiles.clear();
-    for(auto itTileId = _visibleTiles.cbegin(); itTileId != _visibleTiles.cend(); ++itTileId)
-    {
-        const auto& tileId = *itTileId;
-        _uniqueTiles.insert(Utilities::normalizeTileId(tileId, _currentState.zoomBase));
-    }
-
     return true;
 }
 
@@ -350,27 +361,27 @@ bool OsmAnd::MapRenderer::doPrepareFrame()
     return true;
 }
 
-bool OsmAnd::MapRenderer::updateCurrentState()
+bool OsmAnd::MapRenderer::updateInternalState(InternalState* internalState, const MapRendererState& state)
 {
     // Get target tile id
-    _targetTileId.x = _currentState.target31.x >> (ZoomLevel::MaxZoomLevel - _currentState.zoomBase);
-    _targetTileId.y = _currentState.target31.y >> (ZoomLevel::MaxZoomLevel - _currentState.zoomBase);
+    internalState->targetTileId.x = state.target31.x >> (ZoomLevel::MaxZoomLevel - state.zoomBase);
+    internalState->targetTileId.y = state.target31.y >> (ZoomLevel::MaxZoomLevel - state.zoomBase);
 
     // Compute in-tile offset
-    if(_currentState.zoomBase == ZoomLevel::MaxZoomLevel)
+    if(state.zoomBase == ZoomLevel::MaxZoomLevel)
     {
-        _targetInTileOffsetN.x = 0;
-        _targetInTileOffsetN.y = 0;
+        internalState->targetInTileOffsetN.x = 0;
+        internalState->targetInTileOffsetN.y = 0;
     }
     else
     {
         PointI targetTile31;
-        targetTile31.x = _targetTileId.x << (ZoomLevel::MaxZoomLevel - _currentState.zoomBase);
-        targetTile31.y = _targetTileId.y << (ZoomLevel::MaxZoomLevel - _currentState.zoomBase);
+        targetTile31.x = internalState->targetTileId.x << (ZoomLevel::MaxZoomLevel - state.zoomBase);
+        targetTile31.y = internalState->targetTileId.y << (ZoomLevel::MaxZoomLevel - state.zoomBase);
 
-        auto tileWidth31 = (1u << (ZoomLevel::MaxZoomLevel - _currentState.zoomBase)) - 1;
-        _targetInTileOffsetN.x = static_cast<float>(_currentState.target31.x - targetTile31.x) / tileWidth31;
-        _targetInTileOffsetN.y = static_cast<float>(_currentState.target31.y - targetTile31.y) / tileWidth31;
+        auto tileWidth31 = (1u << (ZoomLevel::MaxZoomLevel - state.zoomBase)) - 1;
+        internalState->targetInTileOffsetN.x = static_cast<float>(state.target31.x - targetTile31.x) / tileWidth31;
+        internalState->targetInTileOffsetN.y = static_cast<float>(state.target31.y - targetTile31.y) / tileWidth31;
     }
 
     return true;
@@ -457,7 +468,7 @@ bool OsmAnd::MapRenderer::doProcessRendering()
     // to avoid forcing driver to upload data on current frame presentation.
     if(!setupOptions.backgroundWorker.enabled)
         uploadTiledResources();
-    
+
     return true;
 }
 
@@ -535,9 +546,9 @@ bool OsmAnd::MapRenderer::postReleaseRendering()
     return true;
 }
 
-void OsmAnd::MapRenderer::invalidateCurrentState()
+void OsmAnd::MapRenderer::notifyRequestedStateWasUpdated()
 {
-    _currentStateInvalidated = true;
+    _currentStateOutdated = true;
 
     // Since our current state is invalid, frame is also invalidated
     invalidateFrame();
@@ -615,7 +626,7 @@ void OsmAnd::MapRenderer::backgroundWorkerProcedure()
 
 std::shared_ptr<OsmAnd::IMapTileProvider> OsmAnd::MapRenderer::getTileProviderFor( const TiledResourceType& resourceType )
 {
-    QReadLocker scopedLocker(&_stateLock);
+    QReadLocker scopedLocker(&_requestedStateLock);
 
     if(resourceType >= TiledResourceType::RasterBaseLayer && resourceType < (TiledResourceType::RasterBaseLayer + RasterMapLayersCount))
     {
@@ -639,36 +650,36 @@ void OsmAnd::MapRenderer::cleanUpTiledResourcesCache()
         const auto providerAvailable = static_cast<bool>(getTileProviderFor(tiledResources->type));
 
         tiledResources->removeTileEntries([this, providerAvailable](const std::shared_ptr<TiledResourceEntry>& tileEntry, bool& cancel) -> bool
+        {
+            // Skip cleaning if this tile is needed
+            if(_uniqueTiles.contains(tileEntry->tileId) && providerAvailable)
+                return false;
+
+            // Irrespective of current state, tile entry must be removed
             {
-                // Skip cleaning if this tile is needed
-                if(_uniqueTiles.contains(tileEntry->tileId) && providerAvailable)
-                    return false;
+                QReadLocker scopedLocker(&tileEntry->stateLock);
 
-                // Irrespective of current state, tile entry must be removed
+                // If state is "Requested" it means that there is a task somewhere out there,
+                // that may even be running at this moment
+                if(tileEntry->state == ResourceState::Requested)
                 {
-                    QReadLocker scopedLocker(&tileEntry->stateLock);
-
-                    // If state is "Requested" it means that there is a task somewhere out there,
-                    // that may even be running at this moment
-                    if(tileEntry->state == ResourceState::Requested)
-                    {
-                        // And we need to cancel it
-                        assert(tileEntry->_requestTask != nullptr);
-                        tileEntry->_requestTask->requestCancellation();
-                    }
-                    // If state is "Uploaded", GPU resources must be release prior to deleting tile entry
-                    else if(tileEntry->state == ResourceState::Uploaded)
-                    {
-                        // This should be last reference, so assert on that
-                        assert(tileEntry->_resourceInGPU.use_count() == 1);
-                        tileEntry->_resourceInGPU.reset();
-
-                        tileEntry->state = ResourceState::Unloaded;
-                    }
+                    // And we need to cancel it
+                    assert(tileEntry->_requestTask != nullptr);
+                    tileEntry->_requestTask->requestCancellation();
                 }
+                // If state is "Uploaded", GPU resources must be release prior to deleting tile entry
+                else if(tileEntry->state == ResourceState::Uploaded)
+                {
+                    // This should be last reference, so assert on that
+                    assert(tileEntry->_resourceInGPU.use_count() == 1);
+                    tileEntry->_resourceInGPU.reset();
 
-                return true;
-            });
+                    tileEntry->state = ResourceState::Unloaded;
+                }
+            }
+
+            return true;
+        });
     }
 }
 
@@ -739,6 +750,7 @@ void OsmAnd::MapRenderer::requestMissingTiledResources()
                     // If failed to obtain tile, remove tile entry to repeat try later
                     if(!requestSucceeded)
                     {
+                        // It's safe to simply remove entry, since it's not yet uploaded
                         tiledResources->removeEntry(tileEntry);
                         return;
                     }
@@ -761,7 +773,28 @@ void OsmAnd::MapRenderer::requestMissingTiledResources()
 
                     // If task was canceled, remove tile entry
                     if(wasCancelled)
-                        tiledResources->removeEntry(tileId, requestedZoom);
+                    {
+                        std::shared_ptr<TiledResourceEntry> tileEntry;
+                        if(!tiledResources->obtainTileEntry(tileEntry, tileId, requestedZoom))
+                            return;
+
+                        // Here tiled resource may have been already uploaded, so check that
+                        {
+                            QWriteLocker scopedLock(&tileEntry->stateLock);
+
+                            // Unload resource from GPU, if it's there
+                            if(tileEntry->state == ResourceState::Uploaded)
+                            {
+                                // This should be last reference, so assert on that
+                                assert(tileEntry->_resourceInGPU.use_count() == 1);
+                                tileEntry->_resourceInGPU.reset();
+
+                                tileEntry->state = ResourceState::Unloaded;
+                            }
+                        }
+
+                        tiledResources->removeEntry(tileEntry);
+                    }
                 };
                 const auto asyncTask = new Concurrent::HostedTask(_taskHostBridge, executeProc, nullptr, postExecuteProc);
 
@@ -946,9 +979,16 @@ void OsmAnd::MapRenderer::releaseTiledResources( const std::unique_ptr<TiledReso
     });
 }
 
+unsigned int OsmAnd::MapRenderer::getVisibleTilesCount()
+{
+    QReadLocker scopedLocker(&_internalStateLock);
+
+    return getInternalState()->visibleTiles.size();
+}
+
 void OsmAnd::MapRenderer::setRasterLayerProvider( const RasterMapLayerId& layerId, const std::shared_ptr<IMapBitmapTileProvider>& tileProvider, bool forcedUpdate /*= false*/ )
 {
-    QWriteLocker scopedLocker(&_stateLock);
+    QWriteLocker scopedLocker(&_requestedStateLock);
 
     bool update = forcedUpdate || (_requestedState.rasterLayerProviders[static_cast<int>(layerId)] != tileProvider);
     if(!update)
@@ -957,12 +997,12 @@ void OsmAnd::MapRenderer::setRasterLayerProvider( const RasterMapLayerId& layerI
     _requestedState.rasterLayerProviders[static_cast<int>(layerId)] = tileProvider;
 
     invalidateRasterLayerResources(layerId);
-    invalidateCurrentState();
+    notifyRequestedStateWasUpdated();
 }
 
 void OsmAnd::MapRenderer::setRasterLayerOpacity( const RasterMapLayerId& layerId, const float& opacity, bool forcedUpdate /*= false*/ )
 {
-    QWriteLocker scopedLocker(&_stateLock);
+    QWriteLocker scopedLocker(&_requestedStateLock);
 
     const auto clampedValue = qMax(0.0f, qMin(opacity, 1.0f));
 
@@ -972,12 +1012,12 @@ void OsmAnd::MapRenderer::setRasterLayerOpacity( const RasterMapLayerId& layerId
 
     _requestedState.rasterLayerOpacity[static_cast<int>(layerId)] = clampedValue;
 
-    invalidateCurrentState();
+    notifyRequestedStateWasUpdated();
 }
 
 void OsmAnd::MapRenderer::setElevationDataProvider( const std::shared_ptr<IMapElevationDataProvider>& tileProvider, bool forcedUpdate /*= false*/ )
 {
-    QWriteLocker scopedLocker(&_stateLock);
+    QWriteLocker scopedLocker(&_requestedStateLock);
 
     bool update = forcedUpdate || (_requestedState.elevationDataProvider != tileProvider);
     if(!update)
@@ -986,12 +1026,12 @@ void OsmAnd::MapRenderer::setElevationDataProvider( const std::shared_ptr<IMapEl
     _requestedState.elevationDataProvider = tileProvider;
 
     invalidateElevationDataResources();
-    invalidateCurrentState();
+    notifyRequestedStateWasUpdated();
 }
 
 void OsmAnd::MapRenderer::setElevationDataScaleFactor( const float& factor, bool forcedUpdate /*= false*/ )
 {
-    QWriteLocker scopedLocker(&_stateLock);
+    QWriteLocker scopedLocker(&_requestedStateLock);
 
     bool update = forcedUpdate || !qFuzzyCompare(_requestedState.elevationDataScaleFactor, factor);
     if(!update)
@@ -999,12 +1039,12 @@ void OsmAnd::MapRenderer::setElevationDataScaleFactor( const float& factor, bool
 
     _requestedState.elevationDataScaleFactor = factor;
 
-    invalidateCurrentState();
+    notifyRequestedStateWasUpdated();
 }
 
 void OsmAnd::MapRenderer::setWindowSize( const PointI& windowSize, bool forcedUpdate /*= false*/ )
 {
-    QWriteLocker scopedLocker(&_stateLock);
+    QWriteLocker scopedLocker(&_requestedStateLock);
 
     bool update = forcedUpdate || (_requestedState.windowSize != windowSize);
     if(!update)
@@ -1012,12 +1052,12 @@ void OsmAnd::MapRenderer::setWindowSize( const PointI& windowSize, bool forcedUp
 
     _requestedState.windowSize = windowSize;
 
-    invalidateCurrentState();
+    notifyRequestedStateWasUpdated();
 }
 
 void OsmAnd::MapRenderer::setViewport( const AreaI& viewport, bool forcedUpdate /*= false*/ )
 {
-    QWriteLocker scopedLocker(&_stateLock);
+    QWriteLocker scopedLocker(&_requestedStateLock);
 
     bool update = forcedUpdate || (_requestedState.viewport != viewport);
     if(!update)
@@ -1025,12 +1065,12 @@ void OsmAnd::MapRenderer::setViewport( const AreaI& viewport, bool forcedUpdate 
 
     _requestedState.viewport = viewport;
 
-    invalidateCurrentState();
+    notifyRequestedStateWasUpdated();
 }
 
 void OsmAnd::MapRenderer::setFieldOfView( const float& fieldOfView, bool forcedUpdate /*= false*/ )
 {
-    QWriteLocker scopedLocker(&_stateLock);
+    QWriteLocker scopedLocker(&_requestedStateLock);
 
     const auto clampedValue = qMax(std::numeric_limits<float>::epsilon(), qMin(fieldOfView, 90.0f));
 
@@ -1040,12 +1080,12 @@ void OsmAnd::MapRenderer::setFieldOfView( const float& fieldOfView, bool forcedU
 
     _requestedState.fieldOfView = clampedValue;
 
-    invalidateCurrentState();
+    notifyRequestedStateWasUpdated();
 }
 
 void OsmAnd::MapRenderer::setDistanceToFog( const float& fogDistance, bool forcedUpdate /*= false*/ )
 {
-    QWriteLocker scopedLocker(&_stateLock);
+    QWriteLocker scopedLocker(&_requestedStateLock);
 
     const auto clampedValue = qMax(std::numeric_limits<float>::epsilon(), fogDistance);
 
@@ -1055,12 +1095,12 @@ void OsmAnd::MapRenderer::setDistanceToFog( const float& fogDistance, bool force
 
     _requestedState.fogDistance = clampedValue;
 
-    invalidateCurrentState();
+    notifyRequestedStateWasUpdated();
 }
 
 void OsmAnd::MapRenderer::setFogOriginFactor( const float& factor, bool forcedUpdate /*= false*/ )
 {
-    QWriteLocker scopedLocker(&_stateLock);
+    QWriteLocker scopedLocker(&_requestedStateLock);
 
     const auto clampedValue = qMax(std::numeric_limits<float>::epsilon(), qMin(factor, 1.0f));
 
@@ -1070,12 +1110,12 @@ void OsmAnd::MapRenderer::setFogOriginFactor( const float& factor, bool forcedUp
 
     _requestedState.fogOriginFactor = clampedValue;
 
-    invalidateCurrentState();
+    notifyRequestedStateWasUpdated();
 }
 
 void OsmAnd::MapRenderer::setFogHeightOriginFactor( const float& factor, bool forcedUpdate /*= false*/ )
 {
-    QWriteLocker scopedLocker(&_stateLock);
+    QWriteLocker scopedLocker(&_requestedStateLock);
 
     const auto clampedValue = qMax(std::numeric_limits<float>::epsilon(), qMin(factor, 1.0f));
 
@@ -1085,12 +1125,12 @@ void OsmAnd::MapRenderer::setFogHeightOriginFactor( const float& factor, bool fo
 
     _requestedState.fogHeightOriginFactor = clampedValue;
 
-    invalidateCurrentState();
+    notifyRequestedStateWasUpdated();
 }
 
 void OsmAnd::MapRenderer::setFogDensity( const float& fogDensity, bool forcedUpdate /*= false*/ )
 {
-    QWriteLocker scopedLocker(&_stateLock);
+    QWriteLocker scopedLocker(&_requestedStateLock);
 
     const auto clampedValue = qMax(std::numeric_limits<float>::epsilon(), fogDensity);
 
@@ -1100,12 +1140,12 @@ void OsmAnd::MapRenderer::setFogDensity( const float& fogDensity, bool forcedUpd
 
     _requestedState.fogDensity = clampedValue;
 
-    invalidateCurrentState();
+    notifyRequestedStateWasUpdated();
 }
 
 void OsmAnd::MapRenderer::setFogColor( const FColorRGB& color, bool forcedUpdate /*= false*/ )
 {
-    QWriteLocker scopedLocker(&_stateLock);
+    QWriteLocker scopedLocker(&_requestedStateLock);
 
     bool update = forcedUpdate || _requestedState.fogColor != color;
     if(!update)
@@ -1113,12 +1153,12 @@ void OsmAnd::MapRenderer::setFogColor( const FColorRGB& color, bool forcedUpdate
 
     _requestedState.fogColor = color;
 
-    invalidateCurrentState();
+    notifyRequestedStateWasUpdated();
 }
 
 void OsmAnd::MapRenderer::setSkyColor( const FColorRGB& color, bool forcedUpdate /*= false*/ )
 {
-    QWriteLocker scopedLocker(&_stateLock);
+    QWriteLocker scopedLocker(&_requestedStateLock);
 
     bool update = forcedUpdate || _requestedState.skyColor != color;
     if(!update)
@@ -1126,12 +1166,12 @@ void OsmAnd::MapRenderer::setSkyColor( const FColorRGB& color, bool forcedUpdate
 
     _requestedState.skyColor = color;
 
-    invalidateCurrentState();
+    notifyRequestedStateWasUpdated();
 }
 
 void OsmAnd::MapRenderer::setAzimuth( const float& azimuth, bool forcedUpdate /*= false*/ )
 {
-    QWriteLocker scopedLocker(&_stateLock);
+    QWriteLocker scopedLocker(&_requestedStateLock);
 
     float normalizedAzimuth = Utilities::normalizedAngleDegrees(azimuth);
 
@@ -1141,12 +1181,12 @@ void OsmAnd::MapRenderer::setAzimuth( const float& azimuth, bool forcedUpdate /*
 
     _requestedState.azimuth = normalizedAzimuth;
 
-    invalidateCurrentState();
+    notifyRequestedStateWasUpdated();
 }
 
 void OsmAnd::MapRenderer::setElevationAngle( const float& elevationAngle, bool forcedUpdate /*= false*/ )
 {
-    QWriteLocker scopedLocker(&_stateLock);
+    QWriteLocker scopedLocker(&_requestedStateLock);
 
     const auto clampedValue = qMax(std::numeric_limits<float>::epsilon(), qMin(elevationAngle, 90.0f));
 
@@ -1156,12 +1196,12 @@ void OsmAnd::MapRenderer::setElevationAngle( const float& elevationAngle, bool f
 
     _requestedState.elevationAngle = clampedValue;
 
-    invalidateCurrentState();
+    notifyRequestedStateWasUpdated();
 }
 
 void OsmAnd::MapRenderer::setTarget( const PointI& target31, bool forcedUpdate /*= false*/ )
 {
-    QWriteLocker scopedLocker(&_stateLock);
+    QWriteLocker scopedLocker(&_requestedStateLock);
 
     auto wrappedTarget31 = target31;
     const auto maxTile31Index = static_cast<signed>(1u << 31);
@@ -1176,12 +1216,12 @@ void OsmAnd::MapRenderer::setTarget( const PointI& target31, bool forcedUpdate /
 
     _requestedState.target31 = wrappedTarget31;
 
-    invalidateCurrentState();
+    notifyRequestedStateWasUpdated();
 }
 
 void OsmAnd::MapRenderer::setZoom( const float& zoom, bool forcedUpdate /*= false*/ )
 {
-    QWriteLocker scopedLocker(&_stateLock);
+    QWriteLocker scopedLocker(&_requestedStateLock);
 
     const auto clampedValue = qMax(std::numeric_limits<float>::epsilon(), qMin(zoom, 31.49999f));
 
@@ -1194,7 +1234,7 @@ void OsmAnd::MapRenderer::setZoom( const float& zoom, bool forcedUpdate /*= fals
     assert(_requestedState.zoomBase >= 0 && _requestedState.zoomBase <= 31);
     _requestedState.zoomFraction = _requestedState.requestedZoom - _requestedState.zoomBase;
 
-    invalidateCurrentState();
+    notifyRequestedStateWasUpdated();
 }
 
 OsmAnd::MapRenderer::TiledResources::TiledResources( const TiledResourceType& type_ )
@@ -1249,4 +1289,12 @@ OsmAnd::MapRenderer::TiledResourceEntry::~TiledResourceEntry()
     if(state_ == ResourceState::Uploaded)
         LogPrintf(LogSeverityLevel::Error, "Tile %dx%d@%d still resides in GPU memory. This may cause GPU memory leak", tileId.x, tileId.y, zoom);
     assert(state_ != ResourceState::Uploaded);
+}
+
+OsmAnd::MapRenderer::InternalState::InternalState()
+{
+}
+
+OsmAnd::MapRenderer::InternalState::~InternalState()
+{
 }

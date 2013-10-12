@@ -1,24 +1,24 @@
 /**
- * @file
- *
- * @section LICENSE
- *
- * OsmAnd - Android navigation software based on OSM maps.
- * Copyright (C) 2010-2013  OsmAnd Authors listed in AUTHORS file
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+* @file
+*
+* @section LICENSE
+*
+* OsmAnd - Android navigation software based on OSM maps.
+* Copyright (C) 2010-2013  OsmAnd Authors listed in AUTHORS file
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
 
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #ifndef __MAP_RENDERER_H_
 #define __MAP_RENDERER_H_
 
@@ -76,26 +76,26 @@ namespace OsmAnd {
             // Resource is not in any determined state (resource entry did not exist)
             Unknown = 0,
 
-            // Resource is being requested
-            Requesting,
+                // Resource is being requested
+                Requesting,
 
-            // Resource was requested and should arrive soon
-            Requested,
+                // Resource was requested and should arrive soon
+                Requested,
 
-            // Resource request is being processed
-            ProcessingRequest,
+                // Resource request is being processed
+                ProcessingRequest,
 
-            // Resource is not available at all
-            Unavailable,
+                // Resource is not available at all
+                Unavailable,
 
-            // Resource data is in main memory, but not yet uploaded into GPU
-            Ready,
+                // Resource data is in main memory, but not yet uploaded into GPU
+                Ready,
 
-            // Resource data is already in GPU
-            Uploaded,
+                // Resource data is already in GPU
+                Uploaded,
 
-            // Resource is unloaded, next state is death by deallocation
-            Unloaded,
+                // Resource is unloaded, next state is death by deallocation
+                Unloaded,
         };
 
         class TiledResourceEntry : public TilesCollectionEntryWithState<ResourceState, ResourceState::Unknown>
@@ -113,7 +113,7 @@ namespace OsmAnd {
             const std::shared_ptr<MapTile>& sourceData;
             const std::shared_ptr<RenderAPI::ResourceInGPU>& resourceInGPU;
 
-        friend class OsmAnd::MapRenderer;
+            friend class OsmAnd::MapRenderer;
         };
 
         class TiledResources : public TilesCollection<TiledResourceEntry>
@@ -138,21 +138,20 @@ namespace OsmAnd {
         MapRendererConfiguration _currentConfiguration;
         volatile uint32_t _currentConfigurationInvalidatedMask;
 
-        QReadWriteLock _stateLock;
+        QReadWriteLock _requestedStateLock;
+        QReadWriteLock _internalStateLock;
         MapRendererState _currentState;
-        volatile bool _currentStateInvalidated;
+        volatile bool _currentStateOutdated;
 
         volatile uint32_t _invalidatedRasterLayerResourcesMask;
         QReadWriteLock _invalidatedRasterLayerResourcesMaskLock;
-        
+
         volatile bool _invalidatedElevationDataResources;
 
         std::array< std::unique_ptr<TiledResources>, TiledResourceTypesCount > _tiledResources;
         void uploadTiledResources();
         void releaseTiledResources(const std::unique_ptr<TiledResources>& collection);
         std::shared_ptr<OsmAnd::IMapTileProvider> getTileProviderFor(const TiledResourceType& resourceType);
-
-        QSet<TileId> _uniqueTiles;
 
         QThreadPool _tileRequestsThreadPool;
 
@@ -194,11 +193,21 @@ namespace OsmAnd {
         virtual bool postReleaseRendering();
 
         const MapRendererState& currentState;
-        void invalidateCurrentState();
-        virtual bool updateCurrentState();
+        void notifyRequestedStateWasUpdated();
 
-        TileId _targetTileId;
-        PointF _targetInTileOffsetN;
+        struct InternalState
+        {
+            InternalState();
+            virtual ~InternalState();
+
+            TileId targetTileId;
+            PointF targetInTileOffsetN;
+            QList<TileId> visibleTiles;
+        };
+        virtual InternalState* getInternalState() = 0;
+        virtual bool updateInternalState(InternalState* internalState, const MapRendererState& state);
+
+        QSet<TileId> _uniqueTiles;
 
         void invalidateRasterLayerResources(const RasterMapLayerId& layerId);
         virtual void validateRasterLayerResources(const RasterMapLayerId& layerId);
@@ -240,6 +249,8 @@ namespace OsmAnd {
         virtual bool renderFrame();
         virtual bool processRendering();
         virtual bool releaseRendering();
+
+        virtual unsigned int getVisibleTilesCount();
 
         virtual void setRasterLayerProvider(const RasterMapLayerId& layerId, const std::shared_ptr<IMapBitmapTileProvider>& tileProvider, bool forcedUpdate = false);
         virtual void setRasterLayerOpacity(const RasterMapLayerId& layerId, const float& opacity, bool forcedUpdate = false);
