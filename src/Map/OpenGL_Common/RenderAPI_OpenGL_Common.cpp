@@ -171,7 +171,7 @@ void OsmAnd::RenderAPI_OpenGL_Common::findVariableLocation( GLuint program, GLin
     _programVariables[program].insert(type, location);
 }
 
-bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileToGPU( const std::shared_ptr< MapTile >& tile, const uint32_t& tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU )
+bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileToGPU( const std::shared_ptr< MapTile >& tile, const uint32_t tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU )
 {
     // Upload bitmap tiles
     if(tile->dataType == MapTileDataType::Bitmap)
@@ -222,7 +222,7 @@ bool OsmAnd::RenderAPI_OpenGL_Common::releaseResourceInGPU( const ResourceInGPU:
     return false;
 }
 
-bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU( const std::shared_ptr< MapTile >& tile, const uint32_t& tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU )
+bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU( const std::shared_ptr< MapTile >& tile, const uint32_t tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU )
 {
     GL_CHECK_PRESENT(glGenTextures);
     GL_CHECK_PRESENT(glBindTexture);

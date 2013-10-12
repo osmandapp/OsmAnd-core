@@ -33,7 +33,7 @@ OsmAnd::Rasterizer_P::~Rasterizer_P()
 
 void OsmAnd::Rasterizer_P::prepareContext(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    const AreaI& area31, const ZoomLevel& zoom, const uint32_t& tileSize,
+    const AreaI& area31, const ZoomLevel zoom, const uint32_t tileSize,
     const MapFoundationType& foundation,
     const QList< std::shared_ptr<const OsmAnd::Model::MapObject> >& objects,
     const PointF& tlOriginOffset, bool* nothingToRasterize,
@@ -192,7 +192,7 @@ void OsmAnd::Rasterizer_P::prepareContext(
 
 void OsmAnd::Rasterizer_P::adjustContextFromEnvironment(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    const ZoomLevel& zoom)
+    const ZoomLevel zoom)
 {
     context._mapPaint = env.mapPaint;
 

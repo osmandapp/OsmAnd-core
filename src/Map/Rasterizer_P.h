@@ -180,13 +180,13 @@ namespace OsmAnd {
 
         static void adjustContextFromEnvironment(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-            const ZoomLevel& zoom);
+            const ZoomLevel zoom);
 
         static void prepareContext(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
             const AreaI& area31,
-            const ZoomLevel& zoom,
-            const uint32_t& tileSize,
+            const ZoomLevel zoom,
+            const uint32_t tileSize,
             const MapFoundationType& foundation,
             const QList< std::shared_ptr<const OsmAnd::Model::MapObject> >& objects,
             const PointF& tlOriginOffset,

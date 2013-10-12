@@ -292,7 +292,7 @@ void OsmAnd::RenderAPI_OpenGL::uploadDataToTexture2D(
     GL_CHECK_RESULT;
 }
 
-void OsmAnd::RenderAPI_OpenGL::setMipMapLevelsLimit( GLenum target, const uint32_t& mipmapLevelsCount )
+void OsmAnd::RenderAPI_OpenGL::setMipMapLevelsLimit( GLenum target, const uint32_t mipmapLevelsCount )
 {
     GL_CHECK_PRESENT(glTexParameteri);
 

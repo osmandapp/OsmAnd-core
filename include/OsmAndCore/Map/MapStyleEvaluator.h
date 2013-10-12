@@ -50,8 +50,8 @@ namespace OsmAnd {
         bool evaluate(uint32_t tagKey, uint32_t valueKey, bool fillOutput, bool evaluateChildren);
         bool evaluate(const std::shared_ptr<const MapStyleRule>& rule, bool fillOutput, bool evaluateChildren);
     public:
-        MapStyleEvaluator(const std::shared_ptr<const MapStyle>& style, const float& displayDensityFactor, MapStyleRulesetType ruleset, const std::shared_ptr<const Model::MapObject>& mapObject = std::shared_ptr<const Model::MapObject>());
-        MapStyleEvaluator(const std::shared_ptr<const MapStyle>& style, const float& displayDensityFactor, const std::shared_ptr<const MapStyleRule>& singleRule);
+        MapStyleEvaluator(const std::shared_ptr<const MapStyle>& style, const float displayDensityFactor, MapStyleRulesetType ruleset, const std::shared_ptr<const Model::MapObject>& mapObject = std::shared_ptr<const Model::MapObject>());
+        MapStyleEvaluator(const std::shared_ptr<const MapStyle>& style, const float displayDensityFactor, const std::shared_ptr<const MapStyleRule>& singleRule);
         virtual ~MapStyleEvaluator();
 
         const std::shared_ptr<const MapStyle> style;
@@ -60,11 +60,11 @@ namespace OsmAnd {
         const MapStyleRulesetType ruleset;
         const std::shared_ptr<const MapStyleRule> singleRule;
 
-        void setValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, const MapStyleValue& value);
-        void setBooleanValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, const bool& value);
-        void setIntegerValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, const int& value);
-        void setIntegerValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, const unsigned int& value);
-        void setFloatValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, const float& value);
+        void setValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, const MapStyleValue value);
+        void setBooleanValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, const bool value);
+        void setIntegerValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, const int value);
+        void setIntegerValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, const unsigned int value);
+        void setFloatValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, const float value);
         void setStringValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, const QString& value);
 
         bool getBooleanValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, bool& value) const;

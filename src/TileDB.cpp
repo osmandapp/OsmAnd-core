@@ -167,7 +167,7 @@ bool OsmAnd::TileDB::rebuildIndex()
     return true;
 }
 
-bool OsmAnd::TileDB::obtainTileData( const TileId& tileId, const ZoomLevel& zoom, QByteArray& data )
+bool OsmAnd::TileDB::obtainTileData( const TileId tileId, const ZoomLevel zoom, QByteArray& data )
 {
     QMutexLocker scopeLock(&_indexMutex);
 

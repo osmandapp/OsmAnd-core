@@ -49,7 +49,7 @@ namespace OsmAnd {
         static const QString defaultIndexFilename;
 
         virtual uint32_t getTileSize() const;
-        virtual bool obtainTile(const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<MapTile>& outTile);
+        virtual bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<MapTile>& outTile);
     };
 
 }

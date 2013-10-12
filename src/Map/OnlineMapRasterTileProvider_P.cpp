@@ -26,7 +26,7 @@ OsmAnd::OnlineMapRasterTileProvider_P::~OnlineMapRasterTileProvider_P()
 {
 }
 
-bool OsmAnd::OnlineMapRasterTileProvider_P::obtainTile( const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<MapTile>& outTile )
+bool OsmAnd::OnlineMapRasterTileProvider_P::obtainTile( const TileId tileId, const ZoomLevel zoom, std::shared_ptr<MapTile>& outTile )
 {
     // Check if requested tile is already being processed, and wait until that's done
     // to mark that as being processed.
@@ -197,7 +197,7 @@ bool OsmAnd::OnlineMapRasterTileProvider_P::obtainTile( const TileId& tileId, co
     return true;
 }
 
-void OsmAnd::OnlineMapRasterTileProvider_P::lockTile( const TileId& tileId, const ZoomLevel& zoom )
+void OsmAnd::OnlineMapRasterTileProvider_P::lockTile( const TileId tileId, const ZoomLevel zoom )
 {
     QMutexLocker scopedLocker(&_tilesInProcessMutex);
 
@@ -207,7 +207,7 @@ void OsmAnd::OnlineMapRasterTileProvider_P::lockTile( const TileId& tileId, cons
     _tilesInProcess[zoom].insert(tileId);
 }
 
-void OsmAnd::OnlineMapRasterTileProvider_P::unlockTile( const TileId& tileId, const ZoomLevel& zoom )
+void OsmAnd::OnlineMapRasterTileProvider_P::unlockTile( const TileId tileId, const ZoomLevel zoom )
 {
     QMutexLocker scopedLocker(&_tilesInProcessMutex);
 

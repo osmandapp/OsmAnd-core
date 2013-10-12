@@ -46,7 +46,7 @@ void OsmAnd::ObfDataInterface::obtainBasemapPresenceFlag( bool& basemapPresent, 
     }
 }
 
-void OsmAnd::ObfDataInterface::obtainMapObjects( QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut, MapFoundationType* foundationOut, const AreaI& area31, const ZoomLevel& zoom, IQueryController* controller /*= nullptr*/ )
+void OsmAnd::ObfDataInterface::obtainMapObjects( QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut, MapFoundationType* foundationOut, const AreaI& area31, const ZoomLevel zoom, IQueryController* controller /*= nullptr*/ )
 {
     if(foundationOut)
         *foundationOut = MapFoundationType::Undefined;

@@ -68,7 +68,7 @@ namespace OsmAnd {
     public:
         ~OfflineMapDataProvider_P();
 
-        bool obtainMapPrimitivesTile(const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<Tile>& outTile);
+        bool obtainMapPrimitivesTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<Tile>& outTile);
         //Tile data consists of rasterizer preprocessed primitives?
         //void obtainTileData(TileId, zoom, callback);
         //void purgeCache();

@@ -121,7 +121,7 @@ void OsmAnd::MapRenderer::setConfiguration( const MapRendererConfiguration& conf
     invalidateCurrentConfiguration(mask);
 }
 
-void OsmAnd::MapRenderer::invalidateCurrentConfiguration(const uint32_t& changesMask)
+void OsmAnd::MapRenderer::invalidateCurrentConfiguration(const uint32_t changesMask)
 {
     _currentConfigurationInvalidatedMask = changesMask;
 
@@ -986,7 +986,7 @@ unsigned int OsmAnd::MapRenderer::getVisibleTilesCount()
     return getInternalState()->visibleTiles.size();
 }
 
-void OsmAnd::MapRenderer::setRasterLayerProvider( const RasterMapLayerId& layerId, const std::shared_ptr<IMapBitmapTileProvider>& tileProvider, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setRasterLayerProvider( const RasterMapLayerId layerId, const std::shared_ptr<IMapBitmapTileProvider>& tileProvider, bool forcedUpdate /*= false*/ )
 {
     QWriteLocker scopedLocker(&_requestedStateLock);
 
@@ -1000,7 +1000,7 @@ void OsmAnd::MapRenderer::setRasterLayerProvider( const RasterMapLayerId& layerI
     notifyRequestedStateWasUpdated();
 }
 
-void OsmAnd::MapRenderer::setRasterLayerOpacity( const RasterMapLayerId& layerId, const float& opacity, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setRasterLayerOpacity( const RasterMapLayerId layerId, const float opacity, bool forcedUpdate /*= false*/ )
 {
     QWriteLocker scopedLocker(&_requestedStateLock);
 
@@ -1029,7 +1029,7 @@ void OsmAnd::MapRenderer::setElevationDataProvider( const std::shared_ptr<IMapEl
     notifyRequestedStateWasUpdated();
 }
 
-void OsmAnd::MapRenderer::setElevationDataScaleFactor( const float& factor, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setElevationDataScaleFactor( const float factor, bool forcedUpdate /*= false*/ )
 {
     QWriteLocker scopedLocker(&_requestedStateLock);
 
@@ -1068,7 +1068,7 @@ void OsmAnd::MapRenderer::setViewport( const AreaI& viewport, bool forcedUpdate 
     notifyRequestedStateWasUpdated();
 }
 
-void OsmAnd::MapRenderer::setFieldOfView( const float& fieldOfView, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setFieldOfView( const float fieldOfView, bool forcedUpdate /*= false*/ )
 {
     QWriteLocker scopedLocker(&_requestedStateLock);
 
@@ -1083,7 +1083,7 @@ void OsmAnd::MapRenderer::setFieldOfView( const float& fieldOfView, bool forcedU
     notifyRequestedStateWasUpdated();
 }
 
-void OsmAnd::MapRenderer::setDistanceToFog( const float& fogDistance, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setDistanceToFog( const float fogDistance, bool forcedUpdate /*= false*/ )
 {
     QWriteLocker scopedLocker(&_requestedStateLock);
 
@@ -1098,7 +1098,7 @@ void OsmAnd::MapRenderer::setDistanceToFog( const float& fogDistance, bool force
     notifyRequestedStateWasUpdated();
 }
 
-void OsmAnd::MapRenderer::setFogOriginFactor( const float& factor, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setFogOriginFactor( const float factor, bool forcedUpdate /*= false*/ )
 {
     QWriteLocker scopedLocker(&_requestedStateLock);
 
@@ -1113,7 +1113,7 @@ void OsmAnd::MapRenderer::setFogOriginFactor( const float& factor, bool forcedUp
     notifyRequestedStateWasUpdated();
 }
 
-void OsmAnd::MapRenderer::setFogHeightOriginFactor( const float& factor, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setFogHeightOriginFactor( const float factor, bool forcedUpdate /*= false*/ )
 {
     QWriteLocker scopedLocker(&_requestedStateLock);
 
@@ -1128,7 +1128,7 @@ void OsmAnd::MapRenderer::setFogHeightOriginFactor( const float& factor, bool fo
     notifyRequestedStateWasUpdated();
 }
 
-void OsmAnd::MapRenderer::setFogDensity( const float& fogDensity, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setFogDensity( const float fogDensity, bool forcedUpdate /*= false*/ )
 {
     QWriteLocker scopedLocker(&_requestedStateLock);
 
@@ -1169,7 +1169,7 @@ void OsmAnd::MapRenderer::setSkyColor( const FColorRGB& color, bool forcedUpdate
     notifyRequestedStateWasUpdated();
 }
 
-void OsmAnd::MapRenderer::setAzimuth( const float& azimuth, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setAzimuth( const float azimuth, bool forcedUpdate /*= false*/ )
 {
     QWriteLocker scopedLocker(&_requestedStateLock);
 
@@ -1184,7 +1184,7 @@ void OsmAnd::MapRenderer::setAzimuth( const float& azimuth, bool forcedUpdate /*
     notifyRequestedStateWasUpdated();
 }
 
-void OsmAnd::MapRenderer::setElevationAngle( const float& elevationAngle, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setElevationAngle( const float elevationAngle, bool forcedUpdate /*= false*/ )
 {
     QWriteLocker scopedLocker(&_requestedStateLock);
 
@@ -1219,7 +1219,7 @@ void OsmAnd::MapRenderer::setTarget( const PointI& target31, bool forcedUpdate /
     notifyRequestedStateWasUpdated();
 }
 
-void OsmAnd::MapRenderer::setZoom( const float& zoom, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setZoom( const float zoom, bool forcedUpdate /*= false*/ )
 {
     QWriteLocker scopedLocker(&_requestedStateLock);
 
@@ -1274,7 +1274,7 @@ void OsmAnd::MapRenderer::TiledResources::verifyNoUploadedTilesPresent()
     assert(stillUploadedTilesPresent == false);
 }
 
-OsmAnd::MapRenderer::TiledResourceEntry::TiledResourceEntry( const TileId& tileId, const ZoomLevel& zoom )
+OsmAnd::MapRenderer::TiledResourceEntry::TiledResourceEntry( const TileId tileId, const ZoomLevel zoom )
     : TilesCollectionEntryWithState(tileId, zoom)
     , _requestTask(nullptr)
     , sourceData(_sourceData)

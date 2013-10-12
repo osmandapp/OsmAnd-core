@@ -54,7 +54,7 @@ namespace OsmAnd {
         const QString indexFilename;
 
         bool rebuildIndex();
-        bool obtainTileData(const TileId& tileId, const ZoomLevel& zoom, QByteArray& data);
+        bool obtainTileData(const TileId tileId, const ZoomLevel zoom, QByteArray& data);
     };
 
 }

@@ -77,7 +77,7 @@ void OsmAnd::ObfReaderUtilities::skipUnknownField( gpb::io::CodedInputStream* ci
         gpb::internal::WireFormatLite::SkipField(cis, tag);
 }
 
-QString OsmAnd::ObfReaderUtilities::encodeIntegerToString( const uint32_t& value )
+QString OsmAnd::ObfReaderUtilities::encodeIntegerToString( const uint32_t value )
 {
     QString fakeQString(2, QChar(QChar::Null));
     fakeQString.data()[0].unicode() = static_cast<ushort>((value >> 16*0) & 0xffff);

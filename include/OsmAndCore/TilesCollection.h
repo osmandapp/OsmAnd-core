@@ -49,7 +49,7 @@ namespace OsmAnd {
         {
         }
 
-        virtual bool obtainTileEntry(std::shared_ptr<ENTRY>& outEntry, const TileId& tileId, const ZoomLevel& zoom, bool createEmptyIfUnexistent = false)
+        virtual bool obtainTileEntry(std::shared_ptr<ENTRY>& outEntry, const TileId tileId, const ZoomLevel zoom, bool createEmptyIfUnexistent = false)
         {
             if(createEmptyIfUnexistent)
                 _tilesCollectionLock.lockForWrite();
@@ -120,7 +120,7 @@ namespace OsmAnd {
             _zoomLevels[entry->zoom].remove(entry->tileId);
         }
 
-        virtual void removeEntry(const TileId& tileId, const ZoomLevel& zoom)
+        virtual void removeEntry(const TileId tileId, const ZoomLevel zoom)
         {
             QWriteLocker scopedLock(&_tilesCollectionLock);
 
@@ -156,7 +156,7 @@ namespace OsmAnd {
     {
     private:
     protected:
-        TilesCollectionEntry(const TileId& tileId, const ZoomLevel& zoom);
+        TilesCollectionEntry(const TileId tileId, const ZoomLevel zoom);
     public:
         virtual ~TilesCollectionEntry();
 
@@ -169,7 +169,7 @@ namespace OsmAnd {
     private:
     protected:
     public:
-        TilesCollectionEntryWithState(const TileId& tileId, const ZoomLevel& zoom, const STATE_ENUM& state = UNDEFINED_STATE_VALUE)
+        TilesCollectionEntryWithState(const TileId tileId, const ZoomLevel zoom, const STATE_ENUM& state = UNDEFINED_STATE_VALUE)
             : TilesCollectionEntry(tileId, zoom)
             , state(state)
         {

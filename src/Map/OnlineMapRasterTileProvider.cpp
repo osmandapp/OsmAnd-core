@@ -8,10 +8,10 @@
 OsmAnd::OnlineMapRasterTileProvider::OnlineMapRasterTileProvider(
     const QString& id_,
     const QString& urlPattern_,
-    const ZoomLevel& maxZoom_ /*= 31*/,
-    const ZoomLevel& minZoom_ /*= 0*/,
-    const uint32_t& maxConcurrentDownloads_ /*= 1*/,
-    const uint32_t& providerTileSize_ /*= 256*/,
+    const ZoomLevel maxZoom_ /*= 31*/,
+    const ZoomLevel minZoom_ /*= 0*/,
+    const uint32_t maxConcurrentDownloads_ /*= 1*/,
+    const uint32_t providerTileSize_ /*= 256*/,
     const MapBitmapTile::AlphaChannelData& alphaChannelData_ /*= MapBitmapTile::AlphaChannelData::Undefined*/)
     : _d(new OnlineMapRasterTileProvider_P(this))
     , localCachePath(_d->_localCachePath)
@@ -42,7 +42,7 @@ void OsmAnd::OnlineMapRasterTileProvider::setNetworkAccessPermission( bool allow
     _d->_networkAccessAllowed = allowed;
 }
 
-bool OsmAnd::OnlineMapRasterTileProvider::obtainTile( const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<MapTile>& outTile )
+bool OsmAnd::OnlineMapRasterTileProvider::obtainTile( const TileId tileId, const ZoomLevel zoom, std::shared_ptr<MapTile>& outTile )
 {
     return _d->obtainTile(tileId, zoom, outTile);
 }

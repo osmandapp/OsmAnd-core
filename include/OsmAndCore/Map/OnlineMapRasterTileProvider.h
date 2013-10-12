@@ -42,8 +42,8 @@ namespace OsmAnd {
     protected:
     public:
         OnlineMapRasterTileProvider(const QString& id, const QString& urlPattern,
-            const ZoomLevel& minZoom = ZoomLevel0, const ZoomLevel& maxZoom = ZoomLevel31,
-            const uint32_t& maxConcurrentDownloads = 1, const uint32_t& providerTileSize = 256,
+            const ZoomLevel minZoom = ZoomLevel0, const ZoomLevel maxZoom = ZoomLevel31,
+            const uint32_t maxConcurrentDownloads = 1, const uint32_t providerTileSize = 256,
             const MapBitmapTile::AlphaChannelData& alphaChannelData = MapBitmapTile::AlphaChannelData::Undefined);
         virtual ~OnlineMapRasterTileProvider();
 
@@ -64,7 +64,7 @@ namespace OsmAnd {
         virtual float getTileDensity() const;
         virtual uint32_t getTileSize() const;
 
-        virtual bool obtainTile(const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<MapTile>& outTile);
+        virtual bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<MapTile>& outTile);
         
         static std::shared_ptr<OsmAnd::IMapBitmapTileProvider> createMapnikProvider();
         static std::shared_ptr<OsmAnd::IMapBitmapTileProvider> createCycleMapProvider();

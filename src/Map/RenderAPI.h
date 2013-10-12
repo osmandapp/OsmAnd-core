@@ -73,7 +73,7 @@ namespace OsmAnd {
         private:
         protected:
         public:
-            TextureInGPU(RenderAPI* api, const RefInGPU& refInGPU, const uint32_t& textureSize, const uint32_t& mipmapLevels);
+            TextureInGPU(RenderAPI* api, const RefInGPU& refInGPU, const uint32_t textureSize, const uint32_t mipmapLevels);
             virtual ~TextureInGPU();
 
             const uint32_t textureSize;
@@ -87,7 +87,7 @@ namespace OsmAnd {
         private:
         protected:
         public:
-            ArrayBufferInGPU(RenderAPI* api, const RefInGPU& refInGPU, const uint32_t& itemsCount);
+            ArrayBufferInGPU(RenderAPI* api, const RefInGPU& refInGPU, const uint32_t itemsCount);
             virtual ~ArrayBufferInGPU();
 
             const uint32_t itemsCount;
@@ -174,7 +174,7 @@ namespace OsmAnd {
             QAtomicInt _tilesCounter;
 #endif
         public:
-            AtlasTextureInGPU(RenderAPI* api, const RefInGPU& refInGPU, const uint32_t& textureSize, const uint32_t& mipmapLevels, const std::shared_ptr<AtlasTexturesPool>& pool);
+            AtlasTextureInGPU(RenderAPI* api, const RefInGPU& refInGPU, const uint32_t textureSize, const uint32_t mipmapLevels, const std::shared_ptr<AtlasTexturesPool>& pool);
             virtual ~AtlasTextureInGPU();
 
             const uint16_t tileSize;
@@ -193,7 +193,7 @@ namespace OsmAnd {
         private:
         protected:
         public:
-            TileOnAtlasTextureInGPU(const std::shared_ptr<AtlasTextureInGPU>& atlas, const uint32_t& slotIndex);
+            TileOnAtlasTextureInGPU(const std::shared_ptr<AtlasTextureInGPU>& atlas, const uint32_t slotIndex);
             virtual ~TileOnAtlasTextureInGPU();
 
             const std::shared_ptr<AtlasTextureInGPU> atlasTexture;
@@ -229,7 +229,7 @@ namespace OsmAnd {
         //   0 - unlimited
         //   1 - don't use atlas textures
         //   N - allow up to N*N tiles per atlas texture
-        virtual bool uploadTileToGPU(const std::shared_ptr< MapTile >& tile, const uint32_t& tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU) = 0;
+        virtual bool uploadTileToGPU(const std::shared_ptr< MapTile >& tile, const uint32_t tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU) = 0;
 
     friend OsmAnd::RenderAPI::ResourceInGPU;
     };

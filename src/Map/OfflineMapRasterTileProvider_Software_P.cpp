@@ -20,7 +20,7 @@
 #include "Utilities.h"
 #include "Logging.h"
 
-OsmAnd::OfflineMapRasterTileProvider_Software_P::OfflineMapRasterTileProvider_Software_P( OfflineMapRasterTileProvider_Software* owner_, const uint32_t& outputTileSize_, const float& density_ )
+OsmAnd::OfflineMapRasterTileProvider_Software_P::OfflineMapRasterTileProvider_Software_P( OfflineMapRasterTileProvider_Software* owner_, const uint32_t outputTileSize_, const float density_ )
     : owner(owner_)
     , outputTileSize(outputTileSize_)
     , density(density_)
@@ -32,7 +32,7 @@ OsmAnd::OfflineMapRasterTileProvider_Software_P::~OfflineMapRasterTileProvider_S
 {
 }
 
-bool OsmAnd::OfflineMapRasterTileProvider_Software_P::obtainTile(const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<MapTile>& outTile)
+bool OsmAnd::OfflineMapRasterTileProvider_Software_P::obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<MapTile>& outTile)
 {
     // Get bounding box that covers this tile
     const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);

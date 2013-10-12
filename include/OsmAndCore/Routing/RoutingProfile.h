@@ -94,7 +94,7 @@ namespace OsmAnd {
         void registerBooleanParameter(const QString& id, const QString& name, const QString& description);
         void registerNumericParameter(const QString& id, const QString& name, const QString& description, QList<double>& values, const QStringList& valuesDescriptions);
         uint32_t registerTagValueAttribute(const QString& tag, const QString& value);
-        bool parseTypedValueFromTag(uint32_t id, const QString& type, float& parsedValue);
+        bool parseTypedValueFromTag(const uint32_t id, const QString& type, float& parsedValue);
     public:
         RoutingProfile();
         virtual ~RoutingProfile();
@@ -117,7 +117,7 @@ namespace OsmAnd {
         const float& minDefaultSpeed;
         const float& maxDefaultSpeed;
 
-        std::shared_ptr<OsmAnd::RoutingRuleset> getRuleset(OsmAnd::RoutingRuleset::Type type) const;
+        std::shared_ptr<OsmAnd::RoutingRuleset> getRuleset(const OsmAnd::RoutingRuleset::Type type) const;
         void addAttribute(const QString& key, const QString& value);
 
     friend class OsmAnd::RoutingConfiguration;

@@ -530,7 +530,7 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::Utilities::rayIntersect( const Poi
     return false;
 }
 
-OSMAND_CORE_API OsmAnd::AreaI OSMAND_CORE_CALL OsmAnd::Utilities::tileBoundingBox31( const TileId& tileId, const ZoomLevel& zoom )
+OSMAND_CORE_API OsmAnd::AreaI OSMAND_CORE_CALL OsmAnd::Utilities::tileBoundingBox31( const TileId tileId, const ZoomLevel zoom )
 {
     AreaI output;
 
@@ -593,7 +593,7 @@ OSMAND_CORE_API OsmAnd::AreaI OSMAND_CORE_CALL OsmAnd::Utilities::areaLeftShift(
     return output;
 }
 
-OSMAND_CORE_API uint32_t OSMAND_CORE_CALL OsmAnd::Utilities::getNextPowerOfTwo( const uint32_t& value )
+OSMAND_CORE_API uint32_t OSMAND_CORE_CALL OsmAnd::Utilities::getNextPowerOfTwo( const uint32_t value )
 {
     if(value == 0)
         return 0;
@@ -611,7 +611,7 @@ OSMAND_CORE_API uint32_t OSMAND_CORE_CALL OsmAnd::Utilities::getNextPowerOfTwo( 
     return n;
 }
 
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::getMetersPerTileUnit( const float& zoom, const double& yTile, const double& unitsPerTile )
+OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::getMetersPerTileUnit( const float zoom, const double yTile, const double unitsPerTile )
 {
     // Equatorial circumference of the Earth in meters
     const static double C = 40075017.0;
@@ -623,7 +623,7 @@ OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::getMetersPerTileUnit(
     return res;
 }
 
-OSMAND_CORE_API OsmAnd::TileId OSMAND_CORE_CALL OsmAnd::Utilities::normalizeTileId( const TileId& input, const ZoomLevel& zoom )
+OSMAND_CORE_API OsmAnd::TileId OSMAND_CORE_CALL OsmAnd::Utilities::normalizeTileId( const TileId input, const ZoomLevel zoom )
 {
     TileId output = input;
 
@@ -645,7 +645,7 @@ OSMAND_CORE_API OsmAnd::TileId OSMAND_CORE_CALL OsmAnd::Utilities::normalizeTile
     return output;
 }
 
-OSMAND_CORE_API OsmAnd::PointI OSMAND_CORE_CALL OsmAnd::Utilities::normalizeCoordinates( const PointI& input, const ZoomLevel& zoom )
+OSMAND_CORE_API OsmAnd::PointI OSMAND_CORE_CALL OsmAnd::Utilities::normalizeCoordinates( const PointI& input, const ZoomLevel zoom )
 {
     PointI output = input;
 
@@ -667,7 +667,7 @@ OSMAND_CORE_API OsmAnd::PointI OSMAND_CORE_CALL OsmAnd::Utilities::normalizeCoor
     return output;
 }
 
-OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( const unsigned int& verticesCount, const PointF* vertices, std::function<void (const PointI&)> fillPoint )
+OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( const unsigned int verticesCount, const PointF* vertices, std::function<void (const PointI&)> fillPoint )
 {
     // Find min-max of Y
     float yMinF, yMaxF;

@@ -107,7 +107,7 @@ namespace OsmAnd {
 
             Concurrent::Task* _requestTask;
         public:
-            TiledResourceEntry(const TileId& tileId, const ZoomLevel& zoom);
+            TiledResourceEntry(const TileId tileId, const ZoomLevel zoom);
             virtual ~TiledResourceEntry();
 
             const std::shared_ptr<MapTile>& sourceData;
@@ -168,7 +168,7 @@ namespace OsmAnd {
             TexturesFilteringMode = 1 << 3,
             PaletteTexturesUsage = 1 << 4,
         };
-        void invalidateCurrentConfiguration(const uint32_t& changesMask);
+        void invalidateCurrentConfiguration(const uint32_t changesMask);
         virtual void validateConfigurationChange(const ConfigurationChange& change) = 0;
         bool updateCurrentConfiguration();
 
@@ -252,23 +252,23 @@ namespace OsmAnd {
 
         virtual unsigned int getVisibleTilesCount();
 
-        virtual void setRasterLayerProvider(const RasterMapLayerId& layerId, const std::shared_ptr<IMapBitmapTileProvider>& tileProvider, bool forcedUpdate = false);
-        virtual void setRasterLayerOpacity(const RasterMapLayerId& layerId, const float& opacity, bool forcedUpdate = false);
+        virtual void setRasterLayerProvider(const RasterMapLayerId layerId, const std::shared_ptr<IMapBitmapTileProvider>& tileProvider, bool forcedUpdate = false);
+        virtual void setRasterLayerOpacity(const RasterMapLayerId layerId, const float opacity, bool forcedUpdate = false);
         virtual void setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& tileProvider, bool forcedUpdate = false);
-        virtual void setElevationDataScaleFactor(const float& factor, bool forcedUpdate = false);
+        virtual void setElevationDataScaleFactor(const float factor, bool forcedUpdate = false);
         virtual void setWindowSize(const PointI& windowSize, bool forcedUpdate = false);
         virtual void setViewport(const AreaI& viewport, bool forcedUpdate = false);
-        virtual void setFieldOfView(const float& fieldOfView, bool forcedUpdate = false);
-        virtual void setDistanceToFog(const float& fogDistance, bool forcedUpdate = false);
-        virtual void setFogOriginFactor(const float& factor, bool forcedUpdate = false);
-        virtual void setFogHeightOriginFactor(const float& factor, bool forcedUpdate = false);
-        virtual void setFogDensity(const float& fogDensity, bool forcedUpdate = false);
+        virtual void setFieldOfView(const float fieldOfView, bool forcedUpdate = false);
+        virtual void setDistanceToFog(const float fogDistance, bool forcedUpdate = false);
+        virtual void setFogOriginFactor(const float factor, bool forcedUpdate = false);
+        virtual void setFogHeightOriginFactor(const float factor, bool forcedUpdate = false);
+        virtual void setFogDensity(const float fogDensity, bool forcedUpdate = false);
         virtual void setFogColor(const FColorRGB& color, bool forcedUpdate = false);
         virtual void setSkyColor(const FColorRGB& color, bool forcedUpdate = false);
-        virtual void setAzimuth(const float& azimuth, bool forcedUpdate = false);
-        virtual void setElevationAngle(const float& elevationAngle, bool forcedUpdate = false);
+        virtual void setAzimuth(const float azimuth, bool forcedUpdate = false);
+        virtual void setElevationAngle(const float elevationAngle, bool forcedUpdate = false);
         virtual void setTarget(const PointI& target31, bool forcedUpdate = false);
-        virtual void setZoom(const float& zoom, bool forcedUpdate = false);
+        virtual void setZoom(const float zoom, bool forcedUpdate = false);
     };
 
 }

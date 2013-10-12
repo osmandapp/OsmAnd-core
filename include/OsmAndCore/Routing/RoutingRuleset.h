@@ -39,7 +39,8 @@ namespace OsmAnd {
     class OSMAND_CORE_API RoutingRuleset
     {
     public:
-        enum Type : int {
+        WEAK_ENUM_EX(Type, int)
+        {
             Invalid = -1,
             RoadPriorities = 0,
             RoadSpeed,
@@ -54,7 +55,7 @@ namespace OsmAnd {
         QList< std::shared_ptr<RoutingRuleExpression> > _expressions;
     protected:
         void registerSelectExpression(const QString& value, const QString& type);
-        RoutingRuleset(RoutingProfile* owner, Type type);
+        RoutingRuleset(RoutingProfile* owner, const Type type);
     public:
         virtual ~RoutingRuleset();
 

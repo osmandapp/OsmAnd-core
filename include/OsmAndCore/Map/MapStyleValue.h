@@ -51,7 +51,7 @@ namespace OsmAnd {
             T dip;
             T px;
 
-            T evaluate(const float& densityFactor) const
+            T evaluate(const float densityFactor) const
             {
                 return dip*densityFactor + px;
             }

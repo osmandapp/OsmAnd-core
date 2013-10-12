@@ -124,22 +124,22 @@ namespace OsmAnd
         }
 
     private:
-        static inline bool equal(const double& a, const double& b)
+        static inline bool equal(const double a, const double b)
         {
             return qFuzzyCompare(a, b);
         }
 
-        static inline bool equal(const float& a, const float& b)
+        static inline bool equal(const float a, const float b)
         {
             return qFuzzyCompare(a, b);
         }
 
-        static inline bool equal(const uint32_t& a, const uint32_t& b)
+        static inline bool equal(const uint32_t a, const uint32_t b)
         {
             return a == b;
         }
 
-        static inline bool equal(const int32_t& a, const int32_t& b)
+        static inline bool equal(const int32_t a, const int32_t b)
         {
             return a == b;
         }
@@ -458,7 +458,7 @@ namespace OsmAnd
             , b(1.0f)
         {}
 
-        FColorRGB(const float& r_, const float& g_, const float& b_)
+        FColorRGB(const float r_, const float g_, const float b_)
             : r(r_)
             , g(g_)
             , b(b_)

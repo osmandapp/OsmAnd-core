@@ -50,7 +50,7 @@ namespace OsmAnd {
         public:
             virtual ~Operator();
 
-            virtual bool evaluate(const QBitArray& types, RoutingRulesetContext* context) const = 0;
+            virtual bool evaluate(const QBitArray& types, RoutingRulesetContext* const context) const = 0;
 
             friend class OsmAnd::RoutingRuleExpression;
         };
@@ -72,16 +72,16 @@ namespace OsmAnd {
         bool validateAllTypesShouldNotBePresent(const QBitArray& types) const;
         bool validateFreeTags(const QBitArray& types) const;
         bool validateNotFreeTags(const QBitArray& types) const;
-        bool evaluateExpressions(const QBitArray& types, RoutingRulesetContext* context) const;
+        bool evaluateExpressions(const QBitArray& types, RoutingRulesetContext* const context) const;
     protected:
-        void registerAndTagValue(const QString& tag, const QString& value, bool negation);
+        void registerAndTagValue(const QString& tag, const QString& value, const bool negation);
         void registerLessCondition(const QString& lvalue, const QString& rvalue, const QString& type);
         void registerLessOrEqualCondition(const QString& lvalue, const QString& rvalue, const QString& type);
         void registerGreaterCondition(const QString& lvalue, const QString& rvalue, const QString& type);
         void registerGreaterOrEqualCondition(const QString& lvalue, const QString& rvalue, const QString& type);
-        void registerAndParamCondition(const QString& param, bool negation);
+        void registerAndParamCondition(const QString& param, const bool negation);
         
-        RoutingRuleExpression(RoutingRuleset* ruleset, const QString& value, const QString& type);
+        RoutingRuleExpression(RoutingRuleset* const ruleset, const QString& value, const QString& type);
 
         QString _type;
     public:

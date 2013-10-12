@@ -44,7 +44,7 @@ namespace OsmAnd {
         const std::unique_ptr<OfflineMapRasterTileProvider_GPU_P> _d;
     protected:
     public:
-        OfflineMapRasterTileProvider_GPU(const std::shared_ptr<OfflineMapDataProvider>& dataProvider, const uint32_t& outputTileSize = 256, const float& density = 1.0f);
+        OfflineMapRasterTileProvider_GPU(const std::shared_ptr<OfflineMapDataProvider>& dataProvider, const uint32_t outputTileSize = 256, const float density = 1.0f);
         virtual ~OfflineMapRasterTileProvider_GPU();
 
         const std::shared_ptr<OfflineMapDataProvider> dataProvider;
@@ -52,7 +52,7 @@ namespace OsmAnd {
         virtual float getTileDensity() const;
         virtual uint32_t getTileSize() const;
 
-        virtual bool obtainTile(const TileId& tileId, const ZoomLevel& zoom, std::shared_ptr<MapTile>& outTile);
+        virtual bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<MapTile>& outTile);
     };
 
 }

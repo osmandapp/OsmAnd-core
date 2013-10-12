@@ -156,7 +156,7 @@ void OsmAnd::ObfPoiSectionReader_P::loadCategories(
 
 void OsmAnd::ObfPoiSectionReader_P::loadAmenities(
     const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
-    const ZoomLevel& zoom, uint32_t zoomDepth /*= 3*/, const AreaI* bbox31 /*= nullptr*/,
+    const ZoomLevel zoom, uint32_t zoomDepth /*= 3*/, const AreaI* bbox31 /*= nullptr*/,
     QSet<uint32_t>* desiredCategories /*= nullptr*/,
     QList< std::shared_ptr<const Model::Amenity> >* amenitiesOut /*= nullptr*/,
     std::function<bool (const std::shared_ptr<const Model::Amenity>&)> visitor /*= nullptr*/,
@@ -173,7 +173,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
     const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
     QSet<uint32_t>* desiredCategories,
     QList< std::shared_ptr<const Model::Amenity> >* amenitiesOut,
-    const ZoomLevel& zoom, uint32_t zoomDepth, const AreaI* bbox31,
+    const ZoomLevel zoom, uint32_t zoomDepth, const AreaI* bbox31,
     std::function<bool (const std::shared_ptr<const Model::Amenity>&)> visitor,
     IQueryController* controller)
 {
@@ -402,7 +402,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesFromTile(
     const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section, Tile* tile,
     QSet<uint32_t>* desiredCategories,
     QList< std::shared_ptr<const Model::Amenity> >* amenitiesOut,
-    const ZoomLevel& zoom, uint32_t zoomDepth, const AreaI* bbox31,
+    const ZoomLevel zoom, uint32_t zoomDepth, const AreaI* bbox31,
     std::function<bool (const std::shared_ptr<const Model::Amenity>&)> visitor,
     IQueryController* controller,
     QSet< uint64_t >* amenitiesToSkip)

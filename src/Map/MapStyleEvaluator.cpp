@@ -12,7 +12,7 @@
 #include "MapObject.h"
 #include "Logging.h"
 
-OsmAnd::MapStyleEvaluator::MapStyleEvaluator( const std::shared_ptr<const MapStyle>& style_, const float& displayDensityFactor_, MapStyleRulesetType ruleset_, const std::shared_ptr<const OsmAnd::Model::MapObject>& mapObject_ /*= std::shared_ptr<const OsmAnd::Model::MapObject>()*/ )
+OsmAnd::MapStyleEvaluator::MapStyleEvaluator( const std::shared_ptr<const MapStyle>& style_, const float displayDensityFactor_, MapStyleRulesetType ruleset_, const std::shared_ptr<const OsmAnd::Model::MapObject>& mapObject_ /*= std::shared_ptr<const OsmAnd::Model::MapObject>()*/ )
     : _d(new MapStyleEvaluator_P(this))
     , style(style_)
     , displayDensityFactor(displayDensityFactor_)
@@ -21,7 +21,7 @@ OsmAnd::MapStyleEvaluator::MapStyleEvaluator( const std::shared_ptr<const MapSty
 {
 }
 
-OsmAnd::MapStyleEvaluator::MapStyleEvaluator( const std::shared_ptr<const MapStyle>& style_, const float& displayDensityFactor_, const std::shared_ptr<const MapStyleRule>& singleRule_ )
+OsmAnd::MapStyleEvaluator::MapStyleEvaluator( const std::shared_ptr<const MapStyle>& style_, const float displayDensityFactor_, const std::shared_ptr<const MapStyleRule>& singleRule_ )
     : _d(new MapStyleEvaluator_P(this))
     , style(style_)
     , displayDensityFactor(displayDensityFactor_)
@@ -35,30 +35,30 @@ OsmAnd::MapStyleEvaluator::~MapStyleEvaluator()
 {
 }
 
-void OsmAnd::MapStyleEvaluator::setValue( const std::shared_ptr<const MapStyleValueDefinition>& ref, const MapStyleValue& value )
+void OsmAnd::MapStyleEvaluator::setValue( const std::shared_ptr<const MapStyleValueDefinition>& ref, const MapStyleValue value )
 {
     _d->_values[ref] = value;
 }
 
-void OsmAnd::MapStyleEvaluator::setBooleanValue( const std::shared_ptr<const MapStyleValueDefinition>& ref, const bool& value )
+void OsmAnd::MapStyleEvaluator::setBooleanValue( const std::shared_ptr<const MapStyleValueDefinition>& ref, const bool value )
 {
     _d->_values[ref].isComplex = false;
     _d->_values[ref].asSimple.asInt = value ? 1 : 0;
 }
 
-void OsmAnd::MapStyleEvaluator::setIntegerValue( const std::shared_ptr<const MapStyleValueDefinition>& ref, const int& value )
+void OsmAnd::MapStyleEvaluator::setIntegerValue( const std::shared_ptr<const MapStyleValueDefinition>& ref, const int value )
 {
     _d->_values[ref].isComplex = false;
     _d->_values[ref].asSimple.asInt = value;
 }
 
-void OsmAnd::MapStyleEvaluator::setIntegerValue( const std::shared_ptr<const MapStyleValueDefinition>& ref, const unsigned int& value )
+void OsmAnd::MapStyleEvaluator::setIntegerValue( const std::shared_ptr<const MapStyleValueDefinition>& ref, const unsigned int value )
 {
     _d->_values[ref].isComplex = false;
     _d->_values[ref].asSimple.asUInt = value;
 }
 
-void OsmAnd::MapStyleEvaluator::setFloatValue( const std::shared_ptr<const MapStyleValueDefinition>& ref, const float& value )
+void OsmAnd::MapStyleEvaluator::setFloatValue( const std::shared_ptr<const MapStyleValueDefinition>& ref, const float value )
 {
     _d->_values[ref].isComplex = false;
     _d->_values[ref].asSimple.asFloat = value;
