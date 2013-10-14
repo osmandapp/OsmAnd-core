@@ -7,8 +7,10 @@ add_subdirectory("${OSMAND_ROOT}/core/externals/libpng" "core/externals/libpng")
 # External : expat
 add_subdirectory("${OSMAND_ROOT}/core/externals/expat" "core/externals/expat")
 
-# External : freetype2
-add_subdirectory("${OSMAND_ROOT}/core/externals/freetype" "core/externals/freetype")
+if(CMAKE_TARGET_OS STREQUAL "linux")
+	# External : freetype2
+	add_subdirectory("${OSMAND_ROOT}/core/externals/freetype" "core/externals/freetype")
+endif()
 
 # External : gif
 add_subdirectory("${OSMAND_ROOT}/core/externals/giflib" "core/externals/giflib")
