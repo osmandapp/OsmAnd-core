@@ -1445,6 +1445,16 @@ float OsmAnd::AtlasMapRenderer_OpenGL_Common::getScaledTileSizeOnScreen()
 
 bool OsmAnd::AtlasMapRenderer_OpenGL_Common::getLocationFromScreenPoint( const PointI& screenPoint, PointI& location31 )
 {
+    PointI64 location;
+    if(!getLocationFromScreenPoint(screenPoint, location))
+        return false;
+    location31 = Utilities::normalizeCoordinates(location, ZoomLevel31);
+
+    return true;
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL_Common::getLocationFromScreenPoint( const PointI& screenPoint, PointI64& location )
+{
     InternalState internalState;
     bool ok = updateInternalState(&internalState, state);
     if(!ok)
@@ -1468,12 +1478,13 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::getLocationFromScreenPoint( const P
 
     auto intersection = nearInWorld + distance*rayD;
     intersection /= static_cast<float>(TileSize3D);
-    auto tileWidth31 = (1u << (ZoomLevel::MaxZoomLevel - state.zoomBase)) - 1;
-    intersection.x = (intersection.x + internalState.targetInTileOffsetN.x + internalState.targetTileId.x) * tileWidth31;
-    intersection.z = (intersection.z + internalState.targetInTileOffsetN.y + internalState.targetTileId.y) * tileWidth31;
-    location31.x = static_cast<int32_t>(intersection.x);
-    location31.y = static_cast<int32_t>(intersection.z);
-    location31 = Utilities::normalizeCoordinates(location31, ZoomLevel31);
-
+    double tileWidth31 = (1u << (ZoomLevel::MaxZoomLevel - state.zoomBase)) - 1;
+    auto x = intersection.x + internalState.targetInTileOffsetN.x + internalState.targetTileId.x;
+    x *= tileWidth31;
+    auto y = intersection.z + internalState.targetInTileOffsetN.y + internalState.targetTileId.y;
+    y *= tileWidth31;
+    location.x = static_cast<int64_t>(x);
+    location.y = static_cast<int64_t>(y);
+    
     return true;
 }

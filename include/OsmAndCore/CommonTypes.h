@@ -354,9 +354,11 @@ namespace OsmAnd
     typedef Point<double> PointD;
     typedef Point<float> PointF;
     typedef Point<int32_t> PointI;
+    typedef Point<int64_t> PointI64;
     typedef Area<double> AreaD;
     typedef Area<float> AreaF;
     typedef Area<int32_t> AreaI;
+    typedef Area<int64_t> AreaI64;
 
     union TileId
     {

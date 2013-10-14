@@ -627,14 +627,14 @@ OSMAND_CORE_API OsmAnd::TileId OSMAND_CORE_CALL OsmAnd::Utilities::normalizeTile
 {
     TileId output = input;
 
-    const auto maxTileIndex = static_cast<signed>(1u << zoom);
+    const auto maxTileIndex = static_cast<int32_t>(1u << zoom);
 
     while(output.x < 0)
         output.x += maxTileIndex;
     while(output.y < 0)
         output.y += maxTileIndex;
 
-    if(zoom < 31)
+    if(zoom < ZoomLevel31)
     {
         while(output.x >= maxTileIndex)
             output.x -= maxTileIndex;
@@ -649,14 +649,14 @@ OSMAND_CORE_API OsmAnd::PointI OSMAND_CORE_CALL OsmAnd::Utilities::normalizeCoor
 {
     PointI output = input;
 
-    const auto maxTileIndex = static_cast<signed>(1u << zoom);
+    const auto maxTileIndex = static_cast<int32_t>(1u << zoom);
 
     while(output.x < 0)
         output.x += maxTileIndex;
     while(output.y < 0)
         output.y += maxTileIndex;
 
-    if(zoom < 31)
+    if(zoom < ZoomLevel31)
     {
         while(output.x >= maxTileIndex)
             output.x -= maxTileIndex;
@@ -665,6 +665,28 @@ OSMAND_CORE_API OsmAnd::PointI OSMAND_CORE_CALL OsmAnd::Utilities::normalizeCoor
     }
 
     return output;
+}
+
+OSMAND_CORE_API OsmAnd::PointI OSMAND_CORE_CALL OsmAnd::Utilities::normalizeCoordinates( const PointI64& input, const ZoomLevel zoom )
+{
+    PointI64 output = input;
+
+    const auto maxTileIndex = static_cast<int64_t>(1ull << zoom);
+
+    while(output.x < 0)
+        output.x += maxTileIndex;
+    while(output.y < 0)
+        output.y += maxTileIndex;
+
+    if(zoom < ZoomLevel31)
+    {
+        while(output.x >= maxTileIndex)
+            output.x -= maxTileIndex;
+        while(output.y >= maxTileIndex)
+            output.y -= maxTileIndex;
+    }
+
+    return PointI(static_cast<int32_t>(output.x), static_cast<int32_t>(output.y));
 }
 
 OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( const unsigned int verticesCount, const PointF* vertices, std::function<void (const PointI&)> fillPoint )

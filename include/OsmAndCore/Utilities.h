@@ -91,6 +91,7 @@ namespace OsmAnd {
         OSMAND_CORE_API double OSMAND_CORE_CALL getMetersPerTileUnit(const float zoom, const double yTile, const double unitsPerTile);
         OSMAND_CORE_API TileId OSMAND_CORE_CALL normalizeTileId(const TileId input, const ZoomLevel zoom);
         OSMAND_CORE_API PointI OSMAND_CORE_CALL normalizeCoordinates(const PointI& input, const ZoomLevel zoom);
+        OSMAND_CORE_API PointI OSMAND_CORE_CALL normalizeCoordinates(const PointI64& input, const ZoomLevel zoom);
         OSMAND_CORE_API void OSMAND_CORE_CALL scanlineFillPolygon(const unsigned int verticesCount, const PointF* const vertices, std::function<void (const PointI&)> fillPoint);
 
         inline int qAbsCeil(qreal v)
