@@ -133,7 +133,19 @@ namespace OsmAnd {
                 }
                 else
                 {
-                    //TODO:acceleration until halfway, then deceleration
+                    const auto halfDuration = 0.5f * duration;
+                    const auto halfDelta = 0.5f * delta;
+                    const auto tn = t / halfDuration;
+                    if(tn < 1.0f)
+                    {
+                        // Ease-in part
+                        calculateValue(tn * halfDuration, initial, halfDelta, halfDuration, easingIn, MapAnimatorEasingType::None, value);
+                    }
+                    else
+                    {
+                        // Ease-out part
+                        calculateValue((tn - 1.0f) * halfDuration, initial + halfDelta, halfDelta, halfDuration, MapAnimatorEasingType::None, easingOut, value);
+                    }
                 }
             }
 
@@ -226,7 +238,19 @@ namespace OsmAnd {
                 }
                 else
                 {
-                    //TODO:acceleration until halfway, then deceleration
+                    const auto halfDuration = 0.5f * duration;
+                    const Point<T> halfDelta(0.5f * delta.x, 0.5f * delta.y);
+                    const auto tn = t / halfDuration;
+                    if(tn < 1.0f)
+                    {
+                        // Ease-in part
+                        calculateValue(tn * halfDuration, initial, halfDelta, halfDuration, easingIn, MapAnimatorEasingType::None, value);
+                    }
+                    else
+                    {
+                        // Ease-out part
+                        calculateValue((tn - 1.0f) * halfDuration, initial + halfDelta, halfDelta, halfDuration, MapAnimatorEasingType::None, easingOut, value);
+                    }
                 }
             }
 
