@@ -146,16 +146,52 @@ void OsmAnd::MapAnimator::animateTargetWith( const PointD& velocity, const Point
 
 void OsmAnd::MapAnimator::animateAzimuthBy( const float deltaValue, const float duration, MapAnimatorEasingType easingIn /*= MapAnimatorEasingType::Quadratic*/, MapAnimatorEasingType easingOut /*= MapAnimatorEasingType::Quadratic*/ )
 {
+    std::shared_ptr<MapAnimator_P::AbstractAnimation> newAnimation(new MapAnimator_P::Animation<float>(deltaValue, duration, easingIn, easingOut,
+        [this]()
+        {
+            return _d->_renderer->state.azimuth;
+        },
+        [this](const float& newValue)
+        {
+            _d->_renderer->setAzimuth(newValue);
+        }));
+
+    {
+        QMutexLocker scopedLocker(&_d->_animationsMutex);
+        _d->_animations.push_back(newAnimation);
+    }
 }
 
 void OsmAnd::MapAnimator::animateAzimuthWith( const float velocity, const float deceleration )
 {
+    const auto duration = velocity / deceleration;
+    const auto deltaValue = (3.0f / 2.0f)*(velocity*velocity/deceleration);
+
+    animateAzimuthBy(deltaValue, duration, MapAnimatorEasingType::None, MapAnimatorEasingType::Quadratic);
 }
 
 void OsmAnd::MapAnimator::animateElevationAngleBy( const float deltaValue, const float duration, MapAnimatorEasingType easingIn /*= MapAnimatorEasingType::Quadratic*/, MapAnimatorEasingType easingOut /*= MapAnimatorEasingType::Quadratic*/ )
 {
+    std::shared_ptr<MapAnimator_P::AbstractAnimation> newAnimation(new MapAnimator_P::Animation<float>(deltaValue, duration, easingIn, easingOut,
+        [this]()
+        {
+            return _d->_renderer->state.elevationAngle;
+        },
+        [this](const float& newValue)
+        {
+            _d->_renderer->setElevationAngle(newValue);
+        }));
+
+    {
+        QMutexLocker scopedLocker(&_d->_animationsMutex);
+        _d->_animations.push_back(newAnimation);
+    }
 }
 
 void OsmAnd::MapAnimator::animateElevationAngleWith( const float velocity, const float deceleration )
 {
+    const auto duration = velocity / deceleration;
+    const auto deltaValue = (3.0f / 2.0f)*(velocity*velocity/deceleration);
+
+    animateElevationAngleBy(deltaValue, duration, MapAnimatorEasingType::None, MapAnimatorEasingType::Quadratic);
 }
