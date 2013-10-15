@@ -5,6 +5,7 @@
 #include <QMutableListIterator>
 
 #include <IMapRenderer.h>
+#include <Logging.h>
 #include <Utilities.h>
 
 OsmAnd::MapAnimator::MapAnimator()
@@ -91,8 +92,8 @@ void OsmAnd::MapAnimator::animateZoomBy( const float deltaValue, const float dur
 
 void OsmAnd::MapAnimator::animateZoomWith( const float velocity, const float deceleration )
 {
-    const auto duration = velocity / deceleration;
-    const auto deltaValue = (3.0f / 2.0f)*(velocity*velocity/deceleration);
+    const auto duration = qAbs(velocity / deceleration);
+    const auto deltaValue = 0.5f * velocity * duration;
 
     animateZoomBy(deltaValue, duration, MapAnimatorEasingType::None, MapAnimatorEasingType::Quadratic);
 }
@@ -138,8 +139,8 @@ void OsmAnd::MapAnimator::animateTargetWith( const PointD& velocity, const Point
 {
     const auto duration = qSqrt(velocity.x*velocity.x + velocity.y*velocity.y) / qSqrt(deceleration.x*deceleration.x + deceleration.y*deceleration.y);
     const PointI64 deltaValue(
-        (3.0 / 2.0)*(velocity.x*velocity.x/deceleration.x),
-        (3.0 / 2.0)*(velocity.y*velocity.y/deceleration.y));
+        0.5f * velocity.x * duration,
+        0.5f * velocity.y * duration);
 
     animateTargetBy(deltaValue, duration, MapAnimatorEasingType::None, MapAnimatorEasingType::Quadratic);
 }
@@ -164,8 +165,8 @@ void OsmAnd::MapAnimator::animateAzimuthBy( const float deltaValue, const float 
 
 void OsmAnd::MapAnimator::animateAzimuthWith( const float velocity, const float deceleration )
 {
-    const auto duration = velocity / deceleration;
-    const auto deltaValue = (3.0f / 2.0f)*(velocity*velocity/deceleration);
+    const auto duration = qAbs(velocity / deceleration);
+    const auto deltaValue = 0.5f * velocity * duration;
 
     animateAzimuthBy(deltaValue, duration, MapAnimatorEasingType::None, MapAnimatorEasingType::Quadratic);
 }
@@ -190,8 +191,8 @@ void OsmAnd::MapAnimator::animateElevationAngleBy( const float deltaValue, const
 
 void OsmAnd::MapAnimator::animateElevationAngleWith( const float velocity, const float deceleration )
 {
-    const auto duration = velocity / deceleration;
-    const auto deltaValue = (3.0f / 2.0f)*(velocity*velocity/deceleration);
+    const auto duration = qAbs(velocity / deceleration);
+    const auto deltaValue = 0.5f * velocity * duration;
 
     animateElevationAngleBy(deltaValue, duration, MapAnimatorEasingType::None, MapAnimatorEasingType::Quadratic);
 }
