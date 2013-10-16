@@ -42,7 +42,7 @@ namespace OsmAnd {
     protected:
     public:
         OnlineMapRasterTileProvider(const QString& id, const QString& urlPattern,
-            const ZoomLevel minZoom = ZoomLevel0, const ZoomLevel maxZoom = ZoomLevel31,
+            const ZoomLevel minZoom = MinZoomLevel, const ZoomLevel maxZoom = MaxZoomLevel,
             const uint32_t maxConcurrentDownloads = 1, const uint32_t providerTileSize = 256,
             const MapBitmapTile::AlphaChannelData& alphaChannelData = MapBitmapTile::AlphaChannelData::Undefined);
         virtual ~OnlineMapRasterTileProvider();

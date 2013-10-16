@@ -8,8 +8,8 @@
 OsmAnd::OnlineMapRasterTileProvider::OnlineMapRasterTileProvider(
     const QString& id_,
     const QString& urlPattern_,
-    const ZoomLevel maxZoom_ /*= 31*/,
-    const ZoomLevel minZoom_ /*= 0*/,
+    const ZoomLevel minZoom_ /*= MinZoomLevel*/,
+    const ZoomLevel maxZoom_ /*= MaxZoomLevel*/,
     const uint32_t maxConcurrentDownloads_ /*= 1*/,
     const uint32_t providerTileSize_ /*= 256*/,
     const MapBitmapTile::AlphaChannelData& alphaChannelData_ /*= MapBitmapTile::AlphaChannelData::Undefined*/)
