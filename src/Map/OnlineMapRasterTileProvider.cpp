@@ -44,6 +44,13 @@ void OsmAnd::OnlineMapRasterTileProvider::setNetworkAccessPermission( bool allow
 
 bool OsmAnd::OnlineMapRasterTileProvider::obtainTile( const TileId tileId, const ZoomLevel zoom, std::shared_ptr<MapTile>& outTile )
 {
+    // Check provider can supply this zoom level
+    if(zoom > maxZoom || zoom < minZoom)
+    {
+        outTile.reset();
+        return true;
+    }
+
     return _d->obtainTile(tileId, zoom, outTile);
 }
 
@@ -62,7 +69,7 @@ std::shared_ptr<OsmAnd::IMapBitmapTileProvider> OsmAnd::OnlineMapRasterTileProvi
 {
     auto provider = new OsmAnd::OnlineMapRasterTileProvider(
         "mapnik", "http://mapnik.osmand.net/${zoom}/${x}/${y}.png",
-        ZoomLevel0, ZoomLevel18, 2,
+        ZoomLevel0, ZoomLevel19, 2,
         256, MapBitmapTile::AlphaChannelData::NotPresent);
     return std::shared_ptr<OsmAnd::IMapBitmapTileProvider>(static_cast<OsmAnd::IMapBitmapTileProvider*>(provider));
 }

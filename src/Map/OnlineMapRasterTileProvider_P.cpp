@@ -54,7 +54,6 @@ bool OsmAnd::OnlineMapRasterTileProvider_P::obtainTile( const TileId tileId, con
             return true;
         }
 
-        //NOTE: Here may be issue that SKIA can not handle opening files on different platforms correctly
         auto bitmap = new SkBitmap();
         SkFILEStream fileStream(qPrintable(localFile.absoluteFilePath()));
         if(!SkImageDecoder::DecodeStream(&fileStream, bitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))

@@ -49,8 +49,8 @@ namespace OsmAnd {
 
         const QString id;
         const QString urlPattern;
-        const uint32_t minZoom;
-        const uint32_t maxZoom;
+        const ZoomLevel minZoom;
+        const ZoomLevel maxZoom;
         const uint32_t maxConcurrentDownloads;
         const uint32_t providerTileSize;
         const MapBitmapTile::AlphaChannelData alphaChannelData;
