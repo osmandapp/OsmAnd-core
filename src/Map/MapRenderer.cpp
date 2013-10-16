@@ -368,21 +368,13 @@ bool OsmAnd::MapRenderer::updateInternalState(InternalState* internalState, cons
     internalState->targetTileId.y = state.target31.y >> (ZoomLevel::MaxZoomLevel - state.zoomBase);
 
     // Compute in-tile offset
-    if(state.zoomBase == ZoomLevel::MaxZoomLevel)
-    {
-        internalState->targetInTileOffsetN.x = 0;
-        internalState->targetInTileOffsetN.y = 0;
-    }
-    else
-    {
-        PointI targetTile31;
-        targetTile31.x = internalState->targetTileId.x << (ZoomLevel::MaxZoomLevel - state.zoomBase);
-        targetTile31.y = internalState->targetTileId.y << (ZoomLevel::MaxZoomLevel - state.zoomBase);
+    PointI targetTile31;
+    targetTile31.x = internalState->targetTileId.x << (ZoomLevel::MaxZoomLevel - state.zoomBase);
+    targetTile31.y = internalState->targetTileId.y << (ZoomLevel::MaxZoomLevel - state.zoomBase);
 
-        auto tileWidth31 = (1u << (ZoomLevel::MaxZoomLevel - state.zoomBase)) - 1;
-        internalState->targetInTileOffsetN.x = static_cast<float>(state.target31.x - targetTile31.x) / tileWidth31;
-        internalState->targetInTileOffsetN.y = static_cast<float>(state.target31.y - targetTile31.y) / tileWidth31;
-    }
+    const auto tileWidth31 = (1u << (ZoomLevel::MaxZoomLevel - state.zoomBase));
+    internalState->targetInTileOffsetN.x = static_cast<float>(state.target31.x - targetTile31.x) / tileWidth31;
+    internalState->targetInTileOffsetN.y = static_cast<float>(state.target31.y - targetTile31.y) / tileWidth31;
 
     return true;
 }
