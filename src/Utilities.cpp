@@ -627,20 +627,24 @@ OSMAND_CORE_API OsmAnd::TileId OSMAND_CORE_CALL OsmAnd::Utilities::normalizeTile
 {
     TileId output = input;
 
-    const auto maxTileIndex = static_cast<int32_t>(1u << zoom);
+    const auto tilesCount = static_cast<int32_t>(1u << zoom);
 
     while(output.x < 0)
-        output.x += maxTileIndex;
+        output.x += tilesCount;
     while(output.y < 0)
-        output.y += maxTileIndex;
+        output.y += tilesCount;
 
+    // Max zoom level (31) is skipped, since value stored in int31 can not be more than tilesCount(31)
     if(zoom < ZoomLevel31)
     {
-        while(output.x >= maxTileIndex)
-            output.x -= maxTileIndex;
-        while(output.y >= maxTileIndex)
-            output.y -= maxTileIndex;
+        while(output.x >= tilesCount)
+            output.x -= tilesCount;
+        while(output.y >= tilesCount)
+            output.y -= tilesCount;
     }
+
+    assert(output.x >= 0 && ((zoom < ZoomLevel31 && output.x < tilesCount) || (zoom == ZoomLevel31)));
+    assert(output.x >= 0 && ((zoom < ZoomLevel31 && output.y < tilesCount) || (zoom == ZoomLevel31)));
 
     return output;
 }
@@ -649,20 +653,24 @@ OSMAND_CORE_API OsmAnd::PointI OSMAND_CORE_CALL OsmAnd::Utilities::normalizeCoor
 {
     PointI output = input;
 
-    const auto maxTileIndex = static_cast<int32_t>(1u << zoom);
+    const auto tilesCount = static_cast<int32_t>(1u << zoom);
 
     while(output.x < 0)
-        output.x += maxTileIndex;
+        output.x += tilesCount;
     while(output.y < 0)
-        output.y += maxTileIndex;
+        output.y += tilesCount;
 
+    // Max zoom level (31) is skipped, since value stored in int31 can not be more than tilesCount(31)
     if(zoom < ZoomLevel31)
     {
-        while(output.x >= maxTileIndex)
-            output.x -= maxTileIndex;
-        while(output.y >= maxTileIndex)
-            output.y -= maxTileIndex;
+        while(output.x >= tilesCount)
+            output.x -= tilesCount;
+        while(output.y >= tilesCount)
+            output.y -= tilesCount;
     }
+
+    assert(output.x >= 0 && ((zoom < ZoomLevel31 && output.x < tilesCount) || (zoom == ZoomLevel31)));
+    assert(output.x >= 0 && ((zoom < ZoomLevel31 && output.y < tilesCount) || (zoom == ZoomLevel31)));
 
     return output;
 }
@@ -671,20 +679,20 @@ OSMAND_CORE_API OsmAnd::PointI OSMAND_CORE_CALL OsmAnd::Utilities::normalizeCoor
 {
     PointI64 output = input;
 
-    const auto maxTileIndex = static_cast<int64_t>(1ull << zoom);
+    const auto tilesCount = static_cast<int64_t>(1ull << zoom);
 
     while(output.x < 0)
-        output.x += maxTileIndex;
+        output.x += tilesCount;
     while(output.y < 0)
-        output.y += maxTileIndex;
+        output.y += tilesCount;
 
-    if(zoom < ZoomLevel31)
-    {
-        while(output.x >= maxTileIndex)
-            output.x -= maxTileIndex;
-        while(output.y >= maxTileIndex)
-            output.y -= maxTileIndex;
-    }
+    while(output.x >= tilesCount)
+        output.x -= tilesCount;
+    while(output.y >= tilesCount)
+        output.y -= tilesCount;
+
+    assert(output.x >= 0 && output.x < tilesCount);
+    assert(output.y >= 0 && output.y < tilesCount);
 
     return PointI(static_cast<int32_t>(output.x), static_cast<int32_t>(output.y));
 }
