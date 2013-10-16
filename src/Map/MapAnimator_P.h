@@ -409,7 +409,7 @@ namespace OsmAnd {
                     _initialValueCaptured = true;
 
                     // Return false to indicate that processing has not yet finished
-                    return false;
+                    return (_timePassed >= duration);
                 }
 
                 // Calculate time
