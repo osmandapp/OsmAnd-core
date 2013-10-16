@@ -416,14 +416,18 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
     GL_CHECK_PRESENT(glDisableVertexAttribArray);
 
     // Count active raster tile providers
-    auto activeRasterTileProvidersCount = 1;
-    for(int layerIdx = 1, layerId = static_cast<int>(RasterMapLayerId::BaseLayer) + 1; layerIdx < RasterMapLayersCount; layerIdx++, layerId++)
+    auto activeRasterTileProvidersCount = 0u;
+    for(int layerIdx = 0, layerId = static_cast<int>(RasterMapLayerId::BaseLayer); layerIdx < RasterMapLayersCount; layerIdx++, layerId++)
     {
         if(!currentState.rasterLayerProviders[layerId])
             continue;
 
         activeRasterTileProvidersCount++;
     }
+
+    // If there is no active raster tile providers at all, or no base layer, do not perform anything
+    if(activeRasterTileProvidersCount == 0 || !currentState.rasterLayerProviders[static_cast<int>(RasterMapLayerId::BaseLayer)])
+        return;
 
     // Get proper program variation
     const auto& stageVariation = _rasterMapStage.variations[activeRasterTileProvidersCount - 1];
