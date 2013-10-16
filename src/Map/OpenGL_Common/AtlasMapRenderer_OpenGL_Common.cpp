@@ -1479,15 +1479,15 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::getLocationFromScreenPoint( const P
     auto intersection = nearInWorld + distance*rayD;
     intersection /= static_cast<float>(TileSize3D);
 
-    double x = intersection.x + internalState.targetInTileOffsetN.x + internalState.targetTileId.x;
-    double y = intersection.z + internalState.targetInTileOffsetN.y + internalState.targetTileId.y;
+    double x = intersection.x + internalState.targetInTileOffsetN.x;
+    double y = intersection.z + internalState.targetInTileOffsetN.y;
 
     const auto tileWidth31 = (1u << (ZoomLevel::MaxZoomLevel - state.zoomBase));
     x *= tileWidth31;
     y *= tileWidth31;
 
-    location.x = static_cast<int64_t>(x);
-    location.y = static_cast<int64_t>(y);
+    location.x = static_cast<int64_t>(x) + internalState.targetTileId.x*tileWidth31;
+    location.y = static_cast<int64_t>(y) + internalState.targetTileId.y*tileWidth31;
     
     return true;
 }
