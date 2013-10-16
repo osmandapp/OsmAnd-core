@@ -120,14 +120,13 @@ namespace OsmAnd {
                         GLint mProjectionView;
                         GLint mapScale;
                         GLint targetInTilePosN;
-                        GLint targetTile;
                         GLint distanceFromCameraToTarget;
                         GLint cameraElevationAngleN;
                         GLint groundCameraPosition;
                         GLint scaleToRetainProjectedSize;
 
                         // Per-tile data
-                        GLint tile;
+                        GLint tileCoordsOffset;
                         GLint elevationData_k;
                         GLint elevationData_sampler;
                         GLint elevationData_upperMetersPerUnit;

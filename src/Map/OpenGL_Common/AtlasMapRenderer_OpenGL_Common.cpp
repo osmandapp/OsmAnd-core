@@ -147,14 +147,13 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeRasterMapStage()
         // Parameters: common data
         "uniform mat4 param_vs_mProjectionView;                                                                             ""\n"
         "uniform vec2 param_vs_targetInTilePosN;                                                                            ""\n"
-        "uniform ivec2 param_vs_targetTile;                                                                                 ""\n"
         "uniform float param_vs_distanceFromCameraToTarget;                                                                 ""\n"
         "uniform float param_vs_cameraElevationAngleN;                                                                      ""\n"
         "uniform vec2 param_vs_groundCameraPosition;                                                                        ""\n"
         "uniform float param_vs_scaleToRetainProjectedSize;                                                                 ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-tile data
-        "uniform ivec2 param_vs_tile;                                                                                       ""\n"
+        "uniform ivec2 param_vs_tileCoordsOffset;                                                                           ""\n"
         "uniform float param_vs_elevationData_k;                                                                            ""\n"
         "uniform float param_vs_elevationData_upperMetersPerUnit;                                                           ""\n"
         "uniform float param_vs_elevationData_lowerMetersPerUnit;                                                           ""\n"
@@ -194,9 +193,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeRasterMapStage()
         "    vec4 v = vec4(in_vs_vertexPosition.x, 0.0, in_vs_vertexPosition.y, 1.0);                                       ""\n"
         "                                                                                                                   ""\n"
         //   Shift vertex to it's proper position
-        "    float xOffset = float(param_vs_tile.x - param_vs_targetTile.x) - param_vs_targetInTilePosN.x;                  ""\n"
+        "    float xOffset = float(param_vs_tileCoordsOffset.x) - param_vs_targetInTilePosN.x;                              ""\n"
         "    v.x += xOffset * %TileSize3D%.0;                                                                               ""\n"
-        "    float yOffset = float(param_vs_tile.y - param_vs_targetTile.y) - param_vs_targetInTilePosN.y;                  ""\n"
+        "    float yOffset = float(param_vs_tileCoordsOffset.y) - param_vs_targetInTilePosN.y;                              ""\n"
         "    v.z += yOffset * %TileSize3D%.0;                                                                               ""\n"
         "                                                                                                                   ""\n"
         //   Process each tile layer texture coordinates (except elevation)
@@ -350,12 +349,11 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeRasterMapStage()
         }
         renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.mProjectionView, "param_vs_mProjectionView", GLShaderVariableType::Uniform);
         renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.targetInTilePosN, "param_vs_targetInTilePosN", GLShaderVariableType::Uniform);
-        renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.targetTile, "param_vs_targetTile", GLShaderVariableType::Uniform);
         renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.distanceFromCameraToTarget, "param_vs_distanceFromCameraToTarget", GLShaderVariableType::Uniform);
         renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.cameraElevationAngleN, "param_vs_cameraElevationAngleN", GLShaderVariableType::Uniform);
         renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.groundCameraPosition, "param_vs_groundCameraPosition", GLShaderVariableType::Uniform);
         renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.scaleToRetainProjectedSize, "param_vs_scaleToRetainProjectedSize", GLShaderVariableType::Uniform);
-        renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.tile, "param_vs_tile", GLShaderVariableType::Uniform);
+        renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.tileCoordsOffset, "param_vs_tileCoordsOffset", GLShaderVariableType::Uniform);
         renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationData_k, "param_vs_elevationData_k", GLShaderVariableType::Uniform);
         renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationData_upperMetersPerUnit, "param_vs_elevationData_upperMetersPerUnit", GLShaderVariableType::Uniform);
         renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationData_lowerMetersPerUnit, "param_vs_elevationData_lowerMetersPerUnit", GLShaderVariableType::Uniform);
@@ -449,10 +447,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
     glUniform2f(stageVariation.vs.param.targetInTilePosN, _internalState.targetInTileOffsetN.x, _internalState.targetInTileOffsetN.y);
     GL_CHECK_RESULT;
 
-    // Set target tile
-    glUniform2i(stageVariation.vs.param.targetTile, _internalState.targetTileId.x, _internalState.targetTileId.y);
-    GL_CHECK_RESULT;
-
     // Set distance from camera to target
     glUniform1f(stageVariation.vs.param.distanceFromCameraToTarget, _internalState.distanceFromCameraToTarget);
     GL_CHECK_RESULT;
@@ -520,8 +514,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
         // Get normalized tile index
         auto tileIdN = Utilities::normalizeTileId(tileId, currentState.zoomBase);
 
-        // Set tile id
-        glUniform2i(stageVariation.vs.param.tile, tileId.x, tileId.y);
+        // Set tile coordinates offset
+        glUniform2i(stageVariation.vs.param.tileCoordsOffset,
+            tileId.x - _internalState.targetTileId.x,
+            tileId.y - _internalState.targetTileId.y);
         GL_CHECK_RESULT;
 
         // Set elevation data
