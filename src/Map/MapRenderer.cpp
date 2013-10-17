@@ -363,18 +363,21 @@ bool OsmAnd::MapRenderer::doPrepareFrame()
 
 bool OsmAnd::MapRenderer::updateInternalState(InternalState* internalState, const MapRendererState& state)
 {
+    const auto zoomDiff = ZoomLevel::MaxZoomLevel - state.zoomBase;
+
     // Get target tile id
-    internalState->targetTileId.x = state.target31.x >> (ZoomLevel::MaxZoomLevel - state.zoomBase);
-    internalState->targetTileId.y = state.target31.y >> (ZoomLevel::MaxZoomLevel - state.zoomBase);
+    internalState->targetTileId.x = state.target31.x >> zoomDiff;
+    internalState->targetTileId.y = state.target31.y >> zoomDiff;
 
     // Compute in-tile offset
     PointI targetTile31;
-    targetTile31.x = internalState->targetTileId.x << (ZoomLevel::MaxZoomLevel - state.zoomBase);
-    targetTile31.y = internalState->targetTileId.y << (ZoomLevel::MaxZoomLevel - state.zoomBase);
+    targetTile31.x = internalState->targetTileId.x << zoomDiff;
+    targetTile31.y = internalState->targetTileId.y << zoomDiff;
 
-    const auto tileWidth31 = (1u << (ZoomLevel::MaxZoomLevel - state.zoomBase));
-    internalState->targetInTileOffsetN.x = static_cast<float>(state.target31.x - targetTile31.x) / tileWidth31;
-    internalState->targetInTileOffsetN.y = static_cast<float>(state.target31.y - targetTile31.y) / tileWidth31;
+    const auto tileWidth31 = 1u << zoomDiff;
+    const auto inTileOffset = state.target31 - targetTile31;
+    internalState->targetInTileOffsetN.x = static_cast<float>(inTileOffset.x) / tileWidth31;
+    internalState->targetInTileOffsetN.y = static_cast<float>(inTileOffset.y) / tileWidth31;
 
     return true;
 }
@@ -1191,22 +1194,16 @@ void OsmAnd::MapRenderer::setElevationAngle( const float elevationAngle, bool fo
     notifyRequestedStateWasUpdated();
 }
 
-void OsmAnd::MapRenderer::setTarget( const PointI& target31, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setTarget( const PointI& target31_, bool forcedUpdate /*= false*/ )
 {
     QWriteLocker scopedLocker(&_requestedStateLock);
 
-    auto wrappedTarget31 = target31;
-    const auto maxTile31Index = static_cast<signed>(1u << 31);
-    if(wrappedTarget31.x < 0)
-        wrappedTarget31.x += maxTile31Index;
-    if(wrappedTarget31.y < 0)
-        wrappedTarget31.y += maxTile31Index;
-
-    bool update = forcedUpdate || (_requestedState.target31 != wrappedTarget31);
+    const auto target31 = Utilities::normalizeCoordinates(target31_, ZoomLevel31);
+    bool update = forcedUpdate || (_requestedState.target31 != target31);
     if(!update)
         return;
 
-    _requestedState.target31 = wrappedTarget31;
+    _requestedState.target31 = target31;
 
     notifyRequestedStateWasUpdated();
 }
