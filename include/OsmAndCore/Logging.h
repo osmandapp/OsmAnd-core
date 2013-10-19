@@ -14,7 +14,7 @@ namespace OsmAnd
     };
 
     OSMAND_CORE_API void OSMAND_CORE_CALL LogPrintf(LogSeverityLevel level, const char* format, ...);
-	OSMAND_CORE_API void OSMAND_CORE_CALL LogFlush();
+    OSMAND_CORE_API void OSMAND_CORE_CALL LogFlush();
 }
 
 #endif // __LOGGING_H_

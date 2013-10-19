@@ -69,7 +69,7 @@ void OsmAnd::ObfDataInterface::obtainMapObjects( QList< std::shared_ptr<const Os
 
             // Read objects from each map section
             const auto& mapSection = *itMapSection;
-            OsmAnd::ObfMapSectionReader::loadMapObjects(obfReader, mapSection, zoom, &area31, resultOut, foundationOut, nullptr, controller);
+            OsmAnd::ObfMapSectionReader::loadMapObjects(obfReader, mapSection, zoom, &area31, resultOut, foundationOut, nullptr, nullptr, controller);
         }
     }
 }

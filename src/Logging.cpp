@@ -8,10 +8,10 @@
 #include <android/log.h>
 void OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel level, const char* format, ...)
 {
-	va_list args;
-	va_start(args, format);
-	int androidLevel;
-	switch(level)
+    va_list args;
+    va_start(args, format);
+    int androidLevel;
+    switch(level)
     {
     case LogSeverityLevel::Error:
         androidLevel = ANDROID_LOG_ERROR;
@@ -27,7 +27,7 @@ void OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel level, const char* format, ...)
         break;
     }
     __android_log_vprint(androidLevel, "net.osmand:native", format, args);
-	va_end(args);
+    va_end(args);
 }
 
 void OsmAnd::LogFlush()
@@ -42,20 +42,20 @@ void OsmAnd::LogFlush()
 
 extern void OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel level, const char* msg, ...)
 {
-	va_list args;
-	va_start( args, msg);
-	if(level == LogSeverityLevel::Error) {
-		printf("ERROR: ");
-	} else if(level == LogSeverityLevel::Info) {
-		printf("INFO: ");
-	} else if(level == LogSeverityLevel::Warning) {
-		printf("WARN: ");
-	} else {
-		printf("DEBUG: ");
-	}
-	vprintf(msg, args);
+    va_list args;
+    va_start( args, msg);
+    if(level == LogSeverityLevel::Error) {
+        printf("ERROR: ");
+    } else if(level == LogSeverityLevel::Info) {
+        printf("INFO: ");
+    } else if(level == LogSeverityLevel::Warning) {
+        printf("WARN: ");
+    } else {
+        printf("DEBUG: ");
+    }
+    vprintf(msg, args);
     printf("\n");
-	va_end(args);   
+    va_end(args);
 }
 
 
@@ -69,15 +69,15 @@ void OsmAnd::LogFlush()
 void OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel level, const char* format, ...)
 {
     va_list args;
-	va_start(args, format);
+    va_start(args, format);
     int len = vsnprintf(nullptr, 0, format, args);
     char* buffer = new char[len + 1];
     vsnprintf(buffer, len, format, args);
     buffer[len] = 0;
     OutputDebugStringA(buffer);
     OutputDebugStringA("\n");
-	delete[] buffer;
-	va_end(args);
+    delete[] buffer;
+    va_end(args);
 }
 
 #endif
