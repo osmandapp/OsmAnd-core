@@ -192,8 +192,12 @@ int updatePaint(RenderingRuleSearchRequest* req, SkPaint* paint, int ind, int ar
         if (shader.size() > 0)
         {
             SkBitmap* bmp = getCachedBitmap(rc, shader);
-            if (bmp != NULL)
+            if (bmp != NULL) {
                 paint->setShader(new SkBitmapProcShader(*bmp, SkShader::kRepeat_TileMode, SkShader::kRepeat_TileMode))->unref();
+                if(color == 0) {
+					paint->setColor(0xffffffff);                	
+                }
+            }
         }
     }
 

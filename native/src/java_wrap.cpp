@@ -162,18 +162,16 @@ void fillRenderingAttributes(JNIRenderingContext& rc, RenderingRuleSearchRequest
 #ifdef ANDROID_BUILD
 #include <android/bitmap.h>
 
-extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_plus_render_NativeOsmandLibrary_generateRenderingDirect( JNIEnv* ienv, jobject obj,
-    jobject renderingContext, jlong searchResult, jobject targetBitmap, jobject renderingRuleSearchRequest) {
+// libJniGraphics interface
+typedef int (*PTR_AndroidBitmap_getInfo)(JNIEnv*, jobject, AndroidBitmapInfo*);
+typedef int (*PTR_AndroidBitmap_lockPixels)(JNIEnv*, jobject, void**);
+typedef int (*PTR_AndroidBitmap_unlockPixels)(JNIEnv*, jobject);
+static PTR_AndroidBitmap_getInfo dl_AndroidBitmap_getInfo = 0;
+static PTR_AndroidBitmap_lockPixels dl_AndroidBitmap_lockPixels = 0;
+static PTR_AndroidBitmap_unlockPixels dl_AndroidBitmap_unlockPixels = 0;
+static void* module_libjnigraphics = 0;
 
-	// libJniGraphics interface
-	typedef int (*PTR_AndroidBitmap_getInfo)(JNIEnv*, jobject, AndroidBitmapInfo*);
-	typedef int (*PTR_AndroidBitmap_lockPixels)(JNIEnv*, jobject, void**);
-	typedef int (*PTR_AndroidBitmap_unlockPixels)(JNIEnv*, jobject);
-	static PTR_AndroidBitmap_getInfo dl_AndroidBitmap_getInfo = 0;
-	static PTR_AndroidBitmap_lockPixels dl_AndroidBitmap_lockPixels = 0;
-	static PTR_AndroidBitmap_unlockPixels dl_AndroidBitmap_unlockPixels = 0;
-	static void* module_libjnigraphics = 0;
-
+void loadModuleJNIGraphics(){	
 	if(!module_libjnigraphics)
 	{
 		module_libjnigraphics = dlopen("jnigraphics", /*RTLD_NOLOAD*/0x0004);
@@ -188,12 +186,18 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_plus_render_NativeOsmandLib
 		if(!module_libjnigraphics)
 		{
 			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to load jnigraphics via dlopen, will going to crash");
-			return NULL;
+			return;
 		}
 		dl_AndroidBitmap_getInfo = (PTR_AndroidBitmap_getInfo)dlsym(module_libjnigraphics, "AndroidBitmap_getInfo");
 		dl_AndroidBitmap_lockPixels = (PTR_AndroidBitmap_lockPixels)dlsym(module_libjnigraphics, "AndroidBitmap_lockPixels");
 		dl_AndroidBitmap_unlockPixels = (PTR_AndroidBitmap_unlockPixels)dlsym(module_libjnigraphics, "AndroidBitmap_unlockPixels");
 	}
+}
+
+extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_plus_render_NativeOsmandLibrary_generateRenderingDirect( JNIEnv* ienv, jobject obj,
+    jobject renderingContext, jlong searchResult, jobject targetBitmap, jobject renderingRuleSearchRequest) {
+
+	loadModuleJNIGraphics();
 
 	// Gain information about bitmap
 	AndroidBitmapInfo bitmapInfo;
