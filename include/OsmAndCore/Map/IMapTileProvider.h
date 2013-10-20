@@ -62,7 +62,7 @@ namespace OsmAnd {
         const MapTileDataType dataType;
         virtual uint32_t getTileSize() const = 0;
 
-        virtual bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<MapTile>& outTile) = 0;
+        virtual bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile) = 0;
     };
 
 }

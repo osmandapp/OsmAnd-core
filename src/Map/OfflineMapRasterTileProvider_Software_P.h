@@ -62,7 +62,7 @@ namespace OsmAnd {
         const Concurrent::TaskHost::Bridge _taskHostBridge;
         TilesCollection<TileEntry> _tiles;
 
-        bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<MapTile>& outTile);
+        bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile);
     public:
         virtual ~OfflineMapRasterTileProvider_Software_P();
 

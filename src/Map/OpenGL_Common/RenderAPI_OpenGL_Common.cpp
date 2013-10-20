@@ -171,7 +171,7 @@ void OsmAnd::RenderAPI_OpenGL_Common::findVariableLocation( GLuint program, GLin
     _programVariables[program].insert(type, location);
 }
 
-bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileToGPU( const std::shared_ptr< MapTile >& tile, const uint32_t tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU )
+bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileToGPU( const std::shared_ptr< const MapTile >& tile, const uint32_t tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU )
 {
     // Upload bitmap tiles
     if(tile->dataType == MapTileDataType::Bitmap)
@@ -222,7 +222,7 @@ bool OsmAnd::RenderAPI_OpenGL_Common::releaseResourceInGPU( const ResourceInGPU:
     return false;
 }
 
-bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU( const std::shared_ptr< MapTile >& tile, const uint32_t tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU )
+bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU( const std::shared_ptr< const MapTile >& tile, const uint32_t tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU )
 {
     GL_CHECK_PRESENT(glGenTextures);
     GL_CHECK_PRESENT(glBindTexture);
@@ -237,7 +237,7 @@ bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU( const std::share
     bool paletteTexture = false;
     if(tile->dataType == MapTileDataType::Bitmap)
     {
-        const auto& bitmapTile = std::static_pointer_cast<MapBitmapTile>(tile);
+        const auto& bitmapTile = std::static_pointer_cast<const MapBitmapTile>(tile);
 
         switch (bitmapTile->bitmap->getConfig())
         {
@@ -574,13 +574,13 @@ bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU( const std::share
     return true;
 }
 
-bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsArrayBufferToGPU( const std::shared_ptr< MapTile >& tile, std::shared_ptr< ResourceInGPU >& resourceInGPU )
+bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsArrayBufferToGPU( const std::shared_ptr< const MapTile >& tile, std::shared_ptr< ResourceInGPU >& resourceInGPU )
 {
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
 
     assert(tile->dataType == MapTileDataType::ElevationData);
-    const auto& elevationTile = std::static_pointer_cast<MapElevationDataTile>(tile);
+    const auto& elevationTile = std::static_pointer_cast<const MapElevationDataTile>(tile);
     
     // Create array buffer
     GLuint buffer;

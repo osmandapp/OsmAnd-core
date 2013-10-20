@@ -237,7 +237,7 @@ bool OsmAnd::RenderAPI_OpenGLES2::release()
     return true;
 }
 
-uint32_t OsmAnd::RenderAPI_OpenGLES2::getTileTextureFormat( const std::shared_ptr< MapTile >& tile )
+uint32_t OsmAnd::RenderAPI_OpenGLES2::getTileTextureFormat( const std::shared_ptr< const MapTile >& tile )
 {
     // If current device supports glTexStorage2D, lets use sized format
     if(isSupported_EXT_texture_storage)
@@ -246,7 +246,7 @@ uint32_t OsmAnd::RenderAPI_OpenGLES2::getTileTextureFormat( const std::shared_pt
 
         if(tile->dataType == MapTileDataType::Bitmap)
         {
-            const auto& bitmapTile = std::static_pointer_cast<MapBitmapTile>(tile);
+            const auto& bitmapTile = std::static_pointer_cast<const MapBitmapTile>(tile);
 
             switch (bitmapTile->bitmap->getConfig())
             {
@@ -284,7 +284,7 @@ uint32_t OsmAnd::RenderAPI_OpenGLES2::getTileTextureFormat( const std::shared_pt
     GLenum type = GL_INVALID_ENUM;
     if(tile->dataType == MapTileDataType::Bitmap)
     {
-        const auto& bitmapTile = std::static_pointer_cast<MapBitmapTile>(tile);
+        const auto& bitmapTile = std::static_pointer_cast<const MapBitmapTile>(tile);
 
         switch (bitmapTile->bitmap->getConfig())
         {
@@ -319,7 +319,7 @@ uint32_t OsmAnd::RenderAPI_OpenGLES2::getTileTextureFormat( const std::shared_pt
     return (static_cast<uint32_t>(format) << 16) | type;
 }
 
-void OsmAnd::RenderAPI_OpenGLES2::allocateTexture2D( GLenum target, GLsizei levels, GLsizei width, GLsizei height, const std::shared_ptr< MapTile >& tile )
+void OsmAnd::RenderAPI_OpenGLES2::allocateTexture2D( GLenum target, GLsizei levels, GLsizei width, GLsizei height, const std::shared_ptr< const MapTile >& tile )
 {
     const auto encodedFormat = getTileTextureFormat(tile);
 
@@ -358,7 +358,7 @@ void OsmAnd::RenderAPI_OpenGLES2::uploadDataToTexture2D(
     GLenum target, GLint level,
     GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
     const GLvoid *data, GLsizei dataRowLengthInElements,
-    const std::shared_ptr< MapTile >& tile )
+    const std::shared_ptr< const MapTile >& tile )
 {
     GL_CHECK_PRESENT(glTexSubImage2D);
 
@@ -371,7 +371,7 @@ void OsmAnd::RenderAPI_OpenGLES2::uploadDataToTexture2D(
         GLenum sourceFormatType = GL_INVALID_ENUM;
         if(tile->dataType == MapTileDataType::Bitmap)
         {
-            const auto& bitmapTile = std::static_pointer_cast<MapBitmapTile>(tile);
+            const auto& bitmapTile = std::static_pointer_cast<const MapBitmapTile>(tile);
 
             switch (bitmapTile->bitmap->getConfig())
             {
@@ -417,7 +417,7 @@ void OsmAnd::RenderAPI_OpenGLES2::uploadDataToTexture2D(
     GLenum type = GL_INVALID_ENUM;
     if(tile->dataType == MapTileDataType::Bitmap)
     {
-        const auto& bitmapTile = std::static_pointer_cast<MapBitmapTile>(tile);
+        const auto& bitmapTile = std::static_pointer_cast<const MapBitmapTile>(tile);
 
         switch (bitmapTile->bitmap->getConfig())
         {
@@ -460,7 +460,7 @@ void OsmAnd::RenderAPI_OpenGLES2::uploadDataToTexture2D(
     GLsizei pixelSizeInBytes = 0;
     if(tile->dataType == MapTileDataType::Bitmap)
     {
-        const auto& bitmapTile = std::static_pointer_cast<MapBitmapTile>(tile);
+        const auto& bitmapTile = std::static_pointer_cast<const MapBitmapTile>(tile);
 
         switch (bitmapTile->bitmap->getConfig())
         {

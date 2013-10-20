@@ -202,7 +202,7 @@ bool OsmAnd::MapRenderer::doInitializeRendering()
             else
             {
                 auto bitmapTile = new MapBitmapTile(bitmap, MapBitmapTile::AlphaChannelData::Undefined);
-                _renderAPI->uploadTileToGPU(std::shared_ptr< MapTile >(bitmapTile), 1, _processingTileStub);
+                _renderAPI->uploadTileToGPU(std::shared_ptr< const MapTile >(bitmapTile), 1, _processingTileStub);
             }
         }
         {
@@ -215,7 +215,7 @@ bool OsmAnd::MapRenderer::doInitializeRendering()
             else
             {
                 auto bitmapTile = new MapBitmapTile(bitmap, MapBitmapTile::AlphaChannelData::Undefined);
-                _renderAPI->uploadTileToGPU(std::shared_ptr< MapTile >(bitmapTile), 1, _unavailableTileStub);
+                _renderAPI->uploadTileToGPU(std::shared_ptr< const MapTile >(bitmapTile), 1, _unavailableTileStub);
             }
         }
     }
@@ -730,7 +730,7 @@ void OsmAnd::MapRenderer::requestMissingTiledResources()
                     }
 
                     // Get source of tile
-                    std::shared_ptr<MapTile> tile;
+                    std::shared_ptr<const MapTile> tile;
                     const auto& provider = getTileProviderFor(resourceType);
                     if(!provider)
                     {
@@ -810,11 +810,11 @@ void OsmAnd::MapRenderer::requestMissingTiledResources()
     //TODO: sort requests in all requestedProvidersMask so that closest tiles would be downloaded first
 }
 
-std::shared_ptr<OsmAnd::MapTile> OsmAnd::MapRenderer::prepareTileForUploadingToGPU( const std::shared_ptr<MapTile>& tile )
+std::shared_ptr<const OsmAnd::MapTile> OsmAnd::MapRenderer::prepareTileForUploadingToGPU( const std::shared_ptr<const MapTile>& tile )
 {
     if(tile->dataType == MapTileDataType::Bitmap)
     {
-        auto bitmapTile = std::static_pointer_cast<MapBitmapTile>(tile);
+        auto bitmapTile = std::static_pointer_cast<const MapBitmapTile>(tile);
 
         // Check if we're going to convert
         bool doConvert = false;
@@ -853,7 +853,7 @@ std::shared_ptr<OsmAnd::MapTile> OsmAnd::MapRenderer::prepareTileForUploadingToG
                 : SkBitmap::Config::kRGB_565_Config);
 
             auto convertedTile = new MapBitmapTile(convertedBitmap, convertedAlphaChannelData);
-            return std::shared_ptr<MapTile>(convertedTile);
+            return std::shared_ptr<const MapTile>(convertedTile);
         }
 
         // If we have any other unsupported format, convert to proper 16bit or 32bit
@@ -867,7 +867,7 @@ std::shared_ptr<OsmAnd::MapTile> OsmAnd::MapRenderer::prepareTileForUploadingToG
                 : SkBitmap::kARGB_8888_Config);
 
             auto convertedTile = new MapBitmapTile(convertedBitmap, convertedAlphaChannelData);
-            return std::shared_ptr<MapTile>(convertedTile);
+            return std::shared_ptr<const MapTile>(convertedTile);
         }
     }
 

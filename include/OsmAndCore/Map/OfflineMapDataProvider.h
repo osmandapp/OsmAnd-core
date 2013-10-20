@@ -33,6 +33,8 @@ namespace OsmAnd {
 
     class ObfsCollection;
     class MapStyle;
+    class OfflineMapDataTile;
+
     class OfflineMapDataProvider_P;
     class OSMAND_CORE_API OfflineMapDataProvider
     {
@@ -45,6 +47,8 @@ namespace OsmAnd {
 
         const std::shared_ptr<const ObfsCollection> obfsCollection;
         const std::shared_ptr<const MapStyle> mapStyle;
+
+//        bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<OfflineMapDataTile>& outTile) = 0;
     };
 
 } // namespace OsmAnd

@@ -102,7 +102,7 @@ namespace OsmAnd {
         {
         private:
         protected:
-            std::shared_ptr<MapTile> _sourceData;
+            std::shared_ptr<const MapTile> _sourceData;
             std::shared_ptr<RenderAPI::ResourceInGPU> _resourceInGPU;
 
             Concurrent::Task* _requestTask;
@@ -110,7 +110,7 @@ namespace OsmAnd {
             TiledResourceEntry(const TileId tileId, const ZoomLevel zoom);
             virtual ~TiledResourceEntry();
 
-            const std::shared_ptr<MapTile>& sourceData;
+            const std::shared_ptr<const MapTile>& sourceData;
             const std::shared_ptr<RenderAPI::ResourceInGPU>& resourceInGPU;
 
             friend class OsmAnd::MapRenderer;
@@ -222,8 +222,8 @@ namespace OsmAnd {
         const std::array< std::unique_ptr<TiledResources>, TiledResourceTypesCount >& tiledResources;
         void cleanUpTiledResourcesCache();
         void requestMissingTiledResources();
-        virtual std::shared_ptr<MapTile> prepareTileForUploadingToGPU(const std::shared_ptr<MapTile>& tile);
-        virtual uint32_t getTilesPerAtlasTextureLimit(const TiledResourceType& resourceType, const std::shared_ptr<MapTile>& tile) = 0;
+        virtual std::shared_ptr<const MapTile> prepareTileForUploadingToGPU(const std::shared_ptr<const MapTile>& tile);
+        virtual uint32_t getTilesPerAtlasTextureLimit(const TiledResourceType& resourceType, const std::shared_ptr<const MapTile>& tile) = 0;
 
         Qt::HANDLE _renderThreadId;
         Qt::HANDLE _workerThreadId;

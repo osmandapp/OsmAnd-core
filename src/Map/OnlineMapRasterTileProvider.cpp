@@ -42,7 +42,7 @@ void OsmAnd::OnlineMapRasterTileProvider::setNetworkAccessPermission( bool allow
     _d->_networkAccessAllowed = allowed;
 }
 
-bool OsmAnd::OnlineMapRasterTileProvider::obtainTile( const TileId tileId, const ZoomLevel zoom, std::shared_ptr<MapTile>& outTile )
+bool OsmAnd::OnlineMapRasterTileProvider::obtainTile( const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile )
 {
     // Check provider can supply this zoom level
     if(zoom > maxZoom || zoom < minZoom)

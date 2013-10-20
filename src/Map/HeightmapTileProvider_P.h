@@ -47,7 +47,7 @@ namespace OsmAnd {
         HeightmapTileProvider* const owner;
         TileDB _tileDb;
 
-        bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<MapTile>& outTile);
+        bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile);
     public:
         ~HeightmapTileProvider_P();
 

@@ -32,7 +32,7 @@ OsmAnd::OfflineMapRasterTileProvider_GPU_P::~OfflineMapRasterTileProvider_GPU_P(
 {
 }
 
-bool OsmAnd::OfflineMapRasterTileProvider_GPU_P::obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<MapTile>& outTile)
+bool OsmAnd::OfflineMapRasterTileProvider_GPU_P::obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile)
 {
     // Get bounding box that covers this tile
     const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);

@@ -19,7 +19,7 @@ OsmAnd::HeightmapTileProvider_P::~HeightmapTileProvider_P()
 {
 }
 
-bool OsmAnd::HeightmapTileProvider_P::obtainTile( const TileId tileId, const ZoomLevel zoom, std::shared_ptr<MapTile>& outTile )
+bool OsmAnd::HeightmapTileProvider_P::obtainTile( const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile )
 {
     // Obtain raw data from DB
     QByteArray data;

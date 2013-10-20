@@ -205,13 +205,13 @@ bool OsmAnd::RenderAPI_OpenGL::release()
     return true;
 }
 
-uint32_t OsmAnd::RenderAPI_OpenGL::getTileTextureFormat( const std::shared_ptr< MapTile >& tile )
+uint32_t OsmAnd::RenderAPI_OpenGL::getTileTextureFormat( const std::shared_ptr< const MapTile >& tile )
 {
     GLenum textureFormat = GL_INVALID_ENUM;
 
     if(tile->dataType == MapTileDataType::Bitmap)
     {
-        const auto& bitmapTile = std::static_pointer_cast<MapBitmapTile>(tile);
+        const auto& bitmapTile = std::static_pointer_cast<const MapBitmapTile>(tile);
 
         switch (bitmapTile->bitmap->getConfig())
         {
@@ -236,7 +236,7 @@ uint32_t OsmAnd::RenderAPI_OpenGL::getTileTextureFormat( const std::shared_ptr< 
     return static_cast<uint32_t>(textureFormat);
 }
 
-void OsmAnd::RenderAPI_OpenGL::allocateTexture2D( GLenum target, GLsizei levels, GLsizei width, GLsizei height, const std::shared_ptr< MapTile >& forTile )
+void OsmAnd::RenderAPI_OpenGL::allocateTexture2D( GLenum target, GLsizei levels, GLsizei width, GLsizei height, const std::shared_ptr< const MapTile >& forTile )
 {
     GLenum textureFormat = static_cast<GLenum>(getTileTextureFormat(forTile));
 
@@ -248,7 +248,7 @@ void OsmAnd::RenderAPI_OpenGL::uploadDataToTexture2D(
     GLenum target, GLint level,
     GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
     const GLvoid *data, GLsizei dataRowLengthInElements,
-    const std::shared_ptr< MapTile >& tile )
+    const std::shared_ptr< const MapTile >& tile )
 {
     GL_CHECK_PRESENT(glPixelStorei);
     GL_CHECK_PRESENT(glTexSubImage2D);
@@ -257,7 +257,7 @@ void OsmAnd::RenderAPI_OpenGL::uploadDataToTexture2D(
     GLenum sourceFormatType = GL_INVALID_ENUM;
     if(tile->dataType == MapTileDataType::Bitmap)
     {
-        const auto& bitmapTile = std::static_pointer_cast<MapBitmapTile>(tile);
+        const auto& bitmapTile = std::static_pointer_cast<const MapBitmapTile>(tile);
 
         switch (bitmapTile->bitmap->getConfig())
         {
