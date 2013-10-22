@@ -196,13 +196,14 @@ namespace OsmAnd {
         const ZoomLevel zoom;
     };
 
-    template<class ENTRY, typename STATE_ENUM, STATE_ENUM UNDEFINED_STATE_VALUE> class TilesCollectionEntryWithState : public TilesCollectionEntry<ENTRY>
+    template<class ENTRY, typename STATE_ENUM, STATE_ENUM UNDEFINED_STATE_VALUE>
+    class TilesCollectionEntryWithState : public TilesCollectionEntry<ENTRY>
     {
     private:
     protected:
     public:
         TilesCollectionEntryWithState(const TilesCollection<ENTRY>& collection, const TileId tileId, const ZoomLevel zoom, const STATE_ENUM& state = UNDEFINED_STATE_VALUE)
-            : TilesCollectionEntry(collection, tileId, zoom)
+            : TilesCollectionEntry<ENTRY>(collection, tileId, zoom)
             , state(state)
         {}
         virtual ~TilesCollectionEntryWithState()

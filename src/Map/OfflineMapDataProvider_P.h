@@ -81,7 +81,7 @@ namespace OsmAnd {
             virtual ~TileEntry()
             {}
 
-            std::weak_ptr< OfflineMapDataTile > _tile;
+            std::weak_ptr< const OfflineMapDataTile > _tile;
             QWaitCondition _loadedCondition;
         };
         TilesCollection<TileEntry> _tileReferences;
