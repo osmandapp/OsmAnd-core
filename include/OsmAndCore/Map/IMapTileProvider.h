@@ -38,15 +38,19 @@ namespace OsmAnd {
 
     class OSMAND_CORE_API MapTile
     {
+    public:
+        typedef const void* DataPtr;
     private:
     protected:
-        MapTile(const MapTileDataType& dataType, const void* data, size_t rowLength, uint32_t size);
+        MapTile(const MapTileDataType& dataType, const DataPtr data, size_t rowLength, uint32_t size);
+
+        DataPtr _data;
     public:
         virtual ~MapTile();
 
         const MapTileDataType dataType;
 
-        const void* const data;
+        const DataPtr& data;
         const size_t rowLength;
         const uint32_t size;
     };

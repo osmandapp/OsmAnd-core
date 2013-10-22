@@ -32,6 +32,7 @@
 #include <Concurrent.h>
 #include <TilesCollection.h>
 #include <IMapBitmapTileProvider.h>
+#include <IRetainedMapTile.h>
 
 class SkBitmap;
 
@@ -70,16 +71,19 @@ namespace OsmAnd {
             {}
         };
 
-        class Tile : public MapBitmapTile
+        class Tile : public MapBitmapTile, public IRetainedMapTile
         {
             Q_DISABLE_COPY(Tile);
         private:
+            const std::shared_ptr<const OfflineMapDataTile> _dataTile;
         protected:
         public:
             Tile(SkBitmap* bitmap, const std::shared_ptr<const OfflineMapDataTile>& dataTile);
             virtual ~Tile();
 
-            const std::shared_ptr<const OfflineMapDataTile> dataTile;
+            const std::shared_ptr<const OfflineMapDataTile>& dataTile;
+
+            virtual void releaseNonRetainedData();
         };
 
         OfflineMapRasterTileProvider_Software* const owner;

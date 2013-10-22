@@ -9,9 +9,10 @@ OsmAnd::IMapTileProvider::~IMapTileProvider()
 {
 }
 
-OsmAnd::MapTile::MapTile( const MapTileDataType& dataType_, const void* data_, size_t rowLength_, uint32_t size_ )
-    : dataType(dataType_)
-    , data(data_)
+OsmAnd::MapTile::MapTile( const MapTileDataType& dataType_, DataPtr data_, size_t rowLength_, uint32_t size_ )
+    : _data(data_)
+    , dataType(dataType_)
+    , data(_data)
     , rowLength(rowLength_)
     , size(size_)
 {

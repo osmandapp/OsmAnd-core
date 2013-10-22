@@ -19,56 +19,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __I_MAP_BITMAP_TILE_PROVIDER_H_
-#define __I_MAP_BITMAP_TILE_PROVIDER_H_
+#ifndef __I_PURGEABLE_MAP_TILE_H_
+#define __I_PURGEABLE_MAP_TILE_H_
 
 #include <cstdint>
 #include <memory>
 
-#include <QtGlobal>
-
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/IMapTileProvider.h>
-
-class SkBitmap;
 
 namespace OsmAnd {
 
-    class OSMAND_CORE_API MapBitmapTile : public MapTile
+    class IRetainedMapTile
     {
-        Q_DISABLE_COPY(MapBitmapTile);
-    public:
-        STRONG_ENUM(AlphaChannelData)
-        {
-            Present,
-            NotPresent,
-            Undefined
-        };
-
     private:
     protected:
-        std::unique_ptr<SkBitmap> _bitmap;
     public:
-        MapBitmapTile(SkBitmap* bitmap, const AlphaChannelData& alphaChannelData);
-        virtual ~MapBitmapTile();
+        IRetainedMapTile();
+        virtual ~IRetainedMapTile();
 
-        const std::unique_ptr<SkBitmap>& bitmap;
-
-        const AlphaChannelData alphaChannelData;
-    };
-
-    class OSMAND_CORE_API IMapBitmapTileProvider : public IMapTileProvider
-    {
-    public:
-    private:
-    protected:
-        IMapBitmapTileProvider();
-    public:
-        virtual ~IMapBitmapTileProvider();
-
-        virtual float getTileDensity() const = 0;
+        virtual void releaseNonRetainedData() = 0;
     };
 }
 
-#endif // __I_MAP_BITMAP_TILE_PROVIDER_H_
+#endif // __I_PURGEABLE_MAP_TILE_H_

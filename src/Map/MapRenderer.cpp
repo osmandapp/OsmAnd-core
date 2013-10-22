@@ -9,6 +9,7 @@
 
 #include "IMapBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
+#include "IRetainedMapTile.h"
 #include "RenderAPI.h"
 #include "EmbeddedResources.h"
 #include "Logging.h"
@@ -921,7 +922,16 @@ void OsmAnd::MapRenderer::uploadTiledResources()
                     continue;
                 }
 
-                tileEntry->_sourceData.reset();
+                if(const auto retainedSource = std::dynamic_pointer_cast<const IRetainedMapTile>(tileEntry->_sourceData))
+                {
+                    // If map tile implements 'Retained' interface, it must be kept, but 
+                    std::const_pointer_cast<IRetainedMapTile>(retainedSource)->releaseNonRetainedData();
+                }
+                else
+                {
+                    // or simply release entire tile
+                    tileEntry->_sourceData.reset();
+                }
                 tileEntry->state = ResourceState::Uploaded;
                 didUpload = true;
 
