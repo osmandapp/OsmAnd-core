@@ -31,10 +31,11 @@ OsmAnd::ObfMapSectionLevel_P::~ObfMapSectionLevel_P()
 {
 }
 
-OsmAnd::ObfMapSectionLevelTreeNode::ObfMapSectionLevelTreeNode()
+OsmAnd::ObfMapSectionLevelTreeNode::ObfMapSectionLevelTreeNode(const std::shared_ptr<const ObfMapSectionLevel>& level_)
     : _childrenInnerOffset(0)
     , _dataOffset(0)
     , _foundation(MapFoundationType::Undefined)
+    , level(level_)
 {
 }
 

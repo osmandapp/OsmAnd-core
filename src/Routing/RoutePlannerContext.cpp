@@ -133,7 +133,7 @@ void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::registerRoad( const 
         uint64_t id = (static_cast<uint64_t>(x31) << 31) | y31;
         
         std::shared_ptr<RouteCalculationSegment> routeSegment(new RouteCalculationSegment(road, idx));
-        auto itRouteSegment = _roadSegments.find(id);
+        auto itRouteSegment = _roadSegments.constFind(id);
         if(itRouteSegment == _roadSegments.cend())
             _roadSegments.insert(id, routeSegment);
         else
@@ -211,7 +211,7 @@ std::shared_ptr<OsmAnd::RoutePlannerContext::RouteCalculationSegment> OsmAnd::Ro
     const std::shared_ptr<RouteCalculationSegment>& original_)
 {
     uint64_t id = (static_cast<uint64_t>(x31) << 31) | y31;
-    auto itSegment = _roadSegments.find(id);
+    auto itSegment = _roadSegments.constFind(id);
     if(itSegment == _roadSegments.cend())
         return original_;
     this->_access++;
@@ -222,7 +222,7 @@ std::shared_ptr<OsmAnd::RoutePlannerContext::RouteCalculationSegment> OsmAnd::Ro
     {
         auto road = segment->road;
         auto roadPointId = RoutePlanner::encodeRoutePointId(road, segment->pointIndex);
-        auto itOtherRoad = processed.find(roadPointId);
+        auto itOtherRoad = processed.constFind(roadPointId);
         if(itOtherRoad == processed.cend() || (*itOtherRoad)->points.size() < road->points.size())
         {
             processed.insert(roadPointId, road);

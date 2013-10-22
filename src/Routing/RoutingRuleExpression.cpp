@@ -146,7 +146,7 @@ bool OsmAnd::RoutingRuleExpression::validateFreeTags( const QBitArray& types ) c
 {
     for(auto itOnlyTag = _onlyTags.cbegin(); itOnlyTag != _onlyTags.cend(); ++itOnlyTag)
     {
-        auto itBitset = ruleset->owner->_tagRuleMask.find(*itOnlyTag);
+        auto itBitset = ruleset->owner->_tagRuleMask.constFind(*itOnlyTag);
         if(itBitset == ruleset->owner->_tagRuleMask.cend())
             return false;
         if( (*itBitset & types).count(true) == 0 )
@@ -160,7 +160,7 @@ bool OsmAnd::RoutingRuleExpression::validateNotFreeTags( const QBitArray& types 
 {
     for(auto itOnlyNotTag = _onlyNotTags.cbegin(); itOnlyNotTag != _onlyNotTags.cend(); ++itOnlyNotTag)
     {
-        auto itBitset = ruleset->owner->_tagRuleMask.find(*itOnlyNotTag);
+        auto itBitset = ruleset->owner->_tagRuleMask.constFind(*itOnlyNotTag);
         if(itBitset == ruleset->owner->_tagRuleMask.cend())
             return false;
         if( (*itBitset & types).count(true) > 0 )
@@ -185,7 +185,7 @@ bool OsmAnd::RoutingRuleExpression::evaluateExpressions( const QBitArray& types,
 bool OsmAnd::RoutingRuleExpression::resolveVariableReferenceValue( RoutingRulesetContext* context, const QString& variableRef, const QString& type, float& value )
 {
     bool ok = false;
-    auto itVariable = context->contextValues.find(variableRef);
+    auto itVariable = context->contextValues.constFind(variableRef);
     if(itVariable != context->contextValues.cend())
         ok = RoutingConfiguration::parseTypedValue(itVariable.value(), type, value);
     return ok;
@@ -194,7 +194,7 @@ bool OsmAnd::RoutingRuleExpression::resolveVariableReferenceValue( RoutingRulese
 bool OsmAnd::RoutingRuleExpression::resolveTagReferenceValue( RoutingRulesetContext* context, const QBitArray& types, const QString& tagRef, const QString& type, float& value )
 {
     bool ok = false;
-    auto itMask = context->ruleset->owner->_tagRuleMask.find(tagRef);
+    auto itMask = context->ruleset->owner->_tagRuleMask.constFind(tagRef);
     if(itMask != context->ruleset->owner->_tagRuleMask.cend())
     {
         const auto& mask = *itMask;

@@ -46,7 +46,10 @@ void OsmAnd::ObfDataInterface::obtainBasemapPresenceFlag( bool& basemapPresent, 
     }
 }
 
-void OsmAnd::ObfDataInterface::obtainMapObjects( QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut, MapFoundationType* foundationOut, const AreaI& area31, const ZoomLevel zoom, IQueryController* controller /*= nullptr*/ )
+void OsmAnd::ObfDataInterface::obtainMapObjects(
+    QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut, MapFoundationType* foundationOut,
+    const AreaI& area31, const ZoomLevel zoom,
+    IQueryController* controller /*= nullptr*/, std::function<bool (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t)> filterById /*= nullptr*/ )
 {
     if(foundationOut)
         *foundationOut = MapFoundationType::Undefined;
@@ -69,7 +72,7 @@ void OsmAnd::ObfDataInterface::obtainMapObjects( QList< std::shared_ptr<const Os
 
             // Read objects from each map section
             const auto& mapSection = *itMapSection;
-            OsmAnd::ObfMapSectionReader::loadMapObjects(obfReader, mapSection, zoom, &area31, resultOut, foundationOut, nullptr, nullptr, controller);
+            OsmAnd::ObfMapSectionReader::loadMapObjects(obfReader, mapSection, zoom, &area31, resultOut, foundationOut, filterById, nullptr, controller);
         }
     }
 }

@@ -47,7 +47,7 @@ bool OsmAnd::MapStyles_P::registerStyle( const QString& filePath )
 
 bool OsmAnd::MapStyles_P::obtainStyle( const QString& name, std::shared_ptr<const OsmAnd::MapStyle>& outStyle )
 {
-    auto itStyle = _styles.find(name);
+    auto itStyle = _styles.constFind(name);
     if(itStyle == _styles.cend())
         return false;
 

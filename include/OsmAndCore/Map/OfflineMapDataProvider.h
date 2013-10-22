@@ -48,7 +48,8 @@ namespace OsmAnd {
         const std::shared_ptr<const ObfsCollection> obfsCollection;
         const std::shared_ptr<const MapStyle> mapStyle;
 
-//        bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<OfflineMapDataTile>& outTile) = 0;
+        bool isBasemapAvailable() const;
+        void obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const OfflineMapDataTile>& outTile) const;
     };
 
 } // namespace OsmAnd

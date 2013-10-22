@@ -46,8 +46,6 @@ namespace OsmAnd {
         virtual uint32_t getTilesPerAtlasTextureLimit(const TiledResourceType& resourceType, const std::shared_ptr<const MapTile>& tile);
     public:
         virtual ~AtlasMapRenderer();
-
-        //?virtual void dragViewportBy
     };
 
 }

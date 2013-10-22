@@ -74,7 +74,7 @@ void OsmAnd::MapStyleEvaluator::setStringValue( const std::shared_ptr<const MapS
 
 bool OsmAnd::MapStyleEvaluator::getBooleanValue( const std::shared_ptr<const MapStyleValueDefinition>& ref, bool& value ) const
 {
-    const auto& itValue = _d->_values.find(ref);
+    const auto& itValue = _d->_values.constFind(ref);
     if(itValue == _d->_values.cend())
         return false;
 
@@ -85,7 +85,7 @@ bool OsmAnd::MapStyleEvaluator::getBooleanValue( const std::shared_ptr<const Map
 
 bool OsmAnd::MapStyleEvaluator::getIntegerValue( const std::shared_ptr<const OsmAnd::MapStyleValueDefinition>& ref, int& value ) const
 {
-    const auto& itValue = _d->_values.find(ref);
+    const auto& itValue = _d->_values.constFind(ref);
     if(itValue == _d->_values.cend())
         return false;
 
@@ -98,7 +98,7 @@ bool OsmAnd::MapStyleEvaluator::getIntegerValue( const std::shared_ptr<const Osm
 
 bool OsmAnd::MapStyleEvaluator::getIntegerValue( const std::shared_ptr<const OsmAnd::MapStyleValueDefinition>& ref, unsigned int& value ) const
 {
-    const auto& itValue = _d->_values.find(ref);
+    const auto& itValue = _d->_values.constFind(ref);
     if(itValue == _d->_values.cend())
         return false;
 
@@ -111,7 +111,7 @@ bool OsmAnd::MapStyleEvaluator::getIntegerValue( const std::shared_ptr<const Osm
 
 bool OsmAnd::MapStyleEvaluator::getFloatValue( const std::shared_ptr<const OsmAnd::MapStyleValueDefinition>& ref, float& value ) const
 {
-    const auto& itValue = _d->_values.find(ref);
+    const auto& itValue = _d->_values.constFind(ref);
     if(itValue == _d->_values.cend())
         return false;
 
@@ -124,7 +124,7 @@ bool OsmAnd::MapStyleEvaluator::getFloatValue( const std::shared_ptr<const OsmAn
 
 bool OsmAnd::MapStyleEvaluator::getStringValue( const std::shared_ptr<const OsmAnd::MapStyleValueDefinition>& ref, QString& value ) const
 {
-    const auto& itValue = _d->_values.find(ref);
+    const auto& itValue = _d->_values.constFind(ref);
     if(itValue == _d->_values.cend())
         return false;
 
@@ -178,7 +178,7 @@ bool OsmAnd::MapStyleEvaluator::evaluate( uint32_t tagKey, uint32_t valueKey, bo
 
     const auto& rules = style->_d->obtainRules(ruleset);
     uint64_t ruleId = MapStyle_P::encodeRuleId(tagKey, valueKey);
-    auto itRule = rules.find(ruleId);
+    auto itRule = rules.constFind(ruleId);
     if(itRule == rules.cend())
         return false;
     auto evaluationResult = evaluate(*itRule, fillOutput, evaluateChildren);

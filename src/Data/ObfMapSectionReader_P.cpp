@@ -191,7 +191,7 @@ void OsmAnd::ObfMapSectionReader_P::readRule(
 void OsmAnd::ObfMapSectionReader_P::createRule( const std::shared_ptr<ObfMapSectionInfo_P::Rules>& rules, uint32_t ruleType, uint32_t ruleId, const QString& ruleTag, const QString& ruleVal )
 {
     auto itEncodingRule = rules->_encodingRules.find(ruleTag);
-    if(itEncodingRule == rules->_encodingRules.cend())
+    if(itEncodingRule == rules->_encodingRules.end())
         itEncodingRule = rules->_encodingRules.insert(ruleTag, QHash<QString, uint32_t>());
     itEncodingRule->insert(ruleVal, ruleId);
     
@@ -243,7 +243,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapLevelTreeNodes(
                 auto length = ObfReaderUtilities::readBigEndianInt(cis);
                 auto offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(length);
-                std::shared_ptr<ObfMapSectionLevelTreeNode> levelTree(new ObfMapSectionLevelTreeNode());
+                std::shared_ptr<ObfMapSectionLevelTreeNode> levelTree(new ObfMapSectionLevelTreeNode(level));
                 levelTree->_offset = offset;
                 levelTree->_length = length;
 
@@ -350,7 +350,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                 auto length = ObfReaderUtilities::readBigEndianInt(cis);
                 auto offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(length);
-                std::shared_ptr<ObfMapSectionLevelTreeNode> childNode(new ObfMapSectionLevelTreeNode());
+                std::shared_ptr<ObfMapSectionLevelTreeNode> childNode(new ObfMapSectionLevelTreeNode(treeNode->level));
                 childNode->_foundation = treeNode->_foundation;
                 childNode->_offset = offset;
                 childNode->_length = length;
@@ -406,7 +406,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
     const std::shared_ptr<ObfMapSectionLevelTreeNode>& tree,
     QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut,
     const AreaI* bbox31,
-    std::function<bool (const uint64_t&)> filterById,
+    std::function<bool (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t)> filterById,
     std::function<bool (const std::shared_ptr<const OsmAnd::Model::MapObject>&)> visitor,
     IQueryController* controller)
 {
@@ -464,7 +464,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                 const auto origin = cis->CurrentPosition();
 
                 // Read map object identifier initially, to allow skipping the entire map object
-                uint64_t mapObjectId;
+                uint64_t mapObjectId = 0;
                 {
                     auto oldLimit = cis->PushLimit(length);
                     readMapObjectId(reader, section, baseId, mapObjectId);
@@ -473,7 +473,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                 }
 
                 // Check if map object is desired
-                if(filterById && !filterById(mapObjectId))
+                if(filterById && !filterById(section, mapObjectId))
                     break;
 
                 // Read map object content
@@ -636,7 +636,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
 
                 // Finally, create the object
                 if(!mapObject)
-                    mapObject.reset(new OsmAnd::Model::MapObject(section));
+                    mapObject.reset(new OsmAnd::Model::MapObject(section, treeNode->level));
                 mapObject->_isArea = (tgn == OBF::MapData::kAreaCoordinatesFieldNumber);
                 mapObject->_points31 = points31;
                 mapObject->_bbox31 = objectBBox;
@@ -651,7 +651,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
         case OBF::MapData::kPolygonInnerCoordinatesFieldNumber:
             {
                 if(!mapObject)
-                    mapObject.reset(new OsmAnd::Model::MapObject(section));
+                    mapObject.reset(new OsmAnd::Model::MapObject(section, treeNode->level));
 
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
@@ -678,7 +678,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
         case OBF::MapData::kAdditionalTypesFieldNumber:
             {
                 if(!mapObject)
-                    mapObject.reset(new OsmAnd::Model::MapObject(section));
+                    mapObject.reset(new OsmAnd::Model::MapObject(section, treeNode->level));
 
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
@@ -697,7 +697,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
         case OBF::MapData::kTypesFieldNumber:
             {
                 if(!mapObject)
-                    mapObject.reset(new OsmAnd::Model::MapObject(section));
+                    mapObject.reset(new OsmAnd::Model::MapObject(section, treeNode->level));
 
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
@@ -747,7 +747,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
     ZoomLevel zoom, const AreaI* bbox31,
     QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut, MapFoundationType* foundationOut,
-    std::function<bool (const uint64_t&)> filterById,
+    std::function<bool (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t)> filterById,
     std::function<bool (const std::shared_ptr<const OsmAnd::Model::MapObject>&)> visitor,
     IQueryController* controller)
 {

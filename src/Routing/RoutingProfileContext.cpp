@@ -56,7 +56,7 @@ float OsmAnd::RoutingProfileContext::getSpeed( const std::shared_ptr<const OsmAn
 
 float OsmAnd::RoutingProfileContext::getObstaclesExtraTime( const std::shared_ptr<const OsmAnd::Model::Road>& road, uint32_t pointIndex )
 {
-    auto itPointTypes = road->pointsTypes.find(pointIndex);
+    auto itPointTypes = road->pointsTypes.constFind(pointIndex);
     if(itPointTypes == road->pointsTypes.cend())
         return 0.0f;
 
@@ -66,7 +66,7 @@ float OsmAnd::RoutingProfileContext::getObstaclesExtraTime( const std::shared_pt
 
 float OsmAnd::RoutingProfileContext::getRoutingObstaclesExtraTime( const std::shared_ptr<const OsmAnd::Model::Road>& road, uint32_t pointIndex )
 {
-    auto itPointTypes = road->pointsTypes.find(pointIndex);
+    auto itPointTypes = road->pointsTypes.constFind(pointIndex);
     if(itPointTypes == road->pointsTypes.cend())
         return 0.0f;
 

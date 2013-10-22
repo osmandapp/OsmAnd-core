@@ -137,7 +137,7 @@ void OsmAnd::RoutePlanner::cacheRoad( RoutePlannerContext* context, const std::s
         const auto tileId = getRoutingTileId(context, px31, py31, true);
 
         auto itCache = context->_cachedRoadsInTiles.find(tileId);
-        if(itCache == context->_cachedRoadsInTiles.cend())
+        if(itCache == context->_cachedRoadsInTiles.end())
             itCache = context->_cachedRoadsInTiles.insert(tileId, QList< std::shared_ptr<Model::Road> >());
 
         if(!itCache->contains(road))
@@ -177,7 +177,7 @@ void OsmAnd::RoutePlanner::loadRoadsFromTile( RoutePlannerContext* context, uint
 {
     QMap<uint64_t, std::shared_ptr<const Model::Road> > duplicates;
 
-    auto itRoadsInTile = context->_cachedRoadsInTiles.find(tileId);
+    auto itRoadsInTile = context->_cachedRoadsInTiles.constFind(tileId);
     if (itRoadsInTile != context->_cachedRoadsInTiles.cend())
     {
         for(auto itRoad = itRoadsInTile->begin(); itRoad != itRoadsInTile->end(); ++itRoad)
@@ -191,7 +191,7 @@ void OsmAnd::RoutePlanner::loadRoadsFromTile( RoutePlannerContext* context, uint
         }
     }
 
-    auto itIndexedSubsectionContexts = context->_indexedSubsectionsContexts.find(tileId);
+    auto itIndexedSubsectionContexts = context->_indexedSubsectionsContexts.constFind(tileId);
     assert(itIndexedSubsectionContexts != context->_indexedSubsectionsContexts.cend());
     for(auto itSubsectionContext = itIndexedSubsectionContexts->begin(); itSubsectionContext != itIndexedSubsectionContexts->end(); ++itSubsectionContext)
     {
@@ -229,7 +229,7 @@ uint64_t OsmAnd::RoutePlanner::getRoutingTileId( RoutePlannerContext* context, u
         }
     }
 
-    auto itIndexedSubsectionContexts = context->_indexedSubsectionsContexts.find(tileId);
+    auto itIndexedSubsectionContexts = context->_indexedSubsectionsContexts.constFind(tileId);
     if(itIndexedSubsectionContexts == context->_indexedSubsectionsContexts.cend())
     {
         QList< std::shared_ptr<RoutePlannerContext::RoutingSubsectionContext> > subsectionContexts;
@@ -285,7 +285,7 @@ void OsmAnd::RoutePlanner::loadTileHeader( RoutePlannerContext* context, uint32_
             );
             for(auto itSubsection = subsections.cbegin(); itSubsection != subsections.cend(); ++itSubsection)
             {
-                auto itSubsectionContext = context->_subsectionsContextsLUT.find(itSubsection->get());
+                auto itSubsectionContext = context->_subsectionsContextsLUT.constFind(itSubsection->get());
                 if(itSubsectionContext == context->_subsectionsContextsLUT.cend())
                 {
                     std::shared_ptr<RoutePlannerContext::RoutingSubsectionContext> subsectionContext(new RoutePlannerContext::RoutingSubsectionContext(context, source, *itSubsection));
@@ -690,7 +690,7 @@ void OsmAnd::RoutePlanner::loadBorderPoints( OsmAnd::RoutePlannerContext::Calcul
                 if(!context->owner->profileContext->acceptsBorderLinePoint(subsection->section, point))
                     return false;
 
-                auto itBorderLine = borderLinesLUT.find(point->location.y);
+                auto itBorderLine = borderLinesLUT.constFind(point->location.y);
                 if(itBorderLine == borderLinesLUT.cend())
                 {
                     std::shared_ptr<RoutePlannerContext::BorderLine> line(new RoutePlannerContext::BorderLine());
@@ -901,7 +901,7 @@ float OsmAnd::RoutePlanner::calculateTurnTime(
     const std::shared_ptr<RoutePlannerContext::RouteCalculationSegment>& a, uint32_t aEndPointIndex,
     const std::shared_ptr<RoutePlannerContext::RouteCalculationSegment>& b, uint32_t bEndPointIndex )
 {
-    auto itPointTypesB = b->road->pointsTypes.find(bEndPointIndex);
+    auto itPointTypesB = b->road->pointsTypes.constFind(bEndPointIndex);
     if(itPointTypesB != b->road->pointsTypes.cend())
     {
         const auto& pointTypesB = *itPointTypesB;
@@ -1001,7 +1001,7 @@ bool OsmAnd::RoutePlanner::checkIfOppositeSegmentWasVisited(
 {
     const auto id = encodeRoutePointId(road, intervalId, !forwardDirection);
 
-    auto itOppositeSegment = oppositeSegments.find(id);
+    auto itOppositeSegment = oppositeSegments.constFind(id);
     if(itOppositeSegment == oppositeSegments.cend())
         return false;
 
@@ -1065,7 +1065,7 @@ bool OsmAnd::RoutePlanner::processRestrictions(
         Model::RoadRestriction type = Model::RoadRestriction::Invalid;
         if (!reverseWay)
         {
-            auto itRestriction = road->restrictions.find(next->road->id);
+            auto itRestriction = road->restrictions.constFind(next->road->id);
             if(itRestriction != road->restrictions.cend())
                 type = *itRestriction;
         }
@@ -1392,7 +1392,7 @@ std::shared_ptr<OsmAnd::RoutePlannerContext::RouteCalculationSegment> OsmAnd::Ro
     QMap<uint64_t, std::shared_ptr<const Model::Road> > processed;
     std::shared_ptr<RoutePlannerContext::RouteCalculationSegment> original;
 
-    const auto& itCachedRoads = context->_cachedRoadsInTiles.find(tileId);
+    const auto& itCachedRoads = context->_cachedRoadsInTiles.constFind(tileId);
     if(itCachedRoads != context->_cachedRoadsInTiles.cend())
     {
         const auto& cachedRoads = *itCachedRoads;
@@ -1417,7 +1417,7 @@ std::shared_ptr<OsmAnd::RoutePlannerContext::RouteCalculationSegment> OsmAnd::Ro
         }
     }
 
-    auto itSubregionsContexts = context->_indexedSubsectionsContexts.find(tileId);
+    auto itSubregionsContexts = context->_indexedSubsectionsContexts.constFind(tileId);
     if(itSubregionsContexts != context->_indexedSubsectionsContexts.cend())
     {
         const auto& subregionsContexts = *itSubregionsContexts;

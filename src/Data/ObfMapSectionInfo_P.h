@@ -39,13 +39,14 @@
 
 namespace OsmAnd {
 
+    class ObfMapSectionLevel;
     class ObfMapSectionReader_P;
 
     class ObfMapSectionLevelTreeNode
     {
     private:
     protected:
-        ObfMapSectionLevelTreeNode();
+        ObfMapSectionLevelTreeNode(const std::shared_ptr<const ObfMapSectionLevel>& level);
 
         uint32_t _offset;
         uint32_t _length;
@@ -56,10 +57,11 @@ namespace OsmAnd {
     public:
         ~ObfMapSectionLevelTreeNode();
 
+        const std::shared_ptr<const ObfMapSectionLevel> level;
+
     friend class OsmAnd::ObfMapSectionReader_P;
     };
 
-    class ObfMapSectionLevel;
     class ObfMapSectionLevel_P
     {
     private:

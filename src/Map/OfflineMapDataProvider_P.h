@@ -26,55 +26,91 @@
 #include <cstdint>
 #include <memory>
 
+#include <QHash>
+#include <QAtomicInt>
+#include <QMutex>
+#include <QReadWriteLock>
+#include <QWaitCondition>
+
 #include <OsmAndCore.h>
 #include <CommonTypes.h>
 #include <TilesCollection.h>
 
 namespace OsmAnd {
 
+    namespace Model {
+        class MapObject;
+    }
+    class OfflineMapDataTile;
+    class OfflineMapDataTile_P;
+
     class OfflineMapDataProvider;
     class OfflineMapDataProvider_P
     {
-    public:
-        STRONG_ENUM(TileState)
-        {
-            // Tile is not in any determined state (tile entry did not exist)
-            Unknown = 0,
-
-            // Resource was requested and should arrive soon
-            Requested,
-
-            // Resource data is in main memory, but not yet uploaded into GPU
-            Ready,
-        };
-
-        class Tile : public TilesCollectionEntryWithState<TileState, TileState::Unknown>
-        {
-        private:
-        protected:
-            Tile();
-        public:
-            ~Tile();
-
-        friend class OsmAnd::OfflineMapDataProvider_P;
-        };
     private:
     protected:
         OfflineMapDataProvider_P(OfflineMapDataProvider* owner);
 
         OfflineMapDataProvider* const owner;
 
-//        TilesCollection<Tile>;
+        QAtomicInt _basemapPresenceChecked;
+        QMutex _basemapPresenceCheckMutex;
+        volatile bool _isBasemapAvailable;
+
+        struct DataCacheLevel
+        {
+            QReadWriteLock _mapObjectsMutex;
+            QHash< uint64_t, std::weak_ptr< const Model::MapObject > > _mapObjects;
+        };
+        std::array< DataCacheLevel, ZoomLevelsCount> _dataCache;
+
+        enum TileState
+        {
+            Undefined = -1,
+
+            Loading,
+            Loaded,
+            Released
+        };
+        struct TileEntry : TilesCollectionEntryWithState<TileEntry, TileState, TileState::Undefined>
+        {
+            TileEntry(TilesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom)
+                : TilesCollectionEntryWithState(collection, tileId, zoom)
+            {}
+
+            virtual ~TileEntry()
+            {}
+
+            std::weak_ptr< OfflineMapDataTile > _tile;
+            QWaitCondition _loadedCondition;
+        };
+        TilesCollection<TileEntry> _tileReferences;
+
+        class Link : public std::enable_shared_from_this<Link>
+        {
+        private:
+        protected:
+        public:
+            Link(OfflineMapDataProvider_P& provider_)
+                : provider(provider_)
+            {}
+
+            virtual ~Link()
+            {}
+
+            OfflineMapDataProvider_P& provider;
+        };
+        const std::shared_ptr<Link> _link;
+
+        static uint64_t makeInternalId(const std::shared_ptr<const Model::MapObject>& mapObject);
     public:
         ~OfflineMapDataProvider_P();
 
-        bool obtainMapPrimitivesTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<Tile>& outTile);
-        //Tile data consists of rasterizer preprocessed primitives?
-        //void obtainTileData(TileId, zoom, callback);
-        //void purgeCache();
-        //void purgeCacheExcept(visibleUniqueTiles);
+        bool isBasemapAvailable();
+        void obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const OfflineMapDataTile>& outTile);
 
     friend class OsmAnd::OfflineMapDataProvider;
+    friend class OsmAnd::OfflineMapDataTile_P;
     };
 
 } // namespace OsmAnd

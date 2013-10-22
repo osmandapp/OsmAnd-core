@@ -39,7 +39,7 @@ bool OsmAnd::MapStyle::areDependenciesResolved() const
 
 bool OsmAnd::MapStyle::resolveValueDefinition( const QString& name, std::shared_ptr<const MapStyleValueDefinition>& outDefinition ) const
 {
-    auto itValueDefinition = _d->_valuesDefinitions.find(name);
+    auto itValueDefinition = _d->_valuesDefinitions.constFind(name);
     if(itValueDefinition != _d->_valuesDefinitions.cend())
     {
         outDefinition = *itValueDefinition;
@@ -54,7 +54,7 @@ bool OsmAnd::MapStyle::resolveValueDefinition( const QString& name, std::shared_
 
 bool OsmAnd::MapStyle::resolveAttribute( const QString& name, std::shared_ptr<const MapStyleRule>& outAttribute ) const
 {
-    auto itAttribute = _d->_attributes.find(name);
+    auto itAttribute = _d->_attributes.constFind(name);
     if(itAttribute != _d->_attributes.cend())
     {
         outAttribute = *itAttribute;

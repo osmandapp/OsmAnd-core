@@ -2,10 +2,11 @@
 
 #include "ObfMapSectionReader.h"
 
-OsmAnd::Model::MapObject::MapObject(const std::shared_ptr<const ObfMapSectionInfo>& section_)
+OsmAnd::Model::MapObject::MapObject(const std::shared_ptr<const ObfMapSectionInfo>& section_, const std::shared_ptr<const ObfMapSectionLevel>& level_)
     : _id(std::numeric_limits<uint64_t>::max())
     , _foundation(MapFoundationType::Undefined)
     , section(section_)
+    , level(level_)
     , id(_id)
     , isArea(_isArea)
     , points31(_points31)
@@ -91,14 +92,18 @@ bool OsmAnd::Model::MapObject::containsType( const QString& tag, const QString& 
     return false;
 }
 
-size_t OsmAnd::Model::MapObject::calculateApproxConsumedMemory() const
+bool OsmAnd::Model::MapObject::intersects( const AreaI& area ) const
 {
-    size_t res = sizeof(MapObject) + _points31.size() * sizeof(PointI);
-    for(auto itPolygon = _innerPolygonsPoints31.cbegin(); itPolygon != _innerPolygonsPoints31.cend(); ++itPolygon)
+    // Check if any of the object points is inside area
+    for(auto itPoint = _points31.cbegin(); itPoint != _points31.cend(); ++itPoint)
     {
-        const auto& polygon = *itPolygon;
-
-        res += polygon.size() * sizeof(PointI);
+        if(area.contains(*itPoint))
+            return true;
     }
-    return res;
+
+    // Check if area is inside map object
+    if(bbox31.contains(area) || area.intersects(bbox31))
+        return true;
+
+    return false;
 }

@@ -183,7 +183,7 @@ bool OsmAnd::RasterizerEnvironment_P::obtainBitmapShader( const QString& name, S
     //TODO: I'm not sure that it should be const_cast, like that...
     QMutexLocker scopedLock(&const_cast<RasterizerEnvironment_P*>(this)->_bitmapShadersMutex);
 
-    auto itShader = _bitmapShaders.find(name);
+    auto itShader = _bitmapShaders.constFind(name);
     if(itShader == _bitmapShaders.cend())
     {
         const auto shaderBitmapPath = QString::fromLatin1("map/shaders/%1.png").arg(name);

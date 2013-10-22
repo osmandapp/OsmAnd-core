@@ -39,6 +39,7 @@
 namespace OsmAnd {
 
     class ObfMapSectionInfo;
+    class ObfMapSectionLevel;
     class ObfMapSectionReader_P;
     class Rasterizer_P;
 
@@ -48,7 +49,7 @@ namespace OsmAnd {
         {
         private:
         protected:
-            MapObject(const std::shared_ptr<const ObfMapSectionInfo>& section);
+            MapObject(const std::shared_ptr<const ObfMapSectionInfo>& section, const std::shared_ptr<const ObfMapSectionLevel>& level);
 
             uint64_t _id;
             MapFoundationType _foundation;
@@ -63,6 +64,7 @@ namespace OsmAnd {
             virtual ~MapObject();
 
             const std::shared_ptr<const ObfMapSectionInfo> section;
+            const std::shared_ptr<const ObfMapSectionLevel> level;
 
             const uint64_t& id;
             const bool& isArea;
@@ -79,7 +81,7 @@ namespace OsmAnd {
 
             bool containsType(const QString& tag, const QString& value, bool checkAdditional = false) const;
 
-            size_t calculateApproxConsumedMemory() const;
+            bool intersects(const AreaI& area) const;
 
             friend class OsmAnd::ObfMapSectionReader_P;
             friend class OsmAnd::Rasterizer_P;

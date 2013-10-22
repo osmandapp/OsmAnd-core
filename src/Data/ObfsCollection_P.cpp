@@ -34,7 +34,7 @@ void OsmAnd::ObfsCollection_P::refreshSources()
             {
                 const auto& watchedDirEntry = std::static_pointer_cast<WatchedDirectoryEntry>(entry);
 
-                Utilities::findFiles(watchedDirEntry->dir, QStringList() << "*.obf", obfs, watchedDirEntry->recursive);
+                Utilities::findFiles(watchedDirEntry->dir, QStringList() << QLatin1String("*.obf"), obfs, watchedDirEntry->recursive);
             }
             else if(entry->type == WatchEntry::ExplicitFile)
             {
@@ -69,7 +69,7 @@ void OsmAnd::ObfsCollection_P::refreshSources()
         const auto& obfFileInfo = *itObfFileInfo;
 
         const auto& obfFilePath = obfFileInfo.canonicalFilePath();
-        auto itObfFileEntry = _sources.find(obfFilePath);
+        auto itObfFileEntry = _sources.constFind(obfFilePath);
 
         // ... which is not yet present in registry, ...
         if(itObfFileEntry == _sources.cend())

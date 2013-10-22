@@ -33,7 +33,11 @@
 #include <TilesCollection.h>
 #include <IMapBitmapTileProvider.h>
 
+class SkBitmap;
+
 namespace OsmAnd {
+
+    class OfflineMapDataTile;
 
     class OfflineMapRasterTileProvider_Software;
     class OfflineMapRasterTileProvider_Software_P
@@ -53,7 +57,30 @@ namespace OsmAnd {
             // Tile is processing
             Processing,
         };
-        typedef TilesCollectionEntryWithState<TileState, TileState::Unknown> TileEntry;
+        class TileEntry : public TilesCollectionEntryWithState<TileEntry, TileState, TileState::Unknown>
+        {
+        private:
+        protected:
+        public:
+            TileEntry(const TilesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom)
+                : TilesCollectionEntryWithState(collection, tileId, zoom)
+            {}
+
+            virtual ~TileEntry()
+            {}
+        };
+
+        class Tile : public MapBitmapTile
+        {
+            Q_DISABLE_COPY(Tile);
+        private:
+        protected:
+        public:
+            Tile(SkBitmap* bitmap, const std::shared_ptr<const OfflineMapDataTile>& dataTile);
+            virtual ~Tile();
+
+            const std::shared_ptr<const OfflineMapDataTile> dataTile;
+        };
 
         OfflineMapRasterTileProvider_Software* const owner;
         const uint32_t outputTileSize;

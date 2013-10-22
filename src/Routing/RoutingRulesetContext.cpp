@@ -102,7 +102,7 @@ QBitArray OsmAnd::RoutingRulesetContext::encode( const std::shared_ptr<const Obf
     QBitArray bitset(ruleset->owner->_universalRules.size());
     
     auto itTagValueAttribIdCache = owner->_tagValueAttribIdCache.find(section);
-    if(itTagValueAttribIdCache == owner->_tagValueAttribIdCache.cend())
+    if(itTagValueAttribIdCache == owner->_tagValueAttribIdCache.end())
         itTagValueAttribIdCache = owner->_tagValueAttribIdCache.insert(section, QMap<uint32_t, uint32_t>());
     
     for(auto itType = roadTypes.cbegin(); itType != roadTypes.cend(); ++itType)

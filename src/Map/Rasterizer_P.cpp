@@ -132,7 +132,7 @@ void OsmAnd::Rasterizer_P::prepareContext(
     {
         assert(foundation != MapFoundationType::Undefined);
 
-        std::shared_ptr<Model::MapObject> bgMapObject(new Model::MapObject(nullptr));
+        std::shared_ptr<Model::MapObject> bgMapObject(new Model::MapObject(nullptr, nullptr));
         bgMapObject->_isArea = true;
         bgMapObject->_points31.push_back(PointI(area31.left, area31.top));
         bgMapObject->_points31.push_back(PointI(area31.right, area31.top));
@@ -653,7 +653,7 @@ bool OsmAnd::Rasterizer_P::updatePaint(
 
 SkPathEffect* OsmAnd::Rasterizer_P::obtainPathEffect( const RasterizerEnvironment_P& env, RasterizerContext_P& context, const QString& pathEffect )
 {
-    auto itEffect = context._pathEffects.find(pathEffect);
+    auto itEffect = context._pathEffects.constFind(pathEffect);
     if(itEffect != context._pathEffects.cend())
         return *itEffect;
 
@@ -1076,7 +1076,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
     {
         const auto& polyline = *itPolyline;
 
-        std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr));
+        std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr, nullptr));
         mapObject->_isArea = false;
         mapObject->_points31 = polyline;
         mapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline_line")));
@@ -1088,7 +1088,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
     if(!coastlinePolylines.isEmpty())
     {
         // Add complete water tile with holes
-        std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr));
+        std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr, nullptr));
         mapObject->_points31.push_back(PointI(context._area31.left, context._area31.top));
         mapObject->_points31.push_back(PointI(context._area31.right, context._area31.top));
         mapObject->_points31.push_back(PointI(context._area31.right, context._area31.bottom));
@@ -1121,7 +1121,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
         {
             const auto& polygon = *itPolygon;
 
-            std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr));
+            std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr, nullptr));
             mapObject->_isArea = false;
             mapObject->_points31 = polygon;
             mapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline_broken")));
@@ -1135,7 +1135,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
     {
         const auto& polygon = *itPolygon;
 
-        std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr));
+        std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr, nullptr));
         mapObject->_isArea = false;
         mapObject->_points31 = polygon;
         mapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline_line")));
@@ -1158,7 +1158,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
 
         bool clockwise = isClockwiseCoastlinePolygon(polygon);
 
-        std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr));
+        std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr, nullptr));
         mapObject->_points31 = polygon;
         if(clockwise)
         {
@@ -1187,7 +1187,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
             context._zoom);
 
         // Add complete water tile
-        std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr));
+        std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr, nullptr));
         mapObject->_points31.push_back(PointI(context._area31.left, context._area31.top));
         mapObject->_points31.push_back(PointI(context._area31.right, context._area31.top));
         mapObject->_points31.push_back(PointI(context._area31.right, context._area31.bottom));

@@ -524,7 +524,7 @@ void OsmAnd::MapStyle_P::registerBuiltinValueDefinitions()
 
 bool OsmAnd::MapStyle_P::resolveConstantValue( const QString& name, QString& value )
 {
-    auto itValue = _parsetimeConstants.find(name);
+    auto itValue = _parsetimeConstants.constFind(name);
     if(itValue != _parsetimeConstants.cend())
     {
         value = *itValue;
@@ -613,7 +613,7 @@ bool OsmAnd::MapStyle_P::registerRule( MapStyleRulesetType type, const std::shar
 
     auto insertedRule = rule;
     auto& ruleset = obtainRules(type);
-    auto itPrevious = ruleset.find(id);
+    auto itPrevious = ruleset.constFind(id);
     if(itPrevious != ruleset.cend())
     {
         // all root rules should have at least tag/value
@@ -668,7 +668,7 @@ const QString& OsmAnd::MapStyle_P::lookupStringValue( uint32_t id ) const
 
 bool OsmAnd::MapStyle_P::lookupStringId( const QString& value, uint32_t& id ) const
 {
-    auto itId = _stringsRevLUT.find(value);
+    auto itId = _stringsRevLUT.constFind(value);
     if(itId != _stringsRevLUT.cend())
     {
         id = *itId;
@@ -744,7 +744,7 @@ bool OsmAnd::MapStyle_P::mergeInheritedRules( MapStyleRulesetType type )
 
     for(auto itParentRule = parentRules.cbegin(); itParentRule != parentRules.cend(); ++itParentRule)
     {
-        auto itLocalRule = rules.find(itParentRule.key());
+        auto itLocalRule = rules.constFind(itParentRule.key());
 
         auto toInsert = itParentRule.value();
         if(itLocalRule != rules.cend())
@@ -768,7 +768,7 @@ bool OsmAnd::MapStyle_P::mergeInheritedAttributes()
     {
         const auto& parentAttribute = *itParentAttribute;
 
-        auto itAttribute = _attributes.find(itParentAttribute.key());
+        auto itAttribute = _attributes.constFind(itParentAttribute.key());
         if(itAttribute != _attributes.cend())
         {
             const auto& attribute = *itAttribute;

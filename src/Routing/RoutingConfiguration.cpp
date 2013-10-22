@@ -252,15 +252,15 @@ bool OsmAnd::RoutingConfiguration::isConditionTag( const QStringRef& tagName )
 
 QString OsmAnd::RoutingConfiguration::resolveAttribute( const QString& vehicle, const QString& name )
 {
-    auto itProfile = _routingProfiles.find(vehicle);
+    auto itProfile = _routingProfiles.constFind(vehicle);
     if(itProfile != _routingProfiles.cend())
     {
-        auto itProfileAttribute = (*itProfile)->_attributes.find(name);
+        auto itProfileAttribute = (*itProfile)->_attributes.constFind(name);
         if(itProfileAttribute != (*itProfile)->_attributes.cend())
             return (*itProfileAttribute);
     }
 
-    auto itAttribute = _attributes.find(name);
+    auto itAttribute = _attributes.constFind(name);
     if(itAttribute != _attributes.cend())
         return *itAttribute;
     return QString();

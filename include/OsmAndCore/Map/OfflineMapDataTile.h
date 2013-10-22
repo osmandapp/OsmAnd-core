@@ -20,12 +20,11 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __OBF_MAP_SECTION_READER_H_
-#define __OBF_MAP_SECTION_READER_H_
+#ifndef __OFFLINE_MAP_DATA_TILE_H_
+#define __OFFLINE_MAP_DATA_TILE_H_
 
 #include <cstdint>
 #include <memory>
-#include <functional>
 
 #include <QList>
 
@@ -35,28 +34,29 @@
 
 namespace OsmAnd {
 
-    class ObfReader;
-    class ObfMapSectionInfo;
+    class OfflineMapDataProvider;
+    class OfflineMapDataProvider_P;
     namespace Model {
         class MapObject;
-    } // namespace Model
-    class IQueryController;
+    }
 
-    class OSMAND_CORE_API ObfMapSectionReader
+    class OfflineMapDataTile_P;
+    class OSMAND_CORE_API OfflineMapDataTile
     {
     private:
-        ObfMapSectionReader();
-        ~ObfMapSectionReader();
+        const std::unique_ptr<OfflineMapDataTile_P> _d;
     protected:
+        OfflineMapDataTile(const MapFoundationType tileFoundation, const QList< std::shared_ptr<const Model::MapObject> >& mapObjects);
     public:
-        static void loadMapObjects(const std::shared_ptr<ObfReader>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
-            ZoomLevel zoom, const AreaI* bbox31 = nullptr,
-            QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut = nullptr, MapFoundationType* foundationOut = nullptr,
-            std::function<bool (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t)> filterById = nullptr,
-            std::function<bool (const std::shared_ptr<const OsmAnd::Model::MapObject>&)> visitor = nullptr,
-            IQueryController* controller = nullptr);
+        virtual ~OfflineMapDataTile();
+
+        const MapFoundationType tileFoundation;
+        const QList< std::shared_ptr<const Model::MapObject> > mapObjects;
+
+    friend class OsmAnd::OfflineMapDataProvider;
+    friend class OsmAnd::OfflineMapDataProvider_P;
     };
 
 } // namespace OsmAnd
 
-#endif // __OBF_MAP_SECTION_READER_H_
+#endif // __OFFLINE_MAP_DATA_TILE_H_

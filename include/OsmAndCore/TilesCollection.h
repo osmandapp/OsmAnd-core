@@ -26,6 +26,7 @@
 #include <memory>
 #include <array>
 #include <functional>
+#include <type_traits>
 
 #include <QMap>
 #include <QReadWriteLock>
@@ -35,19 +36,39 @@
 
 namespace OsmAnd {
 
-    template<class ENTRY> class TilesCollection
+    template<class ENTRY>
+    class TilesCollectionEntry;
+
+    template<class ENTRY>
+    class TilesCollection
     {
+    public:
+        class Link : public std::enable_shared_from_this< Link >
+        {
+        private:
+        protected:
+        public:
+            Link(TilesCollection< ENTRY >& collection_)
+                : collection(collection_)
+            {}
+
+            virtual ~Link()
+            {}
+
+            TilesCollection< ENTRY >& collection;
+        };
+
     private:
         std::array< QMap< TileId, std::shared_ptr<ENTRY> >, ZoomLevelsCount > _zoomLevels;
         QReadWriteLock _tilesCollectionLock;
     protected:
+        const std::shared_ptr< Link > _link;
     public:
         TilesCollection()
-        {
-        }
+            : _link(new Link(*this))
+        {}
         virtual ~TilesCollection()
-        {
-        }
+        {}
 
         virtual bool obtainTileEntry(std::shared_ptr<ENTRY>& outEntry, const TileId tileId, const ZoomLevel zoom, bool createEmptyIfUnexistent = false)
         {
@@ -57,7 +78,7 @@ namespace OsmAnd {
                 _tilesCollectionLock.lockForRead();
 
             auto& zoomLevel = _zoomLevels[zoom];
-            auto itEntry = zoomLevel.find(tileId);
+            auto itEntry = zoomLevel.constFind(tileId);
             if(itEntry != zoomLevel.cend())
             {
                 outEntry = *itEntry;
@@ -72,7 +93,7 @@ namespace OsmAnd {
                 return false;
             }
 
-            auto newEntry = new ENTRY(tileId, zoom);
+            auto newEntry = new ENTRY(*this, tileId, zoom);
             outEntry.reset(newEntry);
             itEntry = zoomLevel.insert(tileId, outEntry);
 
@@ -150,33 +171,42 @@ namespace OsmAnd {
                 }
             }
         }
+
+    friend class OsmAnd::TilesCollectionEntry<ENTRY>;
     };
 
-    class OSMAND_CORE_API TilesCollectionEntry
+    template<class ENTRY>
+    class TilesCollectionEntry
     {
     private:
     protected:
-        TilesCollectionEntry(const TileId tileId, const ZoomLevel zoom);
+        TilesCollectionEntry(const TilesCollection<ENTRY>& collection, const TileId tileId_, const ZoomLevel zoom_)
+            : link(collection._link)
+            , tileId(tileId_)
+            , zoom(zoom_)
+        {}
     public:
-        virtual ~TilesCollectionEntry();
+        virtual ~TilesCollectionEntry()
+        {}
+
+        typedef typename TilesCollection<ENTRY>::Link Link;
+        const std::weak_ptr<Link> link;
 
         const TileId tileId;
         const ZoomLevel zoom;
     };
 
-    template<typename STATE_ENUM, STATE_ENUM UNDEFINED_STATE_VALUE> class TilesCollectionEntryWithState : public TilesCollectionEntry
+    template<class ENTRY, typename STATE_ENUM, STATE_ENUM UNDEFINED_STATE_VALUE> class TilesCollectionEntryWithState : public TilesCollectionEntry<ENTRY>
     {
     private:
     protected:
     public:
-        TilesCollectionEntryWithState(const TileId tileId, const ZoomLevel zoom, const STATE_ENUM& state = UNDEFINED_STATE_VALUE)
-            : TilesCollectionEntry(tileId, zoom)
+        TilesCollectionEntryWithState(const TilesCollection<ENTRY>& collection, const TileId tileId, const ZoomLevel zoom, const STATE_ENUM& state = UNDEFINED_STATE_VALUE)
+            : TilesCollectionEntry(collection, tileId, zoom)
             , state(state)
-        {
-        }
+        {}
         virtual ~TilesCollectionEntryWithState()
-        {
-        }
+        {}
 
         volatile STATE_ENUM state;
         QReadWriteLock stateLock;

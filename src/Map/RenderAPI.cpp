@@ -35,7 +35,7 @@ bool OsmAnd::RenderAPI::release()
 
 std::shared_ptr<OsmAnd::RenderAPI::AtlasTexturesPool> OsmAnd::RenderAPI::obtainAtlasTexturesPool( const AtlasTypeId& atlasTypeId )
 {
-    auto itPool = _atlasTexturesPools.find(atlasTypeId);
+    auto itPool = _atlasTexturesPools.constFind(atlasTypeId);
     if(itPool == _atlasTexturesPools.cend())
     {
         std::shared_ptr<AtlasTexturesPool> pool(new AtlasTexturesPool(this, atlasTypeId));

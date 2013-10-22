@@ -14,6 +14,7 @@
 #include <SkImageEncoder.h>
 
 #include "OfflineMapDataProvider.h"
+#include "OfflineMapDataTile.h"
 #include "ObfsCollection.h"
 #include "ObfDataInterface.h"
 #include "Rasterizer.h"
@@ -39,22 +40,9 @@ bool OsmAnd::OfflineMapRasterTileProvider_Software_P::obtainTile(const TileId ti
     // Get bounding box that covers this tile
     const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
 
-    // Obtain OBF data interface
-    const auto& dataInterface = owner->dataProvider->obfsCollection->obtainDataInterface();
-
-    // Get map objects from data proxy
-    QList< std::shared_ptr<const Model::MapObject> > mapObjects;
-#if defined(_DEBUG) || defined(DEBUG)
-    const auto dataRead_Begin = std::chrono::high_resolution_clock::now();
-#endif
-    bool basemapAvailable;
-    MapFoundationType tileFoundation;
-    dataInterface->obtainBasemapPresenceFlag(basemapAvailable, nullptr);
-    dataInterface->obtainMapObjects(&mapObjects, &tileFoundation, tileBBox31, zoom, nullptr);
-#if defined(_DEBUG) || defined(DEBUG)
-    const auto dataRead_End = std::chrono::high_resolution_clock::now();
-    const std::chrono::duration<float> dataRead_Elapsed = dataRead_End - dataRead_Begin;
-#endif
+    // Obtain offline map data tile
+    std::shared_ptr< const OfflineMapDataTile > dataTile;
+    owner->dataProvider->obtainTile(tileId, zoom, dataTile);
 
 #if defined(_DEBUG) || defined(DEBUG)
     const auto dataRasterization_Begin = std::chrono::high_resolution_clock::now();
@@ -77,9 +65,9 @@ bool OsmAnd::OfflineMapRasterTileProvider_Software_P::obtainTile(const TileId ti
 
     // Perform actual rendering
     bool nothingToRasterize = false;
-    RasterizerEnvironment rasterizerEnv(owner->dataProvider->mapStyle, basemapAvailable, density);
+    RasterizerEnvironment rasterizerEnv(owner->dataProvider->mapStyle, owner->dataProvider->isBasemapAvailable(), density);
     RasterizerContext rasterizerContext;
-    Rasterizer::prepareContext(rasterizerEnv, rasterizerContext, tileBBox31, zoom, outputTileSize, tileFoundation, mapObjects, OsmAnd::PointF(), &nothingToRasterize, nullptr);
+    Rasterizer::prepareContext(rasterizerEnv, rasterizerContext, tileBBox31, zoom, outputTileSize, dataTile->tileFoundation, dataTile->mapObjects, OsmAnd::PointF(), &nothingToRasterize, nullptr);
     if(!nothingToRasterize)
         Rasterizer::rasterizeMap(rasterizerEnv, rasterizerContext, true, canvas, nullptr);
 
@@ -89,14 +77,14 @@ bool OsmAnd::OfflineMapRasterTileProvider_Software_P::obtainTile(const TileId ti
     if(!nothingToRasterize)
     {
         LogPrintf(LogSeverityLevel::Info,
-            "%d map objects from %dx%d@%d: reading %fs, rasterization %fs",
-            mapObjects.count(), tileId.x, tileId.y, zoom, dataRead_Elapsed.count(), dataRasterization_Elapsed.count());
+            "%d map objects in %dx%d@%d: rasterization %fs",
+            dataTile->mapObjects.count(), tileId.x, tileId.y, zoom, dataRasterization_Elapsed.count());
     }
     else
     {
         LogPrintf(LogSeverityLevel::Info,
-            "%d map objects from %dx%d@%d: reading %fs, nothing to rasterize (%fs)",
-            mapObjects.count(), tileId.x, tileId.y, zoom, dataRead_Elapsed.count(), dataRasterization_Elapsed.count());
+            "%d map objects in %dx%d@%d: nothing to rasterize (%fs)",
+            dataTile->mapObjects.count(), tileId.x, tileId.y, zoom, dataRasterization_Elapsed.count());
     }
 #endif
 
@@ -110,7 +98,17 @@ bool OsmAnd::OfflineMapRasterTileProvider_Software_P::obtainTile(const TileId ti
     }
 
     // Or supply newly rasterized tile
-    auto tile = new MapBitmapTile(rasterizationSurface, MapBitmapTile::AlphaChannelData::NotPresent);
+    auto tile = new Tile(rasterizationSurface, dataTile);
     outTile.reset(tile);
     return true;
+}
+
+OsmAnd::OfflineMapRasterTileProvider_Software_P::Tile::Tile( SkBitmap* bitmap, const std::shared_ptr<const OfflineMapDataTile>& dataTile_ )
+    : MapBitmapTile(bitmap, MapBitmapTile::AlphaChannelData::NotPresent)
+    , dataTile(dataTile_)
+{
+}
+
+OsmAnd::OfflineMapRasterTileProvider_Software_P::Tile::~Tile()
+{
 }

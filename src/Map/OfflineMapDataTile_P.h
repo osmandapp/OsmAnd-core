@@ -20,48 +20,38 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __OBF_SECTION_INFO_H_
-#define __OBF_SECTION_INFO_H_
+#ifndef __OFFLINE_MAP_DATA_TILE_P_H_
+#define __OFFLINE_MAP_DATA_TILE_P_H_
 
 #include <cstdint>
 #include <memory>
 
-#include <QString>
-#include <QAtomicInt>
-
 #include <OsmAndCore.h>
+#include <CommonTypes.h>
+#include <OfflineMapDataProvider_P.h>
 
 namespace OsmAnd {
 
-    class ObfInfo;
-    class ObfReader;
-    class ObfReader_P;
-
-    class OSMAND_CORE_API ObfSectionInfo
+    class OfflineMapDataTile;
+    class OfflineMapDataTile_P
     {
     private:
-        static QAtomicInt _nextRuntimeGeneratedId;
     protected:
-        ObfSectionInfo(const std::weak_ptr<ObfInfo>& owner);
+        OfflineMapDataTile_P(OfflineMapDataTile* owner);
 
-        QString _name;
-        uint32_t _length;
-        uint32_t _offset;
+        OfflineMapDataTile* const owner;
+
+        std::weak_ptr<OfflineMapDataProvider_P::Link> _link;
+        std::weak_ptr<OfflineMapDataProvider_P::TileEntry> _refEntry;
+
+        void cleanup();
     public:
-        virtual ~ObfSectionInfo();
+        virtual ~OfflineMapDataTile_P();
 
-        const QString& name;
-        const uint32_t &length;
-        const uint32_t &offset;
-
-        const int runtimeGeneratedId;
-        
-        std::weak_ptr<ObfInfo> owner;
-
-    friend class OsmAnd::ObfReader;
-    friend class OsmAnd::ObfReader_P;
+    friend class OsmAnd::OfflineMapDataTile;
+    friend class OsmAnd::OfflineMapDataProvider_P;
     };
 
 } // namespace OsmAnd
 
-#endif // __OBF_SECTION_INFO_H_
+#endif // __OFFLINE_MAP_DATA_TILE_P_H_

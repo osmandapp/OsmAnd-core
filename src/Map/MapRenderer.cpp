@@ -1263,8 +1263,8 @@ void OsmAnd::MapRenderer::TiledResources::verifyNoUploadedTilesPresent()
     assert(stillUploadedTilesPresent == false);
 }
 
-OsmAnd::MapRenderer::TiledResourceEntry::TiledResourceEntry( const TileId tileId, const ZoomLevel zoom )
-    : TilesCollectionEntryWithState(tileId, zoom)
+OsmAnd::MapRenderer::TiledResourceEntry::TiledResourceEntry( const TilesCollection<TiledResourceEntry>& collection, const TileId tileId, const ZoomLevel zoom )
+    : TilesCollectionEntryWithState(collection, tileId, zoom)
     , _requestTask(nullptr)
     , sourceData(_sourceData)
     , resourceInGPU(_resourceInGPU)

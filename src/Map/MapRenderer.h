@@ -98,7 +98,7 @@ namespace OsmAnd {
                 Unloaded,
         };
 
-        class TiledResourceEntry : public TilesCollectionEntryWithState<ResourceState, ResourceState::Unknown>
+        class TiledResourceEntry : public TilesCollectionEntryWithState<TiledResourceEntry, ResourceState, ResourceState::Unknown>
         {
         private:
         protected:
@@ -107,13 +107,13 @@ namespace OsmAnd {
 
             Concurrent::Task* _requestTask;
         public:
-            TiledResourceEntry(const TileId tileId, const ZoomLevel zoom);
+            TiledResourceEntry(const TilesCollection<TiledResourceEntry>& collection, const TileId tileId, const ZoomLevel zoom);
             virtual ~TiledResourceEntry();
 
             const std::shared_ptr<const MapTile>& sourceData;
             const std::shared_ptr<RenderAPI::ResourceInGPU>& resourceInGPU;
 
-            friend class OsmAnd::MapRenderer;
+        friend class OsmAnd::MapRenderer;
         };
 
         class TiledResources : public TilesCollection<TiledResourceEntry>
@@ -129,7 +129,7 @@ namespace OsmAnd {
 
             virtual void removeAllEntries();
 
-            friend class OsmAnd::MapRenderer;
+        friend class OsmAnd::MapRenderer;
         };
     private:
         const Concurrent::TaskHost::Bridge _taskHostBridge;

@@ -108,7 +108,7 @@ OsmAnd::MapStyleRule::~MapStyleRule()
 
 bool OsmAnd::MapStyleRule::getAttribute( const QString& key, MapStyleValue& value ) const
 {
-    auto itValue = _d->_values.find(key);
+    auto itValue = _d->_values.constFind(key);
     if(itValue == _d->_values.cend())
         return false;
 

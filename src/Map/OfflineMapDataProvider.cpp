@@ -11,3 +11,13 @@ OsmAnd::OfflineMapDataProvider::OfflineMapDataProvider( const std::shared_ptr<co
 OsmAnd::OfflineMapDataProvider::~OfflineMapDataProvider()
 {
 }
+
+bool OsmAnd::OfflineMapDataProvider::isBasemapAvailable() const
+{
+    return _d->isBasemapAvailable();
+}
+
+void OsmAnd::OfflineMapDataProvider::obtainTile( const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const OfflineMapDataTile>& outTile ) const
+{
+    _d->obtainTile(tileId, zoom, outTile);
+}
