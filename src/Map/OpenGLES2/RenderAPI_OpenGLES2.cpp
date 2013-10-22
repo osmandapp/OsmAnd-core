@@ -64,6 +64,10 @@
 
 #if !defined(OSMAND_TARGET_OS_ios)
 OsmAnd::RenderAPI_OpenGLES2::P_glTexStorage2DEXT_PROC OsmAnd::RenderAPI_OpenGLES2::glTexStorage2DEXT = nullptr;
+
+PFNGLBINDVERTEXARRAYOESPROC OsmAnd::RenderAPI_OpenGLES2::glBindVertexArrayOES = nullptr;
+PFNGLDELETEVERTEXARRAYSOESPROC OsmAnd::RenderAPI_OpenGLES2::glDeleteVertexArraysOES = nullptr;
+PFNGLGENVERTEXARRAYSOESPROC OsmAnd::RenderAPI_OpenGLES2::glGenVertexArraysOES = nullptr;
 #endif //!OSMAND_TARGET_OS_ios
 
 OsmAnd::RenderAPI_OpenGLES2::RenderAPI_OpenGLES2()
