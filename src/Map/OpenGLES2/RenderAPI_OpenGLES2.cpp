@@ -583,6 +583,20 @@ void OsmAnd::RenderAPI_OpenGLES2::preprocessFragmentShader( QString& code )
 void OsmAnd::RenderAPI_OpenGLES2::setSampler( GLenum texture, const SamplerType samplerType )
 {
     GL_CHECK_PRESENT(glTexParameteri);
+    GL_CHECK_PRESENT(glActiveTexture);
+    GL_CHECK_PRESENT(glGetIntegerv);
+
+    // Get current active texture unit
+    GLint activeTextureUnit = -1;
+    glGetIntegerv(GL_ACTIVE_TEXTURE, &activeTextureUnit);
+    GL_CHECK_RESULT;
+
+    // Activate new texture unit if needed
+    if(activeTextureUnit != texture)
+    {
+        glActiveTexture(texture);
+        GL_CHECK_RESULT;
+    }
 
     if(samplerType == SamplerType::ElevationDataTile)
     {
