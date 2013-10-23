@@ -93,12 +93,20 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
     QList< std::shared_ptr<const Model::MapObject> > mapObjects;
     MapFoundationType tileFoundation;
 #if defined(_DEBUG) || defined(DEBUG)
+    float dataFilter = 0.0f;
     const auto dataRead_Begin = std::chrono::high_resolution_clock::now();
 #endif
     auto& dataCache = _dataCache[zoom];
     dataInterface->obtainMapObjects(&mapObjects, &tileFoundation, tileBBox31, zoom, nullptr,
+#if defined(_DEBUG) || defined(DEBUG)
+        [&dataCache, &duplicateMapObjects, tileBBox31, &dataFilter](const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id) -> bool
+#else
         [&dataCache, &duplicateMapObjects, tileBBox31](const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id) -> bool
+#endif
         {
+#if defined(_DEBUG) || defined(DEBUG)
+            const auto dataFilter_Begin = std::chrono::high_resolution_clock::now();
+#endif
             uint64_t internalId = id;
             if(static_cast<int64_t>(internalId) < 0)
             {
@@ -123,13 +131,32 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
                         if(mapObject->intersects(tileBBox31))
                             duplicateMapObjects.push_back(mapObject);
 
+#if defined(_DEBUG) || defined(DEBUG)
+                        const auto dataFilter_End = std::chrono::high_resolution_clock::now();
+                        const std::chrono::duration<float> dataRead_Elapsed = dataFilter_End - dataFilter_Begin;
+                        dataFilter += dataRead_Elapsed.count();
+#endif
+
                         return false;
                     }
                 }
             }
 
+#if defined(_DEBUG) || defined(DEBUG)
+            const auto dataFilter_End = std::chrono::high_resolution_clock::now();
+            const std::chrono::duration<float> dataRead_Elapsed = dataFilter_End - dataFilter_Begin;
+            dataFilter += dataRead_Elapsed.count();
+#endif
+
             return true;
         });
+
+#if defined(_DEBUG) || defined(DEBUG)
+    const auto dataRead_End = std::chrono::high_resolution_clock::now();
+    const std::chrono::duration<float> dataRead_Elapsed = dataRead_End - dataRead_Begin;
+
+    const auto dataProcess_Begin = std::chrono::high_resolution_clock::now();
+#endif
 
     // Append weak references to newly read map objects
     for(auto itMapObject = mapObjects.cbegin(); itMapObject != mapObjects.cend(); ++itMapObject)
@@ -153,11 +180,13 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
         }
     }
 #if defined(_DEBUG) || defined(DEBUG)
-    const auto dataRead_End = std::chrono::high_resolution_clock::now();
-    const std::chrono::duration<float> dataRead_Elapsed = dataRead_End - dataRead_Begin;
+    const auto dataProcess_End = std::chrono::high_resolution_clock::now();
+    const std::chrono::duration<float> dataProcess_Elapsed = dataProcess_End - dataProcess_Begin;
     LogPrintf(LogSeverityLevel::Info,
-        "%d map objects (%d unique, %d shared) in %dx%d@%d: read took %fs",
-        mapObjects.size() + duplicateMapObjects.size(), mapObjects.size(), duplicateMapObjects.size(), tileId.x, tileId.y, zoom, dataRead_Elapsed.count());
+        "%d map objects (%d unique, %d shared) in %dx%d@%d: filter %fs, read %fs, process %fs",
+        mapObjects.size() + duplicateMapObjects.size(), mapObjects.size(), duplicateMapObjects.size(),
+        tileId.x, tileId.y, zoom,
+        dataFilter, dataRead_Elapsed.count(), dataProcess_Elapsed.count());
 #endif
 
     // Create tile
