@@ -1,6 +1,6 @@
 project(OsmAndCore)
 
-# Bump this number each time a new source file is committed to repository or source file removed from repository: 3
+# Bump this number each time a new source file is committed to repository or source file removed from repository: 4
 
 set(target_specific_sources "")
 set(target_specific_public_definitions "")
@@ -91,8 +91,6 @@ file(GLOB sources_data "src/Data/*.c*")
 file(GLOB sources_data_model "src/Data/Model/*.c*")
 file(GLOB sources_routing "src/Routing/*.c*")
 file(GLOB sources_map "src/Map/*.c*")
-file(GLOB_RECURSE headers_client "client/*.h*")
-file(GLOB_RECURSE sources_client  "client/*.c*")
 
 set(merged_sources
 	${headers}
@@ -106,8 +104,6 @@ set(merged_sources
 	${sources_data_model}
 	${sources_routing}
 	${sources_map}
-	${headers_client}
-	${sources_client}
 	${target_specific_sources}
 	"protos/OBF.pb.h"
 )
@@ -135,7 +131,6 @@ set(merged_include_dirs_private
 )
 set(merged_include_dirs_public
 	"${OSMAND_ROOT}/core/include"
-	"${OSMAND_ROOT}/core/client"
 	${target_specific_public_includes}
 )
 set(merged_link_libs_public
