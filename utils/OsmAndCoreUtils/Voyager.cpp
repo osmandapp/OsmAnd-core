@@ -271,7 +271,9 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
     points.push_back(std::pair<double, double>(cfg.endLatitude, cfg.endLongitude));
 
     QList< std::shared_ptr<OsmAnd::RouteSegment> > route;
+#ifndef OSMAND_TARGET_OS_qnx
     auto routeCalculationStart = std::chrono::steady_clock::now();
+#endif
     if(cfg.verbose)
     {
         if(cfg.generateXml)
@@ -284,19 +286,25 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
     OsmAnd::RouteCalculationResult routeFound =
             OsmAnd::RoutePlanner::calculateRoute(&plannerContext, points, cfg.leftSide, nullptr);
     route = routeFound.list;
+#ifndef OSMAND_TARGET_OS_qnx
     auto routeCalculationFinish = std::chrono::steady_clock::now();
+#endif
     if(cfg.verbose)
     {
         if(cfg.generateXml)
             output << xT("<!--");
+#ifndef OSMAND_TARGET_OS_qnx
         output << xT("Finished route calculation ") << QStringToStlString(QTime::currentTime().toString()) << xT(", took ") << std::chrono::duration<double, std::milli> (routeCalculationFinish - routeCalculationStart).count() << xT(" ms");
+#endif
         if(cfg.generateXml)
             output << xT("-->");
         output << std::endl;
     }
     if(cfg.doRecalculate)
     {
+#ifndef OSMAND_TARGET_OS_qnx
         auto routeRecalculationStart = std::chrono::steady_clock::now();
+#endif
         if(cfg.verbose)
         {
             if(cfg.generateXml)
@@ -308,12 +316,16 @@ void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& 
         }
         routeFound = OsmAnd::RoutePlanner::calculateRoute(&plannerContext, points, cfg.leftSide, nullptr);
         route = routeFound.list;
+#ifndef OSMAND_TARGET_OS_qnx
         auto routeRecalculationFinish = std::chrono::steady_clock::now();
+#endif
         if(cfg.verbose)
         {
             if(cfg.generateXml)
                 output << xT("<!--");
+#ifndef OSMAND_TARGET_OS_qnx
             output << xT("Finished route recalculation ") << QStringToStlString(QTime::currentTime().toString()) << xT(", took ") << std::chrono::duration<double, std::milli> (routeRecalculationFinish - routeRecalculationStart).count() << xT(" ms");
+#endif
             if(cfg.generateXml)
                 output << xT("-->");
             output << std::endl;

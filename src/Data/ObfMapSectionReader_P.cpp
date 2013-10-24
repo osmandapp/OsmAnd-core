@@ -1,6 +1,6 @@
 #include "ObfMapSectionReader_P.h"
 
-#include <cinttypes>
+#include <tr1/cinttypes>
 
 #include "ObfReader.h"
 #include "ObfReader_P.h"

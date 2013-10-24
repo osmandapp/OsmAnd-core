@@ -26,6 +26,12 @@ if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 		LINK_PUBLIC
 			OsmAndCore_shared
 	)
+	if(OSMAND_EMBEDDED_QT)
+	else()
+		qt5_use_modules(OsmAndCoreUtils_shared
+			Core
+		)
+	endif()
 endif()
 
 if(CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
@@ -43,4 +49,10 @@ if(CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 		LINK_PUBLIC
 			OsmAndCore_static
 	)
+	if(OSMAND_EMBEDDED_QT)
+	else()
+		qt5_use_modules(OsmAndCoreUtils_static
+			Core
+		)
+	endif()
 endif()

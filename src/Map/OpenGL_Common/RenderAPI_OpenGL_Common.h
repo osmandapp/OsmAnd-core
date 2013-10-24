@@ -47,7 +47,7 @@
 #elif defined(OSMAND_TARGET_OS_ios)
 #   include <OpenGLES/ES2/gl.h>
 #   include <OpenGLES/ES2/glext.h>
-#elif defined(OSMAND_TARGET_OS_android)
+#elif defined(OSMAND_TARGET_OS_android) || defined(OSMAND_TARGET_OS_qnx)
 #   include <EGL/egl.h>
 #   include <GLES2/gl2.h>
 #   include <GLES2/gl2ext.h>

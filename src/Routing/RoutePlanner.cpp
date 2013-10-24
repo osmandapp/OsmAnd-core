@@ -305,9 +305,11 @@ void OsmAnd::RoutePlanner::loadSubregionContext( RoutePlannerContext::RoutingSub
 {
     const auto wasUnloaded = !context->isLoaded();
     const auto loadsCount = context->getLoadsCounter();
+#ifndef OSMAND_TARGET_OS_qnx
     if(context->owner->_routeStatistics) {
         context->owner->_routeStatistics->timeToLoadBegin = std::chrono::steady_clock::now();
     }
+#endif
     context->markLoaded();
     ObfRoutingSectionReader::loadSubsectionData(context->origin, context->subsection, nullptr, nullptr, nullptr,
         [=] (const std::shared_ptr<const OsmAnd::Model::Road>& road)
@@ -321,8 +323,10 @@ void OsmAnd::RoutePlanner::loadSubregionContext( RoutePlannerContext::RoutingSub
     );
 
     if(context->owner->_routeStatistics) {
+#ifndef OSMAND_TARGET_OS_qnx      
         context->owner->_routeStatistics->timeToLoad += (uint64_t) (
         std::chrono::duration<double, std::milli> (std::chrono::steady_clock::now() - context->owner->_routeStatistics->timeToLoadBegin).count());
+#endif
         context->owner->_routeStatistics->loadedTiles ++;
         context->owner->_loadedTiles++;
         if (wasUnloaded) {
@@ -443,9 +447,11 @@ void OsmAnd::RoutePlanner::printDebugInformation(OsmAnd::RoutePlannerContext::Ca
 
     std::shared_ptr<RouteStatistics> st = ctx->owner->_routeStatistics;
     if(st) {
+#ifndef OSMAND_TARGET_OS_qnx
         st->timeToCalculate += (uint64_t) (
                     std::chrono::duration<double, std::milli> (std::chrono::steady_clock::now() - st->timeToCalculateBegin).count());
         LogPrintf(LogSeverityLevel::Debug, "Time to calculate %llu, time to load %llu ", st->timeToCalculate, st->timeToLoad);
+#endif
         LogPrintf(LogSeverityLevel::Debug, "Forward iterations %u, backward iterations %u", st->forwardIterations, st->backwardIterations);
         auto maxLoadedTiles = qMax(st->maxLoadedTiles, ctx->owner->getCurrentlyLoadedTiles());
         LogPrintf(LogSeverityLevel::Debug, "Current loaded tiles %d, maximum %d : " , ctx->owner->getCurrentlyLoadedTiles(), st->maxLoadedTiles);
@@ -476,11 +482,15 @@ OsmAnd::RouteCalculationResult OsmAnd::RoutePlanner::calculateRoute(
     */
     // measure time
     if(context->owner->_routeStatistics) {
+#ifndef OSMAND_TARGET_OS_qnx
        context->owner->_routeStatistics->timeToLoad = 0;
        context->owner->_routeStatistics->timeToCalculate = 0;
+#endif
        context->owner->_routeStatistics->forwardIterations = 0;
        context->owner->_routeStatistics->backwardIterations = 0;
+#ifndef OSMAND_TARGET_OS_qnx       
        context->owner->_routeStatistics->timeToCalculateBegin = std::chrono::steady_clock::now();
+#endif       
     }
 
     if (!qIsNaN(context->owner->_initialHeading))

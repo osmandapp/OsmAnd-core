@@ -34,7 +34,7 @@ void OsmAnd::LogFlush()
 {
 }
 
-#elif defined(__APPLE__) || defined(__linux__)
+#elif defined(__APPLE__) || defined(__linux__) || defined(__QNXNTO__)
 void OsmAnd::LogFlush()
 {
     fflush(stdout);
