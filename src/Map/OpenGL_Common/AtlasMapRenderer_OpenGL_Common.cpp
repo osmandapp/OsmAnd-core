@@ -258,7 +258,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeRasterMapStage()
         "    lowp vec4 finalColor;                                                                                          ""\n"
         "                                                                                                                   ""\n"
         //   Mix colors of all layers
-        "    finalColor = SAMPLE_TEXTURE_2D_LOD(                                                                            ""\n"
+        "    finalColor = texture2DFetch(                                                                                   ""\n"
         "        param_fs_rasterTileLayers[0].sampler,                                                                      ""\n"
         "        v2f_texCoordsPerLayer[0], v2f_mipmapLOD);                                                                  ""\n"
         "    finalColor.a *= param_fs_rasterTileLayers[0].k;                                                                ""\n"
@@ -283,7 +283,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeRasterMapStage()
         "}                                                                                                                  ""\n");
     const auto& fragmentShader_perRasterLayer = QString::fromLatin1(
         "    {                                                                                                              ""\n"
-        "        lowp vec4 layerColor = SAMPLE_TEXTURE_2D_LOD(                                                              ""\n"
+        "        lowp vec4 layerColor = texture2DFetch(                                                                     ""\n"
         "            param_fs_rasterTileLayers[%rasterLayerId%].sampler,                                                    ""\n"
         "            v2f_texCoordsPerLayer[%rasterLayerId%], v2f_mipmapLOD);                                                ""\n"
         "                                                                                                                   ""\n"
@@ -651,6 +651,12 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
             if(!gpuResource)
                 continue;
 
+#ifdef OSMAND_TARGET_OS_qnx
+            // On blackberry10 fragment shader can't fetch pixels without active texture at 0 unit
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
+#endif
+            
             glActiveTexture(GL_TEXTURE0 + samplerIndex);
             GL_CHECK_RESULT;
 
