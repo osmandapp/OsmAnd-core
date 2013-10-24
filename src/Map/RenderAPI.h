@@ -160,7 +160,7 @@ namespace OsmAnd {
             RenderAPI* const api;
             const AtlasTypeId typeId;
 
-            friend OsmAnd::RenderAPI;
+            friend class OsmAnd::RenderAPI;
         };
 
         class OSMAND_CORE_API AtlasTextureInGPU : public TextureInGPU
@@ -185,7 +185,7 @@ namespace OsmAnd {
 
             const std::shared_ptr<AtlasTexturesPool> pool;
 
-        friend OsmAnd::RenderAPI::TileOnAtlasTextureInGPU;
+        friend class OsmAnd::RenderAPI::TileOnAtlasTextureInGPU;
         };
 
         class OSMAND_CORE_API TileOnAtlasTextureInGPU : public ResourceInGPU
@@ -231,7 +231,7 @@ namespace OsmAnd {
         //   N - allow up to N*N tiles per atlas texture
         virtual bool uploadTileToGPU(const std::shared_ptr< const MapTile >& tile, const uint32_t tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU) = 0;
 
-    friend OsmAnd::RenderAPI::ResourceInGPU;
+    friend class OsmAnd::RenderAPI::ResourceInGPU;
     };
 }
 

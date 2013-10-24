@@ -1,0 +1,128 @@
+--- upstream.original/include/core/SkOSFile.h	2013-10-24 15:41:18.397950851 +0000
++++ upstream.patched/include/core/SkOSFile.h	2013-10-16 20:58:07.371824464 +0000
+@@ -14,7 +14,7 @@
+ 
+ #include "SkString.h"
+ 
+-#if defined(SK_BUILD_FOR_MAC) || defined(SK_BUILD_FOR_UNIX) || defined(SK_BUILD_FOR_ANDROID) || defined(SK_BUILD_FOR_IOS)
++#if defined(SK_BUILD_FOR_MAC) || defined(SK_BUILD_FOR_UNIX) || defined(SK_BUILD_FOR_ANDROID) || defined(SK_BUILD_FOR_IOS) || defined(SK_BUILD_FOR_QNX)
+     #include <dirent.h>
+ #endif
+ 
+@@ -111,7 +111,7 @@
+ #ifdef SK_BUILD_FOR_WIN
+         HANDLE      fHandle;
+         uint16_t*   fPath16;
+-#elif defined(SK_BUILD_FOR_MAC) || defined(SK_BUILD_FOR_UNIX) || defined(SK_BUILD_FOR_ANDROID) || defined(SK_BUILD_FOR_IOS)
++#elif defined(SK_BUILD_FOR_MAC) || defined(SK_BUILD_FOR_UNIX) || defined(SK_BUILD_FOR_ANDROID) || defined(SK_BUILD_FOR_IOS) || defined(SK_BUILD_FOR_QNX)
+         DIR*        fDIR;
+         SkString    fPath, fSuffix;
+ #endif
+
+--- upstream.original/include/core/SkPreConfig.h	2013-10-24 15:41:18.463950851 +0000
++++ upstream.patched/include/core/SkPreConfig.h	2013-10-16 20:53:58.919826707 +0000
+@@ -16,7 +16,7 @@
+ 
+ //////////////////////////////////////////////////////////////////////
+ 
+-#if !defined(SK_BUILD_FOR_ANDROID) && !defined(SK_BUILD_FOR_IOS) && !defined(SK_BUILD_FOR_PALM) && !defined(SK_BUILD_FOR_WINCE) && !defined(SK_BUILD_FOR_WIN32) && !defined(SK_BUILD_FOR_UNIX) && !defined(SK_BUILD_FOR_MAC) && !defined(SK_BUILD_FOR_SDL) && !defined(SK_BUILD_FOR_BREW) && !defined(SK_BUILD_FOR_NACL)
++#if !defined(SK_BUILD_FOR_ANDROID) && !defined(SK_BUILD_FOR_IOS) && !defined(SK_BUILD_FOR_PALM) && !defined(SK_BUILD_FOR_WINCE) && !defined(SK_BUILD_FOR_WIN32) && !defined(SK_BUILD_FOR_UNIX) && !defined(SK_BUILD_FOR_MAC) && !defined(SK_BUILD_FOR_SDL) && !defined(SK_BUILD_FOR_BREW) && !defined(SK_BUILD_FOR_NACL) && !defined(SK_BUILD_FOR_QNX)
+ 
+     #ifdef __APPLE__
+         #include "TargetConditionals.h"
+
+--- upstream.original/include/gpu/gl/SkNativeGLContext.h	2013-10-24 15:41:18.475950851 +0000
++++ upstream.patched/include/gpu/gl/SkNativeGLContext.h	2013-10-16 20:58:47.634824100 +0000
+@@ -12,7 +12,7 @@
+ 
+ #if defined(SK_BUILD_FOR_MAC)
+     #include <OpenGL/OpenGL.h>
+-#elif defined(SK_BUILD_FOR_ANDROID) || defined(SK_BUILD_FOR_NACL)
++#elif defined(SK_BUILD_FOR_ANDROID) || defined(SK_BUILD_FOR_NACL) || defined(SK_BUILD_FOR_QNX)
+     #include <GLES2/gl2.h>
+     #include <EGL/egl.h>
+ #elif defined(SK_BUILD_FOR_UNIX)
+@@ -39,7 +39,7 @@
+     private:
+     #if defined(SK_BUILD_FOR_MAC)
+         CGLContextObj fOldCGLContext;
+-    #elif defined(SK_BUILD_FOR_ANDROID) || defined(SK_BUILD_FOR_NACL)
++    #elif defined(SK_BUILD_FOR_ANDROID) || defined(SK_BUILD_FOR_NACL) || defined(SK_BUILD_FOR_QNX)
+         EGLContext fOldEGLContext;
+         EGLDisplay fOldDisplay;
+         EGLSurface fOldSurface;
+@@ -63,7 +63,7 @@
+ private:
+ #if defined(SK_BUILD_FOR_MAC)
+     CGLContextObj fContext;
+-#elif defined(SK_BUILD_FOR_ANDROID) || defined(SK_BUILD_FOR_NACL)
++#elif defined(SK_BUILD_FOR_ANDROID) || defined(SK_BUILD_FOR_NACL) || defined(SK_BUILD_FOR_QNX)
+     EGLContext fContext;
+     EGLDisplay fDisplay;
+     EGLSurface fSurface;
+
+--- upstream.original/include/views/SkWindow.h	2013-10-24 15:41:18.480950850 +0000
++++ upstream.patched/include/views/SkWindow.h	2013-10-16 21:01:01.141822895 +0000
+@@ -102,7 +102,7 @@
+ 
+ ////////////////////////////////////////////////////////////////////////////////
+ 
+-#if defined(SK_BUILD_FOR_NACL)
++#if defined(SK_BUILD_FOR_NACL) || defined(SK_BUILD_FOR_QNX)
+     #include "SkOSWindow_NaCl.h"
+ #elif defined(SK_BUILD_FOR_MAC)
+     #include "SkOSWindow_Mac.h"
+
+--- upstream.original/src/core/SkAdvancedTypefaceMetrics.cpp	2013-10-24 15:41:21.314950825 +0000
++++ upstream.patched/src/core/SkAdvancedTypefaceMetrics.cpp	2013-10-16 21:01:45.055822498 +0000
+@@ -25,7 +25,7 @@
+ #include <dwrite.h>
+ #endif
+ 
+-#if defined(SK_BUILD_FOR_UNIX) || defined(SK_BUILD_FOR_ANDROID)
++#if defined(SK_BUILD_FOR_UNIX) || defined(SK_BUILD_FOR_ANDROID) || defined(SK_BUILD_FOR_QNX)
+ // forward declare structs needed for getAdvanceData() template for freetype
+ struct FT_FaceRec;
+ typedef struct FT_FaceRec_* FT_Face;
+@@ -283,7 +283,7 @@
+         const uint32_t* subsetGlyphIDs,
+         uint32_t subsetGlyphIDsLength,
+         bool (*getAdvance)(IDWriteFontFace* fontFace, int gId, int16_t* data));
+-#elif defined(SK_BUILD_FOR_UNIX) || defined(SK_BUILD_FOR_ANDROID)
++#elif defined(SK_BUILD_FOR_UNIX) || defined(SK_BUILD_FOR_ANDROID) || defined(SK_BUILD_FOR_QNX)
+ template SkAdvancedTypefaceMetrics::WidthRange* getAdvanceData(
+         FT_Face face,
+         int num_glyphs,
+
+--- upstream.original/src/utils/SkOSFile.cpp	2013-10-24 15:41:21.315950825 +0000
++++ upstream.patched/src/utils/SkOSFile.cpp	2013-10-16 21:03:32.446821529 +0000
+@@ -160,7 +160,7 @@
+     return fHandle != (HANDLE)~0 && get_the_file(fHandle, name, dataPtr, getDir);
+ }
+ 
+-#elif defined(SK_BUILD_FOR_MAC) || defined(SK_BUILD_FOR_UNIX) || defined(SK_BUILD_FOR_ANDROID) || defined(SK_BUILD_FOR_IOS)
++#elif defined(SK_BUILD_FOR_MAC) || defined(SK_BUILD_FOR_UNIX) || defined(SK_BUILD_FOR_ANDROID) || defined(SK_BUILD_FOR_IOS) || defined(SK_BUILD_FOR_QNX)
+ 
+ #if 0
+ OSStatus FSPathMakeRef (
+
+--- upstream.original/src/utils/SkThreadPool.cpp	2013-10-24 15:41:18.769950848 +0000
++++ upstream.patched/src/utils/SkThreadPool.cpp	2013-10-16 21:04:28.856821019 +0000
+@@ -10,7 +10,7 @@
+ #include "SkThreadUtils.h"
+ #include "SkTypes.h"
+ 
+-#if defined(SK_BUILD_FOR_UNIX) || defined(SK_BUILD_FOR_MAC) || defined(SK_BUILD_FOR_ANDROID)
++#if defined(SK_BUILD_FOR_UNIX) || defined(SK_BUILD_FOR_MAC) || defined(SK_BUILD_FOR_ANDROID) || defined(SK_BUILD_FOR_QNX)
+ #include <unistd.h>
+ #endif
+ 
+@@ -20,7 +20,7 @@
+     SYSTEM_INFO sysinfo;
+     GetSystemInfo(&sysinfo);
+     return sysinfo.dwNumberOfProcessors;
+-#elif defined(SK_BUILD_FOR_UNIX) || defined(SK_BUILD_FOR_MAC) || defined(SK_BUILD_FOR_ANDROID)
++#elif defined(SK_BUILD_FOR_UNIX) || defined(SK_BUILD_FOR_MAC) || defined(SK_BUILD_FOR_ANDROID) || defined(SK_BUILD_FOR_QNX)
+     return sysconf(_SC_NPROCESSORS_ONLN);
+ #else
+     return 1;

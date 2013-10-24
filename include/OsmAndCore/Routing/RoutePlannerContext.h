@@ -66,8 +66,10 @@ namespace OsmAnd {
         uint32_t distinctLoadedTiles;
         uint32_t loadedPrevUnloadedTiles;
 
+#ifndef OSMAND_TARGET_OS_qnx
         std::chrono::steady_clock::time_point timeToLoadBegin;
         std::chrono::steady_clock::time_point timeToCalculateBegin;
+#endif
 
         RouteStatistics() {
             //TODO: very dangerous to zeroify non-POD types (timeToLoadBegin, timeToCalculateBegin)

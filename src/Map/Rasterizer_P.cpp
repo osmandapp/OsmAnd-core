@@ -2,7 +2,7 @@
 #include "Rasterizer.h"
 
 #include <cassert>
-#include <cinttypes>
+#include <tr1/cinttypes>
 #include <set>
 
 #include "RasterizerEnvironment.h"

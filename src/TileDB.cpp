@@ -63,7 +63,9 @@ bool OsmAnd::TileDB::rebuildIndex()
     QSqlQuery q(_indexDb);
 
     LogPrintf(LogSeverityLevel::Info, "Rebuilding index of '%s' tiledb...", dataPath.absolutePath().toStdString().c_str());
+#ifndef OSMAND_TARGET_OS_qnx
     auto beginTimestamp = std::chrono::steady_clock::now();
+#endif
 
     // Recreate index db structure
     if(!indexFilename.isEmpty())
@@ -159,9 +161,12 @@ bool OsmAnd::TileDB::rebuildIndex()
     }
 
     _indexDb.commit();
-
+#ifndef OSMAND_TARGET_OS_qnx
     auto endTimestamp = std::chrono::steady_clock::now();
     auto duration = std::chrono::duration_cast< std::chrono::duration<uint64_t, std::milli> >(endTimestamp - beginTimestamp).count();
+#else
+    long long int duration = 0;
+#endif
     LogPrintf(LogSeverityLevel::Info, "Finished indexing '%s', took %lldms, average %lldms/db", dataPath.absolutePath().toStdString().c_str(), duration, duration / files.length());
 
     return true;
