@@ -1,6 +1,6 @@
 project(OsmAndCore)
 
-# Bump this number each time a new file is committed to repository: 1
+# Bump this number each time a new source file is committed to repository or source file removed from repository: 2
 
 set(target_specific_sources "")
 set(target_specific_public_definitions "")

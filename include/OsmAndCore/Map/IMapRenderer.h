@@ -40,6 +40,8 @@ namespace OsmAnd {
     class MapRenderer;
     class IMapBitmapTileProvider;
     class IMapElevationDataProvider;
+    class IMapSymbolProvider;
+
     class OSMAND_CORE_API IMapRenderer
     {
     private:
