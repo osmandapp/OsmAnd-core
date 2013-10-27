@@ -11,7 +11,7 @@ OsmAnd::OfflineMapSymbolProvider::~OfflineMapSymbolProvider()
 {
 }
 
-bool OsmAnd::OfflineMapSymbolProvider::obtainSymbols( const TileId tileId, const ZoomLevel zoom, QList< std::shared_ptr<const MapSymbol> >& outSymbols, std::function<bool (const uint64_t)> filterById /*= nullptr*/ )
+bool OsmAnd::OfflineMapSymbolProvider::obtainSymbols( const TileId tileId, const ZoomLevel zoom, QList< std::shared_ptr<const MapSymbol> >& outSymbols )
 {
-    return _d->obtainSymbols(tileId, zoom, outSymbols, filterById);
+    return _d->obtainSymbols(tileId, zoom, outSymbols);
 }

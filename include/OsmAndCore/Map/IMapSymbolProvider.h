@@ -61,9 +61,7 @@ namespace OsmAnd {
     public:
         virtual ~IMapSymbolProvider();
 
-        virtual bool obtainSymbols(const TileId tileId, const ZoomLevel zoom,
-            QList< std::shared_ptr<const MapSymbol> >& outSymbols,
-            std::function<bool (const uint64_t)> filterById = nullptr) = 0;
+        virtual bool obtainSymbols(const TileId tileId, const ZoomLevel zoom, QList< std::shared_ptr<const MapSymbol> >& outSymbols) = 0;
     };
 
 }

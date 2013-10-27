@@ -1455,6 +1455,7 @@ bool OsmAnd::MapRenderer::SymbolsResourceEntry::obtainData( bool& dataAvailable 
     {
         const auto& provider = *itProvider;
 
+        //TODO: a cache of symbols needs to be maintained, since same symbol may be present in several tiles, but it should be drawn once?
         provider->obtainSymbols(tileId, zoom, _sourceData);
     }
 
