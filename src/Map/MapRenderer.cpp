@@ -1442,6 +1442,22 @@ OsmAnd::MapRenderer::SymbolsResourceEntry::~SymbolsResourceEntry()
 
 bool OsmAnd::MapRenderer::SymbolsResourceEntry::obtainData( bool& dataAvailable )
 {
+    // Obtain list of symbol providers
+    QList< std::shared_ptr<IMapSymbolProvider> > symbolProviders;
+    {
+        QReadLocker scopedLocker(&_owner->_requestedStateLock);
+        symbolProviders = _owner->currentState.symbolProviders;
+    }
+
+    // Obtain symbols from each of symbol provider
+    _sourceData.clear();
+    for(auto itProvider = symbolProviders.cbegin(); itProvider != symbolProviders.cend(); ++itProvider)
+    {
+        const auto& provider = *itProvider;
+
+        provider->obtainSymbols(tileId, zoom, _sourceData);
+    }
+
     return false;
 }
 
