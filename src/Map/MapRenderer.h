@@ -61,6 +61,9 @@ namespace OsmAnd {
             RasterBaseLayer,
             __RasterLayer_LAST = RasterBaseLayer + (RasterMapLayersCount-1),
 
+            // Symbols (icons and labels)
+            Symbols,
+
             __LAST
         };
         enum {
@@ -106,14 +109,14 @@ namespace OsmAnd {
 
             MapRenderer* const _owner;
             Concurrent::Task* _requestTask;
-        public:
-            virtual ~TiledResourceEntry();
-
-            const TiledResourceType type;
 
             virtual bool obtainData(bool& dataAvailable) = 0;
             virtual bool uploadToGPU() = 0;
             virtual void unloadFromGPU() = 0;
+        public:
+            virtual ~TiledResourceEntry();
+
+            const TiledResourceType type;
 
         friend class OsmAnd::MapRenderer;
         };
@@ -141,7 +144,9 @@ namespace OsmAnd {
             std::shared_ptr<const MapTile> _sourceData;
             std::shared_ptr<RenderAPI::ResourceInGPU> _resourceInGPU;
 
-            Concurrent::Task* _requestTask;
+            virtual bool obtainData(bool& dataAvailable);
+            virtual bool uploadToGPU();
+            virtual void unloadFromGPU();
         public:
             MapTileResourceEntry(MapRenderer* owner, const TiledResourceType type, const TilesCollection<TiledResourceEntry>& collection, const TileId tileId, const ZoomLevel zoom);
             virtual ~MapTileResourceEntry();
@@ -149,9 +154,25 @@ namespace OsmAnd {
             const std::shared_ptr<const MapTile>& sourceData;
             const std::shared_ptr<RenderAPI::ResourceInGPU>& resourceInGPU;
 
+        friend class OsmAnd::MapRenderer;
+        };
+
+        class SymbolsResourceEntry : public TiledResourceEntry
+        {
+        private:
+        protected:
+            QList< std::shared_ptr<const MapSymbol> > _sourceData;
+            QList< std::shared_ptr<RenderAPI::ResourceInGPU> > _resourcesInGPU;
+
             virtual bool obtainData(bool& dataAvailable);
             virtual bool uploadToGPU();
             virtual void unloadFromGPU();
+        public:
+            SymbolsResourceEntry(MapRenderer* owner, const TilesCollection<TiledResourceEntry>& collection, const TileId tileId, const ZoomLevel zoom);
+            virtual ~SymbolsResourceEntry();
+
+            const QList< std::shared_ptr<const MapSymbol> >& sourceData;
+            const QList< std::shared_ptr<RenderAPI::ResourceInGPU> >& resourcesInGPU;
 
         friend class OsmAnd::MapRenderer;
         };
@@ -171,6 +192,8 @@ namespace OsmAnd {
         QReadWriteLock _invalidatedRasterLayerResourcesMaskLock;
 
         volatile bool _invalidatedElevationDataResources;
+
+        volatile bool _invalidatedSymbolsResources;
 
         std::array< std::unique_ptr<TiledResources>, TiledResourceTypesCount > _tiledResources;
         void uploadTiledResources();
@@ -240,6 +263,9 @@ namespace OsmAnd {
 
         void invalidateElevationDataResources();
         virtual void validateElevationDataResources();
+
+        void invalidateSymbolsResources();
+        virtual void validateSymbolsResources();
 
         void invalidateFrame();
 

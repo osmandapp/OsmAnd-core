@@ -24,6 +24,7 @@ OsmAnd::MapRenderer::MapRenderer()
     , _currentStateOutdated(true)
     , _invalidatedRasterLayerResourcesMask(0)
     , _invalidatedElevationDataResources(false)
+    , _invalidatedSymbolsResources(false)
     , tiledResources(_tiledResources)
     , _renderThreadId(nullptr)
     , _workerThreadId(nullptr)
@@ -356,6 +357,11 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
         validateElevationDataResources();
         _invalidatedElevationDataResources = false;
     }
+    if(_invalidatedSymbolsResources)
+    {
+        validateSymbolsResources();
+        _invalidatedSymbolsResources = false;
+    }
 
     return true;
 }
@@ -394,9 +400,6 @@ bool OsmAnd::MapRenderer::postPrepareFrame()
     // In the end of rendering processing, request tiled resources that are neither
     // present in requested list, nor in pending, nor in uploaded
     requestMissingTiledResources();
-
-    // Request all missing symbols
-//    requestMissingSymbols();
 
     return true;
 }
@@ -595,6 +598,16 @@ void OsmAnd::MapRenderer::validateElevationDataResources()
     releaseTiledResources(_tiledResources[TiledResourceType::ElevationData]);
 }
 
+void OsmAnd::MapRenderer::invalidateSymbolsResources()
+{
+    _invalidatedSymbolsResources = true;
+}
+
+void OsmAnd::MapRenderer::validateSymbolsResources()
+{
+    releaseTiledResources(_tiledResources[TiledResourceType::Symbols]);
+}
+
 void OsmAnd::MapRenderer::backgroundWorkerProcedure()
 {
     QMutex wakeupMutex;
@@ -637,6 +650,10 @@ bool OsmAnd::MapRenderer::isDataSourceAvailableFor( const TiledResourceType reso
     else if(resourceType == TiledResourceType::ElevationData)
     {
         return static_cast<bool>(_currentState.elevationDataProvider);
+    }
+    else if(resourceType == TiledResourceType::Symbols)
+    {
+        return !_currentState.symbolProviders.isEmpty();
     }
 
     return false;
@@ -725,7 +742,12 @@ void OsmAnd::MapRenderer::requestMissingTiledResources()
             tiledResources->obtainOrAllocateTileEntry(entry, tileId, _currentState.zoomBase,
                 [this, resourceType](const TilesCollection<TiledResourceEntry>& collection, const TileId tileId, const ZoomLevel zoom) -> TiledResourceEntry*
                 {
-                    return new MapTileResourceEntry(this, resourceType, collection, tileId, zoom);
+                    if(resourceType >= TiledResourceType::ElevationData && resourceType <= TiledResourceType::__RasterLayer_LAST)
+                        return new MapTileResourceEntry(this, resourceType, collection, tileId, zoom);
+                    else if(resourceType == TiledResourceType::Symbols)
+                        return new SymbolsResourceEntry(this, collection, tileId, zoom);
+                    else
+                        return nullptr;
                 });
             {
                 // Only if tile entry has "Unknown" state proceed to "Requesting" state
@@ -1059,6 +1081,7 @@ void OsmAnd::MapRenderer::addSymbolProvider( const std::shared_ptr<IMapSymbolPro
 
     _requestedState.symbolProviders.push_back(provider);
 
+    invalidateSymbolsResources();
     notifyRequestedStateWasUpdated();
 }
 
@@ -1073,6 +1096,7 @@ void OsmAnd::MapRenderer::removeSymbolProvider( const std::shared_ptr<IMapSymbol
     _requestedState.symbolProviders.removeOne(provider);
     assert(!_requestedState.symbolProviders.contains(provider));
 
+    invalidateSymbolsResources();
     notifyRequestedStateWasUpdated();
 }
 
@@ -1086,6 +1110,7 @@ void OsmAnd::MapRenderer::removeAllSymbolProviders( bool forcedUpdate /*= false*
 
     _requestedState.symbolProviders.clear();
 
+    invalidateSymbolsResources();
     notifyRequestedStateWasUpdated();
 }
 
@@ -1402,4 +1427,30 @@ void OsmAnd::MapRenderer::MapTileResourceEntry::unloadFromGPU()
 {
     assert(_resourceInGPU.use_count() == 1);
     _resourceInGPU.reset();
+}
+
+OsmAnd::MapRenderer::SymbolsResourceEntry::SymbolsResourceEntry( MapRenderer* owner, const TilesCollection<TiledResourceEntry>& collection, const TileId tileId, const ZoomLevel zoom )
+    : TiledResourceEntry(owner, TiledResourceType::Symbols, collection, tileId, zoom)
+    , sourceData(_sourceData)
+    , resourcesInGPU(_resourcesInGPU)
+{
+}
+
+OsmAnd::MapRenderer::SymbolsResourceEntry::~SymbolsResourceEntry()
+{
+}
+
+bool OsmAnd::MapRenderer::SymbolsResourceEntry::obtainData( bool& dataAvailable )
+{
+    return false;
+}
+
+bool OsmAnd::MapRenderer::SymbolsResourceEntry::uploadToGPU()
+{
+    return false;
+}
+
+void OsmAnd::MapRenderer::SymbolsResourceEntry::unloadFromGPU()
+{
+
 }
