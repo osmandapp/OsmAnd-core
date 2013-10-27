@@ -175,7 +175,9 @@ namespace OsmAnd {
         std::array< std::unique_ptr<TiledResources>, TiledResourceTypesCount > _tiledResources;
         void uploadTiledResources();
         void releaseTiledResources(const std::unique_ptr<TiledResources>& collection);
-        std::shared_ptr<OsmAnd::IMapTileProvider> getTileProviderFor(const TiledResourceType& resourceType);
+        bool isDataSourceAvailableFor(const TiledResourceType resourceType);
+
+        bool obtainMapTileProviderFor(const TiledResourceType resourceType, std::shared_ptr<OsmAnd::IMapTileProvider>& provider);
 
         QThreadPool _requestWorkersPool;
 
@@ -247,7 +249,7 @@ namespace OsmAnd {
         void cleanUpTiledResourcesCache();
         void requestMissingTiledResources();
         virtual std::shared_ptr<const MapTile> prepareTileForUploadingToGPU(const std::shared_ptr<const MapTile>& tile);
-        virtual uint32_t getTilesPerAtlasTextureLimit(const TiledResourceType& resourceType, const std::shared_ptr<const MapTile>& tile) = 0;
+        virtual uint32_t getTilesPerAtlasTextureLimit(const TiledResourceType resourceType, const std::shared_ptr<const MapTile>& tile) = 0;
 
         Qt::HANDLE _renderThreadId;
         Qt::HANDLE _workerThreadId;

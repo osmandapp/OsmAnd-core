@@ -626,21 +626,40 @@ void OsmAnd::MapRenderer::backgroundWorkerProcedure()
     _workerThreadId = nullptr;
 }
 
-std::shared_ptr<OsmAnd::IMapTileProvider> OsmAnd::MapRenderer::getTileProviderFor( const TiledResourceType& resourceType )
+bool OsmAnd::MapRenderer::isDataSourceAvailableFor( const TiledResourceType resourceType )
 {
     QReadLocker scopedLocker(&_requestedStateLock);
 
     if(resourceType >= TiledResourceType::RasterBaseLayer && resourceType < (TiledResourceType::RasterBaseLayer + RasterMapLayersCount))
     {
-        return _currentState.rasterLayerProviders[resourceType - TiledResourceType::RasterBaseLayer];
+        return static_cast<bool>(_currentState.rasterLayerProviders[resourceType - TiledResourceType::RasterBaseLayer]);
     }
     else if(resourceType == TiledResourceType::ElevationData)
     {
-        return _currentState.elevationDataProvider;
+        return static_cast<bool>(_currentState.elevationDataProvider);
     }
 
-    assert(false);
-    return std::shared_ptr<OsmAnd::IMapTileProvider>();
+    return false;
+}
+
+bool OsmAnd::MapRenderer::obtainMapTileProviderFor( const TiledResourceType resourceType, std::shared_ptr<OsmAnd::IMapTileProvider>& provider )
+{
+    QReadLocker scopedLocker(&_requestedStateLock);
+
+    if(resourceType >= TiledResourceType::RasterBaseLayer && resourceType < (TiledResourceType::RasterBaseLayer + RasterMapLayersCount))
+    {
+        provider = _currentState.rasterLayerProviders[resourceType - TiledResourceType::RasterBaseLayer];
+    }
+    else if(resourceType == TiledResourceType::ElevationData)
+    {
+        provider = _currentState.elevationDataProvider;
+    }
+    else
+    {
+        return false;
+    }
+
+    return static_cast<bool>(provider);
 }
 
 void OsmAnd::MapRenderer::cleanUpTiledResourcesCache()
@@ -649,12 +668,12 @@ void OsmAnd::MapRenderer::cleanUpTiledResourcesCache()
     for(auto itTiledResources = _tiledResources.cbegin(); itTiledResources != _tiledResources.cend(); ++itTiledResources)
     {
         const auto& tiledResources = *itTiledResources;
-        const auto providerAvailable = static_cast<bool>(getTileProviderFor(tiledResources->type));
+        const auto dataSourceAvailable = isDataSourceAvailableFor(tiledResources->type);
 
-        tiledResources->removeTileEntries([this, providerAvailable](const std::shared_ptr<TiledResourceEntry>& entry, bool& cancel) -> bool
+        tiledResources->removeTileEntries([this, dataSourceAvailable](const std::shared_ptr<TiledResourceEntry>& entry, bool& cancel) -> bool
         {
             // Skip cleaning if this tiled resource is needed
-            if(_uniqueTiles.contains(entry->tileId) && providerAvailable)
+            if(_uniqueTiles.contains(entry->tileId) && dataSourceAvailable)
                 return false;
 
             // Irrespective of current state, tile entry must be removed
@@ -696,8 +715,8 @@ void OsmAnd::MapRenderer::requestMissingTiledResources()
             const auto& tiledResources = *itTiledResources;
             const auto resourceType = tiledResources->type;
 
-            //TODO: Skip layers that do not have tile providers
-            if(!static_cast<bool>(getTileProviderFor(resourceType)))
+            // Skip resource types that do not have an available data source
+            if(!isDataSourceAvailableFor(resourceType))
                 continue;
 
             // Obtain a resource entry and if it's state is "Unknown", create a task that will
@@ -1336,12 +1355,14 @@ OsmAnd::MapRenderer::MapTileResourceEntry::~MapTileResourceEntry()
 bool OsmAnd::MapRenderer::MapTileResourceEntry::obtainData( bool& dataAvailable )
 {
     // Get source of tile
-    std::shared_ptr<const MapTile> tile;
-    const auto& provider = _owner->getTileProviderFor(type);
-    if(!provider)
+    std::shared_ptr<IMapTileProvider> provider;
+    bool ok = _owner->obtainMapTileProviderFor(type, provider);
+    if(!ok)
         return false;
+    assert(static_cast<bool>(provider));
 
     // Obtain tile from provider
+    std::shared_ptr<const MapTile> tile;
     const auto requestSucceeded = provider->obtainTile(tileId, zoom, tile);
     if(!requestSucceeded)
         return false;
