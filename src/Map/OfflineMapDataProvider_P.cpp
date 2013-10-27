@@ -54,7 +54,10 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 {
     // Check if there is a weak reference to that tile, and if that reference is still valid, use that
     std::shared_ptr<TileEntry> tileEntry;
-    _tileReferences.obtainTileEntry(tileEntry, tileId, zoom, true);
+    _tileReferences.obtainOrAllocateTileEntry(tileEntry, tileId, zoom, [](const TilesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom) -> TileEntry*
+        {
+            return new TileEntry(collection, tileId, zoom);
+        });
 
     // Only if tile entry has "Unknown" state proceed to "Requesting" state
     {

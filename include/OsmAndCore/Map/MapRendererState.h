@@ -27,6 +27,8 @@
 #include <functional>
 #include <array>
 
+#include <QList>
+
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/MapTypes.h>
@@ -35,8 +37,10 @@ namespace OsmAnd {
 
     class IMapBitmapTileProvider;
     class IMapElevationDataProvider;
+    class IMapSymbolProvider;
     class IMapRenderer;
     class MapRenderer;
+
     class OSMAND_CORE_API MapRendererState
     {
     private:
@@ -49,6 +53,7 @@ namespace OsmAnd {
         std::array< float, RasterMapLayersCount > rasterLayerOpacity;
         std::shared_ptr<IMapElevationDataProvider> elevationDataProvider;
         float elevationDataScaleFactor;
+        QList< std::shared_ptr<IMapSymbolProvider> > symbolProviders;
         PointI windowSize;
         AreaI viewport;
         float fieldOfView;

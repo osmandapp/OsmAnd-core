@@ -45,6 +45,8 @@
 namespace OsmAnd {
 
     class MapRendererTiledResources;
+    class MapSymbol;
+
     class MapRenderer : public IMapRenderer
     {
     public:
@@ -58,8 +60,6 @@ namespace OsmAnd {
             // Raster layers (MapRasterLayersCount)
             RasterBaseLayer,
             __RasterLayer_LAST = RasterBaseLayer + (RasterMapLayersCount-1),
-
-            //TODO: mapmarkers? icons+poi+custom?
 
             __LAST
         };
@@ -76,42 +76,44 @@ namespace OsmAnd {
             // Resource is not in any determined state (resource entry did not exist)
             Unknown = 0,
 
-                // Resource is being requested
-                Requesting,
+            // Resource is being requested
+            Requesting,
 
-                // Resource was requested and should arrive soon
-                Requested,
+            // Resource was requested and should arrive soon
+            Requested,
 
-                // Resource request is being processed
-                ProcessingRequest,
+            // Resource request is being processed
+            ProcessingRequest,
 
-                // Resource is not available at all
-                Unavailable,
+            // Resource is not available at all
+            Unavailable,
 
-                // Resource data is in main memory, but not yet uploaded into GPU
-                Ready,
+            // Resource data is in main memory, but not yet uploaded into GPU
+            Ready,
 
-                // Resource data is already in GPU
-                Uploaded,
+            // Resource data is already in GPU
+            Uploaded,
 
-                // Resource is unloaded, next state is death by deallocation
-                Unloaded,
+            // Resource is unloaded, next state is death by deallocation
+            Unloaded,
         };
 
         class TiledResourceEntry : public TilesCollectionEntryWithState<TiledResourceEntry, ResourceState, ResourceState::Unknown>
         {
         private:
         protected:
-            std::shared_ptr<const MapTile> _sourceData;
-            std::shared_ptr<RenderAPI::ResourceInGPU> _resourceInGPU;
+            TiledResourceEntry(MapRenderer* owner, const TiledResourceType type, const TilesCollection<TiledResourceEntry>& collection, const TileId tileId, const ZoomLevel zoom);
 
+            MapRenderer* const _owner;
             Concurrent::Task* _requestTask;
         public:
-            TiledResourceEntry(const TilesCollection<TiledResourceEntry>& collection, const TileId tileId, const ZoomLevel zoom);
             virtual ~TiledResourceEntry();
 
-            const std::shared_ptr<const MapTile>& sourceData;
-            const std::shared_ptr<RenderAPI::ResourceInGPU>& resourceInGPU;
+            const TiledResourceType type;
+
+            virtual bool obtainData(bool& dataAvailable) = 0;
+            virtual bool uploadToGPU() = 0;
+            virtual void unloadFromGPU() = 0;
 
         friend class OsmAnd::MapRenderer;
         };
@@ -128,6 +130,28 @@ namespace OsmAnd {
             const MapRenderer::TiledResourceType type;
 
             virtual void removeAllEntries();
+
+        friend class OsmAnd::MapRenderer;
+        };
+
+        class MapTileResourceEntry : public TiledResourceEntry
+        {
+        private:
+        protected:
+            std::shared_ptr<const MapTile> _sourceData;
+            std::shared_ptr<RenderAPI::ResourceInGPU> _resourceInGPU;
+
+            Concurrent::Task* _requestTask;
+        public:
+            MapTileResourceEntry(MapRenderer* owner, const TiledResourceType type, const TilesCollection<TiledResourceEntry>& collection, const TileId tileId, const ZoomLevel zoom);
+            virtual ~MapTileResourceEntry();
+
+            const std::shared_ptr<const MapTile>& sourceData;
+            const std::shared_ptr<RenderAPI::ResourceInGPU>& resourceInGPU;
+
+            virtual bool obtainData(bool& dataAvailable);
+            virtual bool uploadToGPU();
+            virtual void unloadFromGPU();
 
         friend class OsmAnd::MapRenderer;
         };
@@ -153,7 +177,7 @@ namespace OsmAnd {
         void releaseTiledResources(const std::unique_ptr<TiledResources>& collection);
         std::shared_ptr<OsmAnd::IMapTileProvider> getTileProviderFor(const TiledResourceType& resourceType);
 
-        QThreadPool _tileRequestsThreadPool;
+        QThreadPool _requestWorkersPool;
 
         std::unique_ptr<RenderAPI> _renderAPI;
     protected:
@@ -256,6 +280,9 @@ namespace OsmAnd {
         virtual void setRasterLayerOpacity(const RasterMapLayerId layerId, const float opacity, bool forcedUpdate = false);
         virtual void setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& tileProvider, bool forcedUpdate = false);
         virtual void setElevationDataScaleFactor(const float factor, bool forcedUpdate = false);
+        virtual void addSymbolProvider(const std::shared_ptr<IMapSymbolProvider>& provider, bool forcedUpdate = false);
+        virtual void removeSymbolProvider(const std::shared_ptr<IMapSymbolProvider>& provider, bool forcedUpdate = false);
+        virtual void removeAllSymbolProviders(bool forcedUpdate = false);
         virtual void setWindowSize(const PointI& windowSize, bool forcedUpdate = false);
         virtual void setViewport(const AreaI& viewport, bool forcedUpdate = false);
         virtual void setFieldOfView(const float fieldOfView, bool forcedUpdate = false);

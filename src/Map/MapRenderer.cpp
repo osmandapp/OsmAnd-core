@@ -9,6 +9,7 @@
 
 #include "IMapBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
+#include "IMapSymbolProvider.h"
 #include "IRetainedMapTile.h"
 #include "RenderAPI.h"
 #include "EmbeddedResources.h"
@@ -28,7 +29,9 @@ OsmAnd::MapRenderer::MapRenderer()
     , _workerThreadId(nullptr)
     , renderAPI(_renderAPI)
 {
-    _tileRequestsThreadPool.setMaxThreadCount(4);
+    // Number of workers should be determined in runtime (exclude worker and main threads):
+    const auto idealThreadCount = qMax(QThread::idealThreadCount() - 2, 1);
+    _requestWorkersPool.setMaxThreadCount(idealThreadCount);
 
     // Create all tiled resources
     for(auto resourceType = 0u; resourceType < TiledResourceTypesCount; resourceType++)
@@ -385,12 +388,15 @@ bool OsmAnd::MapRenderer::updateInternalState(InternalState* internalState, cons
 
 bool OsmAnd::MapRenderer::postPrepareFrame()
 {
-    // Before requesting missing tiles, clean up cache to free some space
+    // Before requesting missing tiled resources, clean up cache to free some space
     cleanUpTiledResourcesCache();
 
-    // In the end of rendering processing, request tiles that are neither present in
-    // requested list, nor in pending, nor in uploaded
+    // In the end of rendering processing, request tiled resources that are neither
+    // present in requested list, nor in pending, nor in uploaded
     requestMissingTiledResources();
+
+    // Request all missing symbols
+//    requestMissingSymbols();
 
     return true;
 }
@@ -639,38 +645,37 @@ std::shared_ptr<OsmAnd::IMapTileProvider> OsmAnd::MapRenderer::getTileProviderFo
 
 void OsmAnd::MapRenderer::cleanUpTiledResourcesCache()
 {
-    // Use aggressive cache cleaning: remove all tiles that are not needed
+    // Use aggressive cache cleaning: remove all tiled resources that are not needed
     for(auto itTiledResources = _tiledResources.cbegin(); itTiledResources != _tiledResources.cend(); ++itTiledResources)
     {
         const auto& tiledResources = *itTiledResources;
         const auto providerAvailable = static_cast<bool>(getTileProviderFor(tiledResources->type));
 
-        tiledResources->removeTileEntries([this, providerAvailable](const std::shared_ptr<TiledResourceEntry>& tileEntry, bool& cancel) -> bool
+        tiledResources->removeTileEntries([this, providerAvailable](const std::shared_ptr<TiledResourceEntry>& entry, bool& cancel) -> bool
         {
-            // Skip cleaning if this tile is needed
-            if(_uniqueTiles.contains(tileEntry->tileId) && providerAvailable)
+            // Skip cleaning if this tiled resource is needed
+            if(_uniqueTiles.contains(entry->tileId) && providerAvailable)
                 return false;
 
             // Irrespective of current state, tile entry must be removed
             {
-                QReadLocker scopedLocker(&tileEntry->stateLock);
+                QReadLocker scopedLocker(&entry->stateLock);
 
                 // If state is "Requested" it means that there is a task somewhere out there,
                 // that may even be running at this moment
-                if(tileEntry->state == ResourceState::Requested)
+                if(entry->state == ResourceState::Requested)
                 {
                     // And we need to cancel it
-                    assert(tileEntry->_requestTask != nullptr);
-                    tileEntry->_requestTask->requestCancellation();
+                    assert(entry->_requestTask != nullptr);
+                    entry->_requestTask->requestCancellation();
                 }
-                // If state is "Uploaded", GPU resources must be release prior to deleting tile entry
-                else if(tileEntry->state == ResourceState::Uploaded)
+                // If state is "Uploaded", GPU resources must be release prior to deleting tiled resource entry
+                else if(entry->state == ResourceState::Uploaded)
                 {
                     // This should be last reference, so assert on that
-                    assert(tileEntry->_resourceInGPU.use_count() == 1);
-                    tileEntry->_resourceInGPU.reset();
+                    entry->unloadFromGPU();
 
-                    tileEntry->state = ResourceState::Unloaded;
+                    entry->state = ResourceState::Unloaded;
                 }
             }
 
@@ -681,7 +686,6 @@ void OsmAnd::MapRenderer::cleanUpTiledResourcesCache()
 
 void OsmAnd::MapRenderer::requestMissingTiledResources()
 {
-    // Request all missing tiles
     const auto requestedZoom = _currentState.zoomBase;
     for(auto itTileId = _uniqueTiles.cbegin(); itTileId != _uniqueTiles.cend(); ++itTileId)
     {
@@ -692,72 +696,66 @@ void OsmAnd::MapRenderer::requestMissingTiledResources()
             const auto& tiledResources = *itTiledResources;
             const auto resourceType = tiledResources->type;
 
-            // Skip layers that do not have tile providers
+            //TODO: Skip layers that do not have tile providers
             if(!static_cast<bool>(getTileProviderFor(resourceType)))
                 continue;
 
-            // Obtain a tile entry and if it's state is "Unknown", create a task that will
-            // request tile data
-            std::shared_ptr<TiledResourceEntry> tileEntry;
-            tiledResources->obtainTileEntry(tileEntry, tileId, _currentState.zoomBase, true);
+            // Obtain a resource entry and if it's state is "Unknown", create a task that will
+            // request resource data
+            std::shared_ptr<TiledResourceEntry> entry;
+            tiledResources->obtainOrAllocateTileEntry(entry, tileId, _currentState.zoomBase,
+                [this, resourceType](const TilesCollection<TiledResourceEntry>& collection, const TileId tileId, const ZoomLevel zoom) -> TiledResourceEntry*
+                {
+                    return new MapTileResourceEntry(this, resourceType, collection, tileId, zoom);
+                });
             {
                 // Only if tile entry has "Unknown" state proceed to "Requesting" state
                 {
-                    QWriteLocker scopedLock(&tileEntry->stateLock);
-                    if(tileEntry->state != ResourceState::Unknown)
+                    QWriteLocker scopedLock(&entry->stateLock);
+                    if(entry->state != ResourceState::Unknown)
                         continue;
-                    tileEntry->state = ResourceState::Requesting;
+                    entry->state = ResourceState::Requesting;
                 }
 
-                // Create async-task that will obtain needed tile
+                // Create async-task that will obtain needed resource data
                 const auto executeProc = [this, tileId, requestedZoom, resourceType](const Concurrent::Task* task, QEventLoop& eventLoop)
                 {
                     const auto& tiledResources = _tiledResources[resourceType];
 
-                    // Get tile entry that is going to be obtained
-                    std::shared_ptr<TiledResourceEntry> tileEntry;
-                    if(!tiledResources->obtainTileEntry(tileEntry, tileId, requestedZoom))
+                    // Get resource entry that is going to be obtained
+                    std::shared_ptr<TiledResourceEntry> entry;
+                    if(!tiledResources->obtainTileEntry(entry, tileId, requestedZoom))
                     {
-                        // In case tile entry no longer exists, there is no need to process it
+                        // In case resource entry no longer exists, there is no need to process it
                         return;
                     }
 
-                    // Only if tile entry has "Requested" state proceed to "ProcessingRequest" state
+                    // Only if resource entry has "Requested" state proceed to "ProcessingRequest" state
                     {
-                        QWriteLocker scopedLock(&tileEntry->stateLock);
-                        if(tileEntry->state != ResourceState::Requested)
+                        QWriteLocker scopedLock(&entry->stateLock);
+                        if(entry->state != ResourceState::Requested)
                             return;
-                        tileEntry->state = ResourceState::ProcessingRequest;
+                        entry->state = ResourceState::ProcessingRequest;
                     }
 
-                    // Get source of tile
-                    std::shared_ptr<const MapTile> tile;
-                    const auto& provider = getTileProviderFor(resourceType);
-                    if(!provider)
-                    {
-                        // Provider is no longer available, remove tile entry and do nothing
-                        tiledResources->removeEntry(tileEntry);
-                        return;
-                    }
+                    // Ask resource to obtain it's data
+                    bool dataAvailable = false;
+                    const auto requestSucceeded = entry->obtainData(dataAvailable);
 
-                    // Obtain tile from provider
-                    const auto requestSucceeded = provider->obtainTile(tileId, requestedZoom, tile);
-
-                    // If failed to obtain tile, remove tile entry to repeat try later
+                    // If failed to obtain resource data, remove resource entry to repeat try later
                     if(!requestSucceeded)
                     {
                         // It's safe to simply remove entry, since it's not yet uploaded
-                        tiledResources->removeEntry(tileEntry);
+                        tiledResources->removeEntry(entry);
                         return;
                     }
 
-                    // Finally save obtained data
+                    // Finalize execution of task
                     {
-                        QWriteLocker scopedLock(&tileEntry->stateLock);
+                        QWriteLocker scopedLock(&entry->stateLock);
 
-                        tileEntry->_sourceData = tile;
-                        tileEntry->_requestTask = nullptr;
-                        tileEntry->state = tile ? ResourceState::Ready : ResourceState::Unavailable;
+                        entry->_requestTask = nullptr;
+                        entry->state = dataAvailable ? ResourceState::Ready : ResourceState::Unavailable;
                     }
 
                     // There is data to upload to GPU, so report that
@@ -770,40 +768,39 @@ void OsmAnd::MapRenderer::requestMissingTiledResources()
                     // If task was canceled, remove tile entry
                     if(wasCancelled)
                     {
-                        std::shared_ptr<TiledResourceEntry> tileEntry;
-                        if(!tiledResources->obtainTileEntry(tileEntry, tileId, requestedZoom))
+                        std::shared_ptr<TiledResourceEntry> entry;
+                        if(!tiledResources->obtainTileEntry(entry, tileId, requestedZoom))
                             return;
 
                         // Here tiled resource may have been already uploaded, so check that
                         {
-                            QWriteLocker scopedLock(&tileEntry->stateLock);
+                            QWriteLocker scopedLock(&entry->stateLock);
 
                             // Unload resource from GPU, if it's there
-                            if(tileEntry->state == ResourceState::Uploaded)
+                            if(entry->state == ResourceState::Uploaded)
                             {
                                 // This should be last reference, so assert on that
-                                assert(tileEntry->_resourceInGPU.use_count() == 1);
-                                tileEntry->_resourceInGPU.reset();
+                                entry->unloadFromGPU();
 
-                                tileEntry->state = ResourceState::Unloaded;
+                                entry->state = ResourceState::Unloaded;
                             }
                         }
 
-                        tiledResources->removeEntry(tileEntry);
+                        tiledResources->removeEntry(entry);
                     }
                 };
                 const auto asyncTask = new Concurrent::HostedTask(_taskHostBridge, executeProc, nullptr, postExecuteProc);
 
                 // Register tile as requested
                 {
-                    QWriteLocker scopedLock(&tileEntry->stateLock);
+                    QWriteLocker scopedLock(&entry->stateLock);
 
-                    tileEntry->_requestTask = asyncTask;
-                    tileEntry->state = ResourceState::Requested;
+                    entry->_requestTask = asyncTask;
+                    entry->state = ResourceState::Requested;
                 }
 
                 // Finally start the request
-                _tileRequestsThreadPool.start(asyncTask);
+                _requestWorkersPool.start(asyncTask);
             }
         }
     }
@@ -884,12 +881,12 @@ void OsmAnd::MapRenderer::uploadTiledResources()
     {
         const auto& tiledResources = *itTiledResources;
 
-        // If we're uploading from render thread, limit to 1 tile per frame
-        QList< std::shared_ptr<TiledResourceEntry> > tileEntries;
-        tiledResources->obtainTileEntries(&tileEntries, [&tileEntries, isOnRenderThread](const std::shared_ptr<TiledResourceEntry>& tileEntry, bool& cancel) -> bool
+        // If we're uploading from render thread, limit to 1 resource per frame
+        QList< std::shared_ptr<TiledResourceEntry> > entries;
+        tiledResources->obtainTileEntries(&entries, [&entries, isOnRenderThread](const std::shared_ptr<TiledResourceEntry>& tileEntry, bool& cancel) -> bool
         {
             // If on render thread, limit result with only 1 entry
-            if(isOnRenderThread && tileEntries.size() > 0)
+            if(isOnRenderThread && entries.size() > 0)
             {
                 cancel = true;
                 return false;
@@ -898,42 +895,29 @@ void OsmAnd::MapRenderer::uploadTiledResources()
             // Only ready tiles are needed
             return (tileEntry->state == ResourceState::Ready);
         });
-        if(tileEntries.isEmpty())
+        if(entries.isEmpty())
             continue;
 
-        for(auto itTileEntry = tileEntries.cbegin(); itTileEntry != tileEntries.cend(); ++itTileEntry)
+        for(auto itEntry = entries.cbegin(); itEntry != entries.cend(); ++itEntry)
         {
-            const auto& tileEntry = *itTileEntry;
+            const auto& entry = *itEntry;
 
             {
-                QWriteLocker scopedLock(&tileEntry->stateLock);
+                QWriteLocker scopedLock(&entry->stateLock);
 
                 // State may have changed
-                if(tileEntry->state != ResourceState::Ready)
+                if(entry->state != ResourceState::Ready)
                     continue;
 
-                const auto& preparedSourceData = prepareTileForUploadingToGPU(tileEntry->sourceData);
-                //TODO: This is weird, and probably should not be here. RenderAPI knows how to upload what, but on contrary - does not know the limits
-                const auto tilesPerAtlasTextureLimit = getTilesPerAtlasTextureLimit(tiledResources->type, tileEntry->sourceData);
-                bool ok = renderAPI->uploadTileToGPU(preparedSourceData, tilesPerAtlasTextureLimit, tileEntry->_resourceInGPU);
-                if(!ok)
+                // Actually upload to GPU
+                didUpload = entry->uploadToGPU();
+                if(!didUpload)
                 {
-                    LogPrintf(LogSeverityLevel::Error, "Failed to upload tile %dx%d@%d to GPU", tileEntry->tileId.x, tileEntry->tileId.y, tileEntry->zoom);
+                    LogPrintf(LogSeverityLevel::Error, "Failed to upload tiled resources for %dx%d@%d to GPU", entry->tileId.x, entry->tileId.y, entry->zoom);
                     continue;
                 }
 
-                if(const auto retainedSource = std::dynamic_pointer_cast<const IRetainedMapTile>(tileEntry->_sourceData))
-                {
-                    // If map tile implements 'Retained' interface, it must be kept, but 
-                    std::const_pointer_cast<IRetainedMapTile>(retainedSource)->releaseNonRetainedData();
-                }
-                else
-                {
-                    // or simply release entire tile
-                    tileEntry->_sourceData.reset();
-                }
-                tileEntry->state = ResourceState::Uploaded;
-                didUpload = true;
+                entry->state = ResourceState::Uploaded;
 
                 // If we're not on render thread, and we've just uploaded a tile, invalidate frame
                 if(!isOnRenderThread)
@@ -959,24 +943,23 @@ void OsmAnd::MapRenderer::uploadTiledResources()
 void OsmAnd::MapRenderer::releaseTiledResources( const std::unique_ptr<TiledResources>& collection )
 {
     // Remove all tiles, releasing associated GPU resources
-    collection->removeTileEntries([](const std::shared_ptr<TiledResourceEntry>& tileEntry, bool& cancel) -> bool
+    collection->removeTileEntries([](const std::shared_ptr<TiledResourceEntry>& entry, bool& cancel) -> bool
     {
-        QWriteLocker scopedLock(&tileEntry->stateLock);
+        QWriteLocker scopedLock(&entry->stateLock);
 
         // Unload resource from GPU, if it's there
-        if(tileEntry->state == ResourceState::Uploaded)
+        if(entry->state == ResourceState::Uploaded)
         {
             // This should be last reference, so assert on that
-            assert(tileEntry->_resourceInGPU.use_count() == 1);
-            tileEntry->_resourceInGPU.reset();
+            entry->unloadFromGPU();
 
-            tileEntry->state = ResourceState::Unloaded;
+            entry->state = ResourceState::Unloaded;
         }
         // If tile is just requested, prevent it from loading
-        else if(tileEntry->state == ResourceState::Requested)
+        else if(entry->state == ResourceState::Requested)
         {
             // If cancellation request failed (what means that tile is already being processed), leave it, but change it's state
-            if(!tileEntry->_requestTask->requestCancellation())
+            if(!entry->_requestTask->requestCancellation())
                 return false;
         }
 
@@ -1043,6 +1026,46 @@ void OsmAnd::MapRenderer::setElevationDataScaleFactor( const float factor, bool 
         return;
 
     _requestedState.elevationDataScaleFactor = factor;
+
+    notifyRequestedStateWasUpdated();
+}
+
+void OsmAnd::MapRenderer::addSymbolProvider( const std::shared_ptr<IMapSymbolProvider>& provider, bool forcedUpdate /*= false*/ )
+{
+    QWriteLocker scopedLocker(&_requestedStateLock);
+
+    bool update = forcedUpdate || !_requestedState.symbolProviders.contains(provider);
+    if(!update)
+        return;
+
+    _requestedState.symbolProviders.push_back(provider);
+
+    notifyRequestedStateWasUpdated();
+}
+
+void OsmAnd::MapRenderer::removeSymbolProvider( const std::shared_ptr<IMapSymbolProvider>& provider, bool forcedUpdate /*= false*/ )
+{
+    QWriteLocker scopedLocker(&_requestedStateLock);
+
+    bool update = forcedUpdate || _requestedState.symbolProviders.contains(provider);
+    if(!update)
+        return;
+
+    _requestedState.symbolProviders.removeOne(provider);
+    assert(!_requestedState.symbolProviders.contains(provider));
+
+    notifyRequestedStateWasUpdated();
+}
+
+void OsmAnd::MapRenderer::removeAllSymbolProviders( bool forcedUpdate /*= false*/ )
+{
+    QWriteLocker scopedLocker(&_requestedStateLock);
+
+    bool update = forcedUpdate || !_requestedState.symbolProviders.isEmpty();
+    if(!update)
+        return;
+
+    _requestedState.symbolProviders.clear();
 
     notifyRequestedStateWasUpdated();
 }
@@ -1269,24 +1292,24 @@ void OsmAnd::MapRenderer::TiledResources::verifyNoUploadedTilesPresent()
         return false;
     });
     if(stillUploadedTilesPresent)
-        LogPrintf(LogSeverityLevel::Error, "One or more tiles still reside in GPU memory. This may cause GPU memory leak");
+        LogPrintf(LogSeverityLevel::Error, "One or more tiled resources still reside in GPU memory. This may cause GPU memory leak");
     assert(stillUploadedTilesPresent == false);
 }
 
-OsmAnd::MapRenderer::TiledResourceEntry::TiledResourceEntry( const TilesCollection<TiledResourceEntry>& collection, const TileId tileId, const ZoomLevel zoom )
+OsmAnd::MapRenderer::TiledResourceEntry::TiledResourceEntry( MapRenderer* owner_, const TiledResourceType type_, const TilesCollection<TiledResourceEntry>& collection, const TileId tileId, const ZoomLevel zoom )
     : TilesCollectionEntryWithState(collection, tileId, zoom)
+    , _owner(owner_)
     , _requestTask(nullptr)
-    , sourceData(_sourceData)
-    , resourceInGPU(_resourceInGPU)
+    , type(type_)
 {
 }
 
 OsmAnd::MapRenderer::TiledResourceEntry::~TiledResourceEntry()
 {
-    const auto state_ = state;
+    const volatile auto state_ = state;
 
     if(state_ == ResourceState::Uploaded)
-        LogPrintf(LogSeverityLevel::Error, "Tile %dx%d@%d still resides in GPU memory. This may cause GPU memory leak", tileId.x, tileId.y, zoom);
+        LogPrintf(LogSeverityLevel::Error, "Tiled resource for %dx%d@%d still resides in GPU memory. This may cause GPU memory leak", tileId.x, tileId.y, zoom);
     assert(state_ != ResourceState::Uploaded);
 }
 
@@ -1296,4 +1319,66 @@ OsmAnd::MapRenderer::InternalState::InternalState()
 
 OsmAnd::MapRenderer::InternalState::~InternalState()
 {
+}
+
+OsmAnd::MapRenderer::MapTileResourceEntry::MapTileResourceEntry( MapRenderer* owner, const TiledResourceType type, const TilesCollection<TiledResourceEntry>& collection, const TileId tileId, const ZoomLevel zoom )
+    : TiledResourceEntry(owner, type, collection, tileId, zoom)
+    , sourceData(_sourceData)
+    , resourceInGPU(_resourceInGPU)
+{
+}
+
+OsmAnd::MapRenderer::MapTileResourceEntry::~MapTileResourceEntry()
+{
+
+}
+
+bool OsmAnd::MapRenderer::MapTileResourceEntry::obtainData( bool& dataAvailable )
+{
+    // Get source of tile
+    std::shared_ptr<const MapTile> tile;
+    const auto& provider = _owner->getTileProviderFor(type);
+    if(!provider)
+        return false;
+
+    // Obtain tile from provider
+    const auto requestSucceeded = provider->obtainTile(tileId, zoom, tile);
+    if(!requestSucceeded)
+        return false;
+
+    // Store data
+    _sourceData = tile;
+    dataAvailable = static_cast<bool>(tile);
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::MapTileResourceEntry::uploadToGPU()
+{
+    const auto& preparedSourceData = _owner->prepareTileForUploadingToGPU(_sourceData);
+    //TODO: This is weird, and probably should not be here. RenderAPI knows how to upload what, but on contrary - does not know the limits
+    const auto tilesPerAtlasTextureLimit = _owner->getTilesPerAtlasTextureLimit(type, _sourceData);
+    bool ok = _owner->renderAPI->uploadTileToGPU(preparedSourceData, tilesPerAtlasTextureLimit, _resourceInGPU);
+    if(!ok)
+        return false;
+
+    // Release source data:
+    if(const auto retainedSource = std::dynamic_pointer_cast<const IRetainedMapTile>(_sourceData))
+    {
+        // If map tile implements 'Retained' interface, it must be kept, but 
+        std::const_pointer_cast<IRetainedMapTile>(retainedSource)->releaseNonRetainedData();
+    }
+    else
+    {
+        // or simply release entire tile
+        _sourceData.reset();
+    }
+
+    return true;
+}
+
+void OsmAnd::MapRenderer::MapTileResourceEntry::unloadFromGPU()
+{
+    assert(_resourceInGPU.use_count() == 1);
+    _resourceInGPU.reset();
 }

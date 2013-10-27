@@ -23,6 +23,7 @@
 #define __TILES_COLLECTION_H_
 
 #include <cstdint>
+#include <cassert>
 #include <memory>
 #include <array>
 #include <functional>
@@ -70,12 +71,9 @@ namespace OsmAnd {
         virtual ~TilesCollection()
         {}
 
-        virtual bool obtainTileEntry(std::shared_ptr<ENTRY>& outEntry, const TileId tileId, const ZoomLevel zoom, bool createEmptyIfUnexistent = false)
+        virtual bool obtainTileEntry(std::shared_ptr<ENTRY>& outEntry, const TileId tileId, const ZoomLevel zoom)
         {
-            if(createEmptyIfUnexistent)
-                _tilesCollectionLock.lockForWrite();
-            else
-                _tilesCollectionLock.lockForRead();
+            QReadLocker scopedLocker(&_tilesCollectionLock);
 
             auto& zoomLevel = _zoomLevels[zoom];
             auto itEntry = zoomLevel.constFind(tileId);
@@ -83,22 +81,29 @@ namespace OsmAnd {
             {
                 outEntry = *itEntry;
 
-                _tilesCollectionLock.unlock();
                 return true;
             }
 
-            if(!createEmptyIfUnexistent)
+            return false;
+        }
+
+        virtual void obtainOrAllocateTileEntry(std::shared_ptr<ENTRY>& outEntry, const TileId tileId, const ZoomLevel zoom, std::function<ENTRY* (const TilesCollection<ENTRY>&, const TileId, const ZoomLevel)> allocator)
+        {
+            assert(allocator != nullptr);
+
+            QWriteLocker scopedLocker(&_tilesCollectionLock);
+
+            auto& zoomLevel = _zoomLevels[zoom];
+            auto itEntry = zoomLevel.constFind(tileId);
+            if(itEntry != zoomLevel.cend())
             {
-                _tilesCollectionLock.unlock();
-                return false;
+                outEntry = *itEntry;
+                return;
             }
 
-            auto newEntry = new ENTRY(*this, tileId, zoom);
+            auto newEntry = allocator(*this, tileId, zoom);
             outEntry.reset(newEntry);
             itEntry = zoomLevel.insert(tileId, outEntry);
-
-            _tilesCollectionLock.unlock();
-            return true;
         }
 
         virtual void obtainTileEntries(QList< std::shared_ptr<ENTRY> >* outList, std::function<bool (const std::shared_ptr<ENTRY>& entry, bool& cancel)> filter = nullptr)

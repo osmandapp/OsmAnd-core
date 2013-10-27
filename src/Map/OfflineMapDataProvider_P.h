@@ -74,7 +74,7 @@ namespace OsmAnd {
         };
         struct TileEntry : TilesCollectionEntryWithState<TileEntry, TileState, TileState::Undefined>
         {
-            TileEntry(TilesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom)
+            TileEntry(const TilesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom)
                 : TilesCollectionEntryWithState(collection, tileId, zoom)
             {}
 

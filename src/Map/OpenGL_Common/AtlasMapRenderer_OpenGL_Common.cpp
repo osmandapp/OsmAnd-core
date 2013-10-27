@@ -525,16 +525,17 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
         if(elevationDataEnabled)
         {
             // We're obtaining tile entry by normalized tile coordinates, since tile may repeat several times
-            std::shared_ptr<TiledResourceEntry> tileEntry;
-            tiledResources[TiledResourceType::ElevationData]->obtainTileEntry(tileEntry, tileIdN, currentState.zoomBase);
+            std::shared_ptr<TiledResourceEntry> entry_;
+            tiledResources[TiledResourceType::ElevationData]->obtainTileEntry(entry_, tileIdN, currentState.zoomBase);
+            const auto entry = std::static_pointer_cast<MapTileResourceEntry>(entry_);
 
             // Try lock tile entry for reading state and obtaining GPU resource
             std::shared_ptr< RenderAPI::ResourceInGPU > gpuResource;
-            if(tileEntry && tileEntry->stateLock.tryLockForRead())
+            if(entry && entry->stateLock.tryLockForRead())
             {
-                if(tileEntry->state == ResourceState::Uploaded)
-                    gpuResource = tileEntry->resourceInGPU;
-                tileEntry->stateLock.unlock();
+                if(entry->state == ResourceState::Uploaded)
+                    gpuResource = entry->resourceInGPU;
+                entry->stateLock.unlock();
             }
 
             if(!gpuResource)
@@ -628,21 +629,22 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
             const auto samplerIndex = (renderAPI->isSupported_vertexShaderTextureLookup ? 1 : 0) + layerLinearIdx;
 
             // We're obtaining tile entry by normalized tile coordinates, since tile may repeat several times
-            std::shared_ptr<TiledResourceEntry> tileEntry;
-            layerResources->obtainTileEntry(tileEntry, tileIdN, currentState.zoomBase);
+            std::shared_ptr<TiledResourceEntry> entry_;
+            layerResources->obtainTileEntry(entry_, tileIdN, currentState.zoomBase);
+            const auto entry = std::static_pointer_cast<MapTileResourceEntry>(entry_);
 
             // Try lock tile entry for reading state and obtaining GPU resource
             std::shared_ptr< RenderAPI::ResourceInGPU > gpuResource;
-            if(tileEntry && tileEntry->stateLock.tryLockForRead())
+            if(entry && entry->stateLock.tryLockForRead())
             {
-                if(tileEntry->state == ResourceState::Uploaded)
-                    gpuResource = tileEntry->resourceInGPU;
-                else if(tileEntry->state == ResourceState::Unavailable)
+                if(entry->state == ResourceState::Uploaded)
+                    gpuResource = entry->resourceInGPU;
+                else if(entry->state == ResourceState::Unavailable)
                     gpuResource = _unavailableTileStub;
                 else
                     gpuResource = _processingTileStub;
 
-                tileEntry->stateLock.unlock();
+                entry->stateLock.unlock();
             }
 
             glUniform1f(perTile_fs.k, currentState.rasterLayerOpacity[layerId]);

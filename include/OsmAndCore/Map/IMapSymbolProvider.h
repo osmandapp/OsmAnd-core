@@ -24,21 +24,35 @@
 
 #include <cstdint>
 #include <memory>
+#include <functional>
 
 #include <QSet>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 
+class SkBitmap;
+
 namespace OsmAnd {
 
     class OSMAND_CORE_API MapSymbol
     {
+        Q_DISABLE_COPY(MapSymbol);
     private:
     protected:
-        MapSymbol();
+        MapSymbol(const uint64_t id, const PointI& location, const ZoomLevel minZoom, const ZoomLevel maxZoom, SkBitmap* bitmap);
+
+        std::unique_ptr<SkBitmap> _bitmap;
     public:
         virtual ~MapSymbol();
+
+        const uint64_t id;
+
+        const PointI location;
+        const ZoomLevel minZoom;
+        const ZoomLevel maxZoom;
+
+        const std::unique_ptr<SkBitmap>& bitmap;
     };
 
     class OSMAND_CORE_API IMapSymbolProvider
@@ -49,7 +63,9 @@ namespace OsmAnd {
     public:
         virtual ~IMapSymbolProvider();
 
-        virtual bool obtainSymbols(const QSet<TileId>& tileIds, const ZoomLevel zoom, QList< std::shared_ptr<const MapSymbol> >& outSymbols) = 0;
+        virtual bool obtainSymbols(const QSet<TileId>& tileIds, const ZoomLevel zoom,
+            QList< std::shared_ptr<const MapSymbol> >& outSymbols,
+            std::function<bool (const uint64_t)> filterById = nullptr) = 0;
     };
 
 }

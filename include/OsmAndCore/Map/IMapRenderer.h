@@ -80,6 +80,9 @@ namespace OsmAnd {
         virtual void setRasterLayerOpacity(const RasterMapLayerId layerId, const float opacity, bool forcedUpdate = false) = 0;
         virtual void setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& tileProvider, bool forcedUpdate = false) = 0;
         virtual void setElevationDataScaleFactor(const float factor, bool forcedUpdate = false) = 0;
+        virtual void addSymbolProvider(const std::shared_ptr<IMapSymbolProvider>& provider, bool forcedUpdate = false) = 0;
+        virtual void removeSymbolProvider(const std::shared_ptr<IMapSymbolProvider>& provider, bool forcedUpdate = false) = 0;
+        virtual void removeAllSymbolProviders(bool forcedUpdate = false) = 0;
         virtual void setWindowSize(const PointI& windowSize, bool forcedUpdate = false) = 0;
         virtual void setViewport(const AreaI& viewport, bool forcedUpdate = false) = 0;
         virtual void setFieldOfView(const float fieldOfView, bool forcedUpdate = false) = 0;
