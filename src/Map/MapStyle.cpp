@@ -8,7 +8,7 @@
 
 const OsmAnd::MapStyleBuiltinValueDefinitions OsmAnd::MapStyle::builtinValueDefinitions;
 
-OsmAnd::MapStyle::MapStyle( MapStyles* styles_, const QString& resourcePath_, const bool& isEmbedded_ )
+OsmAnd::MapStyle::MapStyle( MapStyles* styles_, const QString& resourcePath_, const bool isEmbedded_ )
     : _d(new MapStyle_P(this))
     , styles(styles_)
     , resourcePath(resourcePath_)

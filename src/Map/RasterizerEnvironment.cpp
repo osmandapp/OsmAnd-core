@@ -3,7 +3,7 @@
 
 #include "MapStyleValue.h"
 
-OsmAnd::RasterizerEnvironment::RasterizerEnvironment( const std::shared_ptr<const MapStyle>& style_, const bool& basemapAvailable_, const float displayDensityFactor_ )
+OsmAnd::RasterizerEnvironment::RasterizerEnvironment( const std::shared_ptr<const MapStyle>& style_, const bool basemapAvailable_, const float displayDensityFactor_ )
     : _d(new RasterizerEnvironment_P(this))
     , style(style_)
     , basemapAvailable(basemapAvailable_)

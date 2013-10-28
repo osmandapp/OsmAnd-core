@@ -45,7 +45,7 @@ namespace OsmAnd {
         const std::unique_ptr<RasterizerEnvironment_P> _d;
     protected:
     public:
-        RasterizerEnvironment(const std::shared_ptr<const MapStyle>& style, const bool& basemapAvailable, const float displayDensityFactor);
+        RasterizerEnvironment(const std::shared_ptr<const MapStyle>& style, const bool basemapAvailable, const float displayDensityFactor);
         virtual ~RasterizerEnvironment();
 
         const std::shared_ptr<const MapStyle> style;

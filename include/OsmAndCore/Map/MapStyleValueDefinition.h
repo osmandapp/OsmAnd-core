@@ -56,7 +56,7 @@ namespace OsmAnd {
 
     private:
     protected:
-        MapStyleValueDefinition(const MapStyleValueClass& valueClass, const MapStyleValueDataType& dataType, const QString& name, const bool& isComplex);
+        MapStyleValueDefinition(const MapStyleValueClass valueClass, const MapStyleValueDataType dataType, const QString& name, const bool isComplex);
     public:
         virtual ~MapStyleValueDefinition();
 

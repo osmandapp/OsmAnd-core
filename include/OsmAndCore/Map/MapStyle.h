@@ -57,7 +57,7 @@ namespace OsmAnd {
     private:
         const std::unique_ptr<MapStyle_P> _d;
     protected:
-        MapStyle(MapStyles* styles, const QString& resourcePath, const bool& isEmbedded);
+        MapStyle(MapStyles* styles, const QString& resourcePath, const bool isEmbedded);
 
         QString _name;
     public:
