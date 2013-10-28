@@ -50,7 +50,7 @@ void OsmAnd::Rasterizer_P::prepareContext(
     const auto pixelHeight = static_cast<float>(area31.height()) / context._precomputed31toPixelDivisor;
     context._renderViewport.topLeft = tlOriginOffset;
     context._renderViewport.right = tlOriginOffset.x + pixelWidth;
-    context._renderViewport.bottom = pixelHeight - tlOriginOffset.x;
+    context._renderViewport.bottom = pixelHeight - tlOriginOffset.y;
 
     context._zoom = zoom;
     context._area31 = area31;
@@ -1795,7 +1795,7 @@ void OsmAnd::Rasterizer_P::collectPolygonText(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
     const Primitive& primitive )
 {
-    if(primitive.mapObject->_points31.size() <=2)
+    if(primitive.mapObject->_points31.size() <= 2)
     {
         OsmAnd::LogPrintf(LogSeverityLevel::Warning,
             "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized (text) as polygon, but has %d vertices",
