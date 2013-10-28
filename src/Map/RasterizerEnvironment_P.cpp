@@ -170,9 +170,23 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
     _textPaint.setAntiAlias(true);*/
 }
 
+QMap< std::shared_ptr<const OsmAnd::MapStyleValueDefinition>, OsmAnd::MapStyleValue > OsmAnd::RasterizerEnvironment_P::getSettings() const
+{
+    return _settings;
+}
+
+void OsmAnd::RasterizerEnvironment_P::setSettings( const QMap< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue >& newSettings )
+{
+    QMutexLocker scopedLocker(&_settingsChangeMutex);
+
+    _settings = newSettings;
+}
+
 void OsmAnd::RasterizerEnvironment_P::applyTo( MapStyleEvaluator& evaluator ) const
 {
-    for(auto itSetting = owner->settings.cbegin(); itSetting != owner->settings.cend(); ++itSetting)
+    QMutexLocker scopedLocker(&_settingsChangeMutex);
+
+    for(auto itSetting = _settings.cbegin(); itSetting != _settings.cend(); ++itSetting)
     {
         evaluator.setValue(itSetting.key(), *itSetting);
     }

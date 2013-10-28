@@ -46,7 +46,7 @@ namespace OsmAnd {
 
         ObfsCollection* const owner;
 
-        QMutex _watchedCollectionMutex;
+        mutable QMutex _watchedCollectionMutex;
         struct WatchEntry
         {
             enum Type
@@ -84,7 +84,7 @@ namespace OsmAnd {
         QList< std::shared_ptr<WatchEntry> > _watchedCollection;
         bool _watchedCollectionChanged;
 
-        QMutex _sourcesMutex;
+        mutable QMutex _sourcesMutex;
         QHash< QString, std::shared_ptr<ObfFile> > _sources;
         bool _sourcesRefreshedOnce;
         void refreshSources();

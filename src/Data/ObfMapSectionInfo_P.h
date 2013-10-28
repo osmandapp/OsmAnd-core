@@ -70,7 +70,7 @@ namespace OsmAnd {
 
         ObfMapSectionLevel* const owner;
 
-        QMutex _rootNodesMutex;
+        mutable QMutex _rootNodesMutex;
         struct RootNodes
         {
             QList< std::shared_ptr<ObfMapSectionLevelTreeNode> > nodes;
@@ -92,7 +92,7 @@ namespace OsmAnd {
 
         ObfMapSectionInfo* const owner;
 
-        QMutex _rulesMutex;
+        mutable QMutex _rulesMutex;
         struct Rules
         {
             typedef std::tuple<QString, QString, uint32_t> DecodingRule;

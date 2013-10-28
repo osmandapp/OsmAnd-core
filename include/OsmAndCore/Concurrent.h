@@ -68,7 +68,7 @@ namespace OsmAnd {
         private:
             bool _cancellationRequestedByTask;
             bool _cancellationRequestedByExternal;
-            QMutex _cancellationMutex;
+            mutable QMutex _cancellationMutex;
         protected:
         public:
             Task(ExecuteSignature executeMethod, PreExecuteSignature preExecuteMethod = nullptr, PostExecuteSignature postExecuteMethod = nullptr);
@@ -109,7 +109,7 @@ namespace OsmAnd {
         protected:
             const OwnerPtr _ownerPtr;
             QList< HostedTask* > _hostedTasks;
-            QReadWriteLock _hostedTasksLock;
+            mutable QReadWriteLock _hostedTasksLock;
             QWaitCondition _unlockedCondition;
             volatile bool _ownerIsBeingDestructed;
 

@@ -45,7 +45,7 @@ namespace OsmAnd {
 
         ObfFile* const owner;
 
-        QMutex _obfInfoMutex;
+        mutable QMutex _obfInfoMutex;
         std::shared_ptr<ObfInfo> _obfInfo;
     public:
         virtual ~ObfFile_P();

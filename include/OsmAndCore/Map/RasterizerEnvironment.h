@@ -52,7 +52,9 @@ namespace OsmAnd {
         const std::shared_ptr<const MapStyle> style;
         const bool basemapAvailable;
         const float displayDensityFactor;
-        QMap< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > settings;
+
+        QMap< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > getSettings() const;
+        void setSettings(const QMap< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue >& newSettings);
 
     friend class OsmAnd::Rasterizer;
     };

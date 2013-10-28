@@ -179,17 +179,17 @@ namespace OsmAnd {
     private:
         const Concurrent::TaskHost::Bridge _taskHostBridge;
 
-        QReadWriteLock _configurationLock;
+        mutable QReadWriteLock _configurationLock;
         MapRendererConfiguration _currentConfiguration;
         volatile uint32_t _currentConfigurationInvalidatedMask;
 
-        QReadWriteLock _requestedStateLock;
-        QReadWriteLock _internalStateLock;
+        mutable QReadWriteLock _requestedStateLock;
+        mutable QReadWriteLock _internalStateLock;
         MapRendererState _currentState;
         volatile bool _currentStateOutdated;
 
         volatile uint32_t _invalidatedRasterLayerResourcesMask;
-        QReadWriteLock _invalidatedRasterLayerResourcesMaskLock;
+        mutable QReadWriteLock _invalidatedRasterLayerResourcesMaskLock;
 
         volatile bool _invalidatedElevationDataResources;
 

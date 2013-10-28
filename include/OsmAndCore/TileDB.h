@@ -42,7 +42,7 @@ namespace OsmAnd {
     public:
     private:
     protected:
-        QMutex _indexMutex;
+        mutable QMutex _indexMutex;
         QSqlDatabase _indexDb;
 
         bool openIndex();

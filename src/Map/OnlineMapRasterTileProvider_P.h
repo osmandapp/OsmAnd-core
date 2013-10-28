@@ -49,15 +49,15 @@ namespace OsmAnd {
 
         const OnlineMapRasterTileProvider* owner;
 
-        QMutex _currentDownloadsCounterMutex;
+        mutable QMutex _currentDownloadsCounterMutex;
         uint32_t _currentDownloadsCounter;
         QWaitCondition _currentDownloadsCounterChanged;
 
-        QMutex _localCachePathMutex;
+        mutable QMutex _localCachePathMutex;
         QDir _localCachePath;
         bool _networkAccessAllowed;
 
-        QMutex _tilesInProcessMutex;
+        mutable QMutex _tilesInProcessMutex;
         std::array< QSet< TileId >, ZoomLevelsCount > _tilesInProcess;
         QWaitCondition _waitUntilAnyTileIsProcessed;
 

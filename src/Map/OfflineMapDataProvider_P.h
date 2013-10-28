@@ -54,12 +54,12 @@ namespace OsmAnd {
         OfflineMapDataProvider* const owner;
 
         QAtomicInt _basemapPresenceChecked;
-        QMutex _basemapPresenceCheckMutex;
+        mutable QMutex _basemapPresenceCheckMutex;
         volatile bool _isBasemapAvailable;
 
         struct DataCacheLevel
         {
-            QReadWriteLock _mapObjectsMutex;
+            mutable QReadWriteLock _mapObjectsMutex;
             QHash< uint64_t, std::weak_ptr< const Model::MapObject > > _mapObjects;
         };
         std::array< DataCacheLevel, ZoomLevelsCount> _dataCache;

@@ -48,13 +48,16 @@ namespace OsmAnd {
     class Rasterizer;
 
     class RasterizerEnvironment;
-    class OSMAND_CORE_API RasterizerEnvironment_P
+    class RasterizerEnvironment_P
     {
     private:
     protected:
         RasterizerEnvironment_P(RasterizerEnvironment* owner);
 
         void initialize();
+
+        mutable QMutex _settingsChangeMutex;
+        QMap< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > _settings;
 
         SkPaint _mapPaint;
         SkColor _defaultBgColor;
@@ -76,7 +79,7 @@ namespace OsmAnd {
         QVector< SkPaint > _reverseOneWayPaints;
         static void initializeOneWayPaint(SkPaint& paint);
 
-        QMutex _bitmapShadersMutex;
+        mutable QMutex _bitmapShadersMutex;
         QHash< QString, SkBitmapProcShader* > _bitmapShaders;
     public:
         virtual ~RasterizerEnvironment_P();
@@ -102,6 +105,9 @@ namespace OsmAnd {
 
         const QVector< SkPaint >& oneWayPaints;
         const QVector< SkPaint >& reverseOneWayPaints;
+
+        QMap< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > getSettings() const;
+        void setSettings(const QMap< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue >& newSettings);
 
         void applyTo(MapStyleEvaluator& evaluator) const;
 

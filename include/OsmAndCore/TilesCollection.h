@@ -61,7 +61,7 @@ namespace OsmAnd {
 
     private:
         std::array< QMap< TileId, std::shared_ptr<ENTRY> >, ZoomLevelsCount > _zoomLevels;
-        QReadWriteLock _tilesCollectionLock;
+        mutable QReadWriteLock _tilesCollectionLock;
     protected:
         const std::shared_ptr< Link > _link;
     public:
@@ -215,7 +215,7 @@ namespace OsmAnd {
         {}
 
         volatile STATE_ENUM state;
-        QReadWriteLock stateLock;
+        mutable QReadWriteLock stateLock;
     };
 }
 

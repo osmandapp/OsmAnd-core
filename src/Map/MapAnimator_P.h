@@ -432,7 +432,7 @@ namespace OsmAnd {
         };
 
         volatile bool _isAnimationPaused;
-        QMutex _animationsMutex;
+        mutable QMutex _animationsMutex;
         QList< std::shared_ptr<AbstractAnimation> > _animations;
     public:
         ~MapAnimator_P();

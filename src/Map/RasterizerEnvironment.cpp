@@ -17,11 +17,21 @@ OsmAnd::RasterizerEnvironment::RasterizerEnvironment( const std::shared_ptr<cons
     , style(style_)
     , basemapAvailable(basemapAvailable_)
     , displayDensityFactor(displayDensityFactor_)
-    , settings(settings_)
 {
     _d->initialize();
+    _d->setSettings(settings_);
 }
 
 OsmAnd::RasterizerEnvironment::~RasterizerEnvironment()
 {
+}
+
+QMap< std::shared_ptr<const OsmAnd::MapStyleValueDefinition>, OsmAnd::MapStyleValue > OsmAnd::RasterizerEnvironment::getSettings() const
+{
+    return _d->getSettings();
+}
+
+void OsmAnd::RasterizerEnvironment::setSettings( const QMap< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue >& newSettings )
+{
+    _d->setSettings(newSettings);
 }

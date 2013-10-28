@@ -143,10 +143,10 @@ namespace OsmAnd {
         public:
             typedef std::function< AtlasTextureInGPU*() > AtlasTextureAllocatorSignature;
         private:
-            QMutex _freedSlotsMutex;
+            mutable QMutex _freedSlotsMutex;
             QMultiMap< AtlasTextureInGPU*, std::tuple< std::weak_ptr<AtlasTextureInGPU>, uint32_t > > _freedSlots;
 
-            QMutex _unusedSlotsMutex;
+            mutable QMutex _unusedSlotsMutex;
             AtlasTextureInGPU* _lastNonFullAtlasTexture;
             std::weak_ptr<AtlasTextureInGPU> _lastNonFullAtlasTextureWeak;
             uint32_t _firstUnusedSlotIndex;
@@ -168,7 +168,7 @@ namespace OsmAnd {
         private:
         protected:
 #if defined(DEBUG) || defined(_DEBUG)
-            QMutex _tilesMutex;
+            mutable QMutex _tilesMutex;
             QSet< TileOnAtlasTextureInGPU* > _tiles;
 #else
             QAtomicInt _tilesCounter;
@@ -202,7 +202,7 @@ namespace OsmAnd {
     
     private:
 #if defined(DEBUG) || defined(_DEBUG)
-        QMutex _allocatedResourcesMutex;
+        mutable QMutex _allocatedResourcesMutex;
         QList< ResourceInGPU* > _allocatedResources;
 #else
         QAtomicInt _allocatedResourcesCounter;
