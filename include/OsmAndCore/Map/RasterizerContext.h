@@ -26,21 +26,27 @@
 #include <cstdint>
 #include <memory>
 
+#include <QtGlobal>
+
 #include <OsmAndCore.h>
 
 namespace OsmAnd {
 
     class Rasterizer;
+    class RasterizerEnvironment;
 
     class RasterizerContext_P;
     class OSMAND_CORE_API RasterizerContext
     {
+        Q_DISABLE_COPY(RasterizerContext);
     private:
         const std::unique_ptr<RasterizerContext_P> _d;
     protected:
     public:
-        RasterizerContext();
+        RasterizerContext(const std::shared_ptr<RasterizerEnvironment>& environment);
         virtual ~RasterizerContext();
+
+        const std::shared_ptr<RasterizerEnvironment> environment;
 
     friend class OsmAnd::Rasterizer;
     };

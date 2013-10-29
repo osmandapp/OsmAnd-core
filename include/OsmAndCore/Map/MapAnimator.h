@@ -50,6 +50,7 @@ namespace OsmAnd {
     class MapAnimator_P;
     class OSMAND_CORE_API MapAnimator
     {
+        Q_DISABLE_COPY(MapAnimator);
     private:
         const std::unique_ptr<MapAnimator_P> _d;
     protected:

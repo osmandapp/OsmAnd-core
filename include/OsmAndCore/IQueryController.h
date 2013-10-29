@@ -36,7 +36,7 @@ namespace OsmAnd {
         IQueryController();
         virtual ~IQueryController();
 
-        virtual bool isAborted() = 0;
+        virtual bool isAborted() const = 0;
     };
 
 } // namespace OsmAnd

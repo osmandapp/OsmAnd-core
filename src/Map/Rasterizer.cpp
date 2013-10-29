@@ -4,21 +4,33 @@
 #include "RasterizerEnvironment.h"
 #include "RasterizerContext.h"
 
-void OsmAnd::Rasterizer::prepareContext(
-    const RasterizerEnvironment& env, RasterizerContext& context,
-    const AreaI& area31, const ZoomLevel zoom,
-    const uint32_t tileSize,
-    const MapFoundationType& foundation,
-    const QList< std::shared_ptr<const OsmAnd::Model::MapObject> >& objects,
-    const PointF& tlOriginOffset /*= PointF()*/,
-    bool* nothingToRasterize /*= nullptr*/, IQueryController* controller /*= nullptr*/ )
+OsmAnd::Rasterizer::Rasterizer(const std::shared_ptr<const RasterizerContext>& context_)
+    : _d(new Rasterizer_P(this, *context_->environment->_d, *context_->_d))
+    , context(context_)
 {
-    Rasterizer_P::prepareContext(*env._d.get(), *context._d.get(), area31, zoom, tileSize, foundation, objects, tlOriginOffset, nothingToRasterize, controller);
+}
+
+OsmAnd::Rasterizer::~Rasterizer()
+{
+}
+
+void OsmAnd::Rasterizer::prepareContext(
+    RasterizerContext& context,
+    const AreaI& area31,
+    const ZoomLevel zoom,
+    const MapFoundationType foundation,
+    const QList< std::shared_ptr<const Model::MapObject> >& objects,
+    bool* nothingToRasterize /*= nullptr*/,
+    const IQueryController* const controller /*= nullptr*/ )
+{
+    Rasterizer_P::prepareContext(*context.environment->_d, *context._d, area31, zoom, foundation, objects, nothingToRasterize, controller);
 }
 
 bool OsmAnd::Rasterizer::rasterizeMap(
-    const RasterizerEnvironment& env, const RasterizerContext& context,
-    bool fillBackground, SkCanvas& canvas, IQueryController* controller /*= nullptr*/ )
+    SkCanvas& canvas,
+    const bool fillBackground /*= true*/,
+    const AreaI* const destinationArea /*= nullptr*/,
+    const IQueryController* const controller /*= nullptr*/ )
 {
-    return Rasterizer_P::rasterizeMap(*env._d.get(), *context._d.get(), fillBackground, canvas, controller);
+    return _d->rasterizeMap(canvas, fillBackground, destinationArea, controller);
 }

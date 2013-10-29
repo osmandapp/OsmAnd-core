@@ -31,7 +31,7 @@ OsmAnd::BinaryOperator::~BinaryOperator()
 {
 }
 
-bool OsmAnd::BinaryOperator::evaluate( const QBitArray& types, RoutingRulesetContext* context ) const
+bool OsmAnd::BinaryOperator::evaluate( const QBitArray& types, RoutingRulesetContext* const context ) const
 {
     bool ok = false;
 

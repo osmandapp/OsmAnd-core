@@ -160,7 +160,7 @@ void OsmAnd::ObfPoiSectionReader_P::loadAmenities(
     QSet<uint32_t>* desiredCategories /*= nullptr*/,
     QList< std::shared_ptr<const Model::Amenity> >* amenitiesOut /*= nullptr*/,
     std::function<bool (const std::shared_ptr<const Model::Amenity>&)> visitor /*= nullptr*/,
-    IQueryController* controller /*= nullptr*/ )
+    const IQueryController* const controller /*= nullptr*/ )
 {
     auto cis = reader->_codedInputStream.get();
     cis->Seek(section->_offset);
@@ -175,7 +175,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
     QList< std::shared_ptr<const Model::Amenity> >* amenitiesOut,
     const ZoomLevel zoom, uint32_t zoomDepth, const AreaI* bbox31,
     std::function<bool (const std::shared_ptr<const Model::Amenity>&)> visitor,
-    IQueryController* controller)
+    const IQueryController* const controller)
 {
     auto cis = reader->_codedInputStream.get();
     QList< std::shared_ptr<Tile> > tiles;
@@ -232,7 +232,7 @@ bool OsmAnd::ObfPoiSectionReader_P::readTile(
     Tile* parent,
     QSet<uint32_t>* desiredCategories,
     uint32_t zoom, uint32_t zoomDepth, const AreaI* bbox31,
-    IQueryController* controller,
+    const IQueryController* const controller,
     QSet< uint64_t >* tilesToSkip)
 {
     auto cis = reader->_codedInputStream.get();
@@ -404,7 +404,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesFromTile(
     QList< std::shared_ptr<const Model::Amenity> >* amenitiesOut,
     const ZoomLevel zoom, uint32_t zoomDepth, const AreaI* bbox31,
     std::function<bool (const std::shared_ptr<const Model::Amenity>&)> visitor,
-    IQueryController* controller,
+    const IQueryController* const controller,
     QSet< uint64_t >* amenitiesToSkip)
 {
     auto cis = reader->_codedInputStream.get();
@@ -499,7 +499,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
     std::shared_ptr<Model::Amenity>& amenity,
     QSet<uint32_t>* desiredCategories,
     const AreaI* bbox31,
-    IQueryController* controller)
+    const IQueryController* const controller)
 {
     auto cis = reader->_codedInputStream.get();
     PointI point;

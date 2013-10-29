@@ -96,7 +96,7 @@ namespace OsmAnd {
             const std::shared_ptr<RoutePlannerContext::RouteCalculationSegment>& from,
             const std::shared_ptr<RoutePlannerContext::RouteCalculationSegment>& to,
             bool leftSideNavigation,
-            IQueryController* controller = nullptr);
+            const IQueryController* const controller = nullptr);
         static void loadBorderPoints(OsmAnd::RoutePlannerContext::CalculationContext* context);
         static void updateDistanceForBorderPoints(OsmAnd::RoutePlannerContext::CalculationContext* context, const PointI& sPoint, bool isDistanceToStart);
         static uint64_t encodeRoutePointId(const std::shared_ptr<const Model::Road>& road, uint64_t pointIndex, bool positive);
@@ -216,7 +216,7 @@ namespace OsmAnd {
             OsmAnd::RoutePlannerContext* context,
             const QList< std::pair<double, double> >& points,
             bool leftSideNavigation,
-            OsmAnd::IQueryController* controller = nullptr);
+            const OsmAnd::IQueryController* const controller = nullptr);
 
         friend class OsmAnd::RoutePlannerContext;
         friend class OsmAnd::RoutePlannerAnalyzer;

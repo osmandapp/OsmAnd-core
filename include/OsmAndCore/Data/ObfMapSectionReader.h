@@ -54,7 +54,7 @@ namespace OsmAnd {
             QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut = nullptr, MapFoundationType* foundationOut = nullptr,
             std::function<bool (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t)> filterById = nullptr,
             std::function<bool (const std::shared_ptr<const OsmAnd::Model::MapObject>&)> visitor = nullptr,
-            IQueryController* controller = nullptr);
+            const IQueryController* const controller = nullptr);
     };
 
 } // namespace OsmAnd

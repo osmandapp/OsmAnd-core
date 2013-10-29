@@ -80,7 +80,10 @@ namespace OsmAnd {
         static void initializeOneWayPaint(SkPaint& paint);
 
         mutable QMutex _bitmapShadersMutex;
-        QHash< QString, SkBitmapProcShader* > _bitmapShaders;
+        mutable QHash< QString, SkBitmapProcShader* > _bitmapShaders;
+
+        mutable QMutex _pathEffectsMutex;
+        mutable QHash< QString, SkPathEffect* > _pathEffects;
     public:
         virtual ~RasterizerEnvironment_P();
 
@@ -112,6 +115,7 @@ namespace OsmAnd {
         void applyTo(MapStyleEvaluator& evaluator) const;
 
         bool obtainBitmapShader(const QString& name, SkBitmapProcShader* &outShader) const;
+        bool obtainPathEffect(const QString& encodedPathEffect, SkPathEffect* &outPathEffect) const;
 
     friend class OsmAnd::RasterizerEnvironment;
     };

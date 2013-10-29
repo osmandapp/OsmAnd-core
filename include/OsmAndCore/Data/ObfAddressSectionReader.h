@@ -56,23 +56,23 @@ namespace OsmAnd {
         static void loadStreetGroups(const std::shared_ptr<ObfReader>& reader, const std::shared_ptr<const ObfAddressSectionInfo>& section,
             QList< std::shared_ptr<const Model::StreetGroup> >* resultOut = nullptr,
             std::function<bool (const std::shared_ptr<const OsmAnd::Model::StreetGroup>&)> visitor = nullptr,
-            IQueryController* controller = nullptr,
+            const IQueryController* const controller = nullptr,
             QSet<ObfAddressBlockType>* blockTypeFilter = nullptr);
 
         static void loadStreetsFromGroup(const std::shared_ptr<ObfReader>& reader, const std::shared_ptr<const Model::StreetGroup>& group,
             QList< std::shared_ptr<const Model::Street> >* resultOut = nullptr,
             std::function<bool (const std::shared_ptr<const OsmAnd::Model::Street>&)> visitor = nullptr,
-            IQueryController* controller = nullptr);
+            const IQueryController* const controller = nullptr);
 
         static void loadBuildingsFromStreet(const std::shared_ptr<ObfReader>& reader, const std::shared_ptr<const Model::Street>& street,
             QList< std::shared_ptr<const Model::Building> >* resultOut = nullptr,
             std::function<bool (const std::shared_ptr<const OsmAnd::Model::Building>&)> visitor = nullptr,
-            IQueryController* controller = nullptr);
+            const IQueryController* const controller = nullptr);
 
         static void loadIntersectionsFromStreet(const std::shared_ptr<ObfReader>& reader, const std::shared_ptr<const Model::Street>& street,
             QList< std::shared_ptr<const Model::StreetIntersection> >* resultOut = nullptr,
             std::function<bool (const std::shared_ptr<const OsmAnd::Model::StreetIntersection>&)> visitor = nullptr,
-            IQueryController* controller = nullptr);
+            const IQueryController* const controller = nullptr);
     };
 
 } // namespace OsmAnd

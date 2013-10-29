@@ -37,6 +37,7 @@ namespace OsmAnd {
     class OfflineMapSymbolProvider_P;
     class OSMAND_CORE_API OfflineMapSymbolProvider : public IMapSymbolProvider
     {
+        Q_DISABLE_COPY(OfflineMapSymbolProvider);
     private:
         const std::unique_ptr<OfflineMapSymbolProvider_P> _d;
     protected:

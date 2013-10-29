@@ -40,6 +40,7 @@ namespace OsmAnd {
     class OfflineMapRasterTileProvider_Software_P;
     class OSMAND_CORE_API OfflineMapRasterTileProvider_Software : public IMapBitmapTileProvider
     {
+        Q_DISABLE_COPY(OfflineMapRasterTileProvider_Software);
     private:
         const std::unique_ptr<OfflineMapRasterTileProvider_Software_P> _d;
     protected:

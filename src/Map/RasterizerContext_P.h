@@ -58,21 +58,13 @@ namespace OsmAnd {
         AreaI _area31;
         ZoomLevel _zoom;
         double _tileDivisor;
-        uint32_t _tileSize;
-        double _precomputed31toPixelDivisor;
-        PointF _tlOriginOffset;
-        AreaF _renderViewport;
         uint32_t _shadowLevelMin;
         uint32_t _shadowLevelMax;
-
-        SkPaint _mapPaint;
 
         QList< std::shared_ptr<const OsmAnd::Model::MapObject> > _mapObjects, _coastlineObjects, _basemapMapObjects, _basemapCoastlineObjects;
         QList< std::shared_ptr<const OsmAnd::Model::MapObject> > _combinedMapObjects, _triangulatedCoastlineObjects;
         QVector< Rasterizer_P::Primitive > _polygons, _lines, _points;
         QVector< Rasterizer_P::TextPrimitive > _texts;
-
-        QHash< QString, SkPathEffect* > _pathEffects;
 
         void clear();
     public:

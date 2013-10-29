@@ -39,6 +39,7 @@ namespace OsmAnd {
     class ObfsCollection_P;
     class OSMAND_CORE_API ObfsCollection
     {
+        Q_DISABLE_COPY(ObfsCollection);
     private:
     protected:
         const std::unique_ptr<ObfsCollection_P> _d;

@@ -40,6 +40,7 @@ namespace OsmAnd {
     class ObfMapSectionLevel_P;
     class OSMAND_CORE_API ObfMapSectionLevel
     {
+        Q_DISABLE_COPY(ObfMapSectionLevel);
     private:
         const std::unique_ptr<ObfMapSectionLevel_P> _d;
     protected:
@@ -68,6 +69,7 @@ namespace OsmAnd {
     class ObfMapSectionInfo_P;
     class OSMAND_CORE_API ObfMapSectionInfo : public ObfSectionInfo
     {
+        Q_DISABLE_COPY(ObfMapSectionInfo);
     private:
         const std::unique_ptr<ObfMapSectionInfo_P> _d;
     protected:

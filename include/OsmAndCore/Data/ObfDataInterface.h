@@ -48,6 +48,7 @@ namespace OsmAnd {
     class ObfDataInterface_P;
     class OSMAND_CORE_API ObfDataInterface
     {
+        Q_DISABLE_COPY(ObfDataInterface);
     private:
         const std::unique_ptr<ObfDataInterface_P> _d;
     protected:
@@ -55,11 +56,11 @@ namespace OsmAnd {
     public:
         virtual ~ObfDataInterface();
 
-        void obtainObfFiles(QList< std::shared_ptr<const ObfFile> >* outFiles = nullptr, IQueryController* controller = nullptr);
-        void obtainBasemapPresenceFlag(bool& basemapPresent, IQueryController* controller = nullptr);
+        void obtainObfFiles(QList< std::shared_ptr<const ObfFile> >* outFiles = nullptr, const IQueryController* const controller = nullptr);
+        void obtainBasemapPresenceFlag(bool& basemapPresent, const IQueryController* const controller = nullptr);
         void obtainMapObjects(QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut, MapFoundationType* foundationOut,
             const AreaI& area31, const ZoomLevel zoom,
-            IQueryController* controller = nullptr, std::function<bool (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t)> filterById = nullptr);
+            const IQueryController* const controller = nullptr, std::function<bool (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t)> filterById = nullptr);
         
     friend class OsmAnd::ObfsCollection;
     };

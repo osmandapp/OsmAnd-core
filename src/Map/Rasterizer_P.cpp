@@ -23,7 +23,10 @@
 #include <SkDashPathEffect.h>
 #include <SkBitmapProcShader.h>
 
-OsmAnd::Rasterizer_P::Rasterizer_P()
+OsmAnd::Rasterizer_P::Rasterizer_P(Rasterizer* const owner_, const RasterizerEnvironment_P& env_, const RasterizerContext_P& context_)
+    : owner(owner_)
+    , env(env_)
+    , context(context_)
 {
 }
 
@@ -32,29 +35,23 @@ OsmAnd::Rasterizer_P::~Rasterizer_P()
 }
 
 void OsmAnd::Rasterizer_P::prepareContext(
-    const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    const AreaI& area31, const ZoomLevel zoom, const uint32_t tileSize,
-    const MapFoundationType& foundation,
-    const QList< std::shared_ptr<const OsmAnd::Model::MapObject> >& objects,
-    const PointF& tlOriginOffset, bool* nothingToRasterize,
-    IQueryController* controller)
+    const RasterizerEnvironment_P& env,
+    RasterizerContext_P& context,
+    const AreaI& area31,
+    const ZoomLevel zoom,
+    const MapFoundationType foundation,
+    const QList< std::shared_ptr<const Model::MapObject> >& objects,
+    bool* nothingToRasterize,
+    const IQueryController* const controller)
 {
     context.clear();
 
-    context._tileDivisor = Utilities::getPowZoom(31 - zoom);
     adjustContextFromEnvironment(env, context, zoom);
-    
-    context._precomputed31toPixelDivisor = context._tileDivisor / tileSize;
-    
-    const auto pixelWidth = static_cast<float>(area31.width()) / context._precomputed31toPixelDivisor;
-    const auto pixelHeight = static_cast<float>(area31.height()) / context._precomputed31toPixelDivisor;
-    context._renderViewport.topLeft = tlOriginOffset;
-    context._renderViewport.right = tlOriginOffset.x + pixelWidth;
-    context._renderViewport.bottom = pixelHeight - tlOriginOffset.y;
+
+    context._tileDivisor = Utilities::getPowZoom(31 - zoom);
 
     context._zoom = zoom;
     context._area31 = area31;
-    context._tileSize = tileSize;
 
     // Split input map objects to object, coastline, basemapObjects and basemapCoastline
     for(auto itMapObject = objects.cbegin(); itMapObject != objects.cend(); ++itMapObject)
@@ -190,12 +187,533 @@ void OsmAnd::Rasterizer_P::prepareContext(
     }*/
 }
 
+void OsmAnd::Rasterizer_P::obtainPrimitives(
+    const RasterizerEnvironment_P& env, RasterizerContext_P& context,
+    const IQueryController* const controller)
+{
+    QVector< Primitive > unfilteredLines;
+    for(auto itMapObject = context._combinedMapObjects.cbegin(); itMapObject != context._combinedMapObjects.cend(); ++itMapObject)
+    {
+        if(controller && controller->isAborted())
+            return;
+
+        auto mapObject = *itMapObject;
+
+        uint32_t typeIdx = 0;
+        for(auto itType = mapObject->types.cbegin(); itType != mapObject->types.cend(); ++itType, typeIdx++)
+        {
+            const auto& type = *itType;
+            auto layer = mapObject->getSimpleLayerValue();
+
+            MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Order, mapObject);
+            env.applyTo(evaluator);
+            evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
+            evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
+            evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
+            evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
+            evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_LAYER, layer);
+            evaluator.setBooleanValue(MapStyle::builtinValueDefinitions.INPUT_AREA, mapObject->isArea);
+            evaluator.setBooleanValue(MapStyle::builtinValueDefinitions.INPUT_POINT, mapObject->points31.size() == 1);
+            evaluator.setBooleanValue(MapStyle::builtinValueDefinitions.INPUT_CYCLE, mapObject->isClosedFigure());
+            if(!evaluator.evaluate())
+                continue;
+
+            int objectType;
+            if(!evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_OBJECT_TYPE, objectType))
+                continue;
+            int zOrder;
+            if(!evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_ORDER, zOrder))
+                continue;
+
+            Primitive primitive;
+            primitive.mapObject = mapObject;
+            primitive.objectType = static_cast<PrimitiveType>(objectType);
+            primitive.zOrder = zOrder;
+            primitive.typeIndex = typeIdx;
+
+            if(objectType == PrimitiveType::Polygon)
+            {
+                if(mapObject->points31.size() <= 2)
+                {
+                    OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+                        "Map object #%" PRIu64 " (%" PRIi64 ") primitives are processed as polygon, but only %d vertices present",
+                        mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2,
+                        mapObject->points31.size());
+                    continue;
+                }
+                if(!mapObject->isClosedFigure())
+                {
+                    OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+                        "Map object #%" PRIu64 " (%" PRIi64 ") primitives are processed as polygon, but are not closed",
+                        mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2);
+                    continue;
+                }
+                if(!mapObject->isClosedFigure(true))
+                {
+                    OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+                        "Map object #%" PRIu64 " (%" PRIi64 ") primitives are processed as polygon, but are not closed (inner)",
+                        mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2);
+                    continue;
+                }
+
+                Primitive pointPrimitive = primitive;
+                pointPrimitive.objectType = PrimitiveType::Point;
+                auto polygonArea31 = Utilities::polygonArea(mapObject->points31);
+                if(polygonArea31 > PolygonAreaCutoffLowerThreshold)
+                {
+                    primitive.zOrder += 1.0 / polygonArea31;
+                    context._polygons.push_back(primitive);
+                    context._points.push_back(pointPrimitive);
+                }
+            }
+            else if(objectType == PrimitiveType::Point)
+            {
+                context._points.push_back(primitive);
+            }
+            else if(objectType == PrimitiveType::Line)
+            {
+                unfilteredLines.push_back(primitive);
+            }
+            else
+            {
+                assert(false);
+                continue;
+            }
+
+            int shadowLevel;
+            if(evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_SHADOW_LEVEL, shadowLevel) && shadowLevel > 0)
+            {
+                context._shadowLevelMin = qMin(context._shadowLevelMin, static_cast<uint32_t>(zOrder));
+                context._shadowLevelMax = qMax(context._shadowLevelMax, static_cast<uint32_t>(zOrder));
+            }
+        }
+    }
+
+    const auto privitivesSort = [](const Primitive& l, const Primitive& r) -> bool
+    {
+        if(qFuzzyCompare(l.zOrder, r.zOrder))
+        {
+            if(l.typeIndex == r.typeIndex)
+                return l.mapObject->_points31.size() < r.mapObject->_points31.size();
+            return l.typeIndex < r.typeIndex;
+        }
+        return l.zOrder < r.zOrder;
+    };
+
+    qSort(context._polygons.begin(), context._polygons.end(), privitivesSort);
+    qSort(unfilteredLines.begin(), unfilteredLines.end(), privitivesSort);
+    filterOutLinesByDensity(env, context, unfilteredLines, context._lines, controller);
+    qSort(context._points.begin(), context._points.end(), privitivesSort);
+}
+
+void OsmAnd::Rasterizer_P::filterOutLinesByDensity(
+    const RasterizerEnvironment_P& env, const RasterizerContext_P& context,
+    const QVector< Primitive >& in, QVector< Primitive >& out, const IQueryController* const controller )
+{
+    if(context._roadDensityZoomTile == 0 || context._roadsDensityLimitPerTile == 0)
+    {
+        out = in;
+        return;
+    }
+
+    const auto dZ = context._zoom + context._roadDensityZoomTile;
+    QMap< uint64_t, std::pair<uint32_t, double> > densityMap;
+    out.reserve(in.size());
+    for(int lineIdx = in.size() - 1; lineIdx >= 0; lineIdx--)
+    {
+        if(controller && controller->isAborted())
+            return;
+
+        bool accept = true;
+        const auto& primitive = in[lineIdx];
+
+        const auto& type = primitive.mapObject->_types[primitive.typeIndex];
+        if(type.tag == QLatin1String("highway"))
+        {
+            accept = false;
+
+            uint64_t prevId = 0;
+            for(auto itPoint = primitive.mapObject->_points31.cbegin(); itPoint != primitive.mapObject->_points31.cend(); ++itPoint)
+            {
+                if(controller && controller->isAborted())
+                    return;
+
+                const auto& point = *itPoint;
+
+                auto x = point.x >> (31 - dZ);
+                auto y = point.y >> (31 - dZ);
+                uint64_t id = (static_cast<uint64_t>(x) << dZ) | y;
+                if(prevId != id)
+                {
+                    prevId = id;
+
+                    auto& mapEntry = densityMap[id];
+                    if (mapEntry.first < context._roadsDensityLimitPerTile /*&& p.second > o */)
+                    {
+                        accept = true;
+                        mapEntry.first += 1;
+                        mapEntry.second = primitive.zOrder;
+                    }
+                }
+            }
+        }
+
+        if(accept)
+            out.push_front(primitive);
+    }
+}
+
+void OsmAnd::Rasterizer_P::collectPrimitivesTexts(
+    const RasterizerEnvironment_P& env, RasterizerContext_P& context,
+    const QVector< Rasterizer_P::Primitive >& primitives, PrimitivesType type, const IQueryController* const controller )
+{
+//    assert(type != PrimitivesType::ShadowOnlyLines);
+//
+//    for(auto itPrimitive = primitives.cbegin(); itPrimitive != primitives.cend(); ++itPrimitive)
+//    {
+//        if(controller && controller->isAborted())
+//            return;
+//
+//        const auto& primitive = *itPrimitive;
+//
+//        // Skip primitives without names
+//        if(primitive.mapObject->names.isEmpty())
+//            continue;
+//        bool hasNonEmptyNames = false;
+//        for(auto itName = primitive.mapObject->names.cbegin(); itName != primitive.mapObject->names.cend(); ++itName)
+//        {
+//            const auto& name = itName.value();
+//
+//            if(!name.isEmpty())
+//            {
+//                hasNonEmptyNames = true;
+//                break;
+//            }
+//        }
+//        if(!hasNonEmptyNames)
+//            continue;
+//
+//        if(type == Polygons)
+//        {
+//            if (primitive.zOrder < context._polygonMinSizeToDisplay)
+//                return;
+//
+//            collectPolygonText(env, context, primitive);
+//        }
+//        else if(type == Lines)
+//        {
+//            collectLineText(env, context, primitive);
+//        }
+//        else if(type == Points)
+//        {
+//            if(primitive.typeIndex != 0)
+//                continue;
+//
+//            collectPointText(env, context, primitive);
+//        }
+//    }
+//}
+//
+//void OsmAnd::Rasterizer_P::collectPolygonText(
+//    const RasterizerEnvironment_P& env, RasterizerContext_P& context,
+//    const Primitive& primitive )
+//{
+//    if(primitive.mapObject->_points31.size() <= 2)
+//    {
+//        OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+//            "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized (text) as polygon, but has %d vertices",
+//            primitive.mapObject->id >> 1, static_cast<int64_t>(primitive.mapObject->id) / 2,
+//            primitive.mapObject->_points31.size());
+//        return;
+//    }
+//    if(!primitive.mapObject->isClosedFigure())
+//    {
+//        OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+//            "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized (text) as polygon, but is not closed",
+//            primitive.mapObject->id >> 1, static_cast<int64_t>(primitive.mapObject->id) / 2);
+//        return;
+//    }
+//    if(!primitive.mapObject->isClosedFigure(true))
+//    {
+//        OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+//            "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized (text) as polygon, but is not closed (inner)",
+//            primitive.mapObject->id >> 1, static_cast<int64_t>(primitive.mapObject->id) / 2);
+//        return;
+//    }
+//
+//    //{
+//    //    const auto& type = primitive.mapObject->_types[primitive.typeIndex];
+//    //    MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Polygon, primitive.mapObject);
+//    //    env.applyTo(evaluator);
+//    //    evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
+//    //    evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
+//    //    evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
+//    //    evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
+//    //    if(!evaluator.evaluate())
+//    //        return;
+//    //    if(!updatePaint(evaluator, Set_0, true))
+//    //        return;
+//    //}
+//
+//    PointF textPoint;
+//    /*TODO:
+//    bool containsAtLeastOnePoint = false;
+//    PointF vertex;
+//    int bounds = 0;
+//    QVector< PointF > outsideBounds;
+//    for(auto itPoint = primitive.mapObject->_points31.cbegin(); itPoint != primitive.mapObject->_points31.cend(); ++itPoint)
+//    {
+//        const auto& point = *itPoint;
+//
+//        calculateVertex(env, context, point, vertex);
+//
+//        textPoint.x += qMin( qMax(vertex.x, context._renderViewport.left), context._renderViewport.right);
+//        textPoint.y += qMin( qMax(vertex.y, context._renderViewport.bottom), context._renderViewport.top);
+//        
+//        if(!containsAtLeastOnePoint)
+//        {
+//            if(context._renderViewport.contains(vertex))
+//            {
+//                containsAtLeastOnePoint = true;
+//            }
+//            else
+//            {
+//                outsideBounds.push_back(vertex);
+//            }
+//            bounds |= (vertex.x < context._renderViewport.left ? 1 : 0);
+//            bounds |= (vertex.x > context._renderViewport.right ? 2 : 0);
+//            bounds |= (vertex.y < context._renderViewport.top ? 4 : 0);
+//            bounds |= (vertex.y > context._renderViewport.bottom ? 8 : 0);
+//        }
+//    }
+//
+//    auto verticesCount = primitive.mapObject->_points31.size();
+//    textPoint.x /= verticesCount;
+//    textPoint.y /= verticesCount;
+//
+//    if(!containsAtLeastOnePoint)
+//    {
+//        // fast check for polygons
+//        if((bounds & 3) != 3 || (bounds >> 2) != 3)
+//            return;
+//
+//        bool ok = true;
+//        ok = ok || contains(outsideBounds, context._renderViewport.topLeft);
+//        ok = ok || contains(outsideBounds, context._renderViewport.bottomRight);
+//        ok = ok || contains(outsideBounds, PointF(0, context._renderViewport.bottom));
+//        ok = ok || contains(outsideBounds, PointF(context._renderViewport.right, 0));
+//        if(!ok)
+//            return;
+//        else
+//        {
+//            const auto& viewportCenter = context._renderViewport.center();
+//            if(contains(outsideBounds, viewportCenter))
+//                textPoint = viewportCenter;
+//        }
+//    }
+//    */
+//    preparePrimitiveText(env, context, primitive, textPoint, nullptr);
+//}
+//
+//void OsmAnd::Rasterizer_P::collectLineText(
+//    const RasterizerEnvironment_P& env, RasterizerContext_P& context,
+//    const Primitive& primitive )
+//{
+//    if(primitive.mapObject->_points31.size() < 2 )
+//    {
+//        OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+//            "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized (text) as line, but has %d vertices",
+//            primitive.mapObject->id >> 1, static_cast<int64_t>(primitive.mapObject->id) / 2,
+//            primitive.mapObject->_points31.size());
+//        return;
+//    }
+//
+//    //{
+//    //    const auto& type = primitive.mapObject->_types[primitive.typeIndex];
+//    //    MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Line, primitive.mapObject);
+//    //    env.applyTo(evaluator);
+//    //    evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
+//    //    evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
+//    //    evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
+//    //    evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
+//    //    evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_LAYER, primitive.mapObject->getSimpleLayerValue());
+//    //    if(!evaluator.evaluate())
+//    //        return;
+//    //    if(!updatePaint(evaluator, Set_0, false))
+//    //        return;
+//    //}
+//
+//    SkPath path;
+//    int pointIdx = 0;
+//    const auto middleIdx = primitive.mapObject->_points31.size() >> 1;
+//    bool intersect = false;
+//    int prevCross = 0;
+//    PointF vertex, middleVertex;
+//    for(auto itPoint = primitive.mapObject->_points31.cbegin(); itPoint != primitive.mapObject->_points31.cend(); ++itPoint, pointIdx++)
+//    {
+//        const auto& point = *itPoint;
+//
+//        calculateVertex(env, context, point, vertex);
+//
+//        if(pointIdx == 0)
+//        {
+//            path.moveTo(vertex.x, vertex.y);
+//        }
+//        else
+//        {
+//            if(pointIdx == middleIdx)
+//                middleVertex = vertex;
+//
+//            path.lineTo(vertex.x, vertex.y);
+//        }
+//
+///*        if (!intersect)
+//        {
+//            if(context._renderViewport.contains(vertex))
+//            {
+//                intersect = true;
+//            }
+//            else
+//            {
+//                int cross = 0;
+//                cross |= (vertex.x < context._renderViewport.left ? 1 : 0);
+//                cross |= (vertex.x > context._renderViewport.right ? 2 : 0);
+//                cross |= (vertex.y < context._renderViewport.top ? 4 : 0);
+//                cross |= (vertex.y > context._renderViewport.bottom ? 8 : 0);
+//                if(pointIdx > 0)
+//                {
+//                    if((prevCross & cross) == 0)
+//                    {
+//                        intersect = true;
+//                    }
+//                }
+//                prevCross = cross;
+//            }
+//        }*/
+//    }
+//
+//    if (!intersect)
+//        return;
+//
+//    if (pointIdx > 0)
+//    {
+//        preparePrimitiveText(env, context, primitive, middleVertex, &path);
+//    }
+}
+//
+//void OsmAnd::Rasterizer_P::collectPointText(
+//    const RasterizerEnvironment_P& env, RasterizerContext_P& context,
+//    const Primitive& primitive )
+//{
+//    if(primitive.mapObject->_points31.size() < 1 )
+//    {
+//        OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+//            "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized (text) as point, but has %d vertices",
+//            primitive.mapObject->id >> 1, static_cast<int64_t>(primitive.mapObject->id) / 2,
+//            primitive.mapObject->_points31.size());
+//        return;
+//    }
+//
+//    PointF textPoint;
+//    if(primitive.mapObject->_points31.size() == 1)
+//    {
+//        const auto& p = primitive.mapObject->_points31.first();
+//        textPoint.x = p.x;
+//        textPoint.y = p.y;
+//    }
+//    else
+//    {
+//        auto verticesCount = primitive.mapObject->_points31.size();
+//
+//        PointF vertex;
+//        for(auto itPoint = primitive.mapObject->_points31.cbegin(); itPoint != primitive.mapObject->_points31.cend(); ++itPoint)
+//        {
+//            const auto& point = *itPoint;
+//
+//            calculateVertex(env, context, point, vertex);
+//
+//            textPoint += vertex;
+//        }
+//
+//        textPoint.x /= verticesCount;
+//        textPoint.y /= verticesCount;
+//    }
+//    
+//    preparePrimitiveText(env, context, primitive, textPoint, nullptr);
+//}
+//
+//void OsmAnd::Rasterizer_P::preparePrimitiveText(
+//    const RasterizerEnvironment_P& env, RasterizerContext_P& context,
+//    const Primitive& primitive, const PointF& point, SkPath* path )
+//{
+//    const auto& type = primitive.mapObject->_types[primitive.typeIndex];
+//
+//    for(auto itName = primitive.mapObject->names.cbegin(); itName != primitive.mapObject->names.cend(); ++itName)
+//    {
+//        const auto& name = itName.value();
+//
+//        //TODO:name =rc->getTranslatedString(name);
+//        //TODO:name =rc->getReshapedString(name);
+//
+//        const auto& type = primitive.mapObject->_types[primitive.typeIndex];
+//        MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Text, primitive.mapObject);
+//        env.applyTo(evaluator);
+//        evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
+//        evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
+//        evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
+//        evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
+//        evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_TEXT_LENGTH, name.length());
+//        auto nameTag = itName.key();
+//        if(nameTag == "name")
+//            nameTag.clear();
+//        evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_NAME_TAG, nameTag);
+//        if(!evaluator.evaluate())
+//            continue;
+//
+//        bool ok;
+//        int textSize;
+//        ok = evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_SIZE, textSize);
+//        if(!ok || textSize == 0)
+//            continue;
+//
+//        TextPrimitive text;
+//        text.content = name;
+//        text.drawOnPath = false;
+//        if(path)
+//        {
+//            ok = evaluator.getBooleanValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_ON_PATH, text.drawOnPath);
+//            if(ok && text.drawOnPath)
+//                text.path.reset(new SkPath(*path));
+//        }
+//        text.center = point;
+//        text.vOffset = 0;
+//        evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_DY, text.vOffset);
+//        ok = evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_COLOR, text.color);
+//        if(!ok || !text.color)
+//            text.color = SK_ColorBLACK;
+//        ok = evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_SIZE, text.size);
+//        if(!ok)
+//            continue;
+//        text.shadowRadius = 0;
+//        evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_HALO_RADIUS, text.shadowRadius);
+//        text.wrapWidth = 0;
+//        evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_WRAP_WIDTH, text.wrapWidth);
+//        text.isBold = false;
+//        evaluator.getBooleanValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_BOLD, text.isBold);
+//        text.minDistance = 0;
+//        evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_MIN_DISTANCE, text.minDistance);
+//        evaluator.getStringValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_SHIELD, text.shieldResource);
+//        text.order = 100;
+//        evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_ORDER, text.order);
+//
+//        context._texts.push_back(text);
+//    }
+//}
+
 void OsmAnd::Rasterizer_P::adjustContextFromEnvironment(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
     const ZoomLevel zoom)
 {
-    context._mapPaint = env.mapPaint;
-
     context._defaultBgColor = env.defaultBgColor;
     if(env.attributeRule_defaultColor)
     {
@@ -261,29 +779,68 @@ void OsmAnd::Rasterizer_P::adjustContextFromEnvironment(
     context._shadowLevelMax = env.shadowLevelMax;
 }
 
-bool OsmAnd::Rasterizer_P::rasterizeMap(
+void OsmAnd::Rasterizer_P::obtainPrimitivesTexts(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    bool fillBackground,
-    SkCanvas& canvas,
-    IQueryController* controller /*= nullptr*/)
+    const IQueryController* const controller )
 {
+    collectPrimitivesTexts(env, context, context._polygons, Polygons, controller);
+    collectPrimitivesTexts(env, context, context._lines, Lines, controller);
+    collectPrimitivesTexts(env, context, context._points, Points, controller);
+
+    qSort(context._texts.begin(), context._texts.end(), [](const TextPrimitive& l, const TextPrimitive& r) -> bool
+    {
+        return l.order < r.order;
+    });
+}
+
+bool OsmAnd::Rasterizer_P::rasterizeMap(
+    SkCanvas& canvas,
+    const bool fillBackground,
+    const AreaI* const destinationArea,
+    const IQueryController* const controller)
+{
+    // Deal with background
     if(fillBackground)
     {
-        SkPaint bgPaint;
-        bgPaint.setColor(context._defaultBgColor);
-        bgPaint.setStyle(SkPaint::kFill_Style);
-        canvas.drawRectCoords(context._renderViewport.top, context._renderViewport.left, context._renderViewport.right, context._renderViewport.bottom, bgPaint);
+        if(destinationArea)
+        {
+            // If destination area is specified, fill only it with background
+            SkPaint bgPaint;
+            bgPaint.setColor(context._defaultBgColor);
+            bgPaint.setStyle(SkPaint::kFill_Style);
+            canvas.drawRectCoords(destinationArea->top, destinationArea->left, destinationArea->right, destinationArea->bottom, bgPaint);
+        }
+        else
+        {
+            // Since destination area is not specified, erase whole canvas with specified color
+            canvas.clear(context._defaultBgColor);
+        }
     }
 
-    rasterizeMapPrimitives(env, context, canvas, context._polygons, Polygons, controller);
+    // Adopt initial paint setup from environment
+    _mapPaint = env.mapPaint;
 
-    if (context._shadowRenderingMode > 1)
-        rasterizeMapPrimitives(env, context, canvas, context._lines, ShadowOnlyLines, controller);
+    // Precalculate values
+    if(destinationArea)
+    {
+        _destinationArea = *destinationArea;
+    }
+    else
+    {
+        const auto targetSize = canvas.getDeviceSize();
+        _destinationArea = AreaI(0, 0, targetSize.height(), targetSize.width());
+    }
+    _31toPixelDivisor.x = context._tileDivisor / static_cast<double>(_destinationArea.width());
+    _31toPixelDivisor.y = context._tileDivisor / static_cast<double>(_destinationArea.height());
 
-    rasterizeMapPrimitives(env, context, canvas, context._lines, Lines, controller);
+    // Rasterize layers of map:
+    rasterizeMapPrimitives(destinationArea, canvas, context._polygons, Polygons, controller);
+    if(context._shadowRenderingMode > 1)
+        rasterizeMapPrimitives(destinationArea, canvas, context._lines, ShadowOnlyLines, controller);
+    rasterizeMapPrimitives(destinationArea, canvas, context._lines, Lines, controller);
 
     //////////////////////////////////////////////////////////////////////////
-    SkPaint textPaint;
+    /*SkPaint textPaint;
     textPaint.setColor(0xFFFF0000);
     textPaint.setAntiAlias(true);
     textPaint.setTextEncoding(SkPaint::kUTF16_TextEncoding);
@@ -308,197 +865,21 @@ bool OsmAnd::Rasterizer_P::rasterizeMap(
         const auto data = L"Jerusalem [\u05d9\u05b0\u05e8\u05d5\u05bc\u05e9\u05b8\u05c1\u05dc\u05b7\u05d9\u05b4\u05dd]";
         canvas.drawText(data, wcslen(data) * sizeof(wchar_t), 10, 100, textPaint);
     }
-    auto lr = SkGetLastError();
+    auto lr = SkGetLastError();*/
     //////////////////////////////////////////////////////////////////////////
 
     return true;
 }
 
-void OsmAnd::Rasterizer_P::obtainPrimitives(
-    const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    IQueryController* controller)
-{
-    const auto area31toPixelDivisor = context._precomputed31toPixelDivisor * context._precomputed31toPixelDivisor;
-    
-    QVector< Primitive > unfilteredLines;
-    for(auto itMapObject = context._combinedMapObjects.cbegin(); itMapObject != context._combinedMapObjects.cend(); ++itMapObject)
-    {
-        if(controller && controller->isAborted())
-            return;
-
-        auto mapObject = *itMapObject;
-        
-        uint32_t typeIdx = 0;
-        for(auto itType = mapObject->types.cbegin(); itType != mapObject->types.cend(); ++itType, typeIdx++)
-        {
-            const auto& type = *itType;
-            auto layer = mapObject->getSimpleLayerValue();
-
-            MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Order, mapObject);
-            env.applyTo(evaluator);
-            evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
-            evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
-            evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
-            evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
-            evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_LAYER, layer);
-            evaluator.setBooleanValue(MapStyle::builtinValueDefinitions.INPUT_AREA, mapObject->isArea);
-            evaluator.setBooleanValue(MapStyle::builtinValueDefinitions.INPUT_POINT, mapObject->points31.size() == 1);
-            evaluator.setBooleanValue(MapStyle::builtinValueDefinitions.INPUT_CYCLE, mapObject->isClosedFigure());
-            if(!evaluator.evaluate())
-                continue;
-
-            int objectType;
-            if(!evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_OBJECT_TYPE, objectType))
-                continue;
-            int zOrder;
-            if(!evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_ORDER, zOrder))
-                continue;
-
-            Primitive primitive;
-            primitive.mapObject = mapObject;
-            primitive.objectType = static_cast<PrimitiveType>(objectType);
-            primitive.zOrder = zOrder;
-            primitive.typeIndex = typeIdx;
-
-            if(objectType == PrimitiveType::Polygon)
-            {
-                if(mapObject->points31.size() <=2)
-                {
-                    OsmAnd::LogPrintf(LogSeverityLevel::Warning,
-                        "Map object #%" PRIu64 " (%" PRIi64 ") primitives are processed as polygon, but only %d vertices present",
-                        mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2,
-                        mapObject->points31.size());
-                    continue;
-                }
-                if(!mapObject->isClosedFigure())
-                {
-                    OsmAnd::LogPrintf(LogSeverityLevel::Warning,
-                        "Map object #%" PRIu64 " (%" PRIi64 ") primitives are processed as polygon, but are not closed",
-                        mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2);
-                    continue;
-                }
-                if(!mapObject->isClosedFigure(true))
-                {
-                    OsmAnd::LogPrintf(LogSeverityLevel::Warning,
-                        "Map object #%" PRIu64 " (%" PRIi64 ") primitives are processed as polygon, but are not closed (inner)",
-                        mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2);
-                    continue;
-                }
-
-                Primitive pointPrimitive = primitive;
-                pointPrimitive.objectType = PrimitiveType::Point;
-                auto polygonArea31 = Utilities::polygonArea(mapObject->points31);
-                if(polygonArea31 > PolygonAreaCutoffLowerThreshold)
-                {
-                    primitive.zOrder += 1.0 / (polygonArea31/area31toPixelDivisor);
-                    context._polygons.push_back(primitive);
-                    context._points.push_back(pointPrimitive);
-                }
-            }
-            else if(objectType == PrimitiveType::Point)
-            {
-                context._points.push_back(primitive);
-            }
-            else if(objectType == PrimitiveType::Line)
-            {
-                unfilteredLines.push_back(primitive);
-            }
-            else
-            {
-                assert(false);
-                continue;
-            }
-
-            int shadowLevel;
-            if(evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_SHADOW_LEVEL, shadowLevel) && shadowLevel > 0)
-            {
-                context._shadowLevelMin = qMin(context._shadowLevelMin, static_cast<uint32_t>(zOrder));
-                context._shadowLevelMax = qMax(context._shadowLevelMax, static_cast<uint32_t>(zOrder));
-            }
-        }
-    }
-
-    const auto privitivesSort = [](const Primitive& l, const Primitive& r) -> bool
-    {
-        if(qFuzzyCompare(l.zOrder, r.zOrder))
-        {
-            if(l.typeIndex == r.typeIndex)
-                return l.mapObject->_points31.size() < r.mapObject->_points31.size();
-            return l.typeIndex < r.typeIndex;
-        }
-        return l.zOrder < r.zOrder;
-    };
-
-    qSort(context._polygons.begin(), context._polygons.end(), privitivesSort);
-    qSort(unfilteredLines.begin(), unfilteredLines.end(), privitivesSort);
-    filterOutLinesByDensity(env, context, unfilteredLines, context._lines, controller);
-    qSort(context._points.begin(), context._points.end(), privitivesSort);
-}
-
-void OsmAnd::Rasterizer_P::filterOutLinesByDensity(
-    const RasterizerEnvironment_P& env, const RasterizerContext_P& context,
-    const QVector< Primitive >& in, QVector< Primitive >& out, IQueryController* controller )
-{
-    if(context._roadDensityZoomTile == 0 || context._roadsDensityLimitPerTile == 0)
-    {
-        out = in;
-        return;
-    }
-
-    const auto dZ = context._zoom + context._roadDensityZoomTile;
-    QMap< uint64_t, std::pair<uint32_t, double> > densityMap;
-    out.reserve(in.size());
-    for(int lineIdx = in.size() - 1; lineIdx >= 0; lineIdx--)
-    {
-        if(controller && controller->isAborted())
-            return;
-
-        bool accept = true;
-        const auto& primitive = in[lineIdx];
-
-        const auto& type = primitive.mapObject->_types[primitive.typeIndex];
-        if(type.tag == QLatin1String("highway"))
-        {
-            accept = false;
-
-            uint64_t prevId = 0;
-            for(auto itPoint = primitive.mapObject->_points31.cbegin(); itPoint != primitive.mapObject->_points31.cend(); ++itPoint)
-            {
-                if(controller && controller->isAborted())
-                    return;
-
-                const auto& point = *itPoint;
-
-                auto x = point.x >> (31 - dZ);
-                auto y = point.y >> (31 - dZ);
-                uint64_t id = (static_cast<uint64_t>(x) << dZ) | y;
-                if(prevId != id)
-                {
-                    prevId = id;
-
-                    auto& mapEntry = densityMap[id];
-                    if (mapEntry.first < context._roadsDensityLimitPerTile /*&& p.second > o */)
-                    {
-                        accept = true;
-                        mapEntry.first += 1;
-                        mapEntry.second = primitive.zOrder;
-                    }
-                }
-            }
-        }
-
-        if(accept)
-            out.push_front(primitive);
-    }
-}
-
 void OsmAnd::Rasterizer_P::rasterizeMapPrimitives(
-    const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    SkCanvas& canvas, const QVector< Primitive >& primitives, PrimitivesType type, IQueryController* controller )
+    const AreaI* const destinationArea,
+    SkCanvas& canvas, const QVector< Primitive >& primitives, PrimitivesType type, const IQueryController* const controller )
 {
     assert(type != PrimitivesType::Points);
 
-    const auto polygonSizeThreshold = 1.0 / (context._polygonMinSizeToDisplay * env.owner->displayDensityFactor*env.owner->displayDensityFactor);
+    const auto polygonMinSizeToDisplay31 = context._polygonMinSizeToDisplay * (_31toPixelDivisor.x * _31toPixelDivisor.y);
+    const auto polygonSizeThreshold = 1.0 / polygonMinSizeToDisplay31;
+
     for(auto itPrimitive = primitives.cbegin(); itPrimitive != primitives.cend(); ++itPrimitive)
     {
         if(controller && controller->isAborted())
@@ -511,17 +892,16 @@ void OsmAnd::Rasterizer_P::rasterizeMapPrimitives(
             if (primitive.zOrder > polygonSizeThreshold + static_cast<int>(primitive.zOrder))
                 continue;
 
-            rasterizePolygon(env, context, canvas, primitive);
+            rasterizePolygon(destinationArea, canvas, primitive);
         }
         else if(type == Lines || type == ShadowOnlyLines)
         {
-            rasterizeLine(env, context, canvas, primitive, type == ShadowOnlyLines);
+            rasterizeLine(destinationArea, canvas, primitive, type == ShadowOnlyLines);
         }
     }
 }
 
 bool OsmAnd::Rasterizer_P::updatePaint(
-    const RasterizerEnvironment_P& env, RasterizerContext_P& context,
     const MapStyleEvaluator& evaluator, PaintValuesSet valueSetSelector, bool isArea )
 {
     bool ok = true;
@@ -569,11 +949,11 @@ bool OsmAnd::Rasterizer_P::updatePaint(
 
     if(isArea)
     {
-        context._mapPaint.setColorFilter(nullptr);
-        context._mapPaint.setShader(nullptr);
-        context._mapPaint.setLooper(nullptr);
-        context._mapPaint.setStyle(SkPaint::kStrokeAndFill_Style);
-        context._mapPaint.setStrokeWidth(0);
+        _mapPaint.setColorFilter(nullptr);
+        _mapPaint.setShader(nullptr);
+        _mapPaint.setLooper(nullptr);
+        _mapPaint.setStyle(SkPaint::kStrokeAndFill_Style);
+        _mapPaint.setStrokeWidth(0);
     }
     else
     {
@@ -582,33 +962,36 @@ bool OsmAnd::Rasterizer_P::updatePaint(
         if(!ok || stroke <= 0.0f)
             return false;
 
-        context._mapPaint.setColorFilter(nullptr);
-        context._mapPaint.setShader(nullptr);
-        context._mapPaint.setLooper(nullptr);
-        context._mapPaint.setStyle(SkPaint::kStroke_Style);
-        context._mapPaint.setStrokeWidth(stroke);
+        _mapPaint.setColorFilter(nullptr);
+        _mapPaint.setShader(nullptr);
+        _mapPaint.setLooper(nullptr);
+        _mapPaint.setStyle(SkPaint::kStroke_Style);
+        _mapPaint.setStrokeWidth(stroke);
 
         QString cap;
         ok = evaluator.getStringValue(valueSet.cap, cap);
         if (!ok || cap.isEmpty() || cap == QLatin1String("BUTT"))
-            context._mapPaint.setStrokeCap(SkPaint::kButt_Cap);
+            _mapPaint.setStrokeCap(SkPaint::kButt_Cap);
         else if (cap == QLatin1String("ROUND"))
-            context._mapPaint.setStrokeCap(SkPaint::kRound_Cap);
+            _mapPaint.setStrokeCap(SkPaint::kRound_Cap);
         else if (cap == QLatin1String("SQUARE"))
-            context._mapPaint.setStrokeCap(SkPaint::kSquare_Cap);
+            _mapPaint.setStrokeCap(SkPaint::kSquare_Cap);
         else
-            context._mapPaint.setStrokeCap(SkPaint::kButt_Cap);
+            _mapPaint.setStrokeCap(SkPaint::kButt_Cap);
 
-        QString pathEff;
-        ok = evaluator.getStringValue(valueSet.pathEffect, pathEff);
-        if(!ok || pathEff.isEmpty())
+        QString encodedPathEffect;
+        ok = evaluator.getStringValue(valueSet.pathEffect, encodedPathEffect);
+        if(!ok || encodedPathEffect.isEmpty())
         {
-            context._mapPaint.setPathEffect(nullptr);
+            _mapPaint.setPathEffect(nullptr);
         }
         else
         {
-            auto effect = obtainPathEffect(env, context, pathEff);
-            context._mapPaint.setPathEffect(effect);
+            SkPathEffect* pathEffect = nullptr;
+            ok = env.obtainPathEffect(encodedPathEffect, pathEffect);
+
+            if(ok && pathEffect)
+                _mapPaint.setPathEffect(pathEffect);
         }
     }
 
@@ -616,7 +999,7 @@ bool OsmAnd::Rasterizer_P::updatePaint(
     ok = evaluator.getIntegerValue(valueSet.color, color);
     if(!ok || !color)
         return false;
-    context._mapPaint.setColor(color);
+    _mapPaint.setColor(color);
 
     if (valueSetSelector == PaintValuesSet::Set_0)
     {
@@ -627,7 +1010,7 @@ bool OsmAnd::Rasterizer_P::updatePaint(
             SkBitmapProcShader* shaderObj = nullptr;
             if(env.obtainBitmapShader(shader, shaderObj) && shaderObj)
             {
-                context._mapPaint.setShader(static_cast<SkShader*>(shaderObj));
+                _mapPaint.setShader(static_cast<SkShader*>(shaderObj));
             }
         }
     }
@@ -645,36 +1028,17 @@ bool OsmAnd::Rasterizer_P::updatePaint(
             shadowRadius = 0;
 
         if(shadowRadius > 0)
-            context._mapPaint.setLooper(new SkBlurDrawLooper(static_cast<SkScalar>(shadowRadius), 0, 0, shadowColor))->unref();
+            _mapPaint.setLooper(new SkBlurDrawLooper(static_cast<SkScalar>(shadowRadius), 0, 0, shadowColor))->unref();
     }
 
     return true;
 }
 
-SkPathEffect* OsmAnd::Rasterizer_P::obtainPathEffect( const RasterizerEnvironment_P& env, RasterizerContext_P& context, const QString& pathEffect )
-{
-    auto itEffect = context._pathEffects.constFind(pathEffect);
-    if(itEffect != context._pathEffects.cend())
-        return *itEffect;
-
-    const auto& strIntervals = pathEffect.split('_', QString::SkipEmptyParts);
-
-    SkScalar* intervals = new SkScalar[strIntervals.size()];
-    uint32_t idx = 0;
-    for(auto itInterval = strIntervals.cbegin(); itInterval != strIntervals.cend(); ++itInterval, idx++)
-        intervals[idx] = itInterval->toFloat();
-
-    SkPathEffect* pPathEffect = new SkDashPathEffect(intervals, strIntervals.size(), 0);
-    delete[] intervals;
-    context._pathEffects.insert(pathEffect, pPathEffect);
-    return pPathEffect;
-}
-
 void OsmAnd::Rasterizer_P::rasterizePolygon(
-    const RasterizerEnvironment_P& env, RasterizerContext_P& context,
+    const AreaI* const destinationArea,
     SkCanvas& canvas, const Primitive& primitive )
 {
-    if(primitive.mapObject->_points31.size() <=2)
+    if(primitive.mapObject->_points31.size() <= 2)
     {
         OsmAnd::LogPrintf(LogSeverityLevel::Warning,
             "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized as polygon, but has %d vertices",
@@ -707,7 +1071,7 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
     evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
     if(!evaluator.evaluate())
         return;
-    if(!updatePaint(env, context, evaluator, Set_0, true))
+    if(!updatePaint(evaluator, Set_0, true))
         return;
 
     SkPath path;
@@ -720,7 +1084,7 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
     {
         const auto& point = *itPoint;
 
-        calculateVertex(env, context, point, vertex);
+        calculateVertex(point, vertex);
 
         if(pointIdx == 0)
         {
@@ -731,9 +1095,9 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
             path.lineTo(vertex.x, vertex.y);
         }
 
-        if(!containsAtLeastOnePoint)
+        if(destinationArea && !containsAtLeastOnePoint)
         {
-            if(context._renderViewport.contains(vertex))
+            if(destinationArea->contains(vertex))
             {
                 containsAtLeastOnePoint = true;
             }
@@ -741,24 +1105,25 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
             {
                 outsideBounds.push_back(vertex);
             }
-            bounds |= (vertex.x < context._renderViewport.left ? 1 : 0);
-            bounds |= (vertex.x > context._renderViewport.right ? 2 : 0);
-            bounds |= (vertex.y < context._renderViewport.top ? 4 : 0);
-            bounds |= (vertex.y > context._renderViewport.bottom ? 8 : 0);
+            bounds |= (vertex.x < destinationArea->left ? 1 : 0);
+            bounds |= (vertex.x > destinationArea->right ? 2 : 0);
+            bounds |= (vertex.y < destinationArea->top ? 4 : 0);
+            bounds |= (vertex.y > destinationArea->bottom ? 8 : 0);
         }
+
     }
 
-    if(!containsAtLeastOnePoint)
+    if(destinationArea && !containsAtLeastOnePoint)
     {
         // fast check for polygons
         if((bounds & 3) != 3 || (bounds >> 2) != 3)
             return;
 
         bool ok = true;
-        ok = ok || contains(outsideBounds, context._renderViewport.topLeft);
-        ok = ok || contains(outsideBounds, context._renderViewport.bottomRight);
-        ok = ok || contains(outsideBounds, PointF(0, context._renderViewport.bottom));
-        ok = ok || contains(outsideBounds, PointF(context._renderViewport.right, 0));
+        ok = ok || contains(outsideBounds, destinationArea->topLeft);
+        ok = ok || contains(outsideBounds, destinationArea->bottomRight);
+        ok = ok || contains(outsideBounds, PointF(0, destinationArea->bottom));
+        ok = ok || contains(outsideBounds, PointF(destinationArea->right, 0));
         if(!ok)
             return;
     }
@@ -774,7 +1139,7 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
             for(auto itVertex = polygon.cbegin(); itVertex != polygon.cend(); ++itVertex, pointIdx++)
             {
                 const auto& point = *itVertex;
-                calculateVertex(env, context, point, vertex);
+                calculateVertex(point, vertex);
 
                 if(pointIdx == 0)
                 {
@@ -788,13 +1153,13 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
         }
     }
 
-    canvas.drawPath(path, context._mapPaint);
-    if(updatePaint(env, context, evaluator, Set_1, false))
-        canvas.drawPath(path, context._mapPaint);
+    canvas.drawPath(path, _mapPaint);
+    if(updatePaint(evaluator, Set_1, false))
+        canvas.drawPath(path, _mapPaint);
 }
 
 void OsmAnd::Rasterizer_P::rasterizeLine(
-    const RasterizerEnvironment_P& env, RasterizerContext_P& context,
+    const AreaI* const destinationArea,
     SkCanvas& canvas, const Primitive& primitive, bool drawOnlyShadow )
 {
     if(primitive.mapObject->_points31.size() < 2 )
@@ -818,7 +1183,7 @@ void OsmAnd::Rasterizer_P::rasterizeLine(
     evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_LAYER, primitive.mapObject->getSimpleLayerValue());
     if(!evaluator.evaluate())
         return;
-    if(!updatePaint(env, context, evaluator, Set_0, false))
+    if(!updatePaint(evaluator, Set_0, false))
         return;
 
     int shadowColor;
@@ -850,7 +1215,7 @@ void OsmAnd::Rasterizer_P::rasterizeLine(
     {
         const auto& point = *itPoint;
 
-        calculateVertex(env, context, point, vertex);
+        calculateVertex(point, vertex);
 
         if(pointIdx == 0)
         {
@@ -864,19 +1229,19 @@ void OsmAnd::Rasterizer_P::rasterizeLine(
             path.lineTo(vertex.x, vertex.y);
         }
 
-        if (!intersect)
+        if(destinationArea && !intersect)
         {
-            if(context._renderViewport.contains(vertex))
+            if(destinationArea->contains(vertex))
             {
                 intersect = true;
             }
             else
             {
                 int cross = 0;
-                cross |= (vertex.x < context._renderViewport.left ? 1 : 0);
-                cross |= (vertex.x > context._renderViewport.right ? 2 : 0);
-                cross |= (vertex.y < context._renderViewport.top ? 4 : 0);
-                cross |= (vertex.y > context._renderViewport.bottom ? 8 : 0);
+                cross |= (vertex.x < destinationArea->left ? 1 : 0);
+                cross |= (vertex.x > destinationArea->right ? 2 : 0);
+                cross |= (vertex.y < destinationArea->top ? 4 : 0);
+                cross |= (vertex.y > destinationArea->bottom ? 8 : 0);
                 if(pointIdx > 0)
                 {
                     if((prevCross & cross) == 0)
@@ -889,48 +1254,47 @@ void OsmAnd::Rasterizer_P::rasterizeLine(
         }
     }
 
-    if (!intersect)
+    if (destinationArea && !intersect)
         return;
 
     if (pointIdx > 0)
     {
         if (drawOnlyShadow)
         {
-            rasterizeLineShadow(env, context, canvas, path, shadowColor, shadowRadius);
+            rasterizeLineShadow(canvas, path, shadowColor, shadowRadius);
         }
         else
         {
-            if (updatePaint(env, context, evaluator, Set_minus2, false))
+            if (updatePaint(evaluator, Set_minus2, false))
             {
-                canvas.drawPath(path, context._mapPaint);
+                canvas.drawPath(path, _mapPaint);
             }
-            if (updatePaint(env, context, evaluator, Set_minus1, false))
+            if (updatePaint(evaluator, Set_minus1, false))
             {
-                canvas.drawPath(path, context._mapPaint);
+                canvas.drawPath(path, _mapPaint);
             }
-            if (updatePaint(env, context, evaluator, Set_0, false))
+            if (updatePaint(evaluator, Set_0, false))
             {
-                canvas.drawPath(path, context._mapPaint);
+                canvas.drawPath(path, _mapPaint);
             }
-            canvas.drawPath(path, context._mapPaint);
-            if (updatePaint(env, context, evaluator, Set_1, false))
+            canvas.drawPath(path, _mapPaint);
+            if (updatePaint(evaluator, Set_1, false))
             {
-                canvas.drawPath(path, context._mapPaint);
+                canvas.drawPath(path, _mapPaint);
             }
-            if (updatePaint(env, context, evaluator, Set_3, false))
+            if (updatePaint(evaluator, Set_3, false))
             {
-                canvas.drawPath(path, context._mapPaint);
+                canvas.drawPath(path, _mapPaint);
             }
             if (oneway && !drawOnlyShadow)
             {
-                rasterizeLine_OneWay(env, context, canvas, path, oneway);
+                rasterizeLine_OneWay(canvas, path, oneway);
             }
         }
     }
 }
 
 void OsmAnd::Rasterizer_P::rasterizeLineShadow(
-    const RasterizerEnvironment_P& env, RasterizerContext_P& context,
     SkCanvas& canvas, const SkPath& path, uint32_t shadowColor, int shadowRadius )
 {
     // blurred shadows
@@ -938,24 +1302,23 @@ void OsmAnd::Rasterizer_P::rasterizeLineShadow(
     {
         // simply draw shadow? difference from option 3 ?
         // paint->setColor(0xffffffff);
-        context._mapPaint.setLooper(new SkBlurDrawLooper(shadowRadius, 0, 0, shadowColor))->unref();
-        canvas.drawPath(path, context._mapPaint);
+        _mapPaint.setLooper(new SkBlurDrawLooper(shadowRadius, 0, 0, shadowColor))->unref();
+        canvas.drawPath(path, _mapPaint);
     }
 
     // option shadow = 3 with solid border
     if (context._shadowRenderingMode == 3 && shadowRadius > 0)
     {
-        context._mapPaint.setLooper(nullptr);
-        context._mapPaint.setStrokeWidth(context._mapPaint.getStrokeWidth() + shadowRadius*2);
+        _mapPaint.setLooper(nullptr);
+        _mapPaint.setStrokeWidth(_mapPaint.getStrokeWidth() + shadowRadius*2);
         //		paint->setColor(0xffbababa);
-        context._mapPaint.setColorFilter(SkColorFilter::CreateModeFilter(shadowColor, SkXfermode::kSrcIn_Mode))->unref();
+        _mapPaint.setColorFilter(SkColorFilter::CreateModeFilter(shadowColor, SkXfermode::kSrcIn_Mode))->unref();
         //		paint->setColor(shadowColor);
-        canvas.drawPath(path, context._mapPaint);
+        canvas.drawPath(path, _mapPaint);
     }
 }
 
 void OsmAnd::Rasterizer_P::rasterizeLine_OneWay(
-    const RasterizerEnvironment_P& env, const RasterizerContext_P& context,
     SkCanvas& canvas, const SkPath& path, int oneway )
 {
     if (oneway > 0)
@@ -974,12 +1337,10 @@ void OsmAnd::Rasterizer_P::rasterizeLine_OneWay(
     }
 }
 
-void OsmAnd::Rasterizer_P::calculateVertex(
-    const RasterizerEnvironment_P& env, const RasterizerContext_P& context,
-    const PointI& point31, PointF& vertex )
+void OsmAnd::Rasterizer_P::calculateVertex( const PointI& point31, PointF& vertex )
 {
-    vertex.x = static_cast<float>(point31.x - context._area31.left) / context._precomputed31toPixelDivisor + context._renderViewport.left;
-    vertex.y = static_cast<float>(point31.y - context._area31.top) / context._precomputed31toPixelDivisor + context._renderViewport.top;
+    vertex.x = static_cast<float>(point31.x - context._area31.left) / _31toPixelDivisor.x;
+    vertex.y = static_cast<float>(point31.y - context._area31.top) / _31toPixelDivisor.y;
 }
 
 bool OsmAnd::Rasterizer_P::contains( const QVector< PointF >& vertices, const PointF& other )
@@ -1649,23 +2010,9 @@ bool OsmAnd::Rasterizer_P::isClockwiseCoastlinePolygon( const QVector< PointI > 
     return clockwiseSum >= 0;
 }
 
-void OsmAnd::Rasterizer_P::obtainPrimitivesTexts(
-    const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    IQueryController* controller )
-{
-    collectPrimitivesTexts(env, context, context._polygons, Polygons, controller);
-    collectPrimitivesTexts(env, context, context._lines, Lines, controller);
-    collectPrimitivesTexts(env, context, context._points, Points, controller);
-
-    qSort(context._texts.begin(), context._texts.end(), [](const TextPrimitive& l, const TextPrimitive& r) -> bool
-    {
-        return l.order < r.order;
-    });
-}
-
 //void OsmAnd::Rasterizer_P::rasterizeText(
 //    const RasterizerEnvironment_P& env, const RasterizerContext_P& context,
-//    bool fillBackground, SkCanvas& canvas, IQueryController* controller /*= nullptr*/ )
+//    bool fillBackground, SkCanvas& canvas, const IQueryController* const controller /*= nullptr*/ )
 //{
 //    if(fillBackground)
 //    {
@@ -1739,350 +2086,3 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesTexts(
 //        }*/
 //    }
 //}
-
-void OsmAnd::Rasterizer_P::collectPrimitivesTexts(
-    const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    const QVector< Rasterizer_P::Primitive >& primitives, PrimitivesType type, IQueryController* controller )
-{
-    assert(type != PrimitivesType::ShadowOnlyLines);
-
-    for(auto itPrimitive = primitives.cbegin(); itPrimitive != primitives.cend(); ++itPrimitive)
-    {
-        if(controller && controller->isAborted())
-            return;
-
-        const auto& primitive = *itPrimitive;
-
-        // Skip primitives without names
-        if(primitive.mapObject->names.isEmpty())
-            continue;
-        bool hasNonEmptyNames = false;
-        for(auto itName = primitive.mapObject->names.cbegin(); itName != primitive.mapObject->names.cend(); ++itName)
-        {
-            const auto& name = itName.value();
-
-            if(!name.isEmpty())
-            {
-                hasNonEmptyNames = true;
-                break;
-            }
-        }
-        if(!hasNonEmptyNames)
-            continue;
-
-        if(type == Polygons)
-        {
-            if (primitive.zOrder < context._polygonMinSizeToDisplay * env.owner->displayDensityFactor*env.owner->displayDensityFactor)
-                return;
-
-            collectPolygonText(env, context, primitive);
-        }
-        else if(type == Lines)
-        {
-            collectLineText(env, context, primitive);
-        }
-        else if(type == Points)
-        {
-            if(primitive.typeIndex != 0)
-                continue;
-
-            collectPointText(env, context, primitive);
-        }
-    }
-}
-
-void OsmAnd::Rasterizer_P::collectPolygonText(
-    const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    const Primitive& primitive )
-{
-    if(primitive.mapObject->_points31.size() <= 2)
-    {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning,
-            "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized (text) as polygon, but has %d vertices",
-            primitive.mapObject->id >> 1, static_cast<int64_t>(primitive.mapObject->id) / 2,
-            primitive.mapObject->_points31.size());
-        return;
-    }
-    if(!primitive.mapObject->isClosedFigure())
-    {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning,
-            "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized (text) as polygon, but is not closed",
-            primitive.mapObject->id >> 1, static_cast<int64_t>(primitive.mapObject->id) / 2);
-        return;
-    }
-    if(!primitive.mapObject->isClosedFigure(true))
-    {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning,
-            "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized (text) as polygon, but is not closed (inner)",
-            primitive.mapObject->id >> 1, static_cast<int64_t>(primitive.mapObject->id) / 2);
-        return;
-    }
-
-    {
-        const auto& type = primitive.mapObject->_types[primitive.typeIndex];
-        MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Polygon, primitive.mapObject);
-        env.applyTo(evaluator);
-        evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
-        evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
-        evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
-        evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
-        if(!evaluator.evaluate())
-            return;
-        if(!updatePaint(env, context, evaluator, Set_0, true))
-            return;
-    }
-
-    PointF textPoint;
-
-    bool containsAtLeastOnePoint = false;
-    PointF vertex;
-    int bounds = 0;
-    QVector< PointF > outsideBounds;
-    for(auto itPoint = primitive.mapObject->_points31.cbegin(); itPoint != primitive.mapObject->_points31.cend(); ++itPoint)
-    {
-        const auto& point = *itPoint;
-
-        calculateVertex(env, context, point, vertex);
-
-        textPoint.x += qMin( qMax(vertex.x, context._renderViewport.left), context._renderViewport.right);
-        textPoint.y += qMin( qMax(vertex.y, context._renderViewport.bottom), context._renderViewport.top);
-        
-        if(!containsAtLeastOnePoint)
-        {
-            if(context._renderViewport.contains(vertex))
-            {
-                containsAtLeastOnePoint = true;
-            }
-            else
-            {
-                outsideBounds.push_back(vertex);
-            }
-            bounds |= (vertex.x < context._renderViewport.left ? 1 : 0);
-            bounds |= (vertex.x > context._renderViewport.right ? 2 : 0);
-            bounds |= (vertex.y < context._renderViewport.top ? 4 : 0);
-            bounds |= (vertex.y > context._renderViewport.bottom ? 8 : 0);
-        }
-    }
-
-    auto verticesCount = primitive.mapObject->_points31.size();
-    textPoint.x /= verticesCount;
-    textPoint.y /= verticesCount;
-
-    if(!containsAtLeastOnePoint)
-    {
-        // fast check for polygons
-        if((bounds & 3) != 3 || (bounds >> 2) != 3)
-            return;
-
-        bool ok = true;
-        ok = ok || contains(outsideBounds, context._renderViewport.topLeft);
-        ok = ok || contains(outsideBounds, context._renderViewport.bottomRight);
-        ok = ok || contains(outsideBounds, PointF(0, context._renderViewport.bottom));
-        ok = ok || contains(outsideBounds, PointF(context._renderViewport.right, 0));
-        if(!ok)
-            return;
-        else
-        {
-            const auto& viewportCenter = context._renderViewport.center();
-            if(contains(outsideBounds, viewportCenter))
-                textPoint = viewportCenter;
-        }
-    }
-
-    preparePrimitiveText(env, context, primitive, textPoint, nullptr);
-}
-
-void OsmAnd::Rasterizer_P::collectLineText(
-    const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    const Primitive& primitive )
-{
-    if(primitive.mapObject->_points31.size() < 2 )
-    {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning,
-            "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized (text) as line, but has %d vertices",
-            primitive.mapObject->id >> 1, static_cast<int64_t>(primitive.mapObject->id) / 2,
-            primitive.mapObject->_points31.size());
-        return;
-    }
-
-    {
-        const auto& type = primitive.mapObject->_types[primitive.typeIndex];
-        MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Line, primitive.mapObject);
-        env.applyTo(evaluator);
-        evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
-        evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
-        evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
-        evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
-        evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_LAYER, primitive.mapObject->getSimpleLayerValue());
-        if(!evaluator.evaluate())
-            return;
-        if(!updatePaint(env, context, evaluator, Set_0, false))
-            return;
-    }
-
-    SkPath path;
-    int pointIdx = 0;
-    const auto middleIdx = primitive.mapObject->_points31.size() >> 1;
-    bool intersect = false;
-    int prevCross = 0;
-    PointF vertex, middleVertex;
-    for(auto itPoint = primitive.mapObject->_points31.cbegin(); itPoint != primitive.mapObject->_points31.cend(); ++itPoint, pointIdx++)
-    {
-        const auto& point = *itPoint;
-
-        calculateVertex(env, context, point, vertex);
-
-        if(pointIdx == 0)
-        {
-            path.moveTo(vertex.x, vertex.y);
-        }
-        else
-        {
-            if(pointIdx == middleIdx)
-                middleVertex = vertex;
-
-            path.lineTo(vertex.x, vertex.y);
-        }
-
-        if (!intersect)
-        {
-            if(context._renderViewport.contains(vertex))
-            {
-                intersect = true;
-            }
-            else
-            {
-                int cross = 0;
-                cross |= (vertex.x < context._renderViewport.left ? 1 : 0);
-                cross |= (vertex.x > context._renderViewport.right ? 2 : 0);
-                cross |= (vertex.y < context._renderViewport.top ? 4 : 0);
-                cross |= (vertex.y > context._renderViewport.bottom ? 8 : 0);
-                if(pointIdx > 0)
-                {
-                    if((prevCross & cross) == 0)
-                    {
-                        intersect = true;
-                    }
-                }
-                prevCross = cross;
-            }
-        }
-    }
-
-    if (!intersect)
-        return;
-
-    if (pointIdx > 0)
-    {
-        preparePrimitiveText(env, context, primitive, middleVertex, &path);
-    }
-}
-
-void OsmAnd::Rasterizer_P::collectPointText(
-    const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    const Primitive& primitive )
-{
-    if(primitive.mapObject->_points31.size() < 1 )
-    {
-        OsmAnd::LogPrintf(LogSeverityLevel::Warning,
-            "Map object #%" PRIu64 " (%" PRIi64 ") is rasterized (text) as point, but has %d vertices",
-            primitive.mapObject->id >> 1, static_cast<int64_t>(primitive.mapObject->id) / 2,
-            primitive.mapObject->_points31.size());
-        return;
-    }
-
-    PointF textPoint;
-    if(primitive.mapObject->_points31.size() == 1)
-    {
-        const auto& p = primitive.mapObject->_points31.first();
-        textPoint.x = p.x;
-        textPoint.y = p.y;
-    }
-    else
-    {
-        auto verticesCount = primitive.mapObject->_points31.size();
-
-        PointF vertex;
-        for(auto itPoint = primitive.mapObject->_points31.cbegin(); itPoint != primitive.mapObject->_points31.cend(); ++itPoint)
-        {
-            const auto& point = *itPoint;
-
-            calculateVertex(env, context, point, vertex);
-
-            textPoint += vertex;
-        }
-
-        textPoint.x /= verticesCount;
-        textPoint.y /= verticesCount;
-    }
-    
-    preparePrimitiveText(env, context, primitive, textPoint, nullptr);
-}
-
-void OsmAnd::Rasterizer_P::preparePrimitiveText(
-    const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    const Primitive& primitive, const PointF& point, SkPath* path )
-{
-    const auto& type = primitive.mapObject->_types[primitive.typeIndex];
-
-    for(auto itName = primitive.mapObject->names.cbegin(); itName != primitive.mapObject->names.cend(); ++itName)
-    {
-        const auto& name = itName.value();
-
-        //TODO:name =rc->getTranslatedString(name);
-        //TODO:name =rc->getReshapedString(name);
-
-        const auto& type = primitive.mapObject->_types[primitive.typeIndex];
-        MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Text, primitive.mapObject);
-        env.applyTo(evaluator);
-        evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
-        evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
-        evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
-        evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
-        evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_TEXT_LENGTH, name.length());
-        auto nameTag = itName.key();
-        if(nameTag == "name")
-            nameTag.clear();
-        evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_NAME_TAG, nameTag);
-        if(!evaluator.evaluate())
-            continue;
-
-        bool ok;
-        int textSize;
-        ok = evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_SIZE, textSize);
-        if(!ok || textSize == 0)
-            continue;
-
-        TextPrimitive text;
-        text.content = name;
-        text.drawOnPath = false;
-        if(path)
-        {
-            ok = evaluator.getBooleanValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_ON_PATH, text.drawOnPath);
-            if(ok && text.drawOnPath)
-                text.path.reset(new SkPath(*path));
-        }
-        text.center = point;
-        text.vOffset = 0;
-        evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_DY, text.vOffset);
-        ok = evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_COLOR, text.color);
-        if(!ok || !text.color)
-            text.color = SK_ColorBLACK;
-        ok = evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_SIZE, text.size);
-        if(!ok)
-            continue;
-        text.shadowRadius = 0;
-        evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_HALO_RADIUS, text.shadowRadius);
-        text.wrapWidth = 0;
-        evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_WRAP_WIDTH, text.wrapWidth);
-        text.isBold = false;
-        evaluator.getBooleanValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_BOLD, text.isBold);
-        text.minDistance = 0;
-        evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_MIN_DISTANCE, text.minDistance);
-        evaluator.getStringValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_SHIELD, text.shieldResource);
-        text.order = 100;
-        evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_ORDER, text.order);
-
-        context._texts.push_back(text);
-    }
-}

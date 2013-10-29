@@ -40,6 +40,7 @@ namespace OsmAnd {
     class OfflineMapRasterTileProvider_GPU_P;
     class OSMAND_CORE_API OfflineMapRasterTileProvider_GPU : public IMapBitmapTileProvider
     {
+        Q_DISABLE_COPY(OfflineMapRasterTileProvider_GPU);
     private:
         const std::unique_ptr<OfflineMapRasterTileProvider_GPU_P> _d;
     protected:

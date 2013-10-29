@@ -222,11 +222,15 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
     SkCanvas canvas(&renderTarget);
 
     // Perform actual rendering
-    OsmAnd::RasterizerEnvironment rasterizerEnv(style, basemapAvailable, cfg.densityFactor);
-    OsmAnd::RasterizerContext rasterizerContext;
-    OsmAnd::Rasterizer::prepareContext(rasterizerEnv, rasterizerContext, bbox31, cfg.zoom, cfg.tileSide, mapFoundation, mapObjects, OsmAnd::PointF(), nullptr);
+    std::shared_ptr<OsmAnd::RasterizerEnvironment> rasterizerEnv(new OsmAnd::RasterizerEnvironment(style, cfg.densityFactor));
+    std::shared_ptr<OsmAnd::RasterizerContext> rasterizerContext(new OsmAnd::RasterizerContext(rasterizerEnv));
+    OsmAnd::Rasterizer::prepareContext(*rasterizerContext, bbox31, cfg.zoom, mapFoundation, mapObjects);
+
+    OsmAnd::Rasterizer rasterizer(rasterizerContext);
     if(cfg.drawMap)
-        OsmAnd::Rasterizer::rasterizeMap(rasterizerEnv, rasterizerContext, true, canvas, nullptr);
+    {
+        rasterizer.rasterizeMap(canvas);
+    }
     /*if(cfg.drawText)
         OsmAnd::Rasterizer::rasterizeText(rasterizerContext, !cfg.drawMap, canvas, nullptr);*/
 

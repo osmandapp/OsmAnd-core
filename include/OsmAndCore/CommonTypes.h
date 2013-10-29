@@ -73,6 +73,13 @@ namespace OsmAnd
             this->y = 0;
         }
 
+        template<typename T_>
+        Point(const Point<T_>& that)
+        {
+            this->x = that.x;
+            this->y = that.y;
+        }
+
         Point(const T& x, const T& y)
         {
             this->x = x;
@@ -197,6 +204,17 @@ namespace OsmAnd
             this->bottomRight = that.bottomRight;
         }
 
+        template<typename T_>
+        Area(const Area<T_>& that)
+            : top(topLeft.y)
+            , left(topLeft.x)
+            , bottom(bottomRight.y)
+            , right(bottomRight.x)
+        {
+            this->topLeft = that.topLeft;
+            this->bottomRight = that.bottomRight;
+        }
+
         PointT topLeft, bottomRight;
 
         T& top;
@@ -252,6 +270,38 @@ namespace OsmAnd
                 that.bottom <= this->bottom;
         }
 
+        template<typename T_>
+        bool contains(const T_& x, const T_& y) const
+        {
+            return !(left > x || right < x || top > y || bottom < y);
+        }
+
+        template<typename T_>
+        bool contains(const Point<T_>& p) const
+        {
+            return !(left > p.x || right < p.x || top > p.y || bottom < p.y);
+        }
+
+        template<typename T_>
+        bool contains(const T_& t, const T_& l, const T_& b, const T_& r) const
+        {
+            return
+                l >= left &&
+                r <= right &&
+                t >= top &&
+                b <= bottom;
+        }
+
+        template<typename T_>
+        bool contains(const Area<T_>& that) const
+        {
+            return
+                that.left >= this->left &&
+                that.right <= this->right &&
+                that.top >= this->top &&
+                that.bottom <= this->bottom;
+        }
+
         bool intersects(const T& t, const T& l, const T& b, const T& r) const
         {
             return !(
@@ -262,6 +312,26 @@ namespace OsmAnd
         }
 
         bool intersects(const AreaT& that) const
+        {
+            return !(
+                that.left > this->right ||
+                that.right < this->left ||
+                that.top > this->bottom ||
+                that.bottom < this->top);
+        }
+
+        template<typename T_>
+        bool intersects(const T_& t, const T_& l, const T_& b, const T_& r) const
+        {
+            return !(
+                l > this->right ||
+                r < this->left ||
+                t > this->bottom ||
+                b < this->top);
+        }
+
+        template<typename T_>
+        bool intersects(const Area<T_>& that) const
         {
             return !(
                 that.left > this->right ||

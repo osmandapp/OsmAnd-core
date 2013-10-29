@@ -12,42 +12,18 @@
 #include "ObfDataInterface.h"
 #include "ObfMapSectionInfo.h"
 #include "MapObject.h"
+#include "Rasterizer.h"
 #include "Utilities.h"
 #include "Logging.h"
 
 OsmAnd::OfflineMapDataProvider_P::OfflineMapDataProvider_P( OfflineMapDataProvider* owner_ )
     : owner(owner_)
-    , _basemapPresenceChecked(0)
-    , _isBasemapAvailable(false)
     , _link(new Link(*this))
 {
 }
 
 OsmAnd::OfflineMapDataProvider_P::~OfflineMapDataProvider_P()
 {
-}
-
-bool OsmAnd::OfflineMapDataProvider_P::isBasemapAvailable()
-{
-    if(_basemapPresenceChecked.load() != 0)
-        return _isBasemapAvailable;
-    else
-    {
-        QMutexLocker scopedLocker(&_basemapPresenceCheckMutex);
-
-        // Repeat check, since things may have changed
-        if(_basemapPresenceChecked.load() != 0)
-            return _isBasemapAvailable;
-
-        // Obtain flag
-        bool isBasemapAvailable = false;
-        owner->obfsCollection->obtainDataInterface()->obtainBasemapPresenceFlag(isBasemapAvailable);
-        _isBasemapAvailable = isBasemapAvailable;
-
-        _basemapPresenceChecked.store(1);
-
-        return isBasemapAvailable;
-    }
 }
 
 void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const OfflineMapDataTile>& outTile )
@@ -192,11 +168,20 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
         dataFilter, dataRead_Elapsed.count(), dataProcess_Elapsed.count());
 #endif
 
-    // Create tile
+    // Prepare data for the tile
     mapObjects << duplicateMapObjects;
-    const auto newTile = new OfflineMapDataTile(tileFoundation, mapObjects);
+
+    // Allocate and prepare rasterizer context
+    bool nothingToRasterize = false;
+    std::shared_ptr<RasterizerContext> rasterizerContext(new RasterizerContext(owner->rasterizerEnvironment));
+    Rasterizer::prepareContext(*rasterizerContext, tileBBox31, zoom, tileFoundation, mapObjects, &nothingToRasterize);
+
+    // Create tile
+    const auto newTile = new OfflineMapDataTile(tileId, zoom, tileFoundation, mapObjects, rasterizerContext, nothingToRasterize);
     newTile->_d->_link = _link;
     newTile->_d->_refEntry = tileEntry;
+
+    // Publish new tile
     outTile.reset(newTile);
 
     // Store weak reference to new tile and mark it as 'Loaded'

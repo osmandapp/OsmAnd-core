@@ -53,10 +53,6 @@ namespace OsmAnd {
 
         OfflineMapDataProvider* const owner;
 
-        QAtomicInt _basemapPresenceChecked;
-        mutable QMutex _basemapPresenceCheckMutex;
-        volatile bool _isBasemapAvailable;
-
         struct DataCacheLevel
         {
             mutable QReadWriteLock _mapObjectsMutex;
@@ -106,7 +102,6 @@ namespace OsmAnd {
     public:
         ~OfflineMapDataProvider_P();
 
-        bool isBasemapAvailable();
         void obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const OfflineMapDataTile>& outTile);
 
     friend class OsmAnd::OfflineMapDataProvider;

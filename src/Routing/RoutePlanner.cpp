@@ -339,7 +339,7 @@ OsmAnd::RouteCalculationResult OsmAnd::RoutePlanner::calculateRoute(
     OsmAnd::RoutePlannerContext* context,
     const QList< std::pair<double, double> >& points,
     bool leftSideNavigation,
-    IQueryController* controller /*= nullptr*/)
+    const IQueryController* const controller /*= nullptr*/)
 {
     assert(context != nullptr);
     assert(points.size() >= 2);
@@ -462,7 +462,7 @@ OsmAnd::RouteCalculationResult OsmAnd::RoutePlanner::calculateRoute(
     const std::shared_ptr<RoutePlannerContext::RouteCalculationSegment>& from,
     const std::shared_ptr<RoutePlannerContext::RouteCalculationSegment>& to_,
     bool leftSideNavigation,
-    IQueryController* controller /*= nullptr*/)
+    const IQueryController* const controller /*= nullptr*/)
 {
 
     context->_startPoint = from->road->points[from->pointIndex];

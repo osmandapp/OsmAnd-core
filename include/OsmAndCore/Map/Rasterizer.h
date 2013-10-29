@@ -43,30 +43,33 @@ namespace OsmAnd {
     } // namespace Model
     class IQueryController;
 
+    class Rasterizer_P;
     class OSMAND_CORE_API Rasterizer
     {
+        Q_DISABLE_COPY(Rasterizer);
     private:
-        Rasterizer();
-        ~Rasterizer();
+        const std::unique_ptr<Rasterizer_P> _d;
+    protected:
     public:
+        Rasterizer(const std::shared_ptr<const RasterizerContext>& context);
+        virtual ~Rasterizer();
+
+        const std::shared_ptr<const RasterizerContext> context;
+
         static void prepareContext(
-            const RasterizerEnvironment& env,
             RasterizerContext& context,
             const AreaI& area31,
             const ZoomLevel zoom,
-            const uint32_t tileSize,
-            const MapFoundationType& foundation,
-            const QList< std::shared_ptr<const OsmAnd::Model::MapObject> >& objects,
-            const PointF& tlOriginOffset = PointF(),
+            const MapFoundationType foundation,
+            const QList< std::shared_ptr<const Model::MapObject> >& objects,
             bool* nothingToRasterize = nullptr,
-            IQueryController* controller = nullptr);
+            const IQueryController* const controller = nullptr);
 
-        static bool rasterizeMap(
-            const RasterizerEnvironment& env,
-            const RasterizerContext& context,
-            bool fillBackground,
+        bool rasterizeMap(
             SkCanvas& canvas,
-            IQueryController* controller = nullptr);
+            const bool fillBackground = true,
+            const AreaI* const destinationArea = nullptr,
+            const IQueryController* const controller = nullptr);
     };
 
 } // namespace OsmAnd

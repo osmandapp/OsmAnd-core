@@ -28,6 +28,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Map/RasterizerEnvironment.h>
 
 namespace OsmAnd {
 
@@ -38,17 +39,18 @@ namespace OsmAnd {
     class OfflineMapDataProvider_P;
     class OSMAND_CORE_API OfflineMapDataProvider
     {
+        Q_DISABLE_COPY(OfflineMapDataProvider);
     private:
         const std::unique_ptr<OfflineMapDataProvider_P> _d;
     protected:
     public:
-        OfflineMapDataProvider(const std::shared_ptr<const ObfsCollection>& obfsCollection, const std::shared_ptr<const MapStyle>& mapStyle);
+        OfflineMapDataProvider(const std::shared_ptr<ObfsCollection>& obfsCollection, const std::shared_ptr<const MapStyle>& mapStyle, const float displayDensityFactor);
         virtual ~OfflineMapDataProvider();
 
-        const std::shared_ptr<const ObfsCollection> obfsCollection;
+        const std::shared_ptr<ObfsCollection> obfsCollection;
         const std::shared_ptr<const MapStyle> mapStyle;
+        const std::shared_ptr<RasterizerEnvironment> rasterizerEnvironment;
 
-        bool isBasemapAvailable() const;
         void obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const OfflineMapDataTile>& outTile) const;
     };
 

@@ -55,7 +55,7 @@ namespace OsmAnd {
             QSet<uint32_t>* desiredCategories = nullptr,
             QList< std::shared_ptr<const OsmAnd::Model::Amenity> >* amenitiesOut = nullptr,
             std::function<bool (const std::shared_ptr<const OsmAnd::Model::Amenity>&)> visitor = nullptr,
-            IQueryController* controller = nullptr);
+            const IQueryController* const controller = nullptr);
     };
 
 } // namespace OsmAnd

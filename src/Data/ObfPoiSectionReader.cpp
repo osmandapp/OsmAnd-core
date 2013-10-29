@@ -22,7 +22,7 @@ void OsmAnd::ObfPoiSectionReader::loadAmenities(
     const std::shared_ptr<ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfPoiSectionInfo>& section,
     const ZoomLevel zoom, uint32_t zoomDepth /*= 3*/, const AreaI* bbox31 /*= nullptr*/, QSet<uint32_t>* desiredCategories /*= nullptr*/,
     QList< std::shared_ptr<const OsmAnd::Model::Amenity> >* amenitiesOut /*= nullptr*/,
-    std::function<bool (const std::shared_ptr<const OsmAnd::Model::Amenity>&)> visitor /*= nullptr*/, IQueryController* controller /*= nullptr*/ )
+    std::function<bool (const std::shared_ptr<const OsmAnd::Model::Amenity>&)> visitor /*= nullptr*/, const IQueryController* const controller /*= nullptr*/ )
 {
     ObfPoiSectionReader_P::loadAmenities(reader->_d, section, zoom, zoomDepth, bbox31, desiredCategories, amenitiesOut, visitor, controller);
 }

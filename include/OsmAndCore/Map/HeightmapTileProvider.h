@@ -37,6 +37,7 @@ namespace OsmAnd {
     class HeightmapTileProvider_P;
     class OSMAND_CORE_API HeightmapTileProvider : public IMapElevationDataProvider
     {
+        Q_DISABLE_COPY(HeightmapTileProvider);
     private:
         const std::unique_ptr<HeightmapTileProvider_P> _d;
     protected:

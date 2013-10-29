@@ -48,7 +48,7 @@ namespace OsmAnd {
 
         const QString type;
 
-        virtual bool evaluate(const QBitArray& types, RoutingRulesetContext* context) const;
+        virtual bool evaluate(const QBitArray& types, RoutingRulesetContext* const context) const;
     };
 
     class Operator_G : public BinaryOperator

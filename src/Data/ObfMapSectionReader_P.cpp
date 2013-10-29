@@ -333,7 +333,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
     MapFoundationType& foundation,
     QList< std::shared_ptr<ObfMapSectionLevelTreeNode> >* nodesWithData,
     const AreaI* bbox31,
-    IQueryController* controller)
+    const IQueryController* const controller)
 {
     auto cis = reader->_codedInputStream.get();
     foundation = MapFoundationType::Undefined;
@@ -408,7 +408,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
     const AreaI* bbox31,
     std::function<bool (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t)> filterById,
     std::function<bool (const std::shared_ptr<const OsmAnd::Model::MapObject>&)> visitor,
-    IQueryController* controller)
+    const IQueryController* const controller)
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -749,7 +749,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut, MapFoundationType* foundationOut,
     std::function<bool (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t)> filterById,
     std::function<bool (const std::shared_ptr<const OsmAnd::Model::MapObject>&)> visitor,
-    IQueryController* controller)
+    const IQueryController* const controller)
 {
     auto cis = reader->_codedInputStream.get();
 

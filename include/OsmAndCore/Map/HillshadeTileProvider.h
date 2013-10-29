@@ -38,6 +38,7 @@ namespace OsmAnd {
     class HillshadeTileProvider_P;
     class OSMAND_CORE_API HillshadeTileProvider : public IMapBitmapTileProvider
     {
+        Q_DISABLE_COPY(HillshadeTileProvider);
     private:
         const std::unique_ptr<HillshadeTileProvider> _d;
     protected:

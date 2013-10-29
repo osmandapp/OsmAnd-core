@@ -64,17 +64,16 @@ bool OsmAnd::OfflineMapRasterTileProvider_Software_P::obtainTile(const TileId ti
     SkCanvas canvas(&rasterizationTarget);
 
     // Perform actual rendering
-    bool nothingToRasterize = false;
-    RasterizerEnvironment rasterizerEnv(owner->dataProvider->mapStyle, owner->dataProvider->isBasemapAvailable(), density);
-    RasterizerContext rasterizerContext;
-    Rasterizer::prepareContext(rasterizerEnv, rasterizerContext, tileBBox31, zoom, outputTileSize, dataTile->tileFoundation, dataTile->mapObjects, OsmAnd::PointF(), &nothingToRasterize, nullptr);
-    if(!nothingToRasterize)
-        Rasterizer::rasterizeMap(rasterizerEnv, rasterizerContext, true, canvas, nullptr);
+    if(!dataTile->nothingToRasterize)
+    {
+        Rasterizer rasterizer(dataTile->rasterizerContext);
+        rasterizer.rasterizeMap(canvas);
+    }
 
 #if defined(_DEBUG) || defined(DEBUG)
     const auto dataRasterization_End = std::chrono::high_resolution_clock::now();
     const std::chrono::duration<float> dataRasterization_Elapsed = dataRasterization_End - dataRasterization_Begin;
-    if(!nothingToRasterize)
+    if(!dataTile->nothingToRasterize)
     {
         LogPrintf(LogSeverityLevel::Info,
             "%d map objects in %dx%d@%d: rasterization %fs",
@@ -89,7 +88,7 @@ bool OsmAnd::OfflineMapRasterTileProvider_Software_P::obtainTile(const TileId ti
 #endif
 
     // If there is no data to rasterize, tell that this tile is not available
-    if(nothingToRasterize)
+    if(dataTile->nothingToRasterize)
     {
         delete rasterizationSurface;
 

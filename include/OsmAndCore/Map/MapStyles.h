@@ -39,6 +39,7 @@ namespace OsmAnd {
     class MapStyles_P;
     class OSMAND_CORE_API MapStyles
     {
+        Q_DISABLE_COPY(MapStyles);
     private:
         const std::unique_ptr<MapStyles_P> _d;
     protected:

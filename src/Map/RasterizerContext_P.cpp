@@ -25,10 +25,4 @@ void OsmAnd::RasterizerContext_P::clear()
     _basemapMapObjects.clear();
     _basemapCoastlineObjects.clear();
     _texts.clear();
-
-    for(auto itPathEffect = _pathEffects.cbegin(); itPathEffect != _pathEffects.cend(); ++itPathEffect)
-    {
-        auto pathEffect = *itPathEffect;
-        pathEffect->unref();
-    }
 }

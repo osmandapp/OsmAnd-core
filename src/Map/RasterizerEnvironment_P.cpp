@@ -44,6 +44,16 @@ OsmAnd::RasterizerEnvironment_P::~RasterizerEnvironment_P()
             (*itShaderEntry)->unref();
         _bitmapShaders.clear();
     }
+
+    {
+        QMutexLocker scopedLock(&_pathEffectsMutex);
+
+        for(auto itPathEffect = _pathEffects.cbegin(); itPathEffect != _pathEffects.cend(); ++itPathEffect)
+        {
+            auto pathEffect = *itPathEffect;
+            pathEffect->unref();
+        }
+    }
 }
 
 void OsmAnd::RasterizerEnvironment_P::initializeOneWayPaint( SkPaint& paint )
@@ -194,8 +204,7 @@ void OsmAnd::RasterizerEnvironment_P::applyTo( MapStyleEvaluator& evaluator ) co
 
 bool OsmAnd::RasterizerEnvironment_P::obtainBitmapShader( const QString& name, SkBitmapProcShader* &outShader ) const
 {
-    //TODO: I'm not sure that it should be const_cast, like that...
-    QMutexLocker scopedLock(&const_cast<RasterizerEnvironment_P*>(this)->_bitmapShadersMutex);
+    QMutexLocker scopedLock(&_bitmapShadersMutex);
 
     auto itShader = _bitmapShaders.constFind(name);
     if(itShader == _bitmapShaders.cend())
@@ -213,9 +222,33 @@ bool OsmAnd::RasterizerEnvironment_P::obtainBitmapShader( const QString& name, S
 
         // Create shader from that bitmap
         auto shader = new SkBitmapProcShader(shaderBitmap, SkShader::kRepeat_TileMode, SkShader::kRepeat_TileMode);
-        itShader = const_cast<RasterizerEnvironment_P*>(this)->_bitmapShaders.insert(name, shader);
+        itShader = _bitmapShaders.insert(name, shader);
     }
 
     outShader = *itShader;
+    return true;
+}
+
+bool OsmAnd::RasterizerEnvironment_P::obtainPathEffect( const QString& encodedPathEffect, SkPathEffect* &outPathEffect ) const
+{
+    QMutexLocker scopedLock(&_pathEffectsMutex);
+
+    auto itPathEffects = _pathEffects.constFind(encodedPathEffect);
+    if(itPathEffects == _pathEffects.cend())
+    {
+        const auto& strIntervals = encodedPathEffect.split('_', QString::SkipEmptyParts);
+
+        const auto intervals = new SkScalar[strIntervals.size()];
+        auto interval = intervals;
+        for(auto itInterval = strIntervals.cbegin(); itInterval != strIntervals.cend(); ++itInterval, interval++)
+            *interval = itInterval->toFloat();
+
+        SkPathEffect* pathEffect = new SkDashPathEffect(intervals, strIntervals.size(), 0);
+        delete[] intervals;
+
+        itPathEffects = _pathEffects.insert(encodedPathEffect, pathEffect);
+    }
+
+    outPathEffect = *itPathEffects;
     return true;
 }

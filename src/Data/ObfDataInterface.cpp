@@ -15,7 +15,7 @@ OsmAnd::ObfDataInterface::~ObfDataInterface()
 {
 }
 
-void OsmAnd::ObfDataInterface::obtainObfFiles( QList< std::shared_ptr<const ObfFile> >* outFiles /*= nullptr*/, IQueryController* controller /*= nullptr*/ )
+void OsmAnd::ObfDataInterface::obtainObfFiles( QList< std::shared_ptr<const ObfFile> >* outFiles /*= nullptr*/, const IQueryController* const controller /*= nullptr*/ )
 {
     for(auto itObfReader = _d->readers.cbegin(); itObfReader != _d->readers.cend(); ++itObfReader)
     {
@@ -32,7 +32,7 @@ void OsmAnd::ObfDataInterface::obtainObfFiles( QList< std::shared_ptr<const ObfF
     }
 }
 
-void OsmAnd::ObfDataInterface::obtainBasemapPresenceFlag( bool& basemapPresent, IQueryController* controller /*= nullptr*/ )
+void OsmAnd::ObfDataInterface::obtainBasemapPresenceFlag( bool& basemapPresent, const IQueryController* const controller /*= nullptr*/ )
 {
     basemapPresent = false;
     for(auto itObfReader = _d->readers.cbegin(); itObfReader != _d->readers.cend(); ++itObfReader)
@@ -49,7 +49,7 @@ void OsmAnd::ObfDataInterface::obtainBasemapPresenceFlag( bool& basemapPresent, 
 void OsmAnd::ObfDataInterface::obtainMapObjects(
     QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut, MapFoundationType* foundationOut,
     const AreaI& area31, const ZoomLevel zoom,
-    IQueryController* controller /*= nullptr*/, std::function<bool (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t)> filterById /*= nullptr*/ )
+    const IQueryController* const controller /*= nullptr*/, std::function<bool (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t)> filterById /*= nullptr*/ )
 {
     if(foundationOut)
         *foundationOut = MapFoundationType::Undefined;
