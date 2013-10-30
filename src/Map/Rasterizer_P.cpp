@@ -18,11 +18,16 @@
 #include "Utilities.h"
 #include "Logging.h"
 
-#include <SkError.h>
+#include <SkBitmapDevice.h>
 #include <SkBlurDrawLooper.h>
 #include <SkColorFilter.h>
 #include <SkDashPathEffect.h>
 #include <SkBitmapProcShader.h>
+#include <SkError.h>
+
+//////////////////////////////////////////////////////////////////////////
+//#include <SkImageEncoder.h>
+//////////////////////////////////////////////////////////////////////////
 
 OsmAnd::Rasterizer_P::Rasterizer_P(Rasterizer* const owner_, const RasterizerEnvironment_P& env_, const RasterizerContext_P& context_)
     : owner(owner_)
@@ -1937,51 +1942,63 @@ void OsmAnd::Rasterizer_P::rasterizeSymbols(
             env.obtainIcon(primitiveSymbol.icon.resourceName, icon);
 
         // Rasterize each of texts in this symbol
+        QList< std::shared_ptr<const SkBitmap> > rasterizedTexts;
         for(auto itText = primitiveSymbol.texts.cbegin(); itText != primitiveSymbol.texts.cend(); ++itText)
         {
             const auto& text = *itText;
 
-            //TODO: measure text
-            //TODO: request SkCanvas for that size
-            //TODO: perform rasterization
-            //TODO: how to store rezZZZZzult
+            // Configure paint for text
+            SkPaint textPaint = env.textPaint;
 
-            
-    //////////////////////////////////////////////////////////////////////////
-    /*SkPaint textPaint;
-    textPaint.setColor(0xFFFF0000);
-    textPaint.setAntiAlias(true);
-    textPaint.setTextEncoding(SkPaint::kUTF16_TextEncoding);
-    textPaint.setTextSize(24);
-    {
-        const auto data = L"Tokyo [\u6771\u4eac]";
-        canvas.drawText(data, wcslen(data) * sizeof(wchar_t), 10, 20, textPaint);
-    }
-    {
-        const auto data = L"al-Qahira [\u0627\u0644\u0642\u0627\u0647\u0631\u0629]";
-        canvas.drawText(data, wcslen(data) * sizeof(wchar_t), 10, 40, textPaint);
-    }
-    {
-        const auto data = L"Beijing [\u5317\u4eac]";
-        canvas.drawText(data, wcslen(data) * sizeof(wchar_t), 10, 60, textPaint);
-    }
-    {
-        const auto data = L"Kanada [\u0c95\u0ca8\u0ccd\u0ca8\u0ca1]";
-        canvas.drawText(data, wcslen(data) * sizeof(wchar_t), 10, 80, textPaint);
-    }
-    {
-        const auto data = L"Jerusalem [\u05d9\u05b0\u05e8\u05d5\u05bc\u05e9\u05b8\u05c1\u05dc\u05b7\u05d9\u05b4\u05dd]";
-        canvas.drawText(data, wcslen(data) * sizeof(wchar_t), 10, 100, textPaint);
-    }
-    auto lr = SkGetLastError();*/
-    //////////////////////////////////////////////////////////////////////////
+            textPaint.setTextSize(text.size);
+            textPaint.setFakeBoldText(text.isBold);
+            textPaint.setColor(text.color);
 
+            // Measure text
+            SkRect textBounds;
+            textPaint.measureText(text.value.constData(), text.value.length()*sizeof(QChar), &textBounds);
 
-            continue;
+            SkRect textBBox = textBounds;
+
+            // Process shadow
+            SkPaint textShadowPaint;
+            SkRect shadowBounds;
+            if(text.shadowRadius > 0)
+            {
+                textShadowPaint = textPaint;
+
+                textShadowPaint.setStyle(SkPaint::kStroke_Style);
+                textShadowPaint.setColor(SK_ColorWHITE);
+                textShadowPaint.setStrokeWidth(2 + text.shadowRadius);
+
+                textShadowPaint.measureText(text.value.constData(), text.value.length()*sizeof(QChar), &shadowBounds);
+                textBBox.join(shadowBounds);
+            }
+
+            // Create a bitmap that will be hold text
+            auto bitmap = new SkBitmap();
+            bitmap->setConfig(SkBitmap::kARGB_8888_Config, textBBox.width(), textBBox.height());
+            bitmap->allocPixels();
+            SkBitmapDevice target(*bitmap);
+            SkCanvas canvas(&target);
+
+            // Rasterize text
+            canvas.drawText(text.value.constData(), text.value.length()*sizeof(QChar), -textBBox.left(), -textBBox.top(), textPaint);
+            if(text.shadowRadius > 0)
+                canvas.drawText(text.value.constData(), text.value.length()*sizeof(QChar), -textBBox.left(), -textBBox.top(), textShadowPaint);
+
+            //////////////////////////////////////////////////////////////////////////
+            //std::unique_ptr<SkImageEncoder> encoder(CreatePNGImageEncoder());
+            //QString path;
+            //path.sprintf("D:\\texts\\%p.png", bitmap);
+            //encoder->encodeFile(path.toLocal8Bit(), *bitmap, 100);
+            //////////////////////////////////////////////////////////////////////////
+
+            rasterizedTexts.push_back(std::shared_ptr<const SkBitmap>(bitmap));
         }
 
         // Create container and store it
-        auto rasterizedSymbol = new RasterizedSymbol(primitiveSymbol.mapObject, icon);
+        auto rasterizedSymbol = new RasterizedSymbol(primitiveSymbol.mapObject, icon, rasterizedTexts);
         outSymbols.push_back(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol));
     }
 }
@@ -2061,6 +2078,64 @@ void OsmAnd::Rasterizer_P::rasterizeSymbols(
 //            drawWrappedText(rc, cv, textDrawInfo, textSize, paintText);
 //        }*/
 //    }
+//}
+
+//void drawWrappedText(RenderingContext* rc, SkCanvas* cv, TextDrawInfo* text, float textSize, SkPaint& paintText) {
+//    if(text->textWrap == 0) {
+//        // set maximum for all text
+//        text->textWrap = 40;
+//    }
+//
+//    if(text->text.length() > text->textWrap) {
+//        const char* c_str = text->text.c_str();
+//
+//        int end = text->text.length();
+//        int line = 0;
+//        int pos = 0;
+//        int start = 0;
+//        while(start < end) {
+//            const char* p_str = c_str;
+//            int lastSpace = -1;
+//            int prevPos = -1;
+//            int charRead = 0;
+//            do {
+//                int lastSpace = nextWord((uint8_t*)p_str, &charRead);
+//                if (lastSpace == -1) {
+//                    pos = end;
+//                } else {
+//                    p_str += lastSpace;
+//                    if(pos != start && charRead >= text->textWrap){
+//                        break;
+//                    }
+//                    pos += lastSpace;
+//                }
+//            } while(pos < end && charRead < text->textWrap);
+//
+//            PROFILE_NATIVE_OPERATION(rc, drawTextOnCanvas(cv, c_str, pos - start , text->centerX, text->centerY + line * (textSize + 2), paintText, text->textShadow));
+//            c_str += (pos - start);
+//            start = pos;
+//            line++;
+//        }
+//    } else {
+//        PROFILE_NATIVE_OPERATION(rc, drawTextOnCanvas(cv, text->text.data(), text->text.length(), text->centerX, text->centerY, paintText, text->textShadow));
+//    }
+//}
+//
+//void drawTextOnCanvas(SkCanvas* cv, const char* text, uint16_t len, float centerX, float centerY, SkPaint& paintText,
+//                      float textShadow)
+//{
+//    if (textShadow > 0) {
+//        int c = paintText.getColor();
+//        paintText.setStyle(SkPaint::kStroke_Style);
+//        paintText.setColor(-1); // white
+//        paintText.setStrokeWidth(2 + textShadow);
+//        cv->drawText(text, len, centerX, centerY, paintText);
+//        
+//            paintText.setStrokeWidth(2);
+//        paintText.setStyle(SkPaint::kFill_Style);
+//        paintText.setColor(c);
+//    }
+//    cv->drawText(text, len, centerX, centerY, paintText);
 //}
 
 OsmAnd::Rasterizer_P::PrimitiveSymbol::PrimitiveSymbol()

@@ -1,8 +1,9 @@
 #include "RasterizedSymbol.h"
 
-OsmAnd::RasterizedSymbol::RasterizedSymbol( const std::shared_ptr<const Model::MapObject>& mapObject_, const std::shared_ptr<const SkBitmap>& iconBitmap_ )
+OsmAnd::RasterizedSymbol::RasterizedSymbol( const std::shared_ptr<const Model::MapObject>& mapObject_, const std::shared_ptr<const SkBitmap>& icon_, const QList< std::shared_ptr<const SkBitmap> >& texts_ )
     : mapObject(mapObject_)
-    , iconBitmap(iconBitmap_)
+    , icon(icon_)
+    , texts(texts_)
 {
 }
 

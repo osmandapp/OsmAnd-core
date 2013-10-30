@@ -62,6 +62,8 @@ namespace OsmAnd {
         QMap< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > _settings;
 
         SkPaint _mapPaint;
+        SkPaint _textPaint;
+
         SkColor _defaultBgColor;
         uint32_t _shadowLevelMin;
         uint32_t _shadowLevelMax;
@@ -95,6 +97,7 @@ namespace OsmAnd {
         RasterizerEnvironment* const owner;
 
         const SkPaint& mapPaint;
+        const SkPaint& textPaint;
 
         const SkColor& defaultBgColor;
         const uint32_t& shadowLevelMin;

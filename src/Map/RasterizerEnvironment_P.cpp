@@ -30,6 +30,7 @@ OsmAnd::RasterizerEnvironment_P::RasterizerEnvironment_P( RasterizerEnvironment*
     , attributeRule_roadDensityZoomTile(_attributeRule_roadDensityZoomTile)
     , attributeRule_roadsDensityLimitPerTile(_attributeRule_roadsDensityLimitPerTile)
     , mapPaint(_mapPaint)
+    , textPaint(_textPaint)
     , oneWayPaints(_oneWayPaints)
     , reverseOneWayPaints(_reverseOneWayPaints)
 {
@@ -66,6 +67,12 @@ void OsmAnd::RasterizerEnvironment_P::initializeOneWayPaint( SkPaint& paint )
 void OsmAnd::RasterizerEnvironment_P::initialize()
 {
     _mapPaint.setAntiAlias(true);
+
+    _textPaint.setAntiAlias(true);
+    _textPaint.setLCDRenderText(true);
+    _textPaint.setTextEncoding(SkPaint::kUTF16_TextEncoding);
+    static_assert(sizeof(QChar) == 2, "If QChar is not 2 bytes, then encoding is not kUTF16_TextEncoding");
+
     _shadowLevelMin = 0;
     _shadowLevelMax = 256;
     _roadDensityZoomTile = 0;
