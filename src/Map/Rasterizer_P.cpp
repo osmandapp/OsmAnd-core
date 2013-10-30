@@ -9,6 +9,7 @@
 #include "RasterizerEnvironment_P.h"
 #include "RasterizerContext.h"
 #include "RasterizerContext_P.h"
+#include "RasterizedSymbol.h"
 #include "MapStyleEvaluator.h"
 #include "MapTypes.h"
 #include "MapObject.h"
@@ -308,8 +309,6 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                     continue;
                 }
 
-                //TODO: Evaluate style for this primitive to check if it passes
-
                 context._points.push_back(primitive);
             }
             else
@@ -470,6 +469,7 @@ void OsmAnd::Rasterizer_P::obtainPolygonSymbol(
     center.y /= verticesCount;
 
     PrimitiveSymbol primitiveSymbol;
+    primitiveSymbol.mapObject = primitiveSymbol.mapObject;
 
     // Obtain texts for this symbol
     obtainPrimitiveTexts(env, context, primitive, Utilities::normalizeCoordinates(center, ZoomLevel31), primitiveSymbol);
@@ -489,7 +489,7 @@ void OsmAnd::Rasterizer_P::obtainPolylineSymbol(
     const auto center = primitive.mapObject->_points31[primitive.mapObject->_points31.size() >> 1];
 
     PrimitiveSymbol primitiveSymbol;
-    primitiveSymbol.drawOnPath = true;
+    primitiveSymbol.mapObject = primitiveSymbol.mapObject;
 
     // Obtain texts for this symbol
     obtainPrimitiveTexts(env, context, primitive, center, primitiveSymbol);
@@ -532,6 +532,7 @@ void OsmAnd::Rasterizer_P::obtainPointSymbol(
     }
 
     PrimitiveSymbol primitiveSymbol;
+    primitiveSymbol.mapObject = primitiveSymbol.mapObject;
 
     // Point can have icon associated with it
     MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Point, primitive.mapObject);
@@ -602,13 +603,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
         // Some text parameters are applied to symbol entirely.
         if(!firstTextProcessed)
         {
-            if(primitiveSymbol.drawOnPath)
-            {
-                ok = evaluator.getBooleanValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_ON_PATH, primitiveSymbol.drawOnPath);
-                if(!ok)
-                    primitiveSymbol.drawOnPath = false;
-            }
-
+            evaluator.getBooleanValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_ON_PATH, primitiveSymbol.drawOnPath);
             evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_ORDER, primitiveSymbol.order);
 
             firstTextProcessed = true;
@@ -777,35 +772,6 @@ void OsmAnd::Rasterizer_P::rasterizeMap(
     if(context._shadowRenderingMode > 1)
         rasterizeMapPrimitives(destinationArea, canvas, context._lines, Polylines_ShadowOnly, controller);
     rasterizeMapPrimitives(destinationArea, canvas, context._lines, Polylines, controller);
-
-    //////////////////////////////////////////////////////////////////////////
-    /*SkPaint textPaint;
-    textPaint.setColor(0xFFFF0000);
-    textPaint.setAntiAlias(true);
-    textPaint.setTextEncoding(SkPaint::kUTF16_TextEncoding);
-    textPaint.setTextSize(24);
-    {
-        const auto data = L"Tokyo [\u6771\u4eac]";
-        canvas.drawText(data, wcslen(data) * sizeof(wchar_t), 10, 20, textPaint);
-    }
-    {
-        const auto data = L"al-Qahira [\u0627\u0644\u0642\u0627\u0647\u0631\u0629]";
-        canvas.drawText(data, wcslen(data) * sizeof(wchar_t), 10, 40, textPaint);
-    }
-    {
-        const auto data = L"Beijing [\u5317\u4eac]";
-        canvas.drawText(data, wcslen(data) * sizeof(wchar_t), 10, 60, textPaint);
-    }
-    {
-        const auto data = L"Kanada [\u0c95\u0ca8\u0ccd\u0ca8\u0ca1]";
-        canvas.drawText(data, wcslen(data) * sizeof(wchar_t), 10, 80, textPaint);
-    }
-    {
-        const auto data = L"Jerusalem [\u05d9\u05b0\u05e8\u05d5\u05bc\u05e9\u05b8\u05c1\u05dc\u05b7\u05d9\u05b4\u05dd]";
-        canvas.drawText(data, wcslen(data) * sizeof(wchar_t), 10, 100, textPaint);
-    }
-    auto lr = SkGetLastError();*/
-    //////////////////////////////////////////////////////////////////////////
 }
 
 void OsmAnd::Rasterizer_P::initializePolygonEvaluator(
@@ -1957,8 +1923,67 @@ bool OsmAnd::Rasterizer_P::isClockwiseCoastlinePolygon( const QVector< PointI > 
     return clockwiseSum >= 0;
 }
 
-void OsmAnd::Rasterizer_P::rasterizeSymbols( const AreaI* const destinationArea, const IQueryController* const controller )
+void OsmAnd::Rasterizer_P::rasterizeSymbols(
+    QList< std::shared_ptr<const RasterizedSymbol> >& outSymbols,
+    const IQueryController* const controller )
 {
+    for(auto itPrimitiveSymbol = context._symbols.cbegin(); itPrimitiveSymbol != context._symbols.end(); ++itPrimitiveSymbol)
+    {
+        const auto& primitiveSymbol = *itPrimitiveSymbol;
+
+        // Obtain icon if there is one
+        std::shared_ptr<const SkBitmap> icon;
+        if(!primitiveSymbol.icon.resourceName.isEmpty())
+            env.obtainIcon(primitiveSymbol.icon.resourceName, icon);
+
+        // Rasterize each of texts in this symbol
+        for(auto itText = primitiveSymbol.texts.cbegin(); itText != primitiveSymbol.texts.cend(); ++itText)
+        {
+            const auto& text = *itText;
+
+            //TODO: measure text
+            //TODO: request SkCanvas for that size
+            //TODO: perform rasterization
+            //TODO: how to store rezZZZZzult
+
+            
+    //////////////////////////////////////////////////////////////////////////
+    /*SkPaint textPaint;
+    textPaint.setColor(0xFFFF0000);
+    textPaint.setAntiAlias(true);
+    textPaint.setTextEncoding(SkPaint::kUTF16_TextEncoding);
+    textPaint.setTextSize(24);
+    {
+        const auto data = L"Tokyo [\u6771\u4eac]";
+        canvas.drawText(data, wcslen(data) * sizeof(wchar_t), 10, 20, textPaint);
+    }
+    {
+        const auto data = L"al-Qahira [\u0627\u0644\u0642\u0627\u0647\u0631\u0629]";
+        canvas.drawText(data, wcslen(data) * sizeof(wchar_t), 10, 40, textPaint);
+    }
+    {
+        const auto data = L"Beijing [\u5317\u4eac]";
+        canvas.drawText(data, wcslen(data) * sizeof(wchar_t), 10, 60, textPaint);
+    }
+    {
+        const auto data = L"Kanada [\u0c95\u0ca8\u0ccd\u0ca8\u0ca1]";
+        canvas.drawText(data, wcslen(data) * sizeof(wchar_t), 10, 80, textPaint);
+    }
+    {
+        const auto data = L"Jerusalem [\u05d9\u05b0\u05e8\u05d5\u05bc\u05e9\u05b8\u05c1\u05dc\u05b7\u05d9\u05b4\u05dd]";
+        canvas.drawText(data, wcslen(data) * sizeof(wchar_t), 10, 100, textPaint);
+    }
+    auto lr = SkGetLastError();*/
+    //////////////////////////////////////////////////////////////////////////
+
+
+            continue;
+        }
+
+        // Create container and store it
+        auto rasterizedSymbol = new RasterizedSymbol(primitiveSymbol.mapObject, icon);
+        outSymbols.push_back(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol));
+    }
 }
 
 //void OsmAnd::Rasterizer_P::rasterizeText(

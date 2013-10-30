@@ -212,7 +212,7 @@ bool OsmAnd::RasterizerEnvironment_P::obtainBitmapShader( const QString& name, S
         const auto shaderBitmapPath = QString::fromLatin1("map/shaders/%1.png").arg(name);
 
         // Get data from embedded resources
-        auto data = EmbeddedResources::decompressResource(shaderBitmapPath);
+        const auto data = EmbeddedResources::decompressResource(shaderBitmapPath);
 
         // Decode data
         SkBitmap shaderBitmap;
@@ -250,5 +250,30 @@ bool OsmAnd::RasterizerEnvironment_P::obtainPathEffect( const QString& encodedPa
     }
 
     outPathEffect = *itPathEffects;
+    return true;
+}
+
+bool OsmAnd::RasterizerEnvironment_P::obtainIcon( const QString& name, std::shared_ptr<const SkBitmap>& outIcon ) const
+{
+    QMutexLocker scopedLock(&_iconsMutex);
+
+    auto itIcon = _icons.constFind(name);
+    if(itIcon == _icons.cend())
+    {
+        const auto bitmapPath = QString::fromLatin1("map/icons/mm_%1.png").arg(name);
+
+        // Get data from embedded resources
+        auto data = EmbeddedResources::decompressResource(bitmapPath);
+
+        // Decode data
+        auto bitmap = new SkBitmap();
+        SkMemoryStream dataStream(data.constData(), data.length(), false);
+        if(!SkImageDecoder::DecodeStream(&dataStream, bitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
+            return false;
+
+        itIcon = _icons.insert(name, std::shared_ptr<const SkBitmap>(bitmap));
+    }
+
+    outIcon = *itIcon;
     return true;
 }

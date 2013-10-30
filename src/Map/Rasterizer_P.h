@@ -41,6 +41,7 @@ namespace OsmAnd {
     class MapStyleEvaluator;
     class RasterizerEnvironment_P;
     class RasterizerContext_P;
+    class RasterizedSymbol;
     namespace Model {
         class MapObject;
     } // namespace Model
@@ -232,7 +233,7 @@ namespace OsmAnd {
             const IQueryController* const controller);
 
         void rasterizeSymbols(
-            const AreaI* const destinationArea,
+            QList< std::shared_ptr<const RasterizedSymbol> >& outSymbols,
             const IQueryController* const controller);
 
     friend class OsmAnd::Rasterizer;

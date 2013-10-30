@@ -20,39 +20,40 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __RASTERIZER_CONTEXT_H_
-#define __RASTERIZER_CONTEXT_H_
+#ifndef __RASTERIZED_SYMBOL_H_
+#define __RASTERIZED_SYMBOL_H_
 
 #include <cstdint>
 #include <memory>
 
-#include <QtGlobal>
-
 #include <OsmAndCore.h>
+#include <OsmAndCore/CommonTypes.h>
+
+class SkBitmap;
 
 namespace OsmAnd {
 
-    class Rasterizer;
-    class RasterizerEnvironment;
+    namespace Model {
+        class MapObject;
+    } // namespace Model
+    class Rasterizer_P;
 
-    class RasterizerContext_P;
-    class OSMAND_CORE_API RasterizerContext
+    class OSMAND_CORE_API RasterizedSymbol
     {
-        Q_DISABLE_COPY(RasterizerContext);
+        Q_DISABLE_COPY(RasterizedSymbol);
     private:
-        const std::unique_ptr<RasterizerContext_P> _d;
     protected:
+        RasterizedSymbol(const std::shared_ptr<const Model::MapObject>& mapObject, const std::shared_ptr<const SkBitmap>& iconBitmap);
     public:
-        RasterizerContext(const std::shared_ptr<RasterizerEnvironment>& environment);
-        virtual ~RasterizerContext();
+        virtual ~RasterizedSymbol();
 
-        const std::shared_ptr<RasterizerEnvironment> environment;
+        const std::shared_ptr<const Model::MapObject> mapObject;
 
-        int getSymbolsCount() const;
+        const std::shared_ptr<const SkBitmap> iconBitmap;
 
-    friend class OsmAnd::Rasterizer;
+    friend class OsmAnd::Rasterizer_P;
     };
 
 } // namespace OsmAnd
 
-#endif // __RASTERIZER_CONTEXT_H_
+#endif // __RASTERIZED_SYMBOL_H_

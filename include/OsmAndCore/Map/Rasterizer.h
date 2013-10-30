@@ -78,8 +78,11 @@ namespace OsmAnd {
         //QList< std::shared_ptr<const RasterizedSymbol> >& outSymbols,
 
         void rasterizeSymbols(
-            const AreaI* const destinationArea = nullptr,
+            QList< std::shared_ptr<const RasterizedSymbol> >& outSymbols,
             const IQueryController* const controller = nullptr);
+
+        //void rasterizeSymbolsWithPaths(
+        //    const IQueryController* const controller = nullptr);
     };
 
 } // namespace OsmAnd
