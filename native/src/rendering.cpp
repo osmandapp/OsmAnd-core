@@ -220,15 +220,23 @@ int updatePaint(RenderingRuleSearchRequest* req, SkPaint* paint, int ind, int ar
 
 void renderText(MapDataObject* obj, RenderingRuleSearchRequest* req, RenderingContext* rc, std::string tag,
 		std::string value, float xText, float yText, SkPath* path) {
-	UNORDERED(map)<std::string, std::string>::iterator it = obj->objectNames.begin();
-	while (it != obj->objectNames.end()) {
+	UNORDERED(map)<std::string, std::string>::iterator it, next = obj->objectNames.begin();
+	while (next != obj->objectNames.end()) {
+		it = next++;
 		if (it->second.length() > 0) {
 			std::string name = it->second;
+			std::string tagName = it->first == "name" ? "" : it->first;
+			if (tagName == "" && rc -> isUsingEnglishNames() && obj->objectNames.find("name:en") != 
+					obj->objectNames.end()) {
+				continue;
+			} 
+			if (tagName == "name:en" && !rc -> isUsingEnglishNames()) {
+				continue;
+			}
 			name =rc->getTranslatedString(name);
 			name =rc->getReshapedString(name);
 			req->setInitialTagValueZoom(tag, value, rc->getZoom(), obj);
-			req->setIntFilter(req->props()->R_TEXT_LENGTH, name.length());
-			std::string tagName = it->first == "name" ? "" : it->first;
+			req->setIntFilter(req->props()->R_TEXT_LENGTH, name.length());			
 			req->setStringFilter(req->props()->R_NAME_TAG, tagName);
 			if (req->searchRule(RenderingRulesStorage::TEXT_RULES)
 					&& req->isSpecified(req->props()->R_TEXT_SIZE)) {
@@ -248,7 +256,6 @@ void renderText(MapDataObject* obj, RenderingRuleSearchRequest* req, RenderingCo
 				rc->textToDraw.push_back(info);
 			}
 		}
-		it++;
 	}
 
 }
