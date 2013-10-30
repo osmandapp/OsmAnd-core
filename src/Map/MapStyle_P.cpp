@@ -396,7 +396,7 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
             }
             else if(tagName == "line")
             {
-                rulesetType = MapStyleRulesetType::Line;
+                rulesetType = MapStyleRulesetType::Polyline;
             }
             else if(tagName == "polygon")
             {
@@ -557,7 +557,7 @@ QMap< uint64_t, std::shared_ptr<OsmAnd::MapStyleRule> >& OsmAnd::MapStyle_P::obt
     {
     case OsmAnd::MapStyleRulesetType::Point:
         return _pointRules;
-    case OsmAnd::MapStyleRulesetType::Line:
+    case OsmAnd::MapStyleRulesetType::Polyline:
         return _lineRules;
     case OsmAnd::MapStyleRulesetType::Polygon:
         return _polygonRules;
@@ -578,7 +578,7 @@ const QMap< uint64_t, std::shared_ptr<OsmAnd::MapStyleRule> >& OsmAnd::MapStyle_
     {
     case OsmAnd::MapStyleRulesetType::Point:
         return _pointRules;
-    case OsmAnd::MapStyleRulesetType::Line:
+    case OsmAnd::MapStyleRulesetType::Polyline:
         return _lineRules;
     case OsmAnd::MapStyleRulesetType::Polygon:
         return _polygonRules;
@@ -715,7 +715,7 @@ bool OsmAnd::MapStyle_P::mergeInherited()
     if(!ok)
         return false;
 
-    ok = mergeInheritedRules(MapStyleRulesetType::Line);
+    ok = mergeInheritedRules(MapStyleRulesetType::Polyline);
     if(!ok)
         return false;
 

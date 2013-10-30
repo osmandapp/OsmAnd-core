@@ -45,7 +45,7 @@ namespace OsmAnd {
         Invalid = 0,
 
         Point = 1,
-        Line = 2,
+        Polyline = 2,
         Polygon = 3,
         Text = 4,
         Order = 5,

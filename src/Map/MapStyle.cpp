@@ -70,7 +70,7 @@ void OsmAnd::MapStyle::dump( const QString& prefix /*= QString()*/ ) const
     dump(MapStyleRulesetType::Point, prefix);
 
     OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sLine rules:", prefix.toStdString().c_str());
-    dump(MapStyleRulesetType::Line, prefix);
+    dump(MapStyleRulesetType::Polyline, prefix);
 
     OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sPolygon rules:", prefix.toStdString().c_str());
     dump(MapStyleRulesetType::Polygon, prefix);

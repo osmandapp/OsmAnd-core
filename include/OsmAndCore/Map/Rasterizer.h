@@ -38,6 +38,7 @@ namespace OsmAnd {
 
     class RasterizerEnvironment;
     class RasterizerContext;
+    class RasterizedSymbol;
     namespace Model {
         class MapObject;
     } // namespace Model
@@ -65,9 +66,18 @@ namespace OsmAnd {
             bool* nothingToRasterize = nullptr,
             const IQueryController* const controller = nullptr);
 
-        bool rasterizeMap(
+        void rasterizeMap(
             SkCanvas& canvas,
             const bool fillBackground = true,
+            const AreaI* const destinationArea = nullptr,
+            const IQueryController* const controller = nullptr);
+
+        //typedef std::function<  > methodToProvideSkCanvasForSize;
+        //typedef std::function<  > methodToPublish;
+        // a callback-method to provide canvas of specified size?
+        //QList< std::shared_ptr<const RasterizedSymbol> >& outSymbols,
+
+        void rasterizeSymbols(
             const AreaI* const destinationArea = nullptr,
             const IQueryController* const controller = nullptr);
     };

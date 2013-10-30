@@ -26,11 +26,16 @@ void OsmAnd::Rasterizer::prepareContext(
     Rasterizer_P::prepareContext(*context.environment->_d, *context._d, area31, zoom, foundation, objects, nothingToRasterize, controller);
 }
 
-bool OsmAnd::Rasterizer::rasterizeMap(
+void OsmAnd::Rasterizer::rasterizeMap(
     SkCanvas& canvas,
     const bool fillBackground /*= true*/,
     const AreaI* const destinationArea /*= nullptr*/,
     const IQueryController* const controller /*= nullptr*/ )
 {
-    return _d->rasterizeMap(canvas, fillBackground, destinationArea, controller);
+    _d->rasterizeMap(canvas, fillBackground, destinationArea, controller);
+}
+
+void OsmAnd::Rasterizer::rasterizeSymbols( const AreaI* const destinationArea /*= nullptr*/, const IQueryController* const controller /*= nullptr*/ )
+{
+
 }

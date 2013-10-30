@@ -50,6 +50,9 @@ namespace OsmAnd {
         const ZoomLevel minZoom;
         const ZoomLevel maxZoom;
 
+        //todo: text bitmap
+        //todo: icon bitmap?
+
         const std::unique_ptr<SkBitmap>& bitmap;
     };
 

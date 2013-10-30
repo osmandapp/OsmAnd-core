@@ -64,6 +64,7 @@ namespace OsmAnd {
         QList< std::shared_ptr<const OsmAnd::Model::MapObject> > _mapObjects, _coastlineObjects, _basemapMapObjects, _basemapCoastlineObjects;
         QList< std::shared_ptr<const OsmAnd::Model::MapObject> > _combinedMapObjects, _triangulatedCoastlineObjects;
         QVector< Rasterizer_P::Primitive > _polygons, _lines, _points;
+
         QVector< Rasterizer_P::TextPrimitive > _texts;
 
         void clear();
