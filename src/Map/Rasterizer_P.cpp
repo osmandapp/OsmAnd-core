@@ -1963,13 +1963,14 @@ void OsmAnd::Rasterizer_P::rasterizeSymbols(
             // Process shadow
             SkPaint textShadowPaint;
             SkRect shadowBounds;
+
             if(text.shadowRadius > 0)
             {
                 textShadowPaint = textPaint;
 
                 textShadowPaint.setStyle(SkPaint::kStroke_Style);
                 textShadowPaint.setColor(SK_ColorWHITE);
-                textShadowPaint.setStrokeWidth(2 + text.shadowRadius);
+                textShadowPaint.setStrokeWidth(text.shadowRadius);
 
                 textShadowPaint.measureText(text.value.constData(), text.value.length()*sizeof(QChar), &shadowBounds);
                 textBBox.join(shadowBounds);
@@ -1983,15 +1984,15 @@ void OsmAnd::Rasterizer_P::rasterizeSymbols(
             SkCanvas canvas(&target);
 
             // Rasterize text
-            canvas.drawText(text.value.constData(), text.value.length()*sizeof(QChar), -textBBox.left(), -textBBox.top(), textPaint);
             if(text.shadowRadius > 0)
                 canvas.drawText(text.value.constData(), text.value.length()*sizeof(QChar), -textBBox.left(), -textBBox.top(), textShadowPaint);
+            canvas.drawText(text.value.constData(), text.value.length()*sizeof(QChar), -textBBox.left(), -textBBox.top(), textPaint);
 
             //////////////////////////////////////////////////////////////////////////
-            //std::unique_ptr<SkImageEncoder> encoder(CreatePNGImageEncoder());
-            //QString path;
-            //path.sprintf("D:\\texts\\%p.png", bitmap);
-            //encoder->encodeFile(path.toLocal8Bit(), *bitmap, 100);
+            /*std::unique_ptr<SkImageEncoder> encoder(CreatePNGImageEncoder());
+            QString path;
+            path.sprintf("D:\\texts\\%p.png", bitmap);
+            encoder->encodeFile(path.toLocal8Bit(), *bitmap, 100);*/
             //////////////////////////////////////////////////////////////////////////
 
             rasterizedTexts.push_back(std::shared_ptr<const SkBitmap>(bitmap));
