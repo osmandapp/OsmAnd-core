@@ -24,5 +24,5 @@ void OsmAnd::RasterizerContext_P::clear()
     _coastlineObjects.clear();
     _basemapMapObjects.clear();
     _basemapCoastlineObjects.clear();
-    _texts.clear();
+    _symbols.clear();
 }

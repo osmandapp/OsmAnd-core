@@ -27,6 +27,7 @@
 #include <memory>
 
 #include <QList>
+#include <QVector>
 
 #include <SkCanvas.h>
 #include <SkPaint.h>
@@ -103,21 +104,39 @@ namespace OsmAnd {
             Points,
         };
 
-        struct TextPrimitive
+        struct PrimitiveSymbol
         {
-            QString content;
-            bool drawOnPath;
-            std::shared_ptr<SkPath> path;
-            PointI position31;
-            int vOffset;
-            int color;
-            int size;
-            int shadowRadius;
-            int wrapWidth;
-            bool isBold;
-            int minDistance;
-            QString shieldResource;
+            PrimitiveSymbol();
+
+            inline bool isEmpty() const
+            {
+                return texts.isEmpty() && icon.resourceName.isEmpty();
+            }
+
+            std::shared_ptr<const Model::MapObject> mapObject;
+
             int order;
+            bool drawOnPath;
+
+            struct Text
+            {
+                QString value;
+                PointI position31;
+                int verticalOffset;
+                int color;
+                int size;
+                int shadowRadius;
+                int wrapWidth;
+                bool isBold;
+                int minDistance;
+                QString shieldResourceName;
+            };
+            QVector<Text> texts;
+
+            struct Icon
+            {
+                QString resourceName;
+            } icon;
         };
 
         struct Primitive
@@ -135,24 +154,24 @@ namespace OsmAnd {
             const RasterizerEnvironment_P& env, const RasterizerContext_P& context,
             const QVector< Primitive >& in, QVector< Primitive >& out, const IQueryController* const controller);
 
-        static void obtainPrimitivesTexts(
+        static void obtainPrimitivesSymbols(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
             const IQueryController* const controller);
-        static void collectPrimitivesTexts(
+        static void collectPrimitivesSymbols(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
             const QVector< Primitive >& primitives, const PrimitivesType type, const IQueryController* const controller );
-        static void obtainPolygonText(
+        static void obtainPolygonSymbol(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
             const Primitive& primitive);
-        static void obtainPolylineText(
+        static void obtainPolylineSymbol(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
             const Primitive& primitive);
-        static void obtainPointText(
+        static void obtainPointSymbol(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
             const Primitive& primitive);
-        static void preparePrimitiveText(
+        static void obtainPrimitiveTexts(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-            const Primitive& primitive, const PointI& point31, SkPath* path);
+            const Primitive& primitive, const PointI& point31, PrimitiveSymbol& primitiveSymbol);
 
         enum PaintValuesSet : int
         {

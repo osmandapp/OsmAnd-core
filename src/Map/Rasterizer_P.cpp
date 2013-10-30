@@ -180,7 +180,7 @@ void OsmAnd::Rasterizer_P::prepareContext(
     }
 
     // Obtain text from primitives
-    obtainPrimitivesTexts(env, context, controller);
+    obtainPrimitivesSymbols(env, context, controller);
     if(controller && controller->isAborted())
     {
         context.clear();
@@ -401,21 +401,23 @@ void OsmAnd::Rasterizer_P::filterOutLinesByDensity(
     }
 }
 
-void OsmAnd::Rasterizer_P::obtainPrimitivesTexts(
+void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
     const IQueryController* const controller )
 {
-    collectPrimitivesTexts(env, context, context._polygons, Polygons, controller);
-    collectPrimitivesTexts(env, context, context._lines, Polylines, controller);
-    collectPrimitivesTexts(env, context, context._points, Points, controller);
+    // Collect symbols from all primitives
+    collectPrimitivesSymbols(env, context, context._polygons, Polygons, controller);
+    collectPrimitivesSymbols(env, context, context._lines, Polylines, controller);
+    collectPrimitivesSymbols(env, context, context._points, Points, controller);
 
-    qSort(context._texts.begin(), context._texts.end(), [](const TextPrimitive& l, const TextPrimitive& r) -> bool
+    // Sort symbols by order
+    qSort(context._symbols.begin(), context._symbols.end(), [](const PrimitiveSymbol& l, const PrimitiveSymbol& r) -> bool
     {
         return l.order < r.order;
     });
 }
 
-void OsmAnd::Rasterizer_P::collectPrimitivesTexts(
+void OsmAnd::Rasterizer_P::collectPrimitivesSymbols(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
     const QVector< Rasterizer_P::Primitive >& primitives, const PrimitivesType type, const IQueryController* const controller )
 {
@@ -428,42 +430,25 @@ void OsmAnd::Rasterizer_P::collectPrimitivesTexts(
 
         const auto& primitive = *itPrimitive;
 
-        // Skip primitives without names
-        if(primitive.mapObject->names.isEmpty())
-            continue;
-        bool hasNonEmptyNames = false;
-        for(auto itName = primitive.mapObject->names.cbegin(); itName != primitive.mapObject->names.cend(); ++itName)
-        {
-            const auto& name = itName.value();
-
-            if(!name.isEmpty())
-            {
-                hasNonEmptyNames = true;
-                break;
-            }
-        }
-        if(!hasNonEmptyNames)
-            continue;
-
         if(type == Polygons)
         {
-            obtainPolygonText(env, context, primitive);
+            obtainPolygonSymbol(env, context, primitive);
         }
         else if(type == Polylines)
         {
-            obtainPolylineText(env, context, primitive);
+            obtainPolylineSymbol(env, context, primitive);
         }
         else if(type == Points)
         {
             if(primitive.typeIndex != 0)
                 continue;
 
-            obtainPointText(env, context, primitive);
+            obtainPointSymbol(env, context, primitive);
         }
     }
 }
 
-void OsmAnd::Rasterizer_P::obtainPolygonText(
+void OsmAnd::Rasterizer_P::obtainPolygonSymbol(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
     const Primitive& primitive )
 {
@@ -471,80 +456,129 @@ void OsmAnd::Rasterizer_P::obtainPolygonText(
     assert(primitive.mapObject->isClosedFigure());
     assert(primitive.mapObject->isClosedFigure(true));
 
-    PointI64 textLocation;
+    // Get center of polygon, since all symbols of polygon are related to it's center
+    PointI64 center;
     for(auto itPoint = primitive.mapObject->_points31.cbegin(); itPoint != primitive.mapObject->_points31.cend(); ++itPoint)
     {
         const auto& point = *itPoint;
 
-        textLocation.x += point.x;
-        textLocation.y += point.y;
+        center.x += point.x;
+        center.y += point.y;
     }
-
     const auto verticesCount = primitive.mapObject->_points31.size();
-    textLocation.x /= verticesCount;
-    textLocation.y /= verticesCount;
+    center.x /= verticesCount;
+    center.y /= verticesCount;
 
-    preparePrimitiveText(env, context, primitive, Utilities::normalizeCoordinates(textLocation, ZoomLevel31), nullptr);
+    PrimitiveSymbol primitiveSymbol;
+
+    // Obtain texts for this symbol
+    obtainPrimitiveTexts(env, context, primitive, Utilities::normalizeCoordinates(center, ZoomLevel31), primitiveSymbol);
+
+    // Publish symbol
+    if(!primitiveSymbol.isEmpty())
+        context._symbols.push_back(primitiveSymbol);
 }
 
-void OsmAnd::Rasterizer_P::obtainPolylineText(
+void OsmAnd::Rasterizer_P::obtainPolylineSymbol(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
     const Primitive& primitive )
 {
     assert(primitive.mapObject->_points31.size() >= 2);
 
-    const auto middleIdx = primitive.mapObject->_points31.size() >> 1;
-    const auto middlePoint = primitive.mapObject->_points31[middleIdx];
+    // Symbols for polyline are always related to it's "middle" point
+    const auto center = primitive.mapObject->_points31[primitive.mapObject->_points31.size() >> 1];
 
-    preparePrimitiveText(env, context, primitive, middlePoint, /*&path*/nullptr);
+    PrimitiveSymbol primitiveSymbol;
+    primitiveSymbol.drawOnPath = true;
+
+    // Obtain texts for this symbol
+    obtainPrimitiveTexts(env, context, primitive, center, primitiveSymbol);
+
+    // Publish symbol
+    if(!primitiveSymbol.isEmpty())
+        context._symbols.push_back(primitiveSymbol);
 }
 
-void OsmAnd::Rasterizer_P::obtainPointText(
+void OsmAnd::Rasterizer_P::obtainPointSymbol(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
     const Primitive& primitive )
 {
     assert(primitive.mapObject->_points31.size() > 0);
 
-    PointI textLocation;
+    // Depending on type of point, center is determined differently
+    PointI center;
     if(primitive.mapObject->_points31.size() == 1)
     {
-        textLocation = primitive.mapObject->_points31.first();
+        // Regular point
+        center = primitive.mapObject->_points31.first();
     }
     else
     {
-        PointI64 textLocationAccum;
+        // Point represents center of polygon
+        PointI64 center_;
         for(auto itPoint = primitive.mapObject->_points31.cbegin(); itPoint != primitive.mapObject->_points31.cend(); ++itPoint)
         {
             const auto& point = *itPoint;
 
-            textLocationAccum.x += point.x;
-            textLocationAccum.y += point.y;
+            center_.x += point.x;
+            center_.y += point.y;
         }
 
         const auto verticesCount = primitive.mapObject->_points31.size();
-        textLocationAccum.x /= verticesCount;
-        textLocationAccum.y /= verticesCount;
+        center_.x /= verticesCount;
+        center_.y /= verticesCount;
 
-        textLocation = Utilities::normalizeCoordinates(textLocationAccum, ZoomLevel31);
+        center = Utilities::normalizeCoordinates(center_, ZoomLevel31);
     }
 
-    preparePrimitiveText(env, context, primitive, textLocation, nullptr);
+    PrimitiveSymbol primitiveSymbol;
+
+    // Point can have icon associated with it
+    MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Point, primitive.mapObject);
+    initializePointEvaluator(env, context, primitive, evaluator);
+    if(evaluator.evaluate())
+    {
+        bool ok;
+
+        QString iconResourceName;
+        ok = evaluator.getStringValue(MapStyle::builtinValueDefinitions.OUTPUT_ICON, iconResourceName);
+
+        if(ok && !iconResourceName.isEmpty())
+        {
+            primitiveSymbol.icon.resourceName = iconResourceName;
+            primitiveSymbol.order = 100;
+
+            evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_ICON, primitiveSymbol.order);
+        }
+    }
+
+    // Obtain texts for this symbol
+    obtainPrimitiveTexts(env, context, primitive, center, primitiveSymbol);
+
+    // Publish symbol
+    if(!primitiveSymbol.isEmpty())
+        context._symbols.push_back(primitiveSymbol);
 }
 
-void OsmAnd::Rasterizer_P::preparePrimitiveText(
+void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    const Primitive& primitive, const PointI& point31, SkPath* path )
+    const Primitive& primitive, const PointI& point31, PrimitiveSymbol& primitiveSymbol )
 {
     const auto& type = primitive.mapObject->_types[primitive.typeIndex];
 
+    bool ok;
+    auto firstTextProcessed = false;
     for(auto itName = primitive.mapObject->names.cbegin(); itName != primitive.mapObject->names.cend(); ++itName)
     {
         const auto& name = itName.value();
 
-        //TODO:name =rc->getTranslatedString(name);
-        //TODO:name =rc->getReshapedString(name);
+        // Skip empty names
+        if(name.isEmpty())
+            continue;
 
-        const auto& type = primitive.mapObject->_types[primitive.typeIndex];
+        //TODO: reshape name with icu4c
+
+        // Evaluate style to obtain text parameters
         MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Text, primitive.mapObject);
         env.applyTo(evaluator);
         evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
@@ -559,43 +593,73 @@ void OsmAnd::Rasterizer_P::preparePrimitiveText(
         if(!evaluator.evaluate())
             continue;
 
-        bool ok;
-        int textSize;
+        // Skip text that doesn't have valid size
+        int textSize = 0;
         ok = evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_SIZE, textSize);
         if(!ok || textSize == 0)
             continue;
 
-        TextPrimitive text;
-        text.content = name;
-        text.drawOnPath = false;
-        if(path)
+        // Some text parameters are applied to symbol entirely.
+        if(!firstTextProcessed)
         {
-            ok = evaluator.getBooleanValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_ON_PATH, text.drawOnPath);
-            if(ok && text.drawOnPath)
-                text.path.reset(new SkPath(*path));
+            if(primitiveSymbol.drawOnPath)
+            {
+                ok = evaluator.getBooleanValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_ON_PATH, primitiveSymbol.drawOnPath);
+                if(!ok)
+                    primitiveSymbol.drawOnPath = false;
+            }
+
+            evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_ORDER, primitiveSymbol.order);
+
+            firstTextProcessed = true;
         }
+#if defined(_DEBUG) || defined(DEBUG)
+        else
+        {
+            bool drawOnPath;
+            ok = evaluator.getBooleanValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_ON_PATH, drawOnPath);
+            if(ok)
+            {
+                assert(primitiveSymbol.drawOnPath == drawOnPath);
+            }
+
+            int order;
+            ok = evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_ORDER, order);
+            if(ok)
+            {
+                assert(primitiveSymbol.order == order);
+            }
+        }
+#endif
+
+        PrimitiveSymbol::Text text;
+        text.value = name;
         text.position31 = point31;
-        text.vOffset = 0;
-        evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_DY, text.vOffset);
+
+        text.verticalOffset = 0;
+        evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_DY, text.verticalOffset);
+
         ok = evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_COLOR, text.color);
         if(!ok || !text.color)
             text.color = SK_ColorBLACK;
-        ok = evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_SIZE, text.size);
-        if(!ok)
-            continue;
+
+        text.size = textSize;
+
         text.shadowRadius = 0;
         evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_HALO_RADIUS, text.shadowRadius);
+
         text.wrapWidth = 0;
         evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_WRAP_WIDTH, text.wrapWidth);
+
         text.isBold = false;
         evaluator.getBooleanValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_BOLD, text.isBold);
+
         text.minDistance = 0;
         evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_MIN_DISTANCE, text.minDistance);
-        evaluator.getStringValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_SHIELD, text.shieldResource);
-        text.order = 100;
-        evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_ORDER, text.order);
 
-        context._texts.push_back(text);
+        evaluator.getStringValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_SHIELD, text.shieldResourceName);
+
+        primitiveSymbol.texts.push_back(text);
     }
 }
 
@@ -780,6 +844,14 @@ void OsmAnd::Rasterizer_P::initializePointEvaluator(
     const Primitive& primitive, MapStyleEvaluator& evaluator )
 {
     assert(primitive.objectType == PrimitiveType::Point);
+
+    const auto& type = primitive.mapObject->_types[primitive.typeIndex];
+
+    env.applyTo(evaluator);
+    evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
+    evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
+    evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
+    evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
 }
 
 void OsmAnd::Rasterizer_P::rasterizeMapPrimitives(
@@ -1965,3 +2037,9 @@ void OsmAnd::Rasterizer_P::rasterizeSymbols( const AreaI* const destinationArea,
 //        }*/
 //    }
 //}
+
+OsmAnd::Rasterizer_P::PrimitiveSymbol::PrimitiveSymbol()
+    : order(-1)
+    , drawOnPath(false)
+{
+}

@@ -134,7 +134,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
     const auto dataRead_End = std::chrono::high_resolution_clock::now();
     const std::chrono::duration<float> dataRead_Elapsed = dataRead_End - dataRead_Begin;
 
-    const auto dataProcess_Begin = std::chrono::high_resolution_clock::now();
+    const auto dataIdsProcess_Begin = std::chrono::high_resolution_clock::now();
 #endif
 
     // Append weak references to newly read map objects
@@ -159,13 +159,10 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
         }
     }
 #if defined(_DEBUG) || defined(DEBUG)
-    const auto dataProcess_End = std::chrono::high_resolution_clock::now();
-    const std::chrono::duration<float> dataProcess_Elapsed = dataProcess_End - dataProcess_Begin;
-    LogPrintf(LogSeverityLevel::Info,
-        "%d map objects (%d unique, %d shared) in %dx%d@%d: filter %fs, read %fs, process %fs",
-        mapObjects.size() + duplicateMapObjects.size(), mapObjects.size(), duplicateMapObjects.size(),
-        tileId.x, tileId.y, zoom,
-        dataFilter, dataRead_Elapsed.count(), dataProcess_Elapsed.count());
+    const auto dataIdsProcess_End = std::chrono::high_resolution_clock::now();
+    const std::chrono::duration<float> dataIdsProcess_Elapsed = dataIdsProcess_End - dataIdsProcess_Begin;
+
+    const auto dataProcess_Begin = std::chrono::high_resolution_clock::now();
 #endif
 
     // Prepare data for the tile
@@ -175,6 +172,16 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
     bool nothingToRasterize = false;
     std::shared_ptr<RasterizerContext> rasterizerContext(new RasterizerContext(owner->rasterizerEnvironment));
     Rasterizer::prepareContext(*rasterizerContext, tileBBox31, zoom, tileFoundation, mapObjects, &nothingToRasterize);
+
+#if defined(_DEBUG) || defined(DEBUG)
+    const auto dataProcess_End = std::chrono::high_resolution_clock::now();
+    const std::chrono::duration<float> dataProcess_Elapsed = dataProcess_End - dataProcess_Begin;
+    LogPrintf(LogSeverityLevel::Info,
+        "%d map objects (%d unique, %d shared) in %dx%d@%d: read %fs (filter-by-id %fs), process-ids %fs, process-content %fs",
+        mapObjects.size() + duplicateMapObjects.size(), mapObjects.size(), duplicateMapObjects.size(),
+        tileId.x, tileId.y, zoom,
+        dataRead_Elapsed.count(), dataFilter, dataIdsProcess_Elapsed.count(), dataProcess_Elapsed.count());
+#endif
 
     // Create tile
     const auto newTile = new OfflineMapDataTile(tileId, zoom, tileFoundation, mapObjects, rasterizerContext, nothingToRasterize);
