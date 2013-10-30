@@ -833,15 +833,15 @@ bool OsmAnd::Rasterizer_P::updatePaint(
         },
         {//1
             MapStyle::builtinValueDefinitions.OUTPUT_COLOR_2,
-                MapStyle::builtinValueDefinitions.OUTPUT_STROKE_WIDTH_2,
-                MapStyle::builtinValueDefinitions.OUTPUT_CAP_2,
-                MapStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT_2
-            },
+            MapStyle::builtinValueDefinitions.OUTPUT_STROKE_WIDTH_2,
+            MapStyle::builtinValueDefinitions.OUTPUT_CAP_2,
+            MapStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT_2
+        },
         {//-1
             MapStyle::builtinValueDefinitions.OUTPUT_COLOR_0,
-                MapStyle::builtinValueDefinitions.OUTPUT_STROKE_WIDTH_0,
-                MapStyle::builtinValueDefinitions.OUTPUT_CAP_0,
-                MapStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT_0
+            MapStyle::builtinValueDefinitions.OUTPUT_STROKE_WIDTH_0,
+            MapStyle::builtinValueDefinitions.OUTPUT_CAP_0,
+            MapStyle::builtinValueDefinitions.OUTPUT_PATH_EFFECT_0
         },
         {//-2
             MapStyle::builtinValueDefinitions.OUTPUT_COLOR__1,
