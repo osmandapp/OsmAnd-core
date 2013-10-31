@@ -97,8 +97,6 @@ namespace OsmAnd {
             OfflineMapDataProvider_P& provider;
         };
         const std::shared_ptr<Link> _link;
-
-        static uint64_t makeInternalId(const std::shared_ptr<const Model::MapObject>& mapObject);
     public:
         ~OfflineMapDataProvider_P();
 

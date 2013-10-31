@@ -35,9 +35,9 @@ void OsmAnd::Rasterizer::rasterizeMap(
     _d->rasterizeMap(canvas, fillBackground, destinationArea, controller);
 }
 
-void OsmAnd::Rasterizer::rasterizeSymbols(
+void OsmAnd::Rasterizer::rasterizeSymbolsWithoutPaths(
     QList< std::shared_ptr<const RasterizedSymbol> >& outSymbols,
     const IQueryController* const controller /*= nullptr*/ )
 {
-    _d->rasterizeSymbols(outSymbols, controller);
+    _d->rasterizeSymbolsWithoutPaths(outSymbols, controller);
 }

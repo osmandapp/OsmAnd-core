@@ -5,6 +5,7 @@
 #include "OfflineMapDataTile.h"
 #include "Rasterizer.h"
 #include "RasterizedSymbol.h"
+#include "MapObject.h"
 #include "Utilities.h"
 
 OsmAnd::OfflineMapSymbolProvider_P::OfflineMapSymbolProvider_P( OfflineMapSymbolProvider* owner_ )
@@ -37,10 +38,23 @@ bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols( const TileId tileId, con
 
     // Rasterize symbols
     QList< std::shared_ptr<const RasterizedSymbol> > rasterizedSymbols;
-    rasterizer.rasterizeSymbols(rasterizedSymbols);
-    //TODO: start extracting text primitives one by one, checking with filterById if one should be gained from specific mapobject
+    rasterizer.rasterizeSymbolsWithoutPaths(rasterizedSymbols);
+    
+    // Convert results
+    for(auto itRasterizedSymbol = rasterizedSymbols.cbegin(); itRasterizedSymbol != rasterizedSymbols.cend(); ++itRasterizedSymbol)
+    {
+        const auto& rasterizedSymbol = *itRasterizedSymbol;
 
-    //TODO: if filter was passed, rasterize the icon or text or whatever
+        // Create new map symbol
+        auto mapSymbol = new MapSymbol(
+            rasterizedSymbol->mapObject->id,
+            rasterizedSymbol->location31,
+            zoom,
+            rasterizedSymbol->icon,
+            rasterizedSymbol->texts);
 
-    return false;
+        outSymbols.push_back(std::shared_ptr<const MapSymbol>(mapSymbol));
+    }
+
+    return true;
 }

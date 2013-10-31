@@ -474,10 +474,11 @@ void OsmAnd::Rasterizer_P::obtainPolygonSymbol(
     center.y /= verticesCount;
 
     PrimitiveSymbol primitiveSymbol;
-    primitiveSymbol.mapObject = primitiveSymbol.mapObject;
+    primitiveSymbol.mapObject = primitive.mapObject;
+    primitiveSymbol.location31 = Utilities::normalizeCoordinates(center, ZoomLevel31);
 
     // Obtain texts for this symbol
-    obtainPrimitiveTexts(env, context, primitive, Utilities::normalizeCoordinates(center, ZoomLevel31), primitiveSymbol);
+    obtainPrimitiveTexts(env, context, primitive, primitiveSymbol);
 
     // Publish symbol
     if(!primitiveSymbol.isEmpty())
@@ -494,10 +495,11 @@ void OsmAnd::Rasterizer_P::obtainPolylineSymbol(
     const auto center = primitive.mapObject->_points31[primitive.mapObject->_points31.size() >> 1];
 
     PrimitiveSymbol primitiveSymbol;
-    primitiveSymbol.mapObject = primitiveSymbol.mapObject;
+    primitiveSymbol.mapObject = primitive.mapObject;
+    primitiveSymbol.location31 = center;
 
     // Obtain texts for this symbol
-    obtainPrimitiveTexts(env, context, primitive, center, primitiveSymbol);
+    obtainPrimitiveTexts(env, context, primitive, primitiveSymbol);
 
     // Publish symbol
     if(!primitiveSymbol.isEmpty())
@@ -537,7 +539,8 @@ void OsmAnd::Rasterizer_P::obtainPointSymbol(
     }
 
     PrimitiveSymbol primitiveSymbol;
-    primitiveSymbol.mapObject = primitiveSymbol.mapObject;
+    primitiveSymbol.mapObject = primitive.mapObject;
+    primitiveSymbol.location31 = center;
 
     // Point can have icon associated with it
     MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Point, primitive.mapObject);
@@ -559,7 +562,7 @@ void OsmAnd::Rasterizer_P::obtainPointSymbol(
     }
 
     // Obtain texts for this symbol
-    obtainPrimitiveTexts(env, context, primitive, center, primitiveSymbol);
+    obtainPrimitiveTexts(env, context, primitive, primitiveSymbol);
 
     // Publish symbol
     if(!primitiveSymbol.isEmpty())
@@ -568,7 +571,7 @@ void OsmAnd::Rasterizer_P::obtainPointSymbol(
 
 void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    const Primitive& primitive, const PointI& point31, PrimitiveSymbol& primitiveSymbol )
+    const Primitive& primitive, PrimitiveSymbol& primitiveSymbol )
 {
     const auto& type = primitive.mapObject->_types[primitive.typeIndex];
 
@@ -634,8 +637,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
 
         PrimitiveSymbol::Text text;
         text.value = name;
-        text.position31 = point31;
-
+        
         text.verticalOffset = 0;
         evaluator.getIntegerValue(MapStyle::builtinValueDefinitions.OUTPUT_TEXT_DY, text.verticalOffset);
 
@@ -1928,13 +1930,17 @@ bool OsmAnd::Rasterizer_P::isClockwiseCoastlinePolygon( const QVector< PointI > 
     return clockwiseSum >= 0;
 }
 
-void OsmAnd::Rasterizer_P::rasterizeSymbols(
+void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
     QList< std::shared_ptr<const RasterizedSymbol> >& outSymbols,
     const IQueryController* const controller )
 {
     for(auto itPrimitiveSymbol = context._symbols.cbegin(); itPrimitiveSymbol != context._symbols.end(); ++itPrimitiveSymbol)
     {
         const auto& primitiveSymbol = *itPrimitiveSymbol;
+
+        // Skip symbols that need to be rasterized along path
+        if(primitiveSymbol.drawOnPath)
+            continue;
 
         // Obtain icon if there is one
         std::shared_ptr<const SkBitmap> icon;
@@ -1999,7 +2005,11 @@ void OsmAnd::Rasterizer_P::rasterizeSymbols(
         }
 
         // Create container and store it
-        auto rasterizedSymbol = new RasterizedSymbol(primitiveSymbol.mapObject, icon, rasterizedTexts);
+        auto rasterizedSymbol = new RasterizedSymbol(
+            primitiveSymbol.mapObject,
+            primitiveSymbol.location31,
+            icon,
+            rasterizedTexts);
         outSymbols.push_back(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol));
     }
 }

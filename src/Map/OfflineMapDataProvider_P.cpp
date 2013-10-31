@@ -86,20 +86,12 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 #if defined(_DEBUG) || defined(DEBUG)
             const auto dataFilter_Begin = std::chrono::high_resolution_clock::now();
 #endif
-            uint64_t internalId = id;
-            if(static_cast<int64_t>(internalId) < 0)
-            {
-                // IDs < 0 are guaranteed to be unique only inside own section.
-                const int64_t realId = -static_cast<int64_t>(internalId);
-                assert((realId >> 32) == 0);
-                internalId = static_cast<uint64_t>(-(static_cast<int64_t>(section->runtimeGeneratedId) << 32) - realId);
-            }
 
             // Save reference to duplicate map object
             {
                 QReadLocker scopedLocker(&dataCache._mapObjectsMutex);
 
-                const auto itDuplicateMapObject = dataCache._mapObjects.constFind(internalId);
+                const auto itDuplicateMapObject = dataCache._mapObjects.constFind(id);
                 if(itDuplicateMapObject != dataCache._mapObjects.cend())
                 {
                     const auto& mapObjectWeakRef = *itDuplicateMapObject;
@@ -142,9 +134,6 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
     {
         const auto& mapObject = *itMapObject;
 
-        // Modify map object id if needed
-        const auto internalId = makeInternalId(mapObject);
-
         // Add unique map object under lock to all zoom levels, for which this map object is valid
         assert(mapObject->level);
         for(int zoomLevel = mapObject->level->minZoom; zoomLevel <= mapObject->level->maxZoom; zoomLevel++)
@@ -153,8 +142,8 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
             {
                 QWriteLocker scopedLocker(&dataCache._mapObjectsMutex);
 
-                if(!dataCache._mapObjects.contains(internalId))
-                    dataCache._mapObjects.insert(internalId, mapObject);
+                if(!dataCache._mapObjects.contains(mapObject->id))
+                    dataCache._mapObjects.insert(mapObject->id, mapObject);
             }
         }
     }
@@ -204,18 +193,3 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
     }
 }
 
-uint64_t OsmAnd::OfflineMapDataProvider_P::makeInternalId( const std::shared_ptr<const Model::MapObject>& mapObject )
-{
-    uint64_t internalId = mapObject->id;
-
-    if(static_cast<int64_t>(internalId) < 0)
-    {
-        // IDs < 0 are guaranteed to be unique only inside own section
-        const int64_t realId = -static_cast<int64_t>(internalId);
-        assert((realId >> 32) == 0);
-        assert(mapObject->section);
-        internalId = static_cast<uint64_t>(-(static_cast<int64_t>(mapObject->section->runtimeGeneratedId) << 32) - realId);
-    }
-
-    return internalId;
-}

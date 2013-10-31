@@ -43,11 +43,13 @@ namespace OsmAnd {
         Q_DISABLE_COPY(RasterizedSymbol);
     private:
     protected:
-        RasterizedSymbol(const std::shared_ptr<const Model::MapObject>& mapObject, const std::shared_ptr<const SkBitmap>& icon, const QList< std::shared_ptr<const SkBitmap> >& texts);
+        RasterizedSymbol(const std::shared_ptr<const Model::MapObject>& mapObject, const PointI& location31, const std::shared_ptr<const SkBitmap>& icon, const QList< std::shared_ptr<const SkBitmap> >& texts);
     public:
         virtual ~RasterizedSymbol();
 
         const std::shared_ptr<const Model::MapObject> mapObject;
+
+        const PointI location31;
 
         const std::shared_ptr<const SkBitmap> icon;
         const QList< std::shared_ptr<const SkBitmap> > texts;

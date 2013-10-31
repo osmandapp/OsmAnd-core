@@ -472,6 +472,9 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                     cis->PopLimit(oldLimit);
                 }
 
+                // Make unique map object identifier
+                mapObjectId = Model::MapObject::getUniqueId(mapObjectId, section);
+
                 // Check if map object is desired
                 if(filterById && !filterById(section, mapObjectId))
                     break;

@@ -109,20 +109,15 @@ namespace OsmAnd {
         {
             PrimitiveSymbol();
 
-            inline bool isEmpty() const
-            {
-                return texts.isEmpty() && icon.resourceName.isEmpty();
-            }
-
             std::shared_ptr<const Model::MapObject> mapObject;
 
             int order;
+            PointI location31;
             bool drawOnPath;
 
             struct Text
             {
                 QString value;
-                PointI position31;
                 int verticalOffset;
                 int color;
                 int size;
@@ -138,6 +133,11 @@ namespace OsmAnd {
             {
                 QString resourceName;
             } icon;
+
+            inline bool isEmpty() const
+            {
+                return texts.isEmpty() && icon.resourceName.isEmpty();
+            }
         };
 
         struct Primitive
@@ -172,7 +172,7 @@ namespace OsmAnd {
             const Primitive& primitive);
         static void obtainPrimitiveTexts(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-            const Primitive& primitive, const PointI& point31, PrimitiveSymbol& primitiveSymbol);
+            const Primitive& primitive, PrimitiveSymbol& primitiveSymbol);
 
         enum PaintValuesSet : int
         {
@@ -232,7 +232,7 @@ namespace OsmAnd {
             const AreaI* const destinationArea,
             const IQueryController* const controller);
 
-        void rasterizeSymbols(
+        void rasterizeSymbolsWithoutPaths(
             QList< std::shared_ptr<const RasterizedSymbol> >& outSymbols,
             const IQueryController* const controller);
 

@@ -38,22 +38,16 @@ namespace OsmAnd {
         Q_DISABLE_COPY(MapSymbol);
     private:
     protected:
-        MapSymbol(const uint64_t id, const PointI& location, const ZoomLevel minZoom, const ZoomLevel maxZoom, SkBitmap* bitmap);
-
-        std::unique_ptr<SkBitmap> _bitmap;
     public:
+        MapSymbol(const uint64_t id, const PointI& location, const ZoomLevel zoom, const std::shared_ptr<const SkBitmap>& icon, const QList< std::shared_ptr<const SkBitmap> >& texts);
         virtual ~MapSymbol();
 
         const uint64_t id;
-
         const PointI location;
-        const ZoomLevel minZoom;
-        const ZoomLevel maxZoom;
+        const ZoomLevel zoom;
 
-        //todo: text bitmap
-        //todo: icon bitmap?
-
-        const std::unique_ptr<SkBitmap>& bitmap;
+        const std::shared_ptr<const SkBitmap> icon;
+        const QList< std::shared_ptr<const SkBitmap> > texts;
     };
 
     class OSMAND_CORE_API IMapSymbolProvider

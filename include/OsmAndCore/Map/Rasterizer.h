@@ -77,7 +77,7 @@ namespace OsmAnd {
         // a callback-method to provide canvas of specified size?
         //QList< std::shared_ptr<const RasterizedSymbol> >& outSymbols,
 
-        void rasterizeSymbols(
+        void rasterizeSymbolsWithoutPaths(
             QList< std::shared_ptr<const RasterizedSymbol> >& outSymbols,
             const IQueryController* const controller = nullptr);
 

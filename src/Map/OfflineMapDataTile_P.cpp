@@ -37,7 +37,7 @@ void OsmAnd::OfflineMapDataTile_P::cleanup()
                 if(!mapObject.unique())
                     continue;
 
-                dataCache._mapObjects.remove(OfflineMapDataProvider_P::makeInternalId(mapObject));
+                dataCache._mapObjects.remove(mapObject->id);
             }
         }
     }

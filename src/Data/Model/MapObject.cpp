@@ -1,6 +1,9 @@
 #include "MapObject.h"
 
+#include <cassert>
+
 #include "ObfMapSectionReader.h"
+#include "ObfMapSectionInfo.h"
 
 OsmAnd::Model::MapObject::MapObject(const std::shared_ptr<const ObfMapSectionInfo>& section_, const std::shared_ptr<const ObfMapSectionLevel>& level_)
     : _id(std::numeric_limits<uint64_t>::max())
@@ -106,4 +109,28 @@ bool OsmAnd::Model::MapObject::intersects( const AreaI& area ) const
         return true;
 
     return false;
+}
+
+uint64_t OsmAnd::Model::MapObject::getUniqueId( const std::shared_ptr<const MapObject>& mapObject )
+{
+    return getUniqueId(mapObject->id, mapObject->section);
+}
+
+uint64_t OsmAnd::Model::MapObject::getUniqueId( const uint64_t id, const std::shared_ptr<const ObfMapSectionInfo>& section )
+{
+    uint64_t uniqueId = id;
+
+    if(static_cast<int64_t>(uniqueId) < 0)
+    {
+        // IDs < 0 are guaranteed to be unique only inside own section
+        const int64_t realId = -static_cast<int64_t>(uniqueId);
+        assert((realId >> 32) == 0);
+        assert(section);
+        assert((section->runtimeGeneratedId >> 16) == 0);
+
+        uniqueId = (static_cast<int64_t>(section->runtimeGeneratedId) << 32) | realId;
+        uniqueId = static_cast<uint64_t>(-static_cast<int64_t>(uniqueId));
+    }
+
+    return uniqueId;
 }
