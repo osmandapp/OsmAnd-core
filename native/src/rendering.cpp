@@ -58,44 +58,49 @@ void calcPoint(std::pair<int, int>  c, RenderingContext* rc)
 
 
 UNORDERED(map)<std::string, SkPathEffect*> pathEffects;
-SkPathEffect* getDashEffect(std::string input)
+SkPathEffect* getDashEffect(RenderingContext* rc, std::string input)
 {
-    if(pathEffects.find(input) != pathEffects.end())
-        return pathEffects[input];
-
     const char* chars = input.c_str();
     int i = 0;
     char fval[10];
     int flength = 0;
-    float primFloats[20];
-    int floatLen = 0;
-    for(;;i++)
-    {
-        if(chars[i] == 0)
-        {
-            if(flength > 0)	{ fval[flength] = 0;
-            primFloats[floatLen++] = atof(fval); flength = 0;}
-            break;
-        }
-        else
-        {
-            if(chars[i] != '_')
-            {
-                // suppose it is a character
-                fval[flength++] = chars[i];
-            }
-            else
-            {
-                if(flength > 0)
-                {
-                    fval[flength] = 0;
-                    primFloats[floatLen++] = atof(fval); flength = 0;
-                }
-            }
+    vector<float> primFloats;
+    bool afterColon = false;
+    std::string hash = "";
+    for(;;i++) {
+        if(chars[i] != '_' && chars[i] != 0 && chars[i] != ':') {
+           // suppose it is a character
+           fval[flength++] = chars[i];
+        } else {
+            fval[flength] = 0;
+			float parsed = 0;
+			if(flength > 0) {	
+			   parsed = atof(fval);
+			}
+
+			if(afterColon) {
+				primFloats[primFloats.size() - 1] += parsed;
+			} else {
+				parsed = rc->getDensityValue(parsed);
+				primFloats.push_back(parsed); 
+			}
+			hash += (parsed * 10);
+			flength = 0;
+			
+			if(chars[i] == ':') {
+				afterColon = true;
+			} else {
+				afterColon = false;
+			}
+            if(chars[i] == 0) break;                
         }
     }
-    SkPathEffect* r = new SkDashPathEffect(primFloats, floatLen, 0);
-    pathEffects[input] = r;
+
+    if(pathEffects.find(hash) != pathEffects.end())
+        return pathEffects[hash];
+
+    SkPathEffect* r = new SkDashPathEffect(&primFloats[0], primFloats.size(), 0);
+    pathEffects[hash] = r;
     return r;
 }
 
@@ -174,7 +179,7 @@ int updatePaint(RenderingRuleSearchRequest* req, SkPaint* paint, int ind, int ar
 
         if (pathEff.size() > 0)
         {
-            SkPathEffect* p = getDashEffect(pathEff);
+            SkPathEffect* p = getDashEffect(rc, pathEff);
             paint->setPathEffect(p);
         }
         else
