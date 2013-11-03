@@ -281,8 +281,7 @@ void drawPolylineShadow(SkCanvas* cv, SkPaint* paint, RenderingContext* rc, SkPa
     }
 }
 
-std::vector<SkPaint> oneWayPaints;
-std::vector<SkPaint> reverseWayPaints;
+
 SkPaint* oneWayPaint(){
     SkPaint* oneWay = new SkPaint;
     oneWay->setStyle(SkPaint::kStroke_Style);
@@ -291,12 +290,16 @@ SkPaint* oneWayPaint(){
     return oneWay;
 }
 void drawOneWayPaints(RenderingContext* rc, SkCanvas* cv, SkPath* p, int oneway) {
-	if (oneWayPaints.size() == 0) {
+	float rmin = rc->getDensityValue(1);
+	if(rmin > 1) {
+		rmin = rmin * 2 / 3;
+	}
+	if (rc->oneWayPaints.size() == 0) {
         const float intervals_oneway[4][4] = {
-            {0, 12, 10, 152},
-            {0, 12, 9, 153},
-            {0, 18, 2, 154},
-            {0, 18, 1, 155}
+            {0, 12, 10 * rmin, 152},
+            {0, 12,  9 * rmin, 152 + rmin},
+            {0, 12 + 6 * rmin, 2 * rmin , 152 + 2 * rmin},
+            {0, 12 + 6 * rmin, 1 * rmin, 152 + 3 * rmin}
         };
 		SkPathEffect* arrowDashEffect1 = new SkDashPathEffect(intervals_oneway[0], 4, 0);
 		SkPathEffect* arrowDashEffect2 = new SkDashPathEffect(intervals_oneway[1], 4, 1);
@@ -304,71 +307,72 @@ void drawOneWayPaints(RenderingContext* rc, SkCanvas* cv, SkPath* p, int oneway)
 		SkPathEffect* arrowDashEffect4 = new SkDashPathEffect(intervals_oneway[3], 4, 1);
 
 		SkPaint* p = oneWayPaint();
-		p->setStrokeWidth(1);
+		p->setStrokeWidth(rmin);
 		p->setPathEffect(arrowDashEffect1)->unref();
-		oneWayPaints.push_back(*p);
+		rc->oneWayPaints.push_back(*p);
 		delete p;
 
 		p = oneWayPaint();
-		p->setStrokeWidth(2);
+		p->setStrokeWidth(rmin * 2);
 		p->setPathEffect(arrowDashEffect2)->unref();
-		oneWayPaints.push_back(*p);
+		rc->oneWayPaints.push_back(*p);
 		delete p;
 
 		p = oneWayPaint();
-		p->setStrokeWidth(3);
+		p->setStrokeWidth(rmin * 3);
 		p->setPathEffect(arrowDashEffect3)->unref();
-		oneWayPaints.push_back(*p);
+		rc->oneWayPaints.push_back(*p);
 		delete p;
 
 		p = oneWayPaint();
-		p->setStrokeWidth(4);
+		p->setStrokeWidth(rmin * 4);
 		p->setPathEffect(arrowDashEffect4)->unref();
-		oneWayPaints.push_back(*p);
+		rc->oneWayPaints.push_back(*p);
 		delete p;
 	}
-	if (reverseWayPaints.size() == 0) {
+	
+	if (rc->reverseWayPaints.size() == 0) {
             const float intervals_reverse[4][4] = {
-                {0, 12, 10, 152},
-                {0, 13, 9, 152},
-                {0, 14, 2, 158},
-                {0, 15, 1, 158}
-            };
+                {0, 12, 10 * rmin, 152},
+                {0, 12 + 1 * rmin, 9 * rmin, 152},
+                {0, 12 + 2 * rmin, 2 * rmin, 152 + 6 * rmin},
+                {0, 12 + 3 * rmin, 1 * rmin, 152 + 6 * rmin}
+            };            
 		SkPathEffect* arrowDashEffect1 = new SkDashPathEffect(intervals_reverse[0], 4, 0);
 		SkPathEffect* arrowDashEffect2 = new SkDashPathEffect(intervals_reverse[1], 4, 1);
 		SkPathEffect* arrowDashEffect3 = new SkDashPathEffect(intervals_reverse[2], 4, 1);
 		SkPathEffect* arrowDashEffect4 = new SkDashPathEffect(intervals_reverse[3], 4, 1);
 		SkPaint* p = oneWayPaint();
-		p->setStrokeWidth(1);
+		p->setStrokeWidth(rmin * 1);
 		p->setPathEffect(arrowDashEffect1)->unref();
-		reverseWayPaints.push_back(*p);
+		rc->reverseWayPaints.push_back(*p);
 		delete p;
 
 		p = oneWayPaint();
-		p->setStrokeWidth(2);
+		p->setStrokeWidth(rmin * 2);
 		p->setPathEffect(arrowDashEffect2)->unref();
-		reverseWayPaints.push_back(*p);
+		rc->reverseWayPaints.push_back(*p);
 		delete p;
 
 		p = oneWayPaint();
-		p->setStrokeWidth(3);
+		p->setStrokeWidth(rmin * 3);
 		p->setPathEffect(arrowDashEffect3)->unref();
-		reverseWayPaints.push_back(*p);
+		rc->reverseWayPaints.push_back(*p);
 		delete p;
 
 		p = oneWayPaint();
-		p->setStrokeWidth(4);
+		p->setStrokeWidth(rmin * 4);
 		p->setPathEffect(arrowDashEffect4)->unref();
-		reverseWayPaints.push_back(*p);
+		rc->reverseWayPaints.push_back(*p);
 		delete p;
 	}
 	if (oneway > 0) {
-		for (size_t i = 0; i < oneWayPaints.size(); i++) {
-			PROFILE_NATIVE_OPERATION(rc, cv->drawPath(*p, oneWayPaints.at(i)));
+		for (size_t i = 0; i < rc->oneWayPaints.size(); i++) {
+			PROFILE_NATIVE_OPERATION(rc, cv->drawPath(*p, rc->oneWayPaints.at(i)));
 		}
 	} else {
-		for (size_t i = 0; i < reverseWayPaints.size(); i++) {
-			PROFILE_NATIVE_OPERATION(rc, cv->drawPath(*p, reverseWayPaints.at(i)));
+		for (size_t i = 0; i < rc->reverseWayPaints.size(); i++) {
+			PROFILE_NATIVE_OPERATION(rc, cv->drawPath(*p, rc->reverseWayPaints.at(i)));
 		}
 	}
 }

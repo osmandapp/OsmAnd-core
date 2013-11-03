@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <SkPath.h>
+#include <SkPaint.h>
 #include <SkBitmap.h>
 
 #include <ElapsedTimer.h>
@@ -100,6 +101,9 @@ public:
 	int lastRenderedKey;
 	OsmAnd::ElapsedTimer textRendering;
 	OsmAnd::ElapsedTimer nativeOperations;
+
+	std::vector<SkPaint> oneWayPaints;
+	std::vector<SkPaint> reverseWayPaints;
 
 // because they used in 3rd party functions
 public :
