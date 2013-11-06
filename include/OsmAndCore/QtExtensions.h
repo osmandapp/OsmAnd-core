@@ -37,13 +37,13 @@ inline uint qHash(const std::shared_ptr<T>& value, uint seed = 0) Q_DECL_NOTHROW
 #include <QHash>
 
 #ifndef SWIG
-inline uint qHash(const OsmAnd::TileId value, uint seed = 0) Q_DECL_NOTHROW
+inline uint qHash(const OsmAnd::TileId value, uint seed) Q_DECL_NOTHROW
 {
     return ::qHash(value.id, seed);
 }
 
 template<typename T>
-inline uint qHash(const std::shared_ptr<T>& value, uint seed = 0) Q_DECL_NOTHROW
+inline uint qHash(const std::shared_ptr<T>& value, uint seed) Q_DECL_NOTHROW
 {
     return ::qHash(value.get(), seed);
 }
