@@ -23,6 +23,8 @@
 #ifndef __INSPECTOR_H_
 #define __INSPECTOR_H_
 
+#include <OsmAndCore/QtExtensions.h>
+
 #include <QString>
 #include <QStringList>
 

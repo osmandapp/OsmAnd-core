@@ -28,17 +28,10 @@
 
 #include <OsmAndCore.h>
 
-#include <QtGlobal>
-namespace OsmAnd {
-    STRONG_ENUM(ObfAddressBlockType);
-}
-inline uint qHash(const OsmAnd::ObfAddressBlockType value, uint seed = 0) Q_DECL_NOTHROW;
+#include <OsmAndCore/QtExtensions.h>
+
 #include <QList>
 #include <QHash>
-inline uint qHash(const OsmAnd::ObfAddressBlockType value, uint seed) Q_DECL_NOTHROW
-{
-    return ::qHash(static_cast<int>(value), seed);
-}
 
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Data/ObfSectionInfo.h>
@@ -47,14 +40,6 @@ namespace OsmAnd {
 
     class ObfAddressSectionReader_P;
     class ObfReader_P;
-
-    STRONG_ENUM(ObfAddressBlockType)
-    {
-        CitiesOrTowns = 1,
-        Villages = 3,
-        Postcodes = 2,
-    };
-
     class ObfAddressBlocksSectionInfo;
 
     class OSMAND_CORE_API ObfAddressSectionInfo : public ObfSectionInfo

@@ -6,6 +6,8 @@
 #include <map>
 #include <memory>
 
+#include <OsmAndCore/QtExtensions.h>
+
 #include <QFile>
 #include <QStringList>
 

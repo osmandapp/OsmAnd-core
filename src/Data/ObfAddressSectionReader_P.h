@@ -27,17 +27,13 @@
 #include <memory>
 #include <functional>
 
-#include <OsmAndCore.h>
-#include <QtGlobal>
-namespace OsmAnd {
-    STRONG_ENUM(ObfAddressBlockType);
-}
-inline uint qHash(const OsmAnd::ObfAddressBlockType value, uint seed) Q_DECL_NOTHROW;
+#include <QtExtensions.h>
 
 #include <QList>
 #include <QSet>
 
 #include <CommonTypes.h>
+#include <DataTypes.h>
 #include <ObfMapSectionInfo_P.h>
 #include <MapTypes.h>
 
@@ -53,7 +49,6 @@ namespace OsmAnd {
         class Building;
         class StreetIntersection;
     } // namespace Model
-    STRONG_ENUM(ObfAddressBlockType);
     class IQueryController;
 
     class ObfAddressSectionReader_P

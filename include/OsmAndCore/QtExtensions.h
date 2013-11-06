@@ -27,11 +27,15 @@
 
 #include <QtGlobal>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Data/DataTypes.h>
+#include <OsmAndCore/Map/MapTypes.h>
 #ifndef SWIG
 inline uint qHash(const OsmAnd::TileId value, uint seed = 0) Q_DECL_NOTHROW;
 
 template<typename T>
 inline uint qHash(const std::shared_ptr<T>& value, uint seed = 0) Q_DECL_NOTHROW;
+
+inline uint qHash(const OsmAnd::ObfAddressBlockType value, uint seed = 0) Q_DECL_NOTHROW;
 #endif
 
 #include <QHash>
@@ -46,6 +50,11 @@ template<typename T>
 inline uint qHash(const std::shared_ptr<T>& value, uint seed) Q_DECL_NOTHROW
 {
     return ::qHash(value.get(), seed);
+}
+
+inline uint qHash(const OsmAnd::ObfAddressBlockType value, uint seed) Q_DECL_NOTHROW
+{
+    return ::qHash(static_cast<int>(value), seed);
 }
 #endif
 

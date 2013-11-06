@@ -27,11 +27,14 @@
 #include <memory>
 #include <functional>
 
+#include <OsmAndCore/QtExtensions.h>
+
 #include <QList>
 #include <QSet>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Data/DataTypes.h>
 
 namespace OsmAnd {
 
@@ -43,7 +46,6 @@ namespace OsmAnd {
         class Building;
         class StreetIntersection;
     } // namespace Model
-    STRONG_ENUM(ObfAddressBlockType);
     class IQueryController;
 
     class OSMAND_CORE_API ObfAddressSectionReader
