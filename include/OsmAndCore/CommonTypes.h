@@ -28,8 +28,6 @@
 
 #include <QtGlobal>
 #include <QString>
-#include <QList>
-#include <QHash>
 
 #include <OsmAndCore.h>
 
