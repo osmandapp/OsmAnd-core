@@ -26,9 +26,20 @@
 #include <cstdint>
 #include <memory>
 
-#include <QList>
-
 #include <OsmAndCore.h>
+
+#include <QtGlobal>
+namespace OsmAnd {
+    STRONG_ENUM(ObfAddressBlockType);
+}
+inline uint qHash(const OsmAnd::ObfAddressBlockType value, uint seed = 0) Q_DECL_NOTHROW;
+#include <QList>
+#include <QHash>
+inline uint qHash(const OsmAnd::ObfAddressBlockType value, uint seed) Q_DECL_NOTHROW
+{
+    return ::qHash(static_cast<int>(value), seed);
+}
+
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Data/ObfSectionInfo.h>
 
