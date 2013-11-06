@@ -38,21 +38,18 @@ namespace OsmAnd
 
     struct TagValue
     {
-        TagValue()
-        {
-        }
+        inline TagValue()
+        {}
 
-        TagValue(const QString& tag_, const QString& value_)
+        inline TagValue(const QString& tag_, const QString& value_)
             : tag(tag_)
             , value(value_)
-        {
-        }
+        {}
 
-        TagValue(const char* tag_, const char* value_)
+        inline TagValue(const char* tag_, const char* value_)
             : tag(QString::fromLatin1(tag_))
             , value(QString::fromLatin1(value_))
-        {
-        }
+        {}
 
         QString tag;
         QString value;
@@ -68,60 +65,60 @@ namespace OsmAnd
 
         T x, y;
 
-        Point()
+        inline Point()
         {
             this->x = 0;
             this->y = 0;
         }
 
         template<typename T_>
-        Point(const Point<T_>& that)
+        inline Point(const Point<T_>& that)
         {
             this->x = that.x;
             this->y = that.y;
         }
 
-        Point(const T& x, const T& y)
+        inline Point(const T& x, const T& y)
         {
             this->x = x;
             this->y = y;
         }
 
-        PointT operator+ (const PointT& r) const
+        inline PointT operator+ (const PointT& r) const
         {
             return PointT(x + r.x, y + r.y);
         }
 
-        PointT& operator+= (const PointT& r)
+        inline PointT& operator+= (const PointT& r)
         {
             x += r.x;
             y += r.y;
             return *this;
         }
 
-        PointT operator- (const PointT& r) const
+        inline PointT operator- (const PointT& r) const
         {
             return PointT(x - r.x, y - r.y);
         }
 
-        PointT& operator-= (const PointT& r)
+        inline PointT& operator-= (const PointT& r)
         {
             x -= r.x;
             y -= r.y;
             return *this;
         }
 
-        bool operator== (const PointT& r) const
+        inline bool operator== (const PointT& r) const
         {
             return equal(x, r.x) && equal(y, r.y);
         }
 
-        bool operator!= (const PointT& r) const
+        inline bool operator!= (const PointT& r) const
         {
             return !equal(x, r.x) || !equal(y, r.y);
         }
 
-        PointT& operator=(const PointT& that)
+        inline PointT& operator=(const PointT& that)
         {
             if(this != &that)
             {
@@ -161,7 +158,7 @@ namespace OsmAnd
         typedef Point<T> PointT;
         typedef Area<T> AreaT;
 
-        Area()
+        inline Area()
             : top(topLeft.y)
             , left(topLeft.x)
             , bottom(bottomRight.y)
@@ -173,7 +170,7 @@ namespace OsmAnd
             this->right = 0;
         }
 
-        Area(const T& t, const T& l, const T& b, const T& r)
+        inline Area(const T& t, const T& l, const T& b, const T& r)
             : top(topLeft.y)
             , left(topLeft.x)
             , bottom(bottomRight.y)
@@ -185,7 +182,7 @@ namespace OsmAnd
             this->right = r;
         }
 
-        Area(const PointT& tl, const PointT& br)
+        inline Area(const PointT& tl, const PointT& br)
             : top(topLeft.y)
             , left(topLeft.x)
             , bottom(bottomRight.y)
@@ -195,7 +192,7 @@ namespace OsmAnd
             this->bottomRight = br;
         }
 
-        Area(const AreaT& that)
+        inline Area(const AreaT& that)
             : top(topLeft.y)
             , left(topLeft.x)
             , bottom(bottomRight.y)
@@ -206,7 +203,7 @@ namespace OsmAnd
         }
 
         template<typename T_>
-        Area(const Area<T_>& that)
+        inline Area(const Area<T_>& that)
             : top(topLeft.y)
             , left(topLeft.x)
             , bottom(bottomRight.y)
@@ -223,7 +220,7 @@ namespace OsmAnd
         T& bottom;
         T& right;
 
-        AreaT& operator=(const AreaT& that)
+        inline AreaT& operator=(const AreaT& that)
         {
             if(this != &that)
             {
@@ -233,27 +230,27 @@ namespace OsmAnd
             return *this;
         }
 
-        bool operator== (const AreaT& r) const
+        inline bool operator== (const AreaT& r) const
         {
             return topLeft == r.topLeft && bottomRight == r.bottomRight;
         }
 
-        bool operator!= (const AreaT& r) const
+        inline bool operator!= (const AreaT& r) const
         {
             return topLeft != r.topLeft || bottomRight != r.bottomRight;
         }
 
-        bool contains(const T& x, const T& y) const
+        inline bool contains(const T& x, const T& y) const
         {
             return !(left > x || right < x || top > y || bottom < y);
         }
 
-        bool contains(const PointT& p) const
+        inline bool contains(const PointT& p) const
         {
             return !(left > p.x || right < p.x || top > p.y || bottom < p.y);
         }
 
-        bool contains(const T& t, const T& l, const T& b, const T& r) const
+        inline bool contains(const T& t, const T& l, const T& b, const T& r) const
         {
             return
                 l >= left &&
@@ -262,7 +259,7 @@ namespace OsmAnd
                 b <= bottom;
         }
 
-        bool contains(const AreaT& that) const
+        inline bool contains(const AreaT& that) const
         {
             return
                 that.left >= this->left &&
@@ -272,19 +269,19 @@ namespace OsmAnd
         }
 
         template<typename T_>
-        bool contains(const T_& x, const T_& y) const
+        inline bool contains(const T_& x, const T_& y) const
         {
             return !(left > x || right < x || top > y || bottom < y);
         }
 
         template<typename T_>
-        bool contains(const Point<T_>& p) const
+        inline bool contains(const Point<T_>& p) const
         {
             return !(left > p.x || right < p.x || top > p.y || bottom < p.y);
         }
 
         template<typename T_>
-        bool contains(const T_& t, const T_& l, const T_& b, const T_& r) const
+        inline bool contains(const T_& t, const T_& l, const T_& b, const T_& r) const
         {
             return
                 l >= left &&
@@ -294,7 +291,7 @@ namespace OsmAnd
         }
 
         template<typename T_>
-        bool contains(const Area<T_>& that) const
+        inline bool contains(const Area<T_>& that) const
         {
             return
                 that.left >= this->left &&
@@ -303,7 +300,7 @@ namespace OsmAnd
                 that.bottom <= this->bottom;
         }
 
-        bool intersects(const T& t, const T& l, const T& b, const T& r) const
+        inline bool intersects(const T& t, const T& l, const T& b, const T& r) const
         {
             return !(
                 l > this->right ||
@@ -312,7 +309,7 @@ namespace OsmAnd
                 b < this->top);
         }
 
-        bool intersects(const AreaT& that) const
+        inline bool intersects(const AreaT& that) const
         {
             return !(
                 that.left > this->right ||
@@ -322,7 +319,7 @@ namespace OsmAnd
         }
 
         template<typename T_>
-        bool intersects(const T_& t, const T_& l, const T_& b, const T_& r) const
+        inline bool intersects(const T_& t, const T_& l, const T_& b, const T_& r) const
         {
             return !(
                 l > this->right ||
@@ -332,7 +329,7 @@ namespace OsmAnd
         }
 
         template<typename T_>
-        bool intersects(const Area<T_>& that) const
+        inline bool intersects(const Area<T_>& that) const
         {
             return !(
                 that.left > this->right ||
@@ -341,17 +338,17 @@ namespace OsmAnd
                 that.bottom < this->top);
         }
 
-        T width() const
+        inline T width() const
         {
             return left > right ? left - right : right - left;
         }
 
-        T height() const
+        inline T height() const
         {
             return top > bottom ? top - bottom : bottom - top;
         }
 
-        Point<T> center() const
+        inline Point<T> center() const
         {
             return Point<T>(left + width() / 2, bottom + height() / 2);
         }
@@ -521,13 +518,13 @@ namespace OsmAnd
 
     union FColorRGB
     {
-        FColorRGB()
+        inline FColorRGB()
             : r(1.0f)
             , g(1.0f)
             , b(1.0f)
         {}
 
-        FColorRGB(const float r_, const float g_, const float b_)
+        inline FColorRGB(const float r_, const float g_, const float b_)
             : r(r_)
             , g(g_)
             , b(b_)
@@ -541,30 +538,17 @@ namespace OsmAnd
             float b;
         };
 
-        bool operator== (const FColorRGB& other) const
+        inline bool operator== (const FColorRGB& other) const
         {
             return qFuzzyCompare(r, other.r) && qFuzzyCompare(g, other.g) && qFuzzyCompare(b, other.b);
         }
 
-        bool operator!= (const FColorRGB& other) const
+        inline bool operator!= (const FColorRGB& other) const
         {
             return !qFuzzyCompare(r, other.r) || !qFuzzyCompare(g, other.g) || !qFuzzyCompare(b, other.b);
         }
     };
 
 }
-
-#ifndef SWIG
-inline uint qHash(const OsmAnd::TileId value, uint seed = 0) Q_DECL_NOTHROW
-{
-    return ::qHash(value.id, seed);
-}
-
-template<typename T>
-inline uint qHash(const std::shared_ptr<T>& value, uint seed = 0) Q_DECL_NOTHROW
-{
-    return ::qHash(value.get(), seed);
-}
-#endif
 
 #endif // __COMMON_TYPES_H_

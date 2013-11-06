@@ -27,6 +27,8 @@
 
 #include <glm/glm.hpp>
 
+#include <OsmAndCore/QtExtensions.h>
+
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <AtlasMapRenderer.h>
