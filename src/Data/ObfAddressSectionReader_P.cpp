@@ -15,6 +15,11 @@
 #include "OBF.pb.h"
 #include <google/protobuf/wire_format_lite.h>
 
+inline uint qHash(const OsmAnd::ObfAddressBlockType value, uint seed) Q_DECL_NOTHROW
+{
+    return ::qHash(static_cast<int>(value), seed);
+}
+
 OsmAnd::ObfAddressSectionReader_P::ObfAddressSectionReader_P()
 {
 }

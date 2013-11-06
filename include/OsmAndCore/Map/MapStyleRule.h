@@ -27,6 +27,7 @@
 #include <memory>
 
 #include <QString>
+#include <QHash>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>

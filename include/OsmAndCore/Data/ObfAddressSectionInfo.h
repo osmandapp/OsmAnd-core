@@ -43,12 +43,6 @@ namespace OsmAnd {
         Villages = 3,
         Postcodes = 2,
     };
-#ifndef SWIG
-    inline uint qHash(ObfAddressBlockType value, uint seed = 0) Q_DECL_NOTHROW
-    {
-        return ::qHash(static_cast<int>(value), seed);
-    }
-#endif
 
     class ObfAddressBlocksSectionInfo;
 

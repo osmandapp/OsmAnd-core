@@ -26,6 +26,8 @@
 #include <cstdint>
 #include <memory>
 
+#include <QList>
+
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 

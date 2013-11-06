@@ -26,6 +26,8 @@
 #include <memory>
 #include <functional>
 
+#include <QList>
+
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/IMapProvider.h>

@@ -27,10 +27,16 @@
 #include <memory>
 #include <functional>
 
+#include <OsmAndCore.h>
+#include <QtGlobal>
+namespace OsmAnd {
+    STRONG_ENUM(ObfAddressBlockType);
+}
+inline uint qHash(const OsmAnd::ObfAddressBlockType value, uint seed = 0) Q_DECL_NOTHROW;
+
 #include <QList>
 #include <QSet>
 
-#include <OsmAndCore.h>
 #include <CommonTypes.h>
 #include <ObfMapSectionInfo_P.h>
 #include <MapTypes.h>
