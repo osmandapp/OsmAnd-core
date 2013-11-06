@@ -19,15 +19,15 @@
 
 OsmAnd::MapRenderer::MapRenderer()
     : _taskHostBridge(this)
-    , currentConfiguration(_currentConfiguration)
-    , _currentConfigurationInvalidatedMask(std::numeric_limits<uint32_t>::max())
+    , _currentConfigurationInvalidatedMask(0)
+    , _requestedStateUpdatedMask(0)
     , _invalidatedResourcesTypesMask(0)
-    , currentState(_currentState)
-    , _requestedStateUpdatedMask(std::numeric_limits<uint32_t>::max())
-    , providersAndResourcesBindings(_providersAndResourcesBindings)
-    , resources(_resources)
     , _renderThreadId(nullptr)
     , _workerThreadId(nullptr)
+    , currentConfiguration(_currentConfiguration)
+    , currentState(_currentState)
+    , providersAndResourcesBindings(_providersAndResourcesBindings)
+    , resources(_resources)
     , renderAPI(_renderAPI)
 {
     // Number of workers should be determined in runtime (exclude worker and main threads):
@@ -794,6 +794,12 @@ bool OsmAnd::MapRenderer::preInitializeRendering()
     // Capture render thread ID, since rendering must be performed from
     // same thread where it was initialized
     _renderThreadId = QThread::currentThreadId();
+
+    // Initialize various values
+    _workerThreadId = nullptr;
+    _currentConfigurationInvalidatedMask = std::numeric_limits<uint32_t>::max();
+    _requestedStateUpdatedMask = std::numeric_limits<uint32_t>::max();
+    _invalidatedResourcesTypesMask = 0;
 
     // Raster resources collections are special, so preallocate them
     {
