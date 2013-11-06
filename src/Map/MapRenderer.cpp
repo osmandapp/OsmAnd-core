@@ -109,13 +109,9 @@ void OsmAnd::MapRenderer::setConfiguration( const MapRendererConfiguration& conf
         mask |= ConfigurationChange::PaletteTexturesUsage;
 
     if(invalidateRasterTextures)
-    {
-        //TODO: invalidate all active resources collections forcibly
-    }
+        invalidateResourcesOfType(ResourceType::RasterMap);
     if(invalidateElevationData)
-    {
-        //TODO: invalidate all active resources collections forcibly
-    }
+        invalidateResourcesOfType(ResourceType::ElevationData);
     invalidateCurrentConfiguration(mask);
 }
 
