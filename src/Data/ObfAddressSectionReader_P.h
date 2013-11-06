@@ -32,7 +32,7 @@
 namespace OsmAnd {
     STRONG_ENUM(ObfAddressBlockType);
 }
-inline uint qHash(const OsmAnd::ObfAddressBlockType value, uint seed = 0) Q_DECL_NOTHROW;
+inline uint qHash(const OsmAnd::ObfAddressBlockType value, uint seed) Q_DECL_NOTHROW;
 
 #include <QList>
 #include <QSet>
