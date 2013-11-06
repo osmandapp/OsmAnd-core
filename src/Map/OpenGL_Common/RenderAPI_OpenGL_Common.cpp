@@ -27,10 +27,12 @@
 OsmAnd::RenderAPI_OpenGL_Common::RenderAPI_OpenGL_Common()
     : _maxTextureSize(0)
     , _isSupported_vertexShaderTextureLookup(false)
+    , _isSupported_textureLod(false)
     , extensions(_extensions)
     , compressedFormats(_compressedFormats)
     , maxTextureSize(_maxTextureSize)
     , isSupported_vertexShaderTextureLookup(_isSupported_vertexShaderTextureLookup)
+    , isSupported_textureLod(_isSupported_textureLod)
 {
 }
 
@@ -255,7 +257,7 @@ bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU( const std::share
         }
         tileSize = tile->size;
         basePadding = BaseBitmapAtlasTilePadding;
-        generateMipmap = true;
+        generateMipmap = isSupported_textureLod; // No need to generate mipmaps if textureLod is not supported
     }
     else if(tile->dataType == MapTileDataType::ElevationData)
     {

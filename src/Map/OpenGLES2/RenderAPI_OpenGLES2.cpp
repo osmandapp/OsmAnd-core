@@ -180,12 +180,7 @@ bool OsmAnd::RenderAPI_OpenGLES2::initialize()
         return false;
     }
     _isSupported_OES_texture_float = true;
-    if(!extensions.contains("GL_EXT_shader_texture_lod"))
-    {
-        LogPrintf(LogSeverityLevel::Error, "This device does not support required 'GL_EXT_shader_texture_lod' extension");
-        return false;
-    }
-    _isSupported_EXT_shader_texture_lod = true;
+    _isSupported_EXT_shader_texture_lod = _isSupported_textureLod = extensions.contains("GL_EXT_shader_texture_lod");
     _isSupported_EXT_texture_rg = extensions.contains("GL_EXT_texture_rg");
     _isSupported_EXT_unpack_subimage = extensions.contains("GL_EXT_unpack_subimage");
     _isSupported_EXT_texture_storage = extensions.contains("GL_EXT_texture_storage");
@@ -551,12 +546,14 @@ void OsmAnd::RenderAPI_OpenGLES2::preprocessShader( QString& code, const QString
         "                                                                                                                   ""\n"
         // Features definitions
         "#define VERTEX_TEXTURE_FETCH_SUPPORTED %VertexTextureFetchSupported%                                               ""\n"
+        "#define TEXTURE_LOD_SUPPORTED %TextureLodSupported%                                                                ""\n"
         "#define SAMPLE_TEXTURE_2D texture2D                                                                                ""\n"
         "#define SAMPLE_TEXTURE_2D_LOD texture2DLodEXT                                                                      ""\n"
         "                                                                                                                   ""\n");
 
     auto shaderSourcePreprocessed = shaderSource;
     shaderSourcePreprocessed.replace("%VertexTextureFetchSupported%", QString::number(isSupported_vertexShaderTextureLookup ? 1 : 0));
+    shaderSourcePreprocessed.replace("%TextureLodSupported%", QString::number(isSupported_textureLod ? 1 : 0));
 
     code.prepend(shaderSourcePreprocessed);
     code.prepend(extraHeader);

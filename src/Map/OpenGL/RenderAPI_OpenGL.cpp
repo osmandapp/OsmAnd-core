@@ -26,6 +26,9 @@
 OsmAnd::RenderAPI_OpenGL::RenderAPI_OpenGL()
 {
     _textureSamplers.fill(0);
+
+    // textureLod() is supported by GLES 4.3 by specification
+    _isSupported_textureLod = true;
 }
 
 OsmAnd::RenderAPI_OpenGL::~RenderAPI_OpenGL()
@@ -335,12 +338,14 @@ void OsmAnd::RenderAPI_OpenGL::preprocessShader( QString& code )
         "                                                                                                                   ""\n"
         // Features definitions
         "#define VERTEX_TEXTURE_FETCH_SUPPORTED %VertexTextureFetchSupported%                                               ""\n"
+        "#define TEXTURE_LOD_SUPPORTED %TextureLodSupported%                                                                ""\n"
         "#define SAMPLE_TEXTURE_2D texture                                                                                  ""\n"
         "#define SAMPLE_TEXTURE_2D_LOD textureLod                                                                           ""\n"
         "                                                                                                                   ""\n");
 
     auto shaderSourcePreprocessed = shaderSource;
     shaderSourcePreprocessed.replace("%VertexTextureFetchSupported%", QString::number(isSupported_vertexShaderTextureLookup ? 1 : 0));
+    shaderSourcePreprocessed.replace("%TextureLodSupported%", QString::number(isSupported_textureLod ? 1 : 0));
 
     code.prepend(shaderSourcePreprocessed);
 }

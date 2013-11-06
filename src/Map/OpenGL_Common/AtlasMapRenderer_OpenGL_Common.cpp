@@ -144,15 +144,19 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeRasterMapStage()
         "                                                                                                                   ""\n"
         // Output data to next shader stages
         "PARAM_OUTPUT vec2 v2f_texCoordsPerLayer[%RasterLayersCount%];                                                      ""\n"
-        "PARAM_OUTPUT float v2f_mipmapLOD;                                                                                  ""\n"
+        "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
+        "    PARAM_OUTPUT float v2f_mipmapLOD;                                                                              ""\n"
+        "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
         "uniform mat4 param_vs_mProjectionView;                                                                             ""\n"
         "uniform vec2 param_vs_targetInTilePosN;                                                                            ""\n"
-        "uniform float param_vs_distanceFromCameraToTarget;                                                                 ""\n"
-        "uniform float param_vs_cameraElevationAngleN;                                                                      ""\n"
-        "uniform vec2 param_vs_groundCameraPosition;                                                                        ""\n"
-        "uniform float param_vs_scaleToRetainProjectedSize;                                                                 ""\n"
+        "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
+        "    uniform float param_vs_distanceFromCameraToTarget;                                                             ""\n"
+        "    uniform float param_vs_cameraElevationAngleN;                                                                  ""\n"
+        "    uniform vec2 param_vs_groundCameraPosition;                                                                    ""\n"
+        "    uniform float param_vs_scaleToRetainProjectedSize;                                                             ""\n"
+        "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-tile data
         "uniform ivec2 param_vs_tileCoordsOffset;                                                                           ""\n"
@@ -225,6 +229,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeRasterMapStage()
         "        v.y *= param_vs_elevationData_k;                                                                           ""\n"
         "    }                                                                                                              ""\n"
         "                                                                                                                   ""\n"
+        "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
         //   Calculate mipmap LOD
         "    vec2 groundVertex = v.xz;                                                                                      ""\n"
         "    vec2 groundCameraToVertex = groundVertex - param_vs_groundCameraPosition;                                      ""\n"
@@ -232,6 +237,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeRasterMapStage()
         "    float mipmapBaseLevelEndDistance = mipmapK * param_vs_distanceFromCameraToTarget;                              ""\n"
         "    v2f_mipmapLOD = 1.0 + (length(groundCameraToVertex) - mipmapBaseLevelEndDistance)                              ""\n"
         "        / (param_vs_scaleToRetainProjectedSize * %TileSize3D%.0);                                                  ""\n"
+        "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
         "                                                                                                                   ""\n"
         //   Finally output processed modified vertex
         "    gl_Position = param_vs_mProjectionView * v;                                                                    ""\n"
@@ -245,7 +251,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeRasterMapStage()
     const auto& fragmentShader = QString::fromLatin1(
         // Input data
         "PARAM_INPUT vec2 v2f_texCoordsPerLayer[%RasterLayersCount%];                                                       ""\n"
-        "PARAM_INPUT float v2f_mipmapLOD;                                                                                   ""\n"
+        "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
+        "    PARAM_INPUT float v2f_mipmapLOD;                                                                               ""\n"
+        "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-layer data
         "struct RasterLayerTile                                                                                             ""\n"
@@ -260,9 +268,15 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeRasterMapStage()
         "    lowp vec4 finalColor;                                                                                          ""\n"
         "                                                                                                                   ""\n"
         //   Mix colors of all layers
+        "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
         "    finalColor = SAMPLE_TEXTURE_2D_LOD(                                                                            ""\n"
         "        param_fs_rasterTileLayers[0].sampler,                                                                      ""\n"
         "        v2f_texCoordsPerLayer[0], v2f_mipmapLOD);                                                                  ""\n"
+        "#else // !TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
+        "    finalColor = SAMPLE_TEXTURE_2D(                                                                                ""\n"
+        "        param_fs_rasterTileLayers[0].sampler,                                                                      ""\n"
+        "        v2f_texCoordsPerLayer[0]);                                                                                 ""\n"
+        "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
         "    finalColor.a *= param_fs_rasterTileLayers[0].k;                                                                ""\n"
         "%UnrolledPerRasterLayerProcessingCode%                                                                             ""\n"
         "                                                                                                                   ""\n"
@@ -285,9 +299,15 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeRasterMapStage()
         "}                                                                                                                  ""\n");
     const auto& fragmentShader_perRasterLayer = QString::fromLatin1(
         "    {                                                                                                              ""\n"
+        "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
         "        lowp vec4 layerColor = SAMPLE_TEXTURE_2D_LOD(                                                              ""\n"
         "            param_fs_rasterTileLayers[%rasterLayerId%].sampler,                                                    ""\n"
         "            v2f_texCoordsPerLayer[%rasterLayerId%], v2f_mipmapLOD);                                                ""\n"
+        "#else // !TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
+        "        lowp vec4 layerColor = SAMPLE_TEXTURE_2D(                                                                  ""\n"
+        "            param_fs_rasterTileLayers[%rasterLayerId%].sampler,                                                    ""\n"
+        "            v2f_texCoordsPerLayer[%rasterLayerId%]);                                                               ""\n"
+        "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
         "                                                                                                                   ""\n"
         "        layerColor.a *= param_fs_rasterTileLayers[%rasterLayerId%].k;                                              ""\n"
         "        finalColor = mix(finalColor, layerColor, layerColor.a);                                                    ""\n"
@@ -351,10 +371,13 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeRasterMapStage()
         }
         renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.mProjectionView, "param_vs_mProjectionView", GLShaderVariableType::Uniform);
         renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.targetInTilePosN, "param_vs_targetInTilePosN", GLShaderVariableType::Uniform);
-        renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.distanceFromCameraToTarget, "param_vs_distanceFromCameraToTarget", GLShaderVariableType::Uniform);
-        renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.cameraElevationAngleN, "param_vs_cameraElevationAngleN", GLShaderVariableType::Uniform);
-        renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.groundCameraPosition, "param_vs_groundCameraPosition", GLShaderVariableType::Uniform);
-        renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.scaleToRetainProjectedSize, "param_vs_scaleToRetainProjectedSize", GLShaderVariableType::Uniform);
+        if(renderAPI->isSupported_textureLod)
+        {
+            renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.distanceFromCameraToTarget, "param_vs_distanceFromCameraToTarget", GLShaderVariableType::Uniform);
+            renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.cameraElevationAngleN, "param_vs_cameraElevationAngleN", GLShaderVariableType::Uniform);
+            renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.groundCameraPosition, "param_vs_groundCameraPosition", GLShaderVariableType::Uniform);
+            renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.scaleToRetainProjectedSize, "param_vs_scaleToRetainProjectedSize", GLShaderVariableType::Uniform);
+        }
         renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.tileCoordsOffset, "param_vs_tileCoordsOffset", GLShaderVariableType::Uniform);
         renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationData_k, "param_vs_elevationData_k", GLShaderVariableType::Uniform);
         renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationData_upperMetersPerUnit, "param_vs_elevationData_upperMetersPerUnit", GLShaderVariableType::Uniform);
@@ -449,22 +472,25 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
     glUniform2f(stageVariation.vs.param.targetInTilePosN, _internalState.targetInTileOffsetN.x, _internalState.targetInTileOffsetN.y);
     GL_CHECK_RESULT;
 
-    // Set distance from camera to target
-    glUniform1f(stageVariation.vs.param.distanceFromCameraToTarget, _internalState.distanceFromCameraToTarget);
-    GL_CHECK_RESULT;
+    if(renderAPI->isSupported_textureLod)
+    {
+        // Set distance from camera to target
+        glUniform1f(stageVariation.vs.param.distanceFromCameraToTarget, _internalState.distanceFromCameraToTarget);
+        GL_CHECK_RESULT;
 
-    // Set normalized [0.0 .. 1.0] angle of camera elevation
-    glUniform1f(stageVariation.vs.param.cameraElevationAngleN, currentState.elevationAngle / 90.0f);
-    GL_CHECK_RESULT;
+        // Set normalized [0.0 .. 1.0] angle of camera elevation
+        glUniform1f(stageVariation.vs.param.cameraElevationAngleN, currentState.elevationAngle / 90.0f);
+        GL_CHECK_RESULT;
 
-    // Set position of camera in ground place
-    glUniform2fv(stageVariation.vs.param.groundCameraPosition, 1, glm::value_ptr(_internalState.groundCameraPosition));
-    GL_CHECK_RESULT;
+        // Set position of camera in ground place
+        glUniform2fv(stageVariation.vs.param.groundCameraPosition, 1, glm::value_ptr(_internalState.groundCameraPosition));
+        GL_CHECK_RESULT;
 
-    // Set scale to retain projected size
-    glUniform1f(stageVariation.vs.param.scaleToRetainProjectedSize, _internalState.scaleToRetainProjectedSize);
-    GL_CHECK_RESULT;
-
+        // Set scale to retain projected size
+        glUniform1f(stageVariation.vs.param.scaleToRetainProjectedSize, _internalState.scaleToRetainProjectedSize);
+        GL_CHECK_RESULT;
+    }
+    
     // Configure samplers
     if(renderAPI->isSupported_vertexShaderTextureLookup)
     {
@@ -474,14 +500,17 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
         renderAPI->setSampler(GL_TEXTURE0, RenderAPI_OpenGL_Common::SamplerType::ElevationDataTile);
     }
     auto bitmapTileSamplerType = RenderAPI_OpenGL_Common::SamplerType::BitmapTile_Bilinear;
-    switch(currentConfiguration.texturesFilteringQuality)
+    if(renderAPI->isSupported_textureLod)
     {
-    case TextureFilteringQuality::Good:
-        bitmapTileSamplerType = RenderAPI_OpenGL_Common::SamplerType::BitmapTile_BilinearMipmap;
-        break;
-    case TextureFilteringQuality::Best:
-        bitmapTileSamplerType = RenderAPI_OpenGL_Common::SamplerType::BitmapTile_TrilinearMipmap;
-        break;
+        switch(currentConfiguration.texturesFilteringQuality)
+        {
+        case TextureFilteringQuality::Good:
+            bitmapTileSamplerType = RenderAPI_OpenGL_Common::SamplerType::BitmapTile_BilinearMipmap;
+            break;
+        case TextureFilteringQuality::Best:
+            bitmapTileSamplerType = RenderAPI_OpenGL_Common::SamplerType::BitmapTile_TrilinearMipmap;
+            break;
+        }
     }
     for(int layerIdx = 0, layerId = static_cast<int>(RasterMapLayerId::BaseLayer); layerIdx < activeRasterTileProvidersCount; layerIdx++, layerId++)
     {
