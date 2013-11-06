@@ -62,12 +62,12 @@ namespace OsmAnd {
         {
             Q_DISABLE_COPY(Task);
         public:
-            typedef std::function<void (const Task*, bool& requestCancellation)> PreExecuteSignature;
-            typedef std::function<void (const Task*, QEventLoop& eventLoop)> ExecuteSignature;
-            typedef std::function<void (const Task*, bool wasCancelled)> PostExecuteSignature;
+            typedef std::function<void (Task*, bool& requestCancellation)> PreExecuteSignature;
+            typedef std::function<void (Task*, QEventLoop& eventLoop)> ExecuteSignature;
+            typedef std::function<void (Task*, bool wasCancelled)> PostExecuteSignature;
         private:
-            bool _cancellationRequestedByTask;
-            bool _cancellationRequestedByExternal;
+            volatile bool _cancellationRequestedByTask;
+            volatile bool _cancellationRequestedByExternal;
             mutable QMutex _cancellationMutex;
         protected:
         public:

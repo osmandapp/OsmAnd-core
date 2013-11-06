@@ -20,8 +20,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __MAP_TYPES_H_
-#define __MAP_TYPES_H_
+#ifndef __MAP_RENDERER_TYPES_H_
+#define __MAP_RENDERER_TYPES_H_
 
 #include <cstdint>
 
@@ -29,14 +29,23 @@
 
 namespace OsmAnd
 {
-    STRONG_ENUM(MapFoundationType)
-    {
-        Undefined = -1,
 
-        Mixed,
-        FullLand,
-        FullWater,
+    STRONG_ENUM_EX(RasterMapLayerId, int32_t)
+    {
+        Invalid = -1,
+
+        BaseLayer,
+        Overlay0,
+        Overlay1,
+        Overlay2,
+        Overlay3,
+
+        __LAST,
     };
+    enum {
+        RasterMapLayersCount = static_cast<unsigned>(RasterMapLayerId::__LAST)
+    };
+
 }
 
-#endif // __MAP_TYPES_H_
+#endif // __MAP_RENDERER_TYPES_H_

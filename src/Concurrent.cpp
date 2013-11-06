@@ -41,7 +41,11 @@ void OsmAnd::Concurrent::Task::run()
 
     // Check if task wants to cancel itself
     if(preExecute && !_cancellationRequestedByExternal)
-        preExecute(this, _cancellationRequestedByTask);
+    {
+        bool cancellationRequestedByTask = false;
+        preExecute(this, cancellationRequestedByTask);
+        _cancellationRequestedByTask = cancellationRequestedByTask;
+    }
 
     // If cancellation was not requested by task itself nor by
     // external call

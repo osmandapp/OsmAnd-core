@@ -28,6 +28,7 @@ OsmAnd::AtlasMapRenderer_OpenGL_Common::AtlasMapRenderer_OpenGL_Common()
 {
     memset(&_rasterMapStage, 0, sizeof(_rasterMapStage));
     memset(&_skyStage, 0, sizeof(_skyStage));
+    memset(&_symbolsStage, 0, sizeof(_symbolsStage));
 }
 
 OsmAnd::AtlasMapRenderer_OpenGL_Common::~AtlasMapRenderer_OpenGL_Common()
@@ -60,6 +61,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::allocateTilePatch( MapTileVertex* v
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
 
+    //TODO: do not generate multiple VBO/VAO/IBO for each variation
     for(auto variationId = 0u, maxActiveMapLayers = 1u; variationId < RasterMapLayersCount; variationId++, maxActiveMapLayers++)
     {
         auto& stageVariation = _rasterMapStage.variations[variationId];
@@ -524,19 +526,20 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
         bool appliedElevationVertexAttribArray = false;
         if(elevationDataEnabled)
         {
+            // Get resources collection
+            const auto& resourcesCollection =
+                providersAndResourcesBindings[static_cast<int>(ResourceType::ElevationData)]
+                    .providersToResources[std::static_pointer_cast<IMapProvider>(currentState.elevationDataProvider)];
+
             // We're obtaining tile entry by normalized tile coordinates, since tile may repeat several times
             std::shared_ptr<TiledResourceEntry> entry_;
-            tiledResources[TiledResourceType::ElevationData]->obtainTileEntry(entry_, tileIdN, currentState.zoomBase);
+            resourcesCollection->obtainEntry(entry_, tileIdN, currentState.zoomBase);
             const auto entry = std::static_pointer_cast<MapTileResourceEntry>(entry_);
 
-            // Try lock tile entry for reading state and obtaining GPU resource
+            // Check state and obtain GPU resource
             std::shared_ptr< RenderAPI::ResourceInGPU > gpuResource;
-            if(entry && entry->stateLock.tryLockForRead())
-            {
-                if(entry->state == ResourceState::Uploaded)
-                    gpuResource = entry->resourceInGPU;
-                entry->stateLock.unlock();
-            }
+            if(entry->getState() == ResourceState::Uploaded)
+                gpuResource = entry->resourceInGPU;
 
             if(!gpuResource)
             {
@@ -623,35 +626,32 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
                 continue;
             layerLinearIdx++;
 
-            const auto& layerResources = tiledResources[RasterBaseLayer + layerId];
+            // Get resources collection
+            const auto& resourcesCollection =
+                providersAndResourcesBindings[static_cast<int>(ResourceType::RasterMap)]
+                    .providersToResources[std::static_pointer_cast<IMapProvider>(currentState.rasterLayerProviders[layerId])];
+
             const auto& perTile_vs = stageVariation.vs.param.rasterTileLayers[layerLinearIdx];
             const auto& perTile_fs = stageVariation.fs.param.rasterTileLayers[layerLinearIdx];
             const auto samplerIndex = (renderAPI->isSupported_vertexShaderTextureLookup ? 1 : 0) + layerLinearIdx;
 
             // We're obtaining tile entry by normalized tile coordinates, since tile may repeat several times
             std::shared_ptr<TiledResourceEntry> entry_;
-            layerResources->obtainTileEntry(entry_, tileIdN, currentState.zoomBase);
+            resourcesCollection->obtainEntry(entry_, tileIdN, currentState.zoomBase);
             const auto entry = std::static_pointer_cast<MapTileResourceEntry>(entry_);
 
-            // Try lock tile entry for reading state and obtaining GPU resource
+            // Check state and obtain GPU resource
             std::shared_ptr< RenderAPI::ResourceInGPU > gpuResource;
-            if(entry && entry->stateLock.tryLockForRead())
-            {
-                if(entry->state == ResourceState::Uploaded)
-                    gpuResource = entry->resourceInGPU;
-                else if(entry->state == ResourceState::Unavailable)
-                    gpuResource = _unavailableTileStub;
-                else
-                    gpuResource = _processingTileStub;
-
-                entry->stateLock.unlock();
-            }
+            const auto entryState = entry->getState();
+            if(entryState == ResourceState::Uploaded)
+                gpuResource = entry->resourceInGPU;
+            else if(entryState == ResourceState::Unavailable)
+                gpuResource = _unavailableTileStub;
+            else
+                gpuResource = _processingTileStub;
 
             glUniform1f(perTile_fs.k, currentState.rasterLayerOpacity[layerId]);
             GL_CHECK_RESULT;
-
-            if(!gpuResource)
-                continue;
 
             glActiveTexture(GL_TEXTURE0 + samplerIndex);
             GL_CHECK_RESULT;
@@ -896,7 +896,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSkyStage()
     glUniformMatrix4fv(_skyStage.vs.param.mProjectionViewModel, 1, GL_FALSE, glm::value_ptr(mProjectionViewModel));
     GL_CHECK_RESULT;
 
-    // Set halfsize
+    // Set half-size
     glUniform2f(_skyStage.vs.param.halfSize, _internalState.skyplaneHalfSize.x, _internalState.skyplaneHalfSize.y);
     GL_CHECK_RESULT;
 
@@ -961,6 +961,65 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::releaseSkyStage()
     memset(&_skyStage, 0, sizeof(_skyStage));
 }
 
+void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSymbolsStage()
+{
+
+}
+
+void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
+{
+    //TODO: initialize rendering of symbols
+/*
+    const auto& symbolsTiledResources = tiledResources[TiledResourceType::Symbols];
+    for()*/
+}
+
+void OsmAnd::AtlasMapRenderer_OpenGL_Common::releaseSymbolsStage()
+{
+    /*
+    const auto renderAPI = getRenderAPI();
+
+    GL_CHECK_PRESENT(glDeleteBuffers);
+    GL_CHECK_PRESENT(glDeleteProgram);
+    GL_CHECK_PRESENT(glDeleteShader);
+
+    if(_symbolsStage.skyplaneIBO)
+    {
+        glDeleteBuffers(1, &_symbolsStage.skyplaneIBO);
+        GL_CHECK_RESULT;
+    }
+
+    if(_symbolsStage.skyplaneVBO)
+    {
+        glDeleteBuffers(1, &_symbolsStage.skyplaneVBO);
+        GL_CHECK_RESULT;
+    }
+
+    if(_symbolsStage.skyplaneVAO)
+    {
+        renderAPI->glDeleteVertexArrays_wrapper(1, &_symbolsStage.skyplaneVAO);
+        GL_CHECK_RESULT;
+    }
+
+    if(_symbolsStage.program)
+    {
+        glDeleteProgram(_symbolsStage.program);
+        GL_CHECK_RESULT;
+    }
+    if(_symbolsStage.fs.id)
+    {
+        glDeleteShader(_symbolsStage.fs.id);
+        GL_CHECK_RESULT;
+    }
+    if(_symbolsStage.vs.id)
+    {
+        glDeleteShader(_symbolsStage.vs.id);
+        GL_CHECK_RESULT;
+    }
+
+    memset(&_symbolsStage, 0, sizeof(_symbolsStage));*/
+}
+
 bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doInitializeRendering()
 {
     GL_CHECK_PRESENT(glClearColor);
@@ -980,6 +1039,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doInitializeRendering()
 
     initializeSkyStage();
     initializeRasterMapStage();
+    initializeSymbolsStage();
 
     return true;
 }
@@ -1014,6 +1074,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doRenderFrame()
     glDepthFunc(GL_LEQUAL);
     GL_CHECK_RESULT;
 
+    // Render the sky
     renderSkyStage();
 
     // Turn on depth prior to raster map stage and further stages
@@ -1031,10 +1092,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doRenderFrame()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     GL_CHECK_RESULT;
 
+    // Render map symbols
+    renderSymbolsStage();
+
     //TODO: render special fog object some day
-
-    // If we have offline map data provider, render text?, icons? (actually, map markers should be available w/o offline data - favorites, etc.)
-
 
     return true;
 }
@@ -1043,6 +1104,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doReleaseRendering()
 {
     bool ok;
 
+    releaseSymbolsStage();
     releaseRasterMapStage();
     releaseSkyStage();
 
@@ -1053,13 +1115,16 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doReleaseRendering()
     return true;
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGL_Common::validateElevationDataResources()
+void OsmAnd::AtlasMapRenderer_OpenGL_Common::validateResourcesOfType(const ResourceType type)
 {
-    MapRenderer::validateElevationDataResources();
+    AtlasMapRenderer::validateResourcesOfType(type);
 
-    // Recreate tile patch since elevation data influences density of tile patch
-    releaseTilePatch();
-    createTilePatch();
+    if(type == ResourceType::ElevationData)
+    {
+        // Recreate tile patch since elevation data influences density of tile patch
+        releaseTilePatch();
+        createTilePatch();
+    }
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL_Common::updateInternalState(MapRenderer::InternalState* internalState_, const MapRendererState& state)
@@ -1144,7 +1209,12 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::updateInternalState(MapRenderer::In
     return true;
 }
 
-OsmAnd::MapRenderer::InternalState* OsmAnd::AtlasMapRenderer_OpenGL_Common::getInternalState()
+const OsmAnd::AtlasMapRenderer::InternalState* OsmAnd::AtlasMapRenderer_OpenGL_Common::getInternalStateRef() const
+{
+    return &_internalState;
+}
+
+OsmAnd::AtlasMapRenderer::InternalState* OsmAnd::AtlasMapRenderer_OpenGL_Common::getInternalStateRef()
 {
     return &_internalState;
 }

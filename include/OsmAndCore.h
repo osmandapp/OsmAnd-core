@@ -19,7 +19,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#if !defined(__OSMAND_CORE_H_)
+#ifndef __OSMAND_CORE_H_
 #define __OSMAND_CORE_H_
 
 #if defined(OSMAND_CORE_EXPORTS)

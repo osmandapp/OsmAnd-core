@@ -9,6 +9,7 @@
 
 #include <GLSLOptimizer.h>
 
+#include "MapRendererTypes.h"
 #include "IMapBitmapTileProvider.h"
 #include "Logging.h"
 

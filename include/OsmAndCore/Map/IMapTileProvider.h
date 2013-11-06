@@ -27,6 +27,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Map/IMapProvider.h>
 
 namespace OsmAnd {
 
@@ -55,7 +56,7 @@ namespace OsmAnd {
         const uint32_t size;
     };
 
-    class OSMAND_CORE_API IMapTileProvider
+    class OSMAND_CORE_API IMapTileProvider : public IMapProvider
     {
     private:
     protected:

@@ -78,6 +78,8 @@ namespace OsmAnd {
             {}
 
             std::weak_ptr< const OfflineMapDataTile > _tile;
+
+            QReadWriteLock _loadedConditionLock;
             QWaitCondition _loadedCondition;
         };
         TilesCollection<TileEntry> _tileReferences;

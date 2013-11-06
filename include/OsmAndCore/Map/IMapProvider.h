@@ -19,35 +19,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __ATLAS_MAP_RENDERER_H_
-#define __ATLAS_MAP_RENDERER_H_
+#ifndef __I_MAP_PROVIDER_H_
+#define __I_MAP_PROVIDER_H_
 
 #include <cstdint>
 #include <memory>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/CommonTypes.h>
-#include <MapRenderer.h>
 
 namespace OsmAnd {
 
-    class OSMAND_CORE_API AtlasMapRenderer : public MapRenderer
+    class OSMAND_CORE_API IMapProvider
     {
-    public:
-        enum {
-            TileSize3D = 100,
-            OptimalTilesPerAtlasTextureSide = 16, // 256 per atlas texture
-        };
-
     private:
     protected:
-        AtlasMapRenderer();
-
-        virtual uint32_t getTilesPerAtlasTextureLimit(const ResourceType resourceType, const std::shared_ptr<const MapTile>& tile);
+        IMapProvider();
     public:
-        virtual ~AtlasMapRenderer();
+        virtual ~IMapProvider();
     };
 
 }
 
-#endif // __ATLAS_MAP_RENDERER_H_
+#endif // __I_MAP_PROVIDER_H_

@@ -24,6 +24,7 @@
 #define __COMMON_TYPES_H_
 
 #include <cstdint>
+#include <memory>
 
 #include <QtGlobal>
 #include <QString>
@@ -472,10 +473,6 @@ namespace OsmAnd
     };
 
 #ifndef SWIG
-    inline uint qHash(TileId value, uint seed = 0) Q_DECL_NOTHROW
-    {
-        return ::qHash(value.id, seed);
-    }
     static_assert(sizeof(TileId) == 8, "TileId must be 8 bytes in size");
 #endif
 
@@ -554,6 +551,20 @@ namespace OsmAnd
             return !qFuzzyCompare(r, other.r) || !qFuzzyCompare(g, other.g) || !qFuzzyCompare(b, other.b);
         }
     };
+
 }
+
+#ifndef SWIG
+inline uint qHash(const OsmAnd::TileId value, uint seed = 0) Q_DECL_NOTHROW
+{
+    return ::qHash(value.id, seed);
+}
+
+template<typename T>
+inline uint qHash(const std::shared_ptr<T>& value, uint seed = 0) Q_DECL_NOTHROW
+{
+    return ::qHash(value.get(), seed);
+}
+#endif
 
 #endif // __COMMON_TYPES_H_

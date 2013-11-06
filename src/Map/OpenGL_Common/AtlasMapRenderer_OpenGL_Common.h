@@ -77,7 +77,8 @@ namespace OsmAnd {
             float correctedFogDistance;
         };
         InternalState _internalState;
-        virtual AtlasMapRenderer::InternalState* getInternalState();
+        virtual const AtlasMapRenderer::InternalState* getInternalStateRef() const;
+        virtual AtlasMapRenderer::InternalState* getInternalStateRef();
 
         void computeVisibleTileset(InternalState* internalState, const MapRendererState& state);
 
@@ -199,6 +200,43 @@ namespace OsmAnd {
         void renderSkyStage();
         void releaseSkyStage();
 
+        struct {
+            /*GLuint skyplaneVAO;
+            GLuint skyplaneVBO;
+            GLuint skyplaneIBO;
+
+            GLuint program;
+
+            struct {
+                GLuint id;
+
+                // Input data
+                struct {
+                    GLint vertexPosition;
+                } in;
+
+                // Parameters
+                struct {
+                    // Common data
+                    GLint mProjectionViewModel;
+                    GLint halfSize;
+                } param;
+            } vs;
+
+            struct {
+                GLuint id;
+
+                // Parameters
+                struct {
+                    // Common data
+                    GLint skyColor;
+                } param;
+            } fs;*/
+        } _symbolsStage;
+        void initializeSymbolsStage();
+        void renderSymbolsStage();
+        void releaseSymbolsStage();
+
         virtual bool doInitializeRendering();
         virtual bool doRenderFrame();
         virtual bool doReleaseRendering();
@@ -208,7 +246,7 @@ namespace OsmAnd {
         GLsizei _tilePatchIndicesCount;
         virtual void createTilePatch();
         
-        virtual void validateElevationDataResources();
+        virtual void validateResourcesOfType(const ResourceType type);
 
         virtual bool updateInternalState(MapRenderer::InternalState* internalState, const MapRendererState& state);
 

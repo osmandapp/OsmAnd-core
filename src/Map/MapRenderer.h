@@ -27,8 +27,9 @@
 #include <functional>
 #include <array>
 
-#include <QSet>
 #include <QList>
+#include <QHash>
+#include <QSet>
 #include <QThreadPool>
 #include <QReadWriteLock>
 #include <QWaitCondition>
@@ -44,36 +45,36 @@
 
 namespace OsmAnd {
 
+    class IMapProvider;
     class MapRendererTiledResources;
     class MapSymbol;
 
     class MapRenderer : public IMapRenderer
     {
     public:
-        enum TiledResourceType : int32_t
+        STRONG_ENUM_EX(ResourceType, int32_t)
         {
-            InvalidId = -1,
+            Unknown = -1,
 
             // Elevation data
             ElevationData,
 
-            // Raster layers (MapRasterLayersCount)
-            RasterBaseLayer,
-            __RasterLayer_LAST = RasterBaseLayer + (RasterMapLayersCount-1),
+            // Raster map
+            RasterMap,
 
-            // Symbols (icons and labels)
+            // Symbols
             Symbols,
 
             __LAST
         };
         enum {
-            TiledResourceTypesCount = static_cast<unsigned>(TiledResourceType::__LAST)
+            ResourceTypesCount = static_cast<int>(ResourceType::__LAST)
         };
 
         // Possible state chains:
         // Unknown => Requesting => Requested => ProcessingRequest => ...
         // ... => Unavailable.
-        // ... => Ready => Uploaded => Unloaded.
+        // ... => Ready => Uploading => Uploaded => Unloading => Unloaded.
         STRONG_ENUM(ResourceState)
         {
             // Resource is not in any determined state (resource entry did not exist)
@@ -91,21 +92,30 @@ namespace OsmAnd {
             // Resource is not available at all
             Unavailable,
 
-            // Resource data is in main memory, but not yet uploaded into GPU
+            // Resource data is in main memory, but not yet uploaded to GPU
             Ready,
+
+            // Resource data is being uploaded to GPU
+            Uploading,
 
             // Resource data is already in GPU
             Uploaded,
 
-            // Resource is unloaded, next state is death by deallocation
+            // Resource data is being removed from GPU
+            Unloading,
+
+            // Resource is unloaded, next state is "Dead"
             Unloaded,
+
+            // JustBeforeDeath state is installed just before resource is deallocated completely
+            JustBeforeDeath
         };
 
         class TiledResourceEntry : public TilesCollectionEntryWithState<TiledResourceEntry, ResourceState, ResourceState::Unknown>
         {
         private:
         protected:
-            TiledResourceEntry(MapRenderer* owner, const TiledResourceType type, const TilesCollection<TiledResourceEntry>& collection, const TileId tileId, const ZoomLevel zoom);
+            TiledResourceEntry(MapRenderer* owner, const ResourceType type, const TilesCollection<TiledResourceEntry>& collection, const TileId tileId, const ZoomLevel zoom);
 
             MapRenderer* const _owner;
             Concurrent::Task* _requestTask;
@@ -116,7 +126,7 @@ namespace OsmAnd {
         public:
             virtual ~TiledResourceEntry();
 
-            const TiledResourceType type;
+            const ResourceType type;
 
         friend class OsmAnd::MapRenderer;
         };
@@ -127,10 +137,10 @@ namespace OsmAnd {
         protected:
             void verifyNoUploadedTilesPresent();
         public:
-            TiledResources(const TiledResourceType& type);
+            TiledResources(const ResourceType& type);
             virtual ~TiledResources();
 
-            const MapRenderer::TiledResourceType type;
+            const MapRenderer::ResourceType type;
 
             virtual void removeAllEntries();
 
@@ -148,7 +158,7 @@ namespace OsmAnd {
             virtual bool uploadToGPU();
             virtual void unloadFromGPU();
         public:
-            MapTileResourceEntry(MapRenderer* owner, const TiledResourceType type, const TilesCollection<TiledResourceEntry>& collection, const TileId tileId, const ZoomLevel zoom);
+            MapTileResourceEntry(MapRenderer* owner, const ResourceType type, const TilesCollection<TiledResourceEntry>& collection, const TileId tileId, const ZoomLevel zoom);
             virtual ~MapTileResourceEntry();
 
             const std::shared_ptr<const MapTile>& sourceData;
@@ -176,38 +186,92 @@ namespace OsmAnd {
 
         friend class OsmAnd::MapRenderer;
         };
+
+        typedef std::array< QList< std::shared_ptr<TiledResources> >, ResourceTypesCount > ResourcesStorage;
     private:
         const Concurrent::TaskHost::Bridge _taskHostBridge;
 
+        class TileRequestTask : public Concurrent::HostedTask
+        {
+            Q_DISABLE_COPY(TileRequestTask);
+        private:
+        protected:
+        public:
+            TileRequestTask(
+                const std::shared_ptr<TiledResourceEntry>& requestedEntry,
+                const Concurrent::TaskHost::Bridge& bridge, ExecuteSignature executeMethod, PreExecuteSignature preExecuteMethod = nullptr, PostExecuteSignature postExecuteMethod = nullptr);
+            virtual ~TileRequestTask();
+
+            const std::shared_ptr<TiledResourceEntry> requestedEntry;
+        };
+
+        // Configuration-related:
         mutable QReadWriteLock _configurationLock;
         MapRendererConfiguration _currentConfiguration;
         volatile uint32_t _currentConfigurationInvalidatedMask;
+        void invalidateCurrentConfiguration(const uint32_t changesMask);
+        bool updateCurrentConfiguration();
 
-        mutable QReadWriteLock _requestedStateLock;
+        // State-related:
+        mutable QMutex _requestedStateMutex;
         mutable QReadWriteLock _internalStateLock;
         MapRendererState _currentState;
-        volatile bool _currentStateOutdated;
+        volatile uint32_t _requestedStateUpdatedMask;
+        enum class StateChange : uint32_t
+        {
+            RasterLayers_Providers = 1 << 0,
+            RasterLayers_Opacity = 1 << 1,
+            ElevationData_Provider = 1 << 2,
+            ElevationData_ScaleFactor = 1 << 3,
+            Symbols_Providers = 1 << 4,
+            WindowSize = 1 << 5,
+            Viewport = 1 << 6,
+            FieldOfView = 1 << 7,
+            SkyColor = 1 << 8,
+            FogParameters = 1 << 9,
+            Azimuth = 1 << 10,
+            ElevationAngle = 1 << 11,
+            Target = 1 << 12,
+            Zoom = 1 << 13,
+        };
+        bool revalidateState();
+        void notifyRequestedStateWasUpdated(const StateChange change);
 
-        volatile uint32_t _invalidatedRasterLayerResourcesMask;
-        mutable QReadWriteLock _invalidatedRasterLayerResourcesMaskLock;
+        // Resources-related:
+        QThreadPool _resourcesRequestWorkersPool;
+        struct ProvidersAndSourcesBinding
+        {
+            QHash< std::shared_ptr<IMapProvider>, std::shared_ptr<TiledResources> > providersToResources;
+            QHash< std::shared_ptr<TiledResources>, std::shared_ptr<IMapProvider> > resourcesToProviders;
+        };
+        std::array< ProvidersAndSourcesBinding, ResourceTypesCount > _providersAndResourcesBindings;
+        void updateProvidersAndResourcesBindings(const uint32_t updatedMask);
+        ResourcesStorage _resources;
+        void requestNeededResources();
+        void uploadResources();
+        void cleanupJunkResources();
+        void releaseResourcesFrom(const std::shared_ptr<TiledResources>& collection);
+        void requestResourcesUpload();
+        bool isDataSourceAvailableFor(const std::shared_ptr<TiledResources>& collection);
+        bool obtainProviderFor(TiledResources* const resourcesRef, std::shared_ptr<IMapProvider>& provider);
+        uint32_t _invalidatedResourcesTypesMask;
+        void invalidateResourcesOfType(const ResourceType type);
+        void validateResources();
 
-        volatile bool _invalidatedElevationDataResources;
-
-        volatile bool _invalidatedSymbolsResources;
-
-        std::array< std::unique_ptr<TiledResources>, TiledResourceTypesCount > _tiledResources;
-        void uploadTiledResources();
-        void releaseTiledResources(const std::unique_ptr<TiledResources>& collection);
-        bool isDataSourceAvailableFor(const TiledResourceType resourceType);
-
-        bool obtainMapTileProviderFor(const TiledResourceType resourceType, std::shared_ptr<OsmAnd::IMapTileProvider>& provider);
-
-        QThreadPool _requestWorkersPool;
-
+        // General:
+        QSet<TileId> _uniqueTiles;
         std::unique_ptr<RenderAPI> _renderAPI;
+        void invalidateFrame();
+        Qt::HANDLE _renderThreadId;
+        Qt::HANDLE _workerThreadId;
+        std::unique_ptr<Concurrent::Thread> _backgroundWorker;
+        QWaitCondition _backgroundWorkerWakeup;
+        void backgroundWorkerProcedure();
+        
     protected:
         MapRenderer();
 
+        // Configuration-related:
         const MapRendererConfiguration& currentConfiguration;
         enum ConfigurationChange
         {
@@ -217,10 +281,43 @@ namespace OsmAnd {
             TexturesFilteringMode = 1 << 3,
             PaletteTexturesUsage = 1 << 4,
         };
-        void invalidateCurrentConfiguration(const uint32_t changesMask);
         virtual void validateConfigurationChange(const ConfigurationChange& change) = 0;
-        bool updateCurrentConfiguration();
 
+        // State-related:
+        const MapRendererState& currentState;
+        struct InternalState
+        {
+            InternalState();
+            virtual ~InternalState();
+
+            TileId targetTileId;
+            PointF targetInTileOffsetN;
+            QList<TileId> visibleTiles;
+        };
+        virtual const InternalState* getInternalStateRef() const = 0;
+        virtual InternalState* getInternalStateRef() = 0;
+        virtual bool updateInternalState(InternalState* internalState, const MapRendererState& state);
+
+        // Resources-related:
+        const std::array< ProvidersAndSourcesBinding, ResourceTypesCount >& providersAndResourcesBindings;
+        const ResourcesStorage& resources;
+        virtual void validateResourcesOfType(const ResourceType type);
+
+        //////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
+        virtual std::shared_ptr<const MapTile> prepareTileForUploadingToGPU(const std::shared_ptr<const MapTile>& tile);
+        virtual uint32_t getTilesPerAtlasTextureLimit(const ResourceType resourceType, const std::shared_ptr<const MapTile>& tile) = 0;
+
+        std::shared_ptr<RenderAPI::ResourceInGPU> _processingTileStub;
+        std::shared_ptr<RenderAPI::ResourceInGPU> _unavailableTileStub;
+        //////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
+
+        // General:
+        const std::unique_ptr<RenderAPI>& renderAPI;
+        virtual RenderAPI* allocateRenderAPI() = 0;
+
+        // Customization points:
         virtual bool preInitializeRendering();
         virtual bool doInitializeRendering();
         virtual bool postInitializeRendering();
@@ -240,60 +337,12 @@ namespace OsmAnd {
         virtual bool preReleaseRendering();
         virtual bool doReleaseRendering();
         virtual bool postReleaseRendering();
-
-        const MapRendererState& currentState;
-        void notifyRequestedStateWasUpdated();
-
-        struct InternalState
-        {
-            InternalState();
-            virtual ~InternalState();
-
-            TileId targetTileId;
-            PointF targetInTileOffsetN;
-            QList<TileId> visibleTiles;
-        };
-        virtual InternalState* getInternalState() = 0;
-        virtual bool updateInternalState(InternalState* internalState, const MapRendererState& state);
-
-        QSet<TileId> _uniqueTiles;
-
-        void invalidateRasterLayerResources(const RasterMapLayerId& layerId);
-        virtual void validateRasterLayerResources(const RasterMapLayerId& layerId);
-
-        void invalidateElevationDataResources();
-        virtual void validateElevationDataResources();
-
-        void invalidateSymbolsResources();
-        virtual void validateSymbolsResources();
-
-        void invalidateFrame();
-
-        void requestUploadDataToGPU();
-
-        const std::array< std::unique_ptr<TiledResources>, TiledResourceTypesCount >& tiledResources;
-        void cleanUpTiledResourcesCache();
-        void requestMissingTiledResources();
-        virtual std::shared_ptr<const MapTile> prepareTileForUploadingToGPU(const std::shared_ptr<const MapTile>& tile);
-        virtual uint32_t getTilesPerAtlasTextureLimit(const TiledResourceType resourceType, const std::shared_ptr<const MapTile>& tile) = 0;
-
-        Qt::HANDLE _renderThreadId;
-        Qt::HANDLE _workerThreadId;
-
-        std::unique_ptr<Concurrent::Thread> _backgroundWorker;
-        QWaitCondition _backgroundWorkerWakeup;
-        void backgroundWorkerProcedure();
-
-        const std::unique_ptr<RenderAPI>& renderAPI;
-        virtual RenderAPI* allocateRenderAPI() = 0;
-
-        std::shared_ptr<RenderAPI::ResourceInGPU> _processingTileStub;
-        std::shared_ptr<RenderAPI::ResourceInGPU> _unavailableTileStub;
     public:
         virtual ~MapRenderer();
 
         virtual bool setup(const MapRendererSetupOptions& setupOptions);
 
+        // Configuration-related:
         virtual void setConfiguration(const MapRendererConfiguration& configuration, bool forcedUpdate = false);
 
         virtual bool initializeRendering();
@@ -302,11 +351,13 @@ namespace OsmAnd {
         virtual bool processRendering();
         virtual bool releaseRendering();
 
-        virtual unsigned int getVisibleTilesCount();
+        virtual unsigned int getVisibleTilesCount() const;
 
         virtual void setRasterLayerProvider(const RasterMapLayerId layerId, const std::shared_ptr<IMapBitmapTileProvider>& tileProvider, bool forcedUpdate = false);
+        virtual void resetRasterLayerProvider(const RasterMapLayerId layerId, bool forcedUpdate = false);
         virtual void setRasterLayerOpacity(const RasterMapLayerId layerId, const float opacity, bool forcedUpdate = false);
         virtual void setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& tileProvider, bool forcedUpdate = false);
+        virtual void resetElevationDataProvider(bool forcedUpdate = false);
         virtual void setElevationDataScaleFactor(const float factor, bool forcedUpdate = false);
         virtual void addSymbolProvider(const std::shared_ptr<IMapSymbolProvider>& provider, bool forcedUpdate = false);
         virtual void removeSymbolProvider(const std::shared_ptr<IMapSymbolProvider>& provider, bool forcedUpdate = false);

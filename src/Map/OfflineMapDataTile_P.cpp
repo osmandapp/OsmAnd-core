@@ -18,7 +18,7 @@ void OsmAnd::OfflineMapDataTile_P::cleanup()
     if(const auto entry = _refEntry.lock())
     {
         if(const auto link = entry->link.lock())
-            link->collection.removeEntry(entry);
+            link->collection.removeEntry(entry->tileId, entry->zoom);
     }
 
     // Remove all weak pointers to unique map objects from data cache

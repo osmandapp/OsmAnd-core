@@ -51,12 +51,11 @@ void OsmAnd::ObfsCollection_P::refreshSources()
         QMutableHashIterator< QString, std::shared_ptr<ObfFile> > itObfFileEntry(_sources);
         while(itObfFileEntry.hasNext())
         {
+            itObfFileEntry.next();
+
             // ... which does not exist, ...
             if(QFile::exists(itObfFileEntry.key()))
-            {
-                itObfFileEntry.next();
                 continue;
-            }
 
             // ... remove entry
             itObfFileEntry.remove();

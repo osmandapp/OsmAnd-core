@@ -28,6 +28,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Map/IMapProvider.h>
 
 class SkBitmap;
 
@@ -50,7 +51,7 @@ namespace OsmAnd {
         const QList< std::shared_ptr<const SkBitmap> > texts;
     };
 
-    class OSMAND_CORE_API IMapSymbolProvider
+    class OSMAND_CORE_API IMapSymbolProvider : public IMapProvider
     {
     private:
     protected:

@@ -30,34 +30,28 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 {
     // Check if there is a weak reference to that tile, and if that reference is still valid, use that
     std::shared_ptr<TileEntry> tileEntry;
-    _tileReferences.obtainOrAllocateTileEntry(tileEntry, tileId, zoom, [](const TilesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom) -> TileEntry*
+    _tileReferences.obtainOrAllocateEntry(tileEntry, tileId, zoom, [](const TilesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom) -> TileEntry*
         {
             return new TileEntry(collection, tileId, zoom);
         });
 
-    // Only if tile entry has "Unknown" state proceed to "Requesting" state
+    // Only if tile entry has "Undefined" state proceed to "Loading" state
+    if(!tileEntry->setStateIf(TileState::Undefined, TileState::Loading))
     {
-        QWriteLocker scopedLock(&tileEntry->stateLock);
-
-        assert(tileEntry->state != TileState::Released);
-        if(tileEntry->state == TileState::Undefined)
-        {
-            // Since tile is in undefined state, it will be processed right now,
-            // so just change state to 'Loading' and continue execution
-            tileEntry->state = TileState::Loading;
-        }
-        else if(tileEntry->state == TileState::Loading)
-        {
-            // If tile is in 'Loading' state, wait until it will become 'Loaded'
-            while(tileEntry->state != TileState::Loading)
-                tileEntry->_loadedCondition.wait(&tileEntry->stateLock);
-        }
-        else if(tileEntry->state == TileState::Loaded)
+        if(tileEntry->getState() == TileState::Loaded)
         {
             // If tile is already 'Loaded', just verify it's reference and return that
             assert(!tileEntry->_tile.expired());
             outTile = tileEntry->_tile.lock();
             return;
+        }
+        else if(tileEntry->getState() == TileState::Loading)
+        {
+            QReadLocker scopedLcoker(&tileEntry->_loadedConditionLock);
+
+            // If tile is in 'Loading' state, wait until it will become 'Loaded'
+            while(tileEntry->getState() != TileState::Loaded)
+                tileEntry->_loadedCondition.wait(&tileEntry->_loadedConditionLock);
         }
     }
 
@@ -181,14 +175,12 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
     outTile.reset(newTile);
 
     // Store weak reference to new tile and mark it as 'Loaded'
+    tileEntry->_tile = outTile;
+    tileEntry->setState(TileState::Loaded);
+
+    // Notify that tile has been loaded
     {
-        QWriteLocker scopedLock(&tileEntry->stateLock);
-
-        assert(tileEntry->state == TileState::Loading);
-        tileEntry->state = TileState::Loaded;
-        tileEntry->_tile = outTile;
-
-        // Notify that tile has been loaded
+        QWriteLocker scopedLcoker(&tileEntry->_loadedConditionLock);
         tileEntry->_loadedCondition.wakeAll();
     }
 }

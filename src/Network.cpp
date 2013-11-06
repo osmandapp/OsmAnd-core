@@ -31,7 +31,7 @@ std::shared_ptr<QNetworkReply> OsmAnd::Network::Downloader::download( const QUrl
     const auto settings = settings_;
 
     resultMutex.lock();
-    Concurrent::pools->network->start(new Concurrent::Task([url, settings, &result, &resultMutex, &resultWaitCondition](const Concurrent::Task* task, QEventLoop& eventLoop)
+    Concurrent::pools->network->start(new Concurrent::Task([url, settings, &result, &resultMutex, &resultWaitCondition](Concurrent::Task* task, QEventLoop& eventLoop)
         {
             QNetworkAccessManager networkAccessManager;
 

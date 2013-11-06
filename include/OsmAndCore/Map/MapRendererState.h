@@ -27,11 +27,12 @@
 #include <functional>
 #include <array>
 
-#include <QList>
+#include <QSet>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/MapTypes.h>
+#include <OsmAndCore/Map/MapRendererTypes.h>
 
 namespace OsmAnd {
 
@@ -53,7 +54,7 @@ namespace OsmAnd {
         std::array< float, RasterMapLayersCount > rasterLayerOpacity;
         std::shared_ptr<IMapElevationDataProvider> elevationDataProvider;
         float elevationDataScaleFactor;
-        QList< std::shared_ptr<IMapSymbolProvider> > symbolProviders;
+        QSet< std::shared_ptr<IMapSymbolProvider> > symbolProviders;
         PointI windowSize;
         AreaI viewport;
         float fieldOfView;
