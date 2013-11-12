@@ -56,7 +56,14 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
     }
 
     // Obtain OBF data interface
+#if defined(_DEBUG) || defined(DEBUG)
+    const auto obtainDataInterface_Begin = std::chrono::high_resolution_clock::now();
+#endif
     const auto& dataInterface = owner->obfsCollection->obtainDataInterface();
+#if defined(_DEBUG) || defined(DEBUG)
+    const auto obtainDataInterface_End = std::chrono::high_resolution_clock::now();
+    const std::chrono::duration<float> obtainDataInterface_Elapsed = obtainDataInterface_End - obtainDataInterface_Begin;
+#endif
 
     // Get bounding box that covers this tile
     const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
@@ -163,10 +170,10 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
     const auto dataProcess_End = std::chrono::high_resolution_clock::now();
     const std::chrono::duration<float> dataProcess_Elapsed = dataProcess_End - dataProcess_Begin;
     LogPrintf(LogSeverityLevel::Info,
-        "%d map objects (%d unique, %d shared) in %dx%d@%d: read %fs (filter-by-id %fs), process-ids %fs, process-content %fs",
+        "%d map objects (%d unique, %d shared) in %dx%d@%d: open %fs, read %fs (filter-by-id %fs), process-ids %fs, process-content %fs",
         mapObjects.size() + duplicateMapObjects.size(), mapObjects.size(), duplicateMapObjects.size(),
         tileId.x, tileId.y, zoom,
-        dataRead_Elapsed.count(), dataFilter, dataIdsProcess_Elapsed.count(), dataProcess_Elapsed.count());
+        obtainDataInterface_Elapsed.count(), dataRead_Elapsed.count(), dataFilter, dataIdsProcess_Elapsed.count(), dataProcess_Elapsed.count());
 #endif
 
     // Create tile
