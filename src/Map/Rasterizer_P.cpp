@@ -185,6 +185,9 @@ void OsmAnd::Rasterizer_P::prepareContext(
         return;
     }
 
+    // After obtaining primitives, map objects are no longer needed
+    context.cleanupMapObjects();
+
     // Obtain text from primitives
     obtainPrimitivesSymbols(env, context, controller);
     if(controller && controller->isAborted())

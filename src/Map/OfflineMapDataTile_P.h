@@ -32,6 +32,11 @@
 
 namespace OsmAnd {
 
+    class RasterizerContext;
+    namespace Model {
+        class MapObject;
+    }
+
     class OfflineMapDataTile;
     class OfflineMapDataTile_P
     {
@@ -43,6 +48,9 @@ namespace OsmAnd {
 
         std::weak_ptr<OfflineMapDataProvider_P::Link> _link;
         std::weak_ptr<OfflineMapDataProvider_P::TileEntry> _refEntry;
+
+        QList< std::shared_ptr<const Model::MapObject> > _mapObjects;
+        std::shared_ptr< const RasterizerContext > _rasterizerContext;
 
         void cleanup();
     public:

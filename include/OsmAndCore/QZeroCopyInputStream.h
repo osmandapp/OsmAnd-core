@@ -45,12 +45,15 @@ namespace OsmAnd {
         //! Pointer to I/O device
         const std::shared_ptr<QIODevice> _device;
 
+        // Buffer
+        uint8_t* const _buffer;
+
         //! Should close on destruction?
         const bool _closeOnDestruction;
 
         //! Constants
         enum {
-            BufferSize = 4096,
+            BufferSize = 64 * 1024, // 64Kb
         };
     protected:
     public:

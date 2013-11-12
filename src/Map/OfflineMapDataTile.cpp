@@ -9,10 +9,12 @@ OsmAnd::OfflineMapDataTile::OfflineMapDataTile(
     , tileId(tileId_)
     , zoom(zoom_)
     , tileFoundation(tileFoundation_)
-    , mapObjects(mapObjects_)
-    , rasterizerContext(rasterizerContext_)
+    , mapObjects(_d->_mapObjects)
+    , rasterizerContext(_d->_rasterizerContext)
     , nothingToRasterize(nothingToRasterize_)
 {
+    _d->_mapObjects = mapObjects_;
+    _d->_rasterizerContext = rasterizerContext_;
 }
 
 OsmAnd::OfflineMapDataTile::~OfflineMapDataTile()

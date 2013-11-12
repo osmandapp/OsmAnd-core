@@ -31,8 +31,8 @@ OsmAnd::MapRenderer::MapRenderer()
     , renderAPI(_renderAPI)
 {
     // Number of workers should be determined in runtime (exclude worker and main threads):
-    const auto idealThreadCount = qMax(QThread::idealThreadCount() - 2, 1);
-    _resourcesRequestWorkersPool.setMaxThreadCount(idealThreadCount);
+    const auto idealWorkerThreadsCount = qMax(QThread::idealThreadCount() - 2, 1);
+    _resourcesRequestWorkersPool.setMaxThreadCount(idealWorkerThreadsCount);
 
     // Fill-up default state
     for(auto layerId = 0u; layerId < RasterMapLayersCount; layerId++)
@@ -1609,7 +1609,6 @@ OsmAnd::MapRenderer::MapTileResourceEntry::MapTileResourceEntry( MapRenderer* ow
 
 OsmAnd::MapRenderer::MapTileResourceEntry::~MapTileResourceEntry()
 {
-
 }
 
 bool OsmAnd::MapRenderer::MapTileResourceEntry::obtainData( bool& dataAvailable )

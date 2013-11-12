@@ -60,9 +60,9 @@ namespace OsmAnd {
         const ZoomLevel zoom;
 
         const MapFoundationType tileFoundation;
-        const QList< std::shared_ptr<const Model::MapObject> > mapObjects;
+        const QList< std::shared_ptr<const Model::MapObject> >& mapObjects;
 
-        const std::shared_ptr< const RasterizerContext > rasterizerContext;
+        const std::shared_ptr< const RasterizerContext >& rasterizerContext;
 
         const bool nothingToRasterize;
 

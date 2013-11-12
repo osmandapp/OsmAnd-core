@@ -67,6 +67,7 @@ namespace OsmAnd {
 
         QVector< Rasterizer_P::PrimitiveSymbol > _symbols;
 
+        void cleanupMapObjects();
         void clear();
     public:
         virtual ~RasterizerContext_P();

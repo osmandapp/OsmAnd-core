@@ -8,6 +8,7 @@
 #include "ObfMapSectionInfo_P.h"
 #include "ObfReaderUtilities.h"
 #include "MapObject.h"
+#include "IQueryController.h"
 #include "Logging.h"
 #include "Utilities.h"
 

@@ -30,9 +30,9 @@
 #include <QString>
 
 #include <google/protobuf/io/coded_stream.h>
+#include <google/protobuf/io/zero_copy_stream.h>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/IQueryController.h>
 
 class QIODevice;
 
@@ -49,14 +49,15 @@ namespace OsmAnd {
     class ObfTransportSectionReader_P;
 
     class ObfReader;
-    class OSMAND_CORE_API ObfReader_P
+    class ObfReader_P
     {
     private:
     protected:
         ObfReader_P(ObfReader* owner);
 
         ObfReader* const owner;
-        std::shared_ptr<gpb::io::CodedInputStream> _codedInputStream;
+        std::unique_ptr<gpb::io::CodedInputStream> _codedInputStream;
+        std::unique_ptr<gpb::io::ZeroCopyInputStream> _zeroCopyInputStream;
 
         std::shared_ptr<QIODevice> _input;
         std::shared_ptr<ObfInfo> _obfInfo;
@@ -78,4 +79,3 @@ namespace OsmAnd {
 } // namespace OsmAnd
 
 #endif // __OBF_READER_P_H_
-

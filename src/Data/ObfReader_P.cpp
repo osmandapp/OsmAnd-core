@@ -23,6 +23,9 @@ OsmAnd::ObfReader_P::ObfReader_P( ObfReader* owner_ )
 
 OsmAnd::ObfReader_P::~ObfReader_P()
 {
+    _codedInputStream.reset();
+    _zeroCopyInputStream.reset();
+
 }
 
 QString OsmAnd::ObfReader_P::transliterate( const QString& input )

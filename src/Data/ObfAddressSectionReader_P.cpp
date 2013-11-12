@@ -10,6 +10,7 @@
 #include "StreetIntersection.h"
 #include "Building.h"
 #include "ObfReaderUtilities.h"
+#include "IQueryController.h"
 #include "Utilities.h"
 
 #include "OBF.pb.h"
@@ -265,7 +266,7 @@ void OsmAnd::ObfAddressSectionReader_P::loadStreetsFromGroup(
     const IQueryController* const controller /*= nullptr*/)
 {
     //TODO:checkAddressIndex(c.getFileOffset());
-    auto cis = reader->_codedInputStream;
+    auto cis = reader->_codedInputStream.get();
     cis->Seek(group->_offset);
     gpb::uint32 length;
     cis->ReadVarint32(&length);
@@ -375,7 +376,7 @@ void OsmAnd::ObfAddressSectionReader_P::loadBuildingsFromStreet(
     const IQueryController* const controller /*= nullptr*/)
 {
     //TODO:checkAddressIndex(s.getFileOffset());
-    auto cis = reader->_codedInputStream;
+    auto cis = reader->_codedInputStream.get();
     cis->Seek(street->_offset);
     gpb::uint32 length;
     cis->ReadVarint32(&length);
@@ -515,7 +516,7 @@ void OsmAnd::ObfAddressSectionReader_P::loadIntersectionsFromStreet(
     const IQueryController* const controller /*= nullptr*/)
 {
     //TODO:checkAddressIndex(s.getFileOffset());
-    auto cis = reader->_codedInputStream;
+    auto cis = reader->_codedInputStream.get();
     cis->Seek(street->_offset);
     gpb::uint32 length;
     cis->ReadVarint32(&length);

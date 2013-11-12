@@ -5,6 +5,7 @@
 #include "Amenity.h"
 #include "AmenityCategory.h"
 #include "ObfReaderUtilities.h"
+#include "IQueryController.h"
 #include "Utilities.h"
 
 #include "OBF.pb.h"

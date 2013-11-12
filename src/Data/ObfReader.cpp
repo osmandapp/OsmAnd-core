@@ -37,7 +37,12 @@ std::shared_ptr<OsmAnd::ObfInfo> OsmAnd::ObfReader::obtainInfo() const
             _d->_input.reset(input);
         }
 
-        auto cis = new gpb::io::CodedInputStream(new QZeroCopyInputStream(_d->_input));
+        // Create zero-copy input stream
+        auto zcis = new QZeroCopyInputStream(_d->_input);
+        _d->_zeroCopyInputStream.reset(zcis);
+
+        // Create coded input stream wrapper
+        auto cis = new gpb::io::CodedInputStream(zcis);
         cis->SetTotalBytesLimit(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
         _d->_codedInputStream.reset(cis);
     }
