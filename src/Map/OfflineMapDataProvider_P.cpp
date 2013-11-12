@@ -71,7 +71,8 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 #endif
     auto& dataCache = _dataCache[zoom];
     dataInterface->obtainMapObjects(&mapObjects, &tileFoundation, tileBBox31, zoom, nullptr,
-
+        nullptr);
+        /*
 #if defined(_DEBUG) || defined(DEBUG)
         [&dataCache, &duplicateMapObjects, tileBBox31, &dataFilter](const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id) -> bool
 #else
@@ -115,7 +116,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 #endif
 
             return true;
-        });
+        });*/
 
 #if defined(_DEBUG) || defined(DEBUG)
     const auto dataRead_End = std::chrono::high_resolution_clock::now();
