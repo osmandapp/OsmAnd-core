@@ -135,7 +135,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 
     const auto dataIdsProcess_Begin = std::chrono::high_resolution_clock::now();
 #endif
-    /*
+
     // Append weak references to newly read map objects
     for(auto itMapObject = mapObjects.cbegin(); itMapObject != mapObjects.cend(); ++itMapObject)
     {
@@ -154,7 +154,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
             }
         }
     }
-    */
+
 #if defined(_DEBUG) || defined(DEBUG)
     const auto dataIdsProcess_End = std::chrono::high_resolution_clock::now();
     const std::chrono::duration<float> dataIdsProcess_Elapsed = dataIdsProcess_End - dataIdsProcess_Begin;
