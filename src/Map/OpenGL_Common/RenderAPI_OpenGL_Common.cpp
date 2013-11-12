@@ -11,8 +11,8 @@
 #include "IMapTileProvider.h"
 #include "IMapBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
-#include "OsmAndCore/Logging.h"
-#include "OsmAndCore/Utilities.h"
+#include "Logging.h"
+#include "Utilities.h"
 
 #undef GL_CHECK_RESULT
 #undef GL_GET_RESULT
@@ -77,7 +77,7 @@ GLuint OsmAnd::RenderAPI_OpenGL_Common::compileShader( GLenum shaderType, const 
             glGetShaderInfoLog(shader, logBufferLen, &logLen, log);
             GL_CHECK_RESULT;
             assert(logLen + 1 == logBufferLen);
-            LogPrintf(LogSeverityLevel::Error, "Failed to compile GLSL shader:\n%s\nSources:%s\n", log, source);
+            LogPrintf(LogSeverityLevel::Error, "Failed to compile GLSL shader:\n%s\nSources:\n%s", log, source);
             free(log);
         }
 

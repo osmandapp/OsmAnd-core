@@ -569,9 +569,9 @@ void OsmAnd::RenderAPI_OpenGLES2::preprocessFragmentShader( QString& code )
 {
     const auto& shaderSource = QString::fromLatin1(
         // Make some extensions required
-        "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
+        "#if supported(EXT_shader_texture_lod)                                                                              ""\n"
         "#extension GL_EXT_shader_texture_lod : require                                                                     ""\n"
-        "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
+        "#endif                                                                                                             ""\n"
         "                                                                                                                   ""\n"
         // Fragment shader output declaration
         "#define FRAGMENT_COLOR_OUTPUT gl_FragColor                                                                         ""\n"
