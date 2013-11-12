@@ -1,4 +1,4 @@
-#include "OsmAndCore/Logging.h"
+#include "Logging.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -6,7 +6,8 @@
 #if defined(ANDROID) || defined(__ANDROID__)
 
 #include <android/log.h>
-void OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel level, const char* format, ...)
+
+OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel level, const char* format, ...)
 {
     va_list args;
     va_start(args, format);
@@ -30,30 +31,30 @@ void OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel level, const char* format, ...)
     va_end(args);
 }
 
-void OsmAnd::LogFlush()
+OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::LogFlush()
 {
 }
 
 #elif defined(__APPLE__) || defined(__linux__)
-void OsmAnd::LogFlush()
+
+OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::LogFlush()
 {
     fflush(stdout);
 }
 
-extern void OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel level, const char* msg, ...)
+OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel level, const char* format, ...)
 {
     va_list args;
-    va_start( args, msg);
-    if(level == LogSeverityLevel::Error) {
+    va_start(args, msg);
+    if(level == LogSeverityLevel::Error)
         printf("ERROR: ");
-    } else if(level == LogSeverityLevel::Info) {
+    else if(level == LogSeverityLevel::Info)
         printf("INFO: ");
-    } else if(level == LogSeverityLevel::Warning) {
+    else if(level == LogSeverityLevel::Warning)
         printf("WARN: ");
-    } else {
+    else
         printf("DEBUG: ");
-    }
-    vprintf(msg, args);
+    vprintf(format, args);
     printf("\n");
     va_end(args);
 }
@@ -63,20 +64,52 @@ extern void OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel level, const char* msg, .
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-void OsmAnd::LogFlush()
+
+OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::LogFlush()
 {
+    if(!IsDebuggerPresent())
+        fflush(stdout);
 }
-void OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel level, const char* format, ...)
+
+OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel level, const char* format, ...)
 {
     va_list args;
     va_start(args, format);
-    int len = vsnprintf(nullptr, 0, format, args);
-    char* buffer = new char[len + 1];
-    vsnprintf(buffer, len, format, args);
-    buffer[len] = 0;
-    OutputDebugStringA(buffer);
-    OutputDebugStringA("\n");
-    delete[] buffer;
+    
+    if(IsDebuggerPresent())
+    {
+        if(level == LogSeverityLevel::Error)
+            OutputDebugStringA("ERROR: ");
+        else if(level == LogSeverityLevel::Info)
+            OutputDebugStringA("INFO: ");
+        else if(level == LogSeverityLevel::Warning)
+            OutputDebugStringA("WARN: ");
+        else
+            OutputDebugStringA("DEBUG: ");
+
+        int len = vsnprintf(nullptr, 0, format, args);
+        char* buffer = new char[len + 1];
+        vsnprintf(buffer, len, format, args);
+        buffer[len] = 0;
+        OutputDebugStringA(buffer);
+        delete[] buffer;
+
+        OutputDebugStringA("\n");
+    }
+    else
+    {
+        if(level == LogSeverityLevel::Error)
+            printf("ERROR: ");
+        else if(level == LogSeverityLevel::Info)
+            printf("INFO: ");
+        else if(level == LogSeverityLevel::Warning)
+            printf("WARN: ");
+        else
+            printf("DEBUG: ");
+        vprintf(format, args);
+        printf("\n");
+    }
+    
     va_end(args);
 }
 
