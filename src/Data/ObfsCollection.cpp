@@ -3,6 +3,7 @@
 
 #include "ObfReader.h"
 #include "ObfDataInterface.h"
+#include "Logging.h"
 
 OsmAnd::ObfsCollection::ObfsCollection()
     : _d(new ObfsCollection_P(this))
@@ -49,9 +50,23 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection::obtainDataInte
     QMutexLocker scopedLock_sourcesMutex(&_d->_sourcesMutex);
     QMutexLocker scopedLock_watchedEntries(&_d->_watchedCollectionMutex);
 
-    // Refresh sources, if collection was not yet initialized
-    if(!_d->_sourcesRefreshedOnce || _d->_watchedCollectionChanged)
+    // Refresh sources
+    if(!_d->_sourcesRefreshedOnce)
     {
+#if defined(DEBUG) || defined(_DEBUG)
+        LogPrintf(LogSeverityLevel::Info, "Refreshing OBF sources because they were never initialized");
+#endif
+
+        // if sources have never been initialized
+        _d->refreshSources();
+    }
+    else if(_d->_watchedCollectionChanged)
+    {
+#if defined(DEBUG) || defined(_DEBUG)
+        LogPrintf(LogSeverityLevel::Info, "Refreshing OBF sources because watch-collecting was changed");
+#endif
+
+        // if watched collection has changed
         _d->refreshSources();
         _d->_watchedCollectionChanged = false;
     }
