@@ -55,6 +55,10 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
         }
     }
 
+#if defined(_DEBUG) || defined(DEBUG)
+    const auto total_Begin = std::chrono::high_resolution_clock::now();
+#endif
+
     // Obtain OBF data interface
 #if defined(_DEBUG) || defined(DEBUG)
     const auto obtainDataInterface_Begin = std::chrono::high_resolution_clock::now();
@@ -169,11 +173,6 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 #if defined(_DEBUG) || defined(DEBUG)
     const auto dataProcess_End = std::chrono::high_resolution_clock::now();
     const std::chrono::duration<float> dataProcess_Elapsed = dataProcess_End - dataProcess_Begin;
-    LogPrintf(LogSeverityLevel::Info,
-        "%d map objects (%d unique, %d shared) in %dx%d@%d: open %fs, read %fs (filter-by-id %fs), process-ids %fs, process-content %fs",
-        mapObjects.size() + duplicateMapObjects.size(), mapObjects.size(), duplicateMapObjects.size(),
-        tileId.x, tileId.y, zoom,
-        obtainDataInterface_Elapsed.count(), dataRead_Elapsed.count(), dataFilter, dataIdsProcess_Elapsed.count(), dataProcess_Elapsed.count());
 #endif
 
     // Create tile
@@ -193,5 +192,17 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
         QWriteLocker scopedLcoker(&tileEntry->_loadedConditionLock);
         tileEntry->_loadedCondition.wakeAll();
     }
+
+#if defined(_DEBUG) || defined(DEBUG)
+    const auto total_End = std::chrono::high_resolution_clock::now();
+    const std::chrono::duration<float> total_Elapsed = total_End - total_Begin;
+
+    LogPrintf(LogSeverityLevel::Info,
+        "%d map objects (%d unique, %d shared) in %dx%d@%d: elapsed %fs ~= open %fs + read %fs (filter-by-id %fs) + process-ids %fs + process-content %fs",
+        mapObjects.size() + duplicateMapObjects.size(), mapObjects.size(), duplicateMapObjects.size(),
+        tileId.x, tileId.y, zoom,
+        total_Elapsed.count(),
+        obtainDataInterface_Elapsed.count(), dataRead_Elapsed.count(), dataFilter, dataIdsProcess_Elapsed.count(), dataProcess_Elapsed.count());
+#endif
 }
 
