@@ -180,41 +180,41 @@ void OsmAnd::MapStyleRule::dump( const QString& prefix /*= QString()*/ ) const
         }
 
         OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s%s%s = %s",
-            newPrefix.toStdString().c_str(),
+            qPrintable(newPrefix),
             (valueDef->valueClass == MapStyleValueClass::Input) ? ">" : "<",
-            valueDef->name.toStdString().c_str(),
-            strValue.toStdString().c_str());
+            qPrintable(valueDef->name),
+            qPrintable(strValue));
     }
 
     if(!_d->_ifChildren.empty())
     {
         OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sIf(",
-            newPrefix.toStdString().c_str());
+            qPrintable(newPrefix));
         for(auto itChild = _d->_ifChildren.cbegin(); itChild != _d->_ifChildren.cend(); ++itChild)
         {
             auto child = *itChild;
 
             OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sAND",
-                newPrefix.toStdString().c_str());
+                qPrintable(newPrefix));
             child->dump(newPrefix);
         }
         OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s)",
-            newPrefix.toStdString().c_str());
+            qPrintable(newPrefix));
     }
 
     if(!_d->_ifElseChildren.empty())
     {
         OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sSelector: [",
-            newPrefix.toStdString().c_str());
+            qPrintable(newPrefix));
         for(auto itChild = _d->_ifElseChildren.cbegin(); itChild != _d->_ifElseChildren.cend(); ++itChild)
         {
             auto child = *itChild;
 
             OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sOR",
-                newPrefix.toStdString().c_str());
+                qPrintable(newPrefix));
             child->dump(newPrefix);
         }
         OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s]",
-            newPrefix.toStdString().c_str());
+            qPrintable(newPrefix));
     }
 }

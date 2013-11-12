@@ -333,7 +333,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeRasterMapStage()
         preprocessedVertexShader.replace("%RasterLayersCount%", QString::number(maxActiveMapLayers));
         renderAPI->preprocessVertexShader(preprocessedVertexShader);
         renderAPI->optimizeVertexShader(preprocessedVertexShader);
-        stageVariation.vs.id = renderAPI->compileShader(GL_VERTEX_SHADER, preprocessedVertexShader.toStdString().c_str());
+        stageVariation.vs.id = renderAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
         assert(stageVariation.vs.id != 0);
 
         // Compile fragment shader
@@ -351,7 +351,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeRasterMapStage()
         preprocessedFragmentShader.replace("%RasterLayersCount%", QString::number(maxActiveMapLayers));
         renderAPI->preprocessFragmentShader(preprocessedFragmentShader);
         renderAPI->optimizeFragmentShader(preprocessedFragmentShader);
-        stageVariation.fs.id = renderAPI->compileShader(GL_FRAGMENT_SHADER, preprocessedFragmentShader.toStdString().c_str());
+        stageVariation.fs.id = renderAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
         assert(stageVariation.fs.id != 0);
 
         // Link everything into program object
@@ -864,7 +864,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSkyStage()
     auto preprocessedVertexShader = vertexShader;
     renderAPI->preprocessVertexShader(preprocessedVertexShader);
     renderAPI->optimizeVertexShader(preprocessedVertexShader);
-    _skyStage.vs.id = renderAPI->compileShader(GL_VERTEX_SHADER, preprocessedVertexShader.toStdString().c_str());
+    _skyStage.vs.id = renderAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
     assert(_skyStage.vs.id != 0);
 
     // Compile fragment shader
@@ -880,7 +880,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSkyStage()
     QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
     renderAPI->preprocessFragmentShader(preprocessedFragmentShader);
     renderAPI->optimizeFragmentShader(preprocessedFragmentShader);
-    _skyStage.fs.id = renderAPI->compileShader(GL_FRAGMENT_SHADER, preprocessedFragmentShader.toStdString().c_str());
+    _skyStage.fs.id = renderAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
     assert(_skyStage.fs.id != 0);
 
     // Link everything into program object

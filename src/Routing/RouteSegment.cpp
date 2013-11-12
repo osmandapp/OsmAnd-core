@@ -49,6 +49,6 @@ double OsmAnd::RouteSegment::getBearingEnd() const
 
 void OsmAnd::RouteSegment::dump( const QString& prefix /*= QString()*/ ) const
 {
-    LogPrintf(LogSeverityLevel::Debug, "%sroad(%llu), [%u:%u]", prefix.toStdString().c_str(), road->id, _startPointIndex, _endPointIndex);
+    LogPrintf(LogSeverityLevel::Debug, "%sroad(%llu), [%u:%u]", qPrintable(prefix), road->id, _startPointIndex, _endPointIndex);
 }
 

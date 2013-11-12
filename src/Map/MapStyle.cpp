@@ -66,19 +66,19 @@ bool OsmAnd::MapStyle::resolveAttribute( const QString& name, std::shared_ptr<co
 
 void OsmAnd::MapStyle::dump( const QString& prefix /*= QString()*/ ) const
 {
-    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sPoint rules:", prefix.toStdString().c_str());
+    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sPoint rules:", qPrintable(prefix));
     dump(MapStyleRulesetType::Point, prefix);
 
-    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sLine rules:", prefix.toStdString().c_str());
+    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sLine rules:", qPrintable(prefix));
     dump(MapStyleRulesetType::Polyline, prefix);
 
-    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sPolygon rules:", prefix.toStdString().c_str());
+    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sPolygon rules:", qPrintable(prefix));
     dump(MapStyleRulesetType::Polygon, prefix);
 
-    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sText rules:", prefix.toStdString().c_str());
+    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sText rules:", qPrintable(prefix));
     dump(MapStyleRulesetType::Text, prefix);
 
-    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sOrder rules:", prefix.toStdString().c_str());
+    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sOrder rules:", qPrintable(prefix));
     dump(MapStyleRulesetType::Order, prefix);
 }
 

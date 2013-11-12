@@ -294,7 +294,7 @@ void OsmAnd::MapStyleEvaluator::dump( bool input /*= true*/, bool output /*= tru
         if((pValueDef->valueClass == MapStyleValueClass::Input && input) || (pValueDef->valueClass == MapStyleValueClass::Output && output))
         {
             auto strType = pValueDef->valueClass == MapStyleValueClass::Input ? ">" : "<";
-            OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s%s%s = ", prefix.toStdString().c_str(), strType, pValueDef->name.toStdString().c_str());
+            OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s%s%s = ", qPrintable(prefix), strType, qPrintable(pValueDef->name));
 
             switch (pValueDef->dataType)
             {
@@ -314,10 +314,10 @@ void OsmAnd::MapStyleEvaluator::dump( bool input /*= true*/, bool output /*= tru
                     OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%f", value.asSimple.asFloat);
                 break;
             case MapStyleValueDataType::String:
-                OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s", style->_d->lookupStringValue(value.asSimple.asUInt).toStdString().c_str());
+                OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s", qPrintable(style->_d->lookupStringValue(value.asSimple.asUInt)));
                 break;
             case MapStyleValueDataType::Color:
-                OsmAnd::LogPrintf(LogSeverityLevel::Debug, "#%s", QString::number(value.asSimple.asUInt, 16).toStdString().c_str());
+                OsmAnd::LogPrintf(LogSeverityLevel::Debug, "#%s", qPrintable(QString::number(value.asSimple.asUInt, 16)));
                 break;
             }
         }

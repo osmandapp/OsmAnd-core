@@ -77,7 +77,7 @@ GLuint OsmAnd::RenderAPI_OpenGL_Common::compileShader( GLenum shaderType, const 
             glGetShaderInfoLog(shader, logBufferLen, &logLen, log);
             GL_CHECK_RESULT;
             assert(logLen + 1 == logBufferLen);
-            LogPrintf(LogSeverityLevel::Error, "Failed to compile GLSL shader:\n%s", log);
+            LogPrintf(LogSeverityLevel::Error, "Failed to compile GLSL shader:\n%s\nSources:%s\n", log, source);
             free(log);
         }
 
@@ -162,12 +162,12 @@ void OsmAnd::RenderAPI_OpenGL_Common::findVariableLocation( GLuint program, GLin
     GL_CHECK_PRESENT(glGetUniformLocation);
 
     if(type == GLShaderVariableType::In)
-        location = glGetAttribLocation(program, name.toStdString().c_str());
+        location = glGetAttribLocation(program, qPrintable(name));
     else if(type == GLShaderVariableType::Uniform)
-        location = glGetUniformLocation(program, name.toStdString().c_str());
+        location = glGetUniformLocation(program, qPrintable(name));
     GL_CHECK_RESULT;
     if(location == -1)
-        LogPrintf(LogSeverityLevel::Error, "Variable '%s' (%s) was not found in GLSL program %d", name.toStdString().c_str(), type == GLShaderVariableType::In ? "In" : "Uniform", program);
+        LogPrintf(LogSeverityLevel::Error, "Variable '%s' (%s) was not found in GLSL program %d", qPrintable(name), type == GLShaderVariableType::In ? "In" : "Uniform", program);
     assert(location != -1);
     assert(!_programVariables[program].contains(type, location));
     _programVariables[program].insert(type, location);
