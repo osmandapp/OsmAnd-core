@@ -100,6 +100,10 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection_P::obtainDataIn
 
         // if sources have never been initialized
         refreshSources();
+
+        // Clear changed flag if it's raised, since it was already processed
+        if(_watchedCollectionChanged)
+            _watchedCollectionChanged = false;
     }
     else if(_watchedCollectionChanged)
     {
