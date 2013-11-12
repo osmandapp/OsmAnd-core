@@ -45,7 +45,7 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::LogFlush()
 OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel level, const char* format, ...)
 {
     va_list args;
-    va_start(args, msg);
+    va_start(args, format);
     if(level == LogSeverityLevel::Error)
         printf("ERROR: ");
     else if(level == LogSeverityLevel::Info)
