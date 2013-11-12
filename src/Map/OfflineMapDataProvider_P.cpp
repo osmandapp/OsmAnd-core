@@ -73,7 +73,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
     const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
 
     // Perform read-out
-    QList< std::shared_ptr<const Model::MapObject> > duplicateMapObjects;
+    QList< std::shared_ptr<const Model::MapObject> > sharedMapObjects;
     QList< std::shared_ptr<const Model::MapObject> > mapObjects;
     MapFoundationType tileFoundation;
 #if defined(_DEBUG) || defined(DEBUG)
@@ -83,9 +83,9 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
     auto& dataCache = _dataCache[zoom];
     dataInterface->obtainMapObjects(&mapObjects, &tileFoundation, tileBBox31, zoom, nullptr,
 #if defined(_DEBUG) || defined(DEBUG)
-        [&dataCache, &duplicateMapObjects, tileBBox31, &dataFilter](const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id) -> bool
+        [&dataCache, &sharedMapObjects, tileBBox31, &dataFilter](const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id) -> bool
 #else
-        [&dataCache, &duplicateMapObjects, tileBBox31](const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id) -> bool
+        [&dataCache, &sharedMapObjects, tileBBox31](const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id) -> bool
 #endif
         {
 #if defined(_DEBUG) || defined(DEBUG)
@@ -96,16 +96,16 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
             {
                 QReadLocker scopedLocker(&dataCache._mapObjectsMutex);
 
-                const auto itDuplicateMapObject = dataCache._mapObjects.constFind(id);
-                if(itDuplicateMapObject != dataCache._mapObjects.cend())
+                const auto itSharedMapObject = dataCache._mapObjects.constFind(id);
+                if(itSharedMapObject != dataCache._mapObjects.cend())
                 {
-                    const auto& mapObjectWeakRef = *itDuplicateMapObject;
+                    const auto& mapObjectWeakRef = *itSharedMapObject;
 
                     if(const auto& mapObject = mapObjectWeakRef.lock())
                     {
                         // Not all duplicates should be used, since some may lay outside bbox
                         if(mapObject->intersects(tileBBox31))
-                            duplicateMapObjects.push_back(mapObject);
+                            sharedMapObjects.push_back(mapObject);
 
 #if defined(_DEBUG) || defined(DEBUG)
                         const auto dataFilter_End = std::chrono::high_resolution_clock::now();
@@ -161,7 +161,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 #endif
 
     // Prepare data for the tile
-    mapObjects << duplicateMapObjects;
+    mapObjects << sharedMapObjects;
 
     // Allocate and prepare rasterizer context
     bool nothingToRasterize = false;
@@ -197,7 +197,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 
     LogPrintf(LogSeverityLevel::Info,
         "%d map objects (%d unique, %d shared) in %dx%d@%d: elapsed %fs ~= open %fs + read %fs (filter-by-id %fs) + process-ids %fs + process-content %fs",
-        mapObjects.size() + duplicateMapObjects.size(), mapObjects.size(), duplicateMapObjects.size(),
+        mapObjects.size(), mapObjects.size() - sharedMapObjects.size(), sharedMapObjects.size(),
         tileId.x, tileId.y, zoom,
         total_Elapsed.count(),
         obtainDataInterface_Elapsed.count(), dataRead_Elapsed.count(), dataFilter, dataIdsProcess_Elapsed.count(), dataProcess_Elapsed.count());

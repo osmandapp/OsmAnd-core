@@ -32,7 +32,7 @@ OsmAnd::MapRenderer::MapRenderer()
 {
     // Number of workers should be determined in runtime (exclude worker and main threads):
     const auto idealWorkerThreadsCount = (QThread::idealThreadCount() + 4) / 2;
-    _resourcesRequestWorkersPool.setMaxThreadCount(idealWorkerThreadsCount);
+    //_resourcesRequestWorkersPool.setMaxThreadCount(idealWorkerThreadsCount);
 #if defined(DEBUG) || defined(_DEBUG)
     LogPrintf(LogSeverityLevel::Info, "Map renderer will use max %d worker thread(s) to process requests", idealWorkerThreadsCount);
 #endif
