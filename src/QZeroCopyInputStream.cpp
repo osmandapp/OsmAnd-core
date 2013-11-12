@@ -2,9 +2,10 @@
 
 namespace gpb = google::protobuf;
 
-OsmAnd::QZeroCopyInputStream::QZeroCopyInputStream( const std::shared_ptr<QIODevice>& device )
+OsmAnd::QZeroCopyInputStream::QZeroCopyInputStream( const std::shared_ptr<QIODevice>& device, const size_t bufferSize /*= DefaultBufferSize*/ )
     : _device(device)
-    , _buffer(new uint8_t[BufferSize])
+    , _buffer(new uint8_t[bufferSize])
+    , _bufferSize(bufferSize)
     , _closeOnDestruction(!device->isOpen())
 {
     if(!_device->isOpen())
@@ -22,7 +23,7 @@ OsmAnd::QZeroCopyInputStream::~QZeroCopyInputStream()
 
 bool OsmAnd::QZeroCopyInputStream::Next( const void** data, int* size )
 {
-    qint64 bytesRead = _device->read(reinterpret_cast<char*>(_buffer), BufferSize);
+    qint64 bytesRead = _device->read(reinterpret_cast<char*>(_buffer), _bufferSize);
     if (bytesRead < 0 || (bytesRead == 0 && _device->atEnd()))
     {
         *size = 0;

@@ -45,20 +45,23 @@ namespace OsmAnd {
         //! Pointer to I/O device
         const std::shared_ptr<QIODevice> _device;
 
-        // Buffer
+        //! Buffer
         uint8_t* const _buffer;
+
+        //! Buffer size
+        const size_t _bufferSize;
 
         //! Should close on destruction?
         const bool _closeOnDestruction;
 
         //! Constants
         enum {
-            BufferSize = 64 * 1024, // 64Kb
+            DefaultBufferSize = 4 * 1024, // 4Kb
         };
     protected:
     public:
         //! Ctor
-        QZeroCopyInputStream(const std::shared_ptr<QIODevice>& device);
+        QZeroCopyInputStream(const std::shared_ptr<QIODevice>& device, const size_t bufferSize = DefaultBufferSize);
 
         //! Dtor
         virtual ~QZeroCopyInputStream();
