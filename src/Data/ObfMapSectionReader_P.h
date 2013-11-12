@@ -90,7 +90,7 @@ namespace OsmAnd {
             uint64_t& objectId);
 
         static void readMapObject(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
-            const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode,
+            uint64_t baseId, const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode,
             std::shared_ptr<OsmAnd::Model::MapObject>& mapObjectOut,
             const AreaI* bbox31);
 

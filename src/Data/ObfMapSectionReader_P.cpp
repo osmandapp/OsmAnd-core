@@ -462,41 +462,30 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
-                const auto origin = cis->CurrentPosition();
-
-                // Read map object identifier initially, to allow skipping the entire map object
-                uint64_t mapObjectId = 0;
-                {
-                    auto oldLimit = cis->PushLimit(length);
-                    readMapObjectId(reader, section, baseId, mapObjectId);
-                    assert(cis->BytesUntilLimit() == 0);
-                    cis->PopLimit(oldLimit);
-                }
-
-                // Make unique map object identifier
-                mapObjectId = Model::MapObject::getUniqueId(mapObjectId, section);
-
-                // Check if map object is desired
-                if(filterById && !filterById(section, mapObjectId))
-                    break;
 
                 // Read map object content
                 std::shared_ptr<OsmAnd::Model::MapObject> mapObject;
-                cis->Seek(origin);
                 {
                     auto oldLimit = cis->PushLimit(length);
-                    readMapObject(reader, section, tree, mapObject, bbox31);
+                    readMapObject(reader, section, baseId, tree, mapObject, bbox31);
                     assert(cis->BytesUntilLimit() == 0);
                     cis->PopLimit(oldLimit);
                 }
 
+                // If map object was not read, skip it
+                if(!mapObject)
+                    break;
+
+                // Make unique map object identifier
+                mapObject->_id = Model::MapObject::getUniqueId(mapObject->_id, section);
+
+                // Check if map object is desired
+                if(filterById && !filterById(section, mapObject->_id))
+                    break;
+
                 // Save object
-                if(mapObject)
-                {
-                    mapObject->_id = mapObjectId;
-                    mapObject->_foundation = tree->_foundation;
-                    intermediateResult.push_back(mapObject);
-                }
+                mapObject->_foundation = tree->_foundation;
+                intermediateResult.push_back(mapObject);
             }
             break;
         case OBF::MapDataBlock::kStringTableFieldNumber:
@@ -522,52 +511,9 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
     }
 }
 
-void OsmAnd::ObfMapSectionReader_P::readMapObjectId(
-    const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
-    uint64_t baseId,
-    uint64_t& objectId )
-{
-    auto cis = reader->_codedInputStream.get();
-
-    for(;;)
-    {
-        auto tag = cis->ReadTag();
-        auto tgn = gpb::internal::WireFormatLite::GetTagFieldNumber(tag);
-        switch(tgn)
-        {
-        case 0:
-            return;
-        case OBF::MapData::kAreaCoordinatesFieldNumber:
-        case OBF::MapData::kCoordinatesFieldNumber:
-        case OBF::MapData::kPolygonInnerCoordinatesFieldNumber:
-        case OBF::MapData::kAdditionalTypesFieldNumber:
-        case OBF::MapData::kTypesFieldNumber:
-        case OBF::MapData::kStringNamesFieldNumber:
-            {
-                gpb::uint32 length;
-                cis->ReadVarint32(&length);
-
-                // Skip entire block
-                cis->Skip(length);
-            }
-            break;
-        case OBF::MapData::kIdFieldNumber:
-            {
-                auto d = ObfReaderUtilities::readSInt64(cis);
-
-                objectId = d + baseId;
-            }
-            break;
-        default:
-            ObfReaderUtilities::skipUnknownField(cis, tag);
-            break;
-        }
-    }
-}
-
 void OsmAnd::ObfMapSectionReader_P::readMapObject(
     const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
-    const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode,
+    uint64_t baseId, const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode,
     std::shared_ptr<OsmAnd::Model::MapObject>& mapObject,
     const AreaI* bbox31)
 {
@@ -738,6 +684,13 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 }
                 assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
+            }
+            break;
+        case OBF::MapData::kIdFieldNumber:
+            {
+                auto d = ObfReaderUtilities::readSInt64(cis);
+
+                mapObject->_id = d + baseId;
             }
             break;
         default:
