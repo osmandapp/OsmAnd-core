@@ -1,8 +1,11 @@
 #include "ObfsCollection_P.h"
 #include "ObfsCollection.h"
 
+#include "ObfReader.h"
+#include "ObfDataInterface.h"
 #include "ObfFile.h"
 #include "Utilities.h"
+#include "Logging.h"
 
 OsmAnd::ObfsCollection_P::ObfsCollection_P( ObfsCollection* owner_ )
     : owner(owner_)
@@ -81,4 +84,42 @@ void OsmAnd::ObfsCollection_P::refreshSources()
 
     // Mark that sources were refreshed at least once
     _sourcesRefreshedOnce = true;
+}
+
+std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection_P::obtainDataInterface()
+{
+    QMutexLocker scopedLock_sourcesMutex(&_sourcesMutex);
+    QMutexLocker scopedLock_watchedEntries(&_watchedCollectionMutex);
+
+    // Refresh sources
+    if(!_sourcesRefreshedOnce)
+    {
+#if defined(DEBUG) || defined(_DEBUG)
+        LogPrintf(LogSeverityLevel::Info, "Refreshing OBF sources because they were never initialized");
+#endif
+
+        // if sources have never been initialized
+        refreshSources();
+    }
+    else if(_watchedCollectionChanged)
+    {
+#if defined(DEBUG) || defined(_DEBUG)
+        LogPrintf(LogSeverityLevel::Info, "Refreshing OBF sources because watch-collecting was changed");
+#endif
+
+        // if watched collection has changed
+        refreshSources();
+        _watchedCollectionChanged = false;
+    }
+
+    QList< std::shared_ptr<ObfReader> > obfReaders;
+    for(auto itSource = _sources.cbegin(); itSource != _sources.cend(); ++itSource)
+    {
+        const auto& obfFile = itSource.value();
+
+        auto obfReader = new ObfReader(obfFile);
+        obfReaders.push_back(std::shared_ptr<ObfReader>(obfReader));
+    }
+
+    return std::shared_ptr<ObfDataInterface>(new ObfDataInterface(obfReaders));
 }

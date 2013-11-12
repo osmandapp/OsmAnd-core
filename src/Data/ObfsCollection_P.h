@@ -36,6 +36,7 @@
 namespace OsmAnd {
 
     class ObfFile;
+    class ObfDataInterface;
 
     class ObfsCollection;
     class ObfsCollection_P
@@ -90,6 +91,8 @@ namespace OsmAnd {
         void refreshSources();
     public:
         virtual ~ObfsCollection_P();
+
+        std::shared_ptr<ObfDataInterface> obtainDataInterface();
 
     friend class OsmAnd::ObfsCollection;
     };

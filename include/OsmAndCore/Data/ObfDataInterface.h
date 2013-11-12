@@ -37,6 +37,7 @@ namespace OsmAnd {
 
     // Forward declarations
     class ObfsCollection;
+    class ObfsCollection_P;
     class ObfReader;
     class ObfFile;
     class ObfMapSectionInfo;
@@ -63,6 +64,7 @@ namespace OsmAnd {
             const IQueryController* const controller = nullptr, std::function<bool (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t)> filterById = nullptr);
         
     friend class OsmAnd::ObfsCollection;
+    friend class OsmAnd::ObfsCollection_P;
     };
 
 }
