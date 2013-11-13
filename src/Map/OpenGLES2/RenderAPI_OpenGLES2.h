@@ -22,10 +22,11 @@
 #ifndef __RENDER_API__OPENGLES2_H_
 #define __RENDER_API__OPENGLES2_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 #include <array>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QString>
 
 #include <glm/glm.hpp>
