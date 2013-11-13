@@ -766,13 +766,16 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             {
                 cis->Seek(mapLevel->_offset);
                 auto oldLimit = cis->PushLimit(mapLevel->_length);
+                
                 cis->Skip(mapLevel->_boxesInnerOffset);
                 mapLevel->_d->_rootNodes.reset(new ObfMapSectionLevel_P::RootNodes());
                 readMapLevelTreeNodes(reader, section, mapLevel, mapLevel->_d->_rootNodes->nodes);
+
                 cis->PopLimit(oldLimit);
             }
         }
         
+		// Collect tree nodes with data
         QList< std::shared_ptr<ObfMapSectionLevelTreeNode> > treeNodesWithData;
         for(auto itRootNode = mapLevel->_d->_rootNodes->nodes.cbegin(); itRootNode != mapLevel->_d->_rootNodes->nodes.cend(); ++itRootNode)
         {
@@ -811,22 +814,30 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                     foundation = MapFoundationType::Mixed;
             }
         }
+
+		// Sort blocks by data offset to force forward-only seeking
         qSort(treeNodesWithData.begin(), treeNodesWithData.end(), [](const std::shared_ptr<ObfMapSectionLevelTreeNode>& l, const std::shared_ptr<ObfMapSectionLevelTreeNode>& r) -> bool
         {
             return l->_dataOffset < r->_dataOffset;
         });
+
+		// Read map objects from their blocks
         for(auto itTreeNode = treeNodesWithData.cbegin(); itTreeNode != treeNodesWithData.cend(); ++itTreeNode)
         {
+			if(controller && controller->isAborted())
+				break;
+
             const auto& treeNode = *itTreeNode;
-            if(controller && controller->isAborted())
-                break;
 
             cis->Seek(treeNode->_dataOffset);
+
             gpb::uint32 length;
             cis->ReadVarint32(&length);
             auto oldLimit = cis->PushLimit(length);
+
             readMapObjectsBlock(reader, section, treeNode, resultOut, bbox31, filterById, visitor, controller);
             assert(cis->BytesUntilLimit() == 0);
+
             cis->PopLimit(oldLimit);
         }
     }
