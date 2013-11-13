@@ -89,7 +89,7 @@ namespace OsmAnd {
         Uniform
     };
 
-    class OSMAND_CORE_API RenderAPI_OpenGL_Common : public RenderAPI
+    class RenderAPI_OpenGL_Common : public RenderAPI
     {
     private:
         bool uploadTileAsTextureToGPU(const std::shared_ptr< const MapTile >& tile, const uint32_t tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU);

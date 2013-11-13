@@ -103,6 +103,7 @@ target_compile_definitions(gdal_static
 	PRIVATE
 		-DFRMT_gtiff
 	PUBLIC
+		-DCPL_DLL=
 )
 target_include_directories(gdal_static
 	PRIVATE
