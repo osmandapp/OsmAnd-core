@@ -83,8 +83,8 @@ namespace OsmAnd {
         QVector< SkPaint > _reverseOneWayPaints;
         static void initializeOneWayPaint(SkPaint& paint);
 
-        mutable QMutex _bitmapShadersMutex;
-        mutable QHash< QString, SkBitmapProcShader* > _bitmapShaders;
+        mutable QMutex _shadersBitmapsMutex;
+        mutable QHash< QString, std::shared_ptr<SkBitmap> > _shadersBitmaps;
 
         mutable QMutex _pathEffectsMutex;
         mutable QHash< QString, SkPathEffect* > _pathEffects;

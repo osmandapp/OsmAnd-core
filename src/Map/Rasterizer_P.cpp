@@ -970,6 +970,7 @@ bool OsmAnd::Rasterizer_P::updatePaint(
             if(env.obtainBitmapShader(shader, shaderObj) && shaderObj)
             {
                 _mapPaint.setShader(static_cast<SkShader*>(shaderObj));
+                shaderObj->unref();
             }
         }
     }

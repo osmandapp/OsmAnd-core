@@ -39,11 +39,9 @@ OsmAnd::RasterizerEnvironment_P::RasterizerEnvironment_P( RasterizerEnvironment*
 OsmAnd::RasterizerEnvironment_P::~RasterizerEnvironment_P()
 {
     {
-        QMutexLocker scopedLock(&_bitmapShadersMutex);
+        QMutexLocker scopedLock(&_shadersBitmapsMutex);
 
-        for(auto itShaderEntry = _bitmapShaders.cbegin(); itShaderEntry != _bitmapShaders.cend(); ++itShaderEntry)
-            (*itShaderEntry)->unref();
-        _bitmapShaders.clear();
+        _shadersBitmaps.clear();
     }
 
     {
@@ -71,6 +69,10 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
     _textPaint.setAntiAlias(true);
     _textPaint.setLCDRenderText(true);
     _textPaint.setTextEncoding(SkPaint::kUTF16_TextEncoding);
+    /*_textPaint.setStyle(SkPaint::kFill_Style);
+    _textPaint.setStrokeWidth(1);
+    _textPaint.setColor(SK_ColorBLACK);
+    _textPaint.setTextAlign(SkPaint::kCenter_Align);*/
     static_assert(sizeof(QChar) == 2, "If QChar is not 2 bytes, then encoding is not kUTF16_TextEncoding");
 
     _shadowLevelMin = 0;
@@ -179,12 +181,6 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
             _reverseOneWayPaints.push_back(paint);
         }
     }
-
-    /*_textPaint.setStyle(SkPaint::kFill_Style);
-    _textPaint.setStrokeWidth(1);
-    _textPaint.setColor(SK_ColorBLACK);
-    _textPaint.setTextAlign(SkPaint::kCenter_Align);
-    _textPaint.setAntiAlias(true);*/
 }
 
 QMap< std::shared_ptr<const OsmAnd::MapStyleValueDefinition>, OsmAnd::MapStyleValue > OsmAnd::RasterizerEnvironment_P::getSettings() const
@@ -211,28 +207,26 @@ void OsmAnd::RasterizerEnvironment_P::applyTo( MapStyleEvaluator& evaluator ) co
 
 bool OsmAnd::RasterizerEnvironment_P::obtainBitmapShader( const QString& name, SkBitmapProcShader* &outShader ) const
 {
-    QMutexLocker scopedLock(&_bitmapShadersMutex);
+    QMutexLocker scopedLock(&_shadersBitmapsMutex);
 
-    auto itShader = _bitmapShaders.constFind(name);
-    if(itShader == _bitmapShaders.cend())
+    auto itShaderBitmap = _shadersBitmaps.constFind(name);
+    if(itShaderBitmap == _shadersBitmaps.cend())
     {
         const auto shaderBitmapPath = QString::fromLatin1("map/shaders/%1.png").arg(name);
 
         // Get data from embedded resources
         const auto data = EmbeddedResources::decompressResource(shaderBitmapPath);
 
-        // Decode data
-        SkBitmap shaderBitmap;
+        // Decode bitmap for a shader
+        auto shaderBitmap = new SkBitmap();
         SkMemoryStream dataStream(data.constData(), data.length(), false);
-        if(!SkImageDecoder::DecodeStream(&dataStream, &shaderBitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
+        if(!SkImageDecoder::DecodeStream(&dataStream, shaderBitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
             return false;
-
-        // Create shader from that bitmap
-        auto shader = new SkBitmapProcShader(shaderBitmap, SkShader::kRepeat_TileMode, SkShader::kRepeat_TileMode);
-        itShader = _bitmapShaders.insert(name, shader);
+        itShaderBitmap = _shadersBitmaps.insert(name, std::shared_ptr<SkBitmap>(shaderBitmap));
     }
 
-    outShader = *itShader;
+    // Create shader from that bitmap
+    outShader = new SkBitmapProcShader(*itShaderBitmap->get(), SkShader::kRepeat_TileMode, SkShader::kRepeat_TileMode);
     return true;
 }
 
