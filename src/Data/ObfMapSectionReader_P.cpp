@@ -553,12 +553,13 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
 
                 // In protobuf, a sint32 can be encoded using [1..4] bytes,
                 // so try to guess size of array, and preallocate it.
-                // (BytesUntilLimit/2) is ~= number of vertices, and almost always larger
-                // than needed, so in very rare cases it will be required to reallocate
-                // a bigger piece of memory.
+                // (BytesUntilLimit/2) is ~= number of vertices, and is always larger than needed.
+                // So it's impossible that a buffer overflow will ever happen. But assert on that.
                 const auto probableVerticesCount = (cis->BytesUntilLimit() / 2);
-                points31.reserve(probableVerticesCount);
+                points31.resize(probableVerticesCount);
 
+                auto pPoint = points31.data();
+                auto verticesCount = 0;
                 bool shouldNotSkip = (bbox31 == nullptr);
                 while (cis->BytesUntilLimit() > 0)
                 {
@@ -568,8 +569,11 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
 
                     p += d;
 
-                    points31.push_back(p);
-
+                    // Save point into storage
+                    assert(points31.size() > verticesCount);
+                    *(pPoint++) = p;
+                    verticesCount++;
+                    
                     if (!shouldNotSkip && bbox31)
                         shouldNotSkip = bbox31->contains(p);
                     objectBBox.enlargeToInclude(p);
@@ -577,7 +581,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
 
                 // Since reserved space may be larger than actual amount of data,
                 // shrink the vertices array
-                points31.squeeze();
+                points31.resize(verticesCount);
 
                 if(points31.isEmpty())
                 {
@@ -620,22 +624,37 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
-                auto px = treeNode->_area31.left & MaskToRead;
-                auto py = treeNode->_area31.top & MaskToRead;
+
                 mapObject->_innerPolygonsPoints31.push_back(QVector< PointI >());
                 auto& polygon = mapObject->_innerPolygonsPoints31.last();
+
+                PointI p;
+                p.x = treeNode->_area31.left & MaskToRead;
+                p.y = treeNode->_area31.top & MaskToRead;
+
+                // Preallocate memory
+                const auto probableVerticesCount = (cis->BytesUntilLimit() / 2);
+                polygon.resize(probableVerticesCount);
+
+                auto pPoint = polygon.data();
+                auto verticesCount = 0;
                 while(cis->BytesUntilLimit() > 0)
                 {
-                    auto dx = (ObfReaderUtilities::readSInt32(cis) << ShiftCoordinates);
-                    auto x = dx + px;
-                    auto dy = (ObfReaderUtilities::readSInt32(cis) << ShiftCoordinates);
-                    auto y = dy + py;
+                    PointI d;
+                    d.x = (ObfReaderUtilities::readSInt32(cis) << ShiftCoordinates);
+                    d.y = (ObfReaderUtilities::readSInt32(cis) << ShiftCoordinates);
 
-                    polygon.push_back(PointI(x, y));
-                    
-                    px = x;
-                    py = y;
+                    p += d;
+
+                    // Save point into storage
+                    assert(polygon.size() > verticesCount);
+                    *(pPoint++) = p;
+                    verticesCount++;
                 }
+
+                // Shrink memory
+                polygon.resize(verticesCount);
+
                 cis->PopLimit(oldLimit);
             }
             break;
