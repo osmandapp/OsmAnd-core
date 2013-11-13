@@ -1,6 +1,8 @@
 #include "ObfsCollection_P.h"
 #include "ObfsCollection.h"
 
+#include <chrono>
+
 #include "ObfReader.h"
 #include "ObfDataInterface.h"
 #include "ObfFile.h"
@@ -22,6 +24,10 @@ OsmAnd::ObfsCollection_P::~ObfsCollection_P()
 
 void OsmAnd::ObfsCollection_P::refreshSources()
 {
+#if defined(_DEBUG) || defined(DEBUG)
+    const auto refreshSources_Begin = std::chrono::high_resolution_clock::now();
+#endif
+
     QMutexLocker scopedLock(&_sourcesMutex);
 
     // Find all files that are present in watched entries
@@ -81,6 +87,12 @@ void OsmAnd::ObfsCollection_P::refreshSources()
             itObfFileEntry = _sources.insert(obfFilePath, std::shared_ptr<ObfFile>(obfFile));
         }
     }
+
+#if defined(_DEBUG) || defined(DEBUG)
+    const auto refreshSources_End = std::chrono::high_resolution_clock::now();
+    const std::chrono::duration<float> refreshSources_Elapsed = refreshSources_End - refreshSources_Begin;
+    LogPrintf(LogSeverityLevel::Info, "Refreshed OBF sources in %fs", refreshSources_Elapsed.count());
+#endif
 
     // Mark that sources were refreshed at least once
     _sourcesRefreshedOnce = true;
