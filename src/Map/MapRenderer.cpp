@@ -31,8 +31,6 @@ OsmAnd::MapRenderer::MapRenderer()
     , resources(_resources)
     , renderAPI(_renderAPI)
 {
-    // Number of workers should be determined in runtime (exclude worker and main threads):
-    _resourcesRequestWorkersPool.setMaxThreadCount(4);
 #if defined(DEBUG) || defined(_DEBUG)
     LogPrintf(LogSeverityLevel::Info, "Map renderer will use max %d worker thread(s) to process requests", _resourcesRequestWorkersPool.maxThreadCount());
 #endif
