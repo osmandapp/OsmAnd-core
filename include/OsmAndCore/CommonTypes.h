@@ -150,7 +150,7 @@ namespace OsmAnd
     friend struct OsmAnd::Area<T>;
     };
 
-	template<typename T>
+    template<typename T>
     struct Area
     {
         typedef Point<T> PointT;

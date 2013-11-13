@@ -551,16 +551,16 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 objectBBox.top = objectBBox.left = std::numeric_limits<int32_t>::max();
                 objectBBox.bottom = objectBBox.right = 0;
 
-				// In protobuf, a sint32 can be encoded using [1..4] bytes,
-				// so try to guess size of array, and preallocate it.
-				// (BytesUntilLimit/2) is ~= number of vertices, and almost always larger
-				// than needed, so in very rare cases it will be required to reallocate
-				// a bigger piece of memory.
-				const auto probableVerticesCount = (cis->BytesUntilLimit() / 2);
-				points31.reserve(probableVerticesCount);
+                // In protobuf, a sint32 can be encoded using [1..4] bytes,
+                // so try to guess size of array, and preallocate it.
+                // (BytesUntilLimit/2) is ~= number of vertices, and almost always larger
+                // than needed, so in very rare cases it will be required to reallocate
+                // a bigger piece of memory.
+                const auto probableVerticesCount = (cis->BytesUntilLimit() / 2);
+                points31.reserve(probableVerticesCount);
 
                 bool shouldNotSkip = (bbox31 == nullptr);
-				while(cis->BytesUntilLimit() > 0)
+                while (cis->BytesUntilLimit() > 0)
                 {
                     PointI d;
                     d.x = (ObfReaderUtilities::readSInt32(cis) << ShiftCoordinates);
@@ -570,14 +570,14 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
 
                     points31.push_back(p);
 
-                    if(!shouldNotSkip && bbox31)
+                    if (!shouldNotSkip && bbox31)
                         shouldNotSkip = bbox31->contains(p);
                     objectBBox.enlargeToInclude(p);
                 }
 
-				// Since reserved space may be larger than actual amount of data,
-				// shrink the vertices array
-				points31.squeeze();
+                // Since reserved space may be larger than actual amount of data,
+                // shrink the vertices array
+                points31.squeeze();
 
                 if(points31.isEmpty())
                 {
@@ -775,7 +775,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             }
         }
         
-		// Collect tree nodes with data
+        // Collect tree nodes with data
         QList< std::shared_ptr<ObfMapSectionLevelTreeNode> > treeNodesWithData;
         for(auto itRootNode = mapLevel->_d->_rootNodes->nodes.cbegin(); itRootNode != mapLevel->_d->_rootNodes->nodes.cend(); ++itRootNode)
         {
@@ -815,17 +815,17 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             }
         }
 
-		// Sort blocks by data offset to force forward-only seeking
+        // Sort blocks by data offset to force forward-only seeking
         qSort(treeNodesWithData.begin(), treeNodesWithData.end(), [](const std::shared_ptr<ObfMapSectionLevelTreeNode>& l, const std::shared_ptr<ObfMapSectionLevelTreeNode>& r) -> bool
         {
             return l->_dataOffset < r->_dataOffset;
         });
 
-		// Read map objects from their blocks
+        // Read map objects from their blocks
         for(auto itTreeNode = treeNodesWithData.cbegin(); itTreeNode != treeNodesWithData.cend(); ++itTreeNode)
         {
-			if(controller && controller->isAborted())
-				break;
+            if(controller && controller->isAborted())
+                break;
 
             const auto& treeNode = *itTreeNode;
 

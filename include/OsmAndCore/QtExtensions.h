@@ -26,9 +26,9 @@
 #include <memory>
 
 #ifndef SWIG
-#	if defined(QGLOBAL_H)
-#		error <OsmAndCore/QtExtensions.h> must be included before any Qt header
-#	endif // QGLOBAL_H
+#   if defined(QGLOBAL_H)
+#       error <OsmAndCore/QtExtensions.h> must be included before any Qt header
+#   endif // QGLOBAL_H
 #endif // !SWIG
 
 #include <QtGlobal>
