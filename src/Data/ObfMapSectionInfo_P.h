@@ -27,6 +27,7 @@
 #include <memory>
 #include <tuple>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QMutex>
 #include <QSet>
 #include <QHash>

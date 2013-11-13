@@ -3,6 +3,7 @@
 #include <cassert>
 #include <algorithm>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QMutableHashIterator>
 
 #include <SkBitmap.h>

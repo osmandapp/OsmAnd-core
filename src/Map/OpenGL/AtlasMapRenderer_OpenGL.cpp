@@ -2,6 +2,7 @@
 
 #include <cassert>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QtMath>
 
 #include <glm/gtc/type_ptr.hpp>

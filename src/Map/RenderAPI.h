@@ -26,6 +26,7 @@
 #include <memory>
 #include <functional>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QHash>
 #include <QMultiMap>
 #include <QReadWriteLock>

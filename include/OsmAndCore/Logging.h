@@ -1,6 +1,8 @@
 #ifndef __LOGGING_H_
 #define __LOGGING_H_
 
+#include <OsmAndCore/QtExtensions.h>
+
 #include <OsmAndCore.h>
 
 namespace OsmAnd

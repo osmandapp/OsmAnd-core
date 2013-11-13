@@ -3,6 +3,7 @@
 
 #include <cassert>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QCoreApplication>
 #include <QNetworkRequest>
 #include <QNetworkReply>

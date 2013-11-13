@@ -1,14 +1,15 @@
 #include "RoutingConfiguration.h"
 #include "RoutingConfiguration_private.h"
 
-#include "Common.h"
-#include "EmbeddedResources.h"
-#include "Utilities.h"
-
+#include <OsmAndCore/QtExtensions.h>
 #include <QByteArray>
 #include <QBuffer>
 #include <QXmlStreamReader>
 #include <QStringList>
+
+#include "Common.h"
+#include "EmbeddedResources.h"
+#include "Utilities.h"
 
 OsmAnd::RoutingConfiguration::RoutingConfiguration()
     : routingProfiles(_routingProfiles)

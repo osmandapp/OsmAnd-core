@@ -24,6 +24,7 @@
 
 #include <functional>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QEvent>
 
 namespace OsmAnd {

@@ -551,20 +551,34 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 objectBBox.top = objectBBox.left = std::numeric_limits<int32_t>::max();
                 objectBBox.bottom = objectBBox.right = 0;
 
+				// In protobuf, a sint32 can be encoded using [1..4] bytes,
+				// so try to guess size of array, and preallocate it.
+				// (BytesUntilLimit/2) is ~= number of vertices, and almost always larger
+				// than needed, so in very rare cases it will be required to reallocate
+				// a bigger piece of memory.
+				const auto probableVerticesCount = (cis->BytesUntilLimit() / 2);
+				points31.reserve(probableVerticesCount);
+
                 bool shouldNotSkip = (bbox31 == nullptr);
-                while(cis->BytesUntilLimit() > 0)
+				while(cis->BytesUntilLimit() > 0)
                 {
                     PointI d;
                     d.x = (ObfReaderUtilities::readSInt32(cis) << ShiftCoordinates);
                     d.y = (ObfReaderUtilities::readSInt32(cis) << ShiftCoordinates);
 
                     p += d;
+
                     points31.push_back(p);
 
                     if(!shouldNotSkip && bbox31)
                         shouldNotSkip = bbox31->contains(p);
                     objectBBox.enlargeToInclude(p);
                 }
+
+				// Since reserved space may be larger than actual amount of data,
+				// shrink the vertices array
+				points31.squeeze();
+
                 if(points31.isEmpty())
                 {
                     // Fake that this object is inside bbox

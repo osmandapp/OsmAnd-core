@@ -1,6 +1,7 @@
 #include "MapStyle.h"
 #include "MapStyle_P.h"
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QFileInfo>
 
 #include "MapStyleRule.h"

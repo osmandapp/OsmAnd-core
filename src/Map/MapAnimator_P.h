@@ -27,6 +27,7 @@
 #include <cassert>
 #include <functional>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QtMath>
 #include <QList>
 #include <QMutex>

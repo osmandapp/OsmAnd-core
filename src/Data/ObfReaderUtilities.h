@@ -24,6 +24,7 @@
 
 #include <cstdint>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QString>
 #include <QStringList>
 

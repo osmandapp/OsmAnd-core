@@ -23,9 +23,12 @@
 #ifndef __MODEL_BUILDING_H_
 #define __MODEL_BUILDING_H_
 
-#include <OsmAndCore.h>
-#include <QString>
 #include <cstdint>
+
+#include <OsmAndCore/QtExtensions.h>
+#include <QString>
+
+#include <OsmAndCore.h>
 
 namespace OsmAnd {
 

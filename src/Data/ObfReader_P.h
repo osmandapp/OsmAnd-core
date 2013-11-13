@@ -27,6 +27,7 @@
 #include <memory>
 #include <functional>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QString>
 
 #include <google/protobuf/io/coded_stream.h>

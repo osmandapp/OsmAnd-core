@@ -26,6 +26,7 @@
 #include <cstdint>
 #include <memory>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QList>
 #include <QDir>
 #include <QFileInfo>

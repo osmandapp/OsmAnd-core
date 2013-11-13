@@ -25,6 +25,7 @@
 
 #include <cstdint>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QIODevice>
 #include <QString>
 #include <QMap>

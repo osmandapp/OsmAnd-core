@@ -5,6 +5,7 @@
 #include <ctime>
 #include <chrono>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QDateTime>
 #include <QTextStream>
 

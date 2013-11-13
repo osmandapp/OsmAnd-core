@@ -22,6 +22,7 @@
 #ifndef __Q_MAIN_THREAD_TASK_HOST_H_
 #define __Q_MAIN_THREAD_TASK_HOST_H_
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QObject>
 
 #include <QMainThreadTaskEvent.h>

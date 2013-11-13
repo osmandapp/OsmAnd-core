@@ -26,6 +26,7 @@
 #include <cstdint>
 #include <memory>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QDir>
 #include <QHash>
 #include <QMutex>

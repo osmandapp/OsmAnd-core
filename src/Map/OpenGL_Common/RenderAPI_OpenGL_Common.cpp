@@ -2,6 +2,7 @@
 
 #include <cassert>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QtMath>
 
 #include <SkBitmap.h>

@@ -27,6 +27,8 @@
 #include <memory>
 #include <functional>
 
+#include <OsmAndCore/QtExtensions.h>
+
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 

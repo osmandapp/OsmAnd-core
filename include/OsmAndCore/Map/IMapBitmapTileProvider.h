@@ -25,6 +25,7 @@
 #include <cstdint>
 #include <memory>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QtGlobal>
 
 #include <OsmAndCore.h>

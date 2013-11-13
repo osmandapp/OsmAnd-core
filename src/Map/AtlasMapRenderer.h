@@ -25,8 +25,10 @@
 #include <cstdint>
 #include <memory>
 
+#include <OsmAndCore/QtExtensions.h>
+
 #include <OsmAndCore.h>
-#include <OsmAndCore/CommonTypes.h>
+#include <CommonTypes.h>
 #include <MapRenderer.h>
 
 namespace OsmAnd {

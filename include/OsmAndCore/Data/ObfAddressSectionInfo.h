@@ -26,13 +26,11 @@
 #include <cstdint>
 #include <memory>
 
-#include <OsmAndCore.h>
-
 #include <OsmAndCore/QtExtensions.h>
-
 #include <QList>
 #include <QHash>
 
+#include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Data/ObfSectionInfo.h>
 

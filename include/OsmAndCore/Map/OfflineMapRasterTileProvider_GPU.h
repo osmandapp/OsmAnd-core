@@ -27,6 +27,7 @@
 #include <functional>
 #include <array>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QMutex>
 #include <QSet>
 

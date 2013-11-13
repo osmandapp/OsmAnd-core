@@ -25,6 +25,7 @@
 
 #include <memory>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QIODevice>
 
 #include <OsmAndCore.h>

@@ -23,6 +23,8 @@
 #ifndef __MODEL_POSTCODE_AREA_H_
 #define __MODEL_POSTCODE_AREA_H_
 
+#include <OsmAndCore/QtExtensions.h>
+
 #include <OsmAndCore.h>
 #include <OsmAndCore/Data/Model/StreetGroup.h>
 

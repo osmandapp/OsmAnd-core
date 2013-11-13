@@ -26,6 +26,8 @@
 #include <cstdint>
 #include <memory>
 
+#include <OsmAndCore/QtExtensions.h>
+
 #include <OsmAndCore.h>
 #include <CommonTypes.h>
 #include <OfflineMapDataProvider_P.h>

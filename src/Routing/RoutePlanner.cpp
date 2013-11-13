@@ -4,6 +4,7 @@
 #include <ctime>
 #include <chrono>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QtCore>
 
 #include "ObfReader.h"

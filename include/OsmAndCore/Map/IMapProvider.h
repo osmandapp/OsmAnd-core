@@ -25,6 +25,8 @@
 #include <cstdint>
 #include <memory>
 
+#include <OsmAndCore/QtExtensions.h>
+
 #include <OsmAndCore.h>
 
 namespace OsmAnd {

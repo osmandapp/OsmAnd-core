@@ -27,6 +27,7 @@
 #include <memory>
 #include <functional>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QThreadPool>
 #include <QEventLoop>
 #include <QRunnable>

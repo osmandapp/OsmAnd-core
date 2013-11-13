@@ -1,5 +1,6 @@
 #include "RouteSegment.h"
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QtNumeric>
 #include <QtCore>
 

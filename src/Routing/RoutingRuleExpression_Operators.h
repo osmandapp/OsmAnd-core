@@ -23,6 +23,7 @@
 #ifndef __ROUTING_RULE_EXPRESSION_OPERATORS_H_
 #define __ROUTING_RULE_EXPRESSION_OPERATORS_H_
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QString>
 
 #include "RoutingRuleExpression.h"

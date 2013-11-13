@@ -28,6 +28,7 @@
 #include <queue>
 #include <functional>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QString>
 #include <QHash>
 #include <QMap>

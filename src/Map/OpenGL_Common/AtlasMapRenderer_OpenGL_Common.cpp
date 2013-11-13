@@ -6,6 +6,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QtGlobal>
 #include <QtNumeric>
 #include <QtMath>

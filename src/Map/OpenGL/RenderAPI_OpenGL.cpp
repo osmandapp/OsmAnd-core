@@ -2,6 +2,7 @@
 
 #include <cassert>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QRegExp>
 #include <QStringList>
 

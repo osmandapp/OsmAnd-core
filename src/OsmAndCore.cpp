@@ -2,6 +2,7 @@
 
 #include <memory>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QCoreApplication>
 #include <QThread>
 #include <QMutex>

@@ -24,6 +24,7 @@
 
 #include <memory>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QObject>
 
 namespace OsmAnd {

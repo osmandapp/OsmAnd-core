@@ -3,6 +3,7 @@
 #include <cassert>
 #include <chrono>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QtSql>
 
 #include "Logging.h"

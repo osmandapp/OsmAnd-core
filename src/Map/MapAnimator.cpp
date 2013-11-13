@@ -1,6 +1,7 @@
 #include "MapAnimator.h"
 #include "MapAnimator_P.h"
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QtMath>
 #include <QMutableListIterator>
 

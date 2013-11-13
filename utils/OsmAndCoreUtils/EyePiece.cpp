@@ -8,6 +8,7 @@
 #include <SkBitmapDevice.h>
 #include <SkImageEncoder.h>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QtMath>
 
 #include <OsmAndCore/Common.h>

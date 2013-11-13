@@ -29,6 +29,7 @@
 #include <functional>
 #include <type_traits>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QMap>
 #include <QReadWriteLock>
 #include <QAtomicInt>

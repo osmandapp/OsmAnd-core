@@ -23,8 +23,11 @@
 #ifndef __I_QUERY_CONTROLLER_H_
 #define __I_QUERY_CONTROLLER_H_
 
-#include <OsmAndCore.h>
 #include <cstdint>
+
+#include <OsmAndCore/QtExtensions.h>
+
+#include <OsmAndCore.h>
 
 namespace OsmAnd {
 

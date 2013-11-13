@@ -26,6 +26,7 @@
 #include <memory>
 #include <array>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QSet>
 #include <QDir>
 #include <QUrl>

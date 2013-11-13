@@ -4,6 +4,7 @@
 #include <limits>
 #include <cmath>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QtNumeric>
 #include <QtCore>
 

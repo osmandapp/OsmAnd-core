@@ -27,6 +27,7 @@
 #include <memory>
 #include <functional>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QHash>
 #include <QMap>
 #include <QSet>

@@ -26,6 +26,8 @@
 #include <cstdint>
 #include <functional>
 
+#include <OsmAndCore/QtExtensions.h>
+
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/IQueryFilter.h>

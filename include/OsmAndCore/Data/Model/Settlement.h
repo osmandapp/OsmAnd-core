@@ -23,6 +23,8 @@
 #ifndef __MODEL_SETTLEMENT_H_
 #define __MODEL_SETTLEMENT_H_
 
+#include <OsmAndCore/QtExtensions.h>
+
 #include <OsmAndCore.h>
 #include <OsmAndCore/Data/Model/StreetGroup.h>
 

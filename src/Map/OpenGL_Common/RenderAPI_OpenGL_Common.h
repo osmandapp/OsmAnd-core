@@ -26,6 +26,7 @@
 #include <memory>
 #include <type_traits>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QMap>
 #include <QMultiMap>
 #include <QList>

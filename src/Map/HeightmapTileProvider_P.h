@@ -25,6 +25,7 @@
 #include <cstdint>
 #include <memory>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QDir>
 #include <QMutex>
 #include <QQueue>

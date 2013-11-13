@@ -25,6 +25,7 @@
 
 #include <memory>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QString>
 #include <QStringList>
 #include <QDir>

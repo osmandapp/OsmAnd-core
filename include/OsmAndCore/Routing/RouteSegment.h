@@ -26,6 +26,7 @@
 #include <limits>
 #include <memory>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QList>
 #include <QVector>
 

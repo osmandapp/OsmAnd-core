@@ -2,6 +2,7 @@
 
 #include <queue>
 
+#include <OsmAndCore/QtExtensions.h>
 #include <QtCore>
 #include <QtMath>
 

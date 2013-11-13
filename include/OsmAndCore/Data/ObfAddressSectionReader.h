@@ -28,7 +28,6 @@
 #include <functional>
 
 #include <OsmAndCore/QtExtensions.h>
-
 #include <QList>
 #include <QSet>
 

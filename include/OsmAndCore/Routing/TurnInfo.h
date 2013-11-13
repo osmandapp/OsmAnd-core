@@ -25,9 +25,11 @@
 
 #include <cstdint>
 
+#include <OsmAndCore/QtExtensions.h>
+#include <QVector>
+
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <QVector>
 
 namespace OsmAnd {
 enum TurnType {
