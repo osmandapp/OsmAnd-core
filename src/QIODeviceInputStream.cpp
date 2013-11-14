@@ -1,8 +1,8 @@
-#include "QZeroCopyInputStream.h"
+#include "QIODeviceInputStream.h"
 
 namespace gpb = google::protobuf;
 
-OsmAnd::QZeroCopyInputStream::QZeroCopyInputStream( const std::shared_ptr<QIODevice>& device, const size_t bufferSize /*= DefaultBufferSize*/ )
+OsmAnd::QIODeviceInputStream::QIODeviceInputStream( const std::shared_ptr<QIODevice>& device, const size_t bufferSize /*= DefaultBufferSize*/ )
     : _device(device)
     , _buffer(new uint8_t[bufferSize])
     , _bufferSize(bufferSize)
@@ -13,7 +13,7 @@ OsmAnd::QZeroCopyInputStream::QZeroCopyInputStream( const std::shared_ptr<QIODev
     assert(_device->isOpen());
 }
 
-OsmAnd::QZeroCopyInputStream::~QZeroCopyInputStream()
+OsmAnd::QIODeviceInputStream::~QIODeviceInputStream()
 {
     if(_closeOnDestruction)
         _device->close();
@@ -21,7 +21,7 @@ OsmAnd::QZeroCopyInputStream::~QZeroCopyInputStream()
     delete[] _buffer;
 }
 
-bool OsmAnd::QZeroCopyInputStream::Next( const void** data, int* size )
+bool OsmAnd::QIODeviceInputStream::Next( const void** data, int* size )
 {
     qint64 bytesRead = _device->read(reinterpret_cast<char*>(_buffer), _bufferSize);
     if (bytesRead < 0 || (bytesRead == 0 && _device->atEnd()))
@@ -37,7 +37,7 @@ bool OsmAnd::QZeroCopyInputStream::Next( const void** data, int* size )
     }
 }
 
-void OsmAnd::QZeroCopyInputStream::BackUp( int count )
+void OsmAnd::QIODeviceInputStream::BackUp( int count )
 {
     if(!_device->isOpen() && !_closeOnDestruction)
         return;
@@ -48,7 +48,7 @@ void OsmAnd::QZeroCopyInputStream::BackUp( int count )
         _device->seek(_device->pos() - count);
 }
 
-bool OsmAnd::QZeroCopyInputStream::Skip( int count )
+bool OsmAnd::QIODeviceInputStream::Skip( int count )
 {
     if(!_device->isOpen() && !_closeOnDestruction)
         return false;
@@ -65,7 +65,7 @@ bool OsmAnd::QZeroCopyInputStream::Skip( int count )
     }
 }
 
-gpb::int64 OsmAnd::QZeroCopyInputStream::ByteCount() const
+gpb::int64 OsmAnd::QIODeviceInputStream::ByteCount() const
 {
     return _device->pos();
 }

@@ -4,7 +4,7 @@
 #include "ObfFile.h"
 #include "ObfFile_P.h"
 
-#include "QZeroCopyInputStream.h"
+#include "QIODeviceInputStream.h"
 
 OsmAnd::ObfReader::ObfReader( const std::shared_ptr<const ObfFile>& obfFile_ )
     : _d(new ObfReader_P(this))
@@ -38,7 +38,7 @@ std::shared_ptr<OsmAnd::ObfInfo> OsmAnd::ObfReader::obtainInfo() const
         }
 
         // Create zero-copy input stream
-        auto zcis = new QZeroCopyInputStream(_d->_input);
+        auto zcis = new QIODeviceInputStream(_d->_input);
         _d->_zeroCopyInputStream.reset(zcis);
 
         // Create coded input stream wrapper

@@ -20,8 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __Q_ZERO_COPY_INPUT_STREAM_H_
-#define __Q_ZERO_COPY_INPUT_STREAM_H_
+#ifndef __Q_IO_DEVICE_INPUT_STREAM_H_
+#define __Q_IO_DEVICE_INPUT_STREAM_H_
 
 #include <memory>
 
@@ -36,12 +36,12 @@ namespace OsmAnd {
     namespace gpb = google::protobuf;
 
     /**
-    Implementation of zero-copy input stream for Google Protobuf via QIODevice
+    Implementation of input stream for Google Protobuf via QIODevice
     */
-    class OSMAND_CORE_API QZeroCopyInputStream : public gpb::io::ZeroCopyInputStream
+    class OSMAND_CORE_API QIODeviceInputStream : public gpb::io::ZeroCopyInputStream
     {
     private:
-        GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(QZeroCopyInputStream);
+        GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(QIODeviceInputStream);
 
         //! Pointer to I/O device
         const std::shared_ptr<QIODevice> _device;
@@ -62,10 +62,10 @@ namespace OsmAnd {
     protected:
     public:
         //! Ctor
-        QZeroCopyInputStream(const std::shared_ptr<QIODevice>& device, const size_t bufferSize = DefaultBufferSize);
+        QIODeviceInputStream(const std::shared_ptr<QIODevice>& device, const size_t bufferSize = DefaultBufferSize);
 
         //! Dtor
-        virtual ~QZeroCopyInputStream();
+        virtual ~QIODeviceInputStream();
 
         virtual bool Next(const void** data, int* size);
         virtual void BackUp(int count);
@@ -75,4 +75,4 @@ namespace OsmAnd {
 
 } // namespace OsmAnd
 
-#endif // __Q_ZERO_COPY_INPUT_STREAM_H_
+#endif // __Q_IO_DEVICE_INPUT_STREAM_H_
