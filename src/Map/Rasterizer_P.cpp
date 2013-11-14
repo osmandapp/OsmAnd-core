@@ -48,7 +48,8 @@ void OsmAnd::Rasterizer_P::prepareContext(
     const MapFoundationType foundation,
     const QList< std::shared_ptr<const Model::MapObject> >& objects,
     bool* nothingToRasterize,
-    const IQueryController* const controller)
+    const IQueryController* const controller,
+    Rasterizer_Metrics::Metric_prepareContext* const metric)
 {
     context.clear();
 

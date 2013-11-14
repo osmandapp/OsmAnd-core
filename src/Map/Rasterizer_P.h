@@ -47,6 +47,9 @@ namespace OsmAnd {
         class MapObject;
     } // namespace Model
     class IQueryController;
+    namespace Rasterizer_Metrics {
+        struct Metric_prepareContext;
+    } // namespace Rasterizer_Metrics
 
     class Rasterizer;
     class Rasterizer_P
@@ -225,7 +228,8 @@ namespace OsmAnd {
             const MapFoundationType foundation,
             const QList< std::shared_ptr<const Model::MapObject> >& objects,
             bool* nothingToRasterize,
-            const IQueryController* const controller);
+            const IQueryController* const controller,
+            Rasterizer_Metrics::Metric_prepareContext* const metric);
 
         void rasterizeMap(
             SkCanvas& canvas,

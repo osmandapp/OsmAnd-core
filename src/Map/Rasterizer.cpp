@@ -21,9 +21,10 @@ void OsmAnd::Rasterizer::prepareContext(
     const MapFoundationType foundation,
     const QList< std::shared_ptr<const Model::MapObject> >& objects,
     bool* nothingToRasterize /*= nullptr*/,
-    const IQueryController* const controller /*= nullptr*/ )
+    const IQueryController* const controller /*= nullptr*/,
+    Rasterizer_Metrics::Metric_prepareContext* const metric /*= nullptr*/)
 {
-    Rasterizer_P::prepareContext(*context.environment->_d, *context._d, area31, zoom, foundation, objects, nothingToRasterize, controller);
+    Rasterizer_P::prepareContext(*context.environment->_d, *context._d, area31, zoom, foundation, objects, nothingToRasterize, controller, metric);
 }
 
 void OsmAnd::Rasterizer::rasterizeMap(

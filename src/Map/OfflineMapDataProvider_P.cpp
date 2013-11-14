@@ -13,6 +13,7 @@
 #include "ObfMapSectionInfo.h"
 #if defined(_DEBUG) || defined(DEBUG)
 #   include "ObfMapSectionReader_Metrics.h"
+#   include "Rasterizer_Metrics.h"
 #endif
 #include "MapObject.h"
 #include "Rasterizer.h"
@@ -168,6 +169,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
     const auto dataIdsProcess_End = std::chrono::high_resolution_clock::now();
     const std::chrono::duration<float> dataIdsProcess_Elapsed = dataIdsProcess_End - dataIdsProcess_Begin;
 
+    Rasterizer_Metrics::Metric_prepareContext dataProcess_metric;
     const auto dataProcess_Begin = std::chrono::high_resolution_clock::now();
 #endif
 
@@ -177,7 +179,12 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
     // Allocate and prepare rasterizer context
     bool nothingToRasterize = false;
     std::shared_ptr<RasterizerContext> rasterizerContext(new RasterizerContext(owner->rasterizerEnvironment));
-    Rasterizer::prepareContext(*rasterizerContext, tileBBox31, zoom, tileFoundation, mapObjects, &nothingToRasterize);
+    Rasterizer::prepareContext(*rasterizerContext, tileBBox31, zoom, tileFoundation, mapObjects, &nothingToRasterize, nullptr,
+#if defined(_DEBUG) || defined(DEBUG)
+        &dataProcess_metric
+#else
+#endif
+    );
 
 #if defined(_DEBUG) || defined(DEBUG)
     const auto dataProcess_End = std::chrono::high_resolution_clock::now();
