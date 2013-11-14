@@ -27,7 +27,7 @@
 #include <memory>
 
 #include <OsmAndCore/QtExtensions.h>
-#include <QMap>
+#include <QHash>
 
 #include <OsmAndCore.h>
 #include <MapStyle.h>
@@ -46,7 +46,7 @@ namespace OsmAnd {
 
         MapStyleEvaluator* const owner;
 
-        QMap< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > _values;
+        QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > _values;
     public:
         ~MapStyleEvaluator_P();
 

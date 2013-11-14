@@ -28,6 +28,7 @@
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QString>
+#include <QAtomicInt>
 
 #include <OsmAndCore.h>
 
@@ -53,9 +54,8 @@ namespace OsmAnd {
 
     class OSMAND_CORE_API MapStyleValueDefinition
     {
-    public:
-
     private:
+        static QAtomicInt _nextRuntimeGeneratedId;
     protected:
         MapStyleValueDefinition(const MapStyleValueClass valueClass, const MapStyleValueDataType dataType, const QString& name, const bool isComplex);
     public:
@@ -65,6 +65,8 @@ namespace OsmAnd {
         const MapStyleValueDataType dataType;
         const QString name;
         const bool isComplex;
+
+        const int runtimeGeneratedId;
 
     friend class OsmAnd::MapStyle_P;
     friend class OsmAnd::MapStyleBuiltinValueDefinitions;
