@@ -3,6 +3,7 @@
 #include "ObfMapSectionReader_Metrics.h"
 
 #include <cinttypes>
+#include <chrono>
 
 #include "ObfReader.h"
 #include "ObfReader_P.h"
@@ -362,7 +363,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                 childNode->_length = length;
                 readTreeNode(reader, section, treeNode->_area31, childNode);
 
-                // Update metrics
+                // Update metric
                 if(metrics)
                     metrics->visitedNodes++;
 
@@ -381,7 +382,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                 }
                 cis->PopLimit(oldLimit);
 
-                // Update metrics
+                // Update metric
                 if(metrics)
                     metrics->acceptedNodes++;
 
@@ -488,7 +489,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                     readMapObject(reader, section, baseId, tree, mapObject, bbox31);
                     assert(cis->BytesUntilLimit() == 0);
 
-                    // Update metrics
+                    // Update metric
                     if(metrics)
                         metrics->visitedMapObjects++;
 
@@ -499,7 +500,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                 if(!mapObject)
                     break;
 
-                // Update metrics
+                // Update metric
                 if(metrics)
                     metrics->acceptedMapObjects++;
 
@@ -767,7 +768,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     std::function<bool (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t)> filterById,
     std::function<bool (const std::shared_ptr<const OsmAnd::Model::MapObject>&)> visitor,
     const IQueryController* const controller,
-    ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metrics)
+    ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -792,9 +793,9 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     {
         const auto& mapLevel = *itMapLevel;
 
-        // Update metrics
-        if(metrics)
-            metrics->visitedLevels++;
+        // Update metric
+        if(metric)
+            metric->visitedLevels++;
 
         if(mapLevel->_minZoom > zoom || mapLevel->_maxZoom < zoom)
             continue;
@@ -809,9 +810,13 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                 continue;
         }
 
-        // Update metrics
-        if(metrics)
-            metrics->acceptedLevels++;
+        // Update metric
+        std::chrono::high_resolution_clock::time_point treeNodes_begin;
+        if(metric)
+        {
+            metric->acceptedLevels++;
+            treeNodes_begin = std::chrono::high_resolution_clock::now();
+        }
 
         // If there are no tree nodes in map level, it means they are not loaded
         {
@@ -836,9 +841,9 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
         {
             const auto& rootNode = *itRootNode;
 
-            // Update metrics
-            if(metrics)
-                metrics->visitedNodes++;
+            // Update metric
+            if(metric)
+                metric->visitedNodes++;
 
             if(bbox31)
             {
@@ -850,9 +855,9 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                     continue;
             }
 
-            // Update metrics
-            if(metrics)
-                metrics->acceptedNodes++;
+            // Update metric
+            if(metric)
+                metric->acceptedNodes++;
 
             if(rootNode->_dataOffset > 0)
                 treeNodesWithData.push_back(rootNode);
@@ -864,7 +869,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                 auto oldLimit = cis->PushLimit(rootNode->_length);
 
                 cis->Skip(rootNode->_childrenInnerOffset);
-                readTreeNodeChildren(reader, section, rootNode, childrenFoundation, &treeNodesWithData, bbox31, controller, metrics);
+                readTreeNodeChildren(reader, section, rootNode, childrenFoundation, &treeNodesWithData, bbox31, controller, metric);
                 assert(cis->BytesUntilLimit() == 0);
 
                 cis->PopLimit(oldLimit);
@@ -886,6 +891,16 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             return l->_dataOffset < r->_dataOffset;
         });
 
+        // Update metric
+        std::chrono::high_resolution_clock::time_point mapObjects_begin;
+        if(metric)
+        {
+            const std::chrono::duration<float> treeNodes_elapsed = std::chrono::high_resolution_clock::now() - treeNodes_begin;
+            metric->elapsedTimeForNodes += treeNodes_elapsed.count();
+
+            mapObjects_begin = std::chrono::high_resolution_clock::now();
+        }
+
         // Read map objects from their blocks
         for(auto itTreeNode = treeNodesWithData.cbegin(); itTreeNode != treeNodesWithData.cend(); ++itTreeNode)
         {
@@ -900,14 +915,21 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             cis->ReadVarint32(&length);
             auto oldLimit = cis->PushLimit(length);
 
-            readMapObjectsBlock(reader, section, treeNode, resultOut, bbox31, filterById, visitor, controller, metrics);
+            readMapObjectsBlock(reader, section, treeNode, resultOut, bbox31, filterById, visitor, controller, metric);
             assert(cis->BytesUntilLimit() == 0);
 
             cis->PopLimit(oldLimit);
 
-            // Update metrics
-            if(metrics)
-                metrics->mapObjectsBlocksRead++;
+            // Update metric
+            if(metric)
+                metric->mapObjectsBlocksRead++;
+        }
+
+        // Update metric
+        if(metric)
+        {
+            const std::chrono::duration<float> mapObjects_elapsed = std::chrono::high_resolution_clock::now() - mapObjects_begin;
+            metric->elapsedTimeForMapObjects += mapObjects_elapsed.count();
         }
     }
 

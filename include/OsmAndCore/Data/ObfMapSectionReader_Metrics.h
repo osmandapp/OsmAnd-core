@@ -57,6 +57,9 @@ namespace OsmAnd {
             // Number of accepted tree nodes
             unsigned int acceptedNodes;
 
+            // Elapsed time for tree nodes (in seconds)
+            float elapsedTimeForNodes;
+
             // Number of MapObjectBlock read
             unsigned int mapObjectsBlocksRead;
 
@@ -65,6 +68,9 @@ namespace OsmAnd {
 
             // Number of accepted MapObjects (before filtering)
             unsigned int acceptedMapObjects;
+
+            // Elapsed time for MapObjects (in seconds)
+            float elapsedTimeForMapObjects;
         };
 
     } // namespace ObfMapSectionReader_Metrics
