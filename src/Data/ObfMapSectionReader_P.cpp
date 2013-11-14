@@ -338,7 +338,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
     QList< std::shared_ptr<ObfMapSectionLevelTreeNode> >* nodesWithData,
     const AreaI* bbox31,
     const IQueryController* const controller,
-    ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metrics)
+    ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -364,8 +364,8 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                 readTreeNode(reader, section, treeNode->_area31, childNode);
 
                 // Update metric
-                if(metrics)
-                    metrics->visitedNodes++;
+                if(metric)
+                    metric->visitedNodes++;
 
                 if(bbox31)
                 {
@@ -383,8 +383,8 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                 cis->PopLimit(oldLimit);
 
                 // Update metric
-                if(metrics)
-                    metrics->acceptedNodes++;
+                if(metric)
+                    metric->acceptedNodes++;
 
                 if(nodesWithData && childNode->_dataOffset > 0)
                     nodesWithData->push_back(childNode);
@@ -396,7 +396,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                     oldLimit = cis->PushLimit(length);
 
                     cis->Skip(childNode->_childrenInnerOffset);
-                    readTreeNodeChildren(reader, section, childNode, childrenFoundation, nodesWithData, bbox31, controller, metrics);
+                    readTreeNodeChildren(reader, section, childNode, childrenFoundation, nodesWithData, bbox31, controller, metric);
                     assert(cis->BytesUntilLimit() == 0);
 
                     cis->PopLimit(oldLimit);
@@ -427,7 +427,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
     std::function<bool (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t)> filterById,
     std::function<bool (const std::shared_ptr<const OsmAnd::Model::MapObject>&)> visitor,
     const IQueryController* const controller,
-    ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metrics)
+    ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -486,12 +486,22 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                 {
                     auto oldLimit = cis->PushLimit(length);
 
+                    // Update metric
+                    std::chrono::high_resolution_clock::time_point readMapObject_begin;
+                    if(metric)
+                        readMapObject_begin = std::chrono::high_resolution_clock::now();
+
                     readMapObject(reader, section, baseId, tree, mapObject, bbox31);
                     assert(cis->BytesUntilLimit() == 0);
 
                     // Update metric
-                    if(metrics)
-                        metrics->visitedMapObjects++;
+                    if(metric)
+                    {
+                        metric->visitedMapObjects++;
+
+                        const std::chrono::duration<float> readMapObject_elapsed = std::chrono::high_resolution_clock::now() - readMapObject_begin;
+                        metric->elapsedTimeForVisitedMapObjects += readMapObject_elapsed.count();
+                    }
 
                     cis->PopLimit(oldLimit);
                 }
@@ -501,8 +511,8 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                     break;
 
                 // Update metric
-                if(metrics)
-                    metrics->acceptedMapObjects++;
+                if(metric)
+                    metric->acceptedMapObjects++;
 
                 // Make unique map object identifier
                 mapObject->_id = Model::MapObject::getUniqueId(mapObject->_id, section);
