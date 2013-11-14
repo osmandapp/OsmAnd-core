@@ -46,6 +46,9 @@ namespace OsmAnd {
         class MapObject;
     } // namespace Model
     class IQueryController;
+    namespace ObfMapSectionReader_Metrics {
+        struct Metric_loadMapObjects;
+    } // namespace ObfMapSectionReader_Metrics
 
     class ObfMapSectionReader;
     class OSMAND_CORE_API ObfMapSectionReader_P
@@ -76,7 +79,8 @@ namespace OsmAnd {
             MapFoundationType& foundation,
             QList< std::shared_ptr<ObfMapSectionLevelTreeNode> >* nodesWithData,
             const AreaI* bbox31,
-            const IQueryController* const controller);
+            const IQueryController* const controller,
+            ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metrics);
 
         static void readMapObjectsBlock(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
             const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode,
@@ -84,7 +88,8 @@ namespace OsmAnd {
             const AreaI* bbox31,
             std::function<bool (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t)> filterById,
             std::function<bool (const std::shared_ptr<const OsmAnd::Model::MapObject>&)> visitor,
-            const IQueryController* const controller);
+            const IQueryController* const controller,
+            ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metrics);
 
         static void readMapObjectId(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
             uint64_t baseId,
@@ -105,7 +110,8 @@ namespace OsmAnd {
             QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut, MapFoundationType* foundationOut,
             std::function<bool (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t)> filterById,
             std::function<bool (const std::shared_ptr<const OsmAnd::Model::MapObject>&)> visitor,
-            const IQueryController* const controller);
+            const IQueryController* const controller,
+            ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metrics);
 
     friend class OsmAnd::ObfMapSectionReader;
     friend class OsmAnd::ObfReader_P;

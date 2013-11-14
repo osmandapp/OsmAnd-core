@@ -11,6 +11,9 @@
 #include "ObfsCollection.h"
 #include "ObfDataInterface.h"
 #include "ObfMapSectionInfo.h"
+#if defined(_DEBUG) || defined(DEBUG)
+#   include "ObfMapSectionReader_Metrics.h"
+#endif
 #include "MapObject.h"
 #include "Rasterizer.h"
 #include "Utilities.h"
@@ -79,6 +82,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 #if defined(_DEBUG) || defined(DEBUG)
     float dataFilter = 0.0f;
     const auto dataRead_Begin = std::chrono::high_resolution_clock::now();
+    ObfMapSectionReader_Metrics::Metric_loadMapObjects dataRead_Metrics;
 #endif
     auto& dataCache = _dataCache[zoom];
     dataInterface->obtainMapObjects(&mapObjects, &tileFoundation, tileBBox31, zoom, nullptr,
@@ -125,7 +129,13 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 #endif
 
             return true;
-        });
+        },
+#if defined(_DEBUG) || defined(DEBUG)
+        &dataRead_Metrics
+#else
+        nullptr
+#endif
+    );
 
 #if defined(_DEBUG) || defined(DEBUG)
     const auto dataRead_End = std::chrono::high_resolution_clock::now();
@@ -196,11 +206,29 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
     const std::chrono::duration<float> total_Elapsed = total_End - total_Begin;
 
     LogPrintf(LogSeverityLevel::Info,
-        "%d map objects (%d unique, %d shared) in %dx%d@%d: elapsed %fs ~= open %fs + read %fs (filter-by-id %fs) + process-ids %fs + process-content %fs",
+        "%d map objects (%d unique, %d shared) from %dx%d@%d in %fs:\n"
+        "\topen %fs\n"
+        "\tread %fs (filter-by-id %fs)\n"
+        "\tprocess-ids %fs\n"
+        "\tprocess-content %fs\n"
+        "\tvisitedLevels = %d\n"
+        "\tacceptedLevels = %d\n"
+        "\tvisitedNodes = %d\n"
+        "\tacceptedNodes = %d\n"
+        "\tmapObjectsBlocksRead = %d\n"
+        "\tvisitedMapObjects = %d\n"
+        "\tacceptedMapObjects = %d",
         mapObjects.size(), mapObjects.size() - sharedMapObjects.size(), sharedMapObjects.size(),
         tileId.x, tileId.y, zoom,
         total_Elapsed.count(),
-        obtainDataInterface_Elapsed.count(), dataRead_Elapsed.count(), dataFilter, dataIdsProcess_Elapsed.count(), dataProcess_Elapsed.count());
+        obtainDataInterface_Elapsed.count(), dataRead_Elapsed.count(), dataFilter, dataIdsProcess_Elapsed.count(), dataProcess_Elapsed.count(),
+        dataRead_Metrics.visitedLevels,
+        dataRead_Metrics.acceptedLevels,
+        dataRead_Metrics.visitedNodes,
+        dataRead_Metrics.acceptedNodes,
+        dataRead_Metrics.mapObjectsBlocksRead,
+        dataRead_Metrics.visitedMapObjects,
+        dataRead_Metrics.acceptedMapObjects);
 #endif
 }
 

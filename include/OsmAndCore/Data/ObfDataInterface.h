@@ -46,6 +46,9 @@ namespace OsmAnd {
         class MapObject;
     } // namespace Model
     class IQueryController;
+    namespace ObfMapSectionReader_Metrics {
+        struct Metric_loadMapObjects;
+    } // namespace ObfMapSectionReader_Metrics
 
     class ObfDataInterface_P;
     class OSMAND_CORE_API ObfDataInterface
@@ -62,7 +65,8 @@ namespace OsmAnd {
         void obtainBasemapPresenceFlag(bool& basemapPresent, const IQueryController* const controller = nullptr);
         void obtainMapObjects(QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut, MapFoundationType* foundationOut,
             const AreaI& area31, const ZoomLevel zoom,
-            const IQueryController* const controller = nullptr, std::function<bool (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t)> filterById = nullptr);
+            const IQueryController* const controller = nullptr, std::function<bool(const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t)> filterById = nullptr,
+            ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metrics = nullptr);
         
     friend class OsmAnd::ObfsCollection;
     friend class OsmAnd::ObfsCollection_P;
