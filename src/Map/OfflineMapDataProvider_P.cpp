@@ -221,7 +221,9 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
         "\tacceptedMapObjects = %d\n"
         "\telapsedTimeForMapObjectsBlocks = %fs\n"
         "\telapsedTimeForOnlyVisitedMapObjects = %fs\n"
-        "\telapsedTimeForOnlyAcceptedMapObjects = %fs",
+        "\telapsedTimeForOnlyAcceptedMapObjects = %fs\n"
+        "\taverage time per 1K only-visited map objects = %fms\n"
+        "\taverage time per 1K only-accepted map objects = %fms",
         mapObjects.size(), mapObjects.size() - sharedMapObjects.size(), sharedMapObjects.size(),
         tileId.x, tileId.y, zoom,
         total_Elapsed.count(),
@@ -236,7 +238,9 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
         dataRead_Metric.acceptedMapObjects,
         dataRead_Metric.elapsedTimeForMapObjectsBlocks,
         dataRead_Metric.elapsedTimeForOnlyVisitedMapObjects,
-        dataRead_Metric.elapsedTimeForOnlyAcceptedMapObjects);
+        dataRead_Metric.elapsedTimeForOnlyAcceptedMapObjects,
+        (dataRead_Metric.elapsedTimeForOnlyVisitedMapObjects * 1000.0f) / (static_cast<float>(dataRead_Metric.visitedMapObjects - dataRead_Metric.acceptedMapObjects) / 1000.0f),
+        (dataRead_Metric.elapsedTimeForOnlyAcceptedMapObjects * 1000.0f) / (static_cast<float>(dataRead_Metric.acceptedMapObjects) / 1000.0f));
 #endif
 }
 
