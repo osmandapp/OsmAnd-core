@@ -72,8 +72,8 @@ namespace OsmAnd {
             // Elapsed time for MapObjects (in seconds)
             float elapsedTimeForMapObjects;
 
-            // Elapsed time for visited MapObjects (in seconds)
-            float elapsedTimeForVisitedMapObjects;
+            // Elapsed time for only-visited MapObjects (in seconds)
+            float elapsedTimeForOnlyVisitedMapObjects;
         };
 
     } // namespace ObfMapSectionReader_Metrics

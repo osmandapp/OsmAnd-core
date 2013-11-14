@@ -481,34 +481,38 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
 
+                // Update metric
+                std::chrono::high_resolution_clock::time_point readMapObject_begin;
+                if(metric)
+                    readMapObject_begin = std::chrono::high_resolution_clock::now();
+
                 // Read map object content
                 std::shared_ptr<OsmAnd::Model::MapObject> mapObject;
                 {
                     auto oldLimit = cis->PushLimit(length);
-
-                    // Update metric
-                    std::chrono::high_resolution_clock::time_point readMapObject_begin;
-                    if(metric)
-                        readMapObject_begin = std::chrono::high_resolution_clock::now();
 
                     readMapObject(reader, section, baseId, tree, mapObject, bbox31);
                     assert(cis->BytesUntilLimit() == 0);
 
                     // Update metric
                     if(metric)
-                    {
                         metric->visitedMapObjects++;
-
-                        const std::chrono::duration<float> readMapObject_elapsed = std::chrono::high_resolution_clock::now() - readMapObject_begin;
-                        metric->elapsedTimeForVisitedMapObjects += readMapObject_elapsed.count();
-                    }
 
                     cis->PopLimit(oldLimit);
                 }
 
                 // If map object was not read, skip it
                 if(!mapObject)
+                {
+                    // Update metric
+                    if(metric)
+                    {
+                        const std::chrono::duration<float> readMapObject_elapsed = std::chrono::high_resolution_clock::now() - readMapObject_begin;
+                        metric->elapsedTimeForOnlyVisitedMapObjects += readMapObject_elapsed.count();
+                    }
+
                     break;
+                }
 
                 // Update metric
                 if(metric)
