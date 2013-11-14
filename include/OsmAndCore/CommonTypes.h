@@ -398,7 +398,7 @@ namespace OsmAnd
         }
 #endif // !SWIG
 
-        AreaT& enlargeToInclude(const PointT& p)
+        inline AreaT& enlargeToInclude(const PointT& p)
         {
             top = std::min(top, p.y);
             left = std::min(left, p.x);

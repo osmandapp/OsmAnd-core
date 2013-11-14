@@ -588,7 +588,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 QVector< PointI > points31;
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
-                auto oldLimit = cis->PushLimit(length);
+                const auto oldLimit = cis->PushLimit(length);
 
                 PointI p;
                 p.x = treeNode->_area31.left & MaskToRead;
@@ -597,6 +597,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 AreaI objectBBox;
                 objectBBox.top = objectBBox.left = std::numeric_limits<int32_t>::max();
                 objectBBox.bottom = objectBBox.right = 0;
+                auto lastUnprocessedVertexForBBox = 0;
 
                 // In protobuf, a sint32 can be encoded using [1..4] bytes,
                 // so try to guess size of array, and preallocate it.
@@ -608,7 +609,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 auto pPoint = points31.data();
                 auto verticesCount = 0;
                 bool shouldNotSkip = (bbox31 == nullptr);
-                while (cis->BytesUntilLimit() > 0)
+                while(cis->BytesUntilLimit() > 0)
                 {
                     PointI d;
                     d.x = (ObfReaderUtilities::readSInt32(cis) << ShiftCoordinates);
@@ -621,32 +622,57 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                     *(pPoint++) = p;
                     verticesCount++;
                     
-                    if (!shouldNotSkip && bbox31)
+                    // Check if map object should be maintained
+                    if(!shouldNotSkip && bbox31)
+                    {
                         shouldNotSkip = bbox31->contains(p);
-                    objectBBox.enlargeToInclude(p);
+                        objectBBox.enlargeToInclude(p);
+
+                        lastUnprocessedVertexForBBox = verticesCount;
+                    }
                 }
+
+                cis->PopLimit(oldLimit);
 
                 // Since reserved space may be larger than actual amount of data,
                 // shrink the vertices array
                 points31.resize(verticesCount);
 
+                // If map object has no vertices, retain it in a special way to report later, when
+                // it's identifier will be known
                 if(points31.isEmpty())
                 {
                     // Fake that this object is inside bbox
                     shouldNotSkip = true;
                     objectBBox = treeNode->_area31;
                 }
+
+                // Even if no vertex lays inside bbox, an edge
+                // may intersect the bbox
                 if(!shouldNotSkip && bbox31)
                 {
+                    assert(lastUnprocessedVertexForBBox == points31.size());
+
                     shouldNotSkip =
                         objectBBox.contains(*bbox31) ||
                         bbox31->intersects(objectBBox);
                 }
-                cis->PopLimit(oldLimit);
+
+                // If map object didn't fit, skip it's entire content
                 if(!shouldNotSkip)
                 {
                     cis->Skip(cis->BytesUntilLimit());
                     break;
+                }
+
+                // In case bbox is not fully calculated, complete this task
+                auto pPointForBBox = points31.data() + lastUnprocessedVertexForBBox;
+                while(lastUnprocessedVertexForBBox < points31.size())
+                {
+                    objectBBox.enlargeToInclude(*pPointForBBox);
+
+                    lastUnprocessedVertexForBBox++;
+                    pPointForBBox++;
                 }
 
                 // Finally, create the object
