@@ -516,7 +516,12 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
 
                 // Update metric
                 if(metric)
+                {
+                    const std::chrono::duration<float> readMapObject_elapsed = std::chrono::high_resolution_clock::now() - readMapObject_begin;
+                    metric->elapsedTimeForOnlyAcceptedMapObjects += readMapObject_elapsed.count();
+
                     metric->acceptedMapObjects++;
+                }
 
                 // Make unique map object identifier
                 mapObject->_id = Model::MapObject::getUniqueId(mapObject->_id, section);
