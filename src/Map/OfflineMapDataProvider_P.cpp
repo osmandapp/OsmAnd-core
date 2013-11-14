@@ -219,7 +219,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
         "\tmapObjectsBlocksRead = %d\n"
         "\tvisitedMapObjects = %d\n"
         "\tacceptedMapObjects = %d\n"
-        "\telapsedTimeForMapObjects = %fs\n"
+        "\telapsedTimeForMapObjectsBlocks = %fs\n"
         "\telapsedTimeForOnlyVisitedMapObjects = %fs\n"
         "\telapsedTimeForOnlyAcceptedMapObjects = %fs",
         mapObjects.size(), mapObjects.size() - sharedMapObjects.size(), sharedMapObjects.size(),
@@ -234,7 +234,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
         dataRead_Metrics.mapObjectsBlocksRead,
         dataRead_Metrics.visitedMapObjects,
         dataRead_Metrics.acceptedMapObjects,
-        dataRead_Metrics.elapsedTimeForMapObjects,
+        dataRead_Metrics.elapsedTimeForMapObjectsBlocks,
         dataRead_Metrics.elapsedTimeForOnlyVisitedMapObjects,
         dataRead_Metrics.elapsedTimeForOnlyAcceptedMapObjects);
 #endif

@@ -70,7 +70,7 @@ namespace OsmAnd {
             unsigned int acceptedMapObjects;
 
             // Elapsed time for MapObjects (in seconds)
-            float elapsedTimeForMapObjects;
+            float elapsedTimeForMapObjectsBlocks;
 
             // Elapsed time for only-visited MapObjects (in seconds)
             float elapsedTimeForOnlyVisitedMapObjects;

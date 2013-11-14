@@ -948,7 +948,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
         if(metric)
         {
             const std::chrono::duration<float> mapObjects_elapsed = std::chrono::high_resolution_clock::now() - mapObjects_begin;
-            metric->elapsedTimeForMapObjects += mapObjects_elapsed.count();
+            metric->elapsedTimeForMapObjectsBlocks += mapObjects_elapsed.count();
         }
     }
 
