@@ -585,7 +585,6 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
         case OBF::MapData::kAreaCoordinatesFieldNumber:
         case OBF::MapData::kCoordinatesFieldNumber:
             {
-                QVector< PointI > points31;
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 const auto oldLimit = cis->PushLimit(length);
@@ -604,7 +603,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 // (BytesUntilLimit/2) is ~= number of vertices, and is always larger than needed.
                 // So it's impossible that a buffer overflow will ever happen. But assert on that.
                 const auto probableVerticesCount = (cis->BytesUntilLimit() / 2);
-                points31.resize(probableVerticesCount);
+                QVector< PointI > points31(probableVerticesCount);
 
                 auto pPoint = points31.data();
                 auto verticesCount = 0;
@@ -698,16 +697,14 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
 
-                mapObject->_innerPolygonsPoints31.push_back(QVector< PointI >());
-                auto& polygon = mapObject->_innerPolygonsPoints31.last();
-
                 PointI p;
                 p.x = treeNode->_area31.left & MaskToRead;
                 p.y = treeNode->_area31.top & MaskToRead;
 
                 // Preallocate memory
                 const auto probableVerticesCount = (cis->BytesUntilLimit() / 2);
-                polygon.resize(probableVerticesCount);
+                mapObject->_innerPolygonsPoints31.push_back(QVector< PointI >(probableVerticesCount));
+                auto& polygon = mapObject->_innerPolygonsPoints31.last();
 
                 auto pPoint = polygon.data();
                 auto verticesCount = 0;
