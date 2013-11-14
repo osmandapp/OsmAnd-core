@@ -86,6 +86,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 #endif
     auto& dataCache = _dataCache[zoom];
     dataInterface->obtainMapObjects(&mapObjects, &tileFoundation, tileBBox31, zoom, nullptr,
+        /*
 #if defined(_DEBUG) || defined(DEBUG)
         [&dataCache, &sharedMapObjects, tileBBox31, &dataFilter](const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id) -> bool
 #else
@@ -129,7 +130,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 #endif
 
             return true;
-        },
+        },*/nullptr,
 #if defined(_DEBUG) || defined(DEBUG)
         &dataRead_Metric
 #else
@@ -143,7 +144,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 
     const auto dataIdsProcess_Begin = std::chrono::high_resolution_clock::now();
 #endif
-
+    /*
     // Append weak references to newly read map objects
     for(auto itMapObject = mapObjects.cbegin(); itMapObject != mapObjects.cend(); ++itMapObject)
     {
@@ -162,7 +163,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
             }
         }
     }
-
+    */
 #if defined(_DEBUG) || defined(DEBUG)
     const auto dataIdsProcess_End = std::chrono::high_resolution_clock::now();
     const std::chrono::duration<float> dataIdsProcess_Elapsed = dataIdsProcess_End - dataIdsProcess_Begin;
