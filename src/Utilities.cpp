@@ -10,124 +10,6 @@
 
 #include "Logging.h"
 
-const uint64_t l = 1UL << 31;
-
-OSMAND_CORE_API int32_t OSMAND_CORE_CALL OsmAnd::Utilities::get31TileNumberX( double longitude )
-{
-    longitude = normalizeLongitude(longitude);
-    return static_cast<int32_t>((longitude + 180.0) / 360.0*l);
-}
-
-OSMAND_CORE_API int32_t OSMAND_CORE_CALL OsmAnd::Utilities::get31TileNumberY( double latitude )
-{
-    latitude = normalizeLatitude(latitude);
-    double eval = log( tan(toRadians(latitude)) + 1.0/cos(toRadians(latitude)) );
-    if(eval > M_PI)
-        eval = M_PI;
-    return static_cast<int32_t>((1.0 - eval / M_PI) / 2.0*l);
-}
-
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::get31LongitudeX( double x )
-{
-    return getLongitudeFromTile(21, x / 1024.);
-}
-
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::get31LatitudeY( double y )
-{
-    return getLatitudeFromTile(21, y / 1024.);
-}
-
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::getTileNumberX( float zoom, double longitude )
-{
-    if( qAbs(longitude - 180.) < std::numeric_limits<double>::epsilon() )
-        return getPowZoom(zoom) - 1;
-
-    longitude = normalizeLongitude(longitude);
-    return (longitude + 180.)/360. * getPowZoom(zoom);
-}
-
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::getTileNumberY( float zoom, double latitude )
-{
-    latitude = normalizeLatitude(latitude);
-    double eval = log( tan(toRadians(latitude)) + 1/cos(toRadians(latitude)) );
-    if (qIsInf(eval) || qIsNaN(eval))
-    {
-        latitude = latitude < 0 ? - 89.9 : 89.9;
-        eval = log( tan(toRadians(latitude)) + 1/cos(toRadians(latitude)) );
-    }
-    double result = (1 - eval / M_PI) / 2 * getPowZoom(zoom);
-    return result;
-}
-
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::normalizeLatitude( double latitude )
-{
-    while (latitude < -90.0 || latitude > 90.0)
-    {
-        if (latitude < 0.0)
-            latitude += 180.0;
-        else
-            latitude -= 180.0;
-    }
-
-    if(latitude < -85.0511)
-        return -85.0511;
-    else if(latitude > 85.0511)
-        return 85.0511;
-    
-    return latitude;
-}
-
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::normalizeLongitude( double longitude )
-{
-    while (longitude < -180.0 || longitude >= 180.0)
-    {
-        if (longitude < 0.0)
-            longitude += 360.0;
-        else
-            longitude -= 360.0;
-    }
-    return longitude;
-}
-
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::degreesDiff(double a1, double a2){
-    double diff = a1 - a2;
-    while(diff > 180.0)
-    {
-        diff -= 360.0;
-    }
-    while(diff <= -180.0)
-    {
-        diff += 360.0;
-    }
-    return diff;
-
-}
-
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::toRadians( double angle )
-{
-    return angle / 180.0 * M_PI;
-}
-
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::getPowZoom( float zoom )
-{
-    if(zoom >= 0.0f && qFuzzyCompare(zoom, static_cast<uint8_t>(zoom)))
-        return 1 << static_cast<uint8_t>(zoom); 
-
-    return qPow(2, zoom);
-}
-
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::getLongitudeFromTile( float zoom, double x )
-{
-    return x / getPowZoom(zoom) * 360.0 - 180.0;
-}
-
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::getLatitudeFromTile( float zoom, double y )
-{
-    int sign = y < 0 ? -1 : 1;
-    double result = atan(sign * sinh(M_PI * (1 - 2 * y / getPowZoom(zoom)))) * 180. / M_PI;
-    return result;
-}
-
 OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::Utilities::extractFirstNumberPosition( const QString& value, int& first, int& last, bool allowSigned, bool allowDot )
 {
     first = -1;
@@ -150,26 +32,30 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::Utilities::extractFirstNumberPosit
 
 OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::parseSpeed( const QString& value, double defValue, bool* wasParsed/* = nullptr*/ )
 {
-    if(value == "none") {
-        if(wasParsed) { *wasParsed = true; }
+    if(value == QLatin1String("none"))
+    {
+        if(wasParsed)
+            *wasParsed = true;
         return 40;
     }
 
     int first, last;
-    if(!extractFirstNumberPosition(value, first, last, false, true)) {
-        if(wasParsed) { *wasParsed = false;}
+    if(!extractFirstNumberPosition(value, first, last, false, true))
+    {
+        if(wasParsed)
+            *wasParsed = false;
         return defValue;
     }
     bool ok;
     auto result = value.mid(first, last - first + 1).toDouble(&ok);
-    if(wasParsed){ *wasParsed = ok;}
-    if(!ok) {
+    if(wasParsed)
+        *wasParsed = ok;
+    if(!ok)
         return defValue;
-    }
+
     result /= 3.6;
-    if(value.contains("mph")) {
+    if(value.contains(QLatin1String("mph")))
         result *= 1.6;
-    }
     return result;
 }
 
@@ -182,7 +68,7 @@ OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::parseLength( const QS
     auto result = value.mid(first, last - first + 1).toDouble(&ok);
     if(!ok)
         return defValue;
-    if(value.contains("ft") || value.contains('"'))
+    if(value.contains(QLatin1String("ft")) || value.contains('"'))
         result *= 0.3048;
     if(value.contains('\''))
     {
@@ -211,7 +97,7 @@ OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::parseWeight( const QS
 
     if(wasParsed)
         *wasParsed = true;
-    if(value.contains("lbs"))
+    if(value.contains(QLatin1String("lbs")))
         result = (result * 0.4535) / 1000.0; // lbs -> kg -> ton
     return result;
 }
@@ -316,80 +202,6 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::Utilities::parseArbitraryBool( con
     return result;
 }
 
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::x31toMeters( int32_t x31 )
-{
-    return static_cast<double>(x31) * 0.011;
-}
-
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::y31toMeters( int32_t y31 )
-{
-    return static_cast<double>(y31) * 0.01863;
-}
-
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::squareDistance31( int32_t x31a, int32_t y31a, int32_t x31b, int32_t y31b )
-{
-    const auto dx = Utilities::x31toMeters(x31a - x31b);
-    const auto dy = Utilities::y31toMeters(y31a - y31b);
-    return dx * dx + dy * dy;
-}
-
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::distance31( int32_t x31a, int32_t y31a, int32_t x31b, int32_t y31b )
-{
-    return qSqrt(squareDistance31(x31a, y31a, x31b, y31b));
-}
-
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::squareDistance31( const PointI& a, const PointI& b )
-{
-    const auto dx = Utilities::x31toMeters(a.x - b.x);
-    const auto dy = Utilities::y31toMeters(a.y - b.y);
-    return dx * dx + dy * dy;
-}
-
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::distance31( const PointI& a, const PointI& b )
-{
-    return qSqrt(squareDistance31(a, b));
-}
-
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::distance( double xLonA, double yLatA, double xLonB, double yLatB )
-{
-    double R = 6371; // km
-    double dLat = toRadians(yLatB - yLatA);
-    double dLon = toRadians(xLonB - xLonA); 
-    double a =
-        qSin(dLat/2.0) * qSin(dLat/2.0) +
-        qCos(toRadians(yLatA)) * qCos(toRadians(yLatB)) * 
-        qSin(dLon/2.0) * qSin(dLon/2.0); 
-    double c = 2.0 * qAtan2(qSqrt(a), qSqrt(1.0 - a)); 
-    return R * c * 1000.0;
-}
-
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::projection31( int32_t x31a, int32_t y31a, int32_t x31b, int32_t y31b, int32_t x31c, int32_t y31c )
-{
-    // Scalar multiplication between (AB, AC)
-    auto p =
-        Utilities::x31toMeters(x31b - x31a) * Utilities::x31toMeters(x31c - x31a) +
-        Utilities::y31toMeters(y31b - y31a) * Utilities::y31toMeters(y31c - y31a);
-    return p;
-}
-
-OSMAND_CORE_API  double OSMAND_CORE_CALL OsmAnd::Utilities::normalizedAngleRadians( double angle )
-{
-    while(angle > M_PI)
-        angle -= 2.0 * M_PI;
-    while(angle <= -M_PI)
-        angle += 2.0 * M_PI;
-    return angle;
-}
-
-OSMAND_CORE_API  double OSMAND_CORE_CALL OsmAnd::Utilities::normalizedAngleDegrees( double angle )
-{
-    while(angle > 180.0)
-        angle -= 360.0;
-    while(angle <= -180.0)
-        angle += 360.;
-    return angle;
-}
-
 OSMAND_CORE_API  int OSMAND_CORE_CALL OsmAnd::Utilities::javaDoubleCompare( double l, double r )
 {
     const auto lNaN = qIsNaN(l);
@@ -433,269 +245,6 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::findFiles( const QDir& 
         for(auto itSubdir = subdirs.cbegin(); itSubdir != subdirs.cend(); ++itSubdir)
             findFiles(QDir(itSubdir->absoluteFilePath()), masks, files, recursively);
     }
-}
-
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::polygonArea( const QVector<PointI>& points )
-{
-    double area = 0.0;
-
-    assert(points.first() == points.last());
-
-    auto itPrevPoint = points.cbegin();
-    auto itPoint = itPrevPoint + 1;
-    for(; itPoint != points.cend(); itPrevPoint = itPoint, ++itPoint)
-    {
-        const auto& p0 = *itPrevPoint;
-        const auto& p1 = *itPoint;
-
-        area += static_cast<double>(p0.x) * static_cast<double>(p1.y) - static_cast<double>(p1.x) * static_cast<double>(p0.y);
-    }
-    area = qAbs(area) * 0.5;
-
-    return area;
-}
-
-OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::Utilities::rayIntersectX( const PointF& v0_, const PointF& v1_, float mY, float& mX )
-{
-    // prev node above line
-    // x,y node below line
-
-    const auto& v0 = (v0_.y > v1_.y) ? v1_ : v0_;
-    const auto& v1 = (v0_.y > v1_.y) ? v0_ : v1_;
-
-    if(qFuzzyCompare(v1.y, mY) || qFuzzyCompare(v0.y, mY))
-        mY -= 1.0f;
-
-    if(v0.y > mY || v1.y < mY)
-        return false;
-
-    if(v1 == v0)
-    {
-        // the node on the boundary !!!
-        mX = v1.x;
-        return true;
-    }
-
-    // that tested on all cases (left/right)
-    mX = v1.x + (mY - v1.y) * (v1.x - v0.x) / (v1.y - v0.y);
-    return true;
-}
-
-OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::Utilities::rayIntersect( const PointF& v0, const PointF& v1, const PointF& v )
-{
-    float t;
-    if(!rayIntersectX(v0, v1, v.y, t))
-        return false;
-
-    if(t < v.x)
-        return true;
-
-    return false;
-}
-
-OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::Utilities::rayIntersectX( const PointI& v0_, const PointI& v1_, int32_t mY, int32_t& mX )
-{
-    // prev node above line
-    // x,y node below line
-
-    const auto& v0 = (v0_.y > v1_.y) ? v1_ : v0_;
-    const auto& v1 = (v0_.y > v1_.y) ? v0_ : v1_;
-
-    if(v1.y == mY || v0.y == mY)
-        mY -= 1;
-
-    if(v0.y > mY || v1.y < mY)
-        return false;
-
-    if(v1 == v0)
-    {
-        // the node on the boundary !!!
-        mX = v1.x;
-        return true;
-    }
-
-    // that tested on all cases (left/right)
-    mX = static_cast<int32_t>(v1.x + static_cast<double>(mY - v1.y) * static_cast<double>(v1.x - v0.x) / static_cast<double>(v1.y - v0.y));
-    return true;
-}
-
-OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::Utilities::rayIntersect( const PointI& v0, const PointI& v1, const PointI& v )
-{
-    int32_t t;
-    if(!rayIntersectX(v0, v1, v.y, t))
-        return false;
-
-    if(t < v.x)
-        return true;
-
-    return false;
-}
-
-OSMAND_CORE_API OsmAnd::AreaI OSMAND_CORE_CALL OsmAnd::Utilities::tileBoundingBox31( const TileId tileId, const ZoomLevel zoom )
-{
-    AreaI output;
-
-    const auto zoomShift = ZoomLevel31 - zoom;
-
-    output.top = tileId.y << zoomShift;
-    output.left = tileId.x << zoomShift;
-    output.bottom = ((tileId.y + 1) << zoomShift) - 1;
-    output.right = ((tileId.x + 1) << zoomShift) - 1;
-
-    assert(output.top >= 0 && output.top <= std::numeric_limits<int32_t>::max());
-    assert(output.left >= 0 && output.left <= std::numeric_limits<int32_t>::max());
-    assert(output.bottom >= 0 && output.bottom <= std::numeric_limits<int32_t>::max());
-    assert(output.right >= 0 && output.right <= std::numeric_limits<int32_t>::max());
-    assert(output.right >= output.left);
-    assert(output.bottom >= output.top);
-
-    return output;
-}
-
-OSMAND_CORE_API OsmAnd::AreaI OSMAND_CORE_CALL OsmAnd::Utilities::areaRightShift( const AreaI& input, uint32_t shift )
-{
-    AreaI output;
-    uint32_t tail;
-
-    output.top = input.top >> shift;
-    output.left = input.left >> shift;
-
-    tail = input.bottom & ((1 << shift) - 1);
-    output.bottom = (input.bottom >> shift) + (tail ? 1 : 0);
-    tail = input.right & ((1 << shift) - 1);
-    output.right = (input.right >> shift) + (tail ? 1 : 0);
-
-    assert(output.top >= 0 && output.top <= std::numeric_limits<int32_t>::max());
-    assert(output.left >= 0 && output.left <= std::numeric_limits<int32_t>::max());
-    assert(output.bottom >= 0 && output.bottom <= std::numeric_limits<int32_t>::max());
-    assert(output.right >= 0 && output.right <= std::numeric_limits<int32_t>::max());
-    assert(output.right >= output.left);
-    assert(output.bottom >= output.top);
-
-    return output;
-}
-
-OSMAND_CORE_API OsmAnd::AreaI OSMAND_CORE_CALL OsmAnd::Utilities::areaLeftShift( const AreaI& input, uint32_t shift )
-{
-    AreaI output;
-
-    output.top = input.top << shift;
-    output.left = input.left << shift;
-    output.bottom = input.bottom << shift;
-    output.right = input.right << shift;
-
-    assert(output.top >= 0 && output.top <= std::numeric_limits<int32_t>::max());
-    assert(output.left >= 0 && output.left <= std::numeric_limits<int32_t>::max());
-    assert(output.bottom >= 0 && output.bottom <= std::numeric_limits<int32_t>::max());
-    assert(output.right >= 0 && output.right <= std::numeric_limits<int32_t>::max());
-    assert(output.right >= output.left);
-    assert(output.bottom >= output.top);
-
-    return output;
-}
-
-OSMAND_CORE_API uint32_t OSMAND_CORE_CALL OsmAnd::Utilities::getNextPowerOfTwo( const uint32_t value )
-{
-    if(value == 0)
-        return 0;
-
-    auto n = value;
-
-    n--;
-    n |= n >> 1;
-    n |= n >> 2;
-    n |= n >> 4;
-    n |= n >> 8;
-    n |= n >> 16;
-    n++;
-
-    return n;
-}
-
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::getMetersPerTileUnit( const float zoom, const double yTile, const double unitsPerTile )
-{
-    // Equatorial circumference of the Earth in meters
-    const static double C = 40075017.0;
-
-    const auto powZoom = getPowZoom(zoom);
-    const auto sinhValue = sinh( (2.0 * M_PI * yTile)/powZoom - M_PI );
-    auto res = C / (powZoom * unitsPerTile * qSqrt(sinhValue*sinhValue + 1.0));
-
-    return res;
-}
-
-OSMAND_CORE_API OsmAnd::TileId OSMAND_CORE_CALL OsmAnd::Utilities::normalizeTileId( const TileId input, const ZoomLevel zoom )
-{
-    TileId output = input;
-
-    const auto tilesCount = static_cast<int32_t>(1u << zoom);
-
-    while(output.x < 0)
-        output.x += tilesCount;
-    while(output.y < 0)
-        output.y += tilesCount;
-
-    // Max zoom level (31) is skipped, since value stored in int31 can not be more than tilesCount(31)
-    if(zoom < ZoomLevel31)
-    {
-        while(output.x >= tilesCount)
-            output.x -= tilesCount;
-        while(output.y >= tilesCount)
-            output.y -= tilesCount;
-    }
-
-    assert(output.x >= 0 && ((zoom < ZoomLevel31 && output.x < tilesCount) || (zoom == ZoomLevel31)));
-    assert(output.x >= 0 && ((zoom < ZoomLevel31 && output.y < tilesCount) || (zoom == ZoomLevel31)));
-
-    return output;
-}
-
-OSMAND_CORE_API OsmAnd::PointI OSMAND_CORE_CALL OsmAnd::Utilities::normalizeCoordinates( const PointI& input, const ZoomLevel zoom )
-{
-    PointI output = input;
-
-    const auto tilesCount = static_cast<int32_t>(1u << zoom);
-
-    while(output.x < 0)
-        output.x += tilesCount;
-    while(output.y < 0)
-        output.y += tilesCount;
-
-    // Max zoom level (31) is skipped, since value stored in int31 can not be more than tilesCount(31)
-    if(zoom < ZoomLevel31)
-    {
-        while(output.x >= tilesCount)
-            output.x -= tilesCount;
-        while(output.y >= tilesCount)
-            output.y -= tilesCount;
-    }
-
-    assert(output.x >= 0 && ((zoom < ZoomLevel31 && output.x < tilesCount) || (zoom == ZoomLevel31)));
-    assert(output.x >= 0 && ((zoom < ZoomLevel31 && output.y < tilesCount) || (zoom == ZoomLevel31)));
-
-    return output;
-}
-
-OSMAND_CORE_API OsmAnd::PointI OSMAND_CORE_CALL OsmAnd::Utilities::normalizeCoordinates( const PointI64& input, const ZoomLevel zoom )
-{
-    PointI64 output = input;
-
-    const auto tilesCount = static_cast<int64_t>(1ull << zoom);
-
-    while(output.x < 0)
-        output.x += tilesCount;
-    while(output.y < 0)
-        output.y += tilesCount;
-
-    while(output.x >= tilesCount)
-        output.x -= tilesCount;
-    while(output.y >= tilesCount)
-        output.y -= tilesCount;
-
-    assert(output.x >= 0 && output.x < tilesCount);
-    assert(output.y >= 0 && output.y < tilesCount);
-
-    return PointI(static_cast<int32_t>(output.x), static_cast<int32_t>(output.y));
 }
 
 OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( const unsigned int verticesCount, const PointF* vertices, std::function<void (const PointI&)> fillPoint )

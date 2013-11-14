@@ -625,8 +625,8 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                     if(!shouldNotSkip && bbox31)
                     {
                         shouldNotSkip = bbox31->contains(p);
-                        objectBBox.enlargeToInclude(p);
 
+                        objectBBox.enlargeToInclude(p);
                         lastUnprocessedVertexForBBox = verticesCount;
                     }
                 }
