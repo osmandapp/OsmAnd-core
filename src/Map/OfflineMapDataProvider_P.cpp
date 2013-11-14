@@ -82,7 +82,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 #if defined(_DEBUG) || defined(DEBUG)
     float dataFilter = 0.0f;
     const auto dataRead_Begin = std::chrono::high_resolution_clock::now();
-    ObfMapSectionReader_Metrics::Metric_loadMapObjects dataRead_Metrics;
+    ObfMapSectionReader_Metrics::Metric_loadMapObjects dataRead_Metric;
 #endif
     auto& dataCache = _dataCache[zoom];
     dataInterface->obtainMapObjects(&mapObjects, &tileFoundation, tileBBox31, zoom, nullptr,
@@ -131,7 +131,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
             return true;
         },
 #if defined(_DEBUG) || defined(DEBUG)
-        &dataRead_Metrics
+        &dataRead_Metric
 #else
         nullptr
 #endif
@@ -226,17 +226,17 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
         tileId.x, tileId.y, zoom,
         total_Elapsed.count(),
         obtainDataInterface_Elapsed.count(), dataRead_Elapsed.count(), dataFilter, dataIdsProcess_Elapsed.count(), dataProcess_Elapsed.count(),
-        dataRead_Metrics.visitedLevels,
-        dataRead_Metrics.acceptedLevels,
-        dataRead_Metrics.visitedNodes,
-        dataRead_Metrics.acceptedNodes,
-        dataRead_Metrics.elapsedTimeForNodes,
-        dataRead_Metrics.mapObjectsBlocksRead,
-        dataRead_Metrics.visitedMapObjects,
-        dataRead_Metrics.acceptedMapObjects,
-        dataRead_Metrics.elapsedTimeForMapObjectsBlocks,
-        dataRead_Metrics.elapsedTimeForOnlyVisitedMapObjects,
-        dataRead_Metrics.elapsedTimeForOnlyAcceptedMapObjects);
+        dataRead_Metric.visitedLevels,
+        dataRead_Metric.acceptedLevels,
+        dataRead_Metric.visitedNodes,
+        dataRead_Metric.acceptedNodes,
+        dataRead_Metric.elapsedTimeForNodes,
+        dataRead_Metric.mapObjectsBlocksRead,
+        dataRead_Metric.visitedMapObjects,
+        dataRead_Metric.acceptedMapObjects,
+        dataRead_Metric.elapsedTimeForMapObjectsBlocks,
+        dataRead_Metric.elapsedTimeForOnlyVisitedMapObjects,
+        dataRead_Metric.elapsedTimeForOnlyAcceptedMapObjects);
 #endif
 }
 
