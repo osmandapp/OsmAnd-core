@@ -40,6 +40,7 @@ namespace OsmAnd {
     class MapStyleRule;
     class MapStyleValueDefinition;
     struct MapStyleValue;
+    class MapStyleEvaluatorState;
 
     class MapStyleEvaluator_P;
     class OSMAND_CORE_API MapStyleEvaluator
@@ -51,9 +52,20 @@ namespace OsmAnd {
         bool evaluate(uint32_t tagKey, uint32_t valueKey, bool fillOutput, bool evaluateChildren);
         bool evaluate(const std::shared_ptr<const MapStyleRule>& rule, bool fillOutput, bool evaluateChildren);
     public:
-        MapStyleEvaluator(const std::shared_ptr<const MapStyle>& style, const float displayDensityFactor, MapStyleRulesetType ruleset, const std::shared_ptr<const Model::MapObject>& mapObject = std::shared_ptr<const Model::MapObject>());
-        MapStyleEvaluator(const std::shared_ptr<const MapStyle>& style, const float displayDensityFactor, const std::shared_ptr<const MapStyleRule>& singleRule);
+        MapStyleEvaluator(
+            const std::shared_ptr<MapStyleEvaluatorState>& state,
+            const std::shared_ptr<const MapStyle>& style,
+            const float displayDensityFactor,
+            MapStyleRulesetType ruleset,
+            const std::shared_ptr<const Model::MapObject>& mapObject = std::shared_ptr<const Model::MapObject>());
+        MapStyleEvaluator(
+            const std::shared_ptr<MapStyleEvaluatorState>& state,
+            const std::shared_ptr<const MapStyle>& style,
+            const float displayDensityFactor,
+            const std::shared_ptr<const MapStyleRule>& singleRule);
         virtual ~MapStyleEvaluator();
+
+        const std::shared_ptr<MapStyleEvaluatorState> state;
 
         const std::shared_ptr<const MapStyle> style;
         const float displayDensityFactor;

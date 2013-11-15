@@ -40,6 +40,7 @@
 namespace OsmAnd {
 
     class MapStyleEvaluator;
+    class MapStyleEvaluatorState;
     class RasterizerEnvironment_P;
     class RasterizerContext_P;
     class RasterizedSymbol;
@@ -150,6 +151,7 @@ namespace OsmAnd {
             double zOrder;
             uint32_t typeIndex;
             PrimitiveType objectType;
+            std::shared_ptr<MapStyleEvaluatorState> evaluatorState;
         };
 
         static void obtainPrimitives(

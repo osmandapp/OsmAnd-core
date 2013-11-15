@@ -11,6 +11,7 @@
 #include "RasterizerContext_P.h"
 #include "RasterizedSymbol.h"
 #include "MapStyleEvaluator.h"
+#include "MapStyleEvaluatorState.h"
 #include "MapTypes.h"
 #include "MapObject.h"
 #include "ObfMapSectionInfo.h"
@@ -202,6 +203,8 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
     const IQueryController* const controller)
 {
+    std::shared_ptr<MapStyleEvaluatorState> sharedEvaluatorState(new MapStyleEvaluatorState());
+
     QVector< Primitive > unfilteredLines;
     for(auto itMapObject = context._combinedMapObjects.cbegin(); itMapObject != context._combinedMapObjects.cend(); ++itMapObject)
     {
@@ -216,7 +219,8 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
             const auto& type = *itType;
             auto layer = mapObject->getSimpleLayerValue();
 
-            MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Order, mapObject);
+            sharedEvaluatorState->clear();
+            MapStyleEvaluator evaluator(sharedEvaluatorState, env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Order, mapObject);
             env.applyTo(evaluator);
             evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
             evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
@@ -269,20 +273,39 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                 }
 
                 // Evaluate style for this primitive to check if it passes
-                MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Polygon, primitive.mapObject);
+                std::shared_ptr<MapStyleEvaluatorState> evaluatorState(new MapStyleEvaluatorState());
+                MapStyleEvaluator evaluator(evaluatorState, env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Polygon, primitive.mapObject);
                 initializePolygonEvaluator(env, context, primitive, evaluator);
                 if(!evaluator.evaluate())
                     continue;
+                primitive.evaluatorState = evaluatorState;
 
-                // Accept this primitive
-                auto pointPrimitive = primitive;
-                pointPrimitive.objectType = PrimitiveType::Point;
-
+                // Check size of polygon
                 auto polygonArea31 = Utilities::polygonArea(mapObject->points31);
                 if(polygonArea31 > PolygonAreaCutoffLowerThreshold)
                 {
                     primitive.zOrder += 1.0 / polygonArea31;
+
+                    // Accept this primitive
                     context._polygons.push_back(primitive);
+
+                    // Duplicate primitive as point
+                    auto pointPrimitive = primitive;
+                    pointPrimitive.objectType = PrimitiveType::Point;
+                    std::shared_ptr<MapStyleEvaluatorState> pointEvaluatorState(new MapStyleEvaluatorState());
+                    MapStyleEvaluator evaluator(pointEvaluatorState, env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Point, primitive.mapObject);
+                    initializePointEvaluator(env, context, pointPrimitive, evaluator);
+                    if(evaluator.evaluate())
+                    {
+                        // Point evaluation is a bit special, it's success only indicates that point has an icon
+                        pointPrimitive.evaluatorState = pointEvaluatorState;
+                    }
+                    else
+                    {
+                        pointPrimitive.evaluatorState.reset();
+                    }
+
+                    // Accept also point primitive
                     context._points.push_back(pointPrimitive);
                 }
             }
@@ -299,10 +322,12 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                 }
 
                 // Evaluate style for this primitive to check if it passes
-                MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Polyline, primitive.mapObject);
+                std::shared_ptr<MapStyleEvaluatorState> evaluatorState(new MapStyleEvaluatorState());
+                MapStyleEvaluator evaluator(evaluatorState, env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Polyline, primitive.mapObject);
                 initializePolylineEvaluator(env, context, primitive, evaluator);
                 if(!evaluator.evaluate())
                     continue;
+                primitive.evaluatorState = evaluatorState;
 
                 // Accept this primitive
                 unfilteredLines.push_back(primitive);
@@ -317,6 +342,13 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                         primitive.mapObject->id >> 1, static_cast<int64_t>(primitive.mapObject->id) / 2);
                     continue;
                 }
+
+                // Point evaluation is a bit special, it's success only indicates that point has an icon
+                std::shared_ptr<MapStyleEvaluatorState> evaluatorState(new MapStyleEvaluatorState());
+                MapStyleEvaluator evaluator(evaluatorState, env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Point, primitive.mapObject);
+                initializePointEvaluator(env, context, primitive, evaluator);
+                if(evaluator.evaluate())
+                    primitive.evaluatorState = evaluatorState;
 
                 context._points.push_back(primitive);
             }
@@ -547,10 +579,9 @@ void OsmAnd::Rasterizer_P::obtainPointSymbol(
     primitiveSymbol.location31 = center;
 
     // Point can have icon associated with it
-    MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Point, primitive.mapObject);
-    initializePointEvaluator(env, context, primitive, evaluator);
-    if(evaluator.evaluate())
+    if(primitive.evaluatorState)
     {
+        MapStyleEvaluator evaluator(primitive.evaluatorState, env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Point, primitive.mapObject);
         bool ok;
 
         QString iconResourceName;
@@ -579,6 +610,8 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
 {
     const auto& type = primitive.mapObject->_types[primitive.typeIndex];
 
+    std::shared_ptr<MapStyleEvaluatorState> sharedEvaluatorState(new MapStyleEvaluatorState());
+
     bool ok;
     auto firstTextProcessed = false;
     for(auto itName = primitive.mapObject->names.cbegin(); itName != primitive.mapObject->names.cend(); ++itName)
@@ -592,7 +625,8 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
         //TODO: reshape name with icu4c
 
         // Evaluate style to obtain text parameters
-        MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Text, primitive.mapObject);
+        sharedEvaluatorState->clear();
+        MapStyleEvaluator evaluator(sharedEvaluatorState, env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Text, primitive.mapObject);
         env.applyTo(evaluator);
         evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
         evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
@@ -673,10 +707,13 @@ void OsmAnd::Rasterizer_P::adjustContextFromEnvironment(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
     const ZoomLevel zoom)
 {
+    std::shared_ptr<MapStyleEvaluatorState> sharedEvaluatorState(new MapStyleEvaluatorState());
+
     context._defaultBgColor = env.defaultBgColor;
     if(env.attributeRule_defaultColor)
     {
-        MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, env.attributeRule_defaultColor);
+        sharedEvaluatorState->clear();
+        MapStyleEvaluator evaluator(sharedEvaluatorState, env.owner->style, env.owner->displayDensityFactor, env.attributeRule_defaultColor);
 
         env.applyTo(evaluator);
         evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
@@ -688,8 +725,8 @@ void OsmAnd::Rasterizer_P::adjustContextFromEnvironment(
     context._shadowRenderingColor = env.shadowRenderingColor;
     if(env.attributeRule_shadowRendering)
     {
-        MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, env.attributeRule_shadowRendering);
-
+        sharedEvaluatorState->clear();
+        MapStyleEvaluator evaluator(sharedEvaluatorState, env.owner->style, env.owner->displayDensityFactor, env.attributeRule_shadowRendering);
 
         env.applyTo(evaluator);
         evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
@@ -703,7 +740,8 @@ void OsmAnd::Rasterizer_P::adjustContextFromEnvironment(
     context._polygonMinSizeToDisplay = env.polygonMinSizeToDisplay;
     if(env.attributeRule_polygonMinSizeToDisplay)
     {
-        MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, env.attributeRule_polygonMinSizeToDisplay);
+        sharedEvaluatorState->clear();
+        MapStyleEvaluator evaluator(sharedEvaluatorState, env.owner->style, env.owner->displayDensityFactor, env.attributeRule_polygonMinSizeToDisplay);
         env.applyTo(evaluator);
         evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
         if(evaluator.evaluate())
@@ -717,7 +755,8 @@ void OsmAnd::Rasterizer_P::adjustContextFromEnvironment(
     context._roadDensityZoomTile = env.roadDensityZoomTile;
     if(env.attributeRule_roadDensityZoomTile)
     {
-        MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, env.attributeRule_roadDensityZoomTile);
+        sharedEvaluatorState->clear();
+        MapStyleEvaluator evaluator(sharedEvaluatorState, env.owner->style, env.owner->displayDensityFactor, env.attributeRule_roadDensityZoomTile);
         env.applyTo(evaluator);
         evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
         if(evaluator.evaluate())
@@ -727,7 +766,8 @@ void OsmAnd::Rasterizer_P::adjustContextFromEnvironment(
     context._roadsDensityLimitPerTile = env.roadsDensityLimitPerTile;
     if(env.attributeRule_roadsDensityLimitPerTile)
     {
-        MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, env.attributeRule_roadsDensityLimitPerTile);
+        sharedEvaluatorState->clear();
+        MapStyleEvaluator evaluator(sharedEvaluatorState, env.owner->style, env.owner->displayDensityFactor, env.attributeRule_roadsDensityLimitPerTile);
         env.applyTo(evaluator);
         evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, zoom);
         if(evaluator.evaluate())
@@ -1003,10 +1043,7 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
     assert(primitive.mapObject->isClosedFigure());
     assert(primitive.mapObject->isClosedFigure(true));
 
-    MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Polygon, primitive.mapObject);
-    initializePolygonEvaluator(env, context, primitive, evaluator);
-    if(!evaluator.evaluate())
-        return;
+    MapStyleEvaluator evaluator(primitive.evaluatorState, env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Polygon, primitive.mapObject);
     if(!updatePaint(evaluator, Set_0, true))
         return;
 
@@ -1100,10 +1137,7 @@ void OsmAnd::Rasterizer_P::rasterizePolyline(
 {
     assert(primitive.mapObject->_points31.size() >= 2);
 
-    MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Polyline, primitive.mapObject);
-    initializePolylineEvaluator(env, context, primitive, evaluator);
-    if(!evaluator.evaluate())
-        return;
+    MapStyleEvaluator evaluator(primitive.evaluatorState, env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Polyline, primitive.mapObject);
     if(!updatePaint(evaluator, Set_0, false))
         return;
 
