@@ -54,6 +54,7 @@ namespace OsmAnd {
 
     class OSMAND_CORE_API MapStyleValueDefinition
     {
+        Q_DISABLE_COPY(MapStyleValueDefinition);
     private:
         static QAtomicInt _nextId;
     protected:
