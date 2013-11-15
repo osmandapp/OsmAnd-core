@@ -210,16 +210,13 @@ bool OsmAnd::MapStyleEvaluator::evaluate( uint32_t tagKey, uint32_t valueKey, bo
 
 bool OsmAnd::MapStyleEvaluator::evaluate( const std::shared_ptr<const MapStyleRule>& rule, bool fillOutput, bool evaluateChildren )
 {
-    auto itValueDef = rule->_d->_valueDefinitionsRefs.cbegin();
-    auto itValueData = rule->_d->_values.cbegin();
-    for(; itValueDef != rule->_d->_valueDefinitionsRefs.cend(); ++itValueDef, ++itValueData)
+    for(auto itRuleValueEntry = rule->_d->_valuesByRef.cbegin(); itRuleValueEntry != rule->_d->_valuesByRef.cend(); ++itRuleValueEntry)
     {
-        const auto& valueDef = *itValueDef;
-
+        const auto& valueDef = itRuleValueEntry.key();
         if(valueDef->valueClass != MapStyleValueClass::Input)
             continue;
 
-        const auto& valueData = *itValueData;
+        const auto& valueData = *itRuleValueEntry.value();
         const auto& stackValue = state->_d->_values[valueDef];
 
         bool evaluationResult = false;
@@ -275,17 +272,13 @@ bool OsmAnd::MapStyleEvaluator::evaluate( const std::shared_ptr<const MapStyleRu
 
     if (fillOutput || evaluateChildren)
     {
-        auto itValueDef = rule->_d->_valueDefinitionsRefs.cbegin();
-        auto itValueData = rule->_d->_values.cbegin();
-        for(; itValueDef != rule->_d->_valueDefinitionsRefs.cend(); ++itValueDef, ++itValueData)
+        for(auto itRuleValueEntry = rule->_d->_valuesByRef.cbegin(); itRuleValueEntry != rule->_d->_valuesByRef.cend(); ++itRuleValueEntry)
         {
-            const auto& valueDef = *itValueDef;
-            const auto& valueData = *itValueData;
-
+            const auto& valueDef = itRuleValueEntry.key();
             if(valueDef->valueClass != MapStyleValueClass::Output)
                 continue;
 
-            state->_d->_values[valueDef] = valueData;
+            state->_d->_values[valueDef] = *itRuleValueEntry.value();
         }
     }
 

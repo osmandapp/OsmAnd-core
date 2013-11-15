@@ -15,6 +15,7 @@
 #include "MapStyleRule.h"
 #include "MapStyleRule_P.h"
 #include "MapStyleValueDefinition.h"
+#include "MapStyleValue.h"
 #include "MapStyleConfigurableInputValue.h"
 #include "EmbeddedResources.h"
 #include "Logging.h"
@@ -60,10 +61,10 @@ bool OsmAnd::MapStyle_P::parseMetadata( QXmlStreamReader& xmlReader )
         const auto tagName = xmlReader.name();
         if (xmlReader.isStartElement())
         {
-            if (tagName == "renderingStyle")
+            if (tagName == QLatin1String("renderingStyle"))
             {
-                _title = xmlReader.attributes().value("name").toString();
-                auto attrDepends = xmlReader.attributes().value("depends");
+                _title = xmlReader.attributes().value(QLatin1String("name")).toString();
+                auto attrDepends = xmlReader.attributes().value(QLatin1String("depends"));
                 if(!attrDepends.isNull())
                     _parentName = attrDepends.toString();
             }
@@ -596,21 +597,21 @@ const QMap< uint64_t, std::shared_ptr<OsmAnd::MapStyleRule> >& OsmAnd::MapStyle_
 
 bool OsmAnd::MapStyle_P::registerRule( MapStyleRulesetType type, const std::shared_ptr<MapStyleRule>& rule )
 {
-    MapStyleValue tagData;
+    std::shared_ptr<const MapStyleValue> tagData;
     if(!rule->getAttribute(MapStyle::builtinValueDefinitions.INPUT_TAG->name, tagData))
     {
         OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Attribute tag should be specified for root filter");
         return false;
     }
 
-    MapStyleValue valueData;
+    std::shared_ptr<const MapStyleValue> valueData;
     if(!rule->getAttribute(MapStyle::builtinValueDefinitions.INPUT_VALUE->name, valueData))
     {
         OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Attribute tag should be specified for root filter");
         return false;
     }
 
-    uint64_t id = encodeRuleId(tagData.asSimple.asUInt, valueData.asSimple.asUInt);
+    uint64_t id = encodeRuleId(tagData->asSimple.asUInt, valueData->asSimple.asUInt);
 
     auto insertedRule = rule;
     auto& ruleset = obtainRules(type);
@@ -629,7 +630,7 @@ bool OsmAnd::MapStyle_P::registerRule( MapStyleRulesetType type, const std::shar
 
 std::shared_ptr<OsmAnd::MapStyleRule> OsmAnd::MapStyle_P::createTagValueRootWrapperRule( uint64_t id, const std::shared_ptr<MapStyleRule>& rule )
 {
-    if(rule->_d->_valueDefinitionsRefs.size() <= 2)
+    if(rule->_d->_valuesByRef.size() <= 2)
         return rule;
 
     QHash< QString, QString > attributes;
