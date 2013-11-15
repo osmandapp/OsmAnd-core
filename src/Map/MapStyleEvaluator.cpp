@@ -245,7 +245,7 @@ bool OsmAnd::MapStyleEvaluator::evaluate( const std::shared_ptr<const MapStyleRu
                 {
                     const auto& tag = strValue.mid(0, equalSignIdx);
                     const auto& value = strValue.mid(equalSignIdx + 1);
-                    evaluationResult = mapObject->containsType(tag, value, true);
+                    evaluationResult = mapObject->containsTypeSlow(tag, value, true);
                 }
                 else
                     evaluationResult = false;

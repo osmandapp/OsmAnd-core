@@ -14,8 +14,8 @@ OsmAnd::Model::MapObject::MapObject(const std::shared_ptr<const ObfMapSectionInf
     , isArea(_isArea)
     , points31(_points31)
     , innerPolygonsPoints31(_innerPolygonsPoints31)
-    , types(_types)
-    , extraTypes(_extraTypes)
+    , typesRuleIds(_typesRuleIds)
+    , extraTypesRuleIds(_extraTypesRuleIds)
     , foundation(_foundation)
     , names(_names)
     , bbox31(_bbox31)
@@ -28,38 +28,18 @@ OsmAnd::Model::MapObject::~MapObject()
 
 int OsmAnd::Model::MapObject::getSimpleLayerValue() const
 {
-    auto isTunnel = false;
-    auto isBridge = false;
-    for(auto itType = _extraTypes.cbegin(); itType != _extraTypes.cend(); ++itType)
+    for(auto itTypeRuleId = _extraTypesRuleIds.cbegin(); itTypeRuleId != _extraTypesRuleIds.cend(); ++itTypeRuleId)
     {
-        const auto& type = *itType;
+        const auto typeRuleId = *itTypeRuleId;
 
-        if (type.tag == QLatin1String("layer"))
-        {
-            if(!type.value.isEmpty())
-            {
-                if(type.value[0] == '-')
-                    return -1;
-                else if (type.value[0] == '0')
-                    return 0;
-                else
-                    return 1;
-            }
-        }
-        else if (type.tag == QLatin1String("tunnel"))
-        {
-            isTunnel = (type.value == QLatin1String("yes"));
-        }
-        else if (type.tag == QLatin1String("bridge"))
-        {
-            isBridge = (type.value == QLatin1String("yes"));
-        }
+        if(section->encodingDecodingRules->positiveLayers_encodingRuleIds.contains(typeRuleId))
+            return 1;
+        else if(section->encodingDecodingRules->negativeLayers_encodingRuleIds.contains(typeRuleId))
+            return -1;
+        else if(section->encodingDecodingRules->zeroLayers_encodingRuleIds.contains(typeRuleId))
+            return 0;
     }
 
-    if (isTunnel)
-        return -1;
-    else if (isBridge)
-        return 1;
     return 0;
 }
 
@@ -83,16 +63,16 @@ bool OsmAnd::Model::MapObject::isClosedFigure(bool checkInner /*= false*/) const
         return _points31.first() == _points31.last();
 }
 
-bool OsmAnd::Model::MapObject::containsType( const QString& tag, const QString& value, bool checkAdditional /*= false*/ ) const
+bool OsmAnd::Model::MapObject::containsType(const uint32_t typeRuleId, bool checkAdditional /*= false*/) const
 {
-    const auto& types = (checkAdditional ? _extraTypes : _types);
-    for(auto itType = types.cbegin(); itType != types.cend(); ++itType)
-    {
-        const auto& type = *itType;
-        if(type.tag == tag && type.value == value)
-            return true;
-    }
-    return false;
+    return (checkAdditional ? _extraTypesRuleIds : _typesRuleIds).contains(typeRuleId);
+}
+
+bool OsmAnd::Model::MapObject::containsTypeSlow( const QString& tag, const QString& value, bool checkAdditional /*= false*/ ) const
+{
+    const auto typeRuleId = section->encodingDecodingRules->encodingRuleIds[tag][value];
+
+    return (checkAdditional ? _extraTypesRuleIds : _typesRuleIds).contains(typeRuleId);
 }
 
 bool OsmAnd::Model::MapObject::intersects( const AreaI& area ) const

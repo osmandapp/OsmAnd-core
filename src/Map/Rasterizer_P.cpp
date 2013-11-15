@@ -79,16 +79,16 @@ void OsmAnd::Rasterizer_P::prepareContext(
         if(zoom < BasemapZoom && !mapObject->section->isBasemap)
             continue;
 
-        if(mapObject->containsType(QLatin1String("natural"), QLatin1String("coastline")))
+        if(mapObject->containsType(mapObject->section->encodingDecodingRules->naturalCoastline_encodingRuleId))
         {
-            if (mapObject->section->isBasemap)
+            if(mapObject->section->isBasemap)
                 context._basemapCoastlineObjects.push_back(mapObject);
             else
                 context._coastlineObjects.push_back(mapObject);
         }
         else
         {
-            if (mapObject->section->isBasemap)
+            if(mapObject->section->isBasemap)
                 context._basemapMapObjects.push_back(mapObject);
             else
                 context._mapObjects.push_back(mapObject);
@@ -169,7 +169,7 @@ void OsmAnd::Rasterizer_P::prepareContext(
     {
         assert(foundation != MapFoundationType::Undefined);
 
-        std::shared_ptr<Model::MapObject> bgMapObject(new Model::MapObject(nullptr, nullptr));
+        std::shared_ptr<Model::MapObject> bgMapObject(new Model::MapObject(env.dummyMapSection, nullptr));
         bgMapObject->_isArea = true;
         bgMapObject->_points31.push_back(PointI(area31.left, area31.top));
         bgMapObject->_points31.push_back(PointI(area31.right, area31.top));
@@ -177,15 +177,15 @@ void OsmAnd::Rasterizer_P::prepareContext(
         bgMapObject->_points31.push_back(PointI(area31.left, area31.bottom));
         bgMapObject->_points31.push_back(bgMapObject->_points31.first());
         if(foundation == MapFoundationType::FullWater)
-            bgMapObject->_types.push_back(TagValue(QLatin1String("natural"), QLatin1String("coastline")));
+            bgMapObject->_typesRuleIds.push_back(bgMapObject->section->encodingDecodingRules->naturalCoastline_encodingRuleId);
         else if(foundation == MapFoundationType::FullLand || foundation == MapFoundationType::Mixed)
-            bgMapObject->_types.push_back(TagValue(QLatin1String("natural"), QLatin1String("land")));
+            bgMapObject->_typesRuleIds.push_back(bgMapObject->section->encodingDecodingRules->naturalLand_encodingRuleId);
         else
         {
             bgMapObject->_isArea = false;
-            bgMapObject->_types.push_back(TagValue(QLatin1String("natural"), QLatin1String("coastline_broken")));
+            bgMapObject->_typesRuleIds.push_back(bgMapObject->section->encodingDecodingRules->naturalCoastlineBroken_encodingRuleId);
         }
-        bgMapObject->_extraTypes.push_back(TagValue(QLatin1String("layer"), QLatin1String("-5")));
+        bgMapObject->_extraTypesRuleIds.push_back(bgMapObject->section->encodingDecodingRules->layerLowest_encodingRuleId);
 
         assert(bgMapObject->isClosedFigure());
         context._triangulatedCoastlineObjects.push_back(bgMapObject);
@@ -282,13 +282,13 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
         if(controller && controller->isAborted())
             return;
 
-        auto mapObject = *itMapObject;
+        const auto& mapObject = *itMapObject;
 
-        uint32_t typeIdx = 0;
-        for(auto itType = mapObject->types.cbegin(); itType != mapObject->types.cend(); ++itType, typeIdx++)
+        uint32_t typeRuleIdIndex = 0;
+        for(auto itTypeRuleId = mapObject->typesRuleIds.cbegin(); itTypeRuleId != mapObject->typesRuleIds.cend(); ++itTypeRuleId, typeRuleIdIndex++)
         {
-            const auto& type = *itType;
-            auto layer = mapObject->getSimpleLayerValue();
+            const auto& decodedType = mapObject->section->encodingDecodingRules->decodingRules[*itTypeRuleId];
+            const auto layer = mapObject->getSimpleLayerValue();
 
             // Update metric
             std::chrono::high_resolution_clock::time_point orderEvaluation_begin;
@@ -298,8 +298,8 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
             sharedEvaluatorState->clear();
             MapStyleEvaluator evaluator(sharedEvaluatorState, env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Order, mapObject);
             env.applyTo(evaluator);
-            evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
-            evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
+            evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, decodedType.tag);
+            evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, decodedType.value);
             evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
             evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
             evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_LAYER, layer);
@@ -330,7 +330,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
             primitive.mapObject = mapObject;
             primitive.objectType = static_cast<PrimitiveType>(objectType);
             primitive.zOrder = zOrder;
-            primitive.typeIndex = typeIdx;
+            primitive.typeRuleIdIndex = typeRuleIdIndex;
 
             if(objectType == PrimitiveType::Polygon)
             {
@@ -427,7 +427,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                     }
 
                     // Accept also point primitive only if typeIndex == 0 and (there is text or icon)
-                    if(pointPrimitive.typeIndex == 0 && (!pointPrimitive.mapObject->names.isEmpty() || ok))
+                    if(pointPrimitive.typeRuleIdIndex == 0 && (!pointPrimitive.mapObject->names.isEmpty() || ok))
                     {
                         context._points.push_back(pointPrimitive);
 
@@ -513,7 +513,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                     primitive.evaluatorState = evaluatorState;
 
                 // Skip is possible if typeIndex != 0 or (there is no text and no icon)
-                if(primitive.typeIndex != 0 || (primitive.mapObject->names.isEmpty() && !ok))
+                if(primitive.typeRuleIdIndex != 0 || (primitive.mapObject->names.isEmpty() && !ok))
                     continue;
 
                 context._points.push_back(primitive);
@@ -541,9 +541,9 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
     {
         if(qFuzzyCompare(l.zOrder, r.zOrder))
         {
-            if(l.typeIndex == r.typeIndex)
+            if(l.typeRuleIdIndex == r.typeRuleIdIndex)
                 return l.mapObject->_points31.size() < r.mapObject->_points31.size();
-            return l.typeIndex < r.typeIndex;
+            return l.typeRuleIdIndex < r.typeRuleIdIndex;
         }
         return l.zOrder < r.zOrder;
     };
@@ -575,8 +575,8 @@ void OsmAnd::Rasterizer_P::filterOutLinesByDensity(
         bool accept = true;
         const auto& primitive = in[lineIdx];
 
-        const auto& type = primitive.mapObject->_types[primitive.typeIndex];
-        if(type.tag == QLatin1String("highway"))
+        const auto typeRuleId = primitive.mapObject->_typesRuleIds[primitive.typeRuleIdIndex];
+        if(typeRuleId == primitive.mapObject->section->encodingDecodingRules->highway_encodingRuleId)
         {
             accept = false;
 
@@ -650,7 +650,7 @@ void OsmAnd::Rasterizer_P::collectPrimitivesSymbols(
         }
         else if(type == Points)
         {
-            assert(primitive.typeIndex == 0);
+            assert(primitive.typeRuleIdIndex == 0);
 
             obtainPointSymbol(env, context, primitive);
         }
@@ -777,7 +777,8 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
     const Primitive& primitive, PrimitiveSymbol& primitiveSymbol )
 {
-    const auto& type = primitive.mapObject->_types[primitive.typeIndex];
+    const auto typeRuleId = primitive.mapObject->_typesRuleIds[primitive.typeRuleIdIndex];
+    const auto& decodedType = primitive.mapObject->section->encodingDecodingRules->decodingRules[typeRuleId];
 
     std::shared_ptr<MapStyleEvaluatorState> sharedEvaluatorState(new MapStyleEvaluatorState());
 
@@ -797,14 +798,16 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
         sharedEvaluatorState->clear();
         MapStyleEvaluator evaluator(sharedEvaluatorState, env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Text, primitive.mapObject);
         env.applyTo(evaluator);
-        evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
-        evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
+        evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, decodedType.tag);
+        evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, decodedType.value);
         evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
         evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
         evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_TEXT_LENGTH, name.length());
-        auto nameTag = itName.key();
-        if(nameTag == QLatin1String("name"))
-            nameTag.clear();
+
+        QString nameTag;
+        if(itName.key() != primitive.mapObject->section->encodingDecodingRules->name_encodingRuleId)
+            nameTag = primitive.mapObject->section->encodingDecodingRules->decodingRules[itName.key()].tag;
+
         evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_NAME_TAG, nameTag);
         if(!evaluator.evaluate())
             continue;
@@ -1000,11 +1003,12 @@ void OsmAnd::Rasterizer_P::initializePolygonEvaluator(
 {
     assert(primitive.objectType == PrimitiveType::Polygon);
 
-    const auto& type = primitive.mapObject->_types[primitive.typeIndex];
+    const auto typeRuleId = primitive.mapObject->_typesRuleIds[primitive.typeRuleIdIndex];
+    const auto& decodedType = primitive.mapObject->section->encodingDecodingRules->decodingRules[typeRuleId];
 
     env.applyTo(evaluator);
-    evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
-    evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
+    evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, decodedType.tag);
+    evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, decodedType.value);
     evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
     evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
 }
@@ -1015,11 +1019,12 @@ void OsmAnd::Rasterizer_P::initializePolylineEvaluator(
 {
     assert(primitive.objectType == PrimitiveType::Polyline);
 
-    const auto& type = primitive.mapObject->_types[primitive.typeIndex];
+    const auto typeRuleId = primitive.mapObject->_typesRuleIds[primitive.typeRuleIdIndex];
+    const auto& decodedType = primitive.mapObject->section->encodingDecodingRules->decodingRules[typeRuleId];
 
     env.applyTo(evaluator);
-    evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
-    evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
+    evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, decodedType.tag);
+    evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, decodedType.value);
     evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
     evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
     evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_LAYER, primitive.mapObject->getSimpleLayerValue());
@@ -1031,11 +1036,12 @@ void OsmAnd::Rasterizer_P::initializePointEvaluator(
 {
     assert(primitive.objectType == PrimitiveType::Point);
 
-    const auto& type = primitive.mapObject->_types[primitive.typeIndex];
+    const auto typeRuleId = primitive.mapObject->_typesRuleIds[primitive.typeRuleIdIndex];
+    const auto& decodedType = primitive.mapObject->section->encodingDecodingRules->decodingRules[typeRuleId];
 
     env.applyTo(evaluator);
-    evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, type.tag);
-    evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, type.value);
+    evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_TAG, decodedType.tag);
+    evaluator.setStringValue(MapStyle::builtinValueDefinitions.INPUT_VALUE, decodedType.value);
     evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MINZOOM, context._zoom);
     evaluator.setIntegerValue(MapStyle::builtinValueDefinitions.INPUT_MAXZOOM, context._zoom);
 }
@@ -1322,14 +1328,14 @@ void OsmAnd::Rasterizer_P::rasterizePolyline(
     if(drawOnlyShadow && (!ok || shadowRadius == 0))
         return;
 
-    const auto& type = primitive.mapObject->_types[primitive.typeIndex];
+    const auto typeRuleId = primitive.mapObject->_typesRuleIds[primitive.typeRuleIdIndex];
 
     int oneway = 0;
-    if (context._zoom >= ZoomLevel16 && type.tag == QLatin1String("highway"))
+    if(context._zoom >= ZoomLevel16 && typeRuleId == primitive.mapObject->section->encodingDecodingRules->highway_encodingRuleId)
     {
-        if (primitive.mapObject->containsType(QLatin1String("oneway"), QLatin1String("yes"), true))
+        if(primitive.mapObject->containsType(primitive.mapObject->section->encodingDecodingRules->oneway_encodingRuleId, true))
             oneway = 1;
-        else if (primitive.mapObject->containsType(QLatin1String("oneway"), QLatin1String("-1"), true))
+        else if(primitive.mapObject->containsType(primitive.mapObject->section->encodingDecodingRules->onewayReverse_encodingRuleId, true))
             oneway = -1;
     }
 
@@ -1565,10 +1571,10 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
     {
         const auto& polyline = *itPolyline;
 
-        std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr, nullptr));
+        std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(env.dummyMapSection, nullptr));
         mapObject->_isArea = false;
         mapObject->_points31 = polyline;
-        mapObject->_types.push_back(TagValue(QLatin1String("natural"), QLatin1String("coastline_line")));
+        mapObject->_typesRuleIds.push_back(mapObject->section->encodingDecodingRules->naturalCoastlineLine_encodingRuleId);
 
         outVectorized.push_back(mapObject);
     }
@@ -1577,7 +1583,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
     if(!coastlinePolylines.isEmpty())
     {
         // Add complete water tile with holes
-        std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr, nullptr));
+        std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(env.dummyMapSection, nullptr));
         mapObject->_points31.push_back(PointI(context._area31.left, context._area31.top));
         mapObject->_points31.push_back(PointI(context._area31.right, context._area31.top));
         mapObject->_points31.push_back(PointI(context._area31.right, context._area31.bottom));
@@ -1585,7 +1591,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
         mapObject->_points31.push_back(mapObject->_points31.first());
         convertCoastlinePolylinesToPolygons(env, context, coastlinePolylines, mapObject->_innerPolygonsPoints31, osmId);
 
-        mapObject->_types.push_back(TagValue(QLatin1String("natural"), QLatin1String("coastline")));
+        mapObject->_typesRuleIds.push_back(mapObject->section->encodingDecodingRules->naturalCoastline_encodingRuleId);
         mapObject->_id = osmId;
         mapObject->_isArea = true;
 
@@ -1610,10 +1616,10 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
         {
             const auto& polygon = *itPolygon;
 
-            std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr, nullptr));
+            std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(env.dummyMapSection, nullptr));
             mapObject->_isArea = false;
             mapObject->_points31 = polygon;
-            mapObject->_types.push_back(TagValue(QLatin1String("natural"), QLatin1String("coastline_broken")));
+            mapObject->_typesRuleIds.push_back(mapObject->section->encodingDecodingRules->naturalCoastlineBroken_encodingRuleId);
 
             outVectorized.push_back(mapObject);
         }
@@ -1624,10 +1630,10 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
     {
         const auto& polygon = *itPolygon;
 
-        std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr, nullptr));
+        std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(env.dummyMapSection, nullptr));
         mapObject->_isArea = false;
         mapObject->_points31 = polygon;
-        mapObject->_types.push_back(TagValue(QLatin1String("natural"), QLatin1String("coastline_line")));
+        mapObject->_typesRuleIds.push_back(mapObject->section->encodingDecodingRules->naturalCoastlineLine_encodingRuleId);
 
         outVectorized.push_back(mapObject);
     }
@@ -1647,16 +1653,16 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
 
         bool clockwise = isClockwiseCoastlinePolygon(polygon);
 
-        std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr, nullptr));
+        std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(env.dummyMapSection, nullptr));
         mapObject->_points31 = polygon;
         if(clockwise)
         {
-            mapObject->_types.push_back(TagValue(QLatin1String("natural"), QLatin1String("coastline")));
+            mapObject->_typesRuleIds.push_back(mapObject->section->encodingDecodingRules->naturalCoastline_encodingRuleId);
             fullWaterObjects++;
         }
         else
         {
-            mapObject->_types.push_back(TagValue(QLatin1String("natural"), QLatin1String("land")));
+            mapObject->_typesRuleIds.push_back(mapObject->section->encodingDecodingRules->naturalLand_encodingRuleId);
             fullLandObjects++;
         }
         mapObject->_id = osmId;
@@ -1676,14 +1682,14 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
             context._zoom);
 
         // Add complete water tile
-        std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr, nullptr));
+        std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(env.dummyMapSection, nullptr));
         mapObject->_points31.push_back(PointI(context._area31.left, context._area31.top));
         mapObject->_points31.push_back(PointI(context._area31.right, context._area31.top));
         mapObject->_points31.push_back(PointI(context._area31.right, context._area31.bottom));
         mapObject->_points31.push_back(PointI(context._area31.left, context._area31.bottom));
         mapObject->_points31.push_back(mapObject->_points31.first());
 
-        mapObject->_types.push_back(TagValue(QLatin1String("natural"), QLatin1String("coastline")));
+        mapObject->_typesRuleIds.push_back(mapObject->section->encodingDecodingRules->naturalCoastline_encodingRuleId);
         mapObject->_id = osmId;
         mapObject->_isArea = true;
 

@@ -115,9 +115,9 @@ void OsmAnd::ObfMapSectionReader_P::readMapLevelHeader(
     }
 }
 
-void OsmAnd::ObfMapSectionReader_P::readRules(
+void OsmAnd::ObfMapSectionReader_P::readEncodingDecodingRules(
     const std::unique_ptr<ObfReader_P>& reader,
-    const std::shared_ptr<ObfMapSectionInfo_P::Rules>& rules)
+    const std::shared_ptr<ObfMapSectionDecodingEncodingRules>& encodingDecodingRules)
 {
     auto cis = reader->_codedInputStream.get();
 
@@ -129,14 +129,7 @@ void OsmAnd::ObfMapSectionReader_P::readRules(
         {
         case 0:
             {
-                auto free = rules->_decodingRules.size() * 2 + 1;
-                rules->_coastlineBrokenEncodingType = free++;
-                createRule(rules, 0, rules->_coastlineBrokenEncodingType, QLatin1String("natural"), QLatin1String("coastline_broken"));
-                if(rules->_landEncodingType == -1)
-                {
-                    rules->_landEncodingType = free++;
-                    createRule(rules, 0, rules->_landEncodingType, QLatin1String("natural"), QLatin1String("land"));
-                }
+                encodingDecodingRules->createMissingRules();
             }
             return;
         case OBF::OsmAndMapIndex::kRulesFieldNumber:
@@ -144,7 +137,7 @@ void OsmAnd::ObfMapSectionReader_P::readRules(
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
-                readRule(reader, defaultId++, rules);
+                readEncodingDecodingRule(reader, defaultId++, encodingDecodingRules);
                 cis->PopLimit(oldLimit);
             }
             break;
@@ -155,26 +148,26 @@ void OsmAnd::ObfMapSectionReader_P::readRules(
     }
 }
 
-void OsmAnd::ObfMapSectionReader_P::readRule(
+void OsmAnd::ObfMapSectionReader_P::readEncodingDecodingRule(
     const std::unique_ptr<ObfReader_P>& reader,
-    uint32_t defaultId, const std::shared_ptr<ObfMapSectionInfo_P::Rules>& rules)
+    uint32_t defaultId, const std::shared_ptr<ObfMapSectionDecodingEncodingRules>& encodingDecodingRules)
 {
     auto cis = reader->_codedInputStream.get();
 
     gpb::uint32 ruleId = defaultId;
     gpb::uint32 ruleType = 0;
     QString ruleTag;
-    QString ruleVal;
+    QString ruleValue;
     for(;;)
     {
         auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
-            createRule(rules, ruleType, ruleId, ruleTag, ruleVal);
+            encodingDecodingRules->createRule(ruleType, ruleId, ruleTag, ruleValue);
             return;
         case OBF::OsmAndMapIndex_MapEncodingRule::kValueFieldNumber:
-            ObfReaderUtilities::readQString(cis, ruleVal);
+            ObfReaderUtilities::readQString(cis, ruleValue);
             break;
         case OBF::OsmAndMapIndex_MapEncodingRule::kTagFieldNumber:
             ObfReaderUtilities::readQString(cis, ruleTag);
@@ -188,44 +181,6 @@ void OsmAnd::ObfMapSectionReader_P::readRule(
         default:
             ObfReaderUtilities::skipUnknownField(cis, tag);
             break;
-        }
-    }
-}
-
-void OsmAnd::ObfMapSectionReader_P::createRule( const std::shared_ptr<ObfMapSectionInfo_P::Rules>& rules, uint32_t ruleType, uint32_t ruleId, const QString& ruleTag, const QString& ruleVal )
-{
-    auto itEncodingRule = rules->_encodingRules.find(ruleTag);
-    if(itEncodingRule == rules->_encodingRules.end())
-        itEncodingRule = rules->_encodingRules.insert(ruleTag, QHash<QString, uint32_t>());
-    itEncodingRule->insert(ruleVal, ruleId);
-    
-    if(!rules->_decodingRules.contains(ruleId))
-        rules->_decodingRules.insert(ruleId, ObfMapSectionInfo_P::Rules::DecodingRule(ruleTag, ruleVal, ruleType));
-
-    if(QLatin1String("name") == ruleTag)
-        rules->_nameEncodingType = ruleId;
-    else if(QLatin1String("natural") == ruleTag && QLatin1String("coastline") == ruleVal)
-        rules->_coastlineEncodingType = ruleId;
-    else if(QLatin1String("natural") == ruleTag && QLatin1String("land") == ruleVal)
-        rules->_landEncodingType = ruleId;
-    else if(QLatin1String("oneway") == ruleTag && QLatin1String("yes") == ruleVal)
-        rules->_onewayAttribute = ruleId;
-    else if(QLatin1String("oneway") == ruleTag && QLatin1String("-1") == ruleVal)
-        rules->_onewayReverseAttribute = ruleId;
-    else if(QLatin1String("ref") == ruleTag)
-        rules->_refEncodingType = ruleId;
-    else if(QLatin1String("tunnel") == ruleTag)
-        rules->_negativeLayers.insert(ruleId);
-    else if(QLatin1String("bridge") == ruleTag)
-        rules->_positiveLayers.insert(ruleId);
-    else if(QLatin1String("layer") == ruleTag)
-    {
-        if(!ruleVal.isEmpty() && ruleVal != QLatin1String("0"))
-        {
-            if (ruleVal[0] == '-')
-                rules->_negativeLayers.insert(ruleId);
-            else
-                rules->_positiveLayers.insert(ruleId);
         }
     }
 }
@@ -729,40 +684,31 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
             }
             break;
         case OBF::MapData::kAdditionalTypesFieldNumber:
-            {
-                if(!mapObject)
-                    mapObject.reset(new OsmAnd::Model::MapObject(section, treeNode->level));
-
-                gpb::uint32 length;
-                cis->ReadVarint32(&length);
-                auto oldLimit = cis->PushLimit(length);
-                while(cis->BytesUntilLimit() > 0)
-                {
-                    gpb::uint32 type;
-                    cis->ReadVarint32(&type);
-
-                    const auto& tagValue = section->_d->_rules->_decodingRules[type];
-                    mapObject->_extraTypes.push_back(TagValue(std::get<0>(tagValue), std::get<1>(tagValue)));
-                }
-                cis->PopLimit(oldLimit);
-            }
-            break;
         case OBF::MapData::kTypesFieldNumber:
             {
                 if(!mapObject)
                     mapObject.reset(new OsmAnd::Model::MapObject(section, treeNode->level));
 
+                auto& typesRuleIds = (tgn == OBF::MapData::kAdditionalTypesFieldNumber ? mapObject->_extraTypesRuleIds : mapObject->_typesRuleIds);
+
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
+
+                // Preallocate space
+                typesRuleIds.reserve(cis->BytesUntilLimit());
+
                 while(cis->BytesUntilLimit() > 0)
                 {
-                    gpb::uint32 type;
-                    cis->ReadVarint32(&type);
+                    gpb::uint32 ruleId;
+                    cis->ReadVarint32(&ruleId);
 
-                    const auto& tagValue = section->_d->_rules->_decodingRules[type];
-                    mapObject->_types.push_back(TagValue(std::get<0>(tagValue), std::get<1>(tagValue)));
+                    typesRuleIds.push_back(ruleId);
                 }
+
+                // Shrink preallocated space
+                typesRuleIds.squeeze();
+
                 cis->PopLimit(oldLimit);
             }
             break;
@@ -775,15 +721,14 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 {
                     bool ok;
 
-                    gpb::uint32 stringTag;
-                    ok = cis->ReadVarint32(&stringTag);
+                    gpb::uint32 stringRuleId;
+                    ok = cis->ReadVarint32(&stringRuleId);
                     assert(ok);
                     gpb::uint32 stringId;
                     ok = cis->ReadVarint32(&stringId);
                     assert(ok);
 
-                    const auto& tagName = std::get<0>(section->_d->_rules->_decodingRules[stringTag]);
-                    mapObject->_names.insert(tagName, ObfReaderUtilities::encodeIntegerToString(stringId));
+                    mapObject->_names.insert(stringRuleId, ObfReaderUtilities::encodeIntegerToString(stringId));
                 }
                 assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
@@ -816,14 +761,17 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
 
     // Check if this map section has initialized rules
     {
-        QMutexLocker scopedLock(&section->_d->_rulesMutex);
+        QMutexLocker scopedLock(&section->_d->_encodingDecodingDataMutex);
 
-        if(!section->_d->_rules)
+        if(!section->_d->_encodingDecodingRules)
         {
             cis->Seek(section->_offset);
             auto oldLimit = cis->PushLimit(section->_length);
-            section->_d->_rules.reset(new ObfMapSectionInfo_P::Rules());
-            readRules(reader, section->_d->_rules);
+
+            std::shared_ptr<ObfMapSectionDecodingEncodingRules> encodingDecodingRules(new ObfMapSectionDecodingEncodingRules());
+            readEncodingDecodingRules(reader, encodingDecodingRules);
+            section->_d->_encodingDecodingRules = encodingDecodingRules;
+
             cis->PopLimit(oldLimit);
         }
     }

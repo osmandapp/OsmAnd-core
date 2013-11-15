@@ -34,7 +34,6 @@
 
 #include <OsmAndCore.h>
 #include <CommonTypes.h>
-#include <ObfMapSectionInfo_P.h>
 #include <MapTypes.h>
 
 namespace OsmAnd {
@@ -42,6 +41,8 @@ namespace OsmAnd {
     class ObfReader_P;
     class ObfMapSectionInfo;
     class ObfMapSectionLevel;
+    struct ObfMapSectionDecodingEncodingRules;
+    class ObfMapSectionLevelTreeNode;
     namespace Model {
         class MapObject;
     } // namespace Model
@@ -63,11 +64,10 @@ namespace OsmAnd {
         static void readMapLevelHeader(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
             const std::shared_ptr<ObfMapSectionLevel>& level);
 
-        static void readRules(const std::unique_ptr<ObfReader_P>& reader,
-            const std::shared_ptr<ObfMapSectionInfo_P::Rules>& rules);
-        static void readRule(const std::unique_ptr<ObfReader_P>& reader,
-            uint32_t defaultId, const std::shared_ptr<ObfMapSectionInfo_P::Rules>& rules);
-        static void createRule(const std::shared_ptr<ObfMapSectionInfo_P::Rules>& rules, uint32_t type, uint32_t id, const QString& tag, const QString& val);
+        static void readEncodingDecodingRules(const std::unique_ptr<ObfReader_P>& reader,
+            const std::shared_ptr<ObfMapSectionDecodingEncodingRules>& encodingDecodingRules);
+        static void readEncodingDecodingRule(const std::unique_ptr<ObfReader_P>& reader,
+            uint32_t defaultId, const std::shared_ptr<ObfMapSectionDecodingEncodingRules>& encodingDecodingRules);
 
         static void readMapLevelTreeNodes(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
             const std::shared_ptr<const ObfMapSectionLevel>& level, QList< std::shared_ptr<ObfMapSectionLevelTreeNode> >& nodes);

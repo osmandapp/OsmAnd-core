@@ -34,25 +34,6 @@
 namespace OsmAnd
 {
 
-    struct TagValue
-    {
-        inline TagValue()
-        {}
-
-        inline TagValue(const QString& tag_, const QString& value_)
-            : tag(tag_)
-            , value(value_)
-        {}
-
-        inline TagValue(const char* tag_, const char* value_)
-            : tag(QLatin1String(tag_))
-            , value(QLatin1String(value_))
-        {}
-
-        QString tag;
-        QString value;
-    };
-
     template<typename T>
     struct Area;
 

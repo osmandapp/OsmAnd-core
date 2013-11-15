@@ -149,7 +149,7 @@ namespace OsmAnd {
         {
             std::shared_ptr<const Model::MapObject> mapObject;
             double zOrder;
-            uint32_t typeIndex;
+            uint32_t typeRuleIdIndex;
             PrimitiveType objectType;
             std::shared_ptr<MapStyleEvaluatorState> evaluatorState;
         };

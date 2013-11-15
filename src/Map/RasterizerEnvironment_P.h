@@ -49,6 +49,7 @@ namespace OsmAnd {
     class MapStyle;
     class MapStyleEvaluator;
     class Rasterizer;
+    class ObfMapSectionInfo;
 
     class RasterizerEnvironment;
     class RasterizerEnvironment_P
@@ -117,6 +118,8 @@ namespace OsmAnd {
 
         const QVector< SkPaint >& oneWayPaints;
         const QVector< SkPaint >& reverseOneWayPaints;
+
+        const std::shared_ptr<ObfMapSectionInfo> dummyMapSection;
 
         QMap< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > getSettings() const;
         void setSettings(const QMap< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue >& newSettings);

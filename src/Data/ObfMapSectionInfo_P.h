@@ -25,7 +25,6 @@
 
 #include <cstdint>
 #include <memory>
-#include <tuple>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QMutex>
@@ -41,6 +40,7 @@
 namespace OsmAnd {
 
     class ObfMapSectionLevel;
+    struct ObfMapSectionDecodingEncodingRules;
     class ObfMapSectionReader_P;
 
     class ObfMapSectionLevelTreeNode
@@ -93,26 +93,8 @@ namespace OsmAnd {
 
         ObfMapSectionInfo* const owner;
 
-        mutable QMutex _rulesMutex;
-        struct Rules
-        {
-            typedef std::tuple<QString, QString, uint32_t> DecodingRule;
-
-            Rules();
-
-            QHash< QString, QHash<QString, uint32_t> > _encodingRules;
-            QMap< uint32_t, DecodingRule > _decodingRules;
-            uint32_t _nameEncodingType;
-            uint32_t _refEncodingType;
-            uint32_t _coastlineEncodingType;
-            uint32_t _coastlineBrokenEncodingType;
-            uint32_t _landEncodingType;
-            uint32_t _onewayAttribute;
-            uint32_t _onewayReverseAttribute;
-            QSet<uint32_t> _positiveLayers;
-            QSet<uint32_t> _negativeLayers;
-        };
-        std::shared_ptr<Rules> _rules;
+        mutable QMutex _encodingDecodingDataMutex;
+        std::shared_ptr<const ObfMapSectionDecodingEncodingRules> _encodingDecodingRules;
     public:
         virtual ~ObfMapSectionInfo_P();
 

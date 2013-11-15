@@ -57,9 +57,9 @@ namespace OsmAnd {
             bool _isArea;
             QVector< PointI > _points31;
             QList< QVector< PointI > > _innerPolygonsPoints31;
-            QVector< TagValue > _types;
-            QVector< TagValue > _extraTypes;
-            QHash< QString, QString > _names;
+            QVector< uint32_t > _typesRuleIds;
+            QVector< uint32_t > _extraTypesRuleIds;
+            QMap< uint32_t, QString > _names;
             AreaI _bbox31;
         public:
             virtual ~MapObject();
@@ -71,16 +71,17 @@ namespace OsmAnd {
             const bool& isArea;
             const QVector< PointI >& points31;
             const QList< QVector< PointI > >& innerPolygonsPoints31;
-            const QVector< TagValue >& types;
-            const QVector< TagValue >& extraTypes;
+            const QVector< uint32_t >& typesRuleIds;
+            const QVector< uint32_t >& extraTypesRuleIds;
             const MapFoundationType& foundation;
-            const QHash<QString, QString>& names;
+            const QMap<uint32_t, QString>& names;
             const AreaI& bbox31;
 
             int getSimpleLayerValue() const;
             bool isClosedFigure(bool checkInner = false) const;
 
-            bool containsType(const QString& tag, const QString& value, bool checkAdditional = false) const;
+            bool containsType(const uint32_t typeRuleId, bool checkAdditional = false) const;
+            bool containsTypeSlow(const QString& tag, const QString& value, bool checkAdditional = false) const;
 
             bool intersects(const AreaI& area) const;
 

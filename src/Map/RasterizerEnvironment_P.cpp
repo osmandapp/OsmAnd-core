@@ -10,6 +10,7 @@
 
 #include "MapStyleEvaluator.h"
 #include "MapStyleValue.h"
+#include "ObfMapSectionInfo.h"
 #include "EmbeddedResources.h"
 #include "Utilities.h"
 #include "Logging.h"
@@ -33,6 +34,7 @@ OsmAnd::RasterizerEnvironment_P::RasterizerEnvironment_P( RasterizerEnvironment*
     , textPaint(_textPaint)
     , oneWayPaints(_oneWayPaints)
     , reverseOneWayPaints(_reverseOneWayPaints)
+    , dummyMapSection(new ObfMapSectionInfo())
 {
 }
 

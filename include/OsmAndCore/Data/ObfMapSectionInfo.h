@@ -28,6 +28,9 @@
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QList>
+#include <QHash>
+#include <QMap>
+#include <QSet>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
@@ -67,6 +70,41 @@ namespace OsmAnd {
     friend class OsmAnd::ObfMapSectionReader_P;
     };
 
+    struct ObfMapSectionDecodingRule
+    {
+        uint32_t type;
+
+        QString tag;
+        QString value;
+    };
+
+    struct OSMAND_CORE_API ObfMapSectionDecodingEncodingRules
+    {
+        ObfMapSectionDecodingEncodingRules();
+
+        QHash< QString, QHash<QString, uint32_t> > encodingRuleIds;
+        QMap< uint32_t, ObfMapSectionDecodingRule > decodingRules;
+        uint32_t name_encodingRuleId;
+        uint32_t ref_encodingRuleId;
+        uint32_t naturalCoastline_encodingRuleId;
+        uint32_t naturalLand_encodingRuleId;
+        uint32_t naturalCoastlineBroken_encodingRuleId;
+        uint32_t naturalCoastlineLine_encodingRuleId;
+        uint32_t highway_encodingRuleId;
+        uint32_t oneway_encodingRuleId;
+        uint32_t onewayReverse_encodingRuleId;
+        uint32_t tunnel_encodingRuleId;
+        uint32_t bridge_encodingRuleId;
+        uint32_t layerLowest_encodingRuleId;
+
+        QSet<uint32_t> positiveLayers_encodingRuleIds;
+        QSet<uint32_t> zeroLayers_encodingRuleIds;
+        QSet<uint32_t> negativeLayers_encodingRuleIds;
+
+        void createRule(const uint32_t ruleType, const uint32_t ruleId, const QString& ruleTag, const QString& ruleValue);
+        void createMissingRules();
+    };
+
     class ObfMapSectionInfo_P;
     class OSMAND_CORE_API ObfMapSectionInfo : public ObfSectionInfo
     {
@@ -79,10 +117,13 @@ namespace OsmAnd {
         bool _isBasemap;
         QList< std::shared_ptr<const ObfMapSectionLevel> > _levels;
     public:
+        ObfMapSectionInfo();
         virtual ~ObfMapSectionInfo();
 
         const bool& isBasemap;
         const QList< std::shared_ptr<const ObfMapSectionLevel> >& levels;
+
+        const std::shared_ptr<const ObfMapSectionDecodingEncodingRules>& encodingDecodingRules;
 
     friend class OsmAnd::ObfMapSectionReader_P;
     friend class OsmAnd::ObfReader_P;
