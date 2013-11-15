@@ -59,6 +59,18 @@ namespace OsmAnd {
             // Time spent on obtaining primitives
             float elapsedTimeForObtainingPrimitives;
 
+            // Time spent on Order rules evaluation
+            float elapsedTimeForOrderEvaluation;
+
+            // Time spent on Polygon rules evaluation
+            float elapsedTimeForPolygonEvaluation;
+
+            // Time spent on Polyline rules evaluation
+            float elapsedTimeForPolylineEvaluation;
+
+            // Time spent on Point rules evaluation
+            float elapsedTimeForPointEvaluation;
+
             // Time spent on obtaining primitives symbols
             float elapsedTimeForObtainingPrimitivesSymbols;
         };

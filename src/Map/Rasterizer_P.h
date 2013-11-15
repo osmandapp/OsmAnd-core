@@ -156,7 +156,8 @@ namespace OsmAnd {
 
         static void obtainPrimitives(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-            const IQueryController* const controller);
+            const IQueryController* const controller,
+            Rasterizer_Metrics::Metric_prepareContext* const metric);
         static void filterOutLinesByDensity(
             const RasterizerEnvironment_P& env, const RasterizerContext_P& context,
             const QVector< Primitive >& in, QVector< Primitive >& out, const IQueryController* const controller);

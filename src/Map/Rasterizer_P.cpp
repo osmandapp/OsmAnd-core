@@ -229,7 +229,7 @@ void OsmAnd::Rasterizer_P::prepareContext(
         obtainPrimitives_begin = std::chrono::high_resolution_clock::now();
 
     // Obtain primitives
-    obtainPrimitives(env, context, controller);
+    obtainPrimitives(env, context, controller, metric);
     if(controller && controller->isAborted())
     {
         context.clear();
@@ -270,10 +270,12 @@ void OsmAnd::Rasterizer_P::prepareContext(
 
 void OsmAnd::Rasterizer_P::obtainPrimitives(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    const IQueryController* const controller)
+    const IQueryController* const controller,
+    Rasterizer_Metrics::Metric_prepareContext* const metric)
 {
     std::shared_ptr<MapStyleEvaluatorState> sharedEvaluatorState(new MapStyleEvaluatorState());
 
+    bool ok;
     QVector< Primitive > unfilteredLines;
     for(auto itMapObject = context._combinedMapObjects.cbegin(); itMapObject != context._combinedMapObjects.cend(); ++itMapObject)
     {
@@ -288,6 +290,11 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
             const auto& type = *itType;
             auto layer = mapObject->getSimpleLayerValue();
 
+            // Update metric
+            std::chrono::high_resolution_clock::time_point orderEvaluation_begin;
+            if(metric)
+                orderEvaluation_begin = std::chrono::high_resolution_clock::now();
+            
             sharedEvaluatorState->clear();
             MapStyleEvaluator evaluator(sharedEvaluatorState, env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Order, mapObject);
             env.applyTo(evaluator);
@@ -299,7 +306,17 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
             evaluator.setBooleanValue(MapStyle::builtinValueDefinitions.INPUT_AREA, mapObject->isArea);
             evaluator.setBooleanValue(MapStyle::builtinValueDefinitions.INPUT_POINT, mapObject->points31.size() == 1);
             evaluator.setBooleanValue(MapStyle::builtinValueDefinitions.INPUT_CYCLE, mapObject->isClosedFigure());
-            if(!evaluator.evaluate())
+            ok = evaluator.evaluate();
+
+            // Update metric
+            if(metric)
+            {
+                const std::chrono::duration<float> orderEvaluation_elapsed = std::chrono::high_resolution_clock::now() - orderEvaluation_begin;
+                metric->elapsedTimeForOrderEvaluation += orderEvaluation_elapsed.count();
+            }
+
+            // If evaluation failed, skip
+            if(!ok)
                 continue;
 
             int objectType;
@@ -341,11 +358,26 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                     continue;
                 }
 
+                // Update metric
+                std::chrono::high_resolution_clock::time_point polygonEvaluation_begin;
+                if(metric)
+                    polygonEvaluation_begin = std::chrono::high_resolution_clock::now();
+
                 // Evaluate style for this primitive to check if it passes
                 std::shared_ptr<MapStyleEvaluatorState> evaluatorState(new MapStyleEvaluatorState());
                 MapStyleEvaluator evaluator(evaluatorState, env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Polygon, primitive.mapObject);
                 initializePolygonEvaluator(env, context, primitive, evaluator);
-                if(!evaluator.evaluate())
+                ok = evaluator.evaluate();
+
+                // Update metric
+                if(metric)
+                {
+                    const std::chrono::duration<float> polygonEvaluation_elapsed = std::chrono::high_resolution_clock::now() - polygonEvaluation_begin;
+                    metric->elapsedTimeForPolygonEvaluation += polygonEvaluation_elapsed.count();
+                }
+
+                // If evaluation failed, skip
+                if(!ok)
                     continue;
                 primitive.evaluatorState = evaluatorState;
 
@@ -361,12 +393,28 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                     // Duplicate primitive as point
                     auto pointPrimitive = primitive;
                     pointPrimitive.objectType = PrimitiveType::Point;
+
+                    // Update metric
+                    std::chrono::high_resolution_clock::time_point pointEvaluation_begin;
+                    if(metric)
+                        pointEvaluation_begin = std::chrono::high_resolution_clock::now();
+
+                    // Evaluate Point rules
                     std::shared_ptr<MapStyleEvaluatorState> pointEvaluatorState(new MapStyleEvaluatorState());
                     MapStyleEvaluator evaluator(pointEvaluatorState, env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Point, primitive.mapObject);
                     initializePointEvaluator(env, context, pointPrimitive, evaluator);
-                    if(evaluator.evaluate())
+                    ok = evaluator.evaluate();
+
+                    // Update metric
+                    if(metric)
                     {
-                        // Point evaluation is a bit special, it's success only indicates that point has an icon
+                        const std::chrono::duration<float> pointEvaluation_elapsed = std::chrono::high_resolution_clock::now() - pointEvaluation_begin;
+                        metric->elapsedTimeForPointEvaluation += pointEvaluation_elapsed.count();
+                    }
+                    
+                    // Point evaluation is a bit special, it's success only indicates that point has an icon
+                    if(ok)
+                    {
                         pointPrimitive.evaluatorState = pointEvaluatorState;
                     }
                     else
@@ -390,11 +438,26 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                     continue;
                 }
 
+                // Update metric
+                std::chrono::high_resolution_clock::time_point polylineEvaluation_begin;
+                if(metric)
+                    polylineEvaluation_begin = std::chrono::high_resolution_clock::now();
+
                 // Evaluate style for this primitive to check if it passes
                 std::shared_ptr<MapStyleEvaluatorState> evaluatorState(new MapStyleEvaluatorState());
                 MapStyleEvaluator evaluator(evaluatorState, env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Polyline, primitive.mapObject);
                 initializePolylineEvaluator(env, context, primitive, evaluator);
-                if(!evaluator.evaluate())
+                ok = evaluator.evaluate();
+
+                // Update metric
+                if(metric)
+                {
+                    const std::chrono::duration<float> polylineEvaluation_elapsed = std::chrono::high_resolution_clock::now() - polylineEvaluation_begin;
+                    metric->elapsedTimeForPolylineEvaluation += polylineEvaluation_elapsed.count();
+                }
+
+                // If evaluation failed, skip
+                if(!ok)
                     continue;
                 primitive.evaluatorState = evaluatorState;
 
@@ -412,11 +475,26 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                     continue;
                 }
 
-                // Point evaluation is a bit special, it's success only indicates that point has an icon
+                // Update metric
+                std::chrono::high_resolution_clock::time_point pointEvaluation_begin;
+                if(metric)
+                    pointEvaluation_begin = std::chrono::high_resolution_clock::now();
+
+                // Evaluate Point rules
                 std::shared_ptr<MapStyleEvaluatorState> evaluatorState(new MapStyleEvaluatorState());
                 MapStyleEvaluator evaluator(evaluatorState, env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Point, primitive.mapObject);
                 initializePointEvaluator(env, context, primitive, evaluator);
-                if(evaluator.evaluate())
+                ok = evaluator.evaluate();
+
+                // Update metric
+                if(metric)
+                {
+                    const std::chrono::duration<float> pointEvaluation_elapsed = std::chrono::high_resolution_clock::now() - pointEvaluation_begin;
+                    metric->elapsedTimeForPointEvaluation += pointEvaluation_elapsed.count();
+                }
+
+                // Point evaluation is a bit special, it's success only indicates that point has an icon
+                if(ok)
                     primitive.evaluatorState = evaluatorState;
 
                 context._points.push_back(primitive);

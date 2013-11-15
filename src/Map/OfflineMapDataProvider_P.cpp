@@ -237,6 +237,10 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
         "\t - polygonizedCoastlines = %d\n"
         "\t - elapsedTimeForCombiningObjects = %fs\n"
         "\t - elapsedTimeForObtainingPrimitives = %fs\n"
+        "\t - elapsedTimeForOrderEvaluation = %fs\n"
+        "\t - elapsedTimeForPolygonEvaluation = %fs\n"
+        "\t - elapsedTimeForPolylineEvaluation = %fs\n"
+        "\t - elapsedTimeForPointEvaluation = %fs\n"
         "\t - elapsedTimeForObtainingPrimitivesSymbols = %fs\n",
         mapObjects.size(), mapObjects.size() - sharedMapObjects.size(), sharedMapObjects.size(),
         tileId.x, tileId.y, zoom,
@@ -263,6 +267,10 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
         dataProcess_metric.polygonizedCoastlines,
         dataProcess_metric.elapsedTimeForCombiningObjects,
         dataProcess_metric.elapsedTimeForObtainingPrimitives,
+        dataProcess_metric.elapsedTimeForOrderEvaluation,
+        dataProcess_metric.elapsedTimeForPolygonEvaluation,
+        dataProcess_metric.elapsedTimeForPolylineEvaluation,
+        dataProcess_metric.elapsedTimeForPointEvaluation,
         dataProcess_metric.elapsedTimeForObtainingPrimitivesSymbols);
 #endif
 }
