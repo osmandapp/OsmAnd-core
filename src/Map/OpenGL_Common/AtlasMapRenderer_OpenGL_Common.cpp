@@ -397,7 +397,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeRasterMapStage()
             {
                 auto layerStructName =
                     QString::fromLatin1("param_vs_rasterTileLayers[%layerId%]")
-                    .replace(QString::fromLatin1("%layerId%"), QString::number(layerId));
+                        .replace(QLatin1String("%layerId%"), QString::number(layerId));
                 auto& layerStruct = stageVariation.vs.param.rasterTileLayers[layerId];
 
                 renderAPI->findVariableLocation(stageVariation.program, layerStruct.tileSizeN, layerStructName + ".tileSizeN", GLShaderVariableType::Uniform);
@@ -410,7 +410,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeRasterMapStage()
             {
                 auto layerStructName =
                     QString::fromLatin1("param_fs_rasterTileLayers[%layerId%]")
-                    .replace(QString::fromLatin1("%layerId%"), QString::number(layerId));
+                        .replace(QLatin1String("%layerId%"), QString::number(layerId));
                 auto& layerStruct = stageVariation.fs.param.rasterTileLayers[layerId];
 
                 renderAPI->findVariableLocation(stageVariation.program, layerStruct.k, layerStructName + ".k", GLShaderVariableType::Uniform);
@@ -846,7 +846,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSkyStage()
     GL_CHECK_RESULT;
 
     // Compile vertex shader
-    const QString vertexShader = QString::fromLatin1(
+    const QString vertexShader = QLatin1String(
         // Input data
         "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
         "                                                                                                                   ""\n"
@@ -869,7 +869,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSkyStage()
     assert(_skyStage.vs.id != 0);
 
     // Compile fragment shader
-    const QString fragmentShader = QString::fromLatin1(
+    const QString fragmentShader = QLatin1String(
         // Parameters: common data
         "uniform lowp vec4 param_fs_skyColor;                                                                               ""\n"
         "                                                                                                                   ""\n"

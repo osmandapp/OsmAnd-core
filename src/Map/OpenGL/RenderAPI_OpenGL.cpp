@@ -119,7 +119,7 @@ bool OsmAnd::RenderAPI_OpenGL::initialize()
     _extensions.clear();
     for(auto extensionIdx = 0; extensionIdx < numExtensions; extensionIdx++)
     {
-        const auto& extension = QString::fromLatin1(reinterpret_cast<const char*>(glGetStringi(GL_EXTENSIONS, extensionIdx)));
+        const auto& extension = QLatin1String(reinterpret_cast<const char*>(glGetStringi(GL_EXTENSIONS, extensionIdx)));
         GL_CHECK_RESULT;
 
         _extensions.push_back(extension);
@@ -361,7 +361,7 @@ void OsmAnd::RenderAPI_OpenGL::preprocessFragmentShader( QString& code )
     QString common;
     preprocessShader(common);
 
-    const auto& shaderSource = QString::fromLatin1(
+    const auto& shaderSource = QLatin1String(
         // Fragment shader output declaration
         "#define FRAGMENT_COLOR_OUTPUT out_FragColor                                                                        ""\n"
         "out vec4 out_FragColor;                                                                                            ""\n"

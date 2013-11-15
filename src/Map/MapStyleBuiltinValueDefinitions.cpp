@@ -7,7 +7,7 @@ OsmAnd::MapStyleBuiltinValueDefinitions::MapStyleBuiltinValueDefinitions()
         varname(new OsmAnd::MapStyleValueDefinition( \
             OsmAnd::MapStyleValueClass::valueClass, \
             OsmAnd::MapStyleValueDataType::dataType, \
-            QString::fromLatin1(name), isComplex))
+            QLatin1String(name), isComplex))
     : DECLARE_BUILTIN_VALUEDEF(INPUT_TEST, Input, Boolean, "test", false)
     , DECLARE_BUILTIN_VALUEDEF(INPUT_TAG, Input, String, "tag", false)
     , DECLARE_BUILTIN_VALUEDEF(INPUT_VALUE, Input, String, "value", false)

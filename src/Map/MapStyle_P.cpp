@@ -633,8 +633,8 @@ std::shared_ptr<OsmAnd::MapStyleRule> OsmAnd::MapStyle_P::createTagValueRootWrap
         return rule;
 
     QHash< QString, QString > attributes;
-    attributes.insert(QString::fromLatin1("tag"), getTagString(id));
-    attributes.insert(QString::fromLatin1("value"), getValueString(id));
+    attributes.insert(QLatin1String("tag"), getTagString(id));
+    attributes.insert(QLatin1String("value"), getValueString(id));
     std::shared_ptr<MapStyleRule> newRule(new MapStyleRule(owner, attributes));
     newRule->_d->_ifElseChildren.push_back(rule);
     return newRule;

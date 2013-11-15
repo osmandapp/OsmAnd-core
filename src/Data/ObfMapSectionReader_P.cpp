@@ -41,7 +41,7 @@ void OsmAnd::ObfMapSectionReader_P::read(
         case OBF::OsmAndMapIndex::kNameFieldNumber:
             {
                 ObfReaderUtilities::readQString(cis, section->_name);
-                section->_isBasemap = (QString::compare(section->_name, QString::fromLatin1("basemap"), Qt::CaseInsensitive) == 0);
+                section->_isBasemap = (QString::compare(section->_name, QLatin1String("basemap"), Qt::CaseInsensitive) == 0);
             }
             break;
         case OBF::OsmAndMapIndex::kRulesFieldNumber:
@@ -131,11 +131,11 @@ void OsmAnd::ObfMapSectionReader_P::readRules(
             {
                 auto free = rules->_decodingRules.size() * 2 + 1;
                 rules->_coastlineBrokenEncodingType = free++;
-                createRule(rules, 0, rules->_coastlineBrokenEncodingType, QString::fromLatin1("natural"), QString::fromLatin1("coastline_broken"));
+                createRule(rules, 0, rules->_coastlineBrokenEncodingType, QLatin1String("natural"), QLatin1String("coastline_broken"));
                 if(rules->_landEncodingType == -1)
                 {
                     rules->_landEncodingType = free++;
-                    createRule(rules, 0, rules->_landEncodingType, QString::fromLatin1("natural"), QString::fromLatin1("land"));
+                    createRule(rules, 0, rules->_landEncodingType, QLatin1String("natural"), QLatin1String("land"));
                 }
             }
             return;

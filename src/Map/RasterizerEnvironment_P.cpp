@@ -84,11 +84,11 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
     _polygonMinSizeToDisplay = 0.0;
     _defaultBgColor = 0xfff1eee8;
 
-    owner->style->resolveAttribute(QString::fromLatin1("defaultColor"), _attributeRule_defaultColor);
-    owner->style->resolveAttribute(QString::fromLatin1("shadowRendering"), _attributeRule_shadowRendering);
-    owner->style->resolveAttribute(QString::fromLatin1("polygonMinSizeToDisplay"), _attributeRule_polygonMinSizeToDisplay);
-    owner->style->resolveAttribute(QString::fromLatin1("roadDensityZoomTile"), _attributeRule_roadDensityZoomTile);
-    owner->style->resolveAttribute(QString::fromLatin1("roadsDensityLimitPerTile"), _attributeRule_roadsDensityLimitPerTile);
+    owner->style->resolveAttribute(QLatin1String("defaultColor"), _attributeRule_defaultColor);
+    owner->style->resolveAttribute(QLatin1String("shadowRendering"), _attributeRule_shadowRendering);
+    owner->style->resolveAttribute(QLatin1String("polygonMinSizeToDisplay"), _attributeRule_polygonMinSizeToDisplay);
+    owner->style->resolveAttribute(QLatin1String("roadDensityZoomTile"), _attributeRule_roadDensityZoomTile);
+    owner->style->resolveAttribute(QLatin1String("roadsDensityLimitPerTile"), _attributeRule_roadsDensityLimitPerTile);
 
     {
         const float intervals_oneway[4][4] =

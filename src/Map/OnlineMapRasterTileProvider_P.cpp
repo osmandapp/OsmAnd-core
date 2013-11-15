@@ -37,7 +37,7 @@ bool OsmAnd::OnlineMapRasterTileProvider_P::obtainTile( const TileId tileId, con
     const auto tileLocalRelativePath =
         QString::number(zoom) + QDir::separator() +
         QString::number(tileId.x) + QDir::separator() +
-        QString::number(tileId.y) + QString::fromLatin1(".tile");
+        QString::number(tileId.y) + QLatin1String(".tile");
     QFileInfo localFile;
     {
         QMutexLocker scopedLocker(&_localCachePathMutex);
@@ -101,9 +101,9 @@ bool OsmAnd::OnlineMapRasterTileProvider_P::obtainTile( const TileId tileId, con
     // Perform synchronous download
     auto tileUrl = owner->urlPattern;
     tileUrl
-        .replace(QString::fromLatin1("${zoom}"), QString::number(zoom))
-        .replace(QString::fromLatin1("${x}"), QString::number(tileId.x))
-        .replace(QString::fromLatin1("${y}"), QString::number(tileId.y));
+        .replace(QLatin1String("${zoom}"), QString::number(zoom))
+        .replace(QLatin1String("${x}"), QString::number(tileId.x))
+        .replace(QLatin1String("${y}"), QString::number(tileId.y));
     const auto networkReply = Network::Downloader::download(tileUrl);
 
     // Free download slot

@@ -79,7 +79,7 @@ void OsmAnd::Rasterizer_P::prepareContext(
         if(zoom < BasemapZoom && !mapObject->section->isBasemap)
             continue;
 
-        if(mapObject->containsType(QString::fromLatin1("natural"), QString::fromLatin1("coastline")))
+        if(mapObject->containsType(QLatin1String("natural"), QLatin1String("coastline")))
         {
             if (mapObject->section->isBasemap)
                 context._basemapCoastlineObjects.push_back(mapObject);
@@ -177,15 +177,15 @@ void OsmAnd::Rasterizer_P::prepareContext(
         bgMapObject->_points31.push_back(PointI(area31.left, area31.bottom));
         bgMapObject->_points31.push_back(bgMapObject->_points31.first());
         if(foundation == MapFoundationType::FullWater)
-            bgMapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline")));
+            bgMapObject->_types.push_back(TagValue(QLatin1String("natural"), QLatin1String("coastline")));
         else if(foundation == MapFoundationType::FullLand || foundation == MapFoundationType::Mixed)
-            bgMapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("land")));
+            bgMapObject->_types.push_back(TagValue(QLatin1String("natural"), QLatin1String("land")));
         else
         {
             bgMapObject->_isArea = false;
-            bgMapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline_broken")));
+            bgMapObject->_types.push_back(TagValue(QLatin1String("natural"), QLatin1String("coastline_broken")));
         }
-        bgMapObject->_extraTypes.push_back(TagValue(QString::fromLatin1("layer"), QString::fromLatin1("-5")));
+        bgMapObject->_extraTypes.push_back(TagValue(QLatin1String("layer"), QLatin1String("-5")));
 
         assert(bgMapObject->isClosedFigure());
         context._triangulatedCoastlineObjects.push_back(bgMapObject);
@@ -1546,7 +1546,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
         std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr, nullptr));
         mapObject->_isArea = false;
         mapObject->_points31 = polyline;
-        mapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline_line")));
+        mapObject->_types.push_back(TagValue(QLatin1String("natural"), QLatin1String("coastline_line")));
 
         outVectorized.push_back(mapObject);
     }
@@ -1563,7 +1563,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
         mapObject->_points31.push_back(mapObject->_points31.first());
         convertCoastlinePolylinesToPolygons(env, context, coastlinePolylines, mapObject->_innerPolygonsPoints31, osmId);
 
-        mapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline")));
+        mapObject->_types.push_back(TagValue(QLatin1String("natural"), QLatin1String("coastline")));
         mapObject->_id = osmId;
         mapObject->_isArea = true;
 
@@ -1591,7 +1591,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
             std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr, nullptr));
             mapObject->_isArea = false;
             mapObject->_points31 = polygon;
-            mapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline_broken")));
+            mapObject->_types.push_back(TagValue(QLatin1String("natural"), QLatin1String("coastline_broken")));
 
             outVectorized.push_back(mapObject);
         }
@@ -1605,7 +1605,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
         std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(nullptr, nullptr));
         mapObject->_isArea = false;
         mapObject->_points31 = polygon;
-        mapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline_line")));
+        mapObject->_types.push_back(TagValue(QLatin1String("natural"), QLatin1String("coastline_line")));
 
         outVectorized.push_back(mapObject);
     }
@@ -1629,12 +1629,12 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
         mapObject->_points31 = polygon;
         if(clockwise)
         {
-            mapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline")));
+            mapObject->_types.push_back(TagValue(QLatin1String("natural"), QLatin1String("coastline")));
             fullWaterObjects++;
         }
         else
         {
-            mapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("land")));
+            mapObject->_types.push_back(TagValue(QLatin1String("natural"), QLatin1String("land")));
             fullLandObjects++;
         }
         mapObject->_id = osmId;
@@ -1661,7 +1661,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
         mapObject->_points31.push_back(PointI(context._area31.left, context._area31.bottom));
         mapObject->_points31.push_back(mapObject->_points31.first());
 
-        mapObject->_types.push_back(TagValue(QString::fromLatin1("natural"), QString::fromLatin1("coastline")));
+        mapObject->_types.push_back(TagValue(QLatin1String("natural"), QLatin1String("coastline")));
         mapObject->_id = osmId;
         mapObject->_isArea = true;
 

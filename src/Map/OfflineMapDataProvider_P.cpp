@@ -241,7 +241,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
         "\t - elapsedTimeForPolygonEvaluation = %fs\n"
         "\t - elapsedTimeForPolylineEvaluation = %fs\n"
         "\t - elapsedTimeForPointEvaluation = %fs\n"
-        "\t - elapsedTimeForObtainingPrimitivesSymbols = %fs\n",
+        "\t - elapsedTimeForObtainingPrimitivesSymbols = %fs",
         mapObjects.size(), mapObjects.size() - sharedMapObjects.size(), sharedMapObjects.size(),
         tileId.x, tileId.y, zoom,
         total_Elapsed.count(),

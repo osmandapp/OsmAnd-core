@@ -14,7 +14,7 @@ OsmAnd::TileDB::TileDB( const QDir& dataPath_, const QString& indexFilename_/* =
     , dataPath(dataPath_)
     , indexFilename(indexFilename_)
 {
-    auto indexConnectionName = QString::fromLatin1("tiledb-sqlite-index:") + dataPath_.absolutePath();
+    auto indexConnectionName = QLatin1String("tiledb-sqlite-index:") + dataPath_.absolutePath();
 
     if(!QSqlDatabase::contains(indexConnectionName))
         _indexDb = QSqlDatabase::addDatabase("QSQLITE", indexConnectionName);
@@ -114,7 +114,7 @@ bool OsmAnd::TileDB::rebuildIndex()
         const auto& file = *itFile;
         const auto dbFilename = file.absoluteFilePath();
 
-        const auto connectionName = QString::fromLatin1("tiledb-sqlite:") + dbFilename;
+        const auto connectionName = QLatin1String("tiledb-sqlite:") + dbFilename;
         QSqlDatabase db;
         if(!QSqlDatabase::contains(connectionName))
             db = QSqlDatabase::addDatabase("QSQLITE", connectionName);
@@ -198,7 +198,7 @@ bool OsmAnd::TileDB::obtainTileData( const TileId tileId, const ZoomLevel zoom, 
         //QMutexLocker scopeLock(&dbEntry->mutex);
 
         // Open database
-        const auto connectionName = QString::fromLatin1("tiledb-sqlite:") + dbFilename;
+        const auto connectionName = QLatin1String("tiledb-sqlite:") + dbFilename;
         QSqlDatabase db;
         if(!QSqlDatabase::contains(connectionName))
             db = QSqlDatabase::addDatabase("QSQLITE", connectionName);

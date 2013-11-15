@@ -106,12 +106,12 @@ void OsmAnd::ObfRoutingSectionReader_P::readEncodingRule(
         {
         case 0:
             {
-                if(rule->_value.compare(QString::fromLatin1("true"), Qt::CaseInsensitive) == 0)
-                    rule->_value = QString::fromLatin1("yes");
-                if(rule->_value.compare(QString::fromLatin1("false"), Qt::CaseInsensitive) == 0)
-                    rule->_value = QString::fromLatin1("no");
+                if(rule->_value.compare(QLatin1String("true"), Qt::CaseInsensitive) == 0)
+                    rule->_value = QLatin1String("yes");
+                if(rule->_value.compare(QLatin1String("false"), Qt::CaseInsensitive) == 0)
+                    rule->_value = QLatin1String("no");
 
-                if(rule->_tag.compare(QString::fromLatin1("oneway"), Qt::CaseInsensitive) == 0)
+                if(rule->_tag.compare(QLatin1String("oneway"), Qt::CaseInsensitive) == 0)
                 {
                     rule->_type = ObfRoutingSectionInfo_P::EncodingRule::OneWay;
                     if(rule->_value == QLatin1String("-1") || rule->_value == QLatin1String("reverse"))
@@ -121,36 +121,36 @@ void OsmAnd::ObfRoutingSectionReader_P::readEncodingRule(
                     else
                         rule->_parsedValue.asSignedInt = 0;
                 }
-                else if(rule->_tag.compare(QString::fromLatin1("highway"), Qt::CaseInsensitive) == 0 && rule->_value == QLatin1String("traffic_signals"))
+                else if(rule->_tag.compare(QLatin1String("highway"), Qt::CaseInsensitive) == 0 && rule->_value == QLatin1String("traffic_signals"))
                 {
                     rule->_type = ObfRoutingSectionInfo_P::EncodingRule::TrafficSignals;
                 }
-                else if(rule->_tag.compare(QString::fromLatin1("railway"), Qt::CaseInsensitive) == 0 && (rule->_value == QLatin1String("crossing") || rule->_value == QLatin1String("level_crossing")))
+                else if(rule->_tag.compare(QLatin1String("railway"), Qt::CaseInsensitive) == 0 && (rule->_value == QLatin1String("crossing") || rule->_value == QLatin1String("level_crossing")))
                 {
                     rule->_type = ObfRoutingSectionInfo_P::EncodingRule::RailwayCrossing;
                 }
-                else if(rule->_tag.compare(QString::fromLatin1("roundabout"), Qt::CaseInsensitive) == 0 && !rule->_value.isEmpty())
+                else if(rule->_tag.compare(QLatin1String("roundabout"), Qt::CaseInsensitive) == 0 && !rule->_value.isEmpty())
                 {
                     rule->_type = ObfRoutingSectionInfo_P::EncodingRule::Roundabout;
                 }
-                else if(rule->_tag.compare(QString::fromLatin1("junction"), Qt::CaseInsensitive) == 0 && rule->_value.compare(QString::fromLatin1("roundabout"), Qt::CaseInsensitive) == 0)
+                else if(rule->_tag.compare(QLatin1String("junction"), Qt::CaseInsensitive) == 0 && rule->_value.compare(QLatin1String("roundabout"), Qt::CaseInsensitive) == 0)
                 {
                     rule->_type = ObfRoutingSectionInfo_P::EncodingRule::Roundabout;
                 }
-                else if(rule->_tag.compare(QString::fromLatin1("highway"), Qt::CaseInsensitive) == 0 && !rule->_value.isEmpty())
+                else if(rule->_tag.compare(QLatin1String("highway"), Qt::CaseInsensitive) == 0 && !rule->_value.isEmpty())
                 {
                     rule->_type = ObfRoutingSectionInfo_P::EncodingRule::Highway;
                 }
-                else if(rule->_tag.startsWith(QString::fromLatin1("access")) && !rule->_value.isEmpty())
+                else if(rule->_tag.startsWith(QLatin1String("access")) && !rule->_value.isEmpty())
                 {
                     rule->_type = ObfRoutingSectionInfo_P::EncodingRule::Access;
                 }
-                else if(rule->_tag.compare(QString::fromLatin1("maxspeed"), Qt::CaseInsensitive) == 0 && !rule->_value.isEmpty())
+                else if(rule->_tag.compare(QLatin1String("maxspeed"), Qt::CaseInsensitive) == 0 && !rule->_value.isEmpty())
                 {
                     rule->_type = ObfRoutingSectionInfo_P::EncodingRule::Maxspeed;
                     rule->_parsedValue.asFloat = Utilities::parseSpeed(rule->_value, -1.0);
                 }
-                else if (rule->_tag.compare(QString::fromLatin1("lanes"), Qt::CaseInsensitive) == 0 && !rule->_value.isEmpty())
+                else if (rule->_tag.compare(QLatin1String("lanes"), Qt::CaseInsensitive) == 0 && !rule->_value.isEmpty())
                 {
                     rule->_type = ObfRoutingSectionInfo_P::EncodingRule::Lanes;
                     rule->_parsedValue.asSignedInt = Utilities::parseArbitraryInt(rule->_value, -1);

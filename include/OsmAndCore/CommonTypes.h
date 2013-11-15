@@ -45,8 +45,8 @@ namespace OsmAnd
         {}
 
         inline TagValue(const char* tag_, const char* value_)
-            : tag(QString::fromLatin1(tag_))
-            , value(QString::fromLatin1(value_))
+            : tag(QLatin1String(tag_))
+            , value(QLatin1String(value_))
         {}
 
         QString tag;
