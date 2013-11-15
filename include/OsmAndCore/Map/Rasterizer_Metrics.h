@@ -65,11 +65,20 @@ namespace OsmAnd {
             // Time spent on Polygon rules evaluation
             float elapsedTimeForPolygonEvaluation;
 
+            // Number of obtained polygon primitives
+            unsigned int polygonPrimitives;
+
             // Time spent on Polyline rules evaluation
             float elapsedTimeForPolylineEvaluation;
 
+            // Number of obtained polyline primitives
+            unsigned int polylinePrimitives;
+
             // Time spent on Point rules evaluation
             float elapsedTimeForPointEvaluation;
+
+            // Number of obtained point primitives
+            unsigned int pointPrimitives;
 
             // Time spent on obtaining primitives symbols
             float elapsedTimeForObtainingPrimitivesSymbols;

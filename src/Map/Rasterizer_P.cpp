@@ -390,6 +390,10 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                     // Accept this primitive
                     context._polygons.push_back(primitive);
 
+                    // Update metric
+                    if(metric)
+                        metric->polygonPrimitives++;
+
                     // Duplicate primitive as point
                     auto pointPrimitive = primitive;
                     pointPrimitive.objectType = PrimitiveType::Point;
@@ -424,6 +428,10 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
 
                     // Accept also point primitive
                     context._points.push_back(pointPrimitive);
+
+                    // Update metric
+                    if(metric)
+                        metric->pointPrimitives++;
                 }
             }
             else if(objectType == PrimitiveType::Polyline)
@@ -463,6 +471,10 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
 
                 // Accept this primitive
                 unfilteredLines.push_back(primitive);
+
+                // Update metric
+                if(metric)
+                    metric->polylinePrimitives++;
             }
             else if(objectType == PrimitiveType::Point)
             {
@@ -498,6 +510,10 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                     primitive.evaluatorState = evaluatorState;
 
                 context._points.push_back(primitive);
+
+                // Update metric
+                if(metric)
+                    metric->pointPrimitives++;
             }
             else
             {
