@@ -118,7 +118,7 @@ bool OsmAnd::MapStyleRule::getAttribute( const QString& key, MapStyleValue& valu
 
 void OsmAnd::MapStyleRule::dump( const QString& prefix /*= QString()*/ ) const
 {
-    auto newPrefix = prefix + "\t";
+    auto newPrefix = prefix + QLatin1String("\t");
     
     for(auto itValueDef = _d->_valueDefinitionsRefs.cbegin(); itValueDef != _d->_valueDefinitionsRefs.cend(); ++itValueDef)
     {
@@ -155,15 +155,15 @@ void OsmAnd::MapStyleRule::dump( const QString& prefix /*= QString()*/ ) const
             break;
         case MapStyleValueDataType::Integer:
             if(value.isComplex)
-                strValue = QString("%1:%2").arg(value.asComplex.asInt.dip).arg(value.asComplex.asInt.px);
+                strValue = QString::fromLatin1("%1:%2").arg(value.asComplex.asInt.dip).arg(value.asComplex.asInt.px);
             else
-                strValue = QString("%1").arg(value.asSimple.asInt);
+                strValue = QString::fromLatin1("%1").arg(value.asSimple.asInt);
             break;
         case MapStyleValueDataType::Float:
             if(value.isComplex)
-                strValue = QString("%1:%2").arg(value.asComplex.asFloat.dip).arg(value.asComplex.asFloat.px);
+                strValue = QString::fromLatin1("%1:%2").arg(value.asComplex.asFloat.dip).arg(value.asComplex.asFloat.px);
             else
-                strValue = QString("%1").arg(value.asSimple.asFloat);
+                strValue = QString::fromLatin1("%1").arg(value.asSimple.asFloat);
             break;
         case MapStyleValueDataType::String:
             strValue = owner->_d->lookupStringValue(value.asSimple.asUInt);

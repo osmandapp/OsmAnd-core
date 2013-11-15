@@ -18,7 +18,7 @@ OsmAnd::MapStyle::MapStyle( MapStyles* styles_, const QString& resourcePath_, co
     , name(_d->_name)
     , parentName(_d->_parentName)
 {
-    _d->_name = QFileInfo(resourcePath).fileName().replace(".render.xml", "");
+    _d->_name = QFileInfo(resourcePath).fileName().replace(QLatin1String(".render.xml"), QLatin1String(""));
 }
 
 OsmAnd::MapStyle::~MapStyle()
