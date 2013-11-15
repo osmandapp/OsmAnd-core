@@ -43,65 +43,22 @@ namespace OsmAnd {
     public:
         virtual ~MapStyleBuiltinValueDefinitions();
 
-        const std::shared_ptr<const MapStyleValueDefinition> INPUT_TEST;
-        const std::shared_ptr<const MapStyleValueDefinition> INPUT_TEXT_LENGTH;
-        const std::shared_ptr<const MapStyleValueDefinition> INPUT_TAG;
-        const std::shared_ptr<const MapStyleValueDefinition> INPUT_VALUE;
-        const std::shared_ptr<const MapStyleValueDefinition> INPUT_MINZOOM;
-        const std::shared_ptr<const MapStyleValueDefinition> INPUT_MAXZOOM;
-        const std::shared_ptr<const MapStyleValueDefinition> INPUT_NIGHT_MODE;
-        const std::shared_ptr<const MapStyleValueDefinition> INPUT_LAYER;
-        const std::shared_ptr<const MapStyleValueDefinition> INPUT_POINT;
-        const std::shared_ptr<const MapStyleValueDefinition> INPUT_AREA;
-        const std::shared_ptr<const MapStyleValueDefinition> INPUT_CYCLE;
-        const std::shared_ptr<const MapStyleValueDefinition> INPUT_NAME_TAG;
-        const std::shared_ptr<const MapStyleValueDefinition> INPUT_ADDITIONAL;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_DISABLE;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_NAME_TAG2;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_TEXT_SHIELD;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_SHADOW_RADIUS;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_SHADOW_COLOR;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_SHADER;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_CAP_3;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_CAP_2;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_CAP;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_CAP_0;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_CAP__1;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_PATH_EFFECT_3;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_PATH_EFFECT_2;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_PATH_EFFECT;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_PATH_EFFECT_0;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_PATH_EFFECT__1;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_STROKE_WIDTH_3;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_STROKE_WIDTH_2;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_STROKE_WIDTH;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_STROKE_WIDTH_0;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_STROKE_WIDTH__1;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_COLOR_3;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_COLOR;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_COLOR_2;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_COLOR_0;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_COLOR__1;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_TEXT_BOLD;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_TEXT_ORDER;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_TEXT_MIN_DISTANCE;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_TEXT_ON_PATH;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_ICON;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_ICON_ORDER;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_ORDER;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_SHADOW_LEVEL;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_TEXT_DY;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_TEXT_SIZE;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_TEXT_COLOR;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_TEXT_HALO_RADIUS;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_TEXT_WRAP_WIDTH;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_OBJECT_TYPE;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_ATTR_INT_VALUE;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_ATTR_COLOR_VALUE;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_ATTR_BOOL_VALUE;
-        const std::shared_ptr<const MapStyleValueDefinition> OUTPUT_ATTR_STRING_VALUE;
+        // Definitions
+#       define DECLARE_BUILTIN_VALUEDEF(varname, valueClass, dataType, name, isComplex) \
+            const std::shared_ptr<const MapStyleValueDefinition> varname;
+#       include <OsmAndCore/Map/MapStyleBuiltinValueDefinitions_Set.h>
+#       undef DECLARE_BUILTIN_VALUEDEF
+
+        // Identifiers of definitions above
+#       define DECLARE_BUILTIN_VALUEDEF(varname, valueClass, dataType, name, isComplex) \
+            const int varname##_id;
+#       include <OsmAndCore/Map/MapStyleBuiltinValueDefinitions_Set.h>
+#       undef DECLARE_BUILTIN_VALUEDEF
 
     friend class OsmAnd::MapStyle;
+
+    private:
+        int _footerDummy;
     };
 
 } // namespace OsmAnd
