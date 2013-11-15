@@ -52,7 +52,7 @@ namespace OsmAnd {
 
         // Identifiers of definitions above
 #       define DECLARE_BUILTIN_VALUEDEF(varname, valueClass, dataType, name, isComplex) \
-            const int varname##_id;
+            const int id_##varname;
 #       include <OsmAndCore/Map/MapStyleBuiltinValueDefinitions_Set.h>
 #       undef DECLARE_BUILTIN_VALUEDEF
 
