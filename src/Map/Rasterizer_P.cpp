@@ -1,9 +1,11 @@
 #include "Rasterizer_P.h"
 #include "Rasterizer.h"
+#include "Rasterizer_Metrics.h"
 
 #include <cassert>
 #include <cinttypes>
 #include <set>
+#include <chrono>
 
 #include "RasterizerEnvironment.h"
 #include "RasterizerEnvironment_P.h"
@@ -61,6 +63,11 @@ void OsmAnd::Rasterizer_P::prepareContext(
     context._zoom = zoom;
     context._area31 = area31;
 
+    // Update metric
+    std::chrono::high_resolution_clock::time_point objectsSorting_begin;
+    if(metric)
+        objectsSorting_begin = std::chrono::high_resolution_clock::now();
+
     // Split input map objects to object, coastline, basemapObjects and basemapCoastline
     for(auto itMapObject = objects.cbegin(); itMapObject != objects.cend(); ++itMapObject)
     {
@@ -91,8 +98,25 @@ void OsmAnd::Rasterizer_P::prepareContext(
     // Cleanup if aborted
     if(controller && controller->isAborted())
     {
+        // Update metric
+        if(metric)
+        {
+            const std::chrono::duration<float> objectsSorting_elapsed = std::chrono::high_resolution_clock::now() - objectsSorting_begin;
+            metric->elapsedTimeForSortingObjects += objectsSorting_elapsed.count();
+        }
+
         context.clear();
         return;
+    }
+
+    // Update metric
+    std::chrono::high_resolution_clock::time_point polygonizeCoastlines_begin;
+    if(metric)
+    {
+        const std::chrono::duration<float> objectsSorting_elapsed = std::chrono::high_resolution_clock::now() - objectsSorting_begin;
+        metric->elapsedTimeForSortingObjects += objectsSorting_elapsed.count();
+
+        polygonizeCoastlines_begin = std::chrono::high_resolution_clock::now();
     }
 
     // Polygonize coastlines
@@ -121,6 +145,14 @@ void OsmAnd::Rasterizer_P::prepareContext(
             false,
             true);
         fillEntireArea = !coastlinesWereAdded && fillEntireArea;
+    }
+
+    // Update metric
+    if(metric)
+    {
+        const std::chrono::duration<float> polygonizeCoastlines_elapsed = std::chrono::high_resolution_clock::now() - polygonizeCoastlines_begin;
+        metric->elapsedTimeForPolygonizingCoastlines += polygonizeCoastlines_elapsed.count();
+        metric->polygonizedCoastlines = context._triangulatedCoastlineObjects.size();
     }
 
     if(context._basemapMapObjects.isEmpty() && context._mapObjects.isEmpty() && foundation == MapFoundationType::Undefined)
@@ -162,10 +194,22 @@ void OsmAnd::Rasterizer_P::prepareContext(
     // Obtain primitives
     const bool detailedDataMissing = zoom > BasemapZoom && context._mapObjects.isEmpty() && context._coastlineObjects.isEmpty();
 
+    // Update metric
+    std::chrono::high_resolution_clock::time_point combineObjects_begin;
+    if(metric)
+        combineObjects_begin = std::chrono::high_resolution_clock::now();
+
     context._combinedMapObjects << context._mapObjects;
     if(zoom <= BasemapZoom || detailedDataMissing)
         context._combinedMapObjects << context._basemapMapObjects;
     context._combinedMapObjects << context._triangulatedCoastlineObjects;
+
+    // Update metric
+    if(metric)
+    {
+        const std::chrono::duration<float> combineObjects_elapsed = std::chrono::high_resolution_clock::now() - combineObjects_begin;
+        metric->elapsedTimeForCombiningObjects += combineObjects_elapsed.count();
+    }
 
     if(context._combinedMapObjects.isEmpty())
     {
@@ -179,6 +223,11 @@ void OsmAnd::Rasterizer_P::prepareContext(
     if(nothingToRasterize)
         *nothingToRasterize = false;
 
+    // Update metric
+    std::chrono::high_resolution_clock::time_point obtainPrimitives_begin;
+    if(metric)
+        obtainPrimitives_begin = std::chrono::high_resolution_clock::now();
+
     // Obtain primitives
     obtainPrimitives(env, context, controller);
     if(controller && controller->isAborted())
@@ -187,11 +236,31 @@ void OsmAnd::Rasterizer_P::prepareContext(
         return;
     }
 
+    // Update metric
+    if(metric)
+    {
+        const std::chrono::duration<float> obtainPrimitives_elapsed = std::chrono::high_resolution_clock::now() - obtainPrimitives_begin;
+        metric->elapsedTimeForObtainingPrimitives += obtainPrimitives_elapsed.count();
+    }
+
     // After obtaining primitives, map objects are no longer needed
     context.cleanupMapObjects();
 
+    // Update metric
+    std::chrono::high_resolution_clock::time_point obtainPrimitivesSymbols_begin;
+    if(metric)
+        obtainPrimitivesSymbols_begin = std::chrono::high_resolution_clock::now();
+
     // Obtain text from primitives
     obtainPrimitivesSymbols(env, context, controller);
+
+    // Update metric
+    if(metric)
+    {
+        const std::chrono::duration<float> obtainPrimitivesSymbols_elapsed = std::chrono::high_resolution_clock::now() - obtainPrimitivesSymbols_begin;
+        metric->elapsedTimeForObtainingPrimitivesSymbols += obtainPrimitivesSymbols_elapsed.count();
+    }
+
     if(controller && controller->isAborted())
     {
         context.clear();

@@ -216,7 +216,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
     LogPrintf(LogSeverityLevel::Info,
         "%d map objects (%d unique, %d shared) from %dx%d@%d in %fs:\n"
         "\topen %fs\n"
-        "\tread %fs (filter-by-id %fs)\n"
+        "\tread %fs (filter-by-id %fs):\n"
         "\t - visitedLevels = %d\n"
         "\t - acceptedLevels = %d\n"
         "\t - visitedNodes = %d\n"
@@ -231,7 +231,13 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
         "\t - average time per 1K only-visited map objects = %fms\n"
         "\t - average time per 1K only-accepted map objects = %fms\n"
         "\tprocess-ids %fs\n"
-        "\tprocess-content %fs"        ,
+        "\tprocess-content %fs:\n"
+        "\t - elapsedTimeForSortingObjects = %fs\n"
+        "\t - elapsedTimeForPolygonizingCoastlines = %fs\n"
+        "\t - polygonizedCoastlines = %d\n"
+        "\t - elapsedTimeForCombiningObjects = %fs\n"
+        "\t - elapsedTimeForObtainingPrimitives = %fs\n"
+        "\t - elapsedTimeForObtainingPrimitivesSymbols = %fs\n",
         mapObjects.size(), mapObjects.size() - sharedMapObjects.size(), sharedMapObjects.size(),
         tileId.x, tileId.y, zoom,
         total_Elapsed.count(),
@@ -250,7 +256,14 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
         dataRead_Metric.elapsedTimeForOnlyAcceptedMapObjects,
         (dataRead_Metric.elapsedTimeForOnlyVisitedMapObjects * 1000.0f) / (static_cast<float>(dataRead_Metric.visitedMapObjects - dataRead_Metric.acceptedMapObjects) / 1000.0f),
         (dataRead_Metric.elapsedTimeForOnlyAcceptedMapObjects * 1000.0f) / (static_cast<float>(dataRead_Metric.acceptedMapObjects) / 1000.0f),
-        dataIdsProcess_Elapsed.count(), dataProcess_Elapsed.count());
+        dataIdsProcess_Elapsed.count(),
+        dataProcess_Elapsed.count(),
+        dataProcess_metric.elapsedTimeForSortingObjects,
+        dataProcess_metric.elapsedTimeForPolygonizingCoastlines,
+        dataProcess_metric.polygonizedCoastlines,
+        dataProcess_metric.elapsedTimeForCombiningObjects,
+        dataProcess_metric.elapsedTimeForObtainingPrimitives,
+        dataProcess_metric.elapsedTimeForObtainingPrimitivesSymbols);
 #endif
 }
 

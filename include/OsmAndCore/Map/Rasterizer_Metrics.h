@@ -43,6 +43,24 @@ namespace OsmAnd {
             {
                 memset(this, 0, sizeof(Metric_prepareContext));
             }
+
+            // Time spent on objects sorting (seconds)
+            float elapsedTimeForSortingObjects;
+
+            // Time spent on polygonizing coastlines (seconds)
+            float elapsedTimeForPolygonizingCoastlines;
+
+            // Number of polygonized coastlines
+            unsigned int polygonizedCoastlines;
+
+            // Time spent on objects combining
+            float elapsedTimeForCombiningObjects;
+
+            // Time spent on obtaining primitives
+            float elapsedTimeForObtainingPrimitives;
+
+            // Time spent on obtaining primitives symbols
+            float elapsedTimeForObtainingPrimitivesSymbols;
         };
 
     } // namespace Rasterizer_Metrics
