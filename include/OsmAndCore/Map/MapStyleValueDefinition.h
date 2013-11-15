@@ -55,18 +55,19 @@ namespace OsmAnd {
     class OSMAND_CORE_API MapStyleValueDefinition
     {
     private:
-        static QAtomicInt _nextRuntimeGeneratedId;
+        static QAtomicInt _nextId;
     protected:
         MapStyleValueDefinition(const MapStyleValueClass valueClass, const MapStyleValueDataType dataType, const QString& name, const bool isComplex);
     public:
         virtual ~MapStyleValueDefinition();
 
+        // This id is generated in runtime
+        const int id;
+
         const MapStyleValueClass valueClass;
         const MapStyleValueDataType dataType;
         const QString name;
         const bool isComplex;
-
-        const int runtimeGeneratedId;
 
     friend class OsmAnd::MapStyle_P;
     friend class OsmAnd::MapStyleBuiltinValueDefinitions;

@@ -30,7 +30,6 @@
 #include <QString>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/Map/MapStyleBuiltinValueDefinitions.h>
 
 namespace OsmAnd {
 
@@ -52,7 +51,7 @@ namespace OsmAnd {
             T dip;
             T px;
 
-            T evaluate(const float densityFactor) const
+            inline T evaluate(const float densityFactor) const
             {
                 return dip*densityFactor + px;
             }
