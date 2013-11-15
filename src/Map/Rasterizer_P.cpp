@@ -426,8 +426,8 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                         pointPrimitive.evaluatorState.reset();
                     }
 
-                    // Accept also point primitive only if typeIndex == 0
-                    if(pointPrimitive.typeIndex == 0)
+                    // Accept also point primitive only if typeIndex == 0 and (there is text or icon)
+                    if(pointPrimitive.typeIndex == 0 && (!pointPrimitive.mapObject->names.isEmpty() || ok))
                     {
                         context._points.push_back(pointPrimitive);
 
@@ -512,8 +512,8 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                 if(ok)
                     primitive.evaluatorState = evaluatorState;
 
-                // Skip is possible if typeIndex != 0
-                if(primitive.typeIndex != 0)
+                // Skip is possible if typeIndex != 0 or (there is no text and no icon)
+                if(primitive.typeIndex != 0 || (primitive.mapObject->names.isEmpty() && !ok))
                     continue;
 
                 context._points.push_back(primitive);
