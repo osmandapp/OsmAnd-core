@@ -426,12 +426,15 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                         pointPrimitive.evaluatorState.reset();
                     }
 
-                    // Accept also point primitive
-                    context._points.push_back(pointPrimitive);
+                    // Accept also point primitive only if typeIndex == 0
+                    if(pointPrimitive.typeIndex == 0)
+                    {
+                        context._points.push_back(pointPrimitive);
 
-                    // Update metric
-                    if(metric)
-                        metric->pointPrimitives++;
+                        // Update metric
+                        if(metric)
+                            metric->pointPrimitives++;
+                    }
                 }
             }
             else if(objectType == PrimitiveType::Polyline)
@@ -508,6 +511,10 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                 // Point evaluation is a bit special, it's success only indicates that point has an icon
                 if(ok)
                     primitive.evaluatorState = evaluatorState;
+
+                // Skip is possible if typeIndex != 0
+                if(primitive.typeIndex != 0)
+                    continue;
 
                 context._points.push_back(primitive);
 
@@ -643,8 +650,7 @@ void OsmAnd::Rasterizer_P::collectPrimitivesSymbols(
         }
         else if(type == Points)
         {
-            if(primitive.typeIndex != 0)
-                continue;
+            assert(primitive.typeIndex == 0);
 
             obtainPointSymbol(env, context, primitive);
         }
