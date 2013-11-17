@@ -80,13 +80,28 @@ namespace OsmAnd {
         void setFloatValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, const float value);
         void setStringValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, const QString& value);
 
+        void setValue(const int valueDefId, const MapStyleValue value);
+        void setBooleanValue(const int valueDefId, const bool value);
+        void setIntegerValue(const int valueDefId, const int value);
+        void setIntegerValue(const int valueDefId, const unsigned int value);
+        void setFloatValue(const int valueDefId, const float value);
+        void setStringValue(const int valueDefId, const QString& value);
+
         bool getBooleanValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, bool& value) const;
         bool getIntegerValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, int& value) const;
         bool getIntegerValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, unsigned int& value) const;
         bool getFloatValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, float& value) const;
         bool getStringValue(const std::shared_ptr<const MapStyleValueDefinition>& ref, QString& value) const;
 
+        bool getBooleanValue(const int valueDefId, bool& value) const;
+        bool getIntegerValue(const int valueDefId, int& value) const;
+        bool getIntegerValue(const int valueDefId, unsigned int& value) const;
+        bool getFloatValue(const int valueDefId, float& value) const;
+        bool getStringValue(const int valueDefId, QString& value) const;
+
         void clearValue(const std::shared_ptr<const MapStyleValueDefinition>& ref);
+
+        void clearValue(const int valueDefId);
 
         bool evaluate(bool fillOutput = true, bool evaluateChildren = true);
 

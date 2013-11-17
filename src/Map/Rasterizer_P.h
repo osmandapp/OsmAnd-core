@@ -181,13 +181,13 @@ namespace OsmAnd {
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
             const Primitive& primitive, PrimitiveSymbol& primitiveSymbol);
 
-        enum PaintValuesSet : int
+        STRONG_ENUM(PaintValuesSet)
         {
-            Set_0 = 0,
-            Set_1 = 1,
-            Set_minus1 = 2,
-            Set_minus2 = 3,
-            Set_3 = 4,
+            Set_0,
+            Set_1,
+            Set_minus1,
+            Set_minus2,
+            Set_3,
         };
         bool updatePaint(
             const MapStyleEvaluator& evaluator, const PaintValuesSet valueSetSelector, const bool isArea);

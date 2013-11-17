@@ -17,6 +17,7 @@
 
 OsmAnd::RasterizerEnvironment_P::RasterizerEnvironment_P( RasterizerEnvironment* owner_ )
     : owner(owner_)
+    , styleBuiltinValueDefs(MapStyle::getBuiltinValueDefinitions())
     , defaultBgColor(_defaultBgColor)
     , shadowLevelMin(_shadowLevelMin)
     , shadowLevelMax(_shadowLevelMax)

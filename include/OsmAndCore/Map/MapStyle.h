@@ -78,12 +78,13 @@ namespace OsmAnd {
         bool isStandalone() const;
         bool areDependenciesResolved() const;
 
-        static const MapStyleBuiltinValueDefinitions builtinValueDefinitions;
         bool resolveValueDefinition(const QString& name, std::shared_ptr<const MapStyleValueDefinition>& outDefinition) const;
         bool resolveAttribute(const QString& name, std::shared_ptr<const MapStyleRule>& outAttribute) const;
 
         void dump(const QString& prefix = QString()) const;
         void dump(MapStyleRulesetType type, const QString& prefix = QString()) const;
+
+        static std::shared_ptr<const MapStyleBuiltinValueDefinitions> getBuiltinValueDefinitions();
 
     friend class OsmAnd::MapStyles;
     friend class OsmAnd::MapStyles_P;

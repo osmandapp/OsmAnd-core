@@ -50,12 +50,22 @@ OsmAnd::MapStyleEvaluator::~MapStyleEvaluator()
 
 void OsmAnd::MapStyleEvaluator::setValue( const std::shared_ptr<const MapStyleValueDefinition>& ref, const MapStyleValue value )
 {
-    state->_d->_values[ref] = value;
+    setValue(ref->id, value);
+}
+
+void OsmAnd::MapStyleEvaluator::setValue(const int valueDefId, const MapStyleValue value)
+{
+    state->_d->_values[valueDefId] = value;
 }
 
 void OsmAnd::MapStyleEvaluator::setBooleanValue( const std::shared_ptr<const MapStyleValueDefinition>& ref, const bool value )
 {
-    auto& entry = state->_d->_values[ref];
+    setBooleanValue(ref->id, value);
+}
+
+void OsmAnd::MapStyleEvaluator::setBooleanValue(const int valueDefId, const bool value)
+{
+    auto& entry = state->_d->_values[valueDefId];
 
     entry.isComplex = false;
     entry.asSimple.asInt = value ? 1 : 0;
@@ -63,7 +73,12 @@ void OsmAnd::MapStyleEvaluator::setBooleanValue( const std::shared_ptr<const Map
 
 void OsmAnd::MapStyleEvaluator::setIntegerValue( const std::shared_ptr<const MapStyleValueDefinition>& ref, const int value )
 {
-    auto& entry = state->_d->_values[ref];
+    setIntegerValue(ref->id, value);
+}
+
+void OsmAnd::MapStyleEvaluator::setIntegerValue(const int valueDefId, const int value)
+{
+    auto& entry = state->_d->_values[valueDefId];
 
     entry.isComplex = false;
     entry.asSimple.asInt = value;
@@ -71,7 +86,12 @@ void OsmAnd::MapStyleEvaluator::setIntegerValue( const std::shared_ptr<const Map
 
 void OsmAnd::MapStyleEvaluator::setIntegerValue( const std::shared_ptr<const MapStyleValueDefinition>& ref, const unsigned int value )
 {
-    auto& entry = state->_d->_values[ref];
+    setIntegerValue(ref->id, value);
+}
+
+void OsmAnd::MapStyleEvaluator::setIntegerValue(const int valueDefId, const unsigned int value)
+{
+    auto& entry = state->_d->_values[valueDefId];
 
     entry.isComplex = false;
     entry.asSimple.asUInt = value;
@@ -79,7 +99,12 @@ void OsmAnd::MapStyleEvaluator::setIntegerValue( const std::shared_ptr<const Map
 
 void OsmAnd::MapStyleEvaluator::setFloatValue( const std::shared_ptr<const MapStyleValueDefinition>& ref, const float value )
 {
-    auto& entry = state->_d->_values[ref];
+    setFloatValue(ref->id, value);
+}
+
+void OsmAnd::MapStyleEvaluator::setFloatValue(const int valueDefId, const float value)
+{
+    auto& entry = state->_d->_values[valueDefId];
 
     entry.isComplex = false;
     entry.asSimple.asFloat = value;
@@ -87,7 +112,12 @@ void OsmAnd::MapStyleEvaluator::setFloatValue( const std::shared_ptr<const MapSt
 
 void OsmAnd::MapStyleEvaluator::setStringValue( const std::shared_ptr<const MapStyleValueDefinition>& ref, const QString& value )
 {
-    auto& entry = state->_d->_values[ref];
+    setStringValue(ref->id, value);
+}
+
+void OsmAnd::MapStyleEvaluator::setStringValue(const int valueDefId, const QString& value)
+{
+    auto& entry = state->_d->_values[valueDefId];
 
     entry.isComplex = false;
     bool ok = style->_d->lookupStringId(value, entry.asSimple.asUInt);
@@ -97,7 +127,12 @@ void OsmAnd::MapStyleEvaluator::setStringValue( const std::shared_ptr<const MapS
 
 bool OsmAnd::MapStyleEvaluator::getBooleanValue( const std::shared_ptr<const MapStyleValueDefinition>& ref, bool& value ) const
 {
-    const auto& itValue = state->_d->_values.constFind(ref);
+    return getBooleanValue(ref->id, value);
+}
+
+bool OsmAnd::MapStyleEvaluator::getBooleanValue(const int valueDefId, bool& value) const
+{
+    const auto& itValue = state->_d->_values.constFind(valueDefId);
     if(itValue == state->_d->_values.cend())
         return false;
 
@@ -108,7 +143,12 @@ bool OsmAnd::MapStyleEvaluator::getBooleanValue( const std::shared_ptr<const Map
 
 bool OsmAnd::MapStyleEvaluator::getIntegerValue( const std::shared_ptr<const OsmAnd::MapStyleValueDefinition>& ref, int& value ) const
 {
-    const auto& itValue = state->_d->_values.constFind(ref);
+    return getIntegerValue(ref->id, value);
+}
+
+bool OsmAnd::MapStyleEvaluator::getIntegerValue(const int valueDefId, int& value) const
+{
+    const auto& itValue = state->_d->_values.constFind(valueDefId);
     if(itValue == state->_d->_values.cend())
         return false;
 
@@ -121,7 +161,12 @@ bool OsmAnd::MapStyleEvaluator::getIntegerValue( const std::shared_ptr<const Osm
 
 bool OsmAnd::MapStyleEvaluator::getIntegerValue( const std::shared_ptr<const OsmAnd::MapStyleValueDefinition>& ref, unsigned int& value ) const
 {
-    const auto& itValue = state->_d->_values.constFind(ref);
+    return getIntegerValue(ref->id, value);
+}
+
+bool OsmAnd::MapStyleEvaluator::getIntegerValue(const int valueDefId, unsigned int& value) const
+{
+    const auto& itValue = state->_d->_values.constFind(valueDefId);
     if(itValue == state->_d->_values.cend())
         return false;
 
@@ -134,7 +179,12 @@ bool OsmAnd::MapStyleEvaluator::getIntegerValue( const std::shared_ptr<const Osm
 
 bool OsmAnd::MapStyleEvaluator::getFloatValue( const std::shared_ptr<const OsmAnd::MapStyleValueDefinition>& ref, float& value ) const
 {
-    const auto& itValue = state->_d->_values.constFind(ref);
+    return getFloatValue(ref->id, value);
+}
+
+bool OsmAnd::MapStyleEvaluator::getFloatValue(const int valueDefId, float& value) const
+{
+    const auto& itValue = state->_d->_values.constFind(valueDefId);
     if(itValue == state->_d->_values.cend())
         return false;
 
@@ -147,7 +197,12 @@ bool OsmAnd::MapStyleEvaluator::getFloatValue( const std::shared_ptr<const OsmAn
 
 bool OsmAnd::MapStyleEvaluator::getStringValue( const std::shared_ptr<const OsmAnd::MapStyleValueDefinition>& ref, QString& value ) const
 {
-    const auto& itValue = state->_d->_values.constFind(ref);
+    return getStringValue(ref->id, value);
+}
+
+bool OsmAnd::MapStyleEvaluator::getStringValue(const int valueDefId, QString& value) const
+{
+    const auto& itValue = state->_d->_values.constFind(valueDefId);
     if(itValue == state->_d->_values.cend())
         return false;
 
@@ -158,7 +213,12 @@ bool OsmAnd::MapStyleEvaluator::getStringValue( const std::shared_ptr<const OsmA
 
 void OsmAnd::MapStyleEvaluator::clearValue( const std::shared_ptr<const OsmAnd::MapStyleValueDefinition>& ref )
 {
-    state->_d->_values.remove(ref);
+    clearValue(ref->id);
+}
+
+void OsmAnd::MapStyleEvaluator::clearValue(const int valueDefId)
+{
+    state->_d->_values.remove(valueDefId);
 }
 
 bool OsmAnd::MapStyleEvaluator::evaluate( bool fillOutput /*= true*/, bool evaluateChildren /*=true*/ )
@@ -173,10 +233,10 @@ bool OsmAnd::MapStyleEvaluator::evaluate( bool fillOutput /*= true*/, bool evalu
     }
     else
     {
-        assert(!state->_d->_values[MapStyle::builtinValueDefinitions.INPUT_TAG].isComplex);
-        const auto tagKey = state->_d->_values[MapStyle::builtinValueDefinitions.INPUT_TAG].asSimple.asUInt;
-        assert(!state->_d->_values[MapStyle::builtinValueDefinitions.INPUT_VALUE].isComplex);
-        const auto valueKey = state->_d->_values[MapStyle::builtinValueDefinitions.INPUT_VALUE].asSimple.asUInt;
+        assert(!state->_d->_values[_d->_builtinValueDefs->id_INPUT_TAG].isComplex);
+        const auto tagKey = state->_d->_values[_d->_builtinValueDefs->id_INPUT_TAG].asSimple.asUInt;
+        assert(!state->_d->_values[_d->_builtinValueDefs->id_INPUT_VALUE].isComplex);
+        const auto valueKey = state->_d->_values[_d->_builtinValueDefs->id_INPUT_VALUE].asSimple.asUInt;
 
         auto evaluationResult = evaluate(tagKey, valueKey, fillOutput, evaluateChildren);
         if(evaluationResult)
@@ -196,8 +256,8 @@ bool OsmAnd::MapStyleEvaluator::evaluate( bool fillOutput /*= true*/, bool evalu
 
 bool OsmAnd::MapStyleEvaluator::evaluate( uint32_t tagKey, uint32_t valueKey, bool fillOutput, bool evaluateChildren )
 {
-    state->_d->_values[MapStyle::builtinValueDefinitions.INPUT_TAG].asSimple.asUInt = tagKey;
-    state->_d->_values[MapStyle::builtinValueDefinitions.INPUT_VALUE].asSimple.asUInt = valueKey;
+    state->_d->_values[_d->_builtinValueDefs->id_INPUT_TAG].asSimple.asUInt = tagKey;
+    state->_d->_values[_d->_builtinValueDefs->id_INPUT_VALUE].asSimple.asUInt = valueKey;
 
     const auto& rules = style->_d->obtainRules(ruleset);
     uint64_t ruleId = MapStyle_P::encodeRuleId(tagKey, valueKey);
@@ -217,22 +277,22 @@ bool OsmAnd::MapStyleEvaluator::evaluate( const std::shared_ptr<const MapStyleRu
             continue;
 
         const auto& valueData = *itRuleValueEntry.value();
-        const auto& stackValue = state->_d->_values[valueDef];
+        const auto& stackValue = state->_d->_values[valueDef->id];
 
         bool evaluationResult = false;
-        if(valueDef == MapStyle::builtinValueDefinitions.INPUT_MINZOOM)
+        if(valueDef->id == _d->_builtinValueDefs->id_INPUT_MINZOOM)
         {
             assert(!valueData.isComplex);
             assert(!stackValue.isComplex);
             evaluationResult = (valueData.asSimple.asInt <= stackValue.asSimple.asInt);
         }
-        else if(valueDef == MapStyle::builtinValueDefinitions.INPUT_MAXZOOM)
+        else if(valueDef->id == _d->_builtinValueDefs->id_INPUT_MAXZOOM)
         {
             assert(!valueData.isComplex);
             assert(!stackValue.isComplex);
             evaluationResult = (valueData.asSimple.asInt >= stackValue.asSimple.asInt);
         }
-        else if(valueDef == MapStyle::builtinValueDefinitions.INPUT_ADDITIONAL)
+        else if(valueDef->id == _d->_builtinValueDefs->id_INPUT_ADDITIONAL)
         {
             if(!mapObject)
                 evaluationResult = true;
@@ -278,7 +338,7 @@ bool OsmAnd::MapStyleEvaluator::evaluate( const std::shared_ptr<const MapStyleRu
             if(valueDef->valueClass != MapStyleValueClass::Output)
                 continue;
 
-            state->_d->_values[valueDef] = *itRuleValueEntry.value();
+            state->_d->_values[valueDef->id] = *itRuleValueEntry.value();
         }
     }
 
@@ -302,6 +362,7 @@ bool OsmAnd::MapStyleEvaluator::evaluate( const std::shared_ptr<const MapStyleRu
 
 void OsmAnd::MapStyleEvaluator::dump( bool input /*= true*/, bool output /*= true*/, const QString& prefix /*= QString()*/ ) const
 {
+    /*
     for(auto itValue = state->_d->_values.cbegin(); itValue != state->_d->_values.cend(); ++itValue)
     {
         const auto& valueDef = itValue.key();
@@ -338,4 +399,5 @@ void OsmAnd::MapStyleEvaluator::dump( bool input /*= true*/, bool output /*= tru
             }
         }
     }
+    */
 }

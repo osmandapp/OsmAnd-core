@@ -5,6 +5,7 @@
 
 OsmAnd::MapStyleEvaluator_P::MapStyleEvaluator_P( MapStyleEvaluator* owner_ )
     : owner(owner_)
+    , _builtinValueDefs(MapStyle::getBuiltinValueDefinitions())
 {
 }
 

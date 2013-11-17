@@ -35,6 +35,7 @@ namespace OsmAnd {
 
     class MapStyleValueDefinition;
     struct MapStyleValue;
+    class MapStyleBuiltinValueDefinitions;
     
     class MapStyleEvaluator;
     class MapStyleEvaluator_P
@@ -44,6 +45,8 @@ namespace OsmAnd {
         MapStyleEvaluator_P(MapStyleEvaluator* owner);
 
         MapStyleEvaluator* const owner;
+
+        const std::shared_ptr<const MapStyleBuiltinValueDefinitions> _builtinValueDefs;
     public:
         ~MapStyleEvaluator_P();
 

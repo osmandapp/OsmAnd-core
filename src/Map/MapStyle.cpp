@@ -3,11 +3,10 @@
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QFileInfo>
+#include <QAtomicInt>
 
 #include "MapStyleRule.h"
 #include "Logging.h"
-
-const OsmAnd::MapStyleBuiltinValueDefinitions OsmAnd::MapStyle::builtinValueDefinitions;
 
 OsmAnd::MapStyle::MapStyle( MapStyles* styles_, const QString& resourcePath_, const bool isEmbedded_ )
     : _d(new MapStyle_P(this))
@@ -100,4 +99,17 @@ void OsmAnd::MapStyle::dump( MapStyleRulesetType type, const QString& prefix /*=
             _d->getValueStringId(itRuleEntry.key()));
         rule->dump(prefix);
     }
+}
+
+static QMutex g_OsmAnd_MapStyle_builtinValueDefinitionsMutex;
+static std::shared_ptr<const OsmAnd::MapStyleBuiltinValueDefinitions> g_OsmAnd_MapStyle_builtinValueDefinitions;
+
+std::shared_ptr<const OsmAnd::MapStyleBuiltinValueDefinitions> OsmAnd::MapStyle::getBuiltinValueDefinitions()
+{
+    QMutexLocker scopedLocker(&g_OsmAnd_MapStyle_builtinValueDefinitionsMutex);
+
+    if(!static_cast<bool>(g_OsmAnd_MapStyle_builtinValueDefinitions))
+        g_OsmAnd_MapStyle_builtinValueDefinitions.reset(new OsmAnd::MapStyleBuiltinValueDefinitions());
+
+    return g_OsmAnd_MapStyle_builtinValueDefinitions;
 }

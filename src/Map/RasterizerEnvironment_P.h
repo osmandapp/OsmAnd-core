@@ -98,6 +98,8 @@ namespace OsmAnd {
 
         RasterizerEnvironment* const owner;
 
+        const std::shared_ptr<const MapStyleBuiltinValueDefinitions> styleBuiltinValueDefs;
+
         const SkPaint& mapPaint;
         const SkPaint& textPaint;
 

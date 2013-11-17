@@ -100,6 +100,8 @@ namespace OsmAnd {
 
         MapStyle* const owner;
 
+        const std::shared_ptr<const MapStyleBuiltinValueDefinitions> _builtinValueDefs;
+
         static uint64_t encodeRuleId(uint32_t tag, uint32_t value);
     public:
         virtual ~MapStyle_P();
