@@ -1,5 +1,4 @@
 /resources/rendering_styles/default.render.xml:map/styles/default.render.xml
-/resources/rendering_styles/style-icons/drawable-mdpi/h_grave_yard.png:map/shaders/grave_yard.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_beach.png:map/shaders/beach.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_cable_car.png:map/shaders/cable_car.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_chair_lift.png:map/shaders/chair_lift.png
@@ -8,6 +7,7 @@
 /resources/rendering_styles/style-icons/drawable-mdpi/h_forest.png:map/shaders/forest.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_forest1.png:map/shaders/forest1.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_glacier.png:map/shaders/glacier.png
+/resources/rendering_styles/style-icons/drawable-mdpi/h_grave_yard.png:map/shaders/grave_yard.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_marsh.png:map/shaders/marsh.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_mot_shield1.png:map/shaders/mot_shield1.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_mot_shield2.png:map/shaders/mot_shield2.png
