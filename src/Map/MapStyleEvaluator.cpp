@@ -235,7 +235,7 @@ bool OsmAnd::MapStyleEvaluator::evaluate( const std::shared_ptr<const MapStyleRu
         else if(valueDef == MapStyle::builtinValueDefinitions.INPUT_ADDITIONAL)
         {
             if(!mapObject)
-                evaluationResult;
+                evaluationResult = true;
             else
             {
                 assert(!valueData.isComplex);
