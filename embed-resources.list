@@ -1,5 +1,5 @@
 /resources/rendering_styles/default.render.xml:map/styles/default.render.xml
-/resources/rendering_styles/style-icons/drawable-mdpi/h_amenity_grave_yard.png:map/shaders/amenity_grave_yard.png
+/resources/rendering_styles/style-icons/drawable-mdpi/h_grave_yard.png:map/shaders/grave_yard.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_beach.png:map/shaders/beach.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_cable_car.png:map/shaders/cable_car.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_chair_lift.png:map/shaders/chair_lift.png
@@ -23,8 +23,6 @@
 /resources/rendering_styles/style-icons/drawable-mdpi/h_nr2.png:map/shaders/nr2.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_nr21.png:map/shaders/nr21.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_orchard.png:map/shaders/orchard.png
-/resources/rendering_styles/style-icons/drawable-mdpi/h_osmc__yellow_diamond.png:map/shaders/osmc__yellow_diamond.png
-/resources/rendering_styles/style-icons/drawable-mdpi/h_osmc__yellow_diamond1.png:map/shaders/osmc__yellow_diamond1.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_osmc_red_white_bar.png:map/shaders/osmc_red_white_bar.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_osmc_white_blue_bar.png:map/shaders/osmc_white_blue_bar.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_osmc_white_green_backslash.png:map/shaders/osmc_white_green_backslash.png
