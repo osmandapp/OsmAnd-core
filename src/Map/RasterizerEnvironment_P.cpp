@@ -9,6 +9,7 @@
 #include <SkStream.h>
 
 #include "MapStyleEvaluator.h"
+#include "MapStyleValueDefinition.h"
 #include "MapStyleValue.h"
 #include "ObfMapSectionInfo.h"
 #include "EmbeddedResources.h"
@@ -204,7 +205,30 @@ void OsmAnd::RasterizerEnvironment_P::applyTo( MapStyleEvaluator& evaluator ) co
 
     for(auto itSetting = _settings.cbegin(); itSetting != _settings.cend(); ++itSetting)
     {
-        evaluator.setValue(itSetting.key(), *itSetting);
+        const auto& valueDef = itSetting.key();
+        const auto& settingValue = *itSetting;
+
+        switch(valueDef->dataType)
+        {
+        case MapStyleValueDataType::Integer:
+            evaluator.setIntegerValue(valueDef->id,
+                settingValue.isComplex
+                ? settingValue.asComplex.asInt.evaluate(owner->displayDensityFactor)
+                : settingValue.asSimple.asInt);
+            break;
+        case MapStyleValueDataType::Float:
+            evaluator.setFloatValue(valueDef->id,
+                settingValue.isComplex
+                ? settingValue.asComplex.asFloat.evaluate(owner->displayDensityFactor)
+                : settingValue.asSimple.asFloat);
+            break;
+        case MapStyleValueDataType::Boolean:
+        case MapStyleValueDataType::String:
+        case MapStyleValueDataType::Color:
+            assert(!settingValue.isComplex);
+            evaluator.setIntegerValue(valueDef->id, settingValue.asSimple.asUInt);
+            break;
+        }
     }
 }
 

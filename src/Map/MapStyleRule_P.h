@@ -37,6 +37,7 @@ namespace OsmAnd {
 
     class MapStyle_P;
     class MapStyleEvaluator;
+    class MapStyleEvaluator_P;
     class MapStyleValueDefinition;
     struct MapStyleValue;
 
@@ -49,8 +50,9 @@ namespace OsmAnd {
 
         MapStyleRule* const owner;
 
-        QHash< std::shared_ptr<const MapStyleValueDefinition>, std::shared_ptr<const MapStyleValue> > _valuesByRef;
-        QHash< QString, std::shared_ptr<const MapStyleValue> > _valuesByName;
+        QHash< QString, std::shared_ptr<const MapStyleValueDefinition> > _resolvedValueDefinitions;
+
+        QHash< std::shared_ptr<const MapStyleValueDefinition>, std::shared_ptr<const MapStyleValue> > _values;
         QList< std::shared_ptr<MapStyleRule> > _ifElseChildren;
         QList< std::shared_ptr<MapStyleRule> > _ifChildren;
     public:
@@ -59,6 +61,7 @@ namespace OsmAnd {
     friend class OsmAnd::MapStyleRule;
     friend class OsmAnd::MapStyle_P;
     friend class OsmAnd::MapStyleEvaluator;
+    friend class OsmAnd::MapStyleEvaluator_P;
     };
 
 } // namespace OsmAnd

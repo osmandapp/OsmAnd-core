@@ -27,19 +27,31 @@
 #include <memory>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <QMap>
 
 #include <OsmAndCore.h>
 #include <MapStyle.h>
 
 namespace OsmAnd {
 
-    class MapStyleValueDefinition;
-    struct MapStyleValue;
+    class MapStyleEvaluationResult;
     class MapStyleBuiltinValueDefinitions;
     
     class MapStyleEvaluator;
     class MapStyleEvaluator_P
     {
+    public:
+        union InputValue
+        {
+            inline InputValue()
+            {
+                asUInt = 0;
+            }
+
+            float asFloat;
+            int32_t asInt;
+            uint32_t asUInt;
+        };
     private:
     protected:
         MapStyleEvaluator_P(MapStyleEvaluator* owner);
@@ -47,6 +59,12 @@ namespace OsmAnd {
         MapStyleEvaluator* const owner;
 
         const std::shared_ptr<const MapStyleBuiltinValueDefinitions> _builtinValueDefs;
+
+        QMap<int, InputValue> _inputValues;
+
+        bool evaluate(const uint32_t tagKey, const uint32_t valueKey, MapStyleEvaluationResult* const outResultStorage, bool evaluateChildren);
+        bool evaluate(const std::shared_ptr<const MapStyleRule>& rule, MapStyleEvaluationResult* const outResultStorage, bool evaluateChildren);
+        bool evaluate(MapStyleEvaluationResult* const outResultStorage, bool evaluateChildren);
     public:
         ~MapStyleEvaluator_P();
 

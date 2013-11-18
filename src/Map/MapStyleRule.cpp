@@ -14,8 +14,8 @@ OsmAnd::MapStyleRule::MapStyleRule(MapStyle* owner_, const QHash< QString, QStri
     : _d(new MapStyleRule_P(this))
     , owner(owner_)
 {
-    _d->_valuesByRef.reserve(attributes.size());
-    _d->_valuesByName.reserve(attributes.size());
+    _d->_values.reserve(attributes.size());
+    _d->_resolvedValueDefinitions.reserve(attributes.size());
     
     for(auto itAttribute = attributes.cbegin(); itAttribute != attributes.cend(); ++itAttribute)
     {
@@ -25,6 +25,9 @@ OsmAnd::MapStyleRule::MapStyleRule(MapStyle* owner_, const QHash< QString, QStri
         std::shared_ptr<const MapStyleValueDefinition> valueDef;
         bool ok = owner->resolveValueDefinition(key, valueDef);
         assert(ok);
+
+        // Store resolved value definition
+        _d->_resolvedValueDefinitions.insert(key, valueDef);
 
         std::shared_ptr<MapStyleValue> parsedValue(new MapStyleValue());
         switch (valueDef->dataType)
@@ -97,8 +100,7 @@ OsmAnd::MapStyleRule::MapStyleRule(MapStyle* owner_, const QHash< QString, QStri
             break;
         }
         
-        _d->_valuesByRef.insert(valueDef, parsedValue);
-        _d->_valuesByName.insert(key, parsedValue);
+        _d->_values.insert(valueDef, parsedValue);
     }
 }
 
@@ -106,10 +108,10 @@ OsmAnd::MapStyleRule::~MapStyleRule()
 {
 }
 
-bool OsmAnd::MapStyleRule::getAttribute(const QString& key, std::shared_ptr<const MapStyleValue>& value) const
+bool OsmAnd::MapStyleRule::getAttribute(const std::shared_ptr<const MapStyleValueDefinition>& key, std::shared_ptr<const MapStyleValue>& value) const
 {
-    auto itValue = _d->_valuesByName.constFind(key);
-    if(itValue == _d->_valuesByName.cend())
+    auto itValue = _d->_values.constFind(key);
+    if(itValue == _d->_values.cend())
         return false;
 
     value = *itValue;
@@ -120,7 +122,7 @@ void OsmAnd::MapStyleRule::dump( const QString& prefix /*= QString()*/ ) const
 {
     auto newPrefix = prefix + QLatin1String("\t");
     
-    for(auto itValueEntry = _d->_valuesByRef.cbegin(); itValueEntry != _d->_valuesByRef.cend(); ++itValueEntry)
+    for(auto itValueEntry = _d->_values.cbegin(); itValueEntry != _d->_values.cend(); ++itValueEntry)
     {
         const auto& valueDef = itValueEntry.key();
         const auto& value = *itValueEntry.value();
@@ -129,7 +131,7 @@ void OsmAnd::MapStyleRule::dump( const QString& prefix /*= QString()*/ ) const
         switch (valueDef->dataType)
         {
         case MapStyleValueDataType::Boolean:
-            strValue = (value.asSimple.asInt == 1) ? "true" : "false";
+            strValue = (value.asSimple.asInt == 1) ? QLatin1String("true") : QLatin1String("false");
             break;
         case MapStyleValueDataType::Integer:
             if(value.isComplex)

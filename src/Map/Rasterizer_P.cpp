@@ -13,7 +13,7 @@
 #include "RasterizerContext_P.h"
 #include "RasterizedSymbol.h"
 #include "MapStyleEvaluator.h"
-#include "MapStyleEvaluatorState.h"
+#include "MapStyleEvaluationResult.h"
 #include "MapTypes.h"
 #include "MapObject.h"
 #include "ObfMapSectionInfo.h"
@@ -273,8 +273,6 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
     const IQueryController* const controller,
     Rasterizer_Metrics::Metric_prepareContext* const metric)
 {
-    std::shared_ptr<MapStyleEvaluatorState> sharedEvaluatorState(new MapStyleEvaluatorState());
-
     bool ok;
     QVector< Primitive > unfilteredLines;
     for(auto itMapObject = context._combinedMapObjects.cbegin(); itMapObject != context._combinedMapObjects.cend(); ++itMapObject)
@@ -295,18 +293,19 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
             if(metric)
                 orderEvaluation_begin = std::chrono::high_resolution_clock::now();
             
-            sharedEvaluatorState->clear();
-            MapStyleEvaluator evaluator(sharedEvaluatorState, env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Order, mapObject);
+            MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Order, mapObject);
             env.applyTo(evaluator);
-            evaluator.setStringValue(env.styleBuiltinValueDefs->INPUT_TAG, decodedType.tag);
-            evaluator.setStringValue(env.styleBuiltinValueDefs->INPUT_VALUE, decodedType.value);
-            evaluator.setIntegerValue(env.styleBuiltinValueDefs->INPUT_MINZOOM, context._zoom);
-            evaluator.setIntegerValue(env.styleBuiltinValueDefs->INPUT_MAXZOOM, context._zoom);
-            evaluator.setIntegerValue(env.styleBuiltinValueDefs->INPUT_LAYER, layer);
-            evaluator.setBooleanValue(env.styleBuiltinValueDefs->INPUT_AREA, mapObject->isArea);
-            evaluator.setBooleanValue(env.styleBuiltinValueDefs->INPUT_POINT, mapObject->points31.size() == 1);
-            evaluator.setBooleanValue(env.styleBuiltinValueDefs->INPUT_CYCLE, mapObject->isClosedFigure());
-            ok = evaluator.evaluate();
+            evaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
+            evaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
+            evaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_MINZOOM, context._zoom);
+            evaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_MAXZOOM, context._zoom);
+            evaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_LAYER, layer);
+            evaluator.setBooleanValue(env.styleBuiltinValueDefs->id_INPUT_AREA, mapObject->isArea);
+            evaluator.setBooleanValue(env.styleBuiltinValueDefs->id_INPUT_POINT, mapObject->points31.size() == 1);
+            evaluator.setBooleanValue(env.styleBuiltinValueDefs->id_INPUT_CYCLE, mapObject->isClosedFigure());
+
+            MapStyleEvaluationResult orderEvalResult;
+            ok = evaluator.evaluate(&orderEvalResult);
 
             // Update metric
             if(metric)
@@ -320,10 +319,10 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                 continue;
 
             int objectType;
-            if(!evaluator.getIntegerValue(env.styleBuiltinValueDefs->OUTPUT_OBJECT_TYPE, objectType))
+            if(!orderEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_OBJECT_TYPE, objectType))
                 continue;
             int zOrder;
-            if(!evaluator.getIntegerValue(env.styleBuiltinValueDefs->OUTPUT_ORDER, zOrder))
+            if(!orderEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_ORDER, zOrder))
                 continue;
 
             Primitive primitive;
@@ -364,10 +363,10 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                     polygonEvaluation_begin = std::chrono::high_resolution_clock::now();
 
                 // Evaluate style for this primitive to check if it passes
-                std::shared_ptr<MapStyleEvaluatorState> evaluatorState(new MapStyleEvaluatorState());
-                MapStyleEvaluator evaluator(evaluatorState, env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Polygon, primitive.mapObject);
+                std::shared_ptr<MapStyleEvaluationResult> evaluatorState(new MapStyleEvaluationResult());
+                MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Polygon, primitive.mapObject);
                 initializePolygonEvaluator(env, context, primitive, evaluator);
-                ok = evaluator.evaluate();
+                ok = evaluator.evaluate(evaluatorState.get());
 
                 // Update metric
                 if(metric)
@@ -379,7 +378,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                 // If evaluation failed, skip
                 if(!ok)
                     continue;
-                primitive.evaluatorState = evaluatorState;
+                primitive.evaluationResult = evaluatorState;
 
                 // Check size of polygon
                 auto polygonArea31 = Utilities::polygonArea(mapObject->points31);
@@ -404,10 +403,10 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                         pointEvaluation_begin = std::chrono::high_resolution_clock::now();
 
                     // Evaluate Point rules
-                    std::shared_ptr<MapStyleEvaluatorState> pointEvaluatorState(new MapStyleEvaluatorState());
-                    MapStyleEvaluator evaluator(pointEvaluatorState, env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Point, primitive.mapObject);
+                    std::shared_ptr<MapStyleEvaluationResult> pointEvaluatorState(new MapStyleEvaluationResult());
+                    MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Point, primitive.mapObject);
                     initializePointEvaluator(env, context, pointPrimitive, evaluator);
-                    ok = evaluator.evaluate();
+                    ok = evaluator.evaluate(pointEvaluatorState.get());
 
                     // Update metric
                     if(metric)
@@ -419,11 +418,11 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                     // Point evaluation is a bit special, it's success only indicates that point has an icon
                     if(ok)
                     {
-                        pointPrimitive.evaluatorState = pointEvaluatorState;
+                        pointPrimitive.evaluationResult = pointEvaluatorState;
                     }
                     else
                     {
-                        pointPrimitive.evaluatorState.reset();
+                        pointPrimitive.evaluationResult.reset();
                     }
 
                     // Accept also point primitive only if typeIndex == 0 and (there is text or icon)
@@ -455,10 +454,10 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                     polylineEvaluation_begin = std::chrono::high_resolution_clock::now();
 
                 // Evaluate style for this primitive to check if it passes
-                std::shared_ptr<MapStyleEvaluatorState> evaluatorState(new MapStyleEvaluatorState());
-                MapStyleEvaluator evaluator(evaluatorState, env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Polyline, primitive.mapObject);
+                std::shared_ptr<MapStyleEvaluationResult> evaluatorState(new MapStyleEvaluationResult());
+                MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Polyline, primitive.mapObject);
                 initializePolylineEvaluator(env, context, primitive, evaluator);
-                ok = evaluator.evaluate();
+                ok = evaluator.evaluate(evaluatorState.get());
 
                 // Update metric
                 if(metric)
@@ -470,7 +469,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                 // If evaluation failed, skip
                 if(!ok)
                     continue;
-                primitive.evaluatorState = evaluatorState;
+                primitive.evaluationResult = evaluatorState;
 
                 // Accept this primitive
                 unfilteredLines.push_back(primitive);
@@ -496,10 +495,10 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                     pointEvaluation_begin = std::chrono::high_resolution_clock::now();
 
                 // Evaluate Point rules
-                std::shared_ptr<MapStyleEvaluatorState> evaluatorState(new MapStyleEvaluatorState());
-                MapStyleEvaluator evaluator(evaluatorState, env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Point, primitive.mapObject);
+                std::shared_ptr<MapStyleEvaluationResult> evaluatorState(new MapStyleEvaluationResult());
+                MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Point, primitive.mapObject);
                 initializePointEvaluator(env, context, primitive, evaluator);
-                ok = evaluator.evaluate();
+                ok = evaluator.evaluate(evaluatorState.get());
 
                 // Update metric
                 if(metric)
@@ -510,7 +509,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
 
                 // Point evaluation is a bit special, it's success only indicates that point has an icon
                 if(ok)
-                    primitive.evaluatorState = evaluatorState;
+                    primitive.evaluationResult = evaluatorState;
 
                 // Skip is possible if typeIndex != 0 or (there is no text and no icon)
                 if(primitive.typeRuleIdIndex != 0 || (primitive.mapObject->names.isEmpty() && !ok))
@@ -529,7 +528,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
             }
 
             int shadowLevel;
-            if(evaluator.getIntegerValue(env.styleBuiltinValueDefs->OUTPUT_SHADOW_LEVEL, shadowLevel) && shadowLevel > 0)
+            if(orderEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_SHADOW_LEVEL, shadowLevel) && shadowLevel > 0)
             {
                 context._shadowLevelMin = qMin(context._shadowLevelMin, static_cast<uint32_t>(zOrder));
                 context._shadowLevelMax = qMax(context._shadowLevelMax, static_cast<uint32_t>(zOrder));
@@ -748,20 +747,19 @@ void OsmAnd::Rasterizer_P::obtainPointSymbol(
     primitiveSymbol.location31 = center;
 
     // Point can have icon associated with it
-    if(primitive.evaluatorState)
+    if(primitive.evaluationResult)
     {
-        MapStyleEvaluator evaluator(primitive.evaluatorState, env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Point, primitive.mapObject);
         bool ok;
 
         QString iconResourceName;
-        ok = evaluator.getStringValue(env.styleBuiltinValueDefs->OUTPUT_ICON, iconResourceName);
+        ok = primitive.evaluationResult->getStringValue(env.styleBuiltinValueDefs->id_OUTPUT_ICON, iconResourceName);
 
         if(ok && !iconResourceName.isEmpty())
         {
             primitiveSymbol.icon.resourceName = iconResourceName;
             primitiveSymbol.order = 100;
 
-            evaluator.getIntegerValue(env.styleBuiltinValueDefs->OUTPUT_ICON, primitiveSymbol.order);
+            primitive.evaluationResult->getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_ICON, primitiveSymbol.order);
         }
     }
 
@@ -780,7 +778,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
     const auto typeRuleId = primitive.mapObject->_typesRuleIds[primitive.typeRuleIdIndex];
     const auto& decodedType = primitive.mapObject->section->encodingDecodingRules->decodingRules[typeRuleId];
 
-    std::shared_ptr<MapStyleEvaluatorState> sharedEvaluatorState(new MapStyleEvaluatorState());
+    MapStyleEvaluationResult textEvalResult;
 
     bool ok;
     auto firstTextProcessed = false;
@@ -795,34 +793,35 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
         //TODO: reshape name with icu4c
 
         // Evaluate style to obtain text parameters
-        sharedEvaluatorState->clear();
-        MapStyleEvaluator evaluator(sharedEvaluatorState, env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Text, primitive.mapObject);
+        MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Text, primitive.mapObject);
         env.applyTo(evaluator);
-        evaluator.setStringValue(env.styleBuiltinValueDefs->INPUT_TAG, decodedType.tag);
-        evaluator.setStringValue(env.styleBuiltinValueDefs->INPUT_VALUE, decodedType.value);
-        evaluator.setIntegerValue(env.styleBuiltinValueDefs->INPUT_MINZOOM, context._zoom);
-        evaluator.setIntegerValue(env.styleBuiltinValueDefs->INPUT_MAXZOOM, context._zoom);
-        evaluator.setIntegerValue(env.styleBuiltinValueDefs->INPUT_TEXT_LENGTH, name.length());
+        evaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
+        evaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
+        evaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_MINZOOM, context._zoom);
+        evaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_MAXZOOM, context._zoom);
+        evaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_TEXT_LENGTH, name.length());
 
         QString nameTag;
         if(itName.key() != primitive.mapObject->section->encodingDecodingRules->name_encodingRuleId)
             nameTag = primitive.mapObject->section->encodingDecodingRules->decodingRules[itName.key()].tag;
 
-        evaluator.setStringValue(env.styleBuiltinValueDefs->INPUT_NAME_TAG, nameTag);
-        if(!evaluator.evaluate())
+        evaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_NAME_TAG, nameTag);
+
+        textEvalResult.clear();
+        if(!evaluator.evaluate(&textEvalResult))
             continue;
 
         // Skip text that doesn't have valid size
         int textSize = 0;
-        ok = evaluator.getIntegerValue(env.styleBuiltinValueDefs->OUTPUT_TEXT_SIZE, textSize);
+        ok = textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_SIZE, textSize);
         if(!ok || textSize == 0)
             continue;
 
         // Some text parameters are applied to symbol entirely.
         if(!firstTextProcessed)
         {
-            evaluator.getBooleanValue(env.styleBuiltinValueDefs->OUTPUT_TEXT_ON_PATH, primitiveSymbol.drawOnPath);
-            evaluator.getIntegerValue(env.styleBuiltinValueDefs->OUTPUT_TEXT_ORDER, primitiveSymbol.order);
+            textEvalResult.getBooleanValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_ON_PATH, primitiveSymbol.drawOnPath);
+            textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_ORDER, primitiveSymbol.order);
 
             firstTextProcessed = true;
         }
@@ -830,14 +829,14 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
         else
         {
             bool drawOnPath;
-            ok = evaluator.getBooleanValue(env.styleBuiltinValueDefs->OUTPUT_TEXT_ON_PATH, drawOnPath);
+            ok = textEvalResult.getBooleanValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_ON_PATH, drawOnPath);
             if(ok)
             {
                 assert(primitiveSymbol.drawOnPath == drawOnPath);
             }
 
             int order;
-            ok = evaluator.getIntegerValue(env.styleBuiltinValueDefs->OUTPUT_TEXT_ORDER, order);
+            ok = textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_ORDER, order);
             if(ok)
             {
                 assert(primitiveSymbol.order == order);
@@ -849,27 +848,27 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
         text.value = name;
         
         text.verticalOffset = 0;
-        evaluator.getIntegerValue(env.styleBuiltinValueDefs->OUTPUT_TEXT_DY, text.verticalOffset);
+        textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_DY, text.verticalOffset);
 
-        ok = evaluator.getIntegerValue(env.styleBuiltinValueDefs->OUTPUT_TEXT_COLOR, text.color);
+        ok = textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_COLOR, text.color);
         if(!ok || !text.color)
             text.color = SK_ColorBLACK;
 
         text.size = textSize;
 
         text.shadowRadius = 0;
-        evaluator.getIntegerValue(env.styleBuiltinValueDefs->OUTPUT_TEXT_HALO_RADIUS, text.shadowRadius);
+        textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_HALO_RADIUS, text.shadowRadius);
 
         text.wrapWidth = 0;
-        evaluator.getIntegerValue(env.styleBuiltinValueDefs->OUTPUT_TEXT_WRAP_WIDTH, text.wrapWidth);
+        textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_WRAP_WIDTH, text.wrapWidth);
 
         text.isBold = false;
-        evaluator.getBooleanValue(env.styleBuiltinValueDefs->OUTPUT_TEXT_BOLD, text.isBold);
+        textEvalResult.getBooleanValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_BOLD, text.isBold);
 
         text.minDistance = 0;
-        evaluator.getIntegerValue(env.styleBuiltinValueDefs->OUTPUT_TEXT_MIN_DISTANCE, text.minDistance);
+        textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_MIN_DISTANCE, text.minDistance);
 
-        evaluator.getStringValue(env.styleBuiltinValueDefs->OUTPUT_TEXT_SHIELD, text.shieldResourceName);
+        textEvalResult.getStringValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_SHIELD, text.shieldResourceName);
 
         primitiveSymbol.texts.push_back(text);
     }
@@ -879,47 +878,47 @@ void OsmAnd::Rasterizer_P::adjustContextFromEnvironment(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
     const ZoomLevel zoom)
 {
-    std::shared_ptr<MapStyleEvaluatorState> sharedEvaluatorState(new MapStyleEvaluatorState());
+    MapStyleEvaluationResult evalResult;
 
     context._defaultBgColor = env.defaultBgColor;
     if(env.attributeRule_defaultColor)
     {
-        sharedEvaluatorState->clear();
-        MapStyleEvaluator evaluator(sharedEvaluatorState, env.owner->style, env.owner->displayDensityFactor, env.attributeRule_defaultColor);
+        evalResult.clear();
+        MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, env.attributeRule_defaultColor);
 
         env.applyTo(evaluator);
-        evaluator.setIntegerValue(env.styleBuiltinValueDefs->INPUT_MINZOOM, zoom);
-        if(evaluator.evaluate())
-            evaluator.getIntegerValue(env.styleBuiltinValueDefs->OUTPUT_ATTR_COLOR_VALUE, context._defaultBgColor);
+        evaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
+        if(evaluator.evaluate(&evalResult))
+            evalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_ATTR_COLOR_VALUE, context._defaultBgColor);
     }
 
     context._shadowRenderingMode = env.shadowRenderingMode;
     context._shadowRenderingColor = env.shadowRenderingColor;
     if(env.attributeRule_shadowRendering)
     {
-        sharedEvaluatorState->clear();
-        MapStyleEvaluator evaluator(sharedEvaluatorState, env.owner->style, env.owner->displayDensityFactor, env.attributeRule_shadowRendering);
+        evalResult.clear();
+        MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, env.attributeRule_shadowRendering);
 
         env.applyTo(evaluator);
-        evaluator.setIntegerValue(env.styleBuiltinValueDefs->INPUT_MINZOOM, zoom);
-        if(evaluator.evaluate())
+        evaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
+        if(evaluator.evaluate(&evalResult))
         {
-            evaluator.getIntegerValue(env.styleBuiltinValueDefs->OUTPUT_ATTR_INT_VALUE, context._shadowRenderingMode);
-            evaluator.getIntegerValue(env.styleBuiltinValueDefs->OUTPUT_SHADOW_COLOR, context._shadowRenderingColor);
+            evalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_ATTR_INT_VALUE, context._shadowRenderingMode);
+            evalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_SHADOW_COLOR, context._shadowRenderingColor);
         }
     }
 
     context._polygonMinSizeToDisplay = env.polygonMinSizeToDisplay;
     if(env.attributeRule_polygonMinSizeToDisplay)
     {
-        sharedEvaluatorState->clear();
-        MapStyleEvaluator evaluator(sharedEvaluatorState, env.owner->style, env.owner->displayDensityFactor, env.attributeRule_polygonMinSizeToDisplay);
+        evalResult.clear();
+        MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, env.attributeRule_polygonMinSizeToDisplay);
         env.applyTo(evaluator);
-        evaluator.setIntegerValue(env.styleBuiltinValueDefs->INPUT_MINZOOM, zoom);
-        if(evaluator.evaluate())
+        evaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
+        if(evaluator.evaluate(&evalResult))
         {
             int polygonMinSizeToDisplay;
-            if(evaluator.getIntegerValue(env.styleBuiltinValueDefs->OUTPUT_ATTR_INT_VALUE, polygonMinSizeToDisplay))
+            if(evalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_ATTR_INT_VALUE, polygonMinSizeToDisplay))
                 context._polygonMinSizeToDisplay = polygonMinSizeToDisplay;
         }
     }
@@ -927,23 +926,23 @@ void OsmAnd::Rasterizer_P::adjustContextFromEnvironment(
     context._roadDensityZoomTile = env.roadDensityZoomTile;
     if(env.attributeRule_roadDensityZoomTile)
     {
-        sharedEvaluatorState->clear();
-        MapStyleEvaluator evaluator(sharedEvaluatorState, env.owner->style, env.owner->displayDensityFactor, env.attributeRule_roadDensityZoomTile);
+        evalResult.clear();
+        MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, env.attributeRule_roadDensityZoomTile);
         env.applyTo(evaluator);
-        evaluator.setIntegerValue(env.styleBuiltinValueDefs->INPUT_MINZOOM, zoom);
-        if(evaluator.evaluate())
-            evaluator.getIntegerValue(env.styleBuiltinValueDefs->OUTPUT_ATTR_INT_VALUE, context._roadDensityZoomTile);
+        evaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
+        if(evaluator.evaluate(&evalResult))
+            evalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_ATTR_INT_VALUE, context._roadDensityZoomTile);
     }
 
     context._roadsDensityLimitPerTile = env.roadsDensityLimitPerTile;
     if(env.attributeRule_roadsDensityLimitPerTile)
     {
-        sharedEvaluatorState->clear();
-        MapStyleEvaluator evaluator(sharedEvaluatorState, env.owner->style, env.owner->displayDensityFactor, env.attributeRule_roadsDensityLimitPerTile);
+        evalResult.clear();
+        MapStyleEvaluator evaluator(env.owner->style, env.owner->displayDensityFactor, env.attributeRule_roadsDensityLimitPerTile);
         env.applyTo(evaluator);
-        evaluator.setIntegerValue(env.styleBuiltinValueDefs->INPUT_MINZOOM, zoom);
-        if(evaluator.evaluate())
-            evaluator.getIntegerValue(env.styleBuiltinValueDefs->OUTPUT_ATTR_INT_VALUE, context._roadsDensityLimitPerTile);
+        evaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
+        if(evaluator.evaluate(&evalResult))
+            evalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_ATTR_INT_VALUE, context._roadsDensityLimitPerTile);
     }
 
     context._shadowLevelMin = env.shadowLevelMin;
@@ -1007,10 +1006,10 @@ void OsmAnd::Rasterizer_P::initializePolygonEvaluator(
     const auto& decodedType = primitive.mapObject->section->encodingDecodingRules->decodingRules[typeRuleId];
 
     env.applyTo(evaluator);
-    evaluator.setStringValue(env.styleBuiltinValueDefs->INPUT_TAG, decodedType.tag);
-    evaluator.setStringValue(env.styleBuiltinValueDefs->INPUT_VALUE, decodedType.value);
-    evaluator.setIntegerValue(env.styleBuiltinValueDefs->INPUT_MINZOOM, context._zoom);
-    evaluator.setIntegerValue(env.styleBuiltinValueDefs->INPUT_MAXZOOM, context._zoom);
+    evaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
+    evaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
+    evaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_MINZOOM, context._zoom);
+    evaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_MAXZOOM, context._zoom);
 }
 
 void OsmAnd::Rasterizer_P::initializePolylineEvaluator(
@@ -1023,11 +1022,11 @@ void OsmAnd::Rasterizer_P::initializePolylineEvaluator(
     const auto& decodedType = primitive.mapObject->section->encodingDecodingRules->decodingRules[typeRuleId];
 
     env.applyTo(evaluator);
-    evaluator.setStringValue(env.styleBuiltinValueDefs->INPUT_TAG, decodedType.tag);
-    evaluator.setStringValue(env.styleBuiltinValueDefs->INPUT_VALUE, decodedType.value);
-    evaluator.setIntegerValue(env.styleBuiltinValueDefs->INPUT_MINZOOM, context._zoom);
-    evaluator.setIntegerValue(env.styleBuiltinValueDefs->INPUT_MAXZOOM, context._zoom);
-    evaluator.setIntegerValue(env.styleBuiltinValueDefs->INPUT_LAYER, primitive.mapObject->getSimpleLayerValue());
+    evaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
+    evaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
+    evaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_MINZOOM, context._zoom);
+    evaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_MAXZOOM, context._zoom);
+    evaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_LAYER, primitive.mapObject->getSimpleLayerValue());
 }
 
 void OsmAnd::Rasterizer_P::initializePointEvaluator(
@@ -1040,10 +1039,10 @@ void OsmAnd::Rasterizer_P::initializePointEvaluator(
     const auto& decodedType = primitive.mapObject->section->encodingDecodingRules->decodingRules[typeRuleId];
 
     env.applyTo(evaluator);
-    evaluator.setStringValue(env.styleBuiltinValueDefs->INPUT_TAG, decodedType.tag);
-    evaluator.setStringValue(env.styleBuiltinValueDefs->INPUT_VALUE, decodedType.value);
-    evaluator.setIntegerValue(env.styleBuiltinValueDefs->INPUT_MINZOOM, context._zoom);
-    evaluator.setIntegerValue(env.styleBuiltinValueDefs->INPUT_MAXZOOM, context._zoom);
+    evaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
+    evaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
+    evaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_MINZOOM, context._zoom);
+    evaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_MAXZOOM, context._zoom);
 }
 
 void OsmAnd::Rasterizer_P::rasterizeMapPrimitives(
@@ -1077,7 +1076,7 @@ void OsmAnd::Rasterizer_P::rasterizeMapPrimitives(
 }
 
 bool OsmAnd::Rasterizer_P::updatePaint(
-    const MapStyleEvaluator& evaluator, const PaintValuesSet valueSetSelector, const bool isArea )
+    const MapStyleEvaluationResult& evalResult, const PaintValuesSet valueSetSelector, const bool isArea )
 {
     bool ok = true;
 
@@ -1130,7 +1129,7 @@ bool OsmAnd::Rasterizer_P::updatePaint(
     else
     {
         float stroke;
-        ok = evaluator.getFloatValue(valueDefId_strokeWidth, stroke);
+        ok = evalResult.getFloatValue(valueDefId_strokeWidth, stroke);
         if(!ok || stroke <= 0.0f)
             return false;
 
@@ -1141,7 +1140,7 @@ bool OsmAnd::Rasterizer_P::updatePaint(
         _mapPaint.setStrokeWidth(stroke);
 
         QString cap;
-        ok = evaluator.getStringValue(valueDefId_cap, cap);
+        ok = evalResult.getStringValue(valueDefId_cap, cap);
         if (!ok || cap.isEmpty() || cap == QLatin1String("BUTT"))
             _mapPaint.setStrokeCap(SkPaint::kButt_Cap);
         else if (cap == QLatin1String("ROUND"))
@@ -1152,7 +1151,7 @@ bool OsmAnd::Rasterizer_P::updatePaint(
             _mapPaint.setStrokeCap(SkPaint::kButt_Cap);
 
         QString encodedPathEffect;
-        ok = evaluator.getStringValue(valueDefId_pathEffect, encodedPathEffect);
+        ok = evalResult.getStringValue(valueDefId_pathEffect, encodedPathEffect);
         if(!ok || encodedPathEffect.isEmpty())
         {
             _mapPaint.setPathEffect(nullptr);
@@ -1168,7 +1167,7 @@ bool OsmAnd::Rasterizer_P::updatePaint(
     }
 
     SkColor color;
-    ok = evaluator.getIntegerValue(valueDefId_color, color);
+    ok = evalResult.getIntegerValue(valueDefId_color, color);
     if(!ok || !color)
         return false;
     _mapPaint.setColor(color);
@@ -1176,7 +1175,7 @@ bool OsmAnd::Rasterizer_P::updatePaint(
     if (valueSetSelector == PaintValuesSet::Set_0)
     {
         QString shader;
-        ok = evaluator.getStringValue(env.styleBuiltinValueDefs->OUTPUT_SHADER, shader);
+        ok = evalResult.getStringValue(env.styleBuiltinValueDefs->id_OUTPUT_SHADER, shader);
         if(ok && !shader.isEmpty())
         {
             SkBitmapProcShader* shaderObj = nullptr;
@@ -1192,9 +1191,9 @@ bool OsmAnd::Rasterizer_P::updatePaint(
     if (context._shadowRenderingMode == 1 && valueSetSelector == PaintValuesSet::Set_0)
     {
         int shadowColor;
-        ok = evaluator.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_SHADOW_COLOR, shadowColor);
+        ok = evalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_SHADOW_COLOR, shadowColor);
         int shadowRadius;
-        evaluator.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_SHADOW_RADIUS, shadowRadius);
+        evalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_SHADOW_RADIUS, shadowRadius);
         if(!ok || shadowColor == 0)
             shadowColor = context._shadowRenderingColor;
         if(shadowColor == 0)
@@ -1215,8 +1214,7 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
     assert(primitive.mapObject->isClosedFigure());
     assert(primitive.mapObject->isClosedFigure(true));
 
-    MapStyleEvaluator evaluator(primitive.evaluatorState, env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Polygon, primitive.mapObject);
-    if(!updatePaint(evaluator, PaintValuesSet::Set_0, true))
+    if(!updatePaint(*primitive.evaluationResult, PaintValuesSet::Set_0, true))
         return;
 
     SkPath path;
@@ -1299,7 +1297,7 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
     }
 
     canvas.drawPath(path, _mapPaint);
-    if(updatePaint(evaluator, PaintValuesSet::Set_1, false))
+    if(updatePaint(*primitive.evaluationResult, PaintValuesSet::Set_1, false))
         canvas.drawPath(path, _mapPaint);
 }
 
@@ -1309,19 +1307,18 @@ void OsmAnd::Rasterizer_P::rasterizePolyline(
 {
     assert(primitive.mapObject->_points31.size() >= 2);
 
-    MapStyleEvaluator evaluator(primitive.evaluatorState, env.owner->style, env.owner->displayDensityFactor, MapStyleRulesetType::Polyline, primitive.mapObject);
-    if(!updatePaint(evaluator, PaintValuesSet::Set_0, false))
+    if(!updatePaint(*primitive.evaluationResult, PaintValuesSet::Set_0, false))
         return;
 
     bool ok;
 
     int shadowColor;
-    ok = evaluator.getIntegerValue(env.styleBuiltinValueDefs->OUTPUT_SHADOW_COLOR, shadowColor);
+    ok = primitive.evaluationResult->getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_SHADOW_COLOR, shadowColor);
     if(!ok || shadowColor == 0)
         shadowColor = context._shadowRenderingColor;
 
     int shadowRadius;
-    ok = evaluator.getIntegerValue(env.styleBuiltinValueDefs->OUTPUT_SHADOW_RADIUS, shadowRadius);
+    ok = primitive.evaluationResult->getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_SHADOW_RADIUS, shadowRadius);
     if(drawOnlyShadow && (!ok || shadowRadius == 0))
         return;
 
@@ -1396,24 +1393,24 @@ void OsmAnd::Rasterizer_P::rasterizePolyline(
         }
         else
         {
-            if(updatePaint(evaluator, PaintValuesSet::Set_minus2, false))
+            if(updatePaint(*primitive.evaluationResult, PaintValuesSet::Set_minus2, false))
             {
                 canvas.drawPath(path, _mapPaint);
             }
-            if(updatePaint(evaluator, PaintValuesSet::Set_minus1, false))
+            if(updatePaint(*primitive.evaluationResult, PaintValuesSet::Set_minus1, false))
             {
                 canvas.drawPath(path, _mapPaint);
             }
-            if(updatePaint(evaluator, PaintValuesSet::Set_0, false))
+            if(updatePaint(*primitive.evaluationResult, PaintValuesSet::Set_0, false))
             {
                 canvas.drawPath(path, _mapPaint);
             }
             canvas.drawPath(path, _mapPaint);
-            if(updatePaint(evaluator, PaintValuesSet::Set_1, false))
+            if(updatePaint(*primitive.evaluationResult, PaintValuesSet::Set_1, false))
             {
                 canvas.drawPath(path, _mapPaint);
             }
-            if(updatePaint(evaluator, PaintValuesSet::Set_3, false))
+            if(updatePaint(*primitive.evaluationResult, PaintValuesSet::Set_3, false))
             {
                 canvas.drawPath(path, _mapPaint);
             }

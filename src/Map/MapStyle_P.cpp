@@ -545,14 +545,14 @@ const QMap< uint64_t, std::shared_ptr<OsmAnd::MapStyleRule> >& OsmAnd::MapStyle_
 bool OsmAnd::MapStyle_P::registerRule( MapStyleRulesetType type, const std::shared_ptr<MapStyleRule>& rule )
 {
     std::shared_ptr<const MapStyleValue> tagData;
-    if(!rule->getAttribute(_builtinValueDefs->INPUT_TAG->name, tagData))
+    if(!rule->getAttribute(_builtinValueDefs->INPUT_TAG, tagData))
     {
         OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Attribute tag should be specified for root filter");
         return false;
     }
 
     std::shared_ptr<const MapStyleValue> valueData;
-    if(!rule->getAttribute(_builtinValueDefs->INPUT_VALUE->name, valueData))
+    if(!rule->getAttribute(_builtinValueDefs->INPUT_VALUE, valueData))
     {
         OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Attribute tag should be specified for root filter");
         return false;
@@ -577,7 +577,7 @@ bool OsmAnd::MapStyle_P::registerRule( MapStyleRulesetType type, const std::shar
 
 std::shared_ptr<OsmAnd::MapStyleRule> OsmAnd::MapStyle_P::createTagValueRootWrapperRule( uint64_t id, const std::shared_ptr<MapStyleRule>& rule )
 {
-    if(rule->_d->_valuesByRef.size() <= 2)
+    if(rule->_d->_values.size() <= 2)
         return rule;
 
     QHash< QString, QString > attributes;

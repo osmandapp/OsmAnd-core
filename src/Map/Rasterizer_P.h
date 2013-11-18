@@ -34,13 +34,14 @@
 #include <SkPaint.h>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/MapTypes.h>
+#include <CommonTypes.h>
+#include <MapTypes.h>
+#include <MapStyleEvaluationResult.h>
 
 namespace OsmAnd {
 
     class MapStyleEvaluator;
-    class MapStyleEvaluatorState;
+    class MapStyleEvaluator_P;
     class RasterizerEnvironment_P;
     class RasterizerContext_P;
     class RasterizedSymbol;
@@ -151,7 +152,7 @@ namespace OsmAnd {
             double zOrder;
             uint32_t typeRuleIdIndex;
             PrimitiveType objectType;
-            std::shared_ptr<MapStyleEvaluatorState> evaluatorState;
+            std::shared_ptr<MapStyleEvaluationResult> evaluationResult;
         };
 
         static void obtainPrimitives(
@@ -190,7 +191,7 @@ namespace OsmAnd {
             Set_3,
         };
         bool updatePaint(
-            const MapStyleEvaluator& evaluator, const PaintValuesSet valueSetSelector, const bool isArea);
+            const MapStyleEvaluationResult& evalResult, const PaintValuesSet valueSetSelector, const bool isArea);
 
         static void initializePolygonEvaluator(
             const RasterizerEnvironment_P& env, const RasterizerContext_P& context,

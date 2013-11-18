@@ -41,6 +41,7 @@ namespace OsmAnd {
     class MapStyleValueDefinition;
     class MapStyleRule;
     class MapStyleEvaluator;
+    class MapStyleEvaluator_P;
 
     class MapStyle;
     class MapStyle_P
@@ -118,6 +119,7 @@ namespace OsmAnd {
 
     friend class OsmAnd::MapStyle;
     friend class OsmAnd::MapStyleEvaluator;
+    friend class OsmAnd::MapStyleEvaluator_P;
     friend class OsmAnd::MapStyleRule;
     friend class OsmAnd::MapStyles_P;
     };

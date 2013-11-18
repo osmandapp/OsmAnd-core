@@ -48,6 +48,7 @@ namespace OsmAnd {
 
     class MapStyle;
     class MapStyleEvaluator;
+    class MapStyleEvaluator_P;
     class Rasterizer;
     class ObfMapSectionInfo;
 

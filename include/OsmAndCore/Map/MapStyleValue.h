@@ -36,6 +36,7 @@ namespace OsmAnd {
     class MapStyles;
     class MapStyles_P;
     class MapStyleEvaluator;
+    class MapStyleEvaluator_P;
 
     class MapStyleValueDefinition;
     class MapStyleRule;
