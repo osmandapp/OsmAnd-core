@@ -4,6 +4,7 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <QFileInfo>
 #include <QAtomicInt>
+#include <QMutex>
 
 #include "MapStyleRule.h"
 #include "Logging.h"
