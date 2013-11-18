@@ -62,8 +62,14 @@ namespace OsmAnd {
             // Time spent on Order rules evaluation
             float elapsedTimeForOrderEvaluation;
 
+            // Number of order evaluations
+            unsigned int orderEvaluations;
+
             // Time spent on Polygon rules evaluation
             float elapsedTimeForPolygonEvaluation;
+
+            // Number of polygon evaluations
+            unsigned int polygonEvaluations;
 
             // Number of obtained polygon primitives
             unsigned int polygonPrimitives;
@@ -71,11 +77,17 @@ namespace OsmAnd {
             // Time spent on Polyline rules evaluation
             float elapsedTimeForPolylineEvaluation;
 
+            // Number of polyline evaluations
+            unsigned int polylineEvaluations;
+
             // Number of obtained polyline primitives
             unsigned int polylinePrimitives;
 
             // Time spent on Point rules evaluation
             float elapsedTimeForPointEvaluation;
+
+            // Number of point evaluations
+            unsigned int pointEvaluations;
 
             // Number of obtained point primitives
             unsigned int pointPrimitives;

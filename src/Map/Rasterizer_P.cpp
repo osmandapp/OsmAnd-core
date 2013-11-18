@@ -333,6 +333,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
             {
                 const std::chrono::duration<float> orderEvaluation_elapsed = std::chrono::high_resolution_clock::now() - orderEvaluation_begin;
                 metric->elapsedTimeForOrderEvaluation += orderEvaluation_elapsed.count();
+                metric->orderEvaluations++;
             }
 
             // If evaluation failed, skip
@@ -396,6 +397,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                 {
                     const std::chrono::duration<float> polygonEvaluation_elapsed = std::chrono::high_resolution_clock::now() - polygonEvaluation_begin;
                     metric->elapsedTimeForPolygonEvaluation += polygonEvaluation_elapsed.count();
+                    metric->polygonEvaluations++;
                 }
 
                 // If evaluation failed, skip
@@ -438,6 +440,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                     {
                         const std::chrono::duration<float> pointEvaluation_elapsed = std::chrono::high_resolution_clock::now() - pointEvaluation_begin;
                         metric->elapsedTimeForPointEvaluation += pointEvaluation_elapsed.count();
+                        metric->pointEvaluations++;
                     }
                     
                     // Point evaluation is a bit special, it's success only indicates that point has an icon
@@ -492,6 +495,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                 {
                     const std::chrono::duration<float> polylineEvaluation_elapsed = std::chrono::high_resolution_clock::now() - polylineEvaluation_begin;
                     metric->elapsedTimeForPolylineEvaluation += polylineEvaluation_elapsed.count();
+                    metric->polylineEvaluations++;
                 }
 
                 // If evaluation failed, skip
@@ -535,6 +539,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                 {
                     const std::chrono::duration<float> pointEvaluation_elapsed = std::chrono::high_resolution_clock::now() - pointEvaluation_begin;
                     metric->elapsedTimeForPointEvaluation += pointEvaluation_elapsed.count();
+                    metric->pointEvaluations++;
                 }
 
                 // Point evaluation is a bit special, it's success only indicates that point has an icon

@@ -238,11 +238,19 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
         "\t - elapsedTimeForCombiningObjects = %fs\n"
         "\t - elapsedTimeForObtainingPrimitives = %fs\n"
         "\t - elapsedTimeForOrderEvaluation = %fs\n"
+        "\t - orderEvaluations = %d\n"
+        "\t - average time per 1K order evaluations = %fms\n"
         "\t - elapsedTimeForPolygonEvaluation = %fs\n"
+        "\t - polygonEvaluations = %d\n"
+        "\t - average time per 1K polygon evaluations = %fms\n"
         "\t - polygonPrimitives = %d\n"
         "\t - elapsedTimeForPolylineEvaluation = %fs\n"
+        "\t - polylineEvaluations = %d\n"
+        "\t - average time per 1K polyline evaluations = %fms\n"
         "\t - polylinePrimitives = %d\n"
         "\t - elapsedTimeForPointEvaluation = %fs\n"
+        "\t - pointEvaluations = %d\n"
+        "\t - average time per 1K point evaluations = %fms\n"
         "\t - pointPrimitives = %d\n"
         "\t - elapsedTimeForObtainingPrimitivesSymbols = %fs",
         mapObjects.size(), mapObjects.size() - sharedMapObjects.size(), sharedMapObjects.size(),
@@ -271,11 +279,19 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
         dataProcess_metric.elapsedTimeForCombiningObjects,
         dataProcess_metric.elapsedTimeForObtainingPrimitives,
         dataProcess_metric.elapsedTimeForOrderEvaluation,
+        dataProcess_metric.orderEvaluations,
+        (dataProcess_metric.elapsedTimeForOrderEvaluation * 1000.0f / static_cast<float>(dataProcess_metric.orderEvaluations)) * 1000.0f,
         dataProcess_metric.elapsedTimeForPolygonEvaluation,
+        dataProcess_metric.polygonEvaluations,
+        (dataProcess_metric.elapsedTimeForPolygonEvaluation * 1000.0f / static_cast<float>(dataProcess_metric.polygonEvaluations)) * 1000.0f,
         dataProcess_metric.polygonPrimitives,
         dataProcess_metric.elapsedTimeForPolylineEvaluation,
+        dataProcess_metric.polylineEvaluations,
+        (dataProcess_metric.elapsedTimeForPolylineEvaluation * 1000.0f / static_cast<float>(dataProcess_metric.polylineEvaluations)) * 1000.0f,
         dataProcess_metric.polylinePrimitives,
         dataProcess_metric.elapsedTimeForPointEvaluation,
+        dataProcess_metric.pointEvaluations,
+        (dataProcess_metric.elapsedTimeForPointEvaluation * 1000.0f / static_cast<float>(dataProcess_metric.pointEvaluations)) * 1000.0f,
         dataProcess_metric.pointPrimitives,
         dataProcess_metric.elapsedTimeForObtainingPrimitivesSymbols);
 #endif
