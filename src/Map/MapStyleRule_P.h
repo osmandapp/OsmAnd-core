@@ -32,6 +32,7 @@
 #include <QList>
 
 #include <OsmAndCore.h>
+#include <MapStyleValue.h>
 
 namespace OsmAnd {
 
@@ -39,7 +40,6 @@ namespace OsmAnd {
     class MapStyleEvaluator;
     class MapStyleEvaluator_P;
     class MapStyleValueDefinition;
-    struct MapStyleValue;
 
     class MapStyleRule;
     class MapStyleRule_P
@@ -52,7 +52,7 @@ namespace OsmAnd {
 
         QHash< QString, std::shared_ptr<const MapStyleValueDefinition> > _resolvedValueDefinitions;
 
-        QHash< std::shared_ptr<const MapStyleValueDefinition>, std::shared_ptr<const MapStyleValue> > _values;
+        QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > _values;
         QList< std::shared_ptr<MapStyleRule> > _ifElseChildren;
         QList< std::shared_ptr<MapStyleRule> > _ifChildren;
     public:

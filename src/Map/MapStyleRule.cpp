@@ -29,35 +29,35 @@ OsmAnd::MapStyleRule::MapStyleRule(MapStyle* owner_, const QHash< QString, QStri
         // Store resolved value definition
         _d->_resolvedValueDefinitions.insert(key, valueDef);
 
-        std::shared_ptr<MapStyleValue> parsedValue(new MapStyleValue());
+        MapStyleValue parsedValue;
         switch (valueDef->dataType)
         {
         case MapStyleValueDataType::Boolean:
-            parsedValue->asSimple.asInt = (value == QLatin1String("true")) ? 1 : 0;
+            parsedValue.asSimple.asInt = (value == QLatin1String("true")) ? 1 : 0;
             break;
         case MapStyleValueDataType::Integer:
             {
                 if(valueDef->isComplex)
                 {
-                    parsedValue->isComplex = true;
+                    parsedValue.isComplex = true;
                     if(!value.contains(':'))
                     {
-                        parsedValue->asComplex.asInt.dip = Utilities::parseArbitraryInt(value, -1);
-                        parsedValue->asComplex.asInt.px = 0.0;
+                        parsedValue.asComplex.asInt.dip = Utilities::parseArbitraryInt(value, -1);
+                        parsedValue.asComplex.asInt.px = 0.0;
                     }
                     else
                     {
                         // 'dip:px' format
                         const auto& complexValue = value.split(':', QString::KeepEmptyParts);
 
-                        parsedValue->asComplex.asInt.dip = Utilities::parseArbitraryInt(complexValue[0], 0);
-                        parsedValue->asComplex.asInt.px = Utilities::parseArbitraryInt(complexValue[1], 0);
+                        parsedValue.asComplex.asInt.dip = Utilities::parseArbitraryInt(complexValue[0], 0);
+                        parsedValue.asComplex.asInt.px = Utilities::parseArbitraryInt(complexValue[1], 0);
                     }
                 }
                 else
                 {
                     assert(!value.contains(':'));
-                    parsedValue->asSimple.asInt = Utilities::parseArbitraryInt(value, -1);
+                    parsedValue.asSimple.asInt = Utilities::parseArbitraryInt(value, -1);
                 }
             }
             break;
@@ -65,37 +65,37 @@ OsmAnd::MapStyleRule::MapStyleRule(MapStyle* owner_, const QHash< QString, QStri
             {
                 if(valueDef->isComplex)
                 {
-                    parsedValue->isComplex = true;
+                    parsedValue.isComplex = true;
                     if(!value.contains(':'))
                     {
-                        parsedValue->asComplex.asFloat.dip = Utilities::parseArbitraryFloat(value, -1.0f);
-                        parsedValue->asComplex.asFloat.px = 0.0f;
+                        parsedValue.asComplex.asFloat.dip = Utilities::parseArbitraryFloat(value, -1.0f);
+                        parsedValue.asComplex.asFloat.px = 0.0f;
                     }
                     else
                     {
                         // 'dip:px' format
                         const auto& complexValue = value.split(':', QString::KeepEmptyParts);
 
-                        parsedValue->asComplex.asFloat.dip = Utilities::parseArbitraryFloat(complexValue[0], 0);
-                        parsedValue->asComplex.asFloat.px = Utilities::parseArbitraryFloat(complexValue[1], 0);
+                        parsedValue.asComplex.asFloat.dip = Utilities::parseArbitraryFloat(complexValue[0], 0);
+                        parsedValue.asComplex.asFloat.px = Utilities::parseArbitraryFloat(complexValue[1], 0);
                     }
                 }
                 else
                 {
                     assert(!value.contains(':'));
-                    parsedValue->asSimple.asFloat = Utilities::parseArbitraryFloat(value, -1.0f);
+                    parsedValue.asSimple.asFloat = Utilities::parseArbitraryFloat(value, -1.0f);
                 }
             }
             break;
         case MapStyleValueDataType::String:
-            parsedValue->asSimple.asUInt = owner->_d->lookupStringId(value);
+            parsedValue.asSimple.asUInt = owner->_d->lookupStringId(value);
             break;
         case MapStyleValueDataType::Color:
             {
                 assert(value[0] == '#');
-                parsedValue->asSimple.asUInt = value.mid(1).toUInt(nullptr, 16);
+                parsedValue.asSimple.asUInt = value.mid(1).toUInt(nullptr, 16);
                 if(value.size() <= 7)
-                    parsedValue->asSimple.asUInt |= 0xFF000000;
+                    parsedValue.asSimple.asUInt |= 0xFF000000;
             }
             break;
         }
@@ -108,7 +108,7 @@ OsmAnd::MapStyleRule::~MapStyleRule()
 {
 }
 
-bool OsmAnd::MapStyleRule::getAttribute(const std::shared_ptr<const MapStyleValueDefinition>& key, std::shared_ptr<const MapStyleValue>& value) const
+bool OsmAnd::MapStyleRule::getAttribute(const std::shared_ptr<const MapStyleValueDefinition>& key, MapStyleValue& value) const
 {
     auto itValue = _d->_values.constFind(key);
     if(itValue == _d->_values.cend())
@@ -125,7 +125,7 @@ void OsmAnd::MapStyleRule::dump( const QString& prefix /*= QString()*/ ) const
     for(auto itValueEntry = _d->_values.cbegin(); itValueEntry != _d->_values.cend(); ++itValueEntry)
     {
         const auto& valueDef = itValueEntry.key();
-        const auto& value = *itValueEntry.value();
+        const auto& value = *itValueEntry;
 
         QString strValue;
         switch (valueDef->dataType)

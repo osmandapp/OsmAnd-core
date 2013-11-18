@@ -51,7 +51,7 @@ namespace OsmAnd {
     protected:
         MapStyleRule(MapStyle* owner, const QHash< QString, QString >& attributes);
 
-        bool getAttribute(const std::shared_ptr<const MapStyleValueDefinition>& key, std::shared_ptr<const MapStyleValue>& value) const;
+        bool getAttribute(const std::shared_ptr<const MapStyleValueDefinition>& key, MapStyleValue& value) const;
     public:
         virtual ~MapStyleRule();
 
