@@ -62,8 +62,14 @@ namespace OsmAnd {
         void setFloatValue(const int valueDefId, const float value);
         void setStringValue(const int valueDefId, const QString& value);
 
-        bool evaluate(const std::shared_ptr<const Model::MapObject>& mapObject, const MapStyleRulesetType ruleset, MapStyleEvaluationResult* const outResultStorage = nullptr, bool evaluateChildren = true);
-        bool evaluate(const std::shared_ptr<const MapStyleRule>& singleRule, MapStyleEvaluationResult* const outResultStorage = nullptr, bool evaluateChildren = true);
+        bool evaluate(
+            const std::shared_ptr<const Model::MapObject>& mapObject, const MapStyleRulesetType ruleset,
+            MapStyleEvaluationResult* const outResultStorage = nullptr,
+            bool evaluateChildren = true);
+        bool evaluate(
+            const std::shared_ptr<const MapStyleRule>& singleRule,
+            MapStyleEvaluationResult* const outResultStorage = nullptr,
+            bool evaluateChildren = true);
 
         void dump(bool input = true, bool output = true, const QString& prefix = QString()) const;
     };

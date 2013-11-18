@@ -24,8 +24,7 @@ OsmAnd::MapStyleEvaluator_P::~MapStyleEvaluator_P()
 }
 
 bool OsmAnd::MapStyleEvaluator_P::evaluate(
-    const std::shared_ptr<const Model::MapObject>& mapObject,
-    const MapStyleRulesetType ruleset,
+    const std::shared_ptr<const Model::MapObject>& mapObject, const MapStyleRulesetType ruleset,
     MapStyleEvaluationResult* const outResultStorage,
     bool evaluateChildren)
 {
@@ -48,7 +47,10 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
     return false;
 }
 
-bool OsmAnd::MapStyleEvaluator_P::evaluate(const std::shared_ptr<const MapStyleRule>& singleRule, MapStyleEvaluationResult* const outResultStorage, bool evaluateChildren)
+bool OsmAnd::MapStyleEvaluator_P::evaluate(
+    const std::shared_ptr<const MapStyleRule>& singleRule,
+    MapStyleEvaluationResult* const outResultStorage,
+    bool evaluateChildren)
 {
     return evaluate(nullptr, singleRule, outResultStorage, evaluateChildren);
 }
@@ -57,7 +59,8 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
     const std::shared_ptr<const Model::MapObject>& mapObject,
     const QMap< uint64_t, std::shared_ptr<MapStyleRule> >& rules,
     const uint32_t tagKey, const uint32_t valueKey,
-    MapStyleEvaluationResult* const outResultStorage, bool evaluateChildren)
+    MapStyleEvaluationResult* const outResultStorage,
+    bool evaluateChildren)
 {
     _inputValues[_builtinValueDefs->id_INPUT_TAG].asUInt = tagKey;
     _inputValues[_builtinValueDefs->id_INPUT_VALUE].asUInt = valueKey;
@@ -67,11 +70,13 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
     if(itRule == rules.cend())
         return false;
 
-    const auto evaluationResult = evaluate(mapObject.get(), *itRule, outResultStorage, evaluateChildren);
-    return evaluationResult;
+    return evaluate(mapObject.get(), *itRule, outResultStorage, evaluateChildren);
 }
 
-bool OsmAnd::MapStyleEvaluator_P::evaluate(const Model::MapObject* const mapObject, const std::shared_ptr<const MapStyleRule>& rule, MapStyleEvaluationResult* const outResultStorage, bool evaluateChildren)
+bool OsmAnd::MapStyleEvaluator_P::evaluate(
+    const Model::MapObject* const mapObject, const std::shared_ptr<const MapStyleRule>& rule,
+    MapStyleEvaluationResult* const outResultStorage,
+    bool evaluateChildren)
 {
     // Check all values of a rule until all are checked.
     for(auto itRuleValueEntry = rule->_d->_values.cbegin(); itRuleValueEntry != rule->_d->_values.cend(); ++itRuleValueEntry)
@@ -179,7 +184,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(const Model::MapObject* const mapObje
     {
         for(auto itChild = rule->_d->_ifElseChildren.cbegin(); itChild != rule->_d->_ifElseChildren.cend(); ++itChild)
         {
-            auto evaluationResult = evaluate(mapObject, *itChild, outResultStorage, true);
+            const auto evaluationResult = evaluate(mapObject, *itChild, outResultStorage, true);
             if(evaluationResult)
                 break;
         }
