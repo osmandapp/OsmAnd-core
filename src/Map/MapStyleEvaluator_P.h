@@ -34,8 +34,12 @@
 
 namespace OsmAnd {
 
+    class MapStyleRule;
     class MapStyleEvaluationResult;
     class MapStyleBuiltinValueDefinitions;
+    namespace Model {
+        class MapObject;
+    } // namespace Model
     
     class MapStyleEvaluator;
     class MapStyleEvaluator_P
@@ -62,11 +66,20 @@ namespace OsmAnd {
 
         QMap<int, InputValue> _inputValues;
 
-        bool evaluate(const uint32_t tagKey, const uint32_t valueKey, MapStyleEvaluationResult* const outResultStorage, bool evaluateChildren);
-        bool evaluate(const std::shared_ptr<const MapStyleRule>& rule, MapStyleEvaluationResult* const outResultStorage, bool evaluateChildren);
-        bool evaluate(MapStyleEvaluationResult* const outResultStorage, bool evaluateChildren);
+        bool evaluate(
+            const Model::MapObject* const mapObject,
+            const std::shared_ptr<const MapStyleRule>& singleRule,
+            MapStyleEvaluationResult* const outResultStorage, bool evaluateChildren);
+        bool evaluate(
+            const std::shared_ptr<const Model::MapObject>& mapObject,
+            const QMap< uint64_t, std::shared_ptr<MapStyleRule> >& rules,
+            const uint32_t tagKey, const uint32_t valueKey,
+            MapStyleEvaluationResult* const outResultStorage, bool evaluateChildren);
     public:
         ~MapStyleEvaluator_P();
+
+        bool evaluate(const std::shared_ptr<const Model::MapObject>& mapObject, const MapStyleRulesetType ruleset, MapStyleEvaluationResult* const outResultStorage, bool evaluateChildren);
+        bool evaluate(const std::shared_ptr<const MapStyleRule>& singleRule, MapStyleEvaluationResult* const outResultStorage, bool evaluateChildren);
 
     friend class OsmAnd::MapStyleEvaluator;
     };

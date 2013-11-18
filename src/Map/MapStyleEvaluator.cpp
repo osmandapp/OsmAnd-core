@@ -7,29 +7,10 @@
 #include "MapStyle_P.h"
 #include "Logging.h"
 
-OsmAnd::MapStyleEvaluator::MapStyleEvaluator(
-    const std::shared_ptr<const MapStyle>& style_,
-    const float displayDensityFactor_,
-    MapStyleRulesetType ruleset_,
-    const std::shared_ptr<const OsmAnd::Model::MapObject>& mapObject_ /*= std::shared_ptr<const OsmAnd::Model::MapObject>()*/)
+OsmAnd::MapStyleEvaluator::MapStyleEvaluator(const std::shared_ptr<const MapStyle>& style_, const float displayDensityFactor_)
     : _d(new MapStyleEvaluator_P(this))
     , style(style_)
     , displayDensityFactor(displayDensityFactor_)
-    , mapObject(mapObject_)
-    , ruleset(ruleset_)
-{
-}
-
-OsmAnd::MapStyleEvaluator::MapStyleEvaluator(
-    const std::shared_ptr<const MapStyle>& style_,
-    const float displayDensityFactor_,
-    const std::shared_ptr<const MapStyleRule>& singleRule_)
-    : _d(new MapStyleEvaluator_P(this))
-    , style(style_)
-    , displayDensityFactor(displayDensityFactor_)
-    , singleRule(singleRule_)
-    , mapObject()
-    , ruleset(MapStyleRulesetType::Invalid)
 {
 }
 
@@ -74,9 +55,21 @@ void OsmAnd::MapStyleEvaluator::setStringValue(const int valueDefId, const QStri
         entry.asUInt = std::numeric_limits<uint32_t>::max();
 }
 
-bool OsmAnd::MapStyleEvaluator::evaluate(MapStyleEvaluationResult* const outResultStorage /*= nullptr*/, bool evaluateChildren /*=true*/)
+bool OsmAnd::MapStyleEvaluator::evaluate(
+    const std::shared_ptr<const Model::MapObject>& mapObject,
+    const MapStyleRulesetType ruleset,
+    MapStyleEvaluationResult* const outResultStorage /*= nullptr*/,
+    bool evaluateChildren /*= true*/)
 {
-    return _d->evaluate(outResultStorage, evaluateChildren);
+    return _d->evaluate(mapObject, ruleset, outResultStorage, evaluateChildren);
+}
+
+bool OsmAnd::MapStyleEvaluator::evaluate(
+    const std::shared_ptr<const MapStyleRule>& singleRule,
+    MapStyleEvaluationResult* const outResultStorage /*= nullptr*/,
+    bool evaluateChildren /*=true*/)
+{
+    return _d->evaluate(singleRule, outResultStorage, evaluateChildren);
 }
 
 void OsmAnd::MapStyleEvaluator::dump( bool input /*= true*/, bool output /*= true*/, const QString& prefix /*= QString()*/ ) const

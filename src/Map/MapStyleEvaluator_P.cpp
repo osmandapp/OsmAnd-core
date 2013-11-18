@@ -23,53 +23,55 @@ OsmAnd::MapStyleEvaluator_P::~MapStyleEvaluator_P()
 {
 }
 
-bool OsmAnd::MapStyleEvaluator_P::evaluate(MapStyleEvaluationResult* const outResultStorage, bool evaluateChildren)
+bool OsmAnd::MapStyleEvaluator_P::evaluate(
+    const std::shared_ptr<const Model::MapObject>& mapObject,
+    const MapStyleRulesetType ruleset,
+    MapStyleEvaluationResult* const outResultStorage,
+    bool evaluateChildren)
 {
-    if(owner->singleRule)
-    {
-        auto evaluationResult = evaluate(owner->singleRule, outResultStorage, evaluateChildren);
-        if(evaluationResult)
-            return true;
+    const auto tagKey = _inputValues[_builtinValueDefs->id_INPUT_TAG].asUInt;
+    const auto valueKey = _inputValues[_builtinValueDefs->id_INPUT_VALUE].asUInt;
+    const auto& rules = owner->style->_d->obtainRules(ruleset);
 
-        return false;
-    }
-    else
-    {
-        const auto tagKey = _inputValues[_builtinValueDefs->id_INPUT_TAG].asUInt;
-        const auto valueKey = _inputValues[_builtinValueDefs->id_INPUT_VALUE].asUInt;
+    auto evaluationResult = evaluate(mapObject, rules, tagKey, valueKey, outResultStorage, evaluateChildren);
+    if(evaluationResult)
+        return true;
 
-        auto evaluationResult = evaluate(tagKey, valueKey, outResultStorage, evaluateChildren);
-        if(evaluationResult)
-            return true;
+    evaluationResult = evaluate(mapObject, rules, tagKey, 0, outResultStorage, evaluateChildren);
+    if(evaluationResult)
+        return true;
 
-        evaluationResult = evaluate(tagKey, 0, outResultStorage, evaluateChildren);
-        if(evaluationResult)
-            return true;
+    evaluationResult = evaluate(mapObject, rules, 0, 0, outResultStorage, evaluateChildren);
+    if(evaluationResult)
+        return true;
 
-        evaluationResult = evaluate(0, 0, outResultStorage, evaluateChildren);
-        if(evaluationResult)
-            return true;
-
-        return false;
-    }
+    return false;
 }
 
-bool OsmAnd::MapStyleEvaluator_P::evaluate(const uint32_t tagKey, const uint32_t valueKey, MapStyleEvaluationResult* const outResultStorage, bool evaluateChildren)
+bool OsmAnd::MapStyleEvaluator_P::evaluate(const std::shared_ptr<const MapStyleRule>& singleRule, MapStyleEvaluationResult* const outResultStorage, bool evaluateChildren)
+{
+    return evaluate(nullptr, singleRule, outResultStorage, evaluateChildren);
+}
+
+bool OsmAnd::MapStyleEvaluator_P::evaluate(
+    const std::shared_ptr<const Model::MapObject>& mapObject,
+    const QMap< uint64_t, std::shared_ptr<MapStyleRule> >& rules,
+    const uint32_t tagKey, const uint32_t valueKey,
+    MapStyleEvaluationResult* const outResultStorage, bool evaluateChildren)
 {
     _inputValues[_builtinValueDefs->id_INPUT_TAG].asUInt = tagKey;
     _inputValues[_builtinValueDefs->id_INPUT_VALUE].asUInt = valueKey;
 
-    const auto& rules = owner->style->_d->obtainRules(owner->ruleset);
-    uint64_t ruleId = MapStyle_P::encodeRuleId(tagKey, valueKey);
+    const auto ruleId = MapStyle_P::encodeRuleId(tagKey, valueKey);
     auto itRule = rules.constFind(ruleId);
     if(itRule == rules.cend())
         return false;
 
-    const auto evaluationResult = evaluate(*itRule, outResultStorage, evaluateChildren);
+    const auto evaluationResult = evaluate(mapObject.get(), *itRule, outResultStorage, evaluateChildren);
     return evaluationResult;
 }
 
-bool OsmAnd::MapStyleEvaluator_P::evaluate(const std::shared_ptr<const MapStyleRule>& rule, MapStyleEvaluationResult* const outResultStorage, bool evaluateChildren)
+bool OsmAnd::MapStyleEvaluator_P::evaluate(const Model::MapObject* const mapObject, const std::shared_ptr<const MapStyleRule>& rule, MapStyleEvaluationResult* const outResultStorage, bool evaluateChildren)
 {
     // Check all values of a rule until all are checked.
     for(auto itRuleValueEntry = rule->_d->_values.cbegin(); itRuleValueEntry != rule->_d->_values.cend(); ++itRuleValueEntry)
@@ -96,7 +98,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(const std::shared_ptr<const MapStyleR
         }
         else if(valueDef->id == _builtinValueDefs->id_INPUT_ADDITIONAL)
         {
-            if(!owner->mapObject)
+            if(!mapObject)
                 evaluationResult = true;
             else
             {
@@ -107,7 +109,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(const std::shared_ptr<const MapStyleR
                 {
                     const auto& tag = strValue.mid(0, equalSignIdx);
                     const auto& value = strValue.mid(equalSignIdx + 1);
-                    evaluationResult = owner->mapObject->containsTypeSlow(tag, value, true);
+                    evaluationResult = mapObject->containsTypeSlow(tag, value, true);
                 }
                 else
                     evaluationResult = false;
@@ -177,14 +179,14 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(const std::shared_ptr<const MapStyleR
     {
         for(auto itChild = rule->_d->_ifElseChildren.cbegin(); itChild != rule->_d->_ifElseChildren.cend(); ++itChild)
         {
-            auto evaluationResult = evaluate(*itChild, outResultStorage, true);
+            auto evaluationResult = evaluate(mapObject, *itChild, outResultStorage, true);
             if(evaluationResult)
                 break;
         }
 
         for(auto itChild = rule->_d->_ifChildren.cbegin(); itChild != rule->_d->_ifChildren.cend(); ++itChild)
         {
-            evaluate(*itChild, outResultStorage, true);
+            evaluate(mapObject, *itChild, outResultStorage, true);
         }
     }
 

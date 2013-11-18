@@ -193,16 +193,6 @@ namespace OsmAnd {
         bool updatePaint(
             const MapStyleEvaluationResult& evalResult, const PaintValuesSet valueSetSelector, const bool isArea);
 
-        static void initializePolygonEvaluator(
-            const RasterizerEnvironment_P& env, const RasterizerContext_P& context,
-            const Primitive& primitive, MapStyleEvaluator& evaluator);
-        static void initializePolylineEvaluator(
-            const RasterizerEnvironment_P& env, const RasterizerContext_P& context,
-            const Primitive& primitive, MapStyleEvaluator& evaluator);
-        static void initializePointEvaluator(
-            const RasterizerEnvironment_P& env, const RasterizerContext_P& context,
-            const Primitive& primitive, MapStyleEvaluator& evaluator);
-
         void rasterizeMapPrimitives(
             const AreaI* const destinationArea,
             SkCanvas& canvas, const QVector< Primitive >& primitives, const PrimitivesType type, const IQueryController* const controller);
