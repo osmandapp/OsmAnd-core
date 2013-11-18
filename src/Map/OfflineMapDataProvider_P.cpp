@@ -183,6 +183,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 #if defined(_DEBUG) || defined(DEBUG)
         &dataProcess_metric
 #else
+        nullptr
 #endif
     );
 
