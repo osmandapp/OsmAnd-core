@@ -5,6 +5,7 @@
 #include "ObfFile_P.h"
 
 #include "QIODeviceInputStream.h"
+#include "QFileDeviceInputStream.h"
 
 OsmAnd::ObfReader::ObfReader( const std::shared_ptr<const ObfFile>& obfFile_ )
     : _d(new ObfReader_P(this))
@@ -38,11 +39,19 @@ std::shared_ptr<OsmAnd::ObfInfo> OsmAnd::ObfReader::obtainInfo() const
         }
 
         // Create zero-copy input stream
-        auto zcis = new QIODeviceInputStream(_d->_input);
+        gpb::io::ZeroCopyInputStream* zcis = nullptr;
+        if(const auto inputAsFileDevice = std::dynamic_pointer_cast<QFileDevice>(_d->_input))
+        {
+            zcis = new QFileDeviceInputStream(inputAsFileDevice);
+        }
+        else
+        {
+            zcis = new QIODeviceInputStream(_d->_input);
+        }
         _d->_zeroCopyInputStream.reset(zcis);
 
         // Create coded input stream wrapper
-        auto cis = new gpb::io::CodedInputStream(zcis);
+        const auto cis = new gpb::io::CodedInputStream(zcis);
         cis->SetTotalBytesLimit(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
         _d->_codedInputStream.reset(cis);
     }
@@ -53,9 +62,9 @@ std::shared_ptr<OsmAnd::ObfInfo> OsmAnd::ObfReader::obtainInfo() const
 
         if(!obfFile->_d->_obfInfo)
         {
-            std::shared_ptr<ObfInfo> obfInfo(new ObfInfo());
+            const std::shared_ptr<ObfInfo> obfInfo(new ObfInfo());
             ObfReader_P::readInfo(_d, obfInfo);
-            obfFile->_d->_obfInfo = obfInfo;
+            obfFile->_d->_obfInfo = qMove(obfInfo);
         }
         _d->_obfInfo = obfFile->_d->_obfInfo;
 
@@ -63,9 +72,9 @@ std::shared_ptr<OsmAnd::ObfInfo> OsmAnd::ObfReader::obtainInfo() const
     }
     else
     {
-        std::shared_ptr<ObfInfo> obfInfo(new ObfInfo());
+        const std::shared_ptr<ObfInfo> obfInfo(new ObfInfo());
         ObfReader_P::readInfo(_d, obfInfo);
-        _d->_obfInfo = obfInfo;
+        _d->_obfInfo = qMove(obfInfo);
 
         return _d->_obfInfo;
     }

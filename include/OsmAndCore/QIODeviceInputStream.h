@@ -31,8 +31,8 @@
 #include <OsmAndCore.h>
 #include <google/protobuf/io/zero_copy_stream.h>
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     namespace gpb = google::protobuf;
 
     /**
@@ -45,6 +45,9 @@ namespace OsmAnd {
 
         //! Pointer to I/O device
         const std::shared_ptr<QIODevice> _device;
+
+        //! Device size
+        const qint64 _deviceSize;
 
         //! Buffer
         uint8_t* const _buffer;
