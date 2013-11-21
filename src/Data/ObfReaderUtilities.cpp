@@ -56,7 +56,7 @@ void OsmAnd::ObfReaderUtilities::readStringTable( gpb::io::CodedInputStream* cis
             {
                 QString value;
                 if(readQString(cis, value))
-                    stringTableOut.append(value);
+                    stringTableOut.push_back(qMove(value));
             }
             break;
         default:

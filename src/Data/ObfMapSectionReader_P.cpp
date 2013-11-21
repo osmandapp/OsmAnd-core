@@ -52,12 +52,15 @@ void OsmAnd::ObfMapSectionReader_P::read(
                 auto length = ObfReaderUtilities::readBigEndianInt(cis);
                 auto offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(length);
-                std::shared_ptr<ObfMapSectionLevel> levelRoot(new ObfMapSectionLevel());
+
+                const std::shared_ptr<ObfMapSectionLevel> levelRoot(new ObfMapSectionLevel());
                 levelRoot->_length = length;
                 levelRoot->_offset = offset;
                 readMapLevelHeader(reader, section, levelRoot);
-                section->_levels.push_back(levelRoot);
+
                 cis->PopLimit(oldLimit);
+
+                section->_levels.push_back(qMove(levelRoot));
             }
             break;
         default:
@@ -199,17 +202,18 @@ void OsmAnd::ObfMapSectionReader_P::readMapLevelTreeNodes(
             return;
         case OBF::OsmAndMapIndex_MapRootLevel::kBoxesFieldNumber:
             {
-                auto length = ObfReaderUtilities::readBigEndianInt(cis);
-                auto offset = cis->CurrentPosition();
-                auto oldLimit = cis->PushLimit(length);
+                                                                    const auto length = ObfReaderUtilities::readBigEndianInt(cis);
+                const auto offset = cis->CurrentPosition();
+                const auto oldLimit = cis->PushLimit(length);
+                
                 std::shared_ptr<ObfMapSectionLevelTreeNode> levelTree(new ObfMapSectionLevelTreeNode(level));
                 levelTree->_offset = offset;
                 levelTree->_length = length;
-
                 readTreeNode(reader, section, level->area31, levelTree);
                 
                 cis->PopLimit(oldLimit);
-                trees.push_back(levelTree);
+
+                trees.push_back(qMove(levelTree));
             }
             break;
         case OBF::OsmAndMapIndex_MapRootLevel::kBlocksFieldNumber:
@@ -424,7 +428,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                 if(!visitor || visitor(entry))
                 {
                     if(resultOut)
-                        resultOut->push_back(entry);
+                        resultOut->push_back(qMove(entry));
                 }
             }
             return;
@@ -487,7 +491,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
 
                 // Save object
                 mapObject->_foundation = tree->_foundation;
-                intermediateResult.push_back(mapObject);
+                intermediateResult.push_back(qMove(mapObject));
             }
             break;
         case OBF::MapDataBlock::kStringTableFieldNumber:
@@ -658,7 +662,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
 
                 // Preallocate memory
                 const auto probableVerticesCount = (cis->BytesUntilLimit() / 2);
-                mapObject->_innerPolygonsPoints31.push_back(QVector< PointI >(probableVerticesCount));
+                mapObject->_innerPolygonsPoints31.push_back(qMove(QVector< PointI >(probableVerticesCount)));
                 auto& polygon = mapObject->_innerPolygonsPoints31.last();
 
                 auto pPoint = polygon.data();

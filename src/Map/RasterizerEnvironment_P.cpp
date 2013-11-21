@@ -112,7 +112,7 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
             initializeOneWayPaint(paint);
             paint.setStrokeWidth(1.0f);
             paint.setPathEffect(arrowDashEffect1)->unref();
-            _oneWayPaints.push_back(paint);
+            _oneWayPaints.push_back(qMove(paint));
         }
 
         {
@@ -120,7 +120,7 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
             initializeOneWayPaint(paint);
             paint.setStrokeWidth(2.0f);
             paint.setPathEffect(arrowDashEffect2)->unref();
-            _oneWayPaints.push_back(paint);
+            _oneWayPaints.push_back(qMove(paint));
         }
 
         {
@@ -128,7 +128,7 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
             initializeOneWayPaint(paint);
             paint.setStrokeWidth(3.0f);
             paint.setPathEffect(arrowDashEffect3)->unref();
-            _oneWayPaints.push_back(paint);
+            _oneWayPaints.push_back(qMove(paint));
         }
 
         {
@@ -136,7 +136,7 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
             initializeOneWayPaint(paint);
             paint.setStrokeWidth(4.0f);
             paint.setPathEffect(arrowDashEffect4)->unref();
-            _oneWayPaints.push_back(paint);
+            _oneWayPaints.push_back(qMove(paint));
         }
     }
     
@@ -158,7 +158,7 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
             initializeOneWayPaint(paint);
             paint.setStrokeWidth(1.0f);
             paint.setPathEffect(arrowDashEffect1)->unref();
-            _reverseOneWayPaints.push_back(paint);
+            _reverseOneWayPaints.push_back(qMove(paint));
         }
 
         {
@@ -166,7 +166,7 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
             initializeOneWayPaint(paint);
             paint.setStrokeWidth(2.0f);
             paint.setPathEffect(arrowDashEffect2)->unref();
-            _reverseOneWayPaints.push_back(paint);
+            _reverseOneWayPaints.push_back(qMove(paint));
         }
 
         {
@@ -174,7 +174,7 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
             initializeOneWayPaint(paint);
             paint.setStrokeWidth(3.0f);
             paint.setPathEffect(arrowDashEffect3)->unref();
-            _reverseOneWayPaints.push_back(paint);
+            _reverseOneWayPaints.push_back(qMove(paint));
         }
 
         {
@@ -182,7 +182,7 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
             initializeOneWayPaint(paint);
             paint.setStrokeWidth(4.0f);
             paint.setPathEffect(arrowDashEffect4)->unref();
-            _reverseOneWayPaints.push_back(paint);
+            _reverseOneWayPaints.push_back(qMove(paint));
         }
     }
 }

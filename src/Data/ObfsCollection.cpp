@@ -21,7 +21,7 @@ void OsmAnd::ObfsCollection::watchDirectory( const QDir& dir, bool recursive /*=
     auto entry = new ObfsCollection_P::WatchedDirectoryEntry();
     entry->dir = dir;
     entry->recursive = recursive;
-    _d->_watchedCollection.push_back(std::shared_ptr<ObfsCollection_P::WatchEntry>(entry));
+    _d->_watchedCollection.push_back(qMove(std::shared_ptr<ObfsCollection_P::WatchEntry>(entry)));
     _d->_watchedCollectionChanged = true;
 }
 
@@ -36,7 +36,7 @@ void OsmAnd::ObfsCollection::registerExplicitFile( const QFileInfo& fileInfo )
 
     auto entry = new ObfsCollection_P::ExplicitFileEntry();
     entry->fileInfo = fileInfo;
-    _d->_watchedCollection.push_back(std::shared_ptr<ObfsCollection_P::WatchEntry>(entry));
+    _d->_watchedCollection.push_back(qMove(std::shared_ptr<ObfsCollection_P::WatchEntry>(entry)));
     _d->_watchedCollectionChanged = true;
 }
 

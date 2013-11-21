@@ -53,7 +53,7 @@ bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols( const TileId tileId, con
             rasterizedSymbol->icon,
             rasterizedSymbol->texts);
 
-        outSymbols.push_back(std::shared_ptr<const MapSymbol>(mapSymbol));
+        outSymbols.push_back(qMove(std::shared_ptr<const MapSymbol>(mapSymbol)));
     }
 
     return true;

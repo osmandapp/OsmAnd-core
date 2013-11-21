@@ -87,7 +87,7 @@ void OsmAnd::MapAnimator::animateZoomBy( const float deltaValue, const float dur
 
     {
         QMutexLocker scopedLocker(&_d->_animationsMutex);
-        _d->_animations.push_back(newAnimation);
+        _d->_animations.push_back(qMove(newAnimation));
     }
 }
 
@@ -113,7 +113,7 @@ void OsmAnd::MapAnimator::animateTargetBy( const PointI& deltaValue, const float
 
     {
         QMutexLocker scopedLocker(&_d->_animationsMutex);
-        _d->_animations.push_back(newAnimation);
+        _d->_animations.push_back(qMove(newAnimation));
     }
 }
 
@@ -132,7 +132,7 @@ void OsmAnd::MapAnimator::animateTargetBy( const PointI64& deltaValue, const flo
 
     {
         QMutexLocker scopedLocker(&_d->_animationsMutex);
-        _d->_animations.push_back(newAnimation);
+        _d->_animations.push_back(qMove(newAnimation));
     }
 }
 
@@ -160,7 +160,7 @@ void OsmAnd::MapAnimator::animateAzimuthBy( const float deltaValue, const float 
 
     {
         QMutexLocker scopedLocker(&_d->_animationsMutex);
-        _d->_animations.push_back(newAnimation);
+        _d->_animations.push_back(qMove(newAnimation));
     }
 }
 
@@ -186,7 +186,7 @@ void OsmAnd::MapAnimator::animateElevationAngleBy( const float deltaValue, const
 
     {
         QMutexLocker scopedLocker(&_d->_animationsMutex);
-        _d->_animations.push_back(newAnimation);
+        _d->_animations.push_back(qMove(newAnimation));
     }
 }
 

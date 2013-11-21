@@ -95,7 +95,7 @@ void OsmAnd::RoutePlannerContext::unloadUnusedTiles(size_t memoryTarget) {
     int loaded = 0;
     for(std::shared_ptr<RoutingSubsectionContext>  t : this->_subsectionsContexts) {
         if(t->isLoaded()) {
-            list.append(t);
+            list.push_back(t);
             loaded++;
         }
     }
@@ -163,7 +163,7 @@ void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::collectRoads( QList<
         auto routeSegment = itRouteSegment.value();
         while(routeSegment)
         {
-            auto road = routeSegment->road;
+            const auto& road = routeSegment->road;
 
             const auto isDuplicate = duplicatesRegistry && duplicatesRegistry->contains(road->id);
             if(!isDuplicate)

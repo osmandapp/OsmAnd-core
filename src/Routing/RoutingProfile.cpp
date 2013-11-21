@@ -103,7 +103,7 @@ std::shared_ptr<OsmAnd::RoutingRuleset> OsmAnd::RoutingProfile::getRuleset( Rout
 
 uint32_t OsmAnd::RoutingProfile::registerTagValueAttribute( const QString& tag, const QString& value )
 {
-    auto key = tag + "$" + value;
+    const auto key = tag + QLatin1String("$") + value;
 
     auto itId = _universalRules.constFind(key);
     if(itId != _universalRules.cend())

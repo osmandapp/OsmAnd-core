@@ -41,28 +41,34 @@ void OsmAnd::ObfRoutingSectionReader_P::read( const std::unique_ptr<ObfReader_P>
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
-                std::shared_ptr<ObfRoutingSectionInfo_P::EncodingRule> encodingRule(new ObfRoutingSectionInfo_P::EncodingRule());
+
+                const std::shared_ptr<ObfRoutingSectionInfo_P::EncodingRule> encodingRule(new ObfRoutingSectionInfo_P::EncodingRule());
                 encodingRule->_id = routeEncodingRuleId++;
                 readEncodingRule(reader, section, encodingRule);
-                while((unsigned)section->_d->_encodingRules.size() < encodingRule->_id)
-                    section->_d->_encodingRules.push_back(std::shared_ptr<ObfRoutingSectionInfo_P::EncodingRule>());
-                section->_d->_encodingRules.push_back(encodingRule);
+
                 cis->PopLimit(oldLimit);
+
+                while((unsigned)section->_d->_encodingRules.size() < encodingRule->_id)
+                    section->_d->_encodingRules.push_back(qMove(std::shared_ptr<ObfRoutingSectionInfo_P::EncodingRule>()));
+                section->_d->_encodingRules.push_back(qMove(encodingRule));
             } 
             break;
         case OBF::OsmAndRoutingIndex::kRootBoxesFieldNumber:
         case OBF::OsmAndRoutingIndex::kBasemapBoxesFieldNumber:
             {
-                std::shared_ptr<ObfRoutingSubsectionInfo> subsection(new ObfRoutingSubsectionInfo(section));
+                const std::shared_ptr<ObfRoutingSubsectionInfo> subsection(new ObfRoutingSubsectionInfo(section));
                 subsection->_length = ObfReaderUtilities::readBigEndianInt(cis);
                 subsection->_offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(subsection->_length);
+
                 readSubsectionHeader(reader, subsection, nullptr, 0);
-                if(tfn == OBF::OsmAndRoutingIndex::kRootBoxesFieldNumber)
-                    section->_subsections.push_back(subsection);
-                else
-                    section->_baseSubsections.push_back(subsection);
+
                 cis->PopLimit(oldLimit);
+
+                if(tfn == OBF::OsmAndRoutingIndex::kRootBoxesFieldNumber)
+                    section->_subsections.push_back(qMove(subsection));
+                else
+                    section->_baseSubsections.push_back(qMove(subsection));
             }
             break;
         case OBF::OsmAndRoutingIndex::kBorderBoxFieldNumber:
@@ -234,13 +240,16 @@ void OsmAnd::ObfRoutingSectionReader_P::readSubsectionHeader(
                     cis->Skip(cis->BytesUntilLimit());
                     break;
                 }
-                std::shared_ptr<ObfRoutingSubsectionInfo> childSubsection(new ObfRoutingSubsectionInfo(subsection));
+
+                const std::shared_ptr<ObfRoutingSubsectionInfo> childSubsection(new ObfRoutingSubsectionInfo(subsection));
                 childSubsection->_length = ObfReaderUtilities::readBigEndianInt(cis);
                 childSubsection->_offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(childSubsection->_length);
                 readSubsectionHeader(reader, childSubsection, subsection, depth - 1);
-                subsection->_subsections.push_back(childSubsection);
+                
                 cis->PopLimit(oldLimit);
+
+                subsection->_subsections.push_back(qMove(childSubsection));
             }
             break;
         default:
@@ -277,13 +286,15 @@ void OsmAnd::ObfRoutingSectionReader_P::readSubsectionChildrenHeaders(
                     cis->Skip(cis->BytesUntilLimit());
                     break;
                 }
-                std::shared_ptr<ObfRoutingSubsectionInfo> childSubsection(new ObfRoutingSubsectionInfo(subsection));
+                const std::shared_ptr<ObfRoutingSubsectionInfo> childSubsection(new ObfRoutingSubsectionInfo(subsection));
                 childSubsection->_length = ObfReaderUtilities::readBigEndianInt(cis);
                 childSubsection->_offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(childSubsection->_length);
                 readSubsectionHeader(reader, childSubsection, subsection, depth - 1);
-                subsection->_subsections.push_back(childSubsection);
+                
                 cis->PopLimit(oldLimit);
+
+                subsection->_subsections.push_back(qMove(childSubsection));
             }
             break;
         default:
@@ -303,7 +314,7 @@ void OsmAnd::ObfRoutingSectionReader_P::querySubsections(
 
     for(auto itSubsection = in.cbegin(); itSubsection != in.cend(); ++itSubsection)
     {
-        auto subsection = *itSubsection;
+        const auto& subsection = *itSubsection;
 
         // If section is completely outside of bbox, skip it
         if(filter && !filter->acceptsArea(subsection->_area31))
@@ -368,13 +379,13 @@ void OsmAnd::ObfRoutingSectionReader_P::readSubsectionData(
             {
                 for(auto itEntry = resultsByInternalId.cbegin(); itEntry != resultsByInternalId.cend(); ++itEntry)
                 {
-                    auto road = itEntry.value();
+                    const auto& road = itEntry.value();
 
                     // Fill names of roads from stringtable
                     for(auto itNameEntry = road->_names.begin(); itNameEntry != road->_names.end(); ++itNameEntry)
                     {
-                        auto encodedId = itNameEntry.value();
-                        uint32_t stringId = ObfReaderUtilities::decodeIntegerFromString(encodedId);
+                        const auto encodedId = itNameEntry.value();
+                        const uint32_t stringId = ObfReaderUtilities::decodeIntegerFromString(encodedId);
 
                         itNameEntry.value() = roadNamesTable[stringId];
                     }
@@ -527,12 +538,14 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
                 auto dy = subsection->_area31.top >> ShiftCoordinates;
                 while(cis->BytesUntilLimit() > 0)
                 {
-                    uint32_t x = ObfReaderUtilities::readSInt32(cis) + dx;
-                    uint32_t y = ObfReaderUtilities::readSInt32(cis) + dy;
-                    road->_points.push_back(PointI(
+                    const uint32_t x = ObfReaderUtilities::readSInt32(cis) + dx;
+                    const uint32_t y = ObfReaderUtilities::readSInt32(cis) + dy;
+
+                    road->_points.push_back(qMove(PointI(
                         x << ShiftCoordinates,
                         y << ShiftCoordinates
-                        ));
+                        )));
+
                     dx = x;
                     dy = y;
                 }
@@ -678,8 +691,11 @@ void OsmAnd::ObfRoutingSectionReader_P::readBorderBoxLinesHeaders(const std::uni
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
 
-                std::shared_ptr<ObfRoutingBorderLineHeader> line(new ObfRoutingBorderLineHeader());
+                const std::shared_ptr<ObfRoutingBorderLineHeader> line(new ObfRoutingBorderLineHeader());
                 readBorderLineHeader(reader, line, offset);
+
+                cis->PopLimit(oldLimit);
+
                 bool isValid = true;
                 if(filter)
                 {
@@ -696,10 +712,9 @@ void OsmAnd::ObfRoutingSectionReader_P::readBorderBoxLinesHeaders(const std::uni
                      if(!visitor || (visitor && visitor(line)))
                      {
                          if(resultOut)
-                             resultOut->push_back(line);
+                             resultOut->push_back(qMove(line));
                      }
                 }
-                cis->PopLimit(oldLimit);
             }
             break;
         case OBF::OsmAndRoutingIndex_RouteBorderBox::kBlocksFieldNumber:
@@ -780,20 +795,24 @@ void OsmAnd::ObfRoutingSectionReader_P::readBorderLinePoints(
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
-                std::shared_ptr<ObfRoutingBorderLinePoint> point(new ObfRoutingBorderLinePoint());
+
+                const std::shared_ptr<ObfRoutingBorderLinePoint> point(new ObfRoutingBorderLinePoint());
                 readBorderLinePoint(reader, point);
+
+                cis->PopLimit(oldLimit);
+
                 point->_id += id;
                 point->_location += location;
+                id = point->_id;
+                location = point->_location;
+
                 bool valid = true;
                 if(filter)
                     valid = filter->acceptsPoint(point->location);
                 if(valid && visitor)
                     valid = visitor(point);
                 if(valid && resultOut)
-                    resultOut->push_back(point);
-                id = point->_id;
-                location = point->_location;
-                cis->PopLimit(oldLimit);
+                    resultOut->push_back(qMove(point));
             }
             break;
         default:
@@ -805,7 +824,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readBorderLinePoints(
 
 void OsmAnd::ObfRoutingSectionReader_P::readBorderLinePoint(
     const std::unique_ptr<ObfReader_P>& reader,
-    std::shared_ptr<ObfRoutingBorderLinePoint>& point)
+    const std::shared_ptr<ObfRoutingBorderLinePoint>& point)
 {
     auto cis = reader->_codedInputStream.get();
 

@@ -55,27 +55,27 @@ void OsmAnd::RoutingRuleExpression::registerAndTagValue( const QString& tag, con
 
 void OsmAnd::RoutingRuleExpression::registerLessCondition( const QString& lvalue, const QString& rvalue, const QString& type )
 {
-    _operators.push_back(std::shared_ptr<Operator>(new Operator_L(lvalue, rvalue, type)));
+    _operators.push_back(qMove(std::shared_ptr<Operator>(new Operator_L(lvalue, rvalue, type))));
 }
 
 void OsmAnd::RoutingRuleExpression::registerLessOrEqualCondition( const QString& lvalue, const QString& rvalue, const QString& type )
 {
-    _operators.push_back(std::shared_ptr<Operator>(new Operator_LE(lvalue, rvalue, type)));
+    _operators.push_back(qMove(std::shared_ptr<Operator>(new Operator_LE(lvalue, rvalue, type))));
 }
 
 void OsmAnd::RoutingRuleExpression::registerGreaterCondition( const QString& lvalue, const QString& rvalue, const QString& type )
 {
-    _operators.push_back(std::shared_ptr<Operator>(new Operator_G(lvalue, rvalue, type)));
+    _operators.push_back(qMove(std::shared_ptr<Operator>(new Operator_G(lvalue, rvalue, type))));
 }
 
 void OsmAnd::RoutingRuleExpression::registerGreaterOrEqualCondition( const QString& lvalue, const QString& rvalue, const QString& type )
 {
-    _operators.push_back(std::shared_ptr<Operator>(new Operator_GE(lvalue, rvalue, type)));
+    _operators.push_back(qMove(std::shared_ptr<Operator>(new Operator_GE(lvalue, rvalue, type))));
 }
 
 void OsmAnd::RoutingRuleExpression::registerAndParamCondition( const QString& param, bool negation )
 {
-    _parameters.push_back(negation ? "-" + param : param);
+    _parameters.push_back(negation ? QLatin1String("-") + param : param);
 }
 
 bool OsmAnd::RoutingRuleExpression::evaluate( const QBitArray& types, RoutingRulesetContext* context, ResultType resultType, void* result ) const

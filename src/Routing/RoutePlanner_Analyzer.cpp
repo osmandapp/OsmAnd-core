@@ -182,7 +182,7 @@ void OsmAnd::RoutePlanner::attachRouteSegments(
                 attachedSegment.reset(new RouteSegment(previousResult->road, previousResult->endPointIndex, 0));
 
             if(attachedSegment)
-                segment->_attachedRoutes[qAbs(static_cast<int64_t>(pointIdx) - static_cast<int64_t>(segment->_startPointIndex))].push_back(attachedSegment);
+                segment->_attachedRoutes[qAbs(static_cast<int64_t>(pointIdx) - static_cast<int64_t>(segment->_startPointIndex))].push_back(qMove(attachedSegment));
         }
     }
 
@@ -217,7 +217,7 @@ void OsmAnd::RoutePlanner::attachRouteSegments(
             }
 
             if(attachedSegment)
-                segment->_attachedRoutes[qAbs(static_cast<int64_t>(pointIdx) - static_cast<int64_t>(segment->_startPointIndex))].push_back(attachedSegment);
+                segment->_attachedRoutes[qAbs(static_cast<int64_t>(pointIdx) - static_cast<int64_t>(segment->_startPointIndex))].push_back(qMove(attachedSegment));
         }
 
         rt = rt->next;
@@ -290,7 +290,6 @@ bool OsmAnd::RoutePlanner::validateAllPointsConnected( const QVector< std::share
 }
 
 void OsmAnd::RoutePlanner::addRouteSegmentToRoute( QVector< std::shared_ptr<RouteSegment> >& route, const std::shared_ptr<RouteSegment>& segment, bool reverse )
-
 {
     if(segment->startPointIndex == segment->endPointIndex)
         return;

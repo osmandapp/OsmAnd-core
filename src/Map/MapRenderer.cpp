@@ -270,7 +270,7 @@ void OsmAnd::MapRenderer::updateProvidersAndResourcesBindings(const uint32_t upd
             bindings.resourcesToProviders.insert(newResourcesCollection, _currentState.elevationDataProvider);
 
             // Add resources collection
-            resources.append(newResourcesCollection);
+            resources.push_back(qMove(newResourcesCollection));
         }
     }
     if(updatedMask & (1u << static_cast<int>(StateChange::RasterLayers_Providers)))
@@ -369,7 +369,7 @@ void OsmAnd::MapRenderer::updateProvidersAndResourcesBindings(const uint32_t upd
             bindings.resourcesToProviders.insert(newResourcesCollection, *itProvider);
 
             // Add resources collection
-            resources.append(newResourcesCollection);
+            resources.push_back(qMove(newResourcesCollection));
         }
     }
 }
@@ -809,7 +809,7 @@ bool OsmAnd::MapRenderer::preInitializeRendering()
         assert(resources.isEmpty());
         resources.reserve(RasterMapLayersCount);
         while(resources.size() < RasterMapLayersCount)
-            resources.append(std::shared_ptr<TiledResources>());
+            resources.push_back(qMove(std::shared_ptr<TiledResources>()));
     }
     
     return true;

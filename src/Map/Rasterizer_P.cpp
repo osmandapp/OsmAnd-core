@@ -169,12 +169,12 @@ void OsmAnd::Rasterizer_P::prepareContext(
     {
         assert(foundation != MapFoundationType::Undefined);
 
-        std::shared_ptr<Model::MapObject> bgMapObject(new Model::MapObject(env.dummyMapSection, nullptr));
+        const std::shared_ptr<Model::MapObject> bgMapObject(new Model::MapObject(env.dummyMapSection, nullptr));
         bgMapObject->_isArea = true;
-        bgMapObject->_points31.push_back(PointI(area31.left, area31.top));
-        bgMapObject->_points31.push_back(PointI(area31.right, area31.top));
-        bgMapObject->_points31.push_back(PointI(area31.right, area31.bottom));
-        bgMapObject->_points31.push_back(PointI(area31.left, area31.bottom));
+        bgMapObject->_points31.push_back(qMove(PointI(area31.left, area31.top)));
+        bgMapObject->_points31.push_back(qMove(PointI(area31.right, area31.top)));
+        bgMapObject->_points31.push_back(qMove(PointI(area31.right, area31.bottom)));
+        bgMapObject->_points31.push_back(qMove(PointI(area31.left, area31.bottom)));
         bgMapObject->_points31.push_back(bgMapObject->_points31.first());
         if(foundation == MapFoundationType::FullWater)
             bgMapObject->_typesRuleIds.push_back(bgMapObject->section->encodingDecodingRules->naturalCoastline_encodingRuleId);
@@ -188,7 +188,7 @@ void OsmAnd::Rasterizer_P::prepareContext(
         bgMapObject->_extraTypesRuleIds.push_back(bgMapObject->section->encodingDecodingRules->layerLowest_encodingRuleId);
 
         assert(bgMapObject->isClosedFigure());
-        context._triangulatedCoastlineObjects.push_back(bgMapObject);
+        context._triangulatedCoastlineObjects.push_back(qMove(bgMapObject));
     }
 
     // Obtain primitives
@@ -411,16 +411,16 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                 {
                     primitive.zOrder += 1.0 / polygonArea31;
 
+                    // Duplicate primitive as point
+                    auto pointPrimitive = primitive;
+                    pointPrimitive.objectType = PrimitiveType::Point;
+
                     // Accept this primitive
-                    context._polygons.push_back(primitive);
+                    context._polygons.push_back(qMove(primitive));
 
                     // Update metric
                     if(metric)
                         metric->polygonPrimitives++;
-
-                    // Duplicate primitive as point
-                    auto pointPrimitive = primitive;
-                    pointPrimitive.objectType = PrimitiveType::Point;
 
                     // Update metric
                     std::chrono::high_resolution_clock::time_point pointEvaluation_begin;
@@ -433,7 +433,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
 
                     // Evaluate Point rules
                     std::shared_ptr<MapStyleEvaluationResult> pointEvaluatorState(new MapStyleEvaluationResult());
-                    ok = pointEvaluator.evaluate(primitive.mapObject, MapStyleRulesetType::Point, pointEvaluatorState.get());
+                    ok = pointEvaluator.evaluate(pointPrimitive.mapObject, MapStyleRulesetType::Point, pointEvaluatorState.get());
 
                     // Update metric
                     if(metric)
@@ -456,7 +456,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                     // Accept also point primitive only if typeIndex == 0 and (there is text or icon)
                     if(pointPrimitive.typeRuleIdIndex == 0 && (!pointPrimitive.mapObject->names.isEmpty() || ok))
                     {
-                        context._points.push_back(pointPrimitive);
+                        context._points.push_back(qMove(pointPrimitive));
 
                         // Update metric
                         if(metric)
@@ -504,7 +504,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                 primitive.evaluationResult = evaluatorState;
 
                 // Accept this primitive
-                unfilteredLines.push_back(primitive);
+                unfilteredLines.push_back(qMove(primitive));
 
                 // Update metric
                 if(metric)
@@ -550,7 +550,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                 if(primitive.typeRuleIdIndex != 0 || (primitive.mapObject->names.isEmpty() && !ok))
                     continue;
 
-                context._points.push_back(primitive);
+                context._points.push_back(qMove(primitive));
 
                 // Update metric
                 if(metric)
@@ -721,7 +721,7 @@ void OsmAnd::Rasterizer_P::obtainPolygonSymbol(
 
     // Publish symbol
     if(!primitiveSymbol.isEmpty())
-        context._symbols.push_back(primitiveSymbol);
+        context._symbols.push_back(qMove(primitiveSymbol));
 }
 
 void OsmAnd::Rasterizer_P::obtainPolylineSymbol(
@@ -742,7 +742,7 @@ void OsmAnd::Rasterizer_P::obtainPolylineSymbol(
 
     // Publish symbol
     if(!primitiveSymbol.isEmpty())
-        context._symbols.push_back(primitiveSymbol);
+        context._symbols.push_back(qMove(primitiveSymbol));
 }
 
 void OsmAnd::Rasterizer_P::obtainPointSymbol(
@@ -803,7 +803,7 @@ void OsmAnd::Rasterizer_P::obtainPointSymbol(
 
     // Publish symbol
     if(!primitiveSymbol.isEmpty())
-        context._symbols.push_back(primitiveSymbol);
+        context._symbols.push_back(qMove(primitiveSymbol));
 }
 
 void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
@@ -906,7 +906,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
 
         textEvalResult.getStringValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_SHIELD, text.shieldResourceName);
 
-        primitiveSymbol.texts.push_back(text);
+        primitiveSymbol.texts.push_back(qMove(text));
     }
 }
 
@@ -1236,7 +1236,7 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
             }
             else
             {
-                outsideBounds.push_back(vertex);
+                outsideBounds.push_back(qMove(vertex));
             }
             bounds |= (vertex.x < destinationArea->left ? 1 : 0);
             bounds |= (vertex.x > destinationArea->right ? 2 : 0);
@@ -1555,23 +1555,23 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
     {
         const auto& polyline = *itPolyline;
 
-        std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(env.dummyMapSection, nullptr));
+        const std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(env.dummyMapSection, nullptr));
         mapObject->_isArea = false;
         mapObject->_points31 = polyline;
         mapObject->_typesRuleIds.push_back(mapObject->section->encodingDecodingRules->naturalCoastlineLine_encodingRuleId);
 
-        outVectorized.push_back(mapObject);
+        outVectorized.push_back(qMove(mapObject));
     }
 
     const bool coastlineCrossesBounds = !coastlinePolylines.isEmpty();
     if(!coastlinePolylines.isEmpty())
     {
         // Add complete water tile with holes
-        std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(env.dummyMapSection, nullptr));
-        mapObject->_points31.push_back(PointI(context._area31.left, context._area31.top));
-        mapObject->_points31.push_back(PointI(context._area31.right, context._area31.top));
-        mapObject->_points31.push_back(PointI(context._area31.right, context._area31.bottom));
-        mapObject->_points31.push_back(PointI(context._area31.left, context._area31.bottom));
+        const std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(env.dummyMapSection, nullptr));
+        mapObject->_points31.push_back(qMove(PointI(context._area31.left, context._area31.top)));
+        mapObject->_points31.push_back(qMove(PointI(context._area31.right, context._area31.top)));
+        mapObject->_points31.push_back(qMove(PointI(context._area31.right, context._area31.bottom)));
+        mapObject->_points31.push_back(qMove(PointI(context._area31.left, context._area31.bottom)));
         mapObject->_points31.push_back(mapObject->_points31.first());
         convertCoastlinePolylinesToPolygons(env, context, coastlinePolylines, mapObject->_innerPolygonsPoints31, osmId);
 
@@ -1581,7 +1581,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
 
         assert(mapObject->isClosedFigure());
         assert(mapObject->isClosedFigure(true));
-        outVectorized.push_back(mapObject);
+        outVectorized.push_back(qMove(mapObject));
     }
 
     if(!coastlinePolylines.isEmpty())
@@ -1600,12 +1600,12 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
         {
             const auto& polygon = *itPolygon;
 
-            std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(env.dummyMapSection, nullptr));
+            const std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(env.dummyMapSection, nullptr));
             mapObject->_isArea = false;
             mapObject->_points31 = polygon;
             mapObject->_typesRuleIds.push_back(mapObject->section->encodingDecodingRules->naturalCoastlineBroken_encodingRuleId);
 
-            outVectorized.push_back(mapObject);
+            outVectorized.push_back(qMove(mapObject));
         }
     }
 
@@ -1614,12 +1614,12 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
     {
         const auto& polygon = *itPolygon;
 
-        std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(env.dummyMapSection, nullptr));
+        const std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(env.dummyMapSection, nullptr));
         mapObject->_isArea = false;
         mapObject->_points31 = polygon;
         mapObject->_typesRuleIds.push_back(mapObject->section->encodingDecodingRules->naturalCoastlineLine_encodingRuleId);
 
-        outVectorized.push_back(mapObject);
+        outVectorized.push_back(qMove(mapObject));
     }
 
     if (abortIfBrokenCoastlinesExist && !coastlinePolylines.isEmpty())
@@ -1637,8 +1637,8 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
 
         bool clockwise = isClockwiseCoastlinePolygon(polygon);
 
-        std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(env.dummyMapSection, nullptr));
-        mapObject->_points31 = polygon;
+        const std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(env.dummyMapSection, nullptr));
+        mapObject->_points31 = qMove(polygon);
         if(clockwise)
         {
             mapObject->_typesRuleIds.push_back(mapObject->section->encodingDecodingRules->naturalCoastline_encodingRuleId);
@@ -1653,7 +1653,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
         mapObject->_isArea = true;
 
         assert(mapObject->isClosedFigure());
-        outVectorized.push_back(mapObject);
+        outVectorized.push_back(qMove(mapObject));
     }
 
     if(fullWaterObjects == 0u && !coastlineCrossesBounds)
@@ -1666,11 +1666,11 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
             context._zoom);
 
         // Add complete water tile
-        std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(env.dummyMapSection, nullptr));
-        mapObject->_points31.push_back(PointI(context._area31.left, context._area31.top));
-        mapObject->_points31.push_back(PointI(context._area31.right, context._area31.top));
-        mapObject->_points31.push_back(PointI(context._area31.right, context._area31.bottom));
-        mapObject->_points31.push_back(PointI(context._area31.left, context._area31.bottom));
+        const std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(env.dummyMapSection, nullptr));
+        mapObject->_points31.push_back(qMove(PointI(context._area31.left, context._area31.top)));
+        mapObject->_points31.push_back(qMove(PointI(context._area31.right, context._area31.top)));
+        mapObject->_points31.push_back(qMove(PointI(context._area31.right, context._area31.bottom)));
+        mapObject->_points31.push_back(qMove(PointI(context._area31.left, context._area31.bottom)));
         mapObject->_points31.push_back(mapObject->_points31.first());
 
         mapObject->_typesRuleIds.push_back(mapObject->section->encodingDecodingRules->naturalCoastline_encodingRuleId);
@@ -1678,7 +1678,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
         mapObject->_isArea = true;
 
         assert(mapObject->isClosedFigure());
-        outVectorized.push_back(mapObject);
+        outVectorized.push_back(qMove(mapObject));
     }
 
     return true;
@@ -2047,7 +2047,7 @@ void OsmAnd::Rasterizer_P::convertCoastlinePolylinesToPolygons(
                     p.x = alignedArea31.left;
                 }
 
-                polyline.push_back(p);
+                polyline.push_back(qMove(p));
             }
 
             // If nearest-by-CCV is head of current polyline, cap it and add to polygons, ...
@@ -2199,16 +2199,16 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
             encoder->encodeFile(path.toLocal8Bit(), *bitmap, 100);*/
             //////////////////////////////////////////////////////////////////////////
 
-            rasterizedTexts.push_back(std::shared_ptr<const SkBitmap>(bitmap));
+            rasterizedTexts.push_back(qMove(std::shared_ptr<const SkBitmap>(bitmap)));
         }
 
         // Create container and store it
-        auto rasterizedSymbol = new RasterizedSymbol(
+        const auto rasterizedSymbol = new RasterizedSymbol(
             primitiveSymbol.mapObject,
             primitiveSymbol.location31,
             icon,
             rasterizedTexts);
-        outSymbols.push_back(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol));
+        outSymbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
     }
 }
 

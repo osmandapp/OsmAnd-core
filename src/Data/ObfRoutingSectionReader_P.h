@@ -94,7 +94,7 @@ namespace OsmAnd {
             IQueryFilter* filter = nullptr,
             std::function<bool (const std::shared_ptr<const ObfRoutingBorderLinePoint>&)> visitor = nullptr);
         static void readBorderLinePoint(const std::unique_ptr<ObfReader_P>& reader,
-            std::shared_ptr<ObfRoutingBorderLinePoint>& point);
+            const std::shared_ptr<ObfRoutingBorderLinePoint>& point);
 
         static void querySubsections(const std::unique_ptr<ObfReader_P>& reader, const QList< std::shared_ptr<ObfRoutingSubsectionInfo> >& in,
             QList< std::shared_ptr<const ObfRoutingSubsectionInfo> >* resultOut = nullptr,

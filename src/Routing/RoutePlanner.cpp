@@ -183,7 +183,7 @@ void OsmAnd::RoutePlanner::loadRoadsFromTile( RoutePlannerContext* context, uint
     {
         for(auto itRoad = itRoadsInTile->begin(); itRoad != itRoadsInTile->end(); ++itRoad)
         {
-            auto road = *itRoad;
+            const auto& road = *itRoad;
             if(duplicates.contains(road->id))
                 continue;
 
@@ -289,9 +289,9 @@ void OsmAnd::RoutePlanner::loadTileHeader( RoutePlannerContext* context, uint32_
                 auto itSubsectionContext = context->_subsectionsContextsLUT.constFind(itSubsection->get());
                 if(itSubsectionContext == context->_subsectionsContextsLUT.cend())
                 {
-                    std::shared_ptr<RoutePlannerContext::RoutingSubsectionContext> subsectionContext(new RoutePlannerContext::RoutingSubsectionContext(context, source, *itSubsection));
+                    const std::shared_ptr<RoutePlannerContext::RoutingSubsectionContext> subsectionContext(new RoutePlannerContext::RoutingSubsectionContext(context, source, *itSubsection));
                     itSubsectionContext = context->_subsectionsContextsLUT.insert(itSubsection->get(), subsectionContext);
-                    context->_subsectionsContexts.push_back(subsectionContext);
+                    context->_subsectionsContexts.push_back(qMove(subsectionContext));
                 }
 
                 subsectionsContexts.push_back(*itSubsectionContext);
@@ -365,7 +365,7 @@ OsmAnd::RouteCalculationResult OsmAnd::RoutePlanner::calculateRoute(
                 return OsmAnd::RouteCalculationResult("Intermediate point was not found");
             }
         }
-        routeCalculationSegments.push_back(segment);
+        routeCalculationSegments.push_back(qMove(segment));
     }
     
     if(routeCalculationSegments.size() > 2)
@@ -426,7 +426,7 @@ OsmAnd::RouteCalculationResult OsmAnd::RoutePlanner::calculateRoute(
 //            if(context->_previouslyCalculatedRoute)
 //            {
 //                if(outResult)
-//                    outResult->append(restPartRecalculatedRoute);
+//                    outResult->push_back(restPartRecalculatedRoute);
 //                break;
 //            }
 //        }
@@ -1138,7 +1138,7 @@ bool OsmAnd::RoutePlanner::processRestrictions(
         next = next->next;
     }
 
-    prescripted.append(notForbidden);
+    prescripted.append(qMove(notForbidden));
     return true;
 }
 
@@ -1303,7 +1303,7 @@ bool OsmAnd::RoutePlanner::checkPartialRecalculationPossible(
     auto threshold = 0.0f;
     for(auto itPrevRouteSegment = context->owner->_previouslyCalculatedRoute.cbegin(); itPrevRouteSegment != context->owner->_previouslyCalculatedRoute.cend(); ++itPrevRouteSegment)
     {
-        auto prevRouteSegment = *itPrevRouteSegment;
+        const auto& prevRouteSegment = *itPrevRouteSegment;
 
         threshold += prevRouteSegment->distance;
 

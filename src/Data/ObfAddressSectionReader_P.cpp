@@ -45,12 +45,15 @@ void OsmAnd::ObfAddressSectionReader_P::read( const std::unique_ptr<ObfReader_P>
             break;
         case OBF::OsmAndAddressIndex::kCitiesFieldNumber:
             {
-                std::shared_ptr<ObfAddressBlocksSectionInfo> addressBlocksSection(new ObfAddressBlocksSectionInfo(section, section->owner));
+                const std::shared_ptr<ObfAddressBlocksSectionInfo> addressBlocksSection(new ObfAddressBlocksSectionInfo(section, section->owner));
                 addressBlocksSection->_length = ObfReaderUtilities::readBigEndianInt(cis);
                 addressBlocksSection->_offset = cis->CurrentPosition();
+
                 readAddressBlocksSectionHeader(reader, addressBlocksSection);
+
                 cis->Seek(addressBlocksSection->_offset + addressBlocksSection->_length);
-                section->_addressBlocksSections.push_back(addressBlocksSection);
+
+                section->_addressBlocksSections.push_back(qMove(addressBlocksSection));
             }
             break;
         case OBF::OsmAndAddressIndex::kNameIndexFieldNumber:
@@ -136,17 +139,20 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetGroupsFromAddressBlocksSection
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
+
                 std::shared_ptr<OsmAnd::Model::StreetGroup> streetGroup;
                 readStreetGroupHeader(reader, section, offset, streetGroup);
+
+                cis->PopLimit(oldLimit);
+
                 if(streetGroup)
                 {
                     if(!visitor || visitor(streetGroup))
                     {
                         if(resultOut)
-                            resultOut->push_back(streetGroup);
+                            resultOut->push_back(qMove(streetGroup));
                     }
                 }
-                cis->PopLimit(oldLimit);
             }
             break;
         default:
@@ -300,13 +306,16 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetsFromGroup(
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
+
                 readStreet(reader, group, street);
+
+                cis->PopLimit(oldLimit);
+
                 if(!visitor || visitor(street))
                 {
                     if(resultOut)
-                        resultOut->push_back(street);
+                        resultOut->push_back(qMove(street));
                 }
-                cis->PopLimit(oldLimit);
             }
             break;
         case OBF::CityBlockIndex::kBuildingsFieldNumber:
@@ -416,15 +425,18 @@ void OsmAnd::ObfAddressSectionReader_P::readBuildingsFromStreet(
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
+                
                 std::shared_ptr<Model::Building> building(new Model::Building());
                 building->_offset = offset;
                 readBuilding(reader, street, building);
+
+                cis->PopLimit(oldLimit);
+
                 if (!visitor || visitor(building))
                 {
                     if(resultOut)
-                        resultOut->push_back(building);
+                        resultOut->push_back(qMove(building));
                 }
-                cis->PopLimit(oldLimit);
             }
             break;
         default:
@@ -548,14 +560,18 @@ void OsmAnd::ObfAddressSectionReader_P::readIntersectionsFromStreet(
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
+
                 std::shared_ptr<Model::StreetIntersection> intersectedStreet(new Model::StreetIntersection());
                 readIntersectedStreet(reader, street, intersectedStreet);
+                
+                cis->PopLimit(oldLimit);
+
                 if(!visitor || visitor(intersectedStreet))
                 {
                     if(resultOut)
-                        resultOut->push_back(intersectedStreet);
+                        resultOut->push_back(qMove(intersectedStreet));
                 }
-                cis->PopLimit(oldLimit);
+
             }
             break;
         case OBF::StreetIndex::kBuildingsFieldNumber:

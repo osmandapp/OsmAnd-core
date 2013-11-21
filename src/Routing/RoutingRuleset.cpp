@@ -13,6 +13,6 @@ OsmAnd::RoutingRuleset::~RoutingRuleset()
 
 void OsmAnd::RoutingRuleset::registerSelectExpression( const QString& value, const QString& type )
 {
-    std::shared_ptr<RoutingRuleExpression> expression(new RoutingRuleExpression(this, value, type));
-    _expressions.push_back(expression);
+    const std::shared_ptr<RoutingRuleExpression> expression(new RoutingRuleExpression(this, value, type));
+    _expressions.push_back(qMove(expression));
 }

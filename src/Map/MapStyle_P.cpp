@@ -155,7 +155,7 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
 
     struct Group : public Lexeme
     {
-        Group(MapStyle_P* style_)
+        Group(MapStyle_P* const style_)
             : Lexeme(Lexeme::Group, style_)
         {}
 
@@ -163,7 +163,7 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
         QList< std::shared_ptr<MapStyleRule> > children;
         QList< std::shared_ptr<Lexeme> > subgroups;
 
-        void addGroupFilter(std::shared_ptr<MapStyleRule> rule)
+        void addGroupFilter(const std::shared_ptr<MapStyleRule>& rule)
         {
             for(auto itChild = children.cbegin(); itChild != children.cend(); ++itChild)
             {
@@ -181,7 +181,7 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
             }
         }
 
-        bool registerGlobalRules(MapStyleRulesetType type)
+        bool registerGlobalRules(const MapStyleRulesetType type)
         {
             for(auto itChild = children.cbegin(); itChild != children.cend(); ++itChild)
             {
@@ -212,37 +212,37 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
         const auto tagName = xmlReader.name();
         if (xmlReader.isStartElement())
         {
-            if (tagName == "renderingStyle")
+            if(tagName == QLatin1String("renderingStyle"))
             {
                 // We have already parsed metadata and resolved dependencies, so here we don't need to do anything
             }
-            else if(tagName == "renderingConstant")
+            else if(tagName == QLatin1String("renderingConstant"))
             {
                 const auto& attribs = xmlReader.attributes();
 
-                auto name = attribs.value("name").toString();
-                auto value = attribs.value("value").toString();
+                auto name = attribs.value(QLatin1String("name")).toString();
+                auto value = attribs.value(QLatin1String("value")).toString();
                 _parsetimeConstants.insert(name, value);
             }
-            else if(tagName == "renderingProperty")
+            else if(tagName == QLatin1String("renderingProperty"))
             {
                 MapStyleConfigurableInputValue* inputValue = nullptr;
 
                 const auto& attribs = xmlReader.attributes();
-                auto name = obtainValue(attribs.value("attr").toString());
-                auto type = obtainValue(attribs.value("type").toString());
-                auto title = obtainValue(attribs.value("name").toString());
-                auto description = attribs.value("description").toString();
-                auto encodedPossibleValues = attribs.value("possibleValues");
+                auto name = obtainValue(attribs.value(QLatin1String("attr")).toString());
+                auto type = obtainValue(attribs.value(QLatin1String("type")).toString());
+                auto title = obtainValue(attribs.value(QLatin1String("name")).toString());
+                auto description = attribs.value(QLatin1String("description")).toString();
+                auto encodedPossibleValues = attribs.value(QLatin1String("possibleValues"));
                 QStringList possibleValues;
                 if(!encodedPossibleValues.isEmpty())
-                    possibleValues = encodedPossibleValues.toString().split(",", QString::SkipEmptyParts);
+                    possibleValues = encodedPossibleValues.toString().split(',', QString::SkipEmptyParts);
                 for(auto itPossibleValue = possibleValues.begin(); itPossibleValue != possibleValues.end(); ++itPossibleValue)
                 {
                     auto& possibleValue = *itPossibleValue;
                     possibleValue = obtainValue(possibleValue);
                 }
-                if(type == "string")
+                if(type == QLatin1String("string"))
                 {
                     inputValue = new MapStyleConfigurableInputValue(
                         MapStyleValueDataType::String,
@@ -251,7 +251,7 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
                         description,
                         possibleValues);
                 }
-                else if(type == "boolean")
+                else if(type == QLatin1String("boolean"))
                 {
                     inputValue = new MapStyleConfigurableInputValue(
                         MapStyleValueDataType::Boolean,
@@ -272,19 +272,19 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
 
                 registerValue(inputValue);
             }
-            else if(tagName == "renderingAttribute")
+            else if(tagName == QLatin1String("renderingAttribute"))
             {
                 const auto& attribs = xmlReader.attributes();
 
-                auto name = obtainValue(attribs.value("name").toString());
+                auto name = obtainValue(attribs.value(QLatin1String("name")).toString());
 
                 std::shared_ptr<MapStyleRule> attribute(new MapStyleRule(owner, QHash< QString, QString >()));
                 _attributes.insert(name, attribute);
 
                 std::shared_ptr<Lexeme> selector(new Rule(attribute, this));
-                stack.push(selector);
+                stack.push(qMove(selector));
             }
-            else if(tagName == "filter")
+            else if(tagName == QLatin1String("filter"))
             {
                 QHash< QString, QString > ruleAttributes;
 
@@ -301,12 +301,12 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
                 {
                     const auto& xmlAttrib = *itXmlAttrib;
 
-                    auto tag = xmlAttrib.name().toString();
-                    auto value = obtainValue(xmlAttrib.value().toString());
-                    ruleAttributes.insert(tag, value);
+                    const auto tag = xmlAttrib.name().toString();
+                    const auto value = obtainValue(xmlAttrib.value().toString());
+                    ruleAttributes.insert(qMove(tag), qMove(value));
                 }
 
-                std::shared_ptr<MapStyleRule> rule(new MapStyleRule(owner, ruleAttributes));
+                const std::shared_ptr<MapStyleRule> rule(new MapStyleRule(owner, ruleAttributes));
 
                 if(!stack.isEmpty())
                 {
@@ -327,9 +327,9 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
                         return false;
                 }
 
-                stack.push(std::shared_ptr<Lexeme>(new Rule(rule, this)));
+                stack.push(qMove(std::shared_ptr<Lexeme>(new Rule(rule, this))));
             }
-            else if(tagName == "groupFilter")
+            else if(tagName == QLatin1String("groupFilter"))
             {
                 QHash< QString, QString > attributes;
 
@@ -338,9 +338,9 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
                 {
                     const auto& xmlAttrib = *itXmlAttrib;
 
-                    auto tag = xmlAttrib.name().toString();
-                    auto value = obtainValue(xmlAttrib.value().toString());
-                    attributes.insert(tag, value);
+                    const auto tag = xmlAttrib.name().toString();
+                    const auto value = obtainValue(xmlAttrib.value().toString());
+                    attributes.insert(qMove(tag), qMove(value));
                 }
 
                 std::shared_ptr<MapStyleRule> rule(new MapStyleRule(owner, attributes));
@@ -361,11 +361,11 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
                     std::static_pointer_cast<Rule>(lexeme)->rule->_d->_ifChildren.push_back(rule);
                 }
 
-                stack.push(std::shared_ptr<Lexeme>(new Rule(rule, this)));
+                stack.push(qMove(std::shared_ptr<Lexeme>(new Rule(rule, this))));
             }
-            else if(tagName == "group")
+            else if(tagName == QLatin1String("group"))
             {
-                auto group = new Group(this);
+                const auto group = new Group(this);
                 if(!stack.isEmpty())
                 {
                     auto lexeme = stack.top();
@@ -378,43 +378,43 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
                 {
                     const auto& xmlAttrib = *itXmlAttrib;
 
-                    auto tag = xmlAttrib.name().toString();
-                    auto value = obtainValue(xmlAttrib.value().toString());
-                    group->attributes.insert(tag, value);
+                    const auto tag = xmlAttrib.name().toString();
+                    const auto value = obtainValue(xmlAttrib.value().toString());
+                    group->attributes.insert(qMove(tag), qMove(value));
                 }
 
-                stack.push(std::shared_ptr<Lexeme>(group));
+                stack.push(qMove(std::shared_ptr<Lexeme>(group)));
             }
-            else if(tagName == "order")
+            else if(tagName == QLatin1String("order"))
             {
                 rulesetType = MapStyleRulesetType::Order;
             }
-            else if(tagName == "text")
+            else if(tagName == QLatin1String("text"))
             {
                 rulesetType = MapStyleRulesetType::Text;
             }
-            else if(tagName == "point")
+            else if(tagName == QLatin1String("point"))
             {
                 rulesetType = MapStyleRulesetType::Point;
             }
-            else if(tagName == "line")
+            else if(tagName == QLatin1String("line"))
             {
                 rulesetType = MapStyleRulesetType::Polyline;
             }
-            else if(tagName == "polygon")
+            else if(tagName == QLatin1String("polygon"))
             {
                 rulesetType = MapStyleRulesetType::Polygon;
             } 
         }
         else if(xmlReader.isEndElement())
         {
-            if(tagName == "filter")
+            if(tagName == QLatin1String("filter"))
             {
                 stack.pop();
             }
-            else if(tagName == "group")
+            else if(tagName == QLatin1String("group"))
             {
-                auto lexeme = stack.pop();
+                const auto lexeme = stack.pop();
 
                 if (stack.isEmpty())
                 {
@@ -424,16 +424,16 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
                 }
                 else
                 {
-                    auto group = stack.top();
+                    const auto group = stack.top();
                     if(group->type == Lexeme::Group)
-                        std::static_pointer_cast<Group>(group)->subgroups.push_back(lexeme);
+                        std::static_pointer_cast<Group>(group)->subgroups.push_back(qMove(lexeme));
                 }
             }
-            else if(tagName == "groupFilter")
+            else if(tagName == QLatin1String("groupFilter"))
             {
                 stack.pop();
             }
-            else if(tagName == "renderingAttribute")
+            else if(tagName == QLatin1String("renderingAttribute"))
             {
                 stack.pop();
             }
@@ -570,7 +570,7 @@ bool OsmAnd::MapStyle_P::registerRule( MapStyleRulesetType type, const std::shar
         insertedRule->_d->_ifElseChildren.push_back(rule);
     }
 
-    ruleset.insert(id, insertedRule);
+    ruleset.insert(id, qMove(insertedRule));
 
     return true;
 }
@@ -641,7 +641,7 @@ uint32_t OsmAnd::MapStyle_P::lookupStringId( const QString& value )
 
 uint32_t OsmAnd::MapStyle_P::registerString( const QString& value )
 {
-    auto id = _stringsIdBase + _stringsLUT.size();
+    const auto id = _stringsIdBase + _stringsLUT.size();
 
     _stringsRevLUT.insert(value, id);
     _stringsLUT.push_back(value);

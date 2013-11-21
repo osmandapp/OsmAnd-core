@@ -100,10 +100,13 @@ void OsmAnd::ObfPoiSectionReader_P::readCategories(
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
+                
                 std::shared_ptr<Model::AmenityCategory> category(new Model::AmenityCategory());
                 readCategory(reader, category);
+                
                 cis->PopLimit(oldLimit);
-                categories.push_back(category);
+
+                categories.push_back(qMove(category));
             }
             break;
         case OBF::OsmAndPoiIndex::kNameIndexFieldNumber:
@@ -134,7 +137,7 @@ void OsmAnd::ObfPoiSectionReader_P::readCategory( const std::unique_ptr<ObfReade
             {
                 QString name;
                 if(ObfReaderUtilities::readQString(cis, name))
-                    category->_subcategories.push_back(name);
+                    category->_subcategories.push_back(qMove(name));
             }
             break;
         default:
@@ -243,7 +246,7 @@ bool OsmAnd::ObfPoiSectionReader_P::readTile(
     if(parent == nullptr && !tilesToSkip)
         tilesToSkip = &tilesToSkip_;
 
-    std::shared_ptr<Tile> tile(new Tile());
+    const std::shared_ptr<Tile> tile(new Tile());
     gpb::uint32 lzoom;
 
     for(;;)
@@ -254,7 +257,7 @@ bool OsmAnd::ObfPoiSectionReader_P::readTile(
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
-            tiles.push_back(tile);
+            tiles.push_back(qMove(tile));
             return true;
         case OBF::OsmAndPoiBox::kZoomFieldNumber:
             {
@@ -454,9 +457,12 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesFromTile(
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
+
                 std::shared_ptr<Model::Amenity> amenity;
                 readAmenity(reader, section, pTile, zoomTile, amenity, desiredCategories, bbox31, controller);
+
                 cis->PopLimit(oldLimit);
+
                 if(!amenity)
                     break;
                 if(amenitiesToSkip)
@@ -470,7 +476,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesFromTile(
                         {
                             amenitiesToSkip->insert(hash);
                             if(amenitiesOut)
-                                amenitiesOut->push_back(amenity);
+                                amenitiesOut->push_back(qMove(amenity));
                         }
                     }
                     if(zoomToSkip <= zoom)
@@ -481,9 +487,8 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesFromTile(
                 }
                 else
                 {
-                    const auto visitorAgrees = visitor ? visitor(amenity) : true;
-                    if(amenitiesOut && visitorAgrees)
-                        amenitiesOut->push_back(amenity);
+                    if(amenitiesOut && (!visitor || visitor(amenity)))
+                        amenitiesOut->push_back(qMove(amenity));
                 }
             }
             break;

@@ -134,7 +134,7 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection_P::obtainDataIn
         const auto& obfFile = itSource.value();
 
         auto obfReader = new ObfReader(obfFile);
-        obfReaders.push_back(std::shared_ptr<ObfReader>(obfReader));
+        obfReaders.push_back(qMove(std::shared_ptr<ObfReader>(obfReader)));
     }
 
     return std::shared_ptr<ObfDataInterface>(new ObfDataInterface(obfReaders));
