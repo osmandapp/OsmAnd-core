@@ -30,7 +30,7 @@
 #include <type_traits>
 
 #include <OsmAndCore/QtExtensions.h>
-#include <QMap>
+#include <QHash>
 #include <QReadWriteLock>
 #include <QAtomicInt>
 
@@ -62,7 +62,7 @@ namespace OsmAnd {
         };
 
     private:
-        std::array< QMap< TileId, std::shared_ptr<ENTRY> >, ZoomLevelsCount > _zoomLevels;
+        std::array< QHash< TileId, std::shared_ptr<ENTRY> >, ZoomLevelsCount > _zoomLevels;
         mutable QReadWriteLock _collectionLock;
     protected:
         const std::shared_ptr< Link > _link;
@@ -170,7 +170,7 @@ namespace OsmAnd {
             {
                 auto& zoomLevel = *itZoomLevel;
 
-                QMutableMapIterator< TileId, std::shared_ptr<ENTRY> > itEntryPair(zoomLevel);
+                QMutableHashIterator< TileId, std::shared_ptr<ENTRY> > itEntryPair(zoomLevel);
                 while(itEntryPair.hasNext())
                 {
                     itEntryPair.next();

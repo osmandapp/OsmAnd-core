@@ -83,7 +83,7 @@ namespace OsmAnd {
         ObfMapSectionDecodingEncodingRules();
 
         QHash< QString, QHash<QString, uint32_t> > encodingRuleIds;
-        QMap< uint32_t, ObfMapSectionDecodingRule > decodingRules;
+        QHash< uint32_t, ObfMapSectionDecodingRule > decodingRules;
         uint32_t name_encodingRuleId;
         uint32_t ref_encodingRuleId;
         uint32_t naturalCoastline_encodingRuleId;

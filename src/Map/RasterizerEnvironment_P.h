@@ -62,7 +62,7 @@ namespace OsmAnd {
         void initialize();
 
         mutable QMutex _settingsChangeMutex;
-        QMap< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > _settings;
+        QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > _settings;
 
         SkPaint _mapPaint;
         SkPaint _textPaint;
@@ -124,8 +124,8 @@ namespace OsmAnd {
 
         const std::shared_ptr<ObfMapSectionInfo> dummyMapSection;
 
-        QMap< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > getSettings() const;
-        void setSettings(const QMap< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue >& newSettings);
+        QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > getSettings() const;
+        void setSettings(const QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue >& newSettings);
 
         void applyTo(MapStyleEvaluator& evaluator) const;
 

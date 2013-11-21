@@ -53,8 +53,8 @@ namespace OsmAnd {
         const float displayDensityFactor;
         const std::shared_ptr<const MapStyle> style;
 
-        QMap< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > getSettings() const;
-        void setSettings(const QMap< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue >& newSettings);
+        QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > getSettings() const;
+        void setSettings(const QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue >& newSettings);
 
     friend class OsmAnd::Rasterizer;
     };

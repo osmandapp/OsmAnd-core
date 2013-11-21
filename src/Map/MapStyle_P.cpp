@@ -500,7 +500,7 @@ QString OsmAnd::MapStyle_P::obtainValue( const QString& input )
     return output;
 }
 
-QMap< uint64_t, std::shared_ptr<OsmAnd::MapStyleRule> >& OsmAnd::MapStyle_P::obtainRules( MapStyleRulesetType type )
+QMap< uint64_t, std::shared_ptr<OsmAnd::MapStyleRule> >& OsmAnd::MapStyle_P::obtainRulesRef( MapStyleRulesetType type )
 {
     switch (type)
     {
@@ -521,7 +521,7 @@ QMap< uint64_t, std::shared_ptr<OsmAnd::MapStyleRule> >& OsmAnd::MapStyle_P::obt
     return *(QMap< uint64_t, std::shared_ptr<OsmAnd::MapStyleRule> >*)(nullptr);
 }
 
-const QMap< uint64_t, std::shared_ptr<OsmAnd::MapStyleRule> >& OsmAnd::MapStyle_P::obtainRules( MapStyleRulesetType type ) const
+const QMap< uint64_t, std::shared_ptr<OsmAnd::MapStyleRule> >& OsmAnd::MapStyle_P::obtainRulesRef( MapStyleRulesetType type ) const
 {
     switch (type)
     {
@@ -561,7 +561,7 @@ bool OsmAnd::MapStyle_P::registerRule( MapStyleRulesetType type, const std::shar
     uint64_t id = encodeRuleId(tagData.asSimple.asUInt, valueData.asSimple.asUInt);
 
     auto insertedRule = rule;
-    auto& ruleset = obtainRules(type);
+    auto& ruleset = obtainRulesRef(type);
     auto itPrevious = ruleset.constFind(id);
     if(itPrevious != ruleset.cend())
     {
@@ -688,8 +688,8 @@ bool OsmAnd::MapStyle_P::mergeInheritedRules( MapStyleRulesetType type )
     if(!_parent)
         return true;
 
-    const auto& parentRules = _parent->_d->obtainRules(type);
-    auto& rules = obtainRules(type);
+    const auto& parentRules = _parent->_d->obtainRulesRef(type);
+    auto& rules = obtainRulesRef(type);
 
     for(auto itParentRule = parentRules.cbegin(); itParentRule != parentRules.cend(); ++itParentRule)
     {

@@ -46,7 +46,7 @@ namespace OsmAnd {
     protected:
         std::shared_ptr<RoutingRulesetContext> _rulesetContexts[RoutingRuleset::TypesCount];
 
-        QMap< std::shared_ptr<const ObfRoutingSectionInfo>, QMap<uint32_t, uint32_t> > _tagValueAttribIdCache;
+        QHash< std::shared_ptr<const ObfRoutingSectionInfo>, QMap<uint32_t, uint32_t> > _tagValueAttribIdCache;
     public:
         RoutingProfileContext(const std::shared_ptr<RoutingProfile>& profile, QHash<QString, QString>* contextValues = nullptr);
         virtual ~RoutingProfileContext();

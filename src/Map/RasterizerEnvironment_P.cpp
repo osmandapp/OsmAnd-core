@@ -187,12 +187,12 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
     }
 }
 
-QMap< std::shared_ptr<const OsmAnd::MapStyleValueDefinition>, OsmAnd::MapStyleValue > OsmAnd::RasterizerEnvironment_P::getSettings() const
+QHash< std::shared_ptr<const OsmAnd::MapStyleValueDefinition>, OsmAnd::MapStyleValue > OsmAnd::RasterizerEnvironment_P::getSettings() const
 {
     return _settings;
 }
 
-void OsmAnd::RasterizerEnvironment_P::setSettings( const QMap< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue >& newSettings )
+void OsmAnd::RasterizerEnvironment_P::setSettings(const QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue >& newSettings)
 {
     QMutexLocker scopedLocker(&_settingsChangeMutex);
 

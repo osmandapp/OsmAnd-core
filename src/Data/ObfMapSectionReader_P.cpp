@@ -637,7 +637,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 if(!mapObject)
                     mapObject.reset(new OsmAnd::Model::MapObject(section, treeNode->level));
                 mapObject->_isArea = (tgn == OBF::MapData::kAreaCoordinatesFieldNumber);
-                mapObject->_points31 = points31;
+                mapObject->_points31 = qMove(points31);
                 mapObject->_bbox31 = objectBBox;
                 assert(treeNode->_area31.top - mapObject->_bbox31.top <= 32);
                 assert(treeNode->_area31.left - mapObject->_bbox31.left <= 32);
@@ -732,7 +732,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                     ok = cis->ReadVarint32(&stringId);
                     assert(ok);
 
-                    mapObject->_names.insert(stringRuleId, ObfReaderUtilities::encodeIntegerToString(stringId));
+                    mapObject->_names.insert(stringRuleId, qMove(ObfReaderUtilities::encodeIntegerToString(stringId)));
                 }
                 assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);

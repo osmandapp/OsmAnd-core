@@ -85,7 +85,7 @@ namespace OsmAnd {
         QMap< uint64_t, std::shared_ptr<MapStyleRule> > _polygonRules;
         QMap< uint64_t, std::shared_ptr<MapStyleRule> > _textRules;
         QMap< uint64_t, std::shared_ptr<MapStyleRule> > _orderRules;
-        QMap< uint64_t, std::shared_ptr<MapStyleRule> >& obtainRules(MapStyleRulesetType type);
+        QMap< uint64_t, std::shared_ptr<MapStyleRule> >& obtainRulesRef(MapStyleRulesetType type);
 
         std::shared_ptr<MapStyleRule> createTagValueRootWrapperRule(uint64_t id, const std::shared_ptr<MapStyleRule>& rule);
 
@@ -107,7 +107,7 @@ namespace OsmAnd {
     public:
         virtual ~MapStyle_P();
 
-        const QMap< uint64_t, std::shared_ptr<MapStyleRule> >& obtainRules(MapStyleRulesetType type) const;
+        const QMap< uint64_t, std::shared_ptr<MapStyleRule> >& obtainRulesRef(MapStyleRulesetType type) const;
 
         uint32_t getTagStringId(uint64_t ruleId) const;
         uint32_t getValueStringId(uint64_t ruleId) const;

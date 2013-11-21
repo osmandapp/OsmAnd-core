@@ -30,7 +30,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
 {
     const auto tagKey = _inputValues[_builtinValueDefs->id_INPUT_TAG].asUInt;
     const auto valueKey = _inputValues[_builtinValueDefs->id_INPUT_VALUE].asUInt;
-    const auto& rules = owner->style->_d->obtainRules(ruleset);
+    const auto& rules = owner->style->_d->obtainRulesRef(ruleset);
 
     auto evaluationResult = evaluate(mapObject, rules, tagKey, valueKey, outResultStorage, evaluateChildren);
     if(evaluationResult)

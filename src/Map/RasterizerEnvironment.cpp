@@ -15,12 +15,12 @@ OsmAnd::RasterizerEnvironment::~RasterizerEnvironment()
 {
 }
 
-QMap< std::shared_ptr<const OsmAnd::MapStyleValueDefinition>, OsmAnd::MapStyleValue > OsmAnd::RasterizerEnvironment::getSettings() const
+QHash< std::shared_ptr<const OsmAnd::MapStyleValueDefinition>, OsmAnd::MapStyleValue > OsmAnd::RasterizerEnvironment::getSettings() const
 {
     return _d->getSettings();
 }
 
-void OsmAnd::RasterizerEnvironment::setSettings( const QMap< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue >& newSettings )
+void OsmAnd::RasterizerEnvironment::setSettings(const QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue >& newSettings)
 {
     _d->setSettings(newSettings);
 }
