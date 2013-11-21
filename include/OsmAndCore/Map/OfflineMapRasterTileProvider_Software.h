@@ -19,8 +19,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __OFFLINE_MAP_RASTER_TILE_PROVIDER_SOFTWARE_H_
-#define __OFFLINE_MAP_RASTER_TILE_PROVIDER_SOFTWARE_H_
+#ifndef _OSMAND_CORE_OFFLINE_MAP_RASTER_TILE_PROVIDER_SOFTWARE_H_
+#define _OSMAND_CORE_OFFLINE_MAP_RASTER_TILE_PROVIDER_SOFTWARE_H_
 
 #include <cstdint>
 #include <memory>
@@ -59,4 +59,4 @@ namespace OsmAnd {
 
 }
 
-#endif // __OFFLINE_MAP_RASTER_TILE_PROVIDER_SOFTWARE_H_
+#endif // _OSMAND_CORE_OFFLINE_MAP_RASTER_TILE_PROVIDER_SOFTWARE_H_

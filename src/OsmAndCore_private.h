@@ -19,8 +19,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __OSMAND_CORE_PRIVATE_H_
-#define __OSMAND_CORE_PRIVATE_H_
+#ifndef _OSMAND_CORE_OSMAND_CORE_PRIVATE_H_
+#define _OSMAND_CORE_OSMAND_CORE_PRIVATE_H_
 
 #include <memory>
 
@@ -31,4 +31,4 @@ namespace OsmAnd {
     extern std::shared_ptr<QObject> gMainThreadTaskHost;
 }
 
-#endif // __OSMAND_CORE_PRIVATE_H_
+#endif // _OSMAND_CORE_OSMAND_CORE_PRIVATE_H_

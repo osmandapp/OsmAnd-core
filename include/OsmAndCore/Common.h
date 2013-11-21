@@ -20,8 +20,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __OSMAND_COMMON_H_
-#define __OSMAND_COMMON_H_
+#ifndef _OSMAND_CORE_OSMAND_COMMON_H_
+#define _OSMAND_CORE_OSMAND_COMMON_H_
 
 #include <cassert>
 #include <memory>
@@ -56,4 +56,4 @@
 #   define QStringToStlString(x) (x).toStdString()
 #endif
 
-#endif // __OSMAND_COMMON_H_
+#endif // _OSMAND_CORE_OSMAND_COMMON_H_

@@ -20,8 +20,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __EMBEDDED_RESOURCES_PRIVATE_H_
-#define __EMBEDDED_RESOURCES_PRIVATE_H_
+#ifndef _OSMAND_CORE_EMBEDDED_RESOURCES_PRIVATE_H_
+#define _OSMAND_CORE_EMBEDDED_RESOURCES_PRIVATE_H_
 
 namespace OsmAnd {
 
@@ -37,4 +37,4 @@ namespace OsmAnd {
 
 } // namespace OsmAnd
 
-#endif // __EMBEDDED_RESOURCES_PRIVATE_H_
+#endif // _OSMAND_CORE_EMBEDDED_RESOURCES_PRIVATE_H_

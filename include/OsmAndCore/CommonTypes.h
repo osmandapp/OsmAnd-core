@@ -20,8 +20,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __COMMON_TYPES_H_
-#define __COMMON_TYPES_H_
+#ifndef _OSMAND_CORE_COMMON_TYPES_H_
+#define _OSMAND_CORE_COMMON_TYPES_H_
 
 #include <cstdint>
 #include <memory>
@@ -530,4 +530,4 @@ namespace OsmAnd
 
 }
 
-#endif // __COMMON_TYPES_H_
+#endif // _OSMAND_CORE_COMMON_TYPES_H_

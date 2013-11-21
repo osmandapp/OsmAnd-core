@@ -20,8 +20,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __RASTERIZER_H_
-#define __RASTERIZER_H_
+#ifndef _OSMAND_CORE_RASTERIZER_H_
+#define _OSMAND_CORE_RASTERIZER_H_
 
 #include <cstdint>
 #include <memory>
@@ -92,4 +92,4 @@ namespace OsmAnd {
 
 } // namespace OsmAnd
 
-#endif // __RASTERIZER_H_
+#endif // _OSMAND_CORE_RASTERIZER_H_

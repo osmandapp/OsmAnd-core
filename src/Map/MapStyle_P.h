@@ -20,8 +20,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __MAP_STYLE_P_H_
-#define __MAP_STYLE_P_H_
+#ifndef _OSMAND_CORE_MAP_STYLE_P_H_
+#define _OSMAND_CORE_MAP_STYLE_P_H_
 
 #include <cstdint>
 #include <memory>
@@ -126,4 +126,4 @@ namespace OsmAnd {
 
 } // namespace OsmAnd
 
-#endif // __MAP_STYLE_P_H_
+#endif // _OSMAND_CORE_MAP_STYLE_P_H_

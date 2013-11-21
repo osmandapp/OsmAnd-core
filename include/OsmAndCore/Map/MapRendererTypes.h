@@ -20,8 +20,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __MAP_RENDERER_TYPES_H_
-#define __MAP_RENDERER_TYPES_H_
+#ifndef _OSMAND_CORE_MAP_RENDERER_TYPES_H_
+#define _OSMAND_CORE_MAP_RENDERER_TYPES_H_
 
 #include <cstdint>
 
@@ -50,4 +50,4 @@ namespace OsmAnd
 
 }
 
-#endif // __MAP_RENDERER_TYPES_H_
+#endif // _OSMAND_CORE_MAP_RENDERER_TYPES_H_

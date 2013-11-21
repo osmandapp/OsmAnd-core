@@ -19,8 +19,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __Q_MAIN_THREAD_TASK_EVENT_H_
-#define __Q_MAIN_THREAD_TASK_EVENT_H_
+#ifndef _OSMAND_CORE_Q_MAIN_THREAD_TASK_EVENT_H_
+#define _OSMAND_CORE_Q_MAIN_THREAD_TASK_EVENT_H_
 
 #include <functional>
 
@@ -47,4 +47,4 @@ namespace OsmAnd {
 
 }
 
-#endif // __Q_MAIN_THREAD_TASK_EVENT_H_
+#endif // _OSMAND_CORE_Q_MAIN_THREAD_TASK_EVENT_H_

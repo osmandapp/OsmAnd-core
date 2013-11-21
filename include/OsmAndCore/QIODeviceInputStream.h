@@ -20,8 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __Q_IO_DEVICE_INPUT_STREAM_H_
-#define __Q_IO_DEVICE_INPUT_STREAM_H_
+#ifndef _OSMAND_CORE_Q_IO_DEVICE_INPUT_STREAM_H_
+#define _OSMAND_CORE_Q_IO_DEVICE_INPUT_STREAM_H_
 
 #include <memory>
 
@@ -78,4 +78,4 @@ namespace OsmAnd
 
 } // namespace OsmAnd
 
-#endif // __Q_IO_DEVICE_INPUT_STREAM_H_
+#endif // _OSMAND_CORE_Q_IO_DEVICE_INPUT_STREAM_H_

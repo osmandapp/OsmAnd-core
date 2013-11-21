@@ -19,8 +19,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __TILES_COLLECTION_H_
-#define __TILES_COLLECTION_H_
+#ifndef _OSMAND_CORE_TILES_COLLECTION_H_
+#define _OSMAND_CORE_TILES_COLLECTION_H_
 
 #include <cstdint>
 #include <cassert>
@@ -254,4 +254,4 @@ namespace OsmAnd {
     };
 }
 
-#endif // __TILES_COLLECTION_H_
+#endif // _OSMAND_CORE_TILES_COLLECTION_H_

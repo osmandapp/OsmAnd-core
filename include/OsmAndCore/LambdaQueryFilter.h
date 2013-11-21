@@ -20,8 +20,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __LAMBDA_QUERY_FILTER_H_
-#define __LAMBDA_QUERY_FILTER_H_
+#ifndef _OSMAND_CORE_LAMBDA_QUERY_FILTER_H_
+#define _OSMAND_CORE_LAMBDA_QUERY_FILTER_H_
 
 #include <cstdint>
 #include <functional>
@@ -56,4 +56,4 @@ namespace OsmAnd {
 
 } // namespace OsmAnd
 
-#endif // __LAMBDA_QUERY_FILTER_H_
+#endif // _OSMAND_CORE_LAMBDA_QUERY_FILTER_H_

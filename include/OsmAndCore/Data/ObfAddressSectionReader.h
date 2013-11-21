@@ -20,8 +20,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __OBF_ADDRESS_SECTION_READER_H_
-#define __OBF_ADDRESS_SECTION_READER_H_
+#ifndef _OSMAND_CORE_OBF_ADDRESS_SECTION_READER_H_
+#define _OSMAND_CORE_OBF_ADDRESS_SECTION_READER_H_
 
 #include <cstdint>
 #include <memory>
@@ -78,4 +78,4 @@ namespace OsmAnd {
 
 } // namespace OsmAnd
 
-#endif // __OBF_ADDRESS_SECTION_READER_H_
+#endif // _OSMAND_CORE_OBF_ADDRESS_SECTION_READER_H_

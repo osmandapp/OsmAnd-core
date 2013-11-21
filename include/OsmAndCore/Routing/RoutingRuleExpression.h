@@ -20,8 +20,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __ROUTING_RULE_EXPRESSION_H_
-#define __ROUTING_RULE_EXPRESSION_H_
+#ifndef _OSMAND_CORE_ROUTING_RULE_EXPRESSION_H_
+#define _OSMAND_CORE_ROUTING_RULE_EXPRESSION_H_
 
 #include <cstdint>
 #include <memory>
@@ -109,4 +109,4 @@ namespace OsmAnd {
 
 } // namespace OsmAnd
 
-#endif // __ROUTING_RULE_EXPRESSION_H_
+#endif // _OSMAND_CORE_ROUTING_RULE_EXPRESSION_H_

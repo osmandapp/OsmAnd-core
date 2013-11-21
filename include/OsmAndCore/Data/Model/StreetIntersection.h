@@ -20,8 +20,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __MODEL_STREET_INTERSECTION_H_
-#define __MODEL_STREET_INTERSECTION_H_
+#ifndef _OSMAND_CORE_MODEL_STREET_INTERSECTION_H_
+#define _OSMAND_CORE_MODEL_STREET_INTERSECTION_H_
 
 #include <cstdint>
 
@@ -59,4 +59,4 @@ namespace OsmAnd {
 
 } // namespace OsmAnd
 
-#endif // __MODEL_STREET_INTERSECTION_H_
+#endif // _OSMAND_CORE_MODEL_STREET_INTERSECTION_H_

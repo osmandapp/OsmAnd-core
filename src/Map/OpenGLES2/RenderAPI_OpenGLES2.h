@@ -19,8 +19,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __RENDER_API__OPENGLES2_H_
-#define __RENDER_API__OPENGLES2_H_
+#ifndef _OSMAND_CORE_RENDER_API__OPENGLES2_H_
+#define _OSMAND_CORE_RENDER_API__OPENGLES2_H_
 
 #include <cstdint>
 #include <memory>
@@ -100,4 +100,4 @@ namespace OsmAnd {
 
 }
 
-#endif // __RENDER_API__OPENGLES2_H_
+#endif // _OSMAND_CORE_RENDER_API__OPENGLES2_H_

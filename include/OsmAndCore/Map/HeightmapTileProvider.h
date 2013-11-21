@@ -19,8 +19,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __HEIGHTMAP_TILE_PROVIDER_H_
-#define __HEIGHTMAP_TILE_PROVIDER_H_
+#ifndef _OSMAND_CORE_HEIGHTMAP_TILE_PROVIDER_H_
+#define _OSMAND_CORE_HEIGHTMAP_TILE_PROVIDER_H_
 
 #include <cstdint>
 #include <memory>
@@ -56,4 +56,4 @@ namespace OsmAnd {
 
 }
 
-#endif // __HEIGHTMAP_TILE_PROVIDER_H_
+#endif // _OSMAND_CORE_HEIGHTMAP_TILE_PROVIDER_H_

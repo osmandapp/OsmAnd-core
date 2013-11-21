@@ -20,8 +20,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __QT_EXTENSIONS_H_
-#define __QT_EXTENSIONS_H_
+#ifndef _OSMAND_CORE_QT_EXTENSIONS_H_
+#define _OSMAND_CORE_QT_EXTENSIONS_H_
 
 #include <memory>
 
@@ -87,4 +87,4 @@ inline uint qHash(const OsmAnd::ObfAddressBlockType value, uint seed) Q_DECL_NOT
 }
 #endif //!SWIG
 
-#endif // __QT_EXTENSIONS_H_
+#endif // _OSMAND_CORE_QT_EXTENSIONS_H_

@@ -20,8 +20,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __OBF_MAP_SECTION_READER_METRICS_H_
-#define __OBF_MAP_SECTION_READER_METRICS_H_
+#ifndef _OSMAND_CORE_OBF_MAP_SECTION_READER_METRICS_H_
+#define _OSMAND_CORE_OBF_MAP_SECTION_READER_METRICS_H_
 
 #include <cstdint>
 #include <memory>
@@ -82,4 +82,4 @@ namespace OsmAnd {
 
 } // namespace OsmAnd
 
-#endif // __OBF_MAP_SECTION_READER_METRICS_H_
+#endif // _OSMAND_CORE_OBF_MAP_SECTION_READER_METRICS_H_

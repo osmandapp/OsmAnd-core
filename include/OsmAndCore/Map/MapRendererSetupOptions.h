@@ -19,8 +19,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __MAP_RENDERER_SETUP_OPTIONS_H_
-#define __MAP_RENDERER_SETUP_OPTIONS_H_
+#ifndef _OSMAND_CORE_MAP_RENDERER_SETUP_OPTIONS_H_
+#define _OSMAND_CORE_MAP_RENDERER_SETUP_OPTIONS_H_
 
 #include <cstdint>
 #include <memory>
@@ -57,4 +57,4 @@ namespace OsmAnd {
 
 }
 
-#endif // __MAP_RENDERER_SETUP_OPTIONS_H_
+#endif // _OSMAND_CORE_MAP_RENDERER_SETUP_OPTIONS_H_

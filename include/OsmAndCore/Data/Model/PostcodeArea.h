@@ -20,8 +20,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __MODEL_POSTCODE_AREA_H_
-#define __MODEL_POSTCODE_AREA_H_
+#ifndef _OSMAND_CORE_MODEL_POSTCODE_AREA_H_
+#define _OSMAND_CORE_MODEL_POSTCODE_AREA_H_
 
 #include <OsmAndCore/QtExtensions.h>
 
@@ -49,4 +49,4 @@ namespace OsmAnd {
 
 } // namespace OsmAnd
 
-#endif // __MODEL_POSTCODE_AREA_H_
+#endif // _OSMAND_CORE_MODEL_POSTCODE_AREA_H_

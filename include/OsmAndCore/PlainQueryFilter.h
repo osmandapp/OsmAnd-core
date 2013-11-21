@@ -20,8 +20,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __PLAIN_QUERY_FILTER_H_
-#define __PLAIN_QUERY_FILTER_H_
+#ifndef _OSMAND_CORE_PLAIN_QUERY_FILTER_H_
+#define _OSMAND_CORE_PLAIN_QUERY_FILTER_H_
 
 #include <cstdint>
 
@@ -52,4 +52,4 @@ namespace OsmAnd {
 
 } // namespace OsmAnd
 
-#endif // __PLAIN_QUERY_FILTER_H_
+#endif // _OSMAND_CORE_PLAIN_QUERY_FILTER_H_

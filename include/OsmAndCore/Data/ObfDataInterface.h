@@ -19,8 +19,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __OBF_DATA_INTERFACE_H_
-#define __OBF_DATA_INTERFACE_H_
+#ifndef _OSMAND_CORE_OBF_DATA_INTERFACE_H_
+#define _OSMAND_CORE_OBF_DATA_INTERFACE_H_
 
 #include <cstdint>
 #include <memory>
@@ -74,4 +74,4 @@ namespace OsmAnd {
 
 }
 
-#endif // __OBF_DATA_INTERFACE_H_
+#endif // _OSMAND_CORE_OBF_DATA_INTERFACE_H_

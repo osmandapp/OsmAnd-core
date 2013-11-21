@@ -1,5 +1,5 @@
-#ifndef __LOGGING_H_
-#define __LOGGING_H_
+#ifndef _OSMAND_CORE_LOGGING_H_
+#define _OSMAND_CORE_LOGGING_H_
 
 #include <OsmAndCore/QtExtensions.h>
 
@@ -19,4 +19,4 @@ namespace OsmAnd
     OSMAND_CORE_API void OSMAND_CORE_CALL LogFlush();
 }
 
-#endif // __LOGGING_H_
+#endif // _OSMAND_CORE_LOGGING_H_
