@@ -1,8 +1,7 @@
 #ifndef _OSMAND_CORE_MAP_STYLE_EVALUATION_RESULT_H_
 #define _OSMAND_CORE_MAP_STYLE_EVALUATION_RESULT_H_
 
-#include <cstdint>
-#include <memory>
+#include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
 

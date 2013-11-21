@@ -1,8 +1,6 @@
 #include "ObfsCollection_P.h"
 #include "ObfsCollection.h"
 
-#include <chrono>
-
 #include "ObfReader.h"
 #include "ObfDataInterface.h"
 #include "ObfFile.h"

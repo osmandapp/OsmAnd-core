@@ -23,8 +23,7 @@
 #ifndef _OSMAND_CORE_ROUTING_RULE_EXPRESSION_H_
 #define _OSMAND_CORE_ROUTING_RULE_EXPRESSION_H_
 
-#include <cstdint>
-#include <memory>
+#include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QString>

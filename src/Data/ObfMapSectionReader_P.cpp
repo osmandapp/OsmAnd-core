@@ -2,9 +2,6 @@
 #include "ObfMapSectionReader.h"
 #include "ObfMapSectionReader_Metrics.h"
 
-#include <cinttypes>
-#include <chrono>
-
 #include "ObfReader.h"
 #include "ObfReader_P.h"
 #include "ObfMapSectionInfo.h"

@@ -22,8 +22,7 @@
 #ifndef _OSMAND_CORE_I_MAP_BITMAP_TILE_PROVIDER_H_
 #define _OSMAND_CORE_I_MAP_BITMAP_TILE_PROVIDER_H_
 
-#include <cstdint>
-#include <memory>
+#include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QtGlobal>

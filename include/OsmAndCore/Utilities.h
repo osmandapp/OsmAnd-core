@@ -23,10 +23,9 @@
 #ifndef _OSMAND_CORE_UTILITIES_H_
 #define _OSMAND_CORE_UTILITIES_H_
 
-#include <cstdint>
+#include <OsmAndCore/stdlib_common.h>
 #include <cassert>
 #include <climits>
-#include <memory>
 #include <functional>
 
 #include <OsmAndCore/QtExtensions.h>

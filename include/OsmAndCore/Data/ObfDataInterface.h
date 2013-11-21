@@ -22,8 +22,7 @@
 #ifndef _OSMAND_CORE_OBF_DATA_INTERFACE_H_
 #define _OSMAND_CORE_OBF_DATA_INTERFACE_H_
 
-#include <cstdint>
-#include <memory>
+#include <OsmAndCore/stdlib_common.h>
 #include <array>
 #include <functional>
 

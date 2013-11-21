@@ -22,8 +22,7 @@
 #ifndef _OSMAND_CORE_MAP_ANIMATOR_P_H_
 #define _OSMAND_CORE_MAP_ANIMATOR_P_H_
 
-#include <cstdint>
-#include <memory>
+#include <OsmAndCore/stdlib_common.h>
 #include <cassert>
 #include <functional>
 

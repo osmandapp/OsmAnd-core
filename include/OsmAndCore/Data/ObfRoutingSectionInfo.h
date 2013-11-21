@@ -23,8 +23,7 @@
 #ifndef _OSMAND_CORE_OBF_ROUTING_SECTION_INFO_H_
 #define _OSMAND_CORE_OBF_ROUTING_SECTION_INFO_H_
 
-#include <cstdint>
-#include <memory>
+#include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QList>

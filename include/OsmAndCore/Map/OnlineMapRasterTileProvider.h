@@ -22,8 +22,7 @@
 #ifndef _OSMAND_CORE_ONLINE_MAP_RASTER_TILE_PROVIDER_H_
 #define _OSMAND_CORE_ONLINE_MAP_RASTER_TILE_PROVIDER_H_
 
-#include <cstdint>
-#include <memory>
+#include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QString>

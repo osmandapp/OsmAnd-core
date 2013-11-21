@@ -23,8 +23,7 @@
 #ifndef _OSMAND_CORE_MAP_STYLE_BUILTIN_VALUE_DEFINITIONS_H_
 #define _OSMAND_CORE_MAP_STYLE_BUILTIN_VALUE_DEFINITIONS_H_
 
-#include <cstdint>
-#include <memory>
+#include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
 

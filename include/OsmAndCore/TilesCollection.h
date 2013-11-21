@@ -22,9 +22,8 @@
 #ifndef _OSMAND_CORE_TILES_COLLECTION_H_
 #define _OSMAND_CORE_TILES_COLLECTION_H_
 
-#include <cstdint>
+#include <OsmAndCore/stdlib_common.h>
 #include <cassert>
-#include <memory>
 #include <array>
 #include <functional>
 #include <type_traits>

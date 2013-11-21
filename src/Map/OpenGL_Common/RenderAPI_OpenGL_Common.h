@@ -22,8 +22,7 @@
 #ifndef _OSMAND_CORE_RENDER_API__OPENGL_BASE_H_
 #define _OSMAND_CORE_RENDER_API__OPENGL_BASE_H_
 
-#include <cstdint>
-#include <memory>
+#include <OsmAndCore/stdlib_common.h>
 #include <type_traits>
 
 #include <OsmAndCore/QtExtensions.h>

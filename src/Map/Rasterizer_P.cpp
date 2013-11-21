@@ -3,9 +3,7 @@
 #include "Rasterizer_Metrics.h"
 
 #include <cassert>
-#include <cinttypes>
 #include <set>
-#include <chrono>
 
 #include "RasterizerEnvironment.h"
 #include "RasterizerEnvironment_P.h"

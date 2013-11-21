@@ -23,8 +23,7 @@
 #ifndef _OSMAND_CORE_MAP_STYLE_CONFIGURABLE_INPUT_VALUE_H_
 #define _OSMAND_CORE_MAP_STYLE_CONFIGURABLE_INPUT_VALUE_H_
 
-#include <cstdint>
-#include <memory>
+#include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QString>

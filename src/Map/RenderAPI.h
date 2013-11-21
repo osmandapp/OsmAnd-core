@@ -22,8 +22,7 @@
 #ifndef _OSMAND_CORE_RENDER_API_H_
 #define _OSMAND_CORE_RENDER_API_H_
 
-#include <cstdint>
-#include <memory>
+#include <OsmAndCore/stdlib_common.h>
 #include <functional>
 
 #include <OsmAndCore/QtExtensions.h>

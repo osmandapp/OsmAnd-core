@@ -23,8 +23,7 @@
 #ifndef _OSMAND_CORE_RASTERIZER_ENVIRONMENT_H_
 #define _OSMAND_CORE_RASTERIZER_ENVIRONMENT_H_
 
-#include <cstdint>
-#include <memory>
+#include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QMap>

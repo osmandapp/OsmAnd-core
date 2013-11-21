@@ -22,8 +22,7 @@
 #ifndef _OSMAND_CORE_ATLAS_MAP_RENDERER_H_
 #define _OSMAND_CORE_ATLAS_MAP_RENDERER_H_
 
-#include <cstdint>
-#include <memory>
+#include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
 

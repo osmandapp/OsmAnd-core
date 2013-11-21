@@ -22,8 +22,7 @@
 #ifndef _OSMAND_CORE_TILE_DB_H_
 #define _OSMAND_CORE_TILE_DB_H_
 
-#include <cstdint>
-#include <memory>
+#include <OsmAndCore/stdlib_common.h>
 #include <array>
 
 #include <OsmAndCore/QtExtensions.h>

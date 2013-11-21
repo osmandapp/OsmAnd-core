@@ -23,7 +23,7 @@
 #ifndef TURNTYPE_H
 #define TURNTYPE_H
 
-#include <cstdint>
+#include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QVector>

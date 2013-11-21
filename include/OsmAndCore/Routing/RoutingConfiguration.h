@@ -23,7 +23,7 @@
 #ifndef _OSMAND_CORE_ROUTING_CONFIGURATION_H_
 #define _OSMAND_CORE_ROUTING_CONFIGURATION_H_
 
-#include <cstdint>
+#include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QIODevice>

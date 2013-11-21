@@ -22,8 +22,7 @@
 #ifndef _OSMAND_CORE_OFFLINE_MAP_SYMBOL_PROVIDER_P_H_
 #define _OSMAND_CORE_OFFLINE_MAP_SYMBOL_PROVIDER_P_H_
 
-#include <cstdint>
-#include <memory>
+#include <OsmAndCore/stdlib_common.h>
 #include <functional>
 
 #include <OsmAndCore/QtExtensions.h>

@@ -26,8 +26,8 @@
 #include <limits>
 #include <memory>
 
+#include <OsmAndCore/stdlib_common.h>
 #include <ctime>
-#include <chrono>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QString>

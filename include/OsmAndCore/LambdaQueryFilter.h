@@ -23,7 +23,7 @@
 #ifndef _OSMAND_CORE_LAMBDA_QUERY_FILTER_H_
 #define _OSMAND_CORE_LAMBDA_QUERY_FILTER_H_
 
-#include <cstdint>
+#include <OsmAndCore/stdlib_common.h>
 #include <functional>
 
 #include <OsmAndCore/QtExtensions.h>

@@ -23,7 +23,7 @@
 #ifndef _OSMAND_CORE_DATA_TYPES_H_
 #define _OSMAND_CORE_DATA_TYPES_H_
 
-#include <cstdint>
+#include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
 
