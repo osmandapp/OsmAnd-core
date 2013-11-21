@@ -53,12 +53,12 @@ namespace OsmAnd {
 
         OfflineMapDataProvider* const owner;
 
-        struct DataCacheLevel
+        struct MapObjectsCacheLevel
         {
-            mutable QReadWriteLock _mapObjectsMutex;
+            mutable QReadWriteLock _mutex;
             QHash< uint64_t, std::weak_ptr< const Model::MapObject > > _mapObjects;
         };
-        std::array< DataCacheLevel, ZoomLevelsCount> _dataCache;
+        std::array< MapObjectsCacheLevel, ZoomLevelsCount> _mapObjectsCache;
 
         enum TileState
         {

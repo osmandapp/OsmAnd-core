@@ -147,6 +147,7 @@ namespace OsmAnd {
             double zOrder;
             uint32_t typeRuleIdIndex;
             PrimitiveType objectType;
+
             std::shared_ptr<MapStyleEvaluationResult> evaluationResult;
         };
 

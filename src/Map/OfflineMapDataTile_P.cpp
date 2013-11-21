@@ -3,6 +3,7 @@
 
 #include "MapObject.h"
 #include "ObfMapSectionInfo.h"
+#include "Utilities.h"
 #include "Logging.h"
 
 OsmAnd::OfflineMapDataTile_P::OfflineMapDataTile_P( OfflineMapDataTile* owner_ )
@@ -26,7 +27,7 @@ void OsmAnd::OfflineMapDataTile_P::cleanup()
             link->collection.removeEntry(entry->tileId, entry->zoom);
     }
 
-    // Remove all weak pointers to unique map objects from data cache
+    // Remove all weak pointers to shared map objects that have become unique
     if(const auto link = _link.lock())
     {
 #if defined(DEBUG) || defined(_DEBUG)
@@ -47,12 +48,12 @@ void OsmAnd::OfflineMapDataTile_P::cleanup()
 
             for(int zoom = mapObject->level->minZoom; zoom <= mapObject->level->maxZoom; zoom++)
             {
-                auto& dataCache = link->provider._dataCache[zoom];
+                auto& cacheLevel = link->provider._mapObjectsCache[zoom];
 
                 {
-                    QWriteLocker scopedLocker(&dataCache._mapObjectsMutex);
+                    QWriteLocker scopedLocker(&cacheLevel._mutex);
 
-                    dataCache._mapObjects.remove(mapObject->id);
+                    cacheLevel._mapObjects.remove(mapObject->id);
                 }
             }
         }

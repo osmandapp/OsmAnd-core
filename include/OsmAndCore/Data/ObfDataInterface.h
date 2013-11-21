@@ -64,7 +64,7 @@ namespace OsmAnd {
         void obtainBasemapPresenceFlag(bool& basemapPresent, const IQueryController* const controller = nullptr);
         void obtainMapObjects(QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut, MapFoundationType* foundationOut,
             const AreaI& area31, const ZoomLevel zoom,
-            const IQueryController* const controller = nullptr, std::function<bool(const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t)> filterById = nullptr,
+            const IQueryController* const controller = nullptr, std::function<bool (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t, const AreaI& bbox)> filterById = nullptr,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric = nullptr);
         
     friend class OsmAnd::ObfsCollection;

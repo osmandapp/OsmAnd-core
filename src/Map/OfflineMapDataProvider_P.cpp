@@ -85,33 +85,30 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
     const auto dataRead_Begin = std::chrono::high_resolution_clock::now();
     ObfMapSectionReader_Metrics::Metric_loadMapObjects dataRead_Metric;
 #endif
-    auto& dataCache = _dataCache[zoom];
+    auto& cacheLevel = _mapObjectsCache[zoom];
     dataInterface->obtainMapObjects(&mapObjects, &tileFoundation, tileBBox31, zoom, nullptr,
-        /*
 #if defined(_DEBUG) || defined(DEBUG)
-        [&dataCache, &sharedMapObjects, tileBBox31, &dataFilter](const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id) -> bool
+        [&cacheLevel, &sharedMapObjects, tileBBox31, &dataFilter](const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id, const AreaI& bbox) -> bool
 #else
-        [&dataCache, &sharedMapObjects, tileBBox31](const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id) -> bool
+        [&cacheLevel, &sharedMapObjects, tileBBox31](const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id, const AreaI& bbox) -> bool
 #endif
         {
 #if defined(_DEBUG) || defined(DEBUG)
             const auto dataFilter_Begin = std::chrono::high_resolution_clock::now();
 #endif
 
-            // Save reference to duplicate map object
+            // Otherwise, this map object is surely shared, but a check is needed if it was already loaded
             {
-                QReadLocker scopedLocker(&dataCache._mapObjectsMutex);
+                QReadLocker scopedLocker(&cacheLevel._mutex);
 
-                const auto itSharedMapObject = dataCache._mapObjects.constFind(id);
-                if(itSharedMapObject != dataCache._mapObjects.cend())
+                const auto itSharedMapObject = cacheLevel._mapObjects.constFind(id);
+                if(itSharedMapObject != cacheLevel._mapObjects.cend())
                 {
                     const auto& mapObjectWeakRef = *itSharedMapObject;
-
                     if(const auto& mapObject = mapObjectWeakRef.lock())
                     {
-                        // Not all duplicates should be used, since some may lay outside bbox
-                        if(mapObject->intersects(tileBBox31))
-                            sharedMapObjects.push_back(mapObject);
+                        // If map object is already in shared objects cache and is available, use that one
+                        sharedMapObjects.push_back(mapObject);
 
 #if defined(_DEBUG) || defined(DEBUG)
                         const auto dataFilter_End = std::chrono::high_resolution_clock::now();
@@ -131,7 +128,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 #endif
 
             return true;
-        },*/nullptr,
+        },
 #if defined(_DEBUG) || defined(DEBUG)
         &dataRead_Metric
 #else
@@ -145,26 +142,43 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 
     const auto dataIdsProcess_Begin = std::chrono::high_resolution_clock::now();
 #endif
-    /*
-    // Append weak references to newly read map objects
-    for(auto itMapObject = mapObjects.cbegin(); itMapObject != mapObjects.cend(); ++itMapObject)
+
+    // Add all shared map objects to cache
+    for(auto itMapObject = mapObjects.begin(); itMapObject != mapObjects.end(); ++itMapObject)
     {
-        const auto& mapObject = *itMapObject;
+        auto& mapObject = *itMapObject;
 
         // Add unique map object under lock to all zoom levels, for which this map object is valid
         assert(mapObject->level);
         for(int zoomLevel = mapObject->level->minZoom; zoomLevel <= mapObject->level->maxZoom; zoomLevel++)
         {
-            auto& dataCache = _dataCache[zoomLevel];
+            auto& cacheLevel = _mapObjectsCache[zoomLevel];
             {
-                QWriteLocker scopedLocker(&dataCache._mapObjectsMutex);
+                QWriteLocker scopedLocker(&cacheLevel._mutex);
 
-                if(!dataCache._mapObjects.contains(mapObject->id))
-                    dataCache._mapObjects.insert(mapObject->id, mapObject);
+                const auto itSharedMapObject = cacheLevel._mapObjects.find(mapObject->id);
+                if(itSharedMapObject != cacheLevel._mapObjects.end())
+                {
+                    if(const auto sharedMapObject = itSharedMapObject->lock())
+                    {
+                        // If entry already exits, use that object instead of this one
+                        mapObject = sharedMapObject;
+                    }
+                    else
+                    {
+                        // Or replace with current one
+                        *itSharedMapObject = mapObject;
+                    }
+                }
+                else
+                {
+                    // Or simply insert
+                    cacheLevel._mapObjects.insert(mapObject->id, mapObject);
+                }
             }
         }
     }
-    */
+
 #if defined(_DEBUG) || defined(DEBUG)
     const auto dataIdsProcess_End = std::chrono::high_resolution_clock::now();
     const std::chrono::duration<float> dataIdsProcess_Elapsed = dataIdsProcess_End - dataIdsProcess_Begin;
@@ -174,7 +188,8 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 #endif
 
     // Prepare data for the tile
-    mapObjects << sharedMapObjects;
+    const auto sharedMapObjectsCount = sharedMapObjects.size();
+    mapObjects.append(qMove(sharedMapObjects));
 
     // Allocate and prepare rasterizer context
     bool nothingToRasterize = false;
@@ -254,7 +269,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
         "\t - average time per 1K point evaluations = %fms\n"
         "\t - pointPrimitives = %d\n"
         "\t - elapsedTimeForObtainingPrimitivesSymbols = %fs",
-        mapObjects.size(), mapObjects.size() - sharedMapObjects.size(), sharedMapObjects.size(),
+        mapObjects.size(), mapObjects.size() - sharedMapObjectsCount, sharedMapObjectsCount,
         tileId.x, tileId.y, zoom,
         total_Elapsed.count(),
         obtainDataInterface_Elapsed.count(),
