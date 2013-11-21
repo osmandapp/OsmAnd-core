@@ -655,9 +655,9 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
     collectPrimitivesSymbols(env, context, context._points, Points, controller);
 
     // Sort symbols by order
-    qSort(context._symbols.begin(), context._symbols.end(), [](const PrimitiveSymbol& l, const PrimitiveSymbol& r) -> bool
+    qSort(context._symbols.begin(), context._symbols.end(), [](const std::shared_ptr<const PrimitiveSymbol>& l, const std::shared_ptr<const PrimitiveSymbol>& r) -> bool
     {
-        return l.order < r.order;
+        return l->order < r->order;
     });
 }
 
@@ -712,16 +712,8 @@ void OsmAnd::Rasterizer_P::obtainPolygonSymbol(
     center.x /= verticesCount;
     center.y /= verticesCount;
 
-    PrimitiveSymbol primitiveSymbol;
-    primitiveSymbol.mapObject = primitive.mapObject;
-    primitiveSymbol.location31 = Utilities::normalizeCoordinates(center, ZoomLevel31);
-
     // Obtain texts for this symbol
-    obtainPrimitiveTexts(env, context, primitive, primitiveSymbol);
-
-    // Publish symbol
-    if(!primitiveSymbol.isEmpty())
-        context._symbols.push_back(qMove(primitiveSymbol));
+    obtainPrimitiveTexts(env, context, primitive, Utilities::normalizeCoordinates(center, ZoomLevel31));
 }
 
 void OsmAnd::Rasterizer_P::obtainPolylineSymbol(
@@ -733,16 +725,8 @@ void OsmAnd::Rasterizer_P::obtainPolylineSymbol(
     // Symbols for polyline are always related to it's "middle" point
     const auto center = primitive.mapObject->_points31[primitive.mapObject->_points31.size() >> 1];
 
-    PrimitiveSymbol primitiveSymbol;
-    primitiveSymbol.mapObject = primitive.mapObject;
-    primitiveSymbol.location31 = center;
-
     // Obtain texts for this symbol
-    obtainPrimitiveTexts(env, context, primitive, primitiveSymbol);
-
-    // Publish symbol
-    if(!primitiveSymbol.isEmpty())
-        context._symbols.push_back(qMove(primitiveSymbol));
+    obtainPrimitiveTexts(env, context, primitive, center);
 }
 
 void OsmAnd::Rasterizer_P::obtainPointSymbol(
@@ -781,34 +765,16 @@ void OsmAnd::Rasterizer_P::obtainPointSymbol(
     primitiveSymbol.mapObject = primitive.mapObject;
     primitiveSymbol.location31 = center;
 
-    // Point can have icon associated with it
-    if(primitive.evaluationResult)
-    {
-        bool ok;
-
-        QString iconResourceName;
-        ok = primitive.evaluationResult->getStringValue(env.styleBuiltinValueDefs->id_OUTPUT_ICON, iconResourceName);
-
-        if(ok && !iconResourceName.isEmpty())
-        {
-            primitiveSymbol.icon.resourceName = iconResourceName;
-            primitiveSymbol.order = 100;
-
-            primitive.evaluationResult->getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_ICON, primitiveSymbol.order);
-        }
-    }
+    // Obtain icon for this symbol
+    obtainPrimitiveIcon(env, context, primitive, center);
 
     // Obtain texts for this symbol
-    obtainPrimitiveTexts(env, context, primitive, primitiveSymbol);
-
-    // Publish symbol
-    if(!primitiveSymbol.isEmpty())
-        context._symbols.push_back(qMove(primitiveSymbol));
+    obtainPrimitiveTexts(env, context, primitive, center);
 }
 
 void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    const Primitive& primitive, PrimitiveSymbol& primitiveSymbol )
+    const Primitive& primitive, const PointI& location)
 {
     const auto typeRuleId = primitive.mapObject->_typesRuleIds[primitive.typeRuleIdIndex];
     const auto& decodedType = primitive.mapObject->section->encodingDecodingRules->decodingRules[typeRuleId];
@@ -819,7 +785,6 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
     env.applyTo(textEvaluator);
 
     bool ok;
-    auto firstTextProcessed = false;
     for(auto itName = primitive.mapObject->names.cbegin(); itName != primitive.mapObject->names.cend(); ++itName)
     {
         const auto& name = itName.value();
@@ -853,60 +818,66 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
         if(!ok || textSize == 0)
             continue;
 
-        // Some text parameters are applied to symbol entirely.
-        if(!firstTextProcessed)
-        {
-            textEvalResult.getBooleanValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_ON_PATH, primitiveSymbol.drawOnPath);
-            textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_ORDER, primitiveSymbol.order);
+        // Create primitive
+        const auto text = new PrimitiveSymbol_Text();
+        text->mapObject = primitive.mapObject;
+        text->location31 = location;
+        text->value = name;
 
-            firstTextProcessed = true;
-        }
-#if defined(_DEBUG) || defined(DEBUG)
-        else
-        {
-            bool drawOnPath;
-            ok = textEvalResult.getBooleanValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_ON_PATH, drawOnPath);
-            if(ok)
-            {
-                assert(primitiveSymbol.drawOnPath == drawOnPath);
-            }
+        text->drawOnPath = false;
+        textEvalResult.getBooleanValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_ON_PATH, text->drawOnPath);
 
-            int order;
-            ok = textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_ORDER, order);
-            if(ok)
-            {
-                assert(primitiveSymbol.order == order);
-            }
-        }
-#endif
+        textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_ORDER, text->order);
 
-        PrimitiveSymbol::Text text;
-        text.value = name;
-        
-        text.verticalOffset = 0;
-        textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_DY, text.verticalOffset);
+        text->verticalOffset = 0;
+        textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_DY, text->verticalOffset);
 
-        ok = textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_COLOR, text.color);
-        if(!ok || !text.color)
-            text.color = SK_ColorBLACK;
+        ok = textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_COLOR, text->color);
+        if(!ok || !text->color)
+            text->color = SK_ColorBLACK;
 
-        text.size = textSize;
+        text->size = textSize;
 
-        text.shadowRadius = 0;
-        textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_HALO_RADIUS, text.shadowRadius);
+        text->shadowRadius = 0;
+        textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_HALO_RADIUS, text->shadowRadius);
 
-        text.wrapWidth = 0;
-        textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_WRAP_WIDTH, text.wrapWidth);
+        text->wrapWidth = 0;
+        textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_WRAP_WIDTH, text->wrapWidth);
 
-        text.isBold = false;
-        textEvalResult.getBooleanValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_BOLD, text.isBold);
+        text->isBold = false;
+        textEvalResult.getBooleanValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_BOLD, text->isBold);
 
-        text.minDistance = 0;
-        textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_MIN_DISTANCE, text.minDistance);
+        text->minDistance = 0;
+        textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_MIN_DISTANCE, text->minDistance);
 
-        textEvalResult.getStringValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_SHIELD, text.shieldResourceName);
+        textEvalResult.getStringValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_SHIELD, text->shieldResourceName);
 
-        primitiveSymbol.texts.push_back(qMove(text));
+        context._symbols.push_back(qMove(std::shared_ptr<PrimitiveSymbol>(text)));
+    }
+}
+
+void OsmAnd::Rasterizer_P::obtainPrimitiveIcon(const RasterizerEnvironment_P& env, RasterizerContext_P& context, const Primitive& primitive, const PointI& location)
+{
+    if(!primitive.evaluationResult)
+        return;
+
+    bool ok;
+
+    QString iconResourceName;
+    ok = primitive.evaluationResult->getStringValue(env.styleBuiltinValueDefs->id_OUTPUT_ICON, iconResourceName);
+
+    if(ok && !iconResourceName.isEmpty())
+    {
+        const auto icon = new PrimitiveSymbol_Icon();
+        icon->mapObject = primitive.mapObject;
+        icon->location31 = location;
+
+        icon->resourceName = qMove(iconResourceName);
+
+        icon->order = 100;
+        primitive.evaluationResult->getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_ICON, icon->order);
+
+        context._symbols.push_back(qMove(std::shared_ptr<PrimitiveSymbol>(icon)));
     }
 }
 
@@ -2134,33 +2105,24 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
 {
     for(auto itPrimitiveSymbol = context._symbols.cbegin(); itPrimitiveSymbol != context._symbols.end(); ++itPrimitiveSymbol)
     {
-        const auto& primitiveSymbol = *itPrimitiveSymbol;
+        const auto& symbol = *itPrimitiveSymbol;
 
-        // Skip symbols that need to be rasterized along path
-        if(primitiveSymbol.drawOnPath)
-            continue;
-
-        // Obtain icon if there is one
-        std::shared_ptr<const SkBitmap> icon;
-        if(!primitiveSymbol.icon.resourceName.isEmpty())
-            env.obtainIcon(primitiveSymbol.icon.resourceName, icon);
-
-        // Rasterize each of texts in this symbol
-        QList< std::shared_ptr<const SkBitmap> > rasterizedTexts;
-        for(auto itText = primitiveSymbol.texts.cbegin(); itText != primitiveSymbol.texts.cend(); ++itText)
+        if(const auto textSymbol = std::dynamic_pointer_cast<const PrimitiveSymbol_Text>(symbol))
         {
-            const auto& text = *itText;
+            // Skip symbols that need to be rasterized along path
+            if(textSymbol->drawOnPath)
+                continue;
 
             // Configure paint for text
             SkPaint textPaint = env.textPaint;
 
-            textPaint.setTextSize(text.size);
-            textPaint.setFakeBoldText(text.isBold);
-            textPaint.setColor(text.color);
+            textPaint.setTextSize(textSymbol->size);
+            textPaint.setFakeBoldText(textSymbol->isBold);
+            textPaint.setColor(textSymbol->color);
 
             // Measure text
             SkRect textBounds;
-            textPaint.measureText(text.value.constData(), text.value.length()*sizeof(QChar), &textBounds);
+            textPaint.measureText(textSymbol->value.constData(), textSymbol->value.length()*sizeof(QChar), &textBounds);
 
             SkRect textBBox = textBounds;
 
@@ -2168,15 +2130,15 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
             SkPaint textShadowPaint;
             SkRect shadowBounds;
 
-            if(text.shadowRadius > 0)
+            if(textSymbol->shadowRadius > 0)
             {
                 textShadowPaint = textPaint;
 
                 textShadowPaint.setStyle(SkPaint::kStroke_Style);
                 textShadowPaint.setColor(SK_ColorWHITE);
-                textShadowPaint.setStrokeWidth(text.shadowRadius);
+                textShadowPaint.setStrokeWidth(textSymbol->shadowRadius);
 
-                textShadowPaint.measureText(text.value.constData(), text.value.length()*sizeof(QChar), &shadowBounds);
+                textShadowPaint.measureText(textSymbol->value.constData(), textSymbol->value.length()*sizeof(QChar), &shadowBounds);
                 textBBox.join(shadowBounds);
             }
 
@@ -2188,9 +2150,9 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
             SkCanvas canvas(&target);
 
             // Rasterize text
-            if(text.shadowRadius > 0)
-                canvas.drawText(text.value.constData(), text.value.length()*sizeof(QChar), -textBBox.left(), -textBBox.top(), textShadowPaint);
-            canvas.drawText(text.value.constData(), text.value.length()*sizeof(QChar), -textBBox.left(), -textBBox.top(), textPaint);
+            if(textSymbol->shadowRadius > 0)
+                canvas.drawText(textSymbol->value.constData(), textSymbol->value.length()*sizeof(QChar), -textBBox.left(), -textBBox.top(), textShadowPaint);
+            canvas.drawText(textSymbol->value.constData(), textSymbol->value.length()*sizeof(QChar), -textBBox.left(), -textBBox.top(), textPaint);
 
             //////////////////////////////////////////////////////////////////////////
             /*std::unique_ptr<SkImageEncoder> encoder(CreatePNGImageEncoder());
@@ -2198,19 +2160,21 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
             path.sprintf("D:\\texts\\%p.png", bitmap);
             encoder->encodeFile(path.toLocal8Bit(), *bitmap, 100);*/
             //////////////////////////////////////////////////////////////////////////
-
-            rasterizedTexts.push_back(qMove(std::shared_ptr<const SkBitmap>(bitmap)));
+            delete bitmap;
+            //rasterizedTexts.push_back(qMove(std::shared_ptr<const SkBitmap>(bitmap)));
         }
 
-        // Create container and store it
-        const auto rasterizedSymbol = new RasterizedSymbol(
-            primitiveSymbol.mapObject,
-            primitiveSymbol.location31,
-            icon,
-            rasterizedTexts);
-        outSymbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
+        //// Create container and store it
+        //const auto rasterizedSymbol = new RasterizedSymbol(
+        //    primitiveSymbol.mapObject,
+        //    primitiveSymbol.location31,
+        //    icon,
+        //    rasterizedTexts);
+        //outSymbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
     }
 }
+
+
 
 //void OsmAnd::Rasterizer_P::rasterizeText(
 //    const RasterizerEnvironment_P& env, const RasterizerContext_P& context,
@@ -2349,6 +2313,5 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
 
 OsmAnd::Rasterizer_P::PrimitiveSymbol::PrimitiveSymbol()
     : order(-1)
-    , drawOnPath(false)
 {
 }

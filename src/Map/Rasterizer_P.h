@@ -114,36 +114,32 @@ namespace OsmAnd {
         struct PrimitiveSymbol
         {
             PrimitiveSymbol();
+            virtual ~PrimitiveSymbol()
+            {}
 
             std::shared_ptr<const Model::MapObject> mapObject;
+            PointI location31;
 
             int order;
-            PointI location31;
+        };
+
+        struct PrimitiveSymbol_Text : public PrimitiveSymbol
+        {
+            QString value;
             bool drawOnPath;
+            int verticalOffset;
+            int color;
+            int size;
+            int shadowRadius;
+            int wrapWidth;
+            bool isBold;
+            int minDistance;
+            QString shieldResourceName;
+        };
 
-            struct Text
-            {
-                QString value;
-                int verticalOffset;
-                int color;
-                int size;
-                int shadowRadius;
-                int wrapWidth;
-                bool isBold;
-                int minDistance;
-                QString shieldResourceName;
-            };
-            QVector<Text> texts;
-
-            struct Icon
-            {
-                QString resourceName;
-            } icon;
-
-            inline bool isEmpty() const
-            {
-                return texts.isEmpty() && icon.resourceName.isEmpty();
-            }
+        struct PrimitiveSymbol_Icon : public PrimitiveSymbol
+        {
+            QString resourceName;
         };
 
         struct Primitive
@@ -180,7 +176,10 @@ namespace OsmAnd {
             const Primitive& primitive);
         static void obtainPrimitiveTexts(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-            const Primitive& primitive, PrimitiveSymbol& primitiveSymbol);
+            const Primitive& primitive, const PointI& location);
+        static void obtainPrimitiveIcon(
+            const RasterizerEnvironment_P& env, RasterizerContext_P& context,
+            const Primitive& primitive, const PointI& location);
 
         STRONG_ENUM(PaintValuesSet)
         {
