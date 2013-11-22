@@ -5,6 +5,7 @@
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QMap>
+#include <QVariant>
 
 #include <OsmAndCore.h>
 
@@ -17,26 +18,13 @@ namespace OsmAnd
     class MapStyleEvaluationResult;
     class MapStyleEvaluationResult_P
     {
-    public:
-        union EvaluatedValue_POD
-        {
-            inline EvaluatedValue_POD()
-            {
-                asUInt = 0;
-            }
-
-            float asFloat;
-            int32_t asInt;
-            uint32_t asUInt;
-        };
     private:
     protected:
         MapStyleEvaluationResult_P(MapStyleEvaluationResult* const owner);
 
         MapStyleEvaluationResult* const owner;
 
-        QMap< int, EvaluatedValue_POD > _podValues;
-        QMap< int, QString > _stringValues;
+        QMap< int, QVariant > _values;
     public:
         ~MapStyleEvaluationResult_P();
 

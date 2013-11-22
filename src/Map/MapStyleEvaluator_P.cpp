@@ -153,28 +153,28 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
             {
             case MapStyleValueDataType::Boolean:
                 assert(!ruleValue.isComplex);
-                outResultStorage->_d->_podValues[valueDef->id].asUInt = ruleValue.asSimple.asUInt;
+                outResultStorage->_d->_values[valueDef->id] = (ruleValue.asSimple.asUInt == 1);
                 break;
             case MapStyleValueDataType::Integer:
-                outResultStorage->_d->_podValues[valueDef->id].asInt =
+                outResultStorage->_d->_values[valueDef->id] =
                     ruleValue.isComplex
                     ? ruleValue.asComplex.asInt.evaluate(owner->displayDensityFactor)
                     : ruleValue.asSimple.asInt;
                 break;
             case MapStyleValueDataType::Float:
-                outResultStorage->_d->_podValues[valueDef->id].asFloat =
+                outResultStorage->_d->_values[valueDef->id] =
                     ruleValue.isComplex
                     ? ruleValue.asComplex.asFloat.evaluate(owner->displayDensityFactor)
                     : ruleValue.asSimple.asFloat;
                 break;
             case MapStyleValueDataType::String:
                 // Save value of a string instead of it's id
-                outResultStorage->_d->_stringValues[valueDef->id] =
+                outResultStorage->_d->_values[valueDef->id] =
                     owner->style->_d->lookupStringValue(ruleValue.asSimple.asUInt);
                 break;
             case MapStyleValueDataType::Color:
                 assert(!ruleValue.isComplex);
-                outResultStorage->_d->_podValues[valueDef->id].asUInt = ruleValue.asSimple.asUInt;
+                outResultStorage->_d->_values[valueDef->id] = ruleValue.asSimple.asUInt;
                 break;
             }
         }
