@@ -64,3 +64,10 @@ void OsmAnd::MapStyleEvaluationResult::clear()
 {
     _d->_values.clear();
 }
+
+void OsmAnd::MapStyleEvaluationResult::pack(PackedResult& packedResult)
+{
+    packedResult.reserve(_d->_values.size());
+    for(auto itEntry = _d->_values.cbegin(); itEntry != _d->_values.cend(); ++itEntry)
+        packedResult.push_back(qMove(PackedResultEntry(itEntry.key(), itEntry.value())));
+}
