@@ -558,8 +558,9 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
             }
         }
 
-        // Add primitives group to context
-        context._primitivesGroups.push_back(qMove(group));
+        // Add primitives group to context only if it's non-empty
+        if(!group->isEmpty())
+            context._primitivesGroups.push_back(qMove(group));
     }
 }
 
@@ -630,7 +631,13 @@ void OsmAnd::Rasterizer_P::filterOutLinesByDensity(
         if(!accept)
             itLine.remove();
         else
+        {
+            // If group is treated as empty before this line is added,
+            // add this group to context groups
+            if(line->group->isEmpty())
+                context._primitivesGroups.push_back(line->group);
             line->group->polylines.push_back(line);
+        }
     }
 }
 
