@@ -164,15 +164,18 @@ namespace OsmAnd {
         struct Primitive
         {
             Primitive(
-                const std::shared_ptr<PrimitivesGroup>& group_,
+                const std::shared_ptr<const PrimitivesGroup>& group_,
+                const std::shared_ptr<const Model::MapObject>& mapObject_,
                 const PrimitiveType objectType_,
                 const uint32_t typeRuleIdIndex_)
                 : group(group_)
+                , mapObject(mapObject_)
                 , objectType(objectType_)
                 , typeRuleIdIndex(typeRuleIdIndex_)
             {}
 
-            const std::weak_ptr<PrimitivesGroup> group;
+            const std::weak_ptr<const PrimitivesGroup> group;
+            const std::shared_ptr<const Model::MapObject> mapObject;
             const PrimitiveType objectType;
             const uint32_t typeRuleIdIndex;
 
@@ -197,7 +200,7 @@ namespace OsmAnd {
             const IQueryController* const controller);
         static void collectPrimitivesSymbols(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-            const QVector< std::weak_ptr<const Primitive> >& primitives, const PrimitivesType type, const IQueryController* const controller);
+            const QVector< std::shared_ptr<const Primitive> >& primitives, const PrimitivesType type, const IQueryController* const controller);
         static void obtainPolygonSymbol(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
             const std::shared_ptr<const Primitive>& primitive);
@@ -227,7 +230,7 @@ namespace OsmAnd {
 
         void rasterizeMapPrimitives(
             const AreaI* const destinationArea,
-            SkCanvas& canvas, const QVector< std::weak_ptr<const Primitive> >& primitives, const PrimitivesType type, const IQueryController* const controller);
+            SkCanvas& canvas, const QVector< std::shared_ptr<const Primitive> >& primitives, const PrimitivesType type, const IQueryController* const controller);
 
         void rasterizePolygon(
             const AreaI* const destinationArea,
