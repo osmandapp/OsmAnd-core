@@ -154,11 +154,6 @@ namespace OsmAnd {
             QVector< std::shared_ptr<const Primitive> > polygons;
             QVector< std::shared_ptr<const Primitive> > polylines;
             QVector< std::shared_ptr<const Primitive> > points;
-
-            inline bool isEmpty() const
-            {
-                return polygons.isEmpty() && polylines.isEmpty() && points.isEmpty();
-            }
         };
 
         struct Primitive

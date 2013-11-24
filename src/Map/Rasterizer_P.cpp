@@ -300,20 +300,36 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
         // If using shared context is allowed, check if this group was already processed
         if(useSharedContext && context.owner->sharedContext)
         {
-           /* QReadLocker scopedLocker(&context.owner->sharedContext->_d->_primitivesCacheLock);
-            
             // If this group was already processed, use that
-            const auto itProcessedGroup = context.owner->sharedContext->_d->_primitivesCache.constFind(mapObject->id);
-            if(itProcessedGroup != context.owner->sharedContext->_d->_primitivesCache.cend())
+            std::shared_ptr<const PrimitivesGroup> group;
             {
-                const auto& group = *itProcessedGroup;
+                QReadLocker scopedLocker(&context.owner->sharedContext->_d->_primitivesCacheLock);
 
-                context._primitivesGroups.push_back(group_);
-            }*/
+                const auto itProcessedGroup = context.owner->sharedContext->_d->_primitivesCache.constFind(mapObject->id);
+                if(itProcessedGroup != context.owner->sharedContext->_d->_primitivesCache.cend())
+                    group = *itProcessedGroup;
+            }
+
+            if(static_cast<bool>(group))
+            {
+                // Add polygons, polylines and points from group to current context
+                for(auto itPrimitive = group->polygons.cbegin(); itPrimitive != group->polygons.cend(); ++itPrimitive)
+                    context._polygons.push_back(*itPrimitive);
+                for(auto itPrimitive = group->polylines.cbegin(); itPrimitive != group->polylines.cend(); ++itPrimitive)
+                    context._polylines.push_back(*itPrimitive);
+                for(auto itPrimitive = group->points.cbegin(); itPrimitive != group->points.cend(); ++itPrimitive)
+                    context._points.push_back(*itPrimitive);
+
+                // Add shared group to current context
+                context._primitivesGroups.push_back(qMove(group));
+
+                continue;
+            }
         }
 
         // Create a primitives group
-        std::shared_ptr<PrimitivesGroup> group(new PrimitivesGroup(mapObject));
+        const auto constructedGroup = new PrimitivesGroup(mapObject);
+        std::shared_ptr<const PrimitivesGroup> group(constructedGroup);
 
         uint32_t typeRuleIdIndex = 0;
         for(auto itTypeRuleId = mapObject->typesRuleIds.cbegin(); itTypeRuleId != mapObject->typesRuleIds.cend(); ++itTypeRuleId, typeRuleIdIndex++)
@@ -422,8 +438,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                     pointPrimitive->zOrder = primitive->zOrder;
 
                     // Accept this primitive
-                    context._polygons.push_back(primitive);
-                    group->polygons.push_back(qMove(primitive));
+                    constructedGroup->polygons.push_back(qMove(primitive));
 
                     // Update metric
                     if(metric)
@@ -457,8 +472,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                     // Accept also point primitive only if typeIndex == 0 and (there is text or icon)
                     if(pointPrimitive->typeRuleIdIndex == 0 && (!mapObject->names.isEmpty() || ok))
                     {
-                        context._points.push_back(pointPrimitive);
-                        group->points.push_back(qMove(pointPrimitive));
+                        constructedGroup->points.push_back(qMove(pointPrimitive));
 
                         // Update metric
                         if(metric)
@@ -506,8 +520,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                 primitive->evaluationResult = evaluatorState;
 
                 // Accept this primitive
-                context._polylines.push_back(primitive);
-                group->polylines.push_back(qMove(primitive));
+                constructedGroup->polylines.push_back(qMove(primitive));
 
                 // Update metric
                 if(metric)
@@ -554,8 +567,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                     continue;
 
                 // Accept this primitive
-                context._points.push_back(primitive);
-                group->points.push_back(qMove(primitive));
+                constructedGroup->points.push_back(qMove(primitive));
 
                 // Update metric
                 if(metric)
@@ -575,17 +587,35 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
             }
         }
 
-        // Add primitives group to context only if it's non-empty
-        if(!group->isEmpty())
+        // Add this group to shared cache
+        if(useSharedContext && context.owner->sharedContext)
         {
-            // Add this group to shared cache
-            if(useSharedContext && context.owner->sharedContext)
-            {
-                // don't forget that such group may have already been added
-            }
+            QWriteLocker scopedLocker(&context.owner->sharedContext->_d->_primitivesCacheLock);
 
-            context._primitivesGroups.push_back(qMove(group));
+            const auto itProcessedGroup = context.owner->sharedContext->_d->_primitivesCache.constFind(mapObject->id);
+            if(itProcessedGroup != context.owner->sharedContext->_d->_primitivesCache.cend())
+            {
+                // Replace current group with already available shared one. Unfortunately
+                // current group was already duplicate
+                group = *itProcessedGroup;
+            }
+            else
+            {
+                // Add current group to shared cache
+                context.owner->sharedContext->_d->_primitivesCache.insert(mapObject->id, group);
+            }
         }
+
+        // Add polygons, polylines and points from group to current context
+        for(auto itPrimitive = group->polygons.cbegin(); itPrimitive != group->polygons.cend(); ++itPrimitive)
+            context._polygons.push_back(*itPrimitive);
+        for(auto itPrimitive = group->polylines.cbegin(); itPrimitive != group->polylines.cend(); ++itPrimitive)
+            context._polylines.push_back(*itPrimitive);
+        for(auto itPrimitive = group->points.cbegin(); itPrimitive != group->points.cend(); ++itPrimitive)
+            context._points.push_back(*itPrimitive);
+
+        // Empty groups are also inserted, to indicate that they are empty
+        context._primitivesGroups.push_back(qMove(group));
     }
 }
 

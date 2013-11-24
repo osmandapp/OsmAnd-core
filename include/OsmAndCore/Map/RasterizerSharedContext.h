@@ -34,6 +34,8 @@ namespace OsmAnd
 {
     class Rasterizer;
     class Rasterizer_P;
+    class RasterizerContext;
+    class RasterizerContext_P;
 
     class RasterizerSharedContext_P;
     class OSMAND_CORE_API RasterizerSharedContext
@@ -48,6 +50,8 @@ namespace OsmAnd
 
     friend class OsmAnd::Rasterizer;
     friend class OsmAnd::Rasterizer_P;
+    friend class OsmAnd::RasterizerContext;
+    friend class OsmAnd::RasterizerContext_P;
     };
 
 } // namespace OsmAnd

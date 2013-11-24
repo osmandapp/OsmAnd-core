@@ -35,6 +35,8 @@
 namespace OsmAnd
 {
     class Rasterizer_P;
+    class RasterizerContext;
+    class RasterizerContext_P;
 
     class RasterizerSharedContext;
     class RasterizerSharedContext_P
@@ -46,12 +48,14 @@ namespace OsmAnd
         RasterizerSharedContext* const _owner;
 
         mutable QReadWriteLock _primitivesCacheLock;
-        QHash< uint64_t, std::weak_ptr< const Rasterizer_P::PrimitivesGroup > > _primitivesCache;
+        QHash< uint64_t, std::shared_ptr< const Rasterizer_P::PrimitivesGroup > > _primitivesCache;
     public:
         virtual ~RasterizerSharedContext_P();
 
     friend class OsmAnd::RasterizerSharedContext;
     friend class OsmAnd::Rasterizer_P;
+    friend class OsmAnd::RasterizerContext;
+    friend class OsmAnd::RasterizerContext_P;
     };
 
 } // namespace OsmAnd
