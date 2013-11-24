@@ -293,6 +293,9 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
 
         const auto& mapObject = *itMapObject;
 
+        // Create a primitives group
+        std::shared_ptr<PrimitivesGroup> group(new PrimitivesGroup(mapObject));
+
         //TODO: check if this map object was already processed, and an entry exists in shared context.
         // but this should be done if it was a locally generated mapObject (like triangualted coastlines)
 
@@ -336,11 +339,9 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
             if(!orderEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_ORDER, zOrder))
                 continue;
 
-            Primitive primitive;
-            primitive.mapObject = mapObject;
-            primitive.objectType = static_cast<PrimitiveType>(objectType);
-            primitive.zOrder = zOrder;
-            primitive.typeRuleIdIndex = typeRuleIdIndex;
+            // Create new primitive
+            std::shared_ptr<Primitive> primitive(new Primitive(group, static_cast<PrimitiveType>(objectType), typeRuleIdIndex));
+            primitive->zOrder = zOrder;
 
             if(objectType == PrimitiveType::Polygon)
             {
@@ -379,7 +380,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
 
                 // Evaluate style for this primitive to check if it passes
                 std::shared_ptr<MapStyleEvaluationResult> evaluatorState(new MapStyleEvaluationResult());
-                ok = polygonEvaluator.evaluate(primitive.mapObject, MapStyleRulesetType::Polygon, evaluatorState.get());
+                ok = polygonEvaluator.evaluate(mapObject, MapStyleRulesetType::Polygon, evaluatorState.get());
 
                 // Update metric
                 if(metric)
@@ -392,19 +393,20 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                 // If evaluation failed, skip
                 if(!ok)
                     continue;
-                primitive.evaluationResult = evaluatorState;
+                primitive->evaluationResult = evaluatorState;
 
                 // Check size of polygon
                 auto polygonArea31 = Utilities::polygonArea(mapObject->points31);
                 if(polygonArea31 > PolygonAreaCutoffLowerThreshold)
                 {
-                    primitive.zOrder += 1.0 / polygonArea31;
+                    primitive->zOrder += 1.0 / polygonArea31;
 
                     // Duplicate primitive as point
-                    auto pointPrimitive = primitive;
-                    pointPrimitive.objectType = PrimitiveType::Point;
+                    std::shared_ptr<Primitive> pointPrimitive(new Primitive(group, PrimitiveType::Point, typeRuleIdIndex));
+                    pointPrimitive->zOrder = primitive->zOrder;
 
                     // Accept this primitive
+                    group->polygons.push_back(primitive);
                     context._polygons.push_back(qMove(primitive));
 
                     // Update metric
@@ -422,7 +424,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
 
                     // Evaluate Point rules
                     std::shared_ptr<MapStyleEvaluationResult> pointEvaluatorState(new MapStyleEvaluationResult());
-                    ok = pointEvaluator.evaluate(pointPrimitive.mapObject, MapStyleRulesetType::Point, pointEvaluatorState.get());
+                    ok = pointEvaluator.evaluate(mapObject, MapStyleRulesetType::Point, pointEvaluatorState.get());
 
                     // Update metric
                     if(metric)
@@ -434,17 +436,12 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                     
                     // Point evaluation is a bit special, it's success only indicates that point has an icon
                     if(ok)
-                    {
-                        pointPrimitive.evaluationResult = pointEvaluatorState;
-                    }
-                    else
-                    {
-                        pointPrimitive.evaluationResult.reset();
-                    }
+                        pointPrimitive->evaluationResult = pointEvaluatorState;
 
                     // Accept also point primitive only if typeIndex == 0 and (there is text or icon)
-                    if(pointPrimitive.typeRuleIdIndex == 0 && (!pointPrimitive.mapObject->names.isEmpty() || ok))
+                    if(pointPrimitive->typeRuleIdIndex == 0 && (!mapObject->names.isEmpty() || ok))
                     {
+                        group->points.push_back(pointPrimitive);
                         context._points.push_back(qMove(pointPrimitive));
 
                         // Update metric
@@ -460,8 +457,8 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                 {
                     OsmAnd::LogPrintf(LogSeverityLevel::Warning,
                         "Map object #%" PRIu64 " (%" PRIi64 ") is processed as polyline, but has %d point(s)",
-                        primitive.mapObject->id >> 1, static_cast<int64_t>(primitive.mapObject->id) / 2,
-                        primitive.mapObject->_points31.size());
+                        mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2,
+                        mapObject->_points31.size());
                     continue;
                 }
 
@@ -473,11 +470,11 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                 // Setup mapObject-specific input data
                 polylineEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
                 polylineEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
-                polylineEvaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_LAYER, primitive.mapObject->getSimpleLayerValue());
+                polylineEvaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_LAYER, mapObject->getSimpleLayerValue());
 
                 // Evaluate style for this primitive to check if it passes
                 std::shared_ptr<MapStyleEvaluationResult> evaluatorState(new MapStyleEvaluationResult());
-                ok = polylineEvaluator.evaluate(primitive.mapObject, MapStyleRulesetType::Polyline, evaluatorState.get());
+                ok = polylineEvaluator.evaluate(mapObject, MapStyleRulesetType::Polyline, evaluatorState.get());
 
                 // Update metric
                 if(metric)
@@ -490,10 +487,10 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                 // If evaluation failed, skip
                 if(!ok)
                     continue;
-                primitive.evaluationResult = evaluatorState;
+                primitive->evaluationResult = evaluatorState;
 
-                // Accept this primitive
-                context._lines.push_back(qMove(primitive));
+                // Accept this primitive. Polyline is not added to group, since they are going to be filtered, and added later
+                context._polylines.push_back(qMove(primitive));
 
                 // Update metric
                 if(metric)
@@ -506,7 +503,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                 {
                     OsmAnd::LogPrintf(LogSeverityLevel::Warning,
                         "Map object #%" PRIu64 " (%" PRIi64 ") is processed as point, but has no point",
-                        primitive.mapObject->id >> 1, static_cast<int64_t>(primitive.mapObject->id) / 2);
+                        mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2);
                     continue;
                 }
 
@@ -521,7 +518,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
 
                 // Evaluate Point rules
                 std::shared_ptr<MapStyleEvaluationResult> evaluatorState(new MapStyleEvaluationResult());
-                ok = pointEvaluator.evaluate(primitive.mapObject, MapStyleRulesetType::Point, evaluatorState.get());
+                ok = pointEvaluator.evaluate(mapObject, MapStyleRulesetType::Point, evaluatorState.get());
 
                 // Update metric
                 if(metric)
@@ -533,12 +530,14 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
 
                 // Point evaluation is a bit special, it's success only indicates that point has an icon
                 if(ok)
-                    primitive.evaluationResult = evaluatorState;
+                    primitive->evaluationResult = evaluatorState;
 
                 // Skip is possible if typeIndex != 0 or (there is no text and no icon)
-                if(primitive.typeRuleIdIndex != 0 || (primitive.mapObject->names.isEmpty() && !ok))
+                if(primitive->typeRuleIdIndex != 0 || (mapObject->names.isEmpty() && !ok))
                     continue;
 
+                // Accept this primitive
+                group->points.push_back(primitive);
                 context._points.push_back(qMove(primitive));
 
                 // Update metric
@@ -558,25 +557,28 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                 context._shadowLevelMax = qMax(context._shadowLevelMax, static_cast<uint32_t>(zOrder));
             }
         }
+
+        // Add primitives group to context
+        context._primitivesGroups.push_back(qMove(group));
     }
 }
 
 void OsmAnd::Rasterizer_P::sortAndFilterPrimitives(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context)
 {
-    const auto privitivesSort = [](const Primitive& l, const Primitive& r) -> bool
+    const auto privitivesSort = [](const std::shared_ptr<const Primitive>& l, const std::shared_ptr<const Primitive>& r) -> bool
     {
-        if(qFuzzyCompare(l.zOrder, r.zOrder))
+        if(qFuzzyCompare(l->zOrder, r->zOrder))
         {
-            if(l.typeRuleIdIndex == r.typeRuleIdIndex)
-                return l.mapObject->_points31.size() < r.mapObject->_points31.size();
-            return l.typeRuleIdIndex < r.typeRuleIdIndex;
+            if(l->typeRuleIdIndex == r->typeRuleIdIndex)
+                return l->group->mapObject->points31.size() < r->group->mapObject->points31.size();
+            return l->typeRuleIdIndex < r->typeRuleIdIndex;
         }
-        return l.zOrder < r.zOrder;
+        return l->zOrder < r->zOrder;
     };
 
     qSort(context._polygons.begin(), context._polygons.end(), privitivesSort);
-    qSort(context._lines.begin(), context._lines.end(), privitivesSort);
+    qSort(context._polylines.begin(), context._polylines.end(), privitivesSort);
     filterOutLinesByDensity(env, context);
     qSort(context._points.begin(), context._points.end(), privitivesSort);
 }
@@ -591,20 +593,20 @@ void OsmAnd::Rasterizer_P::filterOutLinesByDensity(
     const auto dZ = context._zoom + context._roadDensityZoomTile;
     QHash< uint64_t, std::pair<uint32_t, double> > densityMap;
     
-    QMutableVectorIterator<Primitive> itLine(context._lines);
+    QMutableVectorIterator< std::shared_ptr<const Primitive> > itLine(context._polylines);
     itLine.toBack();
     while(itLine.hasPrevious())
     {
         const auto& line = itLine.previous();
 
         auto accept = true;
-        if(line.mapObject->_typesRuleIds[line.typeRuleIdIndex] == line.mapObject->section->encodingDecodingRules->highway_encodingRuleId)
+        if(line->group->mapObject->_typesRuleIds[line->typeRuleIdIndex] == line->group->mapObject->section->encodingDecodingRules->highway_encodingRuleId)
         {
             accept = false;
 
             uint64_t prevId = 0;
-            const auto pointsCount = line.mapObject->points31.size();
-            auto pPoint = line.mapObject->points31.constData();
+            const auto pointsCount = line->group->mapObject->points31.size();
+            auto pPoint = line->group->mapObject->points31.constData();
             for(auto pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
             {
                 auto x = pPoint->x >> (31 - dZ);
@@ -619,7 +621,7 @@ void OsmAnd::Rasterizer_P::filterOutLinesByDensity(
                     {
                         accept = true;
                         mapEntry.first += 1;
-                        mapEntry.second = line.zOrder;
+                        mapEntry.second = line->zOrder;
                     }
                 }
             }
@@ -627,6 +629,8 @@ void OsmAnd::Rasterizer_P::filterOutLinesByDensity(
 
         if(!accept)
             itLine.remove();
+        else
+            line->group->polylines.push_back(line);
     }
 }
 
@@ -636,7 +640,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
 {
     // Collect symbols from all primitives
     collectPrimitivesSymbols(env, context, context._polygons, Polygons, controller);
-    collectPrimitivesSymbols(env, context, context._lines, Polylines, controller);
+    collectPrimitivesSymbols(env, context, context._polylines, Polylines, controller);
     collectPrimitivesSymbols(env, context, context._points, Points, controller);
 
     // Sort symbols by order
@@ -648,7 +652,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
 
 void OsmAnd::Rasterizer_P::collectPrimitivesSymbols(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    const QVector< Rasterizer_P::Primitive >& primitives, const PrimitivesType type, const IQueryController* const controller )
+    const QVector< std::shared_ptr<const Primitive> >& primitives, const PrimitivesType type, const IQueryController* const controller)
 {
     assert(type != PrimitivesType::Polylines_ShadowOnly);
 
@@ -669,7 +673,7 @@ void OsmAnd::Rasterizer_P::collectPrimitivesSymbols(
         }
         else if(type == Points)
         {
-            assert(primitive.typeRuleIdIndex == 0);
+            assert(primitive->typeRuleIdIndex == 0);
 
             obtainPointSymbol(env, context, primitive);
         }
@@ -678,24 +682,23 @@ void OsmAnd::Rasterizer_P::collectPrimitivesSymbols(
 
 void OsmAnd::Rasterizer_P::obtainPolygonSymbol(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    const Primitive& primitive )
+    const std::shared_ptr<const Primitive>& primitive)
 {
-    assert(primitive.mapObject->_points31.size() > 2);
-    assert(primitive.mapObject->isClosedFigure());
-    assert(primitive.mapObject->isClosedFigure(true));
+    assert(primitive->group->mapObject->points31.size() > 2);
+    assert(primitive->group->mapObject->isClosedFigure());
+    assert(primitive->group->mapObject->isClosedFigure(true));
 
     // Get center of polygon, since all symbols of polygon are related to it's center
     PointI64 center;
-    for(auto itPoint = primitive.mapObject->_points31.cbegin(); itPoint != primitive.mapObject->_points31.cend(); ++itPoint)
+    const auto pointsCount = primitive->group->mapObject->points31.size();
+    auto pPoint = primitive->group->mapObject->points31.constData();
+    for(auto pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
     {
-        const auto& point = *itPoint;
-
-        center.x += point.x;
-        center.y += point.y;
+        center.x += pPoint->x;
+        center.y += pPoint->y;
     }
-    const auto verticesCount = primitive.mapObject->_points31.size();
-    center.x /= verticesCount;
-    center.y /= verticesCount;
+    center.x /= pointsCount;
+    center.y /= pointsCount;
 
     // Obtain texts for this symbol
     obtainPrimitiveTexts(env, context, primitive, Utilities::normalizeCoordinates(center, ZoomLevel31));
@@ -703,12 +706,12 @@ void OsmAnd::Rasterizer_P::obtainPolygonSymbol(
 
 void OsmAnd::Rasterizer_P::obtainPolylineSymbol(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    const Primitive& primitive )
+    const std::shared_ptr<const Primitive>& primitive)
 {
-    assert(primitive.mapObject->_points31.size() >= 2);
+    assert(primitive->group->mapObject->_points31.size() >= 2);
 
     // Symbols for polyline are always related to it's "middle" point
-    const auto center = primitive.mapObject->_points31[primitive.mapObject->_points31.size() >> 1];
+    const auto center = primitive->group->mapObject->points31[primitive->group->mapObject->points31.size() >> 1];
 
     // Obtain texts for this symbol
     obtainPrimitiveTexts(env, context, primitive, center);
@@ -716,38 +719,36 @@ void OsmAnd::Rasterizer_P::obtainPolylineSymbol(
 
 void OsmAnd::Rasterizer_P::obtainPointSymbol(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    const Primitive& primitive )
+    const std::shared_ptr<const Primitive>& primitive)
 {
-    assert(primitive.mapObject->_points31.size() > 0);
+    assert(primitive->group->mapObject->points31.size() > 0);
 
     // Depending on type of point, center is determined differently
     PointI center;
-    if(primitive.mapObject->_points31.size() == 1)
+    if(primitive->group->mapObject->points31.size() == 1)
     {
         // Regular point
-        center = primitive.mapObject->_points31.first();
+        center = primitive->group->mapObject->points31.first();
     }
     else
     {
         // Point represents center of polygon
         PointI64 center_;
-        for(auto itPoint = primitive.mapObject->_points31.cbegin(); itPoint != primitive.mapObject->_points31.cend(); ++itPoint)
+        const auto pointsCount = primitive->group->mapObject->points31.size();
+        auto pPoint = primitive->group->mapObject->points31.constData();
+        for(auto pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
         {
-            const auto& point = *itPoint;
-
-            center_.x += point.x;
-            center_.y += point.y;
+            center_.x += pPoint->x;
+            center_.y += pPoint->y;
         }
-
-        const auto verticesCount = primitive.mapObject->_points31.size();
-        center_.x /= verticesCount;
-        center_.y /= verticesCount;
+        center_.x /= pointsCount;
+        center_.y /= pointsCount;
 
         center = Utilities::normalizeCoordinates(center_, ZoomLevel31);
     }
 
     PrimitiveSymbol primitiveSymbol;
-    primitiveSymbol.mapObject = primitive.mapObject;
+    primitiveSymbol.mapObject = primitive->group->mapObject;
     primitiveSymbol.location31 = center;
 
     // Obtain icon for this symbol
@@ -759,10 +760,10 @@ void OsmAnd::Rasterizer_P::obtainPointSymbol(
 
 void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    const Primitive& primitive, const PointI& location)
+    const std::shared_ptr<const Primitive>& primitive, const PointI& location)
 {
-    const auto typeRuleId = primitive.mapObject->_typesRuleIds[primitive.typeRuleIdIndex];
-    const auto& decodedType = primitive.mapObject->section->encodingDecodingRules->decodingRules[typeRuleId];
+    const auto typeRuleId = primitive->group->mapObject->_typesRuleIds[primitive->typeRuleIdIndex];
+    const auto& decodedType = primitive->group->mapObject->section->encodingDecodingRules->decodingRules[typeRuleId];
 
     MapStyleEvaluationResult textEvalResult;
 
@@ -770,7 +771,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
     env.applyTo(textEvaluator);
 
     bool ok;
-    for(auto itName = primitive.mapObject->names.cbegin(); itName != primitive.mapObject->names.cend(); ++itName)
+    for(auto itName = primitive->group->mapObject->names.cbegin(); itName != primitive->group->mapObject->names.cend(); ++itName)
     {
         const auto& name = itName.value();
 
@@ -788,13 +789,13 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
         textEvaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_TEXT_LENGTH, name.length());
 
         QString nameTag;
-        if(itName.key() != primitive.mapObject->section->encodingDecodingRules->name_encodingRuleId)
-            nameTag = primitive.mapObject->section->encodingDecodingRules->decodingRules[itName.key()].tag;
+        if(itName.key() != primitive->group->mapObject->section->encodingDecodingRules->name_encodingRuleId)
+            nameTag = primitive->group->mapObject->section->encodingDecodingRules->decodingRules[itName.key()].tag;
 
         textEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_NAME_TAG, nameTag);
 
         textEvalResult.clear();
-        if(!textEvaluator.evaluate(primitive.mapObject, MapStyleRulesetType::Text, &textEvalResult))
+        if(!textEvaluator.evaluate(primitive->group->mapObject, MapStyleRulesetType::Text, &textEvalResult))
             continue;
 
         // Skip text that doesn't have valid size
@@ -805,7 +806,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
 
         // Create primitive
         const auto text = new PrimitiveSymbol_Text();
-        text->mapObject = primitive.mapObject;
+        text->mapObject = primitive->group->mapObject;
         text->location31 = location;
         text->value = name;
 
@@ -841,26 +842,28 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
     }
 }
 
-void OsmAnd::Rasterizer_P::obtainPrimitiveIcon(const RasterizerEnvironment_P& env, RasterizerContext_P& context, const Primitive& primitive, const PointI& location)
+void OsmAnd::Rasterizer_P::obtainPrimitiveIcon(
+    const RasterizerEnvironment_P& env, RasterizerContext_P& context,
+    const std::shared_ptr<const Primitive>& primitive, const PointI& location)
 {
-    if(!primitive.evaluationResult)
+    if(!primitive->evaluationResult)
         return;
 
     bool ok;
 
     QString iconResourceName;
-    ok = primitive.evaluationResult->getStringValue(env.styleBuiltinValueDefs->id_OUTPUT_ICON, iconResourceName);
+    ok = primitive->evaluationResult->getStringValue(env.styleBuiltinValueDefs->id_OUTPUT_ICON, iconResourceName);
 
     if(ok && !iconResourceName.isEmpty())
     {
         const auto icon = new PrimitiveSymbol_Icon();
-        icon->mapObject = primitive.mapObject;
+        icon->mapObject = primitive->group->mapObject;
         icon->location31 = location;
 
         icon->resourceName = qMove(iconResourceName);
 
         icon->order = 100;
-        primitive.evaluationResult->getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_ICON, icon->order);
+        primitive->evaluationResult->getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_ICON, icon->order);
 
         context._symbols.push_back(qMove(std::shared_ptr<PrimitiveSymbol>(icon)));
     }
@@ -987,13 +990,13 @@ void OsmAnd::Rasterizer_P::rasterizeMap(
     // Rasterize layers of map:
     rasterizeMapPrimitives(destinationArea, canvas, context._polygons, Polygons, controller);
     if(context._shadowRenderingMode > 1)
-        rasterizeMapPrimitives(destinationArea, canvas, context._lines, Polylines_ShadowOnly, controller);
-    rasterizeMapPrimitives(destinationArea, canvas, context._lines, Polylines, controller);
+        rasterizeMapPrimitives(destinationArea, canvas, context._polylines, Polylines_ShadowOnly, controller);
+    rasterizeMapPrimitives(destinationArea, canvas, context._polylines, Polylines, controller);
 }
 
 void OsmAnd::Rasterizer_P::rasterizeMapPrimitives(
     const AreaI* const destinationArea,
-    SkCanvas& canvas, const QVector< Primitive >& primitives, PrimitivesType type, const IQueryController* const controller )
+    SkCanvas& canvas, const QVector< std::shared_ptr<const Primitive> >& primitives, PrimitivesType type, const IQueryController* const controller )
 {
     assert(type != PrimitivesType::Points);
 
@@ -1009,7 +1012,7 @@ void OsmAnd::Rasterizer_P::rasterizeMapPrimitives(
 
         if(type == Polygons)
         {
-            if(primitive.zOrder > polygonSizeThreshold + static_cast<int>(primitive.zOrder))
+            if(primitive->zOrder > polygonSizeThreshold + static_cast<int>(primitive->zOrder))
                 continue;
 
             rasterizePolygon(destinationArea, canvas, primitive);
@@ -1154,13 +1157,13 @@ bool OsmAnd::Rasterizer_P::updatePaint(
 
 void OsmAnd::Rasterizer_P::rasterizePolygon(
     const AreaI* const destinationArea,
-    SkCanvas& canvas, const Primitive& primitive )
+    SkCanvas& canvas, const std::shared_ptr<const Primitive>& primitive)
 {
-    assert(primitive.mapObject->_points31.size() > 2);
-    assert(primitive.mapObject->isClosedFigure());
-    assert(primitive.mapObject->isClosedFigure(true));
+    assert(primitive->group->mapObject->points31.size() > 2);
+    assert(primitive->group->mapObject->isClosedFigure());
+    assert(primitive->group->mapObject->isClosedFigure(true));
 
-    if(!updatePaint(*primitive.evaluationResult, PaintValuesSet::Set_0, true))
+    if(!updatePaint(*primitive->evaluationResult, PaintValuesSet::Set_0, true))
         return;
 
     SkPath path;
@@ -1169,11 +1172,11 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
     PointF vertex;
     int bounds = 0;
     QVector< PointF > outsideBounds;
-    for(auto itPoint = primitive.mapObject->points31.cbegin(); itPoint != primitive.mapObject->points31.cend(); ++itPoint, pointIdx++)
+    const auto pointsCount = primitive->group->mapObject->points31.size();
+    auto pPoint = primitive->group->mapObject->points31.constData();
+    for(auto pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
     {
-        const auto& point = *itPoint;
-
-        calculateVertex(point, vertex);
+        calculateVertex(*pPoint, vertex);
 
         if(pointIdx == 0)
         {
@@ -1217,10 +1220,10 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
             return;
     }
 
-    if(!primitive.mapObject->innerPolygonsPoints31.isEmpty())
+    if(!primitive->group->mapObject->innerPolygonsPoints31.isEmpty())
     {
         path.setFillType(SkPath::kEvenOdd_FillType);
-        for(auto itPolygon = primitive.mapObject->innerPolygonsPoints31.cbegin(); itPolygon != primitive.mapObject->innerPolygonsPoints31.cend(); ++itPolygon)
+        for(auto itPolygon = primitive->group->mapObject->innerPolygonsPoints31.cbegin(); itPolygon != primitive->group->mapObject->innerPolygonsPoints31.cend(); ++itPolygon)
         {
             const auto& polygon = *itPolygon;
 
@@ -1243,53 +1246,53 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
     }
 
     canvas.drawPath(path, _mapPaint);
-    if(updatePaint(*primitive.evaluationResult, PaintValuesSet::Set_1, false))
+    if(updatePaint(*primitive->evaluationResult, PaintValuesSet::Set_1, false))
         canvas.drawPath(path, _mapPaint);
 }
 
 void OsmAnd::Rasterizer_P::rasterizePolyline(
     const AreaI* const destinationArea,
-    SkCanvas& canvas, const Primitive& primitive, bool drawOnlyShadow )
+    SkCanvas& canvas, const std::shared_ptr<const Primitive>& primitive, bool drawOnlyShadow)
 {
-    assert(primitive.mapObject->_points31.size() >= 2);
+    assert(primitive->group->mapObject->points31.size() >= 2);
 
-    if(!updatePaint(*primitive.evaluationResult, PaintValuesSet::Set_0, false))
+    if(!updatePaint(*primitive->evaluationResult, PaintValuesSet::Set_0, false))
         return;
 
     bool ok;
 
     int shadowColor;
-    ok = primitive.evaluationResult->getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_SHADOW_COLOR, shadowColor);
+    ok = primitive->evaluationResult->getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_SHADOW_COLOR, shadowColor);
     if(!ok || shadowColor == 0)
         shadowColor = context._shadowRenderingColor;
 
     int shadowRadius;
-    ok = primitive.evaluationResult->getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_SHADOW_RADIUS, shadowRadius);
+    ok = primitive->evaluationResult->getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_SHADOW_RADIUS, shadowRadius);
     if(drawOnlyShadow && (!ok || shadowRadius == 0))
         return;
 
-    const auto typeRuleId = primitive.mapObject->_typesRuleIds[primitive.typeRuleIdIndex];
+    const auto typeRuleId = primitive->group->mapObject->_typesRuleIds[primitive->typeRuleIdIndex];
 
     int oneway = 0;
-    if(context._zoom >= ZoomLevel16 && typeRuleId == primitive.mapObject->section->encodingDecodingRules->highway_encodingRuleId)
+    if(context._zoom >= ZoomLevel16 && typeRuleId == primitive->group->mapObject->section->encodingDecodingRules->highway_encodingRuleId)
     {
-        if(primitive.mapObject->containsType(primitive.mapObject->section->encodingDecodingRules->oneway_encodingRuleId, true))
+        if(primitive->group->mapObject->containsType(primitive->group->mapObject->section->encodingDecodingRules->oneway_encodingRuleId, true))
             oneway = 1;
-        else if(primitive.mapObject->containsType(primitive.mapObject->section->encodingDecodingRules->onewayReverse_encodingRuleId, true))
+        else if(primitive->group->mapObject->containsType(primitive->group->mapObject->section->encodingDecodingRules->onewayReverse_encodingRuleId, true))
             oneway = -1;
     }
 
     SkPath path;
     int pointIdx = 0;
-    const auto middleIdx = primitive.mapObject->_points31.size() >> 1;
     bool intersect = false;
     int prevCross = 0;
     PointF vertex, middleVertex;
-    for(auto itPoint = primitive.mapObject->_points31.cbegin(); itPoint != primitive.mapObject->_points31.cend(); ++itPoint, pointIdx++)
+    const auto pointsCount = primitive->group->mapObject->points31.size();
+    const auto middleIdx = pointsCount / 2;
+    auto pPoint = primitive->group->mapObject->points31.constData();
+    for(pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
     {
-        const auto& point = *itPoint;
-
-        calculateVertex(point, vertex);
+        calculateVertex(*pPoint, vertex);
 
         if(pointIdx == 0)
         {
@@ -1339,24 +1342,24 @@ void OsmAnd::Rasterizer_P::rasterizePolyline(
         }
         else
         {
-            if(updatePaint(*primitive.evaluationResult, PaintValuesSet::Set_minus2, false))
+            if(updatePaint(*primitive->evaluationResult, PaintValuesSet::Set_minus2, false))
             {
                 canvas.drawPath(path, _mapPaint);
             }
-            if(updatePaint(*primitive.evaluationResult, PaintValuesSet::Set_minus1, false))
+            if(updatePaint(*primitive->evaluationResult, PaintValuesSet::Set_minus1, false))
             {
                 canvas.drawPath(path, _mapPaint);
             }
-            if(updatePaint(*primitive.evaluationResult, PaintValuesSet::Set_0, false))
+            if(updatePaint(*primitive->evaluationResult, PaintValuesSet::Set_0, false))
             {
                 canvas.drawPath(path, _mapPaint);
             }
             canvas.drawPath(path, _mapPaint);
-            if(updatePaint(*primitive.evaluationResult, PaintValuesSet::Set_1, false))
+            if(updatePaint(*primitive->evaluationResult, PaintValuesSet::Set_1, false))
             {
                 canvas.drawPath(path, _mapPaint);
             }
-            if(updatePaint(*primitive.evaluationResult, PaintValuesSet::Set_3, false))
+            if(updatePaint(*primitive->evaluationResult, PaintValuesSet::Set_3, false))
             {
                 canvas.drawPath(path, _mapPaint);
             }

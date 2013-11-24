@@ -141,13 +141,37 @@ namespace OsmAnd {
             QString resourceName;
         };
 
+        struct Primitive;
+        struct PrimitivesGroup
+        {
+            PrimitivesGroup(const std::shared_ptr<const Model::MapObject>& mapObject_)
+                : mapObject(mapObject_)
+            {}
+
+            const std::shared_ptr<const Model::MapObject> mapObject;
+
+            QVector< std::weak_ptr<const Primitive> > polygons;
+            QVector< std::weak_ptr<const Primitive> > polylines;
+            QVector< std::weak_ptr<const Primitive> > points;
+        };
+
         struct Primitive
         {
-            std::shared_ptr<const Model::MapObject> mapObject;
-            double zOrder;
-            uint32_t typeRuleIdIndex;
-            PrimitiveType objectType;
+            Primitive(
+                const std::shared_ptr<PrimitivesGroup>& group_,
+                const PrimitiveType objectType_,
+                const uint32_t typeRuleIdIndex_)
+                : group(group_)
+                , objectType(objectType_)
+                , typeRuleIdIndex(typeRuleIdIndex_)
+            {}
 
+            const std::shared_ptr<PrimitivesGroup> group;
+            const PrimitiveType objectType;
+            const uint32_t typeRuleIdIndex;
+
+            double zOrder;
+          
             std::shared_ptr<MapStyleEvaluationResult> evaluationResult;
         };
 
@@ -166,22 +190,22 @@ namespace OsmAnd {
             const IQueryController* const controller);
         static void collectPrimitivesSymbols(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-            const QVector< Primitive >& primitives, const PrimitivesType type, const IQueryController* const controller );
+            const QVector< std::shared_ptr<const Primitive> >& primitives, const PrimitivesType type, const IQueryController* const controller);
         static void obtainPolygonSymbol(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-            const Primitive& primitive);
+            const std::shared_ptr<const Primitive>& primitive);
         static void obtainPolylineSymbol(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-            const Primitive& primitive);
+            const std::shared_ptr<const Primitive>& primitive);
         static void obtainPointSymbol(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-            const Primitive& primitive);
+            const std::shared_ptr<const Primitive>& primitive);
         static void obtainPrimitiveTexts(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-            const Primitive& primitive, const PointI& location);
+            const std::shared_ptr<const Primitive>& primitive, const PointI& location);
         static void obtainPrimitiveIcon(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-            const Primitive& primitive, const PointI& location);
+            const std::shared_ptr<const Primitive>& primitive, const PointI& location);
 
         STRONG_ENUM(PaintValuesSet)
         {
@@ -196,14 +220,14 @@ namespace OsmAnd {
 
         void rasterizeMapPrimitives(
             const AreaI* const destinationArea,
-            SkCanvas& canvas, const QVector< Primitive >& primitives, const PrimitivesType type, const IQueryController* const controller);
+            SkCanvas& canvas, const QVector< std::shared_ptr<const Primitive> >& primitives, const PrimitivesType type, const IQueryController* const controller);
 
         void rasterizePolygon(
             const AreaI* const destinationArea,
-            SkCanvas& canvas, const Primitive& primitive);
+            SkCanvas& canvas, const std::shared_ptr<const Primitive>& primitive);
         void rasterizePolyline(
             const AreaI* const destinationArea,
-            SkCanvas& canvas, const Primitive& primitive, bool drawOnlyShadow);
+            SkCanvas& canvas, const std::shared_ptr<const Primitive>& primitive, bool drawOnlyShadow);
         void rasterizeLineShadow(
             SkCanvas& canvas, const SkPath& path, uint32_t shadowColor, int shadowRadius);
         void rasterizeLine_OneWay(

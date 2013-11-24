@@ -15,8 +15,10 @@ OsmAnd::RasterizerContext_P::~RasterizerContext_P()
 
 void OsmAnd::RasterizerContext_P::clear()
 {
+    _primitivesGroups.clear();
     _polygons.clear();
-    _lines.clear();
+    _polylines.clear();
     _points.clear();
+
     _symbols.clear();
 }
