@@ -35,10 +35,11 @@ void OsmAnd::RasterizerContext_P::clear()
             if(group.use_count() > 2)
                 continue;
 
+            auto& primitivesCacheLevel = owner->sharedContext->_d->_primitivesCacheLevels[_zoom];
             {
-                QWriteLocker scopedLocker(&owner->sharedContext->_d->_primitivesCacheLock);
+                QWriteLocker scopedLocker(&primitivesCacheLevel._primitivesCacheLock);
 
-                owner->sharedContext->_d->_primitivesCache.remove(group->mapObject->id);
+                primitivesCacheLevel._primitivesCache.remove(group->mapObject->id);
             }
         }
     }

@@ -300,13 +300,15 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
         // If using shared context is allowed, check if this group was already processed
         if(useSharedContext && context.owner->sharedContext)
         {
+            auto& primitivesCacheLevel = context.owner->sharedContext->_d->_primitivesCacheLevels[context._zoom];
+
             // If this group was already processed, use that
             std::shared_ptr<const PrimitivesGroup> group;
             {
-                QReadLocker scopedLocker(&context.owner->sharedContext->_d->_primitivesCacheLock);
+                QReadLocker scopedLocker(&primitivesCacheLevel._primitivesCacheLock);
 
-                const auto itProcessedGroup = context.owner->sharedContext->_d->_primitivesCache.constFind(mapObject->id);
-                if(itProcessedGroup != context.owner->sharedContext->_d->_primitivesCache.cend())
+                const auto itProcessedGroup = primitivesCacheLevel._primitivesCache.constFind(mapObject->id);
+                if(itProcessedGroup != primitivesCacheLevel._primitivesCache.cend())
                     group = *itProcessedGroup;
             }
 
@@ -590,10 +592,12 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
         // Add this group to shared cache
         if(useSharedContext && context.owner->sharedContext)
         {
-            QWriteLocker scopedLocker(&context.owner->sharedContext->_d->_primitivesCacheLock);
+            auto& primitivesCacheLevel = context.owner->sharedContext->_d->_primitivesCacheLevels[context._zoom];
 
-            const auto itProcessedGroup = context.owner->sharedContext->_d->_primitivesCache.constFind(mapObject->id);
-            if(itProcessedGroup != context.owner->sharedContext->_d->_primitivesCache.cend())
+            QWriteLocker scopedLocker(&primitivesCacheLevel._primitivesCacheLock);
+
+            const auto itProcessedGroup = primitivesCacheLevel._primitivesCache.constFind(mapObject->id);
+            if(itProcessedGroup != primitivesCacheLevel._primitivesCache.cend())
             {
                 // Replace current group with already available shared one. Unfortunately
                 // current group was already duplicate
@@ -602,7 +606,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
             else
             {
                 // Add current group to shared cache
-                context.owner->sharedContext->_d->_primitivesCache.insert(mapObject->id, group);
+                primitivesCacheLevel._primitivesCache.insert(mapObject->id, group);
             }
         }
 

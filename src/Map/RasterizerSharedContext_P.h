@@ -24,6 +24,7 @@
 #define _OSMAND_CORE_RASTERIZER_SHARED_CONTEXT_P_H_
 
 #include <OsmAndCore/stdlib_common.h>
+#include <array>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QtGlobal>
@@ -47,8 +48,12 @@ namespace OsmAnd
 
         RasterizerSharedContext* const _owner;
 
-        mutable QReadWriteLock _primitivesCacheLock;
-        QHash< uint64_t, std::shared_ptr< const Rasterizer_P::PrimitivesGroup > > _primitivesCache;
+        struct PrimitivesCacheLevel
+        {
+            mutable QReadWriteLock _primitivesCacheLock;
+            QHash< uint64_t, std::shared_ptr< const Rasterizer_P::PrimitivesGroup > > _primitivesCache;
+        };
+        std::array<PrimitivesCacheLevel, ZoomLevelsCount> _primitivesCacheLevels;
     public:
         virtual ~RasterizerSharedContext_P();
 
