@@ -20,8 +20,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _OSMAND_CORE_RASTERIZER_CONTEXT_H_
-#define _OSMAND_CORE_RASTERIZER_CONTEXT_H_
+#ifndef _OSMAND_CORE_RASTERIZER_SHARED_CONTEXT_P_H_
+#define _OSMAND_CORE_RASTERIZER_SHARED_CONTEXT_P_H_
 
 #include <OsmAndCore/stdlib_common.h>
 
@@ -30,31 +30,23 @@
 
 #include <OsmAndCore.h>
 
-namespace OsmAnd {
+namespace OsmAnd
+{
 
-    class Rasterizer;
-    class RasterizerEnvironment;
     class RasterizerSharedContext;
-
-    class RasterizerContext_P;
-    class OSMAND_CORE_API RasterizerContext
+    class RasterizerSharedContext_P
     {
-        Q_DISABLE_COPY(RasterizerContext);
     private:
-        const std::unique_ptr<RasterizerContext_P> _d;
     protected:
+        RasterizerSharedContext_P(RasterizerSharedContext* const owner);
+
+        RasterizerSharedContext* const _owner;
     public:
-        RasterizerContext(const std::shared_ptr<RasterizerEnvironment>& environment, const std::shared_ptr<RasterizerSharedContext>& sharedContext = nullptr);
-        virtual ~RasterizerContext();
+        virtual ~RasterizerSharedContext_P();
 
-        const std::shared_ptr<RasterizerEnvironment> environment;
-        const std::shared_ptr<RasterizerSharedContext> sharedContext;
-
-        int getSymbolsCount() const;
-
-    friend class OsmAnd::Rasterizer;
+    friend class OsmAnd::RasterizerSharedContext;
     };
 
 } // namespace OsmAnd
 
-#endif // _OSMAND_CORE_RASTERIZER_CONTEXT_H_
+#endif // _OSMAND_CORE_RASTERIZER_SHARED_CONTEXT_P_H_

@@ -383,7 +383,7 @@ void OsmAnd::MapRenderer::requestNeededResources()
 
         for(auto itResourcesCollections = _resources.cbegin(); itResourcesCollections != _resources.cend(); ++itResourcesCollections)
         {
-            auto& resourcesCollections = *itResourcesCollections;
+            const auto& resourcesCollections = *itResourcesCollections;
 
             for(auto itResourcesCollection = resourcesCollections.cbegin(); itResourcesCollection != resourcesCollections.cend(); ++itResourcesCollection)
             {
@@ -1673,6 +1673,21 @@ OsmAnd::MapRenderer::SymbolsResourceEntry::SymbolsResourceEntry( MapRenderer* ow
 
 OsmAnd::MapRenderer::SymbolsResourceEntry::~SymbolsResourceEntry()
 {
+    // When symbols resource entry was unloaded and is destroyed, remove from unified collection it's unique symbols
+    for(auto itSymbol = _sourceData.cbegin(); itSymbol != _sourceData.cend(); ++itSymbol)
+    {
+        const auto& symbol = *itSymbol;
+
+        // If this is not the last reference to symbol, skip it
+        if(!symbol.unique())
+            continue;
+
+        // Otherwise, remove weak reference from collection by id of WHAT??
+        {
+            QMutexLocker scopedLocker(&_owner->_symbolsMutex);
+//            _owner->_symbols[symbol->order].remove(symbol->id);
+        }
+    }
 }
 
 bool OsmAnd::MapRenderer::SymbolsResourceEntry::obtainData( bool& dataAvailable )
@@ -1684,12 +1699,14 @@ bool OsmAnd::MapRenderer::SymbolsResourceEntry::obtainData( bool& dataAvailable 
         return false;
     const auto provider = std::static_pointer_cast<IMapSymbolProvider>(provider_);
 
-    // Obtain symbols from each of symbol provider
-    _sourceData.clear();
-    
+    //NOTE: SymbolsResourceEntry represents a since tile@zoom. In a single provider. That means, that multiple symbol providers provide data for same tile@zoom
+    //NOTE: part of resources collection. A symbol resource collection is bound to provider
+
     //TODO: a cache of symbols needs to be maintained, since same symbol may be present in several tiles, but it should be drawn once?
     provider->obtainSymbols(tileId, zoom, _sourceData);
     
+    // add std::weak_ptr to QMap< order_from_rules as int, QList<MapSymbol> > g_symbols?
+
     return false;
 }
 

@@ -52,9 +52,6 @@ namespace OsmAnd {
             // Number of polygonized coastlines
             unsigned int polygonizedCoastlines;
 
-            // Time spent on objects combining
-            float elapsedTimeForCombiningObjects;
-
             // Time spent on obtaining primitives
             float elapsedTimeForObtainingPrimitives;
 

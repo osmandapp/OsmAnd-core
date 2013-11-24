@@ -46,7 +46,7 @@ bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols( const TileId tileId, con
         const auto& rasterizedSymbol = *itRasterizedSymbol;
 
         // Create new map symbol
-        auto mapSymbol = new MapSymbol(
+        const auto mapSymbol = new MapSymbol(
             rasterizedSymbol->mapObject->id,
             rasterizedSymbol->location31,
             zoom,

@@ -5,6 +5,8 @@
 #include <cassert>
 #include <set>
 
+#include <QMutableVectorIterator>
+
 #include "RasterizerEnvironment.h"
 #include "RasterizerEnvironment_P.h"
 #include "RasterizerContext.h"
@@ -25,10 +27,6 @@
 #include <SkDashPathEffect.h>
 #include <SkBitmapProcShader.h>
 #include <SkError.h>
-
-//////////////////////////////////////////////////////////////////////////
-//#include <SkImageEncoder.h>
-//////////////////////////////////////////////////////////////////////////
 
 OsmAnd::Rasterizer_P::Rasterizer_P(Rasterizer* const owner_, const RasterizerEnvironment_P& env_, const RasterizerContext_P& context_)
     : owner(owner_)
@@ -67,6 +65,8 @@ void OsmAnd::Rasterizer_P::prepareContext(
         objectsSorting_begin = std::chrono::high_resolution_clock::now();
 
     // Split input map objects to object, coastline, basemapObjects and basemapCoastline
+    QList< std::shared_ptr<const OsmAnd::Model::MapObject> > detailedmapMapObjects, detailedmapCoastlineObjects, basemapMapObjects, basemapCoastlineObjects;
+    QList< std::shared_ptr<const OsmAnd::Model::MapObject> > polygonizedCoastlineObjects;
     for(auto itMapObject = objects.cbegin(); itMapObject != objects.cend(); ++itMapObject)
     {
         if(controller && controller->isAborted())
@@ -80,16 +80,16 @@ void OsmAnd::Rasterizer_P::prepareContext(
         if(mapObject->containsType(mapObject->section->encodingDecodingRules->naturalCoastline_encodingRuleId))
         {
             if(mapObject->section->isBasemap)
-                context._basemapCoastlineObjects.push_back(mapObject);
+                basemapCoastlineObjects.push_back(mapObject);
             else
-                context._coastlineObjects.push_back(mapObject);
+                detailedmapCoastlineObjects.push_back(mapObject);
         }
         else
         {
             if(mapObject->section->isBasemap)
-                context._basemapMapObjects.push_back(mapObject);
+                basemapMapObjects.push_back(mapObject);
             else
-                context._mapObjects.push_back(mapObject);
+                detailedmapMapObjects.push_back(mapObject);
         }
     }
 
@@ -120,13 +120,13 @@ void OsmAnd::Rasterizer_P::prepareContext(
     // Polygonize coastlines
     bool fillEntireArea = true;
     bool addBasemapCoastlines = true;
-    const bool detailedLandData = zoom >= DetailedLandDataZoom && !context._mapObjects.isEmpty();
-    if(!context._coastlineObjects.empty())
+    const bool detailedLandData = zoom >= DetailedLandDataZoom && !detailedmapMapObjects.isEmpty();
+    if(!detailedmapCoastlineObjects.empty())
     {
         const bool coastlinesWereAdded = polygonizeCoastlines(env, context,
-            context._coastlineObjects,
-            context._triangulatedCoastlineObjects,
-            !context._basemapCoastlineObjects.isEmpty(),
+            detailedmapCoastlineObjects,
+            polygonizedCoastlineObjects,
+            !basemapCoastlineObjects.isEmpty(),
             true);
         fillEntireArea = !coastlinesWereAdded && fillEntireArea;
         addBasemapCoastlines = (!coastlinesWereAdded && !detailedLandData) || zoom <= BasemapZoom;
@@ -138,8 +138,8 @@ void OsmAnd::Rasterizer_P::prepareContext(
     if(addBasemapCoastlines)
     {
         const bool coastlinesWereAdded = polygonizeCoastlines(env, context,
-            context._basemapCoastlineObjects,
-            context._triangulatedCoastlineObjects,
+            basemapCoastlineObjects,
+            polygonizedCoastlineObjects,
             false,
             true);
         fillEntireArea = !coastlinesWereAdded && fillEntireArea;
@@ -150,10 +150,10 @@ void OsmAnd::Rasterizer_P::prepareContext(
     {
         const std::chrono::duration<float> polygonizeCoastlines_elapsed = std::chrono::high_resolution_clock::now() - polygonizeCoastlines_begin;
         metric->elapsedTimeForPolygonizingCoastlines += polygonizeCoastlines_elapsed.count();
-        metric->polygonizedCoastlines = context._triangulatedCoastlineObjects.size();
+        metric->polygonizedCoastlines = polygonizedCoastlineObjects.size();
     }
 
-    if(context._basemapMapObjects.isEmpty() && context._mapObjects.isEmpty() && foundation == MapFoundationType::Undefined)
+    if(basemapMapObjects.isEmpty() && detailedmapMapObjects.isEmpty() && foundation == MapFoundationType::Undefined)
     {
         // We simply have no data to render. Report, clean-up and exit
         if(nothingToRasterize)
@@ -186,32 +186,19 @@ void OsmAnd::Rasterizer_P::prepareContext(
         bgMapObject->_extraTypesRuleIds.push_back(bgMapObject->section->encodingDecodingRules->layerLowest_encodingRuleId);
 
         assert(bgMapObject->isClosedFigure());
-        context._triangulatedCoastlineObjects.push_back(qMove(bgMapObject));
+        polygonizedCoastlineObjects.push_back(qMove(bgMapObject));
     }
 
     // Obtain primitives
-    const bool detailedDataMissing = zoom > BasemapZoom && context._mapObjects.isEmpty() && context._coastlineObjects.isEmpty();
+    const bool detailedDataMissing = zoom > BasemapZoom && detailedmapMapObjects.isEmpty() && detailedmapCoastlineObjects.isEmpty();
 
-    // Update metric
-    std::chrono::high_resolution_clock::time_point combineObjects_begin;
-    if(metric)
-        combineObjects_begin = std::chrono::high_resolution_clock::now();
-
-    context._combinedMapObjects << context._mapObjects;
-    if(zoom <= BasemapZoom || detailedDataMissing)
-        context._combinedMapObjects << context._basemapMapObjects;
-    context._combinedMapObjects << context._triangulatedCoastlineObjects;
-
-    // Update metric
-    if(metric)
+    // Check if there is no data to render. Report, clean-up and exit
+    const auto mapObjectsCount =
+        detailedmapMapObjects.size() +
+        ((zoom <= BasemapZoom || detailedDataMissing) ? basemapMapObjects.size() : 0) +
+        polygonizedCoastlineObjects.size();
+    if(mapObjectsCount == 0)
     {
-        const std::chrono::duration<float> combineObjects_elapsed = std::chrono::high_resolution_clock::now() - combineObjects_begin;
-        metric->elapsedTimeForCombiningObjects += combineObjects_elapsed.count();
-    }
-
-    if(context._combinedMapObjects.isEmpty())
-    {
-        // We simply have no data to render. Report, clean-up and exit
         if(nothingToRasterize)
             *nothingToRasterize = true;
 
@@ -227,7 +214,11 @@ void OsmAnd::Rasterizer_P::prepareContext(
         obtainPrimitives_begin = std::chrono::high_resolution_clock::now();
 
     // Obtain primitives
-    obtainPrimitives(env, context, controller, metric);
+    obtainPrimitives(env, context, detailedmapMapObjects, controller, metric);
+    if(zoom <= BasemapZoom || detailedDataMissing)
+        obtainPrimitives(env, context, basemapMapObjects, controller, metric);
+    obtainPrimitives(env, context, polygonizedCoastlineObjects, controller, metric);
+    sortAndFilterPrimitives(env, context);
     if(controller && controller->isAborted())
     {
         context.clear();
@@ -240,9 +231,6 @@ void OsmAnd::Rasterizer_P::prepareContext(
         const std::chrono::duration<float> obtainPrimitives_elapsed = std::chrono::high_resolution_clock::now() - obtainPrimitives_begin;
         metric->elapsedTimeForObtainingPrimitives += obtainPrimitives_elapsed.count();
     }
-
-    // After obtaining primitives, map objects are no longer needed
-    context.cleanupMapObjects();
 
     // Update metric
     std::chrono::high_resolution_clock::time_point obtainPrimitivesSymbols_begin;
@@ -268,11 +256,11 @@ void OsmAnd::Rasterizer_P::prepareContext(
 
 void OsmAnd::Rasterizer_P::obtainPrimitives(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
+    const QList< std::shared_ptr<const OsmAnd::Model::MapObject> >& source,
     const IQueryController* const controller,
     Rasterizer_Metrics::Metric_prepareContext* const metric)
 {
     bool ok;
-    QVector< Primitive > unfilteredLines;
 
     // Initialize shared settings for order evaluation
     MapStyleEvaluator orderEvaluator(env.owner->style, env.owner->displayDensityFactor);
@@ -298,12 +286,15 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
     pointEvaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_MINZOOM, context._zoom);
     pointEvaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_MAXZOOM, context._zoom);
 
-    for(auto itMapObject = context._combinedMapObjects.cbegin(); itMapObject != context._combinedMapObjects.cend(); ++itMapObject)
+    for(auto itMapObject = source.cbegin(); itMapObject != source.cend(); ++itMapObject)
     {
         if(controller && controller->isAborted())
             return;
 
         const auto& mapObject = *itMapObject;
+
+        //TODO: check if this map object was already processed, and an entry exists in shared context.
+        // but this should be done if it was a locally generated mapObject (like triangualted coastlines)
 
         uint32_t typeRuleIdIndex = 0;
         for(auto itTypeRuleId = mapObject->typesRuleIds.cbegin(); itTypeRuleId != mapObject->typesRuleIds.cend(); ++itTypeRuleId, typeRuleIdIndex++)
@@ -502,7 +493,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                 primitive.evaluationResult = evaluatorState;
 
                 // Accept this primitive
-                unfilteredLines.push_back(qMove(primitive));
+                context._lines.push_back(qMove(primitive));
 
                 // Update metric
                 if(metric)
@@ -568,7 +559,11 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
             }
         }
     }
+}
 
+void OsmAnd::Rasterizer_P::sortAndFilterPrimitives(
+    const RasterizerEnvironment_P& env, RasterizerContext_P& context)
+{
     const auto privitivesSort = [](const Primitive& l, const Primitive& r) -> bool
     {
         if(qFuzzyCompare(l.zOrder, r.zOrder))
@@ -581,65 +576,57 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
     };
 
     qSort(context._polygons.begin(), context._polygons.end(), privitivesSort);
-    qSort(unfilteredLines.begin(), unfilteredLines.end(), privitivesSort);
-    filterOutLinesByDensity(env, context, unfilteredLines, context._lines, controller);
+    qSort(context._lines.begin(), context._lines.end(), privitivesSort);
+    filterOutLinesByDensity(env, context);
     qSort(context._points.begin(), context._points.end(), privitivesSort);
 }
 
 void OsmAnd::Rasterizer_P::filterOutLinesByDensity(
-    const RasterizerEnvironment_P& env, const RasterizerContext_P& context,
-    const QVector< Primitive >& in, QVector< Primitive >& out, const IQueryController* const controller )
+    const RasterizerEnvironment_P& env, RasterizerContext_P& context)
 {
+    // Check if any filtering needed
     if(context._roadDensityZoomTile == 0 || context._roadsDensityLimitPerTile == 0)
-    {
-        out = in;
         return;
-    }
 
     const auto dZ = context._zoom + context._roadDensityZoomTile;
-    QMap< uint64_t, std::pair<uint32_t, double> > densityMap;
-    out.reserve(in.size());
-    for(int lineIdx = in.size() - 1; lineIdx >= 0; lineIdx--)
+    QHash< uint64_t, std::pair<uint32_t, double> > densityMap;
+    
+    QMutableVectorIterator<Primitive> itLine(context._lines);
+    itLine.toBack();
+    while(itLine.hasPrevious())
     {
-        if(controller && controller->isAborted())
-            return;
+        const auto& line = itLine.previous();
 
-        bool accept = true;
-        const auto& primitive = in[lineIdx];
-
-        const auto typeRuleId = primitive.mapObject->_typesRuleIds[primitive.typeRuleIdIndex];
-        if(typeRuleId == primitive.mapObject->section->encodingDecodingRules->highway_encodingRuleId)
+        auto accept = true;
+        if(line.mapObject->_typesRuleIds[line.typeRuleIdIndex] == line.mapObject->section->encodingDecodingRules->highway_encodingRuleId)
         {
             accept = false;
 
             uint64_t prevId = 0;
-            for(auto itPoint = primitive.mapObject->_points31.cbegin(); itPoint != primitive.mapObject->_points31.cend(); ++itPoint)
+            const auto pointsCount = line.mapObject->points31.size();
+            auto pPoint = line.mapObject->points31.constData();
+            for(auto pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
             {
-                if(controller && controller->isAborted())
-                    return;
-
-                const auto& point = *itPoint;
-
-                auto x = point.x >> (31 - dZ);
-                auto y = point.y >> (31 - dZ);
+                auto x = pPoint->x >> (31 - dZ);
+                auto y = pPoint->y >> (31 - dZ);
                 uint64_t id = (static_cast<uint64_t>(x) << dZ) | y;
                 if(prevId != id)
                 {
                     prevId = id;
 
                     auto& mapEntry = densityMap[id];
-                    if (mapEntry.first < context._roadsDensityLimitPerTile /*&& p.second > o */)
+                    if(mapEntry.first < context._roadsDensityLimitPerTile /*&& p.second > o */)
                     {
                         accept = true;
                         mapEntry.first += 1;
-                        mapEntry.second = primitive.zOrder;
+                        mapEntry.second = line.zOrder;
                     }
                 }
             }
         }
 
-        if(accept)
-            out.push_front(primitive);
+        if(!accept)
+            itLine.remove();
     }
 }
 
@@ -2097,6 +2084,10 @@ bool OsmAnd::Rasterizer_P::isClockwiseCoastlinePolygon( const QVector< PointI > 
     return clockwiseSum >= 0;
 }
 
+//////////////////////////////////////////////////////////////////////////
+//#include <SkImageEncoder.h>
+//////////////////////////////////////////////////////////////////////////
+
 void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
     QList< std::shared_ptr<const RasterizedSymbol> >& outSymbols,
     const IQueryController* const controller )
@@ -2171,8 +2162,6 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
         //outSymbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
     }
 }
-
-
 
 //void OsmAnd::Rasterizer_P::rasterizeText(
 //    const RasterizerEnvironment_P& env, const RasterizerContext_P& context,

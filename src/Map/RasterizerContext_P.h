@@ -61,13 +61,10 @@ namespace OsmAnd {
         uint32_t _shadowLevelMin;
         uint32_t _shadowLevelMax;
 
-        QList< std::shared_ptr<const OsmAnd::Model::MapObject> > _mapObjects, _coastlineObjects, _basemapMapObjects, _basemapCoastlineObjects;
-        QList< std::shared_ptr<const OsmAnd::Model::MapObject> > _combinedMapObjects, _triangulatedCoastlineObjects;
         QVector< Rasterizer_P::Primitive > _polygons, _lines, _points;
 
         QVector< std::shared_ptr<const Rasterizer_P::PrimitiveSymbol > > _symbols;
 
-        void cleanupMapObjects();
         void clear();
     public:
         virtual ~RasterizerContext_P();

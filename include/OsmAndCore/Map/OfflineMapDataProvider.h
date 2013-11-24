@@ -29,12 +29,13 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/RasterizerEnvironment.h>
 
 namespace OsmAnd {
 
     class ObfsCollection;
     class MapStyle;
+    class RasterizerEnvironment;
+    class RasterizerSharedContext;
     class OfflineMapDataTile;
 
     class OfflineMapDataProvider_P;
@@ -51,6 +52,7 @@ namespace OsmAnd {
         const std::shared_ptr<ObfsCollection> obfsCollection;
         const std::shared_ptr<const MapStyle> mapStyle;
         const std::shared_ptr<RasterizerEnvironment> rasterizerEnvironment;
+        const std::shared_ptr<RasterizerSharedContext> rasterizerSharedContext;
 
         void obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const OfflineMapDataTile>& outTile) const;
     };

@@ -99,16 +99,16 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 
             // Otherwise, this map object is surely shared, but a check is needed if it was already loaded
             {
-                QReadLocker scopedLocker(&cacheLevel._mutex);
+                QReadLocker scopedLocker(&cacheLevel._readWriteLock);
 
                 const auto itSharedMapObject = cacheLevel._mapObjects.constFind(id);
                 if(itSharedMapObject != cacheLevel._mapObjects.cend())
                 {
                     const auto& mapObjectWeakRef = *itSharedMapObject;
-                    if(const auto& mapObject = mapObjectWeakRef.lock())
+                    if(const auto mapObject = mapObjectWeakRef.lock())
                     {
                         // If map object is already in shared objects cache and is available, use that one
-                        sharedMapObjects.push_back(mapObject);
+                        sharedMapObjects.push_back(qMove(mapObject));
 
 #if defined(_DEBUG) || defined(DEBUG)
                         const auto dataFilter_End = std::chrono::high_resolution_clock::now();
@@ -154,7 +154,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
         {
             auto& cacheLevel = _mapObjectsCache[zoomLevel];
             {
-                QWriteLocker scopedLocker(&cacheLevel._mutex);
+                QWriteLocker scopedLocker(&cacheLevel._readWriteLock);
 
                 const auto itSharedMapObject = cacheLevel._mapObjects.find(mapObject->id);
                 if(itSharedMapObject != cacheLevel._mapObjects.end())
@@ -193,7 +193,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 
     // Allocate and prepare rasterizer context
     bool nothingToRasterize = false;
-    std::shared_ptr<RasterizerContext> rasterizerContext(new RasterizerContext(owner->rasterizerEnvironment));
+    std::shared_ptr<RasterizerContext> rasterizerContext(new RasterizerContext(owner->rasterizerEnvironment, owner->rasterizerSharedContext));
     Rasterizer::prepareContext(*rasterizerContext, tileBBox31, zoom, tileFoundation, mapObjects, &nothingToRasterize, nullptr,
 #if defined(_DEBUG) || defined(DEBUG)
         &dataProcess_metric
@@ -251,7 +251,6 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
         "\t - elapsedTimeForSortingObjects = %fs\n"
         "\t - elapsedTimeForPolygonizingCoastlines = %fs\n"
         "\t - polygonizedCoastlines = %d\n"
-        "\t - elapsedTimeForCombiningObjects = %fs\n"
         "\t - elapsedTimeForObtainingPrimitives = %fs\n"
         "\t - elapsedTimeForOrderEvaluation = %fs\n"
         "\t - orderEvaluations = %d\n"
@@ -292,7 +291,6 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
         dataProcess_metric.elapsedTimeForSortingObjects,
         dataProcess_metric.elapsedTimeForPolygonizingCoastlines,
         dataProcess_metric.polygonizedCoastlines,
-        dataProcess_metric.elapsedTimeForCombiningObjects,
         dataProcess_metric.elapsedTimeForObtainingPrimitives,
         dataProcess_metric.elapsedTimeForOrderEvaluation,
         dataProcess_metric.orderEvaluations,

@@ -258,6 +258,10 @@ namespace OsmAnd {
         void invalidateResourcesOfType(const ResourceType type);
         void validateResources();
 
+        // Unified map symbols collection:
+        QMutex _symbolsMutex;
+        QMap< int, QList< std::weak_ptr<MapSymbol> > > _symbols;
+
         // General:
         QSet<TileId> _uniqueTiles;
         std::unique_ptr<RenderAPI> _renderAPI;
