@@ -580,11 +580,11 @@ void OsmAnd::Rasterizer_P::sortAndFilterPrimitives(
 
     qSort(context._polygons.begin(), context._polygons.end(), privitivesSort);
     qSort(context._polylines.begin(), context._polylines.end(), privitivesSort);
-    filterOutLinesByDensity(env, context);
+    filterOutHighwaysByDensity(env, context);
     qSort(context._points.begin(), context._points.end(), privitivesSort);
 }
 
-void OsmAnd::Rasterizer_P::filterOutLinesByDensity(
+void OsmAnd::Rasterizer_P::filterOutHighwaysByDensity(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context)
 {
     // Check if any filtering needed

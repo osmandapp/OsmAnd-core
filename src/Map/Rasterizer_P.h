@@ -187,7 +187,7 @@ namespace OsmAnd {
             Rasterizer_Metrics::Metric_prepareContext* const metric);
         static void sortAndFilterPrimitives(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context);
-        static void filterOutLinesByDensity(
+        static void filterOutHighwaysByDensity(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context);
 
         static void obtainPrimitivesSymbols(
