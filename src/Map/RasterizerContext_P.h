@@ -62,7 +62,7 @@ namespace OsmAnd {
         uint32_t _shadowLevelMax;
 
         QVector< std::shared_ptr<const Rasterizer_P::PrimitivesGroup> > _primitivesGroups;
-        QVector< std::shared_ptr<const Rasterizer_P::Primitive> > _polygons, _polylines, _points;
+        QVector< std::weak_ptr<const Rasterizer_P::Primitive> > _polygons, _polylines, _points;
 
         QVector< std::shared_ptr<const Rasterizer_P::PrimitiveSymbol > > _symbols;
 

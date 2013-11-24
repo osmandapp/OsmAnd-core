@@ -43,6 +43,7 @@ namespace OsmAnd {
     class MapStyleEvaluator_P;
     class RasterizerEnvironment_P;
     class RasterizerContext_P;
+    class RasterizerSharedContext_P;
     class RasterizedSymbol;
     namespace Model {
         class MapObject;
@@ -150,9 +151,9 @@ namespace OsmAnd {
 
             const std::shared_ptr<const Model::MapObject> mapObject;
 
-            QVector< std::weak_ptr<const Primitive> > polygons;
-            QVector< std::weak_ptr<const Primitive> > polylines;
-            QVector< std::weak_ptr<const Primitive> > points;
+            QVector< std::shared_ptr<const Primitive> > polygons;
+            QVector< std::shared_ptr<const Primitive> > polylines;
+            QVector< std::shared_ptr<const Primitive> > points;
 
             inline bool isEmpty() const
             {
@@ -171,7 +172,7 @@ namespace OsmAnd {
                 , typeRuleIdIndex(typeRuleIdIndex_)
             {}
 
-            const std::shared_ptr<PrimitivesGroup> group;
+            const std::weak_ptr<PrimitivesGroup> group;
             const PrimitiveType objectType;
             const uint32_t typeRuleIdIndex;
 
@@ -183,6 +184,7 @@ namespace OsmAnd {
         static void obtainPrimitives(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
             const QList< std::shared_ptr<const OsmAnd::Model::MapObject> >& source,
+            const bool useSharedContext,
             const IQueryController* const controller,
             Rasterizer_Metrics::Metric_prepareContext* const metric);
         static void sortAndFilterPrimitives(
@@ -195,7 +197,7 @@ namespace OsmAnd {
             const IQueryController* const controller);
         static void collectPrimitivesSymbols(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-            const QVector< std::shared_ptr<const Primitive> >& primitives, const PrimitivesType type, const IQueryController* const controller);
+            const QVector< std::weak_ptr<const Primitive> >& primitives, const PrimitivesType type, const IQueryController* const controller);
         static void obtainPolygonSymbol(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
             const std::shared_ptr<const Primitive>& primitive);
@@ -225,7 +227,7 @@ namespace OsmAnd {
 
         void rasterizeMapPrimitives(
             const AreaI* const destinationArea,
-            SkCanvas& canvas, const QVector< std::shared_ptr<const Primitive> >& primitives, const PrimitivesType type, const IQueryController* const controller);
+            SkCanvas& canvas, const QVector< std::weak_ptr<const Primitive> >& primitives, const PrimitivesType type, const IQueryController* const controller);
 
         void rasterizePolygon(
             const AreaI* const destinationArea,
@@ -267,6 +269,7 @@ namespace OsmAnd {
 
     friend class OsmAnd::Rasterizer;
     friend class OsmAnd::RasterizerContext_P;
+    friend class OsmAnd::RasterizerSharedContext_P;
     };
 
 } // namespace OsmAnd

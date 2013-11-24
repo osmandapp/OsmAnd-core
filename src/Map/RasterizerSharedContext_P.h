@@ -27,11 +27,14 @@
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QtGlobal>
+#include <QReadWriteLock>
 
 #include <OsmAndCore.h>
+#include <Rasterizer_P.h>
 
 namespace OsmAnd
 {
+    class Rasterizer_P;
 
     class RasterizerSharedContext;
     class RasterizerSharedContext_P
@@ -41,10 +44,14 @@ namespace OsmAnd
         RasterizerSharedContext_P(RasterizerSharedContext* const owner);
 
         RasterizerSharedContext* const _owner;
+
+        mutable QReadWriteLock _primitivesCacheLock;
+        QHash< uint64_t, std::weak_ptr< const Rasterizer_P::PrimitivesGroup > > _primitivesCache;
     public:
         virtual ~RasterizerSharedContext_P();
 
     friend class OsmAnd::RasterizerSharedContext;
+    friend class OsmAnd::Rasterizer_P;
     };
 
 } // namespace OsmAnd
