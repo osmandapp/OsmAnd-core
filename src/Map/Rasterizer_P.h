@@ -211,15 +211,15 @@ namespace OsmAnd {
             const QVector< std::shared_ptr<const Primitive> >& primitives, const PrimitivesType type,
             QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols,
             const IQueryController* const controller);
-        static void obtainPolygonSymbol(
+        static void obtainSymbolsFromPolygon(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
             const std::shared_ptr<const Primitive>& primitive,
             QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols);
-        static void obtainPolylineSymbol(
+        static void obtainSymbolsFromPolyline(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
             const std::shared_ptr<const Primitive>& primitive,
             QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols);
-        static void obtainPointSymbol(
+        static void obtainSymbolsFromPoint(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
             const std::shared_ptr<const Primitive>& primitive,
             QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols);

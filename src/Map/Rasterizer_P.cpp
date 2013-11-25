@@ -796,22 +796,22 @@ void OsmAnd::Rasterizer_P::collectSymbolsFromPrimitives(
 
         if(type == Polygons)
         {
-            obtainPolygonSymbol(env, context, primitive, outSymbols);
+            obtainSymbolsFromPolygon(env, context, primitive, outSymbols);
         }
         else if(type == Polylines)
         {
-            obtainPolylineSymbol(env, context, primitive, outSymbols);
+            obtainSymbolsFromPolyline(env, context, primitive, outSymbols);
         }
         else if(type == Points)
         {
             assert(primitive->typeRuleIdIndex == 0);
 
-            obtainPointSymbol(env, context, primitive, outSymbols);
+            obtainSymbolsFromPoint(env, context, primitive, outSymbols);
         }
     }
 }
 
-void OsmAnd::Rasterizer_P::obtainPolygonSymbol(
+void OsmAnd::Rasterizer_P::obtainSymbolsFromPolygon(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
     const std::shared_ptr<const Primitive>& primitive,
     QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols)
@@ -836,7 +836,7 @@ void OsmAnd::Rasterizer_P::obtainPolygonSymbol(
     obtainPrimitiveTexts(env, context, primitive, Utilities::normalizeCoordinates(center, ZoomLevel31), outSymbols);
 }
 
-void OsmAnd::Rasterizer_P::obtainPolylineSymbol(
+void OsmAnd::Rasterizer_P::obtainSymbolsFromPolyline(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
     const std::shared_ptr<const Primitive>& primitive,
     QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols)
@@ -850,7 +850,7 @@ void OsmAnd::Rasterizer_P::obtainPolylineSymbol(
     obtainPrimitiveTexts(env, context, primitive, center, outSymbols);
 }
 
-void OsmAnd::Rasterizer_P::obtainPointSymbol(
+void OsmAnd::Rasterizer_P::obtainSymbolsFromPoint(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
     const std::shared_ptr<const Primitive>& primitive,
     QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols)
