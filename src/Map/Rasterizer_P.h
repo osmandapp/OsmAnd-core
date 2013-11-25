@@ -151,7 +151,6 @@ namespace OsmAnd {
         static void obtainPrimitives(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
             const QList< std::shared_ptr<const OsmAnd::Model::MapObject> >& source,
-            const bool useSharedContext,
             const IQueryController* const controller,
             Rasterizer_Metrics::Metric_prepareContext* const metric);
         static void sortAndFilterPrimitives(

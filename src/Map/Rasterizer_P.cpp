@@ -217,10 +217,10 @@ void OsmAnd::Rasterizer_P::prepareContext(
         obtainPrimitives_begin = std::chrono::high_resolution_clock::now();
 
     // Obtain primitives
-    obtainPrimitives(env, context, detailedmapMapObjects, true, controller, metric);
+    obtainPrimitives(env, context, detailedmapMapObjects, controller, metric);
     if(zoom <= BasemapZoom || detailedDataMissing)
-        obtainPrimitives(env, context, basemapMapObjects, true, controller, metric);
-    obtainPrimitives(env, context, polygonizedCoastlineObjects, false, controller, metric);
+        obtainPrimitives(env, context, basemapMapObjects, controller, metric);
+    obtainPrimitives(env, context, polygonizedCoastlineObjects, controller, metric);
     sortAndFilterPrimitives(env, context);
     if(controller && controller->isAborted())
     {
@@ -240,7 +240,7 @@ void OsmAnd::Rasterizer_P::prepareContext(
     if(metric)
         obtainPrimitivesSymbols_begin = std::chrono::high_resolution_clock::now();
 
-    // Obtain text from primitives
+    // Obtain symbols from primitives
     obtainPrimitivesSymbols(env, context, controller);
 
     // Update metric
@@ -260,7 +260,6 @@ void OsmAnd::Rasterizer_P::prepareContext(
 void OsmAnd::Rasterizer_P::obtainPrimitives(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
     const QList< std::shared_ptr<const OsmAnd::Model::MapObject> >& source,
-    const bool useSharedContext,
     const IQueryController* const controller,
     Rasterizer_Metrics::Metric_prepareContext* const metric)
 {
@@ -296,9 +295,10 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
             return;
 
         const auto& mapObject = *itMapObject;
+        const auto isMapObjectGenerated = (mapObject->section == env.dummyMapSection);
         
         // If using shared context is allowed, check if this group was already processed
-        if(useSharedContext && context.owner->sharedContext)
+        if(!isMapObjectGenerated && context.owner->sharedContext)
         {
             auto& primitivesCacheLevel = context.owner->sharedContext->_d->_primitivesCacheLevels[context._zoom];
 
@@ -590,7 +590,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
         }
 
         // Add this group to shared cache
-        if(useSharedContext && context.owner->sharedContext)
+        if(!isMapObjectGenerated && context.owner->sharedContext)
         {
             auto& primitivesCacheLevel = context.owner->sharedContext->_d->_primitivesCacheLevels[context._zoom];
 
