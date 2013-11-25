@@ -64,6 +64,7 @@ namespace OsmAnd {
         QVector< std::shared_ptr<const Rasterizer_P::PrimitivesGroup> > _primitivesGroups;
         QVector< std::shared_ptr<const Rasterizer_P::Primitive> > _polygons, _polylines, _points;
 
+        QVector< std::shared_ptr<const Rasterizer_P::SymbolsGroup> > _symbolsGroups;
         QVector< std::shared_ptr<const Rasterizer_P::PrimitiveSymbol > > _symbols;
 
         void clear();

@@ -305,10 +305,10 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
             // If this group was already processed, use that
             std::shared_ptr<const PrimitivesGroup> group;
             {
-                QReadLocker scopedLocker(&primitivesCacheLevel._primitivesCacheLock);
+                QReadLocker scopedLocker(&primitivesCacheLevel._lock);
 
-                const auto itProcessedGroup = primitivesCacheLevel._primitivesCache.constFind(mapObject->id);
-                if(itProcessedGroup != primitivesCacheLevel._primitivesCache.cend())
+                const auto itProcessedGroup = primitivesCacheLevel._cache.constFind(mapObject->id);
+                if(itProcessedGroup != primitivesCacheLevel._cache.cend())
                     group = *itProcessedGroup;
             }
 
@@ -594,10 +594,10 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
         {
             auto& primitivesCacheLevel = context.owner->sharedContext->_d->_primitivesCacheLevels[context._zoom];
 
-            QWriteLocker scopedLocker(&primitivesCacheLevel._primitivesCacheLock);
+            QWriteLocker scopedLocker(&primitivesCacheLevel._lock);
 
-            const auto itProcessedGroup = primitivesCacheLevel._primitivesCache.constFind(mapObject->id);
-            if(itProcessedGroup != primitivesCacheLevel._primitivesCache.cend())
+            const auto itProcessedGroup = primitivesCacheLevel._cache.constFind(mapObject->id);
+            if(itProcessedGroup != primitivesCacheLevel._cache.cend())
             {
                 // Replace current group with already available shared one. Unfortunately
                 // current group was already duplicate
@@ -606,7 +606,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
             else
             {
                 // Add current group to shared cache
-                primitivesCacheLevel._primitivesCache.insert(mapObject->id, group);
+                primitivesCacheLevel._cache.insert(mapObject->id, group);
             }
         }
 
@@ -696,10 +696,81 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
     const IQueryController* const controller )
 {
-    // Collect symbols from all primitives
-    collectPrimitivesSymbols(env, context, context._polygons, Polygons, controller);
-    collectPrimitivesSymbols(env, context, context._polylines, Polylines, controller);
-    collectPrimitivesSymbols(env, context, context._points, Points, controller);
+    for(auto itPrimitivesGroup = context._primitivesGroups.cbegin(); itPrimitivesGroup != context._primitivesGroups.cend(); ++itPrimitivesGroup)
+    {
+        if(controller && controller->isAborted())
+            return;
+
+        const auto& primitivesGroup = *itPrimitivesGroup;
+        const auto isMapObjectGenerated = (primitivesGroup->mapObject->section == env.dummyMapSection);
+
+        // If using shared context is allowed, check if this group was already processed
+        // (using shared cache is only allowed for non-generated MapObjects)
+        if(!isMapObjectGenerated && context.owner->sharedContext)
+        {
+            auto& symbolsCacheLevel = context.owner->sharedContext->_d->_symbolsCacheLevels[context._zoom];
+
+            // If this group was already processed, use that
+            std::shared_ptr<const SymbolsGroup> group;
+            {
+                QReadLocker scopedLocker(&symbolsCacheLevel._lock);
+
+                const auto itProcessedGroup = symbolsCacheLevel._cache.constFind(primitivesGroup->mapObject->id);
+                if(itProcessedGroup != symbolsCacheLevel._cache.cend())
+                    group = *itProcessedGroup;
+            }
+
+            if(static_cast<bool>(group))
+            {
+                // Add symbols from group to current context
+                for(auto itSymbol = group->symbols.cbegin(); itSymbol != group->symbols.cend(); ++itSymbol)
+                    context._symbols.push_back(*itSymbol);//TODO: check if originating primitive is valid for this context
+
+                // Add shared group to current context
+                context._symbolsGroups.push_back(qMove(group));
+
+                continue;
+            }
+        }
+
+        // Create a symbols group
+        const auto constructedGroup = new SymbolsGroup(primitivesGroup->mapObject);
+        std::shared_ptr<const SymbolsGroup> group(constructedGroup);
+
+        // For each primitive if primitive group, collect symbols from it
+        collectSymbolsFromPrimitives(env, context, primitivesGroup->polygons, Polygons, constructedGroup->symbols, controller);
+        collectSymbolsFromPrimitives(env, context, primitivesGroup->polylines, Polylines, constructedGroup->symbols, controller);
+        collectSymbolsFromPrimitives(env, context, primitivesGroup->points, Points, constructedGroup->symbols, controller);
+
+        // Add this group to shared cache
+        // (using shared cache is only allowed for non-generated MapObjects)
+        if(!isMapObjectGenerated && context.owner->sharedContext)
+        {
+            auto& symbolsCacheLevel = context.owner->sharedContext->_d->_symbolsCacheLevels[context._zoom];
+
+            QWriteLocker scopedLocker(&symbolsCacheLevel._lock);
+
+            const auto itProcessedGroup = symbolsCacheLevel._cache.constFind(primitivesGroup->mapObject->id);
+            if(itProcessedGroup != symbolsCacheLevel._cache.cend())
+            {
+                // Replace current group with already available shared one. Unfortunately
+                // current group was already duplicate
+                group = *itProcessedGroup;
+            }
+            else
+            {
+                // Add current group to shared cache
+                symbolsCacheLevel._cache.insert(primitivesGroup->mapObject->id, group);
+            }
+        }
+
+        // Add polygons, polylines and points from group to current context
+        for(auto itSymbol = group->symbols.cbegin(); itSymbol != group->symbols.cend(); ++itSymbol)
+            context._symbols.push_back(*itSymbol);//TODO: check if originating primitive is valid for this context
+
+        // Empty groups are also inserted, to indicate that they are empty
+        context._symbolsGroups.push_back(qMove(group));
+    }
 
     // Sort symbols by order
     qSort(context._symbols.begin(), context._symbols.end(), [](const std::shared_ptr<const PrimitiveSymbol>& l, const std::shared_ptr<const PrimitiveSymbol>& r) -> bool
@@ -708,9 +779,11 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
     });
 }
 
-void OsmAnd::Rasterizer_P::collectPrimitivesSymbols(
+void OsmAnd::Rasterizer_P::collectSymbolsFromPrimitives(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    const QVector< std::shared_ptr<const Primitive> >& primitives, const PrimitivesType type, const IQueryController* const controller)
+    const QVector< std::shared_ptr<const Primitive> >& primitives, const PrimitivesType type,
+    QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols,
+    const IQueryController* const controller)
 {
     assert(type != PrimitivesType::Polylines_ShadowOnly);
 
@@ -723,24 +796,25 @@ void OsmAnd::Rasterizer_P::collectPrimitivesSymbols(
 
         if(type == Polygons)
         {
-            obtainPolygonSymbol(env, context, primitive);
+            obtainPolygonSymbol(env, context, primitive, outSymbols);
         }
         else if(type == Polylines)
         {
-            obtainPolylineSymbol(env, context, primitive);
+            obtainPolylineSymbol(env, context, primitive, outSymbols);
         }
         else if(type == Points)
         {
             assert(primitive->typeRuleIdIndex == 0);
 
-            obtainPointSymbol(env, context, primitive);
+            obtainPointSymbol(env, context, primitive, outSymbols);
         }
     }
 }
 
 void OsmAnd::Rasterizer_P::obtainPolygonSymbol(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    const std::shared_ptr<const Primitive>& primitive)
+    const std::shared_ptr<const Primitive>& primitive,
+    QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols)
 {
     assert(primitive->mapObject->points31.size() > 2);
     assert(primitive->mapObject->isClosedFigure());
@@ -759,12 +833,13 @@ void OsmAnd::Rasterizer_P::obtainPolygonSymbol(
     center.y /= pointsCount;
 
     // Obtain texts for this symbol
-    obtainPrimitiveTexts(env, context, primitive, Utilities::normalizeCoordinates(center, ZoomLevel31));
+    obtainPrimitiveTexts(env, context, primitive, Utilities::normalizeCoordinates(center, ZoomLevel31), outSymbols);
 }
 
 void OsmAnd::Rasterizer_P::obtainPolylineSymbol(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    const std::shared_ptr<const Primitive>& primitive)
+    const std::shared_ptr<const Primitive>& primitive,
+    QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols)
 {
     assert(primitive->mapObject->points31.size() >= 2);
 
@@ -772,12 +847,13 @@ void OsmAnd::Rasterizer_P::obtainPolylineSymbol(
     const auto center = primitive->mapObject->points31[primitive->mapObject->points31.size() >> 1];
 
     // Obtain texts for this symbol
-    obtainPrimitiveTexts(env, context, primitive, center);
+    obtainPrimitiveTexts(env, context, primitive, center, outSymbols);
 }
 
 void OsmAnd::Rasterizer_P::obtainPointSymbol(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    const std::shared_ptr<const Primitive>& primitive)
+    const std::shared_ptr<const Primitive>& primitive,
+    QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols)
 {
     assert(primitive->mapObject->points31.size() > 0);
 
@@ -805,20 +881,17 @@ void OsmAnd::Rasterizer_P::obtainPointSymbol(
         center = Utilities::normalizeCoordinates(center_, ZoomLevel31);
     }
 
-    PrimitiveSymbol primitiveSymbol;
-    primitiveSymbol.mapObject = primitive->mapObject;
-    primitiveSymbol.location31 = center;
-
     // Obtain icon for this symbol
-    obtainPrimitiveIcon(env, context, primitive, center);
+    obtainPrimitiveIcon(env, context, primitive, center, outSymbols);
 
     // Obtain texts for this symbol
-    obtainPrimitiveTexts(env, context, primitive, center);
+    obtainPrimitiveTexts(env, context, primitive, center, outSymbols);
 }
 
 void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    const std::shared_ptr<const Primitive>& primitive, const PointI& location)
+    const std::shared_ptr<const Primitive>& primitive, const PointI& location,
+    QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols)
 {
     const auto typeRuleId = primitive->mapObject->_typesRuleIds[primitive->typeRuleIdIndex];
     const auto& decodedType = primitive->mapObject->section->encodingDecodingRules->decodingRules[typeRuleId];
@@ -864,7 +937,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
 
         // Create primitive
         const auto text = new PrimitiveSymbol_Text();
-        text->mapObject = primitive->mapObject;
+        text->primitive = primitive;
         text->location31 = location;
         text->value = name;
 
@@ -896,13 +969,14 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
 
         textEvalResult.getStringValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_SHIELD, text->shieldResourceName);
 
-        context._symbols.push_back(qMove(std::shared_ptr<PrimitiveSymbol>(text)));
+        outSymbols.push_back(qMove(std::shared_ptr<PrimitiveSymbol>(text)));
     }
 }
 
 void OsmAnd::Rasterizer_P::obtainPrimitiveIcon(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    const std::shared_ptr<const Primitive>& primitive, const PointI& location)
+    const std::shared_ptr<const Primitive>& primitive, const PointI& location,
+    QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols)
 {
     if(!primitive->evaluationResult)
         return;
@@ -915,7 +989,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveIcon(
     if(ok && !iconResourceName.isEmpty())
     {
         const auto icon = new PrimitiveSymbol_Icon();
-        icon->mapObject = primitive->mapObject;
+        icon->primitive = primitive;
         icon->location31 = location;
 
         icon->resourceName = qMove(iconResourceName);
@@ -923,7 +997,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveIcon(
         icon->order = 100;
         primitive->evaluationResult->getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_ICON, icon->order);
 
-        context._symbols.push_back(qMove(std::shared_ptr<PrimitiveSymbol>(icon)));
+        outSymbols.push_back(qMove(std::shared_ptr<PrimitiveSymbol>(icon)));
     }
 }
 

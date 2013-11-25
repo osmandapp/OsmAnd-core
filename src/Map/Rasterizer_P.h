@@ -111,37 +111,6 @@ namespace OsmAnd {
             Points,
         };
 
-        struct PrimitiveSymbol
-        {
-            PrimitiveSymbol();
-            virtual ~PrimitiveSymbol()
-            {}
-
-            std::shared_ptr<const Model::MapObject> mapObject;
-            PointI location31;
-
-            int order;
-        };
-
-        struct PrimitiveSymbol_Text : public PrimitiveSymbol
-        {
-            QString value;
-            bool drawOnPath;
-            int verticalOffset;
-            int color;
-            int size;
-            int shadowRadius;
-            int wrapWidth;
-            bool isBold;
-            int minDistance;
-            QString shieldResourceName;
-        };
-
-        struct PrimitiveSymbol_Icon : public PrimitiveSymbol
-        {
-            QString resourceName;
-        };
-
         struct Primitive;
         struct PrimitivesGroup
         {
@@ -190,27 +159,78 @@ namespace OsmAnd {
         static void filterOutHighwaysByDensity(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context);
 
+        struct PrimitiveSymbol;
+        struct SymbolsGroup
+        {
+            SymbolsGroup(const std::shared_ptr<const Model::MapObject>& mapObject_)
+                : mapObject(mapObject_)
+            {
+            }
+
+            const std::shared_ptr<const Model::MapObject> mapObject;
+
+            QVector< std::shared_ptr<const PrimitiveSymbol> > symbols;
+        };
+
+        struct PrimitiveSymbol
+        {
+            PrimitiveSymbol();
+            virtual ~PrimitiveSymbol()
+            {}
+
+            std::shared_ptr<const Primitive> primitive;
+            PointI location31;
+
+            int order;
+        };
+
+        struct PrimitiveSymbol_Text : public PrimitiveSymbol
+        {
+            QString value;
+            bool drawOnPath;
+            int verticalOffset;
+            int color;
+            int size;
+            int shadowRadius;
+            int wrapWidth;
+            bool isBold;
+            int minDistance;
+            QString shieldResourceName;
+        };
+
+        struct PrimitiveSymbol_Icon : public PrimitiveSymbol
+        {
+            QString resourceName;
+        };
+
         static void obtainPrimitivesSymbols(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
             const IQueryController* const controller);
-        static void collectPrimitivesSymbols(
+        static void collectSymbolsFromPrimitives(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-            const QVector< std::shared_ptr<const Primitive> >& primitives, const PrimitivesType type, const IQueryController* const controller);
+            const QVector< std::shared_ptr<const Primitive> >& primitives, const PrimitivesType type,
+            QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols,
+            const IQueryController* const controller);
         static void obtainPolygonSymbol(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-            const std::shared_ptr<const Primitive>& primitive);
+            const std::shared_ptr<const Primitive>& primitive,
+            QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols);
         static void obtainPolylineSymbol(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-            const std::shared_ptr<const Primitive>& primitive);
+            const std::shared_ptr<const Primitive>& primitive,
+            QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols);
         static void obtainPointSymbol(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-            const std::shared_ptr<const Primitive>& primitive);
+            const std::shared_ptr<const Primitive>& primitive,
+            QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols);
         static void obtainPrimitiveTexts(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-            const std::shared_ptr<const Primitive>& primitive, const PointI& location);
+            const std::shared_ptr<const Primitive>& primitive, const PointI& location,
+            QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols);
         static void obtainPrimitiveIcon(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-            const std::shared_ptr<const Primitive>& primitive, const PointI& location);
+            const std::shared_ptr<const Primitive>& primitive, const PointI& location,
+            QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols);
 
         STRONG_ENUM(PaintValuesSet)
         {

@@ -50,10 +50,17 @@ namespace OsmAnd
 
         struct PrimitivesCacheLevel
         {
-            mutable QReadWriteLock _primitivesCacheLock;
-            QHash< uint64_t, std::shared_ptr< const Rasterizer_P::PrimitivesGroup > > _primitivesCache;
+            mutable QReadWriteLock _lock;
+            QHash< uint64_t, std::shared_ptr< const Rasterizer_P::PrimitivesGroup > > _cache;
         };
         std::array<PrimitivesCacheLevel, ZoomLevelsCount> _primitivesCacheLevels;
+
+        struct SymbolsCacheLevel
+        {
+            mutable QReadWriteLock _lock;
+            QHash< uint64_t, std::shared_ptr< const Rasterizer_P::SymbolsGroup > > _cache;
+        };
+        std::array<SymbolsCacheLevel, ZoomLevelsCount> _symbolsCacheLevels;
     public:
         virtual ~RasterizerSharedContext_P();
 
