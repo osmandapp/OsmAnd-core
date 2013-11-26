@@ -1161,7 +1161,7 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 						basemapResult.push_back(*r);
 					} else {
 						tempResult.push_back(*r);
-						renderRouteDataFile = -1;
+						//renderRouteDataFile = -1;
 					}
 				}
 			}
@@ -1185,11 +1185,14 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 		map<std::string, BinaryMapFile*>::iterator i = openFiles.begin();
 		for (; i != openFiles.end() && !q->publisher->isCancelled(); i++) {
 			BinaryMapFile* file = i->second;
-			if (q->req != NULL) {
-				q->req->clearState();
+			// false positive case when we have 2 sep maps Country-roads & Country
+			if(file->mapIndexes.size() == 0 || renderRouteDataFile == 1) {
+				if (q->req != NULL) {
+					q->req->clearState();
+				}
+				q->publisher->result.clear();
+				readRouteDataAsMapObjects(q, file, tempResult, skipDuplicates, ids);
 			}
-			q->publisher->result.clear();
-			readRouteDataAsMapObjects(q, file, tempResult, skipDuplicates, ids);
 		}
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Route objects %d", tempResult.size());
 	}
