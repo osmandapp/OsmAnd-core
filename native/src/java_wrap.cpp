@@ -466,12 +466,12 @@ void loadJniRenderingContext(JNIEnv* env)
 
 	jclass_RenderingContext = findClass(env, "net/osmand/RenderingContext");
 	jfield_RenderingContext_interrupted = getFid(env, jclass_RenderingContext, "interrupted", "Z");
-	jfield_RenderingContext_leftX = getFid(env,  jclass_RenderingContext, "leftX", "F" );
-	jfield_RenderingContext_topY = getFid(env,  jclass_RenderingContext, "topY", "F" );
+	jfield_RenderingContext_leftX = getFid(env,  jclass_RenderingContext, "leftX", "D" );
+	jfield_RenderingContext_topY = getFid(env,  jclass_RenderingContext, "topY", "D" );
 	jfield_RenderingContext_width = getFid(env,  jclass_RenderingContext, "width", "I" );
 	jfield_RenderingContext_height = getFid(env,  jclass_RenderingContext, "height", "I" );
 	jfield_RenderingContext_zoom = getFid(env,  jclass_RenderingContext, "zoom", "I" );
-	jfield_RenderingContext_tileDivisor = getFid(env,  jclass_RenderingContext, "tileDivisor", "F" );
+	jfield_RenderingContext_tileDivisor = getFid(env,  jclass_RenderingContext, "tileDivisor", "D" );
 	jfield_RenderingContext_rotate = getFid(env,  jclass_RenderingContext, "rotate", "F" );
 	jfield_RenderingContext_useEnglishNames = getFid(env,  jclass_RenderingContext, "useEnglishNames", "Z" );
 	jfield_RenderingContext_pointCount = getFid(env,  jclass_RenderingContext, "pointCount", "I" );
@@ -529,11 +529,11 @@ void loadJniRenderingContext(JNIEnv* env)
 void pullFromJavaRenderingContext(JNIEnv* env, jobject jrc, JNIRenderingContext* rc)
 {
 	rc->env = env;
-	rc->setLocation(env->GetFloatField( jrc, jfield_RenderingContext_leftX ), env->GetFloatField( jrc, jfield_RenderingContext_topY ));
+	rc->setLocation(env->GetDoubleField( jrc, jfield_RenderingContext_leftX ), env->GetDoubleField( jrc, jfield_RenderingContext_topY ));
 	rc->setDimension(env->GetIntField( jrc, jfield_RenderingContext_width ), env->GetIntField( jrc, jfield_RenderingContext_height ));
 
 	rc->setZoom(env->GetIntField( jrc, jfield_RenderingContext_zoom ));
-	rc->setTileDivisor(env->GetFloatField( jrc, jfield_RenderingContext_tileDivisor ));
+	rc->setTileDivisor(env->GetDoubleField( jrc, jfield_RenderingContext_tileDivisor ));
 	rc->setRotate(env->GetFloatField( jrc, jfield_RenderingContext_rotate ));
 	rc->setDensityScale(env->GetFloatField( jrc, jfield_RenderingContext_density ));
 	rc->setScreenDensityRatio(env->GetFloatField( jrc, jfield_RenderingContext_screenDensityRatio ));
