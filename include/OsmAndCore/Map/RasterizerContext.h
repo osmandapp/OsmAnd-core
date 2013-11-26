@@ -50,8 +50,6 @@ namespace OsmAnd {
         const std::shared_ptr<RasterizerEnvironment> environment;
         const std::shared_ptr<RasterizerSharedContext> sharedContext;
 
-        int getSymbolsCount() const;
-
     friend class OsmAnd::Rasterizer;
     };
 

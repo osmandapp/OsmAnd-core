@@ -723,8 +723,13 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
             if(static_cast<bool>(group))
             {
                 // Add symbols from group to current context
+                RasterizerContext_P::SymbolsEntry entry;
+                entry.first = primitivesGroup->mapObject;
+                entry.second.reserve(group->symbols.size());
                 for(auto itSymbol = group->symbols.cbegin(); itSymbol != group->symbols.cend(); ++itSymbol)
-                    context._symbols.push_back(*itSymbol);//TODO: check if originating primitive is valid for this context
+                    entry.second.push_back(*itSymbol);//TODO: check if originating primitive is valid for this context
+                entry.second.squeeze();
+                context._symbols.push_back(qMove(entry));
 
                 // Add shared group to current context
                 context._symbolsGroups.push_back(qMove(group));
@@ -764,19 +769,18 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
             }
         }
 
-        // Add polygons, polylines and points from group to current context
+        // Add symbols from group to current context
+        RasterizerContext_P::SymbolsEntry entry;
+        entry.first = primitivesGroup->mapObject;
+        entry.second.reserve(group->symbols.size());
         for(auto itSymbol = group->symbols.cbegin(); itSymbol != group->symbols.cend(); ++itSymbol)
-            context._symbols.push_back(*itSymbol);//TODO: check if originating primitive is valid for this context
+            entry.second.push_back(*itSymbol);//TODO: check if originating primitive is valid for this context
+        entry.second.squeeze();
+        context._symbols.push_back(qMove(entry));
 
         // Empty groups are also inserted, to indicate that they are empty
         context._symbolsGroups.push_back(qMove(group));
     }
-
-    // Sort symbols by order
-    qSort(context._symbols.begin(), context._symbols.end(), [](const std::shared_ptr<const PrimitiveSymbol>& l, const std::shared_ptr<const PrimitiveSymbol>& r) -> bool
-    {
-        return l->order < r->order;
-    });
 }
 
 void OsmAnd::Rasterizer_P::collectSymbolsFromPrimitives(
@@ -2227,74 +2231,77 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
     QList< std::shared_ptr<const RasterizedSymbol> >& outSymbols,
     const IQueryController* const controller )
 {
-    for(auto itPrimitiveSymbol = context._symbols.cbegin(); itPrimitiveSymbol != context._symbols.end(); ++itPrimitiveSymbol)
+    for(auto itSymbolsEntry = context._symbols.cbegin(); itSymbolsEntry != context._symbols.end(); ++itSymbolsEntry)
     {
-        const auto& symbol = *itPrimitiveSymbol;
-
-        if(const auto textSymbol = std::dynamic_pointer_cast<const PrimitiveSymbol_Text>(symbol))
+        for(auto itPrimitiveSymbol = itSymbolsEntry->second.cbegin(); itPrimitiveSymbol != itSymbolsEntry->second.cbegin(); ++itPrimitiveSymbol)
         {
-            // Skip symbols that need to be rasterized along path
-            if(textSymbol->drawOnPath)
-                continue;
+            const auto& symbol = *itPrimitiveSymbol;
 
-            // Configure paint for text
-            SkPaint textPaint = env.textPaint;
-
-            textPaint.setTextSize(textSymbol->size);
-            textPaint.setFakeBoldText(textSymbol->isBold);
-            textPaint.setColor(textSymbol->color);
-
-            // Measure text
-            SkRect textBounds;
-            textPaint.measureText(textSymbol->value.constData(), textSymbol->value.length()*sizeof(QChar), &textBounds);
-
-            SkRect textBBox = textBounds;
-
-            // Process shadow
-            SkPaint textShadowPaint;
-            SkRect shadowBounds;
-
-            if(textSymbol->shadowRadius > 0)
+            if(const auto textSymbol = std::dynamic_pointer_cast<const PrimitiveSymbol_Text>(symbol))
             {
-                textShadowPaint = textPaint;
+                // Skip symbols that need to be rasterized along path
+                if(textSymbol->drawOnPath)
+                    continue;
 
-                textShadowPaint.setStyle(SkPaint::kStroke_Style);
-                textShadowPaint.setColor(SK_ColorWHITE);
-                textShadowPaint.setStrokeWidth(textSymbol->shadowRadius);
+                // Configure paint for text
+                SkPaint textPaint = env.textPaint;
 
-                textShadowPaint.measureText(textSymbol->value.constData(), textSymbol->value.length()*sizeof(QChar), &shadowBounds);
-                textBBox.join(shadowBounds);
+                textPaint.setTextSize(textSymbol->size);
+                textPaint.setFakeBoldText(textSymbol->isBold);
+                textPaint.setColor(textSymbol->color);
+
+                // Measure text
+                SkRect textBounds;
+                textPaint.measureText(textSymbol->value.constData(), textSymbol->value.length()*sizeof(QChar), &textBounds);
+
+                SkRect textBBox = textBounds;
+
+                // Process shadow
+                SkPaint textShadowPaint;
+                SkRect shadowBounds;
+
+                if(textSymbol->shadowRadius > 0)
+                {
+                    textShadowPaint = textPaint;
+
+                    textShadowPaint.setStyle(SkPaint::kStroke_Style);
+                    textShadowPaint.setColor(SK_ColorWHITE);
+                    textShadowPaint.setStrokeWidth(textSymbol->shadowRadius);
+
+                    textShadowPaint.measureText(textSymbol->value.constData(), textSymbol->value.length()*sizeof(QChar), &shadowBounds);
+                    textBBox.join(shadowBounds);
+                }
+
+                // Create a bitmap that will be hold text
+                auto bitmap = new SkBitmap();
+                bitmap->setConfig(SkBitmap::kARGB_8888_Config, textBBox.width(), textBBox.height());
+                bitmap->allocPixels();
+                SkBitmapDevice target(*bitmap);
+                SkCanvas canvas(&target);
+
+                // Rasterize text
+                if(textSymbol->shadowRadius > 0)
+                    canvas.drawText(textSymbol->value.constData(), textSymbol->value.length()*sizeof(QChar), -textBBox.left(), -textBBox.top(), textShadowPaint);
+                canvas.drawText(textSymbol->value.constData(), textSymbol->value.length()*sizeof(QChar), -textBBox.left(), -textBBox.top(), textPaint);
+
+                //////////////////////////////////////////////////////////////////////////
+                /*std::unique_ptr<SkImageEncoder> encoder(CreatePNGImageEncoder());
+                QString path;
+                path.sprintf("D:\\texts\\%p.png", bitmap);
+                encoder->encodeFile(path.toLocal8Bit(), *bitmap, 100);*/
+                //////////////////////////////////////////////////////////////////////////
+                delete bitmap;
+                //rasterizedTexts.push_back(qMove(std::shared_ptr<const SkBitmap>(bitmap)));
             }
 
-            // Create a bitmap that will be hold text
-            auto bitmap = new SkBitmap();
-            bitmap->setConfig(SkBitmap::kARGB_8888_Config, textBBox.width(), textBBox.height());
-            bitmap->allocPixels();
-            SkBitmapDevice target(*bitmap);
-            SkCanvas canvas(&target);
-
-            // Rasterize text
-            if(textSymbol->shadowRadius > 0)
-                canvas.drawText(textSymbol->value.constData(), textSymbol->value.length()*sizeof(QChar), -textBBox.left(), -textBBox.top(), textShadowPaint);
-            canvas.drawText(textSymbol->value.constData(), textSymbol->value.length()*sizeof(QChar), -textBBox.left(), -textBBox.top(), textPaint);
-
-            //////////////////////////////////////////////////////////////////////////
-            /*std::unique_ptr<SkImageEncoder> encoder(CreatePNGImageEncoder());
-            QString path;
-            path.sprintf("D:\\texts\\%p.png", bitmap);
-            encoder->encodeFile(path.toLocal8Bit(), *bitmap, 100);*/
-            //////////////////////////////////////////////////////////////////////////
-            delete bitmap;
-            //rasterizedTexts.push_back(qMove(std::shared_ptr<const SkBitmap>(bitmap)));
+            //// Create container and store it
+            //const auto rasterizedSymbol = new RasterizedSymbol(
+            //    primitiveSymbol.mapObject,
+            //    primitiveSymbol.location31,
+            //    icon,
+            //    rasterizedTexts);
+            //outSymbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
         }
-
-        //// Create container and store it
-        //const auto rasterizedSymbol = new RasterizedSymbol(
-        //    primitiveSymbol.mapObject,
-        //    primitiveSymbol.location31,
-        //    icon,
-        //    rasterizedTexts);
-        //outSymbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
     }
 }
 

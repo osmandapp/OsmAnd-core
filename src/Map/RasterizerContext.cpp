@@ -13,8 +13,3 @@ OsmAnd::RasterizerContext::RasterizerContext(const std::shared_ptr<RasterizerEnv
 OsmAnd::RasterizerContext::~RasterizerContext()
 {
 }
-
-int OsmAnd::RasterizerContext::getSymbolsCount() const
-{
-    return _d->_symbols.size();
-}

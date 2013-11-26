@@ -27,7 +27,7 @@ bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols( const TileId tileId, con
     owner->dataProvider->obtainTile(tileId, zoom, dataTile);
 
     // If tile has nothing to be rasterized, mark that data is not available for it
-    if(dataTile->nothingToRasterize || dataTile->rasterizerContext->getSymbolsCount() == 0)
+    if(dataTile->nothingToRasterize)
     {
         outSymbols.clear();
         return true;
