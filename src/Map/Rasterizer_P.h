@@ -24,6 +24,7 @@
 #define _OSMAND_CORE_RASTERIZER_P_H_
 
 #include <OsmAndCore/stdlib_common.h>
+#include <functional>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QList>
@@ -282,6 +283,7 @@ namespace OsmAnd {
 
         void rasterizeSymbolsWithoutPaths(
             QList< std::shared_ptr<const RasterizedSymbol> >& outSymbols,
+            std::function<bool (const std::shared_ptr<const Model::MapObject>& mapObject)> filter,
             const IQueryController* const controller);
 
     friend class OsmAnd::Rasterizer;

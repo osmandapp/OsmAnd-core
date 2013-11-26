@@ -2229,12 +2229,23 @@ bool OsmAnd::Rasterizer_P::isClockwiseCoastlinePolygon( const QVector< PointI > 
 
 void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
     QList< std::shared_ptr<const RasterizedSymbol> >& outSymbols,
+    std::function<bool(const std::shared_ptr<const Model::MapObject>& mapObject)> filter,
     const IQueryController* const controller )
 {
     for(auto itSymbolsEntry = context._symbols.cbegin(); itSymbolsEntry != context._symbols.end(); ++itSymbolsEntry)
     {
+        if(controller && controller->isAborted())
+            return;
+
+        // Apply filter, if it's present
+        if(filter && !filter(itSymbolsEntry->first))
+            continue;
+
         for(auto itPrimitiveSymbol = itSymbolsEntry->second.cbegin(); itPrimitiveSymbol != itSymbolsEntry->second.cbegin(); ++itPrimitiveSymbol)
         {
+            if(controller && controller->isAborted())
+                return;
+
             const auto& symbol = *itPrimitiveSymbol;
 
             if(const auto textSymbol = std::dynamic_pointer_cast<const PrimitiveSymbol_Text>(symbol))
