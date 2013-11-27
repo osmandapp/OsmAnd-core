@@ -18,7 +18,10 @@ OsmAnd::OfflineMapSymbolProvider_P::~OfflineMapSymbolProvider_P()
 {
 }
 
-bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols( const TileId tileId, const ZoomLevel zoom, QList< std::shared_ptr<const MapSymbolsGroup> >& outSymbolsGroups )
+bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols(
+    const TileId tileId, const ZoomLevel zoom,
+    QList< std::shared_ptr<const MapSymbolsGroup> >& outSymbolsGroups,
+    std::function<bool(const std::shared_ptr<const Model::MapObject>& mapObject)> filter)
 {
     // Get bounding box that covers this tile
     const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
@@ -36,7 +39,7 @@ bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols( const TileId tileId, con
 
     // Rasterize symbols
     QList< std::shared_ptr<const RasterizedSymbolsGroup> > rasterizedSymbolsGroups;
-    rasterizer.rasterizeSymbolsWithoutPaths(rasterizedSymbolsGroups, nullptr/*add a pass-througj filter*/, nullptr);
+    rasterizer.rasterizeSymbolsWithoutPaths(rasterizedSymbolsGroups, filter, nullptr);
     
     // Convert results
     for(auto itRasterizedGroup = rasterizedSymbolsGroups.cbegin(); itRasterizedGroup != rasterizedSymbolsGroups.cend(); ++itRasterizedGroup)

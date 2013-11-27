@@ -30,9 +30,12 @@
 #include <OsmAndCore.h>
 #include <CommonTypes.h>
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class MapSymbolsGroup;
+    namespace Model {
+        class MapObject;
+    } // namespace Model
 
     class OfflineMapSymbolProvider;
     class OfflineMapSymbolProvider_P
@@ -45,7 +48,10 @@ namespace OsmAnd {
     public:
         virtual ~OfflineMapSymbolProvider_P();
 
-        bool obtainSymbols(const TileId tileId, const ZoomLevel zoom, QList< std::shared_ptr<const MapSymbolsGroup> >& outSymbolsGroups);
+        bool obtainSymbols(
+            const TileId tileId, const ZoomLevel zoom,
+            QList< std::shared_ptr<const MapSymbolsGroup> >& outSymbolsGroups,
+            std::function<bool(const std::shared_ptr<const Model::MapObject>& mapObject)> filter);
 
     friend class OsmAnd::OfflineMapSymbolProvider;
     };
