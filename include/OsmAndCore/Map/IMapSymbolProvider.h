@@ -34,7 +34,25 @@
 
 class SkBitmap;
 
-namespace OsmAnd {
+namespace OsmAnd
+{
+    namespace Model {
+        class MapObject;
+    } // namespace Model
+
+    class MapSymbol;
+    class OSMAND_CORE_API MapSymbolsGroup
+    {
+        Q_DISABLE_COPY(MapSymbolsGroup);
+    private:
+    protected:
+    public:
+        MapSymbolsGroup(const std::shared_ptr<const Model::MapObject>& mapObject);
+        virtual ~MapSymbolsGroup();
+
+        const std::shared_ptr<const Model::MapObject> mapObject;
+        QList< std::shared_ptr<const MapSymbol> > symbols;
+    };
 
     class OSMAND_CORE_API MapSymbol
     {
@@ -42,15 +60,15 @@ namespace OsmAnd {
     private:
     protected:
     public:
-        MapSymbol(const uint64_t id, const PointI& location, const ZoomLevel zoom, const std::shared_ptr<const SkBitmap>& icon, const QList< std::shared_ptr<const SkBitmap> >& texts);
+        MapSymbol(const std::shared_ptr<const MapSymbolsGroup>& group, const std::shared_ptr<const Model::MapObject>& mapObject, const int order, const PointI& location, const std::shared_ptr<const SkBitmap>& bitmap);
         virtual ~MapSymbol();
 
-        const uint64_t id;
-        const PointI location;
-        const ZoomLevel zoom;
+        const std::weak_ptr<const MapSymbolsGroup> group;
 
-        const std::shared_ptr<const SkBitmap> icon;
-        const QList< std::shared_ptr<const SkBitmap> > texts;
+        const std::shared_ptr<const Model::MapObject> mapObject;
+        const int order;
+        const PointI location;
+        const std::shared_ptr<const SkBitmap> bitmap;
     };
 
     class OSMAND_CORE_API IMapSymbolProvider : public IMapProvider

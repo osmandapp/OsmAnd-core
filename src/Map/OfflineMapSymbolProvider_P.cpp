@@ -38,22 +38,28 @@ bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols( const TileId tileId, con
     QList< std::shared_ptr<const RasterizedSymbolsGroup> > rasterizedSymbolsGroups;
     rasterizer.rasterizeSymbolsWithoutPaths(rasterizedSymbolsGroups, nullptr/*add a pass-througj filter*/, nullptr);
     
-    /*
     // Convert results
-    for(auto itRasterizedSymbol = rasterizedSymbols.cbegin(); itRasterizedSymbol != rasterizedSymbols.cend(); ++itRasterizedSymbol)
+    for(auto itRasterizedGroup = rasterizedSymbolsGroups.cbegin(); itRasterizedGroup != rasterizedSymbolsGroups.cend(); ++itRasterizedGroup)
     {
-        const auto& rasterizedSymbol = *itRasterizedSymbol;
+        const auto& rasterizedGroup = *itRasterizedGroup;
 
-        // Create new map symbol
-        const auto mapSymbol = new MapSymbol(
-            rasterizedSymbol->mapObject->id,
-            rasterizedSymbol->location31,
-            zoom,
-            rasterizedSymbol->icon,
-            rasterizedSymbol->texts);
+        // Create group
+        const auto constructedGroup = new MapSymbolsGroup(rasterizedGroup->mapObject);
+        std::shared_ptr<const MapSymbolsGroup> group(constructedGroup);
 
-        outSymbols.push_back(qMove(std::shared_ptr<const MapSymbol>(mapSymbol)));
+        // Convert all symbols inside group
+        for(auto itRasterizedSymbol = rasterizedGroup->symbols.cbegin(); itRasterizedSymbol != rasterizedGroup->symbols.cend(); ++itRasterizedSymbol)
+        {
+            const auto& rasterizedSymbol = *itRasterizedSymbol;
+
+            const auto symbol = new MapSymbol(
+                group, constructedGroup->mapObject,
+                rasterizedSymbol->order,
+                rasterizedSymbol->location31,
+                rasterizedSymbol->bitmap);
+            constructedGroup->symbols.push_back(qMove(std::shared_ptr<const MapSymbol>(symbol)));
+        }
     }
-    */
+
     return true;
 }
