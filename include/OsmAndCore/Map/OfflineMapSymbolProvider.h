@@ -48,7 +48,7 @@ namespace OsmAnd {
 
         const std::shared_ptr<OfflineMapDataProvider> dataProvider;
 
-        virtual bool obtainSymbols(const TileId tileId, const ZoomLevel zoom, QList< std::shared_ptr<const MapSymbol> >& outSymbols);
+        virtual bool obtainSymbols(const TileId tileId, const ZoomLevel zoom, QList< std::shared_ptr<const MapSymbolsGroup> >& outSymbolsGroups);
     };
 
 }

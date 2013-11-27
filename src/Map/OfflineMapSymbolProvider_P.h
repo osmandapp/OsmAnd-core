@@ -32,7 +32,7 @@
 
 namespace OsmAnd {
 
-    class MapSymbol;
+    class MapSymbolsGroup;
 
     class OfflineMapSymbolProvider;
     class OfflineMapSymbolProvider_P
@@ -45,7 +45,7 @@ namespace OsmAnd {
     public:
         virtual ~OfflineMapSymbolProvider_P();
 
-        bool obtainSymbols(const TileId tileId, const ZoomLevel zoom, QList< std::shared_ptr<const MapSymbol> >& outSymbols);
+        bool obtainSymbols(const TileId tileId, const ZoomLevel zoom, QList< std::shared_ptr<const MapSymbolsGroup> >& outSymbolsGroups);
 
     friend class OsmAnd::OfflineMapSymbolProvider;
     };

@@ -1703,7 +1703,7 @@ bool OsmAnd::MapRenderer::SymbolsResourceEntry::obtainData( bool& dataAvailable 
     //NOTE: part of resources collection. A symbol resource collection is bound to provider
 
     //TODO: a cache of symbols needs to be maintained, since same symbol may be present in several tiles, but it should be drawn once?
-    provider->obtainSymbols(tileId, zoom, _sourceData);
+    //provider->obtainSymbols(tileId, zoom, _sourceData);
     
     // add std::weak_ptr to QMap< order_from_rules as int, QList<MapSymbol> > g_symbols?
 

@@ -18,7 +18,7 @@ OsmAnd::OfflineMapSymbolProvider_P::~OfflineMapSymbolProvider_P()
 {
 }
 
-bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols( const TileId tileId, const ZoomLevel zoom, QList< std::shared_ptr<const MapSymbol> >& outSymbols )
+bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols( const TileId tileId, const ZoomLevel zoom, QList< std::shared_ptr<const MapSymbolsGroup> >& outSymbolsGroups )
 {
     // Get bounding box that covers this tile
     const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
@@ -59,6 +59,9 @@ bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols( const TileId tileId, con
                 rasterizedSymbol->bitmap);
             constructedGroup->symbols.push_back(qMove(std::shared_ptr<const MapSymbol>(symbol)));
         }
+
+        // Add constructed group to output
+        outSymbolsGroups.push_back(qMove(group));
     }
 
     return true;

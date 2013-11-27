@@ -79,7 +79,7 @@ namespace OsmAnd
     public:
         virtual ~IMapSymbolProvider();
 
-        virtual bool obtainSymbols(const TileId tileId, const ZoomLevel zoom, QList< std::shared_ptr<const MapSymbol> >& outSymbols) = 0;
+        virtual bool obtainSymbols(const TileId tileId, const ZoomLevel zoom, QList< std::shared_ptr<const MapSymbolsGroup> >& outSymbolsGroups) = 0;
     };
 
 }
