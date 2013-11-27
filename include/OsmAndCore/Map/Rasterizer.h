@@ -35,11 +35,11 @@
 
 class SkCanvas;
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class RasterizerEnvironment;
     class RasterizerContext;
-    class RasterizedSymbol;
+    class RasterizedSymbolsGroup;
     namespace Model {
         class MapObject;
     } // namespace Model
@@ -83,7 +83,7 @@ namespace OsmAnd {
         //QList< std::shared_ptr<const RasterizedSymbol> >& outSymbols,
 
         void rasterizeSymbolsWithoutPaths(
-            QList< std::shared_ptr<const RasterizedSymbol> >& outSymbols,
+            QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
             std::function<bool (const std::shared_ptr<const Model::MapObject>& mapObject)> filter = nullptr,
             const IQueryController* const controller = nullptr);
 

@@ -37,9 +37,9 @@ void OsmAnd::Rasterizer::rasterizeMap(
 }
 
 void OsmAnd::Rasterizer::rasterizeSymbolsWithoutPaths(
-    QList< std::shared_ptr<const RasterizedSymbol> >& outSymbols,
+    QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
     std::function<bool (const std::shared_ptr<const Model::MapObject>& mapObject)> filter /*= nullptr*/,
     const IQueryController* const controller /*= nullptr*/ )
 {
-    _d->rasterizeSymbolsWithoutPaths(outSymbols, filter, controller);
+    _d->rasterizeSymbolsWithoutPaths(outSymbolsGroups, filter, controller);
 }

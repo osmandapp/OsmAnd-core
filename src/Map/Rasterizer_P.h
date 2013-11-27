@@ -45,6 +45,7 @@ namespace OsmAnd {
     class RasterizerEnvironment_P;
     class RasterizerContext_P;
     class RasterizerSharedContext_P;
+    class RasterizedSymbolsGroup;
     class RasterizedSymbol;
     namespace Model {
         class MapObject;
@@ -282,7 +283,7 @@ namespace OsmAnd {
             const IQueryController* const controller);
 
         void rasterizeSymbolsWithoutPaths(
-            QList< std::shared_ptr<const RasterizedSymbol> >& outSymbols,
+            QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
             std::function<bool (const std::shared_ptr<const Model::MapObject>& mapObject)> filter,
             const IQueryController* const controller);
 

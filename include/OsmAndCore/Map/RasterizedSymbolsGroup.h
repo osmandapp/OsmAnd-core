@@ -20,8 +20,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _OSMAND_CORE_RASTERIZED_SYMBOL_H_
-#define _OSMAND_CORE_RASTERIZED_SYMBOL_H_
+#ifndef _OSMAND_CORE_RASTERIZED_SYMBOLS_GROUP_H_
+#define _OSMAND_CORE_RASTERIZED_SYMBOLS_GROUP_H_
 
 #include <OsmAndCore/stdlib_common.h>
 
@@ -31,35 +31,29 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 
-class SkBitmap;
-
 namespace OsmAnd
 {
-    class RasterizedSymbolsGroup;
+    class RasterizedSymbol;
     namespace Model {
         class MapObject;
     } // namespace Model
     class Rasterizer_P;
 
-    class OSMAND_CORE_API RasterizedSymbol
+    class OSMAND_CORE_API RasterizedSymbolsGroup
     {
-        Q_DISABLE_COPY(RasterizedSymbol);
+        Q_DISABLE_COPY(RasterizedSymbolsGroup);
     private:
     protected:
-        RasterizedSymbol(const std::shared_ptr<const RasterizedSymbolsGroup>& group, const std::shared_ptr<const Model::MapObject>& mapObject, const PointI& location31, const int order, const std::shared_ptr<const SkBitmap>& bitmap);
+        RasterizedSymbolsGroup(const std::shared_ptr<const Model::MapObject>& mapObject);
     public:
-        virtual ~RasterizedSymbol();
-
-        const std::weak_ptr<const RasterizedSymbolsGroup> group;
+        virtual ~RasterizedSymbolsGroup();
 
         const std::shared_ptr<const Model::MapObject> mapObject;
-        const PointI location31;
-        const int order;
-        const std::shared_ptr<const SkBitmap> bitmap;
+        QList< std::shared_ptr<const RasterizedSymbol> > symbols;
 
-    friend class OsmAnd::Rasterizer_P;
+        friend class OsmAnd::Rasterizer_P;
     };
 
 } // namespace OsmAnd
 
-#endif // _OSMAND_CORE_RASTERIZED_SYMBOL_H_
+#endif // _OSMAND_CORE_RASTERIZED_SYMBOLS_GROUP_H_

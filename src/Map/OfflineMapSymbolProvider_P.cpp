@@ -4,6 +4,7 @@
 #include "OfflineMapDataProvider.h"
 #include "OfflineMapDataTile.h"
 #include "Rasterizer.h"
+#include "RasterizedSymbolsGroup.h"
 #include "RasterizedSymbol.h"
 #include "MapObject.h"
 #include "Utilities.h"
@@ -28,18 +29,16 @@ bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols( const TileId tileId, con
 
     // If tile has nothing to be rasterized, mark that data is not available for it
     if(dataTile->nothingToRasterize)
-    {
-        outSymbols.clear();
         return true;
-    }
 
     // Create rasterizer
     Rasterizer rasterizer(dataTile->rasterizerContext);
 
     // Rasterize symbols
-    QList< std::shared_ptr<const RasterizedSymbol> > rasterizedSymbols;
-    rasterizer.rasterizeSymbolsWithoutPaths(rasterizedSymbols);
+    QList< std::shared_ptr<const RasterizedSymbolsGroup> > rasterizedSymbolsGroups;
+    rasterizer.rasterizeSymbolsWithoutPaths(rasterizedSymbolsGroups, nullptr/*add a pass-througj filter*/, nullptr);
     
+    /*
     // Convert results
     for(auto itRasterizedSymbol = rasterizedSymbols.cbegin(); itRasterizedSymbol != rasterizedSymbols.cend(); ++itRasterizedSymbol)
     {
@@ -55,6 +54,6 @@ bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols( const TileId tileId, con
 
         outSymbols.push_back(qMove(std::shared_ptr<const MapSymbol>(mapSymbol)));
     }
-
+    */
     return true;
 }

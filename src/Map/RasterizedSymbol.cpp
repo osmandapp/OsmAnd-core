@@ -2,11 +2,12 @@
 
 #include <cassert>
 
-OsmAnd::RasterizedSymbol::RasterizedSymbol( const std::shared_ptr<const Model::MapObject>& mapObject_, const PointI& location31_, const std::shared_ptr<const SkBitmap>& icon_, const QList< std::shared_ptr<const SkBitmap> >& texts_ )
-    : mapObject(mapObject_)
+OsmAnd::RasterizedSymbol::RasterizedSymbol(const std::shared_ptr<const RasterizedSymbolsGroup>& group_, const std::shared_ptr<const Model::MapObject>& mapObject_, const PointI& location31_, const int order_, const std::shared_ptr<const SkBitmap>& bitmap_)
+    : group(group_)
+    , mapObject(mapObject_)
     , location31(location31_)
-    , icon(icon_)
-    , texts(texts_)
+    , order(order_)
+    , bitmap(bitmap_)
 {
     assert(mapObject_);
 }

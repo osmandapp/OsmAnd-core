@@ -15,6 +15,7 @@
 #include "RasterizerSharedContext.h"
 #include "RasterizerSharedContext_P.h"
 #include "RasterizedSymbol.h"
+#include "RasterizedSymbolsGroup.h"
 #include "MapStyleEvaluator.h"
 #include "MapStyleEvaluationResult.h"
 #include "MapTypes.h"
@@ -696,6 +697,8 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
     const IQueryController* const controller )
 {
+    //NOTE: Since 2 tiles with same MapObject may have different set of polylines, generated from it,
+    //NOTE: then set of symbols also should differ, but it won't.
     for(auto itPrimitivesGroup = context._primitivesGroups.cbegin(); itPrimitivesGroup != context._primitivesGroups.cend(); ++itPrimitivesGroup)
     {
         if(controller && controller->isAborted())
@@ -727,7 +730,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
                 entry.first = primitivesGroup->mapObject;
                 entry.second.reserve(group->symbols.size());
                 for(auto itSymbol = group->symbols.cbegin(); itSymbol != group->symbols.cend(); ++itSymbol)
-                    entry.second.push_back(*itSymbol);//TODO: check if originating primitive is valid for this context
+                    entry.second.push_back(*itSymbol);
                 entry.second.squeeze();
                 context._symbols.push_back(qMove(entry));
 
@@ -774,7 +777,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
         entry.first = primitivesGroup->mapObject;
         entry.second.reserve(group->symbols.size());
         for(auto itSymbol = group->symbols.cbegin(); itSymbol != group->symbols.cend(); ++itSymbol)
-            entry.second.push_back(*itSymbol);//TODO: check if originating primitive is valid for this context
+            entry.second.push_back(*itSymbol);
         entry.second.squeeze();
         context._symbols.push_back(qMove(entry));
 
@@ -2228,7 +2231,7 @@ bool OsmAnd::Rasterizer_P::isClockwiseCoastlinePolygon( const QVector< PointI > 
 //////////////////////////////////////////////////////////////////////////
 
 void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
-    QList< std::shared_ptr<const RasterizedSymbol> >& outSymbols,
+    QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
     std::function<bool(const std::shared_ptr<const Model::MapObject>& mapObject)> filter,
     const IQueryController* const controller )
 {
@@ -2240,6 +2243,10 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
         // Apply filter, if it's present
         if(filter && !filter(itSymbolsEntry->first))
             continue;
+
+        // Create group
+        const auto constructedGroup = new RasterizedSymbolsGroup(itSymbolsEntry->first);
+        std::shared_ptr<const RasterizedSymbolsGroup> group(constructedGroup);
 
         for(auto itPrimitiveSymbol = itSymbolsEntry->second.cbegin(); itPrimitiveSymbol != itSymbolsEntry->second.cbegin(); ++itPrimitiveSymbol)
         {
@@ -2301,18 +2308,20 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                 path.sprintf("D:\\texts\\%p.png", bitmap);
                 encoder->encodeFile(path.toLocal8Bit(), *bitmap, 100);*/
                 //////////////////////////////////////////////////////////////////////////
-                delete bitmap;
-                //rasterizedTexts.push_back(qMove(std::shared_ptr<const SkBitmap>(bitmap)));
-            }
 
-            //// Create container and store it
-            //const auto rasterizedSymbol = new RasterizedSymbol(
-            //    primitiveSymbol.mapObject,
-            //    primitiveSymbol.location31,
-            //    icon,
-            //    rasterizedTexts);
-            //outSymbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
+                // Create RasterizedSymbol
+                const auto rasterizedSymbol = new RasterizedSymbol(
+                    group,
+                    constructedGroup->mapObject,
+                    symbol->location31,
+                    symbol->order,
+                    qMove(std::shared_ptr<const SkBitmap>(bitmap)));
+                constructedGroup->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
+            }
         }
+
+        // Add group to output
+        outSymbolsGroups.push_back(qMove(group));
     }
 }
 
