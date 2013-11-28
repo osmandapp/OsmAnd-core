@@ -33,3 +33,6 @@ if [ -d "$SRCLOC/patches" ]; then
 		patch --strip=1 --directory="$SRCLOC/upstream.patched/" --input="$PATCH"
 	done
 fi
+
+# Add extra source code
+cp -r "$SRCLOC/src" "$SRCLOC/upstream.patched"

@@ -5,7 +5,7 @@
 
 #if defined(_WIN32)
 #   include "upstream.patched/port/cpl_config.h.vc"
-#elif defined(ANDROID) || defined(__ANDROID__) || defined(__APPLE__) || defined(__linux__)
+#elif defined(ANDROID) || defined(__ANDROID__) || defined(__APPLE__) || defined(__linux__) || defined(__QNXNTO__)
 
     /* Define if you want to use pthreads based multiprocessing support */
 #   define CPL_MULTIPROC_PTHREAD 1

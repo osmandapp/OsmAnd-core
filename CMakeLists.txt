@@ -30,7 +30,7 @@ if(CMAKE_TARGET_OS STREQUAL "darwin")
 endif()
 
 # 3D rendering: OpenGL, OpenGLES2, Direct3D
-if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "windows" OR CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android")
+if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "windows" OR CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android" OR CMAKE_TARGET_OS STREQUAL "qnx")
 	file(GLOB_RECURSE sources_opengl_common "src/Map/OpenGL_Common/*.c*")
 	file(GLOB_RECURSE headers_opengl_common "src/Map/OpenGL_Common/*.h*")
 	set(target_specific_public_definitions ${target_specific_public_definitions}
@@ -68,7 +68,7 @@ if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAK
 		${sources_opengl}
 	)
 endif()
-if(CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android")
+if(CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android" OR CMAKE_TARGET_OS STREQUAL "qnx")
 	set(target_specific_public_definitions ${target_specific_public_definitions}
 		-DOSMAND_OPENGLES2_RENDERER_SUPPORTED
 	)
@@ -286,6 +286,12 @@ if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 				${Qt5Core_SHARED_LIBRARIES}
 		)
 	else()
+		target_include_directories(OsmAndCore_shared
+			PUBLIC
+				${Qt5Sql_INCLUDE_DIRS}
+				${Qt5Network_INCLUDE_DIRS}
+				${Qt5Core_INCLUDE_DIRS}
+		)
 		target_link_libraries(OsmAndCore_shared
 			LINK_PUBLIC
 				Qt5::Sql
@@ -385,6 +391,12 @@ if(CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 				${Qt5Core_STATIC_LIBRARIES}
 		)
 	else()
+		target_include_directories(OsmAndCore_static
+			PUBLIC
+				${Qt5Sql_INCLUDE_DIRS}
+				${Qt5Network_INCLUDE_DIRS}
+				${Qt5Core_INCLUDE_DIRS}
+		)
 		target_link_libraries(OsmAndCore_static
 			LINK_PUBLIC
 				Qt5::Sql

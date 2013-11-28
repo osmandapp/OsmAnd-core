@@ -24,6 +24,9 @@
 
 #include <OsmAndCore/stdlib_common.h>
 
+#if defined(__GXX_EXPERIMENTAL_CXX0X__) && (__cplusplus < 201103L)
+#define GLM_FORCE_CXX11
+#endif
 #include <glm/glm.hpp>
 
 #include <OsmAndCore/QtExtensions.h>
