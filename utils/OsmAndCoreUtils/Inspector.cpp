@@ -338,12 +338,12 @@ void printAddressDetailedInfo(std::ostream& output, const OsmAnd::Inspector::Con
         OsmAnd::ObfAddressBlockType::Villages,
         OsmAnd::ObfAddressBlockType::Postcodes,
     };
-    char* strTypes[] = {
+    const char* strTypes[] = {
         "Cities/Towns section",
         "Villages section",
         "Postcodes section",
     };
-    for(int typeIdx = 0; typeIdx < sizeof(types)/sizeof(types[0]); typeIdx++)
+    for(size_t typeIdx = 0; typeIdx < sizeof(types)/sizeof(types[0]); typeIdx++)
     {
         auto type = types[typeIdx];
 

@@ -129,6 +129,40 @@
 	/* Define to necessary symbol if this constant uses a non-standard name on
 	   your system. */
 	/* #undef PTHREAD_CREATE_JOINABLE */
+#elif defined(__QNXNTO__)	
+	/* the namespace of hash_map/hash_set */
+    #define HASH_NAMESPACE __gnu_cxx
+
+	/* the name of <hash_set> */
+	#define HASH_MAP_CLASS hash_map
+
+	/* the location of <hash_map> */
+    #define HASH_MAP_H <ext/hash_map>
+
+	/* the name of <hash_set> */
+	#define HASH_SET_CLASS hash_set
+
+	/* the location of <hash_set> */
+    #define HASH_SET_H <ext/hash_set>
+
+	/* define if the compiler has hash_map */
+	#define HAVE_HASH_MAP 1
+
+	/* define if the compiler has hash_set */
+	#define HAVE_HASH_SET 1
+	
+	/* Define if you have POSIX threads libraries and header files. */
+	#define HAVE_PTHREAD 1
+	
+	/* Enable GNU extensions on systems that have them.  */
+	#ifndef _GNU_SOURCE
+	# define _GNU_SOURCE 1
+	#endif
+	
+	/* Define to necessary symbol if this constant uses a non-standard name on
+	   your system. */
+	/* #undef PTHREAD_CREATE_JOINABLE */
+	
 #endif
 
 /* Enable classes using zlib compression. */

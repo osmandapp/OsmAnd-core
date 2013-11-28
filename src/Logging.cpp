@@ -35,7 +35,7 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::LogFlush()
 {
 }
 
-#elif defined(__APPLE__) || defined(__linux__)
+#elif defined(__APPLE__) || defined(__linux__) || defined(__QNXNTO__)
 
 OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::LogFlush()
 {

@@ -122,6 +122,26 @@ elseif(CMAKE_TARGET_OS STREQUAL "linux")
 		freetype2_static
 		pthread
 	)
+elseif(CMAKE_TARGET_OS STREQUAL "qnx")
+	file(GLOB src_gpu_gl_qnx "upstream.patched/src/gpu/gl/qnx/*")
+	file(GLOB src_fonts_qnx "upstream.patched/src/fonts/*")
+	set(target_specific_sources "${target_specific_sources}"
+		"upstream.patched/src/ports/SkDebug_stdio.cpp"
+		"upstream.patched/src/ports/SkThread_pthread.cpp"
+		"upstream.patched/src/ports/SkTime_Unix.cpp"
+		"upstream.patched/src/ports/SkFontHost_FreeType_common.cpp"
+		"upstream.patched/src/ports/SkFontHost_FreeType.cpp"
+		"upstream.patched/src/ports/SkFontHost_fontconfig.cpp"
+		"upstream.patched/src/ports/SkFontConfigInterface_direct.cpp"
+		"upstream.patched/src/utils/SkThreadUtils_pthread.cpp"
+		"upstream.patched/src/ports/SkOSFile_posix.cpp"
+		"upstream.patched/src/ports/SkTLS_pthread.cpp"
+		${src_gpu_gl_qnx}
+		${src_fonts_qnx}
+	)
+	set(target_specific_definitions_public ${target_specific_definitions_public}
+		-DSK_BUILD_FOR_QNX
+	)
 endif()
 
 file(GLOB src_core "upstream.patched/src/core/*")

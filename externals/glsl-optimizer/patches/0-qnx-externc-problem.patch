@@ -1,0 +1,44 @@
+--- upstream.original/src/glsl/glsl_parser_extras.cpp	2013-11-02 15:13:46.554945207 +0000
++++ upstream.patched/src/glsl/glsl_parser_extras.cpp	2013-11-02 15:18:14.409942788 +0000
+@@ -25,10 +25,14 @@
+ #include <string.h>
+ #include <assert.h>
+ 
++#ifndef __QNXNTO__
+ extern "C" {
++#endif
+ #include "main/core.h" /* for struct gl_context */
+ #include "main/context.h"
++#ifndef __QNXNTO__
+ }
++#endif
+ 
+ #include "ralloc.h"
+ #include "ast.h"
+
+--- upstream.original/src/glsl/ralloc.h	2013-11-02 15:13:46.557945207 +0000
++++ upstream.patched/src/glsl/ralloc.h	2013-11-02 15:18:12.353942807 +0000
+@@ -47,15 +47,23 @@
+ #ifndef RALLOC_H
+ #define RALLOC_H
+ 
++#ifndef __QNXNTO__
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
++#endif
+ 
+ #include <stddef.h>
+ #include <stdarg.h>
+ #include <stdbool.h>
+ #include "main/compiler.h"
+ 
++#ifdef __QNXNTO__
++#ifdef __cplusplus
++extern "C" {
++#endif
++#endif
++
+ /**
+  * \def ralloc(ctx, type)
+  * Allocate a new object chained off of the given context.

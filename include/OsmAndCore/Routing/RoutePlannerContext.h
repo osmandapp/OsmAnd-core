@@ -24,8 +24,6 @@
 #define _OSMAND_CORE_ROUTE_PLANNER_CONTEXT_H_
 
 #include <limits>
-#include <memory>
-
 #include <OsmAndCore/stdlib_common.h>
 #include <ctime>
 
