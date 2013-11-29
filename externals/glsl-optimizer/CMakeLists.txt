@@ -24,6 +24,9 @@ if(MSVC)
 		-D_CRT_SECURE_NO_WARNINGS
 		-D__STDC_VERSION__=200000L
 	)
+
+	# Disable "no matching operator delete found; memory will not be freed if initialization throws an exception
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4291")
 endif()
 
 if(target_specific_private_definitions)
