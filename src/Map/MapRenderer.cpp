@@ -1699,6 +1699,7 @@ bool OsmAnd::MapRenderer::SymbolsResourceEntry::obtainData( bool& dataAvailable 
         return false;
     const auto provider = std::static_pointer_cast<IMapSymbolProvider>(provider_);
 
+    // 
     //NOTE: SymbolsResourceEntry represents a since tile@zoom. In a single provider. That means, that multiple symbol providers provide data for same tile@zoom
     //NOTE: part of resources collection. A symbol resource collection is bound to provider
 

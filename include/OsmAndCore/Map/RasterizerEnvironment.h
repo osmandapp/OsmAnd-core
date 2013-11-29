@@ -32,11 +32,12 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/MapStyle.h>
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class MapStyleValueDefinition;
     class Rasterizer;
     struct MapStyleValue;
+    class ObfMapSectionInfo;
 
     class RasterizerEnvironment_P;
     class OSMAND_CORE_API RasterizerEnvironment
@@ -51,6 +52,8 @@ namespace OsmAnd {
 
         const float displayDensityFactor;
         const std::shared_ptr<const MapStyle> style;
+
+        const std::shared_ptr<const ObfMapSectionInfo>& dummyMapSection;
 
         QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > getSettings() const;
         void setSettings(const QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue >& newSettings);

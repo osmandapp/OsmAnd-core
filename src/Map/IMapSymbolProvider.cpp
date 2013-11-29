@@ -31,3 +31,12 @@ OsmAnd::MapSymbol::MapSymbol(const std::shared_ptr<const MapSymbolsGroup>& group
 OsmAnd::MapSymbol::~MapSymbol()
 {
 }
+
+OsmAnd::MapSymbolsTile::MapSymbolsTile(const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups_)
+    : symbolsGroups(symbolsGroups_)
+{
+}
+
+OsmAnd::MapSymbolsTile::~MapSymbolsTile()
+{
+}

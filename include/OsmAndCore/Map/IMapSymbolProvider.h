@@ -71,6 +71,17 @@ namespace OsmAnd
         const std::shared_ptr<const SkBitmap> bitmap;
     };
 
+    class OSMAND_CORE_API MapSymbolsTile
+    {
+    private:
+    protected:
+        MapSymbolsTile(const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups);
+    public:
+        virtual ~MapSymbolsTile();
+
+        const QList< std::shared_ptr<const MapSymbolsGroup> > symbolsGroups;
+    };
+
     class OSMAND_CORE_API IMapSymbolProvider : public IMapProvider
     {
     private:
@@ -81,8 +92,8 @@ namespace OsmAnd
 
         virtual bool obtainSymbols(
             const TileId tileId, const ZoomLevel zoom,
-            QList< std::shared_ptr<const MapSymbolsGroup> >& outSymbolsGroups,
-            std::function<bool (const std::shared_ptr<const Model::MapObject>& mapObject)> filter = nullptr) = 0;
+            std::shared_ptr<const MapSymbolsTile>& outTile,
+            std::function<bool (const std::shared_ptr<const Model::MapObject>& mapObject)> filter) = 0;
     };
 
 }

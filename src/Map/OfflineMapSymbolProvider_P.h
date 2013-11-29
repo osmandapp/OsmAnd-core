@@ -23,16 +23,22 @@
 #define _OSMAND_CORE_OFFLINE_MAP_SYMBOL_PROVIDER_P_H_
 
 #include <OsmAndCore/stdlib_common.h>
+#include <array>
 #include <functional>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <QReadWriteLock>
+#include <QList>
 
-#include <OsmAndCore.h>
+#include "OsmAndCore.h"
 #include <CommonTypes.h>
+#include <IMapSymbolProvider.h>
 
 namespace OsmAnd
 {
+    class OfflineMapDataTile;
     class MapSymbolsGroup;
+    class MapSymbolsTile;
     namespace Model {
         class MapObject;
     } // namespace Model
@@ -45,13 +51,24 @@ namespace OsmAnd
         OfflineMapSymbolProvider_P(OfflineMapSymbolProvider* owner);
 
         OfflineMapSymbolProvider* const owner;
+
+        class Tile : public MapSymbolsTile
+        {
+        private:
+        protected:
+        public:
+            Tile(const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups, const std::shared_ptr<const OfflineMapDataTile>& dataTile);
+            virtual ~Tile();
+
+            const std::shared_ptr<const OfflineMapDataTile> dataTile;
+        };
     public:
         virtual ~OfflineMapSymbolProvider_P();
 
         bool obtainSymbols(
             const TileId tileId, const ZoomLevel zoom,
-            QList< std::shared_ptr<const MapSymbolsGroup> >& outSymbolsGroups,
-            std::function<bool(const std::shared_ptr<const Model::MapObject>& mapObject)> filter);
+            std::shared_ptr<const MapSymbolsTile>& outTile,
+            std::function<bool (const std::shared_ptr<const Model::MapObject>& mapObject)> filter);
 
     friend class OsmAnd::OfflineMapSymbolProvider;
     };

@@ -99,10 +99,10 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 
             // Otherwise, this map object is surely shared, but a check is needed if it was already loaded
             {
-                QReadLocker scopedLocker(&cacheLevel._readWriteLock);
+                QReadLocker scopedLocker(&cacheLevel._lock);
 
-                const auto itSharedMapObject = cacheLevel._mapObjects.constFind(id);
-                if(itSharedMapObject != cacheLevel._mapObjects.cend())
+                const auto itSharedMapObject = cacheLevel._cache.constFind(id);
+                if(itSharedMapObject != cacheLevel._cache.cend())
                 {
                     const auto& mapObjectWeakRef = *itSharedMapObject;
                     if(const auto mapObject = mapObjectWeakRef.lock())
@@ -154,10 +154,10 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
         {
             auto& cacheLevel = _mapObjectsCache[zoomLevel];
             {
-                QWriteLocker scopedLocker(&cacheLevel._readWriteLock);
+                QWriteLocker scopedLocker(&cacheLevel._lock);
 
-                const auto itSharedMapObject = cacheLevel._mapObjects.find(mapObject->id);
-                if(itSharedMapObject != cacheLevel._mapObjects.end())
+                const auto itSharedMapObject = cacheLevel._cache.find(mapObject->id);
+                if(itSharedMapObject != cacheLevel._cache.end())
                 {
                     if(const auto sharedMapObject = itSharedMapObject->lock())
                     {
@@ -173,7 +173,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
                 else
                 {
                     // Or simply insert
-                    cacheLevel._mapObjects.insert(mapObject->id, mapObject);
+                    cacheLevel._cache.insert(mapObject->id, mapObject);
                 }
             }
         }

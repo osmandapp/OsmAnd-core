@@ -121,7 +121,7 @@ namespace OsmAnd {
         const QVector< SkPaint >& oneWayPaints;
         const QVector< SkPaint >& reverseOneWayPaints;
 
-        const std::shared_ptr<ObfMapSectionInfo> dummyMapSection;
+        const std::shared_ptr<const ObfMapSectionInfo> dummyMapSection;
 
         QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > getSettings() const;
         void setSettings(const QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue >& newSettings);

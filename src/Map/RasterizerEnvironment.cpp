@@ -7,6 +7,7 @@ OsmAnd::RasterizerEnvironment::RasterizerEnvironment( const std::shared_ptr<cons
     : _d(new RasterizerEnvironment_P(this))
     , style(style_)
     , displayDensityFactor(displayDensityFactor_)
+    , dummyMapSection(_d->dummyMapSection)
 {
     _d->initialize();
 }

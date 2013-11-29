@@ -3,6 +3,7 @@
 
 #include "OfflineMapDataProvider.h"
 #include "OfflineMapDataTile.h"
+#include "RasterizerEnvironment.h"
 #include "Rasterizer.h"
 #include "RasterizedSymbolsGroup.h"
 #include "RasterizedSymbol.h"
@@ -20,8 +21,8 @@ OsmAnd::OfflineMapSymbolProvider_P::~OfflineMapSymbolProvider_P()
 
 bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols(
     const TileId tileId, const ZoomLevel zoom,
-    QList< std::shared_ptr<const MapSymbolsGroup> >& outSymbolsGroups,
-    std::function<bool(const std::shared_ptr<const Model::MapObject>& mapObject)> filter)
+    std::shared_ptr<const MapSymbolsTile>& outTile,
+    std::function<bool (const std::shared_ptr<const Model::MapObject>& mapObject)> filter)
 {
     // Get bounding box that covers this tile
     const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
@@ -32,7 +33,11 @@ bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols(
 
     // If tile has nothing to be rasterized, mark that data is not available for it
     if(dataTile->nothingToRasterize)
+    {
+        // Mark tile as empty
+        outTile.reset();
         return true;
+    }
 
     // Create rasterizer
     Rasterizer rasterizer(dataTile->rasterizerContext);
@@ -42,6 +47,7 @@ bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols(
     rasterizer.rasterizeSymbolsWithoutPaths(rasterizedSymbolsGroups, filter, nullptr);
     
     // Convert results
+    QList< std::shared_ptr<const MapSymbolsGroup> > symbolsGroups;
     for(auto itRasterizedGroup = rasterizedSymbolsGroups.cbegin(); itRasterizedGroup != rasterizedSymbolsGroups.cend(); ++itRasterizedGroup)
     {
         const auto& rasterizedGroup = *itRasterizedGroup;
@@ -64,8 +70,20 @@ bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols(
         }
 
         // Add constructed group to output
-        outSymbolsGroups.push_back(qMove(group));
+        symbolsGroups.push_back(qMove(group));
     }
 
+    // Create output tile
+    outTile.reset(new Tile(symbolsGroups, dataTile));
     return true;
+}
+
+OsmAnd::OfflineMapSymbolProvider_P::Tile::Tile(const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups_, const std::shared_ptr<const OfflineMapDataTile>& dataTile_)
+    : MapSymbolsTile(symbolsGroups_)
+    , dataTile(dataTile_)
+{
+}
+
+OsmAnd::OfflineMapSymbolProvider_P::Tile::~Tile()
+{
 }

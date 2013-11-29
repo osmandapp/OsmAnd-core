@@ -51,9 +51,9 @@ void OsmAnd::OfflineMapDataTile_P::cleanup()
                 auto& cacheLevel = link->provider._mapObjectsCache[zoom];
 
                 {
-                    QWriteLocker scopedLocker(&cacheLevel._readWriteLock);
+                    QWriteLocker scopedLocker(&cacheLevel._lock);
 
-                    cacheLevel._mapObjects.remove(mapObject->id);
+                    cacheLevel._cache.remove(mapObject->id);
                 }
             }
         }

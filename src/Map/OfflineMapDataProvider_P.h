@@ -55,8 +55,8 @@ namespace OsmAnd {
 
         struct MapObjectsCacheLevel
         {
-            mutable QReadWriteLock _readWriteLock;
-            QHash< uint64_t, std::weak_ptr< const Model::MapObject > > _mapObjects;
+            mutable QReadWriteLock _lock;
+            QHash< uint64_t, std::weak_ptr< const Model::MapObject > > _cache;
         };
         std::array< MapObjectsCacheLevel, ZoomLevelsCount> _mapObjectsCache;
 
