@@ -3,7 +3,6 @@
 /resources/rendering_styles/style-icons/drawable-mdpi/h_cable_car.png:map/shaders/cable_car.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_chair_lift.png:map/shaders/chair_lift.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_danger.png:map/shaders/danger.png
-/resources/rendering_styles/style-icons/drawable-mdpi/h_danger1.png:map/shaders/danger1.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_forest.png:map/shaders/forest.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_forest1.png:map/shaders/forest1.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_glacier.png:map/shaders/glacier.png
@@ -18,8 +17,6 @@
 /resources/rendering_styles/style-icons/drawable-mdpi/h_mot_shield7.png:map/shaders/mot_shield7.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_mot_shield8.png:map/shaders/mot_shield8.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_mud.png:map/shaders/mud.png
-/resources/rendering_styles/style-icons/drawable-mdpi/h_nr.png:map/shaders/nr.png
-/resources/rendering_styles/style-icons/drawable-mdpi/h_nr1.png:map/shaders/nr1.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_nr2.png:map/shaders/nr2.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_nr2_night.png:map/shaders/nr2_night.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_orchard.png:map/shaders/orchard.png
