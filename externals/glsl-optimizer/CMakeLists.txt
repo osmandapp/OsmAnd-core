@@ -21,6 +21,7 @@ if(MSVC)
 	)
 
 	set(target_specific_private_definitions ${target_specific_private_definitions}
+		-D_CRT_SECURE_NO_WARNINGS
 		-D__STDC_VERSION__=200000L
 	)
 endif()

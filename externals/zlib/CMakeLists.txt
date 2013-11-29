@@ -18,11 +18,21 @@ add_library(z_static STATIC
 	"upstream.patched/zutil.c"
 )
 
+set(target_specific_private_definitions "")
+if(CMAKE_TARGET_OS STREQUAL "windows")
+	if(MSVC)
+		set(target_specific_private_definitions ${target_specific_private_definitions}
+			-D_CRT_SECURE_NO_WARNINGS
+		)
+	endif()
+endif()
+
 target_compile_definitions(z_static
 	PRIVATE
 		-DHAVE_SYS_TYPES_H
 		-DHAVE_STDINT_H
 		-DHAVE_STDDEF_H
+		${target_specific_private_definitions}
 	PUBLIC
 		-DZ_PREFIX
 )

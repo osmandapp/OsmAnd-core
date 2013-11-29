@@ -14,7 +14,19 @@ add_library(protobuf_static STATIC
 	"upstream.patched/src/google/protobuf/wire_format_lite.cc"
 )
 
+set(target_specific_private_definitions "")
+if(CMAKE_TARGET_OS STREQUAL "windows")
+	if(MSVC)
+		set(target_specific_private_definitions ${target_specific_private_definitions}
+			-D_CRT_SECURE_NO_WARNINGS
+		)
+	endif()
+endif()
+
 target_compile_definitions(protobuf_static
+	PRIVATE
+		-D__OSMAND_DUMMY__
+		${target_specific_private_definitions}
 	PUBLIC
 		-DGOOGLE_PROTOBUF_NO_RTTI
 )

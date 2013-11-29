@@ -49,9 +49,19 @@ add_library(jpeg_static STATIC
 	"upstream.patched/jutils.c"
 )
 
+set(target_specific_private_definitions "")
+if(CMAKE_TARGET_OS STREQUAL "windows")
+	if(MSVC)
+		set(target_specific_private_definitions ${target_specific_private_definitions}
+			-D_CRT_SECURE_NO_WARNINGS
+		)
+	endif()
+endif()
+
 target_compile_definitions(jpeg_static
 	PRIVATE
 		-DNO_GETENV
+		${target_specific_private_definitions}
 )
 target_include_directories(jpeg_static
 	PRIVATE

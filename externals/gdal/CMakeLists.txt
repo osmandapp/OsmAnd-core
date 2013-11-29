@@ -2,6 +2,7 @@ project(gdal)
 
 set(target_specific_sources "")
 set(target_specific_public_libraries "")
+set(target_specific_private_definitions "")
 
 # Target specific
 if(CMAKE_TARGET_OS STREQUAL "windows")
@@ -11,6 +12,12 @@ if(CMAKE_TARGET_OS STREQUAL "windows")
 	set(target_specific_public_libraries ${target_specific_public_libraries}
 		Ws2_32
 	)
+
+	if(MSVC)
+		set(target_specific_private_definitions ${target_specific_private_definitions}
+			-D_CRT_SECURE_NO_WARNINGS
+		)
+	endif()
 else()
 	set(target_specific_sources ${target_specific_sources}
 		"upstream.patched/port/cpl_vsil_unix_stdio_64.cpp"
@@ -102,6 +109,7 @@ add_dependencies(gdal_static
 target_compile_definitions(gdal_static
 	PRIVATE
 		-DFRMT_gtiff
+		${target_specific_private_definitions}
 	PUBLIC
 		-DCPL_DLL=
 )

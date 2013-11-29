@@ -14,6 +14,15 @@ if(CMAKE_TARGET_CPU_ARCH STREQUAL "arm")
 	)
 endif()
 
+set(target_specific_private_definitions "")
+if(CMAKE_TARGET_OS STREQUAL "windows")
+	if(MSVC)
+		set(target_specific_private_definitions ${target_specific_private_definitions}
+			-D_CRT_SECURE_NO_WARNINGS
+		)
+	endif()
+endif()
+
 add_library(png_static STATIC
 	"upstream.patched/png.c"
 	"upstream.patched/pngerror.c"
@@ -40,6 +49,7 @@ add_dependencies(png_static
 target_compile_definitions(png_static
 	PRIVATE
 		-DPNG_CONFIGURE_LIBPNG
+		${target_specific_private_definitions}
 )
 target_include_directories(png_static
 	PUBLIC
