@@ -16,7 +16,7 @@ include_directories(AFTER SYSTEM
 	"${OSMAND_ROOT}/externals/giflib/upstream.patched/lib"
 	"${OSMAND_ROOT}/externals/jpeg/upstream.patched"
 	"${OSMAND_ROOT}/externals/libpng/upstream.patched"
-	"${OSMAND_ROOT}/externals/harfbuzz/upstream.patched/src"
+	#"${OSMAND_ROOT}/externals/harfbuzz/upstream.patched/src"
 	"${OSMAND_ROOT}/externals/protobuf/upstream.patched/src"
 	"${OSMAND_ROOT}/native/include"
 	"${OSMAND_ROOT}/native/src"

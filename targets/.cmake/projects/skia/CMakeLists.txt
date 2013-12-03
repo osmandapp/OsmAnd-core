@@ -29,7 +29,7 @@ include_directories(AFTER SYSTEM
 	"${OSMAND_ROOT}/externals/giflib/upstream.patched/lib"
 	"${OSMAND_ROOT}/externals/jpeg/upstream.patched"
 	"${OSMAND_ROOT}/externals/libpng/upstream.patched"
-	"${OSMAND_ROOT}/externals/harfbuzz/upstream.patched/src"
+#	"${OSMAND_ROOT}/externals/harfbuzz/upstream.patched/src"
 )
 add_definitions(-DSK_RELEASE -DGR_RELEASE=1 -DNDEBUG -DSK_SUPPORT_GPU=0)
 set(target_specific_sources
@@ -311,7 +311,7 @@ add_library(skia_osmand STATIC
 target_link_libraries(skia_osmand LINK_PUBLIC
 	expat_osmand
 	freetype2_osmand
-	harfbuzz_osmand
+	#harfbuzz_osmand
 	png_osmand
 	gif_osmand
 	jpeg_osmand
