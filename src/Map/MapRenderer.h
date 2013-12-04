@@ -73,6 +73,7 @@ namespace OsmAnd
         QMap< int, QList< std::weak_ptr<MapSymbol> > > _symbols;
 
         // GPU worker related:
+        volatile bool _gpuWorkerIsAlive;
         Qt::HANDLE _gpuWorkerThreadId;
         std::unique_ptr<Concurrent::Thread> _gpuWorkerThread;
         QMutex _gpuWorkerThreadWakeupMutex;

@@ -22,6 +22,7 @@ OsmAnd::MapRenderer::MapRenderer()
     , _requestedStateUpdatedMask(0)
     , _renderThreadId(nullptr)
     , _gpuWorkerThreadId(nullptr)
+    , _gpuWorkerIsAlive(false)
     , currentConfiguration(_currentConfiguration)
     , currentState(_currentState)
     , renderAPI(_renderAPI)
@@ -245,7 +246,7 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
     if(setupOptions.gpuWorkerThread.prologue)
         setupOptions.gpuWorkerThread.prologue();
 
-    while(_isRenderingInitialized)
+    while(_gpuWorkerIsAlive)
     {
         // Wait until we're unblocked by host
         {
@@ -253,7 +254,7 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
             _gpuWorkerThreadWakeup.wait(&_gpuWorkerThreadWakeupMutex);
             _gpuWorkerThreadWakeupMutex.unlock();
         }
-        if(!_isRenderingInitialized)
+        if(!_gpuWorkerIsAlive)
             break;
 
         // In every layer we have, upload pending resources to GPU without limiting
@@ -336,7 +337,10 @@ bool OsmAnd::MapRenderer::postInitializeRendering()
 
     // Start GPU worker (if it exists)
     if(_gpuWorkerThread)
+    {
+        _gpuWorkerIsAlive = true;
         _gpuWorkerThread->start();
+    }
 
     return true;
 }
@@ -555,12 +559,13 @@ bool OsmAnd::MapRenderer::doReleaseRendering()
 
 bool OsmAnd::MapRenderer::postReleaseRendering()
 {
-    _isRenderingInitialized = false;
-
     // Stop GPU worker if it exists
     if(_gpuWorkerThread)
     {
-        // Since _isRenderingInitialized == false, wake up GPU worker thread to allow it to exit
+        // Deactivate worker thread
+        _gpuWorkerIsAlive = false;
+
+        // Since _gpuWorkerAlive == false, wake up GPU worker thread to allow it to exit
         {
             QMutexLocker scopedLocker(&_gpuWorkerThreadWakeupMutex);
             _gpuWorkerThreadWakeup.wakeAll();
@@ -575,6 +580,8 @@ bool OsmAnd::MapRenderer::postReleaseRendering()
 
     // Release resources
     _resources.reset();
+
+    _isRenderingInitialized = false;
 
     return true;
 }
