@@ -523,6 +523,61 @@ void OsmAnd::MapRendererResources::updateResources(const QSet<TileId>& tiles, co
     requestNeededResources(tiles, zoom);
 }
 
+unsigned int OsmAnd::MapRendererResources::unloadResources()
+{
+    unsigned int totalUnloaded = 0u;
+
+    for(auto itResourcesCollections = _storage.cbegin(); itResourcesCollections != _storage.cend(); ++itResourcesCollections)
+    {
+        const auto& resourcesCollections = *itResourcesCollections;
+
+        for(auto itResourcesCollection = resourcesCollections.cbegin(); itResourcesCollection != resourcesCollections.cend(); ++itResourcesCollection)
+        {
+            const auto& resourcesCollection = *itResourcesCollection;
+
+            // Skip empty entries
+            if(!static_cast<bool>(resourcesCollection))
+                continue;
+
+            // Select all resources with "UnloadPending" state
+            QList< std::shared_ptr<BaseTiledResource> > resources;
+            resourcesCollection->obtainEntries(&resources, [&resources](const std::shared_ptr<BaseTiledResource>& entry, bool& cancel) -> bool
+            {
+                // Skip not-"UnloadPending" resources
+                if(entry->getState() != ResourceState::UnloadPending)
+                    return false;
+
+                // Accept this resource
+                return true;
+            });
+            if(resources.isEmpty())
+                continue;
+
+            // Unload from GPU all selected resources
+            for(auto itResource = resources.cbegin(); itResource != resources.cend(); ++itResource)
+            {
+                const auto& resource = *itResource;
+
+                // Since state change is allowed (it's not changed to "Unloading" during query), check state here
+                if(!resource->setStateIf(ResourceState::UnloadPending, ResourceState::Unloading))
+                    continue;
+
+                // Unload from GPU
+                resource->unloadFromGPU();
+
+                // Mark as unloaded
+                assert(resource->getState() == ResourceState::Unloading);
+                resource->setState(ResourceState::Unloaded);
+
+                // Count uploaded resources
+                totalUnloaded++;
+            }
+        }
+    }
+
+    return totalUnloaded;
+}
+
 unsigned int OsmAnd::MapRendererResources::uploadResources(const unsigned int limit /*= 0u*/, bool* const outMoreThanLimitAvailable /*= nullptr*/)
 {
     unsigned int totalUploaded = 0u;
@@ -652,7 +707,17 @@ void OsmAnd::MapRendererResources::cleanupJunkResources(const QSet<TileId>& tile
 
                     return true;
                 }
+                else if(entry->setStateIf(ResourceState::Unloaded, ResourceState::JustBeforeDeath))
+                {
+                    // If resource was unloaded from GPU, remove the entry.
+                    return true;
+                }
 
+                // Following situations are ignored
+                const auto state = entry->getState();
+                if(state == ResourceState::Uploading || state == ResourceState::UnloadPending || state == ResourceState::Unloading)
+                    return false;
+                
                 assert(false);
                 return false;
             });
@@ -670,6 +735,7 @@ void OsmAnd::MapRendererResources::releaseResourcesFrom(const std::shared_ptr<Ti
         // - Requested
         // - ProcessingRequest
         // - Ready
+        // - Unloaded
         // - Uploaded
         // All other states are considered invalid.
 
@@ -689,8 +755,14 @@ void OsmAnd::MapRendererResources::releaseResourcesFrom(const std::shared_ptr<Ti
         {
             return true;
         }
-        else if(entry->setStateIf(ResourceState::Uploaded, ResourceState::Unloading))
+        else if(entry->setStateIf(ResourceState::Unloaded, ResourceState::JustBeforeDeath))
         {
+            return true;
+        }
+        else if(entry->setStateIf(ResourceState::Uploaded, ResourceState::UnloadPending))
+        {
+            entry->setState(ResourceState::Unloading);
+
             entry->unloadFromGPU();
 
             entry->setState(ResourceState::Unloaded);
@@ -709,6 +781,23 @@ void OsmAnd::MapRendererResources::requestResourcesUpload()
 {
     // This is obsolete, should be redesigned
     renderer->requestResourcesUpload();
+}
+
+void OsmAnd::MapRendererResources::syncResourcesInGPU(
+    const unsigned int limitUploads /*= 0u*/,
+    bool* const outMoreUploadsThanLimitAvailable /*= nullptr*/,
+    unsigned int* const outResourcesUploaded /*= nullptr*/,
+    unsigned int* const outResourcesUnloaded /*= nullptr*/)
+{
+    // Unload resources
+    const auto resourcesUnloaded = unloadResources();
+    if(outResourcesUnloaded)
+        *outResourcesUnloaded = resourcesUnloaded;
+
+    // Upload resources
+    const auto resourcesUploaded = uploadResources(limitUploads, outMoreUploadsThanLimitAvailable);
+    if(outResourcesUploaded)
+        *outResourcesUploaded = resourcesUploaded;
 }
 
 std::shared_ptr<const OsmAnd::MapRendererResources::TiledResourcesCollection> OsmAnd::MapRendererResources::getCollection(const ResourceType type, const std::shared_ptr<IMapProvider>& provider) const

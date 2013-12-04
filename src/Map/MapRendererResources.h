@@ -264,6 +264,7 @@ namespace OsmAnd
         void updateResources(const QSet<TileId>& tiles, const ZoomLevel zoom);
         void requestNeededResources(const QSet<TileId>& tiles, const ZoomLevel zoom);
         void cleanupJunkResources(const QSet<TileId>& tiles, const ZoomLevel zoom);
+        unsigned int unloadResources();
         unsigned int uploadResources(const unsigned int limit = 0u, bool* const outMoreThanLimitAvailable = nullptr);
         void releaseResourcesFrom(const std::shared_ptr<TiledResourcesCollection>& collection);
         void requestResourcesUpload();
@@ -286,6 +287,11 @@ namespace OsmAnd
 
         void updateBindings(const MapRendererState& state, const uint32_t updatedMask);
         void updateActiveZone(const QSet<TileId>& tiles, const ZoomLevel zoom);
+        void syncResourcesInGPU(
+            const unsigned int limitUploads = 0u,
+            bool* const outMoreUploadsThanLimitAvailable = nullptr,
+            unsigned int* const outResourcesUploaded = nullptr,
+            unsigned int* const outResourcesUnloaded = nullptr);
     public:
         ~MapRendererResources();
 
