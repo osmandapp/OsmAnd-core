@@ -559,20 +559,22 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
             const auto resourcesCollection = getResources().getCollection(ResourceType::ElevationData, currentState.elevationDataProvider);
 
             // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
-            std::shared_ptr<Resources::BaseTiledResource> entry_;
-            resourcesCollection->obtainEntry(entry_, tileIdN, currentState.zoomBase);
-            const auto entry = std::static_pointer_cast<Resources::MapTileResource>(entry_);
-
-            // Check state and obtain GPU resource
             std::shared_ptr< const RenderAPI::ResourceInGPU > gpuResource;
-            if(entry->setStateIf(ResourceState::Uploaded, ResourceState::IsBeingUsed))
+            std::shared_ptr<Resources::BaseTiledResource> resource_;
+            if(resourcesCollection->obtainEntry(resource_, tileIdN, currentState.zoomBase))
             {
-                // Capture GPU resource
-                gpuResource = entry->resourceInGPU;
+                const auto resource = std::static_pointer_cast<Resources::MapTileResource>(resource_);
 
-                entry->setState(ResourceState::Uploaded);
+                // Check state and obtain GPU resource
+                if(resource->setStateIf(ResourceState::Uploaded, ResourceState::IsBeingUsed))
+                {
+                    // Capture GPU resource
+                    gpuResource = resource->resourceInGPU;
+
+                    resource->setState(ResourceState::Uploaded);
+                }
             }
-
+            
             if(!gpuResource)
             {
                 // We have no elevation data, so we can not do anything
@@ -666,23 +668,30 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
             const auto samplerIndex = (renderAPI->isSupported_vertexShaderTextureLookup ? 1 : 0) + layerLinearIdx;
 
             // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
-            std::shared_ptr<Resources::BaseTiledResource> entry_;
-            resourcesCollection->obtainEntry(entry_, tileIdN, currentState.zoomBase);
-            const auto entry = std::static_pointer_cast<Resources::MapTileResource>(entry_);
-
-            // Check state and obtain GPU resource
             std::shared_ptr< const RenderAPI::ResourceInGPU > gpuResource;
-            if(entry->setStateIf(ResourceState::Uploaded, ResourceState::IsBeingUsed))
+            std::shared_ptr<Resources::BaseTiledResource> resource_;
+            if(resourcesCollection->obtainEntry(resource_, tileIdN, currentState.zoomBase))
             {
-                // Capture GPU resource
-                gpuResource = entry->resourceInGPU;
+                const auto resource = std::static_pointer_cast<Resources::MapTileResource>(resource_);
 
-                entry->setState(ResourceState::Uploaded);
+                // Check state and obtain GPU resource
+                if(resource->setStateIf(ResourceState::Uploaded, ResourceState::IsBeingUsed))
+                {
+                    // Capture GPU resource
+                    gpuResource = resource->resourceInGPU;
+
+                    resource->setState(ResourceState::Uploaded);
+                }
+                else if(resource->getState() == ResourceState::Unavailable)
+                    gpuResource = getResources().unavailableTileStub;
+                else
+                    gpuResource = getResources().processingTileStub;
             }
-            else if(entry->getState() == ResourceState::Unavailable)
-                gpuResource = getResources().unavailableTileStub;
             else
+            {
+                // No resource entry means that it's not yet processed
                 gpuResource = getResources().processingTileStub;
+            }
 
             glUniform1f(perTile_fs.k, currentState.rasterLayerOpacity[layerId]);
             GL_CHECK_RESULT;

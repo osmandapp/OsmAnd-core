@@ -256,22 +256,33 @@ namespace OsmAnd
         void validateResourcesOfType(const ResourceType type);
 
         // Resources management:
+        QSet<TileId> _activeTiles;
+        ZoomLevel _activeZoom;
+        void updateResources(const QSet<TileId>& tiles, const ZoomLevel zoom);
+        void requestNeededResources(const QSet<TileId>& tiles, const ZoomLevel zoom);
+        void cleanupJunkResources(const QSet<TileId>& tiles, const ZoomLevel zoom);
         unsigned int uploadResources(const unsigned int limit = 0u, bool* const outMoreThanLimitAvailable = nullptr);
         void releaseResourcesFrom(const std::shared_ptr<TiledResourcesCollection>& collection);
         void requestResourcesUpload();
 
+        // Worker thread
+        volatile bool _workerThreadIsAlive;
+        const std::unique_ptr<Concurrent::Thread> _workerThread;
+        Qt::HANDLE _workerThreadId;
+        QMutex _workerThreadWakeupMutex;
+        QWaitCondition _workerThreadWakeup;
+        void workerThreadProcedure();
+
         // Default resources
+        bool initializeDefaultResources();
+        bool releaseDefaultResources();
         std::shared_ptr<const RenderAPI::ResourceInGPU> _processingTileStub;
         std::shared_ptr<const RenderAPI::ResourceInGPU> _unavailableTileStub;
     protected:
         MapRendererResources(MapRenderer* const owner);
 
-        bool initializeDefaultResources();
-        bool releaseDefaultResources();
-
         void updateBindings(const MapRendererState& state, const uint32_t updatedMask);
-        void requestNeededResources(const QSet<TileId>& tiles, const ZoomLevel zoom);
-        void cleanupJunkResources(const QSet<TileId>& tiles, const ZoomLevel zoom);
+        void updateActiveZone(const QSet<TileId>& tiles, const ZoomLevel zoom);
     public:
         ~MapRendererResources();
 

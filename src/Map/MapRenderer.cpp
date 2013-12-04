@@ -422,12 +422,8 @@ bool OsmAnd::MapRenderer::doPrepareFrame()
 
 bool OsmAnd::MapRenderer::postPrepareFrame()
 {
-    // Before requesting missing tiled resources, clean up cache to free some space
-    _resources->cleanupJunkResources(_uniqueTiles, _currentState.zoomBase);
-
-    // In the end of rendering processing, request tiled resources that are neither
-    // present in requested list, nor in pending, nor in uploaded
-    _resources->requestNeededResources(_uniqueTiles, _currentState.zoomBase);
+    // Notify resources manager about new active zone
+    _resources->updateActiveZone(_uniqueTiles, _currentState.zoomBase);
 
     return true;
 }

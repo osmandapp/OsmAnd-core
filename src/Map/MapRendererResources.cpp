@@ -15,6 +15,9 @@
 OsmAnd::MapRendererResources::MapRendererResources(MapRenderer* const owner_)
     : _taskHostBridge(this)
     , _invalidatedResourcesTypesMask(0)
+    , _workerThreadIsAlive(false)
+    , _workerThreadId(nullptr)
+    , _workerThread(new Concurrent::Thread(std::bind(&MapRendererResources::workerThreadProcedure, this)))
     , renderer(owner_)
     , processingTileStub(_processingTileStub)
     , unavailableTileStub(_unavailableTileStub)
@@ -32,10 +35,22 @@ OsmAnd::MapRendererResources::MapRendererResources(MapRenderer* const owner_)
 
     // Initialize default resources
     initializeDefaultResources();
+
+    // Start worker thread
+    _workerThreadIsAlive = true;
+    _workerThread->start();
 }
 
 OsmAnd::MapRendererResources::~MapRendererResources()
 {
+    // Stop worker thread
+    _workerThreadIsAlive = false;
+    {
+        QMutexLocker scopedLocker(&_workerThreadWakeupMutex);
+        _workerThreadWakeup.wakeAll();
+    }
+    _workerThread->wait();
+
     // Release all resources
     for(auto itResourcesCollections = _storage.begin(); itResourcesCollections != _storage.end(); ++itResourcesCollections)
     {
@@ -56,6 +71,7 @@ OsmAnd::MapRendererResources::~MapRendererResources()
     // Release default resources
     releaseDefaultResources();
 
+    // Wait for all tasks to complete
     _taskHostBridge.onOwnerIsBeingDestructed();
 }
 
@@ -253,6 +269,19 @@ void OsmAnd::MapRendererResources::updateBindings(const MapRendererState& state,
     }
 }
 
+void OsmAnd::MapRendererResources::updateActiveZone(const QSet<TileId>& tiles, const ZoomLevel zoom)
+{
+    // Lock worker wakeup mutex
+    QMutexLocker scopedLocker(&_workerThreadWakeupMutex);
+
+    // Update active zone
+    _activeTiles = tiles;
+    _activeZoom = zoom;
+
+    // Wake up the worker
+    _workerThreadWakeup.wakeAll();
+}
+
 bool OsmAnd::MapRendererResources::obtainProviderFor(TiledResourcesCollection* const resourcesRef, std::shared_ptr<IMapProvider>& provider) const
 {
     assert(resourcesRef != nullptr);
@@ -283,6 +312,38 @@ bool OsmAnd::MapRendererResources::isDataSourceAvailableFor(const std::shared_pt
 void OsmAnd::MapRendererResources::notifyNewResourceAvailable()
 {
     renderer->invalidateFrame();
+}
+
+void OsmAnd::MapRendererResources::workerThreadProcedure()
+{
+    // Capture worker thread ID
+    _workerThreadId = QThread::currentThreadId();
+
+    while(_workerThreadIsAlive)
+    {
+        // Local copy of active zone
+        QSet<TileId> activeTiles;
+        ZoomLevel activeZoom;
+
+        // Wait until we're unblocked by host
+        {
+            _workerThreadWakeupMutex.lock();
+            _workerThreadWakeup.wait(&_workerThreadWakeupMutex);
+
+            // Copy active zone to local copy
+            activeTiles = _activeTiles;
+            activeZoom = _activeZoom;
+
+            _workerThreadWakeupMutex.unlock();
+        }
+        if(!_workerThreadIsAlive)
+            break;
+
+        // Update resources
+        updateResources(activeTiles, activeZoom);
+    }
+
+    _workerThreadId = nullptr;
 }
 
 void OsmAnd::MapRendererResources::requestNeededResources(const QSet<TileId>& tiles, const ZoomLevel zoom)
@@ -450,6 +511,16 @@ void OsmAnd::MapRendererResources::validateResourcesOfType(const ResourceType ty
 
         releaseResourcesFrom(*itResourcesCollection);
     }
+}
+
+void OsmAnd::MapRendererResources::updateResources(const QSet<TileId>& tiles, const ZoomLevel zoom)
+{
+    // Before requesting missing tiled resources, clean up cache to free some space
+    //cleanupJunkResources(tiles, zoom);
+
+    // In the end of rendering processing, request tiled resources that are neither
+    // present in requested list, nor in pending, nor in uploaded
+    requestNeededResources(tiles, zoom);
 }
 
 unsigned int OsmAnd::MapRendererResources::uploadResources(const unsigned int limit /*= 0u*/, bool* const outMoreThanLimitAvailable /*= nullptr*/)
