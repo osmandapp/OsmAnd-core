@@ -516,7 +516,7 @@ void OsmAnd::MapRendererResources::validateResourcesOfType(const ResourceType ty
 void OsmAnd::MapRendererResources::updateResources(const QSet<TileId>& tiles, const ZoomLevel zoom)
 {
     // Before requesting missing tiled resources, clean up cache to free some space
-    //cleanupJunkResources(tiles, zoom);
+    cleanupJunkResources(tiles, zoom);
 
     // In the end of rendering processing, request tiled resources that are neither
     // present in requested list, nor in pending, nor in uploaded
@@ -626,44 +626,33 @@ void OsmAnd::MapRendererResources::cleanupJunkResources(const QSet<TileId>& tile
                 if((tiles.contains(entry->tileId) && entry->zoom == zoom) && dataSourceAvailable)
                     return false;
 
-                // Cleanup is only possible for entries that are in "not-in-progress" states.
-                // Following situations are possible:
-                //  - entry will be processed by a task, and has a "Requested" state.
-                //    Cancel the task and remove entry. A post-execute handler will be called that will do nothing.
-                //    If a execute handler will be called, it will see the "JustBeforeDeath" and skip it.
-                //  - entry can be removed, since it has "ProcessingRequest" state, so just mark it
-                //  - entry is in "Ready" state.
-                //    Just remove the entry in this case.
-                //  - entry is in "Uploaded" state.
-                //    Unload resource from GPU, since it's the only place where this action is possible.
-                // All other situations are unhandled, so don't remove entry.
-
-                if(entry->setStateIf(ResourceState::Requested, ResourceState::JustBeforeDeath))
+                if(entry->setStateIf(ResourceState::Uploaded, ResourceState::UnloadPending))
                 {
+                    // If resource is not needed anymore, change its state to "UnloadPending",
+                    // but keep the resource entry, since it must be unload from GPU in another place
+                    return false;
+                }
+                else if(entry->setStateIf(ResourceState::Ready, ResourceState::JustBeforeDeath))
+                {
+                    // If resource was not yet uploaded, just remove it.
+                    return true;
+                }
+                else if(entry->setStateIf(ResourceState::ProcessingRequest, ResourceState::JustBeforeDeath))
+                {
+                    // If resource request is being processed, remove the entry.
+                    return true;
+                }
+                else if(entry->setStateIf(ResourceState::Requested, ResourceState::JustBeforeDeath))
+                {
+                    // If resource was just requested, cancel its task and remove the entry.
+
                     // Cancel the task
                     assert(entry->_requestTask != nullptr);
                     entry->_requestTask->requestCancellation();
 
                     return true;
                 }
-                else if(entry->setStateIf(ResourceState::ProcessingRequest, ResourceState::JustBeforeDeath))
-                {
-                    return true;
-                }
-                else if(entry->setStateIf(ResourceState::Ready, ResourceState::JustBeforeDeath))
-                {
-                    return true;
-                }
-                else if(entry->setStateIf(ResourceState::Uploaded, ResourceState::Unloading))
-                {
-                    entry->unloadFromGPU();
 
-                    entry->setState(ResourceState::Unloaded);
-                    entry->setState(ResourceState::JustBeforeDeath);
-                    return true;
-                }
-
-                //NOTE: this may happen when resources are uploaded in separate thread, or IsBeingUsed. Actually this will happen
                 assert(false);
                 return false;
             });

@@ -71,7 +71,7 @@ namespace OsmAnd
         // Possible state chains:
         // Unknown => Requesting => Requested => ProcessingRequest => ...
         // ... => Unavailable.
-        // ... => Ready => Uploading => Uploaded [=> IsBeingUsed] => Unloading => Unloaded.
+        // ... => Ready => Uploading => Uploaded [=> IsBeingUsed] => UnloadPending => Unloading => Unloaded.
         STRONG_ENUM(ResourceState)
         {
             // Resource is not in any determined state (resource entry did not exist)
@@ -100,6 +100,9 @@ namespace OsmAnd
 
             // Resource data in GPU is being used
             IsBeingUsed,
+
+            // Resource is no longer needed, and it needs to be unloaded from GPU
+            UnloadPending,
 
             // Resource data is being removed from GPU
             Unloading,
