@@ -21,7 +21,7 @@ OsmAnd::MapRenderer::MapRenderer()
     : _currentConfigurationInvalidatedMask(0)
     , _requestedStateUpdatedMask(0)
     , _renderThreadId(nullptr)
-    , _workerThreadId(nullptr)
+    , _gpuWorkerThreadId(nullptr)
     , currentConfiguration(_currentConfiguration)
     , currentState(_currentState)
     , renderAPI(_renderAPI)
@@ -234,21 +234,23 @@ void OsmAnd::MapRenderer::invalidateFrame()
         setupOptions.frameUpdateRequestCallback();
 }
 
-void OsmAnd::MapRenderer::backgroundWorkerProcedure()
+void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
 {
+    assert(setupOptions.gpuWorkerThread.enabled);
+
     QMutex wakeupMutex;
-    _workerThreadId = QThread::currentThreadId();
+    _gpuWorkerThreadId = QThread::currentThreadId();
 
     // Call prologue if such exists
-    if(setupOptions.backgroundWorker.prologue)
-        setupOptions.backgroundWorker.prologue();
+    if(setupOptions.gpuWorkerThread.prologue)
+        setupOptions.gpuWorkerThread.prologue();
 
     while(_isRenderingInitialized)
     {
         // Wait until we're unblocked by host
         {
             wakeupMutex.lock();
-            _backgroundWorkerWakeup.wait(&wakeupMutex);
+            _gpuWorkerThreadWakeup.wait(&wakeupMutex);
             wakeupMutex.unlock();
         }
         if(!_isRenderingInitialized)
@@ -261,10 +263,10 @@ void OsmAnd::MapRenderer::backgroundWorkerProcedure()
     }
 
     // Call epilogue
-    if(setupOptions.backgroundWorker.epilogue)
-        setupOptions.backgroundWorker.epilogue();
+    if(setupOptions.gpuWorkerThread.epilogue)
+        setupOptions.gpuWorkerThread.epilogue();
 
-    _workerThreadId = nullptr;
+    _gpuWorkerThreadId = nullptr;
 }
 
 bool OsmAnd::MapRenderer::initializeRendering()
@@ -305,7 +307,7 @@ bool OsmAnd::MapRenderer::preInitializeRendering()
     _renderThreadId = QThread::currentThreadId();
 
     // Initialize various values
-    _workerThreadId = nullptr;
+    _gpuWorkerThreadId = nullptr;
     _currentConfigurationInvalidatedMask = std::numeric_limits<uint32_t>::max();
     _requestedStateUpdatedMask = std::numeric_limits<uint32_t>::max();
     
@@ -318,9 +320,12 @@ bool OsmAnd::MapRenderer::preInitializeRendering()
 
 bool OsmAnd::MapRenderer::doInitializeRendering()
 {
-    // Create background worker if enabled
-    if(setupOptions.backgroundWorker.enabled)
-        _backgroundWorker.reset(new Concurrent::Thread(std::bind(&MapRenderer::backgroundWorkerProcedure, this)));
+    // Create GPU worker thread
+    if(setupOptions.gpuWorkerThread.enabled)
+    {
+        const auto thread = new Concurrent::Thread(std::bind(&MapRenderer::gpuWorkerThreadProcedure, this));
+        _gpuWorkerThread.reset(thread);
+    }
 
     return true;
 }
@@ -329,8 +334,9 @@ bool OsmAnd::MapRenderer::postInitializeRendering()
 {
     _isRenderingInitialized = true;
 
-    if(_backgroundWorker)
-        _backgroundWorker->start();
+    // Start GPU worker (if it exists)
+    if(_gpuWorkerThread)
+        _gpuWorkerThread->start();
 
     return true;
 }
@@ -486,15 +492,15 @@ bool OsmAnd::MapRenderer::preProcessRendering()
 
 bool OsmAnd::MapRenderer::doProcessRendering()
 {
-    // If background worked is was not enabled, upload tiles to GPU in render thread
-    // To reduce FPS drop, upload not more than 1 tile per frame, and do that before end of the frame
-    // to avoid forcing driver to upload data on current frame presentation.
-    if(!setupOptions.backgroundWorker.enabled)
+    // If GPU worker thread is not enabled, upload resource to GPU from render thread.
+    // To reduce FPS drop, upload not more than 1 resource per frame.
+    if(!_gpuWorkerThread)
     {
         bool moreThanLimitAvailable = false;
         const auto resourcesUploaded = _resources->uploadResources(1, &moreThanLimitAvailable);
 
         // If any resource was uploaded or there is more resources to uploaded, invalidate frame
+        // to use that resource
         if(resourcesUploaded > 0 || moreThanLimitAvailable)
             invalidateFrame();
     }
@@ -551,12 +557,17 @@ bool OsmAnd::MapRenderer::postReleaseRendering()
 {
     _isRenderingInitialized = false;
 
-    // Stop worker
-    if(_backgroundWorker)
+    // Stop GPU worker if it exists
+    if(_gpuWorkerThread)
     {
-        _backgroundWorkerWakeup.wakeAll();
-        _backgroundWorker->wait();
-        _backgroundWorker.reset();
+        // Since _isRenderingInitialized == false, wake up GPU worker thread to allow it to exit
+        _gpuWorkerThreadWakeup.wakeAll();
+
+        // Wait until thread will exit
+        _gpuWorkerThread->wait();
+
+        // And destroy thread object
+        _gpuWorkerThread.reset();
     }
 
     // Release resources
@@ -580,8 +591,8 @@ void OsmAnd::MapRenderer::onValidateResourcesOfType(const MapRendererResources::
 
 void OsmAnd::MapRenderer::requestResourcesUpload()
 {
-    if(setupOptions.backgroundWorker.enabled)
-        _backgroundWorkerWakeup.wakeAll();
+    if(_gpuWorkerThread)
+        _gpuWorkerThreadWakeup.wakeAll();
     else
         invalidateFrame();
 }

@@ -72,15 +72,17 @@ namespace OsmAnd
         QMutex _symbolsMutex;
         QMap< int, QList< std::weak_ptr<MapSymbol> > > _symbols;
 
+        // GPU worker related:
+        Qt::HANDLE _gpuWorkerThreadId;
+        std::unique_ptr<Concurrent::Thread> _gpuWorkerThread;
+        QWaitCondition _gpuWorkerThreadWakeup;
+        void gpuWorkerThreadProcedure();
+
         // General:
         QSet<TileId> _uniqueTiles;
         std::unique_ptr<RenderAPI> _renderAPI;
         void invalidateFrame();
         Qt::HANDLE _renderThreadId;
-        Qt::HANDLE _workerThreadId;
-        std::unique_ptr<Concurrent::Thread> _backgroundWorker;
-        QWaitCondition _backgroundWorkerWakeup;
-        void backgroundWorkerProcedure();
     protected:
         MapRenderer();
 

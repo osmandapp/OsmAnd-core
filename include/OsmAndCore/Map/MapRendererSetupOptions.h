@@ -38,18 +38,17 @@ namespace OsmAnd {
         MapRendererSetupOptions();
         ~MapRendererSetupOptions();
 
-        typedef std::function<void ()> FrameUpdateRequestCallback;
-
-        typedef std::function<void ()> BackgroundWorkerPrologue;
-        typedef std::function<void ()> BackgroundWorkerEpilogue;
-
+        // Background GPU worker is used for uploading/unloading resources from GPU in background
+        typedef std::function<void ()> GpuWorkerThreadPrologue;
+        typedef std::function<void ()> GpuWorkerThreadEpilogue;
         struct {
             bool enabled;
-            BackgroundWorkerPrologue prologue;
-            BackgroundWorkerEpilogue epilogue;
-        } backgroundWorker;
+            GpuWorkerThreadPrologue prologue;
+            GpuWorkerThreadEpilogue epilogue;
+        } gpuWorkerThread;
 
         // This callback is called when frame needs update
+        typedef std::function<void()> FrameUpdateRequestCallback;
         FrameUpdateRequestCallback frameUpdateRequestCallback;
 
         float displayDensityFactor;

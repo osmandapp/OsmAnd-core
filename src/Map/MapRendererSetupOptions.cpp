@@ -2,9 +2,9 @@
 
 OsmAnd::MapRendererSetupOptions::MapRendererSetupOptions()
 {
-    backgroundWorker.enabled = false;
-    backgroundWorker.prologue = nullptr;
-    backgroundWorker.epilogue = nullptr;
+    gpuWorkerThread.enabled = false;
+    gpuWorkerThread.prologue = nullptr;
+    gpuWorkerThread.epilogue = nullptr;
 
     frameUpdateRequestCallback = nullptr;
 
