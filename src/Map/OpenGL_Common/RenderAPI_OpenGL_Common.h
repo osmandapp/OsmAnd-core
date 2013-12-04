@@ -92,8 +92,8 @@ namespace OsmAnd {
     class RenderAPI_OpenGL_Common : public RenderAPI
     {
     private:
-        bool uploadTileAsTextureToGPU(const std::shared_ptr< const MapTile >& tile, const uint32_t tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU);
-        bool uploadTileAsArrayBufferToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< ResourceInGPU >& resourceInGPU);
+        bool uploadTileAsTextureToGPU(const std::shared_ptr< const MapTile >& tile, const uint32_t tilesPerAtlasTextureLimit, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
+        bool uploadTileAsArrayBufferToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
     protected:
         GLint _maxTextureSize;
         QHash< GLuint, QMultiMap< GLShaderVariableType, GLint > > _programVariables;
@@ -160,7 +160,7 @@ namespace OsmAnd {
         virtual void clearVariablesLookup();
         virtual void findVariableLocation(GLuint program, GLint& location, const QString& name, const GLShaderVariableType& type);
 
-        virtual bool uploadTileToGPU(const std::shared_ptr< const MapTile >& tile, const uint32_t tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU);
+        virtual bool uploadTileToGPU(const std::shared_ptr< const MapTile >& tile, const uint32_t tilesPerAtlasTextureLimit, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
     };
 
 }

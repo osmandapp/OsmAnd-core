@@ -72,7 +72,7 @@ namespace OsmAnd {
         virtual ~TilesCollection()
         {}
 
-        virtual bool obtainEntry(std::shared_ptr<ENTRY>& outEntry, const TileId tileId, const ZoomLevel zoom)
+        virtual bool obtainEntry(std::shared_ptr<ENTRY>& outEntry, const TileId tileId, const ZoomLevel zoom) const
         {
             QReadLocker scopedLocker(&_collectionLock);
 
@@ -107,7 +107,7 @@ namespace OsmAnd {
             itEntry = zoomLevel.insert(tileId, outEntry);
         }
 
-        virtual void obtainEntries(QList< std::shared_ptr<ENTRY> >* outList, std::function<bool (const std::shared_ptr<ENTRY>& entry, bool& cancel)> filter = nullptr)
+        virtual void obtainEntries(QList< std::shared_ptr<ENTRY> >* outList, std::function<bool (const std::shared_ptr<ENTRY>& entry, bool& cancel)> filter = nullptr) const
         {
             QReadLocker scopedLocker(&_collectionLock);
 

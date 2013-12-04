@@ -556,20 +556,22 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
         bool appliedElevationVertexAttribArray = false;
         if(elevationDataEnabled)
         {
-            // Get resources collection
-            const auto& resourcesCollection =
-                providersAndResourcesBindings[static_cast<int>(ResourceType::ElevationData)]
-                    .providersToResources[std::static_pointer_cast<IMapProvider>(currentState.elevationDataProvider)];
+            const auto resourcesCollection = getResources().getCollection(ResourceType::ElevationData, currentState.elevationDataProvider);
 
-            // We're obtaining tile entry by normalized tile coordinates, since tile may repeat several times
-            std::shared_ptr<TiledResourceEntry> entry_;
+            // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
+            std::shared_ptr<Resources::BaseTiledResource> entry_;
             resourcesCollection->obtainEntry(entry_, tileIdN, currentState.zoomBase);
-            const auto entry = std::static_pointer_cast<MapTileResourceEntry>(entry_);
+            const auto entry = std::static_pointer_cast<Resources::MapTileResource>(entry_);
 
             // Check state and obtain GPU resource
-            std::shared_ptr< RenderAPI::ResourceInGPU > gpuResource;
-            if(entry->getState() == ResourceState::Uploaded)
+            std::shared_ptr< const RenderAPI::ResourceInGPU > gpuResource;
+            if(entry->setStateIf(ResourceState::Uploaded, ResourceState::IsBeingUsed))
+            {
+                // Capture GPU resource
                 gpuResource = entry->resourceInGPU;
+
+                entry->setState(ResourceState::Uploaded);
+            }
 
             if(!gpuResource)
             {
@@ -582,9 +584,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
                 glUniform1f(stageVariation.vs.param.elevationData_k, currentState.elevationDataScaleFactor);
                 GL_CHECK_RESULT;
 
-                auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomBase, tileIdN.y, TileSize3D);
+                const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomBase, tileIdN.y, TileSize3D);
                 glUniform1f(stageVariation.vs.param.elevationData_upperMetersPerUnit, upperMetersPerUnit);
-                auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomBase, tileIdN.y + 1, TileSize3D);
+                const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomBase, tileIdN.y + 1, TileSize3D);
                 glUniform1f(stageVariation.vs.param.elevationData_lowerMetersPerUnit, lowerMetersPerUnit);
 
                 const auto& perTile_vs = stageVariation.vs.param.elevationTileLayer;
@@ -599,7 +601,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
 
                     if(gpuResource->type == RenderAPI::ResourceInGPU::TileOnAtlasTexture)
                     {
-                        const auto& tileOnAtlasTexture = std::static_pointer_cast<RenderAPI::TileOnAtlasTextureInGPU>(gpuResource);
+                        const auto& tileOnAtlasTexture = std::static_pointer_cast<const RenderAPI::TileOnAtlasTextureInGPU>(gpuResource);
 
                         glUniform1i(perTile_vs.slotIndex, tileOnAtlasTexture->slotIndex);
                         GL_CHECK_RESULT;
@@ -612,7 +614,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
                     }
                     else
                     {
-                        const auto& texture = std::static_pointer_cast<RenderAPI::TextureInGPU>(gpuResource);
+                        const auto& texture = std::static_pointer_cast<const RenderAPI::TextureInGPU>(gpuResource);
 
                         glUniform1i(perTile_vs.slotIndex, 0);
                         GL_CHECK_RESULT;
@@ -628,7 +630,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
                 {
                     assert(gpuResource->type == RenderAPI::ResourceInGPU::ArrayBuffer);
 
-                    const auto& arrayBuffer = std::static_pointer_cast<RenderAPI::ArrayBufferInGPU>(gpuResource);
+                    const auto& arrayBuffer = std::static_pointer_cast<const RenderAPI::ArrayBufferInGPU>(gpuResource);
                     assert(arrayBuffer->itemsCount == currentConfiguration.heixelsPerTileSide*currentConfiguration.heixelsPerTileSide);
 
                     if(!elevationVertexAttribArrayEnabled)
@@ -657,28 +659,30 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
             layerLinearIdx++;
 
             // Get resources collection
-            const auto& resourcesCollection =
-                providersAndResourcesBindings[static_cast<int>(ResourceType::RasterMap)]
-                    .providersToResources[std::static_pointer_cast<IMapProvider>(currentState.rasterLayerProviders[layerId])];
+            const auto resourcesCollection = getResources().getCollection(ResourceType::RasterMap, currentState.rasterLayerProviders[layerId]);
 
             const auto& perTile_vs = stageVariation.vs.param.rasterTileLayers[layerLinearIdx];
             const auto& perTile_fs = stageVariation.fs.param.rasterTileLayers[layerLinearIdx];
             const auto samplerIndex = (renderAPI->isSupported_vertexShaderTextureLookup ? 1 : 0) + layerLinearIdx;
 
-            // We're obtaining tile entry by normalized tile coordinates, since tile may repeat several times
-            std::shared_ptr<TiledResourceEntry> entry_;
+            // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
+            std::shared_ptr<Resources::BaseTiledResource> entry_;
             resourcesCollection->obtainEntry(entry_, tileIdN, currentState.zoomBase);
-            const auto entry = std::static_pointer_cast<MapTileResourceEntry>(entry_);
+            const auto entry = std::static_pointer_cast<Resources::MapTileResource>(entry_);
 
             // Check state and obtain GPU resource
-            std::shared_ptr< RenderAPI::ResourceInGPU > gpuResource;
-            const auto entryState = entry->getState();
-            if(entryState == ResourceState::Uploaded)
+            std::shared_ptr< const RenderAPI::ResourceInGPU > gpuResource;
+            if(entry->setStateIf(ResourceState::Uploaded, ResourceState::IsBeingUsed))
+            {
+                // Capture GPU resource
                 gpuResource = entry->resourceInGPU;
-            else if(entryState == ResourceState::Unavailable)
-                gpuResource = _unavailableTileStub;
+
+                entry->setState(ResourceState::Uploaded);
+            }
+            else if(entry->getState() == ResourceState::Unavailable)
+                gpuResource = getResources().unavailableTileStub;
             else
-                gpuResource = _processingTileStub;
+                gpuResource = getResources().processingTileStub;
 
             glUniform1f(perTile_fs.k, currentState.rasterLayerOpacity[layerId]);
             GL_CHECK_RESULT;
@@ -691,7 +695,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
 
             if(gpuResource->type == RenderAPI::ResourceInGPU::TileOnAtlasTexture)
             {
-                const auto& tileOnAtlasTexture = std::static_pointer_cast<RenderAPI::TileOnAtlasTextureInGPU>(gpuResource);
+                const auto& tileOnAtlasTexture = std::static_pointer_cast<const RenderAPI::TileOnAtlasTextureInGPU>(gpuResource);
 
                 glUniform1i(perTile_vs.slotIndex, tileOnAtlasTexture->slotIndex);
                 GL_CHECK_RESULT;
@@ -1145,11 +1149,11 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doReleaseRendering()
     return true;
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGL_Common::validateResourcesOfType(const ResourceType type)
+void OsmAnd::AtlasMapRenderer_OpenGL_Common::onValidateResourcesOfType(const MapRendererResources::ResourceType type)
 {
-    AtlasMapRenderer::validateResourcesOfType(type);
+    AtlasMapRenderer::onValidateResourcesOfType(type);
 
-    if(type == ResourceType::ElevationData)
+    if(type == MapRendererResources::ResourceType::ElevationData)
     {
         // Recreate tile patch since elevation data influences density of tile patch
         releaseTilePatch();

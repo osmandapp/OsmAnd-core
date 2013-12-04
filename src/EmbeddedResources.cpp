@@ -1,6 +1,8 @@
 #include "EmbeddedResources.h"
 #include "EmbeddedResources_private.h"
 
+#include "Logging.h"
+
 OsmAnd::EmbeddedResources::EmbeddedResources()
 {
 }
@@ -23,6 +25,8 @@ QByteArray OsmAnd::EmbeddedResources::getRawResource( const QString& id )
 
         return QByteArray(reinterpret_cast<const char*>(__bundled_resources[idx].data), __bundled_resources[idx].size);
     }
+
+    LogPrintf(LogSeverityLevel::Error, "Embedded resource '%s' was not found", qPrintable(id));
     return QByteArray();
 }
 

@@ -29,6 +29,7 @@
 #include <OsmAndCore.h>
 #include <CommonTypes.h>
 #include <MapRenderer.h>
+#include <MapRendererResources.h>
 
 namespace OsmAnd {
 
@@ -44,7 +45,7 @@ namespace OsmAnd {
     protected:
         AtlasMapRenderer();
 
-        virtual uint32_t getTilesPerAtlasTextureLimit(const ResourceType resourceType, const std::shared_ptr<const MapTile>& tile);
+        virtual uint32_t getTilesPerAtlasTextureLimit(const MapRendererResources::ResourceType resourceType, const std::shared_ptr<const MapTile>& tile);
     public:
         virtual ~AtlasMapRenderer();
     };

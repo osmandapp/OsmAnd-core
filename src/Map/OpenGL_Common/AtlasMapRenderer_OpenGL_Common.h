@@ -247,7 +247,7 @@ namespace OsmAnd {
         GLsizei _tilePatchIndicesCount;
         virtual void createTilePatch();
         
-        virtual void validateResourcesOfType(const ResourceType type);
+        virtual void onValidateResourcesOfType(const MapRendererResources::ResourceType type);
 
         virtual bool updateInternalState(MapRenderer::InternalState* internalState, const MapRendererState& state);
 

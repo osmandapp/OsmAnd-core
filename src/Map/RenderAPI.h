@@ -229,7 +229,7 @@ namespace OsmAnd {
         //   0 - unlimited
         //   1 - don't use atlas textures
         //   N - allow up to N*N tiles per atlas texture
-        virtual bool uploadTileToGPU(const std::shared_ptr< const MapTile >& tile, const uint32_t tilesPerAtlasTextureLimit, std::shared_ptr< ResourceInGPU >& resourceInGPU) = 0;
+        virtual bool uploadTileToGPU(const std::shared_ptr< const MapTile >& tile, const uint32_t tilesPerAtlasTextureLimit, std::shared_ptr< const ResourceInGPU >& resourceInGPU) = 0;
 
     friend OsmAnd::RenderAPI::ResourceInGPU;
     };
