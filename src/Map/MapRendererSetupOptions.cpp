@@ -6,7 +6,7 @@ OsmAnd::MapRendererSetupOptions::MapRendererSetupOptions()
     backgroundWorker.prologue = nullptr;
     backgroundWorker.epilogue = nullptr;
 
-    frameRequestCallback = nullptr;
+    frameUpdateRequestCallback = nullptr;
 
     displayDensityFactor = 1.0f;
 }

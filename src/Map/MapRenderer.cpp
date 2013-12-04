@@ -230,8 +230,8 @@ void OsmAnd::MapRenderer::invalidateFrame()
     _frameInvalidated = true;
 
     // Request frame, if such callback is defined
-    if(setupOptions.frameRequestCallback)
-        setupOptions.frameRequestCallback();
+    if(setupOptions.frameUpdateRequestCallback)
+        setupOptions.frameUpdateRequestCallback();
 }
 
 void OsmAnd::MapRenderer::backgroundWorkerProcedure()

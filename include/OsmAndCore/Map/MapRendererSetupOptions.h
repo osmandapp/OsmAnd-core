@@ -38,7 +38,7 @@ namespace OsmAnd {
         MapRendererSetupOptions();
         ~MapRendererSetupOptions();
 
-        typedef std::function<void ()> FrameRequestCallback;
+        typedef std::function<void ()> FrameUpdateRequestCallback;
 
         typedef std::function<void ()> BackgroundWorkerPrologue;
         typedef std::function<void ()> BackgroundWorkerEpilogue;
@@ -49,7 +49,8 @@ namespace OsmAnd {
             BackgroundWorkerEpilogue epilogue;
         } backgroundWorker;
 
-        FrameRequestCallback frameRequestCallback;
+        // This callback is called when frame needs update
+        FrameUpdateRequestCallback frameUpdateRequestCallback;
 
         float displayDensityFactor;
     };
