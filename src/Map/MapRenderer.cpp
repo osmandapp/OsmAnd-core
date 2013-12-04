@@ -238,7 +238,7 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
 {
     assert(setupOptions.gpuWorkerThread.enabled);
 
-    QMutex wakeupMutex;
+    // Capture thread ID
     _gpuWorkerThreadId = QThread::currentThreadId();
 
     // Call prologue if such exists
@@ -249,9 +249,9 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
     {
         // Wait until we're unblocked by host
         {
-            wakeupMutex.lock();
-            _gpuWorkerThreadWakeup.wait(&wakeupMutex);
-            wakeupMutex.unlock();
+            _gpuWorkerThreadWakeupMutex.lock();
+            _gpuWorkerThreadWakeup.wait(&_gpuWorkerThreadWakeupMutex);
+            _gpuWorkerThreadWakeupMutex.unlock();
         }
         if(!_isRenderingInitialized)
             break;
@@ -561,8 +561,11 @@ bool OsmAnd::MapRenderer::postReleaseRendering()
     if(_gpuWorkerThread)
     {
         // Since _isRenderingInitialized == false, wake up GPU worker thread to allow it to exit
-        _gpuWorkerThreadWakeup.wakeAll();
-
+        {
+            QMutexLocker scopedLocker(&_gpuWorkerThreadWakeupMutex);
+            _gpuWorkerThreadWakeup.wakeAll();
+        }
+        
         // Wait until thread will exit
         _gpuWorkerThread->wait();
 
@@ -592,7 +595,10 @@ void OsmAnd::MapRenderer::onValidateResourcesOfType(const MapRendererResources::
 void OsmAnd::MapRenderer::requestResourcesUpload()
 {
     if(_gpuWorkerThread)
+    {
+        QMutexLocker scopedLocker(&_gpuWorkerThreadWakeupMutex);
         _gpuWorkerThreadWakeup.wakeAll();
+    }
     else
         invalidateFrame();
 }
