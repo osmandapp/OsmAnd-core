@@ -33,7 +33,7 @@
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
 #include "IMapSymbolProvider.h"
-#include "IRetainedMapTile.h"
+#include "IRetainableResource.h"
 
 namespace OsmAnd
 {
@@ -55,7 +55,7 @@ namespace OsmAnd
 
         class Tile
             : public MapSymbolsTile
-            , public IRetainedMapTile
+            , public IRetainableResource
         {
         private:
         protected:

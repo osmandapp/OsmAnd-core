@@ -5,7 +5,7 @@
 #include "IMapBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
 #include "IMapSymbolProvider.h"
-#include "IRetainedMapTile.h"
+#include "IRetainableResource.h"
 #include "MapObject.h"
 #include "EmbeddedResources.h"
 #include "Utilities.h"
@@ -917,10 +917,10 @@ bool OsmAnd::MapRendererResources::MapTileResource::uploadToGPU()
         return false;
 
     // Release source data:
-    if(const auto retainedSource = std::dynamic_pointer_cast<const IRetainedMapTile>(_sourceData))
+    if(const auto retainedSource = std::dynamic_pointer_cast<const IRetainableResource>(_sourceData))
     {
         // If map tile implements 'Retained' interface, it must be kept, but 
-        std::const_pointer_cast<IRetainedMapTile>(retainedSource)->releaseNonRetainedData();
+        std::const_pointer_cast<IRetainableResource>(retainedSource)->releaseNonRetainedData();
     }
     else
     {
@@ -1037,67 +1037,85 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAva
     dataAvailable = static_cast<bool>(tile);
 
     // Process data
-    if(dataAvailable)
+    if(!dataAvailable)
+        return true;
+
+    // tile->symbolsGroups contains only groups that derived from unique symbols
+    // (that are currently unique, or can not be shared by their type)
+    for(auto itGroup = tile->symbolsGroups.cbegin(); itGroup != tile->symbolsGroups.cend(); ++itGroup)
     {
-        // tile->symbolsGroups contains only groups that derived from unique symbols
-        // (that are currently unique, or can not be shared by their type)
-        for(auto itGroup = tile->symbolsGroups.cbegin(); itGroup != tile->symbolsGroups.cend(); ++itGroup)
+        const auto& group = *itGroup;
+
+        // All groups that can not be cached should be added to unique
+        if(!provider->canSymbolsBeSharedFrom(group->mapObject))
         {
-            const auto& group = *itGroup;
+            _uniqueSymbolsGroups.push_back(group);
+            continue;
+        }
 
-            // All groups that can not be cached should be added to unique
-            if(!provider->canSymbolsBeSharedFrom(group->mapObject))
+        // Check if this group was already cached, and if not - cache it
+        {
+            QWriteLocker scopedLocker(&cacheLevel._lock);
+
+            const auto itSharedGroup = cacheLevel._cache.find(group->mapObject->id);
+            if(itSharedGroup != cacheLevel._cache.end())
             {
-                _uniqueSymbolsGroups.push_back(group);
-                continue;
-            }
-
-            // Check if this group was already cached, and if not - cache it
-            {
-                QWriteLocker scopedLocker(&cacheLevel._lock);
-
-                const auto itSharedGroup = cacheLevel._cache.find(group->mapObject->id);
-                if(itSharedGroup != cacheLevel._cache.end())
+                if(const auto sharedMapObject = itSharedGroup->lock())
                 {
-                    if(const auto sharedMapObject = itSharedGroup->lock())
-                    {
-                        // If entry already exits, use that object instead of this one
-                        _sharedSymbolsGroups.push_back(sharedMapObject);
-                    }
-                    else
-                    {
-                        // Or replace with current one
-                        *itSharedGroup = group;
-                        _sharedSymbolsGroups.push_back(group);
-                    }
+                    // If entry already exits, use that object instead of this one
+                    _sharedSymbolsGroups.push_back(sharedMapObject);
                 }
                 else
                 {
-                    cacheLevel._cache.insert(group->mapObject->id, group);
+                    // Or replace with current one
+                    *itSharedGroup = group;
                     _sharedSymbolsGroups.push_back(group);
                 }
+            }
+            else
+            {
+                cacheLevel._cache.insert(group->mapObject->id, group);
+                _sharedSymbolsGroups.push_back(group);
             }
         }
     }
 
     // Release source data:
-    if(const auto retainedSource = std::dynamic_pointer_cast<const IRetainedMapTile>(_sourceData))
+    if(const auto retainedSource = std::dynamic_pointer_cast<const IRetainableResource>(_sourceData))
     {
         // If map tile implements 'Retained' interface, it must be kept, but 
-        std::const_pointer_cast<IRetainedMapTile>(retainedSource)->releaseNonRetainedData();
+        std::const_pointer_cast<IRetainableResource>(retainedSource)->releaseNonRetainedData();
     }
     else
     {
         // or simply release entire tile
         _sourceData.reset();
     }
-    
+
     return true;
 }
 
 bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
 {
-    //TODO: upload
+    // Upload all unique symbols to GPU
+    for(auto itGroup = _uniqueSymbolsGroups.cbegin(); itGroup != _uniqueSymbolsGroups.cend(); ++itGroup)
+    {
+        const auto& group = *itGroup;
+
+        for(auto itSymbol = group->symbols.cbegin(); itSymbol != group->symbols.cend(); ++itSymbol)
+        {
+            const auto& symbol = *itSymbol;
+
+            //TODO: actually upload to GPU
+
+            //TODO: unload source data if possible
+
+            //TODO: append to global g_symbols
+        }
+    }
+
+    //TODO: upload from unique to GPU without any checks, and use IRetainedResource or similar
+    //TODO: _sharedSymbolsGroups - reuse shared references to GPU resources.
     
     return true;
 }

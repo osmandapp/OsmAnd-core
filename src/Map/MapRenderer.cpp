@@ -10,7 +10,7 @@
 #include "IMapBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
 #include "IMapSymbolProvider.h"
-#include "IRetainedMapTile.h"
+#include "IRetainableResource.h"
 #include "RenderAPI.h"
 #include "Utilities.h"
 #include "Logging.h"

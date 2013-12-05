@@ -33,7 +33,7 @@
 #include <Concurrent.h>
 #include <TilesCollection.h>
 #include <IMapBitmapTileProvider.h>
-#include <IRetainedMapTile.h>
+#include <IRetainableResource.h>
 
 class SkBitmap;
 
@@ -72,7 +72,7 @@ namespace OsmAnd {
             {}
         };
 
-        class Tile : public MapBitmapTile, public IRetainedMapTile
+        class Tile : public MapBitmapTile, public IRetainableResource
         {
             Q_DISABLE_COPY(Tile);
         private:
