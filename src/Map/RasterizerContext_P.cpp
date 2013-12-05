@@ -17,7 +17,6 @@ OsmAnd::RasterizerContext_P::RasterizerContext_P( RasterizerContext* owner_ )
 
 OsmAnd::RasterizerContext_P::~RasterizerContext_P()
 {
-    clear();
 }
 
 void OsmAnd::RasterizerContext_P::clear()

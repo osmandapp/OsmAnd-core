@@ -12,4 +12,5 @@ OsmAnd::RasterizerContext::RasterizerContext(const std::shared_ptr<RasterizerEnv
 
 OsmAnd::RasterizerContext::~RasterizerContext()
 {
+    _d->clear();
 }

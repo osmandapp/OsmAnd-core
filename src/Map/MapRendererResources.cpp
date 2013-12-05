@@ -770,7 +770,8 @@ void OsmAnd::MapRendererResources::releaseResourcesFrom(const std::shared_ptr<Ti
             return true;
         }
 
-        //NOTE: this may happen when resources are uploaded in separate thread. Actually this will happen
+        //NOTE: this may happen when (and indeed, most of these situations are impossible to handle here. Probably an entity should be added that will store floating resource collections!):
+        // - 'requesting' state: task is only being initialized, not much can be done in this case
         const auto state = entry->getState();
         assert(false);
         return false;
@@ -881,9 +882,12 @@ OsmAnd::MapRendererResources::MapTileResource::~MapTileResource()
 
 bool OsmAnd::MapRendererResources::MapTileResource::obtainData(bool& dataAvailable)
 {
+    bool ok = false;
+
     // Get source of tile
     std::shared_ptr<IMapProvider> provider_;
-    bool ok = owner->obtainProviderFor(static_cast<TiledResourcesCollection*>(&link.lock()->collection), provider_);
+    if(const auto link_ = link.lock())
+        ok = owner->obtainProviderFor(static_cast<TiledResourcesCollection*>(&link_->collection), provider_);
     if(!ok)
         return false;
     const auto provider = std::static_pointer_cast<IMapTileProvider>(provider_);
