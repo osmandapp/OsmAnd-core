@@ -1097,21 +1097,27 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAva
 
 bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
 {
+    // for each symbol in _uniqueSymbolsGroups:
+    //   [symbol uploadToGPU];
+    //   []
+
+
     // Upload all unique symbols to GPU
     for(auto itGroup = _uniqueSymbolsGroups.cbegin(); itGroup != _uniqueSymbolsGroups.cend(); ++itGroup)
     {
-        const auto& group = *itGroup;
+        auto& group = *itGroup;
 
-        for(auto itSymbol = group->symbols.cbegin(); itSymbol != group->symbols.cend(); ++itSymbol)
-        {
-            const auto& symbol = *itSymbol;
+        //QMutableListIterator<std::shared_ptr<const MapSymbol> > itSymbol(group->symbols);
+        //for(auto itSymbol = group->symbols.cbegin(); itSymbol != group->symbols.cend(); ++itSymbol)
+        //{
+        //    const auto& symbol = *itSymbol;
 
-            //TODO: actually upload to GPU
+        //    //TODO: actually upload to GPU
 
-            //TODO: unload source data if possible
+        //    //TODO: unload source data if possible
 
-            //TODO: append to global g_symbols
-        }
+        //    //TODO: append to global g_symbols
+        //}
     }
 
     //TODO: upload from unique to GPU without any checks, and use IRetainedResource or similar

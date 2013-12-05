@@ -33,11 +33,9 @@ namespace OsmAnd
 {
     class IRetainableResource
     {
-    private:
-    protected:
     public:
-        IRetainableResource();
-        virtual ~IRetainableResource();
+        virtual ~IRetainableResource()
+        {}
 
         virtual void releaseNonRetainedData() = 0;
     };

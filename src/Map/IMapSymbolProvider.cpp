@@ -25,16 +25,22 @@ OsmAnd::MapSymbolsGroup::~MapSymbolsGroup()
 }
 
 OsmAnd::MapSymbol::MapSymbol(const std::shared_ptr<const MapSymbolsGroup>& group_, const std::shared_ptr<const Model::MapObject>& mapObject_, const int order_, const PointI& location_, const std::shared_ptr<const SkBitmap>& bitmap_)
-    : group(group_)
+    : _bitmap(bitmap_)
+    , group(group_)
     , mapObject(mapObject_)
     , order(order_)
     , location(location_)
-    , bitmap(bitmap_)
+    , bitmap(_bitmap)
 {
 }
 
 OsmAnd::MapSymbol::~MapSymbol()
 {
+}
+
+void OsmAnd::MapSymbol::releaseNonRetainedData()
+{
+    _bitmap.reset();
 }
 
 OsmAnd::MapSymbolsTile::MapSymbolsTile(const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups_)

@@ -31,6 +31,7 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/IMapProvider.h>
+#include <OsmAndCore/Map/IRetainableResource.h>
 
 class SkBitmap;
 
@@ -55,10 +56,12 @@ namespace OsmAnd
     };
 
     class OSMAND_CORE_API MapSymbol
+        : public IRetainableResource
     {
         Q_DISABLE_COPY(MapSymbol);
     private:
     protected:
+        std::shared_ptr<const SkBitmap> _bitmap;
     public:
         MapSymbol(const std::shared_ptr<const MapSymbolsGroup>& group, const std::shared_ptr<const Model::MapObject>& mapObject, const int order, const PointI& location, const std::shared_ptr<const SkBitmap>& bitmap);
         virtual ~MapSymbol();
@@ -68,7 +71,9 @@ namespace OsmAnd
         const std::shared_ptr<const Model::MapObject> mapObject;
         const int order;
         const PointI location;
-        const std::shared_ptr<const SkBitmap> bitmap;
+        const std::shared_ptr<const SkBitmap>& bitmap;
+
+        virtual void releaseNonRetainedData();
     };
 
     class OSMAND_CORE_API MapSymbolsTile
