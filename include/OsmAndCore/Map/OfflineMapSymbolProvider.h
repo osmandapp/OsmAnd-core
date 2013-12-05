@@ -52,6 +52,8 @@ namespace OsmAnd
             const TileId tileId, const ZoomLevel zoom,
             std::shared_ptr<const MapSymbolsTile>& outTile,
             std::function<bool (const std::shared_ptr<const Model::MapObject>& mapObject)> filter = nullptr);
+
+        virtual bool canSymbolsBeSharedFrom(const std::shared_ptr<const Model::MapObject>& mapObject);
     };
 
 }

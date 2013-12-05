@@ -43,7 +43,7 @@
 namespace OsmAnd
 {
     class MapRenderer;
-    class MapSymbol;
+    class MapSymbolsTile;
     class MapSymbolsGroup;
 
     class MapRendererResources
@@ -199,12 +199,34 @@ namespace OsmAnd
         friend class OsmAnd::MapRendererResources;
         };
 
+        // Symbols-related:
+        class SymbolsTileResource;
+        class SymbolsResourcesCollection : public TiledResourcesCollection
+        {
+        private:
+        protected:
+            struct CacheLevel
+            {
+                mutable QReadWriteLock _lock;
+                QHash< uint64_t, std::weak_ptr< const MapSymbolsGroup > > _cache;
+            };
+            std::array<CacheLevel, ZoomLevelsCount> _cacheLevels;
+        public:
+            SymbolsResourcesCollection();
+            virtual ~SymbolsResourcesCollection();
+
+        friend class OsmAnd::MapRendererResources::SymbolsTileResource;
+        };
         class SymbolsTileResource : public BaseTiledResource
         {
         private:
         protected:
-            QList< std::shared_ptr<const MapSymbol> > _sourceData;
-            QList< std::shared_ptr<const RenderAPI::ResourceInGPU> > _resourcesInGPU;
+            std::shared_ptr<const MapSymbolsTile> _sourceData;
+            QList< std::shared_ptr<const MapSymbolsGroup> > _uniqueSymbolsGroups;
+            QList< std::shared_ptr<const MapSymbolsGroup> > _sharedSymbolsGroups;
+            //QList< std::shared_ptr<const RenderAPI::ResourceInGPU> > _resourcesInGPU;
+
+            virtual void detach();
 
             virtual bool obtainData(bool& dataAvailable);
             virtual bool uploadToGPU();
@@ -213,8 +235,8 @@ namespace OsmAnd
             SymbolsTileResource(MapRendererResources* owner, const TilesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom);
             virtual ~SymbolsTileResource();
 
-            const QList< std::shared_ptr<const MapSymbol> >& sourceData;
-            const QList< std::shared_ptr<const RenderAPI::ResourceInGPU> >& resourcesInGPU;
+            const std::shared_ptr<const MapSymbolsTile>& sourceData;
+            //const QList< std::shared_ptr<const RenderAPI::ResourceInGPU> >& resourcesInGPU;
 
             friend class OsmAnd::MapRenderer;
         };

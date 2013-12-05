@@ -18,3 +18,8 @@ bool OsmAnd::OfflineMapSymbolProvider::obtainSymbols(
 {
     return _d->obtainSymbols(tileId, zoom, outTile, filter);
 }
+
+bool OsmAnd::OfflineMapSymbolProvider::canSymbolsBeSharedFrom(const std::shared_ptr<const Model::MapObject>& mapObject)
+{
+    return _d->canSymbolsBeSharedFrom(mapObject);
+}

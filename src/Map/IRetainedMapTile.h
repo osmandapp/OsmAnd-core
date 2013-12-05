@@ -19,8 +19,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _OSMAND_CORE_I_PURGEABLE_MAP_TILE_H_
-#define _OSMAND_CORE_I_PURGEABLE_MAP_TILE_H_
+#ifndef _OSMAND_CORE_I_RETAINED_MAP_TILE_H_
+#define _OSMAND_CORE_I_RETAINED_MAP_TILE_H_
 
 #include <OsmAndCore/stdlib_common.h>
 
@@ -29,8 +29,8 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class IRetainedMapTile
     {
     private:
@@ -43,4 +43,4 @@ namespace OsmAnd {
     };
 }
 
-#endif // _OSMAND_CORE_I_PURGEABLE_MAP_TILE_H_
+#endif // _OSMAND_CORE_I_RETAINED_MAP_TILE_H_

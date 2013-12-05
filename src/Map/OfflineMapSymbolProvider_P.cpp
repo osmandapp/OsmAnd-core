@@ -24,9 +24,6 @@ bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols(
     std::shared_ptr<const MapSymbolsTile>& outTile,
     std::function<bool (const std::shared_ptr<const Model::MapObject>& mapObject)> filter)
 {
-    // Get bounding box that covers this tile
-    const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
-
     // Obtain offline map data tile
     std::shared_ptr< const OfflineMapDataTile > dataTile;
     owner->dataProvider->obtainTile(tileId, zoom, dataTile);
@@ -78,6 +75,11 @@ bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols(
     return true;
 }
 
+bool OsmAnd::OfflineMapSymbolProvider_P::canSymbolsBeSharedFrom(const std::shared_ptr<const Model::MapObject>& mapObject)
+{
+    return !(mapObject->section == owner->dataProvider->rasterizerEnvironment->dummyMapSection);
+}
+
 OsmAnd::OfflineMapSymbolProvider_P::Tile::Tile(const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups_, const std::shared_ptr<const OfflineMapDataTile>& dataTile_)
     : MapSymbolsTile(symbolsGroups_)
     , dataTile(dataTile_)
@@ -86,4 +88,9 @@ OsmAnd::OfflineMapSymbolProvider_P::Tile::Tile(const QList< std::shared_ptr<cons
 
 OsmAnd::OfflineMapSymbolProvider_P::Tile::~Tile()
 {
+}
+
+void OsmAnd::OfflineMapSymbolProvider_P::Tile::releaseNonRetainedData()
+{
+    _symbolsGroups.clear();
 }

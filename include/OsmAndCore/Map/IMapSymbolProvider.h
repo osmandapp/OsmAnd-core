@@ -76,10 +76,12 @@ namespace OsmAnd
     private:
     protected:
         MapSymbolsTile(const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups);
+
+        QList< std::shared_ptr<const MapSymbolsGroup> > _symbolsGroups;
     public:
         virtual ~MapSymbolsTile();
 
-        const QList< std::shared_ptr<const MapSymbolsGroup> > symbolsGroups;
+        const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups;
     };
 
     class OSMAND_CORE_API IMapSymbolProvider : public IMapProvider
@@ -94,6 +96,8 @@ namespace OsmAnd
             const TileId tileId, const ZoomLevel zoom,
             std::shared_ptr<const MapSymbolsTile>& outTile,
             std::function<bool (const std::shared_ptr<const Model::MapObject>& mapObject)> filter) = 0;
+
+        virtual bool canSymbolsBeSharedFrom(const std::shared_ptr<const Model::MapObject>& mapObject);
     };
 
 }

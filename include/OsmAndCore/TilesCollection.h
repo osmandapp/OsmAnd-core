@@ -198,6 +198,13 @@ namespace OsmAnd {
 
     private:
         std::weak_ptr<Link> _link;
+
+        void unlink()
+        {
+            detach();
+
+            _link.reset();
+        }
     protected:
         TilesCollectionEntry(const TilesCollection<ENTRY>& collection, const TileId tileId_, const ZoomLevel zoom_)
             : _link(collection._link)
@@ -206,13 +213,14 @@ namespace OsmAnd {
             , zoom(zoom_)
         {}
 
-        void unlink()
-        {
-            _link.reset();
-        }
+        virtual void detach()
+        {}
     public:
         virtual ~TilesCollectionEntry()
-        {}
+        {
+            if(!_link.expired())
+                unlink();
+        }
 
         const std::weak_ptr<Link>& link;
 

@@ -85,12 +85,12 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
     const auto dataRead_Begin = std::chrono::high_resolution_clock::now();
     ObfMapSectionReader_Metrics::Metric_loadMapObjects dataRead_Metric;
 #endif
-    auto& cacheLevel = _mapObjectsCache[zoom];
+    const auto& cacheLevel = _mapObjectsCache[zoom];
     dataInterface->obtainMapObjects(&mapObjects, &tileFoundation, tileBBox31, zoom, nullptr,
 #if defined(_DEBUG) || defined(DEBUG)
-        [&cacheLevel, &sharedMapObjects, tileBBox31, &dataFilter](const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id, const AreaI& bbox) -> bool
+        [&cacheLevel, &sharedMapObjects, &dataFilter](const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id, const AreaI& bbox) -> bool
 #else
-        [&cacheLevel, &sharedMapObjects, tileBBox31](const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id, const AreaI& bbox) -> bool
+        [&cacheLevel, &sharedMapObjects](const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id, const AreaI& bbox) -> bool
 #endif
         {
 #if defined(_DEBUG) || defined(DEBUG)

@@ -31,8 +31,9 @@
 #include <QList>
 
 #include "OsmAndCore.h"
-#include <CommonTypes.h>
-#include <IMapSymbolProvider.h>
+#include "CommonTypes.h"
+#include "IMapSymbolProvider.h"
+#include "IRetainedMapTile.h"
 
 namespace OsmAnd
 {
@@ -52,7 +53,9 @@ namespace OsmAnd
 
         OfflineMapSymbolProvider* const owner;
 
-        class Tile : public MapSymbolsTile
+        class Tile
+            : public MapSymbolsTile
+            , public IRetainedMapTile
         {
         private:
         protected:
@@ -61,6 +64,8 @@ namespace OsmAnd
             virtual ~Tile();
 
             const std::shared_ptr<const OfflineMapDataTile> dataTile;
+
+            virtual void releaseNonRetainedData();
         };
     public:
         virtual ~OfflineMapSymbolProvider_P();
@@ -69,6 +74,8 @@ namespace OsmAnd
             const TileId tileId, const ZoomLevel zoom,
             std::shared_ptr<const MapSymbolsTile>& outTile,
             std::function<bool (const std::shared_ptr<const Model::MapObject>& mapObject)> filter);
+
+        bool canSymbolsBeSharedFrom(const std::shared_ptr<const Model::MapObject>& mapObject);
 
     friend class OsmAnd::OfflineMapSymbolProvider;
     };

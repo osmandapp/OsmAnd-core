@@ -10,6 +10,11 @@ OsmAnd::IMapSymbolProvider::~IMapSymbolProvider()
 {
 }
 
+bool OsmAnd::IMapSymbolProvider::canSymbolsBeSharedFrom(const std::shared_ptr<const Model::MapObject>& mapObject)
+{
+    return false;
+}
+
 OsmAnd::MapSymbolsGroup::MapSymbolsGroup(const std::shared_ptr<const Model::MapObject>& mapObject_)
     : mapObject(mapObject_)
 {
@@ -33,7 +38,8 @@ OsmAnd::MapSymbol::~MapSymbol()
 }
 
 OsmAnd::MapSymbolsTile::MapSymbolsTile(const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups_)
-    : symbolsGroups(symbolsGroups_)
+    : _symbolsGroups(symbolsGroups_)
+    , symbolsGroups(_symbolsGroups)
 {
 }
 

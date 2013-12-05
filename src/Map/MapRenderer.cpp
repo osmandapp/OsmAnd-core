@@ -792,7 +792,7 @@ void OsmAnd::MapRenderer::removeAllSymbolProviders( bool forcedUpdate /*= false*
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    bool update = forcedUpdate || _requestedState.symbolProviders.isEmpty();
+    bool update = forcedUpdate || !_requestedState.symbolProviders.isEmpty();
     if(!update)
         return;
 

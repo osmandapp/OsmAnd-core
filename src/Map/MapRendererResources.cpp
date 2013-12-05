@@ -6,7 +6,9 @@
 #include "IMapElevationDataProvider.h"
 #include "IMapSymbolProvider.h"
 #include "IRetainedMapTile.h"
+#include "MapObject.h"
 #include "EmbeddedResources.h"
+#include "Utilities.h"
 #include "Logging.h"
 
 #include <SkBitmap.h>
@@ -257,7 +259,7 @@ void OsmAnd::MapRendererResources::updateBindings(const MapRendererState& state,
                 continue;
 
             // Create new resources collection
-            const std::shared_ptr< TiledResourcesCollection > newResourcesCollection(new TiledResourcesCollection(ResourceType::Symbols));
+            const std::shared_ptr< TiledResourcesCollection > newResourcesCollection(new SymbolsResourcesCollection());
 
             // Add binding
             bindings.providersToCollections.insert(*itProvider, newResourcesCollection);
@@ -772,6 +774,7 @@ void OsmAnd::MapRendererResources::releaseResourcesFrom(const std::shared_ptr<Ti
 
         //NOTE: this may happen when (and indeed, most of these situations are impossible to handle here. Probably an entity should be added that will store floating resource collections!):
         // - 'requesting' state: task is only being initialized, not much can be done in this case
+        // - 'uploading'
         const auto state = entry->getState();
         assert(false);
         return false;
@@ -821,7 +824,6 @@ OsmAnd::MapRendererResources::BaseTiledResource::BaseTiledResource(MapRendererRe
     : GenericResource(owner, type)
     , TilesCollectionEntryWithState(collection, tileId, zoom)
 {
-
 }
 
 OsmAnd::MapRendererResources::BaseTiledResource::~BaseTiledResource()
@@ -935,61 +937,175 @@ void OsmAnd::MapRendererResources::MapTileResource::unloadFromGPU()
     _resourceInGPU.reset();
 }
 
+OsmAnd::MapRendererResources::SymbolsResourcesCollection::SymbolsResourcesCollection()
+    : TiledResourcesCollection(ResourceType::Symbols)
+{
+}
+
+OsmAnd::MapRendererResources::SymbolsResourcesCollection::~SymbolsResourcesCollection()
+{
+}
+
 OsmAnd::MapRendererResources::SymbolsTileResource::SymbolsTileResource(MapRendererResources* owner, const TilesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom)
     : BaseTiledResource(owner, ResourceType::Symbols, collection, tileId, zoom)
     , sourceData(_sourceData)
-    , resourcesInGPU(_resourcesInGPU)
+    //, resourcesInGPU(_resourcesInGPU)
 {
 }
 
 OsmAnd::MapRendererResources::SymbolsTileResource::~SymbolsTileResource()
 {
-    // When symbols resource entry was unloaded and is destroyed, remove from unified collection it's unique symbols
-    for(auto itSymbol = _sourceData.cbegin(); itSymbol != _sourceData.cend(); ++itSymbol)
-    {
-        const auto& symbol = *itSymbol;
+    _sharedSymbolsGroups.clear();
+    _uniqueSymbolsGroups.clear();
+}
 
-        // If this is not the last reference to symbol, skip it
-        if(!symbol.unique())
+void OsmAnd::MapRendererResources::SymbolsTileResource::detach()
+{
+    // Obtain collection link and maintain it
+    const auto link_ = link.lock();
+
+    // Dereference all shared map symbols groups (and release them if needed)
+    const auto collection = static_cast<SymbolsResourcesCollection*>(&link_->collection);
+    auto& cacheLevel = collection->_cacheLevels[zoom];
+
+    for(auto itGroup = _sharedSymbolsGroups.cbegin(); itGroup != _sharedSymbolsGroups.cend(); ++itGroup)
+    {
+        const auto& group = *itGroup;
+
+        // If this is not the last reference (including reference in collection) to symbols group, skip it
+        if(!group.unique())
             continue;
 
-        // Otherwise, remove weak reference from collection by id of WHAT??
+        // Otherwise, remove reference to shared symbol from cache
         {
-            //QMutexLocker scopedLocker(&owner->_symbolsMutex);
-            //            _owner->_symbols[symbol->order].remove(symbol->id);
+            QWriteLocker scopedLocker(&cacheLevel._lock);
+            cacheLevel._cache.remove(group->mapObject->id);
         }
     }
 }
 
 bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAvailable)
 {
+    // Obtain collection link and maintain it
+    const auto link_ = link.lock();
+    if(!link_)
+        return false;
+    const auto collection = static_cast<SymbolsResourcesCollection*>(&link_->collection);
+
     // Get source of tile
     std::shared_ptr<IMapProvider> provider_;
-    bool ok = owner->obtainProviderFor(static_cast<TiledResourcesCollection*>(&link.lock()->collection), provider_);
+    bool ok = owner->obtainProviderFor(static_cast<TiledResourcesCollection*>(&link_->collection), provider_);
     if(!ok)
         return false;
     const auto provider = std::static_pointer_cast<IMapSymbolProvider>(provider_);
 
-    // 
-    //NOTE: SymbolsResourceEntry represents a since tile@zoom. In a single provider. That means, that multiple symbol providers provide data for same tile@zoom
-    //NOTE: part of resources collection. A symbol resource collection is bound to provider
+    auto& cacheLevel = collection->_cacheLevels[zoom];
 
-    //TODO: a cache of symbols needs to be maintained, since same symbol may be present in several tiles, but it should be drawn once?
-    //provider->obtainSymbols(tileId, zoom, _sourceData);
+    // Obtain tile from provider
+    std::shared_ptr<const MapSymbolsTile> tile;
+    const auto requestSucceeded = provider->obtainSymbols(tileId, zoom, tile,
+        [this, provider, &cacheLevel](const std::shared_ptr<const Model::MapObject>& mapObject) -> bool
+        {
+            // All symbols that come from map object which can not be cached,
+            // should be received.
+            if(!provider->canSymbolsBeSharedFrom(mapObject))
+                return true;
 
-    // add std::weak_ptr to QMap< order_from_rules as int, QList<MapSymbol> > g_symbols?
+            // Check if map symbols that come from this map object are already in cache
+            {
+                QReadLocker scopedLocker(&cacheLevel._lock);
 
-    return false;
+                const auto itCacheEntry = cacheLevel._cache.constFind(mapObject->id);
+                if(itCacheEntry != cacheLevel._cache.cend())
+                {
+                    if(const auto sharedGroup = itCacheEntry->lock())
+                    {
+                        _sharedSymbolsGroups.push_back(sharedGroup);
+                        return false;
+                    }
+                }
+            }
+
+            // By default, accept all
+            return true;
+        });
+    if(!requestSucceeded)
+        return false;
+
+    // Store data
+    _sourceData = tile;
+    dataAvailable = static_cast<bool>(tile);
+
+    // Process data
+    if(dataAvailable)
+    {
+        // tile->symbolsGroups contains only groups that derived from unique symbols
+        // (that are currently unique, or can not be shared by their type)
+        for(auto itGroup = tile->symbolsGroups.cbegin(); itGroup != tile->symbolsGroups.cend(); ++itGroup)
+        {
+            const auto& group = *itGroup;
+
+            // All groups that can not be cached should be added to unique
+            if(!provider->canSymbolsBeSharedFrom(group->mapObject))
+            {
+                _uniqueSymbolsGroups.push_back(group);
+                continue;
+            }
+
+            // Check if this group was already cached, and if not - cache it
+            {
+                QWriteLocker scopedLocker(&cacheLevel._lock);
+
+                const auto itSharedGroup = cacheLevel._cache.find(group->mapObject->id);
+                if(itSharedGroup != cacheLevel._cache.end())
+                {
+                    if(const auto sharedMapObject = itSharedGroup->lock())
+                    {
+                        // If entry already exits, use that object instead of this one
+                        _sharedSymbolsGroups.push_back(sharedMapObject);
+                    }
+                    else
+                    {
+                        // Or replace with current one
+                        *itSharedGroup = group;
+                        _sharedSymbolsGroups.push_back(group);
+                    }
+                }
+                else
+                {
+                    cacheLevel._cache.insert(group->mapObject->id, group);
+                    _sharedSymbolsGroups.push_back(group);
+                }
+            }
+        }
+    }
+
+    // Release source data:
+    if(const auto retainedSource = std::dynamic_pointer_cast<const IRetainedMapTile>(_sourceData))
+    {
+        // If map tile implements 'Retained' interface, it must be kept, but 
+        std::const_pointer_cast<IRetainedMapTile>(retainedSource)->releaseNonRetainedData();
+    }
+    else
+    {
+        // or simply release entire tile
+        _sourceData.reset();
+    }
+    
+    return true;
 }
 
 bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
 {
-    return false;
+    //TODO: upload
+    
+    return true;
 }
 
 void OsmAnd::MapRendererResources::SymbolsTileResource::unloadFromGPU()
 {
-
+    /*assert(_resourceInGPU.use_count() == 1);
+    _resourceInGPU.reset();*/
 }
 
 OsmAnd::MapRendererResources::ResourceRequestTask::ResourceRequestTask(
