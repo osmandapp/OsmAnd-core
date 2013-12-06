@@ -101,7 +101,7 @@ bool OsmAnd::OfflineMapRasterTileProvider_GPU_P::obtainTile(const TileId tileId,
 }
 
 OsmAnd::OfflineMapRasterTileProvider_GPU_P::Tile::Tile( SkBitmap* bitmap, const std::shared_ptr<const OfflineMapDataTile>& dataTile_ )
-    : MapBitmapTile(bitmap, MapBitmapTile::AlphaChannelData::NotPresent)
+    : MapBitmapTile(bitmap, AlphaChannelData::NotPresent)
     , _dataTile(dataTile_)
     , dataTile(_dataTile)
 {

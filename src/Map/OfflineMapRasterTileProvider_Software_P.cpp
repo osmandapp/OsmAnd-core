@@ -100,7 +100,7 @@ bool OsmAnd::OfflineMapRasterTileProvider_Software_P::obtainTile(const TileId ti
 }
 
 OsmAnd::OfflineMapRasterTileProvider_Software_P::Tile::Tile( SkBitmap* bitmap, const std::shared_ptr<const OfflineMapDataTile>& dataTile_ )
-    : MapBitmapTile(bitmap, MapBitmapTile::AlphaChannelData::NotPresent)
+    : MapBitmapTile(bitmap, AlphaChannelData::NotPresent)
     , _dataTile(dataTile_)
     , dataTile(_dataTile)
 {

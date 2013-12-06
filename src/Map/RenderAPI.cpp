@@ -45,12 +45,12 @@ std::shared_ptr<OsmAnd::RenderAPI::AtlasTexturesPool> OsmAnd::RenderAPI::obtainA
     return *itPool;
 }
 
-std::shared_ptr<OsmAnd::RenderAPI::TileOnAtlasTextureInGPU> OsmAnd::RenderAPI::allocateTile( const std::shared_ptr<AtlasTexturesPool>& pool, AtlasTexturesPool::AtlasTextureAllocatorSignature atlasTextureAllocator )
+std::shared_ptr<OsmAnd::RenderAPI::SlotOnAtlasTextureInGPU> OsmAnd::RenderAPI::allocateTile( const std::shared_ptr<AtlasTexturesPool>& pool, AtlasTexturesPool::AtlasTextureAllocatorSignature atlasTextureAllocator )
 {
     return pool->allocateTile(atlasTextureAllocator);
 }
 
-OsmAnd::RenderAPI::ResourceInGPU::ResourceInGPU( const Type& type_, RenderAPI* api_, const RefInGPU& refInGPU_ )
+OsmAnd::RenderAPI::ResourceInGPU::ResourceInGPU( const Type type_, RenderAPI* api_, const RefInGPU& refInGPU_ )
     : _refInGPU(refInGPU_)
     , api(api_)
     , type(type_)
@@ -84,7 +84,7 @@ OsmAnd::RenderAPI::ResourceInGPU::~ResourceInGPU()
     }
 }
 
-OsmAnd::RenderAPI::TextureInGPU::TextureInGPU( RenderAPI* api_, const RefInGPU& refInGPU_, const uint32_t textureSize_, const uint32_t mipmapLevels_ )
+OsmAnd::RenderAPI::TextureInGPU::TextureInGPU(RenderAPI* api_, const RefInGPU& refInGPU_, const unsigned int textureSize_, const unsigned int mipmapLevels_)
     : ResourceInGPU(Type::Texture, api_, refInGPU_)
     , textureSize(textureSize_)
     , mipmapLevels(mipmapLevels_)
@@ -97,7 +97,7 @@ OsmAnd::RenderAPI::TextureInGPU::~TextureInGPU()
 {
 }
 
-OsmAnd::RenderAPI::ArrayBufferInGPU::ArrayBufferInGPU( RenderAPI* api_, const RefInGPU& refInGPU_, const uint32_t itemsCount_ )
+OsmAnd::RenderAPI::ArrayBufferInGPU::ArrayBufferInGPU(RenderAPI* api_, const RefInGPU& refInGPU_, const unsigned int itemsCount_)
     : ResourceInGPU(Type::ArrayBuffer, api_, refInGPU_)
     , itemsCount(itemsCount_)
 {
@@ -107,7 +107,7 @@ OsmAnd::RenderAPI::ArrayBufferInGPU::~ArrayBufferInGPU()
 {
 }
 
-OsmAnd::RenderAPI::AtlasTextureInGPU::AtlasTextureInGPU( RenderAPI* api_, const RefInGPU& refInGPU_, const uint32_t textureSize_, const uint32_t mipmapLevels_, const std::shared_ptr<AtlasTexturesPool>& pool_ )
+OsmAnd::RenderAPI::AtlasTextureInGPU::AtlasTextureInGPU(RenderAPI* api_, const RefInGPU& refInGPU_, const unsigned int textureSize_, const unsigned int mipmapLevels_, const std::shared_ptr<AtlasTexturesPool>& pool_)
     : TextureInGPU(api_, refInGPU_, textureSize_, mipmapLevels_)
     , tileSize(pool_->typeId.tileSize)
     , padding(pool_->typeId.tilePadding)
@@ -147,8 +147,8 @@ OsmAnd::RenderAPI::AtlasTextureInGPU::~AtlasTextureInGPU()
     }
 }
 
-OsmAnd::RenderAPI::TileOnAtlasTextureInGPU::TileOnAtlasTextureInGPU( const std::shared_ptr<AtlasTextureInGPU>& atlas_, const uint32_t slotIndex_ )
-    : ResourceInGPU(Type::TileOnAtlasTexture, atlas_->api, atlas_->refInGPU)
+OsmAnd::RenderAPI::SlotOnAtlasTextureInGPU::SlotOnAtlasTextureInGPU(const std::shared_ptr<AtlasTextureInGPU>& atlas_, const unsigned int slotIndex_)
+    : ResourceInGPU(Type::SlotOnAtlasTexture, atlas_->api, atlas_->refInGPU)
     , atlasTexture(atlas_)
     , slotIndex(slotIndex_)
 {
@@ -163,7 +163,7 @@ OsmAnd::RenderAPI::TileOnAtlasTextureInGPU::TileOnAtlasTextureInGPU( const std::
     }
 }
 
-OsmAnd::RenderAPI::TileOnAtlasTextureInGPU::~TileOnAtlasTextureInGPU()
+OsmAnd::RenderAPI::SlotOnAtlasTextureInGPU::~SlotOnAtlasTextureInGPU()
 {
     // Remove reference of this tile to atlas texture
     {
@@ -179,7 +179,7 @@ OsmAnd::RenderAPI::TileOnAtlasTextureInGPU::~TileOnAtlasTextureInGPU()
     {
         QMutexLocker scopedLock(&atlasTexture->pool->_freedSlotsMutex);
 
-        atlasTexture->pool->_freedSlots.insert(atlasTexture.get(), std::tuple< std::weak_ptr<AtlasTextureInGPU>, uint32_t >(atlasTexture, slotIndex));
+        atlasTexture->pool->_freedSlots.insert(atlasTexture.get(), qMove(AtlasTexturesPool::FreedSlotsEntry(atlasTexture, slotIndex)));
     }
 
     // Clear reference to GPU resource to avoid removal in base class
@@ -198,7 +198,7 @@ OsmAnd::RenderAPI::AtlasTexturesPool::~AtlasTexturesPool()
 {
 }
 
-std::shared_ptr<OsmAnd::RenderAPI::TileOnAtlasTextureInGPU> OsmAnd::RenderAPI::AtlasTexturesPool::allocateTile( AtlasTextureAllocatorSignature atlasTextureAllocator )
+std::shared_ptr<OsmAnd::RenderAPI::SlotOnAtlasTextureInGPU> OsmAnd::RenderAPI::AtlasTexturesPool::allocateTile( AtlasTextureAllocatorSignature atlasTextureAllocator )
 {
     // First look for freed slots
     {
@@ -215,7 +215,7 @@ std::shared_ptr<OsmAnd::RenderAPI::TileOnAtlasTextureInGPU> OsmAnd::RenderAPI::A
             // Return allocated slot
             const auto& atlasTexture = std::get<0>(freedSlotEntry);
             const auto& slotIndex = std::get<1>(freedSlotEntry);
-            return std::shared_ptr<TileOnAtlasTextureInGPU>(new TileOnAtlasTextureInGPU(atlasTexture.lock(), slotIndex));
+            return std::shared_ptr<SlotOnAtlasTextureInGPU>(new SlotOnAtlasTextureInGPU(atlasTexture.lock(), slotIndex));
         }
     }
     
@@ -239,7 +239,7 @@ std::shared_ptr<OsmAnd::RenderAPI::TileOnAtlasTextureInGPU> OsmAnd::RenderAPI::A
         }
 
         // Or let's just continue using current atlas texture
-        return std::shared_ptr<TileOnAtlasTextureInGPU>(new TileOnAtlasTextureInGPU(atlasTexture, _firstUnusedSlotIndex++));
+        return std::shared_ptr<SlotOnAtlasTextureInGPU>(new SlotOnAtlasTextureInGPU(atlasTexture, _firstUnusedSlotIndex++));
     }
 
     return nullptr;

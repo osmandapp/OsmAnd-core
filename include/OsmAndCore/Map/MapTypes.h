@@ -39,6 +39,14 @@ namespace OsmAnd
         FullLand,
         FullWater,
     };
+
+    STRONG_ENUM(AlphaChannelData)
+    {
+        Present,
+        NotPresent,
+        Undefined
+    };
+
 }
 
 #endif // _OSMAND_CORE_MAP_TYPES_H_

@@ -33,31 +33,35 @@
 #include <QSet>
 #include <QAtomicInt>
 
-#include <OsmAndCore.h>
-#include <Common.h>
-#include <CommonTypes.h>
-#include <MapTypes.h>
-#include <IMapTileProvider.h>
+#include "OsmAndCore.h"
+#include "Common.h"
+#include "CommonTypes.h"
+#include "MapTypes.h"
 
-namespace OsmAnd {
+class SkBitmap;
 
-    class OSMAND_CORE_API RenderAPI
+namespace OsmAnd
+{
+    class MapTile;
+    class MapSymbol;
+
+    class RenderAPI
     {
     public:
         typedef void* RefInGPU;
 
-        class OSMAND_CORE_API ResourceInGPU
+        class ResourceInGPU
         {
         public:
-            enum Type
+            enum class Type
             {
                 Texture,
-                TileOnAtlasTexture,
+                SlotOnAtlasTexture,
                 ArrayBuffer,
             };
         private:
         protected:
-            ResourceInGPU(const Type& type, RenderAPI* api, const RefInGPU& refInGPU);
+            ResourceInGPU(const Type type, RenderAPI* api, const RefInGPU& refInGPU);
 
             RefInGPU _refInGPU;
         public:
@@ -68,29 +72,29 @@ namespace OsmAnd {
             const RefInGPU& refInGPU;
         };
 
-        class OSMAND_CORE_API TextureInGPU : public ResourceInGPU
+        class TextureInGPU : public ResourceInGPU
         {
         private:
         protected:
         public:
-            TextureInGPU(RenderAPI* api, const RefInGPU& refInGPU, const uint32_t textureSize, const uint32_t mipmapLevels);
+            TextureInGPU(RenderAPI* api, const RefInGPU& refInGPU, const unsigned int textureSize, const unsigned int mipmapLevels);
             virtual ~TextureInGPU();
 
-            const uint32_t textureSize;
-            const uint32_t mipmapLevels;
+            const unsigned int textureSize;
+            const unsigned int mipmapLevels;
             const float texelSizeN;
             const float halfTexelSizeN;
         };
 
-        class OSMAND_CORE_API ArrayBufferInGPU : public ResourceInGPU
+        class ArrayBufferInGPU : public ResourceInGPU
         {
         private:
         protected:
         public:
-            ArrayBufferInGPU(RenderAPI* api, const RefInGPU& refInGPU, const uint32_t itemsCount);
+            ArrayBufferInGPU(RenderAPI* api, const RefInGPU& refInGPU, const unsigned int itemsCount);
             virtual ~ArrayBufferInGPU();
 
-            const uint32_t itemsCount;
+            const unsigned int itemsCount;
         };
 
         union AtlasTypeId
@@ -136,15 +140,16 @@ namespace OsmAnd {
         };
         static_assert(sizeof(AtlasTypeId) == 8, "AtlasTypeId must be 8 bytes in size");
 
-        class TileOnAtlasTextureInGPU;
+        class SlotOnAtlasTextureInGPU;
         class AtlasTextureInGPU;
-        class OSMAND_CORE_API AtlasTexturesPool
+        class AtlasTexturesPool
         {
         public:
             typedef std::function< AtlasTextureInGPU*() > AtlasTextureAllocatorSignature;
+            typedef std::tuple< std::weak_ptr<AtlasTextureInGPU>, unsigned int > FreedSlotsEntry;
         private:
             mutable QMutex _freedSlotsMutex;
-            QMultiMap< AtlasTextureInGPU*, std::tuple< std::weak_ptr<AtlasTextureInGPU>, uint32_t > > _freedSlots;
+            QMultiHash< AtlasTextureInGPU*, FreedSlotsEntry> _freedSlots;
 
             mutable QMutex _unusedSlotsMutex;
             AtlasTextureInGPU* _lastNonFullAtlasTexture;
@@ -153,48 +158,48 @@ namespace OsmAnd {
         protected:
             AtlasTexturesPool(RenderAPI* api, const AtlasTypeId& typeId);
 
-            std::shared_ptr<TileOnAtlasTextureInGPU> allocateTile(AtlasTextureAllocatorSignature atlasTextureAllocator);
+            std::shared_ptr<SlotOnAtlasTextureInGPU> allocateTile(AtlasTextureAllocatorSignature atlasTextureAllocator);
         public:
             virtual ~AtlasTexturesPool();
 
             RenderAPI* const api;
             const AtlasTypeId typeId;
 
-            friend OsmAnd::RenderAPI;
+        friend OsmAnd::RenderAPI;
         };
 
-        class OSMAND_CORE_API AtlasTextureInGPU : public TextureInGPU
+        class AtlasTextureInGPU : public TextureInGPU
         {
         private:
         protected:
 #if defined(DEBUG) || defined(_DEBUG)
             mutable QMutex _tilesMutex;
-            QSet< TileOnAtlasTextureInGPU* > _tiles;
+            QSet< SlotOnAtlasTextureInGPU* > _tiles;
 #else
             QAtomicInt _tilesCounter;
 #endif
         public:
-            AtlasTextureInGPU(RenderAPI* api, const RefInGPU& refInGPU, const uint32_t textureSize, const uint32_t mipmapLevels, const std::shared_ptr<AtlasTexturesPool>& pool);
+            AtlasTextureInGPU(RenderAPI* api, const RefInGPU& refInGPU, const unsigned int textureSize, const unsigned int mipmapLevels, const std::shared_ptr<AtlasTexturesPool>& pool);
             virtual ~AtlasTextureInGPU();
 
-            const uint16_t tileSize;
-            const uint16_t padding;
-            const uint32_t slotsPerSide;
+            const unsigned int tileSize;
+            const unsigned int padding;
+            const unsigned int slotsPerSide;
             const float tileSizeN;
             const float tilePaddingN;
 
             const std::shared_ptr<AtlasTexturesPool> pool;
 
-        friend OsmAnd::RenderAPI::TileOnAtlasTextureInGPU;
+        friend OsmAnd::RenderAPI::SlotOnAtlasTextureInGPU;
         };
 
-        class OSMAND_CORE_API TileOnAtlasTextureInGPU : public ResourceInGPU
+        class SlotOnAtlasTextureInGPU : public ResourceInGPU
         {
         private:
         protected:
         public:
-            TileOnAtlasTextureInGPU(const std::shared_ptr<AtlasTextureInGPU>& atlas, const uint32_t slotIndex);
-            virtual ~TileOnAtlasTextureInGPU();
+            SlotOnAtlasTextureInGPU(const std::shared_ptr<AtlasTextureInGPU>& atlas, const uint32_t slotIndex);
+            virtual ~SlotOnAtlasTextureInGPU();
 
             const std::shared_ptr<AtlasTextureInGPU> atlasTexture;
             const uint32_t slotIndex;
@@ -210,14 +215,15 @@ namespace OsmAnd {
 
         QHash< AtlasTypeId, std::shared_ptr<AtlasTexturesPool> > _atlasTexturesPools;
     protected:
-        std::shared_ptr<AtlasTexturesPool> obtainAtlasTexturesPool(const AtlasTypeId& atlasTypeId);
-        std::shared_ptr<TileOnAtlasTextureInGPU> allocateTile(const std::shared_ptr<AtlasTexturesPool>& pool, AtlasTexturesPool::AtlasTextureAllocatorSignature atlasTextureAllocator );
+        RenderAPI();
 
-        virtual bool releaseResourceInGPU(const ResourceInGPU::Type& type, const RefInGPU& refInGPU) = 0;
+        std::shared_ptr<AtlasTexturesPool> obtainAtlasTexturesPool(const AtlasTypeId& atlasTypeId);
+        std::shared_ptr<SlotOnAtlasTextureInGPU> allocateTile(const std::shared_ptr<AtlasTexturesPool>& pool, AtlasTexturesPool::AtlasTextureAllocatorSignature atlasTextureAllocator );
+
+        virtual bool releaseResourceInGPU(const ResourceInGPU::Type type, const RefInGPU& refInGPU) = 0;
 
         bool _isSupported_8bitPaletteRGBA8;
     public:
-        RenderAPI();
         virtual ~RenderAPI();
 
         const bool& isSupported_8bitPaletteRGBA8;
@@ -225,11 +231,8 @@ namespace OsmAnd {
         virtual bool initialize() = 0;
         virtual bool release() = 0;
 
-        // tilesPerAtlasTextureLimit:
-        //   0 - unlimited
-        //   1 - don't use atlas textures
-        //   N - allow up to N*N tiles per atlas texture
-        virtual bool uploadTileToGPU(const std::shared_ptr< const MapTile >& tile, const uint32_t tilesPerAtlasTextureLimit, std::shared_ptr< const ResourceInGPU >& resourceInGPU) = 0;
+        virtual bool uploadTileToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU) = 0;
+        virtual bool uploadSymbolToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU) = 0;
 
     friend OsmAnd::RenderAPI::ResourceInGPU;
     };

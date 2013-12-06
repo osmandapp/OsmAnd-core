@@ -29,6 +29,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Map/MapTypes.h>
 #include <OsmAndCore/Map/IMapTileProvider.h>
 
 class SkBitmap;
@@ -38,22 +39,15 @@ namespace OsmAnd {
     class OSMAND_CORE_API MapBitmapTile : public MapTile
     {
         Q_DISABLE_COPY(MapBitmapTile);
-    public:
-        STRONG_ENUM(AlphaChannelData)
-        {
-            Present,
-            NotPresent,
-            Undefined
-        };
-
     private:
     protected:
-        std::unique_ptr<SkBitmap> _bitmap;
+        std::shared_ptr<const SkBitmap> _bitmap;
     public:
-        MapBitmapTile(SkBitmap* bitmap, const AlphaChannelData& alphaChannelData);
+        MapBitmapTile(const SkBitmap* const bitmap, const AlphaChannelData alphaChannelData);
+        MapBitmapTile(const std::shared_ptr<const SkBitmap>& bitmap, const AlphaChannelData alphaChannelData);
         virtual ~MapBitmapTile();
 
-        const std::unique_ptr<SkBitmap>& bitmap;
+        const std::shared_ptr<const SkBitmap>& bitmap;
 
         const AlphaChannelData alphaChannelData;
     };

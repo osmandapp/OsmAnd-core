@@ -90,8 +90,8 @@ bool OsmAnd::MapRendererResources::initializeDefaultResources()
         }
         else
         {
-            auto bitmapTile = new MapBitmapTile(bitmap, MapBitmapTile::AlphaChannelData::Undefined);
-            renderer->renderAPI->uploadTileToGPU(std::shared_ptr< const MapTile >(bitmapTile), 1, _processingTileStub);
+            std::shared_ptr<const MapTile> bitmapTile(new MapBitmapTile(bitmap, AlphaChannelData::Undefined));
+            uploadTileToGPU(bitmapTile, _processingTileStub);
         }
     }
     {
@@ -104,8 +104,8 @@ bool OsmAnd::MapRendererResources::initializeDefaultResources()
         }
         else
         {
-            auto bitmapTile = new MapBitmapTile(bitmap, MapBitmapTile::AlphaChannelData::Undefined);
-            renderer->renderAPI->uploadTileToGPU(std::shared_ptr< const MapTile >(bitmapTile), 1, _unavailableTileStub);
+            std::shared_ptr<const MapTile> bitmapTile(new MapBitmapTile(bitmap, AlphaChannelData::Undefined));
+            uploadTileToGPU(bitmapTile, _unavailableTileStub);
         }
     }
 
@@ -127,6 +127,18 @@ bool OsmAnd::MapRendererResources::releaseDefaultResources()
     }
 
     return true;
+}
+
+bool OsmAnd::MapRendererResources::uploadTileToGPU(const std::shared_ptr<const MapTile>& mapTile, std::shared_ptr<const RenderAPI::ResourceInGPU>& outResourceInGPU)
+{
+    std::shared_ptr<const MapTile> convertedTile;
+    const auto wasConverted = renderer->convertMapTile(mapTile, convertedTile);
+    return renderer->renderAPI->uploadTileToGPU(wasConverted ? convertedTile : mapTile, outResourceInGPU);
+}
+
+bool OsmAnd::MapRendererResources::uploadSymbolToGPU(const std::shared_ptr<const MapSymbol>& mapSymbol, std::shared_ptr<const RenderAPI::ResourceInGPU>& outResourceInGPU)
+{
+    return false;
 }
 
 void OsmAnd::MapRendererResources::updateBindings(const MapRendererState& state, const uint32_t updatedMask)
@@ -909,10 +921,7 @@ bool OsmAnd::MapRendererResources::MapTileResource::obtainData(bool& dataAvailab
 
 bool OsmAnd::MapRendererResources::MapTileResource::uploadToGPU()
 {
-    const auto& preparedSourceData = owner->renderer->prepareTileForUploadingToGPU(_sourceData);
-    //TODO: This is weird, and probably should not be here. RenderAPI knows how to upload what, but on contrary - does not know the limits
-    const auto tilesPerAtlasTextureLimit = owner->renderer->getTilesPerAtlasTextureLimit(type, _sourceData);
-    bool ok = owner->renderer->renderAPI->uploadTileToGPU(preparedSourceData, tilesPerAtlasTextureLimit, _resourceInGPU);
+    bool ok = owner->uploadTileToGPU(_sourceData, _resourceInGPU);
     if(!ok)
         return false;
 
@@ -1097,32 +1106,63 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAva
 
 bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
 {
-    // for each symbol in _uniqueSymbolsGroups:
-    //   [symbol uploadToGPU];
-    //   []
-
+    bool ok;
+    bool atLeastOneFailed = false;
 
     // Upload all unique symbols to GPU
     for(auto itGroup = _uniqueSymbolsGroups.cbegin(); itGroup != _uniqueSymbolsGroups.cend(); ++itGroup)
     {
-        auto& group = *itGroup;
+        const auto& group = *itGroup;
 
-        //QMutableListIterator<std::shared_ptr<const MapSymbol> > itSymbol(group->symbols);
-        //for(auto itSymbol = group->symbols.cbegin(); itSymbol != group->symbols.cend(); ++itSymbol)
-        //{
-        //    const auto& symbol = *itSymbol;
+        for(auto itSymbol = group->symbols.cbegin(); itSymbol != group->symbols.cend(); ++itSymbol)
+        {
+            const auto& symbol = *itSymbol;
 
-        //    //TODO: actually upload to GPU
+            // Prepare data and upload to GPU
+            std::shared_ptr<const RenderAPI::ResourceInGPU> resourceInGPU;
+//            const auto& preparedSourceData = owner->renderer->prepareTileForUploadingToGPU(_sourceData);
+//            ok = owner->renderer->renderAPI->uploadTileToGPU(preparedSourceData, tilesPerAtlasTextureLimit, _resourceInGPU);
 
-        //    //TODO: unload source data if possible
+            // If upload have failed, stop
+            if(!ok)
+            {
+                atLeastOneFailed = true;
+                break;
+            }
 
-        //    //TODO: append to global g_symbols
-        //}
+            // Save reference to GPU resource
+            _resourcesInGPU.insert(symbol, qMove(resourceInGPU));
+        }
+
+        // If at least one symbol have failed, interrupt
+        if(atLeastOneFailed)
+            break;
+    }
+    //TODO: upload shared symbols
+
+    // If at least one symbol failed to upload, entire tile failed to upload, so unload it
+    if(atLeastOneFailed)
+    {
+        unloadFromGPU();
+
+        return false;
     }
 
-    //TODO: upload from unique to GPU without any checks, and use IRetainedResource or similar
-    //TODO: _sharedSymbolsGroups - reuse shared references to GPU resources.
-    
+    // Since all resources were successfully uploaded, unload their sources
+    for(auto itGroup = _uniqueSymbolsGroups.cbegin(); itGroup != _uniqueSymbolsGroups.cend(); ++itGroup)
+    {
+        const auto& group = *itGroup;
+
+        for(auto itSymbol = group->symbols.cbegin(); itSymbol != group->symbols.cend(); ++itSymbol)
+        {
+            const auto& symbol = *itSymbol;
+
+            // After uploading data to GPU, release source
+            std::const_pointer_cast<MapSymbol>(symbol)->releaseNonRetainedData();
+        }
+    }
+    //TODO: remove source from shared symbols
+
     return true;
 }
 

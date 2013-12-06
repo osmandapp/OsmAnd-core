@@ -27,13 +27,21 @@ OsmAnd::IMapBitmapTileProvider::~IMapBitmapTileProvider()
 {
 }
 
-OsmAnd::MapBitmapTile::MapBitmapTile( SkBitmap* bitmap_, const AlphaChannelData& alphaChannelData_ )
+OsmAnd::MapBitmapTile::MapBitmapTile(const SkBitmap* const bitmap_, const AlphaChannelData alphaChannelData_)
     : MapTile(MapTileDataType::Bitmap, bitmap_->getPixels(), bitmap_->rowBytes(), bitmap_->width())
     , _bitmap(bitmap_)
     , bitmap(_bitmap)
     , alphaChannelData(alphaChannelData_)
 {
     assert(bitmap_->width() == bitmap_->height());
+}
+
+OsmAnd::MapBitmapTile::MapBitmapTile(const std::shared_ptr<const SkBitmap>& bitmap_, const AlphaChannelData alphaChannelData_)
+    : MapTile(MapTileDataType::Bitmap, bitmap_->getPixels(), bitmap_->rowBytes(), bitmap_->width())
+    , _bitmap(bitmap_)
+    , bitmap(_bitmap)
+    , alphaChannelData(alphaChannelData_)
+{
 }
 
 OsmAnd::MapBitmapTile::~MapBitmapTile()

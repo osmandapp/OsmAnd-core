@@ -81,8 +81,8 @@
 #   define GL_CHECK_PRESENT(x)
 #endif
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     enum class GLShaderVariableType
     {
         In,
@@ -92,7 +92,7 @@ namespace OsmAnd {
     class RenderAPI_OpenGL_Common : public RenderAPI
     {
     private:
-        bool uploadTileAsTextureToGPU(const std::shared_ptr< const MapTile >& tile, const uint32_t tilesPerAtlasTextureLimit, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
+        bool uploadTileAsTextureToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
         bool uploadTileAsArrayBufferToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
     protected:
         GLint _maxTextureSize;
@@ -103,14 +103,13 @@ namespace OsmAnd {
         bool _isSupported_vertexShaderTextureLookup;
         bool _isSupported_textureLod;
         
-        virtual bool releaseResourceInGPU(const ResourceInGPU::Type& type, const RefInGPU& refInGPU);
+        virtual bool releaseResourceInGPU(const ResourceInGPU::Type type, const RefInGPU& refInGPU);
     public:
         RenderAPI_OpenGL_Common();
         virtual ~RenderAPI_OpenGL_Common();
 
         enum {
-            BaseBitmapAtlasTilePadding = 2,
-            MipmapLodLevelsMax = 4,
+            //BaseBitmapAtlasTilePadding = 2,
         };
 
         const QStringList& extensions;
@@ -160,7 +159,8 @@ namespace OsmAnd {
         virtual void clearVariablesLookup();
         virtual void findVariableLocation(GLuint program, GLint& location, const QString& name, const GLShaderVariableType& type);
 
-        virtual bool uploadTileToGPU(const std::shared_ptr< const MapTile >& tile, const uint32_t tilesPerAtlasTextureLimit, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
+        virtual bool uploadTileToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
+        virtual bool uploadSymbolToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
     };
 
 }

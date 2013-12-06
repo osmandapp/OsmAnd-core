@@ -12,7 +12,7 @@ OsmAnd::OnlineMapRasterTileProvider::OnlineMapRasterTileProvider(
     const ZoomLevel maxZoom_ /*= MaxZoomLevel*/,
     const uint32_t maxConcurrentDownloads_ /*= 1*/,
     const uint32_t providerTileSize_ /*= 256*/,
-    const MapBitmapTile::AlphaChannelData& alphaChannelData_ /*= MapBitmapTile::AlphaChannelData::Undefined*/)
+    const AlphaChannelData alphaChannelData_ /*= AlphaChannelData::Undefined*/)
     : _d(new OnlineMapRasterTileProvider_P(this))
     , localCachePath(_d->_localCachePath)
     , networkAccessAllowed(_d->_networkAccessAllowed)
@@ -70,7 +70,7 @@ std::shared_ptr<OsmAnd::IMapBitmapTileProvider> OsmAnd::OnlineMapRasterTileProvi
     auto provider = new OsmAnd::OnlineMapRasterTileProvider(
         "mapnik", "http://mapnik.osmand.net/${zoom}/${x}/${y}.png",
         ZoomLevel0, ZoomLevel19, 2,
-        256, MapBitmapTile::AlphaChannelData::NotPresent);
+        256, AlphaChannelData::NotPresent);
     return std::shared_ptr<OsmAnd::IMapBitmapTileProvider>(static_cast<OsmAnd::IMapBitmapTileProvider*>(provider));
 }
 
@@ -79,6 +79,6 @@ std::shared_ptr<OsmAnd::IMapBitmapTileProvider> OsmAnd::OnlineMapRasterTileProvi
     auto provider = new OsmAnd::OnlineMapRasterTileProvider(
         "cyclemap", "http://b.tile.opencyclemap.org/cycle/${zoom}/${x}/${y}.png",
         ZoomLevel0, ZoomLevel18, 2,
-        256, MapBitmapTile::AlphaChannelData::NotPresent);
+        256, AlphaChannelData::NotPresent);
     return std::shared_ptr<OsmAnd::IMapBitmapTileProvider>(static_cast<OsmAnd::IMapBitmapTileProvider*>(provider));
 }

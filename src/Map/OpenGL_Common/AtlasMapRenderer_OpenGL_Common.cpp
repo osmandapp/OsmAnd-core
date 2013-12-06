@@ -601,9 +601,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
                     glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
                     GL_CHECK_RESULT;
 
-                    if(gpuResource->type == RenderAPI::ResourceInGPU::TileOnAtlasTexture)
+                    if(gpuResource->type == RenderAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
                     {
-                        const auto& tileOnAtlasTexture = std::static_pointer_cast<const RenderAPI::TileOnAtlasTextureInGPU>(gpuResource);
+                        const auto& tileOnAtlasTexture = std::static_pointer_cast<const RenderAPI::SlotOnAtlasTextureInGPU>(gpuResource);
 
                         glUniform1i(perTile_vs.slotIndex, tileOnAtlasTexture->slotIndex);
                         GL_CHECK_RESULT;
@@ -630,7 +630,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
                 }
                 else
                 {
-                    assert(gpuResource->type == RenderAPI::ResourceInGPU::ArrayBuffer);
+                    assert(gpuResource->type == RenderAPI::ResourceInGPU::Type::ArrayBuffer);
 
                     const auto& arrayBuffer = std::static_pointer_cast<const RenderAPI::ArrayBufferInGPU>(gpuResource);
                     assert(arrayBuffer->itemsCount == currentConfiguration.heixelsPerTileSide*currentConfiguration.heixelsPerTileSide);
@@ -702,9 +702,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
             glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
             GL_CHECK_RESULT;
 
-            if(gpuResource->type == RenderAPI::ResourceInGPU::TileOnAtlasTexture)
+            if(gpuResource->type == RenderAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
             {
-                const auto& tileOnAtlasTexture = std::static_pointer_cast<const RenderAPI::TileOnAtlasTextureInGPU>(gpuResource);
+                const auto& tileOnAtlasTexture = std::static_pointer_cast<const RenderAPI::SlotOnAtlasTextureInGPU>(gpuResource);
 
                 glUniform1i(perTile_vs.slotIndex, tileOnAtlasTexture->slotIndex);
                 GL_CHECK_RESULT;

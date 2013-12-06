@@ -43,8 +43,10 @@
 namespace OsmAnd
 {
     class MapRenderer;
+    class IMapProvider;
     class MapSymbolsTile;
     class MapSymbolsGroup;
+    class MapSymbol;
 
     class MapRendererResources
     {
@@ -224,7 +226,7 @@ namespace OsmAnd
             std::shared_ptr<const MapSymbolsTile> _sourceData;
             QList< std::shared_ptr<const MapSymbolsGroup> > _uniqueSymbolsGroups;
             QList< std::shared_ptr<const MapSymbolsGroup> > _sharedSymbolsGroups;
-            //QList< std::shared_ptr<const RenderAPI::ResourceInGPU> > _resourcesInGPU;
+            QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const RenderAPI::ResourceInGPU> > _resourcesInGPU;
 
             virtual void detach();
 
@@ -306,6 +308,10 @@ namespace OsmAnd
         std::shared_ptr<const RenderAPI::ResourceInGPU> _unavailableTileStub;
     protected:
         MapRendererResources(MapRenderer* const owner);
+
+        // Resources management:
+        bool uploadTileToGPU(const std::shared_ptr<const MapTile>& mapTile, std::shared_ptr<const RenderAPI::ResourceInGPU>& outResourceInGPU);
+        bool uploadSymbolToGPU(const std::shared_ptr<const MapSymbol>& mapSymbol, std::shared_ptr<const RenderAPI::ResourceInGPU>& outResourceInGPU);
 
         void updateBindings(const MapRendererState& state, const uint32_t updatedMask);
         void updateActiveZone(const QSet<TileId>& tiles, const ZoomLevel zoom);

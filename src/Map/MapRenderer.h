@@ -67,7 +67,7 @@ namespace OsmAnd
 
         // Resources-related:
         std::unique_ptr<MapRendererResources> _resources;
-
+        
         // Unified map symbols collection:
         //QMutex _symbolsMutex;
         //QMap< int, QList< std::weak_ptr<MapSymbol> > > _symbols;
@@ -87,6 +87,9 @@ namespace OsmAnd
         Qt::HANDLE _renderThreadId;
     protected:
         MapRenderer();
+
+        // General:
+        const std::unique_ptr<RenderAPI>& renderAPI;
 
         // Configuration-related:
         const MapRendererConfiguration& currentConfiguration;
@@ -118,14 +121,10 @@ namespace OsmAnd
         // Resources-related:
         const MapRendererResources& getResources() const;
         virtual void onValidateResourcesOfType(const MapRendererResources::ResourceType type);
-
-        //////////////////////////////////////////////////////////////////////////
-        //////////////////////////////////////////////////////////////////////////
         void requestResourcesUpload();
-        virtual std::shared_ptr<const MapTile> prepareTileForUploadingToGPU(const std::shared_ptr<const MapTile>& tile);
-        virtual uint32_t getTilesPerAtlasTextureLimit(const MapRendererResources::ResourceType resourceType, const std::shared_ptr<const MapTile>& tile) = 0;
-        //////////////////////////////////////////////////////////////////////////
-        //////////////////////////////////////////////////////////////////////////
+        bool convertBitmap(const std::shared_ptr<const SkBitmap>& input, std::shared_ptr<const SkBitmap>& output, const AlphaChannelData alphaChannelData = AlphaChannelData::Undefined) const;
+        bool convertMapTile(std::shared_ptr<const MapTile>& mapTile) const;
+        bool convertMapTile(const std::shared_ptr<const MapTile>& input, std::shared_ptr<const MapTile>& output) const;
 
         // General:
         virtual RenderAPI* allocateRenderAPI() = 0;
@@ -153,10 +152,9 @@ namespace OsmAnd
     public:
         virtual ~MapRenderer();
 
-        // General:
-        const std::unique_ptr<RenderAPI>& renderAPI;
-
         virtual bool setup(const MapRendererSetupOptions& setupOptions);
+
+        // General:
 
         // Configuration-related:
         virtual void setConfiguration(const MapRendererConfiguration& configuration, bool forcedUpdate = false);

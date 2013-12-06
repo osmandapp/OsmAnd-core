@@ -30,6 +30,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Map/MapTypes.h>
 #include <OsmAndCore/Map/IMapBitmapTileProvider.h>
 
 namespace OsmAnd {
@@ -45,7 +46,7 @@ namespace OsmAnd {
         OnlineMapRasterTileProvider(const QString& id, const QString& urlPattern,
             const ZoomLevel minZoom = MinZoomLevel, const ZoomLevel maxZoom = MaxZoomLevel,
             const uint32_t maxConcurrentDownloads = 1, const uint32_t providerTileSize = 256,
-            const MapBitmapTile::AlphaChannelData& alphaChannelData = MapBitmapTile::AlphaChannelData::Undefined);
+            const AlphaChannelData alphaChannelData = AlphaChannelData::Undefined);
         virtual ~OnlineMapRasterTileProvider();
 
         const QString id;
@@ -54,7 +55,7 @@ namespace OsmAnd {
         const ZoomLevel maxZoom;
         const uint32_t maxConcurrentDownloads;
         const uint32_t providerTileSize;
-        const MapBitmapTile::AlphaChannelData alphaChannelData;
+        const AlphaChannelData alphaChannelData;
 
         void setLocalCachePath(const QDir& localCachePath);
         const QDir& localCachePath;
