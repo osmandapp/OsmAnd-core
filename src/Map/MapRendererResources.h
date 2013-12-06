@@ -119,13 +119,13 @@ namespace OsmAnd
         // Generic interface that all resources must implement
         class IResource
         {
-        public:
-            virtual ~IResource()
-            {}
-
+        protected:
             virtual bool obtainData(bool& dataAvailable) = 0;
             virtual bool uploadToGPU() = 0;
             virtual void unloadFromGPU() = 0;
+        public:
+            virtual ~IResource()
+            {}
 
         friend class OsmAnd::MapRendererResources;
         };
@@ -166,14 +166,14 @@ namespace OsmAnd
         {
         private:
         protected:
-            void verifyNoUploadedTilesPresent() const;
-        public:
             TiledResourcesCollection(const ResourceType& type);
+
+            void verifyNoUploadedTilesPresent() const;
+            virtual void removeAllEntries();
+        public:
             virtual ~TiledResourcesCollection();
 
             const MapRendererResources::ResourceType type;
-
-            virtual void removeAllEntries();
 
         friend class OsmAnd::MapRendererResources;
         };
@@ -185,6 +185,8 @@ namespace OsmAnd
         {
         private:
         protected:
+            MapTileResource(MapRendererResources* owner, const ResourceType type, const TilesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom);
+
             std::shared_ptr<const MapTile> _sourceData;
             std::shared_ptr<const GPUAPI::ResourceInGPU> _resourceInGPU;
 
@@ -192,10 +194,8 @@ namespace OsmAnd
             virtual bool uploadToGPU();
             virtual void unloadFromGPU();
         public:
-            MapTileResource(MapRendererResources* owner, const ResourceType type, const TilesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom);
             virtual ~MapTileResource();
 
-            const std::shared_ptr<const MapTile>& sourceData;
             const std::shared_ptr<const GPUAPI::ResourceInGPU>& resourceInGPU;
 
         friend class OsmAnd::MapRendererResources;
@@ -207,6 +207,8 @@ namespace OsmAnd
         {
         private:
         protected:
+            SymbolsResourcesCollection();
+
             struct CacheLevel
             {
                 mutable QReadWriteLock _lock;
@@ -214,19 +216,22 @@ namespace OsmAnd
             };
             std::array<CacheLevel, ZoomLevelsCount> _cacheLevels;
         public:
-            SymbolsResourcesCollection();
             virtual ~SymbolsResourcesCollection();
 
+            friend class OsmAnd::MapRendererResources;
         friend class OsmAnd::MapRendererResources::SymbolsTileResource;
         };
         class SymbolsTileResource : public BaseTiledResource
         {
         private:
         protected:
+            SymbolsTileResource(MapRendererResources* owner, const TilesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom);
+
             std::shared_ptr<const MapSymbolsTile> _sourceData;
             QList< std::shared_ptr<const MapSymbolsGroup> > _uniqueSymbolsGroups;
             QList< std::shared_ptr<const MapSymbolsGroup> > _sharedSymbolsGroups;
-            QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > _resourcesInGPU;
+            QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > _uniqueResourcesInGPU;
+            QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > _sharedResourcesInGPU;
 
             virtual void detach();
 
@@ -234,13 +239,9 @@ namespace OsmAnd
             virtual bool uploadToGPU();
             virtual void unloadFromGPU();
         public:
-            SymbolsTileResource(MapRendererResources* owner, const TilesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom);
             virtual ~SymbolsTileResource();
 
-            const std::shared_ptr<const MapSymbolsTile>& sourceData;
-            //const QList< std::shared_ptr<const RenderAPI::ResourceInGPU> >& resourcesInGPU;
-
-            friend class OsmAnd::MapRenderer;
+        friend class OsmAnd::MapRendererResources;
         };
 
     private:

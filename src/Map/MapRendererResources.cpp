@@ -887,7 +887,6 @@ void OsmAnd::MapRendererResources::TiledResourcesCollection::verifyNoUploadedTil
 
 OsmAnd::MapRendererResources::MapTileResource::MapTileResource(MapRendererResources* owner, const ResourceType type, const TilesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom)
     : BaseTiledResource(owner, type, collection, tileId, zoom)
-    , sourceData(_sourceData)
     , resourceInGPU(_resourceInGPU)
 {
 }
@@ -959,8 +958,6 @@ OsmAnd::MapRendererResources::SymbolsResourcesCollection::~SymbolsResourcesColle
 
 OsmAnd::MapRendererResources::SymbolsTileResource::SymbolsTileResource(MapRendererResources* owner, const TilesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom)
     : BaseTiledResource(owner, ResourceType::Symbols, collection, tileId, zoom)
-    , sourceData(_sourceData)
-    //, resourcesInGPU(_resourcesInGPU)
 {
 }
 
@@ -1137,7 +1134,7 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
             }
 
             // Save reference to GPU resource
-            _resourcesInGPU.insert(symbol, qMove(resourceInGPU));
+            _uniqueResourcesInGPU.insert(symbol, qMove(resourceInGPU));
         }
 
         // If at least one symbol have failed, interrupt
@@ -1158,14 +1155,8 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
     for(auto itGroup = _uniqueSymbolsGroups.cbegin(); itGroup != _uniqueSymbolsGroups.cend(); ++itGroup)
     {
         const auto& group = *itGroup;
-
         for(auto itSymbol = group->symbols.cbegin(); itSymbol != group->symbols.cend(); ++itSymbol)
-        {
-            const auto& symbol = *itSymbol;
-
-            // After uploading data to GPU, release source
-            std::const_pointer_cast<MapSymbol>(symbol)->releaseNonRetainedData();
-        }
+            std::const_pointer_cast<MapSymbol>(*itSymbol)->releaseNonRetainedData();
     }
     //TODO: remove source from shared symbols
 
@@ -1174,8 +1165,15 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
 
 void OsmAnd::MapRendererResources::SymbolsTileResource::unloadFromGPU()
 {
-    /*assert(_resourceInGPU.use_count() == 1);
-    _resourceInGPU.reset();*/
+    // Unload unique symbols from GPU
+    for(auto itResourceInGPU = _uniqueResourcesInGPU.begin(); itResourceInGPU != _uniqueResourcesInGPU.end(); ++itResourceInGPU)
+    {
+        auto& resourceInGPU = *itResourceInGPU;
+
+        assert(resourceInGPU.use_count() == 1);
+        resourceInGPU.reset();
+    }
+    _uniqueResourcesInGPU.clear();
 }
 
 OsmAnd::MapRendererResources::ResourceRequestTask::ResourceRequestTask(
