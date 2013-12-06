@@ -218,7 +218,7 @@ namespace OsmAnd
             std::array<CacheLevel, ZoomLevelsCount> _cacheLevels;
 
             // GPU resources cache
-            QMutex _gpuResourcesCacheMutex;
+            mutable QMutex _gpuResourcesCacheMutex;
             QHash< std::shared_ptr<const MapSymbol>, std::weak_ptr<const GPUAPI::ResourceInGPU> > _gpuResourcesCache;
         public:
             virtual ~SymbolsResourcesCollection();
@@ -280,6 +280,10 @@ namespace OsmAnd
         // Resources storages:
         TiledResourcesStorage _storage;
 
+        // Symbols:
+        mutable QMutex _symbolsMapMutex;
+        QMap<int, QHash< std::shared_ptr<const MapSymbol>, std::weak_ptr<const GPUAPI::ResourceInGPU> > > _symbolsMap;
+
         void notifyNewResourceAvailable();
 
         // Invalidated resources:
@@ -303,7 +307,7 @@ namespace OsmAnd
         volatile bool _workerThreadIsAlive;
         const std::unique_ptr<Concurrent::Thread> _workerThread;
         Qt::HANDLE _workerThreadId;
-        QMutex _workerThreadWakeupMutex;
+        mutable QMutex _workerThreadWakeupMutex;
         QWaitCondition _workerThreadWakeup;
         void workerThreadProcedure();
 

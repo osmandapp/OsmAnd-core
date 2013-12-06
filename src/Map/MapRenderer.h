@@ -68,10 +68,6 @@ namespace OsmAnd
         // Resources-related:
         std::unique_ptr<MapRendererResources> _resources;
         
-        // Unified map symbols collection:
-        //QMutex _symbolsMutex;
-        //QMap< int, QList< std::weak_ptr<MapSymbol> > > _symbols;
-
         // GPU worker related:
         volatile bool _gpuWorkerIsAlive;
         Qt::HANDLE _gpuWorkerThreadId;

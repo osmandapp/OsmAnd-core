@@ -1141,7 +1141,8 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
     const auto link_ = link.lock();
     const auto collection = static_cast<SymbolsResourcesCollection*>(&link_->collection);
 
-    QList< std::shared_ptr<const MapSymbol> > uploadedSymbols;
+    typedef std::pair< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > UploadedSymbolEntry;
+    QList< UploadedSymbolEntry > uploadedSymbols;
 
     // Upload all unique symbols to GPU
     for(auto itGroup = _uniqueSymbolsGroups.cbegin(); itGroup != _uniqueSymbolsGroups.cend(); ++itGroup)
@@ -1164,7 +1165,7 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
             }
 
             // Mark this symbol as uploaded
-            uploadedSymbols.push_back(symbol);
+            uploadedSymbols.push_back(qMove(UploadedSymbolEntry(symbol, resourceInGPU)));
 
             // Save reference to GPU resource
             _uniqueResourcesInGPU.insert(symbol, qMove(resourceInGPU));
@@ -1196,14 +1197,13 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
                     ok = owner->uploadSymbolToGPU(symbol, sharedResourceInGPU);
 
                     // If upload have failed, stop
-                    if(!ok)
                     {
                         atLeastOneFailed = true;
                         break;
                     }
 
                     // Mark this symbol as uploaded
-                    uploadedSymbols.push_back(symbol);
+                    uploadedSymbols.push_back(qMove(UploadedSymbolEntry(symbol, sharedResourceInGPU)));
 
                     if(itSharedResourceInGPU == collection->_gpuResourcesCache.end())
                         itSharedResourceInGPU = collection->_gpuResourcesCache.insert(symbol, sharedResourceInGPU);
@@ -1227,14 +1227,27 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
     // If at least one symbol failed to upload, entire tile failed to upload, so unload it
     if(atLeastOneFailed)
     {
+        // Clear all references
+        uploadedSymbols.clear();
+
+        // Unload inconsistent data from GPU
         unloadFromGPU();
 
         return false;
     }
 
-    // Since all resources were successfully uploaded, unload their sources
-    for(auto itSymbol = uploadedSymbols.cbegin(); itSymbol != uploadedSymbols.cend(); ++itSymbol)
-        std::const_pointer_cast<MapSymbol>(*itSymbol)->releaseNonRetainedData();
+    // Process uploaded symbols
+    for(auto itSymbolEntry = uploadedSymbols.begin(); itSymbolEntry != uploadedSymbols.end(); ++itSymbolEntry)
+    {
+        // Unload source data from symbol
+        std::const_pointer_cast<MapSymbol>(itSymbolEntry->first)->releaseNonRetainedData();
+
+        // Publish symbol to global map
+        {
+            QMutexLocker scopedLocker(&owner->_symbolsMapMutex);
+            owner->_symbolsMap[itSymbolEntry->first->order].insert(itSymbolEntry->first, itSymbolEntry->second);
+        }
+    }
 
     return true;
 }
@@ -1245,29 +1258,47 @@ void OsmAnd::MapRendererResources::SymbolsTileResource::unloadFromGPU()
     const auto link_ = link.lock();
     const auto collection = static_cast<SymbolsResourcesCollection*>(&link_->collection);
 
-    // Unload unique symbols from GPU
+    // Unload unique symbols
     for(auto itResourceInGPU = _uniqueResourcesInGPU.begin(); itResourceInGPU != _uniqueResourcesInGPU.end(); ++itResourceInGPU)
     {
-        auto& resourceInGPU = *itResourceInGPU;
+        const auto& symbol = itResourceInGPU.key();
+        auto& resourceInGPU = itResourceInGPU.value();
 
+        // Remove symbol from global map
+        {
+            QMutexLocker scopedLocker(&owner->_symbolsMapMutex);
+            owner->_symbolsMap[symbol->order].remove(symbol);
+        }
+
+        // Unload symbol from GPU
         assert(resourceInGPU.use_count() == 1);
         resourceInGPU.reset();
     }
     _uniqueResourcesInGPU.clear();
 
-    // Dereference all shared symbols, and unload them if they've become unique
+    // Unload/dereference shared symbols
     for(auto itResourceInGPU = _sharedResourcesInGPU.begin(); itResourceInGPU != _sharedResourcesInGPU.end(); ++itResourceInGPU)
     {
+        const auto& symbol = itResourceInGPU.key();
         auto& resourceInGPU = itResourceInGPU.value();
 
-        // If this is the last reference, remove from cache
+        // Check if this is the last instance
         if(resourceInGPU.unique())
         {
-            QMutexLocker scopedLocker(&collection->_gpuResourcesCacheMutex);
+            // Since it's the last reference, remove from cache
+            {
+                QMutexLocker scopedLocker(&collection->_gpuResourcesCacheMutex);
+                collection->_gpuResourcesCache.remove(itResourceInGPU.key());
+            }
 
-            collection->_gpuResourcesCache.remove(itResourceInGPU.key());
+            // And also remove from global map
+            {
+            QMutexLocker scopedLocker(&owner->_symbolsMapMutex);
+            owner->_symbolsMap[symbol->order].remove(symbol);
+            }
         }
 
+        // Dereference resource
         resourceInGPU.reset();
     }
     _sharedResourcesInGPU.clear();
