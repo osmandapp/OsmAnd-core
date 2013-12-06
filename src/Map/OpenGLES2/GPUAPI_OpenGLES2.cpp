@@ -1,4 +1,4 @@
-#include "RenderAPI_OpenGLES2.h"
+#include "GPUAPI_OpenGLES2.h"
 
 #include <assert.h>
 
@@ -64,14 +64,14 @@
 #endif // !GL_PALETTE8_RGBA8_OES
 
 #if !defined(OSMAND_TARGET_OS_ios)
-OsmAnd::RenderAPI_OpenGLES2::P_glTexStorage2DEXT_PROC OsmAnd::RenderAPI_OpenGLES2::glTexStorage2DEXT = nullptr;
+OsmAnd::GPUAPI_OpenGLES2::P_glTexStorage2DEXT_PROC OsmAnd::GPUAPI_OpenGLES2::glTexStorage2DEXT = nullptr;
 
-PFNGLBINDVERTEXARRAYOESPROC OsmAnd::RenderAPI_OpenGLES2::glBindVertexArrayOES = nullptr;
-PFNGLDELETEVERTEXARRAYSOESPROC OsmAnd::RenderAPI_OpenGLES2::glDeleteVertexArraysOES = nullptr;
-PFNGLGENVERTEXARRAYSOESPROC OsmAnd::RenderAPI_OpenGLES2::glGenVertexArraysOES = nullptr;
+PFNGLBINDVERTEXARRAYOESPROC OsmAnd::GPUAPI_OpenGLES2::glBindVertexArrayOES = nullptr;
+PFNGLDELETEVERTEXARRAYSOESPROC OsmAnd::GPUAPI_OpenGLES2::glDeleteVertexArraysOES = nullptr;
+PFNGLGENVERTEXARRAYSOESPROC OsmAnd::GPUAPI_OpenGLES2::glGenVertexArraysOES = nullptr;
 #endif //!OSMAND_TARGET_OS_ios
 
-OsmAnd::RenderAPI_OpenGLES2::RenderAPI_OpenGLES2()
+OsmAnd::GPUAPI_OpenGLES2::GPUAPI_OpenGLES2()
     : isSupported_EXT_unpack_subimage(_isSupported_EXT_unpack_subimage)
     , isSupported_EXT_texture_storage(_isSupported_EXT_texture_storage)
     , isSupported_APPLE_texture_max_level(_isSupported_APPLE_texture_max_level)
@@ -83,11 +83,11 @@ OsmAnd::RenderAPI_OpenGLES2::RenderAPI_OpenGLES2()
 {
 }
 
-OsmAnd::RenderAPI_OpenGLES2::~RenderAPI_OpenGLES2()
+OsmAnd::GPUAPI_OpenGLES2::~GPUAPI_OpenGLES2()
 {
 }
 
-GLenum OsmAnd::RenderAPI_OpenGLES2::validateResult()
+GLenum OsmAnd::GPUAPI_OpenGLES2::validateResult()
 {
     auto result = glGetError();
     if(result == GL_NO_ERROR)
@@ -120,7 +120,7 @@ GLenum OsmAnd::RenderAPI_OpenGLES2::validateResult()
     return result;
 }
 
-bool OsmAnd::RenderAPI_OpenGLES2::initialize()
+bool OsmAnd::GPUAPI_OpenGLES2::initialize()
 {
     bool ok;
 
@@ -226,7 +226,7 @@ bool OsmAnd::RenderAPI_OpenGLES2::initialize()
     return true;
 }
 
-bool OsmAnd::RenderAPI_OpenGLES2::release()
+bool OsmAnd::GPUAPI_OpenGLES2::release()
 {
     bool ok;
 
@@ -237,7 +237,7 @@ bool OsmAnd::RenderAPI_OpenGLES2::release()
     return true;
 }
 
-uint32_t OsmAnd::RenderAPI_OpenGLES2::getTileTextureFormat( const std::shared_ptr< const MapTile >& tile )
+uint32_t OsmAnd::GPUAPI_OpenGLES2::getTileTextureFormat( const std::shared_ptr< const MapTile >& tile )
 {
     // If current device supports glTexStorage2D, lets use sized format
     if(isSupported_EXT_texture_storage)
@@ -319,7 +319,7 @@ uint32_t OsmAnd::RenderAPI_OpenGLES2::getTileTextureFormat( const std::shared_pt
     return (static_cast<uint32_t>(format) << 16) | type;
 }
 
-void OsmAnd::RenderAPI_OpenGLES2::allocateTexture2D( GLenum target, GLsizei levels, GLsizei width, GLsizei height, const std::shared_ptr< const MapTile >& tile )
+void OsmAnd::GPUAPI_OpenGLES2::allocateTexture2D( GLenum target, GLsizei levels, GLsizei width, GLsizei height, const std::shared_ptr< const MapTile >& tile )
 {
     const auto encodedFormat = getTileTextureFormat(tile);
 
@@ -354,7 +354,7 @@ void OsmAnd::RenderAPI_OpenGLES2::allocateTexture2D( GLenum target, GLsizei leve
     delete[] dummyBuffer;
 }
 
-void OsmAnd::RenderAPI_OpenGLES2::uploadDataToTexture2D(
+void OsmAnd::GPUAPI_OpenGLES2::uploadDataToTexture2D(
     GLenum target, GLint level,
     GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
     const GLvoid *data, GLsizei dataRowLengthInElements,
@@ -491,7 +491,7 @@ void OsmAnd::RenderAPI_OpenGLES2::uploadDataToTexture2D(
     }
 }
 
-void OsmAnd::RenderAPI_OpenGLES2::setMipMapLevelsLimit( GLenum target, const uint32_t mipmapLevelsCount )
+void OsmAnd::GPUAPI_OpenGLES2::setMipMapLevelsLimit( GLenum target, const uint32_t mipmapLevelsCount )
 {
 #if defined(OSMAND_TARGET_OS_ios)
     // Limit MipMap max level if possible
@@ -505,28 +505,28 @@ void OsmAnd::RenderAPI_OpenGLES2::setMipMapLevelsLimit( GLenum target, const uin
 #endif //OSMAND_TARGET_OS_ios
 }
 
-void OsmAnd::RenderAPI_OpenGLES2::glGenVertexArrays_wrapper( GLsizei n, GLuint* arrays )
+void OsmAnd::GPUAPI_OpenGLES2::glGenVertexArrays_wrapper( GLsizei n, GLuint* arrays )
 {
     GL_CHECK_PRESENT(glGenVertexArraysOES);
 
     glGenVertexArraysOES(n, arrays);
 }
 
-void OsmAnd::RenderAPI_OpenGLES2::glBindVertexArray_wrapper( GLuint array )
+void OsmAnd::GPUAPI_OpenGLES2::glBindVertexArray_wrapper( GLuint array )
 {
     GL_CHECK_PRESENT(glBindVertexArrayOES);
 
     glBindVertexArrayOES(array);
 }
 
-void OsmAnd::RenderAPI_OpenGLES2::glDeleteVertexArrays_wrapper( GLsizei n, const GLuint* arrays )
+void OsmAnd::GPUAPI_OpenGLES2::glDeleteVertexArrays_wrapper( GLsizei n, const GLuint* arrays )
 {
     GL_CHECK_PRESENT(glDeleteVertexArraysOES);
 
     glDeleteVertexArraysOES(n, arrays);
 }
 
-void OsmAnd::RenderAPI_OpenGLES2::preprocessShader( QString& code, const QString& extraHeader /*= QString()*/ )
+void OsmAnd::GPUAPI_OpenGLES2::preprocessShader( QString& code, const QString& extraHeader /*= QString()*/ )
 {
     const auto& shaderHeader = QString::fromLatin1(
         // Declare version of GLSL used
@@ -560,12 +560,12 @@ void OsmAnd::RenderAPI_OpenGLES2::preprocessShader( QString& code, const QString
     code.prepend(shaderHeader);
 }
 
-void OsmAnd::RenderAPI_OpenGLES2::preprocessVertexShader( QString& code )
+void OsmAnd::GPUAPI_OpenGLES2::preprocessVertexShader( QString& code )
 {
     preprocessShader(code);
 }
 
-void OsmAnd::RenderAPI_OpenGLES2::preprocessFragmentShader( QString& code )
+void OsmAnd::GPUAPI_OpenGLES2::preprocessFragmentShader( QString& code )
 {
     const auto& shaderSource = QString::fromLatin1(
         // Make some extensions required
@@ -580,7 +580,7 @@ void OsmAnd::RenderAPI_OpenGLES2::preprocessFragmentShader( QString& code )
     preprocessShader(code, shaderSource);
 }
 
-void OsmAnd::RenderAPI_OpenGLES2::setSampler( GLenum texture, const SamplerType samplerType )
+void OsmAnd::GPUAPI_OpenGLES2::setSampler( GLenum texture, const SamplerType samplerType )
 {
     GL_CHECK_PRESENT(glTexParameteri);
     GL_CHECK_PRESENT(glActiveTexture);
@@ -644,7 +644,7 @@ void OsmAnd::RenderAPI_OpenGLES2::setSampler( GLenum texture, const SamplerType 
     }
 }
 
-void OsmAnd::RenderAPI_OpenGLES2::optimizeVertexShader( QString& code )
+void OsmAnd::GPUAPI_OpenGLES2::optimizeVertexShader( QString& code )
 {
     /*
     auto context = glslopt_initialize(true);
@@ -662,7 +662,7 @@ void OsmAnd::RenderAPI_OpenGLES2::optimizeVertexShader( QString& code )
     */
 }
 
-void OsmAnd::RenderAPI_OpenGLES2::optimizeFragmentShader( QString& code )
+void OsmAnd::GPUAPI_OpenGLES2::optimizeFragmentShader( QString& code )
 {
     /*
     auto context = glslopt_initialize(true);

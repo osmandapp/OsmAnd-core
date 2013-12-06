@@ -36,7 +36,7 @@
 
 #include "OsmAndCore.h"
 #include "MapRendererState.h"
-#include "RenderAPI.h"
+#include "GPUAPI.h"
 #include "TilesCollection.h"
 #include "Concurrent.h"
 
@@ -186,7 +186,7 @@ namespace OsmAnd
         private:
         protected:
             std::shared_ptr<const MapTile> _sourceData;
-            std::shared_ptr<const RenderAPI::ResourceInGPU> _resourceInGPU;
+            std::shared_ptr<const GPUAPI::ResourceInGPU> _resourceInGPU;
 
             virtual bool obtainData(bool& dataAvailable);
             virtual bool uploadToGPU();
@@ -196,7 +196,7 @@ namespace OsmAnd
             virtual ~MapTileResource();
 
             const std::shared_ptr<const MapTile>& sourceData;
-            const std::shared_ptr<const RenderAPI::ResourceInGPU>& resourceInGPU;
+            const std::shared_ptr<const GPUAPI::ResourceInGPU>& resourceInGPU;
 
         friend class OsmAnd::MapRendererResources;
         };
@@ -226,7 +226,7 @@ namespace OsmAnd
             std::shared_ptr<const MapSymbolsTile> _sourceData;
             QList< std::shared_ptr<const MapSymbolsGroup> > _uniqueSymbolsGroups;
             QList< std::shared_ptr<const MapSymbolsGroup> > _sharedSymbolsGroups;
-            QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const RenderAPI::ResourceInGPU> > _resourcesInGPU;
+            QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > _resourcesInGPU;
 
             virtual void detach();
 
@@ -304,14 +304,14 @@ namespace OsmAnd
         // Default resources
         bool initializeDefaultResources();
         bool releaseDefaultResources();
-        std::shared_ptr<const RenderAPI::ResourceInGPU> _processingTileStub;
-        std::shared_ptr<const RenderAPI::ResourceInGPU> _unavailableTileStub;
+        std::shared_ptr<const GPUAPI::ResourceInGPU> _processingTileStub;
+        std::shared_ptr<const GPUAPI::ResourceInGPU> _unavailableTileStub;
     protected:
         MapRendererResources(MapRenderer* const owner);
 
         // Resources management:
-        bool uploadTileToGPU(const std::shared_ptr<const MapTile>& mapTile, std::shared_ptr<const RenderAPI::ResourceInGPU>& outResourceInGPU);
-        bool uploadSymbolToGPU(const std::shared_ptr<const MapSymbol>& mapSymbol, std::shared_ptr<const RenderAPI::ResourceInGPU>& outResourceInGPU);
+        bool uploadTileToGPU(const std::shared_ptr<const MapTile>& mapTile, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU);
+        bool uploadSymbolToGPU(const std::shared_ptr<const MapSymbol>& mapSymbol, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU);
 
         void updateBindings(const MapRendererState& state, const uint32_t updatedMask);
         void updateActiveZone(const QSet<TileId>& tiles, const ZoomLevel zoom);
@@ -326,8 +326,8 @@ namespace OsmAnd
         MapRenderer* const renderer;
 
         // Default resources
-        const std::shared_ptr<const RenderAPI::ResourceInGPU>& processingTileStub;
-        const std::shared_ptr<const RenderAPI::ResourceInGPU>& unavailableTileStub;
+        const std::shared_ptr<const GPUAPI::ResourceInGPU>& processingTileStub;
+        const std::shared_ptr<const GPUAPI::ResourceInGPU>& unavailableTileStub;
 
         std::shared_ptr<const TiledResourcesCollection> getCollection(const ResourceType type, const std::shared_ptr<IMapProvider>& ofProvider) const;
 

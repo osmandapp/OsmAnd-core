@@ -1,16 +1,16 @@
-#include "RenderAPI.h"
+#include "GPUAPI.h"
 
 #include <cassert>
 
 #include "Logging.h"
 
-OsmAnd::RenderAPI::RenderAPI()
+OsmAnd::GPUAPI::GPUAPI()
     : _isSupported_8bitPaletteRGBA8(false)
     , isSupported_8bitPaletteRGBA8(_isSupported_8bitPaletteRGBA8)
 {
 }
 
-OsmAnd::RenderAPI::~RenderAPI()
+OsmAnd::GPUAPI::~GPUAPI()
 {
     const int resourcesRemaining = 
 #if defined(DEBUG) || defined(_DEBUG)
@@ -23,17 +23,17 @@ OsmAnd::RenderAPI::~RenderAPI()
     assert(resourcesRemaining == 0);
 }
 
-bool OsmAnd::RenderAPI::initialize()
+bool OsmAnd::GPUAPI::initialize()
 {
     return true;
 }
 
-bool OsmAnd::RenderAPI::release()
+bool OsmAnd::GPUAPI::release()
 {
     return true;
 }
 
-std::shared_ptr<OsmAnd::RenderAPI::AtlasTexturesPool> OsmAnd::RenderAPI::obtainAtlasTexturesPool( const AtlasTypeId& atlasTypeId )
+std::shared_ptr<OsmAnd::GPUAPI::AtlasTexturesPool> OsmAnd::GPUAPI::obtainAtlasTexturesPool( const AtlasTypeId& atlasTypeId )
 {
     auto itPool = _atlasTexturesPools.constFind(atlasTypeId);
     if(itPool == _atlasTexturesPools.cend())
@@ -45,12 +45,12 @@ std::shared_ptr<OsmAnd::RenderAPI::AtlasTexturesPool> OsmAnd::RenderAPI::obtainA
     return *itPool;
 }
 
-std::shared_ptr<OsmAnd::RenderAPI::SlotOnAtlasTextureInGPU> OsmAnd::RenderAPI::allocateTile( const std::shared_ptr<AtlasTexturesPool>& pool, AtlasTexturesPool::AtlasTextureAllocatorSignature atlasTextureAllocator )
+std::shared_ptr<OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU> OsmAnd::GPUAPI::allocateTile( const std::shared_ptr<AtlasTexturesPool>& pool, AtlasTexturesPool::AtlasTextureAllocatorSignature atlasTextureAllocator )
 {
     return pool->allocateTile(atlasTextureAllocator);
 }
 
-OsmAnd::RenderAPI::ResourceInGPU::ResourceInGPU( const Type type_, RenderAPI* api_, const RefInGPU& refInGPU_ )
+OsmAnd::GPUAPI::ResourceInGPU::ResourceInGPU( const Type type_, GPUAPI* api_, const RefInGPU& refInGPU_ )
     : _refInGPU(refInGPU_)
     , api(api_)
     , type(type_)
@@ -67,7 +67,7 @@ OsmAnd::RenderAPI::ResourceInGPU::ResourceInGPU( const Type type_, RenderAPI* ap
     }
 }
 
-OsmAnd::RenderAPI::ResourceInGPU::~ResourceInGPU()
+OsmAnd::GPUAPI::ResourceInGPU::~ResourceInGPU()
 {
     // If we have reference to 
     if(_refInGPU)
@@ -84,7 +84,7 @@ OsmAnd::RenderAPI::ResourceInGPU::~ResourceInGPU()
     }
 }
 
-OsmAnd::RenderAPI::TextureInGPU::TextureInGPU(RenderAPI* api_, const RefInGPU& refInGPU_, const unsigned int textureSize_, const unsigned int mipmapLevels_)
+OsmAnd::GPUAPI::TextureInGPU::TextureInGPU(GPUAPI* api_, const RefInGPU& refInGPU_, const unsigned int textureSize_, const unsigned int mipmapLevels_)
     : ResourceInGPU(Type::Texture, api_, refInGPU_)
     , textureSize(textureSize_)
     , mipmapLevels(mipmapLevels_)
@@ -93,21 +93,21 @@ OsmAnd::RenderAPI::TextureInGPU::TextureInGPU(RenderAPI* api_, const RefInGPU& r
 {
 }
 
-OsmAnd::RenderAPI::TextureInGPU::~TextureInGPU()
+OsmAnd::GPUAPI::TextureInGPU::~TextureInGPU()
 {
 }
 
-OsmAnd::RenderAPI::ArrayBufferInGPU::ArrayBufferInGPU(RenderAPI* api_, const RefInGPU& refInGPU_, const unsigned int itemsCount_)
+OsmAnd::GPUAPI::ArrayBufferInGPU::ArrayBufferInGPU(GPUAPI* api_, const RefInGPU& refInGPU_, const unsigned int itemsCount_)
     : ResourceInGPU(Type::ArrayBuffer, api_, refInGPU_)
     , itemsCount(itemsCount_)
 {
 }
 
-OsmAnd::RenderAPI::ArrayBufferInGPU::~ArrayBufferInGPU()
+OsmAnd::GPUAPI::ArrayBufferInGPU::~ArrayBufferInGPU()
 {
 }
 
-OsmAnd::RenderAPI::AtlasTextureInGPU::AtlasTextureInGPU(RenderAPI* api_, const RefInGPU& refInGPU_, const unsigned int textureSize_, const unsigned int mipmapLevels_, const std::shared_ptr<AtlasTexturesPool>& pool_)
+OsmAnd::GPUAPI::AtlasTextureInGPU::AtlasTextureInGPU(GPUAPI* api_, const RefInGPU& refInGPU_, const unsigned int textureSize_, const unsigned int mipmapLevels_, const std::shared_ptr<AtlasTexturesPool>& pool_)
     : TextureInGPU(api_, refInGPU_, textureSize_, mipmapLevels_)
     , tileSize(pool_->typeId.tileSize)
     , padding(pool_->typeId.tilePadding)
@@ -118,7 +118,7 @@ OsmAnd::RenderAPI::AtlasTextureInGPU::AtlasTextureInGPU(RenderAPI* api_, const R
 {
 }
 
-OsmAnd::RenderAPI::AtlasTextureInGPU::~AtlasTextureInGPU()
+OsmAnd::GPUAPI::AtlasTextureInGPU::~AtlasTextureInGPU()
 {
     const int tilesRemaining = 
 #if defined(DEBUG) || defined(_DEBUG)
@@ -147,7 +147,7 @@ OsmAnd::RenderAPI::AtlasTextureInGPU::~AtlasTextureInGPU()
     }
 }
 
-OsmAnd::RenderAPI::SlotOnAtlasTextureInGPU::SlotOnAtlasTextureInGPU(const std::shared_ptr<AtlasTextureInGPU>& atlas_, const unsigned int slotIndex_)
+OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU::SlotOnAtlasTextureInGPU(const std::shared_ptr<AtlasTextureInGPU>& atlas_, const unsigned int slotIndex_)
     : ResourceInGPU(Type::SlotOnAtlasTexture, atlas_->api, atlas_->refInGPU)
     , atlasTexture(atlas_)
     , slotIndex(slotIndex_)
@@ -163,7 +163,7 @@ OsmAnd::RenderAPI::SlotOnAtlasTextureInGPU::SlotOnAtlasTextureInGPU(const std::s
     }
 }
 
-OsmAnd::RenderAPI::SlotOnAtlasTextureInGPU::~SlotOnAtlasTextureInGPU()
+OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU::~SlotOnAtlasTextureInGPU()
 {
     // Remove reference of this tile to atlas texture
     {
@@ -186,7 +186,7 @@ OsmAnd::RenderAPI::SlotOnAtlasTextureInGPU::~SlotOnAtlasTextureInGPU()
     _refInGPU = nullptr;
 }
 
-OsmAnd::RenderAPI::AtlasTexturesPool::AtlasTexturesPool( RenderAPI* api_, const AtlasTypeId& typeId_ )
+OsmAnd::GPUAPI::AtlasTexturesPool::AtlasTexturesPool( GPUAPI* api_, const AtlasTypeId& typeId_ )
     : _lastNonFullAtlasTexture(nullptr)
     , _firstUnusedSlotIndex(0)
     , api(api_)
@@ -194,11 +194,11 @@ OsmAnd::RenderAPI::AtlasTexturesPool::AtlasTexturesPool( RenderAPI* api_, const 
 {
 }
 
-OsmAnd::RenderAPI::AtlasTexturesPool::~AtlasTexturesPool()
+OsmAnd::GPUAPI::AtlasTexturesPool::~AtlasTexturesPool()
 {
 }
 
-std::shared_ptr<OsmAnd::RenderAPI::SlotOnAtlasTextureInGPU> OsmAnd::RenderAPI::AtlasTexturesPool::allocateTile( AtlasTextureAllocatorSignature atlasTextureAllocator )
+std::shared_ptr<OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU> OsmAnd::GPUAPI::AtlasTexturesPool::allocateTile( AtlasTextureAllocatorSignature atlasTextureAllocator )
 {
     // First look for freed slots
     {

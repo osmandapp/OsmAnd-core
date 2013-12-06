@@ -31,7 +31,7 @@
 #include <MapTypes.h>
 #include <Concurrent.h>
 #include <IMapRenderer.h>
-#include <RenderAPI.h>
+#include <GPUAPI.h>
 #include <IMapTileProvider.h>
 #include <TilesCollection.h>
 #include "MapRendererResources.h"
@@ -82,14 +82,14 @@ namespace OsmAnd
 
         // General:
         QSet<TileId> _uniqueTiles;
-        std::unique_ptr<RenderAPI> _renderAPI;
+        std::unique_ptr<GPUAPI> _gpuAPI;
         void invalidateFrame();
         Qt::HANDLE _renderThreadId;
     protected:
         MapRenderer();
 
         // General:
-        const std::unique_ptr<RenderAPI>& renderAPI;
+        const std::unique_ptr<GPUAPI>& gpuAPI;
 
         // Configuration-related:
         const MapRendererConfiguration& currentConfiguration;
@@ -127,7 +127,7 @@ namespace OsmAnd
         bool convertMapTile(const std::shared_ptr<const MapTile>& input, std::shared_ptr<const MapTile>& output) const;
 
         // General:
-        virtual RenderAPI* allocateRenderAPI() = 0;
+        virtual GPUAPI* allocateGPUAPI() = 0;
 
         // Customization points:
         virtual bool preInitializeRendering();

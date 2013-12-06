@@ -1,16 +1,6 @@
 #include "AtlasMapRenderer_OpenGLES2.h"
 
-#include <assert.h>
-
-#include <QtMath>
-
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/transform.hpp>
-
-#include <SkBitmap.h>
-
-#include "IMapTileProvider.h"
+#include "OpenGLES2/GPUAPI_OpenGLES2.h"
 #include "Utilities.h"
 #include "Logging.h"
 
@@ -22,9 +12,9 @@ OsmAnd::AtlasMapRenderer_OpenGLES2::~AtlasMapRenderer_OpenGLES2()
 {
 }
 
-OsmAnd::RenderAPI* OsmAnd::AtlasMapRenderer_OpenGLES2::allocateRenderAPI()
+OsmAnd::GPUAPI* OsmAnd::AtlasMapRenderer_OpenGLES2::allocateGPUAPI()
 {
-    auto api = new RenderAPI_OpenGLES2();
+    auto api = new GPUAPI_OpenGLES2();
     api->initialize();
     return api;
 }

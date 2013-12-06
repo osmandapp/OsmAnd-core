@@ -1,17 +1,6 @@
 #include "AtlasMapRenderer_OpenGL.h"
 
-#include <cassert>
-
-#include <OsmAndCore/QtExtensions.h>
-#include <QtMath>
-
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/transform.hpp>
-
-#include <SkBitmap.h>
-
-#include "IMapTileProvider.h"
+#include "OpenGL/GPUAPI_OpenGL.h"
 #include "Utilities.h"
 #include "Logging.h"
 
@@ -23,9 +12,9 @@ OsmAnd::AtlasMapRenderer_OpenGL::~AtlasMapRenderer_OpenGL()
 {
 }
 
-OsmAnd::RenderAPI* OsmAnd::AtlasMapRenderer_OpenGL::allocateRenderAPI()
+OsmAnd::GPUAPI* OsmAnd::AtlasMapRenderer_OpenGL::allocateGPUAPI()
 {
-    auto api = new RenderAPI_OpenGL();
+    auto api = new GPUAPI_OpenGL();
     api->initialize();
     return api;
 }

@@ -19,8 +19,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _OSMAND_CORE_RENDER_API_H_
-#define _OSMAND_CORE_RENDER_API_H_
+#ifndef _OSMAND_CORE_GPU_API_H_
+#define _OSMAND_CORE_GPU_API_H_
 
 #include <OsmAndCore/stdlib_common.h>
 #include <functional>
@@ -45,7 +45,7 @@ namespace OsmAnd
     class MapTile;
     class MapSymbol;
 
-    class RenderAPI
+    class GPUAPI
     {
     public:
         typedef void* RefInGPU;
@@ -61,13 +61,13 @@ namespace OsmAnd
             };
         private:
         protected:
-            ResourceInGPU(const Type type, RenderAPI* api, const RefInGPU& refInGPU);
+            ResourceInGPU(const Type type, GPUAPI* api, const RefInGPU& refInGPU);
 
             RefInGPU _refInGPU;
         public:
             virtual ~ResourceInGPU();
 
-            RenderAPI* const api;
+            GPUAPI* const api;
             const Type type;
             const RefInGPU& refInGPU;
         };
@@ -77,7 +77,7 @@ namespace OsmAnd
         private:
         protected:
         public:
-            TextureInGPU(RenderAPI* api, const RefInGPU& refInGPU, const unsigned int textureSize, const unsigned int mipmapLevels);
+            TextureInGPU(GPUAPI* api, const RefInGPU& refInGPU, const unsigned int textureSize, const unsigned int mipmapLevels);
             virtual ~TextureInGPU();
 
             const unsigned int textureSize;
@@ -91,7 +91,7 @@ namespace OsmAnd
         private:
         protected:
         public:
-            ArrayBufferInGPU(RenderAPI* api, const RefInGPU& refInGPU, const unsigned int itemsCount);
+            ArrayBufferInGPU(GPUAPI* api, const RefInGPU& refInGPU, const unsigned int itemsCount);
             virtual ~ArrayBufferInGPU();
 
             const unsigned int itemsCount;
@@ -156,16 +156,16 @@ namespace OsmAnd
             std::weak_ptr<AtlasTextureInGPU> _lastNonFullAtlasTextureWeak;
             uint32_t _firstUnusedSlotIndex;
         protected:
-            AtlasTexturesPool(RenderAPI* api, const AtlasTypeId& typeId);
+            AtlasTexturesPool(GPUAPI* api, const AtlasTypeId& typeId);
 
             std::shared_ptr<SlotOnAtlasTextureInGPU> allocateTile(AtlasTextureAllocatorSignature atlasTextureAllocator);
         public:
             virtual ~AtlasTexturesPool();
 
-            RenderAPI* const api;
+            GPUAPI* const api;
             const AtlasTypeId typeId;
 
-        friend OsmAnd::RenderAPI;
+        friend OsmAnd::GPUAPI;
         };
 
         class AtlasTextureInGPU : public TextureInGPU
@@ -179,7 +179,7 @@ namespace OsmAnd
             QAtomicInt _tilesCounter;
 #endif
         public:
-            AtlasTextureInGPU(RenderAPI* api, const RefInGPU& refInGPU, const unsigned int textureSize, const unsigned int mipmapLevels, const std::shared_ptr<AtlasTexturesPool>& pool);
+            AtlasTextureInGPU(GPUAPI* api, const RefInGPU& refInGPU, const unsigned int textureSize, const unsigned int mipmapLevels, const std::shared_ptr<AtlasTexturesPool>& pool);
             virtual ~AtlasTextureInGPU();
 
             const unsigned int tileSize;
@@ -190,7 +190,7 @@ namespace OsmAnd
 
             const std::shared_ptr<AtlasTexturesPool> pool;
 
-        friend OsmAnd::RenderAPI::SlotOnAtlasTextureInGPU;
+        friend OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU;
         };
 
         class SlotOnAtlasTextureInGPU : public ResourceInGPU
@@ -215,7 +215,7 @@ namespace OsmAnd
 
         QHash< AtlasTypeId, std::shared_ptr<AtlasTexturesPool> > _atlasTexturesPools;
     protected:
-        RenderAPI();
+        GPUAPI();
 
         std::shared_ptr<AtlasTexturesPool> obtainAtlasTexturesPool(const AtlasTypeId& atlasTypeId);
         std::shared_ptr<SlotOnAtlasTextureInGPU> allocateTile(const std::shared_ptr<AtlasTexturesPool>& pool, AtlasTexturesPool::AtlasTextureAllocatorSignature atlasTextureAllocator );
@@ -224,7 +224,7 @@ namespace OsmAnd
 
         bool _isSupported_8bitPaletteRGBA8;
     public:
-        virtual ~RenderAPI();
+        virtual ~GPUAPI();
 
         const bool& isSupported_8bitPaletteRGBA8;
 
@@ -234,8 +234,8 @@ namespace OsmAnd
         virtual bool uploadTileToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU) = 0;
         virtual bool uploadSymbolToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU) = 0;
 
-    friend OsmAnd::RenderAPI::ResourceInGPU;
+    friend OsmAnd::GPUAPI::ResourceInGPU;
     };
 }
 
-#endif // _OSMAND_CORE_RENDER_API_H_
+#endif // _OSMAND_CORE_GPU_API_H_

@@ -19,8 +19,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _OSMAND_CORE_RENDER_API__OPENGL_BASE_H_
-#define _OSMAND_CORE_RENDER_API__OPENGL_BASE_H_
+#ifndef _OSMAND_CORE_GPU_API__OPENGL_COMMON_H_
+#define _OSMAND_CORE_GPU_API__OPENGL_COMMON_H_
 
 #include <OsmAndCore/stdlib_common.h>
 #include <type_traits>
@@ -59,13 +59,13 @@
 
 #include <OsmAndCore.h>
 #include <CommonTypes.h>
-#include <RenderAPI.h>
+#include <GPUAPI.h>
 
 #if defined(_DEBUG) || defined(DEBUG)
 #   define GL_CHECK_RESULT \
-        static_cast<RenderAPI_OpenGL_Common*>(this->renderAPI.get())->validateResult()
+        static_cast<GPUAPI_OpenGL_Common*>(this->gpuAPI.get())->validateResult()
 #   define GL_GET_RESULT \
-        static_cast<RenderAPI_OpenGL_Common*>(this->renderAPI.get())->validateResult()
+        static_cast<GPUAPI_OpenGL_Common*>(this->gpuAPI.get())->validateResult()
 #   define GL_CHECK_PRESENT(x)                                                                     \
         {                                                                                          \
             static bool __checked_presence_of_##x = std::is_function<decltype(x)>::value;          \
@@ -89,7 +89,7 @@ namespace OsmAnd
         Uniform
     };
 
-    class RenderAPI_OpenGL_Common : public RenderAPI
+    class GPUAPI_OpenGL_Common : public GPUAPI
     {
     private:
         bool uploadTileAsTextureToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
@@ -105,8 +105,8 @@ namespace OsmAnd
         
         virtual bool releaseResourceInGPU(const ResourceInGPU::Type type, const RefInGPU& refInGPU);
     public:
-        RenderAPI_OpenGL_Common();
-        virtual ~RenderAPI_OpenGL_Common();
+        GPUAPI_OpenGL_Common();
+        virtual ~GPUAPI_OpenGL_Common();
 
         enum {
             //BaseBitmapAtlasTilePadding = 2,
@@ -165,4 +165,4 @@ namespace OsmAnd
 
 }
 
-#endif // _OSMAND_CORE_RENDER_API__OPENGL_BASE_H_
+#endif // _OSMAND_CORE_GPU_API__OPENGL_COMMON_H_

@@ -25,19 +25,19 @@
 #include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
-#include <QMap>
 
-#include <OsmAndCore.h>
-#include <OsmAndCore/CommonTypes.h>
-#include <OpenGL_Common/AtlasMapRenderer_OpenGL_Common.h>
-#include <OpenGL/RenderAPI_OpenGL.h>
+#include "OsmAndCore.h"
+#include "CommonTypes.h"
+#include "OpenGL_Common/AtlasMapRenderer_OpenGL_Common.h"
 
-namespace OsmAnd {
+namespace OsmAnd
+{
+    class GPUAPI;
 
     class OSMAND_CORE_API AtlasMapRenderer_OpenGL : public AtlasMapRenderer_OpenGL_Common
     {
     protected:
-        virtual RenderAPI* allocateRenderAPI();
+        virtual GPUAPI* allocateGPUAPI();
     public:
         AtlasMapRenderer_OpenGL();
         virtual ~AtlasMapRenderer_OpenGL();

@@ -1,4 +1,4 @@
-#include "RenderAPI_OpenGL.h"
+#include "GPUAPI_OpenGL.h"
 
 #include <cassert>
 
@@ -24,7 +24,7 @@
 #   define GL_GET_RESULT glGetError()
 #endif
 
-OsmAnd::RenderAPI_OpenGL::RenderAPI_OpenGL()
+OsmAnd::GPUAPI_OpenGL::GPUAPI_OpenGL()
 {
     _textureSamplers.fill(0);
 
@@ -32,11 +32,11 @@ OsmAnd::RenderAPI_OpenGL::RenderAPI_OpenGL()
     _isSupported_textureLod = true;
 }
 
-OsmAnd::RenderAPI_OpenGL::~RenderAPI_OpenGL()
+OsmAnd::GPUAPI_OpenGL::~GPUAPI_OpenGL()
 {
 }
 
-GLenum OsmAnd::RenderAPI_OpenGL::validateResult()
+GLenum OsmAnd::GPUAPI_OpenGL::validateResult()
 {
     GL_CHECK_PRESENT(glGetError);
 
@@ -49,11 +49,11 @@ GLenum OsmAnd::RenderAPI_OpenGL::validateResult()
     return result;
 }
 
-bool OsmAnd::RenderAPI_OpenGL::initialize()
+bool OsmAnd::GPUAPI_OpenGL::initialize()
 {
     bool ok;
 
-    ok = RenderAPI_OpenGL_Common::initialize();
+    ok = GPUAPI_OpenGL_Common::initialize();
     if(!ok)
         return false;
 
@@ -190,7 +190,7 @@ bool OsmAnd::RenderAPI_OpenGL::initialize()
     return true;
 }
 
-bool OsmAnd::RenderAPI_OpenGL::release()
+bool OsmAnd::GPUAPI_OpenGL::release()
 {
     bool ok;
 
@@ -203,14 +203,14 @@ bool OsmAnd::RenderAPI_OpenGL::release()
         _textureSamplers.fill(0);
     }
     
-    ok = RenderAPI_OpenGL_Common::release();
+    ok = GPUAPI_OpenGL_Common::release();
     if(!ok)
         return false;
 
     return true;
 }
 
-uint32_t OsmAnd::RenderAPI_OpenGL::getTileTextureFormat( const std::shared_ptr< const MapTile >& tile )
+uint32_t OsmAnd::GPUAPI_OpenGL::getTileTextureFormat( const std::shared_ptr< const MapTile >& tile )
 {
     GLenum textureFormat = GL_INVALID_ENUM;
 
@@ -241,7 +241,7 @@ uint32_t OsmAnd::RenderAPI_OpenGL::getTileTextureFormat( const std::shared_ptr< 
     return static_cast<uint32_t>(textureFormat);
 }
 
-void OsmAnd::RenderAPI_OpenGL::allocateTexture2D( GLenum target, GLsizei levels, GLsizei width, GLsizei height, const std::shared_ptr< const MapTile >& forTile )
+void OsmAnd::GPUAPI_OpenGL::allocateTexture2D( GLenum target, GLsizei levels, GLsizei width, GLsizei height, const std::shared_ptr< const MapTile >& forTile )
 {
     GLenum textureFormat = static_cast<GLenum>(getTileTextureFormat(forTile));
 
@@ -249,7 +249,7 @@ void OsmAnd::RenderAPI_OpenGL::allocateTexture2D( GLenum target, GLsizei levels,
     GL_CHECK_RESULT;
 }
 
-void OsmAnd::RenderAPI_OpenGL::uploadDataToTexture2D(
+void OsmAnd::GPUAPI_OpenGL::uploadDataToTexture2D(
     GLenum target, GLint level,
     GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
     const GLvoid *data, GLsizei dataRowLengthInElements,
@@ -297,7 +297,7 @@ void OsmAnd::RenderAPI_OpenGL::uploadDataToTexture2D(
     GL_CHECK_RESULT;
 }
 
-void OsmAnd::RenderAPI_OpenGL::setMipMapLevelsLimit( GLenum target, const uint32_t mipmapLevelsCount )
+void OsmAnd::GPUAPI_OpenGL::setMipMapLevelsLimit( GLenum target, const uint32_t mipmapLevelsCount )
 {
     GL_CHECK_PRESENT(glTexParameteri);
 
@@ -305,28 +305,28 @@ void OsmAnd::RenderAPI_OpenGL::setMipMapLevelsLimit( GLenum target, const uint32
     GL_CHECK_RESULT;
 }
 
-void OsmAnd::RenderAPI_OpenGL::glGenVertexArrays_wrapper( GLsizei n, GLuint* arrays )
+void OsmAnd::GPUAPI_OpenGL::glGenVertexArrays_wrapper( GLsizei n, GLuint* arrays )
 {
     GL_CHECK_PRESENT(glGenVertexArrays);
 
     glGenVertexArrays(n, arrays);
 }
 
-void OsmAnd::RenderAPI_OpenGL::glBindVertexArray_wrapper( GLuint array )
+void OsmAnd::GPUAPI_OpenGL::glBindVertexArray_wrapper( GLuint array )
 {
     GL_CHECK_PRESENT(glBindVertexArray);
 
     glBindVertexArray(array);
 }
 
-void OsmAnd::RenderAPI_OpenGL::glDeleteVertexArrays_wrapper( GLsizei n, const GLuint* arrays )
+void OsmAnd::GPUAPI_OpenGL::glDeleteVertexArrays_wrapper( GLsizei n, const GLuint* arrays )
 {
     GL_CHECK_PRESENT(glDeleteVertexArrays);
 
     glDeleteVertexArrays(n, arrays);
 }
 
-void OsmAnd::RenderAPI_OpenGL::preprocessShader( QString& code )
+void OsmAnd::GPUAPI_OpenGL::preprocessShader( QString& code )
 {
     const auto& shaderSource = QString::fromLatin1(
         // Declare version of GLSL used
@@ -351,12 +351,12 @@ void OsmAnd::RenderAPI_OpenGL::preprocessShader( QString& code )
     code.prepend(shaderSourcePreprocessed);
 }
 
-void OsmAnd::RenderAPI_OpenGL::preprocessVertexShader( QString& code )
+void OsmAnd::GPUAPI_OpenGL::preprocessVertexShader( QString& code )
 {
     preprocessShader(code);
 }
 
-void OsmAnd::RenderAPI_OpenGL::preprocessFragmentShader( QString& code )
+void OsmAnd::GPUAPI_OpenGL::preprocessFragmentShader( QString& code )
 {
     QString common;
     preprocessShader(common);
@@ -371,7 +371,7 @@ void OsmAnd::RenderAPI_OpenGL::preprocessFragmentShader( QString& code )
     code.prepend(common);
 }
 
-void OsmAnd::RenderAPI_OpenGL::setSampler( GLenum texture, const SamplerType samplerType )
+void OsmAnd::GPUAPI_OpenGL::setSampler( GLenum texture, const SamplerType samplerType )
 {
     GL_CHECK_PRESENT(glBindSampler);
 
@@ -379,7 +379,7 @@ void OsmAnd::RenderAPI_OpenGL::setSampler( GLenum texture, const SamplerType sam
     GL_CHECK_RESULT;
 }
 
-void OsmAnd::RenderAPI_OpenGL::optimizeVertexShader( QString& code )
+void OsmAnd::GPUAPI_OpenGL::optimizeVertexShader( QString& code )
 {
     // GLSL 4.30 not yet supported by upstream
     /*
@@ -398,7 +398,7 @@ void OsmAnd::RenderAPI_OpenGL::optimizeVertexShader( QString& code )
     */
 }
 
-void OsmAnd::RenderAPI_OpenGL::optimizeFragmentShader( QString& code )
+void OsmAnd::GPUAPI_OpenGL::optimizeFragmentShader( QString& code )
 {
     // GLSL 4.30 not yet supported by upstream
     /*

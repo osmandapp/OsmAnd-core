@@ -19,11 +19,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _OSMAND_CORE_RENDER_API__OPENGLES2_H_
-#define _OSMAND_CORE_RENDER_API__OPENGLES2_H_
+#ifndef _OSMAND_CORE_GPU_API__OPENGL_H_
+#define _OSMAND_CORE_GPU_API__OPENGL_H_
 
-#include <cstdint>
-#include <memory>
+#include <OsmAndCore/stdlib_common.h>
 #include <array>
 
 #include <OsmAndCore/QtExtensions.h>
@@ -33,48 +32,22 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OpenGL_Common/RenderAPI_OpenGL_Common.h>
+#include <OpenGL_Common/GPUAPI_OpenGL_Common.h>
 
 namespace OsmAnd {
 
-    class OSMAND_CORE_API RenderAPI_OpenGLES2 : public RenderAPI_OpenGL_Common
+    class OSMAND_CORE_API GPUAPI_OpenGL : public GPUAPI_OpenGL_Common
     {
-    public:
-#if !defined(OSMAND_TARGET_OS_ios)
-        typedef void (GL_APIENTRYP P_glTexStorage2DEXT_PROC)(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
-        static P_glTexStorage2DEXT_PROC glTexStorage2DEXT;
-
-        static PFNGLBINDVERTEXARRAYOESPROC glBindVertexArrayOES;
-        static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArraysOES;
-        static PFNGLGENVERTEXARRAYSOESPROC glGenVertexArraysOES;
-#endif // !OSMAND_TARGET_OS_ios
     private:
-        bool _isSupported_EXT_unpack_subimage;
-        bool _isSupported_EXT_texture_storage;
-        bool _isSupported_APPLE_texture_max_level;
-        bool _isSupported_OES_vertex_array_object;
-        bool _isSupported_OES_rgb8_rgba8;
-        bool _isSupported_OES_texture_float;
-        bool _isSupported_EXT_texture_rg;
-        bool _isSupported_EXT_shader_texture_lod;
-
-        void preprocessShader(QString& code, const QString& extraHeader = QString());
+        void preprocessShader(QString& code);
     protected:
+        std::array< GLuint, SamplerTypesCount > _textureSamplers;
     public:
-        RenderAPI_OpenGLES2();
-        virtual ~RenderAPI_OpenGLES2();
+        GPUAPI_OpenGL();
+        virtual ~GPUAPI_OpenGL();
 
         virtual bool initialize();
         virtual bool release();
-
-        const bool& isSupported_EXT_unpack_subimage;
-        const bool& isSupported_EXT_texture_storage;
-        const bool& isSupported_APPLE_texture_max_level;
-        const bool& isSupported_OES_vertex_array_object;
-        const bool& isSupported_OES_rgb8_rgba8;
-        const bool& isSupported_OES_texture_float;
-        const bool& isSupported_EXT_texture_rg;
-        const bool& isSupported_EXT_shader_texture_lod;
 
         virtual GLenum validateResult();
 
@@ -100,4 +73,4 @@ namespace OsmAnd {
 
 }
 
-#endif // _OSMAND_CORE_RENDER_API__OPENGLES2_H_
+#endif // _OSMAND_CORE_GPU_API__OPENGL_H_

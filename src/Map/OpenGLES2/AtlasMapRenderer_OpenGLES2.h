@@ -22,23 +22,22 @@
 #ifndef _OSMAND_CORE_ATLAS_MAP_RENDERER_OPENGLES2_H_
 #define _OSMAND_CORE_ATLAS_MAP_RENDERER_OPENGLES2_H_
 
-#include <cstdint>
-#include <memory>
+#include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
-#include <QMap>
 
-#include <OsmAndCore.h>
-#include <OsmAndCore/CommonTypes.h>
-#include <OpenGL_Common/AtlasMapRenderer_OpenGL_Common.h>
-#include <OpenGLES2/RenderAPI_OpenGLES2.h>
+#include "OsmAndCore.h"
+#include "CommonTypes.h"
+#include "OpenGL_Common/AtlasMapRenderer_OpenGL_Common.h"
 
-namespace OsmAnd {
+namespace OsmAnd
+{
+    class GPUAPI;
 
     class OSMAND_CORE_API AtlasMapRenderer_OpenGLES2 : public AtlasMapRenderer_OpenGL_Common
     {
     protected:
-        virtual RenderAPI* allocateRenderAPI();
+        virtual GPUAPI* allocateGPUAPI();
     public:
         AtlasMapRenderer_OpenGLES2();
         virtual ~AtlasMapRenderer_OpenGLES2();

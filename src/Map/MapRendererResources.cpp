@@ -129,14 +129,14 @@ bool OsmAnd::MapRendererResources::releaseDefaultResources()
     return true;
 }
 
-bool OsmAnd::MapRendererResources::uploadTileToGPU(const std::shared_ptr<const MapTile>& mapTile, std::shared_ptr<const RenderAPI::ResourceInGPU>& outResourceInGPU)
+bool OsmAnd::MapRendererResources::uploadTileToGPU(const std::shared_ptr<const MapTile>& mapTile, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU)
 {
     std::shared_ptr<const MapTile> convertedTile;
     const auto wasConverted = renderer->convertMapTile(mapTile, convertedTile);
-    return renderer->renderAPI->uploadTileToGPU(wasConverted ? convertedTile : mapTile, outResourceInGPU);
+    return renderer->gpuAPI->uploadTileToGPU(wasConverted ? convertedTile : mapTile, outResourceInGPU);
 }
 
-bool OsmAnd::MapRendererResources::uploadSymbolToGPU(const std::shared_ptr<const MapSymbol>& mapSymbol, std::shared_ptr<const RenderAPI::ResourceInGPU>& outResourceInGPU)
+bool OsmAnd::MapRendererResources::uploadSymbolToGPU(const std::shared_ptr<const MapSymbol>& mapSymbol, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU)
 {
     return false;
 }
@@ -1119,9 +1119,9 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
             const auto& symbol = *itSymbol;
 
             // Prepare data and upload to GPU
-            std::shared_ptr<const RenderAPI::ResourceInGPU> resourceInGPU;
+            std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
 //            const auto& preparedSourceData = owner->renderer->prepareTileForUploadingToGPU(_sourceData);
-//            ok = owner->renderer->renderAPI->uploadTileToGPU(preparedSourceData, tilesPerAtlasTextureLimit, _resourceInGPU);
+//            ok = owner->renderer->gpuAPI->uploadTileToGPU(preparedSourceData, tilesPerAtlasTextureLimit, _resourceInGPU);
 
             // If upload have failed, stop
             if(!ok)

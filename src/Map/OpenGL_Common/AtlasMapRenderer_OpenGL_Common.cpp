@@ -38,7 +38,7 @@ OsmAnd::AtlasMapRenderer_OpenGL_Common::~AtlasMapRenderer_OpenGL_Common()
 
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::allocateTilePatch( MapTileVertex* vertices, GLsizei verticesCount, GLushort* indices, GLsizei indicesCount )
 {
-    const auto renderAPI = getRenderAPI();
+    const auto gpuAPI = getGPUAPI();
 
     GL_CHECK_PRESENT(glGenBuffers);
     GL_CHECK_PRESENT(glBindBuffer);
@@ -68,9 +68,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::allocateTilePatch( MapTileVertex* v
         auto& stageVariation = _rasterMapStage.variations[variationId];
 
         // Create Vertex Array Object
-        renderAPI->glGenVertexArrays_wrapper(1, &stageVariation.tilePatchVAO);
+        gpuAPI->glGenVertexArrays_wrapper(1, &stageVariation.tilePatchVAO);
         GL_CHECK_RESULT;
-        renderAPI->glBindVertexArray_wrapper(stageVariation.tilePatchVAO);
+        gpuAPI->glBindVertexArray_wrapper(stageVariation.tilePatchVAO);
         GL_CHECK_RESULT;
 
         // Bind VBO
@@ -90,7 +90,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::allocateTilePatch( MapTileVertex* v
         GL_CHECK_RESULT;
     }
 
-    renderAPI->glBindVertexArray_wrapper(0);
+    gpuAPI->glBindVertexArray_wrapper(0);
     GL_CHECK_RESULT;
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
@@ -100,7 +100,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::allocateTilePatch( MapTileVertex* v
 
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::releaseTilePatch()
 {
-    const auto renderAPI = getRenderAPI();
+    const auto gpuAPI = getGPUAPI();
 
     GL_CHECK_PRESENT(glDeleteBuffers);
 
@@ -110,7 +110,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::releaseTilePatch()
 
         if(stageVariation.tilePatchVAO)
         {
-            renderAPI->glDeleteVertexArrays_wrapper(1, &stageVariation.tilePatchVAO);
+            gpuAPI->glDeleteVertexArrays_wrapper(1, &stageVariation.tilePatchVAO);
             GL_CHECK_RESULT;
             stageVariation.tilePatchVAO = 0;
         }
@@ -133,7 +133,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::releaseTilePatch()
 
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeRasterMapStage()
 {
-    const auto renderAPI = getRenderAPI();
+    const auto gpuAPI = getGPUAPI();
 
     const auto& vertexShader = QString::fromLatin1(
         // Input data
@@ -332,9 +332,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeRasterMapStage()
             preprocessedVertexShader_UnrolledPerRasterLayerTexCoordsProcessingCode);
         preprocessedVertexShader.replace("%TileSize3D%", QString::number(TileSize3D));
         preprocessedVertexShader.replace("%RasterLayersCount%", QString::number(maxActiveMapLayers));
-        renderAPI->preprocessVertexShader(preprocessedVertexShader);
-        renderAPI->optimizeVertexShader(preprocessedVertexShader);
-        stageVariation.vs.id = renderAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+        gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+        gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+        stageVariation.vs.id = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
         assert(stageVariation.vs.id != 0);
 
         // Compile fragment shader
@@ -350,9 +350,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeRasterMapStage()
         }
         preprocessedFragmentShader.replace("%UnrolledPerRasterLayerProcessingCode%", preprocessedFragmentShader_UnrolledPerRasterLayerProcessingCode);
         preprocessedFragmentShader.replace("%RasterLayersCount%", QString::number(maxActiveMapLayers));
-        renderAPI->preprocessFragmentShader(preprocessedFragmentShader);
-        renderAPI->optimizeFragmentShader(preprocessedFragmentShader);
-        stageVariation.fs.id = renderAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+        gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
+        gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
+        stageVariation.fs.id = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
         assert(stageVariation.fs.id != 0);
 
         // Link everything into program object
@@ -360,36 +360,36 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeRasterMapStage()
             stageVariation.vs.id,
             stageVariation.fs.id
         };
-        stageVariation.program = getRenderAPI()->linkProgram(2, shaders);
+        stageVariation.program = getGPUAPI()->linkProgram(2, shaders);
         assert(stageVariation.program != 0);
 
-        renderAPI->clearVariablesLookup();
-        renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-        renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
-        if(!renderAPI->isSupported_vertexShaderTextureLookup)
+        gpuAPI->clearVariablesLookup();
+        gpuAPI->findVariableLocation(stageVariation.program, stageVariation.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
+        gpuAPI->findVariableLocation(stageVariation.program, stageVariation.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
+        if(!gpuAPI->isSupported_vertexShaderTextureLookup)
         {
-            renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.in.vertexElevation, "in_vs_vertexElevation", GLShaderVariableType::In);
+            gpuAPI->findVariableLocation(stageVariation.program, stageVariation.vs.in.vertexElevation, "in_vs_vertexElevation", GLShaderVariableType::In);
         }
-        renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.mProjectionView, "param_vs_mProjectionView", GLShaderVariableType::Uniform);
-        renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.targetInTilePosN, "param_vs_targetInTilePosN", GLShaderVariableType::Uniform);
-        if(renderAPI->isSupported_textureLod)
+        gpuAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.mProjectionView, "param_vs_mProjectionView", GLShaderVariableType::Uniform);
+        gpuAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.targetInTilePosN, "param_vs_targetInTilePosN", GLShaderVariableType::Uniform);
+        if(gpuAPI->isSupported_textureLod)
         {
-            renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.distanceFromCameraToTarget, "param_vs_distanceFromCameraToTarget", GLShaderVariableType::Uniform);
-            renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.cameraElevationAngleN, "param_vs_cameraElevationAngleN", GLShaderVariableType::Uniform);
-            renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.groundCameraPosition, "param_vs_groundCameraPosition", GLShaderVariableType::Uniform);
-            renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.scaleToRetainProjectedSize, "param_vs_scaleToRetainProjectedSize", GLShaderVariableType::Uniform);
+            gpuAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.distanceFromCameraToTarget, "param_vs_distanceFromCameraToTarget", GLShaderVariableType::Uniform);
+            gpuAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.cameraElevationAngleN, "param_vs_cameraElevationAngleN", GLShaderVariableType::Uniform);
+            gpuAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.groundCameraPosition, "param_vs_groundCameraPosition", GLShaderVariableType::Uniform);
+            gpuAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.scaleToRetainProjectedSize, "param_vs_scaleToRetainProjectedSize", GLShaderVariableType::Uniform);
         }
-        renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.tileCoordsOffset, "param_vs_tileCoordsOffset", GLShaderVariableType::Uniform);
-        renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationData_k, "param_vs_elevationData_k", GLShaderVariableType::Uniform);
-        renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationData_upperMetersPerUnit, "param_vs_elevationData_upperMetersPerUnit", GLShaderVariableType::Uniform);
-        renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationData_lowerMetersPerUnit, "param_vs_elevationData_lowerMetersPerUnit", GLShaderVariableType::Uniform);
-        if(renderAPI->isSupported_vertexShaderTextureLookup)
+        gpuAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.tileCoordsOffset, "param_vs_tileCoordsOffset", GLShaderVariableType::Uniform);
+        gpuAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationData_k, "param_vs_elevationData_k", GLShaderVariableType::Uniform);
+        gpuAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationData_upperMetersPerUnit, "param_vs_elevationData_upperMetersPerUnit", GLShaderVariableType::Uniform);
+        gpuAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationData_lowerMetersPerUnit, "param_vs_elevationData_lowerMetersPerUnit", GLShaderVariableType::Uniform);
+        if(gpuAPI->isSupported_vertexShaderTextureLookup)
         {
-            renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationData_sampler, "param_vs_elevationData_sampler", GLShaderVariableType::Uniform);
-            renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationTileLayer.tileSizeN, "param_vs_elevationTileLayer.tileSizeN", GLShaderVariableType::Uniform);
-            renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationTileLayer.tilePaddingN, "param_vs_elevationTileLayer.tilePaddingN", GLShaderVariableType::Uniform);
-            renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationTileLayer.slotsPerSide, "param_vs_elevationTileLayer.slotsPerSide", GLShaderVariableType::Uniform);
-            renderAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationTileLayer.slotIndex, "param_vs_elevationTileLayer.slotIndex", GLShaderVariableType::Uniform);
+            gpuAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationData_sampler, "param_vs_elevationData_sampler", GLShaderVariableType::Uniform);
+            gpuAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationTileLayer.tileSizeN, "param_vs_elevationTileLayer.tileSizeN", GLShaderVariableType::Uniform);
+            gpuAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationTileLayer.tilePaddingN, "param_vs_elevationTileLayer.tilePaddingN", GLShaderVariableType::Uniform);
+            gpuAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationTileLayer.slotsPerSide, "param_vs_elevationTileLayer.slotsPerSide", GLShaderVariableType::Uniform);
+            gpuAPI->findVariableLocation(stageVariation.program, stageVariation.vs.param.elevationTileLayer.slotIndex, "param_vs_elevationTileLayer.slotIndex", GLShaderVariableType::Uniform);
         }
         for(int layerId = 0; layerId < maxActiveMapLayers; layerId++)
         {
@@ -400,10 +400,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeRasterMapStage()
                         .replace(QLatin1String("%layerId%"), QString::number(layerId));
                 auto& layerStruct = stageVariation.vs.param.rasterTileLayers[layerId];
 
-                renderAPI->findVariableLocation(stageVariation.program, layerStruct.tileSizeN, layerStructName + ".tileSizeN", GLShaderVariableType::Uniform);
-                renderAPI->findVariableLocation(stageVariation.program, layerStruct.tilePaddingN, layerStructName + ".tilePaddingN", GLShaderVariableType::Uniform);
-                renderAPI->findVariableLocation(stageVariation.program, layerStruct.slotsPerSide, layerStructName + ".slotsPerSide", GLShaderVariableType::Uniform);
-                renderAPI->findVariableLocation(stageVariation.program, layerStruct.slotIndex, layerStructName + ".slotIndex", GLShaderVariableType::Uniform);
+                gpuAPI->findVariableLocation(stageVariation.program, layerStruct.tileSizeN, layerStructName + ".tileSizeN", GLShaderVariableType::Uniform);
+                gpuAPI->findVariableLocation(stageVariation.program, layerStruct.tilePaddingN, layerStructName + ".tilePaddingN", GLShaderVariableType::Uniform);
+                gpuAPI->findVariableLocation(stageVariation.program, layerStruct.slotsPerSide, layerStructName + ".slotsPerSide", GLShaderVariableType::Uniform);
+                gpuAPI->findVariableLocation(stageVariation.program, layerStruct.slotIndex, layerStructName + ".slotIndex", GLShaderVariableType::Uniform);
             }
 
             // Fragment shader
@@ -413,17 +413,17 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeRasterMapStage()
                         .replace(QLatin1String("%layerId%"), QString::number(layerId));
                 auto& layerStruct = stageVariation.fs.param.rasterTileLayers[layerId];
 
-                renderAPI->findVariableLocation(stageVariation.program, layerStruct.k, layerStructName + ".k", GLShaderVariableType::Uniform);
-                renderAPI->findVariableLocation(stageVariation.program, layerStruct.sampler, layerStructName + ".sampler", GLShaderVariableType::Uniform);
+                gpuAPI->findVariableLocation(stageVariation.program, layerStruct.k, layerStructName + ".k", GLShaderVariableType::Uniform);
+                gpuAPI->findVariableLocation(stageVariation.program, layerStruct.sampler, layerStructName + ".sampler", GLShaderVariableType::Uniform);
             }
         }
-        renderAPI->clearVariablesLookup();
+        gpuAPI->clearVariablesLookup();
     }
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
 {
-    const auto renderAPI = getRenderAPI();
+    const auto gpuAPI = getGPUAPI();
 
     GL_CHECK_PRESENT(glUseProgram);
     GL_CHECK_PRESENT(glUniformMatrix4fv);
@@ -457,7 +457,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
     const auto& stageVariation = _rasterMapStage.variations[activeRasterTileProvidersCount - 1];
 
     // Set tile patch VAO
-    renderAPI->glBindVertexArray_wrapper(stageVariation.tilePatchVAO);
+    gpuAPI->glBindVertexArray_wrapper(stageVariation.tilePatchVAO);
     GL_CHECK_RESULT;
 
     // Activate program
@@ -473,7 +473,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
     glUniform2f(stageVariation.vs.param.targetInTilePosN, _internalState.targetInTileOffsetN.x, _internalState.targetInTileOffsetN.y);
     GL_CHECK_RESULT;
 
-    if(renderAPI->isSupported_textureLod)
+    if(gpuAPI->isSupported_textureLod)
     {
         // Set distance from camera to target
         glUniform1f(stageVariation.vs.param.distanceFromCameraToTarget, _internalState.distanceFromCameraToTarget);
@@ -493,34 +493,34 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
     }
     
     // Configure samplers
-    if(renderAPI->isSupported_vertexShaderTextureLookup)
+    if(gpuAPI->isSupported_vertexShaderTextureLookup)
     {
         glUniform1i(stageVariation.vs.param.elevationData_sampler, 0);
         GL_CHECK_RESULT;
 
-        renderAPI->setSampler(GL_TEXTURE0, RenderAPI_OpenGL_Common::SamplerType::ElevationDataTile);
+        gpuAPI->setSampler(GL_TEXTURE0, GPUAPI_OpenGL_Common::SamplerType::ElevationDataTile);
     }
-    auto bitmapTileSamplerType = RenderAPI_OpenGL_Common::SamplerType::BitmapTile_Bilinear;
-    if(renderAPI->isSupported_textureLod)
+    auto bitmapTileSamplerType = GPUAPI_OpenGL_Common::SamplerType::BitmapTile_Bilinear;
+    if(gpuAPI->isSupported_textureLod)
     {
         switch(currentConfiguration.texturesFilteringQuality)
         {
         case TextureFilteringQuality::Good:
-            bitmapTileSamplerType = RenderAPI_OpenGL_Common::SamplerType::BitmapTile_BilinearMipmap;
+            bitmapTileSamplerType = GPUAPI_OpenGL_Common::SamplerType::BitmapTile_BilinearMipmap;
             break;
         case TextureFilteringQuality::Best:
-            bitmapTileSamplerType = RenderAPI_OpenGL_Common::SamplerType::BitmapTile_TrilinearMipmap;
+            bitmapTileSamplerType = GPUAPI_OpenGL_Common::SamplerType::BitmapTile_TrilinearMipmap;
             break;
         }
     }
     for(int layerIdx = 0, layerId = static_cast<int>(RasterMapLayerId::BaseLayer); layerIdx < activeRasterTileProvidersCount; layerIdx++, layerId++)
     {
-        const auto samplerIndex = (renderAPI->isSupported_vertexShaderTextureLookup ? 1 : 0) + layerId;
+        const auto samplerIndex = (gpuAPI->isSupported_vertexShaderTextureLookup ? 1 : 0) + layerId;
 
         glUniform1i(stageVariation.fs.param.rasterTileLayers[layerId].sampler, samplerIndex);
         GL_CHECK_RESULT;
 
-        renderAPI->setSampler(GL_TEXTURE0 + samplerIndex, bitmapTileSamplerType);
+        gpuAPI->setSampler(GL_TEXTURE0 + samplerIndex, bitmapTileSamplerType);
     }
 
     // Check if we need to process elevation data
@@ -532,7 +532,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
         GL_CHECK_RESULT;
     }
     bool elevationVertexAttribArrayEnabled = false;
-    if(!renderAPI->isSupported_vertexShaderTextureLookup)
+    if(!gpuAPI->isSupported_vertexShaderTextureLookup)
     {
         glDisableVertexAttribArray(stageVariation.vs.in.vertexElevation);
         GL_CHECK_RESULT;
@@ -559,7 +559,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
             const auto resourcesCollection = getResources().getCollection(ResourceType::ElevationData, currentState.elevationDataProvider);
 
             // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
-            std::shared_ptr< const RenderAPI::ResourceInGPU > gpuResource;
+            std::shared_ptr< const GPUAPI::ResourceInGPU > gpuResource;
             std::shared_ptr<Resources::BaseTiledResource> resource_;
             if(resourcesCollection->obtainEntry(resource_, tileIdN, currentState.zoomBase))
             {
@@ -593,7 +593,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
 
                 const auto& perTile_vs = stageVariation.vs.param.elevationTileLayer;
 
-                if(renderAPI->isSupported_vertexShaderTextureLookup)
+                if(gpuAPI->isSupported_vertexShaderTextureLookup)
                 {
                     glActiveTexture(GL_TEXTURE0);
                     GL_CHECK_RESULT;
@@ -601,9 +601,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
                     glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
                     GL_CHECK_RESULT;
 
-                    if(gpuResource->type == RenderAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
+                    if(gpuResource->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
                     {
-                        const auto& tileOnAtlasTexture = std::static_pointer_cast<const RenderAPI::SlotOnAtlasTextureInGPU>(gpuResource);
+                        const auto& tileOnAtlasTexture = std::static_pointer_cast<const GPUAPI::SlotOnAtlasTextureInGPU>(gpuResource);
 
                         glUniform1i(perTile_vs.slotIndex, tileOnAtlasTexture->slotIndex);
                         GL_CHECK_RESULT;
@@ -616,7 +616,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
                     }
                     else
                     {
-                        const auto& texture = std::static_pointer_cast<const RenderAPI::TextureInGPU>(gpuResource);
+                        const auto& texture = std::static_pointer_cast<const GPUAPI::TextureInGPU>(gpuResource);
 
                         glUniform1i(perTile_vs.slotIndex, 0);
                         GL_CHECK_RESULT;
@@ -630,9 +630,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
                 }
                 else
                 {
-                    assert(gpuResource->type == RenderAPI::ResourceInGPU::Type::ArrayBuffer);
+                    assert(gpuResource->type == GPUAPI::ResourceInGPU::Type::ArrayBuffer);
 
-                    const auto& arrayBuffer = std::static_pointer_cast<const RenderAPI::ArrayBufferInGPU>(gpuResource);
+                    const auto& arrayBuffer = std::static_pointer_cast<const GPUAPI::ArrayBufferInGPU>(gpuResource);
                     assert(arrayBuffer->itemsCount == currentConfiguration.heixelsPerTileSide*currentConfiguration.heixelsPerTileSide);
 
                     if(!elevationVertexAttribArrayEnabled)
@@ -665,10 +665,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
 
             const auto& perTile_vs = stageVariation.vs.param.rasterTileLayers[layerLinearIdx];
             const auto& perTile_fs = stageVariation.fs.param.rasterTileLayers[layerLinearIdx];
-            const auto samplerIndex = (renderAPI->isSupported_vertexShaderTextureLookup ? 1 : 0) + layerLinearIdx;
+            const auto samplerIndex = (gpuAPI->isSupported_vertexShaderTextureLookup ? 1 : 0) + layerLinearIdx;
 
             // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
-            std::shared_ptr< const RenderAPI::ResourceInGPU > gpuResource;
+            std::shared_ptr< const GPUAPI::ResourceInGPU > gpuResource;
             std::shared_ptr<Resources::BaseTiledResource> resource_;
             if(resourcesCollection->obtainEntry(resource_, tileIdN, currentState.zoomBase))
             {
@@ -702,9 +702,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
             glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
             GL_CHECK_RESULT;
 
-            if(gpuResource->type == RenderAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
+            if(gpuResource->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
             {
-                const auto& tileOnAtlasTexture = std::static_pointer_cast<const RenderAPI::SlotOnAtlasTextureInGPU>(gpuResource);
+                const auto& tileOnAtlasTexture = std::static_pointer_cast<const GPUAPI::SlotOnAtlasTextureInGPU>(gpuResource);
 
                 glUniform1i(perTile_vs.slotIndex, tileOnAtlasTexture->slotIndex);
                 GL_CHECK_RESULT;
@@ -741,7 +741,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
     }
 
     // Disable textures
-    for(int layerIdx = 0; layerIdx < (renderAPI->isSupported_vertexShaderTextureLookup ? 1 : 0) + activeRasterTileProvidersCount; layerIdx++)
+    for(int layerIdx = 0; layerIdx < (gpuAPI->isSupported_vertexShaderTextureLookup ? 1 : 0) + activeRasterTileProvidersCount; layerIdx++)
     {
         glActiveTexture(GL_TEXTURE0 + layerIdx);
         GL_CHECK_RESULT;
@@ -766,7 +766,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
     GL_CHECK_RESULT;
 
     // Deselect VAO
-    renderAPI->glBindVertexArray_wrapper(0);
+    gpuAPI->glBindVertexArray_wrapper(0);
     GL_CHECK_RESULT;
 }
 
@@ -803,7 +803,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::releaseRasterMapStage()
 
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSkyStage()
 {
-    const auto renderAPI = getRenderAPI();
+    const auto gpuAPI = getGPUAPI();
 
     GL_CHECK_PRESENT(glGenBuffers);
     GL_CHECK_PRESENT(glBindBuffer);
@@ -830,9 +830,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSkyStage()
     const auto indicesCount = 6;
 
     // Create Vertex Array Object
-    renderAPI->glGenVertexArrays_wrapper(1, &_skyStage.skyplaneVAO);
+    gpuAPI->glGenVertexArrays_wrapper(1, &_skyStage.skyplaneVAO);
     GL_CHECK_RESULT;
-    renderAPI->glBindVertexArray_wrapper(_skyStage.skyplaneVAO);
+    gpuAPI->glBindVertexArray_wrapper(_skyStage.skyplaneVAO);
     GL_CHECK_RESULT;
 
     // Create vertex buffer and associate it with VAO
@@ -855,7 +855,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSkyStage()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
 
-    renderAPI->glBindVertexArray_wrapper(0);
+    gpuAPI->glBindVertexArray_wrapper(0);
     GL_CHECK_RESULT;
 
     // Compile vertex shader
@@ -876,9 +876,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSkyStage()
         "    gl_Position = param_vs_mProjectionViewModel * v;                                                               ""\n"
         "}                                                                                                                  ""\n");
     auto preprocessedVertexShader = vertexShader;
-    renderAPI->preprocessVertexShader(preprocessedVertexShader);
-    renderAPI->optimizeVertexShader(preprocessedVertexShader);
-    _skyStage.vs.id = renderAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+    gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+    gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+    _skyStage.vs.id = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
     assert(_skyStage.vs.id != 0);
 
     // Compile fragment shader
@@ -892,9 +892,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSkyStage()
         "}                                                                                                                  ""\n");
     QString preprocessedFragmentShader = fragmentShader;
     QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
-    renderAPI->preprocessFragmentShader(preprocessedFragmentShader);
-    renderAPI->optimizeFragmentShader(preprocessedFragmentShader);
-    _skyStage.fs.id = renderAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+    gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
+    gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
+    _skyStage.fs.id = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
     assert(_skyStage.fs.id != 0);
 
     // Link everything into program object
@@ -902,20 +902,20 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSkyStage()
         _skyStage.vs.id,
         _skyStage.fs.id
     };
-    _skyStage.program = renderAPI->linkProgram(2, shaders);
+    _skyStage.program = gpuAPI->linkProgram(2, shaders);
     assert(_skyStage.program != 0);
 
-    renderAPI->clearVariablesLookup();
-    renderAPI->findVariableLocation(_skyStage.program, _skyStage.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-    renderAPI->findVariableLocation(_skyStage.program, _skyStage.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GLShaderVariableType::Uniform);
-    renderAPI->findVariableLocation(_skyStage.program, _skyStage.vs.param.halfSize, "param_vs_halfSize", GLShaderVariableType::Uniform);
-    renderAPI->findVariableLocation(_skyStage.program, _skyStage.fs.param.skyColor, "param_fs_skyColor", GLShaderVariableType::Uniform);
-    renderAPI->clearVariablesLookup();
+    gpuAPI->clearVariablesLookup();
+    gpuAPI->findVariableLocation(_skyStage.program, _skyStage.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
+    gpuAPI->findVariableLocation(_skyStage.program, _skyStage.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GLShaderVariableType::Uniform);
+    gpuAPI->findVariableLocation(_skyStage.program, _skyStage.vs.param.halfSize, "param_vs_halfSize", GLShaderVariableType::Uniform);
+    gpuAPI->findVariableLocation(_skyStage.program, _skyStage.fs.param.skyColor, "param_fs_skyColor", GLShaderVariableType::Uniform);
+    gpuAPI->clearVariablesLookup();
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSkyStage()
 {
-    const auto renderAPI = getRenderAPI();
+    const auto gpuAPI = getGPUAPI();
 
     GL_CHECK_PRESENT(glUseProgram);
     GL_CHECK_PRESENT(glUniformMatrix4fv);
@@ -925,7 +925,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSkyStage()
     GL_CHECK_PRESENT(glDrawElements);
 
     // Set tile patch VAO
-    renderAPI->glBindVertexArray_wrapper(_skyStage.skyplaneVAO);
+    gpuAPI->glBindVertexArray_wrapper(_skyStage.skyplaneVAO);
     GL_CHECK_RESULT;
 
     // Activate program
@@ -955,13 +955,13 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSkyStage()
     GL_CHECK_RESULT;
 
     // Deselect VAO
-    renderAPI->glBindVertexArray_wrapper(0);
+    gpuAPI->glBindVertexArray_wrapper(0);
     GL_CHECK_RESULT;
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::releaseSkyStage()
 {
-    const auto renderAPI = getRenderAPI();
+    const auto gpuAPI = getGPUAPI();
 
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
@@ -981,7 +981,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::releaseSkyStage()
 
     if(_skyStage.skyplaneVAO)
     {
-        renderAPI->glDeleteVertexArrays_wrapper(1, &_skyStage.skyplaneVAO);
+        gpuAPI->glDeleteVertexArrays_wrapper(1, &_skyStage.skyplaneVAO);
         GL_CHECK_RESULT;
     }
 
@@ -1020,7 +1020,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::releaseSymbolsStage()
 {
     /*
-    const auto renderAPI = getRenderAPI();
+    const auto gpuAPI = getRenderAPI();
 
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
@@ -1040,7 +1040,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::releaseSymbolsStage()
 
     if(_symbolsStage.skyplaneVAO)
     {
-        renderAPI->glDeleteVertexArrays_wrapper(1, &_symbolsStage.skyplaneVAO);
+        gpuAPI->glDeleteVertexArrays_wrapper(1, &_symbolsStage.skyplaneVAO);
         GL_CHECK_RESULT;
     }
 
@@ -1530,9 +1530,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::createTilePatch()
     delete[] pIndices;
 }
 
-OsmAnd::RenderAPI_OpenGL_Common* OsmAnd::AtlasMapRenderer_OpenGL_Common::getRenderAPI() const
+OsmAnd::GPUAPI_OpenGL_Common* OsmAnd::AtlasMapRenderer_OpenGL_Common::getGPUAPI() const
 {
-    return static_cast<OsmAnd::RenderAPI_OpenGL_Common*>(renderAPI.get());
+    return static_cast<OsmAnd::GPUAPI_OpenGL_Common*>(gpuAPI.get());
 }
 
 float OsmAnd::AtlasMapRenderer_OpenGL_Common::getReferenceTileSizeOnScreen( const MapRendererState& state )

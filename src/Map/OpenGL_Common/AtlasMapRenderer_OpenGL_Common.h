@@ -31,7 +31,7 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <AtlasMapRenderer.h>
-#include <OpenGL_Common/RenderAPI_OpenGL_Common.h>
+#include <OpenGL_Common/GPUAPI_OpenGL_Common.h>
 
 namespace OsmAnd {
 
@@ -254,7 +254,7 @@ namespace OsmAnd {
         virtual bool postInitializeRendering();
         virtual bool preReleaseRendering();
 
-        RenderAPI_OpenGL_Common* getRenderAPI() const;
+        GPUAPI_OpenGL_Common* getGPUAPI() const;
 
         float getReferenceTileSizeOnScreen(const MapRendererState& state);
     public:

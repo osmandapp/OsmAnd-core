@@ -11,7 +11,7 @@
 #include "IMapElevationDataProvider.h"
 #include "IMapSymbolProvider.h"
 #include "IRetainableResource.h"
-#include "RenderAPI.h"
+#include "GPUAPI.h"
 #include "Utilities.h"
 #include "Logging.h"
 
@@ -25,7 +25,7 @@ OsmAnd::MapRenderer::MapRenderer()
     , _gpuWorkerIsAlive(false)
     , currentConfiguration(_currentConfiguration)
     , currentState(_currentState)
-    , renderAPI(_renderAPI)
+    , gpuAPI(_gpuAPI)
 {
     // Fill-up default state
     for(auto layerId = 0u; layerId < RasterMapLayersCount; layerId++)
@@ -276,10 +276,10 @@ bool OsmAnd::MapRenderer::initializeRendering()
     bool ok;
 
     // Before doing any initialization, we need to allocate and initialize render API
-    auto apiObject = allocateRenderAPI();
+    auto apiObject = allocateGPUAPI();
     if(!apiObject)
         return false;
-    _renderAPI.reset(apiObject);
+    _gpuAPI.reset(apiObject);
 
     ok = preInitializeRendering();
     if(!ok)
@@ -534,8 +534,8 @@ bool OsmAnd::MapRenderer::releaseRendering()
         return false;
 
     // After all release procedures, release render API
-    ok = _renderAPI->release();
-    _renderAPI.reset();
+    ok = _gpuAPI->release();
+    _gpuAPI.reset();
     if(!ok)
         return false;
 
@@ -610,7 +610,7 @@ bool OsmAnd::MapRenderer::convertBitmap(const std::shared_ptr<const SkBitmap>& i
     // Check if we're going to convert
     bool doConvert = false;
     const bool force16bit = (currentConfiguration.limitTextureColorDepthBy16bits && input->getConfig() == SkBitmap::Config::kARGB_8888_Config);
-    const bool canUsePaletteTextures = currentConfiguration.paletteTexturesAllowed && renderAPI->isSupported_8bitPaletteRGBA8;
+    const bool canUsePaletteTextures = currentConfiguration.paletteTexturesAllowed && gpuAPI->isSupported_8bitPaletteRGBA8;
     const bool paletteTexture = (input->getConfig() == SkBitmap::Config::kIndex8_Config);
     const bool unsupportedFormat =
         (canUsePaletteTextures ? !paletteTexture : paletteTexture) ||

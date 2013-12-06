@@ -1,4 +1,4 @@
-#include "RenderAPI_OpenGL_Common.h"
+#include "GPUAPI_OpenGL_Common.h"
 
 #include <cassert>
 
@@ -25,7 +25,7 @@
 #   define GL_GET_RESULT glGetError()
 #endif
 
-OsmAnd::RenderAPI_OpenGL_Common::RenderAPI_OpenGL_Common()
+OsmAnd::GPUAPI_OpenGL_Common::GPUAPI_OpenGL_Common()
     : _maxTextureSize(0)
     , _isSupported_vertexShaderTextureLookup(false)
     , _isSupported_textureLod(false)
@@ -37,11 +37,11 @@ OsmAnd::RenderAPI_OpenGL_Common::RenderAPI_OpenGL_Common()
 {
 }
 
-OsmAnd::RenderAPI_OpenGL_Common::~RenderAPI_OpenGL_Common()
+OsmAnd::GPUAPI_OpenGL_Common::~GPUAPI_OpenGL_Common()
 {
 }
 
-GLuint OsmAnd::RenderAPI_OpenGL_Common::compileShader( GLenum shaderType, const char* source )
+GLuint OsmAnd::GPUAPI_OpenGL_Common::compileShader( GLenum shaderType, const char* source )
 {
     GL_CHECK_PRESENT(glCreateShader);
     GL_CHECK_PRESENT(glShaderSource);
@@ -90,7 +90,7 @@ GLuint OsmAnd::RenderAPI_OpenGL_Common::compileShader( GLenum shaderType, const 
     return shader;
 }
 
-GLuint OsmAnd::RenderAPI_OpenGL_Common::linkProgram( GLuint shadersCount, GLuint *shaders )
+GLuint OsmAnd::GPUAPI_OpenGL_Common::linkProgram( GLuint shadersCount, GLuint *shaders )
 {
     GL_CHECK_PRESENT(glCreateProgram);
     GL_CHECK_PRESENT(glAttachShader);
@@ -152,12 +152,12 @@ GLuint OsmAnd::RenderAPI_OpenGL_Common::linkProgram( GLuint shadersCount, GLuint
     return program;
 }
 
-void OsmAnd::RenderAPI_OpenGL_Common::clearVariablesLookup()
+void OsmAnd::GPUAPI_OpenGL_Common::clearVariablesLookup()
 {
     _programVariables.clear();
 }
 
-void OsmAnd::RenderAPI_OpenGL_Common::findVariableLocation( GLuint program, GLint& location, const QString& name, const GLShaderVariableType& type )
+void OsmAnd::GPUAPI_OpenGL_Common::findVariableLocation( GLuint program, GLint& location, const QString& name, const GLShaderVariableType& type )
 {
     GL_CHECK_PRESENT(glGetAttribLocation);
     GL_CHECK_PRESENT(glGetUniformLocation);
@@ -174,7 +174,7 @@ void OsmAnd::RenderAPI_OpenGL_Common::findVariableLocation( GLuint program, GLin
     _programVariables[program].insert(type, location);
 }
 
-bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
+bool OsmAnd::GPUAPI_OpenGL_Common::uploadTileToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
 {
     // Upload bitmap tiles
     if(tile->dataType == MapTileDataType::Bitmap)
@@ -196,12 +196,12 @@ bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileToGPU(const std::shared_ptr< con
     return false;
 }
 
-bool OsmAnd::RenderAPI_OpenGL_Common::uploadSymbolToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
+bool OsmAnd::GPUAPI_OpenGL_Common::uploadSymbolToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
 {
     return false;
 }
 
-bool OsmAnd::RenderAPI_OpenGL_Common::releaseResourceInGPU( const ResourceInGPU::Type type, const RefInGPU& refInGPU )
+bool OsmAnd::GPUAPI_OpenGL_Common::releaseResourceInGPU( const ResourceInGPU::Type type, const RefInGPU& refInGPU )
 {
     switch (type)
     {
@@ -230,7 +230,7 @@ bool OsmAnd::RenderAPI_OpenGL_Common::releaseResourceInGPU( const ResourceInGPU:
     return false;
 }
 
-bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
+bool OsmAnd::GPUAPI_OpenGL_Common::uploadTileAsTextureToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
 {
     GL_CHECK_PRESENT(glGenTextures);
     GL_CHECK_PRESENT(glBindTexture);
@@ -460,7 +460,7 @@ bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsTextureToGPU(const std::shared
     return true;
 }
 
-bool OsmAnd::RenderAPI_OpenGL_Common::uploadTileAsArrayBufferToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
+bool OsmAnd::GPUAPI_OpenGL_Common::uploadTileAsArrayBufferToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
 {
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
