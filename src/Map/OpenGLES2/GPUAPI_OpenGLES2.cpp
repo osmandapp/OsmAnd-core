@@ -439,7 +439,7 @@ OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGLES2::getSourceFormat(const std
         else
             sourceFormat.format = GL_LUMINANCE;
 
-        if(isSupported_EXT_unpack_subimage)
+        if(isSupported_OES_texture_float)
             sourceFormat.type = GL_FLOAT;
         else
             sourceFormat.type = GL_UNSIGNED_BYTE;
