@@ -2316,6 +2316,7 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                     symbol->location31,
                     symbol->order,
                     qMove(std::shared_ptr<const SkBitmap>(bitmap)));
+                assert(static_cast<bool>(rasterizedSymbol->bitmap));
                 constructedGroup->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
             }
         }
