@@ -823,6 +823,16 @@ std::shared_ptr<const OsmAnd::MapRendererResources::TiledResourcesCollection> Os
     return _bindings[static_cast<int>(type)].providersToCollections[provider];
 }
 
+QMutex& OsmAnd::MapRendererResources::getSymbolsMapMutex() const
+{
+    return _symbolsMapMutex;
+}
+
+const OsmAnd::MapRendererResources::SymbolsMap& OsmAnd::MapRendererResources::getSymbolsMap() const
+{
+    return _symbolsMap;
+}
+
 OsmAnd::MapRendererResources::GenericResource::GenericResource(MapRendererResources* owner_, const ResourceType type_)
     : _requestTask(nullptr)
     , owner(owner_)

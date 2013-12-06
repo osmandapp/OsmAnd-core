@@ -249,6 +249,8 @@ namespace OsmAnd
         friend class OsmAnd::MapRendererResources;
         };
 
+        typedef QMap<int, QHash< std::shared_ptr<const MapSymbol>, std::weak_ptr<const GPUAPI::ResourceInGPU> > > SymbolsMap;
+
     private:
         // Resource-requests related:
         const Concurrent::TaskHost::Bridge _taskHostBridge;
@@ -282,7 +284,7 @@ namespace OsmAnd
 
         // Symbols:
         mutable QMutex _symbolsMapMutex;
-        QMap<int, QHash< std::shared_ptr<const MapSymbol>, std::weak_ptr<const GPUAPI::ResourceInGPU> > > _symbolsMap;
+        SymbolsMap _symbolsMap;
 
         void notifyNewResourceAvailable();
 
@@ -340,6 +342,9 @@ namespace OsmAnd
         const std::shared_ptr<const GPUAPI::ResourceInGPU>& unavailableTileStub;
 
         std::shared_ptr<const TiledResourcesCollection> getCollection(const ResourceType type, const std::shared_ptr<IMapProvider>& ofProvider) const;
+
+        QMutex& getSymbolsMapMutex() const;
+        const SymbolsMap& getSymbolsMap() const;
 
     friend class OsmAnd::MapRenderer;
     };
