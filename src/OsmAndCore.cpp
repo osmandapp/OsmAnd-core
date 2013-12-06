@@ -25,6 +25,7 @@ namespace OsmAnd {
 int _dummyArgc = 1;
 const char* _dummyArgs[] = { "osmand.core" };
 std::shared_ptr<QCoreApplication> _qCoreApplication;
+QMutex _qCoreApplicationThreadMutex;
 QWaitCondition _qCoreApplicationThreadWaitCondition;
 class QCoreApplicationThread : public QThread
 {
@@ -32,7 +33,10 @@ class QCoreApplicationThread : public QThread
     {
         _qCoreApplication.reset(new QCoreApplication(_dummyArgc, const_cast<char**>(&_dummyArgs[0])));
         OsmAnd::initializeGlobal();
-        _qCoreApplicationThreadWaitCondition.wakeAll();
+        {
+            QMutexLocker scopedLocker(&_qCoreApplicationThreadMutex);
+            _qCoreApplicationThreadWaitCondition.wakeAll();
+        }
         QCoreApplication::exec();
         OsmAnd::releaseGlobal();
         _qCoreApplication.reset();
@@ -51,10 +55,9 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::InitializeCore()
 
         // Wait until global initialization will pass in that thread
         {
-            QMutex mutex;
-            QMutexLocker scopeLock(&mutex);
+            QMutexLocker scopeLock(&_qCoreApplicationThreadMutex);
 
-            _qCoreApplicationThreadWaitCondition.wait(&mutex);
+            _qCoreApplicationThreadWaitCondition.wait(&_qCoreApplicationThreadMutex);
         }
     }
     else
