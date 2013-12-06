@@ -218,10 +218,10 @@ bool OsmAnd::MapRenderer::updateInternalState(InternalState* internalState, cons
     targetTile31.x = internalState->targetTileId.x << zoomDiff;
     targetTile31.y = internalState->targetTileId.y << zoomDiff;
 
-    const auto tileWidth31 = 1u << zoomDiff;
+    const auto tileSize31 = 1u << zoomDiff;
     const auto inTileOffset = state.target31 - targetTile31;
-    internalState->targetInTileOffsetN.x = static_cast<float>(inTileOffset.x) / tileWidth31;
-    internalState->targetInTileOffsetN.y = static_cast<float>(inTileOffset.y) / tileWidth31;
+    internalState->targetInTileOffsetN.x = static_cast<float>(inTileOffset.x) / tileSize31;
+    internalState->targetInTileOffsetN.y = static_cast<float>(inTileOffset.y) / tileSize31;
 
     return true;
 }

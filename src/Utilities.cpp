@@ -195,7 +195,7 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::Utilities::parseArbitraryBool( con
     if(value.isEmpty())
         return defValue;
 
-    auto result = (value.compare("true", Qt::CaseInsensitive) == 0);
+    auto result = (value.compare(QLatin1String("true"), Qt::CaseInsensitive) == 0);
 
     if(wasParsed)
         *wasParsed = true;

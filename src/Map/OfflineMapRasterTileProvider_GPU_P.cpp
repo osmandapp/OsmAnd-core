@@ -40,6 +40,11 @@ bool OsmAnd::OfflineMapRasterTileProvider_GPU_P::obtainTile(const TileId tileId,
     // Obtain offline map data tile
     std::shared_ptr< const OfflineMapDataTile > dataTile;
     owner->dataProvider->obtainTile(tileId, zoom, dataTile);
+    if(!dataTile)
+    {
+        outTile.reset();
+        return true;
+    }
 
 #if defined(_DEBUG) || defined(DEBUG)
     const auto dataRasterization_Begin = std::chrono::high_resolution_clock::now();

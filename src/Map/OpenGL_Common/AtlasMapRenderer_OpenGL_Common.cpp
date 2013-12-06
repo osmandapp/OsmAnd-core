@@ -18,6 +18,7 @@
 #include "IMapTileProvider.h"
 #include "IMapBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
+#include "IMapSymbolProvider.h"
 #include "Logging.h"
 #include "Utilities.h"
 #include "OpenGL_Common/Utilities_OpenGL_Common.h"
@@ -1011,10 +1012,55 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSymbolsStage()
 
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
 {
-    //TODO: initialize rendering of symbols
-/*
-    const auto& symbolsTiledResources = tiledResources[TiledResourceType::Symbols];
-    for()*/
+    QMutexLocker scopedLocker(&getResources().getSymbolsMapMutex());
+    const auto& symbolsMap = getResources().getSymbolsMap();
+    typedef std::pair< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > SymbolPair;
+
+    // Get tile size in 31 coordinates
+    const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - currentState.zoomBase));
+
+    // Get camera global position
+    const auto cameraPos = _internalState.mViewInv * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+    // Iterate over symbols by "order" in ascending direction
+    for(auto itSymbols = symbolsMap.cbegin(); itSymbols != symbolsMap.cend(); ++itSymbols)
+    {
+        // For each "order" value, obtain list of entries and sort them
+        const auto& unsortedSymbols = *itSymbols;
+        if(unsortedSymbols.isEmpty())
+            continue;
+        QMultiMap< float, SymbolPair > sortedSymbols;
+        for(auto itSymbolEntry = unsortedSymbols.cbegin(); itSymbolEntry != unsortedSymbols.cend(); ++itSymbolEntry)
+        {
+            const auto& symbol = itSymbolEntry.key();
+            const auto resource = itSymbolEntry.value().lock();
+            assert(static_cast<bool>(resource));
+
+            // Calculate location of symbol in world coordinates
+            glm::vec4 symbolPos;
+            symbolPos.x = static_cast<float>(static_cast<double>(symbol->location.x) / tileSize31);
+            symbolPos.y = 0.0f;
+            symbolPos.z = static_cast<float>(static_cast<double>(symbol->location.y) / tileSize31);
+            symbolPos.w = 1.0f;
+
+            // Get distance from symbol to camera
+            const auto distance = glm::distance(cameraPos, symbolPos);
+            
+            // Insert into map
+            sortedSymbols.insert(distance, qMove(SymbolPair(symbol, resource)));
+        }
+
+        // Render symbols in sorted order, in reversed order
+        QMapIterator< float, SymbolPair > itSymbolEntry(sortedSymbols);
+        while(itSymbolEntry.hasPrevious())
+        {
+            itSymbolEntry.previous();
+
+            const auto& symbolEntry = itSymbolEntry.value();
+
+            //TODO: render
+        }
+    }
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::releaseSymbolsStage()
@@ -1598,9 +1644,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::getLocationFromScreenPoint( const P
     double y = intersection.z + internalState.targetInTileOffsetN.y;
 
     const auto zoomDiff = ZoomLevel::MaxZoomLevel - state.zoomBase;
-    const auto tileWidth31 = (1u << zoomDiff);
-    x *= tileWidth31;
-    y *= tileWidth31;
+    const auto tileSize31 = (1u << zoomDiff);
+    x *= tileSize31;
+    y *= tileSize31;
 
     location.x = static_cast<int64_t>(x) + (internalState.targetTileId.x << zoomDiff);
     location.y = static_cast<int64_t>(y) + (internalState.targetTileId.y << zoomDiff);
