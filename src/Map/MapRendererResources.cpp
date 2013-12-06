@@ -1011,13 +1011,18 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAva
     auto& cacheLevel = collection->_cacheLevels[zoom];
 
     // Obtain tile from provider
+    const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
     std::shared_ptr<const MapSymbolsTile> tile;
     const auto requestSucceeded = provider->obtainSymbols(tileId, zoom, tile,
-        [this, provider, &cacheLevel](const std::shared_ptr<const Model::MapObject>& mapObject) -> bool
+        [this, provider, &cacheLevel, tileBBox31](const std::shared_ptr<const Model::MapObject>& mapObject) -> bool
         {
             // All symbols that come from map object which can not be cached,
             // should be received.
             if(!provider->canSymbolsBeSharedFrom(mapObject))
+                return true;
+
+            // Symbols from map object can be shared only in case this map object does not lay inside it's tile bbox completely
+            if(tileBBox31.contains(mapObject->bbox31))
                 return true;
 
             // Check if map symbols that come from this map object are already in cache
@@ -1056,7 +1061,7 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAva
         const auto& group = *itGroup;
 
         // All groups that can not be cached should be added to unique
-        if(!provider->canSymbolsBeSharedFrom(group->mapObject))
+        if(!provider->canSymbolsBeSharedFrom(group->mapObject) || tileBBox31.contains(group->mapObject->bbox31))
         {
             _uniqueSymbolsGroups.push_back(group);
             continue;
@@ -1120,8 +1125,7 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
 
             // Prepare data and upload to GPU
             std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
-//            const auto& preparedSourceData = owner->renderer->prepareTileForUploadingToGPU(_sourceData);
-//            ok = owner->renderer->gpuAPI->uploadTileToGPU(preparedSourceData, tilesPerAtlasTextureLimit, _resourceInGPU);
+            ok = owner->uploadSymbolToGPU(symbol, resourceInGPU);
 
             // If upload have failed, stop
             if(!ok)

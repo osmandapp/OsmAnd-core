@@ -2235,7 +2235,7 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
     std::function<bool(const std::shared_ptr<const Model::MapObject>& mapObject)> filter,
     const IQueryController* const controller )
 {
-    for(auto itSymbolsEntry = context._symbols.cbegin(); itSymbolsEntry != context._symbols.end(); ++itSymbolsEntry)
+    for(auto itSymbolsEntry = context._symbols.cbegin(); itSymbolsEntry != context._symbols.cend(); ++itSymbolsEntry)
     {
         if(controller && controller->isAborted())
             return;
@@ -2248,7 +2248,7 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
         const auto constructedGroup = new RasterizedSymbolsGroup(itSymbolsEntry->first);
         std::shared_ptr<const RasterizedSymbolsGroup> group(constructedGroup);
 
-        for(auto itPrimitiveSymbol = itSymbolsEntry->second.cbegin(); itPrimitiveSymbol != itSymbolsEntry->second.cbegin(); ++itPrimitiveSymbol)
+        for(auto itPrimitiveSymbol = itSymbolsEntry->second.cbegin(); itPrimitiveSymbol != itSymbolsEntry->second.cend(); ++itPrimitiveSymbol)
         {
             if(controller && controller->isAborted())
                 return;
