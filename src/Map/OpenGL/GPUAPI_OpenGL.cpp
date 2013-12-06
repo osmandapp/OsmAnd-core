@@ -28,8 +28,11 @@ OsmAnd::GPUAPI_OpenGL::GPUAPI_OpenGL()
 {
     _textureSamplers.fill(0);
 
-    // textureLod() is supported by GLES 4.3 by specification
+    // textureLod() is supported by GLSL 1.30+ specification (which is supported by OpenGL 3.0+)
     _isSupported_textureLod = true;
+
+    // OpenGL 2.0+ fully supports NPOT textures
+    _isSupported_texturesNPOT = true;
 }
 
 OsmAnd::GPUAPI_OpenGL::~GPUAPI_OpenGL()

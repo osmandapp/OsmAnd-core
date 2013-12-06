@@ -29,11 +29,13 @@ OsmAnd::GPUAPI_OpenGL_Common::GPUAPI_OpenGL_Common()
     : _maxTextureSize(0)
     , _isSupported_vertexShaderTextureLookup(false)
     , _isSupported_textureLod(false)
+    , _isSupported_texturesNPOT(false)
     , extensions(_extensions)
     , compressedFormats(_compressedFormats)
     , maxTextureSize(_maxTextureSize)
     , isSupported_vertexShaderTextureLookup(_isSupported_vertexShaderTextureLookup)
     , isSupported_textureLod(_isSupported_textureLod)
+    , isSupported_texturesNPOT(_isSupported_texturesNPOT)
 {
 }
 
@@ -279,7 +281,7 @@ bool OsmAnd::GPUAPI_OpenGL_Common::uploadTileAsTextureToGPU(const std::shared_pt
 
     // If tile has NPOT size, then it needs to be rounded-up to nearest POT value
     const auto tileSizePOT = Utilities::getNextPowerOfTwo(tile->size);
-    const auto textureSize = (tileSizePOT != tile->size) ? tileSizePOT : tile->size;//TODO: support GL_OES_texture_npot
+    const auto textureSize = (tileSizePOT != tile->size && !isSupported_texturesNPOT) ? tileSizePOT : tile->size;
     const bool useAtlasTexture = (textureSize != tile->size);
 
     // Get number of mipmap levels

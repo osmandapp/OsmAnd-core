@@ -185,6 +185,7 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
     _isSupported_EXT_unpack_subimage = extensions.contains("GL_EXT_unpack_subimage");
     _isSupported_EXT_texture_storage = extensions.contains("GL_EXT_texture_storage");
     _isSupported_APPLE_texture_max_level = extensions.contains("GL_APPLE_texture_max_level");
+    _isSupported_texturesNPOT = extensions.contains("GL_OES_texture_npot");
 #if !defined(OSMAND_TARGET_OS_ios)
     if(_isSupported_EXT_texture_storage && !glTexStorage2DEXT)
     {

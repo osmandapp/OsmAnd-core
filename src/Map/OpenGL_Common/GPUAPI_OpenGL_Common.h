@@ -102,6 +102,7 @@ namespace OsmAnd
 
         bool _isSupported_vertexShaderTextureLookup;
         bool _isSupported_textureLod;
+        bool _isSupported_texturesNPOT;
         
         virtual bool releaseResourceInGPU(const ResourceInGPU::Type type, const RefInGPU& refInGPU);
     public:
@@ -118,6 +119,7 @@ namespace OsmAnd
         const GLint& maxTextureSize;
         const bool& isSupported_vertexShaderTextureLookup;
         const bool& isSupported_textureLod;
+        const bool& isSupported_texturesNPOT;
         
         virtual GLenum validateResult() = 0;
         virtual GLuint compileShader(GLenum shaderType, const char* source);
