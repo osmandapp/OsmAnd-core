@@ -200,7 +200,7 @@ bool OsmAnd::GPUAPI_OpenGL_Common::uploadTileToGPU(const std::shared_ptr< const 
 
 bool OsmAnd::GPUAPI_OpenGL_Common::uploadSymbolToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
 {
-    return false;
+    return uploadSymbolAsTextureToGPU(symbol, resourceInGPU);
 }
 
 bool OsmAnd::GPUAPI_OpenGL_Common::releaseResourceInGPU( const ResourceInGPU::Type type, const RefInGPU& refInGPU )
@@ -497,4 +497,9 @@ bool OsmAnd::GPUAPI_OpenGL_Common::uploadTileAsArrayBufferToGPU(const std::share
     resourceInGPU.reset(static_cast<ResourceInGPU*>(arrayBufferInGPU));
 
     return true;
+}
+
+bool OsmAnd::GPUAPI_OpenGL_Common::uploadSymbolAsTextureToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
+{
+    return false;
 }

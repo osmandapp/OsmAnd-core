@@ -138,7 +138,9 @@ bool OsmAnd::MapRendererResources::uploadTileToGPU(const std::shared_ptr<const M
 
 bool OsmAnd::MapRendererResources::uploadSymbolToGPU(const std::shared_ptr<const MapSymbol>& mapSymbol, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU)
 {
-    return false;
+    std::shared_ptr<const MapSymbol> convertedSymbol;
+    const auto wasConverted = renderer->convertMapSymbol(mapSymbol, convertedSymbol);
+    return renderer->gpuAPI->uploadSymbolToGPU(wasConverted ? convertedSymbol : mapSymbol, outResourceInGPU);
 }
 
 void OsmAnd::MapRendererResources::updateBindings(const MapRendererState& state, const uint32_t updatedMask)

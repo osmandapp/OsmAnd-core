@@ -687,6 +687,22 @@ bool OsmAnd::MapRenderer::convertMapTile(const std::shared_ptr<const MapTile>& i
     return false;
 }
 
+bool OsmAnd::MapRenderer::convertMapSymbol(std::shared_ptr<const MapSymbol>& mapSymbol) const
+{
+    return convertMapSymbol(mapSymbol, mapSymbol);
+}
+
+bool OsmAnd::MapRenderer::convertMapSymbol(const std::shared_ptr<const MapSymbol>& input, std::shared_ptr<const MapSymbol>& output) const
+{
+    std::shared_ptr<const SkBitmap> convertedBitmap;
+    const bool wasConverted = convertBitmap(input->bitmap, convertedBitmap, AlphaChannelData::Present);
+    if(!wasConverted)
+        return false;
+
+    output.reset(new MapSymbol(input->group, input->mapObject, input->order, input->location, convertedBitmap));
+    return true;
+}
+
 unsigned int OsmAnd::MapRenderer::getVisibleTilesCount() const
 {
     QReadLocker scopedLocker(&_internalStateLock);

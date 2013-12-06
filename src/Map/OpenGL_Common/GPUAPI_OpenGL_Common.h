@@ -94,6 +94,8 @@ namespace OsmAnd
     private:
         bool uploadTileAsTextureToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
         bool uploadTileAsArrayBufferToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
+
+        bool uploadSymbolAsTextureToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
     protected:
         GLint _maxTextureSize;
         QHash< GLuint, QMultiMap< GLShaderVariableType, GLint > > _programVariables;

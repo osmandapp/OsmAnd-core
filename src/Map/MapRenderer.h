@@ -125,6 +125,8 @@ namespace OsmAnd
         bool convertBitmap(const std::shared_ptr<const SkBitmap>& input, std::shared_ptr<const SkBitmap>& output, const AlphaChannelData alphaChannelData = AlphaChannelData::Undefined) const;
         bool convertMapTile(std::shared_ptr<const MapTile>& mapTile) const;
         bool convertMapTile(const std::shared_ptr<const MapTile>& input, std::shared_ptr<const MapTile>& output) const;
+        bool convertMapSymbol(std::shared_ptr<const MapSymbol>& mapSymbol) const;
+        bool convertMapSymbol(const std::shared_ptr<const MapSymbol>& input, std::shared_ptr<const MapSymbol>& output) const;
 
         // General:
         virtual GPUAPI* allocateGPUAPI() = 0;

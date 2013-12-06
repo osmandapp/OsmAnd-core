@@ -63,7 +63,7 @@ namespace OsmAnd
     protected:
         std::shared_ptr<const SkBitmap> _bitmap;
     public:
-        MapSymbol(const std::shared_ptr<const MapSymbolsGroup>& group, const std::shared_ptr<const Model::MapObject>& mapObject, const int order, const PointI& location, const std::shared_ptr<const SkBitmap>& bitmap);
+        MapSymbol(const std::weak_ptr<const MapSymbolsGroup>& group, const std::shared_ptr<const Model::MapObject>& mapObject, const int order, const PointI& location, const std::shared_ptr<const SkBitmap>& bitmap);
         virtual ~MapSymbol();
 
         const std::weak_ptr<const MapSymbolsGroup> group;
