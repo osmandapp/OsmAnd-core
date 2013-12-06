@@ -12,6 +12,7 @@
 #include "IMapTileProvider.h"
 #include "IMapBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
+#include "IMapSymbolProvider.h"
 #include "Logging.h"
 #include "Utilities.h"
 
@@ -260,6 +261,9 @@ bool OsmAnd::GPUAPI_OpenGL_Common::uploadTileAsTextureToGPU(const std::shared_pt
             sourcePixelByteSize = 1;
             tileUsesPalette = true;
             break;
+        default:
+            assert(false);
+            return false;
         }
 
         // No need to generate mipmaps if textureLod is not supported
@@ -275,6 +279,7 @@ bool OsmAnd::GPUAPI_OpenGL_Common::uploadTileAsTextureToGPU(const std::shared_pt
         assert(false);
         return false;
     }
+    const auto textureFormat = getTextureFormat(tile);
         
     // Calculate texture size. Tiles are always stored in square textures.
     // Also, since atlas-texture support for tiles was deprecated, only 1 tile per texture is allowed.
@@ -305,13 +310,13 @@ bool OsmAnd::GPUAPI_OpenGL_Common::uploadTileAsTextureToGPU(const std::shared_pt
         if(!tileUsesPalette)
         {
             // Allocate square 2D texture
-            allocateTexture2D(GL_TEXTURE_2D, mipmapLevels, textureSize, textureSize, tile);
+            allocateTexture2D(GL_TEXTURE_2D, mipmapLevels, textureSize, textureSize, textureFormat);
 
             // Upload data
             uploadDataToTexture2D(GL_TEXTURE_2D, 0,
                 0, 0, (GLsizei)tile->size, (GLsizei)tile->size,
-                tile->data, tile->rowLength / sourcePixelByteSize,
-                tile);
+                tile->data, tile->rowLength / sourcePixelByteSize, sourcePixelByteSize,
+                getSourceFormat(tile));
 
             // Set maximal mipmap level
             setMipMapLevelsLimit(GL_TEXTURE_2D, mipmapLevels - 1);
@@ -386,7 +391,7 @@ bool OsmAnd::GPUAPI_OpenGL_Common::uploadTileAsTextureToGPU(const std::shared_pt
         GL_CHECK_RESULT;
 
         // Create resource-in-GPU descriptor
-        const auto textureInGPU = new TextureInGPU(this, reinterpret_cast<RefInGPU>(texture), textureSize, mipmapLevels);
+        const auto textureInGPU = new TextureInGPU(this, reinterpret_cast<RefInGPU>(texture), textureSize, textureSize, mipmapLevels);
         resourceInGPU.reset(static_cast<ResourceInGPU*>(textureInGPU));
 
         return true;
@@ -398,7 +403,7 @@ bool OsmAnd::GPUAPI_OpenGL_Common::uploadTileAsTextureToGPU(const std::shared_pt
 
     // Find proper atlas textures pool by format of texture and full size of tile (including padding)
     AtlasTypeId atlasTypeId;
-    atlasTypeId.format = getTileTextureFormat(tile);
+    atlasTypeId.format = getTextureFormat(tile);
     atlasTypeId.tileSize = tile->size;
     atlasTypeId.tilePadding = 0;
     const auto atlasTexturesPool = obtainAtlasTexturesPool(atlasTypeId);
@@ -420,7 +425,7 @@ bool OsmAnd::GPUAPI_OpenGL_Common::uploadTileAsTextureToGPU(const std::shared_pt
             GL_CHECK_RESULT;
 
             // Allocate space for this texture
-            allocateTexture2D(GL_TEXTURE_2D, mipmapLevels, textureSize, textureSize, tile);
+            allocateTexture2D(GL_TEXTURE_2D, mipmapLevels, textureSize, textureSize, getTextureFormat(tile));
             GL_CHECK_RESULT;
 
             // Set maximal mipmap level
@@ -442,8 +447,8 @@ bool OsmAnd::GPUAPI_OpenGL_Common::uploadTileAsTextureToGPU(const std::shared_pt
     // Upload data
     uploadDataToTexture2D(GL_TEXTURE_2D, 0,
         0, 0, (GLsizei)tile->size, (GLsizei)tile->size,
-        tile->data, tile->rowLength / sourcePixelByteSize,
-        tile);
+        tile->data, tile->rowLength / sourcePixelByteSize, sourcePixelByteSize,
+        getSourceFormat(tile));
     GL_CHECK_RESULT;
 
     // Generate mipmap
@@ -501,5 +506,76 @@ bool OsmAnd::GPUAPI_OpenGL_Common::uploadTileAsArrayBufferToGPU(const std::share
 
 bool OsmAnd::GPUAPI_OpenGL_Common::uploadSymbolAsTextureToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
 {
-    return false;
+    GL_CHECK_PRESENT(glGenTextures);
+    GL_CHECK_PRESENT(glBindTexture);
+    GL_CHECK_PRESENT(glGenerateMipmap);
+    GL_CHECK_PRESENT(glTexParameteri);
+
+    // Determine texture properties:
+    GLsizei sourcePixelByteSize = 0;
+    bool symbolUsesPalette = false;
+    switch(symbol->bitmap->getConfig())
+    {
+    case SkBitmap::Config::kARGB_8888_Config:
+        sourcePixelByteSize = 4;
+        break;
+    case SkBitmap::Config::kARGB_4444_Config:
+    case SkBitmap::Config::kRGB_565_Config:
+        sourcePixelByteSize = 2;
+        break;
+    case SkBitmap::Config::kIndex8_Config:
+        sourcePixelByteSize = 1;
+        symbolUsesPalette = true;
+        break;
+    default:
+        assert(false);
+        return false;
+    }
+    const auto textureFormat = getTextureFormat(symbol);
+
+    // Symbols don't use mipmapping, so there is no difference between POT vs NPOT size of texture.
+    // In OpenGLES 2.0 and OpenGL 3.0+, NPOT textures are supported in general.
+    // OpenGLES 2.0 has some limitations without isSupported_texturesNPOT:
+    //  - no mipmaps
+    //  - only LINEAR or NEAREST minification filter.
+
+    // Create texture id
+    GLuint texture;
+    glGenTextures(1, &texture);
+    GL_CHECK_RESULT;
+    assert(texture != 0);
+
+    // Activate texture
+    glBindTexture(GL_TEXTURE_2D, texture);
+    GL_CHECK_RESULT;
+
+    if(!symbolUsesPalette)
+    {
+        // Allocate square 2D texture
+        allocateTexture2D(GL_TEXTURE_2D, 1, symbol->bitmap->width(), symbol->bitmap->height(), textureFormat);
+
+        // Upload data
+        uploadDataToTexture2D(GL_TEXTURE_2D, 0,
+            0, 0, (GLsizei)symbol->bitmap->width(), (GLsizei)symbol->bitmap->height(),
+            symbol->bitmap->getPixels(), symbol->bitmap->rowBytes() / sourcePixelByteSize, sourcePixelByteSize,
+            getSourceFormat(symbol));
+
+        // Set maximal mipmap level to 0
+        setMipMapLevelsLimit(GL_TEXTURE_2D, 0);
+    }
+    else
+    {
+        //TODO: palettes are not yet supported
+        assert(false);
+    }
+
+    // Deselect atlas as active texture
+    glBindTexture(GL_TEXTURE_2D, 0);
+    GL_CHECK_RESULT;
+
+    // Create resource-in-GPU descriptor
+    const auto textureInGPU = new TextureInGPU(this, reinterpret_cast<RefInGPU>(texture), symbol->bitmap->width(), symbol->bitmap->height(), 1);
+    resourceInGPU.reset(static_cast<ResourceInGPU*>(textureInGPU));
+
+    return true;
 }

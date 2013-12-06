@@ -12,6 +12,7 @@
 
 #include "MapRendererTypes.h"
 #include "IMapBitmapTileProvider.h"
+#include "IMapSymbolProvider.h"
 #include "Logging.h"
 
 #undef GL_CHECK_RESULT
@@ -213,7 +214,7 @@ bool OsmAnd::GPUAPI_OpenGL::release()
     return true;
 }
 
-uint32_t OsmAnd::GPUAPI_OpenGL::getTileTextureFormat( const std::shared_ptr< const MapTile >& tile )
+OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(const std::shared_ptr< const MapTile >& tile)
 {
     GLenum textureFormat = GL_INVALID_ENUM;
 
@@ -241,12 +242,93 @@ uint32_t OsmAnd::GPUAPI_OpenGL::getTileTextureFormat( const std::shared_ptr< con
 
     assert(textureFormat != GL_INVALID_ENUM);
 
-    return static_cast<uint32_t>(textureFormat);
+    return static_cast<TextureFormat>(textureFormat);
 }
 
-void OsmAnd::GPUAPI_OpenGL::allocateTexture2D( GLenum target, GLsizei levels, GLsizei width, GLsizei height, const std::shared_ptr< const MapTile >& forTile )
+OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(const std::shared_ptr< const MapSymbol >& symbol)
 {
-    GLenum textureFormat = static_cast<GLenum>(getTileTextureFormat(forTile));
+    GLenum textureFormat = GL_INVALID_ENUM;
+
+    switch(symbol->bitmap->getConfig())
+    {
+    case SkBitmap::Config::kARGB_8888_Config:
+        textureFormat = GL_RGBA8;
+        break;
+    case SkBitmap::Config::kARGB_4444_Config:
+        textureFormat = GL_RGBA4;
+        break;
+    case SkBitmap::Config::kRGB_565_Config:
+        textureFormat = GL_RGB565;
+        break;
+    }
+    
+    assert(textureFormat != GL_INVALID_ENUM);
+
+    return static_cast<TextureFormat>(textureFormat);
+}
+
+OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGL::getSourceFormat(const std::shared_ptr< const MapTile >& tile)
+{
+    SourceFormat sourceFormat;
+    sourceFormat.format = GL_INVALID_ENUM;
+    sourceFormat.type = GL_INVALID_ENUM;
+    if(tile->dataType == MapTileDataType::Bitmap)
+    {
+        const auto& bitmapTile = std::static_pointer_cast<const MapBitmapTile>(tile);
+
+        switch(bitmapTile->bitmap->getConfig())
+        {
+        case SkBitmap::Config::kARGB_8888_Config:
+            sourceFormat.format = GL_RGBA;
+            sourceFormat.type = GL_UNSIGNED_BYTE;
+            break;
+        case SkBitmap::Config::kARGB_4444_Config:
+            sourceFormat.format = GL_RGBA;
+            sourceFormat.type = GL_UNSIGNED_SHORT_4_4_4_4;
+            break;
+        case SkBitmap::Config::kRGB_565_Config:
+            sourceFormat.format = GL_RGB;
+            sourceFormat.type = GL_UNSIGNED_SHORT_5_6_5;
+            break;
+        }
+    }
+    else if(tile->dataType == MapTileDataType::ElevationData)
+    {
+        sourceFormat.format = GL_RED;
+        sourceFormat.type = GL_FLOAT;
+    }
+
+    return sourceFormat;
+}
+
+OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGL::getSourceFormat(const std::shared_ptr< const MapSymbol >& symbol)
+{
+    SourceFormat sourceFormat;
+    sourceFormat.format = GL_INVALID_ENUM;
+    sourceFormat.type = GL_INVALID_ENUM;
+
+    switch(symbol->bitmap->getConfig())
+    {
+    case SkBitmap::Config::kARGB_8888_Config:
+        sourceFormat.format = GL_RGBA;
+        sourceFormat.type = GL_UNSIGNED_BYTE;
+        break;
+    case SkBitmap::Config::kARGB_4444_Config:
+        sourceFormat.format = GL_RGBA;
+        sourceFormat.type = GL_UNSIGNED_SHORT_4_4_4_4;
+        break;
+    case SkBitmap::Config::kRGB_565_Config:
+        sourceFormat.format = GL_RGB;
+        sourceFormat.type = GL_UNSIGNED_SHORT_5_6_5;
+        break;
+    }
+
+    return sourceFormat;
+}
+
+void OsmAnd::GPUAPI_OpenGL::allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const TextureFormat format)
+{
+    GLenum textureFormat = static_cast<GLenum>(format);
 
     glTexStorage2D(target, levels, textureFormat, width, height);
     GL_CHECK_RESULT;
@@ -255,47 +337,19 @@ void OsmAnd::GPUAPI_OpenGL::allocateTexture2D( GLenum target, GLsizei levels, GL
 void OsmAnd::GPUAPI_OpenGL::uploadDataToTexture2D(
     GLenum target, GLint level,
     GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
-    const GLvoid *data, GLsizei dataRowLengthInElements,
-    const std::shared_ptr< const MapTile >& tile )
+    const GLvoid *data, GLsizei dataRowLengthInElements, GLsizei elementSize,
+    const SourceFormat sourceFormat)
 {
     GL_CHECK_PRESENT(glPixelStorei);
     GL_CHECK_PRESENT(glTexSubImage2D);
-
-    GLenum sourceFormat = GL_INVALID_ENUM;
-    GLenum sourceFormatType = GL_INVALID_ENUM;
-    if(tile->dataType == MapTileDataType::Bitmap)
-    {
-        const auto& bitmapTile = std::static_pointer_cast<const MapBitmapTile>(tile);
-
-        switch (bitmapTile->bitmap->getConfig())
-        {
-        case SkBitmap::Config::kARGB_8888_Config:
-            sourceFormat = GL_RGBA;
-            sourceFormatType = GL_UNSIGNED_BYTE;
-            break;
-        case SkBitmap::Config::kARGB_4444_Config:
-            sourceFormat = GL_RGBA;
-            sourceFormatType = GL_UNSIGNED_SHORT_4_4_4_4;
-            break;
-        case SkBitmap::Config::kRGB_565_Config:
-            sourceFormat = GL_RGB;
-            sourceFormatType = GL_UNSIGNED_SHORT_5_6_5;
-            break;
-        }
-    }
-    else if(tile->dataType == MapTileDataType::ElevationData)
-    {
-        sourceFormat = GL_RED;
-        sourceFormatType = GL_FLOAT;
-    }
 
     glPixelStorei(GL_UNPACK_ROW_LENGTH, dataRowLengthInElements);
     GL_CHECK_RESULT;
 
     glTexSubImage2D(target, level,
         xoffset, yoffset, width, height,
-        sourceFormat,
-        sourceFormatType,
+        static_cast<GLenum>(sourceFormat.format),
+        static_cast<GLenum>(sourceFormat.type),
         data);
     GL_CHECK_RESULT;
 }

@@ -11,6 +11,7 @@
 
 #include "MapRendererTypes.h"
 #include "IMapBitmapTileProvider.h"
+#include "IMapSymbolProvider.h"
 #include "Logging.h"
 
 #undef GL_CHECK_RESULT
@@ -238,7 +239,7 @@ bool OsmAnd::GPUAPI_OpenGLES2::release()
     return true;
 }
 
-uint32_t OsmAnd::GPUAPI_OpenGLES2::getTileTextureFormat( const std::shared_ptr< const MapTile >& tile )
+OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGLES2::getTextureFormat( const std::shared_ptr< const MapTile >& tile )
 {
     // If current device supports glTexStorage2D, lets use sized format
     if(isSupported_EXT_texture_storage)
@@ -277,7 +278,7 @@ uint32_t OsmAnd::GPUAPI_OpenGLES2::getTileTextureFormat( const std::shared_ptr< 
 
         assert(textureFormat != GL_INVALID_ENUM);
 
-        return static_cast<uint32_t>(textureFormat);
+        return static_cast<TextureFormat>(textureFormat);
     }
 
     // But if glTexStorage2D is not supported, we need to fallback to pixel type and format specification
@@ -317,13 +318,63 @@ uint32_t OsmAnd::GPUAPI_OpenGLES2::getTileTextureFormat( const std::shared_ptr< 
     assert((format >> 16) == 0);
     assert((type >> 16) == 0);
 
-    return (static_cast<uint32_t>(format) << 16) | type;
+    return (static_cast<TextureFormat>(format) << 16) | type;
 }
 
-void OsmAnd::GPUAPI_OpenGLES2::allocateTexture2D( GLenum target, GLsizei levels, GLsizei width, GLsizei height, const std::shared_ptr< const MapTile >& tile )
+OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGLES2::getTextureFormat( const std::shared_ptr< const MapSymbol >& symbol )
 {
-    const auto encodedFormat = getTileTextureFormat(tile);
+    // If current device supports glTexStorage2D, lets use sized format
+    if(isSupported_EXT_texture_storage)
+    {
+        GLenum textureFormat = GL_INVALID_ENUM;
 
+        switch (symbol->bitmap->getConfig())
+        {
+        case SkBitmap::Config::kARGB_8888_Config:
+            textureFormat = GL_RGBA8_OES;
+            break;
+        case SkBitmap::Config::kARGB_4444_Config:
+            textureFormat = GL_RGBA4;
+            break;
+        case SkBitmap::Config::kRGB_565_Config:
+            textureFormat = GL_RGB565;
+            break;
+        }
+
+        assert(textureFormat != GL_INVALID_ENUM);
+
+        return static_cast<TextureFormat>(textureFormat);
+    }
+
+    // But if glTexStorage2D is not supported, we need to fallback to pixel type and format specification
+    GLenum format = GL_INVALID_ENUM;
+    GLenum type = GL_INVALID_ENUM;
+    switch (symbol->bitmap->getConfig())
+    {
+    case SkBitmap::Config::kARGB_8888_Config:
+        format = GL_RGBA;
+        type = GL_UNSIGNED_BYTE;
+        break;
+    case SkBitmap::Config::kARGB_4444_Config:
+        format = GL_RGBA;
+        type = GL_UNSIGNED_SHORT_4_4_4_4;
+        break;
+    case SkBitmap::Config::kRGB_565_Config:
+        format = GL_RGB;
+        type = GL_UNSIGNED_SHORT_5_6_5;
+        break;
+    }
+
+    assert(format != GL_INVALID_ENUM);
+    assert(format != GL_INVALID_ENUM);
+    assert((format >> 16) == 0);
+    assert((type >> 16) == 0);
+
+    return (static_cast<TextureFormat>(format) << 16) | type;
+}
+
+void OsmAnd::GPUAPI_OpenGLES2::allocateTexture2D( GLenum target, GLsizei levels, GLsizei width, GLsizei height, const TextureFormat encodedFormat )
+{
     // Use glTexStorage2D if possible
     if(isSupported_EXT_texture_storage)
     {
@@ -355,11 +406,78 @@ void OsmAnd::GPUAPI_OpenGLES2::allocateTexture2D( GLenum target, GLsizei levels,
     delete[] dummyBuffer;
 }
 
+OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGLES2::getSourceFormat(const std::shared_ptr< const MapTile >& tile)
+{
+    SourceFormat sourceFormat;
+    sourceFormat.format = GL_INVALID_ENUM;
+    sourceFormat.type = GL_INVALID_ENUM;
+    
+    if(tile->dataType == MapTileDataType::Bitmap)
+    {
+        const auto& bitmapTile = std::static_pointer_cast<const MapBitmapTile>(tile);
+
+        switch(bitmapTile->bitmap->getConfig())
+        {
+        case SkBitmap::Config::kARGB_8888_Config:
+            sourceFormat.format = GL_RGBA;
+            sourceFormat.type = GL_UNSIGNED_BYTE;
+            break;
+        case SkBitmap::Config::kARGB_4444_Config:
+            sourceFormat.format = GL_RGBA;
+            sourceFormat.type = GL_UNSIGNED_SHORT_4_4_4_4;
+            break;
+        case SkBitmap::Config::kRGB_565_Config:
+            sourceFormat.format = GL_RGB;
+            sourceFormat.type = GL_UNSIGNED_SHORT_5_6_5;
+            break;
+        }
+    }
+    else if(tile->dataType == MapTileDataType::ElevationData)
+    {
+        if(isSupported_EXT_texture_rg)
+            sourceFormat.format = GL_RED_EXT;
+        else
+            sourceFormat.format = GL_LUMINANCE;
+
+        if(isSupported_EXT_unpack_subimage)
+            sourceFormat.type = GL_FLOAT;
+        else
+            sourceFormat.type = GL_UNSIGNED_BYTE;
+    }
+
+    return sourceFormat;
+}
+
+OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGLES2::getSourceFormat(const std::shared_ptr< const MapSymbol >& symbol)
+{
+    SourceFormat sourceFormat;
+    sourceFormat.format = GL_INVALID_ENUM;
+    sourceFormat.type = GL_INVALID_ENUM;
+
+    switch(symbol->bitmap->getConfig())
+    {
+    case SkBitmap::Config::kARGB_8888_Config:
+        sourceFormat.format = GL_RGBA;
+        sourceFormat.type = GL_UNSIGNED_BYTE;
+        break;
+    case SkBitmap::Config::kARGB_4444_Config:
+        sourceFormat.format = GL_RGBA;
+        sourceFormat.type = GL_UNSIGNED_SHORT_4_4_4_4;
+        break;
+    case SkBitmap::Config::kRGB_565_Config:
+        sourceFormat.format = GL_RGB;
+        sourceFormat.type = GL_UNSIGNED_SHORT_5_6_5;
+        break;
+    }
+    
+    return sourceFormat;
+}
+
 void OsmAnd::GPUAPI_OpenGLES2::uploadDataToTexture2D(
     GLenum target, GLint level,
     GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
-    const GLvoid *data, GLsizei dataRowLengthInElements,
-    const std::shared_ptr< const MapTile >& tile )
+    const GLvoid *data, GLsizei dataRowLengthInElements, GLsizei elementSize,
+    const SourceFormat sourceFormat)
 {
     GL_CHECK_PRESENT(glTexSubImage2D);
 
@@ -368,44 +486,13 @@ void OsmAnd::GPUAPI_OpenGLES2::uploadDataToTexture2D(
     {
         GL_CHECK_PRESENT(glPixelStorei);
 
-        GLenum sourceFormat = GL_INVALID_ENUM;
-        GLenum sourceFormatType = GL_INVALID_ENUM;
-        if(tile->dataType == MapTileDataType::Bitmap)
-        {
-            const auto& bitmapTile = std::static_pointer_cast<const MapBitmapTile>(tile);
-
-            switch (bitmapTile->bitmap->getConfig())
-            {
-            case SkBitmap::Config::kARGB_8888_Config:
-                sourceFormat = GL_RGBA;
-                sourceFormatType = GL_UNSIGNED_BYTE;
-                break;
-            case SkBitmap::Config::kARGB_4444_Config:
-                sourceFormat = GL_RGBA;
-                sourceFormatType = GL_UNSIGNED_SHORT_4_4_4_4;
-                break;
-            case SkBitmap::Config::kRGB_565_Config:
-                sourceFormat = GL_RGB;
-                sourceFormatType = GL_UNSIGNED_SHORT_5_6_5;
-                break;
-            }
-        }
-        else if(tile->dataType == MapTileDataType::ElevationData)
-        {
-            if(isSupported_EXT_texture_rg)
-                sourceFormat = GL_RED_EXT;
-            else
-                sourceFormat = GL_LUMINANCE;
-            sourceFormatType = GL_FLOAT;
-        }
-
         glPixelStorei(GL_UNPACK_ROW_LENGTH, dataRowLengthInElements);
         GL_CHECK_RESULT;
 
         glTexSubImage2D(target, level,
             xoffset, yoffset, width, height,
-            sourceFormat,
-            sourceFormatType,
+            static_cast<GLenum>(sourceFormat.format),
+            static_cast<GLenum>(sourceFormat.type),
             data);
         GL_CHECK_RESULT;
 
@@ -413,37 +500,6 @@ void OsmAnd::GPUAPI_OpenGLES2::uploadDataToTexture2D(
     }
 
     // Otherwise fallback to manual unpacking
-    const auto encodedFormat = getTileTextureFormat(tile);
-    GLenum format = GL_INVALID_ENUM;
-    GLenum type = GL_INVALID_ENUM;
-    if(tile->dataType == MapTileDataType::Bitmap)
-    {
-        const auto& bitmapTile = std::static_pointer_cast<const MapBitmapTile>(tile);
-
-        switch (bitmapTile->bitmap->getConfig())
-        {
-        case SkBitmap::Config::kARGB_8888_Config:
-            format = GL_RGBA;
-            type = GL_UNSIGNED_BYTE;
-            break;
-        case SkBitmap::Config::kARGB_4444_Config:
-            format = GL_RGBA;
-            type = GL_UNSIGNED_SHORT_4_4_4_4;
-            break;
-        case SkBitmap::Config::kRGB_565_Config:
-            format = GL_RGB;
-            type = GL_UNSIGNED_SHORT_5_6_5;
-            break;
-        }
-    }
-    else if(tile->dataType == MapTileDataType::ElevationData)
-    {
-        if(isSupported_vertexShaderTextureLookup)
-        {
-            format = isSupported_EXT_texture_rg ? GL_RED_EXT : GL_LUMINANCE;
-            type = GL_UNSIGNED_BYTE;
-        }
-    }
     
     // In case our row length is 0 or equals to image width (has no extra stride, just load as-is)
     if(dataRowLengthInElements == 0 || dataRowLengthInElements == width)
@@ -451,44 +507,25 @@ void OsmAnd::GPUAPI_OpenGLES2::uploadDataToTexture2D(
         // Upload data
         glTexSubImage2D(target, level,
             xoffset, yoffset, width, height,
-            format, type,
+            static_cast<GLenum>(sourceFormat.format),
+            static_cast<GLenum>(sourceFormat.type),
             data);
         GL_CHECK_RESULT;
         return;
     }
 
     // Otherwise we need to or load row by row
-    GLsizei pixelSizeInBytes = 0;
-    if(tile->dataType == MapTileDataType::Bitmap)
-    {
-        const auto& bitmapTile = std::static_pointer_cast<const MapBitmapTile>(tile);
-
-        switch (bitmapTile->bitmap->getConfig())
-        {
-        case SkBitmap::Config::kARGB_8888_Config:
-            pixelSizeInBytes = 4;
-            break;
-        case SkBitmap::Config::kARGB_4444_Config:
-        case SkBitmap::Config::kRGB_565_Config:
-            pixelSizeInBytes = 2;
-            break;
-        }
-    }
-    else if(tile->dataType == MapTileDataType::ElevationData)
-    {
-        pixelSizeInBytes = 1;
-    }
-    assert(pixelSizeInBytes != 0);
     auto pRow = reinterpret_cast<const uint8_t*>(data);
     for(auto rowIdx = 0; rowIdx < height; rowIdx++)
     {
         glTexSubImage2D(target, level,
             xoffset, yoffset + rowIdx, width, 1,
-            format, type,
+            static_cast<GLenum>(sourceFormat.format),
+            static_cast<GLenum>(sourceFormat.type),
             pRow);
         GL_CHECK_RESULT;
 
-        pRow += dataRowLengthInElements * pixelSizeInBytes;
+        pRow += dataRowLengthInElements*elementSize;
     }
 }
 

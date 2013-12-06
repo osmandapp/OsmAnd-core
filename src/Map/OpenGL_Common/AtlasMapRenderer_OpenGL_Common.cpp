@@ -609,7 +609,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
                         GL_CHECK_RESULT;
                         glUniform1f(perTile_vs.tileSizeN, tileOnAtlasTexture->atlasTexture->tileSizeN);
                         GL_CHECK_RESULT;
-                        glUniform1f(perTile_vs.tilePaddingN, tileOnAtlasTexture->atlasTexture->halfTexelSizeN);
+                        glUniform1f(perTile_vs.tilePaddingN, tileOnAtlasTexture->atlasTexture->uHalfTexelSizeN);
                         GL_CHECK_RESULT;
                         glUniform1i(perTile_vs.slotsPerSide, tileOnAtlasTexture->atlasTexture->slotsPerSide);
                         GL_CHECK_RESULT;
@@ -622,7 +622,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
                         GL_CHECK_RESULT;
                         glUniform1f(perTile_vs.tileSizeN, 1.0f);
                         GL_CHECK_RESULT;
-                        glUniform1f(perTile_vs.tilePaddingN, texture->halfTexelSizeN);
+                        glUniform1f(perTile_vs.tilePaddingN, texture->uHalfTexelSizeN);
                         GL_CHECK_RESULT;
                         glUniform1i(perTile_vs.slotsPerSide, 1);
                         GL_CHECK_RESULT;

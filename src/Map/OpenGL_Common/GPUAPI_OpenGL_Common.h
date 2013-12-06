@@ -127,12 +127,15 @@ namespace OsmAnd
         virtual GLuint compileShader(GLenum shaderType, const char* source);
         virtual GLuint linkProgram(GLuint shadersCount, GLuint *shaders);
 
-        virtual uint32_t getTileTextureFormat(const std::shared_ptr< const MapTile >& tile) = 0;
-        virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const std::shared_ptr< const MapTile >& forTile) = 0;
+        virtual TextureFormat getTextureFormat(const std::shared_ptr< const MapTile >& tile) = 0;
+        virtual TextureFormat getTextureFormat(const std::shared_ptr< const MapSymbol >& symbol) = 0;
+        virtual SourceFormat getSourceFormat(const std::shared_ptr< const MapTile >& tile) = 0;
+        virtual SourceFormat getSourceFormat(const std::shared_ptr< const MapSymbol >& symbol) = 0;
+        virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const TextureFormat format) = 0;
         virtual void uploadDataToTexture2D(GLenum target, GLint level,
             GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
-            const GLvoid *data, GLsizei dataRowLengthInElements,
-            const std::shared_ptr< const MapTile >& fromTile) = 0;
+            const GLvoid *data, GLsizei dataRowLengthInElements, GLsizei elementSize,
+            const SourceFormat sourceFormat) = 0;
         virtual void setMipMapLevelsLimit(GLenum target, const uint32_t mipmapLevelsCount) = 0;
 
         virtual void glGenVertexArrays_wrapper(GLsizei n, GLuint* arrays) = 0;

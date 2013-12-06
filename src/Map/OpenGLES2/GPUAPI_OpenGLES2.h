@@ -78,12 +78,15 @@ namespace OsmAnd {
 
         virtual GLenum validateResult();
 
-        virtual uint32_t getTileTextureFormat(const std::shared_ptr< const MapTile >& tile);
-        virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const std::shared_ptr< const MapTile >& forTile);
+        virtual TextureFormat getTextureFormat(const std::shared_ptr< const MapTile >& tile);
+        virtual TextureFormat getTextureFormat(const std::shared_ptr< const MapSymbol >& symbol);
+        virtual SourceFormat getSourceFormat(const std::shared_ptr< const MapTile >& tile);
+        virtual SourceFormat getSourceFormat(const std::shared_ptr< const MapSymbol >& symbol);
+        virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const TextureFormat format);
         virtual void uploadDataToTexture2D(GLenum target, GLint level,
             GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
-            const GLvoid *data, GLsizei dataRowLengthInElements,
-            const std::shared_ptr< const MapTile >& fromTile);
+            const GLvoid *data, GLsizei dataRowLengthInElements, GLsizei elementSize,
+            const SourceFormat sourceFormat);
         virtual void setMipMapLevelsLimit(GLenum target, const uint32_t mipmapLevelsCount);
 
         virtual void glGenVertexArrays_wrapper(GLsizei n, GLuint* arrays);

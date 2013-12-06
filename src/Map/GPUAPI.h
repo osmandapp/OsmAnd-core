@@ -49,6 +49,15 @@ namespace OsmAnd
     {
     public:
         typedef void* RefInGPU;
+        typedef uint32_t TextureFormat;
+        union SourceFormat
+        {
+            uint32_t id;
+            struct {
+                uint16_t format;
+                uint16_t type;
+            };
+        };
 
         class ResourceInGPU
         {
@@ -77,13 +86,16 @@ namespace OsmAnd
         private:
         protected:
         public:
-            TextureInGPU(GPUAPI* api, const RefInGPU& refInGPU, const unsigned int textureSize, const unsigned int mipmapLevels);
+            TextureInGPU(GPUAPI* api, const RefInGPU& refInGPU, const unsigned int width, const unsigned int height, const unsigned int mipmapLevels);
             virtual ~TextureInGPU();
 
-            const unsigned int textureSize;
+            const unsigned int width;
+            const unsigned int height;
             const unsigned int mipmapLevels;
-            const float texelSizeN;
-            const float halfTexelSizeN;
+            const float uTexelSizeN;
+            const float vTexelSizeN;
+            const float uHalfTexelSizeN;
+            const float vHalfTexelSizeN;
         };
 
         class ArrayBufferInGPU : public ResourceInGPU
@@ -102,7 +114,7 @@ namespace OsmAnd
             uint64_t id;
             struct
             {
-                uint32_t format;
+                TextureFormat format;
                 uint16_t tileSize;
                 uint16_t tilePadding;
             };

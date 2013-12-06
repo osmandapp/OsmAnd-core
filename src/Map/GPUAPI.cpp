@@ -84,12 +84,15 @@ OsmAnd::GPUAPI::ResourceInGPU::~ResourceInGPU()
     }
 }
 
-OsmAnd::GPUAPI::TextureInGPU::TextureInGPU(GPUAPI* api_, const RefInGPU& refInGPU_, const unsigned int textureSize_, const unsigned int mipmapLevels_)
+OsmAnd::GPUAPI::TextureInGPU::TextureInGPU(GPUAPI* api_, const RefInGPU& refInGPU_, const unsigned int width_, const unsigned int height_, const unsigned int mipmapLevels_)
     : ResourceInGPU(Type::Texture, api_, refInGPU_)
-    , textureSize(textureSize_)
+    , width(width_)
+    , height(height_)
     , mipmapLevels(mipmapLevels_)
-    , texelSizeN(1.0f / static_cast<float>(textureSize_))
-    , halfTexelSizeN(0.5f / static_cast<float>(textureSize_))
+    , uTexelSizeN(1.0f / static_cast<float>(width))
+    , vTexelSizeN(1.0f / static_cast<float>(height))
+    , uHalfTexelSizeN(0.5f / static_cast<float>(width))
+    , vHalfTexelSizeN(0.5f / static_cast<float>(height))
 {
 }
 
@@ -108,7 +111,7 @@ OsmAnd::GPUAPI::ArrayBufferInGPU::~ArrayBufferInGPU()
 }
 
 OsmAnd::GPUAPI::AtlasTextureInGPU::AtlasTextureInGPU(GPUAPI* api_, const RefInGPU& refInGPU_, const unsigned int textureSize_, const unsigned int mipmapLevels_, const std::shared_ptr<AtlasTexturesPool>& pool_)
-    : TextureInGPU(api_, refInGPU_, textureSize_, mipmapLevels_)
+    : TextureInGPU(api_, refInGPU_, textureSize_, textureSize_, mipmapLevels_)
     , tileSize(pool_->typeId.tileSize)
     , padding(pool_->typeId.tilePadding)
     , slotsPerSide(textureSize_ / (tileSize + 2*padding))
@@ -127,7 +130,7 @@ OsmAnd::GPUAPI::AtlasTextureInGPU::~AtlasTextureInGPU()
         _tilesCounter.load();
 #endif
     if(tilesRemaining > 0)
-        LogPrintf(LogSeverityLevel::Error, "By the time of atlas texture destruction, it still contained %d allocated tiles", tilesRemaining);
+        LogPrintf(LogSeverityLevel::Error, "By the time of atlas texture destruction, it still contained %d allocated slots", tilesRemaining);
     assert(tilesRemaining == 0);
 
     // Clear all references to this atlas
