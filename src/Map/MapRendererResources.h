@@ -285,6 +285,7 @@ namespace OsmAnd
         // Symbols:
         mutable QMutex _symbolsMapMutex;
         SymbolsMap _symbolsMap;
+        unsigned int _symbolsMapCount;
 
         void notifyNewResourceAvailable();
 
@@ -345,6 +346,7 @@ namespace OsmAnd
 
         QMutex& getSymbolsMapMutex() const;
         const SymbolsMap& getSymbolsMap() const;
+        unsigned int getSymbolsCount() const;
 
     friend class OsmAnd::MapRenderer;
     };

@@ -16,6 +16,7 @@
 
 OsmAnd::MapRendererResources::MapRendererResources(MapRenderer* const owner_)
     : _taskHostBridge(this)
+    , _symbolsMapCount(0)
     , _invalidatedResourcesTypesMask(0)
     , _workerThreadIsAlive(false)
     , _workerThreadId(nullptr)
@@ -833,6 +834,11 @@ const OsmAnd::MapRendererResources::SymbolsMap& OsmAnd::MapRendererResources::ge
     return _symbolsMap;
 }
 
+unsigned int OsmAnd::MapRendererResources::getSymbolsCount() const
+{
+    return _symbolsMapCount;
+}
+
 OsmAnd::MapRendererResources::GenericResource::GenericResource(MapRendererResources* owner_, const ResourceType type_)
     : _requestTask(nullptr)
     , owner(owner_)
@@ -1256,6 +1262,8 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
         {
             QMutexLocker scopedLocker(&owner->_symbolsMapMutex);
             owner->_symbolsMap[itSymbolEntry->first->order].insert(itSymbolEntry->first, itSymbolEntry->second);
+
+            owner->_symbolsMapCount++;
         }
     }
 
@@ -1277,7 +1285,9 @@ void OsmAnd::MapRendererResources::SymbolsTileResource::unloadFromGPU()
         // Remove symbol from global map
         {
             QMutexLocker scopedLocker(&owner->_symbolsMapMutex);
-            owner->_symbolsMap[symbol->order].remove(symbol);
+            const auto removedCount = owner->_symbolsMap[symbol->order].remove(symbol);
+
+            owner->_symbolsMapCount -= removedCount;
         }
 
         // Unload symbol from GPU
@@ -1303,8 +1313,10 @@ void OsmAnd::MapRendererResources::SymbolsTileResource::unloadFromGPU()
 
             // And also remove from global map
             {
-            QMutexLocker scopedLocker(&owner->_symbolsMapMutex);
-            owner->_symbolsMap[symbol->order].remove(symbol);
+                QMutexLocker scopedLocker(&owner->_symbolsMapMutex);
+                const auto removedCount = owner->_symbolsMap[symbol->order].remove(symbol);
+
+                owner->_symbolsMapCount -= removedCount;
             }
         }
 

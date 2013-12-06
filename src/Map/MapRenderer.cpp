@@ -710,6 +710,11 @@ unsigned int OsmAnd::MapRenderer::getVisibleTilesCount() const
     return getInternalStateRef()->visibleTiles.size();
 }
 
+unsigned int OsmAnd::MapRenderer::getSymbolsCount() const
+{
+    return getResources().getSymbolsCount();
+}
+
 void OsmAnd::MapRenderer::setRasterLayerProvider( const RasterMapLayerId layerId, const std::shared_ptr<IMapBitmapTileProvider>& tileProvider, bool forcedUpdate /*= false*/ )
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);

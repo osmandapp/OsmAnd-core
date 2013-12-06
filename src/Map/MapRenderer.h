@@ -165,6 +165,8 @@ namespace OsmAnd
 
         virtual unsigned int getVisibleTilesCount() const;
 
+        virtual unsigned int getSymbolsCount() const;
+
         virtual void setRasterLayerProvider(const RasterMapLayerId layerId, const std::shared_ptr<IMapBitmapTileProvider>& tileProvider, bool forcedUpdate = false);
         virtual void resetRasterLayerProvider(const RasterMapLayerId layerId, bool forcedUpdate = false);
         virtual void setRasterLayerOpacity(const RasterMapLayerId layerId, const float opacity, bool forcedUpdate = false);
