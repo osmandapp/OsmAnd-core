@@ -681,6 +681,17 @@ void OsmAnd::GPUAPI_OpenGLES2::setSampler( GLenum texture, const SamplerType sam
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         GL_CHECK_RESULT;
     }
+    else if(samplerType == SamplerType::Symbol)
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        GL_CHECK_RESULT;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        GL_CHECK_RESULT;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        GL_CHECK_RESULT;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        GL_CHECK_RESULT;
+    }
 }
 
 void OsmAnd::GPUAPI_OpenGLES2::optimizeVertexShader( QString& code )

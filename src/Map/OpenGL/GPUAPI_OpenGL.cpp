@@ -148,7 +148,7 @@ bool OsmAnd::GPUAPI_OpenGL::initialize()
     GLuint sampler;
 
     // ElevationDataTile sampler
-    sampler = _textureSamplers[SamplerType::ElevationDataTile];
+    sampler = _textureSamplers[static_cast<int>(SamplerType::ElevationDataTile)];
     glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     GL_CHECK_RESULT;
     glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -159,7 +159,7 @@ bool OsmAnd::GPUAPI_OpenGL::initialize()
     GL_CHECK_RESULT;
 
     // BitmapTile_Bilinear sampler
-    sampler = _textureSamplers[SamplerType::BitmapTile_Bilinear];
+    sampler = _textureSamplers[static_cast<int>(SamplerType::BitmapTile_Bilinear)];
     glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     GL_CHECK_RESULT;
     glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -170,7 +170,7 @@ bool OsmAnd::GPUAPI_OpenGL::initialize()
     GL_CHECK_RESULT;
 
     // BitmapTile_BilinearMipmap sampler
-    sampler = _textureSamplers[SamplerType::BitmapTile_BilinearMipmap];
+    sampler = _textureSamplers[static_cast<int>(SamplerType::BitmapTile_BilinearMipmap)];
     glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     GL_CHECK_RESULT;
     glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -181,12 +181,23 @@ bool OsmAnd::GPUAPI_OpenGL::initialize()
     GL_CHECK_RESULT;
 
     // BitmapTile_TrilinearMipmap sampler
-    sampler = _textureSamplers[SamplerType::BitmapTile_TrilinearMipmap];
+    sampler = _textureSamplers[static_cast<int>(SamplerType::BitmapTile_TrilinearMipmap)];
     glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     GL_CHECK_RESULT;
     glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     GL_CHECK_RESULT;
     glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    GL_CHECK_RESULT;
+    glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    GL_CHECK_RESULT;
+
+    // Symbol sampler
+    sampler = _textureSamplers[static_cast<int>(SamplerType::Symbol)];
+    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    GL_CHECK_RESULT;
+    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    GL_CHECK_RESULT;
+    glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     GL_CHECK_RESULT;
     glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     GL_CHECK_RESULT;
@@ -434,7 +445,7 @@ void OsmAnd::GPUAPI_OpenGL::setSampler( GLenum texture, const SamplerType sample
 {
     GL_CHECK_PRESENT(glBindSampler);
 
-    glBindSampler(texture - GL_TEXTURE0, _textureSamplers[samplerType]);
+    glBindSampler(texture - GL_TEXTURE0, _textureSamplers[static_cast<int>(samplerType)]);
     GL_CHECK_RESULT;
 }
 

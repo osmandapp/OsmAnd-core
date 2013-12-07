@@ -50,13 +50,14 @@ namespace OsmAnd {
 
         struct InternalState : public AtlasMapRenderer::InternalState
         {
-            glm::mat4 mProjection;
-            glm::mat4 mView;
+            glm::mat4 mOrthographicProjection;
+            glm::mat4 mPerspectiveProjection;
+            glm::mat4 mCameraView;
             glm::mat4 mDistance;
             glm::mat4 mElevation;
             glm::mat4 mAzimuth;
-            glm::mat4 mProjectionInv;
-            glm::mat4 mViewInv;
+            glm::mat4 mPerspectiveProjectionInv;
+            glm::mat4 mCameraViewInv;
             glm::mat4 mDistanceInv;
             glm::mat4 mElevationInv;
             glm::mat4 mAzimuthInv;
@@ -221,8 +222,13 @@ namespace OsmAnd {
                 // Parameters
                 struct {
                     // Common data
-                    GLint mProjectionViewModel;
-                    //GLint halfSize;
+                    GLint mPerspectiveProjectionView;
+                    GLint mOrthographicProjection;
+                    GLint viewport;
+
+                    // Per-symbol data
+                    GLint symbolCoordinates;
+                    GLint symbolSize;
                 } param;
             } vs;
 
@@ -232,6 +238,8 @@ namespace OsmAnd {
                 // Parameters
                 struct {
                     // Common data
+
+                    // Per-symbol data
                     GLint sampler;
                 } param;
             } fs;

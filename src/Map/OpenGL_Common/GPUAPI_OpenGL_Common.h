@@ -147,7 +147,7 @@ namespace OsmAnd
         virtual void optimizeVertexShader(QString& code) = 0;
         virtual void optimizeFragmentShader(QString& code) = 0;
 
-        enum SamplerType : int32_t
+        enum class SamplerType : int32_t
         {
             Invalid = -1,
 
@@ -155,6 +155,7 @@ namespace OsmAnd
             BitmapTile_Bilinear,
             BitmapTile_BilinearMipmap,
             BitmapTile_TrilinearMipmap,
+            Symbol,
 
             __LAST
         };

@@ -466,7 +466,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
     GL_CHECK_RESULT;
 
     // Set matrices
-    auto mProjectionView = _internalState.mProjection * _internalState.mView;
+    auto mProjectionView = _internalState.mPerspectiveProjection * _internalState.mCameraView;
     glUniformMatrix4fv(stageVariation.vs.param.mProjectionView, 1, GL_FALSE, glm::value_ptr(mProjectionView));
     GL_CHECK_RESULT;
 
@@ -604,7 +604,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
 
                     if(gpuResource->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
                     {
-                        const auto& tileOnAtlasTexture = std::static_pointer_cast<const GPUAPI::SlotOnAtlasTextureInGPU>(gpuResource);
+                        const auto tileOnAtlasTexture = std::static_pointer_cast<const GPUAPI::SlotOnAtlasTextureInGPU>(gpuResource);
 
                         glUniform1i(perTile_vs.slotIndex, tileOnAtlasTexture->slotIndex);
                         GL_CHECK_RESULT;
@@ -705,7 +705,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
 
             if(gpuResource->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
             {
-                const auto& tileOnAtlasTexture = std::static_pointer_cast<const GPUAPI::SlotOnAtlasTextureInGPU>(gpuResource);
+                const auto tileOnAtlasTexture = std::static_pointer_cast<const GPUAPI::SlotOnAtlasTextureInGPU>(gpuResource);
 
                 glUniform1i(perTile_vs.slotIndex, tileOnAtlasTexture->slotIndex);
                 GL_CHECK_RESULT;
@@ -812,6 +812,60 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSkyStage()
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
 
+    // Compile vertex shader
+    const QString vertexShader = QLatin1String(
+        // Input data
+        "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
+        "                                                                                                                   ""\n"
+        // Parameters: common data
+        "uniform mat4 param_vs_mProjectionViewModel;                                                                        ""\n"
+        "uniform vec2 param_vs_planeSize;                                                                                   ""\n"
+        "                                                                                                                   ""\n"
+        "void main()                                                                                                        ""\n"
+        "{                                                                                                                  ""\n"
+        "    vec4 v;                                                                                                        ""\n"
+        "    v.xy = in_vs_vertexPosition * param_vs_planeSize;                                                              ""\n"
+        "    v.w = 1.0;                                                                                                     ""\n"
+        "                                                                                                                   ""\n"
+        "    gl_Position = param_vs_mProjectionViewModel * v;                                                               ""\n"
+        "}                                                                                                                  ""\n");
+    auto preprocessedVertexShader = vertexShader;
+    gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+    gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+    _skyStage.vs.id = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+    assert(_skyStage.vs.id != 0);
+
+    // Compile fragment shader
+    const QString fragmentShader = QLatin1String(
+        // Parameters: common data
+        "uniform lowp vec4 param_fs_skyColor;                                                                               ""\n"
+        "                                                                                                                   ""\n"
+        "void main()                                                                                                        ""\n"
+        "{                                                                                                                  ""\n"
+        "    FRAGMENT_COLOR_OUTPUT = param_fs_skyColor;                                                                     ""\n"
+        "}                                                                                                                  ""\n");
+    auto preprocessedFragmentShader = fragmentShader;
+    QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
+    gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
+    gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
+    _skyStage.fs.id = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+    assert(_skyStage.fs.id != 0);
+
+    // Link everything into program object
+    GLuint shaders[] = {
+        _skyStage.vs.id,
+        _skyStage.fs.id
+    };
+    _skyStage.program = gpuAPI->linkProgram(2, shaders);
+    assert(_skyStage.program != 0);
+
+    gpuAPI->clearVariablesLookup();
+    gpuAPI->findVariableLocation(_skyStage.program, _skyStage.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
+    gpuAPI->findVariableLocation(_skyStage.program, _skyStage.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GLShaderVariableType::Uniform);
+    gpuAPI->findVariableLocation(_skyStage.program, _skyStage.vs.param.planeSize, "param_vs_planeSize", GLShaderVariableType::Uniform);
+    gpuAPI->findVariableLocation(_skyStage.program, _skyStage.fs.param.skyColor, "param_fs_skyColor", GLShaderVariableType::Uniform);
+    gpuAPI->clearVariablesLookup();
+
     // Vertex data (x,y)
     float vertices[4][2] =
     {
@@ -858,60 +912,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSkyStage()
 
     gpuAPI->glBindVertexArray_wrapper(0);
     GL_CHECK_RESULT;
-
-    // Compile vertex shader
-    const QString vertexShader = QLatin1String(
-        // Input data
-        "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: common data
-        "uniform mat4 param_vs_mProjectionViewModel;                                                                        ""\n"
-        "uniform vec2 param_vs_planeSize;                                                                                   ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        "    vec4 v;                                                                                                        ""\n"
-        "    v.xy = in_vs_vertexPosition * param_vs_planeSize;                                                              ""\n"
-        "    v.w = 1.0;                                                                                                     ""\n"
-        "                                                                                                                   ""\n"
-        "    gl_Position = param_vs_mProjectionViewModel * v;                                                               ""\n"
-        "}                                                                                                                  ""\n");
-    auto preprocessedVertexShader = vertexShader;
-    gpuAPI->preprocessVertexShader(preprocessedVertexShader);
-    gpuAPI->optimizeVertexShader(preprocessedVertexShader);
-    _skyStage.vs.id = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-    assert(_skyStage.vs.id != 0);
-
-    // Compile fragment shader
-    const QString fragmentShader = QLatin1String(
-        // Parameters: common data
-        "uniform lowp vec4 param_fs_skyColor;                                                                               ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        "    FRAGMENT_COLOR_OUTPUT = param_fs_skyColor;                                                                     ""\n"
-        "}                                                                                                                  ""\n");
-    QString preprocessedFragmentShader = fragmentShader;
-    QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
-    gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
-    gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
-    _skyStage.fs.id = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-    assert(_skyStage.fs.id != 0);
-
-    // Link everything into program object
-    GLuint shaders[] = {
-        _skyStage.vs.id,
-        _skyStage.fs.id
-    };
-    _skyStage.program = gpuAPI->linkProgram(2, shaders);
-    assert(_skyStage.program != 0);
-
-    gpuAPI->clearVariablesLookup();
-    gpuAPI->findVariableLocation(_skyStage.program, _skyStage.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-    gpuAPI->findVariableLocation(_skyStage.program, _skyStage.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_skyStage.program, _skyStage.vs.param.planeSize, "param_vs_planeSize", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_skyStage.program, _skyStage.fs.param.skyColor, "param_fs_skyColor", GLShaderVariableType::Uniform);
-    gpuAPI->clearVariablesLookup();
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSkyStage()
@@ -925,7 +925,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSkyStage()
     GL_CHECK_PRESENT(glUniform3f);
     GL_CHECK_PRESENT(glDrawElements);
 
-    // Set tile patch VAO
+    // Set sky plane VAO
     gpuAPI->glBindVertexArray_wrapper(_skyStage.skyplaneVAO);
     GL_CHECK_RESULT;
 
@@ -936,11 +936,11 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSkyStage()
     // Set projection*view*model matrix:
     const auto mFogTranslate = glm::translate(0.0f, 0.0f, -_internalState.correctedFogDistance);
     const auto mModel = _internalState.mAzimuthInv * mFogTranslate;
-    const auto mProjectionViewModel = _internalState.mProjection * _internalState.mView * mModel;
+    const auto mProjectionViewModel = _internalState.mPerspectiveProjection * _internalState.mCameraView * mModel;
     glUniformMatrix4fv(_skyStage.vs.param.mProjectionViewModel, 1, GL_FALSE, glm::value_ptr(mProjectionViewModel));
     GL_CHECK_RESULT;
 
-    // Set half-size
+    // Set size of the skyplane
     glUniform2f(_skyStage.vs.param.planeSize, _internalState.skyplaneSize.x, _internalState.skyplaneSize.y);
     GL_CHECK_RESULT;
 
@@ -948,6 +948,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSkyStage()
     glUniform4f(_skyStage.fs.param.skyColor, currentState.skyColor.r, currentState.skyColor.g, currentState.skyColor.b, 1.0f);
     GL_CHECK_RESULT;
 
+    // Draw the skyplane actually
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
     GL_CHECK_RESULT;
 
@@ -1015,6 +1016,117 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSymbolsStage()
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
 
+    // Compile vertex shader
+    const QString vertexShader = QLatin1String(
+        // Input data
+        "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
+        "INPUT vec2 in_vs_vertexTexCoords;                                                                                  ""\n"
+        "                                                                                                                   ""\n"
+        // Output data to next shader stages
+        "PARAM_OUTPUT vec2 v2f_texCoords;                                                                                   ""\n"
+        "                                                                                                                   ""\n"
+        // Parameters: common data
+        "uniform mat4 param_vs_mPerspectiveProjectionView;                                                                  ""\n"
+        "uniform mat4 param_vs_mOrthographicProjection;                                                                     ""\n"
+        "uniform vec4 param_vs_viewport; // x, y, width, height                                                             ""\n"
+        "                                                                                                                   ""\n"
+        // Parameters: per-symbol data
+        "uniform highp vec2 param_vs_symbolCoordinates;                                                                     ""\n"
+        "uniform ivec2 param_vs_symbolSize;                                                                                 ""\n"
+        "                                                                                                                   ""\n"
+        "void main()                                                                                                        ""\n"
+        "{                                                                                                                  ""\n"
+        // Calculate location of symbol in world coordinate system.
+        "    vec4 symbolLocation;                                                                                           ""\n"
+        "    symbolLocation.x = param_vs_symbolCoordinates.x * %TileSize3D%.0;                                              ""\n"
+        "    symbolLocation.y = 0.0; // A height from heightmap should be used here                                         ""\n"
+        "    symbolLocation.z = param_vs_symbolCoordinates.y * %TileSize3D%.0;                                              ""\n"
+        "    symbolLocation.w = 1.0;                                                                                        ""\n"
+        "                                                                                                                   ""\n"
+        // Project location of symbol from world coordinate system to screen
+        "    vec4 projectedSymbolLocation = param_vs_mPerspectiveProjectionView * symbolLocation;                           ""\n"
+        "                                                                                                                   ""\n"
+        // "Normalize" location in screen coordinates to get [-1 .. 1] range
+        "    vec3 symbolLocationOnScreen = projectedSymbolLocation.xyz / projectedSymbolLocation.w;                         ""\n"
+        "                                                                                                                   ""\n"
+        // Using viewport size, get real screen coordinates and correct depth to be [0 .. 1]
+        "    symbolLocationOnScreen.xy = symbolLocationOnScreen.xy * 0.5 + 0.5;                                             ""\n"
+        "    symbolLocationOnScreen.x = symbolLocationOnScreen.x * param_vs_viewport.z + param_vs_viewport.x;               ""\n"
+        "    symbolLocationOnScreen.y = symbolLocationOnScreen.y * param_vs_viewport.w + param_vs_viewport.y;               ""\n"
+        "    symbolLocationOnScreen.z = (1.0 + symbolLocationOnScreen.z) * 0.5;                                             ""\n"
+        "                                                                                                                   ""\n"
+        // symbolLocationOnScreen.xy now contains correct coordinates in viewport,
+        // which can be used in orthographic projection (if it was configured to match viewport).
+        //
+        // So it's possible to calculate current vertex location:
+        // Initially, get location of current vertex in screen coordinates
+        "    vec2 vertexOnScreen;                                                                                           ""\n"
+        "    vertexOnScreen.x = in_vs_vertexPosition.x * float(param_vs_symbolSize.x);                                      ""\n"
+        "    vertexOnScreen.y = in_vs_vertexPosition.y * float(param_vs_symbolSize.y);                                      ""\n"
+        "    vertexOnScreen = vertexOnScreen + symbolLocationOnScreen.xy;                                                   ""\n"
+        "                                                                                                                   ""\n"
+        // There's no need to perform unprojection into orthographic world space, just multiply these coordinates by
+        // orthographic projection matrix (View and Model being identity)
+        "  vec4 vertex;                                                                                                     ""\n"
+        "  vertex.x = vertexOnScreen.x * 0.0000001 + in_vs_vertexPosition.x * 150.0;                                                                                      ""\n"
+        "  vertex.y = vertexOnScreen.y * 0.0000001 + in_vs_vertexPosition.y * 150.0;                                                                                      ""\n"
+        "  vertex.z = -1.0; // probably here should be the real distance from ORIGINAL camera to symbol                      ""\n"
+        "  vertex.w = 1.0;                                                                                                  ""\n"
+        "  gl_Position = vertex * param_vs_mOrthographicProjection;                                                         ""\n"
+        "                                                                                                                   ""\n"
+        // Texture coordinates are simply forwarded from input
+        "   v2f_texCoords = in_vs_vertexTexCoords;                                                                          ""\n"
+        "}                                                                                                                  ""\n");
+    auto preprocessedVertexShader = vertexShader;
+    preprocessedVertexShader.replace("%TileSize3D%", QString::number(TileSize3D));
+    gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+    gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+    _symbolsStage.vs.id = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+    assert(_symbolsStage.vs.id != 0);
+
+    // Compile fragment shader
+    const QString fragmentShader = QLatin1String(
+        // Input data
+        "PARAM_INPUT vec2 v2f_texCoords;                                                                                    ""\n"
+        "                                                                                                                   ""\n"
+        // Parameters: common data
+        // Parameters: per-symbol data
+        "uniform lowp sampler2D param_fs_sampler;                                                                           ""\n"
+        "                                                                                                                   ""\n"
+        "void main()                                                                                                        ""\n"
+        "{                                                                                                                  ""\n"
+        "    lowp vec4 textureColor = SAMPLE_TEXTURE_2D(                                                                    ""\n"
+        "        param_fs_sampler,                                                                                          ""\n"
+        "        v2f_texCoords);                                                                                            ""\n"
+        //"    FRAGMENT_COLOR_OUTPUT = mix(FRAGMENT_COLOR_INPUT, textureColor, textureColor.a);                               ""\n"
+        "    FRAGMENT_COLOR_OUTPUT = textureColor;                               ""\n"
+        "}                                                                                                                  ""\n");
+    auto preprocessedFragmentShader = fragmentShader;
+    QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
+    gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
+    gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
+    _symbolsStage.fs.id = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+    assert(_symbolsStage.fs.id != 0);
+
+    // Link everything into program object
+    GLuint shaders[] = {
+        _symbolsStage.vs.id,
+        _symbolsStage.fs.id
+    };
+    _symbolsStage.program = gpuAPI->linkProgram(2, shaders);
+    assert(_symbolsStage.program != 0);
+
+    gpuAPI->clearVariablesLookup();
+    gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
+    gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
+    gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GLShaderVariableType::Uniform);
+    gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.param.mOrthographicProjection, "param_vs_mOrthographicProjection", GLShaderVariableType::Uniform);
+    gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.param.viewport, "param_vs_viewport", GLShaderVariableType::Uniform);
+    gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.param.symbolCoordinates, "param_vs_symbolCoordinates", GLShaderVariableType::Uniform);
+    gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.param.symbolSize, "param_vs_symbolSize", GLShaderVariableType::Uniform);
+    gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
+    gpuAPI->clearVariablesLookup();
+
 #pragma pack(push)
 #pragma pack(1)
     struct Vertex
@@ -1077,126 +1189,156 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSymbolsStage()
 
     gpuAPI->glBindVertexArray_wrapper(0);
     GL_CHECK_RESULT;
-
-    // Compile vertex shader
-    const QString vertexShader = QLatin1String(
-        // Input data
-        "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
-        "INPUT vec2 in_vs_vertexTexCoords;                                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        // Output data to next shader stages
-        "PARAM_OUTPUT vec2 v2f_texCoords;                                                                                   ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: common data
-        //TODO: position of symbol in [tile].[intile] float
-        //"uniform mat4 param_vs_mProjectionViewModel;                                                                        ""\n"
-        //"uniform ivec2 param_vs_symbolSize;                                                                                 ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        // Create billboard
-        //"    vec4 v;                                                                                                        ""\n"
-        //"    v.xy = in_vs_vertexPosition * param_vs_halfSize;                                                               ""\n"
-        //"    v.w = 1.0;                                                                                                     ""\n"
-        //"                                                                                                                   ""\n"
-        //"    gl_Position = param_vs_mProjectionViewModel * v;                                                               ""\n"
-        "                                                                                                                   ""\n"
-        // Texture coordinates are simply forwarded from input
-        "   v2f_texCoords = in_vs_vertexTexCoords;                                                                          ""\n"
-        "}                                                                                                                  ""\n");
-    auto preprocessedVertexShader = vertexShader;
-    gpuAPI->preprocessVertexShader(preprocessedVertexShader);
-    gpuAPI->optimizeVertexShader(preprocessedVertexShader);
-    _symbolsStage.vs.id = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-    assert(_symbolsStage.vs.id != 0);
-
-    // Compile fragment shader
-    const QString fragmentShader = QLatin1String(
-        // Input data
-        "PARAM_INPUT vec2 v2f_texCoords;                                                                                    ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: common data
-        "uniform lowp sampler2D param_fs_sampler;                                                                           ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        "    lowp vec4 textureColor = SAMPLE_TEXTURE_2D(                                                                    ""\n"
-        "        param_fs_sampler,                                                                                          ""\n"
-        "        v2f_texCoords);                                                                                            ""\n"
-        "    FRAGMENT_COLOR_OUTPUT = mix(FRAGMENT_COLOR_INPUT, textureColor, textureColor.a);                               ""\n"
-        "}                                                                                                                  ""\n");
-    QString preprocessedFragmentShader = fragmentShader;
-    QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
-    gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
-    gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
-    _symbolsStage.fs.id = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-    assert(_symbolsStage.fs.id != 0);
-
-    // Link everything into program object
-    GLuint shaders[] = {
-        _symbolsStage.vs.id,
-        _symbolsStage.fs.id
-    };
-    _symbolsStage.program = gpuAPI->linkProgram(2, shaders);
-    assert(_symbolsStage.program != 0);
-
-    gpuAPI->clearVariablesLookup();
-    //gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-    //gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
-    //gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GLShaderVariableType::Uniform);
-    //gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.param.halfSize, "param_vs_halfSize", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
-    gpuAPI->clearVariablesLookup();
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
 {
-    QMutexLocker scopedLocker(&getResources().getSymbolsMapMutex());
-    const auto& symbolsMap = getResources().getSymbolsMap();
-    typedef std::pair< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > SymbolPair;
+    const auto gpuAPI = getGPUAPI();
 
-    // Get tile size in 31 coordinates
-    const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - currentState.zoomBase));
+    GL_CHECK_PRESENT(glUseProgram);
+    GL_CHECK_PRESENT(glUniformMatrix4fv);
+    GL_CHECK_PRESENT(glUniform1f);
+    GL_CHECK_PRESENT(glUniform2f);
+    GL_CHECK_PRESENT(glUniform3f);
+    GL_CHECK_PRESENT(glDrawElements);
 
-    // Iterate over symbols by "order" in ascending direction
-    for(auto itSymbols = symbolsMap.cbegin(); itSymbols != symbolsMap.cend(); ++itSymbols)
+    // Set symbol VAO
+    gpuAPI->glBindVertexArray_wrapper(_symbolsStage.symbolVAO);
+    GL_CHECK_RESULT;
+
+    // Activate program
+    glUseProgram(_symbolsStage.program);
+    GL_CHECK_RESULT;
+
+    // Set perspective projection-view matrix
+    const auto mPerspectiveProjectionView = _internalState.mPerspectiveProjection * _internalState.mCameraView;
+    glUniformMatrix4fv(_symbolsStage.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(mPerspectiveProjectionView));
+    GL_CHECK_RESULT;
+
+    // Set orthographic projection matrix
+    auto mOrthographicProjection = glm::ortho(
+        -400.0f, 400.0f,
+        -400.0f, 400.0f,
+        -10.0f, 10.0f);
+    glUniformMatrix4fv(_symbolsStage.vs.param.mOrthographicProjection, 1, GL_FALSE, glm::value_ptr(mOrthographicProjection));
+    GL_CHECK_RESULT;
+
+    // Set viewport
+    glUniform4f(_symbolsStage.vs.param.viewport,
+        currentState.viewport.left,
+        currentState.windowSize.y - currentState.viewport.bottom,
+        currentState.viewport.width(),
+        currentState.viewport.height());
+    GL_CHECK_RESULT;
+
+    // Activate texture block for symbol textures
+    glActiveTexture(GL_TEXTURE0 + 0);
+    GL_CHECK_RESULT;
+
+    // Set proper sampler for texture block
+    gpuAPI->setSampler(GL_TEXTURE0 + 0, GPUAPI_OpenGL_Common::SamplerType::Symbol);
+
     {
-        // For each "order" value, obtain list of entries and sort them
-        const auto& unsortedSymbols = *itSymbols;
-        if(unsortedSymbols.isEmpty())
-            continue;
-        QMultiMap< float, SymbolPair > sortedSymbols;
-        for(auto itSymbolEntry = unsortedSymbols.cbegin(); itSymbolEntry != unsortedSymbols.cend(); ++itSymbolEntry)
+        QMutexLocker scopedLocker(&getResources().getSymbolsMapMutex());
+        const auto& symbolsMap = getResources().getSymbolsMap();
+        typedef std::pair< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > SymbolPair;
+
+        // Get tile size in 31 coordinates
+        const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - currentState.zoomBase));
+
+        // Iterate over symbols by "order" in ascending direction
+        for(auto itSymbols = symbolsMap.cbegin(); itSymbols != symbolsMap.cend(); ++itSymbols)
         {
-            const auto& symbol = itSymbolEntry.key();
-            const auto resource = itSymbolEntry.value().lock();
-            assert(static_cast<bool>(resource));
+            // For each "order" value, obtain list of entries and sort them
+            const auto& unsortedSymbols = *itSymbols;
+            if(unsortedSymbols.isEmpty())
+                continue;
+            QMultiMap< float, SymbolPair > sortedSymbols;
+            for(auto itSymbolEntry = unsortedSymbols.cbegin(); itSymbolEntry != unsortedSymbols.cend(); ++itSymbolEntry)
+            {
+                const auto& symbol = itSymbolEntry.key();
+                const auto resource = itSymbolEntry.value().lock();
+                assert(static_cast<bool>(resource));
 
-            // Calculate location of symbol in world coordinates
-            glm::vec4 symbolPos;
-            symbolPos.x = static_cast<float>(static_cast<double>(symbol->location.x) / tileSize31);
-            symbolPos.y = 0.0f;
-            symbolPos.z = static_cast<float>(static_cast<double>(symbol->location.y) / tileSize31);
-            symbolPos.w = 1.0f;
+                // Calculate location of symbol in world coordinates
+                glm::vec4 symbolPos;
+                symbolPos.x = static_cast<float>(static_cast<double>(symbol->location.x) / tileSize31);
+                symbolPos.y = 0.0f;
+                symbolPos.z = static_cast<float>(static_cast<double>(symbol->location.y) / tileSize31);
+                symbolPos.w = 1.0f;
 
-            // Get distance from symbol to camera
-            const auto distance = glm::distance(_internalState.worldCameraPosition, symbolPos);
-            
-            // Insert into map
-            sortedSymbols.insert(distance, qMove(SymbolPair(symbol, resource)));
-        }
+                // Get distance from symbol to camera
+                const auto distance = glm::distance(_internalState.worldCameraPosition, symbolPos);
 
-        // Render symbols in sorted order, in reversed order
-        QMapIterator< float, SymbolPair > itSymbolEntry(sortedSymbols);
-        while(itSymbolEntry.hasPrevious())
-        {
-            itSymbolEntry.previous();
+                // Insert into map
+                sortedSymbols.insert(distance, qMove(SymbolPair(symbol, resource)));
+            }
 
-            const auto& symbolEntry = itSymbolEntry.value();
+            // Render symbols in sorted order, in reversed order
+            QMapIterator< float, SymbolPair > itSymbolEntry(sortedSymbols);
+            itSymbolEntry.toBack();
+            while(itSymbolEntry.hasPrevious())
+            {
+                itSymbolEntry.previous();
 
-            //TODO: render
+                const auto distance = itSymbolEntry.key();
+                const auto& symbolEntry = itSymbolEntry.value();
+                const auto& symbol = symbolEntry.first;
+                const auto& gpuResource = symbolEntry.second;
+
+                // Set symbol coordinates
+                glUniform2f(_symbolsStage.vs.param.symbolCoordinates, 0.0f, 0.0f); //TODO:
+                GL_CHECK_RESULT;
+
+                // Set proper symbol properties
+                if(gpuResource->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
+                {
+                    const auto tileOnAtlasTexture = std::static_pointer_cast<const GPUAPI::SlotOnAtlasTextureInGPU>(gpuResource);
+                    /*
+                    glUniform1i(perTile_vs.slotIndex, tileOnAtlasTexture->slotIndex);
+                    GL_CHECK_RESULT;
+                    glUniform1f(perTile_vs.tileSizeN, tileOnAtlasTexture->atlasTexture->tileSizeN);
+                    GL_CHECK_RESULT;
+                    glUniform1f(perTile_vs.tilePaddingN, tileOnAtlasTexture->atlasTexture->tilePaddingN);
+                    GL_CHECK_RESULT;
+                    glUniform1i(perTile_vs.slotsPerSide, tileOnAtlasTexture->atlasTexture->slotsPerSide);
+                    GL_CHECK_RESULT;
+                    */
+                    assert(false);
+                }
+                else
+                {
+                    const auto texture = std::static_pointer_cast<const GPUAPI::TextureInGPU>(gpuResource);
+
+                    // Set symbol size
+                    glUniform2i(_symbolsStage.vs.param.symbolSize, texture->width, texture->height);
+                    GL_CHECK_RESULT;
+                }
+
+                // Activate symbol texture
+                glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
+                GL_CHECK_RESULT;
+
+                // Draw symbol actually
+                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
+                GL_CHECK_RESULT;
+            }
         }
     }
+
+    // Deactivate any symbol texture
+    glActiveTexture(GL_TEXTURE0 + 0);
+    GL_CHECK_RESULT;
+    glBindTexture(GL_TEXTURE_2D, 0);
+    GL_CHECK_RESULT;
+    
+    // Deactivate program
+    glUseProgram(0);
+    GL_CHECK_RESULT;
+
+    // Deselect VAO
+    gpuAPI->glBindVertexArray_wrapper(0);
+    GL_CHECK_RESULT;
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::releaseSymbolsStage()
@@ -1368,17 +1510,17 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::updateInternalState(MapRenderer::In
     internalState->projectionPlaneHalfHeight = _zNear * internalState->fovInRadians;
     internalState->projectionPlaneHalfWidth = internalState->projectionPlaneHalfHeight * internalState->aspectRatio;
 
-    // Setup projection with fake Z-far plane
-    internalState->mProjection = glm::frustum(
+    // Setup perspective projection with fake Z-far plane
+    internalState->mPerspectiveProjection = glm::frustum(
         -internalState->projectionPlaneHalfWidth, internalState->projectionPlaneHalfWidth,
         -internalState->projectionPlaneHalfHeight, internalState->projectionPlaneHalfHeight,
         _zNear, 1000.0f);
 
     // Calculate limits of camera distance to target and actual distance
     const auto screenTileSize = getReferenceTileSizeOnScreen(state);
-    internalState->nearDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(internalState->mProjection, state.viewport, TileSize3D / 2.0f, screenTileSize / 2.0f, 1.5f);
-    internalState->baseDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(internalState->mProjection, state.viewport, TileSize3D / 2.0f, screenTileSize / 2.0f, 1.0f);
-    internalState->farDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(internalState->mProjection, state.viewport, TileSize3D / 2.0f, screenTileSize / 2.0f, 0.75f);
+    internalState->nearDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(internalState->mPerspectiveProjection, state.viewport, TileSize3D / 2.0f, screenTileSize / 2.0f, 1.5f);
+    internalState->baseDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(internalState->mPerspectiveProjection, state.viewport, TileSize3D / 2.0f, screenTileSize / 2.0f, 1.0f);
+    internalState->farDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(internalState->mPerspectiveProjection, state.viewport, TileSize3D / 2.0f, screenTileSize / 2.0f, 0.75f);
 
     // zoomFraction == [ 0.0 ... 0.5] scales tile [1.0x ... 1.5x]
     // zoomFraction == [-0.5 ...-0.0] scales tile [.75x ... 1.0x]
@@ -1390,33 +1532,40 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::updateInternalState(MapRenderer::In
     internalState->tileScaleFactor = ((state.zoomFraction >= 0.0f) ? (1.0f + state.zoomFraction) : (1.0f + 0.5f * state.zoomFraction));
     internalState->scaleToRetainProjectedSize = internalState->distanceFromCameraToTarget / internalState->baseDistanceFromCameraToTarget;
 
-    // Recalculate projection with obtained value
+    // Recalculate perspective projection with obtained value
     internalState->zSkyplane = state.fogDistance * internalState->scaleToRetainProjectedSize + internalState->distanceFromCameraToTarget;
     internalState->zFar = glm::length(glm::vec3(
         internalState->projectionPlaneHalfWidth * (internalState->zSkyplane / _zNear),
         internalState->projectionPlaneHalfHeight * (internalState->zSkyplane / _zNear),
         internalState->zSkyplane));
-    internalState->mProjection = glm::frustum(
+    internalState->mPerspectiveProjection = glm::frustum(
         -internalState->projectionPlaneHalfWidth, internalState->projectionPlaneHalfWidth,
         -internalState->projectionPlaneHalfHeight, internalState->projectionPlaneHalfHeight,
         _zNear, internalState->zFar);
-    internalState->mProjectionInv = glm::inverse(internalState->mProjection);
+    internalState->mPerspectiveProjectionInv = glm::inverse(internalState->mPerspectiveProjection);
+
+    // Calculate orthographic projection
+    const auto orthoTop = state.windowSize.y - state.viewport.bottom;
+    internalState->mOrthographicProjection = glm::ortho(
+        static_cast<float>(state.viewport.left), static_cast<float>(state.viewport.right),
+        static_cast<float>(state.viewport.height() - orthoTop), static_cast<float>(orthoTop),
+        _zNear, internalState->zFar);
 
     // Setup camera
     internalState->mDistance = glm::translate(0.0f, 0.0f, -internalState->distanceFromCameraToTarget);
     internalState->mElevation = glm::rotate(state.elevationAngle, glm::vec3(1.0f, 0.0f, 0.0f));
     internalState->mAzimuth = glm::rotate(state.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
-    internalState->mView = internalState->mDistance * internalState->mElevation * internalState->mAzimuth;
+    internalState->mCameraView = internalState->mDistance * internalState->mElevation * internalState->mAzimuth;
 
     // Get inverse camera
     internalState->mDistanceInv = glm::translate(0.0f, 0.0f, internalState->distanceFromCameraToTarget);
     internalState->mElevationInv = glm::rotate(-state.elevationAngle, glm::vec3(1.0f, 0.0f, 0.0f));
     internalState->mAzimuthInv = glm::rotate(-state.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
-    internalState->mViewInv = internalState->mAzimuthInv * internalState->mElevationInv * internalState->mDistanceInv;
+    internalState->mCameraViewInv = internalState->mAzimuthInv * internalState->mElevationInv * internalState->mDistanceInv;
 
     // Get camera positions
     internalState->groundCameraPosition = (internalState->mAzimuthInv * glm::vec4(0.0f, 0.0f, internalState->distanceFromCameraToTarget, 1.0f)).xz;
-    internalState->worldCameraPosition = _internalState.mViewInv * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    internalState->worldCameraPosition = _internalState.mCameraViewInv * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
     // Correct fog distance
     internalState->correctedFogDistance = state.fogDistance * internalState->scaleToRetainProjectedSize + (internalState->distanceFromCameraToTarget - internalState->groundDistanceFromCameraToTarget);
@@ -1459,15 +1608,15 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::computeVisibleTileset(InternalState
     const glm::vec4 fBR_c(zFarK * nBR_c.x, zFarK * nBR_c.y, zFarK * nBR_c.z, 1.0f);
 
     // Transform 8 frustum vertices + camera center to global space
-    const auto eye_g = internalState->mViewInv * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-    const auto fTL_g = internalState->mViewInv * fTL_c;
-    const auto fTR_g = internalState->mViewInv * fTR_c;
-    const auto fBL_g = internalState->mViewInv * fBL_c;
-    const auto fBR_g = internalState->mViewInv * fBR_c;
-    const auto nTL_g = internalState->mViewInv * nTL_c;
-    const auto nTR_g = internalState->mViewInv * nTR_c;
-    const auto nBL_g = internalState->mViewInv * nBL_c;
-    const auto nBR_g = internalState->mViewInv * nBR_c;
+    const auto eye_g = internalState->mCameraViewInv * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    const auto fTL_g = internalState->mCameraViewInv * fTL_c;
+    const auto fTR_g = internalState->mCameraViewInv * fTR_c;
+    const auto fBL_g = internalState->mCameraViewInv * fBL_c;
+    const auto fBR_g = internalState->mCameraViewInv * fBR_c;
+    const auto nTL_g = internalState->mCameraViewInv * nTL_c;
+    const auto nTR_g = internalState->mCameraViewInv * nTR_c;
+    const auto nBL_g = internalState->mCameraViewInv * nBL_c;
+    const auto nBR_g = internalState->mCameraViewInv * nBR_c;
 
     // Get (up to) 4 points of frustum edges & plane intersection
     const glm::vec3 planeN(0.0f, 1.0f, 0.0f);
@@ -1756,8 +1905,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::getLocationFromScreenPoint( const P
         state.windowSize.y - state.viewport.bottom,
         state.viewport.width(),
         state.viewport.height());
-    const auto nearInWorld = glm::unProject(glm::vec3(screenPoint.x, state.windowSize.y - screenPoint.y, 0.0f), internalState.mView, internalState.mProjection, viewport);
-    const auto farInWorld = glm::unProject(glm::vec3(screenPoint.x, state.windowSize.y - screenPoint.y, 1.0f), internalState.mView, internalState.mProjection, viewport);
+    const auto nearInWorld = glm::unProject(glm::vec3(screenPoint.x, state.windowSize.y - screenPoint.y, 0.0f), internalState.mCameraView, internalState.mPerspectiveProjection, viewport);
+    const auto farInWorld = glm::unProject(glm::vec3(screenPoint.x, state.windowSize.y - screenPoint.y, 1.0f), internalState.mCameraView, internalState.mPerspectiveProjection, viewport);
     const auto rayD = glm::normalize(farInWorld - nearInWorld);
 
     const glm::vec3 planeN(0.0f, 1.0f, 0.0f);
