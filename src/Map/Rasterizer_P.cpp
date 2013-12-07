@@ -2294,6 +2294,7 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                 auto bitmap = new SkBitmap();
                 bitmap->setConfig(SkBitmap::kARGB_8888_Config, textBBox.width(), textBBox.height());
                 bitmap->allocPixels();
+                bitmap->eraseColor(SK_ColorTRANSPARENT);
                 SkBitmapDevice target(*bitmap);
                 SkCanvas canvas(&target);
 
