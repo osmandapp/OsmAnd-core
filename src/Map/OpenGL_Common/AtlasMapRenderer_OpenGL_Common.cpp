@@ -1069,7 +1069,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSymbolsStage()
         // There's no need to perform unprojection into orthographic world space, just multiply these coordinates by
         // orthographic projection matrix (View and Model being identity)
         "  vec4 vertex;                                                                                                     ""\n"
-        "  vertex.xy = vertexOnScreen.xy * 0.0000001 + in_vs_vertexPosition.xy * 150.0;                                                                                      ""\n"
+        "  vertex.xy = vertexOnScreen.xy * 0.0000001 + in_vs_vertexPosition.xy * 150.0 + vec2(200.0, 200.0);                                                                                      ""\n"
         //"  vertex.xy = vertexOnScreen.xy;                                                                                      ""\n"
         "  vertex.z = -param_vs_distanceFromCamera;                                                                         ""\n"
         "  vertex.w = 1.0;                                                                                                  ""\n"
@@ -1142,10 +1142,11 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSymbolsStage()
     // Vertex data
     Vertex vertices[4] =
     {
-        { { -0.5f, -0.5f }, { 0.0f, 0.0f } },
-        { { -0.5f,  0.5f }, { 0.0f, 1.0f } },
-        { {  0.5f,  0.5f }, { 1.0f, 1.0f } },
-        { {  0.5f, -0.5f }, { 1.0f, 0.0f } }
+        // In OpenGL, UV origin is BL
+        { { -0.5f, -0.5f }, { 0.0f, 0.0f } },//BL
+        { { -0.5f,  0.5f }, { 0.0f, 1.0f } },//TL
+        { {  0.5f,  0.5f }, { 1.0f, 1.0f } },//TR
+        { {  0.5f, -0.5f }, { 1.0f, 0.0f } } //BR
     };
     const auto verticesCount = 4;
 
@@ -1283,7 +1284,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                 const auto& gpuResource = symbolEntry.second;
 
                 // Set symbol coordinates
-                glUniform2f(_symbolsStage.vs.param.symbolCoordinates, 0.0f, 0.0f); //TODO:
+                glUniform2f(_symbolsStage.vs.param.symbolCoordinates, 0.0f, 0.0f); //TODO: 0.0 refers to target. since target is the center. so calculate offset from target
                 GL_CHECK_RESULT;
 
                 // Set proper symbol properties
@@ -1768,10 +1769,11 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::createTilePatch()
         const GLfloat tsz = static_cast<GLfloat>(TileSize3D);
         static MapTileVertex vertices[4] =
         {
-            { {0.0f, 0.0f}, {0.0f, 0.0f} },
-            { {0.0f,  tsz}, {0.0f, 1.0f} },
-            { { tsz,  tsz}, {1.0f, 1.0f} },
-            { { tsz, 0.0f}, {1.0f, 0.0f} }
+            // In OpenGL, UV origin is BL
+            { {0.0f, 0.0f}, {0.0f, 0.0f} },//BL
+            { {0.0f,  tsz}, {0.0f, 1.0f} },//TL
+            { { tsz,  tsz}, {1.0f, 1.0f} },//TR
+            { { tsz, 0.0f}, {1.0f, 0.0f} } //TL
         };
         pVertices = new MapTileVertex[4];
         memcpy(pVertices, vertices, 4*sizeof(MapTileVertex));
