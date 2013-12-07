@@ -1019,9 +1019,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
     // Get tile size in 31 coordinates
     const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - currentState.zoomBase));
 
-    // Get camera global position
-    const auto cameraPos = _internalState.mViewInv * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-
     // Iterate over symbols by "order" in ascending direction
     for(auto itSymbols = symbolsMap.cbegin(); itSymbols != symbolsMap.cend(); ++itSymbols)
     {
@@ -1044,7 +1041,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
             symbolPos.w = 1.0f;
 
             // Get distance from symbol to camera
-            const auto distance = glm::distance(cameraPos, symbolPos);
+            const auto distance = glm::distance(_internalState.worldCameraPosition, symbolPos);
             
             // Insert into map
             sortedSymbols.insert(distance, qMove(SymbolPair(symbol, resource)));
@@ -1281,8 +1278,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::updateInternalState(MapRenderer::In
     internalState->mAzimuthInv = glm::rotate(-state.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
     internalState->mViewInv = internalState->mAzimuthInv * internalState->mElevationInv * internalState->mDistanceInv;
 
-    // Get camera position on the ground
+    // Get camera positions
     internalState->groundCameraPosition = (internalState->mAzimuthInv * glm::vec4(0.0f, 0.0f, internalState->distanceFromCameraToTarget, 1.0f)).xz;
+    internalState->worldCameraPosition = _internalState.mViewInv * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
     // Correct fog distance
     internalState->correctedFogDistance = state.fogDistance * internalState->scaleToRetainProjectedSize + (internalState->distanceFromCameraToTarget - internalState->groundDistanceFromCameraToTarget);
