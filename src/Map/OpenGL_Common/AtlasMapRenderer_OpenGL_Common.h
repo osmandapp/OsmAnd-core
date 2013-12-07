@@ -229,6 +229,7 @@ namespace OsmAnd {
                     // Per-symbol data
                     GLint symbolCoordinates;
                     GLint symbolSize;
+                    GLint distanceFromCamera;
                 } param;
             } vs;
 

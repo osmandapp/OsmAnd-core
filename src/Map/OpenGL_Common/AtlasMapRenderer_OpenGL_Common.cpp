@@ -1033,6 +1033,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSymbolsStage()
         // Parameters: per-symbol data
         "uniform highp vec2 param_vs_symbolCoordinates;                                                                     ""\n"
         "uniform ivec2 param_vs_symbolSize;                                                                                 ""\n"
+        "uniform float param_vs_distanceFromCamera;                                                                         ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
@@ -1070,7 +1071,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSymbolsStage()
         "  vec4 vertex;                                                                                                     ""\n"
         "  vertex.xy = vertexOnScreen.xy * 0.0000001 + in_vs_vertexPosition.xy * 150.0;                                                                                      ""\n"
         //"  vertex.xy = vertexOnScreen.xy;                                                                                      ""\n"
-        "  vertex.z = -900.0; //TODO: here should be the real distance from ORIGINAL camera to symbol                      ""\n"
+        "  vertex.z = -param_vs_distanceFromCamera;                                                                         ""\n"
         "  vertex.w = 1.0;                                                                                                  ""\n"
         "  gl_Position = param_vs_mOrthographicProjection * vertex;                                                         ""\n"
         "                                                                                                                   ""\n"
@@ -1122,6 +1123,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSymbolsStage()
     gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.param.viewport, "param_vs_viewport", GLShaderVariableType::Uniform);
     gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.param.symbolCoordinates, "param_vs_symbolCoordinates", GLShaderVariableType::Uniform);
     gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.param.symbolSize, "param_vs_symbolSize", GLShaderVariableType::Uniform);
+    gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.param.distanceFromCamera, "param_vs_distanceFromCamera", GLShaderVariableType::Uniform);
     gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
     gpuAPI->clearVariablesLookup();
 
@@ -1275,7 +1277,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
             {
                 itSymbolEntry.previous();
 
-                const auto distance = itSymbolEntry.key();
+                const auto distanceFromCamera = itSymbolEntry.key();
                 const auto& symbolEntry = itSymbolEntry.value();
                 const auto& symbol = symbolEntry.first;
                 const auto& gpuResource = symbolEntry.second;
@@ -1308,6 +1310,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                     glUniform2i(_symbolsStage.vs.param.symbolSize, texture->width, texture->height);
                     GL_CHECK_RESULT;
                 }
+
+                // Set distance from camera to symbol
+                glUniform1f(_symbolsStage.vs.param.distanceFromCamera, distanceFromCamera);
+                GL_CHECK_RESULT;
 
                 // Activate symbol texture
                 glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
