@@ -1155,9 +1155,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doRenderFrame()
     GL_CHECK_RESULT;
 
     // Turn off depth testing for sky stage
-    glEnable(GL_DEPTH_TEST);
-    GL_CHECK_RESULT;
-    glDepthFunc(GL_LEQUAL);
+    glDisable(GL_DEPTH_TEST);
     GL_CHECK_RESULT;
 
     // Render the sky
