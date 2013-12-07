@@ -1068,11 +1068,11 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSymbolsStage()
         // There's no need to perform unprojection into orthographic world space, just multiply these coordinates by
         // orthographic projection matrix (View and Model being identity)
         "  vec4 vertex;                                                                                                     ""\n"
-        "  vertex.x = vertexOnScreen.x * 0.0000001 + in_vs_vertexPosition.x * 150.0;                                                                                      ""\n"
-        "  vertex.y = vertexOnScreen.y * 0.0000001 + in_vs_vertexPosition.y * 150.0;                                                                                      ""\n"
-        "  vertex.z = -1.0; // probably here should be the real distance from ORIGINAL camera to symbol                      ""\n"
+        "  vertex.xy = vertexOnScreen.xy * 0.0000001 + in_vs_vertexPosition.xy * 150.0;                                                                                      ""\n"
+        //"  vertex.xy = vertexOnScreen.xy;                                                                                      ""\n"
+        "  vertex.z = -900.0; //TODO: here should be the real distance from ORIGINAL camera to symbol                      ""\n"
         "  vertex.w = 1.0;                                                                                                  ""\n"
-        "  gl_Position = vertex * param_vs_mOrthographicProjection;                                                         ""\n"
+        "  gl_Position = param_vs_mOrthographicProjection * vertex;                                                         ""\n"
         "                                                                                                                   ""\n"
         // Texture coordinates are simply forwarded from input
         "   v2f_texCoords = in_vs_vertexTexCoords;                                                                          ""\n"
@@ -1095,11 +1095,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSymbolsStage()
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
-        "    lowp vec4 textureColor = SAMPLE_TEXTURE_2D(                                                                    ""\n"
+        "    FRAGMENT_COLOR_OUTPUT = SAMPLE_TEXTURE_2D(                                                                     ""\n"
         "        param_fs_sampler,                                                                                          ""\n"
         "        v2f_texCoords);                                                                                            ""\n"
-        //"    FRAGMENT_COLOR_OUTPUT = mix(FRAGMENT_COLOR_INPUT, textureColor, textureColor.a);                               ""\n"
-        "    FRAGMENT_COLOR_OUTPUT = textureColor;                               ""\n"
         "}                                                                                                                  ""\n");
     auto preprocessedFragmentShader = fragmentShader;
     QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
@@ -1216,11 +1214,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
     GL_CHECK_RESULT;
 
     // Set orthographic projection matrix
-    auto mOrthographicProjection = glm::ortho(
-        -400.0f, 400.0f,
-        -400.0f, 400.0f,
-        -10.0f, 10.0f);
-    glUniformMatrix4fv(_symbolsStage.vs.param.mOrthographicProjection, 1, GL_FALSE, glm::value_ptr(mOrthographicProjection));
+    glUniformMatrix4fv(_symbolsStage.vs.param.mOrthographicProjection, 1, GL_FALSE, glm::value_ptr(_internalState.mOrthographicProjection));
     GL_CHECK_RESULT;
 
     // Set viewport
@@ -1545,10 +1539,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::updateInternalState(MapRenderer::In
     internalState->mPerspectiveProjectionInv = glm::inverse(internalState->mPerspectiveProjection);
 
     // Calculate orthographic projection
-    const auto orthoTop = state.windowSize.y - state.viewport.bottom;
+    const auto viewportBottom = state.windowSize.y - state.viewport.bottom;
     internalState->mOrthographicProjection = glm::ortho(
         static_cast<float>(state.viewport.left), static_cast<float>(state.viewport.right),
-        static_cast<float>(state.viewport.height() - orthoTop), static_cast<float>(orthoTop),
+        static_cast<float>(viewportBottom) /*bottom*/, static_cast<float>(viewportBottom + viewportHeight) /*top*/,
         _zNear, internalState->zFar);
 
     // Setup camera
