@@ -79,11 +79,11 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::allocateTilePatch( MapTileVertex* v
         GL_CHECK_RESULT;
         glEnableVertexAttribArray(stageVariation.vs.in.vertexPosition);
         GL_CHECK_RESULT;
-        glVertexAttribPointer(stageVariation.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(MapTileVertex), reinterpret_cast<GLvoid*>(offsetof(MapTileVertex, position)));
+        glVertexAttribPointer(stageVariation.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(MapTileVertex), reinterpret_cast<GLvoid*>(offsetof(MapTileVertex, positionXZ)));
         GL_CHECK_RESULT;
         glEnableVertexAttribArray(stageVariation.vs.in.vertexTexCoords);
         GL_CHECK_RESULT;
-        glVertexAttribPointer(stageVariation.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(MapTileVertex), reinterpret_cast<GLvoid*>(offsetof(MapTileVertex, uv)));
+        glVertexAttribPointer(stageVariation.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(MapTileVertex), reinterpret_cast<GLvoid*>(offsetof(MapTileVertex, textureUV)));
         GL_CHECK_RESULT;
 
         // Bind IBO
@@ -815,10 +815,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSkyStage()
     // Vertex data (x,y)
     float vertices[4][2] =
     {
-        {-1.0f,-1.0f},
-        {-1.0f, 1.0f},
-        { 1.0f, 1.0f},
-        { 1.0f,-1.0f}
+        {-1.0f, -1.0f},
+        {-1.0f,  1.0f},
+        { 1.0f,  1.0f},
+        { 1.0f, -1.0f}
     };
     const auto verticesCount = 4;
 
@@ -1007,7 +1007,146 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::releaseSkyStage()
 
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSymbolsStage()
 {
+    const auto gpuAPI = getGPUAPI();
 
+    GL_CHECK_PRESENT(glGenBuffers);
+    GL_CHECK_PRESENT(glBindBuffer);
+    GL_CHECK_PRESENT(glBufferData);
+    GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glVertexAttribPointer);
+
+#pragma pack(push)
+#pragma pack(1)
+    struct Vertex
+    {
+        // XY coordinates. Z is assumed to be 0
+        float positionXY[2];
+
+        // UV coordinates
+        float textureUV[2];
+    };
+#pragma pack(pop)
+
+    // Vertex data
+    Vertex vertices[4] =
+    {
+        { { -0.5f, -0.5f }, { 0.0f, 0.0f } },
+        { { -0.5f,  0.5f }, { 0.0f, 1.0f } },
+        { {  0.5f,  0.5f }, { 1.0f, 1.0f } },
+        { {  0.5f, -0.5f }, { 1.0f, 0.0f } }
+    };
+    const auto verticesCount = 4;
+
+    // Index data
+    GLushort indices[6] =
+    {
+        0, 1, 2,
+        0, 2, 3
+    };
+    const auto indicesCount = 6;
+
+    // Create Vertex Array Object
+    gpuAPI->glGenVertexArrays_wrapper(1, &_symbolsStage.symbolVAO);
+    GL_CHECK_RESULT;
+    gpuAPI->glBindVertexArray_wrapper(_symbolsStage.symbolVAO);
+    GL_CHECK_RESULT;
+
+    // Create vertex buffer and associate it with VAO
+    glGenBuffers(1, &_symbolsStage.symbolVBO);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ARRAY_BUFFER, _symbolsStage.symbolVBO);
+    GL_CHECK_RESULT;
+    glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(Vertex), vertices, GL_STATIC_DRAW);
+    GL_CHECK_RESULT;
+    glEnableVertexAttribArray(_symbolsStage.vs.in.vertexPosition);
+    GL_CHECK_RESULT;
+    glVertexAttribPointer(_symbolsStage.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, positionXY)));
+    GL_CHECK_RESULT;
+    glEnableVertexAttribArray(_symbolsStage.vs.in.vertexTexCoords);
+    GL_CHECK_RESULT;
+    glVertexAttribPointer(_symbolsStage.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, textureUV)));
+    GL_CHECK_RESULT;
+
+    // Create index buffer and associate it with VAO
+    glGenBuffers(1, &_symbolsStage.symbolIBO);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _symbolsStage.symbolIBO);
+    GL_CHECK_RESULT;
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
+    GL_CHECK_RESULT;
+
+    gpuAPI->glBindVertexArray_wrapper(0);
+    GL_CHECK_RESULT;
+
+    // Compile vertex shader
+    const QString vertexShader = QLatin1String(
+        // Input data
+        "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
+        "INPUT vec2 in_vs_vertexTexCoords;                                                                                  ""\n"
+        "                                                                                                                   ""\n"
+        // Output data to next shader stages
+        "PARAM_OUTPUT vec2 v2f_texCoords;                                                                                   ""\n"
+        "                                                                                                                   ""\n"
+        // Parameters: common data
+        //TODO: position of symbol in [tile].[intile] float
+        //"uniform mat4 param_vs_mProjectionViewModel;                                                                        ""\n"
+        //"uniform ivec2 param_vs_symbolSize;                                                                                 ""\n"
+        "                                                                                                                   ""\n"
+        "void main()                                                                                                        ""\n"
+        "{                                                                                                                  ""\n"
+        // Create billboard
+        //"    vec4 v;                                                                                                        ""\n"
+        //"    v.xy = in_vs_vertexPosition * param_vs_halfSize;                                                               ""\n"
+        //"    v.w = 1.0;                                                                                                     ""\n"
+        //"                                                                                                                   ""\n"
+        //"    gl_Position = param_vs_mProjectionViewModel * v;                                                               ""\n"
+        "                                                                                                                   ""\n"
+        // Texture coordinates are simply forwarded from input
+        "   v2f_texCoords = in_vs_vertexTexCoords                                                                           ""\n"
+        "}                                                                                                                  ""\n");
+    auto preprocessedVertexShader = vertexShader;
+    gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+    gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+    _symbolsStage.vs.id = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+    assert(_symbolsStage.vs.id != 0);
+
+    // Compile fragment shader
+    const QString fragmentShader = QLatin1String(
+        // Input data
+        "PARAM_INPUT vec2 v2f_texCoords;                                                                                    ""\n"
+        "                                                                                                                   ""\n"
+        // Parameters: common data
+        "uniform lowp sampler2D param_fs_sampler;                                                                           ""\n"
+        "                                                                                                                   ""\n"
+        "void main()                                                                                                        ""\n"
+        "{                                                                                                                  ""\n"
+        "    lowp vec4 textureColor = SAMPLE_TEXTURE_2D(                                                                    ""\n"
+        "        param_fs_sampler,                                                                                          ""\n"
+        "        v2f_texCoords);                                                                                            ""\n"
+        "    FRAGMENT_COLOR_OUTPUT = mix(FRAGMENT_COLOR_INPUT, textureColor, textureColor.a);                               ""\n"
+        "}                                                                                                                  ""\n");
+    QString preprocessedFragmentShader = fragmentShader;
+    QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
+    gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
+    gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
+    _symbolsStage.fs.id = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+    assert(_symbolsStage.fs.id != 0);
+
+    // Link everything into program object
+    GLuint shaders[] = {
+        _symbolsStage.vs.id,
+        _symbolsStage.fs.id
+    };
+    _symbolsStage.program = gpuAPI->linkProgram(2, shaders);
+    assert(_symbolsStage.program != 0);
+
+    gpuAPI->clearVariablesLookup();
+    gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
+    gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
+    //gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GLShaderVariableType::Uniform);
+    //gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.param.halfSize, "param_vs_halfSize", GLShaderVariableType::Uniform);
+    gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
+    gpuAPI->clearVariablesLookup();
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
@@ -1062,28 +1201,27 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
 
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::releaseSymbolsStage()
 {
-    /*
-    const auto gpuAPI = getRenderAPI();
+    const auto gpuAPI = getGPUAPI();
 
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
     GL_CHECK_PRESENT(glDeleteShader);
 
-    if(_symbolsStage.skyplaneIBO)
+    if(_symbolsStage.symbolIBO)
     {
-        glDeleteBuffers(1, &_symbolsStage.skyplaneIBO);
+        glDeleteBuffers(1, &_symbolsStage.symbolIBO);
         GL_CHECK_RESULT;
     }
 
-    if(_symbolsStage.skyplaneVBO)
+    if(_symbolsStage.symbolVBO)
     {
-        glDeleteBuffers(1, &_symbolsStage.skyplaneVBO);
+        glDeleteBuffers(1, &_symbolsStage.symbolVBO);
         GL_CHECK_RESULT;
     }
 
-    if(_symbolsStage.skyplaneVAO)
+    if(_symbolsStage.symbolVAO)
     {
-        gpuAPI->glDeleteVertexArrays_wrapper(1, &_symbolsStage.skyplaneVAO);
+        gpuAPI->glDeleteVertexArrays_wrapper(1, &_symbolsStage.symbolVAO);
         GL_CHECK_RESULT;
     }
 
@@ -1103,7 +1241,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::releaseSymbolsStage()
         GL_CHECK_RESULT;
     }
 
-    memset(&_symbolsStage, 0, sizeof(_symbolsStage));*/
+    memset(&_symbolsStage, 0, sizeof(_symbolsStage));
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doInitializeRendering()
@@ -1519,11 +1657,11 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::createTilePatch()
         {
             for(auto col = 0u; col < currentConfiguration.heixelsPerTileSide; col++, pV++)
             {
-                pV->position[0] = static_cast<float>(col) * clusterSize;
-                pV->position[1] = static_cast<float>(row) * clusterSize;
+                pV->positionXZ[0] = static_cast<float>(col) * clusterSize;
+                pV->positionXZ[1] = static_cast<float>(row) * clusterSize;
 
-                pV->uv[0] = static_cast<float>(col) / static_cast<float>(heightPrimitivesPerSide);
-                pV->uv[1] = static_cast<float>(row) / static_cast<float>(heightPrimitivesPerSide);
+                pV->textureUV[0] = static_cast<float>(col) / static_cast<float>(heightPrimitivesPerSide);
+                pV->textureUV[1] = static_cast<float>(row) / static_cast<float>(heightPrimitivesPerSide);
             }
         }
 

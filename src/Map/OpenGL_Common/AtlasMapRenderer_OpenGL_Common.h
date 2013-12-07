@@ -51,11 +51,11 @@ namespace OsmAnd {
         struct InternalState : public AtlasMapRenderer::InternalState
         {
             glm::mat4 mProjection;
-            glm::mat4 mProjectionInv;
             glm::mat4 mView;
             glm::mat4 mDistance;
             glm::mat4 mElevation;
             glm::mat4 mAzimuth;
+            glm::mat4 mProjectionInv;
             glm::mat4 mViewInv;
             glm::mat4 mDistanceInv;
             glm::mat4 mElevationInv;
@@ -88,8 +88,8 @@ namespace OsmAnd {
 #pragma pack(1)
         struct MapTileVertex 
         {
-            GLfloat position[2];
-            GLfloat uv[2];
+            GLfloat positionXZ[2];
+            GLfloat textureUV[2];
         };
 #pragma pack(pop)
 
@@ -203,9 +203,9 @@ namespace OsmAnd {
         void releaseSkyStage();
 
         struct {
-            /*GLuint skyplaneVAO;
-            GLuint skyplaneVBO;
-            GLuint skyplaneIBO;
+            GLuint symbolVAO;
+            GLuint symbolVBO;
+            GLuint symbolIBO;
 
             GLuint program;
 
@@ -215,13 +215,14 @@ namespace OsmAnd {
                 // Input data
                 struct {
                     GLint vertexPosition;
+                    GLint vertexTexCoords;
                 } in;
 
                 // Parameters
                 struct {
                     // Common data
                     GLint mProjectionViewModel;
-                    GLint halfSize;
+                    //GLint halfSize;
                 } param;
             } vs;
 
@@ -231,9 +232,9 @@ namespace OsmAnd {
                 // Parameters
                 struct {
                     // Common data
-                    GLint skyColor;
+                    GLint sampler;
                 } param;
-            } fs;*/
+            } fs;
         } _symbolsStage;
         void initializeSymbolsStage();
         void renderSymbolsStage();
