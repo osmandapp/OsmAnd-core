@@ -422,7 +422,7 @@ void OsmAnd::GPUAPI_OpenGL::preprocessFragmentShader( QString& code )
         // Fragment shader output declaration
         "#define FRAGMENT_COLOR_OUTPUT out_FragColor                                                                        ""\n"
         "#define FRAGMENT_COLOR_INPUT in_FragColor                                                                          ""\n"
-        "int vec4 in_fragColor;                                                                                             ""\n"
+        "in vec4 in_FragColor;                                                                                              ""\n"
         "out vec4 out_FragColor;                                                                                            ""\n"
         "                                                                                                                   ""\n");
 

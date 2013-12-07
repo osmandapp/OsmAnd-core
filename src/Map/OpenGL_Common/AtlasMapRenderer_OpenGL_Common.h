@@ -75,7 +75,7 @@ namespace OsmAnd {
             float groundDistanceFromCameraToTarget;
             float tileScaleFactor;
             float scaleToRetainProjectedSize;
-            PointF skyplaneHalfSize;
+            PointF skyplaneSize;
             float correctedFogDistance;
         };
         InternalState _internalState;
@@ -184,7 +184,7 @@ namespace OsmAnd {
                 struct {
                     // Common data
                     GLint mProjectionViewModel;
-                    GLint halfSize;
+                    GLint planeSize;
                 } param;
             } vs;
 

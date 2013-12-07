@@ -815,10 +815,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSkyStage()
     // Vertex data (x,y)
     float vertices[4][2] =
     {
-        {-1.0f, -1.0f},
-        {-1.0f,  1.0f},
-        { 1.0f,  1.0f},
-        { 1.0f, -1.0f}
+        { -0.5f, -0.5f },
+        { -0.5f,  0.5f },
+        {  0.5f,  0.5f },
+        {  0.5f, -0.5f }
     };
     const auto verticesCount = 4;
 
@@ -866,12 +866,12 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSkyStage()
         "                                                                                                                   ""\n"
         // Parameters: common data
         "uniform mat4 param_vs_mProjectionViewModel;                                                                        ""\n"
-        "uniform vec2 param_vs_halfSize;                                                                                    ""\n"
+        "uniform vec2 param_vs_planeSize;                                                                                   ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
         "    vec4 v;                                                                                                        ""\n"
-        "    v.xy = in_vs_vertexPosition * param_vs_halfSize;                                                               ""\n"
+        "    v.xy = in_vs_vertexPosition * param_vs_planeSize;                                                              ""\n"
         "    v.w = 1.0;                                                                                                     ""\n"
         "                                                                                                                   ""\n"
         "    gl_Position = param_vs_mProjectionViewModel * v;                                                               ""\n"
@@ -909,7 +909,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSkyStage()
     gpuAPI->clearVariablesLookup();
     gpuAPI->findVariableLocation(_skyStage.program, _skyStage.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
     gpuAPI->findVariableLocation(_skyStage.program, _skyStage.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_skyStage.program, _skyStage.vs.param.halfSize, "param_vs_halfSize", GLShaderVariableType::Uniform);
+    gpuAPI->findVariableLocation(_skyStage.program, _skyStage.vs.param.planeSize, "param_vs_planeSize", GLShaderVariableType::Uniform);
     gpuAPI->findVariableLocation(_skyStage.program, _skyStage.fs.param.skyColor, "param_fs_skyColor", GLShaderVariableType::Uniform);
     gpuAPI->clearVariablesLookup();
 }
@@ -941,7 +941,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSkyStage()
     GL_CHECK_RESULT;
 
     // Set half-size
-    glUniform2f(_skyStage.vs.param.halfSize, _internalState.skyplaneHalfSize.x, _internalState.skyplaneHalfSize.y);
+    glUniform2f(_skyStage.vs.param.planeSize, _internalState.skyplaneSize.x, _internalState.skyplaneSize.y);
     GL_CHECK_RESULT;
 
     // Set sky parameters
@@ -1102,7 +1102,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSymbolsStage()
         //"    gl_Position = param_vs_mProjectionViewModel * v;                                                               ""\n"
         "                                                                                                                   ""\n"
         // Texture coordinates are simply forwarded from input
-        "   v2f_texCoords = in_vs_vertexTexCoords                                                                           ""\n"
+        "   v2f_texCoords = in_vs_vertexTexCoords;                                                                          ""\n"
         "}                                                                                                                  ""\n");
     auto preprocessedVertexShader = vertexShader;
     gpuAPI->preprocessVertexShader(preprocessedVertexShader);
@@ -1141,8 +1141,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSymbolsStage()
     assert(_symbolsStage.program != 0);
 
     gpuAPI->clearVariablesLookup();
-    gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-    gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
+    //gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
+    //gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
     //gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GLShaderVariableType::Uniform);
     //gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.param.halfSize, "param_vs_halfSize", GLShaderVariableType::Uniform);
     gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
@@ -1423,8 +1423,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::updateInternalState(MapRenderer::In
 
     // Calculate skyplane size
     float zSkyplaneK = internalState->zSkyplane / _zNear;
-    internalState->skyplaneHalfSize.x = zSkyplaneK * internalState->projectionPlaneHalfWidth;
-    internalState->skyplaneHalfSize.y = zSkyplaneK * internalState->projectionPlaneHalfHeight;
+    internalState->skyplaneSize.x = zSkyplaneK * internalState->projectionPlaneHalfWidth * 2.0f;
+    internalState->skyplaneSize.y = zSkyplaneK * internalState->projectionPlaneHalfHeight * 2.0f;
 
     // Compute visible tileset
     computeVisibleTileset(internalState, state);
