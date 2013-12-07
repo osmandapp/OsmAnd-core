@@ -243,8 +243,6 @@ namespace OsmAnd {
         virtual bool doRenderFrame();
         virtual bool doReleaseRendering();
 
-        virtual void validateConfigurationChange(const ConfigurationChange& change);
-
         GLsizei _tilePatchIndicesCount;
         virtual void createTilePatch();
         

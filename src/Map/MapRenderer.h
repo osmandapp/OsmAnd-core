@@ -92,12 +92,11 @@ namespace OsmAnd
         enum ConfigurationChange
         {
             ColorDepthForcing = 1 << 0,
-            AtlasTexturesUsage = 1 << 1,
-            ElevationDataResolution = 1 << 2,
-            TexturesFilteringMode = 1 << 3,
-            PaletteTexturesUsage = 1 << 4,
+            ElevationDataResolution = 1 << 1,
+            TexturesFilteringMode = 1 << 2,
+            PaletteTexturesUsage = 1 << 3,
         };
-        virtual void validateConfigurationChange(const ConfigurationChange& change) = 0;
+        virtual void validateConfigurationChange(const ConfigurationChange& change);
 
         // State-related:
         const MapRendererState& currentState;

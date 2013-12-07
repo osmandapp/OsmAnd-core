@@ -66,14 +66,12 @@ void OsmAnd::MapRenderer::setConfiguration( const MapRendererConfiguration& conf
     QWriteLocker scopedLocker(&_configurationLock);
 
     const bool colorDepthForcingChanged = (_requestedConfiguration.limitTextureColorDepthBy16bits != configuration_.limitTextureColorDepthBy16bits);
-    const bool atlasTexturesUsageChanged = (_requestedConfiguration.altasTexturesAllowed != configuration_.altasTexturesAllowed);
     const bool elevationDataResolutionChanged = (_requestedConfiguration.heixelsPerTileSide != configuration_.heixelsPerTileSide);
     const bool texturesFilteringChanged = (_requestedConfiguration.texturesFilteringQuality != configuration_.texturesFilteringQuality);
     const bool paletteTexturesUsageChanged = (_requestedConfiguration.paletteTexturesAllowed != configuration_.paletteTexturesAllowed);
 
     bool invalidateRasterTextures = false;
     invalidateRasterTextures = invalidateRasterTextures || colorDepthForcingChanged;
-    invalidateRasterTextures = invalidateRasterTextures || atlasTexturesUsageChanged;
     invalidateRasterTextures = invalidateRasterTextures || paletteTexturesUsageChanged;
 
     bool invalidateElevationData = false;
@@ -93,8 +91,6 @@ void OsmAnd::MapRenderer::setConfiguration( const MapRendererConfiguration& conf
     uint32_t mask = 0;
     if(colorDepthForcingChanged)
         mask |= ConfigurationChange::ColorDepthForcing;
-    if(atlasTexturesUsageChanged)
-        mask |= ConfigurationChange::AtlasTexturesUsage;
     if(elevationDataResolutionChanged)
         mask |= ConfigurationChange::ElevationDataResolution;
     if(texturesFilteringChanged)
@@ -203,6 +199,11 @@ void OsmAnd::MapRenderer::notifyRequestedStateWasUpdated(const MapRendererStateC
 
     // Since our current state is invalid, frame is also invalidated
     invalidateFrame();
+}
+
+void OsmAnd::MapRenderer::validateConfigurationChange(const ConfigurationChange& change)
+{
+    // Empty stub
 }
 
 bool OsmAnd::MapRenderer::updateInternalState(InternalState* internalState, const MapRendererState& state)

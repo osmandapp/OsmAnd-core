@@ -1440,10 +1440,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::computeVisibleTileset(InternalState
     */
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGL_Common::validateConfigurationChange( const ConfigurationChange& change )
-{
-}
-
 bool OsmAnd::AtlasMapRenderer_OpenGL_Common::postInitializeRendering()
 {
     bool ok;

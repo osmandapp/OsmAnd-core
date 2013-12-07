@@ -46,7 +46,6 @@ namespace OsmAnd {
         ~MapRendererConfiguration();
 
         TextureFilteringQuality texturesFilteringQuality;
-        bool altasTexturesAllowed;
         bool limitTextureColorDepthBy16bits;
         uint32_t heixelsPerTileSide;
         bool paletteTexturesAllowed;
