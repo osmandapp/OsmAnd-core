@@ -627,75 +627,61 @@ void OsmAnd::GPUAPI_OpenGLES2::setTextureBlockSampler( const GLenum textureBlock
 void OsmAnd::GPUAPI_OpenGLES2::applyTextureBlockToTexture( const GLenum texture, const GLenum textureBlock )
 {
     GL_CHECK_PRESENT(glTexParameteri);
-    GL_CHECK_PRESENT(glActiveTexture);
-    GL_CHECK_PRESENT(glGetIntegerv);
-
-    // Get current active texture unit
-    GLint activeTextureUnit = -1;
-    glGetIntegerv(GL_ACTIVE_TEXTURE, &activeTextureUnit);
-    GL_CHECK_RESULT;
-
-    // Activate new texture unit if needed
-    if(activeTextureUnit != texture)
-    {
-        glActiveTexture(texture);
-        GL_CHECK_RESULT;
-    }
 
     const auto samplerType = _textureBlocksSamplers[textureBlock];
     if(samplerType == SamplerType::ElevationDataTile)
     {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         GL_CHECK_RESULT;
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         GL_CHECK_RESULT;
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         GL_CHECK_RESULT;
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         GL_CHECK_RESULT;
     }
     else if(samplerType == SamplerType::BitmapTile_Bilinear)
     {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         GL_CHECK_RESULT;
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         GL_CHECK_RESULT;
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         GL_CHECK_RESULT;
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         GL_CHECK_RESULT;
     }
     else if(samplerType == SamplerType::BitmapTile_BilinearMipmap)
     {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         GL_CHECK_RESULT;
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         GL_CHECK_RESULT;
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+        glTexParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
         GL_CHECK_RESULT;
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         GL_CHECK_RESULT;
     }
     else if(samplerType == SamplerType::BitmapTile_TrilinearMipmap)
     {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         GL_CHECK_RESULT;
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         GL_CHECK_RESULT;
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         GL_CHECK_RESULT;
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         GL_CHECK_RESULT;
     }
     else if(samplerType == SamplerType::Symbol)
     {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         GL_CHECK_RESULT;
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         GL_CHECK_RESULT;
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         GL_CHECK_RESULT;
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         GL_CHECK_RESULT;
     }
 }
