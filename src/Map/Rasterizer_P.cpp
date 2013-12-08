@@ -2227,7 +2227,7 @@ bool OsmAnd::Rasterizer_P::isClockwiseCoastlinePolygon( const QVector< PointI > 
 }
 
 //////////////////////////////////////////////////////////////////////////
-//#include <SkImageEncoder.h>
+#include <SkImageEncoder.h>
 //////////////////////////////////////////////////////////////////////////
 
 void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
@@ -2317,6 +2317,29 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                     symbol->location31,
                     symbol->order,
                     qMove(std::shared_ptr<const SkBitmap>(bitmap)));
+                assert(static_cast<bool>(rasterizedSymbol->bitmap));
+                constructedGroup->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
+            }
+            else if(const auto iconSymbol = std::dynamic_pointer_cast<const PrimitiveSymbol_Icon>(symbol))
+            {
+                std::shared_ptr<const SkBitmap> bitmap;
+                if(!env.obtainIcon(iconSymbol->resourceName, bitmap) || !bitmap)
+                    continue;
+
+                //////////////////////////////////////////////////////////////////////////
+                /*std::unique_ptr<SkImageEncoder> encoder(CreatePNGImageEncoder());
+                QString path;
+                path.sprintf("D:\\icons\\%p.png", bitmap);
+                encoder->encodeFile(path.toLocal8Bit(), *bitmap, 100);*/
+                //////////////////////////////////////////////////////////////////////////
+
+                // Create RasterizedSymbol
+                const auto rasterizedSymbol = new RasterizedSymbol(
+                    group,
+                    constructedGroup->mapObject,
+                    symbol->location31,
+                    symbol->order,
+                    qMove(bitmap));
                 assert(static_cast<bool>(rasterizedSymbol->bitmap));
                 constructedGroup->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
             }
