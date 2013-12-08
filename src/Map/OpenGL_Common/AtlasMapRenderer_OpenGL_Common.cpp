@@ -1824,29 +1824,25 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::createTilePatch()
         {
             for(auto col = 0u; col < heightPrimitivesPerSide; col++)
             {
-                // p1 - top left
-                // p2 - bottom left
-                // p3 - bottom right
-                // p4 - top right
-                const auto p1 = (row + 0) * currentConfiguration.heixelsPerTileSide + col + 0;
-                const auto p2 = (row + 1) * currentConfiguration.heixelsPerTileSide + col + 0;
-                const auto p3 = (row + 1) * currentConfiguration.heixelsPerTileSide + col + 1;
-                const auto p4 = (row + 0) * currentConfiguration.heixelsPerTileSide + col + 1;
+                const auto p0 = (row + 1) * currentConfiguration.heixelsPerTileSide + col + 0;//BL
+                const auto p1 = (row + 0) * currentConfiguration.heixelsPerTileSide + col + 0;//TL
+                const auto p2 = (row + 0) * currentConfiguration.heixelsPerTileSide + col + 1;//TR
+                const auto p3 = (row + 1) * currentConfiguration.heixelsPerTileSide + col + 1;//BR
+                assert(p0 <= verticesCount);
                 assert(p1 <= verticesCount);
                 assert(p2 <= verticesCount);
                 assert(p3 <= verticesCount);
-                assert(p4 <= verticesCount);
 
                 // Triangle 0
-                pI[0] = p1;
-                pI[1] = p2;
-                pI[2] = p3;
+                pI[0] = p0;
+                pI[1] = p1;
+                pI[2] = p2;
                 pI += 3;
 
                 // Triangle 1
-                pI[0] = p1;
-                pI[1] = p3;
-                pI[2] = p4;
+                pI[0] = p0;
+                pI[1] = p2;
+                pI[2] = p3;
                 pI += 3;
             }
         }
