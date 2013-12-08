@@ -100,13 +100,12 @@ namespace OsmAnd {
         struct {
             GLuint tilePatchVBO;
             GLuint tilePatchIBO;
+            GLuint tilePatchVAO;
 
             // Multiple variations of RasterStage program.
             // Variations are generated according to number of active raster tile providers.
             struct {
                 GLuint program;
-
-                GLuint tilePatchVAO;
 
                 struct {
                     GLuint id;

@@ -111,10 +111,6 @@ namespace OsmAnd
         GPUAPI_OpenGL_Common();
         virtual ~GPUAPI_OpenGL_Common();
 
-        enum {
-            //BaseBitmapAtlasTilePadding = 2,
-        };
-
         const QStringList& extensions;
         const QVector<GLint>& compressedFormats;
 
