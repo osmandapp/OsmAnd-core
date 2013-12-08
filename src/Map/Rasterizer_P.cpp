@@ -2227,7 +2227,7 @@ bool OsmAnd::Rasterizer_P::isClockwiseCoastlinePolygon( const QVector< PointI > 
 }
 
 //////////////////////////////////////////////////////////////////////////
-#include <SkImageEncoder.h>
+//#include <SkImageEncoder.h>
 //////////////////////////////////////////////////////////////////////////
 
 void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
@@ -2295,9 +2295,26 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                     textBBox.join(shadowBounds);
                 }
 
+                // Calculate bitmap size and text area
+                auto textArea = textBBox;
+                textArea.offset(qAbs(textBBox.left()) * 2.0f, qAbs(textBBox.top()) * 2.0f);
+                auto bitmapWidth = textBBox.width();
+                auto bitmapHeight = textBBox.height();
+                if(textShieldBitmap)
+                {
+                    // Enlarge bitmap if shield is larger than text
+                    bitmapWidth = qMax(bitmapWidth, static_cast<float>(textShieldBitmap->width()));
+                    bitmapHeight = qMax(bitmapHeight, static_cast<float>(textShieldBitmap->height()));
+
+                    // Shift text area to proper position in a larger
+                    textArea.offset(
+                        (bitmapWidth - textArea.width()) / 2.0f,
+                        (bitmapHeight - textArea.height()) / 2.0f);
+                }
+
                 // Create a bitmap that will be hold text
                 auto bitmap = new SkBitmap();
-                bitmap->setConfig(SkBitmap::kARGB_8888_Config, textBBox.width(), textBBox.height());
+                bitmap->setConfig(SkBitmap::kARGB_8888_Config, bitmapWidth, bitmapHeight);
                 bitmap->allocPixels();
                 bitmap->eraseColor(SK_ColorTRANSPARENT);
                 SkBitmapDevice target(*bitmap);
@@ -2306,24 +2323,16 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                 // If there is shield for this text, rasterize it also
                 if(textShieldBitmap)
                 {
-                    /*
-                        float left = textDrawInfo->centerX - ico->width() / 2 * rc->getScreenDensityRatio() 
-                            - 0.5f;
-                        float top = textDrawInfo->centerY - ico->height() / 2  * rc->getScreenDensityRatio() 
-                            - rc->getDensityValue(4.5f);
-                        // SkIRect src =  SkIRect::MakeXYWH(0, 0, ico->width(), ico->height())
-                        SkRect r = SkRect::MakeXYWH(left, top, ico->width() * rc->getScreenDensityRatio(),
-                            ico->height() * rc->getScreenDensityRatio());
-                        PROFILE_NATIVE_OPERATION(rc, cv->drawBitmapRect(*ico, (SkIRect*) NULL, r, &paintIcon));
-                    */
-
-                    canvas.drawBitmap(*textShieldBitmap, 0.0f, 0.0f, nullptr);
+                    canvas.drawBitmap(*textShieldBitmap,
+                        (bitmapWidth - textShieldBitmap->width()) / 2.0f,
+                        (bitmapHeight - textShieldBitmap->height()) / 2.0f,
+                        nullptr);
                 }
 
                 // Rasterize text
                 if(textSymbol->shadowRadius > 0)
-                    canvas.drawText(textSymbol->value.constData(), textSymbol->value.length()*sizeof(QChar), -textBBox.left(), -textBBox.top(), textShadowPaint);
-                canvas.drawText(textSymbol->value.constData(), textSymbol->value.length()*sizeof(QChar), -textBBox.left(), -textBBox.top(), textPaint);
+                    canvas.drawText(textSymbol->value.constData(), textSymbol->value.length()*sizeof(QChar), textArea.left(), textArea.top(), textShadowPaint);
+                canvas.drawText(textSymbol->value.constData(), textSymbol->value.length()*sizeof(QChar), textArea.left(), textArea.top(), textPaint);
 
                 //////////////////////////////////////////////////////////////////////////
                 /*std::unique_ptr<SkImageEncoder> encoder(CreatePNGImageEncoder());
