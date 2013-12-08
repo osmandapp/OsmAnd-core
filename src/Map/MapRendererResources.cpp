@@ -1186,6 +1186,10 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
             // If upload have failed, stop
             if(!ok)
             {
+                LogPrintf(LogSeverityLevel::Error, "Failed to upload unique symbol (size %dx%d) in %dx%d@%d tile",
+                    symbol->bitmap->width(), symbol->bitmap->height(),
+                    tileId.x, tileId.y, zoom);
+
                 atLeastOneFailed = true;
                 break;
             }
@@ -1223,7 +1227,12 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
                     ok = owner->uploadSymbolToGPU(symbol, sharedResourceInGPU);
 
                     // If upload have failed, stop
+                    if(!ok)
                     {
+                        LogPrintf(LogSeverityLevel::Error, "Failed to upload shared symbol (size %dx%d) in %dx%d@%d tile",
+                            symbol->bitmap->width(), symbol->bitmap->height(),
+                            tileId.x, tileId.y, zoom);
+
                         atLeastOneFailed = true;
                         break;
                     }
