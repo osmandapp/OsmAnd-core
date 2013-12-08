@@ -227,7 +227,7 @@ namespace OsmAnd {
                     GLint viewport;
 
                     // Per-symbol data
-                    GLint symbolCoordinates;
+                    GLint symbolOffsetFromTarget;
                     GLint symbolSize;
                     GLint distanceFromCamera;
                 } param;

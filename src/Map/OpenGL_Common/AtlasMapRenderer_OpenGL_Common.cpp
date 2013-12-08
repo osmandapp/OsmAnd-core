@@ -1031,7 +1031,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSymbolsStage()
         "uniform vec4 param_vs_viewport; // x, y, width, height                                                             ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-symbol data
-        "uniform highp vec2 param_vs_symbolCoordinates;                                                                     ""\n"
+        "uniform highp vec2 param_vs_symbolOffsetFromTarget;                                                                ""\n"
         "uniform ivec2 param_vs_symbolSize;                                                                                 ""\n"
         "uniform float param_vs_distanceFromCamera;                                                                         ""\n"
         "                                                                                                                   ""\n"
@@ -1039,9 +1039,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSymbolsStage()
         "{                                                                                                                  ""\n"
         // Calculate location of symbol in world coordinate system.
         "    vec4 symbolLocation;                                                                                           ""\n"
-        "    symbolLocation.x = param_vs_symbolCoordinates.x * %TileSize3D%.0;                                              ""\n"
-        "    symbolLocation.y = 0.0; // A height from heightmap should be used here                                         ""\n"
-        "    symbolLocation.z = param_vs_symbolCoordinates.y * %TileSize3D%.0;                                              ""\n"
+        "    symbolLocation.xz = param_vs_symbolOffsetFromTarget.xy * %TileSize3D%.0;                                       ""\n"
+        "    symbolLocation.y = 0.0; //TODO: A height from heightmap should be used here                                    ""\n"
         "    symbolLocation.w = 1.0;                                                                                        ""\n"
         "                                                                                                                   ""\n"
         // Project location of symbol from world coordinate system to screen
@@ -1069,8 +1068,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSymbolsStage()
         // There's no need to perform unprojection into orthographic world space, just multiply these coordinates by
         // orthographic projection matrix (View and Model being identity)
         "  vec4 vertex;                                                                                                     ""\n"
-        "  vertex.xy = vertexOnScreen.xy * 0.0000001 + in_vs_vertexPosition.xy * 150.0 + vec2(200.0, 200.0);                                                                                      ""\n"
-        //"  vertex.xy = vertexOnScreen.xy;                                                                                      ""\n"
+        //"  vertex.xy = vertexOnScreen.xy * 0.0000001 + in_vs_vertexPosition.xy * 150.0 + vec2(200.0, 200.0);                                                                                      ""\n"
+        "  vertex.xy = vertexOnScreen.xy;                                                                                   ""\n"
         "  vertex.z = -param_vs_distanceFromCamera;                                                                         ""\n"
         "  vertex.w = 1.0;                                                                                                  ""\n"
         "  gl_Position = param_vs_mOrthographicProjection * vertex;                                                         ""\n"
@@ -1121,7 +1120,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSymbolsStage()
     gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GLShaderVariableType::Uniform);
     gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.param.mOrthographicProjection, "param_vs_mOrthographicProjection", GLShaderVariableType::Uniform);
     gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.param.viewport, "param_vs_viewport", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.param.symbolCoordinates, "param_vs_symbolCoordinates", GLShaderVariableType::Uniform);
+    gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.param.symbolOffsetFromTarget, "param_vs_symbolOffsetFromTarget", GLShaderVariableType::Uniform);
     gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.param.symbolSize, "param_vs_symbolSize", GLShaderVariableType::Uniform);
     gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.param.distanceFromCamera, "param_vs_distanceFromCamera", GLShaderVariableType::Uniform);
     gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
@@ -1284,9 +1283,29 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                 const auto& symbol = symbolEntry.first;
                 const auto gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(symbolEntry.second);
 
-                // Set symbol coordinates
-                glUniform2f(_symbolsStage.vs.param.symbolCoordinates, 0.0f, 0.0f); //TODO: 0.0 refers to target. since target is the center. so calculate offset from target
+                // Set symbol offset from target
+                const auto symbolOffset31 = symbol->location - currentState.target31;
+                glUniform2f(_symbolsStage.vs.param.symbolOffsetFromTarget,
+                    static_cast<float>((static_cast<double>(symbolOffset31.x) / tileSize31) / TileSize3D),
+                    static_cast<float>((static_cast<double>(symbolOffset31.y) / tileSize31) / TileSize3D));
                 GL_CHECK_RESULT;
+                //////////////////////////////////////////////////////////////////////////
+                //////////////////////////////////////////////////////////////////////////
+                //////////////////////////////////////////////////////////////////////////
+                // this may be needed when calculating self-intersection
+                auto sx = (static_cast<double>(symbolOffset31.x) / tileSize31);
+                auto sy = (static_cast<double>(symbolOffset31.y) / tileSize31);
+
+                glm::vec4 viewport(
+                    currentState.viewport.left,
+                    currentState.windowSize.y - currentState.viewport.bottom,
+                    currentState.viewport.width(),
+                    currentState.viewport.height());
+
+                auto projectedV = glm::project(glm::vec3(sx, 0.0f, sy), _internalState.mCameraView, _internalState.mPerspectiveProjection, viewport);
+                //////////////////////////////////////////////////////////////////////////
+                //////////////////////////////////////////////////////////////////////////
+                //////////////////////////////////////////////////////////////////////////
 
                 // Set symbol size
                 glUniform2i(_symbolsStage.vs.param.symbolSize, gpuResource->width, gpuResource->height);
