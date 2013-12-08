@@ -63,7 +63,7 @@ namespace OsmAnd
     protected:
         std::shared_ptr<const SkBitmap> _bitmap;
     public:
-        MapSymbol(const std::weak_ptr<const MapSymbolsGroup>& group, const std::shared_ptr<const Model::MapObject>& mapObject, const int order, const PointI& location31, const std::shared_ptr<const SkBitmap>& bitmap);
+        MapSymbol(const std::weak_ptr<const MapSymbolsGroup>& group, const std::shared_ptr<const Model::MapObject>& mapObject, const int order, const PointI& location31, const PointI& offset, const std::shared_ptr<const SkBitmap>& bitmap);
         virtual ~MapSymbol();
 
         const std::weak_ptr<const MapSymbolsGroup> group;
@@ -71,6 +71,7 @@ namespace OsmAnd
         const std::shared_ptr<const Model::MapObject> mapObject;
         const int order;
         const PointI location31;
+        const PointI offset;
         const std::shared_ptr<const SkBitmap>& bitmap;
 
         virtual void releaseNonRetainedData();

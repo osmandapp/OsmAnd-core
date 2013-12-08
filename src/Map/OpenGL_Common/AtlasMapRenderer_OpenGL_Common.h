@@ -229,6 +229,7 @@ namespace OsmAnd {
                     GLint symbolOffsetFromTarget;
                     GLint symbolSize;
                     GLint distanceFromCamera;
+                    GLint onScreenOffset;
                 } param;
             } vs;
 

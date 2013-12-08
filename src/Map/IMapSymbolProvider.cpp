@@ -24,12 +24,16 @@ OsmAnd::MapSymbolsGroup::~MapSymbolsGroup()
 {
 }
 
-OsmAnd::MapSymbol::MapSymbol(const std::weak_ptr<const MapSymbolsGroup>& group_, const std::shared_ptr<const Model::MapObject>& mapObject_, const int order_, const PointI& location31_, const std::shared_ptr<const SkBitmap>& bitmap_)
+OsmAnd::MapSymbol::MapSymbol(
+    const std::weak_ptr<const MapSymbolsGroup>& group_, const std::shared_ptr<const Model::MapObject>& mapObject_,
+    const int order_, const PointI& location31_, const PointI& offset_,
+    const std::shared_ptr<const SkBitmap>& bitmap_)
     : _bitmap(bitmap_)
     , group(group_)
     , mapObject(mapObject_)
     , order(order_)
     , location31(location31_)
+    , offset(offset_)
     , bitmap(_bitmap)
 {
 }

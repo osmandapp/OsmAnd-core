@@ -2248,6 +2248,9 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
         const auto constructedGroup = new RasterizedSymbolsGroup(itSymbolsEntry->first);
         std::shared_ptr<const RasterizedSymbolsGroup> group(constructedGroup);
 
+        // Total offset allows several texts to stack into column
+        PointI totalOffset;
+
         for(auto itPrimitiveSymbol = itSymbolsEntry->second.cbegin(); itPrimitiveSymbol != itSymbolsEntry->second.cend(); ++itPrimitiveSymbol)
         {
             if(controller && controller->isAborted())
@@ -2341,12 +2344,20 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                 encoder->encodeFile(path.toLocal8Bit(), *bitmap, 100);*/
                 //////////////////////////////////////////////////////////////////////////
 
-                // Create RasterizedSymbol for text
+                // Calculate local offset
+                PointI localOffset;
+                localOffset.y = (bitmap->height() / 2) + textSymbol->verticalOffset;
+
+                // Increment total offset
+                totalOffset += localOffset;
+
+                // Publish new rasterized symbol
                 const auto rasterizedSymbol = new RasterizedSymbol(
                     group,
                     constructedGroup->mapObject,
                     symbol->location31,
                     symbol->order,
+                    (constructedGroup->symbols.isEmpty() ? PointI() : totalOffset),
                     qMove(std::shared_ptr<const SkBitmap>(bitmap)));
                 assert(static_cast<bool>(rasterizedSymbol->bitmap));
                 constructedGroup->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
@@ -2364,14 +2375,24 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                 encoder->encodeFile(path.toLocal8Bit(), *bitmap, 100);*/
                 //////////////////////////////////////////////////////////////////////////
 
+                // Calculate local offset
+                PointI localOffset;
+                localOffset.y = (bitmap->height() / 2);
+
+                // Increment total offset
+                totalOffset += localOffset;
+
                 // Create RasterizedSymbol
                 const auto rasterizedSymbol = new RasterizedSymbol(
                     group,
                     constructedGroup->mapObject,
                     symbol->location31,
                     symbol->order,
+                    (constructedGroup->symbols.isEmpty() ? PointI() : totalOffset),
                     qMove(bitmap));
                 assert(static_cast<bool>(rasterizedSymbol->bitmap));
+
+                // Publish new rasterized symbol
                 constructedGroup->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
             }
         }

@@ -1028,6 +1028,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSymbolsStage()
         "uniform highp vec2 param_vs_symbolOffsetFromTarget;                                                                ""\n"
         "uniform ivec2 param_vs_symbolSize;                                                                                 ""\n"
         "uniform float param_vs_distanceFromCamera;                                                                         ""\n"
+        "uniform ivec2 param_vs_onScreenOffset;                                                                             ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
@@ -1048,6 +1049,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSymbolsStage()
         "    symbolLocationOnScreen.x = symbolLocationOnScreen.x * param_vs_viewport.z + param_vs_viewport.x;               ""\n"
         "    symbolLocationOnScreen.y = symbolLocationOnScreen.y * param_vs_viewport.w + param_vs_viewport.y;               ""\n"
         "    symbolLocationOnScreen.z = (1.0 + symbolLocationOnScreen.z) * 0.5;                                             ""\n"
+        "                                                                                                                   ""\n"
+        // Add on-screen offset
+        "    symbolLocationOnScreen.xy -= vec2(param_vs_onScreenOffset);                                                    ""\n"
         "                                                                                                                   ""\n"
         // symbolLocationOnScreen.xy now contains correct coordinates in viewport,
         // which can be used in orthographic projection (if it was configured to match viewport).
@@ -1117,6 +1121,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSymbolsStage()
     gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.param.symbolOffsetFromTarget, "param_vs_symbolOffsetFromTarget", GLShaderVariableType::Uniform);
     gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.param.symbolSize, "param_vs_symbolSize", GLShaderVariableType::Uniform);
     gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.param.distanceFromCamera, "param_vs_distanceFromCamera", GLShaderVariableType::Uniform);
+    gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.vs.param.onScreenOffset, "param_vs_onScreenOffset", GLShaderVariableType::Uniform);
     gpuAPI->findVariableLocation(_symbolsStage.program, _symbolsStage.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
     gpuAPI->clearVariablesLookup();
 
@@ -1307,6 +1312,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
 
                 // Set distance from camera to symbol
                 glUniform1f(_symbolsStage.vs.param.distanceFromCamera, distanceFromCamera);
+                GL_CHECK_RESULT;
+
+                // Set on-screen offset
+                glUniform2i(_symbolsStage.vs.param.onScreenOffset, symbol->offset.x, symbol->offset.y);
                 GL_CHECK_RESULT;
 
                 // Activate symbol texture

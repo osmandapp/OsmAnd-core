@@ -62,6 +62,7 @@ bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols(
                 group, constructedGroup->mapObject,
                 rasterizedSymbol->order,
                 rasterizedSymbol->location31,
+                rasterizedSymbol->offset,
                 rasterizedSymbol->bitmap);
             assert(static_cast<bool>(symbol->bitmap));
             constructedGroup->symbols.push_back(qMove(std::shared_ptr<const MapSymbol>(symbol)));

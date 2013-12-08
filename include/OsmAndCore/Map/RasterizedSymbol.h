@@ -46,7 +46,7 @@ namespace OsmAnd
         Q_DISABLE_COPY(RasterizedSymbol);
     private:
     protected:
-        RasterizedSymbol(const std::shared_ptr<const RasterizedSymbolsGroup>& group, const std::shared_ptr<const Model::MapObject>& mapObject, const PointI& location31, const int order, const std::shared_ptr<const SkBitmap>& bitmap);
+        RasterizedSymbol(const std::shared_ptr<const RasterizedSymbolsGroup>& group, const std::shared_ptr<const Model::MapObject>& mapObject, const PointI& location31, const int order, const PointI& offset, const std::shared_ptr<const SkBitmap>& bitmap);
     public:
         virtual ~RasterizedSymbol();
 
@@ -55,6 +55,7 @@ namespace OsmAnd
         const std::shared_ptr<const Model::MapObject> mapObject;
         const PointI location31;
         const int order;
+        const PointI offset;
         const std::shared_ptr<const SkBitmap> bitmap;
 
     friend class OsmAnd::Rasterizer_P;
