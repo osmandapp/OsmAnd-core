@@ -4,11 +4,15 @@
 #include "RasterizerEnvironment.h"
 #include "RasterizerSharedContext.h"
 
-OsmAnd::OfflineMapDataProvider::OfflineMapDataProvider( const std::shared_ptr<ObfsCollection>& obfsCollection_, const std::shared_ptr<const MapStyle>& mapStyle_, const float displayDensityFactor )
+OsmAnd::OfflineMapDataProvider::OfflineMapDataProvider(
+    const std::shared_ptr<ObfsCollection>& obfsCollection_,
+    const std::shared_ptr<const MapStyle>& mapStyle_,
+    const float displayDensityFactor,
+    const std::shared_ptr<const IExternalResourcesProvider>& externalResourcesProvider /*= nullptr*/ )
     : _d(new OfflineMapDataProvider_P(this))
     , obfsCollection(obfsCollection_)
     , mapStyle(mapStyle_)
-    , rasterizerEnvironment(new RasterizerEnvironment(mapStyle_, displayDensityFactor))
+    , rasterizerEnvironment(new RasterizerEnvironment(mapStyle_, displayDensityFactor, externalResourcesProvider))
     , rasterizerSharedContext(new RasterizerSharedContext())
 {
 }

@@ -37,6 +37,7 @@ namespace OsmAnd {
     class RasterizerEnvironment;
     class RasterizerSharedContext;
     class OfflineMapDataTile;
+    class IExternalResourcesProvider;
 
     class OfflineMapDataProvider_P;
     class OSMAND_CORE_API OfflineMapDataProvider
@@ -46,7 +47,7 @@ namespace OsmAnd {
         const std::unique_ptr<OfflineMapDataProvider_P> _d;
     protected:
     public:
-        OfflineMapDataProvider(const std::shared_ptr<ObfsCollection>& obfsCollection, const std::shared_ptr<const MapStyle>& mapStyle, const float displayDensityFactor);
+        OfflineMapDataProvider(const std::shared_ptr<ObfsCollection>& obfsCollection, const std::shared_ptr<const MapStyle>& mapStyle, const float displayDensityFactor, const std::shared_ptr<const IExternalResourcesProvider>& externalResourcesProvider = nullptr);
         virtual ~OfflineMapDataProvider();
 
         const std::shared_ptr<ObfsCollection> obfsCollection;
