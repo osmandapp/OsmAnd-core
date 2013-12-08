@@ -125,7 +125,7 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
 {
     bool ok;
 
-    ok = RenderAPI_OpenGL_Common::initialize();
+    ok = GPUAPI_OpenGL_Common::initialize();
     if(!ok)
         return false;
 
@@ -232,7 +232,7 @@ bool OsmAnd::GPUAPI_OpenGLES2::release()
 {
     bool ok;
 
-    ok = RenderAPI_OpenGL_Common::release();
+    ok = GPUAPI_OpenGL_Common::release();
     if(!ok)
         return false;
 
