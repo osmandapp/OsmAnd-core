@@ -1282,36 +1282,15 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                 const auto distanceFromCamera = itSymbolEntry.key();
                 const auto& symbolEntry = itSymbolEntry.value();
                 const auto& symbol = symbolEntry.first;
-                const auto& gpuResource = symbolEntry.second;
+                const auto gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(symbolEntry.second);
 
                 // Set symbol coordinates
                 glUniform2f(_symbolsStage.vs.param.symbolCoordinates, 0.0f, 0.0f); //TODO: 0.0 refers to target. since target is the center. so calculate offset from target
                 GL_CHECK_RESULT;
 
-                // Set proper symbol properties
-                if(gpuResource->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
-                {
-                    const auto tileOnAtlasTexture = std::static_pointer_cast<const GPUAPI::SlotOnAtlasTextureInGPU>(gpuResource);
-                    /*
-                    glUniform1i(perTile_vs.slotIndex, tileOnAtlasTexture->slotIndex);
-                    GL_CHECK_RESULT;
-                    glUniform1f(perTile_vs.tileSizeN, tileOnAtlasTexture->atlasTexture->tileSizeN);
-                    GL_CHECK_RESULT;
-                    glUniform1f(perTile_vs.tilePaddingN, tileOnAtlasTexture->atlasTexture->tilePaddingN);
-                    GL_CHECK_RESULT;
-                    glUniform1i(perTile_vs.slotsPerSide, tileOnAtlasTexture->atlasTexture->slotsPerSide);
-                    GL_CHECK_RESULT;
-                    */
-                    assert(false);
-                }
-                else
-                {
-                    const auto texture = std::static_pointer_cast<const GPUAPI::TextureInGPU>(gpuResource);
-
-                    // Set symbol size
-                    glUniform2i(_symbolsStage.vs.param.symbolSize, texture->width, texture->height);
-                    GL_CHECK_RESULT;
-                }
+                // Set symbol size
+                glUniform2i(_symbolsStage.vs.param.symbolSize, gpuResource->width, gpuResource->height);
+                GL_CHECK_RESULT;
 
                 // Set distance from camera to symbol
                 glUniform1f(_symbolsStage.vs.param.distanceFromCamera, distanceFromCamera);
