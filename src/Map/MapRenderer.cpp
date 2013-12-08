@@ -767,6 +767,7 @@ void OsmAnd::MapRenderer::setElevationDataProvider( const std::shared_ptr<IMapEl
 
     _requestedState.elevationDataProvider = tileProvider;
 
+    _resources->invalidateResourcesOfType(ResourceType::ElevationData);
     notifyRequestedStateWasUpdated(MapRendererStateChange::ElevationData_Provider);
 }
 
@@ -780,6 +781,7 @@ void OsmAnd::MapRenderer::resetElevationDataProvider( bool forcedUpdate /*= fals
 
     _requestedState.elevationDataProvider.reset();
 
+    _resources->invalidateResourcesOfType(ResourceType::ElevationData);
     notifyRequestedStateWasUpdated(MapRendererStateChange::ElevationData_Provider);
 }
 

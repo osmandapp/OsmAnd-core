@@ -729,6 +729,11 @@ void OsmAnd::MapRendererResources::cleanupJunkResources(const QSet<TileId>& tile
                     // If resource was unloaded from GPU, remove the entry.
                     return true;
                 }
+                else if(entry->setStateIf(ResourceState::Unavailable, ResourceState::JustBeforeDeath))
+                {
+                    // If resource was never available, just remove the entry
+                    return true;
+                }
 
                 // Following situations are ignored
                 const auto state = entry->getState();
@@ -754,6 +759,7 @@ void OsmAnd::MapRendererResources::releaseResourcesFrom(const std::shared_ptr<Ti
         // - Ready
         // - Unloaded
         // - Uploaded
+        // - Unavailable
         // All other states are considered invalid.
 
         if(entry->setStateIf(ResourceState::Requested, ResourceState::JustBeforeDeath))
@@ -784,6 +790,10 @@ void OsmAnd::MapRendererResources::releaseResourcesFrom(const std::shared_ptr<Ti
 
             entry->setState(ResourceState::Unloaded);
             entry->setState(ResourceState::JustBeforeDeath);
+            return true;
+        }
+        else if(entry->setStateIf(ResourceState::Unavailable, ResourceState::JustBeforeDeath))
+        {
             return true;
         }
 

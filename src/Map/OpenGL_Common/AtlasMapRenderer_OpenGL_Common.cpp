@@ -1142,11 +1142,12 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSymbolsStage()
     // Vertex data
     Vertex vertices[4] =
     {
-        // In OpenGL, UV origin is BL
-        { { -0.5f, -0.5f }, { 0.0f, 0.0f } },//BL
-        { { -0.5f,  0.5f }, { 0.0f, 1.0f } },//TL
-        { {  0.5f,  0.5f }, { 1.0f, 1.0f } },//TR
-        { {  0.5f, -0.5f }, { 1.0f, 0.0f } } //BR
+        // In OpenGL, UV origin is BL. But since same rule applies to uploading texture data,
+        // texture in memory is vertically flipped, so swap bottom and top UVs
+        { { -0.5f, -0.5f }, { 0.0f, 1.0f } },//BL
+        { { -0.5f,  0.5f }, { 0.0f, 0.0f } },//TL
+        { {  0.5f,  0.5f }, { 1.0f, 0.0f } },//TR
+        { {  0.5f, -0.5f }, { 1.0f, 1.0f } } //BR
     };
     const auto verticesCount = 4;
 
@@ -1769,11 +1770,12 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::createTilePatch()
         const GLfloat tsz = static_cast<GLfloat>(TileSize3D);
         static MapTileVertex vertices[4] =
         {
-            // In OpenGL, UV origin is BL
-            { {0.0f, 0.0f}, {0.0f, 0.0f} },//BL
-            { {0.0f,  tsz}, {0.0f, 1.0f} },//TL
-            { { tsz,  tsz}, {1.0f, 1.0f} },//TR
-            { { tsz, 0.0f}, {1.0f, 0.0f} } //TL
+            // In OpenGL, UV origin is BL. But since same rule applies to uploading texture data,
+            // texture in memory is vertically flipped, so swap bottom and top UVs
+            { {0.0f,  tsz}, {0.0f, 1.0f} },//BL
+            { {0.0f, 0.0f}, {0.0f, 0.0f} },//TL
+            { { tsz, 0.0f}, {1.0f, 0.0f} },//TR
+            { { tsz,  tsz}, {1.0f, 1.0f} } //BR
         };
         pVertices = new MapTileVertex[4];
         memcpy(pVertices, vertices, 4*sizeof(MapTileVertex));
