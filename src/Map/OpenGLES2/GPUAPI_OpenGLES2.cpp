@@ -618,7 +618,13 @@ void OsmAnd::GPUAPI_OpenGLES2::preprocessFragmentShader( QString& code )
     preprocessShader(code, shaderSource);
 }
 
-void OsmAnd::GPUAPI_OpenGLES2::setSampler( GLenum texture, const SamplerType samplerType )
+void OsmAnd::GPUAPI_OpenGLES2::setTextureBlockSampler( const GLenum textureBlock, const SamplerType samplerType )
+{
+    // In OpenGLES 2.0 there is no settings of texture-block, so these settings are per-texture
+    _textureBlocksSamplers[textureBlock] = samplerType;
+}
+
+void OsmAnd::GPUAPI_OpenGLES2::applyTextureBlockToTexture( const GLenum texture, const GLenum textureBlock )
 {
     GL_CHECK_PRESENT(glTexParameteri);
     GL_CHECK_PRESENT(glActiveTexture);
@@ -636,6 +642,7 @@ void OsmAnd::GPUAPI_OpenGLES2::setSampler( GLenum texture, const SamplerType sam
         GL_CHECK_RESULT;
     }
 
+    const auto samplerType = _textureBlocksSamplers[textureBlock];
     if(samplerType == SamplerType::ElevationDataTile)
     {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

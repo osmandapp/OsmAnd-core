@@ -158,7 +158,8 @@ namespace OsmAnd
         enum {
             SamplerTypesCount = static_cast<int>(SamplerType::__LAST),
         };
-        virtual void setSampler(GLenum texture, const SamplerType samplerType) = 0;
+        virtual void setTextureBlockSampler(const GLenum textureBlock, const SamplerType samplerType) = 0;
+        virtual void applyTextureBlockToTexture(const GLenum texture, const GLenum textureBlock) = 0;
 
         virtual void clearVariablesLookup();
         virtual void findVariableLocation(GLuint program, GLint& location, const QString& name, const GLShaderVariableType& type);

@@ -493,7 +493,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
         glUniform1i(stageVariation.vs.param.elevationData_sampler, 0);
         GL_CHECK_RESULT;
 
-        gpuAPI->setSampler(GL_TEXTURE0, GPUAPI_OpenGL_Common::SamplerType::ElevationDataTile);
+        gpuAPI->setTextureBlockSampler(GL_TEXTURE0, GPUAPI_OpenGL_Common::SamplerType::ElevationDataTile);
     }
     auto bitmapTileSamplerType = GPUAPI_OpenGL_Common::SamplerType::BitmapTile_Bilinear;
     if(gpuAPI->isSupported_textureLod)
@@ -515,7 +515,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
         glUniform1i(stageVariation.fs.param.rasterTileLayers[layerId].sampler, samplerIndex);
         GL_CHECK_RESULT;
 
-        gpuAPI->setSampler(GL_TEXTURE0 + samplerIndex, bitmapTileSamplerType);
+        gpuAPI->setTextureBlockSampler(GL_TEXTURE0 + samplerIndex, bitmapTileSamplerType);
     }
 
     // Check if we need to process elevation data
@@ -595,6 +595,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
 
                     glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
                     GL_CHECK_RESULT;
+
+                    gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0);
 
                     if(gpuResource->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
                     {
@@ -696,6 +698,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
 
             glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
             GL_CHECK_RESULT;
+
+            gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + samplerIndex);
 
             if(gpuResource->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
             {
@@ -1231,7 +1235,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
     GL_CHECK_RESULT;
 
     // Set proper sampler for texture block
-    gpuAPI->setSampler(GL_TEXTURE0 + 0, GPUAPI_OpenGL_Common::SamplerType::Symbol);
+    gpuAPI->setTextureBlockSampler(GL_TEXTURE0 + 0, GPUAPI_OpenGL_Common::SamplerType::Symbol);
 
     {
         QMutexLocker scopedLocker(&getResources().getSymbolsMapMutex());
@@ -1322,6 +1326,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                 // Activate symbol texture
                 glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
                 GL_CHECK_RESULT;
+
+                // Apply settings from texture block to texture
+                gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + 0);
 
                 // Draw symbol actually
                 glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);

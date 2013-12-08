@@ -439,12 +439,17 @@ void OsmAnd::GPUAPI_OpenGL::preprocessFragmentShader( QString& code )
     code.prepend(common);
 }
 
-void OsmAnd::GPUAPI_OpenGL::setSampler( GLenum texture, const SamplerType samplerType )
+void OsmAnd::GPUAPI_OpenGL::setTextureBlockSampler(const GLenum textureBlock, const SamplerType samplerType)
 {
     GL_CHECK_PRESENT(glBindSampler);
 
-    glBindSampler(texture - GL_TEXTURE0, _textureSamplers[static_cast<int>(samplerType)]);
+    glBindSampler(textureBlock - GL_TEXTURE0, _textureSamplers[static_cast<int>(samplerType)]);
     GL_CHECK_RESULT;
+}
+
+void OsmAnd::GPUAPI_OpenGL::applyTextureBlockToTexture( const GLenum texture, const GLenum textureBlock )
+{
+    // In OpenGL 3.0+ there's nothing to do here
 }
 
 void OsmAnd::GPUAPI_OpenGL::optimizeVertexShader( QString& code )

@@ -28,6 +28,7 @@
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QString>
+#include <QHash>
 
 #include <glm/glm.hpp>
 
@@ -59,6 +60,8 @@ namespace OsmAnd {
         bool _isSupported_EXT_shader_texture_lod;
 
         void preprocessShader(QString& code, const QString& extraHeader = QString());
+
+        QHash<GLenum, SamplerType> _textureBlocksSamplers;
     protected:
     public:
         GPUAPI_OpenGLES2();
@@ -98,7 +101,8 @@ namespace OsmAnd {
         virtual void optimizeVertexShader(QString& code);
         virtual void optimizeFragmentShader(QString& code);
 
-        virtual void setSampler(GLenum texture, const SamplerType samplerType);
+        virtual void setTextureBlockSampler(const GLenum textureBlock, const SamplerType samplerType);
+        virtual void applyTextureBlockToTexture(const GLenum texture, const GLenum textureBlock);
     };
 
 }
