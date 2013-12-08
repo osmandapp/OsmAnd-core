@@ -20,8 +20,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _OSMAND_CORE_EMBEDDED_RESOURCES_H_
-#define _OSMAND_CORE_EMBEDDED_RESOURCES_H_
+#ifndef _OSMAND_CORE_I_EXTERNAL_RESOURCES_PROVIDER_H_
+#define _OSMAND_CORE_I_EXTERNAL_RESOURCES_PROVIDER_H_
 
 #include <OsmAndCore/stdlib_common.h>
 
@@ -31,21 +31,20 @@
 
 #include <OsmAndCore.h>
 
-namespace OsmAnd {
-
-    class OSMAND_CORE_API EmbeddedResources
+namespace OsmAnd
+{
+    class IExternalResourcesProvider
     {
-    private:
-        EmbeddedResources();
-    protected:
     public:
-        virtual ~EmbeddedResources();
+        virtual ~IExternalResourcesProvider()
+        {
+        }
 
-        static QByteArray decompressResource(const QString& id, bool* ok = nullptr);
-        static QByteArray getRawResource(const QString& id, bool* ok = nullptr);
-        static bool containsResource(const QString& id);
+        virtual QByteArray decompressResource(const QString& id, bool* ok = nullptr) const = 0;
+        virtual QByteArray getRawResource(const QString& id, bool* ok = nullptr) const = 0;
+        virtual bool containsResource(const QString& id) const = 0;
     };
 
 } // namespace OsmAnd
 
-#endif // _OSMAND_CORE_EMBEDDED_RESOURCES_H_
+#endif // _OSMAND_CORE_I_EXTERNAL_RESOURCES_PROVIDER_H_

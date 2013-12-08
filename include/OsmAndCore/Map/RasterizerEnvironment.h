@@ -38,6 +38,7 @@ namespace OsmAnd
     class Rasterizer;
     struct MapStyleValue;
     class ObfMapSectionInfo;
+    class IExternalResourcesProvider;
 
     class RasterizerEnvironment_P;
     class OSMAND_CORE_API RasterizerEnvironment
@@ -47,11 +48,12 @@ namespace OsmAnd
         const std::unique_ptr<RasterizerEnvironment_P> _d;
     protected:
     public:
-        RasterizerEnvironment(const std::shared_ptr<const MapStyle>& style, const float displayDensityFactor);
+        RasterizerEnvironment(const std::shared_ptr<const MapStyle>& style, const float displayDensityFactor, const std::shared_ptr<const IExternalResourcesProvider>& externalResourcesProvider = nullptr);
         virtual ~RasterizerEnvironment();
 
-        const float displayDensityFactor;
         const std::shared_ptr<const MapStyle> style;
+        const float displayDensityFactor;
+        const std::shared_ptr<const IExternalResourcesProvider> externalResourcesProvider;
 
         const std::shared_ptr<const ObfMapSectionInfo>& dummyMapSection;
 

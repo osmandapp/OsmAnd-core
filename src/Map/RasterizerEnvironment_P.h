@@ -96,6 +96,8 @@ namespace OsmAnd {
 
         mutable QMutex _textShieldsMutex;
         mutable QHash< QString, std::shared_ptr<const SkBitmap> > _textShields;
+
+        QByteArray obtainResourceByName(const QString& name) const;
     public:
         virtual ~RasterizerEnvironment_P();
 

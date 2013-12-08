@@ -13,6 +13,7 @@
 #include "MapStyleValue.h"
 #include "ObfMapSectionInfo.h"
 #include "EmbeddedResources.h"
+#include "IExternalResourcesProvider.h"
 #include "Utilities.h"
 #include "Logging.h"
 
@@ -242,7 +243,7 @@ bool OsmAnd::RasterizerEnvironment_P::obtainBitmapShader( const QString& name, S
         const auto shaderBitmapPath = QString::fromLatin1("map/shaders/%1.png").arg(name);
 
         // Get data from embedded resources
-        const auto data = EmbeddedResources::decompressResource(shaderBitmapPath);
+        const auto data = obtainResourceByName(shaderBitmapPath);
 
         // Decode bitmap for a shader
         auto shaderBitmap = new SkBitmap();
@@ -291,7 +292,7 @@ bool OsmAnd::RasterizerEnvironment_P::obtainMapIcon( const QString& name, std::s
         const auto bitmapPath = QString::fromLatin1("map/map_icons/%1.png").arg(name);
 
         // Get data from embedded resources
-        auto data = EmbeddedResources::decompressResource(bitmapPath);
+        auto data = obtainResourceByName(bitmapPath);
 
         // Decode data
         auto bitmap = new SkBitmap();
@@ -316,7 +317,7 @@ bool OsmAnd::RasterizerEnvironment_P::obtainTextShield( const QString& name, std
         const auto bitmapPath = QString::fromLatin1("map/shields/%1.png").arg(name);
 
         // Get data from embedded resources
-        auto data = EmbeddedResources::decompressResource(bitmapPath);
+        auto data = obtainResourceByName(bitmapPath);
 
         // Decode data
         auto bitmap = new SkBitmap();
@@ -329,4 +330,19 @@ bool OsmAnd::RasterizerEnvironment_P::obtainTextShield( const QString& name, std
 
     outTextShield = *itTextShield;
     return true;
+}
+
+QByteArray OsmAnd::RasterizerEnvironment_P::obtainResourceByName( const QString& name ) const
+{
+    // Try to obtain from external resources first
+    if(static_cast<bool>(owner->externalResourcesProvider))
+    {
+        bool ok = false;
+        const auto resource = owner->externalResourcesProvider->decompressResource(name, &ok);
+        if(ok)
+            return resource;
+    }
+
+    // Otherwise obtain from embedded
+    return EmbeddedResources::decompressResource(name);
 }
