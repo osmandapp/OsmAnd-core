@@ -281,14 +281,14 @@ bool OsmAnd::RasterizerEnvironment_P::obtainPathEffect( const QString& encodedPa
     return true;
 }
 
-bool OsmAnd::RasterizerEnvironment_P::obtainIcon( const QString& name, std::shared_ptr<const SkBitmap>& outIcon ) const
+bool OsmAnd::RasterizerEnvironment_P::obtainMapIcon( const QString& name, std::shared_ptr<const SkBitmap>& outIcon ) const
 {
-    QMutexLocker scopedLock(&_iconsMutex);
+    QMutexLocker scopedLock(&_mapIconsMutex);
 
-    auto itIcon = _icons.constFind(name);
-    if(itIcon == _icons.cend())
+    auto itIcon = _mapIcons.constFind(name);
+    if(itIcon == _mapIcons.cend())
     {
-        const auto bitmapPath = QString::fromLatin1("map/icons/mm_%1.png").arg(name);
+        const auto bitmapPath = QString::fromLatin1("map/map_icons/%1.png").arg(name);
 
         // Get data from embedded resources
         auto data = EmbeddedResources::decompressResource(bitmapPath);
@@ -299,9 +299,34 @@ bool OsmAnd::RasterizerEnvironment_P::obtainIcon( const QString& name, std::shar
         if(!SkImageDecoder::DecodeStream(&dataStream, bitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
             return false;
 
-        itIcon = _icons.insert(name, std::shared_ptr<const SkBitmap>(bitmap));
+        itIcon = _mapIcons.insert(name, std::shared_ptr<const SkBitmap>(bitmap));
     }
 
     outIcon = *itIcon;
+    return true;
+}
+
+bool OsmAnd::RasterizerEnvironment_P::obtainTextShield( const QString& name, std::shared_ptr<const SkBitmap>& outTextShield ) const
+{
+    QMutexLocker scopedLock(&_textShieldsMutex);
+
+    auto itTextShield = _textShields.constFind(name);
+    if(itTextShield == _textShields.cend())
+    {
+        const auto bitmapPath = QString::fromLatin1("map/shields/%1.png").arg(name);
+
+        // Get data from embedded resources
+        auto data = EmbeddedResources::decompressResource(bitmapPath);
+
+        // Decode data
+        auto bitmap = new SkBitmap();
+        SkMemoryStream dataStream(data.constData(), data.length(), false);
+        if(!SkImageDecoder::DecodeStream(&dataStream, bitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
+            return false;
+
+        itTextShield = _textShields.insert(name, std::shared_ptr<const SkBitmap>(bitmap));
+    }
+
+    outTextShield = *itTextShield;
     return true;
 }

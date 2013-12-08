@@ -2261,6 +2261,11 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                 if(textSymbol->drawOnPath)
                     continue;
 
+                // Obtain shield for text if such exists
+                std::shared_ptr<const SkBitmap> textShieldBitmap;
+                if(!textSymbol->shieldResourceName.isEmpty())
+                    env.obtainTextShield(textSymbol->shieldResourceName, textShieldBitmap);
+
                 // Configure paint for text
                 SkPaint textPaint = env.textPaint;
 
@@ -2298,6 +2303,23 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                 SkBitmapDevice target(*bitmap);
                 SkCanvas canvas(&target);
 
+                // If there is shield for this text, rasterize it also
+                if(textShieldBitmap)
+                {
+                    /*
+                        float left = textDrawInfo->centerX - ico->width() / 2 * rc->getScreenDensityRatio() 
+                            - 0.5f;
+                        float top = textDrawInfo->centerY - ico->height() / 2  * rc->getScreenDensityRatio() 
+                            - rc->getDensityValue(4.5f);
+                        // SkIRect src =  SkIRect::MakeXYWH(0, 0, ico->width(), ico->height())
+                        SkRect r = SkRect::MakeXYWH(left, top, ico->width() * rc->getScreenDensityRatio(),
+                            ico->height() * rc->getScreenDensityRatio());
+                        PROFILE_NATIVE_OPERATION(rc, cv->drawBitmapRect(*ico, (SkIRect*) NULL, r, &paintIcon));
+                    */
+
+                    canvas.drawBitmap(*textShieldBitmap, 0.0f, 0.0f, nullptr);
+                }
+
                 // Rasterize text
                 if(textSymbol->shadowRadius > 0)
                     canvas.drawText(textSymbol->value.constData(), textSymbol->value.length()*sizeof(QChar), -textBBox.left(), -textBBox.top(), textShadowPaint);
@@ -2310,7 +2332,7 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                 encoder->encodeFile(path.toLocal8Bit(), *bitmap, 100);*/
                 //////////////////////////////////////////////////////////////////////////
 
-                // Create RasterizedSymbol
+                // Create RasterizedSymbol for text
                 const auto rasterizedSymbol = new RasterizedSymbol(
                     group,
                     constructedGroup->mapObject,
@@ -2323,7 +2345,7 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
             else if(const auto iconSymbol = std::dynamic_pointer_cast<const PrimitiveSymbol_Icon>(symbol))
             {
                 std::shared_ptr<const SkBitmap> bitmap;
-                if(!env.obtainIcon(iconSymbol->resourceName, bitmap) || !bitmap)
+                if(!env.obtainMapIcon(iconSymbol->resourceName, bitmap) || !bitmap)
                     continue;
 
                 //////////////////////////////////////////////////////////////////////////

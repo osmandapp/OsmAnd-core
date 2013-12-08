@@ -91,8 +91,11 @@ namespace OsmAnd {
         mutable QMutex _pathEffectsMutex;
         mutable QHash< QString, SkPathEffect* > _pathEffects;
 
-        mutable QMutex _iconsMutex;
-        mutable QHash< QString, std::shared_ptr<const SkBitmap> > _icons;
+        mutable QMutex _mapIconsMutex;
+        mutable QHash< QString, std::shared_ptr<const SkBitmap> > _mapIcons;
+
+        mutable QMutex _textShieldsMutex;
+        mutable QHash< QString, std::shared_ptr<const SkBitmap> > _textShields;
     public:
         virtual ~RasterizerEnvironment_P();
 
@@ -130,7 +133,8 @@ namespace OsmAnd {
 
         bool obtainBitmapShader(const QString& name, SkBitmapProcShader* &outShader) const;
         bool obtainPathEffect(const QString& encodedPathEffect, SkPathEffect* &outPathEffect) const;
-        bool obtainIcon(const QString& name, std::shared_ptr<const SkBitmap>& outIcon) const;
+        bool obtainMapIcon(const QString& name, std::shared_ptr<const SkBitmap>& outIcon) const;
+        bool obtainTextShield(const QString& name, std::shared_ptr<const SkBitmap>& outIcon) const;
 
     friend class OsmAnd::RasterizerEnvironment;
     };
