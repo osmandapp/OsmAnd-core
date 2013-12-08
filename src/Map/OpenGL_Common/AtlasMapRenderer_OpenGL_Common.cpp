@@ -1259,9 +1259,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
 
                 // Calculate location of symbol in world coordinates
                 glm::vec4 symbolPos;
-                symbolPos.x = static_cast<float>(static_cast<double>(symbol->location.x) / tileSize31);
+                symbolPos.x = static_cast<float>(static_cast<double>(symbol->location31.x) / tileSize31);
                 symbolPos.y = 0.0f;
-                symbolPos.z = static_cast<float>(static_cast<double>(symbol->location.y) / tileSize31);
+                symbolPos.z = static_cast<float>(static_cast<double>(symbol->location31.y) / tileSize31);
                 symbolPos.w = 1.0f;
 
                 // Get distance from symbol to camera
@@ -1284,17 +1284,17 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                 const auto gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(symbolEntry.second);
 
                 // Set symbol offset from target
-                const auto symbolOffset31 = symbol->location - currentState.target31;
+                const auto symbolOffset31 = symbol->location31 - currentState.target31;
                 glUniform2f(_symbolsStage.vs.param.symbolOffsetFromTarget,
-                    static_cast<float>((static_cast<double>(symbolOffset31.x) / tileSize31) / TileSize3D),
-                    static_cast<float>((static_cast<double>(symbolOffset31.y) / tileSize31) / TileSize3D));
+                    static_cast<float>((static_cast<double>(symbolOffset31.x) / tileSize31)),
+                    static_cast<float>((static_cast<double>(symbolOffset31.y) / tileSize31)));
                 GL_CHECK_RESULT;
                 //////////////////////////////////////////////////////////////////////////
                 //////////////////////////////////////////////////////////////////////////
                 //////////////////////////////////////////////////////////////////////////
                 // this may be needed when calculating self-intersection
-                auto sx = (static_cast<double>(symbolOffset31.x) / tileSize31);
-                auto sy = (static_cast<double>(symbolOffset31.y) / tileSize31);
+                /*auto sx = (static_cast<double>(symbolOffset31.x) / tileSize31) * TileSize3D;
+                auto sy = (static_cast<double>(symbolOffset31.y) / tileSize31) * TileSize3D;
 
                 glm::vec4 viewport(
                     currentState.viewport.left,
@@ -1302,7 +1302,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                     currentState.viewport.width(),
                     currentState.viewport.height());
 
-                auto projectedV = glm::project(glm::vec3(sx, 0.0f, sy), _internalState.mCameraView, _internalState.mPerspectiveProjection, viewport);
+                auto projectedV = glm::project(glm::vec3(sx, 0.0f, sy), _internalState.mCameraView, _internalState.mPerspectiveProjection, viewport);*/
                 //////////////////////////////////////////////////////////////////////////
                 //////////////////////////////////////////////////////////////////////////
                 //////////////////////////////////////////////////////////////////////////

@@ -700,7 +700,7 @@ bool OsmAnd::MapRenderer::convertMapSymbol(const std::shared_ptr<const MapSymbol
     if(!wasConverted)
         return false;
 
-    output.reset(new MapSymbol(input->group, input->mapObject, input->order, input->location, convertedBitmap));
+    output.reset(new MapSymbol(input->group, input->mapObject, input->order, input->location31, convertedBitmap));
     return true;
 }
 
