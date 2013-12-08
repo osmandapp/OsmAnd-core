@@ -33,7 +33,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OpenGL_Common/RenderAPI_OpenGL_Common.h>
+#include <OpenGL_Common/GPUAPI_OpenGL_Common.h>
 
 namespace OsmAnd {
 
