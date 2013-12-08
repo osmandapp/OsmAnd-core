@@ -156,7 +156,7 @@ namespace OsmAnd
             __LAST
         };
         enum {
-            SamplerTypesCount = SamplerType::__LAST,
+            SamplerTypesCount = static_cast<int>(SamplerType::__LAST),
         };
         virtual void setSampler(GLenum texture, const SamplerType samplerType) = 0;
 
