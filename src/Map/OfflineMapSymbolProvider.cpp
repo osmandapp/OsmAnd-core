@@ -1,7 +1,7 @@
 #include "OfflineMapSymbolProvider.h"
 #include "OfflineMapSymbolProvider_P.h"
 
-OsmAnd::OfflineMapSymbolProvider::OfflineMapSymbolProvider( const std::shared_ptr<OfflineMapDataProvider>& dataProvider_, const float density /*= 1.0f*/ )
+OsmAnd::OfflineMapSymbolProvider::OfflineMapSymbolProvider( const std::shared_ptr<OfflineMapDataProvider>& dataProvider_ )
     : _d(new OfflineMapSymbolProvider_P(this))
     , dataProvider(dataProvider_)
 {

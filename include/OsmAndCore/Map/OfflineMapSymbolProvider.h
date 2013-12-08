@@ -43,7 +43,7 @@ namespace OsmAnd
         const std::unique_ptr<OfflineMapSymbolProvider_P> _d;
     protected:
     public:
-        OfflineMapSymbolProvider(const std::shared_ptr<OfflineMapDataProvider>& dataProvider, const float density = 1.0f);
+        OfflineMapSymbolProvider(const std::shared_ptr<OfflineMapDataProvider>& dataProvider);
         virtual ~OfflineMapSymbolProvider();
 
         const std::shared_ptr<OfflineMapDataProvider> dataProvider;
