@@ -1295,7 +1295,11 @@ void OsmAnd::MapRendererResources::SymbolsTileResource::unloadFromGPU()
         // Remove symbol from global map
         {
             QMutexLocker scopedLocker(&owner->_symbolsMapMutex);
-            const auto removedCount = owner->_symbolsMap[symbol->order].remove(symbol);
+
+            const auto itSymbolsLayer = owner->_symbolsMap.find(symbol->order);
+            const auto removedCount = itSymbolsLayer->remove(symbol);
+            if(itSymbolsLayer->isEmpty())
+                owner->_symbolsMap.erase(itSymbolsLayer);
 
             owner->_symbolsMapCount -= removedCount;
         }
@@ -1324,7 +1328,11 @@ void OsmAnd::MapRendererResources::SymbolsTileResource::unloadFromGPU()
             // And also remove from global map
             {
                 QMutexLocker scopedLocker(&owner->_symbolsMapMutex);
-                const auto removedCount = owner->_symbolsMap[symbol->order].remove(symbol);
+
+                const auto itSymbolsLayer = owner->_symbolsMap.find(symbol->order);
+                const auto removedCount = itSymbolsLayer->remove(symbol);
+                if(itSymbolsLayer->isEmpty())
+                    owner->_symbolsMap.erase(itSymbolsLayer);
 
                 owner->_symbolsMapCount -= removedCount;
             }
