@@ -44,6 +44,7 @@ namespace OsmAnd
     
     class MapRenderer : public IMapRenderer
     {
+    public:
         // Declare short aliases for resource-related entities
         typedef OsmAnd::MapRendererResources Resources;
         typedef OsmAnd::MapRendererResources::ResourceType ResourceType;
