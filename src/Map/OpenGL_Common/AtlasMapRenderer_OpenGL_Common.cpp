@@ -1066,7 +1066,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSymbolsStage()
         // There's no need to perform unprojection into orthographic world space, just multiply these coordinates by
         // orthographic projection matrix (View and Model being identity)
         "  vec4 vertex;                                                                                                     ""\n"
-        //"  vertex.xy = vertexOnScreen.xy * 0.0000001 + in_vs_vertexPosition.xy * 150.0 + vec2(200.0, 200.0);                                                                                      ""\n"
         "  vertex.xy = vertexOnScreen.xy;                                                                                   ""\n"
         "  vertex.z = -param_vs_distanceFromCamera;                                                                         ""\n"
         "  vertex.w = 1.0;                                                                                                  ""\n"
@@ -1245,6 +1244,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
         // Iterate over symbols by "order" in ascending direction
         for(auto itSymbols = symbolsMap.cbegin(); itSymbols != symbolsMap.cend(); ++itSymbols)
         {
+            //TODO: check if symbols have intersection
+
             // For each "order" value, obtain list of entries and sort them
             const auto& unsortedSymbols = *itSymbols;
             if(unsortedSymbols.isEmpty())
