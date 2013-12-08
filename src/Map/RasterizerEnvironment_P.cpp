@@ -338,7 +338,7 @@ QByteArray OsmAnd::RasterizerEnvironment_P::obtainResourceByName( const QString&
     if(static_cast<bool>(owner->externalResourcesProvider))
     {
         bool ok = false;
-        const auto resource = owner->externalResourcesProvider->decompressResource(name, &ok);
+        const auto resource = owner->externalResourcesProvider->getResource(name, &ok);
         if(ok)
             return resource;
     }

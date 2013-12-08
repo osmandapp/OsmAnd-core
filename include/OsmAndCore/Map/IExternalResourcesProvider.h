@@ -40,8 +40,7 @@ namespace OsmAnd
         {
         }
 
-        virtual QByteArray decompressResource(const QString& id, bool* ok = nullptr) const = 0;
-        virtual QByteArray getRawResource(const QString& id, bool* ok = nullptr) const = 0;
+        virtual QByteArray getResource(const QString& id, bool* ok = nullptr) const = 0;
         virtual bool containsResource(const QString& id) const = 0;
     };
 
