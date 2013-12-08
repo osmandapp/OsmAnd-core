@@ -164,12 +164,12 @@ void OsmAnd::MapRendererResources::updateBindings(const MapRendererState& state,
             // Clean-up resources
             releaseResourcesFrom(itBindedProvider.value());
 
+            // Remove resources collection
+            resources.removeOne(itBindedProvider.value());
+
             // Remove binding
             bindings.collectionsToProviders.remove(itBindedProvider.value());
             itBindedProvider.remove();
-
-            // Remove resources collection
-            resources.removeOne(itBindedProvider.value());
         }
 
         // Create new binding and storage
