@@ -90,5 +90,7 @@ void OsmAnd::initializeGlobal()
 
 void OsmAnd::releaseGlobal()
 {
+    StopSavingLogs();
+
     gMainThreadTaskHost.reset();
 }
