@@ -9,6 +9,7 @@
 #include <QWaitCondition>
 
 #include <gdal.h>
+#include <SkGraphics.h>
 
 #include "Logging.h"
 #include "OsmAndCore_private.h"
@@ -84,6 +85,7 @@ void OsmAnd::initializeGlobal()
 {
     gMainThreadTaskHost.reset(new QMainThreadTaskHost());
     GDALAllRegister();
+    SkGraphics::PurgeFontCache(); // This will initialize global glyph cache
 }
 
 void OsmAnd::releaseGlobal()
