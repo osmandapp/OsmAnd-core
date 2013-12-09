@@ -5,6 +5,7 @@
 #include <cstdarg>
 
 #include <QReadWriteLock>
+#include <QFileDevice>
 
 static QReadWriteLock _loggingDeviceLock;
 static std::shared_ptr<QIODevice> _loggingDevice;
@@ -57,14 +58,19 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel
 
 OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::LogFlush()
 {
+    // Flush the logging device if supported
+    {
+        QReadLocker scopedLocker(&_loggingDeviceLock);
+        if(_loggingDevice)
+        {
+            if(const auto loggingDevice = std::dynamic_pointer_cast<QFileDevice>(_loggingDevice))
+                loggingDevice->flush();
+        }
+        
+    }
 }
 
 #elif defined(__APPLE__) || defined(__linux__)
-
-OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::LogFlush()
-{
-    fflush(stdout);
-}
 
 OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel level, const char* format, ...)
 {
@@ -100,16 +106,26 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel
     }
 }
 
+OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::LogFlush()
+{
+    fflush(stdout);
+
+    // Flush the logging device if supported
+    {
+        QReadLocker scopedLocker(&_loggingDeviceLock);
+        if(_loggingDevice)
+        {
+            if(const auto loggingDevice = std::dynamic_pointer_cast<QFileDevice>(_loggingDevice))
+                loggingDevice->flush();
+        }
+
+    }
+}
+
 #elif defined(WIN32)
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-
-OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::LogFlush()
-{
-    if(!IsDebuggerPresent())
-        fflush(stdout);
-}
 
 OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel level, const char* format, ...)
 {
@@ -167,6 +183,23 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel
 
             _loggingDevice->write(logLine.toUtf8());
         }
+    }
+}
+
+OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::LogFlush()
+{
+    if(!IsDebuggerPresent())
+        fflush(stdout);
+
+    // Flush the logging device if supported
+    {
+        QReadLocker scopedLocker(&_loggingDeviceLock);
+        if(_loggingDevice)
+        {
+            if(const auto loggingDevice = std::dynamic_pointer_cast<QFileDevice>(_loggingDevice))
+                loggingDevice->flush();
+        }
+
     }
 }
 
