@@ -2300,9 +2300,9 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
 
                 // Calculate bitmap size and text area
                 auto textArea = textBBox;
-                textArea.offset(qAbs(textBBox.left()) * 2.0f, qAbs(textBBox.top()) * 2.0f);
-                auto bitmapWidth = textBBox.width();
-                auto bitmapHeight = textBBox.height();
+                textArea.offset(-textBBox.left() * 2.0f, -textBBox.top() * 2.0f);
+                auto bitmapWidth = textArea.width();
+                auto bitmapHeight = textArea.height();
                 if(textShieldBitmap)
                 {
                     // Enlarge bitmap if shield is larger than text
