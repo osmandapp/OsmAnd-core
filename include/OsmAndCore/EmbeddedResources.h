@@ -41,9 +41,9 @@ namespace OsmAnd {
     public:
         virtual ~EmbeddedResources();
 
-        static QByteArray decompressResource(const QString& id, bool* ok = nullptr);
-        static QByteArray getRawResource(const QString& id, bool* ok = nullptr);
-        static bool containsResource(const QString& id);
+        static QByteArray decompressResource(const QString& name, bool* ok = nullptr);
+        static QByteArray getRawResource(const QString& name, bool* ok = nullptr);
+        static bool containsResource(const QString& name);
     };
 
 } // namespace OsmAnd

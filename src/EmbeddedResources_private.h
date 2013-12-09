@@ -27,7 +27,7 @@ namespace OsmAnd {
 
     struct EmbeddedResource
     {
-        QString id;
+        QString name;
         size_t size;
         const uint8_t* data;
     };
