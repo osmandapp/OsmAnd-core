@@ -29,7 +29,7 @@ QByteArray OsmAnd::EmbeddedResources::getRawResource( const QString& name, bool*
 {
     for(auto idx = 0u; idx < __bundled_resources_count; idx++)
     {
-        if(__bundled_resources[idx].id != name)
+        if(__bundled_resources[idx].name != name)
             continue;
 
         if(ok)
@@ -47,7 +47,7 @@ bool OsmAnd::EmbeddedResources::containsResource( const QString& name )
 {
     for(auto idx = 0u; idx < __bundled_resources_count; idx++)
     {
-        if(__bundled_resources[idx].id != name)
+        if(__bundled_resources[idx].name != name)
             continue;
 
         return true;
