@@ -166,6 +166,8 @@ namespace OsmAnd
 
         virtual bool uploadTileToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
         virtual bool uploadSymbolToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
+
+        virtual void waitUntilUploadIsComplete();
     };
 
 }

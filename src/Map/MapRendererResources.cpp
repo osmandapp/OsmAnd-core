@@ -656,6 +656,11 @@ unsigned int OsmAnd::MapRendererResources::uploadResources(const unsigned int li
                     continue;
                 }
 
+                // Before marking as uploaded, if uploading is done from GPU worker thread,
+                // wait until operation completes
+                if(renderer->setupOptions.gpuWorkerThread.enabled)
+                    renderer->gpuAPI->waitUntilUploadIsComplete();
+
                 // Mark as uploaded
                 assert(resource->getState() == ResourceState::Uploading);
                 resource->setState(ResourceState::Uploaded);

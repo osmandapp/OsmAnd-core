@@ -579,3 +579,10 @@ bool OsmAnd::GPUAPI_OpenGL_Common::uploadSymbolAsTextureToGPU(const std::shared_
 
     return true;
 }
+
+void OsmAnd::GPUAPI_OpenGL_Common::waitUntilUploadIsComplete()
+{
+    // glFinish won't return until all current instructions for GPU (in current context) are complete
+    glFinish();
+    GL_CHECK_RESULT;
+}
