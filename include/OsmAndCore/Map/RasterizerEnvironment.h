@@ -30,6 +30,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/IExternalResourcesProvider.h>
 #include <OsmAndCore/Map/MapStyle.h>
 
 namespace OsmAnd
@@ -38,7 +39,6 @@ namespace OsmAnd
     class Rasterizer;
     struct MapStyleValue;
     class ObfMapSectionInfo;
-    class IExternalResourcesProvider;
 
     class RasterizerEnvironment_P;
     class OSMAND_CORE_API RasterizerEnvironment

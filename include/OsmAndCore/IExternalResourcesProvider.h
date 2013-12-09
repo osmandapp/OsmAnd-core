@@ -33,12 +33,11 @@
 
 namespace OsmAnd
 {
-    class IExternalResourcesProvider
+    class OSMAND_CORE_API IExternalResourcesProvider
     {
     public:
-        virtual ~IExternalResourcesProvider()
-        {
-        }
+        IExternalResourcesProvider();
+        virtual ~IExternalResourcesProvider();
 
         virtual QByteArray getResource(const QString& name, bool* ok = nullptr) const = 0;
         virtual bool containsResource(const QString& name) const = 0;

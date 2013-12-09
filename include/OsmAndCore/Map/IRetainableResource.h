@@ -31,11 +31,11 @@
 
 namespace OsmAnd
 {
-    class IRetainableResource
+    class OSMAND_CORE_API IRetainableResource
     {
     public:
-        virtual ~IRetainableResource()
-        {}
+        IRetainableResource();
+        virtual ~IRetainableResource();
 
         virtual void releaseNonRetainedData() = 0;
     };
