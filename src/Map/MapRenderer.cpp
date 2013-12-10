@@ -260,8 +260,9 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
 
         // In every layer we have, upload pending resources to GPU without limiting
         unsigned int resourcesUploaded = 0u;
-        _resources->syncResourcesInGPU(0, nullptr, &resourcesUploaded, nullptr);
-        if(resourcesUploaded > 0)
+        unsigned int resourcesUnloaded = 0u;
+        _resources->syncResourcesInGPU(0, nullptr, &resourcesUploaded, &resourcesUnloaded);
+        if(resourcesUploaded > 0 || resourcesUnloaded > 0)
             invalidateFrame();
     }
 
@@ -500,11 +501,12 @@ bool OsmAnd::MapRenderer::doProcessRendering()
     {
         bool moreUploadThanLimitAvailable = false;
         unsigned int resourcesUploaded = 0u;
-        _resources->syncResourcesInGPU(1u, &moreUploadThanLimitAvailable, &resourcesUploaded, nullptr);
+        unsigned int resourcesUnloaded = 0u;
+        _resources->syncResourcesInGPU(1u, &moreUploadThanLimitAvailable, &resourcesUploaded, &resourcesUnloaded);
         
         // If any resource was uploaded or there is more resources to uploaded, invalidate frame
         // to use that resource
-        if(resourcesUploaded > 0 || moreUploadThanLimitAvailable)
+        if(resourcesUploaded > 0 || moreUploadThanLimitAvailable || resourcesUnloaded > 0)
             invalidateFrame();
     }
 

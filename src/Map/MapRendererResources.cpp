@@ -582,6 +582,8 @@ unsigned int OsmAnd::MapRendererResources::unloadResources()
                 // Unload from GPU
                 resource->unloadFromGPU();
 
+                // Don't wait until GPU will execute unloading, since this resource won't be used anymore and will eventually be deleted
+
                 // Mark as unloaded
                 assert(resource->getState() == ResourceState::Unloading);
                 resource->setState(ResourceState::Unloaded);
