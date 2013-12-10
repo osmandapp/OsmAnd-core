@@ -229,7 +229,8 @@ bool OsmAnd::MapRenderer::updateInternalState(InternalState* internalState, cons
 
 void OsmAnd::MapRenderer::invalidateFrame()
 {
-    _frameInvalidated = true;
+    // Increment frame-invalidated counter by 1
+    _frameInvalidatesCounter.fetchAndAddOrdered(1);
 
     // Request frame, if such callback is defined
     if(setupOptions.frameUpdateRequestCallback)
@@ -456,13 +457,17 @@ bool OsmAnd::MapRenderer::preRenderFrame()
 {
     if(!_isRenderingInitialized)
         return false;
+    
+    // Capture how many "frame-invalidates" are going to be processed
+    _frameInvalidatesToBeProcessed = _frameInvalidatesCounter.fetchAndAddOrdered(0);
 
     return true;
 }
 
 bool OsmAnd::MapRenderer::postRenderFrame()
 {
-    _frameInvalidated = false;
+    // Decrement "frame-invalidates" counter by amount of processed "frame-invalidates"
+    _frameInvalidatesCounter.fetchAndAddOrdered(-_frameInvalidatesToBeProcessed);
 
     return true;
 }
@@ -704,6 +709,11 @@ bool OsmAnd::MapRenderer::convertMapSymbol(const std::shared_ptr<const MapSymbol
 
     output.reset(new MapSymbol(input->group, input->mapObject, input->order, input->location31, input->offset, convertedBitmap));
     return true;
+}
+
+bool OsmAnd::MapRenderer::isFrameInvalidated() const
+{
+    return (_frameInvalidatesCounter.fetchAndAddOrdered(0) > 0);
 }
 
 unsigned int OsmAnd::MapRenderer::getVisibleTilesCount() const

@@ -2,12 +2,10 @@
 
 OsmAnd::IMapRenderer::IMapRenderer()
     : _isRenderingInitialized(false)
-    , _frameInvalidated(false)
     , setupOptions(_setupOptions)
     , configuration(_requestedConfiguration)
     , isRenderingInitialized(_isRenderingInitialized)
     , state(_requestedState)
-    , frameInvalidated(_frameInvalidated)
 {
 }
 

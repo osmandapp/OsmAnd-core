@@ -25,6 +25,7 @@
 #include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <QAtomicInt>
 
 #include <OsmAndCore.h>
 #include <CommonTypes.h>
@@ -59,6 +60,8 @@ namespace OsmAnd
         bool updateCurrentConfiguration();
 
         // State-related:
+        mutable QAtomicInt _frameInvalidatesCounter;
+        int _frameInvalidatesToBeProcessed;
         mutable QMutex _requestedStateMutex;
         mutable QReadWriteLock _internalStateLock;
         MapRendererState _currentState;
@@ -163,8 +166,9 @@ namespace OsmAnd
         virtual bool processRendering();
         virtual bool releaseRendering();
 
-        virtual unsigned int getVisibleTilesCount() const;
+        virtual bool isFrameInvalidated() const;
 
+        virtual unsigned int getVisibleTilesCount() const;
         virtual unsigned int getSymbolsCount() const;
 
         virtual void setRasterLayerProvider(const RasterMapLayerId layerId, const std::shared_ptr<IMapBitmapTileProvider>& tileProvider, bool forcedUpdate = false);

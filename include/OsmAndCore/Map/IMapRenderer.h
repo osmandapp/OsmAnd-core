@@ -51,8 +51,6 @@ namespace OsmAnd {
         MapRendererSetupOptions _setupOptions;
 
         MapRendererConfiguration _requestedConfiguration;
-
-        volatile bool _frameInvalidated;
     protected:
         IMapRenderer();
 
@@ -74,9 +72,9 @@ namespace OsmAnd {
         virtual bool releaseRendering() = 0;
 
         const MapRendererState& state;
-        const volatile bool& frameInvalidated;
-        virtual unsigned int getVisibleTilesCount() const = 0;
+        virtual bool isFrameInvalidated() const = 0;
 
+        virtual unsigned int getVisibleTilesCount() const = 0;
         virtual unsigned int getSymbolsCount() const = 0;
 
         virtual void setRasterLayerProvider(const RasterMapLayerId layerId, const std::shared_ptr<IMapBitmapTileProvider>& tileProvider, bool forcedUpdate = false) = 0;
