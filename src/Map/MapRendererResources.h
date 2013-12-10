@@ -215,7 +215,7 @@ namespace OsmAnd
                 mutable QReadWriteLock _lock;
                 QHash< uint64_t, std::weak_ptr< const MapSymbolsGroup > > _cache;
             };
-            std::array<CacheLevel, ZoomLevelsCount> _cacheLevels;
+            std::array<CacheLevel, ZoomLevelsCount> _dataCache;
 
             // GPU resources cache
             mutable QMutex _gpuResourcesCacheMutex;
@@ -237,8 +237,6 @@ namespace OsmAnd
             QList< std::shared_ptr<const MapSymbolsGroup> > _sharedSymbolsGroups;
             QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > _uniqueResourcesInGPU;
             QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > _sharedResourcesInGPU;
-
-            virtual void detach();
 
             virtual bool obtainData(bool& dataAvailable);
             virtual bool uploadToGPU();
