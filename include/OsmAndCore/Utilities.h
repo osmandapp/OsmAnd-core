@@ -42,8 +42,8 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     namespace Utilities
     {
         double toRadians(const double angle);
@@ -93,6 +93,7 @@ namespace OsmAnd {
             Top = 8,    // 1000
         };
         uint8_t computeCohenSutherlandCode(const PointI& p, const AreaI& box);
+        QSet<ZoomLevel> enumerateZoomLevels(const ZoomLevel from, const ZoomLevel to);
 
         inline double toRadians(const double angle)
         {
@@ -581,6 +582,16 @@ namespace OsmAnd {
         OSMAND_CORE_API void OSMAND_CORE_CALL findFiles(const QDir& origin, const QStringList& masks, QFileInfoList& files, const bool recursively = true);
 
         OSMAND_CORE_API void OSMAND_CORE_CALL scanlineFillPolygon(const unsigned int verticesCount, const PointF* const vertices, std::function<void(const PointI&)> fillPoint);
+
+        inline QSet<ZoomLevel> enumerateZoomLevels(const ZoomLevel from, const ZoomLevel to)
+        {
+            QSet<ZoomLevel> result;
+            result.reserve(to - from + 1);
+            for(int level = from; level <= to; level++)
+                result.insert(static_cast<ZoomLevel>(level));
+
+            return result;
+        }
 
     } // namespace Utilities
 

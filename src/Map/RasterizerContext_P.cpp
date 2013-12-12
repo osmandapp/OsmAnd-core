@@ -1,8 +1,6 @@
 #include "RasterizerContext_P.h"
 #include "RasterizerContext.h"
 
-#include <QWriteLocker>
-
 #include "Rasterizer_P.h"
 #include "RasterizerSharedContext.h"
 #include "RasterizerSharedContext_P.h"
@@ -12,6 +10,7 @@
 
 OsmAnd::RasterizerContext_P::RasterizerContext_P( RasterizerContext* owner_ )
     : owner(owner_)
+    , _zoom(ZoomLevel0)
 {
 }
 
@@ -25,21 +24,13 @@ void OsmAnd::RasterizerContext_P::clear()
     // that are owned only current context
     if(owner->sharedContext)
     {
-        for(auto itPrimitivesGroup = _primitivesGroups.cbegin(); itPrimitivesGroup != _primitivesGroups.cend(); ++itPrimitivesGroup)
+        auto& sharedGroups = owner->sharedContext->_d->_sharedPrimitivesGroups[_zoom];
+        for(auto itPrimitivesGroup = _primitivesGroups.begin(); itPrimitivesGroup != _primitivesGroups.end(); ++itPrimitivesGroup)
         {
-            const auto& group = *itPrimitivesGroup;
+            auto& group = *itPrimitivesGroup;
 
-            // Skip removing group from shared context if it's being used somewhere else, except for
-            // current context and shared context
-            if(group.use_count() > 2)
-                continue;
-
-            auto& primitivesCacheLevel = owner->sharedContext->_d->_primitivesCacheLevels[_zoom];
-            {
-                QWriteLocker scopedLocker(&primitivesCacheLevel._lock);
-
-                primitivesCacheLevel._cache.remove(group->mapObject->id);
-            }
+            // Remove reference to this group from shared ones
+            sharedGroups.releaseReference(group->mapObject->id, group);
         }
     }
     _primitivesGroups.clear();
@@ -51,21 +42,13 @@ void OsmAnd::RasterizerContext_P::clear()
     // that are owned only current context
     if(owner->sharedContext)
     {
-        for(auto itSymbols = _symbolsGroups.cbegin(); itSymbols != _symbolsGroups.cend(); ++itSymbols)
+        auto& sharedGroups = owner->sharedContext->_d->_sharedSymbolGroups[_zoom];
+        for(auto itSymbols = _symbolsGroups.begin(); itSymbols != _symbolsGroups.end(); ++itSymbols)
         {
-            const auto& group = *itSymbols;
+            auto& group = *itSymbols;
 
-            // Skip removing group from shared context if it's being used somewhere else, except for
-            // current context and shared context
-            if(group.use_count() > 2)
-                continue;
-
-            auto& symbolsCacheLevel = owner->sharedContext->_d->_symbolsCacheLevels[_zoom];
-            {
-                QWriteLocker scopedLocker(&symbolsCacheLevel._lock);
-
-                symbolsCacheLevel._cache.remove(group->mapObject->id);
-            }
+            // Remove reference to this group from shared ones
+            sharedGroups.releaseReference(group->mapObject->id, group);
         }
     }
     _symbolsGroups.clear();

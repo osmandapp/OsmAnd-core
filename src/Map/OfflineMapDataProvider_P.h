@@ -24,6 +24,7 @@
 #define _OSMAND_CORE_OFFLINE_MAP_DATA_PROVIDER_P_H_
 
 #include <OsmAndCore/stdlib_common.h>
+#include <utility>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QHash>
@@ -32,9 +33,10 @@
 #include <QReadWriteLock>
 #include <QWaitCondition>
 
-#include <OsmAndCore.h>
-#include <CommonTypes.h>
-#include <TilesCollection.h>
+#include "OsmAndCore.h"
+#include "CommonTypes.h"
+#include "TilesCollection.h"
+#include "SharedByZoomResourcesContainer.h"
 
 namespace OsmAnd {
 
@@ -53,12 +55,7 @@ namespace OsmAnd {
 
         OfflineMapDataProvider* const owner;
 
-        struct MapObjectsCacheLevel
-        {
-            mutable QReadWriteLock _lock;
-            QHash< uint64_t, std::weak_ptr< const Model::MapObject > > _cache;
-        };
-        std::array< MapObjectsCacheLevel, ZoomLevelsCount> _mapObjectsCache;
+        SharedByZoomResourcesContainer<uint64_t, const Model::MapObject> _sharedMapObjects;
 
         enum TileState
         {

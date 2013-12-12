@@ -380,7 +380,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
     const std::shared_ptr<ObfMapSectionLevelTreeNode>& tree,
     QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut,
     const AreaI* bbox31,
-    std::function<bool (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t, const AreaI& bbox)> filterById,
+    const FilterMapObjectsByIdSignature filterById,
     std::function<bool (const std::shared_ptr<const OsmAnd::Model::MapObject>&)> visitor,
     const IQueryController* const controller,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
@@ -483,7 +483,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                 mapObject->_id = Model::MapObject::getUniqueId(mapObject->_id, section);
 
                 // Check if map object is desired
-                if(filterById && !filterById(section, mapObject->id, mapObject->bbox31))
+                if(filterById && !filterById(section, mapObject->id, mapObject->bbox31, mapObject->level->minZoom, mapObject->level->maxZoom))
                     break;
 
                 // Save object
@@ -753,7 +753,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
     ZoomLevel zoom, const AreaI* bbox31,
     QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut, MapFoundationType* foundationOut,
-    std::function<bool (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t, const AreaI& bbox)> filterById,
+    const FilterMapObjectsByIdSignature filterById,
     std::function<bool (const std::shared_ptr<const OsmAnd::Model::MapObject>&)> visitor,
     const IQueryController* const controller,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)

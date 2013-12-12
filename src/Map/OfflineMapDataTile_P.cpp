@@ -27,43 +27,24 @@ void OsmAnd::OfflineMapDataTile_P::cleanup()
             link->collection.removeEntry(entry->tileId, entry->zoom);
     }
 
-    // Remove all weak pointers to shared map objects that have become unique
+    // Dereference shared map objects
     if(const auto link = _link.lock())
     {
-#if defined(DEBUG) || defined(_DEBUG)
-        int cleanedObjects = 0;
-#endif
+        // Get bounding box that covers this tile
+        const auto tileBBox31 = Utilities::tileBoundingBox31(owner->tileId, owner->zoom);
 
-        for(auto itMapObject = _mapObjects.cbegin(); itMapObject != _mapObjects.cend(); ++itMapObject)
+        for(auto itMapObject = _mapObjects.begin(); itMapObject != _mapObjects.end(); ++itMapObject)
         {
-            const auto& mapObject = *itMapObject;
+            auto& mapObject = *itMapObject;
 
-            // If reference to this object is not unique, skip it
-            if(!mapObject.unique())
+            // Skip all map objects that can not be shared
+            const auto canNotBeShared = tileBBox31.contains(mapObject->bbox31);
+            if(canNotBeShared)
                 continue;
 
-#if defined(DEBUG) || defined(_DEBUG)
-            cleanedObjects++;
-#endif
-
-            for(int zoom = mapObject->level->minZoom; zoom <= mapObject->level->maxZoom; zoom++)
-            {
-                auto& cacheLevel = link->provider._mapObjectsCache[zoom];
-
-                {
-                    QWriteLocker scopedLocker(&cacheLevel._lock);
-
-                    cacheLevel._cache.remove(mapObject->id);
-                }
-            }
+            const auto wasRemoved = link->provider._sharedMapObjects.releaseReference(mapObject->id, owner->zoom, mapObject);
+            assert(wasRemoved);
         }
-
-#if defined(DEBUG) || defined(_DEBUG)
-        LogPrintf(LogSeverityLevel::Info,
-            "%d map objects cleaned with %dx%d@%d",
-            cleanedObjects,
-            owner->tileId.x, owner->tileId.y, owner->zoom);
-#endif
     }
     _mapObjects.clear();
 }

@@ -38,6 +38,7 @@
 #include "MapRendererState.h"
 #include "GPUAPI.h"
 #include "TilesCollection.h"
+#include "SharedResourcesContainer.h"
 #include "Concurrent.h"
 
 namespace OsmAnd
@@ -241,6 +242,8 @@ namespace OsmAnd
             virtual bool obtainData(bool& dataAvailable);
             virtual bool uploadToGPU();
             virtual void unloadFromGPU();
+
+            virtual void detach();
         public:
             virtual ~SymbolsTileResource();
 

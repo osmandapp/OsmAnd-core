@@ -290,30 +290,21 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
     pointEvaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_MINZOOM, context._zoom);
     pointEvaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_MAXZOOM, context._zoom);
 
+    auto& sharedPrimitivesGroups = context.owner->sharedContext->_d->_sharedPrimitivesGroups[context._zoom];
     for(auto itMapObject = source.cbegin(); itMapObject != source.cend(); ++itMapObject)
     {
         if(controller && controller->isAborted())
             return;
 
         const auto& mapObject = *itMapObject;
-        const auto isMapObjectGenerated = (mapObject->section == env.dummyMapSection);
+        const auto canBeShared = (mapObject->section != env.dummyMapSection) && (context.owner->sharedContext);
         
-        // If using shared context is allowed, check if this group was already processed
-        if(!isMapObjectGenerated && context.owner->sharedContext)
+        // If group can be shared, use already-processed or reserve pending
+        if(canBeShared)
         {
-            auto& primitivesCacheLevel = context.owner->sharedContext->_d->_primitivesCacheLevels[context._zoom];
-
             // If this group was already processed, use that
             std::shared_ptr<const PrimitivesGroup> group;
-            {
-                QReadLocker scopedLocker(&primitivesCacheLevel._lock);
-
-                const auto itProcessedGroup = primitivesCacheLevel._cache.constFind(mapObject->id);
-                if(itProcessedGroup != primitivesCacheLevel._cache.cend())
-                    group = *itProcessedGroup;
-            }
-
-            if(static_cast<bool>(group))
+            if(sharedPrimitivesGroups.obtainReferenceOrReserveAsPending(mapObject->id, group))
             {
                 // Add polygons, polylines and points from group to current context
                 for(auto itPrimitive = group->polygons.cbegin(); itPrimitive != group->polygons.cend(); ++itPrimitive)
@@ -591,25 +582,8 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
         }
 
         // Add this group to shared cache
-        if(!isMapObjectGenerated && context.owner->sharedContext)
-        {
-            auto& primitivesCacheLevel = context.owner->sharedContext->_d->_primitivesCacheLevels[context._zoom];
-
-            QWriteLocker scopedLocker(&primitivesCacheLevel._lock);
-
-            const auto itProcessedGroup = primitivesCacheLevel._cache.constFind(mapObject->id);
-            if(itProcessedGroup != primitivesCacheLevel._cache.cend())
-            {
-                // Replace current group with already available shared one. Unfortunately
-                // current group was already duplicate
-                group = *itProcessedGroup;
-            }
-            else
-            {
-                // Add current group to shared cache
-                primitivesCacheLevel._cache.insert(mapObject->id, group);
-            }
-        }
+        if(canBeShared)
+            sharedPrimitivesGroups.insertPendingAndReference(mapObject->id, group);
 
         // Add polygons, polylines and points from group to current context
         for(auto itPrimitive = group->polygons.cbegin(); itPrimitive != group->polygons.cend(); ++itPrimitive)
@@ -699,31 +673,24 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
 {
     //NOTE: Since 2 tiles with same MapObject may have different set of polylines, generated from it,
     //NOTE: then set of symbols also should differ, but it won't.
+    auto& sharedSymbolGroups = context.owner->sharedContext->_d->_sharedSymbolGroups[context._zoom];
     for(auto itPrimitivesGroup = context._primitivesGroups.cbegin(); itPrimitivesGroup != context._primitivesGroups.cend(); ++itPrimitivesGroup)
     {
         if(controller && controller->isAborted())
             return;
 
         const auto& primitivesGroup = *itPrimitivesGroup;
-        const auto isMapObjectGenerated = (primitivesGroup->mapObject->section == env.dummyMapSection);
 
         // If using shared context is allowed, check if this group was already processed
-        // (using shared cache is only allowed for non-generated MapObjects)
-        if(!isMapObjectGenerated && context.owner->sharedContext)
-        {
-            auto& symbolsCacheLevel = context.owner->sharedContext->_d->_symbolsCacheLevels[context._zoom];
+        // (using shared cache is only allowed for non-generated MapObjects),
+        // then primitives group can be shared
+        const auto canBeShared = (primitivesGroup->mapObject->section != env.dummyMapSection) && context.owner->sharedContext;
 
+        if(canBeShared)
+        {
             // If this group was already processed, use that
             std::shared_ptr<const SymbolsGroup> group;
-            {
-                QReadLocker scopedLocker(&symbolsCacheLevel._lock);
-
-                const auto itProcessedGroup = symbolsCacheLevel._cache.constFind(primitivesGroup->mapObject->id);
-                if(itProcessedGroup != symbolsCacheLevel._cache.cend())
-                    group = *itProcessedGroup;
-            }
-
-            if(static_cast<bool>(group))
+            if(sharedSymbolGroups.obtainReferenceOrReserveAsPending(primitivesGroup->mapObject->id, group))
             {
                 // Add symbols from group to current context
                 RasterizerContext_P::SymbolsEntry entry;
@@ -751,26 +718,8 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
         collectSymbolsFromPrimitives(env, context, primitivesGroup->points, Points, constructedGroup->symbols, controller);
 
         // Add this group to shared cache
-        // (using shared cache is only allowed for non-generated MapObjects)
-        if(!isMapObjectGenerated && context.owner->sharedContext)
-        {
-            auto& symbolsCacheLevel = context.owner->sharedContext->_d->_symbolsCacheLevels[context._zoom];
-
-            QWriteLocker scopedLocker(&symbolsCacheLevel._lock);
-
-            const auto itProcessedGroup = symbolsCacheLevel._cache.constFind(primitivesGroup->mapObject->id);
-            if(itProcessedGroup != symbolsCacheLevel._cache.cend())
-            {
-                // Replace current group with already available shared one. Unfortunately
-                // current group was already duplicate
-                group = *itProcessedGroup;
-            }
-            else
-            {
-                // Add current group to shared cache
-                symbolsCacheLevel._cache.insert(primitivesGroup->mapObject->id, group);
-            }
-        }
+        if(canBeShared)
+            sharedSymbolGroups.insertPendingAndReference(primitivesGroup->mapObject->id, group);
 
         // Add symbols from group to current context
         RasterizerContext_P::SymbolsEntry entry;

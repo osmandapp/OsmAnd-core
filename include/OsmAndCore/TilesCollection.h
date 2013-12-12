@@ -34,7 +34,7 @@
 #include <QAtomicInt>
 
 #include <OsmAndCore.h>
-#include <CommonTypes.h>
+#include <OsmAndCore/CommonTypes.h>
 
 namespace OsmAnd {
 

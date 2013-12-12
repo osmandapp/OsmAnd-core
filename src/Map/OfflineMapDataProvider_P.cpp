@@ -77,56 +77,59 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
     const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
 
     // Perform read-out
-    QList< std::shared_ptr<const Model::MapObject> > sharedMapObjects;
-    QList< std::shared_ptr<const Model::MapObject> > mapObjects;
+    QList< std::shared_ptr<const Model::MapObject> > referencedMapObjects;
+    QList< std::shared_ptr<const Model::MapObject> > loadedMapObjects;
+    QSet< uint64_t > loadedSharedMapObjects;
     MapFoundationType tileFoundation;
 #if defined(_DEBUG) || defined(DEBUG)
     float dataFilter = 0.0f;
     const auto dataRead_Begin = std::chrono::high_resolution_clock::now();
     ObfMapSectionReader_Metrics::Metric_loadMapObjects dataRead_Metric;
 #endif
-    const auto& cacheLevel = _mapObjectsCache[zoom];
-    dataInterface->obtainMapObjects(&mapObjects, &tileFoundation, tileBBox31, zoom, nullptr,
+    dataInterface->obtainMapObjects(&loadedMapObjects, &tileFoundation, tileBBox31, zoom, nullptr,
+        [this, zoom, &referencedMapObjects, &loadedSharedMapObjects, tileBBox31
 #if defined(_DEBUG) || defined(DEBUG)
-        [&cacheLevel, &sharedMapObjects, &dataFilter](const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id, const AreaI& bbox) -> bool
-#else
-        [&cacheLevel, &sharedMapObjects](const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id, const AreaI& bbox) -> bool
+            , &dataFilter
 #endif
+        ](const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id, const AreaI& bbox, const ZoomLevel firstZoomLevel, const ZoomLevel lastZoomLevel) -> bool
         {
 #if defined(_DEBUG) || defined(DEBUG)
             const auto dataFilter_Begin = std::chrono::high_resolution_clock::now();
 #endif
 
-            // Otherwise, this map object is surely shared, but a check is needed if it was already loaded
+            // This map object may be shared only in case it crosses bounds of a tile
+            const auto canNotBeShared = tileBBox31.contains(bbox);
+
+            // If map object can not be shared, just read it
+            if(canNotBeShared)
             {
-                QReadLocker scopedLocker(&cacheLevel._lock);
-
-                const auto itSharedMapObject = cacheLevel._cache.constFind(id);
-                if(itSharedMapObject != cacheLevel._cache.cend())
-                {
-                    const auto& mapObjectWeakRef = *itSharedMapObject;
-                    if(const auto mapObject = mapObjectWeakRef.lock())
-                    {
-                        // If map object is already in shared objects cache and is available, use that one
-                        sharedMapObjects.push_back(qMove(mapObject));
-
 #if defined(_DEBUG) || defined(DEBUG)
-                        const auto dataFilter_End = std::chrono::high_resolution_clock::now();
-                        const std::chrono::duration<float> dataRead_Elapsed = dataFilter_End - dataFilter_Begin;
-                        dataFilter += dataRead_Elapsed.count();
+                const auto dataFilter_End = std::chrono::high_resolution_clock::now();
+                const std::chrono::duration<float> dataRead_Elapsed = dataFilter_End - dataFilter_Begin;
+                dataFilter += dataRead_Elapsed.count();
 #endif
 
-                        return false;
-                    }
-                }
+                return true;
+            }
+            
+            // Otherwise, this map object can be shared, so it should be checked for
+            // being present in shared mapObjects storage, or be reserved there
+            std::shared_ptr<const Model::MapObject> sharedMapObjectReference;
+            if(_sharedMapObjects.obtainReferenceOrReserveAsPending(id, zoom, Utilities::enumerateZoomLevels(firstZoomLevel, lastZoomLevel), sharedMapObjectReference))
+            {
+                // If map object is already in shared objects cache and is available, use that one
+                referencedMapObjects.push_back(qMove(sharedMapObjectReference));
+
+#if defined(_DEBUG) || defined(DEBUG)
+                const auto dataFilter_End = std::chrono::high_resolution_clock::now();
+                const std::chrono::duration<float> dataRead_Elapsed = dataFilter_End - dataFilter_Begin;
+                dataFilter += dataRead_Elapsed.count();
+#endif
+                return false;
             }
 
-#if defined(_DEBUG) || defined(DEBUG)
-            const auto dataFilter_End = std::chrono::high_resolution_clock::now();
-            const std::chrono::duration<float> dataRead_Elapsed = dataFilter_End - dataFilter_Begin;
-            dataFilter += dataRead_Elapsed.count();
-#endif
-
+            // This map object was reserved, and is going to be shared, but needs to be loaded
+            loadedSharedMapObjects.insert(id);
             return true;
         },
 #if defined(_DEBUG) || defined(DEBUG)
@@ -143,40 +146,21 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
     const auto dataIdsProcess_Begin = std::chrono::high_resolution_clock::now();
 #endif
 
-    // Add all shared map objects to cache
-    for(auto itMapObject = mapObjects.begin(); itMapObject != mapObjects.end(); ++itMapObject)
+    // Process loaded-and-shared map objects
+    for(auto itMapObject = loadedMapObjects.begin(); itMapObject != loadedMapObjects.end(); ++itMapObject)
     {
         auto& mapObject = *itMapObject;
 
+        // Check if this map object is shared
+        if(!loadedSharedMapObjects.contains(mapObject->id))
+            continue;
+
         // Add unique map object under lock to all zoom levels, for which this map object is valid
         assert(mapObject->level);
-        for(int zoomLevel = mapObject->level->minZoom; zoomLevel <= mapObject->level->maxZoom; zoomLevel++)
-        {
-            auto& cacheLevel = _mapObjectsCache[zoomLevel];
-            {
-                QWriteLocker scopedLocker(&cacheLevel._lock);
-
-                const auto itSharedMapObject = cacheLevel._cache.find(mapObject->id);
-                if(itSharedMapObject != cacheLevel._cache.end())
-                {
-                    if(const auto sharedMapObject = itSharedMapObject->lock())
-                    {
-                        // If entry already exits, use that object instead of this one
-                        mapObject = sharedMapObject;
-                    }
-                    else
-                    {
-                        // Or replace with current one
-                        *itSharedMapObject = mapObject;
-                    }
-                }
-                else
-                {
-                    // Or simply insert
-                    cacheLevel._cache.insert(mapObject->id, mapObject);
-                }
-            }
-        }
+        _sharedMapObjects.insertPendingAndReference(
+            mapObject->id,
+            Utilities::enumerateZoomLevels(mapObject->level->minZoom, mapObject->level->maxZoom),
+            mapObject);
     }
 
 #if defined(_DEBUG) || defined(DEBUG)
@@ -188,13 +172,13 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 #endif
 
     // Prepare data for the tile
-    const auto sharedMapObjectsCount = sharedMapObjects.size();
-    mapObjects.append(qMove(sharedMapObjects));
+    const auto sharedMapObjectsCount = referencedMapObjects.size() + loadedSharedMapObjects.size();
+    const auto allMapObjects = loadedMapObjects + referencedMapObjects;
 
     // Allocate and prepare rasterizer context
     bool nothingToRasterize = false;
     std::shared_ptr<RasterizerContext> rasterizerContext(new RasterizerContext(owner->rasterizerEnvironment, owner->rasterizerSharedContext));
-    Rasterizer::prepareContext(*rasterizerContext, tileBBox31, zoom, tileFoundation, mapObjects, &nothingToRasterize, nullptr,
+    Rasterizer::prepareContext(*rasterizerContext, tileBBox31, zoom, tileFoundation, allMapObjects, &nothingToRasterize, nullptr,
 #if defined(_DEBUG) || defined(DEBUG)
         &dataProcess_metric
 #else
@@ -208,7 +192,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 #endif
 
     // Create tile
-    const auto newTile = new OfflineMapDataTile(tileId, zoom, tileFoundation, mapObjects, rasterizerContext, nothingToRasterize);
+    const auto newTile = new OfflineMapDataTile(tileId, zoom, tileFoundation, allMapObjects, rasterizerContext, nothingToRasterize);
     newTile->_d->_link = _link;
     newTile->_d->_refEntry = tileEntry;
 
@@ -268,7 +252,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
         "\t - average time per 1K point evaluations = %fms\n"
         "\t - pointPrimitives = %d\n"
         "\t - elapsedTimeForObtainingPrimitivesSymbols = %fs",
-        mapObjects.size(), mapObjects.size() - sharedMapObjectsCount, sharedMapObjectsCount,
+        allMapObjects.size(), allMapObjects.size() - sharedMapObjectsCount, sharedMapObjectsCount,
         tileId.x, tileId.y, zoom,
         total_Elapsed.count(),
         obtainDataInterface_Elapsed.count(),
