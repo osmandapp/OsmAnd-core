@@ -256,7 +256,7 @@ struct RoutingConfiguration {
 		for(; t != r->types.end(); t++) {
 			tag_value type = r->region->decodingRules[*t];
 			string key = type.first+"$"+type.second;
-			if(highwayPriorities.find(key) != highwaySpeed.end()) {
+			if(highwayPriorities.find(key) != highwayPriorities.end()) {
 				priority *= highwayPriorities[key];
 			}
 		}
