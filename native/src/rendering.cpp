@@ -759,10 +759,10 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 			}
 		}
 		if (rc->interrupted()) {
-			return;
+			break;
 		}
 	}
-	delete alreadyDrawnIcons;
+	delete[] alreadyDrawnIcons;
 }
 
 double polygonArea(MapDataObject* obj, float mult) {
