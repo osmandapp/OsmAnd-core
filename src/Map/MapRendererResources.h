@@ -210,17 +210,8 @@ namespace OsmAnd
         protected:
             SymbolsResourcesCollection();
 
-            // Symbols groups cache
-            struct CacheLevel
-            {
-                mutable QReadWriteLock _lock;
-                QHash< uint64_t, std::weak_ptr< const MapSymbolsGroup > > _cache;
-            };
-            std::array<CacheLevel, ZoomLevelsCount> _dataCache;
-
-            // GPU resources cache
-            mutable QMutex _gpuResourcesCacheMutex;
-            QHash< std::shared_ptr<const MapSymbol>, std::weak_ptr<const GPUAPI::ResourceInGPU> > _gpuResourcesCache;
+            std::array< SharedResourcesContainer<uint64_t, const MapSymbolsGroup>, ZoomLevelsCount > _sharedMapSymbolsGroups;
+            SharedResourcesContainer< std::shared_ptr<const MapSymbol>, const GPUAPI::ResourceInGPU > _sharedResourcesInGPU;
         public:
             virtual ~SymbolsResourcesCollection();
 

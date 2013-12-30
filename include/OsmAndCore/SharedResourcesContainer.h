@@ -116,6 +116,23 @@ namespace OsmAnd
             _pending.insert(key);
         }
 
+        void cancelPending(const KEY_TYPE& key)
+        {
+            QWriteLocker scopedLocker(&_lock);
+
+            // Check if this resource is in pending (still)
+            assert(_pending.contains(key));
+
+            // Check if this resource is not in container
+            assert(!_container.contains(key));
+
+            // Insert resource key into pending set
+            _pending.remove(key);
+
+            // Notify that pending has changed
+            _pendingWaitCondition.wakeAll();
+        }
+
         void insertPending(const KEY_TYPE& key, std::shared_ptr<RESOURCE_TYPE>& resource)
         {
             QWriteLocker scopedLocker(&_lock);
