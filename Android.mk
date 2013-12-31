@@ -19,7 +19,7 @@ LOCAL_EXPORT_C_INCLUDES := \
     $(LOCAL_PATH)/externals/glm/upstream.patched \
     $(LOCAL_PATH)/include \
     $(LOCAL_PATH)/client
-	
+
 LOCAL_EXPORT_LDLIBS := \
     -lEGL \
     -lGLESv2
@@ -72,7 +72,6 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
         $(wildcard $(LOCAL_PATH)/src/Map/*.c*) \
         $(wildcard $(LOCAL_PATH)/src/Map/OpenGL_Common/*.c*) \
         $(wildcard $(LOCAL_PATH)/src/Map/OpenGLES2/*.c*) \
-        $(wildcard $(LOCAL_PATH)/client/*.c*) \
         $(wildcard $(LOCAL_PATH)/protos/*.c*)
 
     HEADER_FILES := \
@@ -89,7 +88,6 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
         $(wildcard $(LOCAL_PATH)/src/Map/*.h) \
         $(wildcard $(LOCAL_PATH)/src/Map/OpenGL_Common/*.h) \
         $(wildcard $(LOCAL_PATH)/src/Map/OpenGLES2/*.h) \
-        $(wildcard $(LOCAL_PATH)/client/*.h) \
         $(wildcard $(LOCAL_PATH)/protos/*.h)
     mkdirp_ = \
         $(info $(shell ( \
@@ -98,12 +96,12 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
     mkdirp = \
         $(call mkdirp_,$(1))
     run_moc = \
+        $(info moc'ing "$(1)" to "$(1:$(LOCAL_PATH)/%=$(LOCAL_PATH)/moc/%)") \
         $(call mkdirp,$(1:$(LOCAL_PATH)/%=$(LOCAL_PATH)/moc/%)) \
         $(info $(shell ( \
             $(LOCAL_PATH)/externals/qtbase-android/upstream.patched.$(TARGET_ARCH_ABI)$(OSMAND_QT_PATH_SUFFIX).static/bin/moc \
-                $(1) \
-                -f \
                 -o $(1:$(LOCAL_PATH)/%.h=$(LOCAL_PATH)/moc/%.cpp) \
+                $(1) \
             )))
     $(info $(shell (rm -rf $(LOCAL_PATH)/moc)))
     $(foreach header_file,$(HEADER_FILES),$(call run_moc,$(header_file)))
