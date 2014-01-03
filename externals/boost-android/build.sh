@@ -15,12 +15,10 @@ fi
 
 export ANDROID_SDK_ROOT=`echo $ANDROID_SDK | sed 's/\\\\/\//g'`
 export ANDROID_NDK_ROOT=`echo $ANDROID_NDK | sed 's/\\\\/\//g'`
-BOOST_EXTRA_CONFIGURATION=""
 if ls $ANDROID_NDK/toolchains/*-4.8 &> /dev/null; then
 	export ANDROID_NDK_TOOLCHAIN_VERSION=4.8
 elif ls $ANDROID_NDK/toolchains/*-4.7 &> /dev/null; then
 	export ANDROID_NDK_TOOLCHAIN_VERSION=4.7
-	BOOST_EXTRA_CONFIGURATION="cxxflags=-D_GLIBCXX__PTHREADS"
 fi
 if [[ "$(uname -a)" =~ Linux ]]; then
 	if [[ "$(uname -m)" == x86_64 ]] && [ -d "$ANDROID_NDK/prebuilt/linux-x86_64" ]; then
@@ -62,7 +60,6 @@ BOOST_CONFIGURATION=$(echo "
 	link=static
 	runtime-link=shared
 	variant=release
-	$BOOST_EXTRA_CONFIGURATION
 	stage
 " | tr '\n' ' ')
 
