@@ -12,8 +12,16 @@ if [ ! -d "$ANDROID_NDK" ]; then
 	echo "ANDROID_NDK is not set"
 	exit
 fi
+
 export ANDROID_SDK_ROOT=`echo $ANDROID_SDK | sed 's/\\\\/\//g'`
 export ANDROID_NDK_ROOT=`echo $ANDROID_NDK | sed 's/\\\\/\//g'`
+if [ -d "$ANDROID_NDK/toolchains/*-4.7" ]; then
+		export ANDROID_NDK_TOOLCHAIN_VERSION=4.7
+elif [ -d "$ANDROID_NDK/toolchains/*-4.6" ]; then
+		export ANDROID_NDK_TOOLCHAIN_VERSION=4.6
+fi
+# Not using 4.8 yet, since it's not suitable for MIPS target
+
 if [[ "$(uname -a)" =~ Linux ]]; then
 	if [[ "$(uname -m)" == x86_64 ]] && [ -d "$ANDROID_NDK/prebuilt/linux-x86_64" ]; then
 		export ANDROID_NDK_HOST=linux-x86_64;
@@ -42,7 +50,7 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 fi
 
 QTBASE_CONFIGURATION=$(echo "
-	-xplatform android-g++
+	-xplatform android-g++ -android-toolchain-version $ANDROID_NDK_TOOLCHAIN_VERSION
 	-release -opensource -confirm-license -c++11 -static -largefile -no-accessibility -qt-sql-sqlite
 	-no-javascript-jit -no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
 	-nomake examples -nomake tools -no-gui -no-widgets -no-nis -no-cups -no-iconv -no-icu -no-dbus
