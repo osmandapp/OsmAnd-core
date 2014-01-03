@@ -15,9 +15,9 @@ fi
 
 export ANDROID_SDK_ROOT=`echo $ANDROID_SDK | sed 's/\\\\/\//g'`
 export ANDROID_NDK_ROOT=`echo $ANDROID_NDK | sed 's/\\\\/\//g'`
-if [ -d "$ANDROID_NDK/toolchains/*-4.8" ]; then
+if ls $ANDROID_NDK/toolchains/*-4.8 &> /dev/null; then
 	export ANDROID_NDK_TOOLCHAIN_VERSION=4.8
-elif [ -d "$ANDROID_NDK/toolchains/*-4.7" ]; then
+elif ls $ANDROID_NDK/toolchains/*-4.7 &> /dev/null; then
 	export ANDROID_NDK_TOOLCHAIN_VERSION=4.7
 fi
 if [ -n "$ANDROID_NDK_TOOLCHAIN_VERSION" ]; then
