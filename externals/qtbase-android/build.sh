@@ -26,6 +26,7 @@ if [ -d "$ANDROID_NDK_TOOLCHAIN_VERSION" ]; then
 	echo "Using $ANDROID_NDK_TOOLCHAIN_VERSION toolchain version"
 	ANDROID_NDK_TOOLCHAIN="-android-toolchain-version $ANDROID_NDK_TOOLCHAIN_VERSION"
 else
+	echo "Using auto-detected toolchain version"
 	ANDROID_NDK_TOOLCHAIN=""
 fi
 
