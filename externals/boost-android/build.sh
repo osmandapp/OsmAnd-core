@@ -59,58 +59,58 @@ if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[
 	if [ ! -d "$SRCLOC/upstream.patched.armeabi.static" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi.static"
 		export ANDROID_NDK_PLATFORM=android-8
-		cat "$SRCLOC/user-config.jam" > "$SRCLOC/upstream.patched.armeabi.static/tools/build/v2/user-config.jam"
+		cat "$SRCLOC/armv5.jam" > "$SRCLOC/upstream.patched.armeabi.static/tools/build/v2/user-config.jam"
 		(cd "$SRCLOC/upstream.patched.armeabi.static" && \
-			./bootstrap)
+			./bootstrap.sh)
 	fi
 	(cd "$SRCLOC/upstream.patched.armeabi.static" && \
-		./b2 variant=debug,release --layout=versioned toolset=gcc-android-armv5 threading=multi link=static stage)
+		./b2 variant=debug,release --layout=versioned toolset=gcc-android-armv5 target-os=linux threading=multi link=static stage)
 fi
 
 if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv7 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
 	if [ ! -d "$SRCLOC/upstream.patched.armeabi-v7a.static" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi-v7a.static"
 		export ANDROID_NDK_PLATFORM=android-8
-		cat "$SRCLOC/user-config.jam" > "$SRCLOC/upstream.patched.armeabi-v7a.static/tools/build/v2/user-config.jam"
+		cat "$SRCLOC/armv7a.jam" > "$SRCLOC/upstream.patched.armeabi-v7a.static/tools/build/v2/user-config.jam"
 		(cd "$SRCLOC/upstream.patched.armeabi-v7a.static" && \
-			./bootstrap)
+			./bootstrap.sh)
 	fi
 	(cd "$SRCLOC/upstream.patched.armeabi-v7a.static" && \
-		./b2 variant=debug,release --layout=versioned toolset=gcc-android-armv7a threading=multi link=static stage)
+		./b2 variant=debug,release --layout=versioned toolset=gcc-android-armv7a target-os=linux threading=multi link=static stage)
 fi
 
 if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv7-neon ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
 	if [ ! -d "$SRCLOC/upstream.patched.armeabi-v7a-neon.static" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi-v7a-neon.static"
 		export ANDROID_NDK_PLATFORM=android-8
-		cat "$SRCLOC/user-config.jam" > "$SRCLOC/upstream.patched.armeabi-v7a-neon.static/tools/build/v2/user-config.jam"
+		cat "$SRCLOC/armv7a-neon.jam" > "$SRCLOC/upstream.patched.armeabi-v7a-neon.static/tools/build/v2/user-config.jam"
 		(cd "$SRCLOC/upstream.patched.armeabi-v7a-neon.static" && \
-			./bootstrap)
+			./bootstrap.sh)
 	fi
 	(cd "$SRCLOC/upstream.patched.armeabi-v7a-neon.static" && \
-		./b2 variant=debug,release --layout=versioned toolset=gcc-android-armv7a-neon threading=multi link=static stage)
+		./b2 variant=debug,release --layout=versioned toolset=gcc-android-armv7a-neon target-os=linux threading=multi link=static stage)
 fi
 
 if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x86 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
 	if [ ! -d "$SRCLOC/upstream.patched.x86.static" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.x86.static"
 		export ANDROID_NDK_PLATFORM=android-9
-		cat "$SRCLOC/user-config.jam" > "$SRCLOC/upstream.patched.x86.static/tools/build/v2/user-config.jam"
+		cat "$SRCLOC/x86.jam" > "$SRCLOC/upstream.patched.x86.static/tools/build/v2/user-config.jam"
 		(cd "$SRCLOC/upstream.patched.x86.static" && \
-			./bootstrap)
+			./bootstrap.sh)
 	fi
 	(cd "$SRCLOC/upstream.patched.x86.static" && \
-		./b2 variant=debug,release --layout=versioned toolset=gcc-android-x86 threading=multi link=static stage)
+		./b2 variant=debug,release --layout=versioned toolset=gcc-android-x86 target-os=linux threading=multi link=static stage)
 fi
 
 if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ mips ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
 	if [ ! -d "$SRCLOC/upstream.patched.mips.static" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.mips.static"
 		export ANDROID_NDK_PLATFORM=android-9
-		cat "$SRCLOC/user-config.jam" > "$SRCLOC/upstream.patched.mips.static/tools/build/v2/user-config.jam"
+		cat "$SRCLOC/mips.jam" > "$SRCLOC/upstream.patched.mips.static/tools/build/v2/user-config.jam"
 		(cd "$SRCLOC/upstream.patched.mips.static" && \
-			./bootstrap)
+			./bootstrap.sh)
 	fi
 	(cd "$SRCLOC/upstream.patched.mips.static" && \
-		./b2 variant=debug,release --layout=versioned toolset=gcc-android-mips threading=multi link=static stage)
+		./b2 variant=debug,release --layout=versioned toolset=gcc-android-mips target-os=linux threading=multi link=static stage)
 fi
