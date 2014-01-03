@@ -59,7 +59,7 @@ BOOST_CONFIGURATION=$(echo "
 	threading=multi
 	link=static
 	runtime-link=shared
-	variant=debug,release
+	variant=release
 	stage
 " | tr '\n' ' ')
 

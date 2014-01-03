@@ -1,37 +1,38 @@
 LOCAL_PATH := $(call my-dir)
 
 ifeq ($(OSMAND_BUILDING_NEON_LIBRARY),true)
-    OSMAND_QTBASE_SUFFIX := .$(TARGET_ARCH_ABI)-neon
+    OSMAND_BOOST_SUFFIX := .$(TARGET_ARCH_ABI)-neon
     MODULE_SUFFIX := _neon
 else
-    OSMAND_QTBASE_SUFFIX := .$(TARGET_ARCH_ABI)
+    OSMAND_BOOST_SUFFIX := .$(TARGET_ARCH_ABI)
     MODULE_SUFFIX :=
 endif
-QT := upstream.patched$(OSMAND_QTBASE_SUFFIX)
+BOOST := upstream.patched$(OSMAND_BOOST_SUFFIX)
+VERSION := -gcc-mt-1_55
 
 include $(CLEAR_VARS)
 LOCAL_ARM_NEON := $(OSMAND_BUILDING_NEON_LIBRARY)
-LOCAL_MODULE := Qt5Core$(MODULE_SUFFIX)
-LOCAL_SRC_FILES := $(QT).static/lib/lib$(LOCAL_MODULE).a
+LOCAL_LIB_NAME := boost_system
+LOCAL_MODULE := $(LOCAL_LIB_NAME)$(MODULE_SUFFIX)
+LOCAL_SRC_FILES := $(BOOST).static/stage/lib/lib$(LOCAL_LIB_NAME)$(VERSION).a
 LOCAL_EXPORT_C_INCLUDES := \
-    $(LOCAL_PATH)/$(QT).static/include \
-    $(LOCAL_PATH)/$(QT).static/include/QtCore
+    $(LOCAL_PATH)/$(BOOST).static
 include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_ARM_NEON := $(OSMAND_BUILDING_NEON_LIBRARY)
-LOCAL_MODULE := Qt5Network$(MODULE_SUFFIX)
-LOCAL_SRC_FILES := $(QT).static/lib/lib$(LOCAL_MODULE).a
+LOCAL_LIB_NAME := boost_atomic
+LOCAL_MODULE := $(LOCAL_LIB_NAME)$(MODULE_SUFFIX)
+LOCAL_SRC_FILES := $(BOOST).static/stage/lib/lib$(LOCAL_LIB_NAME)$(VERSION).a
 LOCAL_EXPORT_C_INCLUDES := \
-    $(LOCAL_PATH)/$(QT).static/include \
-    $(LOCAL_PATH)/$(QT).static/include/QtNetwork
+    $(LOCAL_PATH)/$(BOOST).static
 include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_ARM_NEON := $(OSMAND_BUILDING_NEON_LIBRARY)
-LOCAL_MODULE := Qt5Sql$(MODULE_SUFFIX)
-LOCAL_SRC_FILES := $(QT).static/lib/lib$(LOCAL_MODULE).a
+LOCAL_LIB_NAME := boost_thread
+LOCAL_MODULE := $(LOCAL_LIB_NAME)$(MODULE_SUFFIX)
+LOCAL_SRC_FILES := $(BOOST).static/stage/lib/lib$(LOCAL_LIB_NAME)$(VERSION).a
 LOCAL_EXPORT_C_INCLUDES := \
-    $(LOCAL_PATH)/$(QT).static/include \
-    $(LOCAL_PATH)/$(QT).static/include/QtSql
+    $(LOCAL_PATH)/$(BOOST).static
 include $(PREBUILT_STATIC_LIBRARY)
