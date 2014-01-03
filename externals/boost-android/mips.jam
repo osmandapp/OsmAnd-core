@@ -13,7 +13,7 @@ $(NDK)/toolchains/mipsel-linux-android-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)
 <archiver>$(NDK)/toolchains/mipsel-linux-android-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)/bin/mipsel-linux-android-ar
 <compileflags>-fexceptions
 <compileflags>-frtti
-<compileflags>-Wall
+#<compileflags>-Wall
 <compileflags>-fvisibility=hidden
 <compileflags>-fvisibility-inlines-hidden
 <compileflags>-Wno-psabi
@@ -33,9 +33,9 @@ $(NDK)/toolchains/mipsel-linux-android-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)
 <compileflags>-Wa,--noexecstack
 <compileflags>-DANDROID
 <compileflags>-D__ANDROID__
-<compileflags>-I$(NDK)/platforms/$(NDK_PLATFORM)/arch-mips/usr/include
-<compileflags>-I$(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/include
-<compileflags>-I$(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/libs/mips/include
+<compileflags>-isystem$(NDK)/platforms/$(NDK_PLATFORM)/arch-mips/usr/include
+<compileflags>-isystem$(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/include
+<compileflags>-isystem$(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/libs/mips/include
 <linkflags>-no-canonical-prefixes
 # 'Release/MIPS' section
 <compileflags>-O2

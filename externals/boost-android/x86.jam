@@ -13,7 +13,7 @@ $(NDK)/toolchains/x86-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)/bin/i686-linux-a
 <archiver>$(NDK)/toolchains/x86-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)/bin/i686-linux-android-ar
 <compileflags>-fexceptions
 <compileflags>-frtti
-<compileflags>-Wall
+#<compileflags>-Wall
 <compileflags>-fvisibility=hidden
 <compileflags>-fvisibility-inlines-hidden
 <compileflags>-Wno-psabi
@@ -25,9 +25,9 @@ $(NDK)/toolchains/x86-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)/bin/i686-linux-a
 <compileflags>-Wa,--noexecstack
 <compileflags>-DANDROID
 <compileflags>-D__ANDROID__
-<compileflags>-I$(NDK)/platforms/$(NDK_PLATFORM)/arch-x86/usr/include
-<compileflags>-I$(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/include
-<compileflags>-I$(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/libs/x86/include
+<compileflags>-isystem$(NDK)/platforms/$(NDK_PLATFORM)/arch-x86/usr/include
+<compileflags>-isystem$(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/include
+<compileflags>-isystem$(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/libs/x86/include
 <linkflags>-no-canonical-prefixes
 # 'Release/x86' section
 <compileflags>-O2
