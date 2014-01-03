@@ -54,7 +54,7 @@ fi
 BOOST_CONFIGURATION=$(echo "
 	--layout=versioned
 	--with-thread
-	toolset=gcc-$ANDROID_NDK_TOOLCHAIN_VERSION
+	toolset=gcc-android
 	target-os=linux
 	threading=multi
 	link=static

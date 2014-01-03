@@ -6,7 +6,7 @@ local TOOLCHAIN_VERSION = [ os.environ ANDROID_NDK_TOOLCHAIN_VERSION ] ;
 
 # --------------------------------------------------------------------
 
-using gcc : $(TOOLCHAIN_VERSION)
+using gcc : android
 :
 $(NDK)/toolchains/x86-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)/bin/i686-linux-android-g++
 :

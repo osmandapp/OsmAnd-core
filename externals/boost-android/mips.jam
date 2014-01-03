@@ -6,7 +6,7 @@ local TOOLCHAIN_VERSION = [ os.environ ANDROID_NDK_TOOLCHAIN_VERSION ] ;
 
 # --------------------------------------------------------------------
 
-using gcc : $(TOOLCHAIN_VERSION)
+using gcc : android
 :
 $(NDK)/toolchains/mipsel-linux-android-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)/bin/mipsel-linux-android-g++
 :
