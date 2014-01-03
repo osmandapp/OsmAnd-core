@@ -51,9 +51,17 @@ if [[ "$(uname -a)" =~ Cygwin ]]; then
 	exit 1
 fi
 
-ARM_TOOLCHAIN_PREFIX="arm-linux-androideabi"
-MIPS_TOOLCHAIN_PREFIX="mipsel-linux-android"
-X86_TOOLCHAIN_PREFIX="x86"
+BOOST_CONFIGURATION=$(echo "
+	--layout=versioned
+	--with-thread
+	toolset=gcc-$ANDROID_NDK_TOOLCHAIN_VERSION
+	target-os=linux
+	threading=multi
+	link=static
+	runtime-link=shared
+	variant=debug,release
+	stage
+" | tr '\n' ' ')
 
 if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv5 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
 	if [ ! -d "$SRCLOC/upstream.patched.armeabi.static" ]; then
@@ -64,53 +72,53 @@ if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[
 			./bootstrap.sh)
 	fi
 	(cd "$SRCLOC/upstream.patched.armeabi.static" && \
-		./b2 variant=debug,release --layout=versioned toolset=gcc-$ANDROID_NDK_TOOLCHAIN_VERSION target-os=linux threading=multi link=static stage)
+		./b2 $BOOST_CONFIGURATION -j $OSMAND_BUILD_CPU_CORES_NUM)
 fi
 
-if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv7 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-	if [ ! -d "$SRCLOC/upstream.patched.armeabi-v7a.static" ]; then
-		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi-v7a.static"
-		export ANDROID_NDK_PLATFORM=android-8
-		cat "$SRCLOC/armv7a.jam" > "$SRCLOC/upstream.patched.armeabi-v7a.static/tools/build/v2/user-config.jam"
-		(cd "$SRCLOC/upstream.patched.armeabi-v7a.static" && \
-			./bootstrap.sh)
-	fi
-	(cd "$SRCLOC/upstream.patched.armeabi-v7a.static" && \
-		./b2 variant=debug,release --layout=versioned toolset=gcc-$ANDROID_NDK_TOOLCHAIN_VERSION target-os=linux threading=multi link=static stage)
-fi
+# if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv7 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
+	# if [ ! -d "$SRCLOC/upstream.patched.armeabi-v7a.static" ]; then
+		# cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi-v7a.static"
+		# export ANDROID_NDK_PLATFORM=android-8
+		# cat "$SRCLOC/armv7a.jam" > "$SRCLOC/upstream.patched.armeabi-v7a.static/tools/build/v2/user-config.jam"
+		# (cd "$SRCLOC/upstream.patched.armeabi-v7a.static" && \
+			# ./bootstrap.sh)
+	# fi
+	# (cd "$SRCLOC/upstream.patched.armeabi-v7a.static" && \
+		# ./b2 $BOOST_CONFIGURATION -j $OSMAND_BUILD_CPU_CORES_NUM)
+# fi
 
-if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv7-neon ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-	if [ ! -d "$SRCLOC/upstream.patched.armeabi-v7a-neon.static" ]; then
-		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi-v7a-neon.static"
-		export ANDROID_NDK_PLATFORM=android-8
-		cat "$SRCLOC/armv7a-neon.jam" > "$SRCLOC/upstream.patched.armeabi-v7a-neon.static/tools/build/v2/user-config.jam"
-		(cd "$SRCLOC/upstream.patched.armeabi-v7a-neon.static" && \
-			./bootstrap.sh)
-	fi
-	(cd "$SRCLOC/upstream.patched.armeabi-v7a-neon.static" && \
-		./b2 variant=debug,release --layout=versioned toolset=gcc-$ANDROID_NDK_TOOLCHAIN_VERSION target-os=linux threading=multi link=static stage)
-fi
+# if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv7-neon ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
+	# if [ ! -d "$SRCLOC/upstream.patched.armeabi-v7a-neon.static" ]; then
+		# cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi-v7a-neon.static"
+		# export ANDROID_NDK_PLATFORM=android-8
+		# cat "$SRCLOC/armv7a-neon.jam" > "$SRCLOC/upstream.patched.armeabi-v7a-neon.static/tools/build/v2/user-config.jam"
+		# (cd "$SRCLOC/upstream.patched.armeabi-v7a-neon.static" && \
+			# ./bootstrap.sh)
+	# fi
+	# (cd "$SRCLOC/upstream.patched.armeabi-v7a-neon.static" && \
+		# ./b2 $BOOST_CONFIGURATION -j $OSMAND_BUILD_CPU_CORES_NUM)
+# fi
 
-if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x86 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-	if [ ! -d "$SRCLOC/upstream.patched.x86.static" ]; then
-		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.x86.static"
-		export ANDROID_NDK_PLATFORM=android-9
-		cat "$SRCLOC/x86.jam" > "$SRCLOC/upstream.patched.x86.static/tools/build/v2/user-config.jam"
-		(cd "$SRCLOC/upstream.patched.x86.static" && \
-			./bootstrap.sh)
-	fi
-	(cd "$SRCLOC/upstream.patched.x86.static" && \
-		./b2 variant=debug,release --layout=versioned toolset=gcc-$ANDROID_NDK_TOOLCHAIN_VERSION target-os=linux threading=multi link=static stage)
-fi
+# if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x86 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
+	# if [ ! -d "$SRCLOC/upstream.patched.x86.static" ]; then
+		# cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.x86.static"
+		# export ANDROID_NDK_PLATFORM=android-9
+		# cat "$SRCLOC/x86.jam" > "$SRCLOC/upstream.patched.x86.static/tools/build/v2/user-config.jam"
+		# (cd "$SRCLOC/upstream.patched.x86.static" && \
+			# ./bootstrap.sh)
+	# fi
+	# (cd "$SRCLOC/upstream.patched.x86.static" && \
+		# ./b2 $BOOST_CONFIGURATION -j $OSMAND_BUILD_CPU_CORES_NUM)
+# fi
 
-if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ mips ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-	if [ ! -d "$SRCLOC/upstream.patched.mips.static" ]; then
-		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.mips.static"
-		export ANDROID_NDK_PLATFORM=android-9
-		cat "$SRCLOC/mips.jam" > "$SRCLOC/upstream.patched.mips.static/tools/build/v2/user-config.jam"
-		(cd "$SRCLOC/upstream.patched.mips.static" && \
-			./bootstrap.sh)
-	fi
-	(cd "$SRCLOC/upstream.patched.mips.static" && \
-		./b2 variant=debug,release --layout=versioned toolset=gcc-$ANDROID_NDK_TOOLCHAIN_VERSION target-os=linux threading=multi link=static stage)
-fi
+# if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ mips ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
+	# if [ ! -d "$SRCLOC/upstream.patched.mips.static" ]; then
+		# cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.mips.static"
+		# export ANDROID_NDK_PLATFORM=android-9
+		# cat "$SRCLOC/mips.jam" > "$SRCLOC/upstream.patched.mips.static/tools/build/v2/user-config.jam"
+		# (cd "$SRCLOC/upstream.patched.mips.static" && \
+			# ./bootstrap.sh)
+	# fi
+	# (cd "$SRCLOC/upstream.patched.mips.static" && \
+		# ./b2 $BOOST_CONFIGURATION -j $OSMAND_BUILD_CPU_CORES_NUM)
+# fi
