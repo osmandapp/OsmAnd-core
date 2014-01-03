@@ -37,8 +37,6 @@
 
 namespace OsmAnd
 {
-    // SharedResourcesContainer is based on blocking-hash-map with own
-    // reference counters and built-in pending state
     template<typename KEY_TYPE, typename RESOURCE_TYPE>
     class SharedResourcesContainer Q_DECL_FINAL
     {
@@ -58,6 +56,22 @@ namespace OsmAnd
         {
         }
 
+        // insert(key, data)
+        // insertAndReference(key, data)
+        // obtainReference
+        // releaseReference
+
+        // makePromise(key) == reserveAsPending
+        // breakPromise(key) == cancelPending
+        // fulfilPromise(key, data) == insertPending
+        // fulfilPromiseAndReference(key, data) == insertPendingAndReference
+        // obtainFutureReferenceOrMakePromise [future references are also counted]
+        // releaseFutureReference
+
+        //////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
+        
         void insert(const KEY_TYPE& key, std::shared_ptr<RESOURCE_TYPE>& resource)
         {
             QWriteLocker scopedLocker(&_lock);
@@ -266,21 +280,6 @@ namespace OsmAnd
             // Set reference
             outResource = itEntry->second;
             return true;
-        }
-
-        void cleanUpUnreferencedResources()
-        {
-            QWriteLocker scopedLocker(&_lock);
-
-            QMutableHashIterator itEntry(_container);
-            while(itEntry.hasNext())
-            {
-                itEntry.next();
-
-                const auto doRemove = (itEntry.value().first == 0);
-                if(doRemove)
-                    itEntry.remove();
-            }
         }
     };
 }

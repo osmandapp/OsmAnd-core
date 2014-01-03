@@ -354,29 +354,6 @@ namespace OsmAnd
             outResource = std::get<1>(entry);
             return true;
         }
-
-        void cleanUpUnreferencedResources()
-        {
-            QWriteLocker scopedLocker(&_lock);
-
-            QMutableSetIterator itResourceEntry(_resources);
-            while(itResourceEntry.hasNext())
-            {
-                itResourceEntry.next();
-
-                const auto doRemove = (std::get<0>(itResourceEntry.value()) == 0);
-                if(doRemove)
-                {
-                    // Erase all the links
-                    const auto& levels = std::get<2>(itResourceEntry.value());
-                    for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
-                        _container[*itLevel].remove(itResourceEntry);
-
-                    // Remove the resource entry
-                    itResourceEntry.remove();
-                }
-            }
-        }
     };
 }
 
