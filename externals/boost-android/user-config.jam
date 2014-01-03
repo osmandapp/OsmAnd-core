@@ -1,0 +1,219 @@
+import os ;
+local NDK = [ os.environ ANDROID_NDK_ROOT ] ;
+local NDK_HOST = [ os.environ ANDROID_NDK_HOST ] ;
+local NDK_PLATFORM = [ os.environ ANDROID_NDK_PLATFORM ] ;
+local TOOLCHAIN_VERSION = [ os.environ ANDROID_NDK_TOOLCHAIN_VERSION ] ;
+
+# --------------------------------------------------------------------
+
+using gcc : android-armv5
+:
+$(NDK)/toolchains/arm-linux-androideabi-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)/bin/arm-linux-androideabi-g++
+:
+<archiver>$(NDK)/toolchains/arm-linux-androideabi-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)/bin/arm-linux-androideabi-ar
+<compileflags>-fexceptions
+<compileflags>-frtti
+<compileflags>-Wall
+<compileflags>-fvisibility=hidden
+<compileflags>-fvisibility-inlines-hidden
+<compileflags>-Wno-psabi
+# Configuration taken from $(NDK)/toolchains/arm-linux-androideabi-$(TOOLCHAIN_VERSION)/setup.mk
+<compileflags>-fpic
+<compileflags>-ffunction-sections
+<compileflags>-funwind-tables
+<compileflags>-fstack-protector
+<compileflags>-no-canonical-prefixes
+<compileflags>-std=gnu++0x
+<compileflags>-Wa,--noexecstack
+<compileflags>-DANDROID
+<compileflags>-D__ANDROID__
+<compileflags>-I$(NDK)/platforms/$(NDK_PLATFORM)/arch-arm/usr/include
+<compileflags>-I$(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/include
+<compileflags>-I$(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/libs/armeabi/include
+<linkflags>-no-canonical-prefixes
+# 'Release/ARM' section
+<compileflags>-O2
+<compileflags>-g
+<compileflags>-DNDEBUG
+<compileflags>-fomit-frame-pointer
+<compileflags>-fstrict-aliasing
+<compileflags>-funswitch-loops
+<compileflags>-finline-limit=300
+# 'ARMv5' section
+<compileflags>-march=armv5te
+<compileflags>-mtune=xscale
+<compileflags>-msoft-float
+# Various
+<cxxflags>-D_REENTRANT
+;
+
+# --------------------------------------------------------------------
+
+using gcc : android-armv7a
+:
+$(NDK)/toolchains/arm-linux-androideabi-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)/bin/arm-linux-androideabi-g++
+:
+<archiver>$(NDK)/toolchains/arm-linux-androideabi-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)/bin/arm-linux-androideabi-ar
+<compileflags>-fexceptions
+<compileflags>-frtti
+<compileflags>-Wall
+<compileflags>-fvisibility=hidden
+<compileflags>-fvisibility-inlines-hidden
+<compileflags>-Wno-psabi
+# Configuration taken from $(NDK)/toolchains/arm-linux-androideabi-$(TOOLCHAIN_VERSION)/setup.mk
+<compileflags>-fpic
+<compileflags>-ffunction-sections
+<compileflags>-funwind-tables
+<compileflags>-fstack-protector
+<compileflags>-no-canonical-prefixes
+<compileflags>-std=gnu++0x
+<compileflags>-Wa,--noexecstack
+<compileflags>-DANDROID
+<compileflags>-D__ANDROID__
+<compileflags>-I$(NDK)/platforms/$(NDK_PLATFORM)/arch-arm/usr/include
+<compileflags>-I$(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/include
+<compileflags>-I$(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/libs/armeabi-v7a/include
+<linkflags>-no-canonical-prefixes
+# 'Release/ARM' section
+<compileflags>-O2
+<compileflags>-g
+<compileflags>-DNDEBUG
+<compileflags>-fomit-frame-pointer
+<compileflags>-fstrict-aliasing
+<compileflags>-funswitch-loops
+<compileflags>-finline-limit=300
+# 'ARMv7a' section
+<compileflags>-march=armv7-a
+<compileflags>-mfloat-abi=softfp
+<compileflags>-mfpu=vfpv3-d16
+<linkflags>-march=armv7-a
+<linkflags>-Wl,--fix-cortex-a8
+# Various
+<cxxflags>-D_REENTRANT
+;
+
+# --------------------------------------------------------------------
+
+using gcc : android-armv7a-neon
+:
+$(NDK)/toolchains/arm-linux-androideabi-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)/bin/arm-linux-androideabi-g++
+:
+<archiver>$(NDK)/toolchains/arm-linux-androideabi-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)/bin/arm-linux-androideabi-ar
+<compileflags>-fexceptions
+<compileflags>-frtti
+<compileflags>-Wall
+<compileflags>-fvisibility=hidden
+<compileflags>-fvisibility-inlines-hidden
+<compileflags>-Wno-psabi
+# Configuration taken from $(NDK)/toolchains/arm-linux-androideabi-$(TOOLCHAIN_VERSION)/setup.mk
+<compileflags>-fpic
+<compileflags>-ffunction-sections
+<compileflags>-funwind-tables
+<compileflags>-fstack-protector
+<compileflags>-no-canonical-prefixes
+<compileflags>-std=gnu++0x
+<compileflags>-Wa,--noexecstack
+<compileflags>-DANDROID
+<compileflags>-D__ANDROID__
+<compileflags>-I$(NDK)/platforms/$(NDK_PLATFORM)/arch-arm/usr/include
+<compileflags>-I$(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/include
+<compileflags>-I$(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/libs/armeabi-v7a/include
+<linkflags>-no-canonical-prefixes
+# 'Release/ARM' section
+<compileflags>-O2
+<compileflags>-g
+<compileflags>-DNDEBUG
+<compileflags>-fomit-frame-pointer
+<compileflags>-fstrict-aliasing
+<compileflags>-funswitch-loops
+<compileflags>-finline-limit=300
+# 'ARMv7a-neon' section
+<compileflags>-march=armv7-a
+<compileflags>-mfloat-abi=softfp
+<compileflags>-mfpu=neon
+<linkflags>-march=armv7-a
+<linkflags>-Wl,--fix-cortex-a8
+# Various
+<cxxflags>-D_REENTRANT
+;
+
+# --------------------------------------------------------------------
+
+using gcc : android-mips
+:
+$(NDK)/toolchains/mipsel-linux-android-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)/bin/mipsel-linux-android-g++
+:
+<archiver>$(NDK)/toolchains/mipsel-linux-android-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)/bin/mipsel-linux-android-ar
+<compileflags>-fexceptions
+<compileflags>-frtti
+<compileflags>-Wall
+<compileflags>-fvisibility=hidden
+<compileflags>-fvisibility-inlines-hidden
+<compileflags>-Wno-psabi
+# Configuration taken from $(NDK)/toolchains/mipsel-linux-android-$(TOOLCHAIN_VERSION)/setup.mk
+<compileflags>-fpic
+<compileflags>-fno-strict-aliasing
+<compileflags>-finline-functions
+<compileflags>-ffunction-sections
+<compileflags>-funwind-tables
+<compileflags>-fmessage-length=0
+<compileflags>-fno-inline-functions-called-once
+<compileflags>-fgcse-after-reload
+<compileflags>-frerun-cse-after-loop
+<compileflags>-frename-registers
+<compileflags>-no-canonical-prefixes
+<compileflags>-std=gnu++0x
+<compileflags>-Wa,--noexecstack
+<compileflags>-DANDROID
+<compileflags>-D__ANDROID__
+<compileflags>-I$(NDK)/platforms/$(NDK_PLATFORM)/arch-mips/usr/include
+<compileflags>-I$(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/include
+<compileflags>-I$(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/libs/mips/include
+<linkflags>-no-canonical-prefixes
+# 'Release/MIPS' section
+<compileflags>-O2
+<compileflags>-g
+<compileflags>-DNDEBUG
+<compileflags>-fomit-frame-pointer
+<compileflags>-funswitch-loops
+<compileflags>-finline-limit=300
+# Various
+<cxxflags>-D_REENTRANT
+;
+
+# --------------------------------------------------------------------
+
+using gcc : android-x86
+:
+$(NDK)/toolchains/x86-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)/bin/i686-linux-android-g++
+:
+<archiver>$(NDK)/toolchains/x86-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)/bin/i686-linux-android-ar
+<compileflags>-fexceptions
+<compileflags>-frtti
+<compileflags>-Wall
+<compileflags>-fvisibility=hidden
+<compileflags>-fvisibility-inlines-hidden
+<compileflags>-Wno-psabi
+# Configuration taken from $(NDK)/toolchains/x86-$(TOOLCHAIN_VERSION)/setup.mk
+<compileflags>-ffunction-sections
+<compileflags>-funwind-tables
+<compileflags>-no-canonical-prefixes
+<compileflags>-std=gnu++0x
+<compileflags>-Wa,--noexecstack
+<compileflags>-DANDROID
+<compileflags>-D__ANDROID__
+<compileflags>-I$(NDK)/platforms/$(NDK_PLATFORM)/arch-x86/usr/include
+<compileflags>-I$(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/include
+<compileflags>-I$(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/libs/x86/include
+<linkflags>-no-canonical-prefixes
+# 'Release/x86' section
+<compileflags>-O2
+<compileflags>-g
+<compileflags>-DNDEBUG
+<compileflags>-fomit-frame-pointer
+<compileflags>-fstrict-aliasing
+<compileflags>-funswitch-loops
+<compileflags>-finline-limit=300
+# Various
+<cxxflags>-D_REENTRANT
+;
