@@ -33,224 +33,104 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\OsmAndCore\Data\Model\Amenity.h">
-      <Filter>Header Files\Data\Model</Filter>
+    <ClInclude Include="src\Map\GPUAPI.h">
+      <Filter>Source Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Data\Model\Building.h">
-      <Filter>Header Files\Data\Model</Filter>
+    <ClInclude Include="src\Map\HeightmapTileProvider_P.h">
+      <Filter>Source Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Data\Model\MapObject.h">
-      <Filter>Header Files\Data\Model</Filter>
+    <ClInclude Include="src\Map\MapAnimator_P.h">
+      <Filter>Source Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Data\Model\PostcodeArea.h">
-      <Filter>Header Files\Data\Model</Filter>
+    <ClInclude Include="src\Map\MapRendererResources.h">
+      <Filter>Source Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Data\Model\Road.h">
-      <Filter>Header Files\Data\Model</Filter>
+    <ClInclude Include="src\Map\MapStyleEvaluationResult_P.h">
+      <Filter>Source Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Data\Model\Settlement.h">
-      <Filter>Header Files\Data\Model</Filter>
+    <ClInclude Include="src\Map\MapStyleEvaluator_P.h">
+      <Filter>Source Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Data\Model\Street.h">
-      <Filter>Header Files\Data\Model</Filter>
+    <ClInclude Include="src\Map\MapStyleRule_P.h">
+      <Filter>Source Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Data\Model\StreetGroup.h">
-      <Filter>Header Files\Data\Model</Filter>
+    <ClInclude Include="src\Map\OfflineMapDataProvider_P.h">
+      <Filter>Source Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Data\Model\StreetIntersection.h">
-      <Filter>Header Files\Data\Model</Filter>
+    <ClInclude Include="src\Map\OfflineMapDataTile_P.h">
+      <Filter>Source Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="src\Data\ObfAddressSectionReader_P.h">
-      <Filter>Header Files\Data</Filter>
+    <ClInclude Include="src\Map\OfflineMapRasterTileProvider_GPU_P.h">
+      <Filter>Source Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="src\Data\ObfDataInterface_P.h">
-      <Filter>Header Files\Data</Filter>
+    <ClInclude Include="src\Map\OfflineMapRasterTileProvider_Software_P.h">
+      <Filter>Source Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="src\Data\ObfFile_P.h">
-      <Filter>Header Files\Data</Filter>
+    <ClInclude Include="src\Map\OfflineMapSymbolProvider_P.h">
+      <Filter>Source Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="src\Data\ObfMapSectionInfo_P.h">
-      <Filter>Header Files\Data</Filter>
+    <ClInclude Include="src\Map\RasterizerSharedContext_P.h">
+      <Filter>Source Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="src\Data\ObfMapSectionReader_P.h">
-      <Filter>Header Files\Data</Filter>
+    <ClInclude Include="include\OsmAndCore\Common.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Data\ObfPoiSectionReader_P.h">
-      <Filter>Header Files\Data</Filter>
+    <ClInclude Include="include\OsmAndCore\CommonTypes.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Data\ObfReader_P.h">
-      <Filter>Header Files\Data</Filter>
+    <ClInclude Include="include\OsmAndCore\Concurrent.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Data\ObfReaderUtilities.h">
-      <Filter>Header Files\Data</Filter>
+    <ClInclude Include="include\OsmAndCore\EmbeddedResources.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Data\ObfRoutingSectionInfo_P.h">
-      <Filter>Header Files\Data</Filter>
+    <ClInclude Include="include\OsmAndCore\IExternalResourcesProvider.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Data\ObfRoutingSectionReader_P.h">
-      <Filter>Header Files\Data</Filter>
+    <ClInclude Include="include\OsmAndCore\IQueryController.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Data\ObfsCollection_P.h">
-      <Filter>Header Files\Data</Filter>
+    <ClInclude Include="include\OsmAndCore\IQueryFilter.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Data\ObfTransportSectionReader_P.h">
-      <Filter>Header Files\Data</Filter>
+    <ClInclude Include="include\OsmAndCore\LambdaQueryFilter.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Data\ObfAddressSectionInfo.h">
-      <Filter>Header Files\Data</Filter>
+    <ClInclude Include="include\OsmAndCore\Logging.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Data\ObfAddressSectionReader.h">
-      <Filter>Header Files\Data</Filter>
+    <ClInclude Include="include\OsmAndCore\Network.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Data\ObfDataInterface.h">
-      <Filter>Header Files\Data</Filter>
+    <ClInclude Include="include\OsmAndCore\PlainQueryFilter.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Data\ObfFile.h">
-      <Filter>Header Files\Data</Filter>
+    <ClInclude Include="include\OsmAndCore\QFileDeviceInputStream.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Data\ObfInfo.h">
-      <Filter>Header Files\Data</Filter>
+    <ClInclude Include="include\OsmAndCore\QIODeviceInputStream.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Data\ObfMapSectionInfo.h">
-      <Filter>Header Files\Data</Filter>
+    <ClInclude Include="include\OsmAndCore\QtExtensions.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Data\ObfMapSectionReader.h">
-      <Filter>Header Files\Data</Filter>
+    <ClInclude Include="include\OsmAndCore\SharedByZoomResourcesContainer.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Data\ObfPoiSectionInfo.h">
-      <Filter>Header Files\Data</Filter>
+    <ClInclude Include="include\OsmAndCore\SharedResourcesContainer.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Data\ObfPoiSectionReader.h">
-      <Filter>Header Files\Data</Filter>
+    <ClInclude Include="include\OsmAndCore\stdlib_common.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Data\ObfReader.h">
-      <Filter>Header Files\Data</Filter>
+    <ClInclude Include="include\OsmAndCore\TileDB.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Data\ObfRoutingSectionInfo.h">
-      <Filter>Header Files\Data</Filter>
+    <ClInclude Include="include\OsmAndCore\TilesCollection.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Data\ObfRoutingSectionReader.h">
-      <Filter>Header Files\Data</Filter>
-    </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Data\ObfsCollection.h">
-      <Filter>Header Files\Data</Filter>
-    </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Data\ObfSectionInfo.h">
-      <Filter>Header Files\Data</Filter>
-    </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Data\ObfTransportSectionInfo.h">
-      <Filter>Header Files\Data</Filter>
-    </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Data\ObfTransportSectionReader.h">
-      <Filter>Header Files\Data</Filter>
-    </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Map\HeightmapTileProvider.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Map\HillshadeTileProvider.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Map\IMapBitmapTileProvider.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Map\IMapElevationDataProvider.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Map\IMapRenderer.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Map\IMapTileProvider.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Map\MapRendererConfiguration.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Map\MapRendererSetupOptions.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Map\MapRendererState.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Map\MapStyle.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Map\MapStyleBuiltinValueDefinitions.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Map\MapStyleConfigurableInputValue.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Map\MapStyleEvaluator.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Map\MapStyleRule.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Map\MapStyles.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Map\MapStyleValueDefinition.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Map\MapTypes.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Map\OfflineMapDataProvider.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Map\OfflineMapRasterTileProvider.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Map\OnlineMapRasterTileProvider.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Map\Rasterizer.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Map\RasterizerContext.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Map\RasterizerEnvironment.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Map\AtlasMapRenderer.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Map\GlobeMapRenderer.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Map\MapRenderer.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Map\MapStyle_P.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Map\MapStyles_P.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Map\OfflineMapRasterTileProvider_P.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Map\OnlineMapRasterTileProvider_P.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Map\Rasterizer_P.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Map\RasterizerContext_P.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Map\RasterizerEnvironment_P.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Map\RenderAPI.h">
-      <Filter>Header Files\Map</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Routing\RoutingConfiguration_private.h">
-      <Filter>Header Files\Routing</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Routing\RoutingRuleExpression_Operators.h">
-      <Filter>Header Files\Routing</Filter>
+    <ClInclude Include="include\OsmAndCore\Utilities.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\OsmAndCore\Routing\RoutePlanner.h">
       <Filter>Header Files\Routing</Filter>
@@ -282,94 +162,460 @@
     <ClInclude Include="include\OsmAndCore\Routing\TurnInfo.h">
       <Filter>Header Files\Routing</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Common.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\OsmAndCore\Map\HeightmapTileProvider.h">
+      <Filter>Header Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\CommonTypes.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\OsmAndCore\Map\HillshadeTileProvider.h">
+      <Filter>Header Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Concurrent.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\OsmAndCore\Map\IMapBitmapTileProvider.h">
+      <Filter>Header Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\EmbeddedResources.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\OsmAndCore\Map\IMapElevationDataProvider.h">
+      <Filter>Header Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\IQueryController.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\OsmAndCore\Map\IMapProvider.h">
+      <Filter>Header Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\IQueryFilter.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\OsmAndCore\Map\IMapRenderer.h">
+      <Filter>Header Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\LambdaQueryFilter.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\OsmAndCore\Map\IMapSymbolProvider.h">
+      <Filter>Header Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Logging.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\OsmAndCore\Map\IMapTileProvider.h">
+      <Filter>Header Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\PlainQueryFilter.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\OsmAndCore\Map\IRetainableResource.h">
+      <Filter>Header Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\QZeroCopyInputStream.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\OsmAndCore\Map\MapAnimator.h">
+      <Filter>Header Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\TileDB.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\OsmAndCore\Map\MapRendererConfiguration.h">
+      <Filter>Header Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\TilesCollection.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\OsmAndCore\Map\MapRendererSetupOptions.h">
+      <Filter>Header Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore\Utilities.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\OsmAndCore\Map\MapRendererState.h">
+      <Filter>Header Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="include\OsmAndCore.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\OsmAndCore\Map\MapRendererTypes.h">
+      <Filter>Header Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="src\EmbeddedResources_private.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\OsmAndCore\Map\MapStyle.h">
+      <Filter>Header Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="src\ExplicitReferences.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\OsmAndCore\Map\MapStyleBuiltinValueDefinitions.h">
+      <Filter>Header Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="src\OsmAndCore_private.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\OsmAndCore\Map\MapStyleBuiltinValueDefinitions_Set.h">
+      <Filter>Header Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="src\QMainThreadTaskEvent.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\OsmAndCore\Map\MapStyleConfigurableInputValue.h">
+      <Filter>Header Files\Map</Filter>
     </ClInclude>
-    <ClInclude Include="src\QMainThreadTaskHost.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\OsmAndCore\Map\MapStyleEvaluationResult.h">
+      <Filter>Header Files\Map</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Map\MapStyleEvaluator.h">
+      <Filter>Header Files\Map</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Map\MapStyleRule.h">
+      <Filter>Header Files\Map</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Map\MapStyles.h">
+      <Filter>Header Files\Map</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Map\MapStyleValue.h">
+      <Filter>Header Files\Map</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Map\MapStyleValueDefinition.h">
+      <Filter>Header Files\Map</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Map\MapTypes.h">
+      <Filter>Header Files\Map</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Map\OfflineMapDataProvider.h">
+      <Filter>Header Files\Map</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Map\OfflineMapDataTile.h">
+      <Filter>Header Files\Map</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Map\OfflineMapRasterTileProvider_GPU.h">
+      <Filter>Header Files\Map</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Map\OfflineMapRasterTileProvider_Software.h">
+      <Filter>Header Files\Map</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Map\OfflineMapSymbolProvider.h">
+      <Filter>Header Files\Map</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Map\OnlineMapRasterTileProvider.h">
+      <Filter>Header Files\Map</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Map\RasterizedSymbol.h">
+      <Filter>Header Files\Map</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Map\RasterizedSymbolsGroup.h">
+      <Filter>Header Files\Map</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Map\Rasterizer.h">
+      <Filter>Header Files\Map</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Map\Rasterizer_Metrics.h">
+      <Filter>Header Files\Map</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Map\RasterizerContext.h">
+      <Filter>Header Files\Map</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Map\RasterizerEnvironment.h">
+      <Filter>Header Files\Map</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Map\RasterizerSharedContext.h">
+      <Filter>Header Files\Map</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Data\DataTypes.h">
+      <Filter>Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Data\ObfAddressSectionInfo.h">
+      <Filter>Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Data\ObfAddressSectionReader.h">
+      <Filter>Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Data\ObfDataInterface.h">
+      <Filter>Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Data\ObfFile.h">
+      <Filter>Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Data\ObfInfo.h">
+      <Filter>Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Data\ObfMapSectionInfo.h">
+      <Filter>Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Data\ObfMapSectionReader.h">
+      <Filter>Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Data\ObfMapSectionReader_Metrics.h">
+      <Filter>Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Data\ObfPoiSectionInfo.h">
+      <Filter>Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Data\ObfPoiSectionReader.h">
+      <Filter>Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Data\ObfReader.h">
+      <Filter>Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Data\ObfRoutingSectionInfo.h">
+      <Filter>Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Data\ObfRoutingSectionReader.h">
+      <Filter>Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Data\ObfsCollection.h">
+      <Filter>Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Data\ObfSectionInfo.h">
+      <Filter>Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Data\ObfTransportSectionInfo.h">
+      <Filter>Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Data\ObfTransportSectionReader.h">
+      <Filter>Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Data\Model\Amenity.h">
+      <Filter>Header Files\Data\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Data\Model\AmenityCategory.h">
+      <Filter>Header Files\Data\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Data\Model\Building.h">
+      <Filter>Header Files\Data\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Data\Model\MapObject.h">
+      <Filter>Header Files\Data\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Data\Model\PostcodeArea.h">
+      <Filter>Header Files\Data\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Data\Model\Road.h">
+      <Filter>Header Files\Data\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Data\Model\Settlement.h">
+      <Filter>Header Files\Data\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Data\Model\Street.h">
+      <Filter>Header Files\Data\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Data\Model\StreetGroup.h">
+      <Filter>Header Files\Data\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OsmAndCore\Data\Model\StreetIntersection.h">
+      <Filter>Header Files\Data\Model</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Data\Model\Amenity.cpp">
-      <Filter>Source Files\Data\Model</Filter>
+    <ClCompile Include="src\Concurrent.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Data\Model\AmenityCategory.cpp">
-      <Filter>Source Files\Data\Model</Filter>
+    <ClCompile Include="src\EmbeddedResources.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Data\Model\Building.cpp">
-      <Filter>Source Files\Data\Model</Filter>
+    <ClCompile Include="src\ExplicitReferences.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Data\Model\MapObject.cpp">
-      <Filter>Source Files\Data\Model</Filter>
+    <ClCompile Include="src\IExternalResourcesProvider.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Data\Model\PostcodeArea.cpp">
-      <Filter>Source Files\Data\Model</Filter>
+    <ClCompile Include="src\IQueryController.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Data\Model\Road.cpp">
-      <Filter>Source Files\Data\Model</Filter>
+    <ClCompile Include="src\IQueryFilter.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Data\Model\Settlement.cpp">
-      <Filter>Source Files\Data\Model</Filter>
+    <ClCompile Include="src\LambdaQueryFilter.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Data\Model\Street.cpp">
-      <Filter>Source Files\Data\Model</Filter>
+    <ClCompile Include="src\Logging.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Data\Model\StreetGroup.cpp">
-      <Filter>Source Files\Data\Model</Filter>
+    <ClCompile Include="src\Network.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Data\Model\StreetIntersection.cpp">
-      <Filter>Source Files\Data\Model</Filter>
+    <ClCompile Include="src\OsmAndCore.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PlainQueryFilter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\QFileDeviceInputStream.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\QIODeviceInputStream.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\QMainThreadTaskEvent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\QMainThreadTaskHost.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TileDB.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Utilities.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Routing\RoutePlanner.cpp">
+      <Filter>Source Files\Routing</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Routing\RoutePlanner_Analyzer.cpp">
+      <Filter>Source Files\Routing</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Routing\RoutePlannerContext.cpp">
+      <Filter>Source Files\Routing</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Routing\RouteSegment.cpp">
+      <Filter>Source Files\Routing</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Routing\RoutingConfiguration.cpp">
+      <Filter>Source Files\Routing</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Routing\RoutingProfile.cpp">
+      <Filter>Source Files\Routing</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Routing\RoutingProfileContext.cpp">
+      <Filter>Source Files\Routing</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Routing\RoutingRuleExpression.cpp">
+      <Filter>Source Files\Routing</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Routing\RoutingRuleExpression_Operators.cpp">
+      <Filter>Source Files\Routing</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Routing\RoutingRuleset.cpp">
+      <Filter>Source Files\Routing</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Routing\RoutingRulesetContext.cpp">
+      <Filter>Source Files\Routing</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Routing\TurnInfo.cpp">
+      <Filter>Source Files\Routing</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\AtlasMapRenderer.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\GlobeMapRenderer.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\GPUAPI.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\HeightmapTileProvider.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\HeightmapTileProvider_P.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\HillshadeTileProvider.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\IMapBitmapTileProvider.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\IMapElevationDataProvider.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\IMapProvider.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\IMapRenderer.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\IMapSymbolProvider.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\IMapTileProvider.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\IRetainableResource.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\MapAnimator.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\MapAnimator_P.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\MapRenderer.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\MapRendererConfiguration.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\MapRendererResources.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\MapRendererSetupOptions.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\MapRendererState.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\MapStyle.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\MapStyle_P.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\MapStyleBuiltinValueDefinitions.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\MapStyleConfigurableInputValue.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\MapStyleEvaluationResult.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\MapStyleEvaluationResult_P.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\MapStyleEvaluator.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\MapStyleEvaluator_P.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\MapStyleRule.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\MapStyleRule_P.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\MapStyles.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\MapStyles_P.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\MapStyleValue.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\MapStyleValueDefinition.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\OfflineMapDataProvider.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\OfflineMapDataProvider_P.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\OfflineMapDataTile.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\OfflineMapDataTile_P.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\OfflineMapRasterTileProvider_GPU.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\OfflineMapRasterTileProvider_GPU_P.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\OfflineMapRasterTileProvider_Software.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\OfflineMapRasterTileProvider_Software_P.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\OfflineMapSymbolProvider.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\OfflineMapSymbolProvider_P.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\OnlineMapRasterTileProvider.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\OnlineMapRasterTileProvider_P.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\RasterizedSymbol.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\RasterizedSymbolsGroup.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\Rasterizer.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\Rasterizer_P.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\RasterizerContext.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\RasterizerContext_P.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\RasterizerEnvironment.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\RasterizerEnvironment_P.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\RasterizerSharedContext.cpp">
+      <Filter>Source Files\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map\RasterizerSharedContext_P.cpp">
+      <Filter>Source Files\Map</Filter>
     </ClCompile>
     <ClCompile Include="src\Data\ObfAddressSectionInfo.cpp">
       <Filter>Source Files\Data</Filter>
@@ -455,185 +701,35 @@
     <ClCompile Include="src\Data\ObfTransportSectionReader_P.cpp">
       <Filter>Source Files\Data</Filter>
     </ClCompile>
-    <ClCompile Include="src\Map\AtlasMapRenderer.cpp">
-      <Filter>Source Files\Map</Filter>
+    <ClCompile Include="src\Data\Model\Amenity.cpp">
+      <Filter>Source Files\Data\Model</Filter>
     </ClCompile>
-    <ClCompile Include="src\Map\GlobeMapRenderer.cpp">
-      <Filter>Source Files\Map</Filter>
+    <ClCompile Include="src\Data\Model\AmenityCategory.cpp">
+      <Filter>Source Files\Data\Model</Filter>
     </ClCompile>
-    <ClCompile Include="src\Map\HeightmapTileProvider.cpp">
-      <Filter>Source Files\Map</Filter>
+    <ClCompile Include="src\Data\Model\Building.cpp">
+      <Filter>Source Files\Data\Model</Filter>
     </ClCompile>
-    <ClCompile Include="src\Map\HillshadeTileProvider.cpp">
-      <Filter>Source Files\Map</Filter>
+    <ClCompile Include="src\Data\Model\MapObject.cpp">
+      <Filter>Source Files\Data\Model</Filter>
     </ClCompile>
-    <ClCompile Include="src\Map\IMapBitmapTileProvider.cpp">
-      <Filter>Source Files\Map</Filter>
+    <ClCompile Include="src\Data\Model\PostcodeArea.cpp">
+      <Filter>Source Files\Data\Model</Filter>
     </ClCompile>
-    <ClCompile Include="src\Map\IMapElevationDataProvider.cpp">
-      <Filter>Source Files\Map</Filter>
+    <ClCompile Include="src\Data\Model\Road.cpp">
+      <Filter>Source Files\Data\Model</Filter>
     </ClCompile>
-    <ClCompile Include="src\Map\IMapRenderer.cpp">
-      <Filter>Source Files\Map</Filter>
+    <ClCompile Include="src\Data\Model\Settlement.cpp">
+      <Filter>Source Files\Data\Model</Filter>
     </ClCompile>
-    <ClCompile Include="src\Map\IMapTileProvider.cpp">
-      <Filter>Source Files\Map</Filter>
+    <ClCompile Include="src\Data\Model\Street.cpp">
+      <Filter>Source Files\Data\Model</Filter>
     </ClCompile>
-    <ClCompile Include="src\Map\MapRenderer.cpp">
-      <Filter>Source Files\Map</Filter>
+    <ClCompile Include="src\Data\Model\StreetGroup.cpp">
+      <Filter>Source Files\Data\Model</Filter>
     </ClCompile>
-    <ClCompile Include="src\Map\MapRendererConfiguration.cpp">
-      <Filter>Source Files\Map</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Map\MapRendererSetupOptions.cpp">
-      <Filter>Source Files\Map</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Map\MapRendererState.cpp">
-      <Filter>Source Files\Map</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Map\MapStyle.cpp">
-      <Filter>Source Files\Map</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Map\MapStyle_P.cpp">
-      <Filter>Source Files\Map</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Map\MapStyleBuiltinValueDefinitions.cpp">
-      <Filter>Source Files\Map</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Map\MapStyleConfigurableInputValue.cpp">
-      <Filter>Source Files\Map</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Map\MapStyleEvaluator.cpp">
-      <Filter>Source Files\Map</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Map\MapStyleRule.cpp">
-      <Filter>Source Files\Map</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Map\MapStyles.cpp">
-      <Filter>Source Files\Map</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Map\MapStyles_P.cpp">
-      <Filter>Source Files\Map</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Map\MapStyleValueDefinition.cpp">
-      <Filter>Source Files\Map</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Map\OfflineMapDataProvider.cpp">
-      <Filter>Source Files\Map</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Map\OfflineMapRasterTileProvider.cpp">
-      <Filter>Source Files\Map</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Map\OfflineMapRasterTileProvider_P.cpp">
-      <Filter>Source Files\Map</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Map\OnlineMapRasterTileProvider.cpp">
-      <Filter>Source Files\Map</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Map\OnlineMapRasterTileProvider_P.cpp">
-      <Filter>Source Files\Map</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Map\Rasterizer.cpp">
-      <Filter>Source Files\Map</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Map\Rasterizer_P.cpp">
-      <Filter>Source Files\Map</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Map\RasterizerContext.cpp">
-      <Filter>Source Files\Map</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Map\RasterizerContext_P.cpp">
-      <Filter>Source Files\Map</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Map\RasterizerEnvironment.cpp">
-      <Filter>Source Files\Map</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Map\RasterizerEnvironment_P.cpp">
-      <Filter>Source Files\Map</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Map\RenderAPI.cpp">
-      <Filter>Source Files\Map</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Routing\RoutePlanner.cpp">
-      <Filter>Source Files\Routing</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Routing\RoutePlanner_Analyzer.cpp">
-      <Filter>Source Files\Routing</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Routing\RoutePlannerContext.cpp">
-      <Filter>Source Files\Routing</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Routing\RouteSegment.cpp">
-      <Filter>Source Files\Routing</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Routing\RoutingConfiguration.cpp">
-      <Filter>Source Files\Routing</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Routing\RoutingProfile.cpp">
-      <Filter>Source Files\Routing</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Routing\RoutingProfileContext.cpp">
-      <Filter>Source Files\Routing</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Routing\RoutingRuleExpression.cpp">
-      <Filter>Source Files\Routing</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Routing\RoutingRuleExpression_Operators.cpp">
-      <Filter>Source Files\Routing</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Routing\RoutingRuleset.cpp">
-      <Filter>Source Files\Routing</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Routing\RoutingRulesetContext.cpp">
-      <Filter>Source Files\Routing</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Routing\TurnInfo.cpp">
-      <Filter>Source Files\Routing</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Concurrent.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\EmbeddedResources.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\ExplicitReferences.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\IQueryController.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\IQueryFilter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\LambdaQueryFilter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Logging.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\OsmAndCore.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\PlainQueryFilter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\QMainThreadTaskEvent.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\QMainThreadTaskHost.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\QZeroCopyInputStream.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\TileDB.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\TilesCollection.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Utilities.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\Data\Model\StreetIntersection.cpp">
+      <Filter>Source Files\Data\Model</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

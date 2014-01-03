@@ -1,0 +1,1965 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{02a9f442-a95d-49f6-b1ab-5905569a952f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\core">
+      <UniqueIdentifier>{5167d663-b8c8-450c-bee1-897068087735}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\effects">
+      <UniqueIdentifier>{c7101a35-758a-4bb9-b672-bc92a5851ee6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\effects\gradients">
+      <UniqueIdentifier>{73202929-5def-44f1-a222-d9c6554de5f3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\image">
+      <UniqueIdentifier>{b98f9fcf-dcad-470d-97e9-f0f9a3d78daf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\images">
+      <UniqueIdentifier>{a1be9d7a-a863-432c-a9fd-0abf215987d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\gpu">
+      <UniqueIdentifier>{e4444b8e-0eb0-42dc-9440-5531efc0ceb7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\gpu\effects">
+      <UniqueIdentifier>{db1092fc-c11e-4ae6-ba5b-40f800af99e7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\gpu\gl">
+      <UniqueIdentifier>{6994f872-d3ae-45a8-b504-14e05745cf8e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ports">
+      <UniqueIdentifier>{b8c81356-9017-43d1-ab11-a7a9dba9215d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\pipe">
+      <UniqueIdentifier>{5a6128ab-2cdb-4398-aa9f-67d81a664f97}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\pathops">
+      <UniqueIdentifier>{9586cdcc-0945-4aa0-bb82-46be659e6d55}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\utils">
+      <UniqueIdentifier>{631b01d8-7a40-4d96-9efa-840f703c2fce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\sfnt">
+      <UniqueIdentifier>{b3d26d28-2e46-4967-8da4-3b9c6ecddf89}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src_specific">
+      <UniqueIdentifier>{71c1f731-2e16-4090-b3fe-1c4c70eb2f4b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src_specific\ports">
+      <UniqueIdentifier>{8da5f9ce-ce04-44f4-a1c3-e08113afd5ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src_specific\opts">
+      <UniqueIdentifier>{e3fce08c-792b-4860-8c18-63465242c605}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src_specific\utils">
+      <UniqueIdentifier>{46bc3087-e2a2-4e7f-96ca-31882efe56c9}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="upstream.patched\src\core\ARGB32_Clamp_Bilinear_BitmapShader.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkAAClip.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkAntiRun.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkAutoKern.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkBBoxHierarchy.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkBBoxHierarchyRecord.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkBBoxRecord.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkBitmapFilter.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkBitmapHeap.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkBitmapProcShader.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkBitmapProcState.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkBitmapProcState_filter.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkBitmapProcState_matrix.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkBitmapProcState_procs.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkBitmapProcState_sample.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkBitmapProcState_shaderproc.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkBitmapProcState_utils.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkBitmapScaler.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkBitmapShader16BilerpTemplate.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkBitmapShaderTemplate.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkBlitBWMaskTemplate.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkBlitMask.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkBlitter.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkBuffer.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkConfig8888.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkConvolver.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkCordic.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkCoreBlitters.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkCubicClipper.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkDescriptor.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkDeviceImageFilterProxy.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkDeviceLooper.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkDeviceProfile.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkDiscardableMemory.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkDrawProcs.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkEdge.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkEdgeBuilder.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkEdgeClipper.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkErrorInternals.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkFDot6.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkFilterProc.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkFilterShader.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkFloat.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkFontDescriptor.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkFontStream.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkFP.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkGlyph.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkGlyphCache.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkMaskGamma.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkMathPriv.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkMatrixUtils.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkMipMap.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkOrderedReadBuffer.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkOrderedWriteBuffer.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkPaintDefaults.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkPaintPriv.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkPathHeap.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkPathRef.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkPerspIter.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkPictureFlat.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkPicturePlayback.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkPictureRecord.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkPictureStateTree.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkPtrRecorder.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkQuadClipper.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkRasterClip.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkRefDict.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkRegionPriv.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkRTree.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkScaledImageCache.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkScalerContext.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkScan.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkScanPriv.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkSinTable.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkSpriteBlitter.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkSpriteBlitterTemplate.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkStroke.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkStrokerPriv.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkTDynamicHash.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkTemplatesPriv.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkTextFormatParams.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkTextToPathIter.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkTileGrid.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkTLList.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkTLS.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkTRefArray.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkTSort.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkTypefaceCache.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkTypefacePriv.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\core\SkUtilsArm.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\effects\SkBlurMask.h">
+      <Filter>src\effects</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\effects\SkEmbossMask.h">
+      <Filter>src\effects</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\effects\SkEmbossMask_Table.h">
+      <Filter>src\effects</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\effects\SkGpuBlurUtils.h">
+      <Filter>src\effects</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\effects\gradients\SkBitmapCache.h">
+      <Filter>src\effects\gradients</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\effects\gradients\SkClampRange.h">
+      <Filter>src\effects\gradients</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\effects\gradients\SkGradientShaderPriv.h">
+      <Filter>src\effects\gradients</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\effects\gradients\SkLinearGradient.h">
+      <Filter>src\effects\gradients</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\effects\gradients\SkRadialGradient.h">
+      <Filter>src\effects\gradients</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\effects\gradients\SkRadialGradient_Table.h">
+      <Filter>src\effects\gradients</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\effects\gradients\SkSweepGradient.h">
+      <Filter>src\effects\gradients</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\effects\gradients\SkTwoPointConicalGradient.h">
+      <Filter>src\effects\gradients</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\effects\gradients\SkTwoPointRadialGradient.h">
+      <Filter>src\effects\gradients</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\image\SkDataPixelRef.h">
+      <Filter>src\image</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\image\SkImage_Base.h">
+      <Filter>src\image</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\image\SkImagePriv.h">
+      <Filter>src\image</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\image\SkSurface_Base.h">
+      <Filter>src\image</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\images\bmpdecoderhelper.h">
+      <Filter>src\images</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\images\SkImageRefPool.h">
+      <Filter>src\images</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\images\SkJpegUtility.h">
+      <Filter>src\images</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\images\SkScaledBitmapSampler.h">
+      <Filter>src\images</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\images\SkStreamHelpers.h">
+      <Filter>src\images</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\images\transform_scanline.h">
+      <Filter>src\images</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\sfnt\SkIBMFamilyClass.h">
+      <Filter>src\sfnt</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\sfnt\SkOTTable_glyf.h">
+      <Filter>src\sfnt</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\sfnt\SkOTTable_head.h">
+      <Filter>src\sfnt</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\sfnt\SkOTTable_hhea.h">
+      <Filter>src\sfnt</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\sfnt\SkOTTable_loca.h">
+      <Filter>src\sfnt</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\sfnt\SkOTTable_maxp.h">
+      <Filter>src\sfnt</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\sfnt\SkOTTable_maxp_CFF.h">
+      <Filter>src\sfnt</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\sfnt\SkOTTable_maxp_TT.h">
+      <Filter>src\sfnt</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\sfnt\SkOTTable_name.h">
+      <Filter>src\sfnt</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\sfnt\SkOTTable_OS_2.h">
+      <Filter>src\sfnt</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\sfnt\SkOTTable_OS_2_V0.h">
+      <Filter>src\sfnt</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\sfnt\SkOTTable_OS_2_V1.h">
+      <Filter>src\sfnt</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\sfnt\SkOTTable_OS_2_V2.h">
+      <Filter>src\sfnt</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\sfnt\SkOTTable_OS_2_V3.h">
+      <Filter>src\sfnt</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\sfnt\SkOTTable_OS_2_V4.h">
+      <Filter>src\sfnt</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\sfnt\SkOTTable_OS_2_VA.h">
+      <Filter>src\sfnt</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\sfnt\SkOTTable_post.h">
+      <Filter>src\sfnt</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\sfnt\SkOTTableTypes.h">
+      <Filter>src\sfnt</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\sfnt\SkOTUtils.h">
+      <Filter>src\sfnt</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\sfnt\SkPanose.h">
+      <Filter>src\sfnt</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\sfnt\SkPreprocessorSeq.h">
+      <Filter>src\sfnt</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\sfnt\SkSFNTHeader.h">
+      <Filter>src\sfnt</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\sfnt\SkTTCFHeader.h">
+      <Filter>src\sfnt</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\sfnt\SkTypedEnum.h">
+      <Filter>src\sfnt</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\pathops\SkAddIntersections.h">
+      <Filter>src\pathops</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\pathops\SkDQuadImplicit.h">
+      <Filter>src\pathops</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\pathops\SkIntersectionHelper.h">
+      <Filter>src\pathops</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\pathops\SkIntersections.h">
+      <Filter>src\pathops</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\pathops\SkLineParameters.h">
+      <Filter>src\pathops</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\pathops\SkOpAngle.h">
+      <Filter>src\pathops</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\pathops\SkOpContour.h">
+      <Filter>src\pathops</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\pathops\SkOpEdgeBuilder.h">
+      <Filter>src\pathops</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\pathops\SkOpSegment.h">
+      <Filter>src\pathops</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\pathops\SkOpSpan.h">
+      <Filter>src\pathops</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\pathops\SkPathOpsBounds.h">
+      <Filter>src\pathops</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\pathops\SkPathOpsCommon.h">
+      <Filter>src\pathops</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\pathops\SkPathOpsCubic.h">
+      <Filter>src\pathops</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\pathops\SkPathOpsCurve.h">
+      <Filter>src\pathops</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\pathops\SkPathOpsDebug.h">
+      <Filter>src\pathops</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\pathops\SkPathOpsLine.h">
+      <Filter>src\pathops</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\pathops\SkPathOpsPoint.h">
+      <Filter>src\pathops</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\pathops\SkPathOpsQuad.h">
+      <Filter>src\pathops</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\pathops\SkPathOpsRect.h">
+      <Filter>src\pathops</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\pathops\SkPathOpsSpan.h">
+      <Filter>src\pathops</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\pathops\SkPathOpsTriangle.h">
+      <Filter>src\pathops</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\pathops\SkPathOpsTypes.h">
+      <Filter>src\pathops</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\pathops\SkPathWriter.h">
+      <Filter>src\pathops</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\pathops\SkQuarticRoot.h">
+      <Filter>src\pathops</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\pathops\SkReduceOrder.h">
+      <Filter>src\pathops</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrAAConvexPathRenderer.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrAAHairLinePathRenderer.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrAARectRenderer.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrAllocator.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrAllocPool.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrAtlas.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrBinHashKey.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrBlend.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrBufferAllocPool.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrClipMaskCache.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrClipMaskManager.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrDefaultPathRenderer.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrDrawState.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrDrawTarget.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrDrawTargetCaps.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrGeometryBuffer.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrGpu.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrIndexBuffer.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrInOrderDrawBuffer.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrMemoryPool.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrOvalRenderer.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrPath.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrPathRenderer.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrPathUtils.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrPlotMgr.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrRectanizer.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrRedBlackTree.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrReducedClip.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrResourceCache.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrSoftwarePathRenderer.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrStencil.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrStencilAndCoverPathRenderer.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrStencilBuffer.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrSWMaskHelper.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrTBSearch.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrTemplates.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrTest.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrTextStrike.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrTextStrike_impl.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrTHashCache.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\GrVertexBuffer.h">
+      <Filter>src\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\effects\Gr1DKernelEffect.h">
+      <Filter>src\gpu\effects</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\effects\GrBezierEffect.h">
+      <Filter>src\gpu\effects</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\effects\GrBicubicEffect.h">
+      <Filter>src\gpu\effects</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\effects\GrConfigConversionEffect.h">
+      <Filter>src\gpu\effects</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\effects\GrConvolutionEffect.h">
+      <Filter>src\gpu\effects</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\effects\GrSimpleTextureEffect.h">
+      <Filter>src\gpu\effects</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\effects\GrSingleTextureEffect.h">
+      <Filter>src\gpu\effects</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\effects\GrTextureDomainEffect.h">
+      <Filter>src\gpu\effects</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\effects\GrTextureStripAtlas.h">
+      <Filter>src\gpu\effects</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\gl\GrGLBufferImpl.h">
+      <Filter>src\gpu\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\gl\GrGLCaps.h">
+      <Filter>src\gpu\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\gl\GrGLContext.h">
+      <Filter>src\gpu\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\gl\GrGLDefines.h">
+      <Filter>src\gpu\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\gl\GrGLEffect.h">
+      <Filter>src\gpu\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\gl\GrGLEffectMatrix.h">
+      <Filter>src\gpu\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\gl\GrGLIndexBuffer.h">
+      <Filter>src\gpu\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\gl\GrGLIRect.h">
+      <Filter>src\gpu\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\gl\GrGLNoOpInterface.h">
+      <Filter>src\gpu\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\gl\GrGLPath.h">
+      <Filter>src\gpu\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\gl\GrGLProgram.h">
+      <Filter>src\gpu\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\gl\GrGLProgramDesc.h">
+      <Filter>src\gpu\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\gl\GrGLRenderTarget.h">
+      <Filter>src\gpu\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\gl\GrGLShaderBuilder.h">
+      <Filter>src\gpu\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\gl\GrGLShaderVar.h">
+      <Filter>src\gpu\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\gl\GrGLSL.h">
+      <Filter>src\gpu\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\gl\GrGLSL_impl.h">
+      <Filter>src\gpu\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\gl\GrGLStencilBuffer.h">
+      <Filter>src\gpu\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\gl\GrGLTexture.h">
+      <Filter>src\gpu\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\gl\GrGLUniformHandle.h">
+      <Filter>src\gpu\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\gl\GrGLUniformManager.h">
+      <Filter>src\gpu\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\gl\GrGLUtil.h">
+      <Filter>src\gpu\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\gl\GrGLVertexArray.h">
+      <Filter>src\gpu\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\gl\GrGLVertexBuffer.h">
+      <Filter>src\gpu\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\gpu\gl\GrGpuGL.h">
+      <Filter>src\gpu\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\utils\SkBase64.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\utils\SkBitmapHasher.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\utils\SkBitSet.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\utils\SkCanvasStack.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\utils\SkDebugTrace.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\utils\SkFloatUtils.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\utils\SkMD5.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\utils\SkSHA1.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\utils\SkTFitsIn.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\utils\SkThreadUtils.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\utils\SkTLogic.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="upstream.patched\src\utils\SkThreadUtils_win.h">
+      <Filter>src_specific\utils</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="upstream.patched\src\core\Sk64.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkAAClip.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkAdvancedTypefaceMetrics.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkAlphaRuns.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkAnnotation.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkBBoxHierarchy.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkBBoxHierarchyRecord.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkBBoxRecord.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkBitmap.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkBitmap_scroll.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkBitmapDevice.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkBitmapFilter.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkBitmapHeap.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkBitmapProcShader.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkBitmapProcState.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkBitmapProcState_matrixProcs.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkBitmapScaler.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkBlitMask_D32.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkBlitRow_D16.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkBlitRow_D32.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkBlitter.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkBlitter_A1.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkBlitter_A8.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkBlitter_ARGB32.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkBlitter_RGB16.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkBlitter_Sprite.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkBuffer.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkCanvas.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkChunkAlloc.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkClipStack.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkColor.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkColorFilter.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkColorTable.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkComposeShader.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkConfig8888.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkConvolver.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkCordic.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkCubicClipper.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkData.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkDataTable.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkDebug.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkDeque.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkDevice.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkDeviceLooper.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkDeviceProfile.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkDither.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkDraw.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkDrawLooper.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkEdge.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkEdgeBuilder.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkEdgeClipper.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkError.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkFilterProc.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkFilterShader.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkFlate.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkFlattenable.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkFlattenableBuffers.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkFlattenableSerialization.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkFloat.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkFloatBits.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkFontDescriptor.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkFontHost.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkFontStream.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkGeometry.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkGlyphCache.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkGraphics.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkImageFilter.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkImageFilterUtils.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkInstCnt.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkLineClipper.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkMallocPixelRef.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkMask.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkMaskFilter.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkMaskGamma.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkMath.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkMatrix.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkMemory_stdlib.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkMetaData.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkMipMap.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkOrderedReadBuffer.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkOrderedWriteBuffer.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkPackBits.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkPaint.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkPaintOptionsAndroid.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkPaintPriv.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkPath.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkPathEffect.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkPathHeap.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkPathMeasure.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkPicture.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkPictureFlat.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkPicturePlayback.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkPictureRecord.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkPictureStateTree.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkPixelRef.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkPoint.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkProcSpriteBlitter.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkPtrRecorder.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkQuadClipper.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkRasterClip.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkRasterizer.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkRect.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkRefCnt.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkRefDict.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkRegion.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkRegion_path.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkRegion_rects.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkRRect.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkRTree.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkScalar.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkScaledImageCache.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkScalerContext.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkScan.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkScan_Antihair.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkScan_AntiPath.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkScan_Hairline.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkScan_Path.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkShader.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkSpriteBlitter_ARGB32.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkSpriteBlitter_RGB16.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkStream.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkString.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkStringUtils.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkStroke.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkStrokeRec.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkStrokerPriv.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkTileGrid.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkTileGridPicture.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkTLS.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkTSearch.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkTypeface.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkTypefaceCache.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkUnPreMultiply.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkUtils.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkUtilsArm.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkWriter32.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\core\SkXfermode.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\Sk1DPathEffect.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\Sk2DPathEffect.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkArithmeticMode.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkAvoidXfermode.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkBicubicImageFilter.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkBitmapAlphaThresholdShader.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkBitmapSource.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkBlurDrawLooper.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkBlurImageFilter.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkBlurMask.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkBlurMaskFilter.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkColorFilterImageFilter.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkColorFilters.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkColorMatrix.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkColorMatrixFilter.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkComposeImageFilter.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkCornerPathEffect.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkDashPathEffect.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkDiscretePathEffect.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkDisplacementMapEffect.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkDropShadowImageFilter.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkEmbossMask.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkEmbossMaskFilter.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkGpuBlurUtils.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkKernel33MaskFilter.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkLayerDrawLooper.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkLayerRasterizer.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkLerpXfermode.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkLightingImageFilter.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkLumaXfermode.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkMagnifierImageFilter.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkMatrixConvolutionImageFilter.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkMergeImageFilter.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkMorphologyImageFilter.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkOffsetImageFilter.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkPaintFlagsDrawFilter.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkPerlinNoiseShader.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkPixelXorXfermode.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkPorterDuff.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkRectShaderImageFilter.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkStippleMaskFilter.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkTableColorFilter.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkTableMaskFilter.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkTestImageFilters.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkTransparentShader.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\SkXfermodeImageFilter.cpp">
+      <Filter>src\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\gradients\SkBitmapCache.cpp">
+      <Filter>src\effects\gradients</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\gradients\SkClampRange.cpp">
+      <Filter>src\effects\gradients</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\gradients\SkGradientShader.cpp">
+      <Filter>src\effects\gradients</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\gradients\SkLinearGradient.cpp">
+      <Filter>src\effects\gradients</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\gradients\SkRadialGradient.cpp">
+      <Filter>src\effects\gradients</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\gradients\SkSweepGradient.cpp">
+      <Filter>src\effects\gradients</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\gradients\SkTwoPointConicalGradient.cpp">
+      <Filter>src\effects\gradients</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\effects\gradients\SkTwoPointRadialGradient.cpp">
+      <Filter>src\effects\gradients</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\image\SkDataPixelRef.cpp">
+      <Filter>src\image</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\image\SkImage.cpp">
+      <Filter>src\image</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\image\SkImage_Codec.cpp">
+      <Filter>src\image</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\image\SkImage_Gpu.cpp">
+      <Filter>src\image</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\image\SkImage_Picture.cpp">
+      <Filter>src\image</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\image\SkImage_Raster.cpp">
+      <Filter>src\image</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\image\SkImagePriv.cpp">
+      <Filter>src\image</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\image\SkSurface.cpp">
+      <Filter>src\image</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\image\SkSurface_Gpu.cpp">
+      <Filter>src\image</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\image\SkSurface_Picture.cpp">
+      <Filter>src\image</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\image\SkSurface_Raster.cpp">
+      <Filter>src\image</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\images\bmpdecoderhelper.cpp">
+      <Filter>src\images</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\images\SkForceLinking.cpp">
+      <Filter>src\images</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\images\SkImageDecoder.cpp">
+      <Filter>src\images</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\images\SkImageDecoder_FactoryDefault.cpp">
+      <Filter>src\images</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\images\SkImageDecoder_FactoryRegistrar.cpp">
+      <Filter>src\images</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\images\SkImageDecoder_libbmp.cpp">
+      <Filter>src\images</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\images\SkImageDecoder_libgif.cpp">
+      <Filter>src\images</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\images\SkImageDecoder_libico.cpp">
+      <Filter>src\images</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\images\SkImageDecoder_libjpeg.cpp">
+      <Filter>src\images</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\images\SkImageDecoder_libpng.cpp">
+      <Filter>src\images</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\images\SkImageDecoder_wbmp.cpp">
+      <Filter>src\images</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\images\SkImageEncoder.cpp">
+      <Filter>src\images</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\images\SkImageEncoder_argb.cpp">
+      <Filter>src\images</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\images\SkImageEncoder_Factory.cpp">
+      <Filter>src\images</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\images\SkImageRef.cpp">
+      <Filter>src\images</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\images\SkImageRef_GlobalPool.cpp">
+      <Filter>src\images</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\images\SkImageRefPool.cpp">
+      <Filter>src\images</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\images\SkImages.cpp">
+      <Filter>src\images</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\images\SkJpegUtility.cpp">
+      <Filter>src\images</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\images\SkMovie.cpp">
+      <Filter>src\images</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\images\SkMovie_gif.cpp">
+      <Filter>src\images</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\images\SkPageFlipper.cpp">
+      <Filter>src\images</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\images\SkScaledBitmapSampler.cpp">
+      <Filter>src\images</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\images\SkStreamHelpers.cpp">
+      <Filter>src\images</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\sfnt\SkOTTable_name.cpp">
+      <Filter>src\sfnt</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\sfnt\SkOTUtils.cpp">
+      <Filter>src\sfnt</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pathops\SkAddIntersections.cpp">
+      <Filter>src\pathops</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pathops\SkDCubicIntersection.cpp">
+      <Filter>src\pathops</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pathops\SkDCubicLineIntersection.cpp">
+      <Filter>src\pathops</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pathops\SkDCubicToQuads.cpp">
+      <Filter>src\pathops</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pathops\SkDLineIntersection.cpp">
+      <Filter>src\pathops</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pathops\SkDQuadImplicit.cpp">
+      <Filter>src\pathops</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pathops\SkDQuadIntersection.cpp">
+      <Filter>src\pathops</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pathops\SkDQuadLineIntersection.cpp">
+      <Filter>src\pathops</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pathops\SkIntersections.cpp">
+      <Filter>src\pathops</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pathops\SkOpAngle.cpp">
+      <Filter>src\pathops</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pathops\SkOpContour.cpp">
+      <Filter>src\pathops</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pathops\SkOpEdgeBuilder.cpp">
+      <Filter>src\pathops</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pathops\SkOpSegment.cpp">
+      <Filter>src\pathops</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pathops\SkPathOpsBounds.cpp">
+      <Filter>src\pathops</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pathops\SkPathOpsCommon.cpp">
+      <Filter>src\pathops</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pathops\SkPathOpsCubic.cpp">
+      <Filter>src\pathops</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pathops\SkPathOpsDebug.cpp">
+      <Filter>src\pathops</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pathops\SkPathOpsLine.cpp">
+      <Filter>src\pathops</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pathops\SkPathOpsOp.cpp">
+      <Filter>src\pathops</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pathops\SkPathOpsPoint.cpp">
+      <Filter>src\pathops</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pathops\SkPathOpsQuad.cpp">
+      <Filter>src\pathops</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pathops\SkPathOpsRect.cpp">
+      <Filter>src\pathops</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pathops\SkPathOpsSimplify.cpp">
+      <Filter>src\pathops</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pathops\SkPathOpsTriangle.cpp">
+      <Filter>src\pathops</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pathops\SkPathOpsTypes.cpp">
+      <Filter>src\pathops</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pathops\SkPathWriter.cpp">
+      <Filter>src\pathops</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pathops\SkQuarticRoot.cpp">
+      <Filter>src\pathops</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pathops\SkReduceOrder.cpp">
+      <Filter>src\pathops</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrAAConvexPathRenderer.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrAAHairLinePathRenderer.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrAARectRenderer.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrAllocPool.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrAtlas.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrBlend.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrBufferAllocPool.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrCacheID.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrClipData.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrClipMaskCache.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrClipMaskManager.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrContext.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrDefaultPathRenderer.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrDrawState.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrDrawTarget.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrEffect.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrGeometryBuffer.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrGpu.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrGpuFactory.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrInOrderDrawBuffer.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrMemory.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrMemoryPool.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrOvalRenderer.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrPaint.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrPath.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrPathRenderer.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrPathRendererChain.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrPathUtils.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrRectanizer.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrReducedClip.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrRenderTarget.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrResource.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrResourceCache.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrSoftwarePathRenderer.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrStencil.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrStencilAndCoverPathRenderer.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrStencilBuffer.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrSurface.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrSWMaskHelper.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrTest.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrTextContext.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrTextStrike.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrTexture.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrTextureAccess.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\SkGpuDevice.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\SkGr.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\SkGrFontScaler.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\SkGrPixelRef.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\SkGrTexturePixelRef.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\effects\GrBezierEffect.cpp">
+      <Filter>src\gpu\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\effects\GrBicubicEffect.cpp">
+      <Filter>src\gpu\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\effects\GrConfigConversionEffect.cpp">
+      <Filter>src\gpu\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\effects\GrConvolutionEffect.cpp">
+      <Filter>src\gpu\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\effects\GrSimpleTextureEffect.cpp">
+      <Filter>src\gpu\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\effects\GrSingleTextureEffect.cpp">
+      <Filter>src\gpu\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\effects\GrTextureDomainEffect.cpp">
+      <Filter>src\gpu\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\effects\GrTextureStripAtlas.cpp">
+      <Filter>src\gpu\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\gl\GrGLBufferImpl.cpp">
+      <Filter>src\gpu\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\gl\GrGLCaps.cpp">
+      <Filter>src\gpu\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\gl\GrGLContext.cpp">
+      <Filter>src\gpu\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\gl\GrGLCreateNullInterface.cpp">
+      <Filter>src\gpu\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\gl\GrGLDefaultInterface_native.cpp">
+      <Filter>src\gpu\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\gl\GrGLEffect.cpp">
+      <Filter>src\gpu\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\gl\GrGLEffectMatrix.cpp">
+      <Filter>src\gpu\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\gl\GrGLExtensions.cpp">
+      <Filter>src\gpu\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\gl\GrGLIndexBuffer.cpp">
+      <Filter>src\gpu\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\gl\GrGLInterface.cpp">
+      <Filter>src\gpu\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\gl\GrGLNoOpInterface.cpp">
+      <Filter>src\gpu\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\gl\GrGLPath.cpp">
+      <Filter>src\gpu\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\gl\GrGLProgram.cpp">
+      <Filter>src\gpu\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\gl\GrGLProgramDesc.cpp">
+      <Filter>src\gpu\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\gl\GrGLRenderTarget.cpp">
+      <Filter>src\gpu\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\gl\GrGLShaderBuilder.cpp">
+      <Filter>src\gpu\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\gl\GrGLSL.cpp">
+      <Filter>src\gpu\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\gl\GrGLStencilBuffer.cpp">
+      <Filter>src\gpu\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\gl\GrGLTexture.cpp">
+      <Filter>src\gpu\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\gl\GrGLUniformManager.cpp">
+      <Filter>src\gpu\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\gl\GrGLUtil.cpp">
+      <Filter>src\gpu\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\gl\GrGLVertexArray.cpp">
+      <Filter>src\gpu\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\gl\GrGLVertexBuffer.cpp">
+      <Filter>src\gpu\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\gl\GrGpuGL.cpp">
+      <Filter>src\gpu\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\gl\GrGpuGL_program.cpp">
+      <Filter>src\gpu\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\gl\SkGLContextHelper.cpp">
+      <Filter>src\gpu\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\gl\SkNullGLContext.cpp">
+      <Filter>src\gpu\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\gpu\GrAddPathRenderers_default.cpp">
+      <Filter>src\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkBase64.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkBitmapHasher.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkBitSet.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkBoundaryPatch.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkCamera.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkCanvasStack.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkCanvasStateUtils.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkCondVar.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkCountdown.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkCubicInterval.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkCullPoints.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkDeferredCanvas.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkDumpCanvas.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkInterpolator.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkJSON.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkLayer.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkMatrix44.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkMD5.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkMeshUtils.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkNinePatch.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkNullCanvas.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkNWayCanvas.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkOSFile.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkParse.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkParseColor.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkParsePath.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkPathUtils.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkPictureUtils.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkProxyCanvas.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkSHA1.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkUnitMappers.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\ports\SkGlobalInitialization_default.cpp">
+      <Filter>src\ports</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\ports\SkOSFile_stdio.cpp">
+      <Filter>src\ports</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pipe\SkGPipeRead.cpp">
+      <Filter>src\pipe</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\pipe\SkGPipeWrite.cpp">
+      <Filter>src\pipe</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\ports\SkDebug_win.cpp">
+      <Filter>src_specific\ports</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\ports\SkThread_win.cpp">
+      <Filter>src_specific\ports</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\ports\SkTime_win.cpp">
+      <Filter>src_specific\ports</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\opts\SkBitmapProcState_opts_none.cpp">
+      <Filter>src_specific\opts</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\opts\SkBlitMask_opts_none.cpp">
+      <Filter>src_specific\opts</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\opts\SkBlitRow_opts_none.cpp">
+      <Filter>src_specific\opts</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\opts\SkUtils_opts_none.cpp">
+      <Filter>src_specific\opts</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\ports\SkTLS_none.cpp">
+      <Filter>src_specific\ports</Filter>
+    </ClCompile>
+    <ClCompile Include="upstream.patched\src\utils\SkThreadUtils_win.cpp">
+      <Filter>src_specific\utils</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

@@ -140,7 +140,7 @@ file(GLOB src_pathops__remove
 list(REMOVE_ITEM src_pathops ${src_pathops__remove})
 file(GLOB src_gpu "upstream.patched/src/gpu/*")
 file(GLOB src_gpu__remove
-	"upstream.patched/src/gpu/GrAddPathRenderers*"
+	"upstream.patched/src/gpu/GrAddPathRenderers_none.cpp"
 	"upstream.patched/src/gpu/gr_unittests.cpp"
 	"upstream.patched/src/gpu/FlingState.cpp"
 	"upstream.patched/src/gpu/GrRectanizer_fifo.cpp")
@@ -161,7 +161,6 @@ add_library(skia_static STATIC
 	${src_sfnt}
 	${src_pathops}
 	${src_gpu}
-	"upstream.patched/src/gpu/GrAddPathRenderers_default.cpp"
 	${src_gpu_effects}
 	${src_gpu_gl}
 	"upstream.patched/src/utils/SkBase64.cpp"

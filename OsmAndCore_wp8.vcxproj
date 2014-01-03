@@ -76,7 +76,7 @@
       <PreprocessorDefinitions>_LIB;_VARIADIC_MAX=10;NOMINMAX;__STDC_FORMAT_MACROS;OSMAND_CORE_STATIC;SK_BUILD_FOR_WIN32;SK_RELEASE;SK_ALLOW_STATIC_GLOBAL_INITIALIZERS=0;SK_SCALAR_IS_FLOAT;SK_CPU_LENDIAN;SK_SUPPORT_GPU=0;XML_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalIncludeDirectories>$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.i686.static\include;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.i686.static\include\QtCore;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.i686.static\include\QtNetwork;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.i686.static\include\QtSql;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.i686.static\include\QtXml;$(ProjectDir)externals\skia\upstream.patched\src\core;$(ProjectDir)externals\skia\upstream.patched\include\core;$(ProjectDir)externals\skia\upstream.patched\include\config;$(ProjectDir)externals\skia\upstream.patched\include\effects;$(ProjectDir)externals\skia\upstream.patched\include\images;$(ProjectDir)externals\skia\upstream.patched\include\pipe;$(ProjectDir)externals\skia\upstream.patched\include\ports;$(ProjectDir)externals\skia\upstream.patched\include\utils;$(ProjectDir)externals\skia\upstream.patched\include\utils\win;$(ProjectDir)externals\skia\upstream.patched\include\xml;$(ProjectDir)externals\expat\upstream.patched\lib;$(ProjectDir)externals\harfbuzz\upstream.patched\src;$(ProjectDir)externals\protobuf;$(ProjectDir)externals\protobuf\upstream.patched\src;$(ProjectDir)externals\gdal;$(ProjectDir)externals\gdal\upstream.patched\gcore;$(ProjectDir)externals\gdal\upstream.patched\ogr;$(ProjectDir)externals\gdal\upstream.patched\alg;$(ProjectDir)externals\gdal\upstream.patched\port;$(ProjectDir)externals\msinttypes;$(ProjectDir)protos;$(ProjectDir)include;$(ProjectDir)include\OsmAndCore;$(ProjectDir)include\OsmAndCore\Map;$(ProjectDir)include\OsmAndCore\Routing;$(ProjectDir)include\OsmAndCore\Data;$(ProjectDir)include\OsmAndCore\Data\Model;$(ProjectDir)src;$(ProjectDir)src\Map;$(ProjectDir)src\Routing;$(ProjectDir)src\Data;$(ProjectDir)src\Data\Model;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.i686.static\include;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.i686.static\include\QtCore;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.i686.static\include\QtNetwork;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.i686.static\include\QtSql;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.i686.static\include\QtXml;$(ProjectDir)externals\skia\upstream.patched\src\core;$(ProjectDir)externals\skia\upstream.patched\include\core;$(ProjectDir)externals\skia\upstream.patched\include\pathops;$(ProjectDir)externals\skia\upstream.patched\include\lazy;$(ProjectDir)externals\skia\upstream.patched\include\config;$(ProjectDir)externals\skia\upstream.patched\include\effects;$(ProjectDir)externals\skia\upstream.patched\include\images;$(ProjectDir)externals\skia\upstream.patched\include\pipe;$(ProjectDir)externals\skia\upstream.patched\include\ports;$(ProjectDir)externals\skia\upstream.patched\include\utils;$(ProjectDir)externals\skia\upstream.patched\include\utils\win;$(ProjectDir)externals\skia\upstream.patched\include\xml;$(ProjectDir)externals\skia\upstream.patched\include\gpu;$(ProjectDir)externals\expat\upstream.patched\lib;$(ProjectDir)externals\protobuf;$(ProjectDir)externals\protobuf\upstream.patched\src;$(ProjectDir)externals\gdal;$(ProjectDir)externals\gdal\upstream.patched\gcore;$(ProjectDir)externals\gdal\upstream.patched\ogr;$(ProjectDir)externals\gdal\upstream.patched\alg;$(ProjectDir)externals\gdal\upstream.patched\port;$(ProjectDir)externals\msinttypes;$(ProjectDir)protos;$(ProjectDir)include;$(ProjectDir)include\OsmAndCore;$(ProjectDir)include\OsmAndCore\Map;$(ProjectDir)include\OsmAndCore\Routing;$(ProjectDir)include\OsmAndCore\Data;$(ProjectDir)include\OsmAndCore\Data\Model;$(ProjectDir)src;$(ProjectDir)src\Map;$(ProjectDir)src\Routing;$(ProjectDir)src\Data;$(ProjectDir)src\Data\Model;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -88,7 +88,7 @@
       <PreprocessorDefinitions>_LIB;_VARIADIC_MAX=10;NOMINMAX;__STDC_FORMAT_MACROS;OSMAND_CORE_STATIC;SK_BUILD_FOR_WIN32;SK_RELEASE;SK_ALLOW_STATIC_GLOBAL_INITIALIZERS=0;SK_SCALAR_IS_FLOAT;SK_CPU_LENDIAN;SK_SUPPORT_GPU=0;XML_STATIC;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalIncludeDirectories>$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.i686.static\include;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.i686.static\include\QtCore;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.i686.static\include\QtNetwork;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.i686.static\include\QtSql;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.i686.static\include\QtXml;$(ProjectDir)externals\skia\upstream.patched\src\core;$(ProjectDir)externals\skia\upstream.patched\include\core;$(ProjectDir)externals\skia\upstream.patched\include\config;$(ProjectDir)externals\skia\upstream.patched\include\effects;$(ProjectDir)externals\skia\upstream.patched\include\images;$(ProjectDir)externals\skia\upstream.patched\include\pipe;$(ProjectDir)externals\skia\upstream.patched\include\ports;$(ProjectDir)externals\skia\upstream.patched\include\utils;$(ProjectDir)externals\skia\upstream.patched\include\utils\win;$(ProjectDir)externals\skia\upstream.patched\include\xml;$(ProjectDir)externals\expat\upstream.patched\lib;$(ProjectDir)externals\harfbuzz\upstream.patched\src;$(ProjectDir)externals\protobuf;$(ProjectDir)externals\protobuf\upstream.patched\src;$(ProjectDir)externals\gdal;$(ProjectDir)externals\gdal\upstream.patched\gcore;$(ProjectDir)externals\gdal\upstream.patched\ogr;$(ProjectDir)externals\gdal\upstream.patched\alg;$(ProjectDir)externals\gdal\upstream.patched\port;$(ProjectDir)externals\msinttypes;$(ProjectDir)protos;$(ProjectDir)include;$(ProjectDir)include\OsmAndCore;$(ProjectDir)include\OsmAndCore\Map;$(ProjectDir)include\OsmAndCore\Routing;$(ProjectDir)include\OsmAndCore\Data;$(ProjectDir)include\OsmAndCore\Data\Model;$(ProjectDir)src;$(ProjectDir)src\Map;$(ProjectDir)src\Routing;$(ProjectDir)src\Data;$(ProjectDir)src\Data\Model;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.i686.static\include;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.i686.static\include\QtCore;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.i686.static\include\QtNetwork;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.i686.static\include\QtSql;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.i686.static\include\QtXml;$(ProjectDir)externals\skia\upstream.patched\src\core;$(ProjectDir)externals\skia\upstream.patched\include\core;$(ProjectDir)externals\skia\upstream.patched\include\pathops;$(ProjectDir)externals\skia\upstream.patched\include\lazy;$(ProjectDir)externals\skia\upstream.patched\include\config;$(ProjectDir)externals\skia\upstream.patched\include\effects;$(ProjectDir)externals\skia\upstream.patched\include\images;$(ProjectDir)externals\skia\upstream.patched\include\pipe;$(ProjectDir)externals\skia\upstream.patched\include\ports;$(ProjectDir)externals\skia\upstream.patched\include\utils;$(ProjectDir)externals\skia\upstream.patched\include\utils\win;$(ProjectDir)externals\skia\upstream.patched\include\xml;$(ProjectDir)externals\skia\upstream.patched\include\gpu;$(ProjectDir)externals\expat\upstream.patched\lib;$(ProjectDir)externals\protobuf;$(ProjectDir)externals\protobuf\upstream.patched\src;$(ProjectDir)externals\gdal;$(ProjectDir)externals\gdal\upstream.patched\gcore;$(ProjectDir)externals\gdal\upstream.patched\ogr;$(ProjectDir)externals\gdal\upstream.patched\alg;$(ProjectDir)externals\gdal\upstream.patched\port;$(ProjectDir)externals\msinttypes;$(ProjectDir)protos;$(ProjectDir)include;$(ProjectDir)include\OsmAndCore;$(ProjectDir)include\OsmAndCore\Map;$(ProjectDir)include\OsmAndCore\Routing;$(ProjectDir)include\OsmAndCore\Data;$(ProjectDir)include\OsmAndCore\Data\Model;$(ProjectDir)src;$(ProjectDir)src\Map;$(ProjectDir)src\Routing;$(ProjectDir)src\Data;$(ProjectDir)src\Data\Model;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -100,7 +100,7 @@
       <PreprocessorDefinitions>_LIB;_VARIADIC_MAX=10;NOMINMAX;__STDC_FORMAT_MACROS;OSMAND_CORE_STATIC;SK_BUILD_FOR_WIN32;SK_RELEASE;SK_ALLOW_STATIC_GLOBAL_INITIALIZERS=0;SK_SCALAR_IS_FLOAT;SK_CPU_LENDIAN;SK_SUPPORT_GPU=0;XML_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalIncludeDirectories>$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.arm.static\include;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.arm.static\include\QtCore;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.arm.static\include\QtNetwork;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.arm.static\include\QtSql;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.arm.static\include\QtXml;$(ProjectDir)externals\skia\upstream.patched\src\core;$(ProjectDir)externals\skia\upstream.patched\include\core;$(ProjectDir)externals\skia\upstream.patched\include\config;$(ProjectDir)externals\skia\upstream.patched\include\effects;$(ProjectDir)externals\skia\upstream.patched\include\images;$(ProjectDir)externals\skia\upstream.patched\include\pipe;$(ProjectDir)externals\skia\upstream.patched\include\ports;$(ProjectDir)externals\skia\upstream.patched\include\utils;$(ProjectDir)externals\skia\upstream.patched\include\utils\win;$(ProjectDir)externals\skia\upstream.patched\include\xml;$(ProjectDir)externals\expat\upstream.patched\lib;$(ProjectDir)externals\harfbuzz\upstream.patched\src;$(ProjectDir)externals\protobuf;$(ProjectDir)externals\protobuf\upstream.patched\src;$(ProjectDir)externals\gdal;$(ProjectDir)externals\gdal\upstream.patched\gcore;$(ProjectDir)externals\gdal\upstream.patched\ogr;$(ProjectDir)externals\gdal\upstream.patched\alg;$(ProjectDir)externals\gdal\upstream.patched\port;$(ProjectDir)externals\msinttypes;$(ProjectDir)protos;$(ProjectDir)include;$(ProjectDir)include\OsmAndCore;$(ProjectDir)include\OsmAndCore\Map;$(ProjectDir)include\OsmAndCore\Routing;$(ProjectDir)include\OsmAndCore\Data;$(ProjectDir)include\OsmAndCore\Data\Model;$(ProjectDir)src;$(ProjectDir)src\Map;$(ProjectDir)src\Routing;$(ProjectDir)src\Data;$(ProjectDir)src\Data\Model;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.arm.static\include;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.arm.static\include\QtCore;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.arm.static\include\QtNetwork;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.arm.static\include\QtSql;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.arm.static\include\QtXml;$(ProjectDir)externals\skia\upstream.patched\src\core;$(ProjectDir)externals\skia\upstream.patched\include\core;$(ProjectDir)externals\skia\upstream.patched\include\pathops;$(ProjectDir)externals\skia\upstream.patched\include\lazy;$(ProjectDir)externals\skia\upstream.patched\include\config;$(ProjectDir)externals\skia\upstream.patched\include\effects;$(ProjectDir)externals\skia\upstream.patched\include\images;$(ProjectDir)externals\skia\upstream.patched\include\pipe;$(ProjectDir)externals\skia\upstream.patched\include\ports;$(ProjectDir)externals\skia\upstream.patched\include\utils;$(ProjectDir)externals\skia\upstream.patched\include\utils\win;$(ProjectDir)externals\skia\upstream.patched\include\xml;$(ProjectDir)externals\skia\upstream.patched\include\gpu;$(ProjectDir)externals\expat\upstream.patched\lib;$(ProjectDir)externals\protobuf;$(ProjectDir)externals\protobuf\upstream.patched\src;$(ProjectDir)externals\gdal;$(ProjectDir)externals\gdal\upstream.patched\gcore;$(ProjectDir)externals\gdal\upstream.patched\ogr;$(ProjectDir)externals\gdal\upstream.patched\alg;$(ProjectDir)externals\gdal\upstream.patched\port;$(ProjectDir)externals\msinttypes;$(ProjectDir)protos;$(ProjectDir)include;$(ProjectDir)include\OsmAndCore;$(ProjectDir)include\OsmAndCore\Map;$(ProjectDir)include\OsmAndCore\Routing;$(ProjectDir)include\OsmAndCore\Data;$(ProjectDir)include\OsmAndCore\Data\Model;$(ProjectDir)src;$(ProjectDir)src\Map;$(ProjectDir)src\Routing;$(ProjectDir)src\Data;$(ProjectDir)src\Data\Model;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -112,7 +112,7 @@
       <PreprocessorDefinitions>_LIB;_VARIADIC_MAX=10;NOMINMAX;__STDC_FORMAT_MACROS;OSMAND_CORE_STATIC;SK_BUILD_FOR_WIN32;SK_RELEASE;SK_ALLOW_STATIC_GLOBAL_INITIALIZERS=0;SK_SCALAR_IS_FLOAT;SK_CPU_LENDIAN;SK_SUPPORT_GPU=0;XML_STATIC;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalIncludeDirectories>$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.arm.static\include;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.arm.static\include\QtCore;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.arm.static\include\QtNetwork;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.arm.static\include\QtSql;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.arm.static\include\QtXml;$(ProjectDir)externals\skia\upstream.patched\src\core;$(ProjectDir)externals\skia\upstream.patched\include\core;$(ProjectDir)externals\skia\upstream.patched\include\config;$(ProjectDir)externals\skia\upstream.patched\include\effects;$(ProjectDir)externals\skia\upstream.patched\include\images;$(ProjectDir)externals\skia\upstream.patched\include\pipe;$(ProjectDir)externals\skia\upstream.patched\include\ports;$(ProjectDir)externals\skia\upstream.patched\include\utils;$(ProjectDir)externals\skia\upstream.patched\include\utils\win;$(ProjectDir)externals\skia\upstream.patched\include\xml;$(ProjectDir)externals\expat\upstream.patched\lib;$(ProjectDir)externals\harfbuzz\upstream.patched\src;$(ProjectDir)externals\protobuf;$(ProjectDir)externals\protobuf\upstream.patched\src;$(ProjectDir)externals\gdal;$(ProjectDir)externals\gdal\upstream.patched\gcore;$(ProjectDir)externals\gdal\upstream.patched\ogr;$(ProjectDir)externals\gdal\upstream.patched\alg;$(ProjectDir)externals\gdal\upstream.patched\port;$(ProjectDir)externals\msinttypes;$(ProjectDir)protos;$(ProjectDir)include;$(ProjectDir)include\OsmAndCore;$(ProjectDir)include\OsmAndCore\Map;$(ProjectDir)include\OsmAndCore\Routing;$(ProjectDir)include\OsmAndCore\Data;$(ProjectDir)include\OsmAndCore\Data\Model;$(ProjectDir)src;$(ProjectDir)src\Map;$(ProjectDir)src\Routing;$(ProjectDir)src\Data;$(ProjectDir)src\Data\Model;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.arm.static\include;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.arm.static\include\QtCore;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.arm.static\include\QtNetwork;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.arm.static\include\QtSql;$(ProjectDir)externals\qtbase-winphone-winrt\upstream.patched.winphone.arm.static\include\QtXml;$(ProjectDir)externals\skia\upstream.patched\src\core;$(ProjectDir)externals\skia\upstream.patched\include\core;$(ProjectDir)externals\skia\upstream.patched\include\pathops;$(ProjectDir)externals\skia\upstream.patched\include\lazy;$(ProjectDir)externals\skia\upstream.patched\include\config;$(ProjectDir)externals\skia\upstream.patched\include\effects;$(ProjectDir)externals\skia\upstream.patched\include\images;$(ProjectDir)externals\skia\upstream.patched\include\pipe;$(ProjectDir)externals\skia\upstream.patched\include\ports;$(ProjectDir)externals\skia\upstream.patched\include\utils;$(ProjectDir)externals\skia\upstream.patched\include\utils\win;$(ProjectDir)externals\skia\upstream.patched\include\xml;$(ProjectDir)externals\skia\upstream.patched\include\gpu;$(ProjectDir)externals\expat\upstream.patched\lib;$(ProjectDir)externals\protobuf;$(ProjectDir)externals\protobuf\upstream.patched\src;$(ProjectDir)externals\gdal;$(ProjectDir)externals\gdal\upstream.patched\gcore;$(ProjectDir)externals\gdal\upstream.patched\ogr;$(ProjectDir)externals\gdal\upstream.patched\alg;$(ProjectDir)externals\gdal\upstream.patched\port;$(ProjectDir)externals\msinttypes;$(ProjectDir)protos;$(ProjectDir)include;$(ProjectDir)include\OsmAndCore;$(ProjectDir)include\OsmAndCore\Map;$(ProjectDir)include\OsmAndCore\Routing;$(ProjectDir)include\OsmAndCore\Data;$(ProjectDir)include\OsmAndCore\Data\Model;$(ProjectDir)src;$(ProjectDir)src\Map;$(ProjectDir)src\Routing;$(ProjectDir)src\Data;$(ProjectDir)src\Data\Model;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -129,11 +129,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\OsmAndCore.h" />
     <ClInclude Include="include\OsmAndCore\Common.h" />
     <ClInclude Include="include\OsmAndCore\CommonTypes.h" />
     <ClInclude Include="include\OsmAndCore\Concurrent.h" />
+    <ClInclude Include="include\OsmAndCore\Data\DataTypes.h" />
     <ClInclude Include="include\OsmAndCore\Data\Model\Amenity.h" />
+    <ClInclude Include="include\OsmAndCore\Data\Model\AmenityCategory.h" />
     <ClInclude Include="include\OsmAndCore\Data\Model\Building.h" />
     <ClInclude Include="include\OsmAndCore\Data\Model\MapObject.h" />
     <ClInclude Include="include\OsmAndCore\Data\Model\PostcodeArea.h" />
@@ -149,6 +150,7 @@
     <ClInclude Include="include\OsmAndCore\Data\ObfInfo.h" />
     <ClInclude Include="include\OsmAndCore\Data\ObfMapSectionInfo.h" />
     <ClInclude Include="include\OsmAndCore\Data\ObfMapSectionReader.h" />
+    <ClInclude Include="include\OsmAndCore\Data\ObfMapSectionReader_Metrics.h" />
     <ClInclude Include="include\OsmAndCore\Data\ObfPoiSectionInfo.h" />
     <ClInclude Include="include\OsmAndCore\Data\ObfPoiSectionReader.h" />
     <ClInclude Include="include\OsmAndCore\Data\ObfReader.h" />
@@ -159,6 +161,7 @@
     <ClInclude Include="include\OsmAndCore\Data\ObfTransportSectionInfo.h" />
     <ClInclude Include="include\OsmAndCore\Data\ObfTransportSectionReader.h" />
     <ClInclude Include="include\OsmAndCore\EmbeddedResources.h" />
+    <ClInclude Include="include\OsmAndCore\IExternalResourcesProvider.h" />
     <ClInclude Include="include\OsmAndCore\IQueryController.h" />
     <ClInclude Include="include\OsmAndCore\IQueryFilter.h" />
     <ClInclude Include="include\OsmAndCore\LambdaQueryFilter.h" />
@@ -167,27 +170,45 @@
     <ClInclude Include="include\OsmAndCore\Map\HillshadeTileProvider.h" />
     <ClInclude Include="include\OsmAndCore\Map\IMapBitmapTileProvider.h" />
     <ClInclude Include="include\OsmAndCore\Map\IMapElevationDataProvider.h" />
+    <ClInclude Include="include\OsmAndCore\Map\IMapProvider.h" />
     <ClInclude Include="include\OsmAndCore\Map\IMapRenderer.h" />
+    <ClInclude Include="include\OsmAndCore\Map\IMapSymbolProvider.h" />
     <ClInclude Include="include\OsmAndCore\Map\IMapTileProvider.h" />
+    <ClInclude Include="include\OsmAndCore\Map\IRetainableResource.h" />
+    <ClInclude Include="include\OsmAndCore\Map\MapAnimator.h" />
     <ClInclude Include="include\OsmAndCore\Map\MapRendererConfiguration.h" />
     <ClInclude Include="include\OsmAndCore\Map\MapRendererSetupOptions.h" />
     <ClInclude Include="include\OsmAndCore\Map\MapRendererState.h" />
+    <ClInclude Include="include\OsmAndCore\Map\MapRendererTypes.h" />
     <ClInclude Include="include\OsmAndCore\Map\MapStyle.h" />
     <ClInclude Include="include\OsmAndCore\Map\MapStyleBuiltinValueDefinitions.h" />
+    <ClInclude Include="include\OsmAndCore\Map\MapStyleBuiltinValueDefinitions_Set.h" />
     <ClInclude Include="include\OsmAndCore\Map\MapStyleConfigurableInputValue.h" />
+    <ClInclude Include="include\OsmAndCore\Map\MapStyleEvaluationResult.h" />
     <ClInclude Include="include\OsmAndCore\Map\MapStyleEvaluator.h" />
     <ClInclude Include="include\OsmAndCore\Map\MapStyleRule.h" />
     <ClInclude Include="include\OsmAndCore\Map\MapStyles.h" />
+    <ClInclude Include="include\OsmAndCore\Map\MapStyleValue.h" />
     <ClInclude Include="include\OsmAndCore\Map\MapStyleValueDefinition.h" />
     <ClInclude Include="include\OsmAndCore\Map\MapTypes.h" />
     <ClInclude Include="include\OsmAndCore\Map\OfflineMapDataProvider.h" />
-    <ClInclude Include="include\OsmAndCore\Map\OfflineMapRasterTileProvider.h" />
+    <ClInclude Include="include\OsmAndCore\Map\OfflineMapDataTile.h" />
+    <ClInclude Include="include\OsmAndCore\Map\OfflineMapRasterTileProvider_GPU.h" />
+    <ClInclude Include="include\OsmAndCore\Map\OfflineMapRasterTileProvider_Software.h" />
+    <ClInclude Include="include\OsmAndCore\Map\OfflineMapSymbolProvider.h" />
     <ClInclude Include="include\OsmAndCore\Map\OnlineMapRasterTileProvider.h" />
+    <ClInclude Include="include\OsmAndCore\Map\RasterizedSymbol.h" />
+    <ClInclude Include="include\OsmAndCore\Map\RasterizedSymbolsGroup.h" />
     <ClInclude Include="include\OsmAndCore\Map\Rasterizer.h" />
     <ClInclude Include="include\OsmAndCore\Map\RasterizerContext.h" />
     <ClInclude Include="include\OsmAndCore\Map\RasterizerEnvironment.h" />
+    <ClInclude Include="include\OsmAndCore\Map\RasterizerSharedContext.h" />
+    <ClInclude Include="include\OsmAndCore\Map\Rasterizer_Metrics.h" />
+    <ClInclude Include="include\OsmAndCore\Network.h" />
     <ClInclude Include="include\OsmAndCore\PlainQueryFilter.h" />
-    <ClInclude Include="include\OsmAndCore\QZeroCopyInputStream.h" />
+    <ClInclude Include="include\OsmAndCore\QFileDeviceInputStream.h" />
+    <ClInclude Include="include\OsmAndCore\QIODeviceInputStream.h" />
+    <ClInclude Include="include\OsmAndCore\QtExtensions.h" />
     <ClInclude Include="include\OsmAndCore\Routing\RoutePlanner.h" />
     <ClInclude Include="include\OsmAndCore\Routing\RoutePlannerContext.h" />
     <ClInclude Include="include\OsmAndCore\Routing\RouteSegment.h" />
@@ -198,39 +219,25 @@
     <ClInclude Include="include\OsmAndCore\Routing\RoutingRuleset.h" />
     <ClInclude Include="include\OsmAndCore\Routing\RoutingRulesetContext.h" />
     <ClInclude Include="include\OsmAndCore\Routing\TurnInfo.h" />
+    <ClInclude Include="include\OsmAndCore\SharedByZoomResourcesContainer.h" />
+    <ClInclude Include="include\OsmAndCore\SharedResourcesContainer.h" />
+    <ClInclude Include="include\OsmAndCore\stdlib_common.h" />
     <ClInclude Include="include\OsmAndCore\TileDB.h" />
     <ClInclude Include="include\OsmAndCore\TilesCollection.h" />
     <ClInclude Include="include\OsmAndCore\Utilities.h" />
-    <ClInclude Include="src\Data\ObfAddressSectionReader_P.h" />
-    <ClInclude Include="src\Data\ObfDataInterface_P.h" />
-    <ClInclude Include="src\Data\ObfFile_P.h" />
-    <ClInclude Include="src\Data\ObfMapSectionInfo_P.h" />
-    <ClInclude Include="src\Data\ObfMapSectionReader_P.h" />
-    <ClInclude Include="src\Data\ObfPoiSectionReader_P.h" />
-    <ClInclude Include="src\Data\ObfReaderUtilities.h" />
-    <ClInclude Include="src\Data\ObfReader_P.h" />
-    <ClInclude Include="src\Data\ObfRoutingSectionInfo_P.h" />
-    <ClInclude Include="src\Data\ObfRoutingSectionReader_P.h" />
-    <ClInclude Include="src\Data\ObfsCollection_P.h" />
-    <ClInclude Include="src\Data\ObfTransportSectionReader_P.h" />
-    <ClInclude Include="src\EmbeddedResources_private.h" />
-    <ClInclude Include="src\ExplicitReferences.h" />
-    <ClInclude Include="src\Map\AtlasMapRenderer.h" />
-    <ClInclude Include="src\Map\GlobeMapRenderer.h" />
-    <ClInclude Include="src\Map\MapRenderer.h" />
-    <ClInclude Include="src\Map\MapStyles_P.h" />
-    <ClInclude Include="src\Map\MapStyle_P.h" />
-    <ClInclude Include="src\Map\OfflineMapRasterTileProvider_P.h" />
-    <ClInclude Include="src\Map\OnlineMapRasterTileProvider_P.h" />
-    <ClInclude Include="src\Map\RasterizerContext_P.h" />
-    <ClInclude Include="src\Map\RasterizerEnvironment_P.h" />
-    <ClInclude Include="src\Map\Rasterizer_P.h" />
-    <ClInclude Include="src\Map\RenderAPI.h" />
-    <ClInclude Include="src\OsmAndCore_private.h" />
-    <ClInclude Include="src\QMainThreadTaskEvent.h" />
-    <ClInclude Include="src\QMainThreadTaskHost.h" />
-    <ClInclude Include="src\Routing\RoutingConfiguration_private.h" />
-    <ClInclude Include="src\Routing\RoutingRuleExpression_Operators.h" />
+    <ClInclude Include="src\Map\GPUAPI.h" />
+    <ClInclude Include="src\Map\HeightmapTileProvider_P.h" />
+    <ClInclude Include="src\Map\MapAnimator_P.h" />
+    <ClInclude Include="src\Map\MapRendererResources.h" />
+    <ClInclude Include="src\Map\MapStyleEvaluationResult_P.h" />
+    <ClInclude Include="src\Map\MapStyleEvaluator_P.h" />
+    <ClInclude Include="src\Map\MapStyleRule_P.h" />
+    <ClInclude Include="src\Map\OfflineMapDataProvider_P.h" />
+    <ClInclude Include="src\Map\OfflineMapDataTile_P.h" />
+    <ClInclude Include="src\Map\OfflineMapRasterTileProvider_GPU_P.h" />
+    <ClInclude Include="src\Map\OfflineMapRasterTileProvider_Software_P.h" />
+    <ClInclude Include="src\Map\OfflineMapSymbolProvider_P.h" />
+    <ClInclude Include="src\Map\RasterizerSharedContext_P.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Concurrent.cpp" />
@@ -274,48 +281,74 @@
     <ClCompile Include="src\Data\ObfTransportSectionReader_P.cpp" />
     <ClCompile Include="src\EmbeddedResources.cpp" />
     <ClCompile Include="src\ExplicitReferences.cpp" />
+    <ClCompile Include="src\IExternalResourcesProvider.cpp" />
     <ClCompile Include="src\IQueryController.cpp" />
     <ClCompile Include="src\IQueryFilter.cpp" />
     <ClCompile Include="src\LambdaQueryFilter.cpp" />
     <ClCompile Include="src\Logging.cpp" />
     <ClCompile Include="src\Map\AtlasMapRenderer.cpp" />
     <ClCompile Include="src\Map\GlobeMapRenderer.cpp" />
+    <ClCompile Include="src\Map\GPUAPI.cpp" />
     <ClCompile Include="src\Map\HeightmapTileProvider.cpp" />
+    <ClCompile Include="src\Map\HeightmapTileProvider_P.cpp" />
     <ClCompile Include="src\Map\HillshadeTileProvider.cpp" />
     <ClCompile Include="src\Map\IMapBitmapTileProvider.cpp" />
     <ClCompile Include="src\Map\IMapElevationDataProvider.cpp" />
+    <ClCompile Include="src\Map\IMapProvider.cpp" />
     <ClCompile Include="src\Map\IMapRenderer.cpp" />
+    <ClCompile Include="src\Map\IMapSymbolProvider.cpp" />
     <ClCompile Include="src\Map\IMapTileProvider.cpp" />
+    <ClCompile Include="src\Map\IRetainableResource.cpp" />
+    <ClCompile Include="src\Map\MapAnimator.cpp" />
+    <ClCompile Include="src\Map\MapAnimator_P.cpp" />
     <ClCompile Include="src\Map\MapRenderer.cpp" />
     <ClCompile Include="src\Map\MapRendererConfiguration.cpp" />
+    <ClCompile Include="src\Map\MapRendererResources.cpp" />
     <ClCompile Include="src\Map\MapRendererSetupOptions.cpp" />
     <ClCompile Include="src\Map\MapRendererState.cpp" />
     <ClCompile Include="src\Map\MapStyle.cpp" />
     <ClCompile Include="src\Map\MapStyleBuiltinValueDefinitions.cpp" />
     <ClCompile Include="src\Map\MapStyleConfigurableInputValue.cpp" />
+    <ClCompile Include="src\Map\MapStyleEvaluationResult.cpp" />
+    <ClCompile Include="src\Map\MapStyleEvaluationResult_P.cpp" />
     <ClCompile Include="src\Map\MapStyleEvaluator.cpp" />
+    <ClCompile Include="src\Map\MapStyleEvaluator_P.cpp" />
     <ClCompile Include="src\Map\MapStyleRule.cpp" />
+    <ClCompile Include="src\Map\MapStyleRule_P.cpp" />
     <ClCompile Include="src\Map\MapStyles.cpp" />
     <ClCompile Include="src\Map\MapStyles_P.cpp" />
+    <ClCompile Include="src\Map\MapStyleValue.cpp" />
     <ClCompile Include="src\Map\MapStyleValueDefinition.cpp" />
     <ClCompile Include="src\Map\MapStyle_P.cpp" />
     <ClCompile Include="src\Map\OfflineMapDataProvider.cpp" />
-    <ClCompile Include="src\Map\OfflineMapRasterTileProvider.cpp" />
-    <ClCompile Include="src\Map\OfflineMapRasterTileProvider_P.cpp" />
+    <ClCompile Include="src\Map\OfflineMapDataProvider_P.cpp" />
+    <ClCompile Include="src\Map\OfflineMapDataTile.cpp" />
+    <ClCompile Include="src\Map\OfflineMapDataTile_P.cpp" />
+    <ClCompile Include="src\Map\OfflineMapRasterTileProvider_GPU.cpp" />
+    <ClCompile Include="src\Map\OfflineMapRasterTileProvider_GPU_P.cpp" />
+    <ClCompile Include="src\Map\OfflineMapRasterTileProvider_Software.cpp" />
+    <ClCompile Include="src\Map\OfflineMapRasterTileProvider_Software_P.cpp" />
+    <ClCompile Include="src\Map\OfflineMapSymbolProvider.cpp" />
+    <ClCompile Include="src\Map\OfflineMapSymbolProvider_P.cpp" />
     <ClCompile Include="src\Map\OnlineMapRasterTileProvider.cpp" />
     <ClCompile Include="src\Map\OnlineMapRasterTileProvider_P.cpp" />
+    <ClCompile Include="src\Map\RasterizedSymbol.cpp" />
+    <ClCompile Include="src\Map\RasterizedSymbolsGroup.cpp" />
     <ClCompile Include="src\Map\Rasterizer.cpp" />
     <ClCompile Include="src\Map\RasterizerContext.cpp" />
     <ClCompile Include="src\Map\RasterizerContext_P.cpp" />
     <ClCompile Include="src\Map\RasterizerEnvironment.cpp" />
     <ClCompile Include="src\Map\RasterizerEnvironment_P.cpp" />
+    <ClCompile Include="src\Map\RasterizerSharedContext.cpp" />
+    <ClCompile Include="src\Map\RasterizerSharedContext_P.cpp" />
     <ClCompile Include="src\Map\Rasterizer_P.cpp" />
-    <ClCompile Include="src\Map\RenderAPI.cpp" />
+    <ClCompile Include="src\Network.cpp" />
     <ClCompile Include="src\OsmAndCore.cpp" />
     <ClCompile Include="src\PlainQueryFilter.cpp" />
+    <ClCompile Include="src\QFileDeviceInputStream.cpp" />
+    <ClCompile Include="src\QIODeviceInputStream.cpp" />
     <ClCompile Include="src\QMainThreadTaskEvent.cpp" />
     <ClCompile Include="src\QMainThreadTaskHost.cpp" />
-    <ClCompile Include="src\QZeroCopyInputStream.cpp" />
     <ClCompile Include="src\Routing\RoutePlanner.cpp" />
     <ClCompile Include="src\Routing\RoutePlannerContext.cpp" />
     <ClCompile Include="src\Routing\RoutePlanner_Analyzer.cpp" />
@@ -329,7 +362,6 @@
     <ClCompile Include="src\Routing\RoutingRulesetContext.cpp" />
     <ClCompile Include="src\Routing\TurnInfo.cpp" />
     <ClCompile Include="src\TileDB.cpp" />
-    <ClCompile Include="src\TilesCollection.cpp" />
     <ClCompile Include="src\Utilities.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
