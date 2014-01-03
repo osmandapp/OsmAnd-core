@@ -15,13 +15,11 @@ fi
 
 export ANDROID_SDK_ROOT=`echo $ANDROID_SDK | sed 's/\\\\/\//g'`
 export ANDROID_NDK_ROOT=`echo $ANDROID_NDK | sed 's/\\\\/\//g'`
-# Not using 4.8 yet, since it's not suitable for MIPS target
-#if [ -d "$ANDROID_NDK/toolchains/*-4.7" ]; then
-#	export ANDROID_NDK_TOOLCHAIN_VERSION=4.7
-#elif [ -d "$ANDROID_NDK/toolchains/*-4.6" ]; then
-#	export ANDROID_NDK_TOOLCHAIN_VERSION=4.6
-#fi
-export ANDROID_NDK_TOOLCHAIN_VERSION=4.6
+if [ -d "$ANDROID_NDK/toolchains/*-4.8" ]; then
+	export ANDROID_NDK_TOOLCHAIN_VERSION=4.8
+elif [ -d "$ANDROID_NDK/toolchains/*-4.7" ]; then
+	export ANDROID_NDK_TOOLCHAIN_VERSION=4.7
+fi
 if [ -n "$ANDROID_NDK_TOOLCHAIN_VERSION" ]; then
 	echo "Using $ANDROID_NDK_TOOLCHAIN_VERSION toolchain version"
 	ANDROID_NDK_TOOLCHAIN="-android-toolchain-version $ANDROID_NDK_TOOLCHAIN_VERSION"
