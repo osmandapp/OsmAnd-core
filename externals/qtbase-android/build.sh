@@ -21,7 +21,9 @@ export ANDROID_NDK_ROOT=`echo $ANDROID_NDK | sed 's/\\\\/\//g'`
 #elif [ -d "$ANDROID_NDK/toolchains/*-4.6" ]; then
 #	export ANDROID_NDK_TOOLCHAIN_VERSION=4.6
 #fi
+export ANDROID_NDK_TOOLCHAIN_VERSION=4.6
 if [ -d "$ANDROID_NDK_TOOLCHAIN_VERSION" ]; then
+	echo "Using $ANDROID_NDK_TOOLCHAIN_VERSION toolchain version"
 	ANDROID_NDK_TOOLCHAIN="-android-toolchain-version $ANDROID_NDK_TOOLCHAIN_VERSION"
 else
 	ANDROID_NDK_TOOLCHAIN=""
