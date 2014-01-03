@@ -33,9 +33,9 @@ $(NDK)/toolchains/mipsel-linux-android-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)
 <compileflags>-Wa,--noexecstack
 <compileflags>-DANDROID
 <compileflags>-D__ANDROID__
-<compileflags>-isystem$(NDK)/platforms/$(NDK_PLATFORM)/arch-mips/usr/include
-<compileflags>-isystem$(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/include
-<compileflags>-isystem$(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/libs/mips/include
+<compileflags>-isystem $(NDK)/platforms/$(NDK_PLATFORM)/arch-mips/usr/include
+<compileflags>-isystem $(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/include
+<compileflags>-isystem $(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/libs/mips/include
 <linkflags>-no-canonical-prefixes
 # 'Release/MIPS' section
 <compileflags>-O2

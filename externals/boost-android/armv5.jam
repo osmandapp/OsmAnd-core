@@ -27,9 +27,9 @@ $(NDK)/toolchains/arm-linux-androideabi-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST
 <compileflags>-Wa,--noexecstack
 <compileflags>-DANDROID
 <compileflags>-D__ANDROID__
-<compileflags>-isystem$(NDK)/platforms/$(NDK_PLATFORM)/arch-arm/usr/include
-<compileflags>-isystem$(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/include
-<compileflags>-isystem$(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/libs/armeabi/include
+<compileflags>-isystem $(NDK)/platforms/$(NDK_PLATFORM)/arch-arm/usr/include
+<compileflags>-isystem $(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/include
+<compileflags>-isystem $(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/libs/armeabi/include
 <linkflags>-no-canonical-prefixes
 # 'Release/ARM' section
 <compileflags>-O2
