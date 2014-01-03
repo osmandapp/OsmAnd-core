@@ -54,6 +54,10 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 		OSMAND_BUILD_CPU_CORES_NUM=`sysctl hw.ncpu | awk '{print $2}'`
 	fi
 fi
+if [[ "$(uname -a)" =~ Cygwin ]]; then
+	echo "Building for Android under Cygwin is not supported"
+	exit 1
+fi
 
 QTBASE_CONFIGURATION=$(echo "
 	-xplatform android-g++ $ANDROID_NDK_TOOLCHAIN
@@ -63,11 +67,6 @@ QTBASE_CONFIGURATION=$(echo "
 	-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib
 	-v
 " | tr '\n' ' ')
-
-if [[ "$(uname -a)" =~ Cygwin ]]; then
-	echo "Building for Android under Cygwin is not supported"
-	exit 1
-fi
 
 if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv5 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
 	if [ ! -d "$SRCLOC/upstream.patched.armeabi.static" ]; then
