@@ -1,0 +1,33 @@
+diff -rupN upstream.original/src/corelib/kernel/qjni.cpp upstream.patched/src/corelib/kernel/qjni.cpp
+--- upstream.original/src/corelib/kernel/qjni.cpp	2013-12-30 20:19:01.440209100 +0200
++++ upstream.patched/src/corelib/kernel/qjni.cpp	2014-01-03 18:06:57.341166800 +0200
+@@ -1255,7 +1255,7 @@ jdouble QJNIObjectPrivate::callStaticMet
+     return callStaticMethod<jdouble>(clazz, methodName, "()D");
+ }
+ 
+-QJNIObjectPrivate QJNIObjectPrivate::callObjectMethod(const char *methodName,
++QJNIObjectPrivate QJNIObjectPrivate::callObjectMethod_VA(const char *methodName,
+                                                       const char *sig,
+                                                       va_list args) const
+ {
+@@ -1277,7 +1277,7 @@ QJNIObjectPrivate QJNIObjectPrivate::cal
+ {
+     va_list args;
+     va_start(args, sig);
+-    QJNIObjectPrivate res = callObjectMethod(methodName, sig, args);
++    QJNIObjectPrivate res = callObjectMethod_VA(methodName, sig, args);
+     va_end(args);
+     return res;
+ }
+diff -rupN upstream.original/src/corelib/kernel/qjni_p.h upstream.patched/src/corelib/kernel/qjni_p.h
+--- upstream.original/src/corelib/kernel/qjni_p.h	2013-12-30 20:19:01.461223200 +0200
++++ upstream.patched/src/corelib/kernel/qjni_p.h	2014-01-03 18:06:42.437212300 +0200
+@@ -198,7 +198,7 @@ private:
+     T callMethod(const char *methodName,
+                  const char *sig,
+                  va_list args) const;
+-    QJNIObjectPrivate callObjectMethod(const char *methodName,
++    QJNIObjectPrivate callObjectMethod_VA(const char *methodName,
+                                        const char *sig,
+                                        va_list args) const;
+     template <typename T>
