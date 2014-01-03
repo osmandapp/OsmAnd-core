@@ -64,7 +64,7 @@ if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[
 			./bootstrap.sh)
 	fi
 	(cd "$SRCLOC/upstream.patched.armeabi.static" && \
-		./b2 variant=debug,release --layout=versioned toolset=gcc-android-armv5 target-os=linux threading=multi link=static stage)
+		./b2 variant=debug,release --layout=versioned toolset=gcc-$ANDROID_NDK_TOOLCHAIN_VERSION target-os=linux threading=multi link=static stage)
 fi
 
 if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv7 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
@@ -76,7 +76,7 @@ if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[
 			./bootstrap.sh)
 	fi
 	(cd "$SRCLOC/upstream.patched.armeabi-v7a.static" && \
-		./b2 variant=debug,release --layout=versioned toolset=gcc-android-armv7a target-os=linux threading=multi link=static stage)
+		./b2 variant=debug,release --layout=versioned toolset=gcc-$ANDROID_NDK_TOOLCHAIN_VERSION target-os=linux threading=multi link=static stage)
 fi
 
 if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv7-neon ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
@@ -88,7 +88,7 @@ if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[
 			./bootstrap.sh)
 	fi
 	(cd "$SRCLOC/upstream.patched.armeabi-v7a-neon.static" && \
-		./b2 variant=debug,release --layout=versioned toolset=gcc-android-armv7a-neon target-os=linux threading=multi link=static stage)
+		./b2 variant=debug,release --layout=versioned toolset=gcc-$ANDROID_NDK_TOOLCHAIN_VERSION target-os=linux threading=multi link=static stage)
 fi
 
 if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x86 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
@@ -100,7 +100,7 @@ if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x86 ]] || [[ -z "$OSMAND_ARCHITECTURES_S
 			./bootstrap.sh)
 	fi
 	(cd "$SRCLOC/upstream.patched.x86.static" && \
-		./b2 variant=debug,release --layout=versioned toolset=gcc-android-x86 target-os=linux threading=multi link=static stage)
+		./b2 variant=debug,release --layout=versioned toolset=gcc-$ANDROID_NDK_TOOLCHAIN_VERSION target-os=linux threading=multi link=static stage)
 fi
 
 if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ mips ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
@@ -112,5 +112,5 @@ if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ mips ]] || [[ -z "$OSMAND_ARCHITECTURES_
 			./bootstrap.sh)
 	fi
 	(cd "$SRCLOC/upstream.patched.mips.static" && \
-		./b2 variant=debug,release --layout=versioned toolset=gcc-android-mips target-os=linux threading=multi link=static stage)
+		./b2 variant=debug,release --layout=versioned toolset=gcc-$ANDROID_NDK_TOOLCHAIN_VERSION target-os=linux threading=multi link=static stage)
 fi
