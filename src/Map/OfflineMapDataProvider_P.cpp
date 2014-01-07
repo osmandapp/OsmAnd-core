@@ -175,7 +175,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
     for(auto itFutureMapObject = futureReferencedMapObjects.cbegin(); itFutureMapObject != futureReferencedMapObjects.cend(); ++itFutureMapObject)
     {
         const auto& futureMapObject = *itFutureMapObject;
-        const auto mapObject = futureMapObject.get();
+        auto mapObject = futureMapObject.get();
 
         referencedMapObjects.push_back(qMove(mapObject));
     }
