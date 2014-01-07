@@ -40,7 +40,7 @@ namespace OsmAnd
     // SharedByZoomResourcesContainer is similar to SharedResourcesContainer,
     // but also allows resources to be shared between multiple zoom levels.
     template<typename KEY_TYPE, typename RESOURCE_TYPE>
-    class SharedByZoomResourcesContainer : private SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE>
+    class SharedByZoomResourcesContainer : protected SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE>
     {
     protected:
         struct AvailableResourceEntry : public SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE>::AvailableResourceEntry
@@ -81,7 +81,7 @@ namespace OsmAnd
 
         typedef std::shared_ptr<PromisedResourceEntry> PromisedResourceEntryPtr;
     private:
-        typedef SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE>::ResourcePtr ResourcePtr;
+        typedef typename SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE>::ResourcePtr ResourcePtr;
 
         QSet< AvailableResourceEntryPtr > _availableResourceEntriesStorage;
         std::array< QHash< KEY_TYPE, AvailableResourceEntryPtr >, ZoomLevelsCount> _availableResources;
