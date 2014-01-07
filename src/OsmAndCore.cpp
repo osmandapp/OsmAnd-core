@@ -94,3 +94,12 @@ void OsmAnd::releaseGlobal()
 
     gMainThreadTaskHost.reset();
 }
+
+#if defined(OSMAND_TARGET_OS_android)
+//HACK: https://code.google.com/p/android/issues/detail?id=43819
+//TODO: Remove this mess when it's going to be fixed
+#include <iostream>
+::std::ios_base::Init::Init()
+{
+}
+#endif
