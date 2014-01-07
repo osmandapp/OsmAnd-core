@@ -34,15 +34,16 @@
 #include <QReadWriteLock>
 #include <QMutex>
 #include <QAtomicInt>
+#include <QQueue>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 
-namespace OsmAnd {
-
-    namespace Concurrent {
-
-        class OSMAND_CORE_API Pools
+namespace OsmAnd
+{
+    namespace Concurrent
+    {
+        class OSMAND_CORE_API Pools Q_DECL_FINAL
         {
             Q_DISABLE_COPY(Pools);
         private:
@@ -153,8 +154,36 @@ namespace OsmAnd {
 
             const ThreadProcedureSignature threadProcedure;
         };
-    } // namespace Concurrent
 
+        class OSMAND_CORE_API Dispatcher
+        {
+            Q_DISABLE_COPY(Dispatcher);
+        public:
+            typedef std::function<void()> Delegate;
+        private:
+        protected:
+            mutable QMutex _queueMutex;
+            QQueue< Delegate > _queue;
+
+            volatile bool _isRunningStandalone;
+            volatile bool _shutdownRequested;
+            QMutex _performedShutdownConditionMutex;
+            QWaitCondition _performedShutdown;
+        public:
+            Dispatcher();
+            virtual ~Dispatcher();
+
+            void runAll();
+            void runOne();
+            void run();
+
+            void invoke(const Delegate method);
+            void invokeAsync(const Delegate method);
+
+            void shutdown();
+            void shutdownAsync();
+        };
+    } // namespace Concurrent
 } // namespace OsmAnd
 
 #endif // _OSMAND_CORE_CONCURRENT_H_

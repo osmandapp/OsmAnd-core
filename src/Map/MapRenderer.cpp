@@ -265,6 +265,9 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
         _resources->syncResourcesInGPU(0, nullptr, &resourcesUploaded, &resourcesUnloaded);
         if(resourcesUploaded > 0 || resourcesUnloaded > 0)
             invalidateFrame();
+
+        // Process GPU dispatcher
+        _gpuThreadDispatcher.runAll();
     }
 
     // Call epilogue
@@ -513,7 +516,13 @@ bool OsmAnd::MapRenderer::doProcessRendering()
         // to use that resource
         if(resourcesUploaded > 0 || moreUploadThanLimitAvailable || resourcesUnloaded > 0)
             invalidateFrame();
+
+        // Process GPU thread dispatcher
+        _gpuThreadDispatcher.runAll();
     }
+
+    // Process render thread dispatcher
+    _renderThreadDispatcher.runAll();
 
     return true;
 }
@@ -714,6 +723,16 @@ bool OsmAnd::MapRenderer::convertMapSymbol(const std::shared_ptr<const MapSymbol
 bool OsmAnd::MapRenderer::isFrameInvalidated() const
 {
     return (_frameInvalidatesCounter.fetchAndAddOrdered(0) > 0);
+}
+
+OsmAnd::Concurrent::Dispatcher& OsmAnd::MapRenderer::getRenderThreadDispatcher()
+{
+    return _renderThreadDispatcher;
+}
+
+OsmAnd::Concurrent::Dispatcher& OsmAnd::MapRenderer::getGpuThreadDispatcher()
+{
+    return _gpuThreadDispatcher;
 }
 
 unsigned int OsmAnd::MapRenderer::getVisibleTilesCount() const

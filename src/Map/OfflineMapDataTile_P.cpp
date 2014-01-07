@@ -42,8 +42,7 @@ void OsmAnd::OfflineMapDataTile_P::cleanup()
             if(canNotBeShared)
                 continue;
 
-            const auto wasRemoved = link->provider._sharedMapObjects.releaseReference(mapObject->id, owner->zoom, mapObject);
-            assert(wasRemoved);
+            link->provider._sharedMapObjects.releaseReference(mapObject->id, owner->zoom, mapObject);
         }
     }
     _mapObjects.clear();

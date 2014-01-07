@@ -24,36 +24,68 @@
 
 #include <OsmAndCore/stdlib_common.h>
 #include <cassert>
-#include <utility>
 #include <array>
-#include <tuple>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QHash>
 #include <QSet>
-#include <QMutableSetIterator>
 #include <QReadWriteLock>
-#include <QWaitCondition>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/SharedResourcesContainer.h>
 
 namespace OsmAnd
 {
     // SharedByZoomResourcesContainer is similar to SharedResourcesContainer,
     // but also allows resources to be shared between multiple zoom levels.
     template<typename KEY_TYPE, typename RESOURCE_TYPE>
-    class SharedByZoomResourcesContainer Q_DECL_FINAL
+    class SharedByZoomResourcesContainer : private SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE>
     {
-    private:
-        typedef std::tuple< int, std::shared_ptr< RESOURCE_TYPE >, QSet<ZoomLevel> > ResourceEntry;
-        typedef std::shared_ptr<ResourceEntry> ResourceEntryRef;
+    protected:
+        struct AvailableResourceEntry : public SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE>::AvailableResourceEntry
+        {
+            typedef SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE>::AvailableResourceEntry base;
 
-        mutable QReadWriteLock _lock;
-        std::array< QHash< KEY_TYPE, ResourceEntryRef >, ZoomLevelsCount> _container;
-        QSet< ResourceEntryRef > _resources;
-        std::array< QSet< KEY_TYPE >, ZoomLevelsCount> _pending;
-        QWaitCondition _pendingWaitCondition;
+            AvailableResourceEntry(const uintmax_t refCounter_, const ResourcePtr& resourcePtr_, const QSet<ZoomLevel>& zoomLevels_)
+                : base(refCounter_, resourcePtr_)
+                , zoomLevels(zoomLevels_)
+            {
+            }
+
+#ifdef Q_COMPILER_RVALUE_REFS
+            AvailableResourceEntry(const uintmax_t refCounter_, ResourcePtr&& resourcePtr_, const QSet<ZoomLevel>& zoomLevels_)
+                : base(refCounter_, resourcePtr_)
+                , zoomLevels(zoomLevels_)
+            {
+            }
+#endif // Q_COMPILER_RVALUE_REFS
+
+            const QSet<ZoomLevel> zoomLevels;
+        };
+
+        typedef std::shared_ptr<AvailableResourceEntry> AvailableResourceEntryPtr;
+
+        struct PromisedResourceEntry : public SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE>::PromisedResourceEntry
+        {
+            typedef SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE>::PromisedResourceEntry base;
+
+            PromisedResourceEntry(const QSet<ZoomLevel>& zoomLevels_)
+                : base()
+                , zoomLevels(zoomLevels_)
+            {
+            }
+
+            const QSet<ZoomLevel> zoomLevels;
+        };
+
+        typedef std::shared_ptr<PromisedResourceEntry> PromisedResourceEntryPtr;
+    private:
+        QSet< AvailableResourceEntryPtr > _availableResourceEntriesStorage;
+        std::array< QHash< KEY_TYPE, AvailableResourceEntryPtr >, ZoomLevelsCount> _availableResources;
+
+        QSet< PromisedResourceEntryPtr > _promisedResourceEntriesStorage;
+        std::array< QHash< KEY_TYPE, PromisedResourceEntryPtr >, ZoomLevelsCount> _promisedResources;
     protected:
     public:
         SharedByZoomResourcesContainer()
@@ -63,297 +95,396 @@ namespace OsmAnd
         {
         }
 
-        void insert(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, std::shared_ptr<RESOURCE_TYPE>& resource)
+        void insert(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, ResourcePtr& resourcePtr)
         {
             QWriteLocker scopedLocker(&_lock);
 
-            // Insert resource and set it's reference counter to 0
-            const ResourceEntryRef resourceEntry(new ResourceEntry(0, resource, levels));
-            _resources.insert(resourceEntry);
+            const AvailableResourceEntryPtr newEntryPtr(new AvailableResourceEntry(0, qMove(resourcePtr), levels));
+#ifndef Q_COMPILER_RVALUE_REFS
+            resourcePtr.reset();
+#else
+            assert(resourcePtr.use_count() == 0);
+#endif
 
             for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
             {
                 const auto level = *itLevel;
 
-                // Check if this resource is not in pending
-                assert(!_pending[level].contains(key));
+                // Resource must not be promised and must not be already available.
+                // Otherwise behavior is undefined
+                assert(!_promisedResources[level].contains(key));
+                assert(!_availableResources[level].contains(key));
 
-                // Insert resource reference
-                assert(!_container[level].contains(key));
-                _container[level].insert(key, resourceEntry);
+                _availableResources[level].insert(key, newEntryPtr);
             }
             
-            // Since we've taken reference, reset it
-            resource.reset();
+            _availableResourceEntriesStorage.insert(qMove(newEntryPtr));
         }
 
 #ifdef Q_COMPILER_RVALUE_REFS
-        void insert(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, std::shared_ptr<RESOURCE_TYPE>&& resource)
+        void insert(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, ResourcePtr&& resourcePtr)
         {
             QWriteLocker scopedLocker(&_lock);
 
-            // Insert resource and set it's reference counter to 0
-            const ResourceEntryRef resourceEntry(new ResourceEntry(0, std::forward(resource), levels));
-            _resources.insert(resourceEntry);
+            const AvailableResourceEntryPtr newEntryPtr(new AvailableResourceEntry(0, qMove(resourcePtr), levels));
+            assert(resourcePtr.use_count() == 0);
 
             for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
             {
                 const auto level = *itLevel;
 
-                // Check if this resource is not in pending
-                assert(!_pending[level].contains(key));
+                // Resource must not be promised and must not be already available.
+                // Otherwise behavior is undefined
+                assert(!_promisedResources[level].contains(key));
+                assert(!_availableResources[level].contains(key));
 
-                // Insert resource reference
-                assert(!_container[level].contains(key));
-                _container[level].insert(key, resourceEntry);
+                _availableResources[level].insert(key, newEntryPtr);
             }
 
-            // Check that resource was reset as expected
-            assert(resource.use_count() == 0);
+            _availableResourceEntriesStorage.insert(qMove(newEntryPtr));
         }
 #endif // Q_COMPILER_RVALUE_REFS
 
-        void insertAndReference(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, const std::shared_ptr<RESOURCE_TYPE>& resource)
+        void insertAndReference(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, const ResourcePtr& resourcePtr)
         {
             QWriteLocker scopedLocker(&_lock);
 
-            // Insert resource and set it's reference counter to 1
-            const ResourceEntryRef resourceEntry(new ResourceEntry(1, resource, levels));
-            _resources.insert(resourceEntry);
+            const AvailableResourceEntryPtr newEntryPtr(new AvailableResourceEntry(1, resourcePtr, levels));
 
             for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
             {
                 const auto level = *itLevel;
 
-                // Check if this resource is not in pending
-                assert(!_pending[level].contains(key));
+                // Resource must not be promised and must not be already available.
+                // Otherwise behavior is undefined
+                assert(!_promisedResources[level].contains(key));
+                assert(!_availableResources[level].contains(key));
 
-                // Insert resource reference
-                assert(!_container[level].contains(key));
-                _container[level].insert(key, resourceEntry);
+                _availableResources[level].insert(key, newEntryPtr);
             }
 
-            // Since we've taken reference, reset it
-            resource.reset();
+            _availableResourceEntriesStorage.insert(qMove(newEntryPtr));
         }
 
-        void reserveAsPending(const KEY_TYPE& key, const QSet<ZoomLevel>& levels)
+        bool obtainReference(const KEY_TYPE& key, const ZoomLevel level, ResourcePtr& outResourcePtr)
         {
             QWriteLocker scopedLocker(&_lock);
 
-            for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
+            // In case resource was promised, wait forever until promise is fulfilled
+            const itPromisedResourceEntry = _promisedResources[level].constFind(key);
+            if(itPromisedResourceEntry != _promisedResources[level].cend())
             {
-                const auto level = *itLevel;
+                const auto localFuture = (*itPromisedResourceEntry)->sharedFuture;
+                scopedLocker.unlock();
 
-                // Check if this resource is not in pending (yet)
-                assert(!_pending[level].contains(key));
+                try
+                {
+                    outResourcePtr = localFuture.get();
+                    return true;
+                }
+                catch(...)
+                {
+                }
 
-                // Check if this resource is not in container
-                assert(!_container[level].contains(key));
-
-                // Insert resource key into pending set
-                _pending[level].insert(key);
-            }
-        }
-
-        void insertPending(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, std::shared_ptr<RESOURCE_TYPE>& resource)
-        {
-            QWriteLocker scopedLocker(&_lock);
-
-            // Insert resource and set it's reference counter to 0
-            const ResourceEntryRef resourceEntry(new ResourceEntry(0, resource, levels));
-            _resources.insert(resourceEntry);
-
-            for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
-            {
-                const auto level = *itLevel;
-
-                // Check if this resource is in pending
-                assert(_pending[level].contains(key));
-                _pending[level].remove(key);
-
-                // Check if this resource is not in container
-                assert(!_container[level].contains(key));
-
-                // Insert resource reference
-                _container[level].insert(key, resourceEntry);
-            }
-
-            // Since we've taken reference, reset it
-            resource.reset();
-
-            // Notify that pending has changed
-            _pendingWaitCondition.wakeAll();
-        }
-
-#ifdef Q_COMPILER_RVALUE_REFS
-        void insertPending(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, std::shared_ptr<RESOURCE_TYPE>&& resource)
-        {
-            QWriteLocker scopedLocker(&_lock);
-
-            // Insert resource and set it's reference counter to 0
-            const ResourceEntryRef resourceEntry(new ResourceEntry(0, std::forward(resource), levels));
-            _resources.insert(resourceEntry);
-
-            for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
-            {
-                const auto level = *itLevel;
-
-                // Check if this resource is in pending
-                assert(_pending[level].contains(key));
-                _pending[level].remove(key);
-
-                // Check if this resource is not in container
-                assert(!_container[level].contains(key));
-
-                // Insert resource reference
-                _container[level].insert(key, resourceEntry);
-            }
-
-            // Check that resource was reset as expected
-            assert(resource.use_count() == 0);
-
-            // Notify that pending has changed
-            _pendingWaitCondition.wakeAll();
-        }
-#endif // Q_COMPILER_RVALUE_REFS
-
-        void insertPendingAndReference(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, const std::shared_ptr<RESOURCE_TYPE>& resource)
-        {
-            QWriteLocker scopedLocker(&_lock);
-
-            // Insert resource and set it's reference counter to 1
-            const ResourceEntryRef resourceEntry(new ResourceEntry(1, resource, levels));
-            _resources.insert(resourceEntry);
-
-            for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
-            {
-                const auto level = *itLevel;
-
-                // Check if this resource is in pending
-                assert(_pending[level].contains(key));
-                _pending[level].remove(key);
-
-                // Check if this resource is not in container
-                assert(!_container[level].contains(key));
-
-                // Insert resource reference
-                _container[level].insert(key, resourceEntry);
-            }
-
-            // Notify that pending has changed
-            _pendingWaitCondition.wakeAll();
-        }
-
-        bool obtainReference(const KEY_TYPE& key, const ZoomLevel level, std::shared_ptr<RESOURCE_TYPE>& outResource)
-        {
-            QWriteLocker scopedLocker(&_lock);
-
-            // Wait until resource is in pending state
-            while(_pending[level].contains(key))
-                _pendingWaitCondition.wait(&_lock);
-
-            // Find entry
-            const auto itEntry = _container[level].find(key);
-            if(itEntry == _container[level].end())
                 return false;
+            }
 
-            // Increase internal reference counter
-            auto& entry = **itEntry;
-            auto& refCounter = std::get<0>(entry);
-            refCounter++;
+            const auto itAvailableResourceEntry = _availableResources[level].find(key);
+            if(itAvailableResourceEntry == _availableResources[level].end())
+                return false;
+            const auto& availableResourceEntry = *itAvailableResourceEntry;
 
-            // Set reference
-            outResource = std::get<1>(entry);
+            availableResourceEntry->refCounter++;
+            outResourcePtr = availableResourceEntry->resourcePtr;
+
             return true;
         }
 
-        bool releaseReference(const KEY_TYPE& key, const ZoomLevel level, std::shared_ptr<RESOURCE_TYPE>& resource, const bool autoClean = true)
+        bool releaseReference(const KEY_TYPE& key, const ZoomLevel level, ResourcePtr& resourcePtr, const bool autoClean = true, bool* outWasCleaned = nullptr, uintmax_t* outRemainingReferences = nullptr)
         {
             QWriteLocker scopedLocker(&_lock);
 
-            // Check if this resource is not in pending
-            assert(!_pending[level].contains(key));
+            // Resource must not be promised. Otherwise behavior is undefined
+            assert(!_promisedResources[level].contains(key));
 
-            // Find entry
-            const auto itEntry = _container[level].find(key);
-            if(itEntry == _container[level].end())
+            const auto itAvailableResourceEntry = _availableResources[level].find(key);
+            if(itAvailableResourceEntry == _availableResources[level].end())
                 return false;
-            const auto& entryRef = *itEntry;
-            auto& entry = *entryRef;
+            const auto& availableResourceEntry = *itAvailableResourceEntry;
+            assert(availableResourceEntry->refCounter > 0);
+            assert(availableResourceEntry->resourcePtr == resourcePtr);
 
-            // Decrement internal reference counter
-            auto& refCounter = std::get<0>(entry);
-            assert(refCounter > 0);
-            refCounter--;
-
-            // Remove reference
-            resource.reset();
-
-            // If this is the last reference, remove the entire entry
-            if(autoClean && refCounter == 0)
+            availableResourceEntry->refCounter--;
+            if(outRemainingReferences)
+                *outRemainingReferences = availableResourceEntry->refCounter;
+            if(autoClean && outWasCleaned)
+                *outWasCleaned = false;
+            if(autoClean && availableResourceEntry->refCounter == 0)
             {
-                // Erase all other links
-                const auto& levels = std::get<2>(entry);
-                for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
+                for(auto itOtherLevel = availableResourceEntry->zoomLevels.cbegin(); itOtherLevel != availableResourceEntry->zoomLevels.cend(); ++itOtherLevel)
                 {
-                    const auto otherLevel = *itLevel;
-                    if(level == otherLevel)
+                    const auto otherLevel = *itOtherLevel;
+                    if(otherLevel == level)
                         continue;
 
-                    const auto removedCount = _container[otherLevel].remove(key);
+                    const auto removedCount = _availableResources[otherLevel].remove(key);
                     assert(removedCount == 1);
                 }
 
-                // Remove the resource entry
-                _resources.remove(entryRef);
+                _availableResourceEntriesStorage.remove(availableResourceEntry);
+                _availableResources[level].erase(itAvailableResourceEntry);
 
-                // Erase current link
-                _container[level].erase(itEntry);
+                if(outWasCleaned)
+                    *outWasCleaned = true;
             }
+            resourcePtr.reset();
 
             return true;
         }
-
-        bool obtainReferenceOrReserveAsPending(const KEY_TYPE& key, const ZoomLevel level, const QSet<ZoomLevel>& levels, std::shared_ptr<RESOURCE_TYPE>& outResource)
+        
+        void makePromise(const KEY_TYPE& key, const QSet<ZoomLevel>& levels)
         {
             QWriteLocker scopedLocker(&_lock);
 
-            // Wait until resource is in pending state
-            while(_pending[level].contains(key))
-                _pendingWaitCondition.wait(&_lock);
+            const PromisedResourceEntryPtr newEntryPtr(new PromisedResourceEntry(levels));
 
-            // Find entry
-            const auto itEntry = _container[level].find(key);
-            if(itEntry == _container[level].end())
+            for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
             {
-                // Reserve as pending
-                for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
-                {
-                    const auto level = *itLevel;
+                const auto level = *itLevel;
 
-                    // Check if this resource is not in pending (yet)
-                    assert(!_pending[level].contains(key));
+                // Resource must not be promised and must not be already available.
+                // Otherwise behavior is undefined
+                assert(!_promisedResources[level].contains(key));
+                assert(!_availableResources[level].contains(key));
 
-                    // Check if this resource is not in container
-                    assert(!_container[level].contains(key));
-
-                    // Insert resource key into pending set
-                    _pending[level].insert(key);
-                }
-
-                return false;
+                _promisedResources[level].insert(key, newEntryPtr);
             }
 
-            // Increase internal reference counter
-            auto& entry = **itEntry;
-            auto& refCounter = std::get<0>(entry);
-            refCounter++;
+            _promisedResourceEntriesStorage.insert(qMove(newEntryPtr));
+        }
 
-            // Set reference
-            outResource = std::get<1>(entry);
+        void breakPromise(const KEY_TYPE& key, const QSet<ZoomLevel>& levels)
+        {
+            QWriteLocker scopedLocker(&_lock);
+
+            PromisedResourceEntryPtr promisedEntryPtr;
+            for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
+            {
+                const auto level = *itLevel;
+
+                // Resource must be promised and must not be already available.
+                // Otherwise behavior is undefined
+                assert(_promisedResources[level].contains(key));
+                assert(!_availableResources[level].contains(key));
+
+                const auto itPromisedResourceEntry = _promisedResources[level].find(key);
+                if(!promisedEntryPtr)
+                    promisedEntryPtr = *itPromisedResourceEntry;
+                _promisedResources[level].erase(itPromisedResourceEntry);
+
+            }
+
+            _promisedResourceEntriesStorage.erase(promisedEntryPtr);
+            promisedEntryPtr->promise.set_exception(std::make_exception_ptr(std::runtime_error("Promise was broken")));
+        }
+
+        void fulfilPromise(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, ResourcePtr& resourcePtr)
+        {
+            QWriteLocker scopedLocker(&_lock);
+
+            PromisedResourceEntryPtr promisedEntryPtr;
+            for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
+            {
+                const auto level = *itLevel;
+
+                // Resource must be promised and must not be already available.
+                // Otherwise behavior is undefined
+                assert(_promisedResources[level].contains(key));
+                assert(!_availableResources[level].contains(key));
+
+                const auto itPromisedResourceEntry = _promisedResources[level].find(key);
+                if(!promisedEntryPtr)
+                    promisedEntryPtr = *itPromisedResourceEntry;
+                _promisedResources[level].erase(itPromisedResourceEntry);
+
+            }
+            _promisedResourceEntriesStorage.erase(promisedEntryPtr);
+
+            if(promisedEntryPtr->refCounter <= 0)
+                return;
+
+            const AvailableResourceEntryPtr newEntryPtr(new AvailableResourceEntry(promisedEntryPtr->refCounter, qMove(resourcePtr), levels));
+#ifndef Q_COMPILER_RVALUE_REFS
+            resourcePtr.reset();
+#else
+            assert(resourcePtr.use_count() == 0);
+#endif
+
+            for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
+            {
+                const auto level = *itLevel;
+
+                // Resource must not be promised and must not be already available.
+                // Otherwise behavior is undefined
+                assert(!_promisedResources[level].contains(key));
+                assert(!_availableResources[level].contains(key));
+
+                _availableResources[level].insert(key, newEntryPtr);
+            }
+
+            _availableResourceEntriesStorage.insert(newEntryPtr);
+            promisedResourceEntry->promise.set_value(newEntryPtr->resourcePtr);
+        }
+
+#ifdef Q_COMPILER_RVALUE_REFS
+        void fulfilPromise(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, ResourcePtr&& resourcePtr)
+        {
+            QWriteLocker scopedLocker(&_lock);
+
+            PromisedResourceEntryPtr promisedEntryPtr;
+            for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
+            {
+                const auto level = *itLevel;
+
+                // Resource must be promised and must not be already available.
+                // Otherwise behavior is undefined
+                assert(_promisedResources[level].contains(key));
+                assert(!_availableResources[level].contains(key));
+
+                const auto itPromisedResourceEntry = _promisedResources[level].find(key);
+                if(!promisedEntryPtr)
+                    promisedEntryPtr = *itPromisedResourceEntry;
+                _promisedResources[level].erase(itPromisedResourceEntry);
+
+            }
+            _promisedResourceEntriesStorage.erase(promisedEntryPtr);
+
+            if(promisedEntryPtr->refCounter <= 0)
+                return;
+
+            const AvailableResourceEntryPtr newEntryPtr(new AvailableResourceEntry(promisedEntryPtr->refCounter, qMove(resourcePtr), levels));
+            assert(resourcePtr.use_count() == 0);
+
+            for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
+            {
+                const auto level = *itLevel;
+
+                // Resource must not be promised and must not be already available.
+                // Otherwise behavior is undefined
+                assert(!_promisedResources[level].contains(key));
+                assert(!_availableResources[level].contains(key));
+
+                _availableResources[level].insert(key, newEntryPtr);
+            }
+
+            _availableResourceEntriesStorage.insert(newEntryPtr);
+            promisedResourceEntry->promise.set_value(newEntryPtr->resourcePtr);
+        }
+#endif // Q_COMPILER_RVALUE_REFS
+
+        void fulfilPromiseAndReference(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, const ResourcePtr& resourcePtr)
+        {
+            QWriteLocker scopedLocker(&_lock);
+
+            PromisedResourceEntryPtr promisedEntryPtr;
+            for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
+            {
+                const auto level = *itLevel;
+
+                // Resource must be promised and must not be already available.
+                // Otherwise behavior is undefined
+                assert(_promisedResources[level].contains(key));
+                assert(!_availableResources[level].contains(key));
+
+                const auto itPromisedResourceEntry = _promisedResources[level].find(key);
+                if(!promisedEntryPtr)
+                    promisedEntryPtr = *itPromisedResourceEntry;
+                _promisedResources[level].erase(itPromisedResourceEntry);
+
+            }
+            _promisedResourceEntriesStorage.remove(promisedEntryPtr);
+
+            const AvailableResourceEntryPtr newEntryPtr(new AvailableResourceEntry(promisedEntryPtr->refCounter + 1, resourcePtr, levels));
+
+            for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
+            {
+                const auto level = *itLevel;
+
+                // Resource must not be promised and must not be already available.
+                // Otherwise behavior is undefined
+                assert(!_promisedResources[level].contains(key));
+                assert(!_availableResources[level].contains(key));
+
+                _availableResources[level].insert(key, newEntryPtr);
+            }
+
+            _availableResourceEntriesStorage.insert(newEntryPtr);
+            promisedEntryPtr->promise.set_value(newEntryPtr->resourcePtr);
+        }
+
+        bool obtainFutureReference(const KEY_TYPE& key, const ZoomLevel level, std::shared_future<ResourcePtr>& outFutureResourcePtr)
+        {
+            QWriteLocker scopedLocker(&_lock);
+
+            // Resource must not be already available.
+            // Otherwise behavior is undefined
+            assert(!_availableResources[level].contains(key));
+
+            const auto itPromisedResourceEntry = _promisedResources[level].constFind(key);
+            if(itPromisedResourceEntry == _promisedResources[level].cend())
+                return false;
+            const auto& promisedResourceEntry = *itPromisedResourceEntry;
+
+            promisedResourceEntry->refCounter++;
+            outFutureResourcePtr = promisedResourceEntry->sharedFuture;
+
             return true;
         }
+
+        bool releaseFutureReference(const KEY_TYPE& key, const ZoomLevel level)
+        {
+            QWriteLocker scopedLocker(&_lock);
+
+            // Resource must not be already available.
+            // Otherwise behavior is undefined
+            assert(!_availableResources[level].contains(key));
+
+            const auto itPromisedResourceEntry = _promisedResources[level].constFind(key);
+            if(itPromisedResourceEntry == _promisedResources[level].cend())
+                return false;
+            const auto& promisedResourceEntry = *itPromisedResourceEntry;
+            assert(promisedResourceEntry->refCounter > 0);
+
+            promisedResourceEntry->refCounter--;
+
+            return true;
+        }
+
+        bool obtainReferenceOrFutureReferenceOrMakePromise(const KEY_TYPE& key, const ZoomLevel level, const QSet<ZoomLevel>& levels, ResourcePtr& outResourcePtr, std::shared_future<ResourcePtr>& outFutureResourcePtr)
+        {
+            QWriteLocker scopedLocker(&_lock);
+
+            assert(levels.contains(level));
+
+            const auto itAvailableResourceEntry = _availableResources[level].find(key);
+            if(itAvailableResourceEntry != _availableResources[level].end())
+            {
+                const auto& availableResourceEntry = *itAvailableResourceEntry;
+
+                availableResourceEntry->refCounter++;
+                outResourcePtr = availableResourceEntry->resourcePtr;
+
+                return true;
+            }
+
+            const auto futureReferenceAvailable = obtainFutureReference(key, level, outFutureResourcePtr);
+            if(futureReferenceAvailable)
+                return true;
+
+            makePromise(key, levels);
+            return false;
+        }
+
     };
 }
 

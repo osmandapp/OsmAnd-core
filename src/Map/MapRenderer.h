@@ -85,6 +85,8 @@ namespace OsmAnd
         std::unique_ptr<GPUAPI> _gpuAPI;
         void invalidateFrame();
         Qt::HANDLE _renderThreadId;
+        Concurrent::Dispatcher _renderThreadDispatcher;
+        Concurrent::Dispatcher _gpuThreadDispatcher;
     protected:
         MapRenderer();
 
@@ -167,6 +169,9 @@ namespace OsmAnd
         virtual bool releaseRendering();
 
         virtual bool isFrameInvalidated() const;
+
+        Concurrent::Dispatcher& getRenderThreadDispatcher();
+        Concurrent::Dispatcher& getGpuThreadDispatcher();
 
         virtual unsigned int getVisibleTilesCount() const;
         virtual unsigned int getSymbolsCount() const;

@@ -264,8 +264,6 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
     const IQueryController* const controller,
     Rasterizer_Metrics::Metric_prepareContext* const metric)
 {
-    bool ok;
-
     // Initialize shared settings for order evaluation
     MapStyleEvaluator orderEvaluator(env.owner->style, env.owner->displayDensityFactor);
     env.applyTo(orderEvaluator);
@@ -291,6 +289,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
     pointEvaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_MAXZOOM, context._zoom);
 
     auto& sharedPrimitivesGroups = context.owner->sharedContext->_d->_sharedPrimitivesGroups[context._zoom];
+    QList< std::shared_future< std::shared_ptr<const PrimitivesGroup> > > futureSharedPrimitivesGroups;
     for(auto itMapObject = source.cbegin(); itMapObject != source.cend(); ++itMapObject)
     {
         if(controller && controller->isAborted())
@@ -304,286 +303,37 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
         {
             // If this group was already processed, use that
             std::shared_ptr<const PrimitivesGroup> group;
-            if(sharedPrimitivesGroups.obtainReferenceOrReserveAsPending(mapObject->id, group))
+            std::shared_future< std::shared_ptr<const PrimitivesGroup> > futureGroup;
+            if(sharedPrimitivesGroups.obtainReferenceOrFutureReferenceOrMakePromise(mapObject->id, group, futureGroup))
             {
-                // Add polygons, polylines and points from group to current context
-                for(auto itPrimitive = group->polygons.cbegin(); itPrimitive != group->polygons.cend(); ++itPrimitive)
-                    context._polygons.push_back(*itPrimitive);
-                for(auto itPrimitive = group->polylines.cbegin(); itPrimitive != group->polylines.cend(); ++itPrimitive)
-                    context._polylines.push_back(*itPrimitive);
-                for(auto itPrimitive = group->points.cbegin(); itPrimitive != group->points.cend(); ++itPrimitive)
-                    context._points.push_back(*itPrimitive);
+                if(group)
+                {
+                    // Add polygons, polylines and points from group to current context
+                    for(auto itPrimitive = group->polygons.cbegin(); itPrimitive != group->polygons.cend(); ++itPrimitive)
+                        context._polygons.push_back(*itPrimitive);
+                    for(auto itPrimitive = group->polylines.cbegin(); itPrimitive != group->polylines.cend(); ++itPrimitive)
+                        context._polylines.push_back(*itPrimitive);
+                    for(auto itPrimitive = group->points.cbegin(); itPrimitive != group->points.cend(); ++itPrimitive)
+                        context._points.push_back(*itPrimitive);
 
-                // Add shared group to current context
-                context._primitivesGroups.push_back(qMove(group));
-
+                    // Add shared group to current context
+                    context._primitivesGroups.push_back(qMove(group));
+                }
+                else
+                {
+                    futureSharedPrimitivesGroups.push_back(qMove(futureGroup));
+                }
+                
                 continue;
             }
         }
 
         // Create a primitives group
-        const auto constructedGroup = new PrimitivesGroup(mapObject);
-        std::shared_ptr<const PrimitivesGroup> group(constructedGroup);
-
-        uint32_t typeRuleIdIndex = 0;
-        for(auto itTypeRuleId = mapObject->typesRuleIds.cbegin(); itTypeRuleId != mapObject->typesRuleIds.cend(); ++itTypeRuleId, typeRuleIdIndex++)
-        {
-            const auto& decodedType = mapObject->section->encodingDecodingRules->decodingRules[*itTypeRuleId];
-
-            // Update metric
-            std::chrono::high_resolution_clock::time_point orderEvaluation_begin;
-            if(metric)
-                orderEvaluation_begin = std::chrono::high_resolution_clock::now();
-            
-            // Setup mapObject-specific input data
-            orderEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
-            orderEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
-            orderEvaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_LAYER, mapObject->getSimpleLayerValue());
-            orderEvaluator.setBooleanValue(env.styleBuiltinValueDefs->id_INPUT_AREA, mapObject->isArea);
-            orderEvaluator.setBooleanValue(env.styleBuiltinValueDefs->id_INPUT_POINT, mapObject->points31.size() == 1);
-            orderEvaluator.setBooleanValue(env.styleBuiltinValueDefs->id_INPUT_CYCLE, mapObject->isClosedFigure());
-
-            MapStyleEvaluationResult orderEvalResult;
-            ok = orderEvaluator.evaluate(mapObject, MapStyleRulesetType::Order, &orderEvalResult);
-
-            // Update metric
-            if(metric)
-            {
-                const std::chrono::duration<float> orderEvaluation_elapsed = std::chrono::high_resolution_clock::now() - orderEvaluation_begin;
-                metric->elapsedTimeForOrderEvaluation += orderEvaluation_elapsed.count();
-                metric->orderEvaluations++;
-            }
-
-            // If evaluation failed, skip
-            if(!ok)
-                continue;
-
-            int objectType;
-            if(!orderEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_OBJECT_TYPE, objectType))
-                continue;
-            int zOrder;
-            if(!orderEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_ORDER, zOrder))
-                continue;
-
-            // Create new primitive
-            std::shared_ptr<Primitive> primitive(new Primitive(group, mapObject, static_cast<PrimitiveType>(objectType), typeRuleIdIndex));
-            primitive->zOrder = zOrder;
-
-            if(objectType == PrimitiveType::Polygon)
-            {
-                // Perform checks on data
-                if(mapObject->points31.size() <= 2)
-                {
-                    OsmAnd::LogPrintf(LogSeverityLevel::Warning,
-                        "Map object #%" PRIu64 " (%" PRIi64 ") primitive is processed as polygon, but has only %d point(s)",
-                        mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2,
-                        mapObject->points31.size());
-                    continue;
-                }
-                if(!mapObject->isClosedFigure())
-                {
-                    OsmAnd::LogPrintf(LogSeverityLevel::Warning,
-                        "Map object #%" PRIu64 " (%" PRIi64 ") primitive is processed as polygon, but isn't closed",
-                        mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2);
-                    continue;
-                }
-                if(!mapObject->isClosedFigure(true))
-                {
-                    OsmAnd::LogPrintf(LogSeverityLevel::Warning,
-                        "Map object #%" PRIu64 " (%" PRIi64 ") primitive is processed as polygon, but isn't closed (inner)",
-                        mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2);
-                    continue;
-                }
-
-                // Update metric
-                std::chrono::high_resolution_clock::time_point polygonEvaluation_begin;
-                if(metric)
-                    polygonEvaluation_begin = std::chrono::high_resolution_clock::now();
-
-                // Setup mapObject-specific input data
-                polygonEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
-                polygonEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
-
-                // Evaluate style for this primitive to check if it passes
-                std::shared_ptr<MapStyleEvaluationResult> evaluatorState(new MapStyleEvaluationResult());
-                ok = polygonEvaluator.evaluate(mapObject, MapStyleRulesetType::Polygon, evaluatorState.get());
-
-                // Update metric
-                if(metric)
-                {
-                    const std::chrono::duration<float> polygonEvaluation_elapsed = std::chrono::high_resolution_clock::now() - polygonEvaluation_begin;
-                    metric->elapsedTimeForPolygonEvaluation += polygonEvaluation_elapsed.count();
-                    metric->polygonEvaluations++;
-                }
-
-                // If evaluation failed, skip
-                if(!ok)
-                    continue;
-                primitive->evaluationResult = evaluatorState;
-
-                // Check size of polygon
-                auto polygonArea31 = Utilities::polygonArea(mapObject->points31);
-                if(polygonArea31 > PolygonAreaCutoffLowerThreshold)
-                {
-                    primitive->zOrder += 1.0 / polygonArea31;
-
-                    // Duplicate primitive as point
-                    std::shared_ptr<Primitive> pointPrimitive(new Primitive(group, mapObject, PrimitiveType::Point, typeRuleIdIndex));
-                    pointPrimitive->zOrder = primitive->zOrder;
-
-                    // Accept this primitive
-                    constructedGroup->polygons.push_back(qMove(primitive));
-
-                    // Update metric
-                    if(metric)
-                        metric->polygonPrimitives++;
-
-                    // Update metric
-                    std::chrono::high_resolution_clock::time_point pointEvaluation_begin;
-                    if(metric)
-                        pointEvaluation_begin = std::chrono::high_resolution_clock::now();
-
-                    // Setup mapObject-specific input data
-                    pointEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
-                    pointEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
-
-                    // Evaluate Point rules
-                    std::shared_ptr<MapStyleEvaluationResult> pointEvaluatorState(new MapStyleEvaluationResult());
-                    ok = pointEvaluator.evaluate(mapObject, MapStyleRulesetType::Point, pointEvaluatorState.get());
-
-                    // Update metric
-                    if(metric)
-                    {
-                        const std::chrono::duration<float> pointEvaluation_elapsed = std::chrono::high_resolution_clock::now() - pointEvaluation_begin;
-                        metric->elapsedTimeForPointEvaluation += pointEvaluation_elapsed.count();
-                        metric->pointEvaluations++;
-                    }
-                    
-                    // Point evaluation is a bit special, it's success only indicates that point has an icon
-                    if(ok)
-                        pointPrimitive->evaluationResult = pointEvaluatorState;
-
-                    // Accept also point primitive only if typeIndex == 0 and (there is text or icon)
-                    if(pointPrimitive->typeRuleIdIndex == 0 && (!mapObject->names.isEmpty() || ok))
-                    {
-                        constructedGroup->points.push_back(qMove(pointPrimitive));
-
-                        // Update metric
-                        if(metric)
-                            metric->pointPrimitives++;
-                    }
-                }
-            }
-            else if(objectType == PrimitiveType::Polyline)
-            {
-                // Perform checks on data
-                if(mapObject->points31.size() < 2)
-                {
-                    OsmAnd::LogPrintf(LogSeverityLevel::Warning,
-                        "Map object #%" PRIu64 " (%" PRIi64 ") is processed as polyline, but has %d point(s)",
-                        mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2,
-                        mapObject->_points31.size());
-                    continue;
-                }
-
-                // Update metric
-                std::chrono::high_resolution_clock::time_point polylineEvaluation_begin;
-                if(metric)
-                    polylineEvaluation_begin = std::chrono::high_resolution_clock::now();
-
-                // Setup mapObject-specific input data
-                polylineEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
-                polylineEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
-                polylineEvaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_LAYER, mapObject->getSimpleLayerValue());
-
-                // Evaluate style for this primitive to check if it passes
-                std::shared_ptr<MapStyleEvaluationResult> evaluatorState(new MapStyleEvaluationResult());
-                ok = polylineEvaluator.evaluate(mapObject, MapStyleRulesetType::Polyline, evaluatorState.get());
-
-                // Update metric
-                if(metric)
-                {
-                    const std::chrono::duration<float> polylineEvaluation_elapsed = std::chrono::high_resolution_clock::now() - polylineEvaluation_begin;
-                    metric->elapsedTimeForPolylineEvaluation += polylineEvaluation_elapsed.count();
-                    metric->polylineEvaluations++;
-                }
-
-                // If evaluation failed, skip
-                if(!ok)
-                    continue;
-                primitive->evaluationResult = evaluatorState;
-
-                // Accept this primitive
-                constructedGroup->polylines.push_back(qMove(primitive));
-
-                // Update metric
-                if(metric)
-                    metric->polylinePrimitives++;
-            }
-            else if(objectType == PrimitiveType::Point)
-            {
-                // Perform checks on data
-                if(mapObject->points31.size() < 1)
-                {
-                    OsmAnd::LogPrintf(LogSeverityLevel::Warning,
-                        "Map object #%" PRIu64 " (%" PRIi64 ") is processed as point, but has no point",
-                        mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2);
-                    continue;
-                }
-
-                // Update metric
-                std::chrono::high_resolution_clock::time_point pointEvaluation_begin;
-                if(metric)
-                    pointEvaluation_begin = std::chrono::high_resolution_clock::now();
-
-                // Setup mapObject-specific input data
-                pointEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
-                pointEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
-
-                // Evaluate Point rules
-                std::shared_ptr<MapStyleEvaluationResult> evaluatorState(new MapStyleEvaluationResult());
-                ok = pointEvaluator.evaluate(mapObject, MapStyleRulesetType::Point, evaluatorState.get());
-
-                // Update metric
-                if(metric)
-                {
-                    const std::chrono::duration<float> pointEvaluation_elapsed = std::chrono::high_resolution_clock::now() - pointEvaluation_begin;
-                    metric->elapsedTimeForPointEvaluation += pointEvaluation_elapsed.count();
-                    metric->pointEvaluations++;
-                }
-
-                // Point evaluation is a bit special, it's success only indicates that point has an icon
-                if(ok)
-                    primitive->evaluationResult = evaluatorState;
-
-                // Skip is possible if typeIndex != 0 or (there is no text and no icon)
-                if(primitive->typeRuleIdIndex != 0 || (mapObject->names.isEmpty() && !ok))
-                    continue;
-
-                // Accept this primitive
-                constructedGroup->points.push_back(qMove(primitive));
-
-                // Update metric
-                if(metric)
-                    metric->pointPrimitives++;
-            }
-            else
-            {
-                assert(false);
-                continue;
-            }
-
-            int shadowLevel;
-            if(orderEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_SHADOW_LEVEL, shadowLevel) && shadowLevel > 0)
-            {
-                context._shadowLevelMin = qMin(context._shadowLevelMin, static_cast<uint32_t>(zOrder));
-                context._shadowLevelMax = qMax(context._shadowLevelMax, static_cast<uint32_t>(zOrder));
-            }
-        }
+        const auto group = createPrimitivesGroup(env, context, mapObject, orderEvaluator, polygonEvaluator, polylineEvaluator, pointEvaluator, metric);
 
         // Add this group to shared cache
         if(canBeShared)
-            sharedPrimitivesGroups.insertPendingAndReference(mapObject->id, group);
+            sharedPrimitivesGroups.fulfilPromiseAndReference(mapObject->id, group);
 
         // Add polygons, polylines and points from group to current context
         for(auto itPrimitive = group->polygons.cbegin(); itPrimitive != group->polygons.cend(); ++itPrimitive)
@@ -596,6 +346,297 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
         // Empty groups are also inserted, to indicate that they are empty
         context._primitivesGroups.push_back(qMove(group));
     }
+
+    for(auto itFutureSharedGroup = futureSharedPrimitivesGroups.cbegin(); itFutureSharedGroup != futureSharedPrimitivesGroups.cend(); ++itFutureSharedGroup)
+    {
+        const auto& futureSharedGroup = *itFutureSharedGroup;
+
+        const auto group = futureSharedGroup.get();
+
+        // Add polygons, polylines and points from group to current context
+        for(auto itPrimitive = group->polygons.cbegin(); itPrimitive != group->polygons.cend(); ++itPrimitive)
+            context._polygons.push_back(*itPrimitive);
+        for(auto itPrimitive = group->polylines.cbegin(); itPrimitive != group->polylines.cend(); ++itPrimitive)
+            context._polylines.push_back(*itPrimitive);
+        for(auto itPrimitive = group->points.cbegin(); itPrimitive != group->points.cend(); ++itPrimitive)
+            context._points.push_back(*itPrimitive);
+
+        // Add shared group to current context
+        context._primitivesGroups.push_back(qMove(group));
+    }
+}
+
+std::shared_ptr<const OsmAnd::Rasterizer_P::PrimitivesGroup> OsmAnd::Rasterizer_P::createPrimitivesGroup(
+    const RasterizerEnvironment_P& env, RasterizerContext_P& context,
+    const std::shared_ptr<const Model::MapObject>& mapObject,
+    MapStyleEvaluator& orderEvaluator,
+    MapStyleEvaluator& polygonEvaluator,
+    MapStyleEvaluator& polylineEvaluator,
+    MapStyleEvaluator& pointEvaluator,
+    Rasterizer_Metrics::Metric_prepareContext* const metric)
+{
+    bool ok;
+
+    const auto constructedGroup = new PrimitivesGroup(mapObject);
+    std::shared_ptr<const PrimitivesGroup> group(constructedGroup);
+
+    uint32_t typeRuleIdIndex = 0;
+    for(auto itTypeRuleId = mapObject->typesRuleIds.cbegin(); itTypeRuleId != mapObject->typesRuleIds.cend(); ++itTypeRuleId, typeRuleIdIndex++)
+    {
+        const auto& decodedType = mapObject->section->encodingDecodingRules->decodingRules[*itTypeRuleId];
+
+        // Update metric
+        std::chrono::high_resolution_clock::time_point orderEvaluation_begin;
+        if(metric)
+            orderEvaluation_begin = std::chrono::high_resolution_clock::now();
+
+        // Setup mapObject-specific input data
+        orderEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
+        orderEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
+        orderEvaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_LAYER, mapObject->getSimpleLayerValue());
+        orderEvaluator.setBooleanValue(env.styleBuiltinValueDefs->id_INPUT_AREA, mapObject->isArea);
+        orderEvaluator.setBooleanValue(env.styleBuiltinValueDefs->id_INPUT_POINT, mapObject->points31.size() == 1);
+        orderEvaluator.setBooleanValue(env.styleBuiltinValueDefs->id_INPUT_CYCLE, mapObject->isClosedFigure());
+
+        MapStyleEvaluationResult orderEvalResult;
+        ok = orderEvaluator.evaluate(mapObject, MapStyleRulesetType::Order, &orderEvalResult);
+
+        // Update metric
+        if(metric)
+        {
+            const std::chrono::duration<float> orderEvaluation_elapsed = std::chrono::high_resolution_clock::now() - orderEvaluation_begin;
+            metric->elapsedTimeForOrderEvaluation += orderEvaluation_elapsed.count();
+            metric->orderEvaluations++;
+        }
+
+        // If evaluation failed, skip
+        if(!ok)
+            continue;
+
+        int objectType;
+        if(!orderEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_OBJECT_TYPE, objectType))
+            continue;
+        int zOrder;
+        if(!orderEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_ORDER, zOrder))
+            continue;
+
+        // Create new primitive
+        std::shared_ptr<Primitive> primitive(new Primitive(group, mapObject, static_cast<PrimitiveType>(objectType), typeRuleIdIndex));
+        primitive->zOrder = zOrder;
+
+        if(objectType == PrimitiveType::Polygon)
+        {
+            // Perform checks on data
+            if(mapObject->points31.size() <= 2)
+            {
+                OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+                    "Map object #%" PRIu64 " (%" PRIi64 ") primitive is processed as polygon, but has only %d point(s)",
+                    mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2,
+                    mapObject->points31.size());
+                continue;
+            }
+            if(!mapObject->isClosedFigure())
+            {
+                OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+                    "Map object #%" PRIu64 " (%" PRIi64 ") primitive is processed as polygon, but isn't closed",
+                    mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2);
+                continue;
+            }
+            if(!mapObject->isClosedFigure(true))
+            {
+                OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+                    "Map object #%" PRIu64 " (%" PRIi64 ") primitive is processed as polygon, but isn't closed (inner)",
+                    mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2);
+                continue;
+            }
+
+            // Update metric
+            std::chrono::high_resolution_clock::time_point polygonEvaluation_begin;
+            if(metric)
+                polygonEvaluation_begin = std::chrono::high_resolution_clock::now();
+
+            // Setup mapObject-specific input data
+            polygonEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
+            polygonEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
+
+            // Evaluate style for this primitive to check if it passes
+            std::shared_ptr<MapStyleEvaluationResult> evaluatorState(new MapStyleEvaluationResult());
+            ok = polygonEvaluator.evaluate(mapObject, MapStyleRulesetType::Polygon, evaluatorState.get());
+
+            // Update metric
+            if(metric)
+            {
+                const std::chrono::duration<float> polygonEvaluation_elapsed = std::chrono::high_resolution_clock::now() - polygonEvaluation_begin;
+                metric->elapsedTimeForPolygonEvaluation += polygonEvaluation_elapsed.count();
+                metric->polygonEvaluations++;
+            }
+
+            // If evaluation failed, skip
+            if(!ok)
+                continue;
+            primitive->evaluationResult = evaluatorState;
+
+            // Check size of polygon
+            auto polygonArea31 = Utilities::polygonArea(mapObject->points31);
+            if(polygonArea31 > PolygonAreaCutoffLowerThreshold)
+            {
+                primitive->zOrder += 1.0 / polygonArea31;
+
+                // Duplicate primitive as point
+                std::shared_ptr<Primitive> pointPrimitive(new Primitive(group, mapObject, PrimitiveType::Point, typeRuleIdIndex));
+                pointPrimitive->zOrder = primitive->zOrder;
+
+                // Accept this primitive
+                constructedGroup->polygons.push_back(qMove(primitive));
+
+                // Update metric
+                if(metric)
+                    metric->polygonPrimitives++;
+
+                // Update metric
+                std::chrono::high_resolution_clock::time_point pointEvaluation_begin;
+                if(metric)
+                    pointEvaluation_begin = std::chrono::high_resolution_clock::now();
+
+                // Setup mapObject-specific input data
+                pointEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
+                pointEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
+
+                // Evaluate Point rules
+                std::shared_ptr<MapStyleEvaluationResult> pointEvaluatorState(new MapStyleEvaluationResult());
+                ok = pointEvaluator.evaluate(mapObject, MapStyleRulesetType::Point, pointEvaluatorState.get());
+
+                // Update metric
+                if(metric)
+                {
+                    const std::chrono::duration<float> pointEvaluation_elapsed = std::chrono::high_resolution_clock::now() - pointEvaluation_begin;
+                    metric->elapsedTimeForPointEvaluation += pointEvaluation_elapsed.count();
+                    metric->pointEvaluations++;
+                }
+
+                // Point evaluation is a bit special, it's success only indicates that point has an icon
+                if(ok)
+                    pointPrimitive->evaluationResult = pointEvaluatorState;
+
+                // Accept also point primitive only if typeIndex == 0 and (there is text or icon)
+                if(pointPrimitive->typeRuleIdIndex == 0 && (!mapObject->names.isEmpty() || ok))
+                {
+                    constructedGroup->points.push_back(qMove(pointPrimitive));
+
+                    // Update metric
+                    if(metric)
+                        metric->pointPrimitives++;
+                }
+            }
+        }
+        else if(objectType == PrimitiveType::Polyline)
+        {
+            // Perform checks on data
+            if(mapObject->points31.size() < 2)
+            {
+                OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+                    "Map object #%" PRIu64 " (%" PRIi64 ") is processed as polyline, but has %d point(s)",
+                    mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2,
+                    mapObject->_points31.size());
+                continue;
+            }
+
+            // Update metric
+            std::chrono::high_resolution_clock::time_point polylineEvaluation_begin;
+            if(metric)
+                polylineEvaluation_begin = std::chrono::high_resolution_clock::now();
+
+            // Setup mapObject-specific input data
+            polylineEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
+            polylineEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
+            polylineEvaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_LAYER, mapObject->getSimpleLayerValue());
+
+            // Evaluate style for this primitive to check if it passes
+            std::shared_ptr<MapStyleEvaluationResult> evaluatorState(new MapStyleEvaluationResult());
+            ok = polylineEvaluator.evaluate(mapObject, MapStyleRulesetType::Polyline, evaluatorState.get());
+
+            // Update metric
+            if(metric)
+            {
+                const std::chrono::duration<float> polylineEvaluation_elapsed = std::chrono::high_resolution_clock::now() - polylineEvaluation_begin;
+                metric->elapsedTimeForPolylineEvaluation += polylineEvaluation_elapsed.count();
+                metric->polylineEvaluations++;
+            }
+
+            // If evaluation failed, skip
+            if(!ok)
+                continue;
+            primitive->evaluationResult = evaluatorState;
+
+            // Accept this primitive
+            constructedGroup->polylines.push_back(qMove(primitive));
+
+            // Update metric
+            if(metric)
+                metric->polylinePrimitives++;
+        }
+        else if(objectType == PrimitiveType::Point)
+        {
+            // Perform checks on data
+            if(mapObject->points31.size() < 1)
+            {
+                OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+                    "Map object #%" PRIu64 " (%" PRIi64 ") is processed as point, but has no point",
+                    mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2);
+                continue;
+            }
+
+            // Update metric
+            std::chrono::high_resolution_clock::time_point pointEvaluation_begin;
+            if(metric)
+                pointEvaluation_begin = std::chrono::high_resolution_clock::now();
+
+            // Setup mapObject-specific input data
+            pointEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
+            pointEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
+
+            // Evaluate Point rules
+            std::shared_ptr<MapStyleEvaluationResult> evaluatorState(new MapStyleEvaluationResult());
+            ok = pointEvaluator.evaluate(mapObject, MapStyleRulesetType::Point, evaluatorState.get());
+
+            // Update metric
+            if(metric)
+            {
+                const std::chrono::duration<float> pointEvaluation_elapsed = std::chrono::high_resolution_clock::now() - pointEvaluation_begin;
+                metric->elapsedTimeForPointEvaluation += pointEvaluation_elapsed.count();
+                metric->pointEvaluations++;
+            }
+
+            // Point evaluation is a bit special, it's success only indicates that point has an icon
+            if(ok)
+                primitive->evaluationResult = evaluatorState;
+
+            // Skip is possible if typeIndex != 0 or (there is no text and no icon)
+            if(primitive->typeRuleIdIndex != 0 || (mapObject->names.isEmpty() && !ok))
+                continue;
+
+            // Accept this primitive
+            constructedGroup->points.push_back(qMove(primitive));
+
+            // Update metric
+            if(metric)
+                metric->pointPrimitives++;
+        }
+        else
+        {
+            assert(false);
+            continue;
+        }
+
+        int shadowLevel;
+        if(orderEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_SHADOW_LEVEL, shadowLevel) && shadowLevel > 0)
+        {
+            context._shadowLevelMin = qMin(context._shadowLevelMin, static_cast<uint32_t>(zOrder));
+            context._shadowLevelMax = qMax(context._shadowLevelMax, static_cast<uint32_t>(zOrder));
+        }
+    }
+
+    return group;
 }
 
 void OsmAnd::Rasterizer_P::sortAndFilterPrimitives(
@@ -674,6 +715,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
     //NOTE: Since 2 tiles with same MapObject may have different set of polylines, generated from it,
     //NOTE: then set of symbols also should differ, but it won't.
     auto& sharedSymbolGroups = context.owner->sharedContext->_d->_sharedSymbolGroups[context._zoom];
+    QList< std::shared_future< std::shared_ptr<const SymbolsGroup> > > futureSharedSymbolGroups;
     for(auto itPrimitivesGroup = context._primitivesGroups.cbegin(); itPrimitivesGroup != context._primitivesGroups.cend(); ++itPrimitivesGroup)
     {
         if(controller && controller->isAborted())
@@ -690,19 +732,27 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
         {
             // If this group was already processed, use that
             std::shared_ptr<const SymbolsGroup> group;
-            if(sharedSymbolGroups.obtainReferenceOrReserveAsPending(primitivesGroup->mapObject->id, group))
+            std::shared_future< std::shared_ptr<const SymbolsGroup> > futureGroup;
+            if(sharedSymbolGroups.obtainReferenceOrFutureReferenceOrMakePromise(primitivesGroup->mapObject->id, group, futureGroup))
             {
-                // Add symbols from group to current context
-                RasterizerContext_P::SymbolsEntry entry;
-                entry.first = primitivesGroup->mapObject;
-                entry.second.reserve(group->symbols.size());
-                for(auto itSymbol = group->symbols.cbegin(); itSymbol != group->symbols.cend(); ++itSymbol)
-                    entry.second.push_back(*itSymbol);
-                entry.second.squeeze();
-                context._symbols.push_back(qMove(entry));
+                if(group)
+                {
+                    // Add symbols from group to current context
+                    RasterizerContext_P::SymbolsEntry entry;
+                    entry.first = primitivesGroup->mapObject;
+                    entry.second.reserve(group->symbols.size());
+                    for(auto itSymbol = group->symbols.cbegin(); itSymbol != group->symbols.cend(); ++itSymbol)
+                        entry.second.push_back(*itSymbol);
+                    entry.second.squeeze();
+                    context._symbols.push_back(qMove(entry));
 
-                // Add shared group to current context
-                context._symbolsGroups.push_back(qMove(group));
+                    // Add shared group to current context
+                    context._symbolsGroups.push_back(qMove(group));
+                }
+                else
+                {
+                    futureSharedSymbolGroups.push_back(qMove(futureGroup));
+                }
 
                 continue;
             }
@@ -719,7 +769,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
 
         // Add this group to shared cache
         if(canBeShared)
-            sharedSymbolGroups.insertPendingAndReference(primitivesGroup->mapObject->id, group);
+            sharedSymbolGroups.fulfilPromiseAndReference(primitivesGroup->mapObject->id, group);
 
         // Add symbols from group to current context
         RasterizerContext_P::SymbolsEntry entry;
@@ -731,6 +781,24 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
         context._symbols.push_back(qMove(entry));
 
         // Empty groups are also inserted, to indicate that they are empty
+        context._symbolsGroups.push_back(qMove(group));
+    }
+
+    for(auto itFutureGroup = futureSharedSymbolGroups.cbegin(); itFutureGroup != futureSharedSymbolGroups.cend(); ++itFutureGroup)
+    {
+        const auto& futureGroup = *itFutureGroup;
+        const auto group = futureGroup.get();
+
+        // Add symbols from group to current context
+        RasterizerContext_P::SymbolsEntry entry;
+        entry.first = group->mapObject;
+        entry.second.reserve(group->symbols.size());
+        for(auto itSymbol = group->symbols.cbegin(); itSymbol != group->symbols.cend(); ++itSymbol)
+            entry.second.push_back(*itSymbol);
+        entry.second.squeeze();
+        context._symbols.push_back(qMove(entry));
+
+        // Add shared group to current context
         context._symbolsGroups.push_back(qMove(group));
     }
 }

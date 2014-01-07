@@ -1258,8 +1258,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
             for(auto itSymbolEntry = unsortedSymbols.cbegin(); itSymbolEntry != unsortedSymbols.cend(); ++itSymbolEntry)
             {
                 const auto& symbol = itSymbolEntry.key();
+                assert(!itSymbolEntry.value().expired());
                 const auto resource = itSymbolEntry.value().lock();
-                assert(static_cast<bool>(resource));
 
                 // Calculate location of symbol in world coordinates.
                 // World (0;0;0) is in the target, so subtract target position

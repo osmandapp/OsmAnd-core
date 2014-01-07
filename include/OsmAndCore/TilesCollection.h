@@ -198,11 +198,12 @@ namespace OsmAnd {
 
     private:
         std::weak_ptr<Link> _link;
-
+        
         void unlink()
         {
             detach();
 
+            assert(checkIsSafeToUnlink());
             _link.reset();
         }
     protected:
@@ -211,15 +212,30 @@ namespace OsmAnd {
             , link(_link)
             , tileId(tileId_)
             , zoom(zoom_)
-        {}
+        {
+        }
 
         virtual void detach()
-        {}
+        {
+        }
+
+        virtual bool checkIsSafeToUnlink()
+        {
+            return true;
+        }
+
+        void safeUnlink()
+        {
+            if(_link.expired())
+                return;
+
+            unlink();
+            return;
+        }
     public:
         virtual ~TilesCollectionEntry()
         {
-            if(!_link.expired())
-                unlink();
+            assert(_link.expired());
         }
 
         const std::weak_ptr<Link>& link;

@@ -326,6 +326,25 @@ bool OsmAnd::MapRendererResources::isDataSourceAvailableFor(const std::shared_pt
     return binding.collectionsToProviders.contains(collection);
 }
 
+void OsmAnd::MapRendererResources::addSymbolsMapEntry(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource)
+{
+    QMutexLocker scopedLocker(&_symbolsMapMutex);
+
+    _symbolsMap[symbol->order].insert(symbol, gpuResource);
+    _symbolsMapCount++;
+}
+
+void OsmAnd::MapRendererResources::removeSymbolsMapEntry(const std::shared_ptr<const MapSymbol>& symbol)
+{
+    QMutexLocker scopedLocker(&_symbolsMapMutex);
+
+    const auto itSymbolsLayer = _symbolsMap.find(symbol->order);
+    const auto removedCount = itSymbolsLayer->remove(symbol);
+    if(itSymbolsLayer->isEmpty())
+        _symbolsMap.erase(itSymbolsLayer);
+    _symbolsMapCount -= removedCount;
+}
+
 void OsmAnd::MapRendererResources::notifyNewResourceAvailable()
 {
     renderer->invalidateFrame();
@@ -438,10 +457,9 @@ void OsmAnd::MapRendererResources::requestNeededResources(const QSet<TileId>& ti
                     // Finalize execution of task
                     if(!resource->setStateIf(ResourceState::ProcessingRequest, dataAvailable ? ResourceState::Ready : ResourceState::Unavailable))
                     {
-                        assert(resource->getState() == ResourceState::JustBeforeDeath);
+                        assert(resource->getState() == ResourceState::RequestCanceledWhileBeingProcessed);
 
-                        // While request was processed, state may have changed to "JustBeforeDeath"
-                        // to indicate that this request was sort of "canceled"
+                        // While request was processed, state may have changed to "RequestCanceledWhileBeingProcessed"
                         task->requestCancellation();
                         return;
                     }
@@ -472,7 +490,8 @@ void OsmAnd::MapRendererResources::requestNeededResources(const QSet<TileId>& ti
                         if(
                             resource->setStateIf(ResourceState::Requested, ResourceState::JustBeforeDeath) ||
                             resource->setStateIf(ResourceState::Ready, ResourceState::JustBeforeDeath) ||
-                            resource->setStateIf(ResourceState::Unavailable, ResourceState::JustBeforeDeath))
+                            resource->setStateIf(ResourceState::Unavailable, ResourceState::JustBeforeDeath) ||
+                            resource->setStateIf(ResourceState::RequestCanceledWhileBeingProcessed, ResourceState::JustBeforeDeath))
                         {
                             if(const auto link = resource->link.lock())
                                 link->collection.removeEntry(resource->tileId, resource->zoom);
@@ -716,10 +735,10 @@ void OsmAnd::MapRendererResources::cleanupJunkResources(const QSet<TileId>& tile
                     // If resource was not yet uploaded, just remove it.
                     return true;
                 }
-                else if(entry->setStateIf(ResourceState::ProcessingRequest, ResourceState::JustBeforeDeath))
+                else if(entry->setStateIf(ResourceState::ProcessingRequest, ResourceState::RequestCanceledWhileBeingProcessed))
                 {
-                    // If resource request is being processed, remove the entry.
-                    return true;
+                    // If resource request is being processed, keep the entry until processing is complete.
+                    return false;
                 }
                 else if(entry->setStateIf(ResourceState::Requested, ResourceState::JustBeforeDeath))
                 {
@@ -744,7 +763,7 @@ void OsmAnd::MapRendererResources::cleanupJunkResources(const QSet<TileId>& tile
 
                 // Following situations are ignored
                 const auto state = entry->getState();
-                if(state == ResourceState::Uploading || state == ResourceState::UnloadPending || state == ResourceState::Unloading)
+                if(state == ResourceState::Uploading || state == ResourceState::UnloadPending || state == ResourceState::Unloading || state == ResourceState::RequestCanceledWhileBeingProcessed)
                     return false;
                 
                 assert(false);
@@ -777,9 +796,9 @@ void OsmAnd::MapRendererResources::releaseResourcesFrom(const std::shared_ptr<Ti
 
             return true;
         }
-        else if(entry->setStateIf(ResourceState::ProcessingRequest, ResourceState::JustBeforeDeath))
+        else if(entry->setStateIf(ResourceState::ProcessingRequest, ResourceState::RequestCanceledWhileBeingProcessed))
         {
-            return true;
+            return false;
         }
         else if(entry->setStateIf(ResourceState::Ready, ResourceState::JustBeforeDeath))
         {
@@ -878,6 +897,8 @@ OsmAnd::MapRendererResources::BaseTiledResource::~BaseTiledResource()
     const volatile auto state = getState();
     if(state == ResourceState::Uploading || state == ResourceState::Uploaded || state == ResourceState::IsBeingUsed || state == ResourceState::Unloading)
         LogPrintf(LogSeverityLevel::Error, "Tiled resource for %dx%d@%d still resides in GPU memory. This may cause GPU memory leak", tileId.x, tileId.y, zoom);
+
+    safeUnlink();
 }
 
 OsmAnd::MapRendererResources::TiledResourcesCollection::TiledResourcesCollection(const ResourceType& type_)
@@ -926,6 +947,7 @@ OsmAnd::MapRendererResources::MapTileResource::MapTileResource(MapRendererResour
 
 OsmAnd::MapRendererResources::MapTileResource::~MapTileResource()
 {
+    safeUnlink();
 }
 
 bool OsmAnd::MapRendererResources::MapTileResource::obtainData(bool& dataAvailable)
@@ -980,15 +1002,6 @@ void OsmAnd::MapRendererResources::MapTileResource::unloadFromGPU()
     _resourceInGPU.reset();
 }
 
-OsmAnd::MapRendererResources::SymbolsResourcesCollection::SymbolsResourcesCollection()
-    : TiledResourcesCollection(ResourceType::Symbols)
-{
-}
-
-OsmAnd::MapRendererResources::SymbolsResourcesCollection::~SymbolsResourcesCollection()
-{
-}
-
 OsmAnd::MapRendererResources::SymbolsTileResource::SymbolsTileResource(MapRendererResources* owner, const TilesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom)
     : BaseTiledResource(owner, ResourceType::Symbols, collection, tileId, zoom)
 {
@@ -996,10 +1009,7 @@ OsmAnd::MapRendererResources::SymbolsTileResource::SymbolsTileResource(MapRender
 
 OsmAnd::MapRendererResources::SymbolsTileResource::~SymbolsTileResource()
 {
-    assert(_uniqueResourcesInGPU.isEmpty());
-    assert(_sharedResourcesInGPU.isEmpty());
-    assert(_uniqueSymbolsGroups.isEmpty());
-    assert(_sharedSymbolsGroups.isEmpty());
+    safeUnlink();
 }
 
 bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAvailable)
@@ -1017,15 +1027,16 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAva
         return false;
     const auto provider = std::static_pointer_cast<IMapSymbolProvider>(provider_);
 
-    auto& sharedMapSymbolsGroups = collection->_sharedMapSymbolsGroups[zoom];
+    auto& sharedGroupsResources = collection->_sharedGroupsResources[zoom];
 
     // Obtain tile from provider
     const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
-    QList< std::shared_ptr<const MapSymbolsGroup> > referencedSharedGroups;
+    QList< std::shared_ptr<GroupResources> > referencedSharedGroupsResources;
+    QList< std::shared_future< std::shared_ptr<GroupResources> > > futureReferencedSharedGroupsResources;
     QSet< uint64_t > loadedSharedGroups;
     std::shared_ptr<const MapSymbolsTile> tile;
     const auto requestSucceeded = provider->obtainSymbols(tileId, zoom, tile,
-        [this, provider, &sharedMapSymbolsGroups, &referencedSharedGroups, &loadedSharedGroups, tileBBox31](const std::shared_ptr<const Model::MapObject>& mapObject) -> bool
+        [this, provider, &sharedGroupsResources, &referencedSharedGroupsResources, &futureReferencedSharedGroupsResources, &loadedSharedGroups, tileBBox31](const std::shared_ptr<const Model::MapObject>& mapObject) -> bool
         {
             // All symbols that come from map object which can not be cached,
             // should be received.
@@ -1034,10 +1045,14 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAva
                 return true;
 
             // Check if this shared symbol is already available, or mark it as pending
-            std::shared_ptr<const MapSymbolsGroup> sharedGroup;
-            if(sharedMapSymbolsGroups.obtainReferenceOrReserveAsPending(mapObject->id, sharedGroup))
+            std::shared_ptr<GroupResources> sharedGroupResources;
+            std::shared_future< std::shared_ptr<GroupResources> > futureSharedGroupResources;
+            if(sharedGroupsResources.obtainReferenceOrFutureReferenceOrMakePromise(mapObject->id, sharedGroupResources, futureSharedGroupResources))
             {
-                referencedSharedGroups.push_back(qMove(sharedGroup));
+                if(static_cast<bool>(sharedGroupResources))
+                    referencedSharedGroupsResources.push_back(qMove(sharedGroupResources));
+                else
+                    futureReferencedSharedGroupsResources.push_back(qMove(futureSharedGroupResources));
                 return false;
             }
 
@@ -1057,23 +1072,33 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAva
         return true;
 
     // Move referenced shared groups
-    _sharedSymbolsGroups = referencedSharedGroups;
+    _referencedSharedGroupsResources = referencedSharedGroupsResources;
 
     // tile->symbolsGroups contains groups that derived from unique symbols, or loaded shared groups
     for(auto itGroup = tile->symbolsGroups.cbegin(); itGroup != tile->symbolsGroups.cend(); ++itGroup)
     {
         const auto& group = *itGroup;
+        std::shared_ptr<GroupResources> groupResources(new GroupResources(group));
 
         // Check if this group is loaded as shared
         if(!loadedSharedGroups.contains(group->mapObject->id))
         {
-            _uniqueSymbolsGroups.push_back(group);
+            _uniqueGroupsResources.push_back(qMove(groupResources));
             continue;
         }
 
         // Otherwise insert it as shared group
-        sharedMapSymbolsGroups.insertPendingAndReference(group->mapObject->id, group);
-        _sharedSymbolsGroups.push_back(group);
+        sharedGroupsResources.fulfilPromiseAndReference(group->mapObject->id, groupResources);
+        _referencedSharedGroupsResources.push_back(qMove(groupResources));
+    }
+
+    // Wait for future referenced shared groups
+    for(auto itFutureGroup = futureReferencedSharedGroupsResources.cbegin(); itFutureGroup != futureReferencedSharedGroupsResources.cend(); ++itFutureGroup)
+    {
+        const auto& futureGroup = *itFutureGroup;
+        auto groupResources = futureGroup.get();
+        
+        _referencedSharedGroupsResources.push_back(qMove(groupResources));
     }
 
     // Release source data:
@@ -1094,21 +1119,21 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAva
 bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
 {
     typedef std::pair< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > SymbolResourceEntry;
+    typedef std::pair< std::shared_ptr<const MapSymbol>, std::shared_future< std::shared_ptr<const GPUAPI::ResourceInGPU> > > FutureSymbolResourceEntry;
 
     bool ok;
-    bool atLeastOneFailed = false;
+    bool anyUploadFailed = false;
 
-    // Obtain collection link and maintain it
     const auto link_ = link.lock();
     const auto collection = static_cast<SymbolsResourcesCollection*>(&link_->collection);
 
-    // Upload all unique symbols to GPU
-    QList< SymbolResourceEntry > uploadedUniqueSymbolResources;
-    for(auto itGroup = _uniqueSymbolsGroups.cbegin(); itGroup != _uniqueSymbolsGroups.cend(); ++itGroup)
+    // Unique
+    QMultiHash< std::shared_ptr<GroupResources>, SymbolResourceEntry > uniqueUploaded;
+    for(auto itGroupResources = _uniqueGroupsResources.cbegin(); itGroupResources != _uniqueGroupsResources.cend() && !anyUploadFailed; ++itGroupResources)
     {
-        const auto& group = *itGroup;
+        const auto& groupResources = *itGroupResources;
 
-        for(auto itSymbol = group->symbols.cbegin(); itSymbol != group->symbols.cend(); ++itSymbol)
+        for(auto itSymbol = groupResources->group->symbols.cbegin(); itSymbol != groupResources->group->symbols.cend() && !anyUploadFailed; ++itSymbol)
         {
             const auto& symbol = *itSymbol;
             
@@ -1124,147 +1149,107 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
                     symbol->bitmap->width(), symbol->bitmap->height(),
                     tileId.x, tileId.y, zoom);
 
-                atLeastOneFailed = true;
+                anyUploadFailed = true;
                 break;
             }
 
             // Mark this symbol as uploaded
-            uploadedUniqueSymbolResources.push_back(qMove(SymbolResourceEntry(symbol, resourceInGPU)));
+            uniqueUploaded.insertMulti(groupResources, qMove(SymbolResourceEntry(symbol, resourceInGPU)));
         }
-
-        // If at least one symbol have failed, interrupt
-        if(atLeastOneFailed)
-            break;
     }
-    
-    // Upload all shared symbols that are missing, or use from cache
-    QList< SymbolResourceEntry > uploadedSharedSymbolResources;
-    QList< SymbolResourceEntry > referencedSharedSymbolResources;
-    for(auto itGroup = _sharedSymbolsGroups.cbegin(); itGroup != _sharedSymbolsGroups.cend(); ++itGroup)
-    {
-        const auto& group = *itGroup;
 
-        for(auto itSymbol = group->symbols.cbegin(); itSymbol != group->symbols.cend(); ++itSymbol)
+    // Shared
+    QMultiHash< std::shared_ptr<GroupResources>, SymbolResourceEntry > sharedUploaded;
+    for(auto itGroupResources = _referencedSharedGroupsResources.begin(); itGroupResources != _referencedSharedGroupsResources.end() && !anyUploadFailed; ++itGroupResources)
+    {
+        const auto& groupResources = *itGroupResources;
+        if(groupResources->group->symbols.isEmpty())
+            continue;
+
+        // Basically, this check means "continue if shared resources where uploaded"
+        if(!groupResources->resourcesInGPU.isEmpty())
+            continue;
+
+        for(auto itSymbol = groupResources->group->symbols.cbegin(); itSymbol != groupResources->group->symbols.cend() && !anyUploadFailed; ++itSymbol)
         {
             const auto& symbol = *itSymbol;
-            
-            // Check if this symbol was already uploaded to GPU
-            std::shared_ptr<const GPUAPI::ResourceInGPU> sharedResourceInGPU;
-            if(collection->_sharedResourcesInGPU.obtainReferenceOrReserveAsPending(symbol, sharedResourceInGPU))
+
+            // Prepare data and upload to GPU
+            assert(static_cast<bool>(symbol->bitmap));
+            std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
+            ok = owner->uploadSymbolToGPU(symbol, resourceInGPU);
+
+            // If upload have failed, stop
+            if(!ok)
             {
-                // Use shared GPU resource
-                referencedSharedSymbolResources.push_back(qMove(SymbolResourceEntry(symbol, qMove(sharedResourceInGPU))));
+                LogPrintf(LogSeverityLevel::Error, "Failed to upload unique symbol (size %dx%d) in %dx%d@%d tile",
+                    symbol->bitmap->width(), symbol->bitmap->height(),
+                    tileId.x, tileId.y, zoom);
+
+                anyUploadFailed = true;
+                break;
             }
-            else
-            {
-                // Prepare data and upload to GPU
-                assert(static_cast<bool>(symbol->bitmap));
 
-                ok = owner->uploadSymbolToGPU(symbol, sharedResourceInGPU);
-
-                // If upload have failed, stop
-                if(!ok)
-                {
-                    collection->_sharedResourcesInGPU.cancelPending(symbol);
-
-                    LogPrintf(LogSeverityLevel::Error, "Failed to upload shared symbol (size %dx%d) in %dx%d@%d tile",
-                        symbol->bitmap->width(), symbol->bitmap->height(),
-                        tileId.x, tileId.y, zoom);
-
-                    atLeastOneFailed = true;
-                    break;
-                }
-
-                // Mark this symbol as uploaded
-                uploadedSharedSymbolResources.push_back(qMove(SymbolResourceEntry(symbol, sharedResourceInGPU)));
-            }
+            // Mark this symbol as uploaded
+            sharedUploaded.insertMulti(groupResources, qMove(SymbolResourceEntry(symbol, resourceInGPU)));
         }
-
-        // If at least one symbol have failed, interrupt
-        if(atLeastOneFailed)
-            break;
     }
-    
-    // If at least one symbol failed to upload, entire tile failed to upload, so unload it
-    if(atLeastOneFailed)
+
+    // If at least one symbol failed to upload, consider entire tile as failed to upload,
+    // and unload its partial GPU resources
+    if(anyUploadFailed)
     {
-        // Unload all symbols that could have been uploaded
-        uploadedUniqueSymbolResources.clear();
-        for(auto itResourceEntry = uploadedSharedSymbolResources.begin(); itResourceEntry != uploadedSharedSymbolResources.end(); ++itResourceEntry)
-        {
-            const auto& symbol = itResourceEntry->first;
-            auto& resource = itResourceEntry->second;
-
-            const auto wasReleased = collection->_sharedResourcesInGPU.releaseReference(symbol, resource);
-            assert(wasReleased);
-        }
-        uploadedSharedSymbolResources.clear();
-
-        // Dereference all shared uploaded symbols
-        for(auto itResourceEntry = referencedSharedSymbolResources.begin(); itResourceEntry != referencedSharedSymbolResources.end(); ++itResourceEntry)
-        {
-            const auto& symbol = itResourceEntry->first;
-            auto& resource = itResourceEntry->second;
-
-            const auto wasReleased = collection->_sharedResourcesInGPU.releaseReference(symbol, resource);
-            assert(wasReleased);
-        }
-        referencedSharedSymbolResources.clear();
+        uniqueUploaded.clear();
+        sharedUploaded.clear();
 
         return false;
     }
 
-    // Process uploaded symbols
-    for(auto itSymbolEntry = uploadedUniqueSymbolResources.begin(); itSymbolEntry != uploadedUniqueSymbolResources.end(); ++itSymbolEntry)
+    // All resources have been uploaded to GPU successfully by this point
+
+    // Unique
+    for(auto itEntry = uniqueUploaded.begin(); itEntry != uniqueUploaded.end(); ++itEntry)
     {
-        auto& symbol = itSymbolEntry->first;
-        auto& resource = itSymbolEntry->second;
+        const auto& groupResources = itEntry.key();
+        auto& symbol = itEntry->first;
+        auto& resource = itEntry->second;
 
         // Unload source data from symbol
         std::const_pointer_cast<MapSymbol>(symbol)->releaseNonRetainedData();
 
         // Publish symbol to global map
-        {
-            QMutexLocker scopedLocker(&owner->_symbolsMapMutex);
-            owner->_symbolsMap[symbol->order].insert(symbol, resource);
-
-            owner->_symbolsMapCount++;
-        }
+        owner->addSymbolsMapEntry(symbol, resource);
 
         // Move reference
-        _uniqueResourcesInGPU.insert(qMove(symbol), qMove(resource));
+        groupResources->resourcesInGPU.insert(qMove(symbol), qMove(resource));
     }
-    for(auto itSymbolEntry = uploadedSharedSymbolResources.begin(); itSymbolEntry != uploadedSharedSymbolResources.end(); ++itSymbolEntry)
+
+    // Shared
+    for(auto itGroupResources = _referencedSharedGroupsResources.begin(); itGroupResources != _referencedSharedGroupsResources.end() && !anyUploadFailed; ++itGroupResources)
     {
-        auto& symbol = itSymbolEntry->first;
-        auto& resource = itSymbolEntry->second;
+        const auto& groupResources = *itGroupResources;
+
+        for(auto itSymbol = groupResources->group->symbols.cbegin(); itSymbol != groupResources->group->symbols.cend() && !anyUploadFailed; ++itSymbol)
+        {
+            const auto& symbol = *itSymbol;
+
+            //TODO: process those symbols that have not been uploaded HERE!
+        }
+    }
+    for(auto itEntry = sharedUploaded.begin(); itEntry != sharedUploaded.end(); ++itEntry)
+    {
+        const auto& groupResources = itEntry.key();
+        auto& symbol = itEntry->first;
+        auto& resource = itEntry->second;
 
         // Unload source data from symbol
         std::const_pointer_cast<MapSymbol>(symbol)->releaseNonRetainedData();
 
         // Publish symbol to global map
-        {
-            QMutexLocker scopedLocker(&owner->_symbolsMapMutex);
-            owner->_symbolsMap[symbol->order].insert(symbol, resource);
-
-            owner->_symbolsMapCount++;
-        }
-
-        // Add symbol resource to shared
-        collection->_sharedResourcesInGPU.insertPendingAndReference(symbol, resource);
+        owner->addSymbolsMapEntry(symbol, resource);
 
         // Move reference
-        _sharedResourcesInGPU.insert(qMove(symbol), qMove(resource));
-    }
-
-    // Process referenced symbols
-    for(auto itSymbolEntry = referencedSharedSymbolResources.begin(); itSymbolEntry != referencedSharedSymbolResources.end(); ++itSymbolEntry)
-    {
-        auto& symbol = itSymbolEntry->first;
-        auto& resource = itSymbolEntry->second;
-
-        // Move reference
-        _sharedResourcesInGPU.insert(qMove(symbol), qMove(resource));
+        groupResources->resourcesInGPU.insert(qMove(symbol), qMove(resource));
     }
 
     return true;
@@ -1272,100 +1257,126 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
 
 void OsmAnd::MapRendererResources::SymbolsTileResource::unloadFromGPU()
 {
-    // Obtain collection link and maintain it
     const auto link_ = link.lock();
     const auto collection = static_cast<SymbolsResourcesCollection*>(&link_->collection);
 
-    // Unload unique symbols
-    for(auto itResourceInGPU = _uniqueResourcesInGPU.begin(); itResourceInGPU != _uniqueResourcesInGPU.end(); ++itResourceInGPU)
+    // Unique
+    for(auto itGroupResources = _uniqueGroupsResources.cbegin(); itGroupResources != _uniqueGroupsResources.cend(); ++itGroupResources)
     {
-        const auto& symbol = itResourceInGPU.key();
-        auto& resourceInGPU = itResourceInGPU.value();
+        const auto& groupResources = *itGroupResources;
 
-        // Remove symbol from global map
+        for(auto itResourceInGPU = groupResources->resourcesInGPU.begin(); itResourceInGPU != groupResources->resourcesInGPU.end(); ++itResourceInGPU)
         {
-            QMutexLocker scopedLocker(&owner->_symbolsMapMutex);
+            const auto& symbol = itResourceInGPU.key();
+            auto& resourceInGPU = itResourceInGPU.value();
 
-            const auto itSymbolsLayer = owner->_symbolsMap.find(symbol->order);
-            const auto removedCount = itSymbolsLayer->remove(symbol);
-            if(itSymbolsLayer->isEmpty())
-                owner->_symbolsMap.erase(itSymbolsLayer);
+            // Remove symbol from global map
+            owner->removeSymbolsMapEntry(symbol);
 
-            owner->_symbolsMapCount -= removedCount;
-        }
-
-        // Unload symbol from GPU
-        assert(resourceInGPU.use_count() == 1);
-        resourceInGPU.reset();
-    }
-    _uniqueResourcesInGPU.clear();
-
-    // Unload/dereference shared symbols
-    auto& sharedMapSymbolsGroups = collection->_sharedMapSymbolsGroups[zoom];
-    for(auto itResourceInGPU = _sharedResourcesInGPU.begin(); itResourceInGPU != _sharedResourcesInGPU.end(); ++itResourceInGPU)
-    {
-        const auto& symbol = itResourceInGPU.key();
-        auto& resourceInGPU = itResourceInGPU.value();
-
-        // Release shared resource
-        const auto wasReleased = collection->_sharedResourcesInGPU.releaseReference(symbol, resourceInGPU);
-        assert(wasReleased);
-        /*
-        // Lock access to GPU resources cache to disallow referencing resources while
-        // check is in progress
-        {
-            QWriteLocker scopedLocker1(&dataCacheLevel._lock);
-            QMutexLocker scopedLocker2(&collection->_gpuResourcesCacheMutex);
-
-            // Check if this is the last instance
-            if(resourceInGPU.unique())
-            {
-                // Since it's the last reference to GPU resource from group,
-                // remove entire group from cache
-                dataCacheLevel._cache.remove(symbol->mapObject->id);
-
-                // Since it's the last reference, remove from cache
-                collection->_gpuResourcesCache.remove(itResourceInGPU.key());
-
-                // And also remove from global map
-                {
-                    QMutexLocker scopedLocker(&owner->_symbolsMapMutex);
-
-                    const auto itSymbolsLayer = owner->_symbolsMap.find(symbol->order);
-                    const auto removedCount = itSymbolsLayer->remove(symbol);
-                    if(itSymbolsLayer->isEmpty())
-                        owner->_symbolsMap.erase(itSymbolsLayer);
-
-                    owner->_symbolsMapCount -= removedCount;
-                }
-            }
-
-            // Dereference resource
+            // Unload symbol from GPU
+            assert(resourceInGPU.use_count() == 1);
             resourceInGPU.reset();
-        }*/
+        }
     }
-    _sharedResourcesInGPU.clear();
+    _uniqueGroupsResources.clear();
+
+    // Shared
+    auto& sharedGroupsResources = collection->_sharedGroupsResources[zoom];
+    for(auto itGroupResources = _referencedSharedGroupsResources.begin(); itGroupResources != _referencedSharedGroupsResources.end(); ++itGroupResources)
+    {
+        auto& groupResources = *itGroupResources;
+
+        bool wasRemoved = false;
+        auto groupResources_ = groupResources;
+        sharedGroupsResources.releaseReference(groupResources->group->mapObject->id, groupResources_, true, &wasRemoved);
+
+        // Skip removing symbols from global map in case this was not the last reference
+        // to shared group resources
+        if(!wasRemoved)
+            continue;
+
+        for(auto itResourceInGPU = groupResources->resourcesInGPU.begin(); itResourceInGPU != groupResources->resourcesInGPU.end(); ++itResourceInGPU)
+        {
+            const auto& symbol = itResourceInGPU.key();
+            auto& resourceInGPU = itResourceInGPU.value();
+
+            // Remove symbol from global map
+            owner->removeSymbolsMapEntry(symbol);
+
+            // Unload symbol from GPU
+            assert(resourceInGPU.use_count() == 1);
+            resourceInGPU.reset();
+        }
+    }
+    _referencedSharedGroupsResources.clear();
+}
+
+bool OsmAnd::MapRendererResources::SymbolsTileResource::checkIsSafeToUnlink()
+{
+    return _referencedSharedGroupsResources.isEmpty();
 }
 
 void OsmAnd::MapRendererResources::SymbolsTileResource::detach()
 {
-    // Obtain collection link and maintain it
     const auto link_ = link.lock();
     const auto collection = static_cast<SymbolsResourcesCollection*>(&link_->collection);
 
-    // Dereference all unique symbols groups
-    _uniqueSymbolsGroups.clear();
+    _uniqueGroupsResources.clear();
 
-    // Dereference all shared symbols groups
-    auto& sharedMapSymbolsGroups = collection->_sharedMapSymbolsGroups[zoom];
-    for(auto itGroup = _sharedSymbolsGroups.begin(); itGroup != _sharedSymbolsGroups.end(); ++itGroup)
+    auto& sharedGroupsResources = collection->_sharedGroupsResources[zoom];
+    for(auto itGroupResources = _referencedSharedGroupsResources.begin(); itGroupResources != _referencedSharedGroupsResources.end(); ++itGroupResources)
     {
-        auto& group = *itGroup;
+        auto& groupResources = *itGroupResources;
 
-        const auto wasReleased = sharedMapSymbolsGroups.releaseReference(group->mapObject->id, group);
-        assert(wasReleased);
+        bool wasRemoved = false;
+        auto groupResources_ = groupResources;
+        sharedGroupsResources.releaseReference(groupResources->group->mapObject->id, groupResources_, true, &wasRemoved);
+
+        // In case this was the last reference to shared group resources, check if any resources need to be deleted
+        if(wasRemoved)
+        {
+            for(auto itResourceInGPU = groupResources->resourcesInGPU.begin(); itResourceInGPU != groupResources->resourcesInGPU.end(); ++itResourceInGPU)
+            {
+                const auto& symbol = itResourceInGPU.key();
+                auto& resourceInGPU = itResourceInGPU.value();
+
+                // Remove symbol from global map
+                owner->removeSymbolsMapEntry(symbol);
+
+                // Unload symbol from GPU thread (using dispatcher)
+                assert(resourceInGPU.use_count() == 1);
+                auto resourceInGPU_ = qMove(resourceInGPU);
+                owner->renderer->getGpuThreadDispatcher().invokeAsync(
+                    [resourceInGPU_]() mutable
+                    {
+                        assert(resourceInGPU_.use_count() == 1);
+                        resourceInGPU_.reset();
+                    });
+#ifndef Q_COMPILER_RVALUE_REFS
+                resourceInGPU.reset();
+#endif //!Q_COMPILER_RVALUE_REFS
+            }
+        }
     }
-    _sharedSymbolsGroups.clear();
+    _referencedSharedGroupsResources.clear();
+}
+
+OsmAnd::MapRendererResources::SymbolsTileResource::GroupResources::GroupResources(const std::shared_ptr<const MapSymbolsGroup>& group_)
+    : group(group_)
+{
+}
+
+OsmAnd::MapRendererResources::SymbolsTileResource::GroupResources::~GroupResources()
+{
+}
+
+OsmAnd::MapRendererResources::SymbolsResourcesCollection::SymbolsResourcesCollection()
+: TiledResourcesCollection(ResourceType::Symbols)
+{
+}
+
+OsmAnd::MapRendererResources::SymbolsResourcesCollection::~SymbolsResourcesCollection()
+{
 }
 
 OsmAnd::MapRendererResources::ResourceRequestTask::ResourceRequestTask(

@@ -24,262 +24,367 @@
 
 #include <OsmAndCore/stdlib_common.h>
 #include <cassert>
-#include <utility>
+#include <future>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QHash>
-#include <QMutableHashIterator>
-#include <QSet>
 #include <QReadWriteLock>
-#include <QWaitCondition>
 
 #include <OsmAndCore.h>
 
 namespace OsmAnd
 {
     template<typename KEY_TYPE, typename RESOURCE_TYPE>
-    class SharedResourcesContainer Q_DECL_FINAL
+    class SharedResourcesContainer
     {
-    private:
-        typedef std::pair< uintmax_t, std::shared_ptr<RESOURCE_TYPE> > ResourceEntry;
-
+    public:
+        typedef std::shared_ptr<RESOURCE_TYPE> ResourcePtr;
+    protected:
         mutable QReadWriteLock _lock;
-        QHash< KEY_TYPE, ResourceEntry > _container;
-        QSet< KEY_TYPE > _pending;
-        QWaitCondition _pendingWaitCondition;
+
+        struct AvailableResourceEntry
+        {
+            AvailableResourceEntry(const uintmax_t refCounter_, const ResourcePtr& resourcePtr_)
+                : refCounter(refCounter_)
+                , resourcePtr(resourcePtr_)
+            {
+            }
+
+#ifdef Q_COMPILER_RVALUE_REFS
+            AvailableResourceEntry(const uintmax_t refCounter_, ResourcePtr&& resourcePtr_)
+                : refCounter(refCounter_)
+                , resourcePtr(resourcePtr_)
+            {
+            }
+#endif // Q_COMPILER_RVALUE_REFS
+
+            virtual ~AvailableResourceEntry()
+            {
+            }
+
+            uintmax_t refCounter;
+            const ResourcePtr resourcePtr;
+        };
+
+        struct PromisedResourceEntry
+        {
+            PromisedResourceEntry()
+                : refCounter(0)
+#ifdef Q_COMPILER_RVALUE_REFS
+                , sharedFuture(qMove(promise.get_future()))
+#else
+                , sharedFuture(promise.get_future().share())
+#endif
+            {
+            }
+
+            virtual ~PromisedResourceEntry()
+            {
+            }
+
+            uintmax_t refCounter;
+            std::promise<ResourcePtr> promise;
+            const std::shared_future<ResourcePtr> sharedFuture;
+        };
+    private:
+        QHash< KEY_TYPE, std::shared_ptr< AvailableResourceEntry > > _availableResources;
+        QHash< KEY_TYPE, std::shared_ptr< PromisedResourceEntry > > _promisedResources;
     protected:
     public:
         SharedResourcesContainer()
+            : _lock(QReadWriteLock::Recursive)
         {
         }
         ~SharedResourcesContainer()
         {
         }
 
-        // insert(key, data)
-        // insertAndReference(key, data)
-        // obtainReference
-        // releaseReference
+        void insert(const KEY_TYPE& key, ResourcePtr& resourcePtr)
+        {
+            QWriteLocker scopedLocker(&_lock);
 
-        // makePromise(key) == reserveAsPending
-        // breakPromise(key) == cancelPending
-        // fulfilPromise(key, data) == insertPending
-        // fulfilPromiseAndReference(key, data) == insertPendingAndReference
-        // obtainFutureReferenceOrMakePromise [future references are also counted]
-        // releaseFutureReference
+            // Resource must not be promised and must not be already available.
+            // Otherwise behavior is undefined
+            assert(!_promisedResources.contains(key));
+            assert(!_availableResources.contains(key));
 
-        //////////////////////////////////////////////////////////////////////////
-        //////////////////////////////////////////////////////////////////////////
-        //////////////////////////////////////////////////////////////////////////
+            const auto newEntry = new AvailableResourceEntry(0, qMove(resourcePtr));
+#ifndef Q_COMPILER_RVALUE_REFS
+            resourcePtr.reset();
+#else
+            assert(resourcePtr.use_count() == 0);
+#endif
+            _availableResources.insert(key, qMove(std::shared_ptr<AvailableResourceEntry>(newEntry)));
+        }
+
+#ifdef Q_COMPILER_RVALUE_REFS
+        void insert(const KEY_TYPE& key, ResourcePtr&& resourcePtr)
+        {
+            QWriteLocker scopedLocker(&_lock);
+
+            // Resource must not be promised and must not be already available.
+            // Otherwise behavior is undefined
+            assert(!_promisedResources.contains(key));
+            assert(!_availableResources.contains(key));
+
+            const auto newEntry = new AvailableResourceEntry(0, qMove(resourcePtr));
+            assert(resourcePtr.use_count() == 0);
+            _availableResources.insert(key, qMove(std::shared_ptr<AvailableResourceEntry>(newEntry)));
+        }
+#endif // Q_COMPILER_RVALUE_REFS
         
-        void insert(const KEY_TYPE& key, std::shared_ptr<RESOURCE_TYPE>& resource)
+        void insertAndReference(const KEY_TYPE& key, const ResourcePtr& resourcePtr)
         {
             QWriteLocker scopedLocker(&_lock);
 
-            // Check if this resource is not in pending
-            assert(!_pending.contains(key));
+            // Resource must not be promised and must not be already available.
+            // Otherwise behavior is undefined
+            assert(!_promisedResources.contains(key));
+            assert(!_availableResources.contains(key));
 
-            // Insert resource and set it's reference counter to 0
-            assert(!_container.contains(key));
-            _container.insert(key, qMove(ResourceEntry(0, resource)));
-
-            // Since we've taken reference, reset it
-            resource.reset();
+            const auto newEntry = new AvailableResourceEntry(1, resourcePtr);
+            _availableResources.insert(key, qMove(std::shared_ptr<AvailableResourceEntry>(newEntry)));
         }
 
-#ifdef Q_COMPILER_RVALUE_REFS
-        void insert(const KEY_TYPE& key, std::shared_ptr<RESOURCE_TYPE>&& resource)
+        bool obtainReference(const KEY_TYPE& key, ResourcePtr& outResourcePtr)
         {
             QWriteLocker scopedLocker(&_lock);
 
-            // Check if this resource is not in pending
-            assert(!_pending.contains(key));
-
-            // Insert resource and set it's reference counter to 0
-            assert(!_container.contains(key));
-            _container.insert(key, qMove(ResourceEntry(0, std::forward(resource))));
-
-            // Check that resource was reset as expected
-            assert(resource.use_count() == 0);
-        }
-#endif // Q_COMPILER_RVALUE_REFS
-
-        void insertAndReference(const KEY_TYPE& key, const std::shared_ptr<RESOURCE_TYPE>& resource)
-        {
-            QWriteLocker scopedLocker(&_lock);
-
-            // Check if this resource is not in pending
-            assert(!_pending.contains(key));
-
-            // Insert resource and set it's reference counter to 1
-            assert(!_container.contains(key));
-            _container.insert(key, qMove(ResourceEntry(1, resource)));
-        }
-
-        void reserveAsPending(const KEY_TYPE& key)
-        {
-            QWriteLocker scopedLocker(&_lock);
-
-            // Check if this resource is not in pending (yet)
-            assert(!_pending.contains(key));
-
-            // Check if this resource is not in container
-            assert(!_container.contains(key));
-
-            // Insert resource key into pending set
-            _pending.insert(key);
-        }
-
-        void cancelPending(const KEY_TYPE& key)
-        {
-            QWriteLocker scopedLocker(&_lock);
-
-            // Check if this resource is in pending (still)
-            assert(_pending.contains(key));
-
-            // Check if this resource is not in container
-            assert(!_container.contains(key));
-
-            // Insert resource key into pending set
-            _pending.remove(key);
-
-            // Notify that pending has changed
-            _pendingWaitCondition.wakeAll();
-        }
-
-        void insertPending(const KEY_TYPE& key, std::shared_ptr<RESOURCE_TYPE>& resource)
-        {
-            QWriteLocker scopedLocker(&_lock);
-
-            // Check if this resource is in pending
-            assert(_pending.contains(key));
-            _pending.remove(key);
-
-            // Check if this resource is not in container
-            assert(!_container.contains(key));
-
-            // Insert resource and set it's reference counter to 0
-            _container.insert(key, qMove(ResourceEntry(0, resource)));
-
-            // Since we've taken reference, reset it
-            resource.reset();
-
-            // Notify that pending has changed
-            _pendingWaitCondition.wakeAll();
-        }
-
-#ifdef Q_COMPILER_RVALUE_REFS
-        void insertPending(const KEY_TYPE& key, std::shared_ptr<RESOURCE_TYPE>&& resource)
-        {
-            QWriteLocker scopedLocker(&_lock);
-
-            // Check if this resource is in pending
-            assert(_pending.contains(key));
-            _pending.remove(key);
-
-            // Check if this resource is not in container
-            assert(!_container.contains(key));
-
-            // Insert resource and set it's reference counter to 0
-            _container.insert(key, qMove(ResourceEntry(0, std::forward(resource))));
-
-            // Check that resource was reset as expected
-            assert(resource.use_count() == 0);
-
-            // Notify that pending has changed
-            _pendingWaitCondition.wakeAll();
-        }
-#endif // Q_COMPILER_RVALUE_REFS
-
-        void insertPendingAndReference(const KEY_TYPE& key, const std::shared_ptr<RESOURCE_TYPE>& resource)
-        {
-            QWriteLocker scopedLocker(&_lock);
-
-            // Check if this resource is in pending
-            assert(_pending.contains(key));
-            _pending.remove(key);
-
-            // Check if this resource is not in container
-            assert(!_container.contains(key));
-
-            // Insert resource and set it's reference counter to 1
-            _container.insert(key, qMove(ResourceEntry(1, resource)));
-
-            // Notify that pending has changed
-            _pendingWaitCondition.wakeAll();
-        }
-
-        bool obtainReference(const KEY_TYPE& key, std::shared_ptr<RESOURCE_TYPE>& outResource)
-        {
-            QWriteLocker scopedLocker(&_lock);
-
-            // Wait until resource is in pending state
-            while(_pending.contains(key))
-                _pendingWaitCondition.wait(&_lock);
-
-            // Find entry
-            const auto itEntry = _container.find(key);
-            if(itEntry == _container.end())
-                return false;
-
-            // Increase internal reference counter
-            itEntry->first++;
-
-            // Set reference
-            outResource = itEntry->second;
-            return true;
-        }
-
-        bool releaseReference(const KEY_TYPE& key, std::shared_ptr<RESOURCE_TYPE>& resource, const bool autoClean = true)
-        {
-            QWriteLocker scopedLocker(&_lock);
-
-            // Check if this resource is not in pending
-            assert(!_pending.contains(key));
-
-            // Find entry
-            const auto itEntry = _container.find(key);
-            if(itEntry == _container.end())
-                return false;
-
-            // Decrement internal reference counter
-            assert(itEntry->first > 0);
-            itEntry->first--;
-
-            // Remove reference
-            resource.reset();
-
-            // If this is the last reference, remove the entire entry
-            if(autoClean && itEntry->first == 0)
-                _container.erase(itEntry);
-
-            return true;
-        }
-
-        bool obtainReferenceOrReserveAsPending(const KEY_TYPE& key, std::shared_ptr<RESOURCE_TYPE>& outResource)
-        {
-            QWriteLocker scopedLocker(&_lock);
-
-            // Wait until resource is in pending state
-            while(_pending.contains(key))
-                _pendingWaitCondition.wait(&_lock);
-
-            // Find entry
-            const auto itEntry = _container.find(key);
-            if(itEntry == _container.end())
+            // In case resource was promised, wait forever until promise is fulfilled
+            const itPromisedResourceEntry = _promisedResources.constFind(key);
+            if(itPromisedResourceEntry != _promisedResources.cend())
             {
-                // Reserve as pending
-                _pending.insert(key);
+                const auto localFuture = (*itPromisedResourceEntry)->sharedFuture;
+                scopedLocker.unlock();
 
+                try
+                {
+                    outResourcePtr = localFuture.get();
+                    return true;
+                }
+                catch(...)
+                {
+                }
+                
                 return false;
             }
 
-            // Increase internal reference counter
-            itEntry->first++;
+            const auto itAvailableResourceEntry = _availableResources.find(key);
+            if(itAvailableResourceEntry == _availableResources.end())
+                return false;
+            const auto& availableResourceEntry = *itAvailableResourceEntry;
 
-            // Set reference
-            outResource = itEntry->second;
+            availableResourceEntry->refCounter++;
+            outResourcePtr = availableResourceEntry->resourcePtr;
+
             return true;
+        }
+
+        bool releaseReference(const KEY_TYPE& key, ResourcePtr& resourcePtr, const bool autoClean = true, bool* outWasCleaned = nullptr, uintmax_t* outRemainingReferences = nullptr)
+        {
+            QWriteLocker scopedLocker(&_lock);
+
+            // Resource must not be promised. Otherwise behavior is undefined
+            assert(!_promisedResources.contains(key));
+            
+            const auto itAvailableResourceEntry = _availableResources.find(key);
+            if(itAvailableResourceEntry == _availableResources.end())
+                return false;
+            const auto& availableResourceEntry = *itAvailableResourceEntry;
+            assert(availableResourceEntry->refCounter > 0);
+            assert(availableResourceEntry->resourcePtr == resourcePtr);
+
+            availableResourceEntry->refCounter--;
+            if(outRemainingReferences)
+                *outRemainingReferences = availableResourceEntry->refCounter;
+            if(autoClean && outWasCleaned)
+                *outWasCleaned = false;
+            if(autoClean && availableResourceEntry->refCounter == 0)
+            {
+                _availableResources.erase(itAvailableResourceEntry);
+
+                if(outWasCleaned)
+                    *outWasCleaned = true;
+            }
+            resourcePtr.reset();
+
+            return true;
+        }
+
+        void makePromise(const KEY_TYPE& key)
+        {
+            QWriteLocker scopedLocker(&_lock);
+
+            // Resource must not be promised and must not be already available.
+            // Otherwise behavior is undefined
+            assert(!_promisedResources.contains(key));
+            assert(!_availableResources.contains(key));
+
+            const auto newEntry = new PromisedResourceEntry();
+            _promisedResources.insert(key, qMove(std::shared_ptr<PromisedResourceEntry>(newEntry)));
+        }
+
+        void breakPromise(const KEY_TYPE& key)
+        {
+            QWriteLocker scopedLocker(&_lock);
+
+            // Resource must be promised and must not be already available.
+            // Otherwise behavior is undefined
+            assert(_promisedResources.contains(key));
+            assert(!_availableResources.contains(key));
+
+            const auto itPromisedResourceEntry = _promisedResources.find(key);
+            const std::shared_ptr<PromisedResourceEntry> promisedResourceEntry
+#ifdef Q_COMPILER_RVALUE_REFS
+                (qMove(*itPromisedResourceEntry))
+#else
+                = itPromisedResourceEntry
+#endif // Q_COMPILER_RVALUE_REFS
+            ;
+            _promisedResources.erase(itPromisedResourceEntry);
+
+            promisedResourceEntry->promise.set_exception(std::make_exception_ptr(std::runtime_error("Promise was broken")));
+        }
+
+        void fulfilPromise(const KEY_TYPE& key, ResourcePtr& resourcePtr)
+        {
+            QWriteLocker scopedLocker(&_lock);
+
+            // Resource must be promised and must not be already available.
+            // Otherwise behavior is undefined
+            assert(_promisedResources.contains(key));
+            assert(!_availableResources.contains(key));
+
+            const auto itPromisedResourceEntry = _promisedResources.find(key);
+            const std::shared_ptr<PromisedResourceEntry> promisedResourceEntry
+#ifdef Q_COMPILER_RVALUE_REFS
+                (qMove(*itPromisedResourceEntry))
+#else
+                = itPromisedResourceEntry
+#endif // Q_COMPILER_RVALUE_REFS
+            ;
+            _promisedResources.erase(itPromisedResourceEntry);
+
+            if(promisedResourceEntry->refCounter <= 0)
+                return;
+
+            const auto newEntry = new AvailableResourceEntry(promisedResourceEntry->refCounter, qMove(resourcePtr));
+#ifndef Q_COMPILER_RVALUE_REFS
+            resourcePtr.reset();
+#else
+            assert(resourcePtr.use_count() == 0);
+#endif
+            _availableResources.insert(key, qMove(std::shared_ptr<AvailableResourceEntry>(newEntry)));
+            promisedResourceEntry->promise.set_value(newEntry->resourcePtr);
+        }
+
+#ifdef Q_COMPILER_RVALUE_REFS
+        void fulfilPromise(const KEY_TYPE& key, ResourcePtr&& resourcePtr)
+        {
+            QWriteLocker scopedLocker(&_lock);
+
+            // Resource must be promised and must not be already available.
+            // Otherwise behavior is undefined
+            assert(_promisedResources.contains(key));
+            assert(!_availableResources.contains(key));
+
+            const auto itPromisedResourceEntry = _promisedResources.find(key);
+            const std::shared_ptr<PromisedResourceEntry> promisedResourceEntry(qMove(*itPromisedResourceEntry));
+            _promisedResources.erase(itPromisedResourceEntry);
+
+            if(promisedResourceEntry->refCounter <= 0)
+                return;
+
+            const auto newEntry = new AvailableResourceEntry(promisedResourceEntry->refCounter, qMove(resourcePtr));
+            assert(resourcePtr.use_count() == 0);
+            _availableResources.insert(key, qMove(std::shared_ptr<AvailableResourceEntry>(newEntry)));
+            promisedResourceEntry->promise.set_value(newEntry->resourcePtr);
+        }
+#endif // Q_COMPILER_RVALUE_REFS
+
+        void fulfilPromiseAndReference(const KEY_TYPE& key, const ResourcePtr& resourcePtr)
+        {
+            QWriteLocker scopedLocker(&_lock);
+
+            // Resource must be promised and must not be already available.
+            // Otherwise behavior is undefined
+            assert(_promisedResources.contains(key));
+            assert(!_availableResources.contains(key));
+
+            const auto itPromisedResourceEntry = _promisedResources.find(key);
+            const std::shared_ptr<PromisedResourceEntry> promisedResourceEntry
+#ifdef Q_COMPILER_RVALUE_REFS
+                (qMove(*itPromisedResourceEntry))
+#else
+                = itPromisedResourceEntry
+#endif // Q_COMPILER_RVALUE_REFS
+            ;
+            _promisedResources.erase(itPromisedResourceEntry);
+
+            const auto newEntry = new AvailableResourceEntry(promisedResourceEntry->refCounter + 1, resourcePtr);
+            _availableResources.insert(key, qMove(std::shared_ptr<AvailableResourceEntry>(newEntry)));
+            promisedResourceEntry->promise.set_value(newEntry->resourcePtr);
+        }
+
+        bool obtainFutureReference(const KEY_TYPE& key, std::shared_future<ResourcePtr>& outFutureResourcePtr)
+        {
+            QWriteLocker scopedLocker(&_lock);
+
+            // Resource must not be already available.
+            // Otherwise behavior is undefined
+            assert(!_availableResources.contains(key));
+
+            const auto itPromisedResourceEntry = _promisedResources.constFind(key);
+            if(itPromisedResourceEntry == _promisedResources.cend())
+                return false;
+            const auto& promisedResourceEntry = *itPromisedResourceEntry;
+
+            promisedResourceEntry->refCounter++;
+            outFutureResourcePtr = promisedResourceEntry->sharedFuture;
+
+            return true;
+        }
+
+        bool releaseFutureReference(const KEY_TYPE& key)
+        {
+            QWriteLocker scopedLocker(&_lock);
+
+            // Resource must not be already available.
+            // Otherwise behavior is undefined
+            assert(!_availableResources.contains(key));
+
+            const auto itPromisedResourceEntry = _promisedResources.constFind(key);
+            if(itPromisedResourceEntry == _promisedResources.cend())
+                return false;
+            const auto& promisedResourceEntry = *itPromisedResourceEntry;
+            assert(promisedResourceEntry->refCounter > 0);
+            
+            promisedResourceEntry->refCounter--;
+
+            return true;
+        }
+
+        bool obtainReferenceOrFutureReferenceOrMakePromise(const KEY_TYPE& key, ResourcePtr& outResourcePtr, std::shared_future<ResourcePtr>& outFutureResourcePtr)
+        {
+            QWriteLocker scopedLocker(&_lock);
+
+            const auto itAvailableResourceEntry = _availableResources.find(key);
+            if(itAvailableResourceEntry != _availableResources.end())
+            {
+                const auto& availableResourceEntry = *itAvailableResourceEntry;
+
+                availableResourceEntry->refCounter++;
+                outResourcePtr = availableResourceEntry->resourcePtr;
+
+                return true;
+            }
+            
+            const auto futureReferenceAvailable = obtainFutureReference(key, outFutureResourcePtr);
+            if(futureReferenceAvailable)
+                return true;
+            
+            makePromise(key);
+            return false;
         }
     };
 }

@@ -69,7 +69,9 @@ namespace OsmAnd {
             {}
 
             virtual ~TileEntry()
-            {}
+            {
+                safeUnlink();
+            }
         };
 
         class Tile : public MapBitmapTile, public IRetainableResource

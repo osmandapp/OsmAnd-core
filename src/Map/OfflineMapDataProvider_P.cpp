@@ -78,6 +78,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 
     // Perform read-out
     QList< std::shared_ptr<const Model::MapObject> > referencedMapObjects;
+    QList< std::shared_future< std::shared_ptr<const Model::MapObject> > > futureReferencedMapObjects;
     QList< std::shared_ptr<const Model::MapObject> > loadedMapObjects;
     QSet< uint64_t > loadedSharedMapObjects;
     MapFoundationType tileFoundation;
@@ -87,7 +88,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
     ObfMapSectionReader_Metrics::Metric_loadMapObjects dataRead_Metric;
 #endif
     dataInterface->obtainMapObjects(&loadedMapObjects, &tileFoundation, tileBBox31, zoom, nullptr,
-        [this, zoom, &referencedMapObjects, &loadedSharedMapObjects, tileBBox31
+        [this, zoom, &referencedMapObjects, &futureReferencedMapObjects, &loadedSharedMapObjects, tileBBox31
 #if defined(_DEBUG) || defined(DEBUG)
             , &dataFilter
 #endif
@@ -115,10 +116,18 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
             // Otherwise, this map object can be shared, so it should be checked for
             // being present in shared mapObjects storage, or be reserved there
             std::shared_ptr<const Model::MapObject> sharedMapObjectReference;
-            if(_sharedMapObjects.obtainReferenceOrReserveAsPending(id, zoom, Utilities::enumerateZoomLevels(firstZoomLevel, lastZoomLevel), sharedMapObjectReference))
+            std::shared_future< std::shared_ptr<const Model::MapObject> > futureSharedMapObjectReference;
+            if(_sharedMapObjects.obtainReferenceOrFutureReferenceOrMakePromise(id, zoom, Utilities::enumerateZoomLevels(firstZoomLevel, lastZoomLevel), sharedMapObjectReference, futureSharedMapObjectReference))
             {
-                // If map object is already in shared objects cache and is available, use that one
-                referencedMapObjects.push_back(qMove(sharedMapObjectReference));
+                if(sharedMapObjectReference)
+                {
+                    // If map object is already in shared objects cache and is available, use that one
+                    referencedMapObjects.push_back(qMove(sharedMapObjectReference));
+                }
+                else
+                {
+                    futureReferencedMapObjects.push_back(qMove(futureSharedMapObjectReference));
+                }
 
 #if defined(_DEBUG) || defined(DEBUG)
                 const auto dataFilter_End = std::chrono::high_resolution_clock::now();
@@ -157,10 +166,18 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 
         // Add unique map object under lock to all zoom levels, for which this map object is valid
         assert(mapObject->level);
-        _sharedMapObjects.insertPendingAndReference(
+        _sharedMapObjects.fulfilPromiseAndReference(
             mapObject->id,
             Utilities::enumerateZoomLevels(mapObject->level->minZoom, mapObject->level->maxZoom),
             mapObject);
+    }
+
+    for(auto itFutureMapObject = futureReferencedMapObjects.cbegin(); itFutureMapObject != futureReferencedMapObjects.cend(); ++itFutureMapObject)
+    {
+        const auto& futureMapObject = *itFutureMapObject;
+        const auto mapObject = futureMapObject.get();
+
+        referencedMapObjects.push_back(qMove(mapObject));
     }
 
 #if defined(_DEBUG) || defined(DEBUG)

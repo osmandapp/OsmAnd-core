@@ -73,8 +73,9 @@ namespace OsmAnd
 
         // Possible state chains:
         // Unknown => Requesting => Requested => ProcessingRequest => ...
-        // ... => Unavailable.
-        // ... => Ready => Uploading => Uploaded [=> IsBeingUsed] => UnloadPending => Unloading => Unloaded.
+        // ... => Unavailable => JustBeforeDeath
+        // ... => Ready => Uploading => Uploaded [=> IsBeingUsed] => UnloadPending => Unloading => Unloaded => JustBeforeDeath
+        // ... => RequestCanceledWhileBeingProcessed => JustBeforeDeath
         STRONG_ENUM(ResourceState)
         {
             // Resource is not in any determined state (resource entry did not exist)
@@ -88,6 +89,9 @@ namespace OsmAnd
 
             // Resource request is being processed
             ProcessingRequest,
+
+            // Request was canceled while being processed
+            RequestCanceledWhileBeingProcessed,
 
             // Resource is not available at all
             Unavailable,
@@ -203,44 +207,56 @@ namespace OsmAnd
         };
 
         // Symbols-related:
-        class SymbolsTileResource;
-        class SymbolsResourcesCollection : public TiledResourcesCollection
-        {
-        private:
-        protected:
-            SymbolsResourcesCollection();
-
-            std::array< SharedResourcesContainer<uint64_t, const MapSymbolsGroup>, ZoomLevelsCount > _sharedMapSymbolsGroups;
-            SharedResourcesContainer< std::shared_ptr<const MapSymbol>, const GPUAPI::ResourceInGPU > _sharedResourcesInGPU;
-        public:
-            virtual ~SymbolsResourcesCollection();
-
-            friend class OsmAnd::MapRendererResources;
-        friend class OsmAnd::MapRendererResources::SymbolsTileResource;
-        };
+        class SymbolsResourcesCollection;
         class SymbolsTileResource : public BaseTiledResource
         {
         private:
         protected:
             SymbolsTileResource(MapRendererResources* owner, const TilesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom);
 
+            class GroupResources
+            {
+                Q_DISABLE_COPY(GroupResources);
+            private:
+            protected:
+            public:
+                GroupResources(const std::shared_ptr<const MapSymbolsGroup>& group);
+                ~GroupResources();
+
+                const std::shared_ptr<const MapSymbolsGroup> group;
+                QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > resourcesInGPU;
+            };
+
             std::shared_ptr<const MapSymbolsTile> _sourceData;
-            QList< std::shared_ptr<const MapSymbolsGroup> > _uniqueSymbolsGroups;
-            QList< std::shared_ptr<const MapSymbolsGroup> > _sharedSymbolsGroups;
-            QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > _uniqueResourcesInGPU;
-            QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > _sharedResourcesInGPU;
+            QList< std::shared_ptr<GroupResources> > _uniqueGroupsResources;
+            QList< std::shared_ptr<GroupResources> > _referencedSharedGroupsResources;
 
             virtual bool obtainData(bool& dataAvailable);
             virtual bool uploadToGPU();
             virtual void unloadFromGPU();
 
+            virtual bool checkIsSafeToUnlink();
             virtual void detach();
         public:
             virtual ~SymbolsTileResource();
 
         friend class OsmAnd::MapRendererResources;
+        friend class OsmAnd::MapRendererResources::SymbolsResourcesCollection;
         };
+        class SymbolsResourcesCollection : public TiledResourcesCollection
+        {
+        private:
+        protected:
+            SymbolsResourcesCollection();
 
+            std::array< SharedResourcesContainer<uint64_t, SymbolsTileResource::GroupResources>, ZoomLevelsCount > _sharedGroupsResources;
+        public:
+            virtual ~SymbolsResourcesCollection();
+
+        friend class OsmAnd::MapRendererResources;
+        friend class OsmAnd::MapRendererResources::SymbolsTileResource;
+        };
+        
         typedef QMap<int, QHash< std::shared_ptr<const MapSymbol>, std::weak_ptr<const GPUAPI::ResourceInGPU> > > SymbolsMap;
 
     private:
@@ -278,6 +294,8 @@ namespace OsmAnd
         mutable QMutex _symbolsMapMutex;
         SymbolsMap _symbolsMap;
         unsigned int _symbolsMapCount;
+        void addSymbolsMapEntry(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource);
+        void removeSymbolsMapEntry(const std::shared_ptr<const MapSymbol>& symbol);
 
         void notifyNewResourceAvailable();
 

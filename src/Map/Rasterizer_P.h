@@ -155,6 +155,14 @@ namespace OsmAnd {
             const QList< std::shared_ptr<const OsmAnd::Model::MapObject> >& source,
             const IQueryController* const controller,
             Rasterizer_Metrics::Metric_prepareContext* const metric);
+        static std::shared_ptr<const PrimitivesGroup> createPrimitivesGroup(
+            const RasterizerEnvironment_P& env, RasterizerContext_P& context,
+            const std::shared_ptr<const Model::MapObject>& mapObject,
+            MapStyleEvaluator& orderEvaluator,
+            MapStyleEvaluator& polygonEvaluator,
+            MapStyleEvaluator& polylineEvaluator,
+            MapStyleEvaluator& pointEvaluator,
+            Rasterizer_Metrics::Metric_prepareContext* const metric);
         static void sortAndFilterPrimitives(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context);
         static void filterOutHighwaysByDensity(

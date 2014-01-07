@@ -72,7 +72,9 @@ namespace OsmAnd {
             {}
 
             virtual ~TileEntry()
-            {}
+            {
+                safeUnlink();
+            }
 
             std::weak_ptr< const OfflineMapDataTile > _tile;
 
