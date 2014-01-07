@@ -45,7 +45,7 @@ namespace OsmAnd
     protected:
         struct AvailableResourceEntry : public SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE>::AvailableResourceEntry
         {
-            typedef SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE>::AvailableResourceEntry base;
+            typedef typename SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE>::AvailableResourceEntry base;
 
             AvailableResourceEntry(const uintmax_t refCounter_, const ResourcePtr& resourcePtr_, const QSet<ZoomLevel>& zoomLevels_)
                 : base(refCounter_, resourcePtr_)
@@ -68,7 +68,7 @@ namespace OsmAnd
 
         struct PromisedResourceEntry : public SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE>::PromisedResourceEntry
         {
-            typedef SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE>::PromisedResourceEntry base;
+            typedef typename SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE>::PromisedResourceEntry base;
 
             PromisedResourceEntry(const QSet<ZoomLevel>& zoomLevels_)
                 : base()
