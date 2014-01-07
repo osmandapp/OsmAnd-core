@@ -287,7 +287,7 @@ namespace OsmAnd
             }
 
             _promisedResourceEntriesStorage.erase(promisedEntryPtr);
-            promisedEntryPtr->promise.set_exception(std::make_exception_ptr(std::runtime_error("Promise was broken")));
+            promisedEntryPtr->promise.set_exception(proper::make_exception_ptr(std::runtime_error("Promise was broken")));
         }
 
         void fulfilPromise(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, ResourcePtr& resourcePtr)
@@ -424,7 +424,7 @@ namespace OsmAnd
             promisedEntryPtr->promise.set_value(newEntryPtr->resourcePtr);
         }
 
-        bool obtainFutureReference(const KEY_TYPE& key, const ZoomLevel level, std::shared_future<ResourcePtr>& outFutureResourcePtr)
+        bool obtainFutureReference(const KEY_TYPE& key, const ZoomLevel level, proper::shared_future<ResourcePtr>& outFutureResourcePtr)
         {
             QWriteLocker scopedLocker(&this->_lock);
 
@@ -462,7 +462,7 @@ namespace OsmAnd
             return true;
         }
 
-        bool obtainReferenceOrFutureReferenceOrMakePromise(const KEY_TYPE& key, const ZoomLevel level, const QSet<ZoomLevel>& levels, ResourcePtr& outResourcePtr, std::shared_future<ResourcePtr>& outFutureResourcePtr)
+        bool obtainReferenceOrFutureReferenceOrMakePromise(const KEY_TYPE& key, const ZoomLevel level, const QSet<ZoomLevel>& levels, ResourcePtr& outResourcePtr, proper::shared_future<ResourcePtr>& outFutureResourcePtr)
         {
             QWriteLocker scopedLocker(&this->_lock);
 

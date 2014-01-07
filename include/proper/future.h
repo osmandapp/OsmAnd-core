@@ -6,7 +6,16 @@
 #include <boost/thread/future.hpp>
 namespace OsmAnd
 {
-    namespace proper = ::boost;
+    namespace proper
+    {
+        using namespace ::boost;
+
+        template<class E>
+        ::boost::exception_ptr make_exception_ptr(E e)
+        {
+            return ::boost::copy_exception<E>(e);
+        }
+    }
 }
 
 #else

@@ -24,7 +24,7 @@
 
 #include <OsmAndCore/stdlib_common.h>
 #include <cassert>
-#include <future>
+#include <proper/future.h>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QHash>
@@ -83,8 +83,8 @@ namespace OsmAnd
             }
 
             uintmax_t refCounter;
-            std::promise<ResourcePtr> promise;
-            const std::shared_future<ResourcePtr> sharedFuture;
+            proper::promise<ResourcePtr> promise;
+            const proper::shared_future<ResourcePtr> sharedFuture;
         };
     private:
         QHash< KEY_TYPE, std::shared_ptr< AvailableResourceEntry > > _availableResources;
@@ -243,7 +243,7 @@ namespace OsmAnd
             ;
             _promisedResources.erase(itPromisedResourceEntry);
 
-            promisedResourceEntry->promise.set_exception(std::make_exception_ptr(std::runtime_error("Promise was broken")));
+            promisedResourceEntry->promise.set_exception(proper::make_exception_ptr(std::runtime_error("Promise was broken")));
         }
 
         void fulfilPromise(const KEY_TYPE& key, ResourcePtr& resourcePtr)
@@ -326,7 +326,7 @@ namespace OsmAnd
             promisedResourceEntry->promise.set_value(newEntry->resourcePtr);
         }
 
-        bool obtainFutureReference(const KEY_TYPE& key, std::shared_future<ResourcePtr>& outFutureResourcePtr)
+        bool obtainFutureReference(const KEY_TYPE& key, proper::shared_future<ResourcePtr>& outFutureResourcePtr)
         {
             QWriteLocker scopedLocker(&_lock);
 
@@ -364,7 +364,7 @@ namespace OsmAnd
             return true;
         }
 
-        bool obtainReferenceOrFutureReferenceOrMakePromise(const KEY_TYPE& key, ResourcePtr& outResourcePtr, std::shared_future<ResourcePtr>& outFutureResourcePtr)
+        bool obtainReferenceOrFutureReferenceOrMakePromise(const KEY_TYPE& key, ResourcePtr& outResourcePtr, proper::shared_future<ResourcePtr>& outFutureResourcePtr)
         {
             QWriteLocker scopedLocker(&_lock);
 

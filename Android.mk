@@ -17,8 +17,7 @@ LOCAL_EXPORT_CFLAGS := \
 
 LOCAL_EXPORT_C_INCLUDES := \
     $(LOCAL_PATH)/externals/glm/upstream.patched \
-    $(LOCAL_PATH)/include \
-    $(LOCAL_PATH)/client
+    $(LOCAL_PATH)/include
 
 LOCAL_EXPORT_LDLIBS := \
     -lEGL \
@@ -39,16 +38,14 @@ LOCAL_STATIC_LIBRARIES := \
     osmand_glsl-optimizer$(OSMAND_BINARY_SUFFIX) \
     Qt5Sql$(OSMAND_BINARY_SUFFIX) \
     Qt5Network$(OSMAND_BINARY_SUFFIX) \
-    Qt5Core$(OSMAND_BINARY_SUFFIX)
+    Qt5Core$(OSMAND_BINARY_SUFFIX) \
+    boost_system$(OSMAND_BINARY_SUFFIX) \
+    boost_atomic$(OSMAND_BINARY_SUFFIX) \
+    boost_thread$(OSMAND_BINARY_SUFFIX)
 
 ifneq ($(OSMAND_USE_PREBUILT),true)
     LOCAL_CFLAGS := \
         $(LOCAL_EXPORT_CFLAGS)
-
-    ifdef OSMAND_PROFILE_NATIVE_OPERATIONS
-        LOCAL_CFLAGS += \
-            -DOSMAND_NATIVE_PROFILING
-    endif
 
     LOCAL_C_INCLUDES := \
         $(LOCAL_EXPORT_C_INCLUDES) \
