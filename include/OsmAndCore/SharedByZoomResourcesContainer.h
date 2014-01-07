@@ -66,8 +66,6 @@ namespace OsmAnd
             const QSet<ZoomLevel> zoomLevels;
         };
 
-        typedef std::shared_ptr<AvailableResourceEntry> AvailableResourceEntryPtr;
-
         struct PromisedResourceEntry : public SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE>::PromisedResourceEntry
         {
             typedef typename SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE>::PromisedResourceEntry base;
@@ -80,14 +78,14 @@ namespace OsmAnd
 
             const QSet<ZoomLevel> zoomLevels;
         };
-
-        typedef std::shared_ptr<PromisedResourceEntry> PromisedResourceEntryPtr;
     private:
-        typedef typename SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE> base;
+        typedef SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE> base;
 
+        typedef std::shared_ptr<AvailableResourceEntry> AvailableResourceEntryPtr;
         QSet< AvailableResourceEntryPtr > _availableResourceEntriesStorage;
         std::array< QHash< KEY_TYPE, AvailableResourceEntryPtr >, ZoomLevelsCount> _availableResources;
 
+        typedef std::shared_ptr<PromisedResourceEntry> PromisedResourceEntryPtr;
         QSet< PromisedResourceEntryPtr > _promisedResourceEntriesStorage;
         std::array< QHash< KEY_TYPE, PromisedResourceEntryPtr >, ZoomLevelsCount> _promisedResources;
     protected:
@@ -101,7 +99,7 @@ namespace OsmAnd
 
         void insert(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, ResourcePtr& resourcePtr)
         {
-            QWriteLocker scopedLocker(&base::_lock);
+            QWriteLocker scopedLocker(&this->_lock);
 
             const AvailableResourceEntryPtr newEntryPtr(new AvailableResourceEntry(0, qMove(resourcePtr), levels));
 #ifndef Q_COMPILER_RVALUE_REFS
@@ -128,7 +126,7 @@ namespace OsmAnd
 #ifdef Q_COMPILER_RVALUE_REFS
         void insert(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, ResourcePtr&& resourcePtr)
         {
-            QWriteLocker scopedLocker(&base::_lock);
+            QWriteLocker scopedLocker(&this->_lock);
 
             const AvailableResourceEntryPtr newEntryPtr(new AvailableResourceEntry(0, qMove(resourcePtr), levels));
             assert(resourcePtr.use_count() == 0);
@@ -151,7 +149,7 @@ namespace OsmAnd
 
         void insertAndReference(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, const ResourcePtr& resourcePtr)
         {
-            QWriteLocker scopedLocker(&base::_lock);
+            QWriteLocker scopedLocker(&this->_lock);
 
             const AvailableResourceEntryPtr newEntryPtr(new AvailableResourceEntry(1, resourcePtr, levels));
 
@@ -172,7 +170,7 @@ namespace OsmAnd
 
         bool obtainReference(const KEY_TYPE& key, const ZoomLevel level, ResourcePtr& outResourcePtr)
         {
-            QWriteLocker scopedLocker(&base::_lock);
+            QWriteLocker scopedLocker(&this->_lock);
 
             // In case resource was promised, wait forever until promise is fulfilled
             const auto itPromisedResourceEntry = _promisedResources[level].constFind(key);
@@ -206,7 +204,7 @@ namespace OsmAnd
 
         bool releaseReference(const KEY_TYPE& key, const ZoomLevel level, ResourcePtr& resourcePtr, const bool autoClean = true, bool* outWasCleaned = nullptr, uintmax_t* outRemainingReferences = nullptr)
         {
-            QWriteLocker scopedLocker(&base::_lock);
+            QWriteLocker scopedLocker(&this->_lock);
 
             // Resource must not be promised. Otherwise behavior is undefined
             assert(!_promisedResources[level].contains(key));
@@ -248,7 +246,7 @@ namespace OsmAnd
         
         void makePromise(const KEY_TYPE& key, const QSet<ZoomLevel>& levels)
         {
-            QWriteLocker scopedLocker(&base::_lock);
+            QWriteLocker scopedLocker(&this->_lock);
 
             const PromisedResourceEntryPtr newEntryPtr(new PromisedResourceEntry(levels));
 
@@ -269,7 +267,7 @@ namespace OsmAnd
 
         void breakPromise(const KEY_TYPE& key, const QSet<ZoomLevel>& levels)
         {
-            QWriteLocker scopedLocker(&base::_lock);
+            QWriteLocker scopedLocker(&this->_lock);
 
             PromisedResourceEntryPtr promisedEntryPtr;
             for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
@@ -294,7 +292,7 @@ namespace OsmAnd
 
         void fulfilPromise(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, ResourcePtr& resourcePtr)
         {
-            QWriteLocker scopedLocker(&base::_lock);
+            QWriteLocker scopedLocker(&this->_lock);
 
             PromisedResourceEntryPtr promisedEntryPtr;
             for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
@@ -337,13 +335,13 @@ namespace OsmAnd
             }
 
             _availableResourceEntriesStorage.insert(newEntryPtr);
-            promisedResourceEntry->promise.set_value(newEntryPtr->resourcePtr);
+            promisedEntryPtr->promise.set_value(newEntryPtr->resourcePtr);
         }
 
 #ifdef Q_COMPILER_RVALUE_REFS
         void fulfilPromise(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, ResourcePtr&& resourcePtr)
         {
-            QWriteLocker scopedLocker(&base::_lock);
+            QWriteLocker scopedLocker(&this->_lock);
 
             PromisedResourceEntryPtr promisedEntryPtr;
             for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
@@ -382,13 +380,13 @@ namespace OsmAnd
             }
 
             _availableResourceEntriesStorage.insert(newEntryPtr);
-            promisedResourceEntry->promise.set_value(newEntryPtr->resourcePtr);
+            promisedEntryPtr->promise.set_value(newEntryPtr->resourcePtr);
         }
 #endif // Q_COMPILER_RVALUE_REFS
 
         void fulfilPromiseAndReference(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, const ResourcePtr& resourcePtr)
         {
-            QWriteLocker scopedLocker(&base::_lock);
+            QWriteLocker scopedLocker(&this->_lock);
 
             PromisedResourceEntryPtr promisedEntryPtr;
             for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
@@ -428,7 +426,7 @@ namespace OsmAnd
 
         bool obtainFutureReference(const KEY_TYPE& key, const ZoomLevel level, std::shared_future<ResourcePtr>& outFutureResourcePtr)
         {
-            QWriteLocker scopedLocker(&base::_lock);
+            QWriteLocker scopedLocker(&this->_lock);
 
             // Resource must not be already available.
             // Otherwise behavior is undefined
@@ -447,7 +445,7 @@ namespace OsmAnd
 
         bool releaseFutureReference(const KEY_TYPE& key, const ZoomLevel level)
         {
-            QWriteLocker scopedLocker(&base::_lock);
+            QWriteLocker scopedLocker(&this->_lock);
 
             // Resource must not be already available.
             // Otherwise behavior is undefined
@@ -466,7 +464,7 @@ namespace OsmAnd
 
         bool obtainReferenceOrFutureReferenceOrMakePromise(const KEY_TYPE& key, const ZoomLevel level, const QSet<ZoomLevel>& levels, ResourcePtr& outResourcePtr, std::shared_future<ResourcePtr>& outFutureResourcePtr)
         {
-            QWriteLocker scopedLocker(&base::_lock);
+            QWriteLocker scopedLocker(&this->_lock);
 
             assert(levels.contains(level));
 
