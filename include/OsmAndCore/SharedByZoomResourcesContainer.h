@@ -81,6 +81,8 @@ namespace OsmAnd
 
         typedef std::shared_ptr<PromisedResourceEntry> PromisedResourceEntryPtr;
     private:
+        typedef SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE>::ResourcePtr ResourcePtr;
+
         QSet< AvailableResourceEntryPtr > _availableResourceEntriesStorage;
         std::array< QHash< KEY_TYPE, AvailableResourceEntryPtr >, ZoomLevelsCount> _availableResources;
 
