@@ -1032,7 +1032,7 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAva
     // Obtain tile from provider
     const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
     QList< std::shared_ptr<GroupResources> > referencedSharedGroupsResources;
-    QList< std::shared_future< std::shared_ptr<GroupResources> > > futureReferencedSharedGroupsResources;
+    QList< proper::shared_future< std::shared_ptr<GroupResources> > > futureReferencedSharedGroupsResources;
     QSet< uint64_t > loadedSharedGroups;
     std::shared_ptr<const MapSymbolsTile> tile;
     const auto requestSucceeded = provider->obtainSymbols(tileId, zoom, tile,
@@ -1046,7 +1046,7 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAva
 
             // Check if this shared symbol is already available, or mark it as pending
             std::shared_ptr<GroupResources> sharedGroupResources;
-            std::shared_future< std::shared_ptr<GroupResources> > futureSharedGroupResources;
+            proper::shared_future< std::shared_ptr<GroupResources> > futureSharedGroupResources;
             if(sharedGroupsResources.obtainReferenceOrFutureReferenceOrMakePromise(mapObject->id, sharedGroupResources, futureSharedGroupResources))
             {
                 if(static_cast<bool>(sharedGroupResources))
@@ -1119,7 +1119,7 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAva
 bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
 {
     typedef std::pair< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > SymbolResourceEntry;
-    typedef std::pair< std::shared_ptr<const MapSymbol>, std::shared_future< std::shared_ptr<const GPUAPI::ResourceInGPU> > > FutureSymbolResourceEntry;
+    typedef std::pair< std::shared_ptr<const MapSymbol>, proper::shared_future< std::shared_ptr<const GPUAPI::ResourceInGPU> > > FutureSymbolResourceEntry;
 
     bool ok;
     bool anyUploadFailed = false;

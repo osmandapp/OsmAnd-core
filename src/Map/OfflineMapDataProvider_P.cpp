@@ -78,7 +78,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 
     // Perform read-out
     QList< std::shared_ptr<const Model::MapObject> > referencedMapObjects;
-    QList< std::shared_future< std::shared_ptr<const Model::MapObject> > > futureReferencedMapObjects;
+    QList< proper::shared_future< std::shared_ptr<const Model::MapObject> > > futureReferencedMapObjects;
     QList< std::shared_ptr<const Model::MapObject> > loadedMapObjects;
     QSet< uint64_t > loadedSharedMapObjects;
     MapFoundationType tileFoundation;
@@ -116,7 +116,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
             // Otherwise, this map object can be shared, so it should be checked for
             // being present in shared mapObjects storage, or be reserved there
             std::shared_ptr<const Model::MapObject> sharedMapObjectReference;
-            std::shared_future< std::shared_ptr<const Model::MapObject> > futureSharedMapObjectReference;
+            proper::shared_future< std::shared_ptr<const Model::MapObject> > futureSharedMapObjectReference;
             if(_sharedMapObjects.obtainReferenceOrFutureReferenceOrMakePromise(id, zoom, Utilities::enumerateZoomLevels(firstZoomLevel, lastZoomLevel), sharedMapObjectReference, futureSharedMapObjectReference))
             {
                 if(sharedMapObjectReference)

@@ -289,7 +289,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
     pointEvaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_MAXZOOM, context._zoom);
 
     auto& sharedPrimitivesGroups = context.owner->sharedContext->_d->_sharedPrimitivesGroups[context._zoom];
-    QList< std::shared_future< std::shared_ptr<const PrimitivesGroup> > > futureSharedPrimitivesGroups;
+    QList< proper::shared_future< std::shared_ptr<const PrimitivesGroup> > > futureSharedPrimitivesGroups;
     for(auto itMapObject = source.cbegin(); itMapObject != source.cend(); ++itMapObject)
     {
         if(controller && controller->isAborted())
@@ -303,7 +303,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
         {
             // If this group was already processed, use that
             std::shared_ptr<const PrimitivesGroup> group;
-            std::shared_future< std::shared_ptr<const PrimitivesGroup> > futureGroup;
+            proper::shared_future< std::shared_ptr<const PrimitivesGroup> > futureGroup;
             if(sharedPrimitivesGroups.obtainReferenceOrFutureReferenceOrMakePromise(mapObject->id, group, futureGroup))
             {
                 if(group)
@@ -714,7 +714,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
     //NOTE: Since 2 tiles with same MapObject may have different set of polylines, generated from it,
     //NOTE: then set of symbols also should differ, but it won't.
     auto& sharedSymbolGroups = context.owner->sharedContext->_d->_sharedSymbolGroups[context._zoom];
-    QList< std::shared_future< std::shared_ptr<const SymbolsGroup> > > futureSharedSymbolGroups;
+    QList< proper::shared_future< std::shared_ptr<const SymbolsGroup> > > futureSharedSymbolGroups;
     for(auto itPrimitivesGroup = context._primitivesGroups.cbegin(); itPrimitivesGroup != context._primitivesGroups.cend(); ++itPrimitivesGroup)
     {
         if(controller && controller->isAborted())
@@ -731,7 +731,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
         {
             // If this group was already processed, use that
             std::shared_ptr<const SymbolsGroup> group;
-            std::shared_future< std::shared_ptr<const SymbolsGroup> > futureGroup;
+            proper::shared_future< std::shared_ptr<const SymbolsGroup> > futureGroup;
             if(sharedSymbolGroups.obtainReferenceOrFutureReferenceOrMakePromise(primitivesGroup->mapObject->id, group, futureGroup))
             {
                 if(group)
