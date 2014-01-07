@@ -78,7 +78,7 @@ void OsmAnd::Rasterizer_P::prepareContext(
 
         const auto& mapObject = *itMapObject;
 
-        if(zoom < BasemapZoom && !mapObject->section->isBasemap)
+        if(zoom < static_cast<ZoomLevel>(BasemapZoom) && !mapObject->section->isBasemap)
             continue;
 
         if(mapObject->containsType(mapObject->section->encodingDecodingRules->naturalCoastline_encodingRuleId))
@@ -124,7 +124,7 @@ void OsmAnd::Rasterizer_P::prepareContext(
     // Polygonize coastlines
     bool fillEntireArea = true;
     bool addBasemapCoastlines = true;
-    const bool detailedLandData = zoom >= DetailedLandDataZoom && !detailedmapMapObjects.isEmpty();
+    const bool detailedLandData = (zoom >= static_cast<ZoomLevel>(DetailedLandDataZoom)) && !detailedmapMapObjects.isEmpty();
     if(!detailedmapCoastlineObjects.empty())
     {
         const bool coastlinesWereAdded = polygonizeCoastlines(env, context,
@@ -133,7 +133,7 @@ void OsmAnd::Rasterizer_P::prepareContext(
             !basemapCoastlineObjects.isEmpty(),
             true);
         fillEntireArea = !coastlinesWereAdded && fillEntireArea;
-        addBasemapCoastlines = (!coastlinesWereAdded && !detailedLandData) || zoom <= BasemapZoom;
+        addBasemapCoastlines = (!coastlinesWereAdded && !detailedLandData) || zoom <= static_cast<ZoomLevel>(BasemapZoom);
     }
     else
     {
@@ -194,12 +194,12 @@ void OsmAnd::Rasterizer_P::prepareContext(
     }
 
     // Obtain primitives
-    const bool detailedDataMissing = zoom > BasemapZoom && detailedmapMapObjects.isEmpty() && detailedmapCoastlineObjects.isEmpty();
+    const bool detailedDataMissing = (zoom > static_cast<ZoomLevel>(BasemapZoom)) && detailedmapMapObjects.isEmpty() && detailedmapCoastlineObjects.isEmpty();
 
     // Check if there is no data to render. Report, clean-up and exit
     const auto mapObjectsCount =
         detailedmapMapObjects.size() +
-        ((zoom <= BasemapZoom || detailedDataMissing) ? basemapMapObjects.size() : 0) +
+        ((zoom <= static_cast<ZoomLevel>(BasemapZoom) || detailedDataMissing) ? basemapMapObjects.size() : 0) +
         polygonizedCoastlineObjects.size();
     if(mapObjectsCount == 0)
     {
@@ -219,7 +219,7 @@ void OsmAnd::Rasterizer_P::prepareContext(
 
     // Obtain primitives
     obtainPrimitives(env, context, detailedmapMapObjects, controller, metric);
-    if(zoom <= BasemapZoom || detailedDataMissing)
+    if((zoom <= static_cast<ZoomLevel>(BasemapZoom)) || detailedDataMissing)
         obtainPrimitives(env, context, basemapMapObjects, controller, metric);
     obtainPrimitives(env, context, polygonizedCoastlineObjects, controller, metric);
     sortAndFilterPrimitives(env, context);
@@ -347,11 +347,10 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
         context._primitivesGroups.push_back(qMove(group));
     }
 
-    for(auto itFutureSharedGroup = futureSharedPrimitivesGroups.cbegin(); itFutureSharedGroup != futureSharedPrimitivesGroups.cend(); ++itFutureSharedGroup)
+    for(auto itFutureSharedGroup = futureSharedPrimitivesGroups.begin(); itFutureSharedGroup != futureSharedPrimitivesGroups.end(); ++itFutureSharedGroup)
     {
-        const auto& futureSharedGroup = *itFutureSharedGroup;
-
-        const auto group = futureSharedGroup.get();
+        auto& futureSharedGroup = *itFutureSharedGroup;
+        auto group = futureSharedGroup.get();
 
         // Add polygons, polylines and points from group to current context
         for(auto itPrimitive = group->polygons.cbegin(); itPrimitive != group->polygons.cend(); ++itPrimitive)
@@ -784,10 +783,10 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
         context._symbolsGroups.push_back(qMove(group));
     }
 
-    for(auto itFutureGroup = futureSharedSymbolGroups.cbegin(); itFutureGroup != futureSharedSymbolGroups.cend(); ++itFutureGroup)
+    for(auto itFutureGroup = futureSharedSymbolGroups.begin(); itFutureGroup != futureSharedSymbolGroups.end(); ++itFutureGroup)
     {
-        const auto& futureGroup = *itFutureGroup;
-        const auto group = futureGroup.get();
+        auto& futureGroup = *itFutureGroup;
+        auto group = futureGroup.get();
 
         // Add symbols from group to current context
         RasterizerContext_P::SymbolsEntry entry;

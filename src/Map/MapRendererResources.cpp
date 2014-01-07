@@ -1093,9 +1093,9 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAva
     }
 
     // Wait for future referenced shared groups
-    for(auto itFutureGroup = futureReferencedSharedGroupsResources.cbegin(); itFutureGroup != futureReferencedSharedGroupsResources.cend(); ++itFutureGroup)
+    for(auto itFutureGroup = futureReferencedSharedGroupsResources.begin(); itFutureGroup != futureReferencedSharedGroupsResources.end(); ++itFutureGroup)
     {
-        const auto& futureGroup = *itFutureGroup;
+        auto& futureGroup = *itFutureGroup;
         auto groupResources = futureGroup.get();
         
         _referencedSharedGroupsResources.push_back(qMove(groupResources));
