@@ -151,7 +151,7 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&_lock);
 
             // In case resource was promised, wait forever until promise is fulfilled
-            const itPromisedResourceEntry = _promisedResources.constFind(key);
+            const auto itPromisedResourceEntry = _promisedResources.constFind(key);
             if(itPromisedResourceEntry != _promisedResources.cend())
             {
                 const auto localFuture = (*itPromisedResourceEntry)->sharedFuture;
