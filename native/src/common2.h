@@ -45,6 +45,7 @@ struct TextDrawInfo {
 	float minDistance;
 	int textColor;
 	int textShadow;
+	int textShadowColor;
 	uint32_t textWrap;
 	bool bold;
 	std::string shieldRes;

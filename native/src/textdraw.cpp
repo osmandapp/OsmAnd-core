@@ -135,6 +135,10 @@ void fillTextProperties(RenderingContext* rc, TextDrawInfo* info, RenderingRuleS
 	}
 	info->textSize = getDensityValue(rc, render, render->props()->R_TEXT_SIZE);
 	info->textShadow = getDensityValue(rc, render, render->props()->R_TEXT_HALO_RADIUS);
+	info->textShadowColor = render->getIntPropertyValue(render->props()->R_TEXT_HALO_COLOR);
+	if (info->textShadowColor == 0) {
+		info->textShadowColor = 0xffffffff;
+	}
 	info->textWrap = getDensityValue(rc, render, render->props()->R_TEXT_WRAP_WIDTH);
 	info->bold = render->getIntPropertyValue(render->props()->R_TEXT_BOLD, 0) > 0;
 	info->minDistance = getDensityValue(rc, render, render->props()->R_TEXT_MIN_DISTANCE);
@@ -148,11 +152,11 @@ bool isLetterOrDigit(char c)
 }
 
 void drawTextOnCanvas(SkCanvas* cv, const char* text, uint16_t len, float centerX, float centerY, SkPaint& paintText,
-		float textShadow) {
+		int textShadowColor, float textShadow) {
 	if (textShadow > 0) {
 		int c = paintText.getColor();
 		paintText.setStyle(SkPaint::kStroke_Style);
-		paintText.setColor(-1); // white
+		paintText.setColor(textShadowColor); // white
 		paintText.setStrokeWidth(2 + textShadow);
 		cv->drawText(text, len, centerX, centerY, paintText);
 // reset
@@ -208,13 +212,15 @@ void drawWrappedText(RenderingContext* rc, SkCanvas* cv, TextDrawInfo* text, flo
 				}
 			} while(pos < end && charRead < text->textWrap);
 
-			PROFILE_NATIVE_OPERATION(rc, drawTextOnCanvas(cv, c_str, pos - start , text->centerX, text->centerY + line * (textSize + 2), paintText, text->textShadow));
+			PROFILE_NATIVE_OPERATION(rc, drawTextOnCanvas(cv, c_str, pos - start , text->centerX, text->centerY + line * (textSize + 2), paintText, 
+				text->textShadowColor, text->textShadow));
 			c_str += (pos - start);
 			start = pos;
 			line++;
 		}
 	} else {
-		PROFILE_NATIVE_OPERATION(rc, drawTextOnCanvas(cv, text->text.data(), text->text.length(), text->centerX, text->centerY, paintText, text->textShadow));
+		PROFILE_NATIVE_OPERATION(rc, drawTextOnCanvas(cv, text->text.data(), text->text.length(), text->centerX, text->centerY, paintText, 
+			text->textShadowColor, text->textShadow));
 	}
 }
 
@@ -564,7 +570,7 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 			}
 			if (textDrawInfo->drawOnPath && textDrawInfo->path != NULL) {
 				if (textDrawInfo->textShadow > 0) {
-					paintText.setColor(0xFFFFFFFF);
+					paintText.setColor(textDrawInfo->textShadowColor);
 					paintText.setStyle(SkPaint::kStroke_Style);
 					paintText.setStrokeWidth(2 + textDrawInfo->textShadow);
 					rc->nativeOperations.Pause();

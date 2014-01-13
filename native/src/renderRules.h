@@ -243,6 +243,7 @@ public:
 	RenderingRuleProperty* R_TEXT_SIZE;
 	RenderingRuleProperty* R_TEXT_COLOR;
 	RenderingRuleProperty* R_TEXT_HALO_RADIUS;
+	RenderingRuleProperty* R_TEXT_HALO_COLOR;
 	RenderingRuleProperty* R_TEXT_WRAP_WIDTH;
 	RenderingRuleProperty* R_ADDITIONAL;
 	RenderingRuleProperty* R_OBJECT_TYPE;
@@ -349,6 +350,7 @@ public:
 		R_TEXT_WRAP_WIDTH = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("textWrapWidth"));
 		R_TEXT_DY = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("textDy"));
 		R_TEXT_HALO_RADIUS = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("textHaloRadius"));
+		R_TEXT_HALO_COLOR = registerRuleInternal(RenderingRuleProperty::createOutputColorProperty("textHaloColor"));
 		R_TEXT_SIZE = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("textSize"));
 		R_TEXT_ORDER = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("textOrder"));
 		R_TEXT_MIN_DISTANCE = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("textMinDistance"));
