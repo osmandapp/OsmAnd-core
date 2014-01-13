@@ -32,6 +32,7 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_SHADOW_LEVEL, Output, Integer, "shadowLevel", fa
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_WRAP_WIDTH, Output, Integer, "textWrapWidth", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_DY, Output, Integer, "textDy", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_HALO_RADIUS, Output, Integer, "textHaloRadius", true)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_HALO_COLOR, Output, Color, "textHaloColor", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_SIZE, Output, Integer, "textSize", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_ORDER, Output, Integer, "textOrder", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_MIN_DISTANCE, Output, Integer, "textMinDistance", true)

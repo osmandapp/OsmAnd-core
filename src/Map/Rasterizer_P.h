@@ -198,9 +198,10 @@ namespace OsmAnd {
             QString value;
             bool drawOnPath;
             int verticalOffset;
-            int color;
+            uint32_t color;
             int size;
             int shadowRadius;
+            uint32_t shadowColor;
             int wrapWidth;
             bool isBold;
             int minDistance;

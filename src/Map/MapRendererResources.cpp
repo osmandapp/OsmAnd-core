@@ -1225,6 +1225,7 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
     }
 
     // Shared
+    /*
     for(auto itGroupResources = _referencedSharedGroupsResources.begin(); itGroupResources != _referencedSharedGroupsResources.end() && !anyUploadFailed; ++itGroupResources)
     {
         const auto& groupResources = *itGroupResources;
@@ -1233,9 +1234,10 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
         {
             const auto& symbol = *itSymbol;
 
-            //TODO: process those symbols that have not been uploaded HERE!
+            //BOTE: processing of those symbols that have not been uploaded (only referenced) may be done here
         }
     }
+    */
     for(auto itEntry = sharedUploaded.begin(); itEntry != sharedUploaded.end(); ++itEntry)
     {
         const auto& groupResources = itEntry.key();

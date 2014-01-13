@@ -981,6 +981,10 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
         text->shadowRadius = 0;
         textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_HALO_RADIUS, text->shadowRadius);
 
+        textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_HALO_COLOR, text->shadowColor);
+        if(!ok || !text->shadowColor)
+            text->shadowColor = SK_ColorWHITE;
+
         text->wrapWidth = 0;
         textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_WRAP_WIDTH, text->wrapWidth);
 
@@ -2307,7 +2311,7 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                     textShadowPaint = textPaint;
 
                     textShadowPaint.setStyle(SkPaint::kStroke_Style);
-                    textShadowPaint.setColor(SK_ColorWHITE);
+                    textShadowPaint.setColor(textSymbol->shadowColor);
                     textShadowPaint.setStrokeWidth(textSymbol->shadowRadius);
 
                     textShadowPaint.measureText(textSymbol->value.constData(), textSymbol->value.length()*sizeof(QChar), &shadowBounds);
