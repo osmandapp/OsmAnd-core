@@ -981,7 +981,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
         text->shadowRadius = 0;
         textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_HALO_RADIUS, text->shadowRadius);
 
-        textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_HALO_COLOR, text->shadowColor);
+        ok = textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_HALO_COLOR, text->shadowColor);
         if(!ok || !text->shadowColor)
             text->shadowColor = SK_ColorWHITE;
 
