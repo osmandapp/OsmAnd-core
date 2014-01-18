@@ -70,7 +70,7 @@ class OsmAndCoreResourcesPacker(object):
         outputFile.write("\tconst uint32_t __bundled_resources_count = %d;\n" % (len(resources)))
         outputFile.write("} /* namespace OsmAnd */\n")
         outputFile.flush()
-        #outputFile.close()
+        outputFile.close()
 
         return 0
 
