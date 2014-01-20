@@ -2,7 +2,7 @@
 #define _OSMAND_CORE_QUAD_TREE_H_
 
 #include <OsmAndCore/stdlib_common.h>
-#include <xutility>
+#include <utility>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QList>
