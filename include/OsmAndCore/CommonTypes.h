@@ -387,18 +387,18 @@ namespace OsmAnd
         };
         inline AreaT getQuadrant(const Quadrant quadrant)
         {
-            const auto center = center();
+            const auto center_ = center();
 
             switch(quadrant)
             {
             case Quadrant::NE:
-                return AreaT(top, center.x, center.y, right);
+                return AreaT(top, center_.x, center_.y, right);
             case Quadrant::SE:
-                return AreaT(center.y, center.x, bottom, right); 
+                return AreaT(center_.y, center_.x, bottom, right);
             case Quadrant::SW:
-                return AreaT(center.y, left, bottom, center.x);
+                return AreaT(center_.y, left, bottom, center_.x);
             case Quadrant::NW:
-                return AreaT(top, left, center.y, center.x);
+                return AreaT(top, left, center_.y, center_.x);
             }
 
             return *this;
