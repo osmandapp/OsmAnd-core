@@ -19,6 +19,7 @@
 #include "IMapBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
 #include "IMapSymbolProvider.h"
+#include "QuadTree.h"
 #include "Logging.h"
 #include "Utilities.h"
 #include "OpenGL_Common/Utilities_OpenGL_Common.h"
@@ -1248,8 +1249,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
         // Iterate over symbols by "order" in ascending direction
         for(auto itSymbols = symbolsMap.cbegin(); itSymbols != symbolsMap.cend(); ++itSymbols)
         {
-            //TODO: check if symbols have intersection
-
             // For each "order" value, obtain list of entries and sort them
             const auto& unsortedSymbols = *itSymbols;
             if(unsortedSymbols.isEmpty())
@@ -1299,6 +1298,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                 //////////////////////////////////////////////////////////////////////////
                 //////////////////////////////////////////////////////////////////////////
                 // this may be needed when calculating self-intersection
+                //TODO: check if symbols have intersection
                 /*auto sx = (static_cast<double>(symbolOffset31.x) / tileSize31) * TileSize3D;
                 auto sy = (static_cast<double>(symbolOffset31.y) / tileSize31) * TileSize3D;
 

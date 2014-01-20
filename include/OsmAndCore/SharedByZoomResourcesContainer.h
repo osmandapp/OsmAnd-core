@@ -79,6 +79,8 @@ namespace OsmAnd
             const QSet<ZoomLevel> zoomLevels;
         };
     private:
+        Q_DISABLE_COPY(SharedByZoomResourcesContainer)
+
         typedef SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE> base;
 
         typedef std::shared_ptr<AvailableResourceEntry> AvailableResourceEntryPtr;

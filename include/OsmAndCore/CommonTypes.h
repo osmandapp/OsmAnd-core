@@ -378,6 +378,32 @@ namespace OsmAnd
         }
 #endif // !SWIG
 
+        STRONG_ENUM(Quadrant)
+        {
+            NE = 0,
+            SE,
+            SW,
+            NW
+        };
+        inline AreaT getQuadrant(const Quadrant quadrant)
+        {
+            const auto center = center();
+
+            switch(quadrant)
+            {
+            case Quadrant::NE:
+                return AreaT(top, center.x, center.y, right);
+            case Quadrant::SE:
+                return AreaT(center.y, center.x, bottom, right); 
+            case Quadrant::SW:
+                return AreaT(center.y, left, bottom, center.x);
+            case Quadrant::NW:
+                return AreaT(top, left, center.y, center.x);
+            }
+
+            return *this;
+        }
+
         inline AreaT& enlargeToInclude(const PointT& p)
         {
             top = std::min(top, p.y);

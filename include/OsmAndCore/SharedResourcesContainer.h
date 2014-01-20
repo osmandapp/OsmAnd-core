@@ -87,6 +87,8 @@ namespace OsmAnd
             const proper::shared_future<ResourcePtr> sharedFuture;
         };
     private:
+        Q_DISABLE_COPY(SharedResourcesContainer)
+
         QHash< KEY_TYPE, std::shared_ptr< AvailableResourceEntry > > _availableResources;
         QHash< KEY_TYPE, std::shared_ptr< PromisedResourceEntry > > _promisedResources;
     protected:
