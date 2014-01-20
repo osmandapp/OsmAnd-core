@@ -12,7 +12,7 @@
 
 namespace OsmAnd
 {
-    template<typename ENTRY, typename COORD_TYPE>
+    template<typename ELEMENT_TYPE, typename COORD_TYPE>
     class QuadTree
     {
     public:
@@ -21,7 +21,6 @@ namespace OsmAnd
     private:
         Q_DISABLE_COPY(QuadTree)
     protected:
-        template<typename ENTRY>
         struct Node
         {
             Node(const AreaT& area_)
@@ -30,20 +29,20 @@ namespace OsmAnd
             }
 
             const AreaT area;
-            std::unique_ptr< Node<ENTRY> > subnodes[4];
-            typedef std::pair<AreaT, ENTRY> EntryPair;
+            std::unique_ptr< Node > subnodes[4];
+            typedef std::pair<AreaT, ELEMENT_TYPE> EntryPair;
             QList< EntryPair > entries;
 
-            bool insert(const ENTRY& entry, const AreaT& area_, const uintmax_t allowedDepthRemaining)
+            bool insert(const ELEMENT_TYPE& element, const AreaT& area_, const uintmax_t allowedDepthRemaining)
             {
-                // Check if this node can hold entire entry
+                // Check if this node can hold entire element
                 if(!area.contains(area_))
                     return false;
 
                 // If depth limit is reached, add to this
                 if(allowedDepthRemaining == 0u)
                 {
-                    entries.push_back(qMove(EntryPair(area_, entry)));
+                    entries.push_back(qMove(EntryPair(area_, element)));
                     return true;
                 }
 
@@ -51,18 +50,18 @@ namespace OsmAnd
                 for(auto idx = 0u; idx < 4; idx++)
                 {
                     if(!subnodes[idx])
-                        subnodes[idx].reset(new Node<ENTRY>(area.getQuadrant(static_cast<AreaT::Quadrant>(idx))));
+                        subnodes[idx].reset(new Node(area.getQuadrant(static_cast<typename AreaT::Quadrant>(idx))));
 
-                    if(subnodes[idx]->insert(entry, area_, allowedDepthRemaining - 1))
+                    if(subnodes[idx]->insert(element, area_, allowedDepthRemaining - 1))
                         return true;
                 }
 
                 // Otherwise, add to current node
-                entries.push_back(qMove(EntryPair(area_, entry)));
+                entries.push_back(qMove(EntryPair(area_, element)));
                 return true;
             }
 
-            void query(const AreaT& area_, QList<ENTRY>& outResults, const bool strict) const
+            void query(const AreaT& area_, QList<ELEMENT_TYPE>& outResults, const bool strict) const
             {
                 if(!(area_->contains(area) || (!strict && area_->intersects(area))))
                     return;
@@ -106,11 +105,11 @@ namespace OsmAnd
             }
         };
 
-        std::unique_ptr< Node<ENTRY> > _root;
+        std::unique_ptr< Node > _root;
     public:
         QuadTree(const uintmax_t maxDepth_ = std::numeric_limits<uintmax_t>::max())
             : _root(new Node(AreaT::largest()))
-            , maxDepth(std::max(maxDepth_, 1))
+            , maxDepth(std::max(maxDepth_, static_cast<uintmax_t>(1u)))
         {
         }
 
@@ -120,12 +119,12 @@ namespace OsmAnd
 
         const uintmax_t maxDepth;
 
-        bool insert(const ENTRY& entry, const AreaT& area)
+        bool insert(const ELEMENT_TYPE& entry, const AreaT& area)
         {
             return _root->insert(entry, area, maxDepth-1);
         }
 
-        void query(const AreaT& area, QList<ENTRY>& outResults, const bool strict = false) const
+        void query(const AreaT& area, QList<ELEMENT_TYPE>& outResults, const bool strict = false) const
         {
             _root->query(area, outResults, strict);
         }
