@@ -31,7 +31,8 @@ namespace OsmAnd
 
             const AreaT area;
             std::unique_ptr< Node<ENTRY> > subnodes[4];
-            QList< std::pair<AreaT, ENTRY> > entries;
+            typedef std::pair<AreaT, ENTRY> EntryPair;
+            QList< EntryPair > entries;
 
             bool insert(const ENTRY& entry, const AreaT& area_, const uintmax_t allowedDepthRemaining)
             {
@@ -42,7 +43,7 @@ namespace OsmAnd
                 // If depth limit is reached, add to this
                 if(allowedDepthRemaining == 0u)
                 {
-                    entries.push_back(qMove(std::pair<AreaT, ENTRY>(area_, entry)));
+                    entries.push_back(qMove(EntryPair(area_, entry)));
                     return true;
                 }
 
@@ -57,7 +58,7 @@ namespace OsmAnd
                 }
 
                 // Otherwise, add to current node
-                entries.push_back(qMove(std::pair<AreaT, ENTRY>(area_, entry)));
+                entries.push_back(qMove(EntryPair(area_, entry)));
                 return true;
             }
 
