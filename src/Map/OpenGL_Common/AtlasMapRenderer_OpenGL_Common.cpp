@@ -1224,11 +1224,12 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
     GL_CHECK_RESULT;
 
     // Set viewport
-    glUniform4f(_symbolsStage.vs.param.viewport,
+    const glm::vec4 viewport(
         currentState.viewport.left,
         currentState.windowSize.y - currentState.viewport.bottom,
         currentState.viewport.width(),
         currentState.viewport.height());
+    glUniform4fv(_symbolsStage.vs.param.viewport, 1, glm::value_ptr(viewport));
     GL_CHECK_RESULT;
 
     // Activate texture block for symbol textures
@@ -1242,6 +1243,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
         QMutexLocker scopedLocker(&getResources().getSymbolsMapMutex());
         const auto& symbolsMap = getResources().getSymbolsMap();
         typedef std::pair< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > SymbolPair;
+
+        // Intersections are calculated using quad-tree, and general rule that
+        // map symbol with smaller order [and further from camera] is more important.
+        QuadTree< std::shared_ptr<const MapSymbol>, AreaI::CoordType > intersections(currentState.viewport, 8);
 
         // Get tile size in 31 coordinates
         const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - currentState.zoomBase));
@@ -1276,7 +1281,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                 sortedSymbols.insert(distance, qMove(SymbolPair(symbol, resource)));
             }
 
-            // Render symbols in sorted order, in reversed order
+            // Render symbols in reversed order, since sortedSymbols contains
+            // symbols by distance from camera from near->far. And rendering
+            // needs to be done far->near
             QMapIterator< float, SymbolPair > itSymbolEntry(sortedSymbols);
             itSymbolEntry.toBack();
             while(itSymbolEntry.hasPrevious())
@@ -1288,30 +1295,24 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                 const auto& symbol = symbolEntry.first;
                 const auto gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(symbolEntry.second);
 
-                // Set symbol offset from target
+                // Calculate position in screen coordinates (same calculation as done in shader)
                 const auto symbolOffset31 = symbol->location31 - currentState.target31;
-                glUniform2f(_symbolsStage.vs.param.symbolOffsetFromTarget,
+                const glm::vec2 symbolOffset(
                     static_cast<float>((static_cast<double>(symbolOffset31.x) / tileSize31)),
                     static_cast<float>((static_cast<double>(symbolOffset31.y) / tileSize31)));
+                const glm::vec3 positionInWorld(symbolOffset.x * TileSize3D, 0.0f, symbolOffset.y * TileSize3D);
+                const auto symbolOnScreen = glm::project(positionInWorld, _internalState.mCameraView, _internalState.mPerspectiveProjection, viewport);
+
+                // Check intersections
+                const auto boundsOnScreen = AreaI::fromCenterAndSize(
+                    static_cast<int>(symbolOnScreen.x), static_cast<int>(symbolOnScreen.y),
+                    gpuResource->width, gpuResource->height);//TODO: use MapSymbol bounds
+                if(intersections.test(boundsOnScreen) || !intersections.insert(symbol, boundsOnScreen))
+                    continue;
+
+                // Set symbol offset from target
+                glUniform2f(_symbolsStage.vs.param.symbolOffsetFromTarget, symbolOffset.x, symbolOffset.y);
                 GL_CHECK_RESULT;
-                //////////////////////////////////////////////////////////////////////////
-                //////////////////////////////////////////////////////////////////////////
-                //////////////////////////////////////////////////////////////////////////
-                // this may be needed when calculating self-intersection
-                //TODO: check if symbols have intersection
-                /*auto sx = (static_cast<double>(symbolOffset31.x) / tileSize31) * TileSize3D;
-                auto sy = (static_cast<double>(symbolOffset31.y) / tileSize31) * TileSize3D;
-
-                glm::vec4 viewport(
-                    currentState.viewport.left,
-                    currentState.windowSize.y - currentState.viewport.bottom,
-                    currentState.viewport.width(),
-                    currentState.viewport.height());
-
-                auto projectedV = glm::project(glm::vec3(sx, 0.0f, sy), _internalState.mCameraView, _internalState.mPerspectiveProjection, viewport);*/
-                //////////////////////////////////////////////////////////////////////////
-                //////////////////////////////////////////////////////////////////////////
-                //////////////////////////////////////////////////////////////////////////
 
                 // Set symbol size
                 glUniform2i(_symbolsStage.vs.param.symbolSize, gpuResource->width, gpuResource->height);

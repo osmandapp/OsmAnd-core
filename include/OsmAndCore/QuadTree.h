@@ -39,36 +39,49 @@ namespace OsmAnd
                 if(!area.contains(area_))
                     return false;
 
+                insertNoCheck(element, area_, allowedDepthRemaining);
+                return true;
+            }
+
+            void insertNoCheck(const ELEMENT_TYPE& element, const AreaT& area_, const uintmax_t allowedDepthRemaining)
+            {
                 // If depth limit is reached, add to this
                 if(allowedDepthRemaining == 0u)
                 {
                     entries.push_back(qMove(EntryPair(area_, element)));
-                    return true;
+                    return;
                 }
 
                 // Try to fit into subnodes
                 for(auto idx = 0u; idx < 4; idx++)
                 {
                     if(!subnodes[idx])
-                        subnodes[idx].reset(new Node(area.getQuadrant(static_cast<typename AreaT::Quadrant>(idx))));
+                    {
+                        const auto subArea = area.getQuadrant(static_cast<typename AreaT::Quadrant>(idx));
+                        if(!subArea.contains(area_))
+                            continue;
+                        subnodes[idx].reset(new Node(subArea));
+                        subnodes[idx]->insertNoCheck(element, area_, allowedDepthRemaining - 1);
+                        return;
+                    }
 
                     if(subnodes[idx]->insert(element, area_, allowedDepthRemaining - 1))
-                        return true;
+                        return;
                 }
 
                 // Otherwise, add to current node
                 entries.push_back(qMove(EntryPair(area_, element)));
-                return true;
+                return;
             }
 
             void query(const AreaT& area_, QList<ELEMENT_TYPE>& outResults, const bool strict) const
             {
-                if(!(area_->contains(area) || (!strict && area_->intersects(area))))
+                if(!(area_..contains(area) || (!strict && area_.intersects(area))))
                     return;
 
                 for(auto itEntry = entries.cbegin(); itEntry != entries.cend(); ++itEntry)
                 {
-                    if(area_->contains(itEntry->first) || (!strict && area_->intersects(itEntry->first)))
+                    if(area_.contains(itEntry->first) || (!strict && area_.intersects(itEntry->first)))
                         outResults.push_back(itEntry->second);
                 }
 
@@ -83,12 +96,12 @@ namespace OsmAnd
 
             bool test(const AreaT& area_, const bool strict) const
             {
-                if(!(area_->contains(area) || (!strict && area_->intersects(area))))
+                if(!(area_.contains(area) || (!strict && area_.intersects(area))))
                     return false;
 
                 for(auto itEntry = entries.cbegin(); itEntry != entries.cend(); ++itEntry)
                 {
-                    if(area_->contains(itEntry->first) || (!strict && area_->intersects(itEntry->first)))
+                    if(area_.contains(itEntry->first) || (!strict && area_.intersects(itEntry->first)))
                         return true;
                 }
 
@@ -107,8 +120,8 @@ namespace OsmAnd
 
         std::unique_ptr< Node > _root;
     public:
-        QuadTree(const uintmax_t maxDepth_ = std::numeric_limits<uintmax_t>::max())
-            : _root(new Node(AreaT::largest()))
+        QuadTree(const AreaT& rootArea = AreaT::largest(), const uintmax_t maxDepth_ = std::numeric_limits<uintmax_t>::max())
+            : _root(new Node(rootArea))
             , maxDepth(std::max(maxDepth_, static_cast<uintmax_t>(1u)))
         {
         }

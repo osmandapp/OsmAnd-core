@@ -39,6 +39,7 @@ namespace OsmAnd
     template<typename T>
     struct Point
     {
+        typedef T CoordType;
         typedef Point<T> PointT;
 
         T x, y;
@@ -56,7 +57,7 @@ namespace OsmAnd
             this->y = that.y;
         }
 
-        inline Point(const T& x, const T& y)
+        inline Point(const T x, const T y)
         {
             this->x = x;
             this->y = y;
@@ -133,6 +134,7 @@ namespace OsmAnd
     template<typename T>
     struct Area
     {
+        typedef T CoordType;
         typedef Point<T> PointT;
         typedef Area<T> AreaT;
 
@@ -148,7 +150,7 @@ namespace OsmAnd
             this->right = 0;
         }
 
-        inline Area(const T& t, const T& l, const T& b, const T& r)
+        inline Area(const T t, const T l, const T b, const T r)
             : top(topLeft.y)
             , left(topLeft.x)
             , bottom(bottomRight.y)
@@ -218,7 +220,7 @@ namespace OsmAnd
             return topLeft != r.topLeft || bottomRight != r.bottomRight;
         }
 
-        inline bool contains(const T& x, const T& y) const
+        inline bool contains(const T x, const T y) const
         {
             return !(left > x || right < x || top > y || bottom < y);
         }
@@ -228,7 +230,7 @@ namespace OsmAnd
             return !(left > p.x || right < p.x || top > p.y || bottom < p.y);
         }
 
-        inline bool contains(const T& t, const T& l, const T& b, const T& r) const
+        inline bool contains(const T t, const T l, const T b, const T r) const
         {
             return
                 l >= left &&
@@ -247,7 +249,7 @@ namespace OsmAnd
         }
 
         template<typename T_>
-        inline bool contains(const T_& x, const T_& y) const
+        inline bool contains(const T_ x, const T_ y) const
         {
             return !(left > x || right < x || top > y || bottom < y);
         }
@@ -259,7 +261,7 @@ namespace OsmAnd
         }
 
         template<typename T_>
-        inline bool contains(const T_& t, const T_& l, const T_& b, const T_& r) const
+        inline bool contains(const T_ t, const T_ l, const T_ b, const T_ r) const
         {
             return
                 l >= left &&
@@ -278,7 +280,7 @@ namespace OsmAnd
                 that.bottom <= this->bottom;
         }
 
-        inline bool intersects(const T& t, const T& l, const T& b, const T& r) const
+        inline bool intersects(const T t, const T l, const T b, const T r) const
         {
             return !(
                 l > this->right ||
@@ -297,7 +299,7 @@ namespace OsmAnd
         }
 
         template<typename T_>
-        inline bool intersects(const T_& t, const T_& l, const T_& b, const T_& r) const
+        inline bool intersects(const T_ t, const T_ l, const T_ b, const T_ r) const
         {
             return !(
                 l > this->right ||
@@ -318,17 +320,17 @@ namespace OsmAnd
 
         inline T width() const
         {
-            return left > right ? left - right : right - left;
+            return right - left;
         }
 
         inline T height() const
         {
-            return top > bottom ? top - bottom : bottom - top;
+            return bottom - top;
         }
 
         inline Point<T> center() const
         {
-            return Point<T>(left + width() / 2, bottom + height() / 2);
+            return Point<T>(left + width() / 2, top + height() / 2);
         }
 
 #ifndef SWIG
@@ -385,7 +387,7 @@ namespace OsmAnd
             SW,
             NW
         };
-        inline AreaT getQuadrant(const Quadrant quadrant)
+        inline AreaT getQuadrant(const Quadrant quadrant) const
         {
             const auto center_ = center();
 
@@ -420,6 +422,13 @@ namespace OsmAnd
             res.top = res.left = std::numeric_limits<T>::min();
             res.bottom = res.right = std::numeric_limits<T>::max();
             return res;
+        }
+
+        static AreaT fromCenterAndSize(const T cx, const T cy, const T width, const T height)
+        {
+            const T halfWidth = width / static_cast<T>(2);
+            const T halfHeight = height / static_cast<T>(2);
+            return AreaT(cy - halfHeight, cx - halfWidth, cy + halfHeight, cx + halfWidth);
         }
     };
 
