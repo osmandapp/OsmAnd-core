@@ -76,7 +76,7 @@ namespace OsmAnd
 
             void query(const AreaT& area_, QList<ELEMENT_TYPE>& outResults, const bool strict) const
             {
-                if(!(area_..contains(area) || (!strict && area_.intersects(area))))
+                if(!(area_.contains(area) || (!strict && area_.intersects(area))))
                     return;
 
                 for(auto itEntry = entries.cbegin(); itEntry != entries.cend(); ++itEntry)
