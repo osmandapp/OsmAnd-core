@@ -690,12 +690,13 @@ public:
 	}
 };
 
-//p RouteSegmentResult[] nativeRouting(int[] coordinates, int[] state, String[] keyConfig, String[] valueConfig);
-extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeRouting(JNIEnv* ienv,
-		jobject obj, jintArray  coordinates,
-		jintArray stateConfig, jobjectArray keyConfig, jobjectArray valueConfig, jfloat initDirection,
-		jobjectArray regions, jobject progress) {
-	vector<ROUTE_TRIPLE> cfg;
+void parsePrecalculatedRoute(JNIEnv* ienv, RoutingContext& ctx,  jobject precalculatedRoute) {
+	// TODO
+}
+
+void parseRouteConfiguration(JNIEnv* ienv, vector<ROUTE_TRIPLE>& cfg,  jintArray stateConfig, 
+	jobjectArray keyConfig, jobjectArray valueConfig) {
+		// TODO
 	int* data = (int*)ienv->GetIntArrayElements(stateConfig, NULL);
 	for(int k = 0; k < ienv->GetArrayLength(stateConfig); k++) {
 		jstring kl = (jstring)ienv->GetObjectArrayElement(keyConfig, k);
@@ -710,14 +711,26 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeRo
 	}
 	ienv->ReleaseIntArrayElements(stateConfig, (jint*)data, 0);
 
+}
+
+// RouteSegmentResult[] nativeRouting(int[] coordinates, int[] state, String[] keyConfig, String[] valueConfig);
+extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeRouting(JNIEnv* ienv,
+		jobject obj, jintArray  coordinates,
+		jintArray stateConfig, jobjectArray keyConfig, jobjectArray valueConfig, jfloat initDirection,
+		jobjectArray regions, jobject progress, jobject precalculatedRoute, bool basemap) {
+	vector<ROUTE_TRIPLE> cfg;
+	parseRouteConfiguration(ienv, cfg, stateConfig, keyConfig, valueConfig);
+	
 	RoutingConfiguration config(cfg, initDirection);
 	RoutingContext c(config);
 	c.progress = SHARED_PTR<RouteCalculationProgress>(new RouteCalculationProgressWrapper(ienv, progress));
-	data = (int*)ienv->GetIntArrayElements(coordinates, NULL);
+	int* data = (int*)ienv->GetIntArrayElements(coordinates, NULL);
 	c.startX = data[0];
 	c.startY = data[1];
 	c.endX = data[2];
 	c.endY = data[3];
+	c.basemap = basemap;
+	parsePrecalculatedRoute(ienv, c, precalculatedRoute);
 	ienv->ReleaseIntArrayElements(coordinates, (jint*)data, 0);
 	vector<RouteSegmentResult> r = searchRouteInternal(&c, false);
 	UNORDERED(map)<int64_t, int> indexes;

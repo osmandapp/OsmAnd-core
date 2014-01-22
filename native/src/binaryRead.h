@@ -314,7 +314,7 @@ struct SearchQuery {
 	}
 };
 
-void searchRouteSubregions(SearchQuery* q, std::vector<RouteSubregion>& tempResult);
+void searchRouteSubregions(SearchQuery* q, std::vector<RouteSubregion>& tempResult, bool basemap);
 
 void searchRouteDataForSubRegion(SearchQuery* q, std::vector<RouteDataObject*>& list, RouteSubregion* sub);
 

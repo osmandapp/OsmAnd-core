@@ -975,14 +975,14 @@ void checkAndInitRouteRegionRules(int fileInd, RoutingIndex* routingIndex){
 	}
 }
 
-void searchRouteSubregions(SearchQuery* q, std::vector<RouteSubregion>& tempResult) {
+void searchRouteSubregions(SearchQuery* q, std::vector<RouteSubregion>& tempResult, bool basemap) {
 	map<std::string, BinaryMapFile*>::iterator i = openFiles.begin();
 	for (; i != openFiles.end() && !q->publisher->isCancelled(); i++) {
 		BinaryMapFile* file = i->second;
 		std::vector<RoutingIndex*>::iterator routeIndex = file->routingIndexes.begin();
 		for (; routeIndex != file->routingIndexes.end(); routeIndex++) {
 			bool contains = false;
-			std::vector<RouteSubregion>& subs = (*routeIndex)->subregions;
+			std::vector<RouteSubregion>& subs = basemap? (*routeIndex)->basesubregions : (*routeIndex)->subregions;
 			for (std::vector<RouteSubregion>::iterator subreg = subs.begin(); subreg != subs.end(); subreg++) {
 				if (subreg->right >= q->left && q->right >= subreg->left && subreg->bottom >= q->top
 						&& q->bottom >= subreg->top) {

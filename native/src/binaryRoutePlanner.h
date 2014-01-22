@@ -414,6 +414,15 @@ public:
 
 };
 
+struct PrecalculatedRouteDirection {
+	vector<uint32_t> pointsX;
+	vector<uint32_t> pointsY;
+	vector<float> times;
+	std::map<std::pair<uint32_t, uint32_t>, int> registered;
+	bool notEmpty;
+
+};
+
 
 struct RoutingContext {
 	typedef UNORDERED(map)<int64_t, SHARED_PTR<RoutingSubregionTile> > MAP_SUBREGION_TILES;
@@ -433,6 +442,9 @@ struct RoutingContext {
 	int startY;
 	int endX;
 	int endY;
+	bool basemap;
+
+	PrecalculatedRouteDirection precalcRoute;
 
 	vector<SHARED_PTR<RouteSegment> > segmentsToVisitNotForbidden;
 	vector<SHARED_PTR<RouteSegment> > segmentsToVisitPrescripted;
@@ -534,7 +546,7 @@ struct RoutingContext {
 			SearchQuery q((uint32_t) (xloc << tz),
 							(uint32_t) ((xloc + 1) << tz), (uint32_t) (yloc << tz), (uint32_t) ((yloc + 1) << tz));
 			std::vector<RouteSubregion> tempResult;
-			searchRouteSubregions(&q, tempResult);
+			searchRouteSubregions(&q, tempResult, basemap);
 			std::vector<SHARED_PTR<RoutingSubregionTile> > collection;
 			for(int i=0; i<tempResult.size(); i++) {
 				RouteSubregion& rs = tempResult[i];
