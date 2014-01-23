@@ -16,7 +16,7 @@ static double measuredDist(int x1, int y1, int x2, int y2) {
 
 struct RouteSegment {
 public :
-	int segmentStart;
+	uint16_t segmentStart;
 	SHARED_PTR<RouteDataObject> road;
 	// needed to store intersection of routes
 	SHARED_PTR<RouteSegment> next;
@@ -24,18 +24,32 @@ public :
 	// search context (needed for searching route)
 	// Initially it should be null (!) because it checks was it segment visited before
 	SHARED_PTR<RouteSegment> parentRoute;
-	int parentSegmentEnd;
+	uint16_t parentSegmentEnd;
+
+	// 1 - positive , -1 - negative, 0 not assigned
+	int8_t directionAssgn;
+	// 1 - only positive allowed, -1 - only negative allowed
+	int8_t allowedDirection;
+
+	// final route segment
+	int8_t reverseWaySearch;
+	SHARED_PTR<RouteSegment> opposite;	
 
 	// distance measured in time (seconds)
 	float distanceFromStart;
 	float distanceToEnd;
 
-	inline int getSegmentStart() {
+	inline bool isFinal() {
+		return reverseWaySearch != 0;
+	}
+
+	inline uint16_t getSegmentStart() {
 		return segmentStart;
 	}
 
 	RouteSegment(SHARED_PTR<RouteDataObject> road, int segmentStart) : road(road), segmentStart(segmentStart),
-			parentSegmentEnd(0), distanceFromStart(0), distanceToEnd(0),next(), parentRoute(){
+			parentSegmentEnd(0), distanceFromStart(0), distanceToEnd(0),next(), parentRoute(),
+			directionAssgn(0), allowedDirection(0), opposite(), reverseWaySearch(0){
 	}
 	~RouteSegment(){
 	}
@@ -51,14 +65,6 @@ struct RouteSegmentResult {
 
 	}
 };
-
-struct FinalRouteSegment {
-	SHARED_PTR<RouteSegment> direct;
-	bool reverseWaySearch;
-	SHARED_PTR<RouteSegment> opposite;
-	float distanceFromStart;
-};
-
 
 
 struct RoutingSubregionTile {
@@ -445,16 +451,16 @@ struct RoutingContext {
 	bool basemap;
 
 	PrecalculatedRouteDirection precalcRoute;
+	SHARED_PTR<RouteSegment> finalRouteSegment;
 
 	vector<SHARED_PTR<RouteSegment> > segmentsToVisitNotForbidden;
 	vector<SHARED_PTR<RouteSegment> > segmentsToVisitPrescripted;
 
-	SHARED_PTR<FinalRouteSegment> finalRouteSegment;
 	MAP_SUBREGION_TILES subregionTiles;
 	UNORDERED(map)<int64_t, std::vector<SHARED_PTR<RoutingSubregionTile> > > indexedSubregions;
 
-	RoutingContext(RoutingConfiguration& config) : finalRouteSegment(), firstRoadDirection(0),firstRoadId(0),
-	loadedTiles(0), visitedSegments(0), config(config){
+	RoutingContext(RoutingConfiguration& config) : firstRoadDirection(0), firstRoadId(0),
+		loadedTiles(0), visitedSegments(0), config(config), finalRouteSegment() {
 	}
 
 	bool acceptLine(SHARED_PTR<RouteDataObject> r) {
