@@ -12,7 +12,7 @@ fi
 # Download upstream if needed
 if [ ! -f "$SRCLOC/upstream.pack" ]; then
 	echo "Downloading '$NAME' upstream..."
-	curl -L https://sourceforge.net/projects/glew/files/glew/1.9.0/glew-1.9.0.tgz/download > "$SRCLOC/upstream.pack" || { echo "Failure" 1>&2; exit; }
+	curl -L https://sourceforge.net/projects/glew/files/glew/1.10.0/glew-1.10.0.tgz/download > "$SRCLOC/upstream.pack" || { echo "Failure" 1>&2; exit; }
 fi
 
 # Extract upstream if needed
