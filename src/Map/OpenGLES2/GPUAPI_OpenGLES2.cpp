@@ -734,7 +734,7 @@ void OsmAnd::GPUAPI_OpenGLES2::applyTextureBlockToTexture( const GLenum texture,
     }
 }
 
-void OsmAnd::GPUAPI_OpenGL::pushDebugMarker(const QString& title)
+void OsmAnd::GPUAPI_OpenGLES2::pushDebugMarker(const QString& title)
 {
     if(isSupported_EXT_debug_marker)
     {
@@ -743,7 +743,7 @@ void OsmAnd::GPUAPI_OpenGL::pushDebugMarker(const QString& title)
     }
 }
 
-void OsmAnd::GPUAPI_OpenGL::popDebugMarker()
+void OsmAnd::GPUAPI_OpenGLES2::popDebugMarker()
 {
     if(isSupported_EXT_debug_marker)
     {
