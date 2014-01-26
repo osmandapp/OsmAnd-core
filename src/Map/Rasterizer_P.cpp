@@ -1023,6 +1023,8 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveIcon(
 
         icon->order = 100;
         primitive->evaluationResult->getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_ICON, icon->order);
+        //NOTE: a magic shifting of icon order. This is needed to keep icons less important than anything else
+        icon->order += 100000;
 
         outSymbols.push_back(qMove(std::shared_ptr<PrimitiveSymbol>(icon)));
     }
