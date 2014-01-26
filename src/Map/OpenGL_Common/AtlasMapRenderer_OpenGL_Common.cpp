@@ -1268,14 +1268,13 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                 // Calculate location of symbol in world coordinates.
                 // World (0;0;0) is in the target, so subtract target position
                 const auto symbolOffset31 = symbol->location31 - currentState.target31;
-                glm::vec4 symbolPos;
-                symbolPos.x = static_cast<float>(static_cast<double>(symbolOffset31.x) / tileSize31);
-                symbolPos.y = 0.0f;
-                symbolPos.z = static_cast<float>(static_cast<double>(symbolOffset31.y) / tileSize31);
-                symbolPos.w = 1.0f;
+                const glm::vec2 symbolOffset(
+                    static_cast<float>((static_cast<double>(symbolOffset31.x) / tileSize31)),
+                    static_cast<float>((static_cast<double>(symbolOffset31.y) / tileSize31)));
+                const glm::vec4 positionInWorld(symbolOffset.x * TileSize3D, 0.0f, symbolOffset.y * TileSize3D, 1.0f);
 
                 // Get distance from symbol to camera
-                const auto distance = glm::distance(_internalState.worldCameraPosition, symbolPos);
+                const auto distance = glm::distance(_internalState.worldCameraPosition, positionInWorld);
 
                 // Insert into map
                 sortedSymbols.insert(distance, qMove(SymbolPair(symbol, resource)));
