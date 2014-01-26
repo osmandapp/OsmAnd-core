@@ -81,6 +81,7 @@ OsmAnd::GPUAPI_OpenGLES2::GPUAPI_OpenGLES2()
     , isSupported_OES_texture_float(_isSupported_OES_texture_float)
     , isSupported_EXT_texture_rg(_isSupported_EXT_texture_rg)
     , isSupported_EXT_shader_texture_lod(_isSupported_EXT_shader_texture_lod)
+    , isSupported_EXT_debug_marker(_isSupported_EXT_debug_marker)
 {
 }
 
@@ -187,6 +188,17 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
     _isSupported_EXT_texture_storage = extensions.contains("GL_EXT_texture_storage");
     _isSupported_APPLE_texture_max_level = extensions.contains("GL_APPLE_texture_max_level");
     _isSupported_texturesNPOT = extensions.contains("GL_OES_texture_npot");
+    _isSupported_EXT_debug_marker = extensions.contains("GL_EXT_debug_marker");
+    if(_isSupported_EXT_debug_marker && !glPopGroupMarkerEXT)
+    {
+        glPopGroupMarkerEXT = reinterpret_cast<PFNGLPOPGROUPMARKEREXTPROC>(eglGetProcAddress("glPopGroupMarkerEXT"));
+        assert(glPopGroupMarkerEXT);
+    }
+    if(_isSupported_EXT_debug_marker && !glPushGroupMarkerEXT)
+    {
+        glPushGroupMarkerEXT = reinterpret_cast<PFNGLPUSHGROUPMARKEREXTPROC>(eglGetProcAddress("glPushGroupMarkerEXT"));
+        assert(glPushGroupMarkerEXT);
+    }
 #if !defined(OSMAND_TARGET_OS_ios)
     if(_isSupported_EXT_texture_storage && !glTexStorage2DEXT)
     {
@@ -618,6 +630,42 @@ void OsmAnd::GPUAPI_OpenGLES2::preprocessFragmentShader( QString& code )
     preprocessShader(code, shaderSource);
 }
 
+void OsmAnd::GPUAPI_OpenGLES2::optimizeVertexShader( QString& code )
+{
+    /*
+    auto context = glslopt_initialize(true);
+
+    auto optimizedShader = glslopt_optimize(context, kGlslOptShaderVertex, qPrintable(code), 0);
+    if(!glslopt_get_status(optimizedShader))
+    {
+        LogPrintf(LogSeverityLevel::Error, "%s", glslopt_get_log(optimizedShader));
+        assert(false);
+    }
+    code = QString::fromLocal8Bit(glslopt_get_output(optimizedShader));
+    glslopt_shader_delete(optimizedShader);
+
+    glslopt_cleanup(context);
+    */
+}
+
+void OsmAnd::GPUAPI_OpenGLES2::optimizeFragmentShader( QString& code )
+{
+    /*
+    auto context = glslopt_initialize(true);
+
+    auto optimizedShader = glslopt_optimize(context, kGlslOptShaderFragment, qPrintable(code), 0);
+    if(!glslopt_get_status(optimizedShader))
+    {
+        LogPrintf(LogSeverityLevel::Error, "%s", glslopt_get_log(optimizedShader));
+        assert(false);
+    }
+    code = QString::fromLocal8Bit(glslopt_get_output(optimizedShader));
+    glslopt_shader_delete(optimizedShader);
+
+    glslopt_cleanup(context);
+    */
+}
+
 void OsmAnd::GPUAPI_OpenGLES2::setTextureBlockSampler( const GLenum textureBlock, const SamplerType samplerType )
 {
     // In OpenGLES 2.0 there is no settings of texture-block, so these settings are per-texture
@@ -686,38 +734,20 @@ void OsmAnd::GPUAPI_OpenGLES2::applyTextureBlockToTexture( const GLenum texture,
     }
 }
 
-void OsmAnd::GPUAPI_OpenGLES2::optimizeVertexShader( QString& code )
+void OsmAnd::GPUAPI_OpenGL::pushDebugMarker(const QString& title)
 {
-    /*
-    auto context = glslopt_initialize(true);
-
-    auto optimizedShader = glslopt_optimize(context, kGlslOptShaderVertex, qPrintable(code), 0);
-    if(!glslopt_get_status(optimizedShader))
+    if(isSupported_EXT_debug_marker)
     {
-        LogPrintf(LogSeverityLevel::Error, "%s", glslopt_get_log(optimizedShader));
-        assert(false);
+        glPushGroupMarkerEXT(0, qPrintable(title));
+        GL_CHECK_RESULT;
     }
-    code = QString::fromLocal8Bit(glslopt_get_output(optimizedShader));
-    glslopt_shader_delete(optimizedShader);
-
-    glslopt_cleanup(context);
-    */
 }
 
-void OsmAnd::GPUAPI_OpenGLES2::optimizeFragmentShader( QString& code )
+void OsmAnd::GPUAPI_OpenGL::popDebugMarker()
 {
-    /*
-    auto context = glslopt_initialize(true);
-
-    auto optimizedShader = glslopt_optimize(context, kGlslOptShaderFragment, qPrintable(code), 0);
-    if(!glslopt_get_status(optimizedShader))
+    if(isSupported_EXT_debug_marker)
     {
-        LogPrintf(LogSeverityLevel::Error, "%s", glslopt_get_log(optimizedShader));
-        assert(false);
+        glPopGroupMarkerEXT();
+        GL_CHECK_RESULT;
     }
-    code = QString::fromLocal8Bit(glslopt_get_output(optimizedShader));
-    glslopt_shader_delete(optimizedShader);
-
-    glslopt_cleanup(context);
-    */
 }

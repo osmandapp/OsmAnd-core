@@ -49,6 +49,11 @@ namespace OsmAnd {
         static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArraysOES;
         static PFNGLGENVERTEXARRAYSOESPROC glGenVertexArraysOES;
 #endif // !OSMAND_TARGET_OS_ios
+
+        //typedef void (GLAPIENTRY * PFNGLPOPGROUPMARKEREXTPROC) (void);
+        static PFNGLPOPGROUPMARKEREXTPROC glPopGroupMarkerEXT;
+        //typedef void (GLAPIENTRY * PFNGLPUSHGROUPMARKEREXTPROC) (GLsizei length, const GLchar* marker);
+        static PFNGLPUSHGROUPMARKEREXTPROC glPushGroupMarkerEXT;
     private:
         bool _isSupported_EXT_unpack_subimage;
         bool _isSupported_EXT_texture_storage;
@@ -58,6 +63,7 @@ namespace OsmAnd {
         bool _isSupported_OES_texture_float;
         bool _isSupported_EXT_texture_rg;
         bool _isSupported_EXT_shader_texture_lod;
+        bool _isSupported_EXT_debug_marker;
 
         void preprocessShader(QString& code, const QString& extraHeader = QString());
 
@@ -78,6 +84,7 @@ namespace OsmAnd {
         const bool& isSupported_OES_texture_float;
         const bool& isSupported_EXT_texture_rg;
         const bool& isSupported_EXT_shader_texture_lod;
+        const bool& isSupported_EXT_debug_marker;
 
         virtual GLenum validateResult();
 
@@ -103,6 +110,9 @@ namespace OsmAnd {
 
         virtual void setTextureBlockSampler(const GLenum textureBlock, const SamplerType samplerType);
         virtual void applyTextureBlockToTexture(const GLenum texture, const GLenum textureBlock);
+
+        virtual void pushDebugMarker(const QString& title);
+        virtual void popDebugMarker();
     };
 
 }

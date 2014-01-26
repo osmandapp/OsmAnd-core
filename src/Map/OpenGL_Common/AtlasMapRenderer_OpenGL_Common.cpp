@@ -19,6 +19,7 @@
 #include "IMapBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
 #include "IMapSymbolProvider.h"
+#include "MapObject.h"
 #include "QuadTree.h"
 #include "Logging.h"
 #include "Utilities.h"
@@ -1309,6 +1310,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                 if(intersections.test(boundsOnScreen) || !intersections.insert(symbol, boundsOnScreen))
                     continue;
 
+                GL_PUSH_MARKER(QString().sprintf("Symbol from #%" PRIu64 "(%" PRIi64 ")",
+                    symbol->mapObject->id >> 1, static_cast<int64_t>(symbol->mapObject->id) / 2));
+
                 // Set symbol offset from target
                 glUniform2f(_symbolsStage.vs.param.symbolOffsetFromTarget, symbolOffset.x, symbolOffset.y);
                 GL_CHECK_RESULT;
@@ -1335,6 +1339,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                 // Draw symbol actually
                 glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
                 GL_CHECK_RESULT;
+
+                GL_POP_MARKER;
             }
         }
     }

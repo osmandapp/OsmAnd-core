@@ -75,10 +75,16 @@
                 __checked_presence_of_##x = true;                                                  \
             }                                                                                      \
         }
+#   define GL_PUSH_MARKER(title) \
+        static_cast<GPUAPI_OpenGL_Common*>(this->gpuAPI.get())->pushDebugMarker((title))
+#   define GL_POP_MARKER \
+        static_cast<GPUAPI_OpenGL_Common*>(this->gpuAPI.get())->popDebugMarker()
 #else
 #   define GL_CHECK_RESULT
 #   define GL_GET_RESULT glGetError()
 #   define GL_CHECK_PRESENT(x)
+#   define GL_PUSH_MARKER(title)
+#   define GL_POP_MARKER
 #endif
 
 namespace OsmAnd
@@ -168,6 +174,9 @@ namespace OsmAnd
         virtual bool uploadSymbolToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
 
         virtual void waitUntilUploadIsComplete();
+
+        virtual void pushDebugMarker(const QString& title) = 0;
+        virtual void popDebugMarker() = 0;
     };
 
 }

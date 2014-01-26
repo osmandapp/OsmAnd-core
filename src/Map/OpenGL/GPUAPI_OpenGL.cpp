@@ -439,19 +439,6 @@ void OsmAnd::GPUAPI_OpenGL::preprocessFragmentShader( QString& code )
     code.prepend(common);
 }
 
-void OsmAnd::GPUAPI_OpenGL::setTextureBlockSampler(const GLenum textureBlock, const SamplerType samplerType)
-{
-    GL_CHECK_PRESENT(glBindSampler);
-
-    glBindSampler(textureBlock - GL_TEXTURE0, _textureSamplers[static_cast<int>(samplerType)]);
-    GL_CHECK_RESULT;
-}
-
-void OsmAnd::GPUAPI_OpenGL::applyTextureBlockToTexture( const GLenum texture, const GLenum textureBlock )
-{
-    // In OpenGL 3.0+ there's nothing to do here
-}
-
 void OsmAnd::GPUAPI_OpenGL::optimizeVertexShader( QString& code )
 {
     // GLSL 4.30 not yet supported by upstream
@@ -487,5 +474,39 @@ void OsmAnd::GPUAPI_OpenGL::optimizeFragmentShader( QString& code )
     glslopt_shader_delete(optimizedShader);
 
     glslopt_cleanup(context);
+    */
+}
+
+void OsmAnd::GPUAPI_OpenGL::setTextureBlockSampler(const GLenum textureBlock, const SamplerType samplerType)
+{
+    GL_CHECK_PRESENT(glBindSampler);
+
+    glBindSampler(textureBlock - GL_TEXTURE0, _textureSamplers[static_cast<int>(samplerType)]);
+    GL_CHECK_RESULT;
+}
+
+void OsmAnd::GPUAPI_OpenGL::applyTextureBlockToTexture(const GLenum texture, const GLenum textureBlock)
+{
+    // In OpenGL 3.0+ there's nothing to do here
+}
+
+//NOTE: glPushDebugGroup/glPopDebugGroup are not supported by nVidia nSight
+void OsmAnd::GPUAPI_OpenGL::pushDebugMarker(const QString& title)
+{
+    /*
+    GL_CHECK_PRESENT(glPushDebugGroup);
+    
+    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0u, -1, qPrintable(title));
+    GL_CHECK_RESULT;
+    */
+}
+
+void OsmAnd::GPUAPI_OpenGL::popDebugMarker()
+{
+    /*
+    GL_CHECK_PRESENT(glPopDebugGroup);
+
+    glPopDebugGroup();
+    GL_CHECK_RESULT;
     */
 }
