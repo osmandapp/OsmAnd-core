@@ -48,12 +48,12 @@ namespace OsmAnd {
         static PFNGLBINDVERTEXARRAYOESPROC glBindVertexArrayOES;
         static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArraysOES;
         static PFNGLGENVERTEXARRAYSOESPROC glGenVertexArraysOES;
-#endif // !OSMAND_TARGET_OS_ios
 
-        //typedef void (GLAPIENTRY * PFNGLPOPGROUPMARKEREXTPROC) (void);
+        typedef void (GLAPIENTRY * PFNGLPOPGROUPMARKEREXTPROC) (void);
+        typedef void (GLAPIENTRY * PFNGLPUSHGROUPMARKEREXTPROC) (GLsizei length, const GLchar* marker);
         static PFNGLPOPGROUPMARKEREXTPROC glPopGroupMarkerEXT;
-        //typedef void (GLAPIENTRY * PFNGLPUSHGROUPMARKEREXTPROC) (GLsizei length, const GLchar* marker);
         static PFNGLPUSHGROUPMARKEREXTPROC glPushGroupMarkerEXT;
+#endif // !OSMAND_TARGET_OS_ios
     private:
         bool _isSupported_EXT_unpack_subimage;
         bool _isSupported_EXT_texture_storage;

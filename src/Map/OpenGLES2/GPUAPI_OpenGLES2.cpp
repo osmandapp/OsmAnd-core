@@ -189,6 +189,7 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
     _isSupported_APPLE_texture_max_level = extensions.contains("GL_APPLE_texture_max_level");
     _isSupported_texturesNPOT = extensions.contains("GL_OES_texture_npot");
     _isSupported_EXT_debug_marker = extensions.contains("GL_EXT_debug_marker");
+#if !defined(OSMAND_TARGET_OS_ios)
     if(_isSupported_EXT_debug_marker && !glPopGroupMarkerEXT)
     {
         glPopGroupMarkerEXT = reinterpret_cast<PFNGLPOPGROUPMARKEREXTPROC>(eglGetProcAddress("glPopGroupMarkerEXT"));
@@ -199,7 +200,6 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
         glPushGroupMarkerEXT = reinterpret_cast<PFNGLPUSHGROUPMARKEREXTPROC>(eglGetProcAddress("glPushGroupMarkerEXT"));
         assert(glPushGroupMarkerEXT);
     }
-#if !defined(OSMAND_TARGET_OS_ios)
     if(_isSupported_EXT_texture_storage && !glTexStorage2DEXT)
     {
         glTexStorage2DEXT = reinterpret_cast<P_glTexStorage2DEXT_PROC>(eglGetProcAddress("glTexStorage2DEXT"));
