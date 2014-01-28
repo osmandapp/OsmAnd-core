@@ -175,8 +175,8 @@ namespace OsmAnd
 
         virtual void waitUntilUploadIsComplete();
 
-        virtual void pushDebugMarker(const QString& title) = 0;
-        virtual void popDebugMarker() = 0;
+        virtual void pushDebugGroupMarker(const QString& title) = 0;
+        virtual void popDebugGroupMarker() = 0;
     };
 
 }

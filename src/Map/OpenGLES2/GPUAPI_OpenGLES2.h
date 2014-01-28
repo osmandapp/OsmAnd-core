@@ -111,8 +111,8 @@ namespace OsmAnd {
         virtual void setTextureBlockSampler(const GLenum textureBlock, const SamplerType samplerType);
         virtual void applyTextureBlockToTexture(const GLenum texture, const GLenum textureBlock);
 
-        virtual void pushDebugMarker(const QString& title);
-        virtual void popDebugMarker();
+        virtual void pushDebugGroupMarker(const QString& title);
+        virtual void popDebugGroupMarker();
     };
 
 }

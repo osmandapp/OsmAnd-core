@@ -492,7 +492,7 @@ void OsmAnd::GPUAPI_OpenGL::applyTextureBlockToTexture(const GLenum texture, con
     // In OpenGL 3.0+ there's nothing to do here
 }
 
-void OsmAnd::GPUAPI_OpenGL::pushDebugMarker(const QString& title)
+void OsmAnd::GPUAPI_OpenGL::pushDebugGroupMarker(const QString& title)
 {
     if(isSupported_GREMEDY_string_marker)
     {
@@ -509,7 +509,7 @@ void OsmAnd::GPUAPI_OpenGL::pushDebugMarker(const QString& title)
     }
 }
 
-void OsmAnd::GPUAPI_OpenGL::popDebugMarker()
+void OsmAnd::GPUAPI_OpenGL::popDebugGroupMarker()
 {
     if(isSupported_GREMEDY_string_marker)
     {
