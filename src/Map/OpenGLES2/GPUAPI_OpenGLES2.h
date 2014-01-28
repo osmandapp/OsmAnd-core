@@ -63,11 +63,13 @@ namespace OsmAnd {
         bool _isSupported_OES_texture_float;
         bool _isSupported_EXT_texture_rg;
         bool _isSupported_EXT_shader_texture_lod;
-        bool _isSupported_EXT_debug_marker;
 
         void preprocessShader(QString& code, const QString& extraHeader = QString());
 
         QHash<GLenum, SamplerType> _textureBlocksSamplers;
+
+        virtual void glPushGroupMarkerEXT_wrapper(GLsizei length, const GLchar* marker);
+        virtual void glPopGroupMarkerEXT_wrapper();
     protected:
     public:
         GPUAPI_OpenGLES2();
@@ -84,7 +86,6 @@ namespace OsmAnd {
         const bool& isSupported_OES_texture_float;
         const bool& isSupported_EXT_texture_rg;
         const bool& isSupported_EXT_shader_texture_lod;
-        const bool& isSupported_EXT_debug_marker;
 
         virtual GLenum validateResult();
 
@@ -110,9 +111,6 @@ namespace OsmAnd {
 
         virtual void setTextureBlockSampler(const GLenum textureBlock, const SamplerType samplerType);
         virtual void applyTextureBlockToTexture(const GLenum texture, const GLenum textureBlock);
-
-        virtual void pushDebugGroupMarker(const QString& title);
-        virtual void popDebugGroupMarker();
     };
 
 }

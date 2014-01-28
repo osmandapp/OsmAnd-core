@@ -1310,8 +1310,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                 if(intersections.test(boundsOnScreen) || !intersections.insert(symbol, boundsOnScreen))
                     continue;
 
-                GL_PUSH_MARKER(QString().sprintf("Symbol from #%" PRIu64 "(%" PRIi64 ")",
-                    symbol->mapObject->id >> 1, static_cast<int64_t>(symbol->mapObject->id) / 2));
+                GL_PUSH_GROUP_MARKER(QString("Symbol [origin %1(%2)]")
+                    .arg(symbol->mapObject->id >> 1)
+                    .arg(static_cast<int64_t>(symbol->mapObject->id) / 2));
 
                 // Set symbol offset from target
                 glUniform2f(_symbolsStage.vs.param.symbolOffsetFromTarget, symbolOffset.x, symbolOffset.y);
@@ -1340,7 +1341,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                 glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
                 GL_CHECK_RESULT;
 
-                GL_POP_MARKER;
+                GL_POP_GROUP_MARKER;
             }
         }
     }

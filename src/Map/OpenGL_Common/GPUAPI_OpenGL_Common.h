@@ -75,16 +75,16 @@
                 __checked_presence_of_##x = true;                                                  \
             }                                                                                      \
         }
-#   define GL_PUSH_MARKER(title) \
-        static_cast<GPUAPI_OpenGL_Common*>(this->gpuAPI.get())->pushDebugMarker((title))
-#   define GL_POP_MARKER \
-        static_cast<GPUAPI_OpenGL_Common*>(this->gpuAPI.get())->popDebugMarker()
+#   define GL_PUSH_GROUP_MARKER(title) \
+        static_cast<GPUAPI_OpenGL_Common*>(this->gpuAPI.get())->pushDebugGroupMarker((title))
+#   define GL_POP_GROUP_MARKER \
+        static_cast<GPUAPI_OpenGL_Common*>(this->gpuAPI.get())->popDebugGroupMarker()
 #else
 #   define GL_CHECK_RESULT
 #   define GL_GET_RESULT glGetError()
 #   define GL_CHECK_PRESENT(x)
-#   define GL_PUSH_MARKER(title)
-#   define GL_POP_MARKER
+#   define GL_PUSH_GROUP_MARKER(title)
+#   define GL_POP_GROUP_MARKER
 #endif
 
 namespace OsmAnd
@@ -111,8 +111,12 @@ namespace OsmAnd
         bool _isSupported_vertexShaderTextureLookup;
         bool _isSupported_textureLod;
         bool _isSupported_texturesNPOT;
+        bool _isSupported_EXT_debug_marker;
         
         virtual bool releaseResourceInGPU(const ResourceInGPU::Type type, const RefInGPU& refInGPU);
+
+        virtual void glPushGroupMarkerEXT_wrapper(GLsizei length, const GLchar* marker) = 0;
+        virtual void glPopGroupMarkerEXT_wrapper() = 0;
     public:
         GPUAPI_OpenGL_Common();
         virtual ~GPUAPI_OpenGL_Common();
@@ -124,6 +128,7 @@ namespace OsmAnd
         const bool& isSupported_vertexShaderTextureLookup;
         const bool& isSupported_textureLod;
         const bool& isSupported_texturesNPOT;
+        const bool& isSupported_EXT_debug_marker;
         
         virtual GLenum validateResult() = 0;
         virtual GLuint compileShader(GLenum shaderType, const char* source);
@@ -175,8 +180,8 @@ namespace OsmAnd
 
         virtual void waitUntilUploadIsComplete();
 
-        virtual void pushDebugGroupMarker(const QString& title) = 0;
-        virtual void popDebugGroupMarker() = 0;
+        virtual void pushDebugGroupMarker(const QString& title);
+        virtual void popDebugGroupMarker();
     };
 
 }

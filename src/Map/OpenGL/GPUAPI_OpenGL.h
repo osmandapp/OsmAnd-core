@@ -44,12 +44,16 @@ namespace OsmAnd {
         void preprocessShader(QString& code);
 
         bool _isSupported_GREMEDY_string_marker;
-    protected:
+
         std::array< GLuint, SamplerTypesCount > _textureSamplers;
 
         // Groups emulation for gDEBugger
         QStringList _gdebuggerGroupsStack;
         QMutex _gdebuggerGroupsStackMutex;
+
+        virtual void glPushGroupMarkerEXT_wrapper(GLsizei length, const GLchar* marker);
+        virtual void glPopGroupMarkerEXT_wrapper();
+    protected:
     public:
         GPUAPI_OpenGL();
         virtual ~GPUAPI_OpenGL();

@@ -70,6 +70,9 @@ OsmAnd::GPUAPI_OpenGLES2::P_glTexStorage2DEXT_PROC OsmAnd::GPUAPI_OpenGLES2::glT
 PFNGLBINDVERTEXARRAYOESPROC OsmAnd::GPUAPI_OpenGLES2::glBindVertexArrayOES = nullptr;
 PFNGLDELETEVERTEXARRAYSOESPROC OsmAnd::GPUAPI_OpenGLES2::glDeleteVertexArraysOES = nullptr;
 PFNGLGENVERTEXARRAYSOESPROC OsmAnd::GPUAPI_OpenGLES2::glGenVertexArraysOES = nullptr;
+
+OsmAnd::GPUAPI_OpenGLES2::PFNGLPOPGROUPMARKEREXTPROC OsmAnd::GPUAPI_OpenGLES2::glPopGroupMarkerEXT = nullptr;
+OsmAnd::GPUAPI_OpenGLES2::PFNGLPUSHGROUPMARKEREXTPROC OsmAnd::GPUAPI_OpenGLES2::glPushGroupMarkerEXT = nullptr;
 #endif //!OSMAND_TARGET_OS_ios
 
 OsmAnd::GPUAPI_OpenGLES2::GPUAPI_OpenGLES2()
@@ -81,7 +84,6 @@ OsmAnd::GPUAPI_OpenGLES2::GPUAPI_OpenGLES2()
     , isSupported_OES_texture_float(_isSupported_OES_texture_float)
     , isSupported_EXT_texture_rg(_isSupported_EXT_texture_rg)
     , isSupported_EXT_shader_texture_lod(_isSupported_EXT_shader_texture_lod)
-    , isSupported_EXT_debug_marker(_isSupported_EXT_debug_marker)
 {
 }
 
@@ -734,20 +736,14 @@ void OsmAnd::GPUAPI_OpenGLES2::applyTextureBlockToTexture( const GLenum texture,
     }
 }
 
-void OsmAnd::GPUAPI_OpenGLES2::pushDebugGroupMarker(const QString& title)
+void OsmAnd::GPUAPI_OpenGLES2::glPushGroupMarkerEXT_wrapper(GLsizei length, const GLchar* marker)
 {
-    if(isSupported_EXT_debug_marker)
-    {
-        glPushGroupMarkerEXT(0, qPrintable(title));
-        GL_CHECK_RESULT;
-    }
+    GL_CHECK_PRESENT(glPushGroupMarkerEXT);
+    glPushGroupMarkerEXT(length, marker);
 }
 
-void OsmAnd::GPUAPI_OpenGLES2::popDebugGroupMarker()
+void OsmAnd::GPUAPI_OpenGLES2::glPopGroupMarkerEXT_wrapper()
 {
-    if(isSupported_EXT_debug_marker)
-    {
-        glPopGroupMarkerEXT();
-        GL_CHECK_RESULT;
-    }
+    GL_CHECK_PRESENT(glPopGroupMarkerEXT);
+    glPopGroupMarkerEXT();
 }

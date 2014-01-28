@@ -37,6 +37,7 @@ OsmAnd::GPUAPI_OpenGL_Common::GPUAPI_OpenGL_Common()
     , isSupported_vertexShaderTextureLookup(_isSupported_vertexShaderTextureLookup)
     , isSupported_textureLod(_isSupported_textureLod)
     , isSupported_texturesNPOT(_isSupported_texturesNPOT)
+    , isSupported_EXT_debug_marker(_isSupported_EXT_debug_marker)
 {
 }
 
@@ -585,4 +586,16 @@ void OsmAnd::GPUAPI_OpenGL_Common::waitUntilUploadIsComplete()
     // glFinish won't return until all current instructions for GPU (in current context) are complete
     glFinish();
     GL_CHECK_RESULT;
+}
+
+void OsmAnd::GPUAPI_OpenGL_Common::pushDebugGroupMarker(const QString& title)
+{
+    if(isSupported_EXT_debug_marker)
+        glPushGroupMarkerEXT_wrapper(title.length(), qPrintable(title));
+}
+
+void OsmAnd::GPUAPI_OpenGL_Common::popDebugGroupMarker()
+{
+    if(isSupported_EXT_debug_marker)
+        glPopGroupMarkerEXT_wrapper();
 }

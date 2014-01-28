@@ -129,8 +129,9 @@ bool OsmAnd::GPUAPI_OpenGL::initialize()
 
         _extensions.push_back(extension);
     }
-    LogPrintf(LogSeverityLevel::Info, "OpenGL extensions: %s", qPrintable(_extensions.join(' ')));
-    _isSupported_GREMEDY_string_marker = _extensions.contains("GL_GREMEDY_string_marker");
+    LogPrintf(LogSeverityLevel::Info, "OpenGL extensions: %s", qPrintable(extensions.join(' ')));
+    _isSupported_GREMEDY_string_marker = extensions.contains("GL_GREMEDY_string_marker");
+    _isSupported_EXT_debug_marker = extensions.contains("GL_EXT_debug_marker");
 
     GLint compressedFormatsLength = 0;
     glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &compressedFormatsLength);
@@ -492,6 +493,18 @@ void OsmAnd::GPUAPI_OpenGL::applyTextureBlockToTexture(const GLenum texture, con
     // In OpenGL 3.0+ there's nothing to do here
 }
 
+void OsmAnd::GPUAPI_OpenGL::glPushGroupMarkerEXT_wrapper(GLsizei length, const GLchar* marker)
+{
+    GL_CHECK_PRESENT(glPushGroupMarkerEXT);
+    glPushGroupMarkerEXT(length, marker);
+}
+
+void OsmAnd::GPUAPI_OpenGL::glPopGroupMarkerEXT_wrapper()
+{
+    GL_CHECK_PRESENT(glPopGroupMarkerEXT);
+    glPopGroupMarkerEXT();
+}
+
 void OsmAnd::GPUAPI_OpenGL::pushDebugGroupMarker(const QString& title)
 {
     if(isSupported_GREMEDY_string_marker)
@@ -507,10 +520,12 @@ void OsmAnd::GPUAPI_OpenGL::pushDebugGroupMarker(const QString& title)
         marker = QLatin1String("Group begin '") + marker + QLatin1String("':");
         glStringMarkerGREMEDY(marker.length(), qPrintable(marker));
     }
+    GPUAPI_OpenGL_Common::pushDebugGroupMarker(title);
 }
 
 void OsmAnd::GPUAPI_OpenGL::popDebugGroupMarker()
 {
+    GPUAPI_OpenGL_Common::popDebugGroupMarker();
     if(isSupported_GREMEDY_string_marker)
     {
         GL_CHECK_PRESENT(glStringMarkerGREMEDY);
