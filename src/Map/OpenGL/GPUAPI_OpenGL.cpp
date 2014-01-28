@@ -26,6 +26,7 @@
 #endif
 
 OsmAnd::GPUAPI_OpenGL::GPUAPI_OpenGL()
+    : isSupported_GREMEDY_string_marker(_isSupported_GREMEDY_string_marker)
 {
     _textureSamplers.fill(0);
 
@@ -129,6 +130,7 @@ bool OsmAnd::GPUAPI_OpenGL::initialize()
         _extensions.push_back(extension);
     }
     LogPrintf(LogSeverityLevel::Info, "OpenGL extensions: %s", qPrintable(_extensions.join(' ')));
+    _isSupported_GREMEDY_string_marker = _extensions.contains("GL_GREMEDY_string_marker");
 
     GLint compressedFormatsLength = 0;
     glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &compressedFormatsLength);
@@ -490,23 +492,36 @@ void OsmAnd::GPUAPI_OpenGL::applyTextureBlockToTexture(const GLenum texture, con
     // In OpenGL 3.0+ there's nothing to do here
 }
 
-//NOTE: glPushDebugGroup/glPopDebugGroup are not supported by nVidia nSight
 void OsmAnd::GPUAPI_OpenGL::pushDebugMarker(const QString& title)
 {
-    /*
-    GL_CHECK_PRESENT(glPushDebugGroup);
-    
-    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0u, -1, qPrintable(title));
-    GL_CHECK_RESULT;
-    */
+    if(isSupported_GREMEDY_string_marker)
+    {
+        GL_CHECK_PRESENT(glStringMarkerGREMEDY);
+
+        QString marker;
+        {
+            QMutexLocker scopedLocker(&_gdebuggerGroupsStackMutex);
+            _gdebuggerGroupsStack.push_back(title);
+            marker = _gdebuggerGroupsStack.join(QChar('/'));
+        }
+        marker = QLatin1String("Group begin '") + marker + QLatin1String("':");
+        glStringMarkerGREMEDY(marker.length(), qPrintable(marker));
+    }
 }
 
 void OsmAnd::GPUAPI_OpenGL::popDebugMarker()
 {
-    /*
-    GL_CHECK_PRESENT(glPopDebugGroup);
+    if(isSupported_GREMEDY_string_marker)
+    {
+        GL_CHECK_PRESENT(glStringMarkerGREMEDY);
 
-    glPopDebugGroup();
-    GL_CHECK_RESULT;
-    */
+        QString marker;
+        {
+            QMutexLocker scopedLocker(&_gdebuggerGroupsStackMutex);
+            marker = _gdebuggerGroupsStack.join(QChar('/'));
+            _gdebuggerGroupsStack.pop_back();
+        }
+        marker = QLatin1String("Group end '") + marker + QLatin1String("'.");
+        glStringMarkerGREMEDY(marker.length(), qPrintable(marker));
+    }
 }

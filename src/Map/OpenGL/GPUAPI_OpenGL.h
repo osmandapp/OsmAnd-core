@@ -27,6 +27,8 @@
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QString>
+#include <QStringList>
+#include <QMutex>
 
 #include <glm/glm.hpp>
 
@@ -40,14 +42,22 @@ namespace OsmAnd {
     {
     private:
         void preprocessShader(QString& code);
+
+        bool _isSupported_GREMEDY_string_marker;
     protected:
         std::array< GLuint, SamplerTypesCount > _textureSamplers;
+
+        // Groups emulation for gDEBugger
+        QStringList _gdebuggerGroupsStack;
+        QMutex _gdebuggerGroupsStackMutex;
     public:
         GPUAPI_OpenGL();
         virtual ~GPUAPI_OpenGL();
 
         virtual bool initialize();
         virtual bool release();
+
+        const bool& isSupported_GREMEDY_string_marker;
 
         virtual GLenum validateResult();
 
