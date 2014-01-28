@@ -450,6 +450,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
     if(activeRasterTileProvidersCount == 0 || !currentState.rasterLayerProviders[static_cast<int>(RasterMapLayerId::BaseLayer)])
         return;
 
+    GL_PUSH_GROUP_MARKER(QLatin1String("tiles"));
+
     // Get proper program variation
     const auto& stageVariation = _rasterMapStage.variations[activeRasterTileProvidersCount - 1];
 
@@ -542,6 +544,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
 
         // Get normalized tile index
         auto tileIdN = Utilities::normalizeTileId(tileId, currentState.zoomBase);
+
+        GL_PUSH_GROUP_MARKER(QString("%1x%2@%3").arg(tileIdN.x).arg(tileIdN.y).arg(currentState.zoomBase));
 
         // Set tile coordinates offset
         glUniform2i(stageVariation.vs.param.tileCoordsOffset,
@@ -739,6 +743,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
 
         glDrawElements(GL_TRIANGLES, _tilePatchIndicesCount, GL_UNSIGNED_SHORT, nullptr);
         GL_CHECK_RESULT;
+
+        GL_POP_GROUP_MARKER;
     }
 
     // Disable textures
@@ -769,6 +775,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderRasterMapStage()
     // Deselect VAO
     gpuAPI->glBindVertexArray_wrapper(0);
     GL_CHECK_RESULT;
+
+    GL_POP_GROUP_MARKER;
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::releaseRasterMapStage()
@@ -916,6 +924,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSkyStage()
 
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSkyStage()
 {
+    GL_PUSH_GROUP_MARKER(QLatin1String("sky"));
+
     const auto gpuAPI = getGPUAPI();
 
     GL_CHECK_PRESENT(glUseProgram);
@@ -959,6 +969,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSkyStage()
     // Deselect VAO
     gpuAPI->glBindVertexArray_wrapper(0);
     GL_CHECK_RESULT;
+
+    GL_POP_GROUP_MARKER;
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::releaseSkyStage()
@@ -1198,6 +1210,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSymbolsStage()
 
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
 {
+    GL_PUSH_GROUP_MARKER(QLatin1String("symbols"));
+
     const auto gpuAPI = getGPUAPI();
 
     GL_CHECK_PRESENT(glUseProgram);
@@ -1259,6 +1273,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
             const auto& unsortedSymbols = *itSymbols;
             if(unsortedSymbols.isEmpty())
                 continue;
+
+            GL_PUSH_GROUP_MARKER(QString("order %1").arg(itSymbols.key()));
+
             QMultiMap< float, SymbolPair > sortedSymbols;
             for(auto itSymbolEntry = unsortedSymbols.cbegin(); itSymbolEntry != unsortedSymbols.cend(); ++itSymbolEntry)
             {
@@ -1310,7 +1327,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                 if(intersections.test(boundsOnScreen) || !intersections.insert(symbol, boundsOnScreen))
                     continue;
 
-                GL_PUSH_GROUP_MARKER(QString("Symbol [origin %1(%2)]")
+                GL_PUSH_GROUP_MARKER(QString("[MO %1(%2)]")
                     .arg(symbol->mapObject->id >> 1)
                     .arg(static_cast<int64_t>(symbol->mapObject->id) / 2));
 
@@ -1343,6 +1360,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
 
                 GL_POP_GROUP_MARKER;
             }
+
+            GL_POP_GROUP_MARKER;
         }
     }
 
@@ -1359,6 +1378,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
     // Deselect VAO
     gpuAPI->glBindVertexArray_wrapper(0);
     GL_CHECK_RESULT;
+
+    GL_POP_GROUP_MARKER;
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::releaseSymbolsStage()
@@ -1432,6 +1453,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doInitializeRendering()
 
 bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doRenderFrame()
 {
+    GL_PUSH_GROUP_MARKER(QLatin1String("OsmAndCore"));
+
     GL_CHECK_PRESENT(glViewport);
     GL_CHECK_PRESENT(glEnable);
     GL_CHECK_PRESENT(glDisable);
@@ -1480,6 +1503,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doRenderFrame()
     renderSymbolsStage();
 
     //TODO: render special fog object some day
+
+    GL_POP_GROUP_MARKER;
 
     return true;
 }
