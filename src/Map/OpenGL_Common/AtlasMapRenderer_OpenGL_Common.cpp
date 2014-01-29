@@ -1069,7 +1069,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSymbolsStage()
         "    symbolLocationOnScreen.z = (1.0 + symbolLocationOnScreen.z) * 0.5;                                             ""\n"
         "                                                                                                                   ""\n"
         // Add on-screen offset
-        "    symbolLocationOnScreen.xy -= vec2(param_vs_onScreenOffset);                                                    ""\n"
+        "    symbolLocationOnScreen.xy += vec2(param_vs_onScreenOffset);                                                    ""\n"
         "                                                                                                                   ""\n"
         // symbolLocationOnScreen.xy now contains correct coordinates in viewport,
         // which can be used in orthographic projection (if it was configured to match viewport).
@@ -1321,14 +1321,13 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                 const auto symbolOnScreen = glm::project(positionInWorld, _internalState.mCameraView, _internalState.mPerspectiveProjection, viewport);
 
                 // Check intersections
-                const auto boundsOnScreen = AreaI::fromCenterAndSize(
-                    static_cast<int>(symbolOnScreen.x), static_cast<int>(symbolOnScreen.y),
+                const auto boundsInWindow = AreaI::fromCenterAndSize(
+                    static_cast<int>(symbolOnScreen.x + symbol->offset.x), static_cast<int>(currentState.windowSize.y - (symbolOnScreen.y + symbol->offset.y)),
                     gpuResource->width, gpuResource->height);//TODO: use MapSymbol bounds
-                if(intersections.test(boundsOnScreen) || !intersections.insert(symbol, boundsOnScreen))
-                    continue;
+                auto test = symbol->mapObject->id >> 1; // test == 9223372032558563750
+                //if(intersections.test(boundsInWindow) || !intersections.insert(symbol, boundsInWindow))
+                //    continue;
 
-                //auto test = symbol->mapObject->id >> 1; // test == 9223372032558563750
-                //int b = 1;
                 GL_PUSH_GROUP_MARKER(QString("[MO %1(%2)]")
                     .arg(symbol->mapObject->id >> 1)
                     .arg(static_cast<int64_t>(symbol->mapObject->id) / 2));
@@ -1346,7 +1345,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                 GL_CHECK_RESULT;
 
                 // Set on-screen offset
-                glUniform2i(_symbolsStage.vs.param.onScreenOffset, symbol->offset.x, symbol->offset.y);
+                glUniform2i(_symbolsStage.vs.param.onScreenOffset, symbol->offset.x, -symbol->offset.y);
                 GL_CHECK_RESULT;
 
                 // Activate symbol texture
