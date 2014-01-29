@@ -250,6 +250,47 @@ namespace OsmAnd {
         void releaseSymbolsStage();
 
 #if OSMAND_DEBUG
+        struct {
+            GLuint vao;
+            GLuint vbo;
+            GLuint ibo;
+
+            GLuint program;
+
+            struct {
+                GLuint id;
+
+                // Input data
+                struct {
+                    GLint vertexPosition;
+                } in;
+
+                // Parameters
+                struct {
+                    // Common data
+                    GLint mProjectionViewModel;
+                    GLint rect;
+                } param;
+            } vs;
+
+            struct {
+                GLuint id;
+
+                // Parameters
+                struct {
+                    // Common data
+                    GLint color;
+                } param;
+            } fs;
+        } _debugStage_Rects2D;
+        void initializeDebugStage();
+        void renderDebugStage();
+        void releaseDebugStage();
+
+        typedef std::pair<AreaI, uint32_t> DebugRect2D;
+        QList<DebugRect2D> _debugRects2D;
+        void clearDebugPrimitives();
+        void addDebugRect2D(const AreaI& rect, uint32_t argbColor);
 #endif
 
         virtual bool doInitializeRendering();

@@ -33,6 +33,9 @@ OsmAnd::AtlasMapRenderer_OpenGL_Common::AtlasMapRenderer_OpenGL_Common()
     memset(&_rasterMapStage, 0, sizeof(_rasterMapStage));
     memset(&_skyStage, 0, sizeof(_skyStage));
     memset(&_symbolsStage, 0, sizeof(_symbolsStage));
+#if OSMAND_DEBUG
+    memset(&_debugStage_Rects2D, 0, sizeof(_debugStage_Rects2D));
+#endif
 }
 
 OsmAnd::AtlasMapRenderer_OpenGL_Common::~AtlasMapRenderer_OpenGL_Common()
@@ -833,6 +836,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeSkyStage()
         "{                                                                                                                  ""\n"
         "    vec4 v;                                                                                                        ""\n"
         "    v.xy = in_vs_vertexPosition * param_vs_planeSize;                                                              ""\n"
+        "    v.z = 0.0;                                                                                                     ""\n"
         "    v.w = 1.0;                                                                                                     ""\n"
         "                                                                                                                   ""\n"
         "    gl_Position = param_vs_mProjectionViewModel * v;                                                               ""\n"
@@ -1325,9 +1329,17 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                     static_cast<int>(symbolOnScreen.x + symbol->offset.x), static_cast<int>(currentState.windowSize.y - (symbolOnScreen.y + symbol->offset.y)),
                     gpuResource->width, gpuResource->height);//TODO: use MapSymbol bounds
                 auto test = symbol->mapObject->id >> 1; // test == 9223372032558563750
-                //if(intersections.test(boundsInWindow) || !intersections.insert(symbol, boundsInWindow))
-                //    continue;
+                if(intersections.test(boundsInWindow) || !intersections.insert(symbol, boundsInWindow))
+                {
+#if OSMAND_DEBUG
+                    addDebugRect2D(boundsInWindow, SkColorSetA(SK_ColorRED, 50));
+#endif
+                    continue;
+                }
 
+#if OSMAND_DEBUG
+                addDebugRect2D(boundsInWindow, SkColorSetA(SK_ColorGREEN, 50));
+#endif
                 GL_PUSH_GROUP_MARKER(QString("[MO %1(%2)]")
                     .arg(symbol->mapObject->id >> 1)
                     .arg(static_cast<int64_t>(symbol->mapObject->id) / 2));
@@ -1428,6 +1440,234 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::releaseSymbolsStage()
     memset(&_symbolsStage, 0, sizeof(_symbolsStage));
 }
 
+#if OSMAND_DEBUG
+void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeDebugStage()
+{
+    const auto gpuAPI = getGPUAPI();
+
+    GL_CHECK_PRESENT(glGenBuffers);
+    GL_CHECK_PRESENT(glBindBuffer);
+    GL_CHECK_PRESENT(glBufferData);
+    GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glVertexAttribPointer);
+
+    // 2D rectangles
+    {
+        // Compile vertex shader
+        const QString vertexShader = QLatin1String(
+            // Input data
+            "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: common data
+            "uniform mat4 param_vs_mProjectionViewModel;                                                                        ""\n"
+            "uniform ivec4 param_vs_rect;                                                                                       ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            "    vec4 v;                                                                                                        ""\n"
+            "    v.xy = in_vs_vertexPosition * vec2(param_vs_rect.wz) + vec2(param_vs_rect.yx);                                 ""\n"
+            "    v.z = -1.0;                                                                                                    ""\n"
+            "    v.w = 1.0;                                                                                                     ""\n"
+            "                                                                                                                   ""\n"
+            "    gl_Position = param_vs_mProjectionViewModel * v;                                                               ""\n"
+            "}                                                                                                                  ""\n");
+        auto preprocessedVertexShader = vertexShader;
+        gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+        gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+        _debugStage_Rects2D.vs.id = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+        assert(_debugStage_Rects2D.vs.id != 0);
+
+        // Compile fragment shader
+        const QString fragmentShader = QLatin1String(
+            // Parameters: common data
+            "uniform lowp vec4 param_fs_color;                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            "    FRAGMENT_COLOR_OUTPUT = param_fs_color;                                                                        ""\n"
+            "}                                                                                                                  ""\n");
+        auto preprocessedFragmentShader = fragmentShader;
+        QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
+        gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
+        gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
+        _debugStage_Rects2D.fs.id = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+        assert(_debugStage_Rects2D.fs.id != 0);
+
+        // Link everything into program object
+        GLuint shaders[] = {
+            _debugStage_Rects2D.vs.id,
+            _debugStage_Rects2D.fs.id
+        };
+        _debugStage_Rects2D.program = gpuAPI->linkProgram(2, shaders);
+        assert(_debugStage_Rects2D.program != 0);
+
+        gpuAPI->clearVariablesLookup();
+        gpuAPI->findVariableLocation(_debugStage_Rects2D.program, _debugStage_Rects2D.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
+        gpuAPI->findVariableLocation(_debugStage_Rects2D.program, _debugStage_Rects2D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GLShaderVariableType::Uniform);
+        gpuAPI->findVariableLocation(_debugStage_Rects2D.program, _debugStage_Rects2D.vs.param.rect, "param_vs_rect", GLShaderVariableType::Uniform);
+        gpuAPI->findVariableLocation(_debugStage_Rects2D.program, _debugStage_Rects2D.fs.param.color, "param_fs_color", GLShaderVariableType::Uniform);
+        gpuAPI->clearVariablesLookup();
+
+        // Vertex data (x,y)
+        float vertices[4][2] =
+        {
+            { -0.5f, -0.5f },
+            { -0.5f, 0.5f },
+            { 0.5f, 0.5f },
+            { 0.5f, -0.5f }
+        };
+        const auto verticesCount = 4;
+
+        // Index data
+        GLushort indices[6] =
+        {
+            0, 1, 2,
+            0, 2, 3
+        };
+        const auto indicesCount = 6;
+
+        // Create Vertex Array Object
+        gpuAPI->glGenVertexArrays_wrapper(1, &_debugStage_Rects2D.vao);
+        GL_CHECK_RESULT;
+        gpuAPI->glBindVertexArray_wrapper(_debugStage_Rects2D.vao);
+        GL_CHECK_RESULT;
+
+        // Create vertex buffer and associate it with VAO
+        glGenBuffers(1, &_debugStage_Rects2D.vbo);
+        GL_CHECK_RESULT;
+        glBindBuffer(GL_ARRAY_BUFFER, _debugStage_Rects2D.vbo);
+        GL_CHECK_RESULT;
+        glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(float)* 2, vertices, GL_STATIC_DRAW);
+        GL_CHECK_RESULT;
+        glEnableVertexAttribArray(_debugStage_Rects2D.vs.in.vertexPosition);
+        GL_CHECK_RESULT;
+        glVertexAttribPointer(_debugStage_Rects2D.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(float)* 2, nullptr);
+        GL_CHECK_RESULT;
+
+        // Create index buffer and associate it with VAO
+        glGenBuffers(1, &_debugStage_Rects2D.ibo);
+        GL_CHECK_RESULT;
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _debugStage_Rects2D.ibo);
+        GL_CHECK_RESULT;
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
+        GL_CHECK_RESULT;
+    }
+
+    gpuAPI->glBindVertexArray_wrapper(0);
+    GL_CHECK_RESULT;
+}
+
+void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderDebugStage()
+{
+    GL_PUSH_GROUP_MARKER(QLatin1String("debug"));
+
+    const auto gpuAPI = getGPUAPI();
+
+    GL_CHECK_PRESENT(glUseProgram);
+    GL_CHECK_PRESENT(glUniformMatrix4fv);
+    GL_CHECK_PRESENT(glUniform1f);
+    GL_CHECK_PRESENT(glUniform2f);
+    GL_CHECK_PRESENT(glUniform3f);
+    GL_CHECK_PRESENT(glDrawElements);
+
+    // 2D rectangles
+    {
+        gpuAPI->glBindVertexArray_wrapper(_debugStage_Rects2D.vao);
+        GL_CHECK_RESULT;
+
+        // Activate program
+        glUseProgram(_debugStage_Rects2D.program);
+        GL_CHECK_RESULT;
+
+        // Set projection*view*model matrix:
+        glUniformMatrix4fv(_debugStage_Rects2D.vs.param.mProjectionViewModel, 1, GL_FALSE, glm::value_ptr(_internalState.mOrthographicProjection));
+        GL_CHECK_RESULT;
+
+        for(auto itPrimitive = _debugRects2D.cbegin(); itPrimitive != _debugRects2D.cend(); ++itPrimitive)
+        {
+            const auto& rect = itPrimitive->first;
+            const auto& color = itPrimitive->second;
+
+            // Set rectangle coordinates
+            const auto center = rect.center();
+            glUniform4i(_debugStage_Rects2D.vs.param.rect, currentState.windowSize.y - center.y, center.x, rect.height(), rect.width());
+            GL_CHECK_RESULT;
+
+            // Set rectangle color
+            glUniform4f(_debugStage_Rects2D.fs.param.color, SkColorGetR(color) / 255.0f, SkColorGetG(color) / 255.0f, SkColorGetB(color) / 255.0f, SkColorGetA(color) / 255.0f);
+            GL_CHECK_RESULT;
+
+            // Draw the skyplane actually
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
+            GL_CHECK_RESULT;
+        }
+    }
+    
+    // Deactivate program
+    glUseProgram(0);
+    GL_CHECK_RESULT;
+
+    // Deselect VAO
+    gpuAPI->glBindVertexArray_wrapper(0);
+    GL_CHECK_RESULT;
+
+    GL_POP_GROUP_MARKER;
+}
+
+void OsmAnd::AtlasMapRenderer_OpenGL_Common::releaseDebugStage()
+{
+    const auto gpuAPI = getGPUAPI();
+
+    GL_CHECK_PRESENT(glDeleteBuffers);
+    GL_CHECK_PRESENT(glDeleteProgram);
+    GL_CHECK_PRESENT(glDeleteShader);
+
+    // 2D rectangles
+    if(_debugStage_Rects2D.ibo)
+    {
+        glDeleteBuffers(1, &_debugStage_Rects2D.ibo);
+        GL_CHECK_RESULT;
+    }
+    if(_debugStage_Rects2D.vbo)
+    {
+        glDeleteBuffers(1, &_debugStage_Rects2D.vbo);
+        GL_CHECK_RESULT;
+    }
+    if(_debugStage_Rects2D.vao)
+    {
+        gpuAPI->glDeleteVertexArrays_wrapper(1, &_debugStage_Rects2D.vao);
+        GL_CHECK_RESULT;
+    }
+    if(_debugStage_Rects2D.program)
+    {
+        glDeleteProgram(_debugStage_Rects2D.program);
+        GL_CHECK_RESULT;
+    }
+    if(_debugStage_Rects2D.fs.id)
+    {
+        glDeleteShader(_debugStage_Rects2D.fs.id);
+        GL_CHECK_RESULT;
+    }
+    if(_debugStage_Rects2D.vs.id)
+    {
+        glDeleteShader(_debugStage_Rects2D.vs.id);
+        GL_CHECK_RESULT;
+    }
+    memset(&_debugStage_Rects2D, 0, sizeof(_debugStage_Rects2D));
+}
+
+
+void OsmAnd::AtlasMapRenderer_OpenGL_Common::clearDebugPrimitives()
+{
+    _debugRects2D.clear();
+}
+
+void OsmAnd::AtlasMapRenderer_OpenGL_Common::addDebugRect2D(const AreaI& rect, uint32_t argbColor)
+{
+    _debugRects2D.push_back(qMove(DebugRect2D(rect, argbColor)));
+}
+#endif
+
 bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doInitializeRendering()
 {
     GL_CHECK_PRESENT(glClearColor);
@@ -1448,6 +1688,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doInitializeRendering()
     initializeSkyStage();
     initializeRasterMapStage();
     initializeSymbolsStage();
+#if OSMAND_DEBUG
+    initializeDebugStage();
+#endif
 
     return true;
 }
@@ -1461,6 +1704,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doRenderFrame()
     GL_CHECK_PRESENT(glDisable);
     GL_CHECK_PRESENT(glBlendFunc);
     GL_CHECK_PRESENT(glClear);
+
+#if OSMAND_DEBUG
+    clearDebugPrimitives();
+#endif
 
     // Setup viewport
     glViewport(
@@ -1505,6 +1752,13 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doRenderFrame()
 
     //TODO: render special fog object some day
 
+#if OSMAND_DEBUG
+    glDisable(GL_DEPTH_TEST);
+    GL_CHECK_RESULT;
+
+    renderDebugStage();
+#endif
+
     GL_POP_GROUP_MARKER;
 
     return true;
@@ -1514,6 +1768,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::doReleaseRendering()
 {
     bool ok;
 
+#if OSMAND_DEBUG
+    releaseDebugStage();
+#endif
     releaseSymbolsStage();
     releaseRasterMapStage();
     releaseSkyStage();
