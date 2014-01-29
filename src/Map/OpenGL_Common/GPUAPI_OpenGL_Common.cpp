@@ -591,7 +591,7 @@ void OsmAnd::GPUAPI_OpenGL_Common::waitUntilUploadIsComplete()
 void OsmAnd::GPUAPI_OpenGL_Common::pushDebugGroupMarker(const QString& title)
 {
     if(isSupported_EXT_debug_marker)
-        glPushGroupMarkerEXT_wrapper(title.length(), qPrintable(title));
+        glPushGroupMarkerEXT_wrapper(0, qPrintable(title));
 }
 
 void OsmAnd::GPUAPI_OpenGL_Common::popDebugGroupMarker()
