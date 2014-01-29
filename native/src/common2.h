@@ -114,12 +114,13 @@ public :
 	float cosRotateTileSize;
 	float sinRotateTileSize;
 
-	std::vector<TextDrawInfo*> textToDraw;
-	std::vector<IconDrawInfo> iconsToDraw;
 	// use to calculate points
 	float calcX;
 	float calcY;
 
+	std::vector<TextDrawInfo*> textToDraw;
+	std::vector<IconDrawInfo> iconsToDraw;
+	
 	// not expect any shadow
 	int shadowLevelMin;
 	int shadowLevelMax;
@@ -128,15 +129,18 @@ public :
 	int roadsDensityLimitPerTile;
 
 public:
-	RenderingContext() : shadowLevelMax(0), shadowLevelMin(256), density(true), useEnglishNames(false), pointCount(0),
-		pointInsideCount(0), visible(0), allObjects(0), shadowRenderingColor(0xff969696) {
-		setRotate(0);
-		setZoom(15);
-		setDefaultColor(0xfff1eee8);
-		roadsDensityLimitPerTile = 0;
-		screenDensityRatio = 1;
-		roadDensityZoomTile = 0;
-		polygonMinSizeToDisplay = 0;
+	RenderingContext() : useEnglishNames(false), density(1), screenDensityRatio(1),
+			//leftX, topY, width, height
+			defaultColor(0xfff1eee8), zoom(15), rotate(0),
+			shadowRenderingMode(2), shadowRenderingColor(0xff969696), // defaultIconsDir
+			pointCount(0), pointInsideCount(0), visible(0), allObjects(0), lastRenderedKey(0),
+			// textRendering, nativeOperations, oneWayPaints, reverseWayPaints
+			// tileDivisor, cosRotateTileSize, sinRotateTileSize,  calcX, calcY
+			// textToDraw, iconsToDraw,
+			shadowLevelMin(256), shadowLevelMax(0), polygonMinSizeToDisplay(0),
+			roadDensityZoomTile(0), roadsDensityLimitPerTile(0) 
+	{
+		
 	}
 	virtual ~RenderingContext();
 

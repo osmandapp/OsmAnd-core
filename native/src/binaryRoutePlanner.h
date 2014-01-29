@@ -20,17 +20,17 @@ public :
 	SHARED_PTR<RouteDataObject> road;
 	// needed to store intersection of routes
 	SHARED_PTR<RouteSegment> next;
+	SHARED_PTR<RouteSegment>  oppositeDirection ;
 
 	// search context (needed for searching route)
 	// Initially it should be null (!) because it checks was it segment visited before
 	SHARED_PTR<RouteSegment> parentRoute;
 	uint16_t parentSegmentEnd;
 
+
 	// 1 - positive , -1 - negative, 0 not assigned
 	int8_t directionAssgn;
-	// 1 - only positive allowed, -1 - only negative allowed
-	int8_t allowedDirection;
-
+	
 	// final route segment
 	int8_t reverseWaySearch;
 	SHARED_PTR<RouteSegment> opposite;	
@@ -47,9 +47,38 @@ public :
 		return segmentStart;
 	}
 
+	inline bool isPositive() {
+		return directionAssgn == 1;
+	}
+
+	SHARED_PTR<RouteSegment> initRouteSegment(boolean positiveDirection) {
+		if(segStart == 0 && !positiveDirection) {
+			return SHARED_PTR<RouteSegment>(NULL);
+		}
+		if(segStart == road->getPointsLength() - 1 && positiveDirection) {
+			return SHARED_PTR<RouteSegment>(NULL);
+		}
+		SHARED_PTR<RouteSegment> rs(this);
+		if(directionAssgn == 0) {
+			rs.directionAssgn = positiveDirection ? 1 : -1;
+		} else {
+			if(positiveDirection != (directionAssgn == 1)) {
+				if(oppositeDirection == null) {
+					oppositeDirection = SHARED_PTR<RouteSegment>(new RouteSegment(road, segStart));
+					oppositeDirection.directionAssgn = positiveDirection ? 1 : -1;
+				}
+				if ((oppositeDirection.directionAssgn == 1) != positiveDirection) {
+					OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "Alert failed - directionAssgn wrongly");					
+				}
+				rs = oppositeDirection;
+			}
+		}
+		return rs;
+	}
+
 	RouteSegment(SHARED_PTR<RouteDataObject> road, int segmentStart) : road(road), segmentStart(segmentStart),
 			parentSegmentEnd(0), distanceFromStart(0), distanceToEnd(0),next(), parentRoute(),
-			directionAssgn(0), allowedDirection(0), opposite(), reverseWaySearch(0){
+			directionAssgn(0), allowedDirection(0), opposite(), reverseWaySearch(0), oppositeDirection(){
 	}
 	~RouteSegment(){
 	}
@@ -425,7 +454,7 @@ struct PrecalculatedRouteDirection {
 	vector<uint32_t> pointsY;
 	vector<float> times;
 	std::map<std::pair<uint32_t, uint32_t>, int> registered;
-	bool notEmpty;
+	bool empty;
 
 };
 
@@ -461,6 +490,7 @@ struct RoutingContext {
 
 	RoutingContext(RoutingConfiguration& config) : firstRoadDirection(0), firstRoadId(0),
 		loadedTiles(0), visitedSegments(0), config(config), finalRouteSegment() {
+			precalcRoute.empty = true;
 	}
 
 	bool acceptLine(SHARED_PTR<RouteDataObject> r) {

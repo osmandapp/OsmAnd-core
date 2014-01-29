@@ -137,6 +137,10 @@ struct RouteDataObject {
 		return s;
 	}
 
+	inline int getPointsLength() {
+		return pointsX.size();
+	}
+
 	double directionRoute(int startPoint, bool plus){
 		// look at comment JAVA
 		return directionRoute(startPoint, plus, 5);
