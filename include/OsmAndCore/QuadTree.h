@@ -33,10 +33,10 @@ namespace OsmAnd
             typedef std::pair<AreaT, ELEMENT_TYPE> EntryPair;
             QList< EntryPair > entries;
 
-            bool insert(const ELEMENT_TYPE& element, const AreaT& area_, const uintmax_t allowedDepthRemaining)
+            bool insert(const ELEMENT_TYPE& element, const AreaT& area_, const bool strict, const uintmax_t allowedDepthRemaining)
             {
                 // Check if this node can hold entire element
-                if(!area.contains(area_))
+                if(!(area.contains(area_) || (!strict && area.intersects(area_))))
                     return false;
 
                 insertNoCheck(element, area_, allowedDepthRemaining);
@@ -65,7 +65,7 @@ namespace OsmAnd
                         return;
                     }
 
-                    if(subnodes[idx]->insert(element, area_, allowedDepthRemaining - 1))
+                    if(subnodes[idx]->insert(element, area_, true, allowedDepthRemaining - 1))
                         return;
                 }
 
@@ -132,9 +132,9 @@ namespace OsmAnd
 
         const uintmax_t maxDepth;
 
-        bool insert(const ELEMENT_TYPE& entry, const AreaT& area)
+        bool insert(const ELEMENT_TYPE& entry, const AreaT& area, const bool strict = false)
         {
-            return _root->insert(entry, area, maxDepth-1);
+            return _root->insert(entry, area, strict, maxDepth-1);
         }
 
         void query(const AreaT& area, QList<ELEMENT_TYPE>& outResults, const bool strict = false) const
