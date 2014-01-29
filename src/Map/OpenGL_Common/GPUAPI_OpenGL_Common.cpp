@@ -18,7 +18,7 @@
 
 #undef GL_CHECK_RESULT
 #undef GL_GET_RESULT
-#if defined(_DEBUG) || defined(DEBUG)
+#if OSMAND_DEBUG
 #   define GL_CHECK_RESULT validateResult()
 #   define GL_GET_RESULT validateResult()
 #else

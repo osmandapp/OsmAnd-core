@@ -2,7 +2,7 @@
 #include "OfflineMapRasterTileProvider_Software.h"
 
 #include <cassert>
-#if defined(_DEBUG) || defined(DEBUG)
+#if OSMAND_DEBUG
 #   include <chrono>
 #endif
 
@@ -46,7 +46,7 @@ bool OsmAnd::OfflineMapRasterTileProvider_Software_P::obtainTile(const TileId ti
         return true;
     }
 
-#if defined(_DEBUG) || defined(DEBUG)
+#if OSMAND_DEBUG
     const auto dataRasterization_Begin = std::chrono::high_resolution_clock::now();
 #endif
 
@@ -72,7 +72,7 @@ bool OsmAnd::OfflineMapRasterTileProvider_Software_P::obtainTile(const TileId ti
         rasterizer.rasterizeMap(canvas);
     }
 
-#if defined(_DEBUG) || defined(DEBUG)
+#if OSMAND_DEBUG
     const auto dataRasterization_End = std::chrono::high_resolution_clock::now();
     const std::chrono::duration<float> dataRasterization_Elapsed = dataRasterization_End - dataRasterization_Begin;
     if(!dataTile->nothingToRasterize)

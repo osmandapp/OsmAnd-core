@@ -155,7 +155,7 @@ bool OsmAnd::OnlineMapRasterTileProvider_P::obtainTile( const TileId tileId, con
     }
 
     // Save data to a file
-#if defined(_DEBUG) || defined(DEBUG)
+#if OSMAND_DEBUG
     LogPrintf(LogSeverityLevel::Info, "Downloaded tile from %s", qPrintable(tileUrl));
 #endif
     const auto& data = networkReply->readAll();
@@ -167,7 +167,7 @@ bool OsmAnd::OnlineMapRasterTileProvider_P::obtainTile( const TileId tileId, con
         tileFile.write(data);
         tileFile.close();
 
-#if defined(_DEBUG) || defined(DEBUG)
+#if OSMAND_DEBUG
         LogPrintf(LogSeverityLevel::Info, "Saved tile from %s to %s", qPrintable(tileUrl), qPrintable(localFile.absoluteFilePath()));
 #endif
     }

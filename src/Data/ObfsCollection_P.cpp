@@ -22,7 +22,7 @@ OsmAnd::ObfsCollection_P::~ObfsCollection_P()
 
 void OsmAnd::ObfsCollection_P::refreshSources()
 {
-#if defined(_DEBUG) || defined(DEBUG)
+#if OSMAND_DEBUG
     const auto refreshSources_Begin = std::chrono::high_resolution_clock::now();
 #endif
 
@@ -86,7 +86,7 @@ void OsmAnd::ObfsCollection_P::refreshSources()
         }
     }
 
-#if defined(_DEBUG) || defined(DEBUG)
+#if OSMAND_DEBUG
     const auto refreshSources_End = std::chrono::high_resolution_clock::now();
     const std::chrono::duration<float> refreshSources_Elapsed = refreshSources_End - refreshSources_Begin;
     LogPrintf(LogSeverityLevel::Info, "Refreshed OBF sources in %fs", refreshSources_Elapsed.count());
@@ -104,7 +104,7 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection_P::obtainDataIn
     // Refresh sources
     if(!_sourcesRefreshedOnce)
     {
-#if defined(DEBUG) || defined(_DEBUG)
+#if OSMAND_DEBUG
         LogPrintf(LogSeverityLevel::Info, "Refreshing OBF sources because they were never initialized");
 #endif
 
@@ -117,7 +117,7 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection_P::obtainDataIn
     }
     else if(_watchedCollectionChanged)
     {
-#if defined(DEBUG) || defined(_DEBUG)
+#if OSMAND_DEBUG
         LogPrintf(LogSeverityLevel::Info, "Refreshing OBF sources because watch-collecting was changed");
 #endif
 

@@ -25,7 +25,7 @@ OsmAnd::MapRendererResources::MapRendererResources(MapRenderer* const owner_)
     , processingTileStub(_processingTileStub)
     , unavailableTileStub(_unavailableTileStub)
 {
-#if defined(DEBUG) || defined(_DEBUG)
+#if OSMAND_DEBUG
     LogPrintf(LogSeverityLevel::Info, "Map renderer will use max %d worker thread(s) to process requests", _resourcesRequestWorkersPool.maxThreadCount());
 #endif
     // Raster resources collections are special, so preallocate them

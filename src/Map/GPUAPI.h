@@ -184,7 +184,7 @@ namespace OsmAnd
         {
         private:
         protected:
-#if defined(DEBUG) || defined(_DEBUG)
+#if OSMAND_DEBUG
             mutable QMutex _tilesMutex;
             QSet< SlotOnAtlasTextureInGPU* > _tiles;
 #else
@@ -218,7 +218,7 @@ namespace OsmAnd
         };
     
     private:
-#if defined(DEBUG) || defined(_DEBUG)
+#if OSMAND_DEBUG
         mutable QMutex _allocatedResourcesMutex;
         QList< ResourceInGPU* > _allocatedResources;
 #else

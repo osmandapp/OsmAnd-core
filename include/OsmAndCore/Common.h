@@ -27,7 +27,7 @@
 #include <memory>
 #include <iostream>
 
-#if defined(DEBUG) || defined(_DEBUG)
+#if OSMAND_DEBUG
 #   define OSMAND_ASSERT(condition, message) \
     do { \
         if (! (condition)) { \

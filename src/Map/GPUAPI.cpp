@@ -13,7 +13,7 @@ OsmAnd::GPUAPI::GPUAPI()
 OsmAnd::GPUAPI::~GPUAPI()
 {
     const int resourcesRemaining = 
-#if defined(DEBUG) || defined(_DEBUG)
+#if OSMAND_DEBUG
         _allocatedResources.size();
 #else
         _allocatedResourcesCounter.load();
@@ -58,7 +58,7 @@ OsmAnd::GPUAPI::ResourceInGPU::ResourceInGPU( const Type type_, GPUAPI* api_, co
 {
     // Add this object to allocated resources list
     {
-#if defined(DEBUG) || defined(_DEBUG)
+#if OSMAND_DEBUG
         QMutexLocker scopedLock(&api->_allocatedResourcesMutex);
         api->_allocatedResources.push_back(this);
 #else
@@ -75,7 +75,7 @@ OsmAnd::GPUAPI::ResourceInGPU::~ResourceInGPU()
 
     // Remove this object from allocated resources list
     {
-#if defined(DEBUG) || defined(_DEBUG)
+#if OSMAND_DEBUG
         QMutexLocker scopedLock(&api->_allocatedResourcesMutex);
         api->_allocatedResources.removeOne(this);
 #else
@@ -124,7 +124,7 @@ OsmAnd::GPUAPI::AtlasTextureInGPU::AtlasTextureInGPU(GPUAPI* api_, const RefInGP
 OsmAnd::GPUAPI::AtlasTextureInGPU::~AtlasTextureInGPU()
 {
     const int tilesRemaining = 
-#if defined(DEBUG) || defined(_DEBUG)
+#if OSMAND_DEBUG
         _tiles.size();
 #else
         _tilesCounter.load();
@@ -157,7 +157,7 @@ OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU::SlotOnAtlasTextureInGPU(const std::shar
 {
     // Add reference of this tile to atlas texture
     {
-#if defined(DEBUG) || defined(_DEBUG)
+#if OSMAND_DEBUG
         QMutexLocker scopedLock(&atlasTexture->_tilesMutex);
         atlasTexture->_tiles.insert(this);
 #else
@@ -170,7 +170,7 @@ OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU::~SlotOnAtlasTextureInGPU()
 {
     // Remove reference of this tile to atlas texture
     {
-#if defined(DEBUG) || defined(_DEBUG)
+#if OSMAND_DEBUG
         QMutexLocker scopedLock(&atlasTexture->_tilesMutex);
         atlasTexture->_tiles.remove(this);
 #else

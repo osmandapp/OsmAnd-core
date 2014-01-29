@@ -45,19 +45,11 @@
 #define ROUTE_STATISTICS 1
 
 #if !defined(DEBUG_ROUTING)
-#   if defined(DEBUG) || defined(_DEBUG)
-#       define DEBUG_ROUTING 1
-#   else
-#       define DEBUG_ROUTING 0
-#   endif
+#   define DEBUG_ROUTING OSMAND_DEBUG
 #endif
 
 #if !defined(TRACE_ROUTING)
-#   if defined(DEBUG) || defined(_DEBUG)
-#       define TRACE_ROUTING 1
-#   else
-#       define TRACE_ROUTING 0
-#   endif
+#   define TRACE_ROUTING OSMAND_DEBUG
 #endif
 
 namespace OsmAnd {

@@ -61,7 +61,7 @@
 #include <CommonTypes.h>
 #include <GPUAPI.h>
 
-#if defined(_DEBUG) || defined(DEBUG)
+#if OSMAND_DEBUG
 #   define GL_CHECK_RESULT \
         static_cast<GPUAPI_OpenGL_Common*>(this->gpuAPI.get())->validateResult()
 #   define GL_GET_RESULT \

@@ -249,6 +249,9 @@ namespace OsmAnd {
         void renderSymbolsStage();
         void releaseSymbolsStage();
 
+#if OSMAND_DEBUG
+#endif
+
         virtual bool doInitializeRendering();
         virtual bool doRenderFrame();
         virtual bool doReleaseRendering();

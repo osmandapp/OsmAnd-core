@@ -59,6 +59,15 @@
 #   define OSMAND_CORE_CALL
 #endif
 
+#if !defined(OSMAND_DEBUG)
+#   if defined(DEBUG) || defined(_DEBUG)
+#       define OSMAND_DEBUG 1
+#   endif
+#endif
+#if !defined(OSMAND_DEBUG)
+#   define OSMAND_DEBUG 0
+#endif
+
 #if !defined(SWIG)
 #   define STRONG_ENUM(name) enum class name
 #   define STRONG_ENUM_EX(name, basetype) enum class name : basetype
