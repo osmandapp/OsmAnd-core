@@ -1327,6 +1327,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                 if(intersections.test(boundsOnScreen) || !intersections.insert(symbol, boundsOnScreen))
                     continue;
 
+                //auto test = symbol->mapObject->id >> 1; // test == 9223372032558563750
+                //int b = 1;
                 GL_PUSH_GROUP_MARKER(QString("[MO %1(%2)]")
                     .arg(symbol->mapObject->id >> 1)
                     .arg(static_cast<int64_t>(symbol->mapObject->id) / 2));

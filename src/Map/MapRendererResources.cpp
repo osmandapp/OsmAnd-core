@@ -52,7 +52,7 @@ OsmAnd::MapRendererResources::~MapRendererResources()
         QMutexLocker scopedLocker(&_workerThreadWakeupMutex);
         _workerThreadWakeup.wakeAll();
     }
-    _workerThread->wait();
+    REPEAT_UNTIL(_workerThread->wait());
 
     // Release all resources
     for(auto itResourcesCollections = _storage.begin(); itResourcesCollections != _storage.end(); ++itResourcesCollections)
@@ -363,14 +363,12 @@ void OsmAnd::MapRendererResources::workerThreadProcedure()
 
         // Wait until we're unblocked by host
         {
-            _workerThreadWakeupMutex.lock();
-            _workerThreadWakeup.wait(&_workerThreadWakeupMutex);
+            QMutexLocker scopedLocker(&_workerThreadWakeupMutex);
+            REPEAT_UNTIL(_workerThreadWakeup.wait(&_workerThreadWakeupMutex));
 
             // Copy active zone to local copy
             activeTiles = _activeTiles;
             activeZoom = _activeZoom;
-
-            _workerThreadWakeupMutex.unlock();
         }
         if(!_workerThreadIsAlive)
             break;

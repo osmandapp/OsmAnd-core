@@ -11,6 +11,7 @@
 #include <gdal.h>
 #include <SkGraphics.h>
 
+#include "Common.h"
 #include "Logging.h"
 #include "OsmAndCore_private.h"
 #include "ExplicitReferences.h"
@@ -57,8 +58,7 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::InitializeCore()
         // Wait until global initialization will pass in that thread
         {
             QMutexLocker scopeLock(&_qCoreApplicationThreadMutex);
-
-            _qCoreApplicationThreadWaitCondition.wait(&_qCoreApplicationThreadMutex);
+            REPEAT_UNTIL(_qCoreApplicationThreadWaitCondition.wait(&_qCoreApplicationThreadMutex));
         }
     }
     else
@@ -72,7 +72,7 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::ReleaseCore()
     if(_qCoreApplicationThread)
     {
         QCoreApplication::exit();
-        _qCoreApplicationThread->wait();
+        REPEAT_UNTIL(_qCoreApplicationThread->wait());
         _qCoreApplicationThread.reset();
     }
     else

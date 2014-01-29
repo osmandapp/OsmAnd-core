@@ -31,7 +31,7 @@
 #   define OSMAND_ASSERT(condition, message) \
     do { \
         if (! (condition)) { \
-            std::cerr << "Assertion `" #condition "` failed in " << __FILE__ \
+            std::cerr << "Assertion '" #condition "' failed in " << __FILE__ \
                       << " line " << __LINE__ << ": " << message << std::endl; \
             assert((condition)); \
         } \
@@ -55,5 +55,8 @@
 #else
 #   define QStringToStlString(x) (x).toStdString()
 #endif
+
+#define REPEAT_UNTIL(exp) \
+    for(;!(exp);)
 
 #endif // _OSMAND_CORE_OSMAND_COMMON_H_

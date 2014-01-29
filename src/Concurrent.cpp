@@ -2,6 +2,8 @@
 
 #include <cassert>
 
+#include "Common.h"
+
 const std::shared_ptr<OsmAnd::Concurrent::Pools> OsmAnd::Concurrent::Pools::instance(new OsmAnd::Concurrent::Pools());
 const std::shared_ptr<OsmAnd::Concurrent::Pools> OsmAnd::Concurrent::pools(OsmAnd::Concurrent::Pools::instance);
 
@@ -100,16 +102,9 @@ void OsmAnd::Concurrent::TaskHost::onOwnerIsBeingDestructed()
     }
 
     // Hold until all tasks are released
-    for(;;)
     {
-        _hostedTasksLock.lockForRead();
-        if(_hostedTasks.size() == 0)
-        {
-            _hostedTasksLock.unlock();
-            break;
-        }
-        _unlockedCondition.wait(&_hostedTasksLock);
-        _hostedTasksLock.unlock();
+        QReadLocker scopedLocker(&_hostedTasksLock);
+        REPEAT_UNTIL(_hostedTasks.size() != 0 || _unlockedCondition.wait(&_hostedTasksLock));
     }
 }
 
@@ -260,11 +255,9 @@ void OsmAnd::Concurrent::Dispatcher::invoke(const Delegate method)
         }
     });
 
-    for(;;)
     {
         QMutexLocker scopedLocker(&waitMutex);
-        if(waitCondition.wait(&waitMutex))
-            break;
+        REPEAT_UNTIL(waitCondition.wait(&waitMutex));
     }
 }
 
@@ -281,7 +274,7 @@ void OsmAnd::Concurrent::Dispatcher::shutdown()
 
     shutdownAsync();
 
-    _performedShutdown.wait(&_performedShutdownConditionMutex);
+    REPEAT_UNTIL(_performedShutdown.wait(&_performedShutdownConditionMutex));
 }
 
 void OsmAnd::Concurrent::Dispatcher::shutdownAsync()

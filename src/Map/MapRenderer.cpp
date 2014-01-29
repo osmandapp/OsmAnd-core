@@ -252,9 +252,8 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
     {
         // Wait until we're unblocked by host
         {
-            _gpuWorkerThreadWakeupMutex.lock();
-            _gpuWorkerThreadWakeup.wait(&_gpuWorkerThreadWakeupMutex);
-            _gpuWorkerThreadWakeupMutex.unlock();
+            QMutexLocker scopedLocker(&_gpuWorkerThreadWakeupMutex);
+            REPEAT_UNTIL(_gpuWorkerThreadWakeup.wait(&_gpuWorkerThreadWakeupMutex));
         }
         if(!_gpuWorkerIsAlive)
             break;
@@ -587,7 +586,7 @@ bool OsmAnd::MapRenderer::postReleaseRendering()
         }
         
         // Wait until thread will exit
-        _gpuWorkerThread->wait();
+        REPEAT_UNTIL(_gpuWorkerThread->wait());
 
         // And destroy thread object
         _gpuWorkerThread.reset();

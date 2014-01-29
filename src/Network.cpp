@@ -2,6 +2,7 @@
 
 #include <cassert>
 
+#include "Common.h"
 #include "Concurrent.h"
 
 OsmAnd::Network::DownloadSettings::DownloadSettings()
@@ -30,7 +31,7 @@ std::shared_ptr<QNetworkReply> OsmAnd::Network::Downloader::download( const QUrl
     const auto url = url_;
     const auto settings = settings_;
 
-    resultMutex.lock();
+    QMutexLocker scopedLocker(&resultMutex);
     Concurrent::pools->network->start(new Concurrent::Task([url, settings, &result, &resultMutex, &resultWaitCondition](Concurrent::Task* task, QEventLoop& eventLoop)
         {
             QNetworkAccessManager networkAccessManager;
@@ -82,8 +83,7 @@ std::shared_ptr<QNetworkReply> OsmAnd::Network::Downloader::download( const QUrl
         }));
 
     // Wait for condition
-    resultWaitCondition.wait(&resultMutex);
-    resultMutex.unlock();
+    REPEAT_UNTIL(resultWaitCondition.wait(&resultMutex));
 
     return result;
 }
