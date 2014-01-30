@@ -59,14 +59,14 @@ bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int 
 	}
 	if (addDebugIncompleted) {
 		// draw uncompleted for debug purpose
-		for (int i = 0; i < uncompletedRings.size(); i++) {
+		for (uint i = 0; i < uncompletedRings.size(); i++) {
 			MapDataObject* o = new MapDataObject();
 			o->points = uncompletedRings[i];
 			o->types.push_back(tag_value("natural", "coastline_broken"));
 			res.push_back(o);
 		}
 		// draw completed for debug purpose
-		for (int i = 0; i < completedRings.size(); i++) {
+		for (uint i = 0; i < completedRings.size(); i++) {
 			MapDataObject* o = new MapDataObject();
 			o->points = completedRings[i];
 			o->types.push_back(tag_value("natural", "coastline_line"));
@@ -79,7 +79,7 @@ bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int 
 	}
 	int landFound = 0;
 	int waterFound = 0;
-	for (int i = 0; i < completedRings.size(); i++) {
+	for (uint i = 0; i < completedRings.size(); i++) {
 		bool clockwise = isClockwiseWay(completedRings[i]);
 		MapDataObject* o = new MapDataObject();
 		o->points = completedRings[i];

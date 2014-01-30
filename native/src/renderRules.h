@@ -164,7 +164,7 @@ public:
 	void printDebugRenderingRule(string indent, RenderingRulesStorage * st);
 private :
 	inline int getPropertyIndex(string property) {
-		for (int i = 0; i < properties.size(); i++) {
+		for (uint i = 0; i < properties.size(); i++) {
 			RenderingRuleProperty* prop = properties[i];
 			if (prop->attrName == property) {
 				return i;
@@ -421,8 +421,8 @@ public:
 	const static int POLYGON_RULES = 3;
 	const static int TEXT_RULES = 4;
 	const static int ORDER_RULES = 5;
-	RenderingRulesStorage(const void* storage, bool createDefProperties = true) : storageId(storage),
-			PROPS(createDefProperties) {
+	RenderingRulesStorage(const void* storage, bool createDefProperties = true) : 
+			PROPS(createDefProperties), storageId(storage) {
 		tagValueGlobalRules = new UNORDERED(map)<int, RenderingRule*>[SIZE_STATES];
 		if(createDefProperties) {
 			getDictionaryValue("");

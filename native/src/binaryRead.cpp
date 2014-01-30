@@ -23,8 +23,8 @@ using google::protobuf::io::FileInputStream;
 using google::protobuf::internal::WireFormatLite;
 //using namespace google::protobuf::internal;
 
-static int zoomForBaseRouteRendering  = 14;
-static int zoomOnlyForBasemaps  = 11;
+static uint zoomForBaseRouteRendering  = 14;
+static uint zoomOnlyForBasemaps  = 11;
 std::map< std::string, BinaryMapFile* > openFiles;
 OsmAndStoredIndex* cache = NULL;
 typedef UNORDERED(set)<long long> IDS_SET;
@@ -119,11 +119,15 @@ bool readMapLevel(CodedInputStream* input, MapRoot* root, bool initSubtrees) {
 	while ((tag = input->ReadTag()) != 0) {
 		switch (WireFormatLite::GetTagFieldNumber(tag)) {
 		case OsmAndMapIndex_MapRootLevel::kMaxZoomFieldNumber: {
-			DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_INT32>(input, &root->maxZoom)));
+			int z;
+			DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_INT32>(input, &z)));
+			root->maxZoom = z;
 			break;
 		}
 		case OsmAndMapIndex_MapRootLevel::kMinZoomFieldNumber: {
-			DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_INT32>(input, &root->minZoom)));
+			int z;
+			DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_INT32>(input, &z)));
+			root->minZoom = z;
 			break;
 		}
 		case OsmAndMapIndex_MapRootLevel::kBottomFieldNumber: {
@@ -184,7 +188,6 @@ bool readRouteEncodingRule(CodedInputStream* input, RoutingIndex* index, uint32_
 	int tag;
 	std::string tagS;
 	std::string value;
-	uint32_t type = 0;
 	while ((tag = input->ReadTag()) != 0) {
 		switch (WireFormatLite::GetTagFieldNumber(tag)) {
 		case OsmAndRoutingIndex_RouteEncodingRule::kValueFieldNumber: {
@@ -535,7 +538,6 @@ static const int MASK_TO_READ = ~((1 << SHIFT_COORDINATES) - 1);
 
 bool acceptTypes(SearchQuery* req, std::vector<tag_value>& types, MapIndex* root) {
 	RenderingRuleSearchRequest* r = req->req;
-	bool accept = true;
 	for (std::vector<tag_value>::iterator type = types.begin(); type != types.end(); type++) {
 		for (int i = 1; i <= 3; i++) {
 			r->setIntFilter(r->props()->R_MINZOOM, req->zoom);
@@ -558,8 +560,8 @@ bool acceptTypes(SearchQuery* req, std::vector<tag_value>& types, MapIndex* root
 MapDataObject* readMapDataObject(CodedInputStream* input, MapTreeBounds* tree, SearchQuery* req,
 			MapIndex* root, uint64_t baseId) {
 	uint32_t tag = WireFormatLite::GetTagFieldNumber(input->ReadTag());
-	bool area = MapData::kAreaCoordinatesFieldNumber == tag;
-	if(!area && MapData::kCoordinatesFieldNumber != tag) {
+	bool area = (uint32_t)MapData::kAreaCoordinatesFieldNumber == tag;
+	if(!area && (uint32_t)MapData::kCoordinatesFieldNumber != tag) {
 		return NULL;
 	}
 	req->cacheCoordinates.clear();
@@ -735,7 +737,8 @@ bool searchMapTreeBounds(CodedInputStream* input, MapTreeBounds* current, MapTre
 		if (init == 0xf) {
 			init = 0;
 			// coordinates are init
-			if (current->right < req->left || current->left > req->right || current->top > req->bottom || current->bottom < req->top) {
+			if (current->right < (uint)req->left || current->left > (uint)req->right || 
+				current->top > (uint)req->bottom || current->bottom < (uint)req->top) {
 				return false;
 			} else {
 				req->numberOfAcceptedSubtrees++;
@@ -831,7 +834,6 @@ bool readMapDataBlocks(CodedInputStream* input, SearchQuery* req, MapTreeBounds*
 			if(results.size() > 0) {
 				std::vector<std::string> stringTable;
 				readStringTable(input, stringTable);
-				MapDataObject* o;
 				for (std::vector<MapDataObject*>::iterator obj = results.begin(); obj != results.end(); obj++) {
 					if ((*obj)->stringIds.size() > 0) {
 						UNORDERED(map)<std::string, unsigned int >::iterator  val=(*obj)->stringIds.begin();
@@ -883,7 +885,8 @@ void searchMapData(CodedInputStream* input, MapRoot* root, MapIndex* ind, Search
 		if (req->publisher->isCancelled()) {
 			return;
 		}
-		if (i->right < req->left || i->left > req->right || i->top > req->bottom || i->bottom < req->top) {
+		if (i->right < (uint)req->left || i->left > (uint)req->right || 
+				i->top > (uint)req->bottom || i->bottom < (uint)req->top) {
 			continue;
 		}
 		std::vector<MapTreeBounds> foundSubtrees;
@@ -984,8 +987,8 @@ void searchRouteSubregions(SearchQuery* q, std::vector<RouteSubregion>& tempResu
 			bool contains = false;
 			std::vector<RouteSubregion>& subs = basemap? (*routeIndex)->basesubregions : (*routeIndex)->subregions;
 			for (std::vector<RouteSubregion>::iterator subreg = subs.begin(); subreg != subs.end(); subreg++) {
-				if (subreg->right >= q->left && q->right >= subreg->left && subreg->bottom >= q->top
-						&& q->bottom >= subreg->top) {
+				if (subreg->right >= (uint)q->left && (uint)q->right >= subreg->left && 
+					subreg->bottom >= (uint)q->top && (uint)q->bottom >= subreg->top) {
 					contains = true;
 				}
 			}
@@ -1040,8 +1043,8 @@ void readRouteDataAsMapObjects(SearchQuery* q, BinaryMapFile* file, std::vector<
 			subs = (*routeIndex)->basesubregions;
 		}
 		for (std::vector<RouteSubregion>::iterator subreg = subs.begin(); subreg != subs.end(); subreg++) {
-			if (subreg->right >= q->left && q->right >= subreg->left && subreg->bottom >= q->top
-					&& q->bottom >= subreg->top) {
+			if (subreg->right >= (uint) q->left && (uint)q->right >= subreg->left && 
+					subreg->bottom >= (uint) q->top && (uint) q->bottom >= subreg->top) {
 				OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Search route map %s", (*routeIndex)->name.c_str());
 				contains = true;
 			}
@@ -1074,8 +1077,8 @@ void readMapObjects(SearchQuery* q, BinaryMapFile* file) {
 			}
 
 			if (mapLevel->minZoom <= q->zoom && mapLevel->maxZoom >= q->zoom) {
-				if (mapLevel->right >= q->left && q->right >= mapLevel->left && mapLevel->bottom >= q->top
-						&& q->bottom >= mapLevel->top) {
+				if (mapLevel->right >= (uint)q->left && (uint)q->right >= mapLevel->left && 
+						mapLevel->bottom >= (uint)q->top && (uint)q->bottom >= mapLevel->top) {
 					// OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Search map %s", mapIndex->name.c_str());
 					// lazy initializing rules
 					if (mapIndex->decodingRules.size() == 0) {
@@ -1274,11 +1277,11 @@ void searchRouteRegion(CodedInputStream* input, SearchQuery* q, RoutingIndex* in
 		std::vector<RouteSubregion>& toLoad) {
 	for (std::vector<RouteSubregion>::iterator subreg = subregions.begin();
 						subreg != subregions.end(); subreg++) {
-		if (subreg->right >= q->left && q->right >= subreg->left && subreg->bottom >= q->top
-				&& q->bottom >= subreg->top) {
+		if (subreg->right >= (uint) q->left && (uint)q->right >= subreg->left && 
+				subreg->bottom >= (uint)q->top && (uint)q->bottom >= subreg->top) {
 			if(subreg->subregions.empty() && subreg->mapDataBlock == 0){
-				bool contains = subreg->right <= q->right &&  subreg->left >= q->left && subreg->top <= q->top
-						&& subreg->bottom >= q->bottom;
+				//bool contains = subreg->right <= (uint)q->right &&  subreg->left >= (uint)q->left && subreg->top <= (uint)q->top
+				// && subreg->bottom >= (uint)q->bottom;
 				input->Seek(subreg->filePointer);
 				uint32_t old = input->PushLimit(subreg->length);
 				readRouteTree(input, &(*subreg), NULL, ind, -1/*contains? -1 : 1*/, false);
@@ -1316,7 +1319,6 @@ bool readRouteDataObject(CodedInputStream* input, uint32_t left, uint32_t top, R
 			uint32_t length;
 			DO_((WireFormatLite::ReadPrimitive<uint32_t, WireFormatLite::TYPE_UINT32>(input, &length)));
 			int oldLimit = input->PushLimit(length);
-			uint32_t t;
 			int s;
 			int px = left >> ROUTE_SHIFT_COORDINATES;
 			int py = top >> ROUTE_SHIFT_COORDINATES;
@@ -1405,7 +1407,7 @@ bool readRouteTreeData(CodedInputStream* input, RouteSubregion* s, std::vector<R
 			int oldLimit = input->PushLimit(length);
 			RouteDataObject* obj = new RouteDataObject;
 			readRouteDataObject(input, s->left, s->top, obj);
-			if(dataObjects.size() <= obj->id ) {
+			if((uint32_t)dataObjects.size() <= obj->id ) {
 				dataObjects.resize((uint32_t) obj->id + 1, NULL);
 			}
 			obj->region = routingIndex;
@@ -1508,7 +1510,7 @@ bool readRouteTreeData(CodedInputStream* input, RouteSubregion* s, std::vector<R
 		RouteDataObject* fromr = dataObjects[itRestrictions->first];
 		if (fromr != NULL) {
 			fromr->restrictions = itRestrictions->second;
-			for (int i = 0; i < fromr->restrictions.size(); i++) {
+			for (uint i = 0; i < fromr->restrictions.size(); i++) {
 				uint32_t to = fromr->restrictions[i] >> RESTRICTION_SHIFT;
 				uint64_t valto = (idTables[to] << RESTRICTION_SHIFT) | ((long) fromr->restrictions[i] & RESTRICTION_MASK);
 				fromr->restrictions[i] = valto;
@@ -1518,7 +1520,7 @@ bool readRouteTreeData(CodedInputStream* input, RouteSubregion* s, std::vector<R
 	std::vector<RouteDataObject*>::iterator dobj = dataObjects.begin();
 	for (; dobj != dataObjects.end(); dobj++) {
 		if (*dobj != NULL) {
-			if ((*dobj)->id < idTables.size()) {
+			if ((uint)(*dobj)->id < idTables.size()) {
 				(*dobj)->id = idTables[(*dobj)->id];
 			}
 			if ((*dobj)->namesIds.size() > 0) {
@@ -1562,7 +1564,6 @@ void searchRouteDataForSubRegion(SearchQuery* q, std::vector<RouteDataObject*>& 
 	map<std::string, BinaryMapFile*>::iterator i = openFiles.begin();
 	RoutingIndex* rs = sub->routingIndex;
 	IDS_SET ids;
-	bool basemapExists = false;
 	for (; i != openFiles.end() && !q->publisher->isCancelled(); i++) {
 		BinaryMapFile* file = i->second;
 		for (std::vector<RoutingIndex*>::iterator routingIndex = file->routingIndexes.begin();

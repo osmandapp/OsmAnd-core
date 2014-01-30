@@ -22,7 +22,6 @@ float getDensityValue(RenderingContext* rc, RenderingRuleSearchRequest* render, 
 int parseColor(string colorString) {
 	if (colorString[0] == '#') {
 		// Use a long to avoid rollovers on #ffXXXXXX
-		char** end;
 		long color = strtol(colorString.c_str() + 1, NULL, 16);
 		if (colorString.size() == 7) {
 			// Set the alpha value
@@ -196,7 +195,7 @@ class RenderingRulesHandler {
 
 
 	RenderingRulesHandler(RenderingRulesStorageResolver* resolver, RenderingRulesStorage* storage) :
-			storage(storage), resolver(resolver), dependsStorage(NULL) {
+			resolver(resolver), dependsStorage(NULL), storage(storage) {
 	}
 
 	RenderingRulesStorage* getDependsStorage() {
@@ -218,9 +217,8 @@ class RenderingRulesHandler {
 
 	static void startElementHandler(void *data, const char *tag, const char **atts) {
 		RenderingRulesHandler* t = (RenderingRulesHandler*) data;
-		int len = strlen(tag);
 		string name(tag);
-		if (len == 6 && "filter" == name) {
+		if ("filter" == name) {
 			map<string, string> attrsMap;
 			if (t->st.size() > 0 && t->st.top().isGroup()) {
 				attrsMap.insert(t->st.top().groupAttributes.begin(), t->st.top().groupAttributes.end());
@@ -230,7 +228,7 @@ class RenderingRulesHandler {
 			if (t->st.size() > 0 && t->st.top().isGroup()) {
 				t->st.top().children.push_back(renderingRule);
 			} else if (t->st.size() > 0 && !t->st.top().isGroup()) {
-				RenderingRule* parent = t->st.top().singleRule;
+				// RenderingRule* parent = t->st.top().singleRule;
 				t->st.top().singleRule->ifElseChildren.push_back(renderingRule);
 			} else {
 				t->storage->registerGlobalRule(renderingRule, t->state);
@@ -330,7 +328,6 @@ class RenderingRulesHandler {
 
 
 	static void endElementHandler(void *data, const char *tag) {
-		int len = strlen(tag);
 		RenderingRulesHandler* t = (RenderingRulesHandler*) data;
 		string name(tag);
 		if ("filter" == name) { //$NON-NLS-1$

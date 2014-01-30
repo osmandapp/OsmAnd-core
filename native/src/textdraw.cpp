@@ -168,7 +168,7 @@ void drawTextOnCanvas(SkCanvas* cv, const char* text, uint16_t len, float center
 }
 
 
-int nextWord(uint8_t* s, int* charRead) {
+int nextWord(uint8_t* s, uint* charRead) {
 	uint8_t* init = s;
 	while((*s) != 0) {
 		uint32_t tp = utf8::unchecked::next(s);
@@ -196,9 +196,7 @@ void drawWrappedText(RenderingContext* rc, SkCanvas* cv, TextDrawInfo* text, flo
 		int start = 0;
 		while(start < end) {
 			const char* p_str = c_str;
-			int lastSpace = -1;
-			int prevPos = -1;
-			int charRead = 0;
+			uint charRead = 0;
 			do {
 				int lastSpace = nextWord((uint8_t*)p_str, &charRead);
 				if (lastSpace == -1) {
@@ -297,7 +295,7 @@ bool calculatePathToRotate(RenderingContext* rc, TextDrawInfo* p) {
 	}
 
 	if (!p->drawOnPath) {
-		int middle = startInd + 1 + (endInd - startInd - 1) / 2;
+		//int middle = startInd + 1 + (endInd - startInd - 1) / 2;
 
 		float px = 0;
 		float py = 0;

@@ -11,7 +11,7 @@ struct ResultJNIPublisher : ResultPublisher {
 	jobject o;
 	jfieldID interruptedField;
 	ResultJNIPublisher(jobject o, jfieldID interruptedField, JNIEnv* env) :
-		o(o), interruptedField(interruptedField), env(env){
+		env(env), o(o), interruptedField(interruptedField){
 	}
 
 	bool isCancelled() {

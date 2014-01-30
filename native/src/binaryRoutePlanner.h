@@ -9,10 +9,7 @@
 typedef UNORDERED(map)<string, float> MAP_STR_FLOAT;
 typedef UNORDERED(map)<string, string> MAP_STR_STR;
 
-static double measuredDist(int x1, int y1, int x2, int y2) {
-	return getDistance(get31LatitudeY(y1), get31LongitudeX(x1), get31LatitudeY(y2),
-			get31LongitudeX(x2));
-}
+
 
 struct RouteSegment {
 public :
@@ -51,23 +48,27 @@ public :
 		return directionAssgn == 1;
 	}
 
-	SHARED_PTR<RouteSegment> initRouteSegment(boolean positiveDirection) {
-		if(segStart == 0 && !positiveDirection) {
+	inline SHARED_PTR<RouteDataObject> getRoad() {
+		return road;
+	}
+
+	SHARED_PTR<RouteSegment> initRouteSegment(bool positiveDirection) {
+		if(segmentStart == 0 && !positiveDirection) {
 			return SHARED_PTR<RouteSegment>(NULL);
 		}
-		if(segStart == road->getPointsLength() - 1 && positiveDirection) {
+		if(segmentStart == road->getPointsLength() - 1 && positiveDirection) {
 			return SHARED_PTR<RouteSegment>(NULL);
 		}
 		SHARED_PTR<RouteSegment> rs(this);
 		if(directionAssgn == 0) {
-			rs.directionAssgn = positiveDirection ? 1 : -1;
+			rs->directionAssgn = positiveDirection ? 1 : -1;
 		} else {
 			if(positiveDirection != (directionAssgn == 1)) {
-				if(oppositeDirection == null) {
-					oppositeDirection = SHARED_PTR<RouteSegment>(new RouteSegment(road, segStart));
-					oppositeDirection.directionAssgn = positiveDirection ? 1 : -1;
+				if(oppositeDirection == NULL) {
+					oppositeDirection = SHARED_PTR<RouteSegment>(new RouteSegment(road, segmentStart));
+					oppositeDirection->directionAssgn = positiveDirection ? 1 : -1;
 				}
-				if ((oppositeDirection.directionAssgn == 1) != positiveDirection) {
+				if ((oppositeDirection->directionAssgn == 1) != positiveDirection) {
 					OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "Alert failed - directionAssgn wrongly");					
 				}
 				rs = oppositeDirection;
@@ -76,9 +77,11 @@ public :
 		return rs;
 	}
 
-	RouteSegment(SHARED_PTR<RouteDataObject> road, int segmentStart) : road(road), segmentStart(segmentStart),
-			parentSegmentEnd(0), distanceFromStart(0), distanceToEnd(0),next(), parentRoute(),
-			directionAssgn(0), allowedDirection(0), opposite(), reverseWaySearch(0), oppositeDirection(){
+	RouteSegment(SHARED_PTR<RouteDataObject> road, int segmentStart) : 
+			segmentStart(segmentStart), road(road), next(), oppositeDirection(),
+			parentRoute(), parentSegmentEnd(0),
+			directionAssgn(0), reverseWaySearch(0), opposite(), 
+			distanceFromStart(0), distanceToEnd(0) {
 	}
 	~RouteSegment(){
 	}
@@ -101,10 +104,10 @@ struct RoutingSubregionTile {
 	// make it without get/set for fast access
 	int access;
 	int loaded;
-	int size ;
+	uint size ;
 	UNORDERED(map)<int64_t, SHARED_PTR<RouteSegment> > routes;
 
-	RoutingSubregionTile(RouteSubregion& sub) : access(0), loaded(0), subregion(sub) {
+	RoutingSubregionTile(RouteSubregion& sub) : subregion(sub), access(0), loaded(0) {
 		size = sizeof(RoutingSubregionTile);
 	}
 	~RoutingSubregionTile(){
@@ -133,7 +136,7 @@ struct RoutingSubregionTile {
 
 	void add(SHARED_PTR<RouteDataObject> o) {
 		size += o->getSize() + sizeof(RouteSegment)* o->pointsX.size();
-		for (int i = 0; i < o->pointsX.size(); i++) {
+		for (uint i = 0; i < o->pointsX.size(); i++) {
 			uint64_t x31 = o->pointsX[i];
 			uint64_t y31 = o->pointsY[i];
 			uint64_t l = (((uint64_t) x31) << 31) + (uint64_t) y31;
@@ -228,7 +231,7 @@ struct RoutingConfiguration {
 
 	RoutingConfiguration(vector<ROUTE_TRIPLE>& config, float initDirection = -360, int memLimit = 48) :
 			memoryLimitation(memLimit), initialDirection(initDirection) {
-		for(int j = 0; j<config.size(); j++) {
+		for(uint j = 0; j < config.size(); j++) {
 			ROUTE_TRIPLE r = config[j];
 			if(r.first == 0) {
 				highwaySpeed[r.second.first] = atof(r.second.second.c_str());
@@ -333,7 +336,7 @@ struct RoutingConfiguration {
 		return 0;
 	}
 
-	float defineRoutingObstacle(SHARED_PTR<RouteDataObject> road, int segmentEnd) {
+	float defineRoutingObstacle(SHARED_PTR<RouteDataObject> road, uint segmentEnd) {
 		if(road->pointTypes.size() <= segmentEnd) {
 			return 0;
 		}
@@ -368,7 +371,7 @@ struct RoutingConfiguration {
 				if(v == "none") {
 					return 40;
 				} else {
-					int i = 0;
+					uint i = 0;
 					while(i < v.length() && v[i] >= '0' && v[i] <= '9') {
 						i++;
 					}
@@ -428,7 +431,7 @@ protected:
 	bool cancelled;
 public:
 	RouteCalculationProgress() : segmentNotFound(-1), distanceFromBegin(0),
-		distanceFromEnd(0), directSegmentQueueSize(0), reverseSegmentQueueSize(0), cancelled(false){
+		directSegmentQueueSize(0), distanceFromEnd(0),  reverseSegmentQueueSize(0), cancelled(false){
 	}
 
 	virtual bool isCancelled(){
@@ -475,8 +478,8 @@ struct RoutingContext {
 
 	int startX;
 	int startY;
-	int endX;
-	int endY;
+	int targetX;
+	int targetY;
 	bool basemap;
 
 	PrecalculatedRouteDirection precalcRoute;
@@ -488,8 +491,10 @@ struct RoutingContext {
 	MAP_SUBREGION_TILES subregionTiles;
 	UNORDERED(map)<int64_t, std::vector<SHARED_PTR<RoutingSubregionTile> > > indexedSubregions;
 
-	RoutingContext(RoutingConfiguration& config) : firstRoadDirection(0), firstRoadId(0),
-		loadedTiles(0), visitedSegments(0), config(config), finalRouteSegment() {
+	RoutingContext(RoutingConfiguration& config) : 
+		visitedSegments(0), loadedTiles(0),
+		firstRoadDirection(0), firstRoadId(0),
+		config(config) {
 			precalcRoute.empty = true;
 	}
 
@@ -526,7 +531,7 @@ struct RoutingContext {
 			}
 		}
 		sort(list.begin(), list.end(), compareRoutingSubregionTile);
-		int i =0;
+		uint i = 0;
 		while(sz >= desirableSize && i < list.size()) {
 			SHARED_PTR<RoutingSubregionTile> unload = list[i];
 			i++;
@@ -545,7 +550,7 @@ struct RoutingContext {
 	void loadHeaderObjects(int64_t tileId) {
 		vector<SHARED_PTR<RoutingSubregionTile> >& subregions = indexedSubregions[tileId];
 		bool gc = false;
-		for(int j = 0; j<subregions.size() && !gc; j++) {
+		for(uint j = 0; j<subregions.size() && !gc; j++) {
 			if(!subregions[j]->isLoaded()) {
 				gc = true;
 			}
@@ -553,7 +558,7 @@ struct RoutingContext {
 		if(gc) {
 			unloadUnusedTiles(config.memoryLimitation);
 		}
-		for(int j = 0; j<subregions.size(); j++) {
+		for(uint j = 0; j<subregions.size(); j++) {
 			if(!subregions[j]->isLoaded()) {
 				loadedTiles++;
 				subregions[j]->setLoaded();
@@ -584,7 +589,7 @@ struct RoutingContext {
 			std::vector<RouteSubregion> tempResult;
 			searchRouteSubregions(&q, tempResult, basemap);
 			std::vector<SHARED_PTR<RoutingSubregionTile> > collection;
-			for(int i=0; i<tempResult.size(); i++) {
+			for(uint i = 0; i<tempResult.size(); i++) {
 				RouteSubregion& rs = tempResult[i];
 				int64_t key = ((int64_t)rs.left << 31)+ rs.filePointer;
 				if(subregionTiles.find(key) == subregionTiles.end()) {
@@ -616,7 +621,7 @@ struct RoutingContext {
 				int64_t tileId = (xloc << z) + yloc;
 				loadHeaders(xloc, yloc);
 				vector<SHARED_PTR<RoutingSubregionTile> >& subregions = indexedSubregions[tileId];
-				for(int j = 0; j<subregions.size(); j++) {
+				for(uint j = 0; j<subregions.size(); j++) {
 					if(subregions[j]->isLoaded()) {
 						UNORDERED(map)<int64_t, SHARED_PTR<RouteSegment> >::iterator s = subregions[j]->routes.begin();
 						while(s != subregions[j]->routes.end()) {
@@ -647,7 +652,7 @@ struct RoutingContext {
 		vector<SHARED_PTR<RoutingSubregionTile> >& subregions = indexedSubregions[tileId];
 		UNORDERED(map)<int64_t, SHARED_PTR<RouteDataObject> > excludeDuplications;
 		SHARED_PTR<RouteSegment> original;
-		for(int j = 0; j<subregions.size(); j++) {
+		for(uint j = 0; j<subregions.size(); j++) {
 			if(subregions[j]->isLoaded()) {
 				SHARED_PTR<RouteSegment> segment = subregions[j]->routes[l];
 				subregions[j]->access++;

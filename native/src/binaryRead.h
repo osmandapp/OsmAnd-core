@@ -26,8 +26,8 @@
 #include "mapObjects.h"
 #include "renderRules.h"
 
-static const int MAP_VERSION = 2;
-static const int BASEMAP_ZOOM = 11;
+static const uint MAP_VERSION = 2;
+static const uint BASEMAP_ZOOM = 11;
 
 
 struct MapTreeBounds {
@@ -62,8 +62,8 @@ struct RouteSubregion {
 
 
 struct MapRoot: MapTreeBounds {
-	int minZoom ;
-	int maxZoom ;
+	uint minZoom ;
+	uint maxZoom ;
 	std::vector<MapTreeBounds> bounds;
 };
 
@@ -122,6 +122,10 @@ struct RouteDataObject {
 		return "";
 	}
 
+	inline int64_t getId() {
+		return id;
+	}
+
 	int getSize() {
 		int s = sizeof(this);
 		s += pointsX.capacity()*sizeof(uint32_t);
@@ -157,7 +161,7 @@ struct RouteDataObject {
 		do {
 			if (plus) {
 				nx++;
-				if (nx >= pointsX.size()) {
+				if (nx >= (int) pointsX.size()) {
 					break;
 				}
 			} else {
@@ -287,17 +291,17 @@ struct SearchQuery {
 	int right;
 	int top;
 	int bottom;
-	int zoom;
+	uint zoom;
 	ResultPublisher* publisher;
 
 	coordinates cacheCoordinates;
 	bool ocean;
 	bool mixed;
 
-	int numberOfVisitedObjects;
-	int numberOfAcceptedObjects;
-	int numberOfReadSubtrees;
-	int numberOfAcceptedSubtrees;
+	uint numberOfVisitedObjects;
+	uint numberOfAcceptedObjects;
+	uint numberOfReadSubtrees;
+	uint numberOfAcceptedSubtrees;
 
 	SearchQuery(int l, int r, int t, int b, RenderingRuleSearchRequest* req, ResultPublisher* publisher) :
 			req(req), left(l), right(r), top(t), bottom(b),publisher(publisher) {

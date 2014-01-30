@@ -418,13 +418,11 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 
 	rc->visible++;
 	SkPath path;
-	int i = 0;
 	SkPoint middlePoint;
-	int middle = length / 2;
-	float prevx;
-	float prevy;
 	bool intersect = false;
-	int prevCross = 0;
+	uint prevCross = 0;
+	uint middle = length / 2;
+	uint i = 0;
 	for (; i < length; i++) {
 		calcPoint(mObj->points.at(i), rc);
 		if (i == 0) {
@@ -439,7 +437,7 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 			if (rc->calcX >= 0 && rc->calcY >= 0 && rc->calcX < rc->getWidth() && rc->calcY < rc->getHeight()) {
 				intersect = true;
 			} else {
-				int cross = 0;
+				uint cross = 0;
 				cross |= (rc->calcX < 0 ? 1 : 0);
 				cross |= (rc->calcX > rc->getWidth() ? 2 : 0);
 				cross |= (rc->calcY < 0 ? 4 : 0);
@@ -529,7 +527,7 @@ bool ray_intersect_x(int prevX, int prevY, int nx, int ny, int x, int y) {
 
 int countIntersections(vector<pair<int,int> > points, int x, int y) {
 	int intersections = 0;
-	for (int i = 0; i < points.size() - 1; i++) {
+	for (uint i = 0; i < points.size() - 1; i++) {
 		if (ray_intersect_x(points[i].first, points[i].second,
 				points[i + 1].first, points[i + 1].second, x, y)) {
 			intersections++;
@@ -568,7 +566,7 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 
 	rc->visible++;
 	SkPath path;
-	int i = 0;
+	uint i = 0;
 	bool containsPoint = false;
 	int bounds = 0;
 	std::vector< std::pair<int,int > > ps;
@@ -611,7 +609,7 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 	yText /= length;
 	if(!containsPoint){
 		// fast check for polygons
-		if((bounds&3 != 3) || (bounds >> 2) != 3) {
+		if(((bounds & 3) != 3) || ((bounds >> 2) != 3) ) {
 			return;
 		}
 		if(contains(ps, 0, 0) ||
@@ -629,9 +627,9 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 	std::vector<coordinates> polygonInnerCoordinates = mObj->polygonInnerCoordinates;
 	if (polygonInnerCoordinates.size() > 0) {
 		path.setFillType(SkPath::kEvenOdd_FillType);
-		for (int j = 0; j < polygonInnerCoordinates.size(); j++) {
+		for (uint j = 0; j < polygonInnerCoordinates.size(); j++) {
 			coordinates cs = polygonInnerCoordinates.at(j);
-			for (int i = 0; i < cs.size(); i++) {
+			for (uint i = 0; i < cs.size(); i++) {
 				calcPoint(cs[i], rc);
 				if (i == 0) {
 					path.moveTo(rc->calcX, rc->calcY);
@@ -651,7 +649,7 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 }
 
 void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* cv, SkPaint* paint,
-	RenderingContext* rc, std::pair<std::string, std::string>  pair, int renderTxt)
+	RenderingContext* rc, std::pair<std::string, std::string>  pair, bool renderTxt)
 {
 	std::string tag = pair.first;
 	std::string value = pair.second;
@@ -661,14 +659,14 @@ void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* c
 	std::string resId = req->getStringPropertyValue(req-> props()-> R_ICON);
 	SkBitmap* bmp = getCachedBitmap(rc, resId);
 	
-	if (!bmp && !renderText)
+	if (bmp == NULL && !renderTxt)
 		return;
 	
 	size_t length = mObj->points.size();
 	rc->visible++;
 	float px = 0;
 	float py = 0;
-	int i = 0;
+	uint i = 0;
 	for (; i < length; i++) {
 		calcPoint(mObj->points.at(i), rc);
 		px += rc->calcX;
@@ -695,11 +693,10 @@ void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* c
 
 void drawObject(RenderingContext* rc,  SkCanvas* cv, RenderingRuleSearchRequest* req,
 	SkPaint* paint, vector<MapDataObjectPrimitive>& array, int objOrder) {
-
-	double polygonLimit = 100;
-	float orderToSwitch = 0;
+	//double polygonLimit = 100;
+	//float orderToSwitch = 0;
 	double minPolygonSize = 1. / rc->polygonMinSizeToDisplay;
-	for (int i = 0; i < array.size(); i++) {
+	for (uint i = 0; i < array.size(); i++) {
 		rc->allObjects++;
 		MapDataObject* mObj = array[i].obj;
 		tag_value pair = mObj->types.at(array[i].typeInd);
@@ -768,7 +765,7 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 double polygonArea(MapDataObject* obj, float mult) {
 	double area = 0.;
 	int j = obj->points.size() - 1;
-	for (int i = 0; i < obj->points.size(); i++) {
+	for (uint i = 0; i < obj->points.size(); i++) {
 		int_pair x = obj->points[i] ;
 		int_pair y = obj->points[j];
 		area += (y.first + ((float) x.first) )* (y.second- ((float)x.second));
@@ -795,7 +792,7 @@ void filterLinesByDensity(RenderingContext* rc, std::vector<MapDataObjectPrimiti
 		if (ts.first == "highway") {
 			accept = false;
 			int64_t prev = 0;
-			for (int k = 0; k < line->points.size(); k++) {
+			for (uint k = 0; k < line->points.size(); k++) {
 				int dz = rc->getZoom() + densityZ;
 				int64_t x = (line->points[k].first) >> (31 - dz);
 				int64_t y = (line->points[k].second) >> (31 - dz);
@@ -837,11 +834,10 @@ void sortObjectsByProperOrder(std::vector <MapDataObject* > mapDataObjects,
 	if (req != NULL) {
 		std::vector<MapDataObjectPrimitive>  linesArray;
 		req->clearState();
-		const int size = mapDataObjects.size();
+		const uint size = mapDataObjects.size();
 		float mult = 1. / getPowZoom(max(31 - (rc->getZoom() + 8), 0));
-		int i = 0;
+		uint i = 0;
 		for (; i < size; i++) {
-			uint32_t sh = i << 8;
 			MapDataObject* mobj = mapDataObjects[i];
 			size_t sizeTypes = mobj->types.size();
 			size_t j = 0;
@@ -855,7 +851,7 @@ void sortObjectsByProperOrder(std::vector <MapDataObject* > mapDataObjects,
 				if (req->searchRule(RenderingRulesStorage::ORDER_RULES)) {
 					int objectType = req->getIntPropertyValue(req->props()->R_OBJECT_TYPE);
 					int order = req->getIntPropertyValue(req->props()->R_ORDER);
-					int l = req->getIntPropertyValue(req->props()->R_LAYER);
+					// int l = req->getIntPropertyValue(req->props()->R_LAYER);
 					MapDataObjectPrimitive mapObj;
 					mapObj.objectType = objectType;
 					mapObj.order = order;
