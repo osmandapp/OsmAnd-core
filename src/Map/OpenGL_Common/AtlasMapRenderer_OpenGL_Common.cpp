@@ -1315,6 +1315,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                 const auto& symbolEntry = itSymbolEntry.value();
                 const auto& symbol = symbolEntry.first;
                 const auto gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(symbolEntry.second);
+                const auto mapObjectId = symbol->mapObject->id;
 
                 // Calculate position in screen coordinates (same calculation as done in shader)
                 const auto symbolOffset31 = symbol->location31 - currentState.target31;
@@ -1328,7 +1329,12 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                 const auto boundsInWindow = AreaI::fromCenterAndSize(
                     static_cast<int>(symbolOnScreen.x + symbol->offset.x), static_cast<int>((currentState.windowSize.y - symbolOnScreen.y) + symbol->offset.y),
                     gpuResource->width, gpuResource->height);//TODO: use MapSymbol bounds
-                if(intersections.test(boundsInWindow) || !intersections.insert(symbol, boundsInWindow))
+                const auto intersects = intersections.test(boundsInWindow, false,
+                    [mapObjectId](const std::shared_ptr<const MapSymbol>& otherSymbol, const AreaI& otherArea) -> bool
+                    {
+                        return otherSymbol->mapObject->id != mapObjectId;
+                    });
+                if(intersects || !intersections.insert(symbol, boundsInWindow))
                 {
 #if OSMAND_DEBUG
                     addDebugRect2D(boundsInWindow, SkColorSetA(SK_ColorRED, 50));
