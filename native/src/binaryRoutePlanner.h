@@ -40,6 +40,10 @@ public :
 		return reverseWaySearch != 0;
 	}
 
+	inline bool isReverseWaySearch() {
+		return reverseWaySearch == 1;
+	}
+
 	inline uint16_t getSegmentStart() {
 		return segmentStart;
 	}
@@ -52,26 +56,26 @@ public :
 		return road;
 	}
 
-	SHARED_PTR<RouteSegment> initRouteSegment(bool positiveDirection) {
-		if(segmentStart == 0 && !positiveDirection) {
-			return SHARED_PTR<RouteSegment>(NULL);
+	static SHARED_PTR<RouteSegment> initRouteSegment(SHARED_PTR<RouteSegment> th, bool positiveDirection) {
+		if(th->segmentStart == 0 && !positiveDirection) {
+			return SHARED_PTR<RouteSegment>();
 		}
-		if(segmentStart == road->getPointsLength() - 1 && positiveDirection) {
-			return SHARED_PTR<RouteSegment>(NULL);
+		if(th->segmentStart == th->road->getPointsLength() - 1 && positiveDirection) {
+			return SHARED_PTR<RouteSegment>();
 		}
-		SHARED_PTR<RouteSegment> rs(this);
-		if(directionAssgn == 0) {
+		SHARED_PTR<RouteSegment> rs = th;
+		if(th->directionAssgn == 0) {
 			rs->directionAssgn = positiveDirection ? 1 : -1;
 		} else {
-			if(positiveDirection != (directionAssgn == 1)) {
-				if(oppositeDirection == NULL) {
-					oppositeDirection = SHARED_PTR<RouteSegment>(new RouteSegment(road, segmentStart));
-					oppositeDirection->directionAssgn = positiveDirection ? 1 : -1;
+			if(positiveDirection != (th->directionAssgn == 1)) {
+				if(th->oppositeDirection.get() == NULL) {
+					th->oppositeDirection = SHARED_PTR<RouteSegment>(new RouteSegment(th->road, th->segmentStart));
+					th->oppositeDirection->directionAssgn = positiveDirection ? 1 : -1;
 				}
-				if ((oppositeDirection->directionAssgn == 1) != positiveDirection) {
+				if ((th->oppositeDirection->directionAssgn == 1) != positiveDirection) {
 					OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "Alert failed - directionAssgn wrongly");					
 				}
-				rs = oppositeDirection;
+				rs = th->oppositeDirection;
 			}
 		}
 		return rs;
@@ -91,9 +95,10 @@ struct RouteSegmentResult {
 	SHARED_PTR<RouteDataObject> object;
 	int startPointIndex;
 	int endPointIndex;
+	float routingTime;
 	vector<vector<RouteSegmentResult> > attachedRoutes;
 	RouteSegmentResult(SHARED_PTR<RouteDataObject> object, int startPointIndex, int endPointIndex) :
-		object(object), startPointIndex(startPointIndex), endPointIndex (endPointIndex) {
+		object(object), startPointIndex(startPointIndex), endPointIndex (endPointIndex), routingTime(0) {
 
 	}
 };

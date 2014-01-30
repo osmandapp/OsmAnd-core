@@ -441,6 +441,7 @@ jclass jclass_RouteSegmentResult = NULL;
 jclass jclass_RouteSegmentResultAr = NULL;
 jmethodID jmethod_RouteSegmentResult_ctor = NULL;
 jfieldID jfield_RouteSegmentResult_preAttachedRoutes = NULL;
+jfieldID jfield_RouteSegmentResult_routingTime = NULL;
 
 
 
@@ -450,6 +451,8 @@ void loadJniRenderingContext(JNIEnv* env)
 	jclass_RouteSegmentResultAr = findClass(env, "[Lnet/osmand/router/RouteSegmentResult;");
 	jmethod_RouteSegmentResult_ctor = env->GetMethodID(jclass_RouteSegmentResult,
 			"<init>", "(Lnet/osmand/binary/RouteDataObject;II)V");
+	jfield_RouteSegmentResult_routingTime = getFid(env, jclass_RouteSegmentResult, "routingTime",
+			"F"); 
 	jfield_RouteSegmentResult_preAttachedRoutes = getFid(env, jclass_RouteSegmentResult, "preAttachedRoutes",
 			"[[Lnet/osmand/router/RouteSegmentResult;");
 
@@ -632,6 +635,7 @@ jobject convertRouteSegmentResultToJava(JNIEnv* ienv, RouteSegmentResult& r, UNO
 	jobject robj = convertRouteDataObjectToJava(ienv, rdo, reg);
 	jobject resobj = ienv->NewObject(jclass_RouteSegmentResult, jmethod_RouteSegmentResult_ctor, robj,
 			r.startPointIndex, r.endPointIndex);
+	ienv->SetFloatField(resobj, jfield_RouteSegmentResult_routingTime, (jfloat)r.routingTime);
 	ienv->SetObjectField(resobj, jfield_RouteSegmentResult_preAttachedRoutes, ar);
 	if(reg != NULL) {
 		ienv->DeleteLocalRef(reg);
