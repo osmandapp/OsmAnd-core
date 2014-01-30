@@ -1326,19 +1326,18 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
 
                 // Check intersections
                 const auto boundsInWindow = AreaI::fromCenterAndSize(
-                    static_cast<int>(symbolOnScreen.x + symbol->offset.x), static_cast<int>(currentState.windowSize.y - (symbolOnScreen.y + symbol->offset.y)),
+                    static_cast<int>(symbolOnScreen.x + symbol->offset.x), static_cast<int>((currentState.windowSize.y - symbolOnScreen.y) + symbol->offset.y),
                     gpuResource->width, gpuResource->height);//TODO: use MapSymbol bounds
-                auto test = symbol->mapObject->id >> 1; // test == 9223372032558563750
                 if(intersections.test(boundsInWindow) || !intersections.insert(symbol, boundsInWindow))
                 {
 #if OSMAND_DEBUG
-                    addDebugRect2D(boundsInWindow, SkColorSetA(SK_ColorRED, 50));
+                    //addDebugRect2D(boundsInWindow, SkColorSetA(SK_ColorRED, 50));
 #endif
                     continue;
                 }
 
 #if OSMAND_DEBUG
-                addDebugRect2D(boundsInWindow, SkColorSetA(SK_ColorGREEN, 50));
+                //addDebugRect2D(boundsInWindow, SkColorSetA(SK_ColorGREEN, 50));
 #endif
                 GL_PUSH_GROUP_MARKER(QString("[MO %1(%2)]")
                     .arg(symbol->mapObject->id >> 1)
