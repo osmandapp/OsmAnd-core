@@ -1331,7 +1331,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                 if(intersections.test(boundsInWindow) || !intersections.insert(symbol, boundsInWindow))
                 {
 #if OSMAND_DEBUG
-                    //addDebugRect2D(boundsInWindow, SkColorSetA(SK_ColorRED, 50));
+                    addDebugRect2D(boundsInWindow, SkColorSetA(SK_ColorRED, 50));
 #endif
                     continue;
                 }

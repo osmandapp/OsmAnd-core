@@ -2,6 +2,7 @@
 #define _OSMAND_CORE_QUAD_TREE_H_
 
 #include <OsmAndCore/stdlib_common.h>
+#include <functional>
 #include <utility>
 
 #include <OsmAndCore/QtExtensions.h>
@@ -17,7 +18,7 @@ namespace OsmAnd
     {
     public:
         typedef Area<COORD_TYPE> AreaT;
-
+        typedef std::function<bool(const ELEMENT_TYPE& element, const AreaT& area)> Acceptor;
     private:
         Q_DISABLE_COPY(QuadTree)
     protected:
@@ -74,7 +75,7 @@ namespace OsmAnd
                 return;
             }
 
-            void query(const AreaT& area_, QList<ELEMENT_TYPE>& outResults, const bool strict) const
+            void query(const AreaT& area_, QList<ELEMENT_TYPE>& outResults, const bool strict, const Acceptor acceptor) const
             {
                 if(!(area_.contains(area) || (!strict && area_.intersects(area))))
                     return;
@@ -82,7 +83,10 @@ namespace OsmAnd
                 for(auto itEntry = entries.cbegin(); itEntry != entries.cend(); ++itEntry)
                 {
                     if(area_.contains(itEntry->first) || (!strict && area_.intersects(itEntry->first)))
-                        outResults.push_back(itEntry->second);
+                    {
+                        if(!acceptor || acceptor(itEntry->second, itEntry->first))
+                            outResults.push_back(itEntry->second);
+                    }
                 }
 
                 for(auto idx = 0u; idx < 4; idx++)
@@ -90,11 +94,11 @@ namespace OsmAnd
                     if(!subnodes[idx])
                         continue;
 
-                    subnodes[idx]->query(area_, outResults, strict);
+                    subnodes[idx]->query(area_, outResults, strict, acceptor);
                 }
             }
 
-            bool test(const AreaT& area_, const bool strict) const
+            bool test(const AreaT& area_, const bool strict, const Acceptor acceptor) const
             {
                 if(!(area_.contains(area) || (!strict && area_.intersects(area))))
                     return false;
@@ -102,7 +106,10 @@ namespace OsmAnd
                 for(auto itEntry = entries.cbegin(); itEntry != entries.cend(); ++itEntry)
                 {
                     if(area_.contains(itEntry->first) || (!strict && area_.intersects(itEntry->first)))
-                        return true;
+                    {
+                        if(!acceptor || acceptor(itEntry->second, itEntry->first))
+                            return true;
+                    }
                 }
 
                 for(auto idx = 0u; idx < 4; idx++)
@@ -110,7 +117,7 @@ namespace OsmAnd
                     if(!subnodes[idx])
                         continue;
 
-                    if(subnodes[idx]->test(area_, strict))
+                    if(subnodes[idx]->test(area_, strict, acceptor))
                         return true;
                 }
 
@@ -137,14 +144,14 @@ namespace OsmAnd
             return _root->insert(entry, area, strict, maxDepth-1);
         }
 
-        void query(const AreaT& area, QList<ELEMENT_TYPE>& outResults, const bool strict = false) const
+        void query(const AreaT& area, QList<ELEMENT_TYPE>& outResults, const bool strict = false, const Acceptor acceptor = nullptr) const
         {
-            _root->query(area, outResults, strict);
+            _root->query(area, outResults, strict, acceptor);
         }
 
-        bool test(const AreaT& area, const bool strict = false) const
+        bool test(const AreaT& area, const bool strict = false, const Acceptor acceptor = nullptr) const
         {
-            return _root->test(area, strict);
+            return _root->test(area, strict, acceptor);
         }
     };
 }
