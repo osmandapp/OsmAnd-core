@@ -79,7 +79,7 @@ bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols(
 
 bool OsmAnd::OfflineMapSymbolProvider_P::canSymbolsBeSharedFrom(const std::shared_ptr<const Model::MapObject>& mapObject)
 {
-    return !(mapObject->section == owner->dataProvider->rasterizerEnvironment->dummyMapSection);
+    return mapObject->section != owner->dataProvider->rasterizerEnvironment->dummyMapSection;
 }
 
 OsmAnd::OfflineMapSymbolProvider_P::Tile::Tile(const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups_, const std::shared_ptr<const OfflineMapDataTile>& dataTile_)
