@@ -387,6 +387,12 @@ jfieldID jfield_RouteCalculationProgress_routingCalculatedTime = NULL;
 jfieldID jfield_RouteCalculationProgress_visitedSegments = NULL;
 jfieldID jfield_RouteCalculationProgress_loadedTiles = NULL;
 
+jclass jclass_PrecalculatedRouteDirection = NULL;
+jfieldID jfield_PrecalculatedRouteDirection_tms = NULL;
+jfieldID jfield_PrecalculatedRouteDirection_pointsY = NULL;
+jfieldID jfield_PrecalculatedRouteDirection_pointsX = NULL;
+jfieldID jfield_PrecalculatedRouteDirection_speed = NULL;
+
 jclass jclass_RenderingContext = NULL;
 jfieldID jfield_RenderingContext_interrupted = NULL;
 jfieldID jfield_RenderingContext_leftX = NULL;
@@ -466,6 +472,12 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_RouteCalculationProgress_routingCalculatedTime  = getFid(env, jclass_RouteCalculationProgress, "routingCalculatedTime", "F");
 	jfield_RouteCalculationProgress_visitedSegments  = getFid(env, jclass_RouteCalculationProgress, "visitedSegments", "I");
 	jfield_RouteCalculationProgress_loadedTiles  = getFid(env, jclass_RouteCalculationProgress, "loadedTiles", "I");
+
+	jclass_PrecalculatedRouteDirection = findClass(env, "net/osmand/router/PrecalculatedRouteDirection");
+	jfield_PrecalculatedRouteDirection_tms = getFid(env, jclass_PrecalculatedRouteDirection, "tms", "[F");
+	jfield_PrecalculatedRouteDirection_pointsY = getFid(env, jclass_PrecalculatedRouteDirection, "pointsY", "[I");
+	jfield_PrecalculatedRouteDirection_pointsX = getFid(env, jclass_PrecalculatedRouteDirection, "pointsX", "[I");
+	jfield_PrecalculatedRouteDirection_speed = getFid(env, jclass_PrecalculatedRouteDirection, "speed", "F");
 
 	jclass_RenderingContext = findClass(env, "net/osmand/RenderingContext");
 	jfield_RenderingContext_interrupted = getFid(env, jclass_RenderingContext, "interrupted", "Z");
@@ -695,6 +707,32 @@ public:
 };
 
 void parsePrecalculatedRoute(JNIEnv* ienv, RoutingContext& ctx,  jobject precalculatedRoute) {
+	if(precalculatedRoute != NULL) {
+		ctx.precalcRoute.empty = false;
+		jintArray pointsY = (jintArray) ienv->GetObjectField(precalculatedRoute, jfield_PrecalculatedRouteDirection_pointsY);
+		jintArray pointsX = (jintArray) ienv->GetObjectField(precalculatedRoute, jfield_PrecalculatedRouteDirection_pointsX);
+		jfloatArray tms = (jfloatArray) ienv->GetObjectField(precalculatedRoute, jfield_PrecalculatedRouteDirection_tms);
+		jint* pointsYF = (jint*)ienv->GetIntArrayElements(pointsY, NULL);
+		jint* pointsXF = (jint*)ienv->GetIntArrayElements(pointsX, NULL);
+		jfloat* tmsF = (jfloat*)ienv->GetFloatArrayElements(tms, NULL);
+		for(int k = 0; k < ienv->GetArrayLength(pointsY); k++) {
+			int y = pointsYF[k];
+			int x = pointsXF[k];
+			int ind = ctx.precalcRoute.pointsX.size();
+			ctx.precalcRoute.pointsY.push_back(y);
+			ctx.precalcRoute.pointsX.push_back(x);
+			ctx.precalcRoute.times.push_back(tmsF[k]);
+			SkRect r = SkRect::MakeLTRB(x, y, x, y);
+			ctx.precalcRoute.quadTree.insert(ind, r);
+		}
+		ctx.precalcRoute.startPoint = ctx.precalcRoute.calc(ctx.startX, ctx.startY);
+		ctx.precalcRoute.endPoint = ctx.precalcRoute.calc(ctx.targetX, ctx.targetY);
+		ctx.precalcRoute.speed = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_speed);
+		ienv->ReleaseIntArrayElements(pointsY, pointsYF, 0);
+		ienv->ReleaseIntArrayElements(pointsX, pointsXF, 0);
+		ienv->ReleaseFloatArrayElements(tms, tmsF, 0);
+
+	}
 	// TODO
 }
 

@@ -21,6 +21,7 @@ static const short RESTRICTION_ONLY_LEFT_TURN = 6;
 static const short RESTRICTION_ONLY_STRAIGHT_ON = 7;
 static const bool TRACE_ROUTING = false;
 
+
 inline int roadPriorityComparator(float o1DistanceFromStart, float o1DistanceToEnd, float o2DistanceFromStart,
 		float o2DistanceToEnd, float heuristicCoefficient) {
 	// f(x) = g(x) + h(x)  --- g(x) - distanceFromStart, h(x) - distanceToEnd (not exact)
@@ -54,6 +55,26 @@ static double squareRootDist(int x1, int y1, int x2, int y2) {
 //		return measuredDist(x1, y1, x2, y2);
 }
 
+
+std::pair<int, int> getProjectionPoint(int px, int py, int xA, int yA, int xB, int yB) {
+	double mDist = squareRootDist(xA,yA, xB,yB);
+	int prx = xA;
+	int pry = yA;
+	double projection = calculateProjection31TileMetric(xA, yA, xB, yB, px, py);
+	if (projection < 0) {
+		prx = xA;
+		pry = yA;
+	} else if (projection >= mDist * mDist) {
+		prx = xB;
+		pry = yB;
+	} else {
+		double c = projection / (mDist * mDist);
+		prx = (int) ((double)xA + ((double)xB - xA) * c);
+		pry = (int) ((double)yA + ((double)yB - yA) * c);
+	}
+	return std::pair<int, int> (prx, pry);
+}
+
 int64_t calculateRoutePointId(SHARED_PTR<RouteDataObject> road, int intervalId, bool positive) {
 	return (road->id << ROUTE_POINTS) + (intervalId << 1) + (positive ? 1 : 0);
 }
@@ -69,13 +90,99 @@ int64_t calculateRoutePointId(SHARED_PTR<RouteSegment> segm, bool direction) {
 				direction ? segm->getSegmentStart() : segm->getSegmentStart() - 1, direction);
 }
 
+float PrecalculatedRouteDirection::getDeviationDistance(int x31, int y31) {
+	int ind = getIndex(x31, y31);
+	if(ind == -1) {
+		return 0;
+	}
+	return getDeviationDistance(x31, y31, ind);
+}
+
+float PrecalculatedRouteDirection::getDeviationDistance(int x31, int y31, int ind) {
+	float distToPoint = 0; //squareRootDist(x31, y31, pointsX.get(ind), pointsY.get(ind));
+	if(ind < (int)pointsX.size() - 1 && ind != 0) {
+		double nx = squareRootDist(x31, y31, pointsX[ind + 1], pointsY[ind + 1]);
+		double pr = squareRootDist(x31, y31, pointsX[ind - 1], pointsY[ind - 1]);
+		int nind =  nx > pr ? ind -1 : ind +1;
+		std::pair<int, int> proj = getProjectionPoint(x31, y31, pointsX[ind], pointsY[ind], pointsX[nind], pointsX[nind]);
+		distToPoint = (float) squareRootDist(x31, y31, (int)proj.first, (int)proj.second) ;
+	}
+	return distToPoint;
+}
+
+int PrecalculatedRouteDirection::SHIFT = (1 << (31 - 17));
+int PrecalculatedRouteDirection::SHIFTS[] = {1 << (31 - 15), 1 << (31 - 13), 1 << (31 - 12), 
+		1 << (31 - 11), 1 << (31 - 7)};
+int PrecalculatedRouteDirection::getIndex(int x31, int y31) {
+	int ind = -1;
+	vector<int> cachedS;
+	SkRect rct = SkRect::MakeLTRB(x31 - SHIFT, y31 - SHIFT, x31 + SHIFT, y31 + SHIFT);
+	quadTree.query_in_box(rct, cachedS);
+	if (cachedS.size() == 0) {
+		for (uint k = 0; k < 5 /* SHIFTS.size()*/; k++) {
+			rct = SkRect::MakeLTRB(x31 - SHIFTS[k], y31 - SHIFTS[k], x31 + SHIFTS[k], y31 + SHIFTS[k]);
+			quadTree.query_in_box(rct, cachedS);
+			if (cachedS.size() != 0) {
+				break;
+			}
+		}
+		if (cachedS.size() == 0) {
+			return -1;
+		}
+	}
+	double minDist = 0;
+	for (uint i = 0; i < cachedS.size(); i++) {
+		int n = cachedS[i];
+		double ds = squareRootDist(x31, y31, pointsX[n], pointsY[n]);
+		if (ds < minDist || i == 0) {
+			ind = n;
+			minDist = ds;
+		}
+	}
+	return ind;
+}
+
+float PrecalculatedRouteDirection::timeEstimate(int sx31, int sy31, int ex31, int ey31) {
+	uint64_t l1 = calc(sx31, sy31);
+	uint64_t l2 = calc(ex31, ey31);
+	int x31 = sx31;
+	int y31 = sy31;
+	bool start = false;
+	if(l1 == startPoint || l1 == endPoint) {
+		start = l1 == startPoint;
+		x31 = ex31;
+		y31 = ey31;
+	} else if(l2 == startPoint || l2 == endPoint) {
+		start = l2 == startPoint;
+		x31 = sx31;
+		y31 = sy31;
+	} else {
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "! Alert unsupported time estimate ");
+		return -2;
+	}
+	int ind = getIndex(x31, y31);
+	if(ind == -1) {
+		return -1;
+	}
+	if((ind == 0 && start) || 
+			(ind == (int)pointsX.size() - 1 && !start)) {
+		return -1;
+	}
+	float distToPoint = getDeviationDistance(x31, y31, ind);
+	float deviationPenalty = distToPoint / speed;
+	if(start) {
+		return (times[0] - times[ind]) +  deviationPenalty;
+	} else {
+		return times[ind] + deviationPenalty;
+	}
+}
+
 static double h(RoutingContext* ctx, int begX, int begY, int endX, int endY) {
 	double distToFinalPoint = squareRootDist(begX, begY,  endX, endY);
 	double result = distToFinalPoint /  ctx->config.getMaxDefaultSpeed();
 	if(!ctx->precalcRoute.empty){
-		// TODO
-		// float te = ctx->precalcRoute.timeEstimate(begX, begY,  endX, endY);
-		// if(te > 0) return te;
+		float te = ctx->precalcRoute.timeEstimate(begX, begY,  endX, endY);
+		if(te > 0) return te;
 	}
 	return result;
 }
@@ -148,12 +255,12 @@ void initQueuesWithStartEnd(RoutingContext* ctx,  SHARED_PTR<RouteSegment> start
 				}
 			}
 		}
-		int targetEndX = end->road->pointsX[end->segmentStart];
-		int targetEndY = end->road->pointsY[end->segmentStart];
-		int startX = start->road->pointsX[start->segmentStart];
-		int startY = start->road->pointsY[start->segmentStart];
+		//int targetEndX = end->road->pointsX[end->segmentStart];
+		//int targetEndY = end->road->pointsY[end->segmentStart];
+		//int startX = start->road->pointsX[start->segmentStart];
+		//int startY = start->road->pointsY[start->segmentStart];
 	
-		float estimatedDistance = (float) h(ctx, targetEndX, targetEndY, startX, startY);
+		float estimatedDistance = (float) h(ctx, ctx->startX, ctx->startY, ctx->targetX, ctx->targetY);
 		if(startPos.get() != NULL) {
 			startPos->distanceToEnd = estimatedDistance;
 			graphDirectSegments.push(startPos);
@@ -599,22 +706,10 @@ SHARED_PTR<RouteSegment> findRouteSegment(int px, int py, RoutingContext* ctx) {
 		SHARED_PTR<RouteDataObject> r = *it;
 		if (r->pointsX.size() > 1) {
 			for (uint j = 1; j < r->pointsX.size(); j++) {
-				double mDist = squareRootDist(r->pointsX[j -1 ], r->pointsY[j-1], r->pointsX[j], r->pointsY[j]);
-				int prx = r->pointsX[j];
-				int pry = r->pointsY[j];
-				double projection = calculateProjection31TileMetric(r->pointsX[j -1 ], r->pointsY[j-1], r->pointsX[j], r->pointsY[j],
-						px, py);
-				if (projection < 0) {
-					prx = r->pointsX[j - 1];
-					pry = r->pointsY[j - 1];
-				} else if (projection >= mDist * mDist) {
-					prx = r->pointsX[j ];
-					pry = r->pointsY[j ];
-				} else {
-					double c = projection / (mDist * mDist);
-					prx = (int) ((double)r->pointsX[j - 1] + ((double)r->pointsX[j] - r->pointsX[j - 1]) * c);
-					pry = (int) ((double)r->pointsY[j - 1] + ((double)r->pointsY[j] - r->pointsY[j - 1]) * c);
-				}
+				std::pair<int, int> p = getProjectionPoint(px, py, 
+						r->pointsX[j -1 ], r->pointsY[j-1], r->pointsX[j], r->pointsY[j]);
+				int prx = p.first;
+				int pry = p.second;
 				double currentsDist = squareDist31TileMetric(prx, pry, px, py);
 				if (road.get() == NULL || currentsDist < sdist) {
 					road = SHARED_PTR<RouteSegment>(new RouteSegment(r, j));
@@ -658,7 +753,7 @@ bool combineTwoSegmentResult(RouteSegmentResult& toAdd, RouteSegmentResult& prev
 void addRouteSegmentToResult(vector<RouteSegmentResult>& result, RouteSegmentResult& res, bool reverse) {
 	if (res.endPointIndex != res.startPointIndex) {
 		if (result.size() > 0) {
-			RouteSegmentResult last = result[result.size() - 1];
+			RouteSegmentResult& last = result[result.size() - 1];
 			if (last.object->id == res.object->id) {
 				if (combineTwoSegmentResult(res, last, reverse)) {
 					return;

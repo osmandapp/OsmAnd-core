@@ -461,8 +461,23 @@ struct PrecalculatedRouteDirection {
 	vector<uint32_t> pointsX;
 	vector<uint32_t> pointsY;
 	vector<float> times;
-	std::map<std::pair<uint32_t, uint32_t>, int> registered;
+	float speed;
+	static int SHIFT;
+	static int SHIFTS[];
 	bool empty;
+
+	uint64_t startPoint;
+	uint64_t endPoint;
+	quad_tree<int> quadTree;
+
+ 	inline uint64_t calc(int x31, int y31) {
+		return (((uint64_t) x31) << 32l) + ((uint64_t)y31);
+	}
+
+	float getDeviationDistance(int x31, int y31, int ind);
+	float getDeviationDistance(int x31, int y31);
+	int getIndex(int x31, int y31);
+	float timeEstimate(int begX, int begY, int endX, int endY);
 
 };
 
