@@ -236,6 +236,24 @@ double getDistance(double lat1, double lon1, double lat2, double lon2) {
 	return R * c * 1000;
 }
 
+int findFirstNumberEndIndex(string value) {
+	uint i = 0;
+	bool valid = false;
+	if (value.length() > 0 && value[0] == '-') {
+		i++;
+	}
+	while (i < value.length() && ((value[i] >= '0' && value[i] <= '9') || value[i] == '.')) {
+		i++;
+		valid = true;
+	}
+	if (valid) {
+		return i;
+	} else {
+		return -1;
+	}
+}
+
+
 double alignAngleDifference(double diff) {
 	while (diff > M_PI) {
 		diff -= 2 * M_PI;

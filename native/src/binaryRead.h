@@ -177,6 +177,50 @@ struct RouteDataObject {
 		} while (total < dist);
 		return -atan2( (float)x - px, (float) y - py );
 	}
+
+	static double parseSpeed(string v, double def) {
+		if(v == "none") {
+			return 40;// RouteDataObject::NONE_MAX_SPEED;
+		} else {
+			int i = findFirstNumberEndIndex(v);
+			if (i > 0) {
+				double f = atof(v.substr(0, i).c_str());
+				f /= 3.6; // km/h -> m/s
+				if (v.find("mph") != string::npos) {
+					f *= 1.6;
+				}
+				return f;
+			}
+		}
+		return def;
+	}
+	
+	static double parseLength(string v, double def) {
+		// 14"10' not supported
+		int i = findFirstNumberEndIndex(v);
+		if (i > 0) {
+			double f = atof(v.substr(0, i).c_str());
+			if (v.find("\"") != string::npos  || v.find("ft") != string::npos) {
+				// foot to meters
+				f *= 0.3048;
+			}
+			return f;
+		}
+		return def;
+	}
+	
+	static double parseWeightInTon(string v, double def) {
+		int i = findFirstNumberEndIndex(v);
+		if (i > 0) {
+			double f = atof(v.substr(0, i).c_str());
+			if (v.find("\"") != string::npos || v.find("lbs") != string::npos) {
+				// lbs -> kg -> ton
+				f = (f * 0.4535) / 1000.0;
+			}
+			return f;
+		}
+		return def;
+	}
 };
 
 

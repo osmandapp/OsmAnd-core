@@ -375,6 +375,7 @@ private:
     }
 };
 
+int findFirstNumberEndIndex(string value); 
 
 
 

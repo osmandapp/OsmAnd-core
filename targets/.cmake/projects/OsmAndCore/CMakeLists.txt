@@ -74,6 +74,7 @@ add_library(osmand SHARED
 	"${ROOT}/src/renderRules.cpp"
 	"${ROOT}/src/rendering.cpp"
 	"${ROOT}/src/binaryRead.cpp"
+	"${ROOT}/src/generalRouter.cpp"
 	"${ROOT}/src/binaryRoutePlanner.cpp"
 	"${ROOT}/src/proto/osmand_index.pb.cc"
 	"${ROOT}/src/java_wrap.cpp"

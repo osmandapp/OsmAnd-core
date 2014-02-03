@@ -5,11 +5,10 @@
 #include "binaryRead.h"
 #include <algorithm>
 #include "Logging.h"
+#include "generalRouter.h"
 
 typedef UNORDERED(map)<string, float> MAP_STR_FLOAT;
 typedef UNORDERED(map)<string, string> MAP_STR_STR;
-
-
 
 struct RouteSegment {
 public :
