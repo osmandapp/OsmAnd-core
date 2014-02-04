@@ -145,6 +145,23 @@ struct RouteDataObject {
 		return pointsX.size();
 	}
 
+	bool loop(){
+		return pointsX[0] == pointsX[pointsX.size() - 1] && pointsY[0] == pointsY[pointsY.size() - 1] ; 
+	}
+	
+	bool roundabout(){
+		uint sz = types.size();
+		for(uint i=0; i < sz; i++) {
+			tag_value r = region->decodingRules[types[i]];
+			if(r.first == "roundabout" || r.second == "roundabout") {
+				return true;
+			} else if(r.first == "oneway" && r.second != "no" && loop()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	double directionRoute(int startPoint, bool plus){
 		// look at comment JAVA
 		return directionRoute(startPoint, plus, 5);

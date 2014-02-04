@@ -387,6 +387,42 @@ jfieldID jfield_RouteCalculationProgress_routingCalculatedTime = NULL;
 jfieldID jfield_RouteCalculationProgress_visitedSegments = NULL;
 jfieldID jfield_RouteCalculationProgress_loadedTiles = NULL;
 
+jclass jclass_RoutingConfiguration = NULL;
+jfieldID jfield_RoutingConfiguration_heuristicCoefficient = NULL;
+jfieldID jfield_RoutingConfiguration_ZOOM_TO_LOAD_TILES = NULL;
+jfieldID jfield_RoutingConfiguration_planRoadDirection = NULL;
+jfieldID jfield_RoutingConfiguration_routerName = NULL;
+jfieldID jfield_RoutingConfiguration_router = NULL;
+
+jclass jclass_GeneralRouter = NULL;
+jfieldID jfield_GeneralRouter_restrictionsAware = NULL;
+jfieldID jfield_GeneralRouter_leftTurn = NULL;
+jfieldID jfield_GeneralRouter_roundaboutTurn = NULL;
+jfieldID jfield_GeneralRouter_rightTurn = NULL;
+jfieldID jfield_GeneralRouter_minDefaultSpeed = NULL;
+jfieldID jfield_GeneralRouter_maxDefaultSpeed = NULL;
+jfieldID jfield_GeneralRouter_objectAttributes = NULL;
+
+jclass jclass_RouteAttributeContext = NULL;
+jmethodID jmethod_RouteAttributeContext_getRules = NULL;
+jmethodID jmethod_RouteAttributeContext_getParamKeys = NULL;
+jmethodID jmethod_RouteAttributeContext_getParamValues = NULL;
+
+jclass jclass_RouteAttributeEvalRule = NULL;
+jfieldID jfield_RouteAttributeEvalRule_selectValueDef = NULL;
+jfieldID jfield_RouteAttributeEvalRule_selectType = NULL;
+
+jmethodID jmethod_RouteAttributeEvalRule_getTagValueCondDefNot = NULL;
+jmethodID jmethod_RouteAttributeEvalRule_getTagValueCondDefValue = NULL;
+jmethodID jmethod_RouteAttributeEvalRule_getTagValueCondDefTag = NULL;
+jmethodID jmethod_RouteAttributeEvalRule_getParameters = NULL;
+jmethodID jmethod_RouteAttributeEvalRule_getExpressions = NULL;
+
+jclass jclass_RouteAttributeExpression = NULL;
+jfieldID jfield_RouteAttributeExpression_values = NULL;
+jfieldID jfield_RouteAttributeExpression_expressionType= NULL;
+jfieldID jfield_RouteAttributeExpression_valueType = NULL;
+
 jclass jclass_PrecalculatedRouteDirection = NULL;
 jfieldID jfield_PrecalculatedRouteDirection_tms = NULL;
 jfieldID jfield_PrecalculatedRouteDirection_pointsY = NULL;
@@ -472,6 +508,52 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_RouteCalculationProgress_routingCalculatedTime  = getFid(env, jclass_RouteCalculationProgress, "routingCalculatedTime", "F");
 	jfield_RouteCalculationProgress_visitedSegments  = getFid(env, jclass_RouteCalculationProgress, "visitedSegments", "I");
 	jfield_RouteCalculationProgress_loadedTiles  = getFid(env, jclass_RouteCalculationProgress, "loadedTiles", "I");
+
+	jclass_RoutingConfiguration = findClass(env, "net/osmand/router/RoutingConfiguration");
+	jfield_RoutingConfiguration_heuristicCoefficient = getFid(env, jclass_RoutingConfiguration, "heuristicCoefficient", "F");
+	jfield_RoutingConfiguration_ZOOM_TO_LOAD_TILES = getFid(env, jclass_RoutingConfiguration, "ZOOM_TO_LOAD_TILES", "I");
+	jfield_RoutingConfiguration_planRoadDirection = getFid(env, jclass_RoutingConfiguration, "planRoadDirection", "I");
+	jfield_RoutingConfiguration_routerName = getFid(env, jclass_RoutingConfiguration, "routerName", "Ljava/lang/String;");
+	jfield_RoutingConfiguration_router = getFid(env, jclass_RoutingConfiguration, "router", "Lnet/osmand/router/GeneralRouter;");
+
+	jclass_GeneralRouter = findClass(env, "net/osmand/router/GeneralRouter");
+	jfield_GeneralRouter_restrictionsAware = getFid(env, jclass_GeneralRouter, "restrictionsAware", "Z");
+	jfield_GeneralRouter_leftTurn = getFid(env, jclass_GeneralRouter, "leftTurn", "F");
+	jfield_GeneralRouter_roundaboutTurn = getFid(env, jclass_GeneralRouter, "roundaboutTurn", "F");
+	jfield_GeneralRouter_rightTurn = getFid(env, jclass_GeneralRouter, "rightTurn", "F");
+	jfield_GeneralRouter_minDefaultSpeed = getFid(env, jclass_GeneralRouter, "minDefaultSpeed", "F");
+	jfield_GeneralRouter_maxDefaultSpeed = getFid(env, jclass_GeneralRouter, "maxDefaultSpeed", "F");
+	jfield_GeneralRouter_objectAttributes = getFid(env, jclass_GeneralRouter, "objectAttributes", 
+		"[Lnet/osmand/router/GeneralRouter$RouteAttributeContext;");
+
+	jclass_RouteAttributeContext = findClass(env, "net/osmand/router/GeneralRouter$RouteAttributeContext");	
+	jmethod_RouteAttributeContext_getRules = env->GetMethodID(jclass_RouteAttributeContext,
+				"getRules", "()[Lnet/osmand/router/GeneralRouter$RouteAttributeEvalRule;");
+	jmethod_RouteAttributeContext_getParamKeys = env->GetMethodID(jclass_RouteAttributeContext,
+				"getParamKeys", "()[Ljava/lang/String;");
+	jmethod_RouteAttributeContext_getParamValues = env->GetMethodID(jclass_RouteAttributeContext,
+				"getParamValues", "()[Ljava/lang/String;");
+
+	jclass_RouteAttributeEvalRule = findClass(env, "net/osmand/router/GeneralRouter$RouteAttributeEvalRule");
+	jfield_RouteAttributeEvalRule_selectValueDef = getFid(env, jclass_RouteAttributeEvalRule, "selectValueDef", "Ljava/lang/String;");
+	jfield_RouteAttributeEvalRule_selectType = getFid(env, jclass_RouteAttributeEvalRule, "selectType", "Ljava/lang/String;");
+
+	jmethod_RouteAttributeEvalRule_getTagValueCondDefNot = env->GetMethodID(jclass_RouteAttributeEvalRule,
+				"getTagValueCondDefNot", "()[Z");
+	jmethod_RouteAttributeEvalRule_getTagValueCondDefValue = env->GetMethodID(jclass_RouteAttributeEvalRule,
+				"getTagValueCondDefValue", "()[Ljava/lang/String;");
+	jmethod_RouteAttributeEvalRule_getTagValueCondDefTag = env->GetMethodID(jclass_RouteAttributeEvalRule,
+				"getTagValueCondDefTag", "()[Ljava/lang/String;");
+	jmethod_RouteAttributeEvalRule_getParameters = env->GetMethodID(jclass_RouteAttributeEvalRule,
+				"getParameters", "()[Ljava/lang/String;");					
+	jmethod_RouteAttributeEvalRule_getExpressions = env->GetMethodID(jclass_RouteAttributeEvalRule,
+				"getExpressions", "()[Lnet/osmand/router/GeneralRouter$RouteAttributeExpression;");
+
+	jclass_RouteAttributeExpression = findClass(env, "net/osmand/router/GeneralRouter$RouteAttributeExpression");	
+    jfield_RouteAttributeExpression_values = getFid(env, jclass_RouteAttributeExpression, "values", "[Ljava/lang/String;");
+   	jfield_RouteAttributeExpression_expressionType = getFid(env, jclass_RouteAttributeExpression, "expressionType", "I");
+   	jfield_RouteAttributeExpression_valueType = getFid(env, jclass_RouteAttributeExpression, "valueType", "Ljava/lang/String;");
+	
 
 	jclass_PrecalculatedRouteDirection = findClass(env, "net/osmand/router/PrecalculatedRouteDirection");
 	jfield_PrecalculatedRouteDirection_tms = getFid(env, jclass_PrecalculatedRouteDirection, "tms", "[F");
@@ -733,38 +815,145 @@ void parsePrecalculatedRoute(JNIEnv* ienv, RoutingContext& ctx,  jobject precalc
 		ienv->ReleaseFloatArrayElements(tms, tmsF, 0);
 
 	}
-	// TODO
 }
 
-void parseRouteConfiguration(JNIEnv* ienv, vector<ROUTE_TRIPLE>& cfg,  jintArray stateConfig, 
-	jobjectArray keyConfig, jobjectArray valueConfig) {
-		// TODO
-	int* data = (int*)ienv->GetIntArrayElements(stateConfig, NULL);
-	for(int k = 0; k < ienv->GetArrayLength(stateConfig); k++) {
-		jstring kl = (jstring)ienv->GetObjectArrayElement(keyConfig, k);
-		jstring vl = (jstring)ienv->GetObjectArrayElement(valueConfig, k);
-		ROUTE_TRIPLE t = ROUTE_TRIPLE (data[k], std::pair<string, string>(
-				getString(ienv, kl),
-				getString(ienv, vl))
-		);
-		ienv->DeleteLocalRef(kl);
-		ienv->DeleteLocalRef(vl);
-		cfg.push_back(t);
+vector<string> convertJArrayToStrings(JNIEnv* ienv, jobjectArray ar) {
+	vector<string> res;
+	for(int i = 0; i < ienv->GetArrayLength(ar); i++) {
+		// RouteAttributeContext
+		jstring s = (jstring) ienv->GetObjectArrayElement(ar, i);
+		if(s == NULL) {
+			res.push_back("");
+		} else {
+			res.push_back(getString(ienv, s));
+			ienv->DeleteLocalRef(s);
+		}
 	}
-	ienv->ReleaseIntArrayElements(stateConfig, (jint*)data, 0);
+	return res;
+}
+
+void parseRouteAttributeEvalRule(JNIEnv* ienv, jobject rule, RouteAttributeEvalRule* erule, GeneralRouter* router) {
+	jstring jselectValue = (jstring) ienv->GetObjectField(rule, jfield_RouteAttributeEvalRule_selectValueDef);
+	string selectValue = getString(ienv, jselectValue);
+	ienv->DeleteLocalRef(jselectValue);
+	jstring jselectType = (jstring) ienv->GetObjectField(rule, jfield_RouteAttributeEvalRule_selectType);
+	string selectType;
+	if(jselectType) {
+		selectType = getString(ienv, jselectType);
+		ienv->DeleteLocalRef(jselectType);
+	}
+
+	erule->registerSelectValue(selectValue, selectType); 
+
+	jobjectArray ar = (jobjectArray) ienv->CallObjectMethod(rule, jmethod_RouteAttributeEvalRule_getParameters);
+	vector<string> params = convertJArrayToStrings(ienv, ar);
+	ienv->DeleteLocalRef(ar);
+	erule->registerParamConditions(params); 
+
+	ar = (jobjectArray) ienv->CallObjectMethod(rule, jmethod_RouteAttributeEvalRule_getTagValueCondDefValue);
+	vector<string> tagValueDefValues = convertJArrayToStrings(ienv, ar);
+	ienv->DeleteLocalRef(ar);
+
+	ar = (jobjectArray) ienv->CallObjectMethod(rule, jmethod_RouteAttributeEvalRule_getTagValueCondDefTag);
+	vector<string> tagValueDefTags = convertJArrayToStrings(ienv, ar);
+	ienv->DeleteLocalRef(ar);
+
+	jbooleanArray tagValueDefNot = (jbooleanArray)ienv->CallObjectMethod(rule, jmethod_RouteAttributeEvalRule_getTagValueCondDefNot);
+	jboolean* nots = ienv->GetBooleanArrayElements(tagValueDefNot, NULL);
+	for(uint i = 0; i < tagValueDefValues.size(); i++) {
+		erule->registerAndTagValueCondition(router, tagValueDefTags[i], tagValueDefValues[i], nots[i]);
+	}
+	ienv->ReleaseBooleanArrayElements(tagValueDefNot, nots, 0);
+	ienv->DeleteLocalRef(tagValueDefNot);
+	
+
+	jobjectArray expressions = (jobjectArray) ienv->CallObjectMethod(rule, jmethod_RouteAttributeEvalRule_getExpressions);
+	for(int j = 0; j < ienv->GetArrayLength(expressions); j++) {
+		jobject expr = ienv->GetObjectArrayElement(expressions, j);
+		jobjectArray jvls  = (jobjectArray) ienv->GetObjectField(expr, jfield_RouteAttributeExpression_values);
+		vector<string> values = convertJArrayToStrings(ienv, jvls);
+		ienv->DeleteLocalRef(jvls);
+		int expressionType = ienv->GetIntField(expr, jfield_RouteAttributeExpression_expressionType);
+		
+		jstring jvalueType = (jstring) ienv->GetObjectField(expr, jfield_RouteAttributeExpression_valueType);
+		string valueType;
+		if(jselectType) {
+			valueType = getString(ienv, jvalueType);
+			ienv->DeleteLocalRef(jvalueType);
+		}
+
+		RouteAttributeExpression e(values, expressionType, valueType);
+		erule->registerExpression(e);
+		ienv->DeleteLocalRef(expr);
+	}
+	ienv->DeleteLocalRef(expressions);
 
 }
 
-// RouteSegmentResult[] nativeRouting(int[] coordinates, int[] state, String[] keyConfig, String[] valueConfig);
+void parseRouteConfiguration(JNIEnv* ienv, RoutingConfiguration& rConfig, jobject jRouteConfig) {
+	rConfig.planRoadDirection = ienv->GetIntField(jRouteConfig, jfield_RoutingConfiguration_planRoadDirection);
+	rConfig.heurCoefficient = ienv->GetFloatField(jRouteConfig, jfield_RoutingConfiguration_heuristicCoefficient);
+	rConfig.zoomToLoad = ienv->GetIntField(jRouteConfig, jfield_RoutingConfiguration_ZOOM_TO_LOAD_TILES);
+	jstring rName = (jstring) ienv->GetObjectField(jRouteConfig, jfield_RoutingConfiguration_routerName);
+	rConfig.routerName = getString(ienv, rName);
+
+	jobject router = ienv->GetObjectField(jRouteConfig, jfield_RoutingConfiguration_router);
+
+	rConfig.router._restrictionsAware = ienv->GetBooleanField(router, jfield_GeneralRouter_restrictionsAware);
+	rConfig.router.leftTurn = ienv->GetFloatField(router, jfield_GeneralRouter_leftTurn);
+	rConfig.router.roundaboutTurn = ienv->GetFloatField(router, jfield_GeneralRouter_roundaboutTurn);
+	rConfig.router.rightTurn = ienv->GetFloatField(router, jfield_GeneralRouter_rightTurn);
+	rConfig.router.minDefaultSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_minDefaultSpeed);
+	rConfig.router.maxDefaultSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_maxDefaultSpeed);
+	// Map<String, String> attributes; // Attributes are not sync not used for calculation
+	// Map<String, RoutingParameter> parameters;  // not used for calculation
+	// Map<String, Integer> universalRules; // dynamically managed
+	// List<String> universalRulesById // dynamically managed
+	// Map<String, BitSet> tagRuleMask // dynamically managed
+	// ArrayList<Object> ruleToValue // dynamically managed
+
+
+	jobjectArray objectAttributes = (jobjectArray) ienv->GetObjectField(router, jfield_GeneralRouter_objectAttributes);
+	for(int i = 0; i < ienv->GetArrayLength(objectAttributes); i++) {
+		// RouteAttributeContext
+		RouteAttributeContext* rctx = rConfig.router.newRouteAttributeContext();
+		jobject ctx = ienv->GetObjectArrayElement(objectAttributes, i);
+		jobjectArray ar = (jobjectArray) ienv->CallObjectMethod(ctx, jmethod_RouteAttributeContext_getParamKeys);
+		vector<string> paramKeys = convertJArrayToStrings(ienv, ar);
+		ienv->DeleteLocalRef(ar);
+		ar = (jobjectArray) ienv->CallObjectMethod(ctx, jmethod_RouteAttributeContext_getParamValues);
+		vector<string> paramValues = convertJArrayToStrings(ienv, ar);
+		ienv->DeleteLocalRef(ar);
+
+		rctx->registerParams(paramKeys, paramValues);
+		
+		jobjectArray rules = (jobjectArray) ienv->CallObjectMethod(ctx, jmethod_RouteAttributeContext_getRules);
+		for(int j = 0; j < ienv->GetArrayLength(rules); j++) {
+			RouteAttributeEvalRule* erule = rctx->newEvaluationRule();
+			jobject rule = ienv->GetObjectArrayElement(rules, j);
+			parseRouteAttributeEvalRule(ienv, rule, erule, &rConfig.router);
+			ienv->DeleteLocalRef(rule);
+		}
+		ienv->DeleteLocalRef(rules);
+		//printf("\n >>>>>>> %d \n", i + 1); rctx->printRules();
+
+		ienv->DeleteLocalRef(ctx);
+	}
+
+
+	ienv->DeleteLocalRef(objectAttributes);
+	ienv->DeleteLocalRef(router);
+	ienv->DeleteLocalRef(rName);
+
+}
+
 extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeRouting(JNIEnv* ienv,
-		jobject obj, jintArray  coordinates,
-		jintArray stateConfig, jobjectArray keyConfig, jobjectArray valueConfig, jfloat initDirection,
+		jobject obj, 
+		jintArray  coordinates, jobject jRouteConfig, jfloat initDirection,
 		jobjectArray regions, jobject progress, jobject precalculatedRoute, bool basemap) {
-	vector<ROUTE_TRIPLE> cfg;
-	parseRouteConfiguration(ienv, cfg, stateConfig, keyConfig, valueConfig);
-	
-	RoutingConfiguration config(cfg, initDirection);
-	RoutingContext c(config);
+	RoutingConfiguration config(initDirection);
+	parseRouteConfiguration(ienv, config, jRouteConfig);
+	RoutingContext c(&config);
 	c.progress = SHARED_PTR<RouteCalculationProgress>(new RouteCalculationProgressWrapper(ienv, progress));
 	int* data = (int*)ienv->GetIntArrayElements(coordinates, NULL);
 	c.startX = data[0];

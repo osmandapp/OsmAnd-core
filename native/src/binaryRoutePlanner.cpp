@@ -179,7 +179,7 @@ float PrecalculatedRouteDirection::timeEstimate(int sx31, int sy31, int ex31, in
 
 static double h(RoutingContext* ctx, int begX, int begY, int endX, int endY) {
 	double distToFinalPoint = squareRootDist(begX, begY,  endX, endY);
-	double result = distToFinalPoint /  ctx->config.getMaxDefaultSpeed();
+	double result = distToFinalPoint /  ctx->config->router.getMaxDefaultSpeed();
 	if(!ctx->precalcRoute.empty){
 		float te = ctx->precalcRoute.timeEstimate(begX, begY,  endX, endY);
 		if(te > 0) return te;
@@ -241,10 +241,10 @@ void initQueuesWithStartEnd(RoutingContext* ctx,  SHARED_PTR<RouteSegment> start
 
 
 		// for start : f(start) = g(start) + h(start) = 0 + h(start) = h(start)
-		if(ctx->config.initialDirection > -180 && ctx->config.initialDirection < 180) {
+		if(ctx->config->initialDirection > -180 && ctx->config->initialDirection < 180) {
 			ctx->firstRoadId = (start->road->id << ROUTE_POINTS) + start->getSegmentStart();
 			double plusDir = start->road->directionRoute(start->getSegmentStart(), true);
-			double diff = plusDir - ctx->config.initialDirection;
+			double diff = plusDir - ctx->config->initialDirection;
 			if(abs(alignAngleDifference(diff)) <= M_PI / 3) {
 				if(startNeg.get() != NULL) {
 					startNeg->distanceFromStart += 500;
@@ -398,7 +398,7 @@ SHARED_PTR<RouteSegment> searchRouteInternal(RoutingContext* ctx, SHARED_PTR<Rou
 bool checkIfInitialMovementAllowedOnSegment(RoutingContext* ctx, bool reverseWaySearch,
 			VISITED_MAP& visitedSegments, SHARED_PTR<RouteSegment> segment, SHARED_PTR<RouteDataObject> road) {
 	bool directionAllowed;
-	int oneway = ctx->config.isOneWay(road);
+	int oneway = ctx->config->router.isOneWay(road);
 	// use positive direction as agreed
 	if (!reverseWaySearch) {
 			if(segment->isPositive()){
@@ -423,14 +423,14 @@ bool checkIfInitialMovementAllowedOnSegment(RoutingContext* ctx, bool reverseWay
 
 
 float calculateTimeWithObstacles(RoutingContext* ctx, SHARED_PTR<RouteDataObject> road, float distOnRoadToPass, float obstaclesTime) {
-	float priority = ctx->config.defineSpeedPriority(road);
-	float speed = ctx->config.defineSpeed(road) * priority;
+	float priority = ctx->config->router.defineSpeedPriority(road);
+	float speed = ctx->config->router.defineRoutingSpeed(road) * priority;
 	if (speed == 0) {
-		speed = ctx->config.getMinDefaultSpeed() * priority;
+		speed = ctx->config->router.getMinDefaultSpeed() * priority;
 	}
 	// speed can not exceed max default speed according to A*
-	if(speed > ctx->config.getMaxDefaultSpeed()) {
-		speed = ctx->config.getMaxDefaultSpeed();
+	if(speed > ctx->config->router.getMaxDefaultSpeed()) {
+		speed = ctx->config->router.getMaxDefaultSpeed();
 	}
 	return obstaclesTime + distOnRoadToPass / speed;
 }
@@ -503,7 +503,7 @@ void processRouteSegment(RoutingContext* ctx, bool reverseWaySearch, SEGMENTS_QU
 		segmentDist  += squareRootDist(x, y,  prevx, prevy);
 			
 		// 2.1 calculate possible obstacle plus time
-		double obstacle = ctx->config.defineRoutingObstacle(road, segmentPoint);
+		double obstacle = ctx->config->router.defineRoutingObstacle(road, segmentPoint);
 		if (obstacle < 0) {
 			directionAllowed = false;
 			continue;
@@ -521,14 +521,14 @@ void processRouteSegment(RoutingContext* ctx, bool reverseWaySearch, SEGMENTS_QU
 //				long nt = System.nanoTime();
 //				float devDistance = ctx.precalculatedRouteDirection.getDeviationDistance(x, y);
 //				// 1. linear method
-//				// segmentDist = segmentDist * (1 + ctx.precalculatedRouteDirection.getDeviationDistance(x, y) / ctx.config.DEVIATION_RADIUS);
+//				// segmentDist = segmentDist * (1 + ctx.precalculatedRouteDirection.getDeviationDistance(x, y) / ctx.config->DEVIATION_RADIUS);
 //				// 2. exponential method
 //				segmentDist = segmentDist * (float) Math.pow(1.5, devDistance / 500);
 //				ctx.timeNanoToCalcDeviation += (System.nanoTime() - nt);
 		}
 		// could be expensive calculation
 		// 3. get intersected ways
-		SHARED_PTR<RouteSegment> roadNext = ctx->loadRouteSegment(x, y); // ctx.config.memoryLimitation - ctx.memoryOverhead
+		SHARED_PTR<RouteSegment> roadNext = ctx->loadRouteSegment(x, y); // ctx.config->memoryLimitation - ctx.memoryOverhead
 		float distStartObstacles = segment->distanceFromStart + calculateTimeWithObstacles(ctx, road, segmentDist , obstaclesTime);
 		// We don't check if there are outgoing connections
 		bool processFurther = processIntersections(ctx, graphSegments, visitedSegments, distStartObstacles,
@@ -553,7 +553,7 @@ bool proccessRestrictions(RoutingContext* ctx, SHARED_PTR<RouteDataObject> road,
 	if (!reverseWay && road->restrictions.size() == 0) {
 		return false;
 	}
-	if(!ctx->config.restrictionsAware()) {
+	if(!ctx->config->router.restrictionsAware()) {
 		return false;
 	}
 	while (next.get() != NULL) {
@@ -789,7 +789,7 @@ void processOneRoadIntersection(RoutingContext* ctx, SEGMENTS_QUEUE& graphSegmen
 			VISITED_MAP& visitedSegments, double distFromStart, double distanceToEnd,  
 			SHARED_PTR<RouteSegment> segment, int segmentPoint, SHARED_PTR<RouteSegment> next) {
 	if (next.get() != NULL) {
-		double obstaclesTime = ctx->config.calculateTurnTime(next, next->isPositive()? 
+		double obstaclesTime = ctx->config->router.calculateTurnTime(next, next->isPositive()? 
 				next->road->getPointsLength() - 1 : 0,  
 				segment, segmentPoint);
 		distFromStart += obstaclesTime;

@@ -9,11 +9,13 @@
 #include "boost/dynamic_bitset.hpp"
 #include "Logging.h"
 #include "binaryRead.h"
-#include "binaryRoutePlanner.h"
 
 struct RouteSegment;
 class GeneralRouter;
 class RouteAttributeContext;
+
+//#include "binaryRoutePlanner.h"
+
 typedef UNORDERED(map)<string, float> MAP_STR_FLOAT;
 typedef UNORDERED(map)<string, string> MAP_STR_STR;
 typedef UNORDERED(map)<int, int> MAP_INT_INT;
@@ -25,11 +27,11 @@ typedef boost::dynamic_bitset<> dynbitset;
 
 enum class RouteDataObjectAttribute : unsigned int {
 	ROAD_SPEED = 0, //"speed"
-	ROAD_PRIORITIES, // "priority"
-	ACCESS, // "access"
-	OBSTACLES, // "obstacle_time"
-	ROUTING_OBSTACLES, // "obstacle"
-	ONEWAY // "oneway"
+	ROAD_PRIORITIES = 1, // "priority"
+	ACCESS = 2, // "access"
+	OBSTACLES = 3, // "obstacle_time"
+	ROUTING_OBSTACLES = 4, // "obstacle"
+	ONEWAY = 5// "oneway"
 };
 
 enum class GeneralRouterProfile {
@@ -67,18 +69,21 @@ struct RouteAttributeExpression {
 	string valueType;
 	vector<double> cacheValues; 
 
-	bool matches(dynbitset& types, ParameterContext& paramContext, GeneralRouter& router) ;
+	RouteAttributeExpression(vector<string>&vls, int type, string vType);
 
-	double calculateExprValue(int id, dynbitset& types, ParameterContext& paramContext, GeneralRouter& router); 
+	bool matches(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router) ;
+
+	double calculateExprValue(int id, dynbitset& types, ParameterContext& paramContext, GeneralRouter* router); 
 };
 
 
 class RouteAttributeEvalRule {
 	friend class RouteAttributeContext;
+
 private: 
 	vector<string> parameters ;
 	double selectValue ;
-	string selectValueParam;
+	string selectValueDef ;
 	string selectType;
 	dynbitset filterTypes;
 	dynbitset filterNotTypes;
@@ -87,30 +92,68 @@ private:
 	UNORDERED(set)<string> onlyNotTags;
 	vector<RouteAttributeExpression> expressions;
 
+	vector<string> tagValueCondDefValue;
+	vector<string> tagValueCondDefTag;
+	vector<bool> tagValueCondDefNot;
 
-	bool matches(dynbitset& types, ParameterContext& paramContext, GeneralRouter& router);
-	double eval(dynbitset& types, ParameterContext& paramContext, GeneralRouter& router);
-	double calcSelectValue(dynbitset& types, ParameterContext& paramContext, GeneralRouter& router);
 
-	bool checkAllTypesShouldBePresent(dynbitset& types, ParameterContext& paramContext, GeneralRouter& router) ;
-	bool checkAllTypesShouldNotBePresent(dynbitset& types, ParameterContext& paramContext, GeneralRouter& router) ;
-	bool checkNotFreeTags(dynbitset& types, ParameterContext& paramContext, GeneralRouter& router) ;
-	bool checkFreeTags(dynbitset& types, ParameterContext& paramContext, GeneralRouter& router) ;
-	bool checkExpressions(dynbitset& types, ParameterContext& paramContext, GeneralRouter& router) ;
+	bool matches(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router);
+	double eval(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router);
+	double calcSelectValue(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router);
+
+	bool checkAllTypesShouldBePresent(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router) ;
+	bool checkAllTypesShouldNotBePresent(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router) ;
+	bool checkNotFreeTags(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router) ;
+	bool checkFreeTags(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router) ;
+	bool checkExpressions(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router) ;
+
+	void printRule(GeneralRouter* r);
+public:
+	void registerAndTagValueCondition(GeneralRouter* r, string tag, string value, bool nt); 
+
+	// formated as [param1,-param2]
+	void registerParamConditions(vector<string>& params); 
+
+	void registerSelectValue(string selectValue, string selectType); 
+
+	void registerExpression(RouteAttributeExpression& expression) {
+		expressions.push_back(expression);
+	}
+
+	// registerGreatCondition, registerLessCondition
 
 };
 
 class RouteAttributeContext {
 	friend class GeneralRouter;
 
-
 private:
 	vector<RouteAttributeEvalRule> rules;
 	ParameterContext paramContext ;
-	GeneralRouter& router;
+	GeneralRouter* router;
 
 public: 
-	RouteAttributeContext(GeneralRouter& r) : router(r) {
+	RouteAttributeContext(GeneralRouter* r) : router(r) {
+	}
+
+
+	void registerParams(vector<string>& keys, vector<string>& vls) {
+		for(uint i = 0; i < keys.size(); i++) {
+			paramContext.vars[keys[i]] = vls[i];
+		}
+	}
+
+	RouteAttributeEvalRule* newEvaluationRule() {
+		RouteAttributeEvalRule c;
+		rules.push_back(c);
+		return &rules[rules.size() - 1];
+	}
+
+	void printRules() {
+		for (uint k = 0; k < rules.size(); k++) {
+			RouteAttributeEvalRule r = rules[k];
+			r.printRule(router);
+		}
 	}
 
 private:
@@ -141,8 +184,16 @@ private:
 		return (int)d;
 	}
 
+	double evaluateDouble(RoutingIndex* reg, std::vector<uint32_t>& types, double defValue) {
+		dynbitset local =  convert(reg, types);
+		double d = evaluate(local);
+		if(d == DOUBLE_MISSING) {
+			return defValue;
+		}
+		return d;
+	}
 
-	double evaluateDouble(SHARED_PTR<RouteDataObject> ro, int defValue) {
+	double evaluateDouble(SHARED_PTR<RouteDataObject> ro, double defValue) {
 		double d = evaluate(ro);
 		if(d == DOUBLE_MISSING) {
 			return defValue;
@@ -151,10 +202,17 @@ private:
 	}
 };
 
+float parseFloat(MAP_STR_STR attributes, string key, float def);
+
+bool parseBool(MAP_STR_STR attributes, string key, bool def);
+
+string parseString(MAP_STR_STR attributes, string key, string def);
+
 
 class GeneralRouter {
 	friend class RouteAttributeContext;
 	friend class RouteAttributeEvalRule;
+	friend class RouteAttributeExpression;
 private:
 	vector<RouteAttributeContext> objectAttributes;
 	MAP_STR_STR attributes;
@@ -166,9 +224,7 @@ private:
 	bool shortestRoute;
 	
 	UNORDERED(map)<RoutingIndex*, MAP_INT_INT> regionConvert;
-	
-
-	
+		
 public:
 	// cached values
 	bool _restrictionsAware ;
@@ -181,6 +237,14 @@ public:
 	GeneralRouter() : _restrictionsAware(true), minDefaultSpeed(10), maxDefaultSpeed(10) {
 
 	}
+
+	RouteAttributeContext* newRouteAttributeContext() {
+		RouteAttributeContext c(this);
+		objectAttributes.push_back(c);
+		return &objectAttributes[objectAttributes.size() - 1];
+	}
+
+	void addAttribute(string k, string v) ;
 
 	bool containsAttribute(string attribute);
 	
@@ -199,41 +263,41 @@ public:
 	/**
 	 * return delay in seconds (0 no obstacles)
 	 */
-	float defineObstacle(SHARED_PTR<RouteDataObject> road, int point);
+	double defineObstacle(SHARED_PTR<RouteDataObject> road, uint point);
 	
 	/**
 	 * return delay in seconds (0 no obstacles)
 	 */
-	float defineRoutingObstacle(SHARED_PTR<RouteDataObject> road, int point);
+	double defineRoutingObstacle(SHARED_PTR<RouteDataObject> road, uint point);
 
 	/**
 	 * return routing speed in m/s for vehicle for specified road
 	 */
-	float defineRoutingSpeed(SHARED_PTR<RouteDataObject> road);
+	double defineRoutingSpeed(SHARED_PTR<RouteDataObject> road);
 	
 	/**
 	 * return real speed in m/s for vehicle for specified road
 	 */
-	float defineVehicleSpeed(SHARED_PTR<RouteDataObject> road);
+	double defineVehicleSpeed(SHARED_PTR<RouteDataObject> road);
 	
 	/**
 	 * define priority to multiply the speed for g(x) A* 
 	 */
-	float defineSpeedPriority(SHARED_PTR<RouteDataObject> road);
+	double defineSpeedPriority(SHARED_PTR<RouteDataObject> road);
 
 	/**
 	 * Used for A* routing to calculate g(x)
 	 * 
 	 * @return minimal speed at road in m/s
 	 */
-	float getMinDefaultSpeed();
+	double getMinDefaultSpeed();
 
 	/**
 	 * Used for A* routing to predict h(x) : it should be great any g(x)
 	 * 
 	 * @return maximum speed to calculate shortest distance
 	 */
-	float getMaxDefaultSpeed();
+	double getMaxDefaultSpeed();
 	
 	/**
 	 * aware of road restrictions
@@ -246,10 +310,16 @@ public:
 	double calculateTurnTime(SHARED_PTR<RouteSegment> segment, int segmentEnd, 
 		SHARED_PTR<RouteSegment> prev, int prevSegmentEnd);
 
-private :
-	double parseValue(string value, string type) ;
 
-	double parseValueFromTag(uint id, string type, GeneralRouter& router);
+	void printRules() {
+		for (uint k = 0; k < objectAttributes.size(); k++) {
+			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "RouteAttributeContext  %d", k + 1);
+			objectAttributes[k].printRules();
+		}
+	}
+private :
+
+	double parseValueFromTag(uint id, string type, GeneralRouter* router);
 
 	uint registerTagValueAttribute(const tag_value& r);
 
