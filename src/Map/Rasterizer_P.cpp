@@ -14,7 +14,8 @@
 #include "RasterizerContext_P.h"
 #include "RasterizerSharedContext.h"
 #include "RasterizerSharedContext_P.h"
-#include "RasterizedSymbol.h"
+#include "RasterizedPinnedSymbol.h"
+#include "RasterizedSymbolOnPath.h"
 #include "RasterizedSymbolsGroup.h"
 #include "MapStyleEvaluator.h"
 #include "MapStyleEvaluationResult.h"
@@ -932,8 +933,6 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
         // Skip empty names
         if(name.isEmpty())
             continue;
-
-        //TODO: reshape name with icu4c
 
         // Evaluate style to obtain text parameters
         textEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
@@ -2282,9 +2281,8 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
 
             if(const auto textSymbol = std::dynamic_pointer_cast<const PrimitiveSymbol_Text>(symbol))
             {
-                // Skip symbols that need to be rasterized along path
-                if(textSymbol->drawOnPath)
-                    continue;
+                //TODO: reshape name with icu4c, since skia doesn't know how to do that
+                const QString text = textSymbol->value;
 
                 // Obtain shield for text if such exists
                 std::shared_ptr<const SkBitmap> textShieldBitmap;
@@ -2293,36 +2291,44 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
 
                 // Configure paint for text
                 SkPaint textPaint = env.textPaint;
-
                 textPaint.setTextSize(textSymbol->size);
                 textPaint.setFakeBoldText(textSymbol->isBold);
                 textPaint.setColor(textSymbol->color);
 
                 // Measure text
                 SkRect textBounds;
-                textPaint.measureText(textSymbol->value.constData(), textSymbol->value.length()*sizeof(QChar), &textBounds);
-
+                auto totalWidth = textPaint.measureText(text.constData(), text.length()*sizeof(QChar), &textBounds);
                 SkRect textBBox = textBounds;
+                QVector<SkScalar> glyphsWidth;
+                if(textSymbol->drawOnPath)
+                {
+                    int glyphsCount = textPaint.countText(text.constData(), text.length()*sizeof(QChar));
+                    glyphsWidth.resize(glyphsCount);
+                    textPaint.getTextWidths(text.constData(), text.length()*sizeof(QChar), glyphsWidth.data());
+                }
 
-                // Process shadow
+                // Process shadow (if such is enabled)
                 SkPaint textShadowPaint;
                 SkRect shadowBounds;
-
                 if(textSymbol->shadowRadius > 0)
                 {
                     textShadowPaint = textPaint;
-
                     textShadowPaint.setStyle(SkPaint::kStroke_Style);
                     textShadowPaint.setColor(textSymbol->shadowColor);
                     textShadowPaint.setStrokeWidth(textSymbol->shadowRadius);
 
-                    textShadowPaint.measureText(textSymbol->value.constData(), textSymbol->value.length()*sizeof(QChar), &shadowBounds);
+                    totalWidth = textShadowPaint.measureText(text.constData(), text.length()*sizeof(QChar), &shadowBounds);
                     textBBox.join(shadowBounds);
+
+                    if(textSymbol->drawOnPath)
+                        textShadowPaint.getTextWidths(text.constData(), text.length()*sizeof(QChar), glyphsWidth.data());
                 }
 
                 // Calculate bitmap size and text area
                 auto textArea = textBBox;
-                textArea.offset(-textBBox.left() * 2.0f, -textBBox.top() * 2.0f);
+                textArea.offset(-2.0f*textBBox.left(), -2.0f*textBBox.top());
+                if(!glyphsWidth.isEmpty())
+                    glyphsWidth[0] += -textBBox.left();
                 auto bitmapWidth = textArea.width();
                 auto bitmapHeight = textArea.height();
                 if(textShieldBitmap)
@@ -2356,33 +2362,48 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
 
                 // Rasterize text
                 if(textSymbol->shadowRadius > 0)
-                    canvas.drawText(textSymbol->value.constData(), textSymbol->value.length()*sizeof(QChar), textArea.left(), textArea.top(), textShadowPaint);
-                canvas.drawText(textSymbol->value.constData(), textSymbol->value.length()*sizeof(QChar), textArea.left(), textArea.top(), textPaint);
+                    canvas.drawText(text.constData(), text.length()*sizeof(QChar), textArea.left(), textArea.top(), textShadowPaint);
+                canvas.drawText(text.constData(), text.length()*sizeof(QChar), textArea.left(), textArea.top(), textPaint);
 
                 //////////////////////////////////////////////////////////////////////////
-                /*std::unique_ptr<SkImageEncoder> encoder(CreatePNGImageEncoder());
-                QString path;
-                path.sprintf("D:\\texts\\%p.png", bitmap);
-                encoder->encodeFile(path.toLocal8Bit(), *bitmap, 100);*/
+                //std::unique_ptr<SkImageEncoder> encoder(CreatePNGImageEncoder());
+                //QString path;
+                //path.sprintf("D:\\texts\\%p.png", bitmap);
+                //encoder->encodeFile(path.toLocal8Bit(), *bitmap, 100);
                 //////////////////////////////////////////////////////////////////////////
 
-                // Calculate local offset
-                PointI localOffset;
-                localOffset.y = (bitmap->height() / 2) + textSymbol->verticalOffset;
+                if(textSymbol->drawOnPath)
+                {
+                    // Publish new rasterized symbol
+                    const auto rasterizedSymbol = new RasterizedSymbolOnPath(
+                        group,
+                        constructedGroup->mapObject,
+                        qMove(std::shared_ptr<const SkBitmap>(bitmap)),
+                        symbol->order,
+                        glyphsWidth);
+                    assert(static_cast<bool>(rasterizedSymbol->bitmap));
+                    constructedGroup->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
+                }
+                else
+                {
+                    // Calculate local offset
+                    PointI localOffset;
+                    localOffset.y = (bitmap->height() / 2) + textSymbol->verticalOffset;
 
-                // Increment total offset
-                totalOffset += localOffset;
+                    // Increment total offset
+                    totalOffset += localOffset;
 
-                // Publish new rasterized symbol
-                const auto rasterizedSymbol = new RasterizedSymbol(
-                    group,
-                    constructedGroup->mapObject,
-                    symbol->location31,
-                    symbol->order,
-                    (constructedGroup->symbols.isEmpty() ? PointI() : totalOffset),
-                    qMove(std::shared_ptr<const SkBitmap>(bitmap)));
-                assert(static_cast<bool>(rasterizedSymbol->bitmap));
-                constructedGroup->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
+                    // Publish new rasterized symbol
+                    const auto rasterizedSymbol = new RasterizedPinnedSymbol(
+                        group,
+                        constructedGroup->mapObject,
+                        qMove(std::shared_ptr<const SkBitmap>(bitmap)),
+                        symbol->order,
+                        symbol->location31,
+                        (constructedGroup->symbols.isEmpty() ? PointI() : totalOffset));
+                    assert(static_cast<bool>(rasterizedSymbol->bitmap));
+                    constructedGroup->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
+                }
             }
             else if(const auto iconSymbol = std::dynamic_pointer_cast<const PrimitiveSymbol_Icon>(symbol))
             {
@@ -2391,10 +2412,10 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                     continue;
 
                 //////////////////////////////////////////////////////////////////////////
-                /*std::unique_ptr<SkImageEncoder> encoder(CreatePNGImageEncoder());
-                QString path;
-                path.sprintf("D:\\icons\\%p.png", bitmap);
-                encoder->encodeFile(path.toLocal8Bit(), *bitmap, 100);*/
+                //std::unique_ptr<SkImageEncoder> encoder(CreatePNGImageEncoder());
+                //QString path;
+                //path.sprintf("D:\\icons\\%p.png", bitmap);
+                //encoder->encodeFile(path.toLocal8Bit(), *bitmap, 100);
                 //////////////////////////////////////////////////////////////////////////
 
                 // Calculate local offset
@@ -2404,17 +2425,15 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                 // Increment total offset
                 totalOffset += localOffset;
 
-                // Create RasterizedSymbol
-                const auto rasterizedSymbol = new RasterizedSymbol(
+                // Publish new rasterized symbol
+                const auto rasterizedSymbol = new RasterizedPinnedSymbol(
                     group,
                     constructedGroup->mapObject,
-                    symbol->location31,
+                    qMove(bitmap),
                     symbol->order,
-                    (constructedGroup->symbols.isEmpty() ? PointI() : totalOffset),
-                    qMove(bitmap));
+                    symbol->location31,
+                    (constructedGroup->symbols.isEmpty() ? PointI() : totalOffset));
                 assert(static_cast<bool>(rasterizedSymbol->bitmap));
-
-                // Publish new rasterized symbol
                 constructedGroup->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
             }
         }

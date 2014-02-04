@@ -1283,7 +1283,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
             QMultiMap< float, SymbolPair > sortedSymbols;
             for(auto itSymbolEntry = unsortedSymbols.cbegin(); itSymbolEntry != unsortedSymbols.cend(); ++itSymbolEntry)
             {
-                const auto& symbol = itSymbolEntry.key();
+                const auto& symbol = std::dynamic_pointer_cast<const MapPinnedSymbol>(itSymbolEntry.key());
+                if(!symbol)
+                    continue;//skip symbols-on-path
                 assert(!itSymbolEntry.value().expired());
                 const auto resource = itSymbolEntry.value().lock();
 
@@ -1313,7 +1315,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
 
                 const auto distanceFromCamera = itSymbolEntry.key();
                 const auto& symbolEntry = itSymbolEntry.value();
-                const auto& symbol = symbolEntry.first;
+                const auto& symbol = std::dynamic_pointer_cast<const MapPinnedSymbol>(symbolEntry.first);
                 const auto gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(symbolEntry.second);
                 const auto mapObjectId = symbol->mapObject->id;
 

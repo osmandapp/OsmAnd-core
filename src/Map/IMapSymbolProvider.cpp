@@ -25,16 +25,15 @@ OsmAnd::MapSymbolsGroup::~MapSymbolsGroup()
 }
 
 OsmAnd::MapSymbol::MapSymbol(
-    const std::weak_ptr<const MapSymbolsGroup>& group_, const std::shared_ptr<const Model::MapObject>& mapObject_,
-    const int order_, const PointI& location31_, const PointI& offset_,
-    const std::shared_ptr<const SkBitmap>& bitmap_)
+    const std::weak_ptr<const MapSymbolsGroup>& group_,
+    const std::shared_ptr<const Model::MapObject>& mapObject_,
+    const std::shared_ptr<const SkBitmap>& bitmap_,
+    const int order_)
     : _bitmap(bitmap_)
     , group(group_)
     , mapObject(mapObject_)
-    , order(order_)
-    , location31(location31_)
-    , offset(offset_)
     , bitmap(_bitmap)
+    , order(order_)
 {
 }
 
@@ -45,6 +44,48 @@ OsmAnd::MapSymbol::~MapSymbol()
 void OsmAnd::MapSymbol::releaseNonRetainedData()
 {
     _bitmap.reset();
+}
+
+OsmAnd::MapPinnedSymbol::MapPinnedSymbol(
+    const std::weak_ptr<const MapSymbolsGroup>& group_,
+    const std::shared_ptr<const Model::MapObject>& mapObject_,
+    const std::shared_ptr<const SkBitmap>& bitmap_,
+    const int order_,
+    const PointI& location31_,
+    const PointI& offset_)
+    : MapSymbol(group_, mapObject_, bitmap_, order_)
+    , location31(location31_)
+    , offset(offset_)
+{
+}
+
+OsmAnd::MapPinnedSymbol::~MapPinnedSymbol()
+{
+}
+
+OsmAnd::MapSymbol* OsmAnd::MapPinnedSymbol::cloneWithReplacedBitmap(const std::shared_ptr<const SkBitmap>& replacementBitmap) const
+{
+    return new MapPinnedSymbol(group, mapObject, replacementBitmap, order, location31, offset);
+}
+
+OsmAnd::MapSymbolOnPath::MapSymbolOnPath(
+    const std::weak_ptr<const MapSymbolsGroup>& group_,
+    const std::shared_ptr<const Model::MapObject>& mapObject_,
+    const std::shared_ptr<const SkBitmap>& bitmap_,
+    const int order_,
+    const QVector<float>& glyphsWidth_)
+    : MapSymbol(group_, mapObject_, bitmap_, order_)
+    , glyphsWidth(glyphsWidth_)
+{
+}
+
+OsmAnd::MapSymbolOnPath::~MapSymbolOnPath()
+{
+}
+
+OsmAnd::MapSymbol* OsmAnd::MapSymbolOnPath::cloneWithReplacedBitmap(const std::shared_ptr<const SkBitmap>& replacementBitmap) const
+{
+    return new MapSymbolOnPath(group, mapObject, replacementBitmap, order, glyphsWidth);
 }
 
 OsmAnd::MapSymbolsTile::MapSymbolsTile(const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups_)

@@ -20,43 +20,41 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _OSMAND_CORE_RASTERIZED_SYMBOL_H_
-#define _OSMAND_CORE_RASTERIZED_SYMBOL_H_
+#ifndef _OSMAND_CORE_RASTERIZED_SYMBOL_ON_PATH_H_
+#define _OSMAND_CORE_RASTERIZED_SYMBOL_ON_PATH_H_
 
 #include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QList>
 
-#include <SkBitmap.h>
-
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/RasterizedSymbolsGroup.h>
-#include <OsmAndCore/Data/Model/MapObject.h>
+#include <OsmAndCore/Map/RasterizedSymbol.h>
 
 namespace OsmAnd
 {
-    class OSMAND_CORE_API RasterizedSymbol
+    class Rasterizer_P;
+
+    class OSMAND_CORE_API RasterizedSymbolOnPath : public RasterizedSymbol
     {
-        Q_DISABLE_COPY(RasterizedSymbol);
+        Q_DISABLE_COPY(RasterizedSymbolOnPath);
     private:
     protected:
-        RasterizedSymbol(
+        RasterizedSymbolOnPath(
             const std::shared_ptr<const RasterizedSymbolsGroup>& group,
             const std::shared_ptr<const Model::MapObject>& mapObject,
             const std::shared_ptr<const SkBitmap>& bitmap,
-            const int order);
+            const int order,
+            const QVector<SkScalar>& glyphsWidth);
     public:
-        virtual ~RasterizedSymbol();
+        virtual ~RasterizedSymbolOnPath();
 
-        const std::weak_ptr<const RasterizedSymbolsGroup> group;
+        const QVector<SkScalar> glyphsWidth;
 
-        const std::shared_ptr<const Model::MapObject> mapObject;
-        const std::shared_ptr<const SkBitmap> bitmap;
-        const int order;
+        friend class OsmAnd::Rasterizer_P;
     };
 
 } // namespace OsmAnd
 
-#endif // _OSMAND_CORE_RASTERIZED_SYMBOL_H_
+#endif // _OSMAND_CORE_RASTERIZED_SYMBOL_ON_PATH_H_

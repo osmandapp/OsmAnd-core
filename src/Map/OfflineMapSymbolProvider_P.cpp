@@ -6,7 +6,8 @@
 #include "RasterizerEnvironment.h"
 #include "Rasterizer.h"
 #include "RasterizedSymbolsGroup.h"
-#include "RasterizedSymbol.h"
+#include "RasterizedPinnedSymbol.h"
+#include "RasterizedSymbolOnPath.h"
 #include "MapObject.h"
 #include "Utilities.h"
 
@@ -58,14 +59,27 @@ bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols(
         {
             const auto& rasterizedSymbol = *itRasterizedSymbol;
 
-            const auto symbol = new MapSymbol(
-                group, constructedGroup->mapObject,
-                rasterizedSymbol->order,
-                rasterizedSymbol->location31,
-                rasterizedSymbol->offset,
-                rasterizedSymbol->bitmap);
-            assert(static_cast<bool>(symbol->bitmap));
-            constructedGroup->symbols.push_back(qMove(std::shared_ptr<const MapSymbol>(symbol)));
+            if(const auto pinnedSymbol = std::dynamic_pointer_cast<const RasterizedPinnedSymbol>(rasterizedSymbol))
+            {
+                const auto symbol = new MapPinnedSymbol(
+                    group, constructedGroup->mapObject,
+                    pinnedSymbol->bitmap,
+                    pinnedSymbol->order,
+                    pinnedSymbol->location31,
+                    pinnedSymbol->offset);
+                assert(static_cast<bool>(symbol->bitmap));
+                constructedGroup->symbols.push_back(qMove(std::shared_ptr<const MapSymbol>(symbol)));
+            }
+            else if(const auto symbolOnPath = std::dynamic_pointer_cast<const RasterizedSymbolOnPath>(rasterizedSymbol))
+            {
+                const auto symbol = new MapSymbolOnPath(
+                    group, constructedGroup->mapObject,
+                    symbolOnPath->bitmap,
+                    symbolOnPath->order,
+                    symbolOnPath->glyphsWidth);
+                assert(static_cast<bool>(symbol->bitmap));
+                constructedGroup->symbols.push_back(qMove(std::shared_ptr<const MapSymbol>(symbol)));
+            }
         }
 
         // Add constructed group to output

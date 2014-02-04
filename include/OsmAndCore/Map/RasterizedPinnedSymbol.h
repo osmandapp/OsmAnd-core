@@ -20,43 +20,43 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _OSMAND_CORE_RASTERIZED_SYMBOL_H_
-#define _OSMAND_CORE_RASTERIZED_SYMBOL_H_
+#ifndef _OSMAND_CORE_RASTERIZED_PINNED_SYMBOL_H_
+#define _OSMAND_CORE_RASTERIZED_PINNED_SYMBOL_H_
 
 #include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QList>
 
-#include <SkBitmap.h>
-
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/RasterizedSymbolsGroup.h>
-#include <OsmAndCore/Data/Model/MapObject.h>
+#include <OsmAndCore/Map/RasterizedSymbol.h>
 
 namespace OsmAnd
 {
-    class OSMAND_CORE_API RasterizedSymbol
+    class Rasterizer_P;
+
+    class OSMAND_CORE_API RasterizedPinnedSymbol : public RasterizedSymbol
     {
-        Q_DISABLE_COPY(RasterizedSymbol);
+        Q_DISABLE_COPY(RasterizedPinnedSymbol);
     private:
     protected:
-        RasterizedSymbol(
+        RasterizedPinnedSymbol(
             const std::shared_ptr<const RasterizedSymbolsGroup>& group,
             const std::shared_ptr<const Model::MapObject>& mapObject,
             const std::shared_ptr<const SkBitmap>& bitmap,
-            const int order);
+            const int order,
+            const PointI& location31,
+            const PointI& offset);
     public:
-        virtual ~RasterizedSymbol();
+        virtual ~RasterizedPinnedSymbol();
 
-        const std::weak_ptr<const RasterizedSymbolsGroup> group;
+        const PointI location31;
+        const PointI offset;
 
-        const std::shared_ptr<const Model::MapObject> mapObject;
-        const std::shared_ptr<const SkBitmap> bitmap;
-        const int order;
+        friend class OsmAnd::Rasterizer_P;
     };
 
 } // namespace OsmAnd
 
-#endif // _OSMAND_CORE_RASTERIZED_SYMBOL_H_
+#endif // _OSMAND_CORE_RASTERIZED_PINNED_SYMBOL_H_
