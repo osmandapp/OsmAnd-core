@@ -186,7 +186,7 @@ struct RoutingConfiguration {
 		// routerProfile = parseString(attributes, "baseProfile", "car");
 	}
 
-	RoutingConfiguration(float initDirection = -360, int memLimit = 48) :
+	RoutingConfiguration(float initDirection = -360, int memLimit = 64) :
 			memoryLimitation(memLimit), initialDirection(initDirection) {
 	}
 

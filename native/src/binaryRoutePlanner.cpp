@@ -214,9 +214,9 @@ void processRouteSegment(RoutingContext* ctx, bool reverseWaySearch, SEGMENTS_QU
 		VISITED_MAP& visitedSegments, SHARED_PTR<RouteSegment> segment, 
 		VISITED_MAP& oppositeSegments, bool direction);
 
-bool processIntersections(RoutingContext* ctx, SEGMENTS_QUEUE& graphSegments, VISITED_MAP& visitedSegments,
+SHARED_PTR<RouteSegment> processIntersections(RoutingContext* ctx, SEGMENTS_QUEUE& graphSegments, VISITED_MAP& visitedSegments,
 		double distFromStart, SHARED_PTR<RouteSegment> segment,int segmentPoint, SHARED_PTR<RouteSegment> inputNext,
-		bool reverseWaySearch, bool doNotAddIntersections);
+		bool reverseWaySearch, bool doNotAddIntersections, bool* processFurther);
 
 void processOneRoadIntersection(RoutingContext* ctx, SEGMENTS_QUEUE& graphSegments,
 			VISITED_MAP& visitedSegments, double distFromStart, double distanceToEnd,  
@@ -477,6 +477,7 @@ void processRouteSegment(RoutingContext* ctx, bool reverseWaySearch, SEGMENTS_QU
 	float segmentDist = 0;
 	int segmentPoint = segment->getSegmentStart();
 	bool dir = segment->isPositive();
+	SHARED_PTR<RouteSegment> prev = segment;
 	while (directionAllowed) {
 		// mark previous interval as visited and move to next intersection
 		int prevInd = segmentPoint;
@@ -490,7 +491,7 @@ void processRouteSegment(RoutingContext* ctx, bool reverseWaySearch, SEGMENTS_QU
 			continue;
 		}
 		visitedSegments[calculateRoutePointId(segment->getRoad(), segment->isPositive() ? segmentPoint - 1 : segmentPoint, 
-					segment->isPositive())]=segment;
+					segment->isPositive())]= prev.get() != NULL ? prev : segment;
 		int x = road->pointsX[segmentPoint];
 		int y = road->pointsY[segmentPoint];
 		int prevx = road->pointsX[prevInd];
@@ -531,8 +532,9 @@ void processRouteSegment(RoutingContext* ctx, bool reverseWaySearch, SEGMENTS_QU
 		SHARED_PTR<RouteSegment> roadNext = ctx->loadRouteSegment(x, y); // ctx.config->memoryLimitation - ctx.memoryOverhead
 		float distStartObstacles = segment->distanceFromStart + calculateTimeWithObstacles(ctx, road, segmentDist , obstaclesTime);
 		// We don't check if there are outgoing connections
-		bool processFurther = processIntersections(ctx, graphSegments, visitedSegments, distStartObstacles,
-					segment, segmentPoint, roadNext, reverseWaySearch, doNotAddIntersections);
+		bool processFurther = true;
+		prev = processIntersections(ctx, graphSegments, visitedSegments, distStartObstacles,
+					segment, segmentPoint, roadNext, reverseWaySearch, doNotAddIntersections, &processFurther);
 		if (!processFurther) {
 			directionAllowed = false;
 			continue;
@@ -621,14 +623,14 @@ bool proccessRestrictions(RoutingContext* ctx, SHARED_PTR<RouteDataObject> road,
 }
 
 
-bool processIntersections(RoutingContext* ctx, SEGMENTS_QUEUE& graphSegments, VISITED_MAP& visitedSegments,
+SHARED_PTR<RouteSegment> processIntersections(RoutingContext* ctx, SEGMENTS_QUEUE& graphSegments, VISITED_MAP& visitedSegments,
 		double distFromStart, SHARED_PTR<RouteSegment> segment,int segmentPoint, SHARED_PTR<RouteSegment> inputNext,
-		bool reverseWaySearch, bool doNotAddIntersections) {
+		bool reverseWaySearch, bool doNotAddIntersections, bool* processFurther) {
 	bool thereAreRestrictions ;
-	bool processFurther = true;
+	SHARED_PTR<RouteSegment> itself;
 	vector<SHARED_PTR<RouteSegment> >::iterator nextIterator;
 	if(inputNext.get() != NULL && inputNext->getRoad()->getId() == segment->getRoad()->getId() && 
-		inputNext->next.get() ==NULL) {
+		inputNext->next.get() == NULL) {
 		thereAreRestrictions = false;
 	} else {
 		thereAreRestrictions = proccessRestrictions(ctx, segment->road, inputNext, reverseWaySearch);
@@ -654,7 +656,7 @@ bool processIntersections(RoutingContext* ctx, SEGMENTS_QUEUE& graphSegments, VI
 		if (next->getSegmentStart() == segmentPoint && next->road->getId() == segment->road->getId()) {
 			// find segment itself  
 			// (and process it as other with small exception that we don't add to graph segments and process immediately)
-			SHARED_PTR<RouteSegment> itself = RouteSegment::initRouteSegment(next, segment->isPositive());
+			itself = RouteSegment::initRouteSegment(next, segment->isPositive());
 			if(itself.get() == NULL) {
 				// do nothing
 			} else if (itself->parentRoute.get() == NULL
@@ -667,7 +669,7 @@ bool processIntersections(RoutingContext* ctx, SEGMENTS_QUEUE& graphSegments, VI
 			} else {
 				// we already processed that segment earlier or it is in graph segments
 				// and we had better results (so we shouldn't process)
-				processFurther = false;
+				*processFurther = false;
 			}
 		} else if(!doNotAddIntersections) {
 			SHARED_PTR<RouteSegment> nextPos = RouteSegment::initRouteSegment(next, true);
@@ -688,7 +690,7 @@ bool processIntersections(RoutingContext* ctx, SEGMENTS_QUEUE& graphSegments, VI
 			hasNext = next.get() != NULL;
 		}
 	}
-	return processFurther;
+	return itself;
 }
 
 SHARED_PTR<RouteSegment> findRouteSegment(int px, int py, RoutingContext* ctx) {
