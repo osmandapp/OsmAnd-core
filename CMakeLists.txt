@@ -28,6 +28,12 @@ if(CMAKE_TARGET_OS STREQUAL "darwin")
 		${ZLIB_LIBRARY}
 	)
 endif()
+if(CMAKE_TARGET_OS STREQUAL "windows")
+	if(MSVC)
+		# Force warning to be an error "deletion of pointer to incomplete type 'type'; no destructor called"
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /we4150")
+	endif()
+endif()
 
 # 3D rendering: OpenGL, OpenGLES2, Direct3D
 if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "windows" OR CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android")

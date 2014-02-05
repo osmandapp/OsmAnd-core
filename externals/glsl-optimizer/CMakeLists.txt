@@ -15,18 +15,21 @@ add_library(glsl-optimizer_static STATIC
 
 set(target_specific_private_definitions "")
 set(target_specific_private_includes "")
-if(MSVC)
-	set(target_specific_private_includes ${target_specific_private_includes}
-		"include"
-	)
+if(CMAKE_TARGET_OS STREQUAL "windows")
+	if(MSVC)
+		set(target_specific_private_includes ${target_specific_private_includes}
+			"include"
+		)
 
-	set(target_specific_private_definitions ${target_specific_private_definitions}
-		-D_CRT_SECURE_NO_WARNINGS
-		-D__STDC_VERSION__=200000L
-	)
+		set(target_specific_private_definitions ${target_specific_private_definitions}
+			-D_CRT_SECURE_NO_WARNINGS
+			-D__STDC_VERSION__=200000L
+			-D_CRT_NONSTDC_NO_WARNINGS
+		)
 
-	# Disable "no matching operator delete found; memory will not be freed if initialization throws an exception
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4291")
+		# Disable "no matching operator delete found; memory will not be freed if initialization throws an exception
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4291")
+	endif()
 endif()
 
 if(target_specific_private_definitions)

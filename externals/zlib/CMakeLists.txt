@@ -23,6 +23,7 @@ if(CMAKE_TARGET_OS STREQUAL "windows")
 	if(MSVC)
 		set(target_specific_private_definitions ${target_specific_private_definitions}
 			-D_CRT_SECURE_NO_WARNINGS
+			-D_CRT_NONSTDC_NO_WARNINGS
 		)
 	endif()
 endif()
