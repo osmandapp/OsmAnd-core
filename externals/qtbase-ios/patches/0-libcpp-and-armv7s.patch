@@ -1,3 +1,16 @@
+diff -rupN upstream.original/mkspecs/features/qt_functions.prf upstream.patched/mkspecs/features/qt_functions.prf
+--- upstream.original/mkspecs/features/qt_functions.prf	2014-02-06 20:04:09.690123500 +0200
++++ upstream.patched/mkspecs/features/qt_functions.prf	2014-02-06 22:08:52.447836300 +0200
+@@ -1,8 +1,5 @@
+ defineReplace(qtPlatformTargetSuffix) {
+-    ios:CONFIG(iphonesimulator, iphonesimulator|iphoneos): \
+-        suffix = _iphonesimulator
+-    else: \
+-        suffix =
++    suffix =
+ 
+     CONFIG(debug, debug|release) {
+         !debug_and_release|build_pass {
 diff -rupN upstream.original/mkspecs/macx-ios-clang-device-armv7/qmake.conf upstream.patched/mkspecs/macx-ios-clang-device-armv7/qmake.conf
 --- upstream.original/mkspecs/macx-ios-clang-device-armv7/qmake.conf	2014-02-06 20:04:10.746320000 +0200
 +++ upstream.patched/mkspecs/macx-ios-clang-device-armv7/qmake.conf	2014-02-06 20:33:25.893092000 +0200
