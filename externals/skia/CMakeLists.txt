@@ -1,18 +1,32 @@
 project(skia)
 
-set(target_specific_sources
-	"upstream.patched/src/opts/SkBlitRow_opts_none.cpp"
-	#TODO: This is bad, use hw-specific
-	"upstream.patched/src/opts/SkBlitMask_opts_none.cpp"
-	"upstream.patched/src/opts/SkBitmapProcState_opts_none.cpp"
-	"upstream.patched/src/opts/SkUtils_opts_none.cpp"
-)
+set(target_specific_sources "")
 set(target_specific_dependencies "")
 set(target_specific_libraries_public "")
-
 set(target_specific_include_dirs_private "")
 set(target_specific_include_dirs_public "")
 set(target_specific_definitions_public "")
+
+# TODO: src/opts/opts_check_arm.cpp says 'memset.arm.S is using syntax incompatible with XCode'
+if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86")
+	set(target_specific_sources "${target_specific_sources}"
+		"upstream.patched/src/opts/opts_check_SSE2.cpp"
+		"upstream.patched/src/opts/SkBitmapFilter_opts_SSE2.cpp"
+		"upstream.patched/src/opts/SkBitmapProcState_opts_SSE2.cpp"
+		"upstream.patched/src/opts/SkBitmapProcState_opts_SSSE3.cpp"
+		"upstream.patched/src/opts/SkBlitRect_opts_SSE2.cpp"
+		"upstream.patched/src/opts/SkBlitRow_opts_SSE2.cpp"
+		"upstream.patched/src/opts/SkUtils_opts_SSE2.cpp"
+	)
+else()
+	set(target_specific_sources "${target_specific_sources}"
+		"upstream.patched/src/opts/SkBlitRow_opts_none.cpp"
+		"upstream.patched/src/opts/SkBlitMask_opts_none.cpp"
+		"upstream.patched/src/opts/SkBitmapProcState_opts_none.cpp"
+		"upstream.patched/src/opts/SkUtils_opts_none.cpp"
+	)
+endif()
+
 if(CMAKE_TARGET_OS STREQUAL "windows")
 	set(target_specific_include_dirs_private ${target_specific_include_dirs_private}
 		"upstream.patched/src/utils/win"
