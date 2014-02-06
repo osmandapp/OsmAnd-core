@@ -59,18 +59,14 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 		cp -rpf "$SRCLOC/upstream.patched.ios.simulator.i386.static/lib/cmake" "$SRCLOC/upstream.patched.ios/lib/cmake"
 
 		# Make universal libraries using lipo
-		for sourcePath in "$SRCLOC/upstream.patched.ios.simulator.i386.static/lib"/lib*.a ; do
-			libName=$(basename "$sourcePath")
-			if [[ "$libName" == *Bootstrap* ]]; then
-				continue
-			fi
-
+		libraries=(Core Concurrent Network Sql Xml)
+		for libName in "${libraries[@]}" ; do
 			echo "Packing '$libName'..."
 			lipo -create \
-				"$SRCLOC/upstream.patched.ios.simulator.i386.static/lib/$libName" \
-				"$SRCLOC/upstream.patched.ios.device.armv7.static/lib/$libName" \
-				"$SRCLOC/upstream.patched.ios.device.armv7s.static/lib/$libName" \
-				-output "$SRCLOC/upstream.patched.ios/lib/$libName"
+				"$SRCLOC/upstream.patched.ios.simulator.i386.static/lib/libQt5${libName}_iphonesimulator.a" \
+				"$SRCLOC/upstream.patched.ios.device.armv7.static/lib/libQt5${libName}.a" \
+				"$SRCLOC/upstream.patched.ios.device.armv7s.static/lib/libQt5${libName}.a" \
+				-output "$SRCLOC/upstream.patched.ios/lib/libQt5${libName}.a"
 		done
 	fi
 fi
