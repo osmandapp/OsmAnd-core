@@ -1,0 +1,122 @@
+diff -rupN upstream.original/src/opts/memset.arm.S upstream.patched/src/opts/memset.arm.S
+--- upstream.original/src/opts/memset.arm.S	2013-09-27 17:22:47.585872500 +0300
++++ upstream.patched/src/opts/memset.arm.S	2014-02-06 08:46:00.718148000 +0200
+@@ -13,14 +13,14 @@
+  *    to aid future maintenance.
+  */
+ 
++#include "xcode-compiler.h"
++
+     .text
+     .align 4
+     .syntax unified
+ 
+-    .global arm_memset32
+-    .type   arm_memset32, %function
+-    .global arm_memset16
+-    .type   arm_memset16, %function
++    GLOBAL(arm_memset32)
++    GLOBAL(arm_memset16)
+ 
+ /*
+  * Optimized memset functions for ARM.
+@@ -29,8 +29,8 @@
+  * void arm_memset32(uint32_t* dst, uint32_t value, int count);
+  *
+  */
+-arm_memset16:
+-        .fnstart
++ENTRY(arm_memset16):
++        UNWIND_START
+         push        {lr}
+ 
+         /* if count is equal to zero then abort */
+@@ -51,10 +51,10 @@ arm_memset16:
+ 
+         /* Now jump into the main loop below. */
+         b           .Lwork_32
+-        .fnend
++        UNWIND_END
+ 
+-arm_memset32:
+-        .fnstart
++ENTRY(arm_memset32):
++        UNWIND_START
+         push        {lr}
+ 
+         /* if count is equal to zero then abort */
+@@ -108,4 +108,4 @@ arm_memset32:
+ 
+ .Lfinish:
+         pop         {pc}
+-        .fnend
++        UNWIND_END
+diff -rupN upstream.original/src/opts/memset16_neon.S upstream.patched/src/opts/memset16_neon.S
+--- upstream.original/src/opts/memset16_neon.S	2013-09-27 17:22:47.587873800 +0300
++++ upstream.patched/src/opts/memset16_neon.S	2014-02-06 08:52:50.076894500 +0200
+@@ -5,6 +5,8 @@
+  * found in the LICENSE file.
+  ***************************************************************************/
+ 
++#include "xcode-compiler.h"
++
+ /***************************************************************************
+   Neon memset: Attempts to do a memset with Neon registers if possible,
+      Inputs:
+@@ -16,12 +18,12 @@
+ ***************************************************************************/
+ 
+         .code 32
+-        .fpu neon
++        USE_FPU(neon)
+         .align 4
+-        .globl memset16_neon
+-        .func
++        GLOBAL(memset16_neon)
++        FUNC_START
+ 
+-memset16_neon:
++ENTRY(memset16_neon):
+         cmp             r2, #0
+         bxeq            lr
+ 
+@@ -139,5 +141,5 @@ memset_end:
+         pop             {r0}
+         bx              lr
+ 
+-        .endfunc
+-        .end
++        FUNC_END
++        THE_END
+diff -rupN upstream.original/src/opts/memset32_neon.S upstream.patched/src/opts/memset32_neon.S
+--- upstream.original/src/opts/memset32_neon.S	2013-09-27 17:22:47.589882100 +0300
++++ upstream.patched/src/opts/memset32_neon.S	2014-02-06 08:52:46.996462300 +0200
+@@ -5,14 +5,16 @@
+  * found in the LICENSE file.
+  ***************************************************************************/
+ 
++ #include "xcode-compiler.h"
++
+ 	.code 32
+-	.fpu neon
++	USE_FPU(neon)
+ 	.align 4
+-	.globl	memset32_neon
+-	.func
++	GLOBAL(memset32_neon)
++	FUNC_START
+ 
+ 	/* r0 = buffer, r1 = value, r2 = times to write */
+-memset32_neon:
++ENTRY(memset32_neon):
+ 	cmp		r2, #1
+ 	streq		r1, [r0], #4
+ 	bxeq		lr
+@@ -109,5 +111,5 @@ memset32_dropthru:
+ 	str		r1, [r0, #0]
+ 	bx		lr
+ 
+-	.endfunc
+-	.end
++	FUNC_END
++	THE_END

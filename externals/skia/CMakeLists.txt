@@ -7,7 +7,9 @@ set(target_specific_include_dirs_private "")
 set(target_specific_include_dirs_public "")
 set(target_specific_definitions_public "")
 
-# TODO: src/opts/opts_check_arm.cpp says 'memset.arm.S is using syntax incompatible with XCode'
+#TODO: src/opts/opts_check_arm.cpp says 'memset.arm.S is using syntax incompatible with XCode'
+#TODO: for x86 & gcc - enabled sse for specific files
+#TODO: for ios target use -no-integrated-as
 if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86")
 	set(target_specific_sources "${target_specific_sources}"
 		"upstream.patched/src/opts/opts_check_SSE2.cpp"
