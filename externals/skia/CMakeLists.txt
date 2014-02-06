@@ -5,9 +5,9 @@ set(target_specific_dependencies "")
 set(target_specific_libraries_public "")
 set(target_specific_include_dirs_private "")
 set(target_specific_include_dirs_public "")
+set(target_specific_definitions_private "")
 set(target_specific_definitions_public "")
 
-#TODO: src/opts/opts_check_arm.cpp says 'memset.arm.S is using syntax incompatible with XCode'
 #TODO: for x86 & gcc - enabled sse for specific files
 #TODO: for ios target use -no-integrated-as
 if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86")
@@ -19,6 +19,32 @@ if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86")
 		"upstream.patched/src/opts/SkBlitRect_opts_SSE2.cpp"
 		"upstream.patched/src/opts/SkBlitRow_opts_SSE2.cpp"
 		"upstream.patched/src/opts/SkUtils_opts_SSE2.cpp"
+	)
+elseif(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm")
+	# SK_ARM_NEON_MODE setting
+	# 0 = NEON is unavailable
+	# 1 = NEON is always available
+	# 2 = NEON may be available
+	if(CMAKE_TARGET_OS STREQUAL "ios")
+		set(target_specific_definitions_public ${target_specific_definitions_public}
+			-DSK_ARM_NEON_MODE=1
+		)
+	else()
+		set(target_specific_definitions_public ${target_specific_definitions_public}
+			-DSK_ARM_NEON_MODE=2
+		)
+	endif()
+	set(target_specific_sources "${target_specific_sources}"
+		"upstream.patched/src/opts/opts_check_arm.cpp"
+		"upstream.patched/src/opts/SkBlitRow_opts_arm.cpp"
+		"upstream.patched/src/opts/SkBlitRow_opts_arm_neon.cpp"
+		"upstream.patched/src/opts/SkBlitMask_opts_arm.cpp"
+		"upstream.patched/src/opts/SkBitmapProcState_opts_arm.cpp"
+		"upstream.patched/src/opts/SkBitmapProcState_matrixProcs_neon.cpp"
+		"upstream.patched/src/opts/SkBitmapProcState_arm_neon.cpp"
+		"upstream.patched/src/opts/memset32_neon.S"
+		"upstream.patched/src/opts/memset16_neon.S"
+		"upstream.patched/src/opts/memset.arm.S"
 	)
 else()
 	set(target_specific_sources "${target_specific_sources}"
