@@ -1,0 +1,39 @@
+diff -rupN upstream.original/src/opts/opts_check_SSE2.cpp upstream.patched/src/opts/opts_check_SSE2.cpp
+--- upstream.original/src/opts/opts_check_SSE2.cpp	2013-09-27 17:22:47.591877900 +0300
++++ upstream.patched/src/opts/opts_check_SSE2.cpp	2014-02-06 20:54:04.653031600 +0200
+@@ -81,6 +81,27 @@ static inline bool hasSSE2() {
+ }
+ #endif
+ 
++#if defined(SK_CPU_NO_SSSE3)
++static inline bool hasSSSE3() {
++    return false;
++}
++void S32_opaque_D32_filter_DX_SSSE3(const SkBitmapProcState& s,
++                                    const uint32_t* xy,
++                                    int count, uint32_t* colors)
++{}
++void S32_alpha_D32_filter_DX_SSSE3(const SkBitmapProcState& s,
++                                   const uint32_t* xy,
++                                   int count, uint32_t* colors)
++{}
++void S32_opaque_D32_filter_DXDY_SSSE3(const SkBitmapProcState& s,
++                                    const uint32_t* xy,
++                                    int count, uint32_t* colors)
++{}
++void S32_alpha_D32_filter_DXDY_SSSE3(const SkBitmapProcState& s,
++                                   const uint32_t* xy,
++                                   int count, uint32_t* colors)
++{}
++#else
+ #if SK_CPU_SSE_LEVEL >= SK_CPU_SSE_LEVEL_SSSE3
+ /* If we know SSSE3 is supported at compile time, don't even bother checking. */
+ static inline bool hasSSSE3() {
+@@ -94,6 +115,7 @@ static inline bool hasSSSE3() {
+     return (cpu_info[2] & 0x200) != 0;
+ }
+ #endif
++#endif
+ 
+ static bool cachedHasSSE2() {
+     static bool gHasSSE2 = hasSSE2();

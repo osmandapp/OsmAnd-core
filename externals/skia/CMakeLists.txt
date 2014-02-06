@@ -30,7 +30,7 @@ if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86")
 		set_source_files_properties(
 			"upstream.patched/src/opts/SkBitmapProcState_opts_SSSE3.cpp"
 			PROPERTIES
-				COMPILE_FLAGS "-msse3")
+				COMPILE_FLAGS "-mssse3")
 	endif()
 elseif(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm")
 	# SK_ARM_NEON_MODE setting

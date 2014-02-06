@@ -473,11 +473,13 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
             upstream.patched/src/opts/SkBlitRow_opts_arm.cpp \
             upstream.patched/src/opts/SkBlitMask_opts_arm.cpp
     else ifeq ($(TARGET_ARCH),x86)
+		LOCAL_CFLAGS += \
+			-DSK_CPU_SSE_LEVEL=20 \
+			-DSK_CPU_NO_SSSE3
         LOCAL_SRC_FILES += \
             upstream.patched/src/opts/opts_check_SSE2.cpp \
             upstream.patched/src/opts/SkBitmapFilter_opts_SSE2.cpp \
             upstream.patched/src/opts/SkBitmapProcState_opts_SSE2.cpp \
-            upstream.patched/src/opts/SkBitmapProcState_opts_SSSE3.cpp \
             upstream.patched/src/opts/SkBlitRect_opts_SSE2.cpp \
             upstream.patched/src/opts/SkBlitRow_opts_SSE2.cpp \
             upstream.patched/src/opts/SkUtils_opts_SSE2.cpp
