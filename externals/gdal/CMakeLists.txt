@@ -26,6 +26,9 @@ else()
 endif()
 
 file(GLOB_RECURSE gdal_gcore_sources "upstream.patched/gcore/*.cpp")
+file(GLOB gdal_gcore_sources__remove
+	"upstream.patched/gcore/gdaldllmain.cpp")
+list(REMOVE_ITEM gdal_gcore_sources ${gdal_gcore_sources__remove})
 file(GLOB_RECURSE gdal_alg_sources "upstream.patched/alg/*.cpp")
 file(GLOB gdal_ogr_sources "upstream.patched/ogr/*.cpp")
 file(GLOB_RECURSE gdal_ogr_frmts_mem_sources "upstream.patched/ogr/ogrsf_frmts/mem/*.cpp")
