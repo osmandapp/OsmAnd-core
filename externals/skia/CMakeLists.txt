@@ -56,6 +56,12 @@ elseif(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm")
 	)
 	if(CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_COMPILER_FAMILY STREQUAL "clang")
 		set_source_files_properties(
+			"upstream.patched/src/opts/SkBlitRow_opts_arm.cpp"
+			"upstream.patched/src/opts/SkBlitRow_opts_arm_neon.cpp"
+			"upstream.patched/src/opts/SkBlitMask_opts_arm.cpp"
+			"upstream.patched/src/opts/SkBitmapProcState_opts_arm.cpp"
+			"upstream.patched/src/opts/SkBitmapProcState_matrixProcs_neon.cpp"
+			"upstream.patched/src/opts/SkBitmapProcState_arm_neon.cpp"
 			"upstream.patched/src/opts/memset32_neon.S"
 			"upstream.patched/src/opts/memset16_neon.S"
 			"upstream.patched/src/opts/memset.arm.S"
