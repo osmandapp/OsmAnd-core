@@ -18,7 +18,7 @@ if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86")
 		"upstream.patched/src/opts/SkBlitRow_opts_SSE2.cpp"
 		"upstream.patched/src/opts/SkUtils_opts_SSE2.cpp"
 	)
-	if(CMAKE_COMPILER_FAMILY STREQUAL "gcc")
+	if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang")
 		set_source_files_properties(
 			"upstream.patched/src/opts/SkBitmapFilter_opts_SSE2.cpp"
 			"upstream.patched/src/opts/SkBitmapProcState_opts_SSE2.cpp"
