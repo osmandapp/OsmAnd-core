@@ -42,6 +42,7 @@ elseif(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm")
 			-D__ARM_HAVE_OPTIONAL_NEON_SUPPORT
 		)
 	endif()
+	enable_language(ASM)
 	set(target_specific_sources "${target_specific_sources}"
 		"upstream.patched/src/opts/opts_check_arm.cpp"
 		"upstream.patched/src/opts/SkBlitRow_opts_arm.cpp"
