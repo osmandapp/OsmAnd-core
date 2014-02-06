@@ -33,17 +33,13 @@ if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86")
 				COMPILE_FLAGS "-mssse3")
 	endif()
 elseif(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm")
-	# SK_ARM_NEON_MODE setting
-	# 0 = NEON is unavailable
-	# 1 = NEON is always available
-	# 2 = NEON may be available
 	if(CMAKE_TARGET_OS STREQUAL "ios")
 		set(target_specific_definitions_public ${target_specific_definitions_public}
-			-DSK_ARM_NEON_MODE=1
+			-D__ARM_HAVE_NEON
 		)
 	else()
 		set(target_specific_definitions_public ${target_specific_definitions_public}
-			-DSK_ARM_NEON_MODE=2
+			-D__ARM_HAVE_OPTIONAL_NEON_SUPPORT
 		)
 	endif()
 	set(target_specific_sources "${target_specific_sources}"
