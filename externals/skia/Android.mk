@@ -466,22 +466,27 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
                 upstream.patched/src/opts/SkBitmapProcState_matrixProcs_neon.cpp \
                 upstream.patched/src/opts/SkBlitRow_opts_arm_neon.cpp
         endif
-
         LOCAL_SRC_FILES += \
             upstream.patched/src/opts/opts_check_arm.cpp \
             upstream.patched/src/opts/memset.arm.S \
             upstream.patched/src/opts/SkBitmapProcState_opts_arm.cpp \
             upstream.patched/src/opts/SkBlitRow_opts_arm.cpp \
             upstream.patched/src/opts/SkBlitMask_opts_arm.cpp
-
+    else ifeq ($(TARGET_ARCH),x86)
+        LOCAL_SRC_FILES += \
+            upstream.patched/src/opts/opts_check_SSE2.cpp \
+            upstream.patched/src/opts/SkBitmapFilter_opts_SSE2.cpp \
+            upstream.patched/src/opts/SkBitmapProcState_opts_SSE2.cpp \
+            upstream.patched/src/opts/SkBitmapProcState_opts_SSSE3.cpp \
+            upstream.patched/src/opts/SkBlitRect_opts_SSE2.cpp \
+            upstream.patched/src/opts/SkBlitRow_opts_SSE2.cpp \
+            upstream.patched/src/opts/SkUtils_opts_SSE2.cpp
     else
-
         LOCAL_SRC_FILES += \
             upstream.patched/src/opts/SkBlitRow_opts_none.cpp \
             upstream.patched/src/opts/SkBitmapProcState_opts_none.cpp \
             upstream.patched/src/opts/SkUtils_opts_none.cpp \
             upstream.patched/src/opts/SkBlitMask_opts_none.cpp
-
     endif
 
     include $(BUILD_STATIC_LIBRARY)
