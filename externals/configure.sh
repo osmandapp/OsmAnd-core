@@ -16,7 +16,7 @@ echo "Last stamp:    "$last_stamp
 echo "Current stamp: "$current_stamp
 if [ "$last_stamp" != "$current_stamp" ]; then
 	echo "Stamps differ, will clean externals..."
-	"$SRCLOC/clean.sh" $OSMAND_EXTERNALS_SET
+	"$SRCLOC/clean.sh" ${OSMAND_EXTERNALS_SET[@]}
 	cp "$SRCLOC/stamp" "$SRCLOC/.stamp"
 fi
 
