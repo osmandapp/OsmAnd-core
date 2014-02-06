@@ -1,18 +1,26 @@
 diff -rupN upstream.original/mkspecs/macx-ios-clang-device-armv7/qmake.conf upstream.patched/mkspecs/macx-ios-clang-device-armv7/qmake.conf
---- upstream.original/mkspecs/macx-ios-clang-device-armv7/qmake.conf	2013-07-14 16:15:59.409236900 +0300
-+++ upstream.patched/mkspecs/macx-ios-clang-device-armv7/qmake.conf	2013-07-22 14:20:52.890899000 +0300
+--- upstream.original/mkspecs/macx-ios-clang-device-armv7/qmake.conf	2014-02-06 20:04:10.746320000 +0200
++++ upstream.patched/mkspecs/macx-ios-clang-device-armv7/qmake.conf	2014-02-06 20:33:25.893092000 +0200
 @@ -7,7 +7,7 @@ CONFIG                 += app_bundle red
  QMAKE_INCREMENTAL_STYLE = sublib
  
  QMAKE_MACOSX_DEPLOYMENT_TARGET  =
--QMAKE_IOS_DEPLOYMENT_TARGET     = 4.3
+-QMAKE_IOS_DEPLOYMENT_TARGET     = 5.0
 +QMAKE_IOS_DEPLOYMENT_TARGET     = 6.0
  
  INCLUDEPATH            += $$PWD/ios
- DEFINES                += DARWIN_NO_CARBON QT_NO_CORESERVICES QT_NO_PRINTER QT_NO_PRINTDIALOG
-@@ -22,4 +22,11 @@ include(../../common/clang-mac.conf)
- include(../../common/ios/clang.conf)
- include(../../common/ios/qmake.conf)
+ DEFINES                += DARWIN_NO_CARBON QT_NO_PRINTER QT_NO_PRINTDIALOG
+@@ -16,7 +16,6 @@ DEFINES                += DARWIN_NO_CARB
+ QMAKE_IOS_TARGETED_DEVICE_FAMILY = 1,2
+ 
+ QMAKE_IOS_DEVICE_ARCHS = armv7
+-QMAKE_IOS_SIMULATOR_ARCHS = i386
+ 
+ include(../common/ios.conf)
+ include(../common/gcc-base-mac.conf)
+@@ -25,4 +24,9 @@ include(../common/clang-mac.conf)
+ include(../common/ios/clang.conf)
+ include(../common/ios/qmake.conf)
  
 +QMAKE_OBJECTIVE_CFLAGS += -stdlib=libc++
 +QMAKE_CFLAGS           += -stdlib=libc++
@@ -20,23 +28,31 @@ diff -rupN upstream.original/mkspecs/macx-ios-clang-device-armv7/qmake.conf upst
 +QMAKE_LFLAGS           += -stdlib=libc++
 +
  load(qt_config)
-+
-+QT_ARCH                 = armv7
 diff -rupN upstream.original/mkspecs/macx-ios-clang-device-armv7s/qmake.conf upstream.patched/mkspecs/macx-ios-clang-device-armv7s/qmake.conf
---- upstream.original/mkspecs/macx-ios-clang-device-armv7s/qmake.conf	2013-07-14 16:15:59.409236900 +0300
-+++ upstream.patched/mkspecs/macx-ios-clang-device-armv7s/qmake.conf	2013-07-22 14:21:04.818867200 +0300
+--- upstream.original/mkspecs/macx-ios-clang-device-armv7s/qmake.conf	2014-02-06 20:04:10.746320000 +0200
++++ upstream.patched/mkspecs/macx-ios-clang-device-armv7s/qmake.conf	2014-02-06 20:33:34.290169500 +0200
 @@ -7,7 +7,7 @@ CONFIG                 += app_bundle red
  QMAKE_INCREMENTAL_STYLE = sublib
  
  QMAKE_MACOSX_DEPLOYMENT_TARGET  =
--QMAKE_IOS_DEPLOYMENT_TARGET     = 4.3
+-QMAKE_IOS_DEPLOYMENT_TARGET     = 5.0
 +QMAKE_IOS_DEPLOYMENT_TARGET     = 6.0
  
  INCLUDEPATH            += $$PWD/ios
- DEFINES                += DARWIN_NO_CARBON QT_NO_CORESERVICES QT_NO_PRINTER QT_NO_PRINTDIALOG
-@@ -22,4 +22,11 @@ include(../../common/clang-mac.conf)
- include(../../common/ios/clang.conf)
- include(../../common/ios/qmake.conf)
+ DEFINES                += DARWIN_NO_CARBON QT_NO_PRINTER QT_NO_PRINTDIALOG
+@@ -15,8 +15,7 @@ DEFINES                += DARWIN_NO_CARB
+ # Universal target (iPhone and iPad)
+ QMAKE_IOS_TARGETED_DEVICE_FAMILY = 1,2
+ 
+-QMAKE_IOS_DEVICE_ARCHS = armv7
+-QMAKE_IOS_SIMULATOR_ARCHS = i386
++QMAKE_IOS_DEVICE_ARCHS = armv7s
+ 
+ include(../common/ios.conf)
+ include(../common/gcc-base-mac.conf)
+@@ -25,4 +24,9 @@ include(../common/clang-mac.conf)
+ include(../common/ios/clang.conf)
+ include(../common/ios/qmake.conf)
  
 +QMAKE_OBJECTIVE_CFLAGS += -stdlib=libc++
 +QMAKE_CFLAGS           += -stdlib=libc++
@@ -44,23 +60,29 @@ diff -rupN upstream.original/mkspecs/macx-ios-clang-device-armv7s/qmake.conf ups
 +QMAKE_LFLAGS           += -stdlib=libc++
 +
  load(qt_config)
-+
-+QT_ARCH                 = armv7s
 diff -rupN upstream.original/mkspecs/macx-ios-clang-simulator-i386/qmake.conf upstream.patched/mkspecs/macx-ios-clang-simulator-i386/qmake.conf
---- upstream.original/mkspecs/macx-ios-clang-simulator-i386/qmake.conf	2013-07-14 16:15:59.409236900 +0300
-+++ upstream.patched/mkspecs/macx-ios-clang-simulator-i386/qmake.conf	2013-07-22 14:21:18.779193100 +0300
+--- upstream.original/mkspecs/macx-ios-clang-simulator-i386/qmake.conf	2014-02-06 20:04:10.746320000 +0200
++++ upstream.patched/mkspecs/macx-ios-clang-simulator-i386/qmake.conf	2014-02-06 20:33:47.961369200 +0200
 @@ -7,7 +7,7 @@ CONFIG                 += app_bundle red
  QMAKE_INCREMENTAL_STYLE = sublib
  
  QMAKE_MACOSX_DEPLOYMENT_TARGET  =
--QMAKE_IOS_DEPLOYMENT_TARGET     = 4.3
+-QMAKE_IOS_DEPLOYMENT_TARGET     = 5.0
 +QMAKE_IOS_DEPLOYMENT_TARGET     = 6.0
  
  INCLUDEPATH            += $$PWD/ios
- DEFINES                += DARWIN_NO_CARBON QT_NO_CORESERVICES QT_NO_PRINTER QT_NO_PRINTDIALOG
-@@ -22,4 +22,11 @@ include(../../common/clang-mac.conf)
- include(../../common/ios/clang.conf)
- include(../../common/ios/qmake.conf)
+ DEFINES                += DARWIN_NO_CARBON QT_NO_PRINTER QT_NO_PRINTDIALOG
+@@ -15,7 +15,6 @@ DEFINES                += DARWIN_NO_CARB
+ # Universal target (iPhone and iPad)
+ QMAKE_IOS_TARGETED_DEVICE_FAMILY = 1,2
+ 
+-QMAKE_IOS_DEVICE_ARCHS = armv7
+ QMAKE_IOS_SIMULATOR_ARCHS = i386
+ 
+ include(../common/ios.conf)
+@@ -25,4 +24,9 @@ include(../common/clang-mac.conf)
+ include(../common/ios/clang.conf)
+ include(../common/ios/qmake.conf)
  
 +QMAKE_OBJECTIVE_CFLAGS += -stdlib=libc++
 +QMAKE_CFLAGS           += -stdlib=libc++
@@ -68,5 +90,3 @@ diff -rupN upstream.original/mkspecs/macx-ios-clang-simulator-i386/qmake.conf up
 +QMAKE_LFLAGS           += -stdlib=libc++
 +
  load(qt_config)
-+
-+QT_ARCH                 = i386
