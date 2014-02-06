@@ -19,21 +19,21 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 	if [ ! -d "$SRCLOC/upstream.patched.ios.simulator.i386.static" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.ios.simulator.i386.static"
 		(cd "$SRCLOC/upstream.patched.ios.simulator.i386.static" && \
-			./configure -xplatform unsupported/macx-ios-clang-simulator-i386 $QTBASE_CONFIGURATION -sdk iphonesimulator)
+			./configure -xplatform macx-ios-clang-simulator-i386 $QTBASE_CONFIGURATION -sdk iphonesimulator)
 	fi
 	(cd "$SRCLOC/upstream.patched.ios.simulator.i386.static" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 
 	if [ ! -d "$SRCLOC/upstream.patched.ios.device.armv7.static" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.ios.device.armv7.static"
 		(cd "$SRCLOC/upstream.patched.ios.device.armv7.static" && \
-			./configure -xplatform unsupported/macx-ios-clang-device-armv7 $QTBASE_CONFIGURATION -sdk iphoneos)
+			./configure -xplatform macx-ios-clang-device-armv7 $QTBASE_CONFIGURATION -sdk iphoneos)
 	fi
 	(cd "$SRCLOC/upstream.patched.ios.device.armv7.static" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 	
 	if [ ! -d "$SRCLOC/upstream.patched.ios.device.armv7s.static" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.ios.device.armv7s.static"
 		(cd "$SRCLOC/upstream.patched.ios.device.armv7s.static" && \
-			./configure -xplatform unsupported/macx-ios-clang-device-armv7s $QTBASE_CONFIGURATION -sdk iphoneos)
+			./configure -xplatform macx-ios-clang-device-armv7s $QTBASE_CONFIGURATION -sdk iphoneos)
 	fi
 	(cd "$SRCLOC/upstream.patched.ios.device.armv7s.static" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 

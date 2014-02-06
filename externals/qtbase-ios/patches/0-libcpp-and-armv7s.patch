@@ -1,6 +1,6 @@
-diff -rupN upstream.patched/mkspecs/unsupported/macx-ios-clang-device-armv7/qmake.conf upstream.patched2/mkspecs/unsupported/macx-ios-clang-device-armv7/qmake.conf
---- upstream.patched/mkspecs/unsupported/macx-ios-clang-device-armv7/qmake.conf	2013-07-14 16:15:59.409236900 +0300
-+++ upstream.patched2/mkspecs/unsupported/macx-ios-clang-device-armv7/qmake.conf	2013-07-22 14:20:52.890899000 +0300
+diff -rupN upstream.original/mkspecs/macx-ios-clang-device-armv7/qmake.conf upstream.patched/mkspecs/macx-ios-clang-device-armv7/qmake.conf
+--- upstream.original/mkspecs/macx-ios-clang-device-armv7/qmake.conf	2013-07-14 16:15:59.409236900 +0300
++++ upstream.patched/mkspecs/macx-ios-clang-device-armv7/qmake.conf	2013-07-22 14:20:52.890899000 +0300
 @@ -7,7 +7,7 @@ CONFIG                 += app_bundle red
  QMAKE_INCREMENTAL_STYLE = sublib
  
@@ -22,9 +22,9 @@ diff -rupN upstream.patched/mkspecs/unsupported/macx-ios-clang-device-armv7/qmak
  load(qt_config)
 +
 +QT_ARCH                 = armv7
-diff -rupN upstream.patched/mkspecs/unsupported/macx-ios-clang-device-armv7s/qmake.conf upstream.patched2/mkspecs/unsupported/macx-ios-clang-device-armv7s/qmake.conf
---- upstream.patched/mkspecs/unsupported/macx-ios-clang-device-armv7s/qmake.conf	2013-07-14 16:15:59.409236900 +0300
-+++ upstream.patched2/mkspecs/unsupported/macx-ios-clang-device-armv7s/qmake.conf	2013-07-22 14:21:04.818867200 +0300
+diff -rupN upstream.original/mkspecs/macx-ios-clang-device-armv7s/qmake.conf upstream.patched/mkspecs/macx-ios-clang-device-armv7s/qmake.conf
+--- upstream.original/mkspecs/macx-ios-clang-device-armv7s/qmake.conf	2013-07-14 16:15:59.409236900 +0300
++++ upstream.patched/mkspecs/macx-ios-clang-device-armv7s/qmake.conf	2013-07-22 14:21:04.818867200 +0300
 @@ -7,7 +7,7 @@ CONFIG                 += app_bundle red
  QMAKE_INCREMENTAL_STYLE = sublib
  
@@ -46,9 +46,9 @@ diff -rupN upstream.patched/mkspecs/unsupported/macx-ios-clang-device-armv7s/qma
  load(qt_config)
 +
 +QT_ARCH                 = armv7s
-diff -rupN upstream.patched/mkspecs/unsupported/macx-ios-clang-simulator-i386/qmake.conf upstream.patched2/mkspecs/unsupported/macx-ios-clang-simulator-i386/qmake.conf
---- upstream.patched/mkspecs/unsupported/macx-ios-clang-simulator-i386/qmake.conf	2013-07-14 16:15:59.409236900 +0300
-+++ upstream.patched2/mkspecs/unsupported/macx-ios-clang-simulator-i386/qmake.conf	2013-07-22 14:21:18.779193100 +0300
+diff -rupN upstream.original/mkspecs/macx-ios-clang-simulator-i386/qmake.conf upstream.patched/mkspecs/macx-ios-clang-simulator-i386/qmake.conf
+--- upstream.original/mkspecs/macx-ios-clang-simulator-i386/qmake.conf	2013-07-14 16:15:59.409236900 +0300
++++ upstream.patched/mkspecs/macx-ios-clang-simulator-i386/qmake.conf	2013-07-22 14:21:18.779193100 +0300
 @@ -7,7 +7,7 @@ CONFIG                 += app_bundle red
  QMAKE_INCREMENTAL_STYLE = sublib
  

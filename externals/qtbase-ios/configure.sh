@@ -17,9 +17,9 @@ fi
 
 # Patch
 cp -rpf "$SRCLOC/upstream.original" "$SRCLOC/upstream.patched"
-cp -rpf "$SRCLOC/upstream.original/mkspecs/unsupported/macx-ios-clang" "$SRCLOC/upstream.patched/mkspecs/unsupported/macx-ios-clang-device-armv7"
-cp -rpf "$SRCLOC/upstream.original/mkspecs/unsupported/macx-ios-clang" "$SRCLOC/upstream.patched/mkspecs/unsupported/macx-ios-clang-device-armv7s"
-cp -rpf "$SRCLOC/upstream.original/mkspecs/unsupported/macx-ios-clang" "$SRCLOC/upstream.patched/mkspecs/unsupported/macx-ios-clang-simulator-i386"
+cp -rpf "$SRCLOC/upstream.original/mkspecs/macx-ios-clang" "$SRCLOC/upstream.patched/mkspecs/macx-ios-clang-device-armv7"
+cp -rpf "$SRCLOC/upstream.original/mkspecs/macx-ios-clang" "$SRCLOC/upstream.patched/mkspecs/macx-ios-clang-device-armv7s"
+cp -rpf "$SRCLOC/upstream.original/mkspecs/macx-ios-clang" "$SRCLOC/upstream.patched/mkspecs/macx-ios-clang-simulator-i386"
 if [ -d "$SRCLOC/patches" ]; then
 	echo "Patching '$NAME'..."
 	PATCHES=`ls -1 $SRCLOC/patches/*.patch | sort`

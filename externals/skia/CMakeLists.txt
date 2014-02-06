@@ -8,7 +8,6 @@ set(target_specific_include_dirs_public "")
 set(target_specific_definitions_private "")
 set(target_specific_definitions_public "")
 
-#TODO: for x86 & gcc - enabled sse for specific files
 if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86")
 	set(target_specific_sources "${target_specific_sources}"
 		"upstream.patched/src/opts/opts_check_SSE2.cpp"
@@ -19,6 +18,20 @@ if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86")
 		"upstream.patched/src/opts/SkBlitRow_opts_SSE2.cpp"
 		"upstream.patched/src/opts/SkUtils_opts_SSE2.cpp"
 	)
+	if(CMAKE_COMPILER_FAMILY "gcc")
+		set_source_files_properties(
+			"upstream.patched/src/opts/SkBitmapFilter_opts_SSE2.cpp"
+			"upstream.patched/src/opts/SkBitmapProcState_opts_SSE2.cpp"
+			"upstream.patched/src/opts/SkBlitRect_opts_SSE2.cpp"
+			"upstream.patched/src/opts/SkBlitRow_opts_SSE2.cpp"
+			"upstream.patched/src/opts/SkUtils_opts_SSE2.cpp"
+			PROPERTIES
+				COMPILE_FLAGS "-msse2")
+		set_source_files_properties(
+			"upstream.patched/src/opts/SkBitmapProcState_opts_SSSE3.cpp"
+			PROPERTIES
+				COMPILE_FLAGS "-msse3")
+	endif()
 elseif(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm")
 	# SK_ARM_NEON_MODE setting
 	# 0 = NEON is unavailable
@@ -46,25 +59,12 @@ elseif(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm")
 		"upstream.patched/src/opts/memset.arm.S"
 	)
 	if(CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_COMPILER_FAMILY "clang")
-		unset(compile_flags)
-		get_source_file_property(compile_flags "upstream.patched/src/opts/memset32_neon.S" COMPILE_FLAGS)
-		set_source_files_properties("upstream.patched/src/opts/memset32_neon.S"
+		set_source_files_properties(
+			"upstream.patched/src/opts/memset32_neon.S"
+			"upstream.patched/src/opts/memset16_neon.S"
+			"upstream.patched/src/opts/memset.arm.S"
 			PROPERTIES
-				COMPILE_FLAGS
-				"${compile_flags} -no-integrated-as")
-		unset(compile_flags)
-		get_source_file_property(compile_flags "upstream.patched/src/opts/memset16_neon.S" COMPILE_FLAGS)
-		set_source_files_properties("upstream.patched/src/opts/memset16_neon.S"
-			PROPERTIES
-				COMPILE_FLAGS
-				"${compile_flags} -no-integrated-as")
-		unset(compile_flags)
-		get_source_file_property(compile_flags "upstream.patched/src/opts/memset.arm.S" COMPILE_FLAGS)
-		set_source_files_properties("upstream.patched/src/opts/memset.arm.S"
-			PROPERTIES
-				COMPILE_FLAGS
-				"${compile_flags} -no-integrated-as")
-		unset(compile_flags)
+				COMPILE_FLAGS "-no-integrated-as")
 	endif()
 else()
 	set(target_specific_sources "${target_specific_sources}"
