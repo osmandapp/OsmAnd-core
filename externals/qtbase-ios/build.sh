@@ -63,7 +63,7 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 		for libName in "${libraries[@]}" ; do
 			echo "Packing '$libName'..."
 			lipo -create \
-				"$SRCLOC/upstream.patched.ios.simulator.i386.static/lib/libQt5${libName}_iphonesimulator.a" \
+				"$SRCLOC/upstream.patched.ios.simulator.i386.static/lib/libQt5${libName}.a" \
 				"$SRCLOC/upstream.patched.ios.device.armv7.static/lib/libQt5${libName}.a" \
 				"$SRCLOC/upstream.patched.ios.device.armv7s.static/lib/libQt5${libName}.a" \
 				-output "$SRCLOC/upstream.patched.ios/lib/libQt5${libName}.a"
