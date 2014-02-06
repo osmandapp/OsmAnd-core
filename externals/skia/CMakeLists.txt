@@ -9,7 +9,6 @@ set(target_specific_definitions_private "")
 set(target_specific_definitions_public "")
 
 #TODO: for x86 & gcc - enabled sse for specific files
-#TODO: for ios target use -no-integrated-as
 if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86")
 	set(target_specific_sources "${target_specific_sources}"
 		"upstream.patched/src/opts/opts_check_SSE2.cpp"
@@ -46,6 +45,27 @@ elseif(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm")
 		"upstream.patched/src/opts/memset16_neon.S"
 		"upstream.patched/src/opts/memset.arm.S"
 	)
+	if(CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_COMPILER_FAMILY "clang")
+		unset(compile_flags)
+		get_source_file_property(compile_flags "upstream.patched/src/opts/memset32_neon.S" COMPILE_FLAGS)
+		set_source_files_properties("upstream.patched/src/opts/memset32_neon.S"
+			PROPERTIES
+				COMPILE_FLAGS
+				"${compile_flags} -no-integrated-as")
+		unset(compile_flags)
+		get_source_file_property(compile_flags "upstream.patched/src/opts/memset16_neon.S" COMPILE_FLAGS)
+		set_source_files_properties("upstream.patched/src/opts/memset16_neon.S"
+			PROPERTIES
+				COMPILE_FLAGS
+				"${compile_flags} -no-integrated-as")
+		unset(compile_flags)
+		get_source_file_property(compile_flags "upstream.patched/src/opts/memset.arm.S" COMPILE_FLAGS)
+		set_source_files_properties("upstream.patched/src/opts/memset.arm.S"
+			PROPERTIES
+				COMPILE_FLAGS
+				"${compile_flags} -no-integrated-as")
+		unset(compile_flags)
+	endif()
 else()
 	set(target_specific_sources "${target_specific_sources}"
 		"upstream.patched/src/opts/SkBlitRow_opts_none.cpp"
