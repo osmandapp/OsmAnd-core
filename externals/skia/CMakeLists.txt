@@ -132,9 +132,9 @@ elseif(CMAKE_TARGET_OS STREQUAL "darwin")
 	find_library(CORE_TEXT_LIBRARY CoreText)
 	find_library(CORE_GRAPHICS_LIBRARY CoreGraphics)
 	set(target_specific_libraries_public ${target_specific_libraries_public}
-		${CORE_FOUNDATION_LIBRARY}
-		${CORE_TEXT_LIBRARY}
-		${CORE_GRAPHICS_LIBRARY}
+		"${CORE_FOUNDATION_LIBRARY}/CoreFoundation"
+		"${CORE_TEXT_LIBRARY}/CoreText"
+		"${CORE_GRAPHICS_LIBRARY}/CoreGraphics"
 	)
 elseif(CMAKE_TARGET_OS STREQUAL "ios")
 	set(target_specific_include_dirs_public ${target_specific_include_dirs_public}
@@ -159,9 +159,9 @@ elseif(CMAKE_TARGET_OS STREQUAL "ios")
 	find_library(CORE_TEXT_LIBRARY CoreText)
 	find_library(CORE_GRAPHICS_LIBRARY CoreGraphics)
 	set(target_specific_libraries_public ${target_specific_libraries_public}
-		${CORE_FOUNDATION_LIBRARY}
-		${CORE_TEXT_LIBRARY}
-		${CORE_GRAPHICS_LIBRARY}
+		"${CORE_FOUNDATION_LIBRARY}/CoreFoundation"
+		"${CORE_TEXT_LIBRARY}/CoreText"
+		"${CORE_GRAPHICS_LIBRARY}/CoreGraphics"
 	)
 elseif(CMAKE_TARGET_OS STREQUAL "linux")
 	file(GLOB src_gpu_gl_unix "upstream.patched/src/gpu/gl/unix/*")
