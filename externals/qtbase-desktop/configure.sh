@@ -31,6 +31,8 @@ fi
 
 # Patch
 cp -rpf "$SRCLOC/upstream.original" "$SRCLOC/upstream.patched"
+cp -rpf "$SRCLOC/upstream.original/mkspecs/macx-clang" "$SRCLOC/upstream.patched/mkspecs/macx-clang-libc++-32"
+cp -rpf "$SRCLOC/upstream.original/mkspecs/macx-clang" "$SRCLOC/upstream.patched/mkspecs/macx-clang-libc++-64"
 if [ -d "$SRCLOC/patches" ]; then
 	echo "Patching '$NAME'..."
 	PATCHES=`ls -1 $SRCLOC/patches/*.patch | sort`
