@@ -230,7 +230,10 @@ struct PrecalculatedRouteDirection {
 	vector<uint32_t> pointsX;
 	vector<uint32_t> pointsY;
 	vector<float> times;
-	float speed;
+	float minSpeed;
+	float maxSpeed;
+	float startFinishTime;
+	float endFinishTime;
 	static int SHIFT;
 	static int SHIFTS[];
 	bool empty;

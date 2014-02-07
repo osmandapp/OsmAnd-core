@@ -427,7 +427,10 @@ jclass jclass_PrecalculatedRouteDirection = NULL;
 jfieldID jfield_PrecalculatedRouteDirection_tms = NULL;
 jfieldID jfield_PrecalculatedRouteDirection_pointsY = NULL;
 jfieldID jfield_PrecalculatedRouteDirection_pointsX = NULL;
-jfieldID jfield_PrecalculatedRouteDirection_speed = NULL;
+jfieldID jfield_PrecalculatedRouteDirection_minSpeed = NULL;
+jfieldID jfield_PrecalculatedRouteDirection_maxSpeed = NULL;
+jfieldID jfield_PrecalculatedRouteDirection_endFinishTime = NULL;
+jfieldID jfield_PrecalculatedRouteDirection_startFinishTime = NULL;
 
 jclass jclass_RenderingContext = NULL;
 jfieldID jfield_RenderingContext_interrupted = NULL;
@@ -559,7 +562,10 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_PrecalculatedRouteDirection_tms = getFid(env, jclass_PrecalculatedRouteDirection, "tms", "[F");
 	jfield_PrecalculatedRouteDirection_pointsY = getFid(env, jclass_PrecalculatedRouteDirection, "pointsY", "[I");
 	jfield_PrecalculatedRouteDirection_pointsX = getFid(env, jclass_PrecalculatedRouteDirection, "pointsX", "[I");
-	jfield_PrecalculatedRouteDirection_speed = getFid(env, jclass_PrecalculatedRouteDirection, "speed", "F");
+	jfield_PrecalculatedRouteDirection_minSpeed = getFid(env, jclass_PrecalculatedRouteDirection, "minSpeed", "F");
+	jfield_PrecalculatedRouteDirection_maxSpeed = getFid(env, jclass_PrecalculatedRouteDirection, "maxSpeed", "F");
+	jfield_PrecalculatedRouteDirection_endFinishTime = getFid(env, jclass_PrecalculatedRouteDirection, "endFinishTime", "F");
+	jfield_PrecalculatedRouteDirection_startFinishTime = getFid(env, jclass_PrecalculatedRouteDirection, "startFinishTime", "F");
 
 	jclass_RenderingContext = findClass(env, "net/osmand/RenderingContext");
 	jfield_RenderingContext_interrupted = getFid(env, jclass_RenderingContext, "interrupted", "Z");
@@ -809,7 +815,10 @@ void parsePrecalculatedRoute(JNIEnv* ienv, RoutingContext& ctx,  jobject precalc
 		}
 		ctx.precalcRoute.startPoint = ctx.precalcRoute.calc(ctx.startX, ctx.startY);
 		ctx.precalcRoute.endPoint = ctx.precalcRoute.calc(ctx.targetX, ctx.targetY);
-		ctx.precalcRoute.speed = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_speed);
+		ctx.precalcRoute.minSpeed = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_minSpeed);
+		ctx.precalcRoute.maxSpeed = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_maxSpeed);
+		ctx.precalcRoute.startFinishTime = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_startFinishTime);
+		ctx.precalcRoute.endFinishTime = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_endFinishTime);
 		ienv->ReleaseIntArrayElements(pointsY, pointsYF, 0);
 		ienv->ReleaseIntArrayElements(pointsX, pointsXF, 0);
 		ienv->ReleaseFloatArrayElements(tms, tmsF, 0);

@@ -169,11 +169,12 @@ float PrecalculatedRouteDirection::timeEstimate(int sx31, int sy31, int ex31, in
 		return -1;
 	}
 	float distToPoint = getDeviationDistance(x31, y31, ind);
-	float deviationPenalty = distToPoint / speed;
+	float deviationPenalty = distToPoint / minSpeed;
+    float finishTime = (start? startFinishTime : endFinishTime);
 	if(start) {
-		return (times[0] - times[ind]) +  deviationPenalty;
+		return (times[0] - times[ind]) +  deviationPenalty + finishTime;
 	} else {
-		return times[ind] + deviationPenalty;
+		return times[ind] + deviationPenalty + finishTime;
 	}
 }
 
