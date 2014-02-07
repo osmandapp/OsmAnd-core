@@ -21,11 +21,11 @@ if(CMAKE_TARGET_OS STREQUAL "darwin")
 	find_library(SECURITY_LIBRARY Security)
 	find_library(ZLIB_LIBRARY z)
 	set(target_specific_public_libraries ${target_specific_public_libraries}
-		${CORESERVICES_LIBRARY}
-		${SYSTEMCONFIGURATION_LIBRARY}
-		${CFNETWORK_LIBRARY}
-		${SECURITY_LIBRARY}
-		${ZLIB_LIBRARY}
+		"${CORESERVICES_LIBRARY}/CoreServices"
+		"${SYSTEMCONFIGURATION_LIBRARY}/SystemConfiguration"
+		"${CFNETWORK_LIBRARY}/CFNetwork"
+		"${SECURITY_LIBRARY}/Security"
+		"${ZLIB_LIBRARY}/z"
 	)
 endif()
 if(CMAKE_TARGET_OS STREQUAL "windows")
