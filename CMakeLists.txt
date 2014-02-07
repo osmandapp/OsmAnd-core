@@ -291,6 +291,12 @@ if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 				${Qt5Network_SHARED_LIBRARIES}
 				${Qt5Core_SHARED_LIBRARIES}
 		)
+		if(CMAKE_TARGET_OS STREQUAL "darwin")
+			target_link_libraries(OsmAndCore_shared
+				LINK_PUBLIC
+					objc
+			)
+		endif()
 	else()
 		target_link_libraries(OsmAndCore_shared
 			LINK_PUBLIC
@@ -390,6 +396,12 @@ if(CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 				${Qt5Network_STATIC_LIBRARIES}
 				${Qt5Core_STATIC_LIBRARIES}
 		)
+		if(CMAKE_TARGET_OS STREQUAL "darwin")
+			target_link_libraries(OsmAndCore_static
+				LINK_PUBLIC
+					objc
+			)
+		endif()
 	else()
 		target_link_libraries(OsmAndCore_static
 			LINK_PUBLIC
