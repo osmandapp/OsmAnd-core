@@ -8,7 +8,7 @@ set(target_specific_include_dirs_public "")
 set(target_specific_definitions_private "")
 set(target_specific_definitions_public "")
 
-if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86")
+if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86" OR (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios"))
 	set(target_specific_sources "${target_specific_sources}"
 		"upstream.patched/src/opts/opts_check_SSE2.cpp"
 		"upstream.patched/src/opts/SkBitmapFilter_opts_SSE2.cpp"
@@ -32,7 +32,7 @@ if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86")
 			PROPERTIES
 				COMPILE_FLAGS "-mssse3")
 	endif()
-elseif(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm")
+elseif(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios"))
 	if(CMAKE_TARGET_OS STREQUAL "ios")
 		set(target_specific_definitions_public ${target_specific_definitions_public}
 			-D__ARM_HAVE_NEON
@@ -309,3 +309,32 @@ target_link_libraries(skia_static
 		jpeg_static
 		${target_specific_libraries_public}
 )
+
+if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios")
+	set(ios_iphoneos_exclude
+		"upstream.patched/src/opts/opts_check_SSE2.cpp"
+		"upstream.patched/src/opts/SkBitmapFilter_opts_SSE2.cpp"
+		"upstream.patched/src/opts/SkBitmapProcState_opts_SSE2.cpp"
+		"upstream.patched/src/opts/SkBitmapProcState_opts_SSSE3.cpp"
+		"upstream.patched/src/opts/SkBlitRect_opts_SSE2.cpp"
+		"upstream.patched/src/opts/SkBlitRow_opts_SSE2.cpp"
+		"upstream.patched/src/opts/SkUtils_opts_SSE2.cpp")
+	set_target_properties(skia_static
+		PROPERTIES
+			EXCLUDED_SOURCE_FILE_NAMES[sdk=iphoneos*][arch=*] "${ios_iphoneos_exclude}")
+
+	set(ios_iphonesimulator_exclude
+		"upstream.patched/src/opts/opts_check_arm.cpp"
+		"upstream.patched/src/opts/SkBlitRow_opts_arm.cpp"
+		"upstream.patched/src/opts/SkBlitRow_opts_arm_neon.cpp"
+		"upstream.patched/src/opts/SkBlitMask_opts_arm.cpp"
+		"upstream.patched/src/opts/SkBitmapProcState_opts_arm.cpp"
+		"upstream.patched/src/opts/SkBitmapProcState_matrixProcs_neon.cpp"
+		"upstream.patched/src/opts/SkBitmapProcState_arm_neon.cpp"
+		"upstream.patched/src/opts/memset32_neon.S"
+		"upstream.patched/src/opts/memset16_neon.S"
+		"upstream.patched/src/opts/memset.arm.S")
+	set_target_properties(skia_static
+		PROPERTIES
+			EXCLUDED_SOURCE_FILE_NAMES[sdk=iphonesimulator*][arch=*] "${ios_iphonesimulator_exclude}")
+endif()
