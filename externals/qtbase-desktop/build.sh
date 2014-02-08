@@ -101,9 +101,10 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 	fi
 
 	if [ ! -d "$SRCLOC/upstream.patched.darwin.intel.shared" ]; then
-		# Copy cmake-related stuff from already built target (any is suitable)
+		# Make link to cmake stuff and includes from already built target (any is suitable)
 		mkdir -p "$SRCLOC/upstream.patched.darwin.intel.shared/lib"
-		cp -rpf "$SRCLOC/upstream.patched.darwin.i386.shared/lib/cmake" "$SRCLOC/upstream.patched.darwin.intel.shared/lib/cmake"
+		ln -s "$SRCLOC/upstream.patched.darwin.i386.shared/lib/cmake" "$SRCLOC/upstream.patched.darwin.intel.shared/lib/cmake"
+		ln -s "$SRCLOC/upstream.patched.darwin.i386.shared/include" "$SRCLOC/upstream.patched.darwin.intel.shared/include"
 
 		# Make universal libraries using lipo
 		libraries=(Core Concurrent Network Sql Xml)
