@@ -72,6 +72,7 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 		done
 	fi
 	if [ ! -d "$SRCLOC/upstream.patched.ios.fat.static" ]; then
+		mkdir -p "$SRCLOC/upstream.patched.ios.fat.static"
 		ln -s "$SRCLOC/upstream.patched.ios/lib" "$SRCLOC/upstream.patched.ios.fat.static/lib"
 		ln -s "$SRCLOC/upstream.patched.ios/include" "$SRCLOC/upstream.patched.ios.fat.static/include"
 		ln -s "$SRCLOC/upstream.patched.ios/bin" "$SRCLOC/upstream.patched.fat.static.ios/bin"
