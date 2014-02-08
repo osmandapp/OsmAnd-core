@@ -99,4 +99,35 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 		fi
 		(cd "$SRCLOC/upstream.patched.darwin.x86_64.static" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 	fi
+
+	if [ ! -d "$SRCLOC/upstream.patched.darwin.intel.shared" ]; then
+		# Copy cmake-related stuff from already built target (any is suitable)
+		mkdir -p "$SRCLOC/upstream.patched.darwin.intel.shared/lib"
+		cp -rpf "$SRCLOC/upstream.patched.darwin.i386.shared/lib/cmake" "$SRCLOC/upstream.patched.darwin.intel.shared/lib/cmake"
+
+		# Make universal libraries using lipo
+		libraries=(Core Concurrent Network Sql Xml)
+		for libName in "${libraries[@]}" ; do
+			echo "Packing '$libName'..."
+			lipo -create \
+				"$SRCLOC/upstream.patched.darwin.x86_64.shared/lib/libQt5${libName}.a" \
+				"$SRCLOC/upstream.patched.darwin.i386.shared/lib/libQt5${libName}.a" \
+				-output "$SRCLOC/upstream.patched.darwin.intel.shared/lib/libQt5${libName}.a"
+		done
+	fi
+	if [ ! -d "$SRCLOC/upstream.patched.darwin.intel.static" ]; then
+		# Copy cmake-related stuff from already built target (any is suitable)
+		mkdir -p "$SRCLOC/upstream.patched.darwin.intel.static/lib"
+		cp -rpf "$SRCLOC/upstream.patched.darwin.i386.static/lib/cmake" "$SRCLOC/upstream.patched.darwin.intel.static/lib/cmake"
+
+		# Make universal libraries using lipo
+		libraries=(Core Concurrent Network Sql Xml)
+		for libName in "${libraries[@]}" ; do
+			echo "Packing '$libName'..."
+			lipo -create \
+				"$SRCLOC/upstream.patched.darwin.x86_64.static/lib/libQt5${libName}.a" \
+				"$SRCLOC/upstream.patched.darwin.i386.static/lib/libQt5${libName}.a" \
+				-output "$SRCLOC/upstream.patched.darwin.intel.static/lib/libQt5${libName}.a"
+		done
+	fi
 fi
