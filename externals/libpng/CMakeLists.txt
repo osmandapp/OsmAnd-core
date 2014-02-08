@@ -70,7 +70,7 @@ if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios
 		"arm_init.c"
 		"filter_neon.S")
 	string(REPLACE ";" " " ios_iphonesimulator_exclude "${ios_iphonesimulator_exclude_list}")
-	set_target_properties(skia_static
+	set_target_properties(png_static
 		PROPERTIES
 			XCODE_ATTRIBUTE_EXCLUDED_SOURCE_FILE_NAMES[sdk=iphonesimulator*][arch=*] "${ios_iphonesimulator_exclude}")
 endif()

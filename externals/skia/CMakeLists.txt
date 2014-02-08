@@ -318,7 +318,7 @@ if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios
 		"SkBitmapProcState_opts_SSE2.cpp"
 		"SkBitmapProcState_opts_SSSE3.cpp"
 		"SkBlitRect_opts_SSE2.cpp"
-		"uSkBlitRow_opts_SSE2.cpp"
+		"SkBlitRow_opts_SSE2.cpp"
 		"SkUtils_opts_SSE2.cpp")
 	string(REPLACE ";" " " ios_iphoneos_exclude "${ios_iphoneos_exclude_list}")
 	set_target_properties(skia_static
