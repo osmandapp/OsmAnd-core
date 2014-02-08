@@ -1,0 +1,24 @@
+diff -rupN upstream.original/src/core/SkBlitter_RGB16.cpp upstream.patched/src/core/SkBlitter_RGB16.cpp
+--- upstream.original/src/core/SkBlitter_RGB16.cpp	2013-09-27 17:22:46.774406500 +0300
++++ upstream.patched/src/core/SkBlitter_RGB16.cpp	2014-02-08 16:52:49.883784000 +0200
+@@ -16,7 +16,7 @@
+ #include "SkUtils.h"
+ #include "SkXfermode.h"
+ 
+-#if defined(__ARM_HAVE_NEON) && defined(SK_CPU_LENDIAN)
++#if (defined(__ARM_HAVE_NEON) || defined(__ARM_NEON__)) && defined(SK_CPU_LENDIAN)
+     #define SK_USE_NEON
+     #include <arm_neon.h>
+ #else
+diff -rupN upstream.original/src/core/SkUtilsArm.h upstream.patched/src/core/SkUtilsArm.h
+--- upstream.original/src/core/SkUtilsArm.h	2013-09-27 17:22:47.032851700 +0300
++++ upstream.patched/src/core/SkUtilsArm.h	2014-02-08 16:52:34.682774400 +0200
+@@ -23,7 +23,7 @@
+ 
+ #if defined(SK_CPU_ARM) && defined(__ARM_HAVE_OPTIONAL_NEON_SUPPORT)
+ #  define SK_ARM_NEON_MODE  SK_ARM_NEON_MODE_DYNAMIC
+-#elif defined(SK_CPU_ARM) && defined(__ARM_HAVE_NEON)
++#elif defined(SK_CPU_ARM) && (defined(__ARM_HAVE_NEON) || defined(__ARM_NEON__))
+ #  define SK_ARM_NEON_MODE  SK_ARM_NEON_MODE_ALWAYS
+ #else
+ #  define SK_ARM_NEON_MODE  SK_ARM_NEON_MODE_NONE

@@ -37,14 +37,7 @@ if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86" OR (CMAKE_TARGET_CPU_ARCH_FAMILY 
 endif()
 if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios"))
 	set(used_arch_specific_sources TRUE)
-	if(CMAKE_TARGET_OS STREQUAL "ios")
-		if(NOT CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat")
-			#TODO: this define needs to be defined only for iphoneos
-			set(target_specific_definitions_public ${target_specific_definitions_public}
-				-D__ARM_HAVE_NEON
-			)
-		endif()
-	else()
+	if(NOT CMAKE_TARGET_OS STREQUAL "ios")
 		set(target_specific_definitions_public ${target_specific_definitions_public}
 			-D__ARM_HAVE_OPTIONAL_NEON_SUPPORT
 		)
@@ -62,7 +55,6 @@ if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR (CMAKE_TARGET_CPU_ARCH_FAMILY 
 		"upstream.patched/src/opts/memset.arm.S"
 	)
 	if(CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_COMPILER_FAMILY STREQUAL "clang")
-		message("blaaaaa")
 		set_source_files_properties(
 			"upstream.patched/src/opts/SkBlitRow_opts_arm.cpp"
 			"upstream.patched/src/opts/SkBlitRow_opts_arm_neon.cpp"
