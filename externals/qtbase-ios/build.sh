@@ -58,6 +58,7 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 		mkdir -p "$SRCLOC/upstream.patched.ios/lib"
 		ln -s "$SRCLOC/upstream.patched.ios.simulator.i386.static/lib/cmake" "$SRCLOC/upstream.patched.ios/lib/cmake"
 		ln -s "$SRCLOC/upstream.patched.ios.simulator.i386.static/include" "$SRCLOC/upstream.patched.ios/include"
+		ln -s "$SRCLOC/upstream.patched.ios.simulator.i386.static/bin" "$SRCLOC/upstream.patched.ios/bin"
 
 		# Make universal libraries using lipo
 		libraries=(Core Concurrent Network Sql Xml)
@@ -69,5 +70,10 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 				"$SRCLOC/upstream.patched.ios.device.armv7s.static/lib/libQt5${libName}.a" \
 				-output "$SRCLOC/upstream.patched.ios/lib/libQt5${libName}.a"
 		done
+	fi
+	if [ ! -d "$SRCLOC/upstream.patched.ios.fat.static" ]; then
+		ln -s "$SRCLOC/upstream.patched.ios/lib" "$SRCLOC/upstream.patched.ios.fat.static/lib"
+		ln -s "$SRCLOC/upstream.patched.ios/include" "$SRCLOC/upstream.patched.ios.fat.static/include"
+		ln -s "$SRCLOC/upstream.patched.ios/bin" "$SRCLOC/upstream.patched.fat.static.ios/bin"
 	fi
 fi
