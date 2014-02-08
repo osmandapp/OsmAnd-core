@@ -25,7 +25,7 @@ if(CMAKE_TARGET_OS STREQUAL "darwin")
 		"${SYSTEMCONFIGURATION_LIBRARY}/SystemConfiguration"
 		"${CFNETWORK_LIBRARY}/CFNetwork"
 		"${SECURITY_LIBRARY}/Security"
-		"${ZLIB_LIBRARY}/z"
+		${ZLIB_LIBRARY}
 	)
 endif()
 if(CMAKE_TARGET_OS STREQUAL "windows")
