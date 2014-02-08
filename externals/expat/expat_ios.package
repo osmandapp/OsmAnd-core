@@ -1,5 +1,0 @@
-# Configuration : Library binary relative path : Makefile path : Makefile target : Buildscript path : Buildscript arguments
-Debug:../../../binaries/ios/device/Debug/libexpat_static.a:../../../baked/device-ios-clang-debug.makefile:expat_static:../../../build/device-ios.sh:debug
-Debug:../../../binaries/ios/simulator/Debug/libexpat_static.a:../../../baked/simulator-ios-clang-debug.makefile:expat_static:../../../build/simulator-ios.sh:debug
-Release:../../../binaries/ios/device/Release/libexpat_static.a:../../../baked/device-ios-clang-release.makefile:expat_static:../../../build/device-ios.sh:release
-Release:../../../binaries/ios/simulator/Release/libexpat_static.a:../../../baked/simulator-ios-clang-release.makefile:expat_static:../../../build/simulator-ios.sh:release
