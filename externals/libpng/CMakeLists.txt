@@ -2,7 +2,7 @@ project(png)
 
 set(target_specific_sources "")
 #HACK: Apple clang-llvm currently can not compile that assembler code. Maybe toolchain in XCode 5.0 will fix that
-if(CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_CPU_ARCH STREQUAL "device")
+if(CMAKE_TARGET_OS STREQUAL "ios")
 	add_definitions(-DPNG_ARM_NEON_OPT=0)
 endif()
 #if((CMAKE_TARGET_CPU_ARCH STREQUAL "arm") OR (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_CPU_ARCH STREQUAL "device"))
