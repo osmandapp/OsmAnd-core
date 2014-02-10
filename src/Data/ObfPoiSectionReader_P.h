@@ -1,26 +1,28 @@
 #ifndef _OSMAND_CORE_OBF_POI_SECTION_READER_P_H_
 #define _OSMAND_CORE_OBF_POI_SECTION_READER_P_H_
 
-#include <OsmAndCore/stdlib_common.h>
+#include "stdlib_common.h"
 #include <functional>
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 
-#include <OsmAndCore.h>
-#include <OsmAndCore/CommonTypes.h>
+#include "OsmAndCore.h"
+#include "CommonTypes.h"
+#include "Reference.h"
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class ObfReader_P;
     class ObfPoiSectionInfo;
-    namespace Model {
+    namespace Model
+    {
         class Amenity;
         class AmenityCategory;
-    } // namespace Model
+    }
     class IQueryController;
 
     class ObfPoiSectionReader;
-    class OSMAND_CORE_API ObfPoiSectionReader_P
+    class ObfPoiSectionReader_P
     {
     private:
         ObfPoiSectionReader_P();
@@ -38,9 +40,9 @@ namespace OsmAnd {
         static void readCategory(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<Model::AmenityCategory>& category);
         static void readAmenities(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
             QSet<uint32_t>* desiredCategories,
-            QList< std::shared_ptr<const Model::Amenity> >* amenitiesOut,
+            QList< Fwd<Model::Amenity>::RefC >* amenitiesOut,
             const ZoomLevel zoom, uint32_t zoomDepth, const AreaI* bbox31,
-            std::function<bool (const std::shared_ptr<const Model::Amenity>&)> visitor,
+            std::function<bool (Fwd<Model::Amenity>::NCRefC)> visitor,
             const IQueryController* const controller);
 
         struct Tile
@@ -62,13 +64,13 @@ namespace OsmAnd {
             QSet<uint32_t>* desiredCategories);
         static void readAmenitiesFromTile(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section, Tile* tile,
             QSet<uint32_t>* desiredCategories,
-            QList< std::shared_ptr<const Model::Amenity> >* amenitiesOut,
+            QList< Fwd<Model::Amenity>::RefC >* amenitiesOut,
             const ZoomLevel zoom, uint32_t zoomDepth, const AreaI* bbox31,
-            std::function<bool (const std::shared_ptr<const Model::Amenity>&)> visitor,
+            std::function<bool (Fwd<Model::Amenity>::NCRefC)> visitor,
             const IQueryController* const controller,
             QSet< uint64_t >* amenitiesToSkip);
         static void readAmenity(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
-            const PointI& pTile, uint32_t pzoom, std::shared_ptr<Model::Amenity>& amenity,
+            const PointI& pTile, uint32_t pzoom, Fwd<Model::Amenity>::OutRefC& amenity,
             QSet<uint32_t>* desiredCategories,
             const AreaI* bbox31,
             const IQueryController* const controller);
@@ -79,14 +81,13 @@ namespace OsmAnd {
         static void loadAmenities(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const OsmAnd::ObfPoiSectionInfo>& section,
             const ZoomLevel zoom, uint32_t zoomDepth = 3, const AreaI* bbox31 = nullptr,
             QSet<uint32_t>* desiredCategories = nullptr,
-            QList< std::shared_ptr<const OsmAnd::Model::Amenity> >* amenitiesOut = nullptr,
-            std::function<bool (const std::shared_ptr<const OsmAnd::Model::Amenity>&)> visitor = nullptr,
+            QList< Fwd<Model::Amenity>::RefC >* amenitiesOut = nullptr,
+            std::function<bool (Fwd<Model::Amenity>::NCRefC)> visitor = nullptr,
             const IQueryController* const controller = nullptr);
 
         friend class OsmAnd::ObfReader_P;
         friend class OsmAnd::ObfPoiSectionReader;
     };
-
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_OBF_POI_SECTION_READER_P_H_)

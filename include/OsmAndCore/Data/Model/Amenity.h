@@ -9,6 +9,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/Memory.h>
+#include <OsmAndCore/Reference.h>
 #include <OsmAndCore/CommonTypes.h>
 
 namespace OsmAnd
@@ -17,9 +18,11 @@ namespace OsmAnd
 
     namespace Model
     {
-        class OSMAND_CORE_API Amenity
+        class OSMAND_CORE_API OSMAND_REFERENCEABLE_CLASS(Amenity)
         {
-            //Q_DISABLE_COPY(Amenity);
+            Q_DISABLE_COPY(Amenity);
+            OSMAND_USE_MEMORY_MANAGER(Amenity);
+            OSMAND_BE_REFERENCEABLE_CLASS(Amenity);
         private:
         protected:
             Amenity();

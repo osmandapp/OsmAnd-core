@@ -40,6 +40,7 @@ namespace OsmAnd
             this->y = y;
         }
 
+#ifndef SWIG
         inline PointT operator+ (const PointT& r) const
         {
             return PointT(x + r.x, y + r.y);
@@ -83,7 +84,7 @@ namespace OsmAnd
             }
             return *this;
         }
-
+#endif // !defined(SWIG)
     private:
         static inline bool equal(const double a, const double b)
         {
@@ -177,6 +178,7 @@ namespace OsmAnd
         T& bottom;
         T& right;
 
+#ifndef SWIG
         inline AreaT& operator=(const AreaT& that)
         {
             if(this != &that)
@@ -196,6 +198,7 @@ namespace OsmAnd
         {
             return topLeft != r.topLeft || bottomRight != r.bottomRight;
         }
+#endif // !defined(SWIG)
 
         inline bool contains(const T x, const T y) const
         {
@@ -427,6 +430,7 @@ namespace OsmAnd
             int32_t y;
         };
 
+#ifndef SWIG
         inline operator uint64_t() const
         {
             return id;
@@ -457,11 +461,12 @@ namespace OsmAnd
         {
             return this->id != that;
         }
+#endif // !defined(SWIG)
     };
 
 #ifndef SWIG
     static_assert(sizeof(TileId) == 8, "TileId must be 8 bytes in size");
-#endif
+#endif // !defined(SWIG)
 
     WEAK_ENUM_EX(ZoomLevel, int32_t)
     {
@@ -528,6 +533,7 @@ namespace OsmAnd
             float b;
         };
 
+#ifndef SWIG
         inline bool operator== (const FColorRGB& other) const
         {
             return qFuzzyCompare(r, other.r) && qFuzzyCompare(g, other.g) && qFuzzyCompare(b, other.b);
@@ -537,8 +543,8 @@ namespace OsmAnd
         {
             return !qFuzzyCompare(r, other.r) || !qFuzzyCompare(g, other.g) || !qFuzzyCompare(b, other.b);
         }
+#endif // !defined(SWIG)
     };
-
 }
 
 #endif // !defined(_OSMAND_CORE_COMMON_TYPES_H_)
