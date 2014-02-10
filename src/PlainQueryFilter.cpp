@@ -1,6 +1,6 @@
 #include "PlainQueryFilter.h"
 
-OsmAnd::PlainQueryFilter::PlainQueryFilter( const uint32_t* zoom, const AreaI* area )
+OsmAnd::PlainQueryFilter::PlainQueryFilter(const ZoomLevel* zoom/* = nullptr*/, const AreaI* area/* = nullptr*/)
     : _isZoomFiltered(zoom != nullptr)
     , _isAreaFiltered(area != nullptr)
 {
@@ -14,7 +14,7 @@ OsmAnd::PlainQueryFilter::~PlainQueryFilter()
 {
 }
 
-bool OsmAnd::PlainQueryFilter::acceptsZoom( uint32_t zoom )
+bool OsmAnd::PlainQueryFilter::acceptsZoom(ZoomLevel zoom)
 {
     if(!_isZoomFiltered)
         return true;

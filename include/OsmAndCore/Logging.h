@@ -23,4 +23,4 @@ namespace OsmAnd
     OSMAND_CORE_API void OSMAND_CORE_CALL StopSavingLogs();
 }
 
-#endif // _OSMAND_CORE_LOGGING_H_
+#endif // !defined(_OSMAND_CORE_LOGGING_H_)

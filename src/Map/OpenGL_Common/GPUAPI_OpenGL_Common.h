@@ -1,31 +1,10 @@
-/**
- * @file
- *
- * @section LICENSE
- *
- * OsmAnd - Android navigation software based on OSM maps.
- * Copyright (C) 2010-2014  OsmAnd Authors listed in AUTHORS file
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
-
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 #ifndef _OSMAND_CORE_GPU_API__OPENGL_COMMON_H_
 #define _OSMAND_CORE_GPU_API__OPENGL_COMMON_H_
 
-#include <OsmAndCore/stdlib_common.h>
+#include "stdlib_common.h"
 #include <type_traits>
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 #include <QMap>
 #include <QMultiMap>
 #include <QList>
@@ -57,9 +36,9 @@
 
 #include <glm/glm.hpp>
 
-#include <OsmAndCore.h>
-#include <CommonTypes.h>
-#include <GPUAPI.h>
+#include "OsmAndCore.h"
+#include "CommonTypes.h"
+#include "GPUAPI.h"
 
 #if OSMAND_DEBUG
 #   define GL_CHECK_RESULT \
@@ -97,6 +76,7 @@ namespace OsmAnd
 
     class GPUAPI_OpenGL_Common : public GPUAPI
     {
+        Q_DISABLE_COPY(GPUAPI_OpenGL_Common);
     private:
         bool uploadTileAsTextureToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
         bool uploadTileAsArrayBufferToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
@@ -183,7 +163,6 @@ namespace OsmAnd
         virtual void pushDebugGroupMarker(const QString& title);
         virtual void popDebugGroupMarker();
     };
-
 }
 
-#endif // _OSMAND_CORE_GPU_API__OPENGL_COMMON_H_
+#endif // !defined(_OSMAND_CORE_GPU_API__OPENGL_COMMON_H_)

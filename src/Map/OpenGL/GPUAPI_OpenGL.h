@@ -1,45 +1,25 @@
-/**
- * @file
- *
- * @section LICENSE
- *
- * OsmAnd - Android navigation software based on OSM maps.
- * Copyright (C) 2010-2014  OsmAnd Authors listed in AUTHORS file
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
-
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 #ifndef _OSMAND_CORE_GPU_API__OPENGL_H_
 #define _OSMAND_CORE_GPU_API__OPENGL_H_
 
-#include <OsmAndCore/stdlib_common.h>
+#include "stdlib_common.h"
 #include <array>
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 #include <QString>
 #include <QStringList>
 #include <QMutex>
 
 #include <glm/glm.hpp>
 
-#include <OsmAndCore.h>
-#include <OsmAndCore/CommonTypes.h>
-#include <OpenGL_Common/GPUAPI_OpenGL_Common.h>
+#include "OsmAndCore.h"
+#include "CommonTypes.h"
+#include "OpenGL_Common/GPUAPI_OpenGL_Common.h"
 
-namespace OsmAnd {
-
+namespace OsmAnd 
+{
     class OSMAND_CORE_API GPUAPI_OpenGL : public GPUAPI_OpenGL_Common
     {
+        Q_DISABLE_COPY(GPUAPI_OpenGL);
     private:
         void preprocessShader(QString& code);
 
@@ -91,7 +71,6 @@ namespace OsmAnd {
         virtual void pushDebugGroupMarker(const QString& title);
         virtual void popDebugGroupMarker();
     };
-
 }
 
-#endif // _OSMAND_CORE_GPU_API__OPENGL_H_
+#endif // !defined(_OSMAND_CORE_GPU_API__OPENGL_H_)

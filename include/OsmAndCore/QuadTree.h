@@ -156,4 +156,4 @@ namespace OsmAnd
     };
 }
 
-#endif // _OSMAND_CORE_QUAD_TREE_H_
+#endif // !defined(_OSMAND_CORE_QUAD_TREE_H_)

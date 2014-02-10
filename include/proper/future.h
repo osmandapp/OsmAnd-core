@@ -28,4 +28,4 @@ namespace OsmAnd
 
 #endif
 
-#endif // _OSMAND_CORE_PROPER_FUTURE_H_
+#endif // !defined(_OSMAND_CORE_PROPER_FUTURE_H_)

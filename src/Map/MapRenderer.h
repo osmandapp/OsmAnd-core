@@ -1,40 +1,19 @@
-/**
-* @file
-*
-* @section LICENSE
-*
-* OsmAnd - Android navigation software based on OSM maps.
-* Copyright (C) 2010-2014  OsmAnd Authors listed in AUTHORS file
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
 #ifndef _OSMAND_CORE_MAP_RENDERER_H_
 #define _OSMAND_CORE_MAP_RENDERER_H_
 
-#include <OsmAndCore/stdlib_common.h>
+#include "stdlib_common.h"
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 #include <QAtomicInt>
 
-#include <OsmAndCore.h>
-#include <CommonTypes.h>
-#include <MapTypes.h>
-#include <Concurrent.h>
-#include <IMapRenderer.h>
-#include <GPUAPI.h>
-#include <IMapTileProvider.h>
-#include <TilesCollection.h>
+#include "OsmAndCore.h"
+#include "CommonTypes.h"
+#include "MapTypes.h"
+#include "Concurrent.h"
+#include "IMapRenderer.h"
+#include "GPUAPI.h"
+#include "IMapTileProvider.h"
+#include "TilesCollection.h"
 #include "MapRendererResources.h"
 
 namespace OsmAnd
@@ -45,6 +24,7 @@ namespace OsmAnd
     
     class MapRenderer : public IMapRenderer
     {
+        Q_DISABLE_COPY(MapRenderer);
     public:
         // Declare short aliases for resource-related entities
         typedef OsmAnd::MapRendererResources Resources;
@@ -201,7 +181,6 @@ namespace OsmAnd
 
     friend class OsmAnd::MapRendererResources;
     };
-
 }
 
-#endif // _OSMAND_CORE_MAP_RENDERER_H_
+#endif // !defined(_OSMAND_MAP_RENDERER_H_)

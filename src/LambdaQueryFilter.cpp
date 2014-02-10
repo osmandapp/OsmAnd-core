@@ -11,7 +11,7 @@ OsmAnd::LambdaQueryFilter::~LambdaQueryFilter()
 {
 }
 
-bool OsmAnd::LambdaQueryFilter::acceptsZoom( uint32_t zoom )
+bool OsmAnd::LambdaQueryFilter::acceptsZoom(ZoomLevel zoom)
 {
     if(!_zoomFunction)
         return true;

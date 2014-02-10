@@ -35,4 +35,4 @@ namespace OsmAnd
 
 } // namespace OsmAnd
 
-#endif // _OSMAND_CORE_MAP_STYLE_EVALUATION_RESULT_P_H_
+#endif // !defined(_OSMAND_CORE_MAP_STYLE_EVALUATION_RESULT_P_H_)
