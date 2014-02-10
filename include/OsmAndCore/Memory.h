@@ -5,7 +5,7 @@
 #include <new>
 
 #include <OsmAndCore/IMemoryManager.h>
-#include <OsmAndCore/MemoryManagerSelector.h>
+#include <OsmAndCore/MemoryManagerSelectors.h>
 
 namespace OsmAnd
 {

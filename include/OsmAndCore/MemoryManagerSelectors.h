@@ -12,9 +12,9 @@
 namespace OsmAnd
 {
     template<class CLASS>
-    struct getMemoryManager
+    struct MemoryManagerSelector
     {
-        static operator()
+        static IMemoryManager* get()
         {
             return getMemoryManager();
         }
@@ -25,9 +25,9 @@ namespace OsmAnd
         class MapObject;
     }
     template<>
-    struct getMemoryManager<OsmAnd::Model::MapObject>
+    struct MemoryManagerSelector<OsmAnd::Model::MapObject>
     {
-        static operator()
+        static IMemoryManager* get()
         {
             return getMemoryManager();
         }
