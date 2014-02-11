@@ -13,7 +13,7 @@ OsmAnd::ObfPoiSectionReader::~ObfPoiSectionReader()
 
 void OsmAnd::ObfPoiSectionReader::loadCategories(
     const std::shared_ptr<ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfPoiSectionInfo>& section,
-    QList< std::shared_ptr<const Model::AmenityCategory> >& categories )
+    QList< Fwd<Model::AmenityCategory>::RefC >& categories)
 {
     ObfPoiSectionReader_P::loadCategories(reader->_d, section, categories);
 }

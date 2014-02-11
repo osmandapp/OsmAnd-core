@@ -29,7 +29,7 @@ namespace OsmAnd
     protected:
     public:
         static void loadCategories(const std::shared_ptr<ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfPoiSectionInfo>& section,
-            QList< std::shared_ptr<const Model::AmenityCategory> >& categories);
+            QList< Fwd<Model::AmenityCategory>::RefC >& categories);
 
         static void loadAmenities(const std::shared_ptr<ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfPoiSectionInfo>& section,
             const ZoomLevel zoom, uint32_t zoomDepth = 3, const AreaI* bbox31 = nullptr,

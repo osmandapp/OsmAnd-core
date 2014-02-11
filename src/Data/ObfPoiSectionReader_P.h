@@ -36,7 +36,7 @@ namespace OsmAnd
             CategoryIdMask = (1u << SubcategoryIdShift) - 1,
         };
         static void readCategories(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
-            QList< std::shared_ptr<const Model::AmenityCategory> >& categories);
+            QList< Fwd<Model::AmenityCategory>::RefC >& categories);
         static void readCategory(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<Model::AmenityCategory>& category);
         static void readAmenities(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
             QSet<uint32_t>* desiredCategories,

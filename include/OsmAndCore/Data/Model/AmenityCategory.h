@@ -8,8 +8,9 @@
 #include <QStringList>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Memory.h>
+#include <OsmAndCore/Reference.h>
+#include <OsmAndCore/CommonTypes.h>
 
 namespace OsmAnd
 {
@@ -17,9 +18,11 @@ namespace OsmAnd
 
     namespace Model
     {
-        class OSMAND_CORE_API AmenityCategory
+        class OSMAND_CORE_API OSMAND_REFERENCEABLE_CLASS(AmenityCategory)
         {
             Q_DISABLE_COPY(AmenityCategory);
+            OSMAND_USE_MEMORY_MANAGER(AmenityCategory);
+            OSMAND_BE_REFERENCEABLE_CLASS(AmenityCategory);
         private:
         protected:
             AmenityCategory();
@@ -34,7 +37,7 @@ namespace OsmAnd
 
         friend class OsmAnd::ObfPoiSectionReader_P;
         };
-    } // namespace Model
-} // namespace OsmAnd
+    }
+}
 
 #endif // !defined(_OSMAND_CORE_AMENITY_CATEGORY_H_)
