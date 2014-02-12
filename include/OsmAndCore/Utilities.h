@@ -138,6 +138,14 @@ namespace OsmAnd
             return static_cast<float>((static_cast<double>(value) / (1u << (ZoomLevel::MaxZoomLevel - zoom))));
         }
 
+        inline PointF convert31toFloat(const PointI& p, const ZoomLevel zoom)
+        {
+            const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - zoom));
+            return PointF(
+                static_cast<float>((static_cast<double>(p.x) / tileSize31)),
+                static_cast<float>((static_cast<double>(p.y) / tileSize31)));
+        }
+
         inline double normalizeLatitude(double latitude)
         {
             while(latitude < -90.0 || latitude > 90.0)

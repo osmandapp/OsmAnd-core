@@ -1284,21 +1284,57 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                 const auto& symbol = std::dynamic_pointer_cast<const MapSymbolOnPath>(itSymbolEntry.key());
                 if(!symbol)
                     continue;
-                
-#if OSMAND_DEBUG
-                QVector< glm::vec3 > convertedPoints;
-                for(auto itPoint = symbol->mapObject->points31.cbegin(); itPoint != symbol->mapObject->points31.cend(); ++itPoint)
+                const auto& points31 = symbol->mapObject->points31;
+
+                // Check first point to initialize subdivision
+                auto pPoint31 = points31.constData();
+                QVector<PointF> worldPoints;
+                worldPoints.reserve(points31.size());
+                auto prevP = Utilities::convert31toFloat(*(pPoint31++) - currentState.target31, currentState.zoomBase);
+                auto wasInside = _internalState.frustum2D.test(prevP);
+                if(wasInside)
+                    worldPoints.push_back(prevP);
+
+                // Process rest of points one by one
+                for(int pointIdx = 1; pointIdx < points31.size(); pointIdx++)
                 {
-                    const auto pointOffset = *itPoint - currentState.target31;
-                    glm::vec3 convertedPoint(
-                        Utilities::convert31toFloat(pointOffset.x, currentState.zoomBase),
-                        0.0f,
-                        Utilities::convert31toFloat(pointOffset.y, currentState.zoomBase));
-                    convertedPoint *= TileSize3D;
-                    convertedPoints.push_back(convertedPoint);
-                }
-                addDebugLine3D(convertedPoints, SkColorSetA(SK_ColorCYAN, 128));
+                    const auto p = Utilities::convert31toFloat(*(pPoint31++) - currentState.target31, currentState.zoomBase);
+                    auto isInside = _internalState.frustum2D.test(p);
+                    if((wasInside && !isInside) || (pointIdx == points31.size()-1 && !worldPoints.isEmpty()))
+                    {
+                        worldPoints.push_back(p);
+                        //TODO: found segment in worldPoints!
+                        //TODO: also calculate distance
+                        // if that segment is fine by it's length, add it for further sorting. at this point there's no
+                        // chance to fully process symbols-on-path, since actual positioning of symbols on paths
+                        // can be done only when all paths are available
+#if OSMAND_DEBUG
+                        {
+                            QVector< glm::vec3 > convertedPoints;
+                            for(auto itPoint = worldPoints.cbegin(); itPoint != worldPoints.cend(); ++itPoint)
+                            {
+                                glm::vec3 convertedPoint(
+                                    itPoint->x * TileSize3D,
+                                    0.0f,
+                                    itPoint->y * TileSize3D);
+                                convertedPoints.push_back(convertedPoint);
+                            }
+                            addDebugLine3D(convertedPoints, SkColorSetA(SK_ColorRED, 128));
+                        }
 #endif
+                        worldPoints.clear();
+                    }
+                    else if(wasInside && isInside)
+                        worldPoints.push_back(p);
+                    else if(!wasInside && isInside)
+                    {
+                        worldPoints.push_back(prevP);
+                        worldPoints.push_back(p);
+                    }
+
+                    wasInside = isInside;
+                    prevP = p;
+                }
             }
 
             //NOTE: symbols-on-path that should be rendered as 2D can also be sorted like others.
