@@ -35,6 +35,7 @@ OsmAnd::AtlasMapRenderer_OpenGL_Common::AtlasMapRenderer_OpenGL_Common()
     memset(&_symbolsStage, 0, sizeof(_symbolsStage));
 #if OSMAND_DEBUG
     memset(&_debugStage_Rects2D, 0, sizeof(_debugStage_Rects2D));
+    memset(&_debugStage_Lines3D, 0, sizeof(_debugStage_Lines3D));
 #endif
 }
 
@@ -1519,9 +1520,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeDebugStage()
         float vertices[4][2] =
         {
             { -0.5f, -0.5f },
-            { -0.5f, 0.5f },
-            { 0.5f, 0.5f },
-            { 0.5f, -0.5f }
+            { -0.5f,  0.5f },
+            {  0.5f,  0.5f },
+            {  0.5f, -0.5f }
         };
         const auto verticesCount = 4;
 
@@ -1544,17 +1545,116 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::initializeDebugStage()
         GL_CHECK_RESULT;
         glBindBuffer(GL_ARRAY_BUFFER, _debugStage_Rects2D.vbo);
         GL_CHECK_RESULT;
-        glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(float)* 2, vertices, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(float) * 2, vertices, GL_STATIC_DRAW);
         GL_CHECK_RESULT;
         glEnableVertexAttribArray(_debugStage_Rects2D.vs.in.vertexPosition);
         GL_CHECK_RESULT;
-        glVertexAttribPointer(_debugStage_Rects2D.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(float)* 2, nullptr);
+        glVertexAttribPointer(_debugStage_Rects2D.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, nullptr);
         GL_CHECK_RESULT;
 
         // Create index buffer and associate it with VAO
         glGenBuffers(1, &_debugStage_Rects2D.ibo);
         GL_CHECK_RESULT;
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _debugStage_Rects2D.ibo);
+        GL_CHECK_RESULT;
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
+        GL_CHECK_RESULT;
+    }
+
+    // 3D lines
+    {
+        // Compile vertex shader
+        const QString vertexShader = QLatin1String(
+            // Input data
+            "INPUT vec2 in_vs_vertexPosition; // (1.0, 0.0) for first point, (0.0, 1.0) for second                              ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: common data
+            "uniform mat4 param_vs_mProjectionViewModel;                                                                        ""\n"
+            "uniform vec4 param_vs_v0;                                                                                          ""\n"
+            "uniform vec4 param_vs_v1;                                                                                          ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            "    vec4 v;                                                                                                        ""\n"
+            "    v = in_vs_vertexPosition.x*param_vs_v0 + in_vs_vertexPosition.y*param_vs_v1;                                   ""\n"
+            "                                                                                                                   ""\n"
+            "    gl_Position = param_vs_mProjectionViewModel * v;                                                               ""\n"
+            "}                                                                                                                  ""\n");
+        auto preprocessedVertexShader = vertexShader;
+        gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+        gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+        _debugStage_Lines3D.vs.id = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+        assert(_debugStage_Lines3D.vs.id != 0);
+
+        // Compile fragment shader
+        const QString fragmentShader = QLatin1String(
+            // Parameters: common data
+            "uniform lowp vec4 param_fs_color;                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            "    FRAGMENT_COLOR_OUTPUT = param_fs_color;                                                                        ""\n"
+            "}                                                                                                                  ""\n");
+        auto preprocessedFragmentShader = fragmentShader;
+        QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
+        gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
+        gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
+        _debugStage_Lines3D.fs.id = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+        assert(_debugStage_Lines3D.fs.id != 0);
+
+        // Link everything into program object
+        GLuint shaders[] = {
+            _debugStage_Lines3D.vs.id,
+            _debugStage_Lines3D.fs.id
+        };
+        _debugStage_Lines3D.program = gpuAPI->linkProgram(2, shaders);
+        assert(_debugStage_Lines3D.program != 0);
+
+        gpuAPI->clearVariablesLookup();
+        gpuAPI->findVariableLocation(_debugStage_Lines3D.program, _debugStage_Lines3D.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
+        gpuAPI->findVariableLocation(_debugStage_Lines3D.program, _debugStage_Lines3D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GLShaderVariableType::Uniform);
+        gpuAPI->findVariableLocation(_debugStage_Lines3D.program, _debugStage_Lines3D.vs.param.v0, "param_vs_v0", GLShaderVariableType::Uniform);
+        gpuAPI->findVariableLocation(_debugStage_Lines3D.program, _debugStage_Lines3D.vs.param.v1, "param_vs_v1", GLShaderVariableType::Uniform);
+        gpuAPI->findVariableLocation(_debugStage_Lines3D.program, _debugStage_Lines3D.fs.param.color, "param_fs_color", GLShaderVariableType::Uniform);
+        gpuAPI->clearVariablesLookup();
+
+        // Vertex data (x,y)
+        float vertices[2][2] =
+        {
+            { 1.0f, 0.0f },
+            { 0.0f, 1.0f }
+        };
+        const auto verticesCount = 2;
+
+        // Index data
+        GLushort indices[2] =
+        {
+            0, 1
+        };
+        const auto indicesCount = 2;
+
+        // Create Vertex Array Object
+        gpuAPI->glGenVertexArrays_wrapper(1, &_debugStage_Lines3D.vao);
+        GL_CHECK_RESULT;
+        gpuAPI->glBindVertexArray_wrapper(_debugStage_Lines3D.vao);
+        GL_CHECK_RESULT;
+
+        // Create vertex buffer and associate it with VAO
+        glGenBuffers(1, &_debugStage_Lines3D.vbo);
+        GL_CHECK_RESULT;
+        glBindBuffer(GL_ARRAY_BUFFER, _debugStage_Lines3D.vbo);
+        GL_CHECK_RESULT;
+        glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(float) * 2, vertices, GL_STATIC_DRAW);
+        GL_CHECK_RESULT;
+        glEnableVertexAttribArray(_debugStage_Lines3D.vs.in.vertexPosition);
+        GL_CHECK_RESULT;
+        glVertexAttribPointer(_debugStage_Lines3D.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, nullptr);
+        GL_CHECK_RESULT;
+
+        // Create index buffer and associate it with VAO
+        glGenBuffers(1, &_debugStage_Lines3D.ibo);
+        GL_CHECK_RESULT;
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _debugStage_Lines3D.ibo);
         GL_CHECK_RESULT;
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
         GL_CHECK_RESULT;
@@ -1604,9 +1704,53 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderDebugStage()
             glUniform4f(_debugStage_Rects2D.fs.param.color, SkColorGetR(color) / 255.0f, SkColorGetG(color) / 255.0f, SkColorGetB(color) / 255.0f, SkColorGetA(color) / 255.0f);
             GL_CHECK_RESULT;
 
-            // Draw the skyplane actually
+            // Draw the rectangle actually
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
             GL_CHECK_RESULT;
+        }
+    }
+
+    // 3D lines
+    {
+        gpuAPI->glBindVertexArray_wrapper(_debugStage_Lines3D.vao);
+        GL_CHECK_RESULT;
+
+        // Activate program
+        glUseProgram(_debugStage_Lines3D.program);
+        GL_CHECK_RESULT;
+
+        // Set projection*view*model matrix:
+        auto mProjectionView = _internalState.mPerspectiveProjection * _internalState.mCameraView;
+        glUniformMatrix4fv(_debugStage_Lines3D.vs.param.mProjectionViewModel, 1, GL_FALSE, glm::value_ptr(mProjectionView));
+        GL_CHECK_RESULT;
+
+        for(auto itPrimitive = _debugLines3D.cbegin(); itPrimitive != _debugLines3D.cend(); ++itPrimitive)
+        {
+            const auto& line = itPrimitive->first;
+            const auto& color = itPrimitive->second;
+
+            // Set line color
+            glUniform4f(_debugStage_Lines3D.fs.param.color, SkColorGetR(color) / 255.0f, SkColorGetG(color) / 255.0f, SkColorGetB(color) / 255.0f, SkColorGetA(color) / 255.0f);
+            GL_CHECK_RESULT;
+
+            // Iterate over pairs of points
+            auto itV0 = line.cbegin();
+            auto itV1 = itV0 + 1;
+            for(; itV1 != line.cend(); itV0 = itV1, ++itV1)
+            {
+                const auto& v0 = *itV0;
+                const auto& v1 = *itV1;
+
+                // Set line coordinates
+                glUniform4f(_debugStage_Lines3D.vs.param.v0, v0.x, v0.y, v0.z, 1.0f);
+                GL_CHECK_RESULT;
+                glUniform4f(_debugStage_Lines3D.vs.param.v1, v1.x, v1.y, v1.z, 1.0f);
+                GL_CHECK_RESULT;
+
+                // Draw the line actually
+                glDrawElements(GL_LINES, 2, GL_UNSIGNED_SHORT, nullptr);
+                GL_CHECK_RESULT;
+            }
         }
     }
     
@@ -1661,17 +1805,57 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::releaseDebugStage()
         GL_CHECK_RESULT;
     }
     memset(&_debugStage_Rects2D, 0, sizeof(_debugStage_Rects2D));
+
+    // 3D lines
+    if(_debugStage_Lines3D.ibo)
+    {
+        glDeleteBuffers(1, &_debugStage_Lines3D.ibo);
+        GL_CHECK_RESULT;
+    }
+    if(_debugStage_Lines3D.vbo)
+    {
+        glDeleteBuffers(1, &_debugStage_Lines3D.vbo);
+        GL_CHECK_RESULT;
+    }
+    if(_debugStage_Lines3D.vao)
+    {
+        gpuAPI->glDeleteVertexArrays_wrapper(1, &_debugStage_Lines3D.vao);
+        GL_CHECK_RESULT;
+    }
+    if(_debugStage_Lines3D.program)
+    {
+        glDeleteProgram(_debugStage_Lines3D.program);
+        GL_CHECK_RESULT;
+    }
+    if(_debugStage_Lines3D.fs.id)
+    {
+        glDeleteShader(_debugStage_Lines3D.fs.id);
+        GL_CHECK_RESULT;
+    }
+    if(_debugStage_Lines3D.vs.id)
+    {
+        glDeleteShader(_debugStage_Lines3D.vs.id);
+        GL_CHECK_RESULT;
+    }
+    memset(&_debugStage_Lines3D, 0, sizeof(_debugStage_Lines3D));
 }
 
 
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::clearDebugPrimitives()
 {
     _debugRects2D.clear();
+    _debugLines3D.clear();
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::addDebugRect2D(const AreaI& rect, uint32_t argbColor)
 {
     _debugRects2D.push_back(qMove(DebugRect2D(rect, argbColor)));
+}
+
+void OsmAnd::AtlasMapRenderer_OpenGL_Common::addDebugLine3D(const std::vector<glm::vec3>& line, uint32_t argbColor)
+{
+    assert(line.size() >= 2);
+    _debugLines3D.push_back(qMove(DebugLine3D(line, argbColor)));
 }
 #endif
 

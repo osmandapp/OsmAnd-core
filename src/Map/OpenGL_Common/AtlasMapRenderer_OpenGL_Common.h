@@ -265,14 +265,51 @@ namespace OsmAnd
                 } param;
             } fs;
         } _debugStage_Rects2D;
+        struct {
+            GLuint vao;
+            GLuint vbo;
+            GLuint ibo;
+
+            GLuint program;
+
+            struct {
+                GLuint id;
+
+                // Input data
+                struct {
+                    GLint vertexPosition;
+                } in;
+
+                // Parameters
+                struct {
+                    // Common data
+                    GLint mProjectionViewModel;
+                    GLint v0;
+                    GLint v1;
+                } param;
+            } vs;
+
+            struct {
+                GLuint id;
+
+                // Parameters
+                struct {
+                    // Common data
+                    GLint color;
+                } param;
+            } fs;
+        } _debugStage_Lines3D;
         void initializeDebugStage();
         void renderDebugStage();
         void releaseDebugStage();
 
         typedef std::pair<AreaI, uint32_t> DebugRect2D;
         QList<DebugRect2D> _debugRects2D;
+        typedef std::pair< std::vector<glm::vec3> , uint32_t> DebugLine3D;
+        QList<DebugLine3D> _debugLines3D;
         void clearDebugPrimitives();
         void addDebugRect2D(const AreaI& rect, uint32_t argbColor);
+        void addDebugLine3D(const std::vector<glm::vec3>& line, uint32_t argbColor);
 #endif
 
         virtual bool doInitializeRendering();
