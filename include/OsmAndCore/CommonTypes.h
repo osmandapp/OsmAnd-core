@@ -308,9 +308,19 @@ namespace OsmAnd
             return bottom - top;
         }
 
-        inline Point<T> center() const
+        inline PointT center() const
         {
-            return Point<T>(left + width() / 2, top + height() / 2);
+            return PointT(left + width() / 2, top + height() / 2);
+        }
+
+        inline PointT topRight() const
+        {
+            return PointT(right, top);
+        }
+
+        inline PointT bottomLeft() const
+        {
+            return PointT(left, bottom);
         }
 
 #ifndef SWIG

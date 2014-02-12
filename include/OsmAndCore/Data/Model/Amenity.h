@@ -53,7 +53,7 @@ namespace OsmAnd
 
         friend class OsmAnd::ObfPoiSectionReader_P;
         };
-    } // namespace Model
-} // namespace OsmAnd
+    }
+}
 
 #endif // !defined(_OSMAND_CORE_AMENITY_H_)
