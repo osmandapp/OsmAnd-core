@@ -2,40 +2,46 @@
 
 void* operator new(std::size_t count)
 {
-    return OsmAnd::operator new(count);
+    const auto ptr = getMemoryManager()->allocate(count, "global");
+    if(!ptr)
+        throw std::bad_alloc();
+    return ptr;
 }
 
 void* operator new[](std::size_t count)
 {
-    return OsmAnd::operator new[](count);
+    const auto ptr = getMemoryManager()->allocate(count, "global");
+    if(!ptr)
+        throw std::bad_alloc();
+    return ptr;
 }
 
 void* operator new(std::size_t count, const std::nothrow_t& tag)
 {
-    return OsmAnd::operator new(count, tag);
+    return getMemoryManager()->allocate(count, "global");
 }
 
 void* operator new[](std::size_t count, const std::nothrow_t& tag)
 {
-    return OsmAnd::operator new[](count, tag);
+    return getMemoryManager()->allocate(count, "global");
 }
 
 void operator delete(void* ptr)
 {
-    OsmAnd::operator delete(ptr);
+    getMemoryManager()->free(ptr, "global");
 }
 
 void operator delete[](void* ptr)
 {
-    OsmAnd::operator delete[](ptr);
+    getMemoryManager()->free(ptr, "global");
 }
 
 void operator delete(void* ptr, const std::nothrow_t& tag)
 {
-    OsmAnd::operator delete(ptr, tag);
+    getMemoryManager()->free(ptr, "global");
 }
 
 void operator delete[](void* ptr, const std::nothrow_t& tag)
 {
-    OsmAnd::operator delete[](ptr, tag);
+    getMemoryManager()->free(ptr, "global");
 }
