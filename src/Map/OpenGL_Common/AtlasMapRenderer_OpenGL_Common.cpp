@@ -1885,6 +1885,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::updateInternalState(MapRenderer::In
     internalState->skyplaneSize.x = zSkyplaneK * internalState->projectionPlaneHalfWidth * 2.0f;
     internalState->skyplaneSize.y = zSkyplaneK * internalState->projectionPlaneHalfHeight * 2.0f;
 
+    // Update frustum
+    updateFrustum(internalState);
+
     // Compute visible tileset
     computeVisibleTileset(internalState, state);
 
@@ -1901,7 +1904,7 @@ OsmAnd::AtlasMapRenderer::InternalState* OsmAnd::AtlasMapRenderer_OpenGL_Common:
     return &_internalState;
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGL_Common::computeVisibleTileset(InternalState* internalState, const MapRendererState& state)
+void OsmAnd::AtlasMapRenderer_OpenGL_Common::updateFrustum(InternalState* internalState)
 {
     // 4 points of frustum near clipping box in camera coordinate space
     const glm::vec4 nTL_c(-internalState->projectionPlaneHalfWidth, +internalState->projectionPlaneHalfHeight, -_zNear, 1.0f);
@@ -1978,23 +1981,28 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::computeVisibleTileset(InternalState
 
     assert(intersectionPointsCounter == 4);
 
-    // Normalize intersection points to tiles
-    intersectionPoints[0] /= static_cast<float>(TileSize3D);
-    intersectionPoints[1] /= static_cast<float>(TileSize3D);
-    intersectionPoints[2] /= static_cast<float>(TileSize3D);
-    intersectionPoints[3] /= static_cast<float>(TileSize3D);
+    internalState->frustum2D.p0 = PointF(intersectionPoints[0].x, intersectionPoints[0].y);
+    internalState->frustum2D.p1 = PointF(intersectionPoints[1].x, intersectionPoints[1].y);
+    internalState->frustum2D.p2 = PointF(intersectionPoints[2].x, intersectionPoints[2].y);
+    internalState->frustum2D.p3 = PointF(intersectionPoints[3].x, intersectionPoints[3].y);
+}
+
+void OsmAnd::AtlasMapRenderer_OpenGL_Common::computeVisibleTileset(InternalState* internalState, const MapRendererState& state)
+{
+    // Normalize 2D-frustum points to tiles
+    PointF p[4];
+    p[0] = internalState->frustum2D.p0 / static_cast<float>(TileSize3D);
+    p[1] = internalState->frustum2D.p1 / static_cast<float>(TileSize3D);
+    p[2] = internalState->frustum2D.p2 / static_cast<float>(TileSize3D);
+    p[3] = internalState->frustum2D.p3 / static_cast<float>(TileSize3D);
 
     // "Round"-up tile indices
     // In-tile normalized position is added, since all tiles are going to be
     // translated in opposite direction during rendering
-    const auto& ip = intersectionPoints;
-    const PointF p[4] =
-    {
-        PointF(ip[0].x + internalState->targetInTileOffsetN.x, ip[0].y + internalState->targetInTileOffsetN.y),
-        PointF(ip[1].x + internalState->targetInTileOffsetN.x, ip[1].y + internalState->targetInTileOffsetN.y),
-        PointF(ip[2].x + internalState->targetInTileOffsetN.x, ip[2].y + internalState->targetInTileOffsetN.y),
-        PointF(ip[3].x + internalState->targetInTileOffsetN.x, ip[3].y + internalState->targetInTileOffsetN.y),
-    };
+    p[0] += internalState->targetInTileOffsetN;
+    p[1] += internalState->targetInTileOffsetN;
+    p[2] += internalState->targetInTileOffsetN;
+    p[3] += internalState->targetInTileOffsetN;
 
     //NOTE: so far scanline does not work exactly as expected, so temporary switch to old implementation
     {

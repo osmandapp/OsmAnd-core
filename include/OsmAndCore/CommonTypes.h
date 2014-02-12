@@ -41,36 +41,36 @@ namespace OsmAnd
         }
 
 #ifndef SWIG
-        inline PointT operator+ (const PointT& r) const
+        inline PointT operator+(const PointT& r) const
         {
             return PointT(x + r.x, y + r.y);
         }
 
-        inline PointT& operator+= (const PointT& r)
+        inline PointT& operator+=(const PointT& r)
         {
             x += r.x;
             y += r.y;
             return *this;
         }
 
-        inline PointT operator- (const PointT& r) const
+        inline PointT operator-(const PointT& r) const
         {
             return PointT(x - r.x, y - r.y);
         }
 
-        inline PointT& operator-= (const PointT& r)
+        inline PointT& operator-=(const PointT& r)
         {
             x -= r.x;
             y -= r.y;
             return *this;
         }
 
-        inline bool operator== (const PointT& r) const
+        inline bool operator==(const PointT& r) const
         {
             return equal(x, r.x) && equal(y, r.y);
         }
 
-        inline bool operator!= (const PointT& r) const
+        inline bool operator!=(const PointT& r) const
         {
             return !equal(x, r.x) || !equal(y, r.y);
         }
@@ -82,6 +82,34 @@ namespace OsmAnd
                 x = that.x;
                 y = that.y;
             }
+            return *this;
+        }
+
+        template<typename T_>
+        inline PointT operator*(const T_ r) const
+        {
+            return PointT(x * r, y * r);
+        }
+
+        template<typename T_>
+        inline PointT& operator*=(const T_ r)
+        {
+            x *= r;
+            y *= r;
+            return *this;
+        }
+
+        template<typename T_>
+        inline PointT operator/(const T_ r) const
+        {
+            return PointT(x / r, y / r);
+        }
+
+        template<typename T_>
+        inline PointT& operator/=(const T_ r)
+        {
+            x /= r;
+            y /= r;
             return *this;
         }
 #endif // !defined(SWIG)
@@ -189,12 +217,12 @@ namespace OsmAnd
             return *this;
         }
 
-        inline bool operator== (const AreaT& r) const
+        inline bool operator==(const AreaT& r) const
         {
             return topLeft == r.topLeft && bottomRight == r.bottomRight;
         }
 
-        inline bool operator!= (const AreaT& r) const
+        inline bool operator!=(const AreaT& r) const
         {
             return topLeft != r.topLeft || bottomRight != r.bottomRight;
         }

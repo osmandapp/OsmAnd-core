@@ -32,7 +32,7 @@ namespace OsmAnd
         PointF p1;
         PointF p2;
         PointF p3;
-
+        
         Frustum2D& operator=(const Frustum2D& that);
 
         bool test(const PointF& p) const;
