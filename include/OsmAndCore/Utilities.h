@@ -31,6 +31,7 @@ namespace OsmAnd
         double get31LatitudeY(const double y);
         double getTileNumberX(const float zoom, const double longitude);
         double getTileNumberY(const float zoom, double latitude);
+        float convert31toFloat(const int32_t value, const ZoomLevel zoom);
         double normalizeLatitude(double latitude);
         double normalizeLongitude(double longitude);
         double getPowZoom(const float zoom);
@@ -124,6 +125,17 @@ namespace OsmAnd
             }
             double result = (1 - eval / M_PI) / 2 * getPowZoom(zoom);
             return result;
+        }
+
+        inline float convert31toFloat(const int32_t value, const ZoomLevel zoom)
+        {
+            /*
+            const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - zoom));
+            const auto fractionalMask = ?;
+            const auto intPart = value >> (ZoomLevel::MaxZoomLevel - zoom);
+            const auto intFractionalPart = tileSize31 / (value & fractionalMask);
+            */
+            return static_cast<float>((static_cast<double>(value) / (1u << (ZoomLevel::MaxZoomLevel - zoom))));
         }
 
         inline double normalizeLatitude(double latitude)

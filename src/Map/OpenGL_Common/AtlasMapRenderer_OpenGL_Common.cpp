@@ -1268,9 +1268,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
         // map symbol with smaller order [and further from camera] is more important.
         QuadTree< std::shared_ptr<const MapSymbol>, AreaI::CoordType > intersections(currentState.viewport, 8);
 
-        // Get tile size in 31 coordinates
-        const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - currentState.zoomBase));
-
         // Iterate over symbols by "order" in ascending direction
         for(auto itSymbols = symbolsMap.cbegin(); itSymbols != symbolsMap.cend(); ++itSymbols)
         {
@@ -1294,9 +1291,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                 {
                     const auto pointOffset = *itPoint - currentState.target31;
                     glm::vec3 convertedPoint(
-                        static_cast<float>((static_cast<double>(pointOffset.x) / tileSize31)),
+                        Utilities::convert31toFloat(pointOffset.x, currentState.zoomBase),
                         0.0f,
-                        static_cast<float>((static_cast<double>(pointOffset.y) / tileSize31)));
+                        Utilities::convert31toFloat(pointOffset.y, currentState.zoomBase));
                     convertedPoint *= TileSize3D;
                     convertedPoints.push_back(convertedPoint);
                 }
@@ -1320,8 +1317,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                 // World (0;0;0) is in the target, so subtract target position
                 const auto symbolOffset31 = symbol->location31 - currentState.target31;
                 const glm::vec2 symbolOffset(
-                    static_cast<float>((static_cast<double>(symbolOffset31.x) / tileSize31)),
-                    static_cast<float>((static_cast<double>(symbolOffset31.y) / tileSize31)));
+                    Utilities::convert31toFloat(symbolOffset31.x, currentState.zoomBase),
+                    Utilities::convert31toFloat(symbolOffset31.y, currentState.zoomBase));
                 const glm::vec4 positionInWorld(symbolOffset.x * TileSize3D, 0.0f, symbolOffset.y * TileSize3D, 1.0f);
 
                 // Get distance from symbol to camera
@@ -1349,8 +1346,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                 // Calculate position in screen coordinates (same calculation as done in shader)
                 const auto symbolOffset31 = symbol->location31 - currentState.target31;
                 const glm::vec2 symbolOffset(
-                    static_cast<float>((static_cast<double>(symbolOffset31.x) / tileSize31)),
-                    static_cast<float>((static_cast<double>(symbolOffset31.y) / tileSize31)));
+                    Utilities::convert31toFloat(symbolOffset31.x, currentState.zoomBase),
+                    Utilities::convert31toFloat(symbolOffset31.y, currentState.zoomBase));
                 const glm::vec3 positionInWorld(symbolOffset.x * TileSize3D, 0.0f, symbolOffset.y * TileSize3D);
                 const auto symbolOnScreen = glm::project(positionInWorld, _internalState.mCameraView, _internalState.mPerspectiveProjection, viewport);
 
