@@ -305,11 +305,11 @@ namespace OsmAnd
 
         typedef std::pair<AreaI, uint32_t> DebugRect2D;
         QList<DebugRect2D> _debugRects2D;
-        typedef std::pair< std::vector<glm::vec3> , uint32_t> DebugLine3D;
+        typedef std::pair< QVector<glm::vec3>, uint32_t> DebugLine3D;
         QList<DebugLine3D> _debugLines3D;
         void clearDebugPrimitives();
         void addDebugRect2D(const AreaI& rect, uint32_t argbColor);
-        void addDebugLine3D(const std::vector<glm::vec3>& line, uint32_t argbColor);
+        void addDebugLine3D(const QVector<glm::vec3>& line, uint32_t argbColor);
 #endif
 
         virtual bool doInitializeRendering();

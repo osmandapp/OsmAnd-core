@@ -1281,6 +1281,32 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
 
             GL_PUSH_GROUP_MARKER(QString("order %1").arg(itSymbols.key()));
 
+            // Process symbols-on-path (3D)
+            for(auto itSymbolEntry = unsortedSymbols.cbegin(); itSymbolEntry != unsortedSymbols.cend(); ++itSymbolEntry)
+            {
+                const auto& symbol = std::dynamic_pointer_cast<const MapSymbolOnPath>(itSymbolEntry.key());
+                if(!symbol)
+                    continue;
+                
+#if OSMAND_DEBUG
+                QVector< glm::vec3 > convertedPoints;
+                for(auto itPoint = symbol->mapObject->points31.cbegin(); itPoint != symbol->mapObject->points31.cend(); ++itPoint)
+                {
+                    const auto pointOffset = *itPoint - currentState.target31;
+                    glm::vec3 convertedPoint(
+                        static_cast<float>((static_cast<double>(pointOffset.x) / tileSize31)),
+                        0.0f,
+                        static_cast<float>((static_cast<double>(pointOffset.y) / tileSize31)));
+                    convertedPoint *= TileSize3D;
+                    convertedPoints.push_back(convertedPoint);
+                }
+                addDebugLine3D(convertedPoints, SkColorSetA(SK_ColorCYAN, 128));
+#endif
+            }
+
+            //NOTE: symbols-on-path that should be rendered as 2D can also be sorted like others.
+            //switching between symbols-on-path 2D vs 3D is determined by angle of camera (check that)
+            // Sort symbols by distance to camera
             QMultiMap< float, SymbolPair > sortedSymbols;
             for(auto itSymbolEntry = unsortedSymbols.cbegin(); itSymbolEntry != unsortedSymbols.cend(); ++itSymbolEntry)
             {
@@ -1852,7 +1878,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::addDebugRect2D(const AreaI& rect, u
     _debugRects2D.push_back(qMove(DebugRect2D(rect, argbColor)));
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGL_Common::addDebugLine3D(const std::vector<glm::vec3>& line, uint32_t argbColor)
+void OsmAnd::AtlasMapRenderer_OpenGL_Common::addDebugLine3D(const QVector<glm::vec3>& line, uint32_t argbColor)
 {
     assert(line.size() >= 2);
     _debugLines3D.push_back(qMove(DebugLine3D(line, argbColor)));
