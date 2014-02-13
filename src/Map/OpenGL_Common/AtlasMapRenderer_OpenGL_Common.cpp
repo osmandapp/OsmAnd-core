@@ -1289,21 +1289,21 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                 //TODO: this check may be done in ints using special Frustum2D31
                 // Check first point to initialize subdivision
                 auto pPoint31 = points31.constData();
-                QVector<PointF> worldPoints;
-                worldPoints.reserve(points31.size());
-                auto prevP = Utilities::convert31toFloat(*(pPoint31++) - currentState.target31, currentState.zoomBase) * TileSize3D;
-                auto wasInside = _internalState.frustum2D.test(prevP);
+                QVector<PointI> innerPoints;
+                innerPoints.reserve(points31.size());
+                auto prevP = *(pPoint31++) - currentState.target31;
+                auto wasInside = _internalState.frustum2D31.test(prevP);
                 if(wasInside)
-                    worldPoints.push_back(prevP);
+                    innerPoints.push_back(prevP);
 
                 // Process rest of points one by one
                 for(int pointIdx = 1; pointIdx < points31.size(); pointIdx++)
                 {
-                    const auto p = Utilities::convert31toFloat(*(pPoint31++) - currentState.target31, currentState.zoomBase) * TileSize3D;
-                    auto isInside = _internalState.frustum2D.test(p);
-                    if((wasInside && !isInside) || (pointIdx == points31.size()-1 && !worldPoints.isEmpty()))
+                    const auto p = *(pPoint31++) - currentState.target31;
+                    auto isInside = _internalState.frustum2D31.test(p);
+                    if((wasInside && !isInside) || (pointIdx == points31.size() - 1 && !innerPoints.isEmpty()))
                     {
-                        worldPoints.push_back(p);
+                        innerPoints.push_back(p);
                         //TODO: found segment in worldPoints!
                         //TODO: also calculate distance
                         // to check if text fits this subpath, calculate its on-screen length as if view was top-bottom
@@ -1314,25 +1314,26 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
 #if OSMAND_DEBUG
                         {
                             QVector< glm::vec3 > convertedPoints;
-                            for(auto itPoint = worldPoints.cbegin(); itPoint != worldPoints.cend(); ++itPoint)
+                            for(auto itPoint = innerPoints.cbegin(); itPoint != innerPoints.cend(); ++itPoint)
                             {
+                                auto worldPoint = Utilities::convert31toFloat(*itPoint, currentState.zoomBase) * TileSize3D;
                                 glm::vec3 convertedPoint(
-                                    itPoint->x,
+                                    worldPoint.x,
                                     0.0f,
-                                    itPoint->y);
+                                    worldPoint.y);
                                 convertedPoints.push_back(convertedPoint);
                             }
                             addDebugLine3D(convertedPoints, SkColorSetA(SK_ColorRED, 128));
                         }
 #endif
-                        worldPoints.clear();
+                        innerPoints.clear();
                     }
                     else if(wasInside && isInside)
-                        worldPoints.push_back(p);
+                        innerPoints.push_back(p);
                     else if(!wasInside && isInside)
                     {
-                        worldPoints.push_back(prevP);
-                        worldPoints.push_back(p);
+                        innerPoints.push_back(prevP);
+                        innerPoints.push_back(p);
                     }
 
                     wasInside = isInside;
@@ -2132,7 +2133,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::updateInternalState(MapRenderer::In
     internalState->skyplaneSize.y = zSkyplaneK * internalState->projectionPlaneHalfHeight * 2.0f;
 
     // Update frustum
-    updateFrustum(internalState);
+    updateFrustum(internalState, state);
 
     // Compute visible tileset
     computeVisibleTileset(internalState, state);
@@ -2150,7 +2151,7 @@ OsmAnd::AtlasMapRenderer::InternalState* OsmAnd::AtlasMapRenderer_OpenGL_Common:
     return &_internalState;
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGL_Common::updateFrustum(InternalState* internalState)
+void OsmAnd::AtlasMapRenderer_OpenGL_Common::updateFrustum(InternalState* internalState, const MapRendererState& state)
 {
     // 4 points of frustum near clipping box in camera coordinate space
     const glm::vec4 nTL_c(-internalState->projectionPlaneHalfWidth, +internalState->projectionPlaneHalfHeight, -_zNear, 1.0f);
@@ -2230,7 +2231,12 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::updateFrustum(InternalState* intern
     internalState->frustum2D.p1 = PointF(intersectionPoints[1].x, intersectionPoints[1].y);
     internalState->frustum2D.p2 = PointF(intersectionPoints[2].x, intersectionPoints[2].y);
     internalState->frustum2D.p3 = PointF(intersectionPoints[3].x, intersectionPoints[3].y);
-    assert(internalState->frustum2D.validate());
+
+    const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - state.zoomBase));
+    internalState->frustum2D31.p0 = (internalState->frustum2D.p0 / TileSize3D) * static_cast<double>(tileSize31);
+    internalState->frustum2D31.p1 = (internalState->frustum2D.p1 / TileSize3D) * static_cast<double>(tileSize31);
+    internalState->frustum2D31.p2 = (internalState->frustum2D.p2 / TileSize3D) * static_cast<double>(tileSize31);
+    internalState->frustum2D31.p3 = (internalState->frustum2D.p3 / TileSize3D) * static_cast<double>(tileSize31);
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::computeVisibleTileset(InternalState* internalState, const MapRendererState& state)

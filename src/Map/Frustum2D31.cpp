@@ -1,11 +1,11 @@
-#include "Frustum2D.h"
+#include "Frustum2D31.h"
 #include "Utilities.h"
 
-OsmAnd::Frustum2D::Frustum2D()
+OsmAnd::Frustum2D31::Frustum2D31()
 {
 }
 
-OsmAnd::Frustum2D::Frustum2D(const PointF& p0_, const PointF& p1_, const PointF& p2_, const PointF& p3_)
+OsmAnd::Frustum2D31::Frustum2D31(const PointI& p0_, const PointI& p1_, const PointI& p2_, const PointI& p3_)
     : p0(p0_)
     , p1(p1_)
     , p2(p2_)
@@ -13,7 +13,7 @@ OsmAnd::Frustum2D::Frustum2D(const PointF& p0_, const PointF& p1_, const PointF&
 {
 }
 
-OsmAnd::Frustum2D::Frustum2D(const Frustum2D& that)
+OsmAnd::Frustum2D31::Frustum2D31(const Frustum2D31& that)
     : p0(that.p0)
     , p1(that.p1)
     , p2(that.p2)
@@ -21,11 +21,11 @@ OsmAnd::Frustum2D::Frustum2D(const Frustum2D& that)
 {
 }
 
-OsmAnd::Frustum2D::~Frustum2D()
+OsmAnd::Frustum2D31::~Frustum2D31()
 {
 }
 
-OsmAnd::Frustum2D& OsmAnd::Frustum2D::operator=(const Frustum2D& that)
+OsmAnd::Frustum2D31& OsmAnd::Frustum2D31::operator=(const Frustum2D31& that)
 {
     p0 = that.p0;
     p1 = that.p1;
@@ -35,12 +35,12 @@ OsmAnd::Frustum2D& OsmAnd::Frustum2D::operator=(const Frustum2D& that)
     return *this;
 }
 
-bool OsmAnd::Frustum2D::test(const PointF& p) const
+bool OsmAnd::Frustum2D31::test(const PointI& p) const
 {
     return isPointInside(p);
 }
 
-bool OsmAnd::Frustum2D::test(const PointF& lp0, const PointF& lp1) const
+bool OsmAnd::Frustum2D31::test(const PointI& lp0, const PointI& lp1) const
 {
     // Check if any of line points is inside.
     // This case covers inner line and partially inner line (that has one vertex inside).
@@ -56,7 +56,7 @@ bool OsmAnd::Frustum2D::test(const PointF& lp0, const PointF& lp1) const
         testLineLineIntersection(lp0, lp1, p3, p0);
 }
 
-bool OsmAnd::Frustum2D::test(const AreaF& area) const
+bool OsmAnd::Frustum2D31::test(const AreaI& area) const
 {
     const auto a0 = area.topLeft;
     const auto a1 = area.topRight();
@@ -97,7 +97,7 @@ bool OsmAnd::Frustum2D::test(const AreaF& area) const
         area.contains(p3);
 }
 
-bool OsmAnd::Frustum2D::isPointInside(const PointF& p) const
+bool OsmAnd::Frustum2D31::isPointInside(const PointI& p) const
 {
     // Check if point 'p' is on the same 'side' of each edge
     const auto sign0 = crossProductSign(p0, p1, p);
@@ -125,7 +125,7 @@ bool OsmAnd::Frustum2D::isPointInside(const PointF& p) const
     return true;
 }
 
-bool OsmAnd::Frustum2D::testLineLineIntersection(const PointF& a0, const PointF& a1, const PointF& b0, const PointF& b1)
+bool OsmAnd::Frustum2D31::testLineLineIntersection(const PointI& a0, const PointI& a1, const PointI& b0, const PointI& b1)
 {
     const auto a1x_a0x = a1.x - a0.x;
     const auto a1y_a0y = a1.y - a0.y;
@@ -134,26 +134,30 @@ bool OsmAnd::Frustum2D::testLineLineIntersection(const PointF& a0, const PointF&
     const auto b0x_a0x = b0.x - a0.x;
     const auto b0y_a0y = b0.y - a0.y;
 
-    const auto d_ = a1x_a0x*b0y_b1y - b0x_b1x*a1y_a0y;
-    const auto t_ = b0y_b1y*b0x_a0x - b0x_b1x*b0y_a0y;
-    const auto u_ = a1x_a0x*b0y_a0y - a1y_a0y*b0x_a0x;
+    const auto d_ = static_cast<int64_t>(a1x_a0x*b0y_b1y) - static_cast<int64_t>(b0x_b1x*a1y_a0y);
+    const auto t_ = static_cast<int64_t>(b0y_b1y*b0x_a0x) - static_cast<int64_t>(b0x_b1x*b0y_a0y);
+    const auto u_ = static_cast<int64_t>(a1x_a0x*b0y_a0y) - static_cast<int64_t>(a1y_a0y*b0x_a0x);
 
-    if(qFuzzyIsNull(d_))
+    if(d_ == 0)
     {
-        if(qFuzzyIsNull(t_) && qFuzzyIsNull(u_))
+        if(t_== 0 && u_ == 0)
             return true;
         return false;
     }
     
-    const auto t = (t_ / d_);
-    const auto u = (u_ / d_);
+    const auto t = (static_cast<double>(t_) / static_cast<double>(d_));
+    const auto u = (static_cast<double>(u_) / static_cast<double>(d_));
 
     return
-        t >= 0.0f && t <= 1.0f &&
-        u >= 0.0f && u <= 1.0f;
+        t >= 0.0 && t <= 1.0 &&
+        u >= 0.0 && u <= 1.0;
 }
 
-int OsmAnd::Frustum2D::crossProductSign(const PointF& a, const PointF& b, const PointF& p)
+int OsmAnd::Frustum2D31::crossProductSign(const PointI& a, const PointI& b, const PointI& p)
 {
-    return Utilities::sign((b.y - a.y)*(p.x - a.x) - (b.x - a.x)*(p.y - a.y));
+    const int64_t bx_ax = b.x - a.x;
+    const int64_t by_ay = b.y - a.y;
+    const int64_t px_ax = p.x - a.x;
+    const int64_t py_ay = p.y - a.y;
+    return Utilities::sign(by_ay*px_ax - bx_ax*py_ay);
 }

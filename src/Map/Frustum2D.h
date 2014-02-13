@@ -11,14 +11,11 @@
 
 namespace OsmAnd
 {
-    // Points should be specified in CCW order.
-    // Axis X: from left to right
-    // Axis Y: from top to bottom
     class Frustum2D Q_DECL_FINAL
     {
         OSMAND_USE_MEMORY_MANAGER(Frustum2D);
     private:
-        static float crossProduct(const PointF& a, const PointF& b, const PointF& p);
+        static int crossProductSign(const PointF& a, const PointF& b, const PointF& p);
         static bool testLineLineIntersection(const PointF& a0, const PointF& a1, const PointF& b0, const PointF& b1);
         bool isPointInside(const PointF& p) const;
     protected:

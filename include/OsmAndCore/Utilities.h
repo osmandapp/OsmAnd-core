@@ -73,6 +73,11 @@ namespace OsmAnd
         };
         uint8_t computeCohenSutherlandCode(const PointI& p, const AreaI& box);
         QSet<ZoomLevel> enumerateZoomLevels(const ZoomLevel from, const ZoomLevel to);
+        template <typename T>
+        int sign(T value)
+        {
+            return (T(0) < value) - (value < T(0));
+        }
 
         inline double toRadians(const double angle)
         {
@@ -134,6 +139,7 @@ namespace OsmAnd
             const auto fractionalMask = ?;
             const auto intPart = value >> (ZoomLevel::MaxZoomLevel - zoom);
             const auto intFractionalPart = tileSize31 / (value & fractionalMask);
+            // res = intPart + 1.0f/intFractionalPart + float<remainder>/(value & fractionalMask)
             */
             return static_cast<float>((static_cast<double>(value) / (1u << (ZoomLevel::MaxZoomLevel - zoom))));
         }

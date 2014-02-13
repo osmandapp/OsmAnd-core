@@ -10,6 +10,7 @@
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
 #include "Frustum2D.h"
+#include "Frustum2D31.h"
 #include "AtlasMapRenderer.h"
 #include "OpenGL_Common/GPUAPI_OpenGL_Common.h"
 
@@ -59,12 +60,13 @@ namespace OsmAnd
             PointF skyplaneSize;
             float correctedFogDistance;
             Frustum2D frustum2D;
+            Frustum2D31 frustum2D31;
         };
         InternalState _internalState;
         virtual const AtlasMapRenderer::InternalState* getInternalStateRef() const;
         virtual AtlasMapRenderer::InternalState* getInternalStateRef();
 
-        void updateFrustum(InternalState* internalState);
+        void updateFrustum(InternalState* internalState, const MapRendererState& state);
         void computeVisibleTileset(InternalState* internalState, const MapRendererState& state);
 
 #pragma pack(push)
