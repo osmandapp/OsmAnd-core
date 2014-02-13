@@ -1305,6 +1305,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                         worldPoints.push_back(p);
                         //TODO: found segment in worldPoints!
                         //TODO: also calculate distance
+                        // to check if text fits this subpath, calculate its on-screen length as if view was top-bottom
+                        // and apply same algo as for 2d SOPs
                         // if that segment is fine by it's length, add it for further sorting. at this point there's no
                         // chance to fully process symbols-on-path, since actual positioning of symbols on paths
                         // can be done only when all paths are available
@@ -2211,33 +2213,33 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::updateFrustum(InternalState* intern
         intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz;
         intersectionPointsCounter++;
     }
-    if(intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTR_g.xyz, nBR_g.xyz, intersectionPoint))
-    {
-        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz;
-        intersectionPointsCounter++;
-    }
     if(intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTL_g.xyz, nBL_g.xyz, intersectionPoint))
     {
         intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz;
         intersectionPointsCounter++;
     }
-
+    if(intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTR_g.xyz, nBR_g.xyz, intersectionPoint))
+    {
+        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz;
+        intersectionPointsCounter++;
+    }
     assert(intersectionPointsCounter == 4);
 
     internalState->frustum2D.p0 = PointF(intersectionPoints[0].x, intersectionPoints[0].y);
     internalState->frustum2D.p1 = PointF(intersectionPoints[1].x, intersectionPoints[1].y);
     internalState->frustum2D.p2 = PointF(intersectionPoints[2].x, intersectionPoints[2].y);
     internalState->frustum2D.p3 = PointF(intersectionPoints[3].x, intersectionPoints[3].y);
+    assert(internalState->frustum2D.validate());
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL_Common::computeVisibleTileset(InternalState* internalState, const MapRendererState& state)
 {
     // Normalize 2D-frustum points to tiles
     PointF p[4];
-    p[0] = internalState->frustum2D.p0 / static_cast<float>(TileSize3D);
-    p[1] = internalState->frustum2D.p1 / static_cast<float>(TileSize3D);
-    p[2] = internalState->frustum2D.p2 / static_cast<float>(TileSize3D);
-    p[3] = internalState->frustum2D.p3 / static_cast<float>(TileSize3D);
+    p[0] = internalState->frustum2D.p0 / TileSize3D;
+    p[1] = internalState->frustum2D.p1 / TileSize3D;
+    p[2] = internalState->frustum2D.p2 / TileSize3D;
+    p[3] = internalState->frustum2D.p3 / TileSize3D;
 
     // "Round"-up tile indices
     // In-tile normalized position is added, since all tiles are going to be

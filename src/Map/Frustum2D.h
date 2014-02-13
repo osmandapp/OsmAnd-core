@@ -35,6 +35,8 @@ namespace OsmAnd
         
         Frustum2D& operator=(const Frustum2D& that);
 
+        bool validate() const;
+
         bool test(const PointF& p) const;
         bool test(const PointF& lp0, const PointF& lp1) const;
         bool test(const AreaF& area) const;

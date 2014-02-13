@@ -34,6 +34,28 @@ OsmAnd::Frustum2D& OsmAnd::Frustum2D::operator=(const Frustum2D& that)
     return *this;
 }
 
+bool OsmAnd::Frustum2D::validate() const
+{
+    // Check that any point is on the left of 3 other
+    return
+        // p3
+        crossProduct(p0, p1, p3) <= 0.0f &&
+        crossProduct(p1, p2, p3) <= 0.0f &&
+        crossProduct(p2, p0, p3) >= 0.0f &&
+        // p2
+        crossProduct(p0, p1, p2) <= 0.0f &&
+        crossProduct(p1, p3, p2) >= 0.0f &&
+        crossProduct(p3, p0, p2) <= 0.0f &&
+        // p1
+        crossProduct(p0, p2, p1) >= 0.0f &&
+        crossProduct(p2, p3, p1) <= 0.0f &&
+        crossProduct(p3, p0, p1) <= 0.0f &&
+        // p0
+        crossProduct(p1, p2, p0) <= 0.0f &&
+        crossProduct(p2, p3, p0) <= 0.0f &&
+        crossProduct(p3, p1, p0) >= 0.0f;
+}
+
 bool OsmAnd::Frustum2D::test(const PointF& p) const
 {
     return isPointInside(p);
