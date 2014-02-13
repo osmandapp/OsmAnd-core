@@ -1286,11 +1286,12 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                     continue;
                 const auto& points31 = symbol->mapObject->points31;
 
+                //TODO: this check may be done in ints using special Frustum2D31
                 // Check first point to initialize subdivision
                 auto pPoint31 = points31.constData();
                 QVector<PointF> worldPoints;
                 worldPoints.reserve(points31.size());
-                auto prevP = Utilities::convert31toFloat(*(pPoint31++) - currentState.target31, currentState.zoomBase);
+                auto prevP = Utilities::convert31toFloat(*(pPoint31++) - currentState.target31, currentState.zoomBase) * TileSize3D;
                 auto wasInside = _internalState.frustum2D.test(prevP);
                 if(wasInside)
                     worldPoints.push_back(prevP);
@@ -1298,7 +1299,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                 // Process rest of points one by one
                 for(int pointIdx = 1; pointIdx < points31.size(); pointIdx++)
                 {
-                    const auto p = Utilities::convert31toFloat(*(pPoint31++) - currentState.target31, currentState.zoomBase);
+                    const auto p = Utilities::convert31toFloat(*(pPoint31++) - currentState.target31, currentState.zoomBase) * TileSize3D;
                     auto isInside = _internalState.frustum2D.test(p);
                     if((wasInside && !isInside) || (pointIdx == points31.size()-1 && !worldPoints.isEmpty()))
                     {
@@ -1316,9 +1317,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                             for(auto itPoint = worldPoints.cbegin(); itPoint != worldPoints.cend(); ++itPoint)
                             {
                                 glm::vec3 convertedPoint(
-                                    itPoint->x * TileSize3D,
+                                    itPoint->x,
                                     0.0f,
-                                    itPoint->y * TileSize3D);
+                                    itPoint->y);
                                 convertedPoints.push_back(convertedPoint);
                             }
                             addDebugLine3D(convertedPoints, SkColorSetA(SK_ColorRED, 128));
