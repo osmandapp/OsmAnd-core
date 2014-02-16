@@ -31,6 +31,8 @@ OsmAnd::GPUAPI_OpenGL_Common::GPUAPI_OpenGL_Common()
     , _isSupported_vertexShaderTextureLookup(false)
     , _isSupported_textureLod(false)
     , _isSupported_texturesNPOT(false)
+    , _maxVertexUniformVectors(-1)
+    , _maxFragmentUniformVectors(-1)
     , extensions(_extensions)
     , compressedFormats(_compressedFormats)
     , maxTextureSize(_maxTextureSize)
@@ -38,6 +40,8 @@ OsmAnd::GPUAPI_OpenGL_Common::GPUAPI_OpenGL_Common()
     , isSupported_textureLod(_isSupported_textureLod)
     , isSupported_texturesNPOT(_isSupported_texturesNPOT)
     , isSupported_EXT_debug_marker(_isSupported_EXT_debug_marker)
+    , maxVertexUniformVectors(_maxVertexUniformVectors)
+    , maxFragmentUniformVectors(_maxFragmentUniformVectors)
 {
 }
 

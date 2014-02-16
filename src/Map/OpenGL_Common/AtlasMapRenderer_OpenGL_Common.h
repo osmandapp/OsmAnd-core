@@ -228,10 +228,57 @@ namespace OsmAnd
                     GLint sampler;
                 } param;
             } fs;
-        } _symbolsStage;
+        } _symbolsStage_pinned;
+        struct {
+            GLuint symbolVAO;
+            GLuint symbolVBO;
+            GLuint symbolIBO;
+
+            GLuint program;
+
+            struct {
+                GLuint id;
+
+                // Input data
+                struct {
+                    GLint vertexPosition;
+                    GLint vertexTexCoords;
+                } in;
+
+                // Parameters
+                struct {
+                    // Common data
+                    GLint mPerspectiveProjectionView;
+                    GLint mOrthographicProjection;
+                    GLint viewport;
+
+                    // Per-symbol data
+                    GLint symbolOffsetFromTarget;
+                    GLint symbolSize;
+                    GLint distanceFromCamera;
+                    GLint onScreenOffset;
+                } param;
+            } vs;
+
+            struct {
+                GLuint id;
+
+                // Parameters
+                struct {
+                    // Common data
+
+                    // Per-symbol data
+                    GLint sampler;
+                } param;
+            } fs;
+        } _symbolsStage_onPath;
         void initializeSymbolsStage();
+        void initializeSymbolsStage_pinned();
+        void initializeSymbolsStage_onPath();
         void renderSymbolsStage();
         void releaseSymbolsStage();
+        void releaseSymbolsStage_pinned();
+        void releaseSymbolsStage_onPath();
 
 #if OSMAND_DEBUG
         struct {

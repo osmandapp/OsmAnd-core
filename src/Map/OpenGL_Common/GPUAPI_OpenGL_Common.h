@@ -92,6 +92,8 @@ namespace OsmAnd
         bool _isSupported_textureLod;
         bool _isSupported_texturesNPOT;
         bool _isSupported_EXT_debug_marker;
+        GLint _maxVertexUniformVectors;
+        GLint _maxFragmentUniformVectors;
         
         virtual bool releaseResourceInGPU(const ResourceInGPU::Type type, const RefInGPU& refInGPU);
 
@@ -109,6 +111,8 @@ namespace OsmAnd
         const bool& isSupported_textureLod;
         const bool& isSupported_texturesNPOT;
         const bool& isSupported_EXT_debug_marker;
+        const GLint& maxVertexUniformVectors;
+        const GLint& maxFragmentUniformVectors;
         
         virtual GLenum validateResult() = 0;
         virtual GLuint compileShader(GLenum shaderType, const char* source);
