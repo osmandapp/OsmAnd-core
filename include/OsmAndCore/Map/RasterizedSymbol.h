@@ -24,7 +24,8 @@ namespace OsmAnd
             const std::shared_ptr<const RasterizedSymbolsGroup>& group,
             const std::shared_ptr<const Model::MapObject>& mapObject,
             const std::shared_ptr<const SkBitmap>& bitmap,
-            const int order);
+            const int order,
+            const QString& content);
     public:
         virtual ~RasterizedSymbol();
 
@@ -33,6 +34,7 @@ namespace OsmAnd
         const std::shared_ptr<const Model::MapObject> mapObject;
         const std::shared_ptr<const SkBitmap> bitmap;
         const int order;
+        const QString content;
     };
 
 } // namespace OsmAnd

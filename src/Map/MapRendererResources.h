@@ -237,7 +237,8 @@ namespace OsmAnd
         friend class OsmAnd::MapRendererResources::SymbolsTileResource;
         };
         
-        typedef QMap<int, QHash< std::shared_ptr<const MapSymbol>, std::weak_ptr<const GPUAPI::ResourceInGPU> > > SymbolsMap;
+        typedef QHash< std::shared_ptr<const MapSymbol>, std::weak_ptr<const GPUAPI::ResourceInGPU> > MapSymbolsLayer;
+        typedef QMap<int, MapSymbolsLayer > MapSymbolsByOrder;
 
     private:
         // Resource-requests related:
@@ -271,11 +272,11 @@ namespace OsmAnd
         TiledResourcesStorage _storage;
 
         // Symbols:
-        mutable QMutex _symbolsMapMutex;
-        SymbolsMap _symbolsMap;
-        unsigned int _symbolsMapCount;
-        void addSymbolsMapEntry(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource);
-        void removeSymbolsMapEntry(const std::shared_ptr<const MapSymbol>& symbol);
+        mutable QMutex _mapSymbolsByOrderMutex;
+        MapSymbolsByOrder _mapSymbolsByOrder;
+        unsigned int _mapSymbolsCount;
+        void addMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource);
+        void removeMapSymbol(const std::shared_ptr<const MapSymbol>& symbol);
 
         void notifyNewResourceAvailable();
 
@@ -335,8 +336,8 @@ namespace OsmAnd
         std::shared_ptr<const TiledResourcesCollection> getCollection(const ResourceType type, const std::shared_ptr<IMapProvider>& ofProvider) const;
 
         QMutex& getSymbolsMapMutex() const;
-        const SymbolsMap& getSymbolsMap() const;
-        unsigned int getSymbolsCount() const;
+        const MapSymbolsByOrder& getMapSymbolsByOrder() const;
+        unsigned int getMapSymbolsCount() const;
 
     friend class OsmAnd::MapRenderer;
     };

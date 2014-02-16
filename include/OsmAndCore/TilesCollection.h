@@ -151,12 +151,12 @@ namespace OsmAnd {
                 QMutableHashIterator< TileId, std::shared_ptr<ENTRY> > itEntryPair(zoomLevel);
                 while(itEntryPair.hasNext())
                 {
-                    itEntryPair.next();
+                    const auto& value = itEntryPair.next().value();
 
-                    const auto doRemove = (filter == nullptr) || filter(itEntryPair.value(), doCancel);
+                    const auto doRemove = (filter == nullptr) || filter(value, doCancel);
                     if(doRemove)
                     {
-                        itEntryPair.value()->unlink();
+                        value->unlink();
                         itEntryPair.remove();
                     }
 

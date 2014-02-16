@@ -16,7 +16,7 @@
 
 OsmAnd::MapRendererResources::MapRendererResources(MapRenderer* const owner_)
     : _taskHostBridge(this)
-    , _symbolsMapCount(0)
+    , _mapSymbolsCount(0)
     , _invalidatedResourcesTypesMask(0)
     , _workerThreadIsAlive(false)
     , _workerThreadId(nullptr)
@@ -326,23 +326,23 @@ bool OsmAnd::MapRendererResources::isDataSourceAvailableFor(const std::shared_pt
     return binding.collectionsToProviders.contains(collection);
 }
 
-void OsmAnd::MapRendererResources::addSymbolsMapEntry(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource)
+void OsmAnd::MapRendererResources::addMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource)
 {
-    QMutexLocker scopedLocker(&_symbolsMapMutex);
+    QMutexLocker scopedLocker(&_mapSymbolsByOrderMutex);
 
-    _symbolsMap[symbol->order].insert(symbol, gpuResource);
-    _symbolsMapCount++;
+    _mapSymbolsByOrder[symbol->order].insert(symbol, gpuResource);
+    _mapSymbolsCount++;
 }
 
-void OsmAnd::MapRendererResources::removeSymbolsMapEntry(const std::shared_ptr<const MapSymbol>& symbol)
+void OsmAnd::MapRendererResources::removeMapSymbol(const std::shared_ptr<const MapSymbol>& symbol)
 {
-    QMutexLocker scopedLocker(&_symbolsMapMutex);
+    QMutexLocker scopedLocker(&_mapSymbolsByOrderMutex);
 
-    const auto itSymbolsLayer = _symbolsMap.find(symbol->order);
+    const auto itSymbolsLayer = _mapSymbolsByOrder.find(symbol->order);
     const auto removedCount = itSymbolsLayer->remove(symbol);
     if(itSymbolsLayer->isEmpty())
-        _symbolsMap.erase(itSymbolsLayer);
-    _symbolsMapCount -= removedCount;
+        _mapSymbolsByOrder.erase(itSymbolsLayer);
+    _mapSymbolsCount -= removedCount;
 }
 
 void OsmAnd::MapRendererResources::notifyNewResourceAvailable()
@@ -860,17 +860,17 @@ std::shared_ptr<const OsmAnd::MapRendererResources::TiledResourcesCollection> Os
 
 QMutex& OsmAnd::MapRendererResources::getSymbolsMapMutex() const
 {
-    return _symbolsMapMutex;
+    return _mapSymbolsByOrderMutex;
 }
 
-const OsmAnd::MapRendererResources::SymbolsMap& OsmAnd::MapRendererResources::getSymbolsMap() const
+const OsmAnd::MapRendererResources::MapSymbolsByOrder& OsmAnd::MapRendererResources::getMapSymbolsByOrder() const
 {
-    return _symbolsMap;
+    return _mapSymbolsByOrder;
 }
 
-unsigned int OsmAnd::MapRendererResources::getSymbolsCount() const
+unsigned int OsmAnd::MapRendererResources::getMapSymbolsCount() const
 {
-    return _symbolsMapCount;
+    return _mapSymbolsCount;
 }
 
 OsmAnd::MapRendererResources::GenericResource::GenericResource(MapRendererResources* owner_, const ResourceType type_)
@@ -1216,7 +1216,7 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
         std::const_pointer_cast<MapSymbol>(symbol)->releaseNonRetainedData();
 
         // Publish symbol to global map
-        owner->addSymbolsMapEntry(symbol, resource);
+        owner->addMapSymbol(symbol, resource);
 
         // Move reference
         groupResources->resourcesInGPU.insert(qMove(symbol), qMove(resource));
@@ -1246,7 +1246,7 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
         std::const_pointer_cast<MapSymbol>(symbol)->releaseNonRetainedData();
 
         // Publish symbol to global map
-        owner->addSymbolsMapEntry(symbol, resource);
+        owner->addMapSymbol(symbol, resource);
 
         // Move reference
         groupResources->resourcesInGPU.insert(qMove(symbol), qMove(resource));
@@ -1271,7 +1271,7 @@ void OsmAnd::MapRendererResources::SymbolsTileResource::unloadFromGPU()
             auto& resourceInGPU = itResourceInGPU.value();
 
             // Remove symbol from global map
-            owner->removeSymbolsMapEntry(symbol);
+            owner->removeMapSymbol(symbol);
 
             // Unload symbol from GPU
             assert(resourceInGPU.use_count() == 1);
@@ -1301,7 +1301,7 @@ void OsmAnd::MapRendererResources::SymbolsTileResource::unloadFromGPU()
             auto& resourceInGPU = itResourceInGPU.value();
 
             // Remove symbol from global map
-            owner->removeSymbolsMapEntry(symbol);
+            owner->removeMapSymbol(symbol);
 
             // Unload symbol from GPU
             assert(resourceInGPU.use_count() == 1);
@@ -1341,7 +1341,7 @@ void OsmAnd::MapRendererResources::SymbolsTileResource::detach()
                 auto& resourceInGPU = itResourceInGPU.value();
 
                 // Remove symbol from global map
-                owner->removeSymbolsMapEntry(symbol);
+                owner->removeMapSymbol(symbol);
 
                 // Unload symbol from GPU thread (using dispatcher)
                 assert(resourceInGPU.use_count() == 1);

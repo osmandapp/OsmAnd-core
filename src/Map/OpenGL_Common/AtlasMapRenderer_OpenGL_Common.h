@@ -43,7 +43,7 @@ namespace OsmAnd
             glm::mat4 mElevationInv;
             glm::mat4 mAzimuthInv;
             glm::vec2 groundCameraPosition;
-            glm::vec4 worldCameraPosition;
+            glm::vec3 worldCameraPosition;
             float zSkyplane;
             float zFar;
             float projectionPlaneHalfHeight;

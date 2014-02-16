@@ -2380,6 +2380,7 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                         constructedGroup->mapObject,
                         qMove(std::shared_ptr<const SkBitmap>(bitmap)),
                         symbol->order,
+                        text,
                         glyphsWidth);
                     assert(static_cast<bool>(rasterizedSymbol->bitmap));
                     constructedGroup->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
@@ -2399,6 +2400,7 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                         constructedGroup->mapObject,
                         qMove(std::shared_ptr<const SkBitmap>(bitmap)),
                         symbol->order,
+                        text,
                         symbol->location31,
                         (constructedGroup->symbols.isEmpty() ? PointI() : totalOffset));
                     assert(static_cast<bool>(rasterizedSymbol->bitmap));
@@ -2431,6 +2433,7 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                     constructedGroup->mapObject,
                     qMove(bitmap),
                     symbol->order,
+                    iconSymbol->resourceName,
                     symbol->location31,
                     (constructedGroup->symbols.isEmpty() ? PointI() : totalOffset));
                 assert(static_cast<bool>(rasterizedSymbol->bitmap));

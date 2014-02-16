@@ -43,7 +43,8 @@ namespace OsmAnd
             const std::weak_ptr<const MapSymbolsGroup>& group,
             const std::shared_ptr<const Model::MapObject>& mapObject,
             const std::shared_ptr<const SkBitmap>& bitmap,
-            const int order);
+            const int order,
+            const QString& content);
     public:
         virtual ~MapSymbol();
 
@@ -52,6 +53,7 @@ namespace OsmAnd
         const std::shared_ptr<const Model::MapObject> mapObject;
         const std::shared_ptr<const SkBitmap>& bitmap;
         const int order;
+        const QString content;
 
         virtual void releaseNonRetainedData();
         virtual MapSymbol* cloneWithReplacedBitmap(const std::shared_ptr<const SkBitmap>& bitmap) const = 0;
@@ -68,6 +70,7 @@ namespace OsmAnd
             const std::shared_ptr<const Model::MapObject>& mapObject,
             const std::shared_ptr<const SkBitmap>& bitmap,
             const int order,
+            const QString& content,
             const PointI& location31,
             const PointI& offset);
         virtual ~MapPinnedSymbol();
@@ -89,6 +92,7 @@ namespace OsmAnd
             const std::shared_ptr<const Model::MapObject>& mapObject,
             const std::shared_ptr<const SkBitmap>& bitmap,
             const int order,
+            const QString& content,
             const QVector<float>& glyphsWidth);
         virtual ~MapSymbolOnPath();
 

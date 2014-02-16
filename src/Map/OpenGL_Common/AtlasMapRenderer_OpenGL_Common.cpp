@@ -11,6 +11,7 @@
 #include <QtNumeric>
 #include <QtMath>
 #include <QThread>
+#include <QLinkedList>
 
 #include <SkBitmap.h>
 
@@ -1217,14 +1218,43 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
 {
     GL_PUSH_GROUP_MARKER(QLatin1String("symbols"));
 
-    const auto gpuAPI = getGPUAPI();
-
     GL_CHECK_PRESENT(glUseProgram);
     GL_CHECK_PRESENT(glUniformMatrix4fv);
     GL_CHECK_PRESENT(glUniform1f);
     GL_CHECK_PRESENT(glUniform2f);
     GL_CHECK_PRESENT(glUniform3f);
     GL_CHECK_PRESENT(glDrawElements);
+
+    const auto gpuAPI = getGPUAPI();
+
+    struct RenderableSymbol
+    {
+        virtual ~RenderableSymbol()
+        {
+        }
+
+        std::shared_ptr<const MapSymbol> mapSymbol;
+        std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
+    };
+
+    struct RenderablePinnedSymbol : RenderableSymbol
+    {
+        PointI offsetFromTarget31;
+        PointF offsetFromTarget;
+        glm::vec3 positionInWorld;
+    };
+
+    struct RenderableSymbolOnPath : RenderableSymbol
+    {
+        int subpathStartIndex;
+        int subpathEndIndex;
+        QVector<PointF> subpathPointsInWorld;
+    };
+
+    QMutexLocker scopedLocker(&getResources().getSymbolsMapMutex());
+    const auto& mapSymbolsByOrder = getResources().getMapSymbolsByOrder();
+
+    const auto& topDownCameraView = _internalState.mDistance * _internalState.mAzimuth;
 
     // Set symbol VAO
     gpuAPI->glBindVertexArray_wrapper(_symbolsStage.symbolVAO);
@@ -1259,137 +1289,215 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
     // Set proper sampler for texture block
     gpuAPI->setTextureBlockSampler(GL_TEXTURE0 + 0, GPUAPI_OpenGL_Common::SamplerType::Symbol);
 
+    typedef std::shared_ptr<const RenderableSymbol> RenderableSymbolEntry;
+    typedef std::shared_ptr<RenderableSymbolOnPath> RenderableSymbolOnPathEntry;
+
+    // Intersections are calculated using quad-tree, and general rule that
+    // map symbol with smaller order [and further from camera] is more important.
+    QuadTree< std::shared_ptr<const MapSymbol>, AreaI::CoordType > intersections(currentState.viewport, 8);
+
+    // Iterate over symbols by "order" in ascending direction
+    for(auto itMapSymbolsLayer = mapSymbolsByOrder.cbegin(), itEnd = mapSymbolsByOrder.cend(); itMapSymbolsLayer != itEnd; ++itMapSymbolsLayer)
     {
-        QMutexLocker scopedLocker(&getResources().getSymbolsMapMutex());
-        const auto& symbolsMap = getResources().getSymbolsMap();
-        typedef std::pair< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > SymbolPair;
+        // For each "order" value, obtain list of entries and sort them
+        const auto& mapSymbolsLayer = *itMapSymbolsLayer;
+        if(mapSymbolsLayer.isEmpty())
+            continue;
 
-        // Intersections are calculated using quad-tree, and general rule that
-        // map symbol with smaller order [and further from camera] is more important.
-        QuadTree< std::shared_ptr<const MapSymbol>, AreaI::CoordType > intersections(currentState.viewport, 8);
+        GL_PUSH_GROUP_MARKER(QString("order %1").arg(itMapSymbolsLayer.key()));
 
-        // Iterate over symbols by "order" in ascending direction
-        for(auto itSymbols = symbolsMap.cbegin(); itSymbols != symbolsMap.cend(); ++itSymbols)
+        // Process symbols-on-path (SOPs) to get visible subpaths from them
+        QList< RenderableSymbolOnPathEntry > visibleSOPSubpaths;
+        visibleSOPSubpaths.reserve(mapSymbolsLayer.size());
+        for(auto itSymbolEntry = mapSymbolsLayer.cbegin(), itEnd = mapSymbolsLayer.cend(); itSymbolEntry != itEnd; ++itSymbolEntry)
         {
-            // For each "order" value, obtain list of entries and sort them
-            const auto& unsortedSymbols = *itSymbols;
-            if(unsortedSymbols.isEmpty())
+            const auto symbol = std::dynamic_pointer_cast<const MapSymbolOnPath>(itSymbolEntry.key());
+            if(!symbol)
                 continue;
+            const auto& points31 = symbol->mapObject->points31;
+            assert(points31.size() >= 2);
 
-            GL_PUSH_GROUP_MARKER(QString("order %1").arg(itSymbols.key()));
-
-            // Process symbols-on-path (3D)
-            for(auto itSymbolEntry = unsortedSymbols.cbegin(); itSymbolEntry != unsortedSymbols.cend(); ++itSymbolEntry)
+            // Check first point to initialize subdivision
+            auto pPoint31 = points31.constData();
+            auto wasInside = _internalState.frustum2D31.test(*(pPoint31++) - currentState.target31);
+            int subpathStartIdx = -1;
+            int subpathEndIdx = -1;
+            if(wasInside)
             {
-                const auto& symbol = std::dynamic_pointer_cast<const MapSymbolOnPath>(itSymbolEntry.key());
-                if(!symbol)
-                    continue;
-                const auto& points31 = symbol->mapObject->points31;
+                subpathStartIdx = 0;
+                subpathEndIdx = 0;
+            }
 
-                //TODO: this check may be done in ints using special Frustum2D31
-                // Check first point to initialize subdivision
-                auto pPoint31 = points31.constData();
-                QVector<PointI> innerPoints;
-                innerPoints.reserve(points31.size());
-                auto prevP = *(pPoint31++) - currentState.target31;
-                auto wasInside = _internalState.frustum2D31.test(prevP);
-                if(wasInside)
-                    innerPoints.push_back(prevP);
-
-                // Process rest of points one by one
-                for(int pointIdx = 1; pointIdx < points31.size(); pointIdx++)
+            // Process rest of points one by one
+            for(int pointIdx = 1, pointsCount = points31.size(); pointIdx < pointsCount; pointIdx++)
+            {
+                auto isInside = _internalState.frustum2D31.test(*(pPoint31++) - currentState.target31);
+                bool currentWasAdded = false;
+                if(wasInside && !isInside)
                 {
-                    const auto p = *(pPoint31++) - currentState.target31;
-                    auto isInside = _internalState.frustum2D31.test(p);
-                    if((wasInside && !isInside) || (pointIdx == points31.size() - 1 && !innerPoints.isEmpty()))
-                    {
-                        innerPoints.push_back(p);
-                        //TODO: found segment in worldPoints!
-                        //TODO: also calculate distance
-                        // to check if text fits this subpath, calculate its on-screen length as if view was top-bottom
-                        // and apply same algo as for 2d SOPs
-                        // if that segment is fine by it's length, add it for further sorting. at this point there's no
-                        // chance to fully process symbols-on-path, since actual positioning of symbols on paths
-                        // can be done only when all paths are available
-#if OSMAND_DEBUG
-                        {
-                            QVector< glm::vec3 > convertedPoints;
-                            for(auto itPoint = innerPoints.cbegin(); itPoint != innerPoints.cend(); ++itPoint)
-                            {
-                                auto worldPoint = Utilities::convert31toFloat(*itPoint, currentState.zoomBase) * TileSize3D;
-                                glm::vec3 convertedPoint(
-                                    worldPoint.x,
-                                    0.0f,
-                                    worldPoint.y);
-                                convertedPoints.push_back(convertedPoint);
-                            }
-                            addDebugLine3D(convertedPoints, SkColorSetA(SK_ColorRED, 128));
-                        }
-#endif
-                        innerPoints.clear();
-                    }
-                    else if(wasInside && isInside)
-                        innerPoints.push_back(p);
-                    else if(!wasInside && isInside)
-                    {
-                        innerPoints.push_back(prevP);
-                        innerPoints.push_back(p);
-                    }
-
-                    wasInside = isInside;
-                    prevP = p;
+                    subpathEndIdx = pointIdx;
+                    currentWasAdded = true;
                 }
+                else if(wasInside && isInside)
+                {
+                    subpathEndIdx = pointIdx;
+                    currentWasAdded = true;
+                }
+                else if(!wasInside && isInside)
+                {
+                    subpathStartIdx = pointIdx - 1;
+                    subpathEndIdx = pointIdx;
+                    currentWasAdded = true;
+                }
+
+                if((wasInside && !isInside) || (pointIdx == pointsCount - 1 && subpathStartIdx >= 0))
+                {
+                    if(!currentWasAdded)
+                        subpathEndIdx = pointIdx;
+
+                    std::shared_ptr<RenderableSymbolOnPath> renderable(new RenderableSymbolOnPath());
+                    renderable->mapSymbol = symbol;
+                    renderable->gpuResource = itSymbolEntry.value().lock();
+                    renderable->subpathStartIndex = subpathStartIdx;
+                    renderable->subpathEndIndex = subpathEndIdx;
+                    visibleSOPSubpaths.push_back(qMove(renderable));
+
+                    subpathStartIdx = -1;
+                    subpathEndIdx = -1;
+                }
+
+                wasInside = isInside;
+            }
+        }
+
+        // Remove all SOP subpaths that can not hold entire content by width
+        QMutableListIterator<RenderableSymbolOnPathEntry> itSOPSubpathEntry(visibleSOPSubpaths);
+        while(itSOPSubpathEntry.hasNext())
+        {
+            const auto& renderable = itSOPSubpathEntry.next();
+            const auto& gpuResource = std::dynamic_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
+
+            const auto& points = renderable->mapSymbol->mapObject->points31;
+            const auto subpathLength = renderable->subpathEndIndex - renderable->subpathStartIndex + 1;
+            renderable->subpathPointsInWorld.resize(subpathLength);
+            PointF* pPointInWorld = renderable->subpathPointsInWorld.data();
+            const auto& pointInWorld0 = *(pPointInWorld++) =
+                Utilities::convert31toFloat(points[renderable->subpathStartIndex] - currentState.target31, currentState.zoomBase) * TileSize3D;
+            glm::vec2 prevProjectedP = glm::project(
+                glm::vec3(pointInWorld0.x, 0.0f, pointInWorld0.y),
+                topDownCameraView,
+                _internalState.mPerspectiveProjection,
+                viewport).xy;
+            float length = 0.0f;
+            for(int idx = renderable->subpathStartIndex + 1, endIdx = renderable->subpathEndIndex; idx <= endIdx; idx++, pPointInWorld++)
+            {
+                *pPointInWorld = Utilities::convert31toFloat(points[idx] - currentState.target31, currentState.zoomBase) * TileSize3D;
+                const glm::vec2& projectedP = glm::project(
+                    glm::vec3(pPointInWorld->x, 0.0f, pPointInWorld->y),
+                    topDownCameraView,
+                    _internalState.mPerspectiveProjection,
+                    viewport).xy;
+                length += glm::distance(prevProjectedP, projectedP);
+                prevProjectedP = projectedP;
             }
 
-            //NOTE: symbols-on-path that should be rendered as 2D can also be sorted like others.
-            //switching between symbols-on-path 2D vs 3D is determined by angle of camera (check that)
-            // Sort symbols by distance to camera
-            QMultiMap< float, SymbolPair > sortedSymbols;
-            for(auto itSymbolEntry = unsortedSymbols.cbegin(); itSymbolEntry != unsortedSymbols.cend(); ++itSymbolEntry)
+            // If projected length is not enough to hold entire texture width, skip it
+            if(length < gpuResource->width)
             {
-                const auto& symbol = std::dynamic_pointer_cast<const MapPinnedSymbol>(itSymbolEntry.key());
-                if(!symbol)
-                    continue;//skip symbols-on-path
-                assert(!itSymbolEntry.value().expired());
-                const auto resource = itSymbolEntry.value().lock();
+#if OSMAND_DEBUG && 0
+                QVector< glm::vec3 > debugPoints;
+                for(const auto& pointInWorld : renderable->subpathPointsInWorld)
+                {
+                    debugPoints.push_back(qMove(glm::vec3(
+                        pointInWorld.x,
+                        0.0f,
+                        pointInWorld.y)));
+                }
+                addDebugLine3D(debugPoints, SkColorSetA(SK_ColorRED, 128));
+#endif // OSMAND_DEBUG
 
-                // Calculate location of symbol in world coordinates.
-                // World (0;0;0) is in the target, so subtract target position
-                const auto symbolOffset31 = symbol->location31 - currentState.target31;
-                const glm::vec2 symbolOffset(
-                    Utilities::convert31toFloat(symbolOffset31.x, currentState.zoomBase),
-                    Utilities::convert31toFloat(symbolOffset31.y, currentState.zoomBase));
-                const glm::vec4 positionInWorld(symbolOffset.x * TileSize3D, 0.0f, symbolOffset.y * TileSize3D, 1.0f);
+                itSOPSubpathEntry.remove();
+                continue;
+            }
+#if OSMAND_DEBUG && 0
+            QVector< glm::vec3 > debugPoints;
+            for(const auto& pointInWorld : renderable->subpathPointsInWorld)
+            {
+                debugPoints.push_back(qMove(glm::vec3(
+                    pointInWorld.x,
+                    0.0f,
+                    pointInWorld.y)));
+            }
+            addDebugLine3D(debugPoints, SkColorSetA(SK_ColorGREEN, 128));
+#endif // OSMAND_DEBUG
+        }
 
-                // Get distance from symbol to camera
-                const auto distance = glm::distance(_internalState.worldCameraPosition, positionInWorld);
+        //TODO: for sure, gluing is needed often
+        // - 3. ADJUST OFFSET TO INCLUDE AS MUCH NON-INTERSECTING
+        //      calculate offsets for each subSOP, to ensure no intersection.
+        //      [optional] Without this step there going to be intersections of street names with themselves
+        //	  [shrink or move active zone]
+        //    Victor: simply renders in the middle
 
-                // Insert into map
-                sortedSymbols.insert(distance, qMove(SymbolPair(symbol, resource)));
+        QMultiMap< float, RenderableSymbolEntry > sortedRenderables;
+
+        // Sort visible SOPs by distance to camera
+        for(auto& renderable : visibleSOPSubpaths)
+        {
+            float maxDistanceToCamera = 0.0f;
+            for(const auto& pointInWorld : constOf(renderable->subpathPointsInWorld))
+            {
+                const auto& distance = glm::distance(_internalState.worldCameraPosition, glm::vec3(pointInWorld.x, 0.0f, pointInWorld.y));
+                if(distance > maxDistanceToCamera)
+                    maxDistanceToCamera = distance;
             }
 
-            // Render symbols in reversed order, since sortedSymbols contains
-            // symbols by distance from camera from near->far. And rendering
-            // needs to be done far->near
-            QMapIterator< float, SymbolPair > itSymbolEntry(sortedSymbols);
-            itSymbolEntry.toBack();
-            while(itSymbolEntry.hasPrevious())
-            {
-                itSymbolEntry.previous();
+            // Insert into map
+            sortedRenderables.insert(maxDistanceToCamera, qMove(renderable));
+        }
+        visibleSOPSubpaths.clear();
 
-                const auto distanceFromCamera = itSymbolEntry.key();
-                const auto& symbolEntry = itSymbolEntry.value();
-                const auto& symbol = std::dynamic_pointer_cast<const MapPinnedSymbol>(symbolEntry.first);
-                const auto gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(symbolEntry.second);
-                const auto mapObjectId = symbol->mapObject->id;
+        // Sort pinned symbols by distance to camera
+        for(auto itSymbolEntry = mapSymbolsLayer.cbegin(), itEnd = mapSymbolsLayer.cend(); itSymbolEntry != itEnd; ++itSymbolEntry)
+        {
+            const auto& symbol = std::dynamic_pointer_cast<const MapPinnedSymbol>(itSymbolEntry.key());
+            if(!symbol)
+                continue;
+            assert(!itSymbolEntry.value().expired());
+
+            std::shared_ptr<RenderablePinnedSymbol> renderable(new RenderablePinnedSymbol());
+            renderable->mapSymbol = symbol;
+            renderable->gpuResource = itSymbolEntry.value().lock();
+
+            // Calculate location of symbol in world coordinates.
+            renderable->offsetFromTarget31 = symbol->location31 - currentState.target31;
+            renderable->offsetFromTarget = Utilities::convert31toFloat(renderable->offsetFromTarget31, currentState.zoomBase);
+            renderable->positionInWorld = glm::vec3(renderable->offsetFromTarget.x * TileSize3D, 0.0f, renderable->offsetFromTarget.y * TileSize3D);
+
+            // Get distance from symbol to camera
+            const auto distance = glm::distance(_internalState.worldCameraPosition, renderable->positionInWorld);
+
+            // Insert into map
+            sortedRenderables.insert(distance, qMove(renderable));
+        }
+
+        // Render symbols in reversed order, since sortedSymbols contains symbols by distance from camera from near->far.
+        // And rendering needs to be done far->near
+        QMapIterator< float, RenderableSymbolEntry > itRenderableEntry(sortedRenderables);
+        itRenderableEntry.toBack();
+        while(itRenderableEntry.hasPrevious())
+        {
+            const auto& item = itRenderableEntry.previous();
+            const auto& distanceFromCamera = item.key();
+
+            if(const auto& renderable = std::dynamic_pointer_cast<const RenderablePinnedSymbol>(item.value()))
+            {
+                const auto& symbol = std::dynamic_pointer_cast<const MapPinnedSymbol>(renderable->mapSymbol);
+                const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
+                const auto& mapObjectId = symbol->mapObject->id;
 
                 // Calculate position in screen coordinates (same calculation as done in shader)
-                const auto symbolOffset31 = symbol->location31 - currentState.target31;
-                const glm::vec2 symbolOffset(
-                    Utilities::convert31toFloat(symbolOffset31.x, currentState.zoomBase),
-                    Utilities::convert31toFloat(symbolOffset31.y, currentState.zoomBase));
-                const glm::vec3 positionInWorld(symbolOffset.x * TileSize3D, 0.0f, symbolOffset.y * TileSize3D);
-                const auto symbolOnScreen = glm::project(positionInWorld, _internalState.mCameraView, _internalState.mPerspectiveProjection, viewport);
+                const auto symbolOnScreen = glm::project(renderable->positionInWorld, _internalState.mCameraView, _internalState.mPerspectiveProjection, viewport);
 
                 // Check intersections
                 const auto boundsInWindow = AreaI::fromCenterAndSize(
@@ -1397,26 +1505,27 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
                     gpuResource->width, gpuResource->height);//TODO: use MapSymbol bounds
                 const auto intersects = intersections.test(boundsInWindow, false,
                     [mapObjectId](const std::shared_ptr<const MapSymbol>& otherSymbol, const AreaI& otherArea) -> bool
-                    {
-                        return otherSymbol->mapObject->id != mapObjectId;
-                    });
+                {
+                    return otherSymbol->mapObject->id != mapObjectId;
+                });
                 if(intersects || !intersections.insert(symbol, boundsInWindow))
                 {
-#if OSMAND_DEBUG
+#if OSMAND_DEBUG && 0
                     addDebugRect2D(boundsInWindow, SkColorSetA(SK_ColorRED, 50));
-#endif
+#endif // OSMAND_DEBUG
                     continue;
                 }
 
-#if OSMAND_DEBUG
-                //addDebugRect2D(boundsInWindow, SkColorSetA(SK_ColorGREEN, 50));
-#endif
-                GL_PUSH_GROUP_MARKER(QString("[MO %1(%2)]")
+#if OSMAND_DEBUG && 0
+                addDebugRect2D(boundsInWindow, SkColorSetA(SK_ColorGREEN, 50));
+#endif // OSMAND_DEBUG
+                GL_PUSH_GROUP_MARKER(QString("[MO %1(%2) \"%3\"]")
                     .arg(symbol->mapObject->id >> 1)
-                    .arg(static_cast<int64_t>(symbol->mapObject->id) / 2));
+                    .arg(static_cast<int64_t>(symbol->mapObject->id) / 2)
+                    .arg(qPrintable(symbol->content)));
 
                 // Set symbol offset from target
-                glUniform2f(_symbolsStage.vs.param.symbolOffsetFromTarget, symbolOffset.x, symbolOffset.y);
+                glUniform2f(_symbolsStage.vs.param.symbolOffsetFromTarget, renderable->offsetFromTarget.x, renderable->offsetFromTarget.y);
                 GL_CHECK_RESULT;
 
                 // Set symbol size
@@ -1444,9 +1553,56 @@ void OsmAnd::AtlasMapRenderer_OpenGL_Common::renderSymbolsStage()
 
                 GL_POP_GROUP_MARKER;
             }
+            else if(const auto& renderable = std::dynamic_pointer_cast<const RenderableSymbolOnPath>(item.value()))
+            {
+                // Project all world points into the screen
+                QVector<glm::vec2> pointsOnScreen(renderable->subpathPointsInWorld.size());
+                auto* pPointOnScreen = pointsOnScreen.data();
+                for(const auto& pointInWorld : constOf(renderable->subpathPointsInWorld))
+                {
+                    *(pPointOnScreen++) = glm::project(
+                        glm::vec3(pointInWorld.x, 0.0f, pointInWorld.y),
+                        _internalState.mCameraView,
+                        _internalState.mPerspectiveProjection,
+                        viewport).xy;
+                }
+                
+                // Calculate 'incline' of each part of path segment and compare to horizontal direction.
+                // If any 'incline' is larger than 15 degrees, this segment is rendered in the map plane.
+                auto is2D = true;
+                const auto inclineThresholdSinSq = 0.0669872981f; // qSin(qDegreesToRadians(15.0f))*qSin(qDegreesToRadians(15.0f))
+                for(auto itPrevP = pointsOnScreen.cbegin(), itP = itPrevP + 1, itEnd = pointsOnScreen.cend(); itP != itEnd; itPrevP = itP, ++itP)
+                {
+                    const auto& prevP = *itPrevP;
+                    const auto& p = *itP;
+                
+                    const auto vP = p - prevP;
+                    const auto d = vP.y;// horizont.x*vP.y - horizont.y*vP.x == 1.0f*vP.y - 0.0f*vP.x
+                    const auto inclineSinSq = d*d / (vP.x*vP.x + vP.y*vP.y);
+                    if(qAbs(inclineSinSq) > inclineThresholdSinSq)
+                    {
+                        is2D = false;
+                        break;
+                    }
+                }
 
-            GL_POP_GROUP_MARKER;
+#if OSMAND_DEBUG && 1
+                {
+                    QVector< glm::vec3 > debugPoints;
+                    for(const auto& pointInWorld : renderable->subpathPointsInWorld)
+                    {
+                        debugPoints.push_back(qMove(glm::vec3(
+                            pointInWorld.x,
+                            0.0f,
+                            pointInWorld.y)));
+                    }
+                    addDebugLine3D(debugPoints, SkColorSetA(is2D ? SK_ColorGREEN : SK_ColorRED, 128));
+                }
+#endif // OSMAND_DEBUG
+            }
         }
+
+        GL_POP_GROUP_MARKER;
     }
 
     // Deactivate any symbol texture
@@ -2122,7 +2278,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL_Common::updateInternalState(MapRenderer::In
 
     // Get camera positions
     internalState->groundCameraPosition = (internalState->mAzimuthInv * glm::vec4(0.0f, 0.0f, internalState->distanceFromCameraToTarget, 1.0f)).xz;
-    internalState->worldCameraPosition = _internalState.mCameraViewInv * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    internalState->worldCameraPosition = (_internalState.mCameraViewInv * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)).xyz;
 
     // Correct fog distance
     internalState->correctedFogDistance = state.fogDistance * internalState->scaleToRetainProjectedSize + (internalState->distanceFromCameraToTarget - internalState->groundDistanceFromCameraToTarget);
