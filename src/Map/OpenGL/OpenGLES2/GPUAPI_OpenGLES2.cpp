@@ -1,7 +1,8 @@
 #include "GPUAPI_OpenGLES2.h"
 
-#include <assert.h>
+#include <cassert>
 
+#include "QtExtensions.h"
 #include <QRegExp>
 #include <QStringList>
 
@@ -128,7 +129,7 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
 {
     bool ok;
 
-    ok = GPUAPI_OpenGL_Common::initialize();
+    ok = GPUAPI_OpenGL::initialize();
     if(!ok)
         return false;
 
@@ -244,7 +245,7 @@ bool OsmAnd::GPUAPI_OpenGLES2::release()
 {
     bool ok;
 
-    ok = GPUAPI_OpenGL_Common::release();
+    ok = GPUAPI_OpenGL::release();
     if(!ok)
         return false;
 

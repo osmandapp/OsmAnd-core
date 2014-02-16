@@ -17,7 +17,7 @@
 
 #include <SkBitmap.h>
 
-OsmAnd::MapRenderer::MapRenderer()
+OsmAnd::MapRenderer::MapRenderer(GPUAPI* const gpuAPI_)
     : _currentConfigurationInvalidatedMask(0)
     , _requestedStateUpdatedMask(0)
     , _renderThreadId(nullptr)
@@ -25,7 +25,7 @@ OsmAnd::MapRenderer::MapRenderer()
     , _gpuWorkerIsAlive(false)
     , currentConfiguration(_currentConfiguration)
     , currentState(_currentState)
-    , gpuAPI(_gpuAPI)
+    , gpuAPI(gpuAPI_)
 {
     // Fill-up default state
     for(auto layerId = 0u; layerId < RasterMapLayersCount; layerId++)
@@ -280,11 +280,9 @@ bool OsmAnd::MapRenderer::initializeRendering()
 {
     bool ok;
 
-    // Before doing any initialization, we need to allocate and initialize render API
-    auto apiObject = allocateGPUAPI();
-    if(!apiObject)
+    ok = gpuAPI->initialize();
+    if(!ok)
         return false;
-    _gpuAPI.reset(apiObject);
 
     ok = preInitializeRendering();
     if(!ok)
@@ -550,8 +548,7 @@ bool OsmAnd::MapRenderer::releaseRendering()
         return false;
 
     // After all release procedures, release render API
-    ok = _gpuAPI->release();
-    _gpuAPI.reset();
+    ok = gpuAPI->release();
     if(!ok)
         return false;
 

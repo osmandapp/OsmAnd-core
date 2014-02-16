@@ -88,12 +88,12 @@ namespace OsmAnd
     friend class OsmAnd::MapRenderer;
     };
 
-#if defined(OSMAND_OPENGL_RENDERER_SUPPORTED)
-    OSMAND_CORE_API std::shared_ptr<OsmAnd::IMapRenderer> OSMAND_CORE_CALL createAtlasMapRenderer_OpenGL();
-#endif // OSMAND_OPENGL_RENDERER_SUPPORTED
+#if defined(OSMAND_OPENGL3_RENDERER_SUPPORTED)
+    OSMAND_CORE_API std::shared_ptr<OsmAnd::IMapRenderer> OSMAND_CORE_CALL createAtlasMapRenderer_OpenGL3();
+#endif // defined(OSMAND_OPENGL3_RENDERER_SUPPORTED)
 #if defined(OSMAND_OPENGLES2_RENDERER_SUPPORTED)
     OSMAND_CORE_API std::shared_ptr<OsmAnd::IMapRenderer> OSMAND_CORE_CALL createAtlasMapRenderer_OpenGLES2();
-#endif // OSMAND_OPENGLES2_RENDERER_SUPPORTED
+#endif // defined(OSMAND_OPENGLES2_RENDERER_SUPPORTED)
 }
 
 #endif // !defined(_OSMAND_CORE_I_MAP_RENDERER_H_)

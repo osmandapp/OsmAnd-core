@@ -21,7 +21,7 @@ namespace OsmAnd
         };
     private:
     protected:
-        AtlasMapRenderer();
+        AtlasMapRenderer(GPUAPI* const gpuAPI);
     public:
         virtual ~AtlasMapRenderer();
     };

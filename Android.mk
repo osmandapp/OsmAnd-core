@@ -67,7 +67,7 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
         $(wildcard $(LOCAL_PATH)/src/Data/Model/*.c*) \
         $(wildcard $(LOCAL_PATH)/src/Routing/*.c*) \
         $(wildcard $(LOCAL_PATH)/src/Map/*.c*) \
-        $(wildcard $(LOCAL_PATH)/src/Map/OpenGL_Common/*.c*) \
+        $(wildcard $(LOCAL_PATH)/src/Map/OpenGL/*.c*) \
         $(wildcard $(LOCAL_PATH)/src/Map/OpenGLES2/*.c*) \
         $(wildcard $(LOCAL_PATH)/protos/*.c*)
 
@@ -83,7 +83,7 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
         $(wildcard $(LOCAL_PATH)/src/Data/Model/*.h) \
         $(wildcard $(LOCAL_PATH)/src/Routing/*.h) \
         $(wildcard $(LOCAL_PATH)/src/Map/*.h) \
-        $(wildcard $(LOCAL_PATH)/src/Map/OpenGL_Common/*.h) \
+        $(wildcard $(LOCAL_PATH)/src/Map/OpenGL/*.h) \
         $(wildcard $(LOCAL_PATH)/src/Map/OpenGLES2/*.h) \
         $(wildcard $(LOCAL_PATH)/protos/*.h)
     mkdirp_ = \

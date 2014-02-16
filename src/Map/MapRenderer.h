@@ -62,16 +62,15 @@ namespace OsmAnd
 
         // General:
         QSet<TileId> _uniqueTiles;
-        std::unique_ptr<GPUAPI> _gpuAPI;
         void invalidateFrame();
         Qt::HANDLE _renderThreadId;
         Concurrent::Dispatcher _renderThreadDispatcher;
         Concurrent::Dispatcher _gpuThreadDispatcher;
     protected:
-        MapRenderer();
+        MapRenderer(GPUAPI* const gpuAPI);
 
         // General:
-        const std::unique_ptr<GPUAPI>& gpuAPI;
+        const std::unique_ptr<GPUAPI> gpuAPI;
 
         // Configuration-related:
         const MapRendererConfiguration& currentConfiguration;
@@ -110,7 +109,6 @@ namespace OsmAnd
         bool convertMapSymbol(const std::shared_ptr<const MapSymbol>& input, std::shared_ptr<const MapSymbol>& output) const;
 
         // General:
-        virtual GPUAPI* allocateGPUAPI() = 0;
 
         // Customization points:
         virtual bool preInitializeRendering();

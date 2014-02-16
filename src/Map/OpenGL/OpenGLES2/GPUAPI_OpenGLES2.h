@@ -1,44 +1,22 @@
-/**
- * @file
- *
- * @section LICENSE
- *
- * OsmAnd - Android navigation software based on OSM maps.
- * Copyright (C) 2010-2014  OsmAnd Authors listed in AUTHORS file
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+#ifndef _OSMAND_CORE_GPU_API_OPENGLES2_H_
+#define _OSMAND_CORE_GPU_API_OPENGLES2_H_
 
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-#ifndef _OSMAND_CORE_GPU_API__OPENGLES2_H_
-#define _OSMAND_CORE_GPU_API__OPENGLES2_H_
-
-#include <cstdint>
-#include <memory>
+#include "stdlib_common.h"
 #include <array>
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 #include <QString>
 #include <QHash>
 
 #include <glm/glm.hpp>
 
-#include <OsmAndCore.h>
-#include <OsmAndCore/CommonTypes.h>
-#include <OpenGL_Common/GPUAPI_OpenGL_Common.h>
+#include "OsmAndCore.h"
+#include "CommonTypes.h"
+#include "GPUAPI_OpenGL.h"
 
-namespace OsmAnd {
-
-    class OSMAND_CORE_API GPUAPI_OpenGLES2 : public GPUAPI_OpenGL_Common
+namespace OsmAnd
+{
+    class GPUAPI_OpenGLES2 : public GPUAPI_OpenGL
     {
     public:
 #if !defined(OSMAND_TARGET_OS_ios)
@@ -112,7 +90,6 @@ namespace OsmAnd {
         virtual void setTextureBlockSampler(const GLenum textureBlock, const SamplerType samplerType);
         virtual void applyTextureBlockToTexture(const GLenum texture, const GLenum textureBlock);
     };
-
 }
 
-#endif // _OSMAND_CORE_GPU_API__OPENGLES2_H_
+#endif // !defined(_OSMAND_CORE_GPU_API_OPENGLES2_H_)

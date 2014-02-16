@@ -37,8 +37,8 @@ endif()
 
 # 3D rendering: OpenGL, OpenGLES2, Direct3D
 if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "windows" OR CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android")
-	file(GLOB_RECURSE sources_opengl_common "src/Map/OpenGL_Common/*.c*")
-	file(GLOB_RECURSE headers_opengl_common "src/Map/OpenGL_Common/*.h*")
+	file(GLOB sources_opengl "src/Map/OpenGL/*.c*")
+	file(GLOB headers_opengl "src/Map/OpenGL/*.h*")
 	set(target_specific_public_definitions ${target_specific_public_definitions}
 		-DGLM_SWIZZLE
 	)
@@ -49,14 +49,14 @@ if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAK
 		glsl-optimizer_static
 	)
 	set(target_specific_sources ${target_specific_sources}
-		${headers_opengl_common}
-		${sources_opengl_common}
+		${headers_opengl}
+		${sources_opengl}
 	)
 endif()
 if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "windows")
 	find_package(OpenGL REQUIRED)
 	set(target_specific_public_definitions ${target_specific_public_definitions}
-		-DOSMAND_OPENGL_RENDERER_SUPPORTED
+		-DOSMAND_OPENGL3_RENDERER_SUPPORTED
 		${OPENGL_DEFINITIONS}
 	)
 	set(target_specific_public_includes ${target_specific_public_includes}
@@ -67,22 +67,22 @@ if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAK
 		${OPENGL_glu_LIBRARY}
 		glew_static
 	)
-	file(GLOB_RECURSE sources_opengl "src/Map/OpenGL/*.c*")
-	file(GLOB_RECURSE headers_opengl "src/Map/OpenGL/*.h*")
+	file(GLOB sources_opengl3 "src/Map/OpenGL/OpenGL3/*.c*")
+	file(GLOB headers_opengl3 "src/Map/OpenGL/OpenGL3/*.h*")
 	set(target_specific_sources ${target_specific_sources}
-		${headers_opengl}
-		${sources_opengl}
+		${headers_opengl3}
+		${sources_opengl3}
 	)
 endif()
 if(CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android")
 	set(target_specific_public_definitions ${target_specific_public_definitions}
 		-DOSMAND_OPENGLES2_RENDERER_SUPPORTED
 	)
-	file(GLOB_RECURSE sources_opengles "src/Map/OpenGLES2/*.c*")
-	file(GLOB_RECURSE headers_opengles "src/Map/OpenGLES2/*.h*")
+	file(GLOB sources_opengles2 "src/Map/OpenGL/OpenGLES2/*.c*")
+	file(GLOB headers_opengles2 "src/Map/OpenGL/OpenGLES2/*.h*")
 	set(target_specific_sources ${target_specific_sources}
-		${headers_opengles}
-		${sources_opengles}
+		${headers_opengles2}
+		${sources_opengles2}
 	)
 endif()
 

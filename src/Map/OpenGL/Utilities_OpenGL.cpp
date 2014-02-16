@@ -1,4 +1,4 @@
-#include "Utilities_OpenGL_Common.h"
+#include "Utilities_OpenGL.h"
 
 OSMAND_CORE_API float OSMAND_CORE_CALL OsmAnd::Utilities_OpenGL_Common::calculateCameraDistance( const glm::mat4& P, const AreaI& viewport, const float Ax, const float Sx, const float k )
 {

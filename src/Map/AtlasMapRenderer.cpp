@@ -1,6 +1,7 @@
 #include "AtlasMapRenderer.h"
 
-OsmAnd::AtlasMapRenderer::AtlasMapRenderer()
+OsmAnd::AtlasMapRenderer::AtlasMapRenderer(GPUAPI* const gpuAPI_)
+    : MapRenderer(gpuAPI_)
 {
 }
 
