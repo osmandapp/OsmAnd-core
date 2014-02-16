@@ -12,7 +12,7 @@
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
-#include "GPUAPI_OpenGL.h"
+#include "OpenGL/GPUAPI_OpenGL.h"
 
 namespace OsmAnd
 {

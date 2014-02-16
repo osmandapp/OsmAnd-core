@@ -18,6 +18,7 @@ namespace OsmAnd
     public:
         enum {
             TileSize3D = 100u,
+            DefaultReferenceTileSizeOnScreen = 256u,
         };
     private:
     protected:

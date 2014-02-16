@@ -21,10 +21,6 @@ namespace OsmAnd
         Q_DISABLE_COPY(AtlasMapRenderer_OpenGL);
     private:
     protected:
-        enum {
-            DefaultReferenceTileSizeOnScreen = 256,
-        };
-
         const static float _zNear;
 
         struct InternalState : public AtlasMapRenderer::InternalState
