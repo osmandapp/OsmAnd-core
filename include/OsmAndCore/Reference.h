@@ -24,7 +24,7 @@ namespace OsmAnd
     template<class CLASS>
     typename Fwd<CLASS>::Ref RefNew()
     {
-        return (new CLASS()).getRef();
+        return (new CLASS())->getRef();
     }
 }
 
