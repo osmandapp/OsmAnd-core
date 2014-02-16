@@ -28,13 +28,6 @@
 OsmAnd::GPUAPI_OpenGL3::GPUAPI_OpenGL3()
     : isSupported_GREMEDY_string_marker(_isSupported_GREMEDY_string_marker)
 {
-    _textureSamplers.fill(0);
-
-    // textureLod() is supported by GLSL 1.30+ specification (which is supported by OpenGL 3.0+)
-    _isSupported_textureLod = true;
-
-    // OpenGL 2.0+ fully supports NPOT textures
-    _isSupported_texturesNPOT = true;
 }
 
 OsmAnd::GPUAPI_OpenGL3::~GPUAPI_OpenGL3()
@@ -133,6 +126,8 @@ bool OsmAnd::GPUAPI_OpenGL3::initialize()
         _extensions.push_back(extension);
     }
     LogPrintf(LogSeverityLevel::Info, "OpenGL extensions: %s", qPrintable(extensions.join(' ')));
+    _isSupported_textureLod = true; // textureLod() is supported by GLSL 1.30+ specification (which is supported by OpenGL 3.0+)
+    _isSupported_texturesNPOT = true; // OpenGL 2.0+ fully supports NPOT textures
     _isSupported_GREMEDY_string_marker = extensions.contains("GL_GREMEDY_string_marker");
     _isSupported_EXT_debug_marker = extensions.contains("GL_EXT_debug_marker");
 
