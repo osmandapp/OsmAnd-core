@@ -504,12 +504,19 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     float lastSegmentAngle = 0.0f;
                     float segmentsLengthSum = 0.0f;
                     float prevOffset = 0.0f;
+                    const auto glyphsCount = symbol->glyphsWidth.size();
                     auto pGlyphWidth = symbol->glyphsWidth.constData();
-                    for(int glyphIdx = 0, glyphsCount = symbol->glyphsWidth.size(); glyphIdx < glyphsCount; glyphIdx++, pGlyphWidth++)
+                    const auto glyphIterationDirection = shouldInvert ? -1 : +1;
+                    if(shouldInvert)
+                    {
+                        // In case of direction inversion, start from last glyph
+                        pGlyphWidth += (glyphsCount - 1);
+                    }
+                    for(int idx = 0; idx < glyphsCount; idx++, pGlyphWidth += glyphIterationDirection)
                     {
                         // Get current glyph anchor offset and provide offset for next glyph
                         const auto& glyphWidth = *pGlyphWidth;
-                        float anchorOffset = prevOffset + glyphWidth / 2.0f;
+                        const auto anchorOffset = prevOffset + glyphWidth / 2.0f;
                         prevOffset += glyphWidth;
 
                         // Get subpath segment, where anchor is located
@@ -533,6 +540,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                             vLastSegment = (vLastPoint1 - vLastPoint0) / lastSegmentLength;
                             vLastSegmentN.x = -vLastSegment.y;
                             vLastSegmentN.y = vLastSegment.x;
+                            if(shouldInvert)
+                                vLastSegmentN = -vLastSegmentN;
                             lastSegmentAngle = qAtan2(vLastSegment.y, vLastSegment.x);
                         }
                         if(doesntFit)
@@ -541,8 +550,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                         // Calculate anchor point
                         const auto anchorPoint = vLastPoint0 + (anchorOffset - (segmentsLengthSum - lastSegmentLength))*vLastSegment;
 
-                        // at this point there's anchor point location and direction of glyph, which is enough for passing to renderer
-                        glyphLocations.push_back(qMove(GlyphLocation(anchorPoint, glyphWidth, lastSegmentAngle, vLastSegmentN)));
+                        // Add glyph location data
+                        GlyphLocation glyphLocation(anchorPoint, glyphWidth, lastSegmentAngle, vLastSegmentN);
+                        if(shouldInvert)
+                            glyphLocations.push_front(qMove(glyphLocation));
+                        else
+                            glyphLocations.push_back(qMove(glyphLocation));
                     }
 
                     // Do actual draw-call only if symbol fits
