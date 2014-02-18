@@ -2,6 +2,7 @@
 #define _OSMAND_CORE_ATLAS_MAP_RENDERER_DEBUG_STAGE_OPENGL_H_
 
 #include "stdlib_common.h"
+#include <tuple>
 
 #include <glm/glm.hpp>
 
@@ -19,7 +20,7 @@ namespace OsmAnd
     {
     private:
     protected:
-        typedef std::pair<AreaF, uint32_t> Rect2D;
+        typedef std::tuple<AreaF, uint32_t, float> Rect2D;
         QList<Rect2D> _rects2D;
         GLuint _vaoRect2D;
         GLuint _vboRect2D;
@@ -38,6 +39,7 @@ namespace OsmAnd
                     // Common data
                     GLint mProjectionViewModel;
                     GLint rect;
+                    GLint angle;
                 } param;
             } vs;
 
@@ -96,8 +98,8 @@ namespace OsmAnd
         virtual void release();
 
         void clear();
-        void addRect2D(const AreaF& rect, uint32_t argbColor);
-        void addLine3D(const QVector<glm::vec3>& line, uint32_t argbColor);
+        void addRect2D(const AreaF& rect, const uint32_t argbColor, const float angle = 0.0f);
+        void addLine3D(const QVector<glm::vec3>& line, const uint32_t argbColor);
     };
 }
 

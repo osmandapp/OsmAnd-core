@@ -66,11 +66,16 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
         // Parameters: common data
         "uniform mat4 param_vs_mProjectionViewModel;                                                                        ""\n"
         "uniform vec4 param_vs_rect;                                                                                        ""\n"
+        "uniform float param_vs_angle;                                                                                      ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
+        "    vec2 p = in_vs_vertexPosition * vec2(param_vs_rect.wz) + vec2(param_vs_rect.yx);                               ""\n"
         "    vec4 v;                                                                                                        ""\n"
-        "    v.xy = in_vs_vertexPosition * vec2(param_vs_rect.wz) + vec2(param_vs_rect.yx);                                 ""\n"
+        "    float cos_a = cos(param_vs_angle);                                                                             ""\n"
+        "    float sin_a = sin(param_vs_angle);                                                                             ""\n"
+        "    v.x = p.x * cos_a - p.y * sin_a;                                                                               ""\n"
+        "    v.y = p.x * sin_a + p.y * cos_a;                                                                               ""\n"
         "    v.z = -1.0;                                                                                                    ""\n"
         "    v.w = 1.0;                                                                                                     ""\n"
         "                                                                                                                   ""\n"
@@ -107,6 +112,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
     gpuAPI->findVariableLocation(_programRect2D.id, _programRect2D.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
     gpuAPI->findVariableLocation(_programRect2D.id, _programRect2D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GLShaderVariableType::Uniform);
     gpuAPI->findVariableLocation(_programRect2D.id, _programRect2D.vs.param.rect, "param_vs_rect", GLShaderVariableType::Uniform);
+    gpuAPI->findVariableLocation(_programRect2D.id, _programRect2D.vs.param.angle, "param_vs_angle", GLShaderVariableType::Uniform);
     gpuAPI->findVariableLocation(_programRect2D.id, _programRect2D.fs.param.color, "param_fs_color", GLShaderVariableType::Uniform);
     gpuAPI->clearVariablesLookup();
 
@@ -182,12 +188,17 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderRects2D()
 
     for(const auto& primitive : constOf(_rects2D))
     {
-        const auto& rect = primitive.first;
-        const auto& color = primitive.second;
+        const auto& rect = std::get<0>(primitive);
+        const auto& color = std::get<1>(primitive);
+        const auto& angle = std::get<2>(primitive);
 
         // Set rectangle coordinates
         const auto center = rect.center();
         glUniform4f(_programRect2D.vs.param.rect, currentState.windowSize.y - center.y, center.x, rect.height(), rect.width());
+        GL_CHECK_RESULT;
+
+        // Set rotation angle
+        glUniform1f(_programRect2D.vs.param.angle, angle);
         GL_CHECK_RESULT;
 
         // Set rectangle color
@@ -448,12 +459,12 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::clear()
     _lines3D.clear();
 }
 
-void OsmAnd::AtlasMapRendererDebugStage_OpenGL::addRect2D(const AreaF& rect, uint32_t argbColor)
+void OsmAnd::AtlasMapRendererDebugStage_OpenGL::addRect2D(const AreaF& rect, const uint32_t argbColor, const float angle /*= 0.0f*/)
 {
-    _rects2D.push_back(qMove(Rect2D(rect, argbColor)));
+    _rects2D.push_back(qMove(Rect2D(rect, argbColor, angle)));
 }
 
-void OsmAnd::AtlasMapRendererDebugStage_OpenGL::addLine3D(const QVector<glm::vec3>& line, uint32_t argbColor)
+void OsmAnd::AtlasMapRendererDebugStage_OpenGL::addLine3D(const QVector<glm::vec3>& line, const uint32_t argbColor)
 {
     assert(line.size() >= 2);
     _lines3D.push_back(qMove(Line3D(line, argbColor)));
