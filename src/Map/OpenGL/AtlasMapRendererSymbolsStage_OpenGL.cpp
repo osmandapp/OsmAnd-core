@@ -74,6 +74,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
         int subpathEndIndex;
         QVector<PointF> subpathPointsInWorld;
         float offset;
+        float subpathLength;
+        QVector<float> segmentLengths;
         bool is2D;
         QVector<glm::vec2> pointsOnScreen;
         glm::vec2 subpathDirectionOnScreen;
@@ -249,9 +251,18 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 const auto& points = renderable->pointsOnScreen;
                 auto pPrevPoint = points.constData();
                 auto pPoint = pPrevPoint + 1;
-                float length = 0.0f;
-                for(auto idx = 1, count = points.size(); idx < count; idx++, pPoint++, pPrevPoint++)
-                    length += glm::distance(*pPoint, *pPrevPoint);
+                auto& length = renderable->subpathLength;
+                auto& segmentLengths = renderable->segmentLengths;
+                length = 0.0f;
+                const auto& pointsCount = points.size();
+                segmentLengths.resize(pointsCount - 1);
+                auto pSegmentLength = segmentLengths.data();
+                for(auto idx = 1; idx < pointsCount; idx++, pPoint++, pPrevPoint++)
+                {
+                    const auto& distance = glm::distance(*pPoint, *pPrevPoint);
+                    *(pSegmentLength++) = distance;
+                    length += distance;
+                }
                 renderable->offset = (length - gpuResource->width) / 2.0f;
             }
             else
@@ -543,7 +554,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                                 break;
                             }
                             const auto& p1 = pointsOnScreen[nextSubpathPointIdx + 1];
-                            lastSegmentLength = glm::distance(p1, p0);
+                            lastSegmentLength = renderable->segmentLengths[nextSubpathPointIdx];
                             segmentsLengthSum += lastSegmentLength;
                             nextSubpathPointIdx++;
 
