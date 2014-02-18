@@ -569,7 +569,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                             const auto& angle = std::get<2>(glyphLocation);
                             const auto& vN = std::get<3>(glyphLocation);
 
-                            getRenderer()->_debugStage.addRect2D(AreaI::fromCenterAndSize(
+                            getRenderer()->_debugStage.addRect2D(AreaF::fromCenterAndSize(
                                 anchorPoint.x, currentState.windowSize.y - anchorPoint.y,
                                 glyphWidth, gpuResource->height), SkColorSetA(SK_ColorGREEN, 128), angle);
 
