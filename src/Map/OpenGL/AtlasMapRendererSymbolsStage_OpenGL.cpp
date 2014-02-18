@@ -73,6 +73,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
         int subpathStartIndex;
         int subpathEndIndex;
         QVector<PointF> subpathPointsInWorld;
+        float offset;
         bool is2D;
         QVector<glm::vec2> pointsOnScreen;
         glm::vec2 subpathDirectionOnScreen;
@@ -237,6 +238,26 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
             }
         }
 
+        // Adjust SOPs placement on path
+        //TODO: improve significantly to place as much SOPs as possible by moving them around. Currently it just centers SOP on path
+        for(auto& renderable : visibleSOPSubpaths)
+        {
+            const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
+
+            if(renderable->is2D)
+            {
+                const auto& points = renderable->pointsOnScreen;
+                auto pPrevPoint = points.constData();
+                auto pPoint = pPrevPoint + 1;
+                float length = 0.0f;
+                for(auto idx = 1, count = points.size(); idx < count; idx++, pPoint++, pPrevPoint++)
+                    length += glm::distance(*pPoint, *pPrevPoint);
+                renderable->offset = (length - gpuResource->width) / 2.0f;
+            }
+            else
+                renderable->offset = 0.0f;
+        }
+
         //TODO: this is only valid for 3D SOPs
 //        // Remove all SOP subpaths that can not hold entire content by width.
 //        // This check is only useful for SOPs rendered in 3D mode
@@ -302,13 +323,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 //            addDebugLine3D(debugPoints, SkColorSetA(SK_ColorGREEN, 128));
 //#endif // OSMAND_DEBUG
 //        }
-
-        //TODO: for sure, gluing is needed often
-        // - 3. ADJUST OFFSET TO INCLUDE AS MUCH NON-INTERSECTING
-        //      calculate offsets for each subSOP, to ensure no intersection.
-        //      [optional] Without this step there going to be intersections of street names with themselves
-        //	  [shrink or move active zone]
-        //    Victor: simply renders in the middle
 
         QMultiMap< float, RenderableSymbolEntry > sortedRenderables;
 
@@ -503,7 +517,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     glm::vec2 vLastSegmentN;
                     float lastSegmentAngle = 0.0f;
                     float segmentsLengthSum = 0.0f;
-                    float prevOffset = 0.0f;
+                    float prevOffset = renderable->offset;
                     const auto glyphsCount = symbol->glyphsWidth.size();
                     auto pGlyphWidth = symbol->glyphsWidth.constData();
                     const auto glyphIterationDirection = shouldInvert ? -1 : +1;
