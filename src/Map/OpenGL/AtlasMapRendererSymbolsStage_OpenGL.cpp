@@ -464,7 +464,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 if(is2D)
                 {
                     bool doesntFit = false;
-                    //const auto& subpathPoints = renderable->subpathPointsInWorld;
+                    typedef std::tuple<glm::vec2, float, float> GlyphLocation;
+                    QVector<GlyphLocation> glyphLocations;
+                    glyphLocations.reserve(symbol->glyphsWidth.size());
+
                     auto nextSubpathPointIdx = renderable->subpathStartIndex;
                     float lastSegmentLength = 0.0f;
                     float segmentsLengthSum = 0.0f;
@@ -507,17 +510,25 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                         vSegmentN /= lastSegmentLength;
 
                         // at this point there's anchor point location and direction of glyph, which is enough for passing to renderer
-                        int i = 5;
-#if OSMAND_DEBUG && 1
-                        getRenderer()->_debugStage.addRect2D(AreaI::fromCenterAndSize(
-                            anchorPoint.x, currentState.windowSize.y - anchorPoint.y,
-                            glyphWidth, gpuResource->height), SkColorSetA(SK_ColorGREEN, 128));
-#endif // OSMAND_DEBUG
+                        glyphLocations.push_back(qMove(GlyphLocation(anchorPoint, glyphWidth, 0.0f)));
                     }
 
                     // Do actual draw-call only if symbol fits
                     if(!doesntFit)
                     {
+#if OSMAND_DEBUG && 1
+                        for(const auto& glyphLocation : constOf(glyphLocations))
+                        {
+                            const auto& anchorPoint = std::get<0>(glyphLocation);
+                            const auto& glyphWidth = std::get<1>(glyphLocation);
+                            const auto& angle = std::get<2>(glyphLocation);
+
+                            getRenderer()->_debugStage.addRect2D(AreaI::fromCenterAndSize(
+                                anchorPoint.x, currentState.windowSize.y - anchorPoint.y,
+                                glyphWidth, gpuResource->height), SkColorSetA(SK_ColorGREEN, 128), angle);
+                        }
+#endif // OSMAND_DEBUG
+
                         //TODO: do draw call
                     }
                 }
