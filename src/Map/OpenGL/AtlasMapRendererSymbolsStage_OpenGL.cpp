@@ -168,70 +168,86 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
             }
         }
 
-        // Remove all SOP subpaths that can not hold entire content by width.
-        // This check is only useful for SOPs rendered in 3D mode
-        QMutableListIterator<RenderableSymbolOnPathEntry> itSOPSubpathEntry(visibleSOPSubpaths);
-        while(itSOPSubpathEntry.hasNext())
+        // For each subpath, calculate it's points in world. That's needed for both 2D and 3D SOPs
+        for(auto& renderable : visibleSOPSubpaths)
         {
-            const auto& renderable = itSOPSubpathEntry.next();
-            const auto& gpuResource = std::dynamic_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
-
             const auto& points = renderable->mapSymbol->mapObject->points31;
             const auto subpathLength = renderable->subpathEndIndex - renderable->subpathStartIndex + 1;
             renderable->subpathPointsInWorld.resize(subpathLength);
             PointF* pPointInWorld = renderable->subpathPointsInWorld.data();
             const auto& pointInWorld0 = *(pPointInWorld++) =
                 Utilities::convert31toFloat(points[renderable->subpathStartIndex] - currentState.target31, currentState.zoomBase) * AtlasMapRenderer::TileSize3D;
-            glm::vec2 prevProjectedP = glm::project(
-                glm::vec3(pointInWorld0.x, 0.0f, pointInWorld0.y),
-                topDownCameraView,
-                internalState.mPerspectiveProjection,
-                viewport).xy;
-            float length = 0.0f;
             for(int idx = renderable->subpathStartIndex + 1, endIdx = renderable->subpathEndIndex; idx <= endIdx; idx++, pPointInWorld++)
-            {
                 *pPointInWorld = Utilities::convert31toFloat(points[idx] - currentState.target31, currentState.zoomBase) * AtlasMapRenderer::TileSize3D;
-                const glm::vec2& projectedP = glm::project(
-                    glm::vec3(pPointInWorld->x, 0.0f, pPointInWorld->y),
-                    topDownCameraView,
-                    internalState.mPerspectiveProjection,
-                    viewport).xy;
-                length += glm::distance(prevProjectedP, projectedP);
-                prevProjectedP = projectedP;
-            }
             renderable->subpathEndIndex -= renderable->subpathStartIndex;
             renderable->subpathStartIndex = 0;
-
-            // If projected length is not enough to hold entire texture width, skip it
-            if(length < gpuResource->width)
-            {
-#if OSMAND_DEBUG && 0
-                QVector< glm::vec3 > debugPoints;
-                for(const auto& pointInWorld : renderable->subpathPointsInWorld)
-                {
-                    debugPoints.push_back(qMove(glm::vec3(
-                        pointInWorld.x,
-                        0.0f,
-                        pointInWorld.y)));
-                }
-                addDebugLine3D(debugPoints, SkColorSetA(SK_ColorRED, 128));
-#endif // OSMAND_DEBUG
-
-                itSOPSubpathEntry.remove();
-                continue;
-            }
-#if OSMAND_DEBUG && 0
-            QVector< glm::vec3 > debugPoints;
-            for(const auto& pointInWorld : renderable->subpathPointsInWorld)
-            {
-                debugPoints.push_back(qMove(glm::vec3(
-                    pointInWorld.x,
-                    0.0f,
-                    pointInWorld.y)));
-            }
-            addDebugLine3D(debugPoints, SkColorSetA(SK_ColorGREEN, 128));
-#endif // OSMAND_DEBUG
         }
+
+        //TODO: this is only valid for 3D SOPs
+//        // Remove all SOP subpaths that can not hold entire content by width.
+//        // This check is only useful for SOPs rendered in 3D mode
+//        QMutableListIterator<RenderableSymbolOnPathEntry> itSOPSubpathEntry(visibleSOPSubpaths);
+//        while(itSOPSubpathEntry.hasNext())
+//        {
+//            const auto& renderable = itSOPSubpathEntry.next();
+//            const auto& gpuResource = std::dynamic_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
+//
+//            const auto& points = renderable->mapSymbol->mapObject->points31;
+//            const auto subpathLength = renderable->subpathEndIndex - renderable->subpathStartIndex + 1;
+//            renderable->subpathPointsInWorld.resize(subpathLength);
+//            PointF* pPointInWorld = renderable->subpathPointsInWorld.data();
+//            const auto& pointInWorld0 = *(pPointInWorld++) =
+//                Utilities::convert31toFloat(points[renderable->subpathStartIndex] - currentState.target31, currentState.zoomBase) * AtlasMapRenderer::TileSize3D;
+//            glm::vec2 prevProjectedP = glm::project(
+//                glm::vec3(pointInWorld0.x, 0.0f, pointInWorld0.y),
+//                topDownCameraView,
+//                internalState.mPerspectiveProjection,
+//                viewport).xy;
+//            float length = 0.0f;
+//            for(int idx = renderable->subpathStartIndex + 1, endIdx = renderable->subpathEndIndex; idx <= endIdx; idx++, pPointInWorld++)
+//            {
+//                *pPointInWorld = Utilities::convert31toFloat(points[idx] - currentState.target31, currentState.zoomBase) * AtlasMapRenderer::TileSize3D;
+//                const glm::vec2& projectedP = glm::project(
+//                    glm::vec3(pPointInWorld->x, 0.0f, pPointInWorld->y),
+//                    topDownCameraView,
+//                    internalState.mPerspectiveProjection,
+//                    viewport).xy;
+//                length += glm::distance(prevProjectedP, projectedP);
+//                prevProjectedP = projectedP;
+//            }
+//            renderable->subpathEndIndex -= renderable->subpathStartIndex;
+//            renderable->subpathStartIndex = 0;
+//
+//            // If projected length is not enough to hold entire texture width, skip it
+//            if(length < gpuResource->width)
+//            {
+//#if OSMAND_DEBUG && 0
+//                QVector< glm::vec3 > debugPoints;
+//                for(const auto& pointInWorld : renderable->subpathPointsInWorld)
+//                {
+//                    debugPoints.push_back(qMove(glm::vec3(
+//                        pointInWorld.x,
+//                        0.0f,
+//                        pointInWorld.y)));
+//                }
+//                addDebugLine3D(debugPoints, SkColorSetA(SK_ColorRED, 128));
+//#endif // OSMAND_DEBUG
+//
+//                itSOPSubpathEntry.remove();
+//                continue;
+//            }
+//#if OSMAND_DEBUG && 0
+//            QVector< glm::vec3 > debugPoints;
+//            for(const auto& pointInWorld : renderable->subpathPointsInWorld)
+//            {
+//                debugPoints.push_back(qMove(glm::vec3(
+//                    pointInWorld.x,
+//                    0.0f,
+//                    pointInWorld.y)));
+//            }
+//            addDebugLine3D(debugPoints, SkColorSetA(SK_ColorGREEN, 128));
+//#endif // OSMAND_DEBUG
+//        }
 
         //TODO: for sure, gluing is needed often
         // - 3. ADJUST OFFSET TO INCLUDE AS MUCH NON-INTERSECTING
