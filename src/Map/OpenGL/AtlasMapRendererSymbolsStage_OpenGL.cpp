@@ -73,7 +73,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
         int subpathStartIndex;
         int subpathEndIndex;
         QVector<PointF> subpathPointsInWorld;
-        float subpathLength;
+        bool is2D;
+        QVector<glm::vec2> pointsOnScreen;
     };
 
     QMutexLocker scopedLocker(&getResources().getSymbolsMapMutex());
@@ -181,6 +182,55 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 *pPointInWorld = Utilities::convert31toFloat(points[idx] - currentState.target31, currentState.zoomBase) * AtlasMapRenderer::TileSize3D;
             renderable->subpathEndIndex -= renderable->subpathStartIndex;
             renderable->subpathStartIndex = 0;
+        }
+
+        // For each subpath, determine if it will be rendered in 2D or 3D
+        for(auto& renderable : visibleSOPSubpaths)
+        {
+            const auto& pointsInWorld = renderable->subpathPointsInWorld;
+
+            // Calculate 'incline' of each part of path segment and compare to horizontal direction.
+            // If any 'incline' is larger than 15 degrees, this segment is rendered in the map plane.
+            renderable->is2D = true;
+            const auto inclineThresholdSinSq = 0.0669872981f; // qSin(qDegreesToRadians(15.0f))*qSin(qDegreesToRadians(15.0f))
+            auto pPointInWorld = pointsInWorld.constData();
+            const auto& pointInWorld0 = *(pPointInWorld++);
+            QVector<glm::vec2> pointsOnScreen(pointsInWorld.size());
+            auto pPointOnScreen = pointsOnScreen.data();
+            auto prevPointOnScreen = *(pPointOnScreen++) = glm::project(
+                glm::vec3(pointInWorld0.x, 0.0f, pointInWorld0.y),
+                internalState.mCameraView,
+                internalState.mPerspectiveProjection,
+                viewport).xy;
+            for(auto idx = 1, count = pointsInWorld.size(); idx < count; idx++, pPointInWorld++)
+            {
+                const auto& pointOnScreen = *(pPointOnScreen++) = glm::project(
+                    glm::vec3(pPointInWorld->x, 0.0f, pPointInWorld->y),
+                    internalState.mCameraView,
+                    internalState.mPerspectiveProjection,
+                    viewport).xy;
+
+                const auto vSegment = pointOnScreen - prevPointOnScreen;
+                const auto d = vSegment.y;// horizont.x*vSegment.y - horizont.y*vSegment.x == 1.0f*vSegment.y - 0.0f*vSegment.x
+                const auto inclineSinSq = d*d / (vSegment.x*vSegment.x + vSegment.y*vSegment.y);
+                if(qAbs(inclineSinSq) > inclineThresholdSinSq)
+                {
+                    renderable->is2D = false;
+                    break;
+                }
+
+                prevPointOnScreen = pointOnScreen;
+            }
+
+            if(renderable->is2D)
+            {
+                // In case SOP needs 2D mode, all points have been projected on the screen already
+                renderable->pointsOnScreen = qMove(pointsOnScreen);
+            }
+            else
+            {
+                //TODO: OTHERWISE, NOTHING CAN BE DONE!
+            }
         }
 
         //TODO: this is only valid for 3D SOPs
@@ -416,37 +466,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 const auto& symbol = std::dynamic_pointer_cast<const MapSymbolOnPath>(renderable->mapSymbol);
                 const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
 
-                // Project all world points into the screen
-                QVector<glm::vec2> pointsOnScreen(renderable->subpathPointsInWorld.size());
-                auto* pPointOnScreen = pointsOnScreen.data();
-                for(const auto& pointInWorld : constOf(renderable->subpathPointsInWorld))
-                {
-                    *(pPointOnScreen++) = glm::project(
-                        glm::vec3(pointInWorld.x, 0.0f, pointInWorld.y),
-                        internalState.mCameraView,
-                        internalState.mPerspectiveProjection,
-                        viewport).xy;
-                }
-                
-                // Calculate 'incline' of each part of path segment and compare to horizontal direction.
-                // If any 'incline' is larger than 15 degrees, this segment is rendered in the map plane.
-                auto is2D = true;
-                const auto inclineThresholdSinSq = 0.0669872981f; // qSin(qDegreesToRadians(15.0f))*qSin(qDegreesToRadians(15.0f))
-                for(auto itPrevP = pointsOnScreen.cbegin(), itP = itPrevP + 1, itEnd = pointsOnScreen.cend(); itP != itEnd; itPrevP = itP, ++itP)
-                {
-                    const auto& prevP = *itPrevP;
-                    const auto& p = *itP;
-                
-                    const auto vP = p - prevP;
-                    const auto d = vP.y;// horizont.x*vP.y - horizont.y*vP.x == 1.0f*vP.y - 0.0f*vP.x
-                    const auto inclineSinSq = d*d / (vP.x*vP.x + vP.y*vP.y);
-                    if(qAbs(inclineSinSq) > inclineThresholdSinSq)
-                    {
-                        is2D = false;
-                        break;
-                    }
-                }
-
 #if OSMAND_DEBUG && 1
                 {
                     QVector< glm::vec3 > debugPoints;
@@ -457,12 +476,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                             0.0f,
                             pointInWorld.y)));
                     }
-                    getRenderer()->_debugStage.addLine3D(debugPoints, SkColorSetA(is2D ? SK_ColorGREEN : SK_ColorRED, 128));
+                    getRenderer()->_debugStage.addLine3D(debugPoints, SkColorSetA(renderable->is2D ? SK_ColorGREEN : SK_ColorRED, 128));
                 }
 #endif // OSMAND_DEBUG
 
-                if(is2D)
+                if(renderable->is2D)
                 {
+                    const auto& pointsOnScreen = renderable->pointsOnScreen;
                     bool doesntFit = false;
                     typedef std::tuple<glm::vec2, float, float> GlyphLocation;
                     QVector<GlyphLocation> glyphLocations;
