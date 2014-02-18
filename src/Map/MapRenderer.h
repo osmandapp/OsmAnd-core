@@ -14,6 +14,7 @@
 #include "GPUAPI.h"
 #include "IMapTileProvider.h"
 #include "TilesCollection.h"
+#include "MapRendererInternalState.h"
 #include "MapRendererResources.h"
 
 namespace OsmAnd
@@ -21,6 +22,8 @@ namespace OsmAnd
     class IMapProvider;
     class MapRendererTiledResources;
     class MapSymbol;
+    class MapRendererStage;
+    struct MapRendererInternalState;
     
     class MapRenderer : public IMapRenderer
     {
@@ -30,7 +33,7 @@ namespace OsmAnd
         typedef OsmAnd::MapRendererResources Resources;
         typedef OsmAnd::MapRendererResources::ResourceType ResourceType;
         typedef OsmAnd::MapRendererResources::ResourceState ResourceState;
-
+        typedef OsmAnd::MapRendererInternalState InternalState;
     private:
         // Configuration-related:
         mutable QReadWriteLock _configurationLock;
@@ -85,15 +88,7 @@ namespace OsmAnd
 
         // State-related:
         const MapRendererState& currentState;
-        struct InternalState
-        {
-            virtual ~InternalState()
-            {}
-
-            TileId targetTileId;
-            PointF targetInTileOffsetN;
-            QList<TileId> visibleTiles;
-        };
+        
         virtual const InternalState* getInternalStateRef() const = 0;
         virtual InternalState* getInternalStateRef() = 0;
         virtual bool updateInternalState(InternalState* internalState, const MapRendererState& state);
@@ -177,6 +172,8 @@ namespace OsmAnd
         virtual void setTarget(const PointI& target31, bool forcedUpdate = false);
         virtual void setZoom(const float zoom, bool forcedUpdate = false);
 
+    friend struct OsmAnd::MapRendererInternalState;
+    friend class OsmAnd::MapRendererStage;
     friend class OsmAnd::MapRendererResources;
     };
 }

@@ -16,7 +16,7 @@ add_library(glsl-optimizer_static STATIC
 set(target_specific_private_definitions "")
 set(target_specific_private_includes "")
 if(CMAKE_TARGET_OS STREQUAL "windows")
-	if(MSVC)
+	if(CMAKE_COMPILER_FAMILY STREQUAL "msvc")
 		set(target_specific_private_includes ${target_specific_private_includes}
 			"include"
 		)

@@ -98,10 +98,11 @@ GLuint OsmAnd::GPUAPI_OpenGL::compileShader( GLenum shaderType, const char* sour
     return shader;
 }
 
-GLuint OsmAnd::GPUAPI_OpenGL::linkProgram( GLuint shadersCount, GLuint *shaders )
+GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(GLuint shadersCount, const GLuint* shaders, const bool autoReleaseShaders /*= true*/)
 {
     GL_CHECK_PRESENT(glCreateProgram);
     GL_CHECK_PRESENT(glAttachShader);
+    GL_CHECK_PRESENT(glDetachShader);
     GL_CHECK_PRESENT(glLinkProgram);
     GL_CHECK_PRESENT(glGetProgramiv);
     GL_CHECK_PRESENT(glGetProgramInfoLog);
@@ -120,6 +121,18 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram( GLuint shadersCount, GLuint *shaders 
 
     glLinkProgram(program);
     GL_CHECK_RESULT;
+
+    for(auto shaderIdx = 0u; shaderIdx < shadersCount; shaderIdx++)
+    {
+        glDetachShader(program, shaders[shaderIdx]);
+        GL_CHECK_RESULT;
+
+        if(autoReleaseShaders)
+        {
+            glDeleteShader(shaders[shaderIdx]);
+            GL_CHECK_RESULT;
+        }
+    }
 
     GLint linkSuccessful;
     glGetProgramiv(program, GL_LINK_STATUS, &linkSuccessful);
@@ -142,8 +155,8 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram( GLuint shadersCount, GLuint *shaders 
 
         glDeleteProgram(program);
         GL_CHECK_RESULT;
-        program = 0;
-        return program;
+
+        return 0;
     }
 
     // Show some info

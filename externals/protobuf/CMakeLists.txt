@@ -16,7 +16,7 @@ add_library(protobuf_static STATIC
 
 set(target_specific_private_definitions "")
 if(CMAKE_TARGET_OS STREQUAL "windows")
-	if(MSVC)
+	if(CMAKE_COMPILER_FAMILY STREQUAL "msvc")
 		set(target_specific_private_definitions ${target_specific_private_definitions}
 			-D_CRT_SECURE_NO_WARNINGS
 			-D_CRT_NONSTDC_NO_WARNINGS

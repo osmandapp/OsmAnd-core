@@ -6,6 +6,7 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <QMutableHashIterator>
 
+#include "MapRendererInternalState.h"
 #include "MapRendererResources.h"
 #include "IMapBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"

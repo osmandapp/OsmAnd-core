@@ -1,6 +1,6 @@
 project(OsmAndCore)
 
-# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 32
+# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 33
 
 set(target_specific_sources "")
 set(target_specific_public_definitions "")
@@ -28,11 +28,15 @@ if(CMAKE_TARGET_OS STREQUAL "darwin")
 		${ZLIB_LIBRARY}
 	)
 endif()
-if(CMAKE_TARGET_OS STREQUAL "windows")
-	if(MSVC)
-		# Force warning to be an error "deletion of pointer to incomplete type 'type'; no destructor called"
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /we4150")
-	endif()
+
+if(CMAKE_COMPILER_FAMILY STREQUAL "msvc")
+	# Force warning to be an error "deletion of pointer to incomplete type 'type'; no destructor called"
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /we4150")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /we4150")
+
+	# Disable warning 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4290")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4290")
 endif()
 
 # 3D rendering: OpenGL, OpenGLES2, Direct3D

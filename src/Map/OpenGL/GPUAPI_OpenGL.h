@@ -115,8 +115,9 @@ namespace OsmAnd
         const GLint& maxFragmentUniformVectors;
         
         virtual GLenum validateResult() = 0;
+
         virtual GLuint compileShader(GLenum shaderType, const char* source);
-        virtual GLuint linkProgram(GLuint shadersCount, GLuint *shaders);
+        virtual GLuint linkProgram(GLuint shadersCount, const GLuint* shaders, const bool autoReleaseShaders = true);
 
         virtual TextureFormat getTextureFormat(const std::shared_ptr< const MapTile >& tile) = 0;
         virtual TextureFormat getTextureFormat(const std::shared_ptr< const MapSymbol >& symbol) = 0;
