@@ -75,6 +75,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
         QVector<PointF> subpathPointsInWorld;
         bool is2D;
         QVector<glm::vec2> pointsOnScreen;
+        glm::vec2 subpathDirectionOnScreen;
     };
 
     QMutexLocker scopedLocker(&getResources().getSymbolsMapMutex());
@@ -192,6 +193,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
             // Calculate 'incline' of each part of path segment and compare to horizontal direction.
             // If any 'incline' is larger than 15 degrees, this segment is rendered in the map plane.
             renderable->is2D = true;
+            auto& subpathDirectionOnScreen = renderable->subpathDirectionOnScreen;
             const auto inclineThresholdSinSq = 0.0669872981f; // qSin(qDegreesToRadians(15.0f))*qSin(qDegreesToRadians(15.0f))
             auto pPointInWorld = pointsInWorld.constData();
             const auto& pointInWorld0 = *(pPointInWorld++);
@@ -219,12 +221,14 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     break;
                 }
 
+                subpathDirectionOnScreen += (pointOnScreen - prevPointOnScreen);
                 prevPointOnScreen = pointOnScreen;
             }
 
             if(renderable->is2D)
             {
                 // In case SOP needs 2D mode, all points have been projected on the screen already
+                subpathDirectionOnScreen = glm::normalize(subpathDirectionOnScreen);
                 renderable->pointsOnScreen = qMove(pointsOnScreen);
             }
             else
@@ -483,6 +487,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 if(renderable->is2D)
                 {
                     const auto& pointsOnScreen = renderable->pointsOnScreen;
+                    const auto& subpathDirectionOnScreen = renderable->subpathDirectionOnScreen;
+                    const glm::vec2 subpathDirectionOnScreenN(-subpathDirectionOnScreen.y, subpathDirectionOnScreen.x);
+                    const auto shouldInvert = (subpathDirectionOnScreenN.y /* horizont.x*dirN.y - horizont.y*dirN.x == 1.0f*dirN.y - 0.0f*dirN.x */) < 0;
                     bool doesntFit = false;
                     typedef std::tuple<glm::vec2, float, float, glm::vec2> GlyphLocation;
                     QVector<GlyphLocation> glyphLocations;
@@ -558,7 +565,17 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                             lineN.push_back(glm::vec2(ln0.x, currentState.windowSize.y - ln0.y));
                             const auto ln1 = anchorPoint + (vN*16.0f);
                             lineN.push_back(glm::vec2(ln1.x, currentState.windowSize.y - ln1.y));
-                            getRenderer()->_debugStage.addLine2D(lineN, SkColorSetA(SK_ColorYELLOW, 128));
+                            getRenderer()->_debugStage.addLine2D(lineN, SkColorSetA(shouldInvert ? SK_ColorMAGENTA : SK_ColorYELLOW, 128));
+                        }
+
+                        // Subpath N
+                        {
+                            QVector<glm::vec2> lineN;
+                            const auto sn0 = pointsOnScreen.last();
+                            lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
+                            const auto sn1 = pointsOnScreen.last() + (subpathDirectionOnScreenN*32.0f);
+                            lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
+                            getRenderer()->_debugStage.addLine2D(lineN, SkColorSetA(SK_ColorMAGENTA, 128));
                         }
 #endif // OSMAND_DEBUG
 
