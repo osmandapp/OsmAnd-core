@@ -65,7 +65,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
         "                                                                                                                   ""\n"
         // Parameters: common data
         "uniform mat4 param_vs_mProjectionViewModel;                                                                        ""\n"
-        "uniform ivec4 param_vs_rect;                                                                                       ""\n"
+        "uniform vec4 param_vs_rect;                                                                                        ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
@@ -187,7 +187,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderRects2D()
 
         // Set rectangle coordinates
         const auto center = rect.center();
-        glUniform4i(_programRect2D.vs.param.rect, currentState.windowSize.y - center.y, center.x, rect.height(), rect.width());
+        glUniform4f(_programRect2D.vs.param.rect, currentState.windowSize.y - center.y, center.x, rect.height(), rect.width());
         GL_CHECK_RESULT;
 
         // Set rectangle color
@@ -448,7 +448,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::clear()
     _lines3D.clear();
 }
 
-void OsmAnd::AtlasMapRendererDebugStage_OpenGL::addRect2D(const AreaI& rect, uint32_t argbColor)
+void OsmAnd::AtlasMapRendererDebugStage_OpenGL::addRect2D(const AreaF& rect, uint32_t argbColor)
 {
     _rects2D.push_back(qMove(Rect2D(rect, argbColor)));
 }

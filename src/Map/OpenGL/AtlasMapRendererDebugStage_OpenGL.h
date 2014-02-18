@@ -19,7 +19,7 @@ namespace OsmAnd
     {
     private:
     protected:
-        typedef std::pair<AreaI, uint32_t> Rect2D;
+        typedef std::pair<AreaF, uint32_t> Rect2D;
         QList<Rect2D> _rects2D;
         GLuint _vaoRect2D;
         GLuint _vboRect2D;
@@ -96,7 +96,7 @@ namespace OsmAnd
         virtual void release();
 
         void clear();
-        void addRect2D(const AreaI& rect, uint32_t argbColor);
+        void addRect2D(const AreaF& rect, uint32_t argbColor);
         void addLine3D(const QVector<glm::vec3>& line, uint32_t argbColor);
     };
 }
