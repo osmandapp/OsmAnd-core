@@ -494,6 +494,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     glm::vec2 vLastPoint1;
                     glm::vec2 vLastSegment;
                     glm::vec2 vLastSegmentN;
+                    float lastSegmentSinOfAngle = 0.0f;
                     float segmentsLengthSum = 0.0f;
                     float prevOffset = 0.0f;
                     auto pGlyphWidth = symbol->glyphsWidth.constData();
@@ -525,6 +526,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                             vLastSegment = (vLastPoint1 - vLastPoint0) / lastSegmentLength;
                             vLastSegmentN.x = -vLastSegment.y;
                             vLastSegmentN.y = vLastSegment.x;
+                            lastSegmentSinOfAngle = -vLastSegment.y; // horizont.y*vLastSegment.x - horizont.x*vLastSegment.y;
                         }
                         if(doesntFit)
                             break;
@@ -533,7 +535,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                         const auto anchorPoint = vLastPoint0 + (anchorOffset - (segmentsLengthSum - lastSegmentLength))*vLastSegment;
 
                         // at this point there's anchor point location and direction of glyph, which is enough for passing to renderer
-                        glyphLocations.push_back(qMove(GlyphLocation(anchorPoint, glyphWidth, 0.0f, vLastSegmentN)));
+                        glyphLocations.push_back(qMove(GlyphLocation(anchorPoint, glyphWidth, lastSegmentSinOfAngle, vLastSegmentN)));
                     }
 
                     // Do actual draw-call only if symbol fits
@@ -544,16 +546,18 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                         {
                             const auto& anchorPoint = std::get<0>(glyphLocation);
                             const auto& glyphWidth = std::get<1>(glyphLocation);
-                            const auto& angle = std::get<2>(glyphLocation);
+                            const auto& sinOfAngle = std::get<2>(glyphLocation);
                             const auto& vN = std::get<3>(glyphLocation);
 
                             getRenderer()->_debugStage.addRect2D(AreaI::fromCenterAndSize(
                                 anchorPoint.x, currentState.windowSize.y - anchorPoint.y,
-                                glyphWidth, gpuResource->height), SkColorSetA(SK_ColorGREEN, 128), angle);
+                                glyphWidth, gpuResource->height), SkColorSetA(SK_ColorGREEN, 128), -qAsin(sinOfAngle));
 
                             QVector<glm::vec2> lineN;
-                            lineN.push_back(anchorPoint);
-                            lineN.push_back(anchorPoint + (vN*16.0f));
+                            const auto ln0 = anchorPoint;
+                            lineN.push_back(glm::vec2(ln0.x, currentState.windowSize.y - ln0.y));
+                            const auto ln1 = anchorPoint + (vN*16.0f);
+                            lineN.push_back(glm::vec2(ln1.x, currentState.windowSize.y - ln1.y));
                             getRenderer()->_debugStage.addLine2D(lineN, SkColorSetA(SK_ColorYELLOW, 128));
                         }
 #endif // OSMAND_DEBUG

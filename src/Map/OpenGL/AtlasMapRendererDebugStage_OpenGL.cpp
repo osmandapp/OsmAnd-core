@@ -77,12 +77,14 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
-        "    vec2 p = in_vs_vertexPosition * vec2(param_vs_rect.wz) + vec2(param_vs_rect.yx);                               ""\n"
+        "    vec2 rectCenter = param_vs_rect.yx;                                                                            ""\n"
+        "    vec2 p = in_vs_vertexPosition*param_vs_rect.wz + rectCenter;                                                   ""\n"
         "    vec4 v;                                                                                                        ""\n"
         "    float cos_a = cos(param_vs_angle);                                                                             ""\n"
         "    float sin_a = sin(param_vs_angle);                                                                             ""\n"
-        "    v.x = p.x * cos_a - p.y * sin_a;                                                                               ""\n"
-        "    v.y = p.x * sin_a + p.y * cos_a;                                                                               ""\n"
+        "    p -= rectCenter;                                                                                               ""\n"
+        "    v.x = rectCenter.x + p.x*cos_a - p.y*sin_a;                                                                    ""\n"
+        "    v.y = rectCenter.y + p.x*sin_a + p.y*cos_a;                                                                    ""\n"
         "    v.z = -1.0;                                                                                                    ""\n"
         "    v.w = 1.0;                                                                                                     ""\n"
         "                                                                                                                   ""\n"
@@ -408,9 +410,9 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderLines2D()
             const auto& v1 = *itV1;
 
             // Set line coordinates
-            glUniform2f(_programLine2D.vs.param.v0, v0.x, v0.y);
+            glUniform2f(_programLine2D.vs.param.v0, v0.x, currentState.windowSize.y - v0.y);
             GL_CHECK_RESULT;
-            glUniform2f(_programLine2D.vs.param.v1, v1.x, v1.y);
+            glUniform2f(_programLine2D.vs.param.v1, v1.x, currentState.windowSize.y - v1.y);
             GL_CHECK_RESULT;
 
             // Draw the line actually
