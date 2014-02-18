@@ -2,6 +2,7 @@
 #define _OSMAND_CORE_COMMON_TYPES_H_
 
 #include <OsmAndCore/stdlib_common.h>
+#include <type_traits>
 
 #include <QtGlobal>
 #include <QString>
@@ -18,6 +19,8 @@ namespace OsmAnd
     {
         typedef T CoordType;
         typedef Point<T> PointT;
+        typedef typename std::conditional<std::is_integral<T>::value, int64_t, double>::type LargerSignedCoordType;
+        typedef typename std::conditional<std::is_integral<T>::value, uint64_t, double>::type LargerUnsignedCoordType;
 
         T x, y;
 
@@ -111,6 +114,18 @@ namespace OsmAnd
             x /= r;
             y /= r;
             return *this;
+        }
+
+        inline LargerUnsignedCoordType squareNorm() const
+        {
+            return
+                static_cast<LargerUnsignedCoordType>(static_cast<LargerSignedCoordType>(x)*static_cast<LargerSignedCoordType>(x)) +
+                static_cast<LargerUnsignedCoordType>(static_cast<LargerSignedCoordType>(y)*static_cast<LargerSignedCoordType>(y));
+        }
+
+        inline T norm() const
+        {
+            return static_cast<T>(qSqrt(squareNorm()));
         }
 #endif // !defined(SWIG)
     private:

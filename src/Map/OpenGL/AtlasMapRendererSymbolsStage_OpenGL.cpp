@@ -9,7 +9,7 @@
 
 #include <SkColor.h>
 
-#include "AtlasMapRenderer_OpenGL.h";
+#include "AtlasMapRenderer_OpenGL.h"
 #include "IMapSymbolProvider.h"
 #include "QuadTree.h"
 #include "Utilities.h"
@@ -73,6 +73,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
         int subpathStartIndex;
         int subpathEndIndex;
         QVector<PointF> subpathPointsInWorld;
+        float subpathLength;
     };
 
     QMutexLocker scopedLocker(&getResources().getSymbolsMapMutex());
@@ -167,7 +168,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
             }
         }
 
-        // Remove all SOP subpaths that can not hold entire content by width
+        // Remove all SOP subpaths that can not hold entire content by width.
+        // This check is only useful for SOPs rendered in 3D mode
         QMutableListIterator<RenderableSymbolOnPathEntry> itSOPSubpathEntry(visibleSOPSubpaths);
         while(itSOPSubpathEntry.hasNext())
         {
@@ -197,6 +199,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 length += glm::distance(prevProjectedP, projectedP);
                 prevProjectedP = projectedP;
             }
+            renderable->subpathEndIndex -= renderable->subpathStartIndex;
+            renderable->subpathStartIndex = 0;
 
             // If projected length is not enough to hold entire texture width, skip it
             if(length < gpuResource->width)
@@ -311,13 +315,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 if(intersects || !intersections.insert(symbol, boundsInWindow))
                 {
 #if OSMAND_DEBUG && 0
-                    addDebugRect2D(boundsInWindow, SkColorSetA(SK_ColorRED, 50));
+                    getRenderer()->_debugStage.addRect2D(boundsInWindow, SkColorSetA(SK_ColorRED, 50));
 #endif // OSMAND_DEBUG
                     continue;
                 }
 
 #if OSMAND_DEBUG && 0
-                addDebugRect2D(boundsInWindow, SkColorSetA(SK_ColorGREEN, 50));
+                getRenderer()->_debugStage.addRect2D(boundsInWindow, SkColorSetA(SK_ColorGREEN, 50));
 #endif // OSMAND_DEBUG
 
                 // Check if correct program is being used
@@ -393,6 +397,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
             }
             else if(const auto& renderable = std::dynamic_pointer_cast<const RenderableSymbolOnPath>(item.value()))
             {
+                const auto& symbol = std::dynamic_pointer_cast<const MapSymbolOnPath>(renderable->mapSymbol);
+                const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
+
                 // Project all world points into the screen
                 QVector<glm::vec2> pointsOnScreen(renderable->subpathPointsInWorld.size());
                 auto* pPointOnScreen = pointsOnScreen.data();
@@ -438,6 +445,70 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 }
 #endif // OSMAND_DEBUG
 
+                if(is2D)
+                {
+                    bool doesntFit = false;
+                    //const auto& subpathPoints = renderable->subpathPointsInWorld;
+                    auto nextSubpathPointIdx = renderable->subpathStartIndex;
+                    float lastSegmentLength = 0.0f;
+                    float segmentsLengthSum = 0.0f;
+                    float prevOffset = 0.0f;
+                    auto pGlyphWidth = symbol->glyphsWidth.constData();
+                    for(int glyphIdx = 0, glyphsCount = symbol->glyphsWidth.size(); glyphIdx < glyphsCount; glyphIdx++, pGlyphWidth++)
+                    {
+                        // Get current glyph anchor offset and provide offset for next glyph
+                        const auto& glyphWidth = *pGlyphWidth;
+                        float anchorOffset = prevOffset + glyphWidth / 2.0f;
+                        prevOffset += glyphWidth;
+
+                        // Get subpath segment, where anchor is located
+                        while(segmentsLengthSum < anchorOffset)
+                        {
+                            const auto& p0 = pointsOnScreen[nextSubpathPointIdx];
+                            if(nextSubpathPointIdx + 1 > renderable->subpathEndIndex)
+                            {
+                                doesntFit = true;
+                                break;
+                            }
+                            const auto& p1 = pointsOnScreen[nextSubpathPointIdx + 1];
+                            lastSegmentLength = glm::distance(p1, p0);
+                            segmentsLengthSum += lastSegmentLength;
+                            nextSubpathPointIdx++;
+                        }
+                        if(doesntFit)
+                            break;
+
+                        // Calculate anchor point
+                        const auto& p0 = pointsOnScreen[nextSubpathPointIdx - 1];
+                        const auto& p1 = pointsOnScreen[nextSubpathPointIdx];
+                        glm::vec2 vp0(p0.x, p0.y);
+                        glm::vec2 vp1(p1.x, p1.y);
+                        const auto vSegment = (vp1 - vp0) / lastSegmentLength;
+                        const auto anchorPoint = vp0 + (anchorOffset - (segmentsLengthSum - lastSegmentLength))*vSegment;
+
+                        //TODO: Calculate rotation angle via direction of segment perpendicular
+                        glm::vec2 vSegmentN(-vSegment.y, vSegment.x);
+                        vSegmentN /= lastSegmentLength;
+
+                        // at this point there's anchor point location and direction of glyph, which is enough for passing to renderer
+                        int i = 5;
+#if OSMAND_DEBUG && 1
+                        getRenderer()->_debugStage.addRect2D(AreaI::fromCenterAndSize(
+                            anchorPoint.x, currentState.windowSize.y - anchorPoint.y,
+                            glyphWidth, gpuResource->height), SkColorSetA(SK_ColorGREEN, 128));
+#endif // OSMAND_DEBUG
+                    }
+
+                    // Do actual draw-call only if symbol fits
+                    if(!doesntFit)
+                    {
+                        //TODO: do draw call
+                    }
+                }
+                else
+                {
+
+                }
                 //TODO: activate and render symbol!!!!
                 int i = 5;
             }
