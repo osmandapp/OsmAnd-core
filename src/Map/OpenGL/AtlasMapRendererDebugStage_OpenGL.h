@@ -55,6 +55,41 @@ namespace OsmAnd
         void renderRects2D();
         void releaseRects2D();
 
+        typedef std::pair< QVector<glm::vec2>, uint32_t> Line2D;
+        QList<Line2D> _lines2D;
+        GLuint _vaoLine2D;
+        GLuint _vboLine2D;
+        GLuint _iboLine2D;
+        struct {
+            GLuint id;
+
+            struct {
+                // Input data
+                struct {
+                    GLint vertexPosition;
+                } in;
+
+                // Parameters
+                struct {
+                    // Common data
+                    GLint mProjectionViewModel;
+                    GLint v0;
+                    GLint v1;
+                } param;
+            } vs;
+
+            struct {
+                // Parameters
+                struct {
+                    // Common data
+                    GLint color;
+                } param;
+            } fs;
+        } _programLine2D;
+        void initializeLines2D();
+        void renderLines2D();
+        void releaseLines2D();
+
         typedef std::pair< QVector<glm::vec3>, uint32_t> Line3D;
         QList<Line3D> _lines3D;
         GLuint _vaoLine3D;
@@ -99,6 +134,7 @@ namespace OsmAnd
 
         void clear();
         void addRect2D(const AreaF& rect, const uint32_t argbColor, const float angle = 0.0f);
+        void addLine2D(const QVector<glm::vec2>& line, const uint32_t argbColor);
         void addLine3D(const QVector<glm::vec3>& line, const uint32_t argbColor);
     };
 }

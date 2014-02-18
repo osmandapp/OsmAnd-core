@@ -526,6 +526,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                         const auto anchorPoint = vp0 + (anchorOffset - (segmentsLengthSum - lastSegmentLength))*vSegment;
 
                         //TODO: Calculate rotation angle via direction of segment perpendicular
+                        //TODO: also, a title may appear upside down, then path walking needs to be reversed!
                         glm::vec2 vSegmentN(-vSegment.y, vSegment.x);
                         vSegmentN /= lastSegmentLength;
 
@@ -556,8 +557,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 {
 
                 }
-                //TODO: activate and render symbol!!!!
-                int i = 5;
             }
         }
 
