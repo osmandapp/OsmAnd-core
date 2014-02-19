@@ -188,7 +188,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
             renderable->subpathStartIndex = 0;
         }
 
-        // For each subpath, determine if it will be rendered in 2D or 3D
+        // For each subpath, determine if it will be rendered in 2D or 3D.
+        //NOTE: This is not quite correct, since it checks entire subpath instead of just occupied part.
         for(auto& renderable : visibleSOPSubpaths)
         {
             const auto& pointsInWorld = renderable->subpathPointsInWorld;
@@ -268,6 +269,20 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 }
                 if(length < symbolWidth)
                 {
+#if OSMAND_DEBUG && 1
+                    {
+                        QVector< glm::vec3 > debugPoints;
+                        for(const auto& pointInWorld : renderable->subpathPointsInWorld)
+                        {
+                            debugPoints.push_back(qMove(glm::vec3(
+                                pointInWorld.x,
+                                0.0f,
+                                pointInWorld.y)));
+                        }
+                        getRenderer()->_debugStage.addLine3D(debugPoints, SkColorSetA(SK_ColorYELLOW, 128));
+                    }
+#endif // OSMAND_DEBUG
+
                     // If length of path is not enough to contain entire symbol, remove this subpath entirely
                     itRenderableSOP.remove();
                     continue;
