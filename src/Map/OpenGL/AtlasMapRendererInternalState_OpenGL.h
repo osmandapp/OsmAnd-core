@@ -38,6 +38,7 @@ namespace OsmAnd
         float projectionPlaneHalfWidth;
         float aspectRatio;
         float fovInRadians;
+        float screenTileSize;
         float nearDistanceFromCameraToTarget;
         float baseDistanceFromCameraToTarget;
         float farDistanceFromCameraToTarget;

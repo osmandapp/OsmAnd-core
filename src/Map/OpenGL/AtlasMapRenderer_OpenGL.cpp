@@ -195,10 +195,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(MapRenderer::InternalS
         _zNear, 1000.0f);
 
     // Calculate limits of camera distance to target and actual distance
-    const auto screenTileSize = getReferenceTileSizeOnScreen(state);
-    internalState->nearDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(internalState->mPerspectiveProjection, state.viewport, TileSize3D / 2.0f, screenTileSize / 2.0f, 1.5f);
-    internalState->baseDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(internalState->mPerspectiveProjection, state.viewport, TileSize3D / 2.0f, screenTileSize / 2.0f, 1.0f);
-    internalState->farDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(internalState->mPerspectiveProjection, state.viewport, TileSize3D / 2.0f, screenTileSize / 2.0f, 0.75f);
+    internalState->screenTileSize = getReferenceTileSizeOnScreen(state);
+    internalState->nearDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(internalState->mPerspectiveProjection, state.viewport, TileSize3D / 2.0f, internalState->screenTileSize / 2.0f, 1.5f);
+    internalState->baseDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(internalState->mPerspectiveProjection, state.viewport, TileSize3D / 2.0f, internalState->screenTileSize / 2.0f, 1.0f);
+    internalState->farDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(internalState->mPerspectiveProjection, state.viewport, TileSize3D / 2.0f, internalState->screenTileSize / 2.0f, 0.75f);
 
     // zoomFraction == [ 0.0 ... 0.5] scales tile [1.0x ... 1.5x]
     // zoomFraction == [-0.5 ...-0.0] scales tile [.75x ... 1.0x]

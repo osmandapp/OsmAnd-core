@@ -77,7 +77,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
         float subpathLength;
         QVector<float> segmentLengths;
         bool is2D;
-        QVector<glm::vec2> pointsOnScreen;
+
+        // 2D-only:
+        QVector<glm::vec2> subpathPointsOnScreen;
         glm::vec2 subpathDirectionOnScreen;
     };
 
@@ -230,7 +232,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
             if(renderable->is2D)
             {
                 // In case SOP needs 2D mode, all points have been projected on the screen already
-                renderable->pointsOnScreen = qMove(pointsOnScreen);
+                renderable->subpathPointsOnScreen = qMove(pointsOnScreen);
             }
             else
             {
@@ -245,88 +247,96 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
         {
             const auto& renderable = itRenderableSOP.next();
             const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
+            const auto& is2D = renderable->is2D;
 
-            if(renderable->is2D)
+            const auto& points = is2D ? renderable->subpathPointsOnScreen : renderable->subpathPointsInWorld;
+            const auto scale = is2D ? 1.0f : (static_cast<float>(AtlasMapRenderer::TileSize3D) / (internalState.screenTileSize*internalState.tileScaleFactor));//TODO: I'm not sure about scale
+            const auto symbolWidth = gpuResource->width*scale;
+            auto& length = renderable->subpathLength;
+            auto& segmentLengths = renderable->segmentLengths;
+            auto& offset = renderable->offset;
+
+            // Calculate offset for 'center' alignment and check if symbol can fit given path
+            auto pPrevPoint = points.constData();
+            auto pPoint = pPrevPoint + 1;
+            length = 0.0f;
+            const auto& pointsCount = points.size();
+            segmentLengths.resize(pointsCount - 1);
+            auto pSegmentLength = segmentLengths.data();
+            for(auto idx = 1; idx < pointsCount; idx++, pPoint++, pPrevPoint++)
             {
-                const auto& points = renderable->pointsOnScreen;
-                const auto& symbolWidth = gpuResource->width;
-                auto& length = renderable->subpathLength;
-                auto& segmentLengths = renderable->segmentLengths;
-                auto& offset = renderable->offset;
-
-                // Calculate offset for 'center' alignment and check if symbol can fit given path
-                auto pPrevPoint = points.constData();
-                auto pPoint = pPrevPoint + 1;
-                length = 0.0f;
-                const auto& pointsCount = points.size();
-                segmentLengths.resize(pointsCount - 1);
-                auto pSegmentLength = segmentLengths.data();
-                for(auto idx = 1; idx < pointsCount; idx++, pPoint++, pPrevPoint++)
-                {
-                    const auto& distance = glm::distance(*pPoint, *pPrevPoint);
-                    *(pSegmentLength++) = distance;
-                    length += distance;
-                }
-                if(length < symbolWidth)
-                {
+                const auto& distance = glm::distance(*pPoint, *pPrevPoint);
+                *(pSegmentLength++) = distance;
+                length += distance;
+            }
+            if(length < symbolWidth)
+            {
 #if OSMAND_DEBUG && 1
+                {
+                    QVector< glm::vec3 > debugPoints;
+                    for(const auto& pointInWorld : renderable->subpathPointsInWorld)
                     {
-                        QVector< glm::vec3 > debugPoints;
-                        for(const auto& pointInWorld : renderable->subpathPointsInWorld)
-                        {
-                            debugPoints.push_back(qMove(glm::vec3(
-                                pointInWorld.x,
-                                0.0f,
-                                pointInWorld.y)));
-                        }
-                        getRenderer()->_debugStage.addLine3D(debugPoints, SkColorSetA(SK_ColorYELLOW, 128));
+                        debugPoints.push_back(qMove(glm::vec3(
+                            pointInWorld.x,
+                            0.0f,
+                            pointInWorld.y)));
                     }
+                    getRenderer()->_debugStage.addLine3D(debugPoints, SkColorSetA(is2D ? SK_ColorYELLOW : SK_ColorBLUE, 128));
+                }
 #endif // OSMAND_DEBUG
 
-                    // If length of path is not enough to contain entire symbol, remove this subpath entirely
-                    itRenderableSOP.remove();
-                    continue;
-                }
-                offset = (length - symbolWidth) / 2.0f;
-
-                // Adjust subpath start index to cut off unused segments
-                auto& startIndex = renderable->subpathStartIndex;
-                float lengthFromStart = 0.0f;
-                float prevLengthFromStart = 0.0f;
-                pSegmentLength = segmentLengths.data();
-                while(lengthFromStart <= offset)
-                {
-                    prevLengthFromStart = lengthFromStart;
-                    lengthFromStart += *(pSegmentLength++);
-                    startIndex++;
-                }
-                startIndex--;
-                assert(startIndex >= 0);
-
-                // Adjust subpath end index to cut off unused segments
-                auto& endIndex = renderable->subpathEndIndex;
-                endIndex = startIndex + 1;
-                while(lengthFromStart <= offset + symbolWidth)
-                {
-                    lengthFromStart += *(pSegmentLength++);
-                    endIndex++;
-                }
-                assert(endIndex < pointsCount);
-                assert(endIndex - startIndex > 0);
-
-                // Adjust offset to reflect the changed
-                offset -= prevLengthFromStart;
-
-                // Calculate direction of used subpath
-                auto& subpathDirectionOnScreen = renderable->subpathDirectionOnScreen;
-                auto pPrevPointOnScreen = points.data() + startIndex;
-                auto pPointOnScreen = pPrevPointOnScreen + 1;
-                for(auto idx = startIndex + 1; idx <= endIndex; idx++, pPrevPointOnScreen++, pPointOnScreen++)
-                    subpathDirectionOnScreen += (*pPointOnScreen - *pPrevPointOnScreen);
-                subpathDirectionOnScreen = glm::normalize(subpathDirectionOnScreen);
+                // If length of path is not enough to contain entire symbol, remove this subpath entirely
+                itRenderableSOP.remove();
+                continue;
             }
+            offset = (length - symbolWidth) / 2.0f;
+
+            // Adjust subpath start index to cut off unused segments
+            auto& startIndex = renderable->subpathStartIndex;
+            float lengthFromStart = 0.0f;
+            float prevLengthFromStart = 0.0f;
+            pSegmentLength = segmentLengths.data();
+            while(lengthFromStart <= offset)
+            {
+                prevLengthFromStart = lengthFromStart;
+                lengthFromStart += *(pSegmentLength++);
+                startIndex++;
+            }
+            startIndex--;
+            assert(startIndex >= 0);
+
+            // Adjust subpath end index to cut off unused segments
+            auto& endIndex = renderable->subpathEndIndex;
+            endIndex = startIndex + 1;
+            while(lengthFromStart <= offset + symbolWidth)
+            {
+                lengthFromStart += *(pSegmentLength++);
+                endIndex++;
+            }
+            assert(endIndex < pointsCount);
+            assert(endIndex - startIndex > 0);
+
+            // Adjust offset to reflect the changed
+            offset -= prevLengthFromStart;
+
+            // Calculate direction of used subpath
+            glm::vec2 subpathDirection;
+            pPrevPoint = points.data() + startIndex;
+            pPoint = pPrevPoint + 1;
+            for(auto idx = startIndex + 1; idx <= endIndex; idx++, pPrevPoint++, pPoint++)
+                subpathDirection += (*pPoint - *pPrevPoint);
+
+            if(is2D)
+                renderable->subpathDirectionOnScreen = glm::normalize(subpathDirection);
             else
-                renderable->offset = 0.0f;
+            {
+                // For 3D SOPs direction is still threated as direction on screen
+                const auto& p0 = points.first();
+                const auto p1 = p0 + subpathDirection;
+                const auto& projectedP0 = glm::project(glm::vec3(p0.x, 0.0f, p0.y), internalState.mCameraView, internalState.mPerspectiveProjection, viewport);
+                const auto& projectedP1 = glm::project(glm::vec3(p1.x, 0.0f, p1.y), internalState.mCameraView, internalState.mPerspectiveProjection, viewport);
+                renderable->subpathDirectionOnScreen = glm::normalize(projectedP1.xy - projectedP0.xy);
+            }
         }
 
         //TODO: this is only valid for 3D SOPs
@@ -571,7 +581,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 
                 if(renderable->is2D)
                 {
-                    const auto& pointsOnScreen = renderable->pointsOnScreen;
+                    const auto& pointsOnScreen = renderable->subpathPointsOnScreen;
                     const auto& subpathDirectionOnScreen = renderable->subpathDirectionOnScreen;
                     const glm::vec2 subpathDirectionOnScreenN(-subpathDirectionOnScreen.y, subpathDirectionOnScreen.x);
                     const auto shouldInvert = (subpathDirectionOnScreenN.y /* horizont.x*dirN.y - horizont.y*dirN.x == 1.0f*dirN.y - 0.0f*dirN.x */) < 0;
