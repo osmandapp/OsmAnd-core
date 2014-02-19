@@ -545,9 +545,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 for(int idx = 0; idx < glyphsCount; idx++, pGlyphWidth += glyphIterationDirection)
                 {
                     // Get current glyph anchor offset and provide offset for next glyph
-                    const auto glyphWidth = (*pGlyphWidth)*scale;
-                    const auto anchorOffset = prevOffset + glyphWidth / 2.0f;
-                    prevOffset += glyphWidth;
+                    const auto& glyphWidth = *pGlyphWidth;
+                    const auto glyphWidthScaled = glyphWidth*scale;
+                    const auto anchorOffset = prevOffset + glyphWidthScaled / 2.0f;
+                    prevOffset += glyphWidthScaled;
 
                     // Get subpath segment, where anchor is located
                     while(segmentsLengthSum < anchorOffset)
@@ -578,7 +579,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                         }
                         if(shouldInvert)
                             vLastSegmentN = -vLastSegmentN;
-                        lastSegmentAngle = qAtan2(vLastSegment.y, vLastSegment.x);
+                        lastSegmentAngle = qAtan2(vLastSegment.y, vLastSegment.x);//TODO: maybe for 3D a -y should be passed (see -1 rotation axis)
                     }
 
                     // Calculate anchor point
@@ -595,7 +596,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 // Draw the glyphs
                 if(renderable->is2D)
                 {
-#if OSMAND_DEBUG && 0
+#if OSMAND_DEBUG && 1
                     for(const auto& glyphLocation : constOf(glyphLocations))
                     {
                         const auto& anchorPoint = std::get<0>(glyphLocation);
@@ -646,19 +647,23 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                         const auto& angle = std::get<2>(glyphLocation);
                         const auto& vN = std::get<3>(glyphLocation);
 
-                        //TODO: ROTATE!
                         const auto& glyphInMapPlane = AreaF::fromCenterAndSize(
                             anchorPoint.x, anchorPoint.y, /* anchor points are specified in world coordinates already */
-                            glyphWidth, gpuResource->height*scale);
+                            glyphWidth*scale, gpuResource->height*scale);
                         const auto& tl = glyphInMapPlane.topLeft;
                         const auto& tr = glyphInMapPlane.topRight();
                         const auto& br = glyphInMapPlane.bottomRight;
                         const auto& bl = glyphInMapPlane.bottomLeft();
-                        const glm::vec3 p0(tl.x, 0.0f, tl.y);
-                        const glm::vec3 p1(tr.x, 0.0f, tr.y);
-                        const glm::vec3 p2(br.x, 0.0f, br.y);
-                        const glm::vec3 p3(bl.x, 0.0f, bl.y);
-                        getRenderer()->_debugStage.addQuad3D(p0, p1, p2, p3, SkColorSetA(SK_ColorGREEN, 128)/*, angle*/);
+                        const glm::vec3 pC(anchorPoint.x, 0.0f, anchorPoint.y);
+                        const glm::vec4 p0(tl.x, 0.0f, tl.y, 1.0f);
+                        const glm::vec4 p1(tr.x, 0.0f, tr.y, 1.0f);
+                        const glm::vec4 p2(br.x, 0.0f, br.y, 1.0f);
+                        const glm::vec4 p3(bl.x, 0.0f, bl.y, 1.0f);
+                        const auto toCenter = glm::translate(-pC);
+                        const auto rotate = glm::rotate(qRadiansToDegrees(angle), glm::vec3(0.0f, -1.0f, 0.0f));
+                        const auto fromCenter = glm::translate(pC);
+                        const auto M = fromCenter*rotate*toCenter;
+                        getRenderer()->_debugStage.addQuad3D((M*p0).xyz, (M*p1).xyz, (M*p2).xyz, (M*p3).xyz, SkColorSetA(SK_ColorGREEN, 128));
 
                         QVector<glm::vec3> lineN;
                         const auto ln0 = anchorPoint;
