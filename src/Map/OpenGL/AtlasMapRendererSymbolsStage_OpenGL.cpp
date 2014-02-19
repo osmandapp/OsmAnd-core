@@ -22,9 +22,11 @@ OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::AtlasMapRendererSymbolsStage_OpenGL
     , _symbolOnPathVAO(0)
     , _symbolOnPathVBO(0)
     , _symbolOnPathIBO(0)
+    , _maxGlyphsPerDrawCallSOP2D(-1)
 {
     memset(&_pinnedSymbolProgram, 0, sizeof(_pinnedSymbolProgram));
-    memset(&_symbolOnPathProgram, 0, sizeof(_symbolOnPathProgram));
+    memset(&_symbolOnPath2dProgram, 0, sizeof(_symbolOnPath2dProgram));
+    _symbolOnPath2dProgram.vs.param.pGlyphs = &_symbolOnPath2dProgram_Glyphs;
 }
 
 OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::~AtlasMapRendererSymbolsStage_OpenGL()
@@ -522,8 +524,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 const glm::vec2 subpathDirectionOnScreenN(-subpathDirectionOnScreen.y, subpathDirectionOnScreen.x);
                 const auto shouldInvert = (subpathDirectionOnScreenN.y /* horizont.x*dirN.y - horizont.y*dirN.x == 1.0f*dirN.y - 0.0f*dirN.x */) < 0;
                 typedef std::tuple<glm::vec2, float, float, glm::vec2> GlyphLocation;
-                QVector<GlyphLocation> glyphLocations;
-                glyphLocations.reserve(symbol->glyphsWidth.size());
+                QVector<GlyphLocation> glyphs;
+                glyphs.reserve(symbol->glyphsWidth.size());
 
                 auto nextSubpathPointIdx = renderable->subpathStartIndex;
                 float lastSegmentLength = 0.0f;
@@ -588,21 +590,121 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     // Add glyph location data
                     GlyphLocation glyphLocation(anchorPoint, glyphWidth, lastSegmentAngle, vLastSegmentN);
                     if(shouldInvert)
-                        glyphLocations.push_front(qMove(glyphLocation));
+                        glyphs.push_front(qMove(glyphLocation));
                     else
-                        glyphLocations.push_back(qMove(glyphLocation));
+                        glyphs.push_back(qMove(glyphLocation));
                 }
 
                 // Draw the glyphs
                 if(renderable->is2D)
                 {
-#if OSMAND_DEBUG && 1
-                    for(const auto& glyphLocation : constOf(glyphLocations))
+                    //TODO: Check intersections
+
+                    // Check if correct program is being used
+                    if(lastUsedProgram != _symbolOnPath2dProgram.id)
                     {
-                        const auto& anchorPoint = std::get<0>(glyphLocation);
-                        const auto& glyphWidth = std::get<1>(glyphLocation);
-                        const auto& angle = std::get<2>(glyphLocation);
-                        const auto& vN = std::get<3>(glyphLocation);
+                        GL_PUSH_GROUP_MARKER("use 'symbol-on-path-2d' program");
+
+                        // Set symbol VAO
+                        gpuAPI->glBindVertexArray_wrapper(_symbolOnPathVAO);
+                        GL_CHECK_RESULT;
+
+                        // Activate program
+                        glUseProgram(_symbolOnPath2dProgram.id);
+                        GL_CHECK_RESULT;
+
+                        // Set orthographic projection matrix
+                        glUniformMatrix4fv(_symbolOnPath2dProgram.vs.param.mOrthographicProjection, 1, GL_FALSE, glm::value_ptr(internalState.mOrthographicProjection));
+                        GL_CHECK_RESULT;
+
+                        // Activate texture block for symbol textures
+                        glActiveTexture(GL_TEXTURE0 + 0);
+                        GL_CHECK_RESULT;
+
+                        // Set proper sampler for texture block
+                        gpuAPI->setTextureBlockSampler(GL_TEXTURE0 + 0, GPUAPI_OpenGL::SamplerType::Symbol);
+
+                        lastUsedProgram = _symbolOnPath2dProgram.id;
+
+                        GL_POP_GROUP_MARKER;
+                    }
+
+                    GL_PUSH_GROUP_MARKER(QString("[MO %1(%2) \"%3\"]")
+                        .arg(symbol->mapObject->id >> 1)
+                        .arg(static_cast<int64_t>(symbol->mapObject->id) / 2)
+                        .arg(qPrintable(symbol->content)));
+
+                    // Set glyph height
+                    glUniform1f(_symbolOnPath2dProgram.vs.param.glyphHeight, gpuResource->height);
+
+                    // Set distance from camera to symbol
+                    glUniform1f(_symbolOnPath2dProgram.vs.param.distanceFromCamera, distanceFromCamera);
+                    GL_CHECK_RESULT;
+
+                    // Activate symbol texture
+                    glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
+                    GL_CHECK_RESULT;
+
+                    // Apply settings from texture block to texture
+                    gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + 0);
+
+                    // Draw chains of glyphs
+                    int glyphsDrawn = 0;
+                    auto pGlyph = glyphs.constData();
+                    auto pGlyphVS = _symbolOnPath2dProgram.vs.param.pGlyphs->constData();
+                    float widthOfPreviousN = 0.0f;
+                    while(glyphsDrawn < glyphsCount)
+                    {
+                        const auto glyphsToDraw = qMin(glyphsCount - glyphsDrawn, _maxGlyphsPerDrawCallSOP2D);
+
+                        for(auto glyphIdx = 0; glyphIdx < glyphsToDraw; glyphIdx++)
+                        {
+                            const auto& glyph = *(pGlyph++);
+                            const auto& vsGlyph = *(pGlyphVS++);
+
+                            // Set anchor point of glyph
+                            const auto& anchorPoint = std::get<0>(glyph);
+                            glUniform2fv(vsGlyph.anchorPoint, 1, glm::value_ptr(anchorPoint));
+                            GL_CHECK_RESULT;
+
+                            // Set glyph width
+                            const auto& width = std::get<1>(glyph);
+                            glUniform1f(vsGlyph.width, width);
+                            GL_CHECK_RESULT;
+
+                            // Set angle
+                            const auto& angle = std::get<2>(glyph);
+                            glUniform1f(vsGlyph.angle, angle);
+                            GL_CHECK_RESULT;
+
+                            // Set normalized width of all previous glyphs
+                            glUniform1f(vsGlyph.widthOfPreviousN, widthOfPreviousN);
+                            GL_CHECK_RESULT;
+
+                            // Set normalized width of this glyph
+                            const auto widthN = width*gpuResource->uTexelSizeN;
+                            glUniform1f(vsGlyph.widthN, widthN);
+                            GL_CHECK_RESULT;
+                            
+                            widthOfPreviousN += widthN;
+                        }
+
+                        // Draw chain of glyphs actually
+                        glDrawElements(GL_TRIANGLES, 6 * glyphsToDraw, GL_UNSIGNED_SHORT, nullptr);
+                        GL_CHECK_RESULT;
+
+                        glyphsDrawn += glyphsToDraw;
+                    }
+                    
+                    GL_POP_GROUP_MARKER;
+
+#if OSMAND_DEBUG && 0
+                    for(const auto& glyph : constOf(glyphs))
+                    {
+                        const auto& anchorPoint = std::get<0>(glyph);
+                        const auto& glyphWidth = std::get<1>(glyph);
+                        const auto& angle = std::get<2>(glyph);
+                        const auto& vN = std::get<3>(glyph);
 
                         getRenderer()->_debugStage.addRect2D(AreaF::fromCenterAndSize(
                             anchorPoint.x, currentState.windowSize.y - anchorPoint.y,
@@ -640,7 +742,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 else
                 {
 #if OSMAND_DEBUG && 1
-                    for(const auto& glyphLocation : constOf(glyphLocations))
+                    for(const auto& glyphLocation : constOf(glyphs))
                     {
                         const auto& anchorPoint = std::get<0>(glyphLocation);
                         const auto& glyphWidth = std::get<1>(glyphLocation);
@@ -941,7 +1043,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releasePinned()
         _pinnedSymbolVAO = 0;
     }
 
-    if(_pinnedSymbolProgram.id)
+    if(_pinnedSymbolProgram.id != 0)
     {
         glDeleteProgram(_pinnedSymbolProgram.id);
         GL_CHECK_RESULT;
@@ -951,11 +1053,290 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releasePinned()
 
 void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath()
 {
+    const auto gpuAPI = getGPUAPI();
+
+    GL_CHECK_PRESENT(glGenBuffers);
+    GL_CHECK_PRESENT(glBindBuffer);
+    GL_CHECK_PRESENT(glBufferData);
+    GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glVertexAttribPointer);
+
+    initializeOnPath2D();
+    initializeOnPath3D();
+
+#pragma pack(push, 1)
+    struct Vertex
+    {
+        // XY coordinates
+        float positionXY[2];
+
+        // Index of glyph
+        unsigned int glyphIndex;
+
+        // UV coordinates
+        float textureUV[2];
+    };
+#pragma pack(pop)
+
+    // Vertex data
+    const Vertex templateVertices[4] =
+    {
+        // In OpenGL, UV origin is BL. But since same rule applies to uploading texture data,
+        // texture in memory is vertically flipped, so swap bottom and top UVs
+        { { -0.5f, -0.5f }, 0, { 0.0f, 1.0f } },//BL
+        { { -0.5f,  0.5f }, 0, { 0.0f, 0.0f } },//TL
+        { {  0.5f,  0.5f }, 0, { 1.0f, 0.0f } },//TR
+        { {  0.5f, -0.5f }, 0, { 1.0f, 1.0f } } //BR
+    };
+    QVector<Vertex> vertices(4 * _maxGlyphsPerDrawCallSOP2D);
+    auto pVertex = vertices.data();
+    for(int glyphIdx = 0; glyphIdx < _maxGlyphsPerDrawCallSOP2D; glyphIdx++)
+    {
+        auto& p0 = *(pVertex++);
+        p0 = templateVertices[0];
+        p0.glyphIndex = glyphIdx;
+
+        auto& p1 = *(pVertex++);
+        p1 = templateVertices[1];
+        p1.glyphIndex = glyphIdx;
+
+        auto& p2 = *(pVertex++);
+        p2 = templateVertices[2];
+        p2.glyphIndex = glyphIdx;
+
+        auto& p3 = *(pVertex++);
+        p3 = templateVertices[3];
+        p3.glyphIndex = glyphIdx;
+    }
+
+    // Index data
+    QVector<GLushort> indices(6 * _maxGlyphsPerDrawCallSOP2D);
+    auto pIndex = indices.data();
+    for(int glyphIdx = 0; glyphIdx < _maxGlyphsPerDrawCallSOP2D; glyphIdx++)
+    {
+        *(pIndex++) = glyphIdx*4 + 0;
+        *(pIndex++) = glyphIdx*4 + 1;
+        *(pIndex++) = glyphIdx*4 + 2;
+
+        *(pIndex++) = glyphIdx*4 + 0;
+        *(pIndex++) = glyphIdx*4 + 2;
+        *(pIndex++) = glyphIdx*4 + 3;
+    }
+
+    // Create Vertex Array Object
+    gpuAPI->glGenVertexArrays_wrapper(1, &_symbolOnPathVAO);
+    GL_CHECK_RESULT;
+    gpuAPI->glBindVertexArray_wrapper(_symbolOnPathVAO);
+    GL_CHECK_RESULT;
+
+    // Create vertex buffer and associate it with VAO
+    glGenBuffers(1, &_symbolOnPathVBO);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ARRAY_BUFFER, _symbolOnPathVBO);
+    GL_CHECK_RESULT;
+    glBufferData(GL_ARRAY_BUFFER, vertices.size()*sizeof(Vertex), vertices.constData(), GL_STATIC_DRAW);
+    GL_CHECK_RESULT;
+    glEnableVertexAttribArray(_symbolOnPath2dProgram.vs.in.vertexPosition);
+    GL_CHECK_RESULT;
+    glVertexAttribPointer(_symbolOnPath2dProgram.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, positionXY)));
+    GL_CHECK_RESULT;
+    glEnableVertexAttribArray(_symbolOnPath2dProgram.vs.in.glyphIndex);
+    GL_CHECK_RESULT;
+    glVertexAttribPointer(_symbolOnPath2dProgram.vs.in.glyphIndex, 1, GL_UNSIGNED_INT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, glyphIndex)));
+    GL_CHECK_RESULT;
+    glEnableVertexAttribArray(_symbolOnPath2dProgram.vs.in.vertexTexCoords);
+    GL_CHECK_RESULT;
+    glVertexAttribPointer(_symbolOnPath2dProgram.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, textureUV)));
+    GL_CHECK_RESULT;
+    //glEnableVertexAttribArray(_pinnedSymbolProgram.vs.in.vertexPosition);
+    //GL_CHECK_RESULT;
+    //glVertexAttribPointer(_pinnedSymbolProgram.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, positionXY)));
+    //GL_CHECK_RESULT;
+    //glEnableVertexAttribArray(_pinnedSymbolProgram.vs.in.vertexTexCoords);
+    //GL_CHECK_RESULT;
+    //glVertexAttribPointer(_pinnedSymbolProgram.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, textureUV)));
+    //GL_CHECK_RESULT;
+
+    // Create index buffer and associate it with VAO
+    glGenBuffers(1, &_symbolOnPathIBO);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _symbolOnPathIBO);
+    GL_CHECK_RESULT;
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size()*sizeof(GLushort), indices.constData(), GL_STATIC_DRAW);
+    GL_CHECK_RESULT;
+
+    gpuAPI->glBindVertexArray_wrapper(0);
+    GL_CHECK_RESULT;
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
+{
+    const auto gpuAPI = getGPUAPI();
+
+    _maxGlyphsPerDrawCallSOP2D = (gpuAPI->maxVertexUniformVectors - 8) / 5;
+
+    // Compile vertex shader
+    const QString vertexShader = QLatin1String(
+        // Input data
+        "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
+        "INPUT uint in_vs_glyphIndex;                                                                                       ""\n"
+        "INPUT vec2 in_vs_vertexTexCoords;                                                                                  ""\n"
+        "                                                                                                                   ""\n"
+        // Output data to next shader stages
+        "PARAM_OUTPUT vec2 v2f_texCoords;                                                                                   ""\n"
+        "                                                                                                                   ""\n"
+        // Parameters: common data
+        "uniform mat4 param_vs_mOrthographicProjection;                                                                     ""\n"
+        "                                                                                                                   ""\n"
+        // Parameters: per-symbol data
+        "uniform float param_vs_glyphHeight;                                                                                ""\n"
+        "uniform float param_vs_distanceFromCamera;                                                                         ""\n"
+        "                                                                                                                   ""\n"
+        // Parameters: per-glyph data
+        "struct Glyph                                                                                                       ""\n"
+        "{                                                                                                                  ""\n"
+        "    vec2 anchorPoint;                                                                                              ""\n"
+        "    float width;                                                                                                   ""\n"
+        "    float angle;                                                                                                   ""\n"
+        "    float widthOfPreviousN;                                                                                        ""\n"
+        "    float widthN;                                                                                                  ""\n"
+        "};                                                                                                                 ""\n"
+        "uniform Glyph param_vs_glyphs[%MaxGlyphsPerDrawCall%];                                                             ""\n"
+        "                                                                                                                   ""\n"
+        "void main()                                                                                                        ""\n"
+        "{                                                                                                                  ""\n"
+        "    Glyph glyph = param_vs_glyphs[in_vs_glyphIndex];                                                               ""\n"
+        "                                                                                                                   ""\n"
+        // Get on-screen vertex coordinates
+        "    float cos_a = cos(glyph.angle);                                                                                ""\n"
+        "    float sin_a = sin(glyph.angle);                                                                                ""\n"
+        "    vec2 p;                                                                                                        ""\n"
+        "    p.x = in_vs_vertexPosition.x * glyph.width;                                                                    ""\n"
+        "    p.y = in_vs_vertexPosition.y * param_vs_glyphHeight;                                                           ""\n"
+        "    vec4 v;                                                                                                        ""\n"
+        "    v.x = glyph.anchorPoint.x + p.x*cos_a - p.y*sin_a;                                                             ""\n"
+        "    v.y = glyph.anchorPoint.y + p.x*sin_a + p.y*cos_a;                                                             ""\n"
+        "    v.z = -param_vs_distanceFromCamera;                                                                            ""\n"
+        "    v.w = 1.0;                                                                                                     ""\n"
+        "    gl_Position = param_vs_mOrthographicProjection * v;                                                            ""\n"
+        "                                                                                                                   ""\n"
+        // Prepare texture coordinates
+        "    v2f_texCoords.s = glyph.widthOfPreviousN + in_vs_vertexTexCoords.s*glyph.widthN;                               ""\n"
+        "    v2f_texCoords.t = in_vs_vertexTexCoords.t; // Height is compatible as-is                                       ""\n"
+        "}                                                                                                                  ""\n");
+    auto preprocessedVertexShader = vertexShader;
+    preprocessedVertexShader.replace("%MaxGlyphsPerDrawCall%", QString::number(_maxGlyphsPerDrawCallSOP2D));
+    gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+    gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+    const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+    assert(vsId != 0);
+
+    // Compile fragment shader
+    const QString fragmentShader = QLatin1String(
+        // Input data
+        "PARAM_INPUT vec2 v2f_texCoords;                                                                                    ""\n"
+        "                                                                                                                   ""\n"
+        // Parameters: common data
+        // Parameters: per-symbol data
+        "uniform lowp sampler2D param_fs_sampler;                                                                           ""\n"
+        "                                                                                                                   ""\n"
+        "void main()                                                                                                        ""\n"
+        "{                                                                                                                  ""\n"
+        "    FRAGMENT_COLOR_OUTPUT = SAMPLE_TEXTURE_2D(                                                                     ""\n"
+        "        param_fs_sampler,                                                                                          ""\n"
+        "        v2f_texCoords);                                                                                            ""\n"
+        "}                                                                                                                  ""\n");
+    auto preprocessedFragmentShader = fragmentShader;
+    QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
+    gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
+    gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
+    const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+    assert(fsId != 0);
+
+    // Link everything into program object
+    GLuint shaders[] = { vsId, fsId };
+    _symbolOnPath2dProgram.id = gpuAPI->linkProgram(2, shaders);
+    assert(_symbolOnPath2dProgram.id != 0);
+
+    gpuAPI->clearVariablesLookup();
+    gpuAPI->findVariableLocation(_symbolOnPath2dProgram.id, _symbolOnPath2dProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
+    gpuAPI->findVariableLocation(_symbolOnPath2dProgram.id, _symbolOnPath2dProgram.vs.in.glyphIndex, "in_vs_glyphIndex", GLShaderVariableType::In);
+    gpuAPI->findVariableLocation(_symbolOnPath2dProgram.id, _symbolOnPath2dProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
+    gpuAPI->findVariableLocation(_symbolOnPath2dProgram.id, _symbolOnPath2dProgram.vs.param.mOrthographicProjection, "param_vs_mOrthographicProjection", GLShaderVariableType::Uniform);
+    gpuAPI->findVariableLocation(_symbolOnPath2dProgram.id, _symbolOnPath2dProgram.vs.param.glyphHeight, "param_vs_glyphHeight", GLShaderVariableType::Uniform);
+    gpuAPI->findVariableLocation(_symbolOnPath2dProgram.id, _symbolOnPath2dProgram.vs.param.distanceFromCamera, "param_vs_distanceFromCamera", GLShaderVariableType::Uniform);
+    auto& glyphs = *_symbolOnPath2dProgram.vs.param.pGlyphs;
+    glyphs.resize(_maxGlyphsPerDrawCallSOP2D);
+    int glyphStructIndex = 0;
+    for(auto& glyph : glyphs)
+    {
+        const auto glyphStructPrefix =
+            QString::fromLatin1("param_vs_glyphs[%glyphIndex%]").replace(QLatin1String("%glyphIndex%"), QString::number(glyphStructIndex++));
+
+        gpuAPI->findVariableLocation(_symbolOnPath2dProgram.id, glyph.anchorPoint, glyphStructPrefix + ".anchorPoint", GLShaderVariableType::Uniform);
+        gpuAPI->findVariableLocation(_symbolOnPath2dProgram.id, glyph.width, glyphStructPrefix + ".width", GLShaderVariableType::Uniform);
+        gpuAPI->findVariableLocation(_symbolOnPath2dProgram.id, glyph.angle, glyphStructPrefix + ".angle", GLShaderVariableType::Uniform);
+        gpuAPI->findVariableLocation(_symbolOnPath2dProgram.id, glyph.widthOfPreviousN, glyphStructPrefix + ".widthOfPreviousN", GLShaderVariableType::Uniform);
+        gpuAPI->findVariableLocation(_symbolOnPath2dProgram.id, glyph.widthN, glyphStructPrefix + ".widthN", GLShaderVariableType::Uniform);
+    }
+    gpuAPI->findVariableLocation(_symbolOnPath2dProgram.id, _symbolOnPath2dProgram.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
+    gpuAPI->clearVariablesLookup();
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
+{
 
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath()
 {
+    const auto gpuAPI = getGPUAPI();
 
+    GL_CHECK_PRESENT(glDeleteBuffers);
+    GL_CHECK_PRESENT(glDeleteProgram);
+
+    if(_symbolOnPathIBO != 0)
+    {
+        glDeleteBuffers(1, &_symbolOnPathIBO);
+        GL_CHECK_RESULT;
+        _symbolOnPathIBO = 0;
+    }
+    if(_symbolOnPathVBO != 0)
+    {
+        glDeleteBuffers(1, &_symbolOnPathVBO);
+        GL_CHECK_RESULT;
+        _symbolOnPathVBO = 0;
+    }
+    if(_symbolOnPathVAO != 0)
+    {
+        gpuAPI->glDeleteVertexArrays_wrapper(1, &_symbolOnPathVAO);
+        GL_CHECK_RESULT;
+        _symbolOnPathVAO = 0;
+    }
+
+    releaseOnPath3D();
+    releaseOnPath2D();
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D()
+{
+    if(_symbolOnPath2dProgram.id != 0)
+    {
+        glDeleteProgram(_symbolOnPath2dProgram.id);
+        GL_CHECK_RESULT;
+        memset(&_symbolOnPath2dProgram, 0, sizeof(_symbolOnPath2dProgram));
+        _symbolOnPath2dProgram_Glyphs.clear();
+        _symbolOnPath2dProgram.vs.param.pGlyphs = &_symbolOnPath2dProgram_Glyphs;
+    }
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath3D()
+{
+    /*if(_pinnedSymbolProgram.id)
+    {
+        glDeleteProgram(_pinnedSymbolProgram.id);
+        GL_CHECK_RESULT;
+        memset(&_pinnedSymbolProgram, 0, sizeof(_pinnedSymbolProgram));
+    }*/
 }
 

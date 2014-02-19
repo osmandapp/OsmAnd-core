@@ -202,7 +202,7 @@ namespace OsmAnd
             const std::shared_ptr<AtlasTextureInGPU> atlasTexture;
             const uint32_t slotIndex;
         };
-    
+
     private:
 #if OSMAND_DEBUG
         mutable QMutex _allocatedResourcesMutex;

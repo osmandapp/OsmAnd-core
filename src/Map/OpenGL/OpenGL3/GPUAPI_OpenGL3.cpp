@@ -106,13 +106,30 @@ bool OsmAnd::GPUAPI_OpenGL3::initialize()
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units (combined) %d", maxTextureUnitsCombined);
 
+    // According to http://www.opengl.org/wiki/GLSL_Uniform ("Implementation limits") , this will give incorrect results for AMD/ATI
     glGetIntegerv(GL_MAX_VERTEX_UNIFORM_VECTORS, &_maxVertexUniformVectors);
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal 4-component parameters in vertex shader %d", _maxVertexUniformVectors);
 
+    GLint maxVertexUniformComponents;
+    glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS, &maxVertexUniformComponents);
+    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal parameters in vertex shader %d", maxVertexUniformComponents);
+    _maxVertexUniformVectors = maxVertexUniformComponents / 4; // Workaround for AMD/ATI (see above)
+
+    // According to http://www.opengl.org/wiki/GLSL_Uniform ("Implementation limits") , this will give incorrect results for AMD/ATI
     glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_VECTORS, &_maxFragmentUniformVectors);
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal 4-component parameters in fragment shader %d", _maxFragmentUniformVectors);
+
+    GLint maxFragmentUniformComponents;
+    glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, &maxFragmentUniformComponents);
+    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal parameters in fragment shader %d", maxFragmentUniformComponents);
+    _maxFragmentUniformVectors = maxFragmentUniformComponents / 4; // Workaround for AMD/ATI (see above)
+
+    GLint maxUniformLocations;
+    glGetIntegerv(GL_MAX_UNIFORM_LOCATIONS, &maxUniformLocations);
+    GL_CHECK_RESULT;
+    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal defined parameters %d", maxUniformLocations);
 
     GLint numExtensions = 0;
     glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);

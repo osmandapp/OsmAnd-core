@@ -62,6 +62,14 @@ namespace OsmAnd
         GLuint _symbolOnPathVAO;
         GLuint _symbolOnPathVBO;
         GLuint _symbolOnPathIBO;
+        struct Glyph
+        {
+            GLint anchorPoint;
+            GLint width;
+            GLint angle;
+            GLint widthOfPreviousN;
+            GLint widthN;
+        };
         struct {
             GLuint id;
 
@@ -69,21 +77,21 @@ namespace OsmAnd
                 // Input data
                 struct {
                     GLint vertexPosition;
+                    GLint glyphIndex;
                     GLint vertexTexCoords;
                 } in;
 
                 // Parameters
                 struct {
                     // Common data
-                    GLint mPerspectiveProjectionView;
                     GLint mOrthographicProjection;
-                    GLint viewport;
 
                     // Per-symbol data
-                    GLint symbolOffsetFromTarget;
-                    GLint symbolSize;
+                    GLint glyphHeight;
                     GLint distanceFromCamera;
-                    GLint onScreenOffset;
+
+                    // Per-glyph data
+                    QVector<Glyph>* pGlyphs;
                 } param;
             } vs;
 
@@ -96,9 +104,15 @@ namespace OsmAnd
                     GLint sampler;
                 } param;
             } fs;
-        } _symbolOnPathProgram;
+        } _symbolOnPath2dProgram;
+        QVector<Glyph> _symbolOnPath2dProgram_Glyphs;
+        GLint _maxGlyphsPerDrawCallSOP2D;
         void initializeOnPath();
+        void initializeOnPath2D();
+        void initializeOnPath3D();
         void releaseOnPath();
+        void releaseOnPath2D();
+        void releaseOnPath3D();
     public:
         AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer);
         virtual ~AtlasMapRendererSymbolsStage_OpenGL();
