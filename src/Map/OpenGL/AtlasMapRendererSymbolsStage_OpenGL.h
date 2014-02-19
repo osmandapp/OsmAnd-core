@@ -107,6 +107,42 @@ namespace OsmAnd
         } _symbolOnPath2dProgram;
         QVector<Glyph> _symbolOnPath2dProgram_Glyphs;
         GLint _maxGlyphsPerDrawCallSOP2D;
+        struct {
+            GLuint id;
+
+            struct {
+                // Input data
+                struct {
+                    GLint vertexPosition;
+                    GLint glyphIndex;
+                    GLint vertexTexCoords;
+                } in;
+
+                // Parameters
+                struct {
+                    // Common data
+                    GLint mPerspectiveProjectionView;
+
+                    // Per-symbol data
+                    GLint glyphHeight;
+
+                    // Per-glyph data
+                    QVector<Glyph>* pGlyphs;
+                } param;
+            } vs;
+
+            struct {
+                // Parameters
+                struct {
+                    // Common data
+
+                    // Per-symbol data
+                    GLint sampler;
+                } param;
+            } fs;
+        } _symbolOnPath3dProgram;
+        QVector<Glyph> _symbolOnPath3dProgram_Glyphs;
+        GLint _maxGlyphsPerDrawCallSOP3D;
         void initializeOnPath();
         void initializeOnPath2D();
         void initializeOnPath3D();
