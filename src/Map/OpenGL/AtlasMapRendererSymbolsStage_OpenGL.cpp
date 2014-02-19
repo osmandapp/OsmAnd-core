@@ -274,7 +274,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
             }
             if(length < symbolWidth)
             {
-#if OSMAND_DEBUG && 1
+#if OSMAND_DEBUG && 0
                 {
                     QVector< glm::vec3 > debugPoints;
                     for(const auto& pointInWorld : renderable->subpathPointsInWorld)
@@ -502,7 +502,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 const auto& symbol = std::dynamic_pointer_cast<const MapSymbolOnPath>(renderable->mapSymbol);
                 const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
 
-#if OSMAND_DEBUG && 1
+#if OSMAND_DEBUG && 0
                 {
                     QVector< glm::vec3 > debugPoints;
                     for(const auto& pointInWorld : renderable->subpathPointsInWorld)
