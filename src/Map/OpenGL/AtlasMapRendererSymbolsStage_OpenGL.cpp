@@ -646,9 +646,19 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                         const auto& angle = std::get<2>(glyphLocation);
                         const auto& vN = std::get<3>(glyphLocation);
 
-                        /*getRenderer()->_debugStage.addRect2D(AreaF::fromCenterAndSize(
-                            anchorPoint.x, currentState.windowSize.y - anchorPoint.y,
-                            glyphWidth, gpuResource->height), SkColorSetA(SK_ColorGREEN, 128), angle);*/
+                        //TODO: ROTATE!
+                        const auto& glyphInMapPlane = AreaF::fromCenterAndSize(
+                            anchorPoint.x, anchorPoint.y, /* anchor points are specified in world coordinates already */
+                            glyphWidth, gpuResource->height*scale);
+                        const auto& tl = glyphInMapPlane.topLeft;
+                        const auto& tr = glyphInMapPlane.topRight();
+                        const auto& br = glyphInMapPlane.bottomRight;
+                        const auto& bl = glyphInMapPlane.bottomLeft();
+                        const glm::vec3 p0(tl.x, 0.0f, tl.y);
+                        const glm::vec3 p1(tr.x, 0.0f, tr.y);
+                        const glm::vec3 p2(br.x, 0.0f, br.y);
+                        const glm::vec3 p3(bl.x, 0.0f, bl.y);
+                        getRenderer()->_debugStage.addQuad3D(p0, p1, p2, p3, SkColorSetA(SK_ColorGREEN, 128)/*, angle*/);
 
                         QVector<glm::vec3> lineN;
                         const auto ln0 = anchorPoint;

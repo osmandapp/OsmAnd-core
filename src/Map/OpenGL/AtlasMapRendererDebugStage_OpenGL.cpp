@@ -777,7 +777,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeQuads3D()
     GL_CHECK_RESULT;
     glEnableVertexAttribArray(_programQuad3D.vs.in.vertexPosition);
     GL_CHECK_RESULT;
-    glVertexAttribPointer(_programQuad3D.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(float)*4, nullptr);
+    glVertexAttribPointer(_programQuad3D.vs.in.vertexPosition, 4, GL_FLOAT, GL_FALSE, sizeof(float)*4, nullptr);
     GL_CHECK_RESULT;
 
     // Create index buffer and associate it with VAO
