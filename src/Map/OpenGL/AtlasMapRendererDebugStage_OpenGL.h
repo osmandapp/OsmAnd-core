@@ -124,6 +124,43 @@ namespace OsmAnd
         void initializeLines3D();
         void renderLines3D();
         void releaseLines3D();
+
+        typedef std::tuple< glm::vec3, glm::vec3, glm::vec3, glm::vec3, uint32_t> Quad3D;
+        QList<Quad3D> _quads3D;
+        GLuint _vaoQuad3D;
+        GLuint _vboQuad3D;
+        GLuint _iboQuad3D;
+        struct {
+            GLuint id;
+
+            struct {
+                // Input data
+                struct {
+                    GLint vertexPosition;
+                } in;
+
+                // Parameters
+                struct {
+                    // Common data
+                    GLint mProjectionViewModel;
+                    GLint v0;
+                    GLint v1;
+                    GLint v2;
+                    GLint v3;
+                } param;
+            } vs;
+
+            struct {
+                // Parameters
+                struct {
+                    // Common data
+                    GLint color;
+                } param;
+            } fs;
+        } _programQuad3D;
+        void initializeQuads3D();
+        void renderQuads3D();
+        void releaseQuads3D();
     public:
         AtlasMapRendererDebugStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer);
         virtual ~AtlasMapRendererDebugStage_OpenGL();
@@ -136,6 +173,7 @@ namespace OsmAnd
         void addRect2D(const AreaF& rect, const uint32_t argbColor, const float angle = 0.0f);
         void addLine2D(const QVector<glm::vec2>& line, const uint32_t argbColor);
         void addLine3D(const QVector<glm::vec3>& line, const uint32_t argbColor);
+        void addQuad3D(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3, const uint32_t argbColor);
     };
 }
 
