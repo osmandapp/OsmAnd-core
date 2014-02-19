@@ -234,7 +234,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
             }
             else
             {
-                //TODO: OTHERWISE, NOTHING CAN BE DONE!
+                //NOTE: Well, actually nothing to do here.
             }
         }
 

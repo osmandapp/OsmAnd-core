@@ -44,6 +44,7 @@ if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAK
 	file(GLOB sources_opengl "src/Map/OpenGL/*.c*")
 	file(GLOB headers_opengl "src/Map/OpenGL/*.h*")
 	set(target_specific_public_definitions ${target_specific_public_definitions}
+		-DOSMAND_GLM_AVAILABLE
 		-DGLM_SWIZZLE
 	)
 	set(target_specific_public_includes ${target_specific_public_includes}

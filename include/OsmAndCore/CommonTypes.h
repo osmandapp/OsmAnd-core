@@ -7,6 +7,10 @@
 #include <QtGlobal>
 #include <QString>
 
+#if defined(OSMAND_GLM_AVAILABLE)
+#   include <glm/glm.hpp>
+#endif // defined(OSMAND_GLM_AVAILABLE)
+
 #include <OsmAndCore.h>
 
 namespace OsmAnd
@@ -115,6 +119,7 @@ namespace OsmAnd
             y /= r;
             return *this;
         }
+#endif // !defined(SWIG)
 
         inline LargerUnsignedCoordType squareNorm() const
         {
@@ -127,7 +132,13 @@ namespace OsmAnd
         {
             return static_cast<T>(qSqrt(squareNorm()));
         }
-#endif // !defined(SWIG)
+
+#if defined(OSMAND_GLM_AVAILABLE)
+        inline operator glm::detail::tvec2<T>() const
+        {
+            return glm::detail::tvec2<T>(x, y);
+        }
+#endif // defined(OSMAND_GLM_AVAILABLE)
     private:
         static inline bool equal(const double a, const double b)
         {
