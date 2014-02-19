@@ -1071,7 +1071,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath()
         float positionXY[2];
 
         // Index of glyph
-        unsigned int glyphIndex;
+        //NOTE: Here should be int to omit conversion float->int, but it's not supported in OpenGLES 2.0
+        float glyphIndex;
 
         // UV coordinates
         float textureUV[2];
@@ -1142,7 +1143,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath()
     GL_CHECK_RESULT;
     glEnableVertexAttribArray(_symbolOnPath2dProgram.vs.in.glyphIndex);
     GL_CHECK_RESULT;
-    glVertexAttribPointer(_symbolOnPath2dProgram.vs.in.glyphIndex, 1, GL_UNSIGNED_INT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, glyphIndex)));
+    //NOTE: Here should be glVertexAttribIPointer to omit conversion float->int, but it's not supported in OpenGLES 2.0
+    glVertexAttribPointer(_symbolOnPath2dProgram.vs.in.glyphIndex, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, glyphIndex)));
     GL_CHECK_RESULT;
     glEnableVertexAttribArray(_symbolOnPath2dProgram.vs.in.vertexTexCoords);
     GL_CHECK_RESULT;
@@ -1179,7 +1181,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
     const QString vertexShader = QLatin1String(
         // Input data
         "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
-        "INPUT uint in_vs_glyphIndex;                                                                                       ""\n"
+        "INPUT float in_vs_glyphIndex;                                                                                       ""\n"
         "INPUT vec2 in_vs_vertexTexCoords;                                                                                  ""\n"
         "                                                                                                                   ""\n"
         // Output data to next shader stages
@@ -1205,7 +1207,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
-        "    Glyph glyph = param_vs_glyphs[in_vs_glyphIndex];                                                               ""\n"
+        "    Glyph glyph = param_vs_glyphs[int(in_vs_glyphIndex)];                                                          ""\n"
         "                                                                                                                   ""\n"
         // Get on-screen vertex coordinates
         "    float cos_a = cos(glyph.angle);                                                                                ""\n"
