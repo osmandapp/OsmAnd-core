@@ -196,7 +196,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
             // Calculate 'incline' of each part of path segment and compare to horizontal direction.
             // If any 'incline' is larger than 15 degrees, this segment is rendered in the map plane.
             renderable->is2D = true;
-            auto& subpathDirectionOnScreen = renderable->subpathDirectionOnScreen;
             const auto inclineThresholdSinSq = 0.0669872981f; // qSin(qDegreesToRadians(15.0f))*qSin(qDegreesToRadians(15.0f))
             auto pPointInWorld = pointsInWorld.constData();
             const auto& pointInWorld0 = *(pPointInWorld++);
@@ -224,14 +223,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     break;
                 }
 
-                subpathDirectionOnScreen += (pointOnScreen - prevPointOnScreen);
                 prevPointOnScreen = pointOnScreen;
             }
 
             if(renderable->is2D)
             {
                 // In case SOP needs 2D mode, all points have been projected on the screen already
-                subpathDirectionOnScreen = glm::normalize(subpathDirectionOnScreen);
                 renderable->pointsOnScreen = qMove(pointsOnScreen);
             }
             else
@@ -242,17 +239,23 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 
         // Adjust SOPs placement on path
         //TODO: improve significantly to place as much SOPs as possible by moving them around. Currently it just centers SOP on path
-        for(auto& renderable : visibleSOPSubpaths)
+        QMutableListIterator<RenderableSymbolOnPathEntry> itRenderableSOP(visibleSOPSubpaths);
+        while(itRenderableSOP.hasNext())
         {
+            const auto& renderable = itRenderableSOP.next();
             const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
 
             if(renderable->is2D)
             {
                 const auto& points = renderable->pointsOnScreen;
-                auto pPrevPoint = points.constData();
-                auto pPoint = pPrevPoint + 1;
+                const auto& symbolWidth = gpuResource->width;
                 auto& length = renderable->subpathLength;
                 auto& segmentLengths = renderable->segmentLengths;
+                auto& offset = renderable->offset;
+
+                // Calculate offset for 'center' alignment and check if symbol can fit given path
+                auto pPrevPoint = points.constData();
+                auto pPoint = pPrevPoint + 1;
                 length = 0.0f;
                 const auto& pointsCount = points.size();
                 segmentLengths.resize(pointsCount - 1);
@@ -263,7 +266,49 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     *(pSegmentLength++) = distance;
                     length += distance;
                 }
-                renderable->offset = (length - gpuResource->width) / 2.0f;
+                if(length < symbolWidth)
+                {
+                    // If length of path is not enough to contain entire symbol, remove this subpath entirely
+                    itRenderableSOP.remove();
+                    continue;
+                }
+                offset = (length - symbolWidth) / 2.0f;
+
+                // Adjust subpath start index to cut off unused segments
+                auto& startIndex = renderable->subpathStartIndex;
+                float lengthFromStart = 0.0f;
+                float prevLengthFromStart = 0.0f;
+                pSegmentLength = segmentLengths.data();
+                while(lengthFromStart <= offset)
+                {
+                    prevLengthFromStart = lengthFromStart;
+                    lengthFromStart += *(pSegmentLength++);
+                    startIndex++;
+                }
+                startIndex--;
+                assert(startIndex >= 0);
+
+                // Adjust subpath end index to cut off unused segments
+                auto& endIndex = renderable->subpathEndIndex;
+                endIndex = startIndex + 1;
+                while(lengthFromStart <= offset + symbolWidth)
+                {
+                    lengthFromStart += *(pSegmentLength++);
+                    endIndex++;
+                }
+                assert(endIndex < pointsCount);
+                assert(endIndex - startIndex > 0);
+
+                // Adjust offset to reflect the changed
+                offset -= prevLengthFromStart;
+
+                // Calculate direction of used subpath
+                auto& subpathDirectionOnScreen = renderable->subpathDirectionOnScreen;
+                auto pPrevPointOnScreen = points.data() + startIndex;
+                auto pPointOnScreen = pPrevPointOnScreen + 1;
+                for(auto idx = startIndex + 1; idx <= endIndex; idx++, pPrevPointOnScreen++, pPointOnScreen++)
+                    subpathDirectionOnScreen += (*pPointOnScreen - *pPrevPointOnScreen);
+                subpathDirectionOnScreen = glm::normalize(subpathDirectionOnScreen);
             }
             else
                 renderable->offset = 0.0f;
@@ -515,7 +560,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     const auto& subpathDirectionOnScreen = renderable->subpathDirectionOnScreen;
                     const glm::vec2 subpathDirectionOnScreenN(-subpathDirectionOnScreen.y, subpathDirectionOnScreen.x);
                     const auto shouldInvert = (subpathDirectionOnScreenN.y /* horizont.x*dirN.y - horizont.y*dirN.x == 1.0f*dirN.y - 0.0f*dirN.x */) < 0;
-                    bool doesntFit = false;
                     typedef std::tuple<glm::vec2, float, float, glm::vec2> GlyphLocation;
                     QVector<GlyphLocation> glyphLocations;
                     glyphLocations.reserve(symbol->glyphsWidth.size());
@@ -548,11 +592,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                         while(segmentsLengthSum < anchorOffset)
                         {
                             const auto& p0 = pointsOnScreen[nextSubpathPointIdx];
-                            if(nextSubpathPointIdx + 1 > renderable->subpathEndIndex)
-                            {
-                                doesntFit = true;
-                                break;
-                            }
+                            assert(nextSubpathPointIdx + 1 <= renderable->subpathEndIndex);
                             const auto& p1 = pointsOnScreen[nextSubpathPointIdx + 1];
                             lastSegmentLength = renderable->segmentLengths[nextSubpathPointIdx];
                             segmentsLengthSum += lastSegmentLength;
@@ -569,8 +609,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                                 vLastSegmentN = -vLastSegmentN;
                             lastSegmentAngle = qAtan2(vLastSegment.y, vLastSegment.x);
                         }
-                        if(doesntFit)
-                            break;
 
                         // Calculate anchor point
                         const auto anchorPoint = vLastPoint0 + (anchorOffset - (segmentsLengthSum - lastSegmentLength))*vLastSegment;
@@ -583,42 +621,48 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                             glyphLocations.push_back(qMove(glyphLocation));
                     }
 
-                    // Do actual draw-call only if symbol fits
-                    if(!doesntFit)
-                    {
 #if OSMAND_DEBUG && 1
-                        for(const auto& glyphLocation : constOf(glyphLocations))
-                        {
-                            const auto& anchorPoint = std::get<0>(glyphLocation);
-                            const auto& glyphWidth = std::get<1>(glyphLocation);
-                            const auto& angle = std::get<2>(glyphLocation);
-                            const auto& vN = std::get<3>(glyphLocation);
+                    for(const auto& glyphLocation : constOf(glyphLocations))
+                    {
+                        const auto& anchorPoint = std::get<0>(glyphLocation);
+                        const auto& glyphWidth = std::get<1>(glyphLocation);
+                        const auto& angle = std::get<2>(glyphLocation);
+                        const auto& vN = std::get<3>(glyphLocation);
 
-                            getRenderer()->_debugStage.addRect2D(AreaF::fromCenterAndSize(
-                                anchorPoint.x, currentState.windowSize.y - anchorPoint.y,
-                                glyphWidth, gpuResource->height), SkColorSetA(SK_ColorGREEN, 128), angle);
+                        getRenderer()->_debugStage.addRect2D(AreaF::fromCenterAndSize(
+                            anchorPoint.x, currentState.windowSize.y - anchorPoint.y,
+                            glyphWidth, gpuResource->height), SkColorSetA(SK_ColorGREEN, 128), angle);
 
-                            QVector<glm::vec2> lineN;
-                            const auto ln0 = anchorPoint;
-                            lineN.push_back(glm::vec2(ln0.x, currentState.windowSize.y - ln0.y));
-                            const auto ln1 = anchorPoint + (vN*16.0f);
-                            lineN.push_back(glm::vec2(ln1.x, currentState.windowSize.y - ln1.y));
-                            getRenderer()->_debugStage.addLine2D(lineN, SkColorSetA(shouldInvert ? SK_ColorMAGENTA : SK_ColorYELLOW, 128));
-                        }
+                        QVector<glm::vec2> lineN;
+                        const auto ln0 = anchorPoint;
+                        lineN.push_back(glm::vec2(ln0.x, currentState.windowSize.y - ln0.y));
+                        const auto ln1 = anchorPoint + (vN*16.0f);
+                        lineN.push_back(glm::vec2(ln1.x, currentState.windowSize.y - ln1.y));
+                        getRenderer()->_debugStage.addLine2D(lineN, SkColorSetA(shouldInvert ? SK_ColorMAGENTA : SK_ColorYELLOW, 128));
+                    }
 
-                        // Subpath N
-                        {
-                            QVector<glm::vec2> lineN;
-                            const auto sn0 = pointsOnScreen.last();
-                            lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
-                            const auto sn1 = pointsOnScreen.last() + (subpathDirectionOnScreenN*32.0f);
-                            lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
-                            getRenderer()->_debugStage.addLine2D(lineN, SkColorSetA(SK_ColorMAGENTA, 128));
-                        }
+                    // Subpath N (start)
+                    {
+                        QVector<glm::vec2> lineN;
+                        const auto sn0 = pointsOnScreen[renderable->subpathStartIndex];
+                        lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
+                        const auto sn1 = pointsOnScreen[renderable->subpathStartIndex] + (subpathDirectionOnScreenN*32.0f);
+                        lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
+                        getRenderer()->_debugStage.addLine2D(lineN, SkColorSetA(SK_ColorCYAN, 128));
+                    }
+
+                    // Subpath N (end)
+                    {
+                        QVector<glm::vec2> lineN;
+                        const auto sn0 = pointsOnScreen[renderable->subpathEndIndex];
+                        lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
+                        const auto sn1 = pointsOnScreen[renderable->subpathEndIndex] + (subpathDirectionOnScreenN*32.0f);
+                        lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
+                        getRenderer()->_debugStage.addLine2D(lineN, SkColorSetA(SK_ColorMAGENTA, 128));
+                    }
 #endif // OSMAND_DEBUG
 
-                        //TODO: do draw call
-                    }
+                    //TODO: do draw call
                 }
                 else
                 {
