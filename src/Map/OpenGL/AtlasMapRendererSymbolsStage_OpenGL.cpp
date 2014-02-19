@@ -72,7 +72,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
     {
         int subpathStartIndex;
         int subpathEndIndex;
-        QVector<PointF> subpathPointsInWorld;
+        QVector<glm::vec2> subpathPointsInWorld;
         float offset;
         float subpathLength;
         QVector<float> segmentLengths;
@@ -179,7 +179,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
             const auto& points = renderable->mapSymbol->mapObject->points31;
             const auto subpathLength = renderable->subpathEndIndex - renderable->subpathStartIndex + 1;
             renderable->subpathPointsInWorld.resize(subpathLength);
-            PointF* pPointInWorld = renderable->subpathPointsInWorld.data();
+            auto pPointInWorld = renderable->subpathPointsInWorld.data();
             const auto& pointInWorld0 = *(pPointInWorld++) =
                 Utilities::convert31toFloat(points[renderable->subpathStartIndex] - currentState.target31, currentState.zoomBase) * AtlasMapRenderer::TileSize3D;
             for(int idx = renderable->subpathStartIndex + 1, endIdx = renderable->subpathEndIndex; idx <= endIdx; idx++, pPointInWorld++)
