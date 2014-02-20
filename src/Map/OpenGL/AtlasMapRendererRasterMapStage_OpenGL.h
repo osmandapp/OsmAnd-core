@@ -2,6 +2,7 @@
 #define _OSMAND_CORE_ATLAS_MAP_RENDERER_RASTER_MAP_STAGE_OPENGL_H_
 
 #include "stdlib_common.h"
+#include <array>
 
 #include <glm/glm.hpp>
 
@@ -21,7 +22,7 @@ namespace OsmAnd
         GLsizei _tilePatchIndicesCount;
         GLname _tilePatchVBO;
         GLname _tilePatchIBO;
-        GLname _tilePatchVAO;
+        std::array<GLname, RasterMapLayersCount> _tilePatchVAOs;
         void createTilePatch();
         void releaseTilePatch();
 
