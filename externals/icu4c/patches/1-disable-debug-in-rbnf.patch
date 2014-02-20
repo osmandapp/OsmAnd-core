@@ -13,20 +13,6 @@ diff -rupN upstream.original/source/i18n/rbnf.cpp upstream.patched/source/i18n/r
  
  #define U_ICUDATA_RBNF U_ICUDATA_NAME U_TREE_SEPARATOR_STRING "rbnf"
  
-@@ -324,11 +326,13 @@ private:
-     UChar*  nextString(void);
- };
- 
-+#if 0
- #ifdef DEBUG
- #define ERROR(msg) parseError(msg); return NULL;
- #else
- #define ERROR(msg) parseError(NULL); return NULL;
- #endif
-+#endif
-         
- 
- static const UChar DQUOTE_STOPLIST[] = { 
 @@ -551,6 +555,7 @@ LocDataParser::parseError(const char* /*
      pe.postContext[limit-p] = 0;
      pe.offset = (int32_t)(p - data);
