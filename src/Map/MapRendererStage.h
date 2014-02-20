@@ -11,6 +11,7 @@
 #include "MapRendererConfiguration.h"
 #include "MapRendererState.h"
 #include "MapRendererInternalState.h"
+#include "MapRendererSetupOptions.h"
 
 namespace OsmAnd
 {
@@ -35,6 +36,7 @@ namespace OsmAnd
         const std::unique_ptr<GPUAPI>& gpuAPI;
         const MapRendererState& currentState;
         const MapRendererConfiguration& currentConfiguration;
+        const MapRendererSetupOptions& setupOptions;
 
         virtual void initialize() = 0;
         virtual void render() = 0;

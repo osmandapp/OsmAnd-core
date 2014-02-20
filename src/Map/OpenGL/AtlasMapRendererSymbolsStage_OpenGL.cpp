@@ -397,16 +397,19 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 // Calculate position in screen coordinates (same calculation as done in shader)
                 const auto symbolOnScreen = glm::project(renderable->positionInWorld, internalState.mCameraView, internalState.mPerspectiveProjection, viewport);
 
-                // Check intersections
-                const auto boundsInWindow = AreaI::fromCenterAndSize(
+                // Get bounds in screen coordinates
+                auto boundsInWindow = AreaI::fromCenterAndSize(
                     static_cast<int>(symbolOnScreen.x + symbol->offset.x), static_cast<int>((currentState.windowSize.y - symbolOnScreen.y) + symbol->offset.y),
-                    gpuResource->width, gpuResource->height);//TODO: use MapSymbol bounds
+                    gpuResource->width, gpuResource->height);
+                boundsInWindow.enlargeBy(PointI(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
+
+                // Check intersections
                 const auto intersects = intersections.test(boundsInWindow, false,
                     [mapObjectId](const std::shared_ptr<const MapSymbol>& otherSymbol, const AreaI& otherArea) -> bool
                 {
                     return otherSymbol->mapObject->id != mapObjectId;
                 });
-                if(intersects || !intersections.insert(symbol, boundsInWindow))
+                if(intersects)
                 {
 #if OSMAND_DEBUG && 0
                     getRenderer()->_debugStage.addRect2D(boundsInWindow, SkColorSetA(SK_ColorRED, 50));
@@ -430,6 +433,15 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 #endif // OSMAND_DEBUG
                         continue;
                     }
+                }
+
+                // Insert into quad-tree
+                if(!intersections.insert(symbol, boundsInWindow))
+                {
+#if OSMAND_DEBUG && 0
+                    getRenderer()->_debugStage.addRect2D(boundsInWindow, SkColorSetA(SK_ColorRED, 50));
+#endif // OSMAND_DEBUG
+                    continue;
                 }
 
 #if OSMAND_DEBUG && 0

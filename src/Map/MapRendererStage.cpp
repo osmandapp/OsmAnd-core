@@ -7,6 +7,7 @@ OsmAnd::MapRendererStage::MapRendererStage(MapRenderer* const renderer_)
     , gpuAPI(renderer->gpuAPI)
     , currentState(renderer->currentState)
     , currentConfiguration(renderer->currentConfiguration)
+    , setupOptions(renderer->setupOptions)
 {
 }
 
