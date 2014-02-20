@@ -131,6 +131,7 @@ namespace OsmAnd
 
                     // Per-symbol data
                     GLint glyphHeight;
+                    GLint zDistanceFromCamera;
 
                     // Per-glyph data
                     QVector<Glyph>* pGlyphs;

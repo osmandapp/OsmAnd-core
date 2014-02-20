@@ -642,6 +642,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 
                     // Set glyph height
                     glUniform1f(_symbolOnPath2dProgram.vs.param.glyphHeight, gpuResource->height);
+                    GL_CHECK_RESULT;
 
                     // Set distance from camera to symbol
                     glUniform1f(_symbolOnPath2dProgram.vs.param.distanceFromCamera, distanceFromCamera);
@@ -786,6 +787,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 
                     // Set glyph height
                     glUniform1f(_symbolOnPath3dProgram.vs.param.glyphHeight, gpuResource->height*scale);
+                    GL_CHECK_RESULT;
+
+                    // Set distance from camera
+                    const auto zDistanceFromCamera = (internalState.mOrthographicProjection * glm::vec4(0.0f, 0.0f, -distanceFromCamera, 1.0f)).z;
+                    glUniform1f(_symbolOnPath3dProgram.vs.param.zDistanceFromCamera, zDistanceFromCamera);
+                    GL_CHECK_RESULT;
 
                     // Activate symbol texture
                     glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
@@ -1388,7 +1395,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
 
-    _maxGlyphsPerDrawCallSOP3D = (gpuAPI->maxVertexUniformVectors - 7) / 5;
+    _maxGlyphsPerDrawCallSOP3D = (gpuAPI->maxVertexUniformVectors - 8) / 5;
 
     // Compile vertex shader
     const QString vertexShader = QLatin1String(
@@ -1405,6 +1412,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
         "                                                                                                                   ""\n"
         // Parameters: per-symbol data
         "uniform float param_vs_glyphHeight;                                                                                ""\n"
+        "uniform float param_vs_zDistanceFromCamera;                                                                        ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-glyph data
         "struct Glyph                                                                                                       ""\n"
@@ -1429,10 +1437,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
         "    p.y = in_vs_vertexPosition.y * param_vs_glyphHeight;                                                           ""\n"
         "    vec4 v;                                                                                                        ""\n"
         "    v.x = glyph.anchorPoint.x + (p.x*cos_a - p.y*sin_a);                                                           ""\n"
-        "    v.y = 1.0; // Move up a bit, since depth-fighting will occur                                                   ""\n"
+        "    v.y = 0.0;                                                                                                     ""\n"
         "    v.z = glyph.anchorPoint.y + (p.x*sin_a + p.y*cos_a);                                                           ""\n"
         "    v.w = 1.0;                                                                                                     ""\n"
         "    gl_Position = param_vs_mPerspectiveProjectionView * v;                                                         ""\n"
+        "    gl_Position.z = param_vs_zDistanceFromCamera;                                                                  ""\n"
         "                                                                                                                   ""\n"
         // Prepare texture coordinates
         "    v2f_texCoords.s = glyph.widthOfPreviousN + in_vs_vertexTexCoords.s*glyph.widthN;                               ""\n"
@@ -1478,6 +1487,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     gpuAPI->findVariableLocation(_symbolOnPath3dProgram.id, _symbolOnPath3dProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
     gpuAPI->findVariableLocation(_symbolOnPath3dProgram.id, _symbolOnPath3dProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GLShaderVariableType::Uniform);
     gpuAPI->findVariableLocation(_symbolOnPath3dProgram.id, _symbolOnPath3dProgram.vs.param.glyphHeight, "param_vs_glyphHeight", GLShaderVariableType::Uniform);
+    gpuAPI->findVariableLocation(_symbolOnPath3dProgram.id, _symbolOnPath3dProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GLShaderVariableType::Uniform);
     auto& glyphs = *_symbolOnPath3dProgram.vs.param.pGlyphs;
     glyphs.resize(_maxGlyphsPerDrawCallSOP3D);
     int glyphStructIndex = 0;
