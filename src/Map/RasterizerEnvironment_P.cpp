@@ -72,12 +72,11 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
     _mapPaint.setAntiAlias(true);
 
     _textPaint.setAntiAlias(true);
-    _textPaint.setLCDRenderText(true);
     _textPaint.setTextEncoding(SkPaint::kUTF16_TextEncoding);
-    /*_textPaint.setStyle(SkPaint::kFill_Style);
-    _textPaint.setStrokeWidth(1);
-    _textPaint.setColor(SK_ColorBLACK);
-    _textPaint.setTextAlign(SkPaint::kCenter_Align);*/
+    //NOTE: Is this needed?
+    //_textPaint.setStyle(SkPaint::kFill_Style);
+    //_textPaint.setStrokeWidth(1);
+    //_textPaint.setColor(SK_ColorBLACK);
     static_assert(sizeof(QChar) == 2, "If QChar is not 2 bytes, then encoding is not kUTF16_TextEncoding");
 
     _shadowLevelMin = 0;
