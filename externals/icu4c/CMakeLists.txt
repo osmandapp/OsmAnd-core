@@ -18,17 +18,10 @@ set_source_files_properties(${source_i18n}
 		COMPILE_DEFINITIONS "U_I18N_IMPLEMENTATION"
 )
 
-file(GLOB_RECURSE source_layout "upstream.patched/source/layout/*.[ch]*")
-set_source_files_properties(${source_layout}
-	PROPERTIES
-		COMPILE_DEFINITIONS "U_LAYOUT_IMPLEMENTATION"
-)
-
 add_library(icu4c_static STATIC
 	${source_common}
 	${source_io}
 	${source_i18n}
-	${source_layout}
 )
 
 set(target_specific_private_definitions "")
@@ -57,5 +50,4 @@ target_include_directories(icu4c_static
 		"upstream.patched/source/common"
 		"upstream.patched/source/io"
 		"upstream.patched/source/i18n"
-		"upstream.patched/source/layout"
 )

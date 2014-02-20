@@ -1,12 +1,12 @@
-diff -rupN upstream.patched/source/common/wintz.c upstream.original/source/common/wintz.c
---- upstream.patched/source/common/wintz.c	2014-02-20 22:53:04.055549000 +0200
-+++ upstream.original/source/common/wintz.c	2013-10-04 23:49:18.000000000 +0300
+diff -rupN upstream.original/source/common/wintz.c upstream.patched/source/common/wintz.c
+--- upstream.original/source/common/wintz.c	2013-10-04 23:49:18.000000000 +0300
++++ upstream.patched/source/common/wintz.c	2014-02-20 23:09:05.808970100 +0200
 @@ -285,7 +285,7 @@ uprv_detectWindowsTimeZone() {
      tmpid[0] = 0;
  
      id = GetUserGeoID(GEOCLASS_NATION);
--    errorCode = GetGeoInfoA(id,GEO_ISO2,ISOcode,3,0);
-+    errorCode = GetGeoInfo(id,GEO_ISO2,ISOcode,3,0);
+-    errorCode = GetGeoInfo(id,GEO_ISO2,ISOcode,3,0);
++    errorCode = GetGeoInfoA(id,GEO_ISO2,ISOcode,3,0);
  
      bundle = ures_openDirect(NULL, "windowsZones", &status);
      ures_getByKey(bundle, "mapTimezones", bundle, &status);
