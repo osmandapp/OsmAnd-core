@@ -18,31 +18,31 @@ namespace OsmAnd
     {
     private:
     protected:
-        GLuint _pinnedSymbolVAO;
-        GLuint _pinnedSymbolVBO;
-        GLuint _pinnedSymbolIBO;
-        struct {
-            GLuint id;
+        GLname _pinnedSymbolVAO;
+        GLname _pinnedSymbolVBO;
+        GLname _pinnedSymbolIBO;
+        struct PinnedSymbolProgram {
+            GLname id;
 
             struct {
                 // Input data
                 struct {
-                    GLint vertexPosition;
-                    GLint vertexTexCoords;
+                    GLlocation vertexPosition;
+                    GLlocation vertexTexCoords;
                 } in;
 
                 // Parameters
                 struct {
                     // Common data
-                    GLint mPerspectiveProjectionView;
-                    GLint mOrthographicProjection;
-                    GLint viewport;
+                    GLlocation mPerspectiveProjectionView;
+                    GLlocation mOrthographicProjection;
+                    GLlocation viewport;
 
                     // Per-symbol data
-                    GLint symbolOffsetFromTarget;
-                    GLint symbolSize;
-                    GLint distanceFromCamera;
-                    GLint onScreenOffset;
+                    GLlocation symbolOffsetFromTarget;
+                    GLlocation symbolSize;
+                    GLlocation distanceFromCamera;
+                    GLlocation onScreenOffset;
                 } param;
             } vs;
 
@@ -52,7 +52,7 @@ namespace OsmAnd
                     // Common data
 
                     // Per-symbol data
-                    GLint sampler;
+                    GLlocation sampler;
                 } param;
             } fs;
         } _pinnedSymbolProgram;
@@ -61,37 +61,37 @@ namespace OsmAnd
 
         struct Glyph
         {
-            GLint anchorPoint;
-            GLint width;
-            GLint angle;
-            GLint widthOfPreviousN;
-            GLint widthN;
+            GLlocation anchorPoint;
+            GLlocation width;
+            GLlocation angle;
+            GLlocation widthOfPreviousN;
+            GLlocation widthN;
         };
-        GLuint _symbolOnPath2dVAO;
-        GLuint _symbolOnPath2dVBO;
-        GLuint _symbolOnPath2dIBO;
-        struct {
-            GLuint id;
+        GLname _symbolOnPath2dVAO;
+        GLname _symbolOnPath2dVBO;
+        GLname _symbolOnPath2dIBO;
+        struct SymbolOnPath2dProgram {
+            GLname id;
 
             struct {
                 // Input data
                 struct {
-                    GLint vertexPosition;
-                    GLint glyphIndex;
-                    GLint vertexTexCoords;
+                    GLlocation vertexPosition;
+                    GLlocation glyphIndex;
+                    GLlocation vertexTexCoords;
                 } in;
 
                 // Parameters
                 struct {
                     // Common data
-                    GLint mOrthographicProjection;
+                    GLlocation mOrthographicProjection;
 
                     // Per-symbol data
-                    GLint glyphHeight;
-                    GLint distanceFromCamera;
+                    GLlocation glyphHeight;
+                    GLlocation distanceFromCamera;
 
                     // Per-glyph data
-                    QVector<Glyph>* pGlyphs;
+                    QVector<Glyph> glyphs;
                 } param;
             } vs;
 
@@ -101,40 +101,39 @@ namespace OsmAnd
                     // Common data
 
                     // Per-symbol data
-                    GLint sampler;
+                    GLlocation sampler;
                 } param;
             } fs;
         } _symbolOnPath2dProgram;
-        QVector<Glyph> _symbolOnPath2dProgram_Glyphs;
         GLint _maxGlyphsPerDrawCallSOP2D;
         void initializeOnPath2D();
         void releaseOnPath2D();
 
-        GLuint _symbolOnPath3dVAO;
-        GLuint _symbolOnPath3dVBO;
-        GLuint _symbolOnPath3dIBO;
-        struct {
-            GLuint id;
+        GLname _symbolOnPath3dVAO;
+        GLname _symbolOnPath3dVBO;
+        GLname _symbolOnPath3dIBO;
+        struct SymbolOnPath3dProgram {
+            GLname id;
 
             struct {
                 // Input data
                 struct {
-                    GLint vertexPosition;
-                    GLint glyphIndex;
-                    GLint vertexTexCoords;
+                    GLlocation vertexPosition;
+                    GLlocation glyphIndex;
+                    GLlocation vertexTexCoords;
                 } in;
 
                 // Parameters
                 struct {
                     // Common data
-                    GLint mPerspectiveProjectionView;
+                    GLlocation mPerspectiveProjectionView;
 
                     // Per-symbol data
-                    GLint glyphHeight;
-                    GLint zDistanceFromCamera;
+                    GLlocation glyphHeight;
+                    GLlocation zDistanceFromCamera;
 
                     // Per-glyph data
-                    QVector<Glyph>* pGlyphs;
+                    QVector<Glyph> glyphs;
                 } param;
             } vs;
 
@@ -144,11 +143,10 @@ namespace OsmAnd
                     // Common data
 
                     // Per-symbol data
-                    GLint sampler;
+                    GLlocation sampler;
                 } param;
             } fs;
         } _symbolOnPath3dProgram;
-        QVector<Glyph> _symbolOnPath3dProgram_Glyphs;
         GLint _maxGlyphsPerDrawCallSOP3D;
         void initializeOnPath3D();
         void releaseOnPath3D();

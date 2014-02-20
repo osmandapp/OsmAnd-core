@@ -11,23 +11,7 @@
 
 OsmAnd::AtlasMapRendererDebugStage_OpenGL::AtlasMapRendererDebugStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer)
     : AtlasMapRendererStage_OpenGL(renderer)
-    , _vaoRect2D(0)
-    , _vboRect2D(0)
-    , _iboRect2D(0)
-    , _vaoLine2D(0)
-    , _vboLine2D(0)
-    , _iboLine2D(0)
-    , _vaoLine3D(0)
-    , _vboLine3D(0)
-    , _iboLine3D(0)
-    , _vaoQuad3D(0)
-    , _vboQuad3D(0)
-    , _iboQuad3D(0)
 {
-    memset(&_programRect2D, 0, sizeof(_programRect2D));
-    memset(&_programLine2D, 0, sizeof(_programLine2D));
-    memset(&_programLine3D, 0, sizeof(_programLine3D));
-    memset(&_programQuad3D, 0, sizeof(_programQuad3D));
 }
 
 OsmAnd::AtlasMapRendererDebugStage_OpenGL::~AtlasMapRendererDebugStage_OpenGL()
@@ -122,15 +106,14 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
     _programRect2D.id = gpuAPI->linkProgram(2, shaders);
-    assert(_programRect2D.id != 0);
+    assert(_programRect2D.id);
 
-    gpuAPI->clearVariablesLookup();
-    gpuAPI->findVariableLocation(_programRect2D.id, _programRect2D.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-    gpuAPI->findVariableLocation(_programRect2D.id, _programRect2D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_programRect2D.id, _programRect2D.vs.param.rect, "param_vs_rect", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_programRect2D.id, _programRect2D.vs.param.angle, "param_vs_angle", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_programRect2D.id, _programRect2D.fs.param.color, "param_fs_color", GLShaderVariableType::Uniform);
-    gpuAPI->clearVariablesLookup();
+    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programRect2D.id);
+    lookup->lookupLocation(_programRect2D.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
+    lookup->lookupLocation(_programRect2D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_programRect2D.vs.param.rect, "param_vs_rect", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_programRect2D.vs.param.angle, "param_vs_angle", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_programRect2D.fs.param.color, "param_fs_color", GLShaderVariableType::Uniform);
 
     // Vertex data (x,y)
     float vertices[4][2] =
@@ -163,9 +146,9 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
     GL_CHECK_RESULT;
     glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(float)* 2, vertices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
-    glEnableVertexAttribArray(_programRect2D.vs.in.vertexPosition);
+    glEnableVertexAttribArray(*_programRect2D.vs.in.vertexPosition);
     GL_CHECK_RESULT;
-    glVertexAttribPointer(_programRect2D.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(float)* 2, nullptr);
+    glVertexAttribPointer(*_programRect2D.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(float)* 2, nullptr);
     GL_CHECK_RESULT;
 
     // Create index buffer and associate it with VAO
@@ -242,29 +225,29 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseRects2D()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    if(_iboRect2D != 0)
+    if(_iboRect2D)
     {
         glDeleteBuffers(1, &_iboRect2D);
         GL_CHECK_RESULT;
-        _iboRect2D = 0;
+        _iboRect2D.reset();
     }
-    if(_vboRect2D != 0)
+    if(_vboRect2D)
     {
         glDeleteBuffers(1, &_vboRect2D);
         GL_CHECK_RESULT;
-        _vboRect2D = 0;
+        _vboRect2D.reset();
     }
-    if(_vaoRect2D != 0)
+    if(_vaoRect2D)
     {
         gpuAPI->glDeleteVertexArrays_wrapper(1, &_vaoRect2D);
         GL_CHECK_RESULT;
-        _vaoRect2D = 0;
+        _vaoRect2D.reset();
     }
-    if(_programRect2D.id != 0)
+    if(_programRect2D.id)
     {
         glDeleteProgram(_programRect2D.id);
         GL_CHECK_RESULT;
-        memset(&_programRect2D, 0, sizeof(_programRect2D));
+        _programRect2D = ProgramRect2D();
     }
 }
 
@@ -322,15 +305,14 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines2D()
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
     _programLine2D.id = gpuAPI->linkProgram(2, shaders);
-    assert(_programLine2D.id != 0);
+    assert(_programLine2D.id);
 
-    gpuAPI->clearVariablesLookup();
-    gpuAPI->findVariableLocation(_programLine2D.id, _programLine2D.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-    gpuAPI->findVariableLocation(_programLine2D.id, _programLine2D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_programLine2D.id, _programLine2D.vs.param.v0, "param_vs_v0", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_programLine2D.id, _programLine2D.vs.param.v1, "param_vs_v1", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_programLine2D.id, _programLine2D.fs.param.color, "param_fs_color", GLShaderVariableType::Uniform);
-    gpuAPI->clearVariablesLookup();
+    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programLine2D.id);
+    lookup->lookupLocation(_programLine2D.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
+    lookup->lookupLocation(_programLine2D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_programLine2D.vs.param.v0, "param_vs_v0", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_programLine2D.vs.param.v1, "param_vs_v1", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_programLine2D.fs.param.color, "param_fs_color", GLShaderVariableType::Uniform);
 
     // Vertex data (x,y)
     float vertices[2][2] =
@@ -360,9 +342,9 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines2D()
     GL_CHECK_RESULT;
     glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(float)* 2, vertices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
-    glEnableVertexAttribArray(_programLine2D.vs.in.vertexPosition);
+    glEnableVertexAttribArray(*_programLine2D.vs.in.vertexPosition);
     GL_CHECK_RESULT;
-    glVertexAttribPointer(_programLine2D.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(float)* 2, nullptr);
+    glVertexAttribPointer(*_programLine2D.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(float)* 2, nullptr);
     GL_CHECK_RESULT;
 
     // Create index buffer and associate it with VAO
@@ -444,29 +426,29 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines2D()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    if(_iboLine2D != 0)
+    if(_iboLine2D)
     {
         glDeleteBuffers(1, &_iboLine2D);
         GL_CHECK_RESULT;
-        _iboLine2D = 0;
+        _iboLine2D.reset();
     }
-    if(_vboLine2D != 0)
+    if(_vboLine2D)
     {
         glDeleteBuffers(1, &_vboLine2D);
         GL_CHECK_RESULT;
-        _vboLine2D = 0;
+        _vboLine2D.reset();
     }
-    if(_vaoLine2D != 0)
+    if(_vaoLine2D)
     {
         gpuAPI->glDeleteVertexArrays_wrapper(1, &_vaoLine2D);
         GL_CHECK_RESULT;
-        _vaoLine2D = 0;
+        _vaoLine2D.reset();
     }
-    if(_programLine2D.id != 0)
+    if(_programLine2D.id)
     {
         glDeleteProgram(_programLine2D.id);
         GL_CHECK_RESULT;
-        memset(&_programLine2D, 0, sizeof(_programLine2D));
+        _programLine2D = ProgramLine2D();
     }
 }
 
@@ -522,15 +504,14 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines3D()
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
     _programLine3D.id = gpuAPI->linkProgram(2, shaders);
-    assert(_programLine3D.id != 0);
+    assert(_programLine3D.id);
 
-    gpuAPI->clearVariablesLookup();
-    gpuAPI->findVariableLocation(_programLine3D.id, _programLine3D.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-    gpuAPI->findVariableLocation(_programLine3D.id, _programLine3D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_programLine3D.id, _programLine3D.vs.param.v0, "param_vs_v0", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_programLine3D.id, _programLine3D.vs.param.v1, "param_vs_v1", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_programLine3D.id, _programLine3D.fs.param.color, "param_fs_color", GLShaderVariableType::Uniform);
-    gpuAPI->clearVariablesLookup();
+    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programLine3D.id);
+    lookup->lookupLocation(_programLine3D.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
+    lookup->lookupLocation(_programLine3D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_programLine3D.vs.param.v0, "param_vs_v0", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_programLine3D.vs.param.v1, "param_vs_v1", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_programLine3D.fs.param.color, "param_fs_color", GLShaderVariableType::Uniform);
 
     // Vertex data (x,y)
     float vertices[2][2] =
@@ -560,9 +541,9 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines3D()
     GL_CHECK_RESULT;
     glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(float)* 2, vertices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
-    glEnableVertexAttribArray(_programLine3D.vs.in.vertexPosition);
+    glEnableVertexAttribArray(*_programLine3D.vs.in.vertexPosition);
     GL_CHECK_RESULT;
-    glVertexAttribPointer(_programLine3D.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(float)* 2, nullptr);
+    glVertexAttribPointer(*_programLine3D.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(float)* 2, nullptr);
     GL_CHECK_RESULT;
 
     // Create index buffer and associate it with VAO
@@ -645,29 +626,29 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines3D()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    if(_iboLine3D != 0)
+    if(_iboLine3D)
     {
         glDeleteBuffers(1, &_iboLine3D);
         GL_CHECK_RESULT;
-        _iboLine3D = 0;
+        _iboLine3D.reset();
     }
-    if(_vboLine3D != 0)
+    if(_vboLine3D)
     {
         glDeleteBuffers(1, &_vboLine3D);
         GL_CHECK_RESULT;
-        _vboLine3D = 0;
+        _vboLine3D.reset();
     }
-    if(_vaoLine3D != 0)
+    if(_vaoLine3D)
     {
         gpuAPI->glDeleteVertexArrays_wrapper(1, &_vaoLine3D);
         GL_CHECK_RESULT;
-        _vaoLine3D = 0;
+        _vaoLine3D.reset();
     }
-    if(_programLine3D.id != 0)
+    if(_programLine3D.id)
     {
         glDeleteProgram(_programLine3D.id);
         GL_CHECK_RESULT;
-        memset(&_programLine3D, 0, sizeof(_programLine3D));
+        _programLine3D = ProgramLine3D();
     }
 }
 
@@ -732,17 +713,16 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeQuads3D()
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
     _programQuad3D.id = gpuAPI->linkProgram(2, shaders);
-    assert(_programQuad3D.id != 0);
+    assert(_programQuad3D.id);
 
-    gpuAPI->clearVariablesLookup();
-    gpuAPI->findVariableLocation(_programQuad3D.id, _programQuad3D.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-    gpuAPI->findVariableLocation(_programQuad3D.id, _programQuad3D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_programQuad3D.id, _programQuad3D.vs.param.v0, "param_vs_v0", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_programQuad3D.id, _programQuad3D.vs.param.v1, "param_vs_v1", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_programQuad3D.id, _programQuad3D.vs.param.v2, "param_vs_v2", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_programQuad3D.id, _programQuad3D.vs.param.v3, "param_vs_v3", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_programQuad3D.id, _programQuad3D.fs.param.color, "param_fs_color", GLShaderVariableType::Uniform);
-    gpuAPI->clearVariablesLookup();
+    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programQuad3D.id);
+    lookup->lookupLocation(_programQuad3D.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
+    lookup->lookupLocation(_programQuad3D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_programQuad3D.vs.param.v0, "param_vs_v0", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_programQuad3D.vs.param.v1, "param_vs_v1", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_programQuad3D.vs.param.v2, "param_vs_v2", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_programQuad3D.vs.param.v3, "param_vs_v3", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_programQuad3D.fs.param.color, "param_fs_color", GLShaderVariableType::Uniform);
 
     // Vertex data (x,y,z,w)
     float vertices[4][4] =
@@ -775,9 +755,9 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeQuads3D()
     GL_CHECK_RESULT;
     glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(float)*4, vertices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
-    glEnableVertexAttribArray(_programQuad3D.vs.in.vertexPosition);
+    glEnableVertexAttribArray(*_programQuad3D.vs.in.vertexPosition);
     GL_CHECK_RESULT;
-    glVertexAttribPointer(_programQuad3D.vs.in.vertexPosition, 4, GL_FLOAT, GL_FALSE, sizeof(float)*4, nullptr);
+    glVertexAttribPointer(*_programQuad3D.vs.in.vertexPosition, 4, GL_FLOAT, GL_FALSE, sizeof(float)*4, nullptr);
     GL_CHECK_RESULT;
 
     // Create index buffer and associate it with VAO
@@ -858,29 +838,29 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseQuads3D()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    if(_iboQuad3D != 0)
+    if(_iboQuad3D)
     {
         glDeleteBuffers(1, &_iboQuad3D);
         GL_CHECK_RESULT;
-        _iboQuad3D = 0;
+        _iboQuad3D.reset();
     }
-    if(_vboQuad3D != 0)
+    if(_vboQuad3D)
     {
         glDeleteBuffers(1, &_vboQuad3D);
         GL_CHECK_RESULT;
-        _vboQuad3D = 0;
+        _vboQuad3D.reset();
     }
-    if(_vaoQuad3D != 0)
+    if(_vaoQuad3D)
     {
         gpuAPI->glDeleteVertexArrays_wrapper(1, &_vaoQuad3D);
         GL_CHECK_RESULT;
-        _vaoQuad3D = 0;
+        _vaoQuad3D.reset();
     }
-    if(_programQuad3D.id != 0)
+    if(_programQuad3D.id)
     {
         glDeleteProgram(_programQuad3D.id);
         GL_CHECK_RESULT;
-        memset(&_programQuad3D, 0, sizeof(_programQuad3D));
+        _programQuad3D = ProgramQuad3D();
     }
 }
 

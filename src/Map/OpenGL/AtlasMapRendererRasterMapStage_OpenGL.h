@@ -19,50 +19,50 @@ namespace OsmAnd
     private:
     protected:
         GLsizei _tilePatchIndicesCount;
-        GLuint _tilePatchVBO;
-        GLuint _tilePatchIBO;
-        GLuint _tilePatchVAO;
+        GLname _tilePatchVBO;
+        GLname _tilePatchIBO;
+        GLname _tilePatchVAO;
         void createTilePatch();
         void releaseTilePatch();
 
         // Multiple variations of RasterStage program.
         // Variations are generated according to number of active raster tile providers.
-        struct {
-            GLuint id;
+        struct TileProgram {
+            GLname id;
 
             struct {
                 // Input data
                 struct {
-                    GLint vertexPosition;
-                    GLint vertexTexCoords;
-                    GLint vertexElevation;
+                    GLlocation vertexPosition;
+                    GLlocation vertexTexCoords;
+                    GLlocation vertexElevation;
                 } in;
 
                 // Parameters
                 struct {
                     // Common data
-                    GLint mProjectionView;
-                    GLint mapScale;
-                    GLint targetInTilePosN;
-                    GLint distanceFromCameraToTarget;
-                    GLint cameraElevationAngleN;
-                    GLint groundCameraPosition;
-                    GLint scaleToRetainProjectedSize;
+                    GLlocation mProjectionView;
+                    GLlocation mapScale;
+                    GLlocation targetInTilePosN;
+                    GLlocation distanceFromCameraToTarget;
+                    GLlocation cameraElevationAngleN;
+                    GLlocation groundCameraPosition;
+                    GLlocation scaleToRetainProjectedSize;
 
                     // Per-tile data
-                    GLint tileCoordsOffset;
-                    GLint elevationData_k;
-                    GLint elevationData_sampler;
-                    GLint elevationData_upperMetersPerUnit;
-                    GLint elevationData_lowerMetersPerUnit;
+                    GLlocation tileCoordsOffset;
+                    GLlocation elevationData_k;
+                    GLlocation elevationData_sampler;
+                    GLlocation elevationData_upperMetersPerUnit;
+                    GLlocation elevationData_lowerMetersPerUnit;
 
                     // Per-tile-per-layer data
                     struct
                     {
-                        GLint tileSizeN;
-                        GLint tilePaddingN;
-                        GLint slotsPerSide;
-                        GLint slotIndex;
+                        GLlocation tileSizeN;
+                        GLlocation tilePaddingN;
+                        GLlocation slotsPerSide;
+                        GLlocation slotIndex;
                     } elevationTileLayer, rasterTileLayers[RasterMapLayersCount];
                 } param;
             } vs;
@@ -73,8 +73,8 @@ namespace OsmAnd
                     // Per-tile-per-layer data
                     struct
                     {
-                        GLint k;
-                        GLint sampler;
+                        GLlocation k;
+                        GLlocation sampler;
                     } rasterTileLayers[RasterMapLayersCount];
                 } param;
             } fs;

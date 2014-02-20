@@ -74,9 +74,116 @@ namespace OsmAnd
         Uniform
     };
 
+    template<typename T, T defaultValue>
+    struct GLref
+    {
+        typedef GLref<T, defaultValue> GLrefT;
+
+        GLref()
+            : value(defaultValue)
+        {
+        }
+
+        GLref(const T& value_)
+            : value(value_)
+        {
+        }
+
+        T value;
+
+        inline operator T() const
+        {
+            return value;
+        }
+
+        inline operator bool() const
+        {
+            return value != defaultValue;
+        }
+
+        inline bool operator==(const GLrefT& r) const
+        {
+            return value == r.value;
+        }
+
+        inline bool operator==(const T& r) const
+        {
+            return value == r;
+        }
+
+        inline bool operator!=(const GLrefT& r) const
+        {
+            return value != r.value;
+        }
+
+        inline bool operator!=(const T& r) const
+        {
+            return value != r;
+        }
+
+        inline GLrefT& operator=(const GLrefT& that)
+        {
+            value = that.value;
+            return *this;
+        }
+
+        inline GLrefT& operator=(const T& that)
+        {
+            value = that;
+            return *this;
+        }
+
+        inline T& operator*()
+        {
+            return value;
+        }
+
+        inline const T& operator*() const
+        {
+            return value;
+        }
+
+        inline T* operator&()
+        {
+            return &value;
+        }
+
+        inline const T* operator&() const
+        {
+            return &value;
+        }
+
+        inline void reset()
+        {
+            value = defaultValue;
+        }
+    };
+
+    typedef GLref<GLuint, 0> GLname;
+    typedef GLref<GLint, -1> GLlocation;
+
     class GPUAPI_OpenGL : public GPUAPI
     {
         Q_DISABLE_COPY(GPUAPI_OpenGL);
+    public:
+        class ProgramVariablesLookupContext
+        {
+        private:
+            GPUAPI_OpenGL* const gpuAPI;
+            const GLuint program;
+
+            QMap< GLShaderVariableType, QMap<QString, GLint> > _variablesByName;
+            QMap< GLShaderVariableType, QMap<GLint, QString> > _variablesByLocation;
+        protected:
+            ProgramVariablesLookupContext(GPUAPI_OpenGL* gpuAPI, GLuint program);
+        public:
+            virtual ~ProgramVariablesLookupContext();
+
+            virtual void lookupLocation(GLint& location, const QString& name, const GLShaderVariableType& type);
+            void lookupLocation(GLlocation& location, const QString& name, const GLShaderVariableType& type);
+
+        friend class OsmAnd::GPUAPI_OpenGL;
+        };
     private:
         bool uploadTileAsTextureToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
         bool uploadTileAsArrayBufferToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
@@ -84,7 +191,6 @@ namespace OsmAnd
         bool uploadSymbolAsTextureToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
     protected:
         GLint _maxTextureSize;
-        QHash< GLuint, QMultiMap< GLShaderVariableType, GLint > > _programVariables;
         QStringList _extensions;
         QVector<GLint> _compressedFormats;
 
@@ -157,8 +263,8 @@ namespace OsmAnd
         virtual void setTextureBlockSampler(const GLenum textureBlock, const SamplerType samplerType) = 0;
         virtual void applyTextureBlockToTexture(const GLenum texture, const GLenum textureBlock) = 0;
 
-        virtual void clearVariablesLookup();
-        virtual void findVariableLocation(GLuint program, GLint& location, const QString& name, const GLShaderVariableType& type);
+        virtual std::shared_ptr<ProgramVariablesLookupContext> obtainVariablesLookupContext(const GLuint& program);
+        virtual void findVariableLocation(const GLuint& program, GLint& location, const QString& name, const GLShaderVariableType& type);
 
         virtual bool uploadTileToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
         virtual bool uploadSymbolToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);

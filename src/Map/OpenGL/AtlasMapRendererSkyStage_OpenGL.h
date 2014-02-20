@@ -18,24 +18,24 @@ namespace OsmAnd
     {
     private:
     protected:
-        GLuint _skyplaneVAO;
-        GLuint _skyplaneVBO;
-        GLuint _skyplaneIBO;
+        GLname _skyplaneVAO;
+        GLname _skyplaneVBO;
+        GLname _skyplaneIBO;
 
-        struct {
-            GLuint id;
+        struct Program {
+            GLname id;
 
             struct {
                 // Input data
                 struct {
-                    GLint vertexPosition;
+                    GLlocation vertexPosition;
                 } in;
 
                 // Parameters
                 struct {
                     // Common data
-                    GLint mProjectionViewModel;
-                    GLint planeSize;
+                    GLlocation mProjectionViewModel;
+                    GLlocation planeSize;
                 } param;
             } vs;
 
@@ -43,7 +43,7 @@ namespace OsmAnd
                 // Parameters
                 struct {
                     // Common data
-                    GLint skyColor;
+                    GLlocation skyColor;
                 } param;
             } fs;
         } _program;

@@ -9,11 +9,7 @@
 
 OsmAnd::AtlasMapRendererSkyStage_OpenGL::AtlasMapRendererSkyStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer)
     : AtlasMapRendererStage_OpenGL(renderer)
-    , _skyplaneVAO(0)
-    , _skyplaneVBO(0)
-    , _skyplaneIBO(0)
 {
-    memset(&_program, 0, sizeof(_program));
 }
 
 OsmAnd::AtlasMapRendererSkyStage_OpenGL::~AtlasMapRendererSkyStage_OpenGL()
@@ -73,14 +69,13 @@ void OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
     // Link everything into program object
     const GLuint shaders[] = { vsId, fsId };
     _program.id = gpuAPI->linkProgram(2, shaders);
-    assert(_program.id != 0);
+    assert(_program.id);
 
-    gpuAPI->clearVariablesLookup();
-    gpuAPI->findVariableLocation(_program.id, _program.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-    gpuAPI->findVariableLocation(_program.id, _program.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_program.id, _program.vs.param.planeSize, "param_vs_planeSize", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_program.id, _program.fs.param.skyColor, "param_fs_skyColor", GLShaderVariableType::Uniform);
-    gpuAPI->clearVariablesLookup();
+    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_program.id);
+    lookup->lookupLocation(_program.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
+    lookup->lookupLocation(_program.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_program.vs.param.planeSize, "param_vs_planeSize", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_program.fs.param.skyColor, "param_fs_skyColor", GLShaderVariableType::Uniform);
 
     // Vertex data (x,y)
     float vertices[4][2] =
@@ -113,9 +108,9 @@ void OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
     GL_CHECK_RESULT;
     glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(float) * 2, vertices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
-    glEnableVertexAttribArray(_program.vs.in.vertexPosition);
+    glEnableVertexAttribArray(*_program.vs.in.vertexPosition);
     GL_CHECK_RESULT;
-    glVertexAttribPointer(_program.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(float)* 2, nullptr);
+    glVertexAttribPointer(*_program.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(float)* 2, nullptr);
     GL_CHECK_RESULT;
 
     // Create index buffer and associate it with VAO
@@ -187,29 +182,29 @@ void OsmAnd::AtlasMapRendererSkyStage_OpenGL::release()
 
     GL_CHECK_PRESENT(glDeleteBuffers);
 
-    if(_skyplaneIBO != 0)
+    if(_skyplaneIBO)
     {
         glDeleteBuffers(1, &_skyplaneIBO);
         GL_CHECK_RESULT;
-        _skyplaneIBO = 0;
+        _skyplaneIBO.reset();
     }
-    if(_skyplaneVBO != 0)
+    if(_skyplaneVBO)
     {
         glDeleteBuffers(1, &_skyplaneVBO);
         GL_CHECK_RESULT;
-        _skyplaneVBO = 0;
+        _skyplaneVBO.reset();
     }
-    if(_skyplaneVAO != 0)
+    if(_skyplaneVAO)
     {
         gpuAPI->glDeleteVertexArrays_wrapper(1, &_skyplaneVAO);
         GL_CHECK_RESULT;
-        _skyplaneVAO = 0;
+        _skyplaneVAO.reset();
     }
 
-    if(_program.id != 0)
+    if(_program.id)
     {
         glDeleteProgram(_program.id);
         GL_CHECK_RESULT;
-        memset(&_program, 0, sizeof(_program));
+        _program = Program();
     }
 }

@@ -16,23 +16,9 @@
 
 OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer)
     : AtlasMapRendererStage_OpenGL(renderer)
-    , _pinnedSymbolVAO(0)
-    , _pinnedSymbolVBO(0)
-    , _pinnedSymbolIBO(0)
-    , _symbolOnPath2dVAO(0)
-    , _symbolOnPath2dVBO(0)
-    , _symbolOnPath2dIBO(0)
     , _maxGlyphsPerDrawCallSOP2D(-1)
-    , _symbolOnPath3dVAO(0)
-    , _symbolOnPath3dVBO(0)
-    , _symbolOnPath3dIBO(0)
     , _maxGlyphsPerDrawCallSOP3D(-1)
 {
-    memset(&_pinnedSymbolProgram, 0, sizeof(_pinnedSymbolProgram));
-    memset(&_symbolOnPath2dProgram, 0, sizeof(_symbolOnPath2dProgram));
-    _symbolOnPath2dProgram.vs.param.pGlyphs = &_symbolOnPath2dProgram_Glyphs;
-    memset(&_symbolOnPath3dProgram, 0, sizeof(_symbolOnPath3dProgram));
-    _symbolOnPath3dProgram.vs.param.pGlyphs = &_symbolOnPath3dProgram_Glyphs;
 }
 
 OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::~AtlasMapRendererSymbolsStage_OpenGL()
@@ -433,7 +419,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 #endif // OSMAND_DEBUG
 
                 // Check if correct program is being used
-                if(lastUsedProgram != _pinnedSymbolProgram.id)
+                if(lastUsedProgram != *_pinnedSymbolProgram.id)
                 {
                     GL_PUSH_GROUP_MARKER("use 'pinned-symbol' program");
 
@@ -607,7 +593,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     //TODO: Check intersections
 
                     // Check if correct program is being used
-                    if(lastUsedProgram != _symbolOnPath2dProgram.id)
+                    if(lastUsedProgram != *_symbolOnPath2dProgram.id)
                     {
                         GL_PUSH_GROUP_MARKER("use 'symbol-on-path-2d' program");
 
@@ -658,7 +644,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     // Draw chains of glyphs
                     int glyphsDrawn = 0;
                     auto pGlyph = glyphs.constData();
-                    auto pGlyphVS = _symbolOnPath2dProgram.vs.param.pGlyphs->constData();
+                    auto pGlyphVS = _symbolOnPath2dProgram.vs.param.glyphs.constData();
                     float widthOfPreviousN = 0.0f;
                     while(glyphsDrawn < glyphsCount)
                     {
@@ -751,7 +737,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     //TODO: Check intersections
 
                     // Check if correct program is being used
-                    if(lastUsedProgram != _symbolOnPath3dProgram.id)
+                    if(lastUsedProgram != *_symbolOnPath3dProgram.id)
                     {
                         GL_PUSH_GROUP_MARKER("use 'symbol-on-path-3d' program");
 
@@ -804,7 +790,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     // Draw chains of glyphs
                     int glyphsDrawn = 0;
                     auto pGlyph = glyphs.constData();
-                    auto pGlyphVS = _symbolOnPath3dProgram.vs.param.pGlyphs->constData();
+                    auto pGlyphVS = _symbolOnPath3dProgram.vs.param.glyphs.constData();
                     float widthOfPreviousN = 0.0f;
                     while(glyphsDrawn < glyphsCount)
                     {
@@ -1047,20 +1033,19 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializePinned()
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
     _pinnedSymbolProgram.id = gpuAPI->linkProgram(2, shaders);
-    assert(_pinnedSymbolProgram.id != 0);
+    assert(_pinnedSymbolProgram.id);
 
-    gpuAPI->clearVariablesLookup();
-    gpuAPI->findVariableLocation(_pinnedSymbolProgram.id, _pinnedSymbolProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-    gpuAPI->findVariableLocation(_pinnedSymbolProgram.id, _pinnedSymbolProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
-    gpuAPI->findVariableLocation(_pinnedSymbolProgram.id, _pinnedSymbolProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_pinnedSymbolProgram.id, _pinnedSymbolProgram.vs.param.mOrthographicProjection, "param_vs_mOrthographicProjection", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_pinnedSymbolProgram.id, _pinnedSymbolProgram.vs.param.viewport, "param_vs_viewport", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_pinnedSymbolProgram.id, _pinnedSymbolProgram.vs.param.symbolOffsetFromTarget, "param_vs_symbolOffsetFromTarget", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_pinnedSymbolProgram.id, _pinnedSymbolProgram.vs.param.symbolSize, "param_vs_symbolSize", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_pinnedSymbolProgram.id, _pinnedSymbolProgram.vs.param.distanceFromCamera, "param_vs_distanceFromCamera", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_pinnedSymbolProgram.id, _pinnedSymbolProgram.vs.param.onScreenOffset, "param_vs_onScreenOffset", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_pinnedSymbolProgram.id, _pinnedSymbolProgram.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
-    gpuAPI->clearVariablesLookup();
+    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_pinnedSymbolProgram.id);
+    lookup->lookupLocation(_pinnedSymbolProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
+    lookup->lookupLocation(_pinnedSymbolProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
+    lookup->lookupLocation(_pinnedSymbolProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_pinnedSymbolProgram.vs.param.mOrthographicProjection, "param_vs_mOrthographicProjection", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_pinnedSymbolProgram.vs.param.viewport, "param_vs_viewport", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_pinnedSymbolProgram.vs.param.symbolOffsetFromTarget, "param_vs_symbolOffsetFromTarget", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_pinnedSymbolProgram.vs.param.symbolSize, "param_vs_symbolSize", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_pinnedSymbolProgram.vs.param.distanceFromCamera, "param_vs_distanceFromCamera", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_pinnedSymbolProgram.vs.param.onScreenOffset, "param_vs_onScreenOffset", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_pinnedSymbolProgram.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
 
 #pragma pack(push, 1)
     struct Vertex
@@ -1106,13 +1091,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializePinned()
     GL_CHECK_RESULT;
     glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(Vertex), vertices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
-    glEnableVertexAttribArray(_pinnedSymbolProgram.vs.in.vertexPosition);
+    glEnableVertexAttribArray(*_pinnedSymbolProgram.vs.in.vertexPosition);
     GL_CHECK_RESULT;
-    glVertexAttribPointer(_pinnedSymbolProgram.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, positionXY)));
+    glVertexAttribPointer(*_pinnedSymbolProgram.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, positionXY)));
     GL_CHECK_RESULT;
-    glEnableVertexAttribArray(_pinnedSymbolProgram.vs.in.vertexTexCoords);
+    glEnableVertexAttribArray(*_pinnedSymbolProgram.vs.in.vertexTexCoords);
     GL_CHECK_RESULT;
-    glVertexAttribPointer(_pinnedSymbolProgram.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, textureUV)));
+    glVertexAttribPointer(*_pinnedSymbolProgram.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, textureUV)));
     GL_CHECK_RESULT;
 
     // Create index buffer and associate it with VAO
@@ -1134,30 +1119,30 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releasePinned()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    if(_pinnedSymbolIBO != 0)
+    if(_pinnedSymbolIBO)
     {
         glDeleteBuffers(1, &_pinnedSymbolIBO);
         GL_CHECK_RESULT;
-        _pinnedSymbolIBO = 0;
+        _pinnedSymbolIBO.reset();
     }
-    if(_pinnedSymbolVBO != 0)
+    if(_pinnedSymbolVBO)
     {
         glDeleteBuffers(1, &_pinnedSymbolVBO);
         GL_CHECK_RESULT;
-        _pinnedSymbolVBO = 0;
+        _pinnedSymbolVBO.reset();
     }
-    if(_pinnedSymbolVAO != 0)
+    if(_pinnedSymbolVAO)
     {
         gpuAPI->glDeleteVertexArrays_wrapper(1, &_pinnedSymbolVAO);
         GL_CHECK_RESULT;
-        _pinnedSymbolVAO = 0;
+        _pinnedSymbolVAO.reset();
     }
 
-    if(_pinnedSymbolProgram.id != 0)
+    if(_pinnedSymbolProgram.id)
     {
         glDeleteProgram(_pinnedSymbolProgram.id);
         GL_CHECK_RESULT;
-        memset(&_pinnedSymbolProgram, 0, sizeof(_pinnedSymbolProgram));
+        _pinnedSymbolProgram = PinnedSymbolProgram();
     }
 }
 
@@ -1260,16 +1245,16 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
     _symbolOnPath2dProgram.id = gpuAPI->linkProgram(2, shaders);
-    assert(_symbolOnPath2dProgram.id != 0);
+    assert(_symbolOnPath2dProgram.id);
 
-    gpuAPI->clearVariablesLookup();
-    gpuAPI->findVariableLocation(_symbolOnPath2dProgram.id, _symbolOnPath2dProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-    gpuAPI->findVariableLocation(_symbolOnPath2dProgram.id, _symbolOnPath2dProgram.vs.in.glyphIndex, "in_vs_glyphIndex", GLShaderVariableType::In);
-    gpuAPI->findVariableLocation(_symbolOnPath2dProgram.id, _symbolOnPath2dProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
-    gpuAPI->findVariableLocation(_symbolOnPath2dProgram.id, _symbolOnPath2dProgram.vs.param.mOrthographicProjection, "param_vs_mOrthographicProjection", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_symbolOnPath2dProgram.id, _symbolOnPath2dProgram.vs.param.glyphHeight, "param_vs_glyphHeight", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_symbolOnPath2dProgram.id, _symbolOnPath2dProgram.vs.param.distanceFromCamera, "param_vs_distanceFromCamera", GLShaderVariableType::Uniform);
-    auto& glyphs = *_symbolOnPath2dProgram.vs.param.pGlyphs;
+    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_symbolOnPath2dProgram.id);
+    lookup->lookupLocation(_symbolOnPath2dProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
+    lookup->lookupLocation(_symbolOnPath2dProgram.vs.in.glyphIndex, "in_vs_glyphIndex", GLShaderVariableType::In);
+    lookup->lookupLocation(_symbolOnPath2dProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
+    lookup->lookupLocation(_symbolOnPath2dProgram.vs.param.mOrthographicProjection, "param_vs_mOrthographicProjection", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_symbolOnPath2dProgram.vs.param.glyphHeight, "param_vs_glyphHeight", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_symbolOnPath2dProgram.vs.param.distanceFromCamera, "param_vs_distanceFromCamera", GLShaderVariableType::Uniform);
+    auto& glyphs = _symbolOnPath2dProgram.vs.param.glyphs;
     glyphs.resize(_maxGlyphsPerDrawCallSOP2D);
     int glyphStructIndex = 0;
     for(auto& glyph : glyphs)
@@ -1277,14 +1262,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
         const auto glyphStructPrefix =
             QString::fromLatin1("param_vs_glyphs[%glyphIndex%]").replace(QLatin1String("%glyphIndex%"), QString::number(glyphStructIndex++));
 
-        gpuAPI->findVariableLocation(_symbolOnPath2dProgram.id, glyph.anchorPoint, glyphStructPrefix + ".anchorPoint", GLShaderVariableType::Uniform);
-        gpuAPI->findVariableLocation(_symbolOnPath2dProgram.id, glyph.width, glyphStructPrefix + ".width", GLShaderVariableType::Uniform);
-        gpuAPI->findVariableLocation(_symbolOnPath2dProgram.id, glyph.angle, glyphStructPrefix + ".angle", GLShaderVariableType::Uniform);
-        gpuAPI->findVariableLocation(_symbolOnPath2dProgram.id, glyph.widthOfPreviousN, glyphStructPrefix + ".widthOfPreviousN", GLShaderVariableType::Uniform);
-        gpuAPI->findVariableLocation(_symbolOnPath2dProgram.id, glyph.widthN, glyphStructPrefix + ".widthN", GLShaderVariableType::Uniform);
+        lookup->lookupLocation(glyph.anchorPoint, glyphStructPrefix + ".anchorPoint", GLShaderVariableType::Uniform);
+        lookup->lookupLocation(glyph.width, glyphStructPrefix + ".width", GLShaderVariableType::Uniform);
+        lookup->lookupLocation(glyph.angle, glyphStructPrefix + ".angle", GLShaderVariableType::Uniform);
+        lookup->lookupLocation(glyph.widthOfPreviousN, glyphStructPrefix + ".widthOfPreviousN", GLShaderVariableType::Uniform);
+        lookup->lookupLocation(glyph.widthN, glyphStructPrefix + ".widthN", GLShaderVariableType::Uniform);
     }
-    gpuAPI->findVariableLocation(_symbolOnPath2dProgram.id, _symbolOnPath2dProgram.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
-    gpuAPI->clearVariablesLookup();
+    lookup->lookupLocation(_symbolOnPath2dProgram.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
 
 #pragma pack(push, 1)
     struct Vertex
@@ -1359,18 +1343,18 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
     GL_CHECK_RESULT;
     glBufferData(GL_ARRAY_BUFFER, vertices.size()*sizeof(Vertex), vertices.constData(), GL_STATIC_DRAW);
     GL_CHECK_RESULT;
-    glEnableVertexAttribArray(_symbolOnPath2dProgram.vs.in.vertexPosition);
+    glEnableVertexAttribArray(*_symbolOnPath2dProgram.vs.in.vertexPosition);
     GL_CHECK_RESULT;
-    glVertexAttribPointer(_symbolOnPath2dProgram.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, positionXY)));
+    glVertexAttribPointer(*_symbolOnPath2dProgram.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, positionXY)));
     GL_CHECK_RESULT;
-    glEnableVertexAttribArray(_symbolOnPath2dProgram.vs.in.glyphIndex);
+    glEnableVertexAttribArray(*_symbolOnPath2dProgram.vs.in.glyphIndex);
     GL_CHECK_RESULT;
     //NOTE: Here should be glVertexAttribIPointer to omit conversion float->int, but it's not supported in OpenGLES 2.0
-    glVertexAttribPointer(_symbolOnPath2dProgram.vs.in.glyphIndex, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, glyphIndex)));
+    glVertexAttribPointer(*_symbolOnPath2dProgram.vs.in.glyphIndex, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, glyphIndex)));
     GL_CHECK_RESULT;
-    glEnableVertexAttribArray(_symbolOnPath2dProgram.vs.in.vertexTexCoords);
+    glEnableVertexAttribArray(*_symbolOnPath2dProgram.vs.in.vertexTexCoords);
     GL_CHECK_RESULT;
-    glVertexAttribPointer(_symbolOnPath2dProgram.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, textureUV)));
+    glVertexAttribPointer(*_symbolOnPath2dProgram.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, textureUV)));
     GL_CHECK_RESULT;
 
     // Create index buffer and associate it with VAO
@@ -1479,16 +1463,16 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
     _symbolOnPath3dProgram.id = gpuAPI->linkProgram(2, shaders);
-    assert(_symbolOnPath3dProgram.id != 0);
+    assert(_symbolOnPath3dProgram.id);
 
-    gpuAPI->clearVariablesLookup();
-    gpuAPI->findVariableLocation(_symbolOnPath3dProgram.id, _symbolOnPath3dProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-    gpuAPI->findVariableLocation(_symbolOnPath3dProgram.id, _symbolOnPath3dProgram.vs.in.glyphIndex, "in_vs_glyphIndex", GLShaderVariableType::In);
-    gpuAPI->findVariableLocation(_symbolOnPath3dProgram.id, _symbolOnPath3dProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
-    gpuAPI->findVariableLocation(_symbolOnPath3dProgram.id, _symbolOnPath3dProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_symbolOnPath3dProgram.id, _symbolOnPath3dProgram.vs.param.glyphHeight, "param_vs_glyphHeight", GLShaderVariableType::Uniform);
-    gpuAPI->findVariableLocation(_symbolOnPath3dProgram.id, _symbolOnPath3dProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GLShaderVariableType::Uniform);
-    auto& glyphs = *_symbolOnPath3dProgram.vs.param.pGlyphs;
+    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_symbolOnPath3dProgram.id);
+    lookup->lookupLocation(_symbolOnPath3dProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
+    lookup->lookupLocation(_symbolOnPath3dProgram.vs.in.glyphIndex, "in_vs_glyphIndex", GLShaderVariableType::In);
+    lookup->lookupLocation(_symbolOnPath3dProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
+    lookup->lookupLocation(_symbolOnPath3dProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_symbolOnPath3dProgram.vs.param.glyphHeight, "param_vs_glyphHeight", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_symbolOnPath3dProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GLShaderVariableType::Uniform);
+    auto& glyphs = _symbolOnPath3dProgram.vs.param.glyphs;
     glyphs.resize(_maxGlyphsPerDrawCallSOP3D);
     int glyphStructIndex = 0;
     for(auto& glyph : glyphs)
@@ -1496,14 +1480,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
         const auto glyphStructPrefix =
             QString::fromLatin1("param_vs_glyphs[%glyphIndex%]").replace(QLatin1String("%glyphIndex%"), QString::number(glyphStructIndex++));
 
-        gpuAPI->findVariableLocation(_symbolOnPath3dProgram.id, glyph.anchorPoint, glyphStructPrefix + ".anchorPoint", GLShaderVariableType::Uniform);
-        gpuAPI->findVariableLocation(_symbolOnPath3dProgram.id, glyph.width, glyphStructPrefix + ".width", GLShaderVariableType::Uniform);
-        gpuAPI->findVariableLocation(_symbolOnPath3dProgram.id, glyph.angle, glyphStructPrefix + ".angle", GLShaderVariableType::Uniform);
-        gpuAPI->findVariableLocation(_symbolOnPath3dProgram.id, glyph.widthOfPreviousN, glyphStructPrefix + ".widthOfPreviousN", GLShaderVariableType::Uniform);
-        gpuAPI->findVariableLocation(_symbolOnPath3dProgram.id, glyph.widthN, glyphStructPrefix + ".widthN", GLShaderVariableType::Uniform);
+        lookup->lookupLocation(glyph.anchorPoint, glyphStructPrefix + ".anchorPoint", GLShaderVariableType::Uniform);
+        lookup->lookupLocation(glyph.width, glyphStructPrefix + ".width", GLShaderVariableType::Uniform);
+        lookup->lookupLocation(glyph.angle, glyphStructPrefix + ".angle", GLShaderVariableType::Uniform);
+        lookup->lookupLocation(glyph.widthOfPreviousN, glyphStructPrefix + ".widthOfPreviousN", GLShaderVariableType::Uniform);
+        lookup->lookupLocation(glyph.widthN, glyphStructPrefix + ".widthN", GLShaderVariableType::Uniform);
     }
-    gpuAPI->findVariableLocation(_symbolOnPath3dProgram.id, _symbolOnPath3dProgram.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
-    gpuAPI->clearVariablesLookup();
+    lookup->lookupLocation(_symbolOnPath3dProgram.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
 
 #pragma pack(push, 1)
     struct Vertex
@@ -1578,18 +1561,18 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     GL_CHECK_RESULT;
     glBufferData(GL_ARRAY_BUFFER, vertices.size()*sizeof(Vertex), vertices.constData(), GL_STATIC_DRAW);
     GL_CHECK_RESULT;
-    glEnableVertexAttribArray(_symbolOnPath3dProgram.vs.in.vertexPosition);
+    glEnableVertexAttribArray(*_symbolOnPath3dProgram.vs.in.vertexPosition);
     GL_CHECK_RESULT;
-    glVertexAttribPointer(_symbolOnPath3dProgram.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, positionXY)));
+    glVertexAttribPointer(*_symbolOnPath3dProgram.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, positionXY)));
     GL_CHECK_RESULT;
-    glEnableVertexAttribArray(_symbolOnPath3dProgram.vs.in.glyphIndex);
+    glEnableVertexAttribArray(*_symbolOnPath3dProgram.vs.in.glyphIndex);
     GL_CHECK_RESULT;
     //NOTE: Here should be glVertexAttribIPointer to omit conversion float->int, but it's not supported in OpenGLES 2.0
-    glVertexAttribPointer(_symbolOnPath3dProgram.vs.in.glyphIndex, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, glyphIndex)));
+    glVertexAttribPointer(*_symbolOnPath3dProgram.vs.in.glyphIndex, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, glyphIndex)));
     GL_CHECK_RESULT;
-    glEnableVertexAttribArray(_symbolOnPath3dProgram.vs.in.vertexTexCoords);
+    glEnableVertexAttribArray(*_symbolOnPath3dProgram.vs.in.vertexTexCoords);
     GL_CHECK_RESULT;
-    glVertexAttribPointer(_symbolOnPath3dProgram.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, textureUV)));
+    glVertexAttribPointer(*_symbolOnPath3dProgram.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, textureUV)));
     GL_CHECK_RESULT;
 
     // Create index buffer and associate it with VAO
@@ -1617,32 +1600,30 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    if(_symbolOnPath2dIBO != 0)
+    if(_symbolOnPath2dIBO)
     {
         glDeleteBuffers(1, &_symbolOnPath2dIBO);
         GL_CHECK_RESULT;
-        _symbolOnPath2dIBO = 0;
+        _symbolOnPath2dIBO.reset();
     }
-    if(_symbolOnPath2dVBO != 0)
+    if(_symbolOnPath2dVBO)
     {
         glDeleteBuffers(1, &_symbolOnPath2dVBO);
         GL_CHECK_RESULT;
-        _symbolOnPath2dVBO = 0;
+        _symbolOnPath2dVBO.reset();
     }
-    if(_symbolOnPath2dVAO != 0)
+    if(_symbolOnPath2dVAO)
     {
         gpuAPI->glDeleteVertexArrays_wrapper(1, &_symbolOnPath2dVAO);
         GL_CHECK_RESULT;
-        _symbolOnPath2dVAO = 0;
+        _symbolOnPath2dVAO.reset();
     }
 
-    if(_symbolOnPath2dProgram.id != 0)
+    if(_symbolOnPath2dProgram.id)
     {
         glDeleteProgram(_symbolOnPath2dProgram.id);
         GL_CHECK_RESULT;
-        memset(&_symbolOnPath2dProgram, 0, sizeof(_symbolOnPath2dProgram));
-        _symbolOnPath2dProgram_Glyphs.clear();
-        _symbolOnPath2dProgram.vs.param.pGlyphs = &_symbolOnPath2dProgram_Glyphs;
+        _symbolOnPath2dProgram = SymbolOnPath2dProgram();
     }
 }
 
@@ -1653,32 +1634,30 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath3D()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    if(_symbolOnPath3dIBO != 0)
+    if(_symbolOnPath3dIBO)
     {
         glDeleteBuffers(1, &_symbolOnPath3dIBO);
         GL_CHECK_RESULT;
-        _symbolOnPath3dIBO = 0;
+        _symbolOnPath3dIBO.reset();
     }
-    if(_symbolOnPath3dVBO != 0)
+    if(_symbolOnPath3dVBO)
     {
         glDeleteBuffers(1, &_symbolOnPath3dVBO);
         GL_CHECK_RESULT;
-        _symbolOnPath3dVBO = 0;
+        _symbolOnPath3dVBO.reset();
     }
-    if(_symbolOnPath3dVAO != 0)
+    if(_symbolOnPath3dVAO)
     {
         gpuAPI->glDeleteVertexArrays_wrapper(1, &_symbolOnPath3dVAO);
         GL_CHECK_RESULT;
-        _symbolOnPath3dVAO = 0;
+        _symbolOnPath3dVAO.reset();
     }
 
-    if(_symbolOnPath3dProgram.id != 0)
+    if(_symbolOnPath3dProgram.id)
     {
         glDeleteProgram(_symbolOnPath3dProgram.id);
         GL_CHECK_RESULT;
-        memset(&_symbolOnPath3dProgram, 0, sizeof(_symbolOnPath3dProgram));
-        _symbolOnPath3dProgram_Glyphs.clear();
-        _symbolOnPath3dProgram.vs.param.pGlyphs = &_symbolOnPath3dProgram_Glyphs;
+        _symbolOnPath3dProgram = SymbolOnPath3dProgram();
     }
 }
 

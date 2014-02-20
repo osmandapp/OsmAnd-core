@@ -22,24 +22,24 @@ namespace OsmAnd
     protected:
         typedef std::tuple<AreaF, uint32_t, float> Rect2D;
         QList<Rect2D> _rects2D;
-        GLuint _vaoRect2D;
-        GLuint _vboRect2D;
-        GLuint _iboRect2D;
-        struct {
-            GLuint id;
+        GLname _vaoRect2D;
+        GLname _vboRect2D;
+        GLname _iboRect2D;
+        struct ProgramRect2D {
+            GLname id;
 
             struct {
                 // Input data
                 struct {
-                    GLint vertexPosition;
+                    GLlocation vertexPosition;
                 } in;
 
                 // Parameters
                 struct {
                     // Common data
-                    GLint mProjectionViewModel;
-                    GLint rect;
-                    GLint angle;
+                    GLlocation mProjectionViewModel;
+                    GLlocation rect;
+                    GLlocation angle;
                 } param;
             } vs;
 
@@ -47,7 +47,7 @@ namespace OsmAnd
                 // Parameters
                 struct {
                     // Common data
-                    GLint color;
+                    GLlocation color;
                 } param;
             } fs;
         } _programRect2D;
@@ -57,24 +57,24 @@ namespace OsmAnd
 
         typedef std::pair< QVector<glm::vec2>, uint32_t> Line2D;
         QList<Line2D> _lines2D;
-        GLuint _vaoLine2D;
-        GLuint _vboLine2D;
-        GLuint _iboLine2D;
-        struct {
-            GLuint id;
+        GLname _vaoLine2D;
+        GLname _vboLine2D;
+        GLname _iboLine2D;
+        struct ProgramLine2D {
+            GLname id;
 
             struct {
                 // Input data
                 struct {
-                    GLint vertexPosition;
+                    GLlocation vertexPosition;
                 } in;
 
                 // Parameters
                 struct {
                     // Common data
-                    GLint mProjectionViewModel;
-                    GLint v0;
-                    GLint v1;
+                    GLlocation mProjectionViewModel;
+                    GLlocation v0;
+                    GLlocation v1;
                 } param;
             } vs;
 
@@ -82,7 +82,7 @@ namespace OsmAnd
                 // Parameters
                 struct {
                     // Common data
-                    GLint color;
+                    GLlocation color;
                 } param;
             } fs;
         } _programLine2D;
@@ -92,24 +92,24 @@ namespace OsmAnd
 
         typedef std::pair< QVector<glm::vec3>, uint32_t> Line3D;
         QList<Line3D> _lines3D;
-        GLuint _vaoLine3D;
-        GLuint _vboLine3D;
-        GLuint _iboLine3D;
-        struct {
-            GLuint id;
+        GLname _vaoLine3D;
+        GLname _vboLine3D;
+        GLname _iboLine3D;
+        struct ProgramLine3D {
+            GLname id;
 
             struct {
                 // Input data
                 struct {
-                    GLint vertexPosition;
+                    GLlocation vertexPosition;
                 } in;
 
                 // Parameters
                 struct {
                     // Common data
-                    GLint mProjectionViewModel;
-                    GLint v0;
-                    GLint v1;
+                    GLlocation mProjectionViewModel;
+                    GLlocation v0;
+                    GLlocation v1;
                 } param;
             } vs;
 
@@ -117,7 +117,7 @@ namespace OsmAnd
                 // Parameters
                 struct {
                     // Common data
-                    GLint color;
+                    GLlocation color;
                 } param;
             } fs;
         } _programLine3D;
@@ -127,26 +127,26 @@ namespace OsmAnd
 
         typedef std::tuple< glm::vec3, glm::vec3, glm::vec3, glm::vec3, uint32_t> Quad3D;
         QList<Quad3D> _quads3D;
-        GLuint _vaoQuad3D;
-        GLuint _vboQuad3D;
-        GLuint _iboQuad3D;
-        struct {
-            GLuint id;
+        GLname _vaoQuad3D;
+        GLname _vboQuad3D;
+        GLname _iboQuad3D;
+        struct ProgramQuad3D {
+            GLname id;
 
             struct {
                 // Input data
                 struct {
-                    GLint vertexPosition;
+                    GLlocation vertexPosition;
                 } in;
 
                 // Parameters
                 struct {
                     // Common data
-                    GLint mProjectionViewModel;
-                    GLint v0;
-                    GLint v1;
-                    GLint v2;
-                    GLint v3;
+                    GLlocation mProjectionViewModel;
+                    GLlocation v0;
+                    GLlocation v1;
+                    GLlocation v2;
+                    GLlocation v3;
                 } param;
             } vs;
 
@@ -154,7 +154,7 @@ namespace OsmAnd
                 // Parameters
                 struct {
                     // Common data
-                    GLint color;
+                    GLlocation color;
                 } param;
             } fs;
         } _programQuad3D;
