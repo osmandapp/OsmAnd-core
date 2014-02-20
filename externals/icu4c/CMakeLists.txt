@@ -39,9 +39,6 @@ target_compile_definitions(icu4c_static
 
 target_include_directories(icu4c_static
 	PUBLIC
-		"upstream.patched/source/common/unicode"
-		"upstream.patched/source/i18n/unicode"
-	PRIVATE
 		"upstream.patched/source/common"
 		"upstream.patched/source/i18n"
 )
