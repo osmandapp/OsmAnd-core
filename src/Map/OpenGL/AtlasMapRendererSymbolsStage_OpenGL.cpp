@@ -19,10 +19,13 @@ OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::AtlasMapRendererSymbolsStage_OpenGL
     , _pinnedSymbolVAO(0)
     , _pinnedSymbolVBO(0)
     , _pinnedSymbolIBO(0)
-    , _symbolOnPathVAO(0)
-    , _symbolOnPathVBO(0)
-    , _symbolOnPathIBO(0)
+    , _symbolOnPath2dVAO(0)
+    , _symbolOnPath2dVBO(0)
+    , _symbolOnPath2dIBO(0)
     , _maxGlyphsPerDrawCallSOP2D(-1)
+    , _symbolOnPath3dVAO(0)
+    , _symbolOnPath3dVBO(0)
+    , _symbolOnPath3dIBO(0)
     , _maxGlyphsPerDrawCallSOP3D(-1)
 {
     memset(&_pinnedSymbolProgram, 0, sizeof(_pinnedSymbolProgram));
@@ -609,7 +612,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                         GL_PUSH_GROUP_MARKER("use 'symbol-on-path-2d' program");
 
                         // Set symbol VAO
-                        gpuAPI->glBindVertexArray_wrapper(_symbolOnPathVAO);
+                        gpuAPI->glBindVertexArray_wrapper(_symbolOnPath2dVAO);
                         GL_CHECK_RESULT;
 
                         // Activate program
@@ -752,7 +755,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                         GL_PUSH_GROUP_MARKER("use 'symbol-on-path-3d' program");
 
                         // Set symbol VAO
-                        gpuAPI->glBindVertexArray_wrapper(_symbolOnPathVAO);
+                        gpuAPI->glBindVertexArray_wrapper(_symbolOnPath3dVAO);
                         GL_CHECK_RESULT;
 
                         // Activate program
@@ -1153,6 +1156,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releasePinned()
 
 void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath()
 {
+    initializeOnPath2D();
+    initializeOnPath3D();
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
+{
     const auto gpuAPI = getGPUAPI();
 
     GL_CHECK_PRESENT(glGenBuffers);
@@ -1160,127 +1169,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath()
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
-
-    initializeOnPath2D();
-    initializeOnPath3D();
-
-#pragma pack(push, 1)
-    struct Vertex
-    {
-        // XY coordinates
-        float positionXY[2];
-
-        // Index of glyph
-        //NOTE: Here should be int to omit conversion float->int, but it's not supported in OpenGLES 2.0
-        float glyphIndex;
-
-        // UV coordinates
-        float textureUV[2];
-    };
-#pragma pack(pop)
-
-    // Vertex data
-    const Vertex templateVertices[4] =
-    {
-        // In OpenGL, UV origin is BL. But since same rule applies to uploading texture data,
-        // texture in memory is vertically flipped, so swap bottom and top UVs
-        { { -0.5f, -0.5f }, 0, { 0.0f, 1.0f } },//BL
-        { { -0.5f,  0.5f }, 0, { 0.0f, 0.0f } },//TL
-        { {  0.5f,  0.5f }, 0, { 1.0f, 0.0f } },//TR
-        { {  0.5f, -0.5f }, 0, { 1.0f, 1.0f } } //BR
-    };
-    QVector<Vertex> vertices(4 * _maxGlyphsPerDrawCallSOP2D);
-    auto pVertex = vertices.data();
-    for(int glyphIdx = 0; glyphIdx < _maxGlyphsPerDrawCallSOP2D; glyphIdx++)
-    {
-        auto& p0 = *(pVertex++);
-        p0 = templateVertices[0];
-        p0.glyphIndex = glyphIdx;
-
-        auto& p1 = *(pVertex++);
-        p1 = templateVertices[1];
-        p1.glyphIndex = glyphIdx;
-
-        auto& p2 = *(pVertex++);
-        p2 = templateVertices[2];
-        p2.glyphIndex = glyphIdx;
-
-        auto& p3 = *(pVertex++);
-        p3 = templateVertices[3];
-        p3.glyphIndex = glyphIdx;
-    }
-
-    // Index data
-    QVector<GLushort> indices(6 * _maxGlyphsPerDrawCallSOP2D);
-    auto pIndex = indices.data();
-    for(int glyphIdx = 0; glyphIdx < _maxGlyphsPerDrawCallSOP2D; glyphIdx++)
-    {
-        *(pIndex++) = glyphIdx*4 + 0;
-        *(pIndex++) = glyphIdx*4 + 1;
-        *(pIndex++) = glyphIdx*4 + 2;
-
-        *(pIndex++) = glyphIdx*4 + 0;
-        *(pIndex++) = glyphIdx*4 + 2;
-        *(pIndex++) = glyphIdx*4 + 3;
-    }
-
-    // Create Vertex Array Object
-    gpuAPI->glGenVertexArrays_wrapper(1, &_symbolOnPathVAO);
-    GL_CHECK_RESULT;
-    gpuAPI->glBindVertexArray_wrapper(_symbolOnPathVAO);
-    GL_CHECK_RESULT;
-
-    // Create vertex buffer and associate it with VAO
-    glGenBuffers(1, &_symbolOnPathVBO);
-    GL_CHECK_RESULT;
-    glBindBuffer(GL_ARRAY_BUFFER, _symbolOnPathVBO);
-    GL_CHECK_RESULT;
-    glBufferData(GL_ARRAY_BUFFER, vertices.size()*sizeof(Vertex), vertices.constData(), GL_STATIC_DRAW);
-    GL_CHECK_RESULT;
-    // 2D SOPs:
-    glEnableVertexAttribArray(_symbolOnPath2dProgram.vs.in.vertexPosition);
-    GL_CHECK_RESULT;
-    glVertexAttribPointer(_symbolOnPath2dProgram.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, positionXY)));
-    GL_CHECK_RESULT;
-    glEnableVertexAttribArray(_symbolOnPath2dProgram.vs.in.glyphIndex);
-    GL_CHECK_RESULT;
-    //NOTE: Here should be glVertexAttribIPointer to omit conversion float->int, but it's not supported in OpenGLES 2.0
-    glVertexAttribPointer(_symbolOnPath2dProgram.vs.in.glyphIndex, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, glyphIndex)));
-    GL_CHECK_RESULT;
-    glEnableVertexAttribArray(_symbolOnPath2dProgram.vs.in.vertexTexCoords);
-    GL_CHECK_RESULT;
-    glVertexAttribPointer(_symbolOnPath2dProgram.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, textureUV)));
-    GL_CHECK_RESULT;
-    // 3D SOPs:
-    glEnableVertexAttribArray(_symbolOnPath3dProgram.vs.in.vertexPosition);
-    GL_CHECK_RESULT;
-    glVertexAttribPointer(_symbolOnPath3dProgram.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, positionXY)));
-    GL_CHECK_RESULT;
-    glEnableVertexAttribArray(_symbolOnPath3dProgram.vs.in.glyphIndex);
-    GL_CHECK_RESULT;
-    //NOTE: Here should be glVertexAttribIPointer to omit conversion float->int, but it's not supported in OpenGLES 2.0
-    glVertexAttribPointer(_symbolOnPath3dProgram.vs.in.glyphIndex, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, glyphIndex)));
-    GL_CHECK_RESULT;
-    glEnableVertexAttribArray(_symbolOnPath3dProgram.vs.in.vertexTexCoords);
-    GL_CHECK_RESULT;
-    glVertexAttribPointer(_symbolOnPath3dProgram.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, textureUV)));
-    GL_CHECK_RESULT;
-
-    // Create index buffer and associate it with VAO
-    glGenBuffers(1, &_symbolOnPathIBO);
-    GL_CHECK_RESULT;
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _symbolOnPathIBO);
-    GL_CHECK_RESULT;
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size()*sizeof(GLushort), indices.constData(), GL_STATIC_DRAW);
-    GL_CHECK_RESULT;
-
-    gpuAPI->glBindVertexArray_wrapper(0);
-    GL_CHECK_RESULT;
-}
-
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
-{
-    const auto gpuAPI = getGPUAPI();
 
     _maxGlyphsPerDrawCallSOP2D = (gpuAPI->maxVertexUniformVectors - 8) / 5;
 
@@ -1390,11 +1278,115 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
     }
     gpuAPI->findVariableLocation(_symbolOnPath2dProgram.id, _symbolOnPath2dProgram.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
     gpuAPI->clearVariablesLookup();
+
+#pragma pack(push, 1)
+    struct Vertex
+    {
+        // XY coordinates
+        float positionXY[2];
+
+        // Index of glyph
+        //NOTE: Here should be int to omit conversion float->int, but it's not supported in OpenGLES 2.0
+        float glyphIndex;
+
+        // UV coordinates
+        float textureUV[2];
+    };
+#pragma pack(pop)
+
+    // Vertex data
+    const Vertex templateVertices[4] =
+    {
+        // In OpenGL, UV origin is BL. But since same rule applies to uploading texture data,
+        // texture in memory is vertically flipped, so swap bottom and top UVs
+        { { -0.5f, -0.5f }, 0, { 0.0f, 1.0f } },//BL
+        { { -0.5f,  0.5f }, 0, { 0.0f, 0.0f } },//TL
+        { {  0.5f,  0.5f }, 0, { 1.0f, 0.0f } },//TR
+        { {  0.5f, -0.5f }, 0, { 1.0f, 1.0f } } //BR
+    };
+    QVector<Vertex> vertices(4 * _maxGlyphsPerDrawCallSOP2D);
+    auto pVertex = vertices.data();
+    for(int glyphIdx = 0; glyphIdx < _maxGlyphsPerDrawCallSOP2D; glyphIdx++)
+    {
+        auto& p0 = *(pVertex++);
+        p0 = templateVertices[0];
+        p0.glyphIndex = glyphIdx;
+
+        auto& p1 = *(pVertex++);
+        p1 = templateVertices[1];
+        p1.glyphIndex = glyphIdx;
+
+        auto& p2 = *(pVertex++);
+        p2 = templateVertices[2];
+        p2.glyphIndex = glyphIdx;
+
+        auto& p3 = *(pVertex++);
+        p3 = templateVertices[3];
+        p3.glyphIndex = glyphIdx;
+    }
+
+    // Index data
+    QVector<GLushort> indices(6 * _maxGlyphsPerDrawCallSOP2D);
+    auto pIndex = indices.data();
+    for(int glyphIdx = 0; glyphIdx < _maxGlyphsPerDrawCallSOP2D; glyphIdx++)
+    {
+        *(pIndex++) = glyphIdx * 4 + 0;
+        *(pIndex++) = glyphIdx * 4 + 1;
+        *(pIndex++) = glyphIdx * 4 + 2;
+
+        *(pIndex++) = glyphIdx * 4 + 0;
+        *(pIndex++) = glyphIdx * 4 + 2;
+        *(pIndex++) = glyphIdx * 4 + 3;
+    }
+
+    // Create Vertex Array Object
+    gpuAPI->glGenVertexArrays_wrapper(1, &_symbolOnPath2dVAO);
+    GL_CHECK_RESULT;
+    gpuAPI->glBindVertexArray_wrapper(_symbolOnPath2dVAO);
+    GL_CHECK_RESULT;
+
+    // Create vertex buffer and associate it with VAO
+    glGenBuffers(1, &_symbolOnPath2dVBO);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ARRAY_BUFFER, _symbolOnPath2dVBO);
+    GL_CHECK_RESULT;
+    glBufferData(GL_ARRAY_BUFFER, vertices.size()*sizeof(Vertex), vertices.constData(), GL_STATIC_DRAW);
+    GL_CHECK_RESULT;
+    glEnableVertexAttribArray(_symbolOnPath2dProgram.vs.in.vertexPosition);
+    GL_CHECK_RESULT;
+    glVertexAttribPointer(_symbolOnPath2dProgram.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, positionXY)));
+    GL_CHECK_RESULT;
+    glEnableVertexAttribArray(_symbolOnPath2dProgram.vs.in.glyphIndex);
+    GL_CHECK_RESULT;
+    //NOTE: Here should be glVertexAttribIPointer to omit conversion float->int, but it's not supported in OpenGLES 2.0
+    glVertexAttribPointer(_symbolOnPath2dProgram.vs.in.glyphIndex, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, glyphIndex)));
+    GL_CHECK_RESULT;
+    glEnableVertexAttribArray(_symbolOnPath2dProgram.vs.in.vertexTexCoords);
+    GL_CHECK_RESULT;
+    glVertexAttribPointer(_symbolOnPath2dProgram.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, textureUV)));
+    GL_CHECK_RESULT;
+
+    // Create index buffer and associate it with VAO
+    glGenBuffers(1, &_symbolOnPath2dIBO);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _symbolOnPath2dIBO);
+    GL_CHECK_RESULT;
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size()*sizeof(GLushort), indices.constData(), GL_STATIC_DRAW);
+    GL_CHECK_RESULT;
+
+    gpuAPI->glBindVertexArray_wrapper(0);
+    GL_CHECK_RESULT;
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
 {
     const auto gpuAPI = getGPUAPI();
+
+    GL_CHECK_PRESENT(glGenBuffers);
+    GL_CHECK_PRESENT(glBindBuffer);
+    GL_CHECK_PRESENT(glBufferData);
+    GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glVertexAttribPointer);
 
     _maxGlyphsPerDrawCallSOP3D = (gpuAPI->maxVertexUniformVectors - 7) / 5;
 
@@ -1502,40 +1494,138 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     }
     gpuAPI->findVariableLocation(_symbolOnPath3dProgram.id, _symbolOnPath3dProgram.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
     gpuAPI->clearVariablesLookup();
+
+#pragma pack(push, 1)
+    struct Vertex
+    {
+        // XY coordinates
+        float positionXY[2];
+
+        // Index of glyph
+        //NOTE: Here should be int to omit conversion float->int, but it's not supported in OpenGLES 2.0
+        float glyphIndex;
+
+        // UV coordinates
+        float textureUV[2];
+    };
+#pragma pack(pop)
+
+    // Vertex data
+    const Vertex templateVertices[4] =
+    {
+        // In OpenGL, UV origin is BL. But since same rule applies to uploading texture data,
+        // texture in memory is vertically flipped, so swap bottom and top UVs
+        { { -0.5f, -0.5f }, 0, { 0.0f, 1.0f } },//BL
+        { { -0.5f,  0.5f }, 0, { 0.0f, 0.0f } },//TL
+        { {  0.5f,  0.5f }, 0, { 1.0f, 0.0f } },//TR
+        { {  0.5f, -0.5f }, 0, { 1.0f, 1.0f } } //BR
+    };
+    QVector<Vertex> vertices(4 * _maxGlyphsPerDrawCallSOP3D);
+    auto pVertex = vertices.data();
+    for(int glyphIdx = 0; glyphIdx < _maxGlyphsPerDrawCallSOP3D; glyphIdx++)
+    {
+        auto& p0 = *(pVertex++);
+        p0 = templateVertices[0];
+        p0.glyphIndex = glyphIdx;
+
+        auto& p1 = *(pVertex++);
+        p1 = templateVertices[1];
+        p1.glyphIndex = glyphIdx;
+
+        auto& p2 = *(pVertex++);
+        p2 = templateVertices[2];
+        p2.glyphIndex = glyphIdx;
+
+        auto& p3 = *(pVertex++);
+        p3 = templateVertices[3];
+        p3.glyphIndex = glyphIdx;
+    }
+
+    // Index data
+    QVector<GLushort> indices(6 * _maxGlyphsPerDrawCallSOP3D);
+    auto pIndex = indices.data();
+    for(int glyphIdx = 0; glyphIdx < _maxGlyphsPerDrawCallSOP3D; glyphIdx++)
+    {
+        *(pIndex++) = glyphIdx * 4 + 0;
+        *(pIndex++) = glyphIdx * 4 + 1;
+        *(pIndex++) = glyphIdx * 4 + 2;
+
+        *(pIndex++) = glyphIdx * 4 + 0;
+        *(pIndex++) = glyphIdx * 4 + 2;
+        *(pIndex++) = glyphIdx * 4 + 3;
+    }
+
+    // Create Vertex Array Object
+    gpuAPI->glGenVertexArrays_wrapper(1, &_symbolOnPath3dVAO);
+    GL_CHECK_RESULT;
+    gpuAPI->glBindVertexArray_wrapper(_symbolOnPath3dVAO);
+    GL_CHECK_RESULT;
+
+    // Create vertex buffer and associate it with VAO
+    glGenBuffers(1, &_symbolOnPath3dVBO);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ARRAY_BUFFER, _symbolOnPath3dVBO);
+    GL_CHECK_RESULT;
+    glBufferData(GL_ARRAY_BUFFER, vertices.size()*sizeof(Vertex), vertices.constData(), GL_STATIC_DRAW);
+    GL_CHECK_RESULT;
+    glEnableVertexAttribArray(_symbolOnPath3dProgram.vs.in.vertexPosition);
+    GL_CHECK_RESULT;
+    glVertexAttribPointer(_symbolOnPath3dProgram.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, positionXY)));
+    GL_CHECK_RESULT;
+    glEnableVertexAttribArray(_symbolOnPath3dProgram.vs.in.glyphIndex);
+    GL_CHECK_RESULT;
+    //NOTE: Here should be glVertexAttribIPointer to omit conversion float->int, but it's not supported in OpenGLES 2.0
+    glVertexAttribPointer(_symbolOnPath3dProgram.vs.in.glyphIndex, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, glyphIndex)));
+    GL_CHECK_RESULT;
+    glEnableVertexAttribArray(_symbolOnPath3dProgram.vs.in.vertexTexCoords);
+    GL_CHECK_RESULT;
+    glVertexAttribPointer(_symbolOnPath3dProgram.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, textureUV)));
+    GL_CHECK_RESULT;
+
+    // Create index buffer and associate it with VAO
+    glGenBuffers(1, &_symbolOnPath3dIBO);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _symbolOnPath3dIBO);
+    GL_CHECK_RESULT;
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size()*sizeof(GLushort), indices.constData(), GL_STATIC_DRAW);
+    GL_CHECK_RESULT;
+
+    gpuAPI->glBindVertexArray_wrapper(0);
+    GL_CHECK_RESULT;
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath()
 {
-    const auto gpuAPI = getGPUAPI();
-
-    GL_CHECK_PRESENT(glDeleteBuffers);
-    GL_CHECK_PRESENT(glDeleteProgram);
-
-    if(_symbolOnPathIBO != 0)
-    {
-        glDeleteBuffers(1, &_symbolOnPathIBO);
-        GL_CHECK_RESULT;
-        _symbolOnPathIBO = 0;
-    }
-    if(_symbolOnPathVBO != 0)
-    {
-        glDeleteBuffers(1, &_symbolOnPathVBO);
-        GL_CHECK_RESULT;
-        _symbolOnPathVBO = 0;
-    }
-    if(_symbolOnPathVAO != 0)
-    {
-        gpuAPI->glDeleteVertexArrays_wrapper(1, &_symbolOnPathVAO);
-        GL_CHECK_RESULT;
-        _symbolOnPathVAO = 0;
-    }
-
     releaseOnPath3D();
     releaseOnPath2D();
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D()
 {
+    const auto gpuAPI = getGPUAPI();
+
+    GL_CHECK_PRESENT(glDeleteBuffers);
+    GL_CHECK_PRESENT(glDeleteProgram);
+
+    if(_symbolOnPath2dIBO != 0)
+    {
+        glDeleteBuffers(1, &_symbolOnPath2dIBO);
+        GL_CHECK_RESULT;
+        _symbolOnPath2dIBO = 0;
+    }
+    if(_symbolOnPath2dVBO != 0)
+    {
+        glDeleteBuffers(1, &_symbolOnPath2dVBO);
+        GL_CHECK_RESULT;
+        _symbolOnPath2dVBO = 0;
+    }
+    if(_symbolOnPath2dVAO != 0)
+    {
+        gpuAPI->glDeleteVertexArrays_wrapper(1, &_symbolOnPath2dVAO);
+        GL_CHECK_RESULT;
+        _symbolOnPath2dVAO = 0;
+    }
+
     if(_symbolOnPath2dProgram.id != 0)
     {
         glDeleteProgram(_symbolOnPath2dProgram.id);
@@ -1548,6 +1638,30 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D()
 
 void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath3D()
 {
+    const auto gpuAPI = getGPUAPI();
+
+    GL_CHECK_PRESENT(glDeleteBuffers);
+    GL_CHECK_PRESENT(glDeleteProgram);
+
+    if(_symbolOnPath3dIBO != 0)
+    {
+        glDeleteBuffers(1, &_symbolOnPath3dIBO);
+        GL_CHECK_RESULT;
+        _symbolOnPath3dIBO = 0;
+    }
+    if(_symbolOnPath3dVBO != 0)
+    {
+        glDeleteBuffers(1, &_symbolOnPath3dVBO);
+        GL_CHECK_RESULT;
+        _symbolOnPath3dVBO = 0;
+    }
+    if(_symbolOnPath3dVAO != 0)
+    {
+        gpuAPI->glDeleteVertexArrays_wrapper(1, &_symbolOnPath3dVAO);
+        GL_CHECK_RESULT;
+        _symbolOnPath3dVAO = 0;
+    }
+
     if(_symbolOnPath3dProgram.id != 0)
     {
         glDeleteProgram(_symbolOnPath3dProgram.id);

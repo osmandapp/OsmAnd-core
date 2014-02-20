@@ -59,9 +59,6 @@ namespace OsmAnd
         void initializePinned();
         void releasePinned();
 
-        GLuint _symbolOnPathVAO;
-        GLuint _symbolOnPathVBO;
-        GLuint _symbolOnPathIBO;
         struct Glyph
         {
             GLint anchorPoint;
@@ -70,6 +67,9 @@ namespace OsmAnd
             GLint widthOfPreviousN;
             GLint widthN;
         };
+        GLuint _symbolOnPath2dVAO;
+        GLuint _symbolOnPath2dVBO;
+        GLuint _symbolOnPath2dIBO;
         struct {
             GLuint id;
 
@@ -107,6 +107,12 @@ namespace OsmAnd
         } _symbolOnPath2dProgram;
         QVector<Glyph> _symbolOnPath2dProgram_Glyphs;
         GLint _maxGlyphsPerDrawCallSOP2D;
+        void initializeOnPath2D();
+        void releaseOnPath2D();
+
+        GLuint _symbolOnPath3dVAO;
+        GLuint _symbolOnPath3dVBO;
+        GLuint _symbolOnPath3dIBO;
         struct {
             GLuint id;
 
@@ -143,12 +149,11 @@ namespace OsmAnd
         } _symbolOnPath3dProgram;
         QVector<Glyph> _symbolOnPath3dProgram_Glyphs;
         GLint _maxGlyphsPerDrawCallSOP3D;
-        void initializeOnPath();
-        void initializeOnPath2D();
         void initializeOnPath3D();
-        void releaseOnPath();
-        void releaseOnPath2D();
         void releaseOnPath3D();
+        
+        void initializeOnPath();
+        void releaseOnPath();
     public:
         AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer);
         virtual ~AtlasMapRendererSymbolsStage_OpenGL();
