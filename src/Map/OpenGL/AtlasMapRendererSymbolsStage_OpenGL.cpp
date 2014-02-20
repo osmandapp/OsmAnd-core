@@ -529,7 +529,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 const auto& subpathDirectionOnScreen = renderable->subpathDirectionOnScreen;
                 const glm::vec2 subpathDirectionOnScreenN(-subpathDirectionOnScreen.y, subpathDirectionOnScreen.x);
                 const auto shouldInvert = (subpathDirectionOnScreenN.y /* horizont.x*dirN.y - horizont.y*dirN.x == 1.0f*dirN.y - 0.0f*dirN.x */) < 0;
-                typedef std::tuple<glm::vec2, float, float, glm::vec2> GlyphLocation;
+                typedef std::tuple<glm::vec2, float, float, glm::vec2, int> GlyphLocation;
                 QVector<GlyphLocation> glyphs;
                 glyphs.reserve(symbol->glyphsWidth.size());
 
@@ -594,7 +594,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     const auto anchorPoint = vLastPoint0 + (anchorOffset - (segmentsLengthSum - lastSegmentLength))*vLastSegment;
 
                     // Add glyph location data
-                    GlyphLocation glyphLocation(anchorPoint, glyphWidth, lastSegmentAngle, vLastSegmentN);
+                    GlyphLocation glyphLocation(anchorPoint, glyphWidth, lastSegmentAngle, vLastSegmentN, nextSubpathPointIdx - 1);
                     if(shouldInvert)
                         glyphs.push_front(qMove(glyphLocation));
                     else
@@ -656,6 +656,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + 0);
 
                     // Draw chains of glyphs
+                    int lastSegmentIndex = -1;
                     int glyphsDrawn = 0;
                     auto pGlyph = glyphs.constData();
                     auto pGlyphVS = _symbolOnPath2dProgram.vs.param.pGlyphs->constData();
@@ -669,6 +670,18 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                             const auto& glyph = *(pGlyph++);
                             const auto& vsGlyph = *(pGlyphVS++);
 
+                            // Set per-segment data
+                            const auto& segmentIndex = std::get<4>(glyph);
+                            if(lastSegmentIndex != segmentIndex)
+                            {
+                                // Set angle
+                                const auto& angle = std::get<2>(glyph);
+                                glUniform1f(vsGlyph.angle, angle);
+                                GL_CHECK_RESULT;
+
+                                lastSegmentIndex = segmentIndex;
+                            }
+
                             // Set anchor point of glyph
                             const auto& anchorPoint = std::get<0>(glyph);
                             glUniform2fv(vsGlyph.anchorPoint, 1, glm::value_ptr(anchorPoint));
@@ -677,11 +690,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                             // Set glyph width
                             const auto& width = std::get<1>(glyph);
                             glUniform1f(vsGlyph.width, width);
-                            GL_CHECK_RESULT;
-
-                            // Set angle
-                            const auto& angle = std::get<2>(glyph);
-                            glUniform1f(vsGlyph.angle, angle);
                             GL_CHECK_RESULT;
 
                             // Set normalized width of all previous glyphs
@@ -802,6 +810,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + 0);
 
                     // Draw chains of glyphs
+                    int lastSegmentIndex = -1;
                     int glyphsDrawn = 0;
                     auto pGlyph = glyphs.constData();
                     auto pGlyphVS = _symbolOnPath3dProgram.vs.param.pGlyphs->constData();
@@ -815,6 +824,18 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                             const auto& glyph = *(pGlyph++);
                             const auto& vsGlyph = *(pGlyphVS++);
 
+                            // Set per-segment data
+                            const auto& segmentIndex = std::get<4>(glyph);
+                            if(lastSegmentIndex != segmentIndex)
+                            {
+                                // Set angle
+                                const auto& angle = std::get<2>(glyph);
+                                glUniform1f(vsGlyph.angle, Utilities::normalizedAngleRadians(angle + M_PI));
+                                GL_CHECK_RESULT;
+
+                                lastSegmentIndex = segmentIndex;
+                            }
+
                             // Set anchor point of glyph
                             const auto& anchorPoint = std::get<0>(glyph);
                             glUniform2fv(vsGlyph.anchorPoint, 1, glm::value_ptr(anchorPoint));
@@ -823,11 +844,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                             // Set glyph width
                             const auto& width = std::get<1>(glyph);
                             glUniform1f(vsGlyph.width, width*scale);
-                            GL_CHECK_RESULT;
-
-                            // Set angle
-                            const auto& angle = std::get<2>(glyph);
-                            glUniform1f(vsGlyph.angle, Utilities::normalizedAngleRadians(angle + M_PI));
                             GL_CHECK_RESULT;
 
                             // Set normalized width of all previous glyphs
