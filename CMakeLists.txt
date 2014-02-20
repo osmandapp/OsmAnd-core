@@ -122,6 +122,7 @@ set(merged_dependencies
 	skia_static
 	protobuf_static
 	gdal_static
+	icu4c_static
 	${target_specific_public_libraries}
 )
 set(merged_compile_definitions_public
@@ -148,6 +149,7 @@ set(merged_link_libs_public
 	skia_static
 	protobuf_static
 	gdal_static
+	icu4c_static
 	${target_specific_public_libraries}
 )
 

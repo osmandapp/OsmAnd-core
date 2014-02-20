@@ -35,6 +35,9 @@ endif()
 # External : GLSL optimizer
 add_subdirectory("${OSMAND_ROOT}/core/externals/glsl-optimizer" "core/externals/glsl-optimizer")
 
+# External: ICU4C
+add_subdirectory("${OSMAND_ROOT}/core/externals/icu4c" "core/externals/icu4c")
+
 # OsmAnd Core
 add_subdirectory("${OSMAND_ROOT}/core" "core/OsmAndCore")
 
