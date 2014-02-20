@@ -585,9 +585,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                             vLastSegmentN.x = vLastSegment.y;
                             vLastSegmentN.y = -vLastSegment.x;
                         }
-                        if(shouldInvert)
-                            vLastSegmentN = -vLastSegmentN;
                         lastSegmentAngle = qAtan2(vLastSegment.y, vLastSegment.x);//TODO: maybe for 3D a -y should be passed (see -1 rotation axis)
+                        if(shouldInvert)
+                            lastSegmentAngle = Utilities::normalizedAngleRadians(lastSegmentAngle + M_PI);
                     }
 
                     // Calculate anchor point
@@ -820,7 +820,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 
                             // Set angle
                             const auto& angle = std::get<2>(glyph);
-                            glUniform1f(vsGlyph.angle, angle);
+                            glUniform1f(vsGlyph.angle, Utilities::normalizedAngleRadians(angle + M_PI));
                             GL_CHECK_RESULT;
 
                             // Set normalized width of all previous glyphs
@@ -865,7 +865,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                         const glm::vec4 p2(br.x, 0.0f, br.y, 1.0f);
                         const glm::vec4 p3(bl.x, 0.0f, bl.y, 1.0f);
                         const auto toCenter = glm::translate(-pC);
-                        const auto rotate = glm::rotate(qRadiansToDegrees(angle), glm::vec3(0.0f, -1.0f, 0.0f));
+                        const auto rotate = glm::rotate(qRadiansToDegrees((float)Utilities::normalizedAngleRadians(angle + M_PI)), glm::vec3(0.0f, -1.0f, 0.0f));
                         const auto fromCenter = glm::translate(pC);
                         const auto M = fromCenter*rotate*toCenter;
                         getRenderer()->_debugStage.addQuad3D((M*p0).xyz, (M*p1).xyz, (M*p2).xyz, (M*p3).xyz, SkColorSetA(SK_ColorGREEN, 128));
@@ -1515,10 +1515,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     {
         // In OpenGL, UV origin is BL. But since same rule applies to uploading texture data,
         // texture in memory is vertically flipped, so swap bottom and top UVs
-        { { -0.5f, -0.5f }, 0, { 0.0f, 1.0f } },//BL
-        { { -0.5f,  0.5f }, 0, { 0.0f, 0.0f } },//TL
-        { {  0.5f,  0.5f }, 0, { 1.0f, 0.0f } },//TR
-        { {  0.5f, -0.5f }, 0, { 1.0f, 1.0f } } //BR
+        { { -0.5f, -0.5f }, 0, { 1.0f - 0.0f, 1.0f } },//BL
+        { { -0.5f,  0.5f }, 0, { 1.0f - 0.0f, 0.0f } },//TL
+        { {  0.5f,  0.5f }, 0, { 1.0f - 1.0f, 0.0f } },//TR
+        { {  0.5f, -0.5f }, 0, { 1.0f - 1.0f, 1.0f } } //BR
     };
     QVector<Vertex> vertices(4 * _maxGlyphsPerDrawCallSOP3D);
     auto pVertex = vertices.data();
