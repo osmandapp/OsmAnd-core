@@ -66,6 +66,7 @@ bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols(
                     pinnedSymbol->bitmap,
                     pinnedSymbol->order,
                     pinnedSymbol->content,
+                    pinnedSymbol->minDistance,
                     pinnedSymbol->location31,
                     pinnedSymbol->offset);
                 assert(static_cast<bool>(symbol->bitmap));
@@ -78,6 +79,7 @@ bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols(
                     symbolOnPath->bitmap,
                     symbolOnPath->order,
                     symbolOnPath->content,
+                    symbolOnPath->minDistance,
                     symbolOnPath->glyphsWidth);
                 assert(static_cast<bool>(symbol->bitmap));
                 constructedGroup->symbols.push_back(qMove(std::shared_ptr<const MapSymbol>(symbol)));

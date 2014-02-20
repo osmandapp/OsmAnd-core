@@ -182,7 +182,7 @@ namespace OsmAnd {
             uint32_t shadowColor;
             int wrapWidth;
             bool isBold;
-            int minDistance;
+            PointI minDistance;
             QString shieldResourceName;
         };
 

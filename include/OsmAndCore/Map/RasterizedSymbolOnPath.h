@@ -25,6 +25,7 @@ namespace OsmAnd
             const std::shared_ptr<const SkBitmap>& bitmap,
             const int order,
             const QString& content,
+            const PointI& minDistance,
             const QVector<SkScalar>& glyphsWidth);
     public:
         virtual ~RasterizedSymbolOnPath();

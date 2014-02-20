@@ -460,6 +460,44 @@ namespace OsmAnd
             return *this;
         }
 
+        inline AreaT enlargeToInclude(const PointT& p) const
+        {
+            return getEnlargedToInclude(p);
+        }
+
+        inline AreaT getEnlargedToInclude(const PointT& p) const
+        {
+            return AreaT(
+                std::min(top, p.y),
+                std::min(left, p.x),
+                std::max(bottom, p.y),
+                std::max(right, p.x));
+        }
+
+        inline AreaT& enlargeBy(const PointT& delta)
+        {
+            top -= delta.y;
+            left -= delta.x;
+            bottom += delta.y;
+            right += delta.x;
+
+            return *this;
+        }
+
+        inline AreaT enlargeBy(const PointT& delta) const
+        {
+            return getEnlargedBy(p);
+        }
+
+        inline AreaT getEnlargedBy(const PointT& delta) const
+        {
+            return AreaT(
+                top - delta.y,
+                left - delta.x,
+                bottom + delta.y,
+                right + delta.x);
+        }
+
         static AreaT largest()
         {
             AreaT res;

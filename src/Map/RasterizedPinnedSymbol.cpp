@@ -6,9 +6,10 @@ OsmAnd::RasterizedPinnedSymbol::RasterizedPinnedSymbol(
     const std::shared_ptr<const SkBitmap>& bitmap_,
     const int order_,
     const QString& content_,
+    const PointI& minDistance_,
     const PointI& location31_,
     const PointI& offset_)
-    : RasterizedSymbol(group_, mapObject_, bitmap_, order_, content_)
+    : RasterizedSymbol(group_, mapObject_, bitmap_, order_, content_, minDistance_)
     , location31(location31_)
     , offset(offset_)
 {

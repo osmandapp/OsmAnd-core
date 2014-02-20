@@ -7,12 +7,12 @@
 #include <QtGlobal>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/Map/RasterizerEnvironment.h>
+#include <OsmAndCore/Map/RasterizerSharedContext.h>
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class Rasterizer;
-    class RasterizerEnvironment;
-    class RasterizerSharedContext;
 
     class RasterizerContext_P;
     class OSMAND_CORE_API RasterizerContext
@@ -30,7 +30,6 @@ namespace OsmAnd {
 
     friend class OsmAnd::Rasterizer;
     };
-
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_RASTERIZER_CONTEXT_H_)

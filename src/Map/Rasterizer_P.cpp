@@ -990,8 +990,14 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
         text->isBold = false;
         textEvalResult.getBooleanValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_BOLD, text->isBold);
 
-        text->minDistance = 0;
-        textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_MIN_DISTANCE, text->minDistance);
+        ok = textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_MIN_DISTANCE_X, text->minDistance.x);
+        if(ok && (text->minDistance.x > 0 || text->minDistance.y > 0))
+        {
+            text->minDistance.y = 15.0f*env.owner->displayDensityFactor; /* 15dip */
+            const auto minDistanceX = 5.0f*env.owner->displayDensityFactor; /* 5dip */
+            if(text->minDistance.x < minDistanceX)
+                text->minDistance.x = minDistanceX;
+        }
 
         textEvalResult.getStringValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_SHIELD, text->shieldResourceName);
 
@@ -2379,8 +2385,9 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                         group,
                         constructedGroup->mapObject,
                         qMove(std::shared_ptr<const SkBitmap>(bitmap)),
-                        symbol->order,
+                        textSymbol->order,
                         text,
+                        textSymbol->minDistance,
                         glyphsWidth);
                     assert(static_cast<bool>(rasterizedSymbol->bitmap));
                     constructedGroup->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
@@ -2399,9 +2406,10 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                         group,
                         constructedGroup->mapObject,
                         qMove(std::shared_ptr<const SkBitmap>(bitmap)),
-                        symbol->order,
+                        textSymbol->order,
                         text,
-                        symbol->location31,
+                        textSymbol->minDistance,
+                        textSymbol->location31,
                         (constructedGroup->symbols.isEmpty() ? PointI() : totalOffset));
                     assert(static_cast<bool>(rasterizedSymbol->bitmap));
                     constructedGroup->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
@@ -2432,9 +2440,10 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                     group,
                     constructedGroup->mapObject,
                     qMove(bitmap),
-                    symbol->order,
+                    iconSymbol->order,
                     iconSymbol->resourceName,
-                    symbol->location31,
+                    PointI(),
+                    iconSymbol->location31,
                     (constructedGroup->symbols.isEmpty() ? PointI() : totalOffset));
                 assert(static_cast<bool>(rasterizedSymbol->bitmap));
                 constructedGroup->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));

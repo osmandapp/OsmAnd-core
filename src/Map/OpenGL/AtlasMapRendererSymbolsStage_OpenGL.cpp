@@ -414,6 +414,24 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     continue;
                 }
 
+                // Query for similar content in area of "minDistance" to exclude duplicates, but keep if from same mapObject
+                if(symbol->minDistance.x > 0 || symbol->minDistance.y > 0)
+                {
+                    const auto& symbolContent = symbol->content;
+                    const auto hasSimilarContent = intersections.test(boundsInWindow.getEnlargedBy(symbol->minDistance), false,
+                        [symbolContent, mapObjectId](const std::shared_ptr<const MapSymbol>& otherSymbol, const AreaI& otherArea) -> bool
+                    {
+                        return otherSymbol->content == symbolContent && otherSymbol->mapObject->id != mapObjectId;
+                    });
+                    if(hasSimilarContent)
+                    {
+#if OSMAND_DEBUG && 0
+                        getRenderer()->_debugStage.addRect2D(boundsInWindow, SkColorSetA(SK_ColorRED, 50));
+#endif // OSMAND_DEBUG
+                        continue;
+                    }
+                }
+
 #if OSMAND_DEBUG && 0
                 getRenderer()->_debugStage.addRect2D(boundsInWindow, SkColorSetA(SK_ColorGREEN, 50));
 #endif // OSMAND_DEBUG
