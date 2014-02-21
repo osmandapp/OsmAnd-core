@@ -34,7 +34,7 @@
 #include <SkDashPathEffect.h>
 #include <SkBitmapProcShader.h>
 #include <SkError.h>
-#define OSMAND_DUMP_SYMBOLS 1
+#define OSMAND_DUMP_SYMBOLS 0
 #if OSMAND_DUMP_SYMBOLS
 #   include <SkImageEncoder.h>
 #endif OSMAND_DUMP_SYMBOLS
@@ -2294,18 +2294,13 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
 
             if(const auto textSymbol = std::dynamic_pointer_cast<const PrimitiveSymbol_Text>(symbol))
             {
-                //const auto text = ICU::convertToVisualOrder(textSymbol->value);
-                const auto text = QString("this is a very very very long long namename with substring! THIS IS A VERY VERY VERY LONG LONG NAMENAME WITH SUBSTRING!");
+                const auto text = ICU::convertToVisualOrder(textSymbol->value);
                 const auto lineRefs =
                     (textSymbol->wrapWidth > 0 && !textSymbol->drawOnPath && textSymbol->shieldResourceName.isEmpty())
                     ? ICU::getTextWrappingRefs(text, textSymbol->wrapWidth)
                     : (QVector<QStringRef>() << QStringRef(&text));
                 const auto& linesCount = lineRefs.size();
 
-                //////////////////////////////////////////////////////////////////////////
-                const bool test = lineRefs.size() > 1;
-                //////////////////////////////////////////////////////////////////////////
-                
                 // Obtain shield for text if such exists
                 std::shared_ptr<const SkBitmap> textShieldBitmap;
                 if(!textSymbol->shieldResourceName.isEmpty())
@@ -2431,7 +2426,7 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                     textArea.fBottom += lineHeight;
                     linesHeightSum += lineHeight;
 
-                    //TODO: this is wrong!
+                    // This will expand left-right bounds to get proper area width
                     textArea.fLeft = qMin(textArea.fLeft, lineNormalizedBounds.fLeft);
                     textArea.fRight = qMax(textArea.fRight, lineNormalizedBounds.fRight);
                 }
@@ -2582,48 +2577,6 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
         outSymbolsGroups.push_back(qMove(group));
     }
 }
-
-//void drawWrappedText(RenderingContext* rc, SkCanvas* cv, TextDrawInfo* text, float textSize, SkPaint& paintText) {
-//    if(text->textWrap == 0) {
-//        // set maximum for all text
-//        text->textWrap = 40;
-//    }
-//
-//    if(text->text.length() > text->textWrap) {
-//        const char* c_str = text->text.c_str();
-//
-//        int end = text->text.length();
-//        int line = 0;
-//        int pos = 0;
-//        int start = 0;
-//        while(start < end) {
-//            const char* p_str = c_str;
-//            int lastSpace = -1;
-//            int prevPos = -1;
-//            int charRead = 0;
-//            do {
-//                int lastSpace = nextWord((uint8_t*)p_str, &charRead);
-//                if (lastSpace == -1) {
-//                    pos = end;
-//                } else {
-//                    p_str += lastSpace;
-//                    if(pos != start && charRead >= text->textWrap){
-//                        break;
-//                    }
-//                    pos += lastSpace;
-//                }
-//            } while(pos < end && charRead < text->textWrap);
-//
-//            PROFILE_NATIVE_OPERATION(rc, drawTextOnCanvas(cv, c_str, pos - start , text->centerX, text->centerY + line * (textSize + 2), paintText, text->textShadow));
-//            c_str += (pos - start);
-//            start = pos;
-//            line++;
-//        }
-//    } else {
-//        PROFILE_NATIVE_OPERATION(rc, drawTextOnCanvas(cv, text->text.data(), text->text.length(), text->centerX, text->centerY, paintText, text->textShadow));
-//    }
-//}
-//
 
 OsmAnd::Rasterizer_P::PrimitiveSymbol::PrimitiveSymbol()
     : order(-1)
