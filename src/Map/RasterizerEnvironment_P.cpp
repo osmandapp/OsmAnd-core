@@ -34,7 +34,8 @@ OsmAnd::RasterizerEnvironment_P::RasterizerEnvironment_P( RasterizerEnvironment*
     , attributeRule_roadDensityZoomTile(_attributeRule_roadDensityZoomTile)
     , attributeRule_roadsDensityLimitPerTile(_attributeRule_roadsDensityLimitPerTile)
     , mapPaint(_mapPaint)
-    , textPaint(_textPaint)
+    , regularTextPaint(_regularTextPaint)
+    , boldTextPaint(_boldTextPaint)
     , oneWayPaints(_oneWayPaints)
     , reverseOneWayPaints(_reverseOneWayPaints)
     , dummyMapSection(new ObfMapSectionInfo())
@@ -71,13 +72,13 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
 {
     _mapPaint.setAntiAlias(true);
 
-    _textPaint.setAntiAlias(true);
-    _textPaint.setTextEncoding(SkPaint::kUTF16_TextEncoding);
-    //NOTE: Is this needed?
-    //_textPaint.setStyle(SkPaint::kFill_Style);
-    //_textPaint.setStrokeWidth(1);
-    //_textPaint.setColor(SK_ColorBLACK);
     static_assert(sizeof(QChar) == 2, "If QChar is not 2 bytes, then encoding is not kUTF16_TextEncoding");
+
+    _regularTextPaint.setAntiAlias(true);
+    _regularTextPaint.setTextEncoding(SkPaint::kUTF16_TextEncoding);
+
+    _boldTextPaint = _regularTextPaint;
+    _boldTextPaint.setFakeBoldText(true);
 
     _shadowLevelMin = 0;
     _shadowLevelMax = 256;

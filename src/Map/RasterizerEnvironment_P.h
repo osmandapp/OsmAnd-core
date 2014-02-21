@@ -42,7 +42,8 @@ namespace OsmAnd {
         QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > _settings;
 
         SkPaint _mapPaint;
-        SkPaint _textPaint;
+        SkPaint _regularTextPaint;
+        SkPaint _boldTextPaint;
 
         SkColor _defaultBgColor;
         uint32_t _shadowLevelMin;
@@ -84,7 +85,8 @@ namespace OsmAnd {
         const std::shared_ptr<const MapStyleBuiltinValueDefinitions> styleBuiltinValueDefs;
 
         const SkPaint& mapPaint;
-        const SkPaint& textPaint;
+        const SkPaint& regularTextPaint;
+        const SkPaint& boldTextPaint;
 
         const SkColor& defaultBgColor;
         const uint32_t& shadowLevelMin;

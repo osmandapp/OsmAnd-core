@@ -2306,10 +2306,15 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                 if(!textSymbol->shieldResourceName.isEmpty())
                     env.obtainTextShield(textSymbol->shieldResourceName, textShieldBitmap);
 
+                // Get base text settings from environment
+                SkPaint textPaint = textSymbol->isBold ? env.boldTextPaint : env.regularTextPaint;
+
+                // Check if content is covered by selected typeface. If not - use default
+                if(textPaint.getTypeface() != nullptr && !textPaint.containsText(text.constData(), text.length()*sizeof(QChar)))
+                    textPaint.setTypeface(nullptr);
+
                 // Configure paint for text
-                SkPaint textPaint = env.textPaint;
                 textPaint.setTextSize(textSymbol->size);
-                textPaint.setFakeBoldText(textSymbol->isBold);
                 textPaint.setColor(textSymbol->color);
 
                 // Get line spacing
@@ -2375,8 +2380,8 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                 }
 
                 // Calculate extra top and bottom space of symbol
-                const auto symbolExtraTopSpace = qMax(0.0f, fontMaxTop - (-linesBounds.first().fTop));
-                const auto symbolExtraBottomSpace = qMax(0.0f, fontMaxBottom - linesBounds.last().fBottom);
+                auto symbolExtraTopSpace = qMax(0.0f, fontMaxTop - (-linesBounds.first().fTop));
+                auto symbolExtraBottomSpace = qMax(0.0f, fontMaxBottom - linesBounds.last().fBottom);
 
                 // Shift first glyph width
                 if(!glyphsWidth.isEmpty())
@@ -2436,6 +2441,10 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                 auto bitmapHeight = qCeil(textArea.height());
                 if(textShieldBitmap)
                 {
+                    // Clear extra spacing
+                    symbolExtraTopSpace = 0.0f;
+                    symbolExtraBottomSpace = 0.0f;
+
                     // Enlarge bitmap if shield is larger than text
                     bitmapWidth = qMax(bitmapWidth, textShieldBitmap->width());
                     bitmapHeight = qMax(bitmapHeight, textShieldBitmap->height());
