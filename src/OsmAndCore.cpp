@@ -98,11 +98,10 @@ void OsmAnd::initializeGlobal()
     UErrorCode icuError = U_ZERO_ERROR;
     const auto icuData = EmbeddedResources::decompressResource(QLatin1String("icu4c/icu-data-l.xml"));
     udata_setCommonData(icuData.constData(), &icuError);
-    if(icuError != U_ZERO_ERROR)
+    if(!U_SUCCESS(icuError))
         LogPrintf(LogSeverityLevel::Error, "Failed to initialize ICU data: %d", icuError);
-    icuError = U_ZERO_ERROR;
     u_init(&icuError);
-    if(icuError != U_ZERO_ERROR)
+    if(!U_SUCCESS(icuError))
         LogPrintf(LogSeverityLevel::Error, "Failed to initialize ICU: %d", icuError);
 }
 
