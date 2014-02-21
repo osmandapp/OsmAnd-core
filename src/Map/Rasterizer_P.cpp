@@ -2516,7 +2516,7 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                 {
                     // Calculate local offset
                     PointI localOffset;
-                    localOffset.y = (pBitmap->height() / 2) + textSymbol->verticalOffset;
+                    localOffset.y = ((symbolExtraTopSpace + pBitmap->height() + symbolExtraBottomSpace) / 2) + textSymbol->verticalOffset;
 
                     // Increment total offset
                     totalOffset += localOffset;
