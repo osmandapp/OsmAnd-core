@@ -2441,9 +2441,10 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                     bitmapHeight = qMax(bitmapHeight, textShieldBitmap->height());
 
                     // Shift text area to proper position in a larger
-                    textArea.offset(
-                        (bitmapWidth - textArea.width()) / 2.0f,
-                        (bitmapHeight - textArea.height()) / 2.0f);
+                    auto& firstLineNormalizedBounds = linesNormalizedBounds.first();
+                    firstLineNormalizedBounds.offset(
+                        (bitmapWidth - qCeil(firstLineNormalizedBounds.width())) / 2.0f,
+                        (bitmapHeight - qCeil(firstLineNormalizedBounds.height())) / 2.0f);
                 }
 
                 // Create a bitmap that will be hold entire symbol
