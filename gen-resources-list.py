@@ -13,7 +13,7 @@ class OsmAndCoreResourcesListGenerator(object):
         return
 
     # -------------------------------------------------------------------------
-    def generate(self, resourcesRoot, rules, outputFilename):
+    def generate(self, root, resourcesSubpaths, rules, outputFilename):
     	# Open output file
         try:
             outputFile = open(outputFilename, "w")
@@ -24,14 +24,15 @@ class OsmAndCoreResourcesListGenerator(object):
         # List all files
         print("Looking for files...")
         filenames = []
-        for root, dirs, files in os.walk(resourcesRoot):
-        	if root.startswith('.'):
-        		print("Ignoring '%s'" % (root))
-        		continue
-        	print("Listing '%s' with %d files" % (root, len(files)))
-        	for filename in files:
-        		filepath = os.path.join(root, filename)
-        		filenames.append(os.path.relpath(filepath, resourcesRoot))
+        for subpath in resourcesSubpaths:
+        	for resourcesRoot, dirs, files in os.walk(os.path.join(root, subpath)):
+        		if resourcesRoot.startswith('.'):
+        			print("Ignoring '%s'" % (resourcesRoot))
+        			continue
+        		print("Listing '%s' with %d files" % (resourcesRoot, len(files)))
+        		for filename in files:
+        			filepath = os.path.join(resourcesRoot, filename)
+        			filenames.append(os.path.relpath(filepath, root))
         print("Found %d files to test" % (len(filenames)))
 
         # Apply each rule to each file entry
@@ -43,7 +44,7 @@ class OsmAndCoreResourcesListGenerator(object):
         			continue
         		listname = re.sub(rule[0], rule[1], filename);
         		processed.append(filename);
-        		outputFile.write("/resources/%s:%s\n" % (filename, listname));
+        		outputFile.write("/%s:%s\n" % (filename, listname));
 
         		print("\t '%s' => '%s'" % (filename, listname))
         	print("\t%d processed" % (len(processed)))
@@ -65,16 +66,20 @@ if __name__=='__main__':
     rootDir = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
     
     rules = [
-    	[r'rendering_styles/default\.render\.xml', r'map/styles/default.render.xml'],
-    	[r'rendering_styles/style-icons/drawable-mdpi/h_(.*shield.*)\.png', r'map/shields/\1.png'],
-    	[r'rendering_styles/style-icons/drawable-mdpi/h_(.*)\.png', r'map/shaders/\1.png'],
-    	[r'rendering_styles/style-icons/drawable-mdpi/mm_(.*)\.png', r'map/map_icons/\1.png'],
-    	[r'rendering_styles/stubs/(.*)\.png', r'map/stubs/\1.png'],
-    	[r'routing/routing\.xml', r'routing/routing.xml'],
+    	[r'resources/rendering_styles/default\.render\.xml', r'map/styles/default.render.xml'],
+    	[r'resources/rendering_styles/style-icons/drawable-mdpi/h_(.*shield.*)\.png', r'map/shields/\1.png'],
+    	[r'resources/rendering_styles/style-icons/drawable-mdpi/h_(.*)\.png', r'map/shaders/\1.png'],
+    	[r'resources/rendering_styles/style-icons/drawable-mdpi/mm_(.*)\.png', r'map/map_icons/\1.png'],
+    	[r'resources/rendering_styles/stubs/(.*)\.png', r'map/stubs/\1.png'],
+    	[r'resources/routing/routing\.xml', r'routing/routing.xml'],
+    	[r'core/externals/icu4c/upstream\.data/icudt\d+([lb])\.dat', r'icu4c/icu-data-\1.xml'],
     ]
 
-    resourcesRootPath = rootDir + "/resources";
+    resourcesSubpaths = [
+    	"resources",
+    	"core/externals/icu4c/upstream.data"
+    ]
     resourcesListFilename = rootDir + "/core/embed-resources.list";
     generator = OsmAndCoreResourcesListGenerator()
-    ok = generator.generate(resourcesRootPath, rules, resourcesListFilename)
+    ok = generator.generate(rootDir, resourcesSubpaths, rules, resourcesListFilename)
     sys.exit(0 if ok else -1)
