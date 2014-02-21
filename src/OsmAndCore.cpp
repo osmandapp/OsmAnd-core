@@ -21,7 +21,8 @@
 #include "QMainThreadTaskEvent.h"
 #include "EmbeddedResources.h"
 
-namespace OsmAnd {
+namespace OsmAnd
+{
     void initializeGlobal();
     void releaseGlobal();
     std::shared_ptr<QObject> gMainThreadTaskHost;

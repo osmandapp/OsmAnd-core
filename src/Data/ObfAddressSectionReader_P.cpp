@@ -11,6 +11,7 @@
 #include "Building.h"
 #include "ObfReaderUtilities.h"
 #include "IQueryController.h"
+#include "ICU.h"
 #include "Utilities.h"
 
 #include "OBF.pb.h"
@@ -35,7 +36,7 @@ void OsmAnd::ObfAddressSectionReader_P::read( const std::unique_ptr<ObfReader_P>
         {
         case 0:
             if(section->_latinName.isEmpty())
-                section->_latinName = reader->transliterate(section->_name);
+                section->_latinName = ICU::transliterateToLatin(section->_name);
             return;
         case OBF::OsmAndAddressIndex::kNameFieldNumber:
             ObfReaderUtilities::readQString(cis, section->_name);
@@ -177,7 +178,7 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetGroupHeader(
         {
         case 0:
             if(streetGroup->_latinName.isEmpty())
-                streetGroup->_latinName = reader->transliterate(streetGroup->_name);
+                streetGroup->_latinName = ICU::transliterateToLatin(streetGroup->_name);
             outStreetGroup = streetGroup;
             return;
         case OBF::CityIndex::kCityTypeFieldNumber:
@@ -340,7 +341,7 @@ void OsmAnd::ObfAddressSectionReader_P::readStreet(
         {
         case 0:
             if(street->_latinName.isEmpty())
-                street->_latinName = reader->transliterate(street->_name);
+                street->_latinName = ICU::transliterateToLatin(street->_name);
             return;
         case OBF::StreetIndex::kIdFieldNumber:
             cis->ReadVarint64(reinterpret_cast<gpb::uint64*>(&street->_id));
@@ -459,9 +460,9 @@ void OsmAnd::ObfAddressSectionReader_P::readBuilding(
         {
         case 0:
             if(building->_latinName.isEmpty())
-                building->_latinName = reader->transliterate(building->_name);
+                building->_latinName = ICU::transliterateToLatin(building->_name);
             if(building->_latinName2.isEmpty())
-                building->_latinName2 = reader->transliterate(building->_name2);
+                building->_latinName2 = ICU::transliterateToLatin(building->_name2);
             return;
         case OBF::BuildingIndex::kIdFieldNumber:
             cis->ReadVarint64(reinterpret_cast<gpb::uint64*>(&building->_id));
@@ -601,7 +602,7 @@ void OsmAnd::ObfAddressSectionReader_P::readIntersectedStreet(
         {
         case 0:
             if(intersection->_latinName.isEmpty())
-                intersection->_latinName = reader->transliterate(intersection->_name);
+                intersection->_latinName = ICU::transliterateToLatin(intersection->_name);
             return;
         case OBF::StreetIntersection::kNameEnFieldNumber:
             ObfReaderUtilities::readQString(cis, intersection->_latinName);

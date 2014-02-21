@@ -6,6 +6,7 @@
 #include "AmenityCategory.h"
 #include "ObfReaderUtilities.h"
 #include "IQueryController.h"
+#include "ICU.h"
 #include "Utilities.h"
 
 #include "OBF.pb.h"
@@ -522,7 +523,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
         {
         case 0:
             if(amenity->_latinName.isEmpty())
-                amenity->_latinName = reader->transliterate(amenity->_name);
+                amenity->_latinName = ICU::transliterateToLatin(amenity->_name);
             amenity->_point31 = point;
             amenity->_categoryId = catId;
             amenity->_subcategoryId = subId;

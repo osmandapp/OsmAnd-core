@@ -28,11 +28,6 @@ OsmAnd::ObfReader_P::~ObfReader_P()
 
 }
 
-QString OsmAnd::ObfReader_P::transliterate( const QString& input )
-{
-    return QString("!transliterate!");
-}
-
 void OsmAnd::ObfReader_P::readInfo( const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<ObfInfo>& info )
 {
     auto cis = reader->_codedInputStream.get();

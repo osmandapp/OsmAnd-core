@@ -34,7 +34,7 @@ target_compile_definitions(icu4c_static
 		${target_specific_private_definitions}
 	PUBLIC
 		-DU_STATIC_IMPLEMENTATION
-		-DU_LIB_SUFFIX_C_NAME=osmand_
+		-DU_LIB_SUFFIX_C_NAME=_osmand
 		-DUCONFIG_NO_FILE_IO=1
 )
 

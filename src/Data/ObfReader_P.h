@@ -40,8 +40,6 @@ namespace OsmAnd {
         std::shared_ptr<QIODevice> _input;
         std::shared_ptr<ObfInfo> _obfInfo;
 
-        QString transliterate(const QString& input);
-
         static void readInfo(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<ObfInfo>& info);
     public:
         virtual ~ObfReader_P();
