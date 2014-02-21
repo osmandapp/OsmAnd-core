@@ -32,7 +32,8 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
 
     LOCAL_SRC_FILES := \
         $(common_SRC_FILES:$(LOCAL_PATH)/%=%) \
-        $(i18n_SRC_FILES:$(LOCAL_PATH)/%=%)
+        $(i18n_SRC_FILES:$(LOCAL_PATH)/%=%) \
+		upstream.patched/source/stubdata/stubdata.c
 
     include $(BUILD_STATIC_LIBRARY)
 else

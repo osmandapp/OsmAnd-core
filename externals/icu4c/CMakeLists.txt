@@ -15,6 +15,7 @@ set_source_files_properties(${source_i18n}
 add_library(icu4c_static STATIC
 	${source_common}
 	${source_i18n}
+	"upstream.patched/source/stubdata/stubdata.c"
 )
 
 set(target_specific_private_definitions "")

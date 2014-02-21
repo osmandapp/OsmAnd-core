@@ -23,6 +23,7 @@
 #include "MapObject.h"
 #include "ObfMapSectionInfo.h"
 #include "IQueryController.h"
+#include "ICU.h"
 #include "Utilities.h"
 #include "Logging.h"
 
@@ -2287,8 +2288,7 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
 
             if(const auto textSymbol = std::dynamic_pointer_cast<const PrimitiveSymbol_Text>(symbol))
             {
-                //TODO: reshape name with icu4c, since skia doesn't know how to do that
-                const QString text = textSymbol->value;
+                const auto text = ICU::convertToVisualOrder(textSymbol->value);
 
                 // Obtain shield for text if such exists
                 std::shared_ptr<const SkBitmap> textShieldBitmap;
