@@ -7,6 +7,7 @@
 #include <SkBitmapProcShader.h>
 #include <SkImageDecoder.h>
 #include <SkStream.h>
+#include <SkTypeface.h>
 
 #include "MapStyleEvaluator.h"
 #include "MapStyleValueDefinition.h"
