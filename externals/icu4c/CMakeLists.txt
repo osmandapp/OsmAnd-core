@@ -36,6 +36,7 @@ target_compile_definitions(icu4c_static
 		-DU_STATIC_IMPLEMENTATION
 		-DU_LIB_SUFFIX_C_NAME=_osmand
 		-DUCONFIG_NO_FILE_IO=1
+		-DUCONFIG_NO_SERVICE=1
 )
 
 target_include_directories(icu4c_static

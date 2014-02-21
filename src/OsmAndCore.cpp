@@ -10,8 +10,6 @@
 
 #include <gdal.h>
 #include <SkGraphics.h>
-#include <unicode/uclean.h>
-#include <unicode/udata.h>
 
 #include "Common.h"
 #include "Logging.h"
@@ -19,7 +17,7 @@
 #include "ExplicitReferences.h"
 #include "QMainThreadTaskHost.h"
 #include "QMainThreadTaskEvent.h"
-#include "EmbeddedResources.h"
+#include "ICU_private.h"
 
 namespace OsmAnd
 {
@@ -96,14 +94,7 @@ void OsmAnd::initializeGlobal()
     SkGraphics::PurgeFontCache(); // This will initialize global glyph cache
 
     // ICU
-    UErrorCode icuError = U_ZERO_ERROR;
-    const auto icuData = EmbeddedResources::decompressResource(QLatin1String("icu4c/icu-data-l.xml"));
-    udata_setCommonData(icuData.constData(), &icuError);
-    if(!U_SUCCESS(icuError))
-        LogPrintf(LogSeverityLevel::Error, "Failed to initialize ICU data: %d", icuError);
-    u_init(&icuError);
-    if(!U_SUCCESS(icuError))
-        LogPrintf(LogSeverityLevel::Error, "Failed to initialize ICU: %d", icuError);
+    ICU::initialize();
 }
 
 void OsmAnd::releaseGlobal()
@@ -113,7 +104,7 @@ void OsmAnd::releaseGlobal()
     gMainThreadTaskHost.reset();
 
     // ICU
-    u_cleanup();
+    ICU::release();
 }
 
 #if defined(OSMAND_TARGET_OS_android)

@@ -8,6 +8,7 @@
 #include <QMutableVectorIterator>
 #include <QReadWriteLock>
 
+#include "Common.h"
 #include "RasterizerEnvironment.h"
 #include "RasterizerEnvironment_P.h"
 #include "RasterizerContext.h"
@@ -33,6 +34,10 @@
 #include <SkDashPathEffect.h>
 #include <SkBitmapProcShader.h>
 #include <SkError.h>
+#define OSMAND_DUMP_SYMBOLS 1
+#if OSMAND_DUMP_SYMBOLS
+#   include <SkImageEncoder.h>
+#endif OSMAND_DUMP_SYMBOLS
 
 OsmAnd::Rasterizer_P::Rasterizer_P(Rasterizer* const owner_, const RasterizerEnvironment_P& env_, const RasterizerContext_P& context_)
     : owner(owner_)
@@ -987,6 +992,11 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
 
         text->wrapWidth = 0;
         textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_WRAP_WIDTH, text->wrapWidth);
+        if(!text->drawOnPath && text->wrapWidth == 0)
+        {
+            // Default wrapping width
+            text->wrapWidth = 40;
+        }
 
         text->isBold = false;
         textEvalResult.getBooleanValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_BOLD, text->isBold);
@@ -2254,10 +2264,6 @@ bool OsmAnd::Rasterizer_P::isClockwiseCoastlinePolygon( const QVector< PointI > 
     return clockwiseSum >= 0;
 }
 
-//////////////////////////////////////////////////////////////////////////
-//#include <SkImageEncoder.h>
-//////////////////////////////////////////////////////////////////////////
-
 void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
     QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
     std::function<bool(const std::shared_ptr<const Model::MapObject>& mapObject)> filter,
@@ -2288,8 +2294,18 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
 
             if(const auto textSymbol = std::dynamic_pointer_cast<const PrimitiveSymbol_Text>(symbol))
             {
-                const auto text = ICU::convertToVisualOrder(textSymbol->value);
+                //const auto text = ICU::convertToVisualOrder(textSymbol->value);
+                const auto text = QString("this is a very very very long long namename with substring! THIS IS A VERY VERY VERY LONG LONG NAMENAME WITH SUBSTRING!");
+                const auto lineRefs =
+                    (textSymbol->wrapWidth > 0 && !textSymbol->drawOnPath && textSymbol->shieldResourceName.isEmpty())
+                    ? ICU::getTextWrappingRefs(text, textSymbol->wrapWidth)
+                    : (QVector<QStringRef>() << QStringRef(&text));
+                const auto& linesCount = lineRefs.size();
 
+                //////////////////////////////////////////////////////////////////////////
+                const bool test = lineRefs.size() > 1;
+                //////////////////////////////////////////////////////////////////////////
+                
                 // Obtain shield for text if such exists
                 std::shared_ptr<const SkBitmap> textShieldBitmap;
                 if(!textSymbol->shieldResourceName.isEmpty())
@@ -2297,51 +2313,137 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
 
                 // Configure paint for text
                 SkPaint textPaint = env.textPaint;
-                textPaint.setTextSize(textSymbol->size);
+                textPaint.setTextSize(textSymbol->size*2);
                 textPaint.setFakeBoldText(textSymbol->isBold);
                 textPaint.setColor(textSymbol->color);
 
+                // Get line spacing
+                SkPaint::FontMetrics fontMetrics;
+                auto fullLineHeight = textPaint.getFontMetrics(&fontMetrics);
+                auto lineSpacing = fontMetrics.fLeading;
+                auto fontMaxTop = -fontMetrics.fTop;
+                auto fontMaxBottom = fontMetrics.fBottom;
+
                 // Measure text
-                SkRect textBounds;
-                auto totalWidth = textPaint.measureText(text.constData(), text.length()*sizeof(QChar), &textBounds);
-                SkRect textBBox = textBounds;
+                QVector<SkRect> linesBounds(linesCount);
+                auto itLineBounds = linesBounds.begin();
+                for(const auto& lineRef : constOf(lineRefs))
+                    textPaint.measureText(lineRef.constData(), lineRef.length()*sizeof(QChar), &*(itLineBounds++));
+
+                // Measure glyphs
                 QVector<SkScalar> glyphsWidth;
                 if(textSymbol->drawOnPath)
                 {
-                    int glyphsCount = textPaint.countText(text.constData(), text.length()*sizeof(QChar));
+                    const auto& lineRef = lineRefs.first();
+
+                    const auto glyphsCount = textPaint.countText(lineRef.constData(), lineRef.length()*sizeof(QChar));
                     glyphsWidth.resize(glyphsCount);
-                    textPaint.getTextWidths(text.constData(), text.length()*sizeof(QChar), glyphsWidth.data());
+                    textPaint.getTextWidths(lineRef.constData(), lineRef.length()*sizeof(QChar), glyphsWidth.data());
                 }
 
-                // Process shadow (if such is enabled)
+                // Process shadow
                 SkPaint textShadowPaint;
-                SkRect shadowBounds;
                 if(textSymbol->shadowRadius > 0)
                 {
+                    // Configure paint for text shadow
                     textShadowPaint = textPaint;
                     textShadowPaint.setStyle(SkPaint::kStroke_Style);
                     textShadowPaint.setColor(textSymbol->shadowColor);
                     textShadowPaint.setStrokeWidth(textSymbol->shadowRadius);
 
-                    totalWidth = textShadowPaint.measureText(text.constData(), text.length()*sizeof(QChar), &shadowBounds);
-                    textBBox.join(shadowBounds);
+                    // Get line spacing
+                    SkPaint::FontMetrics shadowFontMetrics;
+                    const auto fullShadowLineHeight = textShadowPaint.getFontMetrics(&shadowFontMetrics);
+                    fullLineHeight = qMax(fullLineHeight, fullShadowLineHeight);
+                    lineSpacing = qMax(lineSpacing, shadowFontMetrics.fLeading);
+                    fontMaxTop = qMax(fontMaxTop, -shadowFontMetrics.fTop);
+                    fontMaxBottom = qMax(fontMaxBottom, shadowFontMetrics.fBottom);
 
+                    // Measure text shadow bounds
+                    auto itLineBounds = linesBounds.begin();
+                    for(const auto& lineRef : constOf(lineRefs))
+                    {
+                        SkRect lineShadowBounds;
+                        textShadowPaint.measureText(lineRef.constData(), lineRef.length()*sizeof(QChar), &lineShadowBounds);
+
+                        // Combine shadow bounds with text bounds
+                        (itLineBounds++)->join(lineShadowBounds);
+                    }
+
+                    // Re-measure glyphs, since shadow is larger than text itself
                     if(textSymbol->drawOnPath)
-                        textShadowPaint.getTextWidths(text.constData(), text.length()*sizeof(QChar), glyphsWidth.data());
+                    {
+                        const auto& lineRef = lineRefs.first();
+
+                        textShadowPaint.getTextWidths(lineRef.constData(), lineRef.length()*sizeof(QChar), glyphsWidth.data());
+                    }
                 }
 
-                // Calculate bitmap size and text area
-                auto textArea = textBBox;
-                textArea.offset(-2.0f*textBBox.left(), -2.0f*textBBox.top());
+                // Calculate extra top and bottom space of symbol
+                const auto symbolExtraTopSpace = qMax(0.0f, fontMaxTop - (-linesBounds.first().fTop));
+                const auto symbolExtraBottomSpace = qMax(0.0f, fontMaxBottom - linesBounds.last().fBottom);
+
+                // Shift first glyph width
                 if(!glyphsWidth.isEmpty())
-                    glyphsWidth[0] += -textBBox.left();
-                auto bitmapWidth = textArea.width();
-                auto bitmapHeight = textArea.height();
+                    glyphsWidth[0] += -linesBounds.first().left();
+
+                // Normalize line bounds (move origin top bottom-left corner of bitmap)
+                QVector<SkRect> linesNormalizedBounds(linesCount);
+                auto itNormalizedLineBounds = linesNormalizedBounds.begin();
+                for(auto& lineBounds : linesBounds)
+                {
+                    auto& normalizedLineBounds = *(itNormalizedLineBounds++);
+
+                    normalizedLineBounds = lineBounds;
+                    normalizedLineBounds.offset(-2.0f*lineBounds.left(), -2.0f*lineBounds.top());
+                }
+
+                // Calculate text area and move bounds vertically
+                auto textArea = linesNormalizedBounds.first();
+                auto linesHeightSum = textArea.height();
+                auto citPrevLineBounds = linesBounds.cbegin();
+                auto citLineBounds = citPrevLineBounds + 1;
+                for(auto itNormalizedLineBounds = linesNormalizedBounds.begin() + 1, itEnd = linesNormalizedBounds.end(); itNormalizedLineBounds != itEnd; ++itNormalizedLineBounds, citPrevLineBounds = citLineBounds, ++citLineBounds)
+                {
+                    auto& lineNormalizedBounds = *itNormalizedLineBounds;
+                    const auto& prevLineBounds = *citPrevLineBounds;
+                    const auto& lineBounds = *citLineBounds;
+
+                    // Include gap between previous line and it's font-end
+                    const auto extraPrevGapHeight = qMax(0.0f, fontMaxBottom - prevLineBounds.fBottom);
+                    textArea.fBottom += extraPrevGapHeight;
+                    linesHeightSum += extraPrevGapHeight;
+
+                    // Include line spacing
+                    textArea.fBottom += lineSpacing;
+                    linesHeightSum += lineSpacing;
+
+                    // Include gap between current line and it's font-start
+                    const auto extraGapHeight = qMax(0.0f, fontMaxTop - (-lineBounds.fTop));
+                    textArea.fBottom += extraGapHeight;
+                    linesHeightSum += extraGapHeight;
+
+                    // Move current line baseline
+                    lineNormalizedBounds.offset(0.0f, linesHeightSum);
+
+                    // Include height of current line
+                    const auto& lineHeight = lineNormalizedBounds.height();
+                    textArea.fBottom += lineHeight;
+                    linesHeightSum += lineHeight;
+
+                    //TODO: this is wrong!
+                    textArea.fLeft = qMin(textArea.fLeft, lineNormalizedBounds.fLeft);
+                    textArea.fRight = qMax(textArea.fRight, lineNormalizedBounds.fRight);
+                }
+
+                // Calculate bitmap size
+                auto bitmapWidth = qCeil(textArea.width());
+                auto bitmapHeight = qCeil(textArea.height());
                 if(textShieldBitmap)
                 {
                     // Enlarge bitmap if shield is larger than text
-                    bitmapWidth = qMax(bitmapWidth, static_cast<float>(textShieldBitmap->width()));
-                    bitmapHeight = qMax(bitmapHeight, static_cast<float>(textShieldBitmap->height()));
+                    bitmapWidth = qMax(bitmapWidth, textShieldBitmap->width());
+                    bitmapHeight = qMax(bitmapHeight, textShieldBitmap->height());
 
                     // Shift text area to proper position in a larger
                     textArea.offset(
@@ -2349,12 +2451,12 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                         (bitmapHeight - textArea.height()) / 2.0f);
                 }
 
-                // Create a bitmap that will be hold text
-                auto bitmap = new SkBitmap();
-                bitmap->setConfig(SkBitmap::kARGB_8888_Config, bitmapWidth, bitmapHeight);
-                bitmap->allocPixels();
-                bitmap->eraseColor(SK_ColorTRANSPARENT);
-                SkBitmapDevice target(*bitmap);
+                // Create a bitmap that will be hold entire symbol
+                const auto pBitmap = new SkBitmap();
+                pBitmap->setConfig(SkBitmap::kARGB_8888_Config, bitmapWidth, bitmapHeight);
+                pBitmap->allocPixels();
+                pBitmap->eraseColor(SK_ColorTRANSPARENT);
+                SkBitmapDevice target(*pBitmap);
                 SkCanvas canvas(&target);
 
                 // If there is shield for this text, rasterize it also
@@ -2366,17 +2468,40 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                         nullptr);
                 }
 
-                // Rasterize text
+                // Rasterize text shadow first (if enabled)
                 if(textSymbol->shadowRadius > 0)
-                    canvas.drawText(text.constData(), text.length()*sizeof(QChar), textArea.left(), textArea.top(), textShadowPaint);
-                canvas.drawText(text.constData(), text.length()*sizeof(QChar), textArea.left(), textArea.top(), textPaint);
+                {
+                    auto itLineShadowNormalizedBounds = linesNormalizedBounds.cbegin();
+                    for(const auto& lineRef : constOf(lineRefs))
+                    {
+                        const auto& lineShadowNormalizedBounds = *(itLineShadowNormalizedBounds++);
+                        canvas.drawText(
+                            lineRef.constData(), lineRef.length()*sizeof(QChar),
+                            lineShadowNormalizedBounds.left(), lineShadowNormalizedBounds.top(),
+                            textShadowPaint);
+                    }
+                }
 
-                //////////////////////////////////////////////////////////////////////////
-                //std::unique_ptr<SkImageEncoder> encoder(CreatePNGImageEncoder());
-                //QString path;
-                //path.sprintf("D:\\texts\\%p.png", bitmap);
-                //encoder->encodeFile(path.toLocal8Bit(), *bitmap, 100);
-                //////////////////////////////////////////////////////////////////////////
+                // Rasterize text itself
+                auto citLineNormalizedBounds = linesNormalizedBounds.cbegin();
+                for(const auto& lineRef : constOf(lineRefs))
+                {
+                    const auto& lineNormalizedBounds = *(citLineNormalizedBounds++);
+                    canvas.drawText(
+                        lineRef.constData(), lineRef.length()*sizeof(QChar),
+                        lineNormalizedBounds.left(), lineNormalizedBounds.top(),
+                        textPaint);
+                }
+
+#if OSMAND_DUMP_SYMBOLS
+                {
+                    QDir::current().mkpath("text_symbols");
+                    std::unique_ptr<SkImageEncoder> encoder(CreatePNGImageEncoder());
+                    QString filename;
+                    filename.sprintf("%s\\text_symbols\\%p.png", qPrintable(QDir::currentPath()), pBitmap);
+                    encoder->encodeFile(qPrintable(filename), *pBitmap, 100);
+                }
+#endif // OSMAND_DUMP_SYMBOLS
 
                 if(textSymbol->drawOnPath)
                 {
@@ -2384,7 +2509,7 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                     const auto rasterizedSymbol = new RasterizedSymbolOnPath(
                         group,
                         constructedGroup->mapObject,
-                        qMove(std::shared_ptr<const SkBitmap>(bitmap)),
+                        qMove(std::shared_ptr<const SkBitmap>(pBitmap)),
                         textSymbol->order,
                         text,
                         textSymbol->minDistance,
@@ -2396,7 +2521,7 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                 {
                     // Calculate local offset
                     PointI localOffset;
-                    localOffset.y = (bitmap->height() / 2) + textSymbol->verticalOffset;
+                    localOffset.y = (pBitmap->height() / 2) + textSymbol->verticalOffset;
 
                     // Increment total offset
                     totalOffset += localOffset;
@@ -2405,7 +2530,7 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                     const auto rasterizedSymbol = new RasterizedPinnedSymbol(
                         group,
                         constructedGroup->mapObject,
-                        qMove(std::shared_ptr<const SkBitmap>(bitmap)),
+                        qMove(std::shared_ptr<const SkBitmap>(pBitmap)),
                         textSymbol->order,
                         text,
                         textSymbol->minDistance,
@@ -2421,12 +2546,15 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                 if(!env.obtainMapIcon(iconSymbol->resourceName, bitmap) || !bitmap)
                     continue;
 
-                //////////////////////////////////////////////////////////////////////////
-                //std::unique_ptr<SkImageEncoder> encoder(CreatePNGImageEncoder());
-                //QString path;
-                //path.sprintf("D:\\icons\\%p.png", bitmap);
-                //encoder->encodeFile(path.toLocal8Bit(), *bitmap, 100);
-                //////////////////////////////////////////////////////////////////////////
+#if OSMAND_DUMP_SYMBOLS
+                {
+                    QDir::current().mkpath("icon_symbols");
+                    std::unique_ptr<SkImageEncoder> encoder(CreatePNGImageEncoder());
+                    QString filename;
+                    filename.sprintf("%s\\text_symbols\\%p.png", qPrintable(QDir::currentPath()), bitmap.get());
+                    encoder->encodeFile(qPrintable(filename), *bitmap, 100);
+                }
+#endif // OSMAND_DUMP_SYMBOLS
 
                 // Calculate local offset
                 PointI localOffset;
@@ -2454,83 +2582,6 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
         outSymbolsGroups.push_back(qMove(group));
     }
 }
-
-//void OsmAnd::Rasterizer_P::rasterizeText(
-//    const RasterizerEnvironment_P& env, const RasterizerContext_P& context,
-//    bool fillBackground, SkCanvas& canvas, const IQueryController* const controller /*= nullptr*/ )
-//{
-//    if(fillBackground)
-//    {
-//        SkPaint bgPaint;
-//        bgPaint.setColor(SK_ColorTRANSPARENT);
-//        bgPaint.setStyle(SkPaint::kFill_Style);
-//        canvas.drawRectCoords(context._renderViewport.top, context._renderViewport.left, context._renderViewport.right, context._renderViewport.bottom, bgPaint);
-//    }
-//    /*
-//    SkRect r = SkRect::MakeLTRB(0, 0, rc->getWidth(), rc->getHeight());
-//    r.inset(-100, -100);
-//    quad_tree<TextDrawInfo*> boundsIntersect(r, 4, 0.6);
-//    */
-//    /*
-//#if defined(ANDROID)
-//    //TODO: This is never released because of always +1 of reference counter
-//    if(!sDefaultTypeface)
-//        sDefaultTypeface = SkTypeface::CreateFromName("Droid Serif", SkTypeface::kNormal);
-//#endif
-//        */
-//    SkPaint::FontMetrics fontMetrics;
-//    for(auto itText = context._texts.cbegin(); itText != context._texts.cend(); ++itText)
-//    {
-//        if(controller && controller->isAborted())
-//            break;
-//
-//        const auto& text = *itText;
-//
-//        context._textPaint.setTextSize(text.size * context._densityFactor);
-//        context._textPaint.setFakeBoldText(text.isBold);//TODO: use special typeface!
-//        context._textPaint.setColor(text.color);
-//        context._textPaint.getFontMetrics(&fontMetrics);
-//        /*textDrawInfo->centerY += (-fm.fAscent);
-//
-//        // calculate if there is intersection
-//        bool intersects = findTextIntersection(cv, rc, boundsIntersect, textDrawInfo, &paintText, &paintIcon);
-//        if(intersects)
-//            continue;
-//
-//        if (textDrawInfo->drawOnPath && textDrawInfo->path != NULL) {
-//            if (textDrawInfo->textShadow > 0) {
-//                paintText.setColor(0xFFFFFFFF);
-//                paintText.setStyle(SkPaint::kStroke_Style);
-//                paintText.setStrokeWidth(2 + textDrawInfo->textShadow);
-//                rc->nativeOperations.Pause();
-//                cv->drawTextOnPathHV(textDrawInfo->text.c_str(), textDrawInfo->text.length(), *textDrawInfo->path, textDrawInfo->hOffset,
-//                    textDrawInfo->vOffset, paintText);
-//                rc->nativeOperations.Start();
-//                // reset
-//                paintText.setStyle(SkPaint::kFill_Style);
-//                paintText.setStrokeWidth(2);
-//                paintText.setColor(textDrawInfo->textColor);
-//            }
-//            rc->nativeOperations.Pause();
-//            cv->drawTextOnPathHV(textDrawInfo->text.c_str(), textDrawInfo->text.length(), *textDrawInfo->path, textDrawInfo->hOffset,
-//                textDrawInfo->vOffset, paintText);
-//            rc->nativeOperations.Start();
-//        } else {
-//            if (textDrawInfo->shieldRes.length() > 0) {
-//                SkBitmap* ico = getCachedBitmap(rc, textDrawInfo->shieldRes);
-//                if (ico != NULL) {
-//                    float left = textDrawInfo->centerX - rc->getDensityValue(ico->width() / 2) - 0.5f;
-//                    float top = textDrawInfo->centerY - rc->getDensityValue(ico->height() / 2)
-//                        - rc->getDensityValue(4.5f);
-//                    SkRect r = SkRect::MakeXYWH(left, top, rc->getDensityValue(ico->width()),
-//                        rc->getDensityValue(ico->height()));
-//                    PROFILE_NATIVE_OPERATION(rc, cv->drawBitmapRect(*ico, (SkIRect*) NULL, r, &paintIcon));
-//                }
-//            }
-//            drawWrappedText(rc, cv, textDrawInfo, textSize, paintText);
-//        }*/
-//    }
-//}
 
 //void drawWrappedText(RenderingContext* rc, SkCanvas* cv, TextDrawInfo* text, float textSize, SkPaint& paintText) {
 //    if(text->textWrap == 0) {
@@ -2573,22 +2624,6 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
 //    }
 //}
 //
-//void drawTextOnCanvas(SkCanvas* cv, const char* text, uint16_t len, float centerX, float centerY, SkPaint& paintText,
-//                      float textShadow)
-//{
-//    if (textShadow > 0) {
-//        int c = paintText.getColor();
-//        paintText.setStyle(SkPaint::kStroke_Style);
-//        paintText.setColor(-1); // white
-//        paintText.setStrokeWidth(2 + textShadow);
-//        cv->drawText(text, len, centerX, centerY, paintText);
-//        
-//            paintText.setStrokeWidth(2);
-//        paintText.setStyle(SkPaint::kFill_Style);
-//        paintText.setColor(c);
-//    }
-//    cv->drawText(text, len, centerX, centerY, paintText);
-//}
 
 OsmAnd::Rasterizer_P::PrimitiveSymbol::PrimitiveSymbol()
     : order(-1)
