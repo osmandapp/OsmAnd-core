@@ -2308,7 +2308,7 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
 
                 // Configure paint for text
                 SkPaint textPaint = env.textPaint;
-                textPaint.setTextSize(textSymbol->size*2);
+                textPaint.setTextSize(textSymbol->size);
                 textPaint.setFakeBoldText(textSymbol->isBold);
                 textPaint.setColor(textSymbol->color);
 
