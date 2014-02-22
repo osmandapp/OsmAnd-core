@@ -73,10 +73,9 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
 {
     _mapPaint.setAntiAlias(true);
 
-    static_assert(sizeof(QChar) == 2, "If QChar is not 2 bytes, then encoding is not kUTF16_TextEncoding");
-
     _regularTextPaint.setAntiAlias(true);
     _regularTextPaint.setTextEncoding(SkPaint::kUTF16_TextEncoding);
+    static_assert(sizeof(QChar) == 2, "If QChar is not 2 bytes, then encoding is not kUTF16_TextEncoding");
 
     _boldTextPaint = _regularTextPaint;
     _boldTextPaint.setFakeBoldText(true);
