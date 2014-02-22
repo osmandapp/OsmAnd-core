@@ -256,15 +256,22 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
             QMutexLocker scopedLocker(&_gpuWorkerThreadWakeupMutex);
             REPEAT_UNTIL(_gpuWorkerThreadWakeup.wait(&_gpuWorkerThreadWakeupMutex));
         }
+
         if(!_gpuWorkerIsAlive)
             break;
 
         // In every layer we have, upload pending resources to GPU without limiting
-        unsigned int resourcesUploaded = 0u;
-        unsigned int resourcesUnloaded = 0u;
-        _resources->syncResourcesInGPU(0, nullptr, &resourcesUploaded, &resourcesUnloaded);
-        if(resourcesUploaded > 0 || resourcesUnloaded > 0)
-            invalidateFrame();
+        int unprocessedRequests = 0;
+        do
+        {
+            const auto resourceUploadRequestsToProcess = _resourcesUploadRequestsCounter.fetchAndAddOrdered(0);
+            unsigned int resourcesUploaded = 0u;
+            unsigned int resourcesUnloaded = 0u;
+            _resources->syncResourcesInGPU(0, nullptr, &resourcesUploaded, &resourcesUnloaded);
+            if(resourcesUploaded > 0 || resourcesUnloaded > 0)
+                invalidateFrame();
+            unprocessedRequests = _resourcesUploadRequestsCounter.fetchAndAddOrdered(-resourceUploadRequestsToProcess);
+        } while(unprocessedRequests > 0);
 
         // Process GPU dispatcher
         _gpuThreadDispatcher.runAll();
@@ -280,6 +287,8 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
 bool OsmAnd::MapRenderer::initializeRendering()
 {
     bool ok;
+
+    _resourcesUploadRequestsCounter.store(0);
 
     ok = gpuAPI->initialize();
     if(!ok)
@@ -505,14 +514,16 @@ bool OsmAnd::MapRenderer::doProcessRendering()
     // To reduce FPS drop, upload not more than 1 resource per frame.
     if(!_gpuWorkerThread)
     {
+        const auto resourceUploadRequestsToProcess = _resourcesUploadRequestsCounter.fetchAndAddOrdered(0);
         bool moreUploadThanLimitAvailable = false;
         unsigned int resourcesUploaded = 0u;
         unsigned int resourcesUnloaded = 0u;
         _resources->syncResourcesInGPU(1u, &moreUploadThanLimitAvailable, &resourcesUploaded, &resourcesUnloaded);
+        const auto unprocessedRequests = _resourcesUploadRequestsCounter.fetchAndAddOrdered(-resourceUploadRequestsToProcess);
         
         // If any resource was uploaded or there is more resources to uploaded, invalidate frame
         // to use that resource
-        if(resourcesUploaded > 0 || moreUploadThanLimitAvailable || resourcesUnloaded > 0)
+        if(resourcesUploaded > 0 || moreUploadThanLimitAvailable || resourcesUnloaded > 0 || unprocessedRequests > 0)
             invalidateFrame();
 
         // Process GPU thread dispatcher
@@ -610,6 +621,8 @@ void OsmAnd::MapRenderer::onValidateResourcesOfType(const MapRendererResources::
 
 void OsmAnd::MapRenderer::requestResourcesUpload()
 {
+    _resourcesUploadRequestsCounter.fetchAndAddOrdered(1);
+
     if(_gpuWorkerThread)
     {
         QMutexLocker scopedLocker(&_gpuWorkerThreadWakeupMutex);

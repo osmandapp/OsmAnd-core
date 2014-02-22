@@ -54,6 +54,7 @@ namespace OsmAnd
 
         // Resources-related:
         std::unique_ptr<MapRendererResources> _resources;
+        QAtomicInt _resourcesUploadRequestsCounter;
         
         // GPU worker related:
         volatile bool _gpuWorkerIsAlive;
