@@ -1,20 +1,24 @@
 #include "OfflineMapDataProvider_P.h"
 #include "OfflineMapDataProvider.h"
 
-#include <cassert>
-#if OSMAND_DEBUG
-#   include <chrono>
+#if !defined(OSMAND_PERFORMANCE_METRICS)
+#   define OSMAND_PERFORMANCE_METRICS 0
 #endif
+
+#include <cassert>
+#if OSMAND_PERFORMANCE_METRICS
+#   include <chrono>
+#endif // OSMAND_PERFORMANCE_METRICS
 
 #include "OfflineMapDataTile.h"
 #include "OfflineMapDataTile_P.h"
 #include "ObfsCollection.h"
 #include "ObfDataInterface.h"
 #include "ObfMapSectionInfo.h"
-#if OSMAND_DEBUG
+#if OSMAND_PERFORMANCE_METRICS
 #   include "ObfMapSectionReader_Metrics.h"
 #   include "Rasterizer_Metrics.h"
-#endif
+#endif // OSMAND_PERFORMANCE_METRICS
 #include "MapObject.h"
 #include "Rasterizer.h"
 #include "Utilities.h"
@@ -59,19 +63,19 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
         }
     }
 
-#if OSMAND_DEBUG
+#if OSMAND_PERFORMANCE_METRICS
     const auto total_Begin = std::chrono::high_resolution_clock::now();
-#endif
+#endif // OSMAND_PERFORMANCE_METRICS
 
     // Obtain OBF data interface
-#if OSMAND_DEBUG
+#if OSMAND_PERFORMANCE_METRICS
     const auto obtainDataInterface_Begin = std::chrono::high_resolution_clock::now();
-#endif
+#endif // OSMAND_PERFORMANCE_METRICS
     const auto& dataInterface = owner->obfsCollection->obtainDataInterface();
-#if OSMAND_DEBUG
+#if OSMAND_PERFORMANCE_METRICS
     const auto obtainDataInterface_End = std::chrono::high_resolution_clock::now();
     const std::chrono::duration<float> obtainDataInterface_Elapsed = obtainDataInterface_End - obtainDataInterface_Begin;
-#endif
+#endif // OSMAND_PERFORMANCE_METRICS
 
     // Get bounding box that covers this tile
     const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
@@ -82,21 +86,23 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
     QList< std::shared_ptr<const Model::MapObject> > loadedMapObjects;
     QSet< uint64_t > loadedSharedMapObjects;
     MapFoundationType tileFoundation;
-#if OSMAND_DEBUG
+#if OSMAND_PERFORMANCE_METRICS
     float dataFilter = 0.0f;
     const auto dataRead_Begin = std::chrono::high_resolution_clock::now();
+#endif // OSMAND_PERFORMANCE_METRICS
+#if OSMAND_PERFORMANCE_METRICS > 1
     ObfMapSectionReader_Metrics::Metric_loadMapObjects dataRead_Metric;
-#endif
+#endif // OSMAND_PERFORMANCE_METRICS > 1
     dataInterface->obtainMapObjects(&loadedMapObjects, &tileFoundation, tileBBox31, zoom, nullptr,
         [this, zoom, &referencedMapObjects, &futureReferencedMapObjects, &loadedSharedMapObjects, tileBBox31
-#if OSMAND_DEBUG
+#if OSMAND_PERFORMANCE_METRICS
             , &dataFilter
-#endif
+#endif // OSMAND_PERFORMANCE_METRICS
         ](const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id, const AreaI& bbox, const ZoomLevel firstZoomLevel, const ZoomLevel lastZoomLevel) -> bool
         {
-#if OSMAND_DEBUG
+#if OSMAND_PERFORMANCE_METRICS
             const auto dataFilter_Begin = std::chrono::high_resolution_clock::now();
-#endif
+#endif // OSMAND_PERFORMANCE_METRICS
 
             // This map object may be shared only in case it crosses bounds of a tile
             const auto canNotBeShared = tileBBox31.contains(bbox);
@@ -104,11 +110,11 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
             // If map object can not be shared, just read it
             if(canNotBeShared)
             {
-#if OSMAND_DEBUG
+#if OSMAND_PERFORMANCE_METRICS
                 const auto dataFilter_End = std::chrono::high_resolution_clock::now();
                 const std::chrono::duration<float> dataRead_Elapsed = dataFilter_End - dataFilter_Begin;
                 dataFilter += dataRead_Elapsed.count();
-#endif
+#endif // OSMAND_PERFORMANCE_METRICS
 
                 return true;
             }
@@ -129,11 +135,11 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
                     futureReferencedMapObjects.push_back(qMove(futureSharedMapObjectReference));
                 }
 
-#if OSMAND_DEBUG
+#if OSMAND_PERFORMANCE_METRICS
                 const auto dataFilter_End = std::chrono::high_resolution_clock::now();
                 const std::chrono::duration<float> dataRead_Elapsed = dataFilter_End - dataFilter_Begin;
                 dataFilter += dataRead_Elapsed.count();
-#endif
+#endif // OSMAND_PERFORMANCE_METRICS
                 return false;
             }
 
@@ -141,19 +147,19 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
             loadedSharedMapObjects.insert(id);
             return true;
         },
-#if OSMAND_DEBUG
+#if OSMAND_PERFORMANCE_METRICS > 1
         &dataRead_Metric
 #else
         nullptr
-#endif
+#endif // OSMAND_PERFORMANCE_METRICS > 1
     );
 
-#if OSMAND_DEBUG
+#if OSMAND_PERFORMANCE_METRICS
     const auto dataRead_End = std::chrono::high_resolution_clock::now();
     const std::chrono::duration<float> dataRead_Elapsed = dataRead_End - dataRead_Begin;
 
     const auto dataIdsProcess_Begin = std::chrono::high_resolution_clock::now();
-#endif
+#endif // OSMAND_PERFORMANCE_METRICS
 
     // Process loaded-and-shared map objects
     for(auto itMapObject = loadedMapObjects.begin(); itMapObject != loadedMapObjects.end(); ++itMapObject)
@@ -180,13 +186,15 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
         referencedMapObjects.push_back(qMove(mapObject));
     }
 
-#if OSMAND_DEBUG
+#if OSMAND_PERFORMANCE_METRICS
     const auto dataIdsProcess_End = std::chrono::high_resolution_clock::now();
     const std::chrono::duration<float> dataIdsProcess_Elapsed = dataIdsProcess_End - dataIdsProcess_Begin;
 
-    Rasterizer_Metrics::Metric_prepareContext dataProcess_metric;
     const auto dataProcess_Begin = std::chrono::high_resolution_clock::now();
-#endif
+#endif // OSMAND_PERFORMANCE_METRICS
+#if OSMAND_PERFORMANCE_METRICS > 1
+    Rasterizer_Metrics::Metric_prepareContext dataProcess_metric;
+#endif // OSMAND_PERFORMANCE_METRICS > 1
 
     // Prepare data for the tile
     const auto sharedMapObjectsCount = referencedMapObjects.size() + loadedSharedMapObjects.size();
@@ -196,17 +204,17 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
     bool nothingToRasterize = false;
     std::shared_ptr<RasterizerContext> rasterizerContext(new RasterizerContext(owner->rasterizerEnvironment, owner->rasterizerSharedContext));
     Rasterizer::prepareContext(*rasterizerContext, tileBBox31, zoom, tileFoundation, allMapObjects, &nothingToRasterize, nullptr,
-#if OSMAND_DEBUG
+#if OSMAND_PERFORMANCE_METRICS > 1
         &dataProcess_metric
 #else
         nullptr
-#endif
+#endif // OSMAND_PERFORMANCE_METRICS > 1
     );
 
-#if OSMAND_DEBUG
+#if OSMAND_PERFORMANCE_METRICS
     const auto dataProcess_End = std::chrono::high_resolution_clock::now();
     const std::chrono::duration<float> dataProcess_Elapsed = dataProcess_End - dataProcess_Begin;
-#endif
+#endif // OSMAND_PERFORMANCE_METRICS
 
     // Create tile
     const auto newTile = new OfflineMapDataTile(tileId, zoom, tileFoundation, allMapObjects, rasterizerContext, nothingToRasterize);
@@ -226,10 +234,16 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
         tileEntry->_loadedCondition.wakeAll();
     }
 
-#if OSMAND_DEBUG
+#if OSMAND_PERFORMANCE_METRICS
     const auto total_End = std::chrono::high_resolution_clock::now();
     const std::chrono::duration<float> total_Elapsed = total_End - total_Begin;
-
+#if OSMAND_PERFORMANCE_METRICS <= 1
+    LogPrintf(LogSeverityLevel::Info,
+        "%d map objects (%d unique, %d shared) from %dx%d@%d in %fs",
+        allMapObjects.size(), allMapObjects.size() - sharedMapObjectsCount, sharedMapObjectsCount,
+        tileId.x, tileId.y, zoom,
+        total_Elapsed.count());
+#else
     LogPrintf(LogSeverityLevel::Info,
         "%d map objects (%d unique, %d shared) from %dx%d@%d in %fs:\n"
         "\topen %fs\n"
@@ -309,6 +323,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
         (dataProcess_metric.elapsedTimeForPointEvaluation * 1000.0f / static_cast<float>(dataProcess_metric.pointEvaluations)) * 1000.0f,
         dataProcess_metric.pointPrimitives,
         dataProcess_metric.elapsedTimeForObtainingPrimitivesSymbols);
-#endif
+#endif // OSMAND_PERFORMANCE_METRICS <= 1
+#endif // OSMAND_PERFORMANCE_METRICS
 }
 
