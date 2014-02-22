@@ -873,6 +873,85 @@ unsigned int OsmAnd::MapRendererResources::getMapSymbolsCount() const
     return _mapSymbolsCount;
 }
 
+void OsmAnd::MapRendererResources::dumpResourcesInfo() const
+{
+    QMap<ResourceState, QString> resourceStateMap;
+    resourceStateMap.insert(ResourceState::Unknown, QLatin1String("Unknown"));
+    resourceStateMap.insert(ResourceState::Requesting, QLatin1String("Requesting"));
+    resourceStateMap.insert(ResourceState::Requested, QLatin1String("Requested"));
+    resourceStateMap.insert(ResourceState::ProcessingRequest, QLatin1String("ProcessingRequest"));
+    resourceStateMap.insert(ResourceState::RequestCanceledWhileBeingProcessed, QLatin1String("RequestCanceledWhileBeingProcessed"));
+    resourceStateMap.insert(ResourceState::Unavailable, QLatin1String("Unavailable"));
+    resourceStateMap.insert(ResourceState::Ready, QLatin1String("Ready"));
+    resourceStateMap.insert(ResourceState::Uploading, QLatin1String("Uploading"));
+    resourceStateMap.insert(ResourceState::Uploaded, QLatin1String("Uploaded"));
+    resourceStateMap.insert(ResourceState::IsBeingUsed, QLatin1String("IsBeingUsed"));
+    resourceStateMap.insert(ResourceState::UnloadPending, QLatin1String("UnloadPending"));
+    resourceStateMap.insert(ResourceState::Unloading, QLatin1String("Unloading"));
+    resourceStateMap.insert(ResourceState::Unloaded, QLatin1String("Unloaded"));
+    resourceStateMap.insert(ResourceState::JustBeforeDeath, QLatin1String("JustBeforeDeath"));
+
+    QString dump;
+    dump += QLatin1String("Resources:\n");
+    dump += QLatin1String("--------------------------------------------------------------------------------\n");
+
+    dump += QLatin1String("[Tiled] Elevation data:\n");
+    for(const auto& resources : constOf(_storage[static_cast<int>(ResourceType::ElevationData)]))
+    {
+        if(!resources)
+            continue;
+        resources->obtainEntries(nullptr, [&dump, resourceStateMap](const std::shared_ptr<BaseTiledResource>& entry, bool& cancel) -> bool
+        {
+            dump += QString(QLatin1String("\t %1x%2@%3 state '%4'\n")).
+                arg(entry->tileId.x).
+                arg(entry->tileId.y).
+                arg(static_cast<int>(entry->zoom)).
+                arg(resourceStateMap[entry->getState()]);
+
+            return false;
+        });
+        dump += "\t----------------------------------------------------------------------------\n";
+    }
+
+    dump += QLatin1String("[Tiled] Raster map:\n");
+    for(const auto& resources : constOf(_storage[static_cast<int>(ResourceType::RasterMap)]))
+    {
+        if(!resources)
+            continue;
+        resources->obtainEntries(nullptr, [&dump, resourceStateMap](const std::shared_ptr<BaseTiledResource>& entry, bool& cancel) -> bool
+        {
+            dump += QString(QLatin1String("\t %1x%2@%3 state '%4'\n")).
+                arg(entry->tileId.x).
+                arg(entry->tileId.y).
+                arg(static_cast<int>(entry->zoom)).
+                arg(resourceStateMap[entry->getState()]);
+
+            return false;
+        });
+        dump += QLatin1String("\t----------------------------------------------------------------------------\n");
+    }
+
+    dump += QLatin1String("[Tiled] Symbols:\n");
+    for(const auto& resources : constOf(_storage[static_cast<int>(ResourceType::Symbols)]))
+    {
+        if(!resources)
+            continue;
+        resources->obtainEntries(nullptr, [&dump, resourceStateMap](const std::shared_ptr<BaseTiledResource>& entry, bool& cancel) -> bool
+        {
+            dump += QString(QLatin1String("\t %1x%2@%3 state '%4'\n")).
+                arg(entry->tileId.x).
+                arg(entry->tileId.y).
+                arg(static_cast<int>(entry->zoom)).
+                arg(resourceStateMap[entry->getState()]);
+
+            return false;
+        });
+        dump += QLatin1String("\t----------------------------------------------------------------------------\n");
+    }
+
+    LogPrintf(LogSeverityLevel::Debug, qPrintable(dump));
+}
+
 OsmAnd::MapRendererResources::GenericResource::GenericResource(MapRendererResources* owner_, const ResourceType type_)
     : _requestTask(nullptr)
     , owner(owner_)

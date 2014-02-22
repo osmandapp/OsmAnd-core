@@ -1058,3 +1058,8 @@ void OsmAnd::MapRenderer::setZoom( const float zoom, bool forcedUpdate /*= false
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
 }
+
+void OsmAnd::MapRenderer::dumpResourcesInfo() const
+{
+    getResources().dumpResourcesInfo();
+}

@@ -173,6 +173,8 @@ namespace OsmAnd
         virtual void setTarget(const PointI& target31, bool forcedUpdate = false);
         virtual void setZoom(const float zoom, bool forcedUpdate = false);
 
+        virtual void dumpResourcesInfo() const;
+
     friend struct OsmAnd::MapRendererInternalState;
     friend class OsmAnd::MapRendererStage;
     friend class OsmAnd::MapRendererResources;

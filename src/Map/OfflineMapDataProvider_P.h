@@ -47,7 +47,8 @@ namespace OsmAnd {
         {
             TileEntry(const TilesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom)
                 : TilesCollectionEntryWithState(collection, tileId, zoom)
-            {}
+            {
+            }
 
             virtual ~TileEntry()
             {

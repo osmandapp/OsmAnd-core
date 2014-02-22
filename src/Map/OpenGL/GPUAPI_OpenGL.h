@@ -74,13 +74,13 @@ namespace OsmAnd
         Uniform
     };
 
-    template<typename T, T defaultValue>
+    template<typename T, T DEFAULT_VALUE>
     struct GLref
     {
-        typedef GLref<T, defaultValue> GLrefT;
+        typedef GLref<T, DEFAULT_VALUE> GLrefT;
 
         GLref()
-            : value(defaultValue)
+            : value(DEFAULT_VALUE)
         {
         }
 
@@ -98,7 +98,7 @@ namespace OsmAnd
 
         inline operator bool() const
         {
-            return value != defaultValue;
+            return value != DEFAULT_VALUE;
         }
 
         inline bool operator==(const GLrefT& r) const
@@ -155,7 +155,7 @@ namespace OsmAnd
 
         inline void reset()
         {
-            value = defaultValue;
+            value = DEFAULT_VALUE;
         }
     };
 

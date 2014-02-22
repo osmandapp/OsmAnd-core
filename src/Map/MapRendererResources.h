@@ -339,6 +339,8 @@ namespace OsmAnd
         const MapSymbolsByOrder& getMapSymbolsByOrder() const;
         unsigned int getMapSymbolsCount() const;
 
+        void dumpResourcesInfo() const;
+
     friend class OsmAnd::MapRenderer;
     };
 }

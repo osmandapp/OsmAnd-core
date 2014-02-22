@@ -86,6 +86,8 @@ namespace OsmAnd
         virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31) = 0;
         virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI64& location) = 0;
 
+        virtual void dumpResourcesInfo() const = 0;
+
     friend class OsmAnd::MapRenderer;
     };
 

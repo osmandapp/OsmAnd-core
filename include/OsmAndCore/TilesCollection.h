@@ -14,9 +14,14 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Logging.h>
 
-namespace OsmAnd {
+#if !defined(OSMAND_TRACE_TILES_COLLECTION_STATE)
+#   define OSMAND_TRACE_TILES_COLLECTION_STATE 2
+#endif // !defined(OSMAND_TRACE_TILES_COLLECTION_STATE)
 
+namespace OsmAnd
+{
     template<class ENTRY>
     class TilesCollectionEntry;
 
@@ -31,10 +36,12 @@ namespace OsmAnd {
         public:
             Link(TilesCollection< ENTRY >& collection_)
                 : collection(collection_)
-            {}
+            {
+            }
 
             virtual ~Link()
-            {}
+            {
+            }
 
             TilesCollection< ENTRY >& collection;
         };
@@ -47,9 +54,11 @@ namespace OsmAnd {
     public:
         TilesCollection()
             : _link(new Link(*this))
-        {}
+        {
+        }
         virtual ~TilesCollection()
-        {}
+        {
+        }
 
         virtual bool obtainEntry(std::shared_ptr<ENTRY>& outEntry, const TileId tileId, const ZoomLevel zoom) const
         {
@@ -225,33 +234,98 @@ namespace OsmAnd {
     friend class OsmAnd::TilesCollection<ENTRY>;
     };
 
-    template<class ENTRY, typename STATE_ENUM, STATE_ENUM UNDEFINED_STATE_VALUE>
+    template<class ENTRY, typename STATE_ENUM, STATE_ENUM UNDEFINED_STATE_VALUE
+#if OSMAND_TRACE_TILES_COLLECTION_STATE
+        , bool LOG_TRACE = false
+#endif // OSMAND_TRACE_TILES_COLLECTION_STATE
+    >
     class TilesCollectionEntryWithState : public TilesCollectionEntry<ENTRY>
     {
-    private:
     protected:
+#if OSMAND_TRACE_TILES_COLLECTION_STATE
+        mutable QMutex _stateLock;
+        volatile int _stateValue;
+#else
         QAtomicInt _stateValue;
+#endif // OSMAND_TRACE_TILES_COLLECTION_STATE
     public:
         TilesCollectionEntryWithState(const TilesCollection<ENTRY>& collection, const TileId tileId, const ZoomLevel zoom, const STATE_ENUM state = UNDEFINED_STATE_VALUE)
             : TilesCollectionEntry<ENTRY>(collection, tileId, zoom)
             , _stateValue(static_cast<int>(state))
-        {}
+        {
+        }
         virtual ~TilesCollectionEntryWithState()
-        {}
+        {
+        }
 
         inline STATE_ENUM getState() const
         {
+#if OSMAND_TRACE_TILES_COLLECTION_STATE
+            return static_cast<STATE_ENUM>(_stateValue);
+#else
             return static_cast<STATE_ENUM>(_stateValue.load());
+#endif // OSMAND_TRACE_TILES_COLLECTION_STATE
         }
 
         inline void setState(const STATE_ENUM newState)
         {
-            _stateValue.store(static_cast<int>(newState));
+#if OSMAND_TRACE_TILES_COLLECTION_STATE
+            QMutexLocker scopedLocker(&_stateLock);
+            if(LOG_TRACE
+#if OSMAND_TRACE_TILES_COLLECTION_STATE > 1
+                || true
+#endif
+                )
+            {
+                LogPrintf(LogSeverityLevel::Debug,
+                    "%s %dx%d@%d state '%d'=>'%d'",
+                    typeid(ENTRY).name(),
+                    tileId.x, tileId.y, static_cast<int>(zoom),
+                    _stateValue, static_cast<int>(newState));
+            }
+            _stateValue = static_cast<int>(newState);
+#else
+            _stateValue.fetchAndStoreOrdered(static_cast<int>(newState));
+#endif // OSMAND_TRACE_TILES_COLLECTION_STATE
         }
 
         inline bool setStateIf(const STATE_ENUM testState, const STATE_ENUM newState)
         {
+#if OSMAND_TRACE_TILES_COLLECTION_STATE
+            QMutexLocker scopedLocker(&_stateLock);
+            if(_stateValue != static_cast<int>(testState))
+            {
+                if(LOG_TRACE
+#if OSMAND_TRACE_TILES_COLLECTION_STATE > 1
+                    || true
+#endif
+                    )
+                {
+                    LogPrintf(LogSeverityLevel::Debug,
+                        "%s %dx%d@%d state '%d'=>'%d' failed, since not '%d'",
+                        typeid(ENTRY).name(),
+                        tileId.x, tileId.y, static_cast<int>(zoom),
+                        _stateValue, static_cast<int>(newState), static_cast<int>(testState));
+                }
+                return false;
+            }
+            if(LOG_TRACE
+#if OSMAND_TRACE_TILES_COLLECTION_STATE > 1
+                || true
+#endif
+                )
+            {
+                LogPrintf(LogSeverityLevel::Debug,
+                    "%s %dx%d@%d state '%d'=>'%d'",
+                    typeid(ENTRY).name(),
+                    tileId.x, tileId.y, static_cast<int>(zoom),
+                    _stateValue, static_cast<int>(newState));
+            }
+            _stateValue = static_cast<int>(newState);
+            return true;
+#else
             return _stateValue.testAndSetOrdered(static_cast<int>(testState), static_cast<int>(newState));
+#endif // OSMAND_TRACE_TILES_COLLECTION_STATE
         }
     };
 }
