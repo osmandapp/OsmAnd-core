@@ -484,7 +484,7 @@ namespace OsmAnd
 
         inline AreaT enlargeBy(const PointT& delta) const
         {
-            return getEnlargedBy(p);
+            return getEnlargedBy(delta);
         }
 
         inline AreaT getEnlargedBy(const PointT& delta) const
