@@ -1,6 +1,8 @@
 #include "ICU.h"
 #include "ICU_private.h"
 
+#include <cassert>
+
 #include <QByteArray>
 #include <QVector>
 
