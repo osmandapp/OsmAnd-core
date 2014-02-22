@@ -123,8 +123,13 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     GL_CHECK_RESULT;
 
-    // Render map symbols
+    // Render map symbols without writing depth buffer, since symbols use own sorting and intersection checking
+    //NOTE: Currently map symbols are incompatible with height-maps
+    glDepthMask(GL_FALSE);
+    GL_CHECK_RESULT;
     _symbolsStage.render();
+    glDepthMask(GL_TRUE);
+    GL_CHECK_RESULT;
 
     //TODO: render special fog object some day
 
@@ -133,6 +138,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame()
     GL_CHECK_RESULT;
 
     _debugStage.render();
+
+    glEnable(GL_DEPTH_TEST);
+    GL_CHECK_RESULT;
 #endif
 
     GL_POP_GROUP_MARKER;
