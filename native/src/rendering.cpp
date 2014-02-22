@@ -865,7 +865,7 @@ void sortObjectsByProperOrder(std::vector <MapDataObject* > mapDataObjects,
 						if(area > MAX_V) { 
 							mapObj.order = mapObj.order + (1. / area);
 							polygonsArray.push_back(mapObj);
-							pointsArray.push_back(pointObj);
+							pointsArray.push_back(pointObj); // TODO fix duplicate text? verify if it is needed for icon
 						}
 					} else if(objectType == 1) {
 						pointsArray.push_back(mapObj);
