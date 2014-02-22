@@ -25,7 +25,7 @@ namespace OsmAnd {
             OneWayForward = -1,
             TwoWay = 0,
             OneWayReverse = +1
-        };
+        } STRONG_ENUM_TERMINATOR;
 
         STRONG_ENUM_EX(RoadRestriction, int32_t)
         {
@@ -40,7 +40,7 @@ namespace OsmAnd {
             OnlyRightTurn = 5,
             OnlyLeftTurn = 6,
             OnlyStraightOn = 7,
-        };
+        } STRONG_ENUM_TERMINATOR;
 
         class OSMAND_CORE_API Road
         {

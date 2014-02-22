@@ -28,7 +28,7 @@ namespace OsmAnd
         Polygon = 3,
         Text = 4,
         Order = 5,
-    };
+    } STRONG_ENUM_TERMINATOR;
 
     class MapStyle_P;
     class OSMAND_CORE_API MapStyle

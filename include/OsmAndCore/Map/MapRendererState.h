@@ -37,7 +37,7 @@ namespace OsmAnd {
         ElevationAngle = 1 << 11,
         Target = 1 << 12,
         Zoom = 1 << 13,
-    };
+    } STRONG_ENUM_TERMINATOR;
 
     class OSMAND_CORE_API MapRendererState
     {

@@ -37,7 +37,7 @@ namespace OsmAnd {
 
             // Tile is processing
             Processing,
-        };
+        } STRONG_ENUM_TERMINATOR;
         class TileEntry : public TilesCollectionEntryWithState<TileEntry, TileState, TileState::Unknown>
         {
         private:

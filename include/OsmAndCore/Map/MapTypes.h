@@ -16,14 +16,14 @@ namespace OsmAnd
         Mixed,
         FullLand,
         FullWater,
-    };
+    } STRONG_ENUM_TERMINATOR;
 
     STRONG_ENUM(AlphaChannelData)
     {
         Present,
         NotPresent,
         Undefined
-    };
+    } STRONG_ENUM_TERMINATOR;
 }
 
 #endif // !defined(_OSMAND_CORE_MAP_TYPES_H_)

@@ -21,13 +21,13 @@ namespace OsmAnd
         Float,
         String,
         Color,
-    };
+    } STRONG_ENUM_TERMINATOR;
 
     STRONG_ENUM(MapStyleValueClass)
     {
         Input,
         Output,
-    };
+    } STRONG_ENUM_TERMINATOR;
 
     class OSMAND_CORE_API MapStyleValueDefinition
     {

@@ -63,14 +63,14 @@ namespace OsmAnd
         PointI normalizeCoordinates(const PointI64& input, const ZoomLevel zoom);
         int qAbsCeil(qreal v);
         int qAbsFloor(qreal v);
-        WEAK_ENUM_EX(CHCode, uint8_t)
+        STRONG_ENUM_EX(CHCode, uint8_t)
         {
             Inside = 0, // 0000
             Left = 1,   // 0001
             Right = 2,  // 0010
             Bottom = 4, // 0100
             Top = 8,    // 1000
-        };
+        } STRONG_ENUM_TERMINATOR;
         uint8_t computeCohenSutherlandCode(const PointI& p, const AreaI& box);
         QSet<ZoomLevel> enumerateZoomLevels(const ZoomLevel from, const ZoomLevel to);
         template <typename T>
@@ -557,16 +557,16 @@ namespace OsmAnd
 
         inline uint8_t computeCohenSutherlandCode(const PointI& p, const AreaI& box)
         {
-            uint8_t res = CHCode::Inside;
+            uint8_t res = static_cast<uint8_t>(CHCode::Inside);
 
             if(p.x < box.left)           // to the left of clip box
-                res |= CHCode::Left;
+                res |= static_cast<uint8_t>(CHCode::Left);
             else if(p.x > box.right)     // to the right of clip box
-                res |= CHCode::Right;
+                res |= static_cast<uint8_t>(CHCode::Right);
             if(p.y < box.top)            // above the clip box
-                res |= CHCode::Bottom;
+                res |= static_cast<uint8_t>(CHCode::Bottom);
             else if(p.y > box.bottom)    // below the clip box
-                res |= CHCode::Top;
+                res |= static_cast<uint8_t>(CHCode::Top);
 
             return res;
         }

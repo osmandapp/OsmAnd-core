@@ -46,7 +46,7 @@ namespace OsmAnd
             Symbols,
 
             __LAST
-        };
+        } STRONG_ENUM_TERMINATOR;
         enum {
             ResourceTypesCount = static_cast<int>(ResourceType::__LAST)
         };
@@ -99,7 +99,7 @@ namespace OsmAnd
 
             // JustBeforeDeath state is installed just before resource is deallocated completely
             JustBeforeDeath
-        };
+        } STRONG_ENUM_TERMINATOR;
 
         // Generic interface that all resources must implement
         class IResource

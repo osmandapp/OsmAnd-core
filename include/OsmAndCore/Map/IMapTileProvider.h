@@ -15,7 +15,7 @@ namespace OsmAnd
     {
         Bitmap,
         ElevationData
-    };
+    } STRONG_ENUM_TERMINATOR;
 
     class OSMAND_CORE_API MapTile
     {

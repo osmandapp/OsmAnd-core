@@ -47,7 +47,7 @@ namespace OsmAnd
             this->y = y;
         }
 
-#ifndef SWIG
+#if !defined(SWIG)
         inline PointT operator+(const PointT& r) const
         {
             return PointT(x + r.x, y + r.y);
@@ -232,7 +232,7 @@ namespace OsmAnd
         T& bottom;
         T& right;
 
-#ifndef SWIG
+#if !defined(SWIG)
         inline AreaT& operator=(const AreaT& that)
         {
             if(this != &that)
@@ -377,7 +377,6 @@ namespace OsmAnd
             return PointT(left, bottom);
         }
 
-#ifndef SWIG
         STRONG_ENUM(Edge)
         {
             Invalid = -1,
@@ -386,7 +385,7 @@ namespace OsmAnd
             Top = 1,
             Right = 2,
             Bottom = 3
-        };
+        } STRONG_ENUM_TERMINATOR;
 
         bool isOnEdge(const PointT& p, Edge* edge = nullptr) const
         {
@@ -422,7 +421,6 @@ namespace OsmAnd
 
             return res;
         }
-#endif // !SWIG
 
         STRONG_ENUM(Quadrant)
         {
@@ -430,7 +428,7 @@ namespace OsmAnd
             SE,
             SW,
             NW
-        };
+        } STRONG_ENUM_TERMINATOR;
         inline AreaT getQuadrant(const Quadrant quadrant) const
         {
             const auto center_ = center();
@@ -532,7 +530,7 @@ namespace OsmAnd
             int32_t y;
         };
 
-#ifndef SWIG
+#if !defined(SWIG)
         inline operator uint64_t() const
         {
             return id;
@@ -566,7 +564,7 @@ namespace OsmAnd
 #endif // !defined(SWIG)
     };
 
-#ifndef SWIG
+#if !defined(SWIG)
     static_assert(sizeof(TileId) == 8, "TileId must be 8 bytes in size");
 #endif // !defined(SWIG)
 
@@ -635,7 +633,7 @@ namespace OsmAnd
             float b;
         };
 
-#ifndef SWIG
+#if !defined(SWIG)
         inline bool operator== (const FColorRGB& other) const
         {
             return qFuzzyCompare(r, other.r) && qFuzzyCompare(g, other.g) && qFuzzyCompare(b, other.b);
@@ -654,7 +652,7 @@ namespace OsmAnd
 
         Latin,
         Native
-    };
+    } STRONG_ENUM_TERMINATOR;
 }
 
 #endif // !defined(_OSMAND_CORE_COMMON_TYPES_H_)

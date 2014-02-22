@@ -20,7 +20,7 @@ namespace OsmAnd
         Overlay3,
 
         __LAST,
-    };
+    } STRONG_ENUM_TERMINATOR;
     enum {
         RasterMapLayersCount = static_cast<unsigned>(RasterMapLayerId::__LAST)
     };

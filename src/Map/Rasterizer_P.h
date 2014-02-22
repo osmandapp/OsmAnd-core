@@ -229,7 +229,7 @@ namespace OsmAnd {
             Set_minus1,
             Set_minus2,
             Set_3,
-        };
+        } STRONG_ENUM_TERMINATOR;
         bool updatePaint(
             const MapStyleEvaluationResult& evalResult, const PaintValuesSet valueSetSelector, const bool isArea);
 

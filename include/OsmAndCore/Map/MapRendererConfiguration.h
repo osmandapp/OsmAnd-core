@@ -17,7 +17,7 @@ namespace OsmAnd
         Normal,
         Good,
         Best
-    };
+    } STRONG_ENUM_TERMINATOR;
 
     struct OSMAND_CORE_API MapRendererConfiguration
     {
