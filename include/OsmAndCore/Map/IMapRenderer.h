@@ -52,6 +52,7 @@ namespace OsmAnd
 
         const MapRendererState& state;
         virtual bool isFrameInvalidated() const = 0;
+        virtual void forcedFrameInvalidate() = 0;
 
         virtual unsigned int getVisibleTilesCount() const = 0;
         virtual unsigned int getSymbolsCount() const = 0;

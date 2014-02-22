@@ -719,7 +719,12 @@ bool OsmAnd::MapRenderer::convertMapSymbol(const std::shared_ptr<const MapSymbol
 
 bool OsmAnd::MapRenderer::isFrameInvalidated() const
 {
-    return (_frameInvalidatesCounter.fetchAndAddOrdered(0) > 0);
+    return (_frameInvalidatesCounter.load() > 0);
+}
+
+void OsmAnd::MapRenderer::forcedFrameInvalidate()
+{
+    invalidateFrame();
 }
 
 OsmAnd::Concurrent::Dispatcher& OsmAnd::MapRenderer::getRenderThreadDispatcher()
