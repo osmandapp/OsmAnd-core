@@ -1,10 +1,14 @@
 #include "OfflineMapRasterTileProvider_Software_P.h"
 #include "OfflineMapRasterTileProvider_Software.h"
 
-#include <cassert>
-#if OSMAND_DEBUG
-#   include <chrono>
+#if !defined(OSMAND_PERFORMANCE_METRICS)
+#   define OSMAND_PERFORMANCE_METRICS 0
 #endif
+
+#include <cassert>
+#if OSMAND_PERFORMANCE_METRICS
+#   include <chrono>
+#endif // OSMAND_PERFORMANCE_METRICS
 
 #include <SkStream.h>
 #include <SkBitmap.h>
@@ -46,9 +50,9 @@ bool OsmAnd::OfflineMapRasterTileProvider_Software_P::obtainTile(const TileId ti
         return true;
     }
 
-#if OSMAND_DEBUG
+#if OSMAND_PERFORMANCE_METRICS
     const auto dataRasterization_Begin = std::chrono::high_resolution_clock::now();
-#endif
+#endif // OSMAND_PERFORMANCE_METRICS
 
     // Allocate rasterization target
     auto rasterizationSurface = new SkBitmap();
@@ -72,7 +76,7 @@ bool OsmAnd::OfflineMapRasterTileProvider_Software_P::obtainTile(const TileId ti
         rasterizer.rasterizeMap(canvas);
     }
 
-#if OSMAND_DEBUG
+#if OSMAND_PERFORMANCE_METRICS
     const auto dataRasterization_End = std::chrono::high_resolution_clock::now();
     const std::chrono::duration<float> dataRasterization_Elapsed = dataRasterization_End - dataRasterization_Begin;
     if(!dataTile->nothingToRasterize)
@@ -87,7 +91,7 @@ bool OsmAnd::OfflineMapRasterTileProvider_Software_P::obtainTile(const TileId ti
             "%d map objects in %dx%d@%d: nothing to rasterize (%fs)",
             dataTile->mapObjects.count(), tileId.x, tileId.y, zoom, dataRasterization_Elapsed.count());
     }
-#endif
+#endif // OSMAND_PERFORMANCE_METRICS
 
     // If there is no data to rasterize, tell that this tile is not available
     if(dataTile->nothingToRasterize)
