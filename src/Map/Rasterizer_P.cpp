@@ -769,7 +769,8 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
         std::shared_ptr<const SymbolsGroup> group(constructedGroup);
 
         // For each primitive if primitive group, collect symbols from it
-        collectSymbolsFromPrimitives(env, context, primitivesGroup->polygons, Polygons, constructedGroup->symbols, controller);
+        //NOTE: Each polygon that has icon or text is also added as point. So there's no need to process polygons
+        //collectSymbolsFromPrimitives(env, context, primitivesGroup->polygons, Polygons, constructedGroup->symbols, controller);
         collectSymbolsFromPrimitives(env, context, primitivesGroup->polylines, Polylines, constructedGroup->symbols, controller);
         collectSymbolsFromPrimitives(env, context, primitivesGroup->points, Points, constructedGroup->symbols, controller);
 
