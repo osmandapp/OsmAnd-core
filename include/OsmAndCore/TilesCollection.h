@@ -17,7 +17,7 @@
 #include <OsmAndCore/Logging.h>
 
 #if !defined(OSMAND_TRACE_TILES_COLLECTION_STATE)
-#   define OSMAND_TRACE_TILES_COLLECTION_STATE 2
+#   define OSMAND_TRACE_TILES_COLLECTION_STATE 0
 #endif // !defined(OSMAND_TRACE_TILES_COLLECTION_STATE)
 
 namespace OsmAnd
