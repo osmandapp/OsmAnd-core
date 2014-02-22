@@ -37,7 +37,7 @@
 #define OSMAND_DUMP_SYMBOLS 0
 #if OSMAND_DUMP_SYMBOLS
 #   include <SkImageEncoder.h>
-#endif OSMAND_DUMP_SYMBOLS
+#endif // OSMAND_DUMP_SYMBOLS
 
 OsmAnd::Rasterizer_P::Rasterizer_P(Rasterizer* const owner_, const RasterizerEnvironment_P& env_, const RasterizerContext_P& context_)
     : owner(owner_)
