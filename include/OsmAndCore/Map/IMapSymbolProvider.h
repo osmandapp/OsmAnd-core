@@ -45,6 +45,7 @@ namespace OsmAnd
             const std::shared_ptr<const SkBitmap>& bitmap,
             const int order,
             const QString& content,
+            const LanguageId& langId,
             const PointI& minDistance);
     public:
         virtual ~MapSymbol();
@@ -55,6 +56,7 @@ namespace OsmAnd
         const std::shared_ptr<const SkBitmap>& bitmap;
         const int order;
         const QString content;
+        const LanguageId langId;
         const PointI minDistance;
 
         virtual void releaseNonRetainedData();
@@ -73,6 +75,7 @@ namespace OsmAnd
             const std::shared_ptr<const SkBitmap>& bitmap,
             const int order,
             const QString& content,
+            const LanguageId& langId,
             const PointI& minDistance,
             const PointI& location31,
             const PointI& offset);
@@ -96,6 +99,7 @@ namespace OsmAnd
             const std::shared_ptr<const SkBitmap>& bitmap,
             const int order,
             const QString& content,
+            const LanguageId& langId,
             const PointI& minDistance,
             const QVector<float>& glyphsWidth);
         virtual ~MapSymbolOnPath();

@@ -647,6 +647,14 @@ namespace OsmAnd
         }
 #endif // !defined(SWIG)
     };
+
+    STRONG_ENUM_EX(LanguageId, int32_t)
+    {
+        Invariant = -1,
+
+        Latin,
+        Native
+    };
 }
 
 #endif // !defined(_OSMAND_CORE_COMMON_TYPES_H_)

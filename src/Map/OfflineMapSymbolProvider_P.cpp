@@ -66,6 +66,7 @@ bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols(
                     pinnedSymbol->bitmap,
                     pinnedSymbol->order,
                     pinnedSymbol->content,
+                    pinnedSymbol->langId,
                     pinnedSymbol->minDistance,
                     pinnedSymbol->location31,
                     pinnedSymbol->offset);
@@ -79,6 +80,7 @@ bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols(
                     symbolOnPath->bitmap,
                     symbolOnPath->order,
                     symbolOnPath->content,
+                    symbolOnPath->langId,
                     symbolOnPath->minDistance,
                     symbolOnPath->glyphsWidth);
                 assert(static_cast<bool>(symbol->bitmap));

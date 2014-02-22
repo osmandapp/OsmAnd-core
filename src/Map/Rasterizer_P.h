@@ -163,7 +163,8 @@ namespace OsmAnd {
         {
             PrimitiveSymbol();
             virtual ~PrimitiveSymbol()
-            {}
+            {
+            }
 
             std::shared_ptr<const Primitive> primitive;
             PointI location31;
@@ -174,6 +175,7 @@ namespace OsmAnd {
         struct PrimitiveSymbol_Text : public PrimitiveSymbol
         {
             QString value;
+            LanguageId langId;
             bool drawOnPath;
             int verticalOffset;
             uint32_t color;

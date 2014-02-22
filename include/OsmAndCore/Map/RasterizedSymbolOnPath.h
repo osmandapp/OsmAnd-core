@@ -25,6 +25,7 @@ namespace OsmAnd
             const std::shared_ptr<const SkBitmap>& bitmap,
             const int order,
             const QString& content,
+            const LanguageId& langId,
             const PointI& minDistance,
             const QVector<SkScalar>& glyphsWidth);
     public:

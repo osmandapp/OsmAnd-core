@@ -2,6 +2,7 @@
 #include "ObfMapSectionReader.h"
 #include "ObfMapSectionReader_Metrics.h"
 
+#include "Common.h"
 #include "ObfReader.h"
 #include "ObfReader_P.h"
 #include "ObfMapSectionInfo.h"
@@ -387,7 +388,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
 {
     auto cis = reader->_codedInputStream.get();
 
-    QList< std::shared_ptr<OsmAnd::Model::MapObject> > intermediateResult;
+    QList< std::shared_ptr<Model::MapObject> > intermediateResult;
     QStringList mapObjectsNamesTable;
     gpb::uint64 baseId = 0;
     for(;;)
@@ -399,33 +400,32 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
-            for(auto itEntry = intermediateResult.cbegin(); itEntry != intermediateResult.cend(); ++itEntry)
+            for(const auto& mapObject : constOf(intermediateResult))
             {
-                const auto& entry = *itEntry;
-
-                // Fill names of roads from stringtable
-                for(auto itNameEntry = entry->_names.begin(); itNameEntry != entry->_names.end(); ++itNameEntry)
+                // Fill mapObject names from stringtable
+                for(auto itNameEntry = mapObject->_names.begin(), itEnd = mapObject->_names.end(); itNameEntry != itEnd; ++itNameEntry)
                 {
-                    const auto& encodedId = itNameEntry.value();
-                    uint32_t stringId = ObfReaderUtilities::decodeIntegerFromString(encodedId);
+                    auto& name = itNameEntry.value();
+
+                    const auto stringId = ObfReaderUtilities::decodeIntegerFromString(name);
 
                     if(stringId >= mapObjectsNamesTable.size())
                     {
                         LogPrintf(LogSeverityLevel::Error,
                             "Data mismatch: string #%d (map object #%" PRIu64 " (%" PRIi64 ") not found in string table (size %d) in section '%s'",
                             stringId,
-                            entry->id >> 1, static_cast<int64_t>(entry->id) / 2,
+                            mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2,
                             mapObjectsNamesTable.size(), qPrintable(section->name));
-                        itNameEntry.value() = QString::fromLatin1("#%1 NOT FOUND").arg(stringId);
+                        name = QString::fromLatin1("#%1 NOT FOUND").arg(stringId);
                         continue;
                     }
-                    itNameEntry.value() = mapObjectsNamesTable[stringId];
+                    name = mapObjectsNamesTable[stringId];
                 }
 
-                if(!visitor || visitor(entry))
+                if(!visitor || visitor(mapObject))
                 {
                     if(resultOut)
-                        resultOut->push_back(qMove(entry));
+                        resultOut->push_back(qMove(mapObject));
                 }
             }
             return;

@@ -923,17 +923,60 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
     const std::shared_ptr<const Primitive>& primitive, const PointI& location,
     QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols)
 {
-    const auto typeRuleId = primitive->mapObject->_typesRuleIds[primitive->typeRuleIdIndex];
-    const auto& decodedType = primitive->mapObject->section->encodingDecodingRules->decodingRules[typeRuleId];
+    const auto& mapObject = primitive->mapObject;
+    const auto& encDecRules = mapObject->section->encodingDecodingRules;
+    const auto typeRuleId = mapObject->_typesRuleIds[primitive->typeRuleIdIndex];
+    const auto& decodedType = encDecRules->decodingRules[typeRuleId];
 
     MapStyleEvaluationResult textEvalResult;
 
     MapStyleEvaluator textEvaluator(env.owner->style, env.owner->displayDensityFactor);
     env.applyTo(textEvaluator);
 
-    bool ok;
-    for(auto itName = primitive->mapObject->names.cbegin(); itName != primitive->mapObject->names.cend(); ++itName)
+    // Process native and Latin names
+    auto names = mapObject->names;
+    const auto citNamesEnd = names.cend();
+    const auto citNativeName = names.constFind(encDecRules->name_encodingRuleId);
+    const auto citLatinName = names.constFind(encDecRules->latinName_encodingRuleId);
+    auto hasNativeName = (citNativeName != citNamesEnd);
+    auto hasLatinName = (citLatinName != citNamesEnd);
+    bool forceLangInvariantName = false;
+    if(hasNativeName && hasLatinName)
     {
+        const auto& nativeNameValue = citNativeName.value();
+        const auto& latinNameValue = citLatinName.value();
+
+        // If mapObject has both native and Latin names, use only one of them as invariant if they are equal
+        if(nativeNameValue.compare(latinNameValue) == 0)
+        {
+            names.remove(encDecRules->latinName_encodingRuleId);
+            hasNativeName = false;
+        }
+    }
+    else if(hasNativeName && !hasLatinName)
+    {
+        const auto& nativeNameValue = citNativeName.value();
+
+        // If mapObject has native name, but doesn't have Latin name,
+        // create such.
+        const auto latinNameValue = ICU::transliterateToLatin(nativeNameValue);
+
+        // If Latin name differs from native name, add it to names
+        if(nativeNameValue.compare(latinNameValue) != 0)
+        {
+            hasLatinName = true;
+            names.insert(encDecRules->latinName_encodingRuleId, latinNameValue);
+        }
+    }
+    else if(!hasNativeName && hasLatinName)
+    {
+        // If mapObject has only Latin name, use it as language-invariant
+    }
+
+    bool ok;
+    for(auto itName = names.cbegin(), itEnd = names.cend(); itName != itEnd; ++itName)
+    {
+        const auto& nameTagId = itName.key();
         const auto& name = itName.value();
 
         // Skip empty names
@@ -948,8 +991,8 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
         textEvaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_TEXT_LENGTH, name.length());
 
         QString nameTag;
-        if(itName.key() != primitive->mapObject->section->encodingDecodingRules->name_encodingRuleId)
-            nameTag = primitive->mapObject->section->encodingDecodingRules->decodingRules[itName.key()].tag;
+        if(nameTagId != encDecRules->name_encodingRuleId)
+            nameTag = encDecRules->decodingRules[nameTagId].tag;
 
         textEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_NAME_TAG, nameTag);
 
@@ -963,10 +1006,16 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
         if(!ok || textSize == 0)
             continue;
 
+        // Determine language of this text
+        auto langId = LanguageId::Invariant;
+        if((nameTagId == encDecRules->name_encodingRuleId || nameTagId == encDecRules->latinName_encodingRuleId) && hasLatinName && hasNativeName)
+            langId = (nameTagId == encDecRules->latinName_encodingRuleId) ? LanguageId::Latin : LanguageId::Native;
+
         // Create primitive
         const auto text = new PrimitiveSymbol_Text();
         text->primitive = primitive;
         text->location31 = location;
+        text->langId = langId;
         text->value = name;
 
         text->drawOnPath = false;
@@ -994,7 +1043,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
         textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_WRAP_WIDTH, text->wrapWidth);
         if(!text->drawOnPath && text->wrapWidth == 0)
         {
-            // Default wrapping width
+            // Default wrapping width (40 characters)
             text->wrapWidth = 40;
         }
 
@@ -2517,6 +2566,7 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                         qMove(std::shared_ptr<const SkBitmap>(pBitmap)),
                         textSymbol->order,
                         text,
+                        textSymbol->langId,
                         textSymbol->minDistance,
                         glyphsWidth);
                     assert(static_cast<bool>(rasterizedSymbol->bitmap));
@@ -2538,6 +2588,7 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                         qMove(std::shared_ptr<const SkBitmap>(pBitmap)),
                         textSymbol->order,
                         text,
+                        textSymbol->langId,
                         textSymbol->minDistance,
                         textSymbol->location31,
                         (constructedGroup->symbols.isEmpty() ? PointI() : totalOffset));
@@ -2575,6 +2626,7 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                     qMove(bitmap),
                     iconSymbol->order,
                     iconSymbol->resourceName,
+                    LanguageId::Invariant,
                     PointI(),
                     iconSymbol->location31,
                     (constructedGroup->symbols.isEmpty() ? PointI() : totalOffset));
