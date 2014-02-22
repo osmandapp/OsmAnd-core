@@ -1,5 +1,12 @@
 #!/bin/bash
 
+if [ -d "/opt/local/sbin" ]; then
+	export PATH=$PATH:/opt/local/sbin
+fi
+if [ -d "/opt/local/bin" ]; then
+	export PATH=$PATH:/opt/local/bin
+fi
+
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PYTHON3=`which python3`
 if [ ! -f "$PYTHON3" ]; then
