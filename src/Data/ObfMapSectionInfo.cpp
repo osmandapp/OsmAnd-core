@@ -43,7 +43,8 @@ OsmAnd::ObfMapSectionLevel::~ObfMapSectionLevel()
 }
 
 OsmAnd::ObfMapSectionDecodingEncodingRules::ObfMapSectionDecodingEncodingRules()
-    : name_encodingRuleId(0)
+    : name_encodingRuleId(std::numeric_limits<uint32_t>::max())
+    , latinName_encodingRuleId(std::numeric_limits<uint32_t>::max())
     , ref_encodingRuleId(std::numeric_limits<uint32_t>::max())
     , naturalCoastline_encodingRuleId(std::numeric_limits<uint32_t>::max())
     , naturalLand_encodingRuleId(std::numeric_limits<uint32_t>::max())
@@ -80,6 +81,8 @@ void OsmAnd::ObfMapSectionDecodingEncodingRules::createRule(const uint32_t ruleT
 
     if(QLatin1String("name") == ruleTag)
         name_encodingRuleId = ruleId;
+    else if(QLatin1String("name:en") == ruleTag)
+        latinName_encodingRuleId = ruleId;
     else if(QLatin1String("ref") == ruleTag)
         ref_encodingRuleId = ruleId;
     else if(QLatin1String("natural") == ruleTag && QLatin1String("coastline") == ruleValue)
@@ -122,7 +125,23 @@ void OsmAnd::ObfMapSectionDecodingEncodingRules::createMissingRules()
 {
     auto nextId = decodingRules.size()*2 + 1;
 
-    // Create natural=coastline encoding/decoding rule, if it still does not exist
+    // Create 'name' encoding/decoding rule, if it still does not exist
+    if(name_encodingRuleId == std::numeric_limits<uint32_t>::max())
+    {
+        name_encodingRuleId = nextId++;
+        createRule(0, name_encodingRuleId,
+            QLatin1String("name"), QString::null);
+    }
+
+    // Create 'name:en' encoding/decoding rule, if it still does not exist
+    if(latinName_encodingRuleId == std::numeric_limits<uint32_t>::max())
+    {
+        latinName_encodingRuleId = nextId++;
+        createRule(0, latinName_encodingRuleId,
+            QLatin1String("name:en"), QString::null);
+    }
+
+    // Create 'natural=coastline' encoding/decoding rule, if it still does not exist
     if(naturalCoastline_encodingRuleId == std::numeric_limits<uint32_t>::max())
     {
         naturalCoastline_encodingRuleId = nextId++;
@@ -130,7 +149,7 @@ void OsmAnd::ObfMapSectionDecodingEncodingRules::createMissingRules()
             QLatin1String("natural"), QLatin1String("coastline"));
     }
 
-    // Create natural=land encoding/decoding rule, if it still does not exist
+    // Create 'natural=land' encoding/decoding rule, if it still does not exist
     if(naturalLand_encodingRuleId == std::numeric_limits<uint32_t>::max())
     {
         naturalLand_encodingRuleId = nextId++;
@@ -138,7 +157,7 @@ void OsmAnd::ObfMapSectionDecodingEncodingRules::createMissingRules()
             QLatin1String("natural"), QLatin1String("land"));
     }
 
-    // Create natural=coastline_broken encoding/decoding rule, if it still does not exist
+    // Create 'natural=coastline_broken' encoding/decoding rule, if it still does not exist
     if(naturalCoastlineBroken_encodingRuleId == std::numeric_limits<uint32_t>::max())
     {
         naturalCoastlineBroken_encodingRuleId = nextId++;
@@ -146,7 +165,7 @@ void OsmAnd::ObfMapSectionDecodingEncodingRules::createMissingRules()
             QLatin1String("natural"), QLatin1String("coastline_broken"));
     }
 
-    // Create natural=coastline_line encoding/decoding rule, if it still does not exist
+    // Create 'natural=coastline_line' encoding/decoding rule, if it still does not exist
     if(naturalCoastlineLine_encodingRuleId == std::numeric_limits<uint32_t>::max())
     {
         naturalCoastlineLine_encodingRuleId = nextId++;
@@ -154,7 +173,7 @@ void OsmAnd::ObfMapSectionDecodingEncodingRules::createMissingRules()
             QLatin1String("natural"), QLatin1String("coastline_line"));
     }
 
-    // Create highway=yes encoding/decoding rule, if it still does not exist
+    // Create 'highway=yes' encoding/decoding rule, if it still does not exist
     if(highway_encodingRuleId == std::numeric_limits<uint32_t>::max())
     {
         highway_encodingRuleId = nextId++;
@@ -162,7 +181,7 @@ void OsmAnd::ObfMapSectionDecodingEncodingRules::createMissingRules()
             QLatin1String("highway"), QLatin1String("yes"));
     }
 
-    // Create layer=-int32_max encoding/decoding rule, if it still does not exist
+    // Create 'layer=-int32_max' encoding/decoding rule, if it still does not exist
     if(layerLowest_encodingRuleId == std::numeric_limits<uint32_t>::max())
     {
         layerLowest_encodingRuleId = nextId++;
