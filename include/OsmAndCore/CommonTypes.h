@@ -676,7 +676,7 @@ namespace OsmAnd
 
     private:
     protected:
-        AreaT _bboxInObjectSpace;
+        AreaT _unrotatedBBox;
         float _rotation;
         AreaT _aabb;
         PointT _pointInGlobalSpace0;
@@ -719,18 +719,32 @@ namespace OsmAnd
 
         void updateDerivedData()
         {
-            //TODO:!!!!!!
+            // Rotate points of the OOBB
+            const auto cosA = qCos(rotation);
+            const auto sinA = qSin(rotation);
+            const auto& p0 = _unrotatedBBox.topLeft;
+            _pointInGlobalSpace0.x = p0.x*cosA - p0.y*sinA;
+            _pointInGlobalSpace0.y = p0.x*sinA + p0.y*cosA;
+            const auto& p1 = _unrotatedBBox.topRight();
+            _pointInGlobalSpace1.x = p1.x*cosA - p1.y*sinA;
+            _pointInGlobalSpace1.y = p1.x*sinA + p1.y*cosA;
+            const auto& p2 = _unrotatedBBox.bottomRight;
+            _pointInGlobalSpace2.x = p2.x*cosA - p2.y*sinA;
+            _pointInGlobalSpace2.y = p2.x*sinA + p2.y*cosA;
+            const auto& p3 = _unrotatedBBox.bottomLeft();
+            _pointInGlobalSpace3.x = p3.x*cosA - p3.y*sinA;
+            _pointInGlobalSpace3.y = p3.x*sinA + p0.y*cosA;
 
-            _aabb = AreaT();
+            // Compute external AABB
+            _aabb.topLeft = _aabb.bottomRight = _pointInGlobalSpace0;
             _aabb.
-                enlargeToInclude(_pointInGlobalSpace0).
                 enlargeToInclude(_pointInGlobalSpace1).
                 enlargeToInclude(_pointInGlobalSpace2).
                 enlargeToInclude(_pointInGlobalSpace3);
         }
     public:
         inline OOBB()
-            : unrotatedBBox(_bboxInObjectSpace)
+            : unrotatedBBox(_unrotatedBBox)
             , rotation(_rotation)
             , aabb(_aabb)
             , pointInGlobalSpace0(_pointInGlobalSpace0)
@@ -741,7 +755,7 @@ namespace OsmAnd
         }
 
         inline OOBB(const AreaT& bboxInObjectSpace_, const float rotation_)
-            : unrotatedBBox(_bboxInObjectSpace)
+            : unrotatedBBox(_unrotatedBBox)
             , rotation(_rotation)
             , aabb(_aabb)
             , pointInGlobalSpace0(_pointInGlobalSpace0)
@@ -749,14 +763,14 @@ namespace OsmAnd
             , pointInGlobalSpace2(_pointInGlobalSpace2)
             , pointInGlobalSpace3(_pointInGlobalSpace3)
         {
-            this->_bboxInObjectSpace = bboxInObjectSpace_;
+            this->_unrotatedBBox = bboxInObjectSpace_;
             this->_rotation = rotation_;
             updateDerivedData();
         }
 
         template<typename T_>
         inline OOBB(const OOBB<T_>& that)
-            : unrotatedBBox(_bboxInObjectSpace)
+            : unrotatedBBox(_unrotatedBBox)
             , rotation(_rotation)
             , aabb(_aabb)
             , pointInGlobalSpace0(_pointInGlobalSpace0)
@@ -764,13 +778,13 @@ namespace OsmAnd
             , pointInGlobalSpace2(_pointInGlobalSpace2)
             , pointInGlobalSpace3(_pointInGlobalSpace3)
         {
-            this->_bboxInObjectSpace = that._bboxInObjectSpace;
-            this->_rotation = that._rotation;
-            this->_aabb = that._aabb;
-            this->_pointInGlobalSpace0 = that._pointInGlobalSpace0;
-            this->_pointInGlobalSpace1 = that._pointInGlobalSpace1;
-            this->_pointInGlobalSpace2 = that._pointInGlobalSpace2;
-            this->_pointInGlobalSpace3 = that._pointInGlobalSpace3;
+            this->_unrotatedBBox = that.unrotatedBBox;
+            this->_rotation = that.rotation;
+            this->_aabb = that.aabb;
+            this->_pointInGlobalSpace0 = that.pointInGlobalSpace0;
+            this->_pointInGlobalSpace1 = that.pointInGlobalSpace1;
+            this->_pointInGlobalSpace2 = that.pointInGlobalSpace2;
+            this->_pointInGlobalSpace3 = that.pointInGlobalSpace3;
         }
 
         const AreaT& unrotatedBBox;
@@ -784,25 +798,25 @@ namespace OsmAnd
 #if !defined(SWIG)
         inline bool operator==(const OOBBT& r) const
         {
-            return (_bboxInObjectSpace == r._b) && qFuzzyCompare(_rotation, r._rotation);
+            return (_unrotatedBBox == r._b) && qFuzzyCompare(_rotation, r._rotation);
         }
 
         inline bool operator!=(const OOBBT& r) const
         {
-            return (_bboxInObjectSpace != r._b) || !qFuzzyCompare(_rotation, r._rotation);
+            return (_unrotatedBBox != r._b) || !qFuzzyCompare(_rotation, r._rotation);
         }
 
         inline OOBBT& operator=(const OOBBT& that)
         {
             if(this != &that)
             {
-                this->_bboxInObjectSpace = that._bboxInObjectSpace;
-                this->_rotation = that._rotation;
-                this->_aabb = that._aabb;
-                this->_pointInGlobalSpace0 = that._pointInGlobalSpace0;
-                this->_pointInGlobalSpace1 = that._pointInGlobalSpace1;
-                this->_pointInGlobalSpace2 = that._pointInGlobalSpace2;
-                this->_pointInGlobalSpace3 = that._pointInGlobalSpace3;
+                this->_unrotatedBBox = that.unrotatedBBox;
+                this->_rotation = that.rotation;
+                this->_aabb = that.aabb;
+                this->_pointInGlobalSpace0 = that.pointInGlobalSpace0;
+                this->_pointInGlobalSpace1 = that.pointInGlobalSpace1;
+                this->_pointInGlobalSpace2 = that.pointInGlobalSpace2;
+                this->_pointInGlobalSpace3 = that.pointInGlobalSpace3;
             }
             return *this;
         }
@@ -810,17 +824,70 @@ namespace OsmAnd
 
         inline bool contains(const OOBBT& that) const
         {
-            return false;
+            // If external AABB doesn't contain that AABB, surely inner OOBB doesn't contain also
+            if(!aabb.contains(that.aabb))
+                return false;
+
+            // If angle of rotation is equal, check unrotated
+            if(qFuzzyCompare(rotation, that.rotation))
+                return unrotatedBBox.contains(that.unrotatedBBox);
+
+            // In case this OOBB contains that OOBB, all points of that OOBB lay inside this OOBB
+            return
+                isPointInside(that.pointInGlobalSpace0) &&
+                isPointInside(that.pointInGlobalSpace1) && 
+                isPointInside(that.pointInGlobalSpace2) &&
+                isPointInside(that.pointInGlobalSpace3);
         }
 
         inline bool intersects(const OOBBT& that) const
         {
-            return false;
+            // If external AABB doesn't intersect that AABB, surely inner OOBB doesn't intersect also
+            if(!aabb.intersects(that.aabb))
+                return false;
+
+            // If angle of rotation is equal, intersect unrotated
+            if(qFuzzyCompare(rotation, that.rotation))
+                return unrotatedBBox.intersects(that.unrotatedBBox);
+
+            const auto& p0 = pointInGlobalSpace0;
+            const auto& p1 = pointInGlobalSpace1;
+            const auto& p2 = pointInGlobalSpace2;
+            const auto& p3 = pointInGlobalSpace3;
+            const auto& a0 = that.pointInGlobalSpace0;
+            const auto& a1 = that.pointInGlobalSpace1;
+            const auto& a2 = that.pointInGlobalSpace2;
+            const auto& a3 = that.pointInGlobalSpace3;
+
+            // Check if any points of that area is inside.
+            // This case covers inner area and partially inner area (that has at least 1 point inside)
+            if(isPointInside(a0) || isPointInside(a1) || isPointInside(a2) || isPointInside(a3))
+                return true;
+
+            // Check if any that OOBB edge intersects any of OOBB edges.
+            // This case covers intersecting area that has no vertex inside OOBB.
+            return
+                testLineLineIntersection(a0, a1, p0, p1) ||
+                testLineLineIntersection(a0, a1, p1, p2) ||
+                testLineLineIntersection(a0, a1, p2, p3) ||
+                testLineLineIntersection(a0, a1, p3, p0) ||
+                testLineLineIntersection(a1, a2, p0, p1) ||
+                testLineLineIntersection(a1, a2, p1, p2) ||
+                testLineLineIntersection(a1, a2, p2, p3) ||
+                testLineLineIntersection(a1, a2, p3, p0) ||
+                testLineLineIntersection(a2, a3, p0, p1) ||
+                testLineLineIntersection(a2, a3, p1, p2) ||
+                testLineLineIntersection(a2, a3, p2, p3) ||
+                testLineLineIntersection(a2, a3, p3, p0) ||
+                testLineLineIntersection(a3, a0, p0, p1) ||
+                testLineLineIntersection(a3, a0, p1, p2) ||
+                testLineLineIntersection(a3, a0, p2, p3) ||
+                testLineLineIntersection(a3, a0, p3, p0);
         }
 
         inline bool contains(const AreaT& that) const
         {
-            // If external AABB doesn't contain that AABB, surely inner doesn't contain also
+            // If external AABB doesn't contain that AABB, surely inner OOBB doesn't contain also
             if(!aabb.contains(that))
                 return false;
 
@@ -829,16 +896,16 @@ namespace OsmAnd
                 return unrotatedBBox.contains(that);
 
             // If all of points of that AABB are inside, then it's totally inside
-            const auto a0 = that.topLeft;
-            const auto a1 = that.topRight();
-            const auto a2 = that.bottomRight;
-            const auto a3 = that.bottomLeft();
+            const auto& a0 = that.topLeft;
+            const auto& a1 = that.topRight();
+            const auto& a2 = that.bottomRight;
+            const auto& a3 = that.bottomLeft();
             return isPointInside(a0) && isPointInside(a1) && isPointInside(a2) && isPointInside(a3);
         }
 
         inline bool intersects(const AreaT& that) const
         {
-            // If external AABB doesn't intersect that AABB, surely inner doesn't intersect also
+            // If external AABB doesn't intersect that AABB, surely inner OOBB doesn't intersect also
             if(!aabb.intersects(that))
                 return false;
 
@@ -850,10 +917,10 @@ namespace OsmAnd
             const auto& p1 = pointInGlobalSpace1;
             const auto& p2 = pointInGlobalSpace2;
             const auto& p3 = pointInGlobalSpace3;
-            const auto a0 = that.topLeft;
-            const auto a1 = that.topRight();
-            const auto a2 = that.bottomRight;
-            const auto a3 = that.bottomLeft();
+            const auto& a0 = that.topLeft;
+            const auto& a1 = that.topRight();
+            const auto& a2 = that.bottomRight;
+            const auto& a3 = that.bottomLeft();
 
             // Check if any points of that area is inside.
             // This case covers inner area and partially inner area (that has at least 1 point inside)
@@ -883,10 +950,10 @@ namespace OsmAnd
 
         inline OOBBT& enlargeBy(const PointT& delta)
         {
-            _bboxInObjectSpace.top -= delta.y;
-            _bboxInObjectSpace.left -= delta.x;
-            _bboxInObjectSpace.bottom += delta.y;
-            _bboxInObjectSpace.right += delta.x;
+            _unrotatedBBox.top -= delta.y;
+            _unrotatedBBox.left -= delta.x;
+            _unrotatedBBox.bottom += delta.y;
+            _unrotatedBBox.right += delta.x;
             updateDerivedData();
 
             return *this;
@@ -901,19 +968,19 @@ namespace OsmAnd
         {
             return OOBBT(
                 AreaT(
-                    _bboxInObjectSpace.top - delta.y,
-                    _bboxInObjectSpace.left - delta.x,
-                    _bboxInObjectSpace.bottom + delta.y,
-                    _bboxInObjectSpace.right + delta.x),
+                    _unrotatedBBox.top - delta.y,
+                    _unrotatedBBox.left - delta.x,
+                    _unrotatedBBox.bottom + delta.y,
+                    _unrotatedBBox.right + delta.x),
                 _rotation);
         }
 
         inline OOBBT& enlargeBy(const T& dt, const T& dl, const T& db, const T& dr)
         {
-            _bboxInObjectSpace.top -= dt;
-            _bboxInObjectSpace.left -= dl;
-            _bboxInObjectSpace.bottom += db;
-            _bboxInObjectSpace.right += dr;
+            _unrotatedBBox.top -= dt;
+            _unrotatedBBox.left -= dl;
+            _unrotatedBBox.bottom += db;
+            _unrotatedBBox.right += dr;
             updateDerivedData();
 
             return *this;
@@ -928,10 +995,10 @@ namespace OsmAnd
         {
             return OOBBT(
                 AreaT(
-                    _bboxInObjectSpace.top - dt,
-                    _bboxInObjectSpace.left - dl,
-                    _bboxInObjectSpace.bottom + db,
-                    _bboxInObjectSpace.right + dr),
+                    _unrotatedBBox.top - dt,
+                    _unrotatedBBox.left - dl,
+                    _unrotatedBBox.bottom + db,
+                    _unrotatedBBox.right + dr),
                 _rotation);
         }
     };
