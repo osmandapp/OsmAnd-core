@@ -5,6 +5,7 @@
 #include <type_traits>
 
 #include <QtGlobal>
+#include <QtMath>
 #include <QString>
 
 #if defined(OSMAND_GLM_AVAILABLE)
