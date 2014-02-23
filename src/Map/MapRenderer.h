@@ -144,6 +144,7 @@ namespace OsmAnd
 
         virtual bool isFrameInvalidated() const;
         virtual void forcedFrameInvalidate();
+        virtual void forcedGpuProcessingCycle();
 
         Concurrent::Dispatcher& getRenderThreadDispatcher();
         Concurrent::Dispatcher& getGpuThreadDispatcher();
