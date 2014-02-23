@@ -34,9 +34,11 @@ void OsmAnd::ICU::initialize()
         LogPrintf(LogSeverityLevel::Error, "Failed to initialize ICU: %d", icuError);
 
     // Allocate resources
-    g_pIcuTransliterator = Transliterator::createInstance(UnicodeString(reinterpret_cast<const UChar*>(L"Any-Latin/UNGEGN; NFD; [:M:] Remove; NFC")), UTRANS_FORWARD, icuError);
+    icuError = U_ZERO_ERROR;
+    g_pIcuTransliterator = Transliterator::createInstance(UnicodeString("Any-Latin/UNGEGN; NFD; [:M:] Remove; NFC"), UTRANS_FORWARD, icuError);
     if(!U_SUCCESS(icuError))
         LogPrintf(LogSeverityLevel::Error, "Failed to create global ICU transliterator: %d", icuError);
+    icuError = U_ZERO_ERROR;
     g_pIcuWordBreakIterator = BreakIterator::createWordInstance(Locale::getRoot(), icuError);
     if(!U_SUCCESS(icuError))
         LogPrintf(LogSeverityLevel::Error, "Failed to create global ICU word break iterator: %d", icuError);
