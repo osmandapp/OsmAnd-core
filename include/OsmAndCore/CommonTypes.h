@@ -358,12 +358,12 @@ namespace OsmAnd
 
         inline bool contains(const OOBBT& that) const
         {
-            return false;
+            return that.contains(*this);
         }
 
         inline bool intersects(const OOBBT& that) const
         {
-            return false;
+            return that.intersects(*this);
         }
 
         inline T width() const
