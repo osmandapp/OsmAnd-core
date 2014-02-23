@@ -755,6 +755,16 @@ namespace OsmAnd
         }
 #endif // !defined(SWIG)
 
+        inline bool contains(const OOBBT& that) const
+        {
+            return false;
+        }
+
+        inline bool intersects(const OOBBT& that) const
+        {
+            return false;
+        }
+
         inline bool contains(const AreaT& that) const
         {
             // If external AABB doesn't contain that AABB, surely inner doesn't contain also
