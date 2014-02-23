@@ -623,57 +623,116 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 // Draw the glyphs
                 if(renderable->is2D)
                 {
-                    //TODO: calculate OOBB for all symbols using direction vector
-                    OOBBI oobb;
-                    // subpathDirectionOnScreen holds valid vector
-                    // for each glyph, get it's anchor
+                    // Calculate OOBB for 2D SOP
+                    const auto directionAngle = qAtan2(renderable->subpathDirectionOnScreen.y, renderable->subpathDirectionOnScreen.x);
+                    const auto negDirectionAngleCos = qCos(-directionAngle);
+                    const auto negDirectionAngleSin = qSin(-directionAngle);
+                    const auto directionAngleCos = qCos(directionAngle);
+                    const auto directionAngleSin = qSin(directionAngle);
+                    const auto halfGlyphHeight = gpuResource->height / 2.0f;
+                    auto bboxInitialized = false;
+                    AreaF bboxInDirection;
+                    for(const auto& glyph : constOf(glyphs))
+                    {
+                        const auto& anchorPoint = std::get<0>(glyph);
+
+                        const auto halfGlyphWidth = std::get<1>(glyph) / 2.0f;
+                        const glm::vec2 glyphPoints[4] =
+                        {
+                            glm::vec2(-halfGlyphWidth, -halfGlyphHeight), // TL
+                            glm::vec2( halfGlyphWidth, -halfGlyphHeight), // TR
+                            glm::vec2( halfGlyphWidth,  halfGlyphHeight), // BR
+                            glm::vec2(-halfGlyphWidth,  halfGlyphHeight)  // BL
+                        };
+
+                        const auto& segmentAngle = std::get<2>(glyph);
+                        const auto segmentAngleCos = qCos(segmentAngle);
+                        const auto segmentAngleSin = qSin(segmentAngle);
+
+                        for(int idx = 0; idx < 4; idx++)
+                        {
+                            const auto& glyphPoint = glyphPoints[idx];
+
+                            // Rotate to align with it's segment
+                            glm::vec2 pointOnScreen;
+                            pointOnScreen.x = glyphPoint.x*segmentAngleCos - glyphPoint.y*segmentAngleSin;
+                            pointOnScreen.y = glyphPoint.x*segmentAngleSin + glyphPoint.y*segmentAngleCos;
+
+                            // Add anchor point
+                            pointOnScreen += anchorPoint;
+
+                            // Rotate to align with direction
+                            PointF alignedPoint;
+                            alignedPoint.x = pointOnScreen.x*negDirectionAngleCos - pointOnScreen.y*negDirectionAngleSin;
+                            alignedPoint.y = pointOnScreen.x*negDirectionAngleSin + pointOnScreen.y*negDirectionAngleCos;
+                            if(Q_LIKELY(bboxInitialized))
+                                bboxInDirection.enlargeToInclude(alignedPoint);
+                            else
+                            {
+                                bboxInDirection.topLeft = bboxInDirection.bottomRight = alignedPoint;
+                                bboxInitialized = true;
+                            }
+                        }
+                    }
+                    const auto alignedCenter = bboxInDirection.center();
+                    bboxInDirection -= alignedCenter;
+                    PointF centerOnScreen;
+                    centerOnScreen.x = alignedCenter.x*directionAngleCos - alignedCenter.y*directionAngleSin;
+                    centerOnScreen.y = alignedCenter.x*directionAngleSin + alignedCenter.y*directionAngleCos;
+                    bboxInDirection += centerOnScreen;
+                    OOBBF oobb(bboxInDirection, directionAngle);
 
                     //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
                     oobb.enlargeBy(PointI(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
 
-                    // Check intersections
-                    const auto intersects = intersections.test(oobb, false,
-                        [mapObjectId](const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
-                    {
-                        return otherSymbol->mapObject->id != mapObjectId;
-                    });
-                    if(intersects)
-                    {
+//                    // Check intersections
+//                    const auto intersects = intersections.test(oobb, false,
+//                        [mapObjectId](const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+//                    {
+//                        return otherSymbol->mapObject->id != mapObjectId;
+//                    });
+//                    if(intersects)
+//                    {
+//#if OSMAND_DEBUG && 1
+//                        getRenderer()->_debugStage.addRect2D(oobb.bboxInObjectSpace, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
+//#endif // OSMAND_DEBUG
+//                        continue;
+//                    }
+//
+//                    // Query for similar content in area of "minDistance" to exclude duplicates, but keep if from same mapObject
+//                    if(symbol->minDistance.x > 0 || symbol->minDistance.y > 0)
+//                    {
+//                        const auto& symbolContent = symbol->content;
+//                        const auto hasSimilarContent = intersections.test(oobb.getEnlargedBy(symbol->minDistance), false,
+//                            [symbolContent, mapObjectId](const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+//                        {
+//                            return otherSymbol->content == symbolContent && otherSymbol->mapObject->id != mapObjectId;
+//                        });
+//                        if(hasSimilarContent)
+//                        {
+//#if OSMAND_DEBUG && 1
+//                            getRenderer()->_debugStage.addRect2D(oobb.bboxInObjectSpace, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
+//#endif // OSMAND_DEBUG
+//                            continue;
+//                        }
+//                    }
+//
+//                    // Insert into quad-tree
+//                    if(!intersections.insert(symbol, oobb))
+//                    {
+//#if OSMAND_DEBUG && 1
+//                        getRenderer()->_debugStage.addRect2D(oobb.bboxInObjectSpace, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
+//#endif // OSMAND_DEBUG
+//                        continue;
+//                    }
+
 #if OSMAND_DEBUG && 1
-                        getRenderer()->_debugStage.addRect2D(oobb.bboxInObjectSpace, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
-#endif // OSMAND_DEBUG
-                        continue;
-                    }
-
-                    // Query for similar content in area of "minDistance" to exclude duplicates, but keep if from same mapObject
-                    if(symbol->minDistance.x > 0 || symbol->minDistance.y > 0)
                     {
-                        const auto& symbolContent = symbol->content;
-                        const auto hasSimilarContent = intersections.test(oobb.getEnlargedBy(symbol->minDistance), false,
-                            [symbolContent, mapObjectId](const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
-                        {
-                            return otherSymbol->content == symbolContent && otherSymbol->mapObject->id != mapObjectId;
-                        });
-                        if(hasSimilarContent)
-                        {
-#if OSMAND_DEBUG && 1
-                            getRenderer()->_debugStage.addRect2D(oobb.bboxInObjectSpace, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
-#endif // OSMAND_DEBUG
-                            continue;
-                        }
+                        auto bboxDebug = bboxInDirection;
+                        bboxDebug.topLeft.y = currentState.windowSize.y - bboxDebug.topLeft.y;
+                        bboxDebug.bottomRight.y = currentState.windowSize.y - bboxDebug.bottomRight.y;
+                        getRenderer()->_debugStage.addRect2D(bboxDebug, SkColorSetA(SK_ColorGREEN, 50), oobb.rotation);
                     }
-
-                    // Insert into quad-tree
-                    if(!intersections.insert(symbol, oobb))
-                    {
-#if OSMAND_DEBUG && 0
-                        getRenderer()->_debugStage.addRect2D(oobb.bboxInObjectSpace, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
-#endif // OSMAND_DEBUG
-                        continue;
-                    }
-
-#if OSMAND_DEBUG && 0
-                    getRenderer()->_debugStage.addRect2D(oobb.bboxInObjectSpace, SkColorSetA(SK_ColorGREEN, 50), oobb.rotation);
 #endif // OSMAND_DEBUG
 
                     // Check if correct program is being used

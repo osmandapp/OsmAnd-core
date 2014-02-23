@@ -327,6 +327,30 @@ namespace OsmAnd
         {
             return topLeft != r.topLeft || bottomRight != r.bottomRight;
         }
+
+        inline AreaT operator+(const PointT& shift) const
+        {
+            return AreaT(topLeft + shift, bottomRight + shift);
+        }
+
+        inline AreaT& operator+=(const PointT& shift)
+        {
+            topLeft += shift;
+            bottomRight += shift;
+            return *this;
+        }
+
+        inline AreaT operator-(const PointT& shift) const
+        {
+            return AreaT(topLeft - shift, bottomRight - shift);
+        }
+
+        inline AreaT& operator-=(const PointT& shift)
+        {
+            topLeft -= shift;
+            bottomRight -= shift;
+            return *this;
+        }
 #endif // !defined(SWIG)
 
         inline bool contains(const T& x, const T& y) const
@@ -689,7 +713,7 @@ namespace OsmAnd
         }
     public:
         inline OOBB()
-            : bboxInObjectSpace(_bboxInObjectSpace)
+            : unrotatedBBox(_bboxInObjectSpace)
             , rotation(_rotation)
             , aabb(_aabb)
             , pointInGlobalSpace0(_pointInGlobalSpace0)
@@ -700,7 +724,7 @@ namespace OsmAnd
         }
 
         inline OOBB(const AreaT& bboxInObjectSpace_, const float rotation_)
-            : bboxInObjectSpace(_bboxInObjectSpace)
+            : unrotatedBBox(_bboxInObjectSpace)
             , rotation(_rotation)
             , aabb(_aabb)
             , pointInGlobalSpace0(_pointInGlobalSpace0)
@@ -726,7 +750,7 @@ namespace OsmAnd
             this->_pointInGlobalSpace3 = that._pointInGlobalSpace3;
         }
 
-        const AreaT& bboxInObjectSpace;
+        const AreaT& unrotatedBBox;
         const float& rotation;
         const AreaT& aabb;
         const PointT& pointInGlobalSpace0;
@@ -779,7 +803,7 @@ namespace OsmAnd
 
             // If angle of rotation is zero, check OOBB vs that AABB
             if(qFuzzyIsNull(rotation))
-                return bboxInObjectSpace.contains(that);
+                return unrotatedBBox.contains(that);
 
             // If all of points of that AABB are inside, then it's totally inside
             const auto a0 = that.topLeft;
@@ -797,7 +821,7 @@ namespace OsmAnd
 
             // If angle of rotation is zero, check OOBB vs that AABB
             if(qFuzzyIsNull(rotation))
-                return bboxInObjectSpace.intersects(that);
+                return unrotatedBBox.intersects(that);
 
             const auto& p0 = pointInGlobalSpace0;
             const auto& p1 = pointInGlobalSpace1;

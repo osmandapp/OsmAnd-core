@@ -21,6 +21,7 @@ namespace OsmAnd
         typedef OOBB<COORD_TYPE> OOBBT;
         STRONG_ENUM(BBoxType)
         {
+            Invalid,
             AABB,
             OOBB,
         } STRONG_ENUM_TERMINATOR;
@@ -33,8 +34,8 @@ namespace OsmAnd
             inline BBox()
                 : asAABB(*reinterpret_cast<AreaT*>(&data))
                 , asOOBB(*reinterpret_cast<OOBBT*>(&data))
+                , type(BBoxType::Invalid)
             {
-                memset(data, 0, DataSize);
             }
 
             inline BBox(const AreaT& aabb)
@@ -42,6 +43,7 @@ namespace OsmAnd
                 , asOOBB(*reinterpret_cast<OOBBT*>(&data))
                 , type(BBoxType::AABB)
             {
+                new(&asAABB) AreaT();
                 asAABB = aabb;
             }
 
@@ -50,6 +52,7 @@ namespace OsmAnd
                 , asOOBB(*reinterpret_cast<OOBBT*>(&data))
                 , type(BBoxType::OOBB)
             {
+                new(&asOOBB) OOBBT();
                 asOOBB = oobb;
             }
 
@@ -59,9 +62,15 @@ namespace OsmAnd
                 , type(that.type)
             {
                 if(that.type == BBoxType::AABB)
-                    memcpy(data, that.data, sizeof(AreaT));
+                {
+                    new(&asAABB) AreaT();
+                    asAABB = that.asAABB;
+                }
                 else /* if(that.type == BBoxType::OOBB) */
-                    memcpy(data, that.data, sizeof(OOBBT));
+                {
+                    new(&asOOBB) OOBBT();
+                    asOOBB = that.asOOBB;
+                }
             }
 
             inline BBox& operator=(const BBox& that)
@@ -69,9 +78,15 @@ namespace OsmAnd
                 if(this != &that)
                 {
                     if(that.type == BBoxType::AABB)
-                        memcpy(data, that.data, sizeof(AreaT));
+                    {
+                        new(&asAABB) AreaT();
+                        asAABB = that.asAABB;
+                    }
                     else /* if(that.type == BBoxType::OOBB) */
-                        memcpy(data, that.data, sizeof(OOBBT));
+                    {
+                        new(&asOOBB) OOBBT();
+                        asOOBB = that.asOOBB;
+                    }
                     type = that.type;
                 }
                 return *this;
