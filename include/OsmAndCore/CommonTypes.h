@@ -548,7 +548,7 @@ namespace OsmAnd
         }
 
         inline OOBB(const AreaT& bboxInObjectSpace_, const float rotation_, const AreaT& aabb_)
-            : this()
+            : OOBB()
         {
             this->_bboxInObjectSpace = bboxInObjectSpace_;
             this->_rotation = rotation_;
@@ -557,7 +557,7 @@ namespace OsmAnd
 
         template<typename T_>
         inline OOBB(const OOBB<T_>& that)
-            : this()
+            : OOBB()
         {
             this->_bboxInObjectSpace = that._bboxInObjectSpace;
             this->_rotation = that._rotation;
