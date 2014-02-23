@@ -402,6 +402,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 auto boundsInWindow = AreaI::fromCenterAndSize(
                     static_cast<int>(symbolOnScreen.x + symbol->offset.x), static_cast<int>((currentState.windowSize.y - symbolOnScreen.y) + symbol->offset.y),
                     gpuResource->width, gpuResource->height);
+                //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
                 boundsInWindow.enlargeBy(PointI(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
 
                 // Check intersections
@@ -524,6 +525,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
             {
                 const auto& symbol = std::dynamic_pointer_cast<const MapSymbolOnPath>(renderable->mapSymbol);
                 const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
+                const auto& mapObjectId = symbol->mapObject->id;
 
 #if OSMAND_DEBUG && 0
                 {
@@ -621,9 +623,58 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 // Draw the glyphs
                 if(renderable->is2D)
                 {
-                    //TODO: Check intersections
+                    //TODO: calculate OOBB for all symbols using direction vector
+                    OOBBI oobb;
                     // subpathDirectionOnScreen holds valid vector
                     // for each glyph, get it's anchor
+
+                    //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
+                    oobb.enlargeBy(PointI(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
+
+                    // Check intersections
+                    const auto intersects = intersections.test(oobb, false,
+                        [mapObjectId](const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+                    {
+                        return otherSymbol->mapObject->id != mapObjectId;
+                    });
+                    if(intersects)
+                    {
+#if OSMAND_DEBUG && 1
+                        getRenderer()->_debugStage.addRect2D(oobb.bboxInObjectSpace, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
+#endif // OSMAND_DEBUG
+                        continue;
+                    }
+
+                    // Query for similar content in area of "minDistance" to exclude duplicates, but keep if from same mapObject
+                    if(symbol->minDistance.x > 0 || symbol->minDistance.y > 0)
+                    {
+                        const auto& symbolContent = symbol->content;
+                        const auto hasSimilarContent = intersections.test(oobb.getEnlargedBy(symbol->minDistance), false,
+                            [symbolContent, mapObjectId](const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+                        {
+                            return otherSymbol->content == symbolContent && otherSymbol->mapObject->id != mapObjectId;
+                        });
+                        if(hasSimilarContent)
+                        {
+#if OSMAND_DEBUG && 1
+                            getRenderer()->_debugStage.addRect2D(oobb.bboxInObjectSpace, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
+#endif // OSMAND_DEBUG
+                            continue;
+                        }
+                    }
+
+                    // Insert into quad-tree
+                    if(!intersections.insert(symbol, oobb))
+                    {
+#if OSMAND_DEBUG && 0
+                        getRenderer()->_debugStage.addRect2D(oobb.bboxInObjectSpace, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
+#endif // OSMAND_DEBUG
+                        continue;
+                    }
+
+#if OSMAND_DEBUG && 0
+                    getRenderer()->_debugStage.addRect2D(oobb.bboxInObjectSpace, SkColorSetA(SK_ColorGREEN, 50), oobb.rotation);
+#endif // OSMAND_DEBUG
 
                     // Check if correct program is being used
                     if(lastUsedProgram != *_symbolOnPath2dProgram.id)

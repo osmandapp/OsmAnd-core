@@ -581,6 +581,30 @@ namespace OsmAnd
                 right + delta.x);
         }
 
+        inline AreaT& enlargeBy(const T& dt, const T& dl, const T& db, const T& dr)
+        {
+            top -= dt;
+            left -= dl;
+            bottom += db;
+            right += dr;
+
+            return *this;
+        }
+
+        inline AreaT enlargeBy(const T& dt, const T& dl, const T& db, const T& dr) const
+        {
+            return getEnlargedBy(dt, dl, db, dr);
+        }
+
+        inline AreaT getEnlargedBy(const T& dt, const T& dl, const T& db, const T& dr) const
+        {
+            return AreaT(
+                top - dt,
+                left - dl,
+                bottom + db,
+                right + dr);
+        }
+
         static AreaT largest()
         {
             AreaT res;
@@ -651,6 +675,11 @@ namespace OsmAnd
             }
             return true;
         }
+
+        void updateDerivedData()
+        {
+            //TODO:!!!!!!
+        }
     public:
         inline OOBB()
             : bboxInObjectSpace(_bboxInObjectSpace)
@@ -663,12 +692,12 @@ namespace OsmAnd
         {
         }
 
-        inline OOBB(const AreaT& bboxInObjectSpace_, const float rotation_, const AreaT& aabb_)
+        inline OOBB(const AreaT& bboxInObjectSpace_, const float rotation_)
             : OOBB()
         {
             this->_bboxInObjectSpace = bboxInObjectSpace_;
             this->_rotation = rotation_;
-            this->_aabb = aabb_;
+            updateDerivedData();
         }
 
         template<typename T_>
@@ -678,6 +707,10 @@ namespace OsmAnd
             this->_bboxInObjectSpace = that._bboxInObjectSpace;
             this->_rotation = that._rotation;
             this->_aabb = that._aabb;
+            this->_pointInGlobalSpace0 = that._pointInGlobalSpace0;
+            this->_pointInGlobalSpace1 = that._pointInGlobalSpace1;
+            this->_pointInGlobalSpace2 = that._pointInGlobalSpace2;
+            this->_pointInGlobalSpace3 = that._pointInGlobalSpace3;
         }
 
         const AreaT& bboxInObjectSpace;
@@ -706,6 +739,10 @@ namespace OsmAnd
                 this->_bboxInObjectSpace = that._bboxInObjectSpace;
                 this->_rotation = that._rotation;
                 this->_aabb = that._aabb;
+                this->_pointInGlobalSpace0 = that._pointInGlobalSpace0;
+                this->_pointInGlobalSpace1 = that._pointInGlobalSpace1;
+                this->_pointInGlobalSpace2 = that._pointInGlobalSpace2;
+                this->_pointInGlobalSpace3 = that._pointInGlobalSpace3;
             }
             return *this;
         }
@@ -772,6 +809,60 @@ namespace OsmAnd
                 testLineLineIntersection(a3, a0, p1, p2) ||
                 testLineLineIntersection(a3, a0, p2, p3) ||
                 testLineLineIntersection(a3, a0, p3, p0);
+        }
+
+        inline OOBBT& enlargeBy(const PointT& delta)
+        {
+            _bboxInObjectSpace.top -= delta.y;
+            _bboxInObjectSpace.left -= delta.x;
+            _bboxInObjectSpace.bottom += delta.y;
+            _bboxInObjectSpace.right += delta.x;
+            updateDerivedData();
+
+            return *this;
+        }
+
+        inline OOBBT enlargeBy(const PointT& delta) const
+        {
+            return getEnlargedBy(delta);
+        }
+
+        inline OOBBT getEnlargedBy(const PointT& delta) const
+        {
+            return OOBBT(
+                AreaT(
+                    top - delta.y,
+                    left - delta.x,
+                    bottom + delta.y,
+                    right + delta.x),
+                _rotation);
+        }
+
+        inline OOBBT& enlargeBy(const T& dt, const T& dl, const T& db, const T& dr)
+        {
+            _bboxInObjectSpace.top -= dt;
+            _bboxInObjectSpace.left -= dl;
+            _bboxInObjectSpace.bottom += db;
+            _bboxInObjectSpace.right += dr;
+            updateDerivedData();
+
+            return *this;
+        }
+
+        inline OOBBT enlargeBy(const T& dt, const T& dl, const T& db, const T& dr) const
+        {
+            return getEnlargedBy(dt, dl, db, dr);
+        }
+
+        inline OOBBT getEnlargedBy(const T& dt, const T& dl, const T& db, const T& dr) const
+        {
+            return OOBBT(
+                AreaT(
+                    top - dt,
+                    left - dl,
+                    bottom + db,
+                    right + dr),
+                _rotation);
         }
     };
     typedef OOBB<double> OOBBD;
