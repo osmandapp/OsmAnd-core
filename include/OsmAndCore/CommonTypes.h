@@ -593,11 +593,27 @@ namespace OsmAnd
 
         inline bool contains(const AreaT& that) const
         {
+            // If external AABB doesn't contain that AABB, surely inner doesn't contain also
+            if(!aabb.contains(that))
+                return false;
+
+            // If angle of rotation is zero, check OOBB vs that AABB
+            if(qFuzzyIsNull(angle()))
+                return bboxInObjectSpace.contains(that);
+
             return false;
         }
 
         inline bool intersects(const AreaT& that) const
         {
+            // If external AABB doesn't intersect that AABB, surely inner doesn't intersect also
+            if(!aabb.intersects(that))
+                return false;
+
+            // If angle of rotation is zero, check OOBB vs that AABB
+            if(qFuzzyIsNull(angle()))
+                return bboxInObjectSpace.intersects(that);
+
             return false;
         }
     };

@@ -110,8 +110,7 @@ namespace OsmAnd
                 return true;
             }
 
-            template<>
-            inline bool insert<BBox>(const ELEMENT_TYPE& element, const BBox& bbox_, const bool strict, const uintmax_t allowedDepthRemaining)
+            inline bool insert(const ELEMENT_TYPE& element, const BBox& bbox_, const bool strict, const uintmax_t allowedDepthRemaining)
             {
                 if(bbox_.type == BBoxType::AABB)
                     return insert(element, bbox_.asAABB, allowedDepthRemaining);
@@ -150,8 +149,7 @@ namespace OsmAnd
                 entries.push_back(qMove(EntryPair(BBox(bbox_), element)));
             }
 
-            template<>
-            inline void insertNoCheck<BBox>(const ELEMENT_TYPE& element, const BBox& bbox_, const uintmax_t allowedDepthRemaining)
+            inline void insertNoCheck(const ELEMENT_TYPE& element, const BBox& bbox_, const uintmax_t allowedDepthRemaining)
             {
                 if(bbox_.type == BBoxType::AABB)
                     insertNoCheck(element, bbox_.asAABB, allowedDepthRemaining);
@@ -183,8 +181,7 @@ namespace OsmAnd
                 }
             }
 
-            template<>
-            inline void query<BBox>(const BBox& bbox_, QList<ELEMENT_TYPE>& outResults, const bool strict, const Acceptor acceptor) const
+            inline void query(const BBox& bbox_, QList<ELEMENT_TYPE>& outResults, const bool strict, const Acceptor acceptor) const
             {
                 if(bbox_.type == BBoxType::AABB)
                     query(bbox_.asAABB, outResults, strict, acceptor);
@@ -219,8 +216,7 @@ namespace OsmAnd
                 return false;
             }
 
-            template<>
-            inline bool test<BBox>(const BBox& bbox_, const bool strict, const Acceptor acceptor) const
+            inline bool test(const BBox& bbox_, const bool strict, const Acceptor acceptor) const
             {
                 if(bbox_.type == BBoxType::AABB)
                     test(bbox_.asAABB, strict, acceptor);
