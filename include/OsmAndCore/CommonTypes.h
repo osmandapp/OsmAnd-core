@@ -598,7 +598,7 @@ namespace OsmAnd
                 return false;
 
             // If angle of rotation is zero, check OOBB vs that AABB
-            if(qFuzzyIsNull(angle))
+            if(qFuzzyIsNull(rotation))
                 return bboxInObjectSpace.contains(that);
 
             return false;
@@ -611,7 +611,7 @@ namespace OsmAnd
                 return false;
 
             // If angle of rotation is zero, check OOBB vs that AABB
-            if(qFuzzyIsNull(angle))
+            if(qFuzzyIsNull(rotation))
                 return bboxInObjectSpace.intersects(that);
 
             return false;
