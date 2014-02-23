@@ -679,6 +679,13 @@ namespace OsmAnd
         void updateDerivedData()
         {
             //TODO:!!!!!!
+
+            _aabb = AreaT();
+            _aabb.
+                enlargeToInclude(_pointInGlobalSpace0).
+                enlargeToInclude(_pointInGlobalSpace1).
+                enlargeToInclude(_pointInGlobalSpace2).
+                enlargeToInclude(_pointInGlobalSpace3);
         }
     public:
         inline OOBB()
@@ -831,10 +838,10 @@ namespace OsmAnd
         {
             return OOBBT(
                 AreaT(
-                    top - delta.y,
-                    left - delta.x,
-                    bottom + delta.y,
-                    right + delta.x),
+                    _bboxInObjectSpace.top - delta.y,
+                    _bboxInObjectSpace.left - delta.x,
+                    _bboxInObjectSpace.bottom + delta.y,
+                    _bboxInObjectSpace.right + delta.x),
                 _rotation);
         }
 
@@ -858,10 +865,10 @@ namespace OsmAnd
         {
             return OOBBT(
                 AreaT(
-                    top - dt,
-                    left - dl,
-                    bottom + db,
-                    right + dr),
+                    _bboxInObjectSpace.top - dt,
+                    _bboxInObjectSpace.left - dl,
+                    _bboxInObjectSpace.bottom + db,
+                    _bboxInObjectSpace.right + dr),
                 _rotation);
         }
     };
