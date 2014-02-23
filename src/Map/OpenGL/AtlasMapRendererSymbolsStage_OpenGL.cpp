@@ -691,47 +691,47 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
                     oobb.enlargeBy(PointI(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
 
-//                    // Check intersections
-//                    const auto intersects = intersections.test(oobb, false,
-//                        [mapObjectId](const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
-//                    {
-//                        return otherSymbol->mapObject->id != mapObjectId;
-//                    });
-//                    if(intersects)
-//                    {
-//#if OSMAND_DEBUG && 1
-//                        getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
-//#endif // OSMAND_DEBUG
-//                        continue;
-//                    }
-//
-//                    // Query for similar content in area of "minDistance" to exclude duplicates, but keep if from same mapObject
-//                    if(symbol->minDistance.x > 0 || symbol->minDistance.y > 0)
-//                    {
-//                        const auto& symbolContent = symbol->content;
-//                        const auto hasSimilarContent = intersections.test(oobb.getEnlargedBy(symbol->minDistance), false,
-//                            [symbolContent, mapObjectId](const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
-//                        {
-//                            return otherSymbol->content == symbolContent && otherSymbol->mapObject->id != mapObjectId;
-//                        });
-//                        if(hasSimilarContent)
-//                        {
-//#if OSMAND_DEBUG && 1
-//                            getRenderer()->_debugStage.addRect2D(oobb.getEnlargedBy(symbol->minDistance).unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
-//                            getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 128), oobb.rotation);
-//#endif // OSMAND_DEBUG
-//                            continue;
-//                        }
-//                    }
-//
-//                    // Insert into quad-tree
-//                    if(!intersections.insert(symbol, oobb))
-//                    {
-//#if OSMAND_DEBUG && 1
-//                        getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
-//#endif // OSMAND_DEBUG
-//                        continue;
-//                    }
+                    // Check intersections
+                    const auto intersects = intersections.test(oobb, false,
+                        [mapObjectId](const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+                        {
+                            return otherSymbol->mapObject->id != mapObjectId;
+                        });
+                    if(intersects)
+                    {
+#if OSMAND_DEBUG && 1
+                        getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
+#endif // OSMAND_DEBUG
+                        continue;
+                    }
+
+                    // Query for similar content in area of "minDistance" to exclude duplicates, but keep if from same mapObject
+                    if(symbol->minDistance.x > 0 || symbol->minDistance.y > 0)
+                    {
+                        const auto& symbolContent = symbol->content;
+                        const auto hasSimilarContent = intersections.test(oobb.getEnlargedBy(symbol->minDistance), false,
+                            [symbolContent, mapObjectId](const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+                            {
+                                return otherSymbol->content == symbolContent && otherSymbol->mapObject->id != mapObjectId;
+                            });
+                        if(hasSimilarContent)
+                        {
+#if OSMAND_DEBUG && 1
+                            getRenderer()->_debugStage.addRect2D(oobb.getEnlargedBy(symbol->minDistance).unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
+                            getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 128), oobb.rotation);
+#endif // OSMAND_DEBUG
+                            continue;
+                        }
+                    }
+
+                    // Insert into quad-tree
+                    if(!intersections.insert(symbol, oobb))
+                    {
+#if OSMAND_DEBUG && 1
+                        getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
+#endif // OSMAND_DEBUG
+                        continue;
+                    }
 
 #if OSMAND_DEBUG && 1
                     getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorGREEN, 50), oobb.rotation);
@@ -1063,47 +1063,47 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
                     oobb.enlargeBy(PointI(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
 
-//                    // Check intersections
-//                    const auto intersects = intersections.test(oobb, false,
-//                        [mapObjectId](const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
-//                    {
-//                        return otherSymbol->mapObject->id != mapObjectId;
-//                    });
-//                    if(intersects)
-//                    {
-//#if OSMAND_DEBUG && 1
-//                        getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
-//#endif // OSMAND_DEBUG
-//                        continue;
-//                    }
-//
-//                    // Query for similar content in area of "minDistance" to exclude duplicates, but keep if from same mapObject
-//                    if(symbol->minDistance.x > 0 || symbol->minDistance.y > 0)
-//                    {
-//                        const auto& symbolContent = symbol->content;
-//                        const auto hasSimilarContent = intersections.test(oobb.getEnlargedBy(symbol->minDistance), false,
-//                            [symbolContent, mapObjectId](const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
-//                        {
-//                            return otherSymbol->content == symbolContent && otherSymbol->mapObject->id != mapObjectId;
-//                        });
-//                        if(hasSimilarContent)
-//                        {
-//#if OSMAND_DEBUG && 1
-//                            getRenderer()->_debugStage.addRect2D(oobb.getEnlargedBy(symbol->minDistance).unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
-//                            getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 128), oobb.rotation);
-//#endif // OSMAND_DEBUG
-//                            continue;
-//                        }
-//                    }
-//
-//                    // Insert into quad-tree
-//                    if(!intersections.insert(symbol, oobb))
-//                    {
-//#if OSMAND_DEBUG && 1
-//                        getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
-//#endif // OSMAND_DEBUG
-//                        continue;
-//                    }
+                    // Check intersections
+                    const auto intersects = intersections.test(oobb, false,
+                        [mapObjectId](const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+                    {
+                        return otherSymbol->mapObject->id != mapObjectId;
+                    });
+                    if(intersects)
+                    {
+#if OSMAND_DEBUG && 1
+                        getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
+#endif // OSMAND_DEBUG
+                        continue;
+                    }
+
+                    // Query for similar content in area of "minDistance" to exclude duplicates, but keep if from same mapObject
+                    if(symbol->minDistance.x > 0 || symbol->minDistance.y > 0)
+                    {
+                        const auto& symbolContent = symbol->content;
+                        const auto hasSimilarContent = intersections.test(oobb.getEnlargedBy(symbol->minDistance), false,
+                            [symbolContent, mapObjectId](const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+                            {
+                                return otherSymbol->content == symbolContent && otherSymbol->mapObject->id != mapObjectId;
+                            });
+                        if(hasSimilarContent)
+                        {
+#if OSMAND_DEBUG && 1
+                            getRenderer()->_debugStage.addRect2D(oobb.getEnlargedBy(symbol->minDistance).unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
+                            getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 128), oobb.rotation);
+#endif // OSMAND_DEBUG
+                            continue;
+                        }
+                    }
+
+                    // Insert into quad-tree
+                    if(!intersections.insert(symbol, oobb))
+                    {
+#if OSMAND_DEBUG && 1
+                        getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
+#endif // OSMAND_DEBUG
+                        continue;
+                    }
 
 #if OSMAND_DEBUG && 1
                     getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorGREEN, 50), oobb.rotation);

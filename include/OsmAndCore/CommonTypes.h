@@ -756,7 +756,13 @@ namespace OsmAnd
 
         template<typename T_>
         inline OOBB(const OOBB<T_>& that)
-            : OOBB()
+            : unrotatedBBox(_bboxInObjectSpace)
+            , rotation(_rotation)
+            , aabb(_aabb)
+            , pointInGlobalSpace0(_pointInGlobalSpace0)
+            , pointInGlobalSpace1(_pointInGlobalSpace1)
+            , pointInGlobalSpace2(_pointInGlobalSpace2)
+            , pointInGlobalSpace3(_pointInGlobalSpace3)
         {
             this->_bboxInObjectSpace = that._bboxInObjectSpace;
             this->_rotation = that._rotation;
