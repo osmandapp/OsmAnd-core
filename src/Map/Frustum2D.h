@@ -15,8 +15,6 @@ namespace OsmAnd
     {
         OSMAND_USE_MEMORY_MANAGER(Frustum2D);
     private:
-        static int crossProductSign(const PointF& a, const PointF& b, const PointF& p);
-        static bool testLineLineIntersection(const PointF& a0, const PointF& a1, const PointF& b0, const PointF& b1);
         bool isPointInside(const PointF& p) const;
     protected:
     public:

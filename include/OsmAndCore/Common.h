@@ -48,6 +48,12 @@ namespace OsmAnd
     {
         return value;
     }
+
+    template <typename T_>
+    static int sign(T_ value)
+    {
+        return (T_(0) < value) - (value < T_(0));
+    }
 }
 
 #endif // !defined(_OSMAND_CORE_COMMON_H_)

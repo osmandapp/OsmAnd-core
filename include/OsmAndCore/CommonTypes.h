@@ -12,6 +12,7 @@
 #endif // defined(OSMAND_GLM_AVAILABLE)
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/Common.h>
 
 namespace OsmAnd
 {
@@ -162,6 +163,76 @@ namespace OsmAnd
 
     friend struct OsmAnd::Area<T>;
     };
+    typedef Point<double> PointD;
+    typedef Point<float> PointF;
+    typedef Point<int32_t> PointI;
+    typedef Point<int64_t> PointI64;
+    inline int crossProductSign(const PointF& a, const PointF& b, const PointF& p)
+    {
+        return sign((b.y - a.y)*(p.x - a.x) - (b.x - a.x)*(p.y - a.y));
+    }
+    inline int crossProductSign(const PointI& a, const PointI& b, const PointI& p)
+    {
+        const int64_t bx_ax = b.x - a.x;
+        const int64_t by_ay = b.y - a.y;
+        const int64_t px_ax = p.x - a.x;
+        const int64_t py_ay = p.y - a.y;
+        return sign(by_ay*px_ax - bx_ax*py_ay);
+    }
+    inline bool testLineLineIntersection(const PointI& a0, const PointI& a1, const PointI& b0, const PointI& b1)
+    {
+        const auto a1x_a0x = a1.x - a0.x;
+        const auto a1y_a0y = a1.y - a0.y;
+        const auto b0y_b1y = b0.y - b1.y;
+        const auto b0x_b1x = b0.x - b1.x;
+        const auto b0x_a0x = b0.x - a0.x;
+        const auto b0y_a0y = b0.y - a0.y;
+
+        const auto d_ = static_cast<int64_t>(a1x_a0x*b0y_b1y) - static_cast<int64_t>(b0x_b1x*a1y_a0y);
+        const auto t_ = static_cast<int64_t>(b0y_b1y*b0x_a0x) - static_cast<int64_t>(b0x_b1x*b0y_a0y);
+        const auto u_ = static_cast<int64_t>(a1x_a0x*b0y_a0y) - static_cast<int64_t>(a1y_a0y*b0x_a0x);
+
+        if(d_ == 0)
+        {
+            if(t_ == 0 && u_ == 0)
+                return true;
+            return false;
+        }
+
+        const auto t = (static_cast<double>(t_) / static_cast<double>(d_));
+        const auto u = (static_cast<double>(u_) / static_cast<double>(d_));
+
+        return
+            t >= 0.0 && t <= 1.0 &&
+            u >= 0.0 && u <= 1.0;
+    }
+    inline bool testLineLineIntersection(const PointF& a0, const PointF& a1, const PointF& b0, const PointF& b1)
+    {
+        const auto a1x_a0x = a1.x - a0.x;
+        const auto a1y_a0y = a1.y - a0.y;
+        const auto b0y_b1y = b0.y - b1.y;
+        const auto b0x_b1x = b0.x - b1.x;
+        const auto b0x_a0x = b0.x - a0.x;
+        const auto b0y_a0y = b0.y - a0.y;
+
+        const auto d_ = a1x_a0x*b0y_b1y - b0x_b1x*a1y_a0y;
+        const auto t_ = b0y_b1y*b0x_a0x - b0x_b1x*b0y_a0y;
+        const auto u_ = a1x_a0x*b0y_a0y - a1y_a0y*b0x_a0x;
+
+        if(qFuzzyIsNull(d_))
+        {
+            if(qFuzzyIsNull(t_) && qFuzzyIsNull(u_))
+                return true;
+            return false;
+        }
+
+        const auto t = (t_ / d_);
+        const auto u = (u_ / d_);
+
+        return
+            t >= 0.0f && t <= 1.0f &&
+            u >= 0.0f && u <= 1.0f;
+    }
 
     template<typename T>
     class OOBB;
@@ -525,6 +596,10 @@ namespace OsmAnd
             return AreaT(cy - halfHeight, cx - halfWidth, cy + halfHeight, cx + halfWidth);
         }
     };
+    typedef Area<double> AreaD;
+    typedef Area<float> AreaF;
+    typedef Area<int32_t> AreaI;
+    typedef Area<int64_t> AreaI64;
 
     template<typename T>
     class OOBB
@@ -539,11 +614,52 @@ namespace OsmAnd
         AreaT _bboxInObjectSpace;
         float _rotation;
         AreaT _aabb;
+        PointT _pointInGlobalSpace0;
+        PointT _pointInGlobalSpace1;
+        PointT _pointInGlobalSpace2;
+        PointT _pointInGlobalSpace3;
+
+        inline bool isPointInside(const PointT& p) const
+        {
+            const auto& p0 = pointInGlobalSpace0;
+            const auto& p1 = pointInGlobalSpace1;
+            const auto& p2 = pointInGlobalSpace2;
+            const auto& p3 = pointInGlobalSpace3;
+
+            // Check if point 'p' is on the same 'side' of each edge
+            const auto sign0 = crossProductSign(p0, p1, p);
+            const auto sign1 = crossProductSign(p1, p2, p);
+            const auto sign2 = crossProductSign(p2, p3, p);
+            const auto sign3 = crossProductSign(p3, p0, p);
+            int sign = sign0;
+            if(sign1 != 0)
+            {
+                if(sign != 0 && sign != sign1)
+                    return false;
+                sign = sign1;
+            }
+            if(sign2 != 0)
+            {
+                if(sign != 0 && sign != sign2)
+                    return false;
+                sign = sign2;
+            }
+            if(sign3 != 0)
+            {
+                if(sign != 0 && sign != sign3)
+                    return false;
+            }
+            return true;
+        }
     public:
         inline OOBB()
             : bboxInObjectSpace(_bboxInObjectSpace)
             , rotation(_rotation)
             , aabb(_aabb)
+            , pointInGlobalSpace0(_pointInGlobalSpace0)
+            , pointInGlobalSpace1(_pointInGlobalSpace1)
+            , pointInGlobalSpace2(_pointInGlobalSpace2)
+            , pointInGlobalSpace3(_pointInGlobalSpace3)
         {
         }
 
@@ -567,6 +683,10 @@ namespace OsmAnd
         const AreaT& bboxInObjectSpace;
         const float& rotation;
         const AreaT& aabb;
+        const PointT& pointInGlobalSpace0;
+        const PointT& pointInGlobalSpace1;
+        const PointT& pointInGlobalSpace2;
+        const PointT& pointInGlobalSpace3;
 
 #if !defined(SWIG)
         inline bool operator==(const OOBBT& r) const
@@ -601,7 +721,12 @@ namespace OsmAnd
             if(qFuzzyIsNull(rotation))
                 return bboxInObjectSpace.contains(that);
 
-            return false;
+            // If all of points of that AABB are inside, then it's totally inside
+            const auto a0 = that.topLeft;
+            const auto a1 = that.topRight();
+            const auto a2 = that.bottomRight;
+            const auto a3 = that.bottomLeft();
+            return isPointInside(a0) && isPointInside(a1) && isPointInside(a2) && isPointInside(a3);
         }
 
         inline bool intersects(const AreaT& that) const
@@ -614,18 +739,41 @@ namespace OsmAnd
             if(qFuzzyIsNull(rotation))
                 return bboxInObjectSpace.intersects(that);
 
-            return false;
+            const auto& p0 = pointInGlobalSpace0;
+            const auto& p1 = pointInGlobalSpace1;
+            const auto& p2 = pointInGlobalSpace2;
+            const auto& p3 = pointInGlobalSpace3;
+            const auto a0 = that.topLeft;
+            const auto a1 = that.topRight();
+            const auto a2 = that.bottomRight;
+            const auto a3 = that.bottomLeft();
+
+            // Check if any points of that area is inside.
+            // This case covers inner area and partially inner area (that has at least 1 point inside)
+            if(isPointInside(a0) || isPointInside(a1) || isPointInside(a2) || isPointInside(a3))
+                return true;
+
+            // Check if any that area edge intersects any of OOBB edges.
+            // This case covers intersecting area that has no vertex inside OOBB.
+            return
+                testLineLineIntersection(a0, a1, p0, p1) ||
+                testLineLineIntersection(a0, a1, p1, p2) ||
+                testLineLineIntersection(a0, a1, p2, p3) ||
+                testLineLineIntersection(a0, a1, p3, p0) ||
+                testLineLineIntersection(a1, a2, p0, p1) ||
+                testLineLineIntersection(a1, a2, p1, p2) ||
+                testLineLineIntersection(a1, a2, p2, p3) ||
+                testLineLineIntersection(a1, a2, p3, p0) ||
+                testLineLineIntersection(a2, a3, p0, p1) ||
+                testLineLineIntersection(a2, a3, p1, p2) ||
+                testLineLineIntersection(a2, a3, p2, p3) ||
+                testLineLineIntersection(a2, a3, p3, p0) ||
+                testLineLineIntersection(a3, a0, p0, p1) ||
+                testLineLineIntersection(a3, a0, p1, p2) ||
+                testLineLineIntersection(a3, a0, p2, p3) ||
+                testLineLineIntersection(a3, a0, p3, p0);
         }
     };
-
-    typedef Point<double> PointD;
-    typedef Point<float> PointF;
-    typedef Point<int32_t> PointI;
-    typedef Point<int64_t> PointI64;
-    typedef Area<double> AreaD;
-    typedef Area<float> AreaF;
-    typedef Area<int32_t> AreaI;
-    typedef Area<int64_t> AreaI64;
     typedef OOBB<double> OOBBD;
     typedef OOBB<float> OOBBF;
     typedef OOBB<int32_t> OOBBI;

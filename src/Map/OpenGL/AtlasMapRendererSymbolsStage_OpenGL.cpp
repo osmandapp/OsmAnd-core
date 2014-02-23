@@ -70,11 +70,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
         float offset;
         float subpathLength;
         QVector<float> segmentLengths;
+        glm::vec2 subpathDirectionOnScreen;
         bool is2D;
 
         // 2D-only:
         QVector<glm::vec2> subpathPointsOnScreen;
-        glm::vec2 subpathDirectionOnScreen;
     };
 
     QMutexLocker scopedLocker(&getResources().getSymbolsMapMutex());
@@ -622,6 +622,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 if(renderable->is2D)
                 {
                     //TODO: Check intersections
+                    // subpathDirectionOnScreen holds valid vector
+                    // for each glyph, get it's anchor
 
                     // Check if correct program is being used
                     if(lastUsedProgram != *_symbolOnPath2dProgram.id)

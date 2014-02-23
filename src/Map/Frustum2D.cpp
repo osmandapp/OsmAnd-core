@@ -125,35 +125,3 @@ bool OsmAnd::Frustum2D::isPointInside(const PointF& p) const
     return true;
 }
 
-bool OsmAnd::Frustum2D::testLineLineIntersection(const PointF& a0, const PointF& a1, const PointF& b0, const PointF& b1)
-{
-    const auto a1x_a0x = a1.x - a0.x;
-    const auto a1y_a0y = a1.y - a0.y;
-    const auto b0y_b1y = b0.y - b1.y;
-    const auto b0x_b1x = b0.x - b1.x;
-    const auto b0x_a0x = b0.x - a0.x;
-    const auto b0y_a0y = b0.y - a0.y;
-
-    const auto d_ = a1x_a0x*b0y_b1y - b0x_b1x*a1y_a0y;
-    const auto t_ = b0y_b1y*b0x_a0x - b0x_b1x*b0y_a0y;
-    const auto u_ = a1x_a0x*b0y_a0y - a1y_a0y*b0x_a0x;
-
-    if(qFuzzyIsNull(d_))
-    {
-        if(qFuzzyIsNull(t_) && qFuzzyIsNull(u_))
-            return true;
-        return false;
-    }
-    
-    const auto t = (t_ / d_);
-    const auto u = (u_ / d_);
-
-    return
-        t >= 0.0f && t <= 1.0f &&
-        u >= 0.0f && u <= 1.0f;
-}
-
-int OsmAnd::Frustum2D::crossProductSign(const PointF& a, const PointF& b, const PointF& p)
-{
-    return Utilities::sign((b.y - a.y)*(p.x - a.x) - (b.x - a.x)*(p.y - a.y));
-}
