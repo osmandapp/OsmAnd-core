@@ -700,7 +700,13 @@ namespace OsmAnd
         }
 
         inline OOBB(const AreaT& bboxInObjectSpace_, const float rotation_)
-            : OOBB()
+            : bboxInObjectSpace(_bboxInObjectSpace)
+            , rotation(_rotation)
+            , aabb(_aabb)
+            , pointInGlobalSpace0(_pointInGlobalSpace0)
+            , pointInGlobalSpace1(_pointInGlobalSpace1)
+            , pointInGlobalSpace2(_pointInGlobalSpace2)
+            , pointInGlobalSpace3(_pointInGlobalSpace3)
         {
             this->_bboxInObjectSpace = bboxInObjectSpace_;
             this->_rotation = rotation_;
