@@ -450,7 +450,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     continue;
                 }
 
-#if OSMAND_DEBUG && 0
+#if OSMAND_DEBUG && 1
                 getRenderer()->_debugStage.addRect2D(boundsInWindow, SkColorSetA(SK_ColorGREEN, 50));
 #endif // OSMAND_DEBUG
 
@@ -683,6 +683,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     PointF centerOnScreen;
                     centerOnScreen.x = alignedCenter.x*directionAngleCos - alignedCenter.y*directionAngleSin;
                     centerOnScreen.y = alignedCenter.x*directionAngleSin + alignedCenter.y*directionAngleCos;
+                    centerOnScreen.y = currentState.windowSize.y - centerOnScreen.y;
                     bboxInDirection += centerOnScreen;
                     OOBBF oobb(bboxInDirection, directionAngle);
 
@@ -731,12 +732,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 //                    }
 
 #if OSMAND_DEBUG && 1
-                    {
-                        auto bboxDebug = oobb.unrotatedBBox;
-                        bboxDebug.topLeft.y = currentState.windowSize.y - bboxDebug.topLeft.y;
-                        bboxDebug.bottomRight.y = currentState.windowSize.y - bboxDebug.bottomRight.y;
-                        getRenderer()->_debugStage.addRect2D(bboxDebug, SkColorSetA(SK_ColorGREEN, 50), oobb.rotation);
-                    }
+                    getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorGREEN, 50), oobb.rotation);
 #endif // OSMAND_DEBUG
 
                     // Check if correct program is being used
@@ -935,9 +931,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     const auto alignedCenterInWorld = bboxInWorldDirection.center();
                     bboxInWorldDirection -= alignedCenterInWorld;
                     
-                    //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
-                    bboxInWorldDirection.enlargeBy(PointI(3.0f*setupOptions.displayDensityFactor*projectionScale, 10.0f*setupOptions.displayDensityFactor*projectionScale)); /* 3dip; 10dip */
-
                     PointF rotatedBBoxInWorld[4];
                     const auto& tl = bboxInWorldDirection.topLeft;
                     rotatedBBoxInWorld[0].x = tl.x*directionAngleInWorldCos - tl.y*directionAngleInWorldSin;
@@ -1061,8 +1054,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     PointF centerOnScreen;
                     centerOnScreen.x = alignedCenter.x*directionAngleCos - alignedCenter.y*directionAngleSin;
                     centerOnScreen.y = alignedCenter.x*directionAngleSin + alignedCenter.y*directionAngleCos;
+                    centerOnScreen.y = currentState.windowSize.y - centerOnScreen.y;
                     bboxInDirection += centerOnScreen;
                     OOBBF oobb(bboxInDirection, directionAngle);
+
+                    //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
+                    oobb.enlargeBy(PointI(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
 
 //                    // Check intersections
 //                    const auto intersects = intersections.test(oobb, false,
@@ -1106,12 +1103,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 //                    }
 
 #if OSMAND_DEBUG && 1
-                    {
-                        auto bboxDebug = oobb.unrotatedBBox;
-                        bboxDebug.topLeft.y = currentState.windowSize.y - bboxDebug.topLeft.y;
-                        bboxDebug.bottomRight.y = currentState.windowSize.y - bboxDebug.bottomRight.y;
-                        getRenderer()->_debugStage.addRect2D(bboxDebug, SkColorSetA(SK_ColorGREEN, 50), oobb.rotation);
-                    }
+                    getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorGREEN, 50), oobb.rotation);
 #endif // OSMAND_DEBUG
 
                     // Check if correct program is being used
