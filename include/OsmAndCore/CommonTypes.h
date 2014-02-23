@@ -471,7 +471,16 @@ namespace OsmAnd
 
         inline bool contains(const OOBBT& that) const
         {
-            return that.contains(*this);
+            // If this doesn't contain that AABB, it can not contains OOBB
+            if(!contains(that.aabb))
+                return false;
+
+            // If all of global points are contained, then entire OOBB is inside
+            return
+                contains(that.pointInGlobalSpace0) &&
+                contains(that.pointInGlobalSpace1) &&
+                contains(that.pointInGlobalSpace2) &&
+                contains(that.pointInGlobalSpace3);
         }
 
         inline bool intersects(const OOBBT& that) const
@@ -723,18 +732,23 @@ namespace OsmAnd
             // Rotate points of the OOBB
             const auto cosA = qCos(rotation);
             const auto sinA = qSin(rotation);
-            const auto& p0 = _unrotatedBBox.topLeft;
+            const auto& center = _unrotatedBBox.center();
+            const auto p0 = _unrotatedBBox.topLeft - center;
             _pointInGlobalSpace0.x = p0.x*cosA - p0.y*sinA;
             _pointInGlobalSpace0.y = p0.x*sinA + p0.y*cosA;
-            const auto& p1 = _unrotatedBBox.topRight();
+            _pointInGlobalSpace0 += center;
+            const auto p1 = _unrotatedBBox.topRight() - center;
             _pointInGlobalSpace1.x = p1.x*cosA - p1.y*sinA;
             _pointInGlobalSpace1.y = p1.x*sinA + p1.y*cosA;
-            const auto& p2 = _unrotatedBBox.bottomRight;
+            _pointInGlobalSpace1 += center;
+            const auto p2 = _unrotatedBBox.bottomRight - center;
             _pointInGlobalSpace2.x = p2.x*cosA - p2.y*sinA;
             _pointInGlobalSpace2.y = p2.x*sinA + p2.y*cosA;
-            const auto& p3 = _unrotatedBBox.bottomLeft();
+            _pointInGlobalSpace2 += center;
+            const auto p3 = _unrotatedBBox.bottomLeft() - center;
             _pointInGlobalSpace3.x = p3.x*cosA - p3.y*sinA;
             _pointInGlobalSpace3.y = p3.x*sinA + p0.y*cosA;
+            _pointInGlobalSpace3 += center;
 
             // Compute external AABB
             _aabb.topLeft = _aabb.bottomRight = _pointInGlobalSpace0;

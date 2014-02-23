@@ -446,12 +446,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 if(!intersections.insert(symbol, boundsInWindow))
                 {
 #if OSMAND_DEBUG && 0
-                    getRenderer()->_debugStage.addRect2D(boundsInWindow, SkColorSetA(SK_ColorRED, 50));
+                    getRenderer()->_debugStage.addRect2D(boundsInWindow, SkColorSetA(SK_ColorBLUE, 50));
 #endif // OSMAND_DEBUG
                     continue;
                 }
 
-#if OSMAND_DEBUG && 1
+#if OSMAND_DEBUG && 0
                 getRenderer()->_debugStage.addRect2D(boundsInWindow, SkColorSetA(SK_ColorGREEN, 50));
 #endif // OSMAND_DEBUG
 
@@ -684,8 +684,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     PointF centerOnScreen;
                     centerOnScreen.x = alignedCenter.x*directionAngleCos - alignedCenter.y*directionAngleSin;
                     centerOnScreen.y = alignedCenter.x*directionAngleSin + alignedCenter.y*directionAngleCos;
-                    centerOnScreen.y = currentState.windowSize.y - centerOnScreen.y;
-                    bboxInDirection += centerOnScreen;
+                    bboxInDirection = AreaF::fromCenterAndSize(
+                        centerOnScreen.x, currentState.windowSize.y - centerOnScreen.y,
+                        bboxInDirection.width(), bboxInDirection.height());
                     OOBBF oobb(bboxInDirection, directionAngle);
 
                     //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
@@ -699,7 +700,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                         });
                     if(intersects)
                     {
-#if OSMAND_DEBUG && 1
+#if OSMAND_DEBUG && 0
                         getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
 #endif // OSMAND_DEBUG
                         continue;
@@ -716,7 +717,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                             });
                         if(hasSimilarContent)
                         {
-#if OSMAND_DEBUG && 1
+#if OSMAND_DEBUG && 0
                             getRenderer()->_debugStage.addRect2D(oobb.getEnlargedBy(symbol->minDistance).unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
                             getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 128), oobb.rotation);
 #endif // OSMAND_DEBUG
@@ -727,13 +728,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     // Insert into quad-tree
                     if(!intersections.insert(symbol, oobb))
                     {
-#if OSMAND_DEBUG && 1
-                        getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
+#if OSMAND_DEBUG && 0
+                        getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorBLUE, 50), oobb.rotation);
 #endif // OSMAND_DEBUG
                         continue;
                     }
 
-#if OSMAND_DEBUG && 1
+#if OSMAND_DEBUG && 0
                     getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorGREEN, 50), oobb.rotation);
 #endif // OSMAND_DEBUG
 
@@ -1056,8 +1057,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     PointF centerOnScreen;
                     centerOnScreen.x = alignedCenter.x*directionAngleCos - alignedCenter.y*directionAngleSin;
                     centerOnScreen.y = alignedCenter.x*directionAngleSin + alignedCenter.y*directionAngleCos;
-                    centerOnScreen.y = currentState.windowSize.y - centerOnScreen.y;
-                    bboxInDirection += centerOnScreen;
+                    bboxInDirection = AreaF::fromCenterAndSize(
+                        centerOnScreen.x, currentState.windowSize.y - centerOnScreen.y,
+                        bboxInDirection.width(), bboxInDirection.height());
                     OOBBF oobb(bboxInDirection, directionAngle);
 
                     //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
@@ -1071,7 +1073,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     });
                     if(intersects)
                     {
-#if OSMAND_DEBUG && 1
+#if OSMAND_DEBUG && 0
                         getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
 #endif // OSMAND_DEBUG
                         continue;
@@ -1088,7 +1090,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                             });
                         if(hasSimilarContent)
                         {
-#if OSMAND_DEBUG && 1
+#if OSMAND_DEBUG && 0
                             getRenderer()->_debugStage.addRect2D(oobb.getEnlargedBy(symbol->minDistance).unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
                             getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 128), oobb.rotation);
 #endif // OSMAND_DEBUG
@@ -1099,13 +1101,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     // Insert into quad-tree
                     if(!intersections.insert(symbol, oobb))
                     {
-#if OSMAND_DEBUG && 1
-                        getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
+#if OSMAND_DEBUG && 0
+                        getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorBLUE, 50), oobb.rotation);
 #endif // OSMAND_DEBUG
                         continue;
                     }
 
-#if OSMAND_DEBUG && 1
+#if OSMAND_DEBUG && 0
                     getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorGREEN, 50), oobb.rotation);
 #endif // OSMAND_DEBUG
 

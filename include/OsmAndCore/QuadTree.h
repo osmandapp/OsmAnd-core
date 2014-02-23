@@ -115,17 +115,17 @@ namespace OsmAnd
             QList< EntryPair > entries;
 
             template<typename BBOX_TYPE>
-            bool insert(const ELEMENT_TYPE& element, const BBOX_TYPE& bbox_, const bool strict, const uintmax_t allowedDepthRemaining)
+            bool insert(const ELEMENT_TYPE& element, const BBOX_TYPE& bbox_, const uintmax_t allowedDepthRemaining)
             {
                 // Check if this node can hold entire element
-                if(!(area.contains(bbox_) || (!strict && area.intersects(bbox_))))
+                if(!area.contains(bbox_))
                     return false;
 
                 insertNoCheck(element, bbox_, allowedDepthRemaining);
                 return true;
             }
 
-            inline bool insert(const ELEMENT_TYPE& element, const BBox& bbox_, const bool strict, const uintmax_t allowedDepthRemaining)
+            inline bool insert(const ELEMENT_TYPE& element, const BBox& bbox_, const uintmax_t allowedDepthRemaining)
             {
                 if(bbox_.type == BBoxType::AABB)
                     return insert(element, bbox_.asAABB, allowedDepthRemaining);
@@ -156,7 +156,7 @@ namespace OsmAnd
                         return;
                     }
 
-                    if(subnodes[idx]->insert(element, bbox_, true, allowedDepthRemaining - 1))
+                    if(subnodes[idx]->insert(element, bbox_, allowedDepthRemaining - 1))
                         return;
                 }
 
@@ -175,8 +175,14 @@ namespace OsmAnd
             template<typename BBOX_TYPE>
             void query(const BBOX_TYPE& bbox_, QList<ELEMENT_TYPE>& outResults, const bool strict, const Acceptor acceptor) const
             {
-                if(!(bbox_.contains(area) || (!strict && bbox_.intersects(area))))
-                    return;
+                // If this node can not contain the bbox and bbox doesn't intersect node, the node can not have anything that will give positive result
+                if(!area.contains(bbox_))
+                {
+                    if(strict)
+                        return;
+                    if(!bbox_.intersects(area))
+                        return;
+                }
 
                 for(const auto& entry : constOf(entries))
                 {
@@ -207,8 +213,14 @@ namespace OsmAnd
             template<typename BBOX_TYPE>
             bool test(const BBOX_TYPE& bbox_, const bool strict, const Acceptor acceptor) const
             {
-                if(!(bbox_.contains(area) || (!strict && bbox_.intersects(area))))
-                    return false;
+                // If this node can not contain the bbox and bbox doesn't intersect node, the node can not have anything that will give positive result
+                if(!area.contains(bbox_))
+                {
+                    if(strict)
+                        return false;
+                    if(!bbox_.intersects(area))
+                        return false;
+                }
 
                 for(const auto& entry : constOf(entries))
                 {
@@ -298,7 +310,17 @@ namespace OsmAnd
 
         inline bool insert(const ELEMENT_TYPE& entry, const AreaT& bbox, const bool strict = false)
         {
-            return _root->insert(entry, bbox, strict, maxDepth - 1);
+            // Check if this root can hold entire element
+            if(!_root->area.contains(bbox))
+            {
+                if(strict)
+                    return false;
+                if(!bbox.intersects(_root->area))
+                    return false;
+            }
+
+            _root->insertNoCheck(entry, bbox, maxDepth - 1);
+            return true;
         }
 
         inline void query(const AreaT& bbox, QList<ELEMENT_TYPE>& outResults, const bool strict = false, const Acceptor acceptor = nullptr) const
@@ -313,7 +335,17 @@ namespace OsmAnd
 
         inline bool insert(const ELEMENT_TYPE& entry, const OOBBT& bbox, const bool strict = false)
         {
-            return _root->insert(entry, bbox, strict, maxDepth - 1);
+            // Check if this root can hold entire element
+            if(!_root->area.contains(bbox))
+            {
+                if(strict)
+                    return false;
+                if(!bbox.intersects(_root->area))
+                    return false;
+            }
+
+            _root->insertNoCheck(entry, bbox, maxDepth - 1);
+            return true;
         }
 
         inline void query(const OOBBT& bbox, QList<ELEMENT_TYPE>& outResults, const bool strict = false, const Acceptor acceptor = nullptr) const
