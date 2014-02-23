@@ -268,9 +268,9 @@ namespace OsmAnd
         inline void query(const BBox& bbox, QList<ELEMENT_TYPE>& outResults, const bool strict = false, const Acceptor acceptor = nullptr) const
         {
             if(bbox.type == BBoxType::AABB)
-                query(bbox.asAABB, outResults, strict, acceptor)
+                query(bbox.asAABB, outResults, strict, acceptor);
             else /* if(bbox.type == BBoxType::OOBB) */
-                query(bbox.asOOBB, outResults, strict, acceptor)
+                query(bbox.asOOBB, outResults, strict, acceptor);
         }
 
         inline bool test(const BBox& bbox, const bool strict = false, const Acceptor acceptor = nullptr) const
