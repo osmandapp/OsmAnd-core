@@ -41,7 +41,7 @@ namespace OsmAnd
             this->y = that.y;
         }
 
-        inline Point(const T x, const T y)
+        inline Point(const T& x, const T& y)
         {
             this->x = x;
             this->y = y;
@@ -93,13 +93,13 @@ namespace OsmAnd
         }
 
         template<typename T_>
-        inline PointT operator*(const T_ r) const
+        inline PointT operator*(const T_& r) const
         {
             return PointT(x * r, y * r);
         }
 
         template<typename T_>
-        inline PointT& operator*=(const T_ r)
+        inline PointT& operator*=(const T_& r)
         {
             x *= r;
             y *= r;
@@ -107,13 +107,13 @@ namespace OsmAnd
         }
 
         template<typename T_>
-        inline PointT operator/(const T_ r) const
+        inline PointT operator/(const T_& r) const
         {
             return PointT(x / r, y / r);
         }
 
         template<typename T_>
-        inline PointT& operator/=(const T_ r)
+        inline PointT& operator/=(const T_& r)
         {
             x /= r;
             y /= r;
@@ -140,22 +140,22 @@ namespace OsmAnd
         }
 #endif // defined(OSMAND_GLM_AVAILABLE)
     private:
-        static inline bool equal(const double a, const double b)
+        static inline bool equal(const double& a, const double& b)
         {
             return qFuzzyCompare(a, b);
         }
 
-        static inline bool equal(const float a, const float b)
+        static inline bool equal(const float a, const float& b)
         {
             return qFuzzyCompare(a, b);
         }
 
-        static inline bool equal(const uint32_t a, const uint32_t b)
+        static inline bool equal(const uint32_t& a, const uint32_t& b)
         {
             return a == b;
         }
 
-        static inline bool equal(const int32_t a, const int32_t b)
+        static inline bool equal(const int32_t& a, const int32_t& b)
         {
             return a == b;
         }
@@ -164,11 +164,15 @@ namespace OsmAnd
     };
 
     template<typename T>
+    class OOBB;
+
+    template<typename T>
     struct Area
     {
         typedef T CoordType;
         typedef Point<T> PointT;
         typedef Area<T> AreaT;
+        typedef OOBB<T> OOBBT;
 
         inline Area()
             : top(topLeft.y)
@@ -182,7 +186,7 @@ namespace OsmAnd
             this->right = 0;
         }
 
-        inline Area(const T t, const T l, const T b, const T r)
+        inline Area(const T& t, const T& l, const T& b, const T& r)
             : top(topLeft.y)
             , left(topLeft.x)
             , bottom(bottomRight.y)
@@ -254,7 +258,7 @@ namespace OsmAnd
         }
 #endif // !defined(SWIG)
 
-        inline bool contains(const T x, const T y) const
+        inline bool contains(const T& x, const T& y) const
         {
             return !(left > x || right < x || top > y || bottom < y);
         }
@@ -264,7 +268,7 @@ namespace OsmAnd
             return !(left > p.x || right < p.x || top > p.y || bottom < p.y);
         }
 
-        inline bool contains(const T t, const T l, const T b, const T r) const
+        inline bool contains(const T& t, const T& l, const T& b, const T& r) const
         {
             return
                 l >= left &&
@@ -283,7 +287,7 @@ namespace OsmAnd
         }
 
         template<typename T_>
-        inline bool contains(const T_ x, const T_ y) const
+        inline bool contains(const T_& x, const T_& y) const
         {
             return !(left > x || right < x || top > y || bottom < y);
         }
@@ -295,7 +299,7 @@ namespace OsmAnd
         }
 
         template<typename T_>
-        inline bool contains(const T_ t, const T_ l, const T_ b, const T_ r) const
+        inline bool contains(const T_& t, const T_& l, const T_& b, const T_& r) const
         {
             return
                 l >= left &&
@@ -314,7 +318,7 @@ namespace OsmAnd
                 that.bottom <= this->bottom;
         }
 
-        inline bool intersects(const T t, const T l, const T b, const T r) const
+        inline bool intersects(const T& t, const T& l, const T& b, const T& r) const
         {
             return !(
                 l > this->right ||
@@ -333,7 +337,7 @@ namespace OsmAnd
         }
 
         template<typename T_>
-        inline bool intersects(const T_ t, const T_ l, const T_ b, const T_ r) const
+        inline bool intersects(const T_& t, const T_& l, const T_& b, const T_& r) const
         {
             return !(
                 l > this->right ||
@@ -350,6 +354,16 @@ namespace OsmAnd
                 that.right < this->left ||
                 that.top > this->bottom ||
                 that.bottom < this->top);
+        }
+
+        inline bool contains(const OOBBT& that) const
+        {
+            return false;
+        }
+
+        inline bool intersects(const OOBBT& that) const
+        {
+            return false;
         }
 
         inline T width() const
@@ -504,11 +518,87 @@ namespace OsmAnd
             return res;
         }
 
-        static AreaT fromCenterAndSize(const T cx, const T cy, const T width, const T height)
+        static AreaT fromCenterAndSize(const T& cx, const T& cy, const T& width, const T& height)
         {
             const T halfWidth = width / static_cast<T>(2);
             const T halfHeight = height / static_cast<T>(2);
             return AreaT(cy - halfHeight, cx - halfWidth, cy + halfHeight, cx + halfWidth);
+        }
+    };
+
+    template<typename T>
+    class OOBB
+    {
+    public:
+        typedef Area<T> AreaT;
+        typedef Point<T> PointT;
+        typedef OOBB<T> OOBBT;
+
+    private:
+    protected:
+        AreaT _bboxInObjectSpace;
+        float _rotation;
+        AreaT _aabb;
+    public:
+        inline OOBB()
+            : bboxInObjectSpace(_bboxInObjectSpace)
+            , rotation(_rotation)
+            , aabb(_aabb)
+        {
+        }
+
+        inline OOBB(const AreaT& bboxInObjectSpace_, const float rotation_, const AreaT& aabb_)
+            : this()
+        {
+            this->_bboxInObjectSpace = bboxInObjectSpace_;
+            this->_rotation = rotation_;
+            this->_aabb = aabb_;
+        }
+
+        template<typename T_>
+        inline OOBB(const OOBB<T_>& that)
+            : this()
+        {
+            this->_bboxInObjectSpace = that._bboxInObjectSpace;
+            this->_rotation = that._rotation;
+            this->_aabb = that._aabb;
+        }
+
+        const AreaT& bboxInObjectSpace;
+        const float& rotation;
+        const AreaT& aabb;
+
+#if !defined(SWIG)
+        inline bool operator==(const OOBBT& r) const
+        {
+            return (_bboxInObjectSpace == r._b) && qFuzzyCompare(_rotation, r._rotation);
+        }
+
+        inline bool operator!=(const OOBBT& r) const
+        {
+            return (_bboxInObjectSpace != r._b) || !qFuzzyCompare(_rotation, r._rotation);
+        }
+
+        inline OOBBT& operator=(const OOBBT& that)
+        {
+            if(this != &that)
+            {
+                this->_bboxInObjectSpace = that._bboxInObjectSpace;
+                this->_rotation = that._rotation;
+                this->_aabb = that._aabb;
+            }
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        inline bool contains(const AreaT& that) const
+        {
+            return false;
+        }
+
+        inline bool intersects(const AreaT& that) const
+        {
+            return false;
         }
     };
 
@@ -520,12 +610,15 @@ namespace OsmAnd
     typedef Area<float> AreaF;
     typedef Area<int32_t> AreaI;
     typedef Area<int64_t> AreaI64;
+    typedef OOBB<double> OOBBD;
+    typedef OOBB<float> OOBBF;
+    typedef OOBB<int32_t> OOBBI;
+    typedef OOBB<int64_t> OOBBI64;
 
     union TileId
     {
         uint64_t id;
-        struct
-        {
+        struct {
             int32_t x;
             int32_t y;
         };
@@ -617,17 +710,18 @@ namespace OsmAnd
             : r(1.0f)
             , g(1.0f)
             , b(1.0f)
-        {}
+        {
+        }
 
-        inline FColorRGB(const float r_, const float g_, const float b_)
+        inline FColorRGB(const float& r_, const float& g_, const float& b_)
             : r(r_)
             , g(g_)
             , b(b_)
-        {}
+        {
+        }
 
         float value[3];
-        struct
-        {
+        struct {
             float r;
             float g;
             float b;

@@ -93,7 +93,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 
     // Intersections are calculated using quad-tree, and general rule that
     // map symbol with smaller order [and further from camera] is more important.
-    QuadTree< std::shared_ptr<const MapSymbol>, AreaI::CoordType > intersections(currentState.viewport, 8);
+    typedef QuadTree< std::shared_ptr<const MapSymbol>, AreaI::CoordType > IntersectionsQuadTree;
+    IntersectionsQuadTree intersections(currentState.viewport, 8);
 
     // Iterate over symbols by "order" in ascending direction
     for(auto itMapSymbolsLayer = mapSymbolsByOrder.cbegin(), itEnd = mapSymbolsByOrder.cend(); itMapSymbolsLayer != itEnd; ++itMapSymbolsLayer)
@@ -405,7 +406,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 
                 // Check intersections
                 const auto intersects = intersections.test(boundsInWindow, false,
-                    [mapObjectId](const std::shared_ptr<const MapSymbol>& otherSymbol, const AreaI& otherArea) -> bool
+                    [mapObjectId](const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
                 {
                     return otherSymbol->mapObject->id != mapObjectId;
                 });
@@ -422,7 +423,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 {
                     const auto& symbolContent = symbol->content;
                     const auto hasSimilarContent = intersections.test(boundsInWindow.getEnlargedBy(symbol->minDistance), false,
-                        [symbolContent, mapObjectId](const std::shared_ptr<const MapSymbol>& otherSymbol, const AreaI& otherArea) -> bool
+                        [symbolContent, mapObjectId](const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
                     {
                         return otherSymbol->content == symbolContent && otherSymbol->mapObject->id != mapObjectId;
                     });

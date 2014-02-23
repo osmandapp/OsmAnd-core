@@ -18,7 +18,72 @@ namespace OsmAnd
     {
     public:
         typedef Area<COORD_TYPE> AreaT;
-        typedef std::function<bool(const ELEMENT_TYPE& element, const AreaT& area)> Acceptor;
+        typedef OOBB<COORD_TYPE> OOBBT;
+        STRONG_ENUM(BBoxType)
+        {
+            AABB,
+            OOBB,
+        } STRONG_ENUM_TERMINATOR;
+        struct BBox
+        {
+            enum {
+                DataSize = (sizeof(AreaT) > sizeof(OOBBT)) ? sizeof(AreaT) : sizeof(OOBBT)
+            };
+
+            inline BBox()
+                : asAABB(*reinterpret_cast<AreaT*>(&data))
+                , asOOBB(*reinterpret_cast<OOBBT*>(&data))
+            {
+                memset(data, 0, DataSize);
+            }
+
+            inline BBox(const AreaT& aabb)
+                : asAABB(*reinterpret_cast<AreaT*>(&data))
+                , asOOBB(*reinterpret_cast<OOBBT*>(&data))
+                , type(BBoxType::AABB)
+            {
+                asAABB = aabb;
+            }
+
+            inline BBox(const OOBBT& oobb)
+                : asAABB(*reinterpret_cast<AreaT*>(&data))
+                , asOOBB(*reinterpret_cast<OOBBT*>(&data))
+                , type(BBoxType::OOBB)
+            {
+                asOOBB = oobb;
+            }
+
+            inline BBox(const BBox& that)
+                : asAABB(*reinterpret_cast<AreaT*>(&data))
+                , asOOBB(*reinterpret_cast<OOBBT*>(&data))
+                , type(that.type)
+            {
+                if(that.type == BBoxType::AABB)
+                    memcpy(data, that.data, sizeof(AreaT));
+                else /* if(that.type == BBoxType::OOBB) */
+                    memcpy(data, that.data, sizeof(OOBBT));
+            }
+
+            inline BBox& operator=(const BBox& that)
+            {
+                if(this != &that)
+                {
+                    if(that.type == BBoxType::AABB)
+                        memcpy(data, that.data, sizeof(AreaT));
+                    else /* if(that.type == BBoxType::OOBB) */
+                        memcpy(data, that.data, sizeof(OOBBT));
+                    type = that.type;
+                }
+                return *this;
+            }
+
+            uint8_t data[DataSize];
+            AreaT& asAABB;
+            OOBBT& asOOBB;
+            BBoxType type;
+        };
+
+        typedef std::function<bool (const ELEMENT_TYPE& element, const BBox& bbox)> Acceptor;
     private:
         Q_DISABLE_COPY(QuadTree)
     protected:
@@ -31,25 +96,36 @@ namespace OsmAnd
 
             const AreaT area;
             std::unique_ptr< Node > subnodes[4];
-            typedef std::pair<AreaT, ELEMENT_TYPE> EntryPair;
+            typedef std::pair<BBox, ELEMENT_TYPE> EntryPair;
             QList< EntryPair > entries;
 
-            bool insert(const ELEMENT_TYPE& element, const AreaT& area_, const bool strict, const uintmax_t allowedDepthRemaining)
+            template<typename BBOX_TYPE>
+            bool insert(const ELEMENT_TYPE& element, const BBOX_TYPE& bbox_, const bool strict, const uintmax_t allowedDepthRemaining)
             {
                 // Check if this node can hold entire element
-                if(!(area.contains(area_) || (!strict && area.intersects(area_))))
+                if(!(area.contains(bbox_) || (!strict && area.intersects(bbox_))))
                     return false;
 
-                insertNoCheck(element, area_, allowedDepthRemaining);
+                insertNoCheck(element, bbox_, allowedDepthRemaining);
                 return true;
             }
 
-            void insertNoCheck(const ELEMENT_TYPE& element, const AreaT& area_, const uintmax_t allowedDepthRemaining)
+            template<>
+            inline bool insert<BBox>(const ELEMENT_TYPE& element, const BBox& bbox_, const bool strict, const uintmax_t allowedDepthRemaining)
+            {
+                if(bbox_.type == BBoxType::AABB)
+                    return insert(element, bbox_.asAABB, allowedDepthRemaining);
+                else /* if(bbox_.type == BBoxType::OOBB) */
+                    return insert(element, bbox_.asOOBB, allowedDepthRemaining);
+            }
+
+            template<typename BBOX_TYPE>
+            void insertNoCheck(const ELEMENT_TYPE& element, const BBOX_TYPE& bbox_, const uintmax_t allowedDepthRemaining)
             {
                 // If depth limit is reached, add to this
                 if(allowedDepthRemaining == 0u)
                 {
-                    entries.push_back(qMove(EntryPair(area_, element)));
+                    entries.push_back(qMove(EntryPair(BBox(bbox_), element)));
                     return;
                 }
 
@@ -59,33 +135,42 @@ namespace OsmAnd
                     if(!subnodes[idx])
                     {
                         const auto subArea = area.getQuadrant(static_cast<typename AreaT::Quadrant>(idx));
-                        if(!subArea.contains(area_))
+                        if(!subArea.contains(bbox_))
                             continue;
                         subnodes[idx].reset(new Node(subArea));
-                        subnodes[idx]->insertNoCheck(element, area_, allowedDepthRemaining - 1);
+                        subnodes[idx]->insertNoCheck(element, bbox_, allowedDepthRemaining - 1);
                         return;
                     }
 
-                    if(subnodes[idx]->insert(element, area_, true, allowedDepthRemaining - 1))
+                    if(subnodes[idx]->insert(element, bbox_, true, allowedDepthRemaining - 1))
                         return;
                 }
 
                 // Otherwise, add to current node
-                entries.push_back(qMove(EntryPair(area_, element)));
-                return;
+                entries.push_back(qMove(EntryPair(BBox(bbox_), element)));
             }
 
-            void query(const AreaT& area_, QList<ELEMENT_TYPE>& outResults, const bool strict, const Acceptor acceptor) const
+            template<>
+            inline void insertNoCheck<BBox>(const ELEMENT_TYPE& element, const BBox& bbox_, const uintmax_t allowedDepthRemaining)
             {
-                if(!(area_.contains(area) || (!strict && area_.intersects(area))))
+                if(bbox_.type == BBoxType::AABB)
+                    insertNoCheck(element, bbox_.asAABB, allowedDepthRemaining);
+                else /* if(bbox_.type == BBoxType::OOBB) */
+                    insertNoCheck(element, bbox_.asOOBB, allowedDepthRemaining);
+            }
+
+            template<typename BBOX_TYPE>
+            void query(const BBOX_TYPE& bbox_, QList<ELEMENT_TYPE>& outResults, const bool strict, const Acceptor acceptor) const
+            {
+                if(!(bbox_.contains(area) || (!strict && bbox_.intersects(area))))
                     return;
 
-                for(auto itEntry = entries.cbegin(); itEntry != entries.cend(); ++itEntry)
+                for(const auto& entry : constOf(entries))
                 {
-                    if(area_.contains(itEntry->first) || (!strict && area_.intersects(itEntry->first)))
+                    if(contains(bbox_, entry.first) || (!strict && intersects(bbox_, entry.first)))
                     {
-                        if(!acceptor || acceptor(itEntry->second, itEntry->first))
-                            outResults.push_back(itEntry->second);
+                        if(!acceptor || acceptor(entry.second, entry.first))
+                            outResults.push_back(entry.second);
                     }
                 }
 
@@ -94,20 +179,30 @@ namespace OsmAnd
                     if(!subnodes[idx])
                         continue;
 
-                    subnodes[idx]->query(area_, outResults, strict, acceptor);
+                    subnodes[idx]->query(bbox_, outResults, strict, acceptor);
                 }
             }
 
-            bool test(const AreaT& area_, const bool strict, const Acceptor acceptor) const
+            template<>
+            inline void query<BBox>(const BBox& bbox_, QList<ELEMENT_TYPE>& outResults, const bool strict, const Acceptor acceptor) const
             {
-                if(!(area_.contains(area) || (!strict && area_.intersects(area))))
+                if(bbox_.type == BBoxType::AABB)
+                    query(bbox_.asAABB, outResults, strict, acceptor);
+                else /* if(bbox_.type == BBoxType::OOBB) */
+                    query(bbox_.asOOBB, outResults, strict, acceptor);
+            }
+
+            template<typename BBOX_TYPE>
+            bool test(const BBOX_TYPE& bbox_, const bool strict, const Acceptor acceptor) const
+            {
+                if(!(bbox_.contains(area) || (!strict && bbox_.intersects(area))))
                     return false;
 
-                for(auto itEntry = entries.cbegin(); itEntry != entries.cend(); ++itEntry)
+                for(const auto& entry : constOf(entries))
                 {
-                    if(area_.contains(itEntry->first) || (!strict && area_.intersects(itEntry->first)))
+                    if(contains(bbox_, entry.first) || (!strict && intersects(bbox_, entry.first)))
                     {
-                        if(!acceptor || acceptor(itEntry->second, itEntry->first))
+                        if(!acceptor || acceptor(entry.second, entry.first))
                             return true;
                     }
                 }
@@ -117,11 +212,38 @@ namespace OsmAnd
                     if(!subnodes[idx])
                         continue;
 
-                    if(subnodes[idx]->test(area_, strict, acceptor))
+                    if(subnodes[idx]->test(bbox_, strict, acceptor))
                         return true;
                 }
 
                 return false;
+            }
+
+            template<>
+            inline bool test<BBox>(const BBox& bbox_, const bool strict, const Acceptor acceptor) const
+            {
+                if(bbox_.type == BBoxType::AABB)
+                    test(bbox_.asAABB, strict, acceptor);
+                else /* if(bbox_.type == BBoxType::OOBB) */
+                    test(bbox_.asOOBB, strict, acceptor);
+            }
+
+            template<typename BBOX_TYPE>
+            static bool contains(const BBOX_TYPE& which, const BBox& what)
+            {
+                if(what.type == BBoxType::AABB)
+                    return which.contains(what.asAABB);
+                else /* if(bbox_.type == BBoxType::OOBB) */
+                    return which.contains(what.asOOBB);
+            }
+
+            template<typename BBOX_TYPE>
+            static bool intersects(const BBOX_TYPE& which, const BBox& what)
+            {
+                if(what.type == BBoxType::AABB)
+                    return which.intersects(what.asAABB);
+                else /* if(bbox_.type == BBoxType::OOBB) */
+                    return which.intersects(what.asOOBB);
             }
         };
 
@@ -139,19 +261,58 @@ namespace OsmAnd
 
         const uintmax_t maxDepth;
 
-        bool insert(const ELEMENT_TYPE& entry, const AreaT& area, const bool strict = false)
+        inline bool insert(const ELEMENT_TYPE& entry, const BBox& bbox, const bool strict = false)
         {
-            return _root->insert(entry, area, strict, maxDepth-1);
+            if(bbox.type == BBoxType::AABB)
+                return insert(entry, bbox.asAABB, strict);
+            else /* if(bbox.type == BBoxType::OOBB) */
+                return insert(entry, bbox.asOOBB, strict);
         }
 
-        void query(const AreaT& area, QList<ELEMENT_TYPE>& outResults, const bool strict = false, const Acceptor acceptor = nullptr) const
+        inline void query(const BBox& bbox, QList<ELEMENT_TYPE>& outResults, const bool strict = false, const Acceptor acceptor = nullptr) const
         {
-            _root->query(area, outResults, strict, acceptor);
+            if(bbox.type == BBoxType::AABB)
+                query(bbox.asAABB, outResults, strict, acceptor)
+            else /* if(bbox.type == BBoxType::OOBB) */
+                query(bbox.asOOBB, outResults, strict, acceptor)
         }
 
-        bool test(const AreaT& area, const bool strict = false, const Acceptor acceptor = nullptr) const
+        inline bool test(const BBox& bbox, const bool strict = false, const Acceptor acceptor = nullptr) const
         {
-            return _root->test(area, strict, acceptor);
+            if(bbox.type == BBoxType::AABB)
+                return test(bbox.asAABB, strict, acceptor);
+            else /* if(bbox.type == BBoxType::OOBB) */
+                return test(bbox.asOOBB, strict, acceptor);
+        }
+
+        inline bool insert(const ELEMENT_TYPE& entry, const AreaT& bbox, const bool strict = false)
+        {
+            return _root->insert(entry, bbox, strict, maxDepth - 1);
+        }
+
+        inline void query(const AreaT& bbox, QList<ELEMENT_TYPE>& outResults, const bool strict = false, const Acceptor acceptor = nullptr) const
+        {
+            _root->query(bbox, outResults, strict, acceptor);
+        }
+
+        inline bool test(const AreaT& bbox, const bool strict = false, const Acceptor acceptor = nullptr) const
+        {
+            return _root->test(bbox, strict, acceptor);
+        }
+
+        inline bool insert(const ELEMENT_TYPE& entry, const OOBBT& bbox, const bool strict = false)
+        {
+            return _root->insert(entry, bbox, strict, maxDepth - 1);
+        }
+
+        inline void query(const OOBBT& bbox, QList<ELEMENT_TYPE>& outResults, const bool strict = false, const Acceptor acceptor = nullptr) const
+        {
+            _root->query(bbox, outResults, strict, acceptor);
+        }
+
+        inline bool test(const OOBBT& bbox, const bool strict = false, const Acceptor acceptor = nullptr) const
+        {
+            return _root->test(bbox, strict, acceptor);
         }
     };
 }
