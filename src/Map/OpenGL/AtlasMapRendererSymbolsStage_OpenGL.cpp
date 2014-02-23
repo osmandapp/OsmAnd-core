@@ -881,15 +881,15 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 }
                 else
                 {
-                    // Calculate OOBB for 3D SOP
-                    const auto directionAngle = qAtan2(renderable->subpathDirectioInWorld.y, renderable->subpathDirectioInWorld.x);
-                    const auto negDirectionAngleCos = qCos(-directionAngle);
-                    const auto negDirectionAngleSin = qSin(-directionAngle);
-                    const auto directionAngleCos = qCos(directionAngle);
-                    const auto directionAngleSin = qSin(directionAngle);
+                    // Calculate OOBB for 3D SOP in world
+                    const auto directionAngleInWorld = qAtan2(renderable->subpathDirectioInWorld.y, renderable->subpathDirectioInWorld.x);
+                    const auto negDirectionAngleInWorldCos = qCos(-directionAngleInWorld);
+                    const auto negDirectionAngleInWorldSin = qSin(-directionAngleInWorld);
+                    const auto directionAngleInWorldCos = qCos(directionAngleInWorld);
+                    const auto directionAngleInWorldSin = qSin(directionAngleInWorld);
                     const auto halfGlyphHeight = (gpuResource->height / 2.0f) * projectionScale;
-                    auto bboxInitialized = false;
-                    AreaF bboxInDirection;
+                    auto bboxInWorldInitialized = false;
+                    AreaF bboxInWorldDirection;
                     for(const auto& glyph : constOf(glyphs))
                     {
                         const auto& anchorPoint = std::get<0>(glyph);
@@ -921,45 +921,148 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 
                             // Rotate to align with direction
                             PointF alignedPoint;
-                            alignedPoint.x = pointInWorld.x*negDirectionAngleCos - pointInWorld.y*negDirectionAngleSin;
-                            alignedPoint.y = pointInWorld.x*negDirectionAngleSin + pointInWorld.y*negDirectionAngleCos;
-                            if(Q_LIKELY(bboxInitialized))
-                                bboxInDirection.enlargeToInclude(alignedPoint);
+                            alignedPoint.x = pointInWorld.x*negDirectionAngleInWorldCos - pointInWorld.y*negDirectionAngleInWorldSin;
+                            alignedPoint.y = pointInWorld.x*negDirectionAngleInWorldSin + pointInWorld.y*negDirectionAngleInWorldCos;
+                            if(Q_LIKELY(bboxInWorldInitialized))
+                                bboxInWorldDirection.enlargeToInclude(alignedPoint);
                             else
                             {
-                                bboxInDirection.topLeft = bboxInDirection.bottomRight = alignedPoint;
-                                bboxInitialized = true;
+                                bboxInWorldDirection.topLeft = bboxInWorldDirection.bottomRight = alignedPoint;
+                                bboxInWorldInitialized = true;
                             }
                         }
                     }
-                    const auto alignedCenter = bboxInDirection.center();
-                    bboxInDirection -= alignedCenter;
-                    PointF centerOnScreen;
-                    centerOnScreen.x = alignedCenter.x*directionAngleCos - alignedCenter.y*directionAngleSin;
-                    centerOnScreen.y = alignedCenter.x*directionAngleSin + alignedCenter.y*directionAngleCos;
-                    bboxInDirection += centerOnScreen;
+                    const auto alignedCenterInWorld = bboxInWorldDirection.center();
+                    bboxInWorldDirection -= alignedCenterInWorld;
+                    
                     //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
-                    bboxInDirection.enlargeBy(PointI(3.0f*setupOptions.displayDensityFactor*projectionScale, 10.0f*setupOptions.displayDensityFactor*projectionScale)); /* 3dip; 10dip */
-                    // bboxInDirection contains world points of bbox
-                    //OOBBF oobb(bboxInDirection, directionAngle);
+                    bboxInWorldDirection.enlargeBy(PointI(3.0f*setupOptions.displayDensityFactor*projectionScale, 10.0f*setupOptions.displayDensityFactor*projectionScale)); /* 3dip; 10dip */
+
+                    PointF rotatedBBoxInWorld[4];
+                    const auto& tl = bboxInWorldDirection.topLeft;
+                    rotatedBBoxInWorld[0].x = tl.x*directionAngleInWorldCos - tl.y*directionAngleInWorldSin;
+                    rotatedBBoxInWorld[0].y = tl.x*directionAngleInWorldSin + tl.y*directionAngleInWorldCos;
+                    const auto& tr = bboxInWorldDirection.topRight();
+                    rotatedBBoxInWorld[1].x = tr.x*directionAngleInWorldCos - tr.y*directionAngleInWorldSin;
+                    rotatedBBoxInWorld[1].y = tr.x*directionAngleInWorldSin + tr.y*directionAngleInWorldCos;
+                    const auto& br = bboxInWorldDirection.bottomRight;
+                    rotatedBBoxInWorld[2].x = br.x*directionAngleInWorldCos - br.y*directionAngleInWorldSin;
+                    rotatedBBoxInWorld[2].y = br.x*directionAngleInWorldSin + br.y*directionAngleInWorldCos;
+                    const auto& bl = bboxInWorldDirection.bottomLeft();
+                    rotatedBBoxInWorld[3].x = bl.x*directionAngleInWorldCos - bl.y*directionAngleInWorldSin;
+                    rotatedBBoxInWorld[3].y = bl.x*directionAngleInWorldSin + bl.y*directionAngleInWorldCos;
+
+                    PointF centerInWorld;
+                    centerInWorld.x = alignedCenterInWorld.x*directionAngleInWorldCos - alignedCenterInWorld.y*directionAngleInWorldSin;
+                    centerInWorld.y = alignedCenterInWorld.x*directionAngleInWorldSin + alignedCenterInWorld.y*directionAngleInWorldCos;
+                    bboxInWorldDirection += centerInWorld;
+                    rotatedBBoxInWorld[0] += centerInWorld;
+                    rotatedBBoxInWorld[1] += centerInWorld;
+                    rotatedBBoxInWorld[2] += centerInWorld;
+                    rotatedBBoxInWorld[3] += centerInWorld;
+
+#if OSMAND_DEBUG && 0
                     {
-                        const auto& cc = bboxInDirection.center();
-                        const auto& tl = bboxInDirection.topLeft;
-                        const auto& tr = bboxInDirection.topRight();
-                        const auto& br = bboxInDirection.bottomRight;
-                        const auto& bl = bboxInDirection.bottomLeft();
-                        
+                        const auto& cc = bboxInWorldDirection.center();
+                        const auto& tl = bboxInWorldDirection.topLeft;
+                        const auto& tr = bboxInWorldDirection.topRight();
+                        const auto& br = bboxInWorldDirection.bottomRight;
+                        const auto& bl = bboxInWorldDirection.bottomLeft();
+
                         const glm::vec3 pC(cc.x, 0.0f, cc.y);
                         const glm::vec4 p0(tl.x, 0.0f, tl.y, 1.0f);
                         const glm::vec4 p1(tr.x, 0.0f, tr.y, 1.0f);
                         const glm::vec4 p2(br.x, 0.0f, br.y, 1.0f);
                         const glm::vec4 p3(bl.x, 0.0f, bl.y, 1.0f);
                         const auto toCenter = glm::translate(-pC);
-                        const auto rotate = glm::rotate(qRadiansToDegrees((float)Utilities::normalizedAngleRadians(directionAngle + M_PI)), glm::vec3(0.0f, -1.0f, 0.0f));
+                        const auto rotate = glm::rotate(qRadiansToDegrees((float)Utilities::normalizedAngleRadians(directionAngleInWorld + M_PI)), glm::vec3(0.0f, -1.0f, 0.0f));
                         const auto fromCenter = glm::translate(pC);
                         const auto M = fromCenter*rotate*toCenter;
                         getRenderer()->_debugStage.addQuad3D((M*p0).xyz, (M*p1).xyz, (M*p2).xyz, (M*p3).xyz, SkColorSetA(SK_ColorGREEN, 50));
                     }
+#endif // OSMAND_DEBUG
+#if OSMAND_DEBUG && 0
+                    {
+                        const auto& tl = rotatedBBoxInWorld[0];
+                        const auto& tr = rotatedBBoxInWorld[1];
+                        const auto& br = rotatedBBoxInWorld[2];
+                        const auto& bl = rotatedBBoxInWorld[3];
+
+                        const glm::vec3 p0(tl.x, 0.0f, tl.y);
+                        const glm::vec3 p1(tr.x, 0.0f, tr.y);
+                        const glm::vec3 p2(br.x, 0.0f, br.y);
+                        const glm::vec3 p3(bl.x, 0.0f, bl.y);
+                        getRenderer()->_debugStage.addQuad3D(p0, p1, p2, p3, SkColorSetA(SK_ColorGREEN, 50));
+                    }
+#endif // OSMAND_DEBUG
+
+                    // Project points of OOBB in world to screen
+                    const PointF projectedRotatedBBoxInWorldP0(static_cast<glm::vec2>(
+                        glm::project(glm::vec3(rotatedBBoxInWorld[0].x, 0.0f, rotatedBBoxInWorld[0].y),
+                        internalState.mCameraView,
+                        internalState.mPerspectiveProjection,
+                        viewport).xy));
+                    const PointF projectedRotatedBBoxInWorldP1(static_cast<glm::vec2>(
+                        glm::project(glm::vec3(rotatedBBoxInWorld[1].x, 0.0f, rotatedBBoxInWorld[1].y),
+                        internalState.mCameraView,
+                        internalState.mPerspectiveProjection,
+                        viewport).xy));
+                    const PointF projectedRotatedBBoxInWorldP2(static_cast<glm::vec2>(
+                        glm::project(glm::vec3(rotatedBBoxInWorld[2].x, 0.0f, rotatedBBoxInWorld[2].y),
+                        internalState.mCameraView,
+                        internalState.mPerspectiveProjection,
+                        viewport).xy));
+                    const PointF projectedRotatedBBoxInWorldP3(static_cast<glm::vec2>(
+                        glm::project(glm::vec3(rotatedBBoxInWorld[3].x, 0.0f, rotatedBBoxInWorld[3].y),
+                        internalState.mCameraView,
+                        internalState.mPerspectiveProjection,
+                        viewport).xy));
+#if OSMAND_DEBUG && 0
+                    {
+                        QVector<glm::vec2> line;
+                        line.push_back(glm::vec2(projectedRotatedBBoxInWorldP0.x, currentState.windowSize.y - projectedRotatedBBoxInWorldP0.y));
+                        line.push_back(glm::vec2(projectedRotatedBBoxInWorldP1.x, currentState.windowSize.y - projectedRotatedBBoxInWorldP1.y));
+                        line.push_back(glm::vec2(projectedRotatedBBoxInWorldP2.x, currentState.windowSize.y - projectedRotatedBBoxInWorldP2.y));
+                        line.push_back(glm::vec2(projectedRotatedBBoxInWorldP3.x, currentState.windowSize.y - projectedRotatedBBoxInWorldP3.y));
+                        line.push_back(glm::vec2(projectedRotatedBBoxInWorldP0.x, currentState.windowSize.y - projectedRotatedBBoxInWorldP0.y));
+                        getRenderer()->_debugStage.addLine2D(line, SkColorSetA(SK_ColorRED, 50));
+                    }
+#endif // OSMAND_DEBUG
+
+                    // Rotate using direction on screen
+                    const auto directionAngle = qAtan2(renderable->subpathDirectionOnScreen.y, renderable->subpathDirectionOnScreen.x);
+                    const auto negDirectionAngleCos = qCos(-directionAngle);
+                    const auto negDirectionAngleSin = qSin(-directionAngle);
+                    PointF bboxOnScreenP0;
+                    bboxOnScreenP0.x = projectedRotatedBBoxInWorldP0.x*negDirectionAngleCos - projectedRotatedBBoxInWorldP0.y*negDirectionAngleSin;
+                    bboxOnScreenP0.y = projectedRotatedBBoxInWorldP0.x*negDirectionAngleSin + projectedRotatedBBoxInWorldP0.y*negDirectionAngleCos;
+                    PointF bboxOnScreenP1;
+                    bboxOnScreenP1.x = projectedRotatedBBoxInWorldP1.x*negDirectionAngleCos - projectedRotatedBBoxInWorldP1.y*negDirectionAngleSin;
+                    bboxOnScreenP1.y = projectedRotatedBBoxInWorldP1.x*negDirectionAngleSin + projectedRotatedBBoxInWorldP1.y*negDirectionAngleCos;
+                    PointF bboxOnScreenP2;
+                    bboxOnScreenP2.x = projectedRotatedBBoxInWorldP2.x*negDirectionAngleCos - projectedRotatedBBoxInWorldP2.y*negDirectionAngleSin;
+                    bboxOnScreenP2.y = projectedRotatedBBoxInWorldP2.x*negDirectionAngleSin + projectedRotatedBBoxInWorldP2.y*negDirectionAngleCos;
+                    PointF bboxOnScreenP3;
+                    bboxOnScreenP3.x = projectedRotatedBBoxInWorldP3.x*negDirectionAngleCos - projectedRotatedBBoxInWorldP3.y*negDirectionAngleSin;
+                    bboxOnScreenP3.y = projectedRotatedBBoxInWorldP3.x*negDirectionAngleSin + projectedRotatedBBoxInWorldP3.y*negDirectionAngleCos;
+
+                    // Build bbox from that and subtract center
+                    AreaF bboxInDirection;
+                    bboxInDirection.topLeft = bboxInDirection.bottomRight = bboxOnScreenP0;
+                    bboxInDirection.enlargeToInclude(bboxOnScreenP1);
+                    bboxInDirection.enlargeToInclude(bboxOnScreenP2);
+                    bboxInDirection.enlargeToInclude(bboxOnScreenP3);
+                    const auto alignedCenter = bboxInDirection.center();
+                    bboxInDirection -= alignedCenter;
+
+                    // Rotate center and add it
+                    const auto directionAngleCos = qCos(directionAngle);
+                    const auto directionAngleSin = qSin(directionAngle);
+                    PointF centerOnScreen;
+                    centerOnScreen.x = alignedCenter.x*directionAngleCos - alignedCenter.y*directionAngleSin;
+                    centerOnScreen.y = alignedCenter.x*directionAngleSin + alignedCenter.y*directionAngleCos;
+                    bboxInDirection += centerOnScreen;
+                    OOBBF oobb(bboxInDirection, directionAngle);
 
 //                    // Check intersections
 //                    const auto intersects = intersections.test(oobb, false,
@@ -1003,12 +1106,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 //                    }
 
 #if OSMAND_DEBUG && 1
-                    /*{
+                    {
                         auto bboxDebug = oobb.unrotatedBBox;
                         bboxDebug.topLeft.y = currentState.windowSize.y - bboxDebug.topLeft.y;
                         bboxDebug.bottomRight.y = currentState.windowSize.y - bboxDebug.bottomRight.y;
                         getRenderer()->_debugStage.addRect2D(bboxDebug, SkColorSetA(SK_ColorGREEN, 50), oobb.rotation);
-                    }*/
+                    }
 #endif // OSMAND_DEBUG
 
                     // Check if correct program is being used

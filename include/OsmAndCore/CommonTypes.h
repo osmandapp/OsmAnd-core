@@ -48,7 +48,24 @@ namespace OsmAnd
             this->y = y;
         }
 
+#if defined(OSMAND_GLM_AVAILABLE)
+        inline Point(const glm::detail::tvec2<T>& that)
+        {
+            this->x = that.x;
+            this->y = that.y;
+        }
+#endif // defined(OSMAND_GLM_AVAILABLE)
+
 #if !defined(SWIG)
+#   if defined(OSMAND_GLM_AVAILABLE)
+        inline PointT& operator=(const glm::detail::tvec2<T>& r)
+        {
+            this->x = r.x;
+            this->y = r.y;
+            return *this;
+        }
+#   endif // defined(OSMAND_GLM_AVAILABLE)
+
         inline PointT operator+(const PointT& r) const
         {
             return PointT(x + r.x, y + r.y);
