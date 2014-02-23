@@ -435,7 +435,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     if(hasSimilarContent)
                     {
 #if OSMAND_DEBUG && 0
-                        getRenderer()->_debugStage.addRect2D(boundsInWindow, SkColorSetA(SK_ColorRED, 50));
+                        getRenderer()->_debugStage.addRect2D(boundsInWindow.getEnlargedBy(symbol->minDistance), SkColorSetA(SK_ColorRED, 50));
+                        getRenderer()->_debugStage.addRect2D(boundsInWindow, SkColorSetA(SK_ColorRED, 128));
 #endif // OSMAND_DEBUG
                         continue;
                     }
@@ -699,7 +700,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 //                    if(intersects)
 //                    {
 //#if OSMAND_DEBUG && 1
-//                        getRenderer()->_debugStage.addRect2D(oobb.bboxInObjectSpace, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
+//                        getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
 //#endif // OSMAND_DEBUG
 //                        continue;
 //                    }
@@ -716,7 +717,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 //                        if(hasSimilarContent)
 //                        {
 //#if OSMAND_DEBUG && 1
-//                            getRenderer()->_debugStage.addRect2D(oobb.bboxInObjectSpace, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
+//                            getRenderer()->_debugStage.addRect2D(oobb.getEnlargedBy(symbol->minDistance).unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
+//                            getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 128), oobb.rotation);
 //#endif // OSMAND_DEBUG
 //                            continue;
 //                        }
@@ -726,7 +728,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 //                    if(!intersections.insert(symbol, oobb))
 //                    {
 //#if OSMAND_DEBUG && 1
-//                        getRenderer()->_debugStage.addRect2D(oobb.bboxInObjectSpace, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
+//                        getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
 //#endif // OSMAND_DEBUG
 //                        continue;
 //                    }
@@ -1070,7 +1072,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 //                    if(intersects)
 //                    {
 //#if OSMAND_DEBUG && 1
-//                        getRenderer()->_debugStage.addRect2D(oobb.bboxInObjectSpace, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
+//                        getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
 //#endif // OSMAND_DEBUG
 //                        continue;
 //                    }
@@ -1087,7 +1089,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 //                        if(hasSimilarContent)
 //                        {
 //#if OSMAND_DEBUG && 1
-//                            getRenderer()->_debugStage.addRect2D(oobb.bboxInObjectSpace, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
+//                            getRenderer()->_debugStage.addRect2D(oobb.getEnlargedBy(symbol->minDistance).unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
+//                            getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 128), oobb.rotation);
 //#endif // OSMAND_DEBUG
 //                            continue;
 //                        }
@@ -1097,7 +1100,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 //                    if(!intersections.insert(symbol, oobb))
 //                    {
 //#if OSMAND_DEBUG && 1
-//                        getRenderer()->_debugStage.addRect2D(oobb.bboxInObjectSpace, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
+//                        getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
 //#endif // OSMAND_DEBUG
 //                        continue;
 //                    }
