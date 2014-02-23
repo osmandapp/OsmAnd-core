@@ -728,7 +728,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 
 #if OSMAND_DEBUG && 1
                     {
-                        auto bboxDebug = bboxInDirection;
+                        auto bboxDebug = oobb.unrotatedBBox;
                         bboxDebug.topLeft.y = currentState.windowSize.y - bboxDebug.topLeft.y;
                         bboxDebug.bottomRight.y = currentState.windowSize.y - bboxDebug.bottomRight.y;
                         getRenderer()->_debugStage.addRect2D(bboxDebug, SkColorSetA(SK_ColorGREEN, 50), oobb.rotation);
