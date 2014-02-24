@@ -275,7 +275,7 @@ namespace OsmAnd
         mutable QMutex _mapSymbolsByOrderMutex;
         MapSymbolsByOrder _mapSymbolsByOrder;
         unsigned int _mapSymbolsCount;
-        void addMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource);
+        void addMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<const GPUAPI::ResourceInGPU>& gpuResource);
         void removeMapSymbol(const std::shared_ptr<const MapSymbol>& symbol);
 
         void notifyNewResourceAvailable();

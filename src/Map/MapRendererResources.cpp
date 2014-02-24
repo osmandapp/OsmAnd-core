@@ -331,7 +331,7 @@ bool OsmAnd::MapRendererResources::isDataSourceAvailableFor(const std::shared_pt
     return binding.collectionsToProviders.contains(collection);
 }
 
-void OsmAnd::MapRendererResources::addMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource)
+void OsmAnd::MapRendererResources::addMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<const GPUAPI::ResourceInGPU>& gpuResource)
 {
     QMutexLocker scopedLocker(&_mapSymbolsByOrderMutex);
 

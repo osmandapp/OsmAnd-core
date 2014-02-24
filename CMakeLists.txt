@@ -198,17 +198,6 @@ else()
 		WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
 		COMMENT "Embedding resources...")
 endif()
-# This target is always considered out-of-date, which isn't good. It has dependencies - the list
-#add_custom_target(OsmAndCore_embed_resources
-#	ALL
-#	DEPENDS
-#		${OsmAndCore_resources_bundle}
-#	SOURCES
-#		${OsmAndCore_resources_bundle}
-#)
-#set(merged_dependencies ${merged_dependencies}
-#	OsmAndCore_embed_resources
-#)
 set(merged_sources ${merged_sources}
 	${OsmAndCore_resources_bundle}
 )
