@@ -747,6 +747,7 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 				SkRect& t = searchText.at(i);
 				if (SkRect::Intersects(t, r)) {
 					intersects =  true;
+					break;
 				}
 			}
 			if (!intersects) {
