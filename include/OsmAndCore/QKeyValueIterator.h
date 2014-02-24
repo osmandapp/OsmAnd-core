@@ -132,8 +132,6 @@ namespace OsmAnd
         {
             return ConstIterator(container.cend());
         }
-
-    friend struct OsmAnd::KeyValueContainerWrapper<CONTAINER>;
     };
 
     template<class CONTAINER>
@@ -217,8 +215,6 @@ namespace OsmAnd
         {
             return ConstIterator(container.cend());
         }
-
-        friend struct OsmAnd::KeyValueConstContainerWrapper<CONTAINER>;
     };
 
     template<class CONTAINER>
