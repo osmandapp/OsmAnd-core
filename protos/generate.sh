@@ -4,7 +4,7 @@ SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Switch to default protoc if not provided
 if [ -z "$PROTOC" ]; then
-    PROTOC="protoc"
+    PROTOC=`which protoc`
 fi
 if [ -z "$PROTOC" ]; then
 	echo "'protoc' not found, terminating"
