@@ -1307,7 +1307,7 @@ void OsmAnd::MapRendererResources::SymbolsTileResource::unloadFromGPU()
     // Unique
     for(const auto& groupResources : constOf(_uniqueGroupsResources))
     {
-        for(auto& entryResourceInGPU : rangeOf(groupResources->resourcesInGPU))
+        for(const auto& entryResourceInGPU : rangeOf(groupResources->resourcesInGPU))
         {
             const auto& symbol = entryResourceInGPU.key();
             auto& resourceInGPU = entryResourceInGPU.value();
