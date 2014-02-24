@@ -28,13 +28,11 @@ OsmAnd::RoutePlannerContext::RoutePlannerContext(
     _planRoadDirection = Utilities::parseArbitraryInt(configuration->resolveAttribute(vehicle, "planRoadDirection"), 0);
     _roadTilesLoadingZoomLevel = Utilities::parseArbitraryUInt(configuration->resolveAttribute(vehicle, "zoomToLoadTiles"), DefaultRoadTilesLoadingZoomLevel);
 
-    for(auto itSource = sources.cbegin(); itSource != sources.cend(); ++itSource)
+    for(const auto& source : constOf(sources))
     {
-        const auto& source = *itSource;
-
         const auto& obfInfo = source->obtainInfo();
-        for(auto itRoutingSection = obfInfo->routingSections.cbegin(); itRoutingSection != obfInfo->routingSections.cend(); ++itRoutingSection)
-            _sourcesLUT.insert((*itRoutingSection).get(), source);
+        for(const auto& routingSection : constOf(obfInfo->routingSections))
+            _sourcesLUT.insert(routingSection.get(), source);
     }
 }
 
@@ -58,7 +56,8 @@ OsmAnd::RoutePlannerContext::RoutingSubsectionContext::~RoutingSubsectionContext
 
 uint32_t OsmAnd::RoutePlannerContext::getCurrentlyLoadedTiles() {
     uint32_t cnt = 0;
-    for(std::shared_ptr<RoutingSubsectionContext> t : this->_subsectionsContexts){
+    for(const auto& t : this->_subsectionsContexts)
+    {
         if(t->isLoaded()) {
             cnt++;
         }
@@ -93,7 +92,7 @@ void OsmAnd::RoutePlannerContext::unloadUnusedTiles(size_t memoryTarget) {
     float desirableSize = memoryTarget * 0.7f;
     QList< std::shared_ptr<RoutingSubsectionContext> > list;
     int loaded = 0;
-    for(std::shared_ptr<RoutingSubsectionContext>  t : this->_subsectionsContexts) {
+    for(const auto& t : this->_subsectionsContexts) {
         if(t->isLoaded()) {
             list.push_back(t);
             loaded++;
@@ -118,18 +117,18 @@ void OsmAnd::RoutePlannerContext::unloadUnusedTiles(size_t memoryTarget) {
         OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Unloaded tiles %d (loaded prevUnloaded %d, currently loaded %d)",  _routeStatistics->unloadedTiles,  _routeStatistics->loadedPrevUnloadedTiles, getCurrentlyLoadedTiles());
         OsmAnd::LogFlush();
     }
-    for(std::shared_ptr<OsmAnd::RoutePlannerContext::RoutingSubsectionContext> t : _subsectionsContexts) {
+    for(const auto& t : _subsectionsContexts)
         t->_access /= 3;
-    }
 }
 
 void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::registerRoad( const std::shared_ptr<const Model::Road>& road )
 {
     uint32_t idx = 0;
-    for(auto itPoint = road->points.cbegin(); itPoint != road->points.cend(); ++itPoint, idx++)
+    for(auto itPoint = road->points.cbegin(), itEnd = road->points.cend(); itPoint != itEnd; ++itPoint, idx++)
     {
-        const auto& x31 = itPoint->x;
-        const auto& y31 = itPoint->y;
+        const auto& point = *itPoint;
+        const auto& x31 = point.x;
+        const auto& y31 = point.y;
         uint64_t id = (static_cast<uint64_t>(x31) << 31) | y31;
         
         std::shared_ptr<RouteCalculationSegment> routeSegment(new RouteCalculationSegment(road, idx));
@@ -158,7 +157,7 @@ uint32_t OsmAnd::RoutePlannerContext::RoutingSubsectionContext::getLoadsCounter(
 
 void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::collectRoads( QList< std::shared_ptr<const Model::Road> >& output, QMap<uint64_t, std::shared_ptr<const Model::Road> >* duplicatesRegistry /*= nullptr*/ )
 {
-    for(auto itRouteSegment = _roadSegments.cbegin(); itRouteSegment != _roadSegments.cend(); ++itRouteSegment)
+    for(auto itRouteSegment = _roadSegments.cbegin(), itEnd = _roadSegments.cend(); itRouteSegment != itEnd; ++itRouteSegment)
     {
         auto routeSegment = itRouteSegment.value();
         while(routeSegment)

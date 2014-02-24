@@ -144,9 +144,9 @@ bool OsmAnd::RoutingRuleExpression::validateAllTypesShouldNotBePresent( const QB
 
 bool OsmAnd::RoutingRuleExpression::validateFreeTags( const QBitArray& types ) const
 {
-    for(auto itOnlyTag = _onlyTags.cbegin(); itOnlyTag != _onlyTags.cend(); ++itOnlyTag)
+    for(const auto& onlyTag : constOf(_onlyTags))
     {
-        auto itBitset = ruleset->owner->_tagRuleMask.constFind(*itOnlyTag);
+        auto itBitset = ruleset->owner->_tagRuleMask.constFind(onlyTag);
         if(itBitset == ruleset->owner->_tagRuleMask.cend())
             return false;
         if( (*itBitset & types).count(true) == 0 )
@@ -158,9 +158,9 @@ bool OsmAnd::RoutingRuleExpression::validateFreeTags( const QBitArray& types ) c
 
 bool OsmAnd::RoutingRuleExpression::validateNotFreeTags( const QBitArray& types ) const
 {
-    for(auto itOnlyNotTag = _onlyNotTags.cbegin(); itOnlyNotTag != _onlyNotTags.cend(); ++itOnlyNotTag)
+    for(const auto& onlyNotTag : constOf(_onlyNotTags))
     {
-        auto itBitset = ruleset->owner->_tagRuleMask.constFind(*itOnlyNotTag);
+        auto itBitset = ruleset->owner->_tagRuleMask.constFind(onlyNotTag);
         if(itBitset == ruleset->owner->_tagRuleMask.cend())
             return false;
         if( (*itBitset & types).count(true) > 0 )
@@ -172,9 +172,8 @@ bool OsmAnd::RoutingRuleExpression::validateNotFreeTags( const QBitArray& types 
 
 bool OsmAnd::RoutingRuleExpression::evaluateExpressions( const QBitArray& types, RoutingRulesetContext* context ) const
 {
-    for(auto itOperator = _operators.cbegin(); itOperator != _operators.cend(); ++itOperator)
+    for(const auto& operator_ : constOf(_operators))
     {
-        auto operator_ = *itOperator;
         if(!operator_->evaluate(types, context))
             return false;
     }
@@ -201,7 +200,7 @@ bool OsmAnd::RoutingRuleExpression::resolveTagReferenceValue( RoutingRulesetCont
         auto foundBits = (mask & types);
         if(foundBits.count(true) > 0)
         {
-            for(auto bitIdx = 0; bitIdx < foundBits.size(); bitIdx++)
+            for(auto bitIdx = 0, count = foundBits.size(); bitIdx < count; bitIdx++)
             {
                 if(foundBits.testBit(bitIdx))
                 {

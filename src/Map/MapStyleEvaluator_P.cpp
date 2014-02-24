@@ -79,7 +79,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
     bool evaluateChildren)
 {
     // Check all values of a rule until all are checked.
-    for(auto itRuleValueEntry = rule->_d->_values.cbegin(); itRuleValueEntry != rule->_d->_values.cend(); ++itRuleValueEntry)
+    for(auto itRuleValueEntry = rule->_d->_values.cbegin(), itEnd = rule->_d->_values.cend(); itRuleValueEntry != itEnd; ++itRuleValueEntry)
     {
         const auto& valueDef = itRuleValueEntry.key();
 
@@ -141,7 +141,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
     // Fill output values from rule to result storage, if requested
     if(outResultStorage)
     {
-        for(auto itRuleValueEntry = rule->_d->_values.cbegin(); itRuleValueEntry != rule->_d->_values.cend(); ++itRuleValueEntry)
+        for(auto itRuleValueEntry = rule->_d->_values.cbegin(), itEnd = rule->_d->_values.cend(); itRuleValueEntry != itEnd; ++itRuleValueEntry)
         {
             const auto& valueDef = itRuleValueEntry.key();
             if(valueDef->valueClass != MapStyleValueClass::Output)
@@ -182,17 +182,15 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
 
     if(evaluateChildren)
     {
-        for(auto itChild = rule->_d->_ifElseChildren.cbegin(); itChild != rule->_d->_ifElseChildren.cend(); ++itChild)
+        for(const auto& child : constOf(rule->_d->_ifElseChildren))
         {
-            const auto evaluationResult = evaluate(mapObject, *itChild, outResultStorage, true);
+            const auto evaluationResult = evaluate(mapObject, child, outResultStorage, true);
             if(evaluationResult)
                 break;
         }
 
-        for(auto itChild = rule->_d->_ifChildren.cbegin(); itChild != rule->_d->_ifChildren.cend(); ++itChild)
-        {
-            evaluate(mapObject, *itChild, outResultStorage, true);
-        }
+        for(const auto& child : constOf(rule->_d->_ifChildren))
+            evaluate(mapObject, child, outResultStorage, true);
     }
 
     return true;

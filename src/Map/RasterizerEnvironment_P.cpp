@@ -54,11 +54,8 @@ OsmAnd::RasterizerEnvironment_P::~RasterizerEnvironment_P()
     {
         QMutexLocker scopedLock(&_pathEffectsMutex);
 
-        for(auto itPathEffect = _pathEffects.cbegin(); itPathEffect != _pathEffects.cend(); ++itPathEffect)
-        {
-            auto pathEffect = *itPathEffect;
+        for(auto& pathEffect : _pathEffects)
             pathEffect->unref();
-        }
     }
 }
 
@@ -204,7 +201,7 @@ void OsmAnd::RasterizerEnvironment_P::applyTo( MapStyleEvaluator& evaluator ) co
 {
     QMutexLocker scopedLocker(&_settingsChangeMutex);
 
-    for(auto itSetting = _settings.cbegin(); itSetting != _settings.cend(); ++itSetting)
+    for(auto itSetting = _settings.cbegin(), itEnd = _settings.cend(); itSetting != itEnd; ++itSetting)
     {
         const auto& valueDef = itSetting.key();
         const auto& settingValue = *itSetting;
@@ -268,9 +265,9 @@ bool OsmAnd::RasterizerEnvironment_P::obtainPathEffect( const QString& encodedPa
         const auto& strIntervals = encodedPathEffect.split('_', QString::SkipEmptyParts);
 
         const auto intervals = new SkScalar[strIntervals.size()];
-        auto interval = intervals;
-        for(auto itInterval = strIntervals.cbegin(); itInterval != strIntervals.cend(); ++itInterval, interval++)
-            *interval = itInterval->toFloat();
+        auto pInterval = intervals;
+        for(const auto& strInterval : constOf(strIntervals))
+            *(pInterval++) = strInterval.toFloat();
 
         SkPathEffect* pathEffect = new SkDashPathEffect(intervals, strIntervals.size(), 0);
         delete[] intervals;

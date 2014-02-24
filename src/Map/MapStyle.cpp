@@ -86,7 +86,7 @@ void OsmAnd::MapStyle::dump( const QString& prefix /*= QString()*/ ) const
 void OsmAnd::MapStyle::dump( MapStyleRulesetType type, const QString& prefix /*= QString()*/ ) const
 {
     const auto& rules = _d->obtainRulesRef(type);
-    for(auto itRuleEntry = rules.cbegin(); itRuleEntry != rules.cend(); ++itRuleEntry)
+    for(auto itRuleEntry = rules.cbegin(), itEnd = rules.cend(); itRuleEntry != itEnd; ++itRuleEntry)
     {
         auto tag = _d->getTagString(itRuleEntry.key());
         auto value = _d->getValueString(itRuleEntry.key());

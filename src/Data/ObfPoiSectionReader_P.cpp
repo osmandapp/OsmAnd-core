@@ -209,10 +209,8 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
                     return l->_hash < r->_hash;
                 });
 
-                for(auto itTile = tiles.cbegin(); itTile != tiles.cend(); ++itTile)
+                for(const auto& tile : constOf(tiles))
                 {
-                    const auto& tile = *itTile;
-
                     cis->Seek(section->_offset + tile->_offset);
                     auto length = ObfReaderUtilities::readBigEndianInt(cis);
                     auto oldLimit = cis->PushLimit(length);

@@ -100,14 +100,10 @@ namespace OsmAnd
             QReadLocker scopedLocker(&_collectionLock);
 
             bool doCancel = false;
-            for(auto itZoomLevel = _zoomLevels.cbegin(); itZoomLevel != _zoomLevels.cend(); ++itZoomLevel)
+            for(const auto& zoomLevel : constOf(_zoomLevels))
             {
-                const auto& zoomLevel = *itZoomLevel;
-
-                for(auto itEntryPair = zoomLevel.cbegin(); itEntryPair != zoomLevel.cend(); ++itEntryPair)
+                for(const auto& entry : constOf(zoomLevel))
                 {
-                    const auto& entry = itEntryPair.value();
-                    
                     if(!filter || (filter && filter(entry, doCancel)))
                     {
                         if(outList)
@@ -128,8 +124,8 @@ namespace OsmAnd
             {
                 auto& zoomLevel = _zoomLevels[zoom];
 
-                for(auto itEntry = zoomLevel.cbegin(); itEntry != zoomLevel.cend(); ++itEntry)
-                    itEntry.value()->unlink();
+                for(const auto& entry : constOf(zoomLevel))
+                    entry->unlink();
 
                 zoomLevel.clear();
             }
@@ -153,10 +149,8 @@ namespace OsmAnd
             QWriteLocker scopedLock(&_collectionLock);
 
             bool doCancel = false;
-            for(auto itZoomLevel = _zoomLevels.begin(); itZoomLevel != _zoomLevels.end(); ++itZoomLevel)
+            for(auto& zoomLevel : _zoomLevels)
             {
-                auto& zoomLevel = *itZoomLevel;
-
                 QMutableHashIterator< TileId, std::shared_ptr<ENTRY> > itEntryPair(zoomLevel);
                 while(itEntryPair.hasNext())
                 {

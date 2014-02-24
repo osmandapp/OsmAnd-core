@@ -101,12 +101,11 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetGroups(
 {
     auto cis = reader->_codedInputStream.get();
 
-    for(auto itAddressBlocksSection = section->addressBlocksSections.cbegin(); itAddressBlocksSection != section->addressBlocksSections.cend(); ++itAddressBlocksSection)
+    for(const auto& block : constOf(section->addressBlocksSections))
     {
         if(controller && controller->isAborted())
             break;
 
-        const auto& block = *itAddressBlocksSection;
         if(blockTypeFilter && !blockTypeFilter->contains(block->type))
             continue;
 

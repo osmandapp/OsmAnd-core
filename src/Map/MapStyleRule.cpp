@@ -17,7 +17,7 @@ OsmAnd::MapStyleRule::MapStyleRule(MapStyle* owner_, const QHash< QString, QStri
     _d->_values.reserve(attributes.size());
     _d->_resolvedValueDefinitions.reserve(attributes.size());
     
-    for(auto itAttribute = attributes.cbegin(); itAttribute != attributes.cend(); ++itAttribute)
+    for(auto itAttribute = attributes.cbegin(), itEnd = attributes.cend(); itAttribute != itEnd; ++itAttribute)
     {
         const auto& key = itAttribute.key();
         const auto& value = itAttribute.value();
@@ -122,7 +122,7 @@ void OsmAnd::MapStyleRule::dump( const QString& prefix /*= QString()*/ ) const
 {
     auto newPrefix = prefix + QLatin1String("\t");
     
-    for(auto itValueEntry = _d->_values.cbegin(); itValueEntry != _d->_values.cend(); ++itValueEntry)
+    for(auto itValueEntry = _d->_values.cbegin(), itEnd = _d->_values.cend(); itValueEntry != itEnd; ++itValueEntry)
     {
         const auto& valueDef = itValueEntry.key();
         const auto& value = *itValueEntry;
@@ -170,10 +170,8 @@ void OsmAnd::MapStyleRule::dump( const QString& prefix /*= QString()*/ ) const
     {
         OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sIf(",
             qPrintable(newPrefix));
-        for(auto itChild = _d->_ifChildren.cbegin(); itChild != _d->_ifChildren.cend(); ++itChild)
+        for(const auto& child : constOf(_d->_ifChildren))
         {
-            auto child = *itChild;
-
             OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sAND",
                 qPrintable(newPrefix));
             child->dump(newPrefix);
@@ -186,10 +184,8 @@ void OsmAnd::MapStyleRule::dump( const QString& prefix /*= QString()*/ ) const
     {
         OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sSelector: [",
             qPrintable(newPrefix));
-        for(auto itChild = _d->_ifElseChildren.cbegin(); itChild != _d->_ifElseChildren.cend(); ++itChild)
+        for(const auto& child : constOf(_d->_ifElseChildren))
         {
-            auto child = *itChild;
-
             OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sOR",
                 qPrintable(newPrefix));
             child->dump(newPrefix);

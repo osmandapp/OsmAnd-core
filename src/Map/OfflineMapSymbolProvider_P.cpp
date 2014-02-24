@@ -46,19 +46,15 @@ bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols(
     
     // Convert results
     QList< std::shared_ptr<const MapSymbolsGroup> > symbolsGroups;
-    for(auto itRasterizedGroup = rasterizedSymbolsGroups.cbegin(); itRasterizedGroup != rasterizedSymbolsGroups.cend(); ++itRasterizedGroup)
+    for(const auto& rasterizedGroup : constOf(rasterizedSymbolsGroups))
     {
-        const auto& rasterizedGroup = *itRasterizedGroup;
-
         // Create group
         const auto constructedGroup = new MapSymbolsGroup(rasterizedGroup->mapObject);
         std::shared_ptr<const MapSymbolsGroup> group(constructedGroup);
 
         // Convert all symbols inside group
-        for(auto itRasterizedSymbol = rasterizedGroup->symbols.cbegin(); itRasterizedSymbol != rasterizedGroup->symbols.cend(); ++itRasterizedSymbol)
+        for(const auto& rasterizedSymbol : constOf(rasterizedGroup->symbols))
         {
-            const auto& rasterizedSymbol = *itRasterizedSymbol;
-
             if(const auto pinnedSymbol = std::dynamic_pointer_cast<const RasterizedPinnedSymbol>(rasterizedSymbol))
             {
                 const auto symbol = new MapPinnedSymbol(

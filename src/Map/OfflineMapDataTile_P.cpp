@@ -33,10 +33,8 @@ void OsmAnd::OfflineMapDataTile_P::cleanup()
         // Get bounding box that covers this tile
         const auto tileBBox31 = Utilities::tileBoundingBox31(owner->tileId, owner->zoom);
 
-        for(auto itMapObject = _mapObjects.begin(); itMapObject != _mapObjects.end(); ++itMapObject)
+        for(auto& mapObject : _mapObjects)
         {
-            auto& mapObject = *itMapObject;
-
             // Skip all map objects that can not be shared
             const auto canNotBeShared = tileBBox31.contains(mapObject->bbox31);
             if(canNotBeShared)

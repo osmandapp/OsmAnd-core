@@ -37,7 +37,7 @@ OsmAnd::RoutingRulesetContext::RoutingRulesetContext(RoutingProfileContext* owne
     if(contextValues_)
         _contextValues = *contextValues_;
 
-    for(std::shared_ptr<RoutingRuleExpression> rt : ruleset_->_expressions){
+    for(const auto& rt : ruleset_->_expressions){
         if(checkParameter(rt, _contextValues)){
             _ruleset->_expressions.push_back(rt);
         }
@@ -87,10 +87,8 @@ bool OsmAnd::RoutingRulesetContext::evaluate( const std::shared_ptr<const Model:
 
 bool OsmAnd::RoutingRulesetContext::evaluate( const QBitArray& types, RoutingRuleExpression::ResultType type, void* result )
 {
-    //for(std::shared_ptr<RoutingRuleExpression> itExpression = ruleset->expressions.cbegin(); itExpression != ruleset->expressions.cend(); ++itExpression)
-    for(std::shared_ptr<RoutingRuleExpression>  expression  : ruleset->expressions)
+    for(const auto& expression : constOf(ruleset->expressions))
     {
-//        auto expression = *itExpression;
         if(expression->evaluate(types, this, type, result))
             return true;
     }
@@ -105,10 +103,8 @@ QBitArray OsmAnd::RoutingRulesetContext::encode( const std::shared_ptr<const Obf
     if(itTagValueAttribIdCache == owner->_tagValueAttribIdCache.end())
         itTagValueAttribIdCache = owner->_tagValueAttribIdCache.insert(section, QMap<uint32_t, uint32_t>());
     
-    for(auto itType = roadTypes.cbegin(); itType != roadTypes.cend(); ++itType)
+    for(const auto& type : constOf(roadTypes))
     {
-        auto type = *itType;
-
         auto itId = itTagValueAttribIdCache->find(type);
         if(itId == itTagValueAttribIdCache->end())
         {

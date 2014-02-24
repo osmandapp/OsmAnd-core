@@ -279,7 +279,7 @@ namespace OsmAnd
 
             auto p0 = points.constData();
             auto p1 = p0 + 1;
-            for(int idx = 1; idx < points.size(); idx++, p0++, p1++)
+            for(auto idx = 1, count = points.size(); idx < count; idx++, p0++, p1++)
             {
                 area += static_cast<double>(p0->x) * static_cast<double>(p1->y) - static_cast<double>(p1->x) * static_cast<double>(p0->y);
             }

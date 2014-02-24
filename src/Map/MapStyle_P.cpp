@@ -165,17 +165,11 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
 
         void addGroupFilter(const std::shared_ptr<MapStyleRule>& rule)
         {
-            for(auto itChild = children.cbegin(); itChild != children.cend(); ++itChild)
-            {
-                auto child = *itChild;
-
+            for(const auto& child : constOf(children))
                 child->_d->_ifChildren.push_back(rule);
-            }
 
-            for(auto itSubgroup = subgroups.cbegin(); itSubgroup != subgroups.cend(); ++itSubgroup)
+            for(const auto& subgroup : constOf(subgroups))
             {
-                auto subgroup = *itSubgroup;
-
                 assert(subgroup->type == Lexeme::Group);
                 std::static_pointer_cast<Group>(subgroup)->addGroupFilter(rule);
             }
@@ -183,18 +177,14 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
 
         bool registerGlobalRules(const MapStyleRulesetType type)
         {
-            for(auto itChild = children.cbegin(); itChild != children.cend(); ++itChild)
+            for(const auto& child : constOf(children))
             {
-                auto child = *itChild;
-
                 if(!style->registerRule(type, child))
                     return false;
             }
 
-            for(auto itSubgroup = subgroups.cbegin(); itSubgroup != subgroups.cend(); ++itSubgroup)
+            for(const auto& subgroup : constOf(subgroups))
             {
-                auto subgroup = *itSubgroup;
-
                 assert(subgroup->type == Lexeme::Group);
                 if(!std::static_pointer_cast<Group>(subgroup)->registerGlobalRules(type))
                     return false;
@@ -237,11 +227,8 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
                 QStringList possibleValues;
                 if(!encodedPossibleValues.isEmpty())
                     possibleValues = encodedPossibleValues.toString().split(',', QString::SkipEmptyParts);
-                for(auto itPossibleValue = possibleValues.begin(); itPossibleValue != possibleValues.end(); ++itPossibleValue)
-                {
-                    auto& possibleValue = *itPossibleValue;
+                for(auto& possibleValue : possibleValues)
                     possibleValue = obtainValue(possibleValue);
-                }
                 if(type == QLatin1String("string"))
                 {
                     inputValue = new MapStyleConfigurableInputValue(
@@ -297,10 +284,8 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
                 }
 
                 const auto& attribs = xmlReader.attributes();
-                for(auto itXmlAttrib = attribs.cbegin(); itXmlAttrib != attribs.cend(); ++itXmlAttrib)
+                for(const auto& xmlAttrib : constOf(attribs))
                 {
-                    const auto& xmlAttrib = *itXmlAttrib;
-
                     const auto tag = xmlAttrib.name().toString();
                     const auto value = obtainValue(xmlAttrib.value().toString());
                     ruleAttributes.insert(qMove(tag), qMove(value));
@@ -334,10 +319,8 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
                 QHash< QString, QString > attributes;
 
                 const auto& attribs = xmlReader.attributes();
-                for(auto itXmlAttrib = attribs.cbegin(); itXmlAttrib != attribs.cend(); ++itXmlAttrib)
+                for(const auto& xmlAttrib : constOf(attribs))
                 {
-                    const auto& xmlAttrib = *itXmlAttrib;
-
                     const auto tag = xmlAttrib.name().toString();
                     const auto value = obtainValue(xmlAttrib.value().toString());
                     attributes.insert(qMove(tag), qMove(value));
@@ -374,10 +357,8 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
                 }
 
                 const auto& attribs = xmlReader.attributes();
-                for(auto itXmlAttrib = attribs.cbegin(); itXmlAttrib != attribs.cend(); ++itXmlAttrib)
+                for(const auto& xmlAttrib : constOf(attribs))
                 {
-                    const auto& xmlAttrib = *itXmlAttrib;
-
                     const auto tag = xmlAttrib.name().toString();
                     const auto value = obtainValue(xmlAttrib.value().toString());
                     group->attributes.insert(qMove(tag), qMove(value));
@@ -438,6 +419,7 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
                 stack.pop();
             }
         }
+
     }
     if(xmlReader.hasError())
     {
@@ -691,7 +673,7 @@ bool OsmAnd::MapStyle_P::mergeInheritedRules( MapStyleRulesetType type )
     const auto& parentRules = _parent->_d->obtainRulesRef(type);
     auto& rules = obtainRulesRef(type);
 
-    for(auto itParentRule = parentRules.cbegin(); itParentRule != parentRules.cend(); ++itParentRule)
+    for(auto itParentRule = parentRules.cbegin(), itEnd = parentRules.cend(); itParentRule != itEnd; ++itParentRule)
     {
         auto itLocalRule = rules.constFind(itParentRule.key());
 
@@ -713,18 +695,16 @@ bool OsmAnd::MapStyle_P::mergeInheritedAttributes()
     if(!_parent)
         return true;
 
-    for(auto itParentAttribute = _parent->_d->_attributes.cbegin(); itParentAttribute != _parent->_d->_attributes.cend(); ++itParentAttribute)
+    for(auto itParentAttribute = _parent->_d->_attributes.cbegin(), itEnd = _parent->_d->_attributes.cend(); itParentAttribute != itEnd; ++itParentAttribute)
     {
         const auto& parentAttribute = *itParentAttribute;
 
         auto itAttribute = _attributes.constFind(itParentAttribute.key());
-        if(itAttribute != _attributes.cend())
+        if(itAttribute != itEnd)
         {
             const auto& attribute = *itAttribute;
-            for(auto itChild = parentAttribute->_d->_ifElseChildren.cbegin(); itChild != parentAttribute->_d->_ifElseChildren.cend(); ++itChild)
-            {
-                attribute->_d->_ifElseChildren.push_back(*itChild);
-            }
+            for(const auto& child : constOf(parentAttribute->_d->_ifElseChildren))
+                attribute->_d->_ifElseChildren.push_back(child);
         }
         else
         {

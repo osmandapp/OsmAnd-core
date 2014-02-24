@@ -131,12 +131,12 @@ void OsmAnd::RoutingConfiguration::parseRoutingParameter( QXmlStreamReader* xmlP
         auto valueDescriptions = attribs.value("valueDescriptions");
         const auto& stringifiedValues = combinedValues.toString().split(',');
         QList<double> values;
-        for(auto itValue = stringifiedValues.cbegin(); itValue != stringifiedValues.cend(); ++itValue)
+        for(const auto& value_ : constOf(stringifiedValues))
         {
             bool ok;
-            auto value = itValue->trimmed().toDouble(&ok);
+            auto value = value_.trimmed().toDouble(&ok);
             if(!ok)
-                std::cerr << qPrintable(*itValue) << " is not a valid integer" << std::endl;
+                std::cerr << qPrintable(value_) << " is not a valid integer" << std::endl;
             values.push_back(value);
         }
 
@@ -215,8 +215,8 @@ void OsmAnd::RoutingConfiguration::parseRoutingRuleset( QXmlStreamReader* xmlPar
         context->registerSelectExpression(attribs.value("value").toString(), routingRule->_type);
         addRulesetSubclause(routingRule.get(), context.get());
 
-        for(auto itItem = ruleset.cbegin(); itItem != ruleset.cend(); ++itItem)
-            addRulesetSubclause((*itItem).get(), context.get());
+        for(const auto& item : constOf(ruleset))
+            addRulesetSubclause(item.get(), context.get());
     }
     else if (!ruleset.isEmpty() && ruleset.top()->_tagName == "select")
     {

@@ -55,20 +55,20 @@ OsmAnd::MapRendererResources::~MapRendererResources()
     REPEAT_UNTIL(_workerThread->wait());
 
     // Release all resources
-    for(auto itResourcesCollections = _storage.begin(); itResourcesCollections != _storage.end(); ++itResourcesCollections)
+    for(auto& resourcesCollections : _storage)
     {
-        auto& resourcesCollections = *itResourcesCollections;
-
-        for(auto itResourcesCollection = resourcesCollections.cbegin(); itResourcesCollection != resourcesCollections.cend(); ++itResourcesCollection)
-            releaseResourcesFrom(*itResourcesCollection);
+        for(const auto& resourcesCollection : constOf(resourcesCollections))
+            releaseResourcesFrom(resourcesCollection);
         resourcesCollections.clear();
     }
 
     // Release all bindings
     for(auto resourceType = 0; resourceType < ResourceTypesCount; resourceType++)
     {
-        _bindings[resourceType].providersToCollections.clear();
-        _bindings[resourceType].collectionsToProviders.clear();
+        auto& bindings = _bindings[resourceType];
+
+        bindings.providersToCollections.clear();
+        bindings.collectionsToProviders.clear();
     }
 
     // Release default resources
@@ -217,14 +217,16 @@ void OsmAnd::MapRendererResources::updateBindings(const MapRendererState& state,
 
         // Create new binding and storage
         auto rasterLayerIdx = 0;
-        for(auto itProvider = state.rasterLayerProviders.cbegin(); itProvider != state.rasterLayerProviders.cend(); ++itProvider, rasterLayerIdx++)
+        for(auto itProvider = state.rasterLayerProviders.cbegin(), itEnd = state.rasterLayerProviders.cend(); itProvider != itEnd; ++itProvider, rasterLayerIdx++)
         {
+            const auto& provider = *itProvider;
+
             // Skip empty providers
-            if(!*itProvider)
+            if(!provider)
                 continue;
 
             // If binding already exists, skip creation
-            if(bindings.providersToCollections.contains(std::static_pointer_cast<IMapProvider>(*itProvider)))
+            if(bindings.providersToCollections.contains(std::static_pointer_cast<IMapProvider>(provider)))
                 continue;
 
             // Create new resources collection
@@ -267,18 +269,18 @@ void OsmAnd::MapRendererResources::updateBindings(const MapRendererState& state,
         }
 
         // Create new binding and storage
-        for(auto itProvider = state.symbolProviders.cbegin(); itProvider != state.symbolProviders.cend(); ++itProvider)
+        for(const auto& provider : constOf(state.symbolProviders))
         {
             // If binding already exists, skip creation
-            if(bindings.providersToCollections.contains(std::static_pointer_cast<IMapProvider>(*itProvider)))
+            if(bindings.providersToCollections.contains(std::static_pointer_cast<IMapProvider>(provider)))
                 continue;
 
             // Create new resources collection
             const std::shared_ptr< TiledResourcesCollection > newResourcesCollection(new SymbolsResourcesCollection());
 
             // Add binding
-            bindings.providersToCollections.insert(*itProvider, newResourcesCollection);
-            bindings.collectionsToProviders.insert(newResourcesCollection, *itProvider);
+            bindings.providersToCollections.insert(provider, newResourcesCollection);
+            bindings.collectionsToProviders.insert(newResourcesCollection, provider);
 
             // Add resources collection
             resources.push_back(qMove(newResourcesCollection));
@@ -304,15 +306,16 @@ bool OsmAnd::MapRendererResources::obtainProviderFor(TiledResourcesCollection* c
     assert(resourcesRef != nullptr);
 
     const auto& bindings = _bindings[static_cast<int>(resourcesRef->type)];
-    for(auto itBinding = bindings.collectionsToProviders.cbegin(); itBinding != bindings.collectionsToProviders.cend(); ++itBinding)
+    for(auto itBinding = bindings.collectionsToProviders.cbegin(), itEnd = bindings.collectionsToProviders.cend(); itBinding != itEnd; ++itBinding)
     {
         if(itBinding.key().get() != resourcesRef)
             continue;
 
-        if(!static_cast<bool>(itBinding.value()))
+        const auto& testProvider = itBinding.value();
+        if(!testProvider)
             return false;
 
-        provider = itBinding.value();
+        provider = testProvider;
         return true;
     }
 
@@ -383,20 +386,14 @@ void OsmAnd::MapRendererResources::workerThreadProcedure()
 void OsmAnd::MapRendererResources::requestNeededResources(const QSet<TileId>& tiles, const ZoomLevel zoom)
 {
     // Request missing resources
-    for(auto itTileId = tiles.cbegin(); itTileId != tiles.cend(); ++itTileId)
+    for(const auto& tileId : constOf(tiles))
     {
-        const auto& tileId = *itTileId;
-
-        for(auto itResourcesCollections = _storage.cbegin(); itResourcesCollections != _storage.cend(); ++itResourcesCollections)
+        for(const auto& resourcesCollections : constOf(_storage))
         {
-            const auto& resourcesCollections = *itResourcesCollections;
-
-            for(auto itResourcesCollection = resourcesCollections.cbegin(); itResourcesCollection != resourcesCollections.cend(); ++itResourcesCollection)
+            for(const auto& resourcesCollection : constOf(resourcesCollections))
             {
-                const auto& resourcesCollection = *itResourcesCollection;
-
                 // Skip empty entries
-                if(!static_cast<bool>(resourcesCollection))
+                if(!resourcesCollection)
                     continue;
 
                 // Skip resource types that do not have an available data source
@@ -538,12 +535,12 @@ void OsmAnd::MapRendererResources::validateResourcesOfType(const ResourceType ty
     // Notify owner
     renderer->onValidateResourcesOfType(type);
 
-    for(auto itResourcesCollection = resourcesCollections.cbegin(); itResourcesCollection != resourcesCollections.cend(); ++itResourcesCollection)
+    for(const auto& resourcesCollection : constOf(resourcesCollections))
     {
-        if(!bindings.collectionsToProviders.contains(*itResourcesCollection))
+        if(!bindings.collectionsToProviders.contains(resourcesCollection))
             continue;
 
-        releaseResourcesFrom(*itResourcesCollection);
+        releaseResourcesFrom(resourcesCollection);
     }
 }
 
@@ -561,16 +558,12 @@ unsigned int OsmAnd::MapRendererResources::unloadResources()
 {
     unsigned int totalUnloaded = 0u;
 
-    for(auto itResourcesCollections = _storage.cbegin(); itResourcesCollections != _storage.cend(); ++itResourcesCollections)
+    for(const auto& resourcesCollections : constOf(_storage))
     {
-        const auto& resourcesCollections = *itResourcesCollections;
-
-        for(auto itResourcesCollection = resourcesCollections.cbegin(); itResourcesCollection != resourcesCollections.cend(); ++itResourcesCollection)
+        for(const auto& resourcesCollection : constOf(resourcesCollections))
         {
-            const auto& resourcesCollection = *itResourcesCollection;
-
             // Skip empty entries
-            if(!static_cast<bool>(resourcesCollection))
+            if(!resourcesCollection)
                 continue;
 
             // Select all resources with "UnloadPending" state
@@ -588,10 +581,8 @@ unsigned int OsmAnd::MapRendererResources::unloadResources()
                 continue;
 
             // Unload from GPU all selected resources
-            for(auto itResource = resources.cbegin(); itResource != resources.cend(); ++itResource)
+            for(const auto& resource : constOf(resources))
             {
-                const auto& resource = *itResource;
-
                 // Since state change is allowed (it's not changed to "Unloading" during query), check state here
                 if(!resource->setStateIf(ResourceState::UnloadPending, ResourceState::Unloading))
                     continue;
@@ -620,16 +611,12 @@ unsigned int OsmAnd::MapRendererResources::uploadResources(const unsigned int li
     bool moreThanLimitAvailable = false;
     bool atLeastOneUploadFailed = false;
 
-    for(auto itResourcesCollections = _storage.cbegin(); itResourcesCollections != _storage.cend(); ++itResourcesCollections)
+    for(const auto& resourcesCollections : constOf(_storage))
     {
-        const auto& resourcesCollections = *itResourcesCollections;
-
-        for(auto itResourcesCollection = resourcesCollections.cbegin(); itResourcesCollection != resourcesCollections.cend(); ++itResourcesCollection)
+        for(const auto& resourcesCollection : constOf(resourcesCollections))
         {
-            const auto& resourcesCollection = *itResourcesCollection;
-
             // Skip empty entries
-            if(!static_cast<bool>(resourcesCollection))
+            if(!resourcesCollection)
                 continue;
 
             // Select all resources with "Ready" state
@@ -657,10 +644,8 @@ unsigned int OsmAnd::MapRendererResources::uploadResources(const unsigned int li
                 continue;
 
             // Upload to GPU all selected resources
-            for(auto itResource = resources.cbegin(); itResource != resources.cend(); ++itResource)
+            for(const auto& resource : constOf(resources))
             {
-                const auto& resource = *itResource;
-
                 // Since state change is allowed (it's not changed to "Uploading" during query), check state here
                 if(!resource->setStateIf(ResourceState::Ready, ResourceState::Uploading))
                     continue;
@@ -702,16 +687,12 @@ unsigned int OsmAnd::MapRendererResources::uploadResources(const unsigned int li
 void OsmAnd::MapRendererResources::cleanupJunkResources(const QSet<TileId>& tiles, const ZoomLevel zoom)
 {
     // Use aggressive cache cleaning: remove all tiled resources that are not needed
-    for(auto itResourcesCollections = _storage.cbegin(); itResourcesCollections != _storage.cend(); ++itResourcesCollections)
+    for(const auto& resourcesCollections : constOf(_storage))
     {
-        const auto& resourcesCollections = *itResourcesCollections;
-
-        for(auto itResourcesCollection = resourcesCollections.cbegin(); itResourcesCollection != resourcesCollections.cend(); ++itResourcesCollection)
+        for(const auto& resourcesCollection : constOf(resourcesCollections))
         {
-            const auto& resourcesCollection = *itResourcesCollection;
-
             // Skip empty entries
-            if(!static_cast<bool>(resourcesCollection))
+            if(!resourcesCollection)
                 continue;
 
             const auto dataSourceAvailable = isDataSourceAvailableFor(resourcesCollection);
@@ -1152,9 +1133,8 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAva
     _referencedSharedGroupsResources = referencedSharedGroupsResources;
 
     // tile->symbolsGroups contains groups that derived from unique symbols, or loaded shared groups
-    for(auto itGroup = tile->symbolsGroups.cbegin(); itGroup != tile->symbolsGroups.cend(); ++itGroup)
+    for(const auto& group : constOf(tile->symbolsGroups))
     {
-        const auto& group = *itGroup;
         std::shared_ptr<GroupResources> groupResources(new GroupResources(group));
 
         // Check if this group is loaded as shared
@@ -1170,9 +1150,8 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAva
     }
 
     // Wait for future referenced shared groups
-    for(auto itFutureGroup = futureReferencedSharedGroupsResources.begin(); itFutureGroup != futureReferencedSharedGroupsResources.end(); ++itFutureGroup)
+    for(auto& futureGroup : futureReferencedSharedGroupsResources)
     {
-        auto& futureGroup = *itFutureGroup;
         auto groupResources = futureGroup.get();
         
         _referencedSharedGroupsResources.push_back(qMove(groupResources));
@@ -1206,14 +1185,10 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
 
     // Unique
     QMultiHash< std::shared_ptr<GroupResources>, SymbolResourceEntry > uniqueUploaded;
-    for(auto itGroupResources = _uniqueGroupsResources.cbegin(); itGroupResources != _uniqueGroupsResources.cend() && !anyUploadFailed; ++itGroupResources)
+    for(const auto& groupResources : constOf(_uniqueGroupsResources))
     {
-        const auto& groupResources = *itGroupResources;
-
-        for(auto itSymbol = groupResources->group->symbols.cbegin(); itSymbol != groupResources->group->symbols.cend() && !anyUploadFailed; ++itSymbol)
+        for(const auto& symbol : constOf(groupResources->group->symbols))
         {
-            const auto& symbol = *itSymbol;
-            
             // Prepare data and upload to GPU
             assert(static_cast<bool>(symbol->bitmap));
             std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
@@ -1233,13 +1208,14 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
             // Mark this symbol as uploaded
             uniqueUploaded.insertMulti(groupResources, qMove(SymbolResourceEntry(symbol, resourceInGPU)));
         }
+        if(anyUploadFailed)
+            break;
     }
 
     // Shared
     QMultiHash< std::shared_ptr<GroupResources>, SymbolResourceEntry > sharedUploaded;
-    for(auto itGroupResources = _referencedSharedGroupsResources.begin(); itGroupResources != _referencedSharedGroupsResources.end() && !anyUploadFailed; ++itGroupResources)
+    for(const auto& groupResources : constOf(_referencedSharedGroupsResources))
     {
-        const auto& groupResources = *itGroupResources;
         if(groupResources->group->symbols.isEmpty())
             continue;
 
@@ -1247,10 +1223,8 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
         if(!groupResources->resourcesInGPU.isEmpty())
             continue;
 
-        for(auto itSymbol = groupResources->group->symbols.cbegin(); itSymbol != groupResources->group->symbols.cend() && !anyUploadFailed; ++itSymbol)
+        for(const auto& symbol : constOf(groupResources->group->symbols))
         {
-            const auto& symbol = *itSymbol;
-
             // Prepare data and upload to GPU
             assert(static_cast<bool>(symbol->bitmap));
             std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
@@ -1270,6 +1244,8 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
             // Mark this symbol as uploaded
             sharedUploaded.insertMulti(groupResources, qMove(SymbolResourceEntry(symbol, resourceInGPU)));
         }
+        if(anyUploadFailed)
+            break;
     }
 
     // If at least one symbol failed to upload, consider entire tile as failed to upload,
@@ -1285,7 +1261,7 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
     // All resources have been uploaded to GPU successfully by this point
 
     // Unique
-    for(auto itEntry = uniqueUploaded.begin(); itEntry != uniqueUploaded.end(); ++itEntry)
+    for(auto itEntry = uniqueUploaded.begin(), itEnd = uniqueUploaded.end(); itEntry != itEnd; ++itEntry)
     {
         const auto& groupResources = itEntry.key();
         auto& symbol = itEntry->first;
@@ -1302,20 +1278,7 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
     }
 
     // Shared
-    /*
-    for(auto itGroupResources = _referencedSharedGroupsResources.begin(); itGroupResources != _referencedSharedGroupsResources.end() && !anyUploadFailed; ++itGroupResources)
-    {
-        const auto& groupResources = *itGroupResources;
-
-        for(auto itSymbol = groupResources->group->symbols.cbegin(); itSymbol != groupResources->group->symbols.cend() && !anyUploadFailed; ++itSymbol)
-        {
-            const auto& symbol = *itSymbol;
-
-            //BOTE: processing of those symbols that have not been uploaded (only referenced) may be done here
-        }
-    }
-    */
-    for(auto itEntry = sharedUploaded.begin(); itEntry != sharedUploaded.end(); ++itEntry)
+    for(auto itEntry = sharedUploaded.begin(), itEnd = sharedUploaded.end(); itEntry != itEnd; ++itEntry)
     {
         const auto& groupResources = itEntry.key();
         auto& symbol = itEntry->first;
@@ -1340,11 +1303,9 @@ void OsmAnd::MapRendererResources::SymbolsTileResource::unloadFromGPU()
     const auto collection = static_cast<SymbolsResourcesCollection*>(&link_->collection);
 
     // Unique
-    for(auto itGroupResources = _uniqueGroupsResources.cbegin(); itGroupResources != _uniqueGroupsResources.cend(); ++itGroupResources)
+    for(const auto& groupResources : constOf(_uniqueGroupsResources))
     {
-        const auto& groupResources = *itGroupResources;
-
-        for(auto itResourceInGPU = groupResources->resourcesInGPU.begin(); itResourceInGPU != groupResources->resourcesInGPU.end(); ++itResourceInGPU)
+        for(auto itResourceInGPU = groupResources->resourcesInGPU.begin(), itEnd = groupResources->resourcesInGPU.end(); itResourceInGPU != itEnd; ++itResourceInGPU)
         {
             const auto& symbol = itResourceInGPU.key();
             auto& resourceInGPU = itResourceInGPU.value();
@@ -1361,10 +1322,8 @@ void OsmAnd::MapRendererResources::SymbolsTileResource::unloadFromGPU()
 
     // Shared
     auto& sharedGroupsResources = collection->_sharedGroupsResources[zoom];
-    for(auto itGroupResources = _referencedSharedGroupsResources.begin(); itGroupResources != _referencedSharedGroupsResources.end(); ++itGroupResources)
+    for(auto& groupResources : _referencedSharedGroupsResources)
     {
-        auto& groupResources = *itGroupResources;
-
         bool wasRemoved = false;
         auto groupResources_ = groupResources;
         sharedGroupsResources.releaseReference(groupResources->group->mapObject->id, groupResources_, true, &wasRemoved);
@@ -1374,7 +1333,7 @@ void OsmAnd::MapRendererResources::SymbolsTileResource::unloadFromGPU()
         if(!wasRemoved)
             continue;
 
-        for(auto itResourceInGPU = groupResources->resourcesInGPU.begin(); itResourceInGPU != groupResources->resourcesInGPU.end(); ++itResourceInGPU)
+        for(auto itResourceInGPU = groupResources->resourcesInGPU.begin(), itEnd = groupResources->resourcesInGPU.end(); itResourceInGPU != itEnd; ++itResourceInGPU)
         {
             const auto& symbol = itResourceInGPU.key();
             auto& resourceInGPU = itResourceInGPU.value();
@@ -1403,10 +1362,8 @@ void OsmAnd::MapRendererResources::SymbolsTileResource::detach()
     _uniqueGroupsResources.clear();
 
     auto& sharedGroupsResources = collection->_sharedGroupsResources[zoom];
-    for(auto itGroupResources = _referencedSharedGroupsResources.begin(); itGroupResources != _referencedSharedGroupsResources.end(); ++itGroupResources)
+    for(auto& groupResources : _referencedSharedGroupsResources)
     {
-        auto& groupResources = *itGroupResources;
-
         bool wasRemoved = false;
         auto groupResources_ = groupResources;
         sharedGroupsResources.releaseReference(groupResources->group->mapObject->id, groupResources_, true, &wasRemoved);
@@ -1414,7 +1371,7 @@ void OsmAnd::MapRendererResources::SymbolsTileResource::detach()
         // In case this was the last reference to shared group resources, check if any resources need to be deleted
         if(wasRemoved)
         {
-            for(auto itResourceInGPU = groupResources->resourcesInGPU.begin(); itResourceInGPU != groupResources->resourcesInGPU.end(); ++itResourceInGPU)
+            for(auto itResourceInGPU = groupResources->resourcesInGPU.begin(), itEnd = groupResources->resourcesInGPU.end(); itResourceInGPU != itEnd; ++itResourceInGPU)
             {
                 const auto& symbol = itResourceInGPU.key();
                 auto& resourceInGPU = itResourceInGPU.value();

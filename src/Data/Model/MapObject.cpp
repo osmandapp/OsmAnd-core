@@ -28,10 +28,8 @@ OsmAnd::Model::MapObject::~MapObject()
 
 int OsmAnd::Model::MapObject::getSimpleLayerValue() const
 {
-    for(auto itTypeRuleId = _extraTypesRuleIds.cbegin(); itTypeRuleId != _extraTypesRuleIds.cend(); ++itTypeRuleId)
+    for(const auto& typeRuleId : constOf(_extraTypesRuleIds))
     {
-        const auto typeRuleId = *itTypeRuleId;
-
         if(section->encodingDecodingRules->positiveLayers_encodingRuleIds.contains(typeRuleId))
             return 1;
         else if(section->encodingDecodingRules->negativeLayers_encodingRuleIds.contains(typeRuleId))
@@ -47,10 +45,8 @@ bool OsmAnd::Model::MapObject::isClosedFigure(bool checkInner /*= false*/) const
 {
     if(checkInner)
     {
-        for(auto itPolygon = _innerPolygonsPoints31.cbegin(); itPolygon != _innerPolygonsPoints31.cend(); ++itPolygon)
+        for(const auto& polygon : constOf(_innerPolygonsPoints31))
         {
-            const auto& polygon = *itPolygon;
-
             if(polygon.isEmpty())
                 continue;
 
@@ -78,9 +74,9 @@ bool OsmAnd::Model::MapObject::containsTypeSlow( const QString& tag, const QStri
 bool OsmAnd::Model::MapObject::intersects( const AreaI& area ) const
 {
     // Check if any of the object points is inside area
-    for(auto itPoint = _points31.cbegin(); itPoint != _points31.cend(); ++itPoint)
+    for(const auto& point : constOf(_points31))
     {
-        if(area.contains(*itPoint))
+        if(area.contains(point))
             return true;
     }
 

@@ -417,11 +417,8 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
     // Get set of tiles that are unique: visible tiles may contain same tiles, but wrapped
     const auto internalState = getInternalStateRef();
     _uniqueTiles.clear();
-    for(auto itTileId = internalState->visibleTiles.cbegin(); itTileId != internalState->visibleTiles.cend(); ++itTileId)
-    {
-        const auto& tileId = *itTileId;
+    for(const auto& tileId : constOf(internalState->visibleTiles))
         _uniqueTiles.insert(Utilities::normalizeTileId(tileId, _currentState.zoomBase));
-    }
 
     // Validate resources
     _resources->validateResources();

@@ -17,12 +17,10 @@ OsmAnd::ObfDataInterface::~ObfDataInterface()
 
 void OsmAnd::ObfDataInterface::obtainObfFiles( QList< std::shared_ptr<const ObfFile> >* outFiles /*= nullptr*/, const IQueryController* const controller /*= nullptr*/ )
 {
-    for(auto itObfReader = _d->readers.cbegin(); itObfReader != _d->readers.cend(); ++itObfReader)
+    for(const auto& obfReader : constOf(_d->readers))
     {
         if(controller && controller->isAborted())
             return;
-
-        const auto& obfReader = *itObfReader;
 
         // Initialize OBF file
         obfReader->obtainInfo();
@@ -35,12 +33,11 @@ void OsmAnd::ObfDataInterface::obtainObfFiles( QList< std::shared_ptr<const ObfF
 void OsmAnd::ObfDataInterface::obtainBasemapPresenceFlag( bool& basemapPresent, const IQueryController* const controller /*= nullptr*/ )
 {
     basemapPresent = false;
-    for(auto itObfReader = _d->readers.cbegin(); itObfReader != _d->readers.cend(); ++itObfReader)
+    for(const auto& obfReader : constOf(_d->readers))
     {
         if(controller && controller->isAborted())
             return;
 
-        const auto& obfReader = *itObfReader;
         const auto& obfInfo = obfReader->obtainInfo();
         basemapPresent = basemapPresent || obfInfo->isBasemap;
     }
@@ -56,23 +53,21 @@ void OsmAnd::ObfDataInterface::obtainMapObjects(
         *foundationOut = MapFoundationType::Undefined;
 
     // Iterate through all OBF readers
-    for(auto itObfReader = _d->readers.cbegin(); itObfReader != _d->readers.cend(); ++itObfReader)
+    for(const auto& obfReader : constOf(_d->readers))
     {
         // Check if request is aborted
         if(controller && controller->isAborted())
             return;
 
         // Iterate over all map sections of each OBF reader
-        const auto& obfReader = *itObfReader;
         const auto& obfInfo = obfReader->obtainInfo();
-        for(auto itMapSection = obfInfo->mapSections.cbegin(); itMapSection != obfInfo->mapSections.cend(); ++itMapSection)
+        for(const auto& mapSection : constOf(obfInfo->mapSections))
         {
             // Check if request is aborted
             if(controller && controller->isAborted())
                 return;
 
             // Read objects from each map section
-            const auto& mapSection = *itMapSection;
             OsmAnd::ObfMapSectionReader::loadMapObjects(obfReader, mapSection, zoom, &area31, resultOut, foundationOut, filterById, nullptr, controller, metric);
         }
     }

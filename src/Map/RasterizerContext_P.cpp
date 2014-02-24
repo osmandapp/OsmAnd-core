@@ -25,10 +25,8 @@ void OsmAnd::RasterizerContext_P::clear()
     if(owner->sharedContext)
     {
         auto& sharedGroups = owner->sharedContext->_d->_sharedPrimitivesGroups[_zoom];
-        for(auto itPrimitivesGroup = _primitivesGroups.begin(); itPrimitivesGroup != _primitivesGroups.end(); ++itPrimitivesGroup)
+        for(auto& group : _primitivesGroups)
         {
-            auto& group = *itPrimitivesGroup;
-
             // Remove reference to this group from shared ones
             sharedGroups.releaseReference(group->mapObject->id, group);
         }
@@ -43,10 +41,8 @@ void OsmAnd::RasterizerContext_P::clear()
     if(owner->sharedContext)
     {
         auto& sharedGroups = owner->sharedContext->_d->_sharedSymbolGroups[_zoom];
-        for(auto itSymbols = _symbolsGroups.begin(); itSymbols != _symbolsGroups.end(); ++itSymbols)
+        for(auto& group : _symbolsGroups)
         {
-            auto& group = *itSymbols;
-
             // Remove reference to this group from shared ones
             sharedGroups.releaseReference(group->mapObject->id, group);
         }

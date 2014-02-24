@@ -162,10 +162,8 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 #endif // OSMAND_PERFORMANCE_METRICS
 
     // Process loaded-and-shared map objects
-    for(auto itMapObject = loadedMapObjects.begin(); itMapObject != loadedMapObjects.end(); ++itMapObject)
+    for(auto& mapObject : loadedMapObjects)
     {
-        auto& mapObject = *itMapObject;
-
         // Check if this map object is shared
         if(!loadedSharedMapObjects.contains(mapObject->id))
             continue;
@@ -178,9 +176,8 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
             mapObject);
     }
 
-    for(auto itFutureMapObject = futureReferencedMapObjects.begin(); itFutureMapObject != futureReferencedMapObjects.end(); ++itFutureMapObject)
+    for(auto& futureMapObject : futureReferencedMapObjects)
     {
-        auto& futureMapObject = *itFutureMapObject;
         auto mapObject = futureMapObject.get();
 
         referencedMapObjects.push_back(qMove(mapObject));

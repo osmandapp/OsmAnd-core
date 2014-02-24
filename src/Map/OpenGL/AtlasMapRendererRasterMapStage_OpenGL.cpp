@@ -433,10 +433,8 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
     }
 
     // For each visible tile, render it
-    for(auto itTileId = internalState.visibleTiles.cbegin(); itTileId != internalState.visibleTiles.cend(); ++itTileId)
+    for(const auto& tileId : constOf(internalState.visibleTiles))
     {
-        const auto& tileId = *itTileId;
-
         // Get normalized tile index
         auto tileIdN = Utilities::normalizeTileId(tileId, currentState.zoomBase);
 
@@ -643,7 +641,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
     }
 
     // Disable textures
-    for(int layerIdx = 0; layerIdx < (gpuAPI->isSupported_vertexShaderTextureLookup ? 1 : 0) + activeRasterTileProvidersCount; layerIdx++)
+    for(int layerIdx = 0, count = (gpuAPI->isSupported_vertexShaderTextureLookup ? 1 : 0) + activeRasterTileProvidersCount; layerIdx < count; layerIdx++)
     {
         glActiveTexture(GL_TEXTURE0 + layerIdx);
         GL_CHECK_RESULT;
@@ -760,9 +758,9 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::createTilePatch()
 
         // Form vertices
         assert(verticesCount <= std::numeric_limits<GLushort>::max());
-        for(auto row = 0u; row < currentConfiguration.heixelsPerTileSide; row++)
+        for(auto row = 0u, count = currentConfiguration.heixelsPerTileSide; row < count; row++)
         {
-            for(auto col = 0u; col < currentConfiguration.heixelsPerTileSide; col++, pV++)
+            for(auto col = 0u, count = currentConfiguration.heixelsPerTileSide; col < count; col++, pV++)
             {
                 pV->positionXZ[0] = static_cast<float>(col)* clusterSize;
                 pV->positionXZ[1] = static_cast<float>(row)* clusterSize;

@@ -312,10 +312,8 @@ void OsmAnd::ObfRoutingSectionReader_P::querySubsections(
 {
     auto cis = reader->_codedInputStream.get();
 
-    for(auto itSubsection = in.cbegin(); itSubsection != in.cend(); ++itSubsection)
+    for(const auto& subsection : constOf(in))
     {
-        const auto& subsection = *itSubsection;
-
         // If section is completely outside of bbox, skip it
         if(filter && !filter->acceptsArea(subsection->_area31))
             continue;
@@ -377,17 +375,13 @@ void OsmAnd::ObfRoutingSectionReader_P::readSubsectionData(
         {
         case 0:
             {
-                for(auto itEntry = resultsByInternalId.cbegin(); itEntry != resultsByInternalId.cend(); ++itEntry)
+                for(const auto& road : constOf(resultsByInternalId))
                 {
-                    const auto& road = itEntry.value();
-
                     // Fill names of roads from stringtable
-                    for(auto itNameEntry = road->_names.begin(); itNameEntry != road->_names.end(); ++itNameEntry)
+                    for(auto& encodedId : road->_names)
                     {
-                        const auto encodedId = itNameEntry.value();
                         const uint32_t stringId = ObfReaderUtilities::decodeIntegerFromString(encodedId);
-
-                        itNameEntry.value() = roadNamesTable[stringId];
+                        encodedId = roadNamesTable[stringId];
                     }
 
                     if(!visitor || visitor(road))
@@ -658,9 +652,9 @@ void OsmAnd::ObfRoutingSectionReader_P::loadSubsectionBorderBoxLinesPoints(
     cis->PopLimit(oldLimit);
 
     qSort(pointsOffsets);
-    for(auto itOffset = pointsOffsets.cbegin(); itOffset != pointsOffsets.cend(); ++itOffset)
+    for(const auto& offset : constOf(pointsOffsets))
     {
-        cis->Seek(*itOffset);
+        cis->Seek(offset);
         gpb::uint32 length;
         cis->ReadVarint32(&length);
         auto oldLimit = cis->PushLimit(length);

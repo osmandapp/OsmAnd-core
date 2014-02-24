@@ -33,10 +33,8 @@ void OsmAnd::ObfsCollection_P::refreshSources()
     {
         QMutexLocker scopedLock(&_watchedCollectionMutex);
 
-        for(auto itEntry = _watchedCollection.cbegin(); itEntry != _watchedCollection.cend(); ++itEntry)
+        for(const auto& entry : constOf(_watchedCollection))
         {
-            const auto& entry = *itEntry;
-
             if(entry->type == WatchEntry::WatchedDirectory)
             {
                 const auto& watchedDirEntry = std::static_pointer_cast<WatchedDirectoryEntry>(entry);
@@ -70,10 +68,8 @@ void OsmAnd::ObfsCollection_P::refreshSources()
     }
 
     // For each file, ...
-    for(auto itObfFileInfo = obfs.cbegin(); itObfFileInfo != obfs.cend(); ++itObfFileInfo)
+    for(const auto& obfFileInfo : constOf(obfs))
     {
-        const auto& obfFileInfo = *itObfFileInfo;
-
         const auto& obfFilePath = obfFileInfo.canonicalFilePath();
         auto itObfFileEntry = _sources.constFind(obfFilePath);
 
@@ -127,10 +123,8 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection_P::obtainDataIn
     }
 
     QList< std::shared_ptr<ObfReader> > obfReaders;
-    for(auto itSource = _sources.cbegin(); itSource != _sources.cend(); ++itSource)
+    for(const auto& obfFile : constOf(_sources))
     {
-        const auto& obfFile = itSource.value();
-
         auto obfReader = new ObfReader(obfFile);
         obfReaders.push_back(qMove(std::shared_ptr<ObfReader>(obfReader)));
     }

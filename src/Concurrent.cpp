@@ -94,11 +94,8 @@ void OsmAnd::Concurrent::TaskHost::onOwnerIsBeingDestructed()
     {
         QReadLocker scopedLock(&_hostedTasksLock);
 
-        for(auto itTask = _hostedTasks.cbegin(); itTask != _hostedTasks.cend(); itTask++)
-        {
-            const auto& task = *itTask;
+        for(const auto& task : constOf(_hostedTasks))
             task->requestCancellation();
-        }
     }
 
     // Hold until all tasks are released

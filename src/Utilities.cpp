@@ -242,8 +242,8 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::findFiles( const QDir& 
     if(recursively)
     {
         const auto& subdirs = origin.entryInfoList(QStringList(), QDir::AllDirs | QDir::NoDotAndDotDot);
-        for(auto itSubdir = subdirs.cbegin(); itSubdir != subdirs.cend(); ++itSubdir)
-            findFiles(QDir(itSubdir->absoluteFilePath()), masks, files, recursively);
+        for(const auto& subdir : constOf(subdirs))
+            findFiles(QDir(subdir.absoluteFilePath()), masks, files, recursively);
     }
 }
 
@@ -349,10 +349,8 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
 
         // Find active edges
         int nextRow = rowMax;
-        for(auto itEdge = edges.cbegin(); itEdge != edges.cend(); ++itEdge)
+        for(const auto& edge : constOf(edges))
         {
-            auto edge = *itEdge;
-
             const auto isHorizontal = (edge->startRow == edge->endRow);
             if(nextRow > edge->nextRow && edge->nextRow > rowIdx && !isHorizontal)
                 nextRow = edge->nextRow;
@@ -458,6 +456,6 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
     }
 
     // Cleanup
-    for(auto itEdge = edges.cbegin(); itEdge != edges.cend(); ++itEdge)
-        delete *itEdge;
+    for(const auto& edge : constOf(edges))
+        delete edge;
 }

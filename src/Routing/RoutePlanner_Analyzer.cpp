@@ -68,9 +68,8 @@ OsmAnd::RouteCalculationResult OsmAnd::RoutePlanner::prepareResult(
 void OsmAnd::RoutePlanner::printRouteInfo(QVector< std::shared_ptr<RouteSegment> >& route) {
     float completeDist = 0;
     float completeTime = 0;
-    for(auto itSegment = route.cbegin(); itSegment != route.cend(); ++itSegment)
+    for(const auto& segment : constOf(route))
     {
-        auto segment = *itSegment;
         completeDist += segment->distance;
         completeTime += segment->time;
 #ifdef DEBUG_ROUTING
@@ -87,14 +86,14 @@ void OsmAnd::RoutePlanner::printRouteInfo(QVector< std::shared_ptr<RouteSegment>
 
 void OsmAnd::RoutePlanner::splitRoadsAndAttachRoadSegments( OsmAnd::RoutePlannerContext::CalculationContext* context, QVector< std::shared_ptr<RouteSegment> >& route )
 {
-    for(auto itSegment = route.begin(); itSegment != route.end(); ++itSegment)
+    for(auto itSegment = route.begin(), itEnd = route.end(); itSegment != itEnd; ++itSegment)
     {
+        auto segment = *itSegment;
         /*TODO:GC
         if (ctx.checkIfMemoryLimitCritical(ctx.config.memoryLimitation)) {
             ctx.unloadUnusedTiles(ctx.config.memoryLimitation);
         }
         */
-        auto segment = *itSegment;
         //TODO:GC:checkAndInitRouteRegion(context, segment->road);
 
         const bool isIncrement = segment->startPointIndex < segment->endPointIndex;
@@ -120,10 +119,8 @@ void OsmAnd::RoutePlanner::splitRoadsAndAttachRoadSegments( OsmAnd::RoutePlanner
                 auto isSplit = false;
 
                 // split if needed
-                for(auto itAttachedSegment = attachedRoutes.cbegin(); itAttachedSegment != attachedRoutes.cend(); ++itAttachedSegment)
+                for(const auto& attachedSegment : constOf(attachedRoutes))
                 {
-                    auto attachedSegment = *itAttachedSegment;
-
                     auto diff = Utilities::normalizedAngleDegrees(before + 180.0 - attachedSegment->getBearingBegin());
                     if (qAbs(diff) <= (double)MinTurnAngle)
                         isSplit = true;
@@ -226,10 +223,8 @@ void OsmAnd::RoutePlanner::attachRouteSegments(
 
 void OsmAnd::RoutePlanner::calculateTimeSpeedInRoute( OsmAnd::RoutePlannerContext::CalculationContext* context, QVector< std::shared_ptr<RouteSegment> >& route )
 {
-    for(auto itSegment = route.cbegin(); itSegment != route.cend(); ++itSegment)
+    for(const auto& segment : constOf(route))
     {
-        auto segment = *itSegment;
-
         float distOnRoadToPass = 0;
         float speed = context->owner->profileContext->getSpeed(segment->road);
         if (qFuzzyCompare(speed, 0))
@@ -266,7 +261,7 @@ bool OsmAnd::RoutePlanner::validateAllPointsConnected( const QVector< std::share
     assert(route.size() > 1);
 
     bool res = true;    
-    for(int i = 1; i < route.size(); i++)
+    for(int i = 1, count = route.size(); i < count; i++)
     {
         auto prevSegment = route[i-1];
         auto segment = route[i];

@@ -780,10 +780,8 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     auto foundation = MapFoundationType::Undefined;
     if(foundationOut)
         foundation = *foundationOut;
-    for(auto itMapLevel = section->_levels.cbegin(); itMapLevel != section->_levels.cend(); ++itMapLevel)
+    for(const auto& mapLevel : constOf(section->_levels))
     {
-        const auto& mapLevel = *itMapLevel;
-
         // Update metric
         if(metric)
             metric->visitedLevels++;
@@ -828,10 +826,8 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
         
         // Collect tree nodes with data
         QList< std::shared_ptr<ObfMapSectionLevelTreeNode> > treeNodesWithData;
-        for(auto itRootNode = mapLevel->_d->_rootNodes->nodes.cbegin(); itRootNode != mapLevel->_d->_rootNodes->nodes.cend(); ++itRootNode)
+        for(const auto& rootNode : constOf(mapLevel->_d->_rootNodes->nodes))
         {
-            const auto& rootNode = *itRootNode;
-
             // Update metric
             if(metric)
                 metric->visitedNodes++;
@@ -893,12 +889,10 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
         }
 
         // Read map objects from their blocks
-        for(auto itTreeNode = treeNodesWithData.cbegin(); itTreeNode != treeNodesWithData.cend(); ++itTreeNode)
+        for(const auto& treeNode : constOf(treeNodesWithData))
         {
             if(controller && controller->isAborted())
                 break;
-
-            const auto& treeNode = *itTreeNode;
 
             cis->Seek(treeNode->_dataOffset);
 

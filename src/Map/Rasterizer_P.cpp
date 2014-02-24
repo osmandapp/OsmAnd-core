@@ -78,12 +78,10 @@ void OsmAnd::Rasterizer_P::prepareContext(
     // Split input map objects to object, coastline, basemapObjects and basemapCoastline
     QList< std::shared_ptr<const OsmAnd::Model::MapObject> > detailedmapMapObjects, detailedmapCoastlineObjects, basemapMapObjects, basemapCoastlineObjects;
     QList< std::shared_ptr<const OsmAnd::Model::MapObject> > polygonizedCoastlineObjects;
-    for(auto itMapObject = objects.cbegin(); itMapObject != objects.cend(); ++itMapObject)
+    for(const auto& mapObject : constOf(objects))
     {
         if(controller && controller->isAborted())
             break;
-
-        const auto& mapObject = *itMapObject;
 
         if(zoom < static_cast<ZoomLevel>(BasemapZoom) && !mapObject->section->isBasemap)
             continue;
@@ -297,12 +295,11 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
 
     auto& sharedPrimitivesGroups = context.owner->sharedContext->_d->_sharedPrimitivesGroups[context._zoom];
     QList< proper::shared_future< std::shared_ptr<const PrimitivesGroup> > > futureSharedPrimitivesGroups;
-    for(auto itMapObject = source.cbegin(); itMapObject != source.cend(); ++itMapObject)
+    for(const auto& mapObject : constOf(source))
     {
         if(controller && controller->isAborted())
             return;
 
-        const auto& mapObject = *itMapObject;
         const auto canBeShared = (mapObject->section != env.dummyMapSection) && (context.owner->sharedContext);
         
         // If group can be shared, use already-processed or reserve pending
@@ -316,12 +313,15 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
                 if(group)
                 {
                     // Add polygons, polylines and points from group to current context
-                    for(auto itPrimitive = group->polygons.cbegin(); itPrimitive != group->polygons.cend(); ++itPrimitive)
-                        context._polygons.push_back(*itPrimitive);
-                    for(auto itPrimitive = group->polylines.cbegin(); itPrimitive != group->polylines.cend(); ++itPrimitive)
-                        context._polylines.push_back(*itPrimitive);
-                    for(auto itPrimitive = group->points.cbegin(); itPrimitive != group->points.cend(); ++itPrimitive)
-                        context._points.push_back(*itPrimitive);
+                    context._polygons.reserve(context._polygons.size() + group->polygons.size());
+                    for(const auto& primitive : constOf(group->polygons))
+                        context._polygons.push_back(primitive);
+                    context._polylines.reserve(context._polylines.size() + group->polylines.size());
+                    for(const auto& primitive : constOf(group->polylines))
+                        context._polylines.push_back(primitive);
+                    context._points.reserve(context._points.size() + group->points.size());
+                    for(const auto& primitive : constOf(group->points))
+                        context._points.push_back(primitive);
 
                     // Add shared group to current context
                     context._primitivesGroups.push_back(qMove(group));
@@ -343,29 +343,34 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
             sharedPrimitivesGroups.fulfilPromiseAndReference(mapObject->id, group);
 
         // Add polygons, polylines and points from group to current context
-        for(auto itPrimitive = group->polygons.cbegin(); itPrimitive != group->polygons.cend(); ++itPrimitive)
-            context._polygons.push_back(*itPrimitive);
-        for(auto itPrimitive = group->polylines.cbegin(); itPrimitive != group->polylines.cend(); ++itPrimitive)
-            context._polylines.push_back(*itPrimitive);
-        for(auto itPrimitive = group->points.cbegin(); itPrimitive != group->points.cend(); ++itPrimitive)
-            context._points.push_back(*itPrimitive);
+        context._polygons.reserve(context._polygons.size() + group->polygons.size());
+        for(const auto& primitive : constOf(group->polygons))
+            context._polygons.push_back(primitive);
+        context._polylines.reserve(context._polylines.size() + group->polylines.size());
+        for(const auto& primitive : constOf(group->polylines))
+            context._polylines.push_back(primitive);
+        context._points.reserve(context._points.size() + group->points.size());
+        for(const auto& primitive : constOf(group->points))
+            context._points.push_back(primitive);
 
         // Empty groups are also inserted, to indicate that they are empty
         context._primitivesGroups.push_back(qMove(group));
     }
 
-    for(auto itFutureSharedGroup = futureSharedPrimitivesGroups.begin(); itFutureSharedGroup != futureSharedPrimitivesGroups.end(); ++itFutureSharedGroup)
+    for(auto& futureSharedGroup : futureSharedPrimitivesGroups)
     {
-        auto& futureSharedGroup = *itFutureSharedGroup;
         auto group = futureSharedGroup.get();
 
         // Add polygons, polylines and points from group to current context
-        for(auto itPrimitive = group->polygons.cbegin(); itPrimitive != group->polygons.cend(); ++itPrimitive)
-            context._polygons.push_back(*itPrimitive);
-        for(auto itPrimitive = group->polylines.cbegin(); itPrimitive != group->polylines.cend(); ++itPrimitive)
-            context._polylines.push_back(*itPrimitive);
-        for(auto itPrimitive = group->points.cbegin(); itPrimitive != group->points.cend(); ++itPrimitive)
-            context._points.push_back(*itPrimitive);
+        context._polygons.reserve(context._polygons.size() + group->polygons.size());
+        for(const auto& primitive : constOf(group->polygons))
+            context._polygons.push_back(primitive);
+        context._polylines.reserve(context._polylines.size() + group->polylines.size());
+        for(const auto& primitive : constOf(group->polylines))
+            context._polylines.push_back(primitive);
+        context._points.reserve(context._points.size() + group->points.size());
+        for(const auto& primitive : constOf(group->points))
+            context._points.push_back(primitive);
 
         // Add shared group to current context
         context._primitivesGroups.push_back(qMove(group));
@@ -387,7 +392,7 @@ std::shared_ptr<const OsmAnd::Rasterizer_P::PrimitivesGroup> OsmAnd::Rasterizer_
     std::shared_ptr<const PrimitivesGroup> group(constructedGroup);
 
     uint32_t typeRuleIdIndex = 0;
-    for(auto itTypeRuleId = mapObject->typesRuleIds.cbegin(); itTypeRuleId != mapObject->typesRuleIds.cend(); ++itTypeRuleId, typeRuleIdIndex++)
+    for(auto itTypeRuleId = mapObject->typesRuleIds.cbegin(), itEnd = mapObject->typesRuleIds.cend(); itTypeRuleId != itEnd; ++itTypeRuleId, typeRuleIdIndex++)
     {
         const auto& decodedType = mapObject->section->encodingDecodingRules->decodingRules[*itTypeRuleId];
 
@@ -722,12 +727,10 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
     //NOTE: then set of symbols also should differ, but it won't.
     auto& sharedSymbolGroups = context.owner->sharedContext->_d->_sharedSymbolGroups[context._zoom];
     QList< proper::shared_future< std::shared_ptr<const SymbolsGroup> > > futureSharedSymbolGroups;
-    for(auto itPrimitivesGroup = context._primitivesGroups.cbegin(); itPrimitivesGroup != context._primitivesGroups.cend(); ++itPrimitivesGroup)
+    for(const auto& primitivesGroup : constOf(context._primitivesGroups))
     {
         if(controller && controller->isAborted())
             return;
-
-        const auto& primitivesGroup = *itPrimitivesGroup;
 
         // If using shared context is allowed, check if this group was already processed
         // (using shared cache is only allowed for non-generated MapObjects),
@@ -747,8 +750,8 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
                     RasterizerContext_P::SymbolsEntry entry;
                     entry.first = primitivesGroup->mapObject;
                     entry.second.reserve(group->symbols.size());
-                    for(auto itSymbol = group->symbols.cbegin(); itSymbol != group->symbols.cend(); ++itSymbol)
-                        entry.second.push_back(*itSymbol);
+                    for(const auto& symbol : constOf(group->symbols))
+                        entry.second.push_back(symbol);
                     entry.second.squeeze();
                     context._symbols.push_back(qMove(entry));
 
@@ -782,8 +785,8 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
         RasterizerContext_P::SymbolsEntry entry;
         entry.first = primitivesGroup->mapObject;
         entry.second.reserve(group->symbols.size());
-        for(auto itSymbol = group->symbols.cbegin(); itSymbol != group->symbols.cend(); ++itSymbol)
-            entry.second.push_back(*itSymbol);
+        for(const auto& symbol : constOf(group->symbols))
+            entry.second.push_back(symbol);
         entry.second.squeeze();
         context._symbols.push_back(qMove(entry));
 
@@ -791,17 +794,16 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
         context._symbolsGroups.push_back(qMove(group));
     }
 
-    for(auto itFutureGroup = futureSharedSymbolGroups.begin(); itFutureGroup != futureSharedSymbolGroups.end(); ++itFutureGroup)
+    for(auto& futureGroup : futureSharedSymbolGroups)
     {
-        auto& futureGroup = *itFutureGroup;
         auto group = futureGroup.get();
 
         // Add symbols from group to current context
         RasterizerContext_P::SymbolsEntry entry;
         entry.first = group->mapObject;
         entry.second.reserve(group->symbols.size());
-        for(auto itSymbol = group->symbols.cbegin(); itSymbol != group->symbols.cend(); ++itSymbol)
-            entry.second.push_back(*itSymbol);
+        for(const auto& symbol : constOf(group->symbols))
+            entry.second.push_back(symbol);
         entry.second.squeeze();
         context._symbols.push_back(qMove(entry));
 
@@ -818,12 +820,10 @@ void OsmAnd::Rasterizer_P::collectSymbolsFromPrimitives(
 {
     assert(type != PrimitivesType::Polylines_ShadowOnly);
 
-    for(auto itPrimitive = primitives.cbegin(); itPrimitive != primitives.cend(); ++itPrimitive)
+    for(const auto& primitive : constOf(primitives))
     {
         if(controller && controller->isAborted())
             return;
-
-        const auto& primitive = *itPrimitive;
 
         if(type == Polygons)
         {
@@ -1230,12 +1230,10 @@ void OsmAnd::Rasterizer_P::rasterizeMapPrimitives(
     const auto polygonMinSizeToDisplay31 = context._polygonMinSizeToDisplay * (_31toPixelDivisor.x * _31toPixelDivisor.y);
     const auto polygonSizeThreshold = 1.0 / polygonMinSizeToDisplay31;
 
-    for(auto itPrimitive = primitives.cbegin(); itPrimitive != primitives.cend(); ++itPrimitive)
+    for(const auto& primitive : constOf(primitives))
     {
         if(controller && controller->isAborted())
             return;
-
-        const auto& primitive = *itPrimitive;
 
         if(type == Polygons)
         {
@@ -1450,12 +1448,10 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
     if(!primitive->mapObject->innerPolygonsPoints31.isEmpty())
     {
         path.setFillType(SkPath::kEvenOdd_FillType);
-        for(auto itPolygon = primitive->mapObject->innerPolygonsPoints31.cbegin(); itPolygon != primitive->mapObject->innerPolygonsPoints31.cend(); ++itPolygon)
+        for(const auto& polygon : constOf(primitive->mapObject->innerPolygonsPoints31))
         {
-            const auto& polygon = *itPolygon;
-
             pointIdx = 0;
-            for(auto itVertex = polygon.cbegin(); itVertex != polygon.cend(); ++itVertex, pointIdx++)
+            for(auto itVertex = polygon.cbegin(), itEnd = polygon.cend(); itVertex != itEnd; ++itVertex, pointIdx++)
             {
                 const auto& point = *itVertex;
                 calculateVertex(point, vertex);
@@ -1627,17 +1623,13 @@ void OsmAnd::Rasterizer_P::rasterizeLine_OneWay(
 {
     if (oneway > 0)
     {
-        for(auto itPaint = env.oneWayPaints.cbegin(); itPaint != env.oneWayPaints.cend(); ++itPaint)
-        {
-            canvas.drawPath(path, *itPaint);
-        }
+        for(const auto& paint : constOf(env.oneWayPaints))
+            canvas.drawPath(path, paint);
     }
     else
     {
-        for(auto itPaint = env.reverseOneWayPaints.cbegin(); itPaint != env.reverseOneWayPaints.cend(); ++itPaint)
-        {
-            canvas.drawPath(path, *itPaint);
-        }
+        for(const auto& paint : constOf(env.reverseOneWayPaints))
+            canvas.drawPath(path, paint);
     }
 }
 
@@ -1653,7 +1645,7 @@ bool OsmAnd::Rasterizer_P::contains( const QVector< PointF >& vertices, const Po
 
     auto itPrevVertex = vertices.cbegin();
     auto itVertex = itPrevVertex + 1;
-    for(; itVertex != vertices.cend(); itPrevVertex = itVertex, ++itVertex)
+    for(const auto itEnd = vertices.cend(); itVertex != itEnd; itPrevVertex = itVertex, ++itVertex)
     {
         const auto& vertex0 = *itPrevVertex;
         const auto& vertex1 = *itVertex;
@@ -1691,10 +1683,8 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
 
     uint64_t osmId = 0;
     QVector< PointI > linePoints31;
-    for(auto itCoastline = coastlines.cbegin(); itCoastline != coastlines.cend(); ++itCoastline)
+    for(const auto& coastline : constOf(coastlines))
     {
-        const auto& coastline = *itCoastline;
-
         if(coastline->_points31.size() < 2)
         {
             OsmAnd::LogPrintf(LogSeverityLevel::Warning,
@@ -1712,7 +1702,8 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
         auto prevInside = alignedArea31.contains(cp);
         if(prevInside)
             linePoints31.push_back(cp);
-        for(++itPoint; itPoint != coastline->_points31.cend(); ++itPoint)
+        const auto itEnd = coastline->_points31.cend();
+        for(++itPoint; itPoint != itEnd; ++itPoint)
         {
             cp = *itPoint;
 
@@ -1737,10 +1728,8 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
         return false;
 
     // Draw coastlines
-    for(auto itPolyline = coastlinePolylines.cbegin(); itPolyline != coastlinePolylines.cend(); ++itPolyline)
+    for(const auto& polyline : constOf(coastlinePolylines))
     {
-        const auto& polyline = *itPolyline;
-
         const std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(env.dummyMapSection, nullptr));
         mapObject->_isArea = false;
         mapObject->_points31 = polyline;
@@ -1782,10 +1771,8 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
 
     if (includeBrokenCoastlines)
     {
-        for(auto itPolygon = coastlinePolylines.cbegin(); itPolygon != coastlinePolylines.cend(); ++itPolygon)
+        for(const auto& polygon : constOf(coastlinePolylines))
         {
-            const auto& polygon = *itPolygon;
-
             const std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(env.dummyMapSection, nullptr));
             mapObject->_isArea = false;
             mapObject->_points31 = polygon;
@@ -1796,10 +1783,8 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
     }
 
     // Draw coastlines
-    for(auto itPolygon = closedPolygons.cbegin(); itPolygon != closedPolygons.cend(); ++itPolygon)
+    for(const auto& polygon : constOf(closedPolygons))
     {
-        const auto& polygon = *itPolygon;
-
         const std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(env.dummyMapSection, nullptr));
         mapObject->_isArea = false;
         mapObject->_points31 = polygon;
@@ -1813,10 +1798,8 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
 
     auto fullWaterObjects = 0u;
     auto fullLandObjects = 0u;
-    for(auto itPolygon = closedPolygons.cbegin(); itPolygon != closedPolygons.cend(); ++itPolygon)
+    for(const auto& polygon : constOf(closedPolygons))
     {
-        const auto& polygon = *itPolygon;
-
         // If polygon has less than 4 points, it's invalid
         if(polygon.size() < 4)
             continue;
@@ -2031,7 +2014,7 @@ void OsmAnd::Rasterizer_P::appendCoastlinePolygons( QList< QVector< PointI > >& 
 
     bool add = true;
 
-    for(auto itPolygon = coastlinePolylines.begin(); itPolygon != coastlinePolylines.end();)
+    for(auto itPolygon = coastlinePolylines.begin(), itEnd = coastlinePolylines.end(); itPolygon != itEnd;)
     {
         auto& polygon = *itPolygon;
 
@@ -2111,7 +2094,7 @@ void OsmAnd::Rasterizer_P::convertCoastlinePolylinesToPolygons(
     std::set< QList< QVector< PointI > >::iterator > processedPolylines;
     while(processedPolylines.size() != validPolylines.size())
     {
-        for(auto itPolyline = validPolylines.begin(); itPolyline != validPolylines.end(); ++itPolyline)
+        for(auto itPolyline = validPolylines.begin(), itEnd = validPolylines.end(); itPolyline != itEnd; ++itPolyline)
         {
             // If this polyline was already processed, skip it
             if(processedPolylines.find(itPolyline) != processedPolylines.end())
@@ -2122,13 +2105,13 @@ void OsmAnd::Rasterizer_P::convertCoastlinePolylinesToPolygons(
             const auto& tail = polyline.last();
             auto tailEdge = AreaI::Edge::Invalid;
             alignedArea31.isOnEdge(tail, &tailEdge);
-            auto itNearestPolyline = validPolylines.end();
+            auto itNearestPolyline = itEnd;
             auto firstIteration = true;
-            for(int idx = static_cast<int>(tailEdge) + 4; (idx >= static_cast<int>(tailEdge)) && (itNearestPolyline == validPolylines.end()); idx--, firstIteration = false)
+            for(int idx = static_cast<int>(tailEdge)+4; (idx >= static_cast<int>(tailEdge)) && (itNearestPolyline == itEnd); idx--, firstIteration = false)
             {
                 const auto currentEdge = static_cast<AreaI::Edge>(idx % 4);
 
-                for(auto itOtherPolyline = validPolylines.begin(); itOtherPolyline != validPolylines.end(); ++itOtherPolyline)
+                for(auto itOtherPolyline = validPolylines.begin(); itOtherPolyline != itEnd; ++itOtherPolyline)
                 {
                     // If this polyline was already processed, skip it
                     if(processedPolylines.find(itOtherPolyline) != processedPolylines.end())
@@ -2158,7 +2141,7 @@ void OsmAnd::Rasterizer_P::convertCoastlinePolylinesToPolygons(
                     }
 
                     // If nearest was not yet set, set this
-                    if(itNearestPolyline == validPolylines.cend())
+                    if(itNearestPolyline == itEnd)
                     {
                         itNearestPolyline = itOtherPolyline;
                         continue;
@@ -2262,8 +2245,8 @@ bool OsmAnd::Rasterizer_P::isClockwiseCoastlinePolygon( const QVector< PointI > 
 
     // calculate middle Y
     int64_t middleY = 0;
-    for(auto itVertex = polygon.cbegin(); itVertex != polygon.cend(); ++itVertex)
-        middleY += itVertex->y;
+    for(const auto& vertex : constOf(polygon))
+        middleY += vertex.y;
     middleY /= polygon.size();
 
     double clockwiseSum = 0;
@@ -2274,7 +2257,7 @@ bool OsmAnd::Rasterizer_P::isClockwiseCoastlinePolygon( const QVector< PointI > 
 
     auto itPrevVertex = polygon.cbegin();
     auto itVertex = itPrevVertex + 1;
-    for(; itVertex != polygon.cend(); itPrevVertex = itVertex, ++itVertex)
+    for(const auto itEnd = polygon.cend(); itVertex != itEnd; itPrevVertex = itVertex, ++itVertex)
     {
         const auto& vertex0 = *itPrevVertex;
         const auto& vertex1 = *itVertex;
@@ -2319,30 +2302,28 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
     std::function<bool(const std::shared_ptr<const Model::MapObject>& mapObject)> filter,
     const IQueryController* const controller )
 {
-    for(auto itSymbolsEntry = context._symbols.cbegin(); itSymbolsEntry != context._symbols.cend(); ++itSymbolsEntry)
+    for(const auto& symbolsEntry : constOf(context._symbols))
     {
         if(controller && controller->isAborted())
             return;
 
         // Apply filter, if it's present
-        if(filter && !filter(itSymbolsEntry->first))
+        if(filter && !filter(symbolsEntry.first))
             continue;
 
         // Create group
-        const auto constructedGroup = new RasterizedSymbolsGroup(itSymbolsEntry->first);
+        const auto constructedGroup = new RasterizedSymbolsGroup(symbolsEntry.first);
         std::shared_ptr<const RasterizedSymbolsGroup> group(constructedGroup);
 
         // Total offset allows several texts to stack into column
         PointI totalOffset;
 
-        for(auto itPrimitiveSymbol = itSymbolsEntry->second.cbegin(); itPrimitiveSymbol != itSymbolsEntry->second.cend(); ++itPrimitiveSymbol)
+        for(const auto& symbol : constOf(symbolsEntry.second))
         {
             if(controller && controller->isAborted())
                 return;
 
-            const auto& symbol = *itPrimitiveSymbol;
-
-            if(const auto textSymbol = std::dynamic_pointer_cast<const PrimitiveSymbol_Text>(symbol))
+            if(const auto& textSymbol = std::dynamic_pointer_cast<const PrimitiveSymbol_Text>(symbol))
             {
                 const auto text = ICU::convertToVisualOrder(textSymbol->value);
                 const auto lineRefs =
@@ -2597,7 +2578,7 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                     constructedGroup->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
                 }
             }
-            else if(const auto iconSymbol = std::dynamic_pointer_cast<const PrimitiveSymbol_Icon>(symbol))
+            else if(const auto& iconSymbol = std::dynamic_pointer_cast<const PrimitiveSymbol_Icon>(symbol))
             {
                 std::shared_ptr<const SkBitmap> bitmap;
                 if(!env.obtainMapIcon(iconSymbol->resourceName, bitmap) || !bitmap)

@@ -108,9 +108,8 @@ bool OsmAnd::TileDB::rebuildIndex()
     // Index TileDBs
     QFileInfoList files;
     Utilities::findFiles(dataPath, QStringList() << "*", files);
-    for(auto itFile = files.cbegin(); itFile != files.cend(); ++itFile)
+    for(const auto& file : constOf(files))
     {
-        const auto& file = *itFile;
         const auto dbFilename = file.absoluteFilePath();
 
         const auto connectionName = QLatin1String("tiledb-sqlite:") + dbFilename;

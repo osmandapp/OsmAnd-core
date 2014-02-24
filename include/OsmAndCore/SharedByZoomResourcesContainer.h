@@ -89,10 +89,8 @@ namespace OsmAnd
             assert(resourcePtr.use_count() == 0);
 #endif
 
-            for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
+            for(const auto& level : constOf(levels))
             {
-                const auto level = *itLevel;
-
                 // Resource must not be promised and must not be already available.
                 // Otherwise behavior is undefined
                 assert(!_promisedResources[level].contains(key));
@@ -112,10 +110,8 @@ namespace OsmAnd
             const AvailableResourceEntryPtr newEntryPtr(new AvailableResourceEntry(0, qMove(resourcePtr), levels));
             assert(resourcePtr.use_count() == 0);
 
-            for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
+            for(const auto& level : constOf(levels))
             {
-                const auto level = *itLevel;
-
                 // Resource must not be promised and must not be already available.
                 // Otherwise behavior is undefined
                 assert(!_promisedResources[level].contains(key));
@@ -134,10 +130,8 @@ namespace OsmAnd
 
             const AvailableResourceEntryPtr newEntryPtr(new AvailableResourceEntry(1, resourcePtr, levels));
 
-            for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
+            for(const auto& level : constOf(levels))
             {
-                const auto level = *itLevel;
-
                 // Resource must not be promised and must not be already available.
                 // Otherwise behavior is undefined
                 assert(!_promisedResources[level].contains(key));
@@ -204,9 +198,8 @@ namespace OsmAnd
                 *outWasCleaned = false;
             if(autoClean && availableResourceEntry->refCounter == 0)
             {
-                for(auto itOtherLevel = availableResourceEntry->zoomLevels.cbegin(); itOtherLevel != availableResourceEntry->zoomLevels.cend(); ++itOtherLevel)
+                for(const auto& otherLevel : constOf(availableResourceEntry->zoomLevels))
                 {
-                    const auto otherLevel = *itOtherLevel;
                     if(otherLevel == level)
                         continue;
 
@@ -231,10 +224,8 @@ namespace OsmAnd
 
             const PromisedResourceEntryPtr newEntryPtr(new PromisedResourceEntry(levels));
 
-            for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
+            for(const auto& level : constOf(levels))
             {
-                const auto level = *itLevel;
-
                 // Resource must not be promised and must not be already available.
                 // Otherwise behavior is undefined
                 assert(!_promisedResources[level].contains(key));
@@ -251,10 +242,8 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&this->_lock);
 
             PromisedResourceEntryPtr promisedEntryPtr;
-            for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
+            for(const auto& level : constOf(levels))
             {
-                const auto level = *itLevel;
-
                 // Resource must be promised and must not be already available.
                 // Otherwise behavior is undefined
                 assert(_promisedResources[level].contains(key));
@@ -276,10 +265,8 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&this->_lock);
 
             PromisedResourceEntryPtr promisedEntryPtr;
-            for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
+            for(const auto& level : constOf(levels))
             {
-                const auto level = *itLevel;
-
                 // Resource must be promised and must not be already available.
                 // Otherwise behavior is undefined
                 assert(_promisedResources[level].contains(key));
@@ -303,10 +290,8 @@ namespace OsmAnd
             assert(resourcePtr.use_count() == 0);
 #endif
 
-            for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
+            for(const auto& level : constOf(levels))
             {
-                const auto level = *itLevel;
-
                 // Resource must not be promised and must not be already available.
                 // Otherwise behavior is undefined
                 assert(!_promisedResources[level].contains(key));
@@ -325,10 +310,8 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&this->_lock);
 
             PromisedResourceEntryPtr promisedEntryPtr;
-            for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
+            for(const auto& level : constOf(levels))
             {
-                const auto level = *itLevel;
-
                 // Resource must be promised and must not be already available.
                 // Otherwise behavior is undefined
                 assert(_promisedResources[level].contains(key));
@@ -348,10 +331,8 @@ namespace OsmAnd
             const AvailableResourceEntryPtr newEntryPtr(new AvailableResourceEntry(promisedEntryPtr->refCounter, qMove(resourcePtr), levels));
             assert(resourcePtr.use_count() == 0);
 
-            for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
+            for(const auto& level : constOf(levels))
             {
-                const auto level = *itLevel;
-
                 // Resource must not be promised and must not be already available.
                 // Otherwise behavior is undefined
                 assert(!_promisedResources[level].contains(key));
@@ -370,10 +351,8 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&this->_lock);
 
             PromisedResourceEntryPtr promisedEntryPtr;
-            for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
+            for(const auto& level : constOf(levels))
             {
-                const auto level = *itLevel;
-
                 // Resource must be promised and must not be already available.
                 // Otherwise behavior is undefined
                 assert(_promisedResources[level].contains(key));
@@ -389,10 +368,8 @@ namespace OsmAnd
 
             const AvailableResourceEntryPtr newEntryPtr(new AvailableResourceEntry(promisedEntryPtr->refCounter + 1, resourcePtr, levels));
 
-            for(auto itLevel = levels.cbegin(); itLevel != levels.cend(); ++itLevel)
+            for(const auto& level : constOf(levels))
             {
-                const auto level = *itLevel;
-
                 // Resource must not be promised and must not be already available.
                 // Otherwise behavior is undefined
                 assert(!_promisedResources[level].contains(key));
