@@ -180,35 +180,35 @@ set(OsmAndCore_resources_bundle
 if(CMAKE_HOST_WIN32 AND NOT CYGWIN)
 	add_custom_command(OUTPUT ${OsmAndCore_resources_bundle}
 		COMMAND bash ARGS --login "${CMAKE_CURRENT_LIST_DIR}/embed-resources.sh"
-		MAIN_DEPENDENCY
-			"${CMAKE_CURRENT_LIST_DIR}/embed-resources.list"
 		DEPENDS
+			"${CMAKE_CURRENT_LIST_DIR}/embed-resources.list"
+			"${CMAKE_CURRENT_LIST_DIR}/embed-resources.sh"
+			"${CMAKE_CURRENT_LIST_DIR}/embed-resources.py"
 			${OsmAndCore_resources}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
 		COMMENT "Embedding resources...")
 else()
 	add_custom_command(OUTPUT ${OsmAndCore_resources_bundle}
 		COMMAND "${CMAKE_CURRENT_LIST_DIR}/embed-resources.sh"
-		MAIN_DEPENDENCY
-			"${CMAKE_CURRENT_LIST_DIR}/embed-resources.list"
 		DEPENDS
+			"${CMAKE_CURRENT_LIST_DIR}/embed-resources.list"
+			"${CMAKE_CURRENT_LIST_DIR}/embed-resources.sh"
+			"${CMAKE_CURRENT_LIST_DIR}/embed-resources.py"
 			${OsmAndCore_resources}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
 		COMMENT "Embedding resources...")
 endif()
-add_custom_target(OsmAndCore_embed_resources
-	ALL
-	DEPENDS
-		${OsmAndCore_resources_bundle}
-	SOURCES
-		${OsmAndCore_resources_bundle}
-)
-set(merged_dependencies ${merged_dependencies}
-	OsmAndCore_embed_resources
-)
-set_source_files_properties(${OsmAndCore_resources_bundle}
-	PROPERTIES
-		GENERATED TRUE)
+# This target is always considered out-of-date, which isn't good. It has dependencies - the list
+#add_custom_target(OsmAndCore_embed_resources
+#	ALL
+#	DEPENDS
+#		${OsmAndCore_resources_bundle}
+#	SOURCES
+#		${OsmAndCore_resources_bundle}
+#)
+#set(merged_dependencies ${merged_dependencies}
+#	OsmAndCore_embed_resources
+#)
 set(merged_sources ${merged_sources}
 	${OsmAndCore_resources_bundle}
 )
