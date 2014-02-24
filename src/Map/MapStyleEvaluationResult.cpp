@@ -1,6 +1,8 @@
 #include "MapStyleEvaluationResult.h"
 #include "MapStyleEvaluationResult_P.h"
 
+#include "QKeyValueIterator.h"
+
 OsmAnd::MapStyleEvaluationResult::MapStyleEvaluationResult()
     : _d(new MapStyleEvaluationResult_P(this))
 {
@@ -68,6 +70,6 @@ void OsmAnd::MapStyleEvaluationResult::clear()
 void OsmAnd::MapStyleEvaluationResult::pack(PackedResult& packedResult)
 {
     packedResult.reserve(_d->_values.size());
-    for(auto itEntry = _d->_values.cbegin(), itEnd = _d->_values.cend(); itEntry != itEnd; ++itEntry)
-        packedResult.push_back(qMove(PackedResultEntry(itEntry.key(), itEntry.value())));
+    for(const auto& entry : rangeOf(constOf(_d->_values)))
+        packedResult.push_back(qMove(PackedResultEntry(entry.key(), entry.value())));
 }

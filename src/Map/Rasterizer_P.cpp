@@ -25,6 +25,8 @@
 #include "ObfMapSectionInfo.h"
 #include "IQueryController.h"
 #include "ICU.h"
+#include "QKeyValueIterator.h"
+#include "QImmutableIterator.h"
 #include "Utilities.h"
 #include "Logging.h"
 
@@ -392,9 +394,10 @@ std::shared_ptr<const OsmAnd::Rasterizer_P::PrimitivesGroup> OsmAnd::Rasterizer_
     std::shared_ptr<const PrimitivesGroup> group(constructedGroup);
 
     uint32_t typeRuleIdIndex = 0;
-    for(auto itTypeRuleId = mapObject->typesRuleIds.cbegin(), itEnd = mapObject->typesRuleIds.cend(); itTypeRuleId != itEnd; ++itTypeRuleId, typeRuleIdIndex++)
+    const auto& decRules = mapObject->section->encodingDecodingRules->decodingRules;
+    for(auto itTypeRuleId = iteratorOf(constOf(mapObject->typesRuleIds)); itTypeRuleId; ++itTypeRuleId, typeRuleIdIndex++)
     {
-        const auto& decodedType = mapObject->section->encodingDecodingRules->decodingRules[*itTypeRuleId];
+        const auto& decodedType = decRules[*itTypeRuleId];
 
         // Update metric
         std::chrono::high_resolution_clock::time_point orderEvaluation_begin;
@@ -975,10 +978,10 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
     }
 
     bool ok;
-    for(auto itName = names.cbegin(), itEnd = names.cend(); itName != itEnd; ++itName)
+    for(const auto& nameEntry : rangeOf(constOf(names)))
     {
-        const auto& nameTagId = itName.key();
-        const auto& name = itName.value();
+        const auto& nameTagId = nameEntry.key();
+        const auto& name = nameEntry.value();
 
         // Skip empty names
         if(name.isEmpty())
@@ -1451,7 +1454,7 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
         for(const auto& polygon : constOf(primitive->mapObject->innerPolygonsPoints31))
         {
             pointIdx = 0;
-            for(auto itVertex = polygon.cbegin(), itEnd = polygon.cend(); itVertex != itEnd; ++itVertex, pointIdx++)
+            for(auto itVertex = iteratorOf(constOf(polygon)); itVertex; ++itVertex, pointIdx++)
             {
                 const auto& point = *itVertex;
                 calculateVertex(point, vertex);
@@ -2014,7 +2017,7 @@ void OsmAnd::Rasterizer_P::appendCoastlinePolygons( QList< QVector< PointI > >& 
 
     bool add = true;
 
-    for(auto itPolygon = coastlinePolylines.begin(), itEnd = coastlinePolylines.end(); itPolygon != itEnd;)
+    for(auto itPolygon = iteratorOf(coastlinePolylines); itPolygon;)
     {
         auto& polygon = *itPolygon;
 
@@ -2094,7 +2097,7 @@ void OsmAnd::Rasterizer_P::convertCoastlinePolylinesToPolygons(
     std::set< QList< QVector< PointI > >::iterator > processedPolylines;
     while(processedPolylines.size() != validPolylines.size())
     {
-        for(auto itPolyline = validPolylines.begin(), itEnd = validPolylines.end(); itPolyline != itEnd; ++itPolyline)
+        for(auto itPolyline = iteratorOf(validPolylines); itPolyline; ++itPolyline)
         {
             // If this polyline was already processed, skip it
             if(processedPolylines.find(itPolyline) != processedPolylines.end())
@@ -2105,13 +2108,13 @@ void OsmAnd::Rasterizer_P::convertCoastlinePolylinesToPolygons(
             const auto& tail = polyline.last();
             auto tailEdge = AreaI::Edge::Invalid;
             alignedArea31.isOnEdge(tail, &tailEdge);
-            auto itNearestPolyline = itEnd;
+            auto itNearestPolyline = itPolyline.getEnd();
             auto firstIteration = true;
-            for(int idx = static_cast<int>(tailEdge)+4; (idx >= static_cast<int>(tailEdge)) && (itNearestPolyline == itEnd); idx--, firstIteration = false)
+            for(int idx = static_cast<int>(tailEdge)+4; (idx >= static_cast<int>(tailEdge)) && (!itNearestPolyline); idx--, firstIteration = false)
             {
                 const auto currentEdge = static_cast<AreaI::Edge>(idx % 4);
 
-                for(auto itOtherPolyline = validPolylines.begin(); itOtherPolyline != itEnd; ++itOtherPolyline)
+                for(auto itOtherPolyline = iteratorOf(validPolylines); itOtherPolyline; ++itOtherPolyline)
                 {
                     // If this polyline was already processed, skip it
                     if(processedPolylines.find(itOtherPolyline) != processedPolylines.end())
@@ -2141,7 +2144,7 @@ void OsmAnd::Rasterizer_P::convertCoastlinePolylinesToPolygons(
                     }
 
                     // If nearest was not yet set, set this
-                    if(itNearestPolyline == itEnd)
+                    if(!itNearestPolyline)
                     {
                         itNearestPolyline = itOtherPolyline;
                         continue;
@@ -2164,7 +2167,7 @@ void OsmAnd::Rasterizer_P::convertCoastlinePolylinesToPolygons(
                         itNearestPolyline = itOtherPolyline;
                 }
             }
-            assert(itNearestPolyline != validPolylines.cend());
+            assert(itNearestPolyline /* means '!= end' */);
 
             // Get edge of nearest-by-CCV head
             auto nearestHeadEdge = AreaI::Edge::Invalid;

@@ -19,6 +19,7 @@
 #include "MapStyleConfigurableInputValue.h"
 #include "EmbeddedResources.h"
 #include "Logging.h"
+#include "QKeyValueIterator.h"
 
 OsmAnd::MapStyle_P::MapStyle_P( MapStyle* owner_ )
     : owner(owner_)
@@ -673,18 +674,18 @@ bool OsmAnd::MapStyle_P::mergeInheritedRules( MapStyleRulesetType type )
     const auto& parentRules = _parent->_d->obtainRulesRef(type);
     auto& rules = obtainRulesRef(type);
 
-    for(auto itParentRule = parentRules.cbegin(), itEnd = parentRules.cend(); itParentRule != itEnd; ++itParentRule)
+    for(const auto& parentRuleEntry : rangeOf(constOf(parentRules)))
     {
-        auto itLocalRule = rules.constFind(itParentRule.key());
+        auto itLocalRule = rules.constFind(parentRuleEntry.key());
 
-        auto toInsert = itParentRule.value();
+        auto toInsert = parentRuleEntry.value();
         if(itLocalRule != rules.cend())
         {
-            toInsert = createTagValueRootWrapperRule(itParentRule.key(), *itLocalRule);
-            toInsert->_d->_ifElseChildren.push_back(itParentRule.value());
+            toInsert = createTagValueRootWrapperRule(parentRuleEntry.key(), *itLocalRule);
+            toInsert->_d->_ifElseChildren.push_back(parentRuleEntry.value());
         }
 
-        rules.insert(itParentRule.key(), toInsert);
+        rules.insert(parentRuleEntry.key(), toInsert);
     }
 
     return true;
@@ -695,11 +696,12 @@ bool OsmAnd::MapStyle_P::mergeInheritedAttributes()
     if(!_parent)
         return true;
 
-    for(auto itParentAttribute = _parent->_d->_attributes.cbegin(), itEnd = _parent->_d->_attributes.cend(); itParentAttribute != itEnd; ++itParentAttribute)
+    const auto& itEnd = _attributes.cend();
+    for(const auto& parentAttributeEntry : rangeOf(constOf(_parent->_d->_attributes)))
     {
-        const auto& parentAttribute = *itParentAttribute;
+        const auto& parentAttribute = parentAttributeEntry.value();
 
-        auto itAttribute = _attributes.constFind(itParentAttribute.key());
+        const auto& itAttribute = _attributes.constFind(parentAttributeEntry.key());
         if(itAttribute != itEnd)
         {
             const auto& attribute = *itAttribute;
@@ -708,7 +710,7 @@ bool OsmAnd::MapStyle_P::mergeInheritedAttributes()
         }
         else
         {
-            _attributes.insert(itParentAttribute.key(), parentAttribute);
+            _attributes.insert(parentAttributeEntry.key(), parentAttribute);
         }
     }
 

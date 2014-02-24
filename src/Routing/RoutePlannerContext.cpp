@@ -1,9 +1,9 @@
 #include "RoutePlanner.h"
 #include "RoutePlannerContext.h"
-
-#include "OsmAndCore/Logging.h"
-
-#include "OsmAndCore/Utilities.h"
+#include "QKeyValueIterator.h"
+#include "QImmutableIterator.h"
+#include "Logging.h"
+#include "Utilities.h"
 #include "ObfReader.h"
 
 OsmAnd::RoutePlannerContext::RoutePlannerContext(
@@ -124,7 +124,7 @@ void OsmAnd::RoutePlannerContext::unloadUnusedTiles(size_t memoryTarget) {
 void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::registerRoad( const std::shared_ptr<const Model::Road>& road )
 {
     uint32_t idx = 0;
-    for(auto itPoint = road->points.cbegin(), itEnd = road->points.cend(); itPoint != itEnd; ++itPoint, idx++)
+    for(auto itPoint = iteratorOf(constOf(road->points)); itPoint; ++itPoint, idx++)
     {
         const auto& point = *itPoint;
         const auto& x31 = point.x;
@@ -157,9 +157,9 @@ uint32_t OsmAnd::RoutePlannerContext::RoutingSubsectionContext::getLoadsCounter(
 
 void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::collectRoads( QList< std::shared_ptr<const Model::Road> >& output, QMap<uint64_t, std::shared_ptr<const Model::Road> >* duplicatesRegistry /*= nullptr*/ )
 {
-    for(auto itRouteSegment = _roadSegments.cbegin(), itEnd = _roadSegments.cend(); itRouteSegment != itEnd; ++itRouteSegment)
+    for(const auto& routeSegmentEntry : rangeOf(constOf(_roadSegments)))
     {
-        auto routeSegment = itRouteSegment.value();
+        auto routeSegment = routeSegmentEntry.value();
         while(routeSegment)
         {
             const auto& road = routeSegment->road;

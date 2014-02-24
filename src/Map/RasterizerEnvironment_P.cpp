@@ -15,6 +15,7 @@
 #include "ObfMapSectionInfo.h"
 #include "EmbeddedResources.h"
 #include "IExternalResourcesProvider.h"
+#include "QKeyValueIterator.h"
 #include "Utilities.h"
 #include "Logging.h"
 
@@ -201,10 +202,10 @@ void OsmAnd::RasterizerEnvironment_P::applyTo( MapStyleEvaluator& evaluator ) co
 {
     QMutexLocker scopedLocker(&_settingsChangeMutex);
 
-    for(auto itSetting = _settings.cbegin(), itEnd = _settings.cend(); itSetting != itEnd; ++itSetting)
+    for(const auto& settingEntry : rangeOf(constOf(_settings)))
     {
-        const auto& valueDef = itSetting.key();
-        const auto& settingValue = *itSetting;
+        const auto& valueDef = settingEntry.key();
+        const auto& settingValue = settingEntry.value();
 
         switch(valueDef->dataType)
         {

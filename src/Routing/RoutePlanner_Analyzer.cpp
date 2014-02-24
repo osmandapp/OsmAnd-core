@@ -12,6 +12,7 @@
 #include "Logging.h"
 #include "Utilities.h"
 #include "TurnInfo.h"
+#include "QImmutableIterator.h"
 
 OsmAnd::RouteCalculationResult OsmAnd::RoutePlanner::prepareResult(
     OsmAnd::RoutePlannerContext::CalculationContext* context,
@@ -86,7 +87,7 @@ void OsmAnd::RoutePlanner::printRouteInfo(QVector< std::shared_ptr<RouteSegment>
 
 void OsmAnd::RoutePlanner::splitRoadsAndAttachRoadSegments( OsmAnd::RoutePlannerContext::CalculationContext* context, QVector< std::shared_ptr<RouteSegment> >& route )
 {
-    for(auto itSegment = route.begin(), itEnd = route.end(); itSegment != itEnd; ++itSegment)
+    for(auto itSegment = iteratorOf(route); itSegment; ++itSegment)
     {
         auto segment = *itSegment;
         /*TODO:GC

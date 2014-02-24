@@ -7,6 +7,7 @@
 #include "MapStyle_P.h"
 #include "MapStyleValueDefinition.h"
 #include "MapStyleValue.h"
+#include "QKeyValueIterator.h"
 #include "Logging.h"
 #include "Utilities.h"
 
@@ -17,10 +18,10 @@ OsmAnd::MapStyleRule::MapStyleRule(MapStyle* owner_, const QHash< QString, QStri
     _d->_values.reserve(attributes.size());
     _d->_resolvedValueDefinitions.reserve(attributes.size());
     
-    for(auto itAttribute = attributes.cbegin(), itEnd = attributes.cend(); itAttribute != itEnd; ++itAttribute)
+    for(const auto& attributeEntry : rangeOf(constOf(attributes)))
     {
-        const auto& key = itAttribute.key();
-        const auto& value = itAttribute.value();
+        const auto& key = attributeEntry.key();
+        const auto& value = attributeEntry.value();
 
         std::shared_ptr<const MapStyleValueDefinition> valueDef;
         bool ok = owner->resolveValueDefinition(key, valueDef);
@@ -122,10 +123,10 @@ void OsmAnd::MapStyleRule::dump( const QString& prefix /*= QString()*/ ) const
 {
     auto newPrefix = prefix + QLatin1String("\t");
     
-    for(auto itValueEntry = _d->_values.cbegin(), itEnd = _d->_values.cend(); itValueEntry != itEnd; ++itValueEntry)
+    for(const auto& valueEntry : rangeOf(constOf(_d->_values)))
     {
-        const auto& valueDef = itValueEntry.key();
-        const auto& value = *itValueEntry;
+        const auto& valueDef = valueEntry.key();
+        const auto& value = valueEntry.value();
 
         QString strValue;
         switch (valueDef->dataType)

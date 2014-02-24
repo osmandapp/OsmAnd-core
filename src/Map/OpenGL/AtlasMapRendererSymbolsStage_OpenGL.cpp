@@ -12,6 +12,7 @@
 #include "AtlasMapRenderer_OpenGL.h"
 #include "IMapSymbolProvider.h"
 #include "QuadTree.h"
+#include "QKeyValueIterator.h"
 #include "Utilities.h"
 
 OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer)
@@ -100,21 +101,21 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
     IntersectionsQuadTree intersections(currentState.viewport, 8);
 
     // Iterate over symbols by "order" in ascending direction
-    for(auto itMapSymbolsLayer = mapSymbolsByOrder.cbegin(), itEnd = mapSymbolsByOrder.cend(); itMapSymbolsLayer != itEnd; ++itMapSymbolsLayer)
+    for(const auto& mapSymbolsLayerPair : rangeOf(constOf(mapSymbolsByOrder)))
     {
         // For each "order" value, obtain list of entries and sort them
-        const auto& mapSymbolsLayer = *itMapSymbolsLayer;
+        const auto& mapSymbolsLayer = mapSymbolsLayerPair.value();
         if(mapSymbolsLayer.isEmpty())
             continue;
 
-        GL_PUSH_GROUP_MARKER(QString("order %1").arg(itMapSymbolsLayer.key()));
+        GL_PUSH_GROUP_MARKER(QString("order %1").arg(mapSymbolsLayerPair.key()));
 
         // Process symbols-on-path (SOPs) to get visible subpaths from them
         QList< RenderableSymbolOnPathEntry > visibleSOPSubpaths;
         visibleSOPSubpaths.reserve(mapSymbolsLayer.size());
-        for(auto itSymbolEntry = mapSymbolsLayer.cbegin(), itEnd = mapSymbolsLayer.cend(); itSymbolEntry != itEnd; ++itSymbolEntry)
+        for(const auto& symbolEntry : rangeOf(constOf(mapSymbolsLayer)))
         {
-            const auto symbol = std::dynamic_pointer_cast<const MapSymbolOnPath>(itSymbolEntry.key());
+            const auto symbol = std::dynamic_pointer_cast<const MapSymbolOnPath>(symbolEntry.key());
             if(!symbol)
                 continue;
             const auto& points31 = symbol->mapObject->points31;
@@ -160,7 +161,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 
                     std::shared_ptr<RenderableSymbolOnPath> renderable(new RenderableSymbolOnPath());
                     renderable->mapSymbol = symbol;
-                    renderable->gpuResource = itSymbolEntry.value().lock();
+                    renderable->gpuResource = symbolEntry.value().lock();
                     renderable->subpathStartIndex = subpathStartIdx;
                     renderable->subpathEndIndex = subpathEndIdx;
                     visibleSOPSubpaths.push_back(qMove(renderable));
@@ -358,16 +359,16 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
         visibleSOPSubpaths.clear();
 
         // Sort pinned symbols by distance to camera
-        for(auto itSymbolEntry = mapSymbolsLayer.cbegin(), itEnd = mapSymbolsLayer.cend(); itSymbolEntry != itEnd; ++itSymbolEntry)
+        for(const auto& symbolEntry : rangeOf(constOf(mapSymbolsLayer)))
         {
-            const auto& symbol = std::dynamic_pointer_cast<const MapPinnedSymbol>(itSymbolEntry.key());
+            const auto& symbol = std::dynamic_pointer_cast<const MapPinnedSymbol>(symbolEntry.key());
             if(!symbol)
                 continue;
-            assert(!itSymbolEntry.value().expired());
+            assert(!symbolEntry.value().expired());
 
             std::shared_ptr<RenderablePinnedSymbol> renderable(new RenderablePinnedSymbol());
             renderable->mapSymbol = symbol;
-            renderable->gpuResource = itSymbolEntry.value().lock();
+            renderable->gpuResource = symbolEntry.value().lock();
 
             // Calculate location of symbol in world coordinates.
             renderable->offsetFromTarget31 = symbol->location31 - currentState.target31;

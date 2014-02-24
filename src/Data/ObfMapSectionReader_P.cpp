@@ -403,11 +403,9 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
             for(const auto& mapObject : constOf(intermediateResult))
             {
                 // Fill mapObject names from stringtable
-                for(auto itNameEntry = mapObject->_names.begin(), itEnd = mapObject->_names.end(); itNameEntry != itEnd; ++itNameEntry)
+                for(auto& nameValue : mapObject->_names)
                 {
-                    auto& name = itNameEntry.value();
-
-                    const auto stringId = ObfReaderUtilities::decodeIntegerFromString(name);
+                    const auto stringId = ObfReaderUtilities::decodeIntegerFromString(nameValue);
 
                     if(stringId >= mapObjectsNamesTable.size())
                     {
@@ -416,10 +414,10 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                             stringId,
                             mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2,
                             mapObjectsNamesTable.size(), qPrintable(section->name));
-                        name = QString::fromLatin1("#%1 NOT FOUND").arg(stringId);
+                        nameValue = QString::fromLatin1("#%1 NOT FOUND").arg(stringId);
                         continue;
                     }
-                    name = mapObjectsNamesTable[stringId];
+                    nameValue = mapObjectsNamesTable[stringId];
                 }
 
                 if(!visitor || visitor(mapObject))

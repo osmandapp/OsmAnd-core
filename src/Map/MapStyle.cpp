@@ -7,6 +7,7 @@
 #include <QMutex>
 
 #include "MapStyleRule.h"
+#include "QKeyValueIterator.h"
 #include "Logging.h"
 
 OsmAnd::MapStyle::MapStyle( MapStyles* styles_, const QString& resourcePath_, const bool isEmbedded_ )
@@ -86,18 +87,19 @@ void OsmAnd::MapStyle::dump( const QString& prefix /*= QString()*/ ) const
 void OsmAnd::MapStyle::dump( MapStyleRulesetType type, const QString& prefix /*= QString()*/ ) const
 {
     const auto& rules = _d->obtainRulesRef(type);
-    for(auto itRuleEntry = rules.cbegin(), itEnd = rules.cend(); itRuleEntry != itEnd; ++itRuleEntry)
+
+    for(const auto& ruleEntry : rangeOf(constOf(rules)))
     {
-        auto tag = _d->getTagString(itRuleEntry.key());
-        auto value = _d->getValueString(itRuleEntry.key());
-        auto rule = itRuleEntry.value();
+        auto tag = _d->getTagString(ruleEntry.key());
+        auto value = _d->getValueString(ruleEntry.key());
+        auto rule = ruleEntry.value();
 
         OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sRule [%s (%d):%s (%d)]",
             qPrintable(prefix),
             qPrintable(tag),
-            _d->getTagStringId(itRuleEntry.key()),
+            _d->getTagStringId(ruleEntry.key()),
             qPrintable(value),
-            _d->getValueStringId(itRuleEntry.key()));
+            _d->getValueStringId(ruleEntry.key()));
         rule->dump(prefix);
     }
 }

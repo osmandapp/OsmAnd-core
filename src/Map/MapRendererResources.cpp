@@ -8,6 +8,8 @@
 #include "IRetainableResource.h"
 #include "MapObject.h"
 #include "EmbeddedResources.h"
+#include "QKeyValueIterator.h"
+#include "QImmutableIterator.h"
 #include "Utilities.h"
 #include "Logging.h"
 
@@ -217,7 +219,7 @@ void OsmAnd::MapRendererResources::updateBindings(const MapRendererState& state,
 
         // Create new binding and storage
         auto rasterLayerIdx = 0;
-        for(auto itProvider = state.rasterLayerProviders.cbegin(), itEnd = state.rasterLayerProviders.cend(); itProvider != itEnd; ++itProvider, rasterLayerIdx++)
+        for(auto itProvider = iteratorOf(constOf(state.rasterLayerProviders)); itProvider; ++itProvider, rasterLayerIdx++)
         {
             const auto& provider = *itProvider;
 
@@ -306,12 +308,12 @@ bool OsmAnd::MapRendererResources::obtainProviderFor(TiledResourcesCollection* c
     assert(resourcesRef != nullptr);
 
     const auto& bindings = _bindings[static_cast<int>(resourcesRef->type)];
-    for(auto itBinding = bindings.collectionsToProviders.cbegin(), itEnd = bindings.collectionsToProviders.cend(); itBinding != itEnd; ++itBinding)
+    for(const auto& bindingEntry : rangeOf(constOf(bindings.collectionsToProviders)))
     {
-        if(itBinding.key().get() != resourcesRef)
+        if(bindingEntry.key().get() != resourcesRef)
             continue;
 
-        const auto& testProvider = itBinding.value();
+        const auto& testProvider = bindingEntry.value();
         if(!testProvider)
             return false;
 
@@ -1261,11 +1263,11 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
     // All resources have been uploaded to GPU successfully by this point
 
     // Unique
-    for(auto itEntry = uniqueUploaded.begin(), itEnd = uniqueUploaded.end(); itEntry != itEnd; ++itEntry)
+    for(const auto& entry : rangeOf(constOf(uniqueUploaded)))
     {
-        const auto& groupResources = itEntry.key();
-        auto& symbol = itEntry->first;
-        auto& resource = itEntry->second;
+        const auto& groupResources = entry.key();
+        auto& symbol = entry.value().first;
+        auto& resource = entry.value().second;
 
         // Unload source data from symbol
         std::const_pointer_cast<MapSymbol>(symbol)->releaseNonRetainedData();
@@ -1278,11 +1280,11 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
     }
 
     // Shared
-    for(auto itEntry = sharedUploaded.begin(), itEnd = sharedUploaded.end(); itEntry != itEnd; ++itEntry)
+    for(const auto& entry : rangeOf(constOf(sharedUploaded)))
     {
-        const auto& groupResources = itEntry.key();
-        auto& symbol = itEntry->first;
-        auto& resource = itEntry->second;
+        const auto& groupResources = entry.key();
+        auto& symbol = entry.value().first;
+        auto& resource = entry.value().second;
 
         // Unload source data from symbol
         std::const_pointer_cast<MapSymbol>(symbol)->releaseNonRetainedData();
@@ -1305,10 +1307,10 @@ void OsmAnd::MapRendererResources::SymbolsTileResource::unloadFromGPU()
     // Unique
     for(const auto& groupResources : constOf(_uniqueGroupsResources))
     {
-        for(auto itResourceInGPU = groupResources->resourcesInGPU.begin(), itEnd = groupResources->resourcesInGPU.end(); itResourceInGPU != itEnd; ++itResourceInGPU)
+        for(auto& entryResourceInGPU : rangeOf(groupResources->resourcesInGPU))
         {
-            const auto& symbol = itResourceInGPU.key();
-            auto& resourceInGPU = itResourceInGPU.value();
+            const auto& symbol = entryResourceInGPU.key();
+            auto& resourceInGPU = entryResourceInGPU.value();
 
             // Remove symbol from global map
             owner->removeMapSymbol(symbol);
@@ -1333,10 +1335,10 @@ void OsmAnd::MapRendererResources::SymbolsTileResource::unloadFromGPU()
         if(!wasRemoved)
             continue;
 
-        for(auto itResourceInGPU = groupResources->resourcesInGPU.begin(), itEnd = groupResources->resourcesInGPU.end(); itResourceInGPU != itEnd; ++itResourceInGPU)
+        for(auto& entryResourceInGPU : rangeOf(groupResources->resourcesInGPU))
         {
-            const auto& symbol = itResourceInGPU.key();
-            auto& resourceInGPU = itResourceInGPU.value();
+            const auto& symbol = entryResourceInGPU.key();
+            auto& resourceInGPU = entryResourceInGPU.value();
 
             // Remove symbol from global map
             owner->removeMapSymbol(symbol);
@@ -1371,10 +1373,10 @@ void OsmAnd::MapRendererResources::SymbolsTileResource::detach()
         // In case this was the last reference to shared group resources, check if any resources need to be deleted
         if(wasRemoved)
         {
-            for(auto itResourceInGPU = groupResources->resourcesInGPU.begin(), itEnd = groupResources->resourcesInGPU.end(); itResourceInGPU != itEnd; ++itResourceInGPU)
+            for(auto& entryResourceInGPU : rangeOf(groupResources->resourcesInGPU))
             {
-                const auto& symbol = itResourceInGPU.key();
-                auto& resourceInGPU = itResourceInGPU.value();
+                const auto& symbol = entryResourceInGPU.key();
+                auto& resourceInGPU = entryResourceInGPU.value();
 
                 // Remove symbol from global map
                 owner->removeMapSymbol(symbol);

@@ -14,6 +14,8 @@
 #include "Logging.h"
 #include "Utilities.h"
 #include "PlainQueryFilter.h"
+#include "QKeyValueIterator.h"
+#include "QImmutableIterator.h"
 
 OsmAnd::RoutePlanner::RoutePlanner()
 {
@@ -666,10 +668,10 @@ void OsmAnd::RoutePlanner::loadBorderPoints( OsmAnd::RoutePlannerContext::Calcul
     const auto rightBorderBoundary = bbox31.right + distAround;
     
     QMap<uint32_t, std::shared_ptr<RoutePlannerContext::BorderLine> > borderLinesLUT;
-    for(auto itEntry = context->owner->_subsectionsContextsLUT.cbegin(), itEnd = context->owner->_subsectionsContextsLUT.cend(); itEntry != itEnd; ++itEntry)
+    for(const auto& entry : rangeOf(constOf(context->owner->_subsectionsContextsLUT)))
     {
-        auto subsection = itEntry.key();
-        auto source = context->owner->_sourcesLUT[subsection->section.get()];
+        const auto& subsection = entry.key();
+        const auto& source = context->owner->_sourcesLUT[subsection->section.get()];
 
         ObfRoutingSectionReader::loadSubsectionBorderBoxLinesPoints(source, subsection->section, nullptr, &filter, nullptr,
             [&] (const std::shared_ptr<const OsmAnd::ObfRoutingBorderLinePoint>& point)
@@ -1060,10 +1062,10 @@ bool OsmAnd::RoutePlanner::processRestrictions(
         }
         else
         {
-            for(auto itRestriction = next->road->restrictions.cbegin(), itEnd = next->road->restrictions.cend(); itRestriction != itEnd; ++itRestriction)
+            for(const auto& restriction : rangeOf(constOf(next->road->restrictions)))
             {
-                auto restrictedTo = itRestriction.key();
-                auto crt = itRestriction.value();
+                const auto& restrictedTo = restriction.key();
+                const auto& crt = restriction.value();
 
                 if (restrictedTo == road->id)
                 {
@@ -1382,7 +1384,7 @@ std::shared_ptr<OsmAnd::RoutePlannerContext::RouteCalculationSegment> OsmAnd::Ro
         for(const auto& road : constOf(cachedRoads))
         {
             uint32_t pointIdx = 0;
-            for(auto itPoint = road->points.cbegin(), itEnd = road->points.cend(); itPoint != itEnd; ++itPoint, pointIdx++)
+            for(auto itPoint = iteratorOf(constOf(road->points)); itPoint; ++itPoint, pointIdx++)
             {
                 const auto& point = *itPoint;
                 auto id = encodeRoutePointId(road, pointIdx);

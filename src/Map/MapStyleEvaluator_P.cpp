@@ -12,6 +12,7 @@
 #include "MapStyleRule.h"
 #include "MapStyleRule_P.h"
 #include "MapObject.h"
+#include "QKeyValueIterator.h"
 
 OsmAnd::MapStyleEvaluator_P::MapStyleEvaluator_P( MapStyleEvaluator* owner_ )
     : owner(owner_)
@@ -79,15 +80,15 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
     bool evaluateChildren)
 {
     // Check all values of a rule until all are checked.
-    for(auto itRuleValueEntry = rule->_d->_values.cbegin(), itEnd = rule->_d->_values.cend(); itRuleValueEntry != itEnd; ++itRuleValueEntry)
+    for(const auto& ruleValueEntry : rangeOf(constOf(rule->_d->_values)))
     {
-        const auto& valueDef = itRuleValueEntry.key();
+        const auto& valueDef = ruleValueEntry.key();
 
         // Test only input values, the ones that start with INPUT_*
         if(valueDef->valueClass != MapStyleValueClass::Input)
             continue;
 
-        const auto& ruleValue = *itRuleValueEntry;
+        const auto& ruleValue = ruleValueEntry.value();
         const auto& inputValue = _inputValues[valueDef->id];
 
         bool evaluationResult = false;
@@ -141,13 +142,13 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
     // Fill output values from rule to result storage, if requested
     if(outResultStorage)
     {
-        for(auto itRuleValueEntry = rule->_d->_values.cbegin(), itEnd = rule->_d->_values.cend(); itRuleValueEntry != itEnd; ++itRuleValueEntry)
+        for(const auto& ruleValueEntry : rangeOf(constOf(rule->_d->_values)))
         {
-            const auto& valueDef = itRuleValueEntry.key();
+            const auto& valueDef = ruleValueEntry.key();
             if(valueDef->valueClass != MapStyleValueClass::Output)
                 continue;
 
-            const auto& ruleValue = *itRuleValueEntry;
+            const auto& ruleValue = ruleValueEntry.value();
 
             switch(valueDef->dataType)
             {
