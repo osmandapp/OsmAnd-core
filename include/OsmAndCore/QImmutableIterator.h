@@ -22,6 +22,7 @@ namespace OsmAnd
         inline QImmutableIterator(const ITERATOR_TYPE& begin_, const ITERATOR_TYPE& end_)
             : _current(begin_)
             , _end(end_)
+            , current(_current)
             , end(_end)
         {
         }
@@ -29,6 +30,7 @@ namespace OsmAnd
         inline QImmutableIterator(const QImmutableIteratorT& that)
             : _current(that._current)
             , _end(that._end)
+            , current(_current)
             , end(_end)
         {
         }
@@ -91,6 +93,7 @@ namespace OsmAnd
             return _current != _end;
         }
 
+        const ITERATOR_TYPE& current;
         const ITERATOR_TYPE& end;
 
         inline QImmutableIteratorT getEnd() const

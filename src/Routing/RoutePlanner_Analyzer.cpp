@@ -136,7 +136,7 @@ void OsmAnd::RoutePlanner::splitRoadsAndAttachRoadSegments( OsmAnd::RoutePlanner
                     segment->_endPointIndex = nextIdx;
                     segment->_attachedRoutes.resize(qAbs(static_cast<int64_t>(segment->_endPointIndex) - static_cast<int64_t>(segment->_startPointIndex)) + 1);
 
-                    itSegment = route.insert(++itSegment, split);
+                    itSegment = route.insert((++itSegment).current, split);
                     
                     // switch current segment to the splited
                     segment = split;
