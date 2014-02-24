@@ -14,7 +14,7 @@ namespace OsmAnd
     public:
         typedef QImmutableIterator<ITERATOR_TYPE> QImmutableIteratorT;
         typedef decltype(*ITERATOR_TYPE()) ValueRefecenceType;
-        typedef typename std::add_pointer< typename std::remove_reference<typename ValueRefecenceType>::type >::type ValuePointerType;
+        typedef decltype(&(*ITERATOR_TYPE())) ValuePointerType;
     private:
         ITERATOR_TYPE _current;
         ITERATOR_TYPE _end;
