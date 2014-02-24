@@ -723,7 +723,7 @@ bool iconOrder(IconDrawInfo text1, IconDrawInfo text2) {
 void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 {
 	std::sort(rc->iconsToDraw.begin(), rc->iconsToDraw.end(), iconOrder);
-	int skewConstant = (int) rc->getDensityValue(24);
+	int skewConstant = (int) rc->getDensityValue(32);
 	int iconsW = rc -> getWidth() / skewConstant;
 	int iconsH = rc -> getHeight() / skewConstant;
 	int len = (iconsW * iconsH) / 32;
