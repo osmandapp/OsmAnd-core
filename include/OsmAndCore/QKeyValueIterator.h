@@ -64,7 +64,7 @@ namespace OsmAnd
 
             UnderlyingIterator _underlyingIterator;
 
-        friend struct KeyValueContainerWrapperT;
+        friend struct OsmAnd::KeyValueContainerWrapper<CONTAINER>;
         };
 
         inline Iterator begin()
@@ -113,7 +113,7 @@ namespace OsmAnd
 
             UnderlyingConstIterator _underlyingIterator;
 
-        friend struct KeyValueContainerWrapperT;
+        friend struct OsmAnd::KeyValueContainerWrapper<CONTAINER>;
         };
 
         inline ConstIterator begin() const
@@ -132,6 +132,8 @@ namespace OsmAnd
         {
             return ConstIterator(container.cend());
         }
+
+    friend struct OsmAnd::KeyValueContainerWrapper<CONTAINER>;
     };
 
     template<class CONTAINER>
@@ -196,7 +198,7 @@ namespace OsmAnd
 
             UnderlyingConstIterator _underlyingIterator;
 
-            friend struct KeyValueConstContainerWrapperT;
+        friend struct OsmAnd::KeyValueConstContainerWrapper<CONTAINER>;
         };
 
         inline ConstIterator begin() const
@@ -215,6 +217,8 @@ namespace OsmAnd
         {
             return ConstIterator(container.cend());
         }
+
+        friend struct OsmAnd::KeyValueConstContainerWrapper<CONTAINER>;
     };
 
     template<class CONTAINER>
