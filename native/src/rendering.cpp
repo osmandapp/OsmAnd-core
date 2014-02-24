@@ -723,43 +723,42 @@ bool iconOrder(IconDrawInfo text1, IconDrawInfo text2) {
 void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 {
 	std::sort(rc->iconsToDraw.begin(), rc->iconsToDraw.end(), iconOrder);
-	int skewConstant = (int) rc->getDensityValue(32);
-	int iconsW = rc -> getWidth() / skewConstant;
-	int iconsH = rc -> getHeight() / skewConstant;
-	int len = (iconsW * iconsH) / 32;
-	int* alreadyDrawnIcons = new int[len];
-	memset(alreadyDrawnIcons, 0, sizeof(int)*len);
+	SkRect bounds = SkRect::MakeLTRB(0, 0, rc->getWidth(), rc->getHeight());
+	bounds.inset(-bounds.width()/4, -bounds.height()/4);
+	quad_tree<SkRect> boundsIntersect(bounds, 4, 0.6);
 	size_t ji = 0;
 	SkPaint p;
 	p.setStyle(SkPaint::kStroke_Style);
 	p.setFilterBitmap(true);
+	vector<SkRect> searchText;
 	for(;ji< rc->iconsToDraw.size(); ji++)
 	{
 		IconDrawInfo icon = rc->iconsToDraw.at(ji);
 		if (icon.y >= 0 && icon.y < rc->getHeight() && icon.x >= 0 && icon.x < rc->getWidth() && icon.bmp != NULL) {
-			int z = (((int) icon.x / skewConstant) + ((int) icon.y / skewConstant) * iconsW);
-			int i = z / 32;
-			if (i >= len) {
-				continue;
-			}
-			int ind = alreadyDrawnIcons[i];
-			int b = z % 32;
-			// check bit b if it is set
-			if (((ind >> b) & 1) == 0) {
-				alreadyDrawnIcons[i] = ind | (1 << b);
-				SkBitmap* ico = icon.bmp;
-				float left = icon.x -  ico->width() / 2 * rc->getScreenDensityRatio();
-				float top = icon.y - ico->height() / 2 * rc->getScreenDensityRatio(); 
-				SkRect r = SkRect::MakeXYWH(left, top, ico->width() * rc->getScreenDensityRatio(),
+			SkBitmap* ico = icon.bmp;
+			float left = icon.x -  ico->width() / 2 * rc->getScreenDensityRatio();
+			float top = icon.y - ico->height() / 2 * rc->getScreenDensityRatio(); 
+			SkRect r = SkRect::MakeXYWH(left, top, ico->width() * rc->getScreenDensityRatio(),
 						ico->height()* rc->getScreenDensityRatio() );
+			
+			boundsIntersect.query_in_box(r, searchText);
+			bool intersects = false;
+			for (uint32_t i = 0; i < searchText.size(); i++) {
+				SkRect& t = searchText.at(i);
+				if (SkRect::Intersects(t, r)) {
+					intersects =  true;
+				}
+			}
+			if (!intersects) {
 				PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*ico, (SkIRect*) NULL, r, &p));
+				r.inset(-r.width()/4, -r.height()/4);
+				boundsIntersect.insert(r, r);
 			}
 		}
 		if (rc->interrupted()) {
 			break;
 		}
 	}
-	delete[] alreadyDrawnIcons;
 }
 
 double polygonArea(MapDataObject* obj, float mult) {

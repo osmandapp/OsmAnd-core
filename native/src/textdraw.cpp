@@ -351,9 +351,10 @@ bool intersects(TextDrawInfo* t, TextDrawInfo* s) {
 inline float max(float a, float b) {
   return a > b ? a : b;
 }
-vector<TextDrawInfo*> searchText;
+
 bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<TextDrawInfo*>& boundIntersections, TextDrawInfo* text,
 		SkPaint* paintText, SkPaint* paintIcon) {
+	vector<TextDrawInfo*> searchText;
 	paintText->measureText(text->text.c_str(), text->text.length(), &text->bounds);
 	// make wider
 	text->bounds.inset(-rc->getDensityValue( 3), -rc->getDensityValue(10));
