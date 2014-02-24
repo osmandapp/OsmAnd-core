@@ -1335,7 +1335,7 @@ void OsmAnd::MapRendererResources::SymbolsTileResource::unloadFromGPU()
         if(!wasRemoved)
             continue;
 
-        for(auto& entryResourceInGPU : rangeOf(groupResources->resourcesInGPU))
+        for(const auto& entryResourceInGPU : rangeOf(groupResources->resourcesInGPU))
         {
             const auto& symbol = entryResourceInGPU.key();
             auto& resourceInGPU = entryResourceInGPU.value();
@@ -1373,7 +1373,7 @@ void OsmAnd::MapRendererResources::SymbolsTileResource::detach()
         // In case this was the last reference to shared group resources, check if any resources need to be deleted
         if(wasRemoved)
         {
-            for(auto& entryResourceInGPU : rangeOf(groupResources->resourcesInGPU))
+            for(const auto& entryResourceInGPU : rangeOf(groupResources->resourcesInGPU))
             {
                 const auto& symbol = entryResourceInGPU.key();
                 auto& resourceInGPU = entryResourceInGPU.value();
