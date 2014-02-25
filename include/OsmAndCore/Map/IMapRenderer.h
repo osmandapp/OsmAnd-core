@@ -24,6 +24,9 @@ namespace OsmAnd
 
     class OSMAND_CORE_API IMapRenderer
     {
+    public:
+        typedef std::function<void(const MapRendererStateChange thisChange, const uint32_t allChanges)> StateChangeObserverSignature;
+
     private:
         bool _isRenderingInitialized;
 
@@ -80,6 +83,9 @@ namespace OsmAnd
         virtual void setElevationAngle(const float elevationAngle, bool forcedUpdate = false) = 0;
         virtual void setTarget(const PointI& target31, bool forcedUpdate = false) = 0;
         virtual void setZoom(const float zoom, bool forcedUpdate = false) = 0;
+
+        virtual void registerStateChangeObserver(void* tag, const StateChangeObserverSignature observer) const = 0;
+        virtual void unregisterStateChangeObserver(void* tag) const = 0;
 
         virtual float getReferenceTileSizeOnScreen() = 0;
         virtual float getScaledTileSizeOnScreen() = 0;

@@ -5,6 +5,7 @@
 
 #include "QtExtensions.h"
 #include <QAtomicInt>
+#include <QHash>
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
@@ -51,6 +52,8 @@ namespace OsmAnd
         volatile uint32_t _requestedStateUpdatedMask;
         bool revalidateState();
         void notifyRequestedStateWasUpdated(const MapRendererStateChange change);
+        mutable QHash<void*, StateChangeObserverSignature> _stateChangeObservers;
+        mutable QMutex _stateChangeObserversMutex;
 
         // Resources-related:
         std::unique_ptr<MapRendererResources> _resources;
@@ -174,6 +177,9 @@ namespace OsmAnd
         virtual void setElevationAngle(const float elevationAngle, bool forcedUpdate = false);
         virtual void setTarget(const PointI& target31, bool forcedUpdate = false);
         virtual void setZoom(const float zoom, bool forcedUpdate = false);
+
+        virtual void registerStateChangeObserver(void* tag, const StateChangeObserverSignature observer) const;
+        virtual void unregisterStateChangeObserver(void* tag) const;
 
         virtual void dumpResourcesInfo() const;
 

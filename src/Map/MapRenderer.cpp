@@ -198,6 +198,13 @@ void OsmAnd::MapRenderer::notifyRequestedStateWasUpdated(const MapRendererStateC
 {
     _requestedStateUpdatedMask |= 1u << static_cast<int>(change);
 
+    // Notify all observers
+    {
+        QMutexLocker scopedLocker(&_stateChangeObserversMutex);
+        for(const auto& observer : constOf(_stateChangeObservers))
+            observer(change, _requestedStateUpdatedMask);
+    }
+
     // Since our current state is invalid, frame is also invalidated
     invalidateFrame();
 }
@@ -1072,6 +1079,20 @@ void OsmAnd::MapRenderer::setZoom( const float zoom, bool forcedUpdate /*= false
     _requestedState.zoomFraction = _requestedState.requestedZoom - _requestedState.zoomBase;
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
+}
+
+void OsmAnd::MapRenderer::registerStateChangeObserver(void* tag, const StateChangeObserverSignature observer) const
+{
+    QMutexLocker scopedLocker(&_stateChangeObserversMutex);
+
+    _stateChangeObservers.insert(tag, observer);
+}
+
+void OsmAnd::MapRenderer::unregisterStateChangeObserver(void* tag) const
+{
+    QMutexLocker scopedLocker(&_stateChangeObserversMutex);
+
+    _stateChangeObservers.remove(tag);
 }
 
 void OsmAnd::MapRenderer::dumpResourcesInfo() const
