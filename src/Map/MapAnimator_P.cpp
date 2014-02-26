@@ -116,12 +116,40 @@ void OsmAnd::MapAnimator_P::animateTargetBy(const PointI64& deltaValue, const fl
 
 void OsmAnd::MapAnimator_P::animateTargetWith(const PointD& velocity, const PointD& deceleration)
 {
-    const auto duration = qSqrt(velocity.x*velocity.x + velocity.y*velocity.y) / qSqrt(deceleration.x*deceleration.x + deceleration.y*deceleration.y);
+    const auto duration = qSqrt((velocity.x*velocity.x + velocity.y*velocity.y) / (deceleration.x*deceleration.x + deceleration.y*deceleration.y));
     const PointI64 deltaValue(
         0.5f * velocity.x * duration,
         0.5f * velocity.y * duration);
 
     animateTargetBy(deltaValue, duration, MapAnimatorEasingType::None, MapAnimatorEasingType::Quadratic);
+}
+
+void OsmAnd::MapAnimator_P::parabolicAnimateTargetBy(const PointI& deltaValue, const float duration, MapAnimatorEasingType easingIn, MapAnimatorEasingType easingOut)
+{
+    parabolicAnimateTargetBy(PointI64(deltaValue), duration, easingIn, easingOut);
+}
+
+void OsmAnd::MapAnimator_P::parabolicAnimateTargetBy(const PointI64& deltaValue, const float duration, MapAnimatorEasingType easingIn, MapAnimatorEasingType easingOut)
+{
+    std::shared_ptr<AbstractAnimation> newAnimation(new MapAnimator_P::Animation<PointI64>(
+        deltaValue, duration, easingIn, easingOut,
+        _targetGetter, _targetSetter));
+    //TODO: zoom in-out
+
+    {
+        QMutexLocker scopedLocker(&_animationsMutex);
+        _animations.push_back(qMove(newAnimation));
+    }
+}
+
+void OsmAnd::MapAnimator_P::parabolicAnimateTargetWith(const PointD& velocity, const PointD& deceleration)
+{
+    const auto duration = qSqrt((velocity.x*velocity.x + velocity.y*velocity.y) / (deceleration.x*deceleration.x + deceleration.y*deceleration.y));
+    const PointI64 deltaValue(
+        0.5f * velocity.x * duration,
+        0.5f * velocity.y * duration);
+
+    parabolicAnimateTargetBy(deltaValue, duration, MapAnimatorEasingType::None, MapAnimatorEasingType::Quadratic);
 }
 
 void OsmAnd::MapAnimator_P::animateAzimuthBy(const float deltaValue, const float duration, const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut)
@@ -216,7 +244,7 @@ void OsmAnd::MapAnimator_P::animateMoveBy(
 
 void OsmAnd::MapAnimator_P::animateMoveWith(const PointD& velocity, const PointD& deceleration, const bool zeroizeAzimuth, const bool invZeroizeElevationAngle)
 {
-    const auto duration = qSqrt(velocity.x*velocity.x + velocity.y*velocity.y) / qSqrt(deceleration.x*deceleration.x + deceleration.y*deceleration.y);
+    const auto duration = qSqrt((velocity.x*velocity.x + velocity.y*velocity.y) / (deceleration.x*deceleration.x + deceleration.y*deceleration.y));
     const PointI64 deltaValue(
         0.5f * velocity.x * duration,
         0.5f * velocity.y * duration);

@@ -480,15 +480,9 @@ namespace OsmAnd
         void animateTargetBy(const PointI64& deltaValue, const float duration, const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut);
         void animateTargetWith(const PointD& velocity, const PointD& deceleration);
 
-        //void parabolicAnimateTargetBy(
-        //    const PointI& deltaValue, const float duration,
-        //    MapAnimatorEasingType easingIn = MapAnimatorEasingType::Quadratic,
-        //    MapAnimatorEasingType easingOut = MapAnimatorEasingType::Quadratic);
-        //void parabolicAnimateTargetBy(
-        //    const PointI64& deltaValue, const float duration,
-        //    MapAnimatorEasingType easingIn = MapAnimatorEasingType::Quadratic,
-        //    MapAnimatorEasingType easingOut = MapAnimatorEasingType::Quadratic);
-        //void parabolicAnimateTargetWith(const PointD& velocity, const PointD& deceleration);
+        void parabolicAnimateTargetBy(const PointI& deltaValue, const float duration, MapAnimatorEasingType easingIn, MapAnimatorEasingType easingOut);
+        void parabolicAnimateTargetBy(const PointI64& deltaValue, const float duration, MapAnimatorEasingType easingIn, MapAnimatorEasingType easingOut);
+        void parabolicAnimateTargetWith(const PointD& velocity, const PointD& deceleration);
 
         void animateAzimuthBy(const float deltaValue, const float duration, const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut);
         void animateAzimuthWith(const float velocity, const float deceleration);

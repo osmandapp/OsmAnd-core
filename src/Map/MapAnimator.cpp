@@ -88,6 +88,27 @@ void OsmAnd::MapAnimator::animateTargetWith(const PointD& velocity, const PointD
     _d->animateTargetWith(velocity, deceleration);
 }
 
+void OsmAnd::MapAnimator::parabolicAnimateTargetBy(
+    const PointI& deltaValue, const float duration,
+    MapAnimatorEasingType easingIn /*= MapAnimatorEasingType::Quadratic*/,
+    MapAnimatorEasingType easingOut /*= MapAnimatorEasingType::Quadratic*/)
+{
+    _d->parabolicAnimateTargetBy(deltaValue, duration, easingIn, easingOut);
+}
+
+void OsmAnd::MapAnimator::parabolicAnimateTargetBy(
+    const PointI64& deltaValue, const float duration,
+    MapAnimatorEasingType easingIn /*= MapAnimatorEasingType::Quadratic*/,
+    MapAnimatorEasingType easingOut /*= MapAnimatorEasingType::Quadratic*/)
+{
+    _d->parabolicAnimateTargetBy(deltaValue, duration, easingIn, easingOut);
+}
+
+void OsmAnd::MapAnimator::parabolicAnimateTargetWith(const PointD& velocity, const PointD& deceleration)
+{
+    _d->parabolicAnimateTargetWith(velocity, deceleration);
+}
+
 void OsmAnd::MapAnimator::animateAzimuthBy(
     const float deltaValue, const float duration,
     const MapAnimatorEasingType easingIn /*= MapAnimatorEasingType::Quadratic*/,
