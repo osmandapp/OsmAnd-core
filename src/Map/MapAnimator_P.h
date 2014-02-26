@@ -7,8 +7,10 @@
 
 #include "QtExtensions.h"
 #include <QtMath>
+#include <QHash>
 #include <QList>
 #include <QMutex>
+#include <QVariant>
 
 #include "OsmAndCore.h"
 #include "MapTypes.h"
@@ -28,12 +30,21 @@ namespace OsmAnd
         MapAnimator* const owner;
         std::shared_ptr<IMapRenderer> _renderer;
 
+        struct AnimationContext
+        {
+            QVariantList storageList;
+            QVariantHash storageHash;
+        };
+
         class AbstractAnimation
         {
             Q_DISABLE_COPY(AbstractAnimation);
         private:
         protected:
             float _timePassed;
+
+            AnimationContext _ownContext;
+            std::shared_ptr<AnimationContext> _sharedContext;
         
             AbstractAnimation(const float duration_, const MapAnimatorEasingType easingIn_, const MapAnimatorEasingType easingOut_)
                 : _timePassed(0.0f)
@@ -363,9 +374,9 @@ namespace OsmAnd
         {
             Q_DISABLE_COPY(Animation);
         public:
-            typedef std::function<void (const T newValue)> ApplierMethod;
-            typedef std::function<T ()> GetInitialValueMethod;
-            typedef std::function<T ()> GetDeltaValueMethod;
+            typedef std::function<void (const T newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)> ApplierMethod;
+            typedef std::function<T (AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)> GetInitialValueMethod;
+            typedef std::function<T (AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)> GetDeltaValueMethod;
         private:
         protected:
             T _initialValue;
@@ -407,10 +418,10 @@ namespace OsmAnd
                 // If this is first frame, and initial value has not been captured, do that
                 if(!_initialValueCaptured)
                 {
-                    _initialValue = obtainer();
+                    _initialValue = obtainer(_ownContext, _sharedContext);
                     _initialValueCaptured = true;
                     if(deltaValueObtainer)
-                        _deltaValue = deltaValueObtainer();
+                        _deltaValue = deltaValueObtainer(_ownContext, _sharedContext);
 
                     // Return false to indicate that processing has not yet finished
                     return (_timePassed >= duration);
@@ -425,7 +436,7 @@ namespace OsmAnd
                 calculateValue(currentTime, _initialValue, _deltaValue, duration, easingIn, easingOut, newValue);
 
                 // Apply new value
-                applier(newValue);
+                applier(newValue, _ownContext, _sharedContext);
 
                 return (_timePassed >= duration);
             }
@@ -441,24 +452,24 @@ namespace OsmAnd
         QList< std::shared_ptr<AbstractAnimation> > _animations;
 
         const Animation<float>::GetInitialValueMethod _zoomGetter;
-        float zoomGetter();
+        float zoomGetter(AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext);
         const Animation<float>::ApplierMethod _zoomSetter;
-        void zoomSetter(const float newValue);
+        void zoomSetter(const float newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext);
 
         const Animation<float>::GetInitialValueMethod _azimuthGetter;
-        float azimuthGetter();
+        float azimuthGetter(AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext);
         const Animation<float>::ApplierMethod _azimuthSetter;
-        void azimuthSetter(const float newValue);
+        void azimuthSetter(const float newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext);
 
         const Animation<float>::GetInitialValueMethod _elevationAngleGetter;
-        float elevationAngleGetter();
+        float elevationAngleGetter(AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext);
         const Animation<float>::ApplierMethod _elevationAngleSetter;
-        void elevationAngleSetter(const float newValue);
+        void elevationAngleSetter(const float newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext);
 
         const Animation<PointI64>::GetInitialValueMethod _targetGetter;
-        PointI64 targetGetter();
+        PointI64 targetGetter(AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext);
         const Animation<PointI64>::ApplierMethod _targetSetter;
-        void targetSetter(const PointI64 newValue);
+        void targetSetter(const PointI64 newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext);
     public:
         ~MapAnimator_P();
 

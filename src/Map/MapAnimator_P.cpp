@@ -8,14 +8,14 @@ OsmAnd::MapAnimator_P::MapAnimator_P( MapAnimator* const owner_ )
     : owner(owner_)
     , _isAnimationPaused(true)
     , _animationsMutex(QMutex::Recursive)
-    , _zoomGetter(std::bind(&MapAnimator_P::zoomGetter, this))
-    , _zoomSetter(std::bind(&MapAnimator_P::zoomSetter, this, std::placeholders::_1))
-    , _azimuthGetter(std::bind(&MapAnimator_P::azimuthGetter, this))
-    , _azimuthSetter(std::bind(&MapAnimator_P::azimuthSetter, this, std::placeholders::_1))
-    , _elevationAngleGetter(std::bind(&MapAnimator_P::elevationAngleGetter, this))
-    , _elevationAngleSetter(std::bind(&MapAnimator_P::elevationAngleSetter, this, std::placeholders::_1))
-    , _targetGetter(std::bind(&MapAnimator_P::targetGetter, this))
-    , _targetSetter(std::bind(&MapAnimator_P::targetSetter, this, std::placeholders::_1))
+    , _zoomGetter(std::bind(&MapAnimator_P::zoomGetter, this, std::placeholders::_1, std::placeholders::_2))
+    , _zoomSetter(std::bind(&MapAnimator_P::zoomSetter, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3))
+    , _azimuthGetter(std::bind(&MapAnimator_P::azimuthGetter, this, std::placeholders::_1, std::placeholders::_2))
+    , _azimuthSetter(std::bind(&MapAnimator_P::azimuthSetter, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3))
+    , _elevationAngleGetter(std::bind(&MapAnimator_P::elevationAngleGetter, this, std::placeholders::_1, std::placeholders::_2))
+    , _elevationAngleSetter(std::bind(&MapAnimator_P::elevationAngleSetter, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3))
+    , _targetGetter(std::bind(&MapAnimator_P::targetGetter, this, std::placeholders::_1, std::placeholders::_2))
+    , _targetSetter(std::bind(&MapAnimator_P::targetSetter, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3))
 {
 }
 
@@ -107,6 +107,8 @@ void OsmAnd::MapAnimator_P::animateTargetBy(const PointI64& deltaValue, const fl
     std::shared_ptr<AbstractAnimation> newAnimation(new MapAnimator_P::Animation<PointI64>(
         deltaValue, duration, easingIn, easingOut,
         _targetGetter, _targetSetter));
+
+    
 
     {
         QMutexLocker scopedLocker(&_animationsMutex);
@@ -212,9 +214,9 @@ void OsmAnd::MapAnimator_P::animateMoveBy(
     if(zeroizeAzimuth)
     {
         zeroizeAzimuthAnimation.reset(new MapAnimator_P::Animation<float>(
-            [this]()
+            [this](AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
             {
-                return -azimuthGetter();
+                return -azimuthGetter(context, sharedContext);
             },
             duration, easingIn, easingOut,
             _azimuthGetter, _azimuthSetter));
@@ -224,9 +226,9 @@ void OsmAnd::MapAnimator_P::animateMoveBy(
     if(invZeroizeElevationAngle)
     {
         invZeroizeElevationAngleAnimation.reset(new MapAnimator_P::Animation<float>(
-            [this]()
+            [this](AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
             {
-                return 90.0f - elevationAngleGetter();
+                return 90.0f - elevationAngleGetter(context, sharedContext);
             },
             duration, easingIn, easingOut,
             _elevationAngleGetter, _elevationAngleSetter));
@@ -252,42 +254,42 @@ void OsmAnd::MapAnimator_P::animateMoveWith(const PointD& velocity, const PointD
     animateMoveBy(deltaValue, duration, zeroizeAzimuth, invZeroizeElevationAngle, MapAnimatorEasingType::None, MapAnimatorEasingType::Quadratic);
 }
 
-float OsmAnd::MapAnimator_P::zoomGetter()
+float OsmAnd::MapAnimator_P::zoomGetter(AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
 {
     return _renderer->state.requestedZoom;
 }
 
-void OsmAnd::MapAnimator_P::zoomSetter(const float newValue)
+void OsmAnd::MapAnimator_P::zoomSetter(const float newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
 {
     _renderer->setZoom(newValue);
 }
 
-float OsmAnd::MapAnimator_P::azimuthGetter()
+float OsmAnd::MapAnimator_P::azimuthGetter(AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
 {
     return _renderer->state.azimuth;
 }
 
-void OsmAnd::MapAnimator_P::azimuthSetter(const float newValue)
+void OsmAnd::MapAnimator_P::azimuthSetter(const float newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
 {
     _renderer->setAzimuth(newValue);
 }
 
-float OsmAnd::MapAnimator_P::elevationAngleGetter()
+float OsmAnd::MapAnimator_P::elevationAngleGetter(AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
 {
     return _renderer->state.elevationAngle;
 }
 
-void OsmAnd::MapAnimator_P::elevationAngleSetter(const float newValue)
+void OsmAnd::MapAnimator_P::elevationAngleSetter(const float newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
 {
     _renderer->setElevationAngle(newValue);
 }
 
-OsmAnd::PointI64 OsmAnd::MapAnimator_P::targetGetter()
+OsmAnd::PointI64 OsmAnd::MapAnimator_P::targetGetter(AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
 {
     return _renderer->state.target31;
 }
 
-void OsmAnd::MapAnimator_P::targetSetter(const PointI64 newValue)
+void OsmAnd::MapAnimator_P::targetSetter(const PointI64 newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
 {
     _renderer->setTarget(Utilities::normalizeCoordinates(newValue, ZoomLevel31));
 }
