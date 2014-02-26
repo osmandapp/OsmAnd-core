@@ -11,7 +11,7 @@
 #include <QMutex>
 
 #include "OsmAndCore.h"
-#include "MapAnimator.h"
+#include "MapTypes.h"
 
 namespace OsmAnd
 {
@@ -439,8 +439,72 @@ namespace OsmAnd
         volatile bool _isAnimationPaused;
         mutable QMutex _animationsMutex;
         QList< std::shared_ptr<AbstractAnimation> > _animations;
+
+        const Animation<float>::GetInitialValueMethod _zoomGetter;
+        float zoomGetter();
+        const Animation<float>::ApplierMethod _zoomSetter;
+        void zoomSetter(const float newValue);
+
+        const Animation<float>::GetInitialValueMethod _azimuthGetter;
+        float azimuthGetter();
+        const Animation<float>::ApplierMethod _azimuthSetter;
+        void azimuthSetter(const float newValue);
+
+        const Animation<float>::GetInitialValueMethod _elevationAngleGetter;
+        float elevationAngleGetter();
+        const Animation<float>::ApplierMethod _elevationAngleSetter;
+        void elevationAngleSetter(const float newValue);
+
+        const Animation<PointI64>::GetInitialValueMethod _targetGetter;
+        PointI64 targetGetter();
+        const Animation<PointI64>::ApplierMethod _targetSetter;
+        void targetSetter(const PointI64 newValue);
     public:
         ~MapAnimator_P();
+
+        bool isAnimationPaused() const;
+        bool isAnimationRunning() const;
+
+        void pauseAnimation();
+        void resumeAnimation();
+        void cancelAnimation();
+
+        void setMapRenderer(const std::shared_ptr<IMapRenderer>& mapRenderer);
+
+        void update(const float timePassed);
+
+        void animateZoomBy(const float deltaValue, const float duration, const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut);
+        void animateZoomWith(const float velocity, const float deceleration);
+
+        void animateTargetBy(const PointI& deltaValue, const float duration, const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut);
+        void animateTargetBy(const PointI64& deltaValue, const float duration, const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut);
+        void animateTargetWith(const PointD& velocity, const PointD& deceleration);
+
+        //void parabolicAnimateTargetBy(
+        //    const PointI& deltaValue, const float duration,
+        //    MapAnimatorEasingType easingIn = MapAnimatorEasingType::Quadratic,
+        //    MapAnimatorEasingType easingOut = MapAnimatorEasingType::Quadratic);
+        //void parabolicAnimateTargetBy(
+        //    const PointI64& deltaValue, const float duration,
+        //    MapAnimatorEasingType easingIn = MapAnimatorEasingType::Quadratic,
+        //    MapAnimatorEasingType easingOut = MapAnimatorEasingType::Quadratic);
+        //void parabolicAnimateTargetWith(const PointD& velocity, const PointD& deceleration);
+
+        void animateAzimuthBy(const float deltaValue, const float duration, const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut);
+        void animateAzimuthWith(const float velocity, const float deceleration);
+
+        void animateElevationAngleBy(const float deltaValue, const float duration, const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut);
+        void animateElevationAngleWith(const float velocity, const float deceleration);
+
+        void animateMoveBy(
+            const PointI& deltaValue, const float duration,
+            const bool zeroizeAzimuth, const bool invZeroizeElevationAngle,
+            const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut);
+        void animateMoveBy(
+            const PointI64& deltaValue, const float duration,
+            const bool zeroizeAzimuth, const bool invZeroizeElevationAngle,
+            const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut);
+        void animateMoveWith(const PointD& velocity, const PointD& deceleration, const bool zeroizeAzimuth, const bool invZeroizeElevationAngle);
 
     friend class OsmAnd::MapAnimator;
     };

@@ -21,56 +21,37 @@ OsmAnd::MapAnimator::~MapAnimator()
 
 void OsmAnd::MapAnimator::setMapRenderer(const std::shared_ptr<IMapRenderer>& mapRenderer)
 {
-    QMutexLocker scopedLocker(&_d->_animationsMutex);
-
-    cancelAnimation();
-    _d->_renderer = mapRenderer;
+    _d->setMapRenderer(mapRenderer);
 }
 
 bool OsmAnd::MapAnimator::isAnimationPaused() const
 {
-    return _d->_isAnimationPaused;
+    return _d->isAnimationPaused();
 }
 
 bool OsmAnd::MapAnimator::isAnimationRunning() const
 {
-    return !_d->_isAnimationPaused && !_d->_animations.isEmpty();
+    return _d->isAnimationRunning();
 }
 
 void OsmAnd::MapAnimator::pauseAnimation()
 {
-    _d->_isAnimationPaused = true;
+    _d->pauseAnimation();
 }
 
 void OsmAnd::MapAnimator::resumeAnimation()
 {
-    _d->_isAnimationPaused = false;
+    _d->resumeAnimation();
 }
 
 void OsmAnd::MapAnimator::cancelAnimation()
 {
-    QMutexLocker scopedLocker(&_d->_animationsMutex);
-
-    _d->_isAnimationPaused = true;
-    _d->_animations.clear();
+    _d->cancelAnimation();
 }
 
 void OsmAnd::MapAnimator::update(const float timePassed)
 {
-    // Do nothing if animation is paused
-    if(_d->_isAnimationPaused)
-        return;
-
-    // Apply all animations
-    QMutexLocker scopedLocker(&_d->_animationsMutex);
-    QMutableListIterator< std::shared_ptr<MapAnimator_P::AbstractAnimation> > itAnimation(_d->_animations);
-    while(itAnimation.hasNext())
-    {
-        const auto& animation = itAnimation.next();
-
-        if(animation->process(timePassed))
-            itAnimation.remove();
-    }
+    _d->update(timePassed);
 }
 
 void OsmAnd::MapAnimator::animateZoomBy(
@@ -78,28 +59,12 @@ void OsmAnd::MapAnimator::animateZoomBy(
     const MapAnimatorEasingType easingIn /*= MapAnimatorEasingType::Quadratic*/,
     const MapAnimatorEasingType easingOut /*= MapAnimatorEasingType::Quadratic*/)
 {
-    std::shared_ptr<MapAnimator_P::AbstractAnimation> newAnimation(new MapAnimator_P::Animation<float>(deltaValue, duration, easingIn, easingOut,
-        [this]()
-        {
-            return _d->_renderer->state.requestedZoom;
-        },
-        [this](const float newValue)
-        {
-            _d->_renderer->setZoom(newValue);
-        }));
-
-    {
-        QMutexLocker scopedLocker(&_d->_animationsMutex);
-        _d->_animations.push_back(qMove(newAnimation));
-    }
+    _d->animateZoomBy(deltaValue, duration, easingIn, easingOut);
 }
 
 void OsmAnd::MapAnimator::animateZoomWith(const float velocity, const float deceleration)
 {
-    const auto duration = qAbs(velocity / deceleration);
-    const auto deltaValue = 0.5f * velocity * duration;
-
-    animateZoomBy(deltaValue, duration, MapAnimatorEasingType::None, MapAnimatorEasingType::Quadratic);
+    _d->animateZoomWith(velocity, deceleration);
 }
 
 void OsmAnd::MapAnimator::animateTargetBy(
@@ -107,7 +72,7 @@ void OsmAnd::MapAnimator::animateTargetBy(
     MapAnimatorEasingType easingIn /*= MapAnimatorEasingType::Quadratic*/,
     MapAnimatorEasingType easingOut /*= MapAnimatorEasingType::Quadratic*/)
 {
-    animateTargetBy(PointI64(deltaValue), duration, easingIn, easingOut);
+    _d->animateTargetBy(deltaValue, duration, easingIn, easingOut);
 }
 
 void OsmAnd::MapAnimator::animateTargetBy(
@@ -115,31 +80,12 @@ void OsmAnd::MapAnimator::animateTargetBy(
     const MapAnimatorEasingType easingIn /*= MapAnimatorEasingType::Quadratic*/,
     const MapAnimatorEasingType easingOut /*= MapAnimatorEasingType::Quadratic*/)
 {
-    std::shared_ptr<MapAnimator_P::AbstractAnimation> newAnimation(new MapAnimator_P::Animation<PointI64>(deltaValue, duration, easingIn, easingOut,
-        [this]()
-        {
-            const auto value = _d->_renderer->state.target31;
-            return PointI64(value.x, value.y);
-        },
-        [this](const PointI64 newValue)
-        {
-            _d->_renderer->setTarget(Utilities::normalizeCoordinates(newValue, ZoomLevel31));
-        }));
-
-    {
-        QMutexLocker scopedLocker(&_d->_animationsMutex);
-        _d->_animations.push_back(qMove(newAnimation));
-    }
+    _d->animateTargetBy(deltaValue, duration, easingIn, easingOut);
 }
 
 void OsmAnd::MapAnimator::animateTargetWith(const PointD& velocity, const PointD& deceleration)
 {
-    const auto duration = qSqrt(velocity.x*velocity.x + velocity.y*velocity.y) / qSqrt(deceleration.x*deceleration.x + deceleration.y*deceleration.y);
-    const PointI64 deltaValue(
-        0.5f * velocity.x * duration,
-        0.5f * velocity.y * duration);
-
-    animateTargetBy(deltaValue, duration, MapAnimatorEasingType::None, MapAnimatorEasingType::Quadratic);
+    _d->animateTargetWith(velocity, deceleration);
 }
 
 void OsmAnd::MapAnimator::animateAzimuthBy(
@@ -147,28 +93,12 @@ void OsmAnd::MapAnimator::animateAzimuthBy(
     const MapAnimatorEasingType easingIn /*= MapAnimatorEasingType::Quadratic*/,
     const MapAnimatorEasingType easingOut /*= MapAnimatorEasingType::Quadratic*/)
 {
-    std::shared_ptr<MapAnimator_P::AbstractAnimation> newAnimation(new MapAnimator_P::Animation<float>(deltaValue, duration, easingIn, easingOut,
-        [this]()
-        {
-            return _d->_renderer->state.azimuth;
-        },
-        [this](const float newValue)
-        {
-            _d->_renderer->setAzimuth(newValue);
-        }));
-
-    {
-        QMutexLocker scopedLocker(&_d->_animationsMutex);
-        _d->_animations.push_back(qMove(newAnimation));
-    }
+    _d->animateAzimuthBy(deltaValue, duration, easingIn, easingOut);
 }
 
 void OsmAnd::MapAnimator::animateAzimuthWith(const float velocity, const float deceleration)
 {
-    const auto duration = qAbs(velocity / deceleration);
-    const auto deltaValue = 0.5f * velocity * duration;
-
-    animateAzimuthBy(deltaValue, duration, MapAnimatorEasingType::None, MapAnimatorEasingType::Quadratic);
+    _d->animateAzimuthWith(velocity, deceleration);
 }
 
 void OsmAnd::MapAnimator::animateElevationAngleBy(
@@ -176,28 +106,12 @@ void OsmAnd::MapAnimator::animateElevationAngleBy(
     const MapAnimatorEasingType easingIn /*= MapAnimatorEasingType::Quadratic*/,
     const MapAnimatorEasingType easingOut /*= MapAnimatorEasingType::Quadratic*/)
 {
-    std::shared_ptr<MapAnimator_P::AbstractAnimation> newAnimation(new MapAnimator_P::Animation<float>(deltaValue, duration, easingIn, easingOut,
-        [this]()
-        {
-            return _d->_renderer->state.elevationAngle;
-        },
-        [this](const float newValue)
-        {
-            _d->_renderer->setElevationAngle(newValue);
-        }));
-
-    {
-        QMutexLocker scopedLocker(&_d->_animationsMutex);
-        _d->_animations.push_back(qMove(newAnimation));
-    }
+    _d->animateAzimuthBy(deltaValue, duration, easingIn, easingOut);
 }
 
 void OsmAnd::MapAnimator::animateElevationAngleWith(const float velocity, const float deceleration)
 {
-    const auto duration = qAbs(velocity / deceleration);
-    const auto deltaValue = 0.5f * velocity * duration;
-
-    animateElevationAngleBy(deltaValue, duration, MapAnimatorEasingType::None, MapAnimatorEasingType::Quadratic);
+    _d->animateElevationAngleWith(velocity, deceleration);
 }
 
 void OsmAnd::MapAnimator::animateMoveBy(
@@ -206,7 +120,7 @@ void OsmAnd::MapAnimator::animateMoveBy(
     const MapAnimatorEasingType easingIn /*= MapAnimatorEasingType::Quadratic*/,
     const MapAnimatorEasingType easingOut /*= MapAnimatorEasingType::Quadratic*/)
 {
-    animateMoveBy(PointI64(deltaValue), duration, zeroizeAzimuth, invZeroizeElevationAngle, easingIn, easingOut);
+    _d->animateMoveBy(deltaValue, duration, zeroizeAzimuth, invZeroizeElevationAngle, easingIn, easingOut);
 }
 
 void OsmAnd::MapAnimator::animateMoveBy(
@@ -215,71 +129,10 @@ void OsmAnd::MapAnimator::animateMoveBy(
     const MapAnimatorEasingType easingIn /*= MapAnimatorEasingType::Quadratic*/,
     const MapAnimatorEasingType easingOut /*= MapAnimatorEasingType::Quadratic*/)
 {
-    std::shared_ptr<MapAnimator_P::AbstractAnimation> targetAnimation(new MapAnimator_P::Animation<PointI64>(deltaValue, duration, easingIn, easingOut,
-        [this]()
-        {
-            const auto value = _d->_renderer->state.target31;
-            return PointI64(value.x, value.y);
-        },
-        [this](const PointI64 newValue)
-        {
-            _d->_renderer->setTarget(Utilities::normalizeCoordinates(newValue, ZoomLevel31));
-        }));
-
-    std::shared_ptr<MapAnimator_P::AbstractAnimation> zeroizeAzimuthAnimation;
-    if(zeroizeAzimuth)
-    {
-        zeroizeAzimuthAnimation.reset(new MapAnimator_P::Animation<float>(
-            [this]()
-            {
-                return -_d->_renderer->state.azimuth;
-            },
-            duration, easingIn, easingOut,
-            [this]()
-            {
-                return _d->_renderer->state.azimuth;
-            },
-            [this](const float newValue)
-            {
-                _d->_renderer->setAzimuth(newValue);
-            }));
-    }
-
-    std::shared_ptr<MapAnimator_P::AbstractAnimation> invZeroizeElevationAngleAnimation;
-    if(invZeroizeElevationAngle)
-    {
-        invZeroizeElevationAngleAnimation.reset(new MapAnimator_P::Animation<float>(
-            [this]()
-            {
-                return 90.0f - _d->_renderer->state.elevationAngle;
-            },
-            duration, easingIn, easingOut,
-            [this]()
-            {
-                return _d->_renderer->state.elevationAngle;
-            },
-            [this](const float newValue)
-            {
-                _d->_renderer->setElevationAngle(newValue);
-            }));
-    }
-
-    {
-        QMutexLocker scopedLocker(&_d->_animationsMutex);
-        _d->_animations.push_back(qMove(targetAnimation));
-        if(zeroizeAzimuth)
-            _d->_animations.push_back(qMove(zeroizeAzimuthAnimation));
-        if(invZeroizeElevationAngle)
-            _d->_animations.push_back(qMove(invZeroizeElevationAngleAnimation));
-    }
+    _d->animateMoveBy(deltaValue, duration, zeroizeAzimuth, invZeroizeElevationAngle, easingIn, easingOut);
 }
 
 void OsmAnd::MapAnimator::animateMoveWith(const PointD& velocity, const PointD& deceleration, const bool zeroizeAzimuth, const bool invZeroizeElevationAngle)
 {
-    const auto duration = qSqrt(velocity.x*velocity.x + velocity.y*velocity.y) / qSqrt(deceleration.x*deceleration.x + deceleration.y*deceleration.y);
-    const PointI64 deltaValue(
-        0.5f * velocity.x * duration,
-        0.5f * velocity.y * duration);
-
-    animateMoveBy(deltaValue, duration, zeroizeAzimuth, invZeroizeElevationAngle, MapAnimatorEasingType::None, MapAnimatorEasingType::Quadratic);
+    _d->animateMoveWith(velocity, deceleration, zeroizeAzimuth, invZeroizeElevationAngle);
 }

@@ -8,24 +8,11 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Map/MapTypes.h>
 
 namespace OsmAnd
 {
     class IMapRenderer;
-
-    STRONG_ENUM(MapAnimatorEasingType)
-    {
-        None = -1,
-
-        Linear = 0,
-        Quadratic,
-        Cubic,
-        Quartic,
-        Quintic,
-        Sinusoidal,
-        Exponential,
-        Circular
-    } STRONG_ENUM_TERMINATOR;
 
     class MapAnimator_P;
     class OSMAND_CORE_API MapAnimator
