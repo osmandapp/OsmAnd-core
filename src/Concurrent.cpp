@@ -101,7 +101,8 @@ void OsmAnd::Concurrent::TaskHost::onOwnerIsBeingDestructed()
     // Hold until all tasks are released
     {
         QReadLocker scopedLocker(&_hostedTasksLock);
-        REPEAT_UNTIL(_hostedTasks.size() != 0 || _unlockedCondition.wait(&_hostedTasksLock));
+        while(_hostedTasks.size() != 0)
+            REPEAT_UNTIL(_unlockedCondition.wait(&_hostedTasksLock));
     }
 }
 
