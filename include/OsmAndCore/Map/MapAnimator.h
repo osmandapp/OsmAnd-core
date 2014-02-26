@@ -13,7 +13,7 @@ namespace OsmAnd
 {
     class IMapRenderer;
 
-    enum MapAnimatorEasingType
+    STRONG_ENUM(MapAnimatorEasingType)
     {
         None = -1,
 
@@ -25,7 +25,7 @@ namespace OsmAnd
         Sinusoidal,
         Exponential,
         Circular
-    };
+    } STRONG_ENUM_TERMINATOR;
 
     class MapAnimator_P;
     class OSMAND_CORE_API MapAnimator
@@ -50,18 +50,55 @@ namespace OsmAnd
 
         void update(const float timePassed);
 
-        void animateZoomBy(const float deltaValue, const float duration, MapAnimatorEasingType easingIn = MapAnimatorEasingType::Quadratic, MapAnimatorEasingType easingOut = MapAnimatorEasingType::Quadratic);
+        void animateZoomBy(
+            const float deltaValue, const float duration,
+            const MapAnimatorEasingType easingIn = MapAnimatorEasingType::Quadratic,
+            const MapAnimatorEasingType easingOut = MapAnimatorEasingType::Quadratic);
         void animateZoomWith(const float velocity, const float deceleration);
 
-        void animateTargetBy(const PointI& deltaValue, const float duration, MapAnimatorEasingType easingIn = MapAnimatorEasingType::Quadratic, MapAnimatorEasingType easingOut = MapAnimatorEasingType::Quadratic);
-        void animateTargetBy(const PointI64& deltaValue, const float duration, MapAnimatorEasingType easingIn = MapAnimatorEasingType::Quadratic, MapAnimatorEasingType easingOut = MapAnimatorEasingType::Quadratic);
+        void animateTargetBy(
+            const PointI& deltaValue, const float duration,
+            const MapAnimatorEasingType easingIn = MapAnimatorEasingType::Quadratic,
+            const MapAnimatorEasingType easingOut = MapAnimatorEasingType::Quadratic);
+        void animateTargetBy(
+            const PointI64& deltaValue, const float duration,
+            const MapAnimatorEasingType easingIn = MapAnimatorEasingType::Quadratic,
+            const MapAnimatorEasingType easingOut = MapAnimatorEasingType::Quadratic);
         void animateTargetWith(const PointD& velocity, const PointD& deceleration);
 
-        void animateAzimuthBy(const float deltaValue, const float duration, MapAnimatorEasingType easingIn = MapAnimatorEasingType::Quadratic, MapAnimatorEasingType easingOut = MapAnimatorEasingType::Quadratic);
+        //void parabolicAnimateTargetBy(
+        //    const PointI& deltaValue, const float duration,
+        //    MapAnimatorEasingType easingIn = MapAnimatorEasingType::Quadratic,
+        //    MapAnimatorEasingType easingOut = MapAnimatorEasingType::Quadratic);
+        //void parabolicAnimateTargetBy(
+        //    const PointI64& deltaValue, const float duration,
+        //    MapAnimatorEasingType easingIn = MapAnimatorEasingType::Quadratic,
+        //    MapAnimatorEasingType easingOut = MapAnimatorEasingType::Quadratic);
+        //void parabolicAnimateTargetWith(const PointD& velocity, const PointD& deceleration);
+
+        void animateAzimuthBy(
+            const float deltaValue, const float duration,
+            const MapAnimatorEasingType easingIn = MapAnimatorEasingType::Quadratic,
+            const MapAnimatorEasingType easingOut = MapAnimatorEasingType::Quadratic);
         void animateAzimuthWith(const float velocity, const float deceleration);
 
-        void animateElevationAngleBy(const float deltaValue, const float duration, MapAnimatorEasingType easingIn = MapAnimatorEasingType::Quadratic, MapAnimatorEasingType easingOut = MapAnimatorEasingType::Quadratic);
+        void animateElevationAngleBy(
+            const float deltaValue, const float duration,
+            const MapAnimatorEasingType easingIn = MapAnimatorEasingType::Quadratic,
+            const MapAnimatorEasingType easingOut = MapAnimatorEasingType::Quadratic);
         void animateElevationAngleWith(const float velocity, const float deceleration);
+
+        void animateMoveBy(
+            const PointI& deltaValue, const float duration,
+            const bool zeroizeAzimuth, const bool invZeroizeElevationAngle,
+            const MapAnimatorEasingType easingIn = MapAnimatorEasingType::Quadratic,
+            const MapAnimatorEasingType easingOut = MapAnimatorEasingType::Quadratic);
+        void animateMoveBy(
+            const PointI64& deltaValue, const float duration,
+            const bool zeroizeAzimuth, const bool invZeroizeElevationAngle,
+            const MapAnimatorEasingType easingIn = MapAnimatorEasingType::Quadratic,
+            const MapAnimatorEasingType easingOut = MapAnimatorEasingType::Quadratic);
+        void animateMoveWith(const PointD& velocity, const PointD& deceleration, const bool zeroizeAzimuth, const bool invZeroizeElevationAngle);
     };
 }
 

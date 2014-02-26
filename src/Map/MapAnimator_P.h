@@ -35,7 +35,7 @@ namespace OsmAnd
         protected:
             float _timePassed;
         
-            AbstractAnimation(float duration_, MapAnimatorEasingType easingIn_, MapAnimatorEasingType easingOut_)
+            AbstractAnimation(const float duration_, const MapAnimatorEasingType easingIn_, const MapAnimatorEasingType easingOut_)
                 : _timePassed(0.0f)
                 , duration(duration_)
                 , easingIn(easingIn_)
@@ -43,7 +43,7 @@ namespace OsmAnd
             {}
 
             template <typename T>
-            static void calculateValue(const float t, const T initial, const T delta, const float duration, MapAnimatorEasingType easingIn, MapAnimatorEasingType easingOut, T& value)
+            static void calculateValue(const float t, const T initial, const T delta, const float duration, const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut, T& value)
             {
                 if(easingIn == MapAnimatorEasingType::None)
                 {
@@ -132,7 +132,7 @@ namespace OsmAnd
             }
 
             template <typename T>
-            static void calculateValue(const float t, const Point<T>& initial, const Point<T>& delta, const float duration, MapAnimatorEasingType easingIn, MapAnimatorEasingType easingOut, Point<T>& value)
+            static void calculateValue(const float t, const Point<T>& initial, const Point<T>& delta, const float duration, const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut, Point<T>& value)
             {
                 if(easingIn == MapAnimatorEasingType::None)
                 {
@@ -347,7 +347,8 @@ namespace OsmAnd
 
         public:
             virtual ~AbstractAnimation()
-            {}
+            {
+            }
 
             virtual bool process(const float timePassed) = 0;
 
@@ -362,25 +363,44 @@ namespace OsmAnd
         {
             Q_DISABLE_COPY(Animation);
         public:
-            typedef std::function<void (const T& newValue)> ApplierMethod;
+            typedef std::function<void (const T newValue)> ApplierMethod;
             typedef std::function<T ()> GetInitialValueMethod;
+            typedef std::function<T ()> GetDeltaValueMethod;
         private:
         protected:
             T _initialValue;
             bool _initialValueCaptured;
+            T _deltaValue;
         public:
-            Animation(const T& deltaValue_, float duration, MapAnimatorEasingType easingIn, MapAnimatorEasingType easingOut, GetInitialValueMethod obtainer_, ApplierMethod applier_)
+            Animation(const T deltaValue_, const float duration, const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut, const GetInitialValueMethod obtainer_, const ApplierMethod applier_)
                 : AbstractAnimation(duration, easingIn, easingOut)
                 , _initialValueCaptured(false)
-                , deltaValue(deltaValue_)
+                , _deltaValue(deltaValue_)
+                , deltaValue(_deltaValue)
+                , deltaValueObtainer(nullptr)
                 , obtainer(obtainer_)
                 , applier(applier_)
             {
                 assert(obtainer != nullptr);
                 assert(applier != nullptr);
             }
+
+            Animation(const GetDeltaValueMethod deltaValueObtainer_, const float duration, const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut, const GetInitialValueMethod obtainer_, const ApplierMethod applier_)
+                : AbstractAnimation(duration, easingIn, easingOut)
+                , _initialValueCaptured(false)
+                , _deltaValue(T(0))
+                , deltaValue(_deltaValue)
+                , deltaValueObtainer(deltaValueObtainer_)
+                , obtainer(obtainer_)
+                , applier(applier_)
+            {
+                assert(obtainer != nullptr);
+                assert(applier != nullptr);
+            }
+
             virtual ~Animation()
-            {}
+            {
+            }
 
             virtual bool process(const float timePassed)
             {
@@ -389,6 +409,8 @@ namespace OsmAnd
                 {
                     _initialValue = obtainer();
                     _initialValueCaptured = true;
+                    if(deltaValueObtainer)
+                        _deltaValue = deltaValueObtainer();
 
                     // Return false to indicate that processing has not yet finished
                     return (_timePassed >= duration);
@@ -400,7 +422,7 @@ namespace OsmAnd
                
                 // Obtain current delta
                 T newValue;
-                calculateValue(currentTime, _initialValue, deltaValue, duration, easingIn, easingOut, newValue);
+                calculateValue(currentTime, _initialValue, _deltaValue, duration, easingIn, easingOut, newValue);
 
                 // Apply new value
                 applier(newValue);
@@ -408,7 +430,8 @@ namespace OsmAnd
                 return (_timePassed >= duration);
             }
 
-            const T deltaValue;
+            const T& deltaValue;
+            const GetDeltaValueMethod deltaValueObtainer;
             const GetInitialValueMethod obtainer;
             const ApplierMethod applier;
         };
