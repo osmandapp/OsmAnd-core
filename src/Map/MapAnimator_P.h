@@ -44,14 +44,17 @@ namespace OsmAnd
             float _timePassed;
 
             AnimationContext _ownContext;
-            std::shared_ptr<AnimationContext> _sharedContext;
+            const std::shared_ptr<AnimationContext> _sharedContext;
         
-            AbstractAnimation(const float duration_, const MapAnimatorEasingType easingIn_, const MapAnimatorEasingType easingOut_)
+            AbstractAnimation(const float duration_, const float delay_, const MapAnimatorEasingType easingIn_, const MapAnimatorEasingType easingOut_, const std::shared_ptr<AnimationContext>& sharedContext_)
                 : _timePassed(0.0f)
+                , _sharedContext(sharedContext_)
                 , duration(duration_)
+                , delay(delay_)
                 , easingIn(easingIn_)
                 , easingOut(easingOut_)
-            {}
+            {
+            }
 
             template <typename T>
             static void calculateValue(const float t, const T initial, const T delta, const float duration, const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut, T& value)
@@ -363,6 +366,7 @@ namespace OsmAnd
 
             virtual bool process(const float timePassed) = 0;
 
+            const float delay;
             const float duration;
 
             const MapAnimatorEasingType easingIn;
@@ -383,8 +387,16 @@ namespace OsmAnd
             bool _initialValueCaptured;
             T _deltaValue;
         public:
-            Animation(const T deltaValue_, const float duration, const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut, const GetInitialValueMethod obtainer_, const ApplierMethod applier_)
-                : AbstractAnimation(duration, easingIn, easingOut)
+            Animation(
+                const T deltaValue_,
+                const float duration_,
+                const float delay_,
+                const MapAnimatorEasingType easingIn_,
+                const MapAnimatorEasingType easingOut_,
+                const GetInitialValueMethod obtainer_,
+                const ApplierMethod applier_,
+                const std::shared_ptr<AnimationContext>& sharedContext_ = nullptr)
+                : AbstractAnimation(duration_, delay_, easingIn_, easingOut_, sharedContext_)
                 , _initialValueCaptured(false)
                 , _deltaValue(deltaValue_)
                 , deltaValue(_deltaValue)
@@ -396,8 +408,16 @@ namespace OsmAnd
                 assert(applier != nullptr);
             }
 
-            Animation(const GetDeltaValueMethod deltaValueObtainer_, const float duration, const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut, const GetInitialValueMethod obtainer_, const ApplierMethod applier_)
-                : AbstractAnimation(duration, easingIn, easingOut)
+            Animation(
+                const GetDeltaValueMethod deltaValueObtainer_,
+                const float duration_,
+                const float delay_,
+                const MapAnimatorEasingType easingIn_,
+                const MapAnimatorEasingType easingOut_,
+                const GetInitialValueMethod obtainer_,
+                const ApplierMethod applier_,
+                const std::shared_ptr<AnimationContext>& sharedContext_ = nullptr)
+                : AbstractAnimation(duration_, delay_, easingIn_, easingOut_, sharedContext_)
                 , _initialValueCaptured(false)
                 , _deltaValue(T(0))
                 , deltaValue(_deltaValue)
@@ -415,6 +435,13 @@ namespace OsmAnd
 
             virtual bool process(const float timePassed)
             {
+                // Increment time
+                _timePassed += timePassed;
+
+                // Check for delay
+                if(_timePassed < delay)
+                    return false;
+
                 // If this is first frame, and initial value has not been captured, do that
                 if(!_initialValueCaptured)
                 {
@@ -423,13 +450,11 @@ namespace OsmAnd
                     if(deltaValueObtainer)
                         _deltaValue = deltaValueObtainer(_ownContext, _sharedContext);
 
-                    // Return false to indicate that processing has not yet finished
-                    return (_timePassed >= duration);
+                    return false;
                 }
 
                 // Calculate time
-                _timePassed += timePassed;
-                const auto currentTime = qMin(_timePassed, duration);
+                const auto currentTime = qMin(_timePassed - delay, duration);
                
                 // Obtain current delta
                 T newValue;
@@ -438,7 +463,8 @@ namespace OsmAnd
                 // Apply new value
                 applier(newValue, _ownContext, _sharedContext);
 
-                return (_timePassed >= duration);
+                // Return false to indicate that processing has not yet finished
+                return ((_timePassed - delay) >= duration);
             }
 
             const T& deltaValue;

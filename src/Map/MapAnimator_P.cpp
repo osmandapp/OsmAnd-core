@@ -80,7 +80,7 @@ void OsmAnd::MapAnimator_P::update(const float timePassed)
 void OsmAnd::MapAnimator_P::animateZoomBy(const float deltaValue, const float duration, const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut)
 {
     std::shared_ptr<AbstractAnimation> newAnimation(new MapAnimator_P::Animation<float>(
-        deltaValue, duration, easingIn, easingOut,
+        deltaValue, duration, 0.0f, easingIn, easingOut,
         _zoomGetter, _zoomSetter));
 
     {
@@ -105,10 +105,8 @@ void OsmAnd::MapAnimator_P::animateTargetBy(const PointI& deltaValue, const floa
 void OsmAnd::MapAnimator_P::animateTargetBy(const PointI64& deltaValue, const float duration, const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut)
 {
     std::shared_ptr<AbstractAnimation> newAnimation(new MapAnimator_P::Animation<PointI64>(
-        deltaValue, duration, easingIn, easingOut,
+        deltaValue, duration, 0.0f, easingIn, easingOut,
         _targetGetter, _targetSetter));
-
-    
 
     {
         QMutexLocker scopedLocker(&_animationsMutex);
@@ -133,14 +131,36 @@ void OsmAnd::MapAnimator_P::parabolicAnimateTargetBy(const PointI& deltaValue, c
 
 void OsmAnd::MapAnimator_P::parabolicAnimateTargetBy(const PointI64& deltaValue, const float duration, MapAnimatorEasingType easingIn, MapAnimatorEasingType easingOut)
 {
-    std::shared_ptr<AbstractAnimation> newAnimation(new MapAnimator_P::Animation<PointI64>(
-        deltaValue, duration, easingIn, easingOut,
+    const auto halfDuration = duration / 2.0f;
+    const auto intermediateZoomEasing = MapAnimatorEasingType::Quadratic;
+
+    std::shared_ptr<AbstractAnimation> targetAnimation(new MapAnimator_P::Animation<PointI64>(
+        deltaValue, duration, 0.0f, easingIn, easingOut,
         _targetGetter, _targetSetter));
-    //TODO: zoom in-out
+
+    const std::shared_ptr<AnimationContext> sharedContext(new AnimationContext());
+    std::shared_ptr<AbstractAnimation> zoomOutAnimation(new MapAnimator_P::Animation<float>(
+        [this](AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
+        {
+            // Threshold for enabling parabolic effect is that
+            return 0.0f;
+        },
+        halfDuration, 0.0f, easingIn, intermediateZoomEasing,
+        _zoomGetter, _zoomSetter, sharedContext));
+    std::shared_ptr<AbstractAnimation> zoomInAnimation(new MapAnimator_P::Animation<float>(
+        [this](AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
+        {
+            // Threshold for enabling parabolic effect is that
+            return 0.0f;
+        },
+        halfDuration, halfDuration, intermediateZoomEasing, easingOut,
+        _zoomGetter, _zoomSetter, sharedContext));
 
     {
         QMutexLocker scopedLocker(&_animationsMutex);
-        _animations.push_back(qMove(newAnimation));
+        _animations.push_back(qMove(targetAnimation));
+        _animations.push_back(qMove(zoomOutAnimation));
+        _animations.push_back(qMove(zoomInAnimation));
     }
 }
 
@@ -157,7 +177,7 @@ void OsmAnd::MapAnimator_P::parabolicAnimateTargetWith(const PointD& velocity, c
 void OsmAnd::MapAnimator_P::animateAzimuthBy(const float deltaValue, const float duration, const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut)
 {
     std::shared_ptr<AbstractAnimation> newAnimation(new MapAnimator_P::Animation<float>(
-        deltaValue, duration, easingIn, easingOut,
+        deltaValue, duration, 0.0f, easingIn, easingOut,
         _azimuthGetter, _azimuthSetter));
 
     {
@@ -177,7 +197,7 @@ void OsmAnd::MapAnimator_P::animateAzimuthWith(const float velocity, const float
 void OsmAnd::MapAnimator_P::animateElevationAngleBy(const float deltaValue, const float duration, const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut)
 {
     std::shared_ptr<AbstractAnimation> newAnimation(new MapAnimator_P::Animation<float>(
-        deltaValue, duration, easingIn, easingOut,
+        deltaValue, duration, 0.0f, easingIn, easingOut,
         _elevationAngleGetter, _elevationAngleSetter));
 
     {
@@ -207,8 +227,30 @@ void OsmAnd::MapAnimator_P::animateMoveBy(
     const bool zeroizeAzimuth, const bool invZeroizeElevationAngle,
     const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut)
 {
-    std::shared_ptr<AbstractAnimation> targetAnimation(new MapAnimator_P::Animation<PointI64>(deltaValue, duration, easingIn, easingOut,
+    const auto halfDuration = duration / 2.0f;
+    const auto intermediateZoomEasing = MapAnimatorEasingType::Quadratic;
+
+    std::shared_ptr<AbstractAnimation> targetAnimation(new MapAnimator_P::Animation<PointI64>(
+        deltaValue, duration, 0.0f, easingIn, easingOut,
         _targetGetter, _targetSetter));
+
+    const std::shared_ptr<AnimationContext> sharedContext(new AnimationContext());
+    std::shared_ptr<AbstractAnimation> zoomOutAnimation(new MapAnimator_P::Animation<float>(
+        [this](AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
+        {
+            // Threshold for enabling parabolic effect is that
+            return 0.0f;
+        },
+        halfDuration, 0.0f, easingIn, intermediateZoomEasing,
+        _zoomGetter, _zoomSetter, sharedContext));
+    std::shared_ptr<AbstractAnimation> zoomInAnimation(new MapAnimator_P::Animation<float>(
+        [this](AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
+        {
+            // Threshold for enabling parabolic effect is that
+            return 0.0f;
+        },
+        halfDuration, halfDuration, intermediateZoomEasing, easingOut,
+        _zoomGetter, _zoomSetter, sharedContext));
 
     std::shared_ptr<AbstractAnimation> zeroizeAzimuthAnimation;
     if(zeroizeAzimuth)
@@ -218,7 +260,7 @@ void OsmAnd::MapAnimator_P::animateMoveBy(
             {
                 return -azimuthGetter(context, sharedContext);
             },
-            duration, easingIn, easingOut,
+            duration, 0.0f, easingIn, easingOut,
             _azimuthGetter, _azimuthSetter));
     }
 
@@ -230,13 +272,15 @@ void OsmAnd::MapAnimator_P::animateMoveBy(
             {
                 return 90.0f - elevationAngleGetter(context, sharedContext);
             },
-            duration, easingIn, easingOut,
+            duration, 0.0f, easingIn, easingOut,
             _elevationAngleGetter, _elevationAngleSetter));
     }
 
     {
         QMutexLocker scopedLocker(&_animationsMutex);
         _animations.push_back(qMove(targetAnimation));
+        _animations.push_back(qMove(zoomOutAnimation));
+        _animations.push_back(qMove(zoomInAnimation));
         if(zeroizeAzimuth)
             _animations.push_back(qMove(zeroizeAzimuthAnimation));
         if(invZeroizeElevationAngle)
