@@ -251,7 +251,7 @@ void OsmAnd::MapAnimator_P::animateMoveBy(
             sharedContext->storageList.push_back(QVariant(zoomShift));
             return -zoomShift;
         },
-        halfDuration, 0.0f, MapAnimatorTimingFunction::EaseInQuadratic,
+        halfDuration, 0.0f, MapAnimatorTimingFunction::EaseOutQuadratic,
         _zoomGetter, _zoomSetter, sharedContext));
     std::shared_ptr<AbstractAnimation> zoomInAnimation(new MapAnimator_P::Animation<float>(
         [this](AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
@@ -263,7 +263,7 @@ void OsmAnd::MapAnimator_P::animateMoveBy(
             // Just restore the original zoom
             return sharedContext->storageList.first().toFloat();
         },
-        halfDuration, halfDuration, MapAnimatorTimingFunction::EaseOutQuadratic,
+        halfDuration, halfDuration, MapAnimatorTimingFunction::EaseInQuadratic,
         _zoomGetter, _zoomSetter, sharedContext));
 
     std::shared_ptr<AbstractAnimation> zeroizeAzimuthAnimation;

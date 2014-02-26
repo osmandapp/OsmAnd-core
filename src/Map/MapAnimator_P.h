@@ -93,6 +93,9 @@ namespace OsmAnd
         break;                                                                                                                      \
     case MapAnimatorTimingFunction::EaseInOut##name:                                                                                \
         value = initial + static_cast<T>(easeInOut_##name(t, properCast(delta), duration));                                         \
+        break;                                                                                                                      \
+    case MapAnimatorTimingFunction::EaseOutIn##name:                                                                                \
+        value = initial + static_cast<T>(easeOutIn_##name(t, properCast(delta), duration));                                         \
         break;
 
                 _DECLARE_USE(Quadratic)
@@ -126,7 +129,7 @@ namespace OsmAnd
                 return nt*delta;
             }
 
-#define _DECLARE_IN_OUT(name)                                                                                                               \
+#define _DECLARE_IN_OUT_AND_OUT_IN(name)                                                                                                    \
     template <typename T>                                                                                                                   \
     static T easeInOut_##name(const float t, const T delta, const float duration)                                                           \
     {                                                                                                                                       \
@@ -137,6 +140,17 @@ namespace OsmAnd
             return easeIn_##name(tn * halfDuration, halfDelta, halfDuration);                                                               \
         else                                                                                                                                \
             return halfDelta + easeOut_##name((tn - 1.0f) * halfDuration, halfDelta, halfDuration);                                         \
+    }                                                                                                                                       \
+    template <typename T>                                                                                                                   \
+    static T easeOutIn_##name(const float t, const T delta, const float duration)                                                           \
+    {                                                                                                                                       \
+        const auto halfDuration = 0.5f * duration;                                                                                          \
+        const auto halfDelta = 0.5f * delta;                                                                                                \
+        const auto tn = t / halfDuration;                                                                                                   \
+        if(tn < 1.0f)                                                                                                                       \
+            return easeOut_##name(tn * halfDuration, halfDelta, halfDuration);                                                              \
+        else                                                                                                                                \
+            return halfDelta + easeIn_##name((tn - 1.0f) * halfDuration, halfDelta, halfDuration);                                          \
     }
 
             template <typename T>
@@ -151,7 +165,7 @@ namespace OsmAnd
                 const auto nt = t / duration;
                 return -nt*(nt-2.0f)*delta;
             }
-            _DECLARE_IN_OUT(Quadratic);
+            _DECLARE_IN_OUT_AND_OUT_IN(Quadratic);
 
             template <typename T>
             static T easeIn_Cubic(const float t, const T delta, const float duration)
@@ -166,7 +180,7 @@ namespace OsmAnd
                 nt -= 1.0f;
                 return (nt*nt*nt + 1.0f)*delta;
             }
-            _DECLARE_IN_OUT(Cubic);
+            _DECLARE_IN_OUT_AND_OUT_IN(Cubic);
 
             template <typename T>
             static T easeIn_Quartic(const float t, const T delta, const float duration)
@@ -181,7 +195,7 @@ namespace OsmAnd
                 nt -= 1.0f;
                 return -(nt*nt*nt*nt - 1.0f)*delta;
             }
-            _DECLARE_IN_OUT(Quartic);
+            _DECLARE_IN_OUT_AND_OUT_IN(Quartic);
 
             template <typename T>
             static T easeIn_Quintic(const float t, const T delta, const float duration)
@@ -196,7 +210,7 @@ namespace OsmAnd
                 nt -= 1.0f;
                 return (nt*nt*nt*nt*nt + 1.0f)*delta;
             }
-            _DECLARE_IN_OUT(Quintic);
+            _DECLARE_IN_OUT_AND_OUT_IN(Quintic);
 
             template <typename T>
             static T easeIn_Sinusoidal(const float t, const T delta, const float duration)
@@ -210,7 +224,7 @@ namespace OsmAnd
                 const auto nt = t / duration;
                 return qSin(nt * M_PI_2)*delta;
             }
-            _DECLARE_IN_OUT(Sinusoidal);
+            _DECLARE_IN_OUT_AND_OUT_IN(Sinusoidal);
 
             template <typename T>
             static T easeIn_Exponential(const float t, const T delta, const float duration)
@@ -224,7 +238,7 @@ namespace OsmAnd
                 const auto nt = t / duration;
                 return ( -qPow( 2.0f, -10.0f * nt ) + 1.0f )*delta;
             }
-            _DECLARE_IN_OUT(Exponential);
+            _DECLARE_IN_OUT_AND_OUT_IN(Exponential);
 
             template <typename T>
             static T easeIn_Circular(const float t, const T delta, const float duration)
@@ -239,7 +253,7 @@ namespace OsmAnd
                 nt -= 1.0f;
                 return qSqrt(1.0f - nt*nt)*delta;
             }
-            _DECLARE_IN_OUT(Circular);
+            _DECLARE_IN_OUT_AND_OUT_IN(Circular);
 
 #undef _DECLARE_IN_OUT
         public:
