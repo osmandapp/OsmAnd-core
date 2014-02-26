@@ -46,208 +46,77 @@ namespace OsmAnd
             AnimationContext _ownContext;
             const std::shared_ptr<AnimationContext> _sharedContext;
         
-            AbstractAnimation(const float duration_, const float delay_, const MapAnimatorEasingType easingIn_, const MapAnimatorEasingType easingOut_, const std::shared_ptr<AnimationContext>& sharedContext_)
+            AbstractAnimation(const float duration_, const float delay_, const MapAnimatorTimingFunction timingFunction_, const std::shared_ptr<AnimationContext>& sharedContext_)
                 : _timePassed(0.0f)
                 , _sharedContext(sharedContext_)
                 , duration(duration_)
                 , delay(delay_)
-                , easingIn(easingIn_)
-                , easingOut(easingOut_)
+                , timingFunction(timingFunction_)
             {
             }
 
-            template <typename T>
-            static void calculateValue(const float t, const T initial, const T delta, const float duration, const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut, T& value)
+            static float properCast(const float value)
             {
-                if(easingIn == MapAnimatorEasingType::None)
+                return value;
+            }
+
+            static double properCast(const double value)
+            {
+                return value;
+            }
+
+            static double properCast(const int32_t value)
+            {
+                return static_cast<double>(value);
+            }
+
+            static double properCast(const int64_t value)
+            {
+                return static_cast<double>(value);
+            }
+
+            template <typename T>
+            static void calculateValue(const float t, const T initial, const T delta, const float duration, const MapAnimatorTimingFunction timingFunction, T& value)
+            {
+                switch(timingFunction)
                 {
-                    switch (easingOut)
-                    {
-                    case MapAnimatorEasingType::Linear:
-                        value = initial + linearTween(t, delta, duration);
-                        break;
-                    case MapAnimatorEasingType::Quadratic:
-                        value = initial + easeOut_Quadratic(t, delta, duration);
-                        break;
-                    case MapAnimatorEasingType::Cubic:
-                        value = initial + easeOut_Cubic(t, delta, duration);
-                        break;
-                    case MapAnimatorEasingType::Quartic:
-                        value = initial + easeOut_Quartic(t, delta, duration);
-                        break;
-                    case MapAnimatorEasingType::Quintic:
-                        value = initial + easeOut_Quintic(t, delta, duration);
-                        break;
-                    case MapAnimatorEasingType::Sinusoidal:
-                        value = initial + easeOut_Sinusoidal(t, delta, duration);
-                        break;
-                    case MapAnimatorEasingType::Exponential:
-                        value = initial + easeOut_Exponential(t, delta, duration);
-                        break;
-                    case MapAnimatorEasingType::Circular:
-                        value = initial + easeOut_Circular(t, delta, duration);
-                        break;
-                    case MapAnimatorEasingType::None:
-                    default:
-                        assert(false);
-                        break;
-                    }
-                }
-                else if(easingOut == MapAnimatorEasingType::None)
-                {
-                    switch (easingIn)
-                    {
-                    case MapAnimatorEasingType::Linear:
-                        value = initial + linearTween(t, delta, duration);
-                        break;
-                    case MapAnimatorEasingType::Quadratic:
-                        value = initial + easeIn_Quadratic(t, delta, duration);
-                        break;
-                    case MapAnimatorEasingType::Cubic:
-                        value = initial + easeIn_Cubic(t, delta, duration);
-                        break;
-                    case MapAnimatorEasingType::Quartic:
-                        value = initial + easeIn_Quartic(t, delta, duration);
-                        break;
-                    case MapAnimatorEasingType::Quintic:
-                        value = initial + easeIn_Quintic(t, delta, duration);
-                        break;
-                    case MapAnimatorEasingType::Sinusoidal:
-                        value = initial + easeIn_Sinusoidal(t, delta, duration);
-                        break;
-                    case MapAnimatorEasingType::Exponential:
-                        value = initial + easeIn_Exponential(t, delta, duration);
-                        break;
-                    case MapAnimatorEasingType::Circular:
-                        value = initial + easeIn_Circular(t, delta, duration);
-                        break;
-                    case MapAnimatorEasingType::None:
-                    default:
-                        assert(false);
-                        break;
-                    }
-                }
-                else
-                {
-                    const auto halfDuration = 0.5f * duration;
-                    const auto halfDelta = 0.5f * delta;
-                    const auto tn = t / halfDuration;
-                    if(tn < 1.0f)
-                    {
-                        // Ease-in part
-                        calculateValue(tn * halfDuration, initial, halfDelta, halfDuration, easingIn, MapAnimatorEasingType::None, value);
-                    }
-                    else
-                    {
-                        // Ease-out part
-                        calculateValue((tn - 1.0f) * halfDuration, initial + halfDelta, halfDelta, halfDuration, MapAnimatorEasingType::None, easingOut, value);
-                    }
+                case MapAnimatorTimingFunction::Linear:
+                    value = initial + static_cast<T>(linearTween(t, properCast(delta), duration));
+                    break;
+
+#define _DECLARE_USE(name)                                                                                                          \
+    case MapAnimatorTimingFunction::EaseIn##name:                                                                                   \
+        value = initial + static_cast<T>(easeIn_##name(t, properCast(delta), duration));                                            \
+        break;                                                                                                                      \
+    case MapAnimatorTimingFunction::EaseOut##name:                                                                                  \
+        value = initial + static_cast<T>(easeOut_##name(t, properCast(delta), duration));                                           \
+        break;                                                                                                                      \
+    case MapAnimatorTimingFunction::EaseInOut##name:                                                                                \
+        value = initial + static_cast<T>(easeInOut_##name(t, properCast(delta), duration));                                         \
+        break;
+
+                _DECLARE_USE(Quadratic)
+                _DECLARE_USE(Cubic)
+                _DECLARE_USE(Quartic)
+                _DECLARE_USE(Quintic)
+                _DECLARE_USE(Sinusoidal)
+                _DECLARE_USE(Exponential)
+                _DECLARE_USE(Circular)
+
+#undef _DECLARE_USE
+
+                case MapAnimatorTimingFunction::Invalid:
+                default:
+                    assert(false);
+                    break;
                 }
             }
 
             template <typename T>
-            static void calculateValue(const float t, const Point<T>& initial, const Point<T>& delta, const float duration, const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut, Point<T>& value)
+            static void calculateValue(const float t, const Point<T>& initial, const Point<T>& delta, const float duration, const MapAnimatorTimingFunction timingFunction, Point<T>& value)
             {
-                if(easingIn == MapAnimatorEasingType::None)
-                {
-                    switch (easingOut)
-                    {
-                    case MapAnimatorEasingType::Linear:
-                        value.x = initial.x + static_cast<T>(linearTween(t, static_cast<float>(delta.x), duration));
-                        value.y = initial.y + static_cast<T>(linearTween(t, static_cast<float>(delta.y), duration));
-                        break;
-                    case MapAnimatorEasingType::Quadratic:
-                        value.x = initial.x + static_cast<T>(easeOut_Quadratic(t, static_cast<float>(delta.x), duration));
-                        value.y = initial.y + static_cast<T>(easeOut_Quadratic(t, static_cast<float>(delta.y), duration));
-                        break;
-                    case MapAnimatorEasingType::Cubic:
-                        value.x = initial.x + static_cast<T>(easeOut_Cubic(t, static_cast<float>(delta.x), duration));
-                        value.y = initial.y + static_cast<T>(easeOut_Cubic(t, static_cast<float>(delta.y), duration));
-                        break;
-                    case MapAnimatorEasingType::Quartic:
-                        value.x = initial.x + static_cast<T>(easeOut_Quartic(t, static_cast<float>(delta.x), duration));
-                        value.y = initial.y + static_cast<T>(easeOut_Quartic(t, static_cast<float>(delta.y), duration));
-                        break;
-                    case MapAnimatorEasingType::Quintic:
-                        value.x = initial.x + static_cast<T>(easeOut_Quintic(t, static_cast<float>(delta.x), duration));
-                        value.y = initial.y + static_cast<T>(easeOut_Quintic(t, static_cast<float>(delta.y), duration));
-                        break;
-                    case MapAnimatorEasingType::Sinusoidal:
-                        value.x = initial.x + static_cast<T>(easeOut_Sinusoidal(t, static_cast<float>(delta.x), duration));
-                        value.y = initial.y + static_cast<T>(easeOut_Sinusoidal(t, static_cast<float>(delta.y), duration));
-                        break;
-                    case MapAnimatorEasingType::Exponential:
-                        value.x = initial.x + static_cast<T>(easeOut_Exponential(t, static_cast<float>(delta.x), duration));
-                        value.y = initial.y + static_cast<T>(easeOut_Exponential(t, static_cast<float>(delta.y), duration));
-                        break;
-                    case MapAnimatorEasingType::Circular:
-                        value.x = initial.x + static_cast<T>(easeOut_Circular(t, static_cast<float>(delta.x), duration));
-                        value.y = initial.y + static_cast<T>(easeOut_Circular(t, static_cast<float>(delta.y), duration));
-                        break;
-                    case MapAnimatorEasingType::None:
-                    default:
-                        assert(false);
-                        break;
-                    }
-                }
-                else if(easingOut == MapAnimatorEasingType::None)
-                {
-                    switch (easingIn)
-                    {
-                    case MapAnimatorEasingType::Linear:
-                        value.x = initial.x + static_cast<T>(linearTween(t, static_cast<float>(delta.x), duration));
-                        value.y = initial.y + static_cast<T>(linearTween(t, static_cast<float>(delta.y), duration));
-                        break;
-                    case MapAnimatorEasingType::Quadratic:
-                        value.x = initial.x + static_cast<T>(easeIn_Quadratic(t, static_cast<float>(delta.x), duration));
-                        value.y = initial.y + static_cast<T>(easeIn_Quadratic(t, static_cast<float>(delta.y), duration));
-                        break;
-                    case MapAnimatorEasingType::Cubic:
-                        value.x = initial.x + static_cast<T>(easeIn_Cubic(t, static_cast<float>(delta.x), duration));
-                        value.y = initial.y + static_cast<T>(easeIn_Cubic(t, static_cast<float>(delta.y), duration));
-                        break;
-                    case MapAnimatorEasingType::Quartic:
-                        value.x = initial.x + static_cast<T>(easeIn_Quartic(t, static_cast<float>(delta.x), duration));
-                        value.y = initial.y + static_cast<T>(easeIn_Quartic(t, static_cast<float>(delta.y), duration));
-                        break;
-                    case MapAnimatorEasingType::Quintic:
-                        value.x = initial.x + static_cast<T>(easeIn_Quintic(t, static_cast<float>(delta.x), duration));
-                        value.y = initial.y + static_cast<T>(easeIn_Quintic(t, static_cast<float>(delta.y), duration));
-                        break;
-                    case MapAnimatorEasingType::Sinusoidal:
-                        value.x = initial.x + static_cast<T>(easeIn_Sinusoidal(t, static_cast<float>(delta.x), duration));
-                        value.y = initial.y + static_cast<T>(easeIn_Sinusoidal(t, static_cast<float>(delta.y), duration));
-                        break;
-                    case MapAnimatorEasingType::Exponential:
-                        value.x = initial.x + static_cast<T>(easeIn_Exponential(t, static_cast<float>(delta.x), duration));
-                        value.y = initial.y + static_cast<T>(easeIn_Exponential(t, static_cast<float>(delta.y), duration));
-                        break;
-                    case MapAnimatorEasingType::Circular:
-                        value.x = initial.x + static_cast<T>(easeIn_Circular(t, static_cast<float>(delta.x), duration));
-                        value.y = initial.y + static_cast<T>(easeIn_Circular(t, static_cast<float>(delta.y), duration));
-                        break;
-                    case MapAnimatorEasingType::None:
-                    default:
-                        assert(false);
-                        break;
-                    }
-                }
-                else
-                {
-                    const auto halfDuration = 0.5f * duration;
-                    const Point<T> halfDelta(0.5f * delta.x, 0.5f * delta.y);
-                    const auto tn = t / halfDuration;
-                    if(tn < 1.0f)
-                    {
-                        // Ease-in part
-                        calculateValue(tn * halfDuration, initial, halfDelta, halfDuration, easingIn, MapAnimatorEasingType::None, value);
-                    }
-                    else
-                    {
-                        // Ease-out part
-                        calculateValue((tn - 1.0f) * halfDuration, initial + halfDelta, halfDelta, halfDuration, MapAnimatorEasingType::None, easingOut, value);
-                    }
-                }
+                calculateValue(t, initial.x, delta.x, duration, timingFunction, value.x);
+                calculateValue(t, initial.y, delta.y, duration, timingFunction, value.y);
             }
 
             template <typename T>
@@ -257,19 +126,32 @@ namespace OsmAnd
                 return nt*delta;
             }
 
+#define _DECLARE_IN_OUT(name)                                                                                                               \
+    template <typename T>                                                                                                                   \
+    static T easeInOut_##name(const float t, const T delta, const float duration)                                                           \
+    {                                                                                                                                       \
+        const auto halfDuration = 0.5f * duration;                                                                                          \
+        const auto halfDelta = 0.5f * delta;                                                                                                \
+        const auto tn = t / halfDuration;                                                                                                   \
+        if(tn < 1.0f)                                                                                                                       \
+            return easeIn_##name(tn * halfDuration, halfDelta, halfDuration);                                                               \
+        else                                                                                                                                \
+            return halfDelta + easeOut_##name((tn - 1.0f) * halfDuration, halfDelta, halfDuration);                                         \
+    }
+
             template <typename T>
             static T easeIn_Quadratic(const float t, const T delta, const float duration)
             {
                 const auto nt = t / duration;
                 return (nt*nt)*delta;
             }
-
             template <typename T>
             static T easeOut_Quadratic(const float t, const T delta, const float duration)
             {
                 const auto nt = t / duration;
                 return -nt*(nt-2.0f)*delta;
             }
+            _DECLARE_IN_OUT(Quadratic);
 
             template <typename T>
             static T easeIn_Cubic(const float t, const T delta, const float duration)
@@ -277,7 +159,6 @@ namespace OsmAnd
                 const auto nt = t / duration;
                 return nt*nt*nt*delta;
             }
-
             template <typename T>
             static T easeOut_Cubic(const float t, const T delta, const float duration)
             {
@@ -285,6 +166,7 @@ namespace OsmAnd
                 nt -= 1.0f;
                 return (nt*nt*nt + 1.0f)*delta;
             }
+            _DECLARE_IN_OUT(Cubic);
 
             template <typename T>
             static T easeIn_Quartic(const float t, const T delta, const float duration)
@@ -292,7 +174,6 @@ namespace OsmAnd
                 const auto nt = t / duration;
                 return nt*nt*nt*nt*delta;
             }
-
             template <typename T>
             static T easeOut_Quartic(const float t, const T delta, const float duration)
             {
@@ -300,6 +181,7 @@ namespace OsmAnd
                 nt -= 1.0f;
                 return -(nt*nt*nt*nt - 1.0f)*delta;
             }
+            _DECLARE_IN_OUT(Quartic);
 
             template <typename T>
             static T easeIn_Quintic(const float t, const T delta, const float duration)
@@ -307,7 +189,6 @@ namespace OsmAnd
                 const auto nt = t / duration;
                 return nt*nt*nt*nt*nt*delta;
             }
-
             template <typename T>
             static T easeOut_Quintic(const float t, const T delta, const float duration)
             {
@@ -315,6 +196,7 @@ namespace OsmAnd
                 nt -= 1.0f;
                 return (nt*nt*nt*nt*nt + 1.0f)*delta;
             }
+            _DECLARE_IN_OUT(Quintic);
 
             template <typename T>
             static T easeIn_Sinusoidal(const float t, const T delta, const float duration)
@@ -322,13 +204,13 @@ namespace OsmAnd
                 const auto nt = t / duration;
                 return delta - qCos(nt * M_PI_2)*delta;
             }
-
             template <typename T>
             static T easeOut_Sinusoidal(const float t, const T delta, const float duration)
             {
                 const auto nt = t / duration;
                 return qSin(nt * M_PI_2)*delta;
             }
+            _DECLARE_IN_OUT(Sinusoidal);
 
             template <typename T>
             static T easeIn_Exponential(const float t, const T delta, const float duration)
@@ -336,13 +218,13 @@ namespace OsmAnd
                 const auto nt = t / duration;
                 return qPow( 2.0f, 10.0f * (nt - 1.0f) )*delta;
             }
-
             template <typename T>
             static T easeOut_Exponential(const float t, const T delta, const float duration)
             {
                 const auto nt = t / duration;
                 return ( -qPow( 2.0f, -10.0f * nt ) + 1.0f )*delta;
             }
+            _DECLARE_IN_OUT(Exponential);
 
             template <typename T>
             static T easeIn_Circular(const float t, const T delta, const float duration)
@@ -350,7 +232,6 @@ namespace OsmAnd
                 const auto nt = t / duration;
                 return -(qSqrt(1.0f - nt*nt) - 1.0f)*delta;
             }
-
             template <typename T>
             static T easeOut_Circular(const float t, const T delta, const float duration)
             {
@@ -358,7 +239,9 @@ namespace OsmAnd
                 nt -= 1.0f;
                 return qSqrt(1.0f - nt*nt)*delta;
             }
+            _DECLARE_IN_OUT(Circular);
 
+#undef _DECLARE_IN_OUT
         public:
             virtual ~AbstractAnimation()
             {
@@ -369,8 +252,7 @@ namespace OsmAnd
             const float delay;
             const float duration;
 
-            const MapAnimatorEasingType easingIn;
-            const MapAnimatorEasingType easingOut;
+            const MapAnimatorTimingFunction timingFunction;
         };
 
         template <typename T>
@@ -391,12 +273,11 @@ namespace OsmAnd
                 const T deltaValue_,
                 const float duration_,
                 const float delay_,
-                const MapAnimatorEasingType easingIn_,
-                const MapAnimatorEasingType easingOut_,
+                const MapAnimatorTimingFunction timingFunction_,
                 const GetInitialValueMethod obtainer_,
                 const ApplierMethod applier_,
                 const std::shared_ptr<AnimationContext>& sharedContext_ = nullptr)
-                : AbstractAnimation(duration_, delay_, easingIn_, easingOut_, sharedContext_)
+                : AbstractAnimation(duration_, delay_, timingFunction_, sharedContext_)
                 , _initialValueCaptured(false)
                 , _deltaValue(deltaValue_)
                 , deltaValue(_deltaValue)
@@ -412,14 +293,12 @@ namespace OsmAnd
                 const GetDeltaValueMethod deltaValueObtainer_,
                 const float duration_,
                 const float delay_,
-                const MapAnimatorEasingType easingIn_,
-                const MapAnimatorEasingType easingOut_,
+                const MapAnimatorTimingFunction timingFunction_,
                 const GetInitialValueMethod obtainer_,
                 const ApplierMethod applier_,
                 const std::shared_ptr<AnimationContext>& sharedContext_ = nullptr)
-                : AbstractAnimation(duration_, delay_, easingIn_, easingOut_, sharedContext_)
+                : AbstractAnimation(duration_, delay_, timingFunction_, sharedContext_)
                 , _initialValueCaptured(false)
-                , _deltaValue(T(0))
                 , deltaValue(_deltaValue)
                 , deltaValueObtainer(deltaValueObtainer_)
                 , obtainer(obtainer_)
@@ -458,7 +337,7 @@ namespace OsmAnd
                
                 // Obtain current delta
                 T newValue;
-                calculateValue(currentTime, _initialValue, _deltaValue, duration, easingIn, easingOut, newValue);
+                calculateValue(currentTime, _initialValue, _deltaValue, duration, timingFunction, newValue);
 
                 // Apply new value
                 applier(newValue, _ownContext, _sharedContext);
@@ -510,31 +389,31 @@ namespace OsmAnd
 
         void update(const float timePassed);
 
-        void animateZoomBy(const float deltaValue, const float duration, const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut);
+        void animateZoomBy(const float deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction);
         void animateZoomWith(const float velocity, const float deceleration);
 
-        void animateTargetBy(const PointI& deltaValue, const float duration, const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut);
-        void animateTargetBy(const PointI64& deltaValue, const float duration, const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut);
+        void animateTargetBy(const PointI& deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction);
+        void animateTargetBy(const PointI64& deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction);
         void animateTargetWith(const PointD& velocity, const PointD& deceleration);
 
-        void parabolicAnimateTargetBy(const PointI& deltaValue, const float duration, MapAnimatorEasingType easingIn, MapAnimatorEasingType easingOut);
-        void parabolicAnimateTargetBy(const PointI64& deltaValue, const float duration, MapAnimatorEasingType easingIn, MapAnimatorEasingType easingOut);
+        void parabolicAnimateTargetBy(const PointI& deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction);
+        void parabolicAnimateTargetBy(const PointI64& deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction);
         void parabolicAnimateTargetWith(const PointD& velocity, const PointD& deceleration);
 
-        void animateAzimuthBy(const float deltaValue, const float duration, const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut);
+        void animateAzimuthBy(const float deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction);
         void animateAzimuthWith(const float velocity, const float deceleration);
 
-        void animateElevationAngleBy(const float deltaValue, const float duration, const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut);
+        void animateElevationAngleBy(const float deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction);
         void animateElevationAngleWith(const float velocity, const float deceleration);
 
         void animateMoveBy(
             const PointI& deltaValue, const float duration,
             const bool zeroizeAzimuth, const bool invZeroizeElevationAngle,
-            const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut);
+            const MapAnimatorTimingFunction timingFunction);
         void animateMoveBy(
             const PointI64& deltaValue, const float duration,
             const bool zeroizeAzimuth, const bool invZeroizeElevationAngle,
-            const MapAnimatorEasingType easingIn, const MapAnimatorEasingType easingOut);
+            const MapAnimatorTimingFunction timingFunction);
         void animateMoveWith(const PointD& velocity, const PointD& deceleration, const bool zeroizeAzimuth, const bool invZeroizeElevationAngle);
 
     friend class OsmAnd::MapAnimator;

@@ -25,18 +25,32 @@ namespace OsmAnd
         Undefined
     } STRONG_ENUM_TERMINATOR;
 
-    STRONG_ENUM(MapAnimatorEasingType)
+    STRONG_ENUM(MapAnimatorTimingFunction)
     {
-        None = -1,
+        Invalid = -1,
 
         Linear = 0,
-        Quadratic,
-        Cubic,
-        Quartic,
-        Quintic,
-        Sinusoidal,
-        Exponential,
-        Circular
+        EaseInQuadratic,
+        EaseOutQuadratic,
+        EaseInOutQuadratic,
+        EaseInCubic,
+        EaseOutCubic,
+        EaseInOutCubic,
+        EaseInQuartic,
+        EaseOutQuartic,
+        EaseInOutQuartic,
+        EaseInQuintic,
+        EaseOutQuintic,
+        EaseInOutQuintic,
+        EaseInSinusoidal,
+        EaseOutSinusoidal,
+        EaseInOutSinusoidal,
+        EaseInExponential,
+        EaseOutExponential,
+        EaseInOutExponential,
+        EaseInCircular,
+        EaseOutCircular,
+        EaseInOutCircular,
     } STRONG_ENUM_TERMINATOR;
 }
 

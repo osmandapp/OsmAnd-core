@@ -37,54 +37,31 @@ namespace OsmAnd
 
         void update(const float timePassed);
 
-        void animateZoomBy(
-            const float deltaValue, const float duration,
-            const MapAnimatorEasingType easingIn = MapAnimatorEasingType::Quadratic,
-            const MapAnimatorEasingType easingOut = MapAnimatorEasingType::Quadratic);
+        void animateZoomBy(const float deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction);
         void animateZoomWith(const float velocity, const float deceleration);
 
-        void animateTargetBy(
-            const PointI& deltaValue, const float duration,
-            const MapAnimatorEasingType easingIn = MapAnimatorEasingType::Quadratic,
-            const MapAnimatorEasingType easingOut = MapAnimatorEasingType::Quadratic);
-        void animateTargetBy(
-            const PointI64& deltaValue, const float duration,
-            const MapAnimatorEasingType easingIn = MapAnimatorEasingType::Quadratic,
-            const MapAnimatorEasingType easingOut = MapAnimatorEasingType::Quadratic);
+        void animateTargetBy(const PointI& deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction);
+        void animateTargetBy(const PointI64& deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction);
         void animateTargetWith(const PointD& velocity, const PointD& deceleration);
 
-        void parabolicAnimateTargetBy(
-            const PointI& deltaValue, const float duration,
-            MapAnimatorEasingType easingIn = MapAnimatorEasingType::Quadratic,
-            MapAnimatorEasingType easingOut = MapAnimatorEasingType::Quadratic);
-        void parabolicAnimateTargetBy(
-            const PointI64& deltaValue, const float duration,
-            MapAnimatorEasingType easingIn = MapAnimatorEasingType::Quadratic,
-            MapAnimatorEasingType easingOut = MapAnimatorEasingType::Quadratic);
+        void parabolicAnimateTargetBy(const PointI& deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction);
+        void parabolicAnimateTargetBy(const PointI64& deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction);
         void parabolicAnimateTargetWith(const PointD& velocity, const PointD& deceleration);
 
-        void animateAzimuthBy(
-            const float deltaValue, const float duration,
-            const MapAnimatorEasingType easingIn = MapAnimatorEasingType::Quadratic,
-            const MapAnimatorEasingType easingOut = MapAnimatorEasingType::Quadratic);
+        void animateAzimuthBy(const float deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction);
         void animateAzimuthWith(const float velocity, const float deceleration);
 
-        void animateElevationAngleBy(
-            const float deltaValue, const float duration,
-            const MapAnimatorEasingType easingIn = MapAnimatorEasingType::Quadratic,
-            const MapAnimatorEasingType easingOut = MapAnimatorEasingType::Quadratic);
+        void animateElevationAngleBy(const float deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction);
         void animateElevationAngleWith(const float velocity, const float deceleration);
 
         void animateMoveBy(
             const PointI& deltaValue, const float duration,
             const bool zeroizeAzimuth, const bool invZeroizeElevationAngle,
-            const MapAnimatorEasingType easingIn = MapAnimatorEasingType::Quadratic,
-            const MapAnimatorEasingType easingOut = MapAnimatorEasingType::Quadratic);
+            const MapAnimatorTimingFunction timingFunction);
         void animateMoveBy(
             const PointI64& deltaValue, const float duration,
             const bool zeroizeAzimuth, const bool invZeroizeElevationAngle,
-            const MapAnimatorEasingType easingIn = MapAnimatorEasingType::Quadratic,
-            const MapAnimatorEasingType easingOut = MapAnimatorEasingType::Quadratic);
+            const MapAnimatorTimingFunction timingFunction);
         void animateMoveWith(const PointD& velocity, const PointD& deceleration, const bool zeroizeAzimuth, const bool invZeroizeElevationAngle);
     };
 }
