@@ -65,7 +65,7 @@ namespace OsmAnd
             QReadLocker scopedLocker(&_collectionLock);
 
             const auto& zoomLevel = _zoomLevels[zoom];
-            const auto itEntry = zoomLevel.constFind(tileId);
+            const auto& itEntry = zoomLevel.constFind(tileId);
             if(itEntry != zoomLevel.cend())
             {
                 outEntry = *itEntry;
@@ -136,7 +136,7 @@ namespace OsmAnd
             QWriteLocker scopedLock(&_collectionLock);
 
             auto& zoomLevel = _zoomLevels[zoom];
-            const auto itEntry = zoomLevel.find(tileId);
+            const auto& itEntry = zoomLevel.find(tileId);
             if(itEntry == zoomLevel.end())
                 return;
 

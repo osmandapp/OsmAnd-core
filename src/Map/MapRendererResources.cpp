@@ -9,7 +9,7 @@
 #include "MapObject.h"
 #include "EmbeddedResources.h"
 #include "QKeyValueIterator.h"
-#include "QImmutableIterator.h"
+#include "QCachingIterator.h"
 #include "Utilities.h"
 #include "Logging.h"
 

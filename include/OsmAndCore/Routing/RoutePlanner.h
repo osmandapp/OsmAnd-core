@@ -163,8 +163,8 @@ namespace OsmAnd {
         static void addTurnInfoToRoute( bool leftSideNavigation, QVector< std::shared_ptr<RouteSegment> >& route );
         static void attachRouteSegments(
             OsmAnd::RoutePlannerContext::CalculationContext* context,
-            QVector< std::shared_ptr<RouteSegment> >& route,
-            const QVector< std::shared_ptr<RouteSegment> >::iterator& itSegment,
+            const QVector< std::shared_ptr<RouteSegment> >& route,
+            const QVector< std::shared_ptr<RouteSegment> >::const_iterator& itSegment,
             uint32_t pointIdx,
             bool isIncrement);
 

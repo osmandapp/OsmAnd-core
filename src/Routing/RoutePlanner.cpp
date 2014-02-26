@@ -15,7 +15,7 @@
 #include "Utilities.h"
 #include "PlainQueryFilter.h"
 #include "QKeyValueIterator.h"
-#include "QImmutableIterator.h"
+#include "QCachingIterator.h"
 
 OsmAnd::RoutePlanner::RoutePlanner()
 {

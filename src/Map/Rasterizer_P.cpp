@@ -26,7 +26,7 @@
 #include "IQueryController.h"
 #include "ICU.h"
 #include "QKeyValueIterator.h"
-#include "QImmutableIterator.h"
+#include "QCachingIterator.h"
 #include "Utilities.h"
 #include "Logging.h"
 
@@ -2041,7 +2041,8 @@ void OsmAnd::Rasterizer_P::appendCoastlinePolygons( QList< QVector< PointI > >& 
 
         if (remove)
         {
-            itPolygon = coastlinePolylines.erase(itPolygon);
+            itPolygon.set(coastlinePolylines.erase(itPolygon.current));
+            itPolygon.update(coastlinePolylines);
         }
         else
         {
@@ -2100,7 +2101,7 @@ void OsmAnd::Rasterizer_P::convertCoastlinePolylinesToPolygons(
         for(auto itPolyline = iteratorOf(validPolylines); itPolyline; ++itPolyline)
         {
             // If this polyline was already processed, skip it
-            if(processedPolylines.find(itPolyline) != processedPolylines.end())
+            if(processedPolylines.find(itPolyline.current) != processedPolylines.end())
                 continue;
 
             // Start from tail of the polyline and search for it's continuation in CCV order
@@ -2117,7 +2118,7 @@ void OsmAnd::Rasterizer_P::convertCoastlinePolylinesToPolygons(
                 for(auto itOtherPolyline = iteratorOf(validPolylines); itOtherPolyline; ++itOtherPolyline)
                 {
                     // If this polyline was already processed, skip it
-                    if(processedPolylines.find(itOtherPolyline) != processedPolylines.end())
+                    if(processedPolylines.find(itOtherPolyline.current) != processedPolylines.end())
                         continue;
 
                     // Skip polylines that are on other edges
@@ -2236,7 +2237,7 @@ void OsmAnd::Rasterizer_P::convertCoastlinePolylinesToPolygons(
             }
 
             // After we've selected nearest-by-CCV polyline, mark it as processed
-            processedPolylines.insert(itNearestPolyline);
+            processedPolylines.insert(itNearestPolyline.current);
         }
     }
 }

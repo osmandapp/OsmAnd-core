@@ -1,7 +1,7 @@
 #include "RoutePlanner.h"
 #include "RoutePlannerContext.h"
 #include "QKeyValueIterator.h"
-#include "QImmutableIterator.h"
+#include "QCachingIterator.h"
 #include "Logging.h"
 #include "Utilities.h"
 #include "ObfReader.h"

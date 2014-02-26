@@ -148,7 +148,7 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&this->_lock);
 
             // In case resource was promised, wait forever until promise is fulfilled
-            const auto itPromisedResourceEntry = _promisedResources[level].constFind(key);
+            const auto& itPromisedResourceEntry = _promisedResources[level].constFind(key);
             if(itPromisedResourceEntry != _promisedResources[level].cend())
             {
                 const auto localFuture = (*itPromisedResourceEntry)->sharedFuture;
@@ -166,7 +166,7 @@ namespace OsmAnd
                 return false;
             }
 
-            const auto itAvailableResourceEntry = _availableResources[level].find(key);
+            const auto& itAvailableResourceEntry = _availableResources[level].find(key);
             if(itAvailableResourceEntry == _availableResources[level].end())
                 return false;
             const auto& availableResourceEntry = *itAvailableResourceEntry;
@@ -184,7 +184,7 @@ namespace OsmAnd
             // Resource must not be promised. Otherwise behavior is undefined
             assert(!_promisedResources[level].contains(key));
 
-            const auto itAvailableResourceEntry = _availableResources[level].find(key);
+            const auto& itAvailableResourceEntry = _availableResources[level].find(key);
             if(itAvailableResourceEntry == _availableResources[level].end())
                 return false;
             const auto& availableResourceEntry = *itAvailableResourceEntry;
@@ -249,7 +249,7 @@ namespace OsmAnd
                 assert(_promisedResources[level].contains(key));
                 assert(!_availableResources[level].contains(key));
 
-                const auto itPromisedResourceEntry = _promisedResources[level].find(key);
+                const auto& itPromisedResourceEntry = _promisedResources[level].find(key);
                 if(!promisedEntryPtr)
                     promisedEntryPtr = *itPromisedResourceEntry;
                 _promisedResources[level].erase(itPromisedResourceEntry);
@@ -272,7 +272,7 @@ namespace OsmAnd
                 assert(_promisedResources[level].contains(key));
                 assert(!_availableResources[level].contains(key));
 
-                const auto itPromisedResourceEntry = _promisedResources[level].find(key);
+                const auto& itPromisedResourceEntry = _promisedResources[level].find(key);
                 if(!promisedEntryPtr)
                     promisedEntryPtr = *itPromisedResourceEntry;
                 _promisedResources[level].erase(itPromisedResourceEntry);
@@ -317,7 +317,7 @@ namespace OsmAnd
                 assert(_promisedResources[level].contains(key));
                 assert(!_availableResources[level].contains(key));
 
-                const auto itPromisedResourceEntry = _promisedResources[level].find(key);
+                const auto& itPromisedResourceEntry = _promisedResources[level].find(key);
                 if(!promisedEntryPtr)
                     promisedEntryPtr = *itPromisedResourceEntry;
                 _promisedResources[level].erase(itPromisedResourceEntry);
@@ -358,7 +358,7 @@ namespace OsmAnd
                 assert(_promisedResources[level].contains(key));
                 assert(!_availableResources[level].contains(key));
 
-                const auto itPromisedResourceEntry = _promisedResources[level].find(key);
+                const auto& itPromisedResourceEntry = _promisedResources[level].find(key);
                 if(!promisedEntryPtr)
                     promisedEntryPtr = *itPromisedResourceEntry;
                 _promisedResources[level].erase(itPromisedResourceEntry);
@@ -390,7 +390,7 @@ namespace OsmAnd
             // Otherwise behavior is undefined
             assert(!_availableResources[level].contains(key));
 
-            const auto itPromisedResourceEntry = _promisedResources[level].constFind(key);
+            const auto& itPromisedResourceEntry = _promisedResources[level].constFind(key);
             if(itPromisedResourceEntry == _promisedResources[level].cend())
                 return false;
             const auto& promisedResourceEntry = *itPromisedResourceEntry;
@@ -409,7 +409,7 @@ namespace OsmAnd
             // Otherwise behavior is undefined
             assert(!_availableResources[level].contains(key));
 
-            const auto itPromisedResourceEntry = _promisedResources[level].constFind(key);
+            const auto& itPromisedResourceEntry = _promisedResources[level].constFind(key);
             if(itPromisedResourceEntry == _promisedResources[level].cend())
                 return false;
             const auto& promisedResourceEntry = *itPromisedResourceEntry;
@@ -426,7 +426,7 @@ namespace OsmAnd
 
             assert(levels.contains(level));
 
-            const auto itAvailableResourceEntry = _availableResources[level].find(key);
+            const auto& itAvailableResourceEntry = _availableResources[level].find(key);
             if(itAvailableResourceEntry != _availableResources[level].end())
             {
                 const auto& availableResourceEntry = *itAvailableResourceEntry;

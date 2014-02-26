@@ -12,7 +12,7 @@
 #include "Logging.h"
 #include "Utilities.h"
 #include "TurnInfo.h"
-#include "QImmutableIterator.h"
+#include "QCachingIterator.h"
 
 OsmAnd::RouteCalculationResult OsmAnd::RoutePlanner::prepareResult(
     OsmAnd::RoutePlannerContext::CalculationContext* context,
@@ -103,10 +103,10 @@ void OsmAnd::RoutePlanner::splitRoadsAndAttachRoadSegments( OsmAnd::RoutePlanner
             const auto nextIdx = (isIncrement ? pointIdx + 1 : pointIdx - 1);
 
             if (pointIdx == segment->startPointIndex)
-                attachRouteSegments(context, route, itSegment, pointIdx, isIncrement);
+                attachRouteSegments(context, route, itSegment.current, pointIdx, isIncrement);
 
             if (nextIdx != segment->endPointIndex)
-                attachRouteSegments(context, route, itSegment, nextIdx, isIncrement);
+                attachRouteSegments(context, route, itSegment.current, nextIdx, isIncrement);
 
             if(nextIdx < 0 || nextIdx >= segment->attachedRoutes.size())
                 continue;
@@ -136,7 +136,8 @@ void OsmAnd::RoutePlanner::splitRoadsAndAttachRoadSegments( OsmAnd::RoutePlanner
                     segment->_endPointIndex = nextIdx;
                     segment->_attachedRoutes.resize(qAbs(static_cast<int64_t>(segment->_endPointIndex) - static_cast<int64_t>(segment->_startPointIndex)) + 1);
 
-                    itSegment = route.insert((++itSegment).current, split);
+                    itSegment.set(route.insert((++itSegment).current, split));
+                    itSegment.update(route);
                     
                     // switch current segment to the splited
                     segment = split;
@@ -148,11 +149,11 @@ void OsmAnd::RoutePlanner::splitRoadsAndAttachRoadSegments( OsmAnd::RoutePlanner
 
 void OsmAnd::RoutePlanner::attachRouteSegments(
     OsmAnd::RoutePlannerContext::CalculationContext* context,
-    QVector< std::shared_ptr<RouteSegment> >& route,
-    const QVector< std::shared_ptr<RouteSegment> >::iterator& itSegment,
+    const QVector< std::shared_ptr<RouteSegment> >& route,
+    const QVector< std::shared_ptr<RouteSegment> >::const_iterator& itSegment,
     uint32_t pointIdx, bool isIncrement)
 {
-    auto segment = *itSegment;
+    const auto& segment = *itSegment;
     const auto& nextL = pointIdx < segment->road->points.size() - 1
         ? segment->road->points[pointIdx + 1]
         : PointI();
@@ -160,14 +161,12 @@ void OsmAnd::RoutePlanner::attachRouteSegments(
         ? segment->road->points[pointIdx - 1]
         : PointI();
 
-    // attach additional roads to represent more information about the route
-    std::shared_ptr<RouteSegment> previousResult;
-
     // by default make same as this road id
     auto previousRoadId = segment->road->id;
     if (pointIdx == segment->startPointIndex && itSegment != route.cbegin())
     {
-        previousResult = *(itSegment - 1);
+        // attach additional roads to represent more information about the route
+        const auto& previousResult = *(itSegment - 1);
         previousRoadId = previousResult->road->id;
         if (previousRoadId != segment->road->id)
         {
