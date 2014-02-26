@@ -7,6 +7,7 @@
 #include <QThread>
 #include <QMutex>
 #include <QWaitCondition>
+#include <QLocale>
 
 #include <gdal.h>
 #include <SkGraphics.h>
@@ -91,10 +92,13 @@ void OsmAnd::initializeGlobal()
     GDALAllRegister();
 
     // SKIA
-    SkGraphics::PurgeFontCache(); // This will initialize global glyph cache
+    SkGraphics::PurgeFontCache(); // This will initialize global glyph cache, since it fails to initialize concurrently
 
     // ICU
     ICU::initialize();
+
+    // Qt
+    (void)QLocale::system(); // This will initialize system locale, since it fails to initialize concurrently
 }
 
 void OsmAnd::releaseGlobal()
