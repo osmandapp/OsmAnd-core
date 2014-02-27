@@ -44,8 +44,8 @@ namespace OsmAnd
         void animateTargetBy(const PointI64& deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction);
         void animateTargetWith(const PointD& velocity, const PointD& deceleration);
 
-        void parabolicAnimateTargetBy(const PointI& deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction);
-        void parabolicAnimateTargetBy(const PointI64& deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction);
+        void parabolicAnimateTargetBy(const PointI& deltaValue, const float duration, const MapAnimatorTimingFunction targetTimingFunction, const MapAnimatorTimingFunction zoomTimingFunction);
+        void parabolicAnimateTargetBy(const PointI64& deltaValue, const float duration, const MapAnimatorTimingFunction targetTimingFunction, const MapAnimatorTimingFunction zoomTimingFunction);
         void parabolicAnimateTargetWith(const PointD& velocity, const PointD& deceleration);
 
         void animateAzimuthBy(const float deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction);

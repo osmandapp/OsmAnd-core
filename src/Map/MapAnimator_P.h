@@ -9,6 +9,7 @@
 #include <QtMath>
 #include <QHash>
 #include <QList>
+#include <QVector>
 #include <QMutex>
 #include <QVariant>
 
@@ -36,9 +37,9 @@ namespace OsmAnd
             QVariantHash storageHash;
         };
 
-        class AbstractAnimation
+        class BaseAnimation
         {
-            Q_DISABLE_COPY(AbstractAnimation);
+            Q_DISABLE_COPY(BaseAnimation);
         private:
         protected:
             float _timePassed;
@@ -46,7 +47,7 @@ namespace OsmAnd
             AnimationContext _ownContext;
             const std::shared_ptr<AnimationContext> _sharedContext;
         
-            AbstractAnimation(const float duration_, const float delay_, const MapAnimatorTimingFunction timingFunction_, const std::shared_ptr<AnimationContext>& sharedContext_)
+            BaseAnimation(const float duration_, const float delay_, const MapAnimatorTimingFunction timingFunction_, const std::shared_ptr<AnimationContext>& sharedContext_)
                 : _timePassed(0.0f)
                 , _sharedContext(sharedContext_)
                 , duration(duration_)
@@ -257,7 +258,7 @@ namespace OsmAnd
 
 #undef _DECLARE_IN_OUT
         public:
-            virtual ~AbstractAnimation()
+            virtual ~BaseAnimation()
             {
             }
 
@@ -270,7 +271,7 @@ namespace OsmAnd
         };
 
         template <typename T>
-        class Animation : public AbstractAnimation
+        class Animation : public BaseAnimation
         {
             Q_DISABLE_COPY(Animation);
         public:
@@ -291,7 +292,7 @@ namespace OsmAnd
                 const GetInitialValueMethod obtainer_,
                 const ApplierMethod applier_,
                 const std::shared_ptr<AnimationContext>& sharedContext_ = nullptr)
-                : AbstractAnimation(duration_, delay_, timingFunction_, sharedContext_)
+                : BaseAnimation(duration_, delay_, timingFunction_, sharedContext_)
                 , _initialValueCaptured(false)
                 , _deltaValue(deltaValue_)
                 , deltaValue(_deltaValue)
@@ -311,7 +312,7 @@ namespace OsmAnd
                 const GetInitialValueMethod obtainer_,
                 const ApplierMethod applier_,
                 const std::shared_ptr<AnimationContext>& sharedContext_ = nullptr)
-                : AbstractAnimation(duration_, delay_, timingFunction_, sharedContext_)
+                : BaseAnimation(duration_, delay_, timingFunction_, sharedContext_)
                 , _initialValueCaptured(false)
                 , deltaValue(_deltaValue)
                 , deltaValueObtainer(deltaValueObtainer_)
@@ -368,7 +369,42 @@ namespace OsmAnd
 
         volatile bool _isAnimationPaused;
         mutable QMutex _animationsMutex;
-        QList< std::shared_ptr<AbstractAnimation> > _animations;
+        QList< std::shared_ptr<BaseAnimation> > _animations;
+
+        void constructZoomAnimation(
+            QList< std::shared_ptr<BaseAnimation> >& outAnimation,
+            const float deltaValue,
+            const float duration,
+            const MapAnimatorTimingFunction timingFunction);
+        void constructTargetAnimation(
+            QList< std::shared_ptr<BaseAnimation> >& outAnimation,
+            const PointI64& deltaValue,
+            const float duration,
+            const MapAnimatorTimingFunction timingFunction);
+        void constructParabolicTargetAnimation(
+            QList< std::shared_ptr<BaseAnimation> >& outAnimation,
+            const PointI64& deltaValue,
+            const float duration,
+            const MapAnimatorTimingFunction targetTimingFunction,
+            const MapAnimatorTimingFunction zoomTimingFunction);
+        void constructAzimuthAnimation(
+            QList< std::shared_ptr<BaseAnimation> >& outAnimation,
+            const float deltaValue,
+            const float duration,
+            const MapAnimatorTimingFunction timingFunction);
+        void constructElevationAngleAnimation(
+            QList< std::shared_ptr<BaseAnimation> >& outAnimation,
+            const float deltaValue,
+            const float duration,
+            const MapAnimatorTimingFunction timingFunction);
+        void constructZeroizeAzimuthAnimation(
+            QList< std::shared_ptr<BaseAnimation> >& outAnimation,
+            const float duration,
+            const MapAnimatorTimingFunction timingFunction);
+        void constructInvZeroizeElevationAngleAnimation(
+            QList< std::shared_ptr<BaseAnimation> >& outAnimation,
+            const float duration,
+            const MapAnimatorTimingFunction timingFunction);
 
         const Animation<float>::GetInitialValueMethod _zoomGetter;
         float zoomGetter(AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext);
@@ -410,8 +446,8 @@ namespace OsmAnd
         void animateTargetBy(const PointI64& deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction);
         void animateTargetWith(const PointD& velocity, const PointD& deceleration);
 
-        void parabolicAnimateTargetBy(const PointI& deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction);
-        void parabolicAnimateTargetBy(const PointI64& deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction);
+        void parabolicAnimateTargetBy(const PointI& deltaValue, const float duration, const MapAnimatorTimingFunction targetTimingFunction, const MapAnimatorTimingFunction zoomTimingFunction);
+        void parabolicAnimateTargetBy(const PointI64& deltaValue, const float duration, const MapAnimatorTimingFunction targetTimingFunction, const MapAnimatorTimingFunction zoomTimingFunction);
         void parabolicAnimateTargetWith(const PointD& velocity, const PointD& deceleration);
 
         void animateAzimuthBy(const float deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction);

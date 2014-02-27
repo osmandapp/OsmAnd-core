@@ -79,14 +79,14 @@ void OsmAnd::MapAnimator::animateTargetWith(const PointD& velocity, const PointD
     _d->animateTargetWith(velocity, deceleration);
 }
 
-void OsmAnd::MapAnimator::parabolicAnimateTargetBy(const PointI& deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction)
+void OsmAnd::MapAnimator::parabolicAnimateTargetBy(const PointI& deltaValue, const float duration, const MapAnimatorTimingFunction targetTimingFunction, const MapAnimatorTimingFunction zoomTimingFunction)
 {
-    _d->parabolicAnimateTargetBy(deltaValue, duration, timingFunction);
+    _d->parabolicAnimateTargetBy(deltaValue, duration, targetTimingFunction, zoomTimingFunction);
 }
 
-void OsmAnd::MapAnimator::parabolicAnimateTargetBy(const PointI64& deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction)
+void OsmAnd::MapAnimator::parabolicAnimateTargetBy(const PointI64& deltaValue, const float duration, const MapAnimatorTimingFunction targetTimingFunction, const MapAnimatorTimingFunction zoomTimingFunction)
 {
-    _d->parabolicAnimateTargetBy(deltaValue, duration, timingFunction);
+    _d->parabolicAnimateTargetBy(deltaValue, duration, targetTimingFunction, zoomTimingFunction);
 }
 
 void OsmAnd::MapAnimator::parabolicAnimateTargetWith(const PointD& velocity, const PointD& deceleration)
