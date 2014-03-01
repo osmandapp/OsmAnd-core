@@ -41,5 +41,8 @@ add_subdirectory("${OSMAND_ROOT}/core/externals/icu4c" "core/externals/icu4c")
 # OsmAnd Core
 add_subdirectory("${OSMAND_ROOT}/core" "core/OsmAndCore")
 
+# OsmAnd Core wrappers
+include("${OSMAND_ROOT}/core/wrappers/wrappers.cmake")
+
 # OsmAnd Core Utils
 add_subdirectory("${OSMAND_ROOT}/core/utils" "core/OsmAndCoreUtils")
