@@ -358,9 +358,9 @@ SHARED_PTR<RouteSegment> searchRouteInternal(RoutingContext* ctx, SHARED_PTR<Rou
 		}
 		if (ctx->planRouteIn2Directions()) {
 			forwardSearch = !nonHeuristicSegmentsComparator(graphDirectSegments.top(), graphReverseSegments.top());
-			if (graphDirectSegments.size() * 1.3 > graphReverseSegments.size()) {
+			if (graphDirectSegments.size() * 2 > graphReverseSegments.size()) {
 				forwardSearch = false;
-			} else if (graphDirectSegments.size() < 1.3 * graphReverseSegments.size()) {
+			} else if (graphDirectSegments.size() < 2 * graphReverseSegments.size()) {
 				forwardSearch = true;
 			}
 		} else {
