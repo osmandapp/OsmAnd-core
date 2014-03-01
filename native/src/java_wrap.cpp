@@ -116,13 +116,24 @@ extern "C" JNIEXPORT jlong JNICALL Java_net_osmand_NativeLibrary_searchNativeObj
 		interruptedField = getFid(ienv, clObjInterrupted, "interrupted", "Z");
 		ienv->DeleteLocalRef(clObjInterrupted);
 	}
+	jfieldID renderedStateField = 0;
+	int renderedState = 0;
+	if(objInterrupted != NULL) {
+		jclass clObjInterrupted = ienv->GetObjectClass(objInterrupted);
+		renderedStateField = getFid(ienv, clObjInterrupted, "renderedState", "I");
+		ienv->DeleteLocalRef(clObjInterrupted);
+	}
 
 	ResultJNIPublisher* j = new ResultJNIPublisher( objInterrupted, interruptedField, ienv);
 	SearchQuery q(sleft, sright, stop, sbottom, req, j);
 	q.zoom = zoom;
 
 
-	/*ResultPublisher* res =*/ searchObjectsForRendering(&q, skipDuplicates, renderRouteDataFile, getString(ienv, msgNothingFound));
+	/*ResultPublisher* res =*/ searchObjectsForRendering(&q, skipDuplicates, renderRouteDataFile, getString(ienv, msgNothingFound), renderedState);
+	if(objInterrupted != NULL) {
+		ienv->SetIntField(objInterrupted, renderedStateField, renderedState);
+	}
+	
 	delete req;
 	return (jlong) j;
 }

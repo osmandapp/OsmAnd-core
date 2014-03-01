@@ -878,6 +878,27 @@ bool readMapDataBlocks(CodedInputStream* input, SearchQuery* req, MapTreeBounds*
 	return true;
 }
 
+bool checkObjectBounds(SearchQuery* q, MapDataObject* o) {
+	uint prevCross = 0;
+	for (uint i = 0; i < o->points.size(); i++) {
+		uint cross = 0;
+		int x31 = o->points[i].first;
+		int y31 = o->points[i].second;
+		cross |= (x31 < q->left ? 1 : 0);
+		cross |= (x31 > q->right ? 2 : 0);
+		cross |= (y31 < q->top ? 4 : 0);
+		cross |= (y31 > q->bottom? 8 : 0);
+		if(i > 0) {
+			if((prevCross & cross) == 0) {
+				return true;
+			}
+		}
+		prevCross = cross;
+	}
+	return false;
+}
+
+
 bool sortTreeBounds (const MapTreeBounds& i,const MapTreeBounds& j) { return (i.mapDataBlock<j.mapDataBlock); }
 
 void searchMapData(CodedInputStream* input, MapRoot* root, MapIndex* ind, SearchQuery* req) {
@@ -916,7 +937,7 @@ void searchMapData(CodedInputStream* input, MapRoot* root, MapIndex* ind, Search
 
 
 void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<RouteDataObject*>& list, std::vector<MapDataObject*>& tempResult,
-		bool skipDuplicates, IDS_SET& ids) {
+		bool skipDuplicates, IDS_SET& ids, int& renderedState) {
 	std::vector<RouteDataObject*>::iterator rIterator = list.begin();
 	tempResult.reserve((size_t) (list.size() + tempResult.size()));
 	for (; rIterator != list.end(); rIterator++) {
@@ -924,6 +945,7 @@ void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<RouteDataObje
 		if(r == NULL) {
 			continue;
 		}
+
 		if (skipDuplicates && r->id > 0) {
 			if (ids.find(r->id) != ids.end()) {
 				continue;
@@ -956,6 +978,9 @@ void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<RouteDataObje
 				obj->objectNames[r->region->decodingRules[nameIterator->first].first] = nameIterator->second;
 			}
 			obj->area = false;
+			if(renderedState < 2 && checkObjectBounds(q, obj)) {
+				renderedState |= 2;
+			}
 			tempResult.push_back(obj);
 		} else {
 			delete obj;
@@ -1013,7 +1038,7 @@ void searchRouteSubregions(SearchQuery* q, std::vector<RouteSubregion>& tempResu
 
 void readRouteMapObjects(SearchQuery* q, BinaryMapFile* file, vector<RouteSubregion>& found,
 		RoutingIndex* routeIndex, std::vector<MapDataObject*>& tempResult, bool skipDuplicates,
-		IDS_SET& ids) {
+		IDS_SET& ids, int& renderedState) {
 	sort(found.begin(), found.end(), sortRouteRegions);
 	lseek(file->fd, 0, SEEK_SET);
 	FileInputStream input(file->fd);
@@ -1028,12 +1053,12 @@ void readRouteMapObjects(SearchQuery* q, BinaryMapFile* file, vector<RouteSubreg
 		uint32_t old = cis.PushLimit(length);
 		readRouteTreeData(&cis, &(*sub), list, routeIndex);
 		cis.PopLimit(old);
-		convertRouteDataObjecToMapObjects(q, list, tempResult, skipDuplicates, ids);
+		convertRouteDataObjecToMapObjects(q, list, tempResult, skipDuplicates, ids, renderedState);
 	}
 }
 
 void readRouteDataAsMapObjects(SearchQuery* q, BinaryMapFile* file, std::vector<MapDataObject*>& tempResult,
-		bool skipDuplicates, IDS_SET& ids) {
+		bool skipDuplicates, IDS_SET& ids, int& renderedState) {
 	std::vector<RoutingIndex*>::iterator routeIndex = file->routingIndexes.begin();
 	for (; routeIndex != file->routingIndexes.end(); routeIndex++) {
 		if (q->publisher->isCancelled()) {
@@ -1064,7 +1089,7 @@ void readRouteDataAsMapObjects(SearchQuery* q, BinaryMapFile* file, std::vector<
 			cis.PopLimit(old);
 			checkAndInitRouteRegionRules(file->fd, (*routeIndex));
 
-			readRouteMapObjects(q, file, found, (*routeIndex), tempResult, skipDuplicates, ids);
+			readRouteMapObjects(q, file, found, (*routeIndex), tempResult, skipDuplicates, ids, renderedState);
 		}
 	}
 }
@@ -1120,7 +1145,7 @@ void readMapObjects(SearchQuery* q, BinaryMapFile* file) {
 
 void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & basemapResult, std::vector<MapDataObject*>& tempResult,
 		std::vector<MapDataObject*>& coastLines,std::vector<MapDataObject*>& basemapCoastLines,
-		int& count, bool& basemapExists, int& renderRouteDataFile, bool skipDuplicates) {
+		int& count, bool& basemapExists, int& renderRouteDataFile, bool skipDuplicates, int& renderedState) {
 	if (skipDuplicates) {
 		// override it for now
 		// TODO skip duplicates doesn't work correctly with basemap ?
@@ -1142,6 +1167,7 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 		if((renderRouteDataFile == 1 || q->zoom < zoomOnlyForBasemaps) && !file->isBasemap()) {
 			continue;
 		} else if (!q->publisher->isCancelled()) {
+			bool basemap = i->second->isBasemap();
 			readMapObjects(q, file);
 			std::vector<MapDataObject*>::iterator r = q->publisher->result.begin();
 			tempResult.reserve((size_t) (q->publisher->result.size() + tempResult.size()));
@@ -1152,17 +1178,26 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 					}
 					ids.insert((*r)->id);
 				}
+				if(basemap) {
+					if(renderedState % 2 == 0 && checkObjectBounds(q, *r)) {
+						renderedState |= 1;
+					}
+				} else {
+					if(renderedState < 2 && checkObjectBounds(q, *r)) {
+						renderedState |= 2;
+					}
+				}
 
 				count++;
 				if ((*r)->contains("natural", "coastline")) {
-					if (i->second->isBasemap()) {
+					if (basemap) {
 						basemapCoastLines.push_back(*r);
 					} else {
 						coastLines.push_back(*r);
 					}
 				} else {
 					// do not mess coastline and other types
-					if (i->second->isBasemap()) {
+					if (basemap) {
 						basemapResult.push_back(*r);
 					} else {
 						tempResult.push_back(*r);
@@ -1174,7 +1209,8 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 	}
 }
 
-ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, int renderRouteDataFile, std::string msgNothingFound) {
+ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, int renderRouteDataFile, std::string msgNothingFound,
+	 int& renderedState) {
 	int count = 0;
 	std::vector<MapDataObject*> basemapResult;
 	std::vector<MapDataObject*> tempResult;
@@ -1183,7 +1219,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 
 	bool basemapExists = false;
 	readMapObjectsForRendering(q, basemapResult, tempResult, coastLines, basemapCoastLines, count,
-			basemapExists, renderRouteDataFile, skipDuplicates);
+			basemapExists, renderRouteDataFile, skipDuplicates, renderedState);
 
 	if (renderRouteDataFile >= 0 && q->zoom >= zoomOnlyForBasemaps) {
 		IDS_SET ids;
@@ -1196,7 +1232,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 					q->req->clearState();
 				}
 				q->publisher->result.clear();
-				readRouteDataAsMapObjects(q, file, tempResult, skipDuplicates, ids);
+				readRouteDataAsMapObjects(q, file, tempResult, skipDuplicates, ids, renderedState);
 			}
 		}
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Route objects %d", tempResult.size());
