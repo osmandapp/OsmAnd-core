@@ -1,8 +1,11 @@
 # Ignore all externals upstream files
 /externals/**/upstream.*
+externals/.stamp
 
 # Ignore binary files
 /binaries
 
 # Ignore baked files
 /baked
+
+/moc
