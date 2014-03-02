@@ -4,17 +4,25 @@ SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 NAME=$(basename $SRCLOC)
 OSMAND_ARCHITECTURES_SET=($*)
 
-if [ ! -d "$ANDROID_SDK" ]; then
+if [[ -z "$ANDROID_SDK" ]]; then
 	echo "ANDROID_SDK is not set"
 	exit
 fi
-if [ ! -d "$ANDROID_NDK" ]; then
+if [ ! -d "$ANDROID_SDK" ]; then
+	echo "ANDROID_SDK is set incorrectly"
+	exit
+fi
+if [[ -z "$ANDROID_NDK" ]]; then
 	echo "ANDROID_NDK is not set"
 	exit
 fi
+if [ ! -d "$ANDROID_NDK" ]; then
+	echo "ANDROID_NDK is set incorrectly"
+	exit
+fi
 
-export ANDROID_SDK_ROOT=`echo $ANDROID_SDK | sed 's/\\\\/\//g'`
-export ANDROID_NDK_ROOT=`echo $ANDROID_NDK | sed 's/\\\\/\//g'`
+export ANDROID_SDK_ROOT=$ANDROID_SDK
+export ANDROID_NDK_ROOT=$ANDROID_NDK
 if ls $ANDROID_NDK/toolchains/*-4.8 &> /dev/null; then
 	export ANDROID_NDK_TOOLCHAIN_VERSION=4.8
 elif ls $ANDROID_NDK/toolchains/*-4.7 &> /dev/null; then
@@ -22,7 +30,7 @@ elif ls $ANDROID_NDK/toolchains/*-4.7 &> /dev/null; then
 fi
 if [[ "$(uname -a)" =~ Linux ]]; then
 	if [[ "$(uname -m)" == x86_64 ]] && [ -d "$ANDROID_NDK/prebuilt/linux-x86_64" ]; then
-		export ANDROID_NDK_HOST=linux-x86_64;
+		export ANDROID_NDK_HOST=linux-x86_64
 	elif [ -d "$ANDROID_NDK/prebuilt/linux-x86" ]; then
 		export ANDROID_NDK_HOST=linux-x86
 	else
@@ -35,7 +43,7 @@ if [[ "$(uname -a)" =~ Linux ]]; then
 fi
 if [[ "$(uname -a)" =~ Darwin ]]; then
 	if [[ "$(uname -m)" == x86_64 ]] && [ -d "$ANDROID_NDK/prebuilt/darwin-x86_64" ]; then
-		export ANDROID_NDK_HOST=darwin-x86_64;
+		export ANDROID_NDK_HOST=darwin-x86_64
 	elif [ -d "$ANDROID_NDK/prebuilt/darwin-x86" ]; then
 		export ANDROID_NDK_HOST=darwin-x86
 	else
@@ -47,7 +55,7 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 	fi
 fi
 if [[ "$(uname -a)" =~ Cygwin ]]; then
-	echo "Building for Android under Cygwin is not supported"
+	echo "Building for Android under Cygwin is not supported, use built.bat"
 	exit 1
 fi
 
@@ -60,6 +68,7 @@ BOOST_CONFIGURATION=$(echo "
 	link=static
 	runtime-link=shared
 	variant=release
+	threadapi=pthread
 	stage
 " | tr '\n' ' ')
 
