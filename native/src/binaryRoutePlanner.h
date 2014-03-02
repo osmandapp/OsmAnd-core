@@ -395,6 +395,8 @@ struct RoutingContext {
 		timeToLoad.Pause();
 	}
 
+	void reregisterRouteDataObject(SHARED_PTR<RouteDataObject> o, int segmentStart, uint32_t x, uint32_t y);
+
 	void loadTileData(int x31, int y31, int zoomAround, vector<SHARED_PTR<RouteDataObject> >& dataObjects ) {
 		int t = config->zoomToLoad - zoomAround;
 		int coordinatesShift = (1 << (31 - config->zoomToLoad));
@@ -418,7 +420,7 @@ struct RoutingContext {
 						UNORDERED(map)<int64_t, SHARED_PTR<RouteSegment> >::iterator s = subregions[j]->routes.begin();
 						while(s != subregions[j]->routes.end()) {
 							SHARED_PTR<RouteSegment> seg = s->second;
-							if(seg.get() != NULL) {
+							while(seg.get() != NULL) {
 								if(ids.find(seg->road->id) == ids.end()) {
 									dataObjects.push_back(seg->road);
 									ids.insert(seg->road->id);

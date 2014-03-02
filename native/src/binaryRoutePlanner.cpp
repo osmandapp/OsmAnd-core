@@ -34,7 +34,7 @@ inline int roadPriorityComparator(float o1DistanceFromStart, float o1DistanceToE
 }
 
 void printRoad(const char* prefix, SHARED_PTR<RouteSegment> segment) {
-	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "%s Road id=%lld dir=%d ind=%d ds=%f es=%f pend=%d parent=%lld ",
+	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "%s Road id=%lld dir=%d ind=%d ds=%f es=%f pend=%d parent=%lld",
 		prefix, segment->road->id, 
 		segment->directionAssgn, segment->getSegmentStart(),
 		segment->distanceFromStart, segment->distanceToEnd, 
@@ -572,7 +572,7 @@ bool proccessRestrictions(RoutingContext* ctx, SHARED_PTR<RouteDataObject> road,
 			for (uint i = 0; i < next->road->restrictions.size(); i++) {
 				int rt = next->road->restrictions[i] & 7;
 				int64_t restrictedTo = next->road->restrictions[i] >> 3;
-				if (restrictedTo == road->id) {
+				if (restrictedTo == road->id) {					
 					type = rt;
 					break;
 				}
@@ -694,6 +694,30 @@ SHARED_PTR<RouteSegment> processIntersections(RoutingContext* ctx, SEGMENTS_QUEU
 	return itself;
 }
 
+void RoutingContext::reregisterRouteDataObject(SHARED_PTR<RouteDataObject> o, int segmentStart, uint32_t x31, 
+		uint32_t y31) {
+	uint32_t z  = config->zoomToLoad;
+	uint32_t xloc = (x31) >> (31 -z);
+	uint32_t yloc = (y31) >> (31 -z);
+	int64_t tileId = (xloc << z) + yloc;
+	vector<SHARED_PTR<RoutingSubregionTile> >& subregions = indexedSubregions[tileId];
+	for(uint j = 0; j < subregions.size(); j++) {
+		if(subregions[j]->isLoaded()) {
+			UNORDERED(map)<int64_t, SHARED_PTR<RouteSegment> >::iterator s = subregions[j]->routes.begin();
+			while(s != subregions[j]->routes.end()) {
+				SHARED_PTR<RouteSegment> seg = s->second;
+				while(seg.get() != NULL) {
+					if(seg->road->id == o->id  && seg->segmentStart > segmentStart) {
+						seg->segmentStart ++;
+					}
+					seg = seg->next;
+				}
+				s++;
+			}
+		}
+	}
+}
+
 SHARED_PTR<RouteSegment> findRouteSegment(int px, int py, RoutingContext* ctx) {
 	vector<SHARED_PTR<RouteDataObject> > dataObjects;
 	ctx->loadTileData(px, py, 17, dataObjects);
@@ -732,6 +756,9 @@ SHARED_PTR<RouteSegment> findRouteSegment(int px, int py, RoutingContext* ctx) {
 		if(r->pointTypes.size() > index) {
 			r->pointTypes.insert(r->pointTypes.begin() + index, std::vector<uint32_t>());
 		}
+		uint32_t x31 = r->pointsX[index];
+		uint32_t y31 = r->pointsY[index];
+		ctx->reregisterRouteDataObject(r, index, x31, y31);
 	}
 	return road;
 }
