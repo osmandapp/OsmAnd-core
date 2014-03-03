@@ -532,6 +532,10 @@ void processRouteSegment(RoutingContext* ctx, bool reverseWaySearch, SEGMENTS_QU
 		// 3. get intersected ways
 		SHARED_PTR<RouteSegment> roadNext = ctx->loadRouteSegment(x, y); // ctx.config->memoryLimitation - ctx.memoryOverhead
 		float distStartObstacles = segment->distanceFromStart + calculateTimeWithObstacles(ctx, road, segmentDist , obstaclesTime);
+		if(!ctx->precalcRoute.empty && ctx->precalcRoute.followNext) {
+			//distStartObstacles = 0;
+			distStartObstacles = ctx->precalcRoute.getDeviationDistance(x, y) / ctx->precalcRoute.maxSpeed;
+		}
 		// We don't check if there are outgoing connections
 		bool processFurther = true;
 		prev = processIntersections(ctx, graphSegments, visitedSegments, distStartObstacles,

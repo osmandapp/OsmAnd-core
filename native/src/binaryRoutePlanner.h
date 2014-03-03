@@ -234,6 +234,7 @@ struct PrecalculatedRouteDirection {
 	float maxSpeed;
 	float startFinishTime;
 	float endFinishTime;
+	bool followNext;
 	static int SHIFT;
 	static int SHIFTS[];
 	bool empty;

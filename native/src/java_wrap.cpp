@@ -440,6 +440,7 @@ jfieldID jfield_PrecalculatedRouteDirection_pointsY = NULL;
 jfieldID jfield_PrecalculatedRouteDirection_pointsX = NULL;
 jfieldID jfield_PrecalculatedRouteDirection_minSpeed = NULL;
 jfieldID jfield_PrecalculatedRouteDirection_maxSpeed = NULL;
+jfieldID jfield_PrecalculatedRouteDirection_followNext= NULL;
 jfieldID jfield_PrecalculatedRouteDirection_endFinishTime = NULL;
 jfieldID jfield_PrecalculatedRouteDirection_startFinishTime = NULL;
 
@@ -575,6 +576,7 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_PrecalculatedRouteDirection_pointsX = getFid(env, jclass_PrecalculatedRouteDirection, "pointsX", "[I");
 	jfield_PrecalculatedRouteDirection_minSpeed = getFid(env, jclass_PrecalculatedRouteDirection, "minSpeed", "F");
 	jfield_PrecalculatedRouteDirection_maxSpeed = getFid(env, jclass_PrecalculatedRouteDirection, "maxSpeed", "F");
+	jfield_PrecalculatedRouteDirection_followNext = getFid(env, jclass_PrecalculatedRouteDirection, "followNext", "Z");
 	jfield_PrecalculatedRouteDirection_endFinishTime = getFid(env, jclass_PrecalculatedRouteDirection, "endFinishTime", "F");
 	jfield_PrecalculatedRouteDirection_startFinishTime = getFid(env, jclass_PrecalculatedRouteDirection, "startFinishTime", "F");
 
@@ -828,6 +830,7 @@ void parsePrecalculatedRoute(JNIEnv* ienv, RoutingContext& ctx,  jobject precalc
 		ctx.precalcRoute.endPoint = ctx.precalcRoute.calc(ctx.targetX, ctx.targetY);
 		ctx.precalcRoute.minSpeed = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_minSpeed);
 		ctx.precalcRoute.maxSpeed = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_maxSpeed);
+		ctx.precalcRoute.followNext = ienv->GetBooleanField(precalculatedRoute, jfield_PrecalculatedRouteDirection_followNext);
 		ctx.precalcRoute.startFinishTime = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_startFinishTime);
 		ctx.precalcRoute.endFinishTime = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_endFinishTime);
 		ienv->ReleaseIntArrayElements(pointsY, pointsYF, 0);
