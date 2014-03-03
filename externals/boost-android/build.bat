@@ -98,7 +98,7 @@ if not exist "%~dp0upstream.patched.%buildArch%.static" (
 )
 
 REM Perform build
-(pushd %~dp0upstream.patched.%buildArch%.static && (cmd /C "b2 %BOOST_CONFIGURATION%" & popd))
+(pushd %~dp0upstream.patched.%buildArch%.static && (cmd /C "b2 %BOOST_CONFIGURATION% -j %NUMBER_OF_PROCESSORS%" & popd))
 
 endlocal
 exit /B

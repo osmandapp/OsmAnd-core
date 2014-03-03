@@ -52,7 +52,7 @@ echo Building for %envArch%
 REM Check if we have a build directory (shared)
 if not exist "%~dp0upstream.patched.windows.%envArch%.shared" (
 	mkdir "%~dp0upstream.patched.windows.%envArch%.shared"
-	xcopy "%~dp0upstream.patched" "%~dp0upstream.patched.windows.%envArch%.shared" /E
+	xcopy "%~dp0upstream.patched" "%~dp0upstream.patched.windows.%envArch%.shared" /E /Q
 	(pushd %~dp0upstream.patched.windows.%envArch%.shared && (cmd /C "configure.bat -shared %QTBASE_CONFIGURATION%" & popd))
 )
 
@@ -62,7 +62,7 @@ REM Perform build (shared)
 REM Check if we have a build directory (static)
 if not exist "%~dp0upstream.patched.windows.%envArch%.static" (
 	mkdir "%~dp0upstream.patched.windows.%envArch%.static"
-	xcopy "%~dp0upstream.patched" "%~dp0upstream.patched.windows.%envArch%.static" /E
+	xcopy "%~dp0upstream.patched" "%~dp0upstream.patched.windows.%envArch%.static" /E /Q
 	(pushd %~dp0upstream.patched.windows.%envArch%.static && (cmd /C "configure.bat -static %QTBASE_CONFIGURATION%" & popd))
 )
 

@@ -51,7 +51,7 @@ REM ### Function start : BUILD
 REM Check if we have a build directory
 if not exist "%~dp0upstream.patched.%target%.%arch%.static" (
 	mkdir "%~dp0upstream.patched.%target%.%arch%.static"
-	xcopy "%~dp0upstream.patched" "%~dp0upstream.patched.%target%.%arch%.static" /E
+	xcopy "%~dp0upstream.patched" "%~dp0upstream.patched.%target%.%arch%.static" /E /Q
 	(pushd %~dp0upstream.patched.%target%.%arch%.static && (cmd /C "configure.bat %QTBASE_CONFIGURATION% -xplatform %xPlatform%" & popd))
 )
 

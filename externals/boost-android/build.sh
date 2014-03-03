@@ -40,8 +40,7 @@ if [[ "$(uname -a)" =~ Linux ]]; then
 	if [[ -z "$OSMAND_BUILD_CPU_CORES_NUM" ]]; then
 		OSMAND_BUILD_CPU_CORES_NUM=`nproc`
 	fi
-fi
-if [[ "$(uname -a)" =~ Darwin ]]; then
+elif [[ "$(uname -a)" =~ Darwin ]]; then
 	if [[ "$(uname -m)" == x86_64 ]] && [ -d "$ANDROID_NDK/prebuilt/darwin-x86_64" ]; then
 		export ANDROID_NDK_HOST=darwin-x86_64
 	elif [ -d "$ANDROID_NDK/prebuilt/darwin-x86" ]; then
@@ -53,10 +52,13 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 	if [[ -z "$OSMAND_BUILD_CPU_CORES_NUM" ]]; then
 		OSMAND_BUILD_CPU_CORES_NUM=`sysctl hw.ncpu | awk '{print $2}'`
 	fi
-fi
-if [[ "$(uname -a)" =~ Cygwin ]]; then
+elif [[ "$(uname -a)" =~ Cygwin ]]; then
 	echo "Building for Android under Cygwin is not supported, use built.bat"
 	exit 1
+else
+	echo "'$(uname -a)' is not recognized"
+	exit 1
+fi
 fi
 
 BOOST_CONFIGURATION=$(echo "
