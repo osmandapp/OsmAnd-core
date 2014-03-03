@@ -20,6 +20,7 @@ LOCAL_STATIC_LIBRARIES := OsmAndCore$(OSMAND_BINARY_SUFFIX)
 ifneq ($(OSMAND_USE_PREBUILT),true)
     LOCAL_SRC_FILES := gen/cpp/swig.cpp
 
+    $(info $(shell $(LOCAL_PATH)/generate.sh))
     include $(BUILD_SHARED_LIBRARY)
 else
     LOCAL_SRC_FILES := \
