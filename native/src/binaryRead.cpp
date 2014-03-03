@@ -26,6 +26,7 @@ using google::protobuf::internal::WireFormatLite;
 #define INT_MAXIMUM 0x7fffffff
 
 static uint zoomForBaseRouteRendering  = 14;
+static uint detailedZoomStart = 13;
 static uint zoomOnlyForBasemaps  = 11;
 std::map< std::string, BinaryMapFile* > openFiles;
 OsmAndStoredIndex* cache = NULL;
@@ -1171,6 +1172,7 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 			readMapObjects(q, file);
 			std::vector<MapDataObject*>::iterator r = q->publisher->result.begin();
 			tempResult.reserve((size_t) (q->publisher->result.size() + tempResult.size()));
+
 			for (; r != q->publisher->result.end(); r++) {
 				if (skipDuplicates && (*r)->id > 0) {
 					if (ids.find((*r)->id) != ids.end()) {
@@ -1221,6 +1223,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 	readMapObjectsForRendering(q, basemapResult, tempResult, coastLines, basemapCoastLines, count,
 			basemapExists, renderRouteDataFile, skipDuplicates, renderedState);
 
+	bool objectsFromRoutingSectionRead = false;
 	if (renderRouteDataFile >= 0 && q->zoom >= zoomOnlyForBasemaps) {
 		IDS_SET ids;
 		map<std::string, BinaryMapFile*>::iterator i = openFiles.begin();
@@ -1232,7 +1235,9 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 					q->req->clearState();
 				}
 				q->publisher->result.clear();
+				uint sz = tempResult.size();
 				readRouteDataAsMapObjects(q, file, tempResult, skipDuplicates, ids, renderedState);
+				objectsFromRoutingSectionRead = tempResult.size() != sz;
 			}
 		}
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Route objects %d", tempResult.size());
@@ -1248,14 +1253,14 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 		bool ocean = q->ocean;
 		bool land = q->mixed;
 		bool addBasemapCoastlines = true;
-		bool emptyData = q->zoom > BASEMAP_ZOOM && tempResult.empty() && coastLines.empty();
+		bool emptyData = q->zoom > zoomOnlyForBasemaps && tempResult.empty() && coastLines.empty();
 		// determine if there are enough objects like land/lake..
-		bool basemapMissing = q->zoom <= BASEMAP_ZOOM && basemapCoastLines.empty() && !basemapExists;
+		bool basemapMissing = q->zoom <= zoomOnlyForBasemaps && basemapCoastLines.empty() && !basemapExists;
 		bool detailedLandData = q->zoom >= 14 && tempResult.size() > 0 && renderRouteDataFile < 0;
 		if (!coastLines.empty()) {
 			bool coastlinesWereAdded = processCoastlines(coastLines, q->left, q->right, q->bottom, q->top, q->zoom,
 					basemapCoastLines.empty(), true, tempResult);
-			addBasemapCoastlines = (!coastlinesWereAdded && !detailedLandData) || q->zoom <= BASEMAP_ZOOM;
+			addBasemapCoastlines = (!coastlinesWereAdded && !detailedLandData) || q->zoom <= zoomOnlyForBasemaps;
 		} else {
 			addBasemapCoastlines = !detailedLandData;
 		}
@@ -1295,7 +1300,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 			o->objectNames["name"] = msgNothingFound;
 			tempResult.push_back(o);
 		}
-		if (q->zoom <= BASEMAP_ZOOM || emptyData || (renderRouteDataFile >= 0 && q->zoom < 15)) {
+		if (q->zoom <= zoomOnlyForBasemaps || emptyData || (objectsFromRoutingSectionRead && q->zoom < detailedZoomStart)) {
 			tempResult.insert(tempResult.end(), basemapResult.begin(), basemapResult.end());
 		} else {
 			deleteObjects(basemapResult);

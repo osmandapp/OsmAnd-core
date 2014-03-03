@@ -27,7 +27,6 @@
 #include "renderRules.h"
 
 static const uint MAP_VERSION = 2;
-static const uint BASEMAP_ZOOM = 11;
 
 
 struct MapTreeBounds {
