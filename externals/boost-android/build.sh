@@ -59,7 +59,6 @@ else
 	echo "'$(uname -a)' is not recognized"
 	exit 1
 fi
-fi
 
 BOOST_CONFIGURATION=$(echo "
 	--layout=versioned
