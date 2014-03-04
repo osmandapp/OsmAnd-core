@@ -62,42 +62,42 @@ LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/src/Map \
     $(LOCAL_PATH)/protos
 
-LOCAL_PROJECT_ROOT := $(LOCAL_PATH)
+OSMAND_CORE_PROJECT_ROOT := $(LOCAL_PATH)
 
 _SRC_FILES := \
-    $(wildcard $(LOCAL_PROJECT_ROOT)/src/*.c*) \
-    $(wildcard $(LOCAL_PROJECT_ROOT)/src/Data/*.c*) \
-    $(wildcard $(LOCAL_PROJECT_ROOT)/src/Data/Model/*.c*) \
-    $(wildcard $(LOCAL_PROJECT_ROOT)/src/Routing/*.c*) \
-    $(wildcard $(LOCAL_PROJECT_ROOT)/src/Map/*.c*) \
-    $(wildcard $(LOCAL_PROJECT_ROOT)/src/Map/OpenGL/*.c*) \
-    $(wildcard $(LOCAL_PROJECT_ROOT)/src/Map/OpenGLES2/*.c*) \
-    $(wildcard $(LOCAL_PROJECT_ROOT)/protos/*.c*)
-SRC_FILES := $(_SRC_FILES:$(LOCAL_PROJECT_ROOT)/%=%)
+    $(wildcard $(LOCAL_PATH)/src/*.c*) \
+    $(wildcard $(LOCAL_PATH)/src/Data/*.c*) \
+    $(wildcard $(LOCAL_PATH)/src/Data/Model/*.c*) \
+    $(wildcard $(LOCAL_PATH)/src/Routing/*.c*) \
+    $(wildcard $(LOCAL_PATH)/src/Map/*.c*) \
+    $(wildcard $(LOCAL_PATH)/src/Map/OpenGL/*.c*) \
+    $(wildcard $(LOCAL_PATH)/src/Map/OpenGLES2/*.c*) \
+    $(wildcard $(LOCAL_PATH)/protos/*.c*)
+SRC_FILES := $(_SRC_FILES:$(LOCAL_PATH)/%=%)
 
 _HEADER_FILES := \
-    $(wildcard $(LOCAL_PROJECT_ROOT)/include/*.h) \
-    $(wildcard $(LOCAL_PROJECT_ROOT)/include/OsmAndCore/*.h) \
-    $(wildcard $(LOCAL_PROJECT_ROOT)/include/OsmAndCore/Data/*.h) \
-    $(wildcard $(LOCAL_PROJECT_ROOT)/include/OsmAndCore/Data/Model/*.h) \
-    $(wildcard $(LOCAL_PROJECT_ROOT)/include/OsmAndCore/Routing/*.h) \
-    $(wildcard $(LOCAL_PROJECT_ROOT)/include/OsmAndCore/Map/*.h) \
-    $(wildcard $(LOCAL_PROJECT_ROOT)/src/*.h) \
-    $(wildcard $(LOCAL_PROJECT_ROOT)/src/Data/*.h) \
-    $(wildcard $(LOCAL_PROJECT_ROOT)/src/Data/Model/*.h) \
-    $(wildcard $(LOCAL_PROJECT_ROOT)/src/Routing/*.h) \
-    $(wildcard $(LOCAL_PROJECT_ROOT)/src/Map/*.h) \
-    $(wildcard $(LOCAL_PROJECT_ROOT)/src/Map/OpenGL/*.h) \
-    $(wildcard $(LOCAL_PROJECT_ROOT)/src/Map/OpenGLES2/*.h) \
-    $(wildcard $(LOCAL_PROJECT_ROOT)/protos/*.h)
-HEADER_FILES := $(_HEADER_FILES:$(LOCAL_PROJECT_ROOT)/%=%)
+    $(wildcard $(LOCAL_PATH)/include/*.h) \
+    $(wildcard $(LOCAL_PATH)/include/OsmAndCore/*.h) \
+    $(wildcard $(LOCAL_PATH)/include/OsmAndCore/Data/*.h) \
+    $(wildcard $(LOCAL_PATH)/include/OsmAndCore/Data/Model/*.h) \
+    $(wildcard $(LOCAL_PATH)/include/OsmAndCore/Routing/*.h) \
+    $(wildcard $(LOCAL_PATH)/include/OsmAndCore/Map/*.h) \
+    $(wildcard $(LOCAL_PATH)/src/*.h) \
+    $(wildcard $(LOCAL_PATH)/src/Data/*.h) \
+    $(wildcard $(LOCAL_PATH)/src/Data/Model/*.h) \
+    $(wildcard $(LOCAL_PATH)/src/Routing/*.h) \
+    $(wildcard $(LOCAL_PATH)/src/Map/*.h) \
+    $(wildcard $(LOCAL_PATH)/src/Map/OpenGL/*.h) \
+    $(wildcard $(LOCAL_PATH)/src/Map/OpenGLES2/*.h) \
+    $(wildcard $(LOCAL_PATH)/protos/*.h)
+HEADER_FILES := $(_HEADER_FILES:$(LOCAL_PATH)/%=%)
 
 # Rule to get moc'ed file from original
-MOC := $(LOCAL_PROJECT_ROOT)/externals/qtbase-android/upstream.patched.$(TARGET_ARCH_ABI)$(OSMAND_QT_PATH_SUFFIX).static/bin/moc
+OSMAND_CORE_MOC := $(OSMAND_CORE_PROJECT_ROOT)/externals/qtbase-android/upstream.patched.$(TARGET_ARCH_ABI)$(OSMAND_QT_PATH_SUFFIX).static/bin/moc
 MOCED_SRC_FILES := $(addsuffix .cpp, $(addprefix moc/, $(SRC_FILES), $(HEADER_FILES)))
-$(LOCAL_PROJECT_ROOT)/moc/%.cpp: $(LOCAL_PROJECT_ROOT)/% $(MOC)
-	mkdir -p $(dir $@)
-	$(MOC) -o $@ $<
+$(LOCAL_PATH)/moc/%.cpp: $(LOCAL_PATH)/% $(OSMAND_CORE_MOC)
+	@mkdir -p $(dir $@)
+	@$(OSMAND_CORE_MOC) -o $@ $<
 
 # Embed resources
 EMBED_RESOURCES := $(LOCAL_PROJECT_ROOT)/embed-resources.sh

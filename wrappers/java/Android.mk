@@ -31,8 +31,6 @@ SWIG_FILES := \
     $(wildcard $(LOCAL_PATH)/swig/*)
 SWIG_FILES := $(_SWIG_FILES:$(LOCAL_PATH)/%=%)
 
-LOCAL_PROJECT_ROOT := $(LOCAL_PATH)
-
 LOCAL_GENERATOR_INPUT := \
     $(_HEADER_FILES) \
     $(_SWIG_FILES)
@@ -40,9 +38,11 @@ LOCAL_GENERATOR_INPUT := \
 LOCAL_SRC_FILES := \
     gen/cpp/swig.cpp
 
-$(LOCAL_PROJECT_ROOT)/gen/cpp/swig.cpp: $(LOCAL_PROJECT_ROOT) $(LOCAL_PROJECT_ROOT)/generate.sh
-	echo "Generating..."
-	$(LOCAL_PROJECT_ROOT)/generate.sh
+WRAPPER_JAVA_PROJECT_ROOT := $(LOCAL_PATH)
+
+$(LOCAL_PATH)/gen/cpp/swig.cpp: $(LOCAL_GENERATOR_INPUT) $(LOCAL_PATH)/generate.sh
+	@echo "Generating..."
+	@$(WRAPPER_JAVA_PROJECT_ROOT)/generate.sh
 
 include $(BUILD_SHARED_LIBRARY)
 
