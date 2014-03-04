@@ -110,7 +110,7 @@ $(LOCAL_PROJECT_ROOT)/gen/EmbeddedResources_bundle.cpp: $(LOCAL_PROJECT_ROOT)/em
 
 LOCAL_SRC_FILES := \
     $(SRC_FILES) \
-    $(PROTO_FILES)
+    $(PROTO_FILES) \
     $(MOCED_SRC_FILES) \
     gen/EmbeddedResources_bundle.cpp
 
