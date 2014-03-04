@@ -31,7 +31,7 @@ SWIG_FILES := \
     $(wildcard $(LOCAL_PATH)/swig/*)
 SWIG_FILES := $(_SWIG_FILES:$(LOCAL_PATH)/%=%)
 
-LOCAL_GENERATOR_INPUT := \
+WRAPPER_JAVA_GENERATOR_INPUT := \
     $(_HEADER_FILES) \
     $(_SWIG_FILES)
 
@@ -40,7 +40,7 @@ LOCAL_SRC_FILES := \
 
 WRAPPER_JAVA_PROJECT_ROOT := $(LOCAL_PATH)
 
-$(LOCAL_PATH)/gen/cpp/swig.cpp: $(LOCAL_GENERATOR_INPUT) $(LOCAL_PATH)/generate.sh
+$(OSMAND_CORE_PROJECT_ROOT)/gen/cpp/swig.cpp: $(WRAPPER_JAVA_GENERATOR_INPUT) $(WRAPPER_JAVA_PROJECT_ROOT)/generate.sh
 	@echo "Generating..."
 	@$(WRAPPER_JAVA_PROJECT_ROOT)/generate.sh
 
