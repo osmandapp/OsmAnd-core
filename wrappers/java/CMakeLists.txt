@@ -7,10 +7,6 @@ set(target_specific_private_includes "")
 set(target_specific_public_libraries "")
 
 file(GLOB_RECURSE core_includes "${OSMAND_ROOT}/core/include/*.h*")
-file(GLOB_RECURSE core_headers "${OSMAND_ROOT}/core/src/*.h*")
-file(GLOB_RECURSE core_sources "${OSMAND_ROOT}/core/src/*.c*")
-file(GLOB_RECURSE core_headers_client "${OSMAND_ROOT}/core/client/*.h*")
-file(GLOB_RECURSE core_sources_client  "${OSMAND_ROOT}/core/client/*.c*")
 file(GLOB core_swig "${OSMAND_ROOT}/core.swig")
 file(GLOB_RECURSE core_swig_subfiles "${OSMAND_ROOT}/swig/*")
 
@@ -23,10 +19,6 @@ if(CMAKE_HOST_WIN32 AND NOT CYGWIN)
 		DEPENDS
 			"${CMAKE_CURRENT_LIST_DIR}/generate.sh"
 			${core_includes}
-			${core_headers}
-			${core_sources}
-			${core_headers_client}
-			${core_sources_client}
 			${core_swig}
 			${core_swig_subfiles}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
@@ -37,10 +29,6 @@ else()
 		DEPENDS
 			"${CMAKE_CURRENT_LIST_DIR}/generate.sh"
 			${core_includes}
-			${core_headers}
-			${core_sources}
-			${core_headers_client}
-			${core_sources_client}
 			${core_swig}
 			${core_swig_subfiles}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
