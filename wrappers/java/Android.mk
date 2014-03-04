@@ -17,20 +17,23 @@ endif
 
 LOCAL_STATIC_LIBRARIES := OsmAndCore$(OSMAND_BINARY_SUFFIX)
 
+WRAPPER_JAVA_PROJECT_ROOT := $(LOCAL_PATH)
+
 _HEADER_FILES := \
-    $(wildcard $(LOCAL_PATH)/include/*.h) \
-    $(wildcard $(LOCAL_PATH)/include/OsmAndCore/*.h) \
-    $(wildcard $(LOCAL_PATH)/include/OsmAndCore/Data/*.h) \
-    $(wildcard $(LOCAL_PATH)/include/OsmAndCore/Data/Model/*.h) \
-    $(wildcard $(LOCAL_PATH)/include/OsmAndCore/Routing/*.h) \
-    $(wildcard $(LOCAL_PATH)/include/OsmAndCore/Map/*.h)
+    $(wildcard $(LOCAL_PATH)/../../include/*.h) \
+    $(wildcard $(LOCAL_PATH)/../../include/OsmAndCore/*.h) \
+    $(wildcard $(LOCAL_PATH)/../../include/OsmAndCore/Data/*.h) \
+    $(wildcard $(LOCAL_PATH)/../../include/OsmAndCore/Data/Model/*.h) \
+    $(wildcard $(LOCAL_PATH)/../../include/OsmAndCore/Routing/*.h) \
+    $(wildcard $(LOCAL_PATH)/../../include/OsmAndCore/Map/*.h)
 HEADER_FILES := $(_HEADER_FILES:$(LOCAL_PATH)/%=%)
 
 SWIG_FILES := \
-    $(wildcard $(LOCAL_PATH)/*.swig) \
-    $(wildcard $(LOCAL_PATH)/swig/*)
+    $(wildcard $(LOCAL_PATH)/../../*.swig) \
+    $(wildcard $(LOCAL_PATH)/../../swig/*)
 SWIG_FILES := $(_SWIG_FILES:$(LOCAL_PATH)/%=%)
 
+WRAPPER_JAVA_GENERATOR := $(LOCAL_PATH)/generate.sh
 WRAPPER_JAVA_GENERATOR_INPUT := \
     $(_HEADER_FILES) \
     $(_SWIG_FILES)
@@ -38,11 +41,9 @@ WRAPPER_JAVA_GENERATOR_INPUT := \
 LOCAL_SRC_FILES := \
     gen/cpp/swig.cpp
 
-WRAPPER_JAVA_PROJECT_ROOT := $(LOCAL_PATH)
-
-$(OSMAND_CORE_PROJECT_ROOT)/gen/cpp/swig.cpp: $(WRAPPER_JAVA_GENERATOR_INPUT) $(WRAPPER_JAVA_PROJECT_ROOT)/generate.sh
+$(WRAPPER_JAVA_PROJECT_ROOT)/gen/cpp/swig.cpp: $(WRAPPER_JAVA_GENERATOR_INPUT) $(WRAPPER_JAVA_GENERATOR)
 	@echo "Generating..."
-	@$(WRAPPER_JAVA_PROJECT_ROOT)/generate.sh
+	@$(WRAPPER_JAVA_GENERATOR)
 
 include $(BUILD_SHARED_LIBRARY)
 
