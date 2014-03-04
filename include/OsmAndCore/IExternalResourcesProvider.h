@@ -8,7 +8,7 @@
 #include <QByteArray>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/Memory.h>
+#include <OsmAndCore/MemoryCommon.h>
 
 namespace OsmAnd
 {

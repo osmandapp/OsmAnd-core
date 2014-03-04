@@ -8,7 +8,7 @@
 #include <QStringList>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/Memory.h>
+#include <OsmAndCore/MemoryCommon.h>
 #include <OsmAndCore/Reference.h>
 #include <OsmAndCore/CommonTypes.h>
 

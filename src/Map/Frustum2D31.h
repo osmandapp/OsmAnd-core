@@ -6,7 +6,7 @@
 #include "QtExtensions.h"
 
 #include "OsmAndCore.h"
-#include "Memory.h"
+#include "MemoryCommon.h"
 #include "CommonTypes.h"
 
 namespace OsmAnd

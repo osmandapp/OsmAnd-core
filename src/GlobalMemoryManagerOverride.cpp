@@ -1,4 +1,4 @@
-#include "Memory.h"
+#include "MemoryCommon.h"
 
 #include <QtGlobal>
 

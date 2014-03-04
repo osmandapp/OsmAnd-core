@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_MEMORY_H_
-#define _OSMAND_CORE_MEMORY_H_
+#ifndef _OSMAND_CORE_MEMORY_COMMON_H_
+#define _OSMAND_CORE_MEMORY_COMMON_H_
 
 #include <memory>
 #include <new>
@@ -51,4 +51,4 @@
             OsmAnd::MemoryManagerSelector<class_name>::get()->free(ptr, #class_name);                               \
         }
 
-#endif // !defined(_OSMAND_CORE_MEMORY_H_)
+#endif // !defined(_OSMAND_CORE_MEMORY_COMMON_H_)
