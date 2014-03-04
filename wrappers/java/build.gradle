@@ -5,7 +5,7 @@ task generate_direct(type:Exec) {
     commandLine "sh", "generate.sh"
 }
 task generate_cygwin(type:Exec) {
-    commandLine "cmd", "/c", "bash --login "+System.getProperty("user.dir")+"/generate.sh"
+    commandLine "cmd", "/c", "bash --login "+file("generate.sh")
 }
 task generate {
     description "Generate SWIG sources"

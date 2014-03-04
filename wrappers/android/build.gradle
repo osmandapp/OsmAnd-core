@@ -1,0 +1,51 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:0.8.+'
+    }
+}
+
+allprojects {
+    repositories {
+        mavenCentral()
+    }
+}
+
+apply plugin: 'android-library'
+
+android {
+    sourceSets {
+        main {
+            manifest.srcFile "AndroidManifest.xml"
+			jni.srcDirs = ["jni"]
+            java.srcDirs = ["src"]
+            resources.srcDirs = ["src"]
+            renderscript.srcDirs = ["src"]
+            res.srcDirs = ["src"]
+            assets.srcDirs = ["src"]
+        }
+    }
+
+    compileSdkVersion 19
+    buildToolsVersion "19.0.2"
+
+    defaultConfig {
+        minSdkVersion 8
+        targetSdkVersion 19
+        
+        //TODO: this should be added from version of core
+        versionCode 1
+        versionName "1.0"
+    }
+    release {
+        runProguard false
+        proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+    }
+}
+
+dependencies {
+    compile project(":OsmAndCore_java")
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+}

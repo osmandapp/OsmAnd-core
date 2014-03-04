@@ -1,8 +1,6 @@
 LOCAL_PATH := $(call my-dir)
 
-$(info Project: $(LOCAL_PATH))
 include $(CLEAR_VARS)
-$(info Project: $(LOCAL_PATH))
 
 ifneq ($(OSMAND_BUILDING_NEON_LIBRARY),true)
     LOCAL_MODULE := OsmAndCore
@@ -15,7 +13,7 @@ LOCAL_EXPORT_CFLAGS := \
     -DOSMAND_TARGET_OS_android \
     -DOSMAND_OPENGLES2_RENDERER_SUPPORTED \
     -DOSMAND_CORE_STATIC \
-	-DOSMAND_GLM_AVAILABLE \
+    -DOSMAND_GLM_AVAILABLE \
     -DGLM_SWIZZLE
 
 LOCAL_EXPORT_C_INCLUDES := \
@@ -39,7 +37,7 @@ LOCAL_STATIC_LIBRARIES := \
     osmand_skia$(OSMAND_BINARY_SUFFIX) \
     osmand_gdal$(OSMAND_BINARY_SUFFIX) \
     osmand_glsl-optimizer$(OSMAND_BINARY_SUFFIX) \
-	osmand_icu4c$(OSMAND_BINARY_SUFFIX) \
+    osmand_icu4c$(OSMAND_BINARY_SUFFIX) \
     Qt5Sql$(OSMAND_BINARY_SUFFIX) \
     Qt5Network$(OSMAND_BINARY_SUFFIX) \
     Qt5Core$(OSMAND_BINARY_SUFFIX) \
@@ -97,7 +95,6 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
     mkdirp = \
         $(call mkdirp_,$(1))
     run_moc = \
-        $(info moc'ing "$(1)" to "$(1:$(LOCAL_PATH)/%=$(LOCAL_PATH)/moc/%)") \
         $(call mkdirp,$(1:$(LOCAL_PATH)/%=$(LOCAL_PATH)/moc/%)) \
         $(info $(shell ( \
             $(LOCAL_PATH)/externals/qtbase-android/upstream.patched.$(TARGET_ARCH_ABI)$(OSMAND_QT_PATH_SUFFIX).static/bin/moc \
