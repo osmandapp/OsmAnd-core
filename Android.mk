@@ -1,6 +1,8 @@
 LOCAL_PATH := $(call my-dir)
 
+$(info Project: $(LOCAL_PATH))
 include $(CLEAR_VARS)
+$(info Project: $(LOCAL_PATH))
 
 ifneq ($(OSMAND_BUILDING_NEON_LIBRARY),true)
     LOCAL_MODULE := OsmAndCore
@@ -123,3 +125,5 @@ else
         $(OSMAND_ANDROID_PREBUILT_ROOT)/$(TARGET_ARCH_ABI)/lib$(LOCAL_MODULE).a
     include $(PREBUILT_STATIC_LIBRARY)
 endif
+
+include $(call all-makefiles-under,$(LOCAL_PATH)/externals)

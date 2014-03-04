@@ -27,3 +27,5 @@ else
         $(OSMAND_ANDROID_PREBUILT_ROOT)/$(TARGET_ARCH_ABI)/lib$(LOCAL_MODULE).so
     include $(PREBUILT_SHARED_LIBRARY)
 endif
+
+include $(LOCAL_PATH)/../../Android.mk

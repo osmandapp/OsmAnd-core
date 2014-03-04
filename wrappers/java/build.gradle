@@ -1,0 +1,29 @@
+apply plugin: 'java'
+
+import org.apache.tools.ant.taskdefs.condition.Os
+task generate_direct(type:Exec) {
+    commandLine "sh", "generate.sh"
+}
+task generate_cygwin(type:Exec) {
+    commandLine "cmd", "/c", "bash --login "+System.getProperty("user.dir")+"/generate.sh"
+}
+task generate {
+    description "Generate SWIG sources"
+}
+task detectHostOS {
+    if(Os.isFamily(Os.FAMILY_WINDOWS)) {
+        generate.dependsOn generate_cygwin
+    } else {
+        generate.dependsOn generate_direct    
+    }
+}
+classes.dependsOn detectHostOS
+classes.dependsOn generate
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ["gen/java"]
+        }
+    }
+}
