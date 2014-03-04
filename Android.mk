@@ -62,58 +62,52 @@ LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/src/Map \
     $(LOCAL_PATH)/protos
 
-SRC_FILES := \
-    $(wildcard $(LOCAL_PATH)/src/*.c*) \
-    $(wildcard $(LOCAL_PATH)/src/Data/*.c*) \
-    $(wildcard $(LOCAL_PATH)/src/Data/Model/*.c*) \
-    $(wildcard $(LOCAL_PATH)/src/Routing/*.c*) \
-    $(wildcard $(LOCAL_PATH)/src/Map/*.c*) \
-    $(wildcard $(LOCAL_PATH)/src/Map/OpenGL/*.c*) \
-    $(wildcard $(LOCAL_PATH)/src/Map/OpenGLES2/*.c*) \
-    $(wildcard $(LOCAL_PATH)/protos/*.c*)
+LOCAL_PROJECT_ROOT := $(LOCAL_PATH)
 
-HEADER_FILES := \
-    $(wildcard $(LOCAL_PATH)/include/*.h) \
-    $(wildcard $(LOCAL_PATH)/include/OsmAndCore/*.h) \
-    $(wildcard $(LOCAL_PATH)/include/OsmAndCore/Data/*.h) \
-    $(wildcard $(LOCAL_PATH)/include/OsmAndCore/Data/Model/*.h) \
-    $(wildcard $(LOCAL_PATH)/include/OsmAndCore/Routing/*.h) \
-    $(wildcard $(LOCAL_PATH)/include/OsmAndCore/Map/*.h) \
-    $(wildcard $(LOCAL_PATH)/src/*.h) \
-    $(wildcard $(LOCAL_PATH)/src/Data/*.h) \
-    $(wildcard $(LOCAL_PATH)/src/Data/Model/*.h) \
-    $(wildcard $(LOCAL_PATH)/src/Routing/*.h) \
-    $(wildcard $(LOCAL_PATH)/src/Map/*.h) \
-    $(wildcard $(LOCAL_PATH)/src/Map/OpenGL/*.h) \
-    $(wildcard $(LOCAL_PATH)/src/Map/OpenGLES2/*.h) \
-    $(wildcard $(LOCAL_PATH)/protos/*.h)
-mkdirp_ = \
-    $(info $(shell ( \
-        mkdir -p `dirname $(1)` \
-    )))
-mkdirp = \
-    $(call mkdirp_,$(1))
-run_moc = \
-    $(call mkdirp,$(1:$(LOCAL_PATH)/%=$(LOCAL_PATH)/moc/%)) \
-    $(info $(shell ( \
-        $(LOCAL_PATH)/externals/qtbase-android/upstream.patched.$(TARGET_ARCH_ABI)$(OSMAND_QT_PATH_SUFFIX).static/bin/moc \
-            -o $(1:$(LOCAL_PATH)/%.h=$(LOCAL_PATH)/moc/%.cpp) \
-            $(1) \
-        )))
-$(info $(shell (rm -rf $(LOCAL_PATH)/moc)))
-$(foreach header_file,$(HEADER_FILES),$(call run_moc,$(header_file)))
-$(info $(shell (find $(LOCAL_PATH)/moc -type f -size 0 -print0 | xargs -0 rm)))
-MOC_FILES := \
-    $(shell (find $(LOCAL_PATH)/moc -type f))
+_SRC_FILES := \
+    $(wildcard $(LOCAL_PROJECT_ROOT)/src/*.c*) \
+    $(wildcard $(LOCAL_PROJECT_ROOT)/src/Data/*.c*) \
+    $(wildcard $(LOCAL_PROJECT_ROOT)/src/Data/Model/*.c*) \
+    $(wildcard $(LOCAL_PROJECT_ROOT)/src/Routing/*.c*) \
+    $(wildcard $(LOCAL_PROJECT_ROOT)/src/Map/*.c*) \
+    $(wildcard $(LOCAL_PROJECT_ROOT)/src/Map/OpenGL/*.c*) \
+    $(wildcard $(LOCAL_PROJECT_ROOT)/src/Map/OpenGLES2/*.c*) \
+    $(wildcard $(LOCAL_PROJECT_ROOT)/protos/*.c*)
+SRC_FILES := $(_SRC_FILES:$(LOCAL_PROJECT_ROOT)/%=%)
 
-$(info $(shell $(LOCAL_PATH)/embed-resources.sh))
-GEN_FILES := \
-    $(shell (find $(LOCAL_PATH)/gen -type f))
+_HEADER_FILES := \
+    $(wildcard $(LOCAL_PROJECT_ROOT)/include/*.h) \
+    $(wildcard $(LOCAL_PROJECT_ROOT)/include/OsmAndCore/*.h) \
+    $(wildcard $(LOCAL_PROJECT_ROOT)/include/OsmAndCore/Data/*.h) \
+    $(wildcard $(LOCAL_PROJECT_ROOT)/include/OsmAndCore/Data/Model/*.h) \
+    $(wildcard $(LOCAL_PROJECT_ROOT)/include/OsmAndCore/Routing/*.h) \
+    $(wildcard $(LOCAL_PROJECT_ROOT)/include/OsmAndCore/Map/*.h) \
+    $(wildcard $(LOCAL_PROJECT_ROOT)/src/*.h) \
+    $(wildcard $(LOCAL_PROJECT_ROOT)/src/Data/*.h) \
+    $(wildcard $(LOCAL_PROJECT_ROOT)/src/Data/Model/*.h) \
+    $(wildcard $(LOCAL_PROJECT_ROOT)/src/Routing/*.h) \
+    $(wildcard $(LOCAL_PROJECT_ROOT)/src/Map/*.h) \
+    $(wildcard $(LOCAL_PROJECT_ROOT)/src/Map/OpenGL/*.h) \
+    $(wildcard $(LOCAL_PROJECT_ROOT)/src/Map/OpenGLES2/*.h) \
+    $(wildcard $(LOCAL_PROJECT_ROOT)/protos/*.h)
+HEADER_FILES := $(_HEADER_FILES:$(LOCAL_PROJECT_ROOT)/%=%)
+
+# Rule to get moc'ed file from original
+MOC := $(LOCAL_PROJECT_ROOT)/externals/qtbase-android/upstream.patched.$(TARGET_ARCH_ABI)$(OSMAND_QT_PATH_SUFFIX).static/bin/moc
+MOCED_SRC_FILES := $(addsuffix .cpp, $(addprefix moc/, $(SRC_FILES), $(HEADER_FILES)))
+$(LOCAL_PROJECT_ROOT)/moc/%.cpp: $(LOCAL_PROJECT_ROOT)/% $(MOC)
+	mkdir -p $(dir $@)
+	$(MOC) -o $@ $<
+
+# Embed resources
+EMBED_RESOURCES := $(LOCAL_PROJECT_ROOT)/embed-resources.sh
+$(LOCAL_PROJECT_ROOT)/gen/EmbeddedResources_bundle.cpp: $(LOCAL_PROJECT_ROOT)/embed-resources.list $(EMBED_RESOURCES)
+	$(EMBED_RESOURCES)
 
 LOCAL_SRC_FILES := \
-    $(SRC_FILES:$(LOCAL_PATH)/%=%) \
-    $(MOC_FILES:$(LOCAL_PATH)/%=%) \
-    $(GEN_FILES:$(LOCAL_PATH)/%=%) \
+    $(SRC_FILES) \
+    $(MOCED_SRC_FILES) \
+    gen/EmbeddedResources_bundle.cpp
 
 include $(BUILD_STATIC_LIBRARY)
 

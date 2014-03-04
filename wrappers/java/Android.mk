@@ -17,15 +17,33 @@ endif
 
 LOCAL_STATIC_LIBRARIES := OsmAndCore$(OSMAND_BINARY_SUFFIX)
 
-ifneq ($(OSMAND_USE_PREBUILT),true)
-    LOCAL_SRC_FILES := gen/cpp/swig.cpp
+_HEADER_FILES := \
+    $(wildcard $(LOCAL_PATH)/include/*.h) \
+    $(wildcard $(LOCAL_PATH)/include/OsmAndCore/*.h) \
+    $(wildcard $(LOCAL_PATH)/include/OsmAndCore/Data/*.h) \
+    $(wildcard $(LOCAL_PATH)/include/OsmAndCore/Data/Model/*.h) \
+    $(wildcard $(LOCAL_PATH)/include/OsmAndCore/Routing/*.h) \
+    $(wildcard $(LOCAL_PATH)/include/OsmAndCore/Map/*.h)
+HEADER_FILES := $(_HEADER_FILES:$(LOCAL_PATH)/%=%)
 
-    $(info $(shell $(LOCAL_PATH)/generate.sh))
-    include $(BUILD_SHARED_LIBRARY)
-else
-    LOCAL_SRC_FILES := \
-        $(OSMAND_ANDROID_PREBUILT_ROOT)/$(TARGET_ARCH_ABI)/lib$(LOCAL_MODULE).so
-    include $(PREBUILT_SHARED_LIBRARY)
-endif
+SWIG_FILES := \
+    $(wildcard $(LOCAL_PATH)/*.swig) \
+    $(wildcard $(LOCAL_PATH)/swig/*)
+SWIG_FILES := $(_SWIG_FILES:$(LOCAL_PATH)/%=%)
+
+LOCAL_PROJECT_ROOT := $(LOCAL_PATH)
+
+LOCAL_GENERATOR_INPUT := \
+    $(_HEADER_FILES) \
+    $(_SWIG_FILES)
+
+LOCAL_SRC_FILES := \
+    gen/cpp/swig.cpp
+
+$(LOCAL_PROJECT_ROOT)/gen/cpp/swig.cpp: $(LOCAL_PROJECT_ROOT) $(LOCAL_PROJECT_ROOT)/generate.sh
+	echo "Generating..."
+	$(LOCAL_PROJECT_ROOT)/generate.sh
+
+include $(BUILD_SHARED_LIBRARY)
 
 include $(LOCAL_PATH)/../../Android.mk
