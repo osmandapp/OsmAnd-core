@@ -71,12 +71,9 @@ _SRC_FILES := \
     $(wildcard $(LOCAL_PATH)/src/Routing/*.c*) \
     $(wildcard $(LOCAL_PATH)/src/Map/*.c*) \
     $(wildcard $(LOCAL_PATH)/src/Map/OpenGL/*.c*) \
-    $(wildcard $(LOCAL_PATH)/src/Map/OpenGLES2/*.c*)
-SRC_FILES := $(_SRC_FILES:$(LOCAL_PATH)/%=%)
-
-_PROTO_FILES := \
+    $(wildcard $(LOCAL_PATH)/src/Map/OpenGLES2/*.c*) \
     $(wildcard $(LOCAL_PATH)/protos/*.c*)
-PROTO_FILES := $(_PROTO_FILES:$(LOCAL_PATH)/%=%)
+SRC_FILES := $(_SRC_FILES:$(LOCAL_PATH)/%=%)
 
 _HEADER_FILES := \
     $(wildcard $(LOCAL_PATH)/include/*.h) \
@@ -109,7 +106,6 @@ $(OSMAND_CORE_PROJECT_ROOT)/gen/EmbeddedResources_bundle.cpp: $(OSMAND_CORE_PROJ
 
 LOCAL_SRC_FILES := \
     $(SRC_FILES) \
-    $(PROTO_FILES) \
     $(MOCED_SRC_FILES) \
     gen/EmbeddedResources_bundle.cpp
 
