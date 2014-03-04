@@ -104,8 +104,8 @@ $(OSMAND_CORE_PROJECT_ROOT)/moc/%.cpp: $(OSMAND_CORE_PROJECT_ROOT)/% $(OSMAND_CO
 	@$(OSMAND_CORE_MOC) -o $@ $<
 
 # Embed resources
-EMBED_RESOURCES := $(LOCAL_PROJECT_ROOT)/embed-resources.sh
-$(LOCAL_PROJECT_ROOT)/gen/EmbeddedResources_bundle.cpp: $(LOCAL_PROJECT_ROOT)/embed-resources.list $(EMBED_RESOURCES)
+EMBED_RESOURCES := $(OSMAND_CORE_PROJECT_ROOT)/embed-resources.sh
+$(OSMAND_CORE_PROJECT_ROOT)/gen/EmbeddedResources_bundle.cpp: $(OSMAND_CORE_PROJECT_ROOT)/embed-resources.list $(EMBED_RESOURCES)
 	$(EMBED_RESOURCES)
 
 LOCAL_SRC_FILES := \
