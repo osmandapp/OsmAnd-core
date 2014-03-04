@@ -7,31 +7,31 @@ else
     OSMAND_QTBASE_SUFFIX := .$(TARGET_ARCH_ABI)
     MODULE_SUFFIX :=
 endif
-QT := upstream.patched$(OSMAND_QTBASE_SUFFIX)
+QT_FLAVOR := upstream.patched$(OSMAND_QTBASE_SUFFIX)
 
 include $(CLEAR_VARS)
 LOCAL_ARM_NEON := $(OSMAND_BUILDING_NEON_LIBRARY)
 LOCAL_MODULE := Qt5Core$(MODULE_SUFFIX)
-LOCAL_SRC_FILES := $(QT).static/lib/lib$(LOCAL_MODULE).a
+LOCAL_SRC_FILES := $(QT_FLAVOR).static/lib/lib$(LOCAL_MODULE).a
 LOCAL_EXPORT_C_INCLUDES := \
-    $(LOCAL_PATH)/$(QT).static/include \
-    $(LOCAL_PATH)/$(QT).static/include/QtCore
+    $(LOCAL_PATH)/$(QT_FLAVOR).static/include \
+    $(LOCAL_PATH)/$(QT_FLAVOR).static/include/QtCore
 include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_ARM_NEON := $(OSMAND_BUILDING_NEON_LIBRARY)
 LOCAL_MODULE := Qt5Network$(MODULE_SUFFIX)
-LOCAL_SRC_FILES := $(QT).static/lib/lib$(LOCAL_MODULE).a
+LOCAL_SRC_FILES := $(QT_FLAVOR).static/lib/lib$(LOCAL_MODULE).a
 LOCAL_EXPORT_C_INCLUDES := \
-    $(LOCAL_PATH)/$(QT).static/include \
-    $(LOCAL_PATH)/$(QT).static/include/QtNetwork
+    $(LOCAL_PATH)/$(QT_FLAVOR).static/include \
+    $(LOCAL_PATH)/$(QT_FLAVOR).static/include/QtNetwork
 include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_ARM_NEON := $(OSMAND_BUILDING_NEON_LIBRARY)
 LOCAL_MODULE := Qt5Sql$(MODULE_SUFFIX)
-LOCAL_SRC_FILES := $(QT).static/lib/lib$(LOCAL_MODULE).a
+LOCAL_SRC_FILES := $(QT_FLAVOR).static/lib/lib$(LOCAL_MODULE).a
 LOCAL_EXPORT_C_INCLUDES := \
-    $(LOCAL_PATH)/$(QT).static/include \
-    $(LOCAL_PATH)/$(QT).static/include/QtSql
+    $(LOCAL_PATH)/$(QT_FLAVOR).static/include \
+    $(LOCAL_PATH)/$(QT_FLAVOR).static/include/QtSql
 include $(PREBUILT_STATIC_LIBRARY)
