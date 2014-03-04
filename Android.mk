@@ -71,9 +71,12 @@ _SRC_FILES := \
     $(wildcard $(LOCAL_PATH)/src/Routing/*.c*) \
     $(wildcard $(LOCAL_PATH)/src/Map/*.c*) \
     $(wildcard $(LOCAL_PATH)/src/Map/OpenGL/*.c*) \
-    $(wildcard $(LOCAL_PATH)/src/Map/OpenGLES2/*.c*) \
-    $(wildcard $(LOCAL_PATH)/protos/*.c*)
+    $(wildcard $(LOCAL_PATH)/src/Map/OpenGLES2/*.c*)
 SRC_FILES := $(_SRC_FILES:$(LOCAL_PATH)/%=%)
+
+_PROTO_FILES := \
+    $(wildcard $(LOCAL_PATH)/protos/*.c*)
+PROTO_FILES := $(_PROTO_FILES:$(LOCAL_PATH)/%=%)
 
 _HEADER_FILES := \
     $(wildcard $(LOCAL_PATH)/include/*.h) \
@@ -95,6 +98,7 @@ HEADER_FILES := $(_HEADER_FILES:$(LOCAL_PATH)/%=%)
 # Rule to get moc'ed file from original
 OSMAND_CORE_MOC := $(OSMAND_CORE_PROJECT_ROOT)/externals/qtbase-android/upstream.patched.$(TARGET_ARCH_ABI)$(OSMAND_QT_PATH_SUFFIX).static/bin/moc
 MOCED_SRC_FILES := $(addsuffix .cpp, $(addprefix moc/, $(SRC_FILES), $(HEADER_FILES)))
+$(info $(MOCED_SRC_FILES))
 $(OSMAND_CORE_PROJECT_ROOT)/moc/%.cpp: $(OSMAND_CORE_PROJECT_ROOT)/% $(OSMAND_CORE_MOC)
 	@mkdir -p $(dir $@)
 	@$(OSMAND_CORE_MOC) -o $@ $<
@@ -106,6 +110,7 @@ $(LOCAL_PROJECT_ROOT)/gen/EmbeddedResources_bundle.cpp: $(LOCAL_PROJECT_ROOT)/em
 
 LOCAL_SRC_FILES := \
     $(SRC_FILES) \
+    $(PROTO_FILES)
     $(MOCED_SRC_FILES) \
     gen/EmbeddedResources_bundle.cpp
 
