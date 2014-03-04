@@ -97,7 +97,7 @@ HEADER_FILES := $(_HEADER_FILES:$(LOCAL_PATH)/%=%)
 
 # Rule to get moc'ed file from original
 OSMAND_CORE_MOC := $(OSMAND_CORE_PROJECT_ROOT)/externals/qtbase-android/upstream.patched.$(TARGET_ARCH_ABI)$(OSMAND_QT_PATH_SUFFIX).static/bin/moc
-MOCED_SRC_FILES := $(addsuffix .cpp, $(addprefix moc/, $(SRC_FILES), $(HEADER_FILES)))
+MOCED_SRC_FILES := $(addsuffix .cpp, $(addprefix moc/, $(SRC_FILES) $(HEADER_FILES)))
 $(info $(MOCED_SRC_FILES))
 $(OSMAND_CORE_PROJECT_ROOT)/moc/%.cpp: $(OSMAND_CORE_PROJECT_ROOT)/% $(OSMAND_CORE_MOC)
 	@mkdir -p $(dir $@)
