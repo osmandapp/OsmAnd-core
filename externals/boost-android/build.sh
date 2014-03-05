@@ -53,7 +53,7 @@ elif [[ "$(uname -a)" =~ Darwin ]]; then
 		OSMAND_BUILD_CPU_CORES_NUM=`sysctl hw.ncpu | awk '{print $2}'`
 	fi
 elif [[ "$(uname -a)" =~ Cygwin ]]; then
-	echo "Building for Android under Cygwin is not supported, use built.bat"
+	echo "Building for Android under Cygwin is not supported, use build.bat"
 	exit 1
 else
 	echo "'$(uname -a)' is not recognized"

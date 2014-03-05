@@ -5,7 +5,6 @@
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QString>
-#include <QHash>
 
 #include <OsmAndCore.h>
 
@@ -26,11 +25,11 @@ namespace OsmAnd
         virtual ~MapStyles();
 
         bool registerStyle(const QString& filePath);
-        bool obtainStyle(const QString& name, std::shared_ptr<const OsmAnd::MapStyle>& outStyle);
+        bool obtainStyle(const QString& name, std::shared_ptr<const MapStyle>& outStyle) const;
 
     friend class OsmAnd::MapStyle;
     friend class OsmAnd::MapStyle_P;
     };
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_MAP_STYLES_H_)

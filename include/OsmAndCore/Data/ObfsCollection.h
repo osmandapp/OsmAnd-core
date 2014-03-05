@@ -11,8 +11,8 @@
 
 #include <OsmAndCore.h>
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class ObfDataInterface;
     class ObfsCollection_P;
     class OSMAND_CORE_API ObfsCollection
@@ -32,7 +32,6 @@ namespace OsmAnd {
 
         std::shared_ptr<ObfDataInterface> obtainDataInterface() const;
     };
-
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_OBFS_COLLECTION_H_)

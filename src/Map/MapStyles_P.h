@@ -25,10 +25,11 @@ namespace OsmAnd
         QHash< QString, std::shared_ptr<MapStyle> > _styles;
 
         bool registerEmbeddedStyle(const QString& resourceName);
-        bool registerStyle(const QString& filePath);
-        bool obtainStyle(const QString& name, std::shared_ptr<const OsmAnd::MapStyle>& outStyle);
     public:
         virtual ~MapStyles_P();
+
+        bool registerStyle(const QString& filePath);
+        bool obtainStyle(const QString& name, std::shared_ptr<const MapStyle>& outStyle) const;
 
     friend class OsmAnd::MapStyles;
     };

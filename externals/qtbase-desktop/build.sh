@@ -5,8 +5,8 @@ NAME=$(basename $SRCLOC)
 OSMAND_ARCHITECTURES_SET=($*)
 
 if [[ "$(uname -a)" =~ Cygwin ]]; then
-	echo "Please execute build.bat from required environments for i686 and amd64"
-	exit
+	echo "Building under Cygwin is not supported, use build.bat"
+	exit 1
 fi
 
 if [[ "$(uname -a)" =~ Linux ]]; then

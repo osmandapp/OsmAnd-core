@@ -18,7 +18,6 @@ OsmAnd::MapStyles_P::MapStyles_P( MapStyles* owner_ )
 
 OsmAnd::MapStyles_P::~MapStyles_P()
 {
-
 }
 
 bool OsmAnd::MapStyles_P::registerEmbeddedStyle( const QString& resourceName )
@@ -45,7 +44,7 @@ bool OsmAnd::MapStyles_P::registerStyle( const QString& filePath )
     return true;
 }
 
-bool OsmAnd::MapStyles_P::obtainStyle( const QString& name, std::shared_ptr<const OsmAnd::MapStyle>& outStyle )
+bool OsmAnd::MapStyles_P::obtainStyle(const QString& name, std::shared_ptr<const OsmAnd::MapStyle>& outStyle) const
 {
     auto itStyle = _styles.constFind(name);
     if(itStyle == _styles.cend())

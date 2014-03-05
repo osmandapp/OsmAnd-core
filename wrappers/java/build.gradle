@@ -1,8 +1,7 @@
 apply plugin: 'java'
 
-import org.apache.tools.ant.taskdefs.condition.Os
 task generate_direct(type:Exec) {
-    commandLine "sh", "generate.sh"
+    commandLine "sh", file("generate.sh")
 }
 task generate_cygwin(type:Exec) {
     commandLine "cmd", "/c", "bash --login "+file("generate.sh")
@@ -10,6 +9,7 @@ task generate_cygwin(type:Exec) {
 task generate {
     description "Generate SWIG sources"
 }
+import org.apache.tools.ant.taskdefs.condition.Os
 task detectHostOS {
     if(Os.isFamily(Os.FAMILY_WINDOWS)) {
         generate.dependsOn generate_cygwin

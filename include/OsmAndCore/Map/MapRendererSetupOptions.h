@@ -10,8 +10,8 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     struct OSMAND_CORE_API MapRendererSetupOptions
     {
         MapRendererSetupOptions();
@@ -20,11 +20,9 @@ namespace OsmAnd {
         // Background GPU worker is used for uploading/unloading resources from GPU in background
         typedef std::function<void ()> GpuWorkerThreadPrologue;
         typedef std::function<void ()> GpuWorkerThreadEpilogue;
-        struct {
-            bool enabled;
-            GpuWorkerThreadPrologue prologue;
-            GpuWorkerThreadEpilogue epilogue;
-        } gpuWorkerThread;
+        bool gpuWorkerThreadEnabled;
+        GpuWorkerThreadPrologue gpuWorkerThreadPrologue;
+        GpuWorkerThreadEpilogue gpuWorkerThreadEpilogue;
 
         // This callback is called when frame needs update
         typedef std::function<void()> FrameUpdateRequestCallback;
@@ -32,7 +30,6 @@ namespace OsmAnd {
 
         float displayDensityFactor;
     };
-
 }
 
 #endif // !defined(_OSMAND_CORE_MAP_RENDERER_SETUP_OPTIONS_H_)

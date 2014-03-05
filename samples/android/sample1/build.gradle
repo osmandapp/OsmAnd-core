@@ -16,6 +16,22 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
+    lintOptions {
+        abortOnError false
+    }
+	
+	sourceSets {
+        main {
+            manifest.srcFile "AndroidManifest.xml"
+			jni.srcDirs = []
+			jniLibs.srcDirs = ["libs", "../../../wrappers/android/libs"]
+            java.srcDirs = ["src"]
+            resources.srcDirs = ["src"]
+            renderscript.srcDirs = ["src"]
+            res.srcDirs = ["res"]
+            assets.srcDirs = ["assets"]
+        }
+    }
 }
 
 dependencies {

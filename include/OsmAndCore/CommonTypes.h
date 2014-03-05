@@ -513,6 +513,7 @@ namespace OsmAnd
             return PointT(left, bottom);
         }
 
+#if !defined(SWIG)
         STRONG_ENUM(Edge)
         {
             Invalid = -1,
@@ -583,6 +584,7 @@ namespace OsmAnd
 
             return *this;
         }
+#endif // !defined(SWIG)
 
         inline AreaT& enlargeToInclude(const PointT& p)
         {
@@ -1025,10 +1027,15 @@ namespace OsmAnd
     union TileId
     {
         uint64_t id;
+#if !defined(SWIG)
         struct {
             int32_t x;
             int32_t y;
         };
+#else
+        // Fake unwrap for SWIG
+        int32_t x, y;
+#endif // !defined(SWIG)
 
 #if !defined(SWIG)
         inline operator uint64_t() const
@@ -1127,20 +1134,25 @@ namespace OsmAnd
         {
         }
 
+#if !defined(SWIG)
         float value[3];
         struct {
             float r;
             float g;
             float b;
         };
+#else
+        // Fake unwrap for SWIG
+        float r, g, b;
+#endif // !defined(SWIG)
 
 #if !defined(SWIG)
-        inline bool operator== (const FColorRGB& other) const
+        inline bool operator==(const FColorRGB& other) const
         {
             return qFuzzyCompare(r, other.r) && qFuzzyCompare(g, other.g) && qFuzzyCompare(b, other.b);
         }
 
-        inline bool operator!= (const FColorRGB& other) const
+        inline bool operator!=(const FColorRGB& other) const
         {
             return !qFuzzyCompare(r, other.r) || !qFuzzyCompare(g, other.g) || !qFuzzyCompare(b, other.b);
         }

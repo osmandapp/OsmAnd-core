@@ -15,7 +15,7 @@ bool OsmAnd::MapStyles::registerStyle( const QString& filePath )
     return _d->registerStyle(filePath);
 }
 
-bool OsmAnd::MapStyles::obtainStyle( const QString& name, std::shared_ptr<const OsmAnd::MapStyle>& outStyle )
+bool OsmAnd::MapStyles::obtainStyle(const QString& name, std::shared_ptr<const MapStyle>& outStyle) const
 {
     return _d->obtainStyle(name, outStyle);
 }

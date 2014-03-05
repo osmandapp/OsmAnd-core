@@ -247,14 +247,14 @@ void OsmAnd::MapRenderer::invalidateFrame()
 
 void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
 {
-    assert(setupOptions.gpuWorkerThread.enabled);
+    assert(setupOptions.gpuWorkerThreadEnabled);
 
     // Capture thread ID
     _gpuWorkerThreadId = QThread::currentThreadId();
 
     // Call prologue if such exists
-    if(setupOptions.gpuWorkerThread.prologue)
-        setupOptions.gpuWorkerThread.prologue();
+    if(setupOptions.gpuWorkerThreadPrologue)
+        setupOptions.gpuWorkerThreadPrologue();
 
     while(_gpuWorkerIsAlive)
     {
@@ -285,8 +285,8 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
     }
 
     // Call epilogue
-    if(setupOptions.gpuWorkerThread.epilogue)
-        setupOptions.gpuWorkerThread.epilogue();
+    if(setupOptions.gpuWorkerThreadEpilogue)
+        setupOptions.gpuWorkerThreadEpilogue();
 
     _gpuWorkerThreadId = nullptr;
 }
@@ -343,7 +343,7 @@ bool OsmAnd::MapRenderer::preInitializeRendering()
 bool OsmAnd::MapRenderer::doInitializeRendering()
 {
     // Create GPU worker thread
-    if(setupOptions.gpuWorkerThread.enabled)
+    if(setupOptions.gpuWorkerThreadEnabled)
     {
         const auto thread = new Concurrent::Thread(std::bind(&MapRenderer::gpuWorkerThreadProcedure, this));
         _gpuWorkerThread.reset(thread);

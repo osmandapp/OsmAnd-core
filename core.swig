@@ -8,22 +8,14 @@
 #include <OsmAndCore/EmbeddedResources.h>
 #include <OsmAndCore/CommonTypes.h>
 
-// Map-related
-#include <OsmAndCore/Map/IMapTileProvider.h>
-#include <OsmAndCore/Map/IMapBitmapTileProvider.h>
-#include <OsmAndCore/Map/IMapElevationDataProvider.h>
-#include <OsmAndCore/Map/IMapRenderer.h>
-#include <OsmAndCore/Map/HeightmapTileProvider.h>
-//#include <OsmAndCore/Map/HillshadeTileProvider.h>
-#include <OsmAndCore/Map/OnlineMapRasterTileProvider.h>
-//#include <OsmAndCore/Map/MapStyles.h>
-//#include <OsmAndCore/Map/MapStyle.h>
+// Data-related
+#include <OsmAndCore/Data/ObfsCollection.h>
 
-// Routing-related
-#include <OsmAndCore/Routing/RoutingConfiguration.h>
-#include <OsmAndCore/Routing/RoutingProfile.h>
-#include <OsmAndCore/Routing/RoutePlanner.h>
-#include <OsmAndCore/Routing/RoutePlannerContext.h>
+// Map-related
+#include <OsmAndCore/Map/IMapRenderer.h>
+#include <OsmAndCore/Map/MapStyles.h>
+#include <OsmAndCore/Map/MapStyle.h>
+
 
 // To omit 'OsmAnd::' prefixes inside namespace itself, use that namespace
 using namespace OsmAnd;
@@ -31,67 +23,55 @@ using namespace OsmAnd;
 %}
 
 %include <typemaps.i>
+%include <arrays_java.i>
+%include <various.i>
 %include <stdint.i>
 %include <std_shared_ptr.i>
 %include <std_pair.i>
 %include <std_string.i>
 %include <swig/qstring.i>
-%shared_ptr(OsmAnd::Model::Road)
-%shared_ptr(OsmAnd::RoutingConfiguration)
-%shared_ptr(OsmAnd::RoutingProfileContext)
-%shared_ptr(OsmAnd::RoutingRuleset)
+
+%shared_ptr(OsmAnd::MapStyle)
+%shared_ptr(OsmAnd::IMapProvider)
 %shared_ptr(OsmAnd::IMapTileProvider)
 %shared_ptr(OsmAnd::IMapBitmapTileProvider)
 %shared_ptr(OsmAnd::IMapElevationDataProvider)
-%shared_ptr(OsmAnd::HeightmapTileProvider)
-%shared_ptr(OsmAnd::OnlineMapRasterTileProvider)
+%shared_ptr(OsmAnd::IMapSymbolProvider)
 
+%apply QString { std::string };
 
-template <class T>
-class QList {
-public:
-    QList();
-    ~QList();
-    int length() const;
-    void append(const T &elem);
-    void prepend(const T &elem);
-    bool isEmpty() const;
-    bool contains(const T &value) const;
-    T first() const;
-    T last() const;
-    void removeAt(int i);
-};
-
-%extend QList {
-    T at(int i) const{
-        return $self->value(i);
-    }
-};
-
-
-%apply QString { std::string  };     
 // Common
 %include "OsmAndCore.h"
 %include "OsmAndCore/Utilities.h"
 %include "OsmAndCore/EmbeddedResources.h"
 %include "OsmAndCore/CommonTypes.h"
 
+// Data-related
+%include "OsmAndCore/Data/ObfsCollection.h"
+
 // Map-related
+%include "OsmAndCore/Map/MapTypes.h"
+%include "OsmAndCore/Map/MapRendererTypes.h"
+%include "OsmAndCore/Map/MapRendererState.h"
+%include "OsmAndCore/Map/MapRendererConfiguration.h"
+%include "OsmAndCore/Map/MapRendererSetupOptions.h"
+%include "OsmAndCore/Map/IMapRenderer.h"
+%include "OsmAndCore/Map/MapStyles.h"
+%include "OsmAndCore/Map/MapStyle.h"
+%include "OsmAndCore/Map/IRetainableResource.h"
+%include "OsmAndCore/Map/IMapProvider.h"
 %include "OsmAndCore/Map/IMapTileProvider.h"
 %include "OsmAndCore/Map/IMapBitmapTileProvider.h"
 %include "OsmAndCore/Map/IMapElevationDataProvider.h"
-%include "OsmAndCore/Map/IMapRenderer.h"
-%include "OsmAndCore/Map/HeightmapTileProvider.h"
-//%include "OsmAndCore/Map/HillshadeTileProvider.h"
-%include "OsmAndCore/Map/OnlineMapRasterTileProvider.h"
-//%include "OsmAndCore/Map/MapStyles.h"
-//%include "OsmAndCore/Map/MapStyle.h"
+%include "OsmAndCore/Map/IMapSymbolProvider.h"
 
-// Routing-related
-%include "OsmAndCore/Routing/RoutingConfiguration.h"
-%include "OsmAndCore/Routing/RoutingProfile.h"
-%include "OsmAndCore/Routing/RoutePlanner.h"
-%include "OsmAndCore/Routing/RoutePlannerContext.h"
-%include "OsmAndCore/IQueryController.h"
-%template(PairDoubleList) QList<std::pair<double, double> >;
-%template(PairDouble) std::pair<double, double>;
+%template(PointI) OsmAnd::Point<int32_t>;
+%template(PointI64) OsmAnd::Point<int64_t>;
+%template(PointF) OsmAnd::Point<float>;
+%template(PointD) OsmAnd::Point<double>;
+
+//NOTE: Seems if template class has methods, it doesn't need to be instanced like this
+//%template(AreaI) OsmAnd::Area<int32_t>;
+//%template(AreaI64) OsmAnd::Area<int64_t>;
+//%template(AreaF) OsmAnd::Area<float>;
+//%template(AreaD) OsmAnd::Area<double>;

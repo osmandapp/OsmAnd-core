@@ -1,8 +1,9 @@
 #!/bin/bash
 
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+REAL_SRCLOC=`readlink -f $SRCLOC`
 
-if [ -d "$DIRECTORY" ]; then
+if [ -d "$SRCLOC/gen" ]; then
 	rm -rf "$SRCLOC/gen"
 fi
 mkdir -p "$SRCLOC/gen/java/net/osmand/core/jni"
@@ -12,4 +13,4 @@ if [[ -z "$SWIG" ]]; then
 	SWIG=`which swig`
 fi
 
-$SWIG -java -package net.osmand.core.jni -outdir "$SRCLOC/gen/java/net/osmand/core/jni" -o "$SRCLOC/gen/cpp/swig.cpp" -I"$SRCLOC/../../include" -c++ -v "$SRCLOC/../../core.swig"
+$SWIG -java -package net.osmand.core.jni -outdir "$SRCLOC/gen/java/net/osmand/core/jni" -o "$SRCLOC/gen/cpp/swig.cpp" -I"$REAL_SRCLOC/../../include" -c++ -v "$REAL_SRCLOC/../../core.swig"
