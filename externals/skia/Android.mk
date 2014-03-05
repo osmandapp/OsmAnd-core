@@ -9,6 +9,8 @@ else
     LOCAL_ARM_NEON := true
 endif
 
+LOCAL_SHORT_COMMANDS := true
+
 LOCAL_EXPORT_CFLAGS := \
     -DSK_BUILD_FOR_ANDROID
 
