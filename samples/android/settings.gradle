@@ -1,0 +1,7 @@
+include ':sample1'
+
+include ":OsmAndCore_java"
+project(":OsmAndCore_java").projectDir = new File(rootProject.projectDir, "../wrappers/java")
+
+include ":OsmAndCore_android"
+project(":OsmAndCore_android").projectDir = new File(rootProject.projectDir, "../wrappers/android")
