@@ -6,4 +6,4 @@ else
 	NDK_TOOLCHAIN_VERSION := 4.7
 endif
 APP_ABI := all
-APP_PLATFORM := android-8
+APP_PLATFORM := android-9
