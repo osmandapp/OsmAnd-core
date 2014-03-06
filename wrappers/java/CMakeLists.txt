@@ -7,8 +7,8 @@ set(target_specific_private_includes "")
 set(target_specific_public_libraries "")
 
 file(GLOB_RECURSE core_includes "${OSMAND_ROOT}/core/include/*.h*")
-file(GLOB core_swig "${OSMAND_ROOT}/core.swig")
-file(GLOB_RECURSE core_swig_subfiles "${OSMAND_ROOT}/swig/*")
+file(GLOB core_swig "${OSMAND_ROOT}/core/*.swig")
+file(GLOB_RECURSE core_swig_subfiles "${OSMAND_ROOT}/core/swig/*")
 
 set(OsmAndCoreJNI_generated_cpp
 	"${CMAKE_CURRENT_LIST_DIR}/gen/cpp/swig.cpp"
