@@ -9,7 +9,10 @@ else
     LOCAL_ARM_NEON := true
 endif
 
-LOCAL_SHORT_COMMANDS := true
+ifneq (,$(findstring CYGWIN,$(shell uname)))
+    $(info Using short-commands due to command-line limitations)
+    LOCAL_SHORT_COMMANDS := true
+endif
 
 LOCAL_EXPORT_CFLAGS := \
     -DSK_BUILD_FOR_ANDROID

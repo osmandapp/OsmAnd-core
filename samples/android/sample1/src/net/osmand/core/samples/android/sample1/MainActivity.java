@@ -18,6 +18,11 @@ public class MainActivity extends ActionBarActivity {
     private ObfsCollection _obfsCollection;
     private IMapRenderer _mapRenderer;
 
+    static {
+        System.loadLibrary("gnustl_shared");
+        System.loadLibrary("OsmAndCore_android");
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
