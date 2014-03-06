@@ -15,6 +15,9 @@
 #include <OsmAndCore/Map/IMapRenderer.h>
 #include <OsmAndCore/Map/MapStyles.h>
 #include <OsmAndCore/Map/MapStyle.h>
+#include <OsmAndCore/Map/IMapBitmapTileProvider.h>
+#include <OsmAndCore/Map/IMapElevationDataProvider.h>
+#include <OsmAndCore/Map/IMapSymbolProvider.h>
 
 
 // To omit 'OsmAnd::' prefixes inside namespace itself, use that namespace
