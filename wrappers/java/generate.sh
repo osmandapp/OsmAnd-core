@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Until bug with auto-detection of *.swig changes, bump this version: 0
+
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 REAL_SRCLOC=`readlink -f $SRCLOC`
 
