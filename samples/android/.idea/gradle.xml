@@ -8,9 +8,9 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/OsmAndCore_android" />
-            <option value="$PROJECT_DIR$/OsmAndCore_java" />
             <option value="$PROJECT_DIR$/sample1" />
+            <option value="$PROJECT_DIR$/../../wrappers/android" />
+            <option value="$PROJECT_DIR$/../../wrappers/java" />
           </set>
         </option>
       </GradleProjectSettings>

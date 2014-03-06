@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/OsmAndCore_android/OsmAndCore_android.iml" filepath="$PROJECT_DIR$/OsmAndCore_android/OsmAndCore_android.iml" />
-      <module fileurl="file://$PROJECT_DIR$/OsmAndCore_java/OsmAndCore_java.iml" filepath="$PROJECT_DIR$/OsmAndCore_java/OsmAndCore_java.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../wrappers/android/OsmAndCore_android.iml" filepath="$PROJECT_DIR$/../../wrappers/android/OsmAndCore_android.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../wrappers/java/OsmAndCore_java.iml" filepath="$PROJECT_DIR$/../../wrappers/java/OsmAndCore_java.iml" />
       <module fileurl="file://$PROJECT_DIR$/android.iml" filepath="$PROJECT_DIR$/android.iml" />
       <module fileurl="file://$PROJECT_DIR$/sample1/sample1.iml" filepath="$PROJECT_DIR$/sample1/sample1.iml" />
     </modules>
