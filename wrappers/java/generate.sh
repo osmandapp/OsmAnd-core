@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ -z "$BASH_VERSION" ]; then
+	exec bash "$0" "$@"
+	exit $?
+fi
+
 # Until bug with auto-detection of *.swig changes, bump this version: 0
 
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"

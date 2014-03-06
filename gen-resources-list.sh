@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ -z "$BASH_VERSION" ]; then
+	exec bash "$0" "$@"
+	exit $?
+fi
+
 if [ -d "/opt/local/sbin" ]; then
 	export PATH=$PATH:/opt/local/sbin
 fi
