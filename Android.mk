@@ -16,7 +16,6 @@ endif
 
 LOCAL_EXPORT_CFLAGS := \
     -DOSMAND_TARGET_OS_android \
-    -DOSMAND_OPENGLES2_RENDERER_SUPPORTED \
     -DOSMAND_CORE_STATIC \
     -DOSMAND_GLM_AVAILABLE \
     -DGLM_SWIZZLE
@@ -51,7 +50,8 @@ LOCAL_STATIC_LIBRARIES := \
     boost_thread$(OSMAND_BINARY_SUFFIX)
 
 LOCAL_CFLAGS := \
-    $(LOCAL_EXPORT_CFLAGS)
+    $(LOCAL_EXPORT_CFLAGS) \
+    -DOSMAND_OPENGLES2_RENDERER_SUPPORTED
 
 LOCAL_C_INCLUDES := \
     $(LOCAL_EXPORT_C_INCLUDES) \
@@ -76,7 +76,7 @@ _SRC_FILES := \
     $(wildcard $(LOCAL_PATH)/src/Routing/*.c*) \
     $(wildcard $(LOCAL_PATH)/src/Map/*.c*) \
     $(wildcard $(LOCAL_PATH)/src/Map/OpenGL/*.c*) \
-    $(wildcard $(LOCAL_PATH)/src/Map/OpenGLES2/*.c*) \
+    $(wildcard $(LOCAL_PATH)/src/Map/OpenGL/OpenGLES2/*.c*) \
     $(wildcard $(LOCAL_PATH)/protos/*.c*)
 SRC_FILES := $(_SRC_FILES:$(LOCAL_PATH)/%=%)
 
@@ -93,7 +93,7 @@ _HEADER_FILES := \
     $(wildcard $(LOCAL_PATH)/src/Routing/*.h) \
     $(wildcard $(LOCAL_PATH)/src/Map/*.h) \
     $(wildcard $(LOCAL_PATH)/src/Map/OpenGL/*.h) \
-    $(wildcard $(LOCAL_PATH)/src/Map/OpenGLES2/*.h) \
+    $(wildcard $(LOCAL_PATH)/src/Map/OpenGL/OpenGLES2/*.h) \
     $(wildcard $(LOCAL_PATH)/protos/*.h)
 HEADER_FILES := $(_HEADER_FILES:$(LOCAL_PATH)/%=%)
 
