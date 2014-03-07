@@ -5,6 +5,23 @@ if [ -z "$BASH_VERSION" ]; then
 	exit $?
 fi
 
+if [[ -z "$ANDROID_SDK" ]]; then
+	echo "ANDROID_SDK is not set"
+	exit 1
+fi
+if [ ! -d "$ANDROID_SDK" ]; then
+	echo "ANDROID_SDK is set incorrectly"
+	exit 1
+fi
+if [[ -z "$ANDROID_NDK" ]]; then
+	echo "ANDROID_NDK is not set"
+	exit 1
+fi
+if [ ! -d "$ANDROID_NDK" ]; then
+	echo "ANDROID_NDK is set incorrectly"
+	exit 1
+fi
+
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 REAL_SRCLOC=`readlink -f $SRCLOC`
 
@@ -38,4 +55,4 @@ echo "Using OsmAnd Core root (relative): $OSMAND_CORE_ROOT_RELATIVE"
 
 echo "Will execute from $REAL_SRCLOC"
 echo "Using $OSMAND_BUILD_CPU_CORES_NUM core(s)"
-(cd $REAL_SRCLOC && ndk-build -j$OSMAND_BUILD_CPU_CORES_NUM)
+(cd $REAL_SRCLOC && $ANDROID_NDK/ndk-build -j$OSMAND_BUILD_CPU_CORES_NUM)

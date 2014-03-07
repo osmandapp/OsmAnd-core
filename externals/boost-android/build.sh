@@ -11,19 +11,19 @@ OSMAND_ARCHITECTURES_SET=($*)
 
 if [[ -z "$ANDROID_SDK" ]]; then
 	echo "ANDROID_SDK is not set"
-	exit
+	exit 1
 fi
 if [ ! -d "$ANDROID_SDK" ]; then
 	echo "ANDROID_SDK is set incorrectly"
-	exit
+	exit 1
 fi
 if [[ -z "$ANDROID_NDK" ]]; then
 	echo "ANDROID_NDK is not set"
-	exit
+	exit 1
 fi
 if [ ! -d "$ANDROID_NDK" ]; then
 	echo "ANDROID_NDK is set incorrectly"
-	exit
+	exit 1
 fi
 
 export ANDROID_SDK_ROOT=$ANDROID_SDK
