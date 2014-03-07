@@ -93,11 +93,12 @@ public class MainActivity extends ActionBarActivity {
         _mapRenderer.setAzimuth(0.0f);
         _mapRenderer.setElevationAngle(35.0f);
 
-        // Amsterdam
+        // Amsterdam via Mapnik
         _mapRenderer.setTarget(new PointI(
             1102430866,
             704978668));
         _mapRenderer.setZoom(10.0f);
+        //_mapRenderer.setRasterLayerProvider(RasterMapLayerId.BaseLayer, new OnlineMapRasterTileProvider);
 
         _glSurfaceView = (GLSurfaceView) findViewById(R.id.glSurfaceView);
         _glSurfaceView.setEGLContextClientVersion(2);
@@ -115,13 +116,7 @@ public class MainActivity extends ActionBarActivity {
         }
 
         public void onSurfaceChanged(GL10 gl, int width, int height) {
-
-            /*viewport.top = 0;
-            viewport.left = 0;
-            viewport.bottom = 600;
-            viewport.right = 800;
-            renderer->setViewport(viewport);*/
-            //_mapRenderer.setViewport();
+            _mapRenderer.setViewport(new AreaI(0, 0, height, width));
             _mapRenderer.setWindowSize(new PointI(width, height));
 
             if (!_mapRenderer.getIsRenderingInitialized())

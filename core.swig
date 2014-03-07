@@ -18,7 +18,10 @@
 #include <OsmAndCore/Map/IMapBitmapTileProvider.h>
 #include <OsmAndCore/Map/IMapElevationDataProvider.h>
 #include <OsmAndCore/Map/IMapSymbolProvider.h>
-
+#include <OsmAndCore/Map/OnlineMapRasterTileProvider.h>
+#include <OsmAndCore/Map/OfflineMapDataProvider.h>
+#include <OsmAndCore/Map/OfflineMapRasterTileProvider_Software.h>
+#include <OsmAndCore/Map/OfflineMapRasterTileProvider_GPU.h>
 
 // To omit 'OsmAnd::' prefixes inside namespace itself, use that namespace
 using namespace OsmAnd;
@@ -40,6 +43,10 @@ using namespace OsmAnd;
 %shared_ptr(OsmAnd::IMapBitmapTileProvider)
 %shared_ptr(OsmAnd::IMapElevationDataProvider)
 %shared_ptr(OsmAnd::IMapSymbolProvider)
+%shared_ptr(OsmAnd::OnlineMapRasterTileProvider)
+%shared_ptr(OsmAnd::OfflineMapDataProvider)
+%shared_ptr(OsmAnd::OfflineMapRasterTileProvider_Software)
+%shared_ptr(OsmAnd::OfflineMapRasterTileProvider_GPU)
 
 %apply QString { std::string };
 
@@ -67,6 +74,10 @@ using namespace OsmAnd;
 %include "OsmAndCore/Map/IMapBitmapTileProvider.h"
 %include "OsmAndCore/Map/IMapElevationDataProvider.h"
 %include "OsmAndCore/Map/IMapSymbolProvider.h"
+%include "OsmAndCore/Map/OnlineMapRasterTileProvider.h"
+%include "OsmAndCore/Map/OfflineMapDataProvider.h"
+%include "OsmAndCore/Map/OfflineMapRasterTileProvider_Software.h"
+%include "OsmAndCore/Map/OfflineMapRasterTileProvider_GPU.h"
 
 %template(PointI) OsmAnd::Point<int32_t>;
 %template(PointI64) OsmAnd::Point<int64_t>;
