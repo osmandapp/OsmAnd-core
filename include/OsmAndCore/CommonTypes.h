@@ -236,10 +236,6 @@ namespace OsmAnd
             t >= 0.0 && t <= 1.0 &&
             u >= 0.0 && u <= 1.0;
     }
-    inline bool testLineLineIntersection(const PointI64& a0, const PointI64& a1, const PointI64& b0, const PointI64& b1)
-    {
-        return testLineLineIntersection(PointD(a0), PointD(a1), PointD(b0), PointD(b1));
-    }
     inline bool testLineLineIntersection(const PointF& a0, const PointF& a1, const PointF& b0, const PointF& b1)
     {
         const auto a1x_a0x = a1.x - a0.x;
@@ -293,6 +289,10 @@ namespace OsmAnd
         return
             t >= 0.0 && t <= 1.0 &&
             u >= 0.0 && u <= 1.0;
+    }
+    inline bool testLineLineIntersection(const PointI64& a0, const PointI64& a1, const PointI64& b0, const PointI64& b1)
+    {
+        return testLineLineIntersection(PointD(a0), PointD(a1), PointD(b0), PointD(b1));
     }
 
     template<typename T>
