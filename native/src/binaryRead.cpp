@@ -1223,6 +1223,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 	readMapObjectsForRendering(q, basemapResult, tempResult, coastLines, basemapCoastLines, count,
 			basemapExists, renderRouteDataFile, skipDuplicates, renderedState);
 
+	bool objectsFromMapSectionRead = tempResult.size() > 0;
 	bool objectsFromRoutingSectionRead = false;
 	if (renderRouteDataFile >= 0 && q->zoom >= zoomOnlyForBasemaps) {
 		IDS_SET ids;
@@ -1256,7 +1257,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 		bool emptyData = q->zoom > zoomOnlyForBasemaps && tempResult.empty() && coastLines.empty();
 		// determine if there are enough objects like land/lake..
 		bool basemapMissing = q->zoom <= zoomOnlyForBasemaps && basemapCoastLines.empty() && !basemapExists;
-		bool detailedLandData = q->zoom >= 14 && tempResult.size() > 0 && renderRouteDataFile < 0;
+		bool detailedLandData = q->zoom >= 14 && tempResult.size() > 0 && objectsFromMapSectionRead;
 		if (!coastLines.empty()) {
 			bool coastlinesWereAdded = processCoastlines(coastLines, q->left, q->right, q->bottom, q->top, q->zoom,
 					basemapCoastLines.empty(), true, tempResult);
