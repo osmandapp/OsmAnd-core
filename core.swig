@@ -73,8 +73,7 @@ using namespace OsmAnd;
 %template(PointF) OsmAnd::Point<float>;
 %template(PointD) OsmAnd::Point<double>;
 
-//NOTE: Seems if template class has methods, it doesn't need to be instanced like this
-//%template(AreaI) OsmAnd::Area<int32_t>;
-//%template(AreaI64) OsmAnd::Area<int64_t>;
-//%template(AreaF) OsmAnd::Area<float>;
-//%template(AreaD) OsmAnd::Area<double>;
+%template(AreaI) OsmAnd::Area<int32_t>;
+%template(AreaI64) OsmAnd::Area<int64_t>;
+%template(AreaF) OsmAnd::Area<float>;
+%template(AreaD) OsmAnd::Area<double>;

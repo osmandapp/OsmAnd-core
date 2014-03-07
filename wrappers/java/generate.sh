@@ -5,7 +5,7 @@ if [ -z "$BASH_VERSION" ]; then
 	exit $?
 fi
 
-# Until bug with auto-detection of *.swig changes, bump this version: 0
+# Until bug with auto-detection of *.swig changes, bump this version: 1
 
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 REAL_SRCLOC=`readlink -f $SRCLOC`
