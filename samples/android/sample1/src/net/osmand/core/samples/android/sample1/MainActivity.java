@@ -36,8 +36,8 @@ public class MainActivity extends ActionBarActivity {
         _obfsCollection = new ObfsCollection();
         _obfsCollection.watchDirectory(Environment.getExternalStorageState() + "/osmand", true);
 
-        IMapRenderer test = IMapRenderer.createMapRenderer(MapRendererClass.AtlasMapRenderer_OpenGL3);
-        _mapRenderer = IMapRenderer.createMapRenderer(MapRendererClass.AtlasMapRenderer_OpenGLES2);
+        IMapRenderer test = OsmAndCore.createMapRenderer(MapRendererClass.AtlasMapRenderer_OpenGL3);
+        _mapRenderer = OsmAndCore.createMapRenderer(MapRendererClass.AtlasMapRenderer_OpenGLES2);
         /*
         renderer = OsmAnd::createAtlasMapRenderer_OpenGL3();
         if(!renderer)
@@ -98,7 +98,7 @@ public class MainActivity extends ActionBarActivity {
             1102430866,
             704978668));
         _mapRenderer.setZoom(10.0f);
-        //_mapRenderer.setRasterLayerProvider(RasterMapLayerId.BaseLayer, new OnlineMapRasterTileProvider);
+        _mapRenderer.setRasterLayerProvider(RasterMapLayerId.BaseLayer, OnlineMapRasterTileProvider.createMapnikProvider());
 
         _glSurfaceView = (GLSurfaceView) findViewById(R.id.glSurfaceView);
         _glSurfaceView.setEGLContextClientVersion(2);
@@ -144,6 +144,11 @@ public class MainActivity extends ActionBarActivity {
         if (_mapStyles != null) {
             _mapStyles.delete();
             _mapStyles = null;
+        }
+
+        if (_mapRenderer != null) {
+            _mapRenderer.delete();
+            _mapRenderer = null;
         }
 
         OsmAndCore.ReleaseCore();
