@@ -30,11 +30,11 @@ public class MainActivity extends ActionBarActivity {
 
         OsmAndCore.InitializeCore();
 
-        _mapStyles = new MapStyles();
+//        _mapStyles = new MapStyles();
 //        _mapStyle = new MapStyle();
 
-        _obfsCollection = new ObfsCollection();
-        _obfsCollection.watchDirectory(Environment.getExternalStorageState() + "/osmand", true);
+//        _obfsCollection = new ObfsCollection();
+//        _obfsCollection.watchDirectory(Environment.getExternalStorageState() + "/osmand", true);
         /*
         renderer = OsmAnd::createAtlasMapRenderer_OpenGL3();
         if(!renderer)
@@ -118,7 +118,7 @@ public class MainActivity extends ActionBarActivity {
 
     private class Renderer implements GLSurfaceView.Renderer {
         public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-            _mapRenderer.initializeRendering();
+//            _mapRenderer.initializeRendering();
         }
 
         public void onSurfaceChanged(GL10 gl, int width, int height) {
@@ -133,16 +133,14 @@ public class MainActivity extends ActionBarActivity {
         }
 
         public void onDrawFrame(GL10 gl) {
-            if (_mapRenderer.prepareFrame())
-                _mapRenderer.renderFrame();
-            _mapRenderer.processRendering();
+//            if (_mapRenderer.prepareFrame())
+//                _mapRenderer.renderFrame();
+//            _mapRenderer.processRendering();
         }
     }
 
     @Override
     protected void onDestroy() {
-        OsmAndCore.ReleaseCore();
-
         if (_obfsCollection != null) {
             _obfsCollection.delete();
             _obfsCollection = null;
@@ -157,26 +155,23 @@ public class MainActivity extends ActionBarActivity {
             _mapStyles = null;
         }
 
+        OsmAndCore.ReleaseCore();
+
         super.onDestroy();
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         if (id == R.id.action_settings) {
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
-
 }

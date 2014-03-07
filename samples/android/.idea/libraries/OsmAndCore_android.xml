@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="OsmAndCore_android">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/sample1/build/exploded-bundles/NetOsmandCoreOsmAndCore_android10.aar/classes.jar!/" />
+      <root url="file://$PROJECT_DIR$/sample1/build/exploded-bundles/NetOsmandCoreOsmAndCore_android10.aar/res" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

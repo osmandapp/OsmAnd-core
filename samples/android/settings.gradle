@@ -1,9 +1,1 @@
 include ':sample1'
-
-include ":OsmAndCore_java"
-// In case symlinks are not desired, use line below. But it will break Android Studio, since it doesn't support that yet
-//project(":OsmAndCore_java").projectDir = new File(rootProject.projectDir, "../../wrappers/java")
-
-include ":OsmAndCore_android"
-// In case symlinks are not desired, use line below. But it will break Android Studio, since it doesn't support that yet
-//project(":OsmAndCore_android").projectDir = new File(rootProject.projectDir, "../../wrappers/android")

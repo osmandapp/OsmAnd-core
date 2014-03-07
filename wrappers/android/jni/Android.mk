@@ -47,4 +47,15 @@ $(WRAPPER_JAVA_PROJECT_ROOT)/../../java/gen/cpp/swig.cpp: $(WRAPPER_JAVA_GENERAT
 
 include $(BUILD_SHARED_LIBRARY)
 
+_OSMAND_CORE_FOR_ANDROID_MK := $(LOCAL_PATH)/Android.mk
 include $(LOCAL_PATH)/../../../Android.mk
+
+ifeq ($(_OSMAND_CORE_FOR_ANDROID_INCLUDED_SELF),)
+    _OSMAND_CORE_FOR_ANDROID_INCLUDED_SELF := true
+
+    ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
+        OSMAND_BUILDING_NEON_LIBRARY := true
+        include $(_OSMAND_CORE_FOR_ANDROID_MK)
+        OSMAND_BUILDING_NEON_LIBRARY := false
+    endif
+endif

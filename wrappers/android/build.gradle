@@ -16,17 +16,11 @@ allprojects {
 apply plugin: 'android-library'
 
 android {
-    sourceSets {
-        main {
-            manifest.srcFile "AndroidManifest.xml"
-            jniLibs.srcDirs = ["libs"]
-            jni.srcDirs = []
-            java.srcDirs = ["src"]
-            resources.srcDirs = ["src"]
-            renderscript.srcDirs = ["src"]
-            res.srcDirs = ["res"]
-            assets.srcDirs = ["assets"]
-        }
+    sourceSets.main {
+        manifest.srcFile "AndroidManifest.xml"
+        jniLibs.srcDirs = ["libs"]
+        jni.srcDirs = []
+        java.srcDirs = ["src", "../java/gen/java"]
     }
 
     compileSdkVersion 19
@@ -36,17 +30,34 @@ android {
         minSdkVersion 9
         targetSdkVersion 19
     }
-    release {
-        runProguard false
-        proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
-    }
+
     lintOptions {
         abortOnError false
     }
 }
 
+// Java sources generation task
+import org.apache.tools.ant.taskdefs.condition.Os
+task swigGenerate(type: Exec) {
+    description "Generate SWIG sources"
+
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        commandLine "cmd", "/c", "bash --login "+file("../java/generate.sh")
+    } else {
+        commandLine "sh", file("../java/generate.sh")
+    }
+}
+tasks.withType(JavaCompile) {
+    compileTask -> compileTask.dependsOn << swigGenerate
+}
+
+// NDK build task
 import org.apache.tools.ant.taskdefs.condition.Os
 task ndkBuild(type: Exec) {
+    description "NDK build"
+
+    dependsOn swigGenerate
+
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
         commandLine "cmd", "/c", "bash --login "+file("build.sh")
     } else {
@@ -54,10 +65,9 @@ task ndkBuild(type: Exec) {
     }
 }
 tasks.withType(JavaCompile) {
-    compileTask -> compileTask.dependsOn ndkBuild
+    compileTask -> compileTask.dependsOn << ndkBuild
 }
 
 dependencies {
-    compile project(":OsmAndCore_java")
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile fileTree(dir: "libs", include: ["*.jar"])
 }
