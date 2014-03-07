@@ -30,11 +30,14 @@ public class MainActivity extends ActionBarActivity {
 
         OsmAndCore.InitializeCore();
 
-//        _mapStyles = new MapStyles();
-//        _mapStyle = new MapStyle();
+        _mapStyles = new MapStyles();
+        _mapStyle = _mapStyles.getStyle("default");
 
-//        _obfsCollection = new ObfsCollection();
-//        _obfsCollection.watchDirectory(Environment.getExternalStorageState() + "/osmand", true);
+        _obfsCollection = new ObfsCollection();
+        _obfsCollection.watchDirectory(Environment.getExternalStorageState() + "/osmand", true);
+
+        IMapRenderer test = IMapRenderer.createMapRenderer(MapRendererClass.AtlasMapRenderer_OpenGL3);
+        _mapRenderer = IMapRenderer.createMapRenderer(MapRendererClass.AtlasMapRenderer_OpenGLES2);
         /*
         renderer = OsmAnd::createAtlasMapRenderer_OpenGL3();
         if(!renderer)
@@ -87,41 +90,34 @@ public class MainActivity extends ActionBarActivity {
         renderer->setViewport(viewport);
         */
 
-        /*
-        renderer->setAzimuth(0.0f);
-        renderer->setElevationAngle(35.0f);
-        renderer->setFogColor(OsmAnd::FColorRGB(1.0f, 1.0f, 1.0f));
+        _mapRenderer.setAzimuth(0.0f);
+        _mapRenderer.setElevationAngle(35.0f);
 
         // Amsterdam
-        renderer->setTarget(OsmAnd::PointI(
+        _mapRenderer.setTarget(new PointI(
                 1102430866,
                 704978668));
-        renderer->setZoom(10.0f);
-        */
-
-        /*
-        auto renderConfig = renderer->configuration;
-        renderConfig.heixelsPerTileSide = 32;
-        renderer->setConfiguration(renderConfig);
-
-        renderer->initializeRendering();
-        */
+        _mapRenderer.setZoom(10.0f);
 
         _glSurfaceView = (GLSurfaceView) findViewById(R.id.glSurfaceView);
         _glSurfaceView.setEGLContextClientVersion(2);
         _glSurfaceView.setEGLConfigChooser(true);
-        _glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+        //TODO:_glSurfaceView.setPreserveEGLContextOnPause(true);
         _glSurfaceView.setRenderer(new Renderer());
+        _glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
     }
 
     private GLSurfaceView _glSurfaceView;
 
     private class Renderer implements GLSurfaceView.Renderer {
         public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-//            _mapRenderer.initializeRendering();
+            //TODO: create second context
         }
 
         public void onSurfaceChanged(GL10 gl, int width, int height) {
+            if (_mapRenderer.getIsRenderingInitialized())
+                _mapRenderer.releaseRendering();
+
             /*viewport.top = 0;
             viewport.left = 0;
             viewport.bottom = 600;
@@ -130,12 +126,14 @@ public class MainActivity extends ActionBarActivity {
             renderer->setViewport(viewport);
             _mapRenderer.setWindowSize();
             _mapRenderer.setViewport();*/
+
+            _mapRenderer.initializeRendering();
         }
 
         public void onDrawFrame(GL10 gl) {
-//            if (_mapRenderer.prepareFrame())
-//                _mapRenderer.renderFrame();
-//            _mapRenderer.processRendering();
+            if (_mapRenderer.prepareFrame())
+                _mapRenderer.renderFrame();
+            _mapRenderer.processRendering();
         }
     }
 

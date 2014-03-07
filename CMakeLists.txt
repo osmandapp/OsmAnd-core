@@ -6,6 +6,7 @@ set(target_specific_sources "")
 set(target_specific_public_definitions "")
 set(target_specific_public_includes "")
 set(target_specific_public_libraries "")
+set(target_specific_private_definitions "")
 
 # Target specific
 if(CMAKE_TARGET_OS STREQUAL "linux")
@@ -61,8 +62,10 @@ endif()
 if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "windows")
 	find_package(OpenGL REQUIRED)
 	set(target_specific_public_definitions ${target_specific_public_definitions}
-		-DOSMAND_OPENGL3_RENDERER_SUPPORTED
 		${OPENGL_DEFINITIONS}
+	)
+	set(target_specific_private_definitions ${target_specific_private_definitions}
+		-DOSMAND_OPENGL3_RENDERER_SUPPORTED
 	)
 	set(target_specific_public_includes ${target_specific_public_includes}
 		${OPENGL_INCLUDE_DIRS}
@@ -80,7 +83,7 @@ if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAK
 	)
 endif()
 if(CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android")
-	set(target_specific_public_definitions ${target_specific_public_definitions}
+	set(target_specific_private_definitions ${target_specific_private_definitions}
 		-DOSMAND_OPENGLES2_RENDERER_SUPPORTED
 	)
 	file(GLOB sources_opengles2 "src/Map/OpenGL/OpenGLES2/*.c*")
@@ -127,6 +130,9 @@ set(merged_dependencies
 )
 set(merged_compile_definitions_public
 	${target_specific_public_definitions}
+)
+set(merged_compile_definitions_private
+	${target_specific_private_definitions}
 )
 set(merged_include_dirs_private
 	"${OSMAND_ROOT}/core/include/OsmAndCore"
@@ -209,6 +215,7 @@ if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 	target_compile_definitions(OsmAndCore_shared
 		PRIVATE
 			-DOSMAND_CORE_EXPORTS
+			${merged_compile_definitions_private}
 		PUBLIC
 			${merged_compile_definitions_public}
 	)
