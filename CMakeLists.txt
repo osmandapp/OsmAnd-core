@@ -320,6 +320,8 @@ if(CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 	set_target_properties(OsmAndCore_static PROPERTIES AUTOMOC TRUE)
 	add_dependencies(OsmAndCore_static ${merged_dependencies})
 	target_compile_definitions(OsmAndCore_static
+		PRIVATE
+			${merged_compile_definitions_private}
 		PUBLIC
 			-DOSMAND_CORE_STATIC
 			${merged_compile_definitions_public}
