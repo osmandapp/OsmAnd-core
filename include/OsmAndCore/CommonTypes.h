@@ -189,12 +189,24 @@ namespace OsmAnd
     {
         return sign((b.y - a.y)*(p.x - a.x) - (b.x - a.x)*(p.y - a.y));
     }
+    inline int crossProductSign(const PointD& a, const PointD& b, const PointD& p)
+    {
+        return sign((b.y - a.y)*(p.x - a.x) - (b.x - a.x)*(p.y - a.y));
+    }
     inline int crossProductSign(const PointI& a, const PointI& b, const PointI& p)
     {
         const int64_t bx_ax = b.x - a.x;
         const int64_t by_ay = b.y - a.y;
         const int64_t px_ax = p.x - a.x;
         const int64_t py_ay = p.y - a.y;
+        return sign(by_ay*px_ax - bx_ax*py_ay);
+    }
+    inline int crossProductSign(const PointI64& a, const PointI64& b, const PointI64& p)
+    {
+        const double bx_ax = b.x - a.x;
+        const double by_ay = b.y - a.y;
+        const double px_ax = p.x - a.x;
+        const double py_ay = p.y - a.y;
         return sign(by_ay*px_ax - bx_ax*py_ay);
     }
     inline bool testLineLineIntersection(const PointI& a0, const PointI& a1, const PointI& b0, const PointI& b1)
@@ -224,6 +236,10 @@ namespace OsmAnd
             t >= 0.0 && t <= 1.0 &&
             u >= 0.0 && u <= 1.0;
     }
+    inline bool testLineLineIntersection(const PointI64& a0, const PointI64& a1, const PointI64& b0, const PointI64& b1)
+    {
+        return testLineLineIntersection(PointD(a0), PointD(a1), PointD(b0), PointD(b1));
+    }
     inline bool testLineLineIntersection(const PointF& a0, const PointF& a1, const PointF& b0, const PointF& b1)
     {
         const auto a1x_a0x = a1.x - a0.x;
@@ -250,6 +266,33 @@ namespace OsmAnd
         return
             t >= 0.0f && t <= 1.0f &&
             u >= 0.0f && u <= 1.0f;
+    }
+    inline bool testLineLineIntersection(const PointD& a0, const PointD& a1, const PointD& b0, const PointD& b1)
+    {
+        const auto a1x_a0x = a1.x - a0.x;
+        const auto a1y_a0y = a1.y - a0.y;
+        const auto b0y_b1y = b0.y - b1.y;
+        const auto b0x_b1x = b0.x - b1.x;
+        const auto b0x_a0x = b0.x - a0.x;
+        const auto b0y_a0y = b0.y - a0.y;
+
+        const auto d_ = a1x_a0x*b0y_b1y - b0x_b1x*a1y_a0y;
+        const auto t_ = b0y_b1y*b0x_a0x - b0x_b1x*b0y_a0y;
+        const auto u_ = a1x_a0x*b0y_a0y - a1y_a0y*b0x_a0x;
+
+        if(qFuzzyIsNull(d_))
+        {
+            if(qFuzzyIsNull(t_) && qFuzzyIsNull(u_))
+                return true;
+            return false;
+        }
+
+        const auto t = (t_ / d_);
+        const auto u = (u_ / d_);
+
+        return
+            t >= 0.0 && t <= 1.0 &&
+            u >= 0.0 && u <= 1.0;
     }
 
     template<typename T>
