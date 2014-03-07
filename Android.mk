@@ -45,9 +45,9 @@ LOCAL_STATIC_LIBRARIES := \
     Qt5Sql$(OSMAND_BINARY_SUFFIX) \
     Qt5Network$(OSMAND_BINARY_SUFFIX) \
     Qt5Core$(OSMAND_BINARY_SUFFIX) \
-    boost_system$(OSMAND_BINARY_SUFFIX) \
+    boost_thread$(OSMAND_BINARY_SUFFIX) \
     boost_atomic$(OSMAND_BINARY_SUFFIX) \
-    boost_thread$(OSMAND_BINARY_SUFFIX)
+    boost_system$(OSMAND_BINARY_SUFFIX)
 
 LOCAL_CFLAGS := \
     $(LOCAL_EXPORT_CFLAGS) \
