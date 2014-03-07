@@ -95,8 +95,8 @@ public class MainActivity extends ActionBarActivity {
 
         // Amsterdam
         _mapRenderer.setTarget(new PointI(
-                1102430866,
-                704978668));
+            1102430866,
+            704978668));
         _mapRenderer.setZoom(10.0f);
 
         _glSurfaceView = (GLSurfaceView) findViewById(R.id.glSurfaceView);
@@ -115,19 +115,17 @@ public class MainActivity extends ActionBarActivity {
         }
 
         public void onSurfaceChanged(GL10 gl, int width, int height) {
-            if (_mapRenderer.getIsRenderingInitialized())
-                _mapRenderer.releaseRendering();
 
             /*viewport.top = 0;
             viewport.left = 0;
             viewport.bottom = 600;
             viewport.right = 800;
-            renderer->setWindowSize(OsmAnd::PointI(800, 600));
-            renderer->setViewport(viewport);
-            _mapRenderer.setWindowSize();
-            _mapRenderer.setViewport();*/
+            renderer->setViewport(viewport);*/
+            //_mapRenderer.setViewport();
+            _mapRenderer.setWindowSize(new PointI(width, height));
 
-            _mapRenderer.initializeRendering();
+            if (!_mapRenderer.getIsRenderingInitialized())
+                _mapRenderer.initializeRendering();
         }
 
         public void onDrawFrame(GL10 gl) {
