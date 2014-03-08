@@ -9,7 +9,7 @@
 
 namespace OsmAnd
 {
-    enum class RasterMapLayerId : int32_t
+    enum class RasterMapLayerId
     {
         Invalid = -1,
 

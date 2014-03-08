@@ -245,7 +245,7 @@ namespace OsmAnd
         virtual void optimizeVertexShader(QString& code) = 0;
         virtual void optimizeFragmentShader(QString& code) = 0;
 
-        enum class SamplerType : int32_t
+        enum class SamplerType
         {
             Invalid = -1,
 

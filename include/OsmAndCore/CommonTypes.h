@@ -1200,7 +1200,7 @@ namespace OsmAnd
 #endif // !defined(SWIG)
     };
 
-    enum class LanguageId : int32_t
+    enum class LanguageId
     {
         Invariant = -1,
 

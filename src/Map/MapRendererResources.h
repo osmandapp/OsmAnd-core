@@ -32,7 +32,7 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY(MapRendererResources);
     public:
-        enum class ResourceType : int32_t
+        enum class ResourceType
         {
             Unknown = -1,
 
