@@ -1735,14 +1735,14 @@ BinaryMapFile* initBinaryMapFile(std::string inputName) {
 		}
 
 		for (int i = 0; i < fo->routingindex_size(); i++) {
-			RoutingIndex mi;
+			RoutingIndex *mi = new RoutingIndex();
 			RoutingPart mp = fo->routingindex(i);
-			mi.filePointer = mp.offset();
-			mi.length = mp.size();
-			mi.name = mp.name();
+			mi->filePointer = mp.offset();
+			mi->length = mp.size();
+			mi->name = mp.name();
 			for (int j = 0; j < mp.subregions_size(); j++) {
 				RoutingSubregion ml = mp.subregions(j);
-				RouteSubregion mr(&mi);
+				RouteSubregion mr(mi);
 				mr.bottom = ml.bottom();
 				mr.left = ml.left();
 				mr.right = ml.right();
@@ -1751,12 +1751,12 @@ BinaryMapFile* initBinaryMapFile(std::string inputName) {
 				mr.filePointer = ml.offset();
 				mr.length = ml.size();
 				if (ml.basemap()) {
-					mi.basesubregions.push_back(mr);
+					mi->basesubregions.push_back(mr);
 				} else {
-					mi.subregions.push_back(mr);
+					mi->subregions.push_back(mr);
 				}
 			}
-			mapFile->routingIndexes.push_back(new RoutingIndex(mi));
+			mapFile->routingIndexes.push_back(mi);
 			mapFile->indexes.push_back(mapFile->routingIndexes.back());
 		}
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "Native file initialized from cache %s", inputName.c_str());
