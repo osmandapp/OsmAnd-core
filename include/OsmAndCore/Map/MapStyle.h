@@ -19,7 +19,7 @@ namespace OsmAnd
     class MapStyleValueDefinition;
     class MapStyleRule;
 
-    STRONG_ENUM_EX(MapStyleRulesetType, uint32_t)
+    enum class MapStyleRulesetType : uint32_t
     {
         Invalid = 0,
 
@@ -28,7 +28,7 @@ namespace OsmAnd
         Polygon = 3,
         Text = 4,
         Order = 5,
-    } STRONG_ENUM_TERMINATOR;
+    };
 
     class MapStyle_P;
     class OSMAND_CORE_API MapStyle

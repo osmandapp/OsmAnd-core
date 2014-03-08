@@ -20,14 +20,14 @@ namespace OsmAnd {
 
     namespace Model {
 
-        STRONG_ENUM_EX(RoadDirection, int32_t)
+        enum class RoadDirection : int32_t
         {
             OneWayForward = -1,
             TwoWay = 0,
             OneWayReverse = +1
-        } STRONG_ENUM_TERMINATOR;
+        };
 
-        STRONG_ENUM_EX(RoadRestriction, int32_t)
+        enum class RoadRestriction : int32_t
         {
             Special_ReverseWayOnly = -1,
 
@@ -40,7 +40,7 @@ namespace OsmAnd {
             OnlyRightTurn = 5,
             OnlyLeftTurn = 6,
             OnlyStraightOn = 7,
-        } STRONG_ENUM_TERMINATOR;
+        };
 
         class OSMAND_CORE_API Road
         {

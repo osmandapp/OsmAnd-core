@@ -14,20 +14,20 @@ namespace OsmAnd
     class MapStyle_P;
     class MapStyleBuiltinValueDefinitions;
 
-    STRONG_ENUM(MapStyleValueDataType)
+    enum class MapStyleValueDataType
     {
         Boolean,
         Integer,
         Float,
         String,
         Color,
-    } STRONG_ENUM_TERMINATOR;
+    };
 
-    STRONG_ENUM(MapStyleValueClass)
+    enum class MapStyleValueClass
     {
         Input,
         Output,
-    } STRONG_ENUM_TERMINATOR;
+    };
 
     class OSMAND_CORE_API MapStyleValueDefinition
     {

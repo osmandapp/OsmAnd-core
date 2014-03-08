@@ -63,14 +63,14 @@ namespace OsmAnd
         PointI normalizeCoordinates(const PointI64& input, const ZoomLevel zoom);
         int qAbsCeil(qreal v);
         int qAbsFloor(qreal v);
-        STRONG_ENUM_EX(CHCode, uint8_t)
+        enum class CHCode : uint8_t
         {
             Inside = 0, // 0000
             Left = 1,   // 0001
             Right = 2,  // 0010
             Bottom = 4, // 0100
             Top = 8,    // 1000
-        } STRONG_ENUM_TERMINATOR;
+        };
         uint8_t computeCohenSutherlandCode(const PointI& p, const AreaI& box);
         QSet<ZoomLevel> enumerateZoomLevels(const ZoomLevel from, const ZoomLevel to);
 

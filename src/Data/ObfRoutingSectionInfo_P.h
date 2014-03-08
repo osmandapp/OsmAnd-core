@@ -13,7 +13,7 @@ namespace OsmAnd {
 
     class ObfRoutingSectionReader_P;
     namespace Model {
-        STRONG_ENUM_EX(RoadDirection, int32_t);
+        enum class RoadDirection : int32_t;
         class Road;
     } // namespace Model
     class RoutePlanner;

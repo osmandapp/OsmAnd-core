@@ -12,12 +12,12 @@
 
 namespace OsmAnd
 {
-    STRONG_ENUM(TextureFilteringQuality)
+    enum class TextureFilteringQuality
     {
         Normal,
         Good,
         Best
-    } STRONG_ENUM_TERMINATOR;
+    };
 
     struct OSMAND_CORE_API MapRendererConfiguration
     {

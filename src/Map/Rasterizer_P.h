@@ -222,14 +222,14 @@ namespace OsmAnd {
             const std::shared_ptr<const Primitive>& primitive, const PointI& location,
             QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols);
 
-        STRONG_ENUM(PaintValuesSet)
+        enum class PaintValuesSet
         {
             Set_0,
             Set_1,
             Set_minus1,
             Set_minus2,
             Set_3,
-        } STRONG_ENUM_TERMINATOR;
+        };
         bool updatePaint(
             const MapStyleEvaluationResult& evalResult, const PaintValuesSet valueSetSelector, const bool isArea);
 

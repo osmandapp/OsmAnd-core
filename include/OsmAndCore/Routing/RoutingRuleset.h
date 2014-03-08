@@ -17,7 +17,7 @@ namespace OsmAnd {
     class OSMAND_CORE_API RoutingRuleset
     {
     public:
-        WEAK_ENUM_EX(Type, int)
+        enum Type : int
         {
             Invalid = -1,
             RoadPriorities = 0,

@@ -21,7 +21,7 @@ namespace OsmAnd {
     class IMapRenderer;
     class MapRenderer;
 
-    STRONG_ENUM_EX(MapRendererStateChange, uint32_t)
+    enum class MapRendererStateChange : uint32_t
     {
         RasterLayers_Providers = 1 << 0,
         RasterLayers_Opacity = 1 << 1,
@@ -37,7 +37,7 @@ namespace OsmAnd {
         ElevationAngle = 1 << 11,
         Target = 1 << 12,
         Zoom = 1 << 13,
-    } STRONG_ENUM_TERMINATOR;
+    };
 
     class OSMAND_CORE_API MapRendererState
     {

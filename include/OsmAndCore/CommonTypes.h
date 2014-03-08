@@ -556,8 +556,7 @@ namespace OsmAnd
             return PointT(left, bottom);
         }
 
-#if !defined(SWIG)
-        STRONG_ENUM(Edge)
+        enum class Edge
         {
             Invalid = -1,
 
@@ -565,7 +564,7 @@ namespace OsmAnd
             Top = 1,
             Right = 2,
             Bottom = 3
-        } STRONG_ENUM_TERMINATOR;
+        };
 
         bool isOnEdge(const PointT& p, Edge* edge = nullptr) const
         {
@@ -602,13 +601,13 @@ namespace OsmAnd
             return res;
         }
 
-        STRONG_ENUM(Quadrant)
+        enum class Quadrant
         {
             NE = 0,
             SE,
             SW,
             NW
-        } STRONG_ENUM_TERMINATOR;
+        };
         inline AreaT getQuadrant(const Quadrant quadrant) const
         {
             const auto center_ = center();
@@ -627,7 +626,6 @@ namespace OsmAnd
 
             return *this;
         }
-#endif // !defined(SWIG)
 
         inline AreaT& enlargeToInclude(const PointT& p)
         {
@@ -1118,7 +1116,7 @@ namespace OsmAnd
     static_assert(sizeof(TileId) == 8, "TileId must be 8 bytes in size");
 #endif // !defined(SWIG)
 
-    WEAK_ENUM_EX(ZoomLevel, int32_t)
+    enum ZoomLevel : int32_t
     {
         ZoomLevel0 = 0,
         ZoomLevel1,
@@ -1202,13 +1200,13 @@ namespace OsmAnd
 #endif // !defined(SWIG)
     };
 
-    STRONG_ENUM_EX(LanguageId, int32_t)
+    enum class LanguageId : int32_t
     {
         Invariant = -1,
 
         Latin,
         Native
-    } STRONG_ENUM_TERMINATOR;
+    };
 }
 
 #endif // !defined(_OSMAND_CORE_COMMON_TYPES_H_)

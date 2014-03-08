@@ -9,23 +9,23 @@
 
 namespace OsmAnd
 {
-    STRONG_ENUM(MapFoundationType)
+    enum class MapFoundationType
     {
         Undefined = -1,
 
         Mixed,
         FullLand,
         FullWater,
-    } STRONG_ENUM_TERMINATOR;
+    };
 
-    STRONG_ENUM(AlphaChannelData)
+    enum class AlphaChannelData
     {
         Present,
         NotPresent,
         Undefined
-    } STRONG_ENUM_TERMINATOR;
+    };
 
-    STRONG_ENUM(MapAnimatorTimingFunction)
+    enum class MapAnimatorTimingFunction
     {
         Invalid = -1,
 
@@ -46,7 +46,7 @@ namespace OsmAnd
         _DECLARE_TIMING_FUNCTION(Circular),
 
 #undef _DECLARE_TIMING_FUNCTION
-    } STRONG_ENUM_TERMINATOR;
+    };
 }
 
 #endif // !defined(_OSMAND_CORE_MAP_TYPES_H_)

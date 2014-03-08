@@ -47,20 +47,6 @@
 #   define OSMAND_DEBUG 0
 #endif
 
-#if !defined(SWIG)
-#   define STRONG_ENUM(name) enum class name
-#   define STRONG_ENUM_EX(name, basetype) enum class name : basetype
-#   define STRONG_ENUM_TERMINATOR
-#   define WEAK_ENUM(name) enum name
-#   define WEAK_ENUM_EX(name, basetype) enum name : basetype
-#else
-#   define STRONG_ENUM(name) struct name { enum
-#   define STRONG_ENUM_EX(name, basetype) struct name { enum
-#   define STRONG_ENUM_TERMINATOR ;}
-#   define WEAK_ENUM(name) enum name
-#   define WEAK_ENUM_EX(name, basetype) enum name
-#endif
-
 #include <OsmAndCore/QtExtensions.h>
 #include <QtGlobal>
 

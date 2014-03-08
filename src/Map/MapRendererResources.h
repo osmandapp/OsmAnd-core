@@ -32,7 +32,7 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY(MapRendererResources);
     public:
-        STRONG_ENUM_EX(ResourceType, int32_t)
+        enum class ResourceType, int32_t
         {
             Unknown = -1,
 
@@ -46,7 +46,7 @@ namespace OsmAnd
             Symbols,
 
             __LAST
-        } STRONG_ENUM_TERMINATOR;
+        };
         enum {
             ResourceTypesCount = static_cast<int>(ResourceType::__LAST)
         };
@@ -56,7 +56,7 @@ namespace OsmAnd
         // ... => Unavailable => JustBeforeDeath
         // ... => Ready => Uploading => Uploaded [=> IsBeingUsed] => UnloadPending => Unloading => Unloaded => JustBeforeDeath
         // ... => RequestCanceledWhileBeingProcessed => JustBeforeDeath
-        STRONG_ENUM(ResourceState)
+        enum class ResourceState
         {
             // Resource is not in any determined state (resource entry did not exist)
             Unknown = 0,
@@ -99,7 +99,7 @@ namespace OsmAnd
 
             // JustBeforeDeath state is installed just before resource is deallocated completely
             JustBeforeDeath
-        } STRONG_ENUM_TERMINATOR;
+        };
 
         // Generic interface that all resources must implement
         class IResource

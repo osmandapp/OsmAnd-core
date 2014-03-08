@@ -9,7 +9,7 @@
 
 namespace OsmAnd
 {
-    STRONG_ENUM_EX(RasterMapLayerId, int32_t)
+    enum class RasterMapLayerId : int32_t
     {
         Invalid = -1,
 
@@ -20,7 +20,7 @@ namespace OsmAnd
         Overlay3,
 
         __LAST,
-    } STRONG_ENUM_TERMINATOR;
+    };
     enum {
         RasterMapLayersCount = static_cast<unsigned>(RasterMapLayerId::__LAST)
     };

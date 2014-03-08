@@ -11,11 +11,11 @@
 
 namespace OsmAnd
 {
-    STRONG_ENUM(MapTileDataType)
+    enum class MapTileDataType
     {
         Bitmap,
         ElevationData
-    } STRONG_ENUM_TERMINATOR;
+    };
 
     class OSMAND_CORE_API MapTile
     {

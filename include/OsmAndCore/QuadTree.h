@@ -19,12 +19,12 @@ namespace OsmAnd
     public:
         typedef Area<COORD_TYPE> AreaT;
         typedef OOBB<COORD_TYPE> OOBBT;
-        STRONG_ENUM(BBoxType)
+        enum class BBoxType
         {
             Invalid,
             AABB,
             OOBB,
-        } STRONG_ENUM_TERMINATOR;
+        };
         struct BBox
         {
             enum {

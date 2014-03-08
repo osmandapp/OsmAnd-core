@@ -98,11 +98,11 @@ namespace OsmAnd
     friend class OsmAnd::MapRenderer;
     };
 
-    STRONG_ENUM(MapRendererClass)
+    enum class MapRendererClass
     {
         AtlasMapRenderer_OpenGL3,
         AtlasMapRenderer_OpenGLES2,
-    } STRONG_ENUM_TERMINATOR;
+    };
     OSMAND_CORE_API std::shared_ptr<OsmAnd::IMapRenderer> OSMAND_CORE_CALL createMapRenderer(const MapRendererClass mapRendererClass);
 }
 

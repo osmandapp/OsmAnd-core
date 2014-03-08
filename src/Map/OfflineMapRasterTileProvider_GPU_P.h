@@ -27,7 +27,7 @@ namespace OsmAnd {
     protected:
         OfflineMapRasterTileProvider_GPU_P(OfflineMapRasterTileProvider_GPU* owner, const uint32_t outputTileSize, const float density);
 
-        STRONG_ENUM(TileState)
+        enum class TileState
         {
             // Tile is not in any determined state (tile entry did not exist)
             Unknown = 0,
@@ -37,7 +37,7 @@ namespace OsmAnd {
 
             // Tile is processing
             Processing,
-        } STRONG_ENUM_TERMINATOR;
+        };
         class TileEntry : public TilesCollectionEntryWithState<TileEntry, TileState, TileState::Unknown>
         {
         private:

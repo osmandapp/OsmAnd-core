@@ -13,12 +13,12 @@ namespace OsmAnd
 {
     class ObfMapSectionInfo;
 
-    STRONG_ENUM(ObfAddressBlockType)
+    enum class ObfAddressBlockType
     {
         CitiesOrTowns = 1,
         Villages = 3,
         Postcodes = 2,
-    } STRONG_ENUM_TERMINATOR;
+    };
 
     typedef std::function<bool (
         const std::shared_ptr<const ObfMapSectionInfo>& section,

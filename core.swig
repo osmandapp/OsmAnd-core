@@ -28,6 +28,7 @@ using namespace OsmAnd;
 
 %}
 
+%include <enums.swg>
 %include <typemaps.i>
 %include <arrays_java.i>
 %include <various.i>
