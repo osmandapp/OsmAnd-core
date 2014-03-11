@@ -27,6 +27,11 @@ if(CMAKE_TARGET_OS STREQUAL "windows")
 		)
 	endif()
 endif()
+if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android" OR CMAKE_TARGET_OS STREQUAL "darwin")
+	set(target_specific_private_definitions ${target_specific_private_definitions}
+		-DHAVE_UNISTD_H
+	)
+endif()
 
 target_compile_definitions(z_static
 	PRIVATE
