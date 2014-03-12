@@ -40,6 +40,7 @@ if [ ! -d "$SRCLOC/upstream.original" ]; then
 		git remote add origin -t $VERSION https://github.com/osmandapp/OsmAnd-external-skia.git && \
 		git fetch --depth=1 && \
 		git checkout $VERSION)
+	rm -rf "$SRCLOC/upstream.original/.git"
 fi
 
 # Patch

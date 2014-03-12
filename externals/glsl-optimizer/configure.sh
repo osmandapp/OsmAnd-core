@@ -18,6 +18,7 @@ fi
 if [ ! -d "$SRCLOC/upstream.original" ]; then
 	echo "Downloading '$NAME' upstream..."
 	git clone https://github.com/aras-p/glsl-optimizer "$SRCLOC/upstream.original" --depth=1
+	rm -rf "$SRCLOC/upstream.original/.git"
 fi
 
 # Patch

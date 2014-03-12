@@ -32,6 +32,7 @@ fi
 if [ ! -d "$SRCLOC/upstream.original" ]; then
 	echo "Downloading '$NAME' upstream..."
 	git clone https://github.com/osmandapp/OsmAnd-external-qtbase.git "$SRCLOC/upstream.original" -b winrt-winphone --depth=1
+	rm -rf "$SRCLOC/upstream.original/.git"
 fi
 
 # Patch

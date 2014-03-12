@@ -18,6 +18,7 @@ fi
 if [ ! -d "$SRCLOC/upstream.original" ]; then
 	echo "Downloading '$NAME' upstream..."
 	svn checkout http://msinttypes.googlecode.com/svn/trunk/ "$SRCLOC/upstream.original"
+	rm -rf "$SRCLOC/upstream.original/.svn"
 fi
 
 # Patch
