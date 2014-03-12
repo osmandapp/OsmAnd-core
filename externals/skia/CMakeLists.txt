@@ -59,7 +59,6 @@ if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR (CMAKE_TARGET_CPU_ARCH_FAMILY 
 			"upstream.patched/src/opts/SkBlitRow_opts_arm.cpp"
 			"upstream.patched/src/opts/SkBlitMask_opts_arm.cpp"
 			"upstream.patched/src/opts/SkBitmapProcState_opts_arm.cpp"
-			"upstream.patched/src/opts/SkBitmapProcState_matrixProcs_neon.cpp"
 			"upstream.patched/src/opts/SkBitmapProcState_arm_neon.cpp"
 			"upstream.patched/src/opts/memset32_neon.S"
 			"upstream.patched/src/opts/memset16_neon.S"
