@@ -178,9 +178,14 @@ QStringList OsmAnd::ObfsCollection_P::getCollectedSources() const
 
 void OsmAnd::ObfsCollection_P::notifyCollectedSourcesUpdate() const
 {
-    QReadLocker scopedLocker(&_collectedSourcesUpdateObserversLock);
+    QHash<void*, ObfsCollection::CollectedSourcesUpdateObserverSignature> collectedSourcesUpdateObservers;
+    {
+        QReadLocker scopedLocker(&_collectedSourcesUpdateObserversLock);
+        collectedSourcesUpdateObservers = _collectedSourcesUpdateObservers;
+        collectedSourcesUpdateObservers.detach();
+    }
 
-    for(const auto& observer : constOf(_collectedSourcesUpdateObservers))
+    for(const auto& observer : constOf(collectedSourcesUpdateObservers))
     {
         if(observer)
             observer(*owner);
