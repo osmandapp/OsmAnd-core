@@ -74,6 +74,9 @@ namespace OsmAnd
         QHash< ObfsCollection::EntryId, QAtomicInt> _collectedSourcesOriginRefCounters;
         mutable QReadWriteLock _collectedSourcesLock;
         void collectSources();
+
+        ObfsCollection::SourcesSetModifierSignature _sourcesSetModifier;
+        QReadWriteLock _sourcesSetModifierLock;
     public:
         virtual ~ObfsCollection_P();
 
@@ -87,6 +90,8 @@ namespace OsmAnd
         void notifyCollectedSourcesUpdate() const;
         void registerCollectedSourcesUpdateObserver(void* tag, const ObfsCollection::CollectedSourcesUpdateObserverSignature observer);
         void unregisterCollectedSourcesUpdateObserver(void* tag);
+
+        void setSourcesSetModifier(const ObfsCollection::SourcesSetModifierSignature modifier);
 
         std::shared_ptr<ObfDataInterface> obtainDataInterface();
 

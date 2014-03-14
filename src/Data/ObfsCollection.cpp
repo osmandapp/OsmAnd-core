@@ -59,6 +59,11 @@ void OsmAnd::ObfsCollection::unregisterCollectedSourcesUpdateObserver(void* tag)
     _d->unregisterCollectedSourcesUpdateObserver(tag);
 }
 
+void OsmAnd::ObfsCollection::setSourcesSetModifier(const SourcesSetModifierSignature modifier)
+{
+    _d->setSourcesSetModifier(modifier);
+}
+
 std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection::obtainDataInterface() const
 {
     return _d->obtainDataInterface();

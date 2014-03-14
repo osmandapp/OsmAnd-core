@@ -14,9 +14,10 @@
 #include "Logging.h"
 
 OsmAnd::ObfsCollection_P::ObfsCollection_P(ObfsCollection* owner_)
-: owner(owner_)
-, _lastUnusedEntryId(0)
-, _collectedSourcesInvalidated(1)
+    : owner(owner_)
+    , _lastUnusedEntryId(0)
+    , _collectedSourcesInvalidated(1)
+    , _sourcesSetModifier(nullptr)
 {
 }
 
@@ -170,7 +171,7 @@ OsmAnd::ObfsCollection::EntryId OsmAnd::ObfsCollection_P::registerExplicitFile(c
 
 bool OsmAnd::ObfsCollection_P::unregister(const ObfsCollection::EntryId entryId)
 {
-    //NOTE: can not unregister if entry is used in any active data interface
+    //TODO: can not unregister if entry is used in any active data interface
     QWriteLocker scopedLocker(&_entriesLock);
 
     const auto wasRemoved = (_entries.remove(entryId) > 0);
@@ -224,6 +225,13 @@ void OsmAnd::ObfsCollection_P::unregisterCollectedSourcesUpdateObserver(void* ta
     _collectedSourcesUpdateObservers.remove(tag);
 }
 
+void OsmAnd::ObfsCollection_P::setSourcesSetModifier(const ObfsCollection::SourcesSetModifierSignature modifier)
+{
+    QWriteLocker scopedLocker(&_sourcesSetModifierLock);
+
+    _sourcesSetModifier = modifier;
+}
+
 std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection_P::obtainDataInterface()
 {
     // Check if sources were invalidated
@@ -256,6 +264,16 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection_P::obtainDataIn
             }
         }
     }
+
+    // Allow modifier to modify set of sources prior to final use
+    ObfsCollection::SourcesSetModifierSignature sourcesSetModifier;
+    {
+        QReadLocker scopedLocker(&_sourcesSetModifierLock);
+
+        sourcesSetModifier = _sourcesSetModifier;
+    }
+    if(sourcesSetModifier != nullptr)
+        sourcesSetModifier(*owner, obfReaders);
 
     return std::shared_ptr<ObfDataInterface>(new ObfDataInterface(obfReaders), [this, referencedOrigins](ObfDataInterface* object)
     {

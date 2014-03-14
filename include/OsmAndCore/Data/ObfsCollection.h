@@ -15,13 +15,16 @@
 namespace OsmAnd
 {
     class ObfDataInterface;
+    class ObfReader;
+
     class ObfsCollection_P;
     class OSMAND_CORE_API ObfsCollection
     {
         Q_DISABLE_COPY(ObfsCollection);
     public:
         typedef int EntryId;
-        typedef std::function<void (ObfsCollection&)> CollectedSourcesUpdateObserverSignature;
+        typedef std::function<void (const ObfsCollection&)> CollectedSourcesUpdateObserverSignature;
+        typedef std::function<void (const ObfsCollection&, QList<std::shared_ptr<ObfReader>>& inOutSources)> SourcesSetModifierSignature;
 
     private:
     protected:
@@ -39,9 +42,10 @@ namespace OsmAnd
         void notifyFileSystemChange() const;
 
         QStringList getCollectedSources() const;
-
         void registerCollectedSourcesUpdateObserver(void* tag, const CollectedSourcesUpdateObserverSignature observer) const;
         void unregisterCollectedSourcesUpdateObserver(void* tag) const;
+
+        void setSourcesSetModifier(const SourcesSetModifierSignature modifier);
 
         std::shared_ptr<ObfDataInterface> obtainDataInterface() const;
     };
