@@ -71,6 +71,7 @@ namespace OsmAnd
         void invalidateCollectedSources();
         QAtomicInt _collectedSourcesInvalidated;
         QHash< ObfsCollection::EntryId, QHash<QString, std::shared_ptr<ObfFile> > > _collectedSources;
+        QHash< ObfsCollection::EntryId, QAtomicInt> _collectedSourcesOriginRefCounters;
         mutable QReadWriteLock _collectedSourcesLock;
         void collectSources();
     public:

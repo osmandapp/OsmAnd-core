@@ -1,6 +1,7 @@
 #include "ObfsCollection_P.h"
 #include "ObfsCollection.h"
 
+#include <cassert>
 #if OSMAND_DEBUG
 #   include <chrono>
 #endif
@@ -13,9 +14,9 @@
 #include "Logging.h"
 
 OsmAnd::ObfsCollection_P::ObfsCollection_P(ObfsCollection* owner_)
-    : owner(owner_)
-    , _lastUnusedEntryId(0)
-    , _collectedSourcesInvalidated(1)
+: owner(owner_)
+, _lastUnusedEntryId(0)
+, _collectedSourcesInvalidated(1)
 {
 }
 
@@ -42,13 +43,15 @@ void OsmAnd::ObfsCollection_P::collectSources()
     QMutableHashIterator< ObfsCollection::EntryId, QHash<QString, std::shared_ptr<ObfFile> > > itCollectedSourcesEntry(_collectedSources);
     while(itCollectedSourcesEntry.hasNext())
     {
-        const auto& id = itCollectedSourcesEntry.key();
+        const auto& originId = itCollectedSourcesEntry.key();
         auto& collectedSources = itCollectedSourcesEntry.value();
 
         // If this entry no longer exists, remove it entirely
-        if(!_entries.contains(id))
+        if(!_entries.contains(originId))
         {
             itCollectedSourcesEntry.remove();
+            _collectedSourcesOriginRefCounters.remove(originId);
+
             continue;
         }
 
@@ -65,14 +68,29 @@ void OsmAnd::ObfsCollection_P::collectSources()
             // ... remove entry
             itObfFileEntry.remove();
         }
+
+        // If all files are gone 
+        if(collectedSources.isEmpty())
+        {
+            itCollectedSourcesEntry.remove();
+            _collectedSourcesOriginRefCounters.remove(originId);
+
+            continue;
+        }
     }
 
-    // Find all files that are present in registered entries and add them (of they are missing)
+    // Find all files that are present in registered entries and add them (if they are missing)
     for(const auto& itEntry : rangeOf(constOf(_entries)))
     {
-        const auto& id = itEntry.key();
+        const auto& originId = itEntry.key();
         const auto& entry = itEntry.value();
-        auto& collectedSources = _collectedSources[id];
+        auto itCollectedSources = _collectedSources.find(originId);
+        if(itCollectedSources == _collectedSources.end())
+        {
+            itCollectedSources = _collectedSources.insert(originId, QHash<QString, std::shared_ptr<ObfFile> >());
+            _collectedSourcesOriginRefCounters.insert(originId, QAtomicInt(0));
+        }
+        auto& collectedSources = *itCollectedSources;
 
         if(entry->type == EntryType::DirectoryEntry)
         {
@@ -217,11 +235,19 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection_P::obtainDataIn
 
     // Create ObfReader's
     QList< std::shared_ptr<ObfReader> > obfReaders;
+    QSet< ObfsCollection::EntryId > referencedOrigins;
     {
         QReadLocker scopedLocker(&_collectedSourcesLock);
 
-        for(const auto& collectedSources : constOf(_collectedSources))
+        for(const auto& itCollectedSources : rangeOf(constOf(_collectedSources)))
         {
+            const auto& originId = itCollectedSources.key();
+            const auto& collectedSources = itCollectedSources.value();
+
+            // Increment reference counter of origin
+            referencedOrigins.insert(originId);
+            _collectedSourcesOriginRefCounters[originId].fetchAndAddOrdered(1);
+
             obfReaders.reserve(obfReaders.size() + collectedSources.size());
             for(const auto& obfFile : constOf(collectedSources))
             {
@@ -231,5 +257,19 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection_P::obtainDataIn
         }
     }
 
-    return std::shared_ptr<ObfDataInterface>(new ObfDataInterface(obfReaders));
+    return std::shared_ptr<ObfDataInterface>(new ObfDataInterface(obfReaders), [this, referencedOrigins](ObfDataInterface* object)
+    {
+        {
+            QReadLocker scopedLocker(&_collectedSourcesLock);
+
+            // Dereference all referenced origins
+            for(const auto& id : constOf(referencedOrigins))
+            {
+                _collectedSourcesOriginRefCounters[id].fetchAndAddOrdered(-1);
+                assert(_collectedSourcesOriginRefCounters[id].load() >= 0);
+            }
+        }
+
+        delete object;
+    });
 }
