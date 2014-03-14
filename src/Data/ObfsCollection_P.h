@@ -1,18 +1,21 @@
 #ifndef _OSMAND_CORE_OBFS_COLLECTION_P_H_
 #define _OSMAND_CORE_OBFS_COLLECTION_P_H_
 
-#include <OsmAndCore/stdlib_common.h>
+#include "stdlib_common.h"
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 #include <QDir>
 #include <QHash>
-#include <QMutex>
+#include <QMultiHash>
+#include <QReadWriteLock>
+#include <QAtomicInt>
 
-#include <OsmAndCore.h>
-#include <OsmAndCore/CommonTypes.h>
+#include "OsmAndCore.h"
+#include "CommonTypes.h"
+#include "ObfsCollection.h"
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class ObfFile;
     class ObfDataInterface;
 
@@ -25,56 +28,69 @@ namespace OsmAnd {
 
         ObfsCollection* const owner;
 
-        mutable QMutex _watchedCollectionMutex;
-        struct WatchEntry
+        enum class EntryType
         {
-            enum Type
-            {
-                WatchedDirectory,
-                ExplicitFile,
-            };
-
-            WatchEntry(Type type_)
+            DirectoryEntry,
+            ExplicitFileEntry,
+        };
+        struct Entry
+        {
+            Entry(EntryType type_)
                 : type(type_)
             {
             }
 
-            const Type type;
+            const EntryType type;
         };
-        struct WatchedDirectoryEntry : WatchEntry
+        struct DirectoryEntry : Entry
         {
-            WatchedDirectoryEntry()
-                : WatchEntry(WatchedDirectory)
+            DirectoryEntry()
+                : Entry(EntryType::DirectoryEntry)
             {
             }
 
             QDir dir;
             bool recursive;
         };
-        struct ExplicitFileEntry : WatchEntry
+        struct ExplicitFileEntry : Entry
         {
             ExplicitFileEntry()
-                : WatchEntry(ExplicitFile)
+                : Entry(EntryType::ExplicitFileEntry)
             {
             }
 
             QFileInfo fileInfo;
         };
-        QList< std::shared_ptr<WatchEntry> > _watchedCollection;
-        bool _watchedCollectionChanged;
+        QHash< ObfsCollection::EntryId, std::shared_ptr<Entry> > _entries;
+        ObfsCollection::EntryId _lastUnusedEntryId;
+        mutable QReadWriteLock _entriesLock;
 
-        mutable QMutex _sourcesMutex;
-        QHash< QString, std::shared_ptr<ObfFile> > _sources;
-        bool _sourcesRefreshedOnce;
-        void refreshSources();
+        QHash<void*, ObfsCollection::CollectedSourcesUpdateObserverSignature> _collectedSourcesUpdateObservers;
+        mutable QReadWriteLock _collectedSourcesUpdateObserversLock;
+
+        void invalidateCollectedSources();
+        QAtomicInt _collectedSourcesInvalidated;
+        QHash< ObfsCollection::EntryId, QHash<QString, std::shared_ptr<ObfFile> > > _collectedSources;
+        mutable QReadWriteLock _collectedSourcesLock;
+        void collectSources();
     public:
         virtual ~ObfsCollection_P();
+
+        ObfsCollection::EntryId registerDirectory(const QDir& dir, bool recursive = true);
+        ObfsCollection::EntryId registerExplicitFile(const QFileInfo& fileInfo);
+        bool unregister(const ObfsCollection::EntryId entryId);
+
+        void notifyFileSystemChange();
+
+        QStringList getCollectedSources() const;
+        void notifyCollectedSourcesUpdate() const;
+        void registerCollectedSourcesUpdateObserver(void* tag, const ObfsCollection::CollectedSourcesUpdateObserverSignature observer);
+        void unregisterCollectedSourcesUpdateObserver(void* tag);
 
         std::shared_ptr<ObfDataInterface> obtainDataInterface();
 
     friend class OsmAnd::ObfsCollection;
     };
-
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_OBFS_COLLECTION_P_H_)

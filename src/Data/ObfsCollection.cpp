@@ -14,35 +14,49 @@ OsmAnd::ObfsCollection::~ObfsCollection()
 {
 }
 
-void OsmAnd::ObfsCollection::watchDirectory( const QDir& dir, bool recursive /*= true*/ )
+OsmAnd::ObfsCollection::EntryId OsmAnd::ObfsCollection::registerDirectory(const QString& dirPath, bool recursive /*= true*/)
 {
-    QMutexLocker scopedLock(&_d->_watchedCollectionMutex);
-
-    auto entry = new ObfsCollection_P::WatchedDirectoryEntry();
-    entry->dir = dir;
-    entry->recursive = recursive;
-    _d->_watchedCollection.push_back(qMove(std::shared_ptr<ObfsCollection_P::WatchEntry>(entry)));
-    _d->_watchedCollectionChanged = true;
+    return registerDirectory(QDir(dirPath), recursive);
 }
 
-void OsmAnd::ObfsCollection::watchDirectory( const QString& dirPath, bool recursive /*= true*/ )
+OsmAnd::ObfsCollection::EntryId OsmAnd::ObfsCollection::registerDirectory(const QDir& dir, bool recursive /*= true*/)
 {
-    watchDirectory(QDir(dirPath), recursive);
+    return _d->registerDirectory(dir, recursive);
 }
 
-void OsmAnd::ObfsCollection::registerExplicitFile( const QFileInfo& fileInfo )
+OsmAnd::ObfsCollection::EntryId OsmAnd::ObfsCollection::registerExplicitFile(const QString& filePath)
 {
-    QMutexLocker scopedLock(&_d->_watchedCollectionMutex);
-
-    auto entry = new ObfsCollection_P::ExplicitFileEntry();
-    entry->fileInfo = fileInfo;
-    _d->_watchedCollection.push_back(qMove(std::shared_ptr<ObfsCollection_P::WatchEntry>(entry)));
-    _d->_watchedCollectionChanged = true;
+    return registerExplicitFile(QFileInfo(filePath));
 }
 
-void OsmAnd::ObfsCollection::registerExplicitFile( const QString& filePath )
+OsmAnd::ObfsCollection::EntryId OsmAnd::ObfsCollection::registerExplicitFile(const QFileInfo& fileInfo)
 {
-    registerExplicitFile(QFileInfo(filePath));
+    return _d->registerExplicitFile(fileInfo);
+}
+
+bool OsmAnd::ObfsCollection::unregister(const EntryId entryId)
+{
+    return _d->unregister(entryId);
+}
+
+void OsmAnd::ObfsCollection::notifyFileSystemChange() const
+{
+    _d->notifyFileSystemChange();
+}
+
+QStringList OsmAnd::ObfsCollection::getCollectedSources() const
+{
+    return _d->getCollectedSources();
+}
+
+void OsmAnd::ObfsCollection::registerCollectedSourcesUpdateObserver(void* tag, const CollectedSourcesUpdateObserverSignature observer) const
+{
+    _d->registerCollectedSourcesUpdateObserver(tag, observer);
+}
+
+void OsmAnd::ObfsCollection::unregisterCollectedSourcesUpdateObserver(void* tag) const
+{
+    _d->unregisterCollectedSourcesUpdateObserver(tag);
 }
 
 std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection::obtainDataInterface() const

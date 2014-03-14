@@ -2,6 +2,7 @@
 #define _OSMAND_CORE_OBFS_COLLECTION_H_
 
 #include <OsmAndCore/stdlib_common.h>
+#include <functional>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QList>
@@ -18,6 +19,10 @@ namespace OsmAnd
     class OSMAND_CORE_API ObfsCollection
     {
         Q_DISABLE_COPY(ObfsCollection);
+    public:
+        typedef int EntryId;
+        typedef std::function<void (ObfsCollection&)> CollectedSourcesUpdateObserverSignature;
+
     private:
     protected:
         const std::unique_ptr<ObfsCollection_P> _d;
@@ -25,10 +30,18 @@ namespace OsmAnd
         ObfsCollection();
         virtual ~ObfsCollection();
 
-        void watchDirectory(const QDir& dir, bool recursive = true);
-        void watchDirectory(const QString& dirPath, bool recursive = true);
-        void registerExplicitFile(const QFileInfo& fileInfo);
-        void registerExplicitFile(const QString& filePath);
+        EntryId registerDirectory(const QDir& dir, bool recursive = true);
+        EntryId registerDirectory(const QString& dirPath, bool recursive = true);
+        EntryId registerExplicitFile(const QFileInfo& fileInfo);
+        EntryId registerExplicitFile(const QString& filePath);
+        bool unregister(const EntryId entryId);
+
+        void notifyFileSystemChange() const;
+
+        QStringList getCollectedSources() const;
+
+        void registerCollectedSourcesUpdateObserver(void* tag, const CollectedSourcesUpdateObserverSignature observer) const;
+        void unregisterCollectedSourcesUpdateObserver(void* tag) const;
 
         std::shared_ptr<ObfDataInterface> obtainDataInterface() const;
     };
