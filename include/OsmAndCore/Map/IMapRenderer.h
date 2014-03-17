@@ -84,6 +84,9 @@ namespace OsmAnd
         virtual void setTarget(const PointI& target31, bool forcedUpdate = false) = 0;
         virtual void setZoom(const float zoom, bool forcedUpdate = false) = 0;
 
+        virtual float getMinZoom() const = 0;
+        virtual float getMaxZoom() const = 0;
+
         virtual void registerStateChangeObserver(void* tag, const StateChangeObserverSignature observer) const = 0;
         virtual void unregisterStateChangeObserver(void* tag) const = 0;
 

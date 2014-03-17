@@ -1067,7 +1067,7 @@ void OsmAnd::MapRenderer::setZoom( const float zoom, bool forcedUpdate /*= false
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    const auto clampedValue = qMax(std::numeric_limits<float>::epsilon(), qMin(zoom, 31.49999f));
+    const auto clampedValue = qMax(getMinZoom(), qMin(zoom, getMaxZoom()));
 
     bool update = forcedUpdate || !qFuzzyCompare(_requestedState.requestedZoom, clampedValue);
     if(!update)
@@ -1075,10 +1075,20 @@ void OsmAnd::MapRenderer::setZoom( const float zoom, bool forcedUpdate /*= false
 
     _requestedState.requestedZoom = clampedValue;
     _requestedState.zoomBase = static_cast<ZoomLevel>(qRound(clampedValue));
-    assert(_requestedState.zoomBase >= 0 && _requestedState.zoomBase <= 31);
+    assert(_requestedState.zoomBase >= MinZoomLevel && _requestedState.zoomBase <= MaxZoomLevel);
     _requestedState.zoomFraction = _requestedState.requestedZoom - _requestedState.zoomBase;
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
+}
+
+float OsmAnd::MapRenderer::getMinZoom() const
+{
+    return static_cast<float>(MinZoomLevel);
+}
+
+float OsmAnd::MapRenderer::getMaxZoom() const
+{
+    return static_cast<float>(MaxZoomLevel) + 0.49999f;
 }
 
 void OsmAnd::MapRenderer::registerStateChangeObserver(void* tag, const StateChangeObserverSignature observer) const
