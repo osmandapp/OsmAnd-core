@@ -279,18 +279,19 @@ void OsmAnd::MapAnimator_P::constructParabolicTargetAnimation(
     std::shared_ptr<BaseAnimation> zoomOutAnimation(new MapAnimator_P::Animation<float>(
         [this, deltaValue](AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
         {
-            // Find out the final target
-            const auto& currentTarget = _renderer->state.target31;
-            const auto finalTarget = Utilities::normalizeCoordinates(PointI64(currentTarget) + deltaValue, _renderer->state.zoomBase);
+            // Recalculate delta to tiles at current zoom base
+            PointI64 deltaInTiles;
+            const auto bitShift = MaxZoomLevel - _renderer->state.zoomBase;
+            deltaInTiles.x = qAbs(deltaValue.x) >> bitShift;
+            deltaInTiles.y = qAbs(deltaValue.y) >> bitShift;
 
-            // THIS ACTUALLY HAS NO SENSE. FORMULA SHOULD GIVE 0 or LESS on SAME SCREEN
-            //// If final target is in the visible area, don't use parabolic effect
-            //if(_renderer->isVisible(finalTarget))
-            //    return 0.0f;
+            // Calculate distance in unscaled visible tiles
+            const auto distance = deltaInTiles.norm();
 
-            const float zoomShift = 3.0f;
-            //TODO: Recalculate delta into tiles (length / size_of_tile_in_31)
-            //TODO: each '3 screens' of tiles-delta gives -1 to zoom
+            // Calculate zoom shift
+            const float zoomShift = (std::log10(distance) - 1.3f /*~= std::log10f(20.0f)*/) * 7.0f;
+            if(zoomShift <= 0.0f)
+                return 0.0f;
 
             sharedContext->storageList.push_back(QVariant(zoomShift));
             return -zoomShift;
