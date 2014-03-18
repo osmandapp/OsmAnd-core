@@ -288,10 +288,18 @@ void OsmAnd::MapAnimator_P::constructParabolicTargetAnimation(
             // Calculate distance in unscaled visible tiles
             const auto distance = deltaInTiles.norm();
 
+            // Get current zoom
+            const auto currentZoom = zoomGetter(context, sharedContext);
+            const auto minZoom = _renderer->getMinZoom();
+
             // Calculate zoom shift
-            const float zoomShift = (std::log10(distance) - 1.3f /*~= std::log10f(20.0f)*/) * 7.0f;
+            float zoomShift = (std::log10(distance) - 1.3f /*~= std::log10f(20.0f)*/) * 7.0f;
             if(zoomShift <= 0.0f)
                 return 0.0f;
+
+            // If zoom shift will move zoom out of bounds, reduce zoom shift
+            if(currentZoom - zoomShift < minZoom)
+                zoomShift = currentZoom - minZoom;
 
             sharedContext->storageList.push_back(QVariant(zoomShift));
             return -zoomShift;
