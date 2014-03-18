@@ -106,7 +106,7 @@ void OsmAnd::MapAnimator::animateAzimuthWith(const float velocity, const float d
 
 void OsmAnd::MapAnimator::animateElevationAngleBy(const float deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction)
 {
-    _d->animateAzimuthBy(deltaValue, duration, timingFunction);
+    _d->animateElevationAngleBy(deltaValue, duration, timingFunction);
 }
 
 void OsmAnd::MapAnimator::animateElevationAngleWith(const float velocity, const float deceleration)
