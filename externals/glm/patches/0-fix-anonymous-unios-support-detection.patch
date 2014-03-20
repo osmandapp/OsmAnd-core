@@ -1,0 +1,12 @@
+diff -rupN upstream.original/glm/detail/setup.hpp upstream.patched/glm/detail/setup.hpp
+--- upstream.original/glm/detail/setup.hpp	2014-02-08 21:28:22.000000000 +0200
++++ upstream.patched/glm/detail/setup.hpp	2014-03-20 14:56:12.000000000 +0200
+@@ -540,7 +540,7 @@
+ #endif
+ 
+ // Not standard
+-#define GLM_HAS_ANONYMOUS_UNION (GLM_LANG & GLM_LANG_CXXMS_FLAG)
++#define GLM_HAS_ANONYMOUS_UNION ((GLM_LANG & GLM_LANG_CXXMS_FLAG) || (GLM_LANG & GLM_LANG_CXX11))
+ 
+ /////////////////
+ // Platform 
