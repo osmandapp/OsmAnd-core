@@ -50,7 +50,7 @@ namespace OsmAnd
         }
 
 #if defined(OSMAND_GLM_AVAILABLE)
-        inline Point(const glm::detail::tvec2<T>& that)
+        inline Point(const glm::detail::tvec2<T, glm::precision::defaultp>& that)
         {
             this->x = that.x;
             this->y = that.y;
@@ -59,7 +59,7 @@ namespace OsmAnd
 
 #if !defined(SWIG)
 #   if defined(OSMAND_GLM_AVAILABLE)
-        inline PointT& operator=(const glm::detail::tvec2<T>& r)
+        inline PointT& operator=(const glm::detail::tvec2<T, glm::precision::defaultp>& r)
         {
             this->x = r.x;
             this->y = r.y;
@@ -153,9 +153,9 @@ namespace OsmAnd
         }
 
 #if defined(OSMAND_GLM_AVAILABLE)
-        inline operator glm::detail::tvec2<T>() const
+        inline operator glm::detail::tvec2<T, glm::precision::defaultp>() const
         {
-            return glm::detail::tvec2<T>(x, y);
+            return glm::detail::tvec2<T, glm::precision::defaultp>(x, y);
         }
 #endif // defined(OSMAND_GLM_AVAILABLE)
     private:
