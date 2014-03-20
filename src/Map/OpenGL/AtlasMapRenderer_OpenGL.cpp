@@ -238,13 +238,13 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(MapRenderer::InternalS
         _zNear, internalState->zFar);
 
     // Setup camera
-    internalState->mDistance = glm::translate(0.0f, 0.0f, -internalState->distanceFromCameraToTarget);
+    internalState->mDistance = glm::translate(glm::vec3(0.0f, 0.0f, -internalState->distanceFromCameraToTarget));
     internalState->mElevation = glm::rotate(state.elevationAngle, glm::vec3(1.0f, 0.0f, 0.0f));
     internalState->mAzimuth = glm::rotate(state.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
     internalState->mCameraView = internalState->mDistance * internalState->mElevation * internalState->mAzimuth;
 
     // Get inverse camera
-    internalState->mDistanceInv = glm::translate(0.0f, 0.0f, internalState->distanceFromCameraToTarget);
+    internalState->mDistanceInv = glm::translate(glm::vec3(0.0f, 0.0f, internalState->distanceFromCameraToTarget));
     internalState->mElevationInv = glm::rotate(-state.elevationAngle, glm::vec3(1.0f, 0.0f, 0.0f));
     internalState->mAzimuthInv = glm::rotate(-state.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
     internalState->mCameraViewInv = internalState->mAzimuthInv * internalState->mElevationInv * internalState->mDistanceInv;

@@ -147,7 +147,7 @@ void OsmAnd::AtlasMapRendererSkyStage_OpenGL::render()
     GL_CHECK_RESULT;
 
     // Set projection*view*model matrix:
-    const auto mFogTranslate = glm::translate(0.0f, 0.0f, -internalState.correctedFogDistance);
+    const auto mFogTranslate = glm::translate(glm::vec3(0.0f, 0.0f, -internalState.correctedFogDistance));
     const auto mModel = internalState.mAzimuthInv * mFogTranslate;
     const auto mProjectionViewModel = internalState.mPerspectiveProjection * internalState.mCameraView * mModel;
     glUniformMatrix4fv(_program.vs.param.mProjectionViewModel, 1, GL_FALSE, glm::value_ptr(mProjectionViewModel));
