@@ -11,6 +11,7 @@ OsmAnd::MapStyles_P::MapStyles_P( MapStyles* owner_ )
 {
     bool ok = true;
 
+    // Register all embedded styles
     ok = registerEmbeddedStyle("map/styles/default.render.xml") || ok;
 
     assert(ok);
@@ -20,15 +21,21 @@ OsmAnd::MapStyles_P::~MapStyles_P()
 {
 }
 
-bool OsmAnd::MapStyles_P::registerEmbeddedStyle( const QString& resourceName )
+bool OsmAnd::MapStyles_P::registerEmbeddedStyle(const QString& resourceName)
 {
     assert(EmbeddedResources::containsResource(resourceName));
 
     std::shared_ptr<MapStyle> style(new MapStyle(owner, resourceName, true));
     if(!style->_d->parseMetadata())
         return false;
-    _styles.insert(style->name, style);
 
+    {
+        QWriteLocker scopedLocker(&_stylesLock);
+
+        assert(!_styles.contains(style->name));
+        _styles.insert(style->name, style);
+    }
+    
     return true;
 }
 
@@ -37,34 +44,33 @@ bool OsmAnd::MapStyles_P::registerStyle( const QString& filePath )
     std::shared_ptr<MapStyle> style(new MapStyle(owner, filePath, false));
     if(!style->_d->parseMetadata())
         return false;
-    if(_styles.contains(style->name))
-        return false;
-    _styles.insert(style->name, style);
+
+    {
+        QWriteLocker scopedLocker(&_stylesLock);
+
+        if(_styles.contains(style->name))
+            return false;
+        _styles.insert(style->name, style);
+    }
 
     return true;
 }
 
 bool OsmAnd::MapStyles_P::obtainStyle(const QString& name, std::shared_ptr<const OsmAnd::MapStyle>& outStyle) const
 {
-    auto itStyle = _styles.constFind(name);
-    if(itStyle == _styles.cend())
-        return false;
-
-    auto style = *itStyle;
-    if(!style->isStandalone() && !style->areDependenciesResolved())
+    // Obtain style by name
+    QHash< QString, std::shared_ptr<MapStyle> >::const_iterator citStyle;
     {
-        if(!style->_d->resolveDependencies())
+        QReadLocker scopedLocker(&_stylesLock);
+
+        citStyle = _styles.constFind(name);
+        if(citStyle == _styles.cend())
             return false;
     }
 
-    if(style->isStandalone())
-        style->_d->registerString(QString());
-
-    if(!style->_d->parse())
+    const auto style = *citStyle;
+    if(!style->_d->prepareIfNeeded())
         return false;
-
-    if(!style->isStandalone())
-        style->_d->mergeInherited();
 
     outStyle = style;
     return true;

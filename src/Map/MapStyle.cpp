@@ -31,14 +31,6 @@ bool OsmAnd::MapStyle::isStandalone() const
     return parentName.isEmpty();
 }
 
-bool OsmAnd::MapStyle::areDependenciesResolved() const
-{
-    if(isStandalone())
-        return true;
-
-    return _d->_parent && _d->_parent->areDependenciesResolved();
-}
-
 bool OsmAnd::MapStyle::resolveValueDefinition( const QString& name, std::shared_ptr<const MapStyleValueDefinition>& outDefinition ) const
 {
     auto itValueDefinition = _d->_valuesDefinitions.constFind(name);

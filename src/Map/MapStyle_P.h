@@ -38,6 +38,9 @@ namespace OsmAnd
 
         QHash< QString, QString > _parsetimeConstants;
         QHash< QString, std::shared_ptr<MapStyleRule> > _attributes;
+
+        bool _isPrepared;
+        mutable QMutex _preparationMutex;
     protected:
         MapStyle_P(MapStyle* owner);
 
@@ -50,6 +53,9 @@ namespace OsmAnd
         QString _parentName;
         std::shared_ptr<const MapStyle> _parent;
 
+        bool prepareIfNeeded();
+
+        bool areDependenciesResolved();
         bool resolveDependencies();
         bool resolveConstantValue(const QString& name, QString& value);
         QString obtainValue(const QString& value);

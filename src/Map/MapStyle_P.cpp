@@ -23,7 +23,8 @@
 #include "Utilities.h"
 
 OsmAnd::MapStyle_P::MapStyle_P( MapStyle* owner_ )
-    : owner(owner_)
+    : _isPrepared(false)
+    , owner(owner_)
     , _builtinValueDefs(MapStyle::getBuiltinValueDefinitions())
     , _firstNonBuiltinValueDefinitionIndex(0)
     , _stringsIdBase(0)
@@ -83,6 +84,49 @@ bool OsmAnd::MapStyle_P::parseMetadata( QXmlStreamReader& xmlReader )
     }
 
     return true;
+}
+
+bool OsmAnd::MapStyle_P::prepareIfNeeded()
+{
+    QMutexLocker scopedLocker(&_preparationMutex);
+
+    if(_isPrepared)
+        return true;
+
+    // Resolve dependencies if required
+    const auto isStandalone = _parentName.isEmpty();
+    if(!isStandalone && areDependenciesResolved())
+    {
+        if(!resolveDependencies())
+            return false;
+    }
+
+    // In case this is a standalone style, prepare it with preregistered values
+    if(isStandalone)
+    {
+        registerString(QString());
+
+        registerValue(new MapStyleConfigurableInputValue(MapStyleValueDataType::Boolean, QLatin1String("nightMode"), QString(), QString(), QStringList()));
+    }
+
+    // Parse this style itself
+    if(!parse())
+        return false;
+
+    // Merge all dependencies into this style
+    if(!isStandalone)
+        mergeInherited();
+
+    _isPrepared = true;
+    return true;
+}
+
+bool OsmAnd::MapStyle_P::areDependenciesResolved()
+{
+    if(_parentName.isEmpty())
+        return true;
+
+    return _parent && _parent->_d->areDependenciesResolved();
 }
 
 bool OsmAnd::MapStyle_P::resolveDependencies()

@@ -6,6 +6,7 @@
 #include "QtExtensions.h"
 #include <QString>
 #include <QHash>
+#include <QReadWriteLock>
 
 #include "OsmAndCore.h"
 
@@ -23,6 +24,7 @@ namespace OsmAnd
         MapStyles* const owner;
 
         QHash< QString, std::shared_ptr<MapStyle> > _styles;
+        mutable QReadWriteLock _stylesLock;
 
         bool registerEmbeddedStyle(const QString& resourceName);
     public:

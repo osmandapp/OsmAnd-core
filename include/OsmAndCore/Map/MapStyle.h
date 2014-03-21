@@ -53,9 +53,8 @@ namespace OsmAnd
 
         const QString& name;
         const QString& parentName;
-        
+
         bool isStandalone() const;
-        bool areDependenciesResolved() const;
 
         bool resolveValueDefinition(const QString& name, std::shared_ptr<const MapStyleValueDefinition>& outDefinition) const;
         bool resolveAttribute(const QString& name, std::shared_ptr<const MapStyleRule>& outAttribute) const;
