@@ -11,6 +11,7 @@
 
 #include "OsmAndCore.h"
 #include "MapStyle.h"
+#include "MapStyleValue.h"
 
 namespace OsmAnd
 {
@@ -72,6 +73,8 @@ namespace OsmAnd
         uint32_t lookupStringId(const QString& value);
         uint32_t registerString(const QString& value);
 
+        bool parseValue(const std::shared_ptr<const MapStyleValueDefinition>& valueDef, const QString& input, MapStyleValue& output, bool allowStringRegistration);
+
         enum {
             RuleIdTagShift = 32,
         };
@@ -93,6 +96,8 @@ namespace OsmAnd
 
         bool lookupStringId(const QString& value, uint32_t& id) const;
         const QString& lookupStringValue(uint32_t id) const;
+
+        bool parseValue(const std::shared_ptr<const MapStyleValueDefinition>& valueDef, const QString& input, MapStyleValue& output) const;
 
     friend class OsmAnd::MapStyle;
     friend class OsmAnd::MapStyleEvaluator;

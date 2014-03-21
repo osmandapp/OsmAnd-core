@@ -9,6 +9,7 @@
 #include <SkStream.h>
 #include <SkTypeface.h>
 
+#include "MapStyle_P.h"
 #include "MapStyleEvaluator.h"
 #include "MapStyleValueDefinition.h"
 #include "MapStyleValue.h"
@@ -196,6 +197,38 @@ void OsmAnd::RasterizerEnvironment_P::setSettings(const QHash< std::shared_ptr<c
     QMutexLocker scopedLocker(&_settingsChangeMutex);
 
     _settings = newSettings;
+}
+
+void OsmAnd::RasterizerEnvironment_P::setSettings(const QHash< QString, QString >& newSettings)
+{
+    QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > resolvedSettings;
+    resolvedSettings.reserve(newSettings.size());
+
+    for(const auto& itSetting : rangeOf(newSettings))
+    {
+        const auto& name = itSetting.key();
+        const auto& value = itSetting.value();
+
+        // Resolve input-value definition by name
+        std::shared_ptr<const MapStyleValueDefinition> inputValueDef;
+        if(!owner->style->resolveValueDefinition(name, inputValueDef))
+        {
+            LogPrintf(LogSeverityLevel::Warning, "Setting of '%s' to '%s' impossible: failed to resolve input value definition failed with such name");
+            continue;
+        }
+
+        // Parse value
+        MapStyleValue parsedValue;
+        if(!owner->style->_d->parseValue(inputValueDef, value, parsedValue))
+        {
+            LogPrintf(LogSeverityLevel::Warning, "Setting of '%s' to '%s' impossible: failed to parse value");
+            continue;
+        }
+        
+        resolvedSettings.insert(inputValueDef, parsedValue);
+    }
+
+    setSettings(resolvedSettings);
 }
 
 void OsmAnd::RasterizerEnvironment_P::applyTo( MapStyleEvaluator& evaluator ) const

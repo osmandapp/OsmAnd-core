@@ -27,3 +27,8 @@ void OsmAnd::RasterizerEnvironment::setSettings(const QHash< std::shared_ptr<con
 {
     _d->setSettings(newSettings);
 }
+
+void OsmAnd::RasterizerEnvironment::setSettings(const QHash< QString, QString >& newSettings)
+{
+    _d->setSettings(newSettings);
+}

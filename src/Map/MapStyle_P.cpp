@@ -20,6 +20,7 @@
 #include "EmbeddedResources.h"
 #include "Logging.h"
 #include "QKeyValueIterator.h"
+#include "Utilities.h"
 
 OsmAnd::MapStyle_P::MapStyle_P( MapStyle* owner_ )
     : owner(owner_)
@@ -256,6 +257,14 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
                         title,
                         description,
                         possibleValues);
+                }
+
+                // If configurable input value declares a set of strings as possible values,
+                // place those strings in a LUT table
+                if(inputValue->dataType == MapStyleValueDataType::String)
+                {
+                    for(const auto& possibleValue : constOf(inputValue->possibleValues))
+                        lookupStringId(possibleValue);
                 }
 
                 registerValue(inputValue);
@@ -720,4 +729,83 @@ bool OsmAnd::MapStyle_P::mergeInheritedAttributes()
 uint64_t OsmAnd::MapStyle_P::encodeRuleId( uint32_t tag, uint32_t value )
 {
     return (static_cast<uint64_t>(tag) << RuleIdTagShift) | value;
+}
+
+bool OsmAnd::MapStyle_P::parseValue(const std::shared_ptr<const MapStyleValueDefinition>& valueDef, const QString& input, MapStyleValue& output, bool allowStringRegistration)
+{
+    switch(valueDef->dataType)
+    {
+    case MapStyleValueDataType::Boolean:
+        output.asSimple.asInt = (input == QLatin1String("true")) ? 1 : 0;
+        return true;
+    case MapStyleValueDataType::Integer:
+        if(valueDef->isComplex)
+        {
+            output.isComplex = true;
+            if(!input.contains(':'))
+            {
+                output.asComplex.asInt.dip = Utilities::parseArbitraryInt(input, -1);
+                output.asComplex.asInt.px = 0.0;
+            }
+            else
+            {
+                // 'dip:px' format
+                const auto& complexValue = input.split(':', QString::KeepEmptyParts);
+
+                output.asComplex.asInt.dip = Utilities::parseArbitraryInt(complexValue[0], 0);
+                output.asComplex.asInt.px = Utilities::parseArbitraryInt(complexValue[1], 0);
+            }
+        }
+        else
+        {
+            assert(!input.contains(':'));
+            output.asSimple.asInt = Utilities::parseArbitraryInt(input, -1);
+        }
+        return true;
+    case MapStyleValueDataType::Float:
+        if(valueDef->isComplex)
+        {
+            output.isComplex = true;
+            if(!input.contains(':'))
+            {
+                output.asComplex.asFloat.dip = Utilities::parseArbitraryFloat(input, -1.0f);
+                output.asComplex.asFloat.px = 0.0f;
+            }
+            else
+            {
+                // 'dip:px' format
+                const auto& complexValue = input.split(':', QString::KeepEmptyParts);
+
+                output.asComplex.asFloat.dip = Utilities::parseArbitraryFloat(complexValue[0], 0);
+                output.asComplex.asFloat.px = Utilities::parseArbitraryFloat(complexValue[1], 0);
+            }
+        }
+        else
+        {
+            assert(!input.contains(':'));
+            output.asSimple.asFloat = Utilities::parseArbitraryFloat(input, -1.0f);
+        }
+        return true;
+    case MapStyleValueDataType::String:
+        if(allowStringRegistration)
+        {
+            output.asSimple.asUInt = lookupStringId(input);
+            return true;
+        }
+        else
+            return lookupStringId(input, output.asSimple.asUInt);
+    case MapStyleValueDataType::Color:
+        assert(input[0] == '#');
+        output.asSimple.asUInt = input.mid(1).toUInt(nullptr, 16);
+        if(input.size() <= 7)
+            output.asSimple.asUInt |= 0xFF000000;
+        return true;
+    }
+
+    return false;
+}
+
+bool OsmAnd::MapStyle_P::parseValue(const std::shared_ptr<const MapStyleValueDefinition>& valueDef, const QString& input, MapStyleValue& output) const
+{
+    return const_cast<MapStyle_P*>(this)->parseValue(valueDef, input, output, false);
 }

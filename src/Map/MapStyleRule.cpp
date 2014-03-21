@@ -30,76 +30,10 @@ OsmAnd::MapStyleRule::MapStyleRule(MapStyle* owner_, const QHash< QString, QStri
         // Store resolved value definition
         _d->_resolvedValueDefinitions.insert(key, valueDef);
 
+        // Parse value
         MapStyleValue parsedValue;
-        switch (valueDef->dataType)
-        {
-        case MapStyleValueDataType::Boolean:
-            parsedValue.asSimple.asInt = (value == QLatin1String("true")) ? 1 : 0;
-            break;
-        case MapStyleValueDataType::Integer:
-            {
-                if(valueDef->isComplex)
-                {
-                    parsedValue.isComplex = true;
-                    if(!value.contains(':'))
-                    {
-                        parsedValue.asComplex.asInt.dip = Utilities::parseArbitraryInt(value, -1);
-                        parsedValue.asComplex.asInt.px = 0.0;
-                    }
-                    else
-                    {
-                        // 'dip:px' format
-                        const auto& complexValue = value.split(':', QString::KeepEmptyParts);
-
-                        parsedValue.asComplex.asInt.dip = Utilities::parseArbitraryInt(complexValue[0], 0);
-                        parsedValue.asComplex.asInt.px = Utilities::parseArbitraryInt(complexValue[1], 0);
-                    }
-                }
-                else
-                {
-                    assert(!value.contains(':'));
-                    parsedValue.asSimple.asInt = Utilities::parseArbitraryInt(value, -1);
-                }
-            }
-            break;
-        case MapStyleValueDataType::Float:
-            {
-                if(valueDef->isComplex)
-                {
-                    parsedValue.isComplex = true;
-                    if(!value.contains(':'))
-                    {
-                        parsedValue.asComplex.asFloat.dip = Utilities::parseArbitraryFloat(value, -1.0f);
-                        parsedValue.asComplex.asFloat.px = 0.0f;
-                    }
-                    else
-                    {
-                        // 'dip:px' format
-                        const auto& complexValue = value.split(':', QString::KeepEmptyParts);
-
-                        parsedValue.asComplex.asFloat.dip = Utilities::parseArbitraryFloat(complexValue[0], 0);
-                        parsedValue.asComplex.asFloat.px = Utilities::parseArbitraryFloat(complexValue[1], 0);
-                    }
-                }
-                else
-                {
-                    assert(!value.contains(':'));
-                    parsedValue.asSimple.asFloat = Utilities::parseArbitraryFloat(value, -1.0f);
-                }
-            }
-            break;
-        case MapStyleValueDataType::String:
-            parsedValue.asSimple.asUInt = owner->_d->lookupStringId(value);
-            break;
-        case MapStyleValueDataType::Color:
-            {
-                assert(value[0] == '#');
-                parsedValue.asSimple.asUInt = value.mid(1).toUInt(nullptr, 16);
-                if(value.size() <= 7)
-                    parsedValue.asSimple.asUInt |= 0xFF000000;
-            }
-            break;
-        }
+        ok = owner->_d->parseValue(valueDef, value, parsedValue, true);
+        assert(ok);
         
         _d->_values.insert(valueDef, parsedValue);
     }

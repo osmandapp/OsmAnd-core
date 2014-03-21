@@ -37,6 +37,7 @@ namespace OsmAnd
 
         QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > getSettings() const;
         void setSettings(const QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue >& newSettings);
+        void setSettings(const QHash< QString, QString >& newSettings);
 
     friend class OsmAnd::Rasterizer;
     };
