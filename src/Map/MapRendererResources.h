@@ -290,8 +290,8 @@ namespace OsmAnd
         QSet<TileId> _activeTiles;
         ZoomLevel _activeZoom;
         void updateResources(const QSet<TileId>& tiles, const ZoomLevel zoom);
-        void requestNeededResources(const QSet<TileId>& tiles, const ZoomLevel zoom);
-        void cleanupJunkResources(const QSet<TileId>& tiles, const ZoomLevel zoom);
+        void requestNeededResources(const QSet<TileId>& activeTiles, const ZoomLevel activeZoom);
+        void cleanupJunkResources(const QSet<TileId>& activeTiles, const ZoomLevel activeZoom);
         unsigned int unloadResources();
         unsigned int uploadResources(const unsigned int limit = 0u, bool* const outMoreThanLimitAvailable = nullptr);
         void releaseResourcesFrom(const std::shared_ptr<TiledResourcesCollection>& collection);
