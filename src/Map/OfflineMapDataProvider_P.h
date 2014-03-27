@@ -1,10 +1,10 @@
 #ifndef _OSMAND_CORE_OFFLINE_MAP_DATA_PROVIDER_P_H_
 #define _OSMAND_CORE_OFFLINE_MAP_DATA_PROVIDER_P_H_
 
-#include <OsmAndCore/stdlib_common.h>
+#include "stdlib_common.h"
 #include <utility>
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 #include <QHash>
 #include <QAtomicInt>
 #include <QMutex>
@@ -16,9 +16,10 @@
 #include "TilesCollection.h"
 #include "SharedByZoomResourcesContainer.h"
 
-namespace OsmAnd {
-
-    namespace Model {
+namespace OsmAnd
+{
+    namespace Model
+    {
         class MapObject;
     }
     class OfflineMapDataTile;
@@ -69,10 +70,12 @@ namespace OsmAnd {
         public:
             Link(OfflineMapDataProvider_P& provider_)
                 : provider(provider_)
-            {}
+            {
+            }
 
             virtual ~Link()
             {}
+
 
             OfflineMapDataProvider_P& provider;
         };
@@ -86,6 +89,6 @@ namespace OsmAnd {
     friend class OsmAnd::OfflineMapDataTile_P;
     };
 
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_OFFLINE_MAP_DATA_PROVIDER_P_H_)

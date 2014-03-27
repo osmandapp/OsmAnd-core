@@ -36,31 +36,42 @@ OsmAnd::OfflineMapDataProvider_P::~OfflineMapDataProvider_P()
 
 void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const OfflineMapDataTile>& outTile )
 {
-    // Check if there is a weak reference to that tile, and if that reference is still valid, use that
     std::shared_ptr<TileEntry> tileEntry;
-    _tileReferences.obtainOrAllocateEntry(tileEntry, tileId, zoom, [](const TilesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom) -> TileEntry*
-        {
-            return new TileEntry(collection, tileId, zoom);
-        });
 
-    // Only if tile entry has "Undefined" state proceed to "Loading" state
-    if(!tileEntry->setStateIf(TileState::Undefined, TileState::Loading))
+    for(;;)
     {
-        if(tileEntry->getState() == TileState::Loaded)
-        {
-            // If tile is already 'Loaded', just verify it's reference and return that
-            assert(!tileEntry->_tile.expired());
-            outTile = tileEntry->_tile.lock();
-            return;
-        }
-        else if(tileEntry->getState() == TileState::Loading)
+        // Try to obtain previous instance of tile
+        _tileReferences.obtainOrAllocateEntry(tileEntry, tileId, zoom,
+            [](const TilesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom) -> TileEntry*
+            {
+                return new TileEntry(collection, tileId, zoom);
+            });
+
+        // If state is "Undefined", change it to "Loading" and proceed with loading
+        if(tileEntry->setStateIf(TileState::Undefined, TileState::Loading))
+            break;
+
+        // In case tile entry is being loaded, wait until it will finish loading
+        if(tileEntry->getState() == TileState::Loading)
         {
             QReadLocker scopedLcoker(&tileEntry->_loadedConditionLock);
 
             // If tile is in 'Loading' state, wait until it will become 'Loaded'
             while(tileEntry->getState() != TileState::Loaded)
-                tileEntry->_loadedCondition.wait(&tileEntry->_loadedConditionLock);
+                REPEAT_UNTIL(tileEntry->_loadedCondition.wait(&tileEntry->_loadedConditionLock));
         }
+
+        // Try to lock tile reference
+        outTile = tileEntry->_tile.lock();
+
+        // If successfully locked, just return it
+        if(outTile)
+            return;
+
+        // Otherwise consider this tile entry as expired, remove it from collection (it's safe to do that right now)
+        // This will enable creation of new entry on next loop cycle
+        _tileReferences.removeEntry(tileId, zoom);
+        tileEntry.reset();
     }
 
 #if OSMAND_PERFORMANCE_METRICS

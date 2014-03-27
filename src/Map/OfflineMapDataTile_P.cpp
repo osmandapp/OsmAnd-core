@@ -20,7 +20,8 @@ void OsmAnd::OfflineMapDataTile_P::cleanup()
     // Release rasterizer context
     _rasterizerContext.reset();
 
-    // Remove tile reference from collection
+    // Remove tile reference from collection. All checks here does not matter,
+    // since entry->tile reference is already expired (execution is already in destructor of OfflineMapDataTile!)
     if(const auto entry = _refEntry.lock())
     {
         if(const auto link = entry->link.lock())
