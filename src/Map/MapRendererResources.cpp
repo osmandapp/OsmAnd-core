@@ -16,6 +16,18 @@
 #include <SkBitmap.h>
 #include <SkImageDecoder.h>
 
+//#define OSMAND_LOG_RESOURCE_STATE_CHANGE 1
+#ifndef OSMAND_LOG_RESOURCE_STATE_CHANGE
+#   define OSMAND_LOG_RESOURCE_STATE_CHANGE 0
+#endif // !defined(OSMAND_LOG_RESOURCE_STATE_CHANGE)
+
+#if OSMAND_LOG_RESOURCE_STATE_CHANGE
+#   define LOG_STATE_CHANGE(tileId, zoom, oldState, newState) \
+    LogPrintf(LogSeverityLevel::Debug, "Tile %dx%d@%d state change '" #oldState "'->'" #newState "' at " __FILE__ ":" QT_STRINGIFY(__LINE__), (tileId).x, (tileId).y, (zoom))
+#else
+#   define LOG_STATE_CHANGE(tileId, zoom, oldState, newState)
+#endif
+
 OsmAnd::MapRendererResources::MapRendererResources(MapRenderer* const owner_)
     : _taskHostBridge(this)
     , _mapSymbolsCount(0)
@@ -420,6 +432,7 @@ void OsmAnd::MapRendererResources::requestNeededResources(const QSet<TileId>& ti
                 // Only if tile entry has "Unknown" state proceed to "Requesting" state
                 if(!resource->setStateIf(ResourceState::Unknown, ResourceState::Requesting))
                     continue;
+                LOG_STATE_CHANGE(resource->tileId, resource->zoom, ResourceState::Unknown, ResourceState::Requesting);
 
                 // Create async-task that will obtain needed resource data
                 const auto executeProc = [this](Concurrent::Task* task_, QEventLoop& eventLoop)
@@ -436,6 +449,10 @@ void OsmAnd::MapRendererResources::requestNeededResources(const QSet<TileId>& ti
                         //     In this case entry will be removed in post-execute handler.
                         assert(resource->getState() == ResourceState::JustBeforeDeath);
                         return;
+                    }
+                    else
+                    {
+                        LOG_STATE_CHANGE(resource->tileId, resource->zoom, ResourceState::Requested, ResourceState::ProcessingRequest);
                     }
 
                     // Ask resource to obtain it's data
@@ -460,6 +477,15 @@ void OsmAnd::MapRendererResources::requestNeededResources(const QSet<TileId>& ti
                         task->requestCancellation();
                         return;
                     }
+#if OSMAND_LOG_RESOURCE_STATE_CHANGE
+                    else
+                    {
+                        if(dataAvailable)
+                            LOG_STATE_CHANGE(resource->tileId, resource->zoom, ResourceState::ProcessingRequest, ResourceState::Ready);
+                        else
+                            LOG_STATE_CHANGE(resource->tileId, resource->zoom, ResourceState::ProcessingRequest, ResourceState::Unavailable);
+                    }
+#endif // OSMAND_LOG_RESOURCE_STATE_CHANGE
                     resource->_requestTask = nullptr;
 
                     // There is data to upload to GPU, request uploading. Or just ask to show that resource is unavailable
@@ -483,13 +509,14 @@ void OsmAnd::MapRendererResources::requestNeededResources(const QSet<TileId>& ti
                         //    and state _should_ be "Ready" or "Unavailable", but in general it can be any:
                         //    Uploading, Uploaded, Unloading, Unloaded. In case state is "Ready" or "Unavailable",
                         //    change it to "JustBeforeDeath" and delete it.
-
                         if(
                             resource->setStateIf(ResourceState::Requested, ResourceState::JustBeforeDeath) ||
                             resource->setStateIf(ResourceState::Ready, ResourceState::JustBeforeDeath) ||
                             resource->setStateIf(ResourceState::Unavailable, ResourceState::JustBeforeDeath) ||
                             resource->setStateIf(ResourceState::RequestCanceledWhileBeingProcessed, ResourceState::JustBeforeDeath))
                         {
+                            LOG_STATE_CHANGE(resource->tileId, resource->zoom, ?, ResourceState::JustBeforeDeath);
+
                             if(const auto link = resource->link.lock())
                                 link->collection.removeEntry(resource->tileId, resource->zoom);
                         }
@@ -503,6 +530,7 @@ void OsmAnd::MapRendererResources::requestNeededResources(const QSet<TileId>& ti
                 resource->_requestTask = asyncTask;
                 assert(resource->getState() == ResourceState::Requesting);
                 resource->setState(ResourceState::Requested);
+                LOG_STATE_CHANGE(resource->tileId, resource->zoom, ? , ResourceState::Requested);
 
                 // Finally start the request
                 _resourcesRequestWorkersPool.start(asyncTask);
@@ -588,7 +616,8 @@ unsigned int OsmAnd::MapRendererResources::unloadResources()
                 // Since state change is allowed (it's not changed to "Unloading" during query), check state here
                 if(!resource->setStateIf(ResourceState::UnloadPending, ResourceState::Unloading))
                     continue;
-
+                LOG_STATE_CHANGE(resource->tileId, resource->zoom, ResourceState::UnloadPending, ResourceState::Unloading);
+                
                 // Unload from GPU
                 resource->unloadFromGPU();
 
@@ -597,6 +626,7 @@ unsigned int OsmAnd::MapRendererResources::unloadResources()
                 // Mark as unloaded
                 assert(resource->getState() == ResourceState::Unloading);
                 resource->setState(ResourceState::Unloaded);
+                LOG_STATE_CHANGE(resource->tileId, resource->zoom, ResourceState::Unloading, ResourceState::Unloaded);
 
                 // Count uploaded resources
                 totalUnloaded++;
@@ -651,6 +681,7 @@ unsigned int OsmAnd::MapRendererResources::uploadResources(const unsigned int li
                 // Since state change is allowed (it's not changed to "Uploading" during query), check state here
                 if(!resource->setStateIf(ResourceState::Ready, ResourceState::Uploading))
                     continue;
+                LOG_STATE_CHANGE(resource->tileId, resource->zoom, ResourceState::Ready, ResourceState::Uploading);
 
                 // Actually upload resource to GPU
                 const auto didUpload = resource->uploadToGPU();
@@ -670,6 +701,7 @@ unsigned int OsmAnd::MapRendererResources::uploadResources(const unsigned int li
                 // Mark as uploaded
                 assert(resource->getState() == ResourceState::Uploading);
                 resource->setState(ResourceState::Uploaded);
+                LOG_STATE_CHANGE(resource->tileId, resource->zoom, ResourceState::Uploading, ResourceState::Uploaded);
 
                 // Count uploaded resources
                 totalUploaded++;
@@ -688,6 +720,8 @@ unsigned int OsmAnd::MapRendererResources::uploadResources(const unsigned int li
 
 void OsmAnd::MapRendererResources::cleanupJunkResources(const QSet<TileId>& tiles, const ZoomLevel zoom)
 {
+    // This method is called from non-GPU thread, so it's impossible to unload resources from GPU here
+
     // Use aggressive cache cleaning: remove all tiled resources that are not needed
     for(const auto& resourcesCollections : constOf(_storage))
     {
@@ -707,22 +741,30 @@ void OsmAnd::MapRendererResources::cleanupJunkResources(const QSet<TileId>& tile
 
                 if(entry->setStateIf(ResourceState::Uploaded, ResourceState::UnloadPending))
                 {
+                    LOG_STATE_CHANGE(entry->tileId, entry->zoom, ResourceState::Uploaded, ResourceState::UnloadPending);
+
                     // If resource is not needed anymore, change its state to "UnloadPending",
                     // but keep the resource entry, since it must be unload from GPU in another place
                     return false;
                 }
                 else if(entry->setStateIf(ResourceState::Ready, ResourceState::JustBeforeDeath))
                 {
+                    LOG_STATE_CHANGE(entry->tileId, entry->zoom, ResourceState::Ready, ResourceState::JustBeforeDeath);
+
                     // If resource was not yet uploaded, just remove it.
                     return true;
                 }
                 else if(entry->setStateIf(ResourceState::ProcessingRequest, ResourceState::RequestCanceledWhileBeingProcessed))
                 {
+                    LOG_STATE_CHANGE(entry->tileId, entry->zoom, ResourceState::ProcessingRequest, ResourceState::RequestCanceledWhileBeingProcessed);
+
                     // If resource request is being processed, keep the entry until processing is complete.
                     return false;
                 }
                 else if(entry->setStateIf(ResourceState::Requested, ResourceState::JustBeforeDeath))
                 {
+                    LOG_STATE_CHANGE(entry->tileId, entry->zoom, ResourceState::Requested, ResourceState::JustBeforeDeath);
+
                     // If resource was just requested, cancel its task and remove the entry.
 
                     // Cancel the task
@@ -733,20 +775,46 @@ void OsmAnd::MapRendererResources::cleanupJunkResources(const QSet<TileId>& tile
                 }
                 else if(entry->setStateIf(ResourceState::Unloaded, ResourceState::JustBeforeDeath))
                 {
+                    LOG_STATE_CHANGE(entry->tileId, entry->zoom, ResourceState::Unloaded, ResourceState::JustBeforeDeath);
+
                     // If resource was unloaded from GPU, remove the entry.
                     return true;
                 }
                 else if(entry->setStateIf(ResourceState::Unavailable, ResourceState::JustBeforeDeath))
                 {
+                    LOG_STATE_CHANGE(entry->tileId, entry->zoom, ResourceState::Unavailable, ResourceState::JustBeforeDeath);
+
                     // If resource was never available, just remove the entry
                     return true;
                 }
 
-                // Following situations are ignored
                 const auto state = entry->getState();
-                if(state == ResourceState::Uploading || state == ResourceState::UnloadPending || state == ResourceState::Unloading || state == ResourceState::RequestCanceledWhileBeingProcessed)
+                if(state == ResourceState::JustBeforeDeath)
+                {
+                    // If resource has JustBeforeDeath state, it means that it will be deleted from different thread in next few moments,
+                    // so it's safe to remove it here also (since operations with resources removal from collection are atomic, and collection is blocked)
+                    return true;
+                }
+                else if(state == ResourceState::Uploading ||
+                    state == ResourceState::UnloadPending ||
+                    state == ResourceState::Unloading ||
+                    state == ResourceState::RequestCanceledWhileBeingProcessed)
+                {
+                    // Resources with states
+                    //  - Uploading (to allow finish uploading)
+                    //  - UnloadPending (to allow start unloading from GPU)
+                    //  - Unloading (to allow finish unloading)
+                    //  - RequestCanceledWhileBeingProcessed (to allow cleanup of the process)
+                    // should be retained, since they are being processed.
+                    //TODO: but they ARE already invalid, so they need to be removed sometime soon...
                     return false;
+                }
                 
+                LogPrintf(LogSeverityLevel::Error, "Tile resource %dx%d@%d has state %d which is invalid",
+                    entry->tileId.x,
+                    entry->tileId.y,
+                    entry->zoom,
+                    static_cast<int>(state));
                 assert(false);
                 return false;
             });
@@ -771,6 +839,8 @@ void OsmAnd::MapRendererResources::releaseResourcesFrom(const std::shared_ptr<Ti
 
         if(entry->setStateIf(ResourceState::Requested, ResourceState::JustBeforeDeath))
         {
+            LOG_STATE_CHANGE(entry->tileId, entry->zoom, ResourceState::Requested, ResourceState::JustBeforeDeath);
+
             // Cancel the task
             assert(entry->_requestTask != nullptr);
             entry->_requestTask->requestCancellation();
@@ -779,28 +849,43 @@ void OsmAnd::MapRendererResources::releaseResourcesFrom(const std::shared_ptr<Ti
         }
         else if(entry->setStateIf(ResourceState::ProcessingRequest, ResourceState::RequestCanceledWhileBeingProcessed))
         {
+            LOG_STATE_CHANGE(entry->tileId, entry->zoom, ResourceState::ProcessingRequest, ResourceState::RequestCanceledWhileBeingProcessed);
+
             return false;
         }
         else if(entry->setStateIf(ResourceState::Ready, ResourceState::JustBeforeDeath))
         {
+            LOG_STATE_CHANGE(entry->tileId, entry->zoom, ResourceState::Ready, ResourceState::JustBeforeDeath);
+
             return true;
         }
         else if(entry->setStateIf(ResourceState::Unloaded, ResourceState::JustBeforeDeath))
         {
+            LOG_STATE_CHANGE(entry->tileId, entry->zoom, ResourceState::Unloaded, ResourceState::JustBeforeDeath);
+
             return true;
         }
         else if(entry->setStateIf(ResourceState::Uploaded, ResourceState::UnloadPending))
         {
+            LOG_STATE_CHANGE(entry->tileId, entry->zoom, ResourceState::Uploaded, ResourceState::UnloadPending);
+
             entry->setState(ResourceState::Unloading);
+            LOG_STATE_CHANGE(entry->tileId, entry->zoom, ResourceState::UnloadPending, ResourceState::Unloading);
 
             entry->unloadFromGPU();
 
             entry->setState(ResourceState::Unloaded);
+            LOG_STATE_CHANGE(entry->tileId, entry->zoom, ResourceState::Unloading, ResourceState::Unloaded);
+
             entry->setState(ResourceState::JustBeforeDeath);
+            LOG_STATE_CHANGE(entry->tileId, entry->zoom, ResourceState::Unloaded, ResourceState::JustBeforeDeath);
+
             return true;
         }
         else if(entry->setStateIf(ResourceState::Unavailable, ResourceState::JustBeforeDeath))
         {
+            LOG_STATE_CHANGE(entry->tileId, entry->zoom, ResourceState::Unavailable, ResourceState::JustBeforeDeath);
+
             return true;
         }
 
@@ -808,6 +893,11 @@ void OsmAnd::MapRendererResources::releaseResourcesFrom(const std::shared_ptr<Ti
         // - 'requesting' state: task is only being initialized, not much can be done in this case
         // - 'uploading'
         const auto state = entry->getState();
+        LogPrintf(LogSeverityLevel::Error, "Tile resource %dx%d@%d has state %d which is invalid",
+            entry->tileId.x,
+            entry->tileId.y,
+            entry->zoom,
+            static_cast<int>(state));
         assert(false);
         return false;
     });
