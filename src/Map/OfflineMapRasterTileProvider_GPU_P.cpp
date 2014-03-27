@@ -31,7 +31,6 @@ OsmAnd::OfflineMapRasterTileProvider_GPU_P::OfflineMapRasterTileProvider_GPU_P( 
     : owner(owner_)
     , outputTileSize(outputTileSize_)
     , density(density_)
-    , _taskHostBridge(this)
 {
 }
 

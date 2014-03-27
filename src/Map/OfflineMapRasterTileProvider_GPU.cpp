@@ -9,7 +9,6 @@ OsmAnd::OfflineMapRasterTileProvider_GPU::OfflineMapRasterTileProvider_GPU( cons
 
 OsmAnd::OfflineMapRasterTileProvider_GPU::~OfflineMapRasterTileProvider_GPU()
 {
-    _d->_taskHostBridge.onOwnerIsBeingDestructed();
 }
 
 float OsmAnd::OfflineMapRasterTileProvider_GPU::getTileDensity() const

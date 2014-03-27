@@ -31,7 +31,6 @@ OsmAnd::OfflineMapRasterTileProvider_Software_P::OfflineMapRasterTileProvider_So
     : owner(owner_)
     , outputTileSize(outputTileSize_)
     , density(density_)
-    , _taskHostBridge(this)
 {
 }
 

@@ -9,7 +9,6 @@ OsmAnd::OfflineMapRasterTileProvider_Software::OfflineMapRasterTileProvider_Soft
 
 OsmAnd::OfflineMapRasterTileProvider_Software::~OfflineMapRasterTileProvider_Software()
 {
-    _d->_taskHostBridge.onOwnerIsBeingDestructed();
 }
 
 float OsmAnd::OfflineMapRasterTileProvider_Software::getTileDensity() const

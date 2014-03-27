@@ -36,7 +36,7 @@ namespace OsmAnd
 
         SharedByZoomResourcesContainer<uint64_t, const Model::MapObject> _sharedMapObjects;
 
-        enum TileState
+        enum class TileState
         {
             Undefined = -1,
 
