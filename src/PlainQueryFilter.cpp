@@ -2,26 +2,24 @@
 
 OsmAnd::PlainQueryFilter::PlainQueryFilter(const ZoomLevel* zoom/* = nullptr*/, const AreaI* area/* = nullptr*/)
     : _isZoomFiltered(zoom != nullptr)
+    , _zoom(_isZoomFiltered ? *zoom : ZoomLevel0)
     , _isAreaFiltered(area != nullptr)
+    , _area(_isAreaFiltered ? *area : AreaI())
 {
-    if(_isZoomFiltered)
-        _zoom = *zoom;
-    if(_isAreaFiltered)
-        _area = *area;
 }
 
 OsmAnd::PlainQueryFilter::~PlainQueryFilter()
 {
 }
 
-bool OsmAnd::PlainQueryFilter::acceptsZoom(ZoomLevel zoom)
+bool OsmAnd::PlainQueryFilter::acceptsZoom(ZoomLevel zoom) const
 {
     if(!_isZoomFiltered)
         return true;
     return _zoom == zoom;
 }
 
-bool OsmAnd::PlainQueryFilter::acceptsArea( const AreaI& area )
+bool OsmAnd::PlainQueryFilter::acceptsArea(const AreaI& area) const
 {
     if(!_isAreaFiltered)
         return true;
@@ -31,7 +29,7 @@ bool OsmAnd::PlainQueryFilter::acceptsArea( const AreaI& area )
         area.contains(_area);
 }
 
-bool OsmAnd::PlainQueryFilter::acceptsPoint( const PointI& point )
+bool OsmAnd::PlainQueryFilter::acceptsPoint(const PointI& point) const
 {
     if(!_isAreaFiltered)
         return true;

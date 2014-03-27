@@ -19,6 +19,7 @@
 #include "TilesCollection.h"
 #include "SharedResourcesContainer.h"
 #include "Concurrent.h"
+#include "IQueryController.h"
 
 namespace OsmAnd
 {
@@ -105,7 +106,7 @@ namespace OsmAnd
         class IResource
         {
         protected:
-            virtual bool obtainData(bool& dataAvailable) = 0;
+            virtual bool obtainData(bool& dataAvailable, const IQueryController* queryController = nullptr) = 0;
             virtual bool uploadToGPU() = 0;
             virtual void unloadFromGPU() = 0;
         public:
@@ -175,7 +176,7 @@ namespace OsmAnd
             std::shared_ptr<const MapTile> _sourceData;
             std::shared_ptr<const GPUAPI::ResourceInGPU> _resourceInGPU;
 
-            virtual bool obtainData(bool& dataAvailable);
+            virtual bool obtainData(bool& dataAvailable, const IQueryController* queryController);
             virtual bool uploadToGPU();
             virtual void unloadFromGPU();
         public:
@@ -211,7 +212,7 @@ namespace OsmAnd
             QList< std::shared_ptr<GroupResources> > _uniqueGroupsResources;
             QList< std::shared_ptr<GroupResources> > _referencedSharedGroupsResources;
 
-            virtual bool obtainData(bool& dataAvailable);
+            virtual bool obtainData(bool& dataAvailable, const IQueryController* queryController);
             virtual bool uploadToGPU();
             virtual void unloadFromGPU();
 

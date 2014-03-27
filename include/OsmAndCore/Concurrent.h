@@ -45,9 +45,8 @@ namespace OsmAnd
             typedef std::function<void (Task*, QEventLoop& eventLoop)> ExecuteSignature;
             typedef std::function<void (Task*, bool wasCancelled)> PostExecuteSignature;
         private:
-            volatile bool _cancellationRequestedByTask;
-            volatile bool _cancellationRequestedByExternal;
-            mutable QMutex _cancellationMutex;
+            bool _cancellationRequestedByTask;
+            QAtomicInt _cancellationRequestedByExternal;
         protected:
         public:
             Task(ExecuteSignature executeMethod, PreExecuteSignature preExecuteMethod = nullptr, PostExecuteSignature postExecuteMethod = nullptr);
@@ -57,7 +56,7 @@ namespace OsmAnd
             const ExecuteSignature execute;
             const PostExecuteSignature postExecute;
 
-            bool requestCancellation();
+            void requestCancellation();
             bool isCancellationRequested() const;
 
             virtual void run();

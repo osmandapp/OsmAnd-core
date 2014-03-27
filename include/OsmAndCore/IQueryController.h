@@ -20,6 +20,6 @@ namespace OsmAnd
 
         virtual bool isAborted() const = 0;
     };
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_I_QUERY_CONTROLLER_H_)

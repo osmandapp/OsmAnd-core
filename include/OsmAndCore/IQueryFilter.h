@@ -19,10 +19,10 @@ namespace OsmAnd
     public:
         virtual ~IQueryFilter();
     
-        virtual bool acceptsZoom(ZoomLevel zoom) = 0;
-        virtual bool acceptsArea(const AreaI& area) = 0;
-        virtual bool acceptsPoint(const PointI& point) = 0;
+        virtual bool acceptsZoom(ZoomLevel zoom) const = 0;
+        virtual bool acceptsArea(const AreaI& area) const = 0;
+        virtual bool acceptsPoint(const PointI& point) const = 0;
     };
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_I_QUERY_FILTER_H_)

@@ -11,21 +11,21 @@ OsmAnd::LambdaQueryFilter::~LambdaQueryFilter()
 {
 }
 
-bool OsmAnd::LambdaQueryFilter::acceptsZoom(ZoomLevel zoom)
+bool OsmAnd::LambdaQueryFilter::acceptsZoom(ZoomLevel zoom) const
 {
     if(!_zoomFunction)
         return true;
     return _zoomFunction(zoom);
 }
 
-bool OsmAnd::LambdaQueryFilter::acceptsArea( const AreaI& area )
+bool OsmAnd::LambdaQueryFilter::acceptsArea(const AreaI& area) const
 {
     if(!_areaFunction)
         return true;
     return _areaFunction(area);
 }
 
-bool OsmAnd::LambdaQueryFilter::acceptsPoint( const PointI& point )
+bool OsmAnd::LambdaQueryFilter::acceptsPoint(const PointI& point) const
 {
     if(!_pointFunction)
         return true;

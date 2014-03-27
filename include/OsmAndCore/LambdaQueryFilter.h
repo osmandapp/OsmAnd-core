@@ -21,18 +21,17 @@ namespace OsmAnd
         typedef std::function<bool (const PointI& point)> PointFunctionSignature;
     private:
     protected:
-        ZoomFunctionSignature _zoomFunction;
-        AreaFunctionSignature _areaFunction;
-        PointFunctionSignature _pointFunction;
+        const ZoomFunctionSignature _zoomFunction;
+        const AreaFunctionSignature _areaFunction;
+        const PointFunctionSignature _pointFunction;
     public:
         LambdaQueryFilter(ZoomFunctionSignature zoomFunction, AreaFunctionSignature areaFunction, PointFunctionSignature pointFunction);
         virtual ~LambdaQueryFilter();
 
-        virtual bool acceptsZoom(ZoomLevel zoom);
-        virtual bool acceptsArea(const AreaI& area);
-        virtual bool acceptsPoint(const PointI& point);
+        virtual bool acceptsZoom(ZoomLevel zoom) const;
+        virtual bool acceptsArea(const AreaI& area) const;
+        virtual bool acceptsPoint(const PointI& point) const;
     };
-
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_LAMBDA_QUERY_FILTER_H_)

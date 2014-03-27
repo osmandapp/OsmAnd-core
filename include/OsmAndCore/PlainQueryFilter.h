@@ -9,25 +9,24 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/IQueryFilter.h>
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class OSMAND_CORE_API PlainQueryFilter : public IQueryFilter
     {
     private:
     protected:
-        bool _isZoomFiltered;
-        ZoomLevel _zoom;
-        bool _isAreaFiltered;
-        AreaI _area;
+        const bool _isZoomFiltered;
+        const ZoomLevel _zoom;
+        const bool _isAreaFiltered;
+        const AreaI _area;
     public:
         PlainQueryFilter(const ZoomLevel* zoom = nullptr, const AreaI* area = nullptr);
         virtual ~PlainQueryFilter();
 
-        virtual bool acceptsZoom(ZoomLevel zoom);
-        virtual bool acceptsArea(const AreaI& area);
-        virtual bool acceptsPoint(const PointI& point);
+        virtual bool acceptsZoom(ZoomLevel zoom) const;
+        virtual bool acceptsArea(const AreaI& area) const;
+        virtual bool acceptsPoint(const PointI& point) const;
     };
-
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_PLAIN_QUERY_FILTER_H_)

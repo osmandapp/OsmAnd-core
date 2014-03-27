@@ -8,6 +8,7 @@
 #include "IRetainableResource.h"
 #include "MapObject.h"
 #include "EmbeddedResources.h"
+#include "LambdaQueryController.h"
 #include "QKeyValueIterator.h"
 #include "QCachingIterator.h"
 #include "Utilities.h"
@@ -457,7 +458,13 @@ void OsmAnd::MapRendererResources::requestNeededResources(const QSet<TileId>& ac
 
                     // Ask resource to obtain it's data
                     bool dataAvailable = false;
-                    const auto requestSucceeded = resource->obtainData(dataAvailable);
+                    LambdaQueryController obtainDataQueryController(
+                        [task_]() -> bool
+                        {
+                            return task_->isCancellationRequested();
+                        });
+                    const auto requestSucceeded = resource->obtainData(dataAvailable, &obtainDataQueryController);
+                    assert(task_->isCancellationRequested() ? !requestSucceeded : true);
 
                     // If failed to obtain resource data, remove resource entry to repeat try later
                     if(!requestSucceeded)
@@ -1116,7 +1123,7 @@ OsmAnd::MapRendererResources::MapTileResource::~MapTileResource()
     safeUnlink();
 }
 
-bool OsmAnd::MapRendererResources::MapTileResource::obtainData(bool& dataAvailable)
+bool OsmAnd::MapRendererResources::MapTileResource::obtainData(bool& dataAvailable, const IQueryController* queryController)
 {
     bool ok = false;
 
@@ -1178,7 +1185,7 @@ OsmAnd::MapRendererResources::SymbolsTileResource::~SymbolsTileResource()
     safeUnlink();
 }
 
-bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAvailable)
+bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAvailable, const IQueryController* queryController)
 {
     // Obtain collection link and maintain it
     const auto link_ = link.lock();

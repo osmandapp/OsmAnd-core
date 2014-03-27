@@ -21,8 +21,7 @@ OsmAnd::Concurrent::Pools::~Pools()
 
 OsmAnd::Concurrent::Task::Task( ExecuteSignature executeMethod, PreExecuteSignature preExecuteMethod /*= nullptr*/, PostExecuteSignature postExecuteMethod /*= nullptr*/ )
     : _cancellationRequestedByTask(false)
-    , _cancellationRequestedByExternal(false)
-    , _cancellationMutex(QMutex::Recursive)
+    , _cancellationRequestedByExternal(0)
     , preExecute(preExecuteMethod)
     , execute(executeMethod)
     , postExecute(postExecuteMethod)
@@ -36,13 +35,11 @@ OsmAnd::Concurrent::Task::~Task()
 
 void OsmAnd::Concurrent::Task::run()
 {
-    QMutexLocker scopedLocker(&_cancellationMutex);
-
     // This local event loop
     QEventLoop localLoop;
 
     // Check if task wants to cancel itself
-    if(preExecute && !_cancellationRequestedByExternal)
+    if(preExecute && _cancellationRequestedByExternal.loadAcquire() == 0)
     {
         bool cancellationRequestedByTask = false;
         preExecute(this, cancellationRequestedByTask);
@@ -51,28 +48,22 @@ void OsmAnd::Concurrent::Task::run()
 
     // If cancellation was not requested by task itself nor by
     // external call
-    if(!_cancellationRequestedByTask && !_cancellationRequestedByExternal)
+    if(!_cancellationRequestedByTask && _cancellationRequestedByExternal.loadAcquire() == 0)
         execute(this, localLoop);
 
     // Report that execution had finished
     if(postExecute)
-        postExecute(this, _cancellationRequestedByTask || _cancellationRequestedByExternal);
+        postExecute(this, isCancellationRequested());
 }
 
-bool OsmAnd::Concurrent::Task::requestCancellation()
+void OsmAnd::Concurrent::Task::requestCancellation()
 {
-    if(!_cancellationMutex.tryLock())
-        return false;
-
-    _cancellationRequestedByExternal = true;
-
-    _cancellationMutex.unlock();
-    return true;
+    _cancellationRequestedByExternal.fetchAndAddOrdered(1);
 }
 
 bool OsmAnd::Concurrent::Task::isCancellationRequested() const
 {
-    return _cancellationRequestedByTask || _cancellationRequestedByExternal;
+    return _cancellationRequestedByTask || _cancellationRequestedByExternal.loadAcquire() > 0;
 }
 
 OsmAnd::Concurrent::TaskHost::TaskHost( const OwnerPtr& owner )
