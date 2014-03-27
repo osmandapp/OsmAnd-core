@@ -100,7 +100,7 @@ namespace OsmAnd
         // Resources-related:
         const MapRendererResources& getResources() const;
         virtual void onValidateResourcesOfType(const MapRendererResources::ResourceType type);
-        void requestResourcesUpload();
+        void requestResourcesUploadOrUnload();
         bool convertBitmap(const std::shared_ptr<const SkBitmap>& input, std::shared_ptr<const SkBitmap>& output, const AlphaChannelData alphaChannelData = AlphaChannelData::Undefined) const;
         bool convertMapTile(std::shared_ptr<const MapTile>& mapTile) const;
         bool convertMapTile(const std::shared_ptr<const MapTile>& input, std::shared_ptr<const MapTile>& output) const;

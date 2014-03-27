@@ -362,7 +362,7 @@ void OsmAnd::MapRendererResources::removeMapSymbol(const std::shared_ptr<const M
     _mapSymbolsCount -= removedCount;
 }
 
-void OsmAnd::MapRendererResources::notifyNewResourceAvailable()
+void OsmAnd::MapRendererResources::notifyNewResourceAvailableForDrawing()
 {
     renderer->invalidateFrame();
 }
@@ -490,9 +490,9 @@ void OsmAnd::MapRendererResources::requestNeededResources(const QSet<TileId>& ac
 
                     // There is data to upload to GPU, request uploading. Or just ask to show that resource is unavailable
                     if(dataAvailable)
-                        requestResourcesUpload();
+                        requestResourcesUploadOrUnload();
                     else
-                        notifyNewResourceAvailable();
+                        notifyNewResourceAvailableForDrawing();
                 };
                 const auto postExecuteProc = [this](Concurrent::Task* task_, bool wasCancelled)
                 {
@@ -723,6 +723,7 @@ unsigned int OsmAnd::MapRendererResources::uploadResources(const unsigned int li
 void OsmAnd::MapRendererResources::cleanupJunkResources(const QSet<TileId>& activeTiles, const ZoomLevel activeZoom)
 {
     // This method is called from non-GPU thread, so it's impossible to unload resources from GPU here
+    bool needsResourcesUploadOrUnload = false;
 
     // Use aggressive cache cleaning: remove all tiled resources that are not needed
     for(const auto& resourcesCollections : constOf(_storage))
@@ -736,7 +737,7 @@ void OsmAnd::MapRendererResources::cleanupJunkResources(const QSet<TileId>& acti
             const auto dataSourceAvailable = isDataSourceAvailableFor(resourcesCollection);
 
             resourcesCollection->removeEntries(
-                [this, dataSourceAvailable, activeTiles, activeZoom](const std::shared_ptr<BaseTiledResource>& entry, bool& cancel) -> bool
+                [this, dataSourceAvailable, activeTiles, activeZoom, &needsResourcesUploadOrUnload](const std::shared_ptr<BaseTiledResource>& entry, bool& cancel) -> bool
                 {
                     // Resource with "Unloaded" state is junk, regardless if it's needed or not
                     if(entry->setStateIf(ResourceState::Unloaded, ResourceState::JustBeforeDeath))
@@ -764,6 +765,7 @@ void OsmAnd::MapRendererResources::cleanupJunkResources(const QSet<TileId>& acti
 
                         // If resource is not needed anymore, change its state to "UnloadPending",
                         // but keep the resource entry, since it must be unload from GPU in another place
+                        needsResourcesUploadOrUnload = true;
                         return false;
                     }
                     else if(entry->setStateIf(ResourceState::Ready, ResourceState::JustBeforeDeath))
@@ -832,6 +834,9 @@ void OsmAnd::MapRendererResources::cleanupJunkResources(const QSet<TileId>& acti
                 });
         }
     }
+
+    if(needsResourcesUploadOrUnload)
+        requestResourcesUploadOrUnload();
 }
 
 void OsmAnd::MapRendererResources::releaseResourcesFrom(const std::shared_ptr<TiledResourcesCollection>& collection)
@@ -915,10 +920,9 @@ void OsmAnd::MapRendererResources::releaseResourcesFrom(const std::shared_ptr<Ti
     });
 }
 
-void OsmAnd::MapRendererResources::requestResourcesUpload()
+void OsmAnd::MapRendererResources::requestResourcesUploadOrUnload()
 {
-    // This is obsolete, should be redesigned
-    renderer->requestResourcesUpload();
+    renderer->requestResourcesUploadOrUnload();
 }
 
 void OsmAnd::MapRendererResources::syncResourcesInGPU(

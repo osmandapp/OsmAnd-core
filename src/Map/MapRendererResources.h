@@ -278,7 +278,7 @@ namespace OsmAnd
         void addMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<const GPUAPI::ResourceInGPU>& gpuResource);
         void removeMapSymbol(const std::shared_ptr<const MapSymbol>& symbol);
 
-        void notifyNewResourceAvailable();
+        void notifyNewResourceAvailableForDrawing();
 
         // Invalidated resources:
         uint32_t _invalidatedResourcesTypesMask;
@@ -295,7 +295,7 @@ namespace OsmAnd
         unsigned int unloadResources();
         unsigned int uploadResources(const unsigned int limit = 0u, bool* const outMoreThanLimitAvailable = nullptr);
         void releaseResourcesFrom(const std::shared_ptr<TiledResourcesCollection>& collection);
-        void requestResourcesUpload();
+        void requestResourcesUploadOrUnload();
 
         // Worker thread
         volatile bool _workerThreadIsAlive;

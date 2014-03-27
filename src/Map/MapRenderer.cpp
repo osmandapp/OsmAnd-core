@@ -623,7 +623,7 @@ void OsmAnd::MapRenderer::onValidateResourcesOfType(const MapRendererResources::
     // Empty stub
 }
 
-void OsmAnd::MapRenderer::requestResourcesUpload()
+void OsmAnd::MapRenderer::requestResourcesUploadOrUnload()
 {
     _resourcesUploadRequestsCounter.fetchAndAddOrdered(1);
 
@@ -746,7 +746,7 @@ void OsmAnd::MapRenderer::forcedFrameInvalidate()
 
 void OsmAnd::MapRenderer::forcedGpuProcessingCycle()
 {
-    requestResourcesUpload();
+    requestResourcesUploadOrUnload();
 }
 
 OsmAnd::Concurrent::Dispatcher& OsmAnd::MapRenderer::getRenderThreadDispatcher()
