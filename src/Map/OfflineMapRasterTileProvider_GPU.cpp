@@ -21,7 +21,7 @@ uint32_t OsmAnd::OfflineMapRasterTileProvider_GPU::getTileSize() const
     return _d->outputTileSize;
 }
 
-bool OsmAnd::OfflineMapRasterTileProvider_GPU::obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile)
+bool OsmAnd::OfflineMapRasterTileProvider_GPU::obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile, const IQueryController* const queryController)
 {
-    return _d->obtainTile(tileId, zoom, outTile);
+    return _d->obtainTile(tileId, zoom, outTile, queryController);
 }

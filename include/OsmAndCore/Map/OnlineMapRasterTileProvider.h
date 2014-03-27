@@ -12,8 +12,8 @@
 #include <OsmAndCore/Map/MapTypes.h>
 #include <OsmAndCore/Map/IMapBitmapTileProvider.h>
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class OnlineMapRasterTileProvider_P;
     class OSMAND_CORE_API OnlineMapRasterTileProvider : public IMapBitmapTileProvider
     {
@@ -45,12 +45,11 @@ namespace OsmAnd {
         virtual float getTileDensity() const;
         virtual uint32_t getTileSize() const;
 
-        virtual bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile);
+        virtual bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile, const IQueryController* const queryController);
         
         static std::shared_ptr<OsmAnd::IMapBitmapTileProvider> createMapnikProvider();
         static std::shared_ptr<OsmAnd::IMapBitmapTileProvider> createCycleMapProvider();
     };
-
 }
 
 #endif // !defined(_OSMAND_CORE_ONLINE_MAP_RASTER_TILE_PROVIDER_H_)

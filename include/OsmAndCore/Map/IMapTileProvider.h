@@ -8,6 +8,7 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/IMapProvider.h>
+#include <OsmAndCore/IQueryController.h>
 
 namespace OsmAnd
 {
@@ -49,9 +50,8 @@ namespace OsmAnd
         const MapTileDataType dataType;
         virtual uint32_t getTileSize() const = 0;
 
-        virtual bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile) = 0;
+        virtual bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile, const IQueryController* const queryController = nullptr) = 0;
     };
-
 }
 
 #endif // !defined(_OSMAND_CORE_I_MAP_TILE_PROVIDER_H_)

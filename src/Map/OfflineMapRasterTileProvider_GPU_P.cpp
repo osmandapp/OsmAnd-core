@@ -38,7 +38,7 @@ OsmAnd::OfflineMapRasterTileProvider_GPU_P::~OfflineMapRasterTileProvider_GPU_P(
 {
 }
 
-bool OsmAnd::OfflineMapRasterTileProvider_GPU_P::obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile)
+bool OsmAnd::OfflineMapRasterTileProvider_GPU_P::obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile, const IQueryController* const queryController)
 {
     // Obtain offline map data tile
     std::shared_ptr< const OfflineMapDataTile > dataTile;
@@ -73,7 +73,7 @@ bool OsmAnd::OfflineMapRasterTileProvider_GPU_P::obtainTile(const TileId tileId,
     if(!dataTile->nothingToRasterize)
     {
         Rasterizer rasterizer(dataTile->rasterizerContext);
-        rasterizer.rasterizeMap(canvas);
+        rasterizer.rasterizeMap(canvas, queryController);
     }
 
 #if OSMAND_PERFORMANCE_METRICS

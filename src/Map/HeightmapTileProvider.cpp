@@ -22,7 +22,7 @@ uint32_t OsmAnd::HeightmapTileProvider::getTileSize() const
     return 32;
 }
 
-bool OsmAnd::HeightmapTileProvider::obtainTile( const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile )
+bool OsmAnd::HeightmapTileProvider::obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile, const IQueryController* const queryController)
 {
-    return _d->obtainTile(tileId, zoom, outTile);
+    return _d->obtainTile(tileId, zoom, outTile, queryController);
 }

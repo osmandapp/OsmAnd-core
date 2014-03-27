@@ -55,18 +55,10 @@ namespace OsmAnd
             const AreaI* const destinationArea = nullptr,
             const IQueryController* const controller = nullptr);
 
-        //typedef std::function<  > methodToProvideSkCanvasForSize;
-        //typedef std::function<  > methodToPublish;
-        // a callback-method to provide canvas of specified size?
-        //QList< std::shared_ptr<const RasterizedSymbol> >& outSymbols,
-
         void rasterizeSymbolsWithoutPaths(
             QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
             std::function<bool (const std::shared_ptr<const Model::MapObject>& mapObject)> filter = nullptr,
             const IQueryController* const controller = nullptr);
-
-        //void rasterizeSymbolsWithPaths(
-        //    const IQueryController* const controller = nullptr);
     };
 
 } // namespace OsmAnd

@@ -27,8 +27,15 @@ OsmAnd::OnlineMapRasterTileProvider_P::~OnlineMapRasterTileProvider_P()
 {
 }
 
-bool OsmAnd::OnlineMapRasterTileProvider_P::obtainTile( const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile )
+bool OsmAnd::OnlineMapRasterTileProvider_P::obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile, const IQueryController* const queryController)
 {
+    // Check provider can supply this zoom level
+    if(zoom > owner->maxZoom || zoom < owner->minZoom)
+    {
+        outTile.reset();
+        return true;
+    }
+
     // Check if requested tile is already being processed, and wait until that's done
     // to mark that as being processed.
     lockTile(tileId, zoom);

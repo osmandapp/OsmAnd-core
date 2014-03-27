@@ -463,8 +463,7 @@ void OsmAnd::MapRendererResources::requestNeededResources(const QSet<TileId>& ac
                         {
                             return task_->isCancellationRequested();
                         });
-                    const auto requestSucceeded = resource->obtainData(dataAvailable, &obtainDataQueryController);
-                    assert(task_->isCancellationRequested() ? !requestSucceeded : true);
+                    const auto requestSucceeded = resource->obtainData(dataAvailable, &obtainDataQueryController) && !task->isCancellationRequested();
 
                     // If failed to obtain resource data, remove resource entry to repeat try later
                     if(!requestSucceeded)
@@ -1137,7 +1136,7 @@ bool OsmAnd::MapRendererResources::MapTileResource::obtainData(bool& dataAvailab
 
     // Obtain tile from provider
     std::shared_ptr<const MapTile> tile;
-    const auto requestSucceeded = provider->obtainTile(tileId, zoom, tile);
+    const auto requestSucceeded = provider->obtainTile(tileId, zoom, tile, queryController);
     if(!requestSucceeded)
         return false;
 

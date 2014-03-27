@@ -40,7 +40,7 @@ namespace OsmAnd {
         std::array< QSet< TileId >, ZoomLevelsCount > _tilesInProcess;
         QWaitCondition _waitUntilAnyTileIsProcessed;
 
-        bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile);
+        bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile, const IQueryController* const queryController);
         void lockTile(const TileId tileId, const ZoomLevel zoom);
         void unlockTile(const TileId tileId, const ZoomLevel zoom);
     public:
