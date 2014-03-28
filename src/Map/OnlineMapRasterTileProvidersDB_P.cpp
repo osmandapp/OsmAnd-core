@@ -34,7 +34,7 @@ bool OsmAnd::OnlineMapRasterTileProvidersDB_P::remove(const QString& id)
 
 bool OsmAnd::OnlineMapRasterTileProvidersDB_P::saveTo(const QString& filePath) const
 {
-    const auto dbFilepath = QFileInfo(filePath).absolutePath();
+    const auto dbFilepath = QFileInfo(filePath).absoluteFilePath();
     const auto connectionName = QLatin1String("online-tile-providers-db:") + dbFilepath;
     bool ok;
 
@@ -159,7 +159,7 @@ std::shared_ptr<OsmAnd::OnlineMapRasterTileProvidersDB> OsmAnd::OnlineMapRasterT
 {
     std::shared_ptr<OsmAnd::OnlineMapRasterTileProvidersDB> db(new OnlineMapRasterTileProvidersDB());
 
-    const auto dbFilepath = QFileInfo(filePath).absolutePath();
+    const auto dbFilepath = QFileInfo(filePath).absoluteFilePath();
     const auto connectionName = QLatin1String("online-tile-providers-db:") + dbFilepath;
     bool ok;
 
