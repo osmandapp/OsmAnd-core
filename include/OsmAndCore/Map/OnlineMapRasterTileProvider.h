@@ -46,6 +46,9 @@ namespace OsmAnd
         virtual uint32_t getTileSize() const;
 
         virtual bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile, const IQueryController* const queryController);
+
+        virtual ZoomLevel getMinZoom() const;
+        virtual ZoomLevel getMaxZoom() const;
         
         static std::shared_ptr<OsmAnd::IMapBitmapTileProvider> createMapnikProvider();
         static std::shared_ptr<OsmAnd::IMapBitmapTileProvider> createCycleMapProvider();

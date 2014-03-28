@@ -1091,6 +1091,62 @@ float OsmAnd::MapRenderer::getMaxZoom() const
     return static_cast<float>(MaxZoomLevel) + 0.49999f;
 }
 
+float OsmAnd::MapRenderer::getRecommendedMinZoom(const ZoomRecommendationStrategy strategy) const
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    float zoomLimit;
+    if(strategy == IMapRenderer::ZoomRecommendationStrategy::NarrowestRange)
+        zoomLimit = getMinZoom();
+    else if(strategy == IMapRenderer::ZoomRecommendationStrategy::WidestRange)
+        zoomLimit = getMaxZoom();
+
+    bool atLeastOneValid = false;
+    for(const auto& provider : constOf(_requestedState.rasterLayerProviders))
+    {
+        if(!provider)
+            continue;
+
+        atLeastOneValid = true;
+        if(strategy == IMapRenderer::ZoomRecommendationStrategy::NarrowestRange)
+            zoomLimit = qMax(zoomLimit, static_cast<float>(provider->getMinZoom()));
+        else if(strategy == IMapRenderer::ZoomRecommendationStrategy::WidestRange)
+            zoomLimit = qMin(zoomLimit, static_cast<float>(provider->getMinZoom()));
+    }
+
+    if(!atLeastOneValid)
+        return getMinZoom();
+    return (zoomLimit >= 0.5f) ? (zoomLimit - 0.5f) : zoomLimit;
+}
+
+float OsmAnd::MapRenderer::getRecommendedMaxZoom(const ZoomRecommendationStrategy strategy) const
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    float zoomLimit;
+    if(strategy == IMapRenderer::ZoomRecommendationStrategy::NarrowestRange)
+        zoomLimit = getMaxZoom();
+    else if(strategy == IMapRenderer::ZoomRecommendationStrategy::WidestRange)
+        zoomLimit = getMinZoom();
+
+    bool atLeastOneValid = false;
+    for(const auto& provider : constOf(_requestedState.rasterLayerProviders))
+    {
+        if(!provider)
+            continue;
+
+        atLeastOneValid = true;
+        if(strategy == IMapRenderer::ZoomRecommendationStrategy::NarrowestRange)
+            zoomLimit = qMin(zoomLimit, static_cast<float>(provider->getMaxZoom()));
+        else if(strategy == IMapRenderer::ZoomRecommendationStrategy::WidestRange)
+            zoomLimit = qMax(zoomLimit, static_cast<float>(provider->getMaxZoom()));
+    }
+
+    if(!atLeastOneValid)
+        return getMaxZoom();
+    return zoomLimit + 0.49999f;
+}
+
 void OsmAnd::MapRenderer::registerStateChangeObserver(void* tag, const StateChangeObserverSignature observer) const
 {
     QMutexLocker scopedLocker(&_stateChangeObserversMutex);

@@ -45,6 +45,9 @@ namespace OsmAnd
         const float density;
 
         bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile, const IQueryController* const queryController);
+
+        ZoomLevel getMinZoom() const;
+        ZoomLevel getMaxZoom() const;
     public:
         virtual ~OfflineMapRasterTileProvider_GPU_P();
 

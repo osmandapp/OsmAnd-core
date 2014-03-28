@@ -108,6 +108,16 @@ bool OsmAnd::OfflineMapRasterTileProvider_GPU_P::obtainTile(const TileId tileId,
     return true;
 }
 
+OsmAnd::ZoomLevel OsmAnd::OfflineMapRasterTileProvider_GPU_P::getMinZoom() const
+{
+    return MinZoomLevel;
+}
+
+OsmAnd::ZoomLevel OsmAnd::OfflineMapRasterTileProvider_GPU_P::getMaxZoom() const
+{
+    return MaxZoomLevel;
+}
+
 OsmAnd::OfflineMapRasterTileProvider_GPU_P::Tile::Tile( SkBitmap* bitmap, const std::shared_ptr<const OfflineMapDataTile>& dataTile_ )
     : MapBitmapTile(bitmap, AlphaChannelData::NotPresent)
     , _dataTile(dataTile_)

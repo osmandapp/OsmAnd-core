@@ -26,3 +26,13 @@ bool OsmAnd::HeightmapTileProvider::obtainTile(const TileId tileId, const ZoomLe
 {
     return _d->obtainTile(tileId, zoom, outTile, queryController);
 }
+
+OsmAnd::ZoomLevel OsmAnd::HeightmapTileProvider::getMinZoom() const
+{
+    return _d->getMinZoom();
+}
+
+OsmAnd::ZoomLevel OsmAnd::HeightmapTileProvider::getMaxZoom() const
+{
+    return _d->getMaxZoom();
+}

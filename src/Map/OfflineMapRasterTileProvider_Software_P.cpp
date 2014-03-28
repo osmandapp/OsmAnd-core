@@ -107,6 +107,16 @@ bool OsmAnd::OfflineMapRasterTileProvider_Software_P::obtainTile(const TileId ti
     return true;
 }
 
+OsmAnd::ZoomLevel OsmAnd::OfflineMapRasterTileProvider_Software_P::getMinZoom() const
+{
+    return MinZoomLevel;
+}
+
+OsmAnd::ZoomLevel OsmAnd::OfflineMapRasterTileProvider_Software_P::getMaxZoom() const
+{
+    return MaxZoomLevel;
+}
+
 OsmAnd::OfflineMapRasterTileProvider_Software_P::Tile::Tile( SkBitmap* bitmap, const std::shared_ptr<const OfflineMapDataTile>& dataTile_ )
     : MapBitmapTile(bitmap, AlphaChannelData::NotPresent)
     , _dataTile(dataTile_)

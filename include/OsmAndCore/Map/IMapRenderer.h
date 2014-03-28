@@ -87,6 +87,14 @@ namespace OsmAnd
         virtual float getMinZoom() const = 0;
         virtual float getMaxZoom() const = 0;
 
+        enum class ZoomRecommendationStrategy
+        {
+            NarrowestRange,
+            WidestRange
+        };
+        virtual float getRecommendedMinZoom(const ZoomRecommendationStrategy strategy = ZoomRecommendationStrategy::NarrowestRange) const = 0;
+        virtual float getRecommendedMaxZoom(const ZoomRecommendationStrategy strategy = ZoomRecommendationStrategy::NarrowestRange) const = 0;
+
         virtual void registerStateChangeObserver(void* tag, const StateChangeObserverSignature observer) const = 0;
         virtual void unregisterStateChangeObserver(void* tag) const = 0;
 

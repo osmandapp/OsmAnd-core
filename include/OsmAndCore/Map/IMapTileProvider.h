@@ -50,6 +50,9 @@ namespace OsmAnd
         const MapTileDataType dataType;
         virtual uint32_t getTileSize() const = 0;
 
+        virtual ZoomLevel getMinZoom() const = 0;
+        virtual ZoomLevel getMaxZoom() const = 0;
+
         virtual bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile, const IQueryController* const queryController = nullptr) = 0;
     };
 }

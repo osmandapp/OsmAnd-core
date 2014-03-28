@@ -35,6 +35,9 @@ namespace OsmAnd
         virtual float getTileDensity() const;
         virtual uint32_t getTileSize() const;
 
+        virtual ZoomLevel getMinZoom() const;
+        virtual ZoomLevel getMaxZoom() const;
+
         virtual bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile);
     };
 }

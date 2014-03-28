@@ -181,6 +181,9 @@ namespace OsmAnd
         virtual float getMinZoom() const;
         virtual float getMaxZoom() const;
 
+        virtual float getRecommendedMinZoom(const ZoomRecommendationStrategy strategy) const;
+        virtual float getRecommendedMaxZoom(const ZoomRecommendationStrategy strategy) const;
+
         virtual void registerStateChangeObserver(void* tag, const StateChangeObserverSignature observer) const;
         virtual void unregisterStateChangeObserver(void* tag) const;
 

@@ -25,3 +25,13 @@ bool OsmAnd::OfflineMapRasterTileProvider_GPU::obtainTile(const TileId tileId, c
 {
     return _d->obtainTile(tileId, zoom, outTile, queryController);
 }
+
+OsmAnd::ZoomLevel OsmAnd::OfflineMapRasterTileProvider_GPU::getMinZoom() const
+{
+    return _d->getMinZoom();
+}
+
+OsmAnd::ZoomLevel OsmAnd::OfflineMapRasterTileProvider_GPU::getMaxZoom() const
+{
+    return _d->getMaxZoom();
+}

@@ -13,8 +13,8 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/IMapBitmapTileProvider.h>
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class OfflineMapDataProvider;
     class OfflineMapRasterTileProvider_Software_P;
     class OSMAND_CORE_API OfflineMapRasterTileProvider_Software : public IMapBitmapTileProvider
@@ -33,8 +33,10 @@ namespace OsmAnd {
         virtual uint32_t getTileSize() const;
 
         virtual bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile, const IQueryController* const queryController);
-    };
 
+        virtual ZoomLevel getMinZoom() const;
+        virtual ZoomLevel getMaxZoom() const;
+    };
 }
 
 #endif // !defined(_OSMAND_CORE_OFFLINE_MAP_RASTER_TILE_PROVIDER_SOFTWARE_H_)

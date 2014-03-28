@@ -58,6 +58,16 @@ uint32_t OsmAnd::OnlineMapRasterTileProvider::getTileSize() const
     return providerTileSize;
 }
 
+OsmAnd::ZoomLevel OsmAnd::OnlineMapRasterTileProvider::getMinZoom() const
+{
+    return minZoom;
+}
+
+OsmAnd::ZoomLevel OsmAnd::OnlineMapRasterTileProvider::getMaxZoom() const
+{
+    return maxZoom;
+}
+
 std::shared_ptr<OsmAnd::IMapBitmapTileProvider> OsmAnd::OnlineMapRasterTileProvider::createMapnikProvider()
 {
     auto provider = new OsmAnd::OnlineMapRasterTileProvider(

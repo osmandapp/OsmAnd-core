@@ -93,3 +93,13 @@ bool OsmAnd::HeightmapTileProvider_P::obtainTile(const TileId tileId, const Zoom
 
     return success;
 }
+
+OsmAnd::ZoomLevel OsmAnd::HeightmapTileProvider_P::getMinZoom() const
+{
+    return MinZoomLevel;
+}
+
+OsmAnd::ZoomLevel OsmAnd::HeightmapTileProvider_P::getMaxZoom() const
+{
+    return MaxZoomLevel;
+}

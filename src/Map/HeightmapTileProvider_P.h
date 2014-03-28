@@ -28,6 +28,9 @@ namespace OsmAnd
         TileDB _tileDb;
 
         bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile, const IQueryController* const queryController);
+
+        ZoomLevel getMinZoom() const;
+        ZoomLevel getMaxZoom() const;
     public:
         ~HeightmapTileProvider_P();
 
