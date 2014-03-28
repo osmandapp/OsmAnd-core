@@ -49,9 +49,6 @@ namespace OsmAnd
 
         virtual ZoomLevel getMinZoom() const;
         virtual ZoomLevel getMaxZoom() const;
-        
-        static std::shared_ptr<OsmAnd::IMapBitmapTileProvider> createMapnikProvider();
-        static std::shared_ptr<OsmAnd::IMapBitmapTileProvider> createCycleMapProvider();
     };
 }
 

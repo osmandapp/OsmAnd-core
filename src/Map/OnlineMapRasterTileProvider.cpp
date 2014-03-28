@@ -67,21 +67,3 @@ OsmAnd::ZoomLevel OsmAnd::OnlineMapRasterTileProvider::getMaxZoom() const
 {
     return maxZoom;
 }
-
-std::shared_ptr<OsmAnd::IMapBitmapTileProvider> OsmAnd::OnlineMapRasterTileProvider::createMapnikProvider()
-{
-    auto provider = new OsmAnd::OnlineMapRasterTileProvider(
-        "mapnik", "http://mapnik.osmand.net/${zoom}/${x}/${y}.png",
-        ZoomLevel0, ZoomLevel19, 2,
-        256, AlphaChannelData::NotPresent);
-    return std::shared_ptr<OsmAnd::IMapBitmapTileProvider>(static_cast<OsmAnd::IMapBitmapTileProvider*>(provider));
-}
-
-std::shared_ptr<OsmAnd::IMapBitmapTileProvider> OsmAnd::OnlineMapRasterTileProvider::createCycleMapProvider()
-{
-    auto provider = new OsmAnd::OnlineMapRasterTileProvider(
-        "cyclemap", "http://b.tile.opencyclemap.org/cycle/${zoom}/${x}/${y}.png",
-        ZoomLevel0, ZoomLevel18, 2,
-        256, AlphaChannelData::NotPresent);
-    return std::shared_ptr<OsmAnd::IMapBitmapTileProvider>(static_cast<OsmAnd::IMapBitmapTileProvider*>(provider));
-}
