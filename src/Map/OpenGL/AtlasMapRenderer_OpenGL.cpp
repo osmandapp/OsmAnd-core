@@ -101,16 +101,17 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame()
     glDisable(GL_BLEND);
     GL_CHECK_RESULT;
 
-    // Turn off depth testing for sky stage
-    glDisable(GL_DEPTH_TEST);
+    // Turn on depth testing for sky stage (since with disabled depth test, write to depth buffer is blocked),
+    // but since sky is on top of everything, accept all fragments
+    glEnable(GL_DEPTH_TEST);
+    GL_CHECK_RESULT;
+    glDepthFunc(GL_ALWAYS);
     GL_CHECK_RESULT;
 
     // Render the sky
     _skyStage.render();
 
-    // Turn on depth prior to raster map stage and further stages
-    glEnable(GL_DEPTH_TEST);
-    GL_CHECK_RESULT;
+    // Change depth test function prior to raster map stage and further stages
     glDepthFunc(GL_LEQUAL);
     GL_CHECK_RESULT;
 
