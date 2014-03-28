@@ -3,11 +3,13 @@
 
 #include <QSqlDatabase>
 #include <QSqlQuery>
+#include <QSqlError>
 #include <QVariant>
 
 #include "OnlineMapRasterTileProvider.h"
 #include "QCachingIterator.h"
 #include "QKeyValueIterator.h"
+#include "Logging.h"
 
 OsmAnd::OnlineMapRasterTileProvidersDB_P::OnlineMapRasterTileProvidersDB_P(OnlineMapRasterTileProvidersDB* owner_)
     : owner(owner_)
@@ -45,13 +47,30 @@ bool OsmAnd::OnlineMapRasterTileProvidersDB_P::saveTo(const QString& filePath) c
             : QSqlDatabase::database(connectionName);
         sqliteDb.setDatabaseName(dbFilepath);
         ok = sqliteDb.open();
+        if(!ok)
+        {
+            const auto lastError = sqliteDb.lastError();
+            LogPrintf(LogSeverityLevel::Error, "SQL error (%d) %s: %s",
+                lastError.number(),
+                qPrintable(lastError.driverText()),
+                qPrintable(lastError.databaseText()));
+        }
+
         while(ok)
         {
+            sqliteDb.transaction();
             QSqlQuery q(sqliteDb);
 
             ok = q.exec("DROP TABLE IF EXISTS providers");
             if(!ok)
+            {
+                const auto lastError = q.lastError();
+                LogPrintf(LogSeverityLevel::Error, "SQL error (%d) %s: %s",
+                    lastError.number(),
+                    qPrintable(lastError.driverText()),
+                    qPrintable(lastError.databaseText()));
                 break;
+            }
 
             ok = q.exec(
                 "CREATE TABLE providers ("
@@ -65,16 +84,26 @@ bool OsmAnd::OnlineMapRasterTileProvidersDB_P::saveTo(const QString& filePath) c
                 "    alphaChannelData INTEGER"
                 ")");
             if(!ok)
+            {
+                const auto lastError = q.lastError();
+                LogPrintf(LogSeverityLevel::Error, "SQL error (%d) %s: %s",
+                    lastError.number(),
+                    qPrintable(lastError.driverText()),
+                    qPrintable(lastError.databaseText()));
                 break;
-
-            ok = sqliteDb.commit();
-            if(!ok)
-                break;
+            }
 
             QSqlQuery insertEntryQuery(sqliteDb);
             ok = insertEntryQuery.prepare("INSERT INTO providers (id, name, urlPattern, minZoom, maxZoom, maxConcurrentDownloads, tileSize, alphaChannelData) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )");
             if(!ok)
+            {
+                const auto lastError = insertEntryQuery.lastError();
+                LogPrintf(LogSeverityLevel::Error, "SQL error (%d) %s: %s",
+                    lastError.number(),
+                    qPrintable(lastError.driverText()),
+                    qPrintable(lastError.databaseText()));
                 break;
+            }
 
             for(const auto& entry : constOf(_entries))
             {
@@ -100,10 +129,26 @@ bool OsmAnd::OnlineMapRasterTileProvidersDB_P::saveTo(const QString& filePath) c
 
                 ok = insertEntryQuery.exec();
                 if(!ok)
+                {
+                    const auto lastError = insertEntryQuery.lastError();
+                    LogPrintf(LogSeverityLevel::Error, "SQL error (%d) %s: %s",
+                        lastError.number(),
+                        qPrintable(lastError.driverText()),
+                        qPrintable(lastError.databaseText()));
                     break;
+                }
             }
-            if(ok)
-                ok = sqliteDb.commit();;
+
+            ok = sqliteDb.commit();
+            if(!ok)
+            {
+                const auto lastError = sqliteDb.lastError();
+                LogPrintf(LogSeverityLevel::Error, "SQL error (%d) %s: %s",
+                    lastError.number(),
+                    qPrintable(lastError.driverText()),
+                    qPrintable(lastError.databaseText()));
+                break;
+            }
 
             sqliteDb.close();
             break;
@@ -170,11 +215,30 @@ std::shared_ptr<OsmAnd::OnlineMapRasterTileProvidersDB> OsmAnd::OnlineMapRasterT
             : QSqlDatabase::database(connectionName);
         sqliteDb.setDatabaseName(dbFilepath);
         ok = sqliteDb.open();
+        if(!ok)
+        {
+            const auto lastError = sqliteDb.lastError();
+            LogPrintf(LogSeverityLevel::Error, "SQL error %d: %s (%s), (%s)",
+                lastError.number(),
+                qPrintable(lastError.text()),
+                qPrintable(lastError.driverText()),
+                qPrintable(lastError.databaseText()));
+        }
         while(ok)
         {
             QSqlQuery q(sqliteDb);
 
             ok = q.exec("SELECT * FROM providers");
+            if(!ok)
+            {
+                const auto lastError = q.lastError();
+                LogPrintf(LogSeverityLevel::Error, "SQL error %d: %s (%s), (%s)",
+                    lastError.number(),
+                    qPrintable(lastError.text()),
+                    qPrintable(lastError.driverText()),
+                    qPrintable(lastError.databaseText()));
+                break;
+            }
             while(ok && q.next())
             {
                 OnlineMapRasterTileProvidersDB::Entry entry;
