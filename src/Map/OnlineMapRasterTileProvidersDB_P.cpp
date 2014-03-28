@@ -110,7 +110,7 @@ bool OsmAnd::OnlineMapRasterTileProvidersDB_P::saveTo(const QString& filePath) c
         }
     }
 
-    sqliteDb.removeDatabase(connectionName);
+    QSqlDatabase::removeDatabase(connectionName);
 
     return ok;
 }
@@ -211,7 +211,7 @@ std::shared_ptr<OsmAnd::OnlineMapRasterTileProvidersDB> OsmAnd::OnlineMapRasterT
         }
     }
 
-    sqliteDb.removeDatabase(connectionName);
+    QSqlDatabase::removeDatabase(connectionName);
 
     if(!ok)
         return std::shared_ptr<OsmAnd::OnlineMapRasterTileProvidersDB>();
