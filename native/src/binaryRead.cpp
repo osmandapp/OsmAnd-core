@@ -1192,7 +1192,8 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 				}
 
 				count++;
-				if ((*r)->contains("natural", "coastline")) {
+				if ((*r)->contains("natural", "coastline") ) {
+					//&& !(*r)->contains("place", "island")
 					if (basemap) {
 						basemapCoastLines.push_back(*r);
 					} else {
