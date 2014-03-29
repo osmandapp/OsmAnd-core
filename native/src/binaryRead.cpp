@@ -552,6 +552,7 @@ bool acceptTypes(SearchQuery* req, std::vector<tag_value>& types, MapIndex* root
 		}
 		r->setStringFilter(r->props()->R_TAG, type->first);
 		r->setStringFilter(r->props()->R_VALUE, type->second);
+		r->setStringFilter(r->props()->R_NAME_TAG, "");
 		if (r->search(RenderingRulesStorage::TEXT_RULES, false)) {
 			return true;
 		}
@@ -666,11 +667,11 @@ MapDataObject* readMapDataObject(CodedInputStream* input, MapTreeBounds* tree, S
 				WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_INT32>(input, &x);
 				if (root->decodingRules.find(x) != root->decodingRules.end()) {
 					tag_value t = root->decodingRules[x];
-					types.push_back(t);
+					types.push_back(t);		
 				}
 			}
 			input->PopLimit(old);
-			bool acceptTps = acceptTypes(req, types, root);
+			bool acceptTps = acceptTypes(req, types, root);	
 			if (!acceptTps) {
 				return NULL;
 			}
@@ -696,7 +697,7 @@ MapDataObject* readMapDataObject(CodedInputStream* input, MapTreeBounds* tree, S
 			if (WireFormatLite::GetTagWireType(t) == WireFormatLite::WIRETYPE_END_GROUP) {
 				return NULL;
 			}
-			if (!skipUnknownFields(input, t)) {
+			if (!skipUnknownFields(input, t)) {				
 				return NULL;
 			}
 			break;
@@ -1173,13 +1174,13 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 			std::vector<MapDataObject*>::iterator r = q->publisher->result.begin();
 			tempResult.reserve((size_t) (q->publisher->result.size() + tempResult.size()));
 
-			for (; r != q->publisher->result.end(); r++) {
+			for (; r != q->publisher->result.end(); r++) {				
 				if (skipDuplicates && (*r)->id > 0) {
 					if (ids.find((*r)->id) != ids.end()) {
 						continue;
 					}
 					ids.insert((*r)->id);
-				}
+				}				
 				if(basemap) {
 					if(renderedState % 2 == 0 && checkObjectBounds(q, *r)) {
 						renderedState |= 1;

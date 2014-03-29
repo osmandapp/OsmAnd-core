@@ -368,7 +368,13 @@ void RenderingRule::printDebugRenderingRule(string indent, RenderingRulesStorage
 	}
 	vector<RenderingRule*>::iterator it = ifElseChildren.begin();
 	for (; it != ifElseChildren.end(); it++) {
-		(*it)->printDebugRenderingRule(indent, st);
+		string cindent = indent + "  + ";
+		(*it)->printDebugRenderingRule(cindent, st);
+	}
+	it = ifChildren.begin();
+	for (; it != ifChildren.end(); it++) {
+		string cindent = indent + "  o  ";
+		(*it)->printDebugRenderingRule(cindent, st);
 	}
 }
 void RenderingRulesStorage::printDebug(int state) {
