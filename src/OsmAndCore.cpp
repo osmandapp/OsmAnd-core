@@ -1,8 +1,9 @@
 #include "OsmAndCore.h"
 
+#include "stdlib_common.h"
 #include <memory>
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 #include <QCoreApplication>
 #include <QThread>
 #include <QMutex>
@@ -14,6 +15,7 @@
 
 #include "Common.h"
 #include "Logging.h"
+#include "DefaultLogSink.h"
 #include "OsmAndCore_private.h"
 #include "ExplicitReferences.h"
 #include "QMainThreadTaskHost.h"
@@ -22,8 +24,8 @@
 
 namespace OsmAnd
 {
-    void initializeGlobal();
-    void releaseGlobal();
+    void initializeInAppThread();
+    void releaseInAppThread();
     std::shared_ptr<QObject> gMainThreadTaskHost;
 }
 
@@ -37,13 +39,13 @@ class QCoreApplicationThread : public QThread
     void run()
     {
         _qCoreApplication.reset(new QCoreApplication(_dummyArgc, const_cast<char**>(&_dummyArgs[0])));
-        OsmAnd::initializeGlobal();
+        OsmAnd::initializeInAppThread();
         {
             QMutexLocker scopedLocker(&_qCoreApplicationThreadMutex);
             _qCoreApplicationThreadWaitCondition.wakeAll();
         }
         QCoreApplication::exec();
-        OsmAnd::releaseGlobal();
+        OsmAnd::releaseInAppThread();
         _qCoreApplication.reset();
     }
 };
@@ -51,6 +53,8 @@ std::shared_ptr<QCoreApplicationThread> _qCoreApplicationThread;
 
 OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::InitializeCore()
 {
+    Logger::get()->addLogSink(std::shared_ptr<ILogSink>(new DefaultLogSink()));
+
     InflateExplicitReferences();
 
     if(!QCoreApplication::instance())
@@ -66,27 +70,8 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::InitializeCore()
     }
     else
     {
-        initializeGlobal();
+        initializeInAppThread();
     }
-}
-
-OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::ReleaseCore()
-{
-    if(_qCoreApplicationThread)
-    {
-        QCoreApplication::exit();
-        REPEAT_UNTIL(_qCoreApplicationThread->wait());
-        _qCoreApplicationThread.reset();
-    }
-    else
-    {
-        releaseGlobal();
-    }
-}
-
-void OsmAnd::initializeGlobal()
-{
-    gMainThreadTaskHost.reset(new QMainThreadTaskHost());
 
     // GDAL
     GDALAllRegister();
@@ -101,14 +86,34 @@ void OsmAnd::initializeGlobal()
     (void)QLocale::system(); // This will initialize system locale, since it fails to initialize concurrently
 }
 
-void OsmAnd::releaseGlobal()
+OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::ReleaseCore()
 {
-    StopSavingLogs();
-
-    gMainThreadTaskHost.reset();
+    if(_qCoreApplicationThread)
+    {
+        QCoreApplication::exit();
+        REPEAT_UNTIL(_qCoreApplicationThread->wait());
+        _qCoreApplicationThread.reset();
+    }
+    else
+    {
+        releaseInAppThread();
+    }
 
     // ICU
     ICU::release();
+
+    Logger::get()->flush();
+    Logger::get()->removeAllLogSinks();
+}
+
+void OsmAnd::initializeInAppThread()
+{
+    gMainThreadTaskHost.reset(new QMainThreadTaskHost());
+}
+
+void OsmAnd::releaseInAppThread()
+{
+    gMainThreadTaskHost.reset();
 }
 
 #if defined(OSMAND_TARGET_OS_android)

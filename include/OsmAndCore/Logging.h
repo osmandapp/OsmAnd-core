@@ -1,7 +1,13 @@
 #ifndef _OSMAND_CORE_LOGGING_H_
 #define _OSMAND_CORE_LOGGING_H_
 
+#include <OsmAndCore/stdlib_common.h>
+#include <cstdarg>
+
 #include <OsmAndCore/QtExtensions.h>
+#include <QSet>
+#include <QReadWriteLock>
+#include <QMutex>
 #include <QIODevice>
 
 #include <OsmAndCore.h>
@@ -16,11 +22,44 @@ namespace OsmAnd
         Info
     };
 
-    OSMAND_CORE_API void OSMAND_CORE_CALL LogPrintf(LogSeverityLevel level, const char* format, ...);
-    OSMAND_CORE_API void OSMAND_CORE_CALL LogFlush();
+    class ILogSink;
 
-    OSMAND_CORE_API void OSMAND_CORE_CALL SaveLogsTo(const std::shared_ptr<QIODevice>& outputDevice, const bool autoClose = false);
-    OSMAND_CORE_API void OSMAND_CORE_CALL StopSavingLogs();
+    class OSMAND_CORE_API Logger Q_DECL_FINAL
+    {
+        Q_DISABLE_COPY(Logger);
+    private:
+        Logger();
+    protected:
+        mutable QReadWriteLock _sinksLock;
+        QSet< std::shared_ptr<ILogSink> > _sinks;
+        mutable QMutex _logMutex;
+    public:
+        virtual ~Logger();
+
+        QSet< std::shared_ptr<ILogSink> > getCurrentLogSinks() const;
+        void addLogSink(const std::shared_ptr<ILogSink>& logSink);
+        void removeLogSink(const std::shared_ptr<ILogSink>& logSink);
+        void removeAllLogSinks();
+
+        void log(const LogSeverityLevel level, const char* format, va_list args);
+        void log(const LogSeverityLevel level, const char* format, ...);
+        void flush();
+
+        static const std::shared_ptr<Logger>& get();
+    };
+
+    inline void LogPrintf(LogSeverityLevel level, const char* format, ...)
+    {
+        va_list args;
+        va_start(args, format);
+        Logger::get()->log(level, format, args);
+        va_end(args);
+    }
+
+    inline void LogFlush()
+    {
+        Logger::get()->flush();
+    }
 }
 
 #endif // !defined(_OSMAND_CORE_LOGGING_H_)
