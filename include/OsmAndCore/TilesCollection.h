@@ -120,10 +120,8 @@ namespace OsmAnd
         {
             QWriteLocker scopedLocker(&_collectionLock);
 
-            for(int zoom = ZoomLevel::MinZoomLevel; zoom != ZoomLevel::MaxZoomLevel; zoom++)
+            for(auto& zoomLevel : _zoomLevels)
             {
-                auto& zoomLevel = _zoomLevels[zoom];
-
                 for(const auto& entry : constOf(zoomLevel))
                     entry->unlink();
 
@@ -169,17 +167,30 @@ namespace OsmAnd
             }
         }
 
+        virtual void forAllExecute(std::function<void (const std::shared_ptr<ENTRY>& entry, bool& cancel)> action) const
+        {
+            QReadLocker scopedLock(&_collectionLock);
+
+            bool doCancel = false;
+            for(const auto& zoomLevel : constOf(_zoomLevels))
+            {
+                for(const auto& entry : constOf(zoomLevel))
+                {
+                    action(entry, doCancel);
+
+                    if(doCancel)
+                        return;
+                }
+            }
+        }
+
         virtual unsigned int getEntriesCount() const
         {
             QReadLocker scopedLocker(&_collectionLock);
 
             unsigned int count = 0;
-            for(int zoom = ZoomLevel::MinZoomLevel; zoom != ZoomLevel::MaxZoomLevel; zoom++)
-            {
-                auto& zoomLevel = _zoomLevels[zoom];
-
+            for(const auto& zoomLevel : constOf(_zoomLevels))
                 count += zoomLevel.size();
-            }
 
             return count;
         }
