@@ -586,6 +586,9 @@ bool OsmAnd::MapRenderer::doReleaseRendering()
 
 bool OsmAnd::MapRenderer::postReleaseRendering()
 {
+    // Release resources (to let all resources be released)
+    _resources.reset();
+
     // Stop GPU worker if it exists
     if(_gpuWorkerThread)
     {
@@ -604,9 +607,6 @@ bool OsmAnd::MapRenderer::postReleaseRendering()
         // And destroy thread object
         _gpuWorkerThread.reset();
     }
-
-    // Release resources
-    _resources.reset();
 
     _isRenderingInitialized = false;
 

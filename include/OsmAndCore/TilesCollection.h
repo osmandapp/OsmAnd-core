@@ -169,6 +169,21 @@ namespace OsmAnd
             }
         }
 
+        virtual unsigned int getEntriesCount() const
+        {
+            QReadLocker scopedLocker(&_collectionLock);
+
+            unsigned int count = 0;
+            for(int zoom = ZoomLevel::MinZoomLevel; zoom != ZoomLevel::MaxZoomLevel; zoom++)
+            {
+                auto& zoomLevel = _zoomLevels[zoom];
+
+                count += zoomLevel.size();
+            }
+
+            return count;
+        }
+
     friend class OsmAnd::TilesCollectionEntry<ENTRY>;
     };
 
