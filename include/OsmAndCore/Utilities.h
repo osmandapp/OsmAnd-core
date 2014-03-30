@@ -61,8 +61,6 @@ namespace OsmAnd
         TileId normalizeTileId(const TileId input, const ZoomLevel zoom);
         PointI normalizeCoordinates(const PointI& input, const ZoomLevel zoom);
         PointI normalizeCoordinates(const PointI64& input, const ZoomLevel zoom);
-        int qAbsCeil(qreal v);
-        int qAbsFloor(qreal v);
         enum class CHCode : uint8_t
         {
             Inside = 0, // 0000
@@ -539,15 +537,6 @@ namespace OsmAnd
             assert(output.y >= 0 && output.y < tilesCount);
 
             return PointI(static_cast<int32_t>(output.x), static_cast<int32_t>(output.y));
-        }
-
-        inline int qAbsCeil(qreal v)
-        {
-            return v > 0 ? qCeil(v) : qFloor(v);
-        }
-        inline int qAbsFloor(qreal v)
-        {
-            return v > 0 ? qFloor(v) : qCeil(v);
         }
 
         inline uint8_t computeCohenSutherlandCode(const PointI& p, const AreaI& box)
