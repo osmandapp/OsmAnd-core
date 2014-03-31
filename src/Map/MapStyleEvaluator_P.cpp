@@ -121,6 +121,10 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
                     evaluationResult = false;
             }
         }
+        else if(valueDef->id == _builtinValueDefs->id_INPUT_TEST)
+        {
+            evaluationResult = (inputValue.asInt == 1);
+        }
         else if(valueDef->dataType == MapStyleValueDataType::Float)
         {
             const auto lvalue = ruleValue.isComplex ? ruleValue.asComplex.asFloat.evaluate(owner->displayDensityFactor) : ruleValue.asSimple.asFloat;

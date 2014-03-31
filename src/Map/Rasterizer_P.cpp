@@ -928,6 +928,8 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
     QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols)
 {
     const auto& mapObject = primitive->mapObject;
+    if(mapObject->names.isEmpty())
+        return;
     const auto& encDecRules = mapObject->section->encodingDecodingRules;
     const auto typeRuleId = mapObject->_typesRuleIds[primitive->typeRuleIdIndex];
     const auto& decodedType = encDecRules->decodingRules[typeRuleId];
