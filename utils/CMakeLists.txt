@@ -1,5 +1,7 @@
 project(OsmAndCoreUtils)
 
+# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 1
+
 file(GLOB_RECURSE sources "*.c*")
 file(GLOB_RECURSE headers "*.h*")
 
