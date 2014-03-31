@@ -26,7 +26,10 @@ namespace OsmAnd
         const std::unique_ptr<RasterizerEnvironment_P> _d;
     protected:
     public:
-        RasterizerEnvironment(const std::shared_ptr<const MapStyle>& style, const float displayDensityFactor, const std::shared_ptr<const IExternalResourcesProvider>& externalResourcesProvider = nullptr);
+        RasterizerEnvironment(
+            const std::shared_ptr<const MapStyle>& style,
+            const float displayDensityFactor,
+            const std::shared_ptr<const IExternalResourcesProvider>& externalResourcesProvider = nullptr);
         virtual ~RasterizerEnvironment();
 
         const std::shared_ptr<const MapStyle> style;
@@ -41,7 +44,6 @@ namespace OsmAnd
 
     friend class OsmAnd::Rasterizer;
     };
-
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_RASTERIZER_ENVIRONMENT_H_)

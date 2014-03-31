@@ -1,9 +1,9 @@
 #ifndef _OSMAND_CORE_RASTERIZER_ENVIRONMENT_P_H_
 #define _OSMAND_CORE_RASTERIZER_ENVIRONMENT_P_H_
 
-#include <OsmAndCore/stdlib_common.h>
+#include "stdlib_common.h"
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 #include <QMap>
 #include <QVector>
 #include <QHash>
@@ -11,18 +11,18 @@
 
 #include <SkPaint.h>
 
-#include <OsmAndCore.h>
-#include <OsmAndCore/Map/MapStyle.h>
-#include <OsmAndCore/Map/MapStyleRule.h>
-#include <OsmAndCore/Map/Rasterizer.h>
-#include <OsmAndCore/CommonTypes.h>
+#include "OsmAndCore.h"
+#include "CommonTypes.h"
+#include "MapStyle.h"
+#include "MapStyleRule.h"
+#include "Rasterizer.h"
 
 class SkBitmapProcShader;
 class SkPathEffect;
 class SkBitmap;
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class MapStyle;
     class MapStyleEvaluator;
     class MapStyleEvaluator_P;
@@ -121,7 +121,6 @@ namespace OsmAnd {
 
     friend class OsmAnd::RasterizerEnvironment;
     };
-
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_RASTERIZER_ENVIRONMENT_P_H_)

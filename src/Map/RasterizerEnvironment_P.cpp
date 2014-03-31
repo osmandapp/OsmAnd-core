@@ -94,13 +94,15 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
     owner->style->resolveAttribute(QLatin1String("roadDensityZoomTile"), _attributeRule_roadDensityZoomTile);
     owner->style->resolveAttribute(QLatin1String("roadsDensityLimitPerTile"), _attributeRule_roadsDensityLimitPerTile);
 
+    const auto intervalW = 0.5f*owner->displayDensityFactor + 0.5f; // 0.5dp + 0.5px
+
     {
         const float intervals_oneway[4][4] =
         {
-            {0, 12, 10, 152},
-            {0, 12, 9, 153},
-            {0, 18, 2, 154},
-            {0, 18, 1, 155}
+            { 0, 12, 10 * intervalW, 152 },
+            { 0, 12, 9 * intervalW, 152 + intervalW },
+            { 0, 12 + 6 * intervalW, 2 * intervalW, 152 + 2 * intervalW },
+            { 0, 12 + 6 * intervalW, 1 * intervalW, 152 + 3 * intervalW }
         };
         SkPathEffect* arrowDashEffect1 = new SkDashPathEffect(intervals_oneway[0], 4, 0);
         SkPathEffect* arrowDashEffect2 = new SkDashPathEffect(intervals_oneway[1], 4, 1);
@@ -110,7 +112,7 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
         {
             SkPaint paint;
             initializeOneWayPaint(paint);
-            paint.setStrokeWidth(1.0f);
+            paint.setStrokeWidth(1.0f * intervalW);
             paint.setPathEffect(arrowDashEffect1)->unref();
             _oneWayPaints.push_back(qMove(paint));
         }
@@ -118,7 +120,7 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
         {
             SkPaint paint;
             initializeOneWayPaint(paint);
-            paint.setStrokeWidth(2.0f);
+            paint.setStrokeWidth(2.0f * intervalW);
             paint.setPathEffect(arrowDashEffect2)->unref();
             _oneWayPaints.push_back(qMove(paint));
         }
@@ -126,7 +128,7 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
         {
             SkPaint paint;
             initializeOneWayPaint(paint);
-            paint.setStrokeWidth(3.0f);
+            paint.setStrokeWidth(3.0f * intervalW);
             paint.setPathEffect(arrowDashEffect3)->unref();
             _oneWayPaints.push_back(qMove(paint));
         }
@@ -134,7 +136,7 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
         {
             SkPaint paint;
             initializeOneWayPaint(paint);
-            paint.setStrokeWidth(4.0f);
+            paint.setStrokeWidth(4.0f * intervalW);
             paint.setPathEffect(arrowDashEffect4)->unref();
             _oneWayPaints.push_back(qMove(paint));
         }
@@ -143,10 +145,10 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
     {
         const float intervals_reverse[4][4] =
         {
-            {0, 12, 10, 152},
-            {0, 13, 9, 152},
-            {0, 14, 2, 158},
-            {0, 15, 1, 158}
+            { 0, 12, 10 * intervalW, 152 },
+            { 0, 12 + 1 * intervalW, 9 * intervalW, 152 },
+            { 0, 12 + 2 * intervalW, 2 * intervalW, 152 + 6 * intervalW },
+            { 0, 12 + 3 * intervalW, 1 * intervalW, 152 + 6 * intervalW }
         };
         SkPathEffect* arrowDashEffect1 = new SkDashPathEffect(intervals_reverse[0], 4, 0);
         SkPathEffect* arrowDashEffect2 = new SkDashPathEffect(intervals_reverse[1], 4, 1);
@@ -156,7 +158,7 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
         {
             SkPaint paint;
             initializeOneWayPaint(paint);
-            paint.setStrokeWidth(1.0f);
+            paint.setStrokeWidth(1.0f * intervalW);
             paint.setPathEffect(arrowDashEffect1)->unref();
             _reverseOneWayPaints.push_back(qMove(paint));
         }
@@ -164,7 +166,7 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
         {
             SkPaint paint;
             initializeOneWayPaint(paint);
-            paint.setStrokeWidth(2.0f);
+            paint.setStrokeWidth(2.0f * intervalW);
             paint.setPathEffect(arrowDashEffect2)->unref();
             _reverseOneWayPaints.push_back(qMove(paint));
         }
@@ -172,7 +174,7 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
         {
             SkPaint paint;
             initializeOneWayPaint(paint);
-            paint.setStrokeWidth(3.0f);
+            paint.setStrokeWidth(3.0f * intervalW);
             paint.setPathEffect(arrowDashEffect3)->unref();
             _reverseOneWayPaints.push_back(qMove(paint));
         }
@@ -180,7 +182,7 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
         {
             SkPaint paint;
             initializeOneWayPaint(paint);
-            paint.setStrokeWidth(4.0f);
+            paint.setStrokeWidth(4.0f * intervalW);
             paint.setPathEffect(arrowDashEffect4)->unref();
             _reverseOneWayPaints.push_back(qMove(paint));
         }
@@ -301,7 +303,23 @@ bool OsmAnd::RasterizerEnvironment_P::obtainPathEffect( const QString& encodedPa
         const auto intervals = new SkScalar[strIntervals.size()];
         auto pInterval = intervals;
         for(const auto& strInterval : constOf(strIntervals))
-            *(pInterval++) = strInterval.toFloat();
+        {
+            float computedValue = 0.0f;
+
+            if(!strInterval.contains(':'))
+            {
+                computedValue = strInterval.toFloat()*owner->displayDensityFactor;
+            }
+            else
+            {
+                // 'dip:px' format
+                const auto& complexValue = strInterval.split(':', QString::KeepEmptyParts);
+
+                computedValue = complexValue[0].toFloat()*owner->displayDensityFactor + complexValue[1].toFloat();
+            }
+
+            *(pInterval++) = computedValue;
+        }
 
         SkPathEffect* pathEffect = new SkDashPathEffect(intervals, strIntervals.size(), 0);
         delete[] intervals;

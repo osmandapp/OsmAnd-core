@@ -4,7 +4,10 @@
 #include "MapStyleValue.h"
 #include "IExternalResourcesProvider.h"
 
-OsmAnd::RasterizerEnvironment::RasterizerEnvironment( const std::shared_ptr<const MapStyle>& style_, const float displayDensityFactor_, const std::shared_ptr<const IExternalResourcesProvider>& externalResourcesProvider_ /*= nullptr*/ )
+OsmAnd::RasterizerEnvironment::RasterizerEnvironment(
+    const std::shared_ptr<const MapStyle>& style_,
+    const float displayDensityFactor_,
+    const std::shared_ptr<const IExternalResourcesProvider>& externalResourcesProvider_ /*= nullptr*/ )
     : _d(new RasterizerEnvironment_P(this))
     , style(style_)
     , displayDensityFactor(displayDensityFactor_)
