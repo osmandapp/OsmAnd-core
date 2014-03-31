@@ -1,9 +1,10 @@
 #include "OfflineMapRasterTileProvider_Software_P.h"
 #include "OfflineMapRasterTileProvider_Software.h"
 
+//#define OSMAND_PERFORMANCE_METRICS 2
 #if !defined(OSMAND_PERFORMANCE_METRICS)
 #   define OSMAND_PERFORMANCE_METRICS 0
-#endif
+#endif // !defined(OSMAND_PERFORMANCE_METRICS)
 
 #include <cassert>
 #if OSMAND_PERFORMANCE_METRICS

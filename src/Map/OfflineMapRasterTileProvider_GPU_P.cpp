@@ -1,9 +1,10 @@
 #include "OfflineMapRasterTileProvider_GPU_P.h"
 #include "OfflineMapRasterTileProvider_GPU.h"
 
+//#define OSMAND_PERFORMANCE_METRICS 2
 #if !defined(OSMAND_PERFORMANCE_METRICS)
 #   define OSMAND_PERFORMANCE_METRICS 0
-#endif
+#endif // !defined(OSMAND_PERFORMANCE_METRICS)
 
 #include <cassert>
 #if OSMAND_PERFORMANCE_METRICS
