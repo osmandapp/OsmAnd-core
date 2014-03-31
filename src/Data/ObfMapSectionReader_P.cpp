@@ -200,7 +200,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapLevelTreeNodes(
             return;
         case OBF::OsmAndMapIndex_MapRootLevel::kBoxesFieldNumber:
             {
-                                                                    const auto length = ObfReaderUtilities::readBigEndianInt(cis);
+                const auto length = ObfReaderUtilities::readBigEndianInt(cis);
                 const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
                 

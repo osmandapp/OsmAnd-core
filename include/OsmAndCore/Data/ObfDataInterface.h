@@ -12,21 +12,23 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/MapTypes.h>
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     // Forward declarations
     class ObfsCollection;
     class ObfsCollection_P;
     class ObfReader;
     class ObfFile;
     class ObfMapSectionInfo;
-    namespace Model {
+    namespace Model
+    {
         class MapObject;
-    } // namespace Model
+    }
     class IQueryController;
-    namespace ObfMapSectionReader_Metrics {
+    namespace ObfMapSectionReader_Metrics
+    {
         struct Metric_loadMapObjects;
-    } // namespace ObfMapSectionReader_Metrics
+    }
 
     class ObfDataInterface_P;
     class OSMAND_CORE_API ObfDataInterface
@@ -49,7 +51,6 @@ namespace OsmAnd {
     friend class OsmAnd::ObfsCollection;
     friend class OsmAnd::ObfsCollection_P;
     };
-
 }
 
 #endif // !defined(_OSMAND_CORE_OBF_DATA_INTERFACE_H_)

@@ -71,6 +71,7 @@ namespace OsmAnd
         };
         uint8_t computeCohenSutherlandCode(const PointI& p, const AreaI& box);
         QSet<ZoomLevel> enumerateZoomLevels(const ZoomLevel from, const ZoomLevel to);
+        QString stringifyZoomLevels(const QSet<ZoomLevel>& zoomLevels);
 
         inline double toRadians(const double angle)
         {
@@ -581,8 +582,53 @@ namespace OsmAnd
             return result;
         }
 
-    } // namespace Utilities
+        inline QString stringifyZoomLevels(const QSet<ZoomLevel>& zoomLevels)
+        {
+            QString result;
 
-} // namespace OsmAnd
+            auto sortedZoomLevels = zoomLevels.values();
+            qSort(sortedZoomLevels.begin(), sortedZoomLevels.end());
+            bool previousCaptured = false;
+            ZoomLevel previousZoomLevel = sortedZoomLevels.first();
+            bool range = false;
+            ZoomLevel rangeStart;
+            for(const auto zoomLevel : sortedZoomLevels)
+            {
+                if(previousCaptured && static_cast<int>(zoomLevel) == static_cast<int>(previousZoomLevel)+1)
+                {
+                    if(!range)
+                        rangeStart = previousZoomLevel;
+                    range = true;
+                    previousZoomLevel = zoomLevel;
+                    previousCaptured = true;
+                }
+                else if(range)
+                {
+                    range = false;
+                    previousZoomLevel = zoomLevel;
+                    previousCaptured = true;
+
+                    result += QString::fromLatin1("%1-%2, %3, ").arg(rangeStart).arg(previousZoomLevel).arg(zoomLevel);
+                }
+                else
+                {
+                    previousZoomLevel = zoomLevel;
+                    previousCaptured = true;
+
+                    result += QString::fromLatin1("%1, ").arg(zoomLevel);
+                }
+            }
+
+            // Process last range
+            if(range)
+                result += QString::fromLatin1("%1-%2, ").arg(rangeStart).arg(sortedZoomLevels.last());
+
+            if(result.length() > 2)
+                result.truncate(result.length() - 2);
+
+            return result;
+        }
+    }
+}
 
 #endif // !defined(_OSMAND_CORE_UTILITIES_H_)

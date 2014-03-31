@@ -13,6 +13,13 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/SharedResourcesContainer.h>
+#include <OsmAndCore/Logging.h>
+#include <OsmAndCore/Utilities.h>
+
+#define OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE 0
+#ifndef OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
+#   define OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE 0
+#endif // !defined(OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE)
 
 namespace OsmAnd
 {
@@ -82,6 +89,14 @@ namespace OsmAnd
         {
             QWriteLocker scopedLocker(&this->_lock);
 
+#if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
+            LogPrintf(LogSeverityLevel::Debug, "SharedByZoomResourcesContainer(0x%p)->insert(%s, [%s], 0x%p)",
+                this,
+                qPrintable(QString::fromLatin1("%1").arg(key)),
+                qPrintable(Utilities::stringifyZoomLevels(levels)),
+                resourcePtr.get());
+#endif
+
             const AvailableResourceEntryPtr newEntryPtr(new AvailableResourceEntry(0, qMove(resourcePtr), levels));
 #ifndef Q_COMPILER_RVALUE_REFS
             resourcePtr.reset();
@@ -107,6 +122,14 @@ namespace OsmAnd
         {
             QWriteLocker scopedLocker(&this->_lock);
 
+#if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
+            LogPrintf(LogSeverityLevel::Debug, "SharedByZoomResourcesContainer(0x%p)->insert(%s, [%s], 0x%p)",
+                this,
+                qPrintable(QString::fromLatin1("%1").arg(key)),
+                qPrintable(Utilities::stringifyZoomLevels(levels)),
+                resourcePtr.get());
+#endif
+
             const AvailableResourceEntryPtr newEntryPtr(new AvailableResourceEntry(0, qMove(resourcePtr), levels));
             assert(resourcePtr.use_count() == 0);
 
@@ -128,6 +151,14 @@ namespace OsmAnd
         {
             QWriteLocker scopedLocker(&this->_lock);
 
+#if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
+            LogPrintf(LogSeverityLevel::Debug, "SharedByZoomResourcesContainer(0x%p)->insertAndReference(%s, [%s], 0x%p)",
+                this,
+                qPrintable(QString::fromLatin1("%1").arg(key)),
+                qPrintable(Utilities::stringifyZoomLevels(levels)),
+                resourcePtr.get());
+#endif
+
             const AvailableResourceEntryPtr newEntryPtr(new AvailableResourceEntry(1, resourcePtr, levels));
 
             for(const auto& level : constOf(levels))
@@ -146,6 +177,13 @@ namespace OsmAnd
         bool obtainReference(const KEY_TYPE& key, const ZoomLevel level, ResourcePtr& outResourcePtr)
         {
             QWriteLocker scopedLocker(&this->_lock);
+
+#if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
+            LogPrintf(LogSeverityLevel::Debug, "SharedByZoomResourcesContainer(0x%p)->obtainReference(%s, [%d],...)",
+                this,
+                qPrintable(QString::fromLatin1("%1").arg(key)),
+                level);
+#endif
 
             // In case resource was promised, wait forever until promise is fulfilled
             const auto& itPromisedResourceEntry = _promisedResources[level].constFind(key);
@@ -180,6 +218,14 @@ namespace OsmAnd
         bool releaseReference(const KEY_TYPE& key, const ZoomLevel level, ResourcePtr& resourcePtr, const bool autoClean = true, bool* outWasCleaned = nullptr, uintmax_t* outRemainingReferences = nullptr)
         {
             QWriteLocker scopedLocker(&this->_lock);
+
+#if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
+            LogPrintf(LogSeverityLevel::Debug, "SharedByZoomResourcesContainer(0x%p)->releaseReference(%s, [%d], 0x%p, ...)",
+                this,
+                qPrintable(QString::fromLatin1("%1").arg(key)),
+                level,
+                resourcePtr.get());
+#endif
 
             // Resource must not be promised. Otherwise behavior is undefined
             assert(!_promisedResources[level].contains(key));
@@ -222,6 +268,13 @@ namespace OsmAnd
         {
             QWriteLocker scopedLocker(&this->_lock);
 
+#if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
+            LogPrintf(LogSeverityLevel::Debug, "SharedByZoomResourcesContainer(0x%p)->makePromise(%s, [%s])",
+                this,
+                qPrintable(QString::fromLatin1("%1").arg(key)),
+                qPrintable(Utilities::stringifyZoomLevels(levels)));
+#endif
+
             const PromisedResourceEntryPtr newEntryPtr(new PromisedResourceEntry(levels));
 
             for(const auto& level : constOf(levels))
@@ -240,6 +293,13 @@ namespace OsmAnd
         void breakPromise(const KEY_TYPE& key, const QSet<ZoomLevel>& levels)
         {
             QWriteLocker scopedLocker(&this->_lock);
+
+#if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
+            LogPrintf(LogSeverityLevel::Debug, "SharedByZoomResourcesContainer(0x%p)->breakPromise(%s, [%s])",
+                this,
+                qPrintable(QString::fromLatin1("%1").arg(key)),
+                qPrintable(Utilities::stringifyZoomLevels(levels)));
+#endif
 
             PromisedResourceEntryPtr promisedEntryPtr;
             for(const auto& level : constOf(levels))
@@ -263,6 +323,14 @@ namespace OsmAnd
         void fulfilPromise(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, ResourcePtr& resourcePtr)
         {
             QWriteLocker scopedLocker(&this->_lock);
+
+#if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
+            LogPrintf(LogSeverityLevel::Debug, "SharedByZoomResourcesContainer(0x%p)->fulfilPromise(%s, [%s], 0x%p)",
+                this,
+                qPrintable(QString::fromLatin1("%1").arg(key)),
+                qPrintable(Utilities::stringifyZoomLevels(levels)),
+                resourcePtr.get());
+#endif
 
             PromisedResourceEntryPtr promisedEntryPtr;
             for(const auto& level : constOf(levels))
@@ -309,6 +377,14 @@ namespace OsmAnd
         {
             QWriteLocker scopedLocker(&this->_lock);
 
+#if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
+            LogPrintf(LogSeverityLevel::Debug, "SharedByZoomResourcesContainer(0x%p)->fulfilPromise(%s, [%s], 0x%p)",
+                this,
+                qPrintable(QString::fromLatin1("%1").arg(key)),
+                qPrintable(Utilities::stringifyZoomLevels(levels)),
+                resourcePtr.get());
+#endif
+
             PromisedResourceEntryPtr promisedEntryPtr;
             for(const auto& level : constOf(levels))
             {
@@ -350,6 +426,14 @@ namespace OsmAnd
         {
             QWriteLocker scopedLocker(&this->_lock);
 
+#if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
+            LogPrintf(LogSeverityLevel::Debug, "SharedByZoomResourcesContainer(0x%p)->fulfilPromiseAndReference(%s, [%s], 0x%p)",
+                this,
+                qPrintable(QString::fromLatin1("%1").arg(key)),
+                qPrintable(Utilities::stringifyZoomLevels(levels)),
+                resourcePtr.get());
+#endif
+
             PromisedResourceEntryPtr promisedEntryPtr;
             for(const auto& level : constOf(levels))
             {
@@ -386,6 +470,13 @@ namespace OsmAnd
         {
             QWriteLocker scopedLocker(&this->_lock);
 
+#if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
+            LogPrintf(LogSeverityLevel::Debug, "SharedByZoomResourcesContainer(0x%p)->obtainFutureReference(%s, [%d], ...)",
+                this,
+                qPrintable(QString::fromLatin1("%1").arg(key)),
+                level);
+#endif
+
             // Resource must not be already available.
             // Otherwise behavior is undefined
             assert(!_availableResources[level].contains(key));
@@ -404,6 +495,13 @@ namespace OsmAnd
         bool releaseFutureReference(const KEY_TYPE& key, const ZoomLevel level)
         {
             QWriteLocker scopedLocker(&this->_lock);
+
+#if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
+            LogPrintf(LogSeverityLevel::Debug, "SharedByZoomResourcesContainer(0x%p)->releaseFutureReference(%s, [%d])",
+                this,
+                qPrintable(QString::fromLatin1("%1").arg(key)),
+                level);
+#endif
 
             // Resource must not be already available.
             // Otherwise behavior is undefined
@@ -424,6 +522,14 @@ namespace OsmAnd
         {
             QWriteLocker scopedLocker(&this->_lock);
 
+#if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
+            LogPrintf(LogSeverityLevel::Debug, "SharedByZoomResourcesContainer(0x%p)->obtainReferenceOrFutureReferenceOrMakePromise(%s, [%d], [%s], ...)",
+                this,
+                qPrintable(QString::fromLatin1("%1").arg(key)),
+                level,
+                qPrintable(Utilities::stringifyZoomLevels(levels)));
+#endif
+
             assert(levels.contains(level));
 
             const auto& itAvailableResourceEntry = _availableResources[level].find(key);
@@ -433,6 +539,15 @@ namespace OsmAnd
 
                 availableResourceEntry->refCounter++;
                 outResourcePtr = availableResourceEntry->resourcePtr;
+
+#if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
+                LogPrintf(LogSeverityLevel::Debug, "SharedByZoomResourcesContainer(0x%p)->obtainReferenceOrFutureReferenceOrMakePromise(%s, [%d], [%s], ...) = true, found 0x%p",
+                    this,
+                    qPrintable(QString::fromLatin1("%1").arg(key)),
+                    level,
+                    qPrintable(Utilities::stringifyZoomLevels(levels)),
+                    outResourcePtr.get());
+#endif
 
                 return true;
             }
