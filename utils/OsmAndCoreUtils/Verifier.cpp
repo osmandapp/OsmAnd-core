@@ -143,7 +143,7 @@ void dump(std::ostream &output, const OsmAnd::Verifier::Configuration& cfg)
 
             output << "\tProcessed " << mapObjectIds.size() << " map objects.";
             if(!mapObjectIds.isEmpty())
-                output << "Found " << totalDuplicatesCount << " duplicate(s) :";
+                output << " Found " << totalDuplicatesCount << " duplicate(s) :";
             output << std::endl;
             for(auto itEntry = mapObjectIds.cbegin(); itEntry != mapObjectIds.cend(); ++itEntry)
             {
