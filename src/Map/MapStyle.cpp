@@ -60,19 +60,19 @@ bool OsmAnd::MapStyle::resolveAttribute( const QString& name, std::shared_ptr<co
 
 void OsmAnd::MapStyle::dump( const QString& prefix /*= QString()*/ ) const
 {
-    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sPoint rules:", qPrintable(prefix));
+    LogPrintf(LogSeverityLevel::Debug, "%sPoint rules:", qPrintable(prefix));
     dump(MapStyleRulesetType::Point, prefix);
 
-    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sLine rules:", qPrintable(prefix));
+    LogPrintf(LogSeverityLevel::Debug, "%sLine rules:", qPrintable(prefix));
     dump(MapStyleRulesetType::Polyline, prefix);
 
-    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sPolygon rules:", qPrintable(prefix));
+    LogPrintf(LogSeverityLevel::Debug, "%sPolygon rules:", qPrintable(prefix));
     dump(MapStyleRulesetType::Polygon, prefix);
 
-    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sText rules:", qPrintable(prefix));
+    LogPrintf(LogSeverityLevel::Debug, "%sText rules:", qPrintable(prefix));
     dump(MapStyleRulesetType::Text, prefix);
 
-    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sOrder rules:", qPrintable(prefix));
+    LogPrintf(LogSeverityLevel::Debug, "%sOrder rules:", qPrintable(prefix));
     dump(MapStyleRulesetType::Order, prefix);
 }
 
@@ -86,8 +86,9 @@ void OsmAnd::MapStyle::dump( MapStyleRulesetType type, const QString& prefix /*=
         auto value = _d->getValueString(ruleEntry.key());
         auto rule = ruleEntry.value();
 
-        OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%sRule [%s (%d):%s (%d)]",
+        LogPrintf(LogSeverityLevel::Debug, "%sRule 0x%p [%s (%d):%s (%d)]",
             qPrintable(prefix),
+            rule.get(),
             qPrintable(tag),
             _d->getTagStringId(ruleEntry.key()),
             qPrintable(value),

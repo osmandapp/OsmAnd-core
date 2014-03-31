@@ -263,13 +263,13 @@ void printMapDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
             output << xT("\t\t") << mapObject->id << std::endl;
             if(mapObject->names.count() > 0)
             {
-                output << xT("\t\t\tNames:");
+                output << xT("\t\t\tNames:") << output << std::endl;
                 for(auto itName = mapObject->names.cbegin(); itName != mapObject->names.cend(); ++itName)
-                    output << QStringToStlString(itName.value()) << xT(", ");
-                output << std::endl;
+                {
+                    const auto& rule = mapObject->section->encodingDecodingRules->decodingRules[itName.key()];
+                    output << xT("\t\t\t\t") << QStringToStlString(rule.tag) << xT(" = ") << QStringToStlString(itName.value()) << std::endl;
+                }
             }
-            else
-                output << xT("\t\t\tNames: [none]") << std::endl;
         }
     }
     else

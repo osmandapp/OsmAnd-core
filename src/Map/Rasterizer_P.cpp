@@ -1347,9 +1347,7 @@ bool OsmAnd::Rasterizer_P::updatePaint(
 
     SkColor color;
     ok = evalResult.getIntegerValue(valueDefId_color, color);
-    if(!ok || !color)
-        return false;
-    _mapPaint.setColor(color);
+    _mapPaint.setColor(ok ? color : SK_ColorWHITE);
 
     if (valueSetSelector == PaintValuesSet::Set_0)
     {
@@ -1362,6 +1360,9 @@ bool OsmAnd::Rasterizer_P::updatePaint(
             {
                 _mapPaint.setShader(static_cast<SkShader*>(shaderObj));
                 shaderObj->unref();
+
+                if(_mapPaint.getColor() == SK_ColorTRANSPARENT)
+                    _mapPaint.setColor(SK_ColorWHITE);
             }
         }
     }
