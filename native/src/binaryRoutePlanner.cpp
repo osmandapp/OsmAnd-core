@@ -704,7 +704,10 @@ void RoutingContext::reregisterRouteDataObject(SHARED_PTR<RouteDataObject> o, in
 	uint32_t xloc = (x31) >> (31 -z);
 	uint32_t yloc = (y31) >> (31 -z);
 	int64_t tileId = (xloc << z) + yloc;
-	vector<SHARED_PTR<RoutingSubregionTile> >& subregions = indexedSubregions[tileId];
+    const auto itSubregions = indexedSubregions.find(tileId);
+    if(itSubregions == indexedSubregions.end())
+        return;
+	auto& subregions = itSubregions->second;
 	for(uint j = 0; j < subregions.size(); j++) {
 		if(subregions[j]->isLoaded()) {
 			UNORDERED(map)<int64_t, SHARED_PTR<RouteSegment> >::iterator s = subregions[j]->routes.begin();

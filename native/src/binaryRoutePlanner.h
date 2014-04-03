@@ -341,8 +341,11 @@ struct RoutingContext {
 	}
 
 	void loadHeaderObjects(int64_t tileId) {
-		vector<SHARED_PTR<RoutingSubregionTile> >& subregions = indexedSubregions[tileId];
-		bool gc = false;
+        const auto itSubregions = indexedSubregions.find(tileId);
+        if(itSubregions == indexedSubregions.end())
+            return;
+        auto& subregions = itSubregions->second;
+        bool gc = false;
 		for(uint j = 0; j<subregions.size() && !gc; j++) {
 			if(!subregions[j]->isLoaded()) {
 				gc = true;
@@ -415,7 +418,10 @@ struct RoutingContext {
 				uint32_t yloc = (y31+j*coordinatesShift) >> (31 - z);
 				int64_t tileId = (xloc << z) + yloc;
 				loadHeaders(xloc, yloc);
-				vector<SHARED_PTR<RoutingSubregionTile> >& subregions = indexedSubregions[tileId];
+                const auto itSubregions = indexedSubregions.find(tileId);
+                if(itSubregions == indexedSubregions.end())
+                    continue;
+                auto& subregions = itSubregions->second;
 				for(uint j = 0; j<subregions.size(); j++) {
 					if(subregions[j]->isLoaded()) {
 						UNORDERED(map)<int64_t, SHARED_PTR<RouteSegment> >::iterator s = subregions[j]->routes.begin();
@@ -444,7 +450,10 @@ struct RoutingContext {
 		uint64_t l = (((uint64_t) x31) << 31) + (uint64_t) y31;
 		int64_t tileId = (xloc << z) + yloc;
 		loadHeaders(xloc, yloc);
-		vector<SHARED_PTR<RoutingSubregionTile> >& subregions = indexedSubregions[tileId];
+        const auto itSubregions = indexedSubregions.find(tileId);
+        if(itSubregions == indexedSubregions.end())
+            return SHARED_PTR<RouteSegment>();
+        auto& subregions = itSubregions->second;
 		UNORDERED(map)<int64_t, SHARED_PTR<RouteDataObject> > excludeDuplications;
 		SHARED_PTR<RouteSegment> original;
 		for(uint j = 0; j<subregions.size(); j++) {
