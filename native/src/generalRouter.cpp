@@ -253,7 +253,7 @@ double GeneralRouter::defineRoutingSpeed(SHARED_PTR<RouteDataObject> road) {
 }
 
 double GeneralRouter::defineVehicleSpeed(SHARED_PTR<RouteDataObject> road) {
-	return getObjContext(RouteDataObjectAttribute::ROAD_SPEED) .evaluateDouble(road, getMinDefaultSpeed() * 3.6) / 3.6;
+	return getObjContext(RouteDataObjectAttribute::ROAD_SPEED) .evaluateDouble(road, getMinDefaultSpeed());
 }
 
 double GeneralRouter::defineSpeedPriority(SHARED_PTR<RouteDataObject> road) {
