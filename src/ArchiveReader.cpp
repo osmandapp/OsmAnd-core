@@ -16,9 +16,14 @@ QList<OsmAnd::ArchiveReader::Item> OsmAnd::ArchiveReader::getItems(bool* const o
     return _p->getItems(ok);
 }
 
-bool OsmAnd::ArchiveReader::extractItemTo(const QString& itemName, const QString& destinationPath, const bool keepDirectoryStructure /*= false*/) const
+bool OsmAnd::ArchiveReader::extractItemToDirectory(const QString& itemName, const QString& destinationPath, const bool keepDirectoryStructure /*= false*/) const
 {
-    return _p->extractItemTo(itemName, destinationPath, keepDirectoryStructure);
+    return _p->extractItemToDirectory(itemName, destinationPath, keepDirectoryStructure);
+}
+
+bool OsmAnd::ArchiveReader::extractItemToFile(const QString& itemName, const QString& fileName) const
+{
+    return _p->extractItemToFile(itemName, fileName);
 }
 
 bool OsmAnd::ArchiveReader::extractAllItemsTo(const QString& destinationPath) const

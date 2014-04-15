@@ -43,7 +43,8 @@ namespace OsmAnd
 
         QList<Item> getItems(bool* const ok = nullptr) const;
 
-        bool extractItemTo(const QString& itemName, const QString& destinationPath, const bool keepDirectoryStructure = false) const;
+        bool extractItemToDirectory(const QString& itemName, const QString& destinationPath, const bool keepDirectoryStructure = false) const;
+        bool extractItemToFile(const QString& itemName, const QString& fileName) const;
         bool extractAllItemsTo(const QString& destinationPath) const;
     };
 }

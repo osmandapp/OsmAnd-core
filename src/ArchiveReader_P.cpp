@@ -36,73 +36,25 @@ QList<OsmAnd::ArchiveReader_P::Item> OsmAnd::ArchiveReader_P::getItems(bool* con
     return result;
 }
 
-bool OsmAnd::ArchiveReader_P::extractItemTo(const QString& itemName, const QString& destinationPath, const bool keepDirectoryStructure) const
+bool OsmAnd::ArchiveReader_P::extractItemToDirectory(const QString& itemName, const QString& destinationPath, const bool keepDirectoryStructure) const
+{
+    const auto fileName = QDir(destinationPath).absoluteFilePath(keepDirectoryStructure ? itemName : QFileInfo(itemName).fileName());
+    return extractItemToFile(itemName, fileName);
+}
+
+bool OsmAnd::ArchiveReader_P::extractItemToFile(const QString& itemName, const QString& fileName) const
 {
     return processArchive(owner->fileName, 
-        [itemName, destinationPath, keepDirectoryStructure]
+        [itemName, fileName]
         (archive* archive, archive_entry* entry, bool& doStop) -> bool
         {
             const QString currentItemName(reinterpret_cast<const QChar*>(archive_entry_pathname_w(entry)));
             if(currentItemName != itemName)
                 return true;
             
-            const auto itemSize = archive_entry_size(entry);
-            if(itemSize <= 0)
-                return false;
-
-            const auto targetFilePath = QDir(destinationPath).absoluteFilePath(keepDirectoryStructure ? currentItemName : QFileInfo(currentItemName).fileName());
-            QFile targetFile(targetFilePath);
-            if(!QDir(QFileInfo(targetFilePath).absolutePath()).mkpath("."))
-                return false;
-
-            bool ok;
-            for(;;)
-            {
-                ok = targetFile.open(QIODevice::WriteOnly | QIODevice::Truncate);
-                if(!ok)
-                    break;
-
-                ok = targetFile.resize(itemSize);
-                if(!ok)
-                    break;
-
-                const auto buffer = new uint8_t[BufferSize];
-                for(; ok;)
-                {
-                    const auto bytesRead = archive_read_data(archive, buffer, BufferSize);
-                    if(bytesRead <= 0)
-                    {
-                        ok = (bytesRead == 0);
-                        break;
-                    }
-
-                    uint64_t bytesWritten = 0;
-                    do
-                    {
-                        const auto writtenChunkSize = targetFile.write(
-                            reinterpret_cast<char*>(buffer + bytesWritten),
-                            bytesRead - bytesWritten);
-                        if(writtenChunkSize <= 0)
-                        {
-                            ok = false;
-                            break;
-                        }
-                        bytesWritten += writtenChunkSize;
-                    } while(bytesWritten != bytesRead);
-                }
-                delete[] buffer;
-
-                break;
-            }
+            bool ok = extractArchiveEntryAsFile(archive, entry, fileName);
             if(!ok)
-            {
-                targetFile.close();
-                targetFile.remove();
                 return false;
-            }
-
-            targetFile.flush();
-            targetFile.close();
 
             doStop = true;
             return true;
@@ -111,7 +63,13 @@ bool OsmAnd::ArchiveReader_P::extractItemTo(const QString& itemName, const QStri
 
 bool OsmAnd::ArchiveReader_P::extractAllItemsTo(const QString& destinationPath) const
 {
-    return false;
+    return processArchive(owner->fileName, 
+        [destinationPath]
+        (archive* archive, archive_entry* entry, bool& doStop) -> bool
+        {
+            const QString currentItemName(reinterpret_cast<const QChar*>(archive_entry_pathname_w(entry)));
+            return extractArchiveEntryAsFile(archive, entry, QDir(destinationPath).absoluteFilePath(currentItemName));
+        });
 }
 
 bool OsmAnd::ArchiveReader_P::processArchive(const QString& fileName, const ArchiveEntryHander handler)
@@ -203,6 +161,68 @@ bool OsmAnd::ArchiveReader_P::processArchive(QIODevice* const ioDevice, const Ar
     delete[] archiveData.buffer;
 
     return ok;
+}
+
+bool OsmAnd::ArchiveReader_P::extractArchiveEntryAsFile(archive* archive, archive_entry* entry, const QString& fileName)
+{
+    const auto itemSize = archive_entry_size(entry);
+    if(itemSize <= 0)
+        return false;
+
+    QFile targetFile(fileName);
+    if(!QDir(QFileInfo(fileName).absolutePath()).mkpath("."))
+        return false;
+
+    bool ok;
+    for(;;)
+    {
+        ok = targetFile.open(QIODevice::WriteOnly | QIODevice::Truncate);
+        if(!ok)
+            break;
+
+        ok = targetFile.resize(itemSize);
+        if(!ok)
+            break;
+
+        const auto buffer = new uint8_t[BufferSize];
+        for(; ok;)
+        {
+            const auto bytesRead = archive_read_data(archive, buffer, BufferSize);
+            if(bytesRead <= 0)
+            {
+                ok = (bytesRead == 0);
+                break;
+            }
+
+            uint64_t bytesWritten = 0;
+            do
+            {
+                const auto writtenChunkSize = targetFile.write(
+                    reinterpret_cast<char*>(buffer + bytesWritten),
+                    bytesRead - bytesWritten);
+                if(writtenChunkSize <= 0)
+                {
+                    ok = false;
+                    break;
+                }
+                bytesWritten += writtenChunkSize;
+            } while(bytesWritten != bytesRead);
+        }
+        delete[] buffer;
+
+        break;
+    }
+    if(!ok)
+    {
+        targetFile.close();
+        targetFile.remove();
+        return false;
+    }
+
+    targetFile.flush();
+    targetFile.close();
+
+    return true;
 }
 
 int OsmAnd::ArchiveReader_P::archiveOpen(archive *, void *_client_data)

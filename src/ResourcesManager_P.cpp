@@ -292,12 +292,12 @@ bool OsmAnd::ResourcesManager_P::installMapRegionFromFile(const QString& name, c
         return false;
 
     // Extract that file without keeping directory structure
-    if(!archive.extractItemTo(obfArchiveItem.name, owner->localStoragePath, false))
+    const auto localFileName = QDir(owner->localStoragePath).absoluteFilePath(name);
+    if(!archive.extractItemToFile(obfArchiveItem.name, localFileName))
         return false;
 
     // Read information from OBF
-    const auto installedFilePath = QDir(owner->localStoragePath).absoluteFilePath(name);
-    std::shared_ptr<QFile> obfFile(new QFile(installedFilePath));
+    std::shared_ptr<QFile> obfFile(new QFile(localFileName));
     if(!obfFile->open(QIODevice::ReadOnly))
     {
         LogPrintf(LogSeverityLevel::Warning, "Failed to open '%s'", obfFile->fileName());
@@ -314,7 +314,7 @@ bool OsmAnd::ResourcesManager_P::installMapRegionFromFile(const QString& name, c
         name,
         ResourceType::MapRegion,
         fileSize,
-        filePath,
+        localFileName,
         obfInfo));
     _localResources.insert(name, qMove(localResource));
 
