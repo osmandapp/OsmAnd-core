@@ -9,6 +9,7 @@
 #include <QReadWriteLock>
 
 #include "OsmAndCore.h"
+#include "PrivateImplementation.h"
 
 namespace OsmAnd
 {
@@ -21,7 +22,7 @@ namespace OsmAnd
     protected:
         MapStyles_P(MapStyles* owner);
 
-        MapStyles* const owner;
+        ImplementationInterface<MapStyles> owner;
 
         QHash< QString, std::shared_ptr<MapStyle> > _styles;
         mutable QReadWriteLock _stylesLock;

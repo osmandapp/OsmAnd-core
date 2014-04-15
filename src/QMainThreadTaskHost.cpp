@@ -11,10 +11,8 @@ OsmAnd::QMainThreadTaskHost::~QMainThreadTaskHost()
 
 void OsmAnd::QMainThreadTaskHost::customEvent( QEvent *e )
 {
-    if(e->type() != OsmAnd::QMainThreadTaskEvent::Type)
+    if(e->type() != static_cast<QEvent::Type>(QMainThreadTaskEvent::Type))
         return;
 
-    auto taskEvent = static_cast<QMainThreadTaskEvent*>(e);
-
-    taskEvent->task();
+    static_cast<QMainThreadTaskEvent*>(e)->task();
 }

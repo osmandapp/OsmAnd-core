@@ -8,6 +8,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/IExternalResourcesProvider.h>
 #include <OsmAndCore/Map/MapStyle.h>
 
@@ -23,7 +24,7 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY(RasterizerEnvironment);
     private:
-        const std::unique_ptr<RasterizerEnvironment_P> _d;
+        PrivateImplementation<RasterizerEnvironment_P> _p;
     protected:
     public:
         RasterizerEnvironment(

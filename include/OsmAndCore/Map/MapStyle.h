@@ -7,6 +7,7 @@
 #include <QString>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Map/MapStyleBuiltinValueDefinitions.h>
 
 namespace OsmAnd
@@ -36,7 +37,7 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY(MapStyle);
     private:
-        const std::unique_ptr<MapStyle_P> _d;
+        PrivateImplementation<MapStyle_P> _p;
     protected:
         MapStyle(MapStyles* styles, const QString& resourcePath, const bool isEmbedded);
 

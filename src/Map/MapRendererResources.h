@@ -302,6 +302,7 @@ namespace OsmAnd
         unsigned int uploadResources(const unsigned int limit = 0u, bool* const outMoreThanLimitAvailable = nullptr);
         void releaseResourcesFrom(const std::shared_ptr<TiledResourcesCollection>& collection);
         void requestResourcesUploadOrUnload();
+        void releaseAllResources();
 
         // Worker thread
         volatile bool _workerThreadIsAlive;

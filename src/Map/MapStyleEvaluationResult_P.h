@@ -1,13 +1,14 @@
 #ifndef _OSMAND_CORE_MAP_STYLE_EVALUATION_RESULT_P_H_
 #define _OSMAND_CORE_MAP_STYLE_EVALUATION_RESULT_P_H_
 
-#include <OsmAndCore/stdlib_common.h>
+#include "stdlib_common.h"
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 #include <QMap>
 #include <QVariant>
 
-#include <OsmAndCore.h>
+#include "OsmAndCore.h"
+#include "PrivateImplementation.h"
 
 namespace OsmAnd
 {
@@ -22,7 +23,7 @@ namespace OsmAnd
     protected:
         MapStyleEvaluationResult_P(MapStyleEvaluationResult* const owner);
 
-        MapStyleEvaluationResult* const owner;
+        ImplementationInterface<MapStyleEvaluationResult> owner;
 
         QMap< int, QVariant > _values;
     public:
@@ -32,7 +33,6 @@ namespace OsmAnd
     friend class OsmAnd::MapStyleEvaluator;
     friend class OsmAnd::MapStyleEvaluator_P;
     };
-
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_MAP_STYLE_EVALUATION_RESULT_P_H_)

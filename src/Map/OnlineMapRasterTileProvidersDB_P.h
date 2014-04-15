@@ -8,6 +8,7 @@
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
+#include "PrivateImplementation.h"
 #include "MapTypes.h"
 #include "OnlineMapRasterTileProvidersDB.h"
 
@@ -33,7 +34,7 @@ namespace OsmAnd
     public:
         virtual ~OnlineMapRasterTileProvidersDB_P();
 
-        OnlineMapRasterTileProvidersDB* const owner;
+        ImplementationInterface<OnlineMapRasterTileProvidersDB> owner;
 
     friend class OsmAnd::OnlineMapRasterTileProvidersDB;
     };

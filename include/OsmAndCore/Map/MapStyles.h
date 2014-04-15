@@ -7,6 +7,7 @@
 #include <QString>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/PrivateImplementation.h>
 
 namespace OsmAnd
 {
@@ -18,7 +19,7 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY(MapStyles);
     private:
-        const std::unique_ptr<MapStyles_P> _d;
+        PrivateImplementation<MapStyles_P> _p;
     protected:
     public:
         MapStyles();

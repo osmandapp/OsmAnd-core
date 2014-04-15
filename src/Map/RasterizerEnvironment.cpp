@@ -8,13 +8,13 @@ OsmAnd::RasterizerEnvironment::RasterizerEnvironment(
     const std::shared_ptr<const MapStyle>& style_,
     const float displayDensityFactor_,
     const std::shared_ptr<const IExternalResourcesProvider>& externalResourcesProvider_ /*= nullptr*/ )
-    : _d(new RasterizerEnvironment_P(this))
+    : _p(new RasterizerEnvironment_P(this))
     , style(style_)
     , displayDensityFactor(displayDensityFactor_)
     , externalResourcesProvider(externalResourcesProvider_)
-    , dummyMapSection(_d->dummyMapSection)
+    , dummyMapSection(_p->dummyMapSection)
 {
-    _d->initialize();
+    _p->initialize();
 }
 
 OsmAnd::RasterizerEnvironment::~RasterizerEnvironment()
@@ -23,15 +23,15 @@ OsmAnd::RasterizerEnvironment::~RasterizerEnvironment()
 
 QHash< std::shared_ptr<const OsmAnd::MapStyleValueDefinition>, OsmAnd::MapStyleValue > OsmAnd::RasterizerEnvironment::getSettings() const
 {
-    return _d->getSettings();
+    return _p->getSettings();
 }
 
 void OsmAnd::RasterizerEnvironment::setSettings(const QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue >& newSettings)
 {
-    _d->setSettings(newSettings);
+    _p->setSettings(newSettings);
 }
 
 void OsmAnd::RasterizerEnvironment::setSettings(const QHash< QString, QString >& newSettings)
 {
-    _d->setSettings(newSettings);
+    _p->setSettings(newSettings);
 }

@@ -1,14 +1,11 @@
 #ifndef _OSMAND_CORE_ICU_PRIVATE_H_
 #define _OSMAND_CORE_ICU_PRIVATE_H_
 
-#include <OsmAndCore/stdlib_common.h>
+#include "stdlib_common.h"
 
-#include <OsmAndCore/QtExtensions.h>
-#include <QString>
-#include <QStringList>
-#include <QVector>
+#include "QtExtensions.h"
 
-#include <OsmAndCore.h>
+#include "OsmAndCore.h"
 
 namespace OsmAnd
 {

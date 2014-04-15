@@ -3,7 +3,7 @@
 
 OsmAnd::ObfRoutingSectionInfo::ObfRoutingSectionInfo( const std::weak_ptr<ObfInfo>& owner )
     : ObfSectionInfo(owner)
-    , _d(new ObfRoutingSectionInfo_P(this))
+    , _p(new ObfRoutingSectionInfo_P(this))
     , subsections(_subsections)
     , baseSubsections(_baseSubsections)
 {
@@ -13,7 +13,7 @@ OsmAnd::ObfRoutingSectionInfo::~ObfRoutingSectionInfo()
 {
 }
 
-OsmAnd::ObfRoutingSubsectionInfo::ObfRoutingSubsectionInfo( const std::shared_ptr<ObfRoutingSubsectionInfo>& parent_ )
+OsmAnd::ObfRoutingSubsectionInfo::ObfRoutingSubsectionInfo(const std::shared_ptr<const ObfRoutingSubsectionInfo>& parent_)
     : ObfSectionInfo(parent_->owner)
     , _dataOffset(0)
     , _subsectionsOffset(0)
@@ -23,7 +23,7 @@ OsmAnd::ObfRoutingSubsectionInfo::ObfRoutingSubsectionInfo( const std::shared_pt
 {
 }
 
-OsmAnd::ObfRoutingSubsectionInfo::ObfRoutingSubsectionInfo( const std::shared_ptr<ObfRoutingSectionInfo>& section_ )
+OsmAnd::ObfRoutingSubsectionInfo::ObfRoutingSubsectionInfo(const std::shared_ptr<const ObfRoutingSectionInfo>& section_)
     : ObfSectionInfo(section_->owner)
     , _dataOffset(0)
     , _subsectionsOffset(0)

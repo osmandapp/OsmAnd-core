@@ -8,14 +8,15 @@
 #include <QAtomicInt>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/PrivateImplementation.h>
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class ObfInfo;
     class ObfReader;
     class ObfReader_P;
 
-    class OSMAND_CORE_API ObfSectionInfo
+    class ObfSectionInfo
     {
     private:
         static QAtomicInt _nextRuntimeGeneratedId;
@@ -39,7 +40,6 @@ namespace OsmAnd {
     friend class OsmAnd::ObfReader;
     friend class OsmAnd::ObfReader_P;
     };
-
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_OBF_SECTION_INFO_H_)

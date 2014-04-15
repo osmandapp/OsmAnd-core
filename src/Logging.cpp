@@ -1,5 +1,6 @@
 #include "Logging.h"
 
+#include "Common.h"
 #include "ILogSink.h"
 
 OsmAnd::Logger::Logger()
@@ -14,10 +15,7 @@ QSet< std::shared_ptr<OsmAnd::ILogSink> > OsmAnd::Logger::getCurrentLogSinks() c
 {
     QReadLocker scopedLocker(&_sinksLock);
 
-    auto result = _sinks;
-    result.detach();
-
-    return result;
+    return detachedOf(_sinks);
 }
 
 void OsmAnd::Logger::addLogSink(const std::shared_ptr<ILogSink>& logSink)

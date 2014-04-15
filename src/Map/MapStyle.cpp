@@ -11,15 +11,15 @@
 #include "Logging.h"
 
 OsmAnd::MapStyle::MapStyle( MapStyles* styles_, const QString& resourcePath_, const bool isEmbedded_ )
-    : _d(new MapStyle_P(this))
+    : _p(new MapStyle_P(this))
     , styles(styles_)
     , resourcePath(resourcePath_)
     , isEmbedded(isEmbedded_)
-    , title(_d->_title)
-    , name(_d->_name)
-    , parentName(_d->_parentName)
+    , title(_p->_title)
+    , name(_p->_name)
+    , parentName(_p->_parentName)
 {
-    _d->_name = QFileInfo(resourcePath).fileName().replace(QLatin1String(".render.xml"), QLatin1String(""));
+    _p->_name = QFileInfo(resourcePath).fileName().replace(QLatin1String(".render.xml"), QLatin1String(""));
 }
 
 OsmAnd::MapStyle::~MapStyle()
@@ -33,23 +33,23 @@ bool OsmAnd::MapStyle::isStandalone() const
 
 bool OsmAnd::MapStyle::resolveValueDefinition( const QString& name, std::shared_ptr<const MapStyleValueDefinition>& outDefinition ) const
 {
-    auto itValueDefinition = _d->_valuesDefinitions.constFind(name);
-    if(itValueDefinition != _d->_valuesDefinitions.cend())
+    auto itValueDefinition = _p->_valuesDefinitions.constFind(name);
+    if(itValueDefinition != _p->_valuesDefinitions.cend())
     {
         outDefinition = *itValueDefinition;
         return true;
     }
 
-    if(!_d->_parent)
+    if(!_p->_parent)
         return false;
 
-    return _d->_parent->resolveValueDefinition(name, outDefinition);
+    return _p->_parent->resolveValueDefinition(name, outDefinition);
 }
 
 bool OsmAnd::MapStyle::resolveAttribute( const QString& name, std::shared_ptr<const MapStyleRule>& outAttribute ) const
 {
-    auto itAttribute = _d->_attributes.constFind(name);
-    if(itAttribute != _d->_attributes.cend())
+    auto itAttribute = _p->_attributes.constFind(name);
+    if(itAttribute != _p->_attributes.cend())
     {
         outAttribute = *itAttribute;
         return true;
@@ -78,21 +78,21 @@ void OsmAnd::MapStyle::dump( const QString& prefix /*= QString()*/ ) const
 
 void OsmAnd::MapStyle::dump( MapStyleRulesetType type, const QString& prefix /*= QString()*/ ) const
 {
-    const auto& rules = _d->obtainRulesRef(type);
+    const auto& rules = _p->obtainRulesRef(type);
 
     for(const auto& ruleEntry : rangeOf(constOf(rules)))
     {
-        auto tag = _d->getTagString(ruleEntry.key());
-        auto value = _d->getValueString(ruleEntry.key());
+        auto tag = _p->getTagString(ruleEntry.key());
+        auto value = _p->getValueString(ruleEntry.key());
         auto rule = ruleEntry.value();
 
         LogPrintf(LogSeverityLevel::Debug, "%sRule 0x%p [%s (%d):%s (%d)]",
             qPrintable(prefix),
             rule.get(),
             qPrintable(tag),
-            _d->getTagStringId(ruleEntry.key()),
+            _p->getTagStringId(ruleEntry.key()),
             qPrintable(value),
-            _d->getValueStringId(ruleEntry.key()));
+            _p->getValueStringId(ruleEntry.key()));
         rule->dump(prefix);
     }
 }

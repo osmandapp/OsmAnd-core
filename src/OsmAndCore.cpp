@@ -26,7 +26,8 @@ namespace OsmAnd
 {
     void initializeInAppThread();
     void releaseInAppThread();
-    std::shared_ptr<QObject> gMainThreadTaskHost;
+    QThread* gMainThread;
+    std::shared_ptr<QObject> gMainThreadRootObject;
 }
 
 int _dummyArgc = 1;
@@ -60,6 +61,7 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::InitializeCore()
     if(!QCoreApplication::instance())
     {
         _qCoreApplicationThread.reset(new QCoreApplicationThread());
+        gMainThread = _qCoreApplicationThread.get();
         _qCoreApplicationThread->start();
 
         // Wait until global initialization will pass in that thread
@@ -70,6 +72,7 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::InitializeCore()
     }
     else
     {
+        gMainThread = QThread::currentThread();
         initializeInAppThread();
     }
 
@@ -108,12 +111,12 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::ReleaseCore()
 
 void OsmAnd::initializeInAppThread()
 {
-    gMainThreadTaskHost.reset(new QMainThreadTaskHost());
+    gMainThreadRootObject.reset(new QMainThreadTaskHost());
 }
 
 void OsmAnd::releaseInAppThread()
 {
-    gMainThreadTaskHost.reset();
+    gMainThreadRootObject.reset();
 }
 
 #if defined(OSMAND_TARGET_OS_android)

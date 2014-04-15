@@ -10,6 +10,7 @@
 #include <QVariant>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/PrivateImplementation.h>
 
 namespace OsmAnd
 {
@@ -23,8 +24,9 @@ namespace OsmAnd
     public:
         typedef std::pair<int, QVariant> PackedResultEntry;
         typedef QList< PackedResultEntry > PackedResult;
+
     private:
-        const std::unique_ptr<MapStyleEvaluationResult_P> _d;
+        PrivateImplementation<MapStyleEvaluationResult_P> _p;
     protected:
     public:
         MapStyleEvaluationResult();

@@ -1,13 +1,12 @@
 #include "ObfDataInterface.h"
-#include "ObfDataInterface_P.h"
 
 #include "ObfReader.h"
 #include "ObfInfo.h"
 #include "ObfMapSectionReader.h"
 #include "IQueryController.h"
 
-OsmAnd::ObfDataInterface::ObfDataInterface( const QList< std::shared_ptr<ObfReader> >& readers )
-    : _d(new ObfDataInterface_P(this, readers))
+OsmAnd::ObfDataInterface::ObfDataInterface(const QList< std::shared_ptr<const ObfReader> >& obfReaders_)
+    : obfReaders(obfReaders_)
 {
 }
 
@@ -17,7 +16,7 @@ OsmAnd::ObfDataInterface::~ObfDataInterface()
 
 void OsmAnd::ObfDataInterface::obtainObfFiles( QList< std::shared_ptr<const ObfFile> >* outFiles /*= nullptr*/, const IQueryController* const controller /*= nullptr*/ )
 {
-    for(const auto& obfReader : constOf(_d->readers))
+    for(const auto& obfReader : constOf(obfReaders))
     {
         if(controller && controller->isAborted())
             return;
@@ -33,13 +32,15 @@ void OsmAnd::ObfDataInterface::obtainObfFiles( QList< std::shared_ptr<const ObfF
 void OsmAnd::ObfDataInterface::obtainBasemapPresenceFlag( bool& basemapPresent, const IQueryController* const controller /*= nullptr*/ )
 {
     basemapPresent = false;
-    for(const auto& obfReader : constOf(_d->readers))
+    for(const auto& obfReader : constOf(obfReaders))
     {
         if(controller && controller->isAborted())
             return;
 
         const auto& obfInfo = obfReader->obtainInfo();
-        basemapPresent = basemapPresent || obfInfo->isBasemap;
+        basemapPresent = obfInfo->isBasemap;
+        if(basemapPresent)
+            break;
     }
 }
 
@@ -53,7 +54,7 @@ void OsmAnd::ObfDataInterface::obtainMapObjects(
         *foundationOut = MapFoundationType::Undefined;
 
     // Iterate through all OBF readers
-    for(const auto& obfReader : constOf(_d->readers))
+    for(const auto& obfReader : constOf(obfReaders))
     {
         // Check if request is aborted
         if(controller && controller->isAborted())

@@ -22,69 +22,20 @@
 
 namespace OsmAnd
 {
-    namespace Utilities
+    struct OSMAND_CORE_API Utilities Q_DECL_FINAL
     {
-        double toRadians(const double angle);
-        int32_t get31TileNumberX(const double longitude);
-        int32_t get31TileNumberY(const double latitude);
-        double get31LongitudeX(const double x);
-        double get31LatitudeY(const double y);
-        double getTileNumberX(const float zoom, const double longitude);
-        double getTileNumberY(const float zoom, double latitude);
-        float convert31toFloat(const int32_t value, const ZoomLevel zoom);
-        double normalizeLatitude(double latitude);
-        double normalizeLongitude(double longitude);
-        double getPowZoom(const float zoom);
-        double getLongitudeFromTile(const float zoom, const double x);
-        double getLatitudeFromTile(const float zoom, const double y);
-        double x31toMeters(const int32_t x31);
-        double y31toMeters(const int32_t y31);
-        double squareDistance31(const int32_t x31a, const int32_t y31a, const int32_t x31b, const int32_t y31b);
-        double distance31(const int32_t x31a, const int32_t y31a, const int32_t x31b, const int32_t y31b);
-        double squareDistance31(const PointI& a, const PointI& b);
-        double distance31(const PointI& a, const PointI& b);
-        double distance(const double xLonA, const double yLatA, const double xLonB, const double yLatB);
-        double projection31(const int32_t x31a, const int32_t y31a, const int32_t x31b, const int32_t y31b, const int32_t x31c, const int32_t y31c);
-        double normalizedAngleRadians(double angle);
-        double normalizedAngleDegrees(double angle);
-        double polygonArea(const QVector<PointI>& points);
-        bool rayIntersectX(const PointF& v0, const PointF& v1, float mY, float& mX);
-        bool rayIntersect(const PointF& v0, const PointF& v1, const PointF& v);
-        bool rayIntersectX(const PointI& v0, const PointI& v1, int32_t mY, int32_t& mX);
-        bool rayIntersect(const PointI& v0, const PointI& v1, const PointI& v);
-        double degreesDiff(const double a1, const double a2);
-        AreaI tileBoundingBox31(const TileId tileId, const ZoomLevel zoom);
-        AreaI areaRightShift(const AreaI& input, const uint32_t shift);
-        AreaI areaLeftShift(const AreaI& input, const uint32_t shift);
-        uint32_t getNextPowerOfTwo(const uint32_t value);
-        double getMetersPerTileUnit(const float zoom, const double yTile, const double unitsPerTile);
-        TileId normalizeTileId(const TileId input, const ZoomLevel zoom);
-        PointI normalizeCoordinates(const PointI& input, const ZoomLevel zoom);
-        PointI normalizeCoordinates(const PointI64& input, const ZoomLevel zoom);
-        enum class CHCode : uint8_t
-        {
-            Inside = 0, // 0000
-            Left = 1,   // 0001
-            Right = 2,  // 0010
-            Bottom = 4, // 0100
-            Top = 8,    // 1000
-        };
-        uint8_t computeCohenSutherlandCode(const PointI& p, const AreaI& box);
-        QSet<ZoomLevel> enumerateZoomLevels(const ZoomLevel from, const ZoomLevel to);
-        QString stringifyZoomLevels(const QSet<ZoomLevel>& zoomLevels);
-
-        inline double toRadians(const double angle)
+        inline static double toRadians(const double angle)
         {
             return angle / 180.0 * M_PI;
         }
 
-        inline int32_t get31TileNumberX(const double longitude)
+        inline static int32_t get31TileNumberX(const double longitude)
         {
             const auto l = (1UL << 31);
             return static_cast<int32_t>((normalizeLongitude(longitude) + 180.0) / 360.0*l);
         }
 
-        inline int32_t get31TileNumberY(const double latitude)
+        inline static int32_t get31TileNumberY(const double latitude)
         {
             const auto l = (1UL << 31);
 
@@ -95,17 +46,17 @@ namespace OsmAnd
             return static_cast<int32_t>((1.0 - eval / M_PI) / 2.0*l);
         }
 
-        inline double get31LongitudeX(const double x)
+        inline static double get31LongitudeX(const double x)
         {
             return getLongitudeFromTile(21, x / 1024.);
         }
 
-        inline double get31LatitudeY(const double y)
+        inline static double get31LatitudeY(const double y)
         {
             return getLatitudeFromTile(21, y / 1024.);
         }
 
-        inline double getTileNumberX(const float zoom, const double longitude)
+        inline static double getTileNumberX(const float zoom, const double longitude)
         {
             if(qAbs(longitude - 180.) < std::numeric_limits<double>::epsilon())
                 return getPowZoom(zoom) - 1;
@@ -113,7 +64,7 @@ namespace OsmAnd
             return (normalizeLongitude(longitude) + 180.) / 360. * getPowZoom(zoom);
         }
 
-        inline double getTileNumberY(const float zoom, double latitude)
+        inline static double getTileNumberY(const float zoom, double latitude)
         {
             latitude = normalizeLatitude(latitude);
             double eval = log(tan(toRadians(latitude)) + 1 / cos(toRadians(latitude)));
@@ -126,7 +77,7 @@ namespace OsmAnd
             return result;
         }
 
-        inline float convert31toFloat(const int32_t value, const ZoomLevel zoom)
+        inline static float convert31toFloat(const int32_t value, const ZoomLevel zoom)
         {
             /*
             const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - zoom));
@@ -138,7 +89,7 @@ namespace OsmAnd
             return static_cast<float>((static_cast<double>(value) / (1u << (ZoomLevel::MaxZoomLevel - zoom))));
         }
 
-        inline PointF convert31toFloat(const PointI& p, const ZoomLevel zoom)
+        inline static PointF convert31toFloat(const PointI& p, const ZoomLevel zoom)
         {
             const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - zoom));
             return PointF(
@@ -146,7 +97,7 @@ namespace OsmAnd
                 static_cast<float>((static_cast<double>(p.y) / tileSize31)));
         }
 
-        inline double normalizeLatitude(double latitude)
+        inline static double normalizeLatitude(double latitude)
         {
             while(latitude < -90.0 || latitude > 90.0)
             {
@@ -164,7 +115,7 @@ namespace OsmAnd
             return latitude;
         }
 
-        inline double normalizeLongitude(double longitude)
+        inline static double normalizeLongitude(double longitude)
         {
             while(longitude < -180.0 || longitude >= 180.0)
             {
@@ -176,7 +127,7 @@ namespace OsmAnd
             return longitude;
         }
 
-        inline double getPowZoom(const float zoom)
+        inline static double getPowZoom(const float zoom)
         {
             if(zoom >= 0.0f && qFuzzyCompare(zoom, static_cast<uint8_t>(zoom)))
                 return 1 << static_cast<uint8_t>(zoom);
@@ -184,53 +135,53 @@ namespace OsmAnd
             return qPow(2, zoom);
         }
 
-        inline double getLongitudeFromTile(const float zoom, const double x)
+        inline static double getLongitudeFromTile(const float zoom, const double x)
         {
             return x / getPowZoom(zoom) * 360.0 - 180.0;
         }
 
-        inline double getLatitudeFromTile(const float zoom, const double y)
+        inline static double getLatitudeFromTile(const float zoom, const double y)
         {
             int sign = y < 0 ? -1 : 1;
             double result = atan(sign * sinh(M_PI * (1 - 2 * y / getPowZoom(zoom)))) * 180. / M_PI;
             return result;
         }
 
-        inline double x31toMeters(const int32_t x31)
+        inline static double x31toMeters(const int32_t x31)
         {
             return static_cast<double>(x31)* 0.011;
         }
 
-        inline double y31toMeters(const int32_t y31)
+        inline static double y31toMeters(const int32_t y31)
         {
             return static_cast<double>(y31)* 0.01863;
         }
 
-        inline double squareDistance31(const int32_t x31a, const int32_t y31a, const int32_t x31b, const int32_t y31b)
+        inline static double squareDistance31(const int32_t x31a, const int32_t y31a, const int32_t x31b, const int32_t y31b)
         {
             const auto dx = Utilities::x31toMeters(x31a - x31b);
             const auto dy = Utilities::y31toMeters(y31a - y31b);
             return dx * dx + dy * dy;
         }
 
-        inline double distance31(const int32_t x31a, const int32_t y31a, const int32_t x31b, const int32_t y31b)
+        inline static double distance31(const int32_t x31a, const int32_t y31a, const int32_t x31b, const int32_t y31b)
         {
             return qSqrt(squareDistance31(x31a, y31a, x31b, y31b));
         }
 
-        inline double squareDistance31(const PointI& a, const PointI& b)
+        inline static double squareDistance31(const PointI& a, const PointI& b)
         {
             const auto dx = Utilities::x31toMeters(a.x - b.x);
             const auto dy = Utilities::y31toMeters(a.y - b.y);
             return dx * dx + dy * dy;
         }
 
-        inline double distance31(const PointI& a, const PointI& b)
+        inline static double distance31(const PointI& a, const PointI& b)
         {
             return qSqrt(squareDistance31(a, b));
         }
 
-        inline double distance(const double xLonA, const double yLatA, const double xLonB, const double yLatB)
+        inline static double distance(const double xLonA, const double yLatA, const double xLonB, const double yLatB)
         {
             double R = 6371; // km
             double dLat = toRadians(yLatB - yLatA);
@@ -243,7 +194,7 @@ namespace OsmAnd
             return R * c * 1000.0;
         }
 
-        inline double projection31(const int32_t x31a, const int32_t y31a, const int32_t x31b, const int32_t y31b, const int32_t x31c, const int32_t y31c)
+        inline static double projection31(const int32_t x31a, const int32_t y31a, const int32_t x31b, const int32_t y31b, const int32_t x31c, const int32_t y31c)
         {
             // Scalar multiplication between (AB, AC)
             auto p =
@@ -252,7 +203,7 @@ namespace OsmAnd
             return p;
         }
 
-        inline double normalizedAngleRadians(double angle)
+        inline static double normalizedAngleRadians(double angle)
         {
             while(angle > M_PI)
                 angle -= 2.0 * M_PI;
@@ -261,7 +212,7 @@ namespace OsmAnd
             return angle;
         }
 
-        inline double normalizedAngleDegrees(double angle)
+        inline static double normalizedAngleDegrees(double angle)
         {
             while(angle > 180.0)
                 angle -= 360.0;
@@ -270,7 +221,7 @@ namespace OsmAnd
             return angle;
         }
 
-        inline double polygonArea(const QVector<PointI>& points)
+        inline static double polygonArea(const QVector<PointI>& points)
         {
             double area = 0.0;
 
@@ -287,7 +238,7 @@ namespace OsmAnd
             return area;
         }
 
-        inline bool rayIntersectX(const PointF& v0_, const PointF& v1_, float mY, float& mX)
+        inline static bool rayIntersectX(const PointF& v0_, const PointF& v1_, float mY, float& mX)
         {
             // prev node above line
             // x,y node below line
@@ -313,7 +264,7 @@ namespace OsmAnd
             return true;
         }
 
-        inline bool rayIntersect(const PointF& v0, const PointF& v1, const PointF& v)
+        inline static bool rayIntersect(const PointF& v0, const PointF& v1, const PointF& v)
         {
             float t;
             if(!rayIntersectX(v0, v1, v.y, t))
@@ -325,7 +276,7 @@ namespace OsmAnd
             return false;
         }
 
-        inline bool rayIntersectX(const PointI& v0_, const PointI& v1_, int32_t mY, int32_t& mX)
+        inline static bool rayIntersectX(const PointI& v0_, const PointI& v1_, int32_t mY, int32_t& mX)
         {
             // prev node above line
             // x,y node below line
@@ -351,7 +302,7 @@ namespace OsmAnd
             return true;
         }
 
-        inline bool rayIntersect(const PointI& v0, const PointI& v1, const PointI& v)
+        inline static bool rayIntersect(const PointI& v0, const PointI& v1, const PointI& v)
         {
             int32_t t;
             if(!rayIntersectX(v0, v1, v.y, t))
@@ -363,7 +314,7 @@ namespace OsmAnd
             return false;
         }
 
-        inline double degreesDiff(const double a1, const double a2)
+        inline static double degreesDiff(const double a1, const double a2)
         {
             auto diff = a1 - a2;
             while(diff > 180.0)
@@ -373,7 +324,7 @@ namespace OsmAnd
             return diff;
         }
 
-        inline AreaI tileBoundingBox31(const TileId tileId, const ZoomLevel zoom)
+        inline static AreaI tileBoundingBox31(const TileId tileId, const ZoomLevel zoom)
         {
             AreaI output;
 
@@ -394,7 +345,7 @@ namespace OsmAnd
             return output;
         }
 
-        inline AreaI areaRightShift(const AreaI& input, const uint32_t shift)
+        inline static AreaI areaRightShift(const AreaI& input, const uint32_t shift)
         {
             AreaI output;
             uint32_t tail;
@@ -417,7 +368,7 @@ namespace OsmAnd
             return output;
         }
 
-        inline AreaI areaLeftShift(const AreaI& input, const uint32_t shift)
+        inline static AreaI areaLeftShift(const AreaI& input, const uint32_t shift)
         {
             AreaI output;
 
@@ -436,7 +387,7 @@ namespace OsmAnd
             return output;
         }
 
-        inline uint32_t getNextPowerOfTwo(const uint32_t value)
+        inline static uint32_t getNextPowerOfTwo(const uint32_t value)
         {
             if(value == 0)
                 return 0;
@@ -454,7 +405,7 @@ namespace OsmAnd
             return n;
         }
 
-        inline double getMetersPerTileUnit(const float zoom, const double yTile, const double unitsPerTile)
+        inline static double getMetersPerTileUnit(const float zoom, const double yTile, const double unitsPerTile)
         {
             // Equatorial circumference of the Earth in meters
             const static double C = 40075017.0;
@@ -466,7 +417,7 @@ namespace OsmAnd
             return res;
         }
 
-        inline TileId normalizeTileId(const TileId input, const ZoomLevel zoom)
+        inline static TileId normalizeTileId(const TileId input, const ZoomLevel zoom)
         {
             TileId output = input;
 
@@ -492,7 +443,7 @@ namespace OsmAnd
             return output;
         }
 
-        inline PointI normalizeCoordinates(const PointI& input, const ZoomLevel zoom)
+        inline static PointI normalizeCoordinates(const PointI& input, const ZoomLevel zoom)
         {
             PointI output = input;
 
@@ -518,7 +469,7 @@ namespace OsmAnd
             return output;
         }
 
-        inline PointI normalizeCoordinates(const PointI64& input, const ZoomLevel zoom)
+        inline static PointI normalizeCoordinates(const PointI64& input, const ZoomLevel zoom)
         {
             PointI64 output = input;
 
@@ -540,7 +491,16 @@ namespace OsmAnd
             return PointI(static_cast<int32_t>(output.x), static_cast<int32_t>(output.y));
         }
 
-        inline uint8_t computeCohenSutherlandCode(const PointI& p, const AreaI& box)
+        enum class CHCode : uint8_t
+        {
+            Inside = 0, // 0000
+            Left = 1,   // 0001
+            Right = 2,  // 0010
+            Bottom = 4, // 0100
+            Top = 8,    // 1000
+        };
+
+        inline static uint8_t computeCohenSutherlandCode(const PointI& p, const AreaI& box)
         {
             uint8_t res = static_cast<uint8_t>(CHCode::Inside);
 
@@ -556,23 +516,24 @@ namespace OsmAnd
             return res;
         }
 
-        OSMAND_CORE_API bool OSMAND_CORE_CALL extractFirstNumberPosition(const QString& value, int& first, int& last, bool allowSigned, bool allowDot);
-        OSMAND_CORE_API double OSMAND_CORE_CALL parseSpeed(const QString& value, const double defValue, bool* wasParsed = nullptr);
-        OSMAND_CORE_API double OSMAND_CORE_CALL parseLength(const QString& value, const double defValue, bool* wasParsed = nullptr);
-        OSMAND_CORE_API double OSMAND_CORE_CALL parseWeight(const QString& value, const double defValue, bool* wasParsed = nullptr);
-        OSMAND_CORE_API int OSMAND_CORE_CALL parseArbitraryInt(const QString& value, const int defValue, bool* wasParsed = nullptr);
-        OSMAND_CORE_API long OSMAND_CORE_CALL parseArbitraryLong(const QString& value, const long defValue, bool* wasParsed = nullptr);
-        OSMAND_CORE_API unsigned int OSMAND_CORE_CALL parseArbitraryUInt(const QString& value, const unsigned int defValue, bool* wasParsed = nullptr);
-        OSMAND_CORE_API unsigned long OSMAND_CORE_CALL parseArbitraryULong(const QString& value, const unsigned long defValue, bool* wasParsed = nullptr);
-        OSMAND_CORE_API float OSMAND_CORE_CALL parseArbitraryFloat(const QString& value, const float defValue, bool* wasParsed = nullptr);
-        OSMAND_CORE_API bool OSMAND_CORE_CALL parseArbitraryBool(const QString& value, const bool defValue, bool* wasParsed = nullptr);
+        static bool extractFirstNumberPosition(const QString& value, int& first, int& last, bool allowSigned, bool allowDot);
+        static double parseSpeed(const QString& value, const double defValue, bool* wasParsed = nullptr);
+        static double parseLength(const QString& value, const double defValue, bool* wasParsed = nullptr);
+        static double parseWeight(const QString& value, const double defValue, bool* wasParsed = nullptr);
+        static int parseArbitraryInt(const QString& value, const int defValue, bool* wasParsed = nullptr);
+        static long parseArbitraryLong(const QString& value, const long defValue, bool* wasParsed = nullptr);
+        static unsigned int parseArbitraryUInt(const QString& value, const unsigned int defValue, bool* wasParsed = nullptr);
+        static unsigned long parseArbitraryULong(const QString& value, const unsigned long defValue, bool* wasParsed = nullptr);
+        static float parseArbitraryFloat(const QString& value, const float defValue, bool* wasParsed = nullptr);
+        static bool parseArbitraryBool(const QString& value, const bool defValue, bool* wasParsed = nullptr);
 
-        OSMAND_CORE_API int OSMAND_CORE_CALL javaDoubleCompare(const double l, const double r);
-        OSMAND_CORE_API void OSMAND_CORE_CALL findFiles(const QDir& origin, const QStringList& masks, QFileInfoList& files, const bool recursively = true);
+        static int javaDoubleCompare(const double l, const double r);
+        static void findFiles(const QDir& origin, const QStringList& masks, QFileInfoList& files, const bool recursively = true);
+        static void findDirectories(const QDir& origin, const QStringList& masks, QFileInfoList& directories, const bool recursively = true);
 
-        OSMAND_CORE_API void OSMAND_CORE_CALL scanlineFillPolygon(const unsigned int verticesCount, const PointF* const vertices, std::function<void(const PointI&)> fillPoint);
+        static void scanlineFillPolygon(const unsigned int verticesCount, const PointF* const vertices, std::function<void(const PointI&)> fillPoint);
 
-        inline QSet<ZoomLevel> enumerateZoomLevels(const ZoomLevel from, const ZoomLevel to)
+        inline static QSet<ZoomLevel> enumerateZoomLevels(const ZoomLevel from, const ZoomLevel to)
         {
             QSet<ZoomLevel> result;
             result.reserve(to - from + 1);
@@ -582,7 +543,7 @@ namespace OsmAnd
             return result;
         }
 
-        inline QString stringifyZoomLevels(const QSet<ZoomLevel>& zoomLevels)
+        inline static QString stringifyZoomLevels(const QSet<ZoomLevel>& zoomLevels)
         {
             QString result;
 
@@ -628,7 +589,16 @@ namespace OsmAnd
 
             return result;
         }
-    }
+
+    private:
+        Utilities()
+        {
+        }
+
+        ~Utilities()
+        {
+        }
+    };
 }
 
 #endif // !defined(_OSMAND_CORE_UTILITIES_H_)

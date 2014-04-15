@@ -13,7 +13,7 @@ OsmAnd::BinaryOperator::BinaryOperator(const QString& lvalue, const QString& rva
     else
     {
         const auto wasParsed = RoutingConfiguration::parseTypedValue(lvalue.trimmed(), type, _lValue);
-        OSMAND_ASSERT(wasParsed, "LValue '" << qPrintable(lvalue) << "' can not be parsed");
+        OSMAND_ASSERT(wasParsed, QString("LValue '%1' can not be parsed").arg(lvalue));
     }
 
     if(rvalue.startsWith(":"))
@@ -23,7 +23,7 @@ OsmAnd::BinaryOperator::BinaryOperator(const QString& lvalue, const QString& rva
     else
     {
         const auto wasParsed = RoutingConfiguration::parseTypedValue(rvalue.trimmed(), type, _rValue);
-        OSMAND_ASSERT(wasParsed, "RValue '" << qPrintable(rvalue) << "' can not be parsed");
+        OSMAND_ASSERT(wasParsed, QString("RValue '%1' can not be parsed").arg(rvalue));
     }
 }
 

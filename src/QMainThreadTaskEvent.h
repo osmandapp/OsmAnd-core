@@ -3,11 +3,11 @@
 
 #include <functional>
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 #include <QEvent>
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class QMainThreadTaskEvent : public QEvent
     {
     public:
@@ -23,7 +23,6 @@ namespace OsmAnd {
 
         const Task task;
     };
-
 }
 
 #endif // !defined(_OSMAND_CORE_Q_MAIN_THREAD_TASK_EVENT_H_)

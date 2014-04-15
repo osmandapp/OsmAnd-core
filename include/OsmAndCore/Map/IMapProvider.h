@@ -7,8 +7,8 @@
 
 #include <OsmAndCore.h>
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class OSMAND_CORE_API IMapProvider
     {
         Q_DISABLE_COPY(IMapProvider);

@@ -12,17 +12,19 @@
 #include <OsmAndCore/Data/DataTypes.h>
 #include <OsmAndCore/Map/MapTypes.h>
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class ObfReader;
     class ObfMapSectionInfo;
-    namespace Model {
+    namespace Model
+    {
         class MapObject;
-    } // namespace Model
+    }
     class IQueryController;
-    namespace ObfMapSectionReader_Metrics {
+    namespace ObfMapSectionReader_Metrics
+    {
         struct Metric_loadMapObjects;
-    } // namespace ObfMapSectionReader_Metrics
+    }
 
     class OSMAND_CORE_API ObfMapSectionReader
     {
@@ -31,15 +33,14 @@ namespace OsmAnd {
         ~ObfMapSectionReader();
     protected:
     public:
-        static void loadMapObjects(const std::shared_ptr<ObfReader>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
-            ZoomLevel zoom, const AreaI* bbox31 = nullptr,
+        static void loadMapObjects(const std::shared_ptr<const ObfReader>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
+            const ZoomLevel zoom, const AreaI* const bbox31 = nullptr,
             QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut = nullptr, MapFoundationType* foundationOut = nullptr,
             const FilterMapObjectsByIdSignature filterById = nullptr,
             std::function<bool (const std::shared_ptr<const OsmAnd::Model::MapObject>&)> visitor = nullptr,
             const IQueryController* const controller = nullptr,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric = nullptr);
     };
-
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_OBF_MAP_SECTION_READER_H_)

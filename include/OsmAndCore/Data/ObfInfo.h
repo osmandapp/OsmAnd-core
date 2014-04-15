@@ -10,8 +10,8 @@
 
 class QIODevice;
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class ObfReader;
     class ObfReader_P;
 

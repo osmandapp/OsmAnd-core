@@ -55,9 +55,9 @@ namespace OsmAnd
 
         bool prepareIfNeeded();
 
-        bool areDependenciesResolved();
+        bool areDependenciesResolved() const;
         bool resolveDependencies();
-        bool resolveConstantValue(const QString& name, QString& value);
+        bool resolveConstantValue(const QString& name, QString& value) const;
         QString obtainValue(const QString& value);
 
         bool mergeInherited();
@@ -85,7 +85,7 @@ namespace OsmAnd
             RuleIdTagShift = 32,
         };
 
-        MapStyle* const owner;
+        ImplementationInterface<MapStyle> owner;
 
         const std::shared_ptr<const MapStyleBuiltinValueDefinitions> _builtinValueDefs;
 
@@ -111,6 +111,6 @@ namespace OsmAnd
     friend class OsmAnd::MapStyleRule;
     friend class OsmAnd::MapStyles_P;
     };
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_MAP_STYLE_P_H_)

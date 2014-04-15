@@ -14,6 +14,7 @@
 #include <QVariant>
 
 #include "OsmAndCore.h"
+#include "PrivateImplementation.h"
 #include "MapTypes.h"
 
 namespace OsmAnd
@@ -28,7 +29,7 @@ namespace OsmAnd
     protected:
         MapAnimator_P(MapAnimator* const owner);
 
-        MapAnimator* const owner;
+        ImplementationInterface<MapAnimator> owner;
         std::shared_ptr<IMapRenderer> _renderer;
 
         struct AnimationContext

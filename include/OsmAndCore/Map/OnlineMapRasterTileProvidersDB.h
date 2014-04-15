@@ -8,6 +8,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Map/MapTypes.h>
 
 namespace OsmAnd
@@ -31,7 +32,7 @@ namespace OsmAnd
         };
 
     private:
-        const std::unique_ptr<OnlineMapRasterTileProvidersDB_P> _d;
+        PrivateImplementation<OnlineMapRasterTileProvidersDB_P> _p;
     protected:
         OnlineMapRasterTileProvidersDB();
     public:

@@ -26,7 +26,7 @@ bool OsmAnd::MapStyles_P::registerEmbeddedStyle(const QString& resourceName)
     assert(EmbeddedResources::containsResource(resourceName));
 
     std::shared_ptr<MapStyle> style(new MapStyle(owner, resourceName, true));
-    if(!style->_d->parseMetadata())
+    if(!style->_p->parseMetadata())
         return false;
 
     {
@@ -42,7 +42,7 @@ bool OsmAnd::MapStyles_P::registerEmbeddedStyle(const QString& resourceName)
 bool OsmAnd::MapStyles_P::registerStyle( const QString& filePath )
 {
     std::shared_ptr<MapStyle> style(new MapStyle(owner, filePath, false));
-    if(!style->_d->parseMetadata())
+    if(!style->_p->parseMetadata())
         return false;
 
     {
@@ -69,7 +69,7 @@ bool OsmAnd::MapStyles_P::obtainStyle(const QString& name, std::shared_ptr<const
     }
 
     const auto style = *citStyle;
-    if(!style->_d->prepareIfNeeded())
+    if(!style->_p->prepareIfNeeded())
         return false;
 
     outStyle = style;

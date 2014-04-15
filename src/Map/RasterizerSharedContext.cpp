@@ -2,7 +2,7 @@
 #include "RasterizerSharedContext_P.h"
 
 OsmAnd::RasterizerSharedContext::RasterizerSharedContext()
-    : _d(new RasterizerSharedContext_P(this))
+    : _p(new RasterizerSharedContext_P(this))
 {
 }
 

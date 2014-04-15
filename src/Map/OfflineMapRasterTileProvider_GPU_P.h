@@ -9,6 +9,7 @@
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
+#include "PrivateImplementation.h"
 #include "IMapBitmapTileProvider.h"
 #include "IRetainableResource.h"
 
@@ -40,7 +41,7 @@ namespace OsmAnd
             virtual void releaseNonRetainedData();
         };
 
-        OfflineMapRasterTileProvider_GPU* const owner;
+        ImplementationInterface<OfflineMapRasterTileProvider_GPU> owner;
         const uint32_t outputTileSize;
         const float density;
 

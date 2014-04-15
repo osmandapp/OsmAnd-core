@@ -10,8 +10,8 @@
 #include <Utilities.h>
 
 OsmAnd::MapAnimator::MapAnimator()
-    : _d(new MapAnimator_P(this))
-    , mapRenderer(_d->_renderer)
+    : _p(new MapAnimator_P(this))
+    , mapRenderer(_p->_renderer)
 {
 }
 
@@ -21,97 +21,97 @@ OsmAnd::MapAnimator::~MapAnimator()
 
 void OsmAnd::MapAnimator::setMapRenderer(const std::shared_ptr<IMapRenderer>& mapRenderer)
 {
-    _d->setMapRenderer(mapRenderer);
+    _p->setMapRenderer(mapRenderer);
 }
 
 bool OsmAnd::MapAnimator::isAnimationPaused() const
 {
-    return _d->isAnimationPaused();
+    return _p->isAnimationPaused();
 }
 
 bool OsmAnd::MapAnimator::isAnimationRunning() const
 {
-    return _d->isAnimationRunning();
+    return _p->isAnimationRunning();
 }
 
 void OsmAnd::MapAnimator::pauseAnimation()
 {
-    _d->pauseAnimation();
+    _p->pauseAnimation();
 }
 
 void OsmAnd::MapAnimator::resumeAnimation()
 {
-    _d->resumeAnimation();
+    _p->resumeAnimation();
 }
 
 void OsmAnd::MapAnimator::cancelAnimation()
 {
-    _d->cancelAnimation();
+    _p->cancelAnimation();
 }
 
 void OsmAnd::MapAnimator::update(const float timePassed)
 {
-    _d->update(timePassed);
+    _p->update(timePassed);
 }
 
 void OsmAnd::MapAnimator::animateZoomBy(const float deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction)
 {
-    _d->animateZoomBy(deltaValue, duration, timingFunction);
+    _p->animateZoomBy(deltaValue, duration, timingFunction);
 }
 
 void OsmAnd::MapAnimator::animateZoomWith(const float velocity, const float deceleration)
 {
-    _d->animateZoomWith(velocity, deceleration);
+    _p->animateZoomWith(velocity, deceleration);
 }
 
 void OsmAnd::MapAnimator::animateTargetBy(const PointI& deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction)
 {
-    _d->animateTargetBy(deltaValue, duration, timingFunction);
+    _p->animateTargetBy(deltaValue, duration, timingFunction);
 }
 
 void OsmAnd::MapAnimator::animateTargetBy(const PointI64& deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction)
 {
-    _d->animateTargetBy(deltaValue, duration, timingFunction);
+    _p->animateTargetBy(deltaValue, duration, timingFunction);
 }
 
 void OsmAnd::MapAnimator::animateTargetWith(const PointD& velocity, const PointD& deceleration)
 {
-    _d->animateTargetWith(velocity, deceleration);
+    _p->animateTargetWith(velocity, deceleration);
 }
 
 void OsmAnd::MapAnimator::parabolicAnimateTargetBy(const PointI& deltaValue, const float duration, const MapAnimatorTimingFunction targetTimingFunction, const MapAnimatorTimingFunction zoomTimingFunction)
 {
-    _d->parabolicAnimateTargetBy(deltaValue, duration, targetTimingFunction, zoomTimingFunction);
+    _p->parabolicAnimateTargetBy(deltaValue, duration, targetTimingFunction, zoomTimingFunction);
 }
 
 void OsmAnd::MapAnimator::parabolicAnimateTargetBy(const PointI64& deltaValue, const float duration, const MapAnimatorTimingFunction targetTimingFunction, const MapAnimatorTimingFunction zoomTimingFunction)
 {
-    _d->parabolicAnimateTargetBy(deltaValue, duration, targetTimingFunction, zoomTimingFunction);
+    _p->parabolicAnimateTargetBy(deltaValue, duration, targetTimingFunction, zoomTimingFunction);
 }
 
 void OsmAnd::MapAnimator::parabolicAnimateTargetWith(const PointD& velocity, const PointD& deceleration)
 {
-    _d->parabolicAnimateTargetWith(velocity, deceleration);
+    _p->parabolicAnimateTargetWith(velocity, deceleration);
 }
 
 void OsmAnd::MapAnimator::animateAzimuthBy(const float deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction)
 {
-    _d->animateAzimuthBy(deltaValue, duration, timingFunction);
+    _p->animateAzimuthBy(deltaValue, duration, timingFunction);
 }
 
 void OsmAnd::MapAnimator::animateAzimuthWith(const float velocity, const float deceleration)
 {
-    _d->animateAzimuthWith(velocity, deceleration);
+    _p->animateAzimuthWith(velocity, deceleration);
 }
 
 void OsmAnd::MapAnimator::animateElevationAngleBy(const float deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction)
 {
-    _d->animateElevationAngleBy(deltaValue, duration, timingFunction);
+    _p->animateElevationAngleBy(deltaValue, duration, timingFunction);
 }
 
 void OsmAnd::MapAnimator::animateElevationAngleWith(const float velocity, const float deceleration)
 {
-    _d->animateElevationAngleWith(velocity, deceleration);
+    _p->animateElevationAngleWith(velocity, deceleration);
 }
 
 void OsmAnd::MapAnimator::animateMoveBy(
@@ -119,7 +119,7 @@ void OsmAnd::MapAnimator::animateMoveBy(
     const bool zeroizeAzimuth, const bool invZeroizeElevationAngle,
     const MapAnimatorTimingFunction timingFunction)
 {
-    _d->animateMoveBy(deltaValue, duration, zeroizeAzimuth, invZeroizeElevationAngle, timingFunction);
+    _p->animateMoveBy(deltaValue, duration, zeroizeAzimuth, invZeroizeElevationAngle, timingFunction);
 }
 
 void OsmAnd::MapAnimator::animateMoveBy(
@@ -127,10 +127,10 @@ void OsmAnd::MapAnimator::animateMoveBy(
     const bool zeroizeAzimuth, const bool invZeroizeElevationAngle,
     const MapAnimatorTimingFunction timingFunction)
 {
-    _d->animateMoveBy(deltaValue, duration, zeroizeAzimuth, invZeroizeElevationAngle, timingFunction);
+    _p->animateMoveBy(deltaValue, duration, zeroizeAzimuth, invZeroizeElevationAngle, timingFunction);
 }
 
 void OsmAnd::MapAnimator::animateMoveWith(const PointD& velocity, const PointD& deceleration, const bool zeroizeAzimuth, const bool invZeroizeElevationAngle)
 {
-    _d->animateMoveWith(velocity, deceleration, zeroizeAzimuth, invZeroizeElevationAngle);
+    _p->animateMoveWith(velocity, deceleration, zeroizeAzimuth, invZeroizeElevationAngle);
 }

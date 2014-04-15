@@ -1,21 +1,23 @@
 #ifndef _OSMAND_CORE_OBF_ROUTING_SECTION_INFO_P_H_
 #define _OSMAND_CORE_OBF_ROUTING_SECTION_INFO_P_H_
 
-#include <OsmAndCore/stdlib_common.h>
+#include "stdlib_common.h"
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 #include <QList>
 
-#include <OsmAndCore.h>
-#include <OsmAndCore/CommonTypes.h>
+#include "OsmAndCore.h"
+#include "CommonTypes.h"
+#include "PrivateImplementation.h"
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class ObfRoutingSectionReader_P;
-    namespace Model {
+    namespace Model
+    {
         enum class RoadDirection : int32_t;
         class Road;
-    } // namespace Model
+    }
     class RoutePlanner;
     class RoutePlannerContext;
     class RoutingRulesetContext;
@@ -28,7 +30,7 @@ namespace OsmAnd {
     protected:
         ObfRoutingSectionInfo_P(ObfRoutingSectionInfo* owner);
 
-        ObfRoutingSectionInfo* const owner;
+        ImplementationInterface<ObfRoutingSectionInfo> owner;
 
         struct EncodingRule
         {
@@ -74,7 +76,6 @@ namespace OsmAnd {
     friend class OsmAnd::RoutePlannerContext;
     friend class OsmAnd::RoutingRulesetContext;
     };
-
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_OBF_ROUTING_SECTION_INFO_P_H_)

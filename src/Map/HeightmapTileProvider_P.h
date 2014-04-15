@@ -11,6 +11,7 @@
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
+#include "PrivateImplementation.h"
 #include "TileDB.h"
 #include "IMapElevationDataProvider.h"
 
@@ -22,9 +23,9 @@ namespace OsmAnd
         Q_DISABLE_COPY(HeightmapTileProvider_P);
     private:
     protected:
-        HeightmapTileProvider_P(HeightmapTileProvider* owner, const QDir& dataPath, const QString& indexFilepath);
+        HeightmapTileProvider_P(HeightmapTileProvider* const owner, const QDir& dataPath, const QString& indexFilepath);
 
-        HeightmapTileProvider* const owner;
+        ImplementationInterface<HeightmapTileProvider> owner;
         TileDB _tileDb;
 
         bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile, const IQueryController* const queryController);

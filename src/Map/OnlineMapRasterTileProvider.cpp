@@ -13,9 +13,9 @@ OsmAnd::OnlineMapRasterTileProvider::OnlineMapRasterTileProvider(
     const uint32_t maxConcurrentDownloads_ /*= 1*/,
     const uint32_t providerTileSize_ /*= 256*/,
     const AlphaChannelData alphaChannelData_ /*= AlphaChannelData::Undefined*/)
-    : _d(new OnlineMapRasterTileProvider_P(this))
-    , localCachePath(_d->_localCachePath)
-    , networkAccessAllowed(_d->_networkAccessAllowed)
+    : _p(new OnlineMapRasterTileProvider_P(this))
+    , localCachePath(_p->_localCachePath)
+    , networkAccessAllowed(_p->_networkAccessAllowed)
     , id(id_)
     , urlPattern(urlPattern_)
     , minZoom(minZoom_)
@@ -24,7 +24,7 @@ OsmAnd::OnlineMapRasterTileProvider::OnlineMapRasterTileProvider(
     , providerTileSize(providerTileSize_)
     , alphaChannelData(alphaChannelData_)
 {
-    _d->_localCachePath = QDir(QDir::current().filePath(id));
+    _p->_localCachePath = QDir(QDir::current().filePath(id));
 }
 
 OsmAnd::OnlineMapRasterTileProvider::~OnlineMapRasterTileProvider()
@@ -33,18 +33,18 @@ OsmAnd::OnlineMapRasterTileProvider::~OnlineMapRasterTileProvider()
 
 void OsmAnd::OnlineMapRasterTileProvider::setLocalCachePath( const QDir& localCachePath )
 {
-    QMutexLocker scopedLocker(&_d->_localCachePathMutex);
-    _d->_localCachePath = localCachePath;
+    QMutexLocker scopedLocker(&_p->_localCachePathMutex);
+    _p->_localCachePath = localCachePath;
 }
 
 void OsmAnd::OnlineMapRasterTileProvider::setNetworkAccessPermission( bool allowed )
 {
-    _d->_networkAccessAllowed = allowed;
+    _p->_networkAccessAllowed = allowed;
 }
 
 bool OsmAnd::OnlineMapRasterTileProvider::obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile, const IQueryController* const queryController)
 {
-    return _d->obtainTile(tileId, zoom, outTile, queryController);
+    return _p->obtainTile(tileId, zoom, outTile, queryController);
 }
 
 float OsmAnd::OnlineMapRasterTileProvider::getTileDensity() const

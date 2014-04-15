@@ -1,18 +1,18 @@
 #include "Utilities_OpenGL.h"
 
-OSMAND_CORE_API float OSMAND_CORE_CALL OsmAnd::Utilities_OpenGL_Common::calculateCameraDistance( const glm::mat4& P, const AreaI& viewport, const float Ax, const float Sx, const float k )
+float OsmAnd::Utilities_OpenGL_Common::calculateCameraDistance(const glm::mat4& P, const AreaI& viewport, const float Ax, const float Sx, const float k)
 {
     const float w = viewport.width();
     const float x = viewport.left;
 
     const float fw = (Sx*k) / (0.5f * w);
 
-    float d = (Ax * P[0][0])/fw;
+    float d = (Ax * P[0][0]) / fw;
 
     return d;
 }
 
-OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::Utilities_OpenGL_Common::rayIntersectPlane( const glm::vec3& planeN, const glm::vec3& planeO, const glm::vec3& rayD, const glm::vec3& rayO, float& distance )
+bool OsmAnd::Utilities_OpenGL_Common::rayIntersectPlane(const glm::vec3& planeN, const glm::vec3& planeO, const glm::vec3& rayD, const glm::vec3& rayO, float& distance)
 {
     const auto numerator = glm::dot(planeO - rayO, planeN);
     if(qAbs(numerator) <= std::numeric_limits<float>::epsilon())
@@ -28,7 +28,7 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::Utilities_OpenGL_Common::rayInters
     return true;
 }
 
-OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::Utilities_OpenGL_Common::lineSegmentIntersectPlane( const glm::vec3& planeN, const glm::vec3& planeO, const glm::vec3& line0, const glm::vec3& line1, glm::vec3& lineX )
+bool OsmAnd::Utilities_OpenGL_Common::lineSegmentIntersectPlane(const glm::vec3& planeN, const glm::vec3& planeO, const glm::vec3& line0, const glm::vec3& line1, glm::vec3& lineX)
 {
     const auto line = line1 - line0;
     const auto lineD = glm::normalize(line);

@@ -3,7 +3,7 @@
 
 #include <cassert>
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 #include <QCoreApplication>
 #include <QNetworkRequest>
 #include <QNetworkReply>
@@ -12,12 +12,10 @@
 #include <SkStream.h>
 #include <SkImageDecoder.h>
 
-#include "Network.h"
 #include "Logging.h"
 
 OsmAnd::OnlineMapRasterTileProvider_P::OnlineMapRasterTileProvider_P( OnlineMapRasterTileProvider* owner_ )
     : owner(owner_)
-    , _currentDownloadsCounter(0)
     , _localCachePath(QDir::current())
     , _networkAccessAllowed(true)
 {
@@ -94,41 +92,22 @@ bool OsmAnd::OnlineMapRasterTileProvider_P::obtainTile(const TileId tileId, cons
         return false;
     }
 
-    // Check if there is free download slot. If all download slots are used, wait for one to be freed
-    if(owner->maxConcurrentDownloads > 0)
-    {
-        QMutexLocker scopedLocker(&_currentDownloadsCounterMutex);
-
-        while(_currentDownloadsCounter >= owner->maxConcurrentDownloads)
-            _currentDownloadsCounterChanged.wait(&_currentDownloadsCounterMutex);
-
-        _currentDownloadsCounter++;
-    }
-
     // Perform synchronous download
     auto tileUrl = owner->urlPattern;
     tileUrl
         .replace(QLatin1String("${zoom}"), QString::number(zoom))
         .replace(QLatin1String("${x}"), QString::number(tileId.x))
         .replace(QLatin1String("${y}"), QString::number(tileId.y));
-    const auto networkReply = Network::Downloader::download(tileUrl);
-
-    // Free download slot
-    {
-        QMutexLocker scopedLocker(&_currentDownloadsCounterMutex);
-
-        _currentDownloadsCounter--;
-        _currentDownloadsCounterChanged.wakeAll();
-    }
+    std::shared_ptr<const WebClient::RequestResult> requestResult;
+    const auto& downloadResult = _downloadManager.downloadData(QUrl(tileUrl), &requestResult);
 
     // Ensure that all directories are created in path to local tile
     localFile.dir().mkpath(localFile.dir().absolutePath());
 
     // If there was error, check what the error was
-    auto networkError = networkReply->error();
-    if(networkError != QNetworkReply::NetworkError::NoError)
+    if(!requestResult->isSuccessful())
     {
-        const auto httpStatus = networkReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        const auto httpStatus = std::dynamic_pointer_cast<const WebClient::HttpRequestResult>(requestResult)->httpStatusCode;
 
         LogPrintf(LogSeverityLevel::Warning, "Failed to download tile from %s (HTTP status %d)", qPrintable(tileUrl), httpStatus);
 
@@ -143,7 +122,6 @@ bool OsmAnd::OnlineMapRasterTileProvider_P::obtainTile(const TileId tileId, cons
 
                 // Unlock the tile
                 unlockTile(tileId, zoom);
-                networkReply->deleteLater();
                 return true;
             }
             else
@@ -161,17 +139,16 @@ bool OsmAnd::OnlineMapRasterTileProvider_P::obtainTile(const TileId tileId, cons
         return false;
     }
 
-    // Save data to a file
+    // Obtain all data
 #if OSMAND_DEBUG
     LogPrintf(LogSeverityLevel::Info, "Downloaded tile from %s", qPrintable(tileUrl));
 #endif
-    const auto& data = networkReply->readAll();
 
     // Save to a file
     QFile tileFile(localFile.absoluteFilePath());
     if(tileFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
     {
-        tileFile.write(data);
+        tileFile.write(downloadResult);
         tileFile.close();
 
 #if OSMAND_DEBUG
@@ -186,7 +163,7 @@ bool OsmAnd::OnlineMapRasterTileProvider_P::obtainTile(const TileId tileId, cons
 
     // Decode in-memory
     auto bitmap = new SkBitmap();
-    if(!SkImageDecoder::DecodeMemory(data.data(), data.size(), bitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
+    if(!SkImageDecoder::DecodeMemory(downloadResult.constData(), downloadResult.size(), bitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
     {
         LogPrintf(LogSeverityLevel::Error, "Failed to decode tile file from '%s'", qPrintable(tileUrl));
 

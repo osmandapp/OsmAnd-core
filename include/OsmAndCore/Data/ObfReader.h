@@ -8,11 +8,12 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/Data/ObfInfo.h>
+#include <OsmAndCore/PrivateImplementation.h>
 
 class QIODevice;
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class ObfFile;
 
     class ObfMapSectionReader;
@@ -26,7 +27,7 @@ namespace OsmAnd {
     {
         Q_DISABLE_COPY(ObfReader)
     private:
-        const std::unique_ptr<ObfReader_P> _d;
+        PrivateImplementation<ObfReader_P> _p;
     protected:
     public:
         ObfReader(const std::shared_ptr<const ObfFile>& obfFile);
@@ -35,7 +36,7 @@ namespace OsmAnd {
 
         const std::shared_ptr<const ObfFile> obfFile;
 
-        std::shared_ptr<ObfInfo> obtainInfo() const;
+        std::shared_ptr<const ObfInfo> obtainInfo() const;
 
     friend class OsmAnd::ObfMapSectionReader;
     friend class OsmAnd::ObfAddressSectionReader;
@@ -43,7 +44,6 @@ namespace OsmAnd {
     friend class OsmAnd::ObfPoiSectionReader;
     friend class OsmAnd::ObfTransportSectionReader;
     };
-
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_OBF_READER_H_)

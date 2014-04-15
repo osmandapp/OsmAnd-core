@@ -79,7 +79,7 @@ bool OsmAnd::MapStyle_P::parseMetadata( QXmlStreamReader& xmlReader )
     }
     if(xmlReader.hasError())
     {
-        std::cerr << qPrintable(xmlReader.errorString()) << "(" << xmlReader.lineNumber() << ", " << xmlReader.columnNumber() << ")" << std::endl;
+        LogPrintf(LogSeverityLevel::Warning, "XML error: %s (%d, %d)", qPrintable(xmlReader.errorString()), xmlReader.lineNumber(), xmlReader.columnNumber());
         return false;
     }
 
@@ -121,12 +121,12 @@ bool OsmAnd::MapStyle_P::prepareIfNeeded()
     return true;
 }
 
-bool OsmAnd::MapStyle_P::areDependenciesResolved()
+bool OsmAnd::MapStyle_P::areDependenciesResolved() const
 {
     if(_parentName.isEmpty())
         return true;
 
-    return _parent && _parent->_d->areDependenciesResolved();
+    return _parent && _parent->_p->areDependenciesResolved();
 }
 
 bool OsmAnd::MapStyle_P::resolveDependencies()
@@ -142,7 +142,7 @@ bool OsmAnd::MapStyle_P::resolveDependencies()
     }
 
     // Obtain string ID base
-    _stringsIdBase = _parent->_d->_stringsIdBase + _parent->_d->_stringsLUT.size();
+    _stringsIdBase = _parent->_p->_stringsIdBase + _parent->_p->_stringsLUT.size();
 
     return true;
 }
@@ -212,7 +212,7 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
         void addGroupFilter(const std::shared_ptr<MapStyleRule>& rule)
         {
             for(const auto& child : constOf(children))
-                child->_d->_ifChildren.push_back(rule);
+                child->_p->_ifChildren.push_back(rule);
 
             for(const auto& subgroup : constOf(subgroups))
             {
@@ -357,7 +357,7 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
                     }
                     else if(lexeme->type == Lexeme::Rule)
                     {
-                        std::static_pointer_cast<Rule>(lexeme)->rule->_d->_ifElseChildren.push_back(rule);
+                        std::static_pointer_cast<Rule>(lexeme)->rule->_p->_ifElseChildren.push_back(rule);
                     }
                 }
                 else
@@ -395,7 +395,7 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
                 }
                 else if(lexeme->type == Lexeme::Rule)
                 {
-                    std::static_pointer_cast<Rule>(lexeme)->rule->_d->_ifChildren.push_back(rule);
+                    std::static_pointer_cast<Rule>(lexeme)->rule->_p->_ifChildren.push_back(rule);
                 }
 
                 stack.push(qMove(std::shared_ptr<Lexeme>(new Rule(rule, this))));
@@ -477,7 +477,7 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
     }
     if(xmlReader.hasError())
     {
-        std::cerr << qPrintable(xmlReader.errorString()) << "(" << xmlReader.lineNumber() << ", " << xmlReader.columnNumber() << ")" << std::endl;
+        LogPrintf(LogSeverityLevel::Warning, "XML error: %s (%d, %d)", qPrintable(xmlReader.errorString()), xmlReader.lineNumber(), xmlReader.columnNumber());
         return false;
     }
 
@@ -507,7 +507,7 @@ void OsmAnd::MapStyle_P::registerBuiltinValueDefinitions()
 #   undef DECLARE_BUILTIN_VALUEDEF
 }
 
-bool OsmAnd::MapStyle_P::resolveConstantValue( const QString& name, QString& value )
+bool OsmAnd::MapStyle_P::resolveConstantValue(const QString& name, QString& value) const
 {
     auto itValue = _parsetimeConstants.constFind(name);
     if(itValue != _parsetimeConstants.cend())
@@ -517,7 +517,7 @@ bool OsmAnd::MapStyle_P::resolveConstantValue( const QString& name, QString& val
     }
 
     if(_parent)
-        return _parent->_d->resolveConstantValue(name, value);
+        return _parent->_p->resolveConstantValue(name, value);
     return false;
 }
 
@@ -603,7 +603,7 @@ bool OsmAnd::MapStyle_P::registerRule( MapStyleRulesetType type, const std::shar
     {
         // all root rules should have at least tag/value
         insertedRule = createTagValueRootWrapperRule(id, *itPrevious);
-        insertedRule->_d->_ifElseChildren.push_back(rule);
+        insertedRule->_p->_ifElseChildren.push_back(rule);
     }
 
     ruleset.insert(id, qMove(insertedRule));
@@ -613,14 +613,14 @@ bool OsmAnd::MapStyle_P::registerRule( MapStyleRulesetType type, const std::shar
 
 std::shared_ptr<OsmAnd::MapStyleRule> OsmAnd::MapStyle_P::createTagValueRootWrapperRule( uint64_t id, const std::shared_ptr<MapStyleRule>& rule )
 {
-    if(rule->_d->_values.size() <= 2)
+    if(rule->_p->_values.size() <= 2)
         return rule;
 
     QHash< QString, QString > attributes;
     attributes.insert(QLatin1String("tag"), getTagString(id));
     attributes.insert(QLatin1String("value"), getValueString(id));
     std::shared_ptr<MapStyleRule> newRule(new MapStyleRule(owner, attributes));
-    newRule->_d->_ifElseChildren.push_back(rule);
+    newRule->_p->_ifElseChildren.push_back(rule);
     return newRule;
 }
 
@@ -647,7 +647,7 @@ const QString& OsmAnd::MapStyle_P::getValueString( uint64_t ruleId ) const
 const QString& OsmAnd::MapStyle_P::lookupStringValue( uint32_t id ) const
 {
     if(_parent && id < _stringsIdBase)
-        return _parent->_d->lookupStringValue(id);
+        return _parent->_p->lookupStringValue(id);
     return _stringsLUT[id - _stringsIdBase];
 }
 
@@ -661,7 +661,7 @@ bool OsmAnd::MapStyle_P::lookupStringId( const QString& value, uint32_t& id ) co
     }
 
     if(_parent)
-        return _parent->_d->lookupStringId(value, id);
+        return _parent->_p->lookupStringId(value, id);
 
     return false;
 }
@@ -724,7 +724,7 @@ bool OsmAnd::MapStyle_P::mergeInheritedRules( MapStyleRulesetType type )
     if(!_parent)
         return true;
 
-    const auto& parentRules = _parent->_d->obtainRulesRef(type);
+    const auto& parentRules = _parent->_p->obtainRulesRef(type);
     auto& rules = obtainRulesRef(type);
 
     for(const auto& parentRuleEntry : rangeOf(constOf(parentRules)))
@@ -735,7 +735,7 @@ bool OsmAnd::MapStyle_P::mergeInheritedRules( MapStyleRulesetType type )
         if(itLocalRule != rules.cend())
         {
             toInsert = createTagValueRootWrapperRule(parentRuleEntry.key(), *itLocalRule);
-            toInsert->_d->_ifElseChildren.push_back(parentRuleEntry.value());
+            toInsert->_p->_ifElseChildren.push_back(parentRuleEntry.value());
         }
 
         rules.insert(parentRuleEntry.key(), toInsert);
@@ -750,7 +750,7 @@ bool OsmAnd::MapStyle_P::mergeInheritedAttributes()
         return true;
 
     const auto& itEnd = _attributes.cend();
-    for(const auto& parentAttributeEntry : rangeOf(constOf(_parent->_d->_attributes)))
+    for(const auto& parentAttributeEntry : rangeOf(constOf(_parent->_p->_attributes)))
     {
         const auto& parentAttribute = parentAttributeEntry.value();
 
@@ -758,8 +758,8 @@ bool OsmAnd::MapStyle_P::mergeInheritedAttributes()
         if(itAttribute != itEnd)
         {
             const auto& attribute = *itAttribute;
-            for(const auto& child : constOf(parentAttribute->_d->_ifElseChildren))
-                attribute->_d->_ifElseChildren.push_back(child);
+            for(const auto& child : constOf(parentAttribute->_p->_ifElseChildren))
+                attribute->_p->_ifElseChildren.push_back(child);
         }
         else
         {

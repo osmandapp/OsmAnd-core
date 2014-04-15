@@ -10,10 +10,10 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/MapTypes.h>
 
-namespace OsmAnd {
-
-    namespace ObfMapSectionReader_Metrics {
-
+namespace OsmAnd
+{
+    namespace ObfMapSectionReader_Metrics
+    {
         struct Metric_loadMapObjects
         {
             inline Metric_loadMapObjects()

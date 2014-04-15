@@ -9,6 +9,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Map/MapTypes.h>
 #include <OsmAndCore/Map/IMapBitmapTileProvider.h>
 
@@ -19,7 +20,7 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY(OnlineMapRasterTileProvider);
     private:
-        const std::unique_ptr<OnlineMapRasterTileProvider_P> _d;
+        PrivateImplementation<OnlineMapRasterTileProvider_P> _p;
     protected:
     public:
         OnlineMapRasterTileProvider(const QString& id, const QString& urlPattern,

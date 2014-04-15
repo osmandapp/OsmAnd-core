@@ -63,14 +63,14 @@ OsmAnd::MapRendererResources::MapRendererResources(MapRenderer* const owner_)
 
 OsmAnd::MapRendererResources::~MapRendererResources()
 {
-    // Release all resources
+    // Check all resources are released
     for(auto& resourcesCollections : _storage)
     {
         for(const auto& resourcesCollection : constOf(resourcesCollections))
         {
             if(!resourcesCollection)
                 continue;
-            releaseResourcesFrom(resourcesCollection);
+            assert(resourcesCollection->getEntriesCount() == 0);
         }
         resourcesCollections.clear();
     }
@@ -82,15 +82,6 @@ OsmAnd::MapRendererResources::~MapRendererResources()
         _workerThreadWakeup.wakeAll();
     }
     REPEAT_UNTIL(_workerThread->wait());
-
-    // Release all bindings
-    for(auto resourceType = 0; resourceType < ResourceTypesCount; resourceType++)
-    {
-        auto& bindings = _bindings[resourceType];
-
-        bindings.providersToCollections.clear();
-        bindings.collectionsToProviders.clear();
-    }
 
     // Release default resources
     releaseDefaultResources();
@@ -442,7 +433,7 @@ void OsmAnd::MapRendererResources::requestNeededResources(const QSet<TileId>& ac
                 LOG_STATE_CHANGE(resource->tileId, resource->zoom, ResourceState::Unknown, ResourceState::Requesting);
 
                 // Create async-task that will obtain needed resource data
-                const auto executeProc = [this](Concurrent::Task* task_, QEventLoop& eventLoop)
+                const auto executeProc = [this](Concurrent::Task* task_)
                 {
                     const auto task = static_cast<ResourceRequestTask*>(task_);
                     const auto resource = std::static_pointer_cast<BaseTiledResource>(task->requestedResource);
@@ -974,6 +965,29 @@ void OsmAnd::MapRendererResources::releaseResourcesFrom(const std::shared_ptr<Ti
 void OsmAnd::MapRendererResources::requestResourcesUploadOrUnload()
 {
     renderer->requestResourcesUploadOrUnload();
+}
+
+void OsmAnd::MapRendererResources::releaseAllResources()
+{
+    // Release all resources
+    for(auto& resourcesCollections : _storage)
+    {
+        for(const auto& resourcesCollection : constOf(resourcesCollections))
+        {
+            if(!resourcesCollection)
+                continue;
+            releaseResourcesFrom(resourcesCollection);
+        }
+    }
+
+    // Release all bindings
+    for(auto resourceType = 0; resourceType < ResourceTypesCount; resourceType++)
+    {
+        auto& bindings = _bindings[resourceType];
+
+        bindings.providersToCollections.clear();
+        bindings.collectionsToProviders.clear();
+    }
 }
 
 void OsmAnd::MapRendererResources::syncResourcesInGPU(

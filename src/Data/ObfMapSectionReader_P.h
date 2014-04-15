@@ -1,57 +1,59 @@
 #ifndef _OSMAND_CORE_OBF_MAP_SECTION_READER_P_H_
 #define _OSMAND_CORE_OBF_MAP_SECTION_READER_P_H_
 
-#include <OsmAndCore/stdlib_common.h>
+#include "stdlib_common.h"
 #include <functional>
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 #include <QHash>
 #include <QMap>
 #include <QSet>
 
-#include <OsmAndCore.h>
-#include <CommonTypes.h>
-#include <MapTypes.h>
+#include "OsmAndCore.h"
+#include "CommonTypes.h"
+#include "MapTypes.h"
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class ObfReader_P;
     class ObfMapSectionInfo;
     class ObfMapSectionLevel;
     struct ObfMapSectionDecodingEncodingRules;
     class ObfMapSectionLevelTreeNode;
-    namespace Model {
+    namespace Model
+    {
         class MapObject;
-    } // namespace Model
+    }
     class IQueryController;
-    namespace ObfMapSectionReader_Metrics {
+    namespace ObfMapSectionReader_Metrics
+    {
         struct Metric_loadMapObjects;
-    } // namespace ObfMapSectionReader_Metrics
+    }
 
     class ObfMapSectionReader;
-    class OSMAND_CORE_API ObfMapSectionReader_P
+    class ObfMapSectionReader_P
     {
     private:
         ObfMapSectionReader_P();
         ~ObfMapSectionReader_P();
 
     protected:
-        static void read(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<ObfMapSectionInfo>& section);
+        static void read(const ObfReader_P& reader, const std::shared_ptr<ObfMapSectionInfo>& section);
 
-        static void readMapLevelHeader(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
+        static void readMapLevelHeader(const ObfReader_P& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
             const std::shared_ptr<ObfMapSectionLevel>& level);
 
-        static void readEncodingDecodingRules(const std::unique_ptr<ObfReader_P>& reader,
+        static void readEncodingDecodingRules(const ObfReader_P& reader,
             const std::shared_ptr<ObfMapSectionDecodingEncodingRules>& encodingDecodingRules);
-        static void readEncodingDecodingRule(const std::unique_ptr<ObfReader_P>& reader,
+        static void readEncodingDecodingRule(const ObfReader_P& reader,
             uint32_t defaultId, const std::shared_ptr<ObfMapSectionDecodingEncodingRules>& encodingDecodingRules);
 
-        static void readMapLevelTreeNodes(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
+        static void readMapLevelTreeNodes(const ObfReader_P& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
             const std::shared_ptr<const ObfMapSectionLevel>& level, QList< std::shared_ptr<ObfMapSectionLevelTreeNode> >& nodes);
-        static void readTreeNode(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
+        static void readTreeNode(const ObfReader_P& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
             const AreaI& parentArea,
             const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode);
-        static void readTreeNodeChildren(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
+        static void readTreeNodeChildren(const ObfReader_P& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
             const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode,
             MapFoundationType& foundation,
             QList< std::shared_ptr<ObfMapSectionLevelTreeNode> >* nodesWithData,
@@ -59,7 +61,7 @@ namespace OsmAnd {
             const IQueryController* const controller,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric);
 
-        static void readMapObjectsBlock(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
+        static void readMapObjectsBlock(const ObfReader_P& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
             const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode,
             QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut,
             const AreaI* bbox31,
@@ -68,21 +70,21 @@ namespace OsmAnd {
             const IQueryController* const controller,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric);
 
-        static void readMapObjectId(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
+        static void readMapObjectId(const ObfReader_P& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
             uint64_t baseId,
             uint64_t& objectId);
 
-        static void readMapObject(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
+        static void readMapObject(const ObfReader_P& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
             uint64_t baseId, const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode,
             std::shared_ptr<OsmAnd::Model::MapObject>& mapObjectOut,
             const AreaI* bbox31);
 
-        enum {
+        enum : uint32_t {
             ShiftCoordinates = 5,
             MaskToRead = ~((1u << ShiftCoordinates) - 1),
         };
 
-        static void loadMapObjects(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
+        static void loadMapObjects(const ObfReader_P& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
             ZoomLevel zoom, const AreaI* bbox31,
             QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut, MapFoundationType* foundationOut,
             const FilterMapObjectsByIdSignature filterById,
@@ -93,7 +95,6 @@ namespace OsmAnd {
     friend class OsmAnd::ObfMapSectionReader;
     friend class OsmAnd::ObfReader_P;
     };
-
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_OBF_MAP_SECTION_READER_P_H_)

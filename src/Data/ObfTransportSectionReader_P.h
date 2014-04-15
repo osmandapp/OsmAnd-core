@@ -15,15 +15,15 @@ namespace OsmAnd {
     class ObfTransportSectionInfo;
     class IQueryController;
 
-    class OSMAND_CORE_API ObfTransportSectionReader_P
+    class ObfTransportSectionReader_P
     {
     private:
         ObfTransportSectionReader_P();
         ~ObfTransportSectionReader_P();
     protected:
-        static void read(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<ObfTransportSectionInfo>& section);
+        static void read(const ObfReader_P& reader, const std::shared_ptr<ObfTransportSectionInfo>& section);
 
-        static void readTransportStopsBounds(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<ObfTransportSectionInfo>& section);
+        static void readTransportStopsBounds(const ObfReader_P& reader, const std::shared_ptr<ObfTransportSectionInfo>& section);
 
     friend class OsmAnd::ObfReader_P;
     };

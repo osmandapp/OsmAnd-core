@@ -1,37 +1,42 @@
 #ifndef _OSMAND_CORE_OBF_FILE_P_H_
 #define _OSMAND_CORE_OBF_FILE_P_H_
 
-#include <OsmAndCore/stdlib_common.h>
+#include "stdlib_common.h"
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 #include <QMutex>
+#include <QReadWriteLock>
 
-#include <OsmAndCore.h>
+#include "OsmAndCore.h"
+#include "PrivateImplementation.h"
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class ObfReader;
     class ObfInfo;
 
     class ObfFile;
-    class OSMAND_CORE_API ObfFile_P
+    class ObfFile_P
     {
         Q_DISABLE_COPY(ObfFile_P)
     private:
     protected:
         ObfFile_P(ObfFile* owner);
 
-        ObfFile* const owner;
+        ImplementationInterface<ObfFile> owner;
 
         mutable QMutex _obfInfoMutex;
-        std::shared_ptr<ObfInfo> _obfInfo;
+        mutable std::shared_ptr<const ObfInfo> _obfInfo;
+
+        mutable QReadWriteLock _fileLock;
+        mutable bool _isLockedForRemoval;
+        void lockForRemoval() const;
     public:
         virtual ~ObfFile_P();
 
     friend class OsmAnd::ObfFile;
     friend class OsmAnd::ObfReader;
     };
-
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_OBF_FILE_P_H_)

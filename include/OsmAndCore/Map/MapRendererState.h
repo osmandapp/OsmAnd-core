@@ -13,8 +13,8 @@
 #include <OsmAndCore/Map/MapTypes.h>
 #include <OsmAndCore/Map/MapRendererTypes.h>
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class IMapBitmapTileProvider;
     class IMapElevationDataProvider;
     class IMapSymbolProvider;

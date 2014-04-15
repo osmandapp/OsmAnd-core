@@ -273,8 +273,7 @@ void OsmAnd::RoutePlanner::loadTileHeader( RoutePlannerContext* context, uint32_
                 [](const std::shared_ptr<const ObfRoutingSubsectionInfo>& subsection)
                 {
                     return subsection->containsData();
-                }
-            );
+                });
             for(const auto& subsection : constOf(subsections))
             {
                 auto itSubsectionContext = context->_subsectionsContextsLUT.constFind(subsection.get());
@@ -897,7 +896,7 @@ float OsmAnd::RoutePlanner::calculateTurnTime(
         const auto& pointTypesB = *itPointTypesB;
 
         // Check that there are no traffic signals, since they don't add turn info
-        const auto& encRules = b->road->subsection->section->_d->_encodingRules;
+        const auto& encRules = b->road->subsection->section->_p->_encodingRules;
         for(const auto& pointType : constOf(pointTypesB))
         {
             const auto& rule = encRules[pointType];

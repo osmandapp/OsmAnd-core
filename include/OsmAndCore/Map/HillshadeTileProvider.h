@@ -9,7 +9,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-
+#include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Map/IMapBitmapTileProvider.h>
 
 namespace OsmAnd
@@ -19,7 +19,7 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY(HillshadeTileProvider);
     private:
-        const std::unique_ptr<HillshadeTileProvider> _d;
+        PrivateImplementation<HillshadeTileProvider> _p;
     protected:
     public:
         HillshadeTileProvider(const QDir& storagePath);

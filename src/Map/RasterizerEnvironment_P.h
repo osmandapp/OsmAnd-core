@@ -13,6 +13,7 @@
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
+#include "PrivateImplementation.h"
 #include "MapStyle.h"
 #include "MapStyleRule.h"
 #include "Rasterizer.h"
@@ -80,7 +81,7 @@ namespace OsmAnd
     public:
         virtual ~RasterizerEnvironment_P();
 
-        RasterizerEnvironment* const owner;
+        ImplementationInterface<RasterizerEnvironment> owner;
 
         const std::shared_ptr<const MapStyleBuiltinValueDefinitions> styleBuiltinValueDefs;
 

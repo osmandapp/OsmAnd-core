@@ -10,6 +10,7 @@
 
 #include "OsmAndCore.h"
 #include "MapStyleValue.h"
+#include "PrivateImplementation.h"
 
 namespace OsmAnd
 {
@@ -25,7 +26,7 @@ namespace OsmAnd
     protected:
         MapStyleRule_P(MapStyleRule* owner);
 
-        MapStyleRule* const owner;
+        ImplementationInterface<MapStyleRule> owner;
 
         QHash< QString, std::shared_ptr<const MapStyleValueDefinition> > _resolvedValueDefinitions;
 

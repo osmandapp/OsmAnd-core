@@ -38,6 +38,9 @@ add_subdirectory("${OSMAND_ROOT}/core/externals/glsl-optimizer" "core/externals/
 # External: ICU4C
 add_subdirectory("${OSMAND_ROOT}/core/externals/icu4c" "core/externals/icu4c")
 
+# External: libarchive
+add_subdirectory("${OSMAND_ROOT}/core/externals/libarchive" "core/externals/libarchive")
+
 # OsmAnd Core
 add_subdirectory("${OSMAND_ROOT}/core" "core/OsmAndCore")
 

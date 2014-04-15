@@ -1,10 +1,10 @@
 #ifndef _OSMAND_CORE_ONLINE_MAP_RASTER_TILE_PROVIDER_P_H_
 #define _OSMAND_CORE_ONLINE_MAP_RASTER_TILE_PROVIDER_P_H_
 
-#include <OsmAndCore/stdlib_common.h>
+#include "stdlib_common.h"
 #include <array>
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 #include <QSet>
 #include <QDir>
 #include <QUrl>
@@ -13,12 +13,14 @@
 #include <QMutex>
 #include <QWaitCondition>
 
-#include <OsmAndCore.h>
-#include <CommonTypes.h>
-#include <IMapBitmapTileProvider.h>
+#include "OsmAndCore.h"
+#include "CommonTypes.h"
+#include "PrivateImplementation.h"
+#include "IMapBitmapTileProvider.h"
+#include "WebClient.h"
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class OnlineMapRasterTileProvider;
     class OnlineMapRasterTileProvider_P
     {
@@ -26,11 +28,7 @@ namespace OsmAnd {
     protected:
         OnlineMapRasterTileProvider_P(OnlineMapRasterTileProvider* owner);
 
-        const OnlineMapRasterTileProvider* owner;
-
-        mutable QMutex _currentDownloadsCounterMutex;
-        uint32_t _currentDownloadsCounter;
-        QWaitCondition _currentDownloadsCounterChanged;
+        ImplementationInterface<OnlineMapRasterTileProvider> owner;
 
         mutable QMutex _localCachePathMutex;
         QDir _localCachePath;
@@ -40,6 +38,8 @@ namespace OsmAnd {
         std::array< QSet< TileId >, ZoomLevelsCount > _tilesInProcess;
         QWaitCondition _waitUntilAnyTileIsProcessed;
 
+        WebClient _downloadManager;
+
         bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile, const IQueryController* const queryController);
         void lockTile(const TileId tileId, const ZoomLevel zoom);
         void unlockTile(const TileId tileId, const ZoomLevel zoom);
@@ -48,7 +48,6 @@ namespace OsmAnd {
 
     friend class OsmAnd::OnlineMapRasterTileProvider;
     };
-
 }
 
 #endif // !defined(_OSMAND_CORE_ONLINE_MAP_RASTER_TILE_PROVIDER_P_H_)

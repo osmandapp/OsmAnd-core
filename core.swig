@@ -7,9 +7,10 @@
 #include <OsmAndCore/Utilities.h>
 #include <OsmAndCore/EmbeddedResources.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/IObfsCollection.h>
+#include <OsmAndCore/ObfsCollection.h>
 
 // Data-related
-#include <OsmAndCore/Data/ObfsCollection.h>
 
 // Map-related
 #include <OsmAndCore/Map/IMapRenderer.h>
@@ -56,9 +57,10 @@ using namespace OsmAnd;
 %include "OsmAndCore/Utilities.h"
 %include "OsmAndCore/EmbeddedResources.h"
 %include "OsmAndCore/CommonTypes.h"
+%include "OsmAndCore/IObfsCollection.h"
+%include "OsmAndCore/ObfsCollection.h"
 
 // Data-related
-%include "OsmAndCore/Data/ObfsCollection.h"
 
 // Map-related
 %include "OsmAndCore/Map/MapTypes.h"

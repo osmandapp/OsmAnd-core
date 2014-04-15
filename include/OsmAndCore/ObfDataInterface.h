@@ -14,7 +14,6 @@
 
 namespace OsmAnd
 {
-    // Forward declarations
     class ObfsCollection;
     class ObfsCollection_P;
     class ObfReader;
@@ -30,16 +29,16 @@ namespace OsmAnd
         struct Metric_loadMapObjects;
     }
 
-    class ObfDataInterface_P;
     class OSMAND_CORE_API ObfDataInterface
     {
         Q_DISABLE_COPY(ObfDataInterface);
     private:
-        const std::unique_ptr<ObfDataInterface_P> _d;
     protected:
-        ObfDataInterface(const QList< std::shared_ptr<ObfReader> >& readers);
     public:
+        ObfDataInterface(const QList< std::shared_ptr<const ObfReader> >& obfReaders);
         virtual ~ObfDataInterface();
+
+        const QList< std::shared_ptr<const ObfReader> > obfReaders;
 
         void obtainObfFiles(QList< std::shared_ptr<const ObfFile> >* outFiles = nullptr, const IQueryController* const controller = nullptr);
         void obtainBasemapPresenceFlag(bool& basemapPresent, const IQueryController* const controller = nullptr);
@@ -47,9 +46,6 @@ namespace OsmAnd
             const AreaI& area31, const ZoomLevel zoom,
             const IQueryController* const controller = nullptr, const FilterMapObjectsByIdSignature filterById = nullptr,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric = nullptr);
-        
-    friend class OsmAnd::ObfsCollection;
-    friend class OsmAnd::ObfsCollection_P;
     };
 }
 

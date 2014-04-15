@@ -11,10 +11,11 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Data/ObfSectionInfo.h>
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class ObfMapSectionReader_P;
     class ObfReader_P;
 
@@ -23,7 +24,7 @@ namespace OsmAnd {
     {
         Q_DISABLE_COPY(ObfMapSectionLevel);
     private:
-        const std::unique_ptr<ObfMapSectionLevel_P> _d;
+        PrivateImplementation<ObfMapSectionLevel_P> _p;
     protected:
         ObfMapSectionLevel();
 
@@ -88,7 +89,7 @@ namespace OsmAnd {
     {
         Q_DISABLE_COPY(ObfMapSectionInfo);
     private:
-        const std::unique_ptr<ObfMapSectionInfo_P> _d;
+        PrivateImplementation<ObfMapSectionInfo_P> _p;
     protected:
         ObfMapSectionInfo(const std::weak_ptr<ObfInfo>& owner);
 

@@ -9,6 +9,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Data/ObfSectionInfo.h>
 
 namespace OsmAnd {
@@ -28,17 +29,17 @@ namespace OsmAnd {
     {
         Q_DISABLE_COPY(ObfRoutingSectionInfo)
     private:
-        const std::unique_ptr<ObfRoutingSectionInfo_P> _d;
+        PrivateImplementation<ObfRoutingSectionInfo_P> _p;
     protected:
         ObfRoutingSectionInfo(const std::weak_ptr<ObfInfo>& owner);
 
-        QList< std::shared_ptr<ObfRoutingSubsectionInfo> > _subsections;
-        QList< std::shared_ptr<ObfRoutingSubsectionInfo> > _baseSubsections;
+        QList< std::shared_ptr<const ObfRoutingSubsectionInfo> > _subsections;
+        QList< std::shared_ptr<const ObfRoutingSubsectionInfo> > _baseSubsections;
     public:
         virtual ~ObfRoutingSectionInfo();
 
-        const QList< std::shared_ptr<ObfRoutingSubsectionInfo> >& subsections;
-        const QList< std::shared_ptr<ObfRoutingSubsectionInfo> >& baseSubsections;
+        const QList< std::shared_ptr<const ObfRoutingSubsectionInfo> >& subsections;
+        const QList< std::shared_ptr<const ObfRoutingSubsectionInfo> >& baseSubsections;
 
     friend class OsmAnd::ObfRoutingSectionReader_P;
     friend class OsmAnd::ObfReader_P;
@@ -52,23 +53,23 @@ namespace OsmAnd {
     {
     private:
     protected:
-        ObfRoutingSubsectionInfo(const std::shared_ptr<ObfRoutingSubsectionInfo>& parent);
-        ObfRoutingSubsectionInfo(const std::shared_ptr<ObfRoutingSectionInfo>& section);
+        ObfRoutingSubsectionInfo(const std::shared_ptr<const ObfRoutingSubsectionInfo>& parent);
+        ObfRoutingSubsectionInfo(const std::shared_ptr<const ObfRoutingSectionInfo>& section);
 
         AreaI _area31;
 
         uint32_t _dataOffset;
 
         uint32_t _subsectionsOffset;
-        QList< std::shared_ptr<ObfRoutingSubsectionInfo> > _subsections;
+        mutable QList< std::shared_ptr<const ObfRoutingSubsectionInfo> > _subsections;
     public:
         virtual ~ObfRoutingSubsectionInfo();
 
         bool containsData() const;
         const AreaI& area31;
 
-        const std::shared_ptr<ObfRoutingSubsectionInfo> parent;
-        const std::shared_ptr<ObfRoutingSectionInfo> section;
+        const std::shared_ptr<const ObfRoutingSubsectionInfo> parent;
+        const std::shared_ptr<const ObfRoutingSectionInfo> section;
 
     friend class OsmAnd::ObfRoutingSectionReader_P;
     friend class OsmAnd::ObfReader_P;

@@ -58,7 +58,7 @@ bool OsmAnd::RoutingConfiguration::parseConfiguration( QIODevice* data, RoutingC
             {
                 if(!routingProfile)
                 {
-                    std::cerr << "<parameter> is not inside <routingProfile>" << "(" << xmlReader.lineNumber() << ", " << xmlReader.columnNumber() << " @ " << data->pos() << ")" << std::endl;
+                    LogPrintf(LogSeverityLevel::Warning, "<parameter> is not inside <routingProfile> (%d, %d)", xmlReader.lineNumber(), xmlReader.columnNumber());
                     return false;
                 }
                 parseRoutingParameter(&xmlReader, routingProfile.get());
@@ -80,7 +80,7 @@ bool OsmAnd::RoutingConfiguration::parseConfiguration( QIODevice* data, RoutingC
                 else if (attributeName == "oneway")
                     rulesetType = RoutingRuleset::Type::OneWay;
 
-                OSMAND_ASSERT(rulesetType != RoutingRuleset::Type::Invalid, "Route data object attribute is unknown " << qPrintable(attributeName.toString()));
+                OSMAND_ASSERT(rulesetType != RoutingRuleset::Type::Invalid, QString("Route data object attribute '%1' is unknown").arg(attributeName.toString()));
             }
             else if(rulesetType != RoutingRuleset::Type::Invalid)
             {
@@ -106,7 +106,7 @@ bool OsmAnd::RoutingConfiguration::parseConfiguration( QIODevice* data, RoutingC
     }
     if(xmlReader.hasError())
     {
-        std::cerr << qPrintable(xmlReader.errorString()) << "(" << xmlReader.lineNumber() << ", " << xmlReader.columnNumber() << " @ " << data->pos() << ")" << std::endl;
+        LogPrintf(LogSeverityLevel::Warning, "XML error: %s (%d, %d)", qPrintable(xmlReader.errorString()), xmlReader.lineNumber(), xmlReader.columnNumber());
         return false;
     }
 
@@ -136,7 +136,7 @@ void OsmAnd::RoutingConfiguration::parseRoutingParameter( QXmlStreamReader* xmlP
             bool ok;
             auto value = value_.trimmed().toDouble(&ok);
             if(!ok)
-                std::cerr << qPrintable(value_) << " is not a valid integer" << std::endl;
+                LogPrintf(LogSeverityLevel::Error, "'%s' is not a valid integer", qPrintable(value_));
             values.push_back(value);
         }
 
@@ -146,7 +146,7 @@ void OsmAnd::RoutingConfiguration::parseRoutingParameter( QXmlStreamReader* xmlP
     }
     else
     {
-        OSMAND_ASSERT(0, "Unsupported routing parameter type - " << qPrintable(typeAttrib.toString()));
+        OSMAND_ASSERT(0, QString("Unsupported routing parameter type - ").arg(typeAttrib.toString()));
     }
 }
 

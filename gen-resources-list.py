@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 import sys
 import os
 import zlib
@@ -72,7 +75,7 @@ if __name__=='__main__':
     	[r'resources/rendering_styles/style-icons/drawable-mdpi/mm_(.*)\.png', r'map/map_icons/\1.png'],
     	[r'resources/rendering_styles/stubs/(.*)\.png', r'map/stubs/\1.png'],
     	[r'resources/routing/routing\.xml', r'routing/routing.xml'],
-    	[r'core/externals/icu4c/upstream\.data/icudt\d+([lb])\.dat', r'icu4c/icu-data-\1.xml'],
+    	[r'core/externals/icu4c/upstream\.data/icudt\d+([lb])\.dat', r'icu4c/icu-data-\1.dat'],
     ]
 
     resourcesSubpaths = [

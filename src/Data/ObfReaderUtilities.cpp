@@ -1,6 +1,6 @@
 #include "ObfReaderUtilities.h"
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 #include <QtEndian>
 
 #include <google/protobuf/wire_format_lite.h>

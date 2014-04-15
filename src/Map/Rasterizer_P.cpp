@@ -295,7 +295,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
     pointEvaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_MINZOOM, context._zoom);
     pointEvaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_MAXZOOM, context._zoom);
 
-    auto& sharedPrimitivesGroups = context.owner->sharedContext->_d->_sharedPrimitivesGroups[context._zoom];
+    auto& sharedPrimitivesGroups = context.owner->sharedContext->_p->_sharedPrimitivesGroups[context._zoom];
     QList< proper::shared_future< std::shared_ptr<const PrimitivesGroup> > > futureSharedPrimitivesGroups;
     for(const auto& mapObject : constOf(source))
     {
@@ -728,7 +728,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
 {
     //NOTE: Since 2 tiles with same MapObject may have different set of polylines, generated from it,
     //NOTE: then set of symbols also should differ, but it won't.
-    auto& sharedSymbolGroups = context.owner->sharedContext->_d->_sharedSymbolGroups[context._zoom];
+    auto& sharedSymbolGroups = context.owner->sharedContext->_p->_sharedSymbolGroups[context._zoom];
     QList< proper::shared_future< std::shared_ptr<const SymbolsGroup> > > futureSharedSymbolGroups;
     for(const auto& primitivesGroup : constOf(context._primitivesGroups))
     {

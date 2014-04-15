@@ -7,6 +7,7 @@
 #include <QMap>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Map/MapStyle.h>
 
 namespace OsmAnd
@@ -25,7 +26,7 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY(MapStyleEvaluator);
     private:
-        const std::unique_ptr<MapStyleEvaluator_P> _d;
+        PrivateImplementation<MapStyleEvaluator_P> _p;
     protected:
     public:
         MapStyleEvaluator(const std::shared_ptr<const MapStyle>& style, const float displayDensityFactor);

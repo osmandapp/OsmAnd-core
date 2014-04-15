@@ -5,11 +5,11 @@
 #include "RasterizerSharedContext.h"
 
 OsmAnd::OfflineMapDataProvider::OfflineMapDataProvider(
-    const std::shared_ptr<ObfsCollection>& obfsCollection_,
+    const std::shared_ptr<const IObfsCollection>& obfsCollection_,
     const std::shared_ptr<const MapStyle>& mapStyle_,
     const float displayDensityFactor,
     const std::shared_ptr<const IExternalResourcesProvider>& externalResourcesProvider /*= nullptr*/ )
-    : _d(new OfflineMapDataProvider_P(this))
+    : _p(new OfflineMapDataProvider_P(this))
     , obfsCollection(obfsCollection_)
     , mapStyle(mapStyle_)
     , rasterizerEnvironment(new RasterizerEnvironment(mapStyle_, displayDensityFactor, externalResourcesProvider))
@@ -21,7 +21,7 @@ OsmAnd::OfflineMapDataProvider::~OfflineMapDataProvider()
 {
 }
 
-void OsmAnd::OfflineMapDataProvider::obtainTile( const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const OfflineMapDataTile>& outTile ) const
+void OsmAnd::OfflineMapDataProvider::obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const OfflineMapDataTile>& outTile) const
 {
-    _d->obtainTile(tileId, zoom, outTile);
+    _p->obtainTile(tileId, zoom, outTile);
 }

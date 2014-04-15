@@ -31,7 +31,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
 {
     const auto tagKey = _inputValues[_builtinValueDefs->id_INPUT_TAG].asUInt;
     const auto valueKey = _inputValues[_builtinValueDefs->id_INPUT_VALUE].asUInt;
-    const auto& rules = owner->style->_d->obtainRulesRef(ruleset);
+    const auto& rules = owner->style->_p->obtainRulesRef(ruleset);
 
     auto evaluationResult = evaluate(mapObject, rules, tagKey, valueKey, outResultStorage, evaluateChildren);
     if(evaluationResult)
@@ -80,7 +80,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
     bool evaluateChildren)
 {
     // Check all values of a rule until all are checked.
-    for(const auto& ruleValueEntry : rangeOf(constOf(rule->_d->_values)))
+    for(const auto& ruleValueEntry : rangeOf(constOf(rule->_p->_values)))
     {
         const auto& valueDef = ruleValueEntry.key();
 
@@ -109,7 +109,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
             else
             {
                 assert(!ruleValue.isComplex);
-                const auto& strValue = owner->style->_d->lookupStringValue(ruleValue.asSimple.asUInt);
+                const auto& strValue = owner->style->_p->lookupStringValue(ruleValue.asSimple.asUInt);
                 auto equalSignIdx = strValue.indexOf('=');
                 if(equalSignIdx >= 0)
                 {
@@ -146,7 +146,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
     // Fill output values from rule to result storage, if requested
     if(outResultStorage)
     {
-        for(const auto& ruleValueEntry : rangeOf(constOf(rule->_d->_values)))
+        for(const auto& ruleValueEntry : rangeOf(constOf(rule->_p->_values)))
         {
             const auto& valueDef = ruleValueEntry.key();
             if(valueDef->valueClass != MapStyleValueClass::Output)
@@ -158,28 +158,28 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
             {
             case MapStyleValueDataType::Boolean:
                 assert(!ruleValue.isComplex);
-                outResultStorage->_d->_values[valueDef->id] = (ruleValue.asSimple.asUInt == 1);
+                outResultStorage->_p->_values[valueDef->id] = (ruleValue.asSimple.asUInt == 1);
                 break;
             case MapStyleValueDataType::Integer:
-                outResultStorage->_d->_values[valueDef->id] =
+                outResultStorage->_p->_values[valueDef->id] =
                     ruleValue.isComplex
                     ? ruleValue.asComplex.asInt.evaluate(owner->displayDensityFactor)
                     : ruleValue.asSimple.asInt;
                 break;
             case MapStyleValueDataType::Float:
-                outResultStorage->_d->_values[valueDef->id] =
+                outResultStorage->_p->_values[valueDef->id] =
                     ruleValue.isComplex
                     ? ruleValue.asComplex.asFloat.evaluate(owner->displayDensityFactor)
                     : ruleValue.asSimple.asFloat;
                 break;
             case MapStyleValueDataType::String:
                 // Save value of a string instead of it's id
-                outResultStorage->_d->_values[valueDef->id] =
-                    owner->style->_d->lookupStringValue(ruleValue.asSimple.asUInt);
+                outResultStorage->_p->_values[valueDef->id] =
+                    owner->style->_p->lookupStringValue(ruleValue.asSimple.asUInt);
                 break;
             case MapStyleValueDataType::Color:
                 assert(!ruleValue.isComplex);
-                outResultStorage->_d->_values[valueDef->id] = ruleValue.asSimple.asUInt;
+                outResultStorage->_p->_values[valueDef->id] = ruleValue.asSimple.asUInt;
                 break;
             }
         }
@@ -187,14 +187,14 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
 
     if(evaluateChildren)
     {
-        for(const auto& child : constOf(rule->_d->_ifElseChildren))
+        for(const auto& child : constOf(rule->_p->_ifElseChildren))
         {
             const auto evaluationResult = evaluate(mapObject, child, outResultStorage, true);
             if(evaluationResult)
                 break;
         }
 
-        for(const auto& child : constOf(rule->_d->_ifChildren))
+        for(const auto& child : constOf(rule->_p->_ifChildren))
             evaluate(mapObject, child, outResultStorage, true);
     }
 

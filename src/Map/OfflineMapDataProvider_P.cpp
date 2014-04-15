@@ -35,7 +35,7 @@ OsmAnd::OfflineMapDataProvider_P::~OfflineMapDataProvider_P()
 {
 }
 
-void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const OfflineMapDataTile>& outTile )
+void OsmAnd::OfflineMapDataProvider_P::obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const OfflineMapDataTile>& outTile) const
 {
     std::shared_ptr<TileEntry> tileEntry;
 
@@ -227,8 +227,8 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile( const TileId tileId, const Zo
 
     // Create tile
     const auto newTile = new OfflineMapDataTile(tileId, zoom, tileFoundation, allMapObjects, rasterizerContext, nothingToRasterize);
-    newTile->_d->_link = _link;
-    newTile->_d->_refEntry = tileEntry;
+    newTile->_p->_link = _link;
+    newTile->_p->_refEntry = tileEntry;
 
     // Publish new tile
     outTile.reset(newTile);

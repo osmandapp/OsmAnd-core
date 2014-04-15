@@ -1,20 +1,21 @@
 #ifndef _OSMAND_CORE_RASTERIZER_CONTEXT_P_H_
 #define _OSMAND_CORE_RASTERIZER_CONTEXT_P_H_
 
-#include <OsmAndCore/stdlib_common.h>
+#include "stdlib_common.h"
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 #include <QList>
 #include <QVector>
 
 #include <SkColor.h>
 
-#include <OsmAndCore.h>
-#include <CommonTypes.h>
-#include <Rasterizer_P.h>
+#include "OsmAndCore.h"
+#include "CommonTypes.h"
+#include "PrivateImplementation.h"
+#include "Rasterizer_P.h"
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class Rasterizer_P;
 
     class RasterizerContext;
@@ -24,7 +25,7 @@ namespace OsmAnd {
     protected:
         RasterizerContext_P(RasterizerContext* owner);
 
-        RasterizerContext* const owner;
+        ImplementationInterface<RasterizerContext> owner;
 
         SkColor _defaultBgColor;
         int _shadowRenderingMode;
@@ -56,7 +57,6 @@ namespace OsmAnd {
     friend class OsmAnd::RasterizerContext;
     friend class OsmAnd::Rasterizer_P;
     };
-
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_RASTERIZER_CONTEXT_P_H_)

@@ -8,6 +8,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Map/MapTypes.h>
 
 namespace OsmAnd
@@ -19,7 +20,7 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY(MapAnimator);
     private:
-        const std::unique_ptr<MapAnimator_P> _d;
+        PrivateImplementation<MapAnimator_P> _p;
     protected:
     public:
         MapAnimator();

@@ -11,6 +11,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Map/IMapBitmapTileProvider.h>
 
 namespace OsmAnd
@@ -21,7 +22,7 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY(OfflineMapRasterTileProvider_Software);
     private:
-        const std::unique_ptr<OfflineMapRasterTileProvider_Software_P> _d;
+        PrivateImplementation<OfflineMapRasterTileProvider_Software_P> _p;
     protected:
     public:
         OfflineMapRasterTileProvider_Software(const std::shared_ptr<OfflineMapDataProvider>& dataProvider, const uint32_t outputTileSize = 256, const float density = 1.0f);

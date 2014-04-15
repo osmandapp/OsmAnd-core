@@ -1,23 +1,23 @@
 #ifndef _OSMAND_CORE_RASTERIZER_P_H_
 #define _OSMAND_CORE_RASTERIZER_P_H_
 
-#include <OsmAndCore/stdlib_common.h>
+#include "stdlib_common.h"
 #include <functional>
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 #include <QList>
 #include <QVector>
 
 #include <SkCanvas.h>
 #include <SkPaint.h>
 
-#include <OsmAndCore.h>
-#include <CommonTypes.h>
-#include <MapTypes.h>
-#include <MapStyleEvaluationResult.h>
+#include "OsmAndCore.h"
+#include "CommonTypes.h"
+#include "MapTypes.h"
+#include "MapStyleEvaluationResult.h"
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class MapStyleEvaluator;
     class MapStyleEvaluator_P;
     class RasterizerEnvironment_P;
@@ -25,19 +25,21 @@ namespace OsmAnd {
     class RasterizerSharedContext_P;
     class RasterizedSymbolsGroup;
     class RasterizedSymbol;
-    namespace Model {
+    namespace Model
+    {
         class MapObject;
-    } // namespace Model
+    }
     class IQueryController;
-    namespace Rasterizer_Metrics {
+    namespace Rasterizer_Metrics
+    {
         struct Metric_prepareContext;
-    } // namespace Rasterizer_Metrics
+    }
 
     class Rasterizer;
     class Rasterizer_P
     {
     private:
-        Rasterizer* const owner;
+        ImplementationInterface<Rasterizer> owner;
 
         const RasterizerEnvironment_P& env;
         const RasterizerContext_P& context;
@@ -96,7 +98,8 @@ namespace OsmAnd {
         {
             PrimitivesGroup(const std::shared_ptr<const Model::MapObject>& mapObject_)
                 : mapObject(mapObject_)
-            {}
+            {
+            }
 
             const std::shared_ptr<const Model::MapObject> mapObject;
 
@@ -116,7 +119,8 @@ namespace OsmAnd {
                 , mapObject(mapObject_)
                 , objectType(objectType_)
                 , typeRuleIdIndex(typeRuleIdIndex_)
-            {}
+            {
+            }
 
             const std::weak_ptr<const PrimitivesGroup> group;
             const std::shared_ptr<const Model::MapObject> mapObject;
@@ -280,7 +284,6 @@ namespace OsmAnd {
     friend class OsmAnd::RasterizerContext_P;
     friend class OsmAnd::RasterizerSharedContext_P;
     };
-
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_RASTERIZER_P_H_)

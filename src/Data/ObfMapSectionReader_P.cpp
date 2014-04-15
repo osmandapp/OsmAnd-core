@@ -25,9 +25,9 @@ OsmAnd::ObfMapSectionReader_P::~ObfMapSectionReader_P()
 }
 
 void OsmAnd::ObfMapSectionReader_P::read(
-    const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<ObfMapSectionInfo>& section )
+    const ObfReader_P& reader, const std::shared_ptr<ObfMapSectionInfo>& section )
 {
-    auto cis = reader->_codedInputStream.get();
+    auto cis = reader._codedInputStream.get();
 
     for(;;)
     {
@@ -69,10 +69,10 @@ void OsmAnd::ObfMapSectionReader_P::read(
 }
 
 void OsmAnd::ObfMapSectionReader_P::readMapLevelHeader(
-    const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
+    const ObfReader_P& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
     const std::shared_ptr<ObfMapSectionLevel>& level )
 {
-    auto cis = reader->_codedInputStream.get();
+    auto cis = reader._codedInputStream.get();
 
     for(;;)
     {
@@ -117,10 +117,10 @@ void OsmAnd::ObfMapSectionReader_P::readMapLevelHeader(
 }
 
 void OsmAnd::ObfMapSectionReader_P::readEncodingDecodingRules(
-    const std::unique_ptr<ObfReader_P>& reader,
+    const ObfReader_P& reader,
     const std::shared_ptr<ObfMapSectionDecodingEncodingRules>& encodingDecodingRules)
 {
-    auto cis = reader->_codedInputStream.get();
+    auto cis = reader._codedInputStream.get();
 
     uint32_t defaultId = 1;
     for(;;)
@@ -150,10 +150,10 @@ void OsmAnd::ObfMapSectionReader_P::readEncodingDecodingRules(
 }
 
 void OsmAnd::ObfMapSectionReader_P::readEncodingDecodingRule(
-    const std::unique_ptr<ObfReader_P>& reader,
+    const ObfReader_P& reader,
     uint32_t defaultId, const std::shared_ptr<ObfMapSectionDecodingEncodingRules>& encodingDecodingRules)
 {
-    auto cis = reader->_codedInputStream.get();
+    auto cis = reader._codedInputStream.get();
 
     gpb::uint32 ruleId = defaultId;
     gpb::uint32 ruleType = 0;
@@ -187,10 +187,10 @@ void OsmAnd::ObfMapSectionReader_P::readEncodingDecodingRule(
 }
 
 void OsmAnd::ObfMapSectionReader_P::readMapLevelTreeNodes(
-    const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
+    const ObfReader_P& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
     const std::shared_ptr<const ObfMapSectionLevel>& level, QList< std::shared_ptr<ObfMapSectionLevelTreeNode> >& trees )
 {
-    auto cis = reader->_codedInputStream.get();
+    auto cis = reader._codedInputStream.get();
     for(;;)
     {
         gpb::uint32 tag = cis->ReadTag();
@@ -225,11 +225,11 @@ void OsmAnd::ObfMapSectionReader_P::readMapLevelTreeNodes(
 }
 
 void OsmAnd::ObfMapSectionReader_P::readTreeNode(
-    const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
+    const ObfReader_P& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
     const AreaI& parentArea,
     const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode )
 {
-    auto cis = reader->_codedInputStream.get();
+    auto cis = reader._codedInputStream.get();
 
     for(;;)
     {
@@ -289,7 +289,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNode(
 }
 
 void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
-    const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
+    const ObfReader_P& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
     const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode,
     MapFoundationType& foundation,
     QList< std::shared_ptr<ObfMapSectionLevelTreeNode> >* nodesWithData,
@@ -297,7 +297,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
     const IQueryController* const controller,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
 {
-    auto cis = reader->_codedInputStream.get();
+    auto cis = reader._codedInputStream.get();
 
     foundation = MapFoundationType::Undefined;
 
@@ -377,7 +377,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
 }
 
 void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
-    const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
+    const ObfReader_P& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
     const std::shared_ptr<ObfMapSectionLevelTreeNode>& tree,
     QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut,
     const AreaI* bbox31,
@@ -386,7 +386,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
     const IQueryController* const controller,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
 {
-    auto cis = reader->_codedInputStream.get();
+    auto cis = reader._codedInputStream.get();
 
     QList< std::shared_ptr<Model::MapObject> > intermediateResult;
     QStringList mapObjectsNamesTable;
@@ -513,12 +513,12 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
 }
 
 void OsmAnd::ObfMapSectionReader_P::readMapObject(
-    const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
+    const ObfReader_P& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
     uint64_t baseId, const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode,
     std::shared_ptr<OsmAnd::Model::MapObject>& mapObject,
     const AreaI* bbox31)
 {
-    auto cis = reader->_codedInputStream.get();
+    auto cis = reader._codedInputStream.get();
 
     for(;;)
     {
@@ -748,7 +748,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
 }
 
 void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
-    const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
+    const ObfReader_P& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
     ZoomLevel zoom, const AreaI* bbox31,
     QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut, MapFoundationType* foundationOut,
     const FilterMapObjectsByIdSignature filterById,
@@ -756,20 +756,20 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     const IQueryController* const controller,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
 {
-    auto cis = reader->_codedInputStream.get();
+    auto cis = reader._codedInputStream.get();
 
     // Check if this map section has initialized rules
     {
-        QMutexLocker scopedLock(&section->_d->_encodingDecodingDataMutex);
+        QMutexLocker scopedLock(&section->_p->_encodingDecodingDataMutex);
 
-        if(!section->_d->_encodingDecodingRules)
+        if(!section->_p->_encodingDecodingRules)
         {
             cis->Seek(section->_offset);
             auto oldLimit = cis->PushLimit(section->_length);
 
             std::shared_ptr<ObfMapSectionDecodingEncodingRules> encodingDecodingRules(new ObfMapSectionDecodingEncodingRules());
             readEncodingDecodingRules(reader, encodingDecodingRules);
-            section->_d->_encodingDecodingRules = encodingDecodingRules;
+            section->_p->_encodingDecodingRules = encodingDecodingRules;
 
             cis->PopLimit(oldLimit);
         }
@@ -807,16 +807,16 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
 
         // If there are no tree nodes in map level, it means they are not loaded
         {
-            QMutexLocker scopedLock(&mapLevel->_d->_rootNodesMutex);
+            QMutexLocker scopedLock(&mapLevel->_p->_rootNodesMutex);
 
-            if(!mapLevel->_d->_rootNodes)
+            if(!mapLevel->_p->_rootNodes)
             {
                 cis->Seek(mapLevel->_offset);
                 auto oldLimit = cis->PushLimit(mapLevel->_length);
                 
                 cis->Skip(mapLevel->_boxesInnerOffset);
-                mapLevel->_d->_rootNodes.reset(new ObfMapSectionLevel_P::RootNodes());
-                readMapLevelTreeNodes(reader, section, mapLevel, mapLevel->_d->_rootNodes->nodes);
+                mapLevel->_p->_rootNodes.reset(new ObfMapSectionLevel_P::RootNodes());
+                readMapLevelTreeNodes(reader, section, mapLevel, mapLevel->_p->_rootNodes->nodes);
 
                 cis->PopLimit(oldLimit);
             }
@@ -824,7 +824,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
         
         // Collect tree nodes with data
         QList< std::shared_ptr<ObfMapSectionLevelTreeNode> > treeNodesWithData;
-        for(const auto& rootNode : constOf(mapLevel->_d->_rootNodes->nodes))
+        for(const auto& rootNode : constOf(mapLevel->_p->_rootNodes->nodes))
         {
             // Update metric
             if(metric)

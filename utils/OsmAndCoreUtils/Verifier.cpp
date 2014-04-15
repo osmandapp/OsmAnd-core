@@ -11,8 +11,8 @@
 #include <QStringList>
 #include <QHash>
 
-#include <OsmAndCore/Data/ObfsCollection.h>
-#include <OsmAndCore/Data/ObfDataInterface.h>
+#include <OsmAndCore/ObfsCollection.h>
+#include <OsmAndCore/ObfDataInterface.h>
 #include <OsmAndCore/Data/ObfMapSectionInfo.h>
 
 OsmAnd::Verifier::Configuration::Configuration()
@@ -87,15 +87,15 @@ void dump(std::ostream &output, const OsmAnd::Verifier::Configuration& cfg)
 {
     OsmAnd::ObfsCollection obfsCollection;
     for(const auto& obfsDir : cfg.obfDirs)
-        obfsCollection.registerDirectory(obfsDir);
+        obfsCollection.addDirectory(obfsDir);
     for(const auto& obfFile : cfg.obfFiles)
-        obfsCollection.registerExplicitFile(obfFile);
+        obfsCollection.addFile(obfFile);
     const auto dataInterface = obfsCollection.obtainDataInterface();
 
-    const auto collectedSources = obfsCollection.getCollectedSources();
+    const auto obfFiles = obfsCollection.getObfFiles();
     output << "Will work with these files:" << std::endl;
-    for(const auto& source : collectedSources)
-        output << "\t" << qPrintable(source) << std::endl;
+    for(const auto& obfFile : obfFiles)
+        output << "\t" << qPrintable(obfFile->filePath) << std::endl;
 
     if(cfg.action == OsmAnd::Verifier::Configuration::Action::UniqueMapObjectIds)
     {

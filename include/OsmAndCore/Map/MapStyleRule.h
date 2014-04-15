@@ -9,6 +9,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/PrivateImplementation.h>
 
 namespace OsmAnd
 {
@@ -24,15 +25,15 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY(MapStyleRule);
     private:
-        const std::unique_ptr<MapStyleRule_P> _d;
+        PrivateImplementation<MapStyleRule_P> _p;
     protected:
-        MapStyleRule(MapStyle* owner, const QHash< QString, QString >& attributes);
+        MapStyleRule(MapStyle* const owner, const QHash< QString, QString >& attributes);
 
         bool getAttribute(const std::shared_ptr<const MapStyleValueDefinition>& key, MapStyleValue& value) const;
     public:
         virtual ~MapStyleRule();
 
-        MapStyle* const owner;
+        const MapStyle* const owner;
 
         void dump(const QString& prefix = QString()) const;
 

@@ -1,21 +1,22 @@
 #ifndef _OSMAND_CORE_OBF_READER_P_H_
 #define _OSMAND_CORE_OBF_READER_P_H_
 
-#include <OsmAndCore/stdlib_common.h>
+#include "stdlib_common.h"
 #include <functional>
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 #include <QString>
 
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream.h>
 
-#include <OsmAndCore.h>
+#include "OsmAndCore.h"
+#include "PrivateImplementation.h"
 
 class QIODevice;
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     namespace gpb = google::protobuf;
 
     class ObfInfo;
@@ -33,14 +34,14 @@ namespace OsmAnd {
     protected:
         ObfReader_P(ObfReader* owner);
 
-        ObfReader* const owner;
-        std::unique_ptr<gpb::io::CodedInputStream> _codedInputStream;
-        std::unique_ptr<gpb::io::ZeroCopyInputStream> _zeroCopyInputStream;
+        ImplementationInterface<ObfReader> owner;
+        mutable std::unique_ptr<gpb::io::CodedInputStream> _codedInputStream;
+        mutable std::unique_ptr<gpb::io::ZeroCopyInputStream> _zeroCopyInputStream;
 
-        std::shared_ptr<QIODevice> _input;
-        std::shared_ptr<ObfInfo> _obfInfo;
+        mutable std::shared_ptr<QIODevice> _input;
+        mutable std::shared_ptr<const ObfInfo> _obfInfo;
 
-        static void readInfo(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<ObfInfo>& info);
+        static bool readInfo(const ObfReader_P& reader, std::shared_ptr<const ObfInfo>& info);
     public:
         virtual ~ObfReader_P();
 
@@ -52,6 +53,6 @@ namespace OsmAnd {
     friend class OsmAnd::ObfPoiSectionReader_P;
     friend class OsmAnd::ObfTransportSectionReader_P;
     };
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_OBF_READER_P_H_)

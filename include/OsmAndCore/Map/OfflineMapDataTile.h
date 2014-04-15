@@ -8,6 +8,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Map/MapTypes.h>
 #include <OsmAndCore/Map/RasterizerContext.h>
 
@@ -25,7 +26,7 @@ namespace OsmAnd {
     {
         Q_DISABLE_COPY(OfflineMapDataTile);
     private:
-        const std::unique_ptr<OfflineMapDataTile_P> _d;
+        PrivateImplementation<OfflineMapDataTile_P> _p;
     protected:
         OfflineMapDataTile(
             const TileId tileId, const ZoomLevel zoom,

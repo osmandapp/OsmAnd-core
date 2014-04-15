@@ -6,15 +6,24 @@
 #include <iostream>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/Logging.h>
+
+#if !defined(qPrintableRef)
+#  define qPrintableRef(stringRef) stringRef.toLocal8Bit().constData()
+#endif // !defined(qPrintableRef)
+
+#if !defined(Q_STRINGIFY) && !defined(Q_STRINGIFY_)
+#   define Q_STRINGIFY_(value) #value
+#   define Q_STRINGIFY(value) Q_STRINGIFY_(value)
+#endif //  !defined(Q_STRINGIFY) && !defined(Q_STRINGIFY_)
 
 #if OSMAND_DEBUG
 #   define OSMAND_ASSERT(condition, message)                                                                \
     do {                                                                                                    \
         if (! (condition))                                                                                  \
         {                                                                                                   \
-            std::cerr << "Assertion '" #condition "' failed in "                                            \
-                << Q_FUNC_INFO << "(" << __FILE__ << ":" << __LINE__ << ": "                                \
-                << message << std::endl;                                                                    \
+            OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Assertion '" #condition "' failed in "      \
+                Q_FUNC_INFO "(" __FILE__ ":" Q_STRINGIFY(__LINE__) ": %s", qPrintable(message));            \
             assert((condition));                                                                            \
         }                                                                                                   \
     } while (false)
@@ -47,6 +56,14 @@ namespace OsmAnd
     Q_DECL_CONSTEXPR const T& constOf(T& value)
     {
         return value;
+    }
+
+    template<typename T>
+    T detachedOf(const T& instance)
+    {
+        T copy = instance;
+        copy.detach();
+        return copy;
     }
 
     template <typename T_>

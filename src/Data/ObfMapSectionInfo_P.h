@@ -1,21 +1,22 @@
 #ifndef _OSMAND_CORE_OBF_MAP_SECTION_INFO_P_H_
 #define _OSMAND_CORE_OBF_MAP_SECTION_INFO_P_H_
 
-#include <OsmAndCore/stdlib_common.h>
+#include "stdlib_common.h"
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 #include <QMutex>
 #include <QSet>
 #include <QHash>
 #include <QMap>
 #include <QString>
 
-#include <OsmAndCore.h>
-#include <CommonTypes.h>
-#include <MapTypes.h>
+#include "OsmAndCore.h"
+#include "CommonTypes.h"
+#include "PrivateImplementation.h"
+#include "MapTypes.h"
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class ObfMapSectionLevel;
     struct ObfMapSectionDecodingEncodingRules;
     class ObfMapSectionReader_P;
@@ -46,14 +47,14 @@ namespace OsmAnd {
     protected:
         ObfMapSectionLevel_P(ObfMapSectionLevel* owner);
 
-        ObfMapSectionLevel* const owner;
+        ImplementationInterface<ObfMapSectionLevel> owner;
 
         mutable QMutex _rootNodesMutex;
         struct RootNodes
         {
             QList< std::shared_ptr<ObfMapSectionLevelTreeNode> > nodes;
         };
-        std::shared_ptr<RootNodes> _rootNodes;
+        mutable std::shared_ptr<RootNodes> _rootNodes;
     public:
         virtual ~ObfMapSectionLevel_P();
 
@@ -68,17 +69,16 @@ namespace OsmAnd {
     protected:
         ObfMapSectionInfo_P(ObfMapSectionInfo* owner);
 
-        ObfMapSectionInfo* const owner;
+        ImplementationInterface<ObfMapSectionInfo> owner;
 
         mutable QMutex _encodingDecodingDataMutex;
-        std::shared_ptr<const ObfMapSectionDecodingEncodingRules> _encodingDecodingRules;
+        mutable std::shared_ptr<const ObfMapSectionDecodingEncodingRules> _encodingDecodingRules;
     public:
         virtual ~ObfMapSectionInfo_P();
 
     friend class OsmAnd::ObfMapSectionInfo;
     friend class OsmAnd::ObfMapSectionReader_P;
     };
-
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_OBF_MAP_SECTION_INFO_P_H_)

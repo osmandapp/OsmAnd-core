@@ -3,7 +3,6 @@
 #include <cassert>
 
 #include "QtExtensions.h"
-#include <QRegExp>
 #include <QStringList>
 
 #include <SkBitmap.h>

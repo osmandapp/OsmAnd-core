@@ -8,6 +8,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Map/IMapSymbolProvider.h>
 
 namespace OsmAnd
@@ -19,7 +20,7 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY(OfflineMapSymbolProvider);
     private:
-        const std::unique_ptr<OfflineMapSymbolProvider_P> _d;
+        PrivateImplementation<OfflineMapSymbolProvider_P> _p;
     protected:
     public:
         OfflineMapSymbolProvider(const std::shared_ptr<OfflineMapDataProvider>& dataProvider);

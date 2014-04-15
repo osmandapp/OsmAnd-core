@@ -38,7 +38,7 @@ namespace OsmAnd
     protected:
         MapStyleEvaluator_P(MapStyleEvaluator* owner);
 
-        MapStyleEvaluator* const owner;
+        ImplementationInterface<MapStyleEvaluator> owner;
 
         const std::shared_ptr<const MapStyleBuiltinValueDefinitions> _builtinValueDefs;
 
@@ -69,6 +69,6 @@ namespace OsmAnd
 
     friend class OsmAnd::MapStyleEvaluator;
     };
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_MAP_STYLE_EVALUATOR_P_H_)

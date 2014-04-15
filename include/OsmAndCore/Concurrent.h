@@ -21,29 +21,13 @@ namespace OsmAnd
 {
     namespace Concurrent
     {
-        class OSMAND_CORE_API Pools Q_DECL_FINAL
-        {
-            Q_DISABLE_COPY(Pools);
-        private:
-        protected:
-            Pools();
-        public:
-            virtual ~Pools();
-
-            static const std::shared_ptr<Pools> instance;
-
-            const std::unique_ptr<QThreadPool> localStorage;
-            const std::unique_ptr<QThreadPool> network;
-        };
-        const extern OSMAND_CORE_API std::shared_ptr<Pools> pools;
-
         class OSMAND_CORE_API Task : public QRunnable
         {
             Q_DISABLE_COPY(Task);
         public:
-            typedef std::function<void (Task*, bool& requestCancellation)> PreExecuteSignature;
-            typedef std::function<void (Task*, QEventLoop& eventLoop)> ExecuteSignature;
-            typedef std::function<void (Task*, bool wasCancelled)> PostExecuteSignature;
+            typedef std::function<void (Task* task, bool& requestCancellation)> PreExecuteSignature;
+            typedef std::function<void (Task* task)> ExecuteSignature;
+            typedef std::function<void (Task* task, bool wasCancelled)> PostExecuteSignature;
         private:
             bool _cancellationRequestedByTask;
             QAtomicInt _cancellationRequestedByExternal;
@@ -67,7 +51,7 @@ namespace OsmAnd
         {
             Q_DISABLE_COPY(TaskHost)
         public:
-            typedef void* OwnerPtr;
+            typedef const void* OwnerPtr;
 
             class OSMAND_CORE_API Bridge
             {
@@ -119,7 +103,6 @@ namespace OsmAnd
 
         class OSMAND_CORE_API Thread : public QThread
         {
-            Q_OBJECT
         public:
             typedef std::function<void ()> ThreadProcedureSignature;
         private:
@@ -160,7 +143,7 @@ namespace OsmAnd
             void shutdown();
             void shutdownAsync();
         };
-    } // namespace Concurrent
-} // namespace OsmAnd
+    }
+}
 
 #endif // !defined(_OSMAND_CORE_CONCURRENT_H_)

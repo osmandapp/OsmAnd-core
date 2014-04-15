@@ -221,7 +221,7 @@ void OsmAnd::RasterizerEnvironment_P::setSettings(const QHash< QString, QString 
 
         // Parse value
         MapStyleValue parsedValue;
-        if(!owner->style->_d->parseValue(inputValueDef, value, parsedValue))
+        if(!owner->style->_p->parseValue(inputValueDef, value, parsedValue))
         {
             LogPrintf(LogSeverityLevel::Warning, "Setting of '%s' to '%s' impossible: failed to parse value");
             continue;

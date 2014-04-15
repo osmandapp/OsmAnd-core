@@ -5,7 +5,7 @@
 #include "RasterizerContext.h"
 
 OsmAnd::Rasterizer::Rasterizer(const std::shared_ptr<const RasterizerContext>& context_)
-    : _d(new Rasterizer_P(this, *context_->environment->_d, *context_->_d))
+    : _p(new Rasterizer_P(this, *context_->environment->_p, *context_->_p))
     , context(context_)
 {
 }
@@ -24,7 +24,7 @@ void OsmAnd::Rasterizer::prepareContext(
     const IQueryController* const controller /*= nullptr*/,
     Rasterizer_Metrics::Metric_prepareContext* const metric /*= nullptr*/)
 {
-    Rasterizer_P::prepareContext(*context.environment->_d, *context._d, area31, zoom, foundation, objects, nothingToRasterize, controller, metric);
+    Rasterizer_P::prepareContext(*context.environment->_p, *context._p, area31, zoom, foundation, objects, nothingToRasterize, controller, metric);
 }
 
 void OsmAnd::Rasterizer::rasterizeMap(
@@ -33,7 +33,7 @@ void OsmAnd::Rasterizer::rasterizeMap(
     const AreaI* const destinationArea /*= nullptr*/,
     const IQueryController* const controller /*= nullptr*/ )
 {
-    _d->rasterizeMap(canvas, fillBackground, destinationArea, controller);
+    _p->rasterizeMap(canvas, fillBackground, destinationArea, controller);
 }
 
 void OsmAnd::Rasterizer::rasterizeSymbolsWithoutPaths(
@@ -41,5 +41,5 @@ void OsmAnd::Rasterizer::rasterizeSymbolsWithoutPaths(
     std::function<bool (const std::shared_ptr<const Model::MapObject>& mapObject)> filter /*= nullptr*/,
     const IQueryController* const controller /*= nullptr*/ )
 {
-    _d->rasterizeSymbolsWithoutPaths(outSymbolsGroups, filter, controller);
+    _p->rasterizeSymbolsWithoutPaths(outSymbolsGroups, filter, controller);
 }

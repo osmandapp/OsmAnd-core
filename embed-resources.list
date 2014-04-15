@@ -340,4 +340,4 @@
 /resources/rendering_styles/stubs/processing_tile.png:map/stubs/processing_tile.png
 /resources/rendering_styles/stubs/unavailable_tile.png:map/stubs/unavailable_tile.png
 /resources/routing/routing.xml:routing/routing.xml
-/core/externals/icu4c/upstream.data/icudt52l.dat:icu4c/icu-data-l.xml
+/core/externals/icu4c/upstream.data/icudt52l.dat:icu4c/icu-data-l.dat

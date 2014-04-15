@@ -28,17 +28,17 @@ namespace OsmAnd
         ObfPoiSectionReader_P();
         ~ObfPoiSectionReader_P();
     protected:
-        static void read(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<ObfPoiSectionInfo>& section);
-        static void readBoundaries(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<ObfPoiSectionInfo>& section);
+        static void read(const ObfReader_P& reader, const std::shared_ptr<ObfPoiSectionInfo>& section);
+        static void readBoundaries(const ObfReader_P& reader, const std::shared_ptr<ObfPoiSectionInfo>& section);
 
         enum {
             SubcategoryIdShift = 7,
             CategoryIdMask = (1u << SubcategoryIdShift) - 1,
         };
-        static void readCategories(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
+        static void readCategories(const ObfReader_P& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
             QList< Fwd<Model::AmenityCategory>::RefC >& categories);
-        static void readCategory(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<Model::AmenityCategory>& category);
-        static void readAmenities(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
+        static void readCategory(const ObfReader_P& reader, const std::shared_ptr<Model::AmenityCategory>& category);
+        static void readAmenities(const ObfReader_P& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
             QSet<uint32_t>* desiredCategories,
             QList< Fwd<Model::Amenity>::RefC >* amenitiesOut,
             const ZoomLevel zoom, uint32_t zoomDepth, const AreaI* bbox31,
@@ -53,32 +53,32 @@ namespace OsmAnd
             uint64_t _hash;
             int32_t _offset;
         };
-        static bool readTile(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
+        static bool readTile(const ObfReader_P& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
             QList< std::shared_ptr<Tile> >& tiles,
             Tile* parent,
             QSet<uint32_t>* desiredCategories,
             uint32_t zoom, uint32_t zoomDepth, const AreaI* bbox31,
             const IQueryController* const controller,
             QSet< uint64_t >* tilesToSkip);
-        static bool checkTileCategories(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
+        static bool checkTileCategories(const ObfReader_P& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
             QSet<uint32_t>* desiredCategories);
-        static void readAmenitiesFromTile(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section, Tile* tile,
+        static void readAmenitiesFromTile(const ObfReader_P& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section, Tile* tile,
             QSet<uint32_t>* desiredCategories,
             QList< Fwd<Model::Amenity>::RefC >* amenitiesOut,
             const ZoomLevel zoom, uint32_t zoomDepth, const AreaI* bbox31,
             std::function<bool (Fwd<Model::Amenity>::NCRefC)> visitor,
             const IQueryController* const controller,
             QSet< uint64_t >* amenitiesToSkip);
-        static void readAmenity(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
+        static void readAmenity(const ObfReader_P& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
             const PointI& pTile, uint32_t pzoom, Fwd<Model::Amenity>::OutRefC& amenity,
             QSet<uint32_t>* desiredCategories,
             const AreaI* bbox31,
             const IQueryController* const controller);
 
-        static void loadCategories(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const OsmAnd::ObfPoiSectionInfo>& section,
+        static void loadCategories(const ObfReader_P& reader, const std::shared_ptr<const OsmAnd::ObfPoiSectionInfo>& section,
             QList< std::shared_ptr<const Model::AmenityCategory> >& categories);
 
-        static void loadAmenities(const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const OsmAnd::ObfPoiSectionInfo>& section,
+        static void loadAmenities(const ObfReader_P& reader, const std::shared_ptr<const OsmAnd::ObfPoiSectionInfo>& section,
             const ZoomLevel zoom, uint32_t zoomDepth = 3, const AreaI* bbox31 = nullptr,
             QSet<uint32_t>* desiredCategories = nullptr,
             QList< Fwd<Model::Amenity>::RefC >* amenitiesOut = nullptr,

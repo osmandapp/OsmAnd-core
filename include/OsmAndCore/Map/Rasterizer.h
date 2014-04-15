@@ -9,6 +9,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Map/MapTypes.h>
 
 class SkCanvas;
@@ -31,7 +32,7 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY(Rasterizer);
     private:
-        const std::unique_ptr<Rasterizer_P> _d;
+        PrivateImplementation<Rasterizer_P> _p;
     protected:
     public:
         Rasterizer(const std::shared_ptr<const RasterizerContext>& context);

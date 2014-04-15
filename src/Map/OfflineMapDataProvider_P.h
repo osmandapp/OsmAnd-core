@@ -13,6 +13,7 @@
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
+#include "PrivateImplementation.h"
 #include "TilesCollection.h"
 #include "SharedByZoomResourcesContainer.h"
 
@@ -32,9 +33,9 @@ namespace OsmAnd
     protected:
         OfflineMapDataProvider_P(OfflineMapDataProvider* owner);
 
-        OfflineMapDataProvider* const owner;
+        ImplementationInterface<OfflineMapDataProvider> owner;
 
-        SharedByZoomResourcesContainer<uint64_t, const Model::MapObject> _sharedMapObjects;
+        mutable SharedByZoomResourcesContainer<uint64_t, const Model::MapObject> _sharedMapObjects;
 
         enum class TileState
         {
@@ -61,7 +62,7 @@ namespace OsmAnd
             QReadWriteLock _loadedConditionLock;
             QWaitCondition _loadedCondition;
         };
-        TilesCollection<TileEntry> _tileReferences;
+        mutable TilesCollection<TileEntry> _tileReferences;
 
         class Link : public std::enable_shared_from_this<Link>
         {
@@ -74,8 +75,8 @@ namespace OsmAnd
             }
 
             virtual ~Link()
-            {}
-
+            {
+            }
 
             OfflineMapDataProvider_P& provider;
         };
@@ -83,12 +84,11 @@ namespace OsmAnd
     public:
         ~OfflineMapDataProvider_P();
 
-        void obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const OfflineMapDataTile>& outTile);
+        void obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const OfflineMapDataTile>& outTile) const;
 
     friend class OsmAnd::OfflineMapDataProvider;
     friend class OsmAnd::OfflineMapDataTile_P;
     };
-
 }
 
 #endif // !defined(_OSMAND_CORE_OFFLINE_MAP_DATA_PROVIDER_P_H_)

@@ -7,6 +7,7 @@
 #include <QtGlobal>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/PrivateImplementation.h>
 
 namespace OsmAnd
 {
@@ -20,7 +21,7 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY(RasterizerSharedContext);
     private:
-        const std::unique_ptr<RasterizerSharedContext_P> _d;
+        PrivateImplementation<RasterizerSharedContext_P> _p;
     protected:
     public:
         RasterizerSharedContext();

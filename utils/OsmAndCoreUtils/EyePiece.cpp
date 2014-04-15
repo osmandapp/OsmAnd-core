@@ -12,10 +12,10 @@
 #include <QtMath>
 
 #include <OsmAndCore/Common.h>
-#include <OsmAndCore/Data/ObfReader.h>
 #include <OsmAndCore/Utilities.h>
-#include <OsmAndCore/Data/ObfsCollection.h>
-#include <OsmAndCore/Data/ObfDataInterface.h>
+#include <OsmAndCore/ObfsCollection.h>
+#include <OsmAndCore/ObfDataInterface.h>
+#include <OsmAndCore/Data/ObfReader.h>
 #include <OsmAndCore/Map/Rasterizer.h>
 #include <OsmAndCore/Map/RasterizerContext.h>
 #include <OsmAndCore/Map/RasterizerEnvironment.h>
@@ -186,7 +186,7 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
         style->dump();
     
     OsmAnd::ObfsCollection obfsCollection;
-    obfsCollection.registerDirectory(cfg.obfsDir);
+    obfsCollection.addDirectory(cfg.obfsDir);
 
     // Collect all map objects (this should be replaced by something like RasterizerViewport/RasterizerContext)
     QList< std::shared_ptr<const OsmAnd::Model::MapObject> > mapObjects;

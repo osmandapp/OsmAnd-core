@@ -4,21 +4,6 @@
 
 #include "Common.h"
 
-const std::shared_ptr<OsmAnd::Concurrent::Pools> OsmAnd::Concurrent::Pools::instance(new OsmAnd::Concurrent::Pools());
-const std::shared_ptr<OsmAnd::Concurrent::Pools> OsmAnd::Concurrent::pools(OsmAnd::Concurrent::Pools::instance);
-
-OsmAnd::Concurrent::Pools::Pools()
-    : localStorage(new QThreadPool())
-    , network(new QThreadPool())
-{
-    localStorage->setMaxThreadCount(4);
-    network->setMaxThreadCount(4);
-}
-
-OsmAnd::Concurrent::Pools::~Pools()
-{
-}
-
 OsmAnd::Concurrent::Task::Task( ExecuteSignature executeMethod, PreExecuteSignature preExecuteMethod /*= nullptr*/, PostExecuteSignature postExecuteMethod /*= nullptr*/ )
     : _cancellationRequestedByTask(false)
     , _cancellationRequestedByExternal(0)
@@ -35,9 +20,6 @@ OsmAnd::Concurrent::Task::~Task()
 
 void OsmAnd::Concurrent::Task::run()
 {
-    // This local event loop
-    QEventLoop localLoop;
-
     // Check if task wants to cancel itself
     if(preExecute && _cancellationRequestedByExternal.loadAcquire() == 0)
     {
@@ -49,7 +31,7 @@ void OsmAnd::Concurrent::Task::run()
     // If cancellation was not requested by task itself nor by
     // external call
     if(!_cancellationRequestedByTask && _cancellationRequestedByExternal.loadAcquire() == 0)
-        execute(this, localLoop);
+        execute(this);
 
     // Report that execution had finished
     if(postExecute)

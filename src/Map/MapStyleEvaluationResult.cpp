@@ -4,7 +4,7 @@
 #include "QKeyValueIterator.h"
 
 OsmAnd::MapStyleEvaluationResult::MapStyleEvaluationResult()
-    : _d(new MapStyleEvaluationResult_P(this))
+    : _p(new MapStyleEvaluationResult_P(this))
 {
 }
 
@@ -14,8 +14,8 @@ OsmAnd::MapStyleEvaluationResult::~MapStyleEvaluationResult()
 
 bool OsmAnd::MapStyleEvaluationResult::getBooleanValue(const int valueDefId, bool& value) const
 {
-    const auto itValue = _d->_values.constFind(valueDefId);
-    if(itValue == _d->_values.cend())
+    const auto itValue = _p->_values.constFind(valueDefId);
+    if(itValue == _p->_values.cend())
         return false;
 
     value = itValue->toBool();
@@ -24,8 +24,8 @@ bool OsmAnd::MapStyleEvaluationResult::getBooleanValue(const int valueDefId, boo
 
 bool OsmAnd::MapStyleEvaluationResult::getIntegerValue(const int valueDefId, int& value) const
 {
-    const auto itValue = _d->_values.constFind(valueDefId);
-    if(itValue == _d->_values.cend())
+    const auto itValue = _p->_values.constFind(valueDefId);
+    if(itValue == _p->_values.cend())
         return false;
 
     value = itValue->toInt();
@@ -34,8 +34,8 @@ bool OsmAnd::MapStyleEvaluationResult::getIntegerValue(const int valueDefId, int
 
 bool OsmAnd::MapStyleEvaluationResult::getIntegerValue(const int valueDefId, unsigned int& value) const
 {
-    const auto itValue = _d->_values.constFind(valueDefId);
-    if(itValue == _d->_values.cend())
+    const auto itValue = _p->_values.constFind(valueDefId);
+    if(itValue == _p->_values.cend())
         return false;
 
     value = itValue->toUInt();
@@ -44,8 +44,8 @@ bool OsmAnd::MapStyleEvaluationResult::getIntegerValue(const int valueDefId, uns
 
 bool OsmAnd::MapStyleEvaluationResult::getFloatValue(const int valueDefId, float& value) const
 {
-    const auto itValue = _d->_values.constFind(valueDefId);
-    if(itValue == _d->_values.cend())
+    const auto itValue = _p->_values.constFind(valueDefId);
+    if(itValue == _p->_values.cend())
         return false;
 
     value = itValue->toFloat();
@@ -54,8 +54,8 @@ bool OsmAnd::MapStyleEvaluationResult::getFloatValue(const int valueDefId, float
 
 bool OsmAnd::MapStyleEvaluationResult::getStringValue(const int valueDefId, QString& value) const
 {
-    const auto itValue = _d->_values.constFind(valueDefId);
-    if(itValue == _d->_values.cend())
+    const auto itValue = _p->_values.constFind(valueDefId);
+    if(itValue == _p->_values.cend())
         return false;
 
     value = itValue->toString();
@@ -64,12 +64,12 @@ bool OsmAnd::MapStyleEvaluationResult::getStringValue(const int valueDefId, QStr
 
 void OsmAnd::MapStyleEvaluationResult::clear()
 {
-    _d->_values.clear();
+    _p->_values.clear();
 }
 
 void OsmAnd::MapStyleEvaluationResult::pack(PackedResult& packedResult)
 {
-    packedResult.reserve(_d->_values.size());
-    for(const auto& entry : rangeOf(constOf(_d->_values)))
+    packedResult.reserve(_p->_values.size());
+    for(const auto& entry : rangeOf(constOf(_p->_values)))
         packedResult.push_back(qMove(PackedResultEntry(entry.key(), entry.value())));
 }

@@ -8,9 +8,10 @@
 #include <QFileInfo>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/PrivateImplementation.h>
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class ObfInfo;
     class ObfReader;
 
@@ -19,19 +20,21 @@ namespace OsmAnd {
     {
         Q_DISABLE_COPY(ObfFile)
     private:
-        const std::unique_ptr<ObfFile_P> _d;
+        PrivateImplementation<ObfFile_P> _p;
     protected:
     public:
-        ObfFile(const QString& filePath);
+        ObfFile(const QString& filePath, const uint64_t fileSize);
         virtual ~ObfFile();
 
         const QString filePath;
+        const uint64_t fileSize;
+        const std::shared_ptr<const ObfInfo>& obfInfo;
 
-        const std::shared_ptr<ObfInfo>& obfInfo;
+        void lockForRemoval() const;
+        const bool& isLockedForRemoval;
 
     friend class OsmAnd::ObfReader;
     };
-
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_OBF_FILE_H_)

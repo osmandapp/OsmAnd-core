@@ -9,6 +9,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Map/IMapElevationDataProvider.h>
 
 namespace OsmAnd
@@ -18,7 +19,7 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY(HeightmapTileProvider);
     private:
-        const std::unique_ptr<HeightmapTileProvider_P> _d;
+        PrivateImplementation<HeightmapTileProvider_P> _p;
     protected:
     public:
         HeightmapTileProvider(const QDir& dataPath, const QString& indexFilepath = QString());

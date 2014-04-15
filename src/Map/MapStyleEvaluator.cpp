@@ -8,7 +8,7 @@
 #include "Logging.h"
 
 OsmAnd::MapStyleEvaluator::MapStyleEvaluator(const std::shared_ptr<const MapStyle>& style_, const float displayDensityFactor_)
-    : _d(new MapStyleEvaluator_P(this))
+    : _p(new MapStyleEvaluator_P(this))
     , style(style_)
     , displayDensityFactor(displayDensityFactor_)
 {
@@ -20,37 +20,37 @@ OsmAnd::MapStyleEvaluator::~MapStyleEvaluator()
 
 void OsmAnd::MapStyleEvaluator::setBooleanValue(const int valueDefId, const bool value)
 {
-    auto& entry = _d->_inputValues[valueDefId];
+    auto& entry = _p->_inputValues[valueDefId];
 
     entry.asInt = value ? 1 : 0;
 }
 
 void OsmAnd::MapStyleEvaluator::setIntegerValue(const int valueDefId, const int value)
 {
-    auto& entry = _d->_inputValues[valueDefId];
+    auto& entry = _p->_inputValues[valueDefId];
 
     entry.asInt = value;
 }
 
 void OsmAnd::MapStyleEvaluator::setIntegerValue(const int valueDefId, const unsigned int value)
 {
-    auto& entry = _d->_inputValues[valueDefId];
+    auto& entry = _p->_inputValues[valueDefId];
 
     entry.asUInt = value;
 }
 
 void OsmAnd::MapStyleEvaluator::setFloatValue(const int valueDefId, const float value)
 {
-    auto& entry = _d->_inputValues[valueDefId];
+    auto& entry = _p->_inputValues[valueDefId];
 
     entry.asFloat = value;
 }
 
 void OsmAnd::MapStyleEvaluator::setStringValue(const int valueDefId, const QString& value)
 {
-    auto& entry = _d->_inputValues[valueDefId];
+    auto& entry = _p->_inputValues[valueDefId];
 
-    bool ok = style->_d->lookupStringId(value, entry.asUInt);
+    bool ok = style->_p->lookupStringId(value, entry.asUInt);
     if(!ok)
         entry.asUInt = std::numeric_limits<uint32_t>::max();
 }
@@ -60,7 +60,7 @@ bool OsmAnd::MapStyleEvaluator::evaluate(
     MapStyleEvaluationResult* const outResultStorage /*= nullptr*/,
     bool evaluateChildren /*= true*/)
 {
-    return _d->evaluate(mapObject, ruleset, outResultStorage, evaluateChildren);
+    return _p->evaluate(mapObject, ruleset, outResultStorage, evaluateChildren);
 }
 
 bool OsmAnd::MapStyleEvaluator::evaluate(
@@ -68,13 +68,13 @@ bool OsmAnd::MapStyleEvaluator::evaluate(
     MapStyleEvaluationResult* const outResultStorage /*= nullptr*/,
     bool evaluateChildren /*=true*/)
 {
-    return _d->evaluate(singleRule, outResultStorage, evaluateChildren);
+    return _p->evaluate(singleRule, outResultStorage, evaluateChildren);
 }
 
 void OsmAnd::MapStyleEvaluator::dump( bool input /*= true*/, bool output /*= true*/, const QString& prefix /*= QString()*/ ) const
 {
     /*
-    for(auto itValue = _d->_inputValues.cbegin(); itValue != _d->_inputValues.cend(); ++itValue)
+    for(auto itValue = _p->_inputValues.cbegin(); itValue != _p->_inputValues.cend(); ++itValue)
     {
         const auto& valueDef = itValue.key();
         const auto& value = itValue.value();
@@ -102,7 +102,7 @@ void OsmAnd::MapStyleEvaluator::dump( bool input /*= true*/, bool output /*= tru
                     OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%f", value.asSimple.asFloat);
                 break;
             case MapStyleValueDataType::String:
-                OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s", qPrintable(style->_d->lookupStringValue(value.asSimple.asUInt)));
+                OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s", qPrintable(style->_p->lookupStringValue(value.asSimple.asUInt)));
                 break;
             case MapStyleValueDataType::Color:
                 OsmAnd::LogPrintf(LogSeverityLevel::Debug, "#%s", qPrintable(QString::number(value.asSimple.asUInt, 16)));

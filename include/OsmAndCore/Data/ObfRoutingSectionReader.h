@@ -30,7 +30,7 @@ namespace OsmAnd {
         ~ObfRoutingSectionReader();
     protected:
     public:
-        static void querySubsections(const std::shared_ptr<ObfReader>& reader, const QList< std::shared_ptr<ObfRoutingSubsectionInfo> >& in,
+        static void querySubsections(const std::shared_ptr<ObfReader>& reader, const QList< std::shared_ptr<const ObfRoutingSubsectionInfo> >& in,
             QList< std::shared_ptr<const ObfRoutingSubsectionInfo> >* resultOut = nullptr,
             IQueryFilter* filter = nullptr,
             std::function<bool (const std::shared_ptr<const ObfRoutingSubsectionInfo>&)> visitor = nullptr);

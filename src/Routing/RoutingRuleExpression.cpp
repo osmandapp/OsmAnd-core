@@ -20,7 +20,7 @@ OsmAnd::RoutingRuleExpression::RoutingRuleExpression( RoutingRuleset* ruleset, c
     else
     {
         const auto wasParsed = RoutingConfiguration::parseTypedValue(value.trimmed(), type, _value);
-        OSMAND_ASSERT(wasParsed, "Value '" << qPrintable(value) << "' can not be parsed");
+        OSMAND_ASSERT(wasParsed, QString("Value '%1' can not be parsed").arg(value));
     }
 }
 

@@ -4,13 +4,13 @@
 #include <limits>
 #include <cmath>
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 #include <QtNumeric>
 #include <QtCore>
 
 #include "Logging.h"
 
-OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::Utilities::extractFirstNumberPosition( const QString& value, int& first, int& last, bool allowSigned, bool allowDot )
+bool OsmAnd::Utilities::extractFirstNumberPosition(const QString& value, int& first, int& last, bool allowSigned, bool allowDot)
 {
     first = -1;
     last = -1;
@@ -30,7 +30,7 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::Utilities::extractFirstNumberPosit
     return first != -1;
 }
 
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::parseSpeed( const QString& value, double defValue, bool* wasParsed/* = nullptr*/ )
+double OsmAnd::Utilities::parseSpeed(const QString& value, double defValue, bool* wasParsed/* = nullptr*/)
 {
     if(value == QLatin1String("none"))
     {
@@ -59,7 +59,7 @@ OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::parseSpeed( const QSt
     return result;
 }
 
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::parseLength( const QString& value, double defValue, bool* wasParsed/* = nullptr*/ )
+double OsmAnd::Utilities::parseLength(const QString& value, double defValue, bool* wasParsed/* = nullptr*/)
 {
     int first, last;
     if(!extractFirstNumberPosition(value, first, last, false, true))
@@ -78,12 +78,12 @@ OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::parseLength( const QS
         bool ok;
         auto inches = inchesSubstr.mid(first, last - first + 1).toDouble(&ok);
         if(ok)
-            result += inches * 0.0254;        
+            result += inches * 0.0254;
     }
     return result;
 }
 
-OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::parseWeight( const QString& value, double defValue, bool* wasParsed/* = nullptr*/ )
+double OsmAnd::Utilities::parseWeight(const QString& value, double defValue, bool* wasParsed/* = nullptr*/)
 {
     int first, last;
     if(wasParsed)
@@ -102,7 +102,7 @@ OSMAND_CORE_API double OSMAND_CORE_CALL OsmAnd::Utilities::parseWeight( const QS
     return result;
 }
 
-OSMAND_CORE_API int OSMAND_CORE_CALL OsmAnd::Utilities::parseArbitraryInt( const QString& value, int defValue, bool* wasParsed/* = nullptr*/ )
+int OsmAnd::Utilities::parseArbitraryInt(const QString& value, int defValue, bool* wasParsed/* = nullptr*/)
 {
     int first, last;
     if(wasParsed)
@@ -119,7 +119,7 @@ OSMAND_CORE_API int OSMAND_CORE_CALL OsmAnd::Utilities::parseArbitraryInt( const
     return result;
 }
 
-OSMAND_CORE_API long OSMAND_CORE_CALL OsmAnd::Utilities::parseArbitraryLong( const QString& value, long defValue, bool* wasParsed/* = nullptr*/ )
+long OsmAnd::Utilities::parseArbitraryLong(const QString& value, long defValue, bool* wasParsed/* = nullptr*/)
 {
     int first, last;
     if(wasParsed)
@@ -136,7 +136,7 @@ OSMAND_CORE_API long OSMAND_CORE_CALL OsmAnd::Utilities::parseArbitraryLong( con
     return result;
 }
 
-OSMAND_CORE_API unsigned int OSMAND_CORE_CALL OsmAnd::Utilities::parseArbitraryUInt( const QString& value, unsigned int defValue, bool* wasParsed/* = nullptr*/ )
+unsigned int OsmAnd::Utilities::parseArbitraryUInt(const QString& value, unsigned int defValue, bool* wasParsed/* = nullptr*/)
 {
     int first, last;
     if(wasParsed)
@@ -153,7 +153,7 @@ OSMAND_CORE_API unsigned int OSMAND_CORE_CALL OsmAnd::Utilities::parseArbitraryU
     return result;
 }
 
-OSMAND_CORE_API unsigned long OSMAND_CORE_CALL OsmAnd::Utilities::parseArbitraryULong( const QString& value, unsigned long defValue, bool* wasParsed/* = nullptr*/ )
+unsigned long OsmAnd::Utilities::parseArbitraryULong(const QString& value, unsigned long defValue, bool* wasParsed/* = nullptr*/)
 {
     int first, last;
     if(wasParsed)
@@ -170,7 +170,7 @@ OSMAND_CORE_API unsigned long OSMAND_CORE_CALL OsmAnd::Utilities::parseArbitrary
     return result;
 }
 
-OSMAND_CORE_API float OSMAND_CORE_CALL OsmAnd::Utilities::parseArbitraryFloat( const QString& value, float defValue, bool* wasParsed /*= nullptr*/ )
+float OsmAnd::Utilities::parseArbitraryFloat(const QString& value, float defValue, bool* wasParsed /*= nullptr*/)
 {
     int first, last;
     if(wasParsed)
@@ -187,7 +187,7 @@ OSMAND_CORE_API float OSMAND_CORE_CALL OsmAnd::Utilities::parseArbitraryFloat( c
     return result;
 }
 
-OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::Utilities::parseArbitraryBool( const QString& value, bool defValue, bool* wasParsed /*= nullptr*/ )
+bool OsmAnd::Utilities::parseArbitraryBool(const QString& value, bool defValue, bool* wasParsed /*= nullptr*/)
 {
     if(wasParsed)
         *wasParsed = false;
@@ -202,7 +202,7 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::Utilities::parseArbitraryBool( con
     return result;
 }
 
-OSMAND_CORE_API  int OSMAND_CORE_CALL OsmAnd::Utilities::javaDoubleCompare( double l, double r )
+int OsmAnd::Utilities::javaDoubleCompare(double l, double r)
 {
     const auto lNaN = qIsNaN(l);
     const auto rNaN = qIsNaN(r);
@@ -234,7 +234,7 @@ OSMAND_CORE_API  int OSMAND_CORE_CALL OsmAnd::Utilities::javaDoubleCompare( doub
     return qCeil(l) - qCeil(r);
 }
 
-OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::findFiles( const QDir& origin, const QStringList& masks, QFileInfoList& files, bool recursively /*= true */ )
+void OsmAnd::Utilities::findFiles(const QDir& origin, const QStringList& masks, QFileInfoList& files, bool recursively /*= true */)
 {
     const auto& fileInfoList = origin.entryInfoList(masks, QDir::Files);
     files.append(fileInfoList);
@@ -247,7 +247,20 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::findFiles( const QDir& 
     }
 }
 
-OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( const unsigned int verticesCount, const PointF* vertices, std::function<void (const PointI&)> fillPoint )
+void OsmAnd::Utilities::findDirectories(const QDir& origin, const QStringList& masks, QFileInfoList& directories, bool recursively /*= true */)
+{
+    const auto& directoriesList = origin.entryInfoList(masks, QDir::AllDirs | QDir::NoDotAndDotDot);
+    directories.append(directoriesList);
+
+    if(recursively)
+    {
+        const auto& subdirs = origin.entryInfoList(QStringList(), QDir::AllDirs | QDir::NoDotAndDotDot);
+        for(const auto& subdir : constOf(subdirs))
+            findDirectories(QDir(subdir.absoluteFilePath()), masks, directories, recursively);
+    }
+}
+
+void OsmAnd::Utilities::scanlineFillPolygon(const unsigned int verticesCount, const PointF* vertices, std::function<void(const PointI&)> fillPoint)
 {
     // Find min-max of Y
     float yMinF, yMaxF;
@@ -313,7 +326,7 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
             pLower = v1;
             pUpper = v0;
         }
-        
+
         // Fill edge 
         auto edge = new Edge();
         edge->v0 = pLower;
@@ -383,7 +396,7 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
         {
             return l->v0->x > r->v0->x;
         });
-        
+
         // Find next row
         for(; rowIdx < nextRow; rowIdx++)
         {
@@ -404,7 +417,7 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::Utilities::scanlineFillPolygon( co
                 auto xMaxF = qMax(lXf, rXf);
                 auto xMin = qFloor(xMinF);
                 auto xMax = qFloor(xMaxF);
-                
+
                 LogPrintf(LogSeverityLevel::Debug, "line %d from %d(%f) to %d(%f)", rowIdx, xMin, xMinF, xMax, xMaxF);
                 /*for(auto x = xMin; x <= xMax; x++)
                     fillPoint(PointI(x, rowIdx));*/

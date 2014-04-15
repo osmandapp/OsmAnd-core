@@ -11,12 +11,12 @@
 #include "Logging.h"
 #include "Utilities.h"
 
-OsmAnd::MapStyleRule::MapStyleRule(MapStyle* owner_, const QHash< QString, QString >& attributes)
-    : _d(new MapStyleRule_P(this))
+OsmAnd::MapStyleRule::MapStyleRule(MapStyle* const owner_, const QHash< QString, QString >& attributes)
+    : _p(new MapStyleRule_P(this))
     , owner(owner_)
 {
-    _d->_values.reserve(attributes.size());
-    _d->_resolvedValueDefinitions.reserve(attributes.size());
+    _p->_values.reserve(attributes.size());
+    _p->_resolvedValueDefinitions.reserve(attributes.size());
     
     for(const auto& attributeEntry : rangeOf(constOf(attributes)))
     {
@@ -28,14 +28,14 @@ OsmAnd::MapStyleRule::MapStyleRule(MapStyle* owner_, const QHash< QString, QStri
         assert(ok);
 
         // Store resolved value definition
-        _d->_resolvedValueDefinitions.insert(key, valueDef);
+        _p->_resolvedValueDefinitions.insert(key, valueDef);
 
         // Parse value
         MapStyleValue parsedValue;
-        ok = owner->_d->parseValue(valueDef, value, parsedValue, true);
+        ok = owner_->_p->parseValue(valueDef, value, parsedValue, true);
         assert(ok);
         
-        _d->_values.insert(valueDef, parsedValue);
+        _p->_values.insert(valueDef, parsedValue);
     }
 }
 
@@ -45,8 +45,8 @@ OsmAnd::MapStyleRule::~MapStyleRule()
 
 bool OsmAnd::MapStyleRule::getAttribute(const std::shared_ptr<const MapStyleValueDefinition>& key, MapStyleValue& value) const
 {
-    auto itValue = _d->_values.constFind(key);
-    if(itValue == _d->_values.cend())
+    auto itValue = _p->_values.constFind(key);
+    if(itValue == _p->_values.cend())
         return false;
 
     value = *itValue;
@@ -57,7 +57,7 @@ void OsmAnd::MapStyleRule::dump( const QString& prefix /*= QString()*/ ) const
 {
     auto newPrefix = prefix + QLatin1String("\t");
     
-    for(const auto& valueEntry : rangeOf(constOf(_d->_values)))
+    for(const auto& valueEntry : rangeOf(constOf(_p->_values)))
     {
         const auto& valueDef = valueEntry.key();
         const auto& value = valueEntry.value();
@@ -81,7 +81,7 @@ void OsmAnd::MapStyleRule::dump( const QString& prefix /*= QString()*/ ) const
                 strValue = QString::fromLatin1("%1").arg(value.asSimple.asFloat);
             break;
         case MapStyleValueDataType::String:
-            strValue = owner->_d->lookupStringValue(value.asSimple.asUInt);
+            strValue = owner->_p->lookupStringValue(value.asSimple.asUInt);
             break;
         case MapStyleValueDataType::Color:
             {
@@ -101,11 +101,11 @@ void OsmAnd::MapStyleRule::dump( const QString& prefix /*= QString()*/ ) const
             qPrintable(strValue));
     }
 
-    if(!_d->_ifChildren.empty())
+    if(!_p->_ifChildren.empty())
     {
         LogPrintf(LogSeverityLevel::Debug, "%sIf(",
             qPrintable(newPrefix));
-        for(const auto& child : constOf(_d->_ifChildren))
+        for(const auto& child : constOf(_p->_ifChildren))
         {
             LogPrintf(LogSeverityLevel::Debug, "%sAND 0x%p",
                 qPrintable(newPrefix),
@@ -116,11 +116,11 @@ void OsmAnd::MapStyleRule::dump( const QString& prefix /*= QString()*/ ) const
             qPrintable(newPrefix));
     }
 
-    if(!_d->_ifElseChildren.empty())
+    if(!_p->_ifElseChildren.empty())
     {
         LogPrintf(LogSeverityLevel::Debug, "%sSelector: [",
             qPrintable(newPrefix));
-        for(const auto& child : constOf(_d->_ifElseChildren))
+        for(const auto& child : constOf(_p->_ifElseChildren))
         {
             LogPrintf(LogSeverityLevel::Debug, "%sOR 0x%p",
                 qPrintable(newPrefix),

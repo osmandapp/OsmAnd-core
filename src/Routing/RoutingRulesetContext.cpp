@@ -108,7 +108,7 @@ QBitArray OsmAnd::RoutingRulesetContext::encode( const std::shared_ptr<const Obf
         auto itId = itTagValueAttribIdCache->find(type);
         if(itId == itTagValueAttribIdCache->end())
         {
-            const auto& encodingRule = section->_d->_encodingRules[type];
+            const auto& encodingRule = section->_p->_encodingRules[type];
             assert(encodingRule);
 
             auto id = ruleset->owner->registerTagValueAttribute(encodingRule->_tag, encodingRule->_value);

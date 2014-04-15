@@ -9,7 +9,7 @@
 
 #include "Logging.h"
 
-OsmAnd::HeightmapTileProvider_P::HeightmapTileProvider_P( HeightmapTileProvider* owner_, const QDir& dataPath, const QString& indexFilepath )
+OsmAnd::HeightmapTileProvider_P::HeightmapTileProvider_P( HeightmapTileProvider* const owner_, const QDir& dataPath, const QString& indexFilepath )
     : owner(owner_)
     , _tileDb(dataPath, indexFilepath)
 {

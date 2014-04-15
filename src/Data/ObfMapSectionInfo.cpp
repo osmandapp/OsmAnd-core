@@ -3,25 +3,25 @@
 
 OsmAnd::ObfMapSectionInfo::ObfMapSectionInfo( const std::weak_ptr<ObfInfo>& owner )
     : ObfSectionInfo(owner)
-    , _d(new ObfMapSectionInfo_P(this))
+    , _p(new ObfMapSectionInfo_P(this))
     , _isBasemap(false)
     , isBasemap(_isBasemap)
     , levels(_levels)
-    , encodingDecodingRules(_d->_encodingDecodingRules)
+    , encodingDecodingRules(_p->_encodingDecodingRules)
 {
 }
 
 OsmAnd::ObfMapSectionInfo::ObfMapSectionInfo()
     : ObfSectionInfo(std::weak_ptr<ObfInfo>())
-    , _d(new ObfMapSectionInfo_P(this))
+    , _p(new ObfMapSectionInfo_P(this))
     , _isBasemap(false)
     , isBasemap(_isBasemap)
     , levels(_levels)
-    , encodingDecodingRules(_d->_encodingDecodingRules)
+    , encodingDecodingRules(_p->_encodingDecodingRules)
 {
     auto rules = new ObfMapSectionDecodingEncodingRules();
     rules->createMissingRules();
-    _d->_encodingDecodingRules.reset(rules);
+    _p->_encodingDecodingRules.reset(rules);
 }
 
 OsmAnd::ObfMapSectionInfo::~ObfMapSectionInfo()
@@ -29,7 +29,7 @@ OsmAnd::ObfMapSectionInfo::~ObfMapSectionInfo()
 }
 
 OsmAnd::ObfMapSectionLevel::ObfMapSectionLevel()
-    : _d(new ObfMapSectionLevel_P(this))
+    : _p(new ObfMapSectionLevel_P(this))
     , offset(_offset)
     , length(_length)
     , minZoom(_minZoom)

@@ -1,20 +1,20 @@
 #ifndef _OSMAND_CORE_OBF_READER_UTILITIES_H_
 #define _OSMAND_CORE_OBF_READER_UTILITIES_H_
 
-#include <OsmAndCore/stdlib_common.h>
+#include "stdlib_common.h"
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 #include <QString>
 #include <QStringList>
 
 #include <google/protobuf/io/coded_stream.h>
 
-#include <OsmAndCore.h>
+#include "OsmAndCore.h"
 
-namespace OsmAnd {
-
-    namespace ObfReaderUtilities {
-
+namespace OsmAnd
+{
+    namespace ObfReaderUtilities
+    {
         namespace gpb = google::protobuf;
 
         bool readQString(gpb::io::CodedInputStream* cis, QString& output);
@@ -25,10 +25,8 @@ namespace OsmAnd {
         void skipUnknownField(gpb::io::CodedInputStream* cis, int tag);
         QString encodeIntegerToString(const uint32_t value);
         uint32_t decodeIntegerFromString(const QString& container);
-
-    } // namespace ObfReaderUtilities
-    
-} // namespace OsmAnd
+    }
+}
 
 #endif // !defined(_OSMAND_CORE_OBF_READER_UTILITIES_H_)
 

@@ -1,16 +1,17 @@
 #ifndef _OSMAND_CORE_OFFLINE_MAP_SYMBOL_PROVIDER_P_H_
 #define _OSMAND_CORE_OFFLINE_MAP_SYMBOL_PROVIDER_P_H_
 
-#include <OsmAndCore/stdlib_common.h>
+#include "stdlib_common.h"
 #include <array>
 #include <functional>
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 #include <QReadWriteLock>
 #include <QList>
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
+#include "PrivateImplementation.h"
 #include "IMapSymbolProvider.h"
 #include "IRetainableResource.h"
 
@@ -19,9 +20,10 @@ namespace OsmAnd
     class OfflineMapDataTile;
     class MapSymbolsGroup;
     class MapSymbolsTile;
-    namespace Model {
+    namespace Model
+    {
         class MapObject;
-    } // namespace Model
+    }
 
     class OfflineMapSymbolProvider;
     class OfflineMapSymbolProvider_P
@@ -30,7 +32,7 @@ namespace OsmAnd
     protected:
         OfflineMapSymbolProvider_P(OfflineMapSymbolProvider* owner);
 
-        OfflineMapSymbolProvider* const owner;
+        ImplementationInterface<OfflineMapSymbolProvider> owner;
 
         class Tile
             : public MapSymbolsTile
@@ -58,7 +60,6 @@ namespace OsmAnd
 
     friend class OsmAnd::OfflineMapSymbolProvider;
     };
-
 }
 
 #endif // !defined(_OSMAND_CORE_OFFLINE_MAP_SYMBOL_PROVIDER_P_H_)

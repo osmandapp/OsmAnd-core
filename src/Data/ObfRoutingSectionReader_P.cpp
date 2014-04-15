@@ -20,9 +20,9 @@ OsmAnd::ObfRoutingSectionReader_P::~ObfRoutingSectionReader_P()
 {
 }
 
-void OsmAnd::ObfRoutingSectionReader_P::read( const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<ObfRoutingSectionInfo>& section )
+void OsmAnd::ObfRoutingSectionReader_P::read( const ObfReader_P& reader, const std::shared_ptr<ObfRoutingSectionInfo>& section )
 {
-    auto cis = reader->_codedInputStream.get();
+    auto cis = reader._codedInputStream.get();
 
     uint32_t routeEncodingRuleId = 1;
     for(;;)
@@ -48,9 +48,9 @@ void OsmAnd::ObfRoutingSectionReader_P::read( const std::unique_ptr<ObfReader_P>
 
                 cis->PopLimit(oldLimit);
 
-                while((unsigned)section->_d->_encodingRules.size() < encodingRule->_id)
-                    section->_d->_encodingRules.push_back(qMove(std::shared_ptr<ObfRoutingSectionInfo_P::EncodingRule>()));
-                section->_d->_encodingRules.push_back(qMove(encodingRule));
+                while((unsigned)section->_p->_encodingRules.size() < encodingRule->_id)
+                    section->_p->_encodingRules.push_back(qMove(std::shared_ptr<ObfRoutingSectionInfo_P::EncodingRule>()));
+                section->_p->_encodingRules.push_back(qMove(encodingRule));
             } 
             break;
         case OBF::OsmAndRoutingIndex::kRootBoxesFieldNumber:
@@ -78,13 +78,13 @@ void OsmAnd::ObfRoutingSectionReader_P::read( const std::unique_ptr<ObfReader_P>
                 auto offset = cis->CurrentPosition();
                 if(tfn == OBF::OsmAndRoutingIndex::kBorderBoxFieldNumber)
                 {
-                    section->_d->_borderBoxLength = length;
-                    section->_d->_borderBoxOffset = offset;
+                    section->_p->_borderBoxLength = length;
+                    section->_p->_borderBoxOffset = offset;
                 }
                 else
                 {
-                    section->_d->_baseBorderBoxLength = length;
-                    section->_d->_baseBorderBoxOffset = offset;
+                    section->_p->_baseBorderBoxLength = length;
+                    section->_p->_baseBorderBoxOffset = offset;
                 }
                 cis->Skip(length);
             }
@@ -100,10 +100,10 @@ void OsmAnd::ObfRoutingSectionReader_P::read( const std::unique_ptr<ObfReader_P>
 }
 
 void OsmAnd::ObfRoutingSectionReader_P::readEncodingRule(
-    const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfRoutingSectionInfo>& section,
+    const ObfReader_P& reader, const std::shared_ptr<const ObfRoutingSectionInfo>& section,
     const std::shared_ptr<ObfRoutingSectionInfo_P::EncodingRule>& rule )
 {
-    auto cis = reader->_codedInputStream.get();
+    auto cis = reader._codedInputStream.get();
 
     for(;;)
     {
@@ -185,12 +185,12 @@ void OsmAnd::ObfRoutingSectionReader_P::readEncodingRule(
 }
 
 void OsmAnd::ObfRoutingSectionReader_P::readSubsectionHeader(
-    const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<ObfRoutingSubsectionInfo>& subsection,
-    const std::shared_ptr<ObfRoutingSubsectionInfo>& parent, uint32_t depth /*= std::numeric_limits<uint32_t>::max()*/)
+    const ObfReader_P& reader, const std::shared_ptr<ObfRoutingSubsectionInfo>& subsection,
+    const std::shared_ptr<const ObfRoutingSubsectionInfo>& parent, const unsigned int depth /*= std::numeric_limits<unsigned int>::max()*/)
 {
     auto shouldReadSubsections = (depth > 0);
 
-    auto cis = reader->_codedInputStream.get();
+    auto cis = reader._codedInputStream.get();
     for(;;)
     {
         auto lastPos = cis->CurrentPosition();
@@ -260,8 +260,8 @@ void OsmAnd::ObfRoutingSectionReader_P::readSubsectionHeader(
 }
 
 void OsmAnd::ObfRoutingSectionReader_P::readSubsectionChildrenHeaders(
-    const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<ObfRoutingSubsectionInfo>& subsection,
-    uint32_t depth /*= std::numeric_limits<uint32_t>::max()*/ )
+    const ObfReader_P& reader, const std::shared_ptr<const ObfRoutingSubsectionInfo>& subsection,
+    const unsigned int depth /*= std::numeric_limits<unsigned int>::max()*/)
 {
     if(!subsection->_subsectionsOffset)
         return;
@@ -270,7 +270,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readSubsectionChildrenHeaders(
     if(!shouldReadSubsections)
         return;
 
-    auto cis = reader->_codedInputStream.get();
+    auto cis = reader._codedInputStream.get();
     for(;;)
     {
         auto lastPos = cis->CurrentPosition();
@@ -305,12 +305,12 @@ void OsmAnd::ObfRoutingSectionReader_P::readSubsectionChildrenHeaders(
 }
 
 void OsmAnd::ObfRoutingSectionReader_P::querySubsections(
-    const std::unique_ptr<ObfReader_P>& reader, const QList< std::shared_ptr<ObfRoutingSubsectionInfo> >& in,
+    const ObfReader_P& reader, const QList< std::shared_ptr<const ObfRoutingSubsectionInfo> >& in,
     QList< std::shared_ptr<const ObfRoutingSubsectionInfo> >* resultOut /*= nullptr*/,
     IQueryFilter* filter /*= nullptr*/,
     std::function<bool (const std::shared_ptr<const ObfRoutingSubsectionInfo>&)> visitor /*= nullptr*/)
 {
-    auto cis = reader->_codedInputStream.get();
+    auto cis = reader._codedInputStream.get();
 
     for(const auto& subsection : constOf(in))
     {
@@ -340,13 +340,13 @@ void OsmAnd::ObfRoutingSectionReader_P::querySubsections(
 }
 
 void OsmAnd::ObfRoutingSectionReader_P::loadSubsectionData(
-    const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfRoutingSubsectionInfo>& subsection,
+    const ObfReader_P& reader, const std::shared_ptr<const ObfRoutingSubsectionInfo>& subsection,
     QList< std::shared_ptr<const Model::Road> >* resultOut /*= nullptr*/,
     QMap< uint64_t, std::shared_ptr<const Model::Road> >* resultMapOut /*= nullptr*/,
     IQueryFilter* filter /*= nullptr*/,
     std::function<bool (const std::shared_ptr<const Model::Road>&)> visitor /*= nullptr*/ )
 {
-    auto cis = reader->_codedInputStream.get();
+    auto cis = reader._codedInputStream.get();
 
     cis->Seek(subsection->_offset + subsection->_dataOffset);
     gpb::uint32 length;
@@ -357,7 +357,7 @@ void OsmAnd::ObfRoutingSectionReader_P::loadSubsectionData(
 }
 
 void OsmAnd::ObfRoutingSectionReader_P::readSubsectionData(
-    const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfRoutingSubsectionInfo>& subsection,
+    const ObfReader_P& reader, const std::shared_ptr<const ObfRoutingSubsectionInfo>& subsection,
     QList< std::shared_ptr<const Model::Road> >* resultOut /*= nullptr*/,
     QMap< uint64_t, std::shared_ptr<const Model::Road> >* resultMapOut /*= nullptr*/,
     IQueryFilter* filter /*= nullptr*/,
@@ -367,7 +367,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readSubsectionData(
     QList<uint64_t> roadsIdsTable;
     QMap< uint32_t, std::shared_ptr<Model::Road> > resultsByInternalId;
 
-    auto cis = reader->_codedInputStream.get();
+    auto cis = reader._codedInputStream.get();
     for(;;)
     {
         auto tag = cis->ReadTag();
@@ -441,10 +441,10 @@ void OsmAnd::ObfRoutingSectionReader_P::readSubsectionData(
 }
 
 void OsmAnd::ObfRoutingSectionReader_P::readSubsectionRoadsIds(
-    const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfRoutingSubsectionInfo>& subsection,
+    const ObfReader_P& reader, const std::shared_ptr<const ObfRoutingSubsectionInfo>& subsection,
     QList<uint64_t>& ids )
 {
-    auto cis = reader->_codedInputStream.get();
+    auto cis = reader._codedInputStream.get();
 
     uint64_t id = 0;
 
@@ -469,14 +469,14 @@ void OsmAnd::ObfRoutingSectionReader_P::readSubsectionRoadsIds(
 }
 
 void OsmAnd::ObfRoutingSectionReader_P::readSubsectionRestriction(
-    const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfRoutingSubsectionInfo>& subsection,
+    const ObfReader_P& reader, const std::shared_ptr<const ObfRoutingSubsectionInfo>& subsection,
     const QMap< uint32_t, std::shared_ptr<Model::Road> >& roads, const QList<uint64_t>& roadsInternalIdToGlobalIdMap )
 {
     uint32_t originInternalId;
     uint32_t destinationInternalId;
     uint32_t restrictionType;
 
-    auto cis = reader->_codedInputStream.get();
+    auto cis = reader._codedInputStream.get();
     for(;;)
     {
         auto tag = cis->ReadTag();
@@ -512,10 +512,10 @@ void OsmAnd::ObfRoutingSectionReader_P::readSubsectionRestriction(
 }
 
 void OsmAnd::ObfRoutingSectionReader_P::readRoad(
-    const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfRoutingSubsectionInfo>& subsection,
+    const ObfReader_P& reader, const std::shared_ptr<const ObfRoutingSubsectionInfo>& subsection,
     const QList<uint64_t>& idsTable, uint32_t& internalId, const std::shared_ptr<Model::Road>& road )
 {
-    auto cis = reader->_codedInputStream.get();
+    auto cis = reader._codedInputStream.get();
     for(;;)
     {
         auto tag = cis->ReadTag();
@@ -622,18 +622,18 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
 }
 
 void OsmAnd::ObfRoutingSectionReader_P::loadSubsectionBorderBoxLinesPoints(
-    const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<const ObfRoutingSectionInfo>& section,
+    const ObfReader_P& reader, const std::shared_ptr<const ObfRoutingSectionInfo>& section,
     QList< std::shared_ptr<const ObfRoutingBorderLinePoint> >* resultOut /*= nullptr*/,
     IQueryFilter* filter /*= nullptr*/,
     std::function<bool (const std::shared_ptr<const ObfRoutingBorderLineHeader>&)> visitorLine /*= nullptr*/,
     std::function<bool (const std::shared_ptr<const ObfRoutingBorderLinePoint>&)> visitorPoint /*= nullptr*/)
 {
-    if(section->_d->_borderBoxOffset == 0 || section->_d->_borderBoxLength == 0)
+    if(section->_p->_borderBoxOffset == 0 || section->_p->_borderBoxLength == 0)
         return;
 
-    auto cis = reader->_codedInputStream.get();
-    cis->Seek(section->_d->_borderBoxOffset);
-    auto oldLimit = cis->PushLimit(section->_d->_borderBoxLength);
+    auto cis = reader._codedInputStream.get();
+    cis->Seek(section->_p->_borderBoxOffset);
+    auto oldLimit = cis->PushLimit(section->_p->_borderBoxLength);
 
     QList<uint32_t> pointsOffsets;
     readBorderBoxLinesHeaders(reader, nullptr, filter,
@@ -665,12 +665,12 @@ void OsmAnd::ObfRoutingSectionReader_P::loadSubsectionBorderBoxLinesPoints(
     }
 }
 
-void OsmAnd::ObfRoutingSectionReader_P::readBorderBoxLinesHeaders(const std::unique_ptr<ObfReader_P>& reader,
+void OsmAnd::ObfRoutingSectionReader_P::readBorderBoxLinesHeaders(const ObfReader_P& reader,
     QList< std::shared_ptr<const ObfRoutingBorderLineHeader> >* resultOut /*= nullptr*/,
     IQueryFilter* filter /*= nullptr*/,
     std::function<bool (const std::shared_ptr<const ObfRoutingBorderLineHeader>&)> visitor /*= nullptr*/)
 {
-    auto cis = reader->_codedInputStream.get();
+    auto cis = reader._codedInputStream.get();
     for(;;)
     {
         auto tag = cis->ReadTag();
@@ -721,10 +721,10 @@ void OsmAnd::ObfRoutingSectionReader_P::readBorderBoxLinesHeaders(const std::uni
 }
 
 void OsmAnd::ObfRoutingSectionReader_P::readBorderLineHeader(
-    const std::unique_ptr<ObfReader_P>& reader,
+    const ObfReader_P& reader,
     const std::shared_ptr<ObfRoutingBorderLineHeader>& borderLine, uint32_t outerOffset)
 {
-    auto cis = reader->_codedInputStream.get();
+    auto cis = reader._codedInputStream.get();
     for(;;)
     {
         auto tag = cis->ReadTag();
@@ -757,13 +757,13 @@ void OsmAnd::ObfRoutingSectionReader_P::readBorderLineHeader(
 }
 
 void OsmAnd::ObfRoutingSectionReader_P::readBorderLinePoints(
-    const std::unique_ptr<ObfReader_P>& reader,
+    const ObfReader_P& reader,
     QList< std::shared_ptr<const ObfRoutingBorderLinePoint> >* resultOut /*= nullptr*/,
     IQueryFilter* filter /*= nullptr*/,
     std::function<bool (const std::shared_ptr<const ObfRoutingBorderLinePoint>&)> visitor /*= nullptr*/
     )
 {
-    auto cis = reader->_codedInputStream.get();
+    auto cis = reader._codedInputStream.get();
 
     PointI location;
     gpb::uint64 id;
@@ -817,10 +817,10 @@ void OsmAnd::ObfRoutingSectionReader_P::readBorderLinePoints(
 }
 
 void OsmAnd::ObfRoutingSectionReader_P::readBorderLinePoint(
-    const std::unique_ptr<ObfReader_P>& reader,
+    const ObfReader_P& reader,
     const std::shared_ptr<ObfRoutingBorderLinePoint>& point)
 {
-    auto cis = reader->_codedInputStream.get();
+    auto cis = reader._codedInputStream.get();
 
     for(;;)
     {

@@ -25,7 +25,7 @@ void OsmAnd::ICU::initialize()
 {
     // Initialize ICU
     UErrorCode icuError = U_ZERO_ERROR;
-    g_IcuData = qMove(std::unique_ptr<QByteArray>(new QByteArray(EmbeddedResources::decompressResource(QLatin1String("icu4c/icu-data-l.xml")))));
+    g_IcuData = qMove(std::unique_ptr<QByteArray>(new QByteArray(EmbeddedResources::decompressResource(QLatin1String("icu4c/icu-data-l.dat")))));
     udata_setCommonData(g_IcuData->constData(), &icuError);
     if(!U_SUCCESS(icuError))
         LogPrintf(LogSeverityLevel::Error, "Failed to initialize ICU data: %d", icuError);

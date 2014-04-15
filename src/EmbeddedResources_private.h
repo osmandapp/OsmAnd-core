@@ -12,6 +12,6 @@ namespace OsmAnd
 
     extern const EmbeddedResource __bundled_resources[];
     extern const uint32_t __bundled_resources_count;
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_EMBEDDED_RESOURCES_PRIVATE_H_)

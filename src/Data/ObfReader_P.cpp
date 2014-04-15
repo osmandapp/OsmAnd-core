@@ -25,13 +25,13 @@ OsmAnd::ObfReader_P::~ObfReader_P()
 {
     _codedInputStream.reset();
     _zeroCopyInputStream.reset();
-
 }
 
-void OsmAnd::ObfReader_P::readInfo( const std::unique_ptr<ObfReader_P>& reader, const std::shared_ptr<ObfInfo>& info )
+bool OsmAnd::ObfReader_P::readInfo(const ObfReader_P& reader, std::shared_ptr<const ObfInfo>& info_)
 {
-    auto cis = reader->_codedInputStream.get();
+    auto cis = reader._codedInputStream.get();
 
+    std::shared_ptr<ObfInfo> info(new ObfInfo());
     bool loadedCorrectly = false;
     for(;;)
     {
@@ -39,9 +39,10 @@ void OsmAnd::ObfReader_P::readInfo( const std::unique_ptr<ObfReader_P>& reader, 
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
-            if(!loadedCorrectly)
-                info->_version = -1;
-            return;
+            if(loadedCorrectly)
+                info_ = info;
+
+            return loadedCorrectly;
         case OBF::OsmAndStructure::kVersionFieldNumber:
             cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&info->_version));
             break;
@@ -138,4 +139,6 @@ void OsmAnd::ObfReader_P::readInfo( const std::unique_ptr<ObfReader_P>& reader, 
             break;
         }
     }
+
+    return false;
 }
