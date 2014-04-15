@@ -170,7 +170,7 @@ bool OsmAnd::ArchiveReader_P::extractArchiveEntryAsFile(archive* archive, archiv
         return false;
 
     QFile targetFile(fileName);
-    if(!QDir(QFileInfo(fileName).absolutePath()).mkpath("."))
+    if(!QDir(QFileInfo(targetFile).absolutePath()).mkpath("."))
         return false;
 
     bool ok;
