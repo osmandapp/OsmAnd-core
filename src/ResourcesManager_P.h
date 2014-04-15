@@ -37,6 +37,7 @@ namespace OsmAnd
         mutable WebClient _webClient;
 
         bool installMapRegionFromFile(const QString& name, const QString& filePath);
+        bool installVoicePackFromFile(const QString& name, const QString& filePath);
     public:
         virtual ~ResourcesManager_P();
 

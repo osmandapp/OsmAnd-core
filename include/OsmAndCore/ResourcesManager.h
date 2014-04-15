@@ -29,7 +29,7 @@ namespace OsmAnd
             Unknown = -1,
 
             MapRegion,
-            //VoicePack,
+            VoicePack,
         };
 
         class OSMAND_CORE_API Resource

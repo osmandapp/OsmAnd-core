@@ -6,6 +6,7 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <QString>
 #include <QList>
+#include <QDateTime>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
@@ -31,6 +32,10 @@ namespace OsmAnd
             bool isValid() const;
             
             QString name;
+            uint64_t size;
+            QDateTime creationTime;
+            QDateTime modificationTime;
+            QDateTime accessTime;
         };
     private:
         PrivateImplementation<ArchiveReader_P> _p;
@@ -43,9 +48,9 @@ namespace OsmAnd
 
         QList<Item> getItems(bool* const ok = nullptr) const;
 
-        bool extractItemToDirectory(const QString& itemName, const QString& destinationPath, const bool keepDirectoryStructure = false) const;
-        bool extractItemToFile(const QString& itemName, const QString& fileName) const;
-        bool extractAllItemsTo(const QString& destinationPath) const;
+        bool extractItemToDirectory(const QString& itemName, const QString& destinationPath, const bool keepDirectoryStructure = false, uint64_t* const extractedBytes = nullptr) const;
+        bool extractItemToFile(const QString& itemName, const QString& fileName, uint64_t* const extractedBytes = nullptr) const;
+        bool extractAllItemsTo(const QString& destinationPath, uint64_t* const extractedBytes = nullptr) const;
     };
 }
 

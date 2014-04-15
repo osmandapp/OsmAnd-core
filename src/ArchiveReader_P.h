@@ -34,7 +34,7 @@ namespace OsmAnd
         static bool processArchive(const QString& fileName, const ArchiveEntryHander handler);
         static bool processArchive(QIODevice* const ioDevice, const ArchiveEntryHander handler);
 
-        static bool extractArchiveEntryAsFile(archive* archive, archive_entry* entry, const QString& fileName);
+        static bool extractArchiveEntryAsFile(archive* archive, archive_entry* entry, const QString& fileName, uint64_t& bytesExtracted);
 
         static int archiveOpen(archive *, void *_client_data);
         static __LA_SSIZE_T archiveRead(archive *, void *_client_data, const void **_buffer);
@@ -54,9 +54,9 @@ namespace OsmAnd
 
         QList<Item> getItems(bool* const ok) const;
 
-        bool extractItemToDirectory(const QString& itemName, const QString& destinationPath, const bool keepDirectoryStructure) const;
-        bool extractItemToFile(const QString& itemName, const QString& fileName) const;
-        bool extractAllItemsTo(const QString& destinationPath) const;
+        bool extractItemToDirectory(const QString& itemName, const QString& destinationPath, const bool keepDirectoryStructure, uint64_t* const extractedBytes) const;
+        bool extractItemToFile(const QString& itemName, const QString& fileName, uint64_t* const extractedBytes) const;
+        bool extractAllItemsTo(const QString& destinationPath, uint64_t* const extractedBytes) const;
 
     friend class OsmAnd::ArchiveReader;
     };

@@ -16,19 +16,19 @@ QList<OsmAnd::ArchiveReader::Item> OsmAnd::ArchiveReader::getItems(bool* const o
     return _p->getItems(ok);
 }
 
-bool OsmAnd::ArchiveReader::extractItemToDirectory(const QString& itemName, const QString& destinationPath, const bool keepDirectoryStructure /*= false*/) const
+bool OsmAnd::ArchiveReader::extractItemToDirectory(const QString& itemName, const QString& destinationPath, const bool keepDirectoryStructure /*= false*/, uint64_t* const extractedBytes /*= nullptr*/) const
 {
-    return _p->extractItemToDirectory(itemName, destinationPath, keepDirectoryStructure);
+    return _p->extractItemToDirectory(itemName, destinationPath, keepDirectoryStructure, extractedBytes);
 }
 
-bool OsmAnd::ArchiveReader::extractItemToFile(const QString& itemName, const QString& fileName) const
+bool OsmAnd::ArchiveReader::extractItemToFile(const QString& itemName, const QString& fileName, uint64_t* const extractedBytes /*= nullptr*/) const
 {
-    return _p->extractItemToFile(itemName, fileName);
+    return _p->extractItemToFile(itemName, fileName, extractedBytes);
 }
 
-bool OsmAnd::ArchiveReader::extractAllItemsTo(const QString& destinationPath) const
+bool OsmAnd::ArchiveReader::extractAllItemsTo(const QString& destinationPath, uint64_t* const extractedBytes /*= nullptr*/) const
 {
-    return _p->extractAllItemsTo(destinationPath);
+    return _p->extractAllItemsTo(destinationPath, extractedBytes);
 }
 
 OsmAnd::ArchiveReader::Item::Item()
@@ -38,6 +38,10 @@ OsmAnd::ArchiveReader::Item::Item()
 
 OsmAnd::ArchiveReader::Item::Item(const Item& other)
     : name(other.name)
+    , size(other.size)
+    , creationTime(other.creationTime)
+    , modificationTime(other.modificationTime)
+    , accessTime(other.accessTime)
 {
 }
 
@@ -48,6 +52,10 @@ OsmAnd::ArchiveReader::Item::~Item()
 OsmAnd::ArchiveReader::Item& OsmAnd::ArchiveReader::Item::operator=(const Item& other)
 {
     name = other.name;
+    size = other.size;
+    creationTime = other.creationTime;
+    modificationTime = other.modificationTime;
+    accessTime = other.accessTime;
 
     return *this;
 }

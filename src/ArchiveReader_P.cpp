@@ -1,6 +1,8 @@
 #include "ArchiveReader_P.h"
 #include "ArchiveReader.h"
 
+#include <sys/stat.h>
+
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -26,8 +28,15 @@ QList<OsmAnd::ArchiveReader_P::Item> OsmAnd::ArchiveReader_P::getItems(bool* con
         {
             Item item;
             item.name = QString(reinterpret_cast<const QChar*>(archive_entry_pathname_w(entry)));
-            result.push_back(item);
+            item.size = archive_entry_size(entry);
+            if(archive_entry_ctime_is_set(entry) != 0)
+                item.creationTime = QDateTime::fromTime_t(archive_entry_ctime(entry));
+            if(archive_entry_mtime_is_set(entry) != 0)
+                item.modificationTime = QDateTime::fromTime_t(archive_entry_mtime(entry));
+            if(archive_entry_atime_is_set(entry) != 0)
+                item.accessTime = QDateTime::fromTime_t(archive_entry_atime(entry));
 
+            result.push_back(item);
             return true;
         });
 
@@ -36,40 +45,62 @@ QList<OsmAnd::ArchiveReader_P::Item> OsmAnd::ArchiveReader_P::getItems(bool* con
     return result;
 }
 
-bool OsmAnd::ArchiveReader_P::extractItemToDirectory(const QString& itemName, const QString& destinationPath, const bool keepDirectoryStructure) const
+bool OsmAnd::ArchiveReader_P::extractItemToDirectory(const QString& itemName, const QString& destinationPath, const bool keepDirectoryStructure, uint64_t* const extractedBytes) const
 {
     const auto fileName = QDir(destinationPath).absoluteFilePath(keepDirectoryStructure ? itemName : QFileInfo(itemName).fileName());
-    return extractItemToFile(itemName, fileName);
+    return extractItemToFile(itemName, fileName, extractedBytes);
 }
 
-bool OsmAnd::ArchiveReader_P::extractItemToFile(const QString& itemName, const QString& fileName) const
+bool OsmAnd::ArchiveReader_P::extractItemToFile(const QString& itemName, const QString& fileName, uint64_t* const extractedBytes_) const
 {
-    return processArchive(owner->fileName, 
-        [itemName, fileName]
+    uint64_t extractedBytes = 0;
+    bool ok = processArchive(owner->fileName, 
+        [itemName, fileName, &extractedBytes]
         (archive* archive, archive_entry* entry, bool& doStop) -> bool
         {
             const QString currentItemName(reinterpret_cast<const QChar*>(archive_entry_pathname_w(entry)));
             if(currentItemName != itemName)
                 return true;
             
-            bool ok = extractArchiveEntryAsFile(archive, entry, fileName);
+            bool ok = extractArchiveEntryAsFile(archive, entry, fileName, extractedBytes);
             if(!ok)
                 return false;
 
             doStop = true;
             return true;
         });
+    if(!ok)
+        return false;
+
+    if(extractedBytes_ != nullptr)
+        *extractedBytes_ = extractedBytes;
+    return true;
 }
 
-bool OsmAnd::ArchiveReader_P::extractAllItemsTo(const QString& destinationPath) const
+bool OsmAnd::ArchiveReader_P::extractAllItemsTo(const QString& destinationPath, uint64_t* const extractedBytes_) const
 {
-    return processArchive(owner->fileName, 
-        [destinationPath]
+    uint64_t extractedBytes = 0;
+    bool ok = processArchive(owner->fileName,
+        [destinationPath, &extractedBytes]
         (archive* archive, archive_entry* entry, bool& doStop) -> bool
         {
             const QString currentItemName(reinterpret_cast<const QChar*>(archive_entry_pathname_w(entry)));
-            return extractArchiveEntryAsFile(archive, entry, QDir(destinationPath).absoluteFilePath(currentItemName));
+            const auto destinationFileName = QDir(destinationPath).absoluteFilePath(currentItemName);
+
+            uint64_t itemExtractedBytes = 0;
+            bool ok = extractArchiveEntryAsFile(archive, entry, destinationFileName, itemExtractedBytes);
+            if(!ok)
+                return false;
+
+            extractedBytes += itemExtractedBytes;
+            return true;
         });
+    if(!ok)
+        return false;
+
+    if(extractedBytes_ != nullptr)
+        *extractedBytes_ = extractedBytes;
+    return true;
 }
 
 bool OsmAnd::ArchiveReader_P::processArchive(const QString& fileName, const ArchiveEntryHander handler)
@@ -163,16 +194,21 @@ bool OsmAnd::ArchiveReader_P::processArchive(QIODevice* const ioDevice, const Ar
     return ok;
 }
 
-bool OsmAnd::ArchiveReader_P::extractArchiveEntryAsFile(archive* archive, archive_entry* entry, const QString& fileName)
+bool OsmAnd::ArchiveReader_P::extractArchiveEntryAsFile(archive* archive, archive_entry* entry, const QString& fileName, uint64_t& bytesExtracted_)
 {
-    const auto itemSize = archive_entry_size(entry);
-    if(itemSize <= 0)
+    const auto itemType = archive_entry_filetype(entry);
+    if(itemType != S_IFREG)
         return false;
+
+    uint64_t fileSize = 0;
+    if(archive_entry_size_is_set(entry) != 0)
+        fileSize = archive_entry_size(entry);
 
     QFile targetFile(fileName);
     if(!QDir(QFileInfo(targetFile).absolutePath()).mkpath("."))
         return false;
 
+    uint64_t bytesExtracted = 0;
     bool ok;
     for(;;)
     {
@@ -180,9 +216,12 @@ bool OsmAnd::ArchiveReader_P::extractArchiveEntryAsFile(archive* archive, archiv
         if(!ok)
             break;
 
-        ok = targetFile.resize(itemSize);
-        if(!ok)
-            break;
+        if(fileSize > 0)
+        {
+            ok = targetFile.resize(fileSize);
+            if(!ok)
+                break;
+        }
 
         const auto buffer = new uint8_t[BufferSize];
         for(; ok;)
@@ -207,6 +246,8 @@ bool OsmAnd::ArchiveReader_P::extractArchiveEntryAsFile(archive* archive, archiv
                 }
                 bytesWritten += writtenChunkSize;
             } while(bytesWritten != bytesRead);
+
+            bytesExtracted += bytesWritten;
         }
         delete[] buffer;
 
@@ -221,6 +262,8 @@ bool OsmAnd::ArchiveReader_P::extractArchiveEntryAsFile(archive* archive, archiv
 
     targetFile.flush();
     targetFile.close();
+
+    bytesExtracted_ = bytesExtracted;
 
     return true;
 }

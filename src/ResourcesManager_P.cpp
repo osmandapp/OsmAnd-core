@@ -5,6 +5,7 @@
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QDir>
+#include <QTextStream>
 
 #include "ObfReader.h"
 #include "ArchiveReader.h"
@@ -77,6 +78,46 @@ bool OsmAnd::ResourcesManager_P::rescanLocalStoragePath(const QString& storagePa
     // Find ResourceType::VoicePack -> "*.voice" directories
     QFileInfoList voicePackDirectories;
     Utilities::findDirectories(storageDir, QStringList() << QLatin1String("*.voice"), voicePackDirectories, false);
+    for(const auto& voicePackDirectory : constOf(voicePackDirectories))
+    {
+        const auto dirPath = voicePackDirectory.absoluteFilePath();
+
+        // Read special timestamp file
+        uint64_t timestamp = 0;
+        QFile timestampFile(QDir(dirPath).absoluteFilePath(QLatin1String(".timestamp")));
+        if(timestampFile.open(QIODevice::ReadOnly | QIODevice::Text))
+        {
+            QTextStream(&timestampFile) >> timestamp;
+            timestampFile.flush();
+            timestampFile.close();
+        }
+        else
+        {
+            QFile voiceConfig(QDir(dirPath).absoluteFilePath(QLatin1String("_config.p")));
+            if(voiceConfig.exists())
+                timestamp = QFileInfo(voiceConfig).lastModified().toMSecsSinceEpoch();
+        }
+
+        // Read special size file
+        uint64_t contentSize = 0;
+        QFile sizeFile(QDir(dirPath).absoluteFilePath(QLatin1String(".size")));
+        if(sizeFile.open(QIODevice::ReadOnly | QIODevice::Text))
+        {
+            QTextStream(&sizeFile) >> contentSize;
+            sizeFile.flush();
+            sizeFile.close();
+        }
+
+        // Create local resource entry
+        const auto name = voicePackDirectory.fileName();
+        std::shared_ptr<LocalResource> localResource(new LocalResource(
+            name,
+            ResourceType::VoicePack, 
+            timestamp,
+            contentSize,
+            dirPath));
+        outResult.insert(name, qMove(localResource));
+    }
 
     return true;
 }
@@ -140,6 +181,8 @@ bool OsmAnd::ResourcesManager_P::refreshRepositoryIndex() const
         auto resourceType = ResourceType::Unknown;
         if(resourceTypeValue == QLatin1String("map"))
             resourceType = ResourceType::MapRegion;
+        if(resourceTypeValue == QLatin1String("voice"))
+            resourceType = ResourceType::VoicePack;
         if(resourceType == ResourceType::Unknown)
         {
             LogPrintf(LogSeverityLevel::Warning, "Unknown resource type '%s' for '%s'", qPrintableRef(resourceTypeValue), qPrintable(name));
@@ -239,8 +282,8 @@ bool OsmAnd::ResourcesManager_P::uninstallResource(const QString& name)
     bool ok = false;
     if(resource->type == ResourceType::MapRegion)
         ok = QFile(resource->localPath).remove();
-    /*else if(resource->type == ResourceType::VoicePack)
-        ok = QDir(resource->localPath).removeRecursively();*/
+    else if(resource->type == ResourceType::VoicePack)
+        ok = QDir(resource->localPath).removeRecursively();
     if(!ok)
         return false;
     return true;
@@ -248,7 +291,8 @@ bool OsmAnd::ResourcesManager_P::uninstallResource(const QString& name)
 
 bool OsmAnd::ResourcesManager_P::installFromFile(const QString& filePath, const ResourceType resourceType)
 {
-    return installFromFile(QFileInfo(filePath).fileName().replace(QLatin1String(".zip"), QString()), filePath, resourceType);
+    const auto guessedResourceName = QFileInfo(filePath).fileName().replace(QLatin1String(".zip"), QString());
+    return installFromFile(guessedResourceName, filePath, resourceType);
 }
 
 bool OsmAnd::ResourcesManager_P::installFromFile(const QString& name, const QString& filePath, const ResourceType resourceType)
@@ -263,6 +307,8 @@ bool OsmAnd::ResourcesManager_P::installFromFile(const QString& name, const QStr
     {
     case ResourceType::MapRegion:
         return installMapRegionFromFile(name, filePath);
+    case ResourceType::VoicePack:
+        return installVoicePackFromFile(name, filePath);
     }
 
     return false;
@@ -316,6 +362,61 @@ bool OsmAnd::ResourcesManager_P::installMapRegionFromFile(const QString& name, c
         fileSize,
         localFileName,
         obfInfo));
+    _localResources.insert(name, qMove(localResource));
+
+    return true;
+}
+
+bool OsmAnd::ResourcesManager_P::installVoicePackFromFile(const QString& name, const QString& filePath)
+{
+    ArchiveReader archive(filePath);
+
+    // List items
+    bool ok = false;
+    const auto archiveItems = archive.getItems(&ok);
+    if(!ok)
+        return false;
+
+    // Verify voice pack
+    ArchiveReader::Item voicePackConfigItem;
+    for(const auto& archiveItem : constOf(archiveItems))
+    {
+        if(!archiveItem.isValid() || archiveItem.name != QLatin1String("_config.p"))
+            continue;
+
+        voicePackConfigItem = archiveItem;
+        break;
+    }
+    if(!voicePackConfigItem.isValid())
+        return false;
+
+    // Extract all files to local directory
+    const auto localDirectoryName = QDir(owner->localStoragePath).absoluteFilePath(name);
+    uint64_t contentSize = 0;
+    if(!archive.extractAllItemsTo(localDirectoryName, &contentSize))
+        return false;
+
+    // Create special timestamp file
+    QFile timestampFile(QDir(localDirectoryName).absoluteFilePath(QLatin1String(".timestamp")));
+    timestampFile.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text);
+    QTextStream(&timestampFile) << voicePackConfigItem.modificationTime.toMSecsSinceEpoch();
+    timestampFile.flush();
+    timestampFile.close();
+
+    // Create special size file
+    QFile sizeFile(QDir(localDirectoryName).absoluteFilePath(QLatin1String(".size")));
+    sizeFile.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text);
+    QTextStream(&sizeFile) << contentSize;
+    sizeFile.flush();
+    sizeFile.close();
+
+    // Create local resource entry
+    std::shared_ptr<LocalResource> localResource(new LocalResource(
+        name,
+        ResourceType::VoicePack,
+        voicePackConfigItem.modificationTime.toMSecsSinceEpoch(),
+        contentSize,
+        localDirectoryName));
     _localResources.insert(name, qMove(localResource));
 
     return true;
