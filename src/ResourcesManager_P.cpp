@@ -7,6 +7,7 @@
 #include <QDir>
 #include <QTextStream>
 
+#include "OsmAndCore_private.h"
 #include "ObfReader.h"
 #include "ArchiveReader.h"
 #include "Logging.h"
@@ -14,16 +15,52 @@
 
 OsmAnd::ResourcesManager_P::ResourcesManager_P(ResourcesManager* owner_)
     : owner(owner_)
+    , _fileSystemWatcher(new QFileSystemWatcher())
 {
+    _fileSystemWatcher->moveToThread(gMainThread);
 }
 
 OsmAnd::ResourcesManager_P::~ResourcesManager_P()
 {
+    _fileSystemWatcher->deleteLater();
+}
+
+void OsmAnd::ResourcesManager_P::attachToFileSystem()
+{
+    _onDirectoryChangedConnection = QObject::connect(
+        _fileSystemWatcher, &QFileSystemWatcher::directoryChanged,
+        (std::function<void(const QString&)>)std::bind(&ResourcesManager_P::onDirectoryChanged, this, std::placeholders::_1));
+    _onFileChangedConnection = QObject::connect(
+        _fileSystemWatcher, &QFileSystemWatcher::fileChanged,
+        (std::function<void(const QString&)>)std::bind(&ResourcesManager_P::onFileChanged, this, std::placeholders::_1));
+
+    for(const auto& extraStoragePath : constOf(owner->extraStoragePaths))
+        _fileSystemWatcher->addPath(extraStoragePath);
+}
+
+void OsmAnd::ResourcesManager_P::detachFromFileSystem()
+{
+    _fileSystemWatcher->removePaths(_fileSystemWatcher->files());
+    _fileSystemWatcher->removePaths(_fileSystemWatcher->directories());
+
+    QObject::disconnect(_onDirectoryChangedConnection);
+    QObject::disconnect(_onFileChangedConnection);
+}
+
+void OsmAnd::ResourcesManager_P::onDirectoryChanged(const QString& path)
+{
+    rescanLocalStoragePaths();
+}
+
+void OsmAnd::ResourcesManager_P::onFileChanged(const QString& path)
+{
+    rescanLocalStoragePaths();
 }
 
 bool OsmAnd::ResourcesManager_P::rescanLocalStoragePaths() const
 {
-    // Collect resources from all local paths
+    QWriteLocker scopedLocker(&_localResourcesLock);
+
     QHash< QString, std::shared_ptr<const LocalResource> > localResources;
     if(!rescanLocalStoragePath(owner->localStoragePath, localResources))
         return false;
@@ -32,12 +69,7 @@ bool OsmAnd::ResourcesManager_P::rescanLocalStoragePaths() const
         if(!rescanLocalStoragePath(extraStoragePath, localResources))
             return false;
     }
-
-    // Store results of rescan (thread-safe)
-    {
-        QWriteLocker scopedLocker(&_localResourcesLock);
-        _localResources = localResources;
-    }
+    _localResources = localResources;
 
     return true;
 }
@@ -141,6 +173,8 @@ std::shared_ptr<const OsmAnd::ResourcesManager::LocalResource> OsmAnd::Resources
 
 bool OsmAnd::ResourcesManager_P::refreshRepositoryIndex() const
 {
+    QWriteLocker scopedLocker(&_repositoryIndexLock);
+
     // Download content of the index
     std::shared_ptr<const WebClient::RequestResult> requestResult;
     const auto& downloadResult = _webClient.downloadData(QUrl(owner->repositoryBaseUrl + QLatin1String("/get_indexes.php")), &requestResult);
@@ -226,12 +260,9 @@ bool OsmAnd::ResourcesManager_P::refreshRepositoryIndex() const
     }
 
     // Save result
-    {
-        QWriteLocker scopedLocker(&_repositoryIndexLock);
-        _repositoryIndex.clear();
-        for(auto& entry : resources)
-            _repositoryIndex.insert(entry->name, qMove(entry));
-    }
+    _repositoryIndex.clear();
+    for(auto& entry : resources)
+        _repositoryIndex.insert(entry->name, qMove(entry));
     
     return true;
 }
@@ -239,6 +270,7 @@ bool OsmAnd::ResourcesManager_P::refreshRepositoryIndex() const
 QList< std::shared_ptr<const OsmAnd::ResourcesManager::ResourceInRepository> > OsmAnd::ResourcesManager_P::getRepositoryIndex() const
 {
     QReadLocker scopedLocker(&_repositoryIndexLock);
+
     return _repositoryIndex.values();
 }
 
@@ -267,26 +299,40 @@ bool OsmAnd::ResourcesManager_P::uninstallResource(const QString& name)
     if(itResource == _localResources.end())
         return false;
 
-    const auto resource = *itResource;
-
-    //TODO: lock obf file for removal
-    if(const auto obfResource = std::dynamic_pointer_cast<const LocalObfResource>(resource))
+    const auto& resource = *itResource;
+    bool success;
+    switch(resource->type)
     {
-//        obfResource->obfFile->lockForRemoval();
+        case ResourceType::MapRegion:
+            success = uninstallMapRegion(resource);
+            break;
+        case ResourceType::VoicePack:
+            success = uninstallVoicePack(resource);
+            break;
+        default:
+            return false;
     }
+    if(!success)
+        return false;
 
-    // Erase from collection
     _localResources.erase(itResource);
 
-    // Remove as file or as directory
-    bool ok = false;
-    if(resource->type == ResourceType::MapRegion)
-        ok = QFile(resource->localPath).remove();
-    else if(resource->type == ResourceType::VoicePack)
-        ok = QDir(resource->localPath).removeRecursively();
-    if(!ok)
-        return false;
     return true;
+}
+
+bool OsmAnd::ResourcesManager_P::uninstallMapRegion(const std::shared_ptr<const LocalResource>& localResource_)
+{
+    const auto& localResource = std::dynamic_pointer_cast<const LocalObfResource>(localResource_);
+
+    //TODO:
+    //localResource->obfFile->lockForRemoval();
+
+    return QFile(localResource->localPath).remove();
+}
+
+bool OsmAnd::ResourcesManager_P::uninstallVoicePack(const std::shared_ptr<const LocalResource>& localResource)
+{
+    return QDir(localResource->localPath).removeRecursively();
 }
 
 bool OsmAnd::ResourcesManager_P::installFromFile(const QString& filePath, const ResourceType resourceType)
@@ -424,6 +470,9 @@ bool OsmAnd::ResourcesManager_P::installVoicePackFromFile(const QString& name, c
 
 bool OsmAnd::ResourcesManager_P::installFromRepository(const QString& name, const WebClient::RequestProgressCallbackSignature downloadProgressCallback)
 {
+    if(isResourceInstalled(name))
+        return false;
+
     const auto& resource = getResourceInRepository(name);
     if(!resource)
         return false;
@@ -460,7 +509,7 @@ bool OsmAnd::ResourcesManager_P::updateAvailableInRepositoryFor(const QString& n
 
 QList<QString> OsmAnd::ResourcesManager_P::getAvailableUpdatesFromRepository() const
 {
-    QReadLocker scopedLocker2(&_localResourcesLock);
+    QReadLocker scopedLocker(&_localResourcesLock);
 
     QList<QString> resourcesWithUpdates;
     for(const auto& localResource : constOf(_localResources))
@@ -483,6 +532,25 @@ bool OsmAnd::ResourcesManager_P::updateFromFile(const QString& filePath)
 
 bool OsmAnd::ResourcesManager_P::updateFromFile(const QString& name, const QString& filePath)
 {
+    QWriteLocker scopedLocker(&_localResourcesLock);
+
+    const auto itResource = _localResources.find(name);
+    if(itResource != _localResources.end())
+        return false;
+    const auto localResource = *itResource;
+
+    switch(localResource->type)
+    {
+    case ResourceType::MapRegion:
+        if(!uninstallMapRegion(localResource))
+            return false;
+        return installMapRegionFromFile(localResource->name, filePath);
+    case ResourceType::VoicePack:
+        if(!uninstallVoicePack(localResource))
+            return false;
+        return installVoicePackFromFile(localResource->name, filePath);
+    }
+
     return false;
 }
 

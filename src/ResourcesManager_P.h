@@ -9,6 +9,7 @@
 #include <QHash>
 #include <QString>
 #include <QReadWriteLock>
+#include <QFileSystemWatcher>
 
 #include "OsmAndCore.h"
 #include "PrivateImplementation.h"
@@ -19,13 +20,21 @@ namespace OsmAnd
 {
     class ResourcesManager_P
     {
-    private:
+    public:
         typedef ResourcesManager::ResourceType ResourceType;
         typedef ResourcesManager::LocalResource LocalResource;
         typedef ResourcesManager::LocalObfResource LocalObfResource;
         typedef ResourcesManager::ResourceInRepository ResourceInRepository;
-    protected:
-        ResourcesManager_P(ResourcesManager* owner);
+
+    private:
+        QFileSystemWatcher* const _fileSystemWatcher;
+        QMetaObject::Connection _onDirectoryChangedConnection;
+        void onDirectoryChanged(const QString& path);
+        QMetaObject::Connection _onFileChangedConnection;
+        void onFileChanged(const QString& path);
+
+        void attachToFileSystem();
+        void detachFromFileSystem();
 
         mutable QReadWriteLock _localResourcesLock;
         mutable QHash< QString, std::shared_ptr<const LocalResource> > _localResources;
@@ -36,8 +45,13 @@ namespace OsmAnd
 
         mutable WebClient _webClient;
 
+        bool uninstallMapRegion(const std::shared_ptr<const LocalResource>& localResource);
+        bool uninstallVoicePack(const std::shared_ptr<const LocalResource>& localResource);
+
         bool installMapRegionFromFile(const QString& name, const QString& filePath);
         bool installVoicePackFromFile(const QString& name, const QString& filePath);
+    protected:
+        ResourcesManager_P(ResourcesManager* owner);
     public:
         virtual ~ResourcesManager_P();
 

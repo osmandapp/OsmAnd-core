@@ -18,10 +18,13 @@ OsmAnd::ResourcesManager::ResourcesManager(
     , localTemporaryPath(!localTemporaryPath_.isNull() ? localTemporaryPath_ : QStandardPaths::writableLocation(QStandardPaths::TempLocation))
     , repositoryBaseUrl(repositoryBaseUrl_)
 {
+    _p->refreshRepositoryIndex();
+    _p->attachToFileSystem();
 }
 
 OsmAnd::ResourcesManager::~ResourcesManager()
 {
+    _p->detachFromFileSystem();
 }
 
 bool OsmAnd::ResourcesManager::rescanLocalStoragePaths() const
