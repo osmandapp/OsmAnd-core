@@ -15,6 +15,7 @@
 #include "PrivateImplementation.h"
 #include "WebClient.h"
 #include "ResourcesManager.h"
+#include "IObfsCollection.h"
 
 namespace OsmAnd
 {
@@ -50,6 +51,22 @@ namespace OsmAnd
 
         bool installMapRegionFromFile(const QString& name, const QString& filePath);
         bool installVoicePackFromFile(const QString& name, const QString& filePath);
+
+        class ObfsCollection : public IObfsCollection
+        {
+        private:
+        protected:
+            ObfsCollection(ResourcesManager_P* owner);
+        public:
+            virtual ~ObfsCollection();
+
+            ResourcesManager_P* const owner;
+
+            virtual QVector< std::shared_ptr<const ObfFile> > getObfFiles() const;
+            virtual std::shared_ptr<ObfDataInterface> obtainDataInterface() const;
+
+        friend class OsmAnd::ResourcesManager_P;
+        };
     protected:
         ResourcesManager_P(ResourcesManager* owner);
     public:
@@ -82,9 +99,10 @@ namespace OsmAnd
         bool updateFromRepository(const QString& name, const WebClient::RequestProgressCallbackSignature downloadProgressCallback);
 
         // OBFs collection
-        std::shared_ptr<const IObfsCollection> getObfsCollection() const;
+        const std::shared_ptr<const IObfsCollection> obfsCollection;
 
     friend class OsmAnd::ResourcesManager;
+    friend class OsmAnd::ResourcesManager_P::ObfsCollection;
     };
 }
 

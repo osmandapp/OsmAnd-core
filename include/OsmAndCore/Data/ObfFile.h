@@ -23,6 +23,7 @@ namespace OsmAnd
         PrivateImplementation<ObfFile_P> _p;
     protected:
     public:
+        ObfFile(const QString& filePath);
         ObfFile(const QString& filePath, const uint64_t fileSize);
         virtual ~ObfFile();
 

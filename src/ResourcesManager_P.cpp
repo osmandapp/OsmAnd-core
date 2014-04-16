@@ -10,12 +10,14 @@
 #include "OsmAndCore_private.h"
 #include "ObfReader.h"
 #include "ArchiveReader.h"
+#include "ObfDataInterface.h"
 #include "Logging.h"
 #include "Utilities.h"
 
 OsmAnd::ResourcesManager_P::ResourcesManager_P(ResourcesManager* owner_)
     : owner(owner_)
     , _fileSystemWatcher(new QFileSystemWatcher())
+    , obfsCollection(new ObfsCollection(this))
 {
     _fileSystemWatcher->moveToThread(gMainThread);
 }
@@ -86,24 +88,19 @@ bool OsmAnd::ResourcesManager_P::rescanLocalStoragePath(const QString& storagePa
         const auto filePath = mapRegionFile.absoluteFilePath();
 
         // Read information from OBF
-        std::shared_ptr<QFile> obfFile(new QFile(filePath));
-        if(!obfFile->open(QIODevice::ReadOnly))
+        const std::shared_ptr<const ObfFile> obfFile(new ObfFile(filePath));
+        if(!ObfReader(obfFile).obtainInfo())
         {
-            LogPrintf(LogSeverityLevel::Warning, "Failed to open '%s'", obfFile->fileName());
+            LogPrintf(LogSeverityLevel::Warning, "Failed to open '%s'", qPrintable(filePath));
             continue;
         }
-        const auto obfInfo = ObfReader(obfFile).obtainInfo();
-        obfFile->close();
-        obfFile.reset();
 
         // Create local resource entry
         const auto name = mapRegionFile.fileName();
         std::shared_ptr<LocalResource> localResource(new LocalObfResource(
             name,
             ResourceType::MapRegion,
-            mapRegionFile.size(),
-            filePath,
-            obfInfo));
+            obfFile));
         outResult.insert(name, qMove(localResource));
     }
 
@@ -389,25 +386,19 @@ bool OsmAnd::ResourcesManager_P::installMapRegionFromFile(const QString& name, c
         return false;
 
     // Read information from OBF
-    std::shared_ptr<QFile> obfFile(new QFile(localFileName));
-    if(!obfFile->open(QIODevice::ReadOnly))
+    const std::shared_ptr<const ObfFile> obfFile(new ObfFile(filePath));
+    if(!ObfReader(obfFile).obtainInfo())
     {
-        LogPrintf(LogSeverityLevel::Warning, "Failed to open '%s'", obfFile->fileName());
-        obfFile->remove();
+        LogPrintf(LogSeverityLevel::Warning, "Failed to open '%s'", qPrintable(localFileName));
+        QFile(filePath).remove();
         return false;
     }
-    const auto fileSize = obfFile->size();
-    const auto obfInfo = ObfReader(obfFile).obtainInfo();
-    obfFile->close();
-    obfFile.reset();
 
     // Create local resource entry
     std::shared_ptr<LocalResource> localResource(new LocalObfResource(
         name,
         ResourceType::MapRegion,
-        fileSize,
-        localFileName,
-        obfInfo));
+        obfFile));
     _localResources.insert(name, qMove(localResource));
 
     return true;
@@ -578,7 +569,33 @@ bool OsmAnd::ResourcesManager_P::updateFromRepository(const QString& name, const
     return true;
 }
 
-std::shared_ptr<const OsmAnd::IObfsCollection> OsmAnd::ResourcesManager_P::getObfsCollection() const
+OsmAnd::ResourcesManager_P::ObfsCollection::ObfsCollection(ResourcesManager_P* owner_)
+    : owner(owner_)
 {
-    return std::shared_ptr<const OsmAnd::IObfsCollection>();
+}
+
+OsmAnd::ResourcesManager_P::ObfsCollection::~ObfsCollection()
+{
+}
+
+QVector< std::shared_ptr<const OsmAnd::ObfFile> > OsmAnd::ResourcesManager_P::ObfsCollection::getObfFiles() const
+{
+    QReadLocker scopedLocker(&owner->_localResourcesLock);
+
+    QVector< std::shared_ptr<const ObfFile> > obfFiles;
+    for(const auto& localResource : constOf(owner->_localResources))
+    {
+        if(localResource->type != ResourceType::MapRegion)
+            continue;
+
+        const auto& obfLocalResource = std::static_pointer_cast<const LocalObfResource>(localResource);
+        obfFiles.push_back(obfLocalResource->obfFile);
+    }
+
+    return obfFiles;
+}
+
+std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollection::obtainDataInterface() const
+{
+    return nullptr;
 }

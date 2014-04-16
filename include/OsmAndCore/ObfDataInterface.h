@@ -14,8 +14,6 @@
 
 namespace OsmAnd
 {
-    class ObfsCollection;
-    class ObfsCollection_P;
     class ObfReader;
     class ObfFile;
     class ObfMapSectionInfo;

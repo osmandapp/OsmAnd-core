@@ -80,16 +80,10 @@ namespace OsmAnd
                 const QString& name,
                 const ResourceType type,
                 const std::shared_ptr<const ObfFile>& obfFile);
-            LocalObfResource(
-                const QString& name,
-                const ResourceType type,
-                const uint64_t contentSize,
-                const QString& localPath,
-                const std::shared_ptr<const ObfInfo>& obfInfo);
         public:
             virtual ~LocalObfResource();
 
-            const std::shared_ptr<const ObfInfo> obfInfo;
+            const std::shared_ptr<const ObfFile> obfFile;
 
             friend class OsmAnd::ResourcesManager;
             friend class OsmAnd::ResourcesManager_P;
@@ -159,7 +153,7 @@ namespace OsmAnd
         bool updateFromRepository(const QString& name, const WebClient::RequestProgressCallbackSignature downloadProgressCallback = nullptr);
 
         // OBFs collection
-        std::shared_ptr<const IObfsCollection> getObfsCollection() const;
+        const std::shared_ptr<const IObfsCollection>& obfsCollection;
     };
 }
 

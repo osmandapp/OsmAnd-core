@@ -17,6 +17,7 @@ OsmAnd::ResourcesManager::ResourcesManager(
     , miniBasemapFilename(miniBasemapFilename_)
     , localTemporaryPath(!localTemporaryPath_.isNull() ? localTemporaryPath_ : QStandardPaths::writableLocation(QStandardPaths::TempLocation))
     , repositoryBaseUrl(repositoryBaseUrl_)
+    , obfsCollection(_p->obfsCollection)
 {
     _p->refreshRepositoryIndex();
     _p->attachToFileSystem();
@@ -82,11 +83,6 @@ bool OsmAnd::ResourcesManager::installFromRepository(const QString& name, const 
     return _p->installFromRepository(name, downloadProgressCallback);
 }
 
-std::shared_ptr<const OsmAnd::IObfsCollection> OsmAnd::ResourcesManager::getObfsCollection() const
-{
-    return _p->getObfsCollection();
-}
-
 bool OsmAnd::ResourcesManager::updateAvailableInRepositoryFor(const QString& name) const
 {
     return _p->updateAvailableInRepositoryFor(name);
@@ -144,18 +140,7 @@ OsmAnd::ResourcesManager::LocalObfResource::LocalObfResource(
     const ResourceType type_,
     const std::shared_ptr<const ObfFile>& obfFile_)
     : LocalResource(name_, type_, obfFile_->obfInfo->creationTimestamp, obfFile_->fileSize, obfFile_->filePath)
-    , obfInfo(obfFile_->obfInfo)
-{
-}
-
-OsmAnd::ResourcesManager::LocalObfResource::LocalObfResource(
-    const QString& name_,
-    const ResourceType type_,
-    const uint64_t contentSize_,
-    const QString& localPath_,
-    const std::shared_ptr<const ObfInfo>& obfInfo_)
-    : LocalResource(name_, type_, obfInfo_->creationTimestamp, contentSize_, localPath_)
-    , obfInfo(obfInfo_)
+    , obfFile(obfFile_)
 {
 }
 
