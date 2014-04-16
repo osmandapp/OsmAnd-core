@@ -1,4 +1,7 @@
-%module OsmAndCore
+%module(directors="1") OsmAndCore
+
+// Generate directors for all classes that have virtual methods
+%feature("director");
 
 %{
 

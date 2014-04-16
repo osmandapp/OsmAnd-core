@@ -242,7 +242,7 @@ void OsmAnd::MapRenderer::invalidateFrame()
 
     // Request frame, if such callback is defined
     if(setupOptions.frameUpdateRequestCallback)
-        setupOptions.frameUpdateRequestCallback();
+        setupOptions.frameUpdateRequestCallback(this);
 }
 
 void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
@@ -254,7 +254,7 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
 
     // Call prologue if such exists
     if(setupOptions.gpuWorkerThreadPrologue)
-        setupOptions.gpuWorkerThreadPrologue();
+        setupOptions.gpuWorkerThreadPrologue(this);
 
     while(_gpuWorkerIsAlive)
     {
@@ -286,7 +286,7 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
 
     // Call epilogue
     if(setupOptions.gpuWorkerThreadEpilogue)
-        setupOptions.gpuWorkerThreadEpilogue();
+        setupOptions.gpuWorkerThreadEpilogue(this);
 
     _gpuWorkerThreadId = nullptr;
 }
