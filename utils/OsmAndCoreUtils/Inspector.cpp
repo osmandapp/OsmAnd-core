@@ -228,7 +228,8 @@ void dump(std::ostream &output, const QString& filePath, const OsmAnd::Inspector
         const auto& section = *itSection;
 
         output << idx << xT(". POI data '") << QStringToStlString(section->name) << xT("' - ") << section->length << xT(" bytes") << std::endl;
-        printPOIDetailInfo(output, cfg, obfReader, section);
+        if(cfg.verbosePoi)
+            printPOIDetailInfo(output, cfg, obfReader, section);
     }
     for(auto itSection = obfInfo->addressSections.cbegin(); itSection != obfInfo->addressSections.cend(); ++itSection, idx++)
     {
