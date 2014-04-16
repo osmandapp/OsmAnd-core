@@ -321,8 +321,8 @@ bool OsmAnd::ResourcesManager_P::uninstallMapRegion(const std::shared_ptr<const 
 {
     const auto& localResource = std::dynamic_pointer_cast<const LocalObfResource>(localResource_);
 
-    //TODO:
-    //localResource->obfFile->lockForRemoval();
+    // This lock will never be released
+    localResource->obfFile->lockForWriting();
 
     return QFile(localResource->localPath).remove();
 }
@@ -597,5 +597,20 @@ QVector< std::shared_ptr<const OsmAnd::ObfFile> > OsmAnd::ResourcesManager_P::Ob
 
 std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollection::obtainDataInterface() const
 {
-    return nullptr;
+    QReadLocker scopedLocker(&owner->_localResourcesLock);
+
+    QList< std::shared_ptr<const ObfReader> > obfReaders;
+    for(const auto& localResource : constOf(owner->_localResources))
+    {
+        if(localResource->type != ResourceType::MapRegion)
+            continue;
+
+        const auto& obfLocalResource = std::static_pointer_cast<const LocalObfResource>(localResource);
+        if(!obfLocalResource->obfFile->tryLockForReading())
+            continue;
+        std::shared_ptr<const ObfReader> obfReader(new ObfReader(obfFile, false));
+        obfReaders.push_back(qMove(obfReader));
+    }
+
+    return std::shared_ptr<ObfDataInterface>(new ObfDataInterface(obfReaders));
 }

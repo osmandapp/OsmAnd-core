@@ -31,8 +31,13 @@ namespace OsmAnd
         const uint64_t fileSize;
         const std::shared_ptr<const ObfInfo>& obfInfo;
 
-        void lockForRemoval() const;
-        const bool& isLockedForRemoval;
+        bool tryLockForReading() const;
+        void lockForReading() const;
+        void unlockFromReading() const;
+
+        bool tryLockForWriting() const;
+        void lockForWriting() const;
+        void unlockFromWriting() const;
 
     friend class OsmAnd::ObfReader;
     };

@@ -7,15 +7,15 @@
 #include "QIODeviceInputStream.h"
 #include "QFileDeviceInputStream.h"
 
-OsmAnd::ObfReader::ObfReader( const std::shared_ptr<const ObfFile>& obfFile_ )
+OsmAnd::ObfReader::ObfReader(const std::shared_ptr<const ObfFile>& obfFile_, const bool lockForRead /*= true*/)
     : _p(new ObfReader_P(this))
     , obfFile(obfFile_)
 {
-    // Lock OBF file for reading to mark it as 'being used'
-    obfFile->_p->_fileLock.lockForRead();
+    if(lockForRead)
+        obfFile->lockForReading();
 }
 
-OsmAnd::ObfReader::ObfReader( const std::shared_ptr<QIODevice>& input )
+OsmAnd::ObfReader::ObfReader(const std::shared_ptr<QIODevice>& input)
     : _p(new ObfReader_P(this))
 {
     _p->_input = input;
@@ -24,10 +24,7 @@ OsmAnd::ObfReader::ObfReader( const std::shared_ptr<QIODevice>& input )
 OsmAnd::ObfReader::~ObfReader()
 {
     if(obfFile)
-    {
-        // Since OBF file is not going to be used, mark it as 'not being used'
-        obfFile->_p->_fileLock.unlock();
-    }
+        obfFile->unlockFromReading();
 }
 
 std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::ObfReader::obtainInfo() const

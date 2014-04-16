@@ -5,7 +5,6 @@
 
 #include "QtExtensions.h"
 #include <QMutex>
-#include <QReadWriteLock>
 
 #include "OsmAndCore.h"
 #include "PrivateImplementation.h"
@@ -27,12 +26,16 @@ namespace OsmAnd
 
         mutable QMutex _obfInfoMutex;
         mutable std::shared_ptr<const ObfInfo> _obfInfo;
-
-        mutable QReadWriteLock _fileLock;
-        mutable bool _isLockedForRemoval;
-        void lockForRemoval() const;
     public:
         virtual ~ObfFile_P();
+
+        bool tryLockForReading() const;
+        void lockForReading() const;
+        void unlockFromReading() const;
+
+        bool tryLockForWriting() const;
+        void lockForWriting() const;
+        void unlockFromWriting() const;
 
     friend class OsmAnd::ObfFile;
     friend class OsmAnd::ObfReader;

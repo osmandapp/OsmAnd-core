@@ -30,7 +30,7 @@ namespace OsmAnd
         PrivateImplementation<ObfReader_P> _p;
     protected:
     public:
-        ObfReader(const std::shared_ptr<const ObfFile>& obfFile);
+        ObfReader(const std::shared_ptr<const ObfFile>& obfFile, const bool lockForRead = true);
         ObfReader(const std::shared_ptr<QIODevice>& input);
         virtual ~ObfReader();
 

@@ -2,20 +2,36 @@
 
 OsmAnd::ObfFile_P::ObfFile_P(ObfFile* owner_)
     : owner(owner_)
-    , _isLockedForRemoval(false)
 {
 }
 
 OsmAnd::ObfFile_P::~ObfFile_P()
 {
-    if(_isLockedForRemoval)
-        _fileLock.unlock();
 }
 
-void OsmAnd::ObfFile_P::lockForRemoval() const
+bool OsmAnd::ObfFile_P::tryLockForReading() const
 {
-    if(_isLockedForRemoval)
-        return;
-    _fileLock.lockForWrite();
-    _isLockedForRemoval = true;
+    return true;
+}
+
+void OsmAnd::ObfFile_P::lockForReading() const
+{
+    
+}
+
+void OsmAnd::ObfFile_P::unlockFromReading() const
+{
+}
+
+bool OsmAnd::ObfFile_P::tryLockForWriting() const
+{
+    return true;
+}
+
+void OsmAnd::ObfFile_P::lockForWriting() const
+{
+}
+
+void OsmAnd::ObfFile_P::unlockFromWriting() const
+{
 }
