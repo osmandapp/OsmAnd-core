@@ -386,7 +386,7 @@ bool OsmAnd::ResourcesManager_P::installMapRegionFromFile(const QString& name, c
         return false;
 
     // Read information from OBF
-    const std::shared_ptr<const ObfFile> obfFile(new ObfFile(filePath));
+    const std::shared_ptr<const ObfFile> obfFile(new ObfFile(localFileName));
     if(!ObfReader(obfFile).obtainInfo())
     {
         LogPrintf(LogSeverityLevel::Warning, "Failed to open '%s'", qPrintable(localFileName));
