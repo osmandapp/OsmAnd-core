@@ -608,7 +608,7 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
         const auto& obfLocalResource = std::static_pointer_cast<const LocalObfResource>(localResource);
         if(!obfLocalResource->obfFile->tryLockForReading())
             continue;
-        std::shared_ptr<const ObfReader> obfReader(new ObfReader(obfFile, false));
+        std::shared_ptr<const ObfReader> obfReader(new ObfReader(obfLocalResource->obfFile, false));
         obfReaders.push_back(qMove(obfReader));
     }
 

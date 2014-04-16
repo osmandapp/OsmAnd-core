@@ -5,6 +5,7 @@
 
 #include "QtExtensions.h"
 #include <QMutex>
+#include <QWaitCondition>
 
 #include "OsmAndCore.h"
 #include "PrivateImplementation.h"
@@ -26,6 +27,10 @@ namespace OsmAnd
 
         mutable QMutex _obfInfoMutex;
         mutable std::shared_ptr<const ObfInfo> _obfInfo;
+
+        mutable QMutex _lockCounterMutex;
+        mutable QWaitCondition _lockCounterWaitCondition;
+        mutable int _lockCounter;
     public:
         virtual ~ObfFile_P();
 
