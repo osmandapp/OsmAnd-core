@@ -13,33 +13,33 @@ set QTBASE_CONFIGURATION=^
 	-nomake examples -nomake tools -no-vcproj -no-native-gestures
 
 REM Initialize VisualC
-call "%VS110COMNTOOLS%\VCVarsQueryRegistry.bat"
+call "%VS120COMNTOOLS%\VCVarsQueryRegistry.bat"
 call "%VCINSTALLDIR%\vcvarsall.bat" x86
 	
 REM Build for WinPhone(arm and x86) and WinRT(arm, x86 and x64)
 set target=winphone
 set arch=i686
-set xPlatform=winphone-x86-msvc2012
+set xPlatform=winphone-x86-msvc2013
 call :BUILD
 
 set target=winphone
 set arch=arm
-set xPlatform=winphone-arm-msvc2012
+set xPlatform=winphone-arm-msvc2013
 call :BUILD
 
 set target=winrt
 set arch=i686
-set xPlatform=winrt-x86-msvc2012
+set xPlatform=winrt-x86-msvc2013
 call :BUILD
 
 set target=winrt
 set arch=amd64
-set xPlatform=winrt-x64-msvc2012
+set xPlatform=winrt-x64-msvc2013
 call :BUILD
 
 set target=winrt
 set arch=arm
-set xPlatform=winrt-arm-msvc2012
+set xPlatform=winrt-arm-msvc2013
 call :BUILD
 
 endlocal

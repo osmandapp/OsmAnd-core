@@ -5,7 +5,7 @@ setlocal
 REM Prepare environment
 set PATH=%PATH%;%~dp0\tools.windows\bin
 set QTBASE_CONFIGURATION=^
-	-xplatform win32-msvc2012 ^
+	-xplatform win32-msvc2013 ^
 	-debug-and-release -opensource -confirm-license -c++11 -no-gui -no-widgets -no-accessibility ^
 	-qt-sql-sqlite -no-opengl -no-nis -no-iconv -no-inotify -no-eventfd -largefile -no-fontconfig ^
 	-qt-zlib -qt-pcre -no-icu -no-gif -no-libpng -no-libjpeg -no-freetype -no-angle -no-openssl ^
@@ -14,7 +14,7 @@ set QTBASE_CONFIGURATION=^
 	-nomake examples -nomake tools -no-vcproj -no-native-gestures
 
 REM Initialize VisualC variables
-call "%VS110COMNTOOLS%\VCVarsQueryRegistry.bat"
+call "%VS120COMNTOOLS%\VCVarsQueryRegistry.bat"
 
 REM Build for x86
 setlocal

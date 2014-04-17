@@ -7,8 +7,6 @@
 
 #include <SkBitmap.h>
 
-#include <GLSLOptimizer.h>
-
 #include "MapRendererTypes.h"
 #include "IMapBitmapTileProvider.h"
 #include "IMapSymbolProvider.h"
@@ -458,40 +456,10 @@ void OsmAnd::GPUAPI_OpenGL3::preprocessFragmentShader( QString& code )
 
 void OsmAnd::GPUAPI_OpenGL3::optimizeVertexShader( QString& code )
 {
-    // GLSL 4.30 not yet supported by upstream
-    /*
-    auto context = glslopt_initialize(false);
-
-    auto optimizedShader = glslopt_optimize(context, kGlslOptShaderVertex, qPrintable(code), 0);
-    if(!glslopt_get_status(optimizedShader))
-    {
-        LogPrintf(LogSeverityLevel::Error, "%s", glslopt_get_log(optimizedShader));
-        assert(false);
-    }
-    code = QString::fromLocal8Bit(glslopt_get_output(optimizedShader));
-    glslopt_shader_delete(optimizedShader);
-
-    glslopt_cleanup(context);
-    */
 }
 
 void OsmAnd::GPUAPI_OpenGL3::optimizeFragmentShader( QString& code )
 {
-    // GLSL 4.30 not yet supported by upstream
-    /*
-    auto context = glslopt_initialize(false);
-
-    auto optimizedShader = glslopt_optimize(context, kGlslOptShaderFragment, qPrintable(code), 0);
-    if(!glslopt_get_status(optimizedShader))
-    {
-        LogPrintf(LogSeverityLevel::Error, "%s", glslopt_get_log(optimizedShader));
-        assert(false);
-    }
-    code = QString::fromLocal8Bit(glslopt_get_output(optimizedShader));
-    glslopt_shader_delete(optimizedShader);
-
-    glslopt_cleanup(context);
-    */
 }
 
 void OsmAnd::GPUAPI_OpenGL3::setTextureBlockSampler(const GLenum textureBlock, const SamplerType samplerType)

@@ -41,6 +41,8 @@
 #define _OSMAND_CALLABLE_UNRWAP_PLACEHOLDERS_HELPER1(count) _OSMAND_CALLABLE_UNRWAP_PLACEHOLDERS_HELPER2(count)
 #define _OSMAND_CALLABLE_UNRWAP_PLACEHOLDERS(count) _OSMAND_CALLABLE_UNRWAP_PLACEHOLDERS_HELPER1(count)
 
+//NOTE: This will be needed for SWIG
+/*
 #define OSMAND_CALLABLE(name, return_type, ...)                                                                             \
     typedef std::function< return_type ( __VA_ARGS__ )> name;                                                               \
                                                                                                                             \
@@ -67,5 +69,8 @@
                                                                                                                             \
         virtual return_type method( __VA_ARGS__ ) const = 0;                                                                \
     }
+*/
+#define OSMAND_CALLABLE(name, return_type, ...)                                                                             \
+    typedef std::function< return_type ( __VA_ARGS__ )> name;
 
 #endif // !defined(_OSMAND_CORE_CALLABLE_H_)

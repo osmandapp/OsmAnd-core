@@ -52,8 +52,6 @@ namespace OsmAnd
         volatile uint32_t _requestedStateUpdatedMask;
         bool revalidateState();
         void notifyRequestedStateWasUpdated(const MapRendererStateChange change);
-        mutable QHash<void*, StateChangeObserverSignature> _stateChangeObservers;
-        mutable QMutex _stateChangeObserversMutex;
 
         // Resources-related:
         std::unique_ptr<MapRendererResources> _resources;
@@ -183,9 +181,6 @@ namespace OsmAnd
 
         virtual float getRecommendedMinZoom(const ZoomRecommendationStrategy strategy) const;
         virtual float getRecommendedMaxZoom(const ZoomRecommendationStrategy strategy) const;
-
-        virtual void registerStateChangeObserver(void* tag, const StateChangeObserverSignature observer) const;
-        virtual void unregisterStateChangeObserver(void* tag) const;
 
         virtual void dumpResourcesInfo() const;
 

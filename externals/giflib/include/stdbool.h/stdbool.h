@@ -1,11 +1,11 @@
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && _MSC_VER < 1800
 
 #ifndef _OSMAND_WINDOWS_STDBOOL_H_
 #define _OSMAND_WINDOWS_STDBOOL_H_
 
 #ifndef __cplusplus
 
-typedef char _Bool;
+typedef char _Bool
 
 #define bool  _Bool
 #define true  1
@@ -24,4 +24,4 @@ typedef char _Bool;
 
 #endif // _OSMAND_WINDOWS_STDBOOL_H_
 
-#endif // defined(_MSC_VER)
+#endif // defined(_MSC_VER) && _MSC_VER < 1800

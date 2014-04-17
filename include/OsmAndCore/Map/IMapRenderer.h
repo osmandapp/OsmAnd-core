@@ -2,13 +2,14 @@
 #define _OSMAND_CORE_I_MAP_RENDERER_H_
 
 #include <OsmAndCore/stdlib_common.h>
-#include <functional>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QSet>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Callable.h>
+#include <OsmAndCore/Observable.h>
 #include <OsmAndCore/Map/MapTypes.h>
 #include <OsmAndCore/Map/MapRendererTypes.h>
 #include <OsmAndCore/Map/MapRendererState.h>
@@ -25,7 +26,7 @@ namespace OsmAnd
     class OSMAND_CORE_API IMapRenderer
     {
     public:
-        typedef std::function<void(const MapRendererStateChange thisChange, const uint32_t allChanges)> StateChangeObserverSignature;
+        OSMAND_CALLABLE(StateChangeObserver, void, const MapRendererStateChange thisChange, const uint32_t allChanges);
 
     private:
         bool _isRenderingInitialized;
@@ -95,8 +96,7 @@ namespace OsmAnd
         virtual float getRecommendedMinZoom(const ZoomRecommendationStrategy strategy = ZoomRecommendationStrategy::NarrowestRange) const = 0;
         virtual float getRecommendedMaxZoom(const ZoomRecommendationStrategy strategy = ZoomRecommendationStrategy::NarrowestRange) const = 0;
 
-        virtual void registerStateChangeObserver(void* tag, const StateChangeObserverSignature observer) const = 0;
-        virtual void unregisterStateChangeObserver(void* tag) const = 0;
+        Observable<const MapRendererStateChange /*currentChange*/, const uint32_t /*allChanges*/> stateChangeObservable;
 
         virtual float getReferenceTileSizeOnScreen() = 0;
         virtual float getScaledTileSizeOnScreen() = 0;

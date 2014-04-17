@@ -32,9 +32,6 @@ if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAK
 	add_subdirectory("${OSMAND_ROOT}/core/externals/glew" "core/externals/glew")
 endif()
 
-# External : GLSL optimizer
-add_subdirectory("${OSMAND_ROOT}/core/externals/glsl-optimizer" "core/externals/glsl-optimizer")
-
 # External: ICU4C
 add_subdirectory("${OSMAND_ROOT}/core/externals/icu4c" "core/externals/icu4c")
 
