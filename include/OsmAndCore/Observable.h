@@ -55,8 +55,7 @@ namespace OsmAnd
             QHash<Tag, Handler> observers;
             {
                 QReadLocker scopedLocker(&_observersLock);
-                observers = _observers;
-                observers.detach();
+                observers = detachedOf(_observers);
             }
 
             for(const auto& handler : constOf(observers))
