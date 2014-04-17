@@ -30,7 +30,7 @@ namespace OsmAnd
 
         mutable QMutex _lockCounterMutex;
         mutable QWaitCondition _lockCounterWaitCondition;
-        mutable int _lockCounter;
+        mutable volatile int _lockCounter;
     public:
         virtual ~ObfFile_P();
 
