@@ -544,13 +544,19 @@ void OsmAnd::MapRendererResources::requestNeededResources(const QSet<TileId>& ac
 
 void OsmAnd::MapRendererResources::invalidateAllResources()
 {
+    QWriteLocker scopedLocker(&_invalidatedResourcesTypesMaskLock);
+
     _invalidatedResourcesTypesMask = ~((std::numeric_limits<uint32_t>::max() >> ResourceTypesCount) << ResourceTypesCount);
+
     renderer->invalidateFrame();
 }
 
 void OsmAnd::MapRendererResources::invalidateResourcesOfType(const ResourceType type)
 {
+    QWriteLocker scopedLocker(&_invalidatedResourcesTypesMaskLock);
+
     _invalidatedResourcesTypesMask |= 1u << static_cast<int>(type);
+
     renderer->invalidateFrame();
 }
 
@@ -558,17 +564,25 @@ bool OsmAnd::MapRendererResources::validateResources()
 {
     bool anyResourcesVadilated = false;
 
-    uint32_t typeIndex = 0;
-    while(_invalidatedResourcesTypesMask != 0 && typeIndex < ResourceTypesCount)
+    uint32_t invalidatedResourcesTypesMask;
     {
-        if(_invalidatedResourcesTypesMask & 0x1)
+        QReadLocker scopedLocker(&_invalidatedResourcesTypesMaskLock);
+
+        invalidatedResourcesTypesMask = _invalidatedResourcesTypesMask;
+        _invalidatedResourcesTypesMask = 0;
+    }
+
+    uint32_t typeIndex = 0;
+    while(invalidatedResourcesTypesMask != 0 && typeIndex < ResourceTypesCount)
+    {
+        if(invalidatedResourcesTypesMask & 0x1)
         {
             if(validateResourcesOfType(static_cast<ResourceType>(typeIndex)))
                 anyResourcesVadilated = true;
         }
 
         typeIndex++;
-        _invalidatedResourcesTypesMask >>= 1;
+        invalidatedResourcesTypesMask >>= 1;
     }
 
     return anyResourcesVadilated;

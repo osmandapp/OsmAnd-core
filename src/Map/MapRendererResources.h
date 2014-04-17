@@ -287,7 +287,8 @@ namespace OsmAnd
         void notifyNewResourceAvailableForDrawing();
 
         // Invalidated resources:
-        uint32_t _invalidatedResourcesTypesMask;
+        mutable QReadWriteLock _invalidatedResourcesTypesMaskLock;
+        volatile uint32_t _invalidatedResourcesTypesMask;
         void invalidateAllResources();
         void invalidateResourcesOfType(const ResourceType type);
         bool validateResources();
