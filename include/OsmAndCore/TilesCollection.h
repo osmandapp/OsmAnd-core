@@ -60,6 +60,25 @@ namespace OsmAnd
         {
         }
 
+        virtual bool tryObtainEntry(std::shared_ptr<ENTRY>& outEntry, const TileId tileId, const ZoomLevel zoom) const
+        {
+            if(!_collectionLock.tryLockForRead())
+                return false;
+
+            const auto& zoomLevel = _zoomLevels[zoom];
+            const auto& itEntry = zoomLevel.constFind(tileId);
+            if(itEntry != zoomLevel.cend())
+            {
+                outEntry = *itEntry;
+
+                _collectionLock.unlock();
+                return true;
+            }
+
+            _collectionLock.unlock();
+            return false;
+        }
+
         virtual bool obtainEntry(std::shared_ptr<ENTRY>& outEntry, const TileId tileId, const ZoomLevel zoom) const
         {
             QReadLocker scopedLocker(&_collectionLock);

@@ -143,6 +143,8 @@ namespace OsmAnd
         virtual bool processRendering();
         virtual bool releaseRendering();
 
+        virtual void reloadEverything();
+
         virtual bool isFrameInvalidated() const;
         virtual void forcedFrameInvalidate();
         virtual void forcedGpuProcessingCycle();

@@ -11,6 +11,8 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
+#include <OsmAndCore/Callable.h>
+#include <OsmAndCore/Observable.h>
 #include <OsmAndCore/WebClient.h>
 #include <OsmAndCore/Data/ObfFile.h>
 #include <OsmAndCore/Data/ObfInfo.h>
@@ -151,6 +153,10 @@ namespace OsmAnd
         bool updateFromFile(const QString& filePath);
         bool updateFromFile(const QString& name, const QString& filePath);
         bool updateFromRepository(const QString& name, const WebClient::RequestProgressCallbackSignature downloadProgressCallback = nullptr);
+
+        // Observables
+        OSMAND_CALLABLE(LocalResourcesChanged, void, const ResourcesManager* const resourcesManager);
+        const Observable<const ResourcesManager* const /*resourcesManager*/> localResourcesChangeObservable;
 
         // OBFs collection
         const std::shared_ptr<const IObfsCollection>& obfsCollection;

@@ -542,25 +542,39 @@ void OsmAnd::MapRendererResources::requestNeededResources(const QSet<TileId>& ac
     }
 }
 
+void OsmAnd::MapRendererResources::invalidateAllResources()
+{
+    _invalidatedResourcesTypesMask = ~((std::numeric_limits<uint32_t>::max() >> ResourceTypesCount) << ResourceTypesCount);
+    renderer->invalidateFrame();
+}
+
 void OsmAnd::MapRendererResources::invalidateResourcesOfType(const ResourceType type)
 {
     _invalidatedResourcesTypesMask |= 1u << static_cast<int>(type);
+    renderer->invalidateFrame();
 }
 
-void OsmAnd::MapRendererResources::validateResources()
+bool OsmAnd::MapRendererResources::validateResources()
 {
+    bool anyResourcesVadilated = false;
+
     uint32_t typeIndex = 0;
-    while(_invalidatedResourcesTypesMask)
+    while(_invalidatedResourcesTypesMask != 0 && typeIndex < ResourceTypesCount)
     {
         if(_invalidatedResourcesTypesMask & 0x1)
-            validateResourcesOfType(static_cast<ResourceType>(typeIndex));
+        {
+            if(validateResourcesOfType(static_cast<ResourceType>(typeIndex)))
+                anyResourcesVadilated = true;
+        }
 
         typeIndex++;
         _invalidatedResourcesTypesMask >>= 1;
     }
+
+    return anyResourcesVadilated;
 }
 
-void OsmAnd::MapRendererResources::validateResourcesOfType(const ResourceType type)
+bool OsmAnd::MapRendererResources::validateResourcesOfType(const ResourceType type)
 {
     const auto& resourcesCollections = _storage[static_cast<int>(type)];
     const auto& bindings = _bindings[static_cast<int>(type)];
@@ -568,6 +582,7 @@ void OsmAnd::MapRendererResources::validateResourcesOfType(const ResourceType ty
     // Notify owner
     renderer->onValidateResourcesOfType(type);
 
+    bool atLeastOneMarked = false;
     for(const auto& resourcesCollection : constOf(resourcesCollections))
     {
         if(!bindings.collectionsToProviders.contains(resourcesCollection))
@@ -575,11 +590,15 @@ void OsmAnd::MapRendererResources::validateResourcesOfType(const ResourceType ty
 
         // Mark all resources as junk
         resourcesCollection->forAllExecute(
-            [](const std::shared_ptr<BaseTiledResource>& entry, bool& cancel)
+            [&atLeastOneMarked]
+            (const std::shared_ptr<BaseTiledResource>& entry, bool& cancel)
             {
                 entry->markAsJunk();
+                atLeastOneMarked = true;
             });
     }
+
+    return atLeastOneMarked;
 }
 
 void OsmAnd::MapRendererResources::updateResources(const QSet<TileId>& tiles, const ZoomLevel zoom)
@@ -780,6 +799,7 @@ void OsmAnd::MapRendererResources::cleanupJunkResources(const QSet<TileId>& acti
                         // If resource is not needed anymore, change its state to "UnloadPending",
                         // but keep the resource entry, since it must be unload from GPU in another place
 
+                        needsResourcesUploadOrUnload = true;
                         return false;
                     }
                     else if(entry->setStateIf(ResourceState::Ready, ResourceState::JustBeforeDeath))
@@ -831,7 +851,6 @@ void OsmAnd::MapRendererResources::cleanupJunkResources(const QSet<TileId>& acti
                     //  - Unloading (to allow finish unloading)
                     //  - RequestCanceledWhileBeingProcessed (to allow cleanup of the process)
                     // should be retained, since they are being processed. So try to next time
-                    
                     return false;
                 });
         }

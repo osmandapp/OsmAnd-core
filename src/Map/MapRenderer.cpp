@@ -423,7 +423,8 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
     for(const auto& tileId : constOf(internalState->visibleTiles))
         _uniqueTiles.insert(Utilities::normalizeTileId(tileId, _currentState.zoomBase));
 
-    // Validate resources
+    // Validate resources:
+    // If any resources were validated, they will be updated by worker thread during postPrepareFrame
     _resources->validateResources();
 
     return true;
@@ -609,6 +610,11 @@ bool OsmAnd::MapRenderer::postReleaseRendering()
     _isRenderingInitialized = false;
 
     return true;
+}
+
+void OsmAnd::MapRenderer::reloadEverything()
+{
+    _resources->invalidateAllResources();
 }
 
 const OsmAnd::MapRendererResources& OsmAnd::MapRenderer::getResources() const

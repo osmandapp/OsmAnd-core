@@ -288,9 +288,10 @@ namespace OsmAnd
 
         // Invalidated resources:
         uint32_t _invalidatedResourcesTypesMask;
+        void invalidateAllResources();
         void invalidateResourcesOfType(const ResourceType type);
-        void validateResources();
-        void validateResourcesOfType(const ResourceType type);
+        bool validateResources();
+        bool validateResourcesOfType(const ResourceType type);
 
         // Resources management:
         QSet<TileId> _activeTiles;

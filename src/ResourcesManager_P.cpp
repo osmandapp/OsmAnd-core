@@ -72,6 +72,7 @@ bool OsmAnd::ResourcesManager_P::rescanLocalStoragePaths() const
             return false;
     }
     _localResources = localResources;
+    owner->localResourcesChangeObservable.notify(owner);
 
     return true;
 }
@@ -313,6 +314,7 @@ bool OsmAnd::ResourcesManager_P::uninstallResource(const QString& name)
         return false;
 
     _localResources.erase(itResource);
+    owner->localResourcesChangeObservable.notify(owner);
 
     return true;
 }
@@ -346,15 +348,20 @@ bool OsmAnd::ResourcesManager_P::installFromFile(const QString& name, const QStr
     if(itResource != _localResources.end())
         return false;
 
+    bool ok = false;
     switch(resourceType)
     {
     case ResourceType::MapRegion:
-        return installMapRegionFromFile(name, filePath);
+        ok = installMapRegionFromFile(name, filePath);
+        break;
     case ResourceType::VoicePack:
-        return installVoicePackFromFile(name, filePath);
+        ok = installVoicePackFromFile(name, filePath);
+        break;
     }
+    if(ok)
+        owner->localResourcesChangeObservable.notify(owner);
 
-    return false;
+    return ok;
 }
 
 bool OsmAnd::ResourcesManager_P::installMapRegionFromFile(const QString& name, const QString& filePath)
@@ -530,19 +537,24 @@ bool OsmAnd::ResourcesManager_P::updateFromFile(const QString& name, const QStri
         return false;
     const auto localResource = *itResource;
 
+    bool ok = false;
     switch(localResource->type)
     {
     case ResourceType::MapRegion:
         if(!uninstallMapRegion(localResource))
             return false;
-        return installMapRegionFromFile(localResource->name, filePath);
+        ok = installMapRegionFromFile(localResource->name, filePath);
+        break;
     case ResourceType::VoicePack:
         if(!uninstallVoicePack(localResource))
             return false;
-        return installVoicePackFromFile(localResource->name, filePath);
+        ok = installVoicePackFromFile(localResource->name, filePath);
+        break;
     }
+    if(ok)
+        owner->localResourcesChangeObservable.notify(owner);
 
-    return false;
+    return ok;
 }
 
 bool OsmAnd::ResourcesManager_P::updateFromRepository(const QString& name, const WebClient::RequestProgressCallbackSignature downloadProgressCallback)

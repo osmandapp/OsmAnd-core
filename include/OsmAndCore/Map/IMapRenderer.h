@@ -25,9 +25,6 @@ namespace OsmAnd
 
     class OSMAND_CORE_API IMapRenderer
     {
-    public:
-        OSMAND_CALLABLE(StateChangeObserver, void, const MapRendererStateChange thisChange, const uint32_t allChanges);
-
     private:
         bool _isRenderingInitialized;
 
@@ -53,6 +50,8 @@ namespace OsmAnd
         virtual bool renderFrame() = 0;
         virtual bool processRendering() = 0;
         virtual bool releaseRendering() = 0;
+
+        virtual void reloadEverything() = 0;
 
         const MapRendererState& state;
         virtual bool isFrameInvalidated() const = 0;
@@ -96,7 +95,8 @@ namespace OsmAnd
         virtual float getRecommendedMinZoom(const ZoomRecommendationStrategy strategy = ZoomRecommendationStrategy::NarrowestRange) const = 0;
         virtual float getRecommendedMaxZoom(const ZoomRecommendationStrategy strategy = ZoomRecommendationStrategy::NarrowestRange) const = 0;
 
-        Observable<const MapRendererStateChange /*currentChange*/, const uint32_t /*allChanges*/> stateChangeObservable;
+        OSMAND_CALLABLE(StateChangeObserver, void, const MapRendererStateChange thisChange, const uint32_t allChanges);
+        const Observable<const MapRendererStateChange /*currentChange*/, const uint32_t /*allChanges*/> stateChangeObservable;
 
         virtual float getReferenceTileSizeOnScreen() = 0;
         virtual float getScaledTileSizeOnScreen() = 0;
