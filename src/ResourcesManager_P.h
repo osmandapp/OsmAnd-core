@@ -41,6 +41,8 @@ namespace OsmAnd
         mutable QHash< QString, std::shared_ptr<const LocalResource> > _localResources;
         static bool rescanLocalStoragePath(const QString& storagePath, QHash< QString, std::shared_ptr<const LocalResource> >& outResult);
 
+        std::shared_ptr<const ObfFile> _miniBasemapObfFile;
+
         mutable QReadWriteLock _repositoryIndexLock;
         mutable QHash< QString, std::shared_ptr<const ResourceInRepository> > _repositoryIndex;
 
@@ -69,6 +71,8 @@ namespace OsmAnd
         };
     protected:
         ResourcesManager_P(ResourcesManager* owner);
+
+        void initialize();
     public:
         virtual ~ResourcesManager_P();
 

@@ -27,6 +27,18 @@ OsmAnd::ResourcesManager_P::~ResourcesManager_P()
     _fileSystemWatcher->deleteLater();
 }
 
+void OsmAnd::ResourcesManager_P::initialize()
+{
+    if(!owner->miniBasemapFilename.isNull())
+    {
+        const std::shared_ptr<const ObfFile> obfFile(new ObfFile(owner->miniBasemapFilename));
+        if(ObfReader(obfFile).obtainInfo())
+            _miniBasemapObfFile = obfFile;
+        else
+            LogPrintf(LogSeverityLevel::Warning, "Failed to open mini basemap '%s'", qPrintable(owner->miniBasemapFilename));
+    }
+}
+
 void OsmAnd::ResourcesManager_P::attachToFileSystem()
 {
     _onDirectoryChangedConnection = QObject::connect(
@@ -594,6 +606,7 @@ QVector< std::shared_ptr<const OsmAnd::ObfFile> > OsmAnd::ResourcesManager_P::Ob
 {
     QReadLocker scopedLocker(&owner->_localResourcesLock);
 
+    bool otherBasemapPresent = false;
     QVector< std::shared_ptr<const ObfFile> > obfFiles;
     for(const auto& localResource : constOf(owner->_localResources))
     {
@@ -601,8 +614,12 @@ QVector< std::shared_ptr<const OsmAnd::ObfFile> > OsmAnd::ResourcesManager_P::Ob
             continue;
 
         const auto& obfLocalResource = std::static_pointer_cast<const LocalObfResource>(localResource);
+        if(obfLocalResource->obfFile->obfInfo->isBasemap)
+            otherBasemapPresent = true;
         obfFiles.push_back(obfLocalResource->obfFile);
     }
+    if(!otherBasemapPresent && owner->_miniBasemapObfFile)
+        obfFiles.push_back(owner->_miniBasemapObfFile);
 
     return obfFiles;
 }
@@ -611,6 +628,7 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
 {
     QReadLocker scopedLocker(&owner->_localResourcesLock);
 
+    bool otherBasemapPresent = false;
     QList< std::shared_ptr<const ObfReader> > obfReaders;
     for(const auto& localResource : constOf(owner->_localResources))
     {
@@ -620,7 +638,14 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
         const auto& obfLocalResource = std::static_pointer_cast<const LocalObfResource>(localResource);
         if(!obfLocalResource->obfFile->tryLockForReading())
             continue;
+        if(obfLocalResource->obfFile->obfInfo->isBasemap)
+            otherBasemapPresent = true;
         std::shared_ptr<const ObfReader> obfReader(new ObfReader(obfLocalResource->obfFile, false));
+        obfReaders.push_back(qMove(obfReader));
+    }
+    if(!otherBasemapPresent && owner->_miniBasemapObfFile)
+    {
+        std::shared_ptr<const ObfReader> obfReader(new ObfReader(owner->_miniBasemapObfFile));
         obfReaders.push_back(qMove(obfReader));
     }
 

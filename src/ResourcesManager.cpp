@@ -19,6 +19,7 @@ OsmAnd::ResourcesManager::ResourcesManager(
     , repositoryBaseUrl(repositoryBaseUrl_)
     , obfsCollection(_p->obfsCollection)
 {
+    _p->initialize();
     _p->refreshRepositoryIndex();
     _p->attachToFileSystem();
 }
