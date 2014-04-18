@@ -96,8 +96,8 @@ bool OsmAnd::OnlineMapRasterTileProvider_P::obtainTile(const TileId tileId, cons
     auto tileUrl = owner->urlPattern;
     tileUrl
         .replace(QLatin1String("${zoom}"), QString::number(zoom))
-        .replace(QLatin1String("${x}"), QString::number(tileId.x))
-        .replace(QLatin1String("${y}"), QString::number(tileId.y));
+        .replace(QLatin1String("${osm_x}"), QString::number(tileId.x))
+        .replace(QLatin1String("${osm_y}"), QString::number(tileId.y));
     std::shared_ptr<const WebClient::RequestResult> requestResult;
     const auto& downloadResult = _downloadManager.downloadData(QUrl(tileUrl), &requestResult);
 

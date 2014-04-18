@@ -50,7 +50,7 @@ namespace OsmAnd
     public:
         virtual ~ArchiveReader_P();
 
-        ArchiveReader* const owner;
+        ImplementationInterface<ArchiveReader> owner;
 
         QList<Item> getItems(bool* const ok) const;
 

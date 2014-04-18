@@ -183,7 +183,8 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
         Lexeme(Type type_, MapStyle_P* style_)
             : type(type_)
             , style(style_)
-        {}
+        {
+        }
 
         const Type type;
         MapStyle_P* const style;
@@ -194,7 +195,8 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
         Rule(std::shared_ptr<MapStyleRule> rule_, MapStyle_P* style_)
             : Lexeme(Lexeme::Rule, style_)
             , rule(rule_)
-        {}
+        {
+        }
 
         const std::shared_ptr<MapStyleRule> rule;
     };
@@ -203,7 +205,8 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
     {
         Group(MapStyle_P* const style_)
             : Lexeme(Lexeme::Group, style_)
-        {}
+        {
+        }
 
         QHash< QString, QString > attributes;
         QList< std::shared_ptr<MapStyleRule> > children;
@@ -473,7 +476,6 @@ bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
                 stack.pop();
             }
         }
-
     }
     if(xmlReader.hasError())
     {

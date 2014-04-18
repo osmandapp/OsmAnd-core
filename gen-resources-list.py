@@ -70,6 +70,7 @@ if __name__=='__main__':
     
     rules = [
     	[r'resources/rendering_styles/default\.render\.xml', r'map/styles/default.render.xml'],
+        [r'resources/rendering_styles/default\.mapStylesPresets\.xml', r'map/mapStylesPresets/default.mapStylesPresets.xml'],
     	[r'resources/rendering_styles/style-icons/drawable-mdpi/h_(.*shield.*)\.png', r'map/shields/\1.png'],
     	[r'resources/rendering_styles/style-icons/drawable-mdpi/h_(.*)\.png', r'map/shaders/\1.png'],
     	[r'resources/rendering_styles/style-icons/drawable-mdpi/mm_(.*)\.png', r'map/map_icons/\1.png'],

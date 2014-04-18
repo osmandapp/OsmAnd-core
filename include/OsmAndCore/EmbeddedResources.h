@@ -23,6 +23,6 @@ namespace OsmAnd
         static QByteArray getRawResource(const QString& name, bool* ok = nullptr);
         static bool containsResource(const QString& name);
     };
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_EMBEDDED_RESOURCES_H_)
