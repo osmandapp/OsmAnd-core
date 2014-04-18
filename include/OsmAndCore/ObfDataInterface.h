@@ -38,9 +38,9 @@ namespace OsmAnd
 
         const QList< std::shared_ptr<const ObfReader> > obfReaders;
 
-        void obtainObfFiles(QList< std::shared_ptr<const ObfFile> >* outFiles = nullptr, const IQueryController* const controller = nullptr);
-        void obtainBasemapPresenceFlag(bool& basemapPresent, const IQueryController* const controller = nullptr);
-        void obtainMapObjects(QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut, MapFoundationType* foundationOut,
+        bool loadObfFiles(QList< std::shared_ptr<const ObfFile> >* outFiles = nullptr, const IQueryController* const controller = nullptr);
+        bool loadBasemapPresenceFlag(bool& basemapPresent, const IQueryController* const controller = nullptr);
+        bool loadMapObjects(QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut, MapFoundationType* foundationOut,
             const AreaI& area31, const ZoomLevel zoom,
             const IQueryController* const controller = nullptr, const FilterMapObjectsByIdSignature filterById = nullptr,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric = nullptr);

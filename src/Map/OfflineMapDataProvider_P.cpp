@@ -105,7 +105,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile(const TileId tileId, const Zoo
 #if OSMAND_PERFORMANCE_METRICS > 1
     ObfMapSectionReader_Metrics::Metric_loadMapObjects dataRead_Metric;
 #endif // OSMAND_PERFORMANCE_METRICS > 1
-    dataInterface->obtainMapObjects(&loadedMapObjects, &tileFoundation, tileBBox31, zoom, nullptr,
+    dataInterface->loadMapObjects(&loadedMapObjects, &tileFoundation, tileBBox31, zoom, nullptr,
         [this, zoom, &referencedMapObjects, &futureReferencedMapObjects, &loadedSharedMapObjects, tileBBox31
 #if OSMAND_PERFORMANCE_METRICS
             , &dataFilter

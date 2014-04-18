@@ -198,9 +198,9 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
         );
     const auto& obfDI = obfsCollection.obtainDataInterface();
     OsmAnd::MapFoundationType mapFoundation;
-    obfDI->obtainMapObjects(&mapObjects, &mapFoundation, bbox31, cfg.zoom, nullptr);
+    obfDI->loadMapObjects(&mapObjects, &mapFoundation, bbox31, cfg.zoom, nullptr);
     bool basemapAvailable;
-    obfDI->obtainBasemapPresenceFlag(basemapAvailable);
+    obfDI->loadBasemapPresenceFlag(basemapAvailable);
     
     // Calculate output size in pixels
     const auto tileWidth = OsmAnd::Utilities::getTileNumberX(cfg.zoom, cfg.bbox.right) - OsmAnd::Utilities::getTileNumberX(cfg.zoom, cfg.bbox.left);

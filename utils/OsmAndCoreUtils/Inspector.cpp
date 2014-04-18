@@ -264,7 +264,7 @@ void printMapDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
             output << xT("\t\t") << mapObject->id << std::endl;
             if(mapObject->names.count() > 0)
             {
-                output << xT("\t\t\tNames:") << output << std::endl;
+                output << xT("\t\t\tNames:") << std::endl;
                 for(auto itName = mapObject->names.cbegin(); itName != mapObject->names.cend(); ++itName)
                 {
                     const auto& rule = mapObject->section->encodingDecodingRules->decodingRules[itName.key()];

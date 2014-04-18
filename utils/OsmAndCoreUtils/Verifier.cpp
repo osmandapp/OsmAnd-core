@@ -139,7 +139,7 @@ void dump(std::ostream &output, const OsmAnd::Verifier::Configuration& cfg)
                 return false;
             };
 
-            dataInterface->obtainMapObjects(&duplicateMapObjects, nullptr, entireWorld, static_cast<OsmAnd::ZoomLevel>(zoomLevel), nullptr, idsCollector, nullptr);
+            dataInterface->loadMapObjects(&duplicateMapObjects, nullptr, entireWorld, static_cast<OsmAnd::ZoomLevel>(zoomLevel), nullptr, idsCollector, nullptr);
 
             output << "\tProcessed " << mapObjectIds.size() << " map objects.";
             if(!mapObjectIds.isEmpty())
