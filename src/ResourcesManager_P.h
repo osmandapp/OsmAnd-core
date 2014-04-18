@@ -52,12 +52,12 @@ namespace OsmAnd
         static bool rescanLocalStoragePath(const QString& storagePath, const bool isExtraStorage, QHash< QString, std::shared_ptr<const Resource> >& outResult);
 
         std::shared_ptr<const ObfFile> _miniBasemapObfFile;
-/*
-        mutable QReadWriteLock _repositoryIndexLock;
-        mutable QHash< QString, std::shared_ptr<const ResourceInRepository> > _repositoryIndex;
+
+        mutable QReadWriteLock _resourcesInRepositoryLock;
+        mutable QHash< QString, std::shared_ptr<const Resource> > _resourcesInRepository;
 
         mutable WebClient _webClient;
-
+        /*
         bool uninstallMapRegion(const std::shared_ptr<const LocalResource>& localResource);
         bool uninstallVoicePack(const std::shared_ptr<const LocalResource>& localResource);
 
@@ -97,10 +97,10 @@ namespace OsmAnd
         QList< std::shared_ptr<const Resource> > getLocalResources() const;
         std::shared_ptr<const Resource> getLocalResource(const QString& id) const;
 
-        //// Remote resources in repository:
-        //bool refreshRepositoryIndex() const;
-        //QList< std::shared_ptr<const ResourceInRepository> > getRepositoryIndex() const;
-        //std::shared_ptr<const ResourceInRepository> getResourceInRepository(const QString& name) const;
+        // Resources in repository:
+        bool reloadRepository() const;
+        QList< std::shared_ptr<const Resource> > getResourcesInRepository() const;
+        std::shared_ptr<const Resource> getResourceInRepository(const QString& id) const;
 
         //// Install / Uninstall:
         //bool isResourceInstalled(const QString& name) const;

@@ -103,12 +103,14 @@ namespace OsmAnd
             RepositoryResourceOrigin(
                 const QUrl& url,
                 const uint64_t size,
-                const uint64_t timestamp);
+                const uint64_t timestamp,
+                const uint64_t packageSize);
             virtual ~RepositoryResourceOrigin();
 
             const QUrl url;
             const uint64_t size;
             const uint64_t timestamp;
+            const uint64_t packageSize;
         };
 
         enum class ResourceType
@@ -225,12 +227,12 @@ namespace OsmAnd
         bool rescanLocalStoragePaths() const;
         QList< std::shared_ptr<const Resource> > getLocalResources() const;
         std::shared_ptr<const Resource> getLocalResource(const QString& id) const;
-        /*
-        // Resources in repository:
-        bool refreshRepositoryIndex() const;
-        QList< std::shared_ptr<const ResourceInRepository> > getRepositoryIndex() const;
-        std::shared_ptr<const ResourceInRepository> getResourceInRepository(const QString& name) const;
 
+        // Resources in repository:
+        bool reloadRepository() const;
+        QList< std::shared_ptr<const Resource> > getResourcesInRepository() const;
+        std::shared_ptr<const Resource> getResourceInRepository(const QString& id) const;
+        /*
         // Install / Uninstall:
         bool isResourceInstalled(const QString& name) const;
         bool uninstallResource(const QString& name);

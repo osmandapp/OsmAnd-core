@@ -268,119 +268,121 @@ std::shared_ptr<const OsmAnd::ResourcesManager::Resource> OsmAnd::ResourcesManag
     return *citResource;
 }
 
-//bool OsmAnd::ResourcesManager_P::refreshRepositoryIndex() const
-//{
-//    QWriteLocker scopedLocker(&_repositoryIndexLock);
-//
-//    // Download content of the index
-//    std::shared_ptr<const WebClient::RequestResult> requestResult;
-//    const auto& downloadResult = _webClient.downloadData(QUrl(owner->repositoryBaseUrl + QLatin1String("/get_indexes.php")), &requestResult);
-//    if(downloadResult.isNull() || !requestResult->isSuccessful())
-//        return false;
-//
-//    QList< std::shared_ptr<const ResourceInRepository> > resources;
-//
-//    // Parse XML
-//    bool ok = false;
-//    QXmlStreamReader xmlReader(downloadResult);
-//    while(!xmlReader.atEnd() && !xmlReader.hasError())
-//    {
-//        xmlReader.readNext();
-//        if(!xmlReader.isStartElement())
-//            continue;
-//        const auto tagName = xmlReader.name();
-//        const auto& attribs = xmlReader.attributes();
-//
-//        const auto& resourceTypeValue = attribs.value(QLatin1String("type"));
-//        if(resourceTypeValue.isNull())
-//            continue;
-//        const auto& nameValue = attribs.value(QLatin1String("name"));
-//        if(nameValue.isNull())
-//            continue;
-//        const auto& timestampValue = attribs.value(QLatin1String("timestamp"));
-//        if(timestampValue.isNull())
-//            continue;
-//        const auto& containerSizeValue = attribs.value(QLatin1String("containerSize"));
-//        if(containerSizeValue.isNull())
-//            continue;
-//        const auto& contentSizeValue = attribs.value(QLatin1String("contentSize"));
-//        if(contentSizeValue.isNull())
-//            continue;
-//        
-//        const auto name = nameValue.toString();
-//
-//        auto resourceType = ResourceType::Unknown;
-//        if(resourceTypeValue == QLatin1String("map"))
-//            resourceType = ResourceType::MapRegion;
-//        if(resourceTypeValue == QLatin1String("voice"))
-//            resourceType = ResourceType::VoicePack;
-//        if(resourceType == ResourceType::Unknown)
-//        {
-//            LogPrintf(LogSeverityLevel::Warning, "Unknown resource type '%s' for '%s'", qPrintableRef(resourceTypeValue), qPrintable(name));
-//            continue;
-//        }
-//
-//        const auto timestamp = timestampValue.toULongLong(&ok);
-//        if(!ok)
-//        {
-//            LogPrintf(LogSeverityLevel::Warning, "Invalid timestamp '%s' for '%s'", qPrintableRef(timestampValue), qPrintable(name));
-//            continue;
-//        }
-//
-//        const auto containerSize = containerSizeValue.toULongLong(&ok);
-//        if(!ok)
-//        {
-//            LogPrintf(LogSeverityLevel::Warning, "Invalid container size '%s' for '%s'", qPrintableRef(containerSizeValue), qPrintable(name));
-//            continue;
-//        }
-//
-//        const auto contentSize = contentSizeValue.toULongLong(&ok);
-//        if(!ok)
-//        {
-//            LogPrintf(LogSeverityLevel::Warning, "Invalid content size '%s' for '%s'", qPrintableRef(contentSizeValue), qPrintable(name));
-//            continue;
-//        }
-//
-//        std::shared_ptr<ResourceInRepository> resourceInRepository(new ResourceInRepository(
-//            QString(name).replace(QLatin1String(".zip"), QString()),
-//            resourceType,
-//            timestamp,
-//            contentSize,
-//            owner->repositoryBaseUrl + QLatin1String("/download.php?file=") + QUrl::toPercentEncoding(name),
-//            containerSize));
-//        resources.push_back(qMove(resourceInRepository));
-//    }
-//    if(xmlReader.hasError())
-//    {
-//        LogPrintf(LogSeverityLevel::Warning, "XML error: %s (%d, %d)", qPrintable(xmlReader.errorString()), xmlReader.lineNumber(), xmlReader.columnNumber());
-//        return false;
-//    }
-//
-//    // Save result
-//    _repositoryIndex.clear();
-//    for(auto& entry : resources)
-//        _repositoryIndex.insert(entry->name, qMove(entry));
-//    
-//    return true;
-//}
-//
-//QList< std::shared_ptr<const OsmAnd::ResourcesManager::ResourceInRepository> > OsmAnd::ResourcesManager_P::getRepositoryIndex() const
-//{
-//    QReadLocker scopedLocker(&_repositoryIndexLock);
-//
-//    return _repositoryIndex.values();
-//}
-//
-//std::shared_ptr<const OsmAnd::ResourcesManager::ResourceInRepository> OsmAnd::ResourcesManager_P::getResourceInRepository(const QString& name) const
-//{
-//    QReadLocker scopedLocker(&_repositoryIndexLock);
-//
-//    const auto citResource = _repositoryIndex.constFind(name);
-//    if(citResource == _repositoryIndex.cend())
-//        return nullptr;
-//    return *citResource;
-//}
-//
+bool OsmAnd::ResourcesManager_P::reloadRepository() const
+{
+    QWriteLocker scopedLocker(&_resourcesInRepositoryLock);
+
+    // Download content of the index
+    std::shared_ptr<const WebClient::RequestResult> requestResult;
+    const auto& downloadResult = _webClient.downloadData(QUrl(owner->repositoryBaseUrl + QLatin1String("/get_indexes.php")), &requestResult);
+    if(downloadResult.isNull() || !requestResult->isSuccessful())
+        return false;
+
+    QList< std::shared_ptr<const Resource> > resources;
+
+    // Parse XML
+    bool ok = false;
+    QXmlStreamReader xmlReader(downloadResult);
+    while(!xmlReader.atEnd() && !xmlReader.hasError())
+    {
+        xmlReader.readNext();
+        if(!xmlReader.isStartElement())
+            continue;
+        const auto tagName = xmlReader.name();
+        const auto& attribs = xmlReader.attributes();
+
+        const auto& resourceTypeValue = attribs.value(QLatin1String("type"));
+        if(resourceTypeValue.isNull())
+            continue;
+        const auto& nameValue = attribs.value(QLatin1String("name"));
+        if(nameValue.isNull())
+            continue;
+        const auto& timestampValue = attribs.value(QLatin1String("timestamp"));
+        if(timestampValue.isNull())
+            continue;
+        const auto& containerSizeValue = attribs.value(QLatin1String("containerSize"));
+        if(containerSizeValue.isNull())
+            continue;
+        const auto& contentSizeValue = attribs.value(QLatin1String("contentSize"));
+        if(contentSizeValue.isNull())
+            continue;
+        
+        const auto name = nameValue.toString();
+
+        auto resourceType = ResourceType::Unknown;
+        if(resourceTypeValue == QLatin1String("map"))
+            resourceType = ResourceType::MapRegion;
+        if(resourceTypeValue == QLatin1String("voice"))
+            resourceType = ResourceType::VoicePack;
+        if(resourceType == ResourceType::Unknown)
+        {
+            LogPrintf(LogSeverityLevel::Warning, "Unknown resource type '%s' for '%s'", qPrintableRef(resourceTypeValue), qPrintable(name));
+            continue;
+        }
+
+        const auto timestamp = timestampValue.toULongLong(&ok);
+        if(!ok)
+        {
+            LogPrintf(LogSeverityLevel::Warning, "Invalid timestamp '%s' for '%s'", qPrintableRef(timestampValue), qPrintable(name));
+            continue;
+        }
+
+        const auto containerSize = containerSizeValue.toULongLong(&ok);
+        if(!ok)
+        {
+            LogPrintf(LogSeverityLevel::Warning, "Invalid container size '%s' for '%s'", qPrintableRef(containerSizeValue), qPrintable(name));
+            continue;
+        }
+
+        const auto contentSize = contentSizeValue.toULongLong(&ok);
+        if(!ok)
+        {
+            LogPrintf(LogSeverityLevel::Warning, "Invalid content size '%s' for '%s'", qPrintableRef(contentSizeValue), qPrintable(name));
+            continue;
+        }
+
+        std::shared_ptr<ResourceOrigin> resourceOrigin(new RepositoryResourceOrigin(
+            owner->repositoryBaseUrl + QLatin1String("/download.php?file=") + QUrl::toPercentEncoding(name),
+            contentSize,
+            timestamp,
+            containerSize));
+        std::shared_ptr<Resource> resource(new Resource(
+            QString(name).replace(QLatin1String(".zip"), QString()),
+            resourceType,
+            resourceOrigin));
+        resources.push_back(qMove(resource));
+    }
+    if(xmlReader.hasError())
+    {
+        LogPrintf(LogSeverityLevel::Warning, "XML error: %s (%d, %d)", qPrintable(xmlReader.errorString()), xmlReader.lineNumber(), xmlReader.columnNumber());
+        return false;
+    }
+
+    // Save result
+    _resourcesInRepository.clear();
+    for(auto& entry : resources)
+        _resourcesInRepository.insert(entry->id, qMove(entry));
+    
+    return true;
+}
+
+QList< std::shared_ptr<const OsmAnd::ResourcesManager::Resource> > OsmAnd::ResourcesManager_P::getResourcesInRepository() const
+{
+    QReadLocker scopedLocker(&_resourcesInRepositoryLock);
+
+    return _resourcesInRepository.values();
+}
+
+std::shared_ptr<const OsmAnd::ResourcesManager::Resource> OsmAnd::ResourcesManager_P::getResourceInRepository(const QString& id) const
+{
+    QReadLocker scopedLocker(&_resourcesInRepositoryLock);
+
+    const auto citResource = _resourcesInRepository.constFind(id);
+    if(citResource == _resourcesInRepository.cend())
+        return nullptr;
+    return *citResource;
+}
+
 //bool OsmAnd::ResourcesManager_P::isResourceInstalled(const QString& name) const
 //{
 //    QReadLocker scopedLocker(&_localResourcesLock);

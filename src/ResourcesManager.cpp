@@ -55,21 +55,21 @@ std::shared_ptr<const OsmAnd::ResourcesManager::Resource> OsmAnd::ResourcesManag
     return _p->getLocalResource(id);
 }
 
-//bool OsmAnd::ResourcesManager::refreshRepositoryIndex() const
-//{
-//    return _p->refreshRepositoryIndex();
-//}
-//
-//QList< std::shared_ptr<const OsmAnd::ResourcesManager::ResourceInRepository> > OsmAnd::ResourcesManager::getRepositoryIndex() const
-//{
-//    return _p->getRepositoryIndex();
-//}
-//
-//std::shared_ptr<const OsmAnd::ResourcesManager::ResourceInRepository> OsmAnd::ResourcesManager::getResourceInRepository(const QString& name) const
-//{
-//    return _p->getResourceInRepository(name);
-//}
-//
+bool OsmAnd::ResourcesManager::reloadRepository() const
+{
+    return _p->reloadRepository();
+}
+
+QList< std::shared_ptr<const OsmAnd::ResourcesManager::Resource> > OsmAnd::ResourcesManager::getResourcesInRepository() const
+{
+    return _p->getResourcesInRepository();
+}
+
+std::shared_ptr<const OsmAnd::ResourcesManager::Resource> OsmAnd::ResourcesManager::getResourceInRepository(const QString& id) const
+{
+    return _p->getResourceInRepository(id);
+}
+
 //bool OsmAnd::ResourcesManager::isResourceInstalled(const QString& name) const
 //{
 //    return _p->isResourceInstalled(name);
@@ -172,11 +172,13 @@ OsmAnd::ResourcesManager::InstalledResourceOrigin::~InstalledResourceOrigin()
 OsmAnd::ResourcesManager::RepositoryResourceOrigin::RepositoryResourceOrigin(
     const QUrl& url_,
     const uint64_t size_,
-    const uint64_t timestamp_)
+    const uint64_t timestamp_,
+    const uint64_t packageSize_)
     : ResourceOrigin(ResourceOriginType::Repository)
     , url(url_)
     , size(size_)
     , timestamp(timestamp_)
+    , packageSize(packageSize_)
 {
 }
 
