@@ -8,8 +8,6 @@
 
 #include <SkBitmap.h>
 
-#include <GLSLOptimizer.h>
-
 #include "MapRendererTypes.h"
 #include "IMapBitmapTileProvider.h"
 #include "IMapSymbolProvider.h"
@@ -633,38 +631,10 @@ void OsmAnd::GPUAPI_OpenGLES2::preprocessFragmentShader( QString& code )
 
 void OsmAnd::GPUAPI_OpenGLES2::optimizeVertexShader( QString& code )
 {
-    /*
-    auto context = glslopt_initialize(true);
-
-    auto optimizedShader = glslopt_optimize(context, kGlslOptShaderVertex, qPrintable(code), 0);
-    if(!glslopt_get_status(optimizedShader))
-    {
-        LogPrintf(LogSeverityLevel::Error, "%s", glslopt_get_log(optimizedShader));
-        assert(false);
-    }
-    code = QString::fromLocal8Bit(glslopt_get_output(optimizedShader));
-    glslopt_shader_delete(optimizedShader);
-
-    glslopt_cleanup(context);
-    */
 }
 
 void OsmAnd::GPUAPI_OpenGLES2::optimizeFragmentShader( QString& code )
 {
-    /*
-    auto context = glslopt_initialize(true);
-
-    auto optimizedShader = glslopt_optimize(context, kGlslOptShaderFragment, qPrintable(code), 0);
-    if(!glslopt_get_status(optimizedShader))
-    {
-        LogPrintf(LogSeverityLevel::Error, "%s", glslopt_get_log(optimizedShader));
-        assert(false);
-    }
-    code = QString::fromLocal8Bit(glslopt_get_output(optimizedShader));
-    glslopt_shader_delete(optimizedShader);
-
-    glslopt_cleanup(context);
-    */
 }
 
 void OsmAnd::GPUAPI_OpenGLES2::setTextureBlockSampler( const GLenum textureBlock, const SamplerType samplerType )
