@@ -25,8 +25,8 @@ namespace OsmAnd
     protected:
         MapStylesPresets_P(MapStylesPresets* const owner);
 
-        bool loadFrom(QXmlStreamReader& xmlReader);
-        bool saveTo(QXmlStreamWriter& xmlWriter) const;
+        bool deserializeFrom(QXmlStreamReader& xmlReader);
+        bool serializeTo(QXmlStreamWriter& xmlWriter) const;
 
         QHash< QString, std::shared_ptr<MapStylePreset> > _collection;
     public:

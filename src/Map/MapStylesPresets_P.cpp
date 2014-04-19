@@ -14,15 +14,15 @@ OsmAnd::MapStylesPresets_P::~MapStylesPresets_P()
 
 bool OsmAnd::MapStylesPresets_P::loadFrom(const QByteArray& content)
 {
-    return loadFrom(QXmlStreamReader(content));
+    return deserializeFrom(QXmlStreamReader(content));
 }
 
 bool OsmAnd::MapStylesPresets_P::loadFrom(QIODevice& ioDevice)
 {
-    return loadFrom(QXmlStreamReader(&ioDevice));
+    return deserializeFrom(QXmlStreamReader(&ioDevice));
 }
 
-bool OsmAnd::MapStylesPresets_P::loadFrom(QXmlStreamReader& xmlReader)
+bool OsmAnd::MapStylesPresets_P::deserializeFrom(QXmlStreamReader& xmlReader)
 {
     QHash< QString, std::shared_ptr<MapStylePreset> > collection;
     std::shared_ptr<MapStylePreset> mapStylePreset;
@@ -72,10 +72,10 @@ bool OsmAnd::MapStylesPresets_P::loadFrom(QXmlStreamReader& xmlReader)
 
 bool OsmAnd::MapStylesPresets_P::saveTo(QIODevice& ioDevice) const
 {
-    return saveTo(QXmlStreamWriter(&ioDevice));
+    return serializeTo(QXmlStreamWriter(&ioDevice));
 }
 
-bool OsmAnd::MapStylesPresets_P::saveTo(QXmlStreamWriter& xmlWriter) const
+bool OsmAnd::MapStylesPresets_P::serializeTo(QXmlStreamWriter& xmlWriter) const
 {
     assert(false);
     return false;

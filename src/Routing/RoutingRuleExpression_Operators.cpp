@@ -2,6 +2,8 @@
 
 #include "Common.h"
 #include "RoutingConfiguration.h"
+#include "Logging.h"
+#include "LoggingAssert.h"
 
 OsmAnd::BinaryOperator::BinaryOperator(const QString& lvalue, const QString& rvalue, const QString& type)
     : type(type)

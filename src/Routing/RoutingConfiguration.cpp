@@ -10,6 +10,8 @@
 #include "Common.h"
 #include "EmbeddedResources.h"
 #include "Utilities.h"
+#include "Logging.h"
+#include "LoggingAssert.h"
 
 OsmAnd::RoutingConfiguration::RoutingConfiguration()
     : routingProfiles(_routingProfiles)

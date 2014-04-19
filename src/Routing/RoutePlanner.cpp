@@ -12,6 +12,7 @@
 #include "ObfRoutingSectionInfo_P.h"
 #include "Common.h"
 #include "Logging.h"
+#include "LoggingAssert.h"
 #include "Utilities.h"
 #include "PlainQueryFilter.h"
 #include "QKeyValueIterator.h"

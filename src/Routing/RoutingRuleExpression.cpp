@@ -3,6 +3,7 @@
 
 #include "Common.h"
 #include "Logging.h"
+#include "LoggingAssert.h"
 #include "RoutingConfiguration.h"
 #include "RoutingRuleset.h"
 #include "RoutingProfile.h"
