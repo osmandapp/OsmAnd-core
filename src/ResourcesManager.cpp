@@ -22,6 +22,7 @@ OsmAnd::ResourcesManager::ResourcesManager(
     _p->initialize();
     _p->inflateBuiltInResources();
     _p->rescanLocalStoragePaths();
+    _p->loadRepositoryFromCache();
     _p->attachToFileSystem();
 }
 
@@ -40,6 +41,11 @@ std::shared_ptr<const OsmAnd::ResourcesManager::Resource> OsmAnd::ResourcesManag
     return _p->getBuiltInResource(id);
 }
 
+bool OsmAnd::ResourcesManager::isBuiltInResource(const QString& id) const
+{
+    return _p->isBuiltInResource(id);
+}
+
 bool OsmAnd::ResourcesManager::rescanLocalStoragePaths() const
 {
     return _p->rescanLocalStoragePaths();
@@ -55,9 +61,19 @@ std::shared_ptr<const OsmAnd::ResourcesManager::Resource> OsmAnd::ResourcesManag
     return _p->getLocalResource(id);
 }
 
-bool OsmAnd::ResourcesManager::reloadRepository() const
+bool OsmAnd::ResourcesManager::isLocalResource(const QString& id) const
 {
-    return _p->reloadRepository();
+    return _p->isLocalResource(id);
+}
+
+bool OsmAnd::ResourcesManager::isRepositoryAvailable() const
+{
+    return _p->isRepositoryAvailable();
+}
+
+bool OsmAnd::ResourcesManager::updateRepository() const
+{
+    return _p->updateRepository();
 }
 
 QList< std::shared_ptr<const OsmAnd::ResourcesManager::Resource> > OsmAnd::ResourcesManager::getResourcesInRepository() const
@@ -70,11 +86,11 @@ std::shared_ptr<const OsmAnd::ResourcesManager::Resource> OsmAnd::ResourcesManag
     return _p->getResourceInRepository(id);
 }
 
-//bool OsmAnd::ResourcesManager::isResourceInstalled(const QString& name) const
-//{
-//    return _p->isResourceInstalled(name);
-//}
-//
+bool OsmAnd::ResourcesManager::isResourceInRepository(const QString& id) const
+{
+    return _p->isResourceInRepository(id);
+}
+
 //bool OsmAnd::ResourcesManager::uninstallResource(const QString& name)
 //{
 //    return _p->uninstallResource(name);

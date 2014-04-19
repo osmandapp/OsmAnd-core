@@ -10,6 +10,7 @@
 #include <QString>
 #include <QReadWriteLock>
 #include <QFileSystemWatcher>
+#include <QXmlStreamReader>
 
 #include "OsmAndCore.h"
 #include "PrivateImplementation.h"
@@ -55,6 +56,8 @@ namespace OsmAnd
 
         mutable QReadWriteLock _resourcesInRepositoryLock;
         mutable QHash< QString, std::shared_ptr<const Resource> > _resourcesInRepository;
+        mutable bool _resourcesInRepositoryLoaded;
+        bool parseRepository(QXmlStreamReader& xmlReader, QList< std::shared_ptr<const Resource> >& repository) const;
 
         mutable WebClient _webClient;
         /*
@@ -83,6 +86,7 @@ namespace OsmAnd
         ResourcesManager_P(ResourcesManager* owner);
 
         void initialize();
+        void loadRepositoryFromCache();
     public:
         virtual ~ResourcesManager_P();
 
@@ -91,16 +95,20 @@ namespace OsmAnd
         // Built-in resources:
         QList< std::shared_ptr<const Resource> > getBuiltInResources() const;
         std::shared_ptr<const Resource> getBuiltInResource(const QString& id) const;
+        bool isBuiltInResource(const QString& id) const;
 
         // Local resources:
         bool rescanLocalStoragePaths() const;
         QList< std::shared_ptr<const Resource> > getLocalResources() const;
         std::shared_ptr<const Resource> getLocalResource(const QString& id) const;
+        bool isLocalResource(const QString& id) const;
 
         // Resources in repository:
-        bool reloadRepository() const;
+        bool isRepositoryAvailable() const;
+        bool updateRepository() const;
         QList< std::shared_ptr<const Resource> > getResourcesInRepository() const;
         std::shared_ptr<const Resource> getResourceInRepository(const QString& id) const;
+        bool isResourceInRepository(const QString& id) const;
 
         //// Install / Uninstall:
         //bool isResourceInstalled(const QString& name) const;

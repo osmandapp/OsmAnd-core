@@ -222,19 +222,23 @@ namespace OsmAnd
         // Built-in resources:
         QList< std::shared_ptr<const Resource> > getBuiltInResources() const;
         std::shared_ptr<const Resource> getBuiltInResource(const QString& id) const;
+        bool isBuiltInResource(const QString& id) const;
 
         // Local resources:
         bool rescanLocalStoragePaths() const;
         QList< std::shared_ptr<const Resource> > getLocalResources() const;
         std::shared_ptr<const Resource> getLocalResource(const QString& id) const;
+        bool isLocalResource(const QString& id) const;
 
         // Resources in repository:
-        bool reloadRepository() const;
+        bool isRepositoryAvailable() const;
+        bool updateRepository() const;
         QList< std::shared_ptr<const Resource> > getResourcesInRepository() const;
         std::shared_ptr<const Resource> getResourceInRepository(const QString& id) const;
+        bool isResourceInRepository(const QString& id) const;
+
         /*
         // Install / Uninstall:
-        bool isResourceInstalled(const QString& name) const;
         bool uninstallResource(const QString& name);
         bool installFromFile(const QString& filePath, const ResourceType resourceType);
         bool installFromFile(const QString& name, const QString& filePath, const ResourceType resourceType);

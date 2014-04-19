@@ -20,6 +20,7 @@
 OsmAnd::ResourcesManager_P::ResourcesManager_P(ResourcesManager* owner_)
     : owner(owner_)
     , _fileSystemWatcher(new QFileSystemWatcher())
+    , _resourcesInRepositoryLoaded(false)
     , obfsCollection(new ObfsCollection(this))
 {
     _fileSystemWatcher->moveToThread(gMainThread);
@@ -103,6 +104,11 @@ std::shared_ptr<const OsmAnd::ResourcesManager_P::Resource> OsmAnd::ResourcesMan
     if(citResource == _builtinResources.cend())
         return nullptr;
     return *citResource;
+}
+
+bool OsmAnd::ResourcesManager_P::isBuiltInResource(const QString& id) const
+{
+    return _builtinResources.contains(id);
 }
 
 bool OsmAnd::ResourcesManager_P::rescanLocalStoragePaths() const
@@ -268,21 +274,16 @@ std::shared_ptr<const OsmAnd::ResourcesManager::Resource> OsmAnd::ResourcesManag
     return *citResource;
 }
 
-bool OsmAnd::ResourcesManager_P::reloadRepository() const
+bool OsmAnd::ResourcesManager_P::isLocalResource(const QString& id) const
 {
-    QWriteLocker scopedLocker(&_resourcesInRepositoryLock);
+    QReadLocker scopedLocker(&_localResourcesLock);
 
-    // Download content of the index
-    std::shared_ptr<const WebClient::RequestResult> requestResult;
-    const auto& downloadResult = _webClient.downloadData(QUrl(owner->repositoryBaseUrl + QLatin1String("/get_indexes.php")), &requestResult);
-    if(downloadResult.isNull() || !requestResult->isSuccessful())
-        return false;
+    return _localResources.contains(id);
+}
 
-    QList< std::shared_ptr<const Resource> > resources;
-
-    // Parse XML
+bool OsmAnd::ResourcesManager_P::parseRepository(QXmlStreamReader& xmlReader, QList< std::shared_ptr<const Resource> >& repository) const
+{
     bool ok = false;
-    QXmlStreamReader xmlReader(downloadResult);
     while(!xmlReader.atEnd() && !xmlReader.hasError())
     {
         xmlReader.readNext();
@@ -306,7 +307,7 @@ bool OsmAnd::ResourcesManager_P::reloadRepository() const
         const auto& contentSizeValue = attribs.value(QLatin1String("contentSize"));
         if(contentSizeValue.isNull())
             continue;
-        
+
         const auto name = nameValue.toString();
 
         auto resourceType = ResourceType::Unknown;
@@ -350,7 +351,7 @@ bool OsmAnd::ResourcesManager_P::reloadRepository() const
             QString(name).replace(QLatin1String(".zip"), QString()),
             resourceType,
             resourceOrigin));
-        resources.push_back(qMove(resource));
+        repository.push_back(qMove(resource));
     }
     if(xmlReader.hasError())
     {
@@ -358,10 +359,65 @@ bool OsmAnd::ResourcesManager_P::reloadRepository() const
         return false;
     }
 
-    // Save result
+    return true;
+}
+
+void OsmAnd::ResourcesManager_P::loadRepositoryFromCache()
+{
+    QWriteLocker scopedLocker(&_resourcesInRepositoryLock);
+
+    QList< std::shared_ptr<const Resource> > resources;
+    QFile repositoryCache(QDir(owner->localStoragePath).absoluteFilePath("repository.cache.xml"));
+    bool ok = false;
+    if(repositoryCache.open(QIODevice::ReadOnly | QIODevice::Text))
+        ok = parseRepository(QXmlStreamReader(&repositoryCache), resources);
+    repositoryCache.close();
+    if(!ok)
+        return;
+
     _resourcesInRepository.clear();
     for(auto& entry : resources)
         _resourcesInRepository.insert(entry->id, qMove(entry));
+    _resourcesInRepositoryLoaded = true;
+}
+
+bool OsmAnd::ResourcesManager_P::isRepositoryAvailable() const
+{
+    return _resourcesInRepositoryLoaded;
+}
+
+bool OsmAnd::ResourcesManager_P::updateRepository() const
+{
+    QWriteLocker scopedLocker(&_resourcesInRepositoryLock);
+
+    // Download content of the index
+    std::shared_ptr<const WebClient::RequestResult> requestResult;
+    const auto& downloadResult = _webClient.downloadData(QUrl(owner->repositoryBaseUrl + QLatin1String("/get_indexes.php")), &requestResult);
+    if(downloadResult.isNull() || !requestResult->isSuccessful())
+        return false;
+
+    // Parse XML
+    QList< std::shared_ptr<const Resource> > resources;
+    bool ok = parseRepository(QXmlStreamReader(downloadResult), resources);
+    if(!ok)
+        return false;
+
+    // Save repository locally
+    QFile repositoryCache(QDir(owner->localStoragePath).absoluteFilePath("repository.cache.xml"));
+    if(repositoryCache.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
+    {
+        ok = repositoryCache.write(downloadResult);
+        ok = repositoryCache.flush() && ok;
+        repositoryCache.close();
+        if(!ok)
+            repositoryCache.remove();
+    }
+
+    // Update repository in memory
+    _resourcesInRepository.clear();
+    for(auto& entry : resources)
+        _resourcesInRepository.insert(entry->id, qMove(entry));
+    _resourcesInRepositoryLoaded = true;
     
     return true;
 }
@@ -381,6 +437,13 @@ std::shared_ptr<const OsmAnd::ResourcesManager::Resource> OsmAnd::ResourcesManag
     if(citResource == _resourcesInRepository.cend())
         return nullptr;
     return *citResource;
+}
+
+bool OsmAnd::ResourcesManager_P::isResourceInRepository(const QString& id) const
+{
+    QReadLocker scopedLocker(&_resourcesInRepositoryLock);
+
+    return _resourcesInRepository.contains(id);
 }
 
 //bool OsmAnd::ResourcesManager_P::isResourceInstalled(const QString& name) const
