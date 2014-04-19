@@ -5,6 +5,7 @@
 
 #include "QtExtensions.h"
 #include <QList>
+#include <QString>
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
