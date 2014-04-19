@@ -219,7 +219,7 @@ else()
 	#cmakedefine HAVE_STRUCT_TM_TM_GMTOFF 1
 	#cmakedefine HAVE_STRUCT_TM___TM_GMTOFF 1
 	check_function_exists("symlink" HAVE_SYMLINK)
-	check_include_file("sys/acl.h" HAVE_STRING_H)
+	check_include_file("sys/acl.h" HAVE_SYS_ACL_H)
 	check_include_file("sys/cdefs.h" HAVE_SYS_CDEFS_H)
 	check_symbol_exists("DIR" "sys/dir.h" HAVE_SYS_DIR_H)
 	check_include_file("sys/ea.h" HAVE_SYS_EA_H)
