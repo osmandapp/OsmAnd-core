@@ -4,6 +4,106 @@ set(target_specific_sources "")
 set(target_specific_public_libraries "")
 set(target_specific_private_definitions "")
 
+if(CMAKE_COMPILER_FAMILY STREQUAL "msvc")
+	configure_file("upstream.patched/port/cpl_config.h.vc" "${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h" COPYONLY)
+else()
+	include(CheckIncludeFile)
+	include(CheckIncludeFiles)
+	include(CheckFunctionExists)
+	include(CheckSymbolExists)
+	include(CheckLibraryExists)
+	include(CheckTypeSize)
+	include(TestBigEndian)
+	
+	set(CPL_MULTIPROC_PTHREAD ON)
+	set(HAVE_PTHREAD_MUTEX_RECURSIVE ON)
+	
+	check_include_file("assert.h" HAVE_ASSERT_H)
+	check_function_exists("atoll" HAVE_ATOLL)
+	check_include_file("csf.h" HAVE_CSF_H)
+	check_include_file("dbmalloc.h" HAVE_DBMALLOC_H)
+	check_include_file("direct.h" HAVE_DIRECT_H)
+	check_include_file("dlfcn.h" HAVE_DLFCN_H)
+	check_function_exists("_doprnt" HAVE_DOPRNT)
+	check_include_file("errno.h" HAVE_ERRNO_H)
+	check_include_file("fcntl.h" HAVE_FCNTL_H)
+	check_include_file("float.h" HAVE_FLOAT_H)
+	check_function_exists("getcwd" HAVE_GETCWD)
+	check_function_exists("iconv" HAVE_ICONV)
+	set(HAVE_IEEEFP ON)
+	check_type_size("int8" SIZEOF_INT8)
+	if(SIZEOF_INT8)
+		set(HAVE_INT8 ON)
+	else()
+		set(HAVE_INT8 OFF)
+	endif()
+	check_type_size("int16" SIZEOF_INT16)
+	if(SIZEOF_INT16)
+		set(HAVE_INT16 ON)
+	else()
+		set(HAVE_INT16 OFF)
+	endif()
+	check_type_size("int32" SIZEOF_INT32)
+	if(SIZEOF_INT32)
+		set(HAVE_INT32 ON)
+	else()
+		set(HAVE_INT32 OFF)
+	endif()
+	check_include_file("inttypes.h" HAVE_INTTYPES_H)
+	check_include_file("jpeglib.h" HAVE_JPEGLIB_H)
+	check_library_exists("dl" "dlopen" "" HAVE_LIBDL)
+	check_library_exists("m" "sin" "" HAVE_LIBM)
+	set(HAVE_LIBPQ NO)
+	check_library_exists("rt" "fork" "" HAVE_LIBRT)
+	check_include_file("limits.h" HAVE_LIMITS_H)
+	check_include_file("locale.h" HAVE_LOCALE_H)
+	check_type_size("long long" SIZEOF_LONG_LONG)
+	if(SIZEOF_LONG_LONG)
+		set(HAVE_LONG_LONG ON)
+	else()
+		set(HAVE_LONG_LONG OFF)
+	endif()
+	check_include_file("memory.h" HAVE_MEMORY_H)
+	check_include_file("png.h" HAVE_PNG_H)
+	check_function_exists("snprintf" HAVE_SNPRINTF)
+	check_include_file("stdint.h" HAVE_STDINT_H)
+	check_include_file("stdlib.h" HAVE_STDLIB_H)
+	check_include_file("strings.h" HAVE_STRINGS_H)
+	check_include_file("string.h" HAVE_STRING_H)
+	check_function_exists("strtof" HAVE_STRTOF)
+	check_include_file("sys/stat.h" HAVE_SYS_STAT_H)
+	check_include_file("sys/types.h" HAVE_SYS_TYPES_H)
+	check_include_file("unistd.h" HAVE_UNISTD_H)
+	check_include_file("values.h" HAVE_VALUES_H)
+	check_function_exists("vprintf" HAVE_VPRINTF)
+	check_function_exists("vsnprintf" HAVE_VSNPRINTF)
+	check_function_exists("readlink" HAVE_READLINK)
+	check_function_exists("posix_spawnp" HAVE_POSIX_SPAWNP)
+	check_function_exists("vfork" HAVE_VFORK)
+	check_function_exists("lstat" HAVE_LSTAT)
+	set(ICONV_CONST OFF)
+	set(ICONV_CPP_CONST OFF)
+	set(LT_OBJDIR OFF)
+	set(MACOSX_FRAMEWORK OFF)
+	check_type_size("int" SIZEOF_INT)
+	check_type_size("long" SIZEOF_LONG)
+	check_type_size("unsigned long" SIZEOF_UNSIGNED_LONG)
+	check_type_size("void*" SIZEOF_VOIDP)
+	check_include_files("stdlib.h;stdarg.h;string.h;float.h" STDC_HEADERS)
+	check_function_exists("fseek64" UNIX_STDIO_64)
+	set(USE_GCC_VISIBILITY_FLAG ON)
+	set(HAVE_GCC_ATOMIC_BUILTINS OFF)
+	test_big_endian(WORDS_BIGENDIAN)
+	if(WORDS_BIGENDIAN)
+		set(HOST_FILLORDER "FILLORDER_MSB2LSB")
+	else()
+		set(HOST_FILLORDER "FILLORDER_LSB2MSB")
+	endif()
+	check_function_exists("getaddrinfo" HAVE_GETADDRINFO)
+
+	configure_file("cpl_config.h.in" "${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h")
+endif()
+
 # Target specific
 if(CMAKE_TARGET_OS STREQUAL "windows")
 	set(target_specific_sources ${target_specific_sources}
@@ -112,6 +212,7 @@ add_dependencies(gdal_static
 
 target_compile_definitions(gdal_static
 	PRIVATE
+		-DHAVE_LIBZ=1
 		-DFRMT_gtiff
 		${target_specific_private_definitions}
 	PUBLIC
@@ -124,8 +225,8 @@ target_include_directories(gdal_static
 		"upstream.patched/frmts/gtiff/libgeotiff"
 		"upstream.patched/ogr/ogrsf_frmts"
 		"upstream.patched/ogr/ogrsf_frmts/mem"
+		"${CMAKE_CURRENT_BINARY_DIR}"
 	PUBLIC
-		"."
 		"upstream.patched/gcore"
 		"upstream.patched/ogr"
 		"upstream.patched/alg"

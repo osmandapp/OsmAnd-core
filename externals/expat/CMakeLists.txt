@@ -1,6 +1,5 @@
 project(expat)
 
-
 # Modified content from 'ConfigureChecks.cmake':
 include(CheckIncludeFile)
 include(CheckIncludeFiles)
