@@ -234,12 +234,12 @@ target_include_directories(gdal_static
 		"upstream.patched/frmts/gtiff/libgeotiff"
 		"upstream.patched/ogr/ogrsf_frmts"
 		"upstream.patched/ogr/ogrsf_frmts/mem"
-		"${CMAKE_CURRENT_BINARY_DIR}"
 	PUBLIC
 		"upstream.patched/gcore"
 		"upstream.patched/ogr"
 		"upstream.patched/alg"
 		"upstream.patched/port"
+		"${CMAKE_CURRENT_BINARY_DIR}"
 )
 target_link_libraries(gdal_static
 	LINK_PUBLIC
