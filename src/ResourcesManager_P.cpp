@@ -705,7 +705,7 @@ bool OsmAnd::ResourcesManager_P::isInstalledResourceOutdated(const QString& id) 
     const bool outdated = (installedOrigin->timestamp < repositoryOrigin->timestamp);
     if(!outdated && (installedOrigin->timestamp > repositoryOrigin->timestamp))
     {
-        LogPrintf(LogSeverityLevel::Warning, "Installed resource '%s' is newer than in repository (" PRIu64 " > " PRIu64 ")",
+        LogPrintf(LogSeverityLevel::Warning, "Installed resource '%s' is newer than in repository (%" PRIu64 " > %" PRIu64 ")",
             qPrintable(id),
             installedOrigin->timestamp,
             repositoryOrigin->timestamp);
@@ -734,7 +734,7 @@ QList<QString> OsmAnd::ResourcesManager_P::getOutdatedInstalledResources() const
         const bool outdated = (installedOrigin->timestamp < repositoryOrigin->timestamp);
         if(!outdated && (installedOrigin->timestamp > repositoryOrigin->timestamp))
         {
-            LogPrintf(LogSeverityLevel::Warning, "Installed resource '%s' is newer than in repository (" PRIu64 " > " PRIu64 ")",
+            LogPrintf(LogSeverityLevel::Warning, "Installed resource '%s' is newer than in repository (%" PRIu64 " > %" PRIu64 ")",
                 qPrintable(localResource->id),
                 installedOrigin->timestamp,
                 repositoryOrigin->timestamp);
