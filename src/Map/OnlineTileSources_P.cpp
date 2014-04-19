@@ -13,7 +13,7 @@ OsmAnd::OnlineTileSources_P::~OnlineTileSources_P()
 {
 }
 
-bool OsmAnd::OnlineTileSources_P::loadFrom(QXmlStreamReader& xmlReader)
+bool OsmAnd::OnlineTileSources_P::deserializeFrom(QXmlStreamReader& xmlReader)
 {
     QHash< QString, std::shared_ptr<Source> > collection;
 
@@ -69,7 +69,7 @@ bool OsmAnd::OnlineTileSources_P::loadFrom(QXmlStreamReader& xmlReader)
     return true;
 }
 
-bool OsmAnd::OnlineTileSources_P::saveTo(QXmlStreamWriter& xmlWriter) const
+bool OsmAnd::OnlineTileSources_P::serializeTo(QXmlStreamWriter& xmlWriter) const
 {
     assert(false);
     return false;
@@ -77,17 +77,20 @@ bool OsmAnd::OnlineTileSources_P::saveTo(QXmlStreamWriter& xmlWriter) const
 
 bool OsmAnd::OnlineTileSources_P::loadFrom(const QByteArray& content)
 {
-    return loadFrom(QXmlStreamReader(content));
+    QXmlStreamReader xmlReader(content);
+    return deserializeFrom(xmlReader);
 }
 
 bool OsmAnd::OnlineTileSources_P::loadFrom(QIODevice& ioDevice)
 {
-    return loadFrom(QXmlStreamReader(&ioDevice));
+    QXmlStreamReader xmlReader(&ioDevice);
+    return deserializeFrom(xmlReader);
 }
 
 bool OsmAnd::OnlineTileSources_P::saveTo(QIODevice& ioDevice) const
 {
-    return saveTo(QXmlStreamWriter(&ioDevice));
+    QXmlStreamWriter xmlWriter(&ioDevice);
+    return serializeTo(xmlWriter);
 }
 
 QList< std::shared_ptr<OsmAnd::OnlineTileSources_P::Source> > OsmAnd::OnlineTileSources_P::getCollection() const
