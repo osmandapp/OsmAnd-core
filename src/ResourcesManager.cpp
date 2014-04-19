@@ -91,26 +91,31 @@ bool OsmAnd::ResourcesManager::isResourceInRepository(const QString& id) const
     return _p->isResourceInRepository(id);
 }
 
-//bool OsmAnd::ResourcesManager::uninstallResource(const QString& name)
-//{
-//    return _p->uninstallResource(name);
-//}
-//
-//bool OsmAnd::ResourcesManager::installFromFile(const QString& filePath, const ResourceType resourceType)
-//{
-//    return _p->installFromFile(filePath, resourceType);
-//}
-//
-//bool OsmAnd::ResourcesManager::installFromFile(const QString& name, const QString& filePath, const ResourceType resourceType)
-//{
-//    return _p->installFromFile(name, filePath, resourceType);
-//}
-//
-//bool OsmAnd::ResourcesManager::installFromRepository(const QString& name, const WebClient::RequestProgressCallbackSignature downloadProgressCallback /*= nullptr*/)
-//{
-//    return _p->installFromRepository(name, downloadProgressCallback);
-//}
-//
+bool OsmAnd::ResourcesManager::isResourceInstalled(const QString& id) const
+{
+    return _p->isResourceInstalled(id);
+}
+
+bool OsmAnd::ResourcesManager::uninstallResource(const QString& id)
+{
+    return _p->uninstallResource(id);
+}
+
+bool OsmAnd::ResourcesManager::installFromFile(const QString& filePath, const ResourceType resourceType)
+{
+    return _p->installFromFile(filePath, resourceType);
+}
+
+bool OsmAnd::ResourcesManager::installFromFile(const QString& id, const QString& filePath, const ResourceType resourceType)
+{
+    return _p->installFromFile(id, filePath, resourceType);
+}
+
+bool OsmAnd::ResourcesManager::installFromRepository(const QString& id, const WebClient::RequestProgressCallbackSignature downloadProgressCallback /*= nullptr*/)
+{
+    return _p->installFromRepository(id, downloadProgressCallback);
+}
+
 //bool OsmAnd::ResourcesManager::updateAvailableInRepositoryFor(const QString& name) const
 //{
 //    return _p->updateAvailableInRepositoryFor(name);

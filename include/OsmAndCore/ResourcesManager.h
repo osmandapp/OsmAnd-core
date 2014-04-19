@@ -237,13 +237,13 @@ namespace OsmAnd
         std::shared_ptr<const Resource> getResourceInRepository(const QString& id) const;
         bool isResourceInRepository(const QString& id) const;
 
-        /*
         // Install / Uninstall:
-        bool uninstallResource(const QString& name);
+        bool isResourceInstalled(const QString& id) const;
+        bool uninstallResource(const QString& id);
         bool installFromFile(const QString& filePath, const ResourceType resourceType);
-        bool installFromFile(const QString& name, const QString& filePath, const ResourceType resourceType);
-        bool installFromRepository(const QString& name, const WebClient::RequestProgressCallbackSignature downloadProgressCallback = nullptr);
-
+        bool installFromFile(const QString& id, const QString& filePath, const ResourceType resourceType);
+        bool installFromRepository(const QString& id, const WebClient::RequestProgressCallbackSignature downloadProgressCallback = nullptr);
+        /*
         // Updates:
         bool updateAvailableInRepositoryFor(const QString& name) const;
         QList<QString> getAvailableUpdatesFromRepository() const;

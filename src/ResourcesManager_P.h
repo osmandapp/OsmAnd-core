@@ -60,12 +60,12 @@ namespace OsmAnd
         bool parseRepository(QXmlStreamReader& xmlReader, QList< std::shared_ptr<const Resource> >& repository) const;
 
         mutable WebClient _webClient;
-        /*
-        bool uninstallMapRegion(const std::shared_ptr<const LocalResource>& localResource);
-        bool uninstallVoicePack(const std::shared_ptr<const LocalResource>& localResource);
 
-        bool installMapRegionFromFile(const QString& name, const QString& filePath);
-        bool installVoicePackFromFile(const QString& name, const QString& filePath);*/
+        bool uninstallMapRegion(const std::shared_ptr<const Resource>& resource);
+        bool uninstallVoicePack(const std::shared_ptr<const Resource>& resource);
+
+        bool installMapRegionFromFile(const QString& id, const QString& filePath);
+        bool installVoicePackFromFile(const QString& id, const QString& filePath);
 
         class ObfsCollection : public IObfsCollection
         {
@@ -110,12 +110,12 @@ namespace OsmAnd
         std::shared_ptr<const Resource> getResourceInRepository(const QString& id) const;
         bool isResourceInRepository(const QString& id) const;
 
-        //// Install / Uninstall:
-        //bool isResourceInstalled(const QString& name) const;
-        //bool uninstallResource(const QString& name);
-        //bool installFromFile(const QString& filePath, const ResourceType resourceType);
-        //bool installFromFile(const QString& name, const QString& filePath, const ResourceType resourceType);
-        //bool installFromRepository(const QString& name, const WebClient::RequestProgressCallbackSignature downloadProgressCallback);
+        // Install / Uninstall:
+        bool isResourceInstalled(const QString& id) const;
+        bool uninstallResource(const QString& id);
+        bool installFromFile(const QString& filePath, const ResourceType resourceType);
+        bool installFromFile(const QString& id, const QString& filePath, const ResourceType resourceType);
+        bool installFromRepository(const QString& id, const WebClient::RequestProgressCallbackSignature downloadProgressCallback);
 
         //// Updates:
         //bool updateAvailableInRepositoryFor(const QString& name) const;

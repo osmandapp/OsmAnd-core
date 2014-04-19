@@ -446,217 +446,245 @@ bool OsmAnd::ResourcesManager_P::isResourceInRepository(const QString& id) const
     return _resourcesInRepository.contains(id);
 }
 
-//bool OsmAnd::ResourcesManager_P::isResourceInstalled(const QString& name) const
-//{
-//    QReadLocker scopedLocker(&_localResourcesLock);
-//
-//    return (_localResources.constFind(name) != _localResources.cend());
-//}
-//
-//bool OsmAnd::ResourcesManager_P::uninstallResource(const QString& name)
-//{
-//    QWriteLocker scopedLocker(&_localResourcesLock);
-//
-//    const auto itResource = _localResources.find(name);
-//    if(itResource == _localResources.end())
-//        return false;
-//
-//    const auto& resource = *itResource;
-//    bool success;
-//    switch(resource->type)
-//    {
-//        case ResourceType::MapRegion:
-//            success = uninstallMapRegion(resource);
-//            break;
-//        case ResourceType::VoicePack:
-//            success = uninstallVoicePack(resource);
-//            break;
-//        default:
-//            return false;
-//    }
-//    if(!success)
-//        return false;
-//
-//    _localResources.erase(itResource);
-//    owner->localResourcesChangeObservable.notify(owner);
-//
-//    return true;
-//}
-//
-//bool OsmAnd::ResourcesManager_P::uninstallMapRegion(const std::shared_ptr<const LocalResource>& localResource_)
-//{
-//    const auto& localResource = std::dynamic_pointer_cast<const LocalObfResource>(localResource_);
-//
-//    // This lock will never be released
-//    localResource->obfFile->lockForWriting();
-//
-//    return QFile(localResource->localPath).remove();
-//}
-//
-//bool OsmAnd::ResourcesManager_P::uninstallVoicePack(const std::shared_ptr<const LocalResource>& localResource)
-//{
-//    return QDir(localResource->localPath).removeRecursively();
-//}
-//
-//bool OsmAnd::ResourcesManager_P::installFromFile(const QString& filePath, const ResourceType resourceType)
-//{
-//    const auto guessedResourceName = QFileInfo(filePath).fileName().replace(QLatin1String(".zip"), QString());
-//    return installFromFile(guessedResourceName, filePath, resourceType);
-//}
-//
-//bool OsmAnd::ResourcesManager_P::installFromFile(const QString& name, const QString& filePath, const ResourceType resourceType)
-//{
-//    QWriteLocker scopedLocker(&_localResourcesLock);
-//
-//    const auto itResource = _localResources.find(name);
-//    if(itResource != _localResources.end())
-//        return false;
-//
-//    bool ok = false;
-//    switch(resourceType)
-//    {
-//    case ResourceType::MapRegion:
-//        ok = installMapRegionFromFile(name, filePath);
-//        break;
-//    case ResourceType::VoicePack:
-//        ok = installVoicePackFromFile(name, filePath);
-//        break;
-//    }
-//    if(ok)
-//        owner->localResourcesChangeObservable.notify(owner);
-//
-//    return ok;
-//}
-//
-//bool OsmAnd::ResourcesManager_P::installMapRegionFromFile(const QString& name, const QString& filePath)
-//{
-//    ArchiveReader archive(filePath);
-//
-//    // List items
-//    bool ok = false;
-//    const auto archiveItems = archive.getItems(&ok);
-//    if(!ok)
-//        return false;
-//
-//    // Find the OBF file
-//    ArchiveReader::Item obfArchiveItem;
-//    for(const auto& archiveItem : constOf(archiveItems))
-//    {
-//        if(!archiveItem.isValid() || !archiveItem.name.endsWith(QLatin1String(".obf")))
-//            continue;
-//
-//        obfArchiveItem = archiveItem;
-//        break;
-//    }
-//    if(!obfArchiveItem.isValid())
-//        return false;
-//
-//    // Extract that file without keeping directory structure
-//    const auto localFileName = QDir(owner->localStoragePath).absoluteFilePath(name);
-//    if(!archive.extractItemToFile(obfArchiveItem.name, localFileName))
-//        return false;
-//
-//    // Read information from OBF
-//    const std::shared_ptr<const ObfFile> obfFile(new ObfFile(localFileName));
-//    if(!ObfReader(obfFile).obtainInfo())
-//    {
-//        LogPrintf(LogSeverityLevel::Warning, "Failed to open '%s'", qPrintable(localFileName));
-//        QFile(filePath).remove();
-//        return false;
-//    }
-//
-//    // Create local resource entry
-//    std::shared_ptr<LocalResource> localResource(new LocalObfResource(
-//        name,
-//        ResourceType::MapRegion,
-//        obfFile));
-//    _localResources.insert(name, qMove(localResource));
-//
-//    return true;
-//}
-//
-//bool OsmAnd::ResourcesManager_P::installVoicePackFromFile(const QString& name, const QString& filePath)
-//{
-//    ArchiveReader archive(filePath);
-//
-//    // List items
-//    bool ok = false;
-//    const auto archiveItems = archive.getItems(&ok);
-//    if(!ok)
-//        return false;
-//
-//    // Verify voice pack
-//    ArchiveReader::Item voicePackConfigItem;
-//    for(const auto& archiveItem : constOf(archiveItems))
-//    {
-//        if(!archiveItem.isValid() || archiveItem.name != QLatin1String("_config.p"))
-//            continue;
-//
-//        voicePackConfigItem = archiveItem;
-//        break;
-//    }
-//    if(!voicePackConfigItem.isValid())
-//        return false;
-//
-//    // Extract all files to local directory
-//    const auto localDirectoryName = QDir(owner->localStoragePath).absoluteFilePath(name);
-//    uint64_t contentSize = 0;
-//    if(!archive.extractAllItemsTo(localDirectoryName, &contentSize))
-//        return false;
-//
-//    // Create special timestamp file
-//    QFile timestampFile(QDir(localDirectoryName).absoluteFilePath(QLatin1String(".timestamp")));
-//    timestampFile.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text);
-//    QTextStream(&timestampFile) << voicePackConfigItem.modificationTime.toMSecsSinceEpoch();
-//    timestampFile.flush();
-//    timestampFile.close();
-//
-//    // Create special size file
-//    QFile sizeFile(QDir(localDirectoryName).absoluteFilePath(QLatin1String(".size")));
-//    sizeFile.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text);
-//    QTextStream(&sizeFile) << contentSize;
-//    sizeFile.flush();
-//    sizeFile.close();
-//
-//    // Create local resource entry
-//    std::shared_ptr<LocalResource> localResource(new LocalResource(
-//        name,
-//        ResourceType::VoicePack,
-//        voicePackConfigItem.modificationTime.toMSecsSinceEpoch(),
-//        contentSize,
-//        localDirectoryName));
-//    _localResources.insert(name, qMove(localResource));
-//
-//    return true;
-//}
-//
-//bool OsmAnd::ResourcesManager_P::installFromRepository(const QString& name, const WebClient::RequestProgressCallbackSignature downloadProgressCallback)
-//{
-//    if(isResourceInstalled(name))
-//        return false;
-//
-//    const auto& resource = getResourceInRepository(name);
-//    if(!resource)
-//        return false;
-//
-//    const auto tmpFilePath = QDir(owner->localTemporaryPath).absoluteFilePath(QString("%1.%2")
-//        .arg(QString(QCryptographicHash::hash(name.toLocal8Bit(), QCryptographicHash::Md5).toHex()))
-//        .arg(QDateTime::currentDateTimeUtc().toMSecsSinceEpoch()));
-//
-//    bool ok = _webClient.downloadFile(resource->containerDownloadUrl, tmpFilePath, nullptr, downloadProgressCallback);
-//    if(!ok)
-//        return false;
-//
-//    if(!installFromFile(name, tmpFilePath, resource->type))
-//    {
-//        QFile(tmpFilePath).remove();
-//        return false;
-//    }
-//
-//    QFile(tmpFilePath).remove();
-//    return true;
-//}
-//
+bool OsmAnd::ResourcesManager_P::isResourceInstalled(const QString& id) const
+{
+    QReadLocker scopedLocker(&_localResourcesLock);
+
+    const auto citResource = _localResources.constFind(id);
+    if(citResource == _localResources.cend())
+        return false;
+
+    const auto& resource = *citResource;
+
+    return (resource->origin->type == ResourceOriginType::Installed);
+}
+
+bool OsmAnd::ResourcesManager_P::uninstallResource(const QString& id)
+{
+    QWriteLocker scopedLocker(&_localResourcesLock);
+
+    const auto itResource = _localResources.find(id);
+    if(itResource == _localResources.end())
+        return false;
+
+    const auto& resource = *itResource;
+    if(resource->origin->type != ResourceOriginType::Installed)
+        return false;
+
+    bool success;
+    switch(resource->type)
+    {
+        case ResourceType::MapRegion:
+            success = uninstallMapRegion(resource);
+            break;
+        case ResourceType::VoicePack:
+            success = uninstallVoicePack(resource);
+            break;
+        default:
+            return false;
+    }
+    if(!success)
+        return false;
+
+    _localResources.erase(itResource);
+    owner->localResourcesChangeObservable.notify(owner);
+
+    return true;
+}
+
+bool OsmAnd::ResourcesManager_P::uninstallMapRegion(const std::shared_ptr<const Resource>& resource_)
+{
+    const auto& resource = std::dynamic_pointer_cast<const LocalObfResource>(resource_);
+    const auto& origin = std::dynamic_pointer_cast<const InstalledResourceOrigin>(resource_->origin);
+    if(!resource || !origin)
+        return false;
+
+    // This lock will never be released
+    resource->obfFile->lockForWriting();
+
+    return QFile(origin->localPath).remove();
+}
+
+bool OsmAnd::ResourcesManager_P::uninstallVoicePack(const std::shared_ptr<const Resource>& resource_)
+{
+    const auto& origin = std::dynamic_pointer_cast<const InstalledResourceOrigin>(resource_->origin);
+    if(!origin)
+        return false;
+
+    return QDir(origin->localPath).removeRecursively();
+}
+
+bool OsmAnd::ResourcesManager_P::installFromFile(const QString& filePath, const ResourceType resourceType)
+{
+    const auto guessedResourceName = QFileInfo(filePath).fileName().replace(QLatin1String(".zip"), QString());
+    return installFromFile(guessedResourceName, filePath, resourceType);
+}
+
+bool OsmAnd::ResourcesManager_P::installFromFile(const QString& id, const QString& filePath, const ResourceType resourceType)
+{
+    QWriteLocker scopedLocker(&_localResourcesLock);
+
+    const auto itResource = _localResources.find(id);
+    if(itResource != _localResources.end())
+        return false;
+
+    bool ok = false;
+    switch(resourceType)
+    {
+    case ResourceType::MapRegion:
+        ok = installMapRegionFromFile(id, filePath);
+        break;
+    case ResourceType::VoicePack:
+        ok = installVoicePackFromFile(id, filePath);
+        break;
+    }
+    if(ok)
+        owner->localResourcesChangeObservable.notify(owner);
+
+    return ok;
+}
+
+bool OsmAnd::ResourcesManager_P::installMapRegionFromFile(const QString& id, const QString& filePath)
+{
+    assert(id.endsWith(".obf"));
+
+    ArchiveReader archive(filePath);
+
+    // List items
+    bool ok = false;
+    const auto archiveItems = archive.getItems(&ok);
+    if(!ok)
+        return false;
+
+    // Find the OBF file
+    ArchiveReader::Item obfArchiveItem;
+    for(const auto& archiveItem : constOf(archiveItems))
+    {
+        if(!archiveItem.isValid() || !archiveItem.name.endsWith(QLatin1String(".obf")))
+            continue;
+
+        obfArchiveItem = archiveItem;
+        break;
+    }
+    if(!obfArchiveItem.isValid())
+        return false;
+
+    // Extract that file without keeping directory structure
+    const auto localFileName = QDir(owner->localStoragePath).absoluteFilePath(id);
+    if(!archive.extractItemToFile(obfArchiveItem.name, localFileName))
+        return false;
+
+    // Read information from OBF
+    const std::shared_ptr<const ObfFile> obfFile(new ObfFile(localFileName));
+    if(!ObfReader(obfFile).obtainInfo())
+    {
+        LogPrintf(LogSeverityLevel::Warning, "Failed to open '%s'", qPrintable(localFileName));
+        QFile(filePath).remove();
+        return false;
+    }
+
+    // Create local resource entry
+    std::shared_ptr<ResourceOrigin> resourceOrigin(new InstalledResourceOrigin(
+        filePath,
+        obfFile->fileSize,
+        obfFile->obfInfo->creationTimestamp));
+    std::shared_ptr<Resource> localResource(new LocalObfResource(
+        id,
+        ResourceType::MapRegion,
+        resourceOrigin,
+        obfFile));
+    _localResources.insert(id, qMove(localResource));
+
+    return true;
+}
+
+bool OsmAnd::ResourcesManager_P::installVoicePackFromFile(const QString& id, const QString& filePath)
+{
+    assert(id.endsWith(".voice"));
+
+    ArchiveReader archive(filePath);
+
+    // List items
+    bool ok = false;
+    const auto archiveItems = archive.getItems(&ok);
+    if(!ok)
+        return false;
+
+    // Verify voice pack
+    ArchiveReader::Item voicePackConfigItem;
+    for(const auto& archiveItem : constOf(archiveItems))
+    {
+        if(!archiveItem.isValid() || archiveItem.name != QLatin1String("_config.p"))
+            continue;
+
+        voicePackConfigItem = archiveItem;
+        break;
+    }
+    if(!voicePackConfigItem.isValid())
+        return false;
+
+    // Extract all files to local directory
+    const auto localDirectoryName = QDir(owner->localStoragePath).absoluteFilePath(id);
+    uint64_t contentSize = 0;
+    if(!archive.extractAllItemsTo(localDirectoryName, &contentSize))
+        return false;
+
+    // Create special timestamp file
+    QFile timestampFile(QDir(localDirectoryName).absoluteFilePath(QLatin1String(".timestamp")));
+    timestampFile.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text);
+    QTextStream(&timestampFile) << voicePackConfigItem.modificationTime.toMSecsSinceEpoch();
+    timestampFile.flush();
+    timestampFile.close();
+
+    // Create special size file
+    QFile sizeFile(QDir(localDirectoryName).absoluteFilePath(QLatin1String(".size")));
+    sizeFile.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text);
+    QTextStream(&sizeFile) << contentSize;
+    sizeFile.flush();
+    sizeFile.close();
+
+    // Create local resource entry
+    std::shared_ptr<ResourceOrigin> resourceOrigin(new InstalledResourceOrigin(
+        localDirectoryName,
+        contentSize,
+        voicePackConfigItem.modificationTime.toMSecsSinceEpoch()));
+    std::shared_ptr<Resource> localResource(new Resource(
+        id,
+        ResourceType::VoicePack,
+        resourceOrigin));
+    _localResources.insert(id, qMove(localResource));
+
+    return true;
+}
+
+bool OsmAnd::ResourcesManager_P::installFromRepository(const QString& id, const WebClient::RequestProgressCallbackSignature downloadProgressCallback)
+{
+    if(isResourceInstalled(id))
+        return false;
+
+    const auto& resourceInRepository = getResourceInRepository(id);
+    if(!resourceInRepository)
+        return false;
+    const auto& repositoryOrigin = std::dynamic_pointer_cast<const RepositoryResourceOrigin>(resourceInRepository->origin);
+
+    const auto tmpFilePath = QDir(owner->localTemporaryPath).absoluteFilePath(QString("%1.%2")
+        .arg(QString(QCryptographicHash::hash(id.toLocal8Bit(), QCryptographicHash::Md5).toHex()))
+        .arg(QDateTime::currentDateTimeUtc().toMSecsSinceEpoch()));
+
+    bool ok = _webClient.downloadFile(repositoryOrigin->url, tmpFilePath, nullptr, downloadProgressCallback);
+    if(!ok)
+        return false;
+
+    if(!installFromFile(id, tmpFilePath, resourceInRepository->type))
+    {
+        QFile(tmpFilePath).remove();
+        return false;
+    }
+
+    QFile(tmpFilePath).remove();
+    return true;
+}
+
 //bool OsmAnd::ResourcesManager_P::updateAvailableInRepositoryFor(const QString& name) const
 //{
 //    const auto& resourceInRepository = getResourceInRepository(name);
