@@ -14,8 +14,9 @@
     do {                                                                                                    \
         if (! (condition))                                                                                  \
         {                                                                                                   \
-            OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Assertion '" #condition "' failed in "      \
-                ( Q_FUNC_INFO )"(" __FILE__ ":" QT_STRINGIFY(__LINE__) ": %s", qPrintable(message));        \
+            OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Assertion '" QT_STRINGIFY(condition)        \
+                "' failed in " ( Q_FUNC_INFO )"(" __FILE__ ":" QT_STRINGIFY(__LINE__) ": %s",               \
+                qPrintable(message));                                                                       \
             assert((condition));                                                                            \
         }                                                                                                   \
     } while (false)
