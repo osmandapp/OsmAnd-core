@@ -1,6 +1,8 @@
 #include "MapStylesPresets_P.h"
 #include "MapStylesPresets.h"
 
+#include "Logging.h"
+
 OsmAnd::MapStylesPresets_P::MapStylesPresets_P(MapStylesPresets* const owner_)
     : owner(owner_)
 {
