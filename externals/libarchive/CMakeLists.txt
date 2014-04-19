@@ -1,7 +1,7 @@
 project(archive)
 
 if(CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
-	configure_file("expat_config.h.ios" "${CMAKE_CURRENT_BINARY_DIR}/expat_config.h" COPYONLY)
+	configure_file("config.h.ios" "${CMAKE_CURRENT_BINARY_DIR}/config.h" COPYONLY)
 else()
 	include(CheckIncludeFile)
 	include(CheckIncludeFiles)
