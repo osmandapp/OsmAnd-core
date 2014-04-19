@@ -243,14 +243,14 @@ namespace OsmAnd
         bool installFromFile(const QString& filePath, const ResourceType resourceType);
         bool installFromFile(const QString& id, const QString& filePath, const ResourceType resourceType);
         bool installFromRepository(const QString& id, const WebClient::RequestProgressCallbackSignature downloadProgressCallback = nullptr);
-        /*
+
         // Updates:
-        bool updateAvailableInRepositoryFor(const QString& name) const;
-        QList<QString> getAvailableUpdatesFromRepository() const;
+        bool isInstalledResourceOutdated(const QString& id) const;
+        QList<QString> getOutdatedInstalledResources() const;
         bool updateFromFile(const QString& filePath);
-        bool updateFromFile(const QString& name, const QString& filePath);
-        bool updateFromRepository(const QString& name, const WebClient::RequestProgressCallbackSignature downloadProgressCallback = nullptr);
-        */
+        bool updateFromFile(const QString& id, const QString& filePath);
+        bool updateFromRepository(const QString& id, const WebClient::RequestProgressCallbackSignature downloadProgressCallback = nullptr);
+
         // Observables
         OSMAND_CALLABLE(LocalResourcesChanged, void, const ResourcesManager* const resourcesManager);
         const Observable<const ResourcesManager* const /*resourcesManager*/> localResourcesChangeObservable;

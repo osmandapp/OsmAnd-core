@@ -117,12 +117,12 @@ namespace OsmAnd
         bool installFromFile(const QString& id, const QString& filePath, const ResourceType resourceType);
         bool installFromRepository(const QString& id, const WebClient::RequestProgressCallbackSignature downloadProgressCallback);
 
-        //// Updates:
-        //bool updateAvailableInRepositoryFor(const QString& name) const;
-        //QList<QString> getAvailableUpdatesFromRepository() const;
-        //bool updateFromFile(const QString& filePath);
-        //bool updateFromFile(const QString& name, const QString& filePath);
-        //bool updateFromRepository(const QString& name, const WebClient::RequestProgressCallbackSignature downloadProgressCallback);
+        // Updates:
+        bool isInstalledResourceOutdated(const QString& id) const;
+        QList<QString> getOutdatedInstalledResources() const;
+        bool updateFromFile(const QString& filePath);
+        bool updateFromFile(const QString& id, const QString& filePath);
+        bool updateFromRepository(const QString& id, const WebClient::RequestProgressCallbackSignature downloadProgressCallback);
 
         // OBFs collection
         const std::shared_ptr<const IObfsCollection> obfsCollection;

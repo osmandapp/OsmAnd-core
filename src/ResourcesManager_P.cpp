@@ -392,7 +392,7 @@ bool OsmAnd::ResourcesManager_P::updateRepository() const
 
     // Download content of the index
     std::shared_ptr<const WebClient::RequestResult> requestResult;
-    const auto& downloadResult = _webClient.downloadData(QUrl(owner->repositoryBaseUrl + QLatin1String("/get_indexes.php")), &requestResult);
+    const auto& downloadResult = WebClient().downloadData(QUrl(owner->repositoryBaseUrl + QLatin1String("/get_indexes.php")), &requestResult);
     if(downloadResult.isNull() || !requestResult->isSuccessful())
         return false;
 
@@ -666,6 +666,8 @@ bool OsmAnd::ResourcesManager_P::installFromRepository(const QString& id, const 
     if(!resourceInRepository)
         return false;
     const auto& repositoryOrigin = std::dynamic_pointer_cast<const RepositoryResourceOrigin>(resourceInRepository->origin);
+    if(!repositoryOrigin)
+        return false;
 
     const auto tmpFilePath = QDir(owner->localTemporaryPath).absoluteFilePath(QString("%1.%2")
         .arg(QString(QCryptographicHash::hash(id.toLocal8Bit(), QCryptographicHash::Md5).toHex()))
@@ -685,93 +687,129 @@ bool OsmAnd::ResourcesManager_P::installFromRepository(const QString& id, const 
     return true;
 }
 
-//bool OsmAnd::ResourcesManager_P::updateAvailableInRepositoryFor(const QString& name) const
-//{
-//    const auto& resourceInRepository = getResourceInRepository(name);
-//    if(!resourceInRepository)
-//        return false;
-//    const auto& localResource = getLocalResource(name);
-//    if(!localResource)
-//        return false;
-//
-//    return (localResource->timestamp < resourceInRepository->timestamp);
-//}
-//
-//QList<QString> OsmAnd::ResourcesManager_P::getAvailableUpdatesFromRepository() const
-//{
-//    QReadLocker scopedLocker(&_localResourcesLock);
-//
-//    QList<QString> resourcesWithUpdates;
-//    for(const auto& localResource : constOf(_localResources))
-//    {
-//        const auto& resourceInRepository = getResourceInRepository(localResource->name);
-//        if(!resourceInRepository)
-//            continue;
-//
-//        if(localResource->timestamp < resourceInRepository->timestamp)
-//            resourcesWithUpdates.push_back(localResource->name);
-//    }
-//
-//    return resourcesWithUpdates;
-//}
-//
-//bool OsmAnd::ResourcesManager_P::updateFromFile(const QString& filePath)
-//{
-//    return updateFromFile(QFileInfo(filePath).fileName().replace(QLatin1String(".zip"), QString()), filePath);
-//}
-//
-//bool OsmAnd::ResourcesManager_P::updateFromFile(const QString& name, const QString& filePath)
-//{
-//    QWriteLocker scopedLocker(&_localResourcesLock);
-//
-//    const auto itResource = _localResources.find(name);
-//    if(itResource != _localResources.end())
-//        return false;
-//    const auto localResource = *itResource;
-//
-//    bool ok = false;
-//    switch(localResource->type)
-//    {
-//    case ResourceType::MapRegion:
-//        if(!uninstallMapRegion(localResource))
-//            return false;
-//        ok = installMapRegionFromFile(localResource->name, filePath);
-//        break;
-//    case ResourceType::VoicePack:
-//        if(!uninstallVoicePack(localResource))
-//            return false;
-//        ok = installVoicePackFromFile(localResource->name, filePath);
-//        break;
-//    }
-//    if(ok)
-//        owner->localResourcesChangeObservable.notify(owner);
-//
-//    return ok;
-//}
-//
-//bool OsmAnd::ResourcesManager_P::updateFromRepository(const QString& name, const WebClient::RequestProgressCallbackSignature downloadProgressCallback)
-//{
-//    const auto& resource = getResourceInRepository(name);
-//    if(!resource)
-//        return false;
-//
-//    const auto tmpFilePath = QDir(owner->localTemporaryPath).absoluteFilePath(QString("%1.%2")
-//        .arg(QString(QCryptographicHash::hash(name.toLocal8Bit(), QCryptographicHash::Md5).toHex()))
-//        .arg(QDateTime::currentDateTimeUtc().toMSecsSinceEpoch()));
-//
-//    bool ok = _webClient.downloadFile(resource->containerDownloadUrl, tmpFilePath, nullptr, downloadProgressCallback);
-//    if(!ok)
-//        return false;
-//
-//    if(!updateFromFile(name, tmpFilePath))
-//    {
-//        QFile(tmpFilePath).remove();
-//        return false;
-//    }
-//
-//    QFile(tmpFilePath).remove();
-//    return true;
-//}
+bool OsmAnd::ResourcesManager_P::isInstalledResourceOutdated(const QString& id) const
+{
+    const auto& resourceInRepository = getResourceInRepository(id);
+    if(!resourceInRepository)
+        return false;
+    const auto& repositoryOrigin = std::dynamic_pointer_cast<const RepositoryResourceOrigin>(resourceInRepository->origin);
+    if(!repositoryOrigin)
+        return false;
+    const auto& localResource = getLocalResource(id);
+    if(!localResource)
+        return false;
+    const auto& installedOrigin = std::dynamic_pointer_cast<const InstalledResourceOrigin>(localResource->origin);
+    if(!installedOrigin)
+        return false;
+
+    const bool outdated = (installedOrigin->timestamp < repositoryOrigin->timestamp);
+    if(!outdated && (installedOrigin->timestamp > repositoryOrigin->timestamp))
+    {
+        LogPrintf(LogSeverityLevel::Warning, "Installed resource '%s' is newer than in repository (" PRIu64 " > " PRIu64 ")",
+            qPrintable(id),
+            installedOrigin->timestamp,
+            repositoryOrigin->timestamp);
+    }
+
+    return outdated;
+}
+
+QList<QString> OsmAnd::ResourcesManager_P::getOutdatedInstalledResources() const
+{
+    QReadLocker scopedLocker(&_localResourcesLock);
+
+    QList<QString> resourcesWithUpdates;
+    for(const auto& localResource : constOf(_localResources))
+    {
+        const auto& installedOrigin = std::dynamic_pointer_cast<const InstalledResourceOrigin>(localResource->origin);
+        if(!installedOrigin)
+            continue;
+        const auto& resourceInRepository = getResourceInRepository(localResource->id);
+        if(!resourceInRepository)
+            continue;
+        const auto& repositoryOrigin = std::dynamic_pointer_cast<const RepositoryResourceOrigin>(resourceInRepository->origin);
+        if(!repositoryOrigin)
+            continue;
+
+        const bool outdated = (installedOrigin->timestamp < repositoryOrigin->timestamp);
+        if(!outdated && (installedOrigin->timestamp > repositoryOrigin->timestamp))
+        {
+            LogPrintf(LogSeverityLevel::Warning, "Installed resource '%s' is newer than in repository (" PRIu64 " > " PRIu64 ")",
+                qPrintable(localResource->id),
+                installedOrigin->timestamp,
+                repositoryOrigin->timestamp);
+        }
+        if(outdated)
+            resourcesWithUpdates.push_back(localResource->id);
+    }
+
+    return resourcesWithUpdates;
+}
+
+bool OsmAnd::ResourcesManager_P::updateFromFile(const QString& filePath)
+{
+    const auto guessedResourceId = QFileInfo(filePath).fileName().replace(QLatin1String(".zip"), QString());
+    return updateFromFile(guessedResourceId, filePath);
+}
+
+bool OsmAnd::ResourcesManager_P::updateFromFile(const QString& id, const QString& filePath)
+{
+    QWriteLocker scopedLocker(&_localResourcesLock);
+
+    const auto itResource = _localResources.find(id);
+    if(itResource != _localResources.end())
+        return false;
+    const auto localResource = *itResource;
+    const auto& installedOrigin = std::dynamic_pointer_cast<const InstalledResourceOrigin>(localResource->origin);
+    if(!installedOrigin)
+        return false;
+
+    bool ok = false;
+    switch(localResource->type)
+    {
+    case ResourceType::MapRegion:
+        if(!uninstallMapRegion(localResource))
+            return false;
+        ok = installMapRegionFromFile(localResource->id, filePath);
+        break;
+    case ResourceType::VoicePack:
+        if(!uninstallVoicePack(localResource))
+            return false;
+        ok = installVoicePackFromFile(localResource->id, filePath);
+        break;
+    }
+    if(ok)
+        owner->localResourcesChangeObservable.notify(owner);
+
+    return ok;
+}
+
+bool OsmAnd::ResourcesManager_P::updateFromRepository(const QString& name, const WebClient::RequestProgressCallbackSignature downloadProgressCallback)
+{
+    const auto& resourceInRepository = getResourceInRepository(name);
+    if(!resourceInRepository)
+        return false;
+    const auto& repositoryOrigin = std::dynamic_pointer_cast<const RepositoryResourceOrigin>(resourceInRepository->origin);
+    if(!repositoryOrigin)
+        return false;
+
+    const auto tmpFilePath = QDir(owner->localTemporaryPath).absoluteFilePath(QString("%1.%2")
+        .arg(QString(QCryptographicHash::hash(name.toLocal8Bit(), QCryptographicHash::Md5).toHex()))
+        .arg(QDateTime::currentDateTimeUtc().toMSecsSinceEpoch()));
+
+    bool ok = _webClient.downloadFile(repositoryOrigin->url, tmpFilePath, nullptr, downloadProgressCallback);
+    if(!ok)
+        return false;
+
+    if(!updateFromFile(name, tmpFilePath))
+    {
+        QFile(tmpFilePath).remove();
+        return false;
+    }
+
+    QFile(tmpFilePath).remove();
+    return true;
+}
 
 OsmAnd::ResourcesManager_P::ObfsCollection::ObfsCollection(ResourcesManager_P* owner_)
     : owner(owner_)

@@ -116,30 +116,30 @@ bool OsmAnd::ResourcesManager::installFromRepository(const QString& id, const We
     return _p->installFromRepository(id, downloadProgressCallback);
 }
 
-//bool OsmAnd::ResourcesManager::updateAvailableInRepositoryFor(const QString& name) const
-//{
-//    return _p->updateAvailableInRepositoryFor(name);
-//}
-//
-//QList<QString> OsmAnd::ResourcesManager::getAvailableUpdatesFromRepository() const
-//{
-//    return _p->getAvailableUpdatesFromRepository();
-//}
-//
-//bool OsmAnd::ResourcesManager::updateFromFile(const QString& filePath)
-//{
-//    return _p->updateFromFile(filePath);
-//}
-//
-//bool OsmAnd::ResourcesManager::updateFromFile(const QString& name, const QString& filePath)
-//{
-//    return _p->updateFromFile(name, filePath);
-//}
-//
-//bool OsmAnd::ResourcesManager::updateFromRepository(const QString& name, const WebClient::RequestProgressCallbackSignature downloadProgressCallback /*= nullptr*/)
-//{
-//    return _p->updateFromRepository(name, downloadProgressCallback);
-//}
+bool OsmAnd::ResourcesManager::isInstalledResourceOutdated(const QString& id) const
+{
+    return _p->isInstalledResourceOutdated(id);
+}
+
+QList<QString> OsmAnd::ResourcesManager::getOutdatedInstalledResources() const
+{
+    return _p->getOutdatedInstalledResources();
+}
+
+bool OsmAnd::ResourcesManager::updateFromFile(const QString& filePath)
+{
+    return _p->updateFromFile(filePath);
+}
+
+bool OsmAnd::ResourcesManager::updateFromFile(const QString& id, const QString& filePath)
+{
+    return _p->updateFromFile(id, filePath);
+}
+
+bool OsmAnd::ResourcesManager::updateFromRepository(const QString& id, const WebClient::RequestProgressCallbackSignature downloadProgressCallback /*= nullptr*/)
+{
+    return _p->updateFromRepository(id, downloadProgressCallback);
+}
 
 OsmAnd::ResourcesManager::ResourceOrigin::ResourceOrigin(const ResourceOriginType type_)
     : type(type_)
