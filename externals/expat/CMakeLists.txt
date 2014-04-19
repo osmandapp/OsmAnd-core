@@ -43,7 +43,7 @@ else(HAVE_SYS_TYPES_H)
     set(SIZE_T "unsigned")
 endif(HAVE_SYS_TYPES_H)
 # End of modified content from 'ConfigureChecks.cmake'
-configure_file("upstream.patched/expat_config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/expat_config.h")
+configure_file("expat_config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/expat_config.h")
 
 add_library(expat_static STATIC
 	"upstream.patched/lib/xmlparse.c"

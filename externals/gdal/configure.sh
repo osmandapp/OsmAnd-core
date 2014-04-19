@@ -55,6 +55,3 @@ if [ -d "$SRCLOC/patches" ]; then
 		patch --strip=1 --directory="$SRCLOC/upstream.patched/" --input="$PATCH"
 	done
 fi
-
-# Copy "upstream.patched/port/cpl_config.h.in" to "cpl_config.h.in" and replace '#undef' with '#cmakedefine'
-cat "$SRCLOC/upstream.patched/port/cpl_config.h.in" | sed 's/#undef/#cmakedefine/' > "$SRCLOC/cpl_config.h.in"
