@@ -370,7 +370,10 @@ void OsmAnd::ResourcesManager_P::loadRepositoryFromCache()
     QFile repositoryCache(QDir(owner->localStoragePath).absoluteFilePath("repository.cache.xml"));
     bool ok = false;
     if(repositoryCache.open(QIODevice::ReadOnly | QIODevice::Text))
-        ok = parseRepository(QXmlStreamReader(&repositoryCache), resources);
+    {
+        QXmlStreamReader xmlReader(&repositoryCache);
+        ok = parseRepository(xmlReader, resources);
+    }
     repositoryCache.close();
     if(!ok)
         return;
@@ -398,7 +401,8 @@ bool OsmAnd::ResourcesManager_P::updateRepository() const
 
     // Parse XML
     QList< std::shared_ptr<const Resource> > resources;
-    bool ok = parseRepository(QXmlStreamReader(downloadResult), resources);
+    QXmlStreamReader xmlReader(downloadResult);
+    bool ok = parseRepository(xmlReader, resources);
     if(!ok)
         return false;
 
