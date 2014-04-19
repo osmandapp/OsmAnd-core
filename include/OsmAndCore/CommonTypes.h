@@ -6,7 +6,6 @@
 
 #include <QtGlobal>
 #include <QtMath>
-#include <QString>
 
 #if defined(OSMAND_GLM_AVAILABLE)
 #   include <glm/glm.hpp>

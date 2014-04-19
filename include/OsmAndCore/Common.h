@@ -6,7 +6,6 @@
 #include <iostream>
 
 #include <OsmAndCore/QtExtensions.h>
-#include <OsmAndCore/Logging.h>
 
 #if !defined(qPrintableRef)
 #  define qPrintableRef(stringRef) stringRef.toLocal8Bit().constData()
@@ -16,20 +15,6 @@
 #   define Q_STRINGIFY_(value) #value
 #   define Q_STRINGIFY(value) Q_STRINGIFY_(value)
 #endif //  !defined(Q_STRINGIFY) && !defined(Q_STRINGIFY_)
-
-#if OSMAND_DEBUG
-#   define OSMAND_ASSERT(condition, message)                                                                \
-    do {                                                                                                    \
-        if (! (condition))                                                                                  \
-        {                                                                                                   \
-            OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Assertion '" #condition "' failed in "      \
-                Q_FUNC_INFO "(" __FILE__ ":" Q_STRINGIFY(__LINE__) ": %s", qPrintable(message));            \
-            assert((condition));                                                                            \
-        }                                                                                                   \
-    } while (false)
-#else
-#   define OSMAND_ASSERT(condition, message)
-#endif
 
 #if defined(TEXT) && defined(_T)
 #   define xT(x) _T(x)
