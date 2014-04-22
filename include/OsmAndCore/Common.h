@@ -11,11 +11,6 @@
 #  define qPrintableRef(stringRef) stringRef.toLocal8Bit().constData()
 #endif // !defined(qPrintableRef)
 
-#if !defined(Q_STRINGIFY) && !defined(Q_STRINGIFY_)
-#   define Q_STRINGIFY_(value) #value
-#   define Q_STRINGIFY(value) Q_STRINGIFY_(value)
-#endif //  !defined(Q_STRINGIFY) && !defined(Q_STRINGIFY_)
-
 #if defined(TEXT) && defined(_T)
 #   define xT(x) _T(x)
 #else

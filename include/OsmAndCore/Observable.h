@@ -13,7 +13,7 @@
 namespace OsmAnd
 {
     template<typename... ARGS>
-    class Observable Q_DECL_FINAL
+    class Observable
     {
         Q_DISABLE_COPY(Observable);
     public:
@@ -60,6 +60,89 @@ namespace OsmAnd
 
             for(const auto& handler : constOf(observers))
                 handler(args...);
+        }
+    };
+
+    template<typename _>
+    class ObservableAs;
+
+    // ObservableAs for function pointer
+    template<typename RETURN_TYPE, typename... ARGS>
+    class ObservableAs<RETURN_TYPE(*)(ARGS...)> : public Observable< ARGS... >
+    {
+        Q_DISABLE_COPY(ObservableAs);
+    private:
+    protected:
+    public:
+        ObservableAs()
+        {
+        }
+        ~ObservableAs()
+        {
+        }
+    };
+
+    // ObservableAs for member function pointer
+    template<typename CLASS, typename RETURN_TYPE, typename... ARGS>
+    class ObservableAs<RETURN_TYPE(CLASS::*)(ARGS...)> : public Observable< ARGS... >
+    {
+        Q_DISABLE_COPY(ObservableAs);
+    private:
+    protected:
+    public:
+        ObservableAs()
+        {
+        }
+        ~ObservableAs()
+        {
+        }
+    };
+
+    // ObservableAs for const member function pointer
+    template<typename CLASS, typename RETURN_TYPE, typename... ARGS>
+    class ObservableAs<RETURN_TYPE(CLASS::*)(ARGS...) const> : public Observable< ARGS... >
+    {
+        Q_DISABLE_COPY(ObservableAs);
+    private:
+    protected:
+    public:
+        ObservableAs()
+        {
+        }
+        ~ObservableAs()
+        {
+        }
+    };
+
+    // ObservableAs for member object pointer
+    template<typename CLASS, typename RETURN_TYPE>
+    class ObservableAs<RETURN_TYPE(CLASS::*)> : public Observable<>
+    {
+        Q_DISABLE_COPY(ObservableAs);
+    private:
+    protected:
+    public:
+        ObservableAs()
+        {
+        }
+        ~ObservableAs()
+        {
+        }
+    };
+
+    // ObservableAs for functor
+    template<class F>
+    class ObservableAs : public ObservableAs< decltype(&F::operator()) >
+    {
+        Q_DISABLE_COPY(ObservableAs);
+    private:
+    protected:
+    public:
+        ObservableAs()
+        {
+        }
+        ~ObservableAs()
+        {
         }
     };
 }
