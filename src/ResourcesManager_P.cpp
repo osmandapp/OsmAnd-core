@@ -14,6 +14,7 @@
 #include "ObfDataInterface.h"
 #include "MapStylesPresets.h"
 #include "OnlineTileSources.h"
+#include "QKeyValueIterator.h"
 #include "Logging.h"
 #include "Utilities.h"
 
@@ -39,7 +40,7 @@ void OsmAnd::ResourcesManager_P::initialize()
         if(ObfReader(obfFile).obtainInfo())
             _miniBasemapObfFile = obfFile;
         else
-            LogPrintf(LogSeverityLevel::Warning, "Failed to open mini basemap '%s'", qPrintable(owner->miniBasemapFilename));
+            LogPrintf(LogSeverityLevel::Warning, "Failed to open mini basemap OBF '%s'", qPrintable(owner->miniBasemapFilename));
     }
 }
 
@@ -52,8 +53,10 @@ void OsmAnd::ResourcesManager_P::attachToFileSystem()
         _fileSystemWatcher, &QFileSystemWatcher::fileChanged,
         (std::function<void(const QString&)>)std::bind(&ResourcesManager_P::onFileChanged, this, std::placeholders::_1));
 
-    for(const auto& extraStoragePath : constOf(owner->extraStoragePaths))
-        _fileSystemWatcher->addPath(extraStoragePath);
+    if(!owner->userStoragePath.isNull())
+        _fileSystemWatcher->addPath(owner->userStoragePath);
+    for(const auto& readonlyExternalStoragePath : constOf(owner->readonlyExternalStoragePaths))
+        _fileSystemWatcher->addPath(readonlyExternalStoragePath);
 }
 
 void OsmAnd::ResourcesManager_P::detachFromFileSystem()
@@ -67,12 +70,12 @@ void OsmAnd::ResourcesManager_P::detachFromFileSystem()
 
 void OsmAnd::ResourcesManager_P::onDirectoryChanged(const QString& path)
 {
-    rescanLocalStoragePaths();
+    rescanUnmanagedStoragePaths();
 }
 
 void OsmAnd::ResourcesManager_P::onFileChanged(const QString& path)
 {
-    rescanLocalStoragePaths();
+    rescanUnmanagedStoragePaths();
 }
 
 void OsmAnd::ResourcesManager_P::inflateBuiltInResources()
@@ -81,24 +84,24 @@ void OsmAnd::ResourcesManager_P::inflateBuiltInResources()
     std::shared_ptr<MapStylesPresets> defaultMapStylesPresets(new MapStylesPresets());
     defaultMapStylesPresets->loadFrom(EmbeddedResources::decompressResource(
         QLatin1String("map/mapStylesPresets/default.mapStylesPresets.xml")));
-    std::shared_ptr<Resource> defaultMapStylesPresetsResource(new MapStylesPresetsResource(
+    std::shared_ptr<const BuiltinResource> defaultMapStylesPresetsResource(new BuiltinMapStylesPresetsResource(
         QLatin1String("default.mapStylesPresets.xml"),
         defaultMapStylesPresets));
     _builtinResources.insert(defaultMapStylesPresetsResource->id, defaultMapStylesPresetsResource);
 
     // Built-in online tile sources
-    std::shared_ptr<Resource> defaultOnlineTileSourcesResource(new OnlineTileSourcesResource(
+    std::shared_ptr<const BuiltinResource> defaultOnlineTileSourcesResource(new BuiltinOnlineTileSourcesResource(
         QLatin1String("default.onlineTileSources.xml"),
         OnlineTileSources::getBuiltIn()));
     _builtinResources.insert(defaultOnlineTileSourcesResource->id, defaultOnlineTileSourcesResource);
 }
 
-QList< std::shared_ptr<const OsmAnd::ResourcesManager_P::Resource> > OsmAnd::ResourcesManager_P::getBuiltInResources() const
+QList< std::shared_ptr<const OsmAnd::ResourcesManager_P::BuiltinResource> > OsmAnd::ResourcesManager_P::getBuiltInResources() const
 {
     return _builtinResources.values();
 }
 
-std::shared_ptr<const OsmAnd::ResourcesManager_P::Resource> OsmAnd::ResourcesManager_P::getBuiltInResource(const QString& id) const
+std::shared_ptr<const OsmAnd::ResourcesManager_P::BuiltinResource> OsmAnd::ResourcesManager_P::getBuiltInResource(const QString& id) const
 {
     const auto citResource = _builtinResources.constFind(id);
     if(citResource == _builtinResources.cend())
@@ -111,25 +114,90 @@ bool OsmAnd::ResourcesManager_P::isBuiltInResource(const QString& id) const
     return _builtinResources.contains(id);
 }
 
-bool OsmAnd::ResourcesManager_P::rescanLocalStoragePaths() const
+bool OsmAnd::ResourcesManager_P::scanManagedStoragePath()
 {
     QWriteLocker scopedLocker(&_localResourcesLock);
 
-    QHash< QString, std::shared_ptr<const Resource> > localResources;
-    if(!rescanLocalStoragePath(owner->localStoragePath, false, localResources))
+    assert(_localResources.isEmpty());
+    if(!rescanLocalStoragePath(owner->localStoragePath, false, _localResources))
         return false;
-    for(const auto& extraStoragePath : constOf(owner->extraStoragePaths))
+    
+    return true;
+}
+
+bool OsmAnd::ResourcesManager_P::rescanUnmanagedStoragePaths() const
+{
+    QWriteLocker scopedLocker(&_localResourcesLock);
+
+    QHash< QString, std::shared_ptr<const LocalResource> > unmanagedResources;
+    if(!owner->userStoragePath.isNull())
     {
-        if(!rescanLocalStoragePath(extraStoragePath, true, localResources))
+        if(!rescanLocalStoragePath(owner->userStoragePath, true, unmanagedResources))
             return false;
     }
-    _localResources = localResources;
-    owner->localResourcesChangeObservable.notify(owner);
+    for(const auto& readonlyExternalStoragePath : constOf(owner->readonlyExternalStoragePaths))
+    {
+        if(!rescanLocalStoragePath(readonlyExternalStoragePath, true, unmanagedResources))
+            return false;
+    }
+
+    // Merge results with current resources
+    QList< QString > addedResources;
+    QList< QString > removedResources;
+    QList< QString > updatedResources;
+    QMutableHashIterator< QString, std::shared_ptr<const LocalResource> > itLocalResourceEntry(_localResources);
+    while(itLocalResourceEntry.hasNext())
+    {
+        const auto& localResourceEntry = itLocalResourceEntry.next();
+        const auto& id = localResourceEntry.key();
+        auto& resource = localResourceEntry.value();
+
+        // If this resource origin is not unmanaged, skip it
+        if(resource->origin != ResourceOrigin::Unmanaged)
+            continue;
+        const auto itNewResource = unmanagedResources.find(id);
+
+        // If this resource is gone, just copy it to removed and remove from collection
+        if(itNewResource == unmanagedResources.end())
+        {
+            removedResources.push_back(id);
+            itLocalResourceEntry.remove();
+            continue;
+        }
+
+        // Check if type is the same
+        const auto& newResource = *itNewResource;
+        if(resource->type != newResource->type)
+        {
+            removedResources.push_back(id);
+            itLocalResourceEntry.remove();
+            continue;
+        }
+
+        // It's impossible to determine if resource was updated,
+        // so assume that all resources that are still present have been updated
+        resource = newResource;
+        updatedResources.push_back(id);
+        unmanagedResources.erase(itNewResource);
+    }
+    for(const auto& newResource : constOf(unmanagedResources))
+    {
+        const auto& id = newResource->id;
+        if(_localResources.contains(id))
+        {
+            LogPrintf(LogSeverityLevel::Warning, "Ignoring new duplicate resource '%s'", qPrintable(id));
+            continue;
+        }
+
+        _localResources.insert(id, newResource);
+        addedResources.push_back(id);
+    }
+    owner->localResourcesChangeObservable.notify(owner, addedResources, removedResources, updatedResources);
 
     return true;
 }
 
-bool OsmAnd::ResourcesManager_P::rescanLocalStoragePath(const QString& storagePath, const bool isExtraStorage, QHash< QString, std::shared_ptr<const Resource> >& outResult)
+bool OsmAnd::ResourcesManager_P::rescanLocalStoragePath(const QString& storagePath, const bool isUnmanagedStorage, QHash< QString, std::shared_ptr<const LocalResource> >& outResult)
 {
     const QDir storageDir(storagePath);
 
@@ -144,21 +212,20 @@ bool OsmAnd::ResourcesManager_P::rescanLocalStoragePath(const QString& storagePa
         const std::shared_ptr<const ObfFile> obfFile(new ObfFile(filePath));
         if(!ObfReader(obfFile).obtainInfo())
         {
-            LogPrintf(LogSeverityLevel::Warning, "Failed to open '%s'", qPrintable(filePath));
+            LogPrintf(LogSeverityLevel::Warning, "Failed to open OBF '%s'", qPrintable(filePath));
             continue;
         }
 
         // Create local resource entry
         const auto name = obfFileInfo.fileName();
-        std::shared_ptr<ResourceOrigin> resourceOrigin(new InstalledResourceOrigin(
-            filePath,
-            obfFileInfo.size(),
-            obfFile->obfInfo->creationTimestamp));
-        std::shared_ptr<Resource> localResource(new LocalObfResource(
+        const auto pLocalResource = new InstalledResource(
             name,
             ResourceType::MapRegion,
-            resourceOrigin,
-            obfFile));
+            filePath,
+            obfFileInfo.size(),
+            obfFile->obfInfo->creationTimestamp);
+        pLocalResource->_metadata.reset(new ObfMetadata(obfFile));
+        std::shared_ptr<const LocalResource> localResource(pLocalResource);
         outResult.insert(name, qMove(localResource));
     }
 
@@ -197,19 +264,17 @@ bool OsmAnd::ResourcesManager_P::rescanLocalStoragePath(const QString& storagePa
 
         // Create local resource entry
         const auto name = voicePackDirectory.fileName();
-        std::shared_ptr<ResourceOrigin> resourceOrigin(new InstalledResourceOrigin(
+        std::shared_ptr<const LocalResource> localResource(new InstalledResource(
+            name,
+            ResourceType::VoicePack, 
             dirPath,
             contentSize,
             timestamp));
-        std::shared_ptr<Resource> localResource(new Resource(
-            name,
-            ResourceType::VoicePack, 
-            resourceOrigin));
         outResult.insert(name, qMove(localResource));
     }
 
-    // Find ResourceType::MapStylesPresetsResource -> "*.mapStylesPresets.xml" files (only in extra storage)
-    if(isExtraStorage)
+    // Find ResourceType::MapStylesPresetsResource -> "*.mapStylesPresets.xml" files (only in unmanaged storage)
+    if(isUnmanagedStorage)
     {
         QFileInfoList mapStylesPresetsFileInfos;
         Utilities::findDirectories(storageDir, QStringList() << QLatin1String("*.mapStylesPresets.xml"), mapStylesPresetsFileInfos, false);
@@ -220,19 +285,18 @@ bool OsmAnd::ResourcesManager_P::rescanLocalStoragePath(const QString& storagePa
             
             // Create local resource entry
             const auto name = mapStylesPresetsFileInfo.fileName();
-            std::shared_ptr<ResourceOrigin> resourceOrigin(new UserResourceOrigin(
+            std::shared_ptr<const LocalResource> localResource(new UnmanagedResource(
+                name,
+                ResourceType::MapStylePresets,
                 fileName,
                 fileSize,
                 name));
-            std::shared_ptr<Resource> localResource(new MapStylesPresetsResource(
-                name,
-                resourceOrigin));
             outResult.insert(name, qMove(localResource));
         }
     }
 
-    // Find ResourceType::OnlineTileSourcesResource -> "*.onlineTileSources.xml" files (only in extra storage)
-    if(isExtraStorage)
+    // Find ResourceType::OnlineTileSourcesResource -> "*.onlineTileSources.xml" files (only in unmanaged storage)
+    if(isUnmanagedStorage)
     {
         QFileInfoList onlineTileSourcesFileInfos;
         Utilities::findDirectories(storageDir, QStringList() << QLatin1String("*.onlineTileSources.xml"), onlineTileSourcesFileInfos, false);
@@ -243,13 +307,12 @@ bool OsmAnd::ResourcesManager_P::rescanLocalStoragePath(const QString& storagePa
 
             // Create local resource entry
             const auto name = onlineTileSourcesFileInfo.fileName();
-            std::shared_ptr<ResourceOrigin> resourceOrigin(new UserResourceOrigin(
+            std::shared_ptr<const LocalResource> localResource(new UnmanagedResource(
+                name,
+                ResourceType::OnlineTileSources,
                 fileName,
                 fileSize,
                 name));
-            std::shared_ptr<Resource> localResource(new OnlineTileSourcesResource(
-                name,
-                resourceOrigin));
             outResult.insert(name, qMove(localResource));
         }
     }
@@ -257,14 +320,14 @@ bool OsmAnd::ResourcesManager_P::rescanLocalStoragePath(const QString& storagePa
     return true;
 }
 
-QList< std::shared_ptr<const OsmAnd::ResourcesManager::Resource> > OsmAnd::ResourcesManager_P::getLocalResources() const
+QList< std::shared_ptr<const OsmAnd::ResourcesManager_P::LocalResource> > OsmAnd::ResourcesManager_P::getLocalResources() const
 {
     QReadLocker scopedLocker(&_localResourcesLock);
 
     return _localResources.values();
 }
 
-std::shared_ptr<const OsmAnd::ResourcesManager::Resource> OsmAnd::ResourcesManager_P::getLocalResource(const QString& id) const
+std::shared_ptr<const OsmAnd::ResourcesManager_P::LocalResource> OsmAnd::ResourcesManager_P::getLocalResource(const QString& id) const
 {
     QReadLocker scopedLocker(&_localResourcesLock);
 
@@ -281,7 +344,7 @@ bool OsmAnd::ResourcesManager_P::isLocalResource(const QString& id) const
     return _localResources.contains(id);
 }
 
-bool OsmAnd::ResourcesManager_P::parseRepository(QXmlStreamReader& xmlReader, QList< std::shared_ptr<const Resource> >& repository) const
+bool OsmAnd::ResourcesManager_P::parseRepository(QXmlStreamReader& xmlReader, QList< std::shared_ptr<const ResourceInRepository> >& repository) const
 {
     bool ok = false;
     while(!xmlReader.atEnd() && !xmlReader.hasError())
@@ -342,15 +405,13 @@ bool OsmAnd::ResourcesManager_P::parseRepository(QXmlStreamReader& xmlReader, QL
             continue;
         }
 
-        std::shared_ptr<ResourceOrigin> resourceOrigin(new RepositoryResourceOrigin(
+        std::shared_ptr<const ResourceInRepository> resource(new ResourceInRepository(
+            QString(name).replace(QLatin1String(".zip"), QString()),
+            resourceType,
             owner->repositoryBaseUrl + QLatin1String("/download.php?file=") + QUrl::toPercentEncoding(name),
             contentSize,
             timestamp,
             containerSize));
-        std::shared_ptr<Resource> resource(new Resource(
-            QString(name).replace(QLatin1String(".zip"), QString()),
-            resourceType,
-            resourceOrigin));
         repository.push_back(qMove(resource));
     }
     if(xmlReader.hasError())
@@ -366,7 +427,7 @@ void OsmAnd::ResourcesManager_P::loadRepositoryFromCache()
 {
     QWriteLocker scopedLocker(&_resourcesInRepositoryLock);
 
-    QList< std::shared_ptr<const Resource> > resources;
+    QList< std::shared_ptr<const ResourceInRepository> > resources;
     QFile repositoryCache(QDir(owner->localStoragePath).absoluteFilePath("repository.cache.xml"));
     bool ok = false;
     if(repositoryCache.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -400,7 +461,7 @@ bool OsmAnd::ResourcesManager_P::updateRepository() const
         return false;
 
     // Parse XML
-    QList< std::shared_ptr<const Resource> > resources;
+    QList< std::shared_ptr<const ResourceInRepository> > resources;
     QXmlStreamReader xmlReader(downloadResult);
     bool ok = parseRepository(xmlReader, resources);
     if(!ok)
@@ -426,14 +487,14 @@ bool OsmAnd::ResourcesManager_P::updateRepository() const
     return true;
 }
 
-QList< std::shared_ptr<const OsmAnd::ResourcesManager::Resource> > OsmAnd::ResourcesManager_P::getResourcesInRepository() const
+QList< std::shared_ptr<const OsmAnd::ResourcesManager_P::ResourceInRepository> > OsmAnd::ResourcesManager_P::getResourcesInRepository() const
 {
     QReadLocker scopedLocker(&_resourcesInRepositoryLock);
 
     return _resourcesInRepository.values();
 }
 
-std::shared_ptr<const OsmAnd::ResourcesManager::Resource> OsmAnd::ResourcesManager_P::getResourceInRepository(const QString& id) const
+std::shared_ptr<const OsmAnd::ResourcesManager_P::ResourceInRepository> OsmAnd::ResourcesManager_P::getResourceInRepository(const QString& id) const
 {
     QReadLocker scopedLocker(&_resourcesInRepositoryLock);
 
@@ -460,7 +521,7 @@ bool OsmAnd::ResourcesManager_P::isResourceInstalled(const QString& id) const
 
     const auto& resource = *citResource;
 
-    return (resource->origin->type == ResourceOriginType::Installed);
+    return (resource->origin == ResourceOrigin::Installed);
 }
 
 bool OsmAnd::ResourcesManager_P::uninstallResource(const QString& id)
@@ -471,18 +532,22 @@ bool OsmAnd::ResourcesManager_P::uninstallResource(const QString& id)
     if(itResource == _localResources.end())
         return false;
 
-    const auto& resource = *itResource;
-    if(resource->origin->type != ResourceOriginType::Installed)
+    const auto resource = *itResource;
+    if(resource->origin != ResourceOrigin::Installed)
         return false;
+    const auto& installedResource = std::static_pointer_cast<const InstalledResource>(resource);
+
+    // Lock for writing, this lock will never be released
+    installedResource->_lock.lockForWriting();
 
     bool success;
     switch(resource->type)
     {
         case ResourceType::MapRegion:
-            success = uninstallMapRegion(resource);
+            success = uninstallMapRegion(installedResource);
             break;
         case ResourceType::VoicePack:
-            success = uninstallVoicePack(resource);
+            success = uninstallVoicePack(installedResource);
             break;
         default:
             return false;
@@ -491,31 +556,22 @@ bool OsmAnd::ResourcesManager_P::uninstallResource(const QString& id)
         return false;
 
     _localResources.erase(itResource);
-    owner->localResourcesChangeObservable.notify(owner);
+    owner->localResourcesChangeObservable.notify(owner,
+        QList<QString>(),
+        QList<QString>() << resource->id,
+        QList<QString>());
 
     return true;
 }
 
-bool OsmAnd::ResourcesManager_P::uninstallMapRegion(const std::shared_ptr<const Resource>& resource_)
+bool OsmAnd::ResourcesManager_P::uninstallMapRegion(const std::shared_ptr<const InstalledResource>& resource)
 {
-    const auto& resource = std::dynamic_pointer_cast<const LocalObfResource>(resource_);
-    const auto& origin = std::dynamic_pointer_cast<const InstalledResourceOrigin>(resource_->origin);
-    if(!resource || !origin)
-        return false;
-
-    // This lock will never be released
-    resource->obfFile->lockForWriting();
-
-    return QFile(origin->localPath).remove();
+    return QFile(resource->localPath).remove();
 }
 
-bool OsmAnd::ResourcesManager_P::uninstallVoicePack(const std::shared_ptr<const Resource>& resource_)
+bool OsmAnd::ResourcesManager_P::uninstallVoicePack(const std::shared_ptr<const InstalledResource>& resource)
 {
-    const auto& origin = std::dynamic_pointer_cast<const InstalledResourceOrigin>(resource_->origin);
-    if(!origin)
-        return false;
-
-    return QDir(origin->localPath).removeRecursively();
+    return QDir(resource->localPath).removeRecursively();
 }
 
 bool OsmAnd::ResourcesManager_P::installFromFile(const QString& filePath, const ResourceType resourceType)
@@ -533,22 +589,28 @@ bool OsmAnd::ResourcesManager_P::installFromFile(const QString& id, const QStrin
         return false;
 
     bool ok = false;
+    std::shared_ptr<const InstalledResource> resource;
     switch(resourceType)
     {
     case ResourceType::MapRegion:
-        ok = installMapRegionFromFile(id, filePath);
+        ok = installMapRegionFromFile(id, filePath, resource);
         break;
     case ResourceType::VoicePack:
-        ok = installVoicePackFromFile(id, filePath);
+        ok = installVoicePackFromFile(id, filePath, resource);
         break;
     }
     if(ok)
-        owner->localResourcesChangeObservable.notify(owner);
+    {
+        owner->localResourcesChangeObservable.notify(owner,
+            QList<QString>() << resource->id,
+            QList<QString>(),
+            QList<QString>());
+    }
 
     return ok;
 }
 
-bool OsmAnd::ResourcesManager_P::installMapRegionFromFile(const QString& id, const QString& filePath)
+bool OsmAnd::ResourcesManager_P::installMapRegionFromFile(const QString& id, const QString& filePath, std::shared_ptr<const InstalledResource>& outResource)
 {
     assert(id.endsWith(".obf"));
 
@@ -582,27 +644,26 @@ bool OsmAnd::ResourcesManager_P::installMapRegionFromFile(const QString& id, con
     const std::shared_ptr<const ObfFile> obfFile(new ObfFile(localFileName));
     if(!ObfReader(obfFile).obtainInfo())
     {
-        LogPrintf(LogSeverityLevel::Warning, "Failed to open '%s'", qPrintable(localFileName));
+        LogPrintf(LogSeverityLevel::Warning, "Failed to open OBF '%s'", qPrintable(localFileName));
         QFile(filePath).remove();
         return false;
     }
 
     // Create local resource entry
-    std::shared_ptr<ResourceOrigin> resourceOrigin(new InstalledResourceOrigin(
-        filePath,
-        obfFile->fileSize,
-        obfFile->obfInfo->creationTimestamp));
-    std::shared_ptr<Resource> localResource(new LocalObfResource(
+    const auto pLocalResource = new InstalledResource(
         id,
         ResourceType::MapRegion,
-        resourceOrigin,
-        obfFile));
-    _localResources.insert(id, qMove(localResource));
+        filePath,
+        obfFile->fileSize,
+        obfFile->obfInfo->creationTimestamp);
+    outResource.reset(pLocalResource);
+    pLocalResource->_metadata.reset(new ObfMetadata(obfFile));
+    _localResources.insert(id, outResource);
 
     return true;
 }
 
-bool OsmAnd::ResourcesManager_P::installVoicePackFromFile(const QString& id, const QString& filePath)
+bool OsmAnd::ResourcesManager_P::installVoicePackFromFile(const QString& id, const QString& filePath, std::shared_ptr<const InstalledResource>& outResource)
 {
     assert(id.endsWith(".voice"));
 
@@ -648,15 +709,13 @@ bool OsmAnd::ResourcesManager_P::installVoicePackFromFile(const QString& id, con
     sizeFile.close();
 
     // Create local resource entry
-    std::shared_ptr<ResourceOrigin> resourceOrigin(new InstalledResourceOrigin(
+    outResource.reset(new InstalledResource(
+        id,
+        ResourceType::VoicePack,
         localDirectoryName,
         contentSize,
         voicePackConfigItem.modificationTime.toMSecsSinceEpoch()));
-    std::shared_ptr<Resource> localResource(new Resource(
-        id,
-        ResourceType::VoicePack,
-        resourceOrigin));
-    _localResources.insert(id, qMove(localResource));
+    _localResources.insert(id, outResource);
 
     return true;
 }
@@ -669,15 +728,12 @@ bool OsmAnd::ResourcesManager_P::installFromRepository(const QString& id, const 
     const auto& resourceInRepository = getResourceInRepository(id);
     if(!resourceInRepository)
         return false;
-    const auto& repositoryOrigin = std::dynamic_pointer_cast<const RepositoryResourceOrigin>(resourceInRepository->origin);
-    if(!repositoryOrigin)
-        return false;
 
     const auto tmpFilePath = QDir(owner->localTemporaryPath).absoluteFilePath(QString("%1.%2")
         .arg(QString(QCryptographicHash::hash(id.toLocal8Bit(), QCryptographicHash::Md5).toHex()))
         .arg(QDateTime::currentDateTimeUtc().toMSecsSinceEpoch()));
 
-    bool ok = _webClient.downloadFile(repositoryOrigin->url, tmpFilePath, nullptr, downloadProgressCallback);
+    bool ok = _webClient.downloadFile(resourceInRepository->url, tmpFilePath, nullptr, downloadProgressCallback);
     if(!ok)
         return false;
 
@@ -696,23 +752,18 @@ bool OsmAnd::ResourcesManager_P::isInstalledResourceOutdated(const QString& id) 
     const auto& resourceInRepository = getResourceInRepository(id);
     if(!resourceInRepository)
         return false;
-    const auto& repositoryOrigin = std::dynamic_pointer_cast<const RepositoryResourceOrigin>(resourceInRepository->origin);
-    if(!repositoryOrigin)
-        return false;
     const auto& localResource = getLocalResource(id);
-    if(!localResource)
+    if(!localResource || localResource->origin != ResourceOrigin::Installed)
         return false;
-    const auto& installedOrigin = std::dynamic_pointer_cast<const InstalledResourceOrigin>(localResource->origin);
-    if(!installedOrigin)
-        return false;
+    const auto& installedResource = std::static_pointer_cast<const InstalledResource>(localResource);
 
-    const bool outdated = (installedOrigin->timestamp < repositoryOrigin->timestamp);
-    if(!outdated && (installedOrigin->timestamp > repositoryOrigin->timestamp))
+    const bool outdated = (installedResource->timestamp < resourceInRepository->timestamp);
+    if(!outdated && (installedResource->timestamp > resourceInRepository->timestamp))
     {
         LogPrintf(LogSeverityLevel::Warning, "Installed resource '%s' is newer than in repository (%" PRIu64 " > %" PRIu64 ")",
             qPrintable(id),
-            installedOrigin->timestamp,
-            repositoryOrigin->timestamp);
+            installedResource->timestamp,
+            resourceInRepository->timestamp);
     }
 
     return outdated;
@@ -725,23 +776,20 @@ QList<QString> OsmAnd::ResourcesManager_P::getOutdatedInstalledResources() const
     QList<QString> resourcesWithUpdates;
     for(const auto& localResource : constOf(_localResources))
     {
-        const auto& installedOrigin = std::dynamic_pointer_cast<const InstalledResourceOrigin>(localResource->origin);
-        if(!installedOrigin)
+        if(localResource->origin != ResourceOrigin::Installed)
             continue;
+        const auto& installedResource = std::static_pointer_cast<const InstalledResource>(localResource);
         const auto& resourceInRepository = getResourceInRepository(localResource->id);
         if(!resourceInRepository)
             continue;
-        const auto& repositoryOrigin = std::dynamic_pointer_cast<const RepositoryResourceOrigin>(resourceInRepository->origin);
-        if(!repositoryOrigin)
-            continue;
 
-        const bool outdated = (installedOrigin->timestamp < repositoryOrigin->timestamp);
-        if(!outdated && (installedOrigin->timestamp > repositoryOrigin->timestamp))
+        const bool outdated = (installedResource->timestamp < resourceInRepository->timestamp);
+        if(!outdated && (installedResource->timestamp > resourceInRepository->timestamp))
         {
             LogPrintf(LogSeverityLevel::Warning, "Installed resource '%s' is newer than in repository (%" PRIu64 " > %" PRIu64 ")",
                 qPrintable(localResource->id),
-                installedOrigin->timestamp,
-                repositoryOrigin->timestamp);
+                installedResource->timestamp,
+                resourceInRepository->timestamp);
         }
         if(outdated)
             resourcesWithUpdates.push_back(localResource->id);
@@ -756,6 +804,32 @@ bool OsmAnd::ResourcesManager_P::updateFromFile(const QString& filePath)
     return updateFromFile(guessedResourceId, filePath);
 }
 
+bool OsmAnd::ResourcesManager_P::updateMapRegionFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath)
+{
+    resource->_lock.lockForWriting();
+
+    bool ok;
+    ok = uninstallMapRegion(resource);
+    ok = installMapRegionFromFile(resource->id, filePath, resource);
+
+    resource->_lock.unlockFromWriting();
+
+    return ok;
+}
+
+bool OsmAnd::ResourcesManager_P::updateVoicePackFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath)
+{
+    resource->_lock.lockForWriting();
+
+    bool ok;
+    ok = uninstallVoicePack(resource);
+    ok = installVoicePackFromFile(resource->id, filePath, resource);
+
+    resource->_lock.unlockFromWriting();
+
+    return ok;
+}
+
 bool OsmAnd::ResourcesManager_P::updateFromFile(const QString& id, const QString& filePath)
 {
     QWriteLocker scopedLocker(&_localResourcesLock);
@@ -763,29 +837,31 @@ bool OsmAnd::ResourcesManager_P::updateFromFile(const QString& id, const QString
     const auto itResource = _localResources.find(id);
     if(itResource != _localResources.end())
         return false;
-    const auto localResource = *itResource;
-    const auto& installedOrigin = std::dynamic_pointer_cast<const InstalledResourceOrigin>(localResource->origin);
-    if(!installedOrigin)
+    const auto& localResource = *itResource;
+    if(localResource->origin != ResourceOrigin::Installed)
         return false;
+    auto installedResource = std::static_pointer_cast<const InstalledResource>(localResource);
 
     bool ok = false;
     switch(localResource->type)
     {
     case ResourceType::MapRegion:
-        if(!uninstallMapRegion(localResource))
-            return false;
-        ok = installMapRegionFromFile(localResource->id, filePath);
+        ok = updateMapRegionFromFile(installedResource, filePath);
         break;
     case ResourceType::VoicePack:
-        if(!uninstallVoicePack(localResource))
-            return false;
-        ok = installVoicePackFromFile(localResource->id, filePath);
+        ok = updateVoicePackFromFile(installedResource, filePath);
         break;
     }
-    if(ok)
-        owner->localResourcesChangeObservable.notify(owner);
+    if(!ok)
+        return false;
+   
+    *itResource = installedResource;
 
-    return ok;
+    owner->localResourcesChangeObservable.notify(owner,
+        QList<QString>(),
+        QList<QString>(),
+        QList<QString>() << localResource->id);
+    return true;
 }
 
 bool OsmAnd::ResourcesManager_P::updateFromRepository(const QString& name, const WebClient::RequestProgressCallbackSignature downloadProgressCallback)
@@ -793,26 +869,33 @@ bool OsmAnd::ResourcesManager_P::updateFromRepository(const QString& name, const
     const auto& resourceInRepository = getResourceInRepository(name);
     if(!resourceInRepository)
         return false;
-    const auto& repositoryOrigin = std::dynamic_pointer_cast<const RepositoryResourceOrigin>(resourceInRepository->origin);
-    if(!repositoryOrigin)
-        return false;
 
     const auto tmpFilePath = QDir(owner->localTemporaryPath).absoluteFilePath(QString("%1.%2")
         .arg(QString(QCryptographicHash::hash(name.toLocal8Bit(), QCryptographicHash::Md5).toHex()))
         .arg(QDateTime::currentDateTimeUtc().toMSecsSinceEpoch()));
 
-    bool ok = _webClient.downloadFile(repositoryOrigin->url, tmpFilePath, nullptr, downloadProgressCallback);
+    bool ok = _webClient.downloadFile(resourceInRepository->url, tmpFilePath, nullptr, downloadProgressCallback);
     if(!ok)
         return false;
 
-    if(!updateFromFile(name, tmpFilePath))
-    {
-        QFile(tmpFilePath).remove();
-        return false;
-    }
+    ok = updateFromFile(name, tmpFilePath);
 
     QFile(tmpFilePath).remove();
-    return true;
+    return ok;
+}
+
+OsmAnd::ResourcesManager_P::ManagedObfDataInterface::ManagedObfDataInterface(
+    const QList< std::shared_ptr<const ObfReader> >& obfReaders_,
+    const QList< std::shared_ptr<const InstalledResource> >& lockedResources_)
+    : ObfDataInterface(obfReaders_)
+    , lockedResources(lockedResources_)
+{
+}
+
+OsmAnd::ResourcesManager_P::ManagedObfDataInterface::~ManagedObfDataInterface()
+{
+    for(const auto& lockedResource : constOf(lockedResources))
+        lockedResource->_lock.unlockFromReading();
 }
 
 OsmAnd::ResourcesManager_P::ObfsCollection::ObfsCollection(ResourcesManager_P* owner_)
@@ -835,10 +918,10 @@ QVector< std::shared_ptr<const OsmAnd::ObfFile> > OsmAnd::ResourcesManager_P::Ob
         if(localResource->type != ResourceType::MapRegion)
             continue;
 
-        const auto& obfLocalResource = std::static_pointer_cast<const LocalObfResource>(localResource);
-        if(obfLocalResource->obfFile->obfInfo->isBasemap)
+        const auto& obfMetadata = std::static_pointer_cast<const ObfMetadata>(localResource->_metadata);
+        if(obfMetadata->obfFile->obfInfo->isBasemap)
             otherBasemapPresent = true;
-        obfFiles.push_back(obfLocalResource->obfFile);
+        obfFiles.push_back(obfMetadata->obfFile);
     }
     if(!otherBasemapPresent && owner->_miniBasemapObfFile)
         obfFiles.push_back(owner->_miniBasemapObfFile);
@@ -851,18 +934,27 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
     QReadLocker scopedLocker(&owner->_localResourcesLock);
 
     bool otherBasemapPresent = false;
+    QList< std::shared_ptr<const InstalledResource> > lockedResources;
     QList< std::shared_ptr<const ObfReader> > obfReaders;
     for(const auto& localResource : constOf(owner->_localResources))
     {
         if(localResource->type != ResourceType::MapRegion)
             continue;
 
-        const auto& obfLocalResource = std::static_pointer_cast<const LocalObfResource>(localResource);
-        if(!obfLocalResource->obfFile->tryLockForReading())
+        const auto& obfMetadata = std::static_pointer_cast<const ObfMetadata>(localResource->_metadata);
+        if(!obfMetadata)
             continue;
-        if(obfLocalResource->obfFile->obfInfo->isBasemap)
+
+        if(const auto installedResource = std::dynamic_pointer_cast<const InstalledResource>(localResource))
+        {
+            if(!installedResource->_lock.tryLockForReading())
+                continue;
+            lockedResources.push_back(installedResource);
+        }
+
+        if(obfMetadata->obfFile->obfInfo->isBasemap)
             otherBasemapPresent = true;
-        std::shared_ptr<const ObfReader> obfReader(new ObfReader(obfLocalResource->obfFile, false));
+        std::shared_ptr<const ObfReader> obfReader(new ObfReader(obfMetadata->obfFile));
         obfReaders.push_back(qMove(obfReader));
     }
     if(!otherBasemapPresent && owner->_miniBasemapObfFile)
@@ -871,5 +963,5 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
         obfReaders.push_back(qMove(obfReader));
     }
 
-    return std::shared_ptr<ObfDataInterface>(new ObfDataInterface(obfReaders));
+    return std::shared_ptr<ObfDataInterface>(new ManagedObfDataInterface(obfReaders, lockedResources));
 }

@@ -5,12 +5,11 @@
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QString>
+#include <QIODevice>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/Data/ObfInfo.h>
 #include <OsmAndCore/PrivateImplementation.h>
-
-class QIODevice;
 
 namespace OsmAnd
 {
@@ -30,11 +29,15 @@ namespace OsmAnd
         PrivateImplementation<ObfReader_P> _p;
     protected:
     public:
-        ObfReader(const std::shared_ptr<const ObfFile>& obfFile, const bool lockForRead = true);
+        ObfReader(const std::shared_ptr<const ObfFile>& obfFile);
         ObfReader(const std::shared_ptr<QIODevice>& input);
         virtual ~ObfReader();
 
         const std::shared_ptr<const ObfFile> obfFile;
+
+        bool isOpened() const;
+        bool open();
+        bool close();
 
         std::shared_ptr<const ObfInfo> obtainInfo() const;
 

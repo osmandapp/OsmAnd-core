@@ -61,6 +61,8 @@ namespace OsmAnd
             for(const auto& handler : constOf(observers))
                 handler(args...);
         }
+
+        //TODO: add postNotify
     };
 
     template<typename _>

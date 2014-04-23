@@ -96,7 +96,7 @@ namespace OsmAnd
         virtual float getRecommendedMaxZoom(const ZoomRecommendationStrategy strategy = ZoomRecommendationStrategy::NarrowestRange) const = 0;
 
         OSMAND_CALLABLE(StateChangeObserver, void, const MapRendererStateChange thisChange, const uint32_t allChanges);
-        const Observable<const MapRendererStateChange /*currentChange*/, const uint32_t /*allChanges*/> stateChangeObservable;
+        const ObservableAs<StateChangeObserver> stateChangeObservable;
 
         virtual float getReferenceTileSizeOnScreen() = 0;
         virtual float getScaledTileSizeOnScreen() = 0;

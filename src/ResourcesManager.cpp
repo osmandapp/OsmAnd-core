@@ -7,13 +7,15 @@
 
 OsmAnd::ResourcesManager::ResourcesManager(
     const QString& localStoragePath_,
-    const QList<QString>& extraStoragePaths_ /*= QList<QString>()*/,
+    const QString& userStoragePath_ /*= QString::null*/,
+    const QList<QString>& readonlyExternalStoragePaths_ /*= QList<QString>()*/,
     const QString& miniBasemapFilename_ /*= QString::null*/,
     const QString& localTemporaryPath_ /*= QString::null*/,
     const QString& repositoryBaseUrl_ /*= QLatin1String("http://download.osmand.net")*/)
     : _p(new ResourcesManager_P(this))
     , localStoragePath(localStoragePath_)
-    , extraStoragePaths(extraStoragePaths_)
+    , userStoragePath(userStoragePath_)
+    , readonlyExternalStoragePaths(readonlyExternalStoragePaths_)
     , miniBasemapFilename(miniBasemapFilename_)
     , localTemporaryPath(!localTemporaryPath_.isNull() ? localTemporaryPath_ : QStandardPaths::writableLocation(QStandardPaths::TempLocation))
     , repositoryBaseUrl(repositoryBaseUrl_)
@@ -21,7 +23,8 @@ OsmAnd::ResourcesManager::ResourcesManager(
 {
     _p->initialize();
     _p->inflateBuiltInResources();
-    _p->rescanLocalStoragePaths();
+    _p->scanManagedStoragePath();
+    _p->rescanUnmanagedStoragePaths();
     _p->loadRepositoryFromCache();
     _p->attachToFileSystem();
 }
@@ -31,12 +34,12 @@ OsmAnd::ResourcesManager::~ResourcesManager()
     _p->detachFromFileSystem();
 }
 
-QList< std::shared_ptr<const OsmAnd::ResourcesManager::Resource> > OsmAnd::ResourcesManager::getBuiltInResources() const
+QList< std::shared_ptr<const OsmAnd::ResourcesManager::BuiltinResource> > OsmAnd::ResourcesManager::getBuiltInResources() const
 {
     return _p->getBuiltInResources();
 }
 
-std::shared_ptr<const OsmAnd::ResourcesManager::Resource> OsmAnd::ResourcesManager::getBuiltInResource(const QString& id) const
+std::shared_ptr<const OsmAnd::ResourcesManager::BuiltinResource> OsmAnd::ResourcesManager::getBuiltInResource(const QString& id) const
 {
     return _p->getBuiltInResource(id);
 }
@@ -46,17 +49,17 @@ bool OsmAnd::ResourcesManager::isBuiltInResource(const QString& id) const
     return _p->isBuiltInResource(id);
 }
 
-bool OsmAnd::ResourcesManager::rescanLocalStoragePaths() const
+bool OsmAnd::ResourcesManager::rescanUnmanagedStoragePaths() const
 {
-    return _p->rescanLocalStoragePaths();
+    return _p->rescanUnmanagedStoragePaths();
 }
 
-QList< std::shared_ptr<const OsmAnd::ResourcesManager::Resource> > OsmAnd::ResourcesManager::getLocalResources() const
+QList< std::shared_ptr<const OsmAnd::ResourcesManager::LocalResource> > OsmAnd::ResourcesManager::getLocalResources() const
 {
     return _p->getLocalResources();
 }
 
-std::shared_ptr<const OsmAnd::ResourcesManager::Resource> OsmAnd::ResourcesManager::getLocalResource(const QString& id) const
+std::shared_ptr<const OsmAnd::ResourcesManager::LocalResource> OsmAnd::ResourcesManager::getLocalResource(const QString& id) const
 {
     return _p->getLocalResource(id);
 }
@@ -76,12 +79,12 @@ bool OsmAnd::ResourcesManager::updateRepository() const
     return _p->updateRepository();
 }
 
-QList< std::shared_ptr<const OsmAnd::ResourcesManager::Resource> > OsmAnd::ResourcesManager::getResourcesInRepository() const
+QList< std::shared_ptr<const OsmAnd::ResourcesManager::ResourceInRepository> > OsmAnd::ResourcesManager::getResourcesInRepository() const
 {
     return _p->getResourcesInRepository();
 }
 
-std::shared_ptr<const OsmAnd::ResourcesManager::Resource> OsmAnd::ResourcesManager::getResourceInRepository(const QString& id) const
+std::shared_ptr<const OsmAnd::ResourcesManager::ResourceInRepository> OsmAnd::ResourcesManager::getResourceInRepository(const QString& id) const
 {
     return _p->getResourceInRepository(id);
 }
@@ -141,76 +144,18 @@ bool OsmAnd::ResourcesManager::updateFromRepository(const QString& id, const Web
     return _p->updateFromRepository(id, downloadProgressCallback);
 }
 
-OsmAnd::ResourcesManager::ResourceOrigin::ResourceOrigin(const ResourceOriginType type_)
-    : type(type_)
+OsmAnd::ResourcesManager::Resource::Metadata::Metadata()
 {
 }
 
-OsmAnd::ResourcesManager::ResourceOrigin::~ResourceOrigin()
-{
-}
-
-OsmAnd::ResourcesManager::LocalResourceOrigin::LocalResourceOrigin(
-    const ResourceOriginType type_,
-    const QString& localPath_,
-    const uint64_t size_)
-    : ResourceOrigin(type_)
-    , localPath(localPath_)
-    , size(size_)
-{
-}
-
-OsmAnd::ResourcesManager::LocalResourceOrigin::~LocalResourceOrigin()
-{
-}
-
-OsmAnd::ResourcesManager::UserResourceOrigin::UserResourceOrigin(
-    const QString& localPath_,
-    const uint64_t size_,
-    const QString& name_)
-    : LocalResourceOrigin(ResourceOriginType::User, localPath_, size_)
-    , name(name_)
-{
-}
-
-OsmAnd::ResourcesManager::UserResourceOrigin::~UserResourceOrigin()
-{
-}
-
-OsmAnd::ResourcesManager::InstalledResourceOrigin::InstalledResourceOrigin(
-    const QString& localPath_,
-    const uint64_t size_,
-    const uint64_t timestamp_)
-    : LocalResourceOrigin(ResourceOriginType::Installed, localPath_, size_)
-    , timestamp(timestamp_)
-{
-}
-
-OsmAnd::ResourcesManager::InstalledResourceOrigin::~InstalledResourceOrigin()
-{
-}
-
-OsmAnd::ResourcesManager::RepositoryResourceOrigin::RepositoryResourceOrigin(
-    const QUrl& url_,
-    const uint64_t size_,
-    const uint64_t timestamp_,
-    const uint64_t packageSize_)
-    : ResourceOrigin(ResourceOriginType::Repository)
-    , url(url_)
-    , size(size_)
-    , timestamp(timestamp_)
-    , packageSize(packageSize_)
-{
-}
-
-OsmAnd::ResourcesManager::RepositoryResourceOrigin::~RepositoryResourceOrigin()
+OsmAnd::ResourcesManager::Resource::Metadata::~Metadata()
 {
 }
 
 OsmAnd::ResourcesManager::Resource::Resource(
     const QString& id_,
     const ResourceType type_,
-    const std::shared_ptr<const ResourceOrigin>& origin_)
+    const ResourceOrigin origin_)
     : id(id_)
     , type(type_)
     , origin(origin_)
@@ -221,56 +166,103 @@ OsmAnd::ResourcesManager::Resource::~Resource()
 {
 }
 
-OsmAnd::ResourcesManager::LocalObfResource::LocalObfResource(
+OsmAnd::ResourcesManager::LocalResource::LocalResource(
     const QString& id_,
     const ResourceType type_,
-    const std::shared_ptr<const ResourceOrigin>& origin_,
-    const std::shared_ptr<const ObfFile>& obfFile_)
+    const ResourceOrigin origin_,
+    const QString& localPath_,
+    const uint64_t size_)
     : Resource(id_, type_, origin_)
-    , obfFile(obfFile_)
+    , localPath(localPath_)
+    , size(size_)
+{
+    assert(origin_ == ResourceOrigin::Installed || origin_ == ResourceOrigin::Unmanaged);
+}
+
+OsmAnd::ResourcesManager::LocalResource::~LocalResource()
 {
 }
 
-OsmAnd::ResourcesManager::LocalObfResource::~LocalObfResource()
-{
-}
-
-OsmAnd::ResourcesManager::MapStylesPresetsResource::MapStylesPresetsResource(
+OsmAnd::ResourcesManager::UnmanagedResource::UnmanagedResource(
     const QString& id_,
-    const std::shared_ptr<const ResourceOrigin>& origin_)
-    : Resource(id_, ResourceType::MapStylePresets, origin_)
-    , presets(nullptr)
+    const ResourceType type_,
+    const QString& localPath_,
+    const uint64_t size_,
+    const QString& name_)
+    : LocalResource(id_, type_, ResourceOrigin::Unmanaged, localPath_, size_)
+    , name(name_)
 {
 }
 
-OsmAnd::ResourcesManager::MapStylesPresetsResource::MapStylesPresetsResource(
+OsmAnd::ResourcesManager::UnmanagedResource::~UnmanagedResource()
+{
+}
+
+OsmAnd::ResourcesManager::InstalledResource::InstalledResource(
+    const QString& id_,
+    const ResourceType type_,
+    const QString& localPath_,
+    const uint64_t size_,
+    const uint64_t timestamp_)
+    : LocalResource(id_, type_, ResourceOrigin::Installed, localPath_, size_)
+    , timestamp(timestamp_)
+{
+}
+
+OsmAnd::ResourcesManager::InstalledResource::~InstalledResource()
+{
+}
+
+OsmAnd::ResourcesManager::BuiltinResource::BuiltinResource(
+    const QString& id_,
+    const ResourceType type_)
+    : Resource(id_, type_, ResourceOrigin::Builtin)
+{
+}
+
+OsmAnd::ResourcesManager::BuiltinResource::~BuiltinResource()
+{
+}
+
+OsmAnd::ResourcesManager::BuiltinMapStylesPresetsResource::BuiltinMapStylesPresetsResource(
     const QString& id_,
     const std::shared_ptr<const MapStylesPresets>& presets_)
-    : Resource(id_, ResourceType::MapStylePresets, std::shared_ptr<ResourceOrigin>(new ResourceOrigin(ResourceOriginType::Builtin)))
+    : BuiltinResource(id_, ResourceType::OnlineTileSources)
     , presets(presets_)
 {
 }
 
-OsmAnd::ResourcesManager::MapStylesPresetsResource::~MapStylesPresetsResource()
+OsmAnd::ResourcesManager::BuiltinMapStylesPresetsResource::~BuiltinMapStylesPresetsResource()
 {
 }
 
-OsmAnd::ResourcesManager::OnlineTileSourcesResource::OnlineTileSourcesResource(
-    const QString& id_,
-    const std::shared_ptr<const ResourceOrigin>& origin_)
-    : Resource(id_, ResourceType::OnlineTileSources, origin_)
-    , sources(nullptr)
-{
-}
-
-OsmAnd::ResourcesManager::OnlineTileSourcesResource::OnlineTileSourcesResource(
+OsmAnd::ResourcesManager::BuiltinOnlineTileSourcesResource::BuiltinOnlineTileSourcesResource(
     const QString& id_,
     const std::shared_ptr<const OnlineTileSources>& sources_)
-    : Resource(id_, ResourceType::OnlineTileSources, std::shared_ptr<ResourceOrigin>(new ResourceOrigin(ResourceOriginType::Builtin)))
+    : BuiltinResource(id_, ResourceType::OnlineTileSources)
     , sources(sources_)
 {
 }
 
-OsmAnd::ResourcesManager::OnlineTileSourcesResource::~OnlineTileSourcesResource()
+OsmAnd::ResourcesManager::BuiltinOnlineTileSourcesResource::~BuiltinOnlineTileSourcesResource()
+{
+}
+
+OsmAnd::ResourcesManager::ResourceInRepository::ResourceInRepository(
+    const QString& id_,
+    const ResourceType type_,
+    const QUrl& url_,
+    const uint64_t size_,
+    const uint64_t timestamp_,
+    const uint64_t packageSize_)
+    : Resource(id_, type_, ResourceOrigin::Repository)
+    , url(url_)
+    , size(size_)
+    , timestamp(timestamp_)
+    , packageSize(packageSize_)
+{
+}
+
+OsmAnd::ResourcesManager::ResourceInRepository::~ResourceInRepository()
 {
 }

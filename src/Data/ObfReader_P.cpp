@@ -1,5 +1,14 @@
 #include "ObfReader_P.h"
+#include "ObfReader.h"
 
+#include "QtExtensions.h"
+#include <QFile>
+
+#include "QIODeviceInputStream.h"
+#include "QFileDeviceInputStream.h"
+#include "ObfFile.h"
+#include "ObfFile.h"
+#include "ObfFile_P.h"
 #include "ObfInfo.h"
 #include "ObfMapSectionInfo.h"
 #include "ObfMapSectionReader_P.h"
@@ -16,15 +25,82 @@
 #include "OBF.pb.h"
 #include <google/protobuf/wire_format_lite.h>
 
-OsmAnd::ObfReader_P::ObfReader_P( ObfReader* owner_ )
+OsmAnd::ObfReader_P::ObfReader_P(ObfReader* const owner_, const std::shared_ptr<QIODevice>& input_)
     : owner(owner_)
+    , _input(input_)
 {
 }
 
 OsmAnd::ObfReader_P::~ObfReader_P()
 {
+}
+
+bool OsmAnd::ObfReader_P::isOpened() const
+{
+    return static_cast<bool>(_codedInputStream);
+}
+
+bool OsmAnd::ObfReader_P::open()
+{
+    if(isOpened())
+        return false;
+
+    // Create zero-copy input stream
+    gpb::io::ZeroCopyInputStream* zcis = nullptr;
+    if(const auto inputAsFileDevice = std::dynamic_pointer_cast<QFileDevice>(_input))
+        zcis = new QFileDeviceInputStream(inputAsFileDevice);
+    else
+        zcis = new QIODeviceInputStream(_input);
+    _zeroCopyInputStream.reset(zcis);
+
+    // Create coded input stream wrapper
+    const auto cis = new gpb::io::CodedInputStream(zcis);
+    cis->SetTotalBytesLimit(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
+    _codedInputStream.reset(cis);
+
+    return true;
+}
+
+bool OsmAnd::ObfReader_P::close()
+{
+    if(!isOpened())
+        return false;
+
     _codedInputStream.reset();
     _zeroCopyInputStream.reset();
+
+    return true;
+}
+
+std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::ObfReader_P::obtainInfo() const
+{
+    // Check if information is already available
+    if(_obfInfo)
+        return _obfInfo;
+
+    if(!isOpened())
+        return nullptr;
+
+    if(owner->obfFile)
+    {
+        QMutexLocker scopedLock(&owner->obfFile->_p->_obfInfoMutex);
+
+        if(!owner->obfFile->_p->_obfInfo)
+        {
+            if(!readInfo(*this, owner->obfFile->_p->_obfInfo))
+                return nullptr;
+        }
+        _obfInfo = owner->obfFile->_p->_obfInfo;
+
+        return _obfInfo;
+    }
+    else
+    {
+        if(!readInfo(*this, _obfInfo))
+            return nullptr;
+
+        return _obfInfo;
+    }
 }
 
 bool OsmAnd::ObfReader_P::readInfo(const ObfReader_P& reader, std::shared_ptr<const ObfInfo>& info_)

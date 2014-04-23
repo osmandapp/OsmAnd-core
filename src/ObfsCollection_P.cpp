@@ -75,8 +75,7 @@ void OsmAnd::ObfsCollection_P::collectSources() const
             {
                 const auto obfFile = itCollectedSource.value();
 
-                // This lock will never be released
-                obfFile->lockForWriting();
+                //NOTE: OBF should have been locked here, but since file is gone anyways, this lock is quite useless
 
                 itCollectedSource.value().reset();
                 assert(obfFile.use_count() == 1);
@@ -95,8 +94,7 @@ void OsmAnd::ObfsCollection_P::collectSources() const
                 continue;
             const auto obfFile = itObfFileEntry.value();
 
-            // This lock will never be released
-            obfFile->lockForWriting();
+            //NOTE: OBF should have been locked here, but since file is gone anyways, this lock is quite useless
 
             itObfFileEntry.remove();
             assert(obfFile.use_count() == 1);
@@ -289,9 +287,9 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection_P::obtainDataIn
             obfReaders.reserve(obfReaders.size() + collectedSources.size());
             for(const auto& obfFile : constOf(collectedSources))
             {
-                if(!obfFile->tryLockForReading())
+                std::shared_ptr<const ObfReader> obfReader(new ObfReader(obfFile));
+                if(!obfReader->isOpened() || !obfReader->obtainInfo())
                     continue;
-                std::shared_ptr<const ObfReader> obfReader(new ObfReader(obfFile, false));
                 obfReaders.push_back(qMove(obfReader));
             }
         }

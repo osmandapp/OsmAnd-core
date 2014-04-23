@@ -12,7 +12,7 @@
 
 namespace OsmAnd
 {
-    class ObfReader;
+    class ObfReader_P;
     class ObfInfo;
 
     class ObfFile;
@@ -27,23 +27,11 @@ namespace OsmAnd
 
         mutable QMutex _obfInfoMutex;
         mutable std::shared_ptr<const ObfInfo> _obfInfo;
-
-        mutable QMutex _lockCounterMutex;
-        mutable QWaitCondition _lockCounterWaitCondition;
-        mutable volatile int _lockCounter;
     public:
         virtual ~ObfFile_P();
 
-        bool tryLockForReading() const;
-        void lockForReading() const;
-        void unlockFromReading() const;
-
-        bool tryLockForWriting() const;
-        void lockForWriting() const;
-        void unlockFromWriting() const;
-
     friend class OsmAnd::ObfFile;
-    friend class OsmAnd::ObfReader;
+    friend class OsmAnd::ObfReader_P;
     };
 }
 

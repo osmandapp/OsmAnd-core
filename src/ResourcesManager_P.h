@@ -16,6 +16,7 @@
 #include "PrivateImplementation.h"
 #include "WebClient.h"
 #include "ResourcesManager.h"
+#include "ObfDataInterface.h"
 #include "IObfsCollection.h"
 
 namespace OsmAnd
@@ -23,17 +24,16 @@ namespace OsmAnd
     class ResourcesManager_P
     {
     public:
-        typedef ResourcesManager::ResourceOriginType ResourceOriginType;
-        typedef ResourcesManager::ResourceOrigin ResourceOrigin;
-        typedef ResourcesManager::LocalResourceOrigin LocalResourceOrigin;
-        typedef ResourcesManager::UserResourceOrigin UserResourceOrigin;
-        typedef ResourcesManager::InstalledResourceOrigin InstalledResourceOrigin;
-        typedef ResourcesManager::RepositoryResourceOrigin RepositoryResourceOrigin;
         typedef ResourcesManager::ResourceType ResourceType;
+        typedef ResourcesManager::ResourceOrigin ResourceOrigin;
         typedef ResourcesManager::Resource Resource;
-        typedef ResourcesManager::LocalObfResource LocalObfResource;
-        typedef ResourcesManager::MapStylesPresetsResource MapStylesPresetsResource;
-        typedef ResourcesManager::OnlineTileSourcesResource OnlineTileSourcesResource;
+        typedef ResourcesManager::LocalResource LocalResource;
+        typedef ResourcesManager::InstalledResource InstalledResource;
+        typedef ResourcesManager::UnmanagedResource UnmanagedResource;
+        typedef ResourcesManager::BuiltinResource BuiltinResource;
+        typedef ResourcesManager::BuiltinMapStylesPresetsResource BuiltinMapStylesPresetsResource;
+        typedef ResourcesManager::BuiltinOnlineTileSourcesResource BuiltinOnlineTileSourcesResource;
+        typedef ResourcesManager::ResourceInRepository ResourceInRepository;
 
     private:
         QFileSystemWatcher* const _fileSystemWatcher;
@@ -45,27 +45,59 @@ namespace OsmAnd
         void attachToFileSystem();
         void detachFromFileSystem();
 
-        QHash< QString, std::shared_ptr<const Resource> > _builtinResources;
+        QHash< QString, std::shared_ptr<const BuiltinResource> > _builtinResources;
         void inflateBuiltInResources();
 
         mutable QReadWriteLock _localResourcesLock;
-        mutable QHash< QString, std::shared_ptr<const Resource> > _localResources;
-        static bool rescanLocalStoragePath(const QString& storagePath, const bool isExtraStorage, QHash< QString, std::shared_ptr<const Resource> >& outResult);
+        mutable QHash< QString, std::shared_ptr<const LocalResource> > _localResources;
+        static bool rescanLocalStoragePath(const QString& storagePath, const bool isUnmanagedStorage, QHash< QString, std::shared_ptr<const LocalResource> >& outResult);
 
         std::shared_ptr<const ObfFile> _miniBasemapObfFile;
 
         mutable QReadWriteLock _resourcesInRepositoryLock;
-        mutable QHash< QString, std::shared_ptr<const Resource> > _resourcesInRepository;
+        mutable QHash< QString, std::shared_ptr<const ResourceInRepository> > _resourcesInRepository;
         mutable bool _resourcesInRepositoryLoaded;
-        bool parseRepository(QXmlStreamReader& xmlReader, QList< std::shared_ptr<const Resource> >& repository) const;
+        bool parseRepository(QXmlStreamReader& xmlReader, QList< std::shared_ptr<const ResourceInRepository> >& repository) const;
 
         mutable WebClient _webClient;
 
-        bool uninstallMapRegion(const std::shared_ptr<const Resource>& resource);
-        bool uninstallVoicePack(const std::shared_ptr<const Resource>& resource);
+        bool uninstallMapRegion(const std::shared_ptr<const InstalledResource>& resource);
+        bool uninstallVoicePack(const std::shared_ptr<const InstalledResource>& resource);
 
-        bool installMapRegionFromFile(const QString& id, const QString& filePath);
-        bool installVoicePackFromFile(const QString& id, const QString& filePath);
+        bool installMapRegionFromFile(const QString& id, const QString& filePath, std::shared_ptr<const InstalledResource>& outResource);
+        bool installVoicePackFromFile(const QString& id, const QString& filePath, std::shared_ptr<const InstalledResource>& outResource);
+
+        bool updateMapRegionFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
+        bool updateVoicePackFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
+
+        struct ObfMetadata : public Resource::Metadata
+        {
+            ObfMetadata(const std::shared_ptr<const ObfFile>& obfFile_)
+                : obfFile(obfFile_)
+            {
+            }
+
+            virtual ~ObfMetadata()
+            {
+            }
+
+            const std::shared_ptr<const ObfFile> obfFile;
+        };
+
+        class ManagedObfDataInterface : public ObfDataInterface
+        {
+        private:
+        protected:
+            ManagedObfDataInterface(
+                const QList< std::shared_ptr<const ObfReader> >& obfReaders,
+                const QList< std::shared_ptr<const InstalledResource> >& lockedResources);
+        public:
+            virtual ~ManagedObfDataInterface();
+
+            const QList< std::shared_ptr<const InstalledResource> > lockedResources;
+
+        friend class OsmAnd::ResourcesManager_P;
+        };
 
         class ObfsCollection : public IObfsCollection
         {
@@ -87,27 +119,28 @@ namespace OsmAnd
 
         void initialize();
         void loadRepositoryFromCache();
+        bool scanManagedStoragePath();
     public:
         virtual ~ResourcesManager_P();
 
         ImplementationInterface<ResourcesManager> owner;
 
         // Built-in resources:
-        QList< std::shared_ptr<const Resource> > getBuiltInResources() const;
-        std::shared_ptr<const Resource> getBuiltInResource(const QString& id) const;
+        QList< std::shared_ptr<const BuiltinResource> > getBuiltInResources() const;
+        std::shared_ptr<const BuiltinResource> getBuiltInResource(const QString& id) const;
         bool isBuiltInResource(const QString& id) const;
 
         // Local resources:
-        bool rescanLocalStoragePaths() const;
-        QList< std::shared_ptr<const Resource> > getLocalResources() const;
-        std::shared_ptr<const Resource> getLocalResource(const QString& id) const;
+        bool rescanUnmanagedStoragePaths() const;
+        QList< std::shared_ptr<const LocalResource> > getLocalResources() const;
+        std::shared_ptr<const LocalResource> getLocalResource(const QString& id) const;
         bool isLocalResource(const QString& id) const;
 
         // Resources in repository:
         bool isRepositoryAvailable() const;
         bool updateRepository() const;
-        QList< std::shared_ptr<const Resource> > getResourcesInRepository() const;
-        std::shared_ptr<const Resource> getResourceInRepository(const QString& id) const;
+        QList< std::shared_ptr<const ResourceInRepository> > getResourcesInRepository() const;
+        std::shared_ptr<const ResourceInRepository> getResourceInRepository(const QString& id) const;
         bool isResourceInRepository(const QString& id) const;
 
         // Install / Uninstall:

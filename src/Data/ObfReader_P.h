@@ -6,14 +6,13 @@
 
 #include "QtExtensions.h"
 #include <QString>
+#include <QIODevice>
 
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream.h>
 
 #include "OsmAndCore.h"
 #include "PrivateImplementation.h"
-
-class QIODevice;
 
 namespace OsmAnd
 {
@@ -31,19 +30,26 @@ namespace OsmAnd
     class ObfReader_P
     {
     private:
-    protected:
-        ObfReader_P(ObfReader* owner);
-
-        ImplementationInterface<ObfReader> owner;
-        mutable std::unique_ptr<gpb::io::CodedInputStream> _codedInputStream;
         mutable std::unique_ptr<gpb::io::ZeroCopyInputStream> _zeroCopyInputStream;
 
-        mutable std::shared_ptr<QIODevice> _input;
+        const std::shared_ptr<QIODevice> _input;
         mutable std::shared_ptr<const ObfInfo> _obfInfo;
 
         static bool readInfo(const ObfReader_P& reader, std::shared_ptr<const ObfInfo>& info);
+    protected:
+        ObfReader_P(ObfReader* const owner, const std::shared_ptr<QIODevice>& input);
+
+        mutable std::unique_ptr<gpb::io::CodedInputStream> _codedInputStream;
     public:
         virtual ~ObfReader_P();
+
+        ImplementationInterface<ObfReader> owner;
+
+        bool isOpened() const;
+        bool open();
+        bool close();
+
+        std::shared_ptr<const ObfInfo> obtainInfo() const;
 
     friend class OsmAnd::ObfReader;
 
