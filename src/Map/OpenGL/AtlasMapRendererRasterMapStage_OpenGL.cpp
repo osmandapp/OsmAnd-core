@@ -214,7 +214,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::initialize()
         // Compile vertex shader
         auto preprocessedVertexShader = vertexShader;
         QString preprocessedVertexShader_UnrolledPerRasterLayerTexCoordsProcessingCode;
-        for(int layerId = 0; layerId < maxActiveMapLayers; layerId++)
+        for(auto layerId = 0u; layerId < maxActiveMapLayers; layerId++)
         {
             auto preprocessedVertexShader_perRasterLayerTexCoordsProcessing = vertexShader_perRasterLayerTexCoordsProcessing;
             preprocessedVertexShader_perRasterLayerTexCoordsProcessing.replace("%rasterLayerId%", QString::number(layerId));
@@ -234,7 +234,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::initialize()
         // Compile fragment shader
         auto preprocessedFragmentShader = fragmentShader;
         QString preprocessedFragmentShader_UnrolledPerRasterLayerProcessingCode;
-        for(int layerId = static_cast<int>(RasterMapLayerId::BaseLayer) + 1; layerId < maxActiveMapLayers; layerId++)
+        for(auto layerId = static_cast<unsigned int>(RasterMapLayerId::BaseLayer) + 1; layerId < maxActiveMapLayers; layerId++)
         {
             auto linearIdx = layerId - static_cast<int>(RasterMapLayerId::BaseLayer);
             auto preprocessedFragmentShader_perRasterLayer = fragmentShader_perRasterLayer;
@@ -282,7 +282,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::initialize()
             lookup->lookupLocation(tileProgram.vs.param.elevationTileLayer.slotsPerSide, "param_vs_elevationTileLayer.slotsPerSide", GLShaderVariableType::Uniform);
             lookup->lookupLocation(tileProgram.vs.param.elevationTileLayer.slotIndex, "param_vs_elevationTileLayer.slotIndex", GLShaderVariableType::Uniform);
         }
-        for(int layerId = 0; layerId < maxActiveMapLayers; layerId++)
+        for(auto layerId = 0u; layerId < maxActiveMapLayers; layerId++)
         {
             // Vertex shader
             {
@@ -407,7 +407,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
             break;
         }
     }
-    for(int layerIdx = 0, layerId = static_cast<int>(RasterMapLayerId::BaseLayer); layerIdx < activeRasterTileProvidersCount; layerIdx++, layerId++)
+    for(auto layerIdx = 0u, layerId = static_cast<unsigned int>(RasterMapLayerId::BaseLayer); layerIdx < activeRasterTileProvidersCount; layerIdx++, layerId++)
     {
         const auto samplerIndex = (gpuAPI->isSupported_vertexShaderTextureLookup ? 1 : 0) + layerId;
 
