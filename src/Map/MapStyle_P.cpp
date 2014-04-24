@@ -106,7 +106,12 @@ bool OsmAnd::MapStyle_P::prepareIfNeeded()
     {
         registerString(QString());
 
-        registerValue(new MapStyleConfigurableInputValue(MapStyleValueDataType::Boolean, QLatin1String("nightMode"), QString(), QString(), QStringList()));
+        registerValue(new MapStyleConfigurableInputValue(
+            MapStyleValueDataType::Boolean,
+            QLatin1String("nightMode"),
+            QString(),
+            QString(),
+            QStringList()));
     }
 
     // Parse this style itself

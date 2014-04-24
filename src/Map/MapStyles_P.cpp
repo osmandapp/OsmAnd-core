@@ -8,6 +8,7 @@
 
 OsmAnd::MapStyles_P::MapStyles_P( MapStyles* owner_ )
     : owner(owner_)
+    , _stylesLock(QReadWriteLock::Recursive)
 {
     bool ok = true;
 
@@ -23,52 +24,44 @@ OsmAnd::MapStyles_P::~MapStyles_P()
 
 bool OsmAnd::MapStyles_P::registerEmbeddedStyle(const QString& resourceName)
 {
+    QWriteLocker scopedLocker(&_stylesLock);
+
     assert(EmbeddedResources::containsResource(resourceName));
 
     std::shared_ptr<MapStyle> style(new MapStyle(owner, resourceName, true));
     if(!style->_p->parseMetadata())
         return false;
 
-    {
-        QWriteLocker scopedLocker(&_stylesLock);
-
-        assert(!_styles.contains(style->name));
-        _styles.insert(style->name, style);
-    }
+    assert(!_styles.contains(style->name));
+    _styles.insert(style->name, style);
     
     return true;
 }
 
 bool OsmAnd::MapStyles_P::registerStyle( const QString& filePath )
 {
+    QWriteLocker scopedLocker(&_stylesLock);
+
     std::shared_ptr<MapStyle> style(new MapStyle(owner, filePath, false));
     if(!style->_p->parseMetadata())
         return false;
 
-    {
-        QWriteLocker scopedLocker(&_stylesLock);
-
-        if(_styles.contains(style->name))
-            return false;
-        _styles.insert(style->name, style);
-    }
+    if(_styles.contains(style->name))
+        return false;
+    _styles.insert(style->name, style);
 
     return true;
 }
 
 bool OsmAnd::MapStyles_P::obtainStyle(const QString& name, std::shared_ptr<const OsmAnd::MapStyle>& outStyle) const
 {
-    // Obtain style by name
-    QHash< QString, std::shared_ptr<MapStyle> >::const_iterator citStyle;
-    {
-        QReadLocker scopedLocker(&_stylesLock);
+    QReadLocker scopedLocker(&_stylesLock);
 
-        citStyle = _styles.constFind(name);
-        if(citStyle == _styles.cend())
-            return false;
-    }
+    const auto citStyle = _styles.constFind(name);
+    if(citStyle == _styles.cend())
+        return false;
+    const auto& style = *citStyle;
 
-    const auto style = *citStyle;
     if(!style->_p->prepareIfNeeded())
         return false;
 
