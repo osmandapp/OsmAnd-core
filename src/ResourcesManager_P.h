@@ -160,13 +160,13 @@ namespace OsmAnd
         ImplementationInterface<ResourcesManager> owner;
 
         // Built-in resources:
-        QList< std::shared_ptr<const BuiltinResource> > getBuiltInResources() const;
+        QHash< QString, std::shared_ptr<const BuiltinResource> > getBuiltInResources() const;
         std::shared_ptr<const BuiltinResource> getBuiltInResource(const QString& id) const;
         bool isBuiltInResource(const QString& id) const;
 
         // Local resources:
         bool rescanUnmanagedStoragePaths() const;
-        QList< std::shared_ptr<const LocalResource> > getLocalResources() const;
+        QHash< QString, std::shared_ptr<const LocalResource> > getLocalResources() const;
         std::shared_ptr<const LocalResource> getLocalResource(const QString& id) const;
         bool isLocalResource(const QString& id) const;
 

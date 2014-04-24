@@ -116,9 +116,9 @@ void OsmAnd::ResourcesManager_P::inflateBuiltInResources()
     _builtinResources.insert(defaultOnlineTileSourcesResource->id, defaultOnlineTileSourcesResource);
 }
 
-QList< std::shared_ptr<const OsmAnd::ResourcesManager_P::BuiltinResource> > OsmAnd::ResourcesManager_P::getBuiltInResources() const
+QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager_P::BuiltinResource> > OsmAnd::ResourcesManager_P::getBuiltInResources() const
 {
-    return _builtinResources.values();
+    return _builtinResources;
 }
 
 std::shared_ptr<const OsmAnd::ResourcesManager_P::BuiltinResource> OsmAnd::ResourcesManager_P::getBuiltInResource(const QString& id) const
@@ -375,11 +375,11 @@ bool OsmAnd::ResourcesManager_P::rescanLocalStoragePath(
     return true;
 }
 
-QList< std::shared_ptr<const OsmAnd::ResourcesManager_P::LocalResource> > OsmAnd::ResourcesManager_P::getLocalResources() const
+QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager_P::LocalResource> > OsmAnd::ResourcesManager_P::getLocalResources() const
 {
     QReadLocker scopedLocker(&_localResourcesLock);
 
-    return _localResources.values();
+    return detachedOf(_localResources);
 }
 
 std::shared_ptr<const OsmAnd::ResourcesManager_P::LocalResource> OsmAnd::ResourcesManager_P::getLocalResource(const QString& id) const

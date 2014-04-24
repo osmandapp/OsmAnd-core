@@ -35,7 +35,7 @@ OsmAnd::ResourcesManager::~ResourcesManager()
     _p->detachFromFileSystem();
 }
 
-QList< std::shared_ptr<const OsmAnd::ResourcesManager::BuiltinResource> > OsmAnd::ResourcesManager::getBuiltInResources() const
+QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager::BuiltinResource> > OsmAnd::ResourcesManager::getBuiltInResources() const
 {
     return _p->getBuiltInResources();
 }
@@ -55,7 +55,7 @@ bool OsmAnd::ResourcesManager::rescanUnmanagedStoragePaths() const
     return _p->rescanUnmanagedStoragePaths();
 }
 
-QList< std::shared_ptr<const OsmAnd::ResourcesManager::LocalResource> > OsmAnd::ResourcesManager::getLocalResources() const
+QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager::LocalResource> > OsmAnd::ResourcesManager::getLocalResources() const
 {
     return _p->getLocalResources();
 }
