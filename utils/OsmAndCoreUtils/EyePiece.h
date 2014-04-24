@@ -12,7 +12,7 @@
 #include <OsmAndCoreUtils.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/MapStyle.h>
-#include <OsmAndCore/Map/MapStyles.h>
+#include <OsmAndCore/Map/MapStylesCollection.h>
 
 namespace OsmAnd
 {

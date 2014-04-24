@@ -53,7 +53,7 @@ bool OsmAnd::MapStyleRule::getAttribute(const std::shared_ptr<const MapStyleValu
     return true;
 }
 
-void OsmAnd::MapStyleRule::dump( const QString& prefix /*= QString()*/ ) const
+void OsmAnd::MapStyleRule::dump( const QString& prefix /*= QString::null*/ ) const
 {
     auto newPrefix = prefix + QLatin1String("\t");
     

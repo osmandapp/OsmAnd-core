@@ -15,7 +15,7 @@
 
 namespace OsmAnd
 {
-    class MapStyles_P;
+    class MapStylesCollection_P;
     class MapStyleValueDefinition;
     class MapStyleRule;
     class MapStyleEvaluator;
@@ -39,21 +39,24 @@ namespace OsmAnd
         QHash< QString, QString > _parsetimeConstants;
         QHash< QString, std::shared_ptr<MapStyleRule> > _attributes;
 
-        bool _isPrepared;
-        mutable QMutex _preparationMutex;
+        volatile bool _isMetadataLoaded;
+        mutable QMutex _metadataLoadMutex;
+
+        volatile bool _isLoaded;
+        mutable QMutex _loadMutex;
     protected:
-        MapStyle_P(MapStyle* owner);
+        MapStyle_P(MapStyle* const owner, const QString& name, const std::shared_ptr<QIODevice>& source);
+
+        const std::shared_ptr<QIODevice> _source;
 
         bool parseMetadata();
         bool parse();
 
         QString _title;
 
-        QString _name;
+        const QString _name;
         QString _parentName;
         std::shared_ptr<const MapStyle> _parent;
-
-        bool prepareIfNeeded();
 
         bool areDependenciesResolved() const;
         bool resolveDependencies();
@@ -85,13 +88,17 @@ namespace OsmAnd
             RuleIdTagShift = 32,
         };
 
-        ImplementationInterface<MapStyle> owner;
-
         const std::shared_ptr<const MapStyleBuiltinValueDefinitions> _builtinValueDefs;
 
         static uint64_t encodeRuleId(uint32_t tag, uint32_t value);
     public:
         virtual ~MapStyle_P();
+
+        ImplementationInterface<MapStyle> owner;
+
+        bool isStandalone() const;
+        bool loadMetadata();
+        bool loadStyle();
 
         const QMap< uint64_t, std::shared_ptr<MapStyleRule> >& obtainRulesRef(MapStyleRulesetType type) const;
 
@@ -109,7 +116,7 @@ namespace OsmAnd
     friend class OsmAnd::MapStyleEvaluator;
     friend class OsmAnd::MapStyleEvaluator_P;
     friend class OsmAnd::MapStyleRule;
-    friend class OsmAnd::MapStyles_P;
+    friend class OsmAnd::MapStylesCollection_P;
     };
 }
 

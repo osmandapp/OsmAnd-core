@@ -22,7 +22,7 @@ namespace OsmAnd
         PrivateImplementation<HeightmapTileProvider_P> _p;
     protected:
     public:
-        HeightmapTileProvider(const QDir& dataPath, const QString& indexFilepath = QString());
+        HeightmapTileProvider(const QDir& dataPath, const QString& indexFilepath = QString::null);
         virtual ~HeightmapTileProvider();
 
         void rebuildTileDbIndex();

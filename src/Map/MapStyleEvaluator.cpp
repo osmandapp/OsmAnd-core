@@ -71,7 +71,7 @@ bool OsmAnd::MapStyleEvaluator::evaluate(
     return _p->evaluate(singleRule, outResultStorage, evaluateChildren);
 }
 
-void OsmAnd::MapStyleEvaluator::dump( bool input /*= true*/, bool output /*= true*/, const QString& prefix /*= QString()*/ ) const
+void OsmAnd::MapStyleEvaluator::dump( bool input /*= true*/, bool output /*= true*/, const QString& prefix /*= QString::null*/ ) const
 {
     /*
     for(auto itValue = _p->_inputValues.cbegin(); itValue != _p->_inputValues.cend(); ++itValue)

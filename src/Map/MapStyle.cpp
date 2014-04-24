@@ -10,16 +10,32 @@
 #include "QKeyValueIterator.h"
 #include "Logging.h"
 
-OsmAnd::MapStyle::MapStyle( MapStyles* styles_, const QString& resourcePath_, const bool isEmbedded_ )
-    : _p(new MapStyle_P(this))
-    , styles(styles_)
-    , resourcePath(resourcePath_)
-    , isEmbedded(isEmbedded_)
+OsmAnd::MapStyle::MapStyle(
+    /*const std::shared_ptr<const IMapStylesCollection>&*/const IMapStylesCollection* const collection_,
+    const QString& name_,
+    const std::shared_ptr<QIODevice>& source_)
+    : _p(new MapStyle_P(this, name_, source_))
+    , collection(collection_)
     , title(_p->_title)
     , name(_p->_name)
     , parentName(_p->_parentName)
 {
-    _p->_name = QFileInfo(resourcePath).fileName().replace(QLatin1String(".render.xml"), QLatin1String(""));
+    _p->parseMetadata();
+}
+
+OsmAnd::MapStyle::MapStyle(
+    /*const std::shared_ptr<IMapStylesCollection>&*/const IMapStylesCollection* const collection_,
+    const QString& name_,
+    const QString& fileName_)
+    : MapStyle(collection_, name_, std::shared_ptr<QIODevice>(new QFile(fileName_)))
+{
+}
+
+OsmAnd::MapStyle::MapStyle(
+    /*const std::shared_ptr<const IMapStylesCollection>&*/const IMapStylesCollection* const collection_,
+    const QString& fileName_)
+    : MapStyle(collection_, QFileInfo(fileName_).fileName().remove(QLatin1String(".render.xml")), fileName_)
+{
 }
 
 OsmAnd::MapStyle::~MapStyle()
@@ -28,10 +44,20 @@ OsmAnd::MapStyle::~MapStyle()
 
 bool OsmAnd::MapStyle::isStandalone() const
 {
-    return parentName.isEmpty();
+    return _p->isStandalone();
 }
 
-bool OsmAnd::MapStyle::resolveValueDefinition( const QString& name, std::shared_ptr<const MapStyleValueDefinition>& outDefinition ) const
+bool OsmAnd::MapStyle::loadMetadata()
+{
+    return _p->loadMetadata();
+}
+
+bool OsmAnd::MapStyle::loadStyle()
+{
+    return _p->loadStyle();
+}
+
+bool OsmAnd::MapStyle::resolveValueDefinition(const QString& name, std::shared_ptr<const MapStyleValueDefinition>& outDefinition) const
 {
     auto itValueDefinition = _p->_valuesDefinitions.constFind(name);
     if(itValueDefinition != _p->_valuesDefinitions.cend())
@@ -46,7 +72,7 @@ bool OsmAnd::MapStyle::resolveValueDefinition( const QString& name, std::shared_
     return _p->_parent->resolveValueDefinition(name, outDefinition);
 }
 
-bool OsmAnd::MapStyle::resolveAttribute( const QString& name, std::shared_ptr<const MapStyleRule>& outAttribute ) const
+bool OsmAnd::MapStyle::resolveAttribute(const QString& name, std::shared_ptr<const MapStyleRule>& outAttribute) const
 {
     auto itAttribute = _p->_attributes.constFind(name);
     if(itAttribute != _p->_attributes.cend())
@@ -58,7 +84,7 @@ bool OsmAnd::MapStyle::resolveAttribute( const QString& name, std::shared_ptr<co
     return false;
 }
 
-void OsmAnd::MapStyle::dump( const QString& prefix /*= QString()*/ ) const
+void OsmAnd::MapStyle::dump(const QString& prefix /*= QString::null*/) const
 {
     LogPrintf(LogSeverityLevel::Debug, "%sPoint rules:", qPrintable(prefix));
     dump(MapStyleRulesetType::Point, prefix);
@@ -76,7 +102,7 @@ void OsmAnd::MapStyle::dump( const QString& prefix /*= QString()*/ ) const
     dump(MapStyleRulesetType::Order, prefix);
 }
 
-void OsmAnd::MapStyle::dump( MapStyleRulesetType type, const QString& prefix /*= QString()*/ ) const
+void OsmAnd::MapStyle::dump(MapStyleRulesetType type, const QString& prefix /*= QString::null*/) const
 {
     const auto& rules = _p->obtainRulesRef(type);
 

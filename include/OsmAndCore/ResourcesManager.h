@@ -20,7 +20,9 @@
 
 namespace OsmAnd
 {
+    class IMapStylesCollection;
     class IObfsCollection;
+    class MapStyle;
     class MapStylesPresets;
     class OnlineTileSources;
 
@@ -35,6 +37,7 @@ namespace OsmAnd
 
             MapRegion,
             VoicePack,
+            MapStyle,
             MapStylePresets,
             OnlineTileSources,
             //RoadMapRegion,
@@ -147,6 +150,22 @@ namespace OsmAnd
                 const ResourceType type);
         public:
             virtual ~BuiltinResource();
+
+        friend class OsmAnd::ResourcesManager_P;
+        };
+
+        class OSMAND_CORE_API BuiltinMapStyleResource : public BuiltinResource
+        {
+            Q_DISABLE_COPY(BuiltinMapStyleResource);
+        private:
+        protected:
+            BuiltinMapStyleResource(
+                const QString& id,
+                const std::shared_ptr<const MapStyle>& style);
+        public:
+            virtual ~BuiltinMapStyleResource();
+
+            const std::shared_ptr<const MapStyle> style;
 
         friend class OsmAnd::ResourcesManager_P;
         };
@@ -266,7 +285,7 @@ namespace OsmAnd
             const QList< QString >& updated);
         const ObservableAs<LocalResourcesChanged> localResourcesChangeObservable;
 
-        // OBFs collection
+        const std::shared_ptr<const IMapStylesCollection>& mapStylesCollection;
         const std::shared_ptr<const IObfsCollection>& obfsCollection;
     };
 }

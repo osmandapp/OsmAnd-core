@@ -35,7 +35,7 @@ namespace OsmAnd
 
         const MapStyle* const owner;
 
-        void dump(const QString& prefix = QString()) const;
+        void dump(const QString& prefix = QString::null) const;
 
     friend class OsmAnd::MapStyle;
     friend class OsmAnd::MapStyle_P;

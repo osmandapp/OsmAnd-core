@@ -6,12 +6,14 @@
 #include <QDateTime>
 #include <QDir>
 #include <QTextStream>
+#include <QBuffer>
 
 #include "OsmAndCore_private.h"
 #include "EmbeddedResources.h"
 #include "ObfReader.h"
 #include "ArchiveReader.h"
 #include "ObfDataInterface.h"
+#include "MapStyle.h"
 #include "MapStylesPresets.h"
 #include "OnlineTileSources.h"
 #include "QKeyValueIterator.h"
@@ -21,7 +23,9 @@
 OsmAnd::ResourcesManager_P::ResourcesManager_P(ResourcesManager* owner_)
     : owner(owner_)
     , _fileSystemWatcher(new QFileSystemWatcher())
+    , _localResourcesLock(QReadWriteLock::Recursive)
     , _resourcesInRepositoryLoaded(false)
+    , mapStylesCollection(new MapStylesCollection(this))
     , obfsCollection(new ObfsCollection(this))
 {
     _fileSystemWatcher->moveToThread(gMainThread);
@@ -80,6 +84,22 @@ void OsmAnd::ResourcesManager_P::onFileChanged(const QString& path)
 
 void OsmAnd::ResourcesManager_P::inflateBuiltInResources()
 {
+    bool ok;
+
+    // Built-in map style
+    auto defaultMapStyleContent = EmbeddedResources::decompressResource(
+        QLatin1String("map/styles/default.render.xml"));
+    std::shared_ptr<MapStyle> defaultMapStyle(new MapStyle(
+        mapStylesCollection.get(),
+        QLatin1String("default.render.xml"),
+        std::shared_ptr<QIODevice>(new QBuffer(&defaultMapStyleContent))));
+    ok = defaultMapStyle->loadMetadata() && defaultMapStyle->loadStyle();
+    assert(ok);
+    std::shared_ptr<const BuiltinResource> defaultMapStyleResource(new BuiltinMapStyleResource(
+        QLatin1String("default.render.xml"),
+        defaultMapStyle));
+    _builtinResources.insert(defaultMapStyleResource->id, defaultMapStyleResource);
+
     // Built-in presets for "default" map style
     std::shared_ptr<MapStylesPresets> defaultMapStylesPresets(new MapStylesPresets());
     defaultMapStylesPresets->loadFrom(EmbeddedResources::decompressResource(
@@ -197,7 +217,10 @@ bool OsmAnd::ResourcesManager_P::rescanUnmanagedStoragePaths() const
     return true;
 }
 
-bool OsmAnd::ResourcesManager_P::rescanLocalStoragePath(const QString& storagePath, const bool isUnmanagedStorage, QHash< QString, std::shared_ptr<const LocalResource> >& outResult)
+bool OsmAnd::ResourcesManager_P::rescanLocalStoragePath(
+    const QString& storagePath,
+    const bool isUnmanagedStorage,
+    QHash< QString, std::shared_ptr<const LocalResource> >& outResult) const
 {
     const QDir storageDir(storagePath);
 
@@ -271,6 +294,38 @@ bool OsmAnd::ResourcesManager_P::rescanLocalStoragePath(const QString& storagePa
             contentSize,
             timestamp));
         outResult.insert(name, qMove(localResource));
+    }
+
+    // Find ResourceType::MapStyleResource -> "*.render.xml" files (only in unmanaged storage)
+    if(isUnmanagedStorage)
+    {
+        QFileInfoList mapStyleFileInfos;
+        Utilities::findFiles(storageDir, QStringList() << QLatin1String("*.render.xml"), mapStyleFileInfos, false);
+        for(const auto& mapStyleFileInfo : constOf(mapStyleFileInfos))
+        {
+            const auto fileName = mapStyleFileInfo.absoluteFilePath();
+            const auto fileSize = mapStyleFileInfo.size();
+
+            // Read information from map style
+            const std::shared_ptr<MapStyle> mapStyle(new MapStyle(mapStylesCollection.get(), fileName));
+            if(!mapStyle->loadMetadata())
+            {
+                LogPrintf(LogSeverityLevel::Warning, "Failed to open map style '%s'", qPrintable(fileName));
+                continue;
+            }
+
+            // Create local resource entry
+            const auto name = mapStyleFileInfo.fileName();
+            const auto pLocalResource = new UnmanagedResource(
+                name,
+                ResourceType::MapStyle,
+                fileName,
+                fileSize,
+                name);
+            pLocalResource->_metadata.reset(new MapStyleMetadata(mapStyle));
+            std::shared_ptr<const LocalResource> localResource(pLocalResource);
+            outResult.insert(name, qMove(localResource));
+        }
     }
 
     // Find ResourceType::MapStylesPresetsResource -> "*.mapStylesPresets.xml" files (only in unmanaged storage)
@@ -406,7 +461,7 @@ bool OsmAnd::ResourcesManager_P::parseRepository(QXmlStreamReader& xmlReader, QL
         }
 
         std::shared_ptr<const ResourceInRepository> resource(new ResourceInRepository(
-            QString(name).replace(QLatin1String(".zip"), QString()),
+            QString(name).remove(QLatin1String(".zip")),
             resourceType,
             owner->repositoryBaseUrl + QLatin1String("/download.php?file=") + QUrl::toPercentEncoding(name),
             contentSize,
@@ -576,7 +631,7 @@ bool OsmAnd::ResourcesManager_P::uninstallVoicePack(const std::shared_ptr<const 
 
 bool OsmAnd::ResourcesManager_P::installFromFile(const QString& filePath, const ResourceType resourceType)
 {
-    const auto guessedResourceName = QFileInfo(filePath).fileName().replace(QLatin1String(".zip"), QString());
+    const auto guessedResourceName = QFileInfo(filePath).fileName().remove(QLatin1String(".zip"));
     return installFromFile(guessedResourceName, filePath, resourceType);
 }
 
@@ -800,7 +855,7 @@ QList<QString> OsmAnd::ResourcesManager_P::getOutdatedInstalledResources() const
 
 bool OsmAnd::ResourcesManager_P::updateFromFile(const QString& filePath)
 {
-    const auto guessedResourceId = QFileInfo(filePath).fileName().replace(QLatin1String(".zip"), QString());
+    const auto guessedResourceId = QFileInfo(filePath).fileName().remove(QLatin1String(".zip"));
     return updateFromFile(guessedResourceId, filePath);
 }
 
@@ -964,4 +1019,57 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
     }
 
     return std::shared_ptr<ObfDataInterface>(new ManagedObfDataInterface(obfReaders, lockedResources));
+}
+
+OsmAnd::ResourcesManager_P::MapStylesCollection::MapStylesCollection(ResourcesManager_P* owner_)
+    : owner(owner_)
+{
+}
+
+OsmAnd::ResourcesManager_P::MapStylesCollection::~MapStylesCollection()
+{
+}
+
+bool OsmAnd::ResourcesManager_P::MapStylesCollection::obtainStyle(const QString& name_, std::shared_ptr<const MapStyle>& outStyle) const
+{
+    QReadLocker scopedLocker(&owner->_localResourcesLock);
+
+    auto name = name_;
+    if(!name.endsWith(QLatin1String(".render.xml")))
+        name.append(QLatin1String(".render.xml"));
+
+    for(const auto& builtinResource : constOf(owner->_builtinResources))
+    {
+        // Skip anything that is not a style
+        if(builtinResource->type != ResourceType::MapStyle)
+            continue;
+
+        // Skip any style that doesn't match by name
+        if(builtinResource->id != name)
+            continue;
+
+        outStyle = std::static_pointer_cast<const BuiltinMapStyleResource>(builtinResource)->style;
+        return true;
+    }
+
+    for(const auto& localResource : constOf(owner->_localResources))
+    {
+        // Skip anything that is not a style
+        if(localResource->type != ResourceType::MapStyle)
+            continue;
+
+        // Skip any style that doesn't match by name
+        if(localResource->id != name)
+            continue;
+
+        const auto mapStyle = std::static_pointer_cast<MapStyleMetadata>(localResource->_metadata)->mapStyle;
+        if(!mapStyle->loadStyle())
+            return false;
+
+        outStyle = mapStyle;
+
+        return true;
+    }
+
+    return false;
 }

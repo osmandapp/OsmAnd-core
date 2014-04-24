@@ -11,7 +11,7 @@
 #include <QFileInfo>
 #include <QStack>
 
-#include "MapStyles.h"
+#include "IMapStylesCollection.h"
 #include "MapStyleRule.h"
 #include "MapStyleRule_P.h"
 #include "MapStyleValueDefinition.h"
@@ -22,9 +22,12 @@
 #include "QKeyValueIterator.h"
 #include "Utilities.h"
 
-OsmAnd::MapStyle_P::MapStyle_P( MapStyle* owner_ )
-    : _isPrepared(false)
+OsmAnd::MapStyle_P::MapStyle_P(MapStyle* owner_, const QString& name_, const std::shared_ptr<QIODevice>& source_)
+    : _isMetadataLoaded(false)
+    , _isLoaded(false)
+    , _source(source_)
     , owner(owner_)
+    , _name(name_)
     , _builtinValueDefs(MapStyle::getBuiltinValueDefinitions())
     , _firstNonBuiltinValueDefinitionIndex(0)
     , _stringsIdBase(0)
@@ -38,23 +41,12 @@ OsmAnd::MapStyle_P::~MapStyle_P()
 
 bool OsmAnd::MapStyle_P::parseMetadata()
 {
-    if(owner->isEmbedded)
-    {
-        QXmlStreamReader data(EmbeddedResources::decompressResource(owner->resourcePath));
-        return parseMetadata(data);
-    }
-    else
-    {
-        QFile styleFile(owner->resourcePath);
-        if(!styleFile.open(QIODevice::ReadOnly | QIODevice::Text))
-            return false;
-        QXmlStreamReader data(&styleFile);
-        bool ok = parseMetadata(data);
-        styleFile.close();
-        return ok;
-    }
-
-    return false;
+    if(!_source->open(QIODevice::ReadOnly | QIODevice::Text))
+        return false;
+    QXmlStreamReader data(_source.get());
+    bool ok = parseMetadata(data);
+    _source->close();
+    return ok;
 }
 
 bool OsmAnd::MapStyle_P::parseMetadata( QXmlStreamReader& xmlReader )
@@ -86,11 +78,30 @@ bool OsmAnd::MapStyle_P::parseMetadata( QXmlStreamReader& xmlReader )
     return true;
 }
 
-bool OsmAnd::MapStyle_P::prepareIfNeeded()
+bool OsmAnd::MapStyle_P::isStandalone() const
 {
-    QMutexLocker scopedLocker(&_preparationMutex);
+    return _parentName.isNull();
+}
 
-    if(_isPrepared)
+bool OsmAnd::MapStyle_P::loadMetadata()
+{
+    QMutexLocker scopedLocker(&_metadataLoadMutex);
+
+    if(_isMetadataLoaded)
+        return true;
+
+    if(!parseMetadata())
+        return false;
+
+    _isMetadataLoaded = true;
+    return true;
+}
+
+bool OsmAnd::MapStyle_P::loadStyle()
+{
+    QMutexLocker scopedLocker(&_loadMutex);
+
+    if(_isLoaded)
         return true;
 
     // Resolve dependencies if required
@@ -122,7 +133,7 @@ bool OsmAnd::MapStyle_P::prepareIfNeeded()
     if(!isStandalone)
         mergeInherited();
 
-    _isPrepared = true;
+    _isLoaded = true;
     return true;
 }
 
@@ -142,7 +153,8 @@ bool OsmAnd::MapStyle_P::resolveDependencies()
     // Make sure parent is resolved before this style (if present)
     if(!_parentName.isEmpty() && !_parent)
     {
-        if(!owner->styles->obtainStyle(_parentName, _parent))
+        const auto collection = owner->collection;
+        if(!collection || !collection->obtainStyle(_parentName, _parent))
             return false;
     }
 
@@ -154,23 +166,12 @@ bool OsmAnd::MapStyle_P::resolveDependencies()
 
 bool OsmAnd::MapStyle_P::parse()
 {
-    if(owner->isEmbedded)
-    {
-        QXmlStreamReader data(EmbeddedResources::decompressResource(owner->resourcePath));
-        return parse(data);
-    }
-    else
-    {
-        QFile styleFile(owner->resourcePath);
-        if(!styleFile.open(QIODevice::ReadOnly | QIODevice::Text))
-            return false;
-        QXmlStreamReader data(&styleFile);
-        bool ok = parse(data);
-        styleFile.close();
-        return ok;
-    }
-
-    return false;
+    if(!_source->open(QIODevice::ReadOnly | QIODevice::Text))
+        return false;
+    QXmlStreamReader data(_source.get());
+    bool ok = parse(data);
+    _source->close();
+    return ok;
 }
 
 bool OsmAnd::MapStyle_P::parse( QXmlStreamReader& xmlReader )
@@ -510,7 +511,7 @@ void OsmAnd::MapStyle_P::registerBuiltinValueDefinitions()
 {
 #   define DECLARE_BUILTIN_VALUEDEF(varname, valueClass, dataType, name, isComplex) \
         registerBuiltinValueDefinition(_builtinValueDefs->varname);
-#   include <MapStyleBuiltinValueDefinitions_Set.h>
+#   include "MapStyleBuiltinValueDefinitions_Set.h"
 #   undef DECLARE_BUILTIN_VALUEDEF
 }
 

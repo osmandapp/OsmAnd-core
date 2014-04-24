@@ -11,13 +11,13 @@ OsmAnd::MapStyleBuiltinValueDefinitions::MapStyleBuiltinValueDefinitions()
             OsmAnd::MapStyleValueClass::valueClass, \
             OsmAnd::MapStyleValueDataType::dataType, \
             QLatin1String(name), isComplex)),
-#   include <OsmAndCore/Map/MapStyleBuiltinValueDefinitions_Set.h>
+#   include "MapStyleBuiltinValueDefinitions_Set.h"
 #   undef DECLARE_BUILTIN_VALUEDEF
 
     // Identifiers of definitions above
 #   define DECLARE_BUILTIN_VALUEDEF(varname, valueClass, dataType, name, isComplex) \
     id_##varname(varname->id),
-#   include <OsmAndCore/Map/MapStyleBuiltinValueDefinitions_Set.h>
+#   include "MapStyleBuiltinValueDefinitions_Set.h"
 #   undef DECLARE_BUILTIN_VALUEDEF
 
     /*, */ _footerDummy(0)

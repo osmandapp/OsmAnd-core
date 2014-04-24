@@ -48,7 +48,7 @@ double OsmAnd::RouteSegment::getBearingEnd() const
     return Utilities::normalizedAngleRadians(road->getDirectionDelta(_endPointIndex, _startPointIndex > _endPointIndex) - M_PI) / M_PI * 180.0;
 }
 
-void OsmAnd::RouteSegment::dump( const QString& prefix /*= QString()*/ ) const
+void OsmAnd::RouteSegment::dump( const QString& prefix /*= QString::null*/ ) const
 {
     LogPrintf(LogSeverityLevel::Debug, "%sroad(%llu), [%u:%u]", qPrintable(prefix), road->id, _startPointIndex, _endPointIndex);
 }

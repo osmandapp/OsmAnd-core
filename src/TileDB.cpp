@@ -8,7 +8,7 @@
 #include "Logging.h"
 #include "Utilities.h"
 
-OsmAnd::TileDB::TileDB( const QDir& dataPath_, const QString& indexFilename_/* = QString()*/ )
+OsmAnd::TileDB::TileDB( const QDir& dataPath_, const QString& indexFilename_/* = QString::null*/ )
     : _indexMutex(QMutex::Recursive)
     , dataPath(dataPath_)
     , indexFilename(indexFilename_)

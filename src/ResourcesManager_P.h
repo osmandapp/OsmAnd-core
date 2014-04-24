@@ -17,6 +17,7 @@
 #include "WebClient.h"
 #include "ResourcesManager.h"
 #include "ObfDataInterface.h"
+#include "IMapStylesCollection.h"
 #include "IObfsCollection.h"
 
 namespace OsmAnd
@@ -31,6 +32,7 @@ namespace OsmAnd
         typedef ResourcesManager::InstalledResource InstalledResource;
         typedef ResourcesManager::UnmanagedResource UnmanagedResource;
         typedef ResourcesManager::BuiltinResource BuiltinResource;
+        typedef ResourcesManager::BuiltinMapStyleResource BuiltinMapStyleResource;
         typedef ResourcesManager::BuiltinMapStylesPresetsResource BuiltinMapStylesPresetsResource;
         typedef ResourcesManager::BuiltinOnlineTileSourcesResource BuiltinOnlineTileSourcesResource;
         typedef ResourcesManager::ResourceInRepository ResourceInRepository;
@@ -50,7 +52,10 @@ namespace OsmAnd
 
         mutable QReadWriteLock _localResourcesLock;
         mutable QHash< QString, std::shared_ptr<const LocalResource> > _localResources;
-        static bool rescanLocalStoragePath(const QString& storagePath, const bool isUnmanagedStorage, QHash< QString, std::shared_ptr<const LocalResource> >& outResult);
+        bool rescanLocalStoragePath(
+            const QString& storagePath,
+            const bool isUnmanagedStorage,
+            QHash< QString, std::shared_ptr<const LocalResource> >& outResult) const;
 
         std::shared_ptr<const ObfFile> _miniBasemapObfFile;
 
@@ -114,6 +119,35 @@ namespace OsmAnd
 
         friend class OsmAnd::ResourcesManager_P;
         };
+
+        struct MapStyleMetadata : public Resource::Metadata
+        {
+            MapStyleMetadata(const std::shared_ptr<MapStyle>& mapStyle_)
+                : mapStyle(mapStyle_)
+            {
+            }
+
+            virtual ~MapStyleMetadata()
+            {
+            }
+
+            const std::shared_ptr<MapStyle> mapStyle;
+        };
+
+        class MapStylesCollection : public IMapStylesCollection
+        {
+        private:
+        protected:
+            MapStylesCollection(ResourcesManager_P* owner);
+        public:
+            virtual ~MapStylesCollection();
+
+            ResourcesManager_P* const owner;
+
+            virtual bool obtainStyle(const QString& name, std::shared_ptr<const MapStyle>& outStyle) const;
+
+        friend class OsmAnd::ResourcesManager_P;
+        };
     protected:
         ResourcesManager_P(ResourcesManager* owner);
 
@@ -157,7 +191,7 @@ namespace OsmAnd
         bool updateFromFile(const QString& id, const QString& filePath);
         bool updateFromRepository(const QString& id, const WebClient::RequestProgressCallbackSignature downloadProgressCallback);
 
-        // OBFs collection
+        const std::shared_ptr<const IMapStylesCollection> mapStylesCollection;
         const std::shared_ptr<const IObfsCollection> obfsCollection;
 
     friend class OsmAnd::ResourcesManager;

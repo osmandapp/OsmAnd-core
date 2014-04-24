@@ -5,6 +5,8 @@
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QString>
+#include <QIODevice>
+#include <QByteArray>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
@@ -12,8 +14,7 @@
 
 namespace OsmAnd
 {
-    class MapStyles;
-    class MapStyles_P;
+    class IMapStylesCollection;
     class MapStyleEvaluator;
     class MapStyleEvaluator_P;
     class RasterizerEnvironment_P;
@@ -39,16 +40,21 @@ namespace OsmAnd
     private:
         PrivateImplementation<MapStyle_P> _p;
     protected:
-        MapStyle(MapStyles* styles, const QString& resourcePath, const bool isEmbedded);
-
-        QString _name;
     public:
+        MapStyle(
+            /*const std::shared_ptr<const IMapStylesCollection>&*/const IMapStylesCollection* const collection,
+            const QString& name,
+            const std::shared_ptr<QIODevice>& source);
+        MapStyle(
+            /*const std::shared_ptr<IMapStylesCollection>&*/const IMapStylesCollection* const collection,
+            const QString& name,
+            const QString& fileName);
+        MapStyle(
+            /*const std::shared_ptr<IMapStylesCollection>&*/const IMapStylesCollection* const collection,
+            const QString& fileName);
         virtual ~MapStyle();
 
-        MapStyles* const styles;
-
-        const QString resourcePath;
-        const bool isEmbedded;
+        /*const std::shared_ptr<const IMapStylesCollection>&*/const IMapStylesCollection* const collection;
 
         const QString& title;
 
@@ -56,17 +62,17 @@ namespace OsmAnd
         const QString& parentName;
 
         bool isStandalone() const;
+        bool loadMetadata();
+        bool loadStyle();
 
         bool resolveValueDefinition(const QString& name, std::shared_ptr<const MapStyleValueDefinition>& outDefinition) const;
         bool resolveAttribute(const QString& name, std::shared_ptr<const MapStyleRule>& outAttribute) const;
 
-        void dump(const QString& prefix = QString()) const;
-        void dump(MapStyleRulesetType type, const QString& prefix = QString()) const;
+        void dump(const QString& prefix = QString::null) const;
+        void dump(MapStyleRulesetType type, const QString& prefix = QString::null) const;
 
         static std::shared_ptr<const MapStyleBuiltinValueDefinitions> getBuiltinValueDefinitions();
 
-    friend class OsmAnd::MapStyles;
-    friend class OsmAnd::MapStyles_P;
     friend class OsmAnd::MapStyle_P;
     friend class OsmAnd::MapStyleEvaluator;
     friend class OsmAnd::MapStyleEvaluator_P;

@@ -26,7 +26,7 @@ namespace OsmAnd {
 
         bool openIndex();
     public:
-        TileDB(const QDir& dataPath, const QString& indexFilename = QString());
+        TileDB(const QDir& dataPath, const QString& indexFilename = QString::null);
         virtual ~TileDB();
 
         const QDir dataPath;

@@ -10,8 +10,8 @@
 
 namespace OsmAnd
 {
-    class MapStyles;
-    class MapStyles_P;
+    class MapStylesCollection;
+    class MapStylesCollection_P;
     class MapStyleEvaluator;
     class MapStyleEvaluator_P;
 

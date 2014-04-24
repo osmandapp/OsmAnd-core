@@ -50,7 +50,7 @@ namespace OsmAnd
             MapStyleEvaluationResult* const outResultStorage = nullptr,
             bool evaluateChildren = true);
 
-        void dump(bool input = true, bool output = true, const QString& prefix = QString()) const;
+        void dump(bool input = true, bool output = true, const QString& prefix = QString::null) const;
     };
 } // namespace OsmAnd
 

@@ -16,8 +16,6 @@ namespace OsmAnd
     class OSMAND_CORE_API IObfsCollection
     {
         Q_DISABLE_COPY(IObfsCollection);
-    public:
-
     private:
     protected:
         IObfsCollection();

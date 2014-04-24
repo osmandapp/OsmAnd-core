@@ -3,7 +3,7 @@
 
 const QString OsmAnd::HeightmapTileProvider::defaultIndexFilename("heightmap.index");
 
-OsmAnd::HeightmapTileProvider::HeightmapTileProvider( const QDir& dataPath, const QString& indexFilepath/* = QString()*/ )
+OsmAnd::HeightmapTileProvider::HeightmapTileProvider( const QDir& dataPath, const QString& indexFilepath/* = QString::null*/ )
     : _p(new HeightmapTileProvider_P(this, dataPath, indexFilepath))
 {
 }

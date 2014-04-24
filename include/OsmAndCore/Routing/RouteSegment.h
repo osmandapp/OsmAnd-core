@@ -35,7 +35,7 @@ namespace OsmAnd {
         // this make not possible to make turns in between segment result for now
         TurnInfo _turnType;
 
-        void dump(const QString& prefix = QString()) const;
+        void dump(const QString& prefix = QString::null) const;
     public:
         virtual ~RouteSegment();
 

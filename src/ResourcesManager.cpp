@@ -19,6 +19,7 @@ OsmAnd::ResourcesManager::ResourcesManager(
     , miniBasemapFilename(miniBasemapFilename_)
     , localTemporaryPath(!localTemporaryPath_.isNull() ? localTemporaryPath_ : QStandardPaths::writableLocation(QStandardPaths::TempLocation))
     , repositoryBaseUrl(repositoryBaseUrl_)
+    , mapStylesCollection(_p->mapStylesCollection)
     , obfsCollection(_p->obfsCollection)
 {
     _p->initialize();
@@ -221,6 +222,18 @@ OsmAnd::ResourcesManager::BuiltinResource::BuiltinResource(
 }
 
 OsmAnd::ResourcesManager::BuiltinResource::~BuiltinResource()
+{
+}
+
+OsmAnd::ResourcesManager::BuiltinMapStyleResource::BuiltinMapStyleResource(
+    const QString& id_,
+    const std::shared_ptr<const MapStyle>& style_)
+    : BuiltinResource(id_, ResourceType::MapStyle)
+    , style(style_)
+{
+}
+
+OsmAnd::ResourcesManager::BuiltinMapStyleResource::~BuiltinMapStyleResource()
 {
 }
 

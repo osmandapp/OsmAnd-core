@@ -263,7 +263,7 @@ OsmAnd::RoutePlannerContext::RouteCalculationSegment::~RouteCalculationSegment()
 {
 }
 
-void OsmAnd::RoutePlannerContext::RouteCalculationSegment::dump(const QString& prefix /*= QString()*/) const
+void OsmAnd::RoutePlannerContext::RouteCalculationSegment::dump(const QString& prefix /*= QString::null*/) const
 {
     if(parent)
     {
