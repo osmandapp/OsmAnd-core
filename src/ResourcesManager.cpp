@@ -217,48 +217,14 @@ OsmAnd::ResourcesManager::InstalledResource::~InstalledResource()
 
 OsmAnd::ResourcesManager::BuiltinResource::BuiltinResource(
     const QString& id_,
-    const ResourceType type_)
+    const ResourceType type_,
+    const std::shared_ptr<const Metadata>& metadata_ /*= nullptr*/)
     : Resource(id_, type_, ResourceOrigin::Builtin)
 {
+    _metadata = metadata_;
 }
 
 OsmAnd::ResourcesManager::BuiltinResource::~BuiltinResource()
-{
-}
-
-OsmAnd::ResourcesManager::BuiltinMapStyleResource::BuiltinMapStyleResource(
-    const QString& id_,
-    const std::shared_ptr<const MapStyle>& style_)
-    : BuiltinResource(id_, ResourceType::MapStyle)
-    , style(style_)
-{
-}
-
-OsmAnd::ResourcesManager::BuiltinMapStyleResource::~BuiltinMapStyleResource()
-{
-}
-
-OsmAnd::ResourcesManager::BuiltinMapStylesPresetsResource::BuiltinMapStylesPresetsResource(
-    const QString& id_,
-    const std::shared_ptr<const MapStylesPresets>& presets_)
-    : BuiltinResource(id_, ResourceType::OnlineTileSources)
-    , presets(presets_)
-{
-}
-
-OsmAnd::ResourcesManager::BuiltinMapStylesPresetsResource::~BuiltinMapStylesPresetsResource()
-{
-}
-
-OsmAnd::ResourcesManager::BuiltinOnlineTileSourcesResource::BuiltinOnlineTileSourcesResource(
-    const QString& id_,
-    const std::shared_ptr<const OnlineTileSources>& sources_)
-    : BuiltinResource(id_, ResourceType::OnlineTileSources)
-    , sources(sources_)
-{
-}
-
-OsmAnd::ResourcesManager::BuiltinOnlineTileSourcesResource::~BuiltinOnlineTileSourcesResource()
 {
 }
 
@@ -296,5 +262,23 @@ OsmAnd::ResourcesManager::MapStyleMetadata::MapStyleMetadata(const std::shared_p
 }
 
 OsmAnd::ResourcesManager::MapStyleMetadata::~MapStyleMetadata()
+{
+}
+
+OsmAnd::ResourcesManager::MapStylesPresetsMetadata::MapStylesPresetsMetadata(const std::shared_ptr<const MapStylesPresets>& presets_)
+    : presets(presets_)
+{
+}
+
+OsmAnd::ResourcesManager::MapStylesPresetsMetadata::~MapStylesPresetsMetadata()
+{
+}
+
+OsmAnd::ResourcesManager::OnlineTileSourcesMetadata::OnlineTileSourcesMetadata(const std::shared_ptr<const OnlineTileSources>& sources_)
+    : sources(sources_)
+{
+}
+
+OsmAnd::ResourcesManager::OnlineTileSourcesMetadata::~OnlineTileSourcesMetadata()
 {
 }

@@ -152,57 +152,10 @@ namespace OsmAnd
         protected:
             BuiltinResource(
                 const QString& id,
-                const ResourceType type);
+                const ResourceType type,
+                const std::shared_ptr<const Metadata>& metadata = nullptr);
         public:
             virtual ~BuiltinResource();
-
-        friend class OsmAnd::ResourcesManager_P;
-        };
-
-        class OSMAND_CORE_API BuiltinMapStyleResource : public BuiltinResource
-        {
-            Q_DISABLE_COPY(BuiltinMapStyleResource);
-        private:
-        protected:
-            BuiltinMapStyleResource(
-                const QString& id,
-                const std::shared_ptr<const MapStyle>& style);
-        public:
-            virtual ~BuiltinMapStyleResource();
-
-            const std::shared_ptr<const MapStyle> style;
-
-        friend class OsmAnd::ResourcesManager_P;
-        };
-
-        class OSMAND_CORE_API BuiltinMapStylesPresetsResource : public BuiltinResource
-        {
-            Q_DISABLE_COPY(BuiltinMapStylesPresetsResource);
-        private:
-        protected:
-            BuiltinMapStylesPresetsResource(
-                const QString& id,
-                const std::shared_ptr<const MapStylesPresets>& presets);
-        public:
-            virtual ~BuiltinMapStylesPresetsResource();
-
-            const std::shared_ptr<const MapStylesPresets> presets;
-
-        friend class OsmAnd::ResourcesManager_P;
-        };
-
-        class OSMAND_CORE_API BuiltinOnlineTileSourcesResource : public BuiltinResource
-        {
-            Q_DISABLE_COPY(BuiltinOnlineTileSourcesResource);
-        private:
-        protected:
-            BuiltinOnlineTileSourcesResource(
-                const QString& id,
-                const std::shared_ptr<const OnlineTileSources>& sources);
-        public:
-            virtual ~BuiltinOnlineTileSourcesResource();
-
-            const std::shared_ptr<const OnlineTileSources> sources;
 
         friend class OsmAnd::ResourcesManager_P;
         };
@@ -244,6 +197,22 @@ namespace OsmAnd
             virtual ~MapStyleMetadata();
 
             const std::shared_ptr<MapStyle> mapStyle;
+        };
+
+        struct OSMAND_CORE_API MapStylesPresetsMetadata : public Resource::Metadata
+        {
+            MapStylesPresetsMetadata(const std::shared_ptr<const MapStylesPresets>& presets);
+            virtual ~MapStylesPresetsMetadata();
+
+            const std::shared_ptr<const MapStylesPresets> presets;
+        };
+
+        struct OSMAND_CORE_API OnlineTileSourcesMetadata : public Resource::Metadata
+        {
+            OnlineTileSourcesMetadata(const std::shared_ptr<const OnlineTileSources>& sources);
+            virtual ~OnlineTileSourcesMetadata();
+
+            const std::shared_ptr<const OnlineTileSources> sources;
         };
     private:
         PrivateImplementation<ResourcesManager_P> _p;

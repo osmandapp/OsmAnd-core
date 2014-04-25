@@ -32,13 +32,12 @@ namespace OsmAnd
         typedef ResourcesManager::InstalledResource InstalledResource;
         typedef ResourcesManager::UnmanagedResource UnmanagedResource;
         typedef ResourcesManager::BuiltinResource BuiltinResource;
-        typedef ResourcesManager::BuiltinMapStyleResource BuiltinMapStyleResource;
-        typedef ResourcesManager::BuiltinMapStylesPresetsResource BuiltinMapStylesPresetsResource;
-        typedef ResourcesManager::BuiltinOnlineTileSourcesResource BuiltinOnlineTileSourcesResource;
         typedef ResourcesManager::ResourceInRepository ResourceInRepository;
 
         typedef ResourcesManager::ObfMetadata ObfMetadata;
         typedef ResourcesManager::MapStyleMetadata MapStyleMetadata;
+        typedef ResourcesManager::MapStylesPresetsMetadata MapStylesPresetsMetadata;
+        typedef ResourcesManager::OnlineTileSourcesMetadata OnlineTileSourcesMetadata;
 
     private:
         QFileSystemWatcher* const _fileSystemWatcher;
@@ -55,7 +54,7 @@ namespace OsmAnd
 
         mutable QReadWriteLock _localResourcesLock;
         mutable QHash< QString, std::shared_ptr<const LocalResource> > _localResources;
-        bool rescanLocalStoragePath(
+        bool loadLocalResourcesFromPath(
             const QString& storagePath,
             const bool isUnmanagedStorage,
             QHash< QString, std::shared_ptr<const LocalResource> >& outResult) const;

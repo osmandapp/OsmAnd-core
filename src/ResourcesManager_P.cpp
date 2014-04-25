@@ -95,24 +95,27 @@ void OsmAnd::ResourcesManager_P::inflateBuiltInResources()
         std::shared_ptr<QIODevice>(new QBuffer(&defaultMapStyleContent))));
     ok = defaultMapStyle->loadMetadata() && defaultMapStyle->load();
     assert(ok);
-    std::shared_ptr<const BuiltinResource> defaultMapStyleResource(new BuiltinMapStyleResource(
+    std::shared_ptr<const BuiltinResource> defaultMapStyleResource(new BuiltinResource(
         QLatin1String("default.render.xml"),
-        defaultMapStyle));
+        ResourceType::MapStyle,
+        std::shared_ptr<const Resource::Metadata>(new MapStyleMetadata(defaultMapStyle))));
     _builtinResources.insert(defaultMapStyleResource->id, defaultMapStyleResource);
 
     // Built-in presets for "default" map style
     std::shared_ptr<MapStylesPresets> defaultMapStylesPresets(new MapStylesPresets());
     defaultMapStylesPresets->loadFrom(EmbeddedResources::decompressResource(
         QLatin1String("map/mapStylesPresets/default.mapStylesPresets.xml")));
-    std::shared_ptr<const BuiltinResource> defaultMapStylesPresetsResource(new BuiltinMapStylesPresetsResource(
+    std::shared_ptr<const BuiltinResource> defaultMapStylesPresetsResource(new BuiltinResource(
         QLatin1String("default.mapStylesPresets.xml"),
-        defaultMapStylesPresets));
+        ResourceType::MapStylePresets,
+        std::shared_ptr<const Resource::Metadata>(new MapStylesPresetsMetadata(defaultMapStylesPresets))));
     _builtinResources.insert(defaultMapStylesPresetsResource->id, defaultMapStylesPresetsResource);
 
     // Built-in online tile sources
-    std::shared_ptr<const BuiltinResource> defaultOnlineTileSourcesResource(new BuiltinOnlineTileSourcesResource(
+    std::shared_ptr<const BuiltinResource> defaultOnlineTileSourcesResource(new BuiltinResource(
         QLatin1String("default.onlineTileSources.xml"),
-        OnlineTileSources::getBuiltIn()));
+        ResourceType::OnlineTileSources,
+        std::shared_ptr<const Resource::Metadata>(new OnlineTileSourcesMetadata(OnlineTileSources::getBuiltIn()))));
     _builtinResources.insert(defaultOnlineTileSourcesResource->id, defaultOnlineTileSourcesResource);
 }
 
@@ -139,7 +142,7 @@ bool OsmAnd::ResourcesManager_P::scanManagedStoragePath()
     QWriteLocker scopedLocker(&_localResourcesLock);
 
     assert(_localResources.isEmpty());
-    if(!rescanLocalStoragePath(owner->localStoragePath, false, _localResources))
+    if(!loadLocalResourcesFromPath(owner->localStoragePath, false, _localResources))
         return false;
     
     return true;
@@ -152,12 +155,12 @@ bool OsmAnd::ResourcesManager_P::rescanUnmanagedStoragePaths() const
     QHash< QString, std::shared_ptr<const LocalResource> > unmanagedResources;
     if(!owner->userStoragePath.isNull())
     {
-        if(!rescanLocalStoragePath(owner->userStoragePath, true, unmanagedResources))
+        if(!loadLocalResourcesFromPath(owner->userStoragePath, true, unmanagedResources))
             return false;
     }
     for(const auto& readonlyExternalStoragePath : constOf(owner->readonlyExternalStoragePaths))
     {
-        if(!rescanLocalStoragePath(readonlyExternalStoragePath, true, unmanagedResources))
+        if(!loadLocalResourcesFromPath(readonlyExternalStoragePath, true, unmanagedResources))
             return false;
     }
 
@@ -217,7 +220,7 @@ bool OsmAnd::ResourcesManager_P::rescanUnmanagedStoragePaths() const
     return true;
 }
 
-bool OsmAnd::ResourcesManager_P::rescanLocalStoragePath(
+bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
     const QString& storagePath,
     const bool isUnmanagedStorage,
     QHash< QString, std::shared_ptr<const LocalResource> >& outResult) const
@@ -306,7 +309,7 @@ bool OsmAnd::ResourcesManager_P::rescanLocalStoragePath(
             const auto fileName = mapStyleFileInfo.absoluteFilePath();
             const auto fileSize = mapStyleFileInfo.size();
 
-            // Read information from map style
+            // Load resource
             const std::shared_ptr<MapStyle> mapStyle(new MapStyle(mapStylesCollection.get(), fileName));
             if(!mapStyle->loadMetadata())
             {
@@ -337,15 +340,25 @@ bool OsmAnd::ResourcesManager_P::rescanLocalStoragePath(
         {
             const auto fileName = mapStylesPresetsFileInfo.absoluteFilePath();
             const auto fileSize = mapStylesPresetsFileInfo.size();
+
+            // Load resource
+            const std::shared_ptr<MapStylesPresets> presets(new MapStylesPresets());
+            if(!presets->loadFrom(fileName))
+            {
+                LogPrintf(LogSeverityLevel::Warning, "Failed to load map styles presets from '%s'", qPrintable(fileName));
+                continue;
+            }
             
             // Create local resource entry
             const auto name = mapStylesPresetsFileInfo.fileName();
-            std::shared_ptr<const LocalResource> localResource(new UnmanagedResource(
+            const auto pLocalResource = new UnmanagedResource(
                 name,
                 ResourceType::MapStylePresets,
                 fileName,
                 fileSize,
-                name));
+                name);
+            pLocalResource->_metadata.reset(new MapStylesPresetsMetadata(presets));
+            std::shared_ptr<const LocalResource> localResource(pLocalResource);
             outResult.insert(name, qMove(localResource));
         }
     }
@@ -360,14 +373,24 @@ bool OsmAnd::ResourcesManager_P::rescanLocalStoragePath(
             const auto fileName = onlineTileSourcesFileInfo.absoluteFilePath();
             const auto fileSize = onlineTileSourcesFileInfo.size();
 
+            // Load resource
+            const std::shared_ptr<OnlineTileSources> sources(new OnlineTileSources());
+            if(!sources->loadFrom(fileName))
+            {
+                LogPrintf(LogSeverityLevel::Warning, "Failed to load online tile sources from '%s'", qPrintable(fileName));
+                continue;
+            }
+
             // Create local resource entry
             const auto name = onlineTileSourcesFileInfo.fileName();
-            std::shared_ptr<const LocalResource> localResource(new UnmanagedResource(
+            const auto pLocalResource = new UnmanagedResource(
                 name,
                 ResourceType::OnlineTileSources,
                 fileName,
                 fileSize,
-                name));
+                name);
+            pLocalResource->_metadata.reset(new OnlineTileSourcesMetadata(sources));
+            std::shared_ptr<const LocalResource> localResource(pLocalResource);
             outResult.insert(name, qMove(localResource));
         }
     }
@@ -1042,7 +1065,7 @@ QList< std::shared_ptr<const OsmAnd::MapStyle> > OsmAnd::ResourcesManager_P::Map
         if(builtinResource->type != ResourceType::MapStyle)
             continue;
 
-        const auto& mapStyle = std::static_pointer_cast<const BuiltinMapStyleResource>(builtinResource)->style;
+        const auto mapStyle = std::static_pointer_cast<const MapStyleMetadata>(builtinResource->_metadata)->mapStyle;
         result.append(mapStyle);
     }
 
@@ -1077,7 +1100,7 @@ bool OsmAnd::ResourcesManager_P::MapStylesCollection::obtainBakedStyle(const QSt
         if(builtinResource->id != name)
             continue;
 
-        outStyle = std::static_pointer_cast<const BuiltinMapStyleResource>(builtinResource)->style;
+        const auto mapStyle = std::static_pointer_cast<const MapStyleMetadata>(builtinResource->_metadata)->mapStyle;
         assert(outStyle->isMetadataLoaded() && outStyle->isLoaded());
         return true;
     }
