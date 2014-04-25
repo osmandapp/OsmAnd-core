@@ -57,6 +57,14 @@ namespace OsmAnd
         class OSMAND_CORE_API Resource
         {
             Q_DISABLE_COPY(Resource);
+
+        public:
+            struct OSMAND_CORE_API Metadata
+            {
+                Metadata();
+                virtual ~Metadata();
+            };
+
         private:
         protected:
             Resource(
@@ -64,18 +72,15 @@ namespace OsmAnd
                 const ResourceType type,
                 const ResourceOrigin origin);
 
-            struct OSMAND_CORE_API Metadata
-            {
-                Metadata();
-                virtual ~Metadata();
-            };
-            std::shared_ptr<Metadata> _metadata;
+            std::shared_ptr<const Metadata> _metadata;
         public:
             virtual ~Resource();
 
             const QString id;
             const ResourceType type;
             const ResourceOrigin origin;
+
+            const std::shared_ptr<const Metadata>& metadata;
 
         friend class OsmAnd::ResourcesManager_P;
         };
@@ -223,6 +228,22 @@ namespace OsmAnd
             const uint64_t packageSize;
 
         friend class OsmAnd::ResourcesManager_P;
+        };
+
+        struct OSMAND_CORE_API ObfMetadata : public Resource::Metadata
+        {
+            ObfMetadata(const std::shared_ptr<const ObfFile>& obfFile);
+            virtual ~ObfMetadata();
+
+            const std::shared_ptr<const ObfFile> obfFile;
+        };
+
+        struct OSMAND_CORE_API MapStyleMetadata : public Resource::Metadata
+        {
+            MapStyleMetadata(const std::shared_ptr<MapStyle>& mapStyle);
+            virtual ~MapStyleMetadata();
+
+            const std::shared_ptr<MapStyle> mapStyle;
         };
     private:
         PrivateImplementation<ResourcesManager_P> _p;

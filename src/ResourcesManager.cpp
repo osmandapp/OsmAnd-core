@@ -160,6 +160,7 @@ OsmAnd::ResourcesManager::Resource::Resource(
     : id(id_)
     , type(type_)
     , origin(origin_)
+    , metadata(_metadata)
 {
 }
 
@@ -277,5 +278,23 @@ OsmAnd::ResourcesManager::ResourceInRepository::ResourceInRepository(
 }
 
 OsmAnd::ResourcesManager::ResourceInRepository::~ResourceInRepository()
+{
+}
+
+OsmAnd::ResourcesManager::ObfMetadata::ObfMetadata(const std::shared_ptr<const ObfFile>& obfFile_)
+    : obfFile(obfFile_)
+{
+}
+
+OsmAnd::ResourcesManager::ObfMetadata::~ObfMetadata()
+{
+}
+
+OsmAnd::ResourcesManager::MapStyleMetadata::MapStyleMetadata(const std::shared_ptr<MapStyle>& mapStyle_)
+    : mapStyle(mapStyle_)
+{
+}
+
+OsmAnd::ResourcesManager::MapStyleMetadata::~MapStyleMetadata()
 {
 }

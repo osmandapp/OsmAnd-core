@@ -37,6 +37,9 @@ namespace OsmAnd
         typedef ResourcesManager::BuiltinOnlineTileSourcesResource BuiltinOnlineTileSourcesResource;
         typedef ResourcesManager::ResourceInRepository ResourceInRepository;
 
+        typedef ResourcesManager::ObfMetadata ObfMetadata;
+        typedef ResourcesManager::MapStyleMetadata MapStyleMetadata;
+
     private:
         QFileSystemWatcher* const _fileSystemWatcher;
         QMetaObject::Connection _onDirectoryChangedConnection;
@@ -75,20 +78,6 @@ namespace OsmAnd
         bool updateMapRegionFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
         bool updateVoicePackFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
 
-        struct ObfMetadata : public Resource::Metadata
-        {
-            ObfMetadata(const std::shared_ptr<const ObfFile>& obfFile_)
-                : obfFile(obfFile_)
-            {
-            }
-
-            virtual ~ObfMetadata()
-            {
-            }
-
-            const std::shared_ptr<const ObfFile> obfFile;
-        };
-
         class ManagedObfDataInterface : public ObfDataInterface
         {
         private:
@@ -118,20 +107,6 @@ namespace OsmAnd
             virtual std::shared_ptr<ObfDataInterface> obtainDataInterface() const;
 
         friend class OsmAnd::ResourcesManager_P;
-        };
-
-        struct MapStyleMetadata : public Resource::Metadata
-        {
-            MapStyleMetadata(const std::shared_ptr<MapStyle>& mapStyle_)
-                : mapStyle(mapStyle_)
-            {
-            }
-
-            virtual ~MapStyleMetadata()
-            {
-            }
-
-            const std::shared_ptr<MapStyle> mapStyle;
         };
 
         class MapStylesCollection : public IMapStylesCollection

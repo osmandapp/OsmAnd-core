@@ -1052,7 +1052,7 @@ QList< std::shared_ptr<const OsmAnd::MapStyle> > OsmAnd::ResourcesManager_P::Map
         if(localResource->type != ResourceType::MapStyle)
             continue;
 
-        const auto mapStyle = std::static_pointer_cast<MapStyleMetadata>(localResource->_metadata)->mapStyle;
+        const auto mapStyle = std::static_pointer_cast<const MapStyleMetadata>(localResource->_metadata)->mapStyle;
         result.append(mapStyle);
     }
 
@@ -1092,7 +1092,7 @@ bool OsmAnd::ResourcesManager_P::MapStylesCollection::obtainBakedStyle(const QSt
         if(localResource->id != name)
             continue;
 
-        const auto mapStyle = std::static_pointer_cast<MapStyleMetadata>(localResource->_metadata)->mapStyle;
+        const auto mapStyle = std::static_pointer_cast<const MapStyleMetadata>(localResource->_metadata)->mapStyle;
         if(!mapStyle->load())
             return false;
 
