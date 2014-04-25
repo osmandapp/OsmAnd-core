@@ -47,14 +47,24 @@ bool OsmAnd::MapStyle::isStandalone() const
     return _p->isStandalone();
 }
 
+bool OsmAnd::MapStyle::isMetadataLoaded() const
+{
+    return _p->isMetadataLoaded();
+}
+
 bool OsmAnd::MapStyle::loadMetadata()
 {
     return _p->loadMetadata();
 }
 
-bool OsmAnd::MapStyle::loadStyle()
+bool OsmAnd::MapStyle::isLoaded() const
 {
-    return _p->loadStyle();
+    return _p->isLoaded();
+}
+
+bool OsmAnd::MapStyle::load()
+{
+    return _p->load();
 }
 
 bool OsmAnd::MapStyle::resolveValueDefinition(const QString& name, std::shared_ptr<const MapStyleValueDefinition>& outDefinition) const

@@ -96,9 +96,13 @@ namespace OsmAnd
 
         ImplementationInterface<MapStyle> owner;
 
-        bool isStandalone() const;
+        bool isMetadataLoaded() const;
         bool loadMetadata();
-        bool loadStyle();
+
+        bool isStandalone() const;
+
+        bool isLoaded() const;
+        bool load();
 
         const QMap< uint64_t, std::shared_ptr<MapStyleRule> >& obtainRulesRef(MapStyleRulesetType type) const;
 

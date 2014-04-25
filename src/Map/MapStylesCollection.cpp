@@ -15,7 +15,12 @@ bool OsmAnd::MapStylesCollection::registerStyle( const QString& filePath )
     return _p->registerStyle(filePath);
 }
 
-bool OsmAnd::MapStylesCollection::obtainStyle(const QString& name, std::shared_ptr<const MapStyle>& outStyle) const
+QList< std::shared_ptr<const OsmAnd::MapStyle> > OsmAnd::MapStylesCollection::getCollection() const
 {
-    return _p->obtainStyle(name, outStyle);
+    return _p->getCollection();
+}
+
+bool OsmAnd::MapStylesCollection::obtainBakedStyle(const QString& name, std::shared_ptr<const MapStyle>& outStyle) const
+{
+    return _p->obtainBakedStyle(name, outStyle);
 }

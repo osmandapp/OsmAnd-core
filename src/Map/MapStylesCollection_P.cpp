@@ -35,7 +35,7 @@ bool OsmAnd::MapStylesCollection_P::registerEmbeddedStyle(const QString& resourc
         owner.get(),
         QFileInfo(resourceName).fileName(),
         std::shared_ptr<QIODevice>(new QBuffer(&styleContent))));
-    if(!style->loadMetadata() || !style->loadStyle())
+    if(!style->loadMetadata() || !style->load())
         return false;
 
     assert(!_styles.contains(style->name));
@@ -59,7 +59,18 @@ bool OsmAnd::MapStylesCollection_P::registerStyle(const QString& filePath)
     return true;
 }
 
-bool OsmAnd::MapStylesCollection_P::obtainStyle(const QString& name, std::shared_ptr<const OsmAnd::MapStyle>& outStyle) const
+QList< std::shared_ptr<const OsmAnd::MapStyle> > OsmAnd::MapStylesCollection_P::getCollection() const
+{
+    QReadLocker scopedLocker(&_stylesLock);
+
+    QList< std::shared_ptr<const MapStyle> > result;
+    result.reserve(_styles.count());
+    for(const auto& style : constOf(_styles))
+        result.push_back(style);
+    return result;
+}
+
+bool OsmAnd::MapStylesCollection_P::obtainBakedStyle(const QString& name, std::shared_ptr<const MapStyle>& outStyle) const
 {
     QReadLocker scopedLocker(&_stylesLock);
 
@@ -68,7 +79,7 @@ bool OsmAnd::MapStylesCollection_P::obtainStyle(const QString& name, std::shared
         return false;
     const auto& style = *citStyle;
 
-    if(!style->loadStyle())
+    if(!style->load())
         return false;
 
     outStyle = style;

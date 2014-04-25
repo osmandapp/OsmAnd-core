@@ -83,6 +83,11 @@ bool OsmAnd::MapStyle_P::isStandalone() const
     return _parentName.isNull();
 }
 
+bool OsmAnd::MapStyle_P::isMetadataLoaded() const
+{
+    return _isMetadataLoaded;
+}
+
 bool OsmAnd::MapStyle_P::loadMetadata()
 {
     QMutexLocker scopedLocker(&_metadataLoadMutex);
@@ -97,7 +102,12 @@ bool OsmAnd::MapStyle_P::loadMetadata()
     return true;
 }
 
-bool OsmAnd::MapStyle_P::loadStyle()
+bool OsmAnd::MapStyle_P::isLoaded() const
+{
+    return _isLoaded;
+}
+
+bool OsmAnd::MapStyle_P::load()
 {
     QMutexLocker scopedLocker(&_loadMutex);
 
@@ -154,7 +164,7 @@ bool OsmAnd::MapStyle_P::resolveDependencies()
     if(!_parentName.isEmpty() && !_parent)
     {
         const auto collection = owner->collection;
-        if(!collection || !collection->obtainStyle(_parentName, _parent))
+        if(!collection || !collection->obtainBakedStyle(_parentName, _parent))
             return false;
     }
 

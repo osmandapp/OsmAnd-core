@@ -56,14 +56,17 @@ namespace OsmAnd
 
         /*const std::shared_ptr<const IMapStylesCollection>&*/const IMapStylesCollection* const collection;
 
-        const QString& title;
+        bool isMetadataLoaded() const;
+        bool loadMetadata();
 
+        const QString& title;
         const QString& name;
         const QString& parentName;
 
         bool isStandalone() const;
-        bool loadMetadata();
-        bool loadStyle();
+
+        bool isLoaded() const;
+        bool load();
 
         bool resolveValueDefinition(const QString& name, std::shared_ptr<const MapStyleValueDefinition>& outDefinition) const;
         bool resolveAttribute(const QString& name, std::shared_ptr<const MapStyleRule>& outAttribute) const;

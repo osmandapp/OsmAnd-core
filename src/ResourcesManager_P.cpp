@@ -93,7 +93,7 @@ void OsmAnd::ResourcesManager_P::inflateBuiltInResources()
         mapStylesCollection.get(),
         QLatin1String("default.render.xml"),
         std::shared_ptr<QIODevice>(new QBuffer(&defaultMapStyleContent))));
-    ok = defaultMapStyle->loadMetadata() && defaultMapStyle->loadStyle();
+    ok = defaultMapStyle->loadMetadata() && defaultMapStyle->load();
     assert(ok);
     std::shared_ptr<const BuiltinResource> defaultMapStyleResource(new BuiltinMapStyleResource(
         QLatin1String("default.render.xml"),
@@ -1030,7 +1030,36 @@ OsmAnd::ResourcesManager_P::MapStylesCollection::~MapStylesCollection()
 {
 }
 
-bool OsmAnd::ResourcesManager_P::MapStylesCollection::obtainStyle(const QString& name_, std::shared_ptr<const MapStyle>& outStyle) const
+QList< std::shared_ptr<const OsmAnd::MapStyle> > OsmAnd::ResourcesManager_P::MapStylesCollection::getCollection() const
+{
+    QReadLocker scopedLocker(&owner->_localResourcesLock);
+
+    QList< std::shared_ptr<const MapStyle> > result;
+
+    for(const auto& builtinResource : constOf(owner->_builtinResources))
+    {
+        // Skip anything that is not a style
+        if(builtinResource->type != ResourceType::MapStyle)
+            continue;
+
+        const auto& mapStyle = std::static_pointer_cast<const BuiltinMapStyleResource>(builtinResource)->style;
+        result.append(mapStyle);
+    }
+
+    for(const auto& localResource : constOf(owner->_localResources))
+    {
+        // Skip anything that is not a style
+        if(localResource->type != ResourceType::MapStyle)
+            continue;
+
+        const auto mapStyle = std::static_pointer_cast<MapStyleMetadata>(localResource->_metadata)->mapStyle;
+        result.append(mapStyle);
+    }
+
+    return result;
+}
+
+bool OsmAnd::ResourcesManager_P::MapStylesCollection::obtainBakedStyle(const QString& name_, std::shared_ptr<const MapStyle>& outStyle) const
 {
     QReadLocker scopedLocker(&owner->_localResourcesLock);
 
@@ -1049,6 +1078,7 @@ bool OsmAnd::ResourcesManager_P::MapStylesCollection::obtainStyle(const QString&
             continue;
 
         outStyle = std::static_pointer_cast<const BuiltinMapStyleResource>(builtinResource)->style;
+        assert(outStyle->isMetadataLoaded() && outStyle->isLoaded());
         return true;
     }
 
@@ -1063,7 +1093,7 @@ bool OsmAnd::ResourcesManager_P::MapStylesCollection::obtainStyle(const QString&
             continue;
 
         const auto mapStyle = std::static_pointer_cast<MapStyleMetadata>(localResource->_metadata)->mapStyle;
-        if(!mapStyle->loadStyle())
+        if(!mapStyle->load())
             return false;
 
         outStyle = mapStyle;
