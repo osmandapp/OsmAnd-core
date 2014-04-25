@@ -19,6 +19,7 @@ OsmAnd::ResourcesManager::ResourcesManager(
     , miniBasemapFilename(miniBasemapFilename_)
     , localTemporaryPath(!localTemporaryPath_.isNull() ? localTemporaryPath_ : QStandardPaths::writableLocation(QStandardPaths::TempLocation))
     , repositoryBaseUrl(repositoryBaseUrl_)
+    , onlineTileSources(_p->onlineTileSources)
     , mapStylesCollection(_p->mapStylesCollection)
     , obfsCollection(_p->obfsCollection)
 {

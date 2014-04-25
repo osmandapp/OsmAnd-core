@@ -16,6 +16,7 @@
 #include "PrivateImplementation.h"
 #include "WebClient.h"
 #include "ResourcesManager.h"
+#include "IOnlineTileSources.h"
 #include "ObfDataInterface.h"
 #include "IMapStylesCollection.h"
 #include "IObfsCollection.h"
@@ -76,6 +77,22 @@ namespace OsmAnd
 
         bool updateMapRegionFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
         bool updateVoicePackFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
+
+        class OnlineTileSourcesProxy : public IOnlineTileSources
+        {
+        private:
+        protected:
+            OnlineTileSourcesProxy(ResourcesManager_P* owner);
+        public:
+            virtual ~OnlineTileSourcesProxy();
+
+            ResourcesManager_P* const owner;
+
+            virtual QHash< QString, std::shared_ptr<const Source> > getCollection() const;
+            virtual std::shared_ptr<const Source> getSourceByName(const QString& sourceName) const;
+
+        friend class OsmAnd::ResourcesManager_P;
+        };
 
         class ManagedObfDataInterface : public ObfDataInterface
         {
@@ -166,6 +183,7 @@ namespace OsmAnd
         bool updateFromFile(const QString& id, const QString& filePath);
         bool updateFromRepository(const QString& id, const WebClient::RequestProgressCallbackSignature downloadProgressCallback);
 
+        const std::shared_ptr<const IOnlineTileSources> onlineTileSources;
         const std::shared_ptr<const IMapStylesCollection> mapStylesCollection;
         const std::shared_ptr<const IObfsCollection> obfsCollection;
 

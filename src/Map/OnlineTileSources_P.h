@@ -29,7 +29,7 @@ namespace OsmAnd
         bool deserializeFrom(QXmlStreamReader& xmlReader);
         bool serializeTo(QXmlStreamWriter& xmlWriter) const;
 
-        QHash< QString, std::shared_ptr<Source> > _collection;
+        QHash< QString, std::shared_ptr<const Source> > _collection;
     public:
         virtual ~OnlineTileSources_P();
 
@@ -39,8 +39,8 @@ namespace OsmAnd
         bool loadFrom(QIODevice& ioDevice);
         bool saveTo(QIODevice& ioDevice) const;
 
-        QList< std::shared_ptr<Source> > getCollection() const;
-        std::shared_ptr<Source> getSourceByName(const QString& sourceName) const;
+        QHash< QString, std::shared_ptr<const Source> > getCollection() const;
+        std::shared_ptr<const Source> getSourceByName(const QString& sourceName) const;
         bool addSource(const std::shared_ptr<Source>& source);
         bool removeSource(const QString& sourceName);
 

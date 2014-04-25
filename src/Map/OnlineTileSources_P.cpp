@@ -14,7 +14,7 @@ OsmAnd::OnlineTileSources_P::~OnlineTileSources_P()
 
 bool OsmAnd::OnlineTileSources_P::deserializeFrom(QXmlStreamReader& xmlReader)
 {
-    QHash< QString, std::shared_ptr<Source> > collection;
+    QHash< QString, std::shared_ptr<const Source> > collection;
 
     while(!xmlReader.atEnd() && !xmlReader.hasError())
     {
@@ -92,12 +92,12 @@ bool OsmAnd::OnlineTileSources_P::saveTo(QIODevice& ioDevice) const
     return serializeTo(xmlWriter);
 }
 
-QList< std::shared_ptr<OsmAnd::OnlineTileSources_P::Source> > OsmAnd::OnlineTileSources_P::getCollection() const
+QHash< QString, std::shared_ptr<const OsmAnd::OnlineTileSources_P::Source> > OsmAnd::OnlineTileSources_P::getCollection() const
 {
-    return _collection.values();
+    return _collection;
 }
 
-std::shared_ptr<OsmAnd::OnlineTileSources_P::Source> OsmAnd::OnlineTileSources_P::getSourceByName(const QString& sourceName) const
+std::shared_ptr<const OsmAnd::OnlineTileSources_P::Source> OsmAnd::OnlineTileSources_P::getSourceByName(const QString& sourceName) const
 {
     const auto citSource = _collection.constFind(sourceName);
     if(citSource == _collection.cend())

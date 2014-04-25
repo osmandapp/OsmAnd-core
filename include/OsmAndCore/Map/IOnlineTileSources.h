@@ -41,8 +41,8 @@ namespace OsmAnd
     public:
         virtual ~IOnlineTileSources();
 
-        virtual QList< std::shared_ptr<Source> > getCollection() const = 0;
-        virtual std::shared_ptr<Source> getSourceByName(const QString& sourceName) const = 0;
+        virtual QHash< QString, std::shared_ptr<const Source> > getCollection() const = 0;
+        virtual std::shared_ptr<const Source> getSourceByName(const QString& sourceName) const = 0;
 
         virtual std::shared_ptr<OnlineMapRasterTileProvider> createProviderFor(const QString& sourceName) const;
     };

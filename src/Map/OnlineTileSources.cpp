@@ -51,12 +51,12 @@ bool OsmAnd::OnlineTileSources::saveTo(const QString& fileName) const
     return success;
 }
 
-QList< std::shared_ptr<OsmAnd::OnlineTileSources::Source> > OsmAnd::OnlineTileSources::getCollection() const
+QHash< QString, std::shared_ptr<const OsmAnd::OnlineTileSources::Source> > OsmAnd::OnlineTileSources::getCollection() const
 {
     return _p->getCollection();
 }
 
-std::shared_ptr<OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources::getSourceByName(const QString& sourceName) const
+std::shared_ptr<const OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources::getSourceByName(const QString& sourceName) const
 {
     return _p->getSourceByName(sourceName);
 }

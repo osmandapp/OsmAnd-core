@@ -38,8 +38,8 @@ namespace OsmAnd
         bool saveTo(QIODevice& ioDevice) const;
         bool saveTo(const QString& fileName) const;
 
-        virtual QList< std::shared_ptr<Source> > getCollection() const;
-        virtual std::shared_ptr<Source> getSourceByName(const QString& sourceName) const;
+        virtual QHash< QString, std::shared_ptr<const Source> > getCollection() const;
+        virtual std::shared_ptr<const Source> getSourceByName(const QString& sourceName) const;
         bool addSource(const std::shared_ptr<Source>& source);
         bool removeSource(const QString& sourceName);
 

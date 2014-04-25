@@ -25,6 +25,7 @@ OsmAnd::ResourcesManager_P::ResourcesManager_P(ResourcesManager* owner_)
     , _fileSystemWatcher(new QFileSystemWatcher())
     , _localResourcesLock(QReadWriteLock::Recursive)
     , _resourcesInRepositoryLoaded(false)
+    , onlineTileSources(new OnlineTileSourcesProxy(this))
     , mapStylesCollection(new MapStylesCollection(this))
     , obfsCollection(new ObfsCollection(this))
 {
@@ -960,6 +961,71 @@ bool OsmAnd::ResourcesManager_P::updateFromRepository(const QString& name, const
 
     QFile(tmpFilePath).remove();
     return ok;
+}
+
+OsmAnd::ResourcesManager_P::OnlineTileSourcesProxy::OnlineTileSourcesProxy(ResourcesManager_P* owner_)
+    : owner(owner_)
+{
+}
+
+OsmAnd::ResourcesManager_P::OnlineTileSourcesProxy::~OnlineTileSourcesProxy()
+{
+}
+
+QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager_P::OnlineTileSourcesProxy::Source> > OsmAnd::ResourcesManager_P::OnlineTileSourcesProxy::getCollection() const
+{
+    QReadLocker scopedLocker(&owner->_localResourcesLock);
+
+    QHash< QString, std::shared_ptr<const OnlineTileSourcesProxy::Source> > result;
+
+    for(const auto& builtinResource : constOf(owner->_builtinResources))
+    {
+        if(builtinResource->type != ResourceType::OnlineTileSources)
+            continue;
+
+        const auto& sources = std::static_pointer_cast<const OnlineTileSourcesMetadata>(builtinResource->_metadata)->sources;
+        result.unite(sources->getCollection());
+    }
+
+    for(const auto& localResource : constOf(owner->_localResources))
+    {
+        if(localResource->type != ResourceType::OnlineTileSources)
+            continue;
+
+        const auto sources = std::static_pointer_cast<const OnlineTileSourcesMetadata>(localResource->_metadata)->sources;
+        result.unite(sources->getCollection());
+    }
+
+    return result;
+}
+
+std::shared_ptr<const OsmAnd::ResourcesManager_P::OnlineTileSourcesProxy::Source> OsmAnd::ResourcesManager_P::OnlineTileSourcesProxy::getSourceByName(const QString& sourceName) const
+{
+    QReadLocker scopedLocker(&owner->_localResourcesLock);
+
+    for(const auto& builtinResource : constOf(owner->_builtinResources))
+    {
+        if(builtinResource->type != ResourceType::OnlineTileSources)
+            continue;
+
+        const auto& sources = std::static_pointer_cast<const OnlineTileSourcesMetadata>(builtinResource->_metadata)->sources;
+        const auto result = sources->getSourceByName(sourceName);
+        if(result)
+            return result;
+    }
+
+    for(const auto& localResource : constOf(owner->_localResources))
+    {
+        if(localResource->type != ResourceType::OnlineTileSources)
+            continue;
+
+        const auto& sources = std::static_pointer_cast<const OnlineTileSourcesMetadata>(localResource->_metadata)->sources;
+        const auto result = sources->getSourceByName(sourceName);
+        if(result)
+            return result;
+    }
+
+    return nullptr;
 }
 
 OsmAnd::ResourcesManager_P::ManagedObfDataInterface::ManagedObfDataInterface(

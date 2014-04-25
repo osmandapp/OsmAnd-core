@@ -20,6 +20,7 @@
 
 namespace OsmAnd
 {
+    class IOnlineTileSources;
     class IMapStylesCollection;
     class IObfsCollection;
     class MapStyle;
@@ -275,6 +276,7 @@ namespace OsmAnd
             const QList< QString >& updated);
         const ObservableAs<LocalResourcesChanged> localResourcesChangeObservable;
 
+        const std::shared_ptr<const IOnlineTileSources>& onlineTileSources;
         const std::shared_ptr<const IMapStylesCollection>& mapStylesCollection;
         const std::shared_ptr<const IObfsCollection>& obfsCollection;
     };
