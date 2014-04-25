@@ -69,68 +69,22 @@ bool OsmAnd::MapStyle::load()
 
 bool OsmAnd::MapStyle::resolveValueDefinition(const QString& name, std::shared_ptr<const MapStyleValueDefinition>& outDefinition) const
 {
-    auto itValueDefinition = _p->_valuesDefinitions.constFind(name);
-    if(itValueDefinition != _p->_valuesDefinitions.cend())
-    {
-        outDefinition = *itValueDefinition;
-        return true;
-    }
-
-    if(!_p->_parent)
-        return false;
-
-    return _p->_parent->resolveValueDefinition(name, outDefinition);
+    return _p->resolveValueDefinition(name, outDefinition);
 }
 
 bool OsmAnd::MapStyle::resolveAttribute(const QString& name, std::shared_ptr<const MapStyleRule>& outAttribute) const
 {
-    auto itAttribute = _p->_attributes.constFind(name);
-    if(itAttribute != _p->_attributes.cend())
-    {
-        outAttribute = *itAttribute;
-        return true;
-    }
-
-    return false;
+    return _p->resolveAttribute(name, outAttribute);
 }
 
 void OsmAnd::MapStyle::dump(const QString& prefix /*= QString::null*/) const
 {
-    LogPrintf(LogSeverityLevel::Debug, "%sPoint rules:", qPrintable(prefix));
-    dump(MapStyleRulesetType::Point, prefix);
-
-    LogPrintf(LogSeverityLevel::Debug, "%sLine rules:", qPrintable(prefix));
-    dump(MapStyleRulesetType::Polyline, prefix);
-
-    LogPrintf(LogSeverityLevel::Debug, "%sPolygon rules:", qPrintable(prefix));
-    dump(MapStyleRulesetType::Polygon, prefix);
-
-    LogPrintf(LogSeverityLevel::Debug, "%sText rules:", qPrintable(prefix));
-    dump(MapStyleRulesetType::Text, prefix);
-
-    LogPrintf(LogSeverityLevel::Debug, "%sOrder rules:", qPrintable(prefix));
-    dump(MapStyleRulesetType::Order, prefix);
+    return _p->dump(prefix);
 }
 
-void OsmAnd::MapStyle::dump(MapStyleRulesetType type, const QString& prefix /*= QString::null*/) const
+void OsmAnd::MapStyle::dump(const MapStyleRulesetType type, const QString& prefix /*= QString::null*/) const
 {
-    const auto& rules = _p->obtainRulesRef(type);
-
-    for(const auto& ruleEntry : rangeOf(constOf(rules)))
-    {
-        auto tag = _p->getTagString(ruleEntry.key());
-        auto value = _p->getValueString(ruleEntry.key());
-        auto rule = ruleEntry.value();
-
-        LogPrintf(LogSeverityLevel::Debug, "%sRule 0x%p [%s (%d):%s (%d)]",
-            qPrintable(prefix),
-            rule.get(),
-            qPrintable(tag),
-            _p->getTagStringId(ruleEntry.key()),
-            qPrintable(value),
-            _p->getValueStringId(ruleEntry.key()));
-        rule->dump(prefix);
-    }
+    return _p->dump(type, prefix);
 }
 
 static QMutex g_OsmAnd_MapStyle_builtinValueDefinitionsMutex;

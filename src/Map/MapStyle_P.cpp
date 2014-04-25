@@ -63,6 +63,8 @@ bool OsmAnd::MapStyle_P::parseMetadata( QXmlStreamReader& xmlReader )
                 auto attrDepends = xmlReader.attributes().value(QLatin1String("depends"));
                 if(!attrDepends.isNull())
                     _parentName = attrDepends.toString();
+                if(_parentName.isEmpty())
+                    _parentName = QString::null;
             }
         }
         else if (xmlReader.isEndElement())
@@ -115,8 +117,8 @@ bool OsmAnd::MapStyle_P::load()
         return true;
 
     // Resolve dependencies if required
-    const auto isStandalone = _parentName.isEmpty();
-    if(!isStandalone && areDependenciesResolved())
+    const auto isStandalone = _parentName.isNull();
+    if(!isStandalone && !areDependenciesResolved())
     {
         if(!resolveDependencies())
             return false;
@@ -147,9 +149,75 @@ bool OsmAnd::MapStyle_P::load()
     return true;
 }
 
+bool OsmAnd::MapStyle_P::resolveValueDefinition(const QString& name, std::shared_ptr<const MapStyleValueDefinition>& outDefinition) const
+{
+    auto itValueDefinition = _valuesDefinitions.constFind(name);
+    if(itValueDefinition != _valuesDefinitions.cend())
+    {
+        outDefinition = *itValueDefinition;
+        return true;
+    }
+
+    if(!_parent)
+        return false;
+
+    return _parent->resolveValueDefinition(name, outDefinition);
+}
+
+bool OsmAnd::MapStyle_P::resolveAttribute(const QString& name, std::shared_ptr<const MapStyleRule>& outAttribute) const
+{
+    auto itAttribute = _attributes.constFind(name);
+    if(itAttribute != _attributes.cend())
+    {
+        outAttribute = *itAttribute;
+        return true;
+    }
+
+    return false;
+}
+
+void OsmAnd::MapStyle_P::dump(const QString& prefix) const
+{
+    LogPrintf(LogSeverityLevel::Debug, "%sPoint rules:", qPrintable(prefix));
+    dump(MapStyleRulesetType::Point, prefix);
+
+    LogPrintf(LogSeverityLevel::Debug, "%sLine rules:", qPrintable(prefix));
+    dump(MapStyleRulesetType::Polyline, prefix);
+
+    LogPrintf(LogSeverityLevel::Debug, "%sPolygon rules:", qPrintable(prefix));
+    dump(MapStyleRulesetType::Polygon, prefix);
+
+    LogPrintf(LogSeverityLevel::Debug, "%sText rules:", qPrintable(prefix));
+    dump(MapStyleRulesetType::Text, prefix);
+
+    LogPrintf(LogSeverityLevel::Debug, "%sOrder rules:", qPrintable(prefix));
+    dump(MapStyleRulesetType::Order, prefix);
+}
+
+void OsmAnd::MapStyle_P::dump(const MapStyleRulesetType type, const QString& prefix) const
+{
+    const auto& rules = obtainRulesRef(type);
+
+    for(const auto& ruleEntry : rangeOf(constOf(rules)))
+    {
+        auto tag = getTagString(ruleEntry.key());
+        auto value = getValueString(ruleEntry.key());
+        auto rule = ruleEntry.value();
+
+        LogPrintf(LogSeverityLevel::Debug, "%sRule 0x%p [%s (%d):%s (%d)]",
+            qPrintable(prefix),
+            rule.get(),
+            qPrintable(tag),
+            getTagStringId(ruleEntry.key()),
+            qPrintable(value),
+            getValueStringId(ruleEntry.key()));
+        rule->dump(prefix);
+    }
+}
+
 bool OsmAnd::MapStyle_P::areDependenciesResolved() const
 {
-    if(_parentName.isEmpty())
+    if(_parentName.isNull())
         return true;
 
     return _parent && _parent->_p->areDependenciesResolved();
@@ -157,11 +225,11 @@ bool OsmAnd::MapStyle_P::areDependenciesResolved() const
 
 bool OsmAnd::MapStyle_P::resolveDependencies()
 {
-    if(_parentName.isEmpty())
+    if(_parentName.isNull())
         return true;
 
     // Make sure parent is resolved before this style (if present)
-    if(!_parentName.isEmpty() && !_parent)
+    if(!_parentName.isNull() && !_parent)
     {
         const auto collection = owner->collection;
         if(!collection || !collection->obtainBakedStyle(_parentName, _parent))
@@ -546,7 +614,10 @@ QString OsmAnd::MapStyle_P::obtainValue( const QString& input )
     if(!input.isEmpty() && input[0] == '$')
     {
         if(!resolveConstantValue(input.mid(1), output))
+        {
+            LogPrintf(LogSeverityLevel::Warning, "Failed to resolve '%s' constant in '%s' style", qPrintable(input), qPrintable(_name));
             output = "unknown constant";
+        }
     }
     else
         output = input;
@@ -767,13 +838,12 @@ bool OsmAnd::MapStyle_P::mergeInheritedAttributes()
     if(!_parent)
         return true;
 
-    const auto& itEnd = _attributes.cend();
     for(const auto& parentAttributeEntry : rangeOf(constOf(_parent->_p->_attributes)))
     {
         const auto& parentAttribute = parentAttributeEntry.value();
 
         const auto& itAttribute = _attributes.constFind(parentAttributeEntry.key());
-        if(itAttribute != itEnd)
+        if(itAttribute != _attributes.cend())
         {
             const auto& attribute = *itAttribute;
             for(const auto& child : constOf(parentAttribute->_p->_ifElseChildren))

@@ -32,7 +32,7 @@ namespace OsmAnd
         void registerBuiltinValueDefinition(const std::shared_ptr<const MapStyleValueDefinition>& pValueDefinition);
         std::shared_ptr<const MapStyleValueDefinition> registerValue(const MapStyleValueDefinition* pValueDefinition);
         QHash< QString, std::shared_ptr<const MapStyleValueDefinition> > _valuesDefinitions;
-        uint32_t _firstNonBuiltinValueDefinitionIndex;
+        int _firstNonBuiltinValueDefinitionIndex;
 
         bool registerRule(MapStyleRulesetType type, const std::shared_ptr<MapStyleRule>& rule);
 
@@ -91,6 +91,16 @@ namespace OsmAnd
         const std::shared_ptr<const MapStyleBuiltinValueDefinitions> _builtinValueDefs;
 
         static uint64_t encodeRuleId(uint32_t tag, uint32_t value);
+
+        const QMap< uint64_t, std::shared_ptr<MapStyleRule> >& obtainRulesRef(MapStyleRulesetType type) const;
+
+        uint32_t getTagStringId(uint64_t ruleId) const;
+        uint32_t getValueStringId(uint64_t ruleId) const;
+        const QString& getTagString(uint64_t ruleId) const;
+        const QString& getValueString(uint64_t ruleId) const;
+
+        bool lookupStringId(const QString& value, uint32_t& id) const;
+        const QString& lookupStringValue(uint32_t id) const;
     public:
         virtual ~MapStyle_P();
 
@@ -104,15 +114,11 @@ namespace OsmAnd
         bool isLoaded() const;
         bool load();
 
-        const QMap< uint64_t, std::shared_ptr<MapStyleRule> >& obtainRulesRef(MapStyleRulesetType type) const;
+        bool resolveValueDefinition(const QString& name, std::shared_ptr<const MapStyleValueDefinition>& outDefinition) const;
+        bool resolveAttribute(const QString& name, std::shared_ptr<const MapStyleRule>& outAttribute) const;
 
-        uint32_t getTagStringId(uint64_t ruleId) const;
-        uint32_t getValueStringId(uint64_t ruleId) const;
-        const QString& getTagString(uint64_t ruleId) const;
-        const QString& getValueString(uint64_t ruleId) const;
-
-        bool lookupStringId(const QString& value, uint32_t& id) const;
-        const QString& lookupStringValue(uint32_t id) const;
+        void dump(const QString& prefix) const;
+        void dump(const MapStyleRulesetType type, const QString& prefix) const;
 
         bool parseValue(const std::shared_ptr<const MapStyleValueDefinition>& valueDef, const QString& input, MapStyleValue& output) const;
 

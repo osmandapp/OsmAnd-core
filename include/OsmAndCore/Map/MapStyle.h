@@ -72,7 +72,7 @@ namespace OsmAnd
         bool resolveAttribute(const QString& name, std::shared_ptr<const MapStyleRule>& outAttribute) const;
 
         void dump(const QString& prefix = QString::null) const;
-        void dump(MapStyleRulesetType type, const QString& prefix = QString::null) const;
+        void dump(const MapStyleRulesetType type, const QString& prefix = QString::null) const;
 
         static std::shared_ptr<const MapStyleBuiltinValueDefinitions> getBuiltinValueDefinitions();
 
