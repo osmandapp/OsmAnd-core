@@ -71,21 +71,7 @@ bool OsmAnd::OnlineTileSources::removeSource(const QString& sourceName)
     return _p->removeSource(sourceName);
 }
 
-std::shared_ptr<OsmAnd::OnlineMapRasterTileProvider> OsmAnd::OnlineTileSources::createProviderFor(const QString& sourceId) const
-{
-    return _p->createProviderFor(sourceId);
-}
-
 std::shared_ptr<const OsmAnd::OnlineTileSources> OsmAnd::OnlineTileSources::getBuiltIn()
 {
     return OnlineTileSources_P::getBuiltIn();
-}
-
-OsmAnd::OnlineTileSources::Source::Source(const QString& name_)
-    : name(name_)
-{
-}
-
-OsmAnd::OnlineTileSources::Source::~Source()
-{
 }

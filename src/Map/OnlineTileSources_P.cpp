@@ -1,7 +1,6 @@
 #include "OnlineTileSources_P.h"
 #include "OnlineTileSources.h"
 
-#include "OnlineMapRasterTileProvider.h"
 #include "Logging.h"
 
 OsmAnd::OnlineTileSources_P::OnlineTileSources_P(OnlineTileSources* owner_)
@@ -119,23 +118,6 @@ bool OsmAnd::OnlineTileSources_P::addSource(const std::shared_ptr<Source>& sourc
 bool OsmAnd::OnlineTileSources_P::removeSource(const QString& sourceName)
 {
     return (_collection.remove(sourceName) > 0);
-}
-
-std::shared_ptr<OsmAnd::OnlineMapRasterTileProvider> OsmAnd::OnlineTileSources_P::createProviderFor(const QString& sourceName) const
-{
-    const auto citSource = _collection.constFind(sourceName);
-    if(citSource == _collection.cend())
-        return nullptr;
-
-    const auto& source = *citSource;
-    return std::shared_ptr<OsmAnd::OnlineMapRasterTileProvider>(new OnlineMapRasterTileProvider(
-        source->name,
-        source->urlPattern,
-        source->minZoom,
-        source->maxZoom,
-        source->maxConcurrentDownloads,
-        source->tileSize,
-        source->alphaChannelData));
 }
 
 std::shared_ptr<OsmAnd::OnlineTileSources> OsmAnd::OnlineTileSources_P::_builtIn;

@@ -13,28 +13,17 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Map/MapTypes.h>
+#include <OsmAndCore/Map/IOnlineTileSources.h>
 
 namespace OsmAnd
 {
     class OnlineMapRasterTileProvider;
 
     class OnlineTileSources_P;
-    class OSMAND_CORE_API OnlineTileSources
+    class OSMAND_CORE_API OnlineTileSources : public IOnlineTileSources
     {
     public:
-        struct OSMAND_CORE_API Source
-        {
-            Source(const QString& name);
-            virtual ~Source();
-
-            const QString name;
-            QString urlPattern;
-            ZoomLevel minZoom;
-            ZoomLevel maxZoom;
-            unsigned int maxConcurrentDownloads;
-            unsigned int tileSize;
-            AlphaChannelData alphaChannelData;
-        };
+        typedef IOnlineTileSources::Source Source;
 
     private:
         PrivateImplementation<OnlineTileSources_P> _p;
@@ -49,12 +38,10 @@ namespace OsmAnd
         bool saveTo(QIODevice& ioDevice) const;
         bool saveTo(const QString& fileName) const;
 
-        QList< std::shared_ptr<Source> > getCollection() const;
-        std::shared_ptr<Source> getSourceByName(const QString& sourceName) const;
+        virtual QList< std::shared_ptr<Source> > getCollection() const;
+        virtual std::shared_ptr<Source> getSourceByName(const QString& sourceName) const;
         bool addSource(const std::shared_ptr<Source>& source);
         bool removeSource(const QString& sourceName);
-
-        std::shared_ptr<OnlineMapRasterTileProvider> createProviderFor(const QString& sourceName) const;
 
         static std::shared_ptr<const OnlineTileSources> getBuiltIn();
     };

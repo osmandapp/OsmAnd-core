@@ -44,8 +44,6 @@ namespace OsmAnd
         bool addSource(const std::shared_ptr<Source>& source);
         bool removeSource(const QString& sourceName);
 
-        std::shared_ptr<OnlineMapRasterTileProvider> createProviderFor(const QString& sourceId) const;
-
         static std::shared_ptr<const OnlineTileSources> getBuiltIn();
 
     friend class OsmAnd::OnlineTileSources;
