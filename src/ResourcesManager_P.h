@@ -151,6 +151,9 @@ namespace OsmAnd
 
         ImplementationInterface<ResourcesManager> owner;
 
+        // Generic accessors:
+        std::shared_ptr<const Resource> getResource(const QString& id) const;
+
         // Built-in resources:
         QHash< QString, std::shared_ptr<const BuiltinResource> > getBuiltInResources() const;
         std::shared_ptr<const BuiltinResource> getBuiltInResource(const QString& id) const;

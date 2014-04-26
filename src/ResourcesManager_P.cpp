@@ -120,6 +120,34 @@ void OsmAnd::ResourcesManager_P::inflateBuiltInResources()
     _builtinResources.insert(defaultOnlineTileSourcesResource->id, defaultOnlineTileSourcesResource);
 }
 
+std::shared_ptr<const OsmAnd::ResourcesManager_P::Resource> OsmAnd::ResourcesManager_P::getResource(const QString& id) const
+{
+    // Check in builtin resources
+    const auto citBuiltinResource = _builtinResources.constFind(id);
+    if(citBuiltinResource != _builtinResources.cend())
+        return *citBuiltinResource;
+
+    // Check in local resources
+    {
+        QReadLocker scopedLocker(&_localResourcesLock);
+
+        const auto citLocalResource = _localResources.constFind(id);
+        if(citLocalResource != _localResources.cend())
+            return *citLocalResource;
+    }
+
+    // Check in repository
+    {
+        QReadLocker scopedLocker(&_resourcesInRepositoryLock);
+
+        const auto citResourceInRepository = _resourcesInRepository.constFind(id);
+        if(citResourceInRepository != _resourcesInRepository.cend())
+            return *citResourceInRepository;
+    }
+
+    return nullptr;
+}
+
 QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager_P::BuiltinResource> > OsmAnd::ResourcesManager_P::getBuiltInResources() const
 {
     return _builtinResources;
@@ -984,8 +1012,6 @@ OsmAnd::ResourcesManager_P::OnlineTileSourcesProxy::~OnlineTileSourcesProxy()
 
 QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager_P::OnlineTileSourcesProxy::Source> > OsmAnd::ResourcesManager_P::OnlineTileSourcesProxy::getCollection() const
 {
-    QReadLocker scopedLocker(&owner->_localResourcesLock);
-
     QHash< QString, std::shared_ptr<const OnlineTileSourcesProxy::Source> > result;
 
     for(const auto& builtinResource : constOf(owner->_builtinResources))
@@ -997,13 +1023,17 @@ QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager_P::OnlineTileSour
         result.unite(sources->getCollection());
     }
 
-    for(const auto& localResource : constOf(owner->_localResources))
     {
-        if(localResource->type != ResourceType::OnlineTileSources)
-            continue;
+        QReadLocker scopedLocker(&owner->_localResourcesLock);
 
-        const auto sources = std::static_pointer_cast<const OnlineTileSourcesMetadata>(localResource->_metadata)->sources;
-        result.unite(sources->getCollection());
+        for(const auto& localResource : constOf(owner->_localResources))
+        {
+            if(localResource->type != ResourceType::OnlineTileSources)
+                continue;
+
+            const auto sources = std::static_pointer_cast<const OnlineTileSourcesMetadata>(localResource->_metadata)->sources;
+            result.unite(sources->getCollection());
+        }
     }
 
     return result;
@@ -1011,8 +1041,6 @@ QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager_P::OnlineTileSour
 
 std::shared_ptr<const OsmAnd::ResourcesManager_P::OnlineTileSourcesProxy::Source> OsmAnd::ResourcesManager_P::OnlineTileSourcesProxy::getSourceByName(const QString& sourceName) const
 {
-    QReadLocker scopedLocker(&owner->_localResourcesLock);
-
     for(const auto& builtinResource : constOf(owner->_builtinResources))
     {
         if(builtinResource->type != ResourceType::OnlineTileSources)
@@ -1024,17 +1052,21 @@ std::shared_ptr<const OsmAnd::ResourcesManager_P::OnlineTileSourcesProxy::Source
             return result;
     }
 
-    for(const auto& localResource : constOf(owner->_localResources))
     {
-        if(localResource->type != ResourceType::OnlineTileSources)
-            continue;
+        QReadLocker scopedLocker(&owner->_localResourcesLock);
 
-        const auto& sources = std::static_pointer_cast<const OnlineTileSourcesMetadata>(localResource->_metadata)->sources;
-        const auto result = sources->getSourceByName(sourceName);
-        if(result)
-            return result;
+        for(const auto& localResource : constOf(owner->_localResources))
+        {
+            if(localResource->type != ResourceType::OnlineTileSources)
+                continue;
+
+            const auto& sources = std::static_pointer_cast<const OnlineTileSourcesMetadata>(localResource->_metadata)->sources;
+            const auto result = sources->getSourceByName(sourceName);
+            if(result)
+                return result;
+        }
     }
-
+    
     return nullptr;
 }
 
@@ -1131,8 +1163,6 @@ OsmAnd::ResourcesManager_P::MapStylesCollection::~MapStylesCollection()
 
 QList< std::shared_ptr<const OsmAnd::MapStyle> > OsmAnd::ResourcesManager_P::MapStylesCollection::getCollection() const
 {
-    QReadLocker scopedLocker(&owner->_localResourcesLock);
-
     QList< std::shared_ptr<const MapStyle> > result;
 
     for(const auto& builtinResource : constOf(owner->_builtinResources))
@@ -1145,23 +1175,25 @@ QList< std::shared_ptr<const OsmAnd::MapStyle> > OsmAnd::ResourcesManager_P::Map
         result.append(mapStyle);
     }
 
-    for(const auto& localResource : constOf(owner->_localResources))
     {
-        // Skip anything that is not a style
-        if(localResource->type != ResourceType::MapStyle)
-            continue;
+        QReadLocker scopedLocker(&owner->_localResourcesLock);
 
-        const auto mapStyle = std::static_pointer_cast<const MapStyleMetadata>(localResource->_metadata)->mapStyle;
-        result.append(mapStyle);
+        for(const auto& localResource : constOf(owner->_localResources))
+        {
+            // Skip anything that is not a style
+            if(localResource->type != ResourceType::MapStyle)
+                continue;
+
+            const auto mapStyle = std::static_pointer_cast<const MapStyleMetadata>(localResource->_metadata)->mapStyle;
+            result.append(mapStyle);
+        }
     }
-
+    
     return result;
 }
 
 bool OsmAnd::ResourcesManager_P::MapStylesCollection::obtainBakedStyle(const QString& name_, std::shared_ptr<const MapStyle>& outStyle) const
 {
-    QReadLocker scopedLocker(&owner->_localResourcesLock);
-
     auto name = name_;
     if(!name.endsWith(QLatin1String(".render.xml")))
         name.append(QLatin1String(".render.xml"));
@@ -1181,23 +1213,27 @@ bool OsmAnd::ResourcesManager_P::MapStylesCollection::obtainBakedStyle(const QSt
         return true;
     }
 
-    for(const auto& localResource : constOf(owner->_localResources))
     {
-        // Skip anything that is not a style
-        if(localResource->type != ResourceType::MapStyle)
-            continue;
+        QReadLocker scopedLocker(&owner->_localResourcesLock);
 
-        // Skip any style that doesn't match by name
-        if(localResource->id != name)
-            continue;
+        for(const auto& localResource : constOf(owner->_localResources))
+        {
+            // Skip anything that is not a style
+            if(localResource->type != ResourceType::MapStyle)
+                continue;
 
-        const auto mapStyle = std::static_pointer_cast<const MapStyleMetadata>(localResource->_metadata)->mapStyle;
-        if(!mapStyle->load())
-            return false;
+            // Skip any style that doesn't match by name
+            if(localResource->id != name)
+                continue;
 
-        outStyle = mapStyle;
+            const auto mapStyle = std::static_pointer_cast<const MapStyleMetadata>(localResource->_metadata)->mapStyle;
+            if(!mapStyle->load())
+                return false;
 
-        return true;
+            outStyle = mapStyle;
+
+            return true;
+        }
     }
 
     return false;

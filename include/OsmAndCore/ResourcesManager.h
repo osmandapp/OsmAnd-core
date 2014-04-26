@@ -234,6 +234,9 @@ namespace OsmAnd
         const QString miniBasemapFilename;
         const QString localTemporaryPath;
         const QString repositoryBaseUrl;
+
+        // Generic accessors:
+        std::shared_ptr<const Resource> getResource(const QString& id) const;
         
         // Built-in resources:
         QHash< QString, std::shared_ptr<const BuiltinResource> > getBuiltInResources() const;

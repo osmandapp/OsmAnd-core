@@ -36,6 +36,11 @@ OsmAnd::ResourcesManager::~ResourcesManager()
     _p->detachFromFileSystem();
 }
 
+std::shared_ptr<const OsmAnd::ResourcesManager::Resource> OsmAnd::ResourcesManager::getResource(const QString& id) const
+{
+    return _p->getResource(id);
+}
+
 QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager::BuiltinResource> > OsmAnd::ResourcesManager::getBuiltInResources() const
 {
     return _p->getBuiltInResources();
