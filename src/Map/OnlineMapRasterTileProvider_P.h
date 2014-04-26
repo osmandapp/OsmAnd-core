@@ -28,8 +28,6 @@ namespace OsmAnd
     protected:
         OnlineMapRasterTileProvider_P(OnlineMapRasterTileProvider* owner);
 
-        ImplementationInterface<OnlineMapRasterTileProvider> owner;
-
         mutable QMutex _localCachePathMutex;
         QDir _localCachePath;
         bool _networkAccessAllowed;
@@ -45,6 +43,8 @@ namespace OsmAnd
         void unlockTile(const TileId tileId, const ZoomLevel zoom);
     public:
         virtual ~OnlineMapRasterTileProvider_P();
+
+        ImplementationInterface<OnlineMapRasterTileProvider> owner;
 
     friend class OsmAnd::OnlineMapRasterTileProvider;
     };

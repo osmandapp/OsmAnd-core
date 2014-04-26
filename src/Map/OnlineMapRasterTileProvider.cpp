@@ -6,7 +6,7 @@
 #include "Logging.h"
 
 OsmAnd::OnlineMapRasterTileProvider::OnlineMapRasterTileProvider(
-    const QString& id_,
+    const QString& name_,
     const QString& urlPattern_,
     const ZoomLevel minZoom_ /*= MinZoomLevel*/,
     const ZoomLevel maxZoom_ /*= MaxZoomLevel*/,
@@ -16,7 +16,8 @@ OsmAnd::OnlineMapRasterTileProvider::OnlineMapRasterTileProvider(
     : _p(new OnlineMapRasterTileProvider_P(this))
     , localCachePath(_p->_localCachePath)
     , networkAccessAllowed(_p->_networkAccessAllowed)
-    , id(id_)
+    , name(name_)
+    , pathSuffix(QString(name).replace(QRegExp(QLatin1String("\\W+")), QLatin1String("_")))
     , urlPattern(urlPattern_)
     , minZoom(minZoom_)
     , maxZoom(maxZoom_)
@@ -24,20 +25,20 @@ OsmAnd::OnlineMapRasterTileProvider::OnlineMapRasterTileProvider(
     , providerTileSize(providerTileSize_)
     , alphaChannelData(alphaChannelData_)
 {
-    _p->_localCachePath = QDir(QDir::current().filePath(id));
+    _p->_localCachePath = QDir(QDir::temp().absoluteFilePath(pathSuffix));
 }
 
 OsmAnd::OnlineMapRasterTileProvider::~OnlineMapRasterTileProvider()
 {
 }
 
-void OsmAnd::OnlineMapRasterTileProvider::setLocalCachePath( const QDir& localCachePath )
+void OsmAnd::OnlineMapRasterTileProvider::setLocalCachePath(const QDir& localCachePath, const bool appendPathSuffix /*= true*/)
 {
     QMutexLocker scopedLocker(&_p->_localCachePathMutex);
-    _p->_localCachePath = localCachePath;
+    _p->_localCachePath = appendPathSuffix ? QDir(localCachePath.absoluteFilePath(pathSuffix)) : localCachePath;
 }
 
-void OsmAnd::OnlineMapRasterTileProvider::setNetworkAccessPermission( bool allowed )
+void OsmAnd::OnlineMapRasterTileProvider::setNetworkAccessPermission(bool allowed)
 {
     _p->_networkAccessAllowed = allowed;
 }

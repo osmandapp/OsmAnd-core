@@ -14,9 +14,8 @@
 
 #include "Logging.h"
 
-OsmAnd::OnlineMapRasterTileProvider_P::OnlineMapRasterTileProvider_P( OnlineMapRasterTileProvider* owner_ )
+OsmAnd::OnlineMapRasterTileProvider_P::OnlineMapRasterTileProvider_P(OnlineMapRasterTileProvider* owner_)
     : owner(owner_)
-    , _localCachePath(QDir::current())
     , _networkAccessAllowed(true)
 {
 }
@@ -46,7 +45,7 @@ bool OsmAnd::OnlineMapRasterTileProvider_P::obtainTile(const TileId tileId, cons
     QFileInfo localFile;
     {
         QMutexLocker scopedLocker(&_localCachePathMutex);
-        localFile.setFile(_localCachePath.filePath(tileLocalRelativePath));
+        localFile.setFile(_localCachePath.absoluteFilePath(tileLocalRelativePath));
     }
     if(localFile.exists())
     {
@@ -102,7 +101,7 @@ bool OsmAnd::OnlineMapRasterTileProvider_P::obtainTile(const TileId tileId, cons
     const auto& downloadResult = _downloadManager.downloadData(QUrl(tileUrl), &requestResult);
 
     // Ensure that all directories are created in path to local tile
-    localFile.dir().mkpath(localFile.dir().absolutePath());
+    localFile.dir().mkpath(QLatin1String("."));
 
     // If there was error, check what the error was
     if(!requestResult->isSuccessful())
@@ -181,7 +180,7 @@ bool OsmAnd::OnlineMapRasterTileProvider_P::obtainTile(const TileId tileId, cons
     return true;
 }
 
-void OsmAnd::OnlineMapRasterTileProvider_P::lockTile( const TileId tileId, const ZoomLevel zoom )
+void OsmAnd::OnlineMapRasterTileProvider_P::lockTile(const TileId tileId, const ZoomLevel zoom)
 {
     QMutexLocker scopedLocker(&_tilesInProcessMutex);
 
@@ -191,7 +190,7 @@ void OsmAnd::OnlineMapRasterTileProvider_P::lockTile( const TileId tileId, const
     _tilesInProcess[zoom].insert(tileId);
 }
 
-void OsmAnd::OnlineMapRasterTileProvider_P::unlockTile( const TileId tileId, const ZoomLevel zoom )
+void OsmAnd::OnlineMapRasterTileProvider_P::unlockTile(const TileId tileId, const ZoomLevel zoom)
 {
     QMutexLocker scopedLocker(&_tilesInProcessMutex);
 

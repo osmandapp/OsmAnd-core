@@ -23,13 +23,14 @@ namespace OsmAnd
         PrivateImplementation<OnlineMapRasterTileProvider_P> _p;
     protected:
     public:
-        OnlineMapRasterTileProvider(const QString& id, const QString& urlPattern,
+        OnlineMapRasterTileProvider(const QString& name, const QString& urlPattern,
             const ZoomLevel minZoom = MinZoomLevel, const ZoomLevel maxZoom = MaxZoomLevel,
             const uint32_t maxConcurrentDownloads = 1, const uint32_t providerTileSize = 256,
             const AlphaChannelData alphaChannelData = AlphaChannelData::Undefined);
         virtual ~OnlineMapRasterTileProvider();
 
-        const QString id;
+        const QString name;
+        const QString pathSuffix;
         const QString urlPattern;
         const ZoomLevel minZoom;
         const ZoomLevel maxZoom;
@@ -37,7 +38,7 @@ namespace OsmAnd
         const uint32_t providerTileSize;
         const AlphaChannelData alphaChannelData;
 
-        void setLocalCachePath(const QDir& localCachePath);
+        void setLocalCachePath(const QDir& localCachePath, const bool appendPathSuffix = true);
         const QDir& localCachePath;
 
         void setNetworkAccessPermission(bool allowed);
