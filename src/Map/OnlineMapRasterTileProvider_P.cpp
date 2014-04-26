@@ -95,7 +95,7 @@ bool OsmAnd::OnlineMapRasterTileProvider_P::obtainTile(const TileId tileId, cons
     // Perform synchronous download
     auto tileUrl = owner->urlPattern;
     tileUrl
-        .replace(QLatin1String("${zoom}"), QString::number(zoom))
+        .replace(QLatin1String("${osm_zoom}"), QString::number(zoom))
         .replace(QLatin1String("${osm_x}"), QString::number(tileId.x))
         .replace(QLatin1String("${osm_y}"), QString::number(tileId.y));
     std::shared_ptr<const WebClient::RequestResult> requestResult;

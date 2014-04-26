@@ -36,7 +36,7 @@ bool OsmAnd::OnlineTileSources_P::deserializeFrom(QXmlStreamReader& xmlReader)
             }
             const auto originalUrlTemplate = xmlReader.attributes().value(QLatin1String("url_template")).toString();
             auto urlPattern = originalUrlTemplate;
-            urlPattern = urlPattern.replace(QLatin1String("{0}"), QLatin1String("${zoom}"));
+            urlPattern = urlPattern.replace(QLatin1String("{0}"), QLatin1String("${osm_zoom}"));
             urlPattern = urlPattern.replace(QLatin1String("{1}"), QLatin1String("${osm_x}"));
             urlPattern = urlPattern.replace(QLatin1String("{2}"), QLatin1String("${osm_y}"));
             const auto minZoom = static_cast<ZoomLevel>(xmlReader.attributes().value(QLatin1String("min_zoom")).toUInt());
@@ -132,7 +132,7 @@ std::shared_ptr<const OsmAnd::OnlineTileSources> OsmAnd::OnlineTileSources_P::ge
         _builtIn.reset(new OnlineTileSources());
 
         std::shared_ptr<Source> mapnikOsmAndSource(new Source(QLatin1String("Mapnik (OsmAnd)")));
-        mapnikOsmAndSource->urlPattern = QLatin1String("http://mapnik.osmand.net/${zoom}/${x}/${y}.png");
+        mapnikOsmAndSource->urlPattern = QLatin1String("http://mapnik.osmand.net/${osm_zoom}/${osm_x}/${osm_y}.png");
         mapnikOsmAndSource->minZoom = ZoomLevel0;
         mapnikOsmAndSource->maxZoom = ZoomLevel19;
         mapnikOsmAndSource->maxConcurrentDownloads = 0;
