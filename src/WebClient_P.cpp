@@ -397,9 +397,9 @@ void OsmAnd::WebClient_P::Request::run()
 
     // Prepare for processing and launch it
     unsigned int retriesCount = 0;
+    _lastNetworkReply = networkReply;
     do 
     {
-        _lastNetworkReply = networkReply;
         const auto downloadProgressConnection = QObject::connect(
             networkReply, &QNetworkReply::downloadProgress,
             (std::function<void(qint64, qint64)>)std::bind(&Request::onDownloadProgress, this, std::placeholders::_1, std::placeholders::_2));
@@ -427,7 +427,7 @@ void OsmAnd::WebClient_P::Request::run()
             const auto rangeHeaderValue = QString(QLatin1String("bytes=%1-%2")).arg(_totalBytesConsumed).arg(contentSize - 1);
             networkRequest.setRawHeader("Range", rangeHeaderValue.toLocal8Bit());
         }
-        networkReply = networkAccessManager.get(networkRequest);
+        _lastNetworkReply = networkReply = networkAccessManager.get(networkRequest);
 
         retriesCount++;
     } while(retriesCount < retriesLimit);
