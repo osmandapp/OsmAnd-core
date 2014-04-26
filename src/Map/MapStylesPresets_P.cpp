@@ -38,11 +38,16 @@ bool OsmAnd::MapStylesPresets_P::deserializeFrom(QXmlStreamReader& xmlReader)
             if(tagName == QLatin1String("mapStylePreset"))
             {
                 const auto name = xmlReader.attributes().value(QLatin1String("name")).toString();
-                const auto styleName = xmlReader.attributes().value(QLatin1String("styleName")).toString();
+                const auto styleName = xmlReader.attributes().value(QLatin1String("style")).toString();
+                if(name.isEmpty() || styleName.isEmpty())
+                    continue;
                 mapStylePreset.reset(new MapStylePreset(name, styleName));
             }
             else if(tagName == QLatin1String("attribute"))
             {
+                if(!mapStylePreset)
+                    continue;
+
                 const auto name = xmlReader.attributes().value(QLatin1String("name")).toString();
                 const auto value = xmlReader.attributes().value(QLatin1String("value")).toString();
 
