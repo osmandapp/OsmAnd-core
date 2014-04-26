@@ -105,16 +105,16 @@ void OsmAnd::ResourcesManager_P::inflateBuiltInResources()
     // Built-in presets for "default" map style
     std::shared_ptr<MapStylesPresets> defaultMapStylesPresets(new MapStylesPresets());
     defaultMapStylesPresets->loadFrom(EmbeddedResources::decompressResource(
-        QLatin1String("map/mapStylesPresets/default.mapStylesPresets.xml")));
+        QLatin1String("map/presets/default.map_styles_presets.xml")));
     std::shared_ptr<const BuiltinResource> defaultMapStylesPresetsResource(new BuiltinResource(
-        QLatin1String("default.mapStylesPresets.xml"),
+        QLatin1String("default.map_styles_presets.xml"),
         ResourceType::MapStylesPresets,
         std::shared_ptr<const Resource::Metadata>(new MapStylesPresetsMetadata(defaultMapStylesPresets))));
     _builtinResources.insert(defaultMapStylesPresetsResource->id, defaultMapStylesPresetsResource);
 
     // Built-in online tile sources
     std::shared_ptr<const BuiltinResource> defaultOnlineTileSourcesResource(new BuiltinResource(
-        QLatin1String("default.onlineTileSources.xml"),
+        QLatin1String("default.online_tile_sources.xml"),
         ResourceType::OnlineTileSources,
         std::shared_ptr<const Resource::Metadata>(new OnlineTileSourcesMetadata(OnlineTileSources::getBuiltIn()))));
     _builtinResources.insert(defaultOnlineTileSourcesResource->id, defaultOnlineTileSourcesResource);
@@ -362,11 +362,11 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
         }
     }
 
-    // Find ResourceType::MapStylesPresetsResource -> "*.mapStylesPresets.xml" files (only in unmanaged storage)
+    // Find ResourceType::MapStylesPresetsResource -> "*.map_styles_presets.xml" files (only in unmanaged storage)
     if(isUnmanagedStorage)
     {
         QFileInfoList mapStylesPresetsFileInfos;
-        Utilities::findDirectories(storageDir, QStringList() << QLatin1String("*.mapStylesPresets.xml"), mapStylesPresetsFileInfos, false);
+        Utilities::findDirectories(storageDir, QStringList() << QLatin1String("*.map_styles_presets.xml"), mapStylesPresetsFileInfos, false);
         for(const auto& mapStylesPresetsFileInfo : constOf(mapStylesPresetsFileInfos))
         {
             const auto fileName = mapStylesPresetsFileInfo.absoluteFilePath();
@@ -394,11 +394,11 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
         }
     }
 
-    // Find ResourceType::OnlineTileSourcesResource -> "*.onlineTileSources.xml" files (only in unmanaged storage)
+    // Find ResourceType::OnlineTileSourcesResource -> "*.online_tile_sources.xml" files (only in unmanaged storage)
     if(isUnmanagedStorage)
     {
         QFileInfoList onlineTileSourcesFileInfos;
-        Utilities::findDirectories(storageDir, QStringList() << QLatin1String("*.onlineTileSources.xml"), onlineTileSourcesFileInfos, false);
+        Utilities::findDirectories(storageDir, QStringList() << QLatin1String("*.online_tile_sources.xml"), onlineTileSourcesFileInfos, false);
         for(const auto& onlineTileSourcesFileInfo : constOf(onlineTileSourcesFileInfos))
         {
             const auto fileName = onlineTileSourcesFileInfo.absoluteFilePath();

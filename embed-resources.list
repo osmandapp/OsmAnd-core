@@ -1,5 +1,5 @@
 /resources/rendering_styles/default.render.xml:map/styles/default.render.xml
-/resources/rendering_styles/default.mapStylesPresets.xml:map/mapStylesPresets/default.mapStylesPresets.xml
+/resources/rendering_styles/default.map_styles_presets.xml:map/presets/default.map_styles_presets.xml
 /resources/rendering_styles/style-icons/drawable-mdpi/h_mot_shield1.png:map/shields/mot_shield1.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_mot_shield2.png:map/shields/mot_shield2.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_mot_shield3.png:map/shields/mot_shield3.png
