@@ -216,6 +216,8 @@ bool OsmAnd::ResourcesManager_P::rescanUnmanagedStoragePaths() const
         _localResources.insert(id, newResource);
         addedResources.push_back(id);
     }
+
+    scopedLocker.unlock();
     owner->localResourcesChangeObservable.notify(owner, addedResources, removedResources, updatedResources);
 
     return true;
@@ -635,6 +637,8 @@ bool OsmAnd::ResourcesManager_P::uninstallResource(const QString& id)
         return false;
 
     _localResources.erase(itResource);
+
+    scopedLocker.unlock();
     owner->localResourcesChangeObservable.notify(owner,
         QList<QString>(),
         QList<QString>() << resource->id,
@@ -678,6 +682,9 @@ bool OsmAnd::ResourcesManager_P::installFromFile(const QString& id, const QStrin
         ok = installVoicePackFromFile(id, filePath, resource);
         break;
     }
+
+    scopedLocker.unlock();
+
     if(ok)
     {
         owner->localResourcesChangeObservable.notify(owner,
@@ -936,10 +943,13 @@ bool OsmAnd::ResourcesManager_P::updateFromFile(const QString& id, const QString
    
     *itResource = installedResource;
 
+    scopedLocker.unlock();
+
     owner->localResourcesChangeObservable.notify(owner,
         QList<QString>(),
         QList<QString>(),
         QList<QString>() << localResource->id);
+
     return true;
 }
 
