@@ -10,7 +10,7 @@
 #include "IRetainableResource.h"
 #include "MapObject.h"
 #include "EmbeddedResources.h"
-#include "LambdaQueryController.h"
+#include "FunctorQueryController.h"
 #include "QKeyValueIterator.h"
 #include "QCachingIterator.h"
 #include "Utilities.h"
@@ -455,8 +455,9 @@ void OsmAnd::MapRendererResources::requestNeededResources(const QSet<TileId>& ac
 
                     // Ask resource to obtain it's data
                     bool dataAvailable = false;
-                    LambdaQueryController obtainDataQueryController(
-                        [task_]() -> bool
+                    FunctorQueryController obtainDataQueryController(
+                        [task_]
+                        (const FunctorQueryController* const controller) -> bool
                         {
                             return task_->isCancellationRequested();
                         });

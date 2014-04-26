@@ -168,7 +168,7 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
 #endif
 {
     // Obtain and configure rasterization style context
-    OsmAnd::MapStyles stylesCollection;
+    OsmAnd::MapStylesCollection stylesCollection;
     for(auto itStyleFile = cfg.styleFiles.cbegin(); itStyleFile != cfg.styleFiles.cend(); ++itStyleFile)
     {
         const auto& styleFile = *itStyleFile;
@@ -177,7 +177,7 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
             output << xT("Failed to parse metadata of '") << QStringToStlString(styleFile.fileName()) << xT("' or duplicate style") << std::endl;
     }
     std::shared_ptr<const OsmAnd::MapStyle> style;
-    if(!stylesCollection.obtainStyle(cfg.styleName, style))
+    if(!stylesCollection.obtainBakedStyle(cfg.styleName, style))
     {
         output << xT("Failed to resolve style '") << QStringToStlString(cfg.styleName) << xT("'") << std::endl;
         return;

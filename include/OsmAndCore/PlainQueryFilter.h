@@ -23,7 +23,7 @@ namespace OsmAnd
         PlainQueryFilter(const ZoomLevel* zoom = nullptr, const AreaI* area = nullptr);
         virtual ~PlainQueryFilter();
 
-        virtual bool acceptsZoom(ZoomLevel zoom) const;
+        virtual bool acceptsZoom(const ZoomLevel zoom) const;
         virtual bool acceptsArea(const AreaI& area) const;
         virtual bool acceptsPoint(const PointI& point) const;
     };

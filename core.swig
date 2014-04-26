@@ -17,7 +17,7 @@
 
 // Map-related
 #include <OsmAndCore/Map/IMapRenderer.h>
-#include <OsmAndCore/Map/MapStyles.h>
+#include <OsmAndCore/Map/IMapStylesCollection.h>
 #include <OsmAndCore/Map/MapStyle.h>
 #include <OsmAndCore/Map/IMapBitmapTileProvider.h>
 #include <OsmAndCore/Map/IMapElevationDataProvider.h>
@@ -72,7 +72,7 @@ using namespace OsmAnd;
 %include "OsmAndCore/Map/MapRendererConfiguration.h"
 %include "OsmAndCore/Map/MapRendererSetupOptions.h"
 %include "OsmAndCore/Map/IMapRenderer.h"
-%include "OsmAndCore/Map/MapStyles.h"
+%include "OsmAndCore/Map/IMapStylesCollection.h"
 %include "OsmAndCore/Map/MapStyle.h"
 %include "OsmAndCore/Map/IRetainableResource.h"
 %include "OsmAndCore/Map/IMapProvider.h"

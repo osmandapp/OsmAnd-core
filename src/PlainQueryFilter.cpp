@@ -12,7 +12,7 @@ OsmAnd::PlainQueryFilter::~PlainQueryFilter()
 {
 }
 
-bool OsmAnd::PlainQueryFilter::acceptsZoom(ZoomLevel zoom) const
+bool OsmAnd::PlainQueryFilter::acceptsZoom(const ZoomLevel zoom) const
 {
     if(!_isZoomFiltered)
         return true;

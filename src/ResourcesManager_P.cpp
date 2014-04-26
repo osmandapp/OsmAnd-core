@@ -218,7 +218,7 @@ bool OsmAnd::ResourcesManager_P::rescanUnmanagedStoragePaths() const
     }
 
     scopedLocker.unlock();
-    owner->localResourcesChangeObservable.notify(owner, addedResources, removedResources, updatedResources);
+    owner->localResourcesChangeObservable.postNotify(owner, addedResources, removedResources, updatedResources);
 
     return true;
 }
@@ -639,7 +639,7 @@ bool OsmAnd::ResourcesManager_P::uninstallResource(const QString& id)
     _localResources.erase(itResource);
 
     scopedLocker.unlock();
-    owner->localResourcesChangeObservable.notify(owner,
+    owner->localResourcesChangeObservable.postNotify(owner,
         QList<QString>(),
         QList<QString>() << resource->id,
         QList<QString>());
@@ -687,7 +687,7 @@ bool OsmAnd::ResourcesManager_P::installFromFile(const QString& id, const QStrin
 
     if(ok)
     {
-        owner->localResourcesChangeObservable.notify(owner,
+        owner->localResourcesChangeObservable.postNotify(owner,
             QList<QString>() << resource->id,
             QList<QString>(),
             QList<QString>());
@@ -945,7 +945,7 @@ bool OsmAnd::ResourcesManager_P::updateFromFile(const QString& id, const QString
 
     scopedLocker.unlock();
 
-    owner->localResourcesChangeObservable.notify(owner,
+    owner->localResourcesChangeObservable.postNotify(owner,
         QList<QString>(),
         QList<QString>(),
         QList<QString>() << localResource->id);

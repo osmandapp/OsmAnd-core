@@ -19,7 +19,7 @@ namespace OsmAnd
     public:
         virtual ~IQueryFilter();
     
-        virtual bool acceptsZoom(ZoomLevel zoom) const = 0;
+        virtual bool acceptsZoom(const ZoomLevel zoom) const = 0;
         virtual bool acceptsArea(const AreaI& area) const = 0;
         virtual bool acceptsPoint(const PointI& point) const = 0;
     };

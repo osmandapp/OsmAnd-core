@@ -199,7 +199,7 @@ void OsmAnd::MapRenderer::notifyRequestedStateWasUpdated(const MapRendererStateC
     _requestedStateUpdatedMask |= 1u << static_cast<int>(change);
 
     // Notify all observers
-    stateChangeObservable.notify(change, _requestedStateUpdatedMask);
+    stateChangeObservable.postNotify(change, _requestedStateUpdatedMask);
 
     // Since our current state is invalid, frame is also invalidated
     invalidateFrame();

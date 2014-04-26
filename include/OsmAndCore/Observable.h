@@ -7,8 +7,10 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <QHash>
 #include <QReadWriteLock>
+#include <QThreadPool>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/QRunnableFunctor.h>
 
 namespace OsmAnd
 {
@@ -62,7 +64,22 @@ namespace OsmAnd
                 handler(args...);
         }
 
-        //TODO: add postNotify
+        void postNotify(ARGS... args) const
+        {
+            QHash<Tag, Handler> observers;
+            {
+                QReadLocker scopedLocker(&_observersLock);
+                observers = detachedOf(_observers);
+            }
+
+            QThreadPool::globalInstance()->start(new QRunnableFunctor(
+                [=]
+                (const QRunnableFunctor* const runnable)
+                {
+                    for(const auto& handler : constOf(observers))
+                        handler(args...);
+                }));
+        }
     };
 
     template<typename _>
