@@ -1209,7 +1209,10 @@ bool OsmAnd::ResourcesManager_P::MapStylesCollection::obtainBakedStyle(const QSt
             continue;
 
         const auto mapStyle = std::static_pointer_cast<const MapStyleMetadata>(builtinResource->_metadata)->mapStyle;
+
+        outStyle = mapStyle;
         assert(outStyle->isMetadataLoaded() && outStyle->isLoaded());
+
         return true;
     }
 
