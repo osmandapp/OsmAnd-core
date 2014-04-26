@@ -15,7 +15,7 @@ bool OsmAnd::MapStylesCollection::registerStyle( const QString& filePath )
     return _p->registerStyle(filePath);
 }
 
-QList< std::shared_ptr<const OsmAnd::MapStyle> > OsmAnd::MapStylesCollection::getCollection() const
+QHash< QString, std::shared_ptr<const OsmAnd::MapStyle> > OsmAnd::MapStylesCollection::getCollection() const
 {
     return _p->getCollection();
 }

@@ -38,7 +38,7 @@ namespace OsmAnd
         bool loadFrom(QIODevice& ioDevice);
         bool saveTo(QIODevice& ioDevice) const;
 
-        QList< std::shared_ptr<MapStylePreset> > getCollection() const;
+        QHash< QString, std::shared_ptr<MapStylePreset> > getCollection() const;
         std::shared_ptr<MapStylePreset> getPresetByName(const QString& name) const;
         bool addPreset(const std::shared_ptr<MapStylePreset>& preset);
         bool removePreset(const QString& name);

@@ -51,7 +51,7 @@ bool OsmAnd::MapStylesPresets::saveTo(const QString& fileName) const
     return success;
 }
 
-QList< std::shared_ptr<OsmAnd::MapStylePreset> > OsmAnd::MapStylesPresets::getCollection() const
+QHash< QString, std::shared_ptr<OsmAnd::MapStylePreset> > OsmAnd::MapStylesPresets::getCollection() const
 {
     return _p->getCollection();
 }

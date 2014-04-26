@@ -135,7 +135,7 @@ namespace OsmAnd
 
             ResourcesManager_P* const owner;
 
-            virtual QList< std::shared_ptr<const MapStyle> > getCollection() const;
+            virtual QHash< QString, std::shared_ptr<const MapStyle> > getCollection() const;
             virtual bool obtainBakedStyle(const QString& name, std::shared_ptr<const MapStyle>& outStyle) const;
 
         friend class OsmAnd::ResourcesManager_P;

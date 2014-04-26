@@ -1161,9 +1161,9 @@ OsmAnd::ResourcesManager_P::MapStylesCollection::~MapStylesCollection()
 {
 }
 
-QList< std::shared_ptr<const OsmAnd::MapStyle> > OsmAnd::ResourcesManager_P::MapStylesCollection::getCollection() const
+QHash< QString, std::shared_ptr<const OsmAnd::MapStyle> > OsmAnd::ResourcesManager_P::MapStylesCollection::getCollection() const
 {
-    QList< std::shared_ptr<const MapStyle> > result;
+    QHash< QString, std::shared_ptr<const MapStyle> > result;
 
     for(const auto& builtinResource : constOf(owner->_builtinResources))
     {
@@ -1172,7 +1172,7 @@ QList< std::shared_ptr<const OsmAnd::MapStyle> > OsmAnd::ResourcesManager_P::Map
             continue;
 
         const auto mapStyle = std::static_pointer_cast<const MapStyleMetadata>(builtinResource->_metadata)->mapStyle;
-        result.append(mapStyle);
+        result.insert(mapStyle->name, mapStyle);
     }
 
     {
@@ -1185,7 +1185,7 @@ QList< std::shared_ptr<const OsmAnd::MapStyle> > OsmAnd::ResourcesManager_P::Map
                 continue;
 
             const auto mapStyle = std::static_pointer_cast<const MapStyleMetadata>(localResource->_metadata)->mapStyle;
-            result.append(mapStyle);
+            result.insert(mapStyle->name, mapStyle);
         }
     }
     

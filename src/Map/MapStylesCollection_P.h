@@ -33,7 +33,7 @@ namespace OsmAnd
 
         bool registerStyle(const QString& filePath);
 
-        QList< std::shared_ptr<const MapStyle> > getCollection() const;
+        QHash< QString, std::shared_ptr<const MapStyle> > getCollection() const;
         bool obtainBakedStyle(const QString& name, std::shared_ptr<const MapStyle>& outStyle) const;
 
     friend class OsmAnd::MapStylesCollection;

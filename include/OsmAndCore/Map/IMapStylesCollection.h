@@ -5,7 +5,7 @@
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QString>
-#include <QList>
+#include <QHash>
 
 #include <OsmAndCore.h>
 
@@ -22,7 +22,7 @@ namespace OsmAnd
     public:
         virtual ~IMapStylesCollection();
 
-        virtual QList< std::shared_ptr<const MapStyle> > getCollection() const = 0;
+        virtual QHash< QString, std::shared_ptr<const MapStyle> > getCollection() const = 0;
         virtual bool obtainBakedStyle(const QString& name, std::shared_ptr<const MapStyle>& outStyle) const = 0;
         inline std::shared_ptr<const MapStyle> getBakedStyle(const QString& name) const
         {

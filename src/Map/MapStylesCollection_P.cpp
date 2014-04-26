@@ -7,6 +7,7 @@
 #include "MapStyle.h"
 #include "MapStyle_P.h"
 #include "EmbeddedResources.h"
+#include "QKeyValueIterator.h"
 
 OsmAnd::MapStylesCollection_P::MapStylesCollection_P(MapStylesCollection* owner_)
     : owner(owner_)
@@ -59,14 +60,14 @@ bool OsmAnd::MapStylesCollection_P::registerStyle(const QString& filePath)
     return true;
 }
 
-QList< std::shared_ptr<const OsmAnd::MapStyle> > OsmAnd::MapStylesCollection_P::getCollection() const
+QHash< QString, std::shared_ptr<const OsmAnd::MapStyle> > OsmAnd::MapStylesCollection_P::getCollection() const
 {
     QReadLocker scopedLocker(&_stylesLock);
 
-    QList< std::shared_ptr<const MapStyle> > result;
+    QHash< QString, std::shared_ptr<const MapStyle> > result;
     result.reserve(_styles.count());
-    for(const auto& style : constOf(_styles))
-        result.push_back(style);
+    for(const auto& itStyle : rangeOf(constOf(_styles)))
+        result.insert(itStyle.key(), itStyle.value());
     return result;
 }
 

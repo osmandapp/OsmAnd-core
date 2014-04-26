@@ -84,9 +84,9 @@ bool OsmAnd::MapStylesPresets_P::serializeTo(QXmlStreamWriter& xmlWriter) const
     return false;
 }
 
-QList< std::shared_ptr<OsmAnd::MapStylePreset> > OsmAnd::MapStylesPresets_P::getCollection() const
+QHash< QString, std::shared_ptr<OsmAnd::MapStylePreset> > OsmAnd::MapStylesPresets_P::getCollection() const
 {
-    return _collection.values();
+    return _collection;
 }
 
 std::shared_ptr<OsmAnd::MapStylePreset> OsmAnd::MapStylesPresets_P::getPresetByName(const QString& name) const
