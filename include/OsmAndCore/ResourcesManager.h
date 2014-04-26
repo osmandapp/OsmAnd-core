@@ -39,7 +39,7 @@ namespace OsmAnd
             MapRegion,
             VoicePack,
             MapStyle,
-            MapStylePresets,
+            MapStylesPresets,
             OnlineTileSources,
             //RoadMapRegion,
             //SrtmRegion,

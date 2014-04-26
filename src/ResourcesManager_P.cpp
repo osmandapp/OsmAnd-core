@@ -108,7 +108,7 @@ void OsmAnd::ResourcesManager_P::inflateBuiltInResources()
         QLatin1String("map/mapStylesPresets/default.mapStylesPresets.xml")));
     std::shared_ptr<const BuiltinResource> defaultMapStylesPresetsResource(new BuiltinResource(
         QLatin1String("default.mapStylesPresets.xml"),
-        ResourceType::MapStylePresets,
+        ResourceType::MapStylesPresets,
         std::shared_ptr<const Resource::Metadata>(new MapStylesPresetsMetadata(defaultMapStylesPresets))));
     _builtinResources.insert(defaultMapStylesPresetsResource->id, defaultMapStylesPresetsResource);
 
@@ -384,7 +384,7 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
             const auto name = mapStylesPresetsFileInfo.fileName();
             const auto pLocalResource = new UnmanagedResource(
                 name,
-                ResourceType::MapStylePresets,
+                ResourceType::MapStylesPresets,
                 fileName,
                 fileSize,
                 name);
