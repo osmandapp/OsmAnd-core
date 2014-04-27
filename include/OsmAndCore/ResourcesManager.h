@@ -24,7 +24,7 @@ namespace OsmAnd
     class IMapStylesCollection;
     class IObfsCollection;
     class MapStyle;
-    class MapStylesPresets;
+    class MapStylesPresetsCollection;
     class OnlineTileSources;
 
     class ResourcesManager_P;
@@ -202,10 +202,10 @@ namespace OsmAnd
 
         struct OSMAND_CORE_API MapStylesPresetsMetadata : public Resource::Metadata
         {
-            MapStylesPresetsMetadata(const std::shared_ptr<const MapStylesPresets>& presets);
+            MapStylesPresetsMetadata(const std::shared_ptr<const MapStylesPresetsCollection>& presets);
             virtual ~MapStylesPresetsMetadata();
 
-            const std::shared_ptr<const MapStylesPresets> presets;
+            const std::shared_ptr<const MapStylesPresetsCollection> presets;
         };
 
         struct OSMAND_CORE_API OnlineTileSourcesMetadata : public Resource::Metadata

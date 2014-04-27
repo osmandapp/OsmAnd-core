@@ -14,12 +14,24 @@ namespace OsmAnd
     class OSMAND_CORE_API MapStylePreset
     {
         Q_DISABLE_COPY(MapStylePreset);
+
+    public:
+        enum class Type
+        {
+            General,
+            Pedestrian,
+            Bicycle,
+            Car,
+            Custom
+        };
+
     private:
     protected:
     public:
-        MapStylePreset(const QString& name, const QString& styleName);
+        MapStylePreset(const Type type, const QString& name, const QString& styleName);
         virtual ~MapStylePreset();
 
+        const Type type;
         const QString name;
         const QString styleName;
         QHash<QString, QString> attributes;

@@ -14,7 +14,7 @@
 #include "ArchiveReader.h"
 #include "ObfDataInterface.h"
 #include "MapStyle.h"
-#include "MapStylesPresets.h"
+#include "MapStylesPresetsCollection.h"
 #include "OnlineTileSources.h"
 #include "QKeyValueIterator.h"
 #include "Logging.h"
@@ -103,7 +103,7 @@ void OsmAnd::ResourcesManager_P::inflateBuiltInResources()
     _builtinResources.insert(defaultMapStyleResource->id, defaultMapStyleResource);
 
     // Built-in presets for "default" map style
-    std::shared_ptr<MapStylesPresets> defaultMapStylesPresets(new MapStylesPresets());
+    std::shared_ptr<MapStylesPresetsCollection> defaultMapStylesPresets(new MapStylesPresetsCollection());
     defaultMapStylesPresets->loadFrom(EmbeddedResources::decompressResource(
         QLatin1String("map/presets/default.map_styles_presets.xml")));
     std::shared_ptr<const BuiltinResource> defaultMapStylesPresetsResource(new BuiltinResource(
@@ -373,7 +373,7 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
             const auto fileSize = mapStylesPresetsFileInfo.size();
 
             // Load resource
-            const std::shared_ptr<MapStylesPresets> presets(new MapStylesPresets());
+            const std::shared_ptr<MapStylesPresetsCollection> presets(new MapStylesPresetsCollection());
             if(!presets->loadFrom(fileName))
             {
                 LogPrintf(LogSeverityLevel::Warning, "Failed to load map styles presets from '%s'", qPrintable(fileName));

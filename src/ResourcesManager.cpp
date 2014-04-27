@@ -271,7 +271,7 @@ OsmAnd::ResourcesManager::MapStyleMetadata::~MapStyleMetadata()
 {
 }
 
-OsmAnd::ResourcesManager::MapStylesPresetsMetadata::MapStylesPresetsMetadata(const std::shared_ptr<const MapStylesPresets>& presets_)
+OsmAnd::ResourcesManager::MapStylesPresetsMetadata::MapStylesPresetsMetadata(const std::shared_ptr<const MapStylesPresetsCollection>& presets_)
     : presets(presets_)
 {
 }
