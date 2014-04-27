@@ -21,6 +21,7 @@ OsmAnd::ResourcesManager::ResourcesManager(
     , repositoryBaseUrl(repositoryBaseUrl_)
     , onlineTileSources(_p->onlineTileSources)
     , mapStylesCollection(_p->mapStylesCollection)
+    , mapStylesPresetsCollection(_p->mapStylesPresetsCollection)
     , obfsCollection(_p->obfsCollection)
 {
     _p->initialize();

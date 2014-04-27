@@ -26,8 +26,9 @@ OsmAnd::ResourcesManager_P::ResourcesManager_P(ResourcesManager* owner_)
     , _localResourcesLock(QReadWriteLock::Recursive)
     , _resourcesInRepositoryLoaded(false)
     , onlineTileSources(new OnlineTileSourcesProxy(this))
-    , mapStylesCollection(new MapStylesCollection(this))
-    , obfsCollection(new ObfsCollection(this))
+    , mapStylesCollection(new MapStylesCollectionProxy(this))
+    , mapStylesPresetsCollection(new MapStylesPresetsCollectionProxy(this))
+    , obfsCollection(new ObfsCollectionProxy(this))
 {
     _fileSystemWatcher->moveToThread(gMainThread);
 }
@@ -1070,7 +1071,7 @@ std::shared_ptr<const OsmAnd::ResourcesManager_P::OnlineTileSourcesProxy::Source
     return nullptr;
 }
 
-OsmAnd::ResourcesManager_P::ManagedObfDataInterface::ManagedObfDataInterface(
+OsmAnd::ResourcesManager_P::ObfDataInterfaceProxy::ObfDataInterfaceProxy(
     const QList< std::shared_ptr<const ObfReader> >& obfReaders_,
     const QList< std::shared_ptr<const InstalledResource> >& lockedResources_)
     : ObfDataInterface(obfReaders_)
@@ -1078,22 +1079,22 @@ OsmAnd::ResourcesManager_P::ManagedObfDataInterface::ManagedObfDataInterface(
 {
 }
 
-OsmAnd::ResourcesManager_P::ManagedObfDataInterface::~ManagedObfDataInterface()
+OsmAnd::ResourcesManager_P::ObfDataInterfaceProxy::~ObfDataInterfaceProxy()
 {
     for(const auto& lockedResource : constOf(lockedResources))
         lockedResource->_lock.unlockFromReading();
 }
 
-OsmAnd::ResourcesManager_P::ObfsCollection::ObfsCollection(ResourcesManager_P* owner_)
+OsmAnd::ResourcesManager_P::ObfsCollectionProxy::ObfsCollectionProxy(ResourcesManager_P* owner_)
     : owner(owner_)
 {
 }
 
-OsmAnd::ResourcesManager_P::ObfsCollection::~ObfsCollection()
+OsmAnd::ResourcesManager_P::ObfsCollectionProxy::~ObfsCollectionProxy()
 {
 }
 
-QVector< std::shared_ptr<const OsmAnd::ObfFile> > OsmAnd::ResourcesManager_P::ObfsCollection::getObfFiles() const
+QVector< std::shared_ptr<const OsmAnd::ObfFile> > OsmAnd::ResourcesManager_P::ObfsCollectionProxy::getObfFiles() const
 {
     QReadLocker scopedLocker(&owner->_localResourcesLock);
 
@@ -1115,7 +1116,7 @@ QVector< std::shared_ptr<const OsmAnd::ObfFile> > OsmAnd::ResourcesManager_P::Ob
     return obfFiles;
 }
 
-std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollection::obtainDataInterface() const
+std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollectionProxy::obtainDataInterface() const
 {
     QReadLocker scopedLocker(&owner->_localResourcesLock);
 
@@ -1149,29 +1150,28 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
         obfReaders.push_back(qMove(obfReader));
     }
 
-    return std::shared_ptr<ObfDataInterface>(new ManagedObfDataInterface(obfReaders, lockedResources));
+    return std::shared_ptr<ObfDataInterface>(new ObfDataInterfaceProxy(obfReaders, lockedResources));
 }
 
-OsmAnd::ResourcesManager_P::MapStylesCollection::MapStylesCollection(ResourcesManager_P* owner_)
+OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::MapStylesCollectionProxy(ResourcesManager_P* owner_)
     : owner(owner_)
 {
 }
 
-OsmAnd::ResourcesManager_P::MapStylesCollection::~MapStylesCollection()
+OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::~MapStylesCollectionProxy()
 {
 }
 
-QList< std::shared_ptr<const OsmAnd::MapStyle> > OsmAnd::ResourcesManager_P::MapStylesCollection::getCollection() const
+QList< std::shared_ptr<const OsmAnd::MapStyle> > OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::getCollection() const
 {
     QList< std::shared_ptr<const MapStyle> > result;
 
     for(const auto& builtinResource : constOf(owner->_builtinResources))
     {
-        // Skip anything that is not a style
         if(builtinResource->type != ResourceType::MapStyle)
             continue;
 
-        const auto mapStyle = std::static_pointer_cast<const MapStyleMetadata>(builtinResource->_metadata)->mapStyle;
+        const auto& mapStyle = std::static_pointer_cast<const MapStyleMetadata>(builtinResource->_metadata)->mapStyle;
         result.push_back(mapStyle);
     }
 
@@ -1180,11 +1180,10 @@ QList< std::shared_ptr<const OsmAnd::MapStyle> > OsmAnd::ResourcesManager_P::Map
 
         for(const auto& localResource : constOf(owner->_localResources))
         {
-            // Skip anything that is not a style
             if(localResource->type != ResourceType::MapStyle)
                 continue;
 
-            const auto mapStyle = std::static_pointer_cast<const MapStyleMetadata>(localResource->_metadata)->mapStyle;
+            const auto& mapStyle = std::static_pointer_cast<const MapStyleMetadata>(localResource->_metadata)->mapStyle;
             result.push_back(mapStyle);
         }
     }
@@ -1192,7 +1191,7 @@ QList< std::shared_ptr<const OsmAnd::MapStyle> > OsmAnd::ResourcesManager_P::Map
     return result;
 }
 
-std::shared_ptr<const OsmAnd::MapStyle> OsmAnd::ResourcesManager_P::MapStylesCollection::getAsIsStyle(const QString& name_) const
+std::shared_ptr<const OsmAnd::MapStyle> OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::getAsIsStyle(const QString& name_) const
 {
     auto name = name_;
     if(!name.endsWith(QLatin1String(".render.xml")))
@@ -1217,11 +1216,9 @@ std::shared_ptr<const OsmAnd::MapStyle> OsmAnd::ResourcesManager_P::MapStylesCol
 
         for(const auto& localResource : constOf(owner->_localResources))
         {
-            // Skip anything that is not a style
             if(localResource->type != ResourceType::MapStyle)
                 continue;
 
-            // Skip any style that doesn't match by name
             if(localResource->id != name)
                 continue;
 
@@ -1233,7 +1230,7 @@ std::shared_ptr<const OsmAnd::MapStyle> OsmAnd::ResourcesManager_P::MapStylesCol
     return nullptr;
 }
 
-bool OsmAnd::ResourcesManager_P::MapStylesCollection::obtainBakedStyle(const QString& name_, std::shared_ptr<const MapStyle>& outStyle) const
+bool OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::obtainBakedStyle(const QString& name_, std::shared_ptr<const MapStyle>& outStyle) const
 {
     auto name = name_;
     if(!name.endsWith(QLatin1String(".render.xml")))
@@ -1241,11 +1238,9 @@ bool OsmAnd::ResourcesManager_P::MapStylesCollection::obtainBakedStyle(const QSt
 
     for(const auto& builtinResource : constOf(owner->_builtinResources))
     {
-        // Skip anything that is not a style
         if(builtinResource->type != ResourceType::MapStyle)
             continue;
 
-        // Skip any style that doesn't match by name
         if(builtinResource->id != name)
             continue;
 
@@ -1262,11 +1257,9 @@ bool OsmAnd::ResourcesManager_P::MapStylesCollection::obtainBakedStyle(const QSt
 
         for(const auto& localResource : constOf(owner->_localResources))
         {
-            // Skip anything that is not a style
             if(localResource->type != ResourceType::MapStyle)
                 continue;
 
-            // Skip any style that doesn't match by name
             if(localResource->id != name)
                 continue;
 
@@ -1281,4 +1274,102 @@ bool OsmAnd::ResourcesManager_P::MapStylesCollection::obtainBakedStyle(const QSt
     }
 
     return false;
+}
+
+OsmAnd::ResourcesManager_P::MapStylesPresetsCollectionProxy::MapStylesPresetsCollectionProxy(ResourcesManager_P* owner_)
+    : owner(owner_)
+{
+}
+
+OsmAnd::ResourcesManager_P::MapStylesPresetsCollectionProxy::~MapStylesPresetsCollectionProxy()
+{
+}
+
+QList< std::shared_ptr<const OsmAnd::MapStylePreset> > OsmAnd::ResourcesManager_P::MapStylesPresetsCollectionProxy::getCollection() const
+{
+    QList< std::shared_ptr<const MapStylePreset> > result;
+
+    for(const auto& builtinResource : constOf(owner->_builtinResources))
+    {
+        if(builtinResource->type != ResourceType::MapStylesPresets)
+            continue;
+
+        const auto& presets = std::static_pointer_cast<const MapStylesPresetsMetadata>(builtinResource->_metadata)->presets;
+        result << presets->getCollection();
+    }
+
+    {
+        QReadLocker scopedLocker(&owner->_localResourcesLock);
+
+        for(const auto& localResource : constOf(owner->_localResources))
+        {
+            if(localResource->type != ResourceType::MapStylesPresets)
+                continue;
+
+            const auto& presets = std::static_pointer_cast<const MapStylesPresetsMetadata>(localResource->_metadata)->presets;
+            result << presets->getCollection();
+        }
+    }
+
+    return result;
+}
+
+QList< std::shared_ptr<const OsmAnd::MapStylePreset> > OsmAnd::ResourcesManager_P::MapStylesPresetsCollectionProxy::getCollectionFor(const QString& styleName) const
+{
+    QList< std::shared_ptr<const MapStylePreset> > result;
+
+    for(const auto& builtinResource : constOf(owner->_builtinResources))
+    {
+        if(builtinResource->type != ResourceType::MapStylesPresets)
+            continue;
+
+        const auto& presets = std::static_pointer_cast<const MapStylesPresetsMetadata>(builtinResource->_metadata)->presets;
+        result << presets->getCollectionFor(styleName);
+    }
+
+    {
+        QReadLocker scopedLocker(&owner->_localResourcesLock);
+
+        for(const auto& localResource : constOf(owner->_localResources))
+        {
+            if(localResource->type != ResourceType::MapStylesPresets)
+                continue;
+
+            const auto& presets = std::static_pointer_cast<const MapStylesPresetsMetadata>(localResource->_metadata)->presets;
+            result << presets->getCollectionFor(styleName);
+        }
+    }
+
+    return result;
+}
+
+std::shared_ptr<const OsmAnd::MapStylePreset> OsmAnd::ResourcesManager_P::MapStylesPresetsCollectionProxy::getPreset(const QString& styleName, const QString& presetName) const
+{
+    for(const auto& builtinResource : constOf(owner->_builtinResources))
+    {
+        if(builtinResource->type != ResourceType::MapStylesPresets)
+            continue;
+
+        const auto& presets = std::static_pointer_cast<const MapStylesPresetsMetadata>(builtinResource->_metadata)->presets;
+        const auto preset = presets->getPreset(styleName, presetName);
+        if(preset)
+            return preset;
+    }
+
+    {
+        QReadLocker scopedLocker(&owner->_localResourcesLock);
+
+        for(const auto& localResource : constOf(owner->_localResources))
+        {
+            if(localResource->type != ResourceType::MapStyle)
+                continue;
+
+            const auto& presets = std::static_pointer_cast<const MapStylesPresetsMetadata>(localResource->_metadata)->presets;
+            const auto preset = presets->getPreset(styleName, presetName);
+            if(preset)
+                return preset;
+        }
+    }
+
+    return nullptr;
 }

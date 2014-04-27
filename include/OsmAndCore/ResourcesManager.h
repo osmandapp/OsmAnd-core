@@ -22,6 +22,7 @@ namespace OsmAnd
 {
     class IOnlineTileSources;
     class IMapStylesCollection;
+    class IMapStylesPresetsCollection;
     class IObfsCollection;
     class MapStyle;
     class MapStylesPresetsCollection;
@@ -281,6 +282,7 @@ namespace OsmAnd
 
         const std::shared_ptr<const IOnlineTileSources>& onlineTileSources;
         const std::shared_ptr<const IMapStylesCollection>& mapStylesCollection;
+        const std::shared_ptr<const IMapStylesPresetsCollection>& mapStylesPresetsCollection;
         const std::shared_ptr<const IObfsCollection>& obfsCollection;
     };
 }
