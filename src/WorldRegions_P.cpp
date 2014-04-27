@@ -103,7 +103,7 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
                     }
 
                     const auto& nameTag = rules->decodingRules[localizedNameEntry.key()].tag;
-                    if(nameTag.startsWith(localizedNameTagPrefix))
+                    if(!nameTag.startsWith(localizedNameTagPrefix))
                         continue;
                     const auto languageId = nameTag.mid(localizedNameTagPrefixLen).toLower();
                     localizedNames.insert(languageId, localizedNameEntry.value());
