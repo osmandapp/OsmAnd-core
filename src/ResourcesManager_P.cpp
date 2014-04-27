@@ -275,16 +275,17 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
         }
 
         // Create local resource entry
-        const auto name = obfFileInfo.fileName();
+        const auto fileName = obfFileInfo.fileName();
+        const auto resourceId = fileName.toLower();
         const auto pLocalResource = new InstalledResource(
-            name,
+            resourceId,
             ResourceType::MapRegion,
             filePath,
             obfFileInfo.size(),
             obfFile->obfInfo->creationTimestamp);
         pLocalResource->_metadata.reset(new ObfMetadata(obfFile));
         std::shared_ptr<const LocalResource> localResource(pLocalResource);
-        outResult.insert(name, qMove(localResource));
+        outResult.insert(resourceId, qMove(localResource));
     }
 
     // Find ResourceType::VoicePack -> "*.voice" directories
@@ -321,14 +322,15 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
         }
 
         // Create local resource entry
-        const auto name = voicePackDirectory.fileName();
+        const auto fileName = voicePackDirectory.fileName();
+        const auto resourceId = fileName.toLower();
         std::shared_ptr<const LocalResource> localResource(new InstalledResource(
-            name,
+            resourceId,
             ResourceType::VoicePack, 
             dirPath,
             contentSize,
             timestamp));
-        outResult.insert(name, qMove(localResource));
+        outResult.insert(resourceId, qMove(localResource));
     }
 
     // Find ResourceType::MapStyleResource -> "*.render.xml" files (only in unmanaged storage)
@@ -338,28 +340,29 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
         Utilities::findFiles(storageDir, QStringList() << QLatin1String("*.render.xml"), mapStyleFileInfos, false);
         for(const auto& mapStyleFileInfo : constOf(mapStyleFileInfos))
         {
-            const auto fileName = mapStyleFileInfo.absoluteFilePath();
+            const auto filePath = mapStyleFileInfo.absoluteFilePath();
             const auto fileSize = mapStyleFileInfo.size();
 
             // Load resource
-            const std::shared_ptr<MapStyle> mapStyle(new MapStyle(mapStylesCollection.get(), fileName));
+            const std::shared_ptr<MapStyle> mapStyle(new MapStyle(mapStylesCollection.get(), filePath));
             if(!mapStyle->loadMetadata())
             {
-                LogPrintf(LogSeverityLevel::Warning, "Failed to open map style '%s'", qPrintable(fileName));
+                LogPrintf(LogSeverityLevel::Warning, "Failed to open map style '%s'", qPrintable(filePath));
                 continue;
             }
 
             // Create local resource entry
-            const auto name = mapStyleFileInfo.fileName();
+            const auto fileName = mapStyleFileInfo.fileName();
+            const auto resourceId = fileName.toLower();
             const auto pLocalResource = new UnmanagedResource(
-                name,
+                resourceId,
                 ResourceType::MapStyle,
-                fileName,
+                filePath,
                 fileSize,
-                name);
+                fileName);
             pLocalResource->_metadata.reset(new MapStyleMetadata(mapStyle));
             std::shared_ptr<const LocalResource> localResource(pLocalResource);
-            outResult.insert(name, qMove(localResource));
+            outResult.insert(resourceId, qMove(localResource));
         }
     }
 
@@ -370,28 +373,29 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
         Utilities::findDirectories(storageDir, QStringList() << QLatin1String("*.map_styles_presets.xml"), mapStylesPresetsFileInfos, false);
         for(const auto& mapStylesPresetsFileInfo : constOf(mapStylesPresetsFileInfos))
         {
-            const auto fileName = mapStylesPresetsFileInfo.absoluteFilePath();
+            const auto filePath = mapStylesPresetsFileInfo.absoluteFilePath();
             const auto fileSize = mapStylesPresetsFileInfo.size();
 
             // Load resource
             const std::shared_ptr<MapStylesPresetsCollection> presets(new MapStylesPresetsCollection());
-            if(!presets->loadFrom(fileName))
+            if(!presets->loadFrom(filePath))
             {
-                LogPrintf(LogSeverityLevel::Warning, "Failed to load map styles presets from '%s'", qPrintable(fileName));
+                LogPrintf(LogSeverityLevel::Warning, "Failed to load map styles presets from '%s'", qPrintable(filePath));
                 continue;
             }
             
             // Create local resource entry
-            const auto name = mapStylesPresetsFileInfo.fileName();
+            const auto fileName = mapStylesPresetsFileInfo.fileName();
+            const auto resourceId = fileName.toLower();
             const auto pLocalResource = new UnmanagedResource(
-                name,
+                resourceId,
                 ResourceType::MapStylesPresets,
-                fileName,
+                filePath,
                 fileSize,
-                name);
+                fileName);
             pLocalResource->_metadata.reset(new MapStylesPresetsMetadata(presets));
             std::shared_ptr<const LocalResource> localResource(pLocalResource);
-            outResult.insert(name, qMove(localResource));
+            outResult.insert(resourceId, qMove(localResource));
         }
     }
 
@@ -402,28 +406,29 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
         Utilities::findDirectories(storageDir, QStringList() << QLatin1String("*.online_tile_sources.xml"), onlineTileSourcesFileInfos, false);
         for(const auto& onlineTileSourcesFileInfo : constOf(onlineTileSourcesFileInfos))
         {
-            const auto fileName = onlineTileSourcesFileInfo.absoluteFilePath();
+            const auto filePath = onlineTileSourcesFileInfo.absoluteFilePath();
             const auto fileSize = onlineTileSourcesFileInfo.size();
 
             // Load resource
             const std::shared_ptr<OnlineTileSources> sources(new OnlineTileSources());
-            if(!sources->loadFrom(fileName))
+            if(!sources->loadFrom(filePath))
             {
-                LogPrintf(LogSeverityLevel::Warning, "Failed to load online tile sources from '%s'", qPrintable(fileName));
+                LogPrintf(LogSeverityLevel::Warning, "Failed to load online tile sources from '%s'", qPrintable(filePath));
                 continue;
             }
 
             // Create local resource entry
-            const auto name = onlineTileSourcesFileInfo.fileName();
+            const auto fileName = onlineTileSourcesFileInfo.fileName();
+            const auto resourceId = fileName.toLower();
             const auto pLocalResource = new UnmanagedResource(
-                name,
+                resourceId,
                 ResourceType::OnlineTileSources,
-                fileName,
+                filePath,
                 fileSize,
-                name);
+                fileName);
             pLocalResource->_metadata.reset(new OnlineTileSourcesMetadata(sources));
             std::shared_ptr<const LocalResource> localResource(pLocalResource);
-            outResult.insert(name, qMove(localResource));
+            outResult.insert(resourceId, qMove(localResource));
         }
     }
 
@@ -515,8 +520,9 @@ bool OsmAnd::ResourcesManager_P::parseRepository(QXmlStreamReader& xmlReader, QL
             continue;
         }
 
+        const auto resourceId = QString(name).remove(QLatin1String(".zip")).toLower();
         std::shared_ptr<const ResourceInRepository> resource(new ResourceInRepository(
-            QString(name).remove(QLatin1String(".zip")),
+            resourceId,
             resourceType,
             owner->repositoryBaseUrl + QLatin1String("/download.php?file=") + QUrl::toPercentEncoding(name),
             contentSize,
@@ -688,7 +694,7 @@ bool OsmAnd::ResourcesManager_P::uninstallVoicePack(const std::shared_ptr<const 
 
 bool OsmAnd::ResourcesManager_P::installFromFile(const QString& filePath, const ResourceType resourceType)
 {
-    const auto guessedResourceName = QFileInfo(filePath).fileName().remove(QLatin1String(".zip"));
+    const auto guessedResourceName = QFileInfo(filePath).fileName().remove(QLatin1String(".zip")).toLower();
     return installFromFile(guessedResourceName, filePath, resourceType);
 }
 
@@ -915,7 +921,7 @@ QList<QString> OsmAnd::ResourcesManager_P::getOutdatedInstalledResources() const
 
 bool OsmAnd::ResourcesManager_P::updateFromFile(const QString& filePath)
 {
-    const auto guessedResourceId = QFileInfo(filePath).fileName().remove(QLatin1String(".zip"));
+    const auto guessedResourceId = QFileInfo(filePath).fileName().remove(QLatin1String(".zip")).toLower();
     return updateFromFile(guessedResourceId, filePath);
 }
 
@@ -982,21 +988,21 @@ bool OsmAnd::ResourcesManager_P::updateFromFile(const QString& id, const QString
     return true;
 }
 
-bool OsmAnd::ResourcesManager_P::updateFromRepository(const QString& name, const WebClient::RequestProgressCallbackSignature downloadProgressCallback)
+bool OsmAnd::ResourcesManager_P::updateFromRepository(const QString& id, const WebClient::RequestProgressCallbackSignature downloadProgressCallback)
 {
-    const auto& resourceInRepository = getResourceInRepository(name);
+    const auto& resourceInRepository = getResourceInRepository(id);
     if(!resourceInRepository)
         return false;
 
     const auto tmpFilePath = QDir(owner->localTemporaryPath).absoluteFilePath(QString("%1.%2")
-        .arg(QString(QCryptographicHash::hash(name.toLocal8Bit(), QCryptographicHash::Md5).toHex()))
+        .arg(QString(QCryptographicHash::hash(id.toLocal8Bit(), QCryptographicHash::Md5).toHex()))
         .arg(QDateTime::currentDateTimeUtc().toMSecsSinceEpoch()));
 
     bool ok = _webClient.downloadFile(resourceInRepository->url, tmpFilePath, nullptr, downloadProgressCallback);
     if(!ok)
         return false;
 
-    ok = updateFromFile(name, tmpFilePath);
+    ok = updateFromFile(id, tmpFilePath);
 
     QFile(tmpFilePath).remove();
     return ok;
