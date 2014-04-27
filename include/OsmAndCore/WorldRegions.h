@@ -4,7 +4,7 @@
 #include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
-#include <QList>
+#include <QVector>
 #include <QHash>
 #include <QString>
 
