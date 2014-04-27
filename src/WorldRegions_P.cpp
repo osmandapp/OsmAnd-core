@@ -88,17 +88,17 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
                     }
                     else if(ruleId == idId)
                     {
-                        id = localizedNameEntry.value();
+                        id = localizedNameEntry.value().toLower();
                         continue;
                     }
                     else if(ruleId == regionPrefixId)
                     {
-                        regionPrefix = localizedNameEntry.value();
+                        regionPrefix = localizedNameEntry.value().toLower();
                         continue;
                     }
                     else if(ruleId == regionSuffixId)
                     {
-                        regionSuffix = localizedNameEntry.value();
+                        regionSuffix = localizedNameEntry.value().toLower();
                         continue;
                     }
 
