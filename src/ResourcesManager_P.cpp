@@ -93,7 +93,7 @@ void OsmAnd::ResourcesManager_P::inflateBuiltInResources()
         QLatin1String("map/styles/default.render.xml"));
     std::shared_ptr<MapStyle> defaultMapStyle(new MapStyle(
         mapStylesCollection.get(),
-        QLatin1String("default.render.xml"),
+        QLatin1String("default"),
         std::shared_ptr<QIODevice>(new QBuffer(&defaultMapStyleContent))));
     ok = defaultMapStyle->loadMetadata() && defaultMapStyle->load();
     assert(ok);
@@ -1191,11 +1191,11 @@ QList< std::shared_ptr<const OsmAnd::MapStyle> > OsmAnd::ResourcesManager_P::Map
     return result;
 }
 
-std::shared_ptr<const OsmAnd::MapStyle> OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::getAsIsStyle(const QString& name_) const
+std::shared_ptr<const OsmAnd::MapStyle> OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::getAsIsStyle(const QString& styleName) const
 {
-    auto name = name_;
-    if(!name.endsWith(QLatin1String(".render.xml")))
-        name.append(QLatin1String(".render.xml"));
+    auto resourceId = styleName;
+    if(!resourceId.endsWith(QLatin1String(".render.xml")))
+        resourceId.append(QLatin1String(".render.xml"));
 
     for(const auto& builtinResource : constOf(owner->_builtinResources))
     {
@@ -1204,7 +1204,7 @@ std::shared_ptr<const OsmAnd::MapStyle> OsmAnd::ResourcesManager_P::MapStylesCol
             continue;
 
         // Skip any style that doesn't match by name
-        if(builtinResource->id != name)
+        if(builtinResource->id != resourceId)
             continue;
 
         const auto& mapStyle = std::static_pointer_cast<const MapStyleMetadata>(builtinResource->_metadata)->mapStyle;
@@ -1219,7 +1219,7 @@ std::shared_ptr<const OsmAnd::MapStyle> OsmAnd::ResourcesManager_P::MapStylesCol
             if(localResource->type != ResourceType::MapStyle)
                 continue;
 
-            if(localResource->id != name)
+            if(localResource->id != resourceId)
                 continue;
 
             const auto& mapStyle = std::static_pointer_cast<const MapStyleMetadata>(localResource->_metadata)->mapStyle;
@@ -1230,18 +1230,18 @@ std::shared_ptr<const OsmAnd::MapStyle> OsmAnd::ResourcesManager_P::MapStylesCol
     return nullptr;
 }
 
-bool OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::obtainBakedStyle(const QString& name_, std::shared_ptr<const MapStyle>& outStyle) const
+bool OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::obtainBakedStyle(const QString& styleName, std::shared_ptr<const MapStyle>& outStyle) const
 {
-    auto name = name_;
-    if(!name.endsWith(QLatin1String(".render.xml")))
-        name.append(QLatin1String(".render.xml"));
+    auto resourceId = styleName;
+    if(!resourceId.endsWith(QLatin1String(".render.xml")))
+        resourceId.append(QLatin1String(".render.xml"));
 
     for(const auto& builtinResource : constOf(owner->_builtinResources))
     {
         if(builtinResource->type != ResourceType::MapStyle)
             continue;
 
-        if(builtinResource->id != name)
+        if(builtinResource->id != resourceId)
             continue;
 
         const auto& mapStyle = std::static_pointer_cast<const MapStyleMetadata>(builtinResource->_metadata)->mapStyle;
@@ -1260,7 +1260,7 @@ bool OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::obtainBakedStyle(cons
             if(localResource->type != ResourceType::MapStyle)
                 continue;
 
-            if(localResource->id != name)
+            if(localResource->id != resourceId)
                 continue;
 
             const auto& mapStyle = std::static_pointer_cast<const MapStyleMetadata>(localResource->_metadata)->mapStyle;
