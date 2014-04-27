@@ -58,8 +58,11 @@ bool OsmAnd::MapStylesPresetsCollection_P::deserializeFrom(QXmlStreamReader& xml
                     }
                 }
 
-                const auto name = xmlReader.attributes().value(QLatin1String("name")).toString();
-                const auto styleName = xmlReader.attributes().value(QLatin1String("style")).toString();
+                auto name = xmlReader.attributes().value(QLatin1String("name")).toString();
+                if(type != MapStylePreset::Type::Custom && name.isEmpty())
+                    name = QLatin1String("type_") + type_;
+
+                auto styleName = xmlReader.attributes().value(QLatin1String("style")).toString();
                 if(type == MapStylePreset::Type::Custom && name.isEmpty())
                 {
                     LogPrintf(LogSeverityLevel::Warning, "Ignored map style preset with empty name and custom type");
