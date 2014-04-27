@@ -1161,9 +1161,9 @@ OsmAnd::ResourcesManager_P::MapStylesCollection::~MapStylesCollection()
 {
 }
 
-QHash< QString, std::shared_ptr<const OsmAnd::MapStyle> > OsmAnd::ResourcesManager_P::MapStylesCollection::getCollection() const
+QList< std::shared_ptr<const OsmAnd::MapStyle> > OsmAnd::ResourcesManager_P::MapStylesCollection::getCollection() const
 {
-    QHash< QString, std::shared_ptr<const MapStyle> > result;
+    QList< std::shared_ptr<const MapStyle> > result;
 
     for(const auto& builtinResource : constOf(owner->_builtinResources))
     {
@@ -1172,7 +1172,7 @@ QHash< QString, std::shared_ptr<const OsmAnd::MapStyle> > OsmAnd::ResourcesManag
             continue;
 
         const auto mapStyle = std::static_pointer_cast<const MapStyleMetadata>(builtinResource->_metadata)->mapStyle;
-        result.insert(mapStyle->name, mapStyle);
+        result.push_back(mapStyle);
     }
 
     {
@@ -1185,11 +1185,52 @@ QHash< QString, std::shared_ptr<const OsmAnd::MapStyle> > OsmAnd::ResourcesManag
                 continue;
 
             const auto mapStyle = std::static_pointer_cast<const MapStyleMetadata>(localResource->_metadata)->mapStyle;
-            result.insert(mapStyle->name, mapStyle);
+            result.push_back(mapStyle);
         }
     }
     
     return result;
+}
+
+std::shared_ptr<const OsmAnd::MapStyle> OsmAnd::ResourcesManager_P::MapStylesCollection::getAsIsStyle(const QString& name_) const
+{
+    auto name = name_;
+    if(!name.endsWith(QLatin1String(".render.xml")))
+        name.append(QLatin1String(".render.xml"));
+
+    for(const auto& builtinResource : constOf(owner->_builtinResources))
+    {
+        // Skip anything that is not a style
+        if(builtinResource->type != ResourceType::MapStyle)
+            continue;
+
+        // Skip any style that doesn't match by name
+        if(builtinResource->id != name)
+            continue;
+
+        const auto& mapStyle = std::static_pointer_cast<const MapStyleMetadata>(builtinResource->_metadata)->mapStyle;
+        return mapStyle;
+    }
+
+    {
+        QReadLocker scopedLocker(&owner->_localResourcesLock);
+
+        for(const auto& localResource : constOf(owner->_localResources))
+        {
+            // Skip anything that is not a style
+            if(localResource->type != ResourceType::MapStyle)
+                continue;
+
+            // Skip any style that doesn't match by name
+            if(localResource->id != name)
+                continue;
+
+            const auto& mapStyle = std::static_pointer_cast<const MapStyleMetadata>(localResource->_metadata)->mapStyle;
+            return mapStyle;
+        }
+    }
+
+    return nullptr;
 }
 
 bool OsmAnd::ResourcesManager_P::MapStylesCollection::obtainBakedStyle(const QString& name_, std::shared_ptr<const MapStyle>& outStyle) const
@@ -1208,7 +1249,7 @@ bool OsmAnd::ResourcesManager_P::MapStylesCollection::obtainBakedStyle(const QSt
         if(builtinResource->id != name)
             continue;
 
-        const auto mapStyle = std::static_pointer_cast<const MapStyleMetadata>(builtinResource->_metadata)->mapStyle;
+        const auto& mapStyle = std::static_pointer_cast<const MapStyleMetadata>(builtinResource->_metadata)->mapStyle;
 
         outStyle = mapStyle;
         assert(outStyle->isMetadataLoaded() && outStyle->isLoaded());
@@ -1229,7 +1270,7 @@ bool OsmAnd::ResourcesManager_P::MapStylesCollection::obtainBakedStyle(const QSt
             if(localResource->id != name)
                 continue;
 
-            const auto mapStyle = std::static_pointer_cast<const MapStyleMetadata>(localResource->_metadata)->mapStyle;
+            const auto& mapStyle = std::static_pointer_cast<const MapStyleMetadata>(localResource->_metadata)->mapStyle;
             if(!mapStyle->load())
                 return false;
 

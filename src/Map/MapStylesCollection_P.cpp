@@ -41,6 +41,7 @@ bool OsmAnd::MapStylesCollection_P::registerEmbeddedStyle(const QString& resourc
 
     assert(!_styles.contains(style->name));
     _styles.insert(style->name, style);
+    _order.push_back(style);
 
     return true;
 }
@@ -56,19 +57,30 @@ bool OsmAnd::MapStylesCollection_P::registerStyle(const QString& filePath)
     if(_styles.contains(style->name))
         return false;
     _styles.insert(style->name, style);
+    _order.push_back(style);
 
     return true;
 }
 
-QHash< QString, std::shared_ptr<const OsmAnd::MapStyle> > OsmAnd::MapStylesCollection_P::getCollection() const
+QList< std::shared_ptr<const OsmAnd::MapStyle> > OsmAnd::MapStylesCollection_P::getCollection() const
 {
     QReadLocker scopedLocker(&_stylesLock);
 
-    QHash< QString, std::shared_ptr<const MapStyle> > result;
-    result.reserve(_styles.count());
-    for(const auto& itStyle : rangeOf(constOf(_styles)))
-        result.insert(itStyle.key(), itStyle.value());
+    QList< std::shared_ptr<const MapStyle> > result;
+    for(const auto& mapStyle : constOf(_order))
+        result.push_back(mapStyle);
+
     return result;
+}
+
+std::shared_ptr<const OsmAnd::MapStyle> OsmAnd::MapStylesCollection_P::getAsIsStyle(const QString& name) const
+{
+    QReadLocker scopedLocker(&_stylesLock);
+
+    const auto citStyle = _styles.constFind(name);
+    if(citStyle == _styles.cend())
+        return nullptr;
+    return *citStyle;
 }
 
 bool OsmAnd::MapStylesCollection_P::obtainBakedStyle(const QString& name, std::shared_ptr<const MapStyle>& outStyle) const

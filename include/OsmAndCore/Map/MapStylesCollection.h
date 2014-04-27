@@ -25,7 +25,8 @@ namespace OsmAnd
 
         bool registerStyle(const QString& filePath);
 
-        virtual QHash< QString, std::shared_ptr<const MapStyle> > getCollection() const;
+        virtual QList< std::shared_ptr<const MapStyle> > getCollection() const;
+        virtual std::shared_ptr<const MapStyle> getAsIsStyle(const QString& name) const;
         virtual bool obtainBakedStyle(const QString& name, std::shared_ptr<const MapStyle>& outStyle) const;
     };
 }

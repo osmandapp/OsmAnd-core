@@ -6,6 +6,7 @@
 #include "QtExtensions.h"
 #include <QString>
 #include <QHash>
+#include <QList>
 #include <QReadWriteLock>
 
 #include "OsmAndCore.h"
@@ -22,6 +23,7 @@ namespace OsmAnd
     protected:
         MapStylesCollection_P(MapStylesCollection* owner);
 
+        QList< std::shared_ptr<MapStyle> > _order;
         QHash< QString, std::shared_ptr<MapStyle> > _styles;
         mutable QReadWriteLock _stylesLock;
 
@@ -33,7 +35,8 @@ namespace OsmAnd
 
         bool registerStyle(const QString& filePath);
 
-        QHash< QString, std::shared_ptr<const MapStyle> > getCollection() const;
+        QList< std::shared_ptr<const MapStyle> > getCollection() const;
+        std::shared_ptr<const MapStyle> getAsIsStyle(const QString& name) const;
         bool obtainBakedStyle(const QString& name, std::shared_ptr<const MapStyle>& outStyle) const;
 
     friend class OsmAnd::MapStylesCollection;

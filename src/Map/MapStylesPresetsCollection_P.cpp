@@ -156,54 +156,47 @@ QList< std::shared_ptr<const OsmAnd::MapStylePreset> > OsmAnd::MapStylesPresetsC
 {
     QList< std::shared_ptr<const MapStylePreset> > result;
 
-    for(const auto& collectionForStyle : constOf(_collection))
-    {
-        for(const auto& preset : constOf(collectionForStyle))
-            result.push_back(preset);
-    }
+    for(const auto& preset : constOf(_order))
+        result.push_back(preset);
 
     return result;
 }
 
 QList< std::shared_ptr<OsmAnd::MapStylePreset> > OsmAnd::MapStylesPresetsCollection_P::getCollection()
 {
-    QList< std::shared_ptr<MapStylePreset> > result;
-
-    for(const auto& collectionForStyle : constOf(_collection))
-    {
-        for(const auto& preset : constOf(collectionForStyle))
-            result.push_back(preset);
-    }
-
-    return result;
+    return _order;
 }
 
 QList< std::shared_ptr<const OsmAnd::MapStylePreset> > OsmAnd::MapStylesPresetsCollection_P::getCollectionFor(const QString& styleName) const
 {
-    const auto citCollectionForStyle = _collection.constFind(styleName);
-    if(citCollectionForStyle == _collection.cend())
+    if(!_collection.contains(styleName))
         return QList< std::shared_ptr<const MapStylePreset> >();
 
     QList< std::shared_ptr<const MapStylePreset> > result;
 
-    const auto& collectionForStyle = *citCollectionForStyle;
-    for(const auto& preset : constOf(collectionForStyle))
+    for(const auto& preset : constOf(_order))
+    {
+        if(preset->styleName != styleName)
+            continue;
         result.push_back(preset);
+    }
 
     return result;
 }
 
 QList< std::shared_ptr<OsmAnd::MapStylePreset> > OsmAnd::MapStylesPresetsCollection_P::getCollectionFor(const QString& styleName)
 {
-    const auto citCollectionForStyle = _collection.constFind(styleName);
-    if(citCollectionForStyle == _collection.cend())
+    if(!_collection.contains(styleName))
         return QList< std::shared_ptr<MapStylePreset> >();
 
     QList< std::shared_ptr<MapStylePreset> > result;
 
-    const auto& collectionForStyle = *citCollectionForStyle;
-    for(const auto& preset : constOf(collectionForStyle))
+    for(const auto& preset : constOf(_order))
+    {
+        if(preset->styleName != styleName)
+            continue;
         result.push_back(preset);
+    }
 
     return result;
 }
