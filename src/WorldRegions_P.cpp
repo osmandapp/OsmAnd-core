@@ -20,7 +20,7 @@ OsmAnd::WorldRegions_P::~WorldRegions_P()
 }
 
 bool OsmAnd::WorldRegions_P::loadWorldRegions(
-    QVector< std::shared_ptr<const WorldRegion> >& outRegions,
+    QHash< QString, std::shared_ptr<const WorldRegion> >& outRegions,
     const IQueryController* const controller) const
 {
     const std::shared_ptr<QIODevice> ocbfFile(new QFile(owner->ocbfFileName));
@@ -114,7 +114,7 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
                     parentId.prepend(regionPrefix + QLatin1String("_"));
                 std::shared_ptr<const WorldRegion> newRegion(new WorldRegion(id, name, localizedNames, parentId));
 
-                outRegions.push_back(qMove(newRegion));
+                outRegions.insert(id, qMove(newRegion));
 
                 return false;
             };

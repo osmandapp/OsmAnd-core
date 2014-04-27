@@ -20,7 +20,7 @@ OsmAnd::WorldRegions::~WorldRegions()
 }
 
 bool OsmAnd::WorldRegions::loadWorldRegions(
-    QVector< std::shared_ptr<const WorldRegion> >& outRegions,
+    QHash< QString, std::shared_ptr<const WorldRegion> >& outRegions,
     const IQueryController* const controller /*= nullptr*/) const
 {
     return _p->loadWorldRegions(outRegions, controller);

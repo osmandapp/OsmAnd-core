@@ -4,7 +4,6 @@
 #include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
-#include <QVector>
 #include <QHash>
 #include <QString>
 
@@ -61,7 +60,7 @@ namespace OsmAnd
         static const QString SouthAmericaRegionId;
 
         bool loadWorldRegions(
-            QVector< std::shared_ptr<const WorldRegion> >& outRegions,
+            QHash< QString, std::shared_ptr<const WorldRegion> >& outRegions,
             const IQueryController* const controller = nullptr) const;
     };
 }

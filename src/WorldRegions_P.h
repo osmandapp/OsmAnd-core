@@ -4,7 +4,6 @@
 #include "stdlib_common.h"
 
 #include "QtExtensions.h"
-#include <QList>
 #include <QHash>
 #include <QString>
 
@@ -32,7 +31,7 @@ namespace OsmAnd
         ImplementationInterface<WorldRegions> owner;
         
         bool loadWorldRegions(
-            QVector< std::shared_ptr<const WorldRegion> >& outRegions,
+            QHash< QString, std::shared_ptr<const WorldRegion> >& outRegions,
             const IQueryController* const controller) const;
 
     friend class OsmAnd::WorldRegions;
