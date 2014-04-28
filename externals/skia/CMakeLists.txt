@@ -101,7 +101,7 @@ if (CMAKE_TARGET_OS STREQUAL "windows")
 	set(target_specific_libraries_public ${target_specific_libraries_public}
 		Usp10
 	)
-elseif(CMAKE_TARGET_OS STREQUAL "darwin")
+elseif (CMAKE_TARGET_OS STREQUAL "darwin")
 	set(target_specific_include_dirs_public ${target_specific_include_dirs_public}
 		"upstream.patched/include/utils/mac"
 	)
@@ -130,7 +130,7 @@ elseif(CMAKE_TARGET_OS STREQUAL "darwin")
 		"${CORE_TEXT_LIBRARY}/CoreText"
 		"${CORE_GRAPHICS_LIBRARY}/CoreGraphics"
 	)
-elseif(CMAKE_TARGET_OS STREQUAL "ios")
+elseif (CMAKE_TARGET_OS STREQUAL "ios")
 	set(target_specific_include_dirs_public ${target_specific_include_dirs_public}
 		"upstream.patched/include/utils/mac"
 		"upstream.patched/include/utils/ios"
@@ -157,7 +157,7 @@ elseif(CMAKE_TARGET_OS STREQUAL "ios")
 		"${CORE_TEXT_LIBRARY}/CoreText"
 		"${CORE_GRAPHICS_LIBRARY}/CoreGraphics"
 	)
-elseif(CMAKE_TARGET_OS STREQUAL "linux")
+elseif (CMAKE_TARGET_OS STREQUAL "linux")
 	file(GLOB src_gpu_gl_unix "upstream.patched/src/gpu/gl/unix/*")
 	set(target_specific_sources "${target_specific_sources}"
 		"upstream.patched/src/ports/SkDebug_stdio.cpp"

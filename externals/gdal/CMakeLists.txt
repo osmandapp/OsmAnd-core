@@ -6,7 +6,7 @@ set(target_specific_private_definitions "")
 
 if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
 	configure_file("cpl_config.h.ios" "${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h" COPYONLY)
-elseif(CMAKE_COMPILER_FAMILY STREQUAL "msvc")
+elseif (CMAKE_COMPILER_FAMILY STREQUAL "msvc")
 	configure_file("upstream.patched/port/cpl_config.h.vc" "${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h" COPYONLY)
 else()
 	include(CheckIncludeFile)
