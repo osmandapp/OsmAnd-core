@@ -8,6 +8,7 @@ OsmAnd::AccessLockCounter::AccessLockCounter()
 
 OsmAnd::AccessLockCounter::~AccessLockCounter()
 {
+    _p->notifyAboutDestruction();
 }
 
 bool OsmAnd::AccessLockCounter::tryLockForReading() const
@@ -15,9 +16,9 @@ bool OsmAnd::AccessLockCounter::tryLockForReading() const
     return _p->tryLockForReading();
 }
 
-void OsmAnd::AccessLockCounter::lockForReading() const
+bool OsmAnd::AccessLockCounter::lockForReading() const
 {
-    _p->lockForReading();
+    return _p->lockForReading();
 }
 
 void OsmAnd::AccessLockCounter::unlockFromReading() const
@@ -30,9 +31,9 @@ bool OsmAnd::AccessLockCounter::tryLockForWriting() const
     return _p->tryLockForWriting();
 }
 
-void OsmAnd::AccessLockCounter::lockForWriting() const
+bool OsmAnd::AccessLockCounter::lockForWriting() const
 {
-    _p->lockForWriting();
+    return _p->lockForWriting();
 }
 
 void OsmAnd::AccessLockCounter::unlockFromWriting() const

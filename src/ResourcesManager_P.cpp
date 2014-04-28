@@ -320,7 +320,14 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
                 !obfInfo->transportSections.isEmpty())
             {
                 resourceType = ResourceType::MapRegion;
-                resourceId = fileName.toLower().replace(QLatin1String(".obf"), QLatin1String(".map.obf"));
+                resourceId = fileName.toLower().remove("_2")
+                    .replace(QLatin1String(".obf"), QLatin1String(".map.obf"));
+            }
+            if (obfInfo->isBasemap &&
+                !obfInfo->mapSections.isEmpty())
+            {
+                resourceType = ResourceType::MapRegion;
+                resourceId = QLatin1String("world_basemap.map.obf");
             }
             if (resourceType == ResourceType::Unknown)
             {
@@ -752,6 +759,7 @@ bool OsmAnd::ResourcesManager_P::isResourceInstalled(const QString& id) const
 bool OsmAnd::ResourcesManager_P::uninstallResource(const QString& id)
 {
     QWriteLocker scopedLocker(&_localResourcesLock);
+    bool ok;
 
     const auto itResource = _localResources.find(id);
     if (itResource == _localResources.end())
@@ -763,21 +771,21 @@ bool OsmAnd::ResourcesManager_P::uninstallResource(const QString& id)
     const auto& installedResource = std::static_pointer_cast<const InstalledResource>(resource);
 
     // Lock for writing, this lock will never be released
-    installedResource->_lock.lockForWriting();
+    if (!installedResource->_lock.lockForWriting())
+        return false;
 
-    bool success;
     switch(resource->type)
     {
     case ResourceType::MapRegion:
-        success = uninstallMapRegion(installedResource);
+        ok = uninstallMapRegion(installedResource);
         break;
     case ResourceType::VoicePack:
-        success = uninstallVoicePack(installedResource);
+        ok = uninstallVoicePack(installedResource);
         break;
     default:
         return false;
     }
-    if (!success)
+    if (!ok)
         return false;
 
     _localResources.erase(itResource);
@@ -840,9 +848,13 @@ bool OsmAnd::ResourcesManager_P::installFromFile(const QString& id, const QStrin
     return ok;
 }
 
-bool OsmAnd::ResourcesManager_P::installMapRegionFromFile(const QString& id, const QString& filePath, std::shared_ptr<const InstalledResource>& outResource)
+bool OsmAnd::ResourcesManager_P::installMapRegionFromFile(
+    const QString& id,
+    const QString& filePath,
+    std::shared_ptr<const InstalledResource>& outResource,
+    const QString localPath_ /*= QString::null*/)
 {
-    assert(id.endsWith(".obf"));
+    assert(id.endsWith(".map.obf"));
 
     ArchiveReader archive(filePath);
 
@@ -866,7 +878,7 @@ bool OsmAnd::ResourcesManager_P::installMapRegionFromFile(const QString& id, con
         return false;
 
     // Extract that file without keeping directory structure
-    const auto localFileName = QDir(owner->localStoragePath).absoluteFilePath(id);
+    const auto localFileName = localPath_.isNull() ? QDir(owner->localStoragePath).absoluteFilePath(id) : localPath_;
     if (!archive.extractItemToFile(obfArchiveItem.name, localFileName))
         return false;
 
@@ -893,7 +905,11 @@ bool OsmAnd::ResourcesManager_P::installMapRegionFromFile(const QString& id, con
     return true;
 }
 
-bool OsmAnd::ResourcesManager_P::installVoicePackFromFile(const QString& id, const QString& filePath, std::shared_ptr<const InstalledResource>& outResource)
+bool OsmAnd::ResourcesManager_P::installVoicePackFromFile(
+    const QString& id,
+    const QString& filePath,
+    std::shared_ptr<const InstalledResource>& outResource,
+    const QString localPath_ /*= QString::null*/)
 {
     assert(id.endsWith(".voice"));
 
@@ -919,7 +935,7 @@ bool OsmAnd::ResourcesManager_P::installVoicePackFromFile(const QString& id, con
         return false;
 
     // Extract all files to local directory
-    const auto localDirectoryName = QDir(owner->localStoragePath).absoluteFilePath(id);
+    const auto localDirectoryName = localPath_.isNull() ? QDir(owner->localStoragePath).absoluteFilePath(id) : localPath_;
     uint64_t contentSize = 0;
     if (!archive.extractAllItemsTo(localDirectoryName, &contentSize))
         return false;
@@ -1036,26 +1052,26 @@ bool OsmAnd::ResourcesManager_P::updateFromFile(const QString& filePath)
 
 bool OsmAnd::ResourcesManager_P::updateMapRegionFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath)
 {
-    resource->_lock.lockForWriting();
+    if (!resource->_lock.lockForWriting())
+        return false;
 
     bool ok;
+    const auto localPath = resource->localPath;
     ok = uninstallMapRegion(resource);
-    ok = installMapRegionFromFile(resource->id, filePath, resource);
-
-    resource->_lock.unlockFromWriting();
+    ok = installMapRegionFromFile(resource->id, filePath, resource, localPath);
 
     return ok;
 }
 
 bool OsmAnd::ResourcesManager_P::updateVoicePackFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath)
 {
-    resource->_lock.lockForWriting();
+    if (!resource->_lock.lockForWriting())
+        return false;
 
     bool ok;
+    const auto localPath = resource->localPath;
     ok = uninstallVoicePack(resource);
-    ok = installVoicePackFromFile(resource->id, filePath, resource);
-
-    resource->_lock.unlockFromWriting();
+    ok = installVoicePackFromFile(resource->id, filePath, resource, localPath);
 
     return ok;
 }
@@ -1065,7 +1081,7 @@ bool OsmAnd::ResourcesManager_P::updateFromFile(const QString& id, const QString
     QWriteLocker scopedLocker(&_localResourcesLock);
 
     const auto itResource = _localResources.find(id);
-    if (itResource != _localResources.end())
+    if (itResource == _localResources.end())
         return false;
     const auto& localResource = *itResource;
     if (localResource->origin != ResourceOrigin::Installed)

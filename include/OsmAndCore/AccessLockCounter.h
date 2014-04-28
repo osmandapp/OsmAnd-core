@@ -22,11 +22,11 @@ namespace OsmAnd
         virtual ~AccessLockCounter();
 
         bool tryLockForReading() const;
-        void lockForReading() const;
+        bool lockForReading() const;
         void unlockFromReading() const;
 
         bool tryLockForWriting() const;
-        void lockForWriting() const;
+        bool lockForWriting() const;
         void unlockFromWriting() const;
     };
 }

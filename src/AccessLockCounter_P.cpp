@@ -4,11 +4,20 @@
 OsmAnd::AccessLockCounter_P::AccessLockCounter_P(AccessLockCounter* const owner_)
     : owner(owner_)
     , _lockCounter(0)
+    , _isBeingDestroyed(false)
 {
 }
 
 OsmAnd::AccessLockCounter_P::~AccessLockCounter_P()
 {
+}
+
+void OsmAnd::AccessLockCounter_P::notifyAboutDestruction()
+{
+    QMutexLocker scopedLocker(&_lockCounterMutex);
+
+    _isBeingDestroyed = true;
+    _lockCounterWaitCondition.wakeAll();
 }
 
 bool OsmAnd::AccessLockCounter_P::tryLockForReading() const
@@ -25,14 +34,20 @@ bool OsmAnd::AccessLockCounter_P::tryLockForReading() const
     return false;
 }
 
-void OsmAnd::AccessLockCounter_P::lockForReading() const
+bool OsmAnd::AccessLockCounter_P::lockForReading() const
 {
     QMutexLocker scopedLocker(&_lockCounterMutex);
 
-    while(_lockCounter < 0)
+    while (_lockCounter < 0)
+    {
         REPEAT_UNTIL(_lockCounterWaitCondition.wait(&_lockCounterMutex));
+        if (_isBeingDestroyed)
+            return false;
+    }
     _lockCounter++;
     _lockCounterWaitCondition.wakeAll();
+
+    return true;
 }
 
 void OsmAnd::AccessLockCounter_P::unlockFromReading() const
@@ -58,14 +73,20 @@ bool OsmAnd::AccessLockCounter_P::tryLockForWriting() const
     return false;
 }
 
-void OsmAnd::AccessLockCounter_P::lockForWriting() const
+bool OsmAnd::AccessLockCounter_P::lockForWriting() const
 {
     QMutexLocker scopedLocker(&_lockCounterMutex);
 
-    while(_lockCounter > 0)
+    while (_lockCounter > 0)
+    {
         REPEAT_UNTIL(_lockCounterWaitCondition.wait(&_lockCounterMutex));
+        if (_isBeingDestroyed)
+            return false;
+    }
     _lockCounter--;
     _lockCounterWaitCondition.wakeAll();
+
+    return true;
 }
 
 void OsmAnd::AccessLockCounter_P::unlockFromWriting() const

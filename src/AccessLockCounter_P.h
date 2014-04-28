@@ -20,19 +20,23 @@ namespace OsmAnd
         mutable QMutex _lockCounterMutex;
         mutable QWaitCondition _lockCounterWaitCondition;
         mutable volatile int _lockCounter;
+
+        mutable volatile bool _isBeingDestroyed;
     protected:
         AccessLockCounter_P(AccessLockCounter* const owner);
+
+        void notifyAboutDestruction();
     public:
         virtual ~AccessLockCounter_P();
 
         ImplementationInterface<AccessLockCounter> owner;
 
         bool tryLockForReading() const;
-        void lockForReading() const;
+        bool lockForReading() const;
         void unlockFromReading() const;
 
         bool tryLockForWriting() const;
-        void lockForWriting() const;
+        bool lockForWriting() const;
         void unlockFromWriting() const;
 
     friend class OsmAnd::AccessLockCounter;
