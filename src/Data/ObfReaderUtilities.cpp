@@ -10,7 +10,7 @@
 bool OsmAnd::ObfReaderUtilities::readQString( gpb::io::CodedInputStream* cis, QString& output )
 {
     std::string value;
-    if(!gpb::internal::WireFormatLite::ReadString(cis, &value))
+    if (!gpb::internal::WireFormatLite::ReadString(cis, &value))
         return false;
 
     output = QString::fromUtf8(value.c_str(), value.size());
@@ -55,7 +55,7 @@ void OsmAnd::ObfReaderUtilities::readStringTable( gpb::io::CodedInputStream* cis
         case OBF::StringTable::kSFieldNumber:
             {
                 QString value;
-                if(readQString(cis, value))
+                if (readQString(cis, value))
                     stringTableOut.push_back(qMove(value));
             }
             break;
@@ -69,7 +69,7 @@ void OsmAnd::ObfReaderUtilities::readStringTable( gpb::io::CodedInputStream* cis
 void OsmAnd::ObfReaderUtilities::skipUnknownField( gpb::io::CodedInputStream* cis, int tag )
 {
     auto wireType = gpb::internal::WireFormatLite::GetTagWireType(tag);
-    if(wireType == gpb::internal::WireFormatLite::WIRETYPE_FIXED32_LENGTH_DELIMITED)
+    if (wireType == gpb::internal::WireFormatLite::WIRETYPE_FIXED32_LENGTH_DELIMITED)
     {
         auto length = readBigEndianInt(cis);
         cis->Skip(length);

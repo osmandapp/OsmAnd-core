@@ -8,7 +8,7 @@
 OsmAnd::BinaryOperator::BinaryOperator(const QString& lvalue, const QString& rvalue, const QString& type)
     : type(type)
 {
-    if(lvalue.startsWith(":"))
+    if (lvalue.startsWith(":"))
         _lVariableRef = lvalue.mid(1);
     else if (lvalue.startsWith("$"))
         _lTagRef = lvalue.mid(1);
@@ -18,7 +18,7 @@ OsmAnd::BinaryOperator::BinaryOperator(const QString& lvalue, const QString& rva
         OSMAND_ASSERT(wasParsed, QString("LValue '%1' can not be parsed").arg(lvalue));
     }
 
-    if(rvalue.startsWith(":"))
+    if (rvalue.startsWith(":"))
         _rVariableRef = rvalue.mid(1);
     else if (rvalue.startsWith("$"))
         _rTagRef = rvalue.mid(1);
@@ -38,30 +38,30 @@ bool OsmAnd::BinaryOperator::evaluate( const QBitArray& types, RoutingRulesetCon
     bool ok = false;
 
     float lValue;
-    if(!_lTagRef.isEmpty())
+    if (!_lTagRef.isEmpty())
         ok = RoutingRuleExpression::resolveTagReferenceValue(context, types, _lTagRef, type, lValue);
-    else if(!_lVariableRef.isEmpty())
+    else if (!_lVariableRef.isEmpty())
         ok = RoutingRuleExpression::resolveVariableReferenceValue(context, _lVariableRef, type, lValue);
     else
     {
         lValue = _lValue;
         ok = true;
     }
-    if(!ok)
+    if (!ok)
         return false;
     
     ok = false;
     float rValue;
-    if(!_rTagRef.isEmpty())
+    if (!_rTagRef.isEmpty())
         ok = RoutingRuleExpression::resolveTagReferenceValue(context, types, _rTagRef, type, rValue);
-    else if(!_rVariableRef.isEmpty())
+    else if (!_rVariableRef.isEmpty())
         ok = RoutingRuleExpression::resolveVariableReferenceValue(context, _rVariableRef, type, rValue);
     else
     {
         rValue = _rValue;
         ok = true;
     }
-    if(!ok)
+    if (!ok)
         return false;
     
     return evaluateValues(lValue, rValue);

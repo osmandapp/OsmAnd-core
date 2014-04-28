@@ -13,7 +13,7 @@ file(GLOB_RECURSE core_swig_subfiles "${OSMAND_ROOT}/core/swig/*")
 set(OsmAndCoreJNI_generated_cpp
 	"${CMAKE_CURRENT_LIST_DIR}/gen/cpp/swig.cpp"
 )
-if(CMAKE_HOST_WIN32 AND NOT CYGWIN)
+if (CMAKE_HOST_WIN32 AND NOT CYGWIN)
 	add_custom_command(OUTPUT ${OsmAndCoreJNI_generated_cpp}
 		COMMAND bash ARGS --login "${CMAKE_CURRENT_LIST_DIR}/generate.sh"
 		DEPENDS
@@ -50,7 +50,7 @@ target_include_directories(OsmAndCoreJNI
 		${target_specific_private_includes}
 )
 
-if(CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
+if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 	add_dependencies(OsmAndCoreJNI
 		OsmAndCore_static
 		OsmAndCoreUtils_static

@@ -137,7 +137,7 @@ void OsmAnd::ObfPoiSectionReader_P::readCategory( const ObfReader_P& reader, con
         case OBF::OsmAndCategoryTable::kSubcategoriesFieldNumber:
             {
                 QString name;
-                if(ObfReaderUtilities::readQString(cis, name))
+                if (ObfReaderUtilities::readQString(cis, name))
                     category->_subcategories.push_back(qMove(name));
             }
             break;
@@ -197,7 +197,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
                 auto oldLimit = cis->PushLimit(length);
                 readTile(reader, section, tiles, nullptr, desiredCategories, zoom, zoomDepth, bbox31, controller, nullptr);
                 cis->PopLimit(oldLimit);
-                if(controller && controller->isAborted())
+                if (controller && controller->isAborted())
                     return;
             }
             break;
@@ -216,7 +216,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
                     auto oldLimit = cis->PushLimit(length);
                     readAmenitiesFromTile(reader, section, tile.get(), desiredCategories, amenitiesOut, zoom, zoomDepth, bbox31, visitor, controller, nullptr);
                     cis->PopLimit(oldLimit);
-                    if(controller && controller->isAborted())
+                    if (controller && controller->isAborted())
                         return;
                 }
                 cis->Skip(cis->BytesUntilLimit());
@@ -242,7 +242,7 @@ bool OsmAnd::ObfPoiSectionReader_P::readTile(
 
     const auto zoomToSkip = zoom + zoomDepth;
     QSet< uint64_t > tilesToSkip_;
-    if(parent == nullptr && !tilesToSkip)
+    if (parent == nullptr && !tilesToSkip)
         tilesToSkip = &tilesToSkip_;
 
     const std::shared_ptr<Tile> tile(new Tile());
@@ -250,7 +250,7 @@ bool OsmAnd::ObfPoiSectionReader_P::readTile(
 
     for(;;)
     {
-        if(controller && controller->isAborted())
+        if (controller && controller->isAborted())
             return false;
         auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
@@ -262,14 +262,14 @@ bool OsmAnd::ObfPoiSectionReader_P::readTile(
             {
                 cis->ReadVarint32(&lzoom);
                 tile->_zoom = lzoom;
-                if(parent)
+                if (parent)
                     tile->_zoom += parent->_zoom;
             }
             break;
         case OBF::OsmAndPoiBox::kLeftFieldNumber:
             {
                 auto x = ObfReaderUtilities::readSInt32(cis);
-                if(parent)
+                if (parent)
                     tile->_x = x + (parent->_x << lzoom);
                 else
                     tile->_x = x;
@@ -278,13 +278,13 @@ bool OsmAnd::ObfPoiSectionReader_P::readTile(
         case OBF::OsmAndPoiBox::kTopFieldNumber:
             {
                 auto y = ObfReaderUtilities::readSInt32(cis);
-                if(parent)
+                if (parent)
                     tile->_y = y + (parent->_y << lzoom);
                 else
                     tile->_y = y;
 
                 // Check that we're inside bounding box, if requested
-                if(bbox31)
+                if (bbox31)
                 {
                     AreaI area31;
                     area31.left = tile->_x << (31 - tile->_zoom);
@@ -296,7 +296,7 @@ bool OsmAnd::ObfPoiSectionReader_P::readTile(
                         !bbox31->contains(area31) &&
                         !area31.contains(*bbox31) &&
                         !bbox31->intersects(area31);
-                    if(shouldSkip)
+                    if (shouldSkip)
                     {
                         // This tile is outside of bounding box
                         cis->Skip(cis->BytesUntilLimit());
@@ -307,7 +307,7 @@ bool OsmAnd::ObfPoiSectionReader_P::readTile(
             break;
         case OBF::OsmAndPoiBox::kCategoriesFieldNumber:
             {
-                if(!desiredCategories)
+                if (!desiredCategories)
                 {
                     ObfReaderUtilities::skipUnknownField(cis, tag);
                     break;
@@ -317,7 +317,7 @@ bool OsmAnd::ObfPoiSectionReader_P::readTile(
                 auto oldLimit = cis->PushLimit(length);
                 const auto containsDesired = checkTileCategories(reader, section, desiredCategories);
                 cis->PopLimit(oldLimit);
-                if(!containsDesired)
+                if (!containsDesired)
                 {
                     cis->Skip(cis->BytesUntilLimit());
                     return false;
@@ -331,11 +331,11 @@ bool OsmAnd::ObfPoiSectionReader_P::readTile(
                 auto tileOmitted = readTile(reader, section, tiles, tile.get(), desiredCategories, zoom, zoomDepth, bbox31, controller, tilesToSkip);
                 cis->PopLimit(oldLimit);
 
-                if(tilesToSkip && tile->_zoom >= zoomToSkip && tileOmitted)
+                if (tilesToSkip && tile->_zoom >= zoomToSkip && tileOmitted)
                 {
                     auto skipHash = (static_cast<uint64_t>(tile->_x) >> (tile->_zoom - zoomToSkip)) << zoomToSkip;
                     skipHash |= static_cast<uint64_t>(tile->_y) >> (tile->_zoom - zoomToSkip);
-                    if(tilesToSkip->contains(skipHash))
+                    if (tilesToSkip->contains(skipHash))
                     {
                         cis->Skip(cis->BytesUntilLimit());
                         return true;
@@ -351,7 +351,7 @@ bool OsmAnd::ObfPoiSectionReader_P::readTile(
                 tile->_hash |= tile->_zoom;
 
                 // skipTiles - these tiles are going to be ignored, since we need only 1 POI object (x;y)@zoom
-                if(tilesToSkip && tile->_zoom >= zoomToSkip)
+                if (tilesToSkip && tile->_zoom >= zoomToSkip)
                 {
                     auto skipHash = (static_cast<uint64_t>(tile->_x) >> (tile->_zoom - zoomToSkip)) << zoomToSkip;
                     skipHash |= static_cast<uint64_t>(tile->_y) >> (tile->_zoom - zoomToSkip);
@@ -387,7 +387,7 @@ bool OsmAnd::ObfPoiSectionReader_P::checkTileCategories(
 
                 const uint32_t allSubsId = (catId << 16) | 0xFFFF;
                 const uint32_t mixedId = (catId << 16) | subId;
-                if(desiredCategories->contains(allSubsId) || desiredCategories->contains(mixedId))
+                if (desiredCategories->contains(allSubsId) || desiredCategories->contains(mixedId))
                 {
                     cis->Skip(cis->BytesUntilLimit());
                     return true;
@@ -414,7 +414,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesFromTile(
 
     const auto zoomToSkip = zoom + zoomDepth;
     QSet< uint64_t > amenitiesToSkip_;
-    if(!amenitiesToSkip)
+    if (!amenitiesToSkip)
         amenitiesToSkip = &amenitiesToSkip_;
 
     PointI pTile;
@@ -422,7 +422,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesFromTile(
 
     for(;;)
     {
-        if(controller && controller->isAborted())
+        if (controller && controller->isAborted())
             return;
 
         auto tag = cis->ReadTag();
@@ -462,23 +462,23 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesFromTile(
 
                 cis->PopLimit(oldLimit);
 
-                if(!amenity)
+                if (!amenity)
                     break;
-                if(amenitiesToSkip)
+                if (amenitiesToSkip)
                 {
                     const auto xp = amenity->_point31.x >> (31 - zoomToSkip);
                     const auto yp = amenity->_point31.y >> (31 - zoomToSkip);
                     const auto hash = (static_cast<uint64_t>(xp) << zoomToSkip) | static_cast<uint64_t>(yp);
-                    if(!amenitiesToSkip->contains(hash))
+                    if (!amenitiesToSkip->contains(hash))
                     {
-                        if(!visitor || visitor(amenity))
+                        if (!visitor || visitor(amenity))
                         {
                             amenitiesToSkip->insert(hash);
-                            if(amenitiesOut)
+                            if (amenitiesOut)
                                 amenitiesOut->push_back(qMove(amenity));
                         }
                     }
-                    if(zoomToSkip <= zoom)
+                    if (zoomToSkip <= zoom)
                     {
                         cis->Skip(cis->BytesUntilLimit());
                         return;
@@ -486,7 +486,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesFromTile(
                 }
                 else
                 {
-                    if(amenitiesOut && (!visitor || visitor(amenity)))
+                    if (amenitiesOut && (!visitor || visitor(amenity)))
                         amenitiesOut->push_back(qMove(amenity));
                 }
             }
@@ -513,14 +513,14 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
     Model::Amenity::Ref amenity;
     for(;;)
     {
-        if(controller && controller->isAborted())
+        if (controller && controller->isAborted())
             return;
 
         auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
-            if(amenity->_latinName.isEmpty())
+            if (amenity->_latinName.isEmpty())
                 amenity->_latinName = ICU::transliterateToLatin(amenity->_name);
             amenity->_point31 = point;
             amenity->_categoryId = catId;
@@ -532,7 +532,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
             break;
         case OBF::OsmAndPoiBoxDataAtom::kDyFieldNumber:
             point.y = (ObfReaderUtilities::readSInt32(cis) + (pTile.y << (24 - pzoom))) << 7;
-            if(bbox31 && !bbox31->contains(point))
+            if (bbox31 && !bbox31->contains(point))
             {
                 cis->Skip(cis->BytesUntilLimit());
                 return;
@@ -545,11 +545,11 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 catId = value & CategoryIdMask;
                 subId = value >> SubcategoryIdShift;
 
-                if(desiredCategories)
+                if (desiredCategories)
                 {
                     const uint32_t allSubsId = (catId << 16) | 0xFFFF;
                     const uint32_t mixedId = (catId << 16) | subId;
-                    if(desiredCategories->contains(allSubsId) || desiredCategories->contains(mixedId))
+                    if (desiredCategories->contains(allSubsId) || desiredCategories->contains(mixedId))
                     {
                         cis->Skip(cis->BytesUntilLimit());
                         return;

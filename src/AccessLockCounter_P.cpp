@@ -15,7 +15,7 @@ bool OsmAnd::AccessLockCounter_P::tryLockForReading() const
 {
     QMutexLocker scopedLocker(&_lockCounterMutex);
 
-    if(_lockCounter >= 0)
+    if (_lockCounter >= 0)
     {
         _lockCounter++;
         _lockCounterWaitCondition.wakeAll();
@@ -48,7 +48,7 @@ bool OsmAnd::AccessLockCounter_P::tryLockForWriting() const
 {
     QMutexLocker scopedLocker(&_lockCounterMutex);
 
-    if(_lockCounter <= 0)
+    if (_lockCounter <= 0)
     {
         _lockCounter--;
         _lockCounterWaitCondition.wakeAll();

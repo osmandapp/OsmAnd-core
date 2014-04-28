@@ -105,7 +105,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
     {
         // For each "order" value, obtain list of entries and sort them
         const auto& mapSymbolsLayer = mapSymbolsLayerPair.value();
-        if(mapSymbolsLayer.isEmpty())
+        if (mapSymbolsLayer.isEmpty())
             continue;
 
         GL_PUSH_GROUP_MARKER(QString("order %1").arg(mapSymbolsLayerPair.key()));
@@ -116,7 +116,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
         for(const auto& symbolEntry : rangeOf(constOf(mapSymbolsLayer)))
         {
             const auto symbol = std::dynamic_pointer_cast<const MapSymbolOnPath>(symbolEntry.key());
-            if(!symbol)
+            if (!symbol)
                 continue;
             const auto& points31 = symbol->mapObject->points31;
             assert(points31.size() >= 2);
@@ -126,7 +126,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
             auto wasInside = internalState.frustum2D31.test(*(pPoint31++) - currentState.target31);
             int subpathStartIdx = -1;
             int subpathEndIdx = -1;
-            if(wasInside)
+            if (wasInside)
             {
                 subpathStartIdx = 0;
                 subpathEndIdx = 0;
@@ -137,26 +137,26 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
             {
                 auto isInside = internalState.frustum2D31.test(*(pPoint31++) - currentState.target31);
                 bool currentWasAdded = false;
-                if(wasInside && !isInside)
+                if (wasInside && !isInside)
                 {
                     subpathEndIdx = pointIdx;
                     currentWasAdded = true;
                 }
-                else if(wasInside && isInside)
+                else if (wasInside && isInside)
                 {
                     subpathEndIdx = pointIdx;
                     currentWasAdded = true;
                 }
-                else if(!wasInside && isInside)
+                else if (!wasInside && isInside)
                 {
                     subpathStartIdx = pointIdx - 1;
                     subpathEndIdx = pointIdx;
                     currentWasAdded = true;
                 }
 
-                if((wasInside && !isInside) || (pointIdx == pointsCount - 1 && subpathStartIdx >= 0))
+                if ((wasInside && !isInside) || (pointIdx == pointsCount - 1 && subpathStartIdx >= 0))
                 {
-                    if(!currentWasAdded)
+                    if (!currentWasAdded)
                         subpathEndIdx = pointIdx;
 
                     std::shared_ptr<RenderableSymbolOnPath> renderable(new RenderableSymbolOnPath());
@@ -219,7 +219,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 const auto vSegment = pointOnScreen - prevPointOnScreen;
                 const auto d = vSegment.y;// horizont.x*vSegment.y - horizont.y*vSegment.x == 1.0f*vSegment.y - 0.0f*vSegment.x
                 const auto inclineSinSq = d*d / (vSegment.x*vSegment.x + vSegment.y*vSegment.y);
-                if(qAbs(inclineSinSq) > inclineThresholdSinSq)
+                if (qAbs(inclineSinSq) > inclineThresholdSinSq)
                 {
                     renderable->is2D = false;
                     break;
@@ -228,7 +228,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 prevPointOnScreen = pointOnScreen;
             }
 
-            if(renderable->is2D)
+            if (renderable->is2D)
             {
                 // In case SOP needs 2D mode, all points have been projected on the screen already
                 renderable->subpathPointsOnScreen = qMove(pointsOnScreen);
@@ -269,7 +269,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 *(pSegmentLength++) = distance;
                 length += distance;
             }
-            if(length < symbolWidth)
+            if (length < symbolWidth)
             {
 #if OSMAND_DEBUG && 0
                 {
@@ -326,7 +326,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
             for(auto idx = startIndex + 1; idx <= endIndex; idx++, pPrevPoint++, pPoint++)
                 subpathDirection += (*pPoint - *pPrevPoint);
 
-            if(is2D)
+            if (is2D)
                 renderable->subpathDirectionOnScreen = glm::normalize(subpathDirection);
             else
             {
@@ -349,7 +349,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
             for(const auto& pointInWorld : constOf(renderable->subpathPointsInWorld))
             {
                 const auto& distance = glm::distance(internalState.worldCameraPosition, glm::vec3(pointInWorld.x, 0.0f, pointInWorld.y));
-                if(distance > maxDistanceToCamera)
+                if (distance > maxDistanceToCamera)
                     maxDistanceToCamera = distance;
             }
 
@@ -362,7 +362,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
         for(const auto& symbolEntry : rangeOf(constOf(mapSymbolsLayer)))
         {
             const auto& symbol = std::dynamic_pointer_cast<const MapPinnedSymbol>(symbolEntry.key());
-            if(!symbol)
+            if (!symbol)
                 continue;
             assert(!symbolEntry.value().expired());
 
@@ -394,7 +394,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
             const auto& item = itRenderableEntry.previous();
             const auto& distanceFromCamera = item.key();
 
-            if(const auto& renderable = std::dynamic_pointer_cast<const RenderablePinnedSymbol>(item.value()))
+            if (const auto& renderable = std::dynamic_pointer_cast<const RenderablePinnedSymbol>(item.value()))
             {
                 const auto& symbol = std::dynamic_pointer_cast<const MapPinnedSymbol>(renderable->mapSymbol);
                 const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
@@ -416,7 +416,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 {
                     return otherSymbol->mapObject->id != mapObjectId;
                 });
-                if(intersects)
+                if (intersects)
                 {
 #if OSMAND_DEBUG && 0
                     getRenderer()->_debugStage.addRect2D(boundsInWindow, SkColorSetA(SK_ColorRED, 50));
@@ -425,7 +425,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 }
 
                 // Query for similar content in area of "minDistance" to exclude duplicates, but keep if from same mapObject
-                if(symbol->minDistance.x > 0 || symbol->minDistance.y > 0)
+                if (symbol->minDistance.x > 0 || symbol->minDistance.y > 0)
                 {
                     const auto& symbolContent = symbol->content;
                     const auto hasSimilarContent = intersections.test(boundsInWindow.getEnlargedBy(symbol->minDistance), false,
@@ -433,7 +433,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     {
                         return otherSymbol->content == symbolContent && otherSymbol->mapObject->id != mapObjectId;
                     });
-                    if(hasSimilarContent)
+                    if (hasSimilarContent)
                     {
 #if OSMAND_DEBUG && 0
                         getRenderer()->_debugStage.addRect2D(boundsInWindow.getEnlargedBy(symbol->minDistance), SkColorSetA(SK_ColorRED, 50));
@@ -444,7 +444,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 }
 
                 // Insert into quad-tree
-                if(!intersections.insert(symbol, boundsInWindow))
+                if (!intersections.insert(symbol, boundsInWindow))
                 {
 #if OSMAND_DEBUG && 0
                     getRenderer()->_debugStage.addRect2D(boundsInWindow, SkColorSetA(SK_ColorBLUE, 50));
@@ -457,7 +457,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 #endif // OSMAND_DEBUG
 
                 // Check if correct program is being used
-                if(lastUsedProgram != *_pinnedSymbolProgram.id)
+                if (lastUsedProgram != *_pinnedSymbolProgram.id)
                 {
                     GL_PUSH_GROUP_MARKER("use 'pinned-symbol' program");
 
@@ -527,7 +527,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 
                 GL_POP_GROUP_MARKER;
             }
-            else if(const auto& renderable = std::dynamic_pointer_cast<const RenderableSymbolOnPath>(item.value()))
+            else if (const auto& renderable = std::dynamic_pointer_cast<const RenderableSymbolOnPath>(item.value()))
             {
                 const auto& symbol = std::dynamic_pointer_cast<const MapSymbolOnPath>(renderable->mapSymbol);
                 const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
@@ -570,7 +570,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 const auto glyphsCount = symbol->glyphsWidth.size();
                 auto pGlyphWidth = symbol->glyphsWidth.constData();
                 const auto glyphIterationDirection = shouldInvert ? -1 : +1;
-                if(shouldInvert)
+                if (shouldInvert)
                 {
                     // In case of direction inversion, start from last glyph
                     pGlyphWidth += (glyphsCount - 1);
@@ -598,7 +598,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                         vLastPoint1.x = p1.x;
                         vLastPoint1.y = p1.y;
                         vLastSegment = (vLastPoint1 - vLastPoint0) / lastSegmentLength;
-                        if(is2D)
+                        if (is2D)
                         {
                             // CCW 90 degrees rotation of Y is up
                             vLastSegmentN.x = -vLastSegment.y;
@@ -611,7 +611,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                             vLastSegmentN.y = -vLastSegment.x;
                         }
                         lastSegmentAngle = qAtan2(vLastSegment.y, vLastSegment.x);//TODO: maybe for 3D a -y should be passed (see -1 rotation axis)
-                        if(shouldInvert)
+                        if (shouldInvert)
                             lastSegmentAngle = Utilities::normalizedAngleRadians(lastSegmentAngle + M_PI);
                     }
 
@@ -620,14 +620,14 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 
                     // Add glyph location data
                     GlyphLocation glyphLocation(anchorPoint, glyphWidth, lastSegmentAngle, vLastSegmentN);
-                    if(shouldInvert)
+                    if (shouldInvert)
                         glyphs.push_front(qMove(glyphLocation));
                     else
                         glyphs.push_back(qMove(glyphLocation));
                 }
 
                 // Draw the glyphs
-                if(renderable->is2D)
+                if (renderable->is2D)
                 {
                     // Calculate OOBB for 2D SOP
                     const auto directionAngle = qAtan2(renderable->subpathDirectionOnScreen.y, renderable->subpathDirectionOnScreen.x);
@@ -671,7 +671,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                             PointF alignedPoint;
                             alignedPoint.x = pointOnScreen.x*negDirectionAngleCos - pointOnScreen.y*negDirectionAngleSin;
                             alignedPoint.y = pointOnScreen.x*negDirectionAngleSin + pointOnScreen.y*negDirectionAngleCos;
-                            if(Q_LIKELY(bboxInitialized))
+                            if (Q_LIKELY(bboxInitialized))
                                 bboxInDirection.enlargeToInclude(alignedPoint);
                             else
                             {
@@ -699,7 +699,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                         {
                             return otherSymbol->mapObject->id != mapObjectId;
                         });
-                    if(intersects)
+                    if (intersects)
                     {
 #if OSMAND_DEBUG && 0
                         getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
@@ -708,7 +708,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     }
 
                     // Query for similar content in area of "minDistance" to exclude duplicates, but keep if from same mapObject
-                    if(symbol->minDistance.x > 0 || symbol->minDistance.y > 0)
+                    if (symbol->minDistance.x > 0 || symbol->minDistance.y > 0)
                     {
                         const auto& symbolContent = symbol->content;
                         const auto hasSimilarContent = intersections.test(oobb.getEnlargedBy(symbol->minDistance), false,
@@ -716,7 +716,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                             {
                                 return otherSymbol->content == symbolContent && otherSymbol->mapObject->id != mapObjectId;
                             });
-                        if(hasSimilarContent)
+                        if (hasSimilarContent)
                         {
 #if OSMAND_DEBUG && 0
                             getRenderer()->_debugStage.addRect2D(oobb.getEnlargedBy(symbol->minDistance).unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
@@ -727,7 +727,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     }
 
                     // Insert into quad-tree
-                    if(!intersections.insert(symbol, oobb))
+                    if (!intersections.insert(symbol, oobb))
                     {
 #if OSMAND_DEBUG && 0
                         getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorBLUE, 50), oobb.rotation);
@@ -740,7 +740,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 #endif // OSMAND_DEBUG
 
                     // Check if correct program is being used
-                    if(lastUsedProgram != *_symbolOnPath2dProgram.id)
+                    if (lastUsedProgram != *_symbolOnPath2dProgram.id)
                     {
                         GL_PUSH_GROUP_MARKER("use 'symbol-on-path-2d' program");
 
@@ -923,7 +923,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                             PointF alignedPoint;
                             alignedPoint.x = pointInWorld.x*negDirectionAngleInWorldCos - pointInWorld.y*negDirectionAngleInWorldSin;
                             alignedPoint.y = pointInWorld.x*negDirectionAngleInWorldSin + pointInWorld.y*negDirectionAngleInWorldCos;
-                            if(Q_LIKELY(bboxInWorldInitialized))
+                            if (Q_LIKELY(bboxInWorldInitialized))
                                 bboxInWorldDirection.enlargeToInclude(alignedPoint);
                             else
                             {
@@ -1072,7 +1072,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     {
                         return otherSymbol->mapObject->id != mapObjectId;
                     });
-                    if(intersects)
+                    if (intersects)
                     {
 #if OSMAND_DEBUG && 0
                         getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
@@ -1081,7 +1081,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     }
 
                     // Query for similar content in area of "minDistance" to exclude duplicates, but keep if from same mapObject
-                    if(symbol->minDistance.x > 0 || symbol->minDistance.y > 0)
+                    if (symbol->minDistance.x > 0 || symbol->minDistance.y > 0)
                     {
                         const auto& symbolContent = symbol->content;
                         const auto hasSimilarContent = intersections.test(oobb.getEnlargedBy(symbol->minDistance), false,
@@ -1089,7 +1089,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                             {
                                 return otherSymbol->content == symbolContent && otherSymbol->mapObject->id != mapObjectId;
                             });
-                        if(hasSimilarContent)
+                        if (hasSimilarContent)
                         {
 #if OSMAND_DEBUG && 0
                             getRenderer()->_debugStage.addRect2D(oobb.getEnlargedBy(symbol->minDistance).unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
@@ -1100,7 +1100,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     }
 
                     // Insert into quad-tree
-                    if(!intersections.insert(symbol, oobb))
+                    if (!intersections.insert(symbol, oobb))
                     {
 #if OSMAND_DEBUG && 0
                         getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorBLUE, 50), oobb.rotation);
@@ -1113,7 +1113,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 #endif // OSMAND_DEBUG
 
                     // Check if correct program is being used
-                    if(lastUsedProgram != *_symbolOnPath3dProgram.id)
+                    if (lastUsedProgram != *_symbolOnPath3dProgram.id)
                     {
                         GL_PUSH_GROUP_MARKER("use 'symbol-on-path-3d' program");
 
@@ -1495,26 +1495,26 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releasePinned()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    if(_pinnedSymbolIBO)
+    if (_pinnedSymbolIBO)
     {
         glDeleteBuffers(1, &_pinnedSymbolIBO);
         GL_CHECK_RESULT;
         _pinnedSymbolIBO.reset();
     }
-    if(_pinnedSymbolVBO)
+    if (_pinnedSymbolVBO)
     {
         glDeleteBuffers(1, &_pinnedSymbolVBO);
         GL_CHECK_RESULT;
         _pinnedSymbolVBO.reset();
     }
-    if(_pinnedSymbolVAO)
+    if (_pinnedSymbolVAO)
     {
         gpuAPI->glDeleteVertexArrays_wrapper(1, &_pinnedSymbolVAO);
         GL_CHECK_RESULT;
         _pinnedSymbolVAO.reset();
     }
 
-    if(_pinnedSymbolProgram.id)
+    if (_pinnedSymbolProgram.id)
     {
         glDeleteProgram(_pinnedSymbolProgram.id);
         GL_CHECK_RESULT;
@@ -1976,26 +1976,26 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    if(_symbolOnPath2dIBO)
+    if (_symbolOnPath2dIBO)
     {
         glDeleteBuffers(1, &_symbolOnPath2dIBO);
         GL_CHECK_RESULT;
         _symbolOnPath2dIBO.reset();
     }
-    if(_symbolOnPath2dVBO)
+    if (_symbolOnPath2dVBO)
     {
         glDeleteBuffers(1, &_symbolOnPath2dVBO);
         GL_CHECK_RESULT;
         _symbolOnPath2dVBO.reset();
     }
-    if(_symbolOnPath2dVAO)
+    if (_symbolOnPath2dVAO)
     {
         gpuAPI->glDeleteVertexArrays_wrapper(1, &_symbolOnPath2dVAO);
         GL_CHECK_RESULT;
         _symbolOnPath2dVAO.reset();
     }
 
-    if(_symbolOnPath2dProgram.id)
+    if (_symbolOnPath2dProgram.id)
     {
         glDeleteProgram(_symbolOnPath2dProgram.id);
         GL_CHECK_RESULT;
@@ -2010,26 +2010,26 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath3D()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    if(_symbolOnPath3dIBO)
+    if (_symbolOnPath3dIBO)
     {
         glDeleteBuffers(1, &_symbolOnPath3dIBO);
         GL_CHECK_RESULT;
         _symbolOnPath3dIBO.reset();
     }
-    if(_symbolOnPath3dVBO)
+    if (_symbolOnPath3dVBO)
     {
         glDeleteBuffers(1, &_symbolOnPath3dVBO);
         GL_CHECK_RESULT;
         _symbolOnPath3dVBO.reset();
     }
-    if(_symbolOnPath3dVAO)
+    if (_symbolOnPath3dVAO)
     {
         gpuAPI->glDeleteVertexArrays_wrapper(1, &_symbolOnPath3dVAO);
         GL_CHECK_RESULT;
         _symbolOnPath3dVAO.reset();
     }
 
-    if(_symbolOnPath3dProgram.id)
+    if (_symbolOnPath3dProgram.id)
     {
         glDeleteProgram(_symbolOnPath3dProgram.id);
         GL_CHECK_RESULT;

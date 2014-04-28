@@ -1,6 +1,6 @@
 project(gif)
 
-if(CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
+if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
 	configure_file("config.h.ios" "${CMAKE_CURRENT_BINARY_DIR}/config.h" COPYONLY)
 else()
 	include(CheckIncludeFile)
@@ -52,8 +52,8 @@ add_library(gif_static STATIC
 )
 
 set(target_specific_private_definitions "")
-if(CMAKE_TARGET_OS STREQUAL "windows")
-	if(CMAKE_COMPILER_FAMILY STREQUAL "msvc")
+if (CMAKE_TARGET_OS STREQUAL "windows")
+	if (CMAKE_COMPILER_FAMILY STREQUAL "msvc")
 		set(target_specific_private_definitions ${target_specific_private_definitions}
 			-D_CRT_SECURE_NO_WARNINGS
 			-D_CRT_NONSTDC_NO_WARNINGS
@@ -72,12 +72,12 @@ target_compile_definitions(gif_static
 )
 
 set(target_specific_public_includes "")
-if(CMAKE_TARGET_OS STREQUAL "windows")
-	if(CMAKE_COMPILER_FAMILY STREQUAL "msvc")
+if (CMAKE_TARGET_OS STREQUAL "windows")
+	if (CMAKE_COMPILER_FAMILY STREQUAL "msvc")
 		set(target_specific_public_includes ${target_specific_public_includes}
 			"include/unistd.h"
 		)
-		if(MSVC_VERSION LESS 1800)
+		if (MSVC_VERSION LESS 1800)
 			set(target_specific_public_includes ${target_specific_public_includes}
 				"include/stdbool.h"
 			)

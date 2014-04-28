@@ -68,7 +68,7 @@ OsmAnd::MapRendererResources::~MapRendererResources()
     {
         for(const auto& resourcesCollection : constOf(resourcesCollections))
         {
-            if(!resourcesCollection)
+            if (!resourcesCollection)
                 continue;
             assert(resourcesCollection->getEntriesCount() == 0);
         }
@@ -96,7 +96,7 @@ bool OsmAnd::MapRendererResources::initializeDefaultResources()
     {
         const auto& data = EmbeddedResources::decompressResource(QLatin1String("map/stubs/processing_tile.png"));
         auto bitmap = new SkBitmap();
-        if(!SkImageDecoder::DecodeMemory(data.data(), data.size(), bitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
+        if (!SkImageDecoder::DecodeMemory(data.data(), data.size(), bitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
         {
             delete bitmap;
             return false;
@@ -110,7 +110,7 @@ bool OsmAnd::MapRendererResources::initializeDefaultResources()
     {
         const auto& data = EmbeddedResources::decompressResource(QLatin1String("map/stubs/unavailable_tile.png"));
         auto bitmap = new SkBitmap();
-        if(!SkImageDecoder::DecodeMemory(data.data(), data.size(), bitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
+        if (!SkImageDecoder::DecodeMemory(data.data(), data.size(), bitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
         {
             delete bitmap;
             return false;
@@ -128,12 +128,12 @@ bool OsmAnd::MapRendererResources::initializeDefaultResources()
 bool OsmAnd::MapRendererResources::releaseDefaultResources()
 {
     // Release stubs
-    if(_unavailableTileStub)
+    if (_unavailableTileStub)
     {
         assert(_unavailableTileStub.use_count() == 1);
         _unavailableTileStub.reset();
     }
-    if(_processingTileStub)
+    if (_processingTileStub)
     {
         assert(_processingTileStub.use_count() == 1);
         _processingTileStub.reset();
@@ -158,7 +158,7 @@ bool OsmAnd::MapRendererResources::uploadSymbolToGPU(const std::shared_ptr<const
 
 void OsmAnd::MapRendererResources::updateBindings(const MapRendererState& state, const uint32_t updatedMask)
 {
-    if(updatedMask & (1u << static_cast<int>(MapRendererStateChange::ElevationData_Provider)))
+    if (updatedMask & (1u << static_cast<int>(MapRendererStateChange::ElevationData_Provider)))
     {
         auto& bindings = _bindings[static_cast<int>(ResourceType::ElevationData)];
         auto& resources = _storage[static_cast<int>(ResourceType::ElevationData)];
@@ -170,7 +170,7 @@ void OsmAnd::MapRendererResources::updateBindings(const MapRendererState& state,
             itBindedProvider.next();
 
             // Skip binding if it's still active
-            if(itBindedProvider.key() == state.elevationDataProvider)
+            if (itBindedProvider.key() == state.elevationDataProvider)
                 continue;
 
             // Clean-up resources
@@ -185,7 +185,7 @@ void OsmAnd::MapRendererResources::updateBindings(const MapRendererState& state,
         }
 
         // Create new binding and storage
-        if(state.elevationDataProvider && !bindings.providersToCollections.contains(state.elevationDataProvider))
+        if (state.elevationDataProvider && !bindings.providersToCollections.contains(state.elevationDataProvider))
         {
             // Create new resources collection
             const std::shared_ptr< TiledResourcesCollection > newResourcesCollection(new TiledResourcesCollection(ResourceType::ElevationData));
@@ -198,7 +198,7 @@ void OsmAnd::MapRendererResources::updateBindings(const MapRendererState& state,
             resources.push_back(qMove(newResourcesCollection));
         }
     }
-    if(updatedMask & (1u << static_cast<int>(MapRendererStateChange::RasterLayers_Providers)))
+    if (updatedMask & (1u << static_cast<int>(MapRendererStateChange::RasterLayers_Providers)))
     {
         auto& bindings = _bindings[static_cast<int>(ResourceType::RasterMap)];
         auto& resources = _storage[static_cast<int>(ResourceType::RasterMap)];
@@ -210,7 +210,7 @@ void OsmAnd::MapRendererResources::updateBindings(const MapRendererState& state,
             itBindedProvider.next();
 
             // Skip binding if it's still active
-            if(std::find(state.rasterLayerProviders.cbegin(), state.rasterLayerProviders.cend(),
+            if (std::find(state.rasterLayerProviders.cbegin(), state.rasterLayerProviders.cend(),
                 std::static_pointer_cast<IMapBitmapTileProvider>(itBindedProvider.key())) != state.rasterLayerProviders.cend())
             {
                 continue;
@@ -234,11 +234,11 @@ void OsmAnd::MapRendererResources::updateBindings(const MapRendererState& state,
             const auto& provider = *itProvider;
 
             // Skip empty providers
-            if(!provider)
+            if (!provider)
                 continue;
 
             // If binding already exists, skip creation
-            if(bindings.providersToCollections.contains(std::static_pointer_cast<IMapProvider>(provider)))
+            if (bindings.providersToCollections.contains(std::static_pointer_cast<IMapProvider>(provider)))
                 continue;
 
             // Create new resources collection
@@ -254,7 +254,7 @@ void OsmAnd::MapRendererResources::updateBindings(const MapRendererState& state,
             resources[rasterLayerIdx] = newResourcesCollection;
         }
     }
-    if(updatedMask & (1u << static_cast<int>(MapRendererStateChange::Symbols_Providers)))
+    if (updatedMask & (1u << static_cast<int>(MapRendererStateChange::Symbols_Providers)))
     {
         auto& bindings = _bindings[static_cast<int>(ResourceType::Symbols)];
         auto& resources = _storage[static_cast<int>(ResourceType::Symbols)];
@@ -266,7 +266,7 @@ void OsmAnd::MapRendererResources::updateBindings(const MapRendererState& state,
             itBindedProvider.next();
 
             // Skip binding if it's still active
-            if(state.symbolProviders.contains(std::static_pointer_cast<IMapSymbolProvider>(itBindedProvider.key())))
+            if (state.symbolProviders.contains(std::static_pointer_cast<IMapSymbolProvider>(itBindedProvider.key())))
                 continue;
 
             // Clean-up resources
@@ -284,7 +284,7 @@ void OsmAnd::MapRendererResources::updateBindings(const MapRendererState& state,
         for(const auto& provider : constOf(state.symbolProviders))
         {
             // If binding already exists, skip creation
-            if(bindings.providersToCollections.contains(std::static_pointer_cast<IMapProvider>(provider)))
+            if (bindings.providersToCollections.contains(std::static_pointer_cast<IMapProvider>(provider)))
                 continue;
 
             // Create new resources collection
@@ -320,11 +320,11 @@ bool OsmAnd::MapRendererResources::obtainProviderFor(TiledResourcesCollection* c
     const auto& bindings = _bindings[static_cast<int>(resourcesRef->type)];
     for(const auto& bindingEntry : rangeOf(constOf(bindings.collectionsToProviders)))
     {
-        if(bindingEntry.key().get() != resourcesRef)
+        if (bindingEntry.key().get() != resourcesRef)
             continue;
 
         const auto& testProvider = bindingEntry.value();
-        if(!testProvider)
+        if (!testProvider)
             return false;
 
         provider = testProvider;
@@ -355,7 +355,7 @@ void OsmAnd::MapRendererResources::removeMapSymbol(const std::shared_ptr<const M
 
     const auto itSymbolsLayer = _mapSymbolsByOrder.find(symbol->order);
     const auto removedCount = itSymbolsLayer->remove(symbol);
-    if(itSymbolsLayer->isEmpty())
+    if (itSymbolsLayer->isEmpty())
         _mapSymbolsByOrder.erase(itSymbolsLayer);
     _mapSymbolsCount -= removedCount;
 }
@@ -385,7 +385,7 @@ void OsmAnd::MapRendererResources::workerThreadProcedure()
             activeTiles = _activeTiles;
             activeZoom = _activeZoom;
         }
-        if(!_workerThreadIsAlive)
+        if (!_workerThreadIsAlive)
             break;
 
         // Update resources
@@ -405,11 +405,11 @@ void OsmAnd::MapRendererResources::requestNeededResources(const QSet<TileId>& ac
             for(const auto& resourcesCollection : constOf(resourcesCollections))
             {
                 // Skip empty entries
-                if(!resourcesCollection)
+                if (!resourcesCollection)
                     continue;
 
                 // Skip resource types that do not have an available data source
-                if(!isDataSourceAvailableFor(resourcesCollection))
+                if (!isDataSourceAvailableFor(resourcesCollection))
                     continue;
 
                 // Obtain a resource entry and if it's state is "Unknown", create a task that will
@@ -419,16 +419,16 @@ void OsmAnd::MapRendererResources::requestNeededResources(const QSet<TileId>& ac
                 resourcesCollection->obtainOrAllocateEntry(resource, activeTileId, activeZoom,
                     [this, resourceType](const TilesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom) -> BaseTiledResource*
                     {
-                        if(resourceType == ResourceType::ElevationData || resourceType == ResourceType::RasterMap)
+                        if (resourceType == ResourceType::ElevationData || resourceType == ResourceType::RasterMap)
                             return new MapTileResource(this, resourceType, collection, tileId, zoom);
-                        else if(resourceType == ResourceType::Symbols)
+                        else if (resourceType == ResourceType::Symbols)
                             return new SymbolsTileResource(this, collection, tileId, zoom);
                         else
                             return nullptr;
                     });
 
                 // Only if tile entry has "Unknown" state proceed to "Requesting" state
-                if(!resource->setStateIf(ResourceState::Unknown, ResourceState::Requesting))
+                if (!resource->setStateIf(ResourceState::Unknown, ResourceState::Requesting))
                     continue;
                 LOG_STATE_CHANGE(resource->tileId, resource->zoom, ResourceState::Unknown, ResourceState::Requesting);
 
@@ -439,7 +439,7 @@ void OsmAnd::MapRendererResources::requestNeededResources(const QSet<TileId>& ac
                     const auto resource = std::static_pointer_cast<BaseTiledResource>(task->requestedResource);
 
                     // Only if resource entry has "Requested" state proceed to "ProcessingRequest" state
-                    if(!resource->setStateIf(ResourceState::Requested, ResourceState::ProcessingRequest))
+                    if (!resource->setStateIf(ResourceState::Requested, ResourceState::ProcessingRequest))
                     {
                         // This actually can happen in following situation(s):
                         //   - if request task was canceled before has started it's execution,
@@ -464,16 +464,16 @@ void OsmAnd::MapRendererResources::requestNeededResources(const QSet<TileId>& ac
                     const auto requestSucceeded = resource->obtainData(dataAvailable, &obtainDataQueryController) && !task->isCancellationRequested();
 
                     // If failed to obtain resource data, remove resource entry to repeat try later
-                    if(!requestSucceeded)
+                    if (!requestSucceeded)
                     {
                         // It's safe to simply remove entry, since it's not yet uploaded
-                        if(const auto link = resource->link.lock())
+                        if (const auto link = resource->link.lock())
                             link->collection.removeEntry(resource->tileId, resource->zoom);
                         return;
                     }
 
                     // Finalize execution of task
-                    if(!resource->setStateIf(ResourceState::ProcessingRequest, dataAvailable ? ResourceState::Ready : ResourceState::Unavailable))
+                    if (!resource->setStateIf(ResourceState::ProcessingRequest, dataAvailable ? ResourceState::Ready : ResourceState::Unavailable))
                     {
                         assert(resource->getState() == ResourceState::RequestCanceledWhileBeingProcessed);
 
@@ -484,7 +484,7 @@ void OsmAnd::MapRendererResources::requestNeededResources(const QSet<TileId>& ac
 #if OSMAND_LOG_RESOURCE_STATE_CHANGE
                     else
                     {
-                        if(dataAvailable)
+                        if (dataAvailable)
                             LOG_STATE_CHANGE(resource->tileId, resource->zoom, ResourceState::ProcessingRequest, ResourceState::Ready);
                         else
                             LOG_STATE_CHANGE(resource->tileId, resource->zoom, ResourceState::ProcessingRequest, ResourceState::Unavailable);
@@ -493,7 +493,7 @@ void OsmAnd::MapRendererResources::requestNeededResources(const QSet<TileId>& ac
                     resource->_requestTask = nullptr;
 
                     // There is data to upload to GPU, request uploading. Or just ask to show that resource is unavailable
-                    if(dataAvailable)
+                    if (dataAvailable)
                         requestResourcesUploadOrUnload();
                     else
                         notifyNewResourceAvailableForDrawing();
@@ -503,7 +503,7 @@ void OsmAnd::MapRendererResources::requestNeededResources(const QSet<TileId>& ac
                     const auto task = static_cast<const ResourceRequestTask*>(task_);
                     const auto resource = std::static_pointer_cast<BaseTiledResource>(task->requestedResource);
 
-                    if(wasCancelled)
+                    if (wasCancelled)
                     {
                         // If request task was canceled, if could have happened:
                         //  - before it has started it's execution.
@@ -513,7 +513,7 @@ void OsmAnd::MapRendererResources::requestNeededResources(const QSet<TileId>& ac
                         //    and state _should_ be "Ready" or "Unavailable", but in general it can be any:
                         //    Uploading, Uploaded, Unloading, Unloaded. In case state is "Ready" or "Unavailable",
                         //    change it to "JustBeforeDeath" and delete it.
-                        if(
+                        if (
                             resource->setStateIf(ResourceState::Requested, ResourceState::JustBeforeDeath) ||
                             resource->setStateIf(ResourceState::Ready, ResourceState::JustBeforeDeath) ||
                             resource->setStateIf(ResourceState::Unavailable, ResourceState::JustBeforeDeath) ||
@@ -521,7 +521,7 @@ void OsmAnd::MapRendererResources::requestNeededResources(const QSet<TileId>& ac
                         {
                             LOG_STATE_CHANGE(resource->tileId, resource->zoom, ?, ResourceState::JustBeforeDeath);
 
-                            if(const auto link = resource->link.lock())
+                            if (const auto link = resource->link.lock())
                                 link->collection.removeEntry(resource->tileId, resource->zoom);
                         }
 
@@ -576,9 +576,9 @@ bool OsmAnd::MapRendererResources::validateResources()
     uint32_t typeIndex = 0;
     while(invalidatedResourcesTypesMask != 0 && typeIndex < ResourceTypesCount)
     {
-        if(invalidatedResourcesTypesMask & 0x1)
+        if (invalidatedResourcesTypesMask & 0x1)
         {
-            if(validateResourcesOfType(static_cast<ResourceType>(typeIndex)))
+            if (validateResourcesOfType(static_cast<ResourceType>(typeIndex)))
                 anyResourcesVadilated = true;
         }
 
@@ -600,7 +600,7 @@ bool OsmAnd::MapRendererResources::validateResourcesOfType(const ResourceType ty
     bool atLeastOneMarked = false;
     for(const auto& resourcesCollection : constOf(resourcesCollections))
     {
-        if(!bindings.collectionsToProviders.contains(resourcesCollection))
+        if (!bindings.collectionsToProviders.contains(resourcesCollection))
             continue;
 
         // Mark all resources as junk
@@ -635,7 +635,7 @@ unsigned int OsmAnd::MapRendererResources::unloadResources()
         for(const auto& resourcesCollection : constOf(resourcesCollections))
         {
             // Skip empty entries
-            if(!resourcesCollection)
+            if (!resourcesCollection)
                 continue;
 
             // Select all resources with "UnloadPending" state
@@ -644,20 +644,20 @@ unsigned int OsmAnd::MapRendererResources::unloadResources()
                 [&resources](const std::shared_ptr<BaseTiledResource>& entry, bool& cancel) -> bool
                 {
                     // Skip not-"UnloadPending" resources
-                    if(entry->getState() != ResourceState::UnloadPending)
+                    if (entry->getState() != ResourceState::UnloadPending)
                         return false;
 
                     // Accept this resource
                     return true;
                 });
-            if(resources.isEmpty())
+            if (resources.isEmpty())
                 continue;
 
             // Unload from GPU all selected resources
             for(const auto& resource : constOf(resources))
             {
                 // Since state change is allowed (it's not changed to "Unloading" during query), check state here
-                if(!resource->setStateIf(ResourceState::UnloadPending, ResourceState::Unloading))
+                if (!resource->setStateIf(ResourceState::UnloadPending, ResourceState::Unloading))
                     continue;
                 LOG_STATE_CHANGE(resource->tileId, resource->zoom, ResourceState::UnloadPending, ResourceState::Unloading);
                 
@@ -691,7 +691,7 @@ unsigned int OsmAnd::MapRendererResources::uploadResources(const unsigned int li
         for(const auto& resourcesCollection : constOf(resourcesCollections))
         {
             // Skip empty entries
-            if(!resourcesCollection)
+            if (!resourcesCollection)
                 continue;
 
             // Select all resources with "Ready" state
@@ -700,11 +700,11 @@ unsigned int OsmAnd::MapRendererResources::uploadResources(const unsigned int li
                 [&resources, limit, totalUploaded, &moreThanLimitAvailable](const std::shared_ptr<BaseTiledResource>& entry, bool& cancel) -> bool
                 {
                     // Skip not-ready resources
-                    if(entry->getState() != ResourceState::Ready)
+                    if (entry->getState() != ResourceState::Ready)
                         return false;
 
                     // Check if limit was reached
-                    if(limit > 0 && (totalUploaded + resources.size()) > limit)
+                    if (limit > 0 && (totalUploaded + resources.size()) > limit)
                     {
                         // Tell that more resources are available for upload
                         moreThanLimitAvailable = true;
@@ -716,22 +716,22 @@ unsigned int OsmAnd::MapRendererResources::uploadResources(const unsigned int li
                     // Accept this resource
                     return true;
                 });
-            if(resources.isEmpty())
+            if (resources.isEmpty())
                 continue;
 
             // Upload to GPU all selected resources
             for(const auto& resource : constOf(resources))
             {
                 // Since state change is allowed (it's not changed to "Uploading" during query), check state here
-                if(!resource->setStateIf(ResourceState::Ready, ResourceState::Uploading))
+                if (!resource->setStateIf(ResourceState::Ready, ResourceState::Uploading))
                     continue;
                 LOG_STATE_CHANGE(resource->tileId, resource->zoom, ResourceState::Ready, ResourceState::Uploading);
 
                 // Actually upload resource to GPU
                 const auto didUpload = resource->uploadToGPU();
-                if(!atLeastOneUploadFailed && !didUpload)
+                if (!atLeastOneUploadFailed && !didUpload)
                     atLeastOneUploadFailed = true;
-                if(!didUpload)
+                if (!didUpload)
                 {
                     LogPrintf(LogSeverityLevel::Error, "Failed to upload tiled resource for %dx%d@%d to GPU", resource->tileId.x, resource->tileId.y, resource->zoom);
                     continue;
@@ -739,7 +739,7 @@ unsigned int OsmAnd::MapRendererResources::uploadResources(const unsigned int li
 
                 // Before marking as uploaded, if uploading is done from GPU worker thread,
                 // wait until operation completes
-                if(renderer->setupOptions.gpuWorkerThreadEnabled)
+                if (renderer->setupOptions.gpuWorkerThreadEnabled)
                     renderer->gpuAPI->waitUntilUploadIsComplete();
 
                 // Mark as uploaded
@@ -754,10 +754,10 @@ unsigned int OsmAnd::MapRendererResources::uploadResources(const unsigned int li
     }
 
     // If any resource failed to upload, report that more ready resources are available
-    if(atLeastOneUploadFailed)
+    if (atLeastOneUploadFailed)
         moreThanLimitAvailable = true;
 
-    if(outMoreThanLimitAvailable)
+    if (outMoreThanLimitAvailable)
         *outMoreThanLimitAvailable = moreThanLimitAvailable;
     return totalUploaded;
 }
@@ -773,7 +773,7 @@ void OsmAnd::MapRendererResources::cleanupJunkResources(const QSet<TileId>& acti
         for(const auto& resourcesCollection : constOf(resourcesCollections))
         {
             // Skip empty entries
-            if(!resourcesCollection)
+            if (!resourcesCollection)
                 continue;
 
             const auto dataSourceAvailable = isDataSourceAvailableFor(resourcesCollection);
@@ -783,7 +783,7 @@ void OsmAnd::MapRendererResources::cleanupJunkResources(const QSet<TileId>& acti
                 (const std::shared_ptr<BaseTiledResource>& entry, bool& cancel) -> bool
                 {
                     // Resource with "Unloaded" state is junk, regardless if it's needed or not
-                    if(entry->setStateIf(ResourceState::Unloaded, ResourceState::JustBeforeDeath))
+                    if (entry->setStateIf(ResourceState::Unloaded, ResourceState::JustBeforeDeath))
                     {
                         LOG_STATE_CHANGE(entry->tileId, entry->zoom, ResourceState::Unloaded, ResourceState::JustBeforeDeath);
 
@@ -801,13 +801,13 @@ void OsmAnd::MapRendererResources::cleanupJunkResources(const QSet<TileId>& acti
                     isJunk = isJunk || !(activeTiles.contains(entry->tileId) && entry->zoom == activeZoom);
 
                     // Skip cleaning if this resource is not junk
-                    if(!isJunk)
+                    if (!isJunk)
                         return false;
 
                     // Mark this entry as junk until it will die
                     entry->markAsJunk();
 
-                    if(entry->setStateIf(ResourceState::Uploaded, ResourceState::UnloadPending))
+                    if (entry->setStateIf(ResourceState::Uploaded, ResourceState::UnloadPending))
                     {
                         LOG_STATE_CHANGE(entry->tileId, entry->zoom, ResourceState::Uploaded, ResourceState::UnloadPending);
 
@@ -817,14 +817,14 @@ void OsmAnd::MapRendererResources::cleanupJunkResources(const QSet<TileId>& acti
                         needsResourcesUploadOrUnload = true;
                         return false;
                     }
-                    else if(entry->setStateIf(ResourceState::Ready, ResourceState::JustBeforeDeath))
+                    else if (entry->setStateIf(ResourceState::Ready, ResourceState::JustBeforeDeath))
                     {
                         LOG_STATE_CHANGE(entry->tileId, entry->zoom, ResourceState::Ready, ResourceState::JustBeforeDeath);
 
                         // If resource was not yet uploaded, just remove it.
                         return true;
                     }
-                    else if(entry->setStateIf(ResourceState::ProcessingRequest, ResourceState::RequestCanceledWhileBeingProcessed))
+                    else if (entry->setStateIf(ResourceState::ProcessingRequest, ResourceState::RequestCanceledWhileBeingProcessed))
                     {
                         LOG_STATE_CHANGE(entry->tileId, entry->zoom, ResourceState::ProcessingRequest, ResourceState::RequestCanceledWhileBeingProcessed);
 
@@ -832,7 +832,7 @@ void OsmAnd::MapRendererResources::cleanupJunkResources(const QSet<TileId>& acti
 
                         return false;
                     }
-                    else if(entry->setStateIf(ResourceState::Requested, ResourceState::JustBeforeDeath))
+                    else if (entry->setStateIf(ResourceState::Requested, ResourceState::JustBeforeDeath))
                     {
                         LOG_STATE_CHANGE(entry->tileId, entry->zoom, ResourceState::Requested, ResourceState::JustBeforeDeath);
 
@@ -844,7 +844,7 @@ void OsmAnd::MapRendererResources::cleanupJunkResources(const QSet<TileId>& acti
 
                         return true;
                     }
-                    else if(entry->setStateIf(ResourceState::Unavailable, ResourceState::JustBeforeDeath))
+                    else if (entry->setStateIf(ResourceState::Unavailable, ResourceState::JustBeforeDeath))
                     {
                         LOG_STATE_CHANGE(entry->tileId, entry->zoom, ResourceState::Unavailable, ResourceState::JustBeforeDeath);
 
@@ -853,7 +853,7 @@ void OsmAnd::MapRendererResources::cleanupJunkResources(const QSet<TileId>& acti
                     }
 
                     const auto state = entry->getState();
-                    if(state == ResourceState::JustBeforeDeath)
+                    if (state == ResourceState::JustBeforeDeath)
                     {
                         // If resource has JustBeforeDeath state, it means that it will be deleted from different thread in next few moments,
                         // so it's safe to remove it here also (since operations with resources removal from collection are atomic, and collection is blocked)
@@ -871,7 +871,7 @@ void OsmAnd::MapRendererResources::cleanupJunkResources(const QSet<TileId>& acti
         }
     }
 
-    if(needsResourcesUploadOrUnload)
+    if (needsResourcesUploadOrUnload)
         requestResourcesUploadOrUnload();
 }
 
@@ -899,7 +899,7 @@ void OsmAnd::MapRendererResources::releaseResourcesFrom(const std::shared_ptr<Ti
                 // - Unavailable
                 // All other states are considered invalid.
 
-                if(entry->setStateIf(ResourceState::Requested, ResourceState::JustBeforeDeath))
+                if (entry->setStateIf(ResourceState::Requested, ResourceState::JustBeforeDeath))
                 {
                     LOG_STATE_CHANGE(entry->tileId, entry->zoom, ResourceState::Requested, ResourceState::JustBeforeDeath);
 
@@ -909,7 +909,7 @@ void OsmAnd::MapRendererResources::releaseResourcesFrom(const std::shared_ptr<Ti
 
                     return true;
                 }
-                else if(entry->setStateIf(ResourceState::ProcessingRequest, ResourceState::RequestCanceledWhileBeingProcessed))
+                else if (entry->setStateIf(ResourceState::ProcessingRequest, ResourceState::RequestCanceledWhileBeingProcessed))
                 {
                     LOG_STATE_CHANGE(entry->tileId, entry->zoom, ResourceState::ProcessingRequest, ResourceState::RequestCanceledWhileBeingProcessed);
 
@@ -917,19 +917,19 @@ void OsmAnd::MapRendererResources::releaseResourcesFrom(const std::shared_ptr<Ti
 
                     return false;
                 }
-                else if(entry->setStateIf(ResourceState::Ready, ResourceState::JustBeforeDeath))
+                else if (entry->setStateIf(ResourceState::Ready, ResourceState::JustBeforeDeath))
                 {
                     LOG_STATE_CHANGE(entry->tileId, entry->zoom, ResourceState::Ready, ResourceState::JustBeforeDeath);
 
                     return true;
                 }
-                else if(entry->setStateIf(ResourceState::Unloaded, ResourceState::JustBeforeDeath))
+                else if (entry->setStateIf(ResourceState::Unloaded, ResourceState::JustBeforeDeath))
                 {
                     LOG_STATE_CHANGE(entry->tileId, entry->zoom, ResourceState::Unloaded, ResourceState::JustBeforeDeath);
 
                     return true;
                 }
-                else if(entry->setStateIf(ResourceState::Uploaded, ResourceState::UnloadPending))
+                else if (entry->setStateIf(ResourceState::Uploaded, ResourceState::UnloadPending))
                 {
                     LOG_STATE_CHANGE(entry->tileId, entry->zoom, ResourceState::Uploaded, ResourceState::UnloadPending);
 
@@ -940,7 +940,7 @@ void OsmAnd::MapRendererResources::releaseResourcesFrom(const std::shared_ptr<Ti
 
                     return false;
                 }
-                else if(entry->setStateIf(ResourceState::Unavailable, ResourceState::JustBeforeDeath))
+                else if (entry->setStateIf(ResourceState::Unavailable, ResourceState::JustBeforeDeath))
                 {
                     LOG_STATE_CHANGE(entry->tileId, entry->zoom, ResourceState::Unavailable, ResourceState::JustBeforeDeath);
 
@@ -948,7 +948,7 @@ void OsmAnd::MapRendererResources::releaseResourcesFrom(const std::shared_ptr<Ti
                 }
 
                 const auto state = entry->getState();
-                if(state == ResourceState::JustBeforeDeath)
+                if (state == ResourceState::JustBeforeDeath)
                 {
                     // If resource has JustBeforeDeath state, it means that it will be deleted from different thread in next few moments,
                     // so it's safe to remove it here also (since operations with resources removal from collection are atomic, and collection is blocked)
@@ -961,7 +961,7 @@ void OsmAnd::MapRendererResources::releaseResourcesFrom(const std::shared_ptr<Ti
                 //  - Unloading (to allow finish unloading)
                 //  - RequestCanceledWhileBeingProcessed (to allow cleanup of the process)
                 // should be retained, since they are being processed. So try to next time
-                if(state == ResourceState::Uploading ||
+                if (state == ResourceState::Uploading ||
                     state == ResourceState::UnloadPending ||
                     state == ResourceState::Unloading)
                 {
@@ -978,7 +978,7 @@ void OsmAnd::MapRendererResources::releaseResourcesFrom(const std::shared_ptr<Ti
             });
 
             // If there are unprocessable resources and
-            if(containedUnprocessableResources && needsResourcesUploadOrUnload)
+            if (containedUnprocessableResources && needsResourcesUploadOrUnload)
             {
                 requestResourcesUploadOrUnload();
                 needsResourcesUploadOrUnload = false;
@@ -986,7 +986,7 @@ void OsmAnd::MapRendererResources::releaseResourcesFrom(const std::shared_ptr<Ti
     } while(containedUnprocessableResources);
 
     // Perform final request to upload or unload resources
-    if(needsResourcesUploadOrUnload)
+    if (needsResourcesUploadOrUnload)
     {
         requestResourcesUploadOrUnload();
         needsResourcesUploadOrUnload = false;
@@ -1008,7 +1008,7 @@ void OsmAnd::MapRendererResources::releaseAllResources()
     {
         for(const auto& resourcesCollection : constOf(resourcesCollections))
         {
-            if(!resourcesCollection)
+            if (!resourcesCollection)
                 continue;
             releaseResourcesFrom(resourcesCollection);
         }
@@ -1032,12 +1032,12 @@ void OsmAnd::MapRendererResources::syncResourcesInGPU(
 {
     // Unload resources
     const auto resourcesUnloaded = unloadResources();
-    if(outResourcesUnloaded)
+    if (outResourcesUnloaded)
         *outResourcesUnloaded = resourcesUnloaded;
 
     // Upload resources
     const auto resourcesUploaded = uploadResources(limitUploads, outMoreUploadsThanLimitAvailable);
-    if(outResourcesUploaded)
+    if (outResourcesUploaded)
         *outResourcesUploaded = resourcesUploaded;
 }
 
@@ -1086,7 +1086,7 @@ void OsmAnd::MapRendererResources::dumpResourcesInfo() const
     dump += QLatin1String("[Tiled] Elevation data:\n");
     for(const auto& resources : constOf(_storage[static_cast<int>(ResourceType::ElevationData)]))
     {
-        if(!resources)
+        if (!resources)
             continue;
         resources->obtainEntries(nullptr, [&dump, resourceStateMap](const std::shared_ptr<BaseTiledResource>& entry, bool& cancel) -> bool
         {
@@ -1104,7 +1104,7 @@ void OsmAnd::MapRendererResources::dumpResourcesInfo() const
     dump += QLatin1String("[Tiled] Raster map:\n");
     for(const auto& resources : constOf(_storage[static_cast<int>(ResourceType::RasterMap)]))
     {
-        if(!resources)
+        if (!resources)
             continue;
         resources->obtainEntries(nullptr, [&dump, resourceStateMap](const std::shared_ptr<BaseTiledResource>& entry, bool& cancel) -> bool
         {
@@ -1122,7 +1122,7 @@ void OsmAnd::MapRendererResources::dumpResourcesInfo() const
     dump += QLatin1String("[Tiled] Symbols:\n");
     for(const auto& resources : constOf(_storage[static_cast<int>(ResourceType::Symbols)]))
     {
-        if(!resources)
+        if (!resources)
             continue;
         resources->obtainEntries(nullptr, [&dump, resourceStateMap](const std::shared_ptr<BaseTiledResource>& entry, bool& cancel) -> bool
         {
@@ -1162,7 +1162,7 @@ OsmAnd::MapRendererResources::BaseTiledResource::BaseTiledResource(MapRendererRe
 OsmAnd::MapRendererResources::BaseTiledResource::~BaseTiledResource()
 {
     const volatile auto state = getState();
-    if(state == ResourceState::Uploading || state == ResourceState::Uploaded || state == ResourceState::IsBeingUsed || state == ResourceState::Unloading)
+    if (state == ResourceState::Uploading || state == ResourceState::Uploaded || state == ResourceState::IsBeingUsed || state == ResourceState::Unloading)
         LogPrintf(LogSeverityLevel::Error, "Tiled resource for %dx%d@%d still resides in GPU memory. This may cause GPU memory leak", tileId.x, tileId.y, zoom);
 
     safeUnlink();
@@ -1197,7 +1197,7 @@ void OsmAnd::MapRendererResources::TiledResourcesCollection::verifyNoUploadedTil
     obtainEntries(nullptr, [&stillUploadedTilesPresent](const std::shared_ptr<BaseTiledResource>& tileEntry, bool& cancel) -> bool
     {
         const auto state = tileEntry->getState();
-        if(state == ResourceState::Uploading || state == ResourceState::Uploaded || state == ResourceState::IsBeingUsed || state == ResourceState::Unloading)
+        if (state == ResourceState::Uploading || state == ResourceState::Uploaded || state == ResourceState::IsBeingUsed || state == ResourceState::Unloading)
         {
             stillUploadedTilesPresent = true;
             cancel = true;
@@ -1206,7 +1206,7 @@ void OsmAnd::MapRendererResources::TiledResourcesCollection::verifyNoUploadedTil
 
         return false;
     });
-    if(stillUploadedTilesPresent)
+    if (stillUploadedTilesPresent)
         LogPrintf(LogSeverityLevel::Error, "One or more tiled resources still reside in GPU memory. This may cause GPU memory leak");
     assert(stillUploadedTilesPresent == false);
 }
@@ -1228,16 +1228,16 @@ bool OsmAnd::MapRendererResources::MapTileResource::obtainData(bool& dataAvailab
 
     // Get source of tile
     std::shared_ptr<IMapProvider> provider_;
-    if(const auto link_ = link.lock())
+    if (const auto link_ = link.lock())
         ok = owner->obtainProviderFor(static_cast<TiledResourcesCollection*>(&link_->collection), provider_);
-    if(!ok)
+    if (!ok)
         return false;
     const auto provider = std::static_pointer_cast<IMapTileProvider>(provider_);
 
     // Obtain tile from provider
     std::shared_ptr<const MapTile> tile;
     const auto requestSucceeded = provider->obtainTile(tileId, zoom, tile, queryController);
-    if(!requestSucceeded)
+    if (!requestSucceeded)
         return false;
 
     // Store data
@@ -1250,11 +1250,11 @@ bool OsmAnd::MapRendererResources::MapTileResource::obtainData(bool& dataAvailab
 bool OsmAnd::MapRendererResources::MapTileResource::uploadToGPU()
 {
     bool ok = owner->uploadTileToGPU(_sourceData, _resourceInGPU);
-    if(!ok)
+    if (!ok)
         return false;
 
     // Release source data:
-    if(const auto retainedSource = std::dynamic_pointer_cast<const IRetainableResource>(_sourceData))
+    if (const auto retainedSource = std::dynamic_pointer_cast<const IRetainableResource>(_sourceData))
     {
         // If map tile implements 'Retained' interface, it must be kept, but 
         std::const_pointer_cast<IRetainableResource>(retainedSource)->releaseNonRetainedData();
@@ -1288,14 +1288,14 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAva
 {
     // Obtain collection link and maintain it
     const auto link_ = link.lock();
-    if(!link_)
+    if (!link_)
         return false;
     const auto collection = static_cast<SymbolsResourcesCollection*>(&link_->collection);
 
     // Get source of tile
     std::shared_ptr<IMapProvider> provider_;
     bool ok = owner->obtainProviderFor(static_cast<TiledResourcesCollection*>(&link_->collection), provider_);
-    if(!ok)
+    if (!ok)
         return false;
     const auto provider = std::static_pointer_cast<IMapSymbolProvider>(provider_);
 
@@ -1313,15 +1313,15 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAva
             // All symbols that come from map object which can not be cached,
             // should be received.
             // Symbols from map object can be shared only in case this map object does not lay inside it's tile bbox completely
-            if(!provider->canSymbolsBeSharedFrom(mapObject) || tileBBox31.contains(mapObject->bbox31))
+            if (!provider->canSymbolsBeSharedFrom(mapObject) || tileBBox31.contains(mapObject->bbox31))
                 return true;
 
             // Check if this shared symbol is already available, or mark it as pending
             std::shared_ptr<GroupResources> sharedGroupResources;
             proper::shared_future< std::shared_ptr<GroupResources> > futureSharedGroupResources;
-            if(sharedGroupsResources.obtainReferenceOrFutureReferenceOrMakePromise(mapObject->id, sharedGroupResources, futureSharedGroupResources))
+            if (sharedGroupsResources.obtainReferenceOrFutureReferenceOrMakePromise(mapObject->id, sharedGroupResources, futureSharedGroupResources))
             {
-                if(static_cast<bool>(sharedGroupResources))
+                if (static_cast<bool>(sharedGroupResources))
                     referencedSharedGroupsResources.push_back(qMove(sharedGroupResources));
                 else
                     futureReferencedSharedGroupsResources.push_back(qMove(futureSharedGroupResources));
@@ -1332,7 +1332,7 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAva
             loadedSharedGroups.insert(mapObject->id);
             return true;
         });
-    if(!requestSucceeded)
+    if (!requestSucceeded)
         return false;
 
     // Store data
@@ -1340,7 +1340,7 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAva
     dataAvailable = static_cast<bool>(tile);
 
     // Process data
-    if(!dataAvailable)
+    if (!dataAvailable)
         return true;
 
     // Move referenced shared groups
@@ -1352,7 +1352,7 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAva
         std::shared_ptr<GroupResources> groupResources(new GroupResources(group));
 
         // Check if this group is loaded as shared
-        if(!loadedSharedGroups.contains(group->mapObject->id))
+        if (!loadedSharedGroups.contains(group->mapObject->id))
         {
             _uniqueGroupsResources.push_back(qMove(groupResources));
             continue;
@@ -1372,7 +1372,7 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAva
     }
 
     // Release source data:
-    if(const auto retainedSource = std::dynamic_pointer_cast<const IRetainableResource>(_sourceData))
+    if (const auto retainedSource = std::dynamic_pointer_cast<const IRetainableResource>(_sourceData))
     {
         // If map tile implements 'Retained' interface, it must be kept, but 
         std::const_pointer_cast<IRetainableResource>(retainedSource)->releaseNonRetainedData();
@@ -1409,7 +1409,7 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
             ok = owner->uploadSymbolToGPU(symbol, resourceInGPU);
 
             // If upload have failed, stop
-            if(!ok)
+            if (!ok)
             {
                 LogPrintf(LogSeverityLevel::Error, "Failed to upload unique symbol (size %dx%d) in %dx%d@%d tile",
                     symbol->bitmap->width(), symbol->bitmap->height(),
@@ -1422,7 +1422,7 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
             // Mark this symbol as uploaded
             uniqueUploaded.insertMulti(groupResources, qMove(SymbolResourceEntry(symbol, resourceInGPU)));
         }
-        if(anyUploadFailed)
+        if (anyUploadFailed)
             break;
     }
 
@@ -1430,11 +1430,11 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
     QMultiHash< std::shared_ptr<GroupResources>, SymbolResourceEntry > sharedUploaded;
     for(const auto& groupResources : constOf(_referencedSharedGroupsResources))
     {
-        if(groupResources->group->symbols.isEmpty())
+        if (groupResources->group->symbols.isEmpty())
             continue;
 
         // Basically, this check means "continue if shared resources where uploaded"
-        if(!groupResources->resourcesInGPU.isEmpty())
+        if (!groupResources->resourcesInGPU.isEmpty())
             continue;
 
         for(const auto& symbol : constOf(groupResources->group->symbols))
@@ -1445,7 +1445,7 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
             ok = owner->uploadSymbolToGPU(symbol, resourceInGPU);
 
             // If upload have failed, stop
-            if(!ok)
+            if (!ok)
             {
                 LogPrintf(LogSeverityLevel::Error, "Failed to upload unique symbol (size %dx%d) in %dx%d@%d tile",
                     symbol->bitmap->width(), symbol->bitmap->height(),
@@ -1458,13 +1458,13 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
             // Mark this symbol as uploaded
             sharedUploaded.insertMulti(groupResources, qMove(SymbolResourceEntry(symbol, resourceInGPU)));
         }
-        if(anyUploadFailed)
+        if (anyUploadFailed)
             break;
     }
 
     // If at least one symbol failed to upload, consider entire tile as failed to upload,
     // and unload its partial GPU resources
-    if(anyUploadFailed)
+    if (anyUploadFailed)
     {
         uniqueUploaded.clear();
         sharedUploaded.clear();
@@ -1544,7 +1544,7 @@ void OsmAnd::MapRendererResources::SymbolsTileResource::unloadFromGPU()
 
         // Skip removing symbols from global map in case this was not the last reference
         // to shared group resources
-        if(!wasRemoved)
+        if (!wasRemoved)
             continue;
 
         for(const auto& entryResourceInGPU : rangeOf(groupResources->resourcesInGPU))
@@ -1583,7 +1583,7 @@ void OsmAnd::MapRendererResources::SymbolsTileResource::detach()
         sharedGroupsResources.releaseReference(groupResources->group->mapObject->id, groupResources_, true, &wasRemoved);
 
         // In case this was the last reference to shared group resources, check if any resources need to be deleted
-        if(wasRemoved)
+        if (wasRemoved)
         {
             for(const auto& entryResourceInGPU : rangeOf(groupResources->resourcesInGPU))
             {

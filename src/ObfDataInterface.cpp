@@ -18,13 +18,13 @@ bool OsmAnd::ObfDataInterface::loadObfFiles( QList< std::shared_ptr<const ObfFil
 {
     for(const auto& obfReader : constOf(obfReaders))
     {
-        if(controller && controller->isAborted())
+        if (controller && controller->isAborted())
             return false;
 
         // Initialize OBF file
         obfReader->obtainInfo();
 
-        if(outFiles)
+        if (outFiles)
             outFiles->push_back(obfReader->obfFile);
     }
 
@@ -36,12 +36,12 @@ bool OsmAnd::ObfDataInterface::loadBasemapPresenceFlag( bool& basemapPresent, co
     basemapPresent = false;
     for(const auto& obfReader : constOf(obfReaders))
     {
-        if(controller && controller->isAborted())
+        if (controller && controller->isAborted())
             return false;
 
         const auto& obfInfo = obfReader->obtainInfo();
         basemapPresent = obfInfo->isBasemap;
-        if(basemapPresent)
+        if (basemapPresent)
             break;
     }
 
@@ -54,14 +54,14 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
     const IQueryController* const controller /*= nullptr*/, const FilterMapObjectsByIdSignature filterById /*= nullptr*/,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric /*= nullptr*/)
 {
-    if(foundationOut)
+    if (foundationOut)
         *foundationOut = MapFoundationType::Undefined;
 
     // Iterate through all OBF readers
     for(const auto& obfReader : constOf(obfReaders))
     {
         // Check if request is aborted
-        if(controller && controller->isAborted())
+        if (controller && controller->isAborted())
             return false;
 
         // Iterate over all map sections of each OBF reader
@@ -69,7 +69,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
         for(const auto& mapSection : constOf(obfInfo->mapSections))
         {
             // Check if request is aborted
-            if(controller && controller->isAborted())
+            if (controller && controller->isAborted())
                 return false;
 
             // Read objects from each map section

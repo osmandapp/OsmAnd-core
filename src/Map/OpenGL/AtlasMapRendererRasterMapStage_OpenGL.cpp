@@ -103,7 +103,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::initialize()
         "%UnrolledPerRasterLayerTexCoordsProcessingCode%                                                                    ""\n"
         "                                                                                                                   ""\n"
         //   If elevation data is active, use it
-        "    if(abs(param_vs_elevationData_k) > 0.0)                                                                        ""\n"
+        "    if (abs(param_vs_elevationData_k) > 0.0)                                                                       ""\n"
         "    {                                                                                                              ""\n"
         "        float metersToUnits = mix(param_vs_elevationData_upperMetersPerUnit,                                       ""\n"
         "            param_vs_elevationData_lowerMetersPerUnit, in_vs_vertexTexCoords.t);                                   ""\n"
@@ -257,13 +257,13 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::initialize()
         const auto& lookup = gpuAPI->obtainVariablesLookupContext(tileProgram.id);
         lookup->lookupLocation(tileProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
         lookup->lookupLocation(tileProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
-        if(!gpuAPI->isSupported_vertexShaderTextureLookup)
+        if (!gpuAPI->isSupported_vertexShaderTextureLookup)
         {
             lookup->lookupLocation(tileProgram.vs.in.vertexElevation, "in_vs_vertexElevation", GLShaderVariableType::In);
         }
         lookup->lookupLocation(tileProgram.vs.param.mProjectionView, "param_vs_mProjectionView", GLShaderVariableType::Uniform);
         lookup->lookupLocation(tileProgram.vs.param.targetInTilePosN, "param_vs_targetInTilePosN", GLShaderVariableType::Uniform);
-        if(gpuAPI->isSupported_textureLod)
+        if (gpuAPI->isSupported_textureLod)
         {
             lookup->lookupLocation(tileProgram.vs.param.distanceFromCameraToTarget, "param_vs_distanceFromCameraToTarget", GLShaderVariableType::Uniform);
             lookup->lookupLocation(tileProgram.vs.param.cameraElevationAngleN, "param_vs_cameraElevationAngleN", GLShaderVariableType::Uniform);
@@ -274,7 +274,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::initialize()
         lookup->lookupLocation(tileProgram.vs.param.elevationData_k, "param_vs_elevationData_k", GLShaderVariableType::Uniform);
         lookup->lookupLocation(tileProgram.vs.param.elevationData_upperMetersPerUnit, "param_vs_elevationData_upperMetersPerUnit", GLShaderVariableType::Uniform);
         lookup->lookupLocation(tileProgram.vs.param.elevationData_lowerMetersPerUnit, "param_vs_elevationData_lowerMetersPerUnit", GLShaderVariableType::Uniform);
-        if(gpuAPI->isSupported_vertexShaderTextureLookup)
+        if (gpuAPI->isSupported_vertexShaderTextureLookup)
         {
             lookup->lookupLocation(tileProgram.vs.param.elevationData_sampler, "param_vs_elevationData_sampler", GLShaderVariableType::Uniform);
             lookup->lookupLocation(tileProgram.vs.param.elevationTileLayer.tileSizeN, "param_vs_elevationTileLayer.tileSizeN", GLShaderVariableType::Uniform);
@@ -335,14 +335,14 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
     auto activeRasterTileProvidersCount = 0u;
     for(int layerIdx = 0, layerId = static_cast<int>(RasterMapLayerId::BaseLayer); layerIdx < RasterMapLayersCount; layerIdx++, layerId++)
     {
-        if(!currentState.rasterLayerProviders[layerId])
+        if (!currentState.rasterLayerProviders[layerId])
             continue;
 
         activeRasterTileProvidersCount++;
     }
 
     // If there is no active raster tile providers at all, or no base layer, do not perform anything
-    if(activeRasterTileProvidersCount == 0 || !currentState.rasterLayerProviders[static_cast<int>(RasterMapLayerId::BaseLayer)])
+    if (activeRasterTileProvidersCount == 0 || !currentState.rasterLayerProviders[static_cast<int>(RasterMapLayerId::BaseLayer)])
         return;
 
     GL_PUSH_GROUP_MARKER(QLatin1String("tiles"));
@@ -367,7 +367,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
     glUniform2f(tileProgram.vs.param.targetInTilePosN, internalState.targetInTileOffsetN.x, internalState.targetInTileOffsetN.y);
     GL_CHECK_RESULT;
 
-    if(gpuAPI->isSupported_textureLod)
+    if (gpuAPI->isSupported_textureLod)
     {
         // Set distance from camera to target
         glUniform1f(tileProgram.vs.param.distanceFromCameraToTarget, internalState.distanceFromCameraToTarget);
@@ -387,7 +387,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
     }
 
     // Configure samplers
-    if(gpuAPI->isSupported_vertexShaderTextureLookup)
+    if (gpuAPI->isSupported_vertexShaderTextureLookup)
     {
         glUniform1i(tileProgram.vs.param.elevationData_sampler, 0);
         GL_CHECK_RESULT;
@@ -395,7 +395,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
         gpuAPI->setTextureBlockSampler(GL_TEXTURE0, GPUAPI_OpenGL::SamplerType::ElevationDataTile);
     }
     auto bitmapTileSamplerType = GPUAPI_OpenGL::SamplerType::BitmapTile_Bilinear;
-    if(gpuAPI->isSupported_textureLod)
+    if (gpuAPI->isSupported_textureLod)
     {
         switch(currentConfiguration.texturesFilteringQuality)
         {
@@ -419,14 +419,14 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
 
     // Check if we need to process elevation data
     const bool elevationDataEnabled = static_cast<bool>(currentState.elevationDataProvider);
-    if(!elevationDataEnabled)
+    if (!elevationDataEnabled)
     {
         // We have no elevation data provider, so we can not do anything
         glUniform1f(tileProgram.vs.param.elevationData_k, 0.0f);
         GL_CHECK_RESULT;
     }
     bool elevationVertexAttribArrayEnabled = false;
-    if(!gpuAPI->isSupported_vertexShaderTextureLookup)
+    if (!gpuAPI->isSupported_vertexShaderTextureLookup)
     {
         glDisableVertexAttribArray(*tileProgram.vs.in.vertexElevation);
         GL_CHECK_RESULT;
@@ -448,19 +448,19 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
 
         // Set elevation data
         bool appliedElevationVertexAttribArray = false;
-        if(elevationDataEnabled)
+        if (elevationDataEnabled)
         {
             const auto resourcesCollection = getResources().getCollection(ResourceType::ElevationData, currentState.elevationDataProvider);
 
             // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
             std::shared_ptr< const GPUAPI::ResourceInGPU > gpuResource;
             std::shared_ptr<Resources::BaseTiledResource> resource_;
-            if(resourcesCollection->tryObtainEntry(resource_, tileIdN, currentState.zoomBase))
+            if (resourcesCollection->tryObtainEntry(resource_, tileIdN, currentState.zoomBase))
             {
                 const auto resource = std::static_pointer_cast<Resources::MapTileResource>(resource_);
 
                 // Check state and obtain GPU resource
-                if(resource->setStateIf(ResourceState::Uploaded, ResourceState::IsBeingUsed))
+                if (resource->setStateIf(ResourceState::Uploaded, ResourceState::IsBeingUsed))
                 {
                     // Capture GPU resource
                     gpuResource = resource->resourceInGPU;
@@ -469,7 +469,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
                 }
             }
 
-            if(!gpuResource)
+            if (!gpuResource)
             {
                 // We have no elevation data, so we can not do anything
                 glUniform1f(tileProgram.vs.param.elevationData_k, 0.0f);
@@ -487,7 +487,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
 
                 const auto& perTile_vs = tileProgram.vs.param.elevationTileLayer;
 
-                if(gpuAPI->isSupported_vertexShaderTextureLookup)
+                if (gpuAPI->isSupported_vertexShaderTextureLookup)
                 {
                     glActiveTexture(GL_TEXTURE0);
                     GL_CHECK_RESULT;
@@ -497,7 +497,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
 
                     gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0);
 
-                    if(gpuResource->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
+                    if (gpuResource->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
                     {
                         const auto tileOnAtlasTexture = std::static_pointer_cast<const GPUAPI::SlotOnAtlasTextureInGPU>(gpuResource);
 
@@ -531,7 +531,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
                     const auto& arrayBuffer = std::static_pointer_cast<const GPUAPI::ArrayBufferInGPU>(gpuResource);
                     assert(arrayBuffer->itemsCount == currentConfiguration.heixelsPerTileSide*currentConfiguration.heixelsPerTileSide);
 
-                    if(!elevationVertexAttribArrayEnabled)
+                    if (!elevationVertexAttribArrayEnabled)
                     {
                         glEnableVertexAttribArray(*tileProgram.vs.in.vertexElevation);
                         GL_CHECK_RESULT;
@@ -552,7 +552,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
         // We need to pass each layer of this tile to shader
         for(int layerIdx = 0, layerId = static_cast<int>(RasterMapLayerId::BaseLayer), layerLinearIdx = -1; layerIdx < RasterMapLayersCount; layerIdx++, layerId++)
         {
-            if(!currentState.rasterLayerProviders[layerId])
+            if (!currentState.rasterLayerProviders[layerId])
                 continue;
             layerLinearIdx++;
 
@@ -566,19 +566,19 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
             // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
             std::shared_ptr< const GPUAPI::ResourceInGPU > gpuResource;
             std::shared_ptr<Resources::BaseTiledResource> resource_;
-            if(resourcesCollection->tryObtainEntry(resource_, tileIdN, currentState.zoomBase))
+            if (resourcesCollection->tryObtainEntry(resource_, tileIdN, currentState.zoomBase))
             {
                 const auto resource = std::static_pointer_cast<Resources::MapTileResource>(resource_);
 
                 // Check state and obtain GPU resource
-                if(resource->setStateIf(ResourceState::Uploaded, ResourceState::IsBeingUsed))
+                if (resource->setStateIf(ResourceState::Uploaded, ResourceState::IsBeingUsed))
                 {
                     // Capture GPU resource
                     gpuResource = resource->resourceInGPU;
 
                     resource->setState(ResourceState::Uploaded);
                 }
-                else if(resource->getState() == ResourceState::Unavailable)
+                else if (resource->getState() == ResourceState::Unavailable)
                     gpuResource = getResources().unavailableTileStub;
                 else
                     gpuResource = getResources().processingTileStub;
@@ -600,7 +600,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
 
             gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + samplerIndex);
 
-            if(gpuResource->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
+            if (gpuResource->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
             {
                 const auto tileOnAtlasTexture = std::static_pointer_cast<const GPUAPI::SlotOnAtlasTextureInGPU>(gpuResource);
 
@@ -626,7 +626,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
             }
         }
 
-        if(!appliedElevationVertexAttribArray && elevationVertexAttribArrayEnabled)
+        if (!appliedElevationVertexAttribArray && elevationVertexAttribArrayEnabled)
         {
             elevationVertexAttribArrayEnabled = false;
 
@@ -655,7 +655,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
     GL_CHECK_RESULT;
 
     // Disable elevation vertex attrib array (if enabled)
-    if(elevationVertexAttribArrayEnabled)
+    if (elevationVertexAttribArrayEnabled)
     {
         glDisableVertexAttribArray(*tileProgram.vs.in.vertexElevation);
         GL_CHECK_RESULT;
@@ -682,7 +682,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::release()
     {
         auto& tileProgram = _tileProgramVariations[variationId];
 
-        if(tileProgram.id)
+        if (tileProgram.id)
         {
             glDeleteProgram(tileProgram.id);
             GL_CHECK_RESULT;
@@ -714,7 +714,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::createTilePatch()
     GLushort* pIndices = nullptr;
     GLsizei indicesCount = 0;
 
-    if(!currentState.elevationDataProvider)
+    if (!currentState.elevationDataProvider)
     {
         // Simple tile patch, that consists of 4 vertices
 
@@ -867,20 +867,20 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::releaseTilePatch()
 
     for(auto& tilePatchVAO : _tilePatchVAOs)
     {
-        if(tilePatchVAO)
+        if (tilePatchVAO)
         {
             gpuAPI->glDeleteVertexArrays_wrapper(1, &tilePatchVAO);
             GL_CHECK_RESULT;
             tilePatchVAO.reset();
         }
     }
-    if(_tilePatchIBO)
+    if (_tilePatchIBO)
     {
         glDeleteBuffers(1, &_tilePatchIBO);
         GL_CHECK_RESULT;
         _tilePatchIBO.reset();
     }
-    if(_tilePatchVBO)
+    if (_tilePatchVBO)
     {
         glDeleteBuffers(1, &_tilePatchVBO);
         GL_CHECK_RESULT;

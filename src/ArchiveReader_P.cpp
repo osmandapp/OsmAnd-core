@@ -29,18 +29,18 @@ QList<OsmAnd::ArchiveReader_P::Item> OsmAnd::ArchiveReader_P::getItems(bool* con
             Item item;
             item.name = QString(reinterpret_cast<const QChar*>(archive_entry_pathname_w(entry)));
             item.size = archive_entry_size(entry);
-            if(archive_entry_ctime_is_set(entry) != 0)
+            if (archive_entry_ctime_is_set(entry) != 0)
                 item.creationTime = QDateTime::fromTime_t(archive_entry_ctime(entry));
-            if(archive_entry_mtime_is_set(entry) != 0)
+            if (archive_entry_mtime_is_set(entry) != 0)
                 item.modificationTime = QDateTime::fromTime_t(archive_entry_mtime(entry));
-            if(archive_entry_atime_is_set(entry) != 0)
+            if (archive_entry_atime_is_set(entry) != 0)
                 item.accessTime = QDateTime::fromTime_t(archive_entry_atime(entry));
 
             result.push_back(item);
             return true;
         });
 
-    if(ok_)
+    if (ok_)
         *ok_ = ok;
     return result;
 }
@@ -59,20 +59,20 @@ bool OsmAnd::ArchiveReader_P::extractItemToFile(const QString& itemName, const Q
         (archive* archive, archive_entry* entry, bool& doStop) -> bool
         {
             const QString currentItemName(reinterpret_cast<const QChar*>(archive_entry_pathname_w(entry)));
-            if(currentItemName != itemName)
+            if (currentItemName != itemName)
                 return true;
             
             bool ok = extractArchiveEntryAsFile(archive, entry, fileName, extractedBytes);
-            if(!ok)
+            if (!ok)
                 return false;
 
             doStop = true;
             return true;
         });
-    if(!ok)
+    if (!ok)
         return false;
 
-    if(extractedBytes_ != nullptr)
+    if (extractedBytes_ != nullptr)
         *extractedBytes_ = extractedBytes;
     return true;
 }
@@ -89,16 +89,16 @@ bool OsmAnd::ArchiveReader_P::extractAllItemsTo(const QString& destinationPath, 
 
             uint64_t itemExtractedBytes = 0;
             bool ok = extractArchiveEntryAsFile(archive, entry, destinationFileName, itemExtractedBytes);
-            if(!ok)
+            if (!ok)
                 return false;
 
             extractedBytes += itemExtractedBytes;
             return true;
         });
-    if(!ok)
+    if (!ok)
         return false;
 
-    if(extractedBytes_ != nullptr)
+    if (extractedBytes_ != nullptr)
         *extractedBytes_ = extractedBytes;
     return true;
 }
@@ -106,7 +106,7 @@ bool OsmAnd::ArchiveReader_P::extractAllItemsTo(const QString& destinationPath, 
 bool OsmAnd::ArchiveReader_P::processArchive(const QString& fileName, const ArchiveEntryHander handler)
 {
     QFile archiveFile(fileName);
-    if(!archiveFile.exists())
+    if (!archiveFile.exists())
         return false;
 
     bool ok = processArchive(&archiveFile, handler);
@@ -119,7 +119,7 @@ bool OsmAnd::ArchiveReader_P::processArchive(const QString& fileName, const Arch
 bool OsmAnd::ArchiveReader_P::processArchive(QIODevice* const ioDevice, const ArchiveEntryHander handler)
 {
     auto archive = archive_read_new();
-    if(!archive)
+    if (!archive)
         return false;
 
     ArchiveData archiveData;
@@ -131,42 +131,42 @@ bool OsmAnd::ArchiveReader_P::processArchive(QIODevice* const ioDevice, const Ar
     for(;;)
     {
         res = archive_read_support_compression_all(archive);
-        if(res != ARCHIVE_OK)
+        if (res != ARCHIVE_OK)
             break;
 
         res = archive_read_support_format_all(archive);
-        if(res != ARCHIVE_OK)
+        if (res != ARCHIVE_OK)
             break;
 
         res = archive_read_set_callback_data(archive, &archiveData);
-        if(res != ARCHIVE_OK)
+        if (res != ARCHIVE_OK)
             break;
 
         res = archive_read_set_open_callback(archive, &ArchiveReader_P::archiveOpen);
-        if(res != ARCHIVE_OK)
+        if (res != ARCHIVE_OK)
             break;
 
         res = archive_read_set_read_callback(archive, &ArchiveReader_P::archiveRead);
-        if(res != ARCHIVE_OK)
+        if (res != ARCHIVE_OK)
             break;
 
         res = archive_read_set_skip_callback(archive, &ArchiveReader_P::archiveSkip);
-        if(res != ARCHIVE_OK)
+        if (res != ARCHIVE_OK)
             break;
 
         res = archive_read_set_seek_callback(archive, &ArchiveReader_P::archiveSeek);
-        if(res != ARCHIVE_OK)
+        if (res != ARCHIVE_OK)
             break;
 
         res = archive_read_set_close_callback(archive, &ArchiveReader_P::archiveClose);
-        if(res != ARCHIVE_OK)
+        if (res != ARCHIVE_OK)
             break;
 
         res = archive_read_open1(archive);
 
         break;
     }
-    if(res != ARCHIVE_OK)
+    if (res != ARCHIVE_OK)
     {
         archive_read_finish(archive);
         delete[] archiveData.buffer;
@@ -181,13 +181,13 @@ bool OsmAnd::ArchiveReader_P::processArchive(QIODevice* const ioDevice, const Ar
     {
         bool doStop = false;
         ok = handler(archive, archiveEntry, doStop);
-        if(!ok || doStop)
+        if (!ok || doStop)
             break;
     }
 
     // Close archive
     res = archive_read_finish(archive);
-    if(res != ARCHIVE_OK)
+    if (res != ARCHIVE_OK)
         ok = false;
     delete[] archiveData.buffer;
 
@@ -197,15 +197,15 @@ bool OsmAnd::ArchiveReader_P::processArchive(QIODevice* const ioDevice, const Ar
 bool OsmAnd::ArchiveReader_P::extractArchiveEntryAsFile(archive* archive, archive_entry* entry, const QString& fileName, uint64_t& bytesExtracted_)
 {
     const auto itemType = archive_entry_filetype(entry);
-    if(itemType != S_IFREG)
+    if (itemType != S_IFREG)
         return false;
 
     uint64_t fileSize = 0;
-    if(archive_entry_size_is_set(entry) != 0)
+    if (archive_entry_size_is_set(entry) != 0)
         fileSize = archive_entry_size(entry);
 
     QFile targetFile(fileName);
-    if(!QDir(QFileInfo(targetFile).absolutePath()).mkpath("."))
+    if (!QDir(QFileInfo(targetFile).absolutePath()).mkpath("."))
         return false;
 
     uint64_t bytesExtracted = 0;
@@ -213,13 +213,13 @@ bool OsmAnd::ArchiveReader_P::extractArchiveEntryAsFile(archive* archive, archiv
     for(;;)
     {
         ok = targetFile.open(QIODevice::WriteOnly | QIODevice::Truncate);
-        if(!ok)
+        if (!ok)
             break;
 
-        if(fileSize > 0)
+        if (fileSize > 0)
         {
             ok = targetFile.resize(fileSize);
-            if(!ok)
+            if (!ok)
                 break;
         }
 
@@ -227,7 +227,7 @@ bool OsmAnd::ArchiveReader_P::extractArchiveEntryAsFile(archive* archive, archiv
         for(; ok;)
         {
             const auto bytesRead = archive_read_data(archive, buffer, BufferSize);
-            if(bytesRead <= 0)
+            if (bytesRead <= 0)
             {
                 ok = (bytesRead == 0);
                 break;
@@ -239,7 +239,7 @@ bool OsmAnd::ArchiveReader_P::extractArchiveEntryAsFile(archive* archive, archiv
                 const auto writtenChunkSize = targetFile.write(
                     reinterpret_cast<char*>(buffer + bytesWritten),
                     bytesRead - bytesWritten);
-                if(writtenChunkSize <= 0)
+                if (writtenChunkSize <= 0)
                 {
                     ok = false;
                     break;
@@ -253,7 +253,7 @@ bool OsmAnd::ArchiveReader_P::extractArchiveEntryAsFile(archive* archive, archiv
 
         break;
     }
-    if(!ok)
+    if (!ok)
     {
         targetFile.close();
         targetFile.remove();
@@ -299,7 +299,7 @@ __LA_INT64_T OsmAnd::ArchiveReader_P::archiveSeek(archive *, void *_client_data,
 {
     const auto archiveData = reinterpret_cast<ArchiveData*>(_client_data);
 
-    if(archiveData->ioDevice->isSequential())
+    if (archiveData->ioDevice->isSequential())
         return ARCHIVE_FATAL;
 
     switch (whence)
@@ -323,7 +323,7 @@ int OsmAnd::ArchiveReader_P::archiveClose(archive *, void *_client_data)
 {
     const auto archiveData = reinterpret_cast<ArchiveData*>(_client_data);
 
-    if(archiveData->ioDevice->isOpen())
+    if (archiveData->ioDevice->isOpen())
         archiveData->ioDevice->close();
 
     return ARCHIVE_OK;

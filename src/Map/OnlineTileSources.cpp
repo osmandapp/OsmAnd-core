@@ -25,7 +25,7 @@ bool OsmAnd::OnlineTileSources::loadFrom(QIODevice& ioDevice)
 bool OsmAnd::OnlineTileSources::loadFrom(const QString& fileName)
 {
     QFile file(fileName);
-    if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
         return false;
     const auto success = loadFrom(file);
     file.close();
@@ -40,10 +40,10 @@ bool OsmAnd::OnlineTileSources::saveTo(QIODevice& ioDevice) const
 bool OsmAnd::OnlineTileSources::saveTo(const QString& fileName) const
 {
     QFile file(fileName);
-    if(!file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
         return false;
     const auto success = saveTo(file);
-    if(!success)
+    if (!success)
     {
         file.close();
         file.remove();

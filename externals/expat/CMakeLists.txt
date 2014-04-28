@@ -1,6 +1,6 @@
 project(expat)
 
-if(CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
+if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
 	configure_file("expat_config.h.ios" "${CMAKE_CURRENT_BINARY_DIR}/expat_config.h" COPYONLY)
 else()
 	# Modified content from 'ConfigureChecks.cmake':
@@ -32,13 +32,13 @@ else()
 
 	test_big_endian(WORDS_BIGENDIAN)
 	#/* 1234 = LIL_ENDIAN, 4321 = BIGENDIAN */
-	if(WORDS_BIGENDIAN)
+	if (WORDS_BIGENDIAN)
 		set(BYTEORDER 4321)
 	else(WORDS_BIGENDIAN)
 		set(BYTEORDER 1234)
 	endif(WORDS_BIGENDIAN)
 
-	if(HAVE_SYS_TYPES_H)
+	if (HAVE_SYS_TYPES_H)
 		check_symbol_exists("off_t" "sys/types.h" OFF_T)
 		check_symbol_exists("size_t" "sys/types.h" SIZE_T)
 	else(HAVE_SYS_TYPES_H)

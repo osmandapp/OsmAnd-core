@@ -15,7 +15,7 @@ OsmAnd::TileDB::TileDB( const QDir& dataPath_, const QString& indexFilename_/* =
 {
     auto indexConnectionName = QLatin1String("tiledb-sqlite-index:") + dataPath_.absolutePath();
 
-    if(!QSqlDatabase::contains(indexConnectionName))
+    if (!QSqlDatabase::contains(indexConnectionName))
         _indexDb = QSqlDatabase::addDatabase("QSQLITE", indexConnectionName);
     else
         _indexDb = QSqlDatabase::database(indexConnectionName);
@@ -23,7 +23,7 @@ OsmAnd::TileDB::TileDB( const QDir& dataPath_, const QString& indexFilename_/* =
 
 OsmAnd::TileDB::~TileDB()
 {
-    if(_indexDb.isOpen())
+    if (_indexDb.isOpen())
         _indexDb.close();
 }
 
@@ -36,13 +36,13 @@ bool OsmAnd::TileDB::openIndex()
 
     _indexDb.setDatabaseName(indexFilename.isEmpty() ? ":memory:" : indexFilename);
     ok = _indexDb.open();
-    if(!ok)
+    if (!ok)
     {
         LogPrintf(LogSeverityLevel::Error, "Failed to open TileDB index from '%s': %s", qPrintable(indexFilename), qPrintable(_indexDb.lastError().text()));
         return false;
     }
 
-    if(shouldRebuild)
+    if (shouldRebuild)
         rebuildIndex();
 
     return true;
@@ -55,9 +55,9 @@ bool OsmAnd::TileDB::rebuildIndex()
     bool ok;
 
     // Open index database if it's not yet
-    if(!_indexDb.isOpen())
+    if (!_indexDb.isOpen())
     {
-        if(!openIndex())
+        if (!openIndex())
             return false;
     }
     QSqlQuery q(_indexDb);
@@ -66,7 +66,7 @@ bool OsmAnd::TileDB::rebuildIndex()
     auto beginTimestamp = std::chrono::steady_clock::now();
 
     // Recreate index db structure
-    if(!indexFilename.isEmpty())
+    if (!indexFilename.isEmpty())
     {
         ok = q.exec("DROP TABLE IF EXISTS tiledb_files");
         assert(ok);
@@ -114,12 +114,12 @@ bool OsmAnd::TileDB::rebuildIndex()
 
         const auto connectionName = QLatin1String("tiledb-sqlite:") + dbFilename;
         QSqlDatabase db;
-        if(!QSqlDatabase::contains(connectionName))
+        if (!QSqlDatabase::contains(connectionName))
             db = QSqlDatabase::addDatabase("QSQLITE", connectionName);
         else
             db = QSqlDatabase::database(connectionName);
         db.setDatabaseName(dbFilename);
-        if(!db.open())
+        if (!db.open())
         {
             LogPrintf(LogSeverityLevel::Error, "Failed to open TileDB from '%s': %s", qPrintable(dbFilename), qPrintable(db.lastError().text()));
             continue;
@@ -171,9 +171,9 @@ bool OsmAnd::TileDB::obtainTileData( const TileId tileId, const ZoomLevel zoom, 
     QMutexLocker scopeLock(&_indexMutex);
 
     // Check that index is available
-    if(!_indexDb.isOpen())
+    if (!_indexDb.isOpen())
     {
-        if(!openIndex())
+        if (!openIndex())
             return false;
     }
 
@@ -184,7 +184,7 @@ bool OsmAnd::TileDB::obtainTileData( const TileId tileId, const ZoomLevel zoom, 
     query.addBindValue(tileId.y);
     query.addBindValue(tileId.y);
     query.addBindValue(zoom);
-    if(!query.exec())
+    if (!query.exec())
         return false;
 
     bool hit = false;
@@ -198,12 +198,12 @@ bool OsmAnd::TileDB::obtainTileData( const TileId tileId, const ZoomLevel zoom, 
         // Open database
         const auto connectionName = QLatin1String("tiledb-sqlite:") + dbFilename;
         QSqlDatabase db;
-        if(!QSqlDatabase::contains(connectionName))
+        if (!QSqlDatabase::contains(connectionName))
             db = QSqlDatabase::addDatabase("QSQLITE", connectionName);
         else
             db = QSqlDatabase::database(connectionName);
         db.setDatabaseName(dbFilename);
-        if(!db.open())
+        if (!db.open())
         {
             LogPrintf(LogSeverityLevel::Error, "Failed to open TileDB index from '%s': %s", qPrintable(dbFilename), qPrintable(db.lastError().text()));
             return false;
@@ -215,7 +215,7 @@ bool OsmAnd::TileDB::obtainTileData( const TileId tileId, const ZoomLevel zoom, 
         query.addBindValue(tileId.x);
         query.addBindValue(tileId.y);
         query.addBindValue(static_cast<int>(zoom));
-        if(query.exec() && query.next())
+        if (query.exec() && query.next())
         {
             data = query.value(0).toByteArray();
             hit = true;

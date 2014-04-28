@@ -62,7 +62,7 @@ void OsmAnd::MapAnimator_P::cancelAnimation()
 void OsmAnd::MapAnimator_P::update(const float timePassed)
 {
     // Do nothing if animation is paused
-    if(_isAnimationPaused)
+    if (_isAnimationPaused)
         return;
 
     // Apply all animations
@@ -72,7 +72,7 @@ void OsmAnd::MapAnimator_P::update(const float timePassed)
     {
         const auto& animation = itAnimation.next();
 
-        if(animation->process(timePassed))
+        if (animation->process(timePassed))
             itAnimation.remove();
     }
 }
@@ -182,9 +182,9 @@ void OsmAnd::MapAnimator_P::animateMoveBy(
     QMutexLocker scopedLocker(&_animationsMutex);
 
     constructParabolicTargetAnimation(_animations, deltaValue, duration, timingFunction, MapAnimatorTimingFunction::EaseOutInQuadratic);
-    if(zeroizeAzimuth)
+    if (zeroizeAzimuth)
         constructZeroizeAzimuthAnimation(_animations, duration, timingFunction);
-    if(invZeroizeElevationAngle)
+    if (invZeroizeElevationAngle)
         constructInvZeroizeElevationAngleAnimation(_animations, duration, timingFunction);
 }
 
@@ -244,7 +244,7 @@ void OsmAnd::MapAnimator_P::constructZoomAnimation(
     const float duration,
     const MapAnimatorTimingFunction timingFunction)
 {
-    if(qFuzzyIsNull(duration) || qFuzzyIsNull(deltaValue))
+    if (qFuzzyIsNull(duration) || qFuzzyIsNull(deltaValue))
         return;
 
     std::shared_ptr<BaseAnimation> newAnimation(new MapAnimator_P::Animation<float>(
@@ -260,7 +260,7 @@ void OsmAnd::MapAnimator_P::constructTargetAnimation(
     const float duration,
     const MapAnimatorTimingFunction timingFunction)
 {
-    if(qFuzzyIsNull(duration) || (deltaValue.x == 0 && deltaValue.y == 0))
+    if (qFuzzyIsNull(duration) || (deltaValue.x == 0 && deltaValue.y == 0))
         return;
 
     std::shared_ptr<BaseAnimation> newAnimation(new MapAnimator_P::Animation<PointI64>(
@@ -277,7 +277,7 @@ void OsmAnd::MapAnimator_P::constructParabolicTargetAnimation(
     const MapAnimatorTimingFunction targetTimingFunction,
     const MapAnimatorTimingFunction zoomTimingFunction)
 {
-    if(qFuzzyIsNull(duration) || (deltaValue.x == 0 && deltaValue.y == 0))
+    if (qFuzzyIsNull(duration) || (deltaValue.x == 0 && deltaValue.y == 0))
         return;
 
     constructTargetAnimation(outAnimation, deltaValue, duration, targetTimingFunction);
@@ -303,11 +303,11 @@ void OsmAnd::MapAnimator_P::constructParabolicTargetAnimation(
 
             // Calculate zoom shift
             float zoomShift = (std::log10(distance) - 1.3f /*~= std::log10f(20.0f)*/) * 7.0f;
-            if(zoomShift <= 0.0f)
+            if (zoomShift <= 0.0f)
                 return 0.0f;
 
             // If zoom shift will move zoom out of bounds, reduce zoom shift
-            if(currentZoom - zoomShift < minZoom)
+            if (currentZoom - zoomShift < minZoom)
                 zoomShift = currentZoom - minZoom;
 
             sharedContext->storageList.push_back(QVariant(zoomShift));
@@ -319,7 +319,7 @@ void OsmAnd::MapAnimator_P::constructParabolicTargetAnimation(
             [this](AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
         {
             // If shared context contains no data it means that parabolic effect was disabled
-            if(sharedContext->storageList.isEmpty())
+            if (sharedContext->storageList.isEmpty())
                 return 0.0f;
 
             // Just restore the original zoom
@@ -338,7 +338,7 @@ void OsmAnd::MapAnimator_P::constructAzimuthAnimation(
     const float duration,
     const MapAnimatorTimingFunction timingFunction)
 {
-    if(qFuzzyIsNull(duration) || qFuzzyIsNull(deltaValue))
+    if (qFuzzyIsNull(duration) || qFuzzyIsNull(deltaValue))
         return;
 
     std::shared_ptr<BaseAnimation> newAnimation(new MapAnimator_P::Animation<float>(
@@ -354,7 +354,7 @@ void OsmAnd::MapAnimator_P::constructElevationAngleAnimation(
     const float duration,
     const MapAnimatorTimingFunction timingFunction)
 {
-    if(qFuzzyIsNull(duration) || qFuzzyIsNull(deltaValue))
+    if (qFuzzyIsNull(duration) || qFuzzyIsNull(deltaValue))
         return;
 
     std::shared_ptr<BaseAnimation> newAnimation(new MapAnimator_P::Animation<float>(
@@ -369,7 +369,7 @@ void OsmAnd::MapAnimator_P::constructZeroizeAzimuthAnimation(
     const float duration,
     const MapAnimatorTimingFunction timingFunction)
 {
-    if(qFuzzyIsNull(duration))
+    if (qFuzzyIsNull(duration))
         return;
 
     std::shared_ptr<BaseAnimation> newAnimation(new MapAnimator_P::Animation<float>(
@@ -388,7 +388,7 @@ void OsmAnd::MapAnimator_P::constructInvZeroizeElevationAngleAnimation(
     const float duration,
     const MapAnimatorTimingFunction timingFunction)
 {
-    if(qFuzzyIsNull(duration))
+    if (qFuzzyIsNull(duration))
         return;
 
     std::shared_ptr<BaseAnimation> newAnimation(new MapAnimator_P::Animation<float>(

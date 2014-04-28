@@ -22,7 +22,7 @@ void OsmAnd::RasterizerContext_P::clear()
 {
     // If context has binded shared context, remove all primitives groups
     // that are owned only current context
-    if(owner->sharedContext)
+    if (owner->sharedContext)
     {
         auto& sharedGroups = owner->sharedContext->_p->_sharedPrimitivesGroups[_zoom];
         for(auto& group : _primitivesGroups)
@@ -38,7 +38,7 @@ void OsmAnd::RasterizerContext_P::clear()
 
     // If context has binded shared context, remove all symbols groups
     // that are owned only current context
-    if(owner->sharedContext)
+    if (owner->sharedContext)
     {
         auto& sharedGroups = owner->sharedContext->_p->_sharedSymbolGroups[_zoom];
         for(auto& group : _symbolsGroups)

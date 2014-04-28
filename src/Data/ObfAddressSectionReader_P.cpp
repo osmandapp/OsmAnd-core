@@ -35,7 +35,7 @@ void OsmAnd::ObfAddressSectionReader_P::read( const ObfReader_P& reader, const s
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
-            if(section->_latinName.isEmpty())
+            if (section->_latinName.isEmpty())
                 section->_latinName = ICU::transliterateToLatin(section->_name);
             return;
         case OBF::OsmAndAddressIndex::kNameFieldNumber:
@@ -103,10 +103,10 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetGroups(
 
     for(const auto& block : constOf(section->addressBlocksSections))
     {
-        if(controller && controller->isAborted())
+        if (controller && controller->isAborted())
             break;
 
-        if(blockTypeFilter && !blockTypeFilter->contains(block->type))
+        if (blockTypeFilter && !blockTypeFilter->contains(block->type))
             continue;
 
         auto res = cis->Seek(block->_offset);
@@ -125,7 +125,7 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetGroupsFromAddressBlocksSection
 
     for(;;)
     {
-        if(controller && controller->isAborted())
+        if (controller && controller->isAborted())
             break;
 
         auto tag = cis->ReadTag();
@@ -145,11 +145,11 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetGroupsFromAddressBlocksSection
 
                 cis->PopLimit(oldLimit);
 
-                if(streetGroup)
+                if (streetGroup)
                 {
-                    if(!visitor || visitor(streetGroup))
+                    if (!visitor || visitor(streetGroup))
                     {
-                        if(resultOut)
+                        if (resultOut)
                             resultOut->push_back(qMove(streetGroup));
                     }
                 }
@@ -176,7 +176,7 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetGroupHeader(
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
-            if(streetGroup->_latinName.isEmpty())
+            if (streetGroup->_latinName.isEmpty())
                 streetGroup->_latinName = ICU::transliterateToLatin(streetGroup->_name);
             outStreetGroup = streetGroup;
             return;
@@ -191,7 +191,7 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetGroupHeader(
             cis->ReadVarint64(reinterpret_cast<gpb::uint64*>(&streetGroup->_id));
             /*
             TODO:
-            if(nameMatcher != null && useEn && !englishNameMatched){
+            if (nameMatcher != null && useEn && !englishNameMatched){
             codedIS.skipRawBytes(codedIS.getBytesUntilLimit());
             return null;
             }
@@ -213,19 +213,19 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetGroupHeader(
                 QString name;
                 ObfReaderUtilities::readQString(cis, name);
                 /*
-                if(nameMatcher != null){
-                if(!useEn){
-                if(!nameMatcher.matches(name)) {
+                if (nameMatcher != null){
+                if (!useEn){
+                if (!nameMatcher.matches(name)) {
                 codedIS.skipRawBytes(codedIS.getBytesUntilLimit());
                 return null;
                 }
-                } else if(nameMatcher.matches(Junidecode.unidecode(name))){
+                } else if (nameMatcher.matches(Junidecode.unidecode(name))){
                 englishNameMatched = true;
                 }
                 }
                 */
 
-                if(!streetGroup)
+                if (!streetGroup)
                     streetGroup.reset(new Model::PostcodeArea());
 
                 streetGroup->_name = name;
@@ -291,7 +291,7 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetsFromGroup(
 
     for(;;)
     {
-        if(controller && controller->isAborted())
+        if (controller && controller->isAborted())
             return;
 
         auto tag = cis->ReadTag();
@@ -311,9 +311,9 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetsFromGroup(
 
                 cis->PopLimit(oldLimit);
 
-                if(!visitor || visitor(street))
+                if (!visitor || visitor(street))
                 {
-                    if(resultOut)
+                    if (resultOut)
                         resultOut->push_back(qMove(street));
                 }
             }
@@ -339,7 +339,7 @@ void OsmAnd::ObfAddressSectionReader_P::readStreet(
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
-            if(street->_latinName.isEmpty())
+            if (street->_latinName.isEmpty())
                 street->_latinName = ICU::transliterateToLatin(street->_name);
             return;
         case OBF::StreetIndex::kIdFieldNumber:
@@ -404,7 +404,7 @@ void OsmAnd::ObfAddressSectionReader_P::readBuildingsFromStreet(
 
     for(;;)
     {
-        if(controller && controller->isAborted())
+        if (controller && controller->isAborted())
             return;
 
         auto tag = cis->ReadTag();
@@ -434,7 +434,7 @@ void OsmAnd::ObfAddressSectionReader_P::readBuildingsFromStreet(
 
                 if (!visitor || visitor(building))
                 {
-                    if(resultOut)
+                    if (resultOut)
                         resultOut->push_back(qMove(building));
                 }
             }
@@ -458,9 +458,9 @@ void OsmAnd::ObfAddressSectionReader_P::readBuilding(
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
-            if(building->_latinName.isEmpty())
+            if (building->_latinName.isEmpty())
                 building->_latinName = ICU::transliterateToLatin(building->_name);
-            if(building->_latinName2.isEmpty())
+            if (building->_latinName2.isEmpty())
                 building->_latinName2 = ICU::transliterateToLatin(building->_name2);
             return;
         case OBF::BuildingIndex::kIdFieldNumber:
@@ -481,7 +481,7 @@ void OsmAnd::ObfAddressSectionReader_P::readBuilding(
         case OBF::BuildingIndex::kInterpolationFieldNumber:
             {
                 auto value = ObfReaderUtilities::readSInt32(cis);
-                if(value > 0)
+                if (value > 0)
                     building->_interpolationInterval = value;
                 else
                     building->_interpolation = static_cast<Model::Building::Interpolation>(value);
@@ -547,7 +547,7 @@ void OsmAnd::ObfAddressSectionReader_P::readIntersectionsFromStreet(
 
     for(;;)
     {
-        if(controller && controller->isAborted())
+        if (controller && controller->isAborted())
             return;
 
         auto tag = cis->ReadTag();
@@ -566,9 +566,9 @@ void OsmAnd::ObfAddressSectionReader_P::readIntersectionsFromStreet(
                 
                 cis->PopLimit(oldLimit);
 
-                if(!visitor || visitor(intersectedStreet))
+                if (!visitor || visitor(intersectedStreet))
                 {
-                    if(resultOut)
+                    if (resultOut)
                         resultOut->push_back(qMove(intersectedStreet));
                 }
 
@@ -600,7 +600,7 @@ void OsmAnd::ObfAddressSectionReader_P::readIntersectedStreet(
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
-            if(intersection->_latinName.isEmpty())
+            if (intersection->_latinName.isEmpty())
                 intersection->_latinName = ICU::transliterateToLatin(intersection->_name);
             return;
         case OBF::StreetIntersection::kNameEnFieldNumber:

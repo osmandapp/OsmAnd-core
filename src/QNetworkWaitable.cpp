@@ -36,7 +36,7 @@ void OsmAnd::QNetworkWaitable::waitForMetaDataOf(QNetworkReply* const networkRep
         _mutex.lock();
     }
 
-    if(autoReset)
+    if (autoReset)
         _finishedReplies.remove(networkReply);
     QObject::disconnect(readyReadConnection);
 }
@@ -52,7 +52,7 @@ void OsmAnd::QNetworkWaitable::waitForFinishOf(QNetworkReply* const networkReply
         _mutex.lock();
     }
 
-    if(autoReset)
+    if (autoReset)
         _finishedReplies.remove(networkReply);
 }
 

@@ -42,12 +42,12 @@ bool OsmAnd::ObfReader_P::isOpened() const
 
 bool OsmAnd::ObfReader_P::open()
 {
-    if(isOpened())
+    if (isOpened())
         return false;
 
     // Create zero-copy input stream
     gpb::io::ZeroCopyInputStream* zcis = nullptr;
-    if(const auto inputAsFileDevice = std::dynamic_pointer_cast<QFileDevice>(_input))
+    if (const auto inputAsFileDevice = std::dynamic_pointer_cast<QFileDevice>(_input))
         zcis = new QFileDeviceInputStream(inputAsFileDevice);
     else
         zcis = new QIODeviceInputStream(_input);
@@ -63,7 +63,7 @@ bool OsmAnd::ObfReader_P::open()
 
 bool OsmAnd::ObfReader_P::close()
 {
-    if(!isOpened())
+    if (!isOpened())
         return false;
 
     _codedInputStream.reset();
@@ -75,19 +75,19 @@ bool OsmAnd::ObfReader_P::close()
 std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::ObfReader_P::obtainInfo() const
 {
     // Check if information is already available
-    if(_obfInfo)
+    if (_obfInfo)
         return _obfInfo;
 
-    if(!isOpened())
+    if (!isOpened())
         return nullptr;
 
-    if(owner->obfFile)
+    if (owner->obfFile)
     {
         QMutexLocker scopedLock(&owner->obfFile->_p->_obfInfoMutex);
 
-        if(!owner->obfFile->_p->_obfInfo)
+        if (!owner->obfFile->_p->_obfInfo)
         {
-            if(!readInfo(*this, owner->obfFile->_p->_obfInfo))
+            if (!readInfo(*this, owner->obfFile->_p->_obfInfo))
                 return nullptr;
         }
         _obfInfo = owner->obfFile->_p->_obfInfo;
@@ -96,7 +96,7 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::ObfReader_P::obtainInfo() const
     }
     else
     {
-        if(!readInfo(*this, _obfInfo))
+        if (!readInfo(*this, _obfInfo))
             return nullptr;
 
         return _obfInfo;
@@ -115,7 +115,7 @@ bool OsmAnd::ObfReader_P::readInfo(const ObfReader_P& reader, std::shared_ptr<co
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
-            if(loadedCorrectly)
+            if (loadedCorrectly)
                 info_ = info;
 
             return loadedCorrectly;
@@ -206,7 +206,7 @@ bool OsmAnd::ObfReader_P::readInfo(const ObfReader_P& reader, std::shared_ptr<co
                 gpb::uint32 controlVersion;
                 cis->ReadVarint32(&controlVersion);
                 loadedCorrectly = (controlVersion == info->_version);
-                if(!loadedCorrectly)
+                if (!loadedCorrectly)
                     break;
             }
             break;

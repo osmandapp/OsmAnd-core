@@ -21,7 +21,7 @@ OsmAnd::Concurrent::Task::~Task()
 void OsmAnd::Concurrent::Task::run()
 {
     // Check if task wants to cancel itself
-    if(preExecute && _cancellationRequestedByExternal.loadAcquire() == 0)
+    if (preExecute && _cancellationRequestedByExternal.loadAcquire() == 0)
     {
         bool cancellationRequestedByTask = false;
         preExecute(this, cancellationRequestedByTask);
@@ -30,11 +30,11 @@ void OsmAnd::Concurrent::Task::run()
 
     // If cancellation was not requested by task itself nor by
     // external call
-    if(!_cancellationRequestedByTask && _cancellationRequestedByExternal.loadAcquire() == 0)
+    if (!_cancellationRequestedByTask && _cancellationRequestedByExternal.loadAcquire() == 0)
         execute(this);
 
     // Report that execution had finished
-    if(postExecute)
+    if (postExecute)
         postExecute(this, isCancellationRequested());
 }
 
@@ -104,7 +104,7 @@ OsmAnd::Concurrent::HostedTask::HostedTask( const TaskHost::Bridge& bridge, Exec
     , lockedOwner(_lockedOwner)
 {
     // Ensure that owner is not being destructed
-    if(_host->_ownerIsBeingDestructed)
+    if (_host->_ownerIsBeingDestructed)
     {
         requestCancellation();
         return;
@@ -131,7 +131,7 @@ OsmAnd::Concurrent::HostedTask::~HostedTask()
 void OsmAnd::Concurrent::HostedTask::run()
 {
     // Do nothing if owner is being destructed
-    if(_host->_ownerIsBeingDestructed)
+    if (_host->_ownerIsBeingDestructed)
         requestCancellation();
 
     // Execute task itself
@@ -172,7 +172,7 @@ void OsmAnd::Concurrent::Dispatcher::runAll()
         {
             QMutexLocker scopedLocker(&_queueMutex);
 
-            if(_queue.isEmpty())
+            if (_queue.isEmpty())
                 break;
             method = _queue.dequeue();
         }
@@ -187,7 +187,7 @@ void OsmAnd::Concurrent::Dispatcher::runOne()
     {
         QMutexLocker scopedLocker(&_queueMutex);
 
-        if(_queue.isEmpty())
+        if (_queue.isEmpty())
             return;
         method = _queue.dequeue();
     }

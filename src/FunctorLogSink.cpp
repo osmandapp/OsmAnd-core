@@ -12,7 +12,7 @@ OsmAnd::FunctorLogSink::~FunctorLogSink()
 
 void OsmAnd::FunctorLogSink::log(const LogSeverityLevel level, const char* format, va_list args)
 {
-    if(!_writeFunctor)
+    if (!_writeFunctor)
         return;
 
     _writeFunctor(this, level, format, args);
@@ -20,7 +20,7 @@ void OsmAnd::FunctorLogSink::log(const LogSeverityLevel level, const char* forma
 
 void OsmAnd::FunctorLogSink::flush()
 {
-    if(!_flushFunctor)
+    if (!_flushFunctor)
         return;
 
     _flushFunctor(this);

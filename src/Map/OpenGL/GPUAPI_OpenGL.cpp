@@ -74,7 +74,7 @@ GLuint OsmAnd::GPUAPI_OpenGL::compileShader( GLenum shaderType, const char* sour
     GLint didCompile;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &didCompile);
     GL_CHECK_RESULT;
-    if(didCompile != GL_TRUE)
+    if (didCompile != GL_TRUE)
     {
         GLint logBufferLen = 0;
         GLsizei logLen = 0;
@@ -127,7 +127,7 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(GLuint shadersCount, const GLuint* sha
         glDetachShader(program, shaders[shaderIdx]);
         GL_CHECK_RESULT;
 
-        if(autoReleaseShaders)
+        if (autoReleaseShaders)
         {
             glDeleteShader(shaders[shaderIdx]);
             GL_CHECK_RESULT;
@@ -137,7 +137,7 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(GLuint shadersCount, const GLuint* sha
     GLint linkSuccessful;
     glGetProgramiv(program, GL_LINK_STATUS, &linkSuccessful);
     GL_CHECK_RESULT;
-    if(linkSuccessful != GL_TRUE)
+    if (linkSuccessful != GL_TRUE)
     {
         GLint logBufferLen = 0;
         GLsizei logLen = 0;
@@ -183,12 +183,12 @@ void OsmAnd::GPUAPI_OpenGL::findVariableLocation(const GLuint& program, GLint& l
     GL_CHECK_PRESENT(glGetAttribLocation);
     GL_CHECK_PRESENT(glGetUniformLocation);
 
-    if(type == GLShaderVariableType::In)
+    if (type == GLShaderVariableType::In)
         location = glGetAttribLocation(program, qPrintable(name));
-    else if(type == GLShaderVariableType::Uniform)
+    else if (type == GLShaderVariableType::Uniform)
         location = glGetUniformLocation(program, qPrintable(name));
     GL_CHECK_RESULT;
-    if(location == -1)
+    if (location == -1)
         LogPrintf(LogSeverityLevel::Error, "Variable '%s' (%s) was not found in GLSL program %d", qPrintable(name), type == GLShaderVariableType::In ? "In" : "Uniform", program);
     assert(location != -1);
 }
@@ -196,13 +196,13 @@ void OsmAnd::GPUAPI_OpenGL::findVariableLocation(const GLuint& program, GLint& l
 bool OsmAnd::GPUAPI_OpenGL::uploadTileToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
 {
     // Upload bitmap tiles
-    if(tile->dataType == MapTileDataType::Bitmap)
+    if (tile->dataType == MapTileDataType::Bitmap)
     {
         return uploadTileAsTextureToGPU(tile, resourceInGPU);
     }
-    else if(tile->dataType == MapTileDataType::ElevationData)
+    else if (tile->dataType == MapTileDataType::ElevationData)
     {
-        if(isSupported_vertexShaderTextureLookup)
+        if (isSupported_vertexShaderTextureLookup)
         {
             return uploadTileAsTextureToGPU(tile, resourceInGPU);
         }
@@ -260,7 +260,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< cons
     GLsizei sourcePixelByteSize = 0;
     bool mipmapGenerationSupported = false;
     bool tileUsesPalette = false;
-    if(tile->dataType == MapTileDataType::Bitmap)
+    if (tile->dataType == MapTileDataType::Bitmap)
     {
         const auto bitmapTile = std::static_pointer_cast<const MapBitmapTile>(tile);
 
@@ -285,7 +285,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< cons
         // No need to generate mipmaps if textureLod is not supported
         mipmapGenerationSupported = isSupported_textureLod;
     }
-    else if(tile->dataType == MapTileDataType::ElevationData)
+    else if (tile->dataType == MapTileDataType::ElevationData)
     {
         sourcePixelByteSize = 4;
         mipmapGenerationSupported = false;
@@ -307,11 +307,11 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< cons
 
     // Get number of mipmap levels
     auto mipmapLevels = 1u;
-    if(mipmapGenerationSupported)
+    if (mipmapGenerationSupported)
         mipmapLevels += qLn(textureSize) / M_LN2;
 
     // If tile size matches size of texture, upload is quite straightforward
-    if(!useAtlasTexture)
+    if (!useAtlasTexture)
     {
         // Create texture id
         GLuint texture;
@@ -323,7 +323,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< cons
         glBindTexture(GL_TEXTURE_2D, texture);
         GL_CHECK_RESULT;
 
-        if(!tileUsesPalette)
+        if (!tileUsesPalette)
         {
             // Allocate square 2D texture
             allocateTexture2D(GL_TEXTURE_2D, mipmapLevels, textureSize, textureSize, textureFormat);
@@ -338,7 +338,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< cons
             setMipMapLevelsLimit(GL_TEXTURE_2D, mipmapLevels - 1);
 
             // Generate mipmap levels
-            if(mipmapLevels > 1)
+            if (mipmapLevels > 1)
             {
                 glGenerateMipmap(GL_TEXTURE_2D);
                 GL_CHECK_RESULT;
@@ -357,7 +357,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< cons
             // Generate mipmaps
             decompressedTexture.buildMipMap();
             auto generatedLevels = decompressedTexture.extractMipLevel(nullptr, SK_FixedMax, SK_FixedMax);
-            if(mipmapLevels > generatedLevels)
+            if (mipmapLevels > generatedLevels)
             mipmapLevels = generatedLevels;
 
             LogPrintf(LogSeverityLevel::Info, "colors = %d", bitmapTile->bitmap->getColorTable()->count());
@@ -423,7 +423,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< cons
     atlasTypeId.tileSize = tile->size;
     atlasTypeId.tilePadding = 0;
     const auto atlasTexturesPool = obtainAtlasTexturesPool(atlasTypeId);
-    if(!atlasTexturesPool)
+    if (!atlasTexturesPool)
         return false;
 
     // Get free slot from that pool
@@ -468,7 +468,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< cons
     GL_CHECK_RESULT;
 
     // Generate mipmap
-    if(slotInGPU->atlasTexture->mipmapLevels > 1)
+    if (slotInGPU->atlasTexture->mipmapLevels > 1)
     {
         glGenerateMipmap(GL_TEXTURE_2D);
         GL_CHECK_RESULT;
@@ -488,7 +488,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsArrayBufferToGPU(const std::shared_ptr< 
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
 
-    if(tile->dataType != MapTileDataType::ElevationData)
+    if (tile->dataType != MapTileDataType::ElevationData)
     {
         assert(false);
         return false;
@@ -565,7 +565,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(const std::shared_ptr< co
     glBindTexture(GL_TEXTURE_2D, texture);
     GL_CHECK_RESULT;
 
-    if(!symbolUsesPalette)
+    if (!symbolUsesPalette)
     {
         // Allocate square 2D texture
         allocateTexture2D(GL_TEXTURE_2D, 1, symbol->bitmap->width(), symbol->bitmap->height(), textureFormat);
@@ -605,13 +605,13 @@ void OsmAnd::GPUAPI_OpenGL::waitUntilUploadIsComplete()
 
 void OsmAnd::GPUAPI_OpenGL::pushDebugGroupMarker(const QString& title)
 {
-    if(isSupported_EXT_debug_marker)
+    if (isSupported_EXT_debug_marker)
         glPushGroupMarkerEXT_wrapper(0, qPrintable(title));
 }
 
 void OsmAnd::GPUAPI_OpenGL::popDebugGroupMarker()
 {
-    if(isSupported_EXT_debug_marker)
+    if (isSupported_EXT_debug_marker)
         glPopGroupMarkerEXT_wrapper();
 }
 
@@ -629,7 +629,7 @@ void OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(GLint&
 {
     auto& variablesByName = _variablesByName[type];
     const auto itPreviousLocation = variablesByName.constFind(name);
-    if(itPreviousLocation != variablesByName.constEnd())
+    if (itPreviousLocation != variablesByName.constEnd())
     {
         LogPrintf(LogSeverityLevel::Error,
             "Variable '%s' (%s) was already located in program %d at %d",
@@ -644,7 +644,7 @@ void OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(GLint&
 
     auto& variablesByLocation = _variablesByLocation[type];
     const auto itOtherName = variablesByLocation.constFind(location);
-    if(itOtherName != variablesByLocation.constEnd())
+    if (itOtherName != variablesByLocation.constEnd())
     {
         LogPrintf(LogSeverityLevel::Error,
             "Variable '%s' (%s) in program %d was shares same location at other variable '%s'",

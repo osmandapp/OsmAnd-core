@@ -62,12 +62,12 @@ namespace OsmAnd
 
         virtual bool tryObtainEntry(std::shared_ptr<ENTRY>& outEntry, const TileId tileId, const ZoomLevel zoom) const
         {
-            if(!_collectionLock.tryLockForRead())
+            if (!_collectionLock.tryLockForRead())
                 return false;
 
             const auto& zoomLevel = _zoomLevels[zoom];
             const auto& itEntry = zoomLevel.constFind(tileId);
-            if(itEntry != zoomLevel.cend())
+            if (itEntry != zoomLevel.cend())
             {
                 outEntry = *itEntry;
 
@@ -85,7 +85,7 @@ namespace OsmAnd
 
             const auto& zoomLevel = _zoomLevels[zoom];
             const auto& itEntry = zoomLevel.constFind(tileId);
-            if(itEntry != zoomLevel.cend())
+            if (itEntry != zoomLevel.cend())
             {
                 outEntry = *itEntry;
 
@@ -103,7 +103,7 @@ namespace OsmAnd
 
             auto& zoomLevel = _zoomLevels[zoom];
             auto itEntry = zoomLevel.constFind(tileId);
-            if(itEntry != zoomLevel.cend())
+            if (itEntry != zoomLevel.cend())
             {
                 outEntry = *itEntry;
                 return;
@@ -123,13 +123,13 @@ namespace OsmAnd
             {
                 for(const auto& entry : constOf(zoomLevel))
                 {
-                    if(!filter || (filter && filter(entry, doCancel)))
+                    if (!filter || (filter && filter(entry, doCancel)))
                     {
-                        if(outList)
+                        if (outList)
                             outList->push_back(entry);
                     }
 
-                    if(doCancel)
+                    if (doCancel)
                         return;
                 }
             }
@@ -154,7 +154,7 @@ namespace OsmAnd
 
             auto& zoomLevel = _zoomLevels[zoom];
             const auto& itEntry = zoomLevel.find(tileId);
-            if(itEntry == zoomLevel.end())
+            if (itEntry == zoomLevel.end())
                 return;
 
             itEntry.value()->unlink();
@@ -174,13 +174,13 @@ namespace OsmAnd
                     const auto& value = itEntryPair.next().value();
 
                     const auto doRemove = (filter == nullptr) || filter(value, doCancel);
-                    if(doRemove)
+                    if (doRemove)
                     {
                         value->unlink();
                         itEntryPair.remove();
                     }
 
-                    if(doCancel)
+                    if (doCancel)
                         return;
                 }
             }
@@ -197,7 +197,7 @@ namespace OsmAnd
                 {
                     action(entry, doCancel);
 
-                    if(doCancel)
+                    if (doCancel)
                         return;
                 }
             }
@@ -253,7 +253,7 @@ namespace OsmAnd
 
         void safeUnlink()
         {
-            if(_link.expired())
+            if (_link.expired())
                 return;
 
             unlink();
@@ -310,7 +310,7 @@ namespace OsmAnd
         {
 #if OSMAND_TRACE_TILES_COLLECTION_STATE
             QMutexLocker scopedLocker(&_stateLock);
-            if(LOG_TRACE
+            if (LOG_TRACE
 #if OSMAND_TRACE_TILES_COLLECTION_STATE > 1
                 || true
 #endif
@@ -332,9 +332,9 @@ namespace OsmAnd
         {
 #if OSMAND_TRACE_TILES_COLLECTION_STATE
             QMutexLocker scopedLocker(&_stateLock);
-            if(_stateValue != static_cast<int>(testState))
+            if (_stateValue != static_cast<int>(testState))
             {
-                if(LOG_TRACE
+                if (LOG_TRACE
 #if OSMAND_TRACE_TILES_COLLECTION_STATE > 1
                     || true
 #endif
@@ -348,7 +348,7 @@ namespace OsmAnd
                 }
                 return false;
             }
-            if(LOG_TRACE
+            if (LOG_TRACE
 #if OSMAND_TRACE_TILES_COLLECTION_STATE > 1
                 || true
 #endif

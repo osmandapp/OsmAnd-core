@@ -213,7 +213,7 @@ void OsmAnd::RasterizerEnvironment_P::setSettings(const QHash< QString, QString 
 
         // Resolve input-value definition by name
         std::shared_ptr<const MapStyleValueDefinition> inputValueDef;
-        if(!owner->style->resolveValueDefinition(name, inputValueDef))
+        if (!owner->style->resolveValueDefinition(name, inputValueDef))
         {
             LogPrintf(LogSeverityLevel::Warning, "Setting of '%s' to '%s' impossible: failed to resolve input value definition failed with such name");
             continue;
@@ -221,7 +221,7 @@ void OsmAnd::RasterizerEnvironment_P::setSettings(const QHash< QString, QString 
 
         // Parse value
         MapStyleValue parsedValue;
-        if(!owner->style->_p->parseValue(inputValueDef, value, parsedValue))
+        if (!owner->style->_p->parseValue(inputValueDef, value, parsedValue))
         {
             LogPrintf(LogSeverityLevel::Warning, "Setting of '%s' to '%s' impossible: failed to parse value");
             continue;
@@ -271,7 +271,7 @@ bool OsmAnd::RasterizerEnvironment_P::obtainBitmapShader( const QString& name, S
     QMutexLocker scopedLock(&_shadersBitmapsMutex);
 
     auto itShaderBitmap = _shadersBitmaps.constFind(name);
-    if(itShaderBitmap == _shadersBitmaps.cend())
+    if (itShaderBitmap == _shadersBitmaps.cend())
     {
         const auto shaderBitmapPath = QString::fromLatin1("map/shaders/%1.png").arg(name);
 
@@ -281,7 +281,7 @@ bool OsmAnd::RasterizerEnvironment_P::obtainBitmapShader( const QString& name, S
         // Decode bitmap for a shader
         auto shaderBitmap = new SkBitmap();
         SkMemoryStream dataStream(data.constData(), data.length(), false);
-        if(!SkImageDecoder::DecodeStream(&dataStream, shaderBitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
+        if (!SkImageDecoder::DecodeStream(&dataStream, shaderBitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
             return false;
         itShaderBitmap = _shadersBitmaps.insert(name, std::shared_ptr<SkBitmap>(shaderBitmap));
     }
@@ -296,7 +296,7 @@ bool OsmAnd::RasterizerEnvironment_P::obtainPathEffect( const QString& encodedPa
     QMutexLocker scopedLock(&_pathEffectsMutex);
 
     auto itPathEffects = _pathEffects.constFind(encodedPathEffect);
-    if(itPathEffects == _pathEffects.cend())
+    if (itPathEffects == _pathEffects.cend())
     {
         const auto& strIntervals = encodedPathEffect.split('_', QString::SkipEmptyParts);
 
@@ -306,7 +306,7 @@ bool OsmAnd::RasterizerEnvironment_P::obtainPathEffect( const QString& encodedPa
         {
             float computedValue = 0.0f;
 
-            if(!strInterval.contains(':'))
+            if (!strInterval.contains(':'))
             {
                 computedValue = strInterval.toFloat()*owner->displayDensityFactor;
             }
@@ -336,7 +336,7 @@ bool OsmAnd::RasterizerEnvironment_P::obtainMapIcon( const QString& name, std::s
     QMutexLocker scopedLock(&_mapIconsMutex);
 
     auto itIcon = _mapIcons.constFind(name);
-    if(itIcon == _mapIcons.cend())
+    if (itIcon == _mapIcons.cend())
     {
         const auto bitmapPath = QString::fromLatin1("map/map_icons/%1.png").arg(name);
 
@@ -346,7 +346,7 @@ bool OsmAnd::RasterizerEnvironment_P::obtainMapIcon( const QString& name, std::s
         // Decode data
         auto bitmap = new SkBitmap();
         SkMemoryStream dataStream(data.constData(), data.length(), false);
-        if(!SkImageDecoder::DecodeStream(&dataStream, bitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
+        if (!SkImageDecoder::DecodeStream(&dataStream, bitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
             return false;
 
         itIcon = _mapIcons.insert(name, std::shared_ptr<const SkBitmap>(bitmap));
@@ -361,7 +361,7 @@ bool OsmAnd::RasterizerEnvironment_P::obtainTextShield( const QString& name, std
     QMutexLocker scopedLock(&_textShieldsMutex);
 
     auto itTextShield = _textShields.constFind(name);
-    if(itTextShield == _textShields.cend())
+    if (itTextShield == _textShields.cend())
     {
         const auto bitmapPath = QString::fromLatin1("map/shields/%1.png").arg(name);
 
@@ -371,7 +371,7 @@ bool OsmAnd::RasterizerEnvironment_P::obtainTextShield( const QString& name, std
         // Decode data
         auto bitmap = new SkBitmap();
         SkMemoryStream dataStream(data.constData(), data.length(), false);
-        if(!SkImageDecoder::DecodeStream(&dataStream, bitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
+        if (!SkImageDecoder::DecodeStream(&dataStream, bitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
             return false;
 
         itTextShield = _textShields.insert(name, std::shared_ptr<const SkBitmap>(bitmap));
@@ -384,11 +384,11 @@ bool OsmAnd::RasterizerEnvironment_P::obtainTextShield( const QString& name, std
 QByteArray OsmAnd::RasterizerEnvironment_P::obtainResourceByName( const QString& name ) const
 {
     // Try to obtain from external resources first
-    if(static_cast<bool>(owner->externalResourcesProvider))
+    if (static_cast<bool>(owner->externalResourcesProvider))
     {
         bool ok = false;
         const auto resource = owner->externalResourcesProvider->getResource(name, &ok);
-        if(ok)
+        if (ok)
             return resource;
     }
 

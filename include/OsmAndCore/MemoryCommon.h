@@ -15,14 +15,14 @@
         static void* operator new(std::size_t count) throw(std::bad_alloc)                                          \
         {                                                                                                           \
             const auto ptr = OsmAnd::MemoryManagerSelector<class_name>::get()->allocate(count, #class_name);        \
-            if(!ptr)                                                                                                \
+            if (!ptr)                                                                                               \
                 throw std::bad_alloc();                                                                             \
             return ptr;                                                                                             \
         }                                                                                                           \
         static void* operator new[](std::size_t count) throw(std::bad_alloc)                                        \
         {                                                                                                           \
             const auto ptr = OsmAnd::MemoryManagerSelector<class_name>::get()->allocate(count, #class_name);        \
-            if(!ptr)                                                                                                \
+            if (!ptr)                                                                                               \
                 throw std::bad_alloc();                                                                             \
             return ptr;                                                                                             \
         }                                                                                                           \

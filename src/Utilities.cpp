@@ -18,43 +18,43 @@ bool OsmAnd::Utilities::extractFirstNumberPosition(const QString& value, int& fi
     for(auto itChr = value.cbegin(); itChr != value.cend() && (first == -1 || last == -1); ++itChr, curPos++)
     {
         auto chr = *itChr;
-        if(first == -1 && chr.isDigit())
+        if (first == -1 && chr.isDigit())
             first = curPos;
-        if(last == -1 && first != -1 && !chr.isDigit() && ((allowDot && chr != '.') || !allowDot))
+        if (last == -1 && first != -1 && !chr.isDigit() && ((allowDot && chr != '.') || !allowDot))
             last = curPos - 1;
     }
-    if(first >= 1 && allowSigned && value[first - 1] == '-')
+    if (first >= 1 && allowSigned && value[first - 1] == '-')
         first -= 1;
-    if(first != -1 && last == -1)
+    if (first != -1 && last == -1)
         last = value.length() - 1;
     return first != -1;
 }
 
 double OsmAnd::Utilities::parseSpeed(const QString& value, double defValue, bool* wasParsed/* = nullptr*/)
 {
-    if(value == QLatin1String("none"))
+    if (value == QLatin1String("none"))
     {
-        if(wasParsed)
+        if (wasParsed)
             *wasParsed = true;
         return 40;
     }
 
     int first, last;
-    if(!extractFirstNumberPosition(value, first, last, false, true))
+    if (!extractFirstNumberPosition(value, first, last, false, true))
     {
-        if(wasParsed)
+        if (wasParsed)
             *wasParsed = false;
         return defValue;
     }
     bool ok;
     auto result = value.mid(first, last - first + 1).toDouble(&ok);
-    if(wasParsed)
+    if (wasParsed)
         *wasParsed = ok;
-    if(!ok)
+    if (!ok)
         return defValue;
 
     result /= 3.6;
-    if(value.contains(QLatin1String("mph")))
+    if (value.contains(QLatin1String("mph")))
         result *= 1.6;
     return result;
 }
@@ -62,22 +62,22 @@ double OsmAnd::Utilities::parseSpeed(const QString& value, double defValue, bool
 double OsmAnd::Utilities::parseLength(const QString& value, double defValue, bool* wasParsed/* = nullptr*/)
 {
     int first, last;
-    if(!extractFirstNumberPosition(value, first, last, false, true))
+    if (!extractFirstNumberPosition(value, first, last, false, true))
         return defValue;
     bool ok;
     auto result = value.mid(first, last - first + 1).toDouble(&ok);
-    if(!ok)
+    if (!ok)
         return defValue;
-    if(value.contains(QLatin1String("ft")) || value.contains('"'))
+    if (value.contains(QLatin1String("ft")) || value.contains('"'))
         result *= 0.3048;
-    if(value.contains('\''))
+    if (value.contains('\''))
     {
         auto inchesSubstr = value.mid(value.indexOf('"') + 1);
-        if(!extractFirstNumberPosition(inchesSubstr, first, last, false, true))
+        if (!extractFirstNumberPosition(inchesSubstr, first, last, false, true))
             return defValue;
         bool ok;
         auto inches = inchesSubstr.mid(first, last - first + 1).toDouble(&ok);
-        if(ok)
+        if (ok)
             result += inches * 0.0254;
     }
     return result;
@@ -86,18 +86,18 @@ double OsmAnd::Utilities::parseLength(const QString& value, double defValue, boo
 double OsmAnd::Utilities::parseWeight(const QString& value, double defValue, bool* wasParsed/* = nullptr*/)
 {
     int first, last;
-    if(wasParsed)
+    if (wasParsed)
         *wasParsed = false;
-    if(!extractFirstNumberPosition(value, first, last, false, true))
+    if (!extractFirstNumberPosition(value, first, last, false, true))
         return defValue;
     bool ok;
     auto result = value.mid(first, last - first + 1).toDouble(&ok);
-    if(!ok)
+    if (!ok)
         return defValue;
 
-    if(wasParsed)
+    if (wasParsed)
         *wasParsed = true;
-    if(value.contains(QLatin1String("lbs")))
+    if (value.contains(QLatin1String("lbs")))
         result = (result * 0.4535) / 1000.0; // lbs -> kg -> ton
     return result;
 }
@@ -105,16 +105,16 @@ double OsmAnd::Utilities::parseWeight(const QString& value, double defValue, boo
 int OsmAnd::Utilities::parseArbitraryInt(const QString& value, int defValue, bool* wasParsed/* = nullptr*/)
 {
     int first, last;
-    if(wasParsed)
+    if (wasParsed)
         *wasParsed = false;
-    if(!extractFirstNumberPosition(value, first, last, true, false))
+    if (!extractFirstNumberPosition(value, first, last, true, false))
         return defValue;
     bool ok;
     auto result = value.mid(first, last - first + 1).toInt(&ok);
-    if(!ok)
+    if (!ok)
         return defValue;
 
-    if(wasParsed)
+    if (wasParsed)
         *wasParsed = true;
     return result;
 }
@@ -122,16 +122,16 @@ int OsmAnd::Utilities::parseArbitraryInt(const QString& value, int defValue, boo
 long OsmAnd::Utilities::parseArbitraryLong(const QString& value, long defValue, bool* wasParsed/* = nullptr*/)
 {
     int first, last;
-    if(wasParsed)
+    if (wasParsed)
         *wasParsed = false;
-    if(!extractFirstNumberPosition(value, first, last, true, false))
+    if (!extractFirstNumberPosition(value, first, last, true, false))
         return defValue;
     bool ok;
     auto result = value.mid(first, last - first + 1).toLong(&ok);
-    if(!ok)
+    if (!ok)
         return defValue;
 
-    if(wasParsed)
+    if (wasParsed)
         *wasParsed = true;
     return result;
 }
@@ -139,16 +139,16 @@ long OsmAnd::Utilities::parseArbitraryLong(const QString& value, long defValue, 
 unsigned int OsmAnd::Utilities::parseArbitraryUInt(const QString& value, unsigned int defValue, bool* wasParsed/* = nullptr*/)
 {
     int first, last;
-    if(wasParsed)
+    if (wasParsed)
         *wasParsed = false;
-    if(!extractFirstNumberPosition(value, first, last, false, false))
+    if (!extractFirstNumberPosition(value, first, last, false, false))
         return defValue;
     bool ok;
     auto result = value.mid(first, last - first + 1).toUInt(&ok);
-    if(!ok)
+    if (!ok)
         return defValue;
 
-    if(wasParsed)
+    if (wasParsed)
         *wasParsed = true;
     return result;
 }
@@ -156,16 +156,16 @@ unsigned int OsmAnd::Utilities::parseArbitraryUInt(const QString& value, unsigne
 unsigned long OsmAnd::Utilities::parseArbitraryULong(const QString& value, unsigned long defValue, bool* wasParsed/* = nullptr*/)
 {
     int first, last;
-    if(wasParsed)
+    if (wasParsed)
         *wasParsed = false;
-    if(!extractFirstNumberPosition(value, first, last, false, false))
+    if (!extractFirstNumberPosition(value, first, last, false, false))
         return defValue;
     bool ok;
     auto result = value.mid(first, last - first + 1).toULong(&ok);
-    if(!ok)
+    if (!ok)
         return defValue;
 
-    if(wasParsed)
+    if (wasParsed)
         *wasParsed = true;
     return result;
 }
@@ -173,31 +173,31 @@ unsigned long OsmAnd::Utilities::parseArbitraryULong(const QString& value, unsig
 float OsmAnd::Utilities::parseArbitraryFloat(const QString& value, float defValue, bool* wasParsed /*= nullptr*/)
 {
     int first, last;
-    if(wasParsed)
+    if (wasParsed)
         *wasParsed = false;
-    if(!extractFirstNumberPosition(value, first, last, true, true))
+    if (!extractFirstNumberPosition(value, first, last, true, true))
         return defValue;
     bool ok;
     auto result = value.mid(first, last - first + 1).toFloat(&ok);
-    if(!ok)
+    if (!ok)
         return defValue;
 
-    if(wasParsed)
+    if (wasParsed)
         *wasParsed = true;
     return result;
 }
 
 bool OsmAnd::Utilities::parseArbitraryBool(const QString& value, bool defValue, bool* wasParsed /*= nullptr*/)
 {
-    if(wasParsed)
+    if (wasParsed)
         *wasParsed = false;
 
-    if(value.isEmpty())
+    if (value.isEmpty())
         return defValue;
 
     auto result = (value.compare(QLatin1String("true"), Qt::CaseInsensitive) == 0);
 
-    if(wasParsed)
+    if (wasParsed)
         *wasParsed = true;
     return result;
 }
@@ -214,19 +214,19 @@ int OsmAnd::Utilities::javaDoubleCompare(double l, double r)
     const auto rZero = (ri64 << 1) == 0;
 
     // NaN is considered by this method to be equal to itself and greater than all other double values (including +inf).
-    if(lNaN && rNaN)
+    if (lNaN && rNaN)
         return 0;
-    if(lNaN)
+    if (lNaN)
         return +1;
-    if(rNaN)
+    if (rNaN)
         return -1;
 
     // 0.0 is considered by this method to be greater than -0.0
-    if(lZero && rZero)
+    if (lZero && rZero)
     {
-        if(lPos && !rPos)
+        if (lPos && !rPos)
             return -1;
-        if(!lPos && rPos)
+        if (!lPos && rPos)
             return +1;
     }
 
@@ -239,7 +239,7 @@ void OsmAnd::Utilities::findFiles(const QDir& origin, const QStringList& masks, 
     const auto& fileInfoList = origin.entryInfoList(masks, QDir::Files);
     files.append(fileInfoList);
 
-    if(recursively)
+    if (recursively)
     {
         const auto& subdirs = origin.entryInfoList(QStringList(), QDir::AllDirs | QDir::NoDotAndDotDot);
         for(const auto& subdir : constOf(subdirs))
@@ -252,7 +252,7 @@ void OsmAnd::Utilities::findDirectories(const QDir& origin, const QStringList& m
     const auto& directoriesList = origin.entryInfoList(masks, QDir::AllDirs | QDir::NoDotAndDotDot);
     directories.append(directoriesList);
 
-    if(recursively)
+    if (recursively)
     {
         const auto& subdirs = origin.entryInfoList(QStringList(), QDir::AllDirs | QDir::NoDotAndDotDot);
         for(const auto& subdir : constOf(subdirs))
@@ -268,9 +268,9 @@ void OsmAnd::Utilities::scanlineFillPolygon(const unsigned int verticesCount, co
     for(auto idx = 1u; idx < verticesCount; idx++)
     {
         const auto& y = vertices[idx].y;
-        if(y > yMaxF)
+        if (y > yMaxF)
             yMaxF = y;
-        if(y < yMinF)
+        if (y < yMinF)
             yMinF = y;
     }
     const auto rowMin = qFloor(yMinF);
@@ -295,7 +295,7 @@ void OsmAnd::Utilities::scanlineFillPolygon(const unsigned int verticesCount, co
         auto v0 = &vertices[prevIdx];
         auto v1 = &vertices[idx];
 
-        if(v0->y == v1->y)
+        if (v0->y == v1->y)
         {
             // Horizontal edge
             auto edge = new Edge();
@@ -314,13 +314,13 @@ void OsmAnd::Utilities::scanlineFillPolygon(const unsigned int verticesCount, co
 
         const PointF* pLower = nullptr;
         const PointF* pUpper = nullptr;
-        if(v0->y < v1->y)
+        if (v0->y < v1->y)
         {
             // Up-going edge
             pLower = v0;
             pUpper = v1;
         }
-        else if(v0->y > v1->y)
+        else if (v0->y > v1->y)
         {
             // Down-going edge
             pLower = v1;
@@ -340,7 +340,7 @@ void OsmAnd::Utilities::scanlineFillPolygon(const unsigned int verticesCount, co
         {
             const auto& v = vertices[vertexIdx];
 
-            if(v.y > edge->v0->y && qFloor(v.y) < edge->nextRow)
+            if (v.y > edge->v0->y && qFloor(v.y) < edge->nextRow)
                 edge->nextRow = qFloor(v.y);
         }
         //LogPrintf(LogSeverityLevel::Debug, "Edge %p y(%d %d)(%f %f), next row = %d", edge, edge->startRow, edge->endRow, edge->v0->y, edge->v1->y, edge->nextRow);
@@ -365,13 +365,13 @@ void OsmAnd::Utilities::scanlineFillPolygon(const unsigned int verticesCount, co
         for(const auto& edge : constOf(edges))
         {
             const auto isHorizontal = (edge->startRow == edge->endRow);
-            if(nextRow > edge->nextRow && edge->nextRow > rowIdx && !isHorizontal)
+            if (nextRow > edge->nextRow && edge->nextRow > rowIdx && !isHorizontal)
                 nextRow = edge->nextRow;
 
-            if(edge->startRow != rowIdx)
+            if (edge->startRow != rowIdx)
                 continue;
 
-            if(isHorizontal)
+            if (isHorizontal)
             {
                 // Fill horizontal edge
                 const auto xMin = qFloor(qMin(edge->v0->x, edge->v1->x));
@@ -387,7 +387,7 @@ void OsmAnd::Utilities::scanlineFillPolygon(const unsigned int verticesCount, co
         }
 
         // If there are no active edges, we've finished filling
-        if(aet.isEmpty())
+        if (aet.isEmpty())
             break;
         assert(aet.size() % 2 == 0);
 
@@ -429,7 +429,7 @@ void OsmAnd::Utilities::scanlineFillPolygon(const unsigned int verticesCount, co
         {
             auto edge = *itEdge;
 
-            if(edge->endRow <= nextRow)
+            if (edge->endRow <= nextRow)
             {
                 // When we're done processing the edge, fill it Y-by-X
                 auto startCol = qFloor(edge->v0->x);

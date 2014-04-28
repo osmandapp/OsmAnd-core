@@ -33,14 +33,14 @@ OsmAnd::Model::Road::Road( const std::shared_ptr<const Road>& that, int insertId
     for(; pointIdx < insertIdx; pointIdx++)
     {
         _points[pointIdx] = _ref->_points[pointIdx];
-        if(!_ref->_pointsTypes.isEmpty())
+        if (!_ref->_pointsTypes.isEmpty())
             _pointsTypes.insert(pointIdx, _ref->_pointsTypes[pointIdx]);
     }
     _points[pointIdx++] = PointI(x31, y31);
     for(const auto count = _points.size(); pointIdx < count; pointIdx++)
     {
         _points[pointIdx] = _ref->_points[pointIdx - 1];
-        if(!_ref->_pointsTypes.isEmpty())
+        if (!_ref->_pointsTypes.isEmpty())
             _pointsTypes.insert(pointIdx, _ref->_pointsTypes[pointIdx]);
     }
 }
@@ -64,10 +64,10 @@ double OsmAnd::Model::Road::getDirectionDelta( uint32_t originIdx, bool forward,
     float scannedDistance = 0.0;
     do
     {
-        if(forward)
+        if (forward)
         {
             itPoint++;
-            if(itPoint == _points.cend())
+            if (itPoint == _points.cend())
             {
                 itPoint--;
                 break;
@@ -75,7 +75,7 @@ double OsmAnd::Model::Road::getDirectionDelta( uint32_t originIdx, bool forward,
         }
         else
         {
-            if(itPoint == _points.cbegin())
+            if (itPoint == _points.cbegin())
                 break;
             itPoint--;
         }
@@ -96,9 +96,9 @@ OsmAnd::Model::RoadDirection OsmAnd::Model::Road::getDirection() const
     {
         const auto& rule = encRules[type];
 
-        if(rule->_type == ObfRoutingSectionInfo_P::EncodingRule::OneWay)
+        if (rule->_type == ObfRoutingSectionInfo_P::EncodingRule::OneWay)
             return static_cast<Model::RoadDirection>(rule->_parsedValue.asSignedInt);
-        else if(rule->_type == ObfRoutingSectionInfo_P::EncodingRule::Roundabout)
+        else if (rule->_type == ObfRoutingSectionInfo_P::EncodingRule::Roundabout)
             return Model::RoadDirection::OneWayForward;
     }
     
@@ -112,9 +112,9 @@ bool OsmAnd::Model::Road::isRoundabout() const
     {
         const auto& rule = encRules[type];
 
-        if(rule->isRoundabout())
+        if (rule->isRoundabout())
             return true;
-        else if(rule->getDirection() != Model::RoadDirection::TwoWay && isLoop())
+        else if (rule->getDirection() != Model::RoadDirection::TwoWay && isLoop())
             return true;
     }
 
@@ -128,7 +128,7 @@ int OsmAnd::Model::Road::getLanes() const
     {
         const auto& rule = encRules[type];
 
-        if(rule->_type == ObfRoutingSectionInfo_P::EncodingRule::Lanes)
+        if (rule->_type == ObfRoutingSectionInfo_P::EncodingRule::Lanes)
             return rule->_parsedValue.asUnsignedInt;
     }
     return -1;
@@ -141,7 +141,7 @@ QString OsmAnd::Model::Road::getHighway() const
     {
         const auto& rule = encRules[type];
 
-        if(rule->_type == ObfRoutingSectionInfo_P::EncodingRule::Highway)
+        if (rule->_type == ObfRoutingSectionInfo_P::EncodingRule::Highway)
             return rule->_value;
     }
     return QString();

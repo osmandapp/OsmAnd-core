@@ -50,7 +50,7 @@ void OsmAnd::ObfsCollection_P::collectSources() const
 
     // Capture how many invalidations are going to be processed
     const auto invalidationsToProcess = _collectedSourcesInvalidated.loadAcquire();
-    if(invalidationsToProcess == 0)
+    if (invalidationsToProcess == 0)
         return;
 
 #if OSMAND_DEBUG
@@ -68,7 +68,7 @@ void OsmAnd::ObfsCollection_P::collectSources() const
 
         // If current source origin was removed,
         // remove entire each collected source related to it
-        if(itSourceOrigin == _sourcesOrigins.cend())
+        if (itSourceOrigin == _sourcesOrigins.cend())
         {
             // Ensure that ObfFile is not being read anywhere
             for(const auto& itCollectedSource : rangeOf(collectedSources))
@@ -90,7 +90,7 @@ void OsmAnd::ObfsCollection_P::collectSources() const
         while(itObfFileEntry.hasNext())
         {
             const auto& sourceFilename = itObfFileEntry.next().key();
-            if(QFile::exists(sourceFilename))
+            if (QFile::exists(sourceFilename))
                 continue;
             const auto obfFile = itObfFileEntry.value();
 
@@ -102,7 +102,7 @@ void OsmAnd::ObfsCollection_P::collectSources() const
 
         // If all collected sources for current source origin are gone,
         // remove entire collection attached to source origin ID
-        if(collectedSources.isEmpty())
+        if (collectedSources.isEmpty())
         {
             itCollectedSourcesEntry.remove();
             continue;
@@ -115,11 +115,11 @@ void OsmAnd::ObfsCollection_P::collectSources() const
         const auto& originId = itEntry.key();
         const auto& entry = itEntry.value();
         auto itCollectedSources = _collectedSources.find(originId);
-        if(itCollectedSources == _collectedSources.end())
+        if (itCollectedSources == _collectedSources.end())
             itCollectedSources = _collectedSources.insert(originId, QHash<QString, std::shared_ptr<ObfFile> >());
         auto& collectedSources = *itCollectedSources;
 
-        if(entry->type == SourceOriginType::Directory)
+        if (entry->type == SourceOriginType::Directory)
         {
             const auto& directoryAsSourceOrigin = std::static_pointer_cast<const DirectoryAsSourceOrigin>(entry);
 
@@ -128,14 +128,14 @@ void OsmAnd::ObfsCollection_P::collectSources() const
             for(const auto& obfFileInfo : constOf(obfFilesInfo))
             {
                 const auto& obfFilePath = obfFileInfo.canonicalFilePath();
-                if(collectedSources.constFind(obfFilePath) != collectedSources.cend())
+                if (collectedSources.constFind(obfFilePath) != collectedSources.cend())
                     continue;
                 
                 auto obfFile = new ObfFile(obfFilePath, obfFileInfo.size());
                 collectedSources.insert(obfFilePath, std::shared_ptr<ObfFile>(obfFile));
             }
 
-            if(directoryAsSourceOrigin->isRecursive)
+            if (directoryAsSourceOrigin->isRecursive)
             {
                 QFileInfoList directoriesInfo;
                 Utilities::findDirectories(directoryAsSourceOrigin->directory, QStringList() << QLatin1String("*"), directoriesInfo, true);
@@ -143,7 +143,7 @@ void OsmAnd::ObfsCollection_P::collectSources() const
                 for(const auto& directoryInfo : constOf(directoriesInfo))
                 {
                     const auto canonicalPath = directoryInfo.canonicalFilePath();
-                    if(directoryAsSourceOrigin->watchedSubdirectories.contains(canonicalPath))
+                    if (directoryAsSourceOrigin->watchedSubdirectories.contains(canonicalPath))
                         continue;
 
                     _fileSystemWatcher->addPath(canonicalPath);
@@ -151,14 +151,14 @@ void OsmAnd::ObfsCollection_P::collectSources() const
                 }
             }
         }
-        else if(entry->type == SourceOriginType::File)
+        else if (entry->type == SourceOriginType::File)
         {
             const auto& fileAsSourceOrigin = std::static_pointer_cast<const FileAsSourceOrigin>(entry);
 
-            if(!fileAsSourceOrigin->fileInfo.exists())
+            if (!fileAsSourceOrigin->fileInfo.exists())
                 continue;
             const auto& obfFilePath = fileAsSourceOrigin->fileInfo.canonicalFilePath();
-            if(collectedSources.constFind(obfFilePath) != collectedSources.cend())
+            if (collectedSources.constFind(obfFilePath) != collectedSources.cend())
                 continue;
 
             auto obfFile = new ObfFile(obfFilePath, fileAsSourceOrigin->fileInfo.size());
@@ -187,7 +187,7 @@ OsmAnd::ObfsCollection::SourceOriginId OsmAnd::ObfsCollection_P::addDirectory(co
     _sourcesOrigins.insert(allocatedId, qMove(std::shared_ptr<const SourceOrigin>(sourceOrigin)));
 
     _fileSystemWatcher->addPath(dir.canonicalPath());
-    if(recursive)
+    if (recursive)
     {
         QFileInfoList subdirs;
         Utilities::findDirectories(dir, QStringList() << QLatin1String("*"), subdirs, true);
@@ -225,11 +225,11 @@ bool OsmAnd::ObfsCollection_P::remove(const ObfsCollection::SourceOriginId entry
     QWriteLocker scopedLocker(&_sourcesOriginsLock);
 
     const auto itSourceOrigin = _sourcesOrigins.find(entryId);
-    if(itSourceOrigin == _sourcesOrigins.end())
+    if (itSourceOrigin == _sourcesOrigins.end())
         return false;
 
     const auto& sourceOrigin = *itSourceOrigin;
-    if(sourceOrigin->type == SourceOriginType::Directory)
+    if (sourceOrigin->type == SourceOriginType::Directory)
     {
         const auto& directoryAsSourceOrigin = std::static_pointer_cast<const DirectoryAsSourceOrigin>(sourceOrigin);
 
@@ -237,7 +237,7 @@ bool OsmAnd::ObfsCollection_P::remove(const ObfsCollection::SourceOriginId entry
             _fileSystemWatcher->removePath(watchedSubdirectory);
         _fileSystemWatcher->removePath(directoryAsSourceOrigin->directory.canonicalPath());
     }
-    else if(sourceOrigin->type == SourceOriginType::File)
+    else if (sourceOrigin->type == SourceOriginType::File)
     {
         const auto& fileAsSourceOrigin = std::static_pointer_cast<const FileAsSourceOrigin>(sourceOrigin);
 
@@ -254,7 +254,7 @@ bool OsmAnd::ObfsCollection_P::remove(const ObfsCollection::SourceOriginId entry
 QVector< std::shared_ptr<const OsmAnd::ObfFile> > OsmAnd::ObfsCollection_P::getObfFiles() const
 {
     // Check if sources were invalidated
-    if(_collectedSourcesInvalidated.loadAcquire() > 0)
+    if (_collectedSourcesInvalidated.loadAcquire() > 0)
         collectSources();
 
     QVector< std::shared_ptr<const OsmAnd::ObfFile> > obfFiles;
@@ -274,7 +274,7 @@ QVector< std::shared_ptr<const OsmAnd::ObfFile> > OsmAnd::ObfsCollection_P::getO
 std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection_P::obtainDataInterface() const
 {
     // Check if sources were invalidated
-    if(_collectedSourcesInvalidated.loadAcquire() > 0)
+    if (_collectedSourcesInvalidated.loadAcquire() > 0)
         collectSources();
 
     // Create ObfReaders from collected sources
@@ -288,7 +288,7 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection_P::obtainDataIn
             for(const auto& obfFile : constOf(collectedSources))
             {
                 std::shared_ptr<const ObfReader> obfReader(new ObfReader(obfFile));
-                if(!obfReader->isOpened() || !obfReader->obtainInfo())
+                if (!obfReader->isOpened() || !obfReader->obtainInfo())
                     continue;
                 obfReaders.push_back(qMove(obfReader));
             }

@@ -13,7 +13,7 @@ set(merged_include_dirs_public
 	"${OSMAND_ROOT}/core/utils"
 )
 
-if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
+if (CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 	add_library(OsmAndCoreUtils_shared SHARED ${merged_sources})
 	add_dependencies(OsmAndCoreUtils_shared OsmAndCore_shared)
 	target_compile_definitions(OsmAndCoreUtils_shared
@@ -30,7 +30,7 @@ if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 	)
 endif()
 
-if(CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
+if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 	add_library(OsmAndCoreUtils_static STATIC ${merged_sources})
 	add_dependencies(OsmAndCoreUtils_static OsmAndCore_static)
 	target_compile_definitions(OsmAndCoreUtils_static

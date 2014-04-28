@@ -36,7 +36,7 @@ bool OsmAnd::MapStylesCollection_P::registerEmbeddedStyle(const QString& resourc
         owner.get(),
         QFileInfo(resourceName).fileName(),
         std::shared_ptr<QIODevice>(new QBuffer(&styleContent))));
-    if(!style->loadMetadata() || !style->load())
+    if (!style->loadMetadata() || !style->load())
         return false;
 
     assert(!_styles.contains(style->name));
@@ -51,10 +51,10 @@ bool OsmAnd::MapStylesCollection_P::registerStyle(const QString& filePath)
     QWriteLocker scopedLocker(&_stylesLock);
 
     std::shared_ptr<MapStyle> style(new MapStyle(owner.get(), filePath));
-    if(!style->loadMetadata())
+    if (!style->loadMetadata())
         return false;
 
-    if(_styles.contains(style->name))
+    if (_styles.contains(style->name))
         return false;
     _styles.insert(style->name, style);
     _order.push_back(style);
@@ -78,7 +78,7 @@ std::shared_ptr<const OsmAnd::MapStyle> OsmAnd::MapStylesCollection_P::getAsIsSt
     QReadLocker scopedLocker(&_stylesLock);
 
     const auto citStyle = _styles.constFind(name);
-    if(citStyle == _styles.cend())
+    if (citStyle == _styles.cend())
         return nullptr;
     return *citStyle;
 }
@@ -88,11 +88,11 @@ bool OsmAnd::MapStylesCollection_P::obtainBakedStyle(const QString& name, std::s
     QReadLocker scopedLocker(&_stylesLock);
 
     const auto citStyle = _styles.constFind(name);
-    if(citStyle == _styles.cend())
+    if (citStyle == _styles.cend())
         return false;
     const auto& style = *citStyle;
 
-    if(!style->load())
+    if (!style->load())
         return false;
 
     outStyle = style;

@@ -321,16 +321,16 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                 readTreeNode(reader, section, treeNode->_area31, childNode);
 
                 // Update metric
-                if(metric)
+                if (metric)
                     metric->visitedNodes++;
 
-                if(bbox31)
+                if (bbox31)
                 {
                     const auto shouldSkip =
                         !bbox31->contains(childNode->_area31) &&
                         !childNode->_area31.contains(*bbox31) &&
                         !bbox31->intersects(childNode->_area31);
-                    if(shouldSkip)
+                    if (shouldSkip)
                     {
                         cis->Skip(cis->BytesUntilLimit());
                         cis->PopLimit(oldLimit);
@@ -340,14 +340,14 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                 cis->PopLimit(oldLimit);
 
                 // Update metric
-                if(metric)
+                if (metric)
                     metric->acceptedNodes++;
 
-                if(nodesWithData && childNode->_dataOffset > 0)
+                if (nodesWithData && childNode->_dataOffset > 0)
                     nodesWithData->push_back(childNode);
 
                 auto childrenFoundation = MapFoundationType::Undefined;
-                if(childNode->_childrenInnerOffset > 0)
+                if (childNode->_childrenInnerOffset > 0)
                 {
                     cis->Seek(offset);
                     oldLimit = cis->PushLimit(length);
@@ -360,11 +360,11 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                 }
 
                 const auto foundationToMerge = (childrenFoundation != MapFoundationType::Undefined) ? childrenFoundation : childNode->_foundation;
-                if(foundationToMerge != MapFoundationType::Undefined)
+                if (foundationToMerge != MapFoundationType::Undefined)
                 {
-                    if(foundation == MapFoundationType::Undefined)
+                    if (foundation == MapFoundationType::Undefined)
                         foundation = foundationToMerge;
-                    else if(foundation != foundationToMerge)
+                    else if (foundation != foundationToMerge)
                         foundation = MapFoundationType::Mixed;
                 }
             }
@@ -393,7 +393,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
     gpb::uint64 baseId = 0;
     for(;;)
     {
-        if(controller && controller->isAborted())
+        if (controller && controller->isAborted())
             return;
         
         auto tag = cis->ReadTag();
@@ -407,7 +407,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                 {
                     const auto stringId = ObfReaderUtilities::decodeIntegerFromString(nameValue);
 
-                    if(stringId >= mapObjectsNamesTable.size())
+                    if (stringId >= mapObjectsNamesTable.size())
                     {
                         LogPrintf(LogSeverityLevel::Error,
                             "Data mismatch: string #%d (map object #%" PRIu64 " (%" PRIi64 ") not found in string table (size %d) in section '%s'",
@@ -420,9 +420,9 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                     nameValue = mapObjectsNamesTable[stringId];
                 }
 
-                if(!visitor || visitor(mapObject))
+                if (!visitor || visitor(mapObject))
                 {
-                    if(resultOut)
+                    if (resultOut)
                         resultOut->push_back(qMove(mapObject));
                 }
             }
@@ -437,7 +437,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
 
                 // Update metric
                 std::chrono::high_resolution_clock::time_point readMapObject_begin;
-                if(metric)
+                if (metric)
                     readMapObject_begin = std::chrono::high_resolution_clock::now();
 
                 // Read map object content
@@ -449,17 +449,17 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                     assert(cis->BytesUntilLimit() == 0);
 
                     // Update metric
-                    if(metric)
+                    if (metric)
                         metric->visitedMapObjects++;
 
                     cis->PopLimit(oldLimit);
                 }
 
                 // If map object was not read, skip it
-                if(!mapObject)
+                if (!mapObject)
                 {
                     // Update metric
-                    if(metric)
+                    if (metric)
                     {
                         const std::chrono::duration<float> readMapObject_elapsed = std::chrono::high_resolution_clock::now() - readMapObject_begin;
                         metric->elapsedTimeForOnlyVisitedMapObjects += readMapObject_elapsed.count();
@@ -469,7 +469,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                 }
 
                 // Update metric
-                if(metric)
+                if (metric)
                 {
                     const std::chrono::duration<float> readMapObject_elapsed = std::chrono::high_resolution_clock::now() - readMapObject_begin;
                     metric->elapsedTimeForOnlyAcceptedMapObjects += readMapObject_elapsed.count();
@@ -481,7 +481,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                 mapObject->_id = Model::MapObject::getUniqueId(mapObject->_id, section);
 
                 // Check if map object is desired
-                if(filterById && !filterById(section, mapObject->id, mapObject->bbox31, mapObject->level->minZoom, mapObject->level->maxZoom))
+                if (filterById && !filterById(section, mapObject->id, mapObject->bbox31, mapObject->level->minZoom, mapObject->level->maxZoom))
                     break;
 
                 // Save object
@@ -494,7 +494,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
-                if(intermediateResult.isEmpty())
+                if (intermediateResult.isEmpty())
                 {
                     cis->Skip(cis->BytesUntilLimit());
                     cis->PopLimit(oldLimit);
@@ -527,7 +527,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
         switch(tgn)
         {
         case 0:
-            if(mapObject && mapObject->points31.isEmpty())
+            if (mapObject && mapObject->points31.isEmpty())
             {
                 LogPrintf(LogSeverityLevel::Warning,
                     "Empty MapObject #%" PRIu64 "(%" PRIi64 ") detected in section '%s'",
@@ -576,7 +576,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                     verticesCount++;
                     
                     // Check if map object should be maintained
-                    if(!shouldNotSkip && bbox31)
+                    if (!shouldNotSkip && bbox31)
                     {
                         shouldNotSkip = bbox31->contains(p);
 
@@ -593,7 +593,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
 
                 // If map object has no vertices, retain it in a special way to report later, when
                 // it's identifier will be known
-                if(points31.isEmpty())
+                if (points31.isEmpty())
                 {
                     // Fake that this object is inside bbox
                     shouldNotSkip = true;
@@ -602,7 +602,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
 
                 // Even if no vertex lays inside bbox, an edge
                 // may intersect the bbox
-                if(!shouldNotSkip && bbox31)
+                if (!shouldNotSkip && bbox31)
                 {
                     assert(lastUnprocessedVertexForBBox == points31.size());
 
@@ -612,7 +612,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 }
 
                 // If map object didn't fit, skip it's entire content
-                if(!shouldNotSkip)
+                if (!shouldNotSkip)
                 {
                     cis->Skip(cis->BytesUntilLimit());
                     break;
@@ -629,7 +629,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 }
 
                 // Finally, create the object
-                if(!mapObject)
+                if (!mapObject)
                     mapObject.reset(new OsmAnd::Model::MapObject(section, treeNode->level));
                 mapObject->_isArea = (tgn == OBF::MapData::kAreaCoordinatesFieldNumber);
                 mapObject->_points31 = qMove(points31);
@@ -644,7 +644,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
             break;
         case OBF::MapData::kPolygonInnerCoordinatesFieldNumber:
             {
-                if(!mapObject)
+                if (!mapObject)
                     mapObject.reset(new OsmAnd::Model::MapObject(section, treeNode->level));
 
                 gpb::uint32 length;
@@ -685,7 +685,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
         case OBF::MapData::kAdditionalTypesFieldNumber:
         case OBF::MapData::kTypesFieldNumber:
             {
-                if(!mapObject)
+                if (!mapObject)
                     mapObject.reset(new OsmAnd::Model::MapObject(section, treeNode->level));
 
                 auto& typesRuleIds = (tgn == OBF::MapData::kAdditionalTypesFieldNumber ? mapObject->_extraTypesRuleIds : mapObject->_typesRuleIds);
@@ -762,7 +762,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     {
         QMutexLocker scopedLock(&section->_p->_encodingDecodingDataMutex);
 
-        if(!section->_p->_encodingDecodingRules)
+        if (!section->_p->_encodingDecodingRules)
         {
             cis->Seek(section->_offset);
             auto oldLimit = cis->PushLimit(section->_length);
@@ -776,30 +776,30 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     }
     
     auto foundation = MapFoundationType::Undefined;
-    if(foundationOut)
+    if (foundationOut)
         foundation = *foundationOut;
     for(const auto& mapLevel : constOf(section->_levels))
     {
         // Update metric
-        if(metric)
+        if (metric)
             metric->visitedLevels++;
 
-        if(mapLevel->_minZoom > zoom || mapLevel->_maxZoom < zoom)
+        if (mapLevel->_minZoom > zoom || mapLevel->_maxZoom < zoom)
             continue;
 
-        if(bbox31)
+        if (bbox31)
         {
             const auto shouldSkip =
                 !bbox31->contains(mapLevel->_area31) &&
                 !mapLevel->_area31.contains(*bbox31) &&
                 !bbox31->intersects(mapLevel->_area31);
-            if(shouldSkip)
+            if (shouldSkip)
                 continue;
         }
 
         // Update metric
         std::chrono::high_resolution_clock::time_point treeNodes_begin;
-        if(metric)
+        if (metric)
         {
             metric->acceptedLevels++;
             treeNodes_begin = std::chrono::high_resolution_clock::now();
@@ -809,7 +809,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
         {
             QMutexLocker scopedLock(&mapLevel->_p->_rootNodesMutex);
 
-            if(!mapLevel->_p->_rootNodes)
+            if (!mapLevel->_p->_rootNodes)
             {
                 cis->Seek(mapLevel->_offset);
                 auto oldLimit = cis->PushLimit(mapLevel->_length);
@@ -827,28 +827,28 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
         for(const auto& rootNode : constOf(mapLevel->_p->_rootNodes->nodes))
         {
             // Update metric
-            if(metric)
+            if (metric)
                 metric->visitedNodes++;
 
-            if(bbox31)
+            if (bbox31)
             {
                 const auto shouldSkip =
                     !bbox31->contains(rootNode->_area31) &&
                     !rootNode->_area31.contains(*bbox31) &&
                     !bbox31->intersects(rootNode->_area31);
-                if(shouldSkip)
+                if (shouldSkip)
                     continue;
             }
 
             // Update metric
-            if(metric)
+            if (metric)
                 metric->acceptedNodes++;
 
-            if(rootNode->_dataOffset > 0)
+            if (rootNode->_dataOffset > 0)
                 treeNodesWithData.push_back(rootNode);
 
             auto childrenFoundation = MapFoundationType::Undefined;
-            if(rootNode->_childrenInnerOffset > 0)
+            if (rootNode->_childrenInnerOffset > 0)
             {
                 cis->Seek(rootNode->_offset);
                 auto oldLimit = cis->PushLimit(rootNode->_length);
@@ -861,11 +861,11 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             }
 
             const auto foundationToMerge = (childrenFoundation != MapFoundationType::Undefined) ? childrenFoundation : rootNode->_foundation;
-            if(foundationToMerge != MapFoundationType::Undefined)
+            if (foundationToMerge != MapFoundationType::Undefined)
             {
-                if(foundation == MapFoundationType::Undefined)
+                if (foundation == MapFoundationType::Undefined)
                     foundation = foundationToMerge;
-                else if(foundation != foundationToMerge)
+                else if (foundation != foundationToMerge)
                     foundation = MapFoundationType::Mixed;
             }
         }
@@ -878,7 +878,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
 
         // Update metric
         std::chrono::high_resolution_clock::time_point mapObjects_begin;
-        if(metric)
+        if (metric)
         {
             const std::chrono::duration<float> treeNodes_elapsed = std::chrono::high_resolution_clock::now() - treeNodes_begin;
             metric->elapsedTimeForNodes += treeNodes_elapsed.count();
@@ -889,7 +889,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
         // Read map objects from their blocks
         for(const auto& treeNode : constOf(treeNodesWithData))
         {
-            if(controller && controller->isAborted())
+            if (controller && controller->isAborted())
                 break;
 
             cis->Seek(treeNode->_dataOffset);
@@ -904,18 +904,18 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             cis->PopLimit(oldLimit);
 
             // Update metric
-            if(metric)
+            if (metric)
                 metric->mapObjectsBlocksRead++;
         }
 
         // Update metric
-        if(metric)
+        if (metric)
         {
             const std::chrono::duration<float> mapObjects_elapsed = std::chrono::high_resolution_clock::now() - mapObjects_begin;
             metric->elapsedTimeForMapObjectsBlocks += mapObjects_elapsed.count();
         }
     }
 
-    if(foundationOut)
+    if (foundationOut)
         *foundationOut = foundation;
 }

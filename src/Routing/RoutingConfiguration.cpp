@@ -43,7 +43,7 @@ bool OsmAnd::RoutingConfiguration::parseConfiguration( QIODevice* data, RoutingC
             {
                 routingProfile.reset(new RoutingProfile());
                 parseRoutingProfile(&xmlReader, routingProfile.get());
-                if(routingProfile->_name == outConfig._defaultRoutingProfileName)
+                if (routingProfile->_name == outConfig._defaultRoutingProfileName)
                     outConfig._defaultRoutingProfile = routingProfile;
                 outConfig._routingProfiles.insert(routingProfile->_name, routingProfile);
             }
@@ -51,14 +51,14 @@ bool OsmAnd::RoutingConfiguration::parseConfiguration( QIODevice* data, RoutingC
             {
                 auto name = xmlReader.attributes().value("name").toString();
                 auto value = xmlReader.attributes().value("value").toString();
-                if(routingProfile)
+                if (routingProfile)
                     routingProfile->addAttribute(name, value);
                 else
                     outConfig._attributes.insert(name, value);
             }
             else if (tagName == "parameter")
             {
-                if(!routingProfile)
+                if (!routingProfile)
                 {
                     LogPrintf(LogSeverityLevel::Warning, "<parameter> is not inside <routingProfile> (%d, %d)", xmlReader.lineNumber(), xmlReader.columnNumber());
                     return false;
@@ -84,15 +84,15 @@ bool OsmAnd::RoutingConfiguration::parseConfiguration( QIODevice* data, RoutingC
 
                 OSMAND_ASSERT(rulesetType != RoutingRuleset::Type::Invalid, QString("Route data object attribute '%1' is unknown").arg(attributeName.toString()));
             }
-            else if(rulesetType != RoutingRuleset::Type::Invalid)
+            else if (rulesetType != RoutingRuleset::Type::Invalid)
             {
-                if(isConditionTag(tagName))
+                if (isConditionTag(tagName))
                     parseRoutingRuleset(&xmlReader, routingProfile.get(), rulesetType, ruleset);
             }
         }
         else if (xmlReader.isEndElement())
         {
-            if(tagName == "routingProfile")
+            if (tagName == "routingProfile")
             {
                 routingProfile.reset();
             }
@@ -100,13 +100,13 @@ bool OsmAnd::RoutingConfiguration::parseConfiguration( QIODevice* data, RoutingC
             {
                 rulesetType = RoutingRuleset::Type::Invalid;
             }
-            else if(isConditionTag(tagName))
+            else if (isConditionTag(tagName))
             {
                 ruleset.pop();
             }
         }
     }
-    if(xmlReader.hasError())
+    if (xmlReader.hasError())
     {
         LogPrintf(LogSeverityLevel::Warning, "XML error: %s (%d, %d)", qPrintable(xmlReader.errorString()), xmlReader.lineNumber(), xmlReader.columnNumber());
         return false;
@@ -123,11 +123,11 @@ void OsmAnd::RoutingConfiguration::parseRoutingParameter( QXmlStreamReader* xmlP
     auto idAttrib = attribs.value("id");
     auto typeAttrib = attribs.value("type");
 
-    if(typeAttrib == "boolean")
+    if (typeAttrib == "boolean")
     {
         routingProfile->registerBooleanParameter(idAttrib.toString(), nameAttrib.toString(), descriptionAttrib.toString());
     }
-    else if(typeAttrib == "numeric")
+    else if (typeAttrib == "numeric")
     {
         auto combinedValues = attribs.value("values");
         auto valueDescriptions = attribs.value("valueDescriptions");
@@ -137,7 +137,7 @@ void OsmAnd::RoutingConfiguration::parseRoutingParameter( QXmlStreamReader* xmlP
         {
             bool ok;
             auto value = value_.trimmed().toDouble(&ok);
-            if(!ok)
+            if (!ok)
                 LogPrintf(LogSeverityLevel::Error, "'%s' is not a valid integer", qPrintable(value_));
             values.push_back(value);
         }
@@ -173,7 +173,7 @@ void OsmAnd::RoutingConfiguration::parseRoutingProfile( QXmlStreamReader* xmlPar
         const auto& attrib = *itAttrib;
         auto name = attrib.name();
         auto value = attrib.value();
-        if(name.isNull())
+        if (name.isNull())
             continue;
         routingProfile->addAttribute(name.toString(), value.isNull() ? QString() : value.toString());
     }
@@ -181,11 +181,11 @@ void OsmAnd::RoutingConfiguration::parseRoutingProfile( QXmlStreamReader* xmlPar
     /*TODO: Not yet used
     RoutingProfile::Preset baseProfile;
     auto baseProfileAttrib = xmlParser->attributes().value("baseProfile");
-    if(baseProfileAttrib == "pedestrian")
+    if (baseProfileAttrib == "pedestrian")
         baseProfile = RoutingProfile::Preset::Pedestrian;
-    else if(baseProfileAttrib == "bicycle")
+    else if (baseProfileAttrib == "bicycle")
         baseProfile = RoutingProfile::Preset::Bicycle;
-    else if(baseProfileAttrib == "car")
+    else if (baseProfileAttrib == "car")
         baseProfile = RoutingProfile::Preset::Car;
     else
     {
@@ -207,12 +207,12 @@ void OsmAnd::RoutingConfiguration::parseRoutingRuleset( QXmlStreamReader* xmlPar
     routingRule->_value1 = attribs.value("value1").toString();
     routingRule->_value2 = attribs.value("value2").toString();
     routingRule->_type = attribs.value("type").toString();
-    if(routingRule->_type == "" && rulesetType == RoutingRuleset::Type::RoadSpeed ) {
+    if (routingRule->_type == "" && rulesetType == RoutingRuleset::Type::RoadSpeed ) {
         routingRule->_type = "speed";
     }
 
     auto context = routingProfile->getRuleset(rulesetType);
-    if(routingRule->_tagName == "select")
+    if (routingRule->_tagName == "select")
     {
         context->registerSelectExpression(attribs.value("value").toString(), routingRule->_type);
         addRulesetSubclause(routingRule.get(), context.get());
@@ -256,15 +256,15 @@ bool OsmAnd::RoutingConfiguration::isConditionTag( const QStringRef& tagName )
 QString OsmAnd::RoutingConfiguration::resolveAttribute( const QString& vehicle, const QString& name )
 {
     auto itProfile = _routingProfiles.constFind(vehicle);
-    if(itProfile != _routingProfiles.cend())
+    if (itProfile != _routingProfiles.cend())
     {
         auto itProfileAttribute = (*itProfile)->_attributes.constFind(name);
-        if(itProfileAttribute != (*itProfile)->_attributes.cend())
+        if (itProfileAttribute != (*itProfile)->_attributes.cend())
             return (*itProfileAttribute);
     }
 
     auto itAttribute = _attributes.constFind(name);
-    if(itAttribute != _attributes.cend())
+    if (itAttribute != _attributes.cend())
         return *itAttribute;
     return QString();
 }
@@ -274,11 +274,11 @@ bool OsmAnd::RoutingConfiguration::parseTypedValue( const QString& value, const 
     parsedValue;
     bool ok;
     
-    if(type == "speed")
+    if (type == "speed")
         parsedValue = Utilities::parseSpeed(value, 0, &ok);
-    else if(type == "weight")
+    else if (type == "weight")
         parsedValue = Utilities::parseWeight(value, 0, &ok);
-    else if(type == "length")
+    else if (type == "length")
         parsedValue = Utilities::parseLength(value, 0, &ok);
     else
         parsedValue = Utilities::parseArbitraryFloat(value, 0, &ok);

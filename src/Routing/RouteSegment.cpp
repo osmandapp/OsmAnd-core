@@ -22,7 +22,7 @@ OsmAnd::RouteSegment::RouteSegment(const std::shared_ptr<const Model::Road>& roa
     , turnInfo(_turnType)
     , description(_description)
 {
-    if(startPointIndex_ >= road_->points.size() || endPointIndex_ >= road_->points.size())
+    if (startPointIndex_ >= road_->points.size() || endPointIndex_ >= road_->points.size())
     {
         int i = 5;
     }

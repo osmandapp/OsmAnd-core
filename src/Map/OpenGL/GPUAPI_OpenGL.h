@@ -48,7 +48,7 @@
 #   define GL_CHECK_PRESENT(x)                                                                     \
         {                                                                                          \
             static bool __checked_presence_of_##x = std::is_function<decltype(x)>::value;          \
-            if(!__checked_presence_of_##x)                                                         \
+            if (!__checked_presence_of_##x)                                                        \
             {                                                                                      \
                 assert(x != nullptr);                                                              \
                 __checked_presence_of_##x = true;                                                  \

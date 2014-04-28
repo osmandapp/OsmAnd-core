@@ -16,21 +16,21 @@ OsmAnd::FunctorQueryFilter::~FunctorQueryFilter()
 
 bool OsmAnd::FunctorQueryFilter::acceptsZoom(ZoomLevel zoom) const
 {
-    if(!_acceptsZoomCallback)
+    if (!_acceptsZoomCallback)
         return true;
     return _acceptsZoomCallback(zoom);
 }
 
 bool OsmAnd::FunctorQueryFilter::acceptsArea(const AreaI& area) const
 {
-    if(!_acceptsAreaCallback)
+    if (!_acceptsAreaCallback)
         return true;
     return _acceptsAreaCallback(area);
 }
 
 bool OsmAnd::FunctorQueryFilter::acceptsPoint(const PointI& point) const
 {
-    if(!_acceptsPointCallback)
+    if (!_acceptsPointCallback)
         return true;
     return _acceptsPointCallback(point);
 }

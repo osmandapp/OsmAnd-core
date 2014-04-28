@@ -30,11 +30,11 @@ int OsmAnd::Model::MapObject::getSimpleLayerValue() const
 {
     for(const auto& typeRuleId : constOf(_extraTypesRuleIds))
     {
-        if(section->encodingDecodingRules->positiveLayers_encodingRuleIds.contains(typeRuleId))
+        if (section->encodingDecodingRules->positiveLayers_encodingRuleIds.contains(typeRuleId))
             return 1;
-        else if(section->encodingDecodingRules->negativeLayers_encodingRuleIds.contains(typeRuleId))
+        else if (section->encodingDecodingRules->negativeLayers_encodingRuleIds.contains(typeRuleId))
             return -1;
-        else if(section->encodingDecodingRules->zeroLayers_encodingRuleIds.contains(typeRuleId))
+        else if (section->encodingDecodingRules->zeroLayers_encodingRuleIds.contains(typeRuleId))
             return 0;
     }
 
@@ -43,14 +43,14 @@ int OsmAnd::Model::MapObject::getSimpleLayerValue() const
 
 bool OsmAnd::Model::MapObject::isClosedFigure(bool checkInner /*= false*/) const
 {
-    if(checkInner)
+    if (checkInner)
     {
         for(const auto& polygon : constOf(_innerPolygonsPoints31))
         {
-            if(polygon.isEmpty())
+            if (polygon.isEmpty())
                 continue;
 
-            if(polygon.first() != polygon.last())
+            if (polygon.first() != polygon.last())
                 return false;
         }
         return true;
@@ -76,12 +76,12 @@ bool OsmAnd::Model::MapObject::intersects( const AreaI& area ) const
     // Check if any of the object points is inside area
     for(const auto& point : constOf(_points31))
     {
-        if(area.contains(point))
+        if (area.contains(point))
             return true;
     }
 
     // Check if area is inside map object
-    if(bbox31.contains(area) || area.intersects(bbox31))
+    if (bbox31.contains(area) || area.intersects(bbox31))
         return true;
 
     return false;
@@ -96,7 +96,7 @@ uint64_t OsmAnd::Model::MapObject::getUniqueId( const uint64_t id, const std::sh
 {
     uint64_t uniqueId = id;
 
-    if(static_cast<int64_t>(uniqueId) < 0)
+    if (static_cast<int64_t>(uniqueId) < 0)
     {
         // IDs < 0 are guaranteed to be unique only inside own section
         const int64_t realId = -static_cast<int64_t>(uniqueId);

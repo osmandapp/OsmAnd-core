@@ -225,25 +225,25 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseRects2D()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    if(_iboRect2D)
+    if (_iboRect2D)
     {
         glDeleteBuffers(1, &_iboRect2D);
         GL_CHECK_RESULT;
         _iboRect2D.reset();
     }
-    if(_vboRect2D)
+    if (_vboRect2D)
     {
         glDeleteBuffers(1, &_vboRect2D);
         GL_CHECK_RESULT;
         _vboRect2D.reset();
     }
-    if(_vaoRect2D)
+    if (_vaoRect2D)
     {
         gpuAPI->glDeleteVertexArrays_wrapper(1, &_vaoRect2D);
         GL_CHECK_RESULT;
         _vaoRect2D.reset();
     }
-    if(_programRect2D.id)
+    if (_programRect2D.id)
     {
         glDeleteProgram(_programRect2D.id);
         GL_CHECK_RESULT;
@@ -426,25 +426,25 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines2D()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    if(_iboLine2D)
+    if (_iboLine2D)
     {
         glDeleteBuffers(1, &_iboLine2D);
         GL_CHECK_RESULT;
         _iboLine2D.reset();
     }
-    if(_vboLine2D)
+    if (_vboLine2D)
     {
         glDeleteBuffers(1, &_vboLine2D);
         GL_CHECK_RESULT;
         _vboLine2D.reset();
     }
-    if(_vaoLine2D)
+    if (_vaoLine2D)
     {
         gpuAPI->glDeleteVertexArrays_wrapper(1, &_vaoLine2D);
         GL_CHECK_RESULT;
         _vaoLine2D.reset();
     }
-    if(_programLine2D.id)
+    if (_programLine2D.id)
     {
         glDeleteProgram(_programLine2D.id);
         GL_CHECK_RESULT;
@@ -626,25 +626,25 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines3D()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    if(_iboLine3D)
+    if (_iboLine3D)
     {
         glDeleteBuffers(1, &_iboLine3D);
         GL_CHECK_RESULT;
         _iboLine3D.reset();
     }
-    if(_vboLine3D)
+    if (_vboLine3D)
     {
         glDeleteBuffers(1, &_vboLine3D);
         GL_CHECK_RESULT;
         _vboLine3D.reset();
     }
-    if(_vaoLine3D)
+    if (_vaoLine3D)
     {
         gpuAPI->glDeleteVertexArrays_wrapper(1, &_vaoLine3D);
         GL_CHECK_RESULT;
         _vaoLine3D.reset();
     }
-    if(_programLine3D.id)
+    if (_programLine3D.id)
     {
         glDeleteProgram(_programLine3D.id);
         GL_CHECK_RESULT;
@@ -838,25 +838,25 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseQuads3D()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    if(_iboQuad3D)
+    if (_iboQuad3D)
     {
         glDeleteBuffers(1, &_iboQuad3D);
         GL_CHECK_RESULT;
         _iboQuad3D.reset();
     }
-    if(_vboQuad3D)
+    if (_vboQuad3D)
     {
         glDeleteBuffers(1, &_vboQuad3D);
         GL_CHECK_RESULT;
         _vboQuad3D.reset();
     }
-    if(_vaoQuad3D)
+    if (_vaoQuad3D)
     {
         gpuAPI->glDeleteVertexArrays_wrapper(1, &_vaoQuad3D);
         GL_CHECK_RESULT;
         _vaoQuad3D.reset();
     }
-    if(_programQuad3D.id)
+    if (_programQuad3D.id)
     {
         glDeleteProgram(_programQuad3D.id);
         GL_CHECK_RESULT;

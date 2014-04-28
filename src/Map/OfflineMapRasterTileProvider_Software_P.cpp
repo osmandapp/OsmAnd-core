@@ -44,7 +44,7 @@ bool OsmAnd::OfflineMapRasterTileProvider_Software_P::obtainTile(const TileId ti
     // Obtain offline map data tile
     std::shared_ptr< const OfflineMapDataTile > dataTile;
     owner->dataProvider->obtainTile(tileId, zoom, dataTile);
-    if(!dataTile)
+    if (!dataTile)
     {
         outTile.reset();
         return true;
@@ -57,7 +57,7 @@ bool OsmAnd::OfflineMapRasterTileProvider_Software_P::obtainTile(const TileId ti
     // Allocate rasterization target
     auto rasterizationSurface = new SkBitmap();
     rasterizationSurface->setConfig(SkBitmap::kARGB_8888_Config, outputTileSize, outputTileSize);
-    if(!rasterizationSurface->allocPixels())
+    if (!rasterizationSurface->allocPixels())
     {
         delete rasterizationSurface;
 
@@ -70,7 +70,7 @@ bool OsmAnd::OfflineMapRasterTileProvider_Software_P::obtainTile(const TileId ti
     SkCanvas canvas(&rasterizationTarget);
 
     // Perform actual rendering
-    if(!dataTile->nothingToRasterize)
+    if (!dataTile->nothingToRasterize)
     {
         Rasterizer rasterizer(dataTile->rasterizerContext);
         rasterizer.rasterizeMap(canvas, true, nullptr, queryController);
@@ -79,7 +79,7 @@ bool OsmAnd::OfflineMapRasterTileProvider_Software_P::obtainTile(const TileId ti
 #if OSMAND_PERFORMANCE_METRICS
     const auto dataRasterization_End = std::chrono::high_resolution_clock::now();
     const std::chrono::duration<float> dataRasterization_Elapsed = dataRasterization_End - dataRasterization_Begin;
-    if(!dataTile->nothingToRasterize)
+    if (!dataTile->nothingToRasterize)
     {
         LogPrintf(LogSeverityLevel::Info,
             "%d map objects in %dx%d@%d: rasterization %fs",
@@ -94,7 +94,7 @@ bool OsmAnd::OfflineMapRasterTileProvider_Software_P::obtainTile(const TileId ti
 #endif // OSMAND_PERFORMANCE_METRICS
 
     // If there is no data to rasterize, tell that this tile is not available
-    if(dataTile->nothingToRasterize)
+    if (dataTile->nothingToRasterize)
     {
         delete rasterizationSurface;
 

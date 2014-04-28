@@ -133,7 +133,7 @@ namespace OsmAnd
 
             // In case resource was promised, wait forever until promise is fulfilled
             const auto itPromisedResourceEntry = _promisedResources.constFind(key);
-            if(itPromisedResourceEntry != _promisedResources.cend())
+            if (itPromisedResourceEntry != _promisedResources.cend())
             {
                 const auto localFuture = (*itPromisedResourceEntry)->sharedFuture;
                 scopedLocker.unlock();
@@ -151,7 +151,7 @@ namespace OsmAnd
             }
 
             const auto itAvailableResourceEntry = _availableResources.find(key);
-            if(itAvailableResourceEntry == _availableResources.end())
+            if (itAvailableResourceEntry == _availableResources.end())
                 return false;
             const auto& availableResourceEntry = *itAvailableResourceEntry;
 
@@ -169,22 +169,22 @@ namespace OsmAnd
             assert(!_promisedResources.contains(key));
             
             const auto itAvailableResourceEntry = _availableResources.find(key);
-            if(itAvailableResourceEntry == _availableResources.end())
+            if (itAvailableResourceEntry == _availableResources.end())
                 return false;
             const auto& availableResourceEntry = *itAvailableResourceEntry;
             assert(availableResourceEntry->refCounter > 0);
             assert(availableResourceEntry->resourcePtr == resourcePtr);
 
             availableResourceEntry->refCounter--;
-            if(outRemainingReferences)
+            if (outRemainingReferences)
                 *outRemainingReferences = availableResourceEntry->refCounter;
-            if(autoClean && outWasCleaned)
+            if (autoClean && outWasCleaned)
                 *outWasCleaned = false;
-            if(autoClean && availableResourceEntry->refCounter == 0)
+            if (autoClean && availableResourceEntry->refCounter == 0)
             {
                 _availableResources.erase(itAvailableResourceEntry);
 
-                if(outWasCleaned)
+                if (outWasCleaned)
                     *outWasCleaned = true;
             }
             resourcePtr.reset();
@@ -246,7 +246,7 @@ namespace OsmAnd
             ;
             _promisedResources.erase(itPromisedResourceEntry);
 
-            if(promisedResourceEntry->refCounter <= 0)
+            if (promisedResourceEntry->refCounter <= 0)
                 return;
 
             const auto newEntry = new AvailableResourceEntry(promisedResourceEntry->refCounter, qMove(resourcePtr));
@@ -273,7 +273,7 @@ namespace OsmAnd
             const std::shared_ptr<PromisedResourceEntry> promisedResourceEntry(qMove(*itPromisedResourceEntry));
             _promisedResources.erase(itPromisedResourceEntry);
 
-            if(promisedResourceEntry->refCounter <= 0)
+            if (promisedResourceEntry->refCounter <= 0)
                 return;
 
             const auto newEntry = new AvailableResourceEntry(promisedResourceEntry->refCounter, qMove(resourcePtr));
@@ -316,7 +316,7 @@ namespace OsmAnd
             assert(!_availableResources.contains(key));
 
             const auto itPromisedResourceEntry = _promisedResources.constFind(key);
-            if(itPromisedResourceEntry == _promisedResources.cend())
+            if (itPromisedResourceEntry == _promisedResources.cend())
                 return false;
             const auto& promisedResourceEntry = *itPromisedResourceEntry;
 
@@ -335,7 +335,7 @@ namespace OsmAnd
             assert(!_availableResources.contains(key));
 
             const auto itPromisedResourceEntry = _promisedResources.constFind(key);
-            if(itPromisedResourceEntry == _promisedResources.cend())
+            if (itPromisedResourceEntry == _promisedResources.cend())
                 return false;
             const auto& promisedResourceEntry = *itPromisedResourceEntry;
             assert(promisedResourceEntry->refCounter > 0);
@@ -350,7 +350,7 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&_lock);
 
             const auto itAvailableResourceEntry = _availableResources.find(key);
-            if(itAvailableResourceEntry != _availableResources.end())
+            if (itAvailableResourceEntry != _availableResources.end())
             {
                 const auto& availableResourceEntry = *itAvailableResourceEntry;
 
@@ -361,7 +361,7 @@ namespace OsmAnd
             }
             
             const auto futureReferenceAvailable = obtainFutureReference(key, outFutureResourcePtr);
-            if(futureReferenceAvailable)
+            if (futureReferenceAvailable)
                 return true;
             
             makePromise(key);

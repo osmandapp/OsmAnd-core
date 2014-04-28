@@ -34,11 +34,11 @@ OsmAnd::RoutingRulesetContext::RoutingRulesetContext(RoutingProfileContext* owne
     , ruleset(_ruleset)
     , contextValues(_contextValues)
 {
-    if(contextValues_)
+    if (contextValues_)
         _contextValues = *contextValues_;
 
     for(const auto& rt : ruleset_->_expressions){
-        if(checkParameter(rt, _contextValues)){
+        if (checkParameter(rt, _contextValues)){
             _ruleset->_expressions.push_back(rt);
         }
     }
@@ -51,7 +51,7 @@ OsmAnd::RoutingRulesetContext::~RoutingRulesetContext()
 int OsmAnd::RoutingRulesetContext::evaluateAsInteger( const std::shared_ptr<const Model::Road>& road, int defaultValue )
 {
     int result;
-    if(!evaluate(road, RoutingRuleExpression::ResultType::Integer, &result))
+    if (!evaluate(road, RoutingRuleExpression::ResultType::Integer, &result))
         return defaultValue;
     return result;
 }
@@ -59,7 +59,7 @@ int OsmAnd::RoutingRulesetContext::evaluateAsInteger( const std::shared_ptr<cons
 float OsmAnd::RoutingRulesetContext::evaluateAsFloat( const std::shared_ptr<const Model::Road>& road, float defaultValue )
 {
     float result;
-    if(!evaluate(road, RoutingRuleExpression::ResultType::Float, &result))
+    if (!evaluate(road, RoutingRuleExpression::ResultType::Float, &result))
         return defaultValue;
     return result;
 }
@@ -67,7 +67,7 @@ float OsmAnd::RoutingRulesetContext::evaluateAsFloat( const std::shared_ptr<cons
 int OsmAnd::RoutingRulesetContext::evaluateAsInteger( const std::shared_ptr<const ObfRoutingSectionInfo>& section, const QVector<uint32_t>& roadTypes, int defaultValue )
 {
     int result;
-    if(!evaluate(encode(section, roadTypes), RoutingRuleExpression::ResultType::Integer, &result))
+    if (!evaluate(encode(section, roadTypes), RoutingRuleExpression::ResultType::Integer, &result))
         return defaultValue;
     return result;
 }
@@ -75,7 +75,7 @@ int OsmAnd::RoutingRulesetContext::evaluateAsInteger( const std::shared_ptr<cons
 float OsmAnd::RoutingRulesetContext::evaluateAsFloat( const std::shared_ptr<const ObfRoutingSectionInfo>& section, const QVector<uint32_t>& roadTypes, float defaultValue )
 {
     float result;
-    if(!evaluate(encode(section, roadTypes), RoutingRuleExpression::ResultType::Float, &result))
+    if (!evaluate(encode(section, roadTypes), RoutingRuleExpression::ResultType::Float, &result))
         return defaultValue;
     return result;
 }
@@ -89,7 +89,7 @@ bool OsmAnd::RoutingRulesetContext::evaluate( const QBitArray& types, RoutingRul
 {
     for(const auto& expression : constOf(ruleset->expressions))
     {
-        if(expression->evaluate(types, this, type, result))
+        if (expression->evaluate(types, this, type, result))
             return true;
     }
     return false;
@@ -100,13 +100,13 @@ QBitArray OsmAnd::RoutingRulesetContext::encode( const std::shared_ptr<const Obf
     QBitArray bitset(ruleset->owner->_universalRules.size());
     
     auto itTagValueAttribIdCache = owner->_tagValueAttribIdCache.find(section);
-    if(itTagValueAttribIdCache == owner->_tagValueAttribIdCache.end())
+    if (itTagValueAttribIdCache == owner->_tagValueAttribIdCache.end())
         itTagValueAttribIdCache = owner->_tagValueAttribIdCache.insert(section, QMap<uint32_t, uint32_t>());
     
     for(const auto& type : constOf(roadTypes))
     {
         auto itId = itTagValueAttribIdCache->find(type);
-        if(itId == itTagValueAttribIdCache->end())
+        if (itId == itTagValueAttribIdCache->end())
         {
             const auto& encodingRule = section->_p->_encodingRules[type];
             assert(encodingRule);
@@ -116,7 +116,7 @@ QBitArray OsmAnd::RoutingRulesetContext::encode( const std::shared_ptr<const Obf
         }
         auto id = *itId;
 
-        if(bitset.size() <= id)
+        if (bitset.size() <= id)
             bitset.resize(id + 1);
         bitset.setBit(id);
     }

@@ -187,7 +187,7 @@ namespace OsmAnd
 
             // In case resource was promised, wait forever until promise is fulfilled
             const auto& itPromisedResourceEntry = _promisedResources[level].constFind(key);
-            if(itPromisedResourceEntry != _promisedResources[level].cend())
+            if (itPromisedResourceEntry != _promisedResources[level].cend())
             {
                 const auto localFuture = (*itPromisedResourceEntry)->sharedFuture;
                 scopedLocker.unlock();
@@ -205,7 +205,7 @@ namespace OsmAnd
             }
 
             const auto& itAvailableResourceEntry = _availableResources[level].find(key);
-            if(itAvailableResourceEntry == _availableResources[level].end())
+            if (itAvailableResourceEntry == _availableResources[level].end())
                 return false;
             const auto& availableResourceEntry = *itAvailableResourceEntry;
 
@@ -231,22 +231,22 @@ namespace OsmAnd
             assert(!_promisedResources[level].contains(key));
 
             const auto& itAvailableResourceEntry = _availableResources[level].find(key);
-            if(itAvailableResourceEntry == _availableResources[level].end())
+            if (itAvailableResourceEntry == _availableResources[level].end())
                 return false;
             const auto& availableResourceEntry = *itAvailableResourceEntry;
             assert(availableResourceEntry->refCounter > 0);
             assert(availableResourceEntry->resourcePtr == resourcePtr);
 
             availableResourceEntry->refCounter--;
-            if(outRemainingReferences)
+            if (outRemainingReferences)
                 *outRemainingReferences = availableResourceEntry->refCounter;
-            if(autoClean && outWasCleaned)
+            if (autoClean && outWasCleaned)
                 *outWasCleaned = false;
-            if(autoClean && availableResourceEntry->refCounter == 0)
+            if (autoClean && availableResourceEntry->refCounter == 0)
             {
                 for(const auto& otherLevel : constOf(availableResourceEntry->zoomLevels))
                 {
-                    if(otherLevel == level)
+                    if (otherLevel == level)
                         continue;
 
                     const auto removedCount = _availableResources[otherLevel].remove(key);
@@ -256,7 +256,7 @@ namespace OsmAnd
                 _availableResourceEntriesStorage.remove(availableResourceEntry);
                 _availableResources[level].erase(itAvailableResourceEntry);
 
-                if(outWasCleaned)
+                if (outWasCleaned)
                     *outWasCleaned = true;
             }
             resourcePtr.reset();
@@ -310,7 +310,7 @@ namespace OsmAnd
                 assert(!_availableResources[level].contains(key));
 
                 const auto& itPromisedResourceEntry = _promisedResources[level].find(key);
-                if(!promisedEntryPtr)
+                if (!promisedEntryPtr)
                     promisedEntryPtr = *itPromisedResourceEntry;
                 _promisedResources[level].erase(itPromisedResourceEntry);
 
@@ -341,14 +341,14 @@ namespace OsmAnd
                 assert(!_availableResources[level].contains(key));
 
                 const auto& itPromisedResourceEntry = _promisedResources[level].find(key);
-                if(!promisedEntryPtr)
+                if (!promisedEntryPtr)
                     promisedEntryPtr = *itPromisedResourceEntry;
                 _promisedResources[level].erase(itPromisedResourceEntry);
 
             }
             _promisedResourceEntriesStorage.erase(promisedEntryPtr);
 
-            if(promisedEntryPtr->refCounter <= 0)
+            if (promisedEntryPtr->refCounter <= 0)
                 return;
 
             const AvailableResourceEntryPtr newEntryPtr(new AvailableResourceEntry(promisedEntryPtr->refCounter, qMove(resourcePtr), levels));
@@ -394,14 +394,14 @@ namespace OsmAnd
                 assert(!_availableResources[level].contains(key));
 
                 const auto& itPromisedResourceEntry = _promisedResources[level].find(key);
-                if(!promisedEntryPtr)
+                if (!promisedEntryPtr)
                     promisedEntryPtr = *itPromisedResourceEntry;
                 _promisedResources[level].erase(itPromisedResourceEntry);
 
             }
             _promisedResourceEntriesStorage.erase(promisedEntryPtr);
 
-            if(promisedEntryPtr->refCounter <= 0)
+            if (promisedEntryPtr->refCounter <= 0)
                 return;
 
             const AvailableResourceEntryPtr newEntryPtr(new AvailableResourceEntry(promisedEntryPtr->refCounter, qMove(resourcePtr), levels));
@@ -443,7 +443,7 @@ namespace OsmAnd
                 assert(!_availableResources[level].contains(key));
 
                 const auto& itPromisedResourceEntry = _promisedResources[level].find(key);
-                if(!promisedEntryPtr)
+                if (!promisedEntryPtr)
                     promisedEntryPtr = *itPromisedResourceEntry;
                 _promisedResources[level].erase(itPromisedResourceEntry);
 
@@ -482,7 +482,7 @@ namespace OsmAnd
             assert(!_availableResources[level].contains(key));
 
             const auto& itPromisedResourceEntry = _promisedResources[level].constFind(key);
-            if(itPromisedResourceEntry == _promisedResources[level].cend())
+            if (itPromisedResourceEntry == _promisedResources[level].cend())
                 return false;
             const auto& promisedResourceEntry = *itPromisedResourceEntry;
 
@@ -508,7 +508,7 @@ namespace OsmAnd
             assert(!_availableResources[level].contains(key));
 
             const auto& itPromisedResourceEntry = _promisedResources[level].constFind(key);
-            if(itPromisedResourceEntry == _promisedResources[level].cend())
+            if (itPromisedResourceEntry == _promisedResources[level].cend())
                 return false;
             const auto& promisedResourceEntry = *itPromisedResourceEntry;
             assert(promisedResourceEntry->refCounter > 0);
@@ -533,7 +533,7 @@ namespace OsmAnd
             assert(levels.contains(level));
 
             const auto& itAvailableResourceEntry = _availableResources[level].find(key);
-            if(itAvailableResourceEntry != _availableResources[level].end())
+            if (itAvailableResourceEntry != _availableResources[level].end())
             {
                 const auto& availableResourceEntry = *itAvailableResourceEntry;
 
@@ -553,7 +553,7 @@ namespace OsmAnd
             }
 
             const auto futureReferenceAvailable = obtainFutureReference(key, level, outFutureResourcePtr);
-            if(futureReferenceAvailable)
+            if (futureReferenceAvailable)
                 return true;
 
             makePromise(key, levels);

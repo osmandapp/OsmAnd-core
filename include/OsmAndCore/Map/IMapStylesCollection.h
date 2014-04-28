@@ -29,7 +29,7 @@ namespace OsmAnd
         inline std::shared_ptr<const MapStyle> getBakedStyle(const QString& name) const
         {
             std::shared_ptr<const MapStyle> style;
-            if(!obtainBakedStyle(name, style))
+            if (!obtainBakedStyle(name, style))
                 return nullptr;
             return style;
         }

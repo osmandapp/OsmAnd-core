@@ -54,7 +54,7 @@ OsmAnd::MapRenderer::~MapRenderer()
 bool OsmAnd::MapRenderer::setup( const MapRendererSetupOptions& setupOptions )
 {
     // We can not change setup options renderer once rendering has been initialized
-    if(_isRenderingInitialized)
+    if (_isRenderingInitialized)
         return false;
 
     _setupOptions = setupOptions;
@@ -85,25 +85,25 @@ void OsmAnd::MapRenderer::setConfiguration( const MapRendererConfiguration& conf
     update = update || invalidateRasterTextures;
     update = update || invalidateElevationData;
     update = update || texturesFilteringChanged;
-    if(!update)
+    if (!update)
         return;
 
     _requestedConfiguration = configuration_;
     uint32_t mask = 0;
-    if(colorDepthForcingChanged)
+    if (colorDepthForcingChanged)
         mask |= ConfigurationChange::ColorDepthForcing;
-    if(elevationDataResolutionChanged)
+    if (elevationDataResolutionChanged)
         mask |= ConfigurationChange::ElevationDataResolution;
-    if(texturesFilteringChanged)
+    if (texturesFilteringChanged)
         mask |= ConfigurationChange::TexturesFilteringMode;
-    if(paletteTexturesUsageChanged)
+    if (paletteTexturesUsageChanged)
         mask |= ConfigurationChange::PaletteTexturesUsage;
 
-    if(invalidateRasterTextures)
+    if (invalidateRasterTextures)
         _resources->invalidateResourcesOfType(ResourceType::RasterMap);
-    if(invalidateElevationData)
+    if (invalidateElevationData)
         _resources->invalidateResourcesOfType(ResourceType::ElevationData);
-    if(invalidateSymbols)
+    if (invalidateSymbols)
         _resources->invalidateResourcesOfType(ResourceType::Symbols);
     invalidateCurrentConfiguration(mask);
 }
@@ -121,7 +121,7 @@ bool OsmAnd::MapRenderer::updateCurrentConfiguration()
     uint32_t bitIndex = 0;
     while(_currentConfigurationInvalidatedMask)
     {
-        if(_currentConfigurationInvalidatedMask & 0x1)
+        if (_currentConfigurationInvalidatedMask & 0x1)
             validateConfigurationChange(static_cast<ConfigurationChange>(1 << bitIndex));
 
         bitIndex++;
@@ -142,7 +142,7 @@ bool OsmAnd::MapRenderer::revalidateState()
         QMutexLocker scopedLocker(&_requestedStateMutex);
 
         // Check if requested state was updated at all
-        if(!_requestedStateUpdatedMask)
+        if (!_requestedStateUpdatedMask)
             return true;
 
         // Capture new state and mask
@@ -164,7 +164,7 @@ bool OsmAnd::MapRenderer::revalidateState()
     ok = updateInternalState(internalState, _currentState);
 
     // Postprocess internal state
-    if(ok)
+    if (ok)
     {
         // Sort visible tiles by distance from target
         qSort(internalState->visibleTiles.begin(), internalState->visibleTiles.end(), [internalState](const TileId& l, const TileId& r) -> bool
@@ -183,7 +183,7 @@ bool OsmAnd::MapRenderer::revalidateState()
     invalidateFrame();
 
     // If there was an error, mark current state as updated again
-    if(!ok)
+    if (!ok)
     {
         QMutexLocker scopedLocker(&_requestedStateMutex);
         _requestedStateUpdatedMask = updatedMask;
@@ -237,7 +237,7 @@ void OsmAnd::MapRenderer::invalidateFrame()
     _frameInvalidatesCounter.fetchAndAddOrdered(1);
 
     // Request frame, if such callback is defined
-    if(setupOptions.frameUpdateRequestCallback)
+    if (setupOptions.frameUpdateRequestCallback)
         setupOptions.frameUpdateRequestCallback(this);
 }
 
@@ -249,7 +249,7 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
     _gpuWorkerThreadId = QThread::currentThreadId();
 
     // Call prologue if such exists
-    if(setupOptions.gpuWorkerThreadPrologue)
+    if (setupOptions.gpuWorkerThreadPrologue)
         setupOptions.gpuWorkerThreadPrologue(this);
 
     while(_gpuWorkerIsAlive)
@@ -260,7 +260,7 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
             REPEAT_UNTIL(_gpuWorkerThreadWakeup.wait(&_gpuWorkerThreadWakeupMutex));
         }
 
-        if(!_gpuWorkerIsAlive)
+        if (!_gpuWorkerIsAlive)
             break;
 
         // In every layer we have, upload pending resources to GPU without limiting
@@ -271,7 +271,7 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
             unsigned int resourcesUploaded = 0u;
             unsigned int resourcesUnloaded = 0u;
             _resources->syncResourcesInGPU(0, nullptr, &resourcesUploaded, &resourcesUnloaded);
-            if(resourcesUploaded > 0 || resourcesUnloaded > 0)
+            if (resourcesUploaded > 0 || resourcesUnloaded > 0)
                 invalidateFrame();
             unprocessedRequests = _resourcesUploadRequestsCounter.fetchAndAddOrdered(-requestsToProcess) - requestsToProcess;
         } while(unprocessedRequests > 0);
@@ -281,7 +281,7 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
     }
 
     // Call epilogue
-    if(setupOptions.gpuWorkerThreadEpilogue)
+    if (setupOptions.gpuWorkerThreadEpilogue)
         setupOptions.gpuWorkerThreadEpilogue(this);
 
     _gpuWorkerThreadId = nullptr;
@@ -294,19 +294,19 @@ bool OsmAnd::MapRenderer::initializeRendering()
     _resourcesUploadRequestsCounter.store(0);
 
     ok = gpuAPI->initialize();
-    if(!ok)
+    if (!ok)
         return false;
 
     ok = preInitializeRendering();
-    if(!ok)
+    if (!ok)
         return false;
 
     ok = doInitializeRendering();
-    if(!ok)
+    if (!ok)
         return false;
 
     ok = postInitializeRendering();
-    if(!ok)
+    if (!ok)
         return false;
 
     // Once rendering is initialized, invalidate frame
@@ -317,7 +317,7 @@ bool OsmAnd::MapRenderer::initializeRendering()
 
 bool OsmAnd::MapRenderer::preInitializeRendering()
 {
-    if(_isRenderingInitialized)
+    if (_isRenderingInitialized)
         return false;
 
     // Capture render thread ID, since rendering must be performed from
@@ -339,7 +339,7 @@ bool OsmAnd::MapRenderer::preInitializeRendering()
 bool OsmAnd::MapRenderer::doInitializeRendering()
 {
     // Create GPU worker thread
-    if(setupOptions.gpuWorkerThreadEnabled)
+    if (setupOptions.gpuWorkerThreadEnabled)
     {
         const auto thread = new Concurrent::Thread(std::bind(&MapRenderer::gpuWorkerThreadProcedure, this));
         _gpuWorkerThread.reset(thread);
@@ -353,7 +353,7 @@ bool OsmAnd::MapRenderer::postInitializeRendering()
     _isRenderingInitialized = true;
 
     // Start GPU worker (if it exists)
-    if(_gpuWorkerThread)
+    if (_gpuWorkerThread)
     {
         _gpuWorkerIsAlive = true;
         _gpuWorkerThread->start();
@@ -369,15 +369,15 @@ bool OsmAnd::MapRenderer::prepareFrame()
     bool ok;
 
     ok = prePrepareFrame();
-    if(!ok)
+    if (!ok)
         return false;
 
     ok = doPrepareFrame();
-    if(!ok)
+    if (!ok)
         return false;
 
     ok = postPrepareFrame();
-    if(!ok)
+    if (!ok)
         return false;
 
     return true;
@@ -385,14 +385,14 @@ bool OsmAnd::MapRenderer::prepareFrame()
 
 bool OsmAnd::MapRenderer::prePrepareFrame()
 {
-    if(!_isRenderingInitialized)
+    if (!_isRenderingInitialized)
         return false;
 
     bool ok;
 
     // If we have current configuration invalidated, we need to update it
     // and invalidate frame
-    if(_currentConfigurationInvalidatedMask)
+    if (_currentConfigurationInvalidatedMask)
     {
         // Capture configuration
         {
@@ -402,19 +402,19 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
         }
 
         bool ok = updateCurrentConfiguration();
-        if(ok)
+        if (ok)
             _currentConfigurationInvalidatedMask = 0;
 
         invalidateFrame();
 
         // If configuration is still invalidated, abort processing
-        if(_currentConfigurationInvalidatedMask)
+        if (_currentConfigurationInvalidatedMask)
             return false;
     }
 
     // Deal with state
     ok = revalidateState();
-    if(!ok)
+    if (!ok)
         return false;
 
     // Get set of tiles that are unique: visible tiles may contain same tiles, but wrapped
@@ -450,15 +450,15 @@ bool OsmAnd::MapRenderer::renderFrame()
     bool ok;
 
     ok = preRenderFrame();
-    if(!ok)
+    if (!ok)
         return false;
 
     ok = doRenderFrame();
-    if(!ok)
+    if (!ok)
         return false;
 
     ok = postRenderFrame();
-    if(!ok)
+    if (!ok)
         return false;
 
     return true;
@@ -466,7 +466,7 @@ bool OsmAnd::MapRenderer::renderFrame()
 
 bool OsmAnd::MapRenderer::preRenderFrame()
 {
-    if(!_isRenderingInitialized)
+    if (!_isRenderingInitialized)
         return false;
     
     // Capture how many "frame-invalidates" are going to be processed
@@ -490,15 +490,15 @@ bool OsmAnd::MapRenderer::processRendering()
     bool ok;
 
     ok = preProcessRendering();
-    if(!ok)
+    if (!ok)
         return false;
 
     ok = doProcessRendering();
-    if(!ok)
+    if (!ok)
         return false;
 
     ok = postProcessRendering();
-    if(!ok)
+    if (!ok)
         return false;
 
     return true;
@@ -513,7 +513,7 @@ bool OsmAnd::MapRenderer::doProcessRendering()
 {
     // If GPU worker thread is not enabled, upload resource to GPU from render thread.
     // To reduce FPS drop, upload not more than 1 resource per frame.
-    if(!_gpuWorkerThread)
+    if (!_gpuWorkerThread)
     {
         const auto requestsToProcess = _resourcesUploadRequestsCounter.fetchAndAddOrdered(0);
         bool moreUploadThanLimitAvailable = false;
@@ -524,7 +524,7 @@ bool OsmAnd::MapRenderer::doProcessRendering()
         
         // If any resource was uploaded or there is more resources to uploaded, invalidate frame
         // to use that resource
-        if(resourcesUploaded > 0 || moreUploadThanLimitAvailable || resourcesUnloaded > 0 || unprocessedRequests > 0)
+        if (resourcesUploaded > 0 || moreUploadThanLimitAvailable || resourcesUnloaded > 0 || unprocessedRequests > 0)
             invalidateFrame();
 
         // Process GPU thread dispatcher
@@ -549,20 +549,20 @@ bool OsmAnd::MapRenderer::releaseRendering()
     bool ok;
 
     ok = preReleaseRendering();
-    if(!ok)
+    if (!ok)
         return false;
 
     ok = doReleaseRendering();
-    if(!ok)
+    if (!ok)
         return false;
 
     ok = postReleaseRendering();
-    if(!ok)
+    if (!ok)
         return false;
 
     // After all release procedures, release render API
     ok = gpuAPI->release();
-    if(!ok)
+    if (!ok)
         return false;
 
     return true;
@@ -570,7 +570,7 @@ bool OsmAnd::MapRenderer::releaseRendering()
 
 bool OsmAnd::MapRenderer::preReleaseRendering()
 {
-    if(!_isRenderingInitialized)
+    if (!_isRenderingInitialized)
         return false;
 
     return true;
@@ -587,7 +587,7 @@ bool OsmAnd::MapRenderer::postReleaseRendering()
     _resources->releaseAllResources();
 
     // Stop GPU worker if it exists
-    if(_gpuWorkerThread)
+    if (_gpuWorkerThread)
     {
         // Deactivate worker thread
         _gpuWorkerIsAlive = false;
@@ -631,7 +631,7 @@ void OsmAnd::MapRenderer::requestResourcesUploadOrUnload()
 {
     _resourcesUploadRequestsCounter.fetchAndAddOrdered(1);
 
-    if(_gpuWorkerThread)
+    if (_gpuWorkerThread)
     {
         QMutexLocker scopedLocker(&_gpuWorkerThreadWakeupMutex);
         _gpuWorkerThreadWakeup.wakeAll();
@@ -656,12 +656,12 @@ bool OsmAnd::MapRenderer::convertBitmap(const std::shared_ptr<const SkBitmap>& i
     doConvert = doConvert || unsupportedFormat;
 
     // Pass palette texture as-is
-    if(paletteTexture && canUsePaletteTextures)
+    if (paletteTexture && canUsePaletteTextures)
         return false;
 
     // Check if we need alpha
     auto convertedAlphaChannelData = alphaChannelData;
-    if(doConvert && (convertedAlphaChannelData == AlphaChannelData::Undefined))
+    if (doConvert && (convertedAlphaChannelData == AlphaChannelData::Undefined))
     {
         convertedAlphaChannelData = SkBitmap::ComputeIsOpaque(*input)
             ? AlphaChannelData::NotPresent
@@ -669,7 +669,7 @@ bool OsmAnd::MapRenderer::convertBitmap(const std::shared_ptr<const SkBitmap>& i
     }
 
     // If we have limit of 16bits per pixel in bitmaps, convert to ARGB(4444) or RGB(565)
-    if(force16bit)
+    if (force16bit)
     {
         auto convertedBitmap = new SkBitmap();
 
@@ -683,7 +683,7 @@ bool OsmAnd::MapRenderer::convertBitmap(const std::shared_ptr<const SkBitmap>& i
     }
 
     // If we have any other unsupported format, convert to proper 16bit or 32bit
-    if(unsupportedFormat)
+    if (unsupportedFormat)
     {
         auto convertedBitmap = new SkBitmap();
 
@@ -706,13 +706,13 @@ bool OsmAnd::MapRenderer::convertMapTile(std::shared_ptr<const MapTile>& mapTile
 
 bool OsmAnd::MapRenderer::convertMapTile(const std::shared_ptr<const MapTile>& input_, std::shared_ptr<const MapTile>& output) const
 {
-    if(input_->dataType == MapTileDataType::Bitmap)
+    if (input_->dataType == MapTileDataType::Bitmap)
     {
         const auto input = std::static_pointer_cast<const MapBitmapTile>(input_);
 
         std::shared_ptr<const SkBitmap> convertedBitmap;
         const bool wasConverted = convertBitmap(input->bitmap, convertedBitmap, input->alphaChannelData);
-        if(!wasConverted)
+        if (!wasConverted)
             return false;
 
         output.reset(new MapBitmapTile(convertedBitmap, input->alphaChannelData));
@@ -731,7 +731,7 @@ bool OsmAnd::MapRenderer::convertMapSymbol(const std::shared_ptr<const MapSymbol
 {
     std::shared_ptr<const SkBitmap> convertedBitmap;
     const bool wasConverted = convertBitmap(input->bitmap, convertedBitmap, AlphaChannelData::Present);
-    if(!wasConverted)
+    if (!wasConverted)
         return false;
 
     output.reset(input->cloneWithReplacedBitmap(convertedBitmap));
@@ -780,7 +780,7 @@ void OsmAnd::MapRenderer::setRasterLayerProvider( const RasterMapLayerId layerId
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     bool update = forcedUpdate || (_requestedState.rasterLayerProviders[static_cast<int>(layerId)] != tileProvider);
-    if(!update)
+    if (!update)
         return;
 
     _requestedState.rasterLayerProviders[static_cast<int>(layerId)] = tileProvider;
@@ -793,7 +793,7 @@ void OsmAnd::MapRenderer::resetRasterLayerProvider( const RasterMapLayerId layer
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     bool update = forcedUpdate || static_cast<bool>(_requestedState.rasterLayerProviders[static_cast<int>(layerId)]);
-    if(!update)
+    if (!update)
         return;
 
     _requestedState.rasterLayerProviders[static_cast<int>(layerId)].reset();
@@ -808,7 +808,7 @@ void OsmAnd::MapRenderer::setRasterLayerOpacity( const RasterMapLayerId layerId,
     const auto clampedValue = qMax(0.0f, qMin(opacity, 1.0f));
 
     bool update = forcedUpdate || !qFuzzyCompare(_requestedState.rasterLayerOpacity[static_cast<int>(layerId)], clampedValue);
-    if(!update)
+    if (!update)
         return;
 
     _requestedState.rasterLayerOpacity[static_cast<int>(layerId)] = clampedValue;
@@ -821,7 +821,7 @@ void OsmAnd::MapRenderer::setElevationDataProvider( const std::shared_ptr<IMapEl
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     bool update = forcedUpdate || (_requestedState.elevationDataProvider != tileProvider);
-    if(!update)
+    if (!update)
         return;
 
     _requestedState.elevationDataProvider = tileProvider;
@@ -835,7 +835,7 @@ void OsmAnd::MapRenderer::resetElevationDataProvider( bool forcedUpdate /*= fals
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     bool update = forcedUpdate || static_cast<bool>(_requestedState.elevationDataProvider);
-    if(!update)
+    if (!update)
         return;
 
     _requestedState.elevationDataProvider.reset();
@@ -849,7 +849,7 @@ void OsmAnd::MapRenderer::setElevationDataScaleFactor( const float factor, bool 
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     bool update = forcedUpdate || !qFuzzyCompare(_requestedState.elevationDataScaleFactor, factor);
-    if(!update)
+    if (!update)
         return;
 
     _requestedState.elevationDataScaleFactor = factor;
@@ -862,7 +862,7 @@ void OsmAnd::MapRenderer::addSymbolProvider( const std::shared_ptr<IMapSymbolPro
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     bool update = forcedUpdate || !_requestedState.symbolProviders.contains(provider);
-    if(!update)
+    if (!update)
         return;
 
     _requestedState.symbolProviders.insert(provider);
@@ -875,7 +875,7 @@ void OsmAnd::MapRenderer::removeSymbolProvider( const std::shared_ptr<IMapSymbol
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     bool update = forcedUpdate || _requestedState.symbolProviders.contains(provider);
-    if(!update)
+    if (!update)
         return;
 
     _requestedState.symbolProviders.remove(provider);
@@ -888,7 +888,7 @@ void OsmAnd::MapRenderer::removeAllSymbolProviders( bool forcedUpdate /*= false*
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     bool update = forcedUpdate || !_requestedState.symbolProviders.isEmpty();
-    if(!update)
+    if (!update)
         return;
 
     _requestedState.symbolProviders.clear();
@@ -901,7 +901,7 @@ void OsmAnd::MapRenderer::setWindowSize( const PointI& windowSize, bool forcedUp
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     bool update = forcedUpdate || (_requestedState.windowSize != windowSize);
-    if(!update)
+    if (!update)
         return;
 
     _requestedState.windowSize = windowSize;
@@ -914,7 +914,7 @@ void OsmAnd::MapRenderer::setViewport( const AreaI& viewport, bool forcedUpdate 
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     bool update = forcedUpdate || (_requestedState.viewport != viewport);
-    if(!update)
+    if (!update)
         return;
 
     _requestedState.viewport = viewport;
@@ -929,7 +929,7 @@ void OsmAnd::MapRenderer::setFieldOfView( const float fieldOfView, bool forcedUp
     const auto clampedValue = qMax(std::numeric_limits<float>::epsilon(), qMin(fieldOfView, 90.0f));
 
     bool update = forcedUpdate || !qFuzzyCompare(_requestedState.fieldOfView, clampedValue);
-    if(!update)
+    if (!update)
         return;
 
     _requestedState.fieldOfView = clampedValue;
@@ -944,7 +944,7 @@ void OsmAnd::MapRenderer::setDistanceToFog( const float fogDistance, bool forced
     const auto clampedValue = qMax(std::numeric_limits<float>::epsilon(), fogDistance);
 
     bool update = forcedUpdate || !qFuzzyCompare(_requestedState.fogDistance, clampedValue);
-    if(!update)
+    if (!update)
         return;
 
     _requestedState.fogDistance = clampedValue;
@@ -959,7 +959,7 @@ void OsmAnd::MapRenderer::setFogOriginFactor( const float factor, bool forcedUpd
     const auto clampedValue = qMax(std::numeric_limits<float>::epsilon(), qMin(factor, 1.0f));
 
     bool update = forcedUpdate || !qFuzzyCompare(_requestedState.fogOriginFactor, clampedValue);
-    if(!update)
+    if (!update)
         return;
 
     _requestedState.fogOriginFactor = clampedValue;
@@ -974,7 +974,7 @@ void OsmAnd::MapRenderer::setFogHeightOriginFactor( const float factor, bool for
     const auto clampedValue = qMax(std::numeric_limits<float>::epsilon(), qMin(factor, 1.0f));
 
     bool update = forcedUpdate || !qFuzzyCompare(_requestedState.fogHeightOriginFactor, clampedValue);
-    if(!update)
+    if (!update)
         return;
 
     _requestedState.fogHeightOriginFactor = clampedValue;
@@ -989,7 +989,7 @@ void OsmAnd::MapRenderer::setFogDensity( const float fogDensity, bool forcedUpda
     const auto clampedValue = qMax(std::numeric_limits<float>::epsilon(), fogDensity);
 
     bool update = forcedUpdate || !qFuzzyCompare(_requestedState.fogDensity, clampedValue);
-    if(!update)
+    if (!update)
         return;
 
     _requestedState.fogDensity = clampedValue;
@@ -1002,7 +1002,7 @@ void OsmAnd::MapRenderer::setFogColor( const FColorRGB& color, bool forcedUpdate
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     bool update = forcedUpdate || _requestedState.fogColor != color;
-    if(!update)
+    if (!update)
         return;
 
     _requestedState.fogColor = color;
@@ -1015,7 +1015,7 @@ void OsmAnd::MapRenderer::setSkyColor( const FColorRGB& color, bool forcedUpdate
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     bool update = forcedUpdate || _requestedState.skyColor != color;
-    if(!update)
+    if (!update)
         return;
 
     _requestedState.skyColor = color;
@@ -1030,7 +1030,7 @@ void OsmAnd::MapRenderer::setAzimuth( const float azimuth, bool forcedUpdate /*=
     float normalizedAzimuth = Utilities::normalizedAngleDegrees(azimuth);
 
     bool update = forcedUpdate || !qFuzzyCompare(_requestedState.azimuth, normalizedAzimuth);
-    if(!update)
+    if (!update)
         return;
 
     _requestedState.azimuth = normalizedAzimuth;
@@ -1045,7 +1045,7 @@ void OsmAnd::MapRenderer::setElevationAngle( const float elevationAngle, bool fo
     const auto clampedValue = qMax(std::numeric_limits<float>::epsilon(), qMin(elevationAngle, 90.0f));
 
     bool update = forcedUpdate || !qFuzzyCompare(_requestedState.elevationAngle, clampedValue);
-    if(!update)
+    if (!update)
         return;
 
     _requestedState.elevationAngle = clampedValue;
@@ -1059,7 +1059,7 @@ void OsmAnd::MapRenderer::setTarget( const PointI& target31_, bool forcedUpdate 
 
     const auto target31 = Utilities::normalizeCoordinates(target31_, ZoomLevel31);
     bool update = forcedUpdate || (_requestedState.target31 != target31);
-    if(!update)
+    if (!update)
         return;
 
     _requestedState.target31 = target31;
@@ -1074,7 +1074,7 @@ void OsmAnd::MapRenderer::setZoom( const float zoom, bool forcedUpdate /*= false
     const auto clampedValue = qMax(getMinZoom(), qMin(zoom, getMaxZoom()));
 
     bool update = forcedUpdate || !qFuzzyCompare(_requestedState.requestedZoom, clampedValue);
-    if(!update)
+    if (!update)
         return;
 
     _requestedState.requestedZoom = clampedValue;
@@ -1100,25 +1100,25 @@ float OsmAnd::MapRenderer::getRecommendedMinZoom(const ZoomRecommendationStrateg
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     float zoomLimit;
-    if(strategy == IMapRenderer::ZoomRecommendationStrategy::NarrowestRange)
+    if (strategy == IMapRenderer::ZoomRecommendationStrategy::NarrowestRange)
         zoomLimit = getMinZoom();
-    else if(strategy == IMapRenderer::ZoomRecommendationStrategy::WidestRange)
+    else if (strategy == IMapRenderer::ZoomRecommendationStrategy::WidestRange)
         zoomLimit = getMaxZoom();
 
     bool atLeastOneValid = false;
     for(const auto& provider : constOf(_requestedState.rasterLayerProviders))
     {
-        if(!provider)
+        if (!provider)
             continue;
 
         atLeastOneValid = true;
-        if(strategy == IMapRenderer::ZoomRecommendationStrategy::NarrowestRange)
+        if (strategy == IMapRenderer::ZoomRecommendationStrategy::NarrowestRange)
             zoomLimit = qMax(zoomLimit, static_cast<float>(provider->getMinZoom()));
-        else if(strategy == IMapRenderer::ZoomRecommendationStrategy::WidestRange)
+        else if (strategy == IMapRenderer::ZoomRecommendationStrategy::WidestRange)
             zoomLimit = qMin(zoomLimit, static_cast<float>(provider->getMinZoom()));
     }
 
-    if(!atLeastOneValid)
+    if (!atLeastOneValid)
         return getMinZoom();
     return (zoomLimit >= 0.5f) ? (zoomLimit - 0.5f) : zoomLimit;
 }
@@ -1128,25 +1128,25 @@ float OsmAnd::MapRenderer::getRecommendedMaxZoom(const ZoomRecommendationStrateg
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     float zoomLimit;
-    if(strategy == IMapRenderer::ZoomRecommendationStrategy::NarrowestRange)
+    if (strategy == IMapRenderer::ZoomRecommendationStrategy::NarrowestRange)
         zoomLimit = getMaxZoom();
-    else if(strategy == IMapRenderer::ZoomRecommendationStrategy::WidestRange)
+    else if (strategy == IMapRenderer::ZoomRecommendationStrategy::WidestRange)
         zoomLimit = getMinZoom();
 
     bool atLeastOneValid = false;
     for(const auto& provider : constOf(_requestedState.rasterLayerProviders))
     {
-        if(!provider)
+        if (!provider)
             continue;
 
         atLeastOneValid = true;
-        if(strategy == IMapRenderer::ZoomRecommendationStrategy::NarrowestRange)
+        if (strategy == IMapRenderer::ZoomRecommendationStrategy::NarrowestRange)
             zoomLimit = qMin(zoomLimit, static_cast<float>(provider->getMaxZoom()));
-        else if(strategy == IMapRenderer::ZoomRecommendationStrategy::WidestRange)
+        else if (strategy == IMapRenderer::ZoomRecommendationStrategy::WidestRange)
             zoomLimit = qMax(zoomLimit, static_cast<float>(provider->getMaxZoom()));
     }
 
-    if(!atLeastOneValid)
+    if (!atLeastOneValid)
         return getMaxZoom();
     return zoomLimit + 0.49999f;
 }

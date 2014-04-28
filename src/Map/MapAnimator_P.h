@@ -138,7 +138,7 @@ namespace OsmAnd
         const auto halfDuration = 0.5f * duration;                                                                                          \
         const auto halfDelta = 0.5f * delta;                                                                                                \
         const auto tn = t / halfDuration;                                                                                                   \
-        if(tn < 1.0f)                                                                                                                       \
+        if (tn < 1.0f)                                                                                                                       \
             return easeIn_##name(tn * halfDuration, halfDelta, halfDuration);                                                               \
         else                                                                                                                                \
             return halfDelta + easeOut_##name((tn - 1.0f) * halfDuration, halfDelta, halfDuration);                                         \
@@ -149,7 +149,7 @@ namespace OsmAnd
         const auto halfDuration = 0.5f * duration;                                                                                          \
         const auto halfDelta = 0.5f * delta;                                                                                                \
         const auto tn = t / halfDuration;                                                                                                   \
-        if(tn < 1.0f)                                                                                                                       \
+        if (tn < 1.0f)                                                                                                                       \
             return easeOut_##name(tn * halfDuration, halfDelta, halfDuration);                                                              \
         else                                                                                                                                \
             return halfDelta + easeIn_##name((tn - 1.0f) * halfDuration, halfDelta, halfDuration);                                          \
@@ -334,15 +334,15 @@ namespace OsmAnd
                 _timePassed += timePassed;
 
                 // Check for delay
-                if(_timePassed < delay)
+                if (_timePassed < delay)
                     return false;
 
                 // If this is first frame, and initial value has not been captured, do that
-                if(!_initialValueCaptured)
+                if (!_initialValueCaptured)
                 {
                     _initialValue = obtainer(_ownContext, _sharedContext);
                     _initialValueCaptured = true;
-                    if(deltaValueObtainer)
+                    if (deltaValueObtainer)
                         _deltaValue = deltaValueObtainer(_ownContext, _sharedContext);
 
                     return false;

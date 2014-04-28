@@ -15,9 +15,9 @@ QByteArray OsmAnd::EmbeddedResources::decompressResource( const QString& name, b
 {
     bool ok = false;
     const auto compressedData = getRawResource(name, &ok);
-    if(!ok)
+    if (!ok)
     {
-        if(ok_)
+        if (ok_)
             *ok_ = false;
         return QByteArray();
     }
@@ -29,16 +29,16 @@ QByteArray OsmAnd::EmbeddedResources::getRawResource( const QString& name, bool*
 {
     for(auto idx = 0u; idx < __bundled_resources_count; idx++)
     {
-        if(__bundled_resources[idx].name != name)
+        if (__bundled_resources[idx].name != name)
             continue;
 
-        if(ok)
+        if (ok)
             *ok = true;
         return QByteArray(reinterpret_cast<const char*>(__bundled_resources[idx].data), __bundled_resources[idx].size);
     }
 
     LogPrintf(LogSeverityLevel::Error, "Embedded resource '%s' was not found", qPrintable(name));
-    if(ok)
+    if (ok)
         *ok = false;
     return QByteArray();
 }
@@ -47,7 +47,7 @@ bool OsmAnd::EmbeddedResources::containsResource( const QString& name )
 {
     for(auto idx = 0u; idx < __bundled_resources_count; idx++)
     {
-        if(__bundled_resources[idx].name != name)
+        if (__bundled_resources[idx].name != name)
             continue;
 
         return true;

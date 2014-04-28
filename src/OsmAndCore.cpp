@@ -58,7 +58,7 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::InitializeCore()
 
     InflateExplicitReferences();
 
-    if(!QCoreApplication::instance())
+    if (!QCoreApplication::instance())
     {
         _qCoreApplicationThread.reset(new QCoreApplicationThread());
         gMainThread = _qCoreApplicationThread.get();
@@ -91,7 +91,7 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::InitializeCore()
 
 OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::ReleaseCore()
 {
-    if(_qCoreApplicationThread)
+    if (_qCoreApplicationThread)
     {
         QCoreApplication::exit();
         REPEAT_UNTIL(_qCoreApplicationThread->wait());

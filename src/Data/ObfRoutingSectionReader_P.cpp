@@ -65,7 +65,7 @@ void OsmAnd::ObfRoutingSectionReader_P::read( const ObfReader_P& reader, const s
 
                 cis->PopLimit(oldLimit);
 
-                if(tfn == OBF::OsmAndRoutingIndex::kRootBoxesFieldNumber)
+                if (tfn == OBF::OsmAndRoutingIndex::kRootBoxesFieldNumber)
                     section->_subsections.push_back(qMove(subsection));
                 else
                     section->_baseSubsections.push_back(qMove(subsection));
@@ -76,7 +76,7 @@ void OsmAnd::ObfRoutingSectionReader_P::read( const ObfReader_P& reader, const s
             {
                 auto length = ObfReaderUtilities::readBigEndianInt(cis);
                 auto offset = cis->CurrentPosition();
-                if(tfn == OBF::OsmAndRoutingIndex::kBorderBoxFieldNumber)
+                if (tfn == OBF::OsmAndRoutingIndex::kBorderBoxFieldNumber)
                 {
                     section->_p->_borderBoxLength = length;
                     section->_p->_borderBoxOffset = offset;
@@ -112,46 +112,46 @@ void OsmAnd::ObfRoutingSectionReader_P::readEncodingRule(
         {
         case 0:
             {
-                if(rule->_value.compare(QLatin1String("true"), Qt::CaseInsensitive) == 0)
+                if (rule->_value.compare(QLatin1String("true"), Qt::CaseInsensitive) == 0)
                     rule->_value = QLatin1String("yes");
-                if(rule->_value.compare(QLatin1String("false"), Qt::CaseInsensitive) == 0)
+                if (rule->_value.compare(QLatin1String("false"), Qt::CaseInsensitive) == 0)
                     rule->_value = QLatin1String("no");
 
-                if(rule->_tag.compare(QLatin1String("oneway"), Qt::CaseInsensitive) == 0)
+                if (rule->_tag.compare(QLatin1String("oneway"), Qt::CaseInsensitive) == 0)
                 {
                     rule->_type = ObfRoutingSectionInfo_P::EncodingRule::OneWay;
-                    if(rule->_value == QLatin1String("-1") || rule->_value == QLatin1String("reverse"))
+                    if (rule->_value == QLatin1String("-1") || rule->_value == QLatin1String("reverse"))
                         rule->_parsedValue.asSignedInt = -1;
-                    else if(rule->_value == QLatin1String("1") || rule->_value == QLatin1String("yes"))
+                    else if (rule->_value == QLatin1String("1") || rule->_value == QLatin1String("yes"))
                         rule->_parsedValue.asSignedInt = 1;
                     else
                         rule->_parsedValue.asSignedInt = 0;
                 }
-                else if(rule->_tag.compare(QLatin1String("highway"), Qt::CaseInsensitive) == 0 && rule->_value == QLatin1String("traffic_signals"))
+                else if (rule->_tag.compare(QLatin1String("highway"), Qt::CaseInsensitive) == 0 && rule->_value == QLatin1String("traffic_signals"))
                 {
                     rule->_type = ObfRoutingSectionInfo_P::EncodingRule::TrafficSignals;
                 }
-                else if(rule->_tag.compare(QLatin1String("railway"), Qt::CaseInsensitive) == 0 && (rule->_value == QLatin1String("crossing") || rule->_value == QLatin1String("level_crossing")))
+                else if (rule->_tag.compare(QLatin1String("railway"), Qt::CaseInsensitive) == 0 && (rule->_value == QLatin1String("crossing") || rule->_value == QLatin1String("level_crossing")))
                 {
                     rule->_type = ObfRoutingSectionInfo_P::EncodingRule::RailwayCrossing;
                 }
-                else if(rule->_tag.compare(QLatin1String("roundabout"), Qt::CaseInsensitive) == 0 && !rule->_value.isEmpty())
+                else if (rule->_tag.compare(QLatin1String("roundabout"), Qt::CaseInsensitive) == 0 && !rule->_value.isEmpty())
                 {
                     rule->_type = ObfRoutingSectionInfo_P::EncodingRule::Roundabout;
                 }
-                else if(rule->_tag.compare(QLatin1String("junction"), Qt::CaseInsensitive) == 0 && rule->_value.compare(QLatin1String("roundabout"), Qt::CaseInsensitive) == 0)
+                else if (rule->_tag.compare(QLatin1String("junction"), Qt::CaseInsensitive) == 0 && rule->_value.compare(QLatin1String("roundabout"), Qt::CaseInsensitive) == 0)
                 {
                     rule->_type = ObfRoutingSectionInfo_P::EncodingRule::Roundabout;
                 }
-                else if(rule->_tag.compare(QLatin1String("highway"), Qt::CaseInsensitive) == 0 && !rule->_value.isEmpty())
+                else if (rule->_tag.compare(QLatin1String("highway"), Qt::CaseInsensitive) == 0 && !rule->_value.isEmpty())
                 {
                     rule->_type = ObfRoutingSectionInfo_P::EncodingRule::Highway;
                 }
-                else if(rule->_tag.startsWith(QLatin1String("access")) && !rule->_value.isEmpty())
+                else if (rule->_tag.startsWith(QLatin1String("access")) && !rule->_value.isEmpty())
                 {
                     rule->_type = ObfRoutingSectionInfo_P::EncodingRule::Access;
                 }
-                else if(rule->_tag.compare(QLatin1String("maxspeed"), Qt::CaseInsensitive) == 0 && !rule->_value.isEmpty())
+                else if (rule->_tag.compare(QLatin1String("maxspeed"), Qt::CaseInsensitive) == 0 && !rule->_value.isEmpty())
                 {
                     rule->_type = ObfRoutingSectionInfo_P::EncodingRule::Maxspeed;
                     rule->_parsedValue.asFloat = Utilities::parseSpeed(rule->_value, -1.0);
@@ -233,9 +233,9 @@ void OsmAnd::ObfRoutingSectionReader_P::readSubsectionHeader(
             break;
         case OBF::OsmAndRoutingIndex_RouteDataBox::kBoxesFieldNumber:
             {
-                if(subsection->_subsectionsOffset == 0)
+                if (subsection->_subsectionsOffset == 0)
                     subsection->_subsectionsOffset = lastPos;
-                if(!shouldReadSubsections)
+                if (!shouldReadSubsections)
                 {
                     cis->Skip(cis->BytesUntilLimit());
                     break;
@@ -263,11 +263,11 @@ void OsmAnd::ObfRoutingSectionReader_P::readSubsectionChildrenHeaders(
     const ObfReader_P& reader, const std::shared_ptr<const ObfRoutingSubsectionInfo>& subsection,
     const unsigned int depth /*= std::numeric_limits<unsigned int>::max()*/)
 {
-    if(!subsection->_subsectionsOffset)
+    if (!subsection->_subsectionsOffset)
         return;
 
     const auto shouldReadSubsections = (depth > 0 || subsection->_dataOffset != 0);
-    if(!shouldReadSubsections)
+    if (!shouldReadSubsections)
         return;
 
     auto cis = reader._codedInputStream.get();
@@ -281,7 +281,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readSubsectionChildrenHeaders(
             return;
         case OBF::OsmAndRoutingIndex_RouteDataBox::kBoxesFieldNumber:
             {
-                if(!shouldReadSubsections)
+                if (!shouldReadSubsections)
                 {
                     cis->Skip(cis->BytesUntilLimit());
                     break;
@@ -315,11 +315,11 @@ void OsmAnd::ObfRoutingSectionReader_P::querySubsections(
     for(const auto& subsection : constOf(in))
     {
         // If section is completely outside of bbox, skip it
-        if(filter && !filter->acceptsArea(subsection->_area31))
+        if (filter && !filter->acceptsArea(subsection->_area31))
             continue;
         
         // Load children if they are not yet loaded
-        if(subsection->_subsectionsOffset != 0 && subsection->_subsections.isEmpty())
+        if (subsection->_subsectionsOffset != 0 && subsection->_subsections.isEmpty())
         {
             cis->Seek(subsection->_offset);
             auto oldLimit = cis->PushLimit(subsection->_length);
@@ -331,9 +331,9 @@ void OsmAnd::ObfRoutingSectionReader_P::querySubsections(
 
         querySubsections(reader, subsection->_subsections, resultOut, filter, visitor);
 
-        if(!visitor || visitor(subsection))
+        if (!visitor || visitor(subsection))
         {
-            if(resultOut)
+            if (resultOut)
                 resultOut->push_back(subsection);
         }
     }
@@ -384,11 +384,11 @@ void OsmAnd::ObfRoutingSectionReader_P::readSubsectionData(
                         encodedId = roadNamesTable[stringId];
                     }
 
-                    if(!visitor || visitor(road))
+                    if (!visitor || visitor(road))
                     {
-                        if(resultOut)
+                        if (resultOut)
                             resultOut->push_back(road);
-                        if(resultMapOut)
+                        if (resultMapOut)
                             resultMapOut->insert(road->_id, road);
                     }
                 }
@@ -591,7 +591,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
                 gpb::uint32 id;
                 cis->ReadVarint32(&id);
                 internalId = id;
-                if(id < idsTable.size())
+                if (id < idsTable.size())
                     road->_id = idsTable[id];
                 else
                     road->_id = id;
@@ -628,7 +628,7 @@ void OsmAnd::ObfRoutingSectionReader_P::loadSubsectionBorderBoxLinesPoints(
     std::function<bool (const std::shared_ptr<const ObfRoutingBorderLineHeader>&)> visitorLine /*= nullptr*/,
     std::function<bool (const std::shared_ptr<const ObfRoutingBorderLinePoint>&)> visitorPoint /*= nullptr*/)
 {
-    if(section->_p->_borderBoxOffset == 0 || section->_p->_borderBoxLength == 0)
+    if (section->_p->_borderBoxOffset == 0 || section->_p->_borderBoxLength == 0)
         return;
 
     auto cis = reader._codedInputStream.get();
@@ -640,7 +640,7 @@ void OsmAnd::ObfRoutingSectionReader_P::loadSubsectionBorderBoxLinesPoints(
         [&] (const std::shared_ptr<const ObfRoutingBorderLineHeader>& borderLine)
         {
             auto valid = !visitorLine || visitorLine(borderLine);
-            if(!valid)
+            if (!valid)
                 return false;
 
             pointsOffsets.push_back(borderLine->offset);
@@ -691,21 +691,21 @@ void OsmAnd::ObfRoutingSectionReader_P::readBorderBoxLinesHeaders(const ObfReade
                 cis->PopLimit(oldLimit);
 
                 bool isValid = true;
-                if(filter)
+                if (filter)
                 {
-                    if(line->_x2present)
+                    if (line->_x2present)
                         isValid = filter->acceptsArea(AreaI(line->_x, line->_y, line->_x2, line->_y));
                     else
                         isValid = false;
                     /*FIXME: borders approach
-                    else if(ln.hasToy())
+                    else if (ln.hasToy())
                         isValid = req.intersects(ln.getX(), ln.getY(), ln.getX(), ln.getToy());*/
                 }
-                if(isValid)
+                if (isValid)
                 {
-                     if(!visitor || (visitor && visitor(line)))
+                     if (!visitor || (visitor && visitor(line)))
                      {
-                         if(resultOut)
+                         if (resultOut)
                              resultOut->push_back(qMove(line));
                      }
                 }
@@ -801,11 +801,11 @@ void OsmAnd::ObfRoutingSectionReader_P::readBorderLinePoints(
                 location = point->_location;
 
                 bool valid = true;
-                if(filter)
+                if (filter)
                     valid = filter->acceptsPoint(point->location);
-                if(valid && visitor)
+                if (valid && visitor)
                     valid = visitor(point);
-                if(valid && resultOut)
+                if (valid && resultOut)
                     resultOut->push_back(qMove(point));
             }
             break;

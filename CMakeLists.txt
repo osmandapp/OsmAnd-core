@@ -9,13 +9,13 @@ set(target_specific_public_libraries "")
 set(target_specific_private_definitions "")
 
 # Target specific
-if(CMAKE_TARGET_OS STREQUAL "linux")
+if (CMAKE_TARGET_OS STREQUAL "linux")
 	set(target_specific_public_libraries ${target_specific_public_libraries}
 		dl
 		rt
 	)
 endif()
-if(CMAKE_TARGET_OS STREQUAL "darwin")
+if (CMAKE_TARGET_OS STREQUAL "darwin")
 	find_library(CORESERVICES_LIBRARY CoreServices)
 	find_library(SYSTEMCONFIGURATION_LIBRARY SystemConfiguration)
 	find_library(CFNETWORK_LIBRARY CFNetwork)
@@ -30,7 +30,7 @@ if(CMAKE_TARGET_OS STREQUAL "darwin")
 	)
 endif()
 
-if(CMAKE_COMPILER_FAMILY STREQUAL "msvc")
+if (CMAKE_COMPILER_FAMILY STREQUAL "msvc")
 	# Force warning to be an error "deletion of pointer to incomplete type 'type'; no destructor called"
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /we4150")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /we4150")
@@ -41,7 +41,7 @@ if(CMAKE_COMPILER_FAMILY STREQUAL "msvc")
 endif()
 
 # 3D rendering: OpenGL, OpenGLES2, Direct3D
-if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "windows" OR CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android")
+if (CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "windows" OR CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android")
 	file(GLOB sources_opengl "src/Map/OpenGL/*.c*")
 	file(GLOB headers_opengl "src/Map/OpenGL/*.h*")
 	set(target_specific_public_definitions ${target_specific_public_definitions}
@@ -56,7 +56,7 @@ if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAK
 		${sources_opengl}
 	)
 endif()
-if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "windows")
+if (CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "windows")
 	find_package(OpenGL REQUIRED)
 	set(target_specific_public_definitions ${target_specific_public_definitions}
 		${OPENGL_DEFINITIONS}
@@ -79,7 +79,7 @@ if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAK
 		${sources_opengl3}
 	)
 endif()
-if(CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android")
+if (CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android")
 	set(target_specific_private_definitions ${target_specific_private_definitions}
 		-DOSMAND_OPENGLES2_RENDERER_SUPPORTED
 	)
@@ -158,10 +158,10 @@ set(merged_link_libs_public
 	${target_specific_public_libraries}
 )
 
-if(OSMAND_EMBEDDED_QT)
+if (OSMAND_EMBEDDED_QT)
 	# When using embedded Qt, we need to use tools from either static or shared
 	# version of qt.
-	if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
+	if (CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 		find_package(Qt5Core REQUIRED PATHS "${OSMAND_EMBEDDED_QT_SHARED}/lib/cmake" NO_DEFAULT_PATH)
 	elseif(CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 		find_package(Qt5Core REQUIRED PATHS "${OSMAND_EMBEDDED_QT_STATIC}/lib/cmake" NO_DEFAULT_PATH)
@@ -182,7 +182,7 @@ endforeach(OsmAndCore_resourceEntry)
 set(OsmAndCore_resources_bundle
 	"${CMAKE_CURRENT_LIST_DIR}/gen/EmbeddedResources_bundle.cpp"
 )
-if(CMAKE_HOST_WIN32 AND NOT CYGWIN)
+if (CMAKE_HOST_WIN32 AND NOT CYGWIN)
 	add_custom_command(OUTPUT ${OsmAndCore_resources_bundle}
 		COMMAND bash ARGS --login "${CMAKE_CURRENT_LIST_DIR}/embed-resources.sh"
 		DEPENDS
@@ -207,7 +207,7 @@ set(merged_sources ${merged_sources}
 	${OsmAndCore_resources_bundle}
 )
 
-if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
+if (CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 	add_library(OsmAndCore_shared SHARED ${merged_sources})
 	set_target_properties(OsmAndCore_shared PROPERTIES AUTOMOC TRUE)
 	add_dependencies(OsmAndCore_shared ${merged_dependencies})
@@ -225,11 +225,11 @@ if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 			${merged_include_dirs_public}
 	)
 
-	if(OSMAND_EMBEDDED_QT)
+	if (OSMAND_EMBEDDED_QT)
 		find_library(Qt5Core_SHARED_LIBRARY "Qt5Core" PATHS "${OSMAND_EMBEDDED_QT_SHARED}/lib" NO_DEFAULT_PATH)
 		find_library(Qt5Cored_SHARED_LIBRARY "Qt5Cored" PATHS "${OSMAND_EMBEDDED_QT_SHARED}/lib" NO_DEFAULT_PATH)
 		set(Qt5Core_SHARED_LIBRARIES "")
-		if(Qt5Core_SHARED_LIBRARY AND Qt5Cored_SHARED_LIBRARY)
+		if (Qt5Core_SHARED_LIBRARY AND Qt5Cored_SHARED_LIBRARY)
 			set(Qt5Core_SHARED_LIBRARIES ${Qt5Core_SHARED_LIBRARIES}
 				optimized ${Qt5Core_SHARED_LIBRARY}
 			)
@@ -238,7 +238,7 @@ if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 				${Qt5Core_SHARED_LIBRARY}
 			)
 		endif()
-		if(Qt5Cored_SHARED_LIBRARY)
+		if (Qt5Cored_SHARED_LIBRARY)
 			set(Qt5Core_SHARED_LIBRARIES ${Qt5Core_SHARED_LIBRARIES}
 				debug ${Qt5Cored_SHARED_LIBRARY}
 			)
@@ -247,7 +247,7 @@ if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 		find_library(Qt5Network_SHARED_LIBRARY "Qt5Network" PATHS "${OSMAND_EMBEDDED_QT_SHARED}/lib" NO_DEFAULT_PATH)
 		find_library(Qt5Networkd_SHARED_LIBRARY "Qt5Networkd" PATHS "${OSMAND_EMBEDDED_QT_SHARED}/lib" NO_DEFAULT_PATH)
 		set(Qt5Network_SHARED_LIBRARIES "")
-		if(Qt5Network_SHARED_LIBRARY AND Qt5Networkd_SHARED_LIBRARY)
+		if (Qt5Network_SHARED_LIBRARY AND Qt5Networkd_SHARED_LIBRARY)
 			set(Qt5Network_SHARED_LIBRARIES ${Qt5Network_SHARED_LIBRARIES}
 				optimized ${Qt5Network_SHARED_LIBRARY}
 			)
@@ -256,7 +256,7 @@ if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 				${Qt5Network_SHARED_LIBRARY}
 			)
 		endif()
-		if(Qt5Networkd_SHARED_LIBRARY)
+		if (Qt5Networkd_SHARED_LIBRARY)
 			set(Qt5Network_SHARED_LIBRARIES ${Qt5Network_SHARED_LIBRARIES}
 				debug ${Qt5Networkd_SHARED_LIBRARY}
 			)
@@ -265,7 +265,7 @@ if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 		find_library(Qt5Sql_SHARED_LIBRARY "Qt5Sql" PATHS "${OSMAND_EMBEDDED_QT_SHARED}/lib" NO_DEFAULT_PATH)
 		find_library(Qt5Sqld_SHARED_LIBRARY "Qt5Sqld" PATHS "${OSMAND_EMBEDDED_QT_SHARED}/lib" NO_DEFAULT_PATH)
 		set(Qt5Sql_SHARED_LIBRARIES "")
-		if(Qt5Sql_SHARED_LIBRARY AND Qt5Sqld_SHARED_LIBRARY)
+		if (Qt5Sql_SHARED_LIBRARY AND Qt5Sqld_SHARED_LIBRARY)
 			set(Qt5Sql_SHARED_LIBRARIES ${Qt5Sql_SHARED_LIBRARIES}
 				optimized ${Qt5Sql_SHARED_LIBRARY}
 			)
@@ -274,7 +274,7 @@ if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 				${Qt5Sql_SHARED_LIBRARY}
 			)
 		endif()
-		if(Qt5Sqld_SHARED_LIBRARY)
+		if (Qt5Sqld_SHARED_LIBRARY)
 			set(Qt5Sql_SHARED_LIBRARIES ${Qt5Sql_SHARED_LIBRARIES}
 				debug ${Qt5Sqld_SHARED_LIBRARY}
 			)
@@ -293,7 +293,7 @@ if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 				${Qt5Network_SHARED_LIBRARIES}
 				${Qt5Core_SHARED_LIBRARIES}
 		)
-		if(CMAKE_TARGET_OS STREQUAL "darwin")
+		if (CMAKE_TARGET_OS STREQUAL "darwin")
 			target_link_libraries(OsmAndCore_shared
 				LINK_PUBLIC
 					objc
@@ -314,7 +314,7 @@ if(CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 	)
 endif()
 
-if(CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
+if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 	add_library(OsmAndCore_static STATIC ${merged_sources})
 	set_target_properties(OsmAndCore_static PROPERTIES AUTOMOC TRUE)
 	add_dependencies(OsmAndCore_static ${merged_dependencies})
@@ -332,11 +332,11 @@ if(CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 			${merged_include_dirs_public}
 	)
 
-	if(OSMAND_EMBEDDED_QT)
+	if (OSMAND_EMBEDDED_QT)
 		find_library(Qt5Core_STATIC_LIBRARY "Qt5Core" PATHS "${OSMAND_EMBEDDED_QT_STATIC}/lib" NO_DEFAULT_PATH)
 		find_library(Qt5Cored_STATIC_LIBRARY "Qt5Cored" PATHS "${OSMAND_EMBEDDED_QT_STATIC}/lib" NO_DEFAULT_PATH)
 		set(Qt5Core_STATIC_LIBRARIES "")
-		if(Qt5Core_STATIC_LIBRARY AND Qt5Cored_STATIC_LIBRARY)
+		if (Qt5Core_STATIC_LIBRARY AND Qt5Cored_STATIC_LIBRARY)
 			set(Qt5Core_STATIC_LIBRARIES ${Qt5Core_STATIC_LIBRARIES}
 				optimized ${Qt5Core_STATIC_LIBRARY}
 			)
@@ -345,7 +345,7 @@ if(CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 				${Qt5Core_STATIC_LIBRARY}
 			)
 		endif()
-		if(Qt5Cored_STATIC_LIBRARY)
+		if (Qt5Cored_STATIC_LIBRARY)
 			set(Qt5Core_STATIC_LIBRARIES ${Qt5Core_STATIC_LIBRARIES}
 				debug ${Qt5Cored_STATIC_LIBRARY}
 			)
@@ -354,7 +354,7 @@ if(CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 		find_library(Qt5Network_STATIC_LIBRARY "Qt5Network" PATHS "${OSMAND_EMBEDDED_QT_STATIC}/lib" NO_DEFAULT_PATH)
 		find_library(Qt5Networkd_STATIC_LIBRARY "Qt5Networkd" PATHS "${OSMAND_EMBEDDED_QT_STATIC}/lib" NO_DEFAULT_PATH)
 		set(Qt5Network_STATIC_LIBRARIES "")
-		if(Qt5Network_STATIC_LIBRARY AND Qt5Networkd_STATIC_LIBRARY)
+		if (Qt5Network_STATIC_LIBRARY AND Qt5Networkd_STATIC_LIBRARY)
 			set(Qt5Network_STATIC_LIBRARIES ${Qt5Network_STATIC_LIBRARIES}
 				optimized ${Qt5Network_STATIC_LIBRARY}
 			)
@@ -363,7 +363,7 @@ if(CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 				${Qt5Network_STATIC_LIBRARY}
 			)
 		endif()
-		if(Qt5Networkd_STATIC_LIBRARY)
+		if (Qt5Networkd_STATIC_LIBRARY)
 			set(Qt5Network_STATIC_LIBRARIES ${Qt5Network_STATIC_LIBRARIES}
 				debug ${Qt5Networkd_STATIC_LIBRARY}
 			)
@@ -372,7 +372,7 @@ if(CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 		find_library(Qt5Sql_STATIC_LIBRARY "Qt5Sql" PATHS "${OSMAND_EMBEDDED_QT_STATIC}/lib" NO_DEFAULT_PATH)
 		find_library(Qt5Sqld_STATIC_LIBRARY "Qt5Sqld" PATHS "${OSMAND_EMBEDDED_QT_STATIC}/lib" NO_DEFAULT_PATH)
 		set(Qt5Sql_STATIC_LIBRARIES "")
-		if(Qt5Sql_STATIC_LIBRARY AND Qt5Sqld_STATIC_LIBRARY)
+		if (Qt5Sql_STATIC_LIBRARY AND Qt5Sqld_STATIC_LIBRARY)
 			set(Qt5Sql_STATIC_LIBRARIES ${Qt5Sql_STATIC_LIBRARIES}
 				optimized ${Qt5Sql_STATIC_LIBRARY}
 			)
@@ -381,7 +381,7 @@ if(CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 				${Qt5Sql_STATIC_LIBRARY}
 			)
 		endif()
-		if(Qt5Sqld_STATIC_LIBRARY)
+		if (Qt5Sqld_STATIC_LIBRARY)
 			set(Qt5Sql_STATIC_LIBRARIES ${Qt5Sql_STATIC_LIBRARIES}
 				debug ${Qt5Sqld_STATIC_LIBRARY}
 			)
@@ -400,7 +400,7 @@ if(CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 				${Qt5Network_STATIC_LIBRARIES}
 				${Qt5Core_STATIC_LIBRARIES}
 		)
-		if(CMAKE_TARGET_OS STREQUAL "darwin")
+		if (CMAKE_TARGET_OS STREQUAL "darwin")
 			target_link_libraries(OsmAndCore_static
 				LINK_PUBLIC
 					objc

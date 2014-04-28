@@ -51,7 +51,7 @@ void OsmAnd::MapStyleEvaluator::setStringValue(const int valueDefId, const QStri
     auto& entry = _p->_inputValues[valueDefId];
 
     bool ok = style->_p->lookupStringId(value, entry.asUInt);
-    if(!ok)
+    if (!ok)
         entry.asUInt = std::numeric_limits<uint32_t>::max();
 }
 
@@ -79,7 +79,7 @@ void OsmAnd::MapStyleEvaluator::dump( bool input /*= true*/, bool output /*= tru
         const auto& valueDef = itValue.key();
         const auto& value = itValue.value();
 
-        if((valueDef->valueClass == MapStyleValueClass::Input && input) || (valueDef->valueClass == MapStyleValueClass::Output && output))
+        if ((valueDef->valueClass == MapStyleValueClass::Input && input) || (valueDef->valueClass == MapStyleValueClass::Output && output))
         {
             auto strType = valueDef->valueClass == MapStyleValueClass::Input ? ">" : "<";
             OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s%s%s = ", qPrintable(prefix), strType, qPrintable(valueDef->name));
@@ -90,13 +90,13 @@ void OsmAnd::MapStyleEvaluator::dump( bool input /*= true*/, bool output /*= tru
                 OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s", value.asSimple.asUInt == 1 ? "true" : "false");
                 break;
             case MapStyleValueDataType::Integer:
-                if(value.isComplex)
+                if (value.isComplex)
                     OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%d:%d", value.asComplex.asInt.dip, value.asComplex.asInt.px);
                 else
                     OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%d", value.asSimple.asInt);
                 break;
             case MapStyleValueDataType::Float:
-                if(value.isComplex)
+                if (value.isComplex)
                     OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%f:%f", value.asComplex.asFloat.dip, value.asComplex.asFloat.px);
                 else
                     OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%f", value.asSimple.asFloat);

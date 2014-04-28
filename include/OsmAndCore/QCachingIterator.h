@@ -77,7 +77,7 @@ namespace OsmAnd
 
         inline QCachingConstIteratorT& operator=(const QCachingConstIteratorT& that)
         {
-            if(this != &that)
+            if (this != &that)
             {
                 _current = that._current;
                 _end = that._end;
@@ -191,7 +191,7 @@ namespace OsmAnd
 
         inline QCachingIterator& operator=(const QCachingIterator& that)
         {
-            if(this != &that)
+            if (this != &that)
             {
                 _current = that._current;
                 _end = that._end;

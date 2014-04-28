@@ -17,7 +17,7 @@ OsmAnd::QFileDeviceInputStream::QFileDeviceInputStream(const std::shared_ptr<QFi
 OsmAnd::QFileDeviceInputStream::~QFileDeviceInputStream()
 {
     // Unmap memory if it's still mapped
-    if(_mappedMemory)
+    if (_mappedMemory)
     {
         bool ok;
         ok = _file->unmap(_mappedMemory);
@@ -27,25 +27,25 @@ OsmAnd::QFileDeviceInputStream::~QFileDeviceInputStream()
     }
 
     // If file device was initially opened, but is closed right now, reopen it
-    if(_wasInitiallyOpened && !_file->isOpen())
+    if (_wasInitiallyOpened && !_file->isOpen())
         _file->open(_originalOpenMode);
 
     // If file was opened during work, close it
-    if(_closeOnDestruction && _file->isOpen())
+    if (_closeOnDestruction && _file->isOpen())
         _file->close();
 }
 
 bool OsmAnd::QFileDeviceInputStream::Next(const void** data, int* size)
 {
     // If memory was already mapped, unmap it
-    if(Q_LIKELY(_mappedMemory != nullptr))
+    if (Q_LIKELY(_mappedMemory != nullptr))
     {
         _file->unmap(_mappedMemory);
         _mappedMemory = nullptr;
     }
 
     // Check if current position is in valid range
-    if(Q_UNLIKELY(_currentPosition < 0 || _currentPosition >= _fileSize))
+    if (Q_UNLIKELY(_currentPosition < 0 || _currentPosition >= _fileSize))
     {
         *data = nullptr;
         *size = 0;
@@ -53,9 +53,9 @@ bool OsmAnd::QFileDeviceInputStream::Next(const void** data, int* size)
     }
 
     // If file is not opened, open it
-    if(!_file->isOpen())
+    if (!_file->isOpen())
     {
-        if(_wasInitiallyOpened)
+        if (_wasInitiallyOpened)
             _file->open(_originalOpenMode);
         else
         {
@@ -66,12 +66,12 @@ bool OsmAnd::QFileDeviceInputStream::Next(const void** data, int* size)
 
     // Map new portion of data
     auto mappedSize = _memoryWindowSize;
-    if(_currentPosition + mappedSize >= _fileSize)
+    if (_currentPosition + mappedSize >= _fileSize)
         mappedSize = _fileSize - _currentPosition;
     _mappedMemory = _file->map(_currentPosition, mappedSize);
 
     // Check if memory was mapped successfully
-    if(!_mappedMemory)
+    if (!_mappedMemory)
     {
         *data = nullptr;
         *size = 0;
@@ -89,7 +89,7 @@ bool OsmAnd::QFileDeviceInputStream::Next(const void** data, int* size)
 
 void OsmAnd::QFileDeviceInputStream::BackUp(int count)
 {
-    if(count > _currentPosition)
+    if (count > _currentPosition)
         _currentPosition = 0;
     else
         _currentPosition -= count;
@@ -97,7 +97,7 @@ void OsmAnd::QFileDeviceInputStream::BackUp(int count)
 
 bool OsmAnd::QFileDeviceInputStream::Skip(int count)
 {
-    if(Q_UNLIKELY(_currentPosition + count >= _fileSize))
+    if (Q_UNLIKELY(_currentPosition + count >= _fileSize))
     {
         _currentPosition = _fileSize;
         return false;

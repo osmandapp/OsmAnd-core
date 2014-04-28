@@ -46,7 +46,7 @@ OsmAnd::MapStyleRule::~MapStyleRule()
 bool OsmAnd::MapStyleRule::getAttribute(const std::shared_ptr<const MapStyleValueDefinition>& key, MapStyleValue& value) const
 {
     auto itValue = _p->_values.constFind(key);
-    if(itValue == _p->_values.cend())
+    if (itValue == _p->_values.cend())
         return false;
 
     value = *itValue;
@@ -69,13 +69,13 @@ void OsmAnd::MapStyleRule::dump( const QString& prefix /*= QString::null*/ ) con
             strValue = (value.asSimple.asInt == 1) ? QLatin1String("true") : QLatin1String("false");
             break;
         case MapStyleValueDataType::Integer:
-            if(value.isComplex)
+            if (value.isComplex)
                 strValue = QString::fromLatin1("%1:%2").arg(value.asComplex.asInt.dip).arg(value.asComplex.asInt.px);
             else
                 strValue = QString::fromLatin1("%1").arg(value.asSimple.asInt);
             break;
         case MapStyleValueDataType::Float:
-            if(value.isComplex)
+            if (value.isComplex)
                 strValue = QString::fromLatin1("%1:%2").arg(value.asComplex.asFloat.dip).arg(value.asComplex.asFloat.px);
             else
                 strValue = QString::fromLatin1("%1").arg(value.asSimple.asFloat);
@@ -86,7 +86,7 @@ void OsmAnd::MapStyleRule::dump( const QString& prefix /*= QString::null*/ ) con
         case MapStyleValueDataType::Color:
             {
                 auto color = value.asSimple.asUInt;
-                if((color & 0xFF000000) == 0xFF000000)
+                if ((color & 0xFF000000) == 0xFF000000)
                     strValue = '#' + QString::number(color, 16).right(6);
                 else
                     strValue = '#' + QString::number(color, 16).right(8);
@@ -101,7 +101,7 @@ void OsmAnd::MapStyleRule::dump( const QString& prefix /*= QString::null*/ ) con
             qPrintable(strValue));
     }
 
-    if(!_p->_ifChildren.empty())
+    if (!_p->_ifChildren.empty())
     {
         LogPrintf(LogSeverityLevel::Debug, "%sIf(",
             qPrintable(newPrefix));
@@ -116,7 +116,7 @@ void OsmAnd::MapStyleRule::dump( const QString& prefix /*= QString::null*/ ) con
             qPrintable(newPrefix));
     }
 
-    if(!_p->_ifElseChildren.empty())
+    if (!_p->_ifElseChildren.empty())
     {
         LogPrintf(LogSeverityLevel::Debug, "%sSelector: [",
             qPrintable(newPrefix));

@@ -49,11 +49,11 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile(const TileId tileId, const Zoo
             });
 
         // If state is "Undefined", change it to "Loading" and proceed with loading
-        if(tileEntry->setStateIf(TileState::Undefined, TileState::Loading))
+        if (tileEntry->setStateIf(TileState::Undefined, TileState::Loading))
             break;
 
         // In case tile entry is being loaded, wait until it will finish loading
-        if(tileEntry->getState() == TileState::Loading)
+        if (tileEntry->getState() == TileState::Loading)
         {
             QReadLocker scopedLcoker(&tileEntry->_loadedConditionLock);
 
@@ -66,7 +66,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile(const TileId tileId, const Zoo
         outTile = tileEntry->_tile.lock();
 
         // If successfully locked, just return it
-        if(outTile)
+        if (outTile)
             return;
 
         // Otherwise consider this tile entry as expired, remove it from collection (it's safe to do that right now)
@@ -120,7 +120,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile(const TileId tileId, const Zoo
             const auto canNotBeShared = tileBBox31.contains(bbox);
 
             // If map object can not be shared, just read it
-            if(canNotBeShared)
+            if (canNotBeShared)
             {
 #if OSMAND_PERFORMANCE_METRICS
                 const auto dataFilter_End = std::chrono::high_resolution_clock::now();
@@ -135,9 +135,9 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile(const TileId tileId, const Zoo
             // being present in shared mapObjects storage, or be reserved there
             std::shared_ptr<const Model::MapObject> sharedMapObjectReference;
             proper::shared_future< std::shared_ptr<const Model::MapObject> > futureSharedMapObjectReference;
-            if(_sharedMapObjects.obtainReferenceOrFutureReferenceOrMakePromise(id, zoom, Utilities::enumerateZoomLevels(firstZoomLevel, lastZoomLevel), sharedMapObjectReference, futureSharedMapObjectReference))
+            if (_sharedMapObjects.obtainReferenceOrFutureReferenceOrMakePromise(id, zoom, Utilities::enumerateZoomLevels(firstZoomLevel, lastZoomLevel), sharedMapObjectReference, futureSharedMapObjectReference))
             {
-                if(sharedMapObjectReference)
+                if (sharedMapObjectReference)
                 {
                     // If map object is already in shared objects cache and is available, use that one
                     referencedMapObjects.push_back(qMove(sharedMapObjectReference));
@@ -177,7 +177,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile(const TileId tileId, const Zoo
     for(auto& mapObject : loadedMapObjects)
     {
         // Check if this map object is shared
-        if(!loadedSharedMapObjects.contains(mapObject->id))
+        if (!loadedSharedMapObjects.contains(mapObject->id))
             continue;
 
         // Add unique map object under lock to all zoom levels, for which this map object is valid

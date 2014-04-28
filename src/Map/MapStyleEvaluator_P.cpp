@@ -34,15 +34,15 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
     const auto& rules = owner->style->_p->obtainRulesRef(ruleset);
 
     auto evaluationResult = evaluate(mapObject, rules, tagKey, valueKey, outResultStorage, evaluateChildren);
-    if(evaluationResult)
+    if (evaluationResult)
         return true;
 
     evaluationResult = evaluate(mapObject, rules, tagKey, 0, outResultStorage, evaluateChildren);
-    if(evaluationResult)
+    if (evaluationResult)
         return true;
 
     evaluationResult = evaluate(mapObject, rules, 0, 0, outResultStorage, evaluateChildren);
-    if(evaluationResult)
+    if (evaluationResult)
         return true;
 
     return false;
@@ -68,7 +68,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
 
     const auto ruleId = MapStyle_P::encodeRuleId(tagKey, valueKey);
     auto itRule = rules.constFind(ruleId);
-    if(itRule == rules.cend())
+    if (itRule == rules.cend())
         return false;
 
     return evaluate(mapObject.get(), *itRule, outResultStorage, evaluateChildren);
@@ -85,33 +85,33 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
         const auto& valueDef = ruleValueEntry.key();
 
         // Test only input values, the ones that start with INPUT_*
-        if(valueDef->valueClass != MapStyleValueClass::Input)
+        if (valueDef->valueClass != MapStyleValueClass::Input)
             continue;
 
         const auto& ruleValue = ruleValueEntry.value();
         const auto& inputValue = _inputValues[valueDef->id];
 
         bool evaluationResult = false;
-        if(valueDef->id == _builtinValueDefs->id_INPUT_MINZOOM)
+        if (valueDef->id == _builtinValueDefs->id_INPUT_MINZOOM)
         {
             assert(!ruleValue.isComplex);
             evaluationResult = (ruleValue.asSimple.asInt <= inputValue.asInt);
         }
-        else if(valueDef->id == _builtinValueDefs->id_INPUT_MAXZOOM)
+        else if (valueDef->id == _builtinValueDefs->id_INPUT_MAXZOOM)
         {
             assert(!ruleValue.isComplex);
             evaluationResult = (ruleValue.asSimple.asInt >= inputValue.asInt);
         }
-        else if(valueDef->id == _builtinValueDefs->id_INPUT_ADDITIONAL)
+        else if (valueDef->id == _builtinValueDefs->id_INPUT_ADDITIONAL)
         {
-            if(!mapObject)
+            if (!mapObject)
                 evaluationResult = true;
             else
             {
                 assert(!ruleValue.isComplex);
                 const auto& strValue = owner->style->_p->lookupStringValue(ruleValue.asSimple.asUInt);
                 auto equalSignIdx = strValue.indexOf('=');
-                if(equalSignIdx >= 0)
+                if (equalSignIdx >= 0)
                 {
                     const auto& tag = strValue.mid(0, equalSignIdx);
                     const auto& value = strValue.mid(equalSignIdx + 1);
@@ -121,11 +121,11 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
                     evaluationResult = false;
             }
         }
-        else if(valueDef->id == _builtinValueDefs->id_INPUT_TEST)
+        else if (valueDef->id == _builtinValueDefs->id_INPUT_TEST)
         {
             evaluationResult = (inputValue.asInt == 1);
         }
-        else if(valueDef->dataType == MapStyleValueDataType::Float)
+        else if (valueDef->dataType == MapStyleValueDataType::Float)
         {
             const auto lvalue = ruleValue.isComplex ? ruleValue.asComplex.asFloat.evaluate(owner->displayDensityFactor) : ruleValue.asSimple.asFloat;
 
@@ -139,17 +139,17 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
         }
 
         // If at least one value of rule does not match, it's failure
-        if(!evaluationResult)
+        if (!evaluationResult)
             return false;
     }
 
     // Fill output values from rule to result storage, if requested
-    if(outResultStorage)
+    if (outResultStorage)
     {
         for(const auto& ruleValueEntry : rangeOf(constOf(rule->_p->_values)))
         {
             const auto& valueDef = ruleValueEntry.key();
-            if(valueDef->valueClass != MapStyleValueClass::Output)
+            if (valueDef->valueClass != MapStyleValueClass::Output)
                 continue;
 
             const auto& ruleValue = ruleValueEntry.value();
@@ -185,12 +185,12 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
         }
     }
 
-    if(evaluateChildren)
+    if (evaluateChildren)
     {
         for(const auto& child : constOf(rule->_p->_ifElseChildren))
         {
             const auto evaluationResult = evaluate(mapObject, child, outResultStorage, true);
-            if(evaluationResult)
+            if (evaluationResult)
                 break;
         }
 

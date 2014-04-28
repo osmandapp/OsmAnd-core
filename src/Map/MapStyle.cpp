@@ -94,7 +94,7 @@ std::shared_ptr<const OsmAnd::MapStyleBuiltinValueDefinitions> OsmAnd::MapStyle:
 {
     QMutexLocker scopedLocker(&g_OsmAnd_MapStyle_builtinValueDefinitionsMutex);
 
-    if(!static_cast<bool>(g_OsmAnd_MapStyle_builtinValueDefinitions))
+    if (!static_cast<bool>(g_OsmAnd_MapStyle_builtinValueDefinitions))
         g_OsmAnd_MapStyle_builtinValueDefinitions.reset(new OsmAnd::MapStyleBuiltinValueDefinitions());
 
     return g_OsmAnd_MapStyle_builtinValueDefinitions;

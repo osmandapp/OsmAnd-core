@@ -52,7 +52,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doInitializeRendering()
     bool ok;
 
     ok = AtlasMapRenderer::doInitializeRendering();
-    if(!ok)
+    if (!ok)
         return false;
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -161,7 +161,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doReleaseRendering()
     _skyStage.release();
 
     ok = AtlasMapRenderer::doReleaseRendering();
-    if(!ok)
+    if (!ok)
         return false;
 
     return true;
@@ -171,7 +171,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::onValidateResourcesOfType(const MapRendere
 {
     AtlasMapRenderer::onValidateResourcesOfType(type);
 
-    if(type == MapRendererResources::ResourceType::ElevationData)
+    if (type == MapRendererResources::ResourceType::ElevationData)
     {
         // Recreate tile patch since elevation data influences density of tile patch
         _rasterMapStage.recreateTile();
@@ -182,7 +182,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(MapRenderer::InternalS
 {
     bool ok;
     ok = AtlasMapRenderer::updateInternalState(internalState_, state);
-    if(!ok)
+    if (!ok)
         return false;
 
     const auto internalState = static_cast<InternalState*>(internalState_);
@@ -190,7 +190,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(MapRenderer::InternalS
     // Prepare values for projection matrix
     const auto viewportWidth = state.viewport.width();
     const auto viewportHeight = state.viewport.height();
-    if(viewportWidth == 0 || viewportHeight == 0)
+    if (viewportWidth == 0 || viewportHeight == 0)
         return false;
     internalState->aspectRatio = static_cast<float>(viewportWidth) / static_cast<float>(viewportHeight);
     internalState->fovInRadians = qDegreesToRadians(state.fieldOfView);
@@ -211,7 +211,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(MapRenderer::InternalS
 
     // zoomFraction == [ 0.0 ... 0.5] scales tile [1.0x ... 1.5x]
     // zoomFraction == [-0.5 ...-0.0] scales tile [.75x ... 1.0x]
-    if(state.zoomFraction >= 0.0f)
+    if (state.zoomFraction >= 0.0f)
         internalState->distanceFromCameraToTarget = internalState->baseDistanceFromCameraToTarget - (internalState->baseDistanceFromCameraToTarget - internalState->nearDistanceFromCameraToTarget) * (2.0f * state.zoomFraction);
     else
         internalState->distanceFromCameraToTarget = internalState->baseDistanceFromCameraToTarget - (internalState->farDistanceFromCameraToTarget - internalState->baseDistanceFromCameraToTarget) * (2.0f * state.zoomFraction);
@@ -315,42 +315,42 @@ void OsmAnd::AtlasMapRenderer_OpenGL::updateFrustum(InternalState* internalState
     glm::vec3 intersectionPoint;
     glm::vec2 intersectionPoints[4];
 
-    if(intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nBL_g.xyz, fBL_g.xyz, intersectionPoint))
+    if (intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nBL_g.xyz, fBL_g.xyz, intersectionPoint))
     {
         intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz;
         intersectionPointsCounter++;
     }
-    if(intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nBR_g.xyz, fBR_g.xyz, intersectionPoint))
+    if (intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nBR_g.xyz, fBR_g.xyz, intersectionPoint))
     {
         intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz;
         intersectionPointsCounter++;
     }
-    if(intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTR_g.xyz, fTR_g.xyz, intersectionPoint))
+    if (intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTR_g.xyz, fTR_g.xyz, intersectionPoint))
     {
         intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz;
         intersectionPointsCounter++;
     }
-    if(intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTL_g.xyz, fTL_g.xyz, intersectionPoint))
+    if (intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTL_g.xyz, fTL_g.xyz, intersectionPoint))
     {
         intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz;
         intersectionPointsCounter++;
     }
-    if(intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, fTR_g.xyz, fBR_g.xyz, intersectionPoint))
+    if (intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, fTR_g.xyz, fBR_g.xyz, intersectionPoint))
     {
         intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz;
         intersectionPointsCounter++;
     }
-    if(intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, fTL_g.xyz, fBL_g.xyz, intersectionPoint))
+    if (intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, fTL_g.xyz, fBL_g.xyz, intersectionPoint))
     {
         intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz;
         intersectionPointsCounter++;
     }
-    if(intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTL_g.xyz, nBL_g.xyz, intersectionPoint))
+    if (intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTL_g.xyz, nBL_g.xyz, intersectionPoint))
     {
         intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz;
         intersectionPointsCounter++;
     }
-    if(intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTR_g.xyz, nBR_g.xyz, intersectionPoint))
+    if (intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTR_g.xyz, nBR_g.xyz, intersectionPoint))
     {
         intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz;
         intersectionPointsCounter++;
@@ -432,7 +432,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::postInitializeRendering()
     bool ok;
 
     ok = AtlasMapRenderer::postInitializeRendering();
-    if(!ok)
+    if (!ok)
         return false;
 
     return true;
@@ -443,7 +443,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::preReleaseRendering()
     bool ok;
 
     ok = AtlasMapRenderer::preReleaseRendering();
-    if(!ok)
+    if (!ok)
         return false;
 
     return true;
@@ -457,7 +457,7 @@ OsmAnd::GPUAPI_OpenGL* OsmAnd::AtlasMapRenderer_OpenGL::getGPUAPI() const
 float OsmAnd::AtlasMapRenderer_OpenGL::getReferenceTileSizeOnScreen( const MapRendererState& state )
 {
     const auto& rasterMapProvider = state.rasterLayerProviders[static_cast<int>(RasterMapLayerId::BaseLayer)];
-    if(!rasterMapProvider)
+    if (!rasterMapProvider)
         return static_cast<float>(DefaultReferenceTileSizeOnScreen) * setupOptions.displayDensityFactor;
 
     auto tileProvider = std::static_pointer_cast<IMapBitmapTileProvider>(rasterMapProvider);
@@ -480,7 +480,7 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getScaledTileSizeOnScreen()
 bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint( const PointI& screenPoint, PointI& location31 )
 {
     PointI64 location;
-    if(!getLocationFromScreenPoint(screenPoint, location))
+    if (!getLocationFromScreenPoint(screenPoint, location))
         return false;
     location31 = Utilities::normalizeCoordinates(location, ZoomLevel31);
 
@@ -491,7 +491,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint( const PointI& 
 {
     InternalState internalState;
     bool ok = updateInternalState(&internalState, state);
-    if(!ok)
+    if (!ok)
         return false;
 
     glm::vec4 viewport(
@@ -507,7 +507,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint( const PointI& 
     const glm::vec3 planeO(0.0f, 0.0f, 0.0f);
     float distance;
     const auto intersects = Utilities_OpenGL_Common::rayIntersectPlane(planeN, planeO, rayD, nearInWorld, distance);
-    if(!intersects)
+    if (!intersects)
         return false;
 
     auto intersection = nearInWorld + distance*rayD;

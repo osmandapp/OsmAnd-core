@@ -24,7 +24,7 @@ bool OsmAnd::HeightmapTileProvider_P::obtainTile(const TileId tileId, const Zoom
     // Obtain raw data from DB
     QByteArray data;
     bool ok = _tileDb.obtainTileData(tileId, zoom, data);
-    if(!ok || data.length() == 0)
+    if (!ok || data.length() == 0)
     {
         // There was no data at all, to avoid further requests, mark this tile as empty
         outTile.reset();
@@ -39,17 +39,17 @@ bool OsmAnd::HeightmapTileProvider_P::obtainTile(const TileId tileId, const Zoom
     vmemFilename.sprintf("/vsimem/heightmapTile@%p", data.data());
     VSIFileFromMemBuffer(qPrintable(vmemFilename), reinterpret_cast<GByte*>(data.data()), data.length(), FALSE);
     auto dataset = reinterpret_cast<GDALDataset*>(GDALOpen(qPrintable(vmemFilename), GA_ReadOnly));
-    if(dataset != nullptr)
+    if (dataset != nullptr)
     {
         bool bad = false;
         bad = bad || dataset->GetRasterCount() != 1;
         bad = bad || dataset->GetRasterXSize() != tileSize;
         bad = bad || dataset->GetRasterYSize() != tileSize;
-        if(bad)
+        if (bad)
         {
-            if(dataset->GetRasterCount() != 1)
+            if (dataset->GetRasterCount() != 1)
                 LogPrintf(LogSeverityLevel::Error, "Height tile %dx%d@%d has %d bands instead of 1", tileId.x, tileId.y, zoom, dataset->GetRasterCount());
-            if(dataset->GetRasterXSize() != tileSize || dataset->GetRasterYSize() != tileSize)
+            if (dataset->GetRasterXSize() != tileSize || dataset->GetRasterYSize() != tileSize)
             {
                 LogPrintf(LogSeverityLevel::Error, "Height tile %dx%d@%d has %dx%x size instead of %d", tileId.x, tileId.y, zoom,
                     dataset->GetRasterXSize(), dataset->GetRasterYSize(), tileSize);
@@ -62,11 +62,11 @@ bool OsmAnd::HeightmapTileProvider_P::obtainTile(const TileId tileId, const Zoom
             bad = bad || band->GetColorTable() != nullptr;
             bad = bad || band->GetRasterDataType() != GDT_Int16;
 
-            if(bad)
+            if (bad)
             {
-                if(band->GetColorTable() != nullptr)
+                if (band->GetColorTable() != nullptr)
                     LogPrintf(LogSeverityLevel::Error, "Height tile %dx%d@%d has color table", tileId.x, tileId.y, zoom);
-                if(band->GetRasterDataType() != GDT_Int16)
+                if (band->GetRasterDataType() != GDT_Int16)
                     LogPrintf(LogSeverityLevel::Error, "Height tile %dx%d@%d has %s data type in band 1", tileId.x, tileId.y, zoom, GDALGetDataTypeName(band->GetRasterDataType()));
             }
             else
@@ -74,7 +74,7 @@ bool OsmAnd::HeightmapTileProvider_P::obtainTile(const TileId tileId, const Zoom
                 auto buffer = new float[tileSize*tileSize];
 
                 auto res = dataset->RasterIO(GF_Read, 0, 0, tileSize, tileSize, buffer, tileSize, tileSize, GDT_Float32, 1, nullptr, 0, 0, 0);
-                if(res != CE_None)
+                if (res != CE_None)
                 {
                     delete[] buffer;
                     LogPrintf(LogSeverityLevel::Error, "Failed to decode height tile %dx%d@%d: %s", tileId.x, tileId.y, zoom, CPLGetLastErrorMsg());

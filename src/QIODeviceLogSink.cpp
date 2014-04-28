@@ -13,7 +13,7 @@ OsmAnd::QIODeviceLogSink::QIODeviceLogSink(const std::shared_ptr<QIODevice>& out
 
 OsmAnd::QIODeviceLogSink::~QIODeviceLogSink()
 {
-    if(_autoClose)
+    if (_autoClose)
         _device->close();
 }
 
@@ -28,6 +28,6 @@ void OsmAnd::QIODeviceLogSink::log(const LogSeverityLevel level, const char* for
 
 void OsmAnd::QIODeviceLogSink::flush()
 {
-    if(const auto device = std::dynamic_pointer_cast<QFileDevice>(_device))
+    if (const auto device = std::dynamic_pointer_cast<QFileDevice>(_device))
         device->flush();
 }

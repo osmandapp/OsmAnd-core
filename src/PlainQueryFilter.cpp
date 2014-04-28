@@ -14,14 +14,14 @@ OsmAnd::PlainQueryFilter::~PlainQueryFilter()
 
 bool OsmAnd::PlainQueryFilter::acceptsZoom(const ZoomLevel zoom) const
 {
-    if(!_isZoomFiltered)
+    if (!_isZoomFiltered)
         return true;
     return _zoom == zoom;
 }
 
 bool OsmAnd::PlainQueryFilter::acceptsArea(const AreaI& area) const
 {
-    if(!_isAreaFiltered)
+    if (!_isAreaFiltered)
         return true;
     return
         _area.intersects(area) ||
@@ -31,7 +31,7 @@ bool OsmAnd::PlainQueryFilter::acceptsArea(const AreaI& area) const
 
 bool OsmAnd::PlainQueryFilter::acceptsPoint(const PointI& point) const
 {
-    if(!_isAreaFiltered)
+    if (!_isAreaFiltered)
         return true;
     return _area.contains(point);
 }

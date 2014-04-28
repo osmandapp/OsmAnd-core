@@ -9,7 +9,7 @@ set(target_specific_definitions_private "")
 set(target_specific_definitions_public "")
 
 set(used_arch_specific_sources FALSE)
-if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86" OR (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios"))
+if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86" OR (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios"))
 	set(used_arch_specific_sources TRUE)
 	set(target_specific_sources "${target_specific_sources}"
 		"upstream.patched/src/opts/opts_check_SSE2.cpp"
@@ -20,7 +20,7 @@ if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86" OR (CMAKE_TARGET_CPU_ARCH_FAMILY 
 		"upstream.patched/src/opts/SkBlitRow_opts_SSE2.cpp"
 		"upstream.patched/src/opts/SkUtils_opts_SSE2.cpp"
 	)
-	if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang")
+	if (CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang")
 		set_source_files_properties(
 			"upstream.patched/src/opts/SkBitmapFilter_opts_SSE2.cpp"
 			"upstream.patched/src/opts/SkBitmapProcState_opts_SSE2.cpp"
@@ -35,9 +35,9 @@ if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86" OR (CMAKE_TARGET_CPU_ARCH_FAMILY 
 				COMPILE_FLAGS "-mssse3")
 	endif()
 endif()
-if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios"))
+if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios"))
 	set(used_arch_specific_sources TRUE)
-	if(NOT CMAKE_TARGET_OS STREQUAL "ios")
+	if (NOT CMAKE_TARGET_OS STREQUAL "ios")
 		set(target_specific_definitions_public ${target_specific_definitions_public}
 			-D__ARM_HAVE_OPTIONAL_NEON_SUPPORT
 		)
@@ -54,7 +54,7 @@ if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR (CMAKE_TARGET_CPU_ARCH_FAMILY 
 		"upstream.patched/src/opts/memset16_neon.S"
 		"upstream.patched/src/opts/memset.arm.S"
 	)
-	if(CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_COMPILER_FAMILY STREQUAL "clang")
+	if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_COMPILER_FAMILY STREQUAL "clang")
 		set_source_files_properties(
 			"upstream.patched/src/opts/memset32_neon.S"
 			"upstream.patched/src/opts/memset16_neon.S"
@@ -63,7 +63,7 @@ if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR (CMAKE_TARGET_CPU_ARCH_FAMILY 
 				COMPILE_FLAGS "-no-integrated-as")
 	endif()
 endif()
-if(NOT used_arch_specific_sources)
+if (NOT used_arch_specific_sources)
 	set(target_specific_sources "${target_specific_sources}"
 		"upstream.patched/src/opts/SkBlitRow_opts_none.cpp"
 		"upstream.patched/src/opts/SkBlitMask_opts_none.cpp"
@@ -72,7 +72,7 @@ if(NOT used_arch_specific_sources)
 	)
 endif()
 
-if(CMAKE_TARGET_OS STREQUAL "windows")
+if (CMAKE_TARGET_OS STREQUAL "windows")
 	set(target_specific_include_dirs_private ${target_specific_include_dirs_private}
 		"upstream.patched/src/utils/win"
 	)
@@ -305,7 +305,7 @@ target_link_libraries(skia_static
 		${target_specific_libraries_public}
 )
 
-if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios")
+if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios")
 	set(ios_iphoneos_exclude_list
 		"opts_check_SSE2.cpp"
 		"SkBitmapFilter_opts_SSE2.cpp"

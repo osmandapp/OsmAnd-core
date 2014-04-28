@@ -35,23 +35,23 @@ bool OsmAnd::MapStylesPresetsCollection_P::deserializeFrom(QXmlStreamReader& xml
     {
         xmlReader.readNext();
         const auto tagName = xmlReader.name();
-        if(xmlReader.isStartElement())
+        if (xmlReader.isStartElement())
         {
-            if(tagName == QLatin1String("mapStylePreset"))
+            if (tagName == QLatin1String("mapStylePreset"))
             {
                 const auto type_ = xmlReader.attributes().value(QLatin1String("type")).toString();
                 auto type = MapStylePreset::Type::Custom;
-                if(!type_.isEmpty())
+                if (!type_.isEmpty())
                 {
-                    if(type_ == QLatin1String("general"))
+                    if (type_ == QLatin1String("general"))
                         type = MapStylePreset::Type::General;
-                    else if(type_ == QLatin1String("pedestrian"))
+                    else if (type_ == QLatin1String("pedestrian"))
                         type = MapStylePreset::Type::Pedestrian;
-                    else if(type_ == QLatin1String("bicycle"))
+                    else if (type_ == QLatin1String("bicycle"))
                         type = MapStylePreset::Type::Bicycle;
-                    else if(type_ == QLatin1String("car"))
+                    else if (type_ == QLatin1String("car"))
                         type = MapStylePreset::Type::Car;
-                    else if(type_ != QLatin1String("custom"))
+                    else if (type_ != QLatin1String("custom"))
                     {
                         LogPrintf(LogSeverityLevel::Warning, "Ignored map style preset with unknown type '%s'", qPrintable(type_));
                         continue;
@@ -59,25 +59,25 @@ bool OsmAnd::MapStylesPresetsCollection_P::deserializeFrom(QXmlStreamReader& xml
                 }
 
                 auto name = xmlReader.attributes().value(QLatin1String("name")).toString();
-                if(type != MapStylePreset::Type::Custom && name.isEmpty())
+                if (type != MapStylePreset::Type::Custom && name.isEmpty())
                     name = QLatin1String("type_") + type_;
 
                 auto styleName = xmlReader.attributes().value(QLatin1String("style")).toString();
-                if(type == MapStylePreset::Type::Custom && name.isEmpty())
+                if (type == MapStylePreset::Type::Custom && name.isEmpty())
                 {
                     LogPrintf(LogSeverityLevel::Warning, "Ignored map style preset with empty name and custom type");
                     continue;
                 }
-                if(styleName.isEmpty())
+                if (styleName.isEmpty())
                 {
                     LogPrintf(LogSeverityLevel::Warning, "Ignored orphaned map style preset with name '%s' and type '%s'", qPrintable(name), qPrintable(type_));
                     continue;
                 }
                 mapStylePreset.reset(new MapStylePreset(type, name, styleName));
             }
-            else if(tagName == QLatin1String("attribute"))
+            else if (tagName == QLatin1String("attribute"))
             {
-                if(!mapStylePreset)
+                if (!mapStylePreset)
                     continue;
 
                 const auto name = xmlReader.attributes().value(QLatin1String("name")).toString();
@@ -86,13 +86,13 @@ bool OsmAnd::MapStylesPresetsCollection_P::deserializeFrom(QXmlStreamReader& xml
                 mapStylePreset->attributes.insert(name, value);
             }
         }
-        else if(xmlReader.isEndElement())
+        else if (xmlReader.isEndElement())
         {
-            if(tagName == QLatin1String("mapStylePreset"))
+            if (tagName == QLatin1String("mapStylePreset"))
             {
                 auto& collectionForStyle = collection[mapStylePreset->styleName];
                 
-                if(!collectionForStyle.contains(mapStylePreset->name))
+                if (!collectionForStyle.contains(mapStylePreset->name))
                 {
                     collectionForStyle.insert(mapStylePreset->name, mapStylePreset);
                     order.push_back(mapStylePreset);
@@ -103,7 +103,7 @@ bool OsmAnd::MapStylesPresetsCollection_P::deserializeFrom(QXmlStreamReader& xml
             }
         }
     }
-    if(xmlReader.hasError())
+    if (xmlReader.hasError())
     {
         LogPrintf(LogSeverityLevel::Warning, "XML error: %s (%d, %d)", qPrintable(xmlReader.errorString()), xmlReader.lineNumber(), xmlReader.columnNumber());
         return false;
@@ -130,7 +130,7 @@ bool OsmAnd::MapStylesPresetsCollection_P::serializeTo(QXmlStreamWriter& xmlWrit
 bool OsmAnd::MapStylesPresetsCollection_P::addPreset(const std::shared_ptr<MapStylePreset>& preset)
 {
     auto& collectionForStyle = _collection[preset->styleName];
-    if(collectionForStyle.constFind(preset->name) != collectionForStyle.cend())
+    if (collectionForStyle.constFind(preset->name) != collectionForStyle.cend())
         return false;
 
     collectionForStyle.insert(preset->name, preset);
@@ -142,14 +142,14 @@ bool OsmAnd::MapStylesPresetsCollection_P::addPreset(const std::shared_ptr<MapSt
 bool OsmAnd::MapStylesPresetsCollection_P::removePreset(const std::shared_ptr<MapStylePreset>& preset)
 {
     const auto itCollectionForStyle = _collection.find(preset->styleName);
-    if(itCollectionForStyle == _collection.end())
+    if (itCollectionForStyle == _collection.end())
         return false;
     auto& collectionForStyle = *itCollectionForStyle;
-    if(collectionForStyle.remove(preset->name) == 0)
+    if (collectionForStyle.remove(preset->name) == 0)
         return false;
     
     _order.removeOne(preset);
-    if(collectionForStyle.isEmpty())
+    if (collectionForStyle.isEmpty())
         _collection.erase(itCollectionForStyle);
 
     return true;
@@ -172,14 +172,14 @@ QList< std::shared_ptr<OsmAnd::MapStylePreset> > OsmAnd::MapStylesPresetsCollect
 
 QList< std::shared_ptr<const OsmAnd::MapStylePreset> > OsmAnd::MapStylesPresetsCollection_P::getCollectionFor(const QString& styleName) const
 {
-    if(!_collection.contains(styleName))
+    if (!_collection.contains(styleName))
         return QList< std::shared_ptr<const MapStylePreset> >();
 
     QList< std::shared_ptr<const MapStylePreset> > result;
 
     for(const auto& preset : constOf(_order))
     {
-        if(preset->styleName != styleName)
+        if (preset->styleName != styleName)
             continue;
         result.push_back(preset);
     }
@@ -189,14 +189,14 @@ QList< std::shared_ptr<const OsmAnd::MapStylePreset> > OsmAnd::MapStylesPresetsC
 
 QList< std::shared_ptr<OsmAnd::MapStylePreset> > OsmAnd::MapStylesPresetsCollection_P::getCollectionFor(const QString& styleName)
 {
-    if(!_collection.contains(styleName))
+    if (!_collection.contains(styleName))
         return QList< std::shared_ptr<MapStylePreset> >();
 
     QList< std::shared_ptr<MapStylePreset> > result;
 
     for(const auto& preset : constOf(_order))
     {
-        if(preset->styleName != styleName)
+        if (preset->styleName != styleName)
             continue;
         result.push_back(preset);
     }
@@ -207,12 +207,12 @@ QList< std::shared_ptr<OsmAnd::MapStylePreset> > OsmAnd::MapStylesPresetsCollect
 std::shared_ptr<const OsmAnd::MapStylePreset> OsmAnd::MapStylesPresetsCollection_P::getPreset(const QString& styleName, const QString& presetName) const
 {
     const auto citCollectionForStyle = _collection.constFind(styleName);
-    if(citCollectionForStyle == _collection.cend())
+    if (citCollectionForStyle == _collection.cend())
         return nullptr;
 
     const auto& collectionForStyle = *citCollectionForStyle;
     const auto citPreset = collectionForStyle.constFind(presetName);
-    if(citPreset == collectionForStyle.cend())
+    if (citPreset == collectionForStyle.cend())
         return nullptr;
 
     return *citPreset;
@@ -221,12 +221,12 @@ std::shared_ptr<const OsmAnd::MapStylePreset> OsmAnd::MapStylesPresetsCollection
 std::shared_ptr<OsmAnd::MapStylePreset> OsmAnd::MapStylesPresetsCollection_P::getPreset(const QString& styleName, const QString& presetName)
 {
     const auto citCollectionForStyle = _collection.constFind(styleName);
-    if(citCollectionForStyle == _collection.cend())
+    if (citCollectionForStyle == _collection.cend())
         return nullptr;
 
     const auto& collectionForStyle = *citCollectionForStyle;
     const auto citPreset = collectionForStyle.constFind(presetName);
-    if(citPreset == collectionForStyle.cend())
+    if (citPreset == collectionForStyle.cend())
         return nullptr;
 
     return *citPreset;

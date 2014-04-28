@@ -37,7 +37,7 @@ namespace OsmAnd
         {
             QWriteLocker scopedLocker(&_observersLock);
 
-            if(_observers.contains(tag) || handler == nullptr)
+            if (_observers.contains(tag) || handler == nullptr)
                 return false;
 
             _observers.insert(tag, handler);

@@ -22,14 +22,14 @@ void OsmAnd::OfflineMapDataTile_P::cleanup()
 
     // Remove tile reference from collection. All checks here does not matter,
     // since entry->tile reference is already expired (execution is already in destructor of OfflineMapDataTile!)
-    if(const auto entry = _refEntry.lock())
+    if (const auto entry = _refEntry.lock())
     {
-        if(const auto link = entry->link.lock())
+        if (const auto link = entry->link.lock())
             link->collection.removeEntry(entry->tileId, entry->zoom);
     }
 
     // Dereference shared map objects
-    if(const auto link = _link.lock())
+    if (const auto link = _link.lock())
     {
         // Get bounding box that covers this tile
         const auto tileBBox31 = Utilities::tileBoundingBox31(owner->tileId, owner->zoom);
@@ -38,7 +38,7 @@ void OsmAnd::OfflineMapDataTile_P::cleanup()
         {
             // Skip all map objects that can not be shared
             const auto canNotBeShared = tileBBox31.contains(mapObject->bbox31);
-            if(canNotBeShared)
+            if (canNotBeShared)
                 continue;
 
             link->provider._sharedMapObjects.releaseReference(mapObject->id, owner->zoom, mapObject);

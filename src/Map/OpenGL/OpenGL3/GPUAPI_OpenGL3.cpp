@@ -36,7 +36,7 @@ GLenum OsmAnd::GPUAPI_OpenGL3::validateResult()
     GL_CHECK_PRESENT(glGetError);
 
     auto result = glGetError();
-    if(result == GL_NO_ERROR)
+    if (result == GL_NO_ERROR)
         return result;
 
     LogPrintf(LogSeverityLevel::Error, "OpenGL error 0x%08x : %s", result, gluErrorString(result));
@@ -49,7 +49,7 @@ bool OsmAnd::GPUAPI_OpenGL3::initialize()
     bool ok;
 
     ok = GPUAPI_OpenGL::initialize();
-    if(!ok)
+    if (!ok)
         return false;
 
     glewExperimental = GL_TRUE;
@@ -149,7 +149,7 @@ bool OsmAnd::GPUAPI_OpenGL3::initialize()
     glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &compressedFormatsLength);
     GL_CHECK_RESULT;
     _compressedFormats.resize(compressedFormatsLength);
-    if(compressedFormatsLength > 0)
+    if (compressedFormatsLength > 0)
     {
         glGetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS, _compressedFormats.data());
         GL_CHECK_RESULT;
@@ -226,7 +226,7 @@ bool OsmAnd::GPUAPI_OpenGL3::release()
 
     GL_CHECK_PRESENT(glDeleteSamplers);
 
-    if(_textureSamplers[0] != 0)
+    if (_textureSamplers[0] != 0)
     {
         glDeleteSamplers(1, _textureSamplers.data());
         GL_CHECK_RESULT;
@@ -234,7 +234,7 @@ bool OsmAnd::GPUAPI_OpenGL3::release()
     }
     
     ok = GPUAPI_OpenGL::release();
-    if(!ok)
+    if (!ok)
         return false;
 
     return true;
@@ -244,7 +244,7 @@ OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGL3::getTextureFormat(const std
 {
     GLenum textureFormat = GL_INVALID_ENUM;
 
-    if(tile->dataType == MapTileDataType::Bitmap)
+    if (tile->dataType == MapTileDataType::Bitmap)
     {
         const auto& bitmapTile = std::static_pointer_cast<const MapBitmapTile>(tile);
 
@@ -261,7 +261,7 @@ OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGL3::getTextureFormat(const std
             break;
         }
     }
-    else if(tile->dataType == MapTileDataType::ElevationData)
+    else if (tile->dataType == MapTileDataType::ElevationData)
     {
         textureFormat = GL_R32F;
     }
@@ -298,7 +298,7 @@ OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGL3::getSourceFormat(const std::
     SourceFormat sourceFormat;
     sourceFormat.format = GL_INVALID_ENUM;
     sourceFormat.type = GL_INVALID_ENUM;
-    if(tile->dataType == MapTileDataType::Bitmap)
+    if (tile->dataType == MapTileDataType::Bitmap)
     {
         const auto& bitmapTile = std::static_pointer_cast<const MapBitmapTile>(tile);
 
@@ -318,7 +318,7 @@ OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGL3::getSourceFormat(const std::
             break;
         }
     }
-    else if(tile->dataType == MapTileDataType::ElevationData)
+    else if (tile->dataType == MapTileDataType::ElevationData)
     {
         sourceFormat.format = GL_RED;
         sourceFormat.type = GL_FLOAT;
@@ -489,7 +489,7 @@ void OsmAnd::GPUAPI_OpenGL3::glPopGroupMarkerEXT_wrapper()
 
 void OsmAnd::GPUAPI_OpenGL3::pushDebugGroupMarker(const QString& title)
 {
-    if(isSupported_GREMEDY_string_marker)
+    if (isSupported_GREMEDY_string_marker)
     {
         GL_CHECK_PRESENT(glStringMarkerGREMEDY);
 
@@ -508,7 +508,7 @@ void OsmAnd::GPUAPI_OpenGL3::pushDebugGroupMarker(const QString& title)
 void OsmAnd::GPUAPI_OpenGL3::popDebugGroupMarker()
 {
     GPUAPI_OpenGL::popDebugGroupMarker();
-    if(isSupported_GREMEDY_string_marker)
+    if (isSupported_GREMEDY_string_marker)
     {
         GL_CHECK_PRESENT(glStringMarkerGREMEDY);
 

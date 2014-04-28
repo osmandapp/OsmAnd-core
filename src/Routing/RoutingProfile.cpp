@@ -33,43 +33,43 @@ void OsmAnd::RoutingProfile::addAttribute( const QString& key, const QString& va
 {
     _attributes.insert(key, value);
 
-    if(key == "restrictionsAware")
+    if (key == "restrictionsAware")
     {
         _restrictionsAware = Utilities::parseArbitraryBool(value, _restrictionsAware);
     }
-    else if(key == "leftTurn")
+    else if (key == "leftTurn")
     {
         bool ok;
         auto parsed = value.toFloat(&ok);
-        if(ok)
+        if (ok)
             _leftTurn = parsed;
     }
-    else if(key == "rightTurn")
+    else if (key == "rightTurn")
     {
         bool ok;
         auto parsed = value.toFloat(&ok);
-        if(ok)
+        if (ok)
             _rightTurn = parsed;
     }
-    else if(key == "roundaboutTurn")
+    else if (key == "roundaboutTurn")
     {
         bool ok;
         auto parsed = value.toFloat(&ok);
-        if(ok)
+        if (ok)
             _roundaboutTurn = parsed;
     }
-    else if(key == "minDefaultSpeed")
+    else if (key == "minDefaultSpeed")
     {
         bool ok;
         auto parsed = value.toFloat(&ok);
-        if(ok)
+        if (ok)
             _minDefaultSpeed = parsed / 3.6f;
     }
-    else if(key == "maxDefaultSpeed")
+    else if (key == "maxDefaultSpeed")
     {
         bool ok;
         auto parsed = value.toFloat(&ok);
-        if(ok)
+        if (ok)
             _maxDefaultSpeed = parsed / 3.6f;
     }
 }
@@ -106,7 +106,7 @@ uint32_t OsmAnd::RoutingProfile::registerTagValueAttribute( const QString& tag, 
     const auto key = tag + QLatin1String("$") + value;
 
     auto itId = _universalRules.constFind(key);
-    if(itId != _universalRules.cend())
+    if (itId != _universalRules.cend())
         return *itId;
     
     auto id = _universalRules.size();
@@ -114,10 +114,10 @@ uint32_t OsmAnd::RoutingProfile::registerTagValueAttribute( const QString& tag, 
     _universalRules.insert(key, id);
 
     auto itTagRuleMask = _tagRuleMask.find(tag);
-    if(itTagRuleMask == _tagRuleMask.end())
+    if (itTagRuleMask == _tagRuleMask.end())
         itTagRuleMask = _tagRuleMask.insert(tag, QBitArray());
     
-    if(itTagRuleMask->size() <= id)
+    if (itTagRuleMask->size() <= id)
     {
         assert(id < std::numeric_limits<int>::max());
         itTagRuleMask->resize(id + 1);
@@ -132,17 +132,17 @@ bool OsmAnd::RoutingProfile::parseTypedValueFromTag( uint32_t id, const QString&
     bool ok = true;
 
     auto itCachedValue = _ruleToValueCache.constFind(id);
-    if(itCachedValue == _ruleToValueCache.cend())
+    if (itCachedValue == _ruleToValueCache.cend())
     {
         const auto& key = _universalRulesKeysById[id];
         const auto& valueName = key.mid(key.indexOf('$') + 1);
 
         ok = RoutingConfiguration::parseTypedValue(valueName, type, parsedValue);
-        if(ok)
+        if (ok)
             itCachedValue = _ruleToValueCache.insert(id, parsedValue);
     }
 
-    if(ok)
+    if (ok)
         parsedValue = *itCachedValue;
     return ok;
 }

@@ -102,7 +102,7 @@ namespace OsmAnd
 
         inline PointT& operator=(const PointT& that)
         {
-            if(this != &that)
+            if (this != &that)
             {
                 x = that.x;
                 y = that.y;
@@ -221,9 +221,9 @@ namespace OsmAnd
         const auto t_ = static_cast<int64_t>(b0y_b1y*b0x_a0x) - static_cast<int64_t>(b0x_b1x*b0y_a0y);
         const auto u_ = static_cast<int64_t>(a1x_a0x*b0y_a0y) - static_cast<int64_t>(a1y_a0y*b0x_a0x);
 
-        if(d_ == 0)
+        if (d_ == 0)
         {
-            if(t_ == 0 && u_ == 0)
+            if (t_ == 0 && u_ == 0)
                 return true;
             return false;
         }
@@ -248,9 +248,9 @@ namespace OsmAnd
         const auto t_ = b0y_b1y*b0x_a0x - b0x_b1x*b0y_a0y;
         const auto u_ = a1x_a0x*b0y_a0y - a1y_a0y*b0x_a0x;
 
-        if(qFuzzyIsNull(d_))
+        if (qFuzzyIsNull(d_))
         {
-            if(qFuzzyIsNull(t_) && qFuzzyIsNull(u_))
+            if (qFuzzyIsNull(t_) && qFuzzyIsNull(u_))
                 return true;
             return false;
         }
@@ -275,9 +275,9 @@ namespace OsmAnd
         const auto t_ = b0y_b1y*b0x_a0x - b0x_b1x*b0y_a0y;
         const auto u_ = a1x_a0x*b0y_a0y - a1y_a0y*b0x_a0x;
 
-        if(qFuzzyIsNull(d_))
+        if (qFuzzyIsNull(d_))
         {
-            if(qFuzzyIsNull(t_) && qFuzzyIsNull(u_))
+            if (qFuzzyIsNull(t_) && qFuzzyIsNull(u_))
                 return true;
             return false;
         }
@@ -370,7 +370,7 @@ namespace OsmAnd
 #if !defined(SWIG)
         inline AreaT& operator=(const AreaT& that)
         {
-            if(this != &that)
+            if (this != &that)
             {
                 topLeft = that.topLeft;
                 bottomRight = that.bottomRight;
@@ -514,7 +514,7 @@ namespace OsmAnd
         inline bool contains(const OOBBT& that) const
         {
             // If this doesn't contain that AABB, it can not contains OOBB
-            if(!contains(that.aabb))
+            if (!contains(that.aabb))
                 return false;
 
             // If all of global points are contained, then entire OOBB is inside
@@ -569,31 +569,31 @@ namespace OsmAnd
         {
             bool res = false;
 
-            if(!res && PointT::equal(p.x, left))
+            if (!res && PointT::equal(p.x, left))
             {
                 res = true;
-                if(edge)
+                if (edge)
                     *edge = Edge::Left;
             }
 
-            if(!res && PointT::equal(p.x, right))
+            if (!res && PointT::equal(p.x, right))
             {
                 res = true;
-                if(edge)
+                if (edge)
                     *edge = Edge::Right;
             }
 
-            if(!res && PointT::equal(p.y, top))
+            if (!res && PointT::equal(p.y, top))
             {
                 res = true;
-                if(edge)
+                if (edge)
                     *edge = Edge::Top;
             }
 
-            if(!res && PointT::equal(p.y, bottom))
+            if (!res && PointT::equal(p.y, bottom))
             {
                 res = true;
-                if(edge)
+                if (edge)
                     *edge = Edge::Bottom;
             }
 
@@ -749,21 +749,21 @@ namespace OsmAnd
             const auto sign2 = crossProductSign(p2, p3, p);
             const auto sign3 = crossProductSign(p3, p0, p);
             int sign = sign0;
-            if(sign1 != 0)
+            if (sign1 != 0)
             {
-                if(sign != 0 && sign != sign1)
+                if (sign != 0 && sign != sign1)
                     return false;
                 sign = sign1;
             }
-            if(sign2 != 0)
+            if (sign2 != 0)
             {
-                if(sign != 0 && sign != sign2)
+                if (sign != 0 && sign != sign2)
                     return false;
                 sign = sign2;
             }
-            if(sign3 != 0)
+            if (sign3 != 0)
             {
-                if(sign != 0 && sign != sign3)
+                if (sign != 0 && sign != sign3)
                     return false;
             }
             return true;
@@ -865,7 +865,7 @@ namespace OsmAnd
 
         inline OOBBT& operator=(const OOBBT& that)
         {
-            if(this != &that)
+            if (this != &that)
             {
                 this->_unrotatedBBox = that.unrotatedBBox;
                 this->_rotation = that.rotation;
@@ -882,11 +882,11 @@ namespace OsmAnd
         inline bool contains(const OOBBT& that) const
         {
             // If external AABB doesn't contain that AABB, surely inner OOBB doesn't contain also
-            if(!aabb.contains(that.aabb))
+            if (!aabb.contains(that.aabb))
                 return false;
 
             // If angle of rotation is equal, check unrotated
-            if(qFuzzyCompare(rotation, that.rotation))
+            if (qFuzzyCompare(rotation, that.rotation))
                 return unrotatedBBox.contains(that.unrotatedBBox);
 
             // In case this OOBB contains that OOBB, all points of that OOBB lay inside this OOBB
@@ -900,11 +900,11 @@ namespace OsmAnd
         inline bool intersects(const OOBBT& that) const
         {
             // If external AABB doesn't intersect that AABB, surely inner OOBB doesn't intersect also
-            if(!aabb.intersects(that.aabb))
+            if (!aabb.intersects(that.aabb))
                 return false;
 
             // If angle of rotation is equal, intersect unrotated
-            if(qFuzzyCompare(rotation, that.rotation))
+            if (qFuzzyCompare(rotation, that.rotation))
                 return unrotatedBBox.intersects(that.unrotatedBBox);
 
             const auto& p0 = pointInGlobalSpace0;
@@ -918,7 +918,7 @@ namespace OsmAnd
 
             // Check if any points of that area is inside.
             // This case covers inner area and partially inner area (that has at least 1 point inside)
-            if(isPointInside(a0) || isPointInside(a1) || isPointInside(a2) || isPointInside(a3))
+            if (isPointInside(a0) || isPointInside(a1) || isPointInside(a2) || isPointInside(a3))
                 return true;
 
             // Check if any that OOBB edge intersects any of OOBB edges.
@@ -945,11 +945,11 @@ namespace OsmAnd
         inline bool contains(const AreaT& that) const
         {
             // If external AABB doesn't contain that AABB, surely inner OOBB doesn't contain also
-            if(!aabb.contains(that))
+            if (!aabb.contains(that))
                 return false;
 
             // If angle of rotation is zero, check OOBB vs that AABB
-            if(qFuzzyIsNull(rotation))
+            if (qFuzzyIsNull(rotation))
                 return unrotatedBBox.contains(that);
 
             // If all of points of that AABB are inside, then it's totally inside
@@ -963,11 +963,11 @@ namespace OsmAnd
         inline bool intersects(const AreaT& that) const
         {
             // If external AABB doesn't intersect that AABB, surely inner OOBB doesn't intersect also
-            if(!aabb.intersects(that))
+            if (!aabb.intersects(that))
                 return false;
 
             // If angle of rotation is zero, check OOBB vs that AABB
-            if(qFuzzyIsNull(rotation))
+            if (qFuzzyIsNull(rotation))
                 return unrotatedBBox.intersects(that);
 
             const auto& p0 = pointInGlobalSpace0;
@@ -981,7 +981,7 @@ namespace OsmAnd
 
             // Check if any points of that area is inside.
             // This case covers inner area and partially inner area (that has at least 1 point inside)
-            if(isPointInside(a0) || isPointInside(a1) || isPointInside(a2) || isPointInside(a3))
+            if (isPointInside(a0) || isPointInside(a1) || isPointInside(a2) || isPointInside(a3))
                 return true;
 
             // Check if any that area edge intersects any of OOBB edges.

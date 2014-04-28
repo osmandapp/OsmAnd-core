@@ -15,13 +15,13 @@ float OsmAnd::Utilities_OpenGL_Common::calculateCameraDistance(const glm::mat4& 
 bool OsmAnd::Utilities_OpenGL_Common::rayIntersectPlane(const glm::vec3& planeN, const glm::vec3& planeO, const glm::vec3& rayD, const glm::vec3& rayO, float& distance)
 {
     const auto numerator = glm::dot(planeO - rayO, planeN);
-    if(qAbs(numerator) <= std::numeric_limits<float>::epsilon())
+    if (qAbs(numerator) <= std::numeric_limits<float>::epsilon())
     {
         distance = std::numeric_limits<float>::quiet_NaN();
         return true;
     }
     const auto denominator = glm::dot(rayD, planeN);
-    if(qAbs(denominator) <= std::numeric_limits<float>::epsilon())
+    if (qAbs(denominator) <= std::numeric_limits<float>::epsilon())
         return false;
 
     distance = numerator / denominator;
@@ -33,11 +33,11 @@ bool OsmAnd::Utilities_OpenGL_Common::lineSegmentIntersectPlane(const glm::vec3&
     const auto line = line1 - line0;
     const auto lineD = glm::normalize(line);
     float d;
-    if(!rayIntersectPlane(planeN, planeO, lineD, line0, d))
+    if (!rayIntersectPlane(planeN, planeO, lineD, line0, d))
         return false;
 
     // If point is not in [line0 .. line1]
-    if(d < 0.0f || d > glm::length(line))
+    if (d < 0.0f || d > glm::length(line))
         return false;
 
     lineX = line0 + d*lineD;

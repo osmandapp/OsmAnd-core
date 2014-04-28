@@ -43,11 +43,11 @@ void OsmAnd::DefaultLogSink::flush()
 
 void OsmAnd::DefaultLogSink::log(const LogSeverityLevel level, const char* format, va_list args)
 {
-    if(level == LogSeverityLevel::Error)
+    if (level == LogSeverityLevel::Error)
         printf("ERROR: ");
-    else if(level == LogSeverityLevel::Info)
+    else if (level == LogSeverityLevel::Info)
         printf("INFO: ");
-    else if(level == LogSeverityLevel::Warning)
+    else if (level == LogSeverityLevel::Warning)
         printf("WARN: ");
     else
         printf("DEBUG: ");
@@ -67,13 +67,13 @@ void OsmAnd::DefaultLogSink::flush()
 
 void OsmAnd::DefaultLogSink::log(const LogSeverityLevel level, const char* format, va_list args)
 {
-    if(IsDebuggerPresent())
+    if (IsDebuggerPresent())
     {
-        if(level == LogSeverityLevel::Error)
+        if (level == LogSeverityLevel::Error)
             OutputDebugStringA("ERROR: ");
-        else if(level == LogSeverityLevel::Info)
+        else if (level == LogSeverityLevel::Info)
             OutputDebugStringA("INFO: ");
-        else if(level == LogSeverityLevel::Warning)
+        else if (level == LogSeverityLevel::Warning)
             OutputDebugStringA("WARN: ");
         else
             OutputDebugStringA("DEBUG: ");
@@ -89,11 +89,11 @@ void OsmAnd::DefaultLogSink::log(const LogSeverityLevel level, const char* forma
     }
     else
     {
-        if(level == LogSeverityLevel::Error)
+        if (level == LogSeverityLevel::Error)
             printf("ERROR: ");
-        else if(level == LogSeverityLevel::Info)
+        else if (level == LogSeverityLevel::Info)
             printf("INFO: ");
-        else if(level == LogSeverityLevel::Warning)
+        else if (level == LogSeverityLevel::Warning)
             printf("WARN: ");
         else
             printf("DEBUG: ");
@@ -104,7 +104,7 @@ void OsmAnd::DefaultLogSink::log(const LogSeverityLevel level, const char* forma
 
 void OsmAnd::DefaultLogSink::flush()
 {
-    if(!IsDebuggerPresent())
+    if (!IsDebuggerPresent())
         fflush(stdout);
 }
 

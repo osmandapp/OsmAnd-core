@@ -58,7 +58,7 @@ uint32_t OsmAnd::RoutePlannerContext::getCurrentlyLoadedTiles() {
     uint32_t cnt = 0;
     for(const auto& t : this->_subsectionsContexts)
     {
-        if(t->isLoaded()) {
+        if (t->isLoaded()) {
             cnt++;
         }
     }
@@ -93,12 +93,12 @@ void OsmAnd::RoutePlannerContext::unloadUnusedTiles(size_t memoryTarget) {
     QList< std::shared_ptr<RoutingSubsectionContext> > list;
     int loaded = 0;
     for(const auto& t : this->_subsectionsContexts) {
-        if(t->isLoaded()) {
+        if (t->isLoaded()) {
             list.push_back(t);
             loaded++;
         }
     }
-    if(_routeStatistics) {
+    if (_routeStatistics) {
         _routeStatistics->maxLoadedTiles = qMax(_routeStatistics->maxLoadedTiles , getCurrentlyLoadedTiles());
     }
     qSort(list.begin(), list.end(), compareSections);
@@ -108,12 +108,12 @@ void OsmAnd::RoutePlannerContext::unloadUnusedTiles(size_t memoryTarget) {
         std::shared_ptr<RoutingSubsectionContext>  unload = list[i];
         i++;
         unload->unload();
-        if(_routeStatistics) {
+        if (_routeStatistics) {
             _routeStatistics->unloadedTiles ++;
         }
 
     }
-    if(_routeStatistics) {
+    if (_routeStatistics) {
         OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Unloaded tiles %d (loaded prevUnloaded %d, currently loaded %d)",  _routeStatistics->unloadedTiles,  _routeStatistics->loadedPrevUnloadedTiles, getCurrentlyLoadedTiles());
         OsmAnd::LogFlush();
     }
@@ -133,7 +133,7 @@ void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::registerRoad( const 
         
         std::shared_ptr<RouteCalculationSegment> routeSegment(new RouteCalculationSegment(road, idx));
         auto itRouteSegment = _roadSegments.constFind(id);
-        if(itRouteSegment == _roadSegments.cend())
+        if (itRouteSegment == _roadSegments.cend())
             _roadSegments.insert(id, routeSegment);
         else
         {
@@ -165,9 +165,9 @@ void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::collectRoads( QList<
             const auto& road = routeSegment->road;
 
             const auto isDuplicate = duplicatesRegistry && duplicatesRegistry->contains(road->id);
-            if(!isDuplicate)
+            if (!isDuplicate)
             {
-                if(duplicatesRegistry)
+                if (duplicatesRegistry)
                     duplicatesRegistry->insert(road->id, road);
                 output.push_back(road);
             }
@@ -178,10 +178,10 @@ void OsmAnd::RoutePlannerContext::RoutingSubsectionContext::collectRoads( QList<
 
 
             /*TODO: to Alexey what is this?
-        if(routes != null) {
-        } else if(searchResult != null) {
+        if (routes != null) {
+        } else if (searchResult != null) {
             RouteDataObject[] objects = searchResult.objects;
-            if(objects != null) {
+            if (objects != null) {
                 for(RouteDataObject ro : objects) {
                     if (ro != null && !excludeDuplications.contains(ro.id)) {
                         excludeDuplications.put(ro.id, ro);
@@ -211,7 +211,7 @@ std::shared_ptr<OsmAnd::RoutePlannerContext::RouteCalculationSegment> OsmAnd::Ro
 {
     uint64_t id = (static_cast<uint64_t>(x31) << 31) | y31;
     auto itSegment = _roadSegments.constFind(id);
-    if(itSegment == _roadSegments.cend())
+    if (itSegment == _roadSegments.cend())
         return original_;
     this->_access++;
 
@@ -222,7 +222,7 @@ std::shared_ptr<OsmAnd::RoutePlannerContext::RouteCalculationSegment> OsmAnd::Ro
         auto road = segment->road;
         auto roadPointId = RoutePlanner::encodeRoutePointId(road, segment->pointIndex);
         auto itOtherRoad = processed.constFind(roadPointId);
-        if(itOtherRoad == processed.cend() || (*itOtherRoad)->points.size() < road->points.size())
+        if (itOtherRoad == processed.cend() || (*itOtherRoad)->points.size() < road->points.size())
         {
             processed.insert(roadPointId, road);
 
@@ -265,7 +265,7 @@ OsmAnd::RoutePlannerContext::RouteCalculationSegment::~RouteCalculationSegment()
 
 void OsmAnd::RoutePlannerContext::RouteCalculationSegment::dump(const QString& prefix /*= QString::null*/) const
 {
-    if(parent)
+    if (parent)
     {
         LogPrintf(LogSeverityLevel::Debug, "%sroad(%llu), point(%d), w(%f), ds(%f), es(%f); parent = road(%llu), point(%d);",
             qPrintable(prefix),

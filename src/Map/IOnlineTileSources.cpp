@@ -13,7 +13,7 @@ OsmAnd::IOnlineTileSources::~IOnlineTileSources()
 std::shared_ptr<OsmAnd::OnlineMapRasterTileProvider> OsmAnd::IOnlineTileSources::createProviderFor(const QString& sourceName) const
 {
     const auto source = getSourceByName(sourceName);
-    if(!source)
+    if (!source)
         return nullptr;
 
     return std::shared_ptr<OsmAnd::OnlineMapRasterTileProvider>(new OnlineMapRasterTileProvider(

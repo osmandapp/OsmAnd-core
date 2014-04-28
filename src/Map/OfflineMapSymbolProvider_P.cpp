@@ -30,7 +30,7 @@ bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols(
     owner->dataProvider->obtainTile(tileId, zoom, dataTile);
 
     // If tile has nothing to be rasterized, mark that data is not available for it
-    if(!dataTile || dataTile->nothingToRasterize)
+    if (!dataTile || dataTile->nothingToRasterize)
     {
         // Mark tile as empty
         outTile.reset();
@@ -55,7 +55,7 @@ bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols(
         // Convert all symbols inside group
         for(const auto& rasterizedSymbol : constOf(rasterizedGroup->symbols))
         {
-            if(const auto pinnedSymbol = std::dynamic_pointer_cast<const RasterizedPinnedSymbol>(rasterizedSymbol))
+            if (const auto pinnedSymbol = std::dynamic_pointer_cast<const RasterizedPinnedSymbol>(rasterizedSymbol))
             {
                 const auto symbol = new MapPinnedSymbol(
                     group, constructedGroup->mapObject,
@@ -69,7 +69,7 @@ bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols(
                 assert(static_cast<bool>(symbol->bitmap));
                 constructedGroup->symbols.push_back(qMove(std::shared_ptr<const MapSymbol>(symbol)));
             }
-            else if(const auto symbolOnPath = std::dynamic_pointer_cast<const RasterizedSymbolOnPath>(rasterizedSymbol))
+            else if (const auto symbolOnPath = std::dynamic_pointer_cast<const RasterizedSymbolOnPath>(rasterizedSymbol))
             {
                 const auto symbol = new MapSymbolOnPath(
                     group, constructedGroup->mapObject,

@@ -10,7 +10,7 @@ OsmAnd::QIODeviceInputStream::QIODeviceInputStream( const std::shared_ptr<QIODev
     , _closeOnDestruction(!device->isOpen())
 {
     // Open the device if it was not yet opened
-    if(!_device->isOpen())
+    if (!_device->isOpen())
         _device->open(QIODevice::ReadOnly);
     assert(_device->isOpen());
 }
@@ -18,7 +18,7 @@ OsmAnd::QIODeviceInputStream::QIODeviceInputStream( const std::shared_ptr<QIODev
 OsmAnd::QIODeviceInputStream::~QIODeviceInputStream()
 {
     // If device was opened by this instance, close it also
-    if(_closeOnDestruction && _device->isOpen())
+    if (_closeOnDestruction && _device->isOpen())
         _device->close();
 
     // Delete buffer
@@ -28,7 +28,7 @@ OsmAnd::QIODeviceInputStream::~QIODeviceInputStream()
 bool OsmAnd::QIODeviceInputStream::Next( const void** data, int* size )
 {
     const auto bytesRead = _device->read(reinterpret_cast<char*>(_buffer), _bufferSize);
-    if(Q_UNLIKELY(bytesRead < 0 || (bytesRead == 0 && _device->atEnd())))
+    if (Q_UNLIKELY(bytesRead < 0 || (bytesRead == 0 && _device->atEnd())))
     {
         *data = nullptr;
         *size = 0;
@@ -44,7 +44,7 @@ bool OsmAnd::QIODeviceInputStream::Next( const void** data, int* size )
 
 void OsmAnd::QIODeviceInputStream::BackUp( int count )
 {
-    if(Q_UNLIKELY(!_device->isOpen() && !_closeOnDestruction))
+    if (Q_UNLIKELY(!_device->isOpen() && !_closeOnDestruction))
         return;
 
     if (count > _device->pos())
@@ -55,10 +55,10 @@ void OsmAnd::QIODeviceInputStream::BackUp( int count )
 
 bool OsmAnd::QIODeviceInputStream::Skip( int count )
 {
-    if(Q_UNLIKELY(!_device->isOpen() && !_closeOnDestruction))
+    if (Q_UNLIKELY(!_device->isOpen() && !_closeOnDestruction))
         return false;
 
-    if(Q_UNLIKELY(_device->pos() + count >= _deviceSize))
+    if (Q_UNLIKELY(_device->pos() + count >= _deviceSize))
     {
         _device->seek(_device->size());
         return false;

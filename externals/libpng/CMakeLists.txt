@@ -3,15 +3,15 @@ project(png)
 set(target_specific_sources "")
 
 #TODO: filter_neon.S needs to be patched to support neon
-if(CMAKE_TARGET_OS STREQUAL "ios")
+if (CMAKE_TARGET_OS STREQUAL "ios")
 	add_definitions(-DPNG_ARM_NEON_OPT=0)
 endif()
-if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios"))
+if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios"))
 	set(target_specific_sources ${target_specific_sources}
 		"upstream.patched/arm/arm_init.c"
 		"upstream.patched/arm/filter_neon.S"
 	)
-	if(CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_COMPILER_FAMILY STREQUAL "clang")
+	if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_COMPILER_FAMILY STREQUAL "clang")
 		set_source_files_properties(
 			"upstream.patched/arm/filter_neon.S"
 			PROPERTIES
@@ -20,8 +20,8 @@ if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR (CMAKE_TARGET_CPU_ARCH_FAMILY 
 endif()
 
 set(target_specific_private_definitions "")
-if(CMAKE_TARGET_OS STREQUAL "windows")
-	if(CMAKE_COMPILER_FAMILY STREQUAL "msvc")
+if (CMAKE_TARGET_OS STREQUAL "windows")
+	if (CMAKE_COMPILER_FAMILY STREQUAL "msvc")
 		set(target_specific_private_definitions ${target_specific_private_definitions}
 			-D_CRT_SECURE_NO_WARNINGS
 		)
@@ -65,7 +65,7 @@ target_link_libraries(png_static
 		z_static
 )
 
-if(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios")
+if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios")
 	set(ios_iphonesimulator_exclude_list
 		"arm_init.c"
 		"filter_neon.S")

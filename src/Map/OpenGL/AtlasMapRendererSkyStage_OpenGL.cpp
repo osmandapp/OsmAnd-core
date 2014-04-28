@@ -182,26 +182,26 @@ void OsmAnd::AtlasMapRendererSkyStage_OpenGL::release()
 
     GL_CHECK_PRESENT(glDeleteBuffers);
 
-    if(_skyplaneIBO)
+    if (_skyplaneIBO)
     {
         glDeleteBuffers(1, &_skyplaneIBO);
         GL_CHECK_RESULT;
         _skyplaneIBO.reset();
     }
-    if(_skyplaneVBO)
+    if (_skyplaneVBO)
     {
         glDeleteBuffers(1, &_skyplaneVBO);
         GL_CHECK_RESULT;
         _skyplaneVBO.reset();
     }
-    if(_skyplaneVAO)
+    if (_skyplaneVAO)
     {
         gpuAPI->glDeleteVertexArrays_wrapper(1, &_skyplaneVAO);
         GL_CHECK_RESULT;
         _skyplaneVAO.reset();
     }
 
-    if(_program.id)
+    if (_program.id)
     {
         glDeleteProgram(_program.id);
         GL_CHECK_RESULT;

@@ -41,7 +41,7 @@ namespace OsmAnd
 
             const auto latitude_ = normalizeLatitude(latitude);
             double eval = log(tan(toRadians(latitude_)) + 1.0 / cos(toRadians(latitude_)));
-            if(eval > M_PI)
+            if (eval > M_PI)
                 eval = M_PI;
             return static_cast<int32_t>((1.0 - eval / M_PI) / 2.0*l);
         }
@@ -58,7 +58,7 @@ namespace OsmAnd
 
         inline static double getTileNumberX(const float zoom, const double longitude)
         {
-            if(qAbs(longitude - 180.) < std::numeric_limits<double>::epsilon())
+            if (qAbs(longitude - 180.) < std::numeric_limits<double>::epsilon())
                 return getPowZoom(zoom) - 1;
 
             return (normalizeLongitude(longitude) + 180.) / 360. * getPowZoom(zoom);
@@ -68,7 +68,7 @@ namespace OsmAnd
         {
             latitude = normalizeLatitude(latitude);
             double eval = log(tan(toRadians(latitude)) + 1 / cos(toRadians(latitude)));
-            if(qIsInf(eval) || qIsNaN(eval))
+            if (qIsInf(eval) || qIsNaN(eval))
             {
                 latitude = latitude < 0 ? -89.9 : 89.9;
                 eval = log(tan(toRadians(latitude)) + 1 / cos(toRadians(latitude)));
@@ -101,15 +101,15 @@ namespace OsmAnd
         {
             while(latitude < -90.0 || latitude > 90.0)
             {
-                if(latitude < 0.0)
+                if (latitude < 0.0)
                     latitude += 180.0;
                 else
                     latitude -= 180.0;
             }
 
-            if(latitude < -85.0511)
+            if (latitude < -85.0511)
                 return -85.0511;
-            else if(latitude > 85.0511)
+            else if (latitude > 85.0511)
                 return 85.0511;
 
             return latitude;
@@ -119,7 +119,7 @@ namespace OsmAnd
         {
             while(longitude < -180.0 || longitude >= 180.0)
             {
-                if(longitude < 0.0)
+                if (longitude < 0.0)
                     longitude += 360.0;
                 else
                     longitude -= 360.0;
@@ -129,7 +129,7 @@ namespace OsmAnd
 
         inline static double getPowZoom(const float zoom)
         {
-            if(zoom >= 0.0f && qFuzzyCompare(zoom, static_cast<uint8_t>(zoom)))
+            if (zoom >= 0.0f && qFuzzyCompare(zoom, static_cast<uint8_t>(zoom)))
                 return 1 << static_cast<uint8_t>(zoom);
 
             return qPow(2, zoom);
@@ -246,13 +246,13 @@ namespace OsmAnd
             const auto& v0 = (v0_.y > v1_.y) ? v1_ : v0_;
             const auto& v1 = (v0_.y > v1_.y) ? v0_ : v1_;
 
-            if(qFuzzyCompare(v1.y, mY) || qFuzzyCompare(v0.y, mY))
+            if (qFuzzyCompare(v1.y, mY) || qFuzzyCompare(v0.y, mY))
                 mY -= 1.0f;
 
-            if(v0.y > mY || v1.y < mY)
+            if (v0.y > mY || v1.y < mY)
                 return false;
 
-            if(v1 == v0)
+            if (v1 == v0)
             {
                 // the node on the boundary !!!
                 mX = v1.x;
@@ -267,10 +267,10 @@ namespace OsmAnd
         inline static bool rayIntersect(const PointF& v0, const PointF& v1, const PointF& v)
         {
             float t;
-            if(!rayIntersectX(v0, v1, v.y, t))
+            if (!rayIntersectX(v0, v1, v.y, t))
                 return false;
 
-            if(t < v.x)
+            if (t < v.x)
                 return true;
 
             return false;
@@ -284,13 +284,13 @@ namespace OsmAnd
             const auto& v0 = (v0_.y > v1_.y) ? v1_ : v0_;
             const auto& v1 = (v0_.y > v1_.y) ? v0_ : v1_;
 
-            if(v1.y == mY || v0.y == mY)
+            if (v1.y == mY || v0.y == mY)
                 mY -= 1;
 
-            if(v0.y > mY || v1.y < mY)
+            if (v0.y > mY || v1.y < mY)
                 return false;
 
-            if(v1 == v0)
+            if (v1 == v0)
             {
                 // the node on the boundary !!!
                 mX = v1.x;
@@ -305,10 +305,10 @@ namespace OsmAnd
         inline static bool rayIntersect(const PointI& v0, const PointI& v1, const PointI& v)
         {
             int32_t t;
-            if(!rayIntersectX(v0, v1, v.y, t))
+            if (!rayIntersectX(v0, v1, v.y, t))
                 return false;
 
-            if(t < v.x)
+            if (t < v.x)
                 return true;
 
             return false;
@@ -389,7 +389,7 @@ namespace OsmAnd
 
         inline static uint32_t getNextPowerOfTwo(const uint32_t value)
         {
-            if(value == 0)
+            if (value == 0)
                 return 0;
 
             auto n = value;
@@ -429,7 +429,7 @@ namespace OsmAnd
                 output.y += tilesCount;
 
             // Max zoom level (31) is skipped, since value stored in int31 can not be more than tilesCount(31)
-            if(zoom < ZoomLevel31)
+            if (zoom < ZoomLevel31)
             {
                 while(output.x >= tilesCount)
                     output.x -= tilesCount;
@@ -455,7 +455,7 @@ namespace OsmAnd
                 output.y += tilesCount;
 
             // Max zoom level (31) is skipped, since value stored in int31 can not be more than tilesCount(31)
-            if(zoom < ZoomLevel31)
+            if (zoom < ZoomLevel31)
             {
                 while(output.x >= tilesCount)
                     output.x -= tilesCount;
@@ -504,13 +504,13 @@ namespace OsmAnd
         {
             uint8_t res = static_cast<uint8_t>(CHCode::Inside);
 
-            if(p.x < box.left)           // to the left of clip box
+            if (p.x < box.left)           // to the left of clip box
                 res |= static_cast<uint8_t>(CHCode::Left);
-            else if(p.x > box.right)     // to the right of clip box
+            else if (p.x > box.right)     // to the right of clip box
                 res |= static_cast<uint8_t>(CHCode::Right);
-            if(p.y < box.top)            // above the clip box
+            if (p.y < box.top)            // above the clip box
                 res |= static_cast<uint8_t>(CHCode::Bottom);
-            else if(p.y > box.bottom)    // below the clip box
+            else if (p.y > box.bottom)    // below the clip box
                 res |= static_cast<uint8_t>(CHCode::Top);
 
             return res;
@@ -555,15 +555,15 @@ namespace OsmAnd
             ZoomLevel rangeStart;
             for(const auto zoomLevel : sortedZoomLevels)
             {
-                if(previousCaptured && static_cast<int>(zoomLevel) == static_cast<int>(previousZoomLevel)+1)
+                if (previousCaptured && static_cast<int>(zoomLevel) == static_cast<int>(previousZoomLevel)+1)
                 {
-                    if(!range)
+                    if (!range)
                         rangeStart = previousZoomLevel;
                     range = true;
                     previousZoomLevel = zoomLevel;
                     previousCaptured = true;
                 }
-                else if(range)
+                else if (range)
                 {
                     range = false;
                     previousZoomLevel = zoomLevel;
@@ -581,10 +581,10 @@ namespace OsmAnd
             }
 
             // Process last range
-            if(range)
+            if (range)
                 result += QString::fromLatin1("%1-%2, ").arg(rangeStart).arg(sortedZoomLevels.last());
 
-            if(result.length() > 2)
+            if (result.length() > 2)
                 result.truncate(result.length() - 2);
 
             return result;

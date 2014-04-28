@@ -123,14 +123,14 @@ QByteArray OsmAnd::WebClient_P::downloadData(
     _threadPool.start(&request);
     request.waitUntilFinished();
 
-    if(request._lastNetworkReply == nullptr || request._lastNetworkReply->error() != QNetworkReply::NoError)
+    if (request._lastNetworkReply == nullptr || request._lastNetworkReply->error() != QNetworkReply::NoError)
     {
-        if(requestResult != nullptr)
+        if (requestResult != nullptr)
             requestResult->reset(request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
         return QByteArray();
     }
 
-    if(requestResult != nullptr)
+    if (requestResult != nullptr)
         requestResult->reset(request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
     return data;
 }
@@ -168,13 +168,13 @@ QString OsmAnd::WebClient_P::downloadString(
     request.waitUntilFinished();
 
     QString charset = QString::null;
-    if(request._lastNetworkReply->hasRawHeader("Content-Type"))
+    if (request._lastNetworkReply->hasRawHeader("Content-Type"))
     {
         const auto contentTypeParameters = QString(request._lastNetworkReply->rawHeader("Content-Type")).split(';', QString::SkipEmptyParts);
         for(const auto& contentTypeParam : constOf(contentTypeParameters))
         {
             const auto trimmed = contentTypeParam.trimmed();
-            if(trimmed.startsWith(QLatin1String("charset=")))
+            if (trimmed.startsWith(QLatin1String("charset=")))
             {
                 charset = trimmed.mid(8).toLower();
                 break;
@@ -182,16 +182,16 @@ QString OsmAnd::WebClient_P::downloadString(
         }
     }
 
-    if(request._lastNetworkReply == nullptr || request._lastNetworkReply->error() != QNetworkReply::NoError)
+    if (request._lastNetworkReply == nullptr || request._lastNetworkReply->error() != QNetworkReply::NoError)
     {
-        if(requestResult != nullptr)
+        if (requestResult != nullptr)
             requestResult->reset(request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
         return QString::null;
     }
 
-    if(requestResult != nullptr)
+    if (requestResult != nullptr)
         requestResult->reset(request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
-    if(!charset.isNull() && charset.contains(QLatin1String("utf-8")))
+    if (!charset.isNull() && charset.contains(QLatin1String("utf-8")))
         return QString::fromUtf8(data);
     return QString::fromLocal8Bit(data);
 }
@@ -209,7 +209,7 @@ bool OsmAnd::WebClient_P::downloadFile(
 
     // Open file for writing, replacing
     bool ok = file.open(QIODevice::WriteOnly | QIODevice::Truncate);
-    if(!ok)
+    if (!ok)
         return false;
 
     enum {
@@ -226,7 +226,7 @@ bool OsmAnd::WebClient_P::downloadFile(
             const auto bytesRead = networkReply.read(
                 reinterpret_cast<char*>(intermediateBuffer),
                 qMin(static_cast<qint64>(IntermediateBufferSize), networkReply.bytesAvailable()));
-            if(bytesRead <= 0)
+            if (bytesRead <= 0)
                 break;
 
             // Write that chunk into destination completely
@@ -236,7 +236,7 @@ bool OsmAnd::WebClient_P::downloadFile(
                 const auto writtenChunkSize = file.write(
                     reinterpret_cast<char*>(intermediateBuffer + bytesWritten),
                     bytesRead - bytesWritten);
-                if(writtenChunkSize <= 0)
+                if (writtenChunkSize <= 0)
                     break;
                 bytesWritten += writtenChunkSize;
             } while(bytesWritten != bytesRead);
@@ -267,12 +267,12 @@ bool OsmAnd::WebClient_P::downloadFile(
 
     delete[] intermediateBuffer;
 
-    if(request._lastNetworkReply == nullptr || request._lastNetworkReply->error() != QNetworkReply::NoError)
+    if (request._lastNetworkReply == nullptr || request._lastNetworkReply->error() != QNetworkReply::NoError)
     {
         file.close();
         file.remove();
 
-        if(requestResult != nullptr)
+        if (requestResult != nullptr)
             requestResult->reset(request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
         return false;
     }
@@ -280,7 +280,7 @@ bool OsmAnd::WebClient_P::downloadFile(
     file.flush();
     file.close();
 
-    if(requestResult != nullptr)
+    if (requestResult != nullptr)
         requestResult->reset(request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
     return true;
 }
@@ -330,7 +330,7 @@ void OsmAnd::WebClient_P::Request::run()
 
     // Obtain network reply
     auto networkReply = networkAccessManager.get(networkRequest);
-    if(followRedirects)
+    if (followRedirects)
     {
         for(;;)
         {
@@ -339,11 +339,11 @@ void OsmAnd::WebClient_P::Request::run()
             waitable.waitForMetaDataOf(networkReply, false);
 
             // If any error have occurred, do nothing
-            if(networkReply->error() != QNetworkReply::NoError)
+            if (networkReply->error() != QNetworkReply::NoError)
                 break;
 
             const auto redirectionTarget = networkReply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
-            if(!redirectionTarget.isEmpty())
+            if (!redirectionTarget.isEmpty())
             {
                 // Delete current reply
                 waitable.reset(networkReply);
@@ -362,13 +362,13 @@ void OsmAnd::WebClient_P::Request::run()
     // Check if "Range" header is supported for requesting partial content
     bool rangeHeaderSupported = false;
     uint64_t contentSize = 0;
-    if(networkReply->hasRawHeader("Accept-Ranges") &&
+    if (networkReply->hasRawHeader("Accept-Ranges") &&
         QString(networkReply->rawHeader("Accept-Ranges")).contains(QLatin1String("bytes")) &&
         networkReply->hasRawHeader("Content-Length"))
     {
         contentSize = QString(networkReply->rawHeader("Content-Length")).toULongLong(&rangeHeaderSupported);
     }
-    if(!rangeHeaderSupported)
+    if (!rangeHeaderSupported)
     {
         auto rangeNetworkRequest = networkRequest;
         rangeNetworkRequest.setRawHeader("Range", "bytes=0-");
@@ -380,14 +380,14 @@ void OsmAnd::WebClient_P::Request::run()
         waitable.waitForMetaDataOf(rangeNetworkReply, true);
 
         // Check response
-        if(rangeNetworkReply->error() == QNetworkReply::NoError)
+        if (rangeNetworkReply->error() == QNetworkReply::NoError)
         {
             // Try to find "Content-Range" header
-            if(networkReply->hasRawHeader("Content-Range"))
+            if (networkReply->hasRawHeader("Content-Range"))
             {
                 const QString contentRangeHeader(networkReply->rawHeader("Content-Range"));
                 QRegExp contentRangeHeaderParser(QLatin1String("bytes (\\d+)-(\\d+)\\/.*"));
-                if(contentRangeHeaderParser.exactMatch(contentRangeHeader))
+                if (contentRangeHeaderParser.exactMatch(contentRangeHeader))
                     contentSize = contentRangeHeaderParser.cap(2).toULongLong(&rangeHeaderSupported);
             }
         }
@@ -411,17 +411,17 @@ void OsmAnd::WebClient_P::Request::run()
         QObject::disconnect(uploadProgressConnection);
 
         // If there was no error, just quit retry loop
-        if(networkReply->error() == QNetworkReply::NoError)
+        if (networkReply->error() == QNetworkReply::NoError)
             break;
 
         // If "Range" header is not supported, it's impossible to resume download
-        if(_totalBytesConsumed > 0 && !rangeHeaderSupported)
+        if (_totalBytesConsumed > 0 && !rangeHeaderSupported)
             break;
 
         // Otherwise, retry download
         _lastNetworkReply = nullptr;
         networkReply->deleteLater();
-        if(_totalBytesConsumed > 0)
+        if (_totalBytesConsumed > 0)
         {
             assert(_totalBytesConsumed < contentSize);
             const auto rangeHeaderValue = QString(QLatin1String("bytes=%1-%2")).arg(_totalBytesConsumed).arg(contentSize - 1);
@@ -452,13 +452,13 @@ void OsmAnd::WebClient_P::Request::onReadyRead()
 
 void OsmAnd::WebClient_P::Request::onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 {
-    if(downloadProgressCallback)
+    if (downloadProgressCallback)
         downloadProgressCallback(bytesReceived, bytesTotal);
 }
 
 void OsmAnd::WebClient_P::Request::onUploadProgress(qint64 bytesSent, qint64 bytesTotal)
 {
-    if(uploadProgressCallback)
+    if (uploadProgressCallback)
         uploadProgressCallback(bytesSent, bytesTotal);
 }
 

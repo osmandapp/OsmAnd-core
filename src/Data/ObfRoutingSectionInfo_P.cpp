@@ -18,7 +18,7 @@ bool OsmAnd::ObfRoutingSectionInfo_P::EncodingRule::isRoundabout() const
 
 OsmAnd::Model::RoadDirection OsmAnd::ObfRoutingSectionInfo_P::EncodingRule::getDirection() const
 {
-    if(_type == OneWay)
+    if (_type == OneWay)
         return static_cast<Model::RoadDirection>(_parsedValue.asSignedInt);
 
     return Model::RoadDirection::TwoWay;

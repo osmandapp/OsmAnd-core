@@ -14,7 +14,7 @@ OsmAnd::RoutingRuleExpression::RoutingRuleExpression( RoutingRuleset* ruleset, c
     , parameters(_parameters)
     , type(_type)
 {
-    if(value.startsWith(":"))
+    if (value.startsWith(":"))
         _variableRef = value.mid(1);
     else if (value.startsWith("$"))
         _tagRef = value.mid(1);
@@ -31,9 +31,9 @@ OsmAnd::RoutingRuleExpression::~RoutingRuleExpression()
 
 void OsmAnd::RoutingRuleExpression::registerAndTagValue( const QString& tag, const QString& value, bool negation )
 {
-    if(value.isEmpty())
+    if (value.isEmpty())
     {
-        if(negation)
+        if (negation)
             _onlyNotTags.insert(tag);
         else
             _onlyTags.insert(tag);
@@ -42,12 +42,12 @@ void OsmAnd::RoutingRuleExpression::registerAndTagValue( const QString& tag, con
     {
         auto valueType = ruleset->owner->registerTagValueAttribute(tag, value);
 
-        if(_filterNotTypes.size() <= valueType)
+        if (_filterNotTypes.size() <= valueType)
             _filterNotTypes.resize(valueType + 1);
-        if(_filterTypes.size() <= valueType)
+        if (_filterTypes.size() <= valueType)
             _filterTypes.resize(valueType + 1);
 
-        if(negation)
+        if (negation)
             _filterNotTypes.setBit(valueType);
         else
             _filterTypes.setBit(valueType);
@@ -81,17 +81,17 @@ void OsmAnd::RoutingRuleExpression::registerAndParamCondition( const QString& pa
 
 bool OsmAnd::RoutingRuleExpression::evaluate( const QBitArray& types, RoutingRulesetContext* context, ResultType resultType, void* result ) const
 {
-    if(!validate(types, context))
+    if (!validate(types, context))
         return false;
 
-    if(!evaluateExpressions(types, context))
+    if (!evaluateExpressions(types, context))
         return false;
 
     float value;
     bool ok = false;
-    if(!_tagRef.isEmpty())
+    if (!_tagRef.isEmpty())
         ok = resolveTagReferenceValue(context, types, _tagRef, type, value);
-    else if(!_variableRef.isEmpty())
+    else if (!_variableRef.isEmpty())
         ok = resolveVariableReferenceValue(context, _variableRef, type, value);
     else
     {
@@ -99,11 +99,11 @@ bool OsmAnd::RoutingRuleExpression::evaluate( const QBitArray& types, RoutingRul
         ok = true;
     }
     
-    if(ok)
+    if (ok)
     {
-        if(resultType == Float)
+        if (resultType == Float)
             *reinterpret_cast<float*>(result) = value;
-        else if(resultType == Integer)
+        else if (resultType == Integer)
             *reinterpret_cast<int*>(result) = (int)value;
         else
             ok = false;
@@ -113,16 +113,16 @@ bool OsmAnd::RoutingRuleExpression::evaluate( const QBitArray& types, RoutingRul
 
 bool OsmAnd::RoutingRuleExpression::validate( const QBitArray& types, RoutingRulesetContext* context ) const
 {
-    if(!validateAllTypesShouldBePresent(types))
+    if (!validateAllTypesShouldBePresent(types))
         return false;
     
-    if(!validateAllTypesShouldNotBePresent(types))
+    if (!validateAllTypesShouldNotBePresent(types))
         return false;
     
-    if(!validateFreeTags(types))
+    if (!validateFreeTags(types))
         return false;
     
-    if(!validateNotFreeTags(types))
+    if (!validateNotFreeTags(types))
         return false;
     
     return true;
@@ -136,7 +136,7 @@ bool OsmAnd::RoutingRuleExpression::validateAllTypesShouldBePresent( const QBitA
 
 bool OsmAnd::RoutingRuleExpression::validateAllTypesShouldNotBePresent( const QBitArray& types ) const
 {
-    if(_filterNotTypes.isEmpty())
+    if (_filterNotTypes.isEmpty())
         return true;
 
     const auto& intermediate = types & _filterNotTypes;
@@ -148,9 +148,9 @@ bool OsmAnd::RoutingRuleExpression::validateFreeTags( const QBitArray& types ) c
     for(const auto& onlyTag : constOf(_onlyTags))
     {
         auto itBitset = ruleset->owner->_tagRuleMask.constFind(onlyTag);
-        if(itBitset == ruleset->owner->_tagRuleMask.cend())
+        if (itBitset == ruleset->owner->_tagRuleMask.cend())
             return false;
-        if( (*itBitset & types).count(true) == 0 )
+        if ( (*itBitset & types).count(true) == 0 )
             return false;
     }
     
@@ -162,9 +162,9 @@ bool OsmAnd::RoutingRuleExpression::validateNotFreeTags( const QBitArray& types 
     for(const auto& onlyNotTag : constOf(_onlyNotTags))
     {
         auto itBitset = ruleset->owner->_tagRuleMask.constFind(onlyNotTag);
-        if(itBitset == ruleset->owner->_tagRuleMask.cend())
+        if (itBitset == ruleset->owner->_tagRuleMask.cend())
             return false;
-        if( (*itBitset & types).count(true) > 0 )
+        if ( (*itBitset & types).count(true) > 0 )
             return false;
     }
 
@@ -175,7 +175,7 @@ bool OsmAnd::RoutingRuleExpression::evaluateExpressions( const QBitArray& types,
 {
     for(const auto& operator_ : constOf(_operators))
     {
-        if(!operator_->evaluate(types, context))
+        if (!operator_->evaluate(types, context))
             return false;
     }
 
@@ -186,7 +186,7 @@ bool OsmAnd::RoutingRuleExpression::resolveVariableReferenceValue( RoutingRulese
 {
     bool ok = false;
     auto itVariable = context->contextValues.constFind(variableRef);
-    if(itVariable != context->contextValues.cend())
+    if (itVariable != context->contextValues.cend())
         ok = RoutingConfiguration::parseTypedValue(itVariable.value(), type, value);
     return ok;
 }
@@ -195,15 +195,15 @@ bool OsmAnd::RoutingRuleExpression::resolveTagReferenceValue( RoutingRulesetCont
 {
     bool ok = false;
     auto itMask = context->ruleset->owner->_tagRuleMask.constFind(tagRef);
-    if(itMask != context->ruleset->owner->_tagRuleMask.cend())
+    if (itMask != context->ruleset->owner->_tagRuleMask.cend())
     {
         const auto& mask = *itMask;
         auto foundBits = (mask & types);
-        if(foundBits.count(true) > 0)
+        if (foundBits.count(true) > 0)
         {
             for(auto bitIdx = 0, count = foundBits.size(); bitIdx < count; bitIdx++)
             {
-                if(foundBits.testBit(bitIdx))
+                if (foundBits.testBit(bitIdx))
                 {
                     ok = context->ruleset->owner->parseTypedValueFromTag(bitIdx, type, value);
                     break;
