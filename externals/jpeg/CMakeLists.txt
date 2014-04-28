@@ -55,8 +55,8 @@ if (CMAKE_TARGET_OS STREQUAL "windows")
 		set(target_specific_private_definitions ${target_specific_private_definitions}
 			-D_CRT_SECURE_NO_WARNINGS
 		)
-	endif()
-endif()
+	endif ()
+endif ()
 
 target_compile_definitions(jpeg_static
 	PRIVATE

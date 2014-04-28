@@ -5,7 +5,7 @@ set(target_specific_sources "")
 #TODO: filter_neon.S needs to be patched to support neon
 if (CMAKE_TARGET_OS STREQUAL "ios")
 	add_definitions(-DPNG_ARM_NEON_OPT=0)
-endif()
+endif ()
 if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios"))
 	set(target_specific_sources ${target_specific_sources}
 		"upstream.patched/arm/arm_init.c"
@@ -16,8 +16,8 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR (CMAKE_TARGET_CPU_ARCH_FAMILY
 			"upstream.patched/arm/filter_neon.S"
 			PROPERTIES
 				COMPILE_FLAGS "-no-integrated-as")
-	endif()
-endif()
+	endif ()
+endif ()
 
 set(target_specific_private_definitions "")
 if (CMAKE_TARGET_OS STREQUAL "windows")
@@ -25,8 +25,8 @@ if (CMAKE_TARGET_OS STREQUAL "windows")
 		set(target_specific_private_definitions ${target_specific_private_definitions}
 			-D_CRT_SECURE_NO_WARNINGS
 		)
-	endif()
-endif()
+	endif ()
+endif ()
 
 add_library(png_static STATIC
 	"upstream.patched/png.c"
@@ -73,4 +73,4 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "io
 	set_target_properties(png_static
 		PROPERTIES
 			XCODE_ATTRIBUTE_EXCLUDED_SOURCE_FILE_NAMES[sdk=iphonesimulator*][arch=*] "${ios_iphonesimulator_exclude}")
-endif()
+endif ()

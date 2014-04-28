@@ -28,7 +28,7 @@ if (CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 		LINK_PUBLIC
 			OsmAndCore_shared
 	)
-endif()
+endif ()
 
 if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 	add_library(OsmAndCoreUtils_static STATIC ${merged_sources})
@@ -45,4 +45,4 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 		LINK_PUBLIC
 			OsmAndCore_static
 	)
-endif()
+endif ()

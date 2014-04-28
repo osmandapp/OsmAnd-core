@@ -33,7 +33,7 @@ else()
 			${core_swig_subfiles}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
 		COMMENT "Generating sources...")
-endif()
+endif ()
 
 add_library(OsmAndCoreJNI SHARED
 	${OsmAndCoreJNI_generated_cpp}
@@ -72,7 +72,7 @@ else()
 			OsmAndCoreUtils_shared
 			${target_specific_public_libraries}
 	)
-endif()
+endif ()
 
 file(GLOB_RECURSE OsmAndCoreJNI_generated_java "${CMAKE_CURRENT_LIST_DIR}/gen/java/*")
 include(UseJava)
