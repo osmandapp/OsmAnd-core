@@ -214,7 +214,7 @@
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_man_made_lighthouse.png:map/map_icons/man_made_lighthouse.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_man_made_mineshaft.png:map/map_icons/man_made_mineshaft.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_man_made_water_tower.png:map/map_icons/man_made_water_tower.png
-/resources/rendering_styles/style-icons/drawable-mdpi/mm_tower_type_communication.png:map/map_cons/tower_type_communication.png
+/resources/rendering_styles/style-icons/drawable-mdpi/mm_tower_type_communication.png:map/map_icons/tower_type_communication.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_man_made_windmill.png:map/map_icons/man_made_windmill.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_military.png:map/map_icons/military.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_military_danger_area.png:map/map_icons/military_danger_area.png
