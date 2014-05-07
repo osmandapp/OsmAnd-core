@@ -16,7 +16,7 @@ fi
 
 # Download
 echo "JPEG Downloading new upstream..."
-curl -L http://www.ijg.org/files/jpegsrc.v8d.tar.gz > $SRCLOC/upstream.tar.gz || { echo "Failed to download!" 1>&2; exit; }
+curl -L http://download.osmand.net/libs/jpegsrc.v8d.tar.gz > $SRCLOC/upstream.tar.gz || { echo "Failed to download!" 1>&2; exit; }
 
 # Extract
 echo "JPEG Extracting upstream..."
