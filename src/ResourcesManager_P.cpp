@@ -719,11 +719,11 @@ bool OsmAnd::ResourcesManager_P::updateRepository() const
     return true;
 }
 
-QList< std::shared_ptr<const OsmAnd::ResourcesManager_P::ResourceInRepository> > OsmAnd::ResourcesManager_P::getResourcesInRepository() const
+QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager_P::ResourceInRepository> > OsmAnd::ResourcesManager_P::getResourcesInRepository() const
 {
     QReadLocker scopedLocker(&_resourcesInRepositoryLock);
 
-    return _resourcesInRepository.values();
+    return detachedOf(_resourcesInRepository);
 }
 
 std::shared_ptr<const OsmAnd::ResourcesManager_P::ResourceInRepository> OsmAnd::ResourcesManager_P::getResourceInRepository(const QString& id) const

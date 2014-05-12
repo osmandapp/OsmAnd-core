@@ -87,7 +87,7 @@ bool OsmAnd::ResourcesManager::updateRepository() const
     return _p->updateRepository();
 }
 
-QList< std::shared_ptr<const OsmAnd::ResourcesManager::ResourceInRepository> > OsmAnd::ResourcesManager::getResourcesInRepository() const
+QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager::ResourceInRepository> > OsmAnd::ResourcesManager::getResourcesInRepository() const
 {
     return _p->getResourcesInRepository();
 }

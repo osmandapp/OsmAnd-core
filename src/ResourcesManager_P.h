@@ -187,7 +187,7 @@ namespace OsmAnd
         // Resources in repository:
         bool isRepositoryAvailable() const;
         bool updateRepository() const;
-        QList< std::shared_ptr<const ResourceInRepository> > getResourcesInRepository() const;
+        QHash< QString, std::shared_ptr<const ResourceInRepository> > getResourcesInRepository() const;
         std::shared_ptr<const ResourceInRepository> getResourceInRepository(const QString& id) const;
         bool isResourceInRepository(const QString& id) const;
 
