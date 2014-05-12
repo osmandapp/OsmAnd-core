@@ -200,7 +200,7 @@ namespace OsmAnd
 
         // Updates:
         bool isInstalledResourceOutdated(const QString& id) const;
-        QList<QString> getOutdatedInstalledResources() const;
+        QHash< QString, std::shared_ptr<const LocalResource> > getOutdatedInstalledResources() const;
         bool updateFromFile(const QString& filePath);
         bool updateFromFile(const QString& id, const QString& filePath);
         bool updateFromRepository(const QString& id, const WebClient::RequestProgressCallbackSignature downloadProgressCallback);

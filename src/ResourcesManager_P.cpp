@@ -1015,11 +1015,11 @@ bool OsmAnd::ResourcesManager_P::isInstalledResourceOutdated(const QString& id) 
     return outdated;
 }
 
-QList<QString> OsmAnd::ResourcesManager_P::getOutdatedInstalledResources() const
+QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager::LocalResource> > OsmAnd::ResourcesManager_P::getOutdatedInstalledResources() const
 {
     QReadLocker scopedLocker(&_localResourcesLock);
 
-    QList<QString> resourcesWithUpdates;
+    QHash< QString, std::shared_ptr<const LocalResource> > resourcesWithUpdates;
     for(const auto& localResource : constOf(_localResources))
     {
         if (localResource->origin != ResourceOrigin::Installed)
@@ -1038,7 +1038,7 @@ QList<QString> OsmAnd::ResourcesManager_P::getOutdatedInstalledResources() const
                 resourceInRepository->timestamp);
         }
         if (outdated)
-            resourcesWithUpdates.push_back(localResource->id);
+            resourcesWithUpdates.insert(localResource->id, localResource);
     }
 
     return resourcesWithUpdates;

@@ -137,7 +137,7 @@ bool OsmAnd::ResourcesManager::isInstalledResourceOutdated(const QString& id) co
     return _p->isInstalledResourceOutdated(id);
 }
 
-QList<QString> OsmAnd::ResourcesManager::getOutdatedInstalledResources() const
+QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager::LocalResource> > OsmAnd::ResourcesManager::getOutdatedInstalledResources() const
 {
     return _p->getOutdatedInstalledResources();
 }
