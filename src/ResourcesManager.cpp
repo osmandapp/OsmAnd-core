@@ -2,6 +2,7 @@
 #include "ResourcesManager_P.h"
 
 #include <QStandardPaths>
+#include <QDir>
 
 #include "ObfInfo.h"
 
@@ -24,6 +25,10 @@ OsmAnd::ResourcesManager::ResourcesManager(
     , mapStylesPresetsCollection(_p->mapStylesPresetsCollection)
     , obfsCollection(_p->obfsCollection)
 {
+    QDir(localStoragePath).mkpath(QLatin1String("."));
+    QDir(userStoragePath).mkpath(QLatin1String("."));
+    QDir(localTemporaryPath).mkpath(QLatin1String("."));
+
     _p->initialize();
     _p->inflateBuiltInResources();
     _p->scanManagedStoragePath();
