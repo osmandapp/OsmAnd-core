@@ -36,7 +36,7 @@ fi
 # Download upstream if needed
 if [ ! -f "$SRCLOC/upstream.pack" ]; then
 	echo "Downloading '$NAME' upstream..."
-	curl -L http://sourceforge.net/projects/ogl-math/files/glm-0.9.5.2/glm-0.9.5.2.zip/download > "$SRCLOC/upstream.pack" || { echo "Failure" 1>&2; exit; }
+	curl -L http://sourceforge.net/projects/ogl-math/files/glm-0.9.5.3/glm-0.9.5.3.zip/download > "$SRCLOC/upstream.pack" || { echo "Failure" 1>&2; exit; }
 fi
 
 # Extract upstream if needed
