@@ -8,9 +8,6 @@ fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 NAME=$(basename $SRCLOC)
 
-# Fail on any error
-set -e
-
 # Check if already configured
 if [ -d "$SRCLOC/upstream.patched" ]; then
 	echo "Skipping external '$NAME': already configured"
@@ -36,6 +33,6 @@ if [ -d "$SRCLOC/patches" ]; then
 	do
 		read  -rd '' PATCH <<< "$PATCH"
 		echo "Applying "`basename $PATCH`
-		patch --strip=1 --directory="$SRCLOC/upstream.patched/" --input="$PATCH"
+		patch --strip=1 --directory="$SRCLOC/upstream.patched/" --input="$PATCH" || { echo "Failed to apply $PATCH" 1>&2; exit; }
 	done
 fi
