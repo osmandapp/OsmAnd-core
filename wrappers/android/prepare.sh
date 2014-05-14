@@ -9,6 +9,9 @@ fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ROOT="$SRCLOC/../../.."
 
+# Fail on any error
+set -e
+
 # Prepare core dependencies
 echo "Configuring dependencies..."
 "$ROOT/core/externals/configure.sh" expat freetype gdal giflib glm glsl-optimizer jpeg libpng protobuf qtbase-android skia icu4c boost-android

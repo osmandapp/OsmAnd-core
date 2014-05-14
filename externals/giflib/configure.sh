@@ -8,6 +8,9 @@ fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 NAME=$(basename $SRCLOC)
 
+# Fail on any error
+set -e
+
 # Check if already configured
 if [ -d "$SRCLOC/upstream.patched" ]; then
 	echo "Skipping external '$NAME': already configured"

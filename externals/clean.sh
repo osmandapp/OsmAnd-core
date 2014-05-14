@@ -12,6 +12,9 @@ if [ -z "$OSMAND_EXTERNALS_SET" ]; then
 	OSMAND_EXTERNALS_SET=*
 fi
 
+# Fail on any error
+set -e
+
 for external in ${OSMAND_EXTERNALS_SET[@]/#/$SRCLOC/} ; do
 	if ls -1 $external/upstream.* >/dev/null 2>&1
 	then

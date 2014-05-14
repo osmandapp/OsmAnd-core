@@ -10,6 +10,9 @@ fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 REAL_SRCLOC=`readlink -f $SRCLOC`
 
+# Fail on any error
+set -e
+
 if [ -d "$SRCLOC/gen" ]; then
 	rm -rf "$SRCLOC/gen"
 fi

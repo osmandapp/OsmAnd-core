@@ -16,6 +16,9 @@ if [ -z "$OSMAND_ARCHITECTURES_SET" ]; then
 	OSMAND_ARCHITECTURES_SET=(x64 x86 mips arm armv5 armv7 armv7-neon)
 fi
 
+# Fail on any error
+set -e
+
 for external in ${OSMAND_EXTERNALS_SET[@]/#/$SRCLOC/} ; do
 	if [ -f "$external/build.sh" ] && [ -d "$external/upstream.patched" ]; then
 		echo "Building '"$(basename "$external")"'..."

@@ -9,6 +9,9 @@ SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 NAME=$(basename $SRCLOC)
 OSMAND_ARCHITECTURES_SET=($*)
 
+# Fail on any error
+set -e
+
 if [[ "$(uname -a)" =~ Cygwin ]]; then
 	echo "Building under Cygwin is not supported, use build.bat"
 	exit 1

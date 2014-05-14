@@ -5,6 +5,9 @@ if [ -z "$BASH_VERSION" ]; then
 	exit $?
 fi
 
+# Fail on any error
+set -e
+
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 NAME=$(basename $SRCLOC)
 OSMAND_ARCHITECTURES_SET=($*)

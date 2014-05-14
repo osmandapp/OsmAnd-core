@@ -8,6 +8,9 @@ fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 NAME=$(basename $SRCLOC)
 
+# Fail on any error
+set -e
+
 # Check if needs reconfiguring
 if [ -f "$SRCLOC/stamp" ]; then
 	last_stamp=""

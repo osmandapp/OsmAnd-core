@@ -9,6 +9,9 @@ SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 NAME=$(basename $SRCLOC)
 OSMAND_ARCHITECTURES_SET=($*)
 
+# Fail on any error
+set -e
+
 if [[ -z "$ANDROID_SDK" ]]; then
 	echo "ANDROID_SDK is not set"
 	exit 1

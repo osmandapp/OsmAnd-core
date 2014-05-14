@@ -8,6 +8,9 @@ fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 NAME=$(basename $SRCLOC)
 
+# Fail on any error
+set -e
+
 # Check if tools are present
 if [[ "$(uname -a)" == *Cygwin* ]]; then
 	if [ ! -f "$SRCLOC/tools.windows.pack" ]; then
