@@ -5,9 +5,6 @@ if [ -z "$BASH_VERSION" ]; then
 	exit $?
 fi
 
-# Fail on any error
-set -e
-
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 OSMAND_EXTERNALS_SET=($*)
@@ -32,6 +29,10 @@ for external in ${OSMAND_EXTERNALS_SET[@]/#/$SRCLOC/} ; do
 	if [ -d "$external" ]; then
 		if [ -e "$external/configure.sh" ]; then
 			"$external/configure.sh"
+			if [ $? -ne 0 ]; then
+				echo "Failed to configure '$external', aborting..."
+				exit $?
+			fi
 		fi
 	fi
 done
