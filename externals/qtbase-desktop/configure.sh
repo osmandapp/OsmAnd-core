@@ -9,7 +9,7 @@ fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$SRCLOC/../functions.sh"
 
-configureExternalFromGit "$SRCLOC" "https://github.com/osmandapp/OsmAnd-external-qtbase.git" "desktop"
+configureExternalFromGit "$SRCLOC" "https://github.com/osmandapp/OsmAnd-external-qtbase.git" "qt-v5.3.0-rc1"
 cp -rpf "$SRCLOC/upstream.original/mkspecs/macx-clang" "$SRCLOC/upstream.original/mkspecs/macx-clang-libc++-32"
 cp -rpf "$SRCLOC/upstream.original/mkspecs/macx-clang" "$SRCLOC/upstream.original/mkspecs/macx-clang-libc++-64"
 patchExternal "$SRCLOC" 
