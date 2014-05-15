@@ -117,8 +117,8 @@ makeFlavor()
 		export ANDROID_TARGET_ARCH=$arch
 		export ANDROID_NDK_PLATFORM=android-$platform
 		(cd "$path" && ./configure $configuration)
-		if [ $? -ne 0 ]; then
-			local retcode=$?
+		retcode=$?
+		if [ $retcode -ne 0 ]; then
 			echo "Failed to configure 'qtbase-android' for '$name', aborting..."
 			rm -rf "$path"
 			exit $retcode
@@ -127,8 +127,8 @@ makeFlavor()
 	
 	# Build
 	(cd "$path" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
-	if [ $? -ne 0 ]; then
-		local retcode=$?
+	retcode=$?
+	if [ $retcode -ne 0 ]; then
 		echo "Failed to build 'qtbase-android' for '$name', aborting..."
 		rm -rf "$path"
 		exit $retcode

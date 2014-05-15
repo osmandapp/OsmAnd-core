@@ -11,8 +11,8 @@ cleanExternal()
 	then
 		echo "Cleaning '$externalName'..."
 		rm -rf "$externalPath"/upstream.*
-		if [ $? -ne 0 ]; then
-			local retcode=$?
+		retcode=$?
+		if [ $retcode -ne 0 ]; then
 			echo "Failed to remove '$externalName' upstream, aborting..."
 			exit $retcode
 		fi
@@ -58,8 +58,8 @@ configureExternalFromGit()
 	if [ ! -d "$externalPath/upstream.original" ]; then
 		echo "Downloading '$externalName' upstream from $gitUrl [branch $gitBranch] ..."
 		git clone $gitUrl "$externalPath/upstream.original" -b $gitBranch --depth=1
-		if [ $? -ne 0 ]; then
-			local retcode=$?
+		retcode=$?
+		if [ $retcode -ne 0 ]; then
 			echo "Failed to download '$externalName' upstream, aborting..."
 			rm -rf "$externalPath/upstream.original"
 			exit $retcode
@@ -108,8 +108,8 @@ configureExternalFromSvn()
 	if [ ! -d "$externalPath/upstream.original" ]; then
 		echo "Downloading '$externalName' upstream from $svnUrl ..."
 		svn checkout $svnUrl "$externalPath/upstream.original"
-		if [ $? -ne 0 ]; then
-			local retcode=$?
+		retcode=$?
+		if [ $retcode -ne 0 ]; then
 			echo "Failed to download '$externalName' upstream, aborting..."
 			rm -rf "$externalPath/upstream.original"
 			exit $retcode
@@ -158,8 +158,8 @@ configureExternalFromTarArchive()
 	if [ ! -f "$externalPath/upstream.pack" ]; then
 		echo "Downloading '$externalName' upstream from $tarUrl ..."
 		curl -L $tarUrl > "$externalPath/upstream.pack"
-		if [ $? -ne 0 ]; then
-			local retcode=$?
+		retcode=$?
+		if [ $retcode -ne 0 ]; then
 			echo "Failed to download '$externalName' upstream, aborting..."
 			rm -rf "$externalPath/upstream.pack"
 			exit $retcode
@@ -171,8 +171,8 @@ configureExternalFromTarArchive()
 		echo "Extracting '$externalName' upstream..."
 		mkdir -p "$externalPath/upstream.original"
 		tar -xf "$externalPath/upstream.pack" -C "$externalPath/upstream.original" --strip 1
-		if [ $? -ne 0 ]; then
-			local retcode=$?
+		retcode=$?
+		if [ $retcode -ne 0 ]; then
 			echo "Failed to extract '$externalName' upstream, aborting..."
 			rm -rf "$externalPath/upstream.pack" "$externalPath/upstream.original"
 			exit $retcode
@@ -218,8 +218,8 @@ configureExternalFromZipArchive()
 	if [ ! -f "$externalPath/upstream.pack" ]; then
 		echo "Downloading '$externalName' upstream from $tarUrl ..."
 		curl -L $tarUrl > "$externalPath/upstream.pack"
-		if [ $? -ne 0 ]; then
-			local retcode=$?
+		retcode=$?
+		if [ $retcode -ne 0 ]; then
 			echo "Failed to download '$externalName' upstream, aborting..."
 			rm -rf "$externalPath/upstream.pack"
 			exit $retcode
@@ -231,8 +231,8 @@ configureExternalFromZipArchive()
 		echo "Extracting '$externalName' upstream..."
 		mkdir -p "$externalPath/upstream.tmp"
 		unzip -q "$externalPath/upstream.pack" -d "$externalPath/upstream.tmp"
-		if [ $? -ne 0 ]; then
-			local retcode=$?
+		retcode=$?
+		if [ $retcode -ne 0 ]; then
 			echo "Failed to extract '$externalName' upstream, aborting..."
 			rm -rf "$externalPath/upstream.pack" "$externalPath/upstream.tmp" "$externalPath/upstream.original"
 			exit $retcode
@@ -260,8 +260,8 @@ patchExternal()
 		do
 			echo "Applying "`basename $patchFile`
 			patch --strip=1 --directory="$externalPath/upstream.patched/" --input="$patchFile"
-			if [ $? -ne 0 ]; then
-				local retcode=$?
+			retcode=$?
+			if [ $retcode -ne 0 ]; then
 				echo "Failed to apply '$patchFile' to upstream, aborting..."
 				rm -rf "$externalPath/upstream.patched"
 				exit $retcode

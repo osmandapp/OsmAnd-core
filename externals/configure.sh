@@ -33,8 +33,8 @@ fi
 for external in ${OSMAND_EXTERNALS_SET[@]/#/$SRCLOC/} ; do
 	if [ -f "$external/build.sh" ] && [ -e "$external/configure.sh" ]; then
 		"$external/configure.sh"
-		if [ $? -ne 0 ]; then
-			local retcode=$?
+		retcode=$?
+		if [ $retcode -ne 0 ]; then
 			echo "Failed to configure external in '$external', aborting..."
 			exit $retcode
 		fi

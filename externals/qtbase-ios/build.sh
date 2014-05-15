@@ -34,8 +34,8 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 		if [ ! -d "$path" ]; then
 			cp -rpf "$SRCLOC/upstream.patched" "$path"
 			(cd "$path" && ./configure -xplatform $platform $configuration)
-			if [ $? -ne 0 ]; then
-				local retcode=$?
+			retcode=$?
+			if [ $retcode -ne 0 ]; then
 				echo "Failed to configure 'qtbase-ios' for '$name', aborting..."
 				rm -rf "$path"
 				exit $retcode
@@ -44,8 +44,8 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 		
 		# Build
 		(cd "$path" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
-		if [ $? -ne 0 ]; then
-			local retcode=$?
+		retcode=$?
+		if [ $retcode -ne 0 ]; then
 			echo "Failed to build 'qtbase-ios' for '$name', aborting..."
 			rm -rf "$path"
 			exit $retcode
@@ -88,8 +88,8 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 				"$SRCLOC/upstream.patched.ios.device.armv7.static/lib/libQt5${libName}.a" \
 				"$SRCLOC/upstream.patched.ios.device.armv7s.static/lib/libQt5${libName}.a" \
 				-output "$SRCLOC/upstream.patched.ios/lib/libQt5${libName}.a"
-			if [ $? -ne 0 ]; then
-				local retcode=$?
+			retcode=$?
+			if [ $retcode -ne 0 ]; then
 				echo "Failed to lipo 'libQt5${libName}.a', aborting..."
 				rm -rf "$path"
 				exit $retcode

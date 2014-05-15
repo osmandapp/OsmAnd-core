@@ -13,15 +13,15 @@ ROOT="$SRCLOC/../../.."
 # Prepare core dependencies
 echo "Configuring dependencies..."
 "$ROOT/core/externals/configure.sh" expat freetype gdal giflib glm jpeg libpng protobuf qtbase-android skia icu4c libarchive boost-android
-if [ $? -ne 0 ]; then
-	local retcode=$?
+retcode=$?
+if [ $retcode -ne 0 ]; then
 	echo "Failed to configure dependencies, aborting..."
 	exit $retcode
 fi
 echo "Building dependencies..."
 "$ROOT/core/externals/build.sh" expat freetype gdal giflib glm jpeg libpng protobuf qtbase-android skia icu4c libarchive boost-android
-if [ $? -ne 0 ]; then
-	local retcode=$?
+retcode=$?
+if [ $retcode -ne 0 ]; then
 	echo "Failed to build dependencies, aborting..."
 	exit $retcode
 fi
