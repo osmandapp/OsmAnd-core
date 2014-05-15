@@ -17,9 +17,10 @@ if [ ! -f "$SRCLOC/upstream.data-pack" ]; then
 	echo "Downloading '$NAME' upstream data..."
 	curl -L http://download.osmand.net/prebuilt/icudt52l.zip > "$SRCLOC/upstream.data-pack"
 	if [ $? -ne 0 ]; then
+		local retcode=$?
 		echo "Failed to download data for '$externalName', aborting..."
 		rm -rf "$externalPath/upstream.data-pack"
-		exit $?
+		exit $retcode
 	fi
 fi
 
@@ -29,8 +30,9 @@ if [ ! -d "$SRCLOC/upstream.data" ]; then
 	mkdir -p "$SRCLOC/upstream.data"
 	unzip "$SRCLOC/upstream.data-pack" -d "$SRCLOC/upstream.data"
 	if [ $? -ne 0 ]; then
+		local retcode=$?
 		echo "Failed to download data for '$externalName', aborting..."
 		rm -rf "$externalPath/upstream.data-pack" "$externalPath/upstream.data"
-		exit $?
+		exit $retcode
 	fi
 fi

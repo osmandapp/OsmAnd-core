@@ -29,18 +29,20 @@ makeFlavor()
 		cp -rpf "$SRCLOC/upstream.patched" "$path"
 		(cd "$path" && ./configure -xplatform $platform $configuration)
 		if [ $? -ne 0 ]; then
+			local retcode=$?
 			echo "Failed to configure 'qtbase-desktop' for '$name', aborting..."
 			rm -rf "$path"
-			exit $?
+			exit $retcode
 		fi
 	fi
 	
 	# Build
 	(cd "$path" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 	if [ $? -ne 0 ]; then
+		local retcode=$?
 		echo "Failed to build 'qtbase-desktop' for '$name', aborting..."
 		rm -rf "$path"
-		exit $?
+		exit $retcode
 	fi
 }
 
