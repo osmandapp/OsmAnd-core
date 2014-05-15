@@ -31,7 +31,8 @@ if [ -f "$SRCLOC/stamp" ]; then
 fi
 
 for external in ${OSMAND_EXTERNALS_SET[@]/#/$SRCLOC/} ; do
-	if [ -f "$external/build.sh" ] && [ -e "$external/configure.sh" ]; then
+	echo "Looking for external in '$external'..."
+	if [ -d "$external" ] && [ -e "$external/configure.sh" ]; then
 		"$external/configure.sh"
 		retcode=$?
 		if [ $retcode -ne 0 ]; then
