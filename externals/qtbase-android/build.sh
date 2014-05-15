@@ -1,16 +1,14 @@
 #!/bin/bash
 
+echo "Checking for bash..."
 if [ -z "$BASH_VERSION" ]; then
+	echo "Invalid shell, re-running using bash..."
 	exec bash "$0" "$@"
 	exit $?
 fi
-
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-NAME=$(basename $SRCLOC)
-OSMAND_ARCHITECTURES_SET=($*)
 
-# Fail on any error
-set -e
+OSMAND_ARCHITECTURES_SET=($*)
 
 if [[ -z "$ANDROID_SDK" ]]; then
 	echo "ANDROID_SDK is not set"
@@ -103,60 +101,54 @@ else
 	exit 1
 fi
 
-if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv5 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-	if [ ! -d "$SRCLOC/upstream.patched.armeabi.static" ]; then
-		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi.static"
-		export ANDROID_TARGET_ARCH=armeabi
-		export ANDROID_NDK_PLATFORM=android-8
-		(cd "$SRCLOC/upstream.patched.armeabi.static" && \
-			./configure $QTBASE_CONFIGURATION \
-			-no-neon)
+# Function: makeFlavor(name, arch, platform, configuration)
+makeFlavor()
+{
+	local name=$1
+	local arch=$2
+	local platform=$3
+	local configuration=$4
+	
+	local path="$SRCLOC/upstream.patched.$name"
+	
+	# Configure
+	if [ ! -d "$path" ]; then
+		cp -rpf "$SRCLOC/upstream.patched" "$path"
+		export ANDROID_TARGET_ARCH=$arch
+		export ANDROID_NDK_PLATFORM=android-$platform
+		(cd "$path" && ./configure $configuration)
+		if [ $? -ne 0 ]; then
+			echo "Failed to configure 'qtbase-android' for '$name', aborting..."
+			rm -rf "$path"
+			exit $?
+		fi
 	fi
-	(cd "$SRCLOC/upstream.patched.armeabi.static" && $MAKE -j$OSMAND_BUILD_CPU_CORES_NUM)
+	
+	# Build
+	(cd "$path" && $MAKE -j$OSMAND_BUILD_CPU_CORES_NUM)
+	if [ $? -ne 0 ]; then
+		echo "Failed to build 'qtbase-android' for '$name', aborting..."
+		rm -rf "$path"
+		exit $?
+	fi
+}
+
+if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv5 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
+	makeFlavor "armeabi.static" "armeabi" "8" "$QTBASE_CONFIGURATION -no-neon"
 fi
 
 if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv7 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-	if [ ! -d "$SRCLOC/upstream.patched.armeabi-v7a.static" ]; then
-		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi-v7a.static"
-		export ANDROID_TARGET_ARCH=armeabi-v7a
-		export ANDROID_NDK_PLATFORM=android-8
-		(cd "$SRCLOC/upstream.patched.armeabi-v7a.static" && \
-			./configure $QTBASE_CONFIGURATION \
-			-no-neon)
-	fi
-	(cd "$SRCLOC/upstream.patched.armeabi-v7a.static" && $MAKE -j$OSMAND_BUILD_CPU_CORES_NUM)
+	makeFlavor "armeabi-v7a.static" "armeabi-v7a" "8" "$QTBASE_CONFIGURATION -no-neon"
 fi
 
 if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv7-neon ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-	if [ ! -d "$SRCLOC/upstream.patched.armeabi-v7a-neon.static" ]; then
-		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.armeabi-v7a-neon.static"
-		export ANDROID_TARGET_ARCH=armeabi-v7a
-		export ANDROID_NDK_PLATFORM=android-8
-		(cd "$SRCLOC/upstream.patched.armeabi-v7a-neon.static" && \
-			./configure $QTBASE_CONFIGURATION \
-			-qtlibinfix _neon)
-	fi
-	(cd "$SRCLOC/upstream.patched.armeabi-v7a-neon.static" && $MAKE -j$OSMAND_BUILD_CPU_CORES_NUM)
+	makeFlavor "armeabi-v7a-neon.static" "armeabi-v7a" "8" "$QTBASE_CONFIGURATION -qtlibinfix _neon"
 fi
 
 if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x86 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-	if [ ! -d "$SRCLOC/upstream.patched.x86.static" ]; then
-		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.x86.static"
-		export ANDROID_TARGET_ARCH=x86
-		export ANDROID_NDK_PLATFORM=android-9
-		(cd "$SRCLOC/upstream.patched.x86.static" && \
-			./configure $QTBASE_CONFIGURATION)
-	fi
-	(cd "$SRCLOC/upstream.patched.x86.static" && $MAKE -j$OSMAND_BUILD_CPU_CORES_NUM)
+	makeFlavor "x86.static" "x86" "9" "$QTBASE_CONFIGURATION"
 fi
 
 if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ mips ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-	if [ ! -d "$SRCLOC/upstream.patched.mips.static" ]; then
-		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.mips.static"
-		export ANDROID_TARGET_ARCH=mips
-		export ANDROID_NDK_PLATFORM=android-9
-		(cd "$SRCLOC/upstream.patched.mips.static" && \
-			./configure $QTBASE_CONFIGURATION)
-	fi
-	(cd "$SRCLOC/upstream.patched.mips.static" && $MAKE -j$OSMAND_BUILD_CPU_CORES_NUM)
+	makeFlavor "mips.static" "mips" "9" "$QTBASE_CONFIGURATION"
 fi

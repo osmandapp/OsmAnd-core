@@ -1,38 +1,37 @@
 #!/bin/bash
 
+echo "Checking for bash..."
 if [ -z "$BASH_VERSION" ]; then
+	echo "Invalid shell, re-running using bash..."
 	exec bash "$0" "$@"
 	exit $?
 fi
-
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source "$SRCLOC/functions.sh"
 
 OSMAND_EXTERNALS_SET=($*)
 if [ -z "$OSMAND_EXTERNALS_SET" ]; then
 	OSMAND_EXTERNALS_SET=*
 fi
 
-last_stamp=""
-if [ -f "$SRCLOC/.stamp" ]; then
-	last_stamp=`cat "$SRCLOC/.stamp"`
-fi
-current_stamp=`cat "$SRCLOC/stamp"`
-echo "Last stamp:    "$last_stamp
-echo "Current stamp: "$current_stamp
-if [ "$last_stamp" != "$current_stamp" ]; then
-	echo "Stamps differ, will clean externals..."
-	"$SRCLOC/clean.sh"
-	cp "$SRCLOC/stamp" "$SRCLOC/.stamp"
+# Check if everything needs reconfiguring
+if [ -f "$SRCLOC/stamp" ]; then
+	lastStamp=""
+	if [ -f "$SRCLOC/.stamp" ]; then
+		lastStamp=$(cat "$SRCLOC/.stamp")
+	fi
+	currentStamp=$(cat "$SRCLOC/stamp")
+	echo "Last global stamp:    "$lastStamp
+	echo "Current global stamp: "$currentStamp
+	if [ "$lastStamp" != "$currentStamp" ]; then
+		echo "Stamps differ, will clean external '$externalName'..."
+		"$SRCLOC/clean.sh"
+		cp "$SRCLOC/stamp" "$SRCLOC/.stamp"
+	fi
 fi
 
 for external in ${OSMAND_EXTERNALS_SET[@]/#/$SRCLOC/} ; do
-	if [ -d "$external" ]; then
-		if [ -e "$external/configure.sh" ]; then
-			"$external/configure.sh"
-			if [ $? -ne 0 ]; then
-				echo "Failed to configure '$external', aborting..."
-				exit $?
-			fi
-		fi
+	if [ -f "$external/build.sh" ] && [ -e "$external/configure.sh" ]; then
+		"$external/configure.sh"
 	fi
 done

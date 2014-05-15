@@ -1,7 +1,7 @@
 diff -rupN upstream.original/glm/detail/setup.hpp upstream.patched/glm/detail/setup.hpp
---- upstream.original/glm/detail/setup.hpp	2014-02-08 21:28:22.000000000 +0200
-+++ upstream.patched/glm/detail/setup.hpp	2014-03-20 14:56:12.000000000 +0200
-@@ -540,7 +540,7 @@
+--- upstream.original/glm/detail/setup.hpp	2014-04-01 01:01:00.000000000 +0300
++++ upstream.patched/glm/detail/setup.hpp	2014-05-14 20:51:02.403861400 +0300
+@@ -543,7 +543,7 @@
  #endif
  
  // Not standard

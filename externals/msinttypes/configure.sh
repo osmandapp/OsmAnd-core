@@ -1,38 +1,13 @@
 #!/bin/bash
 
+echo "Checking for bash..."
 if [ -z "$BASH_VERSION" ]; then
+	echo "Invalid shell, re-running using bash..."
 	exec bash "$0" "$@"
 	exit $?
 fi
-
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-NAME=$(basename $SRCLOC)
+source "$SRCLOC/../functions.sh"
 
-# Fail on any error
-set -e
-
-# Check if already configured
-if [ -d "$SRCLOC/upstream.patched" ]; then
-	echo "Skipping external '$NAME': already configured"
-	exit
-fi
-
-# Extract upstream if needed
-if [ ! -d "$SRCLOC/upstream.original" ]; then
-	echo "Downloading '$NAME' upstream..."
-	svn checkout http://msinttypes.googlecode.com/svn/trunk/ "$SRCLOC/upstream.original"
-	rm -rf "$SRCLOC/upstream.original/.svn"
-fi
-
-# Patch
-cp -rpf "$SRCLOC/upstream.original" "$SRCLOC/upstream.patched"
-if [ -d "$SRCLOC/patches" ]; then
-	echo "Patching '$NAME'..."
-	PATCHES=`ls -1 $SRCLOC/patches/*.patch | sort`
-	for PATCH in $PATCHES
-	do
-		read  -rd '' PATCH <<< "$PATCH"
-		echo "Applying "`basename $PATCH`
-		patch --strip=1 --directory="$SRCLOC/upstream.patched/" --input="$PATCH"
-	done
-fi
+configureExternalFromSvn "$SRCLOC" "http://msinttypes.googlecode.com/svn/trunk/"
+patchExternal "$SRCLOC" 

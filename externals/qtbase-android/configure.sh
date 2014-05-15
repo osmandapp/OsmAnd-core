@@ -1,38 +1,13 @@
 #!/bin/bash
 
+echo "Checking for bash..."
 if [ -z "$BASH_VERSION" ]; then
+	echo "Invalid shell, re-running using bash..."
 	exec bash "$0" "$@"
 	exit $?
 fi
-
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-NAME=$(basename $SRCLOC)
+source "$SRCLOC/../functions.sh"
 
-# Fail on any error
-set -e
-
-# Check if already configured
-if [ -d "$SRCLOC/upstream.patched" ]; then
-	echo "Skipping external '$NAME': already configured"
-	exit
-fi
-
-# Extract upstream if needed
-if [ ! -d "$SRCLOC/upstream.original" ]; then
-	echo "Downloading '$NAME' upstream..."
-	git clone https://github.com/osmandapp/OsmAnd-external-qtbase.git "$SRCLOC/upstream.original" -b android --depth=1
-	rm -rf "$SRCLOC/upstream.original/.git"
-fi
-
-# Patch
-cp -rfp "$SRCLOC/upstream.original" "$SRCLOC/upstream.patched"
-if [ -d "$SRCLOC/patches" ]; then
-	echo "Patching '$NAME'..."
-	PATCHES=`ls -1 $SRCLOC/patches/*.patch | sort`
-	for PATCH in $PATCHES
-	do
-		read  -rd '' PATCH <<< "$PATCH"
-		echo "Applying "`basename $PATCH`
-		patch --strip=1 --directory="$SRCLOC/upstream.patched/" --input="$PATCH"
-	done
-fi
+configureExternalFromGit "$SRCLOC" "https://github.com/osmandapp/OsmAnd-external-qtbase.git" "android"
+patchExternal "$SRCLOC" 

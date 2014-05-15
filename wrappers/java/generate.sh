@@ -1,17 +1,16 @@
 #!/bin/bash
 
+echo "Checking for bash..."
 if [ -z "$BASH_VERSION" ]; then
+	echo "Invalid shell, re-running using bash..."
 	exec bash "$0" "$@"
 	exit $?
 fi
+SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Until bug with auto-detection of *.swig changes, bump this version: 2
 
-SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 REAL_SRCLOC=`readlink -f $SRCLOC`
-
-# Fail on any error
-set -e
 
 if [ -d "$SRCLOC/gen" ]; then
 	rm -rf "$SRCLOC/gen"

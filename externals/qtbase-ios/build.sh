@@ -1,15 +1,12 @@
 #!/bin/bash
 
+echo "Checking for bash..."
 if [ -z "$BASH_VERSION" ]; then
+	echo "Invalid shell, re-running using bash..."
 	exec bash "$0" "$@"
 	exit $?
 fi
-
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-NAME=$(basename $SRCLOC)
-
-# Fail on any error
-set -e
 
 QTBASE_CONFIGURATION=$(echo "
 	-release -opensource -confirm-license -c++11 -static -largefile -no-accessibility -qt-sql-sqlite
@@ -24,26 +21,38 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 		OSMAND_BUILD_CPU_CORES_NUM=`sysctl hw.ncpu | awk '{print $2}'`
 	fi
 
-	if [ ! -d "$SRCLOC/upstream.patched.ios.simulator.i386.static" ]; then
-		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.ios.simulator.i386.static"
-		(cd "$SRCLOC/upstream.patched.ios.simulator.i386.static" && \
-			./configure -xplatform macx-ios-clang-simulator-i386 $QTBASE_CONFIGURATION -sdk iphonesimulator)
-	fi
-	(cd "$SRCLOC/upstream.patched.ios.simulator.i386.static" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
-
-	if [ ! -d "$SRCLOC/upstream.patched.ios.device.armv7.static" ]; then
-		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.ios.device.armv7.static"
-		(cd "$SRCLOC/upstream.patched.ios.device.armv7.static" && \
-			./configure -xplatform macx-ios-clang-device-armv7 $QTBASE_CONFIGURATION -sdk iphoneos)
-	fi
-	(cd "$SRCLOC/upstream.patched.ios.device.armv7.static" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
+	# Function: makeFlavor(name, platform, configuration)
+	makeFlavor()
+	{
+		local name=$1
+		local platform=$2
+		local configuration=$3
+		
+		local path="$SRCLOC/upstream.patched.$name"
+		
+		# Configure
+		if [ ! -d "$path" ]; then
+			cp -rpf "$SRCLOC/upstream.patched" "$path"
+			(cd "$path" && ./configure -xplatform $platform $configuration)
+			if [ $? -ne 0 ]; then
+				echo "Failed to configure 'qtbase-ios' for '$name', aborting..."
+				rm -rf "$path"
+				exit $?
+			fi
+		fi
+		
+		# Build
+		(cd "$path" && $MAKE -j$OSMAND_BUILD_CPU_CORES_NUM)
+		if [ $? -ne 0 ]; then
+			echo "Failed to build 'qtbase-ios' for '$name', aborting..."
+			rm -rf "$path"
+			exit $?
+		fi
+	}
 	
-	if [ ! -d "$SRCLOC/upstream.patched.ios.device.armv7s.static" ]; then
-		cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.ios.device.armv7s.static"
-		(cd "$SRCLOC/upstream.patched.ios.device.armv7s.static" && \
-			./configure -xplatform macx-ios-clang-device-armv7s $QTBASE_CONFIGURATION -sdk iphoneos)
-	fi
-	(cd "$SRCLOC/upstream.patched.ios.device.armv7s.static" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
+	makeFlavor "ios.simulator.i386.static" "macx-ios-clang-simulator-i386" "$QTBASE_CONFIGURATION -sdk iphonesimulator"
+	makeFlavor "ios.device.armv7.static" "macx-ios-clang-device-armv7" "$QTBASE_CONFIGURATION -sdk iphoneos"
+	makeFlavor "ios.device.armv7s.static" "macx-ios-clang-device-armv7s" "$QTBASE_CONFIGURATION -sdk iphoneos"
 
 	if [ ! -h "$SRCLOC/upstream.patched.ios.simulator.static" ]; then
 		ln -s "$SRCLOC/upstream.patched.ios.simulator.i386.static" "$SRCLOC/upstream.patched.ios.simulator.static"
@@ -77,6 +86,11 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 				"$SRCLOC/upstream.patched.ios.device.armv7.static/lib/libQt5${libName}.a" \
 				"$SRCLOC/upstream.patched.ios.device.armv7s.static/lib/libQt5${libName}.a" \
 				-output "$SRCLOC/upstream.patched.ios/lib/libQt5${libName}.a"
+			if [ $? -ne 0 ]; then
+				echo "Failed to lipo 'libQt5${libName}.a', aborting..."
+				rm -rf "$path"
+				exit $?
+			fi
 		done
 	fi
 	if [ ! -d "$SRCLOC/upstream.patched.ios.fat.static" ]; then

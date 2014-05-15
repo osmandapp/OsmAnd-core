@@ -1,24 +1,19 @@
 #!/bin/bash
 
+echo "Checking for bash..."
 if [ -z "$BASH_VERSION" ]; then
+	echo "Invalid shell, re-running using bash..."
 	exec bash "$0" "$@"
 	exit $?
 fi
-
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source "$SRCLOC/functions.sh"
 
 OSMAND_EXTERNALS_SET=($*)
 if [ -z "$OSMAND_EXTERNALS_SET" ]; then
 	OSMAND_EXTERNALS_SET=*
 fi
 
-# Fail on any error
-set -e
-
 for external in ${OSMAND_EXTERNALS_SET[@]/#/$SRCLOC/} ; do
-	if ls -1 $external/upstream.* >/dev/null 2>&1
-	then
-		echo "Cleaning '"$(basename "$external")"'..."
-		rm -rf "$external"/upstream.*
-	fi
+	cleanExternal "$external"
 done

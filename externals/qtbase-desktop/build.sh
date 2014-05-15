@@ -1,21 +1,59 @@
 #!/bin/bash
 
+echo "Checking for bash..."
 if [ -z "$BASH_VERSION" ]; then
+	echo "Invalid shell, re-running using bash..."
 	exec bash "$0" "$@"
 	exit $?
 fi
-
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-NAME=$(basename $SRCLOC)
-OSMAND_ARCHITECTURES_SET=($*)
 
-# Fail on any error
-set -e
+OSMAND_ARCHITECTURES_SET=($*)
 
 if [[ "$(uname -a)" =~ Cygwin ]]; then
 	echo "Building under Cygwin is not supported, use build.bat"
 	exit 1
 fi
+
+# Function: makeFlavor(name, platform, configuration)
+makeFlavor()
+{
+	local name=$1
+	local platform=$2
+	local configuration=$3
+	
+	local path="$SRCLOC/upstream.patched.$name"
+	
+	# Configure
+	if [ ! -d "$path" ]; then
+		cp -rpf "$SRCLOC/upstream.patched" "$path"
+		(cd "$path" && ./configure -xplatform $platform $configuration)
+		if [ $? -ne 0 ]; then
+			echo "Failed to configure 'qtbase-desktop' for '$name', aborting..."
+			rm -rf "$path"
+			exit $?
+		fi
+	fi
+	
+	# Build
+	(cd "$path" && $MAKE -j$OSMAND_BUILD_CPU_CORES_NUM)
+	if [ $? -ne 0 ]; then
+		echo "Failed to build 'qtbase-desktop' for '$name', aborting..."
+		rm -rf "$path"
+		exit $?
+	fi
+}
+
+# Function: makeStaticAndSharedFlavor(name, platform, configuration)
+makeStaticAndSharedFlavor()
+{
+	local name=$1
+	local platform=$2
+	local configuration=$3
+
+	makeFlavor "$name.static" $platform "-static $configuration"
+	makeFlavor "$name.shared" $platform "-shared $configuration"
+}
 
 if [[ "$(uname -a)" =~ Linux ]]; then
 	QTBASE_CONFIGURATION=$(echo "
@@ -29,37 +67,13 @@ if [[ "$(uname -a)" =~ Linux ]]; then
 	if [[ -z "$OSMAND_BUILD_CPU_CORES_NUM" ]]; then
 		OSMAND_BUILD_CPU_CORES_NUM=`nproc`
 	fi
-
+	
 	if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x86 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-		if [ ! -d "$SRCLOC/upstream.patched.linux.i686.shared" ]; then
-			cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.linux.i686.shared"
-			(cd "$SRCLOC/upstream.patched.linux.i686.shared" && \
-				./configure -xplatform linux-g++-32 -shared $QTBASE_CONFIGURATION)
-		fi
-		(cd "$SRCLOC/upstream.patched.linux.i686.shared" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
-
-		if [ ! -d "$SRCLOC/upstream.patched.linux.i686.static" ]; then
-			cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.linux.i686.static"
-			(cd "$SRCLOC/upstream.patched.linux.i686.static" && \
-				./configure -xplatform linux-g++-32 -static $QTBASE_CONFIGURATION)
-		fi
-		(cd "$SRCLOC/upstream.patched.linux.i686.static" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
+		makeStaticAndSharedFlavor "linux.i686" "linux-g++-32" "$QTBASE_CONFIGURATION"
 	fi
 
 	if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x64 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-		if [ ! -d "$SRCLOC/upstream.patched.linux.amd64.shared" ]; then
-			cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.linux.amd64.shared"
-			(cd "$SRCLOC/upstream.patched.linux.amd64.shared" && \
-				./configure -xplatform linux-g++-64 -shared $QTBASE_CONFIGURATION)
-		fi
-		(cd "$SRCLOC/upstream.patched.linux.amd64.shared" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
-
-		if [ ! -d "$SRCLOC/upstream.patched.linux.amd64.static" ]; then
-			cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.linux.amd64.static"
-			(cd "$SRCLOC/upstream.patched.linux.amd64.static" && \
-				./configure -xplatform linux-g++-64 -static $QTBASE_CONFIGURATION)
-		fi
-		(cd "$SRCLOC/upstream.patched.linux.amd64.static" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
+		makeStaticAndSharedFlavor "linux.amd64" "linux-g++-64" "$QTBASE_CONFIGURATION"
 	fi
 fi
 
@@ -77,35 +91,11 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 	fi
 
 	if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x86 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-		if [ ! -d "$SRCLOC/upstream.patched.darwin.i386.shared" ]; then
-			cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.darwin.i386.shared"
-			(cd "$SRCLOC/upstream.patched.darwin.i386.shared" && \
-				./configure -xplatform macx-clang-libc++-32 -shared $QTBASE_CONFIGURATION)
-		fi
-		(cd "$SRCLOC/upstream.patched.darwin.i386.shared" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
-
-		if [ ! -d "$SRCLOC/upstream.patched.darwin.i386.static" ]; then
-			cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.darwin.i386.static"
-			(cd "$SRCLOC/upstream.patched.darwin.i386.static" && \
-				./configure -xplatform macx-clang-libc++-32 -static $QTBASE_CONFIGURATION)
-		fi
-		(cd "$SRCLOC/upstream.patched.darwin.i386.static" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
+		makeStaticAndSharedFlavor "darwin.i686" "macx-clang-libc++-32" "$QTBASE_CONFIGURATION"
 	fi
 
 	if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x64 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-		if [ ! -d "$SRCLOC/upstream.patched.darwin.x86_64.shared" ]; then
-			cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.darwin.x86_64.shared"
-			(cd "$SRCLOC/upstream.patched.darwin.x86_64.shared" && \
-				./configure -xplatform macx-clang-libc++-64 -shared $QTBASE_CONFIGURATION)
-		fi
-		(cd "$SRCLOC/upstream.patched.darwin.x86_64.shared" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
-
-		if [ ! -d "$SRCLOC/upstream.patched.darwin.x86_64.static" ]; then
-			cp -rpf "$SRCLOC/upstream.patched" "$SRCLOC/upstream.patched.darwin.x86_64.static"
-			(cd "$SRCLOC/upstream.patched.darwin.x86_64.static" && \
-				./configure -xplatform macx-clang-libc++-64 -static $QTBASE_CONFIGURATION)
-		fi
-		(cd "$SRCLOC/upstream.patched.darwin.x86_64.static" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
+		makeStaticAndSharedFlavor "darwin.x86_64" "macx-clang-libc++-64" "$QTBASE_CONFIGURATION"
 	fi
 
 	if [ ! -d "$SRCLOC/upstream.patched.darwin.intel.shared" ]; then
