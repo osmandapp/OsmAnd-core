@@ -60,7 +60,7 @@ makeStaticAndSharedFlavor()
 if [[ "$(uname -a)" =~ Linux ]]; then
 	QTBASE_CONFIGURATION=$(echo "
 		-release -opensource -confirm-license -c++11 -largefile -no-accessibility -qt-sql-sqlite
-		-no-javascript-jit -no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
+		-no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
 		-nomake examples -nomake tools -no-gui -no-widgets -no-nis -no-cups -no-iconv -no-icu -no-dbus
 		-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib
 		-v
@@ -82,7 +82,7 @@ fi
 if [[ "$(uname -a)" =~ Darwin ]]; then
 	QTBASE_CONFIGURATION=$(echo "
 		-debug-and-release -opensource -confirm-license -c++11 -largefile -no-accessibility -qt-sql-sqlite
-		-no-javascript-jit -no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
+		-no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
 		-nomake examples -nomake tools -no-gui -no-widgets -no-nis -no-cups -no-iconv -no-icu -no-dbus
 		-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib -no-framework
 		-v

@@ -30,7 +30,7 @@ fi
 QTBASE_CONFIGURATION=$(echo "
 	-xplatform android-g++ $ANDROID_NDK_TOOLCHAIN
 	-release -opensource -confirm-license -c++11 -static -largefile -no-accessibility -qt-sql-sqlite
-	-no-javascript-jit -no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
+	-no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
 	-nomake examples -nomake tools -no-gui -no-widgets -no-nis -no-cups -no-iconv -no-icu -no-dbus
 	-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib
 	-v
@@ -114,9 +114,8 @@ makeFlavor()
 	# Configure
 	if [ ! -d "$path" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$path"
-		export ANDROID_TARGET_ARCH=$arch
-		export ANDROID_NDK_PLATFORM=android-$platform
-		(cd "$path" && ./configure $configuration)
+		export ANDROID_API_VERSION=android-$platform
+		(cd "$path" && ./configure -android-ndk-platform android-$platform -android-arch $arch $configuration)
 		retcode=$?
 		if [ $retcode -ne 0 ]; then
 			echo "Failed to configure 'qtbase-android' for '$name', aborting..."
@@ -136,15 +135,11 @@ makeFlavor()
 }
 
 if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv5 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-	makeFlavor "armeabi.static" "armeabi" "8" "$QTBASE_CONFIGURATION -no-neon"
+	makeFlavor "armeabi.static" "armeabi" "8" "$QTBASE_CONFIGURATION"
 fi
 
-if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv7 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-	makeFlavor "armeabi-v7a.static" "armeabi-v7a" "8" "$QTBASE_CONFIGURATION -no-neon"
-fi
-
-if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv7-neon ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-	makeFlavor "armeabi-v7a-neon.static" "armeabi-v7a" "8" "$QTBASE_CONFIGURATION -qtlibinfix _neon"
+if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv7 ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv7-neon ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
+	makeFlavor "armeabi-v7a.static" "armeabi-v7a" "8" "$QTBASE_CONFIGURATION"
 fi
 
 if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x86 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
