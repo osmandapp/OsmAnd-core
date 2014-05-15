@@ -1,0 +1,54 @@
+diff -rupN upstream.original/mkspecs/winphone-arm-msvc2013/qmake.conf upstream.patched/mkspecs/winphone-arm-msvc2013/qmake.conf
+--- upstream.original/mkspecs/winphone-arm-msvc2013/qmake.conf	2014-05-15 16:27:39.094674300 +0300
++++ upstream.patched/mkspecs/winphone-arm-msvc2013/qmake.conf	2014-05-15 16:35:25.455707900 +0300
+@@ -1,11 +1,11 @@
+ #
+-# qmake configuration for winphone-arm-msvc2012
++# qmake configuration for winphone-arm-msvc2013
+ #
+-# Written for Microsoft Visual C++ 2012
++# Written for Microsoft Visual C++ 2013
+ #
+ 
+ include(../common/winrt_winphone/qmake.conf)
+-QMAKE_COMPILER_DEFINES += _MSC_VER=1700
++QMAKE_COMPILER_DEFINES += _MSC_VER=1800
+ QMAKE_PLATFORM          = winphone $$QMAKE_PLATFORM
+ CONFIG                 += font_deployment
+ DEFINES                += WINAPI_FAMILY=WINAPI_FAMILY_PHONE_APP ARM __ARM__ __arm__
+@@ -15,7 +15,7 @@ QMAKE_LFLAGS           += /MACHINE:ARM
+ QMAKE_LIBS             += WindowsPhoneCore.lib PhoneAppModelHost.lib
+ 
+ VCPROJ_ARCH             = ARM
+-MSVC_VER                = 11.0
++MSVC_VER                = 12.0
+ WINSDK_VER              = 8.0
+ WINTARGET_VER           = WP80
+ WINRT_MANIFEST          = $$PWD/../common/winrt_winphone/manifests/8.0/WMAppManifest.xml.in
+diff -rupN upstream.original/mkspecs/winphone-x86-msvc2013/qmake.conf upstream.patched/mkspecs/winphone-x86-msvc2013/qmake.conf
+--- upstream.original/mkspecs/winphone-x86-msvc2013/qmake.conf	2014-05-15 16:27:39.105682600 +0300
++++ upstream.patched/mkspecs/winphone-x86-msvc2013/qmake.conf	2014-05-15 16:35:23.880654500 +0300
+@@ -1,11 +1,11 @@
+ #
+-# qmake configuration for winphone-x86-msvc2012
++# qmake configuration for winphone-x86-msvc2013
+ #
+-# Written for Microsoft Visual C++ 2012
++# Written for Microsoft Visual C++ 2013
+ #
+ 
+ include(../common/winrt_winphone/qmake.conf)
+-QMAKE_COMPILER_DEFINES += _MSC_VER=1700
++QMAKE_COMPILER_DEFINES += _MSC_VER=1800
+ QMAKE_PLATFORM          = winphone $$QMAKE_PLATFORM
+ CONFIG                 += font_deployment
+ DEFINES                += WINAPI_FAMILY=WINAPI_FAMILY_PHONE_APP X86 __X86__ __x86__
+@@ -15,7 +15,7 @@ QMAKE_LFLAGS           += /MACHINE:X86
+ QMAKE_LIBS             += WindowsPhoneCore.lib PhoneAppModelHost.lib
+ 
+ VCPROJ_ARCH             = Win32
+-MSVC_VER                = 11.0
++MSVC_VER                = 12.0
+ WINSDK_VER              = 8.0
+ WINTARGET_VER           = WP80
+ WINRT_MANIFEST          = $$PWD/../common/winrt_winphone/manifests/8.0/WMAppManifest.xml.in

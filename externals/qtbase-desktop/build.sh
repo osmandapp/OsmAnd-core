@@ -93,7 +93,7 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 	fi
 
 	if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x86 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-		makeStaticAndSharedFlavor "darwin.i686" "macx-clang-libc++-32" "$QTBASE_CONFIGURATION"
+		makeStaticAndSharedFlavor "darwin.i386" "macx-clang-libc++-32" "$QTBASE_CONFIGURATION"
 	fi
 
 	if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x64 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
@@ -112,22 +112,22 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 		for libName in "${libraries[@]}" ; do
 			echo "Packing '$libName'..."
 			lipo -create \
-				"$SRCLOC/upstream.patched.darwin.x86_64.shared/lib/libQt5${libName}.5.2.0.dylib" \
-				"$SRCLOC/upstream.patched.darwin.i386.shared/lib/libQt5${libName}.5.2.0.dylib" \
-				-output "$SRCLOC/upstream.patched.darwin.intel.shared/lib/libQt5${libName}.5.2.0.dylib"
+				"$SRCLOC/upstream.patched.darwin.x86_64.shared/lib/libQt5${libName}.5.3.0.dylib" \
+				"$SRCLOC/upstream.patched.darwin.i386.shared/lib/libQt5${libName}.5.3.0.dylib" \
+				-output "$SRCLOC/upstream.patched.darwin.intel.shared/lib/libQt5${libName}.5.3.0.dylib"
 			(cd "$SRCLOC/upstream.patched.darwin.intel.shared/lib" && \
-				ln -s "libQt5${libName}.5.2.0.dylib" "libQt5${libName}.5.2.dylib" && \
-				ln -s "libQt5${libName}.5.2.0.dylib" "libQt5${libName}.5.dylib" && \
-				ln -s "libQt5${libName}.5.2.0.dylib" "libQt5${libName}.dylib")
+				ln -s "libQt5${libName}.5.3.0.dylib" "libQt5${libName}.5.3.dylib" && \
+				ln -s "libQt5${libName}.5.3.0.dylib" "libQt5${libName}.5.dylib" && \
+				ln -s "libQt5${libName}.5.3.0.dylib" "libQt5${libName}.dylib")
 			
 			lipo -create \
-				"$SRCLOC/upstream.patched.darwin.x86_64.shared/lib/libQt5${libName}_debug.5.2.0.dylib" \
-				"$SRCLOC/upstream.patched.darwin.i386.shared/lib/libQt5${libName}_debug.5.2.0.dylib" \
-				-output "$SRCLOC/upstream.patched.darwin.intel.shared/lib/libQt5${libName}_debug.5.2.0.dylib"
+				"$SRCLOC/upstream.patched.darwin.x86_64.shared/lib/libQt5${libName}_debug.5.3.0.dylib" \
+				"$SRCLOC/upstream.patched.darwin.i386.shared/lib/libQt5${libName}_debug.5.3.0.dylib" \
+				-output "$SRCLOC/upstream.patched.darwin.intel.shared/lib/libQt5${libName}_debug.5.3.0.dylib"
 			(cd "$SRCLOC/upstream.patched.darwin.intel.shared/lib" && \
-				ln -s "libQt5${libName}_debug.5.2.0.dylib" "libQt5${libName}_debug.5.2.dylib" && \
-				ln -s "libQt5${libName}_debug.5.2.0.dylib" "libQt5${libName}_debug.5.dylib" && \
-				ln -s "libQt5${libName}_debug.5.2.0.dylib" "libQt5${libName}_debug.dylib")
+				ln -s "libQt5${libName}_debug.5.3.0.dylib" "libQt5${libName}_debug.5.3.dylib" && \
+				ln -s "libQt5${libName}_debug.5.3.0.dylib" "libQt5${libName}_debug.5.dylib" && \
+				ln -s "libQt5${libName}_debug.5.3.0.dylib" "libQt5${libName}_debug.dylib")
 		done
 	fi
 	if [ ! -d "$SRCLOC/upstream.patched.darwin.intel.static" ]; then

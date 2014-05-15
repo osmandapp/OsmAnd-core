@@ -10,4 +10,4 @@ SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$SRCLOC/../functions.sh"
 
 configureExternalFromSvn "$SRCLOC" "http://msinttypes.googlecode.com/svn/trunk/"
-patchExternal "$SRCLOC" 
+patchExternal "$SRCLOC"
