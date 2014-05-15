@@ -13,4 +13,4 @@ configureExternalFromGit "$SRCLOC" "https://github.com/osmandapp/OsmAnd-external
 cp -rpf "$SRCLOC/upstream.original/mkspecs/macx-ios-clang" "$SRCLOC/upstream.original/mkspecs/macx-ios-clang-device-armv7"
 cp -rpf "$SRCLOC/upstream.original/mkspecs/macx-ios-clang" "$SRCLOC/upstream.original/mkspecs/macx-ios-clang-device-armv7s"
 cp -rpf "$SRCLOC/upstream.original/mkspecs/macx-ios-clang" "$SRCLOC/upstream.original/mkspecs/macx-ios-clang-simulator-i386"
-patchExternal "$SRCLOC" 
+patchExternal "$SRCLOC"

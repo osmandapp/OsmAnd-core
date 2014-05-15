@@ -9,8 +9,10 @@ fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$SRCLOC/../functions.sh"
 
-configureExternalFromGit "$SRCLOC" "https://github.com/osmandapp/OsmAnd-external-qtbase.git" "winrt-winphone"
-patchExternal "$SRCLOC" 
+configureExternalFromGit "$SRCLOC" "https://github.com/osmandapp/OsmAnd-external-qtbase.git" "qt-v5.3.0-rc1"
+cp -rpf "$SRCLOC/upstream.original/mkspecs/winphone-arm-msvc2012" "$SRCLOC/upstream.original/mkspecs/winphone-arm-msvc2013"
+cp -rpf "$SRCLOC/upstream.original/mkspecs/winphone-x86-msvc2012" "$SRCLOC/upstream.original/mkspecs/winphone-x86-msvc2013"
+patchExternal "$SRCLOC"
 
 # Check if tools are present
 if [[ "$(uname -a)" == *Cygwin* ]]; then
