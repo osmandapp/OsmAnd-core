@@ -114,7 +114,6 @@ makeFlavor()
 	# Configure
 	if [ ! -d "$path" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$path"
-		export ANDROID_API_VERSION=android-$platform
 		(cd "$path" && ./configure -android-ndk-platform android-$platform -android-arch $arch $configuration)
 		retcode=$?
 		if [ $retcode -ne 0 ]; then
