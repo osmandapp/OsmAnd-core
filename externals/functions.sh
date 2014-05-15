@@ -65,9 +65,6 @@ configureExternalFromGit()
 			exit $retcode
 		fi
 	fi
-	
-	# Clean traces of git
-	rm -rf "$externalPath/upstream.original/.git"
 }
 export -f configureExternalFromGit
 
@@ -115,9 +112,6 @@ configureExternalFromSvn()
 			exit $retcode
 		fi
 	fi
-	
-	# Clean traces of svn
-	rm -rf "$externalPath/upstream.original/.svn"
 }
 export -f configureExternalFromSvn
 
