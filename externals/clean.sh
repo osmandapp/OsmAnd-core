@@ -15,5 +15,7 @@ if [ -z "$OSMAND_EXTERNALS_SET" ]; then
 fi
 
 for external in ${OSMAND_EXTERNALS_SET[@]/#/$SRCLOC/} ; do
-	cleanExternal "$external"
+	if [ -d "$external" ]; then
+		cleanExternal "$external"
+	fi
 done
