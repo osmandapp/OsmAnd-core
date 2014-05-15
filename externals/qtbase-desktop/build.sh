@@ -36,7 +36,7 @@ makeFlavor()
 	fi
 	
 	# Build
-	(cd "$path" && $MAKE -j$OSMAND_BUILD_CPU_CORES_NUM)
+	(cd "$path" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 	if [ $? -ne 0 ]; then
 		echo "Failed to build 'qtbase-desktop' for '$name', aborting..."
 		rm -rf "$path"
