@@ -10,8 +10,8 @@ SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$SRCLOC/../functions.sh"
 
 configureExternalFromGit "$SRCLOC" "https://github.com/osmandapp/OsmAnd-external-qtbase.git" "desktop"
-cp -rpf "$SRCLOC/upstream.original/mkspecs/macx-clang" "$SRCLOC/upstream.patched/mkspecs/macx-clang-libc++-32"
-cp -rpf "$SRCLOC/upstream.original/mkspecs/macx-clang" "$SRCLOC/upstream.patched/mkspecs/macx-clang-libc++-64"
+cp -rpf "$SRCLOC/upstream.original/mkspecs/macx-clang" "$SRCLOC/upstream.original/mkspecs/macx-clang-libc++-32"
+cp -rpf "$SRCLOC/upstream.original/mkspecs/macx-clang" "$SRCLOC/upstream.original/mkspecs/macx-clang-libc++-64"
 patchExternal "$SRCLOC" 
 
 # Check if tools are present
