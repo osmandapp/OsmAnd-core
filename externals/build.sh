@@ -21,5 +21,10 @@ fi
 for external in ${OSMAND_EXTERNALS_SET[@]/#/$SRCLOC/} ; do
 	if [ -f "$external/build.sh" ] && [ -d "$external/upstream.patched" ]; then
 		"$external/build.sh" ${OSMAND_ARCHITECTURES_SET[*]}
+		if [ $? -ne 0 ]; then
+			local retcode=$?
+			echo "Failed to build external in '$external', aborting..."
+			exit $retcode
+		fi
 	fi
 done
