@@ -58,7 +58,7 @@ bool OsmAnd::ArchiveReader_P::extractItemToFile(const QString& itemName, const Q
         [itemName, fileName, &extractedBytes]
         (archive* archive, archive_entry* entry, bool& doStop) -> bool
         {
-            const QString currentItemName(reinterpret_cast<const QChar*>(archive_entry_pathname_w(entry)));
+            const auto& currentItemName = QString::fromWCharArray(archive_entry_pathname_w(entry));
             if (currentItemName != itemName)
                 return true;
             
