@@ -27,7 +27,7 @@ QList<OsmAnd::ArchiveReader_P::Item> OsmAnd::ArchiveReader_P::getItems(bool* con
         (archive* archive, archive_entry* entry, bool& doStop) -> bool
         {
             Item item;
-            item.name = QString(reinterpret_cast<const QChar*>(archive_entry_pathname_w(entry)));
+            item.name = QString::fromWCharArray(archive_entry_pathname_w(entry));
             item.size = archive_entry_size(entry);
             if (archive_entry_ctime_is_set(entry) != 0)
                 item.creationTime = QDateTime::fromTime_t(archive_entry_ctime(entry));
@@ -84,7 +84,7 @@ bool OsmAnd::ArchiveReader_P::extractAllItemsTo(const QString& destinationPath, 
         [destinationPath, &extractedBytes]
         (archive* archive, archive_entry* entry, bool& doStop) -> bool
         {
-            const QString currentItemName(reinterpret_cast<const QChar*>(archive_entry_pathname_w(entry)));
+            const auto& currentItemName = QString::fromWCharArray(archive_entry_pathname_w(entry));
             const auto destinationFileName = QDir(destinationPath).absoluteFilePath(currentItemName);
 
             uint64_t itemExtractedBytes = 0;
