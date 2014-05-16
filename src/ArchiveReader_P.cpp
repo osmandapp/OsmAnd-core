@@ -180,8 +180,8 @@ bool OsmAnd::ArchiveReader_P::processArchive(QIODevice* const ioDevice, const Ar
     while(archive_read_next_header(archive, &archiveEntry) == ARCHIVE_OK)
     {
         bool doStop = false;
-        ok = handler(archive, archiveEntry, doStop);
-        if (!ok || doStop)
+        ok = handler(archive, archiveEntry, doStop) && ok;
+        if (doStop)
             break;
     }
 
