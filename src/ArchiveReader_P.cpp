@@ -61,13 +61,10 @@ bool OsmAnd::ArchiveReader_P::extractItemToFile(const QString& itemName, const Q
             const auto& currentItemName = QString::fromWCharArray(archive_entry_pathname_w(entry));
             if (currentItemName != itemName)
                 return false;
-            
-            bool ok = extractArchiveEntryAsFile(archive, entry, fileName, extractedBytes);
-            if (!ok)
-                return false;
 
+            // Item was found, so stop on this item regardless of result
             doStop = true;
-            return true;
+            return extractArchiveEntryAsFile(archive, entry, fileName, extractedBytes);
         });
     if (!ok)
         return false;
@@ -176,14 +173,10 @@ bool OsmAnd::ArchiveReader_P::processArchive(QIODevice* const ioDevice, const Ar
 
     // Process items
     bool ok = true;
+    bool doStop = false;
     archive_entry* archiveEntry = nullptr;
-    while(archive_read_next_header(archive, &archiveEntry) == ARCHIVE_OK)
-    {
-        bool doStop = false;
+    while (!doStop && (archive_read_next_header(archive, &archiveEntry) == ARCHIVE_OK))
         ok = handler(archive, archiveEntry, doStop) && ok;
-        if (doStop)
-            break;
-    }
 
     // Close archive
     res = archive_read_finish(archive);
