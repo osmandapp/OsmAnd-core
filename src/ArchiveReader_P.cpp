@@ -175,7 +175,7 @@ bool OsmAnd::ArchiveReader_P::processArchive(QIODevice* const ioDevice, const Ar
     }
 
     // Process items
-    bool ok;
+    bool ok = true;
     archive_entry* archiveEntry = nullptr;
     while(archive_read_next_header(archive, &archiveEntry) == ARCHIVE_OK)
     {
