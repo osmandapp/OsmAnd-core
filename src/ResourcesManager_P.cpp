@@ -993,6 +993,18 @@ bool OsmAnd::ResourcesManager_P::installFromRepository(const QString& id, const 
     return true;
 }
 
+bool OsmAnd::ResourcesManager_P::installFromRepository(const QString& id, const QString& filePath)
+{
+    if (isResourceInstalled(id))
+        return false;
+
+    const auto& resourceInRepository = getResourceInRepository(id);
+    if (!resourceInRepository)
+        return false;
+
+    return installFromFile(id, filePath, resourceInRepository->type);
+}
+
 bool OsmAnd::ResourcesManager_P::isInstalledResourceOutdated(const QString& id) const
 {
     const auto& resourceInRepository = getResourceInRepository(id);
@@ -1131,6 +1143,15 @@ bool OsmAnd::ResourcesManager_P::updateFromRepository(const QString& id, const W
 
     QFile(tmpFilePath).remove();
     return ok;
+}
+
+bool OsmAnd::ResourcesManager_P::updateFromRepository(const QString& id, const QString& filePath)
+{
+    const auto& resourceInRepository = getResourceInRepository(id);
+    if (!resourceInRepository)
+        return false;
+
+    return updateFromFile(id, filePath);
 }
 
 OsmAnd::ResourcesManager_P::OnlineTileSourcesProxy::OnlineTileSourcesProxy(ResourcesManager_P* owner_)

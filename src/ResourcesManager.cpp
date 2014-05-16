@@ -132,6 +132,11 @@ bool OsmAnd::ResourcesManager::installFromRepository(const QString& id, const We
     return _p->installFromRepository(id, downloadProgressCallback);
 }
 
+bool OsmAnd::ResourcesManager::installFromRepository(const QString& id, const QString& filePath)
+{
+    return _p->installFromRepository(id, filePath);
+}
+
 bool OsmAnd::ResourcesManager::isInstalledResourceOutdated(const QString& id) const
 {
     return _p->isInstalledResourceOutdated(id);
@@ -155,6 +160,11 @@ bool OsmAnd::ResourcesManager::updateFromFile(const QString& id, const QString& 
 bool OsmAnd::ResourcesManager::updateFromRepository(const QString& id, const WebClient::RequestProgressCallbackSignature downloadProgressCallback /*= nullptr*/)
 {
     return _p->updateFromRepository(id, downloadProgressCallback);
+}
+
+bool OsmAnd::ResourcesManager::updateFromRepository(const QString& id, const QString& filePath)
+{
+    return _p->updateFromRepository(id, filePath);
 }
 
 OsmAnd::ResourcesManager::Resource::Metadata::Metadata()
