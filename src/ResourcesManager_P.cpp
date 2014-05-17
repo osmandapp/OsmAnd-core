@@ -654,12 +654,16 @@ bool OsmAnd::ResourcesManager_P::parseRepository(QXmlStreamReader& xmlReader, QL
             if (citLocalResource != _localResources.cend())
             {
                 const auto& localResource = *citLocalResource;
-                if (localResource->origin == ResourceOrigin::Installed && localResource->timestamp > timestamp)
+                if (localResource->origin == ResourceOrigin::Installed)
                 {
-                    LogPrintf(LogSeverityLevel::Warning, "Installed resource '%s' is newer than in repository (%" PRIu64 " > %" PRIu64 ")",
-                        qPrintable(resourceId),
-                        localResource->timestamp,
-                        timestamp);
+                    const auto& installedResource = std::static_pointer_cast<const InstalledResource>(localResource);
+                    if (installedResource->timestamp > timestamp)
+                    {
+                        LogPrintf(LogSeverityLevel::Warning, "Installed resource '%s' is newer than in repository (%" PRIu64 " > %" PRIu64 ")",
+                            qPrintable(resourceId),
+                            installedResource->timestamp,
+                            timestamp);
+                    }
                 }
             }
         }
