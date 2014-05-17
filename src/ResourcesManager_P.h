@@ -56,7 +56,6 @@ namespace OsmAnd
 
         mutable QReadWriteLock _localResourcesLock;
         mutable QHash< QString, std::shared_ptr<const LocalResource> > _localResources;
-        mutable QHash< QString, std::shared_ptr<const LocalResource> > _localResourcesCached;
         bool loadLocalResourcesFromPath(
             const QString& storagePath,
             const bool isUnmanagedStorage,
