@@ -645,6 +645,25 @@ bool OsmAnd::ResourcesManager_P::parseRepository(QXmlStreamReader& xmlReader, QL
             timestamp,
             containerSize));
         repository.push_back(qMove(resource));
+
+#if OSMAND_DEBUG
+        {
+            QReadLocker scopedLocker(&_localResourcesLock);
+
+            const auto& citLocalResource = _localResources.constFind(resourceId);
+            if (citLocalResource != _localResources.cend())
+            {
+                const auto& localResource = *citLocalResource;
+                if (localResource->origin == ResourceOrigin::Installed && localResource->timestamp > timestamp)
+                {
+                    LogPrintf(LogSeverityLevel::Warning, "Installed resource '%s' is newer than in repository (%" PRIu64 " > %" PRIu64 ")",
+                        qPrintable(resourceId),
+                        localResource->timestamp,
+                        timestamp);
+                }
+            }
+        }
+#endif // OSMAND_DEBUG
     }
     if (xmlReader.hasError())
     {
@@ -1041,16 +1060,10 @@ QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager::LocalResource> >
         if (!resourceInRepository)
             continue;
 
-        const bool outdated = (installedResource->timestamp < resourceInRepository->timestamp);
-        if (!outdated && (installedResource->timestamp > resourceInRepository->timestamp))
-        {
-            LogPrintf(LogSeverityLevel::Warning, "Installed resource '%s' is newer than in repository (%" PRIu64 " > %" PRIu64 ")",
-                qPrintable(localResource->id),
-                installedResource->timestamp,
-                resourceInRepository->timestamp);
-        }
-        if (outdated)
-            resourcesWithUpdates.insert(localResource->id, localResource);
+        if (installedResource->timestamp >= resourceInRepository->timestamp)
+            continue;
+
+        resourcesWithUpdates.insert(localResource->id, localResource);
     }
 
     return resourcesWithUpdates;
