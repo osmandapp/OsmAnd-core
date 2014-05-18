@@ -35,7 +35,7 @@ void OsmAnd::ICU::initialize()
 
     // Allocate resources
     icuError = U_ZERO_ERROR;
-    g_pIcuTransliterator = Transliterator::createInstance(UnicodeString("Any-Latin/UNGEGN; NFD; [:M:] Remove; NFC"), UTRANS_FORWARD, icuError);
+    g_pIcuTransliterator = Transliterator::createInstance(UnicodeString("Any-Latin/UNGEGN"), UTRANS_FORWARD, icuError);
     if (!U_SUCCESS(icuError))
         LogPrintf(LogSeverityLevel::Error, "Failed to create global ICU transliterator: %d", icuError);
     icuError = U_ZERO_ERROR;
