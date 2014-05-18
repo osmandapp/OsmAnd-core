@@ -19,7 +19,7 @@ namespace OsmAnd
         typedef typename std::add_const<NonConstPIMPL>::type ConstPIMPL;
 
     private:
-        const std::unique_ptr<NonConstPIMPL> _pimplInstance;
+        NonConstPIMPL* const _pimplInstance;
     protected:
     public:
         PrivateImplementation(NonConstPIMPL* const pimplInstance)
@@ -29,21 +29,22 @@ namespace OsmAnd
 
         ~PrivateImplementation()
         {
+            delete _pimplInstance;
         }
 
         inline NonConstPIMPL* operator->()
         {
-            return _pimplInstance.get();
+            return _pimplInstance;
         }
 
         inline NonConstPIMPL* get()
         {
-            return _pimplInstance.get();
+            return _pimplInstance;
         }
 
         inline operator NonConstPIMPL*()
         {
-            return _pimplInstance.get();
+            return _pimplInstance;
         }
 
         inline NonConstPIMPL& operator*()
@@ -53,17 +54,17 @@ namespace OsmAnd
 
         inline ConstPIMPL* operator->() const
         {
-            return const_cast<ConstPIMPL*>(_pimplInstance.get());
+            return const_cast<ConstPIMPL*>(_pimplInstance);
         }
 
         inline ConstPIMPL* get() const
         {
-            return const_cast<ConstPIMPL*>(_pimplInstance.get());
+            return const_cast<ConstPIMPL*>(_pimplInstance);
         }
 
         inline operator ConstPIMPL*() const
         {
-            return const_cast<ConstPIMPL*>(_pimplInstance.get());
+            return const_cast<ConstPIMPL*>(_pimplInstance);
         }
 
         inline ConstPIMPL& operator*() const
