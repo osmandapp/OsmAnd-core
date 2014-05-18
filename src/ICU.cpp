@@ -12,13 +12,13 @@
 #include <unicode/ushape.h>
 #include <unicode/translit.h>
 #include <unicode/brkiter.h>
-#include <unicode/locid.h>
 
 #include "EmbeddedResources.h"
 #include "Logging.h"
 
 std::unique_ptr<QByteArray> g_IcuData;
-const Transliterator* g_pIcuTransliterator = nullptr;
+const Transliterator* g_pIcuAnyToLatinTransliterator = nullptr;
+const Transliterator* g_pIcuAccentsAndDiacriticsConverter = nullptr;
 const BreakIterator* g_pIcuWordBreakIterator = nullptr;
 
 void OsmAnd::ICU::initialize()
@@ -27,30 +27,86 @@ void OsmAnd::ICU::initialize()
     UErrorCode icuError = U_ZERO_ERROR;
     g_IcuData = qMove(std::unique_ptr<QByteArray>(new QByteArray(EmbeddedResources::decompressResource(QLatin1String("icu4c/icu-data-l.dat")))));
     udata_setCommonData(g_IcuData->constData(), &icuError);
-    if (!U_SUCCESS(icuError))
+    if (U_FAILURE(icuError))
+    {
         LogPrintf(LogSeverityLevel::Error, "Failed to initialize ICU data: %d", icuError);
+        return;
+    }
     u_init(&icuError);
-    if (!U_SUCCESS(icuError))
+    if (U_FAILURE(icuError))
+    {
         LogPrintf(LogSeverityLevel::Error, "Failed to initialize ICU: %d", icuError);
+        return;
+    }
 
-    // Allocate resources
+    // Allocate resources:
+
+    QString anyToLatinTransliteratorId(QLatin1String("Any-Latin"));
     icuError = U_ZERO_ERROR;
-    g_pIcuTransliterator = Transliterator::createInstance(UnicodeString("Any-Latin/UNGEGN"), UTRANS_FORWARD, icuError);
-    if (!U_SUCCESS(icuError))
-        LogPrintf(LogSeverityLevel::Error, "Failed to create global ICU transliterator: %d", icuError);
+    const auto availableTransliteratorIds = Transliterator::getAvailableIDs(icuError);
+    if (U_SUCCESS(icuError))
+    {
+        anyToLatinTransliteratorId.clear();
+
+        const UnicodeString* pTransliteratorId;
+
+        while ((pTransliteratorId = availableTransliteratorIds->snext(icuError)) != nullptr && U_SUCCESS(icuError))
+        {
+            const QString transliteratorId(reinterpret_cast<const QChar*>(pTransliteratorId->getBuffer()), pTransliteratorId->length());
+
+            if (transliteratorId.startsWith(QLatin1String("ASCII")))
+                continue;
+            else if (!transliteratorId.endsWith(QLatin1String("-Latin/BGN"))) // U.S. Board on Geographic Names (BGN)
+                continue;
+
+            anyToLatinTransliteratorId += transliteratorId + QLatin1String("; ");
+        }
+        availableTransliteratorIds->reset(icuError);
+
+        while ((pTransliteratorId = availableTransliteratorIds->snext(icuError)) != nullptr && U_SUCCESS(icuError))
+        {
+            const QString transliteratorId(reinterpret_cast<const QChar*>(pTransliteratorId->getBuffer()), pTransliteratorId->length());
+
+            if (transliteratorId.startsWith(QLatin1String("ASCII")))
+                continue;
+            else if (!transliteratorId.endsWith(QLatin1String("-Latin")))
+                continue;
+
+            anyToLatinTransliteratorId += transliteratorId + QLatin1String("; ");
+        }
+        availableTransliteratorIds->reset(icuError);
+
+        anyToLatinTransliteratorId += QLatin1String("Any-Latin");
+    }
+    icuError = U_ZERO_ERROR;
+    g_pIcuAnyToLatinTransliterator = Transliterator::createInstance(UnicodeString(anyToLatinTransliteratorId.toLatin1().constData()), UTRANS_FORWARD, icuError);
+    if (U_FAILURE(icuError))
+        LogPrintf(LogSeverityLevel::Error, "Failed to create global ICU Any-to-Latin transliterator: %d", icuError);
+
+    icuError = U_ZERO_ERROR;
+    g_pIcuAccentsAndDiacriticsConverter = Transliterator::createInstance(UnicodeString("NFD; [:Mn:] Remove; NFC"), UTRANS_FORWARD, icuError);
+    if (U_FAILURE(icuError))
+        LogPrintf(LogSeverityLevel::Error, "Failed to create global ICU accents&diacritics converter: %d", icuError);
+
     icuError = U_ZERO_ERROR;
     g_pIcuWordBreakIterator = BreakIterator::createWordInstance(Locale::getRoot(), icuError);
-    if (!U_SUCCESS(icuError))
+    if (U_FAILURE(icuError))
         LogPrintf(LogSeverityLevel::Error, "Failed to create global ICU word break iterator: %d", icuError);
 }
 
 void OsmAnd::ICU::release()
 {
-    // Release resources
-    delete g_pIcuTransliterator;
-    g_pIcuTransliterator = nullptr;
+    // Release resources:
+
+    delete g_pIcuAccentsAndDiacriticsConverter;
+    g_pIcuAccentsAndDiacriticsConverter = nullptr;
+    
+    delete g_pIcuAnyToLatinTransliterator;
+    g_pIcuAnyToLatinTransliterator = nullptr;
+
     delete g_pIcuWordBreakIterator;
     g_pIcuWordBreakIterator = nullptr;
+
     g_IcuData.reset();
 
     // Release ICU
@@ -66,7 +122,7 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::convertToVisualOrder(const
 
     // Allocate ICU BiDi context
     const auto pContext = ubidi_openSized(len, 0, &icuError);
-    if (pContext == nullptr || !U_SUCCESS(icuError))
+    if (pContext == nullptr || U_FAILURE(icuError))
     {
         LogPrintf(LogSeverityLevel::Error, "ICU error: %d", icuError);
         return input;
@@ -109,27 +165,44 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::convertToVisualOrder(const
     return output;
 }
 
-OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::transliterateToLatin(const QString& input)
+OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::transliterateToLatin(const QString& input, const bool keepAccentsAndDiacriticsInOriginal /*= true*/)
 {
     QString output;
     UErrorCode icuError = U_ZERO_ERROR;
     bool ok = true;
 
-    const auto pTransliterator = g_pIcuTransliterator->clone();
-    if (pTransliterator == nullptr || !U_SUCCESS(icuError))
+    const auto pAnyToLatinTransliterator = g_pIcuAnyToLatinTransliterator->clone();
+    if (pAnyToLatinTransliterator == nullptr || U_FAILURE(icuError))
     {
         LogPrintf(LogSeverityLevel::Error, "ICU error: %d", icuError);
-        if (pTransliterator != nullptr)
-            delete pTransliterator;
+        if (pAnyToLatinTransliterator != nullptr)
+            delete pAnyToLatinTransliterator;
         return input;
     }
 
+    // Transliterate from any to latin
     UnicodeString icuString(reinterpret_cast<const UChar*>(input.unicode()), input.length());
-    pTransliterator->transliterate(icuString);
+    pAnyToLatinTransliterator->transliterate(icuString);
     output = qMove(QString(reinterpret_cast<const QChar*>(icuString.getBuffer()), icuString.length()));
 
-    if (pTransliterator != nullptr)
-        delete pTransliterator;
+    // If input and out differ at this point or accents/diacritics should be converted,
+    // normalize the output again
+    if (input.compare(output, Qt::CaseInsensitive) != 0 || !keepAccentsAndDiacriticsInOriginal)
+    {
+        const auto pIcuAccentsAndDiacriticsConverter = g_pIcuAccentsAndDiacriticsConverter->clone();
+        ok = pIcuAccentsAndDiacriticsConverter != nullptr && U_SUCCESS(icuError);
+        if (ok)
+        {
+            pIcuAccentsAndDiacriticsConverter->transliterate(icuString);
+            output = qMove(QString(reinterpret_cast<const QChar*>(icuString.getBuffer()), icuString.length()));
+        }
+
+        if (pIcuAccentsAndDiacriticsConverter != nullptr)
+            delete pIcuAccentsAndDiacriticsConverter;
+    }
+    
+    if (pAnyToLatinTransliterator != nullptr)
+        delete pAnyToLatinTransliterator;
 
     if (!ok)
     {
@@ -148,7 +221,7 @@ OSMAND_CORE_API QVector<int> OSMAND_CORE_CALL OsmAnd::ICU::getTextWrapping(const
 
     // Create break iterator
     const auto pBreakIterator = g_pIcuWordBreakIterator->clone();
-    if (pBreakIterator == nullptr || !U_SUCCESS(icuError))
+    if (pBreakIterator == nullptr || U_FAILURE(icuError))
     {
         LogPrintf(LogSeverityLevel::Error, "ICU error: %d", icuError);
         if (pBreakIterator != nullptr)
