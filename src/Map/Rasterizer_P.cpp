@@ -939,44 +939,54 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
     MapStyleEvaluator textEvaluator(env.owner->style, env.owner->displayDensityFactor);
     env.applyTo(textEvaluator);
 
-    // Process native and Latin names
+    // Process native and localized names
     auto names = mapObject->names;
+
     const auto citNamesEnd = names.cend();
-    const auto citNativeName = names.constFind(encDecRules->name_encodingRuleId);
-    const auto citLatinName = names.constFind(encDecRules->latinName_encodingRuleId);
+
+    const auto citNativeName =
+        (encDecRules->name_encodingRuleId == std::numeric_limits<uint32_t>::max())
+        ? citNamesEnd
+        : names.constFind(encDecRules->name_encodingRuleId);
     auto hasNativeName = (citNativeName != citNamesEnd);
-    auto hasLatinName = (citLatinName != citNamesEnd);
+
+    const auto citLocalizedNameRuleId = encDecRules->localizedName_encodingRuleIds.constFind(QLatin1String("en"));
+    const auto localizedNameRuleId =
+        (citLocalizedNameRuleId == encDecRules->localizedName_encodingRuleIds.cend())
+        ? std::numeric_limits<uint32_t>::max()
+        : *citLocalizedNameRuleId;
+    const auto citLocalizedName =
+        (localizedNameRuleId == std::numeric_limits<uint32_t>::max())
+        ? citNamesEnd
+        : names.constFind(localizedNameRuleId);
+    auto hasLocalizedName = (citLocalizedName != citNamesEnd);
+
     bool forceLangInvariantName = false;
-    if (hasNativeName && hasLatinName)
+    if (hasNativeName && hasLocalizedName)
     {
         const auto& nativeNameValue = citNativeName.value();
-        const auto& latinNameValue = citLatinName.value();
+        const auto& localizedNameValue = citLocalizedName.value();
 
-        // If mapObject has both native and Latin names, use only one of them as invariant if they are equal
-        if (nativeNameValue.compare(latinNameValue) == 0)
+        // If mapObject has both native and localized names and they are equal - prefer native
+        if (nativeNameValue.compare(localizedNameValue, Qt::CaseInsensitive) == 0)
         {
-            names.remove(encDecRules->latinName_encodingRuleId);
-            hasNativeName = false;
+            names.remove(localizedNameRuleId);
+            hasLocalizedName = false;
         }
     }
-    else if (hasNativeName && !hasLatinName)
+    else if (hasNativeName && !hasLocalizedName)
     {
         const auto& nativeNameValue = citNativeName.value();
 
-        // If mapObject has native name, but doesn't have Latin name,
-        // create such.
+        // If mapObject has native name, but doesn't have localized name - create such (as a Latin)
         const auto latinNameValue = ICU::transliterateToLatin(nativeNameValue);
 
-        // If Latin name differs from native name, add it to names
-        if (nativeNameValue.compare(latinNameValue) != 0)
+        // If transliterated name differs from native name, add it to names
+        if (nativeNameValue.compare(latinNameValue, Qt::CaseInsensitive) != 0)
         {
-            hasLatinName = true;
-            names.insert(encDecRules->latinName_encodingRuleId, latinNameValue);
+            hasLocalizedName = true;
+            names.insert(localizedNameRuleId, latinNameValue);
         }
-    }
-    else if (!hasNativeName && hasLatinName)
-    {
-        // If mapObject has only Latin name, use it as language-invariant
     }
 
     bool ok;
@@ -989,6 +999,14 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
         if (name.isEmpty())
             continue;
 
+        // Skip names that are from different languages
+        if (nameTagId != encDecRules->name_encodingRuleId &&
+            nameTagId != localizedNameRuleId &&
+            encDecRules->namesRuleId.contains(nameTagId))
+        {
+            continue;
+        }
+
         // Evaluate style to obtain text parameters
         textEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
         textEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
@@ -997,7 +1015,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
         textEvaluator.setIntegerValue(env.styleBuiltinValueDefs->id_INPUT_TEXT_LENGTH, name.length());
 
         QString nameTag;
-        if (nameTagId != encDecRules->name_encodingRuleId)
+        if (nameTagId != encDecRules->name_encodingRuleId && nameTagId != localizedNameRuleId)
             nameTag = encDecRules->decodingRules[nameTagId].tag;
 
         textEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_NAME_TAG, nameTag);
@@ -1014,8 +1032,8 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
 
         // Determine language of this text
         auto langId = LanguageId::Invariant;
-        if ((nameTagId == encDecRules->name_encodingRuleId || nameTagId == encDecRules->latinName_encodingRuleId) && hasLatinName && hasNativeName)
-            langId = (nameTagId == encDecRules->latinName_encodingRuleId) ? LanguageId::Latin : LanguageId::Native;
+        if ((nameTagId == encDecRules->name_encodingRuleId || nameTagId == localizedNameRuleId) && hasLocalizedName && hasNativeName)
+            langId = (nameTagId == localizedNameRuleId) ? LanguageId::Localized : LanguageId::Native;
 
         // Create primitive
         const auto text = new PrimitiveSymbol_Text();

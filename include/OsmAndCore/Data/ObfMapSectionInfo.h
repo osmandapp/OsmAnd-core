@@ -63,7 +63,8 @@ namespace OsmAnd
         QHash< QString, QHash<QString, uint32_t> > encodingRuleIds;
         QHash< uint32_t, ObfMapSectionDecodingRule > decodingRules;
         uint32_t name_encodingRuleId;
-        uint32_t latinName_encodingRuleId;
+        QHash< QString, uint32_t > localizedName_encodingRuleIds;
+        QSet< uint32_t > namesRuleId;
         uint32_t ref_encodingRuleId;
         uint32_t naturalCoastline_encodingRuleId;
         uint32_t naturalLand_encodingRuleId;

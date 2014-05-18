@@ -1203,7 +1203,7 @@ namespace OsmAnd
     {
         Invariant = -1,
 
-        Latin,
+        Localized,
         Native
     };
 }
