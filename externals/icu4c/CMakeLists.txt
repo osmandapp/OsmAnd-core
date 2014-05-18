@@ -25,8 +25,8 @@ if (CMAKE_TARGET_OS STREQUAL "windows")
 			-D_CRT_SECURE_NO_WARNINGS
 			-D_CRT_NONSTDC_NO_WARNINGS
 		)
-	endif ()
-endif ()
+	endif()
+endif()
 
 target_compile_definitions(icu4c_static
 	PRIVATE

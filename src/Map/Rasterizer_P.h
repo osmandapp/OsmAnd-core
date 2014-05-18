@@ -179,7 +179,7 @@ namespace OsmAnd
         struct PrimitiveSymbol_Text : public PrimitiveSymbol
         {
             QString value;
-            LanguageId langId;
+            LanguageId languageId;
             bool drawOnPath;
             int verticalOffset;
             uint32_t color;

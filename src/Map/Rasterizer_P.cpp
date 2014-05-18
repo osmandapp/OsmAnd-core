@@ -1031,15 +1031,15 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
             continue;
 
         // Determine language of this text
-        auto langId = LanguageId::Invariant;
+        auto languageId = LanguageId::Invariant;
         if ((nameTagId == encDecRules->name_encodingRuleId || nameTagId == localizedNameRuleId) && hasLocalizedName && hasNativeName)
-            langId = (nameTagId == localizedNameRuleId) ? LanguageId::Localized : LanguageId::Native;
+            languageId = (nameTagId == localizedNameRuleId) ? LanguageId::Localized : LanguageId::Native;
 
         // Create primitive
         const auto text = new PrimitiveSymbol_Text();
         text->primitive = primitive;
         text->location31 = location;
-        text->langId = langId;
+        text->languageId = languageId;
         text->value = name;
 
         text->drawOnPath = false;
@@ -2573,7 +2573,7 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                         qMove(std::shared_ptr<const SkBitmap>(pBitmap)),
                         textSymbol->order,
                         text,
-                        textSymbol->langId,
+                        textSymbol->languageId,
                         textSymbol->minDistance,
                         glyphsWidth);
                     assert(static_cast<bool>(rasterizedSymbol->bitmap));
@@ -2595,7 +2595,7 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                         qMove(std::shared_ptr<const SkBitmap>(pBitmap)),
                         textSymbol->order,
                         text,
-                        textSymbol->langId,
+                        textSymbol->languageId,
                         textSymbol->minDistance,
                         textSymbol->location31,
                         (constructedGroup->symbols.isEmpty() ? PointI() : totalOffset));

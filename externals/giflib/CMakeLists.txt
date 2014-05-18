@@ -40,7 +40,7 @@ else()
 	set(X_DISPLAY_MISSING ON)
 
 	configure_file("config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/config.h")
-endif ()
+endif()
 
 add_library(gif_static STATIC
 	"upstream.patched/lib/dgif_lib.c"
@@ -58,12 +58,12 @@ if (CMAKE_TARGET_OS STREQUAL "windows")
 			-D_CRT_SECURE_NO_WARNINGS
 			-D_CRT_NONSTDC_NO_WARNINGS
 		)
-	endif ()
+	endif()
 
 	set(target_specific_private_definitions ${target_specific_private_definitions}
 		-DWINDOWS32
 	)
-endif ()
+endif()
 
 target_compile_definitions(gif_static
 	PRIVATE
@@ -81,9 +81,9 @@ if (CMAKE_TARGET_OS STREQUAL "windows")
 			set(target_specific_public_includes ${target_specific_public_includes}
 				"include/stdbool.h"
 			)
-		endif ()
-	endif ()
-endif ()
+		endif()
+	endif()
+endif()
 
 target_include_directories(gif_static
 	PRIVATE

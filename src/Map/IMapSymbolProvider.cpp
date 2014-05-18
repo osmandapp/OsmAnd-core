@@ -30,7 +30,7 @@ OsmAnd::MapSymbol::MapSymbol(
     const std::shared_ptr<const SkBitmap>& bitmap_,
     const int order_,
     const QString& content_,
-    const LanguageId& langId_,
+    const LanguageId& languageId_,
     const PointI& minDistance_)
     : _bitmap(bitmap_)
     , group(group_)
@@ -38,7 +38,7 @@ OsmAnd::MapSymbol::MapSymbol(
     , bitmap(_bitmap)
     , order(order_)
     , content(content_)
-    , langId(langId_)
+    , languageId(languageId_)
     , minDistance(minDistance_)
 {
 }
@@ -58,11 +58,11 @@ OsmAnd::MapPinnedSymbol::MapPinnedSymbol(
     const std::shared_ptr<const SkBitmap>& bitmap_,
     const int order_,
     const QString& content_,
-    const LanguageId& langId_,
+    const LanguageId& languageId_,
     const PointI& minDistance_,
     const PointI& location31_,
     const PointI& offset_)
-    : MapSymbol(group_, mapObject_, bitmap_, order_, content_, langId_, minDistance_)
+    : MapSymbol(group_, mapObject_, bitmap_, order_, content_, languageId_, minDistance_)
     , location31(location31_)
     , offset(offset_)
 {
@@ -74,7 +74,7 @@ OsmAnd::MapPinnedSymbol::~MapPinnedSymbol()
 
 OsmAnd::MapSymbol* OsmAnd::MapPinnedSymbol::cloneWithReplacedBitmap(const std::shared_ptr<const SkBitmap>& replacementBitmap) const
 {
-    return new MapPinnedSymbol(group, mapObject, replacementBitmap, order, content, langId, minDistance, location31, offset);
+    return new MapPinnedSymbol(group, mapObject, replacementBitmap, order, content, languageId, minDistance, location31, offset);
 }
 
 OsmAnd::MapSymbolOnPath::MapSymbolOnPath(
@@ -83,10 +83,10 @@ OsmAnd::MapSymbolOnPath::MapSymbolOnPath(
     const std::shared_ptr<const SkBitmap>& bitmap_,
     const int order_,
     const QString& content_,
-    const LanguageId& langId_,
+    const LanguageId& languageId_,
     const PointI& minDistance_,
     const QVector<float>& glyphsWidth_)
-    : MapSymbol(group_, mapObject_, bitmap_, order_, content_, langId_, minDistance_)
+    : MapSymbol(group_, mapObject_, bitmap_, order_, content_, languageId_, minDistance_)
     , glyphsWidth(glyphsWidth_)
 {
 }
@@ -97,7 +97,7 @@ OsmAnd::MapSymbolOnPath::~MapSymbolOnPath()
 
 OsmAnd::MapSymbol* OsmAnd::MapSymbolOnPath::cloneWithReplacedBitmap(const std::shared_ptr<const SkBitmap>& replacementBitmap) const
 {
-    return new MapSymbolOnPath(group, mapObject, replacementBitmap, order, content, langId, minDistance, glyphsWidth);
+    return new MapSymbolOnPath(group, mapObject, replacementBitmap, order, content, languageId, minDistance, glyphsWidth);
 }
 
 OsmAnd::MapSymbolsTile::MapSymbolsTile(const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups_)

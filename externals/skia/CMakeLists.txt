@@ -33,15 +33,15 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86" OR (CMAKE_TARGET_CPU_ARCH_FAMILY
 			"upstream.patched/src/opts/SkBitmapProcState_opts_SSSE3.cpp"
 			PROPERTIES
 				COMPILE_FLAGS "-mssse3")
-	endif ()
-endif ()
+	endif()
+endif()
 if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios"))
 	set(used_arch_specific_sources TRUE)
 	if (NOT CMAKE_TARGET_OS STREQUAL "ios")
 		set(target_specific_definitions_public ${target_specific_definitions_public}
 			-D__ARM_HAVE_OPTIONAL_NEON_SUPPORT
 		)
-	endif ()
+	endif()
 	set(target_specific_sources "${target_specific_sources}"
 		"upstream.patched/src/opts/opts_check_arm.cpp"
 		"upstream.patched/src/opts/SkBlitRow_opts_arm.cpp"
@@ -61,8 +61,8 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR (CMAKE_TARGET_CPU_ARCH_FAMILY
 			"upstream.patched/src/opts/memset.arm.S"
 			PROPERTIES
 				COMPILE_FLAGS "-no-integrated-as")
-	endif ()
-endif ()
+	endif()
+endif()
 if (NOT used_arch_specific_sources)
 	set(target_specific_sources "${target_specific_sources}"
 		"upstream.patched/src/opts/SkBlitRow_opts_none.cpp"
@@ -70,7 +70,7 @@ if (NOT used_arch_specific_sources)
 		"upstream.patched/src/opts/SkBitmapProcState_opts_none.cpp"
 		"upstream.patched/src/opts/SkUtils_opts_none.cpp"
 	)
-endif ()
+endif()
 
 if (CMAKE_TARGET_OS STREQUAL "windows")
 	set(target_specific_include_dirs_private ${target_specific_include_dirs_private}
@@ -181,7 +181,7 @@ elseif (CMAKE_TARGET_OS STREQUAL "linux")
 		freetype2_static
 		pthread
 	)
-endif ()
+endif()
 
 file(GLOB src_core "upstream.patched/src/core/*")
 file(GLOB src_effects "upstream.patched/src/effects/*")
@@ -334,4 +334,4 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "io
 	set_target_properties(skia_static
 		PROPERTIES
 			XCODE_ATTRIBUTE_EXCLUDED_SOURCE_FILE_NAMES[sdk=iphonesimulator*][arch=*] "${ios_iphonesimulator_exclude}")
-endif ()
+endif()

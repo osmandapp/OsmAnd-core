@@ -14,7 +14,7 @@ if (CMAKE_TARGET_OS STREQUAL "linux")
 		dl
 		rt
 	)
-endif ()
+endif()
 if (CMAKE_TARGET_OS STREQUAL "darwin")
 	find_library(CORESERVICES_LIBRARY CoreServices)
 	find_library(SYSTEMCONFIGURATION_LIBRARY SystemConfiguration)
@@ -28,7 +28,7 @@ if (CMAKE_TARGET_OS STREQUAL "darwin")
 		"${SECURITY_LIBRARY}/Security"
 		${ZLIB_LIBRARY}
 	)
-endif ()
+endif()
 
 if (CMAKE_COMPILER_FAMILY STREQUAL "msvc")
 	# Force warning to be an error "deletion of pointer to incomplete type 'type'; no destructor called"
@@ -38,7 +38,7 @@ if (CMAKE_COMPILER_FAMILY STREQUAL "msvc")
 	# Disable warning 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4290")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4290")
-endif ()
+endif()
 
 # 3D rendering: OpenGL, OpenGLES2, Direct3D
 if (CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "windows" OR CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android")
@@ -55,7 +55,7 @@ if (CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMA
 		${headers_opengl}
 		${sources_opengl}
 	)
-endif ()
+endif()
 if (CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "windows")
 	find_package(OpenGL REQUIRED)
 	set(target_specific_public_definitions ${target_specific_public_definitions}
@@ -78,7 +78,7 @@ if (CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMA
 		${headers_opengl3}
 		${sources_opengl3}
 	)
-endif ()
+endif()
 if (CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android")
 	set(target_specific_private_definitions ${target_specific_private_definitions}
 		-DOSMAND_OPENGLES2_RENDERER_SUPPORTED
@@ -89,7 +89,7 @@ if (CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android")
 		${headers_opengles2}
 		${sources_opengles2}
 	)
-endif ()
+endif()
 
 file(GLOB_RECURSE includes "include/*.h*")
 file(GLOB headers "src/*.h*")
@@ -165,13 +165,13 @@ if (OSMAND_EMBEDDED_QT)
 		find_package(Qt5Core REQUIRED PATHS "${OSMAND_EMBEDDED_QT_SHARED}/lib/cmake" NO_DEFAULT_PATH)
 	elseif (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 		find_package(Qt5Core REQUIRED PATHS "${OSMAND_EMBEDDED_QT_STATIC}/lib/cmake" NO_DEFAULT_PATH)
-	endif ()
+	endif()
 else()
 	# If not using embedded QT, find packages it as usual
 	find_package(Qt5Core REQUIRED)
 	find_package(Qt5Network REQUIRED)
 	find_package(Qt5Sql REQUIRED)
-endif ()
+endif()
 
 file(STRINGS "${CMAKE_CURRENT_LIST_DIR}/embed-resources.list" OsmAndCore_resources_list)
 set(OsmAndCore_resources)
@@ -202,7 +202,7 @@ else()
 			${OsmAndCore_resources}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
 		COMMENT "Embedding resources...")
-endif ()
+endif()
 set(merged_sources ${merged_sources}
 	${OsmAndCore_resources_bundle}
 )
@@ -237,12 +237,12 @@ if (CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 			set(Qt5Core_SHARED_LIBRARIES ${Qt5Core_SHARED_LIBRARIES}
 				${Qt5Core_SHARED_LIBRARY}
 			)
-		endif ()
+		endif()
 		if (Qt5Cored_SHARED_LIBRARY)
 			set(Qt5Core_SHARED_LIBRARIES ${Qt5Core_SHARED_LIBRARIES}
 				debug ${Qt5Cored_SHARED_LIBRARY}
 			)
-		endif ()
+		endif()
 
 		find_library(Qt5Network_SHARED_LIBRARY "Qt5Network" PATHS "${OSMAND_EMBEDDED_QT_SHARED}/lib" NO_DEFAULT_PATH)
 		find_library(Qt5Networkd_SHARED_LIBRARY "Qt5Networkd" PATHS "${OSMAND_EMBEDDED_QT_SHARED}/lib" NO_DEFAULT_PATH)
@@ -255,12 +255,12 @@ if (CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 			set(Qt5Network_SHARED_LIBRARIES ${Qt5Network_SHARED_LIBRARIES}
 				${Qt5Network_SHARED_LIBRARY}
 			)
-		endif ()
+		endif()
 		if (Qt5Networkd_SHARED_LIBRARY)
 			set(Qt5Network_SHARED_LIBRARIES ${Qt5Network_SHARED_LIBRARIES}
 				debug ${Qt5Networkd_SHARED_LIBRARY}
 			)
-		endif ()
+		endif()
 
 		find_library(Qt5Sql_SHARED_LIBRARY "Qt5Sql" PATHS "${OSMAND_EMBEDDED_QT_SHARED}/lib" NO_DEFAULT_PATH)
 		find_library(Qt5Sqld_SHARED_LIBRARY "Qt5Sqld" PATHS "${OSMAND_EMBEDDED_QT_SHARED}/lib" NO_DEFAULT_PATH)
@@ -273,12 +273,12 @@ if (CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 			set(Qt5Sql_SHARED_LIBRARIES ${Qt5Sql_SHARED_LIBRARIES}
 				${Qt5Sql_SHARED_LIBRARY}
 			)
-		endif ()
+		endif()
 		if (Qt5Sqld_SHARED_LIBRARY)
 			set(Qt5Sql_SHARED_LIBRARIES ${Qt5Sql_SHARED_LIBRARIES}
 				debug ${Qt5Sqld_SHARED_LIBRARY}
 			)
-		endif ()
+		endif()
 
 		target_include_directories(OsmAndCore_shared
 			PUBLIC
@@ -298,7 +298,7 @@ if (CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 				LINK_PUBLIC
 					objc
 			)
-		endif ()
+		endif()
 	else()
 		target_link_libraries(OsmAndCore_shared
 			LINK_PUBLIC
@@ -306,13 +306,13 @@ if (CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 				Qt5::Network
 				Qt5::Core
 		)
-	endif ()
+	endif()
 
 	target_link_libraries(OsmAndCore_shared
 		LINK_PUBLIC
 			${merged_link_libs_public}
 	)
-endif ()
+endif()
 
 if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 	add_library(OsmAndCore_static STATIC ${merged_sources})
@@ -344,12 +344,12 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 			set(Qt5Core_STATIC_LIBRARIES ${Qt5Core_STATIC_LIBRARIES}
 				${Qt5Core_STATIC_LIBRARY}
 			)
-		endif ()
+		endif()
 		if (Qt5Cored_STATIC_LIBRARY)
 			set(Qt5Core_STATIC_LIBRARIES ${Qt5Core_STATIC_LIBRARIES}
 				debug ${Qt5Cored_STATIC_LIBRARY}
 			)
-		endif ()
+		endif()
 
 		find_library(Qt5Network_STATIC_LIBRARY "Qt5Network" PATHS "${OSMAND_EMBEDDED_QT_STATIC}/lib" NO_DEFAULT_PATH)
 		find_library(Qt5Networkd_STATIC_LIBRARY "Qt5Networkd" PATHS "${OSMAND_EMBEDDED_QT_STATIC}/lib" NO_DEFAULT_PATH)
@@ -362,12 +362,12 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 			set(Qt5Network_STATIC_LIBRARIES ${Qt5Network_STATIC_LIBRARIES}
 				${Qt5Network_STATIC_LIBRARY}
 			)
-		endif ()
+		endif()
 		if (Qt5Networkd_STATIC_LIBRARY)
 			set(Qt5Network_STATIC_LIBRARIES ${Qt5Network_STATIC_LIBRARIES}
 				debug ${Qt5Networkd_STATIC_LIBRARY}
 			)
-		endif ()
+		endif()
 
 		find_library(Qt5Sql_STATIC_LIBRARY "Qt5Sql" PATHS "${OSMAND_EMBEDDED_QT_STATIC}/lib" NO_DEFAULT_PATH)
 		find_library(Qt5Sqld_STATIC_LIBRARY "Qt5Sqld" PATHS "${OSMAND_EMBEDDED_QT_STATIC}/lib" NO_DEFAULT_PATH)
@@ -380,12 +380,12 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 			set(Qt5Sql_STATIC_LIBRARIES ${Qt5Sql_STATIC_LIBRARIES}
 				${Qt5Sql_STATIC_LIBRARY}
 			)
-		endif ()
+		endif()
 		if (Qt5Sqld_STATIC_LIBRARY)
 			set(Qt5Sql_STATIC_LIBRARIES ${Qt5Sql_STATIC_LIBRARIES}
 				debug ${Qt5Sqld_STATIC_LIBRARY}
 			)
-		endif ()
+		endif()
 
 		target_include_directories(OsmAndCore_static
 			PUBLIC
@@ -405,7 +405,7 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 				LINK_PUBLIC
 					objc
 			)
-		endif ()
+		endif()
 	else()
 		target_link_libraries(OsmAndCore_static
 			LINK_PUBLIC
@@ -413,10 +413,10 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 				Qt5::Network
 				Qt5::Core
 		)
-	endif ()
+	endif()
 
 	target_link_libraries(OsmAndCore_static
 		LINK_PUBLIC
 			${merged_link_libs_public}
 	)
-endif ()
+endif()
