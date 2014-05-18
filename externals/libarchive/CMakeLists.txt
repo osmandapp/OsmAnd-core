@@ -25,6 +25,14 @@ else()
 	unset(HAVE_ACL_USER) # True for systems with POSIX ACL support
 	check_include_file("attr/xattr.h" HAVE_ATTR_XATTR_H)
 	check_include_file("bzlib.h" HAVE_BZLIB_H)
+	if (HAVE_BZLIB_H)
+		find_package(BZip2)
+		if (NOT BZIP2_FOUND)
+			set(HAVE_BZLIB_H OFF)
+		else()
+			include_directories(${BZIP_INCLUDE_DIRS})
+		endif()
+	endif ()
 	check_function_exists("chflags" HAVE_CHFLAGS)
 	check_function_exists("chown" HAVE_CHOWN)
 	check_function_exists("chroot" HAVE_CHROOT)
@@ -540,4 +548,5 @@ target_include_directories(archive_static
 target_link_libraries(archive_static
 	LINK_PUBLIC
 		z_static
+		${BZIP2_LIBRARIES}
 )
