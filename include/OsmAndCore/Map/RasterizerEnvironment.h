@@ -30,11 +30,13 @@ namespace OsmAnd
         RasterizerEnvironment(
             const std::shared_ptr<const MapStyle>& style,
             const float displayDensityFactor,
+            const QString& localeLanguageId = QLatin1String("en"),
             const std::shared_ptr<const IExternalResourcesProvider>& externalResourcesProvider = nullptr);
         virtual ~RasterizerEnvironment();
 
         const std::shared_ptr<const MapStyle> style;
         const float displayDensityFactor;
+        const QString localeLanguageId;
         const std::shared_ptr<const IExternalResourcesProvider> externalResourcesProvider;
 
         const std::shared_ptr<const ObfMapSectionInfo>& dummyMapSection;

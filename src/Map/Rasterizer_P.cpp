@@ -950,7 +950,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
         : names.constFind(encDecRules->name_encodingRuleId);
     auto hasNativeName = (citNativeName != citNamesEnd);
 
-    const auto citLocalizedNameRuleId = encDecRules->localizedName_encodingRuleIds.constFind(QLatin1String("en"));
+    const auto citLocalizedNameRuleId = encDecRules->localizedName_encodingRuleIds.constFind(env.owner->localeLanguageId);
     const auto localizedNameRuleId =
         (citLocalizedNameRuleId == encDecRules->localizedName_encodingRuleIds.cend())
         ? std::numeric_limits<uint32_t>::max()

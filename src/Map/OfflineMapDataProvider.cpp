@@ -8,11 +8,12 @@ OsmAnd::OfflineMapDataProvider::OfflineMapDataProvider(
     const std::shared_ptr<const IObfsCollection>& obfsCollection_,
     const std::shared_ptr<const MapStyle>& mapStyle_,
     const float displayDensityFactor,
+    const QString& localeLanguageId /*= QLatin1String("en")*/,
     const std::shared_ptr<const IExternalResourcesProvider>& externalResourcesProvider /*= nullptr*/ )
     : _p(new OfflineMapDataProvider_P(this))
     , obfsCollection(obfsCollection_)
     , mapStyle(mapStyle_)
-    , rasterizerEnvironment(new RasterizerEnvironment(mapStyle_, displayDensityFactor, externalResourcesProvider))
+    , rasterizerEnvironment(new RasterizerEnvironment(mapStyle_, displayDensityFactor, localeLanguageId, externalResourcesProvider))
     , rasterizerSharedContext(new RasterizerSharedContext())
 {
 }

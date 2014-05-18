@@ -4,6 +4,7 @@
 #include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <QString>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
@@ -30,6 +31,7 @@ namespace OsmAnd
             const std::shared_ptr<const IObfsCollection>& obfsCollection,
             const std::shared_ptr<const MapStyle>& mapStyle,
             const float displayDensityFactor,
+            const QString& localeLanguageId = QLatin1String("en"),
             const std::shared_ptr<const IExternalResourcesProvider>& externalResourcesProvider = nullptr);
         virtual ~OfflineMapDataProvider();
 
