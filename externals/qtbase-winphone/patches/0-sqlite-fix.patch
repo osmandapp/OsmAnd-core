@@ -1,0 +1,12 @@
+diff -rupN upstream.original/src/3rdparty/sqlite.pri upstream.patched/src/3rdparty/sqlite.pri
+--- upstream.original/src/3rdparty/sqlite.pri	2014-05-20 16:43:41.869910800 +0300
++++ upstream.patched/src/3rdparty/sqlite.pri	2014-05-21 08:34:45.116013200 +0300
+@@ -2,7 +2,7 @@ CONFIG(release, debug|release):DEFINES *
+ DEFINES += SQLITE_OMIT_LOAD_EXTENSION SQLITE_OMIT_COMPLETE SQLITE_ENABLE_FTS3 SQLITE_ENABLE_FTS3_PARENTHESIS SQLITE_ENABLE_RTREE
+ !contains(CONFIG, largefile):DEFINES += SQLITE_DISABLE_LFS
+ contains(QT_CONFIG, posix_fallocate):DEFINES += HAVE_POSIX_FALLOCATE=1
+-winrt: DEFINES += SQLITE_OS_WINRT
++winrt: DEFINES += SQLITE_OS_WINRT SQLITE_WIN32_FILEMAPPING_API
+ qnx: DEFINES += _QNX_SOURCE
+ INCLUDEPATH +=  $$PWD/sqlite
+ SOURCES +=      $$PWD/sqlite/sqlite3.c
