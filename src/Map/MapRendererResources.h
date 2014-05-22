@@ -110,8 +110,7 @@ namespace OsmAnd
             virtual bool uploadToGPU() = 0;
             virtual void unloadFromGPU() = 0;
         public:
-            virtual ~IResource()
-            {}
+            virtual ~IResource();
 
         friend class OsmAnd::MapRendererResources;
         };
@@ -120,15 +119,20 @@ namespace OsmAnd
         class GenericResource : public IResource
         {
         private:
+            bool _isJunk;
         protected:
             GenericResource(MapRendererResources* owner, const ResourceType type);
 
             Concurrent::Task* _requestTask;
+
+            void markAsJunk();
         public:
             virtual ~GenericResource();
 
             MapRendererResources* const owner;
             const ResourceType type;
+
+            const bool& isJunk;
 
         friend class OsmAnd::MapRendererResources;
         };
@@ -139,15 +143,10 @@ namespace OsmAnd
             , public TilesCollectionEntryWithState<BaseTiledResource, ResourceState, ResourceState::Unknown>
         {
         private:
-            bool _isJunk;
         protected:
             BaseTiledResource(MapRendererResources* owner, const ResourceType type, const TilesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom);
-
-            void markAsJunk();
         public:
             virtual ~BaseTiledResource();
-
-            const bool& isJunk;
 
         friend class OsmAnd::MapRendererResources;
         };

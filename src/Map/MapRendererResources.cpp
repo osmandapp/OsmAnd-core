@@ -1141,11 +1141,22 @@ void OsmAnd::MapRendererResources::dumpResourcesInfo() const
     LogPrintf(LogSeverityLevel::Debug, qPrintable(dump));
 }
 
+OsmAnd::MapRendererResources::IResource::~IResource()
+{
+}
+
 OsmAnd::MapRendererResources::GenericResource::GenericResource(MapRendererResources* owner_, const ResourceType type_)
-    : _requestTask(nullptr)
+    : _isJunk(false)
+    , _requestTask(nullptr)
     , owner(owner_)
     , type(type_)
+    , isJunk(_isJunk)
 {
+}
+
+void OsmAnd::MapRendererResources::GenericResource::markAsJunk()
+{
+    _isJunk = true;
 }
 
 OsmAnd::MapRendererResources::GenericResource::~GenericResource()
@@ -1155,8 +1166,6 @@ OsmAnd::MapRendererResources::GenericResource::~GenericResource()
 OsmAnd::MapRendererResources::BaseTiledResource::BaseTiledResource(MapRendererResources* owner, const ResourceType type, const TilesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom)
     : GenericResource(owner, type)
     , TilesCollectionEntryWithState(collection, tileId, zoom)
-    , _isJunk(false)
-    , isJunk(_isJunk)
 {
 }
 
@@ -1167,11 +1176,6 @@ OsmAnd::MapRendererResources::BaseTiledResource::~BaseTiledResource()
         LogPrintf(LogSeverityLevel::Error, "Tiled resource for %dx%d@%d still resides in GPU memory. This may cause GPU memory leak", tileId.x, tileId.y, zoom);
 
     safeUnlink();
-}
-
-void OsmAnd::MapRendererResources::BaseTiledResource::markAsJunk()
-{
-    _isJunk = true;
 }
 
 OsmAnd::MapRendererResources::TiledResourcesCollection::TiledResourcesCollection(const ResourceType& type_)
