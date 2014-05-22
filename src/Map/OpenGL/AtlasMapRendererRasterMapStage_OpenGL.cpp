@@ -450,7 +450,8 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
         bool appliedElevationVertexAttribArray = false;
         if (elevationDataEnabled)
         {
-            const auto resourcesCollection = getResources().getCollection(ResourceType::ElevationData, currentState.elevationDataProvider);
+            const auto& resourcesCollection_ = getResources().getCollection(ResourceType::ElevationData, currentState.elevationDataProvider);
+            const auto& resourcesCollection = std::static_pointer_cast<const MapRendererResources::TiledResourcesCollection>(resourcesCollection_);
 
             // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
             std::shared_ptr< const GPUAPI::ResourceInGPU > gpuResource;
@@ -557,7 +558,8 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
             layerLinearIdx++;
 
             // Get resources collection
-            const auto resourcesCollection = getResources().getCollection(ResourceType::RasterMap, currentState.rasterLayerProviders[layerId]);
+            const auto& resourcesCollection_ = getResources().getCollection(ResourceType::RasterMap, currentState.rasterLayerProviders[layerId]);
+            const auto& resourcesCollection = std::static_pointer_cast<const MapRendererResources::TiledResourcesCollection>(resourcesCollection_);
 
             const auto& perTile_vs = tileProgram.vs.param.rasterTileLayers[layerLinearIdx];
             const auto& perTile_fs = tileProgram.fs.param.rasterTileLayers[layerLinearIdx];

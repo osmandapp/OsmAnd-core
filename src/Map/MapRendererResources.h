@@ -102,57 +102,89 @@ namespace OsmAnd
             JustBeforeDeath
         };
 
-        // Generic interface that all resources must implement
-        class IResource
-        {
-        protected:
-            virtual bool obtainData(bool& dataAvailable, const IQueryController* queryController = nullptr) = 0;
-            virtual bool uploadToGPU() = 0;
-            virtual void unloadFromGPU() = 0;
-        public:
-            virtual ~IResource();
-
-        friend class OsmAnd::MapRendererResources;
-        };
-
-        // Generic resource
-        class GenericResource : public IResource
+        // Base resource
+        class BaseResource
         {
         private:
             bool _isJunk;
         protected:
-            GenericResource(MapRendererResources* owner, const ResourceType type);
+            BaseResource(MapRendererResources* owner, const ResourceType type);
 
             Concurrent::Task* _requestTask;
 
             void markAsJunk();
+
+            virtual bool obtainData(bool& dataAvailable, const IQueryController* queryController = nullptr) = 0;
+            virtual bool uploadToGPU() = 0;
+            virtual void unloadFromGPU() = 0;
         public:
-            virtual ~GenericResource();
+            virtual ~BaseResource();
 
             MapRendererResources* const owner;
             const ResourceType type;
 
             const bool& isJunk;
 
+            virtual ResourceState getState() const = 0;
+            virtual void setState(const ResourceState newState) = 0;
+            virtual bool setStateIf(const ResourceState testState, const ResourceState newState) = 0;
+
         friend class OsmAnd::MapRendererResources;
         };
 
         // Base class for all tiled resources
         class BaseTiledResource
-            : public GenericResource
+            : public BaseResource
             , public TilesCollectionEntryWithState<BaseTiledResource, ResourceState, ResourceState::Unknown>
         {
+            typedef TilesCollectionEntryWithState<BaseTiledResource, ResourceState, ResourceState::Unknown> BaseTilesCollectionEntryWithState;
+
         private:
         protected:
-            BaseTiledResource(MapRendererResources* owner, const ResourceType type, const TilesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom);
+            BaseTiledResource(
+                MapRendererResources* owner,
+                const ResourceType type,
+                const TilesCollection<BaseTiledResource>& collection,
+                const TileId tileId,
+                const ZoomLevel zoom);
         public:
             virtual ~BaseTiledResource();
+
+            virtual ResourceState getState() const;
+            virtual void setState(const ResourceState newState);
+            virtual bool setStateIf(const ResourceState testState, const ResourceState newState);
 
         friend class OsmAnd::MapRendererResources;
         };
 
+        // Base Collection of resources
+        class BaseResourcesCollection
+        {
+        public:
+            typedef std::function<void (const std::shared_ptr<BaseResource>& resource, bool& cancel)> ResourceActionCallback;
+            typedef std::function<bool (const std::shared_ptr<BaseResource>& resource, bool& cancel)> ResourceFilterCallback;
+
+        private:
+        protected:
+            BaseResourcesCollection(const ResourceType& type);
+        public:
+            virtual ~BaseResourcesCollection();
+
+            const MapRendererResources::ResourceType type;
+
+            virtual int getResourcesCount() const = 0;
+            virtual void forEachResourceExecute(const ResourceActionCallback action) = 0;
+            virtual void obtainResources(QList< std::shared_ptr<BaseResource> >* outList, const ResourceFilterCallback filter) = 0;
+            virtual void removeResources(const ResourceFilterCallback filter) = 0;
+
+        friend class OsmAnd::MapRendererResources;
+        };
+        typedef std::array< QList< std::shared_ptr<BaseResourcesCollection> >, ResourceTypesCount > ResourcesStorage;
+
         // Collection of tiled resources
-        class TiledResourcesCollection : public TilesCollection<BaseTiledResource>
+        class TiledResourcesCollection
+            : public BaseResourcesCollection
+            , public TilesCollection<BaseTiledResource>
         {
         private:
         protected:
@@ -163,12 +195,13 @@ namespace OsmAnd
         public:
             virtual ~TiledResourcesCollection();
 
-            const MapRendererResources::ResourceType type;
+            virtual int getResourcesCount() const;
+            virtual void forEachResourceExecute(const ResourceActionCallback action);
+            virtual void obtainResources(QList< std::shared_ptr<BaseResource> >* outList, const ResourceFilterCallback filter);
+            virtual void removeResources(const ResourceFilterCallback filter);
 
         friend class OsmAnd::MapRendererResources;
         };
-
-        typedef std::array< QList< std::shared_ptr<TiledResourcesCollection> >, ResourceTypesCount > TiledResourcesStorage;
 
         // Resource of map tile
         class MapTileResource : public BaseTiledResource
@@ -256,25 +289,28 @@ namespace OsmAnd
         protected:
         public:
             ResourceRequestTask(
-                const std::shared_ptr<IResource>& requestedResource,
-                const Concurrent::TaskHost::Bridge& bridge, ExecuteSignature executeMethod, PreExecuteSignature preExecuteMethod = nullptr, PostExecuteSignature postExecuteMethod = nullptr);
+                const std::shared_ptr<BaseResource>& requestedResource,
+                const Concurrent::TaskHost::Bridge& bridge,
+                ExecuteSignature executeMethod,
+                PreExecuteSignature preExecuteMethod = nullptr,
+                PostExecuteSignature postExecuteMethod = nullptr);
             virtual ~ResourceRequestTask();
 
-            const std::shared_ptr<IResource> requestedResource;
+            const std::shared_ptr<BaseResource> requestedResource;
         };
 
         // Each provider has a binded resource collection, and these are bindings:
         struct Binding
         {
-            QHash< std::shared_ptr<IMapProvider>, std::shared_ptr<TiledResourcesCollection> > providersToCollections;
-            QHash< std::shared_ptr<TiledResourcesCollection>, std::shared_ptr<IMapProvider> > collectionsToProviders;
+            QHash< std::shared_ptr<IMapProvider>, std::shared_ptr<BaseResourcesCollection> > providersToCollections;
+            QHash< std::shared_ptr<BaseResourcesCollection>, std::shared_ptr<IMapProvider> > collectionsToProviders;
         };
         std::array< Binding, ResourceTypesCount > _bindings;
-        bool obtainProviderFor(TiledResourcesCollection* const resourcesRef, std::shared_ptr<IMapProvider>& provider) const;
-        bool isDataSourceAvailableFor(const std::shared_ptr<TiledResourcesCollection>& collection) const;
+        bool obtainProviderFor(BaseResourcesCollection* const resourcesRef, std::shared_ptr<IMapProvider>& provider) const;
+        bool isDataSourceAvailableFor(const std::shared_ptr<BaseResourcesCollection>& collection) const;
 
         // Resources storages:
-        TiledResourcesStorage _storage;
+        ResourcesStorage _storageByType;
 
         // Symbols:
         mutable QMutex _mapSymbolsByOrderMutex;
@@ -301,7 +337,7 @@ namespace OsmAnd
         void cleanupJunkResources(const QSet<TileId>& activeTiles, const ZoomLevel activeZoom);
         unsigned int unloadResources();
         unsigned int uploadResources(const unsigned int limit = 0u, bool* const outMoreThanLimitAvailable = nullptr);
-        void releaseResourcesFrom(const std::shared_ptr<TiledResourcesCollection>& collection);
+        void releaseResourcesFrom(const std::shared_ptr<BaseResourcesCollection>& collection);
         void requestResourcesUploadOrUnload();
         void releaseAllResources();
 
@@ -341,7 +377,7 @@ namespace OsmAnd
         const std::shared_ptr<const GPUAPI::ResourceInGPU>& processingTileStub;
         const std::shared_ptr<const GPUAPI::ResourceInGPU>& unavailableTileStub;
 
-        std::shared_ptr<const TiledResourcesCollection> getCollection(const ResourceType type, const std::shared_ptr<IMapProvider>& ofProvider) const;
+        std::shared_ptr<const BaseResourcesCollection> getCollection(const ResourceType type, const std::shared_ptr<IMapProvider>& ofProvider) const;
 
         QMutex& getSymbolsMapMutex() const;
         const MapSymbolsByOrder& getMapSymbolsByOrder() const;
