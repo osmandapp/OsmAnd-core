@@ -7,17 +7,37 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <QList>
 #include <QVector>
+#include <QString>
 
 #include <SkBitmap.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Callable.h>
 #include <OsmAndCore/Map/IMapProvider.h>
 #include <OsmAndCore/Map/IRetainableResource.h>
-#include <OsmAndCore/Data/Model/MapObject.h>
 
 namespace OsmAnd
 {
+    namespace Model
+    {
+        class ObjectWithId;
+    }
+
+    class OSMAND_CORE_API IMapSymbolProvider : public IMapProvider
+    {
+        Q_DISABLE_COPY(IMapSymbolProvider);
+
+    public:
+        OSMAND_CALLABLE(FilterCallback, bool, const IMapSymbolProvider* const provider, const std::shared_ptr<const Model::ObjectWithId>& object, const bool shareable);
+
+    private:
+    protected:
+        IMapSymbolProvider();
+    public:
+        virtual ~IMapSymbolProvider();
+    };
+
     class MapSymbol;
     class OSMAND_CORE_API MapSymbolsGroup
     {
@@ -25,10 +45,11 @@ namespace OsmAnd
     private:
     protected:
     public:
-        MapSymbolsGroup(const std::shared_ptr<const Model::MapObject>& mapObject);
+        MapSymbolsGroup(const std::shared_ptr<const Model::ObjectWithId>& object);
         virtual ~MapSymbolsGroup();
 
-        const std::shared_ptr<const Model::MapObject> mapObject;
+        const std::shared_ptr<const Model::ObjectWithId> object;
+
         QList< std::shared_ptr<const MapSymbol> > symbols;
     };
 
@@ -40,8 +61,8 @@ namespace OsmAnd
         std::shared_ptr<const SkBitmap> _bitmap;
 
         MapSymbol(
-            const std::weak_ptr<const MapSymbolsGroup>& group,
-            const std::shared_ptr<const Model::MapObject>& mapObject,
+            const std::shared_ptr<const MapSymbolsGroup>& group,
+            const bool isShareable,
             const std::shared_ptr<const SkBitmap>& bitmap,
             const int order,
             const QString& content,
@@ -51,8 +72,10 @@ namespace OsmAnd
         virtual ~MapSymbol();
 
         const std::weak_ptr<const MapSymbolsGroup> group;
+        const uint64_t groupObjectId;
 
-        const std::shared_ptr<const Model::MapObject> mapObject;
+        const bool isShareable;
+
         const std::shared_ptr<const SkBitmap>& bitmap;
         const int order;
         const QString content;
@@ -60,18 +83,39 @@ namespace OsmAnd
         const PointI minDistance;
 
         virtual void releaseNonRetainedData();
+
         virtual MapSymbol* cloneWithReplacedBitmap(const std::shared_ptr<const SkBitmap>& bitmap) const = 0;
     };
 
-    class OSMAND_CORE_API MapPinnedSymbol : public MapSymbol
+    class OSMAND_CORE_API BoundToPointMapSymbol : public MapSymbol
     {
-        Q_DISABLE_COPY(MapPinnedSymbol);
+        Q_DISABLE_COPY(BoundToPointMapSymbol);
+    private:
+    protected:
+        BoundToPointMapSymbol(
+            const std::shared_ptr<const MapSymbolsGroup>& group,
+            const bool isShareable,
+            const std::shared_ptr<const SkBitmap>& bitmap,
+            const int order,
+            const QString& content,
+            const LanguageId& languageId,
+            const PointI& minDistance,
+            const PointI& location31);
+    public:
+        virtual ~BoundToPointMapSymbol();
+
+        const PointI location31;
+    };
+
+    class OSMAND_CORE_API PinnedMapSymbol : public BoundToPointMapSymbol
+    {
+        Q_DISABLE_COPY(PinnedMapSymbol);
     private:
     protected:
     public:
-        MapPinnedSymbol(
-            const std::weak_ptr<const MapSymbolsGroup>& group,
-            const std::shared_ptr<const Model::MapObject>& mapObject,
+        PinnedMapSymbol(
+            const std::shared_ptr<const MapSymbolsGroup>& group,
+            const bool isShareable,
             const std::shared_ptr<const SkBitmap>& bitmap,
             const int order,
             const QString& content,
@@ -79,64 +123,60 @@ namespace OsmAnd
             const PointI& minDistance,
             const PointI& location31,
             const PointI& offset);
-        virtual ~MapPinnedSymbol();
+        virtual ~PinnedMapSymbol();
 
-        const PointI location31;
         const PointI offset;
 
         virtual MapSymbol* cloneWithReplacedBitmap(const std::shared_ptr<const SkBitmap>& bitmap) const;
     };
 
-    class OSMAND_CORE_API MapSymbolOnPath : public MapSymbol
+    class OSMAND_CORE_API OnSurfaceMapSymbol : public BoundToPointMapSymbol
     {
-        Q_DISABLE_COPY(MapSymbolOnPath);
+        Q_DISABLE_COPY(OnSurfaceMapSymbol);
     private:
     protected:
     public:
-        MapSymbolOnPath(
-            const std::weak_ptr<const MapSymbolsGroup>& group,
-            const std::shared_ptr<const Model::MapObject>& mapObject,
+        OnSurfaceMapSymbol(
+            const std::shared_ptr<const MapSymbolsGroup>& group,
+            const bool isShareable,
             const std::shared_ptr<const SkBitmap>& bitmap,
             const int order,
             const QString& content,
             const LanguageId& languageId,
             const PointI& minDistance,
-            const QVector<float>& glyphsWidth);
-        virtual ~MapSymbolOnPath();
+            const PointI& location31,
+            const double areaRadius,
+            const SkColor areaBaseColor);
+        virtual ~OnSurfaceMapSymbol();
 
-        const QVector<float> glyphsWidth;
+        const double areaRadius;
+        const SkColor areaBaseColor;
 
         virtual MapSymbol* cloneWithReplacedBitmap(const std::shared_ptr<const SkBitmap>& bitmap) const;
     };
 
-    class OSMAND_CORE_API MapSymbolsTile
+    class OSMAND_CORE_API OnPathMapSymbol : public MapSymbol
     {
+        Q_DISABLE_COPY(OnPathMapSymbol);
     private:
     protected:
-        MapSymbolsTile(const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups);
-
-        QList< std::shared_ptr<const MapSymbolsGroup> > _symbolsGroups;
     public:
-        virtual ~MapSymbolsTile();
+        OnPathMapSymbol(
+            const std::shared_ptr<const MapSymbolsGroup>& group,
+            const bool isShareable,
+            const std::shared_ptr<const SkBitmap>& bitmap,
+            const int order,
+            const QString& content,
+            const LanguageId& languageId,
+            const PointI& minDistance,
+            const QVector<PointI>& path,
+            const QVector<float>& glyphsWidth);
+        virtual ~OnPathMapSymbol();
 
-        const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups;
-    };
+        const QVector<PointI> path;
+        const QVector<float> glyphsWidth;
 
-    class OSMAND_CORE_API IMapSymbolProvider : public IMapProvider
-    {
-        Q_DISABLE_COPY(IMapSymbolProvider);
-    private:
-    protected:
-        IMapSymbolProvider();
-    public:
-        virtual ~IMapSymbolProvider();
-
-        virtual bool obtainSymbols(
-            const TileId tileId, const ZoomLevel zoom,
-            std::shared_ptr<const MapSymbolsTile>& outTile,
-            std::function<bool (const std::shared_ptr<const Model::MapObject>& mapObject)> filter) = 0;
-
-        virtual bool canSymbolsBeSharedFrom(const std::shared_ptr<const Model::MapObject>& mapObject);
+        virtual MapSymbol* cloneWithReplacedBitmap(const std::shared_ptr<const SkBitmap>& bitmap) const;
     };
 }
 

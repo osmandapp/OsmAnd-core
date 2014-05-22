@@ -12,7 +12,7 @@
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
 #include "PrivateImplementation.h"
-#include "IMapSymbolProvider.h"
+#include "IMapSymbolTiledProvider.h"
 #include "IRetainableResource.h"
 
 namespace OsmAnd
@@ -22,17 +22,17 @@ namespace OsmAnd
     class MapSymbolsTile;
     namespace Model
     {
-        class MapObject;
+        class ObjectWithId;
     }
 
-    class OfflineMapSymbolProvider;
-    class OfflineMapSymbolProvider_P
+    class OfflineMapStaticSymbolProvider;
+    class OfflineMapStaticSymbolProvider_P
     {
     private:
     protected:
-        OfflineMapSymbolProvider_P(OfflineMapSymbolProvider* owner);
+        OfflineMapStaticSymbolProvider_P(OfflineMapStaticSymbolProvider* owner);
 
-        ImplementationInterface<OfflineMapSymbolProvider> owner;
+        ImplementationInterface<OfflineMapStaticSymbolProvider> owner;
 
         class Tile
             : public MapSymbolsTile
@@ -49,16 +49,14 @@ namespace OsmAnd
             virtual void releaseNonRetainedData();
         };
     public:
-        virtual ~OfflineMapSymbolProvider_P();
+        virtual ~OfflineMapStaticSymbolProvider_P();
 
         bool obtainSymbols(
             const TileId tileId, const ZoomLevel zoom,
             std::shared_ptr<const MapSymbolsTile>& outTile,
-            std::function<bool (const std::shared_ptr<const Model::MapObject>& mapObject)> filter);
+            const IMapSymbolProvider::FilterCallback filterCallback);
 
-        bool canSymbolsBeSharedFrom(const std::shared_ptr<const Model::MapObject>& mapObject);
-
-    friend class OsmAnd::OfflineMapSymbolProvider;
+    friend class OsmAnd::OfflineMapStaticSymbolProvider;
     };
 }
 

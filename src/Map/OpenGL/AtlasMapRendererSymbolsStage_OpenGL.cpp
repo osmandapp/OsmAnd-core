@@ -13,7 +13,13 @@
 #include "IMapSymbolProvider.h"
 #include "QuadTree.h"
 #include "QKeyValueIterator.h"
+#include "ObjectWithId.h"
 #include "Utilities.h"
+
+//#define OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK 1
+#if !defined(OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK)
+#   define OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK 0
+#endif // !defined(OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK)
 
 OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer)
     : AtlasMapRendererStage_OpenGL(renderer)
@@ -115,10 +121,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
         visibleSOPSubpaths.reserve(mapSymbolsLayer.size());
         for(const auto& symbolEntry : rangeOf(constOf(mapSymbolsLayer)))
         {
-            const auto symbol = std::dynamic_pointer_cast<const MapSymbolOnPath>(symbolEntry.key());
+            const auto symbol = std::dynamic_pointer_cast<const OnPathMapSymbol>(symbolEntry.key());
             if (!symbol)
                 continue;
-            const auto& points31 = symbol->mapObject->points31;
+            const auto& points31 = symbol->path;
             assert(points31.size() >= 2);
 
             // Check first point to initialize subdivision
@@ -177,7 +183,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
         // For each subpath, calculate it's points in world. That's needed for both 2D and 3D SOPs
         for(auto& renderable : visibleSOPSubpaths)
         {
-            const auto& points = renderable->mapSymbol->mapObject->points31;
+            const auto& points = std::static_pointer_cast<const OnPathMapSymbol>(renderable->mapSymbol)->path;
             const auto subpathLength = renderable->subpathEndIndex - renderable->subpathStartIndex + 1;
             renderable->subpathPointsInWorld.resize(subpathLength);
             auto pPointInWorld = renderable->subpathPointsInWorld.data();
@@ -361,7 +367,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
         // Sort pinned symbols by distance to camera
         for(const auto& symbolEntry : rangeOf(constOf(mapSymbolsLayer)))
         {
-            const auto& symbol = std::dynamic_pointer_cast<const MapPinnedSymbol>(symbolEntry.key());
+            const auto& symbol = std::dynamic_pointer_cast<const PinnedMapSymbol>(symbolEntry.key());
             if (!symbol)
                 continue;
             assert(!symbolEntry.value().expired());
@@ -396,9 +402,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 
             if (const auto& renderable = std::dynamic_pointer_cast<const RenderablePinnedSymbol>(item.value()))
             {
-                const auto& symbol = std::dynamic_pointer_cast<const MapPinnedSymbol>(renderable->mapSymbol);
+                const auto& symbol = std::dynamic_pointer_cast<const PinnedMapSymbol>(renderable->mapSymbol);
                 const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
-                const auto& mapObjectId = symbol->mapObject->id;
+                const auto& groupObjectId = symbol->groupObjectId;
 
                 // Calculate position in screen coordinates (same calculation as done in shader)
                 const auto symbolOnScreen = glm::project(renderable->positionInWorld, internalState.mCameraView, internalState.mPerspectiveProjection, viewport);
@@ -410,12 +416,15 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
                 boundsInWindow.enlargeBy(PointI(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
 
+#if !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
                 // Check intersections
                 const auto intersects = intersections.test(boundsInWindow, false,
-                    [mapObjectId](const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
-                {
-                    return otherSymbol->mapObject->id != mapObjectId;
-                });
+                    [groupObjectId]
+                    (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+                    {
+                        // Only accept intersections with symbols from other groups
+                        return otherSymbol->groupObjectId != groupObjectId;
+                    });
                 if (intersects)
                 {
 #if OSMAND_DEBUG && 0
@@ -423,16 +432,20 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 #endif // OSMAND_DEBUG
                     continue;
                 }
+#endif // !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
 
                 // Query for similar content in area of "minDistance" to exclude duplicates, but keep if from same mapObject
                 if (symbol->minDistance.x > 0 || symbol->minDistance.y > 0)
                 {
                     const auto& symbolContent = symbol->content;
                     const auto hasSimilarContent = intersections.test(boundsInWindow.getEnlargedBy(symbol->minDistance), false,
-                        [symbolContent, mapObjectId](const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
-                    {
-                        return otherSymbol->content == symbolContent && otherSymbol->mapObject->id != mapObjectId;
-                    });
+                        [symbolContent, groupObjectId]
+                        (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+                        {
+                            return
+                                (otherSymbol->groupObjectId != groupObjectId) && 
+                                (otherSymbol->content == symbolContent);
+                        });
                     if (hasSimilarContent)
                     {
 #if OSMAND_DEBUG && 0
@@ -493,9 +506,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     GL_POP_GROUP_MARKER;
                 }
 
-                GL_PUSH_GROUP_MARKER(QString("[MO %1(%2) pinned \"%3\"]")
-                    .arg(symbol->mapObject->id >> 1)
-                    .arg(static_cast<int64_t>(symbol->mapObject->id) / 2)
+                GL_PUSH_GROUP_MARKER(QString("[%1(%2) pinned \"%3\"]")
+                    .arg(groupObjectId >> 1)
+                    .arg(static_cast<int64_t>(groupObjectId) / 2)
                     .arg(qPrintable(symbol->content)));
 
                 // Set symbol offset from target
@@ -529,9 +542,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
             }
             else if (const auto& renderable = std::dynamic_pointer_cast<const RenderableSymbolOnPath>(item.value()))
             {
-                const auto& symbol = std::dynamic_pointer_cast<const MapSymbolOnPath>(renderable->mapSymbol);
+                const auto& symbol = std::dynamic_pointer_cast<const OnPathMapSymbol>(renderable->mapSymbol);
                 const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
-                const auto& mapObjectId = symbol->mapObject->id;
+                const auto& groupObjectId = symbol->groupObjectId;
 
 #if OSMAND_DEBUG && 0
                 {
@@ -693,11 +706,14 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
                     oobb.enlargeBy(PointI(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
 
+#if !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
                     // Check intersections
                     const auto intersects = intersections.test(oobb, false,
-                        [mapObjectId](const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+                        [groupObjectId]
+                        (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
                         {
-                            return otherSymbol->mapObject->id != mapObjectId;
+                            // Only accept intersections with symbols from other groups
+                            return otherSymbol->groupObjectId != groupObjectId;
                         });
                     if (intersects)
                     {
@@ -706,15 +722,19 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 #endif // OSMAND_DEBUG
                         continue;
                     }
+#endif // !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
 
                     // Query for similar content in area of "minDistance" to exclude duplicates, but keep if from same mapObject
                     if (symbol->minDistance.x > 0 || symbol->minDistance.y > 0)
                     {
                         const auto& symbolContent = symbol->content;
                         const auto hasSimilarContent = intersections.test(oobb.getEnlargedBy(symbol->minDistance), false,
-                            [symbolContent, mapObjectId](const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+                            [symbolContent, groupObjectId]
+                            (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
                             {
-                                return otherSymbol->content == symbolContent && otherSymbol->mapObject->id != mapObjectId;
+                                return
+                                    (otherSymbol->groupObjectId != groupObjectId) &&
+                                    (otherSymbol->content == symbolContent);
                             });
                         if (hasSimilarContent)
                         {
@@ -768,9 +788,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                         GL_POP_GROUP_MARKER;
                     }
 
-                    GL_PUSH_GROUP_MARKER(QString("[MO %1(%2) SOP-2D \"%3\"]")
-                        .arg(symbol->mapObject->id >> 1)
-                        .arg(static_cast<int64_t>(symbol->mapObject->id) / 2)
+                    GL_PUSH_GROUP_MARKER(QString("[%1(%2) SOP-2D \"%3\"]")
+                        .arg(groupObjectId >> 1)
+                        .arg(static_cast<int64_t>(groupObjectId) / 2)
                         .arg(qPrintable(symbol->content)));
 
                     // Set glyph height
@@ -1066,12 +1086,15 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
                     oobb.enlargeBy(PointI(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
 
+#if !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
                     // Check intersections
                     const auto intersects = intersections.test(oobb, false,
-                        [mapObjectId](const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
-                    {
-                        return otherSymbol->mapObject->id != mapObjectId;
-                    });
+                        [groupObjectId]
+                        (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+                        {
+                            // Only accept intersections with symbols from other groups
+                            return otherSymbol->groupObjectId != groupObjectId;
+                        });
                     if (intersects)
                     {
 #if OSMAND_DEBUG && 0
@@ -1079,15 +1102,19 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 #endif // OSMAND_DEBUG
                         continue;
                     }
+#endif // !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
 
                     // Query for similar content in area of "minDistance" to exclude duplicates, but keep if from same mapObject
                     if (symbol->minDistance.x > 0 || symbol->minDistance.y > 0)
                     {
                         const auto& symbolContent = symbol->content;
                         const auto hasSimilarContent = intersections.test(oobb.getEnlargedBy(symbol->minDistance), false,
-                            [symbolContent, mapObjectId](const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+                            [symbolContent, groupObjectId]
+                            (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
                             {
-                                return otherSymbol->content == symbolContent && otherSymbol->mapObject->id != mapObjectId;
+                                return
+                                    (otherSymbol->groupObjectId != groupObjectId) &&
+                                    (otherSymbol->content == symbolContent);
                             });
                         if (hasSimilarContent)
                         {
@@ -1142,9 +1169,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                         GL_POP_GROUP_MARKER;
                     }
 
-                    GL_PUSH_GROUP_MARKER(QString("[MO %1(%2) SOP-3D \"%3\"]")
-                        .arg(symbol->mapObject->id >> 1)
-                        .arg(static_cast<int64_t>(symbol->mapObject->id) / 2)
+                    GL_PUSH_GROUP_MARKER(QString("[%1(%2) SOP-3D \"%3\"]")
+                        .arg(groupObjectId >> 1)
+                        .arg(static_cast<int64_t>(groupObjectId) / 2)
                         .arg(qPrintable(symbol->content)));
 
                     // Set glyph height

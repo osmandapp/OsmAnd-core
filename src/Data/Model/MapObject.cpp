@@ -6,11 +6,9 @@
 #include "ObfMapSectionInfo.h"
 
 OsmAnd::Model::MapObject::MapObject(const std::shared_ptr<const ObfMapSectionInfo>& section_, const std::shared_ptr<const ObfMapSectionLevel>& level_)
-    : _id(std::numeric_limits<uint64_t>::max())
-    , _foundation(MapFoundationType::Undefined)
+    : _foundation(MapFoundationType::Undefined)
     , section(section_)
     , level(level_)
-    , id(_id)
     , isArea(_isArea)
     , points31(_points31)
     , innerPolygonsPoints31(_innerPolygonsPoints31)

@@ -1,5 +1,5 @@
-#include "OfflineMapSymbolProvider_P.h"
-#include "OfflineMapSymbolProvider.h"
+#include "OfflineMapStaticSymbolProvider_P.h"
+#include "OfflineMapStaticSymbolProvider.h"
 
 #include "OfflineMapDataProvider.h"
 #include "OfflineMapDataTile.h"
@@ -11,20 +11,22 @@
 #include "MapObject.h"
 #include "Utilities.h"
 
-OsmAnd::OfflineMapSymbolProvider_P::OfflineMapSymbolProvider_P( OfflineMapSymbolProvider* owner_ )
+OsmAnd::OfflineMapStaticSymbolProvider_P::OfflineMapStaticSymbolProvider_P(OfflineMapStaticSymbolProvider* owner_)
     : owner(owner_)
 {
 }
 
-OsmAnd::OfflineMapSymbolProvider_P::~OfflineMapSymbolProvider_P()
+OsmAnd::OfflineMapStaticSymbolProvider_P::~OfflineMapStaticSymbolProvider_P()
 {
 }
 
-bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols(
+bool OsmAnd::OfflineMapStaticSymbolProvider_P::obtainSymbols(
     const TileId tileId, const ZoomLevel zoom,
     std::shared_ptr<const MapSymbolsTile>& outTile,
-    std::function<bool (const std::shared_ptr<const Model::MapObject>& mapObject)> filter)
+    const IMapSymbolProvider::FilterCallback filterCallback)
 {
+    const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
+
     // Obtain offline map data tile
     std::shared_ptr< const OfflineMapDataTile > dataTile;
     owner->dataProvider->obtainTile(tileId, zoom, dataTile);
@@ -42,23 +44,41 @@ bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols(
 
     // Rasterize symbols
     QList< std::shared_ptr<const RasterizedSymbolsGroup> > rasterizedSymbolsGroups;
-    rasterizer.rasterizeSymbolsWithoutPaths(rasterizedSymbolsGroups, filter, nullptr);
-    
+    rasterizer.rasterizeSymbolsWithoutPaths(rasterizedSymbolsGroups,
+        [this, tileBBox31, filterCallback]
+        (const std::shared_ptr<const Model::MapObject>& mapObject) -> bool
+        {
+            if (filterCallback == nullptr)
+                return true;
+
+            const auto isShareable =
+                (mapObject->section != owner->dataProvider->rasterizerEnvironment->dummyMapSection) &&
+                !tileBBox31.contains(mapObject->bbox31);
+
+            return filterCallback(owner, mapObject, isShareable);
+        }, nullptr);
+
     // Convert results
     QList< std::shared_ptr<const MapSymbolsGroup> > symbolsGroups;
-    for(const auto& rasterizedGroup : constOf(rasterizedSymbolsGroups))
+    for (const auto& rasterizedGroup : constOf(rasterizedSymbolsGroups))
     {
+        const auto& mapObject = rasterizedGroup->mapObject;
+        const auto isShareable =
+            (mapObject->section != owner->dataProvider->rasterizerEnvironment->dummyMapSection) &&
+            !tileBBox31.contains(mapObject->bbox31);
+
         // Create group
         const auto constructedGroup = new MapSymbolsGroup(rasterizedGroup->mapObject);
         std::shared_ptr<const MapSymbolsGroup> group(constructedGroup);
 
         // Convert all symbols inside group
-        for(const auto& rasterizedSymbol : constOf(rasterizedGroup->symbols))
+        for (const auto& rasterizedSymbol : constOf(rasterizedGroup->symbols))
         {
             if (const auto pinnedSymbol = std::dynamic_pointer_cast<const RasterizedPinnedSymbol>(rasterizedSymbol))
             {
-                const auto symbol = new MapPinnedSymbol(
-                    group, constructedGroup->mapObject,
+                const auto symbol = new PinnedMapSymbol(
+                    group,
+                    isShareable,
                     pinnedSymbol->bitmap,
                     pinnedSymbol->order,
                     pinnedSymbol->content,
@@ -71,13 +91,15 @@ bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols(
             }
             else if (const auto symbolOnPath = std::dynamic_pointer_cast<const RasterizedSymbolOnPath>(rasterizedSymbol))
             {
-                const auto symbol = new MapSymbolOnPath(
-                    group, constructedGroup->mapObject,
+                const auto symbol = new OnPathMapSymbol(
+                    group,
+                    isShareable,
                     symbolOnPath->bitmap,
                     symbolOnPath->order,
                     symbolOnPath->content,
                     symbolOnPath->languageId,
                     symbolOnPath->minDistance,
+                    mapObject->points31,
                     symbolOnPath->glyphsWidth);
                 assert(static_cast<bool>(symbol->bitmap));
                 constructedGroup->symbols.push_back(qMove(std::shared_ptr<const MapSymbol>(symbol)));
@@ -93,22 +115,17 @@ bool OsmAnd::OfflineMapSymbolProvider_P::obtainSymbols(
     return true;
 }
 
-bool OsmAnd::OfflineMapSymbolProvider_P::canSymbolsBeSharedFrom(const std::shared_ptr<const Model::MapObject>& mapObject)
-{
-    return mapObject->section != owner->dataProvider->rasterizerEnvironment->dummyMapSection;
-}
-
-OsmAnd::OfflineMapSymbolProvider_P::Tile::Tile(const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups_, const std::shared_ptr<const OfflineMapDataTile>& dataTile_)
+OsmAnd::OfflineMapStaticSymbolProvider_P::Tile::Tile(const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups_, const std::shared_ptr<const OfflineMapDataTile>& dataTile_)
     : MapSymbolsTile(symbolsGroups_)
     , dataTile(dataTile_)
 {
 }
 
-OsmAnd::OfflineMapSymbolProvider_P::Tile::~Tile()
+OsmAnd::OfflineMapStaticSymbolProvider_P::Tile::~Tile()
 {
 }
 
-void OsmAnd::OfflineMapSymbolProvider_P::Tile::releaseNonRetainedData()
+void OsmAnd::OfflineMapStaticSymbolProvider_P::Tile::releaseNonRetainedData()
 {
     _symbolsGroups.clear();
 }

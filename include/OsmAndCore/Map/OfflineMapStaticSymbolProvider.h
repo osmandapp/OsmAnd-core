@@ -9,33 +9,30 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/PrivateImplementation.h>
-#include <OsmAndCore/Map/IMapSymbolProvider.h>
+#include <OsmAndCore/Map/IMapSymbolTiledProvider.h>
 
 namespace OsmAnd
 {
     class OfflineMapDataProvider;
 
-    class OfflineMapSymbolProvider_P;
-    class OSMAND_CORE_API OfflineMapSymbolProvider : public IMapSymbolProvider
+    class OfflineMapStaticSymbolProvider_P;
+    class OSMAND_CORE_API OfflineMapStaticSymbolProvider : public IMapSymbolTiledProvider
     {
-        Q_DISABLE_COPY(OfflineMapSymbolProvider);
+        Q_DISABLE_COPY(OfflineMapStaticSymbolProvider);
     private:
-        PrivateImplementation<OfflineMapSymbolProvider_P> _p;
+        PrivateImplementation<OfflineMapStaticSymbolProvider_P> _p;
     protected:
     public:
-        OfflineMapSymbolProvider(const std::shared_ptr<OfflineMapDataProvider>& dataProvider);
-        virtual ~OfflineMapSymbolProvider();
+        OfflineMapStaticSymbolProvider(const std::shared_ptr<OfflineMapDataProvider>& dataProvider);
+        virtual ~OfflineMapStaticSymbolProvider();
 
         const std::shared_ptr<OfflineMapDataProvider> dataProvider;
 
         virtual bool obtainSymbols(
             const TileId tileId, const ZoomLevel zoom,
             std::shared_ptr<const MapSymbolsTile>& outTile,
-            std::function<bool (const std::shared_ptr<const Model::MapObject>& mapObject)> filter = nullptr);
-
-        virtual bool canSymbolsBeSharedFrom(const std::shared_ptr<const Model::MapObject>& mapObject);
+            const FilterCallback filterCallback = nullptr);
     };
-
 }
 
 #endif // !defined(_OSMAND_CORE_OFFLINE_MAP_SYMBOL_PROVIDER_H_)

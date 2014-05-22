@@ -13,6 +13,7 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/MapTypes.h>
+#include <OsmAndCore/Data/Model/ObjectWithId.h>
 
 namespace OsmAnd
 {
@@ -23,14 +24,13 @@ namespace OsmAnd
 
     namespace Model
     {
-        class OSMAND_CORE_API MapObject
+        class OSMAND_CORE_API MapObject : public ObjectWithId
         {
             Q_DISABLE_COPY(MapObject);
         private:
         protected:
             MapObject(const std::shared_ptr<const ObfMapSectionInfo>& section, const std::shared_ptr<const ObfMapSectionLevel>& level);
 
-            uint64_t _id;
             MapFoundationType _foundation;
             bool _isArea;
             QVector< PointI > _points31;
@@ -45,7 +45,6 @@ namespace OsmAnd
             const std::shared_ptr<const ObfMapSectionInfo> section;
             const std::shared_ptr<const ObfMapSectionLevel> level;
 
-            const uint64_t& id;
             const bool& isArea;
             const QVector< PointI >& points31;
             const QList< QVector< PointI > >& innerPolygonsPoints31;
@@ -69,7 +68,7 @@ namespace OsmAnd
         friend class OsmAnd::ObfMapSectionReader_P;
         friend class OsmAnd::Rasterizer_P;
         };
-    } // namespace Model
-} // namespace OsmAnd
+    }
+}
 
 #endif // !defined(_OSMAND_CORE_MAP_OBJECT_H_)

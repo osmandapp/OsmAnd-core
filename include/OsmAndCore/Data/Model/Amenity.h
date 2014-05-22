@@ -11,6 +11,7 @@
 #include <OsmAndCore/MemoryCommon.h>
 #include <OsmAndCore/Reference.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Data/Model/ObjectWithId.h>
 
 namespace OsmAnd
 {
@@ -18,7 +19,7 @@ namespace OsmAnd
 
     namespace Model
     {
-        class OSMAND_CORE_API OSMAND_REFERENCEABLE_CLASS(Amenity)
+        class OSMAND_CORE_API OSMAND_REFERENCEABLE_CLASS(Amenity) //TODO: : public ObjectWithId
         {
             Q_DISABLE_COPY(Amenity);
             OSMAND_USE_MEMORY_MANAGER(Amenity);

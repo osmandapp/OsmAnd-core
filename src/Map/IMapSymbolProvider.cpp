@@ -1,6 +1,6 @@
 #include "IMapSymbolProvider.h"
 
-#include <SkBitmap.h>
+#include "ObjectWithId.h"
 
 OsmAnd::IMapSymbolProvider::IMapSymbolProvider()
 {
@@ -10,13 +10,8 @@ OsmAnd::IMapSymbolProvider::~IMapSymbolProvider()
 {
 }
 
-bool OsmAnd::IMapSymbolProvider::canSymbolsBeSharedFrom(const std::shared_ptr<const Model::MapObject>& mapObject)
-{
-    return false;
-}
-
-OsmAnd::MapSymbolsGroup::MapSymbolsGroup(const std::shared_ptr<const Model::MapObject>& mapObject_)
-    : mapObject(mapObject_)
+OsmAnd::MapSymbolsGroup::MapSymbolsGroup(const std::shared_ptr<const Model::ObjectWithId>& object_)
+    : object(object_)
 {
 }
 
@@ -25,8 +20,8 @@ OsmAnd::MapSymbolsGroup::~MapSymbolsGroup()
 }
 
 OsmAnd::MapSymbol::MapSymbol(
-    const std::weak_ptr<const MapSymbolsGroup>& group_,
-    const std::shared_ptr<const Model::MapObject>& mapObject_,
+    const std::shared_ptr<const MapSymbolsGroup>& group_,
+    const bool isShareable_,
     const std::shared_ptr<const SkBitmap>& bitmap_,
     const int order_,
     const QString& content_,
@@ -34,7 +29,8 @@ OsmAnd::MapSymbol::MapSymbol(
     const PointI& minDistance_)
     : _bitmap(bitmap_)
     , group(group_)
-    , mapObject(mapObject_)
+    , groupObjectId(group_->object->id)
+    , isShareable(isShareable_)
     , bitmap(_bitmap)
     , order(order_)
     , content(content_)
@@ -52,9 +48,27 @@ void OsmAnd::MapSymbol::releaseNonRetainedData()
     _bitmap.reset();
 }
 
-OsmAnd::MapPinnedSymbol::MapPinnedSymbol(
-    const std::weak_ptr<const MapSymbolsGroup>& group_,
-    const std::shared_ptr<const Model::MapObject>& mapObject_,
+OsmAnd::BoundToPointMapSymbol::BoundToPointMapSymbol(
+    const std::shared_ptr<const MapSymbolsGroup>& group_,
+    const bool isShareable_,
+    const std::shared_ptr<const SkBitmap>& bitmap_,
+    const int order_,
+    const QString& content_,
+    const LanguageId& languageId_,
+    const PointI& minDistance_,
+    const PointI& location31_)
+    : MapSymbol(group_, isShareable_, bitmap_, order_, content_, languageId_, minDistance_)
+    , location31(location31_)
+{
+}
+
+OsmAnd::BoundToPointMapSymbol::~BoundToPointMapSymbol()
+{
+}
+
+OsmAnd::PinnedMapSymbol::PinnedMapSymbol(
+    const std::shared_ptr<const MapSymbolsGroup>& group_,
+    const bool isShareable_,
     const std::shared_ptr<const SkBitmap>& bitmap_,
     const int order_,
     const QString& content_,
@@ -62,50 +76,95 @@ OsmAnd::MapPinnedSymbol::MapPinnedSymbol(
     const PointI& minDistance_,
     const PointI& location31_,
     const PointI& offset_)
-    : MapSymbol(group_, mapObject_, bitmap_, order_, content_, languageId_, minDistance_)
-    , location31(location31_)
+    : BoundToPointMapSymbol(group_, isShareable_, bitmap_, order_, content_, languageId_, minDistance_, location31_)
     , offset(offset_)
 {
 }
 
-OsmAnd::MapPinnedSymbol::~MapPinnedSymbol()
+OsmAnd::PinnedMapSymbol::~PinnedMapSymbol()
 {
 }
 
-OsmAnd::MapSymbol* OsmAnd::MapPinnedSymbol::cloneWithReplacedBitmap(const std::shared_ptr<const SkBitmap>& replacementBitmap) const
+OsmAnd::MapSymbol* OsmAnd::PinnedMapSymbol::cloneWithReplacedBitmap(const std::shared_ptr<const SkBitmap>& replacementBitmap) const
 {
-    return new MapPinnedSymbol(group, mapObject, replacementBitmap, order, content, languageId, minDistance, location31, offset);
+    return new PinnedMapSymbol(
+        group.lock(),
+        isShareable,
+        replacementBitmap,
+        order,
+        content,
+        languageId,
+        minDistance,
+        location31,
+        offset);
 }
 
-OsmAnd::MapSymbolOnPath::MapSymbolOnPath(
-    const std::weak_ptr<const MapSymbolsGroup>& group_,
-    const std::shared_ptr<const Model::MapObject>& mapObject_,
+OsmAnd::OnSurfaceMapSymbol::OnSurfaceMapSymbol(
+    const std::shared_ptr<const MapSymbolsGroup>& group_,
+    const bool isShareable_,
     const std::shared_ptr<const SkBitmap>& bitmap_,
     const int order_,
     const QString& content_,
     const LanguageId& languageId_,
     const PointI& minDistance_,
+    const PointI& location31_,
+    const double areaRadius_,
+    const SkColor areaBaseColor_)
+    : BoundToPointMapSymbol(group_, isShareable_, bitmap_, order_, content_, languageId_, minDistance_, location31_)
+    , areaRadius(areaRadius_)
+    , areaBaseColor(areaBaseColor_)
+{
+}
+
+OsmAnd::OnSurfaceMapSymbol::~OnSurfaceMapSymbol()
+{
+}
+
+OsmAnd::MapSymbol* OsmAnd::OnSurfaceMapSymbol::cloneWithReplacedBitmap(const std::shared_ptr<const SkBitmap>& replacementBitmap) const
+{
+    return new OnSurfaceMapSymbol(
+        group.lock(),
+        isShareable,
+        replacementBitmap,
+        order,
+        content,
+        languageId,
+        minDistance,
+        location31,
+        areaRadius,
+        areaBaseColor);
+}
+
+OsmAnd::OnPathMapSymbol::OnPathMapSymbol(
+    const std::shared_ptr<const MapSymbolsGroup>& group_,
+    const bool isShareable_,
+    const std::shared_ptr<const SkBitmap>& bitmap_,
+    const int order_,
+    const QString& content_,
+    const LanguageId& languageId_,
+    const PointI& minDistance_,
+    const QVector<PointI>& path_,
     const QVector<float>& glyphsWidth_)
-    : MapSymbol(group_, mapObject_, bitmap_, order_, content_, languageId_, minDistance_)
+    : MapSymbol(group_, isShareable_, bitmap_, order_, content_, languageId_, minDistance_)
+    , path(path_)
     , glyphsWidth(glyphsWidth_)
 {
 }
 
-OsmAnd::MapSymbolOnPath::~MapSymbolOnPath()
+OsmAnd::OnPathMapSymbol::~OnPathMapSymbol()
 {
 }
 
-OsmAnd::MapSymbol* OsmAnd::MapSymbolOnPath::cloneWithReplacedBitmap(const std::shared_ptr<const SkBitmap>& replacementBitmap) const
+OsmAnd::MapSymbol* OsmAnd::OnPathMapSymbol::cloneWithReplacedBitmap(const std::shared_ptr<const SkBitmap>& replacementBitmap) const
 {
-    return new MapSymbolOnPath(group, mapObject, replacementBitmap, order, content, languageId, minDistance, glyphsWidth);
-}
-
-OsmAnd::MapSymbolsTile::MapSymbolsTile(const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups_)
-    : _symbolsGroups(symbolsGroups_)
-    , symbolsGroups(_symbolsGroups)
-{
-}
-
-OsmAnd::MapSymbolsTile::~MapSymbolsTile()
-{
+    return new OnPathMapSymbol(
+        group.lock(),
+        isShareable,
+        replacementBitmap,
+        order,
+        content,
+        languageId,
+        minDistance,
+        path,
+        glyphsWidth);
 }
