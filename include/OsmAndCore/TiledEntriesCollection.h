@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_TILES_COLLECTION_H_
-#define _OSMAND_CORE_TILES_COLLECTION_H_
+#ifndef _OSMAND_CORE_TILED_ENTRIES_COLLECTION_H_
+#define _OSMAND_CORE_TILED_ENTRIES_COLLECTION_H_
 
 #include <OsmAndCore/stdlib_common.h>
 #include <cassert>
@@ -16,25 +16,27 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Logging.h>
 
-#if !defined(OSMAND_TRACE_TILES_COLLECTION_STATE)
-#   define OSMAND_TRACE_TILES_COLLECTION_STATE 0
-#endif // !defined(OSMAND_TRACE_TILES_COLLECTION_STATE)
+#if !defined(OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE)
+#   define OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE 0
+#endif // !defined(OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE)
 
 namespace OsmAnd
 {
-    template<class ENTRY>
-    class TilesCollectionEntry;
+    template<typename ENTRY>
+    class TiledEntriesCollectionEntry;
 
-    template<class ENTRY>
-    class TilesCollection
+    template<typename ENTRY>
+    class TiledEntriesCollection
     {
     public:
+        typedef typename TiledEntriesCollection<ENTRY> Collection;
+
         class Link : public std::enable_shared_from_this< Link >
         {
         private:
         protected:
         public:
-            Link(TilesCollection< ENTRY >& collection_)
+            Link(Collection& collection_)
                 : collection(collection_)
             {
             }
@@ -43,7 +45,7 @@ namespace OsmAnd
             {
             }
 
-            TilesCollection< ENTRY >& collection;
+            Collection& collection;
         };
 
     private:
@@ -52,11 +54,11 @@ namespace OsmAnd
     protected:
         const std::shared_ptr< Link > _link;
     public:
-        TilesCollection()
+        TiledEntriesCollection()
             : _link(new Link(*this))
         {
         }
-        virtual ~TilesCollection()
+        virtual ~TiledEntriesCollection()
         {
         }
 
@@ -95,7 +97,7 @@ namespace OsmAnd
             return false;
         }
 
-        virtual void obtainOrAllocateEntry(std::shared_ptr<ENTRY>& outEntry, const TileId tileId, const ZoomLevel zoom, std::function<ENTRY* (const TilesCollection<ENTRY>&, const TileId, const ZoomLevel)> allocator)
+        virtual void obtainOrAllocateEntry(std::shared_ptr<ENTRY>& outEntry, const TileId tileId, const ZoomLevel zoom, std::function<ENTRY* (const Collection&, const TileId, const ZoomLevel)> allocator)
         {
             assert(allocator != nullptr);
 
@@ -214,14 +216,15 @@ namespace OsmAnd
             return count;
         }
 
-    friend class OsmAnd::TilesCollectionEntry<ENTRY>;
+    friend class OsmAnd::TiledEntriesCollectionEntry<ENTRY>;
     };
 
-    template<class ENTRY>
-    class TilesCollectionEntry
+    template<typename ENTRY>
+    class TiledEntriesCollectionEntry
     {
     public:
-        typedef typename TilesCollection<ENTRY>::Link Link;
+        typedef typename TiledEntriesCollection<ENTRY> Collection;
+        typedef typename Collection::Link Link;
 
     private:
         std::weak_ptr<Link> _link;
@@ -234,7 +237,7 @@ namespace OsmAnd
             _link.reset();
         }
     protected:
-        TilesCollectionEntry(const TilesCollection<ENTRY>& collection, const TileId tileId_, const ZoomLevel zoom_)
+        TiledEntriesCollectionEntry(const Collection& collection, const TileId tileId_, const ZoomLevel zoom_)
             : _link(collection._link)
             , link(_link)
             , tileId(tileId_)
@@ -260,7 +263,7 @@ namespace OsmAnd
             return;
         }
     public:
-        virtual ~TilesCollectionEntry()
+        virtual ~TiledEntriesCollectionEntry()
         {
             assert(_link.expired());
         }
@@ -270,48 +273,48 @@ namespace OsmAnd
         const TileId tileId;
         const ZoomLevel zoom;
 
-    friend class OsmAnd::TilesCollection<ENTRY>;
+    friend class OsmAnd::TiledEntriesCollection<ENTRY>;
     };
 
-    template<class ENTRY, typename STATE_ENUM, STATE_ENUM UNDEFINED_STATE_VALUE
-#if OSMAND_TRACE_TILES_COLLECTION_STATE
+    template<typename ENTRY, typename STATE_ENUM, STATE_ENUM UNDEFINED_STATE_VALUE
+#if OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE
         , bool LOG_TRACE = false
-#endif // OSMAND_TRACE_TILES_COLLECTION_STATE
+#endif // OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE
     >
-    class TilesCollectionEntryWithState : public TilesCollectionEntry<ENTRY>
+    class TiledEntriesCollectionEntryWithState : public TiledEntriesCollectionEntry<ENTRY>
     {
     protected:
-#if OSMAND_TRACE_TILES_COLLECTION_STATE
+#if OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE
         mutable QMutex _stateLock;
         volatile int _stateValue;
 #else
         QAtomicInt _stateValue;
-#endif // OSMAND_TRACE_TILES_COLLECTION_STATE
+#endif // OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE
     public:
-        TilesCollectionEntryWithState(const TilesCollection<ENTRY>& collection, const TileId tileId, const ZoomLevel zoom, const STATE_ENUM state = UNDEFINED_STATE_VALUE)
-            : TilesCollectionEntry<ENTRY>(collection, tileId, zoom)
+        TiledEntriesCollectionEntryWithState(const Collection& collection, const TileId tileId, const ZoomLevel zoom, const STATE_ENUM state = UNDEFINED_STATE_VALUE)
+            : TiledEntriesCollectionEntry<ENTRY>(collection, tileId, zoom)
             , _stateValue(static_cast<int>(state))
         {
         }
-        virtual ~TilesCollectionEntryWithState()
+        virtual ~TiledEntriesCollectionEntryWithState()
         {
         }
 
         inline STATE_ENUM getState() const
         {
-#if OSMAND_TRACE_TILES_COLLECTION_STATE
+#if OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE
             return static_cast<STATE_ENUM>(_stateValue);
 #else
             return static_cast<STATE_ENUM>(_stateValue.load());
-#endif // OSMAND_TRACE_TILES_COLLECTION_STATE
+#endif // OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE
         }
 
         inline void setState(const STATE_ENUM newState)
         {
-#if OSMAND_TRACE_TILES_COLLECTION_STATE
+#if OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE
             QMutexLocker scopedLocker(&_stateLock);
             if (LOG_TRACE
-#if OSMAND_TRACE_TILES_COLLECTION_STATE > 1
+#if OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE > 1
                 || true
 #endif
                 )
@@ -325,17 +328,17 @@ namespace OsmAnd
             _stateValue = static_cast<int>(newState);
 #else
             _stateValue.fetchAndStoreOrdered(static_cast<int>(newState));
-#endif // OSMAND_TRACE_TILES_COLLECTION_STATE
+#endif // OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE
         }
 
         inline bool setStateIf(const STATE_ENUM testState, const STATE_ENUM newState)
         {
-#if OSMAND_TRACE_TILES_COLLECTION_STATE
+#if OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE
             QMutexLocker scopedLocker(&_stateLock);
             if (_stateValue != static_cast<int>(testState))
             {
                 if (LOG_TRACE
-#if OSMAND_TRACE_TILES_COLLECTION_STATE > 1
+#if OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE > 1
                     || true
 #endif
                     )
@@ -349,7 +352,7 @@ namespace OsmAnd
                 return false;
             }
             if (LOG_TRACE
-#if OSMAND_TRACE_TILES_COLLECTION_STATE > 1
+#if OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE > 1
                 || true
 #endif
                 )
@@ -364,9 +367,9 @@ namespace OsmAnd
             return true;
 #else
             return _stateValue.testAndSetOrdered(static_cast<int>(testState), static_cast<int>(newState));
-#endif // OSMAND_TRACE_TILES_COLLECTION_STATE
+#endif // OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE
         }
     };
 }
 
-#endif // !defined(_OSMAND_CORE_TILES_COLLECTION_H_)
+#endif // !defined(_OSMAND_CORE_TILED_ENTRIES_COLLECTION_H_)

@@ -16,7 +16,8 @@
 #include "OsmAndCore.h"
 #include "MapRendererState.h"
 #include "GPUAPI.h"
-#include "TilesCollection.h"
+#include "TiledEntriesCollection.h"
+#include "KeyedEntriesCollection.h"
 #include "SharedResourcesContainer.h"
 #include "Concurrent.h"
 #include "IQueryController.h"
@@ -135,20 +136,44 @@ namespace OsmAnd
         // Base class for all tiled resources
         class BaseTiledResource
             : public BaseResource
-            , public TilesCollectionEntryWithState<BaseTiledResource, ResourceState, ResourceState::Unknown>
+            , public TiledEntriesCollectionEntryWithState<BaseTiledResource, ResourceState, ResourceState::Unknown>
         {
-            typedef TilesCollectionEntryWithState<BaseTiledResource, ResourceState, ResourceState::Unknown> BaseTilesCollectionEntryWithState;
+            typedef TiledEntriesCollectionEntryWithState<BaseTiledResource, ResourceState, ResourceState::Unknown> BaseTilesCollectionEntryWithState;
 
         private:
         protected:
             BaseTiledResource(
                 MapRendererResources* owner,
                 const ResourceType type,
-                const TilesCollection<BaseTiledResource>& collection,
+                const TiledEntriesCollection<BaseTiledResource>& collection,
                 const TileId tileId,
                 const ZoomLevel zoom);
         public:
             virtual ~BaseTiledResource();
+
+            virtual ResourceState getState() const;
+            virtual void setState(const ResourceState newState);
+            virtual bool setStateIf(const ResourceState testState, const ResourceState newState);
+
+        friend class OsmAnd::MapRendererResources;
+        };
+
+        // Base class for all keyed resources
+        class BaseKeyedResource
+            : public BaseResource
+            , public KeyedEntriesCollectionEntryWithState<const void*, BaseKeyedResource, ResourceState, ResourceState::Unknown>
+        {
+            typedef KeyedEntriesCollectionEntryWithState<const void*, BaseKeyedResource, ResourceState, ResourceState::Unknown> BaseKeyedEntriesCollectionEntryWithState;
+
+        private:
+        protected:
+            BaseKeyedResource(
+                MapRendererResources* owner,
+                const ResourceType type,
+                const KeyedEntriesCollection<const void*, BaseKeyedResource>& collection,
+                const void* key);
+        public:
+            virtual ~BaseKeyedResource();
 
             virtual ResourceState getState() const;
             virtual void setState(const ResourceState newState);
@@ -181,16 +206,16 @@ namespace OsmAnd
         };
         typedef std::array< QList< std::shared_ptr<BaseResourcesCollection> >, ResourceTypesCount > ResourcesStorage;
 
-        // Collection of tiled resources
+        // Tiled resources collection
         class TiledResourcesCollection
             : public BaseResourcesCollection
-            , public TilesCollection<BaseTiledResource>
+            , public TiledEntriesCollection<BaseTiledResource>
         {
         private:
         protected:
             TiledResourcesCollection(const ResourceType& type);
 
-            void verifyNoUploadedTilesPresent() const;
+            void verifyNoUploadedResourcesPresent() const;
             virtual void removeAllEntries();
         public:
             virtual ~TiledResourcesCollection();
@@ -203,12 +228,12 @@ namespace OsmAnd
         friend class OsmAnd::MapRendererResources;
         };
 
-        // Resource of map tile
+        // Map tile:
         class MapTileResource : public BaseTiledResource
         {
         private:
         protected:
-            MapTileResource(MapRendererResources* owner, const ResourceType type, const TilesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom);
+            MapTileResource(MapRendererResources* owner, const ResourceType type, const TiledEntriesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom);
 
             std::shared_ptr<const MapTile> _sourceData;
             std::shared_ptr<const GPUAPI::ResourceInGPU> _resourceInGPU;
@@ -224,13 +249,35 @@ namespace OsmAnd
         friend class OsmAnd::MapRendererResources;
         };
 
-        // Symbols-related:
-        class SymbolsResourcesCollection;
+        // Keyed resources collection:
+        class KeyedResourcesCollection
+            : public BaseResourcesCollection
+            , public KeyedEntriesCollection<const void*, BaseKeyedResource>
+        {
+        private:
+        protected:
+            KeyedResourcesCollection(const ResourceType& type);
+
+            void verifyNoUploadedResourcesPresent() const;
+            virtual void removeAllEntries();
+        public:
+            virtual ~KeyedResourcesCollection();
+
+            virtual int getResourcesCount() const;
+            virtual void forEachResourceExecute(const ResourceActionCallback action);
+            virtual void obtainResources(QList< std::shared_ptr<BaseResource> >* outList, const ResourceFilterCallback filter);
+            virtual void removeResources(const ResourceFilterCallback filter);
+
+        friend class OsmAnd::MapRendererResources;
+        };
+
+        // Symbols:
+        class SymbolsTiledResourcesCollection;
         class SymbolsTileResource : public BaseTiledResource
         {
         private:
         protected:
-            SymbolsTileResource(MapRendererResources* owner, const TilesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom);
+            SymbolsTileResource(MapRendererResources* owner, const TiledEntriesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom);
 
             class GroupResources
             {
@@ -259,17 +306,17 @@ namespace OsmAnd
             virtual ~SymbolsTileResource();
 
         friend class OsmAnd::MapRendererResources;
-        friend class OsmAnd::MapRendererResources::SymbolsResourcesCollection;
+        friend class OsmAnd::MapRendererResources::SymbolsTiledResourcesCollection;
         };
-        class SymbolsResourcesCollection : public TiledResourcesCollection
+        class SymbolsTiledResourcesCollection : public TiledResourcesCollection
         {
         private:
         protected:
-            SymbolsResourcesCollection();
+            SymbolsTiledResourcesCollection();
 
             std::array< SharedResourcesContainer<uint64_t, SymbolsTileResource::GroupResources>, ZoomLevelsCount > _sharedGroupsResources;
         public:
-            virtual ~SymbolsResourcesCollection();
+            virtual ~SymbolsTiledResourcesCollection();
 
         friend class OsmAnd::MapRendererResources;
         friend class OsmAnd::MapRendererResources::SymbolsTileResource;
@@ -334,6 +381,7 @@ namespace OsmAnd
         ZoomLevel _activeZoom;
         void updateResources(const QSet<TileId>& tiles, const ZoomLevel zoom);
         void requestNeededResources(const QSet<TileId>& activeTiles, const ZoomLevel activeZoom);
+        void requestNeededTiledResources(const std::shared_ptr<TiledResourcesCollection>& resourcesCollection, const QSet<TileId>& activeTiles, const ZoomLevel activeZoom);
         void cleanupJunkResources(const QSet<TileId>& activeTiles, const ZoomLevel activeZoom);
         unsigned int unloadResources();
         unsigned int uploadResources(const unsigned int limit = 0u, bool* const outMoreThanLimitAvailable = nullptr);

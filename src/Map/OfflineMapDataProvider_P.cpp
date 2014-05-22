@@ -43,7 +43,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile(const TileId tileId, const Zoo
     {
         // Try to obtain previous instance of tile
         _tileReferences.obtainOrAllocateEntry(tileEntry, tileId, zoom,
-            [](const TilesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom) -> TileEntry*
+            [](const TiledEntriesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom) -> TileEntry*
             {
                 return new TileEntry(collection, tileId, zoom);
             });

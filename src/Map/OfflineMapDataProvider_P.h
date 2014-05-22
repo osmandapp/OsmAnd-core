@@ -14,7 +14,7 @@
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
 #include "PrivateImplementation.h"
-#include "TilesCollection.h"
+#include "TiledEntriesCollection.h"
 #include "SharedByZoomResourcesContainer.h"
 
 namespace OsmAnd
@@ -45,10 +45,10 @@ namespace OsmAnd
             Loaded,
             Released
         };
-        struct TileEntry : TilesCollectionEntryWithState<TileEntry, TileState, TileState::Undefined>
+        struct TileEntry : TiledEntriesCollectionEntryWithState<TileEntry, TileState, TileState::Undefined>
         {
-            TileEntry(const TilesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom)
-                : TilesCollectionEntryWithState(collection, tileId, zoom)
+            TileEntry(const TiledEntriesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom)
+                : TiledEntriesCollectionEntryWithState(collection, tileId, zoom)
             {
             }
 
@@ -62,7 +62,7 @@ namespace OsmAnd
             QReadWriteLock _loadedConditionLock;
             QWaitCondition _loadedCondition;
         };
-        mutable TilesCollection<TileEntry> _tileReferences;
+        mutable TiledEntriesCollection<TileEntry> _tileReferences;
 
         class Link : public std::enable_shared_from_this<Link>
         {

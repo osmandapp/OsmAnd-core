@@ -6,8 +6,6 @@
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QList>
-#include <QVector>
-#include <QString>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>

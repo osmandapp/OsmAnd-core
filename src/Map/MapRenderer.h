@@ -14,7 +14,7 @@
 #include "IMapRenderer.h"
 #include "GPUAPI.h"
 #include "IMapTileProvider.h"
-#include "TilesCollection.h"
+#include "TiledEntriesCollection.h"
 #include "MapRendererInternalState.h"
 #include "MapRendererResources.h"
 
