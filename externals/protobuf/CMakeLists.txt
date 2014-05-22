@@ -28,8 +28,6 @@ target_compile_definitions(protobuf_static
 	PRIVATE
 		-D__OSMAND_DUMMY__
 		${target_specific_private_definitions}
-	PUBLIC
-		-DGOOGLE_PROTOBUF_NO_RTTI
 )
 target_include_directories(protobuf_static
 	PRIVATE
