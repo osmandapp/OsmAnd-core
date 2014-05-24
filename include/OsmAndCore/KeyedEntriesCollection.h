@@ -259,6 +259,9 @@ namespace OsmAnd
     >
     class KeyedEntriesCollectionEntryWithState : public KeyedEntriesCollectionEntry<KEY, ENTRY>
     {
+    public:
+        typedef KeyedEntriesCollectionEntry<KEY, ENTRY>::Collection Collection;
+
     protected:
 #if OSMAND_TRACE_KEYED_ENTRIES_COLLECTION_STATE
         mutable QMutex _stateLock;

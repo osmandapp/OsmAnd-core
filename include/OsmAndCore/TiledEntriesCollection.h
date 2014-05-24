@@ -283,6 +283,9 @@ namespace OsmAnd
     >
     class TiledEntriesCollectionEntryWithState : public TiledEntriesCollectionEntry<ENTRY>
     {
+    public:
+        typedef TiledEntriesCollectionEntry<ENTRY>::Collection Collection;
+
     protected:
 #if OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE
         mutable QMutex _stateLock;
