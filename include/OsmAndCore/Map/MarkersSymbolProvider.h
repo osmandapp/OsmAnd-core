@@ -13,12 +13,12 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/IMapSymbolCollectionProvider.h>
+#include <OsmAndCore/Map/IMapSymbolKeyedProvider.h>
 
 namespace OsmAnd
 {
     class MarkersSymbolProvider_P;
-    class OSMAND_CORE_API MarkersSymbolProvider : public IMapSymbolCollectionProvider
+    class OSMAND_CORE_API MarkersSymbolProvider : public IMapSymbolKeyedProvider
     {
         Q_DISABLE_COPY(MarkersSymbolProvider);
 
@@ -68,6 +68,8 @@ namespace OsmAnd
         bool removeMarker(const std::shared_ptr<Marker>& marker);
         int removeMarkersWithName(const QString& name);
         int removeAllMarkers();
+
+        virtual QSet<Key> getKeys() const;
 
         virtual bool obtainSymbols(
             QList< std::shared_ptr<const MapSymbolsGroup> >& outSymbolGroups,

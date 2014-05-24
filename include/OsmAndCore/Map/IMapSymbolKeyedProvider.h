@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_I_MAP_SYMBOL_COLLECTION_PROVIDER_H_
-#define _OSMAND_CORE_I_MAP_SYMBOL_COLLECTION_PROVIDER_H_
+#ifndef _OSMAND_CORE_I_MAP_SYMBOL_KEYED_PROVIDER_H_
+#define _OSMAND_CORE_I_MAP_SYMBOL_KEYED_PROVIDER_H_
 
 #include <OsmAndCore/stdlib_common.h>
 #include <functional>
@@ -10,17 +10,20 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/IMapSymbolProvider.h>
+#include <OsmAndCore/Map/IMapKeyedProvider.h>
 
 namespace OsmAnd
 {
-    class OSMAND_CORE_API IMapSymbolCollectionProvider : public IMapSymbolProvider
+    class OSMAND_CORE_API IMapSymbolKeyedProvider
+        : public IMapSymbolProvider
+        , public virtual IMapKeyedProvider
     {
-        Q_DISABLE_COPY(IMapSymbolCollectionProvider);
+        Q_DISABLE_COPY(IMapSymbolKeyedProvider);
     private:
     protected:
-        IMapSymbolCollectionProvider();
+        IMapSymbolKeyedProvider();
     public:
-        virtual ~IMapSymbolCollectionProvider();
+        virtual ~IMapSymbolKeyedProvider();
 
         virtual bool obtainSymbols(
             QList< std::shared_ptr<const MapSymbolsGroup> >& outSymbolGroups,
@@ -28,4 +31,4 @@ namespace OsmAnd
     };
 }
 
-#endif // !defined(_OSMAND_CORE_I_MAP_SYMBOL_COLLECTION_PROVIDER_H_)
+#endif // !defined(_OSMAND_CORE_I_MAP_SYMBOL_KEYED_PROVIDER_H_)

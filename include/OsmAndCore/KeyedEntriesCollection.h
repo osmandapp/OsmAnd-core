@@ -28,7 +28,7 @@ namespace OsmAnd
     class KeyedEntriesCollection
     {
     public:
-        typedef typename KeyedEntriesCollection<KEY, ENTRY> Collection;
+        typedef KeyedEntriesCollection<KEY, ENTRY> Collection;
 
         class Link : public std::enable_shared_from_this < Link >
         {

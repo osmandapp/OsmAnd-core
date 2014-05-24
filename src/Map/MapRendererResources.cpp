@@ -4,6 +4,7 @@
 
 #include "MapRenderer.h"
 #include "IMapProvider.h"
+#include "IMapKeyedProvider.h"
 #include "IMapBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
 #include "IMapSymbolProvider.h"
@@ -425,6 +426,8 @@ void OsmAnd::MapRendererResources::requestNeededResources(const QSet<TileId>& ac
 
             if (const auto resourcesCollection_ = std::dynamic_pointer_cast<TiledResourcesCollection>(resourcesCollection))
                 requestNeededTiledResources(resourcesCollection_, activeTiles, activeZoom);
+            else if (const auto resourcesCollection_ = std::dynamic_pointer_cast<KeyedResourcesCollection>(resourcesCollection))
+                requestNeededKeyedResources(resourcesCollection_);
         }
     }
 }
@@ -449,118 +452,154 @@ void OsmAnd::MapRendererResources::requestNeededTiledResources(const std::shared
                     return nullptr;
             });
 
-        // Only if tile entry has "Unknown" state proceed to "Requesting" state
-        if (!resource->setStateIf(ResourceState::Unknown, ResourceState::Requesting))
-            continue;
-        LOG_RESOURCE_STATE_CHANGE(resource, ResourceState::Unknown, ResourceState::Requesting);
-
-        // Create async-task that will obtain needed resource data
-        const auto executeProc = [this](Concurrent::Task* task_)
-        {
-            const auto task = static_cast<ResourceRequestTask*>(task_);
-            const auto resource = std::static_pointer_cast<BaseTiledResource>(task->requestedResource);
-
-            // Only if resource entry has "Requested" state proceed to "ProcessingRequest" state
-            if (!resource->setStateIf(ResourceState::Requested, ResourceState::ProcessingRequest))
-            {
-                // This actually can happen in following situation(s):
-                //   - if request task was canceled before has started it's execution,
-                //     since in that case a state change "Requested => JustBeforeDeath" must have happend.
-                //     In this case entry will be removed in post-execute handler.
-                assert(resource->getState() == ResourceState::JustBeforeDeath);
-                return;
-            }
-            else
-            {
-                LOG_RESOURCE_STATE_CHANGE(resource, ResourceState::Requested, ResourceState::ProcessingRequest);
-            }
-
-            // Ask resource to obtain it's data
-            bool dataAvailable = false;
-            FunctorQueryController obtainDataQueryController(
-                [task_]
-                (const FunctorQueryController* const controller) -> bool
-                {
-                    return task_->isCancellationRequested();
-                });
-            const auto requestSucceeded = resource->obtainData(dataAvailable, &obtainDataQueryController) && !task->isCancellationRequested();
-
-            // If failed to obtain resource data, remove resource entry to repeat try later
-            if (!requestSucceeded)
-            {
-                // It's safe to simply remove entry, since it's not yet uploaded
-                if (const auto link = resource->link.lock())
-                    link->collection.removeEntry(resource->tileId, resource->zoom);
-                return;
-            }
-
-            // Finalize execution of task
-            if (!resource->setStateIf(ResourceState::ProcessingRequest, dataAvailable ? ResourceState::Ready : ResourceState::Unavailable))
-            {
-                assert(resource->getState() == ResourceState::RequestCanceledWhileBeingProcessed);
-
-                // While request was processed, state may have changed to "RequestCanceledWhileBeingProcessed"
-                task->requestCancellation();
-                return;
-            }
-#if OSMAND_LOG_RESOURCE_STATE_CHANGE
-            else
-            {
-                if (dataAvailable)
-                    LOG_RESOURCE_STATE_CHANGE(resource, ResourceState::ProcessingRequest, ResourceState::Ready);
-                else
-                    LOG_RESOURCE_STATE_CHANGE(resource, ResourceState::ProcessingRequest, ResourceState::Unavailable);
-            }
-#endif // OSMAND_LOG_RESOURCE_STATE_CHANGE
-            resource->_requestTask = nullptr;
-
-            // There is data to upload to GPU, request uploading. Or just ask to show that resource is unavailable
-            if (dataAvailable)
-                requestResourcesUploadOrUnload();
-            else
-                notifyNewResourceAvailableForDrawing();
-        };
-        const auto postExecuteProc = [this](Concurrent::Task* task_, bool wasCancelled)
-        {
-            const auto task = static_cast<const ResourceRequestTask*>(task_);
-            const auto resource = std::static_pointer_cast<BaseTiledResource>(task->requestedResource);
-
-            if (wasCancelled)
-            {
-                // If request task was canceled, if could have happened:
-                //  - before it has started it's execution.
-                //    In this case, state has to be "Requested", and it won't change. So just remove it
-                //  - during it's execution.
-                //    In this case, this handler will be called after execution was finished,
-                //    and state _should_ be "Ready" or "Unavailable", but in general it can be any:
-                //    Uploading, Uploaded, Unloading, Unloaded. In case state is "Ready" or "Unavailable",
-                //    change it to "JustBeforeDeath" and delete it.
-                if (
-                    resource->setStateIf(ResourceState::Requested, ResourceState::JustBeforeDeath) ||
-                    resource->setStateIf(ResourceState::Ready, ResourceState::JustBeforeDeath) ||
-                    resource->setStateIf(ResourceState::Unavailable, ResourceState::JustBeforeDeath) ||
-                    resource->setStateIf(ResourceState::RequestCanceledWhileBeingProcessed, ResourceState::JustBeforeDeath))
-                {
-                    LOG_RESOURCE_STATE_CHANGE(resource, ?, ResourceState::JustBeforeDeath);
-
-                    if (const auto link = resource->link.lock())
-                        link->collection.removeEntry(resource->tileId, resource->zoom);
-                }
-
-                // All other cases must be handled in other places, since here there is no access to GPU
-            }
-        };
-        const auto asyncTask = new ResourceRequestTask(resource, _taskHostBridge, executeProc, nullptr, postExecuteProc);
-
-        // Register tile as requested
-        resource->_requestTask = asyncTask;
-        assert(resource->getState() == ResourceState::Requesting);
-        resource->setState(ResourceState::Requested);
-        LOG_RESOURCE_STATE_CHANGE(resource, ?, ResourceState::Requested);
-
-        // Finally start the request
-        _resourcesRequestWorkersPool.start(asyncTask);
+        requestNeededResource(resource);
     }
+}
+
+void OsmAnd::MapRendererResources::requestNeededKeyedResources(const std::shared_ptr<KeyedResourcesCollection>& resourcesCollection)
+{
+    // Get keyed provider
+    std::shared_ptr<IMapProvider> provider_;
+    if (!obtainProviderFor(static_cast<BaseResourcesCollection*>(resourcesCollection.get()), provider_))
+        return;
+    const auto& provider = std::dynamic_pointer_cast<IMapKeyedProvider>(provider_);
+    if (!provider)
+        return;
+
+    // Get list of keys this provider has and check that all are present
+    const auto& resourceKeys = provider->getKeys();
+    for (const auto& resourceKey : constOf(resourceKeys))
+    {
+        // Obtain a resource entry and if it's state is "Unknown", create a task that will
+        // request resource data
+        std::shared_ptr<BaseKeyedResource> resource;
+        const auto resourceType = resourcesCollection->type;
+        resourcesCollection->obtainOrAllocateEntry(resource, resourceKey,
+            [this, resourceType]
+            (const KeyedEntriesCollection<const void*, BaseKeyedResource>& collection, const void* const key) -> BaseKeyedResource*
+            {
+                /*if (resourceType == ResourceType::Symbols)
+                    return new SymbolsKeyedResource(this, collection, key);
+                else*/
+                    return nullptr;
+            });
+
+        requestNeededResource(resource);
+    }
+}
+
+void OsmAnd::MapRendererResources::requestNeededResource(const std::shared_ptr<BaseResource>& resource)
+{
+    // Only if tile entry has "Unknown" state proceed to "Requesting" state
+    if (!resource->setStateIf(ResourceState::Unknown, ResourceState::Requesting))
+        return;
+    LOG_RESOURCE_STATE_CHANGE(resource, ResourceState::Unknown, ResourceState::Requesting);
+
+    // Create async-task that will obtain needed resource data
+    const auto executeProc = [this](Concurrent::Task* task_)
+    {
+        const auto task = static_cast<ResourceRequestTask*>(task_);
+        const auto resource = std::static_pointer_cast<BaseTiledResource>(task->requestedResource);
+
+        // Only if resource entry has "Requested" state proceed to "ProcessingRequest" state
+        if (!resource->setStateIf(ResourceState::Requested, ResourceState::ProcessingRequest))
+        {
+            // This actually can happen in following situation(s):
+            //   - if request task was canceled before has started it's execution,
+            //     since in that case a state change "Requested => JustBeforeDeath" must have happend.
+            //     In this case entry will be removed in post-execute handler.
+            assert(resource->getState() == ResourceState::JustBeforeDeath);
+            return;
+        }
+        else
+        {
+            LOG_RESOURCE_STATE_CHANGE(resource, ResourceState::Requested, ResourceState::ProcessingRequest);
+        }
+
+        // Ask resource to obtain it's data
+        bool dataAvailable = false;
+        FunctorQueryController obtainDataQueryController(
+            [task_]
+            (const FunctorQueryController* const controller) -> bool
+            {
+                return task_->isCancellationRequested();
+            });
+        const auto requestSucceeded = resource->obtainData(dataAvailable, &obtainDataQueryController) && !task->isCancellationRequested();
+
+        // If failed to obtain resource data, remove resource entry to repeat try later
+        if (!requestSucceeded)
+        {
+            // It's safe to simply remove entry, since it's not yet uploaded
+            if (const auto link = resource->link.lock())
+                link->collection.removeEntry(resource->tileId, resource->zoom);
+            return;
+        }
+
+        // Finalize execution of task
+        if (!resource->setStateIf(ResourceState::ProcessingRequest, dataAvailable ? ResourceState::Ready : ResourceState::Unavailable))
+        {
+            assert(resource->getState() == ResourceState::RequestCanceledWhileBeingProcessed);
+
+            // While request was processed, state may have changed to "RequestCanceledWhileBeingProcessed"
+            task->requestCancellation();
+            return;
+        }
+#if OSMAND_LOG_RESOURCE_STATE_CHANGE
+        else
+        {
+            if (dataAvailable)
+                LOG_RESOURCE_STATE_CHANGE(resource, ResourceState::ProcessingRequest, ResourceState::Ready);
+            else
+                LOG_RESOURCE_STATE_CHANGE(resource, ResourceState::ProcessingRequest, ResourceState::Unavailable);
+        }
+#endif // OSMAND_LOG_RESOURCE_STATE_CHANGE
+        resource->_requestTask = nullptr;
+
+        // There is data to upload to GPU, request uploading. Or just ask to show that resource is unavailable
+        if (dataAvailable)
+            requestResourcesUploadOrUnload();
+        else
+            notifyNewResourceAvailableForDrawing();
+    };
+    const auto postExecuteProc = [this](Concurrent::Task* task_, bool wasCancelled)
+    {
+        const auto task = static_cast<const ResourceRequestTask*>(task_);
+        const auto resource = std::static_pointer_cast<BaseTiledResource>(task->requestedResource);
+
+        if (wasCancelled)
+        {
+            // If request task was canceled, if could have happened:
+            //  - before it has started it's execution.
+            //    In this case, state has to be "Requested", and it won't change. So just remove it
+            //  - during it's execution.
+            //    In this case, this handler will be called after execution was finished,
+            //    and state _should_ be "Ready" or "Unavailable", but in general it can be any:
+            //    Uploading, Uploaded, Unloading, Unloaded. In case state is "Ready" or "Unavailable",
+            //    change it to "JustBeforeDeath" and delete it.
+            if (
+                resource->setStateIf(ResourceState::Requested, ResourceState::JustBeforeDeath) ||
+                resource->setStateIf(ResourceState::Ready, ResourceState::JustBeforeDeath) ||
+                resource->setStateIf(ResourceState::Unavailable, ResourceState::JustBeforeDeath) ||
+                resource->setStateIf(ResourceState::RequestCanceledWhileBeingProcessed, ResourceState::JustBeforeDeath))
+            {
+                LOG_RESOURCE_STATE_CHANGE(resource, ? , ResourceState::JustBeforeDeath);
+
+                task->requestedResource->removeSelfFromCollection();
+            }
+
+            // All other cases must be handled in other places, since here there is no access to GPU
+        }
+    };
+    const auto asyncTask = new ResourceRequestTask(resource, _taskHostBridge, executeProc, nullptr, postExecuteProc);
+
+    // Register tile as requested
+    resource->_requestTask = asyncTask;
+    assert(resource->getState() == ResourceState::Requesting);
+    resource->setState(ResourceState::Requested);
+    LOG_RESOURCE_STATE_CHANGE(resource, ? , ResourceState::Requested);
+
+    // Finally start the request
+    _resourcesRequestWorkersPool.start(asyncTask);
 }
 
 void OsmAnd::MapRendererResources::invalidateAllResources()
@@ -1249,6 +1288,12 @@ bool OsmAnd::MapRendererResources::BaseTiledResource::setStateIf(const ResourceS
     return BaseTilesCollectionEntryWithState::setStateIf(testState, newState);
 }
 
+void OsmAnd::MapRendererResources::BaseTiledResource::removeSelfFromCollection()
+{
+    if (const auto link_ = link.lock())
+        link_->collection.removeEntry(tileId, zoom);
+}
+
 OsmAnd::MapRendererResources::BaseKeyedResource::BaseKeyedResource(MapRendererResources* owner, const ResourceType type, const KeyedEntriesCollection<const void*, BaseKeyedResource>& collection, const void* key)
     : BaseResource(owner, type)
     , KeyedEntriesCollectionEntryWithState(collection, key)
@@ -1277,6 +1322,12 @@ void OsmAnd::MapRendererResources::BaseKeyedResource::setState(const ResourceSta
 bool OsmAnd::MapRendererResources::BaseKeyedResource::setStateIf(const ResourceState testState, const ResourceState newState)
 {
     return BaseKeyedEntriesCollectionEntryWithState::setStateIf(testState, newState);
+}
+
+void OsmAnd::MapRendererResources::BaseKeyedResource::removeSelfFromCollection()
+{
+    if (const auto link_ = link.lock())
+        link_->collection.removeEntry(key);
 }
 
 OsmAnd::MapRendererResources::BaseResourcesCollection::BaseResourcesCollection(const ResourceType& type_)
@@ -1384,7 +1435,7 @@ bool OsmAnd::MapRendererResources::MapTileResource::obtainData(bool& dataAvailab
     // Get source of tile
     std::shared_ptr<IMapProvider> provider_;
     if (const auto link_ = link.lock())
-        ok = owner->obtainProviderFor(static_cast<TiledResourcesCollection*>(&link_->collection), provider_);
+        ok = owner->obtainProviderFor(static_cast<TiledResourcesCollection*>(static_cast<TiledResourcesCollection*>(&link_->collection)), provider_);
     if (!ok)
         return false;
     const auto provider = std::static_pointer_cast<IMapTileProvider>(provider_);
@@ -1527,7 +1578,7 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAva
 
     // Get source of tile
     std::shared_ptr<IMapProvider> provider_;
-    bool ok = owner->obtainProviderFor(static_cast<TiledResourcesCollection*>(&link_->collection), provider_);
+    bool ok = owner->obtainProviderFor(static_cast<TiledResourcesCollection*>(static_cast<TiledResourcesCollection*>(&link_->collection)), provider_);
     if (!ok)
         return false;
     const auto provider = std::static_pointer_cast<IMapSymbolTiledProvider>(provider_);

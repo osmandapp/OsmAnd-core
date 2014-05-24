@@ -118,6 +118,8 @@ namespace OsmAnd
             virtual bool obtainData(bool& dataAvailable, const IQueryController* queryController = nullptr) = 0;
             virtual bool uploadToGPU() = 0;
             virtual void unloadFromGPU() = 0;
+
+            virtual void removeSelfFromCollection() = 0;
         public:
             virtual ~BaseResource();
 
@@ -148,6 +150,8 @@ namespace OsmAnd
                 const TiledEntriesCollection<BaseTiledResource>& collection,
                 const TileId tileId,
                 const ZoomLevel zoom);
+
+            virtual void removeSelfFromCollection();
         public:
             virtual ~BaseTiledResource();
 
@@ -172,6 +176,8 @@ namespace OsmAnd
                 const ResourceType type,
                 const KeyedEntriesCollection<const void*, BaseKeyedResource>& collection,
                 const void* key);
+
+            virtual void removeSelfFromCollection();
         public:
             virtual ~BaseKeyedResource();
 
@@ -382,6 +388,8 @@ namespace OsmAnd
         void updateResources(const QSet<TileId>& tiles, const ZoomLevel zoom);
         void requestNeededResources(const QSet<TileId>& activeTiles, const ZoomLevel activeZoom);
         void requestNeededTiledResources(const std::shared_ptr<TiledResourcesCollection>& resourcesCollection, const QSet<TileId>& activeTiles, const ZoomLevel activeZoom);
+        void requestNeededKeyedResources(const std::shared_ptr<KeyedResourcesCollection>& resourcesCollection);
+        void requestNeededResource(const std::shared_ptr<BaseResource>& resource);
         void cleanupJunkResources(const QSet<TileId>& activeTiles, const ZoomLevel activeZoom);
         unsigned int unloadResources();
         unsigned int uploadResources(const unsigned int limit = 0u, bool* const outMoreThanLimitAvailable = nullptr);

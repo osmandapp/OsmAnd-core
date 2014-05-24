@@ -29,7 +29,7 @@ namespace OsmAnd
     class TiledEntriesCollection
     {
     public:
-        typedef typename TiledEntriesCollection<ENTRY> Collection;
+        typedef TiledEntriesCollection<ENTRY> Collection;
 
         class Link : public std::enable_shared_from_this< Link >
         {

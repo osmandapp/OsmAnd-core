@@ -14,7 +14,7 @@
 #include "OsmAndCore.h"
 #include "PrivateImplementation.h"
 #include "CommonTypes.h"
-#include "IMapSymbolCollectionProvider.h"
+#include "IMapSymbolKeyedProvider.h"
 #include "MarkersSymbolProvider.h"
 
 namespace OsmAnd

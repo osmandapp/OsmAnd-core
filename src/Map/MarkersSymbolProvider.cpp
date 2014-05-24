@@ -51,3 +51,8 @@ bool OsmAnd::MarkersSymbolProvider::obtainSymbols(QList< std::shared_ptr<const M
 {
     return _p->obtainSymbols(outSymbolGroups, filterCallback);
 }
+
+QSet<OsmAnd::MarkersSymbolProvider::Key> OsmAnd::MarkersSymbolProvider::getKeys() const
+{
+    return QSet<OsmAnd::MarkersSymbolProvider::Key>();
+}
