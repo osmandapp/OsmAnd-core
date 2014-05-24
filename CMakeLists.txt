@@ -15,7 +15,7 @@ if (CMAKE_TARGET_OS STREQUAL "linux")
 		rt
 	)
 endif()
-if (CMAKE_TARGET_OS STREQUAL "darwin")
+if (CMAKE_TARGET_OS STREQUAL "macosx")
 	find_library(CORESERVICES_LIBRARY CoreServices)
 	find_library(SYSTEMCONFIGURATION_LIBRARY SystemConfiguration)
 	find_library(CFNETWORK_LIBRARY CFNetwork)
@@ -41,7 +41,7 @@ if (CMAKE_COMPILER_FAMILY STREQUAL "msvc")
 endif()
 
 # 3D rendering: OpenGL, OpenGLES2, Direct3D
-if (CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "windows" OR CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android")
+if (CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "macosx" OR CMAKE_TARGET_OS STREQUAL "windows" OR CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android")
 	file(GLOB sources_opengl "src/Map/OpenGL/*.c*")
 	file(GLOB headers_opengl "src/Map/OpenGL/*.h*")
 	set(target_specific_public_definitions ${target_specific_public_definitions}
@@ -56,7 +56,7 @@ if (CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMA
 		${sources_opengl}
 	)
 endif()
-if (CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "darwin" OR CMAKE_TARGET_OS STREQUAL "windows")
+if (CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "macosx" OR CMAKE_TARGET_OS STREQUAL "windows")
 	find_package(OpenGL REQUIRED)
 	set(target_specific_public_definitions ${target_specific_public_definitions}
 		${OPENGL_DEFINITIONS}
@@ -293,7 +293,7 @@ if (CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 				${Qt5Network_SHARED_LIBRARIES}
 				${Qt5Core_SHARED_LIBRARIES}
 		)
-		if (CMAKE_TARGET_OS STREQUAL "darwin")
+		if (CMAKE_TARGET_OS STREQUAL "macosx")
 			target_link_libraries(OsmAndCore_shared
 				LINK_PUBLIC
 					objc
@@ -400,7 +400,7 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 				${Qt5Network_STATIC_LIBRARIES}
 				${Qt5Core_STATIC_LIBRARIES}
 		)
-		if (CMAKE_TARGET_OS STREQUAL "darwin")
+		if (CMAKE_TARGET_OS STREQUAL "macosx")
 			target_link_libraries(OsmAndCore_static
 				LINK_PUBLIC
 					objc

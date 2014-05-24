@@ -227,7 +227,7 @@ else()
 	#cmakedefine HAVE_STRUCT_TM_TM_GMTOFF 1
 	#cmakedefine HAVE_STRUCT_TM___TM_GMTOFF 1
 	check_function_exists("symlink" HAVE_SYMLINK)
-	if (CMAKE_TARGET_OS STREQUAL "darwin")
+	if (CMAKE_TARGET_OS STREQUAL "macosx")
 		# MacOSX has sys/acl.h file, but it's not POSIX-compatible and
 		# requires "sys/types.h" to be included manually
 		check_include_files("sys/types.h;sys/acl.h" HAVE_SYS_ACL_H)

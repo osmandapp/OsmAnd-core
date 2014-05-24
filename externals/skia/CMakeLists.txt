@@ -101,7 +101,7 @@ if (CMAKE_TARGET_OS STREQUAL "windows")
 	set(target_specific_libraries_public ${target_specific_libraries_public}
 		Usp10
 	)
-elseif (CMAKE_TARGET_OS STREQUAL "darwin")
+elseif (CMAKE_TARGET_OS STREQUAL "macosx")
 	set(target_specific_include_dirs_public ${target_specific_include_dirs_public}
 		"upstream.patched/include/utils/mac"
 	)
