@@ -223,7 +223,7 @@ namespace OsmAnd
     class TiledEntriesCollectionEntry
     {
     public:
-        typedef typename TiledEntriesCollection<ENTRY> Collection;
+        typedef TiledEntriesCollection<ENTRY> Collection;
         typedef typename Collection::Link Link;
 
     private:

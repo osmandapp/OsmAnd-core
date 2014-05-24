@@ -201,7 +201,7 @@ namespace OsmAnd
     class KeyedEntriesCollectionEntry
     {
     public:
-        typedef typename KeyedEntriesCollection<KEY, ENTRY> Collection;
+        typedef KeyedEntriesCollection<KEY, ENTRY> Collection;
         typedef typename Collection::Link Link;
 
     private:
