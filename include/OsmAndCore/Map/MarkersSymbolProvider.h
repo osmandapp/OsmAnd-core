@@ -71,9 +71,7 @@ namespace OsmAnd
 
         virtual QSet<Key> getKeys() const;
 
-        virtual bool obtainSymbols(
-            QList< std::shared_ptr<const MapSymbolsGroup> >& outSymbolGroups,
-            const FilterCallback filterCallback = nullptr);
+        virtual bool obtainSymbolsGroup(const Key key, std::shared_ptr<const MapSymbolsGroup>& outSymbolGroups);
     };
 }
 

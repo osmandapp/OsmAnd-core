@@ -25,6 +25,7 @@ namespace OsmAnd
         Q_DISABLE_COPY(MarkersSymbolProvider_P);
 
     public:
+        typedef MarkersSymbolProvider::Key Key;
         typedef MarkersSymbolProvider::Marker Marker;
         typedef MarkersSymbolProvider::FilterCallback FilterCallback;
 
@@ -57,9 +58,8 @@ namespace OsmAnd
         int removeMarkersWithName(const QString& name);
         int removeAllMarkers();
 
-        virtual bool obtainSymbols(
-            QList< std::shared_ptr<const MapSymbolsGroup> >& outSymbolGroups,
-            const FilterCallback filterCallback);
+        QSet<Key> getKeys() const;
+        bool obtainSymbolsGroup(const Key key, std::shared_ptr<const MapSymbolsGroup>& outSymbolGroups);
 
     friend class OsmAnd::MarkersSymbolProvider;
     };

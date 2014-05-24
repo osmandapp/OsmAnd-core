@@ -25,9 +25,7 @@ namespace OsmAnd
     public:
         virtual ~IMapSymbolKeyedProvider();
 
-        virtual bool obtainSymbols(
-            QList< std::shared_ptr<const MapSymbolsGroup> >& outSymbolGroups,
-            const FilterCallback filterCallback = nullptr) = 0;
+        virtual bool obtainSymbolsGroup(const Key key, std::shared_ptr<const MapSymbolsGroup>& outSymbolGroups) = 0;
     };
 }
 

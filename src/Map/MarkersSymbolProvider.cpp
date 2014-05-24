@@ -47,12 +47,12 @@ int OsmAnd::MarkersSymbolProvider::removeAllMarkers()
     return _p->removeAllMarkers();
 }
 
-bool OsmAnd::MarkersSymbolProvider::obtainSymbols(QList< std::shared_ptr<const MapSymbolsGroup> >& outSymbolGroups, const FilterCallback filterCallback /*= nullptr*/)
-{
-    return _p->obtainSymbols(outSymbolGroups, filterCallback);
-}
-
 QSet<OsmAnd::MarkersSymbolProvider::Key> OsmAnd::MarkersSymbolProvider::getKeys() const
 {
-    return QSet<OsmAnd::MarkersSymbolProvider::Key>();
+    return _p->getKeys();
+}
+
+bool OsmAnd::MarkersSymbolProvider::obtainSymbolsGroup(const Key key, std::shared_ptr<const MapSymbolsGroup>& outSymbolGroups)
+{
+    return _p->obtainSymbolsGroup(key, outSymbolGroups);
 }

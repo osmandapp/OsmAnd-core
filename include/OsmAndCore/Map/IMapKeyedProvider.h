@@ -14,6 +14,7 @@ namespace OsmAnd
     class OSMAND_CORE_API IMapKeyedProvider : public IMapProvider
     {
         Q_DISABLE_COPY(IMapKeyedProvider);
+
     public:
         typedef const void* Key;
 
