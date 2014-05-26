@@ -516,7 +516,7 @@ void OsmAnd::MapAnimator_P::constructAzimuthAnimationToValue(
         [this, value]
         (AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext) -> float
         {
-            return value - azimuthGetter(context, sharedContext);
+            return Utilities::normalizedAngleDegrees(value - azimuthGetter(context, sharedContext));
         },
         duration, 0.0f, timingFunction,
         _azimuthGetter, _azimuthSetter));
