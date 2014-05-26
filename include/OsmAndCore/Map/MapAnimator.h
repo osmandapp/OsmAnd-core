@@ -104,20 +104,25 @@ namespace OsmAnd
         void update(const float timePassed);
 
         void animateZoomBy(const float deltaValue, const float duration, const TimingFunction timingFunction);
+        void animateZoomTo(const float value, const float duration, const TimingFunction timingFunction);
         void animateZoomWith(const float velocity, const float deceleration);
 
         void animateTargetBy(const PointI& deltaValue, const float duration, const TimingFunction timingFunction);
         void animateTargetBy(const PointI64& deltaValue, const float duration, const TimingFunction timingFunction);
+        void animateTargetTo(const PointI& value, const float duration, const TimingFunction timingFunction);
         void animateTargetWith(const PointD& velocity, const PointD& deceleration);
 
         void parabolicAnimateTargetBy(const PointI& deltaValue, const float duration, const TimingFunction targetTimingFunction, const TimingFunction zoomTimingFunction);
         void parabolicAnimateTargetBy(const PointI64& deltaValue, const float duration, const TimingFunction targetTimingFunction, const TimingFunction zoomTimingFunction);
+        void parabolicAnimateTargetTo(const PointI& value, const float duration, const TimingFunction targetTimingFunction, const TimingFunction zoomTimingFunction);
         void parabolicAnimateTargetWith(const PointD& velocity, const PointD& deceleration);
 
         void animateAzimuthBy(const float deltaValue, const float duration, const TimingFunction timingFunction);
+        void animateAzimuthTo(const float value, const float duration, const TimingFunction timingFunction);
         void animateAzimuthWith(const float velocity, const float deceleration);
 
         void animateElevationAngleBy(const float deltaValue, const float duration, const TimingFunction timingFunction);
+        void animateElevationAngleTo(const float value, const float duration, const TimingFunction timingFunction);
         void animateElevationAngleWith(const float velocity, const float deceleration);
 
         void animateMoveBy(
@@ -126,6 +131,10 @@ namespace OsmAnd
             const TimingFunction timingFunction);
         void animateMoveBy(
             const PointI64& deltaValue, const float duration,
+            const bool zeroizeAzimuth, const bool invZeroizeElevationAngle,
+            const TimingFunction timingFunction);
+        void animateMoveTo(
+            const PointI& deltaValue, const float duration,
             const bool zeroizeAzimuth, const bool invZeroizeElevationAngle,
             const TimingFunction timingFunction);
         void animateMoveWith(const PointD& velocity, const PointD& deceleration, const bool zeroizeAzimuth, const bool invZeroizeElevationAngle);
