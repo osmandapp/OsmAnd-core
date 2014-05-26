@@ -11,10 +11,12 @@
 #include <QList>
 #include <QVector>
 #include <QMutex>
+#include <QReadWriteLock>
 #include <QVariant>
 
 #include "OsmAndCore.h"
 #include "PrivateImplementation.h"
+#include "MapAnimator.h"
 #include "MapTypes.h"
 
 namespace OsmAnd
@@ -25,6 +27,11 @@ namespace OsmAnd
     class MapAnimator_P
     {
         Q_DISABLE_COPY(MapAnimator_P);
+    public:
+        typedef MapAnimator::TimingFunction TimingFunction;
+        typedef MapAnimator::AnimatedValue AnimatedValue;
+        typedef MapAnimator::IAnimation IAnimation;
+
     private:
     protected:
         MapAnimator_P(MapAnimator* const owner);
@@ -38,65 +45,50 @@ namespace OsmAnd
             QVariantHash storageHash;
         };
 
-        class BaseAnimation
+        class GenericAnimation : public IAnimation
         {
-            Q_DISABLE_COPY(BaseAnimation);
+            Q_DISABLE_COPY(GenericAnimation);
         private:
         protected:
+            mutable QReadWriteLock _processLock;
+
             float _timePassed;
 
             AnimationContext _ownContext;
             const std::shared_ptr<AnimationContext> _sharedContext;
         
-            BaseAnimation(const float duration_, const float delay_, const MapAnimatorTimingFunction timingFunction_, const std::shared_ptr<AnimationContext>& sharedContext_)
-                : _timePassed(0.0f)
-                , _sharedContext(sharedContext_)
-                , duration(duration_)
-                , delay(delay_)
-                , timingFunction(timingFunction_)
-            {
-            }
+            GenericAnimation(
+                const AnimatedValue animatedValue,
+                const float duration,
+                const float delay,
+                const TimingFunction timingFunction,
+                const std::shared_ptr<AnimationContext>& sharedContext);
 
-            static float properCast(const float value)
-            {
-                return value;
-            }
-
-            static double properCast(const double value)
-            {
-                return value;
-            }
-
-            static double properCast(const int32_t value)
-            {
-                return static_cast<double>(value);
-            }
-
-            static double properCast(const int64_t value)
-            {
-                return static_cast<double>(value);
-            }
+            static float properCast(const float value);
+            static double properCast(const double value);
+            static double properCast(const int32_t value);
+            static double properCast(const int64_t value);
 
             template <typename T>
-            static void calculateValue(const float t, const T initial, const T delta, const float duration, const MapAnimatorTimingFunction timingFunction, T& value)
+            static void calculateValue(const float t, const T initial, const T delta, const float duration, const TimingFunction timingFunction, T& value)
             {
                 switch(timingFunction)
                 {
-                case MapAnimatorTimingFunction::Linear:
+                case TimingFunction::Linear:
                     value = initial + static_cast<T>(linearTween(t, properCast(delta), duration));
                     break;
 
 #define _DECLARE_USE(name)                                                                                                          \
-    case MapAnimatorTimingFunction::EaseIn##name:                                                                                   \
+    case TimingFunction::EaseIn##name:                                                                                              \
         value = initial + static_cast<T>(easeIn_##name(t, properCast(delta), duration));                                            \
         break;                                                                                                                      \
-    case MapAnimatorTimingFunction::EaseOut##name:                                                                                  \
+    case TimingFunction::EaseOut##name:                                                                                             \
         value = initial + static_cast<T>(easeOut_##name(t, properCast(delta), duration));                                           \
         break;                                                                                                                      \
-    case MapAnimatorTimingFunction::EaseInOut##name:                                                                                \
+    case TimingFunction::EaseInOut##name:                                                                                           \
         value = initial + static_cast<T>(easeInOut_##name(t, properCast(delta), duration));                                         \
         break;                                                                                                                      \
-    case MapAnimatorTimingFunction::EaseOutIn##name:                                                                                \
+    case TimingFunction::EaseOutIn##name:                                                                                           \
         value = initial + static_cast<T>(easeOutIn_##name(t, properCast(delta), duration));                                         \
         break;
 
@@ -110,7 +102,7 @@ namespace OsmAnd
 
 #undef _DECLARE_USE
 
-                case MapAnimatorTimingFunction::Invalid:
+                case TimingFunction::Invalid:
                 default:
                     assert(false);
                     break;
@@ -118,7 +110,7 @@ namespace OsmAnd
             }
 
             template <typename T>
-            static void calculateValue(const float t, const Point<T>& initial, const Point<T>& delta, const float duration, const MapAnimatorTimingFunction timingFunction, Point<T>& value)
+            static void calculateValue(const float t, const Point<T>& initial, const Point<T>& delta, const float duration, const TimingFunction timingFunction, Point<T>& value)
             {
                 calculateValue(t, initial.x, delta.x, duration, timingFunction, value.x);
                 calculateValue(t, initial.y, delta.y, duration, timingFunction, value.y);
@@ -138,7 +130,7 @@ namespace OsmAnd
         const auto halfDuration = 0.5f * duration;                                                                                          \
         const auto halfDelta = 0.5f * delta;                                                                                                \
         const auto tn = t / halfDuration;                                                                                                   \
-        if (tn < 1.0f)                                                                                                                       \
+        if (tn < 1.0f)                                                                                                                      \
             return easeIn_##name(tn * halfDuration, halfDelta, halfDuration);                                                               \
         else                                                                                                                                \
             return halfDelta + easeOut_##name((tn - 1.0f) * halfDuration, halfDelta, halfDuration);                                         \
@@ -149,7 +141,7 @@ namespace OsmAnd
         const auto halfDuration = 0.5f * duration;                                                                                          \
         const auto halfDelta = 0.5f * delta;                                                                                                \
         const auto tn = t / halfDuration;                                                                                                   \
-        if (tn < 1.0f)                                                                                                                       \
+        if (tn < 1.0f)                                                                                                                      \
             return easeOut_##name(tn * halfDuration, halfDelta, halfDuration);                                                              \
         else                                                                                                                                \
             return halfDelta + easeIn_##name((tn - 1.0f) * halfDuration, halfDelta, halfDuration);                                          \
@@ -259,20 +251,29 @@ namespace OsmAnd
 
 #undef _DECLARE_IN_OUT
         public:
-            virtual ~BaseAnimation()
-            {
-            }
+            virtual ~GenericAnimation();
 
             virtual bool process(const float timePassed) = 0;
+
+            const AnimatedValue animatedValue;
 
             const float delay;
             const float duration;
 
-            const MapAnimatorTimingFunction timingFunction;
+            const TimingFunction timingFunction;
+
+            virtual AnimatedValue getAnimatedValue() const;
+
+            virtual bool isActive() const;
+
+            virtual float getTimePassed() const;
+            virtual float getDelay() const;
+            virtual float getDuration() const;
+            virtual TimingFunction getTimingFunction() const;
         };
 
         template <typename T>
-        class Animation : public BaseAnimation
+        class Animation : public GenericAnimation
         {
             Q_DISABLE_COPY(Animation);
         public:
@@ -284,18 +285,22 @@ namespace OsmAnd
             T _initialValue;
             bool _initialValueCaptured;
             T _deltaValue;
+            T _currentValue;
+            bool _currentValueCalculatedOnce;
         public:
             Animation(
+                const AnimatedValue animatedValue_,
                 const T deltaValue_,
                 const float duration_,
                 const float delay_,
-                const MapAnimatorTimingFunction timingFunction_,
+                const TimingFunction timingFunction_,
                 const GetInitialValueMethod obtainer_,
                 const ApplierMethod applier_,
                 const std::shared_ptr<AnimationContext>& sharedContext_ = nullptr)
-                : BaseAnimation(duration_, delay_, timingFunction_, sharedContext_)
+                : GenericAnimation(animatedValue_, duration_, delay_, timingFunction_, sharedContext_)
                 , _initialValueCaptured(false)
                 , _deltaValue(deltaValue_)
+                , _currentValueCalculatedOnce(false)
                 , deltaValue(_deltaValue)
                 , deltaValueObtainer(nullptr)
                 , obtainer(obtainer_)
@@ -306,14 +311,15 @@ namespace OsmAnd
             }
 
             Animation(
+                const AnimatedValue animatedValue_,
                 const GetDeltaValueMethod deltaValueObtainer_,
                 const float duration_,
                 const float delay_,
-                const MapAnimatorTimingFunction timingFunction_,
+                const TimingFunction timingFunction_,
                 const GetInitialValueMethod obtainer_,
                 const ApplierMethod applier_,
                 const std::shared_ptr<AnimationContext>& sharedContext_ = nullptr)
-                : BaseAnimation(duration_, delay_, timingFunction_, sharedContext_)
+                : GenericAnimation(animatedValue_, duration_, delay_, timingFunction_, sharedContext_)
                 , _initialValueCaptured(false)
                 , deltaValue(_deltaValue)
                 , deltaValueObtainer(deltaValueObtainer_)
@@ -330,6 +336,8 @@ namespace OsmAnd
 
             virtual bool process(const float timePassed)
             {
+                QWriteLocker scopedLock(&_processLock);
+
                 // Increment time
                 _timePassed += timePassed;
 
@@ -352,11 +360,11 @@ namespace OsmAnd
                 const auto currentTime = qMin(_timePassed - delay, duration);
                
                 // Obtain current delta
-                T newValue;
-                calculateValue(currentTime, _initialValue, _deltaValue, duration, timingFunction, newValue);
+                calculateValue(currentTime, _initialValue, _deltaValue, duration, timingFunction, _currentValue);
+                _currentValueCalculatedOnce = true;
 
                 // Apply new value
-                applier(newValue, _ownContext, _sharedContext);
+                applier(_currentValue, _ownContext, _sharedContext);
 
                 // Return false to indicate that processing has not yet finished
                 return ((_timePassed - delay) >= duration);
@@ -366,46 +374,108 @@ namespace OsmAnd
             const GetDeltaValueMethod deltaValueObtainer;
             const GetInitialValueMethod obtainer;
             const ApplierMethod applier;
+
+            virtual bool obtainInitialValueAsFloat(float& outValue) const
+            {
+                QReadLocker scopedLock(&_processLock);
+
+                if (!std::is_same<T, float>::value || !_initialValueCaptured)
+                    return false;
+
+                outValue = *reinterpret_cast<const float*>(&_initialValue);
+                return true;
+            }
+            virtual bool obtainDeltaValueAsFloat(float& outValue) const
+            {
+                QReadLocker scopedLock(&_processLock);
+
+                if (!std::is_same<T, float>::value || !_initialValueCaptured)
+                    return false;
+
+                outValue = *reinterpret_cast<const float*>(&deltaValue);
+                return true;
+            }
+            virtual bool obtainCurrentValueAsFloat(float& outValue) const
+            {
+                QReadLocker scopedLock(&_processLock);
+
+                if (!std::is_same<T, float>::value || !_currentValueCalculatedOnce)
+                    return false;
+
+                outValue = *reinterpret_cast<const float*>(&_currentValue);
+                return true;
+            }
+
+            virtual bool obtainInitialValueAsPointI64(PointI64& outValue) const
+            {
+                QReadLocker scopedLock(&_processLock);
+
+                if (!std::is_same<T, PointI64>::value || !_initialValueCaptured)
+                    return false;
+
+                outValue = *reinterpret_cast<const PointI64*>(&_initialValue);
+                return true;
+            }
+            virtual bool obtainDeltaValueAsPointI64(PointI64& outValue) const
+            {
+                QReadLocker scopedLock(&_processLock);
+
+                if (!std::is_same<T, PointI64>::value || !_initialValueCaptured)
+                    return false;
+
+                outValue = *reinterpret_cast<const PointI64*>(&deltaValue);
+                return true;
+            }
+            virtual bool obtainCurrentValueAsPointI64(PointI64& outValue) const
+            {
+                QReadLocker scopedLock(&_processLock);
+
+                if (!std::is_same<T, PointI64>::value || !_currentValueCalculatedOnce)
+                    return false;
+
+                outValue = *reinterpret_cast<const PointI64*>(&_currentValue);
+                return true;
+            }
         };
 
         volatile bool _isAnimationPaused;
         mutable QMutex _animationsMutex;
-        QList< std::shared_ptr<BaseAnimation> > _animations;
+        QList< std::shared_ptr<GenericAnimation> > _animations;
 
         void constructZoomAnimation(
-            QList< std::shared_ptr<BaseAnimation> >& outAnimation,
+            QList< std::shared_ptr<GenericAnimation> >& outAnimation,
             const float deltaValue,
             const float duration,
-            const MapAnimatorTimingFunction timingFunction);
+            const TimingFunction timingFunction);
         void constructTargetAnimation(
-            QList< std::shared_ptr<BaseAnimation> >& outAnimation,
+            QList< std::shared_ptr<GenericAnimation> >& outAnimation,
             const PointI64& deltaValue,
             const float duration,
-            const MapAnimatorTimingFunction timingFunction);
+            const TimingFunction timingFunction);
         void constructParabolicTargetAnimation(
-            QList< std::shared_ptr<BaseAnimation> >& outAnimation,
+            QList< std::shared_ptr<GenericAnimation> >& outAnimation,
             const PointI64& deltaValue,
             const float duration,
-            const MapAnimatorTimingFunction targetTimingFunction,
-            const MapAnimatorTimingFunction zoomTimingFunction);
+            const TimingFunction targetTimingFunction,
+            const TimingFunction zoomTimingFunction);
         void constructAzimuthAnimation(
-            QList< std::shared_ptr<BaseAnimation> >& outAnimation,
+            QList< std::shared_ptr<GenericAnimation> >& outAnimation,
             const float deltaValue,
             const float duration,
-            const MapAnimatorTimingFunction timingFunction);
+            const TimingFunction timingFunction);
         void constructElevationAngleAnimation(
-            QList< std::shared_ptr<BaseAnimation> >& outAnimation,
+            QList< std::shared_ptr<GenericAnimation> >& outAnimation,
             const float deltaValue,
             const float duration,
-            const MapAnimatorTimingFunction timingFunction);
+            const TimingFunction timingFunction);
         void constructZeroizeAzimuthAnimation(
-            QList< std::shared_ptr<BaseAnimation> >& outAnimation,
+            QList< std::shared_ptr<GenericAnimation> >& outAnimation,
             const float duration,
-            const MapAnimatorTimingFunction timingFunction);
+            const TimingFunction timingFunction);
         void constructInvZeroizeElevationAngleAnimation(
-            QList< std::shared_ptr<BaseAnimation> >& outAnimation,
+            QList< std::shared_ptr<GenericAnimation> >& outAnimation,
             const float duration,
-            const MapAnimatorTimingFunction timingFunction);
+            const TimingFunction timingFunction);
 
         const Animation<float>::GetInitialValueMethod _zoomGetter;
         float zoomGetter(AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext);
@@ -436,35 +506,38 @@ namespace OsmAnd
         void resumeAnimation();
         void cancelAnimation();
 
+        QList< std::shared_ptr<const IAnimation> > getAnimations() const;
+        std::shared_ptr<const IAnimation> getCurrentAnimationOf(const AnimatedValue value) const;
+
         void setMapRenderer(const std::shared_ptr<IMapRenderer>& mapRenderer);
 
         void update(const float timePassed);
 
-        void animateZoomBy(const float deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction);
+        void animateZoomBy(const float deltaValue, const float duration, const TimingFunction timingFunction);
         void animateZoomWith(const float velocity, const float deceleration);
 
-        void animateTargetBy(const PointI& deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction);
-        void animateTargetBy(const PointI64& deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction);
+        void animateTargetBy(const PointI& deltaValue, const float duration, const TimingFunction timingFunction);
+        void animateTargetBy(const PointI64& deltaValue, const float duration, const TimingFunction timingFunction);
         void animateTargetWith(const PointD& velocity, const PointD& deceleration);
 
-        void parabolicAnimateTargetBy(const PointI& deltaValue, const float duration, const MapAnimatorTimingFunction targetTimingFunction, const MapAnimatorTimingFunction zoomTimingFunction);
-        void parabolicAnimateTargetBy(const PointI64& deltaValue, const float duration, const MapAnimatorTimingFunction targetTimingFunction, const MapAnimatorTimingFunction zoomTimingFunction);
+        void parabolicAnimateTargetBy(const PointI& deltaValue, const float duration, const TimingFunction targetTimingFunction, const TimingFunction zoomTimingFunction);
+        void parabolicAnimateTargetBy(const PointI64& deltaValue, const float duration, const TimingFunction targetTimingFunction, const TimingFunction zoomTimingFunction);
         void parabolicAnimateTargetWith(const PointD& velocity, const PointD& deceleration);
 
-        void animateAzimuthBy(const float deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction);
+        void animateAzimuthBy(const float deltaValue, const float duration, const TimingFunction timingFunction);
         void animateAzimuthWith(const float velocity, const float deceleration);
 
-        void animateElevationAngleBy(const float deltaValue, const float duration, const MapAnimatorTimingFunction timingFunction);
+        void animateElevationAngleBy(const float deltaValue, const float duration, const TimingFunction timingFunction);
         void animateElevationAngleWith(const float velocity, const float deceleration);
 
         void animateMoveBy(
             const PointI& deltaValue, const float duration,
             const bool zeroizeAzimuth, const bool invZeroizeElevationAngle,
-            const MapAnimatorTimingFunction timingFunction);
+            const TimingFunction timingFunction);
         void animateMoveBy(
             const PointI64& deltaValue, const float duration,
             const bool zeroizeAzimuth, const bool invZeroizeElevationAngle,
-            const MapAnimatorTimingFunction timingFunction);
+            const TimingFunction timingFunction);
         void animateMoveWith(const PointD& velocity, const PointD& deceleration, const bool zeroizeAzimuth, const bool invZeroizeElevationAngle);
 
     friend class OsmAnd::MapAnimator;
