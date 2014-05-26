@@ -250,6 +250,16 @@ namespace OsmAnd
             _DECLARE_IN_OUT_AND_OUT_IN(Circular);
 
 #undef _DECLARE_IN_OUT
+
+            static bool isZero(const float value)
+            {
+                return qFuzzyIsNull(value);
+            }
+
+            static bool isZero(const PointI64 value)
+            {
+                return (value.x == 0 && value.y == 0);
+            }
         public:
             virtual ~GenericAnimation();
 
@@ -352,6 +362,8 @@ namespace OsmAnd
                     _initialValueCaptured = true;
                     if (deltaValueObtainer)
                         _deltaValue = deltaValueObtainer(_ownContext, _sharedContext);
+                    if (isZero(_deltaValue))
+                        return true;
 
                     return false;
                 }
