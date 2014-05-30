@@ -9,8 +9,8 @@
 #include <SkCanvas.h>
 
 #include "IMapRenderer.h"
-#include "IMapTiledProvider.h"
-#include "IMapBitmapTileProvider.h"
+#include "IMapTiledDataProvider.h"
+#include "IMapRasterBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
 #include "MapSymbolProvidersCommon.h"
 #include "Logging.h"
@@ -493,7 +493,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsArrayBufferToGPU(const std::shared_ptr< 
         assert(false);
         return false;
     }
-    const auto elevationTile = std::static_pointer_cast<const MapElevationDataTile>(tile);
+    const auto elevationTile = std::static_pointer_cast<const ElevationDataTile>(tile);
     
     // Create array buffer
     GLuint buffer;

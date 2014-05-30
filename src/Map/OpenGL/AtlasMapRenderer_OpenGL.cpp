@@ -17,8 +17,8 @@
 #include <SkBitmap.h>
 
 #include "IMapRenderer.h"
-#include "IMapTiledProvider.h"
-#include "IMapBitmapTileProvider.h"
+#include "IMapTiledDataProvider.h"
+#include "IMapRasterBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
 #include "MapSymbolProvidersCommon.h"
 #include "MapObject.h"
@@ -460,7 +460,7 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getReferenceTileSizeOnScreen( const MapRe
     if (!rasterMapProvider)
         return static_cast<float>(DefaultReferenceTileSizeOnScreen) * setupOptions.displayDensityFactor;
 
-    auto tileProvider = std::static_pointer_cast<IMapBitmapTileProvider>(rasterMapProvider);
+    auto tileProvider = std::static_pointer_cast<IMapRasterBitmapTileProvider>(rasterMapProvider);
     return tileProvider->getTileSize() * (setupOptions.displayDensityFactor / tileProvider->getTileDensity());
 }
 

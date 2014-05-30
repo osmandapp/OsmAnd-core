@@ -22,18 +22,24 @@ namespace OsmAnd
         PrivateImplementation<HeightmapTileProvider_P> _p;
     protected:
     public:
-        HeightmapTileProvider(const QDir& dataPath, const QString& indexFilepath = QString::null);
+        HeightmapTileProvider(const QString& dataPath, const QString& indexFilename = QString::null);
         virtual ~HeightmapTileProvider();
+
+        const QString dataPath;
+        const QString indexFilename;
 
         void rebuildTileDbIndex();
 
-        static const QString defaultIndexFilename;
-
-        virtual uint32_t getTileSize() const;
-        virtual bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile, const IQueryController* const queryController);
-
         virtual ZoomLevel getMinZoom() const;
         virtual ZoomLevel getMaxZoom() const;
+        virtual uint32_t getTileSize() const;
+        virtual bool obtainData(
+            const TileId tileId,
+            const ZoomLevel zoom,
+            std::shared_ptr<const MapTiledData>& outTiledData,
+            const IQueryController* const queryController = nullptr);
+
+        static const QString defaultIndexFilename;
     };
 }
 

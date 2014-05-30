@@ -1,5 +1,5 @@
-#include "OnlineMapRasterTileProvider_P.h"
-#include "OnlineMapRasterTileProvider.h"
+#include "OnlineRasterMapTileProvider_P.h"
+#include "OnlineRasterMapTileProvider.h"
 
 #include <cassert>
 
@@ -14,17 +14,17 @@
 
 #include "Logging.h"
 
-OsmAnd::OnlineMapRasterTileProvider_P::OnlineMapRasterTileProvider_P(OnlineMapRasterTileProvider* owner_)
+OsmAnd::OnlineRasterMapTileProvider_P::OnlineRasterMapTileProvider_P(OnlineRasterMapTileProvider* owner_)
     : owner(owner_)
     , _networkAccessAllowed(true)
 {
 }
 
-OsmAnd::OnlineMapRasterTileProvider_P::~OnlineMapRasterTileProvider_P()
+OsmAnd::OnlineRasterMapTileProvider_P::~OnlineRasterMapTileProvider_P()
 {
 }
 
-bool OsmAnd::OnlineMapRasterTileProvider_P::obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile, const IQueryController* const queryController)
+bool OsmAnd::OnlineRasterMapTileProvider_P::obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile, const IQueryController* const queryController)
 {
     // Check provider can supply this zoom level
     if (zoom > owner->maxZoom || zoom < owner->minZoom)
@@ -180,7 +180,7 @@ bool OsmAnd::OnlineMapRasterTileProvider_P::obtainTile(const TileId tileId, cons
     return true;
 }
 
-void OsmAnd::OnlineMapRasterTileProvider_P::lockTile(const TileId tileId, const ZoomLevel zoom)
+void OsmAnd::OnlineRasterMapTileProvider_P::lockTile(const TileId tileId, const ZoomLevel zoom)
 {
     QMutexLocker scopedLocker(&_tilesInProcessMutex);
 
@@ -190,7 +190,7 @@ void OsmAnd::OnlineMapRasterTileProvider_P::lockTile(const TileId tileId, const 
     _tilesInProcess[zoom].insert(tileId);
 }
 
-void OsmAnd::OnlineMapRasterTileProvider_P::unlockTile(const TileId tileId, const ZoomLevel zoom)
+void OsmAnd::OnlineRasterMapTileProvider_P::unlockTile(const TileId tileId, const ZoomLevel zoom)
 {
     QMutexLocker scopedLocker(&_tilesInProcessMutex);
 

@@ -1,6 +1,6 @@
 #include "IOnlineTileSources.h"
 
-#include "OnlineMapRasterTileProvider.h"
+#include "OnlineRasterMapTileProvider.h"
 
 OsmAnd::IOnlineTileSources::IOnlineTileSources()
 {
@@ -10,13 +10,13 @@ OsmAnd::IOnlineTileSources::~IOnlineTileSources()
 {
 }
 
-std::shared_ptr<OsmAnd::OnlineMapRasterTileProvider> OsmAnd::IOnlineTileSources::createProviderFor(const QString& sourceName) const
+std::shared_ptr<OsmAnd::OnlineRasterMapTileProvider> OsmAnd::IOnlineTileSources::createProviderFor(const QString& sourceName) const
 {
     const auto source = getSourceByName(sourceName);
     if (!source)
         return nullptr;
 
-    return std::shared_ptr<OsmAnd::OnlineMapRasterTileProvider>(new OnlineMapRasterTileProvider(
+    return std::shared_ptr<OsmAnd::OnlineRasterMapTileProvider>(new OnlineRasterMapTileProvider(
         source->name,
         source->urlPattern,
         source->minZoom,

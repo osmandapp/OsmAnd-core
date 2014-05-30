@@ -1,10 +1,12 @@
 #include "HeightmapTileProvider.h"
 #include "HeightmapTileProvider_P.h"
 
-const QString OsmAnd::HeightmapTileProvider::defaultIndexFilename("heightmap.index");
+const QString OsmAnd::HeightmapTileProvider::defaultIndexFilename(QLatin1String("heightmap.index"));
 
-OsmAnd::HeightmapTileProvider::HeightmapTileProvider( const QDir& dataPath, const QString& indexFilepath/* = QString::null*/ )
-    : _p(new HeightmapTileProvider_P(this, dataPath, indexFilepath))
+OsmAnd::HeightmapTileProvider::HeightmapTileProvider(const QString& dataPath_, const QString& indexFilename_ /*= QString::null*/)
+    : _p(new HeightmapTileProvider_P(this))
+    , dataPath(dataPath_)
+    , indexFilename(indexFilename_)
 {
 }
 
@@ -14,17 +16,12 @@ OsmAnd::HeightmapTileProvider::~HeightmapTileProvider()
 
 void OsmAnd::HeightmapTileProvider::rebuildTileDbIndex()
 {
-    _p->_tileDb.rebuildIndex();
+    _p->rebuildTileDbIndex();
 }
 
 uint32_t OsmAnd::HeightmapTileProvider::getTileSize() const
 {
-    return 32;
-}
-
-bool OsmAnd::HeightmapTileProvider::obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile, const IQueryController* const queryController)
-{
-    return _p->obtainTile(tileId, zoom, outTile, queryController);
+    return _p->getTileSize();
 }
 
 OsmAnd::ZoomLevel OsmAnd::HeightmapTileProvider::getMinZoom() const
@@ -35,4 +32,13 @@ OsmAnd::ZoomLevel OsmAnd::HeightmapTileProvider::getMinZoom() const
 OsmAnd::ZoomLevel OsmAnd::HeightmapTileProvider::getMaxZoom() const
 {
     return _p->getMaxZoom();
+}
+
+bool OsmAnd::HeightmapTileProvider::obtainData(
+    const TileId tileId,
+    const ZoomLevel zoom,
+    std::shared_ptr<const MapTiledData>& outTiledData,
+    const IQueryController* const queryController)
+{
+    return _p->obtainData(tileId, zoom, outTiledData, queryController);
 }

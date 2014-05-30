@@ -3,13 +3,13 @@
 #include <cassert>
 
 #include "MapRenderer.h"
-#include "IMapProvider.h"
-#include "IMapKeyedProvider.h"
-#include "IMapBitmapTileProvider.h"
+#include "IMapDataProvider.h"
+#include "IMapKeyedDataProvider.h"
+#include "IMapRasterBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
 #include "MapSymbolProvidersCommon.h"
-#include "IMapSymbolTiledProvider.h"
-#include "IMapSymbolKeyedProvider.h"
+#include "IMapTiledSymbolsProvider.h"
+#include "IMapKeyedSymbolsProvider.h"
 #include "IRetainableResource.h"
 #include "MapObject.h"
 #include "EmbeddedResources.h"
@@ -178,7 +178,7 @@ void OsmAnd::MapRendererResources::updateBindings(const MapRendererState& state,
         auto& resources = _storageByType[static_cast<int>(ResourceType::ElevationData)];
 
         // Clean-up and unbind gone providers and their resources
-        QMutableHashIterator< std::shared_ptr<IMapProvider>, std::shared_ptr<BaseResourcesCollection> > itBindedProvider(bindings.providersToCollections);
+        QMutableHashIterator< std::shared_ptr<IMapDataProvider>, std::shared_ptr<BaseResourcesCollection> > itBindedProvider(bindings.providersToCollections);
         while(itBindedProvider.hasNext())
         {
             itBindedProvider.next();
@@ -218,14 +218,14 @@ void OsmAnd::MapRendererResources::updateBindings(const MapRendererState& state,
         auto& resources = _storageByType[static_cast<int>(ResourceType::RasterMap)];
 
         // Clean-up and unbind gone providers and their resources
-        QMutableHashIterator< std::shared_ptr<IMapProvider>, std::shared_ptr<BaseResourcesCollection> > itBindedProvider(bindings.providersToCollections);
+        QMutableHashIterator< std::shared_ptr<IMapDataProvider>, std::shared_ptr<BaseResourcesCollection> > itBindedProvider(bindings.providersToCollections);
         while(itBindedProvider.hasNext())
         {
             itBindedProvider.next();
 
             // Skip binding if it's still active
             if (std::find(state.rasterLayerProviders.cbegin(), state.rasterLayerProviders.cend(),
-                std::static_pointer_cast<IMapBitmapTileProvider>(itBindedProvider.key())) != state.rasterLayerProviders.cend())
+                std::static_pointer_cast<IMapRasterBitmapTileProvider>(itBindedProvider.key())) != state.rasterLayerProviders.cend())
             {
                 continue;
             }
@@ -252,7 +252,7 @@ void OsmAnd::MapRendererResources::updateBindings(const MapRendererState& state,
                 continue;
 
             // If binding already exists, skip creation
-            if (bindings.providersToCollections.contains(std::static_pointer_cast<IMapProvider>(provider)))
+            if (bindings.providersToCollections.contains(std::static_pointer_cast<IMapDataProvider>(provider)))
                 continue;
 
             // Create new resources collection
@@ -274,7 +274,7 @@ void OsmAnd::MapRendererResources::updateBindings(const MapRendererState& state,
         auto& resources = _storageByType[static_cast<int>(ResourceType::Symbols)];
 
         // Clean-up and unbind gone providers and their resources
-        QMutableHashIterator< std::shared_ptr<IMapProvider>, std::shared_ptr<BaseResourcesCollection> > itBindedProvider(bindings.providersToCollections);
+        QMutableHashIterator< std::shared_ptr<IMapDataProvider>, std::shared_ptr<BaseResourcesCollection> > itBindedProvider(bindings.providersToCollections);
         while(itBindedProvider.hasNext())
         {
             itBindedProvider.next();
@@ -298,12 +298,12 @@ void OsmAnd::MapRendererResources::updateBindings(const MapRendererState& state,
         for(const auto& provider : constOf(state.symbolProviders))
         {
             // If binding already exists, skip creation
-            if (bindings.providersToCollections.contains(std::static_pointer_cast<IMapProvider>(provider)))
+            if (bindings.providersToCollections.contains(std::static_pointer_cast<IMapDataProvider>(provider)))
                 continue;
 
             // Create new resources collection
             const std::shared_ptr< BaseResourcesCollection > newResourcesCollection(
-                (std::dynamic_pointer_cast<IMapSymbolTiledProvider>(provider) != nullptr)
+                (std::dynamic_pointer_cast<IMapTiledSymbolsProvider>(provider) != nullptr)
                 ? static_cast<BaseResourcesCollection*>(new SymbolsTiledResourcesCollection())
                 : static_cast<BaseResourcesCollection*>(new KeyedResourcesCollection(ResourceType::Symbols)));
 
@@ -330,7 +330,7 @@ void OsmAnd::MapRendererResources::updateActiveZone(const QSet<TileId>& tiles, c
     _workerThreadWakeup.wakeAll();
 }
 
-bool OsmAnd::MapRendererResources::obtainProviderFor(BaseResourcesCollection* const resourcesRef, std::shared_ptr<IMapProvider>& provider) const
+bool OsmAnd::MapRendererResources::obtainProviderFor(BaseResourcesCollection* const resourcesRef, std::shared_ptr<IMapDataProvider>& provider) const
 {
     assert(resourcesRef != nullptr);
 
@@ -460,10 +460,10 @@ void OsmAnd::MapRendererResources::requestNeededTiledResources(const std::shared
 void OsmAnd::MapRendererResources::requestNeededKeyedResources(const std::shared_ptr<KeyedResourcesCollection>& resourcesCollection)
 {
     // Get keyed provider
-    std::shared_ptr<IMapProvider> provider_;
+    std::shared_ptr<IMapDataProvider> provider_;
     if (!obtainProviderFor(static_cast<BaseResourcesCollection*>(resourcesCollection.get()), provider_))
         return;
-    const auto& provider = std::dynamic_pointer_cast<IMapKeyedProvider>(provider_);
+    const auto& provider = std::dynamic_pointer_cast<IMapKeyedDataProvider>(provider_);
     if (!provider)
         return;
 
@@ -1133,7 +1133,7 @@ void OsmAnd::MapRendererResources::syncResourcesInGPU(
 }
 
 std::shared_ptr<const OsmAnd::MapRendererResources::BaseResourcesCollection>
-OsmAnd::MapRendererResources::getCollection(const ResourceType type, const std::shared_ptr<IMapProvider>& provider) const
+OsmAnd::MapRendererResources::getCollection(const ResourceType type, const std::shared_ptr<IMapDataProvider>& provider) const
 {
     return _bindings[static_cast<int>(type)].providersToCollections[provider];
 }
@@ -1438,12 +1438,12 @@ bool OsmAnd::MapRendererResources::MapTileResource::obtainData(bool& dataAvailab
     bool ok = false;
 
     // Get source of tile
-    std::shared_ptr<IMapProvider> provider_;
+    std::shared_ptr<IMapDataProvider> provider_;
     if (const auto link_ = link.lock())
         ok = owner->obtainProviderFor(static_cast<BaseResourcesCollection*>(static_cast<TiledResourcesCollection*>(&link_->collection)), provider_);
     if (!ok)
         return false;
-    const auto provider = std::static_pointer_cast<IMapTiledProvider>(provider_);
+    const auto provider = std::static_pointer_cast<IMapTiledDataProvider>(provider_);
 
     // Obtain tile from provider
     std::shared_ptr<const MapTile> tile;
@@ -1582,11 +1582,11 @@ bool OsmAnd::MapRendererResources::SymbolsTiledResource::obtainData(bool& dataAv
     const auto collection = static_cast<SymbolsTiledResourcesCollection*>(&link_->collection);
 
     // Get source of tile
-    std::shared_ptr<IMapProvider> provider_;
+    std::shared_ptr<IMapDataProvider> provider_;
     bool ok = owner->obtainProviderFor(static_cast<BaseResourcesCollection*>(collection), provider_);
     if (!ok)
         return false;
-    const auto provider = std::static_pointer_cast<IMapSymbolTiledProvider>(provider_);
+    const auto provider = std::static_pointer_cast<IMapTiledSymbolsProvider>(provider_);
 
     auto& sharedGroupsResources = collection->_sharedGroupsResources[zoom];
 
@@ -1595,7 +1595,7 @@ bool OsmAnd::MapRendererResources::SymbolsTiledResource::obtainData(bool& dataAv
     QList< std::shared_ptr<GroupResources> > referencedSharedGroupsResources;
     QList< proper::shared_future< std::shared_ptr<GroupResources> > > futureReferencedSharedGroupsResources;
     QSet< uint64_t > loadedSharedGroups;
-    std::shared_ptr<const MapSymbolsTile> tile;
+    std::shared_ptr<const MapTiledSymbols> tile;
     const auto requestSucceeded = provider->obtainSymbols(tileId, zoom, tile,
         [this, provider, &sharedGroupsResources, &referencedSharedGroupsResources, &futureReferencedSharedGroupsResources, &loadedSharedGroups, tileBBox31]
         (const IMapSymbolProvider*, const std::shared_ptr<const Model::ObjectWithId>& object, const bool shareable) -> bool
@@ -1946,11 +1946,11 @@ bool OsmAnd::MapRendererResources::SymbolsKeyedResource::obtainData(bool& dataAv
     const auto collection = static_cast<KeyedResourcesCollection*>(&link_->collection);
 
     // Get source
-    std::shared_ptr<IMapProvider> provider_;
+    std::shared_ptr<IMapDataProvider> provider_;
     bool ok = owner->obtainProviderFor(static_cast<BaseResourcesCollection*>(collection), provider_);
     if (!ok)
         return false;
-    const auto provider = std::static_pointer_cast<IMapSymbolKeyedProvider>(provider_);
+    const auto provider = std::static_pointer_cast<IMapKeyedSymbolsProvider>(provider_);
 
     // Obtain source data from provider
     std::shared_ptr<const MapSymbolsGroup> sourceData;

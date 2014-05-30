@@ -19,7 +19,7 @@
 namespace OsmAnd
 {
     class MapRenderer;
-    class IMapBitmapTileProvider;
+    class IMapRasterBitmapTileProvider;
     class IMapElevationDataProvider;
     class IMapSymbolProvider;
 
@@ -61,7 +61,7 @@ namespace OsmAnd
         virtual unsigned int getVisibleTilesCount() const = 0;
         virtual unsigned int getSymbolsCount() const = 0;
 
-        virtual void setRasterLayerProvider(const RasterMapLayerId layerId, const std::shared_ptr<IMapBitmapTileProvider>& tileProvider, bool forcedUpdate = false) = 0;
+        virtual void setRasterLayerProvider(const RasterMapLayerId layerId, const std::shared_ptr<IMapRasterBitmapTileProvider>& tileProvider, bool forcedUpdate = false) = 0;
         virtual void resetRasterLayerProvider(const RasterMapLayerId layerId, bool forcedUpdate = false) = 0;
         virtual void setRasterLayerOpacity(const RasterMapLayerId layerId, const float opacity, bool forcedUpdate = false) = 0;
         virtual void setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& tileProvider, bool forcedUpdate = false) = 0;

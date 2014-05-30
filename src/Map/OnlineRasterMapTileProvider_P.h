@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_ONLINE_MAP_RASTER_TILE_PROVIDER_P_H_
-#define _OSMAND_CORE_ONLINE_MAP_RASTER_TILE_PROVIDER_P_H_
+#ifndef _OSMAND_CORE_ONLINE_RASTER_MAP_TILE_PROVIDER_P_H_
+#define _OSMAND_CORE_ONLINE_RASTER_MAP_TILE_PROVIDER_P_H_
 
 #include "stdlib_common.h"
 #include <array>
@@ -16,17 +16,17 @@
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
 #include "PrivateImplementation.h"
-#include "IMapBitmapTileProvider.h"
+#include "IMapRasterBitmapTileProvider.h"
 #include "WebClient.h"
 
 namespace OsmAnd
 {
-    class OnlineMapRasterTileProvider;
-    class OnlineMapRasterTileProvider_P
+    class OnlineRasterMapTileProvider;
+    class OnlineRasterMapTileProvider_P
     {
     private:
     protected:
-        OnlineMapRasterTileProvider_P(OnlineMapRasterTileProvider* owner);
+        OnlineRasterMapTileProvider_P(OnlineRasterMapTileProvider* owner);
 
         mutable QMutex _localCachePathMutex;
         QDir _localCachePath;
@@ -42,12 +42,12 @@ namespace OsmAnd
         void lockTile(const TileId tileId, const ZoomLevel zoom);
         void unlockTile(const TileId tileId, const ZoomLevel zoom);
     public:
-        virtual ~OnlineMapRasterTileProvider_P();
+        virtual ~OnlineRasterMapTileProvider_P();
 
-        ImplementationInterface<OnlineMapRasterTileProvider> owner;
+        ImplementationInterface<OnlineRasterMapTileProvider> owner;
 
-    friend class OsmAnd::OnlineMapRasterTileProvider;
+    friend class OsmAnd::OnlineRasterMapTileProvider;
     };
 }
 
-#endif // !defined(_OSMAND_CORE_ONLINE_MAP_RASTER_TILE_PROVIDER_P_H_)
+#endif // !defined(_OSMAND_CORE_ONLINE_RASTER_MAP_TILE_PROVIDER_P_H_)

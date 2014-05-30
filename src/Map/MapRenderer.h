@@ -13,14 +13,14 @@
 #include "Concurrent.h"
 #include "IMapRenderer.h"
 #include "GPUAPI.h"
-#include "IMapTiledProvider.h"
+#include "IMapTiledDataProvider.h"
 #include "TiledEntriesCollection.h"
 #include "MapRendererInternalState.h"
 #include "MapRendererResources.h"
 
 namespace OsmAnd
 {
-    class IMapProvider;
+    class IMapDataProvider;
     class MapRendererTiledResources;
     class MapSymbol;
     class MapRendererStage;
@@ -155,7 +155,7 @@ namespace OsmAnd
         virtual unsigned int getVisibleTilesCount() const;
         virtual unsigned int getSymbolsCount() const;
 
-        virtual void setRasterLayerProvider(const RasterMapLayerId layerId, const std::shared_ptr<IMapBitmapTileProvider>& tileProvider, bool forcedUpdate = false);
+        virtual void setRasterLayerProvider(const RasterMapLayerId layerId, const std::shared_ptr<IMapRasterBitmapTileProvider>& tileProvider, bool forcedUpdate = false);
         virtual void resetRasterLayerProvider(const RasterMapLayerId layerId, bool forcedUpdate = false);
         virtual void setRasterLayerOpacity(const RasterMapLayerId layerId, const float opacity, bool forcedUpdate = false);
         virtual void setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& tileProvider, bool forcedUpdate = false);

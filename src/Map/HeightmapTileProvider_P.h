@@ -23,17 +23,24 @@ namespace OsmAnd
         Q_DISABLE_COPY(HeightmapTileProvider_P);
     private:
     protected:
-        HeightmapTileProvider_P(HeightmapTileProvider* const owner, const QDir& dataPath, const QString& indexFilepath);
+        HeightmapTileProvider_P(HeightmapTileProvider* const owner);
+
+        TileDB _tileDb;
+    public:
+        ~HeightmapTileProvider_P();
 
         ImplementationInterface<HeightmapTileProvider> owner;
-        TileDB _tileDb;
 
-        bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile, const IQueryController* const queryController);
+        void rebuildTileDbIndex();
 
         ZoomLevel getMinZoom() const;
         ZoomLevel getMaxZoom() const;
-    public:
-        ~HeightmapTileProvider_P();
+        uint32_t getTileSize() const;
+        bool obtainData(
+            const TileId tileId,
+            const ZoomLevel zoom,
+            std::shared_ptr<const MapTiledData>& outTiledData,
+            const IQueryController* const queryController);
 
     friend class OsmAnd::HeightmapTileProvider;
     };

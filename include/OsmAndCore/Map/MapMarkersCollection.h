@@ -12,7 +12,7 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/IMapSymbolKeyedProvider.h>
+#include <OsmAndCore/Map/IMapKeyedSymbolsProvider.h>
 #include <OsmAndCore/Map/MapMarker.h>
 
 namespace OsmAnd
@@ -21,7 +21,7 @@ namespace OsmAnd
     class MapMarkerBuilder_P;
 
     class MapMarkersCollection_P;
-    class OSMAND_CORE_API MapMarkersCollection : public IMapSymbolKeyedProvider
+    class OSMAND_CORE_API MapMarkersCollection : public IMapKeyedSymbolsProvider
     {
         Q_DISABLE_COPY(MapMarkersCollection);
 

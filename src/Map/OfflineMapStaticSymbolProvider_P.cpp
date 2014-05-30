@@ -22,7 +22,7 @@ OsmAnd::OfflineMapStaticSymbolProvider_P::~OfflineMapStaticSymbolProvider_P()
 
 bool OsmAnd::OfflineMapStaticSymbolProvider_P::obtainSymbols(
     const TileId tileId, const ZoomLevel zoom,
-    std::shared_ptr<const MapSymbolsTile>& outTile,
+    std::shared_ptr<const MapTiledSymbols>& outTile,
     const IMapSymbolProvider::FilterCallback filterCallback)
 {
     const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
@@ -116,7 +116,7 @@ bool OsmAnd::OfflineMapStaticSymbolProvider_P::obtainSymbols(
 }
 
 OsmAnd::OfflineMapStaticSymbolProvider_P::Tile::Tile(const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups_, const std::shared_ptr<const OfflineMapDataTile>& dataTile_)
-    : MapSymbolsTile(symbolsGroups_)
+    : MapTiledSymbols(symbolsGroups_)
     , dataTile(dataTile_)
 {
 }

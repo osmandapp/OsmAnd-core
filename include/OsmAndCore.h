@@ -50,6 +50,20 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <QtGlobal>
 
+// Ensure that SKIA is using RGBA order
+#include <SkColor.h>
+#ifdef SK_CPU_LENDIAN
+#   if (24 != SK_A32_SHIFT) || ( 0 != SK_R32_SHIFT) || \
+       ( 8 != SK_G32_SHIFT) || (16 != SK_B32_SHIFT)
+#       error SKIA must be configured to use RGBA color order
+#   endif
+#else
+#   if ( 0 != SK_A32_SHIFT) || (24 != SK_R32_SHIFT) || \
+       (16 != SK_G32_SHIFT) || ( 8 != SK_B32_SHIFT)
+#       error SKIA must be configured to use RGBA color order
+#   endif
+#endif
+
 #include <memory>
 
 #define OSMAND_CLASS(name) \

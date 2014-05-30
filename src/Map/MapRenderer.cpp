@@ -8,7 +8,7 @@
 
 #include "MapRendererInternalState.h"
 #include "MapRendererResources.h"
-#include "IMapBitmapTileProvider.h"
+#include "IMapRasterBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
 #include "MapSymbolProvidersCommon.h"
 #include "IRetainableResource.h"
@@ -775,7 +775,7 @@ unsigned int OsmAnd::MapRenderer::getSymbolsCount() const
     return getResources().getMapSymbolsCount();
 }
 
-void OsmAnd::MapRenderer::setRasterLayerProvider( const RasterMapLayerId layerId, const std::shared_ptr<IMapBitmapTileProvider>& tileProvider, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setRasterLayerProvider( const RasterMapLayerId layerId, const std::shared_ptr<IMapRasterBitmapTileProvider>& tileProvider, bool forcedUpdate /*= false*/ )
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 

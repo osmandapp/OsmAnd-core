@@ -14,7 +14,7 @@
 #include "OsmAndCore.h"
 #include "PrivateImplementation.h"
 #include "CommonTypes.h"
-#include "IMapSymbolKeyedProvider.h"
+#include "IMapKeyedSymbolsProvider.h"
 #include "MapMarkersCollection.h"
 #include "MapMarker.h"
 #include "MapMarkerBuilder.h"

@@ -17,7 +17,7 @@
 
 namespace OsmAnd
 {
-    class OnlineMapRasterTileProvider;
+    class OnlineRasterMapTileProvider;
 
     class OnlineTileSources_P;
     class OSMAND_CORE_API OnlineTileSources : public IOnlineTileSources

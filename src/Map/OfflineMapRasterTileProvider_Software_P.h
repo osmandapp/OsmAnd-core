@@ -10,7 +10,7 @@
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
 #include "PrivateImplementation.h"
-#include "IMapBitmapTileProvider.h"
+#include "IMapRasterBitmapTileProvider.h"
 #include "IRetainableResource.h"
 
 class SkBitmap;

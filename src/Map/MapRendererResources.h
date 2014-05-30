@@ -25,8 +25,8 @@
 namespace OsmAnd
 {
     class MapRenderer;
-    class IMapProvider;
-    class MapSymbolsTile;
+    class IMapDataProvider;
+    class MapTiledSymbols;
     class MapSymbolsGroup;
     class MapSymbol;
 
@@ -299,7 +299,7 @@ namespace OsmAnd
                 QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > resourcesInGPU;
             };
 
-            std::shared_ptr<const MapSymbolsTile> _sourceData;
+            std::shared_ptr<const MapTiledSymbols> _sourceData;
             QList< std::shared_ptr<GroupResources> > _uniqueGroupsResources;
             QList< std::shared_ptr<GroupResources> > _referencedSharedGroupsResources;
 
@@ -379,11 +379,11 @@ namespace OsmAnd
         // Each provider has a binded resource collection, and these are bindings:
         struct Binding
         {
-            QHash< std::shared_ptr<IMapProvider>, std::shared_ptr<BaseResourcesCollection> > providersToCollections;
-            QHash< std::shared_ptr<BaseResourcesCollection>, std::shared_ptr<IMapProvider> > collectionsToProviders;
+            QHash< std::shared_ptr<IMapDataProvider>, std::shared_ptr<BaseResourcesCollection> > providersToCollections;
+            QHash< std::shared_ptr<BaseResourcesCollection>, std::shared_ptr<IMapDataProvider> > collectionsToProviders;
         };
         std::array< Binding, ResourceTypesCount > _bindings;
-        bool obtainProviderFor(BaseResourcesCollection* const resourcesRef, std::shared_ptr<IMapProvider>& provider) const;
+        bool obtainProviderFor(BaseResourcesCollection* const resourcesRef, std::shared_ptr<IMapDataProvider>& provider) const;
         bool isDataSourceAvailableFor(const std::shared_ptr<BaseResourcesCollection>& collection) const;
 
         // Resources storages:
@@ -457,7 +457,7 @@ namespace OsmAnd
         const std::shared_ptr<const GPUAPI::ResourceInGPU>& processingTileStub;
         const std::shared_ptr<const GPUAPI::ResourceInGPU>& unavailableTileStub;
 
-        std::shared_ptr<const BaseResourcesCollection> getCollection(const ResourceType type, const std::shared_ptr<IMapProvider>& ofProvider) const;
+        std::shared_ptr<const BaseResourcesCollection> getCollection(const ResourceType type, const std::shared_ptr<IMapDataProvider>& ofProvider) const;
 
         QMutex& getSymbolsMapMutex() const;
         const MapSymbolsByOrder& getMapSymbolsByOrder() const;

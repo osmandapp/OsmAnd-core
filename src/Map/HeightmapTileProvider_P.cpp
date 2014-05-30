@@ -9,7 +9,7 @@
 
 #include "Logging.h"
 
-OsmAnd::HeightmapTileProvider_P::HeightmapTileProvider_P( HeightmapTileProvider* const owner_, const QDir& dataPath, const QString& indexFilepath )
+OsmAnd::HeightmapTileProvider_P::HeightmapTileProvider_P(HeightmapTileProvider* const owner_)
     : owner(owner_)
     , _tileDb(dataPath, indexFilepath)
 {
@@ -19,7 +19,31 @@ OsmAnd::HeightmapTileProvider_P::~HeightmapTileProvider_P()
 {
 }
 
-bool OsmAnd::HeightmapTileProvider_P::obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile, const IQueryController* const queryController)
+void OsmAnd::HeightmapTileProvider_P::rebuildTileDbIndex()
+{
+    _tileDb.rebuildIndex();
+}
+
+OsmAnd::ZoomLevel OsmAnd::HeightmapTileProvider_P::getMinZoom() const
+{
+    return MinZoomLevel;
+}
+
+OsmAnd::ZoomLevel OsmAnd::HeightmapTileProvider_P::getMaxZoom() const
+{
+    return MaxZoomLevel;
+}
+
+uint32_t OsmAnd::HeightmapTileProvider_P::getTileSize() const
+{
+    return 32;
+}
+
+bool OsmAnd::HeightmapTileProvider_P::obtainData(
+    const TileId tileId,
+    const ZoomLevel zoom,
+    std::shared_ptr<const MapTiledData>& outTiledData,
+    const IQueryController* const queryController)
 {
     // Obtain raw data from DB
     QByteArray data;
@@ -81,7 +105,7 @@ bool OsmAnd::HeightmapTileProvider_P::obtainTile(const TileId tileId, const Zoom
                 }
                 else
                 {
-                    outTile.reset(new MapElevationDataTile(buffer, sizeof(float)*tileSize, tileSize));
+                    outTile.reset(new ElevationDataTile(buffer, sizeof(float)*tileSize, tileSize));
                     success = true;
                 }
             }
@@ -92,14 +116,4 @@ bool OsmAnd::HeightmapTileProvider_P::obtainTile(const TileId tileId, const Zoom
     VSIUnlink(qPrintable(vmemFilename));
 
     return success;
-}
-
-OsmAnd::ZoomLevel OsmAnd::HeightmapTileProvider_P::getMinZoom() const
-{
-    return MinZoomLevel;
-}
-
-OsmAnd::ZoomLevel OsmAnd::HeightmapTileProvider_P::getMaxZoom() const
-{
-    return MaxZoomLevel;
 }

@@ -10,12 +10,12 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/PrivateImplementation.h>
-#include <OsmAndCore/Map/IMapBitmapTileProvider.h>
+#include <OsmAndCore/Map/IMapRasterBitmapTileProvider.h>
 
 namespace OsmAnd
 {
     class HillshadeTileProvider_P;
-    class OSMAND_CORE_API HillshadeTileProvider : public IMapBitmapTileProvider
+    class OSMAND_CORE_API HillshadeTileProvider : public IMapRasterBitmapTileProvider
     {
         Q_DISABLE_COPY(HillshadeTileProvider);
     private:
@@ -38,7 +38,7 @@ namespace OsmAnd
         virtual ZoomLevel getMinZoom() const;
         virtual ZoomLevel getMaxZoom() const;
 
-        virtual bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile);
+        virtual bool obtainData(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile);
     };
 }
 

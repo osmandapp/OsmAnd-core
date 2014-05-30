@@ -14,7 +14,7 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Callable.h>
-#include <OsmAndCore/Map/IMapProvider.h>
+#include <OsmAndCore/Map/IMapDataProvider.h>
 #include <OsmAndCore/Map/IRetainableResource.h>
 
 namespace OsmAnd

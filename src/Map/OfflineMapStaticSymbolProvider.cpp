@@ -13,7 +13,7 @@ OsmAnd::OfflineMapStaticSymbolProvider::~OfflineMapStaticSymbolProvider()
 
 bool OsmAnd::OfflineMapStaticSymbolProvider::obtainSymbols(
     const TileId tileId, const ZoomLevel zoom,
-    std::shared_ptr<const MapSymbolsTile>& outTile,
+    std::shared_ptr<const MapTiledSymbols>& outTile,
     const FilterCallback filterCallback/* = nullptr*/)
 {
     return _p->obtainSymbols(tileId, zoom, outTile, filterCallback);

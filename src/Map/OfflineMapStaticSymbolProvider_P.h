@@ -12,7 +12,7 @@
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
 #include "PrivateImplementation.h"
-#include "IMapSymbolTiledProvider.h"
+#include "IMapTiledSymbolsProvider.h"
 #include "MapObject.h"
 #include "IRetainableResource.h"
 
@@ -20,7 +20,7 @@ namespace OsmAnd
 {
     class OfflineMapDataTile;
     class MapSymbolsGroup;
-    class MapSymbolsTile;
+    class MapTiledSymbols;
 
     class OfflineMapStaticSymbolProvider;
     class OfflineMapStaticSymbolProvider_P
@@ -46,7 +46,7 @@ namespace OsmAnd
         };
 
         class Tile
-            : public MapSymbolsTile
+            : public MapTiledSymbols
             , public IRetainableResource
         {
             Q_DISABLE_COPY(Tile);
@@ -66,7 +66,7 @@ namespace OsmAnd
 
         bool obtainSymbols(
             const TileId tileId, const ZoomLevel zoom,
-            std::shared_ptr<const MapSymbolsTile>& outTile,
+            std::shared_ptr<const MapTiledSymbols>& outTile,
             const IMapSymbolProvider::FilterCallback filterCallback);
 
     friend class OsmAnd::OfflineMapStaticSymbolProvider;
