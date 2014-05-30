@@ -9,14 +9,18 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/IMapSymbolProvider.h>
+#include <OsmAndCore/Map/MapSymbolProvidersCommon.h>
+#include <OsmAndCore/Map/IMapTiledProvider.h>
 
 namespace OsmAnd
 {
     class MapSymbolsTile;
-    class OSMAND_CORE_API IMapSymbolTiledProvider : public IMapSymbolProvider
+    class OSMAND_CORE_API IMapSymbolTiledProvider : public IMapTiledProvider
     {
         Q_DISABLE_COPY(IMapSymbolTiledProvider);
+    public:
+        OSMAND_CALLABLE(FilterCallback, bool, const IMapSymbolTiledProvider* const provider, const std::shared_ptr<const Model::ObjectWithId>& object, const bool shareable);
+
     private:
     protected:
         IMapSymbolTiledProvider();

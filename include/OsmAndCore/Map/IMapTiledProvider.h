@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_I_MAP_TILE_PROVIDER_H_
-#define _OSMAND_CORE_I_MAP_TILE_PROVIDER_H_
+#ifndef _OSMAND_CORE_I_MAP_TILED_PROVIDER_H_
+#define _OSMAND_CORE_I_MAP_TILED_PROVIDER_H_
 
 #include <OsmAndCore/stdlib_common.h>
 
@@ -38,14 +38,14 @@ namespace OsmAnd
         const uint32_t size;
     };
 
-    class OSMAND_CORE_API IMapTileProvider : public IMapProvider
+    class OSMAND_CORE_API IMapTiledProvider : public IMapProvider
     {
-        Q_DISABLE_COPY(IMapTileProvider);
+        Q_DISABLE_COPY(IMapTiledProvider);
     private:
     protected:
-        IMapTileProvider(const MapTileDataType& dataType);
+        IMapTiledProvider(const MapTileDataType& dataType);
     public:
-        virtual ~IMapTileProvider();
+        virtual ~IMapTiledProvider();
 
         const MapTileDataType dataType;
         virtual uint32_t getTileSize() const = 0;
@@ -57,4 +57,4 @@ namespace OsmAnd
     };
 }
 
-#endif // !defined(_OSMAND_CORE_I_MAP_TILE_PROVIDER_H_)
+#endif // !defined(_OSMAND_CORE_I_MAP_TILED_PROVIDER_H_)

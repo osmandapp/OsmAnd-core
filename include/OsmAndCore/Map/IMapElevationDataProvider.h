@@ -7,7 +7,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/IMapTileProvider.h>
+#include <OsmAndCore/Map/IMapTiledProvider.h>
 
 namespace OsmAnd
 {
@@ -21,7 +21,7 @@ namespace OsmAnd
         virtual ~MapElevationDataTile();
     };
 
-    class OSMAND_CORE_API IMapElevationDataProvider : public IMapTileProvider
+    class OSMAND_CORE_API IMapElevationDataProvider : public IMapTiledProvider
     {
         Q_DISABLE_COPY(IMapElevationDataProvider);
     private:

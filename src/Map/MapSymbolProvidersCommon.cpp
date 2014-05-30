@@ -1,14 +1,6 @@
-#include "IMapSymbolProvider.h"
+#include "MapSymbolProvidersCommon.h"
 
 #include "ObjectWithId.h"
-
-OsmAnd::IMapSymbolProvider::IMapSymbolProvider()
-{
-}
-
-OsmAnd::IMapSymbolProvider::~IMapSymbolProvider()
-{
-}
 
 OsmAnd::MapSymbolsGroup::MapSymbolsGroup()
 {
@@ -127,12 +119,8 @@ OsmAnd::OnSurfaceMapSymbol::OnSurfaceMapSymbol(
     const QString& content_,
     const LanguageId& languageId_,
     const PointI& minDistance_,
-    const PointI& location31_,
-    const double areaRadius_,
-    const SkColor areaBaseColor_)
+    const PointI& location31_)
     : BoundToPointMapSymbol(group_, isShareable_, bitmap_, order_, content_, languageId_, minDistance_, location31_)
-    , areaRadius(areaRadius_)
-    , areaBaseColor(areaBaseColor_)
 {
 }
 
@@ -150,9 +138,7 @@ OsmAnd::MapSymbol* OsmAnd::OnSurfaceMapSymbol::cloneWithReplacedBitmap(const std
         content,
         languageId,
         minDistance,
-        location31,
-        areaRadius,
-        areaBaseColor);
+        location31);
 }
 
 OsmAnd::OnPathMapSymbol::OnPathMapSymbol(

@@ -1,7 +1,7 @@
 #include "IMapElevationDataProvider.h"
 
 OsmAnd::IMapElevationDataProvider::IMapElevationDataProvider()
-    : IMapTileProvider(MapTileDataType::ElevationData)
+    : IMapTiledProvider(MapTileDataType::ElevationData)
 {
 }
 

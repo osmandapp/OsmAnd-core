@@ -1,6 +1,11 @@
 #include "MapMarkerBuilder_P.h"
 #include "MapMarkerBuilder.h"
 
+#include "MapMarker.h"
+#include "MapMarker_P.h"
+#include "MapMarkersCollection.h"
+#include "MapMarkersCollection_P.h"
+#include "MapSymbolProvidersCommon.h"
 #include "Utilities.h"
 
 OsmAnd::MapMarkerBuilder_P::MapMarkerBuilder_P(MapMarkerBuilder* const owner_)
@@ -146,6 +151,30 @@ std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToColl
 {
     QReadLocker scopedLocker(&_lock);
 
-    return nullptr;
+    std::shared_ptr<OsmAnd::MapMarker> marker(new MapMarker());
+    /*
+    // Map marker consists one or more of:
+    // - Set of OnSurfaceMapSymbol from _mapIconsBitmaps
+    for (const auto& mapIconPair : constOf(_mapIconsBitmaps))
+    {
+        std::shared_ptr<OnSurfaceMapSymbol> symbol(new OnSurfaceMapSymbol(
+            marker->_p->_symbolsGroup,
+            false,
+            BITMAP,
+            order,
+            content,
+            language,
+            minDistance,
+            location));
+    }
+
+    // 2. Special OnSurfaceMapSymbol that represents precision circle (PrimitiveOnSurfaceMapSymbol)
+    // 3. PinnedMapSymbol from _pinIconBitmap
+    */
+
+    // Add this marker to collection and return it if adding was successful
+    if (!collection->_p->addMarker(marker))
+        return nullptr;
+    return marker;
 }
 

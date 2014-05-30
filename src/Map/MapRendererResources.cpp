@@ -7,8 +7,9 @@
 #include "IMapKeyedProvider.h"
 #include "IMapBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
-#include "IMapSymbolProvider.h"
+#include "MapSymbolProvidersCommon.h"
 #include "IMapSymbolTiledProvider.h"
+#include "IMapSymbolKeyedProvider.h"
 #include "IRetainableResource.h"
 #include "MapObject.h"
 #include "EmbeddedResources.h"
@@ -447,7 +448,7 @@ void OsmAnd::MapRendererResources::requestNeededTiledResources(const std::shared
                 if (resourceType == ResourceType::ElevationData || resourceType == ResourceType::RasterMap)
                     return new MapTileResource(this, resourceType, collection, tileId, zoom);
                 else if (resourceType == ResourceType::Symbols)
-                    return new SymbolsTileResource(this, collection, tileId, zoom);
+                    return new SymbolsTiledResource(this, collection, tileId, zoom);
                 else
                     return nullptr;
             });
@@ -478,9 +479,9 @@ void OsmAnd::MapRendererResources::requestNeededKeyedResources(const std::shared
             [this, resourceType]
             (const KeyedEntriesCollection<const void*, BaseKeyedResource>& collection, const void* const key) -> BaseKeyedResource*
             {
-                /*if (resourceType == ResourceType::Symbols)
+                if (resourceType == ResourceType::Symbols)
                     return new SymbolsKeyedResource(this, collection, key);
-                else*/
+                else
                     return nullptr;
             });
 
@@ -1294,7 +1295,11 @@ void OsmAnd::MapRendererResources::BaseTiledResource::removeSelfFromCollection()
         link_->collection.removeEntry(tileId, zoom);
 }
 
-OsmAnd::MapRendererResources::BaseKeyedResource::BaseKeyedResource(MapRendererResources* owner, const ResourceType type, const KeyedEntriesCollection<const void*, BaseKeyedResource>& collection, const void* key)
+OsmAnd::MapRendererResources::BaseKeyedResource::BaseKeyedResource(
+    MapRendererResources* owner,
+    const ResourceType type,
+    const KeyedEntriesCollection<Key, BaseKeyedResource>& collection,
+    const Key key)
     : BaseResource(owner, type)
     , KeyedEntriesCollectionEntryWithState(collection, key)
 {
@@ -1435,10 +1440,10 @@ bool OsmAnd::MapRendererResources::MapTileResource::obtainData(bool& dataAvailab
     // Get source of tile
     std::shared_ptr<IMapProvider> provider_;
     if (const auto link_ = link.lock())
-        ok = owner->obtainProviderFor(static_cast<TiledResourcesCollection*>(static_cast<TiledResourcesCollection*>(&link_->collection)), provider_);
+        ok = owner->obtainProviderFor(static_cast<BaseResourcesCollection*>(static_cast<TiledResourcesCollection*>(&link_->collection)), provider_);
     if (!ok)
         return false;
-    const auto provider = std::static_pointer_cast<IMapTileProvider>(provider_);
+    const auto provider = std::static_pointer_cast<IMapTiledProvider>(provider_);
 
     // Obtain tile from provider
     std::shared_ptr<const MapTile> tile;
@@ -1558,17 +1563,17 @@ void OsmAnd::MapRendererResources::KeyedResourcesCollection::removeResources(con
         });
 }
 
-OsmAnd::MapRendererResources::SymbolsTileResource::SymbolsTileResource(MapRendererResources* owner, const TiledEntriesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom)
+OsmAnd::MapRendererResources::SymbolsTiledResource::SymbolsTiledResource(MapRendererResources* owner, const TiledEntriesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom)
     : BaseTiledResource(owner, ResourceType::Symbols, collection, tileId, zoom)
 {
 }
 
-OsmAnd::MapRendererResources::SymbolsTileResource::~SymbolsTileResource()
+OsmAnd::MapRendererResources::SymbolsTiledResource::~SymbolsTiledResource()
 {
     safeUnlink();
 }
 
-bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAvailable, const IQueryController* queryController)
+bool OsmAnd::MapRendererResources::SymbolsTiledResource::obtainData(bool& dataAvailable, const IQueryController* queryController)
 {
     // Obtain collection link and maintain it
     const auto link_ = link.lock();
@@ -1578,7 +1583,7 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAva
 
     // Get source of tile
     std::shared_ptr<IMapProvider> provider_;
-    bool ok = owner->obtainProviderFor(static_cast<TiledResourcesCollection*>(static_cast<TiledResourcesCollection*>(&link_->collection)), provider_);
+    bool ok = owner->obtainProviderFor(static_cast<BaseResourcesCollection*>(collection), provider_);
     if (!ok)
         return false;
     const auto provider = std::static_pointer_cast<IMapSymbolTiledProvider>(provider_);
@@ -1675,7 +1680,7 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAva
     return true;
 }
 
-bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
+bool OsmAnd::MapRendererResources::SymbolsTiledResource::uploadToGPU()
 {
     typedef std::pair< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > SymbolResourceEntry;
     typedef std::pair< std::shared_ptr<const MapSymbol>, proper::shared_future< std::shared_ptr<const GPUAPI::ResourceInGPU> > > FutureSymbolResourceEntry;
@@ -1800,7 +1805,7 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::uploadToGPU()
     return true;
 }
 
-void OsmAnd::MapRendererResources::SymbolsTileResource::unloadFromGPU()
+void OsmAnd::MapRendererResources::SymbolsTiledResource::unloadFromGPU()
 {
     const auto link_ = link.lock();
     const auto collection = static_cast<SymbolsTiledResourcesCollection*>(&link_->collection);
@@ -1854,12 +1859,12 @@ void OsmAnd::MapRendererResources::SymbolsTileResource::unloadFromGPU()
     _referencedSharedGroupsResources.clear();
 }
 
-bool OsmAnd::MapRendererResources::SymbolsTileResource::checkIsSafeToUnlink()
+bool OsmAnd::MapRendererResources::SymbolsTiledResource::checkIsSafeToUnlink()
 {
     return _referencedSharedGroupsResources.isEmpty();
 }
 
-void OsmAnd::MapRendererResources::SymbolsTileResource::detach()
+void OsmAnd::MapRendererResources::SymbolsTiledResource::detach()
 {
     const auto link_ = link.lock();
     const auto collection = static_cast<SymbolsTiledResourcesCollection*>(&link_->collection);
@@ -1904,22 +1909,150 @@ void OsmAnd::MapRendererResources::SymbolsTileResource::detach()
     _referencedSharedGroupsResources.clear();
 }
 
-OsmAnd::MapRendererResources::SymbolsTileResource::GroupResources::GroupResources(const std::shared_ptr<const MapSymbolsGroup>& group_)
+OsmAnd::MapRendererResources::SymbolsTiledResource::GroupResources::GroupResources(const std::shared_ptr<const MapSymbolsGroup>& group_)
     : group(group_)
 {
 }
 
-OsmAnd::MapRendererResources::SymbolsTileResource::GroupResources::~GroupResources()
+OsmAnd::MapRendererResources::SymbolsTiledResource::GroupResources::~GroupResources()
 {
 }
 
 OsmAnd::MapRendererResources::SymbolsTiledResourcesCollection::SymbolsTiledResourcesCollection()
-: TiledResourcesCollection(ResourceType::Symbols)
+    : TiledResourcesCollection(ResourceType::Symbols)
 {
 }
 
 OsmAnd::MapRendererResources::SymbolsTiledResourcesCollection::~SymbolsTiledResourcesCollection()
 {
+}
+
+OsmAnd::MapRendererResources::SymbolsKeyedResource::SymbolsKeyedResource(MapRendererResources* owner, const KeyedEntriesCollection<Key, BaseKeyedResource>& collection, const Key key)
+    : BaseKeyedResource(owner, ResourceType::Symbols, collection, key)
+{
+}
+
+OsmAnd::MapRendererResources::SymbolsKeyedResource::~SymbolsKeyedResource()
+{
+    safeUnlink();
+}
+
+bool OsmAnd::MapRendererResources::SymbolsKeyedResource::obtainData(bool& dataAvailable, const IQueryController* queryController)
+{
+    // Obtain collection link and maintain it
+    const auto link_ = link.lock();
+    if (!link_)
+        return false;
+    const auto collection = static_cast<KeyedResourcesCollection*>(&link_->collection);
+
+    // Get source
+    std::shared_ptr<IMapProvider> provider_;
+    bool ok = owner->obtainProviderFor(static_cast<BaseResourcesCollection*>(collection), provider_);
+    if (!ok)
+        return false;
+    const auto provider = std::static_pointer_cast<IMapSymbolKeyedProvider>(provider_);
+
+    // Obtain source data from provider
+    std::shared_ptr<const MapSymbolsGroup> sourceData;
+    const auto requestSucceeded = provider->obtainSymbolsGroup(key, sourceData);
+    if (!requestSucceeded)
+        return false;
+
+    // Store data
+    _sourceData = sourceData;
+    dataAvailable = static_cast<bool>(_sourceData);
+
+    // Process data
+    if (!dataAvailable)
+        return true;
+
+    // Release source data:
+    if (const auto retainedSource = std::dynamic_pointer_cast<const IRetainableResource>(_sourceData))
+    {
+        // If map tile implements 'Retained' interface, it must be kept, but 
+        std::const_pointer_cast<IRetainableResource>(retainedSource)->releaseNonRetainedData();
+    }
+    else
+    {
+        // or simply release entire tile
+        _sourceData.reset();
+    }
+
+    return true;
+}
+
+bool OsmAnd::MapRendererResources::SymbolsKeyedResource::uploadToGPU()
+{
+    bool ok;
+    bool anyUploadFailed = false;
+
+    const auto link_ = link.lock();
+    const auto collection = static_cast<KeyedResourcesCollection*>(&link_->collection);
+
+    QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > uploaded;
+    for (const auto& symbol : constOf(_sourceData->symbols))
+    {
+        // Prepare data and upload to GPU
+        assert(static_cast<bool>(symbol->bitmap));
+        std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
+        ok = owner->uploadSymbolToGPU(symbol, resourceInGPU);
+
+        // If upload have failed, stop
+        if (!ok)
+        {
+            LogPrintf(LogSeverityLevel::Error, "Failed to upload keyed symbol (size %dx%d)",
+                symbol->bitmap->width(), symbol->bitmap->height());
+
+            anyUploadFailed = true;
+            break;
+        }
+
+        // Mark this symbol as uploaded
+        uploaded.insert(symbol, qMove(resourceInGPU));
+    }
+
+    // If at least one symbol failed to upload, consider entire tile as failed to upload,
+    // and unload its partial GPU resources
+    if (anyUploadFailed)
+    {
+        uploaded.clear();
+
+        return false;
+    }
+
+    // All resources have been uploaded to GPU successfully by this point
+
+    for (const auto& entry : rangeOf(constOf(uploaded)))
+    {
+        auto& symbol = entry.key();
+        auto& resource = entry.value();
+
+        // Unload source data from symbol
+        std::const_pointer_cast<MapSymbol>(symbol)->releaseNonRetainedData();
+
+        // Publish symbol to global map
+        owner->addMapSymbol(symbol, resource);
+
+        // Move reference
+        _resourcesInGPU.insert(qMove(symbol), qMove(resource));
+    }
+
+    return true;
+}
+
+void OsmAnd::MapRendererResources::SymbolsKeyedResource::unloadFromGPU()
+{
+    return;
+}
+
+bool OsmAnd::MapRendererResources::SymbolsKeyedResource::checkIsSafeToUnlink()
+{
+    return false;
+}
+
+void OsmAnd::MapRendererResources::SymbolsKeyedResource::detach()
+{
+    return;
 }
 
 OsmAnd::MapRendererResources::ResourceRequestTask::ResourceRequestTask(

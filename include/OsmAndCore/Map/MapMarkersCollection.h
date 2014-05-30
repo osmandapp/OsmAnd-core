@@ -5,7 +5,6 @@
 #include <functional>
 
 #include <OsmAndCore/QtExtensions.h>
-#include <QMultiHash>
 #include <QList>
 
 #include <SkBitmap.h>
@@ -19,6 +18,7 @@
 namespace OsmAnd
 {
     class MapMarkerBuilder;
+    class MapMarkerBuilder_P;
 
     class MapMarkersCollection_P;
     class OSMAND_CORE_API MapMarkersCollection : public IMapSymbolKeyedProvider
@@ -32,12 +32,15 @@ namespace OsmAnd
         MapMarkersCollection();
         virtual ~MapMarkersCollection();
 
-        QSet< std::shared_ptr<MapMarker> > getMarkers() const;
+        QList< std::shared_ptr<MapMarker> > getMarkers() const;
         bool removeMarker(const std::shared_ptr<MapMarker>& marker);
         void removeAllMarkers();
 
-        virtual QSet<Key> getKeys() const;
+        virtual QList<Key> getKeys() const;
         virtual bool obtainSymbolsGroup(const Key key, std::shared_ptr<const MapSymbolsGroup>& outSymbolGroups);
+
+    friend class OsmAnd::MapMarkerBuilder;
+    friend class OsmAnd::MapMarkerBuilder_P;
     };
 }
 

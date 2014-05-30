@@ -4,7 +4,7 @@
 #include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
-#include <QSet>
+#include <QList>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/Map/IMapProvider.h>
@@ -24,7 +24,7 @@ namespace OsmAnd
     public:
         virtual ~IMapKeyedProvider();
 
-        virtual QSet<Key> getKeys() const = 0;
+        virtual QList<Key> getKeys() const = 0;
     };
 }
 

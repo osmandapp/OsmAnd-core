@@ -17,10 +17,10 @@
 #include <SkBitmap.h>
 
 #include "IMapRenderer.h"
-#include "IMapTileProvider.h"
+#include "IMapTiledProvider.h"
 #include "IMapBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
-#include "IMapSymbolProvider.h"
+#include "MapSymbolProvidersCommon.h"
 #include "MapObject.h"
 #include "QuadTree.h"
 #include "Logging.h"

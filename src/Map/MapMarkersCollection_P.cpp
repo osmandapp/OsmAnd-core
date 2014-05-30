@@ -10,27 +10,57 @@ OsmAnd::MapMarkersCollection_P::~MapMarkersCollection_P()
 {
 }
 
-QSet< std::shared_ptr<OsmAnd::MapMarker> > OsmAnd::MapMarkersCollection_P::getMarkers() const
+QList< std::shared_ptr<OsmAnd::MapMarker> > OsmAnd::MapMarkersCollection_P::getMarkers() const
 {
-    return QSet< std::shared_ptr<OsmAnd::MapMarker> >();
+    QReadLocker scopedLocker(&_markersLock);
+
+    return _markers.values();
+}
+
+bool OsmAnd::MapMarkersCollection_P::addMarker(const std::shared_ptr<MapMarker>& marker)
+{
+    QWriteLocker scopedLocker(&_markersLock);
+
+    const auto key = reinterpret_cast<Key>(marker.get());
+    if (_markers.contains(key))
+        return false;
+
+    _markers.insert(key, marker);
+
+    return true;
 }
 
 bool OsmAnd::MapMarkersCollection_P::removeMarker(const std::shared_ptr<MapMarker>& marker)
 {
-    return false;
+    QWriteLocker scopedLocker(&_markersLock);
+
+    const bool removed = (_markers.remove(reinterpret_cast<Key>(marker.get())) > 0);
+    return removed;
 }
 
 void OsmAnd::MapMarkersCollection_P::removeAllMarkers()
 {
+    QWriteLocker scopedLocker(&_markersLock);
 
+    _markers.clear();
 }
 
-QSet<OsmAnd::MapMarkersCollection_P::Key> OsmAnd::MapMarkersCollection_P::getKeys() const
+QList<OsmAnd::MapMarkersCollection_P::Key> OsmAnd::MapMarkersCollection_P::getKeys() const
 {
-    return QSet<OsmAnd::MapMarkersCollection_P::Key>();
+    QReadLocker scopedLocker(&_markersLock);
+
+    return _markers.keys();
 }
 
 bool OsmAnd::MapMarkersCollection_P::obtainSymbolsGroup(const Key key, std::shared_ptr<const MapSymbolsGroup>& outSymbolGroups)
 {
-    return false;
+    QReadLocker scopedLocker(&_markersLock);
+
+    const auto citMarker = _markers.constFind(key);
+    if (citMarker == _markers.cend())
+        return false;
+
+    //outSymbolGroups = ;
+
+    return true;
 }

@@ -13,7 +13,7 @@
 #include "Concurrent.h"
 #include "IMapRenderer.h"
 #include "GPUAPI.h"
-#include "IMapTileProvider.h"
+#include "IMapTiledProvider.h"
 #include "TiledEntriesCollection.h"
 #include "MapRendererInternalState.h"
 #include "MapRendererResources.h"

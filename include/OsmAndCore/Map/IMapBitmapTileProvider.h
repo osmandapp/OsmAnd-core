@@ -11,7 +11,7 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/MapTypes.h>
-#include <OsmAndCore/Map/IMapTileProvider.h>
+#include <OsmAndCore/Map/IMapTiledProvider.h>
 
 namespace OsmAnd
 {
@@ -31,7 +31,7 @@ namespace OsmAnd
         const AlphaChannelData alphaChannelData;
     };
 
-    class OSMAND_CORE_API IMapBitmapTileProvider : public IMapTileProvider
+    class OSMAND_CORE_API IMapBitmapTileProvider : public IMapTiledProvider
     {
         Q_DISABLE_COPY(IMapBitmapTileProvider);
     private:

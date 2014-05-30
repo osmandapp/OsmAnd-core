@@ -9,14 +9,12 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/IMapSymbolProvider.h>
+#include <OsmAndCore/Map/MapSymbolProvidersCommon.h>
 #include <OsmAndCore/Map/IMapKeyedProvider.h>
 
 namespace OsmAnd
 {
-    class OSMAND_CORE_API IMapSymbolKeyedProvider
-        : public IMapSymbolProvider
-        , public virtual IMapKeyedProvider
+    class OSMAND_CORE_API IMapSymbolKeyedProvider : public IMapKeyedProvider
     {
         Q_DISABLE_COPY(IMapSymbolKeyedProvider);
     private:

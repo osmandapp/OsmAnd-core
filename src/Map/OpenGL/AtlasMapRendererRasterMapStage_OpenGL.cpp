@@ -10,7 +10,7 @@
 #include <SkColor.h>
 
 #include "AtlasMapRenderer_OpenGL.h"
-#include "IMapTileProvider.h"
+#include "IMapTiledProvider.h"
 #include "IMapBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
 #include "Utilities.h"

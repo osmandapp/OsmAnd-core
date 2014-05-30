@@ -167,15 +167,16 @@ namespace OsmAnd
             : public BaseResource
             , public KeyedEntriesCollectionEntryWithState<const void*, BaseKeyedResource, ResourceState, ResourceState::Unknown>
         {
-            typedef KeyedEntriesCollectionEntryWithState<const void*, BaseKeyedResource, ResourceState, ResourceState::Unknown> BaseKeyedEntriesCollectionEntryWithState;
+            typedef const void* Key;
+            typedef KeyedEntriesCollectionEntryWithState<Key, BaseKeyedResource, ResourceState, ResourceState::Unknown> BaseKeyedEntriesCollectionEntryWithState;
 
         private:
         protected:
             BaseKeyedResource(
                 MapRendererResources* owner,
                 const ResourceType type,
-                const KeyedEntriesCollection<const void*, BaseKeyedResource>& collection,
-                const void* key);
+                const KeyedEntriesCollection<Key, BaseKeyedResource>& collection,
+                const Key key);
 
             virtual void removeSelfFromCollection();
         public:
@@ -277,13 +278,13 @@ namespace OsmAnd
         friend class OsmAnd::MapRendererResources;
         };
 
-        // Symbols:
+        // Tiled symbols:
         class SymbolsTiledResourcesCollection;
-        class SymbolsTileResource : public BaseTiledResource
+        class SymbolsTiledResource : public BaseTiledResource
         {
         private:
         protected:
-            SymbolsTileResource(MapRendererResources* owner, const TiledEntriesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom);
+            SymbolsTiledResource(MapRendererResources* owner, const TiledEntriesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom);
 
             class GroupResources
             {
@@ -309,7 +310,7 @@ namespace OsmAnd
             virtual bool checkIsSafeToUnlink();
             virtual void detach();
         public:
-            virtual ~SymbolsTileResource();
+            virtual ~SymbolsTiledResource();
 
         friend class OsmAnd::MapRendererResources;
         friend class OsmAnd::MapRendererResources::SymbolsTiledResourcesCollection;
@@ -320,14 +321,37 @@ namespace OsmAnd
         protected:
             SymbolsTiledResourcesCollection();
 
-            std::array< SharedResourcesContainer<uint64_t, SymbolsTileResource::GroupResources>, ZoomLevelsCount > _sharedGroupsResources;
+            std::array< SharedResourcesContainer<uint64_t, SymbolsTiledResource::GroupResources>, ZoomLevelsCount > _sharedGroupsResources;
         public:
             virtual ~SymbolsTiledResourcesCollection();
 
         friend class OsmAnd::MapRendererResources;
-        friend class OsmAnd::MapRendererResources::SymbolsTileResource;
+        friend class OsmAnd::MapRendererResources::SymbolsTiledResource;
+        };
+
+        // Keyed symbols:
+        class SymbolsKeyedResource : public BaseKeyedResource
+        {
+        private:
+        protected:
+            SymbolsKeyedResource(MapRendererResources* owner, const KeyedEntriesCollection<Key, BaseKeyedResource>& collection, const Key key);
+
+            std::shared_ptr<const MapSymbolsGroup> _sourceData;
+            QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > _resourcesInGPU;
+
+            virtual bool obtainData(bool& dataAvailable, const IQueryController* queryController);
+            virtual bool uploadToGPU();
+            virtual void unloadFromGPU();
+
+            virtual bool checkIsSafeToUnlink();
+            virtual void detach();
+        public:
+            virtual ~SymbolsKeyedResource();
+
+        friend class OsmAnd::MapRendererResources;
         };
         
+        // Symbols:
         typedef QHash< std::shared_ptr<const MapSymbol>, std::weak_ptr<const GPUAPI::ResourceInGPU> > MapSymbolsLayer;
         typedef QMap<int, MapSymbolsLayer > MapSymbolsByOrder;
 

@@ -10,7 +10,7 @@ OsmAnd::MapMarkersCollection::~MapMarkersCollection()
 {
 }
 
-QSet<OsmAnd::MapMarkersCollection::Key> OsmAnd::MapMarkersCollection::getKeys() const
+QList<OsmAnd::MapMarkersCollection::Key> OsmAnd::MapMarkersCollection::getKeys() const
 {
     return _p->getKeys();
 }

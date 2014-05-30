@@ -19,7 +19,7 @@
 #endif
 
 OsmAnd::IMapBitmapTileProvider::IMapBitmapTileProvider()
-    : IMapTileProvider(MapTileDataType::Bitmap)
+    : IMapTiledProvider(MapTileDataType::Bitmap)
 {
 }
 

@@ -1,11 +1,11 @@
-#include "IMapTileProvider.h"
+#include "IMapTiledProvider.h"
 
-OsmAnd::IMapTileProvider::IMapTileProvider( const MapTileDataType& dataType_ )
+OsmAnd::IMapTiledProvider::IMapTiledProvider( const MapTileDataType& dataType_ )
     : dataType(dataType_)
 {
 }
 
-OsmAnd::IMapTileProvider::~IMapTileProvider()
+OsmAnd::IMapTiledProvider::~IMapTiledProvider()
 {
 }
 

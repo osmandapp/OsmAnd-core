@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_I_MAP_SYMBOL_PROVIDER_H_
-#define _OSMAND_CORE_I_MAP_SYMBOL_PROVIDER_H_
+#ifndef _OSMAND_CORE_MAP_SYMBOL_PROVIDERS_COMMON_H_
+#define _OSMAND_CORE_MAP_SYMBOL_PROVIDERS_COMMON_H_
 
 #include <OsmAndCore/stdlib_common.h>
 #include <functional>
@@ -23,21 +23,7 @@ namespace OsmAnd
     {
         class ObjectWithId;
     }
-
-    class OSMAND_CORE_API IMapSymbolProvider : public IMapProvider
-    {
-        Q_DISABLE_COPY(IMapSymbolProvider);
-
-    public:
-        OSMAND_CALLABLE(FilterCallback, bool, const IMapSymbolProvider* const provider, const std::shared_ptr<const Model::ObjectWithId>& object, const bool shareable);
-
-    private:
-    protected:
-        IMapSymbolProvider();
-    public:
-        virtual ~IMapSymbolProvider();
-    };
-
+    
     class MapSymbol;
     class OSMAND_CORE_API MapSymbolsGroup
     {
@@ -158,13 +144,8 @@ namespace OsmAnd
             const QString& content,
             const LanguageId& languageId,
             const PointI& minDistance,
-            const PointI& location31,
-            const double areaRadius,
-            const SkColor areaBaseColor);
+            const PointI& location31);
         virtual ~OnSurfaceMapSymbol();
-
-        const double areaRadius;
-        const SkColor areaBaseColor;
 
         virtual MapSymbol* cloneWithReplacedBitmap(const std::shared_ptr<const SkBitmap>& bitmap) const;
     };
@@ -194,4 +175,4 @@ namespace OsmAnd
     };
 }
 
-#endif // !defined(_OSMAND_CORE_I_MAP_SYMBOL_PROVIDER_H_)
+#endif // !defined(_OSMAND_CORE_MAP_SYMBOL_PROVIDERS_COMMON_H_)

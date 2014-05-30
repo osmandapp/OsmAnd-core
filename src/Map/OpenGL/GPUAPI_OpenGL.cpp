@@ -9,10 +9,10 @@
 #include <SkCanvas.h>
 
 #include "IMapRenderer.h"
-#include "IMapTileProvider.h"
+#include "IMapTiledProvider.h"
 #include "IMapBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
-#include "IMapSymbolProvider.h"
+#include "MapSymbolProvidersCommon.h"
 #include "Logging.h"
 #include "Utilities.h"
 

@@ -5,7 +5,8 @@
 #include <functional>
 
 #include "QtExtensions.h"
-#include <QSet>
+#include <QHash>
+#include <QList>
 #include <QReadWriteLock>
 
 #include <SkBitmap.h>
@@ -20,6 +21,9 @@
 
 namespace OsmAnd
 {
+    class MapMarkerBuilder;
+    class MapMarkerBuilder_P;
+
     class MapMarkersCollection;
     class MapMarkersCollection_P
     {
@@ -33,20 +37,24 @@ namespace OsmAnd
         MapMarkersCollection_P(MapMarkersCollection* const owner);
 
         mutable QReadWriteLock _markersLock;
-        QSet< std::shared_ptr<MapMarker> > _markers;
+        QHash< Key, std::shared_ptr<MapMarker> > _markers;
+
+        bool addMarker(const std::shared_ptr<MapMarker>& marker);
     public:
         virtual ~MapMarkersCollection_P();
 
         ImplementationInterface<MapMarkersCollection> owner;
 
-        QSet< std::shared_ptr<MapMarker> > getMarkers() const;
+        QList< std::shared_ptr<MapMarker> > getMarkers() const;
         bool removeMarker(const std::shared_ptr<MapMarker>& marker);
         void removeAllMarkers();
 
-        QSet<Key> getKeys() const;
+        QList<Key> getKeys() const;
         bool obtainSymbolsGroup(const Key key, std::shared_ptr<const MapSymbolsGroup>& outSymbolGroups);
 
     friend class OsmAnd::MapMarkersCollection;
+    friend class OsmAnd::MapMarkerBuilder;
+    friend class OsmAnd::MapMarkerBuilder_P;
     };
 }
 

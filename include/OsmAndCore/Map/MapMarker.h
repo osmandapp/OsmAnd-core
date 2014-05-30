@@ -13,8 +13,8 @@
 
 namespace OsmAnd
 {
-    class MapMarkersCollection;
-    class MapMarkersCollection_P;
+    class MapMarkerBuilder;
+    class MapMarkerBuilder_P;
 
     class MapMarker_P;
     class OSMAND_CORE_API MapMarker
@@ -47,8 +47,8 @@ namespace OsmAnd
         bool hasUnappliedChanges() const;
         void applyChanges();
 
-    friend class OsmAnd::MapMarkersCollection;
-    friend class OsmAnd::MapMarkersCollection_P;
+    friend class OsmAnd::MapMarkerBuilder;
+    friend class OsmAnd::MapMarkerBuilder_P;
     };
 }
 

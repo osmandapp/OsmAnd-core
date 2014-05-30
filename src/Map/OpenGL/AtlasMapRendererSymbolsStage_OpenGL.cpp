@@ -10,7 +10,7 @@
 #include <SkColor.h>
 
 #include "AtlasMapRenderer_OpenGL.h"
-#include "IMapSymbolProvider.h"
+#include "MapSymbolProvidersCommon.h"
 #include "QuadTree.h"
 #include "QKeyValueIterator.h"
 #include "ObjectWithId.h"
