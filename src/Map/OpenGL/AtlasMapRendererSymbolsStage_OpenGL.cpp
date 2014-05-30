@@ -404,7 +404,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
             {
                 const auto& symbol = std::dynamic_pointer_cast<const PinnedMapSymbol>(renderable->mapSymbol);
                 const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
-                const auto& groupObjectId = symbol->groupObjectId;
+                const auto& symbolGroupPtr = symbol->groupPtr;
 
                 // Calculate position in screen coordinates (same calculation as done in shader)
                 const auto symbolOnScreen = glm::project(renderable->positionInWorld, internalState.mCameraView, internalState.mPerspectiveProjection, viewport);
@@ -419,11 +419,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 #if !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
                 // Check intersections
                 const auto intersects = intersections.test(boundsInWindow, false,
-                    [groupObjectId]
+                    [symbolGroupPtr]
                     (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
                     {
                         // Only accept intersections with symbols from other groups
-                        return otherSymbol->groupObjectId != groupObjectId;
+                        return otherSymbol->groupPtr != symbolGroupPtr;
                     });
                 if (intersects)
                 {
@@ -439,11 +439,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 {
                     const auto& symbolContent = symbol->content;
                     const auto hasSimilarContent = intersections.test(boundsInWindow.getEnlargedBy(symbol->minDistance), false,
-                        [symbolContent, groupObjectId]
+                        [symbolContent, symbolGroupPtr]
                         (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
                         {
                             return
-                                (otherSymbol->groupObjectId != groupObjectId) && 
+                                (otherSymbol->groupPtr != symbolGroupPtr) &&
                                 (otherSymbol->content == symbolContent);
                         });
                     if (hasSimilarContent)
@@ -507,8 +507,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 }
 
                 GL_PUSH_GROUP_MARKER(QString("[%1(%2) pinned \"%3\"]")
-                    .arg(groupObjectId >> 1)
-                    .arg(static_cast<int64_t>(groupObjectId) / 2)
+                    .arg(QString().sprintf("0x%p", symbol->groupPtr))
+                    .arg(symbol->group.lock()->getDebugTitle())
                     .arg(qPrintable(symbol->content)));
 
                 // Set symbol offset from target
@@ -544,7 +544,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
             {
                 const auto& symbol = std::dynamic_pointer_cast<const OnPathMapSymbol>(renderable->mapSymbol);
                 const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
-                const auto& groupObjectId = symbol->groupObjectId;
+                const auto& symbolGroupPtr = symbol->groupPtr;
 
 #if OSMAND_DEBUG && 0
                 {
@@ -709,11 +709,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 #if !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
                     // Check intersections
                     const auto intersects = intersections.test(oobb, false,
-                        [groupObjectId]
+                        [symbolGroupPtr]
                         (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
                         {
                             // Only accept intersections with symbols from other groups
-                            return otherSymbol->groupObjectId != groupObjectId;
+                            return otherSymbol->groupPtr != symbolGroupPtr;
                         });
                     if (intersects)
                     {
@@ -729,11 +729,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     {
                         const auto& symbolContent = symbol->content;
                         const auto hasSimilarContent = intersections.test(oobb.getEnlargedBy(symbol->minDistance), false,
-                            [symbolContent, groupObjectId]
+                            [symbolContent, symbolGroupPtr]
                             (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
                             {
                                 return
-                                    (otherSymbol->groupObjectId != groupObjectId) &&
+                                    (otherSymbol->groupPtr != symbolGroupPtr) &&
                                     (otherSymbol->content == symbolContent);
                             });
                         if (hasSimilarContent)
@@ -789,8 +789,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     }
 
                     GL_PUSH_GROUP_MARKER(QString("[%1(%2) SOP-2D \"%3\"]")
-                        .arg(groupObjectId >> 1)
-                        .arg(static_cast<int64_t>(groupObjectId) / 2)
+                        .arg(QString().sprintf("0x%p", symbol->groupPtr))
+                        .arg(symbol->group.lock()->getDebugTitle())
                         .arg(qPrintable(symbol->content)));
 
                     // Set glyph height
@@ -1089,11 +1089,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 #if !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
                     // Check intersections
                     const auto intersects = intersections.test(oobb, false,
-                        [groupObjectId]
+                        [symbolGroupPtr]
                         (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
                         {
                             // Only accept intersections with symbols from other groups
-                            return otherSymbol->groupObjectId != groupObjectId;
+                            return otherSymbol->groupPtr != symbolGroupPtr;
                         });
                     if (intersects)
                     {
@@ -1109,11 +1109,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     {
                         const auto& symbolContent = symbol->content;
                         const auto hasSimilarContent = intersections.test(oobb.getEnlargedBy(symbol->minDistance), false,
-                            [symbolContent, groupObjectId]
+                            [symbolContent, symbolGroupPtr]
                             (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
                             {
                                 return
-                                    (otherSymbol->groupObjectId != groupObjectId) &&
+                                    (otherSymbol->groupPtr != symbolGroupPtr) &&
                                     (otherSymbol->content == symbolContent);
                             });
                         if (hasSimilarContent)
@@ -1170,8 +1170,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     }
 
                     GL_PUSH_GROUP_MARKER(QString("[%1(%2) SOP-3D \"%3\"]")
-                        .arg(groupObjectId >> 1)
-                        .arg(static_cast<int64_t>(groupObjectId) / 2)
+                        .arg(QString().sprintf("0x%p", symbol->groupPtr))
+                        .arg(symbol->group.lock()->getDebugTitle())
                         .arg(qPrintable(symbol->content)));
 
                     // Set glyph height

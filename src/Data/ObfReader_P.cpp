@@ -83,7 +83,7 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::ObfReader_P::obtainInfo() const
 
     if (owner->obfFile)
     {
-        QMutexLocker scopedLock(&owner->obfFile->_p->_obfInfoMutex);
+        QMutexLocker scopedLocker(&owner->obfFile->_p->_obfInfoMutex);
 
         if (!owner->obfFile->_p->_obfInfo)
         {

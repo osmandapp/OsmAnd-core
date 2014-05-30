@@ -1,0 +1,44 @@
+#ifndef _OSMAND_CORE_MAP_MARKERS_COLLECTION_H_
+#define _OSMAND_CORE_MAP_MARKERS_COLLECTION_H_
+
+#include <OsmAndCore/stdlib_common.h>
+#include <functional>
+
+#include <OsmAndCore/QtExtensions.h>
+#include <QMultiHash>
+#include <QList>
+
+#include <SkBitmap.h>
+
+#include <OsmAndCore.h>
+#include <OsmAndCore/PrivateImplementation.h>
+#include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Map/IMapSymbolKeyedProvider.h>
+#include <OsmAndCore/Map/MapMarker.h>
+
+namespace OsmAnd
+{
+    class MapMarkerBuilder;
+
+    class MapMarkersCollection_P;
+    class OSMAND_CORE_API MapMarkersCollection : public IMapSymbolKeyedProvider
+    {
+        Q_DISABLE_COPY(MapMarkersCollection);
+
+    private:
+        PrivateImplementation<MapMarkersCollection_P> _p;
+    protected:
+    public:
+        MapMarkersCollection();
+        virtual ~MapMarkersCollection();
+
+        QSet< std::shared_ptr<MapMarker> > getMarkers() const;
+        bool removeMarker(const std::shared_ptr<MapMarker>& marker);
+        void removeAllMarkers();
+
+        virtual QSet<Key> getKeys() const;
+        virtual bool obtainSymbolsGroup(const Key key, std::shared_ptr<const MapSymbolsGroup>& outSymbolGroups);
+    };
+}
+
+#endif // !defined(_OSMAND_CORE_MAP_MARKERS_COLLECTION_H_)

@@ -651,14 +651,14 @@ OsmAnd::MapAnimator_P::AnimatedValue OsmAnd::MapAnimator_P::GenericAnimation::ge
 
 bool OsmAnd::MapAnimator_P::GenericAnimation::isActive() const
 {
-    QReadLocker scopedLock(&_processLock);
+    QReadLocker scopedLocker(&_processLock);
 
     return (_timePassed >= delay) && ((_timePassed - delay) < duration);
 }
 
 float OsmAnd::MapAnimator_P::GenericAnimation::getTimePassed() const
 {
-    QReadLocker scopedLock(&_processLock);
+    QReadLocker scopedLocker(&_processLock);
 
     return _timePassed;
 }

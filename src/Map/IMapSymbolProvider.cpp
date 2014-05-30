@@ -10,13 +10,33 @@ OsmAnd::IMapSymbolProvider::~IMapSymbolProvider()
 {
 }
 
-OsmAnd::MapSymbolsGroup::MapSymbolsGroup(const std::shared_ptr<const Model::ObjectWithId>& object_)
-    : object(object_)
+OsmAnd::MapSymbolsGroup::MapSymbolsGroup()
 {
 }
 
 OsmAnd::MapSymbolsGroup::~MapSymbolsGroup()
 {
+}
+
+QString OsmAnd::MapSymbolsGroup::getDebugTitle() const
+{
+    static QString noDebugTitle(QLatin1String("?"));
+
+    return noDebugTitle;
+}
+
+OsmAnd::MapSymbolsGroupShareableById::MapSymbolsGroupShareableById(const uint64_t id_)
+    : id(id_)
+{
+}
+
+OsmAnd::MapSymbolsGroupShareableById::~MapSymbolsGroupShareableById()
+{
+}
+
+QString OsmAnd::MapSymbolsGroupShareableById::getDebugTitle() const
+{
+    return QString(QLatin1String("%1")).arg(id);
 }
 
 OsmAnd::MapSymbol::MapSymbol(
@@ -29,7 +49,7 @@ OsmAnd::MapSymbol::MapSymbol(
     const PointI& minDistance_)
     : _bitmap(bitmap_)
     , group(group_)
-    , groupObjectId(group_->object->id)
+    , groupPtr(group_.get())
     , isShareable(isShareable_)
     , bitmap(_bitmap)
     , order(order_)

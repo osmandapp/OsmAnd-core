@@ -45,12 +45,26 @@ namespace OsmAnd
     private:
     protected:
     public:
-        MapSymbolsGroup(const std::shared_ptr<const Model::ObjectWithId>& object);
+        MapSymbolsGroup();
         virtual ~MapSymbolsGroup();
 
-        const std::shared_ptr<const Model::ObjectWithId> object;
-
         QList< std::shared_ptr<const MapSymbol> > symbols;
+
+        virtual QString getDebugTitle() const;
+    };
+
+    class OSMAND_CORE_API MapSymbolsGroupShareableById : public MapSymbolsGroup
+    {
+        Q_DISABLE_COPY(MapSymbolsGroupShareableById);
+    private:
+    protected:
+    public:
+        MapSymbolsGroupShareableById(const uint64_t id);
+        virtual ~MapSymbolsGroupShareableById();
+
+        const uint64_t id;
+
+        virtual QString getDebugTitle() const;
     };
 
     class OSMAND_CORE_API MapSymbol : public IRetainableResource
@@ -72,7 +86,7 @@ namespace OsmAnd
         virtual ~MapSymbol();
 
         const std::weak_ptr<const MapSymbolsGroup> group;
-        const uint64_t groupObjectId;
+        const MapSymbolsGroup* const groupPtr;
 
         const bool isShareable;
 

@@ -68,7 +68,7 @@ bool OsmAnd::OfflineMapStaticSymbolProvider_P::obtainSymbols(
             !tileBBox31.contains(mapObject->bbox31);
 
         // Create group
-        const auto constructedGroup = new MapSymbolsGroup(rasterizedGroup->mapObject);
+        const auto constructedGroup = new Group(rasterizedGroup->mapObject);
         std::shared_ptr<const MapSymbolsGroup> group(constructedGroup);
 
         // Convert all symbols inside group
@@ -128,4 +128,19 @@ OsmAnd::OfflineMapStaticSymbolProvider_P::Tile::~Tile()
 void OsmAnd::OfflineMapStaticSymbolProvider_P::Tile::releaseNonRetainedData()
 {
     _symbolsGroups.clear();
+}
+
+OsmAnd::OfflineMapStaticSymbolProvider_P::Group::Group(const std::shared_ptr<const Model::MapObject>& mapObject_)
+    : MapSymbolsGroupShareableById(mapObject_->id)
+    , mapObject(mapObject_)
+{
+}
+
+OsmAnd::OfflineMapStaticSymbolProvider_P::Group::~Group()
+{
+}
+
+QString OsmAnd::OfflineMapStaticSymbolProvider_P::Group::getDebugTitle() const
+{
+    return QString(QLatin1String("MO %1,%2")).arg(id).arg(static_cast<int64_t>(id) / 2);
 }

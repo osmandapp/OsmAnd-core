@@ -141,7 +141,7 @@ namespace OsmAnd
 
         virtual void removeEntry(const KEY key)
         {
-            QWriteLocker scopedLock(&_collectionLock);
+            QWriteLocker scopedLocker(&_collectionLock);
 
             const auto& itEntry = _collection.find(key);
             if (itEntry == _collection.end())
@@ -153,7 +153,7 @@ namespace OsmAnd
 
         virtual void removeEntries(std::function<bool(const std::shared_ptr<ENTRY>& entry, bool& cancel)> filter = nullptr)
         {
-            QWriteLocker scopedLock(&_collectionLock);
+            QWriteLocker scopedLocker(&_collectionLock);
 
             bool doCancel = false;
             QMutableHashIterator< KEY, std::shared_ptr<ENTRY> > itEntryPair(_collection);
@@ -175,7 +175,7 @@ namespace OsmAnd
 
         virtual void forAllExecute(std::function<void(const std::shared_ptr<ENTRY>& entry, bool& cancel)> action) const
         {
-            QReadLocker scopedLock(&_collectionLock);
+            QReadLocker scopedLocker(&_collectionLock);
 
             bool doCancel = false;
             for (const auto& entry : constOf(_collection))

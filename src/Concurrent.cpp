@@ -65,7 +65,7 @@ void OsmAnd::Concurrent::TaskHost::onOwnerIsBeingDestructed()
 
     // Ask all tasks to cancel
     {
-        QReadLocker scopedLock(&_hostedTasksLock);
+        QReadLocker scopedLocker(&_hostedTasksLock);
 
         for(const auto& task : constOf(_hostedTasks))
             task->requestCancellation();
@@ -87,7 +87,7 @@ OsmAnd::Concurrent::TaskHost::Bridge::Bridge( const OwnerPtr& owner )
 OsmAnd::Concurrent::TaskHost::Bridge::~Bridge()
 {
     {
-        QReadLocker scopedLock(&_host->_hostedTasksLock);
+        QReadLocker scopedLocker(&_host->_hostedTasksLock);
         assert(_host->_hostedTasks.size() == 0);
     }
 }
@@ -112,7 +112,7 @@ OsmAnd::Concurrent::HostedTask::HostedTask( const TaskHost::Bridge& bridge, Exec
 
     // When task is created, during it's lifetime task host must exist
     {
-        QWriteLocker scopedLock(&_host->_hostedTasksLock);
+        QWriteLocker scopedLocker(&_host->_hostedTasksLock);
         _host->_hostedTasks.push_back(this);
     }
     _lockedOwner = _host->_ownerPtr;
@@ -122,7 +122,7 @@ OsmAnd::Concurrent::HostedTask::~HostedTask()
 {
     // When hosted task is being destroyed, it unlocks owner
     {
-        QWriteLocker scopedLock(&_host->_hostedTasksLock);
+        QWriteLocker scopedLocker(&_host->_hostedTasksLock);
         _host->_hostedTasks.removeOne(this);
     }
     _host->_unlockedCondition.wakeOne();

@@ -13,6 +13,7 @@
 #include "CommonTypes.h"
 #include "PrivateImplementation.h"
 #include "IMapSymbolTiledProvider.h"
+#include "MapObject.h"
 #include "IRetainableResource.h"
 
 namespace OsmAnd
@@ -20,10 +21,6 @@ namespace OsmAnd
     class OfflineMapDataTile;
     class MapSymbolsGroup;
     class MapSymbolsTile;
-    namespace Model
-    {
-        class ObjectWithId;
-    }
 
     class OfflineMapStaticSymbolProvider;
     class OfflineMapStaticSymbolProvider_P
@@ -34,10 +31,26 @@ namespace OsmAnd
 
         ImplementationInterface<OfflineMapStaticSymbolProvider> owner;
 
+        class Group : public MapSymbolsGroupShareableById
+        {
+            Q_DISABLE_COPY(Group);
+        private:
+        protected:
+        public:
+            Group(const std::shared_ptr<const Model::MapObject>& mapObject);
+            virtual ~Group();
+
+            const std::shared_ptr<const Model::MapObject> mapObject;
+
+            virtual QString getDebugTitle() const;
+        };
+
         class Tile
             : public MapSymbolsTile
             , public IRetainableResource
         {
+            Q_DISABLE_COPY(Tile);
+
         private:
         protected:
         public:

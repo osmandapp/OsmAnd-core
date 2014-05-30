@@ -346,7 +346,7 @@ namespace OsmAnd
 
             virtual bool process(const float timePassed)
             {
-                QWriteLocker scopedLock(&_processLock);
+                QWriteLocker scopedLocker(&_processLock);
 
                 // Increment time
                 _timePassed += timePassed;
@@ -389,7 +389,7 @@ namespace OsmAnd
 
             virtual bool obtainInitialValueAsFloat(float& outValue) const
             {
-                QReadLocker scopedLock(&_processLock);
+                QReadLocker scopedLocker(&_processLock);
 
                 if (!std::is_same<T, float>::value || !_initialValueCaptured)
                     return false;
@@ -399,7 +399,7 @@ namespace OsmAnd
             }
             virtual bool obtainDeltaValueAsFloat(float& outValue) const
             {
-                QReadLocker scopedLock(&_processLock);
+                QReadLocker scopedLocker(&_processLock);
 
                 if (!std::is_same<T, float>::value || !_initialValueCaptured)
                     return false;
@@ -409,7 +409,7 @@ namespace OsmAnd
             }
             virtual bool obtainCurrentValueAsFloat(float& outValue) const
             {
-                QReadLocker scopedLock(&_processLock);
+                QReadLocker scopedLocker(&_processLock);
 
                 if (!std::is_same<T, float>::value || !_currentValueCalculatedOnce)
                     return false;
@@ -420,7 +420,7 @@ namespace OsmAnd
 
             virtual bool obtainInitialValueAsPointI64(PointI64& outValue) const
             {
-                QReadLocker scopedLock(&_processLock);
+                QReadLocker scopedLocker(&_processLock);
 
                 if (!std::is_same<T, PointI64>::value || !_initialValueCaptured)
                     return false;
@@ -430,7 +430,7 @@ namespace OsmAnd
             }
             virtual bool obtainDeltaValueAsPointI64(PointI64& outValue) const
             {
-                QReadLocker scopedLock(&_processLock);
+                QReadLocker scopedLocker(&_processLock);
 
                 if (!std::is_same<T, PointI64>::value || !_initialValueCaptured)
                     return false;
@@ -440,7 +440,7 @@ namespace OsmAnd
             }
             virtual bool obtainCurrentValueAsPointI64(PointI64& outValue) const
             {
-                QReadLocker scopedLock(&_processLock);
+                QReadLocker scopedLocker(&_processLock);
 
                 if (!std::is_same<T, PointI64>::value || !_currentValueCalculatedOnce)
                     return false;

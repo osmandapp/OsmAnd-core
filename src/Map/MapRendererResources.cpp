@@ -1633,16 +1633,23 @@ bool OsmAnd::MapRendererResources::SymbolsTileResource::obtainData(bool& dataAva
     {
         std::shared_ptr<GroupResources> groupResources(new GroupResources(group));
 
-        // Check if this group is loaded as shared
-        if (!loadedSharedGroups.contains(group->object->id))
+        if (const auto shareableById = std::dynamic_pointer_cast<const MapSymbolsGroupShareableById>(group))
         {
-            _uniqueGroupsResources.push_back(qMove(groupResources));
-            continue;
-        }
+            // Check if this group is loaded as shared
+            if (!loadedSharedGroups.contains(shareableById->id))
+            {
+                _uniqueGroupsResources.push_back(qMove(groupResources));
+                continue;
+            }
 
-        // Otherwise insert it as shared group
-        sharedGroupsResources.fulfilPromiseAndReference(group->object->id, groupResources);
-        _referencedSharedGroupsResources.push_back(qMove(groupResources));
+            // Otherwise insert it as shared group
+            sharedGroupsResources.fulfilPromiseAndReference(shareableById->id, groupResources);
+            _referencedSharedGroupsResources.push_back(qMove(groupResources));
+        }
+        else
+        {
+            _uniqueGroupsResources.push_back(groupResources);
+        }
     }
 
     // Wait for future referenced shared groups
@@ -1820,9 +1827,11 @@ void OsmAnd::MapRendererResources::SymbolsTileResource::unloadFromGPU()
     auto& sharedGroupsResources = collection->_sharedGroupsResources[zoom];
     for(auto& groupResources : _referencedSharedGroupsResources)
     {
+        const auto shareableById = std::dynamic_pointer_cast<const MapSymbolsGroupShareableById>(groupResources->group);
+
         bool wasRemoved = false;
         auto groupResources_ = groupResources;
-        sharedGroupsResources.releaseReference(groupResources->group->object->id, groupResources_, true, &wasRemoved);
+        sharedGroupsResources.releaseReference(shareableById->id, groupResources_, true, &wasRemoved);
 
         // Skip removing symbols from global map in case this was not the last reference
         // to shared group resources
@@ -1860,9 +1869,11 @@ void OsmAnd::MapRendererResources::SymbolsTileResource::detach()
     auto& sharedGroupsResources = collection->_sharedGroupsResources[zoom];
     for(auto& groupResources : _referencedSharedGroupsResources)
     {
+        const auto shareableById = std::dynamic_pointer_cast<const MapSymbolsGroupShareableById>(groupResources->group);
+
         bool wasRemoved = false;
         auto groupResources_ = groupResources;
-        sharedGroupsResources.releaseReference(groupResources->group->object->id, groupResources_, true, &wasRemoved);
+        sharedGroupsResources.releaseReference(shareableById->id, groupResources_, true, &wasRemoved);
 
         // In case this was the last reference to shared group resources, check if any resources need to be deleted
         if (wasRemoved)

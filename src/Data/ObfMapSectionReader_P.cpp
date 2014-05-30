@@ -760,7 +760,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
 
     // Check if this map section has initialized rules
     {
-        QMutexLocker scopedLock(&section->_p->_encodingDecodingDataMutex);
+        QMutexLocker scopedLocker(&section->_p->_encodingDecodingDataMutex);
 
         if (!section->_p->_encodingDecodingRules)
         {
@@ -807,7 +807,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
 
         // If there are no tree nodes in map level, it means they are not loaded
         {
-            QMutexLocker scopedLock(&mapLevel->_p->_rootNodesMutex);
+            QMutexLocker scopedLocker(&mapLevel->_p->_rootNodesMutex);
 
             if (!mapLevel->_p->_rootNodes)
             {

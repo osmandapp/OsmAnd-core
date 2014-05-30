@@ -152,7 +152,7 @@ namespace OsmAnd
 
         virtual void removeEntry(const TileId tileId, const ZoomLevel zoom)
         {
-            QWriteLocker scopedLock(&_collectionLock);
+            QWriteLocker scopedLocker(&_collectionLock);
 
             auto& zoomLevel = _zoomLevels[zoom];
             const auto& itEntry = zoomLevel.find(tileId);
@@ -165,7 +165,7 @@ namespace OsmAnd
 
         virtual void removeEntries(std::function<bool (const std::shared_ptr<ENTRY>& entry, bool& cancel)> filter = nullptr)
         {
-            QWriteLocker scopedLock(&_collectionLock);
+            QWriteLocker scopedLocker(&_collectionLock);
 
             bool doCancel = false;
             for(auto& zoomLevel : _zoomLevels)
@@ -190,7 +190,7 @@ namespace OsmAnd
 
         virtual void forAllExecute(std::function<void (const std::shared_ptr<ENTRY>& entry, bool& cancel)> action) const
         {
-            QReadLocker scopedLock(&_collectionLock);
+            QReadLocker scopedLocker(&_collectionLock);
 
             bool doCancel = false;
             for(const auto& zoomLevel : constOf(_zoomLevels))

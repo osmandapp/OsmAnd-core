@@ -48,13 +48,13 @@ OsmAnd::RasterizerEnvironment_P::RasterizerEnvironment_P( RasterizerEnvironment*
 OsmAnd::RasterizerEnvironment_P::~RasterizerEnvironment_P()
 {
     {
-        QMutexLocker scopedLock(&_shadersBitmapsMutex);
+        QMutexLocker scopedLocker(&_shadersBitmapsMutex);
 
         _shadersBitmaps.clear();
     }
 
     {
-        QMutexLocker scopedLock(&_pathEffectsMutex);
+        QMutexLocker scopedLocker(&_pathEffectsMutex);
 
         for(auto& pathEffect : _pathEffects)
             pathEffect->unref();
@@ -268,7 +268,7 @@ void OsmAnd::RasterizerEnvironment_P::applyTo( MapStyleEvaluator& evaluator ) co
 
 bool OsmAnd::RasterizerEnvironment_P::obtainBitmapShader( const QString& name, SkBitmapProcShader* &outShader ) const
 {
-    QMutexLocker scopedLock(&_shadersBitmapsMutex);
+    QMutexLocker scopedLocker(&_shadersBitmapsMutex);
 
     auto itShaderBitmap = _shadersBitmaps.constFind(name);
     if (itShaderBitmap == _shadersBitmaps.cend())
@@ -293,7 +293,7 @@ bool OsmAnd::RasterizerEnvironment_P::obtainBitmapShader( const QString& name, S
 
 bool OsmAnd::RasterizerEnvironment_P::obtainPathEffect( const QString& encodedPathEffect, SkPathEffect* &outPathEffect ) const
 {
-    QMutexLocker scopedLock(&_pathEffectsMutex);
+    QMutexLocker scopedLocker(&_pathEffectsMutex);
 
     auto itPathEffects = _pathEffects.constFind(encodedPathEffect);
     if (itPathEffects == _pathEffects.cend())
@@ -333,7 +333,7 @@ bool OsmAnd::RasterizerEnvironment_P::obtainPathEffect( const QString& encodedPa
 
 bool OsmAnd::RasterizerEnvironment_P::obtainMapIcon( const QString& name, std::shared_ptr<const SkBitmap>& outIcon ) const
 {
-    QMutexLocker scopedLock(&_mapIconsMutex);
+    QMutexLocker scopedLocker(&_mapIconsMutex);
 
     auto itIcon = _mapIcons.constFind(name);
     if (itIcon == _mapIcons.cend())
@@ -358,7 +358,7 @@ bool OsmAnd::RasterizerEnvironment_P::obtainMapIcon( const QString& name, std::s
 
 bool OsmAnd::RasterizerEnvironment_P::obtainTextShield( const QString& name, std::shared_ptr<const SkBitmap>& outTextShield ) const
 {
-    QMutexLocker scopedLock(&_textShieldsMutex);
+    QMutexLocker scopedLocker(&_textShieldsMutex);
 
     auto itTextShield = _textShields.constFind(name);
     if (itTextShield == _textShields.cend())

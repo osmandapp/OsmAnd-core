@@ -59,7 +59,7 @@ OsmAnd::GPUAPI::ResourceInGPU::ResourceInGPU( const Type type_, GPUAPI* api_, co
     // Add this object to allocated resources list
     {
 #if OSMAND_DEBUG
-        QMutexLocker scopedLock(&api->_allocatedResourcesMutex);
+        QMutexLocker scopedLocker(&api->_allocatedResourcesMutex);
         api->_allocatedResources.push_back(this);
 #else
         api->_allocatedResourcesCounter.ref();
@@ -76,7 +76,7 @@ OsmAnd::GPUAPI::ResourceInGPU::~ResourceInGPU()
     // Remove this object from allocated resources list
     {
 #if OSMAND_DEBUG
-        QMutexLocker scopedLock(&api->_allocatedResourcesMutex);
+        QMutexLocker scopedLocker(&api->_allocatedResourcesMutex);
         api->_allocatedResources.removeOne(this);
 #else
         api->_allocatedResourcesCounter.deref();
@@ -135,12 +135,12 @@ OsmAnd::GPUAPI::AtlasTextureInGPU::~AtlasTextureInGPU()
 
     // Clear all references to this atlas
     {
-        QMutexLocker scopedLock(&pool->_freedSlotsMutex);
+        QMutexLocker scopedLocker(&pool->_freedSlotsMutex);
 
         pool->_freedSlots.remove(this);
     }
     {
-        QMutexLocker scopedLock(&pool->_unusedSlotsMutex);
+        QMutexLocker scopedLocker(&pool->_unusedSlotsMutex);
 
         if (pool->_lastNonFullAtlasTexture == this)
         {
@@ -158,7 +158,7 @@ OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU::SlotOnAtlasTextureInGPU(const std::shar
     // Add reference of this tile to atlas texture
     {
 #if OSMAND_DEBUG
-        QMutexLocker scopedLock(&atlasTexture->_tilesMutex);
+        QMutexLocker scopedLocker(&atlasTexture->_tilesMutex);
         atlasTexture->_tiles.insert(this);
 #else
         atlasTexture->_tilesCounter.ref();
@@ -171,7 +171,7 @@ OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU::~SlotOnAtlasTextureInGPU()
     // Remove reference of this tile to atlas texture
     {
 #if OSMAND_DEBUG
-        QMutexLocker scopedLock(&atlasTexture->_tilesMutex);
+        QMutexLocker scopedLocker(&atlasTexture->_tilesMutex);
         atlasTexture->_tiles.remove(this);
 #else
         atlasTexture->_tilesCounter.deref();
@@ -180,7 +180,7 @@ OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU::~SlotOnAtlasTextureInGPU()
 
     // Publish slot that was occupied by this tile as freed
     {
-        QMutexLocker scopedLock(&atlasTexture->pool->_freedSlotsMutex);
+        QMutexLocker scopedLocker(&atlasTexture->pool->_freedSlotsMutex);
 
         atlasTexture->pool->_freedSlots.insert(atlasTexture.get(), qMove(AtlasTexturesPool::FreedSlotsEntry(atlasTexture, slotIndex)));
     }
@@ -205,7 +205,7 @@ std::shared_ptr<OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU> OsmAnd::GPUAPI::AtlasTe
 {
     // First look for freed slots
     {
-        QMutexLocker scopedLock(&_freedSlotsMutex);
+        QMutexLocker scopedLocker(&_freedSlotsMutex);
 
         while(!_freedSlots.isEmpty())
         {
@@ -223,7 +223,7 @@ std::shared_ptr<OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU> OsmAnd::GPUAPI::AtlasTe
     }
     
     {
-        QMutexLocker scopedLock(&_unusedSlotsMutex);
+        QMutexLocker scopedLocker(&_unusedSlotsMutex);
 
         std::shared_ptr<AtlasTextureInGPU> atlasTexture;
         
