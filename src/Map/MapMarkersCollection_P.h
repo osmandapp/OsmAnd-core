@@ -31,7 +31,6 @@ namespace OsmAnd
 
     public:
         typedef MapMarkersCollection::Key Key;
-        typedef MapMarkersCollection::FilterCallback FilterCallback;
     private:
     protected:
         MapMarkersCollection_P(MapMarkersCollection* const owner);

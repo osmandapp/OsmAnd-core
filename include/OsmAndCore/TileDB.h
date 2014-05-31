@@ -16,6 +16,7 @@
 
 namespace OsmAnd {
 
+    //TODO: total shit, refactor or remove. incompatible with resources model, see obfscollection
     class OSMAND_CORE_API TileDB
     {
     public:

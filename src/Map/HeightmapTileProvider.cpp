@@ -4,7 +4,7 @@
 const QString OsmAnd::HeightmapTileProvider::defaultIndexFilename(QLatin1String("heightmap.index"));
 
 OsmAnd::HeightmapTileProvider::HeightmapTileProvider(const QString& dataPath_, const QString& indexFilename_ /*= QString::null*/)
-    : _p(new HeightmapTileProvider_P(this))
+    : _p(new HeightmapTileProvider_P(this, dataPath_, indexFilename_))
     , dataPath(dataPath_)
     , indexFilename(indexFilename_)
 {

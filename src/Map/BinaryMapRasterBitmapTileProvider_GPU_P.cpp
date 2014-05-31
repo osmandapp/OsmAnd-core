@@ -1,5 +1,5 @@
-#include "OfflineMapRasterTileProvider_Software_P.h"
-#include "OfflineMapRasterTileProvider_Software.h"
+#include "BinaryMapRasterBitmapTileProvider_GPU_P.h"
+#include "BinaryMapRasterBitmapTileProvider_GPU.h"
 
 //#define OSMAND_PERFORMANCE_METRICS 2
 #if !defined(OSMAND_PERFORMANCE_METRICS)
@@ -18,8 +18,7 @@
 #include <SkImageDecoder.h>
 #include <SkImageEncoder.h>
 
-#include "OfflineMapDataProvider.h"
-#include "OfflineMapDataTile.h"
+#include "BinaryMapDataProvider.h"
 #include "ObfsCollection.h"
 #include "ObfDataInterface.h"
 #include "Rasterizer.h"
@@ -28,42 +27,45 @@
 #include "Utilities.h"
 #include "Logging.h"
 
-OsmAnd::OfflineMapRasterTileProvider_Software_P::OfflineMapRasterTileProvider_Software_P( OfflineMapRasterTileProvider_Software* owner_, const uint32_t outputTileSize_, const float density_ )
-    : owner(owner_)
-    , outputTileSize(outputTileSize_)
-    , density(density_)
+OsmAnd::BinaryMapRasterBitmapTileProvider_GPU_P::BinaryMapRasterBitmapTileProvider_GPU_P(BinaryMapRasterBitmapTileProvider_GPU* owner_)
+    : BinaryMapRasterBitmapTileProvider_P(owner_)
+    , owner(owner_)
 {
 }
 
-OsmAnd::OfflineMapRasterTileProvider_Software_P::~OfflineMapRasterTileProvider_Software_P()
+OsmAnd::BinaryMapRasterBitmapTileProvider_GPU_P::~BinaryMapRasterBitmapTileProvider_GPU_P()
 {
 }
 
-bool OsmAnd::OfflineMapRasterTileProvider_Software_P::obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile, const IQueryController* const queryController)
+bool OsmAnd::BinaryMapRasterBitmapTileProvider_GPU_P::obtainData(
+    const TileId tileId,
+    const ZoomLevel zoom,
+    std::shared_ptr<const MapTiledData>& outTiledData,
+    const IQueryController* const queryController)
 {
     // Obtain offline map data tile
-    std::shared_ptr< const OfflineMapDataTile > dataTile;
-    owner->dataProvider->obtainTile(tileId, zoom, dataTile);
-    if (!dataTile)
+    std::shared_ptr<const MapTiledData > dataTile_;
+    owner->dataProvider->obtainData(tileId, zoom, dataTile_);
+    if (!dataTile_)
     {
-        outTile.reset();
+        outTiledData.reset();
         return true;
     }
+    const auto dataTile = std::static_pointer_cast<const BinaryMapDataTile>(dataTile_);
 
 #if OSMAND_PERFORMANCE_METRICS
     const auto dataRasterization_Begin = std::chrono::high_resolution_clock::now();
 #endif // OSMAND_PERFORMANCE_METRICS
 
     // Allocate rasterization target
-    auto rasterizationSurface = new SkBitmap();
-    rasterizationSurface->setConfig(SkBitmap::kARGB_8888_Config, outputTileSize, outputTileSize);
+    const std::shared_ptr<SkBitmap> rasterizationSurface(new SkBitmap());
+    rasterizationSurface->setConfig(SkBitmap::kARGB_8888_Config, owner->tileSize, owner->tileSize);
     if (!rasterizationSurface->allocPixels())
     {
-        delete rasterizationSurface;
-
-        LogPrintf(LogSeverityLevel::Error, "Failed to allocate buffer for ARGB8888 rasterization surface %dx%d", outputTileSize, outputTileSize);
+        LogPrintf(LogSeverityLevel::Error, "Failed to allocate buffer for ARGB8888 rasterization surface %dx%d", owner->tileSize, owner->tileSize);
         return false;
     }
+    //TODO: SkGpuDevice
     SkBitmapDevice rasterizationTarget(*rasterizationSurface);
 
     // Create rasterization canvas
@@ -96,40 +98,19 @@ bool OsmAnd::OfflineMapRasterTileProvider_Software_P::obtainTile(const TileId ti
     // If there is no data to rasterize, tell that this tile is not available
     if (dataTile->nothingToRasterize)
     {
-        delete rasterizationSurface;
-
-        outTile.reset();
+        outTiledData.reset();
         return true;
     }
 
     // Or supply newly rasterized tile
-    auto tile = new Tile(rasterizationSurface, dataTile);
-    outTile.reset(tile);
+    const auto newTile = new BinaryMapRasterizedTile(
+        dataTile,
+        rasterizationSurface,
+        AlphaChannelData::NotPresent,
+        owner->densityFactor,
+        tileId,
+        zoom);
+    outTiledData.reset(newTile);
+
     return true;
-}
-
-OsmAnd::ZoomLevel OsmAnd::OfflineMapRasterTileProvider_Software_P::getMinZoom() const
-{
-    return MinZoomLevel;
-}
-
-OsmAnd::ZoomLevel OsmAnd::OfflineMapRasterTileProvider_Software_P::getMaxZoom() const
-{
-    return MaxZoomLevel;
-}
-
-OsmAnd::OfflineMapRasterTileProvider_Software_P::Tile::Tile( SkBitmap* bitmap, const std::shared_ptr<const OfflineMapDataTile>& dataTile_ )
-    : MapBitmapTile(bitmap, AlphaChannelData::NotPresent)
-    , _dataTile(dataTile_)
-    , dataTile(_dataTile)
-{
-}
-
-OsmAnd::OfflineMapRasterTileProvider_Software_P::Tile::~Tile()
-{
-}
-
-void OsmAnd::OfflineMapRasterTileProvider_Software_P::Tile::releaseNonRetainedData()
-{
-    _bitmap.reset();
 }

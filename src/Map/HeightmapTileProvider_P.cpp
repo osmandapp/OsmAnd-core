@@ -9,9 +9,11 @@
 
 #include "Logging.h"
 
-OsmAnd::HeightmapTileProvider_P::HeightmapTileProvider_P(HeightmapTileProvider* const owner_)
+OsmAnd::HeightmapTileProvider_P::HeightmapTileProvider_P(HeightmapTileProvider* const owner_,
+    const QString& dataPath,
+    const QString& indexFilename)
     : owner(owner_)
-    , _tileDb(dataPath, indexFilepath)
+    , _tileDb(dataPath, indexFilename)
 {
 }
 
@@ -51,13 +53,12 @@ bool OsmAnd::HeightmapTileProvider_P::obtainData(
     if (!ok || data.length() == 0)
     {
         // There was no data at all, to avoid further requests, mark this tile as empty
-        outTile.reset();
+        outTiledData.reset();
         return true;
     }
 
-    const auto tileSize = owner->getTileSize();
-
     // We have the data, use GDAL to decode this GeoTIFF
+    const auto tileSize = getTileSize();
     bool success = false;
     QString vmemFilename;
     vmemFilename.sprintf("/vsimem/heightmapTile@%p", data.data());
@@ -105,7 +106,7 @@ bool OsmAnd::HeightmapTileProvider_P::obtainData(
                 }
                 else
                 {
-                    outTile.reset(new ElevationDataTile(buffer, sizeof(float)*tileSize, tileSize));
+                    outTiledData.reset(new ElevationDataTile(buffer, sizeof(float)*tileSize, tileSize, tileId, zoom));
                     success = true;
                 }
             }

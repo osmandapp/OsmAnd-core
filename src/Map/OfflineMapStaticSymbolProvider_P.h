@@ -18,7 +18,7 @@
 
 namespace OsmAnd
 {
-    class OfflineMapDataTile;
+    class BinaryMapDataTile;
     class MapSymbolsGroup;
     class MapTiledSymbols;
 
@@ -54,10 +54,10 @@ namespace OsmAnd
         private:
         protected:
         public:
-            Tile(const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups, const std::shared_ptr<const OfflineMapDataTile>& dataTile);
+            Tile(const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups, const std::shared_ptr<const BinaryMapDataTile>& dataTile);
             virtual ~Tile();
 
-            const std::shared_ptr<const OfflineMapDataTile> dataTile;
+            const std::shared_ptr<const BinaryMapDataTile> dataTile;
 
             virtual void releaseNonRetainedData();
         };

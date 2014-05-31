@@ -23,7 +23,9 @@ namespace OsmAnd
         Q_DISABLE_COPY(HeightmapTileProvider_P);
     private:
     protected:
-        HeightmapTileProvider_P(HeightmapTileProvider* const owner);
+        HeightmapTileProvider_P(HeightmapTileProvider* const owner,
+            const QString& dataPath,//TODO:refactor-remove
+            const QString& indexFilename);//TODO:refactor-remove
 
         TileDB _tileDb;
     public:

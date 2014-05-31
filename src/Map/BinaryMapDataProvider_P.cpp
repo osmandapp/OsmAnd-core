@@ -1,5 +1,5 @@
-#include "OfflineMapDataProvider_P.h"
-#include "OfflineMapDataProvider.h"
+#include "BinaryMapDataProvider_P.h"
+#include "BinaryMapDataProvider.h"
 
 //#define OSMAND_PERFORMANCE_METRICS 2
 #if !defined(OSMAND_PERFORMANCE_METRICS)
@@ -11,8 +11,6 @@
 #   include <chrono>
 #endif // OSMAND_PERFORMANCE_METRICS
 
-#include "OfflineMapDataTile.h"
-#include "OfflineMapDataTile_P.h"
 #include "ObfsCollection.h"
 #include "ObfDataInterface.h"
 #include "ObfMapSectionInfo.h"
@@ -22,24 +20,29 @@
 #endif // OSMAND_PERFORMANCE_METRICS
 #include "MapObject.h"
 #include "Rasterizer.h"
+#include "RasterizerContext.h"
 #include "Utilities.h"
 #include "Logging.h"
 
-OsmAnd::OfflineMapDataProvider_P::OfflineMapDataProvider_P( OfflineMapDataProvider* owner_ )
+OsmAnd::BinaryMapDataProvider_P::BinaryMapDataProvider_P(BinaryMapDataProvider* owner_)
     : owner(owner_)
     , _link(new Link(*this))
 {
 }
 
-OsmAnd::OfflineMapDataProvider_P::~OfflineMapDataProvider_P()
+OsmAnd::BinaryMapDataProvider_P::~BinaryMapDataProvider_P()
 {
 }
 
-void OsmAnd::OfflineMapDataProvider_P::obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const OfflineMapDataTile>& outTile) const
+bool OsmAnd::BinaryMapDataProvider_P::obtainData(
+    const TileId tileId,
+    const ZoomLevel zoom,
+    std::shared_ptr<const MapTiledData>& outTiledData,
+    const IQueryController* const queryController)
 {
     std::shared_ptr<TileEntry> tileEntry;
 
-    for(;;)
+    for (;;)
     {
         // Try to obtain previous instance of tile
         _tileReferences.obtainOrAllocateEntry(tileEntry, tileId, zoom,
@@ -58,16 +61,16 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile(const TileId tileId, const Zoo
             QReadLocker scopedLcoker(&tileEntry->_loadedConditionLock);
 
             // If tile is in 'Loading' state, wait until it will become 'Loaded'
-            while(tileEntry->getState() != TileState::Loaded)
+            while (tileEntry->getState() != TileState::Loaded)
                 REPEAT_UNTIL(tileEntry->_loadedCondition.wait(&tileEntry->_loadedConditionLock));
         }
 
         // Try to lock tile reference
-        outTile = tileEntry->_tile.lock();
+        outTiledData = tileEntry->_tile.lock();
 
         // If successfully locked, just return it
-        if (outTile)
-            return;
+        if (outTiledData)
+            return true;
 
         // Otherwise consider this tile entry as expired, remove it from collection (it's safe to do that right now)
         // This will enable creation of new entry on next loop cycle
@@ -108,9 +111,10 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile(const TileId tileId, const Zoo
     dataInterface->loadMapObjects(&loadedMapObjects, &tileFoundation, tileBBox31, zoom, nullptr,
         [this, zoom, &referencedMapObjects, &futureReferencedMapObjects, &loadedSharedMapObjects, tileBBox31
 #if OSMAND_PERFORMANCE_METRICS
-            , &dataFilter
+        , &dataFilter
 #endif // OSMAND_PERFORMANCE_METRICS
-        ](const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id, const AreaI& bbox, const ZoomLevel firstZoomLevel, const ZoomLevel lastZoomLevel) -> bool
+        ]
+        (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id, const AreaI& bbox, const ZoomLevel firstZoomLevel, const ZoomLevel lastZoomLevel) -> bool
         {
 #if OSMAND_PERFORMANCE_METRICS
             const auto dataFilter_Begin = std::chrono::high_resolution_clock::now();
@@ -130,7 +134,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile(const TileId tileId, const Zoo
 
                 return true;
             }
-            
+
             // Otherwise, this map object can be shared, so it should be checked for
             // being present in shared mapObjects storage, or be reserved there
             std::shared_ptr<const Model::MapObject> sharedMapObjectReference;
@@ -164,7 +168,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile(const TileId tileId, const Zoo
 #else
         nullptr
 #endif // OSMAND_PERFORMANCE_METRICS > 1
-    );
+        );
 
 #if OSMAND_PERFORMANCE_METRICS
     const auto dataRead_End = std::chrono::high_resolution_clock::now();
@@ -174,7 +178,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile(const TileId tileId, const Zoo
 #endif // OSMAND_PERFORMANCE_METRICS
 
     // Process loaded-and-shared map objects
-    for(auto& mapObject : loadedMapObjects)
+    for (auto& mapObject : loadedMapObjects)
     {
         // Check if this map object is shared
         if (!loadedSharedMapObjects.contains(mapObject->id))
@@ -188,7 +192,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile(const TileId tileId, const Zoo
             mapObject);
     }
 
-    for(auto& futureMapObject : futureReferencedMapObjects)
+    for (auto& futureMapObject : futureReferencedMapObjects)
     {
         auto mapObject = futureMapObject.get();
 
@@ -218,7 +222,7 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile(const TileId tileId, const Zoo
 #else
         nullptr
 #endif // OSMAND_PERFORMANCE_METRICS > 1
-    );
+        );
 
 #if OSMAND_PERFORMANCE_METRICS
     const auto dataProcess_End = std::chrono::high_resolution_clock::now();
@@ -226,15 +230,21 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile(const TileId tileId, const Zoo
 #endif // OSMAND_PERFORMANCE_METRICS
 
     // Create tile
-    const auto newTile = new OfflineMapDataTile(tileId, zoom, tileFoundation, allMapObjects, rasterizerContext, nothingToRasterize);
+    const std::shared_ptr<BinaryMapDataTile> newTile(new BinaryMapDataTile(
+        tileFoundation,
+        allMapObjects,
+        rasterizerContext,
+        nothingToRasterize,
+        tileId,
+        zoom));
     newTile->_p->_link = _link;
     newTile->_p->_refEntry = tileEntry;
 
     // Publish new tile
-    outTile.reset(newTile);
+    outTiledData = newTile;
 
     // Store weak reference to new tile and mark it as 'Loaded'
-    tileEntry->_tile = outTile;
+    tileEntry->_tile = newTile;
     tileEntry->setState(TileState::Loaded);
 
     // Notify that tile has been loaded
@@ -334,5 +344,47 @@ void OsmAnd::OfflineMapDataProvider_P::obtainTile(const TileId tileId, const Zoo
         dataProcess_metric.elapsedTimeForObtainingPrimitivesSymbols);
 #endif // OSMAND_PERFORMANCE_METRICS <= 1
 #endif // OSMAND_PERFORMANCE_METRICS
+
+    return true;
 }
 
+OsmAnd::BinaryMapDataTile_P::BinaryMapDataTile_P(BinaryMapDataTile* owner_)
+    : owner(owner_)
+{
+}
+
+OsmAnd::BinaryMapDataTile_P::~BinaryMapDataTile_P()
+{
+}
+
+void OsmAnd::BinaryMapDataTile_P::cleanup()
+{
+    // Release rasterizer context
+    _rasterizerContext.reset();
+
+    // Remove tile reference from collection. All checks here does not matter,
+    // since entry->tile reference is already expired (execution is already in destructor of OfflineMapDataTile!)
+    if (const auto entry = _refEntry.lock())
+    {
+        if (const auto link = entry->link.lock())
+            link->collection.removeEntry(entry->tileId, entry->zoom);
+    }
+
+    // Dereference shared map objects
+    if (const auto link = _link.lock())
+    {
+        // Get bounding box that covers this tile
+        const auto tileBBox31 = Utilities::tileBoundingBox31(owner->tileId, owner->zoom);
+
+        for (auto& mapObject : _mapObjects)
+        {
+            // Skip all map objects that can not be shared
+            const auto canNotBeShared = tileBBox31.contains(mapObject->bbox31);
+            if (canNotBeShared)
+                continue;
+
+            link->provider._sharedMapObjects.releaseReference(mapObject->id, owner->zoom, mapObject);
+        }
+    }
+    _mapObjects.clear();
+}

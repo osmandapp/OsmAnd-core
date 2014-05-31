@@ -1,10 +1,6 @@
 #include "OnlineRasterMapTileProvider.h"
 #include "OnlineRasterMapTileProvider_P.h"
 
-#include <cassert>
-
-#include "Logging.h"
-
 OsmAnd::OnlineRasterMapTileProvider::OnlineRasterMapTileProvider(
     const QString& name_,
     const QString& urlPattern_,
@@ -43,12 +39,16 @@ void OsmAnd::OnlineRasterMapTileProvider::setNetworkAccessPermission(bool allowe
     _p->_networkAccessAllowed = allowed;
 }
 
-bool OsmAnd::OnlineRasterMapTileProvider::obtainData(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile, const IQueryController* const queryController)
+bool OsmAnd::OnlineRasterMapTileProvider::obtainData(
+    const TileId tileId,
+    const ZoomLevel zoom,
+    std::shared_ptr<const MapTiledData>& outTiledData,
+    const IQueryController* const queryController)
 {
-    return _p->obtainTile(tileId, zoom, outTile, queryController);
+    return _p->obtainData(tileId, zoom, outTiledData, queryController);
 }
 
-float OsmAnd::OnlineRasterMapTileProvider::getTileDensity() const
+float OsmAnd::OnlineRasterMapTileProvider::getTileDensityFactor() const
 {
     // Online tile providers do not have any idea about our tile density
     return 1.0f;

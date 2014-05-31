@@ -461,7 +461,7 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getReferenceTileSizeOnScreen( const MapRe
         return static_cast<float>(DefaultReferenceTileSizeOnScreen) * setupOptions.displayDensityFactor;
 
     auto tileProvider = std::static_pointer_cast<IMapRasterBitmapTileProvider>(rasterMapProvider);
-    return tileProvider->getTileSize() * (setupOptions.displayDensityFactor / tileProvider->getTileDensity());
+    return tileProvider->getTileSize() * (setupOptions.displayDensityFactor / tileProvider->getTileDensityFactor());
 }
 
 float OsmAnd::AtlasMapRenderer_OpenGL::getReferenceTileSizeOnScreen()

@@ -24,12 +24,16 @@ OsmAnd::OnlineRasterMapTileProvider_P::~OnlineRasterMapTileProvider_P()
 {
 }
 
-bool OsmAnd::OnlineRasterMapTileProvider_P::obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile, const IQueryController* const queryController)
+bool OsmAnd::OnlineRasterMapTileProvider_P::obtainData(
+    const TileId tileId,
+    const ZoomLevel zoom,
+    std::shared_ptr<const MapTiledData>& outTiledData,
+    const IQueryController* const queryController)
 {
     // Check provider can supply this zoom level
     if (zoom > owner->maxZoom || zoom < owner->minZoom)
     {
-        outTile.reset();
+        outTiledData.reset();
         return true;
     }
 
@@ -55,17 +59,15 @@ bool OsmAnd::OnlineRasterMapTileProvider_P::obtainTile(const TileId tileId, cons
         // If local file is empty, it means that requested tile does not exist (has no data)
         if (localFile.size() == 0)
         {
-            outTile.reset();
+            outTiledData.reset();
             return true;
         }
 
-        auto bitmap = new SkBitmap();
+        const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
         SkFILEStream fileStream(qPrintable(localFile.absoluteFilePath()));
-        if (!SkImageDecoder::DecodeStream(&fileStream, bitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
+        if (!SkImageDecoder::DecodeStream(&fileStream, bitmap.get(), SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
         {
             LogPrintf(LogSeverityLevel::Error, "Failed to decode tile file '%s'", qPrintable(localFile.absoluteFilePath()));
-
-            delete bitmap;
 
             return false;
         }
@@ -74,8 +76,8 @@ bool OsmAnd::OnlineRasterMapTileProvider_P::obtainTile(const TileId tileId, cons
         assert(bitmap->width() == owner->providerTileSize);
 
         // Return tile
-        auto tile = new MapBitmapTile(bitmap, owner->alphaChannelData);
-        outTile.reset(tile);
+        auto tile = new RasterBitmapTile(bitmap, owner->alphaChannelData, owner->getTileDensityFactor(), tileId, zoom);
+        outTiledData.reset(tile);
         return true;
     }
 
@@ -161,12 +163,10 @@ bool OsmAnd::OnlineRasterMapTileProvider_P::obtainTile(const TileId tileId, cons
     unlockTile(tileId, zoom);
 
     // Decode in-memory
-    auto bitmap = new SkBitmap();
-    if (!SkImageDecoder::DecodeMemory(downloadResult.constData(), downloadResult.size(), bitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
+    const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
+    if (!SkImageDecoder::DecodeMemory(downloadResult.constData(), downloadResult.size(), bitmap.get(), SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
     {
         LogPrintf(LogSeverityLevel::Error, "Failed to decode tile file from '%s'", qPrintable(tileUrl));
-
-        delete bitmap;
 
         return false;
     }
@@ -175,8 +175,8 @@ bool OsmAnd::OnlineRasterMapTileProvider_P::obtainTile(const TileId tileId, cons
     assert(bitmap->width() == owner->providerTileSize);
 
     // Return tile
-    auto tile = new MapBitmapTile(bitmap, owner->alphaChannelData);
-    outTile.reset(tile);
+    auto tile = new RasterBitmapTile(bitmap, owner->alphaChannelData, owner->getTileDensityFactor(), tileId, zoom);
+    outTiledData.reset(tile);
     return true;
 }
 

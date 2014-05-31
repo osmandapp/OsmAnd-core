@@ -1,7 +1,7 @@
 #include "OfflineMapStaticSymbolProvider_P.h"
 #include "OfflineMapStaticSymbolProvider.h"
 
-#include "OfflineMapDataProvider.h"
+#include "BinaryMapDataProvider.h"
 #include "OfflineMapDataTile.h"
 #include "RasterizerEnvironment.h"
 #include "Rasterizer.h"
@@ -28,7 +28,7 @@ bool OsmAnd::OfflineMapStaticSymbolProvider_P::obtainSymbols(
     const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
 
     // Obtain offline map data tile
-    std::shared_ptr< const OfflineMapDataTile > dataTile;
+    std::shared_ptr< const BinaryMapDataTile > dataTile;
     owner->dataProvider->obtainTile(tileId, zoom, dataTile);
 
     // If tile has nothing to be rasterized, mark that data is not available for it
@@ -115,7 +115,7 @@ bool OsmAnd::OfflineMapStaticSymbolProvider_P::obtainSymbols(
     return true;
 }
 
-OsmAnd::OfflineMapStaticSymbolProvider_P::Tile::Tile(const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups_, const std::shared_ptr<const OfflineMapDataTile>& dataTile_)
+OsmAnd::OfflineMapStaticSymbolProvider_P::Tile::Tile(const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups_, const std::shared_ptr<const BinaryMapDataTile>& dataTile_)
     : MapTiledSymbols(symbolsGroups_)
     , dataTile(dataTile_)
 {

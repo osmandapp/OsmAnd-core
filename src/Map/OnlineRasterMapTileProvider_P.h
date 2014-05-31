@@ -38,13 +38,18 @@ namespace OsmAnd
 
         WebClient _downloadManager;
 
-        bool obtainTile(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<const MapTile>& outTile, const IQueryController* const queryController);
         void lockTile(const TileId tileId, const ZoomLevel zoom);
         void unlockTile(const TileId tileId, const ZoomLevel zoom);
     public:
         virtual ~OnlineRasterMapTileProvider_P();
 
         ImplementationInterface<OnlineRasterMapTileProvider> owner;
+
+        bool obtainData(
+            const TileId tileId,
+            const ZoomLevel zoom,
+            std::shared_ptr<const MapTiledData>& outTiledData,
+            const IQueryController* const queryController);
 
     friend class OsmAnd::OnlineRasterMapTileProvider;
     };

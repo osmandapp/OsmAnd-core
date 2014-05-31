@@ -13,7 +13,7 @@
 
 namespace OsmAnd
 {
-    class OfflineMapDataProvider;
+    class BinaryMapDataProvider;
 
     class OfflineMapStaticSymbolProvider_P;
     class OSMAND_CORE_API OfflineMapStaticSymbolProvider : public IMapTiledSymbolsProvider
@@ -23,10 +23,10 @@ namespace OsmAnd
         PrivateImplementation<OfflineMapStaticSymbolProvider_P> _p;
     protected:
     public:
-        OfflineMapStaticSymbolProvider(const std::shared_ptr<OfflineMapDataProvider>& dataProvider);
+        OfflineMapStaticSymbolProvider(const std::shared_ptr<BinaryMapDataProvider>& dataProvider);
         virtual ~OfflineMapStaticSymbolProvider();
 
-        const std::shared_ptr<OfflineMapDataProvider> dataProvider;
+        const std::shared_ptr<BinaryMapDataProvider> dataProvider;
 
         virtual bool obtainSymbols(
             const TileId tileId, const ZoomLevel zoom,
