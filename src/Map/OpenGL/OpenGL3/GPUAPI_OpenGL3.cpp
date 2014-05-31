@@ -240,13 +240,13 @@ bool OsmAnd::GPUAPI_OpenGL3::release()
     return true;
 }
 
-OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGL3::getTextureFormat(const std::shared_ptr< const MapTile >& tile)
+OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGL3::getTextureFormat(const std::shared_ptr< const MapTiledData >& tile)
 {
     GLenum textureFormat = GL_INVALID_ENUM;
 
-    if (tile->dataType == MapTileDataType::Bitmap)
+    if (tile->dataType == MapTiledData::DataType::RasterBitmapTile)
     {
-        const auto& bitmapTile = std::static_pointer_cast<const MapBitmapTile>(tile);
+        const auto& bitmapTile = std::static_pointer_cast<const RasterBitmapTile>(tile);
 
         switch (bitmapTile->bitmap->getConfig())
         {
@@ -261,7 +261,7 @@ OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGL3::getTextureFormat(const std
             break;
         }
     }
-    else if (tile->dataType == MapTileDataType::ElevationData)
+    else if (tile->dataType == MapTiledData::DataType::ElevationDataTile)
     {
         textureFormat = GL_R32F;
     }
@@ -293,14 +293,14 @@ OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGL3::getTextureFormat(const std
     return static_cast<TextureFormat>(textureFormat);
 }
 
-OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGL3::getSourceFormat(const std::shared_ptr< const MapTile >& tile)
+OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGL3::getSourceFormat(const std::shared_ptr< const MapTiledData >& tile)
 {
     SourceFormat sourceFormat;
     sourceFormat.format = GL_INVALID_ENUM;
     sourceFormat.type = GL_INVALID_ENUM;
-    if (tile->dataType == MapTileDataType::Bitmap)
+    if (tile->dataType == MapTiledData::DataType::RasterBitmapTile)
     {
-        const auto& bitmapTile = std::static_pointer_cast<const MapBitmapTile>(tile);
+        const auto& bitmapTile = std::static_pointer_cast<const RasterBitmapTile>(tile);
 
         switch(bitmapTile->bitmap->getConfig())
         {
@@ -318,7 +318,7 @@ OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGL3::getSourceFormat(const std::
             break;
         }
     }
-    else if (tile->dataType == MapTileDataType::ElevationData)
+    else if (tile->dataType == MapTiledData::DataType::ElevationDataTile)
     {
         sourceFormat.format = GL_RED;
         sourceFormat.type = GL_FLOAT;

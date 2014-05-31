@@ -19,9 +19,7 @@
 namespace OsmAnd
 {
     class MapRenderer;
-    class IMapRasterBitmapTileProvider;
-    class IMapElevationDataProvider;
-    class IMapSymbolProvider;
+    class IMapDataProvider;
 
     class OSMAND_CORE_API IMapRenderer
     {
@@ -67,8 +65,8 @@ namespace OsmAnd
         virtual void setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& tileProvider, bool forcedUpdate = false) = 0;
         virtual void resetElevationDataProvider(bool forcedUpdate = false) = 0;
         virtual void setElevationDataScaleFactor(const float factor, bool forcedUpdate = false) = 0;
-        virtual void addSymbolProvider(const std::shared_ptr<IMapSymbolProvider>& provider, bool forcedUpdate = false) = 0;
-        virtual void removeSymbolProvider(const std::shared_ptr<IMapSymbolProvider>& provider, bool forcedUpdate = false) = 0;
+        virtual void addSymbolProvider(const std::shared_ptr<IMapDataProvider>& provider, bool forcedUpdate = false) = 0;
+        virtual void removeSymbolProvider(const std::shared_ptr<IMapDataProvider>& provider, bool forcedUpdate = false) = 0;
         virtual void removeAllSymbolProviders(bool forcedUpdate = false) = 0;
         virtual void setWindowSize(const PointI& windowSize, bool forcedUpdate = false) = 0;
         virtual void setViewport(const AreaI& viewport, bool forcedUpdate = false) = 0;

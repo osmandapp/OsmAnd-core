@@ -242,7 +242,7 @@ namespace OsmAnd
         protected:
             MapTileResource(MapRendererResources* owner, const ResourceType type, const TiledEntriesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom);
 
-            std::shared_ptr<const MapTile> _sourceData;
+            std::shared_ptr<const MapTiledData> _sourceData;
             std::shared_ptr<const GPUAPI::ResourceInGPU> _resourceInGPU;
 
             virtual bool obtainData(bool& dataAvailable, const IQueryController* queryController);
@@ -438,7 +438,7 @@ namespace OsmAnd
         MapRendererResources(MapRenderer* const owner);
 
         // Resources management:
-        bool uploadTileToGPU(const std::shared_ptr<const MapTile>& mapTile, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU);
+        bool uploadTileToGPU(const std::shared_ptr<const MapTiledData>& mapTile, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU);
         bool uploadSymbolToGPU(const std::shared_ptr<const MapSymbol>& mapSymbol, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU);
 
         void updateBindings(const MapRendererState& state, const uint32_t updatedMask);

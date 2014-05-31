@@ -15,9 +15,9 @@
 
 namespace OsmAnd
 {
+    class IMapDataProvider;
     class IMapRasterBitmapTileProvider;
     class IMapElevationDataProvider;
-    class IMapSymbolProvider;
     class IMapRenderer;
     class MapRenderer;
 
@@ -51,7 +51,7 @@ namespace OsmAnd
         std::array< float, RasterMapLayersCount > rasterLayerOpacity;
         std::shared_ptr<IMapElevationDataProvider> elevationDataProvider;
         float elevationDataScaleFactor;
-        QSet< std::shared_ptr<IMapSymbolProvider> > symbolProviders;
+        QSet< std::shared_ptr<IMapDataProvider> > symbolProviders;
         PointI windowSize;
         AreaI viewport;
         float fieldOfView;

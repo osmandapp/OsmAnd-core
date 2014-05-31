@@ -21,7 +21,7 @@ class SkBitmap;
 
 namespace OsmAnd
 {
-    class MapTile;
+    class MapTiledData;
     class MapSymbol;
 
     class GPUAPI
@@ -230,7 +230,7 @@ namespace OsmAnd
         virtual bool initialize() = 0;
         virtual bool release() = 0;
 
-        virtual bool uploadTileToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU) = 0;
+        virtual bool uploadTileToGPU(const std::shared_ptr< const MapTiledData >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU) = 0;
         virtual bool uploadSymbolToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU) = 0;
 
         virtual void waitUntilUploadIsComplete() = 0;

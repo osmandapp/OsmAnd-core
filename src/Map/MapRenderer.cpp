@@ -29,7 +29,7 @@ OsmAnd::MapRenderer::MapRenderer(GPUAPI* const gpuAPI_)
     , gpuAPI(gpuAPI_)
 {
     // Fill-up default state
-    for(auto layerId = 0u; layerId < RasterMapLayersCount; layerId++)
+    for (auto layerId = 0u; layerId < RasterMapLayersCount; layerId++)
         setRasterLayerOpacity(static_cast<RasterMapLayerId>(layerId), 1.0f);
     setElevationDataScaleFactor(1.0f, true);
     setFieldOfView(16.5f, true);
@@ -51,7 +51,7 @@ OsmAnd::MapRenderer::~MapRenderer()
     releaseRendering();
 }
 
-bool OsmAnd::MapRenderer::setup( const MapRendererSetupOptions& setupOptions )
+bool OsmAnd::MapRenderer::setup(const MapRendererSetupOptions& setupOptions)
 {
     // We can not change setup options renderer once rendering has been initialized
     if (_isRenderingInitialized)
@@ -62,7 +62,7 @@ bool OsmAnd::MapRenderer::setup( const MapRendererSetupOptions& setupOptions )
     return true;
 }
 
-void OsmAnd::MapRenderer::setConfiguration( const MapRendererConfiguration& configuration_, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setConfiguration(const MapRendererConfiguration& configuration_, bool forcedUpdate /*= false*/)
 {
     QWriteLocker scopedLocker(&_configurationLock);
 
@@ -119,7 +119,7 @@ void OsmAnd::MapRenderer::invalidateCurrentConfiguration(const uint32_t changesM
 bool OsmAnd::MapRenderer::updateCurrentConfiguration()
 {
     uint32_t bitIndex = 0;
-    while(_currentConfigurationInvalidatedMask)
+    while (_currentConfigurationInvalidatedMask)
     {
         if (_currentConfigurationInvalidatedMask & 0x1)
             validateConfigurationChange(static_cast<ConfigurationChange>(1 << bitIndex));
@@ -252,7 +252,7 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
     if (setupOptions.gpuWorkerThreadPrologue)
         setupOptions.gpuWorkerThreadPrologue(this);
 
-    while(_gpuWorkerIsAlive)
+    while (_gpuWorkerIsAlive)
     {
         // Wait until we're unblocked by host
         {
@@ -274,7 +274,7 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
             if (resourcesUploaded > 0 || resourcesUnloaded > 0)
                 invalidateFrame();
             unprocessedRequests = _resourcesUploadRequestsCounter.fetchAndAddOrdered(-requestsToProcess) - requestsToProcess;
-        } while(unprocessedRequests > 0);
+        } while (unprocessedRequests > 0);
 
         // Process GPU dispatcher
         _gpuThreadDispatcher.runAll();
@@ -328,11 +328,11 @@ bool OsmAnd::MapRenderer::preInitializeRendering()
     _gpuWorkerThreadId = nullptr;
     _currentConfigurationInvalidatedMask = std::numeric_limits<uint32_t>::max();
     _requestedStateUpdatedMask = std::numeric_limits<uint32_t>::max();
-    
+
     // Create resources
     assert(!static_cast<bool>(_resources));
     _resources.reset(new MapRendererResources(this));
-    
+
     return true;
 }
 
@@ -420,7 +420,7 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
     // Get set of tiles that are unique: visible tiles may contain same tiles, but wrapped
     const auto internalState = getInternalStateRef();
     _uniqueTiles.clear();
-    for(const auto& tileId : constOf(internalState->visibleTiles))
+    for (const auto& tileId : constOf(internalState->visibleTiles))
         _uniqueTiles.insert(Utilities::normalizeTileId(tileId, _currentState.zoomBase));
 
     // Validate resources:
@@ -468,7 +468,7 @@ bool OsmAnd::MapRenderer::preRenderFrame()
 {
     if (!_isRenderingInitialized)
         return false;
-    
+
     // Capture how many "frame-invalidates" are going to be processed
     _frameInvalidatesToBeProcessed = _frameInvalidatesCounter.fetchAndAddOrdered(0);
 
@@ -521,7 +521,7 @@ bool OsmAnd::MapRenderer::doProcessRendering()
         unsigned int resourcesUnloaded = 0u;
         _resources->syncResourcesInGPU(1u, &moreUploadThanLimitAvailable, &resourcesUploaded, &resourcesUnloaded);
         const auto unprocessedRequests = _resourcesUploadRequestsCounter.fetchAndAddOrdered(-requestsToProcess) - requestsToProcess;
-        
+
         // If any resource was uploaded or there is more resources to uploaded, invalidate frame
         // to use that resource
         if (resourcesUploaded > 0 || moreUploadThanLimitAvailable || resourcesUnloaded > 0 || unprocessedRequests > 0)
@@ -597,7 +597,7 @@ bool OsmAnd::MapRenderer::postReleaseRendering()
             QMutexLocker scopedLocker(&_gpuWorkerThreadWakeupMutex);
             _gpuWorkerThreadWakeup.wakeAll();
         }
-        
+
         // Wait until thread will exit
         REPEAT_UNTIL(_gpuWorkerThread->wait());
 
@@ -699,23 +699,25 @@ bool OsmAnd::MapRenderer::convertBitmap(const std::shared_ptr<const SkBitmap>& i
     return false;
 }
 
-bool OsmAnd::MapRenderer::convertMapTile(std::shared_ptr<const MapTile>& mapTile) const
+bool OsmAnd::MapRenderer::convertMapTile(std::shared_ptr<const MapTiledData>& mapTile) const
 {
     return convertMapTile(mapTile, mapTile);
 }
 
-bool OsmAnd::MapRenderer::convertMapTile(const std::shared_ptr<const MapTile>& input_, std::shared_ptr<const MapTile>& output) const
+bool OsmAnd::MapRenderer::convertMapTile(const std::shared_ptr<const MapTiledData>& input_, std::shared_ptr<const MapTiledData>& output) const
 {
-    if (input_->dataType == MapTileDataType::Bitmap)
+    if (input_->dataType == MapTiledData::DataType::RasterBitmapTile)
     {
-        const auto input = std::static_pointer_cast<const MapBitmapTile>(input_);
+        const auto input = std::static_pointer_cast<const RasterBitmapTile>(input_);
+        if (!input)
+            return false;
 
         std::shared_ptr<const SkBitmap> convertedBitmap;
         const bool wasConverted = convertBitmap(input->bitmap, convertedBitmap, input->alphaChannelData);
         if (!wasConverted)
             return false;
 
-        output.reset(new MapBitmapTile(convertedBitmap, input->alphaChannelData));
+        output.reset(input->cloneWithBitmap(convertedBitmap));
         return true;
     }
 
@@ -775,7 +777,7 @@ unsigned int OsmAnd::MapRenderer::getSymbolsCount() const
     return getResources().getMapSymbolsCount();
 }
 
-void OsmAnd::MapRenderer::setRasterLayerProvider( const RasterMapLayerId layerId, const std::shared_ptr<IMapRasterBitmapTileProvider>& tileProvider, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setRasterLayerProvider(const RasterMapLayerId layerId, const std::shared_ptr<IMapRasterBitmapTileProvider>& tileProvider, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -788,7 +790,7 @@ void OsmAnd::MapRenderer::setRasterLayerProvider( const RasterMapLayerId layerId
     notifyRequestedStateWasUpdated(MapRendererStateChange::RasterLayers_Providers);
 }
 
-void OsmAnd::MapRenderer::resetRasterLayerProvider( const RasterMapLayerId layerId, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::resetRasterLayerProvider(const RasterMapLayerId layerId, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -801,7 +803,7 @@ void OsmAnd::MapRenderer::resetRasterLayerProvider( const RasterMapLayerId layer
     notifyRequestedStateWasUpdated(MapRendererStateChange::RasterLayers_Providers);
 }
 
-void OsmAnd::MapRenderer::setRasterLayerOpacity( const RasterMapLayerId layerId, const float opacity, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setRasterLayerOpacity(const RasterMapLayerId layerId, const float opacity, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -816,7 +818,7 @@ void OsmAnd::MapRenderer::setRasterLayerOpacity( const RasterMapLayerId layerId,
     notifyRequestedStateWasUpdated(MapRendererStateChange::RasterLayers_Opacity);
 }
 
-void OsmAnd::MapRenderer::setElevationDataProvider( const std::shared_ptr<IMapElevationDataProvider>& tileProvider, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& tileProvider, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -830,7 +832,7 @@ void OsmAnd::MapRenderer::setElevationDataProvider( const std::shared_ptr<IMapEl
     notifyRequestedStateWasUpdated(MapRendererStateChange::ElevationData_Provider);
 }
 
-void OsmAnd::MapRenderer::resetElevationDataProvider( bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::resetElevationDataProvider(bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -844,7 +846,7 @@ void OsmAnd::MapRenderer::resetElevationDataProvider( bool forcedUpdate /*= fals
     notifyRequestedStateWasUpdated(MapRendererStateChange::ElevationData_Provider);
 }
 
-void OsmAnd::MapRenderer::setElevationDataScaleFactor( const float factor, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setElevationDataScaleFactor(const float factor, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -857,7 +859,7 @@ void OsmAnd::MapRenderer::setElevationDataScaleFactor( const float factor, bool 
     notifyRequestedStateWasUpdated(MapRendererStateChange::ElevationData_ScaleFactor);
 }
 
-void OsmAnd::MapRenderer::addSymbolProvider( const std::shared_ptr<IMapSymbolProvider>& provider, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::addSymbolProvider(const std::shared_ptr<IMapDataProvider>& provider, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -870,7 +872,7 @@ void OsmAnd::MapRenderer::addSymbolProvider( const std::shared_ptr<IMapSymbolPro
     notifyRequestedStateWasUpdated(MapRendererStateChange::Symbols_Providers);
 }
 
-void OsmAnd::MapRenderer::removeSymbolProvider( const std::shared_ptr<IMapSymbolProvider>& provider, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::removeSymbolProvider(const std::shared_ptr<IMapDataProvider>& provider, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -883,7 +885,7 @@ void OsmAnd::MapRenderer::removeSymbolProvider( const std::shared_ptr<IMapSymbol
     notifyRequestedStateWasUpdated(MapRendererStateChange::Symbols_Providers);
 }
 
-void OsmAnd::MapRenderer::removeAllSymbolProviders( bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::removeAllSymbolProviders(bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -896,7 +898,7 @@ void OsmAnd::MapRenderer::removeAllSymbolProviders( bool forcedUpdate /*= false*
     notifyRequestedStateWasUpdated(MapRendererStateChange::Symbols_Providers);
 }
 
-void OsmAnd::MapRenderer::setWindowSize( const PointI& windowSize, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setWindowSize(const PointI& windowSize, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -909,7 +911,7 @@ void OsmAnd::MapRenderer::setWindowSize( const PointI& windowSize, bool forcedUp
     notifyRequestedStateWasUpdated(MapRendererStateChange::WindowSize);
 }
 
-void OsmAnd::MapRenderer::setViewport( const AreaI& viewport, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setViewport(const AreaI& viewport, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -922,7 +924,7 @@ void OsmAnd::MapRenderer::setViewport( const AreaI& viewport, bool forcedUpdate 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Viewport);
 }
 
-void OsmAnd::MapRenderer::setFieldOfView( const float fieldOfView, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setFieldOfView(const float fieldOfView, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -937,7 +939,7 @@ void OsmAnd::MapRenderer::setFieldOfView( const float fieldOfView, bool forcedUp
     notifyRequestedStateWasUpdated(MapRendererStateChange::FieldOfView);
 }
 
-void OsmAnd::MapRenderer::setDistanceToFog( const float fogDistance, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setDistanceToFog(const float fogDistance, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -952,7 +954,7 @@ void OsmAnd::MapRenderer::setDistanceToFog( const float fogDistance, bool forced
     notifyRequestedStateWasUpdated(MapRendererStateChange::FogParameters);
 }
 
-void OsmAnd::MapRenderer::setFogOriginFactor( const float factor, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setFogOriginFactor(const float factor, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -967,7 +969,7 @@ void OsmAnd::MapRenderer::setFogOriginFactor( const float factor, bool forcedUpd
     notifyRequestedStateWasUpdated(MapRendererStateChange::FogParameters);
 }
 
-void OsmAnd::MapRenderer::setFogHeightOriginFactor( const float factor, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setFogHeightOriginFactor(const float factor, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -982,7 +984,7 @@ void OsmAnd::MapRenderer::setFogHeightOriginFactor( const float factor, bool for
     notifyRequestedStateWasUpdated(MapRendererStateChange::FogParameters);
 }
 
-void OsmAnd::MapRenderer::setFogDensity( const float fogDensity, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setFogDensity(const float fogDensity, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -997,7 +999,7 @@ void OsmAnd::MapRenderer::setFogDensity( const float fogDensity, bool forcedUpda
     notifyRequestedStateWasUpdated(MapRendererStateChange::FogParameters);
 }
 
-void OsmAnd::MapRenderer::setFogColor( const FColorRGB& color, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setFogColor(const FColorRGB& color, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -1010,7 +1012,7 @@ void OsmAnd::MapRenderer::setFogColor( const FColorRGB& color, bool forcedUpdate
     notifyRequestedStateWasUpdated(MapRendererStateChange::FogParameters);
 }
 
-void OsmAnd::MapRenderer::setSkyColor( const FColorRGB& color, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setSkyColor(const FColorRGB& color, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -1023,7 +1025,7 @@ void OsmAnd::MapRenderer::setSkyColor( const FColorRGB& color, bool forcedUpdate
     notifyRequestedStateWasUpdated(MapRendererStateChange::SkyColor);
 }
 
-void OsmAnd::MapRenderer::setAzimuth( const float azimuth, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setAzimuth(const float azimuth, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -1038,7 +1040,7 @@ void OsmAnd::MapRenderer::setAzimuth( const float azimuth, bool forcedUpdate /*=
     notifyRequestedStateWasUpdated(MapRendererStateChange::Azimuth);
 }
 
-void OsmAnd::MapRenderer::setElevationAngle( const float elevationAngle, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setElevationAngle(const float elevationAngle, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -1053,7 +1055,7 @@ void OsmAnd::MapRenderer::setElevationAngle( const float elevationAngle, bool fo
     notifyRequestedStateWasUpdated(MapRendererStateChange::ElevationAngle);
 }
 
-void OsmAnd::MapRenderer::setTarget( const PointI& target31_, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setTarget(const PointI& target31_, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -1067,7 +1069,7 @@ void OsmAnd::MapRenderer::setTarget( const PointI& target31_, bool forcedUpdate 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Target);
 }
 
-void OsmAnd::MapRenderer::setZoom( const float zoom, bool forcedUpdate /*= false*/ )
+void OsmAnd::MapRenderer::setZoom(const float zoom, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -1092,7 +1094,7 @@ float OsmAnd::MapRenderer::getMinZoom() const
 
 float OsmAnd::MapRenderer::getMaxZoom() const
 {
-    return static_cast<float>(MaxZoomLevel) + 0.49999f;
+    return static_cast<float>(MaxZoomLevel)+0.49999f;
 }
 
 float OsmAnd::MapRenderer::getRecommendedMinZoom(const ZoomRecommendationStrategy strategy) const
@@ -1106,7 +1108,7 @@ float OsmAnd::MapRenderer::getRecommendedMinZoom(const ZoomRecommendationStrateg
         zoomLimit = getMaxZoom();
 
     bool atLeastOneValid = false;
-    for(const auto& provider : constOf(_requestedState.rasterLayerProviders))
+    for (const auto& provider : constOf(_requestedState.rasterLayerProviders))
     {
         if (!provider)
             continue;
@@ -1134,7 +1136,7 @@ float OsmAnd::MapRenderer::getRecommendedMaxZoom(const ZoomRecommendationStrateg
         zoomLimit = getMinZoom();
 
     bool atLeastOneValid = false;
-    for(const auto& provider : constOf(_requestedState.rasterLayerProviders))
+    for (const auto& provider : constOf(_requestedState.rasterLayerProviders))
     {
         if (!provider)
             continue;

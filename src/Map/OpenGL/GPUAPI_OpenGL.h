@@ -185,8 +185,8 @@ namespace OsmAnd
         friend class OsmAnd::GPUAPI_OpenGL;
         };
     private:
-        bool uploadTileAsTextureToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
-        bool uploadTileAsArrayBufferToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
+        bool uploadTileAsTextureToGPU(const std::shared_ptr< const MapTiledData >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
+        bool uploadTileAsArrayBufferToGPU(const std::shared_ptr< const MapTiledData >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
 
         bool uploadSymbolAsTextureToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
     protected:
@@ -225,9 +225,9 @@ namespace OsmAnd
         virtual GLuint compileShader(GLenum shaderType, const char* source);
         virtual GLuint linkProgram(GLuint shadersCount, const GLuint* shaders, const bool autoReleaseShaders = true);
 
-        virtual TextureFormat getTextureFormat(const std::shared_ptr< const MapTile >& tile) = 0;
+        virtual TextureFormat getTextureFormat(const std::shared_ptr< const MapTiledData >& tile) = 0;
         virtual TextureFormat getTextureFormat(const std::shared_ptr< const MapSymbol >& symbol) = 0;
-        virtual SourceFormat getSourceFormat(const std::shared_ptr< const MapTile >& tile) = 0;
+        virtual SourceFormat getSourceFormat(const std::shared_ptr< const MapTiledData >& tile) = 0;
         virtual SourceFormat getSourceFormat(const std::shared_ptr< const MapSymbol >& symbol) = 0;
         virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const TextureFormat format) = 0;
         virtual void uploadDataToTexture2D(GLenum target, GLint level,
@@ -266,7 +266,7 @@ namespace OsmAnd
         virtual std::shared_ptr<ProgramVariablesLookupContext> obtainVariablesLookupContext(const GLuint& program);
         virtual void findVariableLocation(const GLuint& program, GLint& location, const QString& name, const GLShaderVariableType& type);
 
-        virtual bool uploadTileToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
+        virtual bool uploadTileToGPU(const std::shared_ptr< const MapTiledData >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
         virtual bool uploadSymbolToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
 
         virtual void waitUntilUploadIsComplete();

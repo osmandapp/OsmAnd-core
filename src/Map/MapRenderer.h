@@ -20,7 +20,6 @@
 
 namespace OsmAnd
 {
-    class IMapDataProvider;
     class MapRendererTiledResources;
     class MapSymbol;
     class MapRendererStage;
@@ -100,8 +99,8 @@ namespace OsmAnd
         virtual void onValidateResourcesOfType(const MapRendererResources::ResourceType type);
         void requestResourcesUploadOrUnload();
         bool convertBitmap(const std::shared_ptr<const SkBitmap>& input, std::shared_ptr<const SkBitmap>& output, const AlphaChannelData alphaChannelData = AlphaChannelData::Undefined) const;
-        bool convertMapTile(std::shared_ptr<const MapTile>& mapTile) const;
-        bool convertMapTile(const std::shared_ptr<const MapTile>& input, std::shared_ptr<const MapTile>& output) const;
+        bool convertMapTile(std::shared_ptr<const MapTiledData>& mapTile) const;
+        bool convertMapTile(const std::shared_ptr<const MapTiledData>& input, std::shared_ptr<const MapTiledData>& output) const;
         bool convertMapSymbol(std::shared_ptr<const MapSymbol>& mapSymbol) const;
         bool convertMapSymbol(const std::shared_ptr<const MapSymbol>& input, std::shared_ptr<const MapSymbol>& output) const;
 
@@ -161,8 +160,8 @@ namespace OsmAnd
         virtual void setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& tileProvider, bool forcedUpdate = false);
         virtual void resetElevationDataProvider(bool forcedUpdate = false);
         virtual void setElevationDataScaleFactor(const float factor, bool forcedUpdate = false);
-        virtual void addSymbolProvider(const std::shared_ptr<IMapSymbolProvider>& provider, bool forcedUpdate = false);
-        virtual void removeSymbolProvider(const std::shared_ptr<IMapSymbolProvider>& provider, bool forcedUpdate = false);
+        virtual void addSymbolProvider(const std::shared_ptr<IMapDataProvider>& provider, bool forcedUpdate = false);
+        virtual void removeSymbolProvider(const std::shared_ptr<IMapDataProvider>& provider, bool forcedUpdate = false);
         virtual void removeAllSymbolProviders(bool forcedUpdate = false);
         virtual void setWindowSize(const PointI& windowSize, bool forcedUpdate = false);
         virtual void setViewport(const AreaI& viewport, bool forcedUpdate = false);

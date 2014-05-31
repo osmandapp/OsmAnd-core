@@ -1,41 +1,54 @@
-#include "OfflineMapStaticSymbolProvider_P.h"
-#include "OfflineMapStaticSymbolProvider.h"
+#include "BinaryMapStaticSymbolsProvider_P.h"
+#include "BinaryMapStaticSymbolsProvider.h"
 
 #include "BinaryMapDataProvider.h"
-#include "OfflineMapDataTile.h"
 #include "RasterizerEnvironment.h"
 #include "Rasterizer.h"
 #include "RasterizedSymbolsGroup.h"
 #include "RasterizedPinnedSymbol.h"
 #include "RasterizedSymbolOnPath.h"
+#include "SpriteMapSymbol.h"
+#include "OnPathMapSymbol.h"
 #include "MapObject.h"
 #include "Utilities.h"
 
-OsmAnd::OfflineMapStaticSymbolProvider_P::OfflineMapStaticSymbolProvider_P(OfflineMapStaticSymbolProvider* owner_)
+OsmAnd::BinaryMapStaticSymbolsProvider_P::BinaryMapStaticSymbolsProvider_P(BinaryMapStaticSymbolsProvider* owner_)
     : owner(owner_)
 {
 }
 
-OsmAnd::OfflineMapStaticSymbolProvider_P::~OfflineMapStaticSymbolProvider_P()
+OsmAnd::BinaryMapStaticSymbolsProvider_P::~BinaryMapStaticSymbolsProvider_P()
 {
 }
 
-bool OsmAnd::OfflineMapStaticSymbolProvider_P::obtainSymbols(
-    const TileId tileId, const ZoomLevel zoom,
-    std::shared_ptr<const MapTiledSymbols>& outTile,
-    const IMapSymbolProvider::FilterCallback filterCallback)
+bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
+    const TileId tileId,
+    const ZoomLevel zoom,
+    std::shared_ptr<const MapTiledData>& outTiledData,
+    const IQueryController* const queryController)
+{
+    return obtainData(tileId, zoom, outTiledData, nullptr, queryController);
+}
+
+bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
+    const TileId tileId,
+    const ZoomLevel zoom,
+    std::shared_ptr<const MapTiledData>& outTiledData,
+    const FilterCallback filterCallback,
+    const IQueryController* const queryController)
 {
     const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
 
     // Obtain offline map data tile
-    std::shared_ptr< const BinaryMapDataTile > dataTile;
-    owner->dataProvider->obtainTile(tileId, zoom, dataTile);
+    std::shared_ptr<const MapTiledData > dataTile_;
+    owner->dataProvider->obtainData(tileId, zoom, dataTile_);
+    const auto dataTile = std::static_pointer_cast<const BinaryMapDataTile>(dataTile_);
 
     // If tile has nothing to be rasterized, mark that data is not available for it
-    if (!dataTile || dataTile->nothingToRasterize)
+    if (!dataTile_ || dataTile->nothingToRasterize)
     {
         // Mark tile as empty
-        outTile.reset();
+        outTiledData.reset();
         return true;
     }
 
@@ -111,36 +124,22 @@ bool OsmAnd::OfflineMapStaticSymbolProvider_P::obtainSymbols(
     }
 
     // Create output tile
-    outTile.reset(new Tile(symbolsGroups, dataTile));
+    outTiledData.reset(new BinaryMapStaticSymbolsTile(dataTile, symbolsGroups, tileId, zoom));
+
     return true;
 }
 
-OsmAnd::OfflineMapStaticSymbolProvider_P::Tile::Tile(const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups_, const std::shared_ptr<const BinaryMapDataTile>& dataTile_)
-    : MapTiledSymbols(symbolsGroups_)
-    , dataTile(dataTile_)
-{
-}
-
-OsmAnd::OfflineMapStaticSymbolProvider_P::Tile::~Tile()
-{
-}
-
-void OsmAnd::OfflineMapStaticSymbolProvider_P::Tile::releaseNonRetainedData()
-{
-    _symbolsGroups.clear();
-}
-
-OsmAnd::OfflineMapStaticSymbolProvider_P::Group::Group(const std::shared_ptr<const Model::MapObject>& mapObject_)
+OsmAnd::BinaryMapStaticSymbolsProvider_P::Group::Group(const std::shared_ptr<const Model::MapObject>& mapObject_)
     : MapSymbolsGroupShareableById(mapObject_->id)
     , mapObject(mapObject_)
 {
 }
 
-OsmAnd::OfflineMapStaticSymbolProvider_P::Group::~Group()
+OsmAnd::BinaryMapStaticSymbolsProvider_P::Group::~Group()
 {
 }
 
-QString OsmAnd::OfflineMapStaticSymbolProvider_P::Group::getDebugTitle() const
+QString OsmAnd::BinaryMapStaticSymbolsProvider_P::Group::getDebugTitle() const
 {
     return QString(QLatin1String("MO %1,%2")).arg(id).arg(static_cast<int64_t>(id) / 2);
 }

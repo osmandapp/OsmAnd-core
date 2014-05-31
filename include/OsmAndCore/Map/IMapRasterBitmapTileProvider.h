@@ -46,6 +46,8 @@ namespace OsmAnd
         const std::shared_ptr<const SkBitmap> bitmap;
         const AlphaChannelData alphaChannelData;
         const float densityFactor;
+
+        RasterBitmapTile* cloneWithBitmap(const std::shared_ptr<const SkBitmap>& bitmap) const;
     };
 }
 

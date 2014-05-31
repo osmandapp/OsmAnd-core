@@ -30,3 +30,8 @@ OsmAnd::RasterBitmapTile::RasterBitmapTile(
 OsmAnd::RasterBitmapTile::~RasterBitmapTile()
 {
 }
+
+OsmAnd::RasterBitmapTile* OsmAnd::RasterBitmapTile::cloneWithBitmap(const std::shared_ptr<const SkBitmap>& bitmap) const
+{
+    return new RasterBitmapTile(bitmap, alphaChannelData, densityFactor, tileId, zoom);
+}

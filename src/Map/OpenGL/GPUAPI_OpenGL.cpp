@@ -193,14 +193,14 @@ void OsmAnd::GPUAPI_OpenGL::findVariableLocation(const GLuint& program, GLint& l
     assert(location != -1);
 }
 
-bool OsmAnd::GPUAPI_OpenGL::uploadTileToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
+bool OsmAnd::GPUAPI_OpenGL::uploadTileToGPU(const std::shared_ptr< const MapTiledData >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
 {
     // Upload bitmap tiles
-    if (tile->dataType == MapTileDataType::Bitmap)
+    if (tile->dataType == MapTiledData::DataType::RasterBitmapTile)
     {
         return uploadTileAsTextureToGPU(tile, resourceInGPU);
     }
-    else if (tile->dataType == MapTileDataType::ElevationData)
+    else if (tile->dataType == MapTiledData::DataType::ElevationDataTile)
     {
         if (isSupported_vertexShaderTextureLookup)
         {
@@ -249,7 +249,7 @@ bool OsmAnd::GPUAPI_OpenGL::releaseResourceInGPU( const ResourceInGPU::Type type
     return false;
 }
 
-bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
+bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< const MapTiledData >& tile_, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
 {
     GL_CHECK_PRESENT(glGenTextures);
     GL_CHECK_PRESENT(glBindTexture);
@@ -260,11 +260,14 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< cons
     GLsizei sourcePixelByteSize = 0;
     bool mipmapGenerationSupported = false;
     bool tileUsesPalette = false;
-    if (tile->dataType == MapTileDataType::Bitmap)
+    uint32_t tileSize = 0;
+    size_t dataRowLength = 0;
+    const void* tileData = nullptr;
+    if (tile_->dataType == MapTiledData::DataType::RasterBitmapTile)
     {
-        const auto bitmapTile = std::static_pointer_cast<const MapBitmapTile>(tile);
+        const auto tile = std::static_pointer_cast<const RasterBitmapTile>(tile_);
 
-        switch(bitmapTile->bitmap->getConfig())
+        switch (tile->bitmap->getConfig())
         {
         case SkBitmap::Config::kARGB_8888_Config:
             sourcePixelByteSize = 4;
@@ -281,13 +284,21 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< cons
             assert(false);
             return false;
         }
+        tileSize = tile->bitmap->width();
+        dataRowLength = tile->bitmap->rowBytes();
+        tileData = tile->bitmap->getPixels();
 
         // No need to generate mipmaps if textureLod is not supported
         mipmapGenerationSupported = isSupported_textureLod;
     }
-    else if (tile->dataType == MapTileDataType::ElevationData)
+    else if (tile_->dataType == MapTiledData::DataType::ElevationDataTile)
     {
+        const auto tile = std::static_pointer_cast<const ElevationDataTile>(tile_);
+
         sourcePixelByteSize = 4;
+        tileSize = tile->size;
+        dataRowLength = tile->rowLength;
+        tileData = tile->data;
         mipmapGenerationSupported = false;
     }
     else
@@ -295,15 +306,16 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< cons
         assert(false);
         return false;
     }
-    const auto textureFormat = getTextureFormat(tile);
-        
+    const auto textureFormat = getTextureFormat(tile_);
+    const auto sourceFormat = getSourceFormat(tile_);
+
     // Calculate texture size. Tiles are always stored in square textures.
     // Also, since atlas-texture support for tiles was deprecated, only 1 tile per texture is allowed.
 
     // If tile has NPOT size, then it needs to be rounded-up to nearest POT value
-    const auto tileSizePOT = Utilities::getNextPowerOfTwo(tile->size);
-    const auto textureSize = (tileSizePOT != tile->size && !isSupported_texturesNPOT) ? tileSizePOT : tile->size;
-    const bool useAtlasTexture = (textureSize != tile->size);
+    const auto tileSizePOT = Utilities::getNextPowerOfTwo(tileSize);
+    const auto textureSize = (tileSizePOT != tileSize && !isSupported_texturesNPOT) ? tileSizePOT : tileSize;
+    const bool useAtlasTexture = (textureSize != tileSize);
 
     // Get number of mipmap levels
     auto mipmapLevels = 1u;
@@ -330,9 +342,9 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< cons
 
             // Upload data
             uploadDataToTexture2D(GL_TEXTURE_2D, 0,
-                0, 0, (GLsizei)tile->size, (GLsizei)tile->size,
-                tile->data, tile->rowLength / sourcePixelByteSize, sourcePixelByteSize,
-                getSourceFormat(tile));
+                0, 0, (GLsizei)tileSize, (GLsizei)tileSize,
+                tileData, dataRowLength / sourcePixelByteSize, sourcePixelByteSize,
+                sourceFormat);
 
             // Set maximal mipmap level
             setMipMapLevelsLimit(GL_TEXTURE_2D, mipmapLevels - 1);
@@ -419,8 +431,8 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< cons
 
     // Find proper atlas textures pool by format of texture and full size of tile (including padding)
     AtlasTypeId atlasTypeId;
-    atlasTypeId.format = getTextureFormat(tile);
-    atlasTypeId.tileSize = tile->size;
+    atlasTypeId.format = textureFormat;
+    atlasTypeId.tileSize = tileSize;
     atlasTypeId.tilePadding = 0;
     const auto atlasTexturesPool = obtainAtlasTexturesPool(atlasTypeId);
     if (!atlasTexturesPool)
@@ -428,7 +440,8 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< cons
 
     // Get free slot from that pool
     const auto slotInGPU = allocateTile(atlasTexturesPool,
-        [this, textureSize, mipmapLevels, atlasTexturesPool, tile]() -> AtlasTextureInGPU*
+        [this, textureSize, mipmapLevels, atlasTexturesPool, textureFormat]
+        () -> AtlasTextureInGPU*
         {
             // Allocate texture id
             GLuint texture;
@@ -441,7 +454,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< cons
             GL_CHECK_RESULT;
 
             // Allocate space for this texture
-            allocateTexture2D(GL_TEXTURE_2D, mipmapLevels, textureSize, textureSize, getTextureFormat(tile));
+            allocateTexture2D(GL_TEXTURE_2D, mipmapLevels, textureSize, textureSize, textureFormat);
             GL_CHECK_RESULT;
 
             // Set maximal mipmap level
@@ -462,9 +475,9 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< cons
 
     // Upload data
     uploadDataToTexture2D(GL_TEXTURE_2D, 0,
-        0, 0, (GLsizei)tile->size, (GLsizei)tile->size,
-        tile->data, tile->rowLength / sourcePixelByteSize, sourcePixelByteSize,
-        getSourceFormat(tile));
+        0, 0, (GLsizei)tileSize, (GLsizei)tileSize,
+        tileData, dataRowLength / sourcePixelByteSize, sourcePixelByteSize,
+        sourceFormat);
     GL_CHECK_RESULT;
 
     // Generate mipmap
@@ -483,17 +496,17 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< cons
     return true;
 }
 
-bool OsmAnd::GPUAPI_OpenGL::uploadTileAsArrayBufferToGPU(const std::shared_ptr< const MapTile >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
+bool OsmAnd::GPUAPI_OpenGL::uploadTileAsArrayBufferToGPU(const std::shared_ptr< const MapTiledData >& tile_, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
 {
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
 
-    if (tile->dataType != MapTileDataType::ElevationData)
+    if (tile_->dataType != MapTiledData::DataType::ElevationDataTile)
     {
         assert(false);
         return false;
     }
-    const auto elevationTile = std::static_pointer_cast<const ElevationDataTile>(tile);
+    const auto tile = std::static_pointer_cast<const ElevationDataTile>(tile_);
     
     // Create array buffer
     GLuint buffer;

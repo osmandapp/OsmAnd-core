@@ -11,6 +11,9 @@
 
 #include "AtlasMapRenderer_OpenGL.h"
 #include "MapSymbol.h"
+#include "OnPathMapSymbol.h"
+#include "SpriteMapSymbol.h"
+#include "MapSymbolsGroup.h"
 #include "QuadTree.h"
 #include "QKeyValueIterator.h"
 #include "ObjectWithId.h"

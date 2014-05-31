@@ -29,8 +29,8 @@ namespace OsmAnd
     {
     private:
     protected:
-        MapTiledSymbols(const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups, const TileId tileId, const ZoomLevel zoom);
     public:
+        MapTiledSymbols(const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups, const TileId tileId, const ZoomLevel zoom);
         virtual ~MapTiledSymbols();
 
         const QList< std::shared_ptr<const MapSymbolsGroup> > symbolsGroups;

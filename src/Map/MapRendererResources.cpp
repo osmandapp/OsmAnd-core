@@ -109,29 +109,27 @@ bool OsmAnd::MapRendererResources::initializeDefaultResources()
     // Upload stubs
     {
         const auto& data = EmbeddedResources::decompressResource(QLatin1String("map/stubs/processing_tile.png"));
-        auto bitmap = new SkBitmap();
-        if (!SkImageDecoder::DecodeMemory(data.data(), data.size(), bitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
+        const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
+        if (SkImageDecoder::DecodeMemory(data.data(), data.size(), bitmap.get(), SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
         {
-            delete bitmap;
             return false;
         }
         else
         {
-            std::shared_ptr<const MapTile> bitmapTile(new MapBitmapTile(bitmap, AlphaChannelData::Undefined));
+            std::shared_ptr<const MapTiledData> bitmapTile(new RasterBitmapTile(bitmap, AlphaChannelData::Undefined, 1.0f, TileId(), InvalidZoom));
             uploadTileToGPU(bitmapTile, _processingTileStub);
         }
     }
     {
         const auto& data = EmbeddedResources::decompressResource(QLatin1String("map/stubs/unavailable_tile.png"));
-        auto bitmap = new SkBitmap();
-        if (!SkImageDecoder::DecodeMemory(data.data(), data.size(), bitmap, SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
+        const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
+        if (!SkImageDecoder::DecodeMemory(data.data(), data.size(), bitmap.get(), SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
         {
-            delete bitmap;
             return false;
         }
         else
         {
-            std::shared_ptr<const MapTile> bitmapTile(new MapBitmapTile(bitmap, AlphaChannelData::Undefined));
+            std::shared_ptr<const MapTiledData> bitmapTile(new RasterBitmapTile(bitmap, AlphaChannelData::Undefined, 1.0f, TileId(), InvalidZoom));
             uploadTileToGPU(bitmapTile, _unavailableTileStub);
         }
     }
@@ -156,9 +154,9 @@ bool OsmAnd::MapRendererResources::releaseDefaultResources()
     return true;
 }
 
-bool OsmAnd::MapRendererResources::uploadTileToGPU(const std::shared_ptr<const MapTile>& mapTile, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU)
+bool OsmAnd::MapRendererResources::uploadTileToGPU(const std::shared_ptr<const MapTiledData>& mapTile, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU)
 {
-    std::shared_ptr<const MapTile> convertedTile;
+    std::shared_ptr<const MapTiledData> convertedTile;
     const auto wasConverted = renderer->convertMapTile(mapTile, convertedTile);
     return renderer->gpuAPI->uploadTileToGPU(wasConverted ? convertedTile : mapTile, outResourceInGPU);
 }
@@ -280,7 +278,7 @@ void OsmAnd::MapRendererResources::updateBindings(const MapRendererState& state,
             itBindedProvider.next();
 
             // Skip binding if it's still active
-            if (state.symbolProviders.contains(std::static_pointer_cast<IMapSymbolProvider>(itBindedProvider.key())))
+            if (state.symbolProviders.contains(itBindedProvider.key()))
                 continue;
 
             // Clean-up resources
@@ -468,7 +466,7 @@ void OsmAnd::MapRendererResources::requestNeededKeyedResources(const std::shared
         return;
 
     // Get list of keys this provider has and check that all are present
-    const auto& resourceKeys = provider->getKeys();
+    const auto& resourceKeys = provider->getProvidedDataKeys();
     for (const auto& resourceKey : constOf(resourceKeys))
     {
         // Obtain a resource entry and if it's state is "Unknown", create a task that will
@@ -1446,7 +1444,7 @@ bool OsmAnd::MapRendererResources::MapTileResource::obtainData(bool& dataAvailab
     const auto provider = std::static_pointer_cast<IMapTiledDataProvider>(provider_);
 
     // Obtain tile from provider
-    std::shared_ptr<const MapTile> tile;
+    std::shared_ptr<const MapTiledData> tile;
     const auto requestSucceeded = provider->obtainTile(tileId, zoom, tile, queryController);
     if (!requestSucceeded)
         return false;

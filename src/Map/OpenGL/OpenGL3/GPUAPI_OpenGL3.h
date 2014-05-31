@@ -45,9 +45,9 @@ namespace OsmAnd
 
         virtual GLenum validateResult();
 
-        virtual TextureFormat getTextureFormat(const std::shared_ptr< const MapTile >& tile);
+        virtual TextureFormat getTextureFormat(const std::shared_ptr< const MapTiledData >& tile);
         virtual TextureFormat getTextureFormat(const std::shared_ptr< const MapSymbol >& symbol);
-        virtual SourceFormat getSourceFormat(const std::shared_ptr< const MapTile >& tile);
+        virtual SourceFormat getSourceFormat(const std::shared_ptr< const MapTiledData >& tile);
         virtual SourceFormat getSourceFormat(const std::shared_ptr< const MapSymbol >& symbol);
         virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const TextureFormat format);
         virtual void uploadDataToTexture2D(GLenum target, GLint level,
