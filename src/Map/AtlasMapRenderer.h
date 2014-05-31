@@ -8,7 +8,7 @@
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
 #include "MapRenderer.h"
-#include "MapRendererResources.h"
+#include "MapRendererResourcesManager.h"
 
 namespace OsmAnd
 {

@@ -1,4 +1,4 @@
-#include "MapRendererResources.h"
+#include "MapRendererResourcesManager.h"
 
 #include <cassert>
 
@@ -45,13 +45,13 @@
 #   define LOG_RESOURCE_STATE_CHANGE(resource, oldState, newState)
 #endif
 
-OsmAnd::MapRendererResources::MapRendererResources(MapRenderer* const owner_)
+OsmAnd::MapRendererResourcesManager::MapRendererResourcesManager(MapRenderer* const owner_)
     : _taskHostBridge(this)
     , _mapSymbolsCount(0)
     , _invalidatedResourcesTypesMask(0)
     , _workerThreadIsAlive(false)
     , _workerThreadId(nullptr)
-    , _workerThread(new Concurrent::Thread(std::bind(&MapRendererResources::workerThreadProcedure, this)))
+    , _workerThread(new Concurrent::Thread(std::bind(&MapRendererResourcesManager::workerThreadProcedure, this)))
     , renderer(owner_)
     , processingTileStub(_processingTileStub)
     , unavailableTileStub(_unavailableTileStub)
@@ -75,7 +75,7 @@ OsmAnd::MapRendererResources::MapRendererResources(MapRenderer* const owner_)
     _workerThread->start();
 }
 
-OsmAnd::MapRendererResources::~MapRendererResources()
+OsmAnd::MapRendererResourcesManager::~MapRendererResourcesManager()
 {
     // Check all resources are released
     for(auto& resourcesCollections : _storageByType)
@@ -104,7 +104,7 @@ OsmAnd::MapRendererResources::~MapRendererResources()
     _taskHostBridge.onOwnerIsBeingDestructed();
 }
 
-bool OsmAnd::MapRendererResources::initializeDefaultResources()
+bool OsmAnd::MapRendererResourcesManager::initializeDefaultResources()
 {
     // Upload stubs
     {
@@ -137,7 +137,7 @@ bool OsmAnd::MapRendererResources::initializeDefaultResources()
     return true;
 }
 
-bool OsmAnd::MapRendererResources::releaseDefaultResources()
+bool OsmAnd::MapRendererResourcesManager::releaseDefaultResources()
 {
     // Release stubs
     if (_unavailableTileStub)
@@ -154,21 +154,21 @@ bool OsmAnd::MapRendererResources::releaseDefaultResources()
     return true;
 }
 
-bool OsmAnd::MapRendererResources::uploadTileToGPU(const std::shared_ptr<const MapTiledData>& mapTile, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU)
+bool OsmAnd::MapRendererResourcesManager::uploadTileToGPU(const std::shared_ptr<const MapTiledData>& mapTile, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU)
 {
     std::shared_ptr<const MapTiledData> convertedTile;
     const auto wasConverted = renderer->convertMapTile(mapTile, convertedTile);
     return renderer->gpuAPI->uploadTileToGPU(wasConverted ? convertedTile : mapTile, outResourceInGPU);
 }
 
-bool OsmAnd::MapRendererResources::uploadSymbolToGPU(const std::shared_ptr<const MapSymbol>& mapSymbol, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU)
+bool OsmAnd::MapRendererResourcesManager::uploadSymbolToGPU(const std::shared_ptr<const MapSymbol>& mapSymbol, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU)
 {
     std::shared_ptr<const MapSymbol> convertedSymbol;
     const auto wasConverted = renderer->convertMapSymbol(mapSymbol, convertedSymbol);
     return renderer->gpuAPI->uploadSymbolToGPU(wasConverted ? convertedSymbol : mapSymbol, outResourceInGPU);
 }
 
-void OsmAnd::MapRendererResources::updateBindings(const MapRendererState& state, const uint32_t updatedMask)
+void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState& state, const uint32_t updatedMask)
 {
     if (updatedMask & (1u << static_cast<int>(MapRendererStateChange::ElevationData_Provider)))
     {
@@ -315,7 +315,7 @@ void OsmAnd::MapRendererResources::updateBindings(const MapRendererState& state,
     }
 }
 
-void OsmAnd::MapRendererResources::updateActiveZone(const QSet<TileId>& tiles, const ZoomLevel zoom)
+void OsmAnd::MapRendererResourcesManager::updateActiveZone(const QSet<TileId>& tiles, const ZoomLevel zoom)
 {
     // Lock worker wakeup mutex
     QMutexLocker scopedLocker(&_workerThreadWakeupMutex);
@@ -328,7 +328,7 @@ void OsmAnd::MapRendererResources::updateActiveZone(const QSet<TileId>& tiles, c
     _workerThreadWakeup.wakeAll();
 }
 
-bool OsmAnd::MapRendererResources::obtainProviderFor(BaseResourcesCollection* const resourcesRef, std::shared_ptr<IMapDataProvider>& provider) const
+bool OsmAnd::MapRendererResourcesManager::obtainProviderFor(BaseResourcesCollection* const resourcesRef, std::shared_ptr<IMapDataProvider>& provider) const
 {
     assert(resourcesRef != nullptr);
 
@@ -349,14 +349,14 @@ bool OsmAnd::MapRendererResources::obtainProviderFor(BaseResourcesCollection* co
     return false;
 }
 
-bool OsmAnd::MapRendererResources::isDataSourceAvailableFor(const std::shared_ptr<BaseResourcesCollection>& collection) const
+bool OsmAnd::MapRendererResourcesManager::isDataSourceAvailableFor(const std::shared_ptr<BaseResourcesCollection>& collection) const
 {
     const auto& binding = _bindings[static_cast<int>(collection->type)];
 
     return binding.collectionsToProviders.contains(collection);
 }
 
-void OsmAnd::MapRendererResources::addMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<const GPUAPI::ResourceInGPU>& gpuResource)
+void OsmAnd::MapRendererResourcesManager::addMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<const GPUAPI::ResourceInGPU>& gpuResource)
 {
     QMutexLocker scopedLocker(&_mapSymbolsByOrderMutex);
 
@@ -364,7 +364,7 @@ void OsmAnd::MapRendererResources::addMapSymbol(const std::shared_ptr<const MapS
     _mapSymbolsCount++;
 }
 
-void OsmAnd::MapRendererResources::removeMapSymbol(const std::shared_ptr<const MapSymbol>& symbol)
+void OsmAnd::MapRendererResourcesManager::removeMapSymbol(const std::shared_ptr<const MapSymbol>& symbol)
 {
     QMutexLocker scopedLocker(&_mapSymbolsByOrderMutex);
 
@@ -375,12 +375,12 @@ void OsmAnd::MapRendererResources::removeMapSymbol(const std::shared_ptr<const M
     _mapSymbolsCount -= removedCount;
 }
 
-void OsmAnd::MapRendererResources::notifyNewResourceAvailableForDrawing()
+void OsmAnd::MapRendererResourcesManager::notifyNewResourceAvailableForDrawing()
 {
     renderer->invalidateFrame();
 }
 
-void OsmAnd::MapRendererResources::workerThreadProcedure()
+void OsmAnd::MapRendererResourcesManager::workerThreadProcedure()
 {
     // Capture worker thread ID
     _workerThreadId = QThread::currentThreadId();
@@ -410,7 +410,7 @@ void OsmAnd::MapRendererResources::workerThreadProcedure()
     _workerThreadId = nullptr;
 }
 
-void OsmAnd::MapRendererResources::requestNeededResources(const QSet<TileId>& activeTiles, const ZoomLevel activeZoom)
+void OsmAnd::MapRendererResourcesManager::requestNeededResources(const QSet<TileId>& activeTiles, const ZoomLevel activeZoom)
 {
     for(const auto& resourcesCollections : constOf(_storageByType))
     {
@@ -431,7 +431,7 @@ void OsmAnd::MapRendererResources::requestNeededResources(const QSet<TileId>& ac
     }
 }
 
-void OsmAnd::MapRendererResources::requestNeededTiledResources(const std::shared_ptr<TiledResourcesCollection>& resourcesCollection, const QSet<TileId>& activeTiles, const ZoomLevel activeZoom)
+void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(const std::shared_ptr<TiledResourcesCollection>& resourcesCollection, const QSet<TileId>& activeTiles, const ZoomLevel activeZoom)
 {
     for (const auto& activeTileId : constOf(activeTiles))
     {
@@ -455,7 +455,7 @@ void OsmAnd::MapRendererResources::requestNeededTiledResources(const std::shared
     }
 }
 
-void OsmAnd::MapRendererResources::requestNeededKeyedResources(const std::shared_ptr<KeyedResourcesCollection>& resourcesCollection)
+void OsmAnd::MapRendererResourcesManager::requestNeededKeyedResources(const std::shared_ptr<KeyedResourcesCollection>& resourcesCollection)
 {
     // Get keyed provider
     std::shared_ptr<IMapDataProvider> provider_;
@@ -487,7 +487,7 @@ void OsmAnd::MapRendererResources::requestNeededKeyedResources(const std::shared
     }
 }
 
-void OsmAnd::MapRendererResources::requestNeededResource(const std::shared_ptr<BaseResource>& resource)
+void OsmAnd::MapRendererResourcesManager::requestNeededResource(const std::shared_ptr<BaseResource>& resource)
 {
     // Only if tile entry has "Unknown" state proceed to "Requesting" state
     if (!resource->setStateIf(ResourceState::Unknown, ResourceState::Requesting))
@@ -601,7 +601,7 @@ void OsmAnd::MapRendererResources::requestNeededResource(const std::shared_ptr<B
     _resourcesRequestWorkersPool.start(asyncTask);
 }
 
-void OsmAnd::MapRendererResources::invalidateAllResources()
+void OsmAnd::MapRendererResourcesManager::invalidateAllResources()
 {
     QWriteLocker scopedLocker(&_invalidatedResourcesTypesMaskLock);
 
@@ -610,7 +610,7 @@ void OsmAnd::MapRendererResources::invalidateAllResources()
     renderer->invalidateFrame();
 }
 
-void OsmAnd::MapRendererResources::invalidateResourcesOfType(const ResourceType type)
+void OsmAnd::MapRendererResourcesManager::invalidateResourcesOfType(const ResourceType type)
 {
     QWriteLocker scopedLocker(&_invalidatedResourcesTypesMaskLock);
 
@@ -619,7 +619,7 @@ void OsmAnd::MapRendererResources::invalidateResourcesOfType(const ResourceType 
     renderer->invalidateFrame();
 }
 
-bool OsmAnd::MapRendererResources::validateResources()
+bool OsmAnd::MapRendererResourcesManager::validateResources()
 {
     bool anyResourcesVadilated = false;
 
@@ -647,7 +647,7 @@ bool OsmAnd::MapRendererResources::validateResources()
     return anyResourcesVadilated;
 }
 
-bool OsmAnd::MapRendererResources::validateResourcesOfType(const ResourceType type)
+bool OsmAnd::MapRendererResourcesManager::validateResourcesOfType(const ResourceType type)
 {
     const auto& resourcesCollections = _storageByType[static_cast<int>(type)];
     const auto& bindings = _bindings[static_cast<int>(type)];
@@ -674,7 +674,7 @@ bool OsmAnd::MapRendererResources::validateResourcesOfType(const ResourceType ty
     return atLeastOneMarked;
 }
 
-void OsmAnd::MapRendererResources::updateResources(const QSet<TileId>& tiles, const ZoomLevel zoom)
+void OsmAnd::MapRendererResourcesManager::updateResources(const QSet<TileId>& tiles, const ZoomLevel zoom)
 {
     // Before requesting missing tiled resources, clean up cache to free some space
     cleanupJunkResources(tiles, zoom);
@@ -684,7 +684,7 @@ void OsmAnd::MapRendererResources::updateResources(const QSet<TileId>& tiles, co
     requestNeededResources(tiles, zoom);
 }
 
-unsigned int OsmAnd::MapRendererResources::unloadResources()
+unsigned int OsmAnd::MapRendererResourcesManager::unloadResources()
 {
     unsigned int totalUnloaded = 0u;
 
@@ -739,7 +739,7 @@ unsigned int OsmAnd::MapRendererResources::unloadResources()
     return totalUnloaded;
 }
 
-unsigned int OsmAnd::MapRendererResources::uploadResources(const unsigned int limit /*= 0u*/, bool* const outMoreThanLimitAvailable /*= nullptr*/)
+unsigned int OsmAnd::MapRendererResourcesManager::uploadResources(const unsigned int limit /*= 0u*/, bool* const outMoreThanLimitAvailable /*= nullptr*/)
 {
     unsigned int totalUploaded = 0u;
     bool moreThanLimitAvailable = false;
@@ -834,7 +834,7 @@ unsigned int OsmAnd::MapRendererResources::uploadResources(const unsigned int li
     return totalUploaded;
 }
 
-void OsmAnd::MapRendererResources::cleanupJunkResources(const QSet<TileId>& activeTiles, const ZoomLevel activeZoom)
+void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(const QSet<TileId>& activeTiles, const ZoomLevel activeZoom)
 {
     // This method is called from non-GPU thread, so it's impossible to unload resources from GPU here
     bool needsResourcesUploadOrUnload = false;
@@ -951,7 +951,7 @@ void OsmAnd::MapRendererResources::cleanupJunkResources(const QSet<TileId>& acti
         requestResourcesUploadOrUnload();
 }
 
-void OsmAnd::MapRendererResources::releaseResourcesFrom(const std::shared_ptr<BaseResourcesCollection>& collection)
+void OsmAnd::MapRendererResourcesManager::releaseResourcesFrom(const std::shared_ptr<BaseResourcesCollection>& collection)
 {
     // This method is called from non-GPU thread, so it's impossible to unload resources from GPU here.
     // So wait here until all resources will be unloaded from GPU
@@ -1085,12 +1085,12 @@ void OsmAnd::MapRendererResources::releaseResourcesFrom(const std::shared_ptr<Ba
     assert(collection->getResourcesCount() == 0);
 }
 
-void OsmAnd::MapRendererResources::requestResourcesUploadOrUnload()
+void OsmAnd::MapRendererResourcesManager::requestResourcesUploadOrUnload()
 {
     renderer->requestResourcesUploadOrUnload();
 }
 
-void OsmAnd::MapRendererResources::releaseAllResources()
+void OsmAnd::MapRendererResourcesManager::releaseAllResources()
 {
     // Release all resources
     for(auto& resourcesCollections : _storageByType)
@@ -1113,7 +1113,7 @@ void OsmAnd::MapRendererResources::releaseAllResources()
     }
 }
 
-void OsmAnd::MapRendererResources::syncResourcesInGPU(
+void OsmAnd::MapRendererResourcesManager::syncResourcesInGPU(
     const unsigned int limitUploads /*= 0u*/,
     bool* const outMoreUploadsThanLimitAvailable /*= nullptr*/,
     unsigned int* const outResourcesUploaded /*= nullptr*/,
@@ -1130,28 +1130,28 @@ void OsmAnd::MapRendererResources::syncResourcesInGPU(
         *outResourcesUploaded = resourcesUploaded;
 }
 
-std::shared_ptr<const OsmAnd::MapRendererResources::BaseResourcesCollection>
-OsmAnd::MapRendererResources::getCollection(const ResourceType type, const std::shared_ptr<IMapDataProvider>& provider) const
+std::shared_ptr<const OsmAnd::MapRendererResourcesManager::BaseResourcesCollection>
+OsmAnd::MapRendererResourcesManager::getCollection(const ResourceType type, const std::shared_ptr<IMapDataProvider>& provider) const
 {
     return _bindings[static_cast<int>(type)].providersToCollections[provider];
 }
 
-QMutex& OsmAnd::MapRendererResources::getSymbolsMapMutex() const
+QMutex& OsmAnd::MapRendererResourcesManager::getSymbolsMapMutex() const
 {
     return _mapSymbolsByOrderMutex;
 }
 
-const OsmAnd::MapRendererResources::MapSymbolsByOrder& OsmAnd::MapRendererResources::getMapSymbolsByOrder() const
+const OsmAnd::MapRendererResourcesManager::MapSymbolsByOrder& OsmAnd::MapRendererResourcesManager::getMapSymbolsByOrder() const
 {
     return _mapSymbolsByOrder;
 }
 
-unsigned int OsmAnd::MapRendererResources::getMapSymbolsCount() const
+unsigned int OsmAnd::MapRendererResourcesManager::getMapSymbolsCount() const
 {
     return _mapSymbolsCount;
 }
 
-void OsmAnd::MapRendererResources::dumpResourcesInfo() const
+void OsmAnd::MapRendererResourcesManager::dumpResourcesInfo() const
 {
     QMap<ResourceState, QString> resourceStateMap;
     resourceStateMap.insert(ResourceState::Unknown, QLatin1String("Unknown"));
@@ -1239,7 +1239,7 @@ void OsmAnd::MapRendererResources::dumpResourcesInfo() const
     LogPrintf(LogSeverityLevel::Debug, qPrintable(dump));
 }
 
-OsmAnd::MapRendererResources::BaseResource::BaseResource(MapRendererResources* owner_, const ResourceType type_)
+OsmAnd::MapRendererResourcesManager::BaseResource::BaseResource(MapRendererResourcesManager* owner_, const ResourceType type_)
     : _isJunk(false)
     , _requestTask(nullptr)
     , owner(owner_)
@@ -1248,22 +1248,22 @@ OsmAnd::MapRendererResources::BaseResource::BaseResource(MapRendererResources* o
 {
 }
 
-void OsmAnd::MapRendererResources::BaseResource::markAsJunk()
+void OsmAnd::MapRendererResourcesManager::BaseResource::markAsJunk()
 {
     _isJunk = true;
 }
 
-OsmAnd::MapRendererResources::BaseResource::~BaseResource()
+OsmAnd::MapRendererResourcesManager::BaseResource::~BaseResource()
 {
 }
 
-OsmAnd::MapRendererResources::BaseTiledResource::BaseTiledResource(MapRendererResources* owner, const ResourceType type, const TiledEntriesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom)
+OsmAnd::MapRendererResourcesManager::BaseTiledResource::BaseTiledResource(MapRendererResourcesManager* owner, const ResourceType type, const TiledEntriesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom)
     : BaseResource(owner, type)
     , TiledEntriesCollectionEntryWithState(collection, tileId, zoom)
 {
 }
 
-OsmAnd::MapRendererResources::BaseTiledResource::~BaseTiledResource()
+OsmAnd::MapRendererResourcesManager::BaseTiledResource::~BaseTiledResource()
 {
     const volatile auto state = getState();
     if (state == ResourceState::Uploading || state == ResourceState::Uploaded || state == ResourceState::IsBeingUsed || state == ResourceState::Unloading)
@@ -1272,29 +1272,29 @@ OsmAnd::MapRendererResources::BaseTiledResource::~BaseTiledResource()
     safeUnlink();
 }
 
-OsmAnd::MapRendererResources::ResourceState OsmAnd::MapRendererResources::BaseTiledResource::getState() const
+OsmAnd::MapRendererResourcesManager::ResourceState OsmAnd::MapRendererResourcesManager::BaseTiledResource::getState() const
 {
     return BaseTilesCollectionEntryWithState::getState();
 }
 
-void OsmAnd::MapRendererResources::BaseTiledResource::setState(const ResourceState newState)
+void OsmAnd::MapRendererResourcesManager::BaseTiledResource::setState(const ResourceState newState)
 {
     return BaseTilesCollectionEntryWithState::setState(newState);
 }
 
-bool OsmAnd::MapRendererResources::BaseTiledResource::setStateIf(const ResourceState testState, const ResourceState newState)
+bool OsmAnd::MapRendererResourcesManager::BaseTiledResource::setStateIf(const ResourceState testState, const ResourceState newState)
 {
     return BaseTilesCollectionEntryWithState::setStateIf(testState, newState);
 }
 
-void OsmAnd::MapRendererResources::BaseTiledResource::removeSelfFromCollection()
+void OsmAnd::MapRendererResourcesManager::BaseTiledResource::removeSelfFromCollection()
 {
     if (const auto link_ = link.lock())
         link_->collection.removeEntry(tileId, zoom);
 }
 
-OsmAnd::MapRendererResources::BaseKeyedResource::BaseKeyedResource(
-    MapRendererResources* owner,
+OsmAnd::MapRendererResourcesManager::BaseKeyedResource::BaseKeyedResource(
+    MapRendererResourcesManager* owner,
     const ResourceType type,
     const KeyedEntriesCollection<Key, BaseKeyedResource>& collection,
     const Key key)
@@ -1303,7 +1303,7 @@ OsmAnd::MapRendererResources::BaseKeyedResource::BaseKeyedResource(
 {
 }
 
-OsmAnd::MapRendererResources::BaseKeyedResource::~BaseKeyedResource()
+OsmAnd::MapRendererResourcesManager::BaseKeyedResource::~BaseKeyedResource()
 {
     const volatile auto state = getState();
     if (state == ResourceState::Uploading || state == ResourceState::Uploaded || state == ResourceState::IsBeingUsed || state == ResourceState::Unloading)
@@ -1312,54 +1312,54 @@ OsmAnd::MapRendererResources::BaseKeyedResource::~BaseKeyedResource()
     safeUnlink();
 }
 
-OsmAnd::MapRendererResources::ResourceState OsmAnd::MapRendererResources::BaseKeyedResource::getState() const
+OsmAnd::MapRendererResourcesManager::ResourceState OsmAnd::MapRendererResourcesManager::BaseKeyedResource::getState() const
 {
     return BaseKeyedEntriesCollectionEntryWithState::getState();
 }
 
-void OsmAnd::MapRendererResources::BaseKeyedResource::setState(const ResourceState newState)
+void OsmAnd::MapRendererResourcesManager::BaseKeyedResource::setState(const ResourceState newState)
 {
     return BaseKeyedEntriesCollectionEntryWithState::setState(newState);
 }
 
-bool OsmAnd::MapRendererResources::BaseKeyedResource::setStateIf(const ResourceState testState, const ResourceState newState)
+bool OsmAnd::MapRendererResourcesManager::BaseKeyedResource::setStateIf(const ResourceState testState, const ResourceState newState)
 {
     return BaseKeyedEntriesCollectionEntryWithState::setStateIf(testState, newState);
 }
 
-void OsmAnd::MapRendererResources::BaseKeyedResource::removeSelfFromCollection()
+void OsmAnd::MapRendererResourcesManager::BaseKeyedResource::removeSelfFromCollection()
 {
     if (const auto link_ = link.lock())
         link_->collection.removeEntry(key);
 }
 
-OsmAnd::MapRendererResources::BaseResourcesCollection::BaseResourcesCollection(const ResourceType& type_)
+OsmAnd::MapRendererResourcesManager::BaseResourcesCollection::BaseResourcesCollection(const ResourceType& type_)
     : type(type_)
 {
 }
 
-OsmAnd::MapRendererResources::BaseResourcesCollection::~BaseResourcesCollection()
+OsmAnd::MapRendererResourcesManager::BaseResourcesCollection::~BaseResourcesCollection()
 {
 }
 
-OsmAnd::MapRendererResources::TiledResourcesCollection::TiledResourcesCollection(const ResourceType& type_)
+OsmAnd::MapRendererResourcesManager::TiledResourcesCollection::TiledResourcesCollection(const ResourceType& type_)
     : BaseResourcesCollection(type_)
 {
 }
 
-OsmAnd::MapRendererResources::TiledResourcesCollection::~TiledResourcesCollection()
+OsmAnd::MapRendererResourcesManager::TiledResourcesCollection::~TiledResourcesCollection()
 {
     verifyNoUploadedResourcesPresent();
 }
 
-void OsmAnd::MapRendererResources::TiledResourcesCollection::removeAllEntries()
+void OsmAnd::MapRendererResourcesManager::TiledResourcesCollection::removeAllEntries()
 {
     verifyNoUploadedResourcesPresent();
 
     TiledEntriesCollection::removeAllEntries();
 }
 
-void OsmAnd::MapRendererResources::TiledResourcesCollection::verifyNoUploadedResourcesPresent() const
+void OsmAnd::MapRendererResourcesManager::TiledResourcesCollection::verifyNoUploadedResourcesPresent() const
 {
     // Ensure that no tiles have "Uploaded" state
     bool stillUploadedTilesPresent = false;
@@ -1380,12 +1380,12 @@ void OsmAnd::MapRendererResources::TiledResourcesCollection::verifyNoUploadedRes
     assert(stillUploadedTilesPresent == false);
 }
 
-int OsmAnd::MapRendererResources::TiledResourcesCollection::getResourcesCount() const
+int OsmAnd::MapRendererResourcesManager::TiledResourcesCollection::getResourcesCount() const
 {
     return getEntriesCount();
 }
 
-void OsmAnd::MapRendererResources::TiledResourcesCollection::forEachResourceExecute(const ResourceActionCallback action)
+void OsmAnd::MapRendererResourcesManager::TiledResourcesCollection::forEachResourceExecute(const ResourceActionCallback action)
 {
     forAllExecute(
         [action]
@@ -1395,7 +1395,7 @@ void OsmAnd::MapRendererResources::TiledResourcesCollection::forEachResourceExec
         });
 }
 
-void OsmAnd::MapRendererResources::TiledResourcesCollection::obtainResources(QList< std::shared_ptr<BaseResource> >* outList, const ResourceFilterCallback filter)
+void OsmAnd::MapRendererResourcesManager::TiledResourcesCollection::obtainResources(QList< std::shared_ptr<BaseResource> >* outList, const ResourceFilterCallback filter)
 {
     obtainEntries(nullptr, 
         [outList, filter]
@@ -1410,7 +1410,7 @@ void OsmAnd::MapRendererResources::TiledResourcesCollection::obtainResources(QLi
         });
 }
 
-void OsmAnd::MapRendererResources::TiledResourcesCollection::removeResources(const ResourceFilterCallback filter)
+void OsmAnd::MapRendererResourcesManager::TiledResourcesCollection::removeResources(const ResourceFilterCallback filter)
 {
     removeEntries(
         [filter]
@@ -1420,18 +1420,18 @@ void OsmAnd::MapRendererResources::TiledResourcesCollection::removeResources(con
         });
 }
 
-OsmAnd::MapRendererResources::MapTileResource::MapTileResource(MapRendererResources* owner, const ResourceType type, const TiledEntriesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom)
+OsmAnd::MapRendererResourcesManager::MapTileResource::MapTileResource(MapRendererResourcesManager* owner, const ResourceType type, const TiledEntriesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom)
     : BaseTiledResource(owner, type, collection, tileId, zoom)
     , resourceInGPU(_resourceInGPU)
 {
 }
 
-OsmAnd::MapRendererResources::MapTileResource::~MapTileResource()
+OsmAnd::MapRendererResourcesManager::MapTileResource::~MapTileResource()
 {
     safeUnlink();
 }
 
-bool OsmAnd::MapRendererResources::MapTileResource::obtainData(bool& dataAvailable, const IQueryController* queryController)
+bool OsmAnd::MapRendererResourcesManager::MapTileResource::obtainData(bool& dataAvailable, const IQueryController* queryController)
 {
     bool ok = false;
 
@@ -1445,7 +1445,7 @@ bool OsmAnd::MapRendererResources::MapTileResource::obtainData(bool& dataAvailab
 
     // Obtain tile from provider
     std::shared_ptr<const MapTiledData> tile;
-    const auto requestSucceeded = provider->obtainTile(tileId, zoom, tile, queryController);
+    const auto requestSucceeded = provider->obtainData(tileId, zoom, tile, queryController);
     if (!requestSucceeded)
         return false;
 
@@ -1456,7 +1456,7 @@ bool OsmAnd::MapRendererResources::MapTileResource::obtainData(bool& dataAvailab
     return true;
 }
 
-bool OsmAnd::MapRendererResources::MapTileResource::uploadToGPU()
+bool OsmAnd::MapRendererResourcesManager::MapTileResource::uploadToGPU()
 {
     bool ok = owner->uploadTileToGPU(_sourceData, _resourceInGPU);
     if (!ok)
@@ -1477,23 +1477,23 @@ bool OsmAnd::MapRendererResources::MapTileResource::uploadToGPU()
     return true;
 }
 
-void OsmAnd::MapRendererResources::MapTileResource::unloadFromGPU()
+void OsmAnd::MapRendererResourcesManager::MapTileResource::unloadFromGPU()
 {
     assert(_resourceInGPU.use_count() == 1);
     _resourceInGPU.reset();
 }
 
-OsmAnd::MapRendererResources::KeyedResourcesCollection::KeyedResourcesCollection(const ResourceType& type_)
+OsmAnd::MapRendererResourcesManager::KeyedResourcesCollection::KeyedResourcesCollection(const ResourceType& type_)
     : BaseResourcesCollection(type_)
 {
 }
 
-OsmAnd::MapRendererResources::KeyedResourcesCollection::~KeyedResourcesCollection()
+OsmAnd::MapRendererResourcesManager::KeyedResourcesCollection::~KeyedResourcesCollection()
 {
     verifyNoUploadedResourcesPresent();
 }
 
-void OsmAnd::MapRendererResources::KeyedResourcesCollection::verifyNoUploadedResourcesPresent() const
+void OsmAnd::MapRendererResourcesManager::KeyedResourcesCollection::verifyNoUploadedResourcesPresent() const
 {
     // Ensure that no resources have "Uploaded" state
     bool stillUploadedResourcesPresent = false;
@@ -1514,19 +1514,19 @@ void OsmAnd::MapRendererResources::KeyedResourcesCollection::verifyNoUploadedRes
     assert(stillUploadedResourcesPresent == false);
 }
 
-void OsmAnd::MapRendererResources::KeyedResourcesCollection::removeAllEntries()
+void OsmAnd::MapRendererResourcesManager::KeyedResourcesCollection::removeAllEntries()
 {
     verifyNoUploadedResourcesPresent();
 
     KeyedEntriesCollection::removeAllEntries();
 }
 
-int OsmAnd::MapRendererResources::KeyedResourcesCollection::getResourcesCount() const
+int OsmAnd::MapRendererResourcesManager::KeyedResourcesCollection::getResourcesCount() const
 {
     return getEntriesCount();
 }
 
-void OsmAnd::MapRendererResources::KeyedResourcesCollection::forEachResourceExecute(const ResourceActionCallback action)
+void OsmAnd::MapRendererResourcesManager::KeyedResourcesCollection::forEachResourceExecute(const ResourceActionCallback action)
 {
     forAllExecute(
         [action]
@@ -1536,7 +1536,7 @@ void OsmAnd::MapRendererResources::KeyedResourcesCollection::forEachResourceExec
         });
 }
 
-void OsmAnd::MapRendererResources::KeyedResourcesCollection::obtainResources(QList< std::shared_ptr<BaseResource> >* outList, const ResourceFilterCallback filter)
+void OsmAnd::MapRendererResourcesManager::KeyedResourcesCollection::obtainResources(QList< std::shared_ptr<BaseResource> >* outList, const ResourceFilterCallback filter)
 {
     obtainEntries(nullptr, 
         [outList, filter]
@@ -1551,7 +1551,7 @@ void OsmAnd::MapRendererResources::KeyedResourcesCollection::obtainResources(QLi
         });
 }
 
-void OsmAnd::MapRendererResources::KeyedResourcesCollection::removeResources(const ResourceFilterCallback filter)
+void OsmAnd::MapRendererResourcesManager::KeyedResourcesCollection::removeResources(const ResourceFilterCallback filter)
 {
     removeEntries(
         [filter]
@@ -1561,17 +1561,17 @@ void OsmAnd::MapRendererResources::KeyedResourcesCollection::removeResources(con
         });
 }
 
-OsmAnd::MapRendererResources::SymbolsTiledResource::SymbolsTiledResource(MapRendererResources* owner, const TiledEntriesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom)
+OsmAnd::MapRendererResourcesManager::SymbolsTiledResource::SymbolsTiledResource(MapRendererResourcesManager* owner, const TiledEntriesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom)
     : BaseTiledResource(owner, ResourceType::Symbols, collection, tileId, zoom)
 {
 }
 
-OsmAnd::MapRendererResources::SymbolsTiledResource::~SymbolsTiledResource()
+OsmAnd::MapRendererResourcesManager::SymbolsTiledResource::~SymbolsTiledResource()
 {
     safeUnlink();
 }
 
-bool OsmAnd::MapRendererResources::SymbolsTiledResource::obtainData(bool& dataAvailable, const IQueryController* queryController)
+bool OsmAnd::MapRendererResourcesManager::SymbolsTiledResource::obtainData(bool& dataAvailable, const IQueryController* queryController)
 {
     // Obtain collection link and maintain it
     const auto link_ = link.lock();
@@ -1678,7 +1678,7 @@ bool OsmAnd::MapRendererResources::SymbolsTiledResource::obtainData(bool& dataAv
     return true;
 }
 
-bool OsmAnd::MapRendererResources::SymbolsTiledResource::uploadToGPU()
+bool OsmAnd::MapRendererResourcesManager::SymbolsTiledResource::uploadToGPU()
 {
     typedef std::pair< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > SymbolResourceEntry;
     typedef std::pair< std::shared_ptr<const MapSymbol>, proper::shared_future< std::shared_ptr<const GPUAPI::ResourceInGPU> > > FutureSymbolResourceEntry;
@@ -1803,7 +1803,7 @@ bool OsmAnd::MapRendererResources::SymbolsTiledResource::uploadToGPU()
     return true;
 }
 
-void OsmAnd::MapRendererResources::SymbolsTiledResource::unloadFromGPU()
+void OsmAnd::MapRendererResourcesManager::SymbolsTiledResource::unloadFromGPU()
 {
     const auto link_ = link.lock();
     const auto collection = static_cast<SymbolsTiledResourcesCollection*>(&link_->collection);
@@ -1857,12 +1857,12 @@ void OsmAnd::MapRendererResources::SymbolsTiledResource::unloadFromGPU()
     _referencedSharedGroupsResources.clear();
 }
 
-bool OsmAnd::MapRendererResources::SymbolsTiledResource::checkIsSafeToUnlink()
+bool OsmAnd::MapRendererResourcesManager::SymbolsTiledResource::checkIsSafeToUnlink()
 {
     return _referencedSharedGroupsResources.isEmpty();
 }
 
-void OsmAnd::MapRendererResources::SymbolsTiledResource::detach()
+void OsmAnd::MapRendererResourcesManager::SymbolsTiledResource::detach()
 {
     const auto link_ = link.lock();
     const auto collection = static_cast<SymbolsTiledResourcesCollection*>(&link_->collection);
@@ -1907,35 +1907,35 @@ void OsmAnd::MapRendererResources::SymbolsTiledResource::detach()
     _referencedSharedGroupsResources.clear();
 }
 
-OsmAnd::MapRendererResources::SymbolsTiledResource::GroupResources::GroupResources(const std::shared_ptr<const MapSymbolsGroup>& group_)
+OsmAnd::MapRendererResourcesManager::SymbolsTiledResource::GroupResources::GroupResources(const std::shared_ptr<const MapSymbolsGroup>& group_)
     : group(group_)
 {
 }
 
-OsmAnd::MapRendererResources::SymbolsTiledResource::GroupResources::~GroupResources()
+OsmAnd::MapRendererResourcesManager::SymbolsTiledResource::GroupResources::~GroupResources()
 {
 }
 
-OsmAnd::MapRendererResources::SymbolsTiledResourcesCollection::SymbolsTiledResourcesCollection()
+OsmAnd::MapRendererResourcesManager::SymbolsTiledResourcesCollection::SymbolsTiledResourcesCollection()
     : TiledResourcesCollection(ResourceType::Symbols)
 {
 }
 
-OsmAnd::MapRendererResources::SymbolsTiledResourcesCollection::~SymbolsTiledResourcesCollection()
+OsmAnd::MapRendererResourcesManager::SymbolsTiledResourcesCollection::~SymbolsTiledResourcesCollection()
 {
 }
 
-OsmAnd::MapRendererResources::SymbolsKeyedResource::SymbolsKeyedResource(MapRendererResources* owner, const KeyedEntriesCollection<Key, BaseKeyedResource>& collection, const Key key)
+OsmAnd::MapRendererResourcesManager::SymbolsKeyedResource::SymbolsKeyedResource(MapRendererResourcesManager* owner, const KeyedEntriesCollection<Key, BaseKeyedResource>& collection, const Key key)
     : BaseKeyedResource(owner, ResourceType::Symbols, collection, key)
 {
 }
 
-OsmAnd::MapRendererResources::SymbolsKeyedResource::~SymbolsKeyedResource()
+OsmAnd::MapRendererResourcesManager::SymbolsKeyedResource::~SymbolsKeyedResource()
 {
     safeUnlink();
 }
 
-bool OsmAnd::MapRendererResources::SymbolsKeyedResource::obtainData(bool& dataAvailable, const IQueryController* queryController)
+bool OsmAnd::MapRendererResourcesManager::SymbolsKeyedResource::obtainData(bool& dataAvailable, const IQueryController* queryController)
 {
     // Obtain collection link and maintain it
     const auto link_ = link.lock();
@@ -1979,7 +1979,7 @@ bool OsmAnd::MapRendererResources::SymbolsKeyedResource::obtainData(bool& dataAv
     return true;
 }
 
-bool OsmAnd::MapRendererResources::SymbolsKeyedResource::uploadToGPU()
+bool OsmAnd::MapRendererResourcesManager::SymbolsKeyedResource::uploadToGPU()
 {
     bool ok;
     bool anyUploadFailed = false;
@@ -2038,22 +2038,22 @@ bool OsmAnd::MapRendererResources::SymbolsKeyedResource::uploadToGPU()
     return true;
 }
 
-void OsmAnd::MapRendererResources::SymbolsKeyedResource::unloadFromGPU()
+void OsmAnd::MapRendererResourcesManager::SymbolsKeyedResource::unloadFromGPU()
 {
     return;
 }
 
-bool OsmAnd::MapRendererResources::SymbolsKeyedResource::checkIsSafeToUnlink()
+bool OsmAnd::MapRendererResourcesManager::SymbolsKeyedResource::checkIsSafeToUnlink()
 {
     return false;
 }
 
-void OsmAnd::MapRendererResources::SymbolsKeyedResource::detach()
+void OsmAnd::MapRendererResourcesManager::SymbolsKeyedResource::detach()
 {
     return;
 }
 
-OsmAnd::MapRendererResources::ResourceRequestTask::ResourceRequestTask(
+OsmAnd::MapRendererResourcesManager::ResourceRequestTask::ResourceRequestTask(
     const std::shared_ptr<BaseResource>& requestedResource_,
     const Concurrent::TaskHost::Bridge& bridge, ExecuteSignature executeMethod, PreExecuteSignature preExecuteMethod /*= nullptr*/, PostExecuteSignature postExecuteMethod /*= nullptr*/)
     : HostedTask(bridge, executeMethod, preExecuteMethod, postExecuteMethod)
@@ -2061,6 +2061,6 @@ OsmAnd::MapRendererResources::ResourceRequestTask::ResourceRequestTask(
 {
 }
 
-OsmAnd::MapRendererResources::ResourceRequestTask::~ResourceRequestTask()
+OsmAnd::MapRendererResourcesManager::ResourceRequestTask::~ResourceRequestTask()
 {
 }

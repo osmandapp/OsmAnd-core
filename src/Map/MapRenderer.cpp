@@ -7,7 +7,7 @@
 #include <QMutableHashIterator>
 
 #include "MapRendererInternalState.h"
-#include "MapRendererResources.h"
+#include "MapRendererResourcesManager.h"
 #include "IMapRasterBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
 #include "MapSymbol.h"
@@ -331,7 +331,7 @@ bool OsmAnd::MapRenderer::preInitializeRendering()
 
     // Create resources
     assert(!static_cast<bool>(_resources));
-    _resources.reset(new MapRendererResources(this));
+    _resources.reset(new MapRendererResourcesManager(this));
 
     return true;
 }
@@ -617,12 +617,12 @@ void OsmAnd::MapRenderer::reloadEverything()
     _resources->invalidateAllResources();
 }
 
-const OsmAnd::MapRendererResources& OsmAnd::MapRenderer::getResources() const
+const OsmAnd::MapRendererResourcesManager& OsmAnd::MapRenderer::getResources() const
 {
     return *_resources.get();
 }
 
-void OsmAnd::MapRenderer::onValidateResourcesOfType(const MapRendererResources::ResourceType type)
+void OsmAnd::MapRenderer::onValidateResourcesOfType(const MapRendererResourcesManager::ResourceType type)
 {
     // Empty stub
 }

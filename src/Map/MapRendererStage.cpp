@@ -15,7 +15,7 @@ OsmAnd::MapRendererStage::~MapRendererStage()
 {
 }
 
-const OsmAnd::MapRendererResources& OsmAnd::MapRendererStage::getResources()
+const OsmAnd::MapRendererResourcesManager& OsmAnd::MapRendererStage::getResources()
 {
     return renderer->getResources();
 }

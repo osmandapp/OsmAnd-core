@@ -50,7 +50,7 @@ namespace OsmAnd
         virtual bool doRenderFrame();
         virtual bool doReleaseRendering();
 
-        virtual void onValidateResourcesOfType(const MapRendererResources::ResourceType type);
+        virtual void onValidateResourcesOfType(const MapRendererResourcesManager::ResourceType type);
 
         virtual bool updateInternalState(MapRenderer::InternalState* internalState, const MapRendererState& state);
 

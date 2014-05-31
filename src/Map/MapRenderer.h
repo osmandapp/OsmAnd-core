@@ -16,7 +16,7 @@
 #include "IMapTiledDataProvider.h"
 #include "TiledEntriesCollection.h"
 #include "MapRendererInternalState.h"
-#include "MapRendererResources.h"
+#include "MapRendererResourcesManager.h"
 
 namespace OsmAnd
 {
@@ -30,9 +30,9 @@ namespace OsmAnd
         Q_DISABLE_COPY(MapRenderer);
     public:
         // Declare short aliases for resource-related entities
-        typedef OsmAnd::MapRendererResources Resources;
-        typedef OsmAnd::MapRendererResources::ResourceType ResourceType;
-        typedef OsmAnd::MapRendererResources::ResourceState ResourceState;
+        typedef OsmAnd::MapRendererResourcesManager Resources;
+        typedef OsmAnd::MapRendererResourcesManager::ResourceType ResourceType;
+        typedef OsmAnd::MapRendererResourcesManager::ResourceState ResourceState;
         typedef OsmAnd::MapRendererInternalState InternalState;
     private:
         // Configuration-related:
@@ -53,7 +53,7 @@ namespace OsmAnd
         void notifyRequestedStateWasUpdated(const MapRendererStateChange change);
 
         // Resources-related:
-        std::unique_ptr<MapRendererResources> _resources;
+        std::unique_ptr<MapRendererResourcesManager> _resources;
         QAtomicInt _resourcesUploadRequestsCounter;
         
         // GPU worker related:
@@ -95,8 +95,8 @@ namespace OsmAnd
         virtual bool updateInternalState(InternalState* internalState, const MapRendererState& state);
 
         // Resources-related:
-        const MapRendererResources& getResources() const;
-        virtual void onValidateResourcesOfType(const MapRendererResources::ResourceType type);
+        const MapRendererResourcesManager& getResources() const;
+        virtual void onValidateResourcesOfType(const MapRendererResourcesManager::ResourceType type);
         void requestResourcesUploadOrUnload();
         bool convertBitmap(const std::shared_ptr<const SkBitmap>& input, std::shared_ptr<const SkBitmap>& output, const AlphaChannelData alphaChannelData = AlphaChannelData::Undefined) const;
         bool convertMapTile(std::shared_ptr<const MapTiledData>& mapTile) const;
@@ -187,7 +187,7 @@ namespace OsmAnd
 
     friend struct OsmAnd::MapRendererInternalState;
     friend class OsmAnd::MapRendererStage;
-    friend class OsmAnd::MapRendererResources;
+    friend class OsmAnd::MapRendererResourcesManager;
     };
 }
 

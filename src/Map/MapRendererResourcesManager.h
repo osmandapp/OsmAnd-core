@@ -30,9 +30,9 @@ namespace OsmAnd
     class MapSymbolsGroup;
     class MapSymbol;
 
-    class MapRendererResources
+    class MapRendererResourcesManager
     {
-        Q_DISABLE_COPY(MapRendererResources);
+        Q_DISABLE_COPY(MapRendererResourcesManager);
     public:
         enum class ResourceType
         {
@@ -109,7 +109,7 @@ namespace OsmAnd
         private:
             bool _isJunk;
         protected:
-            BaseResource(MapRendererResources* owner, const ResourceType type);
+            BaseResource(MapRendererResourcesManager* owner, const ResourceType type);
 
             Concurrent::Task* _requestTask;
 
@@ -123,7 +123,7 @@ namespace OsmAnd
         public:
             virtual ~BaseResource();
 
-            MapRendererResources* const owner;
+            MapRendererResourcesManager* const owner;
             const ResourceType type;
 
             const bool& isJunk;
@@ -132,7 +132,7 @@ namespace OsmAnd
             virtual void setState(const ResourceState newState) = 0;
             virtual bool setStateIf(const ResourceState testState, const ResourceState newState) = 0;
 
-        friend class OsmAnd::MapRendererResources;
+        friend class OsmAnd::MapRendererResourcesManager;
         };
 
         // Base class for all tiled resources
@@ -145,7 +145,7 @@ namespace OsmAnd
         private:
         protected:
             BaseTiledResource(
-                MapRendererResources* owner,
+                MapRendererResourcesManager* owner,
                 const ResourceType type,
                 const TiledEntriesCollection<BaseTiledResource>& collection,
                 const TileId tileId,
@@ -159,7 +159,7 @@ namespace OsmAnd
             virtual void setState(const ResourceState newState);
             virtual bool setStateIf(const ResourceState testState, const ResourceState newState);
 
-        friend class OsmAnd::MapRendererResources;
+        friend class OsmAnd::MapRendererResourcesManager;
         };
 
         // Base class for all keyed resources
@@ -173,7 +173,7 @@ namespace OsmAnd
         private:
         protected:
             BaseKeyedResource(
-                MapRendererResources* owner,
+                MapRendererResourcesManager* owner,
                 const ResourceType type,
                 const KeyedEntriesCollection<Key, BaseKeyedResource>& collection,
                 const Key key);
@@ -186,7 +186,7 @@ namespace OsmAnd
             virtual void setState(const ResourceState newState);
             virtual bool setStateIf(const ResourceState testState, const ResourceState newState);
 
-        friend class OsmAnd::MapRendererResources;
+        friend class OsmAnd::MapRendererResourcesManager;
         };
 
         // Base Collection of resources
@@ -202,14 +202,14 @@ namespace OsmAnd
         public:
             virtual ~BaseResourcesCollection();
 
-            const MapRendererResources::ResourceType type;
+            const MapRendererResourcesManager::ResourceType type;
 
             virtual int getResourcesCount() const = 0;
             virtual void forEachResourceExecute(const ResourceActionCallback action) = 0;
             virtual void obtainResources(QList< std::shared_ptr<BaseResource> >* outList, const ResourceFilterCallback filter) = 0;
             virtual void removeResources(const ResourceFilterCallback filter) = 0;
 
-        friend class OsmAnd::MapRendererResources;
+        friend class OsmAnd::MapRendererResourcesManager;
         };
         typedef std::array< QList< std::shared_ptr<BaseResourcesCollection> >, ResourceTypesCount > ResourcesStorage;
 
@@ -232,7 +232,7 @@ namespace OsmAnd
             virtual void obtainResources(QList< std::shared_ptr<BaseResource> >* outList, const ResourceFilterCallback filter);
             virtual void removeResources(const ResourceFilterCallback filter);
 
-        friend class OsmAnd::MapRendererResources;
+        friend class OsmAnd::MapRendererResourcesManager;
         };
 
         // Map tile:
@@ -240,7 +240,7 @@ namespace OsmAnd
         {
         private:
         protected:
-            MapTileResource(MapRendererResources* owner, const ResourceType type, const TiledEntriesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom);
+            MapTileResource(MapRendererResourcesManager* owner, const ResourceType type, const TiledEntriesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom);
 
             std::shared_ptr<const MapTiledData> _sourceData;
             std::shared_ptr<const GPUAPI::ResourceInGPU> _resourceInGPU;
@@ -253,7 +253,7 @@ namespace OsmAnd
 
             const std::shared_ptr<const GPUAPI::ResourceInGPU>& resourceInGPU;
 
-        friend class OsmAnd::MapRendererResources;
+        friend class OsmAnd::MapRendererResourcesManager;
         };
 
         // Keyed resources collection:
@@ -275,7 +275,7 @@ namespace OsmAnd
             virtual void obtainResources(QList< std::shared_ptr<BaseResource> >* outList, const ResourceFilterCallback filter);
             virtual void removeResources(const ResourceFilterCallback filter);
 
-        friend class OsmAnd::MapRendererResources;
+        friend class OsmAnd::MapRendererResourcesManager;
         };
 
         // Tiled symbols:
@@ -284,7 +284,7 @@ namespace OsmAnd
         {
         private:
         protected:
-            SymbolsTiledResource(MapRendererResources* owner, const TiledEntriesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom);
+            SymbolsTiledResource(MapRendererResourcesManager* owner, const TiledEntriesCollection<BaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom);
 
             class GroupResources
             {
@@ -312,8 +312,8 @@ namespace OsmAnd
         public:
             virtual ~SymbolsTiledResource();
 
-        friend class OsmAnd::MapRendererResources;
-        friend class OsmAnd::MapRendererResources::SymbolsTiledResourcesCollection;
+        friend class OsmAnd::MapRendererResourcesManager;
+        friend class OsmAnd::MapRendererResourcesManager::SymbolsTiledResourcesCollection;
         };
         class SymbolsTiledResourcesCollection : public TiledResourcesCollection
         {
@@ -325,8 +325,8 @@ namespace OsmAnd
         public:
             virtual ~SymbolsTiledResourcesCollection();
 
-        friend class OsmAnd::MapRendererResources;
-        friend class OsmAnd::MapRendererResources::SymbolsTiledResource;
+        friend class OsmAnd::MapRendererResourcesManager;
+        friend class OsmAnd::MapRendererResourcesManager::SymbolsTiledResource;
         };
 
         // Keyed symbols:
@@ -334,7 +334,7 @@ namespace OsmAnd
         {
         private:
         protected:
-            SymbolsKeyedResource(MapRendererResources* owner, const KeyedEntriesCollection<Key, BaseKeyedResource>& collection, const Key key);
+            SymbolsKeyedResource(MapRendererResourcesManager* owner, const KeyedEntriesCollection<Key, BaseKeyedResource>& collection, const Key key);
 
             std::shared_ptr<const MapSymbolsGroup> _sourceData;
             QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > _resourcesInGPU;
@@ -348,7 +348,7 @@ namespace OsmAnd
         public:
             virtual ~SymbolsKeyedResource();
 
-        friend class OsmAnd::MapRendererResources;
+        friend class OsmAnd::MapRendererResourcesManager;
         };
         
         // Symbols:
@@ -435,7 +435,7 @@ namespace OsmAnd
         std::shared_ptr<const GPUAPI::ResourceInGPU> _processingTileStub;
         std::shared_ptr<const GPUAPI::ResourceInGPU> _unavailableTileStub;
     protected:
-        MapRendererResources(MapRenderer* const owner);
+        MapRendererResourcesManager(MapRenderer* const owner);
 
         // Resources management:
         bool uploadTileToGPU(const std::shared_ptr<const MapTiledData>& mapTile, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU);
@@ -449,7 +449,7 @@ namespace OsmAnd
             unsigned int* const outResourcesUploaded = nullptr,
             unsigned int* const outResourcesUnloaded = nullptr);
     public:
-        ~MapRendererResources();
+        ~MapRendererResourcesManager();
 
         MapRenderer* const renderer;
 
