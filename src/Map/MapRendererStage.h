@@ -22,12 +22,6 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY(MapRendererStage);
     public:
-        // Declare short aliases for resource-related entities
-        typedef OsmAnd::MapRendererResourcesManager Resources;
-        typedef OsmAnd::MapRendererResourcesManager::ResourceType ResourceType;
-        typedef OsmAnd::MapRendererResourcesManager::ResourceState ResourceState;
-        typedef OsmAnd::MapRendererInternalState InternalState;
-    public:
         MapRendererStage(MapRenderer* const renderer);
         virtual ~MapRendererStage();
 

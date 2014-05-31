@@ -28,12 +28,6 @@ namespace OsmAnd
     class MapRenderer : public IMapRenderer
     {
         Q_DISABLE_COPY(MapRenderer);
-    public:
-        // Declare short aliases for resource-related entities
-        typedef OsmAnd::MapRendererResourcesManager Resources;
-        typedef OsmAnd::MapRendererResourcesManager::ResourceType ResourceType;
-        typedef OsmAnd::MapRendererResourcesManager::ResourceState ResourceState;
-        typedef OsmAnd::MapRendererInternalState InternalState;
     private:
         // Configuration-related:
         mutable QReadWriteLock _configurationLock;
@@ -90,13 +84,13 @@ namespace OsmAnd
         // State-related:
         const MapRendererState& currentState;
         
-        virtual const InternalState* getInternalStateRef() const = 0;
-        virtual InternalState* getInternalStateRef() = 0;
-        virtual bool updateInternalState(InternalState* internalState, const MapRendererState& state);
+        virtual const MapRendererInternalState* getInternalStateRef() const = 0;
+        virtual MapRendererInternalState* getInternalStateRef() = 0;
+        virtual bool updateInternalState(MapRendererInternalState* internalState, const MapRendererState& state);
 
         // Resources-related:
         const MapRendererResourcesManager& getResources() const;
-        virtual void onValidateResourcesOfType(const MapRendererResourcesManager::ResourceType type);
+        virtual void onValidateResourcesOfType(const MapRendererResourceType type);
         void requestResourcesUploadOrUnload();
         bool convertBitmap(const std::shared_ptr<const SkBitmap>& input, std::shared_ptr<const SkBitmap>& output, const AlphaChannelData alphaChannelData = AlphaChannelData::Undefined) const;
         bool convertMapTile(std::shared_ptr<const MapTiledData>& mapTile) const;

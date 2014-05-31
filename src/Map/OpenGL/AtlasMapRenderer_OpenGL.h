@@ -33,8 +33,8 @@ namespace OsmAnd
         const static float _zNear;
 
         InternalState _internalState;
-        virtual const MapRenderer::InternalState* getInternalStateRef() const;
-        virtual MapRenderer::InternalState* getInternalStateRef();
+        virtual const MapRendererInternalState* getInternalStateRef() const;
+        virtual MapRendererInternalState* getInternalStateRef();
 
         void updateFrustum(InternalState* internalState, const MapRendererState& state);
         void computeVisibleTileset(InternalState* internalState, const MapRendererState& state);
@@ -50,9 +50,9 @@ namespace OsmAnd
         virtual bool doRenderFrame();
         virtual bool doReleaseRendering();
 
-        virtual void onValidateResourcesOfType(const MapRendererResourcesManager::ResourceType type);
+        virtual void onValidateResourcesOfType(const MapRendererResourceType type);
 
-        virtual bool updateInternalState(MapRenderer::InternalState* internalState, const MapRendererState& state);
+        virtual bool updateInternalState(MapRendererInternalState* internalState, const MapRendererState& state);
 
         virtual bool postInitializeRendering();
         virtual bool preReleaseRendering();

@@ -451,11 +451,11 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
         if (elevationDataEnabled)
         {
             const auto& resourcesCollection_ = getResources().getCollection(ResourceType::ElevationData, currentState.elevationDataProvider);
-            const auto& resourcesCollection = std::static_pointer_cast<const MapRendererResourcesManager::TiledResourcesCollection>(resourcesCollection_);
+            const auto& resourcesCollection = std::static_pointer_cast<const MapRendererResourcesManager::MapRendererTiledResourcesCollection>(resourcesCollection_);
 
             // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
             std::shared_ptr< const GPUAPI::ResourceInGPU > gpuResource;
-            std::shared_ptr<Resources::BaseTiledResource> resource_;
+            std::shared_ptr<Resources::MapRendererBaseTiledResource> resource_;
             if (resourcesCollection->tryObtainEntry(resource_, tileIdN, currentState.zoomBase))
             {
                 const auto resource = std::static_pointer_cast<Resources::MapTileResource>(resource_);
@@ -559,7 +559,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
 
             // Get resources collection
             const auto& resourcesCollection_ = getResources().getCollection(ResourceType::RasterMap, currentState.rasterLayerProviders[layerId]);
-            const auto& resourcesCollection = std::static_pointer_cast<const MapRendererResourcesManager::TiledResourcesCollection>(resourcesCollection_);
+            const auto& resourcesCollection = std::static_pointer_cast<const MapRendererResourcesManager::MapRendererTiledResourcesCollection>(resourcesCollection_);
 
             const auto& perTile_vs = tileProgram.vs.param.rasterTileLayers[layerLinearIdx];
             const auto& perTile_fs = tileProgram.fs.param.rasterTileLayers[layerLinearIdx];
@@ -567,7 +567,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
 
             // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
             std::shared_ptr< const GPUAPI::ResourceInGPU > gpuResource;
-            std::shared_ptr<Resources::BaseTiledResource> resource_;
+            std::shared_ptr<Resources::MapRendererBaseTiledResource> resource_;
             if (resourcesCollection->tryObtainEntry(resource_, tileIdN, currentState.zoomBase))
             {
                 const auto resource = std::static_pointer_cast<Resources::MapTileResource>(resource_);

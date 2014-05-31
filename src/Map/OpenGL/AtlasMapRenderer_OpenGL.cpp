@@ -167,11 +167,11 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doReleaseRendering()
     return true;
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGL::onValidateResourcesOfType(const MapRendererResourcesManager::ResourceType type)
+void OsmAnd::AtlasMapRenderer_OpenGL::onValidateResourcesOfType(const MapRendererResourcesManager::MapRendererResourceType type)
 {
     AtlasMapRenderer::onValidateResourcesOfType(type);
 
-    if (type == MapRendererResourcesManager::ResourceType::ElevationData)
+    if (type == MapRendererResourcesManager::MapRendererResourceType::ElevationData)
     {
         // Recreate tile patch since elevation data influences density of tile patch
         _rasterMapStage.recreateTile();

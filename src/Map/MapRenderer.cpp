@@ -100,11 +100,11 @@ void OsmAnd::MapRenderer::setConfiguration(const MapRendererConfiguration& confi
         mask |= ConfigurationChange::PaletteTexturesUsage;
 
     if (invalidateRasterTextures)
-        _resources->invalidateResourcesOfType(ResourceType::RasterMap);
+        _resources->invalidateResourcesOfType(MapRendererResourceType::RasterMap);
     if (invalidateElevationData)
-        _resources->invalidateResourcesOfType(ResourceType::ElevationData);
+        _resources->invalidateResourcesOfType(MapRendererResourceType::ElevationData);
     if (invalidateSymbols)
-        _resources->invalidateResourcesOfType(ResourceType::Symbols);
+        _resources->invalidateResourcesOfType(MapRendererResourceType::Symbols);
     invalidateCurrentConfiguration(mask);
 }
 
@@ -210,7 +210,7 @@ void OsmAnd::MapRenderer::validateConfigurationChange(const ConfigurationChange&
     // Empty stub
 }
 
-bool OsmAnd::MapRenderer::updateInternalState(InternalState* internalState, const MapRendererState& state)
+bool OsmAnd::MapRenderer::updateInternalState(MapRendererInternalState* internalState, const MapRendererState& state)
 {
     const auto zoomDiff = ZoomLevel::MaxZoomLevel - state.zoomBase;
 
@@ -622,7 +622,7 @@ const OsmAnd::MapRendererResourcesManager& OsmAnd::MapRenderer::getResources() c
     return *_resources.get();
 }
 
-void OsmAnd::MapRenderer::onValidateResourcesOfType(const MapRendererResourcesManager::ResourceType type)
+void OsmAnd::MapRenderer::onValidateResourcesOfType(const MapRendererResourceType type)
 {
     // Empty stub
 }
@@ -828,7 +828,7 @@ void OsmAnd::MapRenderer::setElevationDataProvider(const std::shared_ptr<IMapEle
 
     _requestedState.elevationDataProvider = tileProvider;
 
-    _resources->invalidateResourcesOfType(ResourceType::ElevationData);
+    _resources->invalidateResourcesOfType(MapRendererResourceType::ElevationData);
     notifyRequestedStateWasUpdated(MapRendererStateChange::ElevationData_Provider);
 }
 
@@ -842,7 +842,7 @@ void OsmAnd::MapRenderer::resetElevationDataProvider(bool forcedUpdate /*= false
 
     _requestedState.elevationDataProvider.reset();
 
-    _resources->invalidateResourcesOfType(ResourceType::ElevationData);
+    _resources->invalidateResourcesOfType(MapRendererResourceType::ElevationData);
     notifyRequestedStateWasUpdated(MapRendererStateChange::ElevationData_Provider);
 }
 
