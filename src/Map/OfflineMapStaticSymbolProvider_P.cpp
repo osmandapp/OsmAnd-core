@@ -76,7 +76,7 @@ bool OsmAnd::OfflineMapStaticSymbolProvider_P::obtainSymbols(
         {
             if (const auto pinnedSymbol = std::dynamic_pointer_cast<const RasterizedPinnedSymbol>(rasterizedSymbol))
             {
-                const auto symbol = new PinnedMapSymbol(
+                const auto symbol = new SpriteMapSymbol(
                     group,
                     isShareable,
                     pinnedSymbol->bitmap,

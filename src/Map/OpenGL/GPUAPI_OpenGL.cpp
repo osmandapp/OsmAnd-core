@@ -12,7 +12,7 @@
 #include "IMapTiledDataProvider.h"
 #include "IMapRasterBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
-#include "MapSymbolProvidersCommon.h"
+#include "MapSymbol.h"
 #include "Logging.h"
 #include "Utilities.h"
 

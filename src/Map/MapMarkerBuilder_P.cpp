@@ -5,7 +5,7 @@
 #include "MapMarker_P.h"
 #include "MapMarkersCollection.h"
 #include "MapMarkersCollection_P.h"
-#include "MapSymbolProvidersCommon.h"
+#include "MapSymbol.h"
 #include "Utilities.h"
 
 OsmAnd::MapMarkerBuilder_P::MapMarkerBuilder_P(MapMarkerBuilder* const owner_)

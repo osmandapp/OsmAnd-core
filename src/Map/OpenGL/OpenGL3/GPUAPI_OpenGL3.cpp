@@ -9,7 +9,7 @@
 
 #include "MapRendererTypes.h"
 #include "IMapRasterBitmapTileProvider.h"
-#include "MapSymbolProvidersCommon.h"
+#include "MapSymbol.h"
 #include "Logging.h"
 
 #undef GL_CHECK_RESULT

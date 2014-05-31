@@ -204,7 +204,7 @@ void OsmAnd::MapStyle_P::dump(const MapStyleRulesetType type, const QString& pre
         auto value = getValueString(ruleEntry.key());
         auto rule = ruleEntry.value();
 
-        LogPrintf(LogSeverityLevel::Debug, "%sRule 0x%p [%s (%d):%s (%d)]",
+        LogPrintf(LogSeverityLevel::Debug, "%sRule %p [%s (%d):%s (%d)]",
             qPrintable(prefix),
             rule.get(),
             qPrintable(tag),

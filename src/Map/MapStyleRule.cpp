@@ -107,7 +107,7 @@ void OsmAnd::MapStyleRule::dump( const QString& prefix /*= QString::null*/ ) con
             qPrintable(newPrefix));
         for(const auto& child : constOf(_p->_ifChildren))
         {
-            LogPrintf(LogSeverityLevel::Debug, "%sAND 0x%p",
+            LogPrintf(LogSeverityLevel::Debug, "%sAND %p",
                 qPrintable(newPrefix),
                 child.get());
             child->dump(newPrefix);
@@ -122,7 +122,7 @@ void OsmAnd::MapStyleRule::dump( const QString& prefix /*= QString::null*/ ) con
             qPrintable(newPrefix));
         for(const auto& child : constOf(_p->_ifElseChildren))
         {
-            LogPrintf(LogSeverityLevel::Debug, "%sOR 0x%p",
+            LogPrintf(LogSeverityLevel::Debug, "%sOR %p",
                 qPrintable(newPrefix),
                 child.get());
             child->dump(newPrefix);

@@ -10,7 +10,7 @@
 #include "MapRendererResources.h"
 #include "IMapRasterBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
-#include "MapSymbolProvidersCommon.h"
+#include "MapSymbol.h"
 #include "IRetainableResource.h"
 #include "GPUAPI.h"
 #include "Utilities.h"

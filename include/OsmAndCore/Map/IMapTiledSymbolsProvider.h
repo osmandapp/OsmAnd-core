@@ -9,7 +9,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/MapSymbolProvidersCommon.h>
+#include <OsmAndCore/Map/MapSymbol.h>
 #include <OsmAndCore/Map/IMapTiledDataProvider.h>
 
 namespace OsmAnd

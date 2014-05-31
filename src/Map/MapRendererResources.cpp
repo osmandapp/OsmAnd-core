@@ -7,7 +7,7 @@
 #include "IMapKeyedDataProvider.h"
 #include "IMapRasterBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
-#include "MapSymbolProvidersCommon.h"
+#include "MapSymbol.h"
 #include "IMapTiledSymbolsProvider.h"
 #include "IMapKeyedSymbolsProvider.h"
 #include "IRetainableResource.h"
@@ -32,13 +32,13 @@
     if (const auto tiledResource = std::dynamic_pointer_cast<const BaseTiledResource>(resource))                                            \
     {                                                                                                                                       \
         LogPrintf(LogSeverityLevel::Debug,                                                                                                  \
-            "Tile resource 0x%p %dx%d@%d state change '" #oldState "'->'" #newState "' at " __FILE__ ":" QT_STRINGIFY(__LINE__),            \
+            "Tile resource %p %dx%d@%d state change '" #oldState "'->'" #newState "' at " __FILE__ ":" QT_STRINGIFY(__LINE__),              \
             resource.get(), tiledResource.tileId.x, tiledResource.tileId.y, tiledResource.zoom);                                            \
     }                                                                                                                                       \
     else                                                                                                                                    \
     {                                                                                                                                       \
         LogPrintf(LogSeverityLevel::Debug,                                                                                                  \
-            "Resource 0x%p state change '" #oldState "'->'" #newState "' at " __FILE__ ":" QT_STRINGIFY(__LINE__),                          \
+            "Resource %p state change '" #oldState "'->'" #newState "' at " __FILE__ ":" QT_STRINGIFY(__LINE__),                            \
             resource.get());                                                                                                                \
     }
 #else
@@ -798,14 +798,14 @@ unsigned int OsmAnd::MapRendererResources::uploadResources(const unsigned int li
                     if (const auto tiledResource = std::dynamic_pointer_cast<const BaseTiledResource>(resource))
                     {
                         LogPrintf(LogSeverityLevel::Error,
-                            "Failed to upload tiled resource 0x%p for %dx%d@%d to GPU",
+                            "Failed to upload tiled resource %p for %dx%d@%d to GPU",
                             resource.get(),
                             tiledResource->tileId.x, tiledResource->tileId.y, tiledResource->zoom);
                     }
                     else
                     {
                         LogPrintf(LogSeverityLevel::Error,
-                            "Failed to upload resource 0x%p to GPU",
+                            "Failed to upload resource %p to GPU",
                             resource.get());
                     }
                     continue;
@@ -1049,7 +1049,7 @@ void OsmAnd::MapRendererResources::releaseResourcesFrom(const std::shared_ptr<Ba
                 if (const auto tiledEntry = std::dynamic_pointer_cast<const BaseTiledResource>(entry))
                 {
                     LogPrintf(LogSeverityLevel::Debug,
-                        "Tile resource 0x%p %dx%d@%d has state %d which can not be processed, need to wait",
+                        "Tile resource %p %dx%d@%d has state %d which can not be processed, need to wait",
                         entry.get(),
                         tiledEntry->tileId.x,
                         tiledEntry->tileId.y,
@@ -1059,7 +1059,7 @@ void OsmAnd::MapRendererResources::releaseResourcesFrom(const std::shared_ptr<Ba
                 else
                 {
                     LogPrintf(LogSeverityLevel::Debug,
-                        "Resource 0x%p has state %d which can not be processed, need to wait",
+                        "Resource %p has state %d which can not be processed, need to wait",
                         entry.get(),
                         static_cast<int>(state));
                 }
@@ -1309,7 +1309,7 @@ OsmAnd::MapRendererResources::BaseKeyedResource::~BaseKeyedResource()
 {
     const volatile auto state = getState();
     if (state == ResourceState::Uploading || state == ResourceState::Uploaded || state == ResourceState::IsBeingUsed || state == ResourceState::Unloading)
-        LogPrintf(LogSeverityLevel::Error, "Keyed resource for 0x%p still resides in GPU memory. This may cause GPU memory leak", key);
+        LogPrintf(LogSeverityLevel::Error, "Keyed resource for %p still resides in GPU memory. This may cause GPU memory leak", key);
 
     safeUnlink();
 }

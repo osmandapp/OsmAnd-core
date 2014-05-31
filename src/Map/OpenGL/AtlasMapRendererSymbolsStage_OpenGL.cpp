@@ -10,7 +10,7 @@
 #include <SkColor.h>
 
 #include "AtlasMapRenderer_OpenGL.h"
-#include "MapSymbolProvidersCommon.h"
+#include "MapSymbol.h"
 #include "QuadTree.h"
 #include "QKeyValueIterator.h"
 #include "ObjectWithId.h"
@@ -367,7 +367,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
         // Sort pinned symbols by distance to camera
         for(const auto& symbolEntry : rangeOf(constOf(mapSymbolsLayer)))
         {
-            const auto& symbol = std::dynamic_pointer_cast<const PinnedMapSymbol>(symbolEntry.key());
+            const auto& symbol = std::dynamic_pointer_cast<const SpriteMapSymbol>(symbolEntry.key());
             if (!symbol)
                 continue;
             assert(!symbolEntry.value().expired());
@@ -402,7 +402,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 
             if (const auto& renderable = std::dynamic_pointer_cast<const RenderablePinnedSymbol>(item.value()))
             {
-                const auto& symbol = std::dynamic_pointer_cast<const PinnedMapSymbol>(renderable->mapSymbol);
+                const auto& symbol = std::dynamic_pointer_cast<const SpriteMapSymbol>(renderable->mapSymbol);
                 const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
                 const auto& symbolGroupPtr = symbol->groupPtr;
 
@@ -507,7 +507,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 }
 
                 GL_PUSH_GROUP_MARKER(QString("[%1(%2) pinned \"%3\"]")
-                    .arg(QString().sprintf("0x%p", symbol->groupPtr))
+                    .arg(QString().sprintf("%p", symbol->groupPtr))
                     .arg(symbol->group.lock()->getDebugTitle())
                     .arg(qPrintable(symbol->content)));
 
@@ -789,7 +789,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     }
 
                     GL_PUSH_GROUP_MARKER(QString("[%1(%2) SOP-2D \"%3\"]")
-                        .arg(QString().sprintf("0x%p", symbol->groupPtr))
+                        .arg(QString().sprintf("%p", symbol->groupPtr))
                         .arg(symbol->group.lock()->getDebugTitle())
                         .arg(qPrintable(symbol->content)));
 
@@ -1170,7 +1170,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     }
 
                     GL_PUSH_GROUP_MARKER(QString("[%1(%2) SOP-3D \"%3\"]")
-                        .arg(QString().sprintf("0x%p", symbol->groupPtr))
+                        .arg(QString().sprintf("%p", symbol->groupPtr))
                         .arg(symbol->group.lock()->getDebugTitle())
                         .arg(qPrintable(symbol->content)));
 
