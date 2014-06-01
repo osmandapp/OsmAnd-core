@@ -20,6 +20,16 @@ void OsmAnd::MapMarkerBuilder::setIsHidden(const bool hidden)
     _p->setIsHidden(hidden);
 }
 
+int OsmAnd::MapMarkerBuilder::getBaseOrder() const
+{
+    return _p->getBaseOrder();
+}
+
+void OsmAnd::MapMarkerBuilder::setBaseOrder(const int baseOrder)
+{
+    _p->setBaseOrder(baseOrder);
+}
+
 bool OsmAnd::MapMarkerBuilder::isPrecisionCircleEnabled() const
 {
     return _p->isPrecisionCircleEnabled();

@@ -1,6 +1,8 @@
 #include "MapMarkersCollection_P.h"
 #include "MapMarkersCollection.h"
 
+#include "MapMarker.h"
+
 OsmAnd::MapMarkersCollection_P::MapMarkersCollection_P(MapMarkersCollection* const owner_)
     : owner(owner_)
 {
@@ -59,8 +61,12 @@ bool OsmAnd::MapMarkersCollection_P::obtainData(const Key key, std::shared_ptr<c
     const auto citMarker = _markers.constFind(key);
     if (citMarker == _markers.cend())
         return false;
+    auto& marker = *citMarker;
 
-    //outSymbolGroups = ;
+    // Apply all the changes that were performed over this marker
+    marker->applyChanges();
+
+    outKeyedData.reset(new KeyedSymbolsData(marker->mapSymbolsGroup, key));
 
     return true;
 }

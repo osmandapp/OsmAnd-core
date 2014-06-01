@@ -1,8 +1,9 @@
 #include "MapMarker.h"
 #include "MapMarker_P.h"
 
-OsmAnd::MapMarker::MapMarker()
+OsmAnd::MapMarker::MapMarker(const std::shared_ptr<const MapSymbolsGroup>& mapSymbolsGroup_)
     : _p(new MapMarker_P(this))
+    , mapSymbolsGroup(mapSymbolsGroup_)
 {
 }
 

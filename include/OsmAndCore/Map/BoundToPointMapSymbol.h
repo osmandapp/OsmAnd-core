@@ -28,7 +28,7 @@ namespace OsmAnd
     public:
         virtual ~BoundToPointMapSymbol();
 
-        const PointI location31;
+        PointI location31;
     };
 }
 

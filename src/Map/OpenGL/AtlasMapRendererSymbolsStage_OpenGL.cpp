@@ -438,7 +438,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 #endif // !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
 
                 // Query for similar content in area of "minDistance" to exclude duplicates, but keep if from same mapObject
-                if (symbol->minDistance.x > 0 || symbol->minDistance.y > 0)
+                if ((symbol->minDistance.x > 0 || symbol->minDistance.y > 0) && !symbol->content.isNull())
                 {
                     const auto& symbolContent = symbol->content;
                     const auto hasSimilarContent = intersections.test(boundsInWindow.getEnlargedBy(symbol->minDistance), false,
@@ -728,7 +728,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 #endif // !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
 
                     // Query for similar content in area of "minDistance" to exclude duplicates, but keep if from same mapObject
-                    if (symbol->minDistance.x > 0 || symbol->minDistance.y > 0)
+                    if ((symbol->minDistance.x > 0 || symbol->minDistance.y > 0) && !symbol->content.isNull())
                     {
                         const auto& symbolContent = symbol->content;
                         const auto hasSimilarContent = intersections.test(oobb.getEnlargedBy(symbol->minDistance), false,
@@ -1108,7 +1108,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 #endif // !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
 
                     // Query for similar content in area of "minDistance" to exclude duplicates, but keep if from same mapObject
-                    if (symbol->minDistance.x > 0 || symbol->minDistance.y > 0)
+                    if ((symbol->minDistance.x > 0 || symbol->minDistance.y > 0) && !symbol->content.isNull())
                     {
                         const auto& symbolContent = symbol->content;
                         const auto hasSimilarContent = intersections.test(oobb.getEnlargedBy(symbol->minDistance), false,

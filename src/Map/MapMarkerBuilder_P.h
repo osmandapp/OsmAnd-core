@@ -32,6 +32,8 @@ namespace OsmAnd
 
         bool _isHidden;
 
+        int _baseOrder;
+
         bool _isPrecisionCircleEnabled;
         double _precisionCircleRadius;
         SkColor _precisionCircleBaseColor;
@@ -50,6 +52,9 @@ namespace OsmAnd
 
         bool isHidden() const;
         void setIsHidden(const bool hidden);
+
+        int getBaseOrder() const;
+        void setBaseOrder(const int baseOrder);
 
         bool isPrecisionCircleEnabled() const;
         void setIsPrecisionCircleEnabled(const bool enabled);

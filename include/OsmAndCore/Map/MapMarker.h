@@ -15,7 +15,10 @@ namespace OsmAnd
 {
     class MapMarkerBuilder;
     class MapMarkerBuilder_P;
-
+    class MapMarkersCollection;
+    class MapMarkersCollection_P;
+    class MapSymbolsGroup;
+    
     class MapMarker_P;
     class OSMAND_CORE_API MapMarker
     {
@@ -24,7 +27,9 @@ namespace OsmAnd
     private:
         PrivateImplementation<MapMarker_P> _p;
     protected:
-        MapMarker();
+        MapMarker(const std::shared_ptr<const MapSymbolsGroup>& mapSymbolsGroup);
+
+        void applyChanges();
     public:
         virtual ~MapMarker();
 
@@ -45,10 +50,13 @@ namespace OsmAnd
         void setDirection(const float direction);
 
         bool hasUnappliedChanges() const;
-        void applyChanges();
+
+        const std::shared_ptr<const MapSymbolsGroup> mapSymbolsGroup;
 
     friend class OsmAnd::MapMarkerBuilder;
     friend class OsmAnd::MapMarkerBuilder_P;
+    friend class OsmAnd::MapMarkersCollection;
+    friend class OsmAnd::MapMarkersCollection_P;
     };
 }
 
