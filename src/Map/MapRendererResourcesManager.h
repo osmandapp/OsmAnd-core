@@ -161,6 +161,17 @@ namespace OsmAnd
         void dumpResourcesInfo() const;
 
     friend class OsmAnd::MapRenderer;
+    friend class OsmAnd::MapRendererBaseResource;
+    friend class OsmAnd::MapRendererBaseTiledResource;
+    friend class OsmAnd::MapRendererBaseKeyedResource;
+    friend class OsmAnd::MapRendererBaseResourcesCollection;
+    friend class OsmAnd::MapRendererTiledResourcesCollection;
+    friend class OsmAnd::MapRendererKeyedResourcesCollection;
+    friend class OsmAnd::MapRendererRasterBitmapTileResource;
+    friend class OsmAnd::MapRendererElevationDataTileResource;
+    friend class OsmAnd::MapRendererTiledSymbolsResourcesCollection;
+    friend class OsmAnd::MapRendererTiledSymbolsResource;
+    friend class OsmAnd::MapRendererKeyedSymbolsResource;
     };
 }
 

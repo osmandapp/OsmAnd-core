@@ -15,19 +15,16 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Callable.h>
 #include <OsmAndCore/Map/IMapDataProvider.h>
-#include <OsmAndCore/Map/IRetainableResource.h>
 
 namespace OsmAnd
 {
     class MapSymbolsGroup;
 
-    class OSMAND_CORE_API MapSymbol : public IRetainableResource
+    class OSMAND_CORE_API MapSymbol
     {
         Q_DISABLE_COPY(MapSymbol);
     private:
     protected:
-        std::shared_ptr<const SkBitmap> _bitmap;
-
         MapSymbol(
             const std::shared_ptr<const MapSymbolsGroup>& group,
             const bool isShareable,
@@ -44,13 +41,11 @@ namespace OsmAnd
 
         const bool isShareable;
 
-        const std::shared_ptr<const SkBitmap>& bitmap;
+        const std::shared_ptr<const SkBitmap> bitmap;
         const int order;
         const QString content;
         const LanguageId languageId;
         const PointI minDistance;
-
-        virtual void releaseNonRetainedData();
 
         virtual MapSymbol* cloneWithReplacedBitmap(const std::shared_ptr<const SkBitmap>& bitmap) const = 0;
     };

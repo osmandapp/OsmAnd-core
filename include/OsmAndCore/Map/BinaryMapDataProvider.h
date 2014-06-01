@@ -73,10 +73,10 @@ namespace OsmAnd
 
         const MapFoundationType tileFoundation;
         const QList< std::shared_ptr<const Model::MapObject> >& mapObjects;
-
         const std::shared_ptr< const RasterizerContext >& rasterizerContext;
-
         const bool nothingToRasterize;
+
+        virtual std::shared_ptr<MapData> createNoContentInstance() const;
 
     friend class OsmAnd::BinaryMapDataProvider;
     friend class OsmAnd::BinaryMapDataProvider_P;

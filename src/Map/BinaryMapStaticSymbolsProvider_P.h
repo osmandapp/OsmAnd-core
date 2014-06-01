@@ -15,7 +15,6 @@
 #include "IMapTiledSymbolsProvider.h"
 #include "MapSymbolsGroupShareableById.h"
 #include "MapObject.h"
-#include "IRetainableResource.h"
 #include "BinaryMapStaticSymbolsProvider.h"
 
 namespace OsmAnd

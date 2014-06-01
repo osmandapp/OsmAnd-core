@@ -22,7 +22,6 @@ namespace OsmAnd
     protected:
         MapRendererRasterBitmapTileResource(
             MapRendererResourcesManager* owner,
-            const MapRendererResourceType type,
             const TiledEntriesCollection<MapRendererBaseTiledResource>& collection,
             const TileId tileId,
             const ZoomLevel zoom);

@@ -167,18 +167,18 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doReleaseRendering()
     return true;
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGL::onValidateResourcesOfType(const MapRendererResourcesManager::MapRendererResourceType type)
+void OsmAnd::AtlasMapRenderer_OpenGL::onValidateResourcesOfType(const MapRendererResourceType type)
 {
     AtlasMapRenderer::onValidateResourcesOfType(type);
 
-    if (type == MapRendererResourcesManager::MapRendererResourceType::ElevationData)
+    if (type == MapRendererResourceType::ElevationDataTile)
     {
         // Recreate tile patch since elevation data influences density of tile patch
         _rasterMapStage.recreateTile();
     }
 }
 
-bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(MapRenderer::InternalState* internalState_, const MapRendererState& state)
+bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(MapRendererInternalState* internalState_, const MapRendererState& state)
 {
     bool ok;
     ok = AtlasMapRenderer::updateInternalState(internalState_, state);
@@ -271,12 +271,12 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(MapRenderer::InternalS
     return true;
 }
 
-const OsmAnd::MapRenderer::InternalState* OsmAnd::AtlasMapRenderer_OpenGL::getInternalStateRef() const
+const OsmAnd::MapRendererInternalState* OsmAnd::AtlasMapRenderer_OpenGL::getInternalStateRef() const
 {
     return &_internalState;
 }
 
-OsmAnd::MapRenderer::InternalState* OsmAnd::AtlasMapRenderer_OpenGL::getInternalStateRef()
+OsmAnd::MapRendererInternalState* OsmAnd::AtlasMapRenderer_OpenGL::getInternalStateRef()
 {
     return &_internalState;
 }

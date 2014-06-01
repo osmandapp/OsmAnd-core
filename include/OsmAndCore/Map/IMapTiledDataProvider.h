@@ -34,20 +34,14 @@ namespace OsmAnd
             const IQueryController* const queryController = nullptr) = 0;
     };
 
-    class OSMAND_CORE_API MapTiledData
+    class OSMAND_CORE_API MapTiledData : public MapData
     {
         Q_DISABLE_COPY(MapTiledData);
-
-    public:
-        typedef IMapDataProvider::DataType DataType;
-    
     private:
     protected:
         MapTiledData(const DataType dataType, const TileId tileId, const ZoomLevel zoom);
     public:
         virtual ~MapTiledData();
-
-        const DataType dataType;
 
         const TileId tileId;
         const ZoomLevel zoom;

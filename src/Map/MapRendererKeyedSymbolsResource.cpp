@@ -1,5 +1,13 @@
 #include "MapRendererKeyedSymbolsResource.h"
 
+#include "IMapDataProvider.h"
+#include "IMapKeyedDataProvider.h"
+#include "MapSymbol.h"
+#include "MapSymbolsGroup.h"
+#include "MapRendererKeyedResourcesCollection.h"
+#include "MapRendererResourcesManager.h"
+#include "QKeyValueIterator.h"
+
 OsmAnd::MapRendererKeyedSymbolsResource::MapRendererKeyedSymbolsResource(MapRendererResourcesManager* owner, const KeyedEntriesCollection<Key, MapRendererBaseKeyedResource>& collection, const Key key)
     : MapRendererBaseKeyedResource(owner, MapRendererResourceType::Symbols, collection, key)
 {
@@ -23,13 +31,14 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::obtainData(bool& dataAvailable, co
     bool ok = owner->obtainProviderFor(static_cast<MapRendererBaseResourcesCollection*>(collection), provider_);
     if (!ok)
         return false;
-    const auto provider = std::static_pointer_cast<IMapKeyedSymbolsProvider>(provider_);
+    const auto provider = std::static_pointer_cast<IMapKeyedDataProvider>(provider_);
 
     // Obtain source data from provider
-    std::shared_ptr<const MapSymbolsGroup> sourceData;
-    const auto requestSucceeded = provider->obtainSymbolsGroup(key, sourceData);
+    std::shared_ptr<const MapKeyedData> sourceData_;
+    const auto requestSucceeded = provider->obtainData(key, sourceData_);
     if (!requestSucceeded)
         return false;
+    const auto sourceData = std::static_pointer_cast<const MapSymbolsGroup>(sourceData_);
 
     // Store data
     _sourceData = sourceData;

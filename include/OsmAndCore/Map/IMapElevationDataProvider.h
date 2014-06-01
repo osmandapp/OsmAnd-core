@@ -43,6 +43,8 @@ namespace OsmAnd
         const DataPtr data;
         const size_t rowLength;
         const uint32_t size;
+
+        virtual std::shared_ptr<MapData> createNoContentInstance() const;
     };
 }
 

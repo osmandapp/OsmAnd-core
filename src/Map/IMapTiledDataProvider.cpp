@@ -10,7 +10,7 @@ OsmAnd::IMapTiledDataProvider::~IMapTiledDataProvider()
 }
 
 OsmAnd::MapTiledData::MapTiledData(const DataType dataType_, const TileId tileId_, const ZoomLevel zoom_)
-    : dataType(dataType_)
+    : MapData(dataType_)
     , tileId(tileId_)
     , zoom(zoom_)
 {

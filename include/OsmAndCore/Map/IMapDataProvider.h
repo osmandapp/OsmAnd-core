@@ -38,6 +38,24 @@ namespace OsmAnd
 
         const DataType dataType;
     };
+
+    class OSMAND_CORE_API MapData
+    {
+        Q_DISABLE_COPY(MapData);
+
+    public:
+        typedef IMapDataProvider::DataType DataType;
+
+    private:
+    protected:
+        MapData(const DataType dataType);
+    public:
+        virtual ~MapData();
+
+        const DataType dataType;
+
+        virtual std::shared_ptr<MapData> createNoContentInstance() const = 0;
+    };
 }
 
 #endif // !defined(_OSMAND_CORE_I_MAP_DATA_PROVIDER_H_)

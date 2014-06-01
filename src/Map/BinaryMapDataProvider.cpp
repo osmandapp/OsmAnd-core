@@ -54,3 +54,8 @@ OsmAnd::BinaryMapDataTile::~BinaryMapDataTile()
 {
     _p->cleanup();
 }
+
+std::shared_ptr<OsmAnd::MapData> OsmAnd::BinaryMapDataTile::createNoContentInstance() const
+{
+    return nullptr;
+}

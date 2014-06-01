@@ -24,14 +24,23 @@ OsmAnd::RasterBitmapTile::RasterBitmapTile(
     , alphaChannelData(alphaChannelData_)
     , densityFactor(densityFactor)
 {
-    assert(bitmap->width() == bitmap->height());
+    assert((bitmap && bitmap->width() == bitmap->height()) || !bitmap);
 }
 
 OsmAnd::RasterBitmapTile::~RasterBitmapTile()
 {
 }
 
-OsmAnd::RasterBitmapTile* OsmAnd::RasterBitmapTile::cloneWithBitmap(const std::shared_ptr<const SkBitmap>& bitmap) const
+OsmAnd::RasterBitmapTile* OsmAnd::RasterBitmapTile::cloneWithBitmap(const std::shared_ptr<const SkBitmap>& newBitmap) const
 {
-    return new RasterBitmapTile(bitmap, alphaChannelData, densityFactor, tileId, zoom);
+    assert(bitmap->width() == newBitmap->width());
+    assert(bitmap->height() == newBitmap->height());
+
+    return new RasterBitmapTile(newBitmap, alphaChannelData, densityFactor, tileId, zoom);
+}
+
+std::shared_ptr<OsmAnd::MapData> OsmAnd::RasterBitmapTile::createNoContentInstance() const
+{
+    // Metadata is useless in elevation data
+    return nullptr;
 }

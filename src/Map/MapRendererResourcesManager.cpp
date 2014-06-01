@@ -10,7 +10,6 @@
 #include "MapSymbol.h"
 #include "IMapTiledSymbolsProvider.h"
 #include "IMapKeyedSymbolsProvider.h"
-#include "IRetainableResource.h"
 #include "MapObject.h"
 #include "EmbeddedResources.h"
 #include "FunctorQueryController.h"
@@ -61,7 +60,7 @@ OsmAnd::MapRendererResourcesManager::MapRendererResourcesManager(MapRenderer* co
 #endif
     // Raster resources collections are special, so preallocate them
     {
-        auto& resources = _storageByType[static_cast<int>(MapRendererResourceType::RasterMap)];
+        auto& resources = _storageByType[static_cast<int>(MapRendererResourceType::RasterBitmapTile)];
         resources.reserve(RasterMapLayersCount);
         while(resources.size() < RasterMapLayersCount)
             resources.push_back(qMove(std::shared_ptr<MapRendererTiledResourcesCollection>()));
@@ -172,8 +171,8 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
 {
     if (updatedMask & (1u << static_cast<int>(MapRendererStateChange::ElevationData_Provider)))
     {
-        auto& bindings = _bindings[static_cast<int>(MapRendererResourceType::ElevationData)];
-        auto& resources = _storageByType[static_cast<int>(MapRendererResourceType::ElevationData)];
+        auto& bindings = _bindings[static_cast<int>(MapRendererResourceType::ElevationDataTile)];
+        auto& resources = _storageByType[static_cast<int>(MapRendererResourceType::ElevationDataTile)];
 
         // Clean-up and unbind gone providers and their resources
         QMutableHashIterator< std::shared_ptr<IMapDataProvider>, std::shared_ptr<MapRendererBaseResourcesCollection> > itBindedProvider(bindings.providersToCollections);
@@ -200,7 +199,7 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
         if (state.elevationDataProvider && !bindings.providersToCollections.contains(state.elevationDataProvider))
         {
             // Create new resources collection
-            const std::shared_ptr< MapRendererTiledResourcesCollection > newResourcesCollection(new MapRendererTiledResourcesCollection(MapRendererResourceType::ElevationData));
+            const std::shared_ptr< MapRendererTiledResourcesCollection > newResourcesCollection(new MapRendererTiledResourcesCollection(MapRendererResourceType::ElevationDataTile));
 
             // Add binding
             bindings.providersToCollections.insert(state.elevationDataProvider, newResourcesCollection);
@@ -212,8 +211,8 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
     }
     if (updatedMask & (1u << static_cast<int>(MapRendererStateChange::RasterLayers_Providers)))
     {
-        auto& bindings = _bindings[static_cast<int>(MapRendererResourceType::RasterMap)];
-        auto& resources = _storageByType[static_cast<int>(MapRendererResourceType::RasterMap)];
+        auto& bindings = _bindings[static_cast<int>(MapRendererResourceType::RasterBitmapTile)];
+        auto& resources = _storageByType[static_cast<int>(MapRendererResourceType::RasterBitmapTile)];
 
         // Clean-up and unbind gone providers and their resources
         QMutableHashIterator< std::shared_ptr<IMapDataProvider>, std::shared_ptr<MapRendererBaseResourcesCollection> > itBindedProvider(bindings.providersToCollections);
@@ -254,7 +253,7 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
                 continue;
 
             // Create new resources collection
-            const std::shared_ptr< MapRendererTiledResourcesCollection > newResourcesCollection(new MapRendererTiledResourcesCollection(MapRendererResourceType::RasterMap));
+            const std::shared_ptr< MapRendererTiledResourcesCollection > newResourcesCollection(new MapRendererTiledResourcesCollection(MapRendererResourceType::RasterBitmapTile));
 
             // Add binding
             bindings.providersToCollections.insert(*itProvider, newResourcesCollection);
@@ -441,10 +440,12 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(const std:
         const auto resourceType = resourcesCollection->type;
         resourcesCollection->obtainOrAllocateEntry(resource, activeTileId, activeZoom,
             [this, resourceType]
-            (const TiledEntriesCollection<MapRendererBaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom) -> BaseTiledResource*
+            (const TiledEntriesCollection<MapRendererBaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom) -> MapRendererBaseTiledResource*
             {
-                if (resourceType == MapRendererResourceType::ElevationData || resourceType == MapRendererResourceType::RasterMap)
-                    return new MapTileResource(this, resourceType, collection, tileId, zoom);
+                if (resourceType == MapRendererResourceType::RasterBitmapTile)
+                    return new MapRendererRasterBitmapTileResource(this, collection, tileId, zoom);
+                else if(resourceType == MapRendererResourceType::ElevationDataTile)
+                    return new MapRendererElevationDataTileResource(this, collection, tileId, zoom);
                 else if (resourceType == MapRendererResourceType::Symbols)
                     return new MapRendererTiledSymbolsResource(this, collection, tileId, zoom);
                 else
@@ -475,7 +476,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededKeyedResources(const std:
         const auto resourceType = resourcesCollection->type;
         resourcesCollection->obtainOrAllocateEntry(resource, resourceKey,
             [this, resourceType]
-            (const KeyedEntriesCollection<const void*, MapRendererBaseKeyedResource>& collection, const void* const key) -> BaseKeyedResource*
+            (const KeyedEntriesCollection<const void*, MapRendererBaseKeyedResource>& collection, const void* const key) -> MapRendererBaseKeyedResource*
             {
                 if (resourceType == MapRendererResourceType::Symbols)
                     return new MapRendererKeyedSymbolsResource(this, collection, key);
@@ -1130,8 +1131,9 @@ void OsmAnd::MapRendererResourcesManager::syncResourcesInGPU(
         *outResourcesUploaded = resourcesUploaded;
 }
 
-std::shared_ptr<const OsmAnd::MapRendererResourcesManager::MapRendererBaseResourcesCollection>
-OsmAnd::MapRendererResourcesManager::getCollection(const MapRendererResourceType type, const std::shared_ptr<IMapDataProvider>& provider) const
+std::shared_ptr<const OsmAnd::MapRendererBaseResourcesCollection> OsmAnd::MapRendererResourcesManager::getCollection(
+    const MapRendererResourceType type,
+    const std::shared_ptr<IMapDataProvider>& provider) const
 {
     return _bindings[static_cast<int>(type)].providersToCollections[provider];
 }
@@ -1174,7 +1176,7 @@ void OsmAnd::MapRendererResourcesManager::dumpResourcesInfo() const
     dump += QLatin1String("--------------------------------------------------------------------------------\n");
 
     dump += QLatin1String("[Tiled] Elevation data:\n");
-    for(const auto& resources_ : constOf(_storageByType[static_cast<int>(MapRendererResourceType::ElevationData)]))
+    for(const auto& resources_ : constOf(_storageByType[static_cast<int>(MapRendererResourceType::ElevationDataTile)]))
     {
         if (!resources_)
             continue;
@@ -1195,7 +1197,7 @@ void OsmAnd::MapRendererResourcesManager::dumpResourcesInfo() const
     }
 
     dump += QLatin1String("[Tiled] Raster map:\n");
-    for(const auto& resources_ : constOf(_storageByType[static_cast<int>(MapRendererResourceType::RasterMap)]))
+    for(const auto& resources_ : constOf(_storageByType[static_cast<int>(MapRendererResourceType::RasterBitmapTile)]))
     {
         if (!resources_)
             continue;

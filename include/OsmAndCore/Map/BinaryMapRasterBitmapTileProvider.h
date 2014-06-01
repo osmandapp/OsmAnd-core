@@ -68,6 +68,8 @@ namespace OsmAnd
         virtual ~BinaryMapRasterizedTile();
 
         const std::shared_ptr<const BinaryMapDataTile> binaryMapTile;
+
+        virtual std::shared_ptr<MapData> createNoContentInstance() const;
     };
 }
 

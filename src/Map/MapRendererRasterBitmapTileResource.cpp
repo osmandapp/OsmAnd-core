@@ -1,12 +1,14 @@
 #include "MapRendererRasterBitmapTileResource.h"
 
+#include "IMapRasterBitmapTileProvider.h"
+#include "MapRendererResourcesManager.h"
+
 OsmAnd::MapRendererRasterBitmapTileResource::MapRendererRasterBitmapTileResource(
-    MapRendererResourcesManager* owner,
-    const MapRendererResourceType type,
-    const TiledEntriesCollection<MapRendererBaseTiledResource>& collection,
-    const TileId tileId,
-    const ZoomLevel zoom)
-    : MapRendererBaseTiledResource(owner, type, collection, tileId, zoom)
+    MapRendererResourcesManager* owner_,
+    const TiledEntriesCollection<MapRendererBaseTiledResource>& collection_,
+    const TileId tileId_,
+    const ZoomLevel zoom_)
+    : MapRendererBaseTiledResource(owner_, MapRendererResourceType::RasterBitmapTile, collection_, tileId_, zoom_)
     , resourceInGPU(_resourceInGPU)
 {
 }
@@ -47,17 +49,7 @@ bool OsmAnd::MapRendererRasterBitmapTileResource::uploadToGPU()
     if (!ok)
         return false;
 
-    // Release source data:
-    if (const auto retainedSource = std::dynamic_pointer_cast<const IRetainableResource>(_sourceData))
-    {
-        // If map tile implements 'Retained' interface, it must be kept, but 
-        std::const_pointer_cast<IRetainableResource>(retainedSource)->releaseNonRetainedData();
-    }
-    else
-    {
-        // or simply release entire tile
-        _sourceData.reset();
-    }
+    _sourceData = std::static_pointer_cast<RasterBitmapTile>(_sourceData->createNoContentInstance());
 
     return true;
 }

@@ -22,7 +22,6 @@ namespace OsmAnd
     protected:
         MapRendererElevationDataTileResource(
             MapRendererResourcesManager* owner,
-            const MapRendererResourceType type,
             const TiledEntriesCollection<MapRendererBaseTiledResource>& collection,
             const TileId tileId,
             const ZoomLevel zoom);
@@ -38,7 +37,7 @@ namespace OsmAnd
 
         const std::shared_ptr<const GPUAPI::ResourceInGPU>& resourceInGPU;
 
-        friend class OsmAnd::MapRendererResourcesManager;
+    friend class OsmAnd::MapRendererResourcesManager;
     };
 }
 

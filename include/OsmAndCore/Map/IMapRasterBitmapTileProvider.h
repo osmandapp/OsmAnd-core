@@ -48,6 +48,8 @@ namespace OsmAnd
         const float densityFactor;
 
         RasterBitmapTile* cloneWithBitmap(const std::shared_ptr<const SkBitmap>& bitmap) const;
+
+        virtual std::shared_ptr<MapData> createNoContentInstance() const;
     };
 }
 

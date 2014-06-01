@@ -450,23 +450,23 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
         bool appliedElevationVertexAttribArray = false;
         if (elevationDataEnabled)
         {
-            const auto& resourcesCollection_ = getResources().getCollection(ResourceType::ElevationData, currentState.elevationDataProvider);
-            const auto& resourcesCollection = std::static_pointer_cast<const MapRendererResourcesManager::MapRendererTiledResourcesCollection>(resourcesCollection_);
+            const auto& resourcesCollection_ = getResources().getCollection(MapRendererResourceType::ElevationDataTile, currentState.elevationDataProvider);
+            const auto& resourcesCollection = std::static_pointer_cast<const MapRendererTiledResourcesCollection>(resourcesCollection_);
 
             // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
-            std::shared_ptr< const GPUAPI::ResourceInGPU > gpuResource;
-            std::shared_ptr<Resources::MapRendererBaseTiledResource> resource_;
+            std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
+            std::shared_ptr<MapRendererBaseTiledResource> resource_;
             if (resourcesCollection->tryObtainEntry(resource_, tileIdN, currentState.zoomBase))
             {
-                const auto resource = std::static_pointer_cast<Resources::MapTileResource>(resource_);
+                const auto resource = std::static_pointer_cast<MapRendererElevationDataTileResource>(resource_);
 
                 // Check state and obtain GPU resource
-                if (resource->setStateIf(ResourceState::Uploaded, ResourceState::IsBeingUsed))
+                if (resource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
                 {
                     // Capture GPU resource
                     gpuResource = resource->resourceInGPU;
 
-                    resource->setState(ResourceState::Uploaded);
+                    resource->setState(MapRendererResourceState::Uploaded);
                 }
             }
 
@@ -558,29 +558,29 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
             layerLinearIdx++;
 
             // Get resources collection
-            const auto& resourcesCollection_ = getResources().getCollection(ResourceType::RasterMap, currentState.rasterLayerProviders[layerId]);
-            const auto& resourcesCollection = std::static_pointer_cast<const MapRendererResourcesManager::MapRendererTiledResourcesCollection>(resourcesCollection_);
+            const auto& resourcesCollection_ = getResources().getCollection(MapRendererResourceType::RasterBitmapTile, currentState.rasterLayerProviders[layerId]);
+            const auto& resourcesCollection = std::static_pointer_cast<const MapRendererTiledResourcesCollection>(resourcesCollection_);
 
             const auto& perTile_vs = tileProgram.vs.param.rasterTileLayers[layerLinearIdx];
             const auto& perTile_fs = tileProgram.fs.param.rasterTileLayers[layerLinearIdx];
             const auto samplerIndex = (gpuAPI->isSupported_vertexShaderTextureLookup ? 1 : 0) + layerLinearIdx;
 
             // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
-            std::shared_ptr< const GPUAPI::ResourceInGPU > gpuResource;
-            std::shared_ptr<Resources::MapRendererBaseTiledResource> resource_;
+            std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
+            std::shared_ptr<MapRendererBaseTiledResource> resource_;
             if (resourcesCollection->tryObtainEntry(resource_, tileIdN, currentState.zoomBase))
             {
-                const auto resource = std::static_pointer_cast<Resources::MapTileResource>(resource_);
+                const auto resource = std::static_pointer_cast<MapRendererRasterBitmapTileResource>(resource_);
 
                 // Check state and obtain GPU resource
-                if (resource->setStateIf(ResourceState::Uploaded, ResourceState::IsBeingUsed))
+                if (resource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
                 {
                     // Capture GPU resource
                     gpuResource = resource->resourceInGPU;
 
-                    resource->setState(ResourceState::Uploaded);
+                    resource->setState(MapRendererResourceState::Uploaded);
                 }
-                else if (resource->getState() == ResourceState::Unavailable)
+                else if (resource->getState() == MapRendererResourceState::Unavailable)
                     gpuResource = getResources().unavailableTileStub;
                 else
                     gpuResource = getResources().processingTileStub;

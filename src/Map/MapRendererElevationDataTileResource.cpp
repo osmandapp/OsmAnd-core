@@ -4,12 +4,11 @@
 #include "MapRendererResourcesManager.h"
 
 OsmAnd::MapRendererElevationDataTileResource::MapRendererElevationDataTileResource(
-    MapRendererResourcesManager* owner,
-    const MapRendererResourceType type,
-    const TiledEntriesCollection<MapRendererBaseTiledResource>& collection,
-    const TileId tileId,
-    const ZoomLevel zoom)
-    : MapRendererBaseTiledResource(owner, type, collection, tileId, zoom)
+    MapRendererResourcesManager* owner_,
+    const TiledEntriesCollection<MapRendererBaseTiledResource>& collection_,
+    const TileId tileId_,
+    const ZoomLevel zoom_)
+    : MapRendererBaseTiledResource(owner_, MapRendererResourceType::ElevationDataTile, collection_, tileId_, zoom_)
     , resourceInGPU(_resourceInGPU)
 {
 }
@@ -26,7 +25,7 @@ bool OsmAnd::MapRendererElevationDataTileResource::obtainData(bool& dataAvailabl
     // Get source of tile
     std::shared_ptr<IMapDataProvider> provider_;
     if (const auto link_ = link.lock())
-        ok = owner->obtainProviderFor(&link_->collection, provider_);
+        ok = owner->obtainProviderFor(static_cast<MapRendererBaseResourcesCollection*>(static_cast<MapRendererTiledResourcesCollection*>(&link_->collection)), provider_);
     if (!ok)
         return false;
     const auto provider = std::static_pointer_cast<IMapTiledDataProvider>(provider_);
@@ -38,7 +37,7 @@ bool OsmAnd::MapRendererElevationDataTileResource::obtainData(bool& dataAvailabl
         return false;
 
     // Store data
-    _sourceData = tile;
+    _sourceData = std::static_pointer_cast<ElevationDataTile>(tile);
     dataAvailable = static_cast<bool>(tile);
 
     return true;
@@ -50,17 +49,7 @@ bool OsmAnd::MapRendererElevationDataTileResource::uploadToGPU()
     if (!ok)
         return false;
 
-    // Release source data:
-    if (const auto retainedSource = std::dynamic_pointer_cast<const IRetainableResource>(_sourceData))
-    {
-        // If map tile implements 'Retained' interface, it must be kept, but 
-        std::const_pointer_cast<IRetainableResource>(retainedSource)->releaseNonRetainedData();
-    }
-    else
-    {
-        // or simply release entire tile
-        _sourceData.reset();
-    }
+    _sourceData = std::static_pointer_cast<ElevationDataTile>(_sourceData->createNoContentInstance());
 
     return true;
 }

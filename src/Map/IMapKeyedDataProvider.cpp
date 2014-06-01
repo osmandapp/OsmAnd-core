@@ -10,7 +10,7 @@ OsmAnd::IMapKeyedDataProvider::~IMapKeyedDataProvider()
 }
 
 OsmAnd::MapKeyedData::MapKeyedData(const DataType dataType_, const Key key_)
-    : dataType(dataType_)
+    : MapData(dataType_)
     , key(key_)
 {
 }

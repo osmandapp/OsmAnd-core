@@ -13,13 +13,8 @@ namespace OsmAnd
     {
         Unknown = -1,
 
-        // Elevation data
-        ElevationData,
-
-        // Raster map
-        RasterMap,
-
-        // Symbols
+        ElevationDataTile,
+        RasterBitmapTile,
         Symbols,
 
         __LAST

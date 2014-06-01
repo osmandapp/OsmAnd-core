@@ -8,11 +8,10 @@ OsmAnd::MapSymbol::MapSymbol(
     const QString& content_,
     const LanguageId& languageId_,
     const PointI& minDistance_)
-    : _bitmap(bitmap_)
-    , group(group_)
+    : group(group_)
     , groupPtr(group_.get())
     , isShareable(isShareable_)
-    , bitmap(_bitmap)
+    , bitmap(bitmap_)
     , order(order_)
     , content(content_)
     , languageId(languageId_)
@@ -22,9 +21,4 @@ OsmAnd::MapSymbol::MapSymbol(
 
 OsmAnd::MapSymbol::~MapSymbol()
 {
-}
-
-void OsmAnd::MapSymbol::releaseNonRetainedData()
-{
-    _bitmap.reset();
 }

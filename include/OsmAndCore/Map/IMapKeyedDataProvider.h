@@ -35,12 +35,11 @@ namespace OsmAnd
             const IQueryController* const queryController = nullptr) = 0;
     };
 
-    class OSMAND_CORE_API MapKeyedData
+    class OSMAND_CORE_API MapKeyedData : public MapData
     {
         Q_DISABLE_COPY(MapKeyedData);
 
     public:
-        typedef IMapDataProvider::DataType DataType;
         typedef IMapKeyedDataProvider::Key Key;
 
     private:
@@ -48,8 +47,6 @@ namespace OsmAnd
         MapKeyedData(const DataType dataType, const Key key);
     public:
         virtual ~MapKeyedData();
-
-        const DataType dataType;
 
         const Key key;
     };

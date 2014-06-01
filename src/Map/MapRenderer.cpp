@@ -11,7 +11,6 @@
 #include "IMapRasterBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
 #include "MapSymbol.h"
-#include "IRetainableResource.h"
 #include "GPUAPI.h"
 #include "Utilities.h"
 #include "Logging.h"
@@ -100,9 +99,9 @@ void OsmAnd::MapRenderer::setConfiguration(const MapRendererConfiguration& confi
         mask |= ConfigurationChange::PaletteTexturesUsage;
 
     if (invalidateRasterTextures)
-        _resources->invalidateResourcesOfType(MapRendererResourceType::RasterMap);
+        _resources->invalidateResourcesOfType(MapRendererResourceType::RasterBitmapTile);
     if (invalidateElevationData)
-        _resources->invalidateResourcesOfType(MapRendererResourceType::ElevationData);
+        _resources->invalidateResourcesOfType(MapRendererResourceType::ElevationDataTile);
     if (invalidateSymbols)
         _resources->invalidateResourcesOfType(MapRendererResourceType::Symbols);
     invalidateCurrentConfiguration(mask);
@@ -828,7 +827,7 @@ void OsmAnd::MapRenderer::setElevationDataProvider(const std::shared_ptr<IMapEle
 
     _requestedState.elevationDataProvider = tileProvider;
 
-    _resources->invalidateResourcesOfType(MapRendererResourceType::ElevationData);
+    _resources->invalidateResourcesOfType(MapRendererResourceType::ElevationDataTile);
     notifyRequestedStateWasUpdated(MapRendererStateChange::ElevationData_Provider);
 }
 
@@ -842,7 +841,7 @@ void OsmAnd::MapRenderer::resetElevationDataProvider(bool forcedUpdate /*= false
 
     _requestedState.elevationDataProvider.reset();
 
-    _resources->invalidateResourcesOfType(MapRendererResourceType::ElevationData);
+    _resources->invalidateResourcesOfType(MapRendererResourceType::ElevationDataTile);
     notifyRequestedStateWasUpdated(MapRendererStateChange::ElevationData_Provider);
 }
 
