@@ -76,8 +76,8 @@ bool OsmAnd::MapMarker::hasUnappliedChanges() const
     return _p->hasUnappliedChanges();
 }
 
-void OsmAnd::MapMarker::applyChanges()
+bool OsmAnd::MapMarker::applyChanges()
 {
-    _p->applyChanges();
+    return _p->applyChanges();
 }
 

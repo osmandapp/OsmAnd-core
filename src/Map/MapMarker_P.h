@@ -60,7 +60,7 @@ namespace OsmAnd
         void setDirection(const float direction);
 
         bool hasUnappliedChanges() const;
-        void applyChanges();
+        bool applyChanges();
 
     friend class OsmAnd::MapMarker;
     friend class OsmAnd::MapMarkersCollection;

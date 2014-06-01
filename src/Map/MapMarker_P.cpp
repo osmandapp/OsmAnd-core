@@ -111,12 +111,12 @@ bool OsmAnd::MapMarker_P::hasUnappliedChanges() const
     return _hasUnappliedChanges;
 }
 
-void OsmAnd::MapMarker_P::applyChanges()
+bool OsmAnd::MapMarker_P::applyChanges()
 {
     QReadLocker scopedLocker(&_lock);
 
     if (!_hasUnappliedChanges)
-        return;
+        return false;
 
     for (const auto& symbol_ : constOf(owner->mapSymbolsGroup->symbols))
     {
@@ -135,5 +135,7 @@ void OsmAnd::MapMarker_P::applyChanges()
     }
 
     _hasUnappliedChanges = false;
+
+    return true;
 }
 

@@ -29,7 +29,7 @@ namespace OsmAnd
     protected:
         MapMarker(const std::shared_ptr<const MapSymbolsGroup>& mapSymbolsGroup);
 
-        void applyChanges();
+        bool applyChanges();
     public:
         virtual ~MapMarker();
 

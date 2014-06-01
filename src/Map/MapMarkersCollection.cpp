@@ -12,16 +12,6 @@ OsmAnd::MapMarkersCollection::~MapMarkersCollection()
 {
 }
 
-QList<OsmAnd::MapMarkersCollection::Key> OsmAnd::MapMarkersCollection::getProvidedDataKeys() const
-{
-    return _p->getProvidedDataKeys();
-}
-
-bool OsmAnd::MapMarkersCollection::obtainData(const Key key, std::shared_ptr<const MapKeyedData>& outKeyedData, const IQueryController* const queryController /*= nullptr*/)
-{
-    return _p->obtainData(key, outKeyedData, queryController);
-}
-
 OsmAnd::ZoomLevel OsmAnd::MapMarkersCollection::getMinZoom() const
 {
     return minZoom;
@@ -30,4 +20,14 @@ OsmAnd::ZoomLevel OsmAnd::MapMarkersCollection::getMinZoom() const
 OsmAnd::ZoomLevel OsmAnd::MapMarkersCollection::getMaxZoom() const
 {
     return maxZoom;
+}
+
+QList<OsmAnd::MapMarkersCollection::Key> OsmAnd::MapMarkersCollection::getProvidedDataKeys() const
+{
+    return _p->getProvidedDataKeys();
+}
+
+bool OsmAnd::MapMarkersCollection::obtainData(const Key key, std::shared_ptr<const MapKeyedData>& outKeyedData, const IQueryController* const queryController /*= nullptr*/)
+{
+    return _p->obtainData(key, outKeyedData, queryController);
 }
