@@ -12,7 +12,7 @@
 
 OsmAnd::MapMarkerBuilder_P::MapMarkerBuilder_P(MapMarkerBuilder* const owner_)
     : _isHidden(false)
-    , _baseOrder(200000) //NOTE: See Rasterizer_P.cpp:1115
+    , _baseOrder(std::numeric_limits<int>::min()) //NOTE: See Rasterizer_P.cpp:1115 - this is needed to keep markers as the most important symbols
     , _isPrecisionCircleEnabled(false)
     , _precisionCircleRadius(0.0)
     , _precisionCircleBaseColor(SK_ColorTRANSPARENT)
@@ -212,7 +212,7 @@ std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToColl
             LanguageId::Invariant,
             PointI(), // Since minDistance is (0, 0), this map symbol will not be compared to others
             _position,
-            PointI(0, pinIconBitmap->height()/2)));
+            PointI(0, -pinIconBitmap->height()/2)));
         symbolsGroup->symbols.push_back(pinIconSymbol);
     }
 
