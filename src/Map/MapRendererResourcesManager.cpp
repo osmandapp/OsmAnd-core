@@ -109,14 +109,15 @@ bool OsmAnd::MapRendererResourcesManager::initializeDefaultResources()
     {
         const auto& data = EmbeddedResources::decompressResource(QLatin1String("map/stubs/processing_tile.png"));
         const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-        if (SkImageDecoder::DecodeMemory(data.data(), data.size(), bitmap.get(), SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
+        if (!SkImageDecoder::DecodeMemory(data.data(), data.size(), bitmap.get(), SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
         {
             return false;
         }
         else
         {
             std::shared_ptr<const MapTiledData> bitmapTile(new RasterBitmapTile(bitmap, AlphaChannelData::Undefined, 1.0f, TileId(), InvalidZoom));
-            uploadTileToGPU(bitmapTile, _processingTileStub);
+            if (!uploadTileToGPU(bitmapTile, _processingTileStub))
+                return false;
         }
     }
     {
@@ -129,7 +130,8 @@ bool OsmAnd::MapRendererResourcesManager::initializeDefaultResources()
         else
         {
             std::shared_ptr<const MapTiledData> bitmapTile(new RasterBitmapTile(bitmap, AlphaChannelData::Undefined, 1.0f, TileId(), InvalidZoom));
-            uploadTileToGPU(bitmapTile, _unavailableTileStub);
+            if (!uploadTileToGPU(bitmapTile, _unavailableTileStub))
+                return false;
         }
     }
 
