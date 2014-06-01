@@ -18,17 +18,17 @@ bool OsmAnd::IMapTiledSymbolsProvider::obtainData(
     return obtainData(tileId, zoom, outTiledData, nullptr, queryController);
 }
 
-OsmAnd::MapTiledSymbols::MapTiledSymbols(const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups_, const TileId tileId_, const ZoomLevel zoom_)
+OsmAnd::TiledMapSymbolsData::TiledMapSymbolsData(const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups_, const TileId tileId_, const ZoomLevel zoom_)
     : MapTiledData(DataType::SymbolsTile, tileId_, zoom_)
     , symbolsGroups(symbolsGroups_)
 {
 }
 
-OsmAnd::MapTiledSymbols::~MapTiledSymbols()
+OsmAnd::TiledMapSymbolsData::~TiledMapSymbolsData()
 {
 }
 
-std::shared_ptr<OsmAnd::MapData> OsmAnd::MapTiledSymbols::createNoContentInstance() const
+std::shared_ptr<OsmAnd::MapData> OsmAnd::TiledMapSymbolsData::createNoContentInstance() const
 {
     return nullptr;
 }

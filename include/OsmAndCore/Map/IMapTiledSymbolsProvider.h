@@ -43,13 +43,13 @@ namespace OsmAnd
             const IQueryController* const queryController = nullptr) = 0;
     };
 
-    class OSMAND_CORE_API MapTiledSymbols : public MapTiledData
+    class OSMAND_CORE_API TiledMapSymbolsData : public MapTiledData
     {
     private:
     protected:
     public:
-        MapTiledSymbols(const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups, const TileId tileId, const ZoomLevel zoom);
-        virtual ~MapTiledSymbols();
+        TiledMapSymbolsData(const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups, const TileId tileId, const ZoomLevel zoom);
+        virtual ~TiledMapSymbolsData();
 
         const QList< std::shared_ptr<const MapSymbolsGroup> > symbolsGroups;
 

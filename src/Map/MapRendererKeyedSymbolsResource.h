@@ -26,8 +26,8 @@ namespace OsmAnd
     protected:
         MapRendererKeyedSymbolsResource(MapRendererResourcesManager* owner, const KeyedEntriesCollection<Key, MapRendererBaseKeyedResource>& collection, const Key key);
 
-        std::shared_ptr<const KeyedSymbolsData> _sourceData;
-        QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > _resourcesInGPU;
+        std::shared_ptr<const KeyedMapSymbolsData> _sourceData;
+        QHash< std::shared_ptr<MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > _resourcesInGPU;
 
         virtual bool obtainData(bool& dataAvailable, const IQueryController* queryController);
         virtual bool uploadToGPU();
@@ -37,6 +37,9 @@ namespace OsmAnd
         virtual void detach();
     public:
         virtual ~MapRendererKeyedSymbolsResource();
+
+        virtual bool prepareForUse();
+        std::shared_ptr<const GPUAPI::ResourceInGPU> getGpuResourceFor(const std::shared_ptr<const MapSymbol>& mapSymbol);
 
         friend class OsmAnd::MapRendererResourcesManager;
     };

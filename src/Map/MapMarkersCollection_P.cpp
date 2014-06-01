@@ -66,7 +66,7 @@ bool OsmAnd::MapMarkersCollection_P::obtainData(const Key key, std::shared_ptr<c
     // Apply all the changes that were performed over this marker
     marker->applyChanges();
 
-    outKeyedData.reset(new KeyedSymbolsData(marker->mapSymbolsGroup, key));
+    outKeyedData.reset(new KeyedMapSymbolsData(marker->mapSymbolsGroup, key));
 
     return true;
 }

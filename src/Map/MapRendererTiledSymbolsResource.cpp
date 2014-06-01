@@ -75,7 +75,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
         });
     if (!requestSucceeded)
         return false;
-    const auto tile = std::static_pointer_cast<const MapTiledSymbols>(tile_);
+    const auto tile = std::static_pointer_cast<const TiledMapSymbolsData>(tile_);
 
     // Store data
     _sourceData = tile;
@@ -119,6 +119,8 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
 
         _referencedSharedGroupsResources.push_back(qMove(groupResources));
     }
+
+    // Register 
 
     return true;
 }
@@ -210,7 +212,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
     }
 
     // All resources have been uploaded to GPU successfully by this point
-    _sourceData = std::static_pointer_cast<MapTiledSymbols>(_sourceData->createNoContentInstance());
+    _sourceData = std::static_pointer_cast<TiledMapSymbolsData>(_sourceData->createNoContentInstance());
 
     // Unique
     for (const auto& entry : rangeOf(constOf(uniqueUploaded)))
@@ -223,7 +225,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
         symbol = symbol->cloneWithoutBitmap();
         
         // Publish symbol to global map
-        owner->addMapSymbol(symbol, resource);
+        owner->registerMapSymbol(symbol, resource);
 
         // Move reference
         groupResources->resourcesInGPU.insert(qMove(symbol), qMove(resource));
@@ -240,7 +242,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
         symbol = symbol->cloneWithoutBitmap();
         
         // Publish symbol to global map
-        owner->addMapSymbol(symbol, resource);
+        owner->registerMapSymbol(symbol, resource);
 
         // Move reference
         groupResources->resourcesInGPU.insert(qMove(symbol), qMove(resource));
@@ -263,7 +265,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU()
             auto& resourceInGPU = entryResourceInGPU.value();
 
             // Remove symbol from global map
-            owner->removeMapSymbol(symbol);
+            owner->unregisterMapSymbol(symbol);
 
             // Unload symbol from GPU
             assert(resourceInGPU.use_count() == 1);
@@ -293,7 +295,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU()
             auto& resourceInGPU = entryResourceInGPU.value();
 
             // Remove symbol from global map
-            owner->removeMapSymbol(symbol);
+            owner->unregisterMapSymbol(symbol);
 
             // Unload symbol from GPU
             assert(resourceInGPU.use_count() == 1);
@@ -333,7 +335,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::detach()
                 auto& resourceInGPU = entryResourceInGPU.value();
 
                 // Remove symbol from global map
-                owner->removeMapSymbol(symbol);
+                owner->unregisterMapSymbol(symbol);
 
                 // Unload symbol from GPU thread (using dispatcher)
                 assert(resourceInGPU.use_count() == 1);
@@ -352,6 +354,11 @@ void OsmAnd::MapRendererTiledSymbolsResource::detach()
         }
     }
     _referencedSharedGroupsResources.clear();
+}
+
+std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::MapRendererTiledSymbolsResource::getGpuResourceFor(const std::shared_ptr<const MapSymbol>& mapSymbol)
+{
+    return nullptr;
 }
 
 OsmAnd::MapRendererTiledSymbolsResource::GroupResources::GroupResources(const std::shared_ptr<const MapSymbolsGroup>& group_)

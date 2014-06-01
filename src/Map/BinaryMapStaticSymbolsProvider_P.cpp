@@ -31,7 +31,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
     const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
 
     // Obtain offline map data tile
-    std::shared_ptr<const MapTiledData > dataTile_;
+    std::shared_ptr<const MapTiledData> dataTile_;
     owner->dataProvider->obtainData(tileId, zoom, dataTile_);
     const auto dataTile = std::static_pointer_cast<const BinaryMapDataTile>(dataTile_);
 

@@ -65,14 +65,14 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
         std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
     };
 
-    struct RenderablePinnedSymbol : RenderableSymbol
+    struct RenderableSpriteSymbol : RenderableSymbol
     {
         PointI offsetFromTarget31;
         PointF offsetFromTarget;
         glm::vec3 positionInWorld;
     };
 
-    struct RenderableSymbolOnPath : RenderableSymbol
+    struct RenderableOnPathSymbol : RenderableSymbol
     {
         int subpathStartIndex;
         int subpathEndIndex;
@@ -90,8 +90,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
         glm::vec2 subpathDirectioInWorld;
     };
 
-    QMutexLocker scopedLocker(&getResources().getSymbolsMapMutex());
-    const auto& mapSymbolsByOrder = getResources().getMapSymbolsByOrder();
+    QMutexLocker scopedLocker(&getResources().getMapSymbolsRegistersMutex());
+    const auto& mapSymbolsByOrder = getResources().getMapSymbolsByOrderRegister();
+    QSet< std::shared_ptr<MapRendererBaseResource> > updatedMapSymbolsResources;
     const auto& topDownCameraView = internalState.mDistance * internalState.mAzimuth;
     const glm::vec4 viewport(
         currentState.viewport.left,
@@ -102,7 +103,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
     int lastUsedProgram = -1;
 
     typedef std::shared_ptr<const RenderableSymbol> RenderableSymbolEntry;
-    typedef std::shared_ptr<RenderableSymbolOnPath> RenderableSymbolOnPathEntry;
+    typedef std::shared_ptr<RenderableOnPathSymbol> RenderableSymbolOnPathEntry;
 
     // Intersections are calculated using quad-tree, and general rule that
     // map symbol with smaller order [and further from camera] is more important.
@@ -124,11 +125,37 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
         visibleSOPSubpaths.reserve(mapSymbolsLayer.size());
         for(const auto& symbolEntry : rangeOf(constOf(mapSymbolsLayer)))
         {
-            const auto symbol = std::dynamic_pointer_cast<const OnPathMapSymbol>(symbolEntry.key());
+            const auto& symbol_ = symbolEntry.key();
+            const auto symbol = std::dynamic_pointer_cast<const OnPathMapSymbol>(symbol_);
             if (!symbol)
                 continue;
             const auto& points31 = symbol->path;
+            const auto& resource = symbolEntry.value();
             assert(points31.size() >= 2);
+
+            // Get GPU resource
+            std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
+            if (resource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
+            {
+                // Prepare resource if needed
+                if (!updatedMapSymbolsResources.contains(resource))
+                {
+                    if (!resource->prepareForUse())
+                    {
+                        resource->setState(MapRendererResourceState::Uploaded);
+                        continue;
+                    }
+                    updatedMapSymbolsResources.insert(resource);
+                }
+
+                // Capture GPU resource
+                if (const auto tiledResource = std::dynamic_pointer_cast<MapRendererTiledSymbolsResource>(resource))
+                    gpuResource = tiledResource->getGpuResourceFor(symbol_);
+                else if (const auto keyedResource = std::dynamic_pointer_cast<MapRendererKeyedSymbolsResource>(resource))
+                    gpuResource = keyedResource->getGpuResourceFor(symbol_);
+
+                resource->setState(MapRendererResourceState::Uploaded);
+            }
 
             // Check first point to initialize subdivision
             auto pPoint31 = points31.constData();
@@ -168,9 +195,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     if (!currentWasAdded)
                         subpathEndIdx = pointIdx;
 
-                    std::shared_ptr<RenderableSymbolOnPath> renderable(new RenderableSymbolOnPath());
+                    std::shared_ptr<RenderableOnPathSymbol> renderable(new RenderableOnPathSymbol());
                     renderable->mapSymbol = symbol;
-                    renderable->gpuResource = symbolEntry.value().lock();
+                    renderable->gpuResource = gpuResource;
                     renderable->subpathStartIndex = subpathStartIdx;
                     renderable->subpathEndIndex = subpathEndIdx;
                     visibleSOPSubpaths.push_back(qMove(renderable));
@@ -370,14 +397,39 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
         // Sort pinned symbols by distance to camera
         for(const auto& symbolEntry : rangeOf(constOf(mapSymbolsLayer)))
         {
-            const auto& symbol = std::dynamic_pointer_cast<const SpriteMapSymbol>(symbolEntry.key());
+            const auto& symbol_ = symbolEntry.key();
+            const auto& symbol = std::dynamic_pointer_cast<const SpriteMapSymbol>(symbol_);
             if (!symbol)
                 continue;
-            assert(!symbolEntry.value().expired());
+            const auto& resource = symbolEntry.value();
+            
+            // Get GPU resource
+            std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
+            if (resource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
+            {
+                // Prepare resource if needed
+                if (!updatedMapSymbolsResources.contains(resource))
+                {
+                    if (!resource->prepareForUse())
+                    {
+                        resource->setState(MapRendererResourceState::Uploaded);
+                        continue;
+                    }
+                    updatedMapSymbolsResources.insert(resource);
+                }
 
-            std::shared_ptr<RenderablePinnedSymbol> renderable(new RenderablePinnedSymbol());
+                // Capture GPU resource
+                if (const auto tiledResource = std::dynamic_pointer_cast<MapRendererTiledSymbolsResource>(resource))
+                    gpuResource = tiledResource->getGpuResourceFor(symbol_);
+                else if (const auto keyedResource = std::dynamic_pointer_cast<MapRendererKeyedSymbolsResource>(resource))
+                    gpuResource = keyedResource->getGpuResourceFor(symbol_);
+
+                resource->setState(MapRendererResourceState::Uploaded);
+            }
+
+            std::shared_ptr<RenderableSpriteSymbol> renderable(new RenderableSpriteSymbol());
             renderable->mapSymbol = symbol;
-            renderable->gpuResource = symbolEntry.value().lock();
+            renderable->gpuResource = gpuResource;
 
             // Calculate location of symbol in world coordinates.
             renderable->offsetFromTarget31 = symbol->location31 - currentState.target31;
@@ -403,7 +455,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
             const auto& item = itRenderableEntry.previous();
             const auto& distanceFromCamera = item.key();
 
-            if (const auto& renderable = std::dynamic_pointer_cast<const RenderablePinnedSymbol>(item.value()))
+            if (const auto& renderable = std::dynamic_pointer_cast<const RenderableSpriteSymbol>(item.value()))
             {
                 const auto& symbol = std::dynamic_pointer_cast<const SpriteMapSymbol>(renderable->mapSymbol);
                 const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
@@ -549,7 +601,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 
                 GL_POP_GROUP_MARKER;
             }
-            else if (const auto& renderable = std::dynamic_pointer_cast<const RenderableSymbolOnPath>(item.value()))
+            else if (const auto& renderable = std::dynamic_pointer_cast<const RenderableOnPathSymbol>(item.value()))
             {
                 const auto& symbol = std::dynamic_pointer_cast<const OnPathMapSymbol>(renderable->mapSymbol);
                 const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
@@ -2084,4 +2136,3 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath3D()
         _symbolOnPath3dProgram = SymbolOnPath3dProgram();
     }
 }
-

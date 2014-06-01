@@ -39,7 +39,7 @@ namespace OsmAnd
 {
     class MapRenderer;
     class IMapDataProvider;
-    class MapTiledSymbols;
+    class TiledMapSymbolsData;
     class MapSymbolsGroup;
     class MapSymbol;
 
@@ -48,8 +48,11 @@ namespace OsmAnd
         Q_DISABLE_COPY(MapRendererResourcesManager);
     public:
         typedef std::array< QList< std::shared_ptr<MapRendererBaseResourcesCollection> >, MapRendererResourceTypesCount > ResourcesStorage;
-        typedef QHash< std::shared_ptr<const MapSymbol>, std::weak_ptr<const GPUAPI::ResourceInGPU> > MapSymbolsLayer;
-        typedef QMap<int, MapSymbolsLayer > MapSymbolsByOrder;
+
+        typedef QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<MapRendererBaseResource> > MapSymbolsByOrderRegisterLayer;
+        typedef QMap<int, MapSymbolsByOrderRegisterLayer > MapSymbolsByOrderRegister;
+        typedef QHash< std::shared_ptr<MapRendererBaseResource>, unsigned int > MapSymbolsResourcesRegister;
+
     private:
         // Resource-requests related:
         const Concurrent::TaskHost::Bridge _taskHostBridge;
@@ -85,11 +88,12 @@ namespace OsmAnd
         ResourcesStorage _storageByType;
 
         // Symbols:
-        mutable QMutex _mapSymbolsByOrderMutex;
-        MapSymbolsByOrder _mapSymbolsByOrder;
-        unsigned int _mapSymbolsCount;
-        void addMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<const GPUAPI::ResourceInGPU>& gpuResource);
-        void removeMapSymbol(const std::shared_ptr<const MapSymbol>& symbol);
+        mutable QMutex _mapSymbolsRegistersMutex;
+        MapSymbolsByOrderRegister _mapSymbolsByOrderRegister;
+        unsigned int _mapSymbolsInRegisterCount;
+        MapSymbolsResourcesRegister _mapSymbolsResourcesRegister;
+        void registerMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<MapRendererBaseResource>& resourceWithSymbols);
+        void unregisterMapSymbol(const std::shared_ptr<const MapSymbol>& symbol);
 
         void notifyNewResourceAvailableForDrawing();
 
@@ -154,9 +158,10 @@ namespace OsmAnd
 
         std::shared_ptr<const MapRendererBaseResourcesCollection> getCollection(const MapRendererResourceType type, const std::shared_ptr<IMapDataProvider>& ofProvider) const;
 
-        QMutex& getSymbolsMapMutex() const;
-        const MapSymbolsByOrder& getMapSymbolsByOrder() const;
-        unsigned int getMapSymbolsCount() const;
+        QMutex& getMapSymbolsRegistersMutex() const;
+        const MapSymbolsByOrderRegister& getMapSymbolsByOrderRegister() const;
+        const MapSymbolsResourcesRegister& getMapSymbolsResourcesRegister() const;
+        unsigned int getMapSymbolsInRegisterCount() const;
 
         void dumpResourcesInfo() const;
 

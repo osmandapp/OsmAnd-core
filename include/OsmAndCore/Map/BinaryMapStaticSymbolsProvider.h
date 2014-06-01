@@ -44,7 +44,7 @@ namespace OsmAnd
             const IQueryController* const queryController = nullptr);
     };
 
-    class OSMAND_CORE_API BinaryMapStaticSymbolsTile : public MapTiledSymbols
+    class OSMAND_CORE_API BinaryMapStaticSymbolsTile : public TiledMapSymbolsData
     {
     private:
     protected:

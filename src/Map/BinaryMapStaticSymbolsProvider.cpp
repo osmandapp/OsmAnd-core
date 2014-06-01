@@ -38,7 +38,7 @@ OsmAnd::BinaryMapStaticSymbolsTile::BinaryMapStaticSymbolsTile(
     const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups_,
     const TileId tileId_,
     const ZoomLevel zoom_)
-    : MapTiledSymbols(symbolsGroups_, tileId_, zoom_)
+    : TiledMapSymbolsData(symbolsGroups_, tileId_, zoom_)
     , dataTile(dataTile_)
 {
 }

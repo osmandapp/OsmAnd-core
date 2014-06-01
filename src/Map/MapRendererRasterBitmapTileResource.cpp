@@ -31,13 +31,13 @@ bool OsmAnd::MapRendererRasterBitmapTileResource::obtainData(bool& dataAvailable
     const auto provider = std::static_pointer_cast<IMapTiledDataProvider>(provider_);
 
     // Obtain tile from provider
-    std::shared_ptr<const MapTiledData> tile;
+    std::shared_ptr<MapTiledData> tile;
     const auto requestSucceeded = provider->obtainData(tileId, zoom, tile, queryController);
     if (!requestSucceeded)
         return false;
 
     // Store data
-    _sourceData = std::static_pointer_cast<const RasterBitmapTile>(tile);
+    _sourceData = std::static_pointer_cast<RasterBitmapTile>(tile);
     dataAvailable = static_cast<bool>(tile);
 
     return true;

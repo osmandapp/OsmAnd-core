@@ -46,7 +46,7 @@
 
 OsmAnd::MapRendererResourcesManager::MapRendererResourcesManager(MapRenderer* const owner_)
     : _taskHostBridge(this)
-    , _mapSymbolsCount(0)
+    , _mapSymbolsInRegisterCount(0)
     , _invalidatedResourcesTypesMask(0)
     , _workerThreadIsAlive(false)
     , _workerThreadId(nullptr)
@@ -357,23 +357,41 @@ bool OsmAnd::MapRendererResourcesManager::isDataSourceAvailableFor(const std::sh
     return binding.collectionsToProviders.contains(collection);
 }
 
-void OsmAnd::MapRendererResourcesManager::addMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<const GPUAPI::ResourceInGPU>& gpuResource)
+void OsmAnd::MapRendererResourcesManager::registerMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<MapRendererBaseResource>& resourceWithSymbols)
 {
-    QMutexLocker scopedLocker(&_mapSymbolsByOrderMutex);
+    QMutexLocker scopedLocker(&_mapSymbolsRegistersMutex);
 
-    _mapSymbolsByOrder[symbol->order].insert(symbol, gpuResource);
-    _mapSymbolsCount++;
+    // Increment reference counter to container
+    _mapSymbolsResourcesRegister[resourceWithSymbols]++;
+
+    // Insert map symbol into the register
+    _mapSymbolsByOrderRegister[symbol->order].insert(symbol, resourceWithSymbols);
+    _mapSymbolsInRegisterCount++;
 }
 
-void OsmAnd::MapRendererResourcesManager::removeMapSymbol(const std::shared_ptr<const MapSymbol>& symbol)
+void OsmAnd::MapRendererResourcesManager::unregisterMapSymbol(const std::shared_ptr<const MapSymbol>& symbol)
 {
-    QMutexLocker scopedLocker(&_mapSymbolsByOrderMutex);
+    QMutexLocker scopedLocker(&_mapSymbolsRegistersMutex);
 
-    const auto itSymbolsLayer = _mapSymbolsByOrder.find(symbol->order);
-    const auto removedCount = itSymbolsLayer->remove(symbol);
-    if (itSymbolsLayer->isEmpty())
-        _mapSymbolsByOrder.erase(itSymbolsLayer);
-    _mapSymbolsCount -= removedCount;
+    // Get layer of register
+    const auto itSymbolsLayer = _mapSymbolsByOrderRegister.find(symbol->order);
+    auto& symbolsLayer = *itSymbolsLayer;
+
+    // Get resource with symbols (as container) and remove the entry
+    const auto itEntry = symbolsLayer.find(symbol);
+    const auto resourceWithSymbols = *itEntry;
+    symbolsLayer.erase(itEntry);
+    _mapSymbolsInRegisterCount--;
+
+    // Decrement reference counter to container (and remove if 0)
+    const auto itContainerRefCount = _mapSymbolsResourcesRegister.find(resourceWithSymbols);
+    auto& containerRefCount = *itContainerRefCount;
+    if ((--containerRefCount) == 0)
+        _mapSymbolsResourcesRegister.erase(itContainerRefCount);
+
+    // In case layer is empty, remove it entirely
+    if (symbolsLayer.isEmpty())
+        _mapSymbolsByOrderRegister.erase(itSymbolsLayer);
 }
 
 void OsmAnd::MapRendererResourcesManager::notifyNewResourceAvailableForDrawing()
@@ -1140,19 +1158,24 @@ std::shared_ptr<const OsmAnd::MapRendererBaseResourcesCollection> OsmAnd::MapRen
     return _bindings[static_cast<int>(type)].providersToCollections[provider];
 }
 
-QMutex& OsmAnd::MapRendererResourcesManager::getSymbolsMapMutex() const
+QMutex& OsmAnd::MapRendererResourcesManager::getMapSymbolsRegistersMutex() const
 {
-    return _mapSymbolsByOrderMutex;
+    return _mapSymbolsRegistersMutex;
 }
 
-const OsmAnd::MapRendererResourcesManager::MapSymbolsByOrder& OsmAnd::MapRendererResourcesManager::getMapSymbolsByOrder() const
+const OsmAnd::MapRendererResourcesManager::MapSymbolsByOrderRegister& OsmAnd::MapRendererResourcesManager::getMapSymbolsByOrderRegister() const
 {
-    return _mapSymbolsByOrder;
+    return _mapSymbolsByOrderRegister;
 }
 
-unsigned int OsmAnd::MapRendererResourcesManager::getMapSymbolsCount() const
+const OsmAnd::MapRendererResourcesManager::MapSymbolsResourcesRegister& OsmAnd::MapRendererResourcesManager::getMapSymbolsResourcesRegister() const
 {
-    return _mapSymbolsCount;
+    return _mapSymbolsResourcesRegister;
+}
+
+unsigned int OsmAnd::MapRendererResourcesManager::getMapSymbolsInRegisterCount() const
+{
+    return _mapSymbolsInRegisterCount;
 }
 
 void OsmAnd::MapRendererResourcesManager::dumpResourcesInfo() const

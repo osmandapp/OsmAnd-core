@@ -44,7 +44,7 @@ bool OsmAnd::BinaryMapRasterBitmapTileProvider_Software_P::obtainData(
     const IQueryController* const queryController)
 {
     // Obtain offline map data tile
-    std::shared_ptr<const MapTiledData > dataTile_;
+    std::shared_ptr<const MapTiledData> dataTile_;
     owner->dataProvider->obtainData(tileId, zoom, dataTile_);
     if (!dataTile_)
     {

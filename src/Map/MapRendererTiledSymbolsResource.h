@@ -17,7 +17,7 @@ namespace OsmAnd
     class MapRendererTiledSymbolsResourcesCollection;
     class MapSymbol;
     class MapSymbolsGroup;
-    class MapTiledSymbols;
+    class TiledMapSymbolsData;
 
     class MapRendererTiledSymbolsResource : public MapRendererBaseTiledResource
     {
@@ -38,7 +38,7 @@ namespace OsmAnd
             QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > resourcesInGPU;
         };
 
-        std::shared_ptr<const MapTiledSymbols> _sourceData;
+        std::shared_ptr<const TiledMapSymbolsData> _sourceData;
         QList< std::shared_ptr<GroupResources> > _uniqueGroupsResources;
         QList< std::shared_ptr<GroupResources> > _referencedSharedGroupsResources;
 
@@ -50,6 +50,8 @@ namespace OsmAnd
         virtual void detach();
     public:
         virtual ~MapRendererTiledSymbolsResource();
+
+        std::shared_ptr<const GPUAPI::ResourceInGPU> getGpuResourceFor(const std::shared_ptr<const MapSymbol>& mapSymbol);
 
     friend class OsmAnd::MapRendererResourcesManager;
     friend class OsmAnd::MapRendererTiledSymbolsResourcesCollection;

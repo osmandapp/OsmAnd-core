@@ -17,3 +17,8 @@ void OsmAnd::MapRendererBaseResource::markAsJunk()
 {
     _isJunk = true;
 }
+
+bool OsmAnd::MapRendererBaseResource::prepareForUse()
+{
+    return true;
+}

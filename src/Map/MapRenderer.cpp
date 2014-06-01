@@ -773,7 +773,7 @@ unsigned int OsmAnd::MapRenderer::getVisibleTilesCount() const
 
 unsigned int OsmAnd::MapRenderer::getSymbolsCount() const
 {
-    return getResources().getMapSymbolsCount();
+    return getResources().getMapSymbolsInRegisterCount();
 }
 
 void OsmAnd::MapRenderer::setRasterLayerProvider(const RasterMapLayerId layerId, const std::shared_ptr<IMapRasterBitmapTileProvider>& tileProvider, bool forcedUpdate /*= false*/)

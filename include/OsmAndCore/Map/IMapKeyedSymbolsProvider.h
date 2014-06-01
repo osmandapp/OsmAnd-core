@@ -24,15 +24,15 @@ namespace OsmAnd
         virtual ~IMapKeyedSymbolsProvider();
     };
 
-    class OSMAND_CORE_API KeyedSymbolsData : public MapKeyedData
+    class OSMAND_CORE_API KeyedMapSymbolsData : public MapKeyedData
     {
-        Q_DISABLE_COPY(KeyedSymbolsData);
+        Q_DISABLE_COPY(KeyedMapSymbolsData);
 
     private:
     protected:
     public:
-        KeyedSymbolsData(const std::shared_ptr<const MapSymbolsGroup>& group, const Key key);
-        virtual ~KeyedSymbolsData();
+        KeyedMapSymbolsData(const std::shared_ptr<const MapSymbolsGroup>& group, const Key key);
+        virtual ~KeyedMapSymbolsData();
 
         const std::shared_ptr<const MapSymbolsGroup> group;
 

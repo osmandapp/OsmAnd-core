@@ -57,7 +57,7 @@ namespace OsmAnd
                 safeUnlink();
             }
 
-            std::weak_ptr< const BinaryMapDataTile > _tile;
+            std::weak_ptr<const BinaryMapDataTile> _tile;
 
             QReadWriteLock _loadedConditionLock;
             QWaitCondition _loadedCondition;

@@ -44,6 +44,8 @@ namespace OsmAnd
         virtual void setState(const MapRendererResourceState newState) = 0;
         virtual bool setStateIf(const MapRendererResourceState testState, const MapRendererResourceState newState) = 0;
 
+        virtual bool prepareForUse();
+
     friend class OsmAnd::MapRendererResourcesManager;
     };
 }

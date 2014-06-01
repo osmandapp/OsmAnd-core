@@ -39,7 +39,7 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::obtainData(bool& dataAvailable, co
     const auto requestSucceeded = provider->obtainData(key, sourceData_);
     if (!requestSucceeded)
         return false;
-    const auto sourceData = std::static_pointer_cast<const KeyedSymbolsData>(sourceData_);
+    const auto sourceData = std::static_pointer_cast<const KeyedMapSymbolsData>(sourceData_);
 
     // Store data
     _sourceData = sourceData;
@@ -48,6 +48,14 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::obtainData(bool& dataAvailable, co
     // Process data
     if (!dataAvailable)
         return true;
+
+    // Form flattened map of editable symbols and publish those to registry
+    for (const auto& symbol : constOf(_sourceData->group->symbols))
+    {
+        /*const auto editableSymbol = symbol->clone();
+
+        _resourcesInGPU.*/
+    }
 
     return true;
 }
@@ -92,6 +100,7 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::uploadToGPU()
     }
 
     // All resources have been uploaded to GPU successfully by this point
+    _sourceData = std::static_pointer_cast<KeyedMapSymbolsData>(_sourceData->createNoContentInstance());
 
     for (const auto& entry : rangeOf(constOf(uploaded)))
     {
@@ -102,7 +111,7 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::uploadToGPU()
         symbol = symbol->cloneWithoutBitmap();
 
         // Publish symbol to global map
-        owner->addMapSymbol(symbol, resource);
+        owner->registerMapSymbol(symbol, resource);
 
         // Move reference
         _resourcesInGPU.insert(qMove(symbol), qMove(resource));
@@ -124,4 +133,14 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::checkIsSafeToUnlink()
 void OsmAnd::MapRendererKeyedSymbolsResource::detach()
 {
     return;
+}
+
+bool OsmAnd::MapRendererKeyedSymbolsResource::prepareForUse()
+{
+    return true;
+}
+
+std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::MapRendererKeyedSymbolsResource::getGpuResourceFor(const std::shared_ptr<const MapSymbol>& mapSymbol)
+{
+    return nullptr;
 }
