@@ -15,8 +15,8 @@
 #include "RasterizerContext_P.h"
 #include "RasterizerSharedContext.h"
 #include "RasterizerSharedContext_P.h"
-#include "RasterizedPinnedSymbol.h"
-#include "RasterizedSymbolOnPath.h"
+#include "RasterizedSpriteSymbol.h"
+#include "RasterizedOnPathSymbol.h"
 #include "RasterizedSymbolsGroup.h"
 #include "MapStyleEvaluator.h"
 #include "MapStyleEvaluationResult.h"
@@ -2567,7 +2567,7 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                 if (textSymbol->drawOnPath)
                 {
                     // Publish new rasterized symbol
-                    const auto rasterizedSymbol = new RasterizedSymbolOnPath(
+                    const auto rasterizedSymbol = new RasterizedOnPathSymbol(
                         group,
                         constructedGroup->mapObject,
                         qMove(std::shared_ptr<const SkBitmap>(pBitmap)),
@@ -2589,7 +2589,7 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                     totalOffset += localOffset;
 
                     // Publish new rasterized symbol
-                    const auto rasterizedSymbol = new RasterizedPinnedSymbol(
+                    const auto rasterizedSymbol = new RasterizedSpriteSymbol(
                         group,
                         constructedGroup->mapObject,
                         qMove(std::shared_ptr<const SkBitmap>(pBitmap)),
@@ -2627,7 +2627,7 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                 totalOffset += localOffset;
 
                 // Publish new rasterized symbol
-                const auto rasterizedSymbol = new RasterizedPinnedSymbol(
+                const auto rasterizedSymbol = new RasterizedSpriteSymbol(
                     group,
                     constructedGroup->mapObject,
                     qMove(bitmap),

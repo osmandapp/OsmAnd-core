@@ -1,6 +1,6 @@
-#include "RasterizedPinnedSymbol.h"
+#include "RasterizedOnPathSymbol.h"
 
-OsmAnd::RasterizedPinnedSymbol::RasterizedPinnedSymbol(
+OsmAnd::RasterizedOnPathSymbol::RasterizedOnPathSymbol(
     const std::shared_ptr<const RasterizedSymbolsGroup>& group_,
     const std::shared_ptr<const Model::MapObject>& mapObject_,
     const std::shared_ptr<const SkBitmap>& bitmap_,
@@ -8,14 +8,12 @@ OsmAnd::RasterizedPinnedSymbol::RasterizedPinnedSymbol(
     const QString& content_,
     const LanguageId& languageId_,
     const PointI& minDistance_,
-    const PointI& location31_,
-    const PointI& offset_)
+    const QVector<SkScalar>& glyphsWidth_)
     : RasterizedSymbol(group_, mapObject_, bitmap_, order_, content_, languageId_, minDistance_)
-    , location31(location31_)
-    , offset(offset_)
+    , glyphsWidth(glyphsWidth_)
 {
 }
 
-OsmAnd::RasterizedPinnedSymbol::~RasterizedPinnedSymbol()
+OsmAnd::RasterizedOnPathSymbol::~RasterizedOnPathSymbol()
 {
 }

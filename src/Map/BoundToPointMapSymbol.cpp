@@ -5,11 +5,12 @@ OsmAnd::BoundToPointMapSymbol::BoundToPointMapSymbol(
     const bool isShareable_,
     const std::shared_ptr<const SkBitmap>& bitmap_,
     const int order_,
+    const IntersectionModeFlags intersectionModeFlags_,
     const QString& content_,
     const LanguageId& languageId_,
     const PointI& minDistance_,
     const PointI& location31_)
-    : MapSymbol(group_, isShareable_, bitmap_, order_, content_, languageId_, minDistance_)
+    : MapSymbol(group_, isShareable_, bitmap_, order_, intersectionModeFlags_, content_, languageId_, minDistance_)
     , location31(location31_)
 {
 }

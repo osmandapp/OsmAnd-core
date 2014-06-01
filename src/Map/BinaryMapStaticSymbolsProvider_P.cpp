@@ -5,8 +5,8 @@
 #include "RasterizerEnvironment.h"
 #include "Rasterizer.h"
 #include "RasterizedSymbolsGroup.h"
-#include "RasterizedPinnedSymbol.h"
-#include "RasterizedSymbolOnPath.h"
+#include "RasterizedSpriteSymbol.h"
+#include "RasterizedOnPathSymbol.h"
 #include "SpriteMapSymbol.h"
 #include "OnPathMapSymbol.h"
 #include "MapObject.h"
@@ -82,13 +82,14 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
         // Convert all symbols inside group
         for (const auto& rasterizedSymbol : constOf(rasterizedGroup->symbols))
         {
-            if (const auto pinnedSymbol = std::dynamic_pointer_cast<const RasterizedPinnedSymbol>(rasterizedSymbol))
+            if (const auto pinnedSymbol = std::dynamic_pointer_cast<const RasterizedSpriteSymbol>(rasterizedSymbol))
             {
                 const auto symbol = new SpriteMapSymbol(
                     group,
                     isShareable,
                     pinnedSymbol->bitmap,
                     pinnedSymbol->order,
+                    MapSymbol::RegularIntersectionProcessing,
                     pinnedSymbol->content,
                     pinnedSymbol->languageId,
                     pinnedSymbol->minDistance,
@@ -97,13 +98,14 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                 assert(static_cast<bool>(symbol->bitmap));
                 group->symbols.push_back(qMove(std::shared_ptr<const MapSymbol>(symbol)));
             }
-            else if (const auto symbolOnPath = std::dynamic_pointer_cast<const RasterizedSymbolOnPath>(rasterizedSymbol))
+            else if (const auto symbolOnPath = std::dynamic_pointer_cast<const RasterizedOnPathSymbol>(rasterizedSymbol))
             {
                 const auto symbol = new OnPathMapSymbol(
                     group,
                     isShareable,
                     symbolOnPath->bitmap,
                     symbolOnPath->order,
+                    MapSymbol::RegularIntersectionProcessing,
                     symbolOnPath->content,
                     symbolOnPath->languageId,
                     symbolOnPath->minDistance,

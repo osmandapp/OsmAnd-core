@@ -22,6 +22,7 @@ namespace OsmAnd
             const bool isShareable,
             const std::shared_ptr<const SkBitmap>& bitmap,
             const int order,
+            const IntersectionModeFlags intersectionModeFlags,
             const QString& content,
             const LanguageId& languageId,
             const PointI& minDistance,

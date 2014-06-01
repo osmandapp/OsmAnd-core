@@ -14,12 +14,12 @@ namespace OsmAnd
 {
     class Rasterizer_P;
 
-    class OSMAND_CORE_API RasterizedSymbolOnPath : public RasterizedSymbol
+    class OSMAND_CORE_API RasterizedOnPathSymbol : public RasterizedSymbol
     {
-        Q_DISABLE_COPY(RasterizedSymbolOnPath);
+        Q_DISABLE_COPY(RasterizedOnPathSymbol);
     private:
     protected:
-        RasterizedSymbolOnPath(
+        RasterizedOnPathSymbol(
             const std::shared_ptr<const RasterizedSymbolsGroup>& group,
             const std::shared_ptr<const Model::MapObject>& mapObject,
             const std::shared_ptr<const SkBitmap>& bitmap,
@@ -29,7 +29,7 @@ namespace OsmAnd
             const PointI& minDistance,
             const QVector<SkScalar>& glyphsWidth);
     public:
-        virtual ~RasterizedSymbolOnPath();
+        virtual ~RasterizedOnPathSymbol();
 
         const QVector<SkScalar> glyphsWidth;
 

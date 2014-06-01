@@ -14,12 +14,12 @@ namespace OsmAnd
 {
     class Rasterizer_P;
 
-    class OSMAND_CORE_API RasterizedPinnedSymbol : public RasterizedSymbol
+    class OSMAND_CORE_API RasterizedSpriteSymbol : public RasterizedSymbol
     {
-        Q_DISABLE_COPY(RasterizedPinnedSymbol);
+        Q_DISABLE_COPY(RasterizedSpriteSymbol);
     private:
     protected:
-        RasterizedPinnedSymbol(
+        RasterizedSpriteSymbol(
             const std::shared_ptr<const RasterizedSymbolsGroup>& group,
             const std::shared_ptr<const Model::MapObject>& mapObject,
             const std::shared_ptr<const SkBitmap>& bitmap,
@@ -30,7 +30,7 @@ namespace OsmAnd
             const PointI& location31,
             const PointI& offset);
     public:
-        virtual ~RasterizedPinnedSymbol();
+        virtual ~RasterizedSpriteSymbol();
 
         const PointI location31;
         const PointI offset;

@@ -208,6 +208,7 @@ std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToColl
             false, // This symbol is not shareable
             pinIconBitmap,
             order++,
+            static_cast<MapSymbol::IntersectionModeFlags>(MapSymbol::IgnoredByIntersectionTest | MapSymbol::TransparentForIntersectionLookup),
             QString().sprintf("marker(%p)->pinBitmap:%p", marker.get(), _pinIconBitmap.getPixels()),
             LanguageId::Invariant,
             PointI(), // Since minDistance is (0, 0), this map symbol will not be compared to others

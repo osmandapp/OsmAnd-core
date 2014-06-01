@@ -5,12 +5,13 @@ OsmAnd::SpriteMapSymbol::SpriteMapSymbol(
     const bool isShareable_,
     const std::shared_ptr<const SkBitmap>& bitmap_,
     const int order_,
+    const IntersectionModeFlags intersectionModeFlags_,
     const QString& content_,
     const LanguageId& languageId_,
     const PointI& minDistance_,
     const PointI& location31_,
     const PointI& offset_)
-    : BoundToPointMapSymbol(group_, isShareable_, bitmap_, order_, content_, languageId_, minDistance_, location31_)
+    : BoundToPointMapSymbol(group_, isShareable_, bitmap_, order_, intersectionModeFlags_, content_, languageId_, minDistance_, location31_)
     , offset(offset_)
 {
 }
@@ -26,6 +27,7 @@ std::shared_ptr<OsmAnd::MapSymbol> OsmAnd::SpriteMapSymbol::cloneWithBitmap(cons
         isShareable,
         replacementBitmap,
         order,
+        intersectionModeFlags,
         content,
         languageId,
         minDistance,

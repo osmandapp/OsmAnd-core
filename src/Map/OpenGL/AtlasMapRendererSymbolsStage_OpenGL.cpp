@@ -419,23 +419,26 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                 //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
                 boundsInWindow.enlargeBy(PointI(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
 
-#if !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
-                // Check intersections
-                const auto intersects = intersections.test(boundsInWindow, false,
-                    [symbolGroupPtr]
-                    (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
-                    {
-                        // Only accept intersections with symbols from other groups
-                        return otherSymbol->groupPtr != symbolGroupPtr;
-                    });
-                if (intersects)
+                if ((symbol->intersectionModeFlags & MapSymbol::IgnoredByIntersectionTest) != MapSymbol::IgnoredByIntersectionTest)
                 {
+#if !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
+                    // Check intersections
+                    const auto intersects = intersections.test(boundsInWindow, false,
+                        [symbolGroupPtr]
+                        (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+                        {
+                            // Only accept intersections with symbols from other groups
+                            return otherSymbol->groupPtr != symbolGroupPtr;
+                        });
+                    if (intersects)
+                    {
 #if OSMAND_DEBUG && 0
-                    getRenderer()->_debugStage.addRect2D(boundsInWindow, SkColorSetA(SK_ColorRED, 50));
+                        getRenderer()->_debugStage.addRect2D(boundsInWindow, SkColorSetA(SK_ColorRED, 50));
 #endif // OSMAND_DEBUG
-                    continue;
-                }
+                        continue;
+                    }
 #endif // !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
+                }
 
                 // Query for similar content in area of "minDistance" to exclude duplicates, but keep if from same mapObject
                 if ((symbol->minDistance.x > 0 || symbol->minDistance.y > 0) && !symbol->content.isNull())
@@ -459,13 +462,16 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     }
                 }
 
-                // Insert into quad-tree
-                if (!intersections.insert(symbol, boundsInWindow))
+                if ((symbol->intersectionModeFlags & MapSymbol::TransparentForIntersectionLookup) != MapSymbol::TransparentForIntersectionLookup)
                 {
+                    // Insert into quad-tree
+                    if (!intersections.insert(symbol, boundsInWindow))
+                    {
 #if OSMAND_DEBUG && 0
-                    getRenderer()->_debugStage.addRect2D(boundsInWindow, SkColorSetA(SK_ColorBLUE, 50));
+                        getRenderer()->_debugStage.addRect2D(boundsInWindow, SkColorSetA(SK_ColorBLUE, 50));
 #endif // OSMAND_DEBUG
-                    continue;
+                        continue;
+                    }
                 }
 
 #if OSMAND_DEBUG && 0
@@ -709,23 +715,26 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
                     oobb.enlargeBy(PointI(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
 
-#if !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
-                    // Check intersections
-                    const auto intersects = intersections.test(oobb, false,
-                        [symbolGroupPtr]
-                        (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
-                        {
-                            // Only accept intersections with symbols from other groups
-                            return otherSymbol->groupPtr != symbolGroupPtr;
-                        });
-                    if (intersects)
+                    if ((symbol->intersectionModeFlags & MapSymbol::IgnoredByIntersectionTest) != MapSymbol::IgnoredByIntersectionTest)
                     {
+#if !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
+                        // Check intersections
+                        const auto intersects = intersections.test(oobb, false,
+                            [symbolGroupPtr]
+                            (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+                            {
+                                // Only accept intersections with symbols from other groups
+                                return otherSymbol->groupPtr != symbolGroupPtr;
+                            });
+                        if (intersects)
+                        {
 #if OSMAND_DEBUG && 0
-                        getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
+                            getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
 #endif // OSMAND_DEBUG
-                        continue;
-                    }
+                            continue;
+                        }
 #endif // !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
+                    }
 
                     // Query for similar content in area of "minDistance" to exclude duplicates, but keep if from same mapObject
                     if ((symbol->minDistance.x > 0 || symbol->minDistance.y > 0) && !symbol->content.isNull())
@@ -749,13 +758,16 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                         }
                     }
 
-                    // Insert into quad-tree
-                    if (!intersections.insert(symbol, oobb))
+                    if ((symbol->intersectionModeFlags & MapSymbol::TransparentForIntersectionLookup) != MapSymbol::TransparentForIntersectionLookup)
                     {
+                        // Insert into quad-tree
+                        if (!intersections.insert(symbol, oobb))
+                        {
 #if OSMAND_DEBUG && 0
-                        getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorBLUE, 50), oobb.rotation);
+                            getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorBLUE, 50), oobb.rotation);
 #endif // OSMAND_DEBUG
-                        continue;
+                            continue;
+                        }
                     }
 
 #if OSMAND_DEBUG && 0
@@ -1089,23 +1101,26 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
                     oobb.enlargeBy(PointI(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
 
-#if !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
-                    // Check intersections
-                    const auto intersects = intersections.test(oobb, false,
-                        [symbolGroupPtr]
-                        (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
-                        {
-                            // Only accept intersections with symbols from other groups
-                            return otherSymbol->groupPtr != symbolGroupPtr;
-                        });
-                    if (intersects)
+                    if ((symbol->intersectionModeFlags & MapSymbol::IgnoredByIntersectionTest) != MapSymbol::IgnoredByIntersectionTest)
                     {
+#if !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
+                        // Check intersections
+                        const auto intersects = intersections.test(oobb, false,
+                            [symbolGroupPtr]
+                            (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+                            {
+                                // Only accept intersections with symbols from other groups
+                                return otherSymbol->groupPtr != symbolGroupPtr;
+                            });
+                        if (intersects)
+                        {
 #if OSMAND_DEBUG && 0
-                        getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
+                            getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
 #endif // OSMAND_DEBUG
-                        continue;
-                    }
+                            continue;
+                        }
 #endif // !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
+                    }
 
                     // Query for similar content in area of "minDistance" to exclude duplicates, but keep if from same mapObject
                     if ((symbol->minDistance.x > 0 || symbol->minDistance.y > 0) && !symbol->content.isNull())
@@ -1129,13 +1144,16 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                         }
                     }
 
-                    // Insert into quad-tree
-                    if (!intersections.insert(symbol, oobb))
+                    if ((symbol->intersectionModeFlags & MapSymbol::TransparentForIntersectionLookup) != MapSymbol::TransparentForIntersectionLookup)
                     {
+                        // Insert into quad-tree
+                        if (!intersections.insert(symbol, oobb))
+                        {
 #if OSMAND_DEBUG && 0
-                        getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorBLUE, 50), oobb.rotation);
+                            getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorBLUE, 50), oobb.rotation);
 #endif // OSMAND_DEBUG
-                        continue;
+                            continue;
+                        }
                     }
 
 #if OSMAND_DEBUG && 0

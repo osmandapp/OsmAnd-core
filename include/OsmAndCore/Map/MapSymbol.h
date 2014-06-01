@@ -23,6 +23,16 @@ namespace OsmAnd
     class OSMAND_CORE_API MapSymbol
     {
         Q_DISABLE_COPY(MapSymbol);
+
+    public:
+        enum IntersectionModeFlags : uint32_t
+        {
+            RegularIntersectionProcessing = 0,
+
+            IgnoredByIntersectionTest = 1 << 0,
+            TransparentForIntersectionLookup = 1 << 1,
+        };
+
     private:
     protected:
         MapSymbol(
@@ -30,6 +40,7 @@ namespace OsmAnd
             const bool isShareable,
             const std::shared_ptr<const SkBitmap>& bitmap,
             const int order,
+            const IntersectionModeFlags intersectionModeFlags,
             const QString& content,
             const LanguageId& languageId,
             const PointI& minDistance);
@@ -43,6 +54,7 @@ namespace OsmAnd
 
         const std::shared_ptr<const SkBitmap> bitmap;
         const int order;
+        const IntersectionModeFlags intersectionModeFlags;
         const QString content;
         const LanguageId languageId;
         const PointI minDistance;
