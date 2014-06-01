@@ -1,10 +1,14 @@
 #include "MapRendererTiledSymbolsResource.h"
 
+#include "MapRenderer.h"
+#include "MapRendererResourcesManager.h"
 #include "IMapDataProvider.h"
 #include "IMapTiledSymbolsProvider.h"
+#include "MapSymbolsGroupShareableById.h"
 #include "MapRendererResourcesManager.h"
 #include "MapRendererBaseResourcesCollection.h"
 #include "MapRendererTiledSymbolsResourcesCollection.h"
+#include "QKeyValueIterator.h"
 #include "Utilities.h"
 
 OsmAnd::MapRendererTiledSymbolsResource::MapRendererTiledSymbolsResource(
@@ -39,22 +43,24 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
     auto& sharedGroupsResources = collection->_sharedGroupsResources[zoom];
 
     // Obtain tile from provider
-    const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
     QList< std::shared_ptr<GroupResources> > referencedSharedGroupsResources;
     QList< proper::shared_future< std::shared_ptr<GroupResources> > > futureReferencedSharedGroupsResources;
     QSet< uint64_t > loadedSharedGroups;
-    std::shared_ptr<const MapTiledSymbols> tile;
-    const auto requestSucceeded = provider->obtainSymbols(tileId, zoom, tile,
-        [this, provider, &sharedGroupsResources, &referencedSharedGroupsResources, &futureReferencedSharedGroupsResources, &loadedSharedGroups, tileBBox31]
-        (const IMapSymbolProvider*, const std::shared_ptr<const Model::ObjectWithId>& object, const bool shareable) -> bool
+    std::shared_ptr<const MapTiledData> tile_;
+    const auto requestSucceeded = provider->obtainData(tileId, zoom, tile_,
+        [this, provider, &sharedGroupsResources, &referencedSharedGroupsResources, &futureReferencedSharedGroupsResources, &loadedSharedGroups]
+        (const IMapTiledSymbolsProvider*, const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup_) -> bool
         {
-            if (!shareable)
+            const auto symbolsGroup = std::dynamic_pointer_cast<const MapSymbolsGroupShareableById>(symbolsGroup_);
+
+            // If not shareable, just accept it
+            if (!symbolsGroup)
                 return true;
 
             // Check if this shared symbol is already available, or mark it as pending
             std::shared_ptr<GroupResources> sharedGroupResources;
             proper::shared_future< std::shared_ptr<GroupResources> > futureSharedGroupResources;
-            if (sharedGroupsResources.obtainReferenceOrFutureReferenceOrMakePromise(object->id, sharedGroupResources, futureSharedGroupResources))
+            if (sharedGroupsResources.obtainReferenceOrFutureReferenceOrMakePromise(symbolsGroup->id, sharedGroupResources, futureSharedGroupResources))
             {
                 if (static_cast<bool>(sharedGroupResources))
                     referencedSharedGroupsResources.push_back(qMove(sharedGroupResources));
@@ -64,11 +70,12 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
             }
 
             // Or load this shared group
-            loadedSharedGroups.insert(object->id);
+            loadedSharedGroups.insert(symbolsGroup->id);
             return true;
         });
     if (!requestSucceeded)
         return false;
+    const auto tile = std::static_pointer_cast<const MapTiledSymbols>(tile_);
 
     // Store data
     _sourceData = tile;
@@ -111,18 +118,6 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
         auto groupResources = futureGroup.get();
 
         _referencedSharedGroupsResources.push_back(qMove(groupResources));
-    }
-
-    // Release source data:
-    if (const auto retainedSource = std::dynamic_pointer_cast<const IRetainableResource>(_sourceData))
-    {
-        // If map tile implements 'Retained' interface, it must be kept, but 
-        std::const_pointer_cast<IRetainableResource>(retainedSource)->releaseNonRetainedData();
-    }
-    else
-    {
-        // or simply release entire tile
-        _sourceData.reset();
     }
 
     return true;
@@ -215,17 +210,18 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
     }
 
     // All resources have been uploaded to GPU successfully by this point
+    _sourceData = std::static_pointer_cast<MapTiledSymbols>(_sourceData->createNoContentInstance());
 
     // Unique
     for (const auto& entry : rangeOf(constOf(uniqueUploaded)))
     {
         const auto& groupResources = entry.key();
-        auto& symbol = entry.value().first;
+        auto symbol = entry.value().first;
         auto& resource = entry.value().second;
 
         // Unload source data from symbol
-        std::const_pointer_cast<MapSymbol>(symbol)->releaseNonRetainedData();
-
+        symbol = symbol->cloneWithoutBitmap();
+        
         // Publish symbol to global map
         owner->addMapSymbol(symbol, resource);
 
@@ -237,12 +233,12 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
     for (const auto& entry : rangeOf(constOf(sharedUploaded)))
     {
         const auto& groupResources = entry.key();
-        auto& symbol = entry.value().first;
+        auto symbol = entry.value().first;
         auto& resource = entry.value().second;
 
         // Unload source data from symbol
-        std::const_pointer_cast<MapSymbol>(symbol)->releaseNonRetainedData();
-
+        symbol = symbol->cloneWithoutBitmap();
+        
         // Publish symbol to global map
         owner->addMapSymbol(symbol, resource);
 
@@ -343,11 +339,12 @@ void OsmAnd::MapRendererTiledSymbolsResource::detach()
                 assert(resourceInGPU.use_count() == 1);
                 auto resourceInGPU_ = qMove(resourceInGPU);
                 owner->renderer->getGpuThreadDispatcher().invokeAsync(
-                    [resourceInGPU_]() mutable
-                {
-                    assert(resourceInGPU_.use_count() == 1);
-                    resourceInGPU_.reset();
-                });
+                    [resourceInGPU_]
+                    () mutable
+                    {
+                        assert(resourceInGPU_.use_count() == 1);
+                        resourceInGPU_.reset();
+                    });
 #ifndef Q_COMPILER_RVALUE_REFS
                 resourceInGPU.reset();
 #endif //!Q_COMPILER_RVALUE_REFS

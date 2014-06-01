@@ -32,6 +32,16 @@ bool OsmAnd::BinaryMapDataProvider::obtainData(
     return _p->obtainData(tileId, zoom, outTiledData, queryController);
 }
 
+OsmAnd::ZoomLevel OsmAnd::BinaryMapDataProvider::getMinZoom() const
+{
+    return MinZoomLevel;//TODO: invalid
+}
+
+OsmAnd::ZoomLevel OsmAnd::BinaryMapDataProvider::getMaxZoom() const
+{
+    return MaxZoomLevel;//TODO: invalid
+}
+
 OsmAnd::BinaryMapDataTile::BinaryMapDataTile(
     const MapFoundationType tileFoundation_,
     const QList< std::shared_ptr<const Model::MapObject> >& mapObjects_,

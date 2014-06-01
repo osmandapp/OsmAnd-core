@@ -19,9 +19,9 @@ OsmAnd::SpriteMapSymbol::~SpriteMapSymbol()
 {
 }
 
-OsmAnd::MapSymbol* OsmAnd::SpriteMapSymbol::cloneWithReplacedBitmap(const std::shared_ptr<const SkBitmap>& replacementBitmap) const
+std::shared_ptr<OsmAnd::MapSymbol> OsmAnd::SpriteMapSymbol::cloneWithBitmap(const std::shared_ptr<const SkBitmap>& replacementBitmap) const
 {
-    return new SpriteMapSymbol(
+    return std::shared_ptr<OsmAnd::MapSymbol>(new SpriteMapSymbol(
         group.lock(),
         isShareable,
         replacementBitmap,
@@ -30,5 +30,5 @@ OsmAnd::MapSymbol* OsmAnd::SpriteMapSymbol::cloneWithReplacedBitmap(const std::s
         languageId,
         minDistance,
         location31,
-        offset);
+        offset));
 }

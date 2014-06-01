@@ -25,13 +25,6 @@ namespace OsmAnd
     class OSMAND_CORE_API BinaryMapStaticSymbolsProvider : public IMapTiledSymbolsProvider
     {
         Q_DISABLE_COPY(BinaryMapStaticSymbolsProvider);
-    public:
-        OSMAND_CALLABLE(FilterCallback,
-            bool,
-            const BinaryMapStaticSymbolsProvider* const provider,
-            const std::shared_ptr<const Model::MapObject>& object,
-            const bool shareable);
-
     private:
         PrivateImplementation<BinaryMapStaticSymbolsProvider_P> _p;
     protected:
@@ -41,13 +34,10 @@ namespace OsmAnd
 
         const std::shared_ptr<BinaryMapDataProvider> dataProvider;
 
-        virtual bool obtainData(
-            const TileId tileId,
-            const ZoomLevel zoom,
-            std::shared_ptr<const MapTiledData>& outTiledData,
-            const IQueryController* const queryController = nullptr);
+        virtual ZoomLevel getMinZoom() const;
+        virtual ZoomLevel getMaxZoom() const;
 
-        bool obtainData(
+        virtual bool obtainData(
             const TileId tileId, const ZoomLevel zoom,
             std::shared_ptr<const MapTiledData>& outTiledData,
             const FilterCallback filterCallback = nullptr,
@@ -66,6 +56,8 @@ namespace OsmAnd
         virtual ~BinaryMapStaticSymbolsTile();
 
         const std::shared_ptr<const BinaryMapDataTile> dataTile;
+
+        virtual std::shared_ptr<MapData> createNoContentInstance() const;
 
     friend class OsmAnd::BinaryMapStaticSymbolsProvider;
     friend class OsmAnd::BinaryMapStaticSymbolsProvider_P;

@@ -28,7 +28,7 @@ namespace OsmAnd
             const PointI& location31);
         virtual ~OnSurfaceMapSymbol();
 
-        virtual MapSymbol* cloneWithReplacedBitmap(const std::shared_ptr<const SkBitmap>& bitmap) const;
+        virtual std::shared_ptr<OsmAnd::MapSymbol> cloneWithBitmap(const std::shared_ptr<const SkBitmap>& bitmap) const;
     };
 }
 

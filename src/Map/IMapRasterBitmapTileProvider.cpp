@@ -31,12 +31,12 @@ OsmAnd::RasterBitmapTile::~RasterBitmapTile()
 {
 }
 
-OsmAnd::RasterBitmapTile* OsmAnd::RasterBitmapTile::cloneWithBitmap(const std::shared_ptr<const SkBitmap>& newBitmap) const
+std::shared_ptr<OsmAnd::RasterBitmapTile> OsmAnd::RasterBitmapTile::cloneWithBitmap(const std::shared_ptr<const SkBitmap>& newBitmap) const
 {
     assert(bitmap->width() == newBitmap->width());
     assert(bitmap->height() == newBitmap->height());
 
-    return new RasterBitmapTile(newBitmap, alphaChannelData, densityFactor, tileId, zoom);
+    return std::shared_ptr<RasterBitmapTile>(new RasterBitmapTile(newBitmap, alphaChannelData, densityFactor, tileId, zoom));
 }
 
 std::shared_ptr<OsmAnd::MapData> OsmAnd::RasterBitmapTile::createNoContentInstance() const

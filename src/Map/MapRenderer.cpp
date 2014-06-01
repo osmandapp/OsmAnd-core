@@ -716,7 +716,7 @@ bool OsmAnd::MapRenderer::convertMapTile(const std::shared_ptr<const MapTiledDat
         if (!wasConverted)
             return false;
 
-        output.reset(input->cloneWithBitmap(convertedBitmap));
+        output = input->cloneWithBitmap(convertedBitmap);
         return true;
     }
 
@@ -735,7 +735,7 @@ bool OsmAnd::MapRenderer::convertMapSymbol(const std::shared_ptr<const MapSymbol
     if (!wasConverted)
         return false;
 
-    output.reset(input->cloneWithReplacedBitmap(convertedBitmap));
+    output = input->cloneWithBitmap(convertedBitmap);
     return true;
 }
 

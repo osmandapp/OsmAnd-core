@@ -2,6 +2,7 @@
 
 #include "IMapDataProvider.h"
 #include "IMapKeyedDataProvider.h"
+#include "IMapKeyedSymbolsProvider.h"
 #include "MapSymbol.h"
 #include "MapSymbolsGroup.h"
 #include "MapRendererKeyedResourcesCollection.h"
@@ -38,7 +39,7 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::obtainData(bool& dataAvailable, co
     const auto requestSucceeded = provider->obtainData(key, sourceData_);
     if (!requestSucceeded)
         return false;
-    const auto sourceData = std::static_pointer_cast<const MapSymbolsGroup>(sourceData_);
+    const auto sourceData = std::static_pointer_cast<const KeyedSymbolsData>(sourceData_);
 
     // Store data
     _sourceData = sourceData;
@@ -47,18 +48,6 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::obtainData(bool& dataAvailable, co
     // Process data
     if (!dataAvailable)
         return true;
-
-    // Release source data:
-    if (const auto retainedSource = std::dynamic_pointer_cast<const IRetainableResource>(_sourceData))
-    {
-        // If map tile implements 'Retained' interface, it must be kept, but 
-        std::const_pointer_cast<IRetainableResource>(retainedSource)->releaseNonRetainedData();
-    }
-    else
-    {
-        // or simply release entire tile
-        _sourceData.reset();
-    }
 
     return true;
 }
@@ -72,7 +61,7 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::uploadToGPU()
     const auto collection = static_cast<MapRendererKeyedResourcesCollection*>(&link_->collection);
 
     QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > uploaded;
-    for (const auto& symbol : constOf(_sourceData->symbols))
+    for (const auto& symbol : constOf(_sourceData->group->symbols))
     {
         // Prepare data and upload to GPU
         assert(static_cast<bool>(symbol->bitmap));
@@ -106,11 +95,11 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::uploadToGPU()
 
     for (const auto& entry : rangeOf(constOf(uploaded)))
     {
-        auto& symbol = entry.key();
+        auto symbol = entry.key();
         auto& resource = entry.value();
 
         // Unload source data from symbol
-        std::const_pointer_cast<MapSymbol>(symbol)->releaseNonRetainedData();
+        symbol = symbol->cloneWithoutBitmap();
 
         // Publish symbol to global map
         owner->addMapSymbol(symbol, resource);

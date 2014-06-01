@@ -20,9 +20,9 @@ OsmAnd::OnPathMapSymbol::~OnPathMapSymbol()
 {
 }
 
-OsmAnd::MapSymbol* OsmAnd::OnPathMapSymbol::cloneWithReplacedBitmap(const std::shared_ptr<const SkBitmap>& replacementBitmap) const
+std::shared_ptr<OsmAnd::MapSymbol> OsmAnd::OnPathMapSymbol::cloneWithBitmap(const std::shared_ptr<const SkBitmap>& replacementBitmap) const
 {
-    return new OnPathMapSymbol(
+    return std::shared_ptr<MapSymbol>(new OnPathMapSymbol(
         group.lock(),
         isShareable,
         replacementBitmap,
@@ -31,5 +31,5 @@ OsmAnd::MapSymbol* OsmAnd::OnPathMapSymbol::cloneWithReplacedBitmap(const std::s
         languageId,
         minDistance,
         path,
-        glyphsWidth);
+        glyphsWidth));
 }

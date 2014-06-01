@@ -52,12 +52,6 @@ namespace OsmAnd
         virtual ~BinaryMapStaticSymbolsProvider_P();
 
         bool obtainData(
-            const TileId tileId,
-            const ZoomLevel zoom,
-            std::shared_ptr<const MapTiledData>& outTiledData,
-            const IQueryController* const queryController);
-
-        bool obtainData(
             const TileId tileId, const ZoomLevel zoom,
             std::shared_ptr<const MapTiledData>& outTiledData,
             const FilterCallback filterCallback,

@@ -47,7 +47,8 @@ namespace OsmAnd
         const LanguageId languageId;
         const PointI minDistance;
 
-        virtual MapSymbol* cloneWithReplacedBitmap(const std::shared_ptr<const SkBitmap>& bitmap) const = 0;
+        virtual std::shared_ptr<MapSymbol> cloneWithBitmap(const std::shared_ptr<const SkBitmap>& bitmap) const = 0;
+        virtual std::shared_ptr<MapSymbol> cloneWithoutBitmap() const;
     };
 }
 

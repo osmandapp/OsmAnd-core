@@ -37,7 +37,7 @@ bool OsmAnd::MapRendererRasterBitmapTileResource::obtainData(bool& dataAvailable
         return false;
 
     // Store data
-    _sourceData = tile;
+    _sourceData = std::static_pointer_cast<const RasterBitmapTile>(tile);
     dataAvailable = static_cast<bool>(tile);
 
     return true;

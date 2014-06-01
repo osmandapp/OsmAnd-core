@@ -33,7 +33,7 @@ namespace OsmAnd
         const QVector<PointI> path;
         const QVector<float> glyphsWidth;
 
-        virtual MapSymbol* cloneWithReplacedBitmap(const std::shared_ptr<const SkBitmap>& bitmap) const;
+        virtual std::shared_ptr<MapSymbol> cloneWithBitmap(const std::shared_ptr<const SkBitmap>& bitmap) const;
     };
 
 }

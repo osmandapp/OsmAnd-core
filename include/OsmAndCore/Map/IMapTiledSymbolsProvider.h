@@ -18,11 +18,29 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY(IMapTiledSymbolsProvider);
 
+    public:
+        OSMAND_CALLABLE(FilterCallback,
+            bool,
+            const IMapTiledSymbolsProvider* const provider,
+            const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup);
+
     private:
     protected:
         IMapTiledSymbolsProvider();
     public:
         virtual ~IMapTiledSymbolsProvider();
+
+        virtual bool obtainData(
+            const TileId tileId,
+            const ZoomLevel zoom,
+            std::shared_ptr<const MapTiledData>& outTiledData,
+            const IQueryController* const queryController = nullptr);
+
+        virtual bool obtainData(
+            const TileId tileId, const ZoomLevel zoom,
+            std::shared_ptr<const MapTiledData>& outTiledData,
+            const FilterCallback filterCallback = nullptr,
+            const IQueryController* const queryController = nullptr) = 0;
     };
 
     class OSMAND_CORE_API MapTiledSymbols : public MapTiledData
@@ -34,6 +52,8 @@ namespace OsmAnd
         virtual ~MapTiledSymbols();
 
         const QList< std::shared_ptr<const MapSymbolsGroup> > symbolsGroups;
+
+        virtual std::shared_ptr<MapData> createNoContentInstance() const;
     };
 }
 

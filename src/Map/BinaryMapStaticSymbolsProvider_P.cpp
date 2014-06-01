@@ -25,15 +25,6 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
     const TileId tileId,
     const ZoomLevel zoom,
     std::shared_ptr<const MapTiledData>& outTiledData,
-    const IQueryController* const queryController)
-{
-    return obtainData(tileId, zoom, outTiledData, nullptr, queryController);
-}
-
-bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
-    const TileId tileId,
-    const ZoomLevel zoom,
-    std::shared_ptr<const MapTiledData>& outTiledData,
     const FilterCallback filterCallback,
     const IQueryController* const queryController)
 {
@@ -55,34 +46,38 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
     // Create rasterizer
     Rasterizer rasterizer(dataTile->rasterizerContext);
 
-    // Rasterize symbols
+    // Rasterize symbols and create symbols groups
     QList< std::shared_ptr<const RasterizedSymbolsGroup> > rasterizedSymbolsGroups;
-    rasterizer.rasterizeSymbolsWithoutPaths(rasterizedSymbolsGroups,
-        [this, tileBBox31, filterCallback]
+    QHash< uint64_t, std::shared_ptr<MapSymbolsGroup> > preallocatedSymbolsGroups;
+    const auto rasterizationFilter =
+        [this, tileBBox31, filterCallback, &preallocatedSymbolsGroups]
         (const std::shared_ptr<const Model::MapObject>& mapObject) -> bool
         {
-            if (filterCallback == nullptr)
-                return true;
-
             const auto isShareable =
                 (mapObject->section != owner->dataProvider->rasterizerEnvironment->dummyMapSection) &&
                 !tileBBox31.contains(mapObject->bbox31);
+            const std::shared_ptr<MapSymbolsGroup> preallocatedGroup(isShareable ? new MapSymbolsGroupShareableById(mapObject->id) : new MapSymbolsGroup());
 
-            return filterCallback(owner, mapObject, isShareable);
-        }, nullptr);
+            if (!filterCallback || filterCallback(owner, preallocatedGroup))
+            {
+                preallocatedSymbolsGroups.insert(mapObject->id, preallocatedGroup);
+                return true;
+            }
+            return false;
+        };
+    rasterizer.rasterizeSymbolsWithoutPaths(rasterizedSymbolsGroups, rasterizationFilter, nullptr);
 
     // Convert results
     QList< std::shared_ptr<const MapSymbolsGroup> > symbolsGroups;
     for (const auto& rasterizedGroup : constOf(rasterizedSymbolsGroups))
     {
         const auto& mapObject = rasterizedGroup->mapObject;
-        const auto isShareable =
-            (mapObject->section != owner->dataProvider->rasterizerEnvironment->dummyMapSection) &&
-            !tileBBox31.contains(mapObject->bbox31);
-
-        // Create group
-        const auto constructedGroup = new Group(rasterizedGroup->mapObject);
-        std::shared_ptr<const MapSymbolsGroup> group(constructedGroup);
+        
+        // Get preallocated group
+        const auto citPreallocatedGroup = preallocatedSymbolsGroups.constFind(mapObject->id);
+        assert(citPreallocatedGroup != preallocatedSymbolsGroups.cend());
+        const auto group = *citPreallocatedGroup;
+        const auto isShareable = (std::dynamic_pointer_cast<MapSymbolsGroupShareableById>(group) != nullptr);
 
         // Convert all symbols inside group
         for (const auto& rasterizedSymbol : constOf(rasterizedGroup->symbols))
@@ -100,7 +95,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                     pinnedSymbol->location31,
                     pinnedSymbol->offset);
                 assert(static_cast<bool>(symbol->bitmap));
-                constructedGroup->symbols.push_back(qMove(std::shared_ptr<const MapSymbol>(symbol)));
+                group->symbols.push_back(qMove(std::shared_ptr<const MapSymbol>(symbol)));
             }
             else if (const auto symbolOnPath = std::dynamic_pointer_cast<const RasterizedSymbolOnPath>(rasterizedSymbol))
             {
@@ -115,7 +110,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                     mapObject->points31,
                     symbolOnPath->glyphsWidth);
                 assert(static_cast<bool>(symbol->bitmap));
-                constructedGroup->symbols.push_back(qMove(std::shared_ptr<const MapSymbol>(symbol)));
+                group->symbols.push_back(qMove(std::shared_ptr<const MapSymbol>(symbol)));
             }
         }
 

@@ -47,6 +47,9 @@ namespace OsmAnd
         const std::shared_ptr<RasterizerEnvironment> rasterizerEnvironment;
         const std::shared_ptr<RasterizerSharedContext> rasterizerSharedContext;
 
+        virtual ZoomLevel getMinZoom() const;
+        virtual ZoomLevel getMaxZoom() const;
+
         virtual bool obtainData(
             const TileId tileId,
             const ZoomLevel zoom,
