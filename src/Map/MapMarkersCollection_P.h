@@ -48,8 +48,11 @@ namespace OsmAnd
         bool removeMarker(const std::shared_ptr<MapMarker>& marker);
         void removeAllMarkers();
 
-        QList<Key> getKeys() const;
-        bool obtainSymbolsGroup(const Key key, std::shared_ptr<const MapSymbolsGroup>& outSymbolGroups);
+        QList<Key> getProvidedDataKeys() const;
+        bool obtainData(
+            const Key key,
+            std::shared_ptr<const MapKeyedData>& outKeyedData,
+            const IQueryController* const queryController);
 
     friend class OsmAnd::MapMarkersCollection;
     friend class OsmAnd::MapMarkerBuilder;

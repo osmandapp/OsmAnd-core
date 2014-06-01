@@ -45,14 +45,14 @@ void OsmAnd::MapMarkersCollection_P::removeAllMarkers()
     _markers.clear();
 }
 
-QList<OsmAnd::MapMarkersCollection_P::Key> OsmAnd::MapMarkersCollection_P::getKeys() const
+QList<OsmAnd::MapMarkersCollection_P::Key> OsmAnd::MapMarkersCollection_P::getProvidedDataKeys() const
 {
     QReadLocker scopedLocker(&_markersLock);
 
     return _markers.keys();
 }
 
-bool OsmAnd::MapMarkersCollection_P::obtainSymbolsGroup(const Key key, std::shared_ptr<const MapSymbolsGroup>& outSymbolGroups)
+bool OsmAnd::MapMarkersCollection_P::obtainData(const Key key, std::shared_ptr<const MapKeyedData>& outKeyedData, const IQueryController* const queryController)
 {
     QReadLocker scopedLocker(&_markersLock);
 
