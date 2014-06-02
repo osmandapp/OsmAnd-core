@@ -130,8 +130,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
             if (!symbol)
                 continue;
             const auto& points31 = symbol->path;
-            const auto& resource = symbolEntry.value();
             assert(points31.size() >= 2);
+
+            // Take any first resource, since shared symbols can be processed via any resource:
+            const auto& resource = symbolEntry.value().first();
 
             // Get GPU resource
             std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
@@ -401,7 +403,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
             const auto& symbol = std::dynamic_pointer_cast<const SpriteMapSymbol>(symbol_);
             if (!symbol)
                 continue;
-            const auto& resource = symbolEntry.value();
+            
+            // Take any first resource, since shared symbols can be processed via any resource:
+            const auto& resource = symbolEntry.value().first();
             
             // Get GPU resource
             std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;

@@ -124,12 +124,12 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
     for (const auto& groupResources : constOf(_uniqueGroupsResources))
     {
         for (const auto& symbol : constOf(groupResources->group->symbols))
-            owner->registerMapSymbol(symbol);
+            owner->registerMapSymbol(symbol, shared_from_this());
     }
     for (const auto& groupResources : constOf(_uniqueGroupsResources))
     {
         for (const auto& symbol : constOf(groupResources->group->symbols))
-            owner->registerMapSymbol(symbol);
+            owner->registerMapSymbol(symbol, shared_from_this());
     }
 
     // Since there's a copy of references to map symbols groups and symbols themselves,
@@ -186,7 +186,8 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
         if (groupResources->group->symbols.isEmpty())
             continue;
 
-        // Basically, this check means "continue if shared resources where uploaded"
+        // Basically, this check means "continue if shared symbols were uploaded by other resource"
+        // This check needs no special handling, since all GPU resources work is done from same thread.
         if (!groupResources->resourcesInGPU.isEmpty())
             continue;
 
@@ -306,7 +307,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
     for (const auto& groupResources : constOf(_uniqueGroupsResources))
     {
         for (const auto& symbol : constOf(groupResources->group->symbols))
-            owner->unregisterMapSymbol(symbol);
+            owner->unregisterMapSymbol(symbol, shared_from_this());
     }
     _uniqueGroupsResources.clear();
 
@@ -321,7 +322,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
 
         // Unregister symbols
         for (const auto& symbol : constOf(groupResources->group->symbols))
-            owner->unregisterMapSymbol(symbol);
+            owner->unregisterMapSymbol(symbol, shared_from_this());
 
         for (const auto& entryResourceInGPU : rangeOf(groupResources->resourcesInGPU))
         {

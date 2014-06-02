@@ -16,7 +16,7 @@ namespace OsmAnd
     class MapRendererResourcesManager;
 
     // Base resource
-    class MapRendererBaseResource
+    class MapRendererBaseResource : public std::enable_shared_from_this<MapRendererBaseResource>
     {
     private:
         bool _isJunk;

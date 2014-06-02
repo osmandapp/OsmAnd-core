@@ -357,39 +357,35 @@ bool OsmAnd::MapRendererResourcesManager::isDataSourceAvailableFor(const std::sh
     return binding.collectionsToProviders.contains(collection);
 }
 
-void OsmAnd::MapRendererResourcesManager::registerMapSymbol(const std::shared_ptr<const MapSymbol>& symbol)
+void OsmAnd::MapRendererResourcesManager::registerMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<MapRendererBaseResource>& resource)
 {
     QMutexLocker scopedLocker(&_mapSymbolsRegistersMutex);
 
-    // Increment reference counter for the specified map symbol
-    auto& symbolReferencesCount = _mapSymbolsByOrderRegister[symbol->order][symbol];
-    if (symbolReferencesCount == 0)
+    auto& symbolReferencedResources = _mapSymbolsByOrderRegister[symbol->order][symbol];
+    if (symbolReferencedResources.isEmpty())
         _mapSymbolsInRegisterCount++;
-    symbolReferencesCount++;
+    symbolReferencedResources.push_back(resource);
 }
 
-void OsmAnd::MapRendererResourcesManager::unregisterMapSymbol(const std::shared_ptr<const MapSymbol>& symbol)
+void OsmAnd::MapRendererResourcesManager::unregisterMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<MapRendererBaseResource>& resource)
 {
     QMutexLocker scopedLocker(&_mapSymbolsRegistersMutex);
 
-    // Get layer of register
-    const auto itSymbolsLayer = _mapSymbolsByOrderRegister.find(symbol->order);
-    auto& symbolsLayer = *itSymbolsLayer;
+    const auto itRegisterLayer = _mapSymbolsByOrderRegister.find(symbol->order);
+    auto& registerLayer = *itRegisterLayer;
 
-    // Decrement reference counter for the specified map symbol
-    // (and remove, if 0)
-    const auto itReferencesCounter = symbolsLayer.find(symbol);
-    auto& symbolReferencesCount = *itReferencesCounter;
-    symbolReferencesCount--;
-    if (symbolReferencesCount == 0)
+    const auto itSymbolReferencedResources = registerLayer.find(symbol);
+    auto& symbolReferencedResources = *itSymbolReferencedResources;
+    symbolReferencedResources.removeOne(resource);
+    if (symbolReferencedResources.isEmpty())
     {
-        symbolsLayer.erase(itReferencesCounter);
         _mapSymbolsInRegisterCount--;
+        registerLayer.erase(itSymbolReferencedResources);
     }
 
     // In case layer is empty, remove it entirely
-    if (symbolsLayer.isEmpty())
-        _mapSymbolsByOrderRegister.erase(itSymbolsLayer);
+    if (registerLayer.isEmpty())
+        _mapSymbolsByOrderRegister.erase(itRegisterLayer);
 }
 
 void OsmAnd::MapRendererResourcesManager::notifyNewResourceAvailableForDrawing()

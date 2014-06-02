@@ -49,7 +49,7 @@ namespace OsmAnd
     public:
         typedef std::array< QList< std::shared_ptr<MapRendererBaseResourcesCollection> >, MapRendererResourceTypesCount > ResourcesStorage;
 
-        typedef QHash< std::shared_ptr<const MapSymbol>, int > MapSymbolsByOrderRegisterLayer;
+        typedef QHash< std::shared_ptr<const MapSymbol>, QList< std::shared_ptr<MapRendererBaseResource> > > MapSymbolsByOrderRegisterLayer;
         typedef QMap<int, MapSymbolsByOrderRegisterLayer > MapSymbolsByOrderRegister;
 
     private:
@@ -90,8 +90,8 @@ namespace OsmAnd
         mutable QMutex _mapSymbolsRegistersMutex;
         MapSymbolsByOrderRegister _mapSymbolsByOrderRegister;
         unsigned int _mapSymbolsInRegisterCount;
-        void registerMapSymbol(const std::shared_ptr<const MapSymbol>& symbol);
-        void unregisterMapSymbol(const std::shared_ptr<const MapSymbol>& symbol);
+        void registerMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<MapRendererBaseResource>& resource);
+        void unregisterMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<MapRendererBaseResource>& resource);
 
         void notifyNewResourceAvailableForDrawing();
 
@@ -155,7 +155,6 @@ namespace OsmAnd
         const std::shared_ptr<const GPUAPI::ResourceInGPU>& unavailableTileStub;
 
         std::shared_ptr<const MapRendererBaseResourcesCollection> getCollection(const MapRendererResourceType type, const std::shared_ptr<IMapDataProvider>& ofProvider) const;
-
         QMutex& getMapSymbolsRegistersMutex() const;
         const MapSymbolsByOrderRegister& getMapSymbolsByOrderRegister() const;
         unsigned int getMapSymbolsInRegisterCount() const;
