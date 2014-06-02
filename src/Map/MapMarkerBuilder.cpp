@@ -80,29 +80,14 @@ void OsmAnd::MapMarkerBuilder::setDirection(const float direction)
     _p->setDirection(direction);
 }
 
-const SkBitmap OsmAnd::MapMarkerBuilder::getPinIcon() const
+std::shared_ptr<const SkBitmap> OsmAnd::MapMarkerBuilder::getPinIcon() const
 {
     return _p->getPinIcon();
 }
 
-void OsmAnd::MapMarkerBuilder::setPinIcon(const SkBitmap& bitmap)
+void OsmAnd::MapMarkerBuilder::setPinIcon(const std::shared_ptr<const SkBitmap>& bitmap)
 {
     _p->setPinIcon(bitmap);
-}
-
-QList< QPair<const SkBitmap, bool> > OsmAnd::MapMarkerBuilder::getMapIcons() const
-{
-    return _p->getMapIcons();
-}
-
-void OsmAnd::MapMarkerBuilder::clearMapIcons()
-{
-    _p->clearMapIcons();
-}
-
-void OsmAnd::MapMarkerBuilder::addMapIcon(const SkBitmap& bitmap, const bool respectsDirection /*= true*/)
-{
-    _p->addMapIcon(bitmap, respectsDirection);
 }
 
 std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder::buildAndAddToCollection(const std::shared_ptr<MapMarkersCollection>& collection)

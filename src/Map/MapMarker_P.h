@@ -5,12 +5,16 @@
 
 #include "QtExtensions.h"
 #include <QReadWriteLock>
+#include <QMutex>
+#include <QList>
 
+#include <SkBitmap.h>
 #include <SkColor.h>
 
 #include "OsmAndCore.h"
 #include "PrivateImplementation.h"
 #include "CommonTypes.h"
+#include "MapSymbolsGroup.h"
 
 namespace OsmAnd
 {
@@ -38,6 +42,14 @@ namespace OsmAnd
         PointI _position;
 
         float _direction;
+
+        std::shared_ptr<MapSymbolsGroup> inflateSymbolsGroup() const;
+        //////////////////////////////////////////////////////////////////////////
+        //mutable QMutex _symbolsGroupsRegisterMutex;
+        ////QList< std::weak_ptr< MapSymbolsGroup > >
+        //void registerSymbolsGroup(const std::shared_ptr<MapSymbolsGroup>& symbolsGroup) const;
+        //void unregisterSymbolsGroup(const std::shared_ptr<MapSymbolsGroup>& symbolsGroup) const;
+        //////////////////////////////////////////////////////////////////////////
     public:
         virtual ~MapMarker_P();
 
@@ -61,6 +73,8 @@ namespace OsmAnd
 
         bool hasUnappliedChanges() const;
         bool applyChanges();
+
+        std::shared_ptr<MapSymbolsGroup> createSymbolsGroup() const;
 
     friend class OsmAnd::MapMarker;
     friend class OsmAnd::MapMarkersCollection;

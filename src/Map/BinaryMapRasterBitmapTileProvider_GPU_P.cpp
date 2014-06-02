@@ -40,18 +40,18 @@ OsmAnd::BinaryMapRasterBitmapTileProvider_GPU_P::~BinaryMapRasterBitmapTileProvi
 bool OsmAnd::BinaryMapRasterBitmapTileProvider_GPU_P::obtainData(
     const TileId tileId,
     const ZoomLevel zoom,
-    std::shared_ptr<const MapTiledData>& outTiledData,
+    std::shared_ptr<MapTiledData>& outTiledData,
     const IQueryController* const queryController)
 {
     // Obtain offline map data tile
-    std::shared_ptr<const MapTiledData> dataTile_;
+    std::shared_ptr<MapTiledData> dataTile_;
     owner->dataProvider->obtainData(tileId, zoom, dataTile_);
     if (!dataTile_)
     {
         outTiledData.reset();
         return true;
     }
-    const auto dataTile = std::static_pointer_cast<const BinaryMapDataTile>(dataTile_);
+    const auto dataTile = std::static_pointer_cast<BinaryMapDataTile>(dataTile_);
 
 #if OSMAND_PERFORMANCE_METRICS
     const auto dataRasterization_Begin = std::chrono::high_resolution_clock::now();
@@ -103,14 +103,13 @@ bool OsmAnd::BinaryMapRasterBitmapTileProvider_GPU_P::obtainData(
     }
 
     // Or supply newly rasterized tile
-    const auto newTile = new BinaryMapRasterizedTile(
+    outTiledData.reset(new BinaryMapRasterizedTile(
         dataTile,
         rasterizationSurface,
         AlphaChannelData::NotPresent,
         owner->densityFactor,
         tileId,
-        zoom);
-    outTiledData.reset(newTile);
+        zoom));
 
     return true;
 }

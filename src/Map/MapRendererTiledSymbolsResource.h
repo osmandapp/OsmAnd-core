@@ -31,23 +31,21 @@ namespace OsmAnd
         private:
         protected:
         public:
-            GroupResources(const std::shared_ptr<const MapSymbolsGroup>& group);
+            GroupResources(const std::shared_ptr<MapSymbolsGroup>& group);
             ~GroupResources();
 
-            const std::shared_ptr<const MapSymbolsGroup> group;
-            QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > resourcesInGPU;
+            const std::shared_ptr<MapSymbolsGroup> group;
+            QHash< std::shared_ptr<MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > resourcesInGPU;
         };
 
-        std::shared_ptr<const TiledMapSymbolsData> _sourceData;
+        std::shared_ptr<TiledMapSymbolsData> _sourceData;
         QList< std::shared_ptr<GroupResources> > _uniqueGroupsResources;
         QList< std::shared_ptr<GroupResources> > _referencedSharedGroupsResources;
 
         virtual bool obtainData(bool& dataAvailable, const IQueryController* queryController);
         virtual bool uploadToGPU();
         virtual void unloadFromGPU();
-
-        virtual bool checkIsSafeToUnlink();
-        virtual void detach();
+        virtual void releaseData();
     public:
         virtual ~MapRendererTiledSymbolsResource();
 

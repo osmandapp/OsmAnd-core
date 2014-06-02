@@ -43,13 +43,11 @@ namespace OsmAnd
             const ZoomLevel zoom);
         virtual ~RasterBitmapTile();
 
-        const std::shared_ptr<const SkBitmap> bitmap;
-        const AlphaChannelData alphaChannelData;
-        const float densityFactor;
+        std::shared_ptr<const SkBitmap> bitmap;
+        AlphaChannelData alphaChannelData;
+        float densityFactor;
 
-        std::shared_ptr<RasterBitmapTile> cloneWithBitmap(const std::shared_ptr<const SkBitmap>& bitmap) const;
-
-        virtual std::shared_ptr<MapData> createNoContentInstance() const;
+        virtual void releaseConsumableContent();
     };
 }
 

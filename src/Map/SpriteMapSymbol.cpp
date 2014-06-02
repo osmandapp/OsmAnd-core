@@ -19,18 +19,3 @@ OsmAnd::SpriteMapSymbol::SpriteMapSymbol(
 OsmAnd::SpriteMapSymbol::~SpriteMapSymbol()
 {
 }
-
-std::shared_ptr<OsmAnd::MapSymbol> OsmAnd::SpriteMapSymbol::cloneWithBitmap(const std::shared_ptr<const SkBitmap>& replacementBitmap) const
-{
-    return std::shared_ptr<OsmAnd::MapSymbol>(new SpriteMapSymbol(
-        group.lock(),
-        isShareable,
-        replacementBitmap,
-        order,
-        intersectionModeFlags,
-        content,
-        languageId,
-        minDistance,
-        location31,
-        offset));
-}

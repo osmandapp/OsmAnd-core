@@ -45,3 +45,8 @@ void OsmAnd::MapRendererBaseTiledResource::removeSelfFromCollection()
     if (const auto link_ = link.lock())
         link_->collection.removeEntry(tileId, zoom);
 }
+
+void OsmAnd::MapRendererBaseTiledResource::detach()
+{
+    releaseData();
+}

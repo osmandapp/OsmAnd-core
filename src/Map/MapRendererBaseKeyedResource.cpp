@@ -44,3 +44,8 @@ void OsmAnd::MapRendererBaseKeyedResource::removeSelfFromCollection()
     if (const auto link_ = link.lock())
         link_->collection.removeEntry(key);
 }
+
+void OsmAnd::MapRendererBaseKeyedResource::detach()
+{
+    releaseData();
+}

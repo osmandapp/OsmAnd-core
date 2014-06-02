@@ -9,9 +9,9 @@ OsmAnd::IMapKeyedSymbolsProvider::~IMapKeyedSymbolsProvider()
 {
 }
 
-OsmAnd::KeyedMapSymbolsData::KeyedMapSymbolsData(const std::shared_ptr<const MapSymbolsGroup>& group_, const Key key_)
+OsmAnd::KeyedMapSymbolsData::KeyedMapSymbolsData(const std::shared_ptr<MapSymbolsGroup>& symbolsGroup_, const Key key_)
     : MapKeyedData(DataType::Symbols, key_)
-    , group(group_)
+    , symbolsGroup(symbolsGroup_)
 {
 }
 
@@ -19,7 +19,9 @@ OsmAnd::KeyedMapSymbolsData::~KeyedMapSymbolsData()
 {
 }
 
-std::shared_ptr<OsmAnd::MapData> OsmAnd::KeyedMapSymbolsData::createNoContentInstance() const
+void OsmAnd::KeyedMapSymbolsData::releaseConsumableContent()
 {
-    return nullptr;
+    symbolsGroup.reset();
+
+    MapKeyedData::releaseConsumableContent();
 }

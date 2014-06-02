@@ -41,7 +41,7 @@ namespace OsmAnd
         bool obtainData(
             const TileId tileId,
             const ZoomLevel zoom,
-            std::shared_ptr<const MapTiledData>& outTiledData,
+            std::shared_ptr<MapTiledData>& outTiledData,
             const IQueryController* const queryController);
 
     friend class OsmAnd::HeightmapTileProvider;

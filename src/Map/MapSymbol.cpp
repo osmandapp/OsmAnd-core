@@ -24,8 +24,3 @@ OsmAnd::MapSymbol::MapSymbol(
 OsmAnd::MapSymbol::~MapSymbol()
 {
 }
-
-std::shared_ptr<OsmAnd::MapSymbol> OsmAnd::MapSymbol::cloneWithoutBitmap() const
-{
-    return cloneWithBitmap(nullptr);
-}

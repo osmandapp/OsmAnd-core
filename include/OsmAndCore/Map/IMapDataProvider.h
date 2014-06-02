@@ -47,6 +47,7 @@ namespace OsmAnd
         typedef IMapDataProvider::DataType DataType;
 
     private:
+        bool _consumableContentReleased;
     protected:
         MapData(const DataType dataType);
     public:
@@ -54,7 +55,8 @@ namespace OsmAnd
 
         const DataType dataType;
 
-        virtual std::shared_ptr<MapData> createNoContentInstance() const = 0;
+        const bool& consumableContentReleased;
+        virtual void releaseConsumableContent() = 0;
     };
 }
 

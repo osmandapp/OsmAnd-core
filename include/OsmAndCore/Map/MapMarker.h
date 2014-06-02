@@ -4,7 +4,9 @@
 #include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <QList>
 
+#include <SkBitmap.h>
 #include <SkColor.h>
 
 #include <OsmAndCore.h>
@@ -27,11 +29,16 @@ namespace OsmAnd
     private:
         PrivateImplementation<MapMarker_P> _p;
     protected:
-        MapMarker(const std::shared_ptr<const MapSymbolsGroup>& mapSymbolsGroup);
+        MapMarker(
+            const int baseOrder,
+            const std::shared_ptr<const SkBitmap>& pinIcon);
 
         bool applyChanges();
     public:
         virtual ~MapMarker();
+
+        const int baseOrder;
+        const std::shared_ptr<const SkBitmap> pinIcon;
 
         bool isHidden() const;
         void setIsHidden(const bool hidden);
@@ -51,7 +58,7 @@ namespace OsmAnd
 
         bool hasUnappliedChanges() const;
 
-        const std::shared_ptr<const MapSymbolsGroup> mapSymbolsGroup;
+        std::shared_ptr<MapSymbolsGroup> createSymbolsGroup() const;
 
     friend class OsmAnd::MapMarkerBuilder;
     friend class OsmAnd::MapMarkerBuilder_P;

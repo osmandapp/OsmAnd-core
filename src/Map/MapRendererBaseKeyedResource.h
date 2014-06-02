@@ -32,6 +32,8 @@ namespace OsmAnd
             const KeyedEntriesCollection<Key, MapRendererBaseKeyedResource>& collection,
             const Key key);
 
+        virtual void detach();
+
         virtual void removeSelfFromCollection();
     public:
         virtual ~MapRendererBaseKeyedResource();

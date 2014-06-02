@@ -31,8 +31,6 @@ namespace OsmAnd
         virtual ~SpriteMapSymbol();
 
         const PointI offset;
-
-        virtual std::shared_ptr<OsmAnd::MapSymbol> cloneWithBitmap(const std::shared_ptr<const SkBitmap>& bitmap) const;
     };
 }
 

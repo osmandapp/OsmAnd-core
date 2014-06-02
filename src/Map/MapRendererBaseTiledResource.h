@@ -33,6 +33,8 @@ namespace OsmAnd
             const TileId tileId,
             const ZoomLevel zoom);
 
+        virtual void detach();
+
         virtual void removeSelfFromCollection();
     public:
         virtual ~MapRendererBaseTiledResource();

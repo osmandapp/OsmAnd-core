@@ -30,7 +30,7 @@ uint32_t OsmAnd::BinaryMapRasterBitmapTileProvider::getTileSize() const
 bool OsmAnd::BinaryMapRasterBitmapTileProvider::obtainData(
     const TileId tileId,
     const ZoomLevel zoom,
-    std::shared_ptr<const MapTiledData>& outTiledData,
+    std::shared_ptr<MapTiledData>& outTiledData,
     const IQueryController* const queryController /*= nullptr*/)
 {
     return _p->obtainData(tileId, zoom, outTiledData, queryController);
@@ -60,15 +60,4 @@ OsmAnd::BinaryMapRasterizedTile::BinaryMapRasterizedTile(
 
 OsmAnd::BinaryMapRasterizedTile::~BinaryMapRasterizedTile()
 {
-}
-
-std::shared_ptr<OsmAnd::MapData> OsmAnd::BinaryMapRasterizedTile::createNoContentInstance() const
-{
-    return std::shared_ptr<MapData>(new BinaryMapRasterizedTile(
-        binaryMapTile,
-        nullptr,
-        alphaChannelData,
-        densityFactor,
-        tileId,
-        zoom));
 }

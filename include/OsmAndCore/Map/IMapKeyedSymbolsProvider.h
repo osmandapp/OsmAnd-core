@@ -31,12 +31,12 @@ namespace OsmAnd
     private:
     protected:
     public:
-        KeyedMapSymbolsData(const std::shared_ptr<const MapSymbolsGroup>& group, const Key key);
+        KeyedMapSymbolsData(const std::shared_ptr<MapSymbolsGroup>& symbolsGroup, const Key key);
         virtual ~KeyedMapSymbolsData();
 
-        const std::shared_ptr<const MapSymbolsGroup> group;
+        std::shared_ptr<MapSymbolsGroup> symbolsGroup;
 
-        virtual std::shared_ptr<MapData> createNoContentInstance() const;
+        virtual void releaseConsumableContent();
     };
 }
 

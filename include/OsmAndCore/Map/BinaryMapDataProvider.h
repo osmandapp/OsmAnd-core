@@ -53,7 +53,7 @@ namespace OsmAnd
         virtual bool obtainData(
             const TileId tileId,
             const ZoomLevel zoom,
-            std::shared_ptr<const MapTiledData>& outTiledData,
+            std::shared_ptr<MapTiledData>& outTiledData,
             const IQueryController* const queryController = nullptr);
     };
 
@@ -79,7 +79,7 @@ namespace OsmAnd
         const std::shared_ptr< const RasterizerContext >& rasterizerContext;
         const bool nothingToRasterize;
 
-        virtual std::shared_ptr<MapData> createNoContentInstance() const;
+        virtual void releaseConsumableContent();
 
     friend class OsmAnd::BinaryMapDataProvider;
     friend class OsmAnd::BinaryMapDataProvider_P;

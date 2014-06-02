@@ -25,11 +25,21 @@ OsmAnd::ElevationDataTile::ElevationDataTile(
 OsmAnd::ElevationDataTile::~ElevationDataTile()
 {
     if (data != nullptr)
+    {
         delete[] data;
+        data = nullptr;
+    }
 }
 
-std::shared_ptr<OsmAnd::MapData> OsmAnd::ElevationDataTile::createNoContentInstance() const
+void OsmAnd::ElevationDataTile::releaseConsumableContent()
 {
-    // Metadata is useless in elevation data
-    return nullptr;
+    if (data != nullptr)
+    {
+        delete[] data;
+        data = nullptr;
+    }
+    rowLength = 0;
+    size = 0;
+
+    MapTiledData::releaseConsumableContent();
 }

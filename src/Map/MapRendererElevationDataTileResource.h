@@ -26,12 +26,13 @@ namespace OsmAnd
             const TileId tileId,
             const ZoomLevel zoom);
 
-        std::shared_ptr<const ElevationDataTile> _sourceData;
+        std::shared_ptr<ElevationDataTile> _sourceData;
         std::shared_ptr<const GPUAPI::ResourceInGPU> _resourceInGPU;
 
         virtual bool obtainData(bool& dataAvailable, const IQueryController* queryController);
         virtual bool uploadToGPU();
         virtual void unloadFromGPU();
+        virtual void releaseData();
     public:
         virtual ~MapRendererElevationDataTileResource();
 

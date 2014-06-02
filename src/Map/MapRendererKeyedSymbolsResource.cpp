@@ -35,11 +35,11 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::obtainData(bool& dataAvailable, co
     const auto provider = std::static_pointer_cast<IMapKeyedDataProvider>(provider_);
 
     // Obtain source data from provider
-    std::shared_ptr<const MapKeyedData> sourceData_;
+    std::shared_ptr<MapKeyedData> sourceData_;
     const auto requestSucceeded = provider->obtainData(key, sourceData_);
     if (!requestSucceeded)
         return false;
-    const auto sourceData = std::static_pointer_cast<const KeyedMapSymbolsData>(sourceData_);
+    const auto sourceData = std::static_pointer_cast<KeyedMapSymbolsData>(sourceData_);
 
     // Store data
     _sourceData = sourceData;
@@ -50,7 +50,7 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::obtainData(bool& dataAvailable, co
         return true;
 
     // Form flattened map of editable symbols and publish those to registry
-    for (const auto& symbol : constOf(_sourceData->group->symbols))
+    for (const auto& symbol : constOf(_sourceData->symbolsGroup->symbols))
     {
         /*const auto editableSymbol = symbol->clone();
 
@@ -62,60 +62,60 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::obtainData(bool& dataAvailable, co
 
 bool OsmAnd::MapRendererKeyedSymbolsResource::uploadToGPU()
 {
-    bool ok;
-    bool anyUploadFailed = false;
+    //bool ok;
+    //bool anyUploadFailed = false;
 
-    const auto link_ = link.lock();
-    const auto collection = static_cast<MapRendererKeyedResourcesCollection*>(&link_->collection);
+    //const auto link_ = link.lock();
+    //const auto collection = static_cast<MapRendererKeyedResourcesCollection*>(&link_->collection);
 
-    QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > uploaded;
-    for (const auto& symbol : constOf(_sourceData->group->symbols))
-    {
-        // Prepare data and upload to GPU
-        assert(static_cast<bool>(symbol->bitmap));
-        std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
-        ok = owner->uploadSymbolToGPU(symbol, resourceInGPU);
+    //QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > uploaded;
+    //for (const auto& symbol : constOf(_sourceData->symbolsGroup->symbols))
+    //{
+    //    // Prepare data and upload to GPU
+    //    assert(static_cast<bool>(symbol->bitmap));
+    //    std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
+    //    ok = owner->uploadSymbolToGPU(symbol, resourceInGPU);
 
-        // If upload have failed, stop
-        if (!ok)
-        {
-            LogPrintf(LogSeverityLevel::Error, "Failed to upload keyed symbol (size %dx%d)",
-                symbol->bitmap->width(), symbol->bitmap->height());
+    //    // If upload have failed, stop
+    //    if (!ok)
+    //    {
+    //        LogPrintf(LogSeverityLevel::Error, "Failed to upload keyed symbol (size %dx%d)",
+    //            symbol->bitmap->width(), symbol->bitmap->height());
 
-            anyUploadFailed = true;
-            break;
-        }
+    //        anyUploadFailed = true;
+    //        break;
+    //    }
 
-        // Mark this symbol as uploaded
-        uploaded.insert(symbol, qMove(resourceInGPU));
-    }
+    //    // Mark this symbol as uploaded
+    //    uploaded.insert(symbol, qMove(resourceInGPU));
+    //}
 
-    // If at least one symbol failed to upload, consider entire tile as failed to upload,
-    // and unload its partial GPU resources
-    if (anyUploadFailed)
-    {
-        uploaded.clear();
+    //// If at least one symbol failed to upload, consider entire tile as failed to upload,
+    //// and unload its partial GPU resources
+    //if (anyUploadFailed)
+    //{
+    //    uploaded.clear();
 
-        return false;
-    }
+    //    return false;
+    //}
 
-    // All resources have been uploaded to GPU successfully by this point
-    _sourceData = std::static_pointer_cast<KeyedMapSymbolsData>(_sourceData->createNoContentInstance());
+    //// All resources have been uploaded to GPU successfully by this point
+    //_sourceData = std::static_pointer_cast<KeyedMapSymbolsData>(_sourceData->createNoContentInstance());
 
-    for (const auto& entry : rangeOf(constOf(uploaded)))
-    {
-        auto symbol = entry.key();
-        auto& resource = entry.value();
+    //for (const auto& entry : rangeOf(constOf(uploaded)))
+    //{
+    //    auto symbol = entry.key();
+    //    auto& resource = entry.value();
 
-        // Unload source data from symbol
-        symbol = symbol->cloneWithoutBitmap();
+    //    // Unload source data from symbol
+    //    symbol = symbol->cloneWithoutBitmap();
 
-        // Publish symbol to global map
-        owner->registerMapSymbol(symbol, resource);
+    //    // Publish symbol to global map
+    //    owner->registerMapSymbol(symbol, resource);
 
-        // Move reference
-        _resourcesInGPU.insert(qMove(symbol), qMove(resource));
-    }
+    //    // Move reference
+    //    _resourcesInGPU.insert(qMove(symbol), qMove(resource));
+    //}
 
     return true;
 }
@@ -125,14 +125,9 @@ void OsmAnd::MapRendererKeyedSymbolsResource::unloadFromGPU()
     return;
 }
 
-bool OsmAnd::MapRendererKeyedSymbolsResource::checkIsSafeToUnlink()
+void OsmAnd::MapRendererKeyedSymbolsResource::releaseData()
 {
-    return false;
-}
-
-void OsmAnd::MapRendererKeyedSymbolsResource::detach()
-{
-    return;
+    _sourceData.reset();
 }
 
 bool OsmAnd::MapRendererKeyedSymbolsResource::prepareForUse()

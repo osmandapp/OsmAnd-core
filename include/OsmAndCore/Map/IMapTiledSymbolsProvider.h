@@ -33,12 +33,12 @@ namespace OsmAnd
         virtual bool obtainData(
             const TileId tileId,
             const ZoomLevel zoom,
-            std::shared_ptr<const MapTiledData>& outTiledData,
+            std::shared_ptr<MapTiledData>& outTiledData,
             const IQueryController* const queryController = nullptr);
 
         virtual bool obtainData(
             const TileId tileId, const ZoomLevel zoom,
-            std::shared_ptr<const MapTiledData>& outTiledData,
+            std::shared_ptr<MapTiledData>& outTiledData,
             const FilterCallback filterCallback = nullptr,
             const IQueryController* const queryController = nullptr) = 0;
     };
@@ -48,12 +48,11 @@ namespace OsmAnd
     private:
     protected:
     public:
-        TiledMapSymbolsData(const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups, const TileId tileId, const ZoomLevel zoom);
+        TiledMapSymbolsData(const QList< std::shared_ptr<MapSymbolsGroup> >& symbolsGroups, const TileId tileId, const ZoomLevel zoom);
         virtual ~TiledMapSymbolsData();
 
-        const QList< std::shared_ptr<const MapSymbolsGroup> > symbolsGroups;
-
-        virtual std::shared_ptr<MapData> createNoContentInstance() const;
+        QList< std::shared_ptr<MapSymbolsGroup> > symbolsGroups;
+        virtual void releaseConsumableContent();
     };
 }
 

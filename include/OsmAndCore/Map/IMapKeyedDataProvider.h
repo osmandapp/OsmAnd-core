@@ -31,7 +31,7 @@ namespace OsmAnd
         virtual QList<Key> getProvidedDataKeys() const = 0;
         virtual bool obtainData(
             const Key key,
-            std::shared_ptr<const MapKeyedData>& outKeyedData,
+            std::shared_ptr<MapKeyedData>& outKeyedData,
             const IQueryController* const queryController = nullptr) = 0;
     };
 

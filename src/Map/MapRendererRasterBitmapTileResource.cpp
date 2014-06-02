@@ -49,7 +49,8 @@ bool OsmAnd::MapRendererRasterBitmapTileResource::uploadToGPU()
     if (!ok)
         return false;
 
-    _sourceData = std::static_pointer_cast<RasterBitmapTile>(_sourceData->createNoContentInstance());
+    // Since content was uploaded to GPU, it's safe to release it
+    _sourceData->releaseConsumableContent();
 
     return true;
 }
@@ -58,4 +59,9 @@ void OsmAnd::MapRendererRasterBitmapTileResource::unloadFromGPU()
 {
     assert(_resourceInGPU.use_count() == 1);
     _resourceInGPU.reset();
+}
+
+void OsmAnd::MapRendererRasterBitmapTileResource::releaseData()
+{
+    _sourceData.reset();
 }

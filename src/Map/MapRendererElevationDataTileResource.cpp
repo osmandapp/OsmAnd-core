@@ -49,7 +49,8 @@ bool OsmAnd::MapRendererElevationDataTileResource::uploadToGPU()
     if (!ok)
         return false;
 
-    _sourceData = std::static_pointer_cast<ElevationDataTile>(_sourceData->createNoContentInstance());
+    // Since content was uploaded to GPU, it's safe to release it
+    _sourceData->releaseConsumableContent();
 
     return true;
 }
@@ -58,4 +59,9 @@ void OsmAnd::MapRendererElevationDataTileResource::unloadFromGPU()
 {
     assert(_resourceInGPU.use_count() == 1);
     _resourceInGPU.reset();
+}
+
+void OsmAnd::MapRendererElevationDataTileResource::releaseData()
+{
+    _sourceData.reset();
 }

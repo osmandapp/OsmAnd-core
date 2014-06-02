@@ -27,7 +27,7 @@ QList<OsmAnd::MapMarkersCollection::Key> OsmAnd::MapMarkersCollection::getProvid
     return _p->getProvidedDataKeys();
 }
 
-bool OsmAnd::MapMarkersCollection::obtainData(const Key key, std::shared_ptr<const MapKeyedData>& outKeyedData, const IQueryController* const queryController /*= nullptr*/)
+bool OsmAnd::MapMarkersCollection::obtainData(const Key key, std::shared_ptr<MapKeyedData>& outKeyedData, const IQueryController* const queryController /*= nullptr*/)
 {
     return _p->obtainData(key, outKeyedData, queryController);
 }

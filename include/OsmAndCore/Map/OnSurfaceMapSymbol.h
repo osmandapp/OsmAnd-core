@@ -28,8 +28,6 @@ namespace OsmAnd
             const PointI& minDistance,
             const PointI& location31);
         virtual ~OnSurfaceMapSymbol();
-
-        virtual std::shared_ptr<OsmAnd::MapSymbol> cloneWithBitmap(const std::shared_ptr<const SkBitmap>& bitmap) const;
     };
 }
 

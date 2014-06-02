@@ -49,9 +49,8 @@ namespace OsmAnd
     public:
         typedef std::array< QList< std::shared_ptr<MapRendererBaseResourcesCollection> >, MapRendererResourceTypesCount > ResourcesStorage;
 
-        typedef QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<MapRendererBaseResource> > MapSymbolsByOrderRegisterLayer;
+        typedef QHash< std::shared_ptr<const MapSymbol>, int > MapSymbolsByOrderRegisterLayer;
         typedef QMap<int, MapSymbolsByOrderRegisterLayer > MapSymbolsByOrderRegister;
-        typedef QHash< std::shared_ptr<MapRendererBaseResource>, unsigned int > MapSymbolsResourcesRegister;
 
     private:
         // Resource-requests related:
@@ -91,8 +90,7 @@ namespace OsmAnd
         mutable QMutex _mapSymbolsRegistersMutex;
         MapSymbolsByOrderRegister _mapSymbolsByOrderRegister;
         unsigned int _mapSymbolsInRegisterCount;
-        MapSymbolsResourcesRegister _mapSymbolsResourcesRegister;
-        void registerMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<MapRendererBaseResource>& resourceWithSymbols);
+        void registerMapSymbol(const std::shared_ptr<const MapSymbol>& symbol);
         void unregisterMapSymbol(const std::shared_ptr<const MapSymbol>& symbol);
 
         void notifyNewResourceAvailableForDrawing();
@@ -160,7 +158,6 @@ namespace OsmAnd
 
         QMutex& getMapSymbolsRegistersMutex() const;
         const MapSymbolsByOrderRegister& getMapSymbolsByOrderRegister() const;
-        const MapSymbolsResourcesRegister& getMapSymbolsResourcesRegister() const;
         unsigned int getMapSymbolsInRegisterCount() const;
 
         void dumpResourcesInfo() const;

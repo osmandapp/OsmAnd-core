@@ -44,7 +44,7 @@ uint32_t OsmAnd::HeightmapTileProvider_P::getTileSize() const
 bool OsmAnd::HeightmapTileProvider_P::obtainData(
     const TileId tileId,
     const ZoomLevel zoom,
-    std::shared_ptr<const MapTiledData>& outTiledData,
+    std::shared_ptr<MapTiledData>& outTiledData,
     const IQueryController* const queryController)
 {
     // Obtain raw data from DB

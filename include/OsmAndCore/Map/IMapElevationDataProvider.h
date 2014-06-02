@@ -40,11 +40,11 @@ namespace OsmAnd
             const ZoomLevel zoom);
         virtual ~ElevationDataTile();
 
-        const DataPtr data;
-        const size_t rowLength;
-        const uint32_t size;
+        DataPtr data;
+        size_t rowLength;
+        uint32_t size;
 
-        virtual std::shared_ptr<MapData> createNoContentInstance() const;
+        virtual void releaseConsumableContent();
     };
 }
 

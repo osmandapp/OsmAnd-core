@@ -32,9 +32,7 @@ namespace OsmAnd
         virtual bool obtainData(bool& dataAvailable, const IQueryController* queryController);
         virtual bool uploadToGPU();
         virtual void unloadFromGPU();
-
-        virtual bool checkIsSafeToUnlink();
-        virtual void detach();
+        virtual void releaseData();
     public:
         virtual ~MapRendererKeyedSymbolsResource();
 

@@ -37,7 +37,7 @@ OsmAnd::BinaryMapDataProvider_P::~BinaryMapDataProvider_P()
 bool OsmAnd::BinaryMapDataProvider_P::obtainData(
     const TileId tileId,
     const ZoomLevel zoom,
-    std::shared_ptr<const MapTiledData>& outTiledData,
+    std::shared_ptr<MapTiledData>& outTiledData,
     const IQueryController* const queryController)
 {
     std::shared_ptr<TileEntry> tileEntry;

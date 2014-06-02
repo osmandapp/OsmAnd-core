@@ -48,12 +48,8 @@ namespace OsmAnd
         float getDirection() const;
         void setDirection(const float direction);
         
-        const SkBitmap getPinIcon() const;
-        void setPinIcon(const SkBitmap& bitmap);
-
-        QList< QPair<const SkBitmap, bool> > getMapIcons() const;
-        void clearMapIcons();
-        void addMapIcon(const SkBitmap& bitmap, const bool respectsDirection = true);
+        std::shared_ptr<const SkBitmap> getPinIcon() const;
+        void setPinIcon(const std::shared_ptr<const SkBitmap>& bitmap);
 
         std::shared_ptr<MapMarker> buildAndAddToCollection(const std::shared_ptr<MapMarkersCollection>& collection);
     };

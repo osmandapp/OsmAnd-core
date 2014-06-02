@@ -1,9 +1,12 @@
 #include "MapMarker.h"
 #include "MapMarker_P.h"
 
-OsmAnd::MapMarker::MapMarker(const std::shared_ptr<const MapSymbolsGroup>& mapSymbolsGroup_)
+OsmAnd::MapMarker::MapMarker(
+    const int baseOrder_,
+    const std::shared_ptr<const SkBitmap>& pinIcon_)
     : _p(new MapMarker_P(this))
-    , mapSymbolsGroup(mapSymbolsGroup_)
+    , baseOrder(baseOrder_)
+    , pinIcon(pinIcon_)
 {
 }
 
@@ -81,3 +84,7 @@ bool OsmAnd::MapMarker::applyChanges()
     return _p->applyChanges();
 }
 
+std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker::createSymbolsGroup() const
+{
+    return _p->createSymbolsGroup();
+}

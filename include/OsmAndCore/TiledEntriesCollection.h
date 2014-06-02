@@ -233,7 +233,6 @@ namespace OsmAnd
         {
             detach();
 
-            assert(checkIsSafeToUnlink());
             _link.reset();
         }
     protected:
@@ -247,11 +246,6 @@ namespace OsmAnd
 
         virtual void detach()
         {
-        }
-
-        virtual bool checkIsSafeToUnlink()
-        {
-            return true;
         }
 
         void safeUnlink()

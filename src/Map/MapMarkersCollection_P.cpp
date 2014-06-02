@@ -54,7 +54,7 @@ QList<OsmAnd::MapMarkersCollection_P::Key> OsmAnd::MapMarkersCollection_P::getPr
     return _markers.keys();
 }
 
-bool OsmAnd::MapMarkersCollection_P::obtainData(const Key key, std::shared_ptr<const MapKeyedData>& outKeyedData, const IQueryController* const queryController)
+bool OsmAnd::MapMarkersCollection_P::obtainData(const Key key, std::shared_ptr<MapKeyedData>& outKeyedData, const IQueryController* const queryController)
 {
     QReadLocker scopedLocker(&_markersLock);
 
@@ -63,10 +63,7 @@ bool OsmAnd::MapMarkersCollection_P::obtainData(const Key key, std::shared_ptr<c
         return false;
     auto& marker = *citMarker;
 
-    // Apply all the changes that were performed over this marker
-    marker->applyChanges();
-
-    outKeyedData.reset(new KeyedMapSymbolsData(marker->mapSymbolsGroup, key));
+    outKeyedData.reset(new KeyedMapSymbolsData(marker->createSymbolsGroup(), key));
 
     return true;
 }

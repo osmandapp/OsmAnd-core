@@ -35,14 +35,14 @@ namespace OsmAnd
 
         ImplementationInterface<BinaryMapStaticSymbolsProvider> owner;
 
-        class Group : public MapSymbolsGroupShareableById
+        class MapSymbolsGroupShareableByMapObjectId : public MapSymbolsGroupShareableById
         {
-            Q_DISABLE_COPY(Group);
+            Q_DISABLE_COPY(MapSymbolsGroupShareableByMapObjectId);
         private:
         protected:
         public:
-            Group(const std::shared_ptr<const Model::MapObject>& mapObject);
-            virtual ~Group();
+            MapSymbolsGroupShareableByMapObjectId(const std::shared_ptr<const Model::MapObject>& mapObject);
+            virtual ~MapSymbolsGroupShareableByMapObjectId();
 
             const std::shared_ptr<const Model::MapObject> mapObject;
 
@@ -53,7 +53,7 @@ namespace OsmAnd
 
         bool obtainData(
             const TileId tileId, const ZoomLevel zoom,
-            std::shared_ptr<const MapTiledData>& outTiledData,
+            std::shared_ptr<MapTiledData>& outTiledData,
             const FilterCallback filterCallback,
             const IQueryController* const queryController);
 

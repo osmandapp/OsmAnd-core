@@ -39,7 +39,7 @@ namespace OsmAnd
 
         virtual bool obtainData(
             const TileId tileId, const ZoomLevel zoom,
-            std::shared_ptr<const MapTiledData>& outTiledData,
+            std::shared_ptr<MapTiledData>& outTiledData,
             const FilterCallback filterCallback = nullptr,
             const IQueryController* const queryController = nullptr);
     };
@@ -50,15 +50,13 @@ namespace OsmAnd
     protected:
         BinaryMapStaticSymbolsTile(
             const std::shared_ptr<const BinaryMapDataTile>& dataTile,
-            const QList< std::shared_ptr<const MapSymbolsGroup> >& symbolsGroups,
+            const QList< std::shared_ptr<MapSymbolsGroup> >& symbolsGroups,
             const TileId tileId, const ZoomLevel zoom);
     public:
         virtual ~BinaryMapStaticSymbolsTile();
 
         const std::shared_ptr<const BinaryMapDataTile> dataTile;
-
-        virtual std::shared_ptr<MapData> createNoContentInstance() const;
-
+ 
     friend class OsmAnd::BinaryMapStaticSymbolsProvider;
     friend class OsmAnd::BinaryMapStaticSymbolsProvider_P;
     };

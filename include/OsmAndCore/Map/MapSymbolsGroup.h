@@ -24,7 +24,7 @@ namespace OsmAnd
         MapSymbolsGroup();
         virtual ~MapSymbolsGroup();
 
-        QList< std::shared_ptr<const MapSymbol> > symbols;
+        QList< std::shared_ptr<MapSymbol> > symbols;
 
         virtual QString getDebugTitle() const;
     };

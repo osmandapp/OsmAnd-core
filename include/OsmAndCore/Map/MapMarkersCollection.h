@@ -45,7 +45,7 @@ namespace OsmAnd
         virtual QList<Key> getProvidedDataKeys() const;
         virtual bool obtainData(
             const Key key,
-            std::shared_ptr<const MapKeyedData>& outKeyedData,
+            std::shared_ptr<MapKeyedData>& outKeyedData,
             const IQueryController* const queryController = nullptr);
 
     friend class OsmAnd::MapMarkerBuilder;

@@ -26,7 +26,7 @@ OsmAnd::BinaryMapDataProvider::~BinaryMapDataProvider()
 bool OsmAnd::BinaryMapDataProvider::obtainData(
     const TileId tileId,
     const ZoomLevel zoom,
-    std::shared_ptr<const MapTiledData>& outTiledData,
+    std::shared_ptr<MapTiledData>& outTiledData,
     const IQueryController* const queryController /*= nullptr*/)
 {
     return _p->obtainData(tileId, zoom, outTiledData, queryController);
@@ -65,7 +65,9 @@ OsmAnd::BinaryMapDataTile::~BinaryMapDataTile()
     _p->cleanup();
 }
 
-std::shared_ptr<OsmAnd::MapData> OsmAnd::BinaryMapDataTile::createNoContentInstance() const
+void OsmAnd::BinaryMapDataTile::releaseConsumableContent()
 {
-    return nullptr;
+    // There's no consumable data?
+
+    MapTiledData::releaseConsumableContent();
 }

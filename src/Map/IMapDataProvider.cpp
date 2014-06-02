@@ -10,7 +10,9 @@ OsmAnd::IMapDataProvider::~IMapDataProvider()
 }
 
 OsmAnd::MapData::MapData(const DataType dataType_)
-    : dataType(dataType_)
+    : _consumableContentReleased(false)
+    , dataType(dataType_)
+    , consumableContentReleased(_consumableContentReleased)
 {
 }
 
@@ -18,7 +20,7 @@ OsmAnd::MapData::~MapData()
 {
 }
 
-std::shared_ptr<OsmAnd::MapData> OsmAnd::MapData::createNoContentInstance() const
+void OsmAnd::MapData::releaseConsumableContent()
 {
-    return nullptr;
+    _consumableContentReleased = true;
 }
