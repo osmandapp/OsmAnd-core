@@ -9,8 +9,8 @@
 #include <SkBitmap.h>
 
 #include "MapRendererTypes.h"
-#include "IMapBitmapTileProvider.h"
-#include "IMapSymbolProvider.h"
+#include "IMapRasterBitmapTileProvider.h"
+#include "MapSymbol.h"
 #include "Logging.h"
 
 #undef GL_CHECK_RESULT
@@ -93,30 +93,30 @@ OsmAnd::GPUAPI_OpenGLES2::~GPUAPI_OpenGLES2()
 GLenum OsmAnd::GPUAPI_OpenGLES2::validateResult()
 {
     auto result = glGetError();
-    if(result == GL_NO_ERROR)
+    if (result == GL_NO_ERROR)
         return result;
 
     const char* errorString = nullptr;
-    switch(result)
+    switch (result)
     {
-        case GL_NO_ERROR:
-            errorString = "no error";
-            break;
-        case GL_INVALID_ENUM:
-            errorString = "invalid enumerant";
-            break;
-        case GL_INVALID_VALUE:
-            errorString = "invalid value";
-            break;
-        case GL_INVALID_OPERATION:
-            errorString = "invalid operation";
-            break;
-        case GL_OUT_OF_MEMORY:
-            errorString = "out of memory";
-            break;
-        default:
-            errorString = "(unknown)";
-            break;
+    case GL_NO_ERROR:
+        errorString = "no error";
+        break;
+    case GL_INVALID_ENUM:
+        errorString = "invalid enumerant";
+        break;
+    case GL_INVALID_VALUE:
+        errorString = "invalid value";
+        break;
+    case GL_INVALID_OPERATION:
+        errorString = "invalid operation";
+        break;
+    case GL_OUT_OF_MEMORY:
+        errorString = "out of memory";
+        break;
+    default:
+        errorString = "(unknown)";
+        break;
     }
     LogPrintf(LogSeverityLevel::Error, "OpenGLES2 error 0x%08x : %s", result, errorString);
 
@@ -128,7 +128,7 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
     bool ok;
 
     ok = GPUAPI_OpenGL::initialize();
-    if(!ok)
+    if (!ok)
         return false;
 
     const auto glVersionString = glGetString(GL_VERSION);
@@ -163,19 +163,19 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGLES2 extensions: %s", qPrintable(extensionsString));
     _extensions = extensionsString.split(QRegExp("\\s+"), QString::SkipEmptyParts);
-    if(!extensions.contains("GL_OES_vertex_array_object"))
+    if (!extensions.contains("GL_OES_vertex_array_object"))
     {
         LogPrintf(LogSeverityLevel::Error, "This device does not support required 'GL_OES_vertex_array_object' extension");
         return false;
     }
     _isSupported_OES_vertex_array_object = true;
-    if(!extensions.contains("GL_OES_rgb8_rgba8"))
+    if (!extensions.contains("GL_OES_rgb8_rgba8"))
     {
         LogPrintf(LogSeverityLevel::Error, "This device does not support required 'GL_OES_rgb8_rgba8' extension");
         return false;
     }
     _isSupported_OES_rgb8_rgba8 = true;
-    if(!extensions.contains("GL_OES_texture_float"))
+    if (!extensions.contains("GL_OES_texture_float"))
     {
         LogPrintf(LogSeverityLevel::Error, "This device does not support required 'GL_OES_texture_float' extension");
         return false;
@@ -189,32 +189,32 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
     _isSupported_texturesNPOT = extensions.contains("GL_OES_texture_npot");
     _isSupported_EXT_debug_marker = extensions.contains("GL_EXT_debug_marker");
 #if !defined(OSMAND_TARGET_OS_ios)
-    if(_isSupported_EXT_debug_marker && !glPopGroupMarkerEXT)
+    if (_isSupported_EXT_debug_marker && !glPopGroupMarkerEXT)
     {
         glPopGroupMarkerEXT = reinterpret_cast<PFNGLPOPGROUPMARKEREXTPROC>(eglGetProcAddress("glPopGroupMarkerEXT"));
         assert(glPopGroupMarkerEXT);
     }
-    if(_isSupported_EXT_debug_marker && !glPushGroupMarkerEXT)
+    if (_isSupported_EXT_debug_marker && !glPushGroupMarkerEXT)
     {
         glPushGroupMarkerEXT = reinterpret_cast<PFNGLPUSHGROUPMARKEREXTPROC>(eglGetProcAddress("glPushGroupMarkerEXT"));
         assert(glPushGroupMarkerEXT);
     }
-    if(_isSupported_EXT_texture_storage && !glTexStorage2DEXT)
+    if (_isSupported_EXT_texture_storage && !glTexStorage2DEXT)
     {
         glTexStorage2DEXT = reinterpret_cast<P_glTexStorage2DEXT_PROC>(eglGetProcAddress("glTexStorage2DEXT"));
         assert(glTexStorage2DEXT);
     }
-    if(_isSupported_OES_vertex_array_object && !glBindVertexArrayOES)
+    if (_isSupported_OES_vertex_array_object && !glBindVertexArrayOES)
     {
         glBindVertexArrayOES = reinterpret_cast<PFNGLBINDVERTEXARRAYOESPROC>(eglGetProcAddress("glBindVertexArrayOES"));
         assert(glBindVertexArrayOES);
     }
-    if(_isSupported_OES_vertex_array_object && !glDeleteVertexArraysOES)
+    if (_isSupported_OES_vertex_array_object && !glDeleteVertexArraysOES)
     {
         glDeleteVertexArraysOES = reinterpret_cast<PFNGLDELETEVERTEXARRAYSOESPROC>(eglGetProcAddress("glDeleteVertexArraysOES"));
         assert(glDeleteVertexArraysOES);
     }
-    if(_isSupported_OES_vertex_array_object && !glGenVertexArraysOES)
+    if (_isSupported_OES_vertex_array_object && !glGenVertexArraysOES)
     {
         glGenVertexArraysOES = reinterpret_cast<PFNGLGENVERTEXARRAYSOESPROC>(eglGetProcAddress("glGenVertexArraysOES"));
         assert(glGenVertexArraysOES);
@@ -225,7 +225,7 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
     glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &compressedFormatsLength);
     GL_CHECK_RESULT;
     _compressedFormats.resize(compressedFormatsLength);
-    if(compressedFormatsLength > 0)
+    if (compressedFormatsLength > 0)
     {
         glGetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS, _compressedFormats.data());
         GL_CHECK_RESULT;
@@ -244,22 +244,22 @@ bool OsmAnd::GPUAPI_OpenGLES2::release()
     bool ok;
 
     ok = GPUAPI_OpenGL::release();
-    if(!ok)
+    if (!ok)
         return false;
 
     return true;
 }
 
-OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGLES2::getTextureFormat( const std::shared_ptr< const MapTile >& tile )
+OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGLES2::getTextureFormat(const std::shared_ptr< const MapTiledData >& tile)
 {
     // If current device supports glTexStorage2D, lets use sized format
-    if(isSupported_EXT_texture_storage)
+    if (isSupported_EXT_texture_storage)
     {
         GLenum textureFormat = GL_INVALID_ENUM;
 
-        if(tile->dataType == MapTileDataType::Bitmap)
+        if (tile->dataType == MapTiledData::DataType::RasterBitmapTile)
         {
-            const auto& bitmapTile = std::static_pointer_cast<const MapBitmapTile>(tile);
+            const auto& bitmapTile = std::static_pointer_cast<const RasterBitmapTile>(tile);
 
             switch (bitmapTile->bitmap->getConfig())
             {
@@ -274,13 +274,13 @@ OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGLES2::getTextureFormat( const 
                 break;
             }
         }
-        else if(tile->dataType == MapTileDataType::ElevationData)
+        else if (tile->dataType == MapTiledData::DataType::ElevationDataTile)
         {
-            if(isSupported_vertexShaderTextureLookup)
+            if (isSupported_vertexShaderTextureLookup)
             {
-                if(isSupported_OES_texture_float && isSupported_EXT_texture_rg)
+                if (isSupported_OES_texture_float && isSupported_EXT_texture_rg)
                     textureFormat = GL_R32F_EXT;
-                else if(isSupported_EXT_texture_rg)
+                else if (isSupported_EXT_texture_rg)
                     textureFormat = GL_R8_EXT;
                 else
                     textureFormat = GL_LUMINANCE8_EXT;
@@ -295,9 +295,9 @@ OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGLES2::getTextureFormat( const 
     // But if glTexStorage2D is not supported, we need to fallback to pixel type and format specification
     GLenum format = GL_INVALID_ENUM;
     GLenum type = GL_INVALID_ENUM;
-    if(tile->dataType == MapTileDataType::Bitmap)
+    if (tile->dataType == MapTiledData::DataType::RasterBitmapTile)
     {
-        const auto& bitmapTile = std::static_pointer_cast<const MapBitmapTile>(tile);
+        const auto& bitmapTile = std::static_pointer_cast<const RasterBitmapTile>(tile);
 
         switch (bitmapTile->bitmap->getConfig())
         {
@@ -315,9 +315,9 @@ OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGLES2::getTextureFormat( const 
             break;
         }
     }
-    else if(tile->dataType == MapTileDataType::ElevationData)
+    else if (tile->dataType == MapTiledData::DataType::ElevationDataTile)
     {
-        if(isSupported_vertexShaderTextureLookup)
+        if (isSupported_vertexShaderTextureLookup)
         {
             format = GL_LUMINANCE;
             type = GL_UNSIGNED_BYTE;
@@ -332,10 +332,10 @@ OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGLES2::getTextureFormat( const 
     return (static_cast<TextureFormat>(format) << 16) | type;
 }
 
-OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGLES2::getTextureFormat( const std::shared_ptr< const MapSymbol >& symbol )
+OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGLES2::getTextureFormat(const std::shared_ptr< const MapSymbol >& symbol)
 {
     // If current device supports glTexStorage2D, lets use sized format
-    if(isSupported_EXT_texture_storage)
+    if (isSupported_EXT_texture_storage)
     {
         GLenum textureFormat = GL_INVALID_ENUM;
 
@@ -384,10 +384,10 @@ OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGLES2::getTextureFormat( const 
     return (static_cast<TextureFormat>(format) << 16) | type;
 }
 
-void OsmAnd::GPUAPI_OpenGLES2::allocateTexture2D( GLenum target, GLsizei levels, GLsizei width, GLsizei height, const TextureFormat encodedFormat )
+void OsmAnd::GPUAPI_OpenGLES2::allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const TextureFormat encodedFormat)
 {
     // Use glTexStorage2D if possible
-    if(isSupported_EXT_texture_storage)
+    if (isSupported_EXT_texture_storage)
     {
         GL_CHECK_PRESENT(glTexStorage2DEXT);
 
@@ -400,34 +400,34 @@ void OsmAnd::GPUAPI_OpenGLES2::allocateTexture2D( GLenum target, GLsizei levels,
     GLenum format = static_cast<GLenum>(encodedFormat >> 16);
     GLenum type = static_cast<GLenum>(encodedFormat & 0xFFFF);
     GLsizei pixelSizeInBytes = 0;
-    if(format == GL_RGBA && type == GL_UNSIGNED_BYTE)
+    if (format == GL_RGBA && type == GL_UNSIGNED_BYTE)
         pixelSizeInBytes = 4;
-    else if(format == GL_RGBA && type == GL_UNSIGNED_SHORT_4_4_4_4)
+    else if (format == GL_RGBA && type == GL_UNSIGNED_SHORT_4_4_4_4)
         pixelSizeInBytes = 2;
-    else if(format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5)
+    else if (format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5)
         pixelSizeInBytes = 2;
-    else if(format == GL_LUMINANCE && type == GL_UNSIGNED_BYTE)
+    else if (format == GL_LUMINANCE && type == GL_UNSIGNED_BYTE)
         pixelSizeInBytes = 1;
-    
+
     uint8_t* dummyBuffer = new uint8_t[width * height * pixelSizeInBytes];
-    
+
     glTexImage2D(target, 0, format, width, height, 0, format, type, dummyBuffer);
     GL_CHECK_RESULT;
 
     delete[] dummyBuffer;
 }
 
-OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGLES2::getSourceFormat(const std::shared_ptr< const MapTile >& tile)
+OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGLES2::getSourceFormat(const std::shared_ptr< const MapTiledData >& tile)
 {
     SourceFormat sourceFormat;
     sourceFormat.format = GL_INVALID_ENUM;
     sourceFormat.type = GL_INVALID_ENUM;
-    
-    if(tile->dataType == MapTileDataType::Bitmap)
-    {
-        const auto& bitmapTile = std::static_pointer_cast<const MapBitmapTile>(tile);
 
-        switch(bitmapTile->bitmap->getConfig())
+    if (tile->dataType == MapTiledData::DataType::RasterBitmapTile)
+    {
+        const auto& bitmapTile = std::static_pointer_cast<const RasterBitmapTile>(tile);
+
+        switch (bitmapTile->bitmap->getConfig())
         {
         case SkBitmap::Config::kARGB_8888_Config:
             sourceFormat.format = GL_RGBA;
@@ -443,14 +443,14 @@ OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGLES2::getSourceFormat(const std
             break;
         }
     }
-    else if(tile->dataType == MapTileDataType::ElevationData)
+    else if (tile->dataType == MapTiledData::DataType::ElevationDataTile)
     {
-        if(isSupported_EXT_texture_rg)
+        if (isSupported_EXT_texture_rg)
             sourceFormat.format = GL_RED_EXT;
         else
             sourceFormat.format = GL_LUMINANCE;
 
-        if(isSupported_OES_texture_float)
+        if (isSupported_OES_texture_float)
             sourceFormat.type = GL_FLOAT;
         else
             sourceFormat.type = GL_UNSIGNED_BYTE;
@@ -465,7 +465,7 @@ OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGLES2::getSourceFormat(const std
     sourceFormat.format = GL_INVALID_ENUM;
     sourceFormat.type = GL_INVALID_ENUM;
 
-    switch(symbol->bitmap->getConfig())
+    switch (symbol->bitmap->getConfig())
     {
     case SkBitmap::Config::kARGB_8888_Config:
         sourceFormat.format = GL_RGBA;
@@ -480,7 +480,7 @@ OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGLES2::getSourceFormat(const std
         sourceFormat.type = GL_UNSIGNED_SHORT_5_6_5;
         break;
     }
-    
+
     return sourceFormat;
 }
 
@@ -493,7 +493,7 @@ void OsmAnd::GPUAPI_OpenGLES2::uploadDataToTexture2D(
     GL_CHECK_PRESENT(glTexSubImage2D);
 
     // Try to use glPixelStorei to unpack
-    if(isSupported_EXT_unpack_subimage)
+    if (isSupported_EXT_unpack_subimage)
     {
         GL_CHECK_PRESENT(glPixelStorei);
 
@@ -511,9 +511,9 @@ void OsmAnd::GPUAPI_OpenGLES2::uploadDataToTexture2D(
     }
 
     // Otherwise fallback to manual unpacking
-    
+
     // In case our row length is 0 or equals to image width (has no extra stride, just load as-is)
-    if(dataRowLengthInElements == 0 || dataRowLengthInElements == width)
+    if (dataRowLengthInElements == 0 || dataRowLengthInElements == width)
     {
         // Upload data
         glTexSubImage2D(target, level,
@@ -527,7 +527,7 @@ void OsmAnd::GPUAPI_OpenGLES2::uploadDataToTexture2D(
 
     // Otherwise we need to or load row by row
     auto pRow = reinterpret_cast<const uint8_t*>(data);
-    for(auto rowIdx = 0; rowIdx < height; rowIdx++)
+    for (auto rowIdx = 0; rowIdx < height; rowIdx++)
     {
         glTexSubImage2D(target, level,
             xoffset, yoffset + rowIdx, width, 1,
@@ -540,11 +540,11 @@ void OsmAnd::GPUAPI_OpenGLES2::uploadDataToTexture2D(
     }
 }
 
-void OsmAnd::GPUAPI_OpenGLES2::setMipMapLevelsLimit( GLenum target, const uint32_t mipmapLevelsCount )
+void OsmAnd::GPUAPI_OpenGLES2::setMipMapLevelsLimit(GLenum target, const uint32_t mipmapLevelsCount)
 {
 #if defined(OSMAND_TARGET_OS_ios)
     // Limit MipMap max level if possible
-    if(isSupported_APPLE_texture_max_level)
+    if (isSupported_APPLE_texture_max_level)
     {
         GL_CHECK_PRESENT(glTexParameteri);
 
@@ -554,28 +554,28 @@ void OsmAnd::GPUAPI_OpenGLES2::setMipMapLevelsLimit( GLenum target, const uint32
 #endif //OSMAND_TARGET_OS_ios
 }
 
-void OsmAnd::GPUAPI_OpenGLES2::glGenVertexArrays_wrapper( GLsizei n, GLuint* arrays )
+void OsmAnd::GPUAPI_OpenGLES2::glGenVertexArrays_wrapper(GLsizei n, GLuint* arrays)
 {
     GL_CHECK_PRESENT(glGenVertexArraysOES);
 
     glGenVertexArraysOES(n, arrays);
 }
 
-void OsmAnd::GPUAPI_OpenGLES2::glBindVertexArray_wrapper( GLuint array )
+void OsmAnd::GPUAPI_OpenGLES2::glBindVertexArray_wrapper(GLuint array)
 {
     GL_CHECK_PRESENT(glBindVertexArrayOES);
 
     glBindVertexArrayOES(array);
 }
 
-void OsmAnd::GPUAPI_OpenGLES2::glDeleteVertexArrays_wrapper( GLsizei n, const GLuint* arrays )
+void OsmAnd::GPUAPI_OpenGLES2::glDeleteVertexArrays_wrapper(GLsizei n, const GLuint* arrays)
 {
     GL_CHECK_PRESENT(glDeleteVertexArraysOES);
 
     glDeleteVertexArraysOES(n, arrays);
 }
 
-void OsmAnd::GPUAPI_OpenGLES2::preprocessShader( QString& code, const QString& extraHeader /*= QString()*/ )
+void OsmAnd::GPUAPI_OpenGLES2::preprocessShader(QString& code, const QString& extraHeader /*= QString()*/)
 {
     const auto& shaderHeader = QString::fromLatin1(
         // Declare version of GLSL used
@@ -609,12 +609,12 @@ void OsmAnd::GPUAPI_OpenGLES2::preprocessShader( QString& code, const QString& e
     code.prepend(shaderHeader);
 }
 
-void OsmAnd::GPUAPI_OpenGLES2::preprocessVertexShader( QString& code )
+void OsmAnd::GPUAPI_OpenGLES2::preprocessVertexShader(QString& code)
 {
     preprocessShader(code);
 }
 
-void OsmAnd::GPUAPI_OpenGLES2::preprocessFragmentShader( QString& code )
+void OsmAnd::GPUAPI_OpenGLES2::preprocessFragmentShader(QString& code)
 {
     const auto& shaderSource = QString::fromLatin1(
         // Make some extensions required
@@ -629,26 +629,26 @@ void OsmAnd::GPUAPI_OpenGLES2::preprocessFragmentShader( QString& code )
     preprocessShader(code, shaderSource);
 }
 
-void OsmAnd::GPUAPI_OpenGLES2::optimizeVertexShader( QString& code )
+void OsmAnd::GPUAPI_OpenGLES2::optimizeVertexShader(QString& code)
 {
 }
 
-void OsmAnd::GPUAPI_OpenGLES2::optimizeFragmentShader( QString& code )
+void OsmAnd::GPUAPI_OpenGLES2::optimizeFragmentShader(QString& code)
 {
 }
 
-void OsmAnd::GPUAPI_OpenGLES2::setTextureBlockSampler( const GLenum textureBlock, const SamplerType samplerType )
+void OsmAnd::GPUAPI_OpenGLES2::setTextureBlockSampler(const GLenum textureBlock, const SamplerType samplerType)
 {
     // In OpenGLES 2.0 there is no settings of texture-block, so these settings are per-texture
     _textureBlocksSamplers[textureBlock] = samplerType;
 }
 
-void OsmAnd::GPUAPI_OpenGLES2::applyTextureBlockToTexture( const GLenum texture, const GLenum textureBlock )
+void OsmAnd::GPUAPI_OpenGLES2::applyTextureBlockToTexture(const GLenum texture, const GLenum textureBlock)
 {
     GL_CHECK_PRESENT(glTexParameteri);
 
     const auto samplerType = _textureBlocksSamplers[textureBlock];
-    if(samplerType == SamplerType::ElevationDataTile)
+    if (samplerType == SamplerType::ElevationDataTile)
     {
         glTexParameteri(texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         GL_CHECK_RESULT;
@@ -659,7 +659,7 @@ void OsmAnd::GPUAPI_OpenGLES2::applyTextureBlockToTexture( const GLenum texture,
         glTexParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         GL_CHECK_RESULT;
     }
-    else if(samplerType == SamplerType::BitmapTile_Bilinear)
+    else if (samplerType == SamplerType::BitmapTile_Bilinear)
     {
         glTexParameteri(texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         GL_CHECK_RESULT;
@@ -670,7 +670,7 @@ void OsmAnd::GPUAPI_OpenGLES2::applyTextureBlockToTexture( const GLenum texture,
         glTexParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         GL_CHECK_RESULT;
     }
-    else if(samplerType == SamplerType::BitmapTile_BilinearMipmap)
+    else if (samplerType == SamplerType::BitmapTile_BilinearMipmap)
     {
         glTexParameteri(texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         GL_CHECK_RESULT;
@@ -681,7 +681,7 @@ void OsmAnd::GPUAPI_OpenGLES2::applyTextureBlockToTexture( const GLenum texture,
         glTexParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         GL_CHECK_RESULT;
     }
-    else if(samplerType == SamplerType::BitmapTile_TrilinearMipmap)
+    else if (samplerType == SamplerType::BitmapTile_TrilinearMipmap)
     {
         glTexParameteri(texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         GL_CHECK_RESULT;
@@ -692,7 +692,7 @@ void OsmAnd::GPUAPI_OpenGLES2::applyTextureBlockToTexture( const GLenum texture,
         glTexParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         GL_CHECK_RESULT;
     }
-    else if(samplerType == SamplerType::Symbol)
+    else if (samplerType == SamplerType::Symbol)
     {
         glTexParameteri(texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         GL_CHECK_RESULT;
