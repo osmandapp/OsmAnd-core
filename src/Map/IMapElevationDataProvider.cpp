@@ -43,3 +43,8 @@ void OsmAnd::ElevationDataTile::releaseConsumableContent()
 
     MapTiledData::releaseConsumableContent();
 }
+
+std::shared_ptr<OsmAnd::MapData> OsmAnd::ElevationDataTile::clone() const
+{
+    return std::shared_ptr<MapData>(new ElevationDataTile(data, rowLength, size, tileId, zoom));
+}

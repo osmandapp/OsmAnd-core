@@ -17,7 +17,7 @@ namespace OsmAnd
     private:
     protected:
         BoundToPointMapSymbol(
-            const std::shared_ptr<const MapSymbolsGroup>& group,
+            const std::shared_ptr<MapSymbolsGroup>& group,
             const bool isShareable,
             const std::shared_ptr<const SkBitmap>& bitmap,
             const int order,

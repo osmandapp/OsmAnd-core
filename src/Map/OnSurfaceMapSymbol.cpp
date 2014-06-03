@@ -1,7 +1,7 @@
 #include "OnSurfaceMapSymbol.h"
 
 OsmAnd::OnSurfaceMapSymbol::OnSurfaceMapSymbol(
-    const std::shared_ptr<const MapSymbolsGroup>& group_,
+    const std::shared_ptr<MapSymbolsGroup>& group_,
     const bool isShareable_,
     const std::shared_ptr<const SkBitmap>& bitmap_,
     const int order_,
@@ -16,4 +16,9 @@ OsmAnd::OnSurfaceMapSymbol::OnSurfaceMapSymbol(
 
 OsmAnd::OnSurfaceMapSymbol::~OnSurfaceMapSymbol()
 {
+}
+
+std::shared_ptr<OsmAnd::MapSymbol> OsmAnd::OnSurfaceMapSymbol::clone() const
+{
+    return std::shared_ptr<MapSymbol>(new OnSurfaceMapSymbol(nullptr, isShareable, bitmap, order, intersectionModeFlags, content, languageId, minDistance, location31));
 }

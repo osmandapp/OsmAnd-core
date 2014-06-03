@@ -1,7 +1,7 @@
 #include "OnPathMapSymbol.h"
 
 OsmAnd::OnPathMapSymbol::OnPathMapSymbol(
-    const std::shared_ptr<const MapSymbolsGroup>& group_,
+    const std::shared_ptr<MapSymbolsGroup>& group_,
     const bool isShareable_,
     const std::shared_ptr<const SkBitmap>& bitmap_,
     const int order_,
@@ -19,4 +19,19 @@ OsmAnd::OnPathMapSymbol::OnPathMapSymbol(
 
 OsmAnd::OnPathMapSymbol::~OnPathMapSymbol()
 {
+}
+
+std::shared_ptr<OsmAnd::MapSymbol> OsmAnd::OnPathMapSymbol::clone() const
+{
+    return std::shared_ptr<MapSymbol>(new OnPathMapSymbol(
+        nullptr,
+        isShareable,
+        bitmap,
+        order,
+        intersectionModeFlags,
+        content,
+        languageId,
+        minDistance,
+        path,
+        glyphsWidth));
 }

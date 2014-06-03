@@ -19,7 +19,7 @@ namespace OsmAnd
     protected:
     public:
         OnPathMapSymbol(
-            const std::shared_ptr<const MapSymbolsGroup>& group,
+            const std::shared_ptr<MapSymbolsGroup>& group,
             const bool isShareable,
             const std::shared_ptr<const SkBitmap>& bitmap,
             const int order,
@@ -33,6 +33,8 @@ namespace OsmAnd
 
         const QVector<PointI> path;
         const QVector<float> glyphsWidth;
+
+        virtual std::shared_ptr<MapSymbol> clone() const;
     };
 
 }

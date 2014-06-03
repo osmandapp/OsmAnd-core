@@ -36,7 +36,7 @@ namespace OsmAnd
     private:
     protected:
         MapSymbol(
-            const std::shared_ptr<const MapSymbolsGroup>& group,
+            const std::shared_ptr<MapSymbolsGroup>& group,
             const bool isShareable,
             const std::shared_ptr<const SkBitmap>& bitmap,
             const int order,
@@ -47,8 +47,8 @@ namespace OsmAnd
     public:
         virtual ~MapSymbol();
 
-        const std::weak_ptr<const MapSymbolsGroup> group;
-        const MapSymbolsGroup* const groupPtr;
+        const std::weak_ptr<MapSymbolsGroup> group;
+        MapSymbolsGroup* const groupPtr;
 
         const bool isShareable;
 
@@ -58,6 +58,8 @@ namespace OsmAnd
         const QString content;
         const LanguageId languageId;
         const PointI minDistance;
+
+        virtual std::shared_ptr<MapSymbol> clone() const = 0;
     };
 }
 

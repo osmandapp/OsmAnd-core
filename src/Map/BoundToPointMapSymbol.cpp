@@ -1,7 +1,7 @@
 #include "BoundToPointMapSymbol.h"
 
 OsmAnd::BoundToPointMapSymbol::BoundToPointMapSymbol(
-    const std::shared_ptr<const MapSymbolsGroup>& group_,
+    const std::shared_ptr<MapSymbolsGroup>& group_,
     const bool isShareable_,
     const std::shared_ptr<const SkBitmap>& bitmap_,
     const int order_,

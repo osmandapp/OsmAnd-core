@@ -36,6 +36,8 @@ namespace OsmAnd
 
         std::shared_ptr<MapSymbolsGroup> symbolsGroup;
 
+        virtual std::shared_ptr<MapData> clone() const;
+
         virtual void releaseConsumableContent();
     };
 }

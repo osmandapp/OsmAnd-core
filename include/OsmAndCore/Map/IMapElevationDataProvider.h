@@ -44,6 +44,8 @@ namespace OsmAnd
         size_t rowLength;
         uint32_t size;
 
+        virtual std::shared_ptr<MapData> clone() const;
+
         virtual void releaseConsumableContent();
     };
 }

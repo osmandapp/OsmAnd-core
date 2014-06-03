@@ -18,7 +18,7 @@ namespace OsmAnd
     protected:
     public:
         OnSurfaceMapSymbol(
-            const std::shared_ptr<const MapSymbolsGroup>& group,
+            const std::shared_ptr<MapSymbolsGroup>& group,
             const bool isShareable,
             const std::shared_ptr<const SkBitmap>& bitmap,
             const int order,
@@ -28,6 +28,8 @@ namespace OsmAnd
             const PointI& minDistance,
             const PointI& location31);
         virtual ~OnSurfaceMapSymbol();
+
+        virtual std::shared_ptr<MapSymbol> clone() const;
     };
 }
 

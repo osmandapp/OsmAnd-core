@@ -39,3 +39,8 @@ void OsmAnd::RasterBitmapTile::releaseConsumableContent()
 
     MapTiledData::releaseConsumableContent();
 }
+
+std::shared_ptr<OsmAnd::MapData> OsmAnd::RasterBitmapTile::clone() const
+{
+    return std::shared_ptr<MapData>(new RasterBitmapTile(bitmap, alphaChannelData, densityFactor, tileId, zoom));
+}

@@ -716,7 +716,10 @@ bool OsmAnd::MapRenderer::convertMapTile(const std::shared_ptr<const MapTiledDat
         if (!wasConverted)
             return false;
 
-        output = input->cloneWithBitmap(convertedBitmap);
+        const auto clone = std::static_pointer_cast<RasterBitmapTile>(input->clone());
+        clone->bitmap = convertedBitmap;
+
+        output = clone;
         return true;
     }
 
@@ -735,7 +738,10 @@ bool OsmAnd::MapRenderer::convertMapSymbol(const std::shared_ptr<const MapSymbol
     if (!wasConverted)
         return false;
 
-    output = input->cloneWithBitmap(convertedBitmap);
+    const auto clone = input->clone();
+    clone->bitmap = convertedBitmap;
+
+    output = clone;
     return true;
 }
 

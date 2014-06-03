@@ -61,3 +61,8 @@ OsmAnd::BinaryMapRasterizedTile::BinaryMapRasterizedTile(
 OsmAnd::BinaryMapRasterizedTile::~BinaryMapRasterizedTile()
 {
 }
+
+std::shared_ptr<OsmAnd::MapData> OsmAnd::BinaryMapRasterizedTile::clone() const
+{
+    return std::shared_ptr<MapData>(new BinaryMapRasterizedTile(binaryMapTile, bitmap, alphaChannelData, densityFactor, tileId, zoom));
+}
