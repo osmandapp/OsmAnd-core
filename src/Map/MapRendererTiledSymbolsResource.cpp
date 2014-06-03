@@ -291,7 +291,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
         symbol->bitmap.reset();
 
         // Add GPU resource reference
-        //_resourcesInGPU.insert(symbol, resource);
+        _symbolToResourceInGpuLUT.insert(symbol, resource);
         groupResources->resourcesInGPU.insert(qMove(symbol), qMove(resource));
     }
 
@@ -306,7 +306,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
         symbol->bitmap.reset();
 
         // Add GPU resource reference
-        //_resourcesInGPU.insert(symbol, resource);
+        _symbolToResourceInGpuLUT.insert(symbol, resource);
         groupResources->resourcesInGPU.insert(qMove(symbol), qMove(resource));
     }
 
@@ -319,7 +319,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU()
     const auto collection = static_cast<MapRendererTiledSymbolsResourcesCollection*>(&link_->collection);
 
     // Remove quick references
-    _resourcesInGPU.clear();
+    _symbolToResourceInGpuLUT.clear();
 
     // Unique
     for (const auto& groupResources : constOf(_uniqueGroupsResources))
@@ -395,7 +395,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
     _publishedMapSymbols.clear();
 
     // Remove quick references (if any left)
-    _resourcesInGPU.clear();
+    _symbolToResourceInGpuLUT.clear();
 
     // Unique
     for (const auto& groupResources : constOf(_uniqueGroupsResources))
@@ -487,8 +487,8 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
 
 std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::MapRendererTiledSymbolsResource::getGpuResourceFor(const std::shared_ptr<const MapSymbol>& mapSymbol)
 {
-    const auto citResourceInGPU = _resourcesInGPU.constFind(mapSymbol);
-    if (citResourceInGPU == _resourcesInGPU.cend())
+    const auto citResourceInGPU = _symbolToResourceInGpuLUT.constFind(mapSymbol);
+    if (citResourceInGPU == _symbolToResourceInGpuLUT.cend())
         return nullptr;
     return *citResourceInGPU;
 }
