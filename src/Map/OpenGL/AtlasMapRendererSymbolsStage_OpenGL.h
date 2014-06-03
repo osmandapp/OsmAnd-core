@@ -11,6 +11,7 @@
 #include "CommonTypes.h"
 #include "AtlasMapRendererStage_OpenGL.h"
 #include "GPUAPI_OpenGL.h"
+#include "QuadTree.h"
 
 namespace OsmAnd
 {
@@ -153,6 +154,92 @@ namespace OsmAnd
         
         void initializeOnPath();
         void releaseOnPath();
+
+        struct RenderableSymbol
+        {
+            virtual ~RenderableSymbol();
+
+            std::shared_ptr<const MapSymbol> mapSymbol;
+            std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
+        };
+        typedef std::shared_ptr<const RenderableSymbol> RenderableSymbolEntry;
+
+        struct RenderableSpriteSymbol : RenderableSymbol
+        {
+            PointI offsetFromTarget31;
+            PointF offsetFromTarget;
+            glm::vec3 positionInWorld;
+        };
+        
+        struct RenderableOnPathSymbol : RenderableSymbol
+        {
+            int subpathStartIndex;
+            int subpathEndIndex;
+            QVector<glm::vec2> subpathPointsInWorld;
+            float offset;
+            float subpathLength;
+            QVector<float> segmentLengths;
+            glm::vec2 subpathDirectionOnScreen;
+            bool is2D;
+
+            // 2D-only:
+            QVector<glm::vec2> subpathPointsOnScreen;
+
+            // 3D-only:
+            glm::vec2 subpathDirectioInWorld;
+        };
+        typedef std::shared_ptr<RenderableOnPathSymbol> RenderableSymbolOnPathEntry;
+
+        void processOnPathSymbols(
+            const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
+            QMultiMap<float, RenderableSymbolEntry>& output,
+            const glm::vec4& viewport,
+            QSet< std::shared_ptr<MapRendererBaseResource> > &updatedMapSymbolsResources);
+
+        // Obtains visible portions of each OnPathSymbol
+        void obtainRenderableEntriesForOnPathSymbols(
+            const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
+            QList< RenderableSymbolOnPathEntry >& output,
+            QSet< std::shared_ptr<MapRendererBaseResource> > &updatedMapSymbolsResources);
+
+        // Calculates renderable OnPathSymbols to in world
+        void calculateRenderableOnPathSymbolsInWorld(QList< RenderableSymbolOnPathEntry >& entries);
+
+        // Determines if each renderable OnPathSymbol is 2D-mode or 3D-mode
+        void determineRenderableOnPathSymbolsMode(QList< RenderableSymbolOnPathEntry >& entries, const glm::vec4& viewport);
+
+        // Adjusts renderable OnPathSymbol bitmap placement on entire path
+        void adjustPlacementOfGlyphsOnPath(QList< RenderableSymbolOnPathEntry >& entries, const glm::vec4& viewport);
+
+        void sortRenderableOnPathSymbols(const QList< RenderableSymbolOnPathEntry >& entries, QMultiMap< float, RenderableSymbolEntry >& output);
+
+        void processSpriteSymbols(
+            const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
+            QMultiMap<float, RenderableSymbolEntry>& output,
+            QSet< std::shared_ptr<MapRendererBaseResource> >& updatedMapSymbolsResources);
+
+        void obtainAndSortSpriteSymbols(
+            const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
+            QMultiMap<float, RenderableSymbolEntry>& output,
+            QSet< std::shared_ptr<MapRendererBaseResource> >& updatedMapSymbolsResources);
+
+        typedef QuadTree< std::shared_ptr<const MapSymbol>, AreaI::CoordType > IntersectionsQuadTree;
+
+        bool renderSpriteSymbol(
+            const std::shared_ptr<const RenderableSpriteSymbol>& renderable,
+            const glm::vec4& viewport,
+            IntersectionsQuadTree& intersections,
+            int& lastUsedProgram,
+            const glm::mat4x4& mPerspectiveProjectionView,
+            const float distanceFromCamera);
+
+        bool renderOnPathSymbol(
+            const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
+            const glm::vec4& viewport,
+            IntersectionsQuadTree& intersections,
+            int& lastUsedProgram,
+            const glm::mat4x4& mPerspectiveProjectionView,
+            const float distanceFromCamera);
     public:
         AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer);
         virtual ~AtlasMapRendererSymbolsStage_OpenGL();
