@@ -195,7 +195,7 @@ bool OsmAnd::MapRenderer::revalidateState()
 
 void OsmAnd::MapRenderer::notifyRequestedStateWasUpdated(const MapRendererStateChange change)
 {
-    _requestedStateUpdatedMask |= 1u << static_cast<int>(change);
+    _requestedStateUpdatedMask |= static_cast<uint32_t>(change);
 
     // Notify all observers
     stateChangeObservable.postNotify(change, _requestedStateUpdatedMask);

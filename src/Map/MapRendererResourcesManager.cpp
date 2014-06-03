@@ -176,7 +176,7 @@ bool OsmAnd::MapRendererResourcesManager::uploadSymbolToGPU(const std::shared_pt
 
 void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState& state, const uint32_t updatedMask)
 {
-    if (updatedMask & (1u << static_cast<int>(MapRendererStateChange::ElevationData_Provider)))
+    if (updatedMask & static_cast<uint32_t>(MapRendererStateChange::ElevationData_Provider))
     {
         auto& bindings = _bindings[static_cast<int>(MapRendererResourceType::ElevationDataTile)];
         auto& resources = _storageByType[static_cast<int>(MapRendererResourceType::ElevationDataTile)];
@@ -216,7 +216,7 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
             resources.push_back(qMove(newResourcesCollection));
         }
     }
-    if (updatedMask & (1u << static_cast<int>(MapRendererStateChange::RasterLayers_Providers)))
+    if (updatedMask & static_cast<uint32_t>(MapRendererStateChange::RasterLayers_Providers))
     {
         auto& bindings = _bindings[static_cast<int>(MapRendererResourceType::RasterBitmapTile)];
         auto& resources = _storageByType[static_cast<int>(MapRendererResourceType::RasterBitmapTile)];
@@ -272,7 +272,7 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
             resources[rasterLayerIdx] = newResourcesCollection;
         }
     }
-    if (updatedMask & (1u << static_cast<int>(MapRendererStateChange::Symbols_Providers)))
+    if (updatedMask & static_cast<uint32_t>(MapRendererStateChange::Symbols_Providers))
     {
         auto& bindings = _bindings[static_cast<int>(MapRendererResourceType::Symbols)];
         auto& resources = _storageByType[static_cast<int>(MapRendererResourceType::Symbols)];
