@@ -114,26 +114,32 @@ bool OsmAnd::MapMarker_P::hasUnappliedChanges() const
 
 bool OsmAnd::MapMarker_P::applyChanges()
 {
-    QReadLocker scopedLocker(&_lock);
-
+    QReadLocker scopedLocker1(&_lock);
+    
     if (!_hasUnappliedChanges)
         return false;
 
-    //for (const auto& symbol_ : constOf(owner->mapSymbolsGroup->symbols))
-    //{
-    //    const auto symbol = std::const_pointer_cast<MapSymbol>(symbol_);
+    QReadLocker scopedLocker2(&_symbolsGroupsRegisterLock);
+    for (const auto& symbolGroup_ : constOf(_symbolsGroupsRegister))
+    {
+        const auto symbolGroup = symbolGroup_.lock();
+        if (!symbolGroup)
+            continue;
 
-    //    //TODO:
-    //    //marker->setIsHidden(_isHidden);
-    //    //marker->setIsPrecisionCircleEnabled(_isPrecisionCircleEnabled);
-    //    //marker->setPrecisionCircleRadius(_precisionCircleRadius);
-    //    //marker->setPrecisionCircleBaseColor(_precisionCircleBaseColor);
+        //TODO:
+        //marker->setIsHidden(_isHidden);
+        //marker->setIsPrecisionCircleEnabled(_isPrecisionCircleEnabled);
+        //marker->setPrecisionCircleRadius(_precisionCircleRadius);
+        //marker->setPrecisionCircleBaseColor(_precisionCircleBaseColor);
 
-    //    if (const auto symbolWithPosition = std::dynamic_pointer_cast<BoundToPointMapSymbol>(symbol))
-    //        symbolWithPosition->location31 = _position;
-
-    //    //marker->setDirection(_direction);
-    //}
+        for (const auto& symbol : constOf(symbolGroup->symbols))
+        {
+            if (const auto symbolWithPosition = std::dynamic_pointer_cast<BoundToPointMapSymbol>(symbol))
+                symbolWithPosition->location31 = _position;
+        }
+        
+        //marker->setDirection(_direction);
+    }
 
     _hasUnappliedChanges = false;
 
@@ -145,7 +151,8 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
     QReadLocker scopedLocker(&_lock);
 
     // Construct new map symbols group for this marker
-    const std::shared_ptr<MapSymbolsGroup> symbolsGroup(new MapSymbolsGroup());
+    const std::shared_ptr<MapSymbolsGroup> symbolsGroup(new LinkedMapSymbolsGroup(
+        std::const_pointer_cast<MapMarker_P>(shared_from_this())));
     int order = owner->baseOrder;
 
     /*
@@ -193,6 +200,37 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
 std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::createSymbolsGroup() const
 {
     const auto inflatedSymbolsGroup = inflateSymbolsGroup();
-
+    registerSymbolsGroup(inflatedSymbolsGroup);
     return inflatedSymbolsGroup;
+}
+
+void OsmAnd::MapMarker_P::registerSymbolsGroup(const std::shared_ptr<MapSymbolsGroup>& symbolsGroup) const
+{
+    QWriteLocker scopedLocker(&_symbolsGroupsRegisterLock);
+
+    _symbolsGroupsRegister.insert(symbolsGroup.get(), symbolsGroup);
+}
+
+void OsmAnd::MapMarker_P::unregisterSymbolsGroup(MapSymbolsGroup* const symbolsGroup) const
+{
+    QWriteLocker scopedLocker(&_symbolsGroupsRegisterLock);
+
+    _symbolsGroupsRegister.remove(symbolsGroup);
+}
+
+OsmAnd::MapMarker_P::LinkedMapSymbolsGroup::LinkedMapSymbolsGroup(const std::shared_ptr<MapMarker_P>& mapMarkerP_)
+    : mapMarkerP(mapMarkerP_)
+{
+}
+
+OsmAnd::MapMarker_P::LinkedMapSymbolsGroup::~LinkedMapSymbolsGroup()
+{
+    if (const auto mapMarkerP_ = mapMarkerP.lock())
+        mapMarkerP_->unregisterSymbolsGroup(this);
+}
+
+void OsmAnd::MapMarker_P::LinkedMapSymbolsGroup::update()
+{
+    if (const auto mapMarkerP_ = mapMarkerP.lock())
+        mapMarkerP_->applyChanges();
 }

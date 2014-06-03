@@ -5,8 +5,7 @@
 
 #include "QtExtensions.h"
 #include <QReadWriteLock>
-#include <QMutex>
-#include <QList>
+#include <QHash>
 
 #include <SkBitmap.h>
 #include <SkColor.h>
@@ -22,7 +21,7 @@ namespace OsmAnd
     class MapMarkersCollection_P;
 
     class MapMarker;
-    class MapMarker_P
+    class MapMarker_P : public std::enable_shared_from_this<MapMarker_P>
     {
         Q_DISABLE_COPY(MapMarker_P);
 
@@ -43,13 +42,30 @@ namespace OsmAnd
 
         float _direction;
 
+        class LinkedMapSymbolsGroup
+            : public MapSymbolsGroup
+            , public IUpdatableMapSymbolsGroup
+        {
+        private:
+        protected:
+            LinkedMapSymbolsGroup(const std::shared_ptr<MapMarker_P>& mapMarkerP);
+        public:
+            virtual ~LinkedMapSymbolsGroup();
+
+            const std::weak_ptr<MapMarker_P> mapMarkerP;
+
+            virtual void update();
+
+        friend class OsmAnd::MapMarker_P;
+        };
+
+        bool applyChanges();
+
         std::shared_ptr<MapSymbolsGroup> inflateSymbolsGroup() const;
-        //////////////////////////////////////////////////////////////////////////
-        //mutable QMutex _symbolsGroupsRegisterMutex;
-        ////QList< std::weak_ptr< MapSymbolsGroup > >
-        //void registerSymbolsGroup(const std::shared_ptr<MapSymbolsGroup>& symbolsGroup) const;
-        //void unregisterSymbolsGroup(const std::shared_ptr<MapSymbolsGroup>& symbolsGroup) const;
-        //////////////////////////////////////////////////////////////////////////
+        mutable QReadWriteLock _symbolsGroupsRegisterLock;
+        mutable QHash< MapSymbolsGroup*, std::weak_ptr< MapSymbolsGroup > > _symbolsGroupsRegister;
+        void registerSymbolsGroup(const std::shared_ptr<MapSymbolsGroup>& symbolsGroup) const;
+        void unregisterSymbolsGroup(MapSymbolsGroup* const symbolsGroup) const;
     public:
         virtual ~MapMarker_P();
 
@@ -72,8 +88,7 @@ namespace OsmAnd
         void setDirection(const float direction);
 
         bool hasUnappliedChanges() const;
-        bool applyChanges();
-
+        
         std::shared_ptr<MapSymbolsGroup> createSymbolsGroup() const;
 
     friend class OsmAnd::MapMarker;

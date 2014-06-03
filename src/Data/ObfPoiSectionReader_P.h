@@ -8,7 +8,7 @@
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
-#include "Reference.h"
+#include "ForwardReference.h"
 
 namespace OsmAnd
 {

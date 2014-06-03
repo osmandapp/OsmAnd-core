@@ -139,6 +139,9 @@ void OsmAnd::MapRendererKeyedSymbolsResource::releaseData()
 
 bool OsmAnd::MapRendererKeyedSymbolsResource::prepareForUse()
 {
+    if (const auto updatableMapSymbolGroup = std::dynamic_pointer_cast<IUpdatableMapSymbolsGroup>(_mapSymbolsGroup))
+        updatableMapSymbolGroup->update();
+
     return true;
 }
 

@@ -28,6 +28,17 @@ namespace OsmAnd
 
         virtual QString getDebugTitle() const;
     };
+
+    class OSMAND_CORE_API IUpdatableMapSymbolsGroup
+    {
+    private:
+    protected:
+        IUpdatableMapSymbolsGroup();
+    public:
+        virtual ~IUpdatableMapSymbolsGroup();
+
+        virtual void update() = 0;
+    };
 }
 
 #endif // !defined(_OSMAND_CORE_MAP_SYMBOL_GROUP_H_)

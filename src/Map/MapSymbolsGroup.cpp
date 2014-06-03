@@ -14,3 +14,11 @@ QString OsmAnd::MapSymbolsGroup::getDebugTitle() const
 
     return noDebugTitle;
 }
+
+OsmAnd::IUpdatableMapSymbolsGroup::IUpdatableMapSymbolsGroup()
+{
+}
+
+OsmAnd::IUpdatableMapSymbolsGroup::~IUpdatableMapSymbolsGroup()
+{
+}

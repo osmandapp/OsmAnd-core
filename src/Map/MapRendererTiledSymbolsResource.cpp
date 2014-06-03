@@ -121,15 +121,16 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
     }
 
     // Register all obtained symbols
+    const auto& self = shared_from_this();
     for (const auto& groupResources : constOf(_uniqueGroupsResources))
     {
         for (const auto& symbol : constOf(groupResources->group->symbols))
-            owner->registerMapSymbol(symbol, shared_from_this());
+            owner->registerMapSymbol(symbol, self);
     }
-    for (const auto& groupResources : constOf(_uniqueGroupsResources))
+    for (const auto& groupResources : constOf(_referencedSharedGroupsResources))
     {
         for (const auto& symbol : constOf(groupResources->group->symbols))
-            owner->registerMapSymbol(symbol, shared_from_this());
+            owner->registerMapSymbol(symbol, self);
     }
 
     // Since there's a copy of references to map symbols groups and symbols themselves,
@@ -307,12 +308,13 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
 {
     const auto link_ = link.lock();
     const auto collection = static_cast<MapRendererTiledSymbolsResourcesCollection*>(&link_->collection);
+    const auto& self = shared_from_this();
 
     // Unregister all obtained unique symbols
     for (const auto& groupResources : constOf(_uniqueGroupsResources))
     {
         for (const auto& symbol : constOf(groupResources->group->symbols))
-            owner->unregisterMapSymbol(symbol, shared_from_this());
+            owner->unregisterMapSymbol(symbol, self);
     }
     _uniqueGroupsResources.clear();
 
@@ -327,7 +329,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
 
         // Unregister symbols
         for (const auto& symbol : constOf(groupResources->group->symbols))
-            owner->unregisterMapSymbol(symbol, shared_from_this());
+            owner->unregisterMapSymbol(symbol, self);
 
         for (const auto& entryResourceInGPU : rangeOf(groupResources->resourcesInGPU))
         {

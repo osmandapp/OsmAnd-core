@@ -66,16 +66,6 @@
 
 #include <memory>
 
-#define OSMAND_CLASS(name) \
-    private: \
-        Q_DISABLE_COPY(name) \
-    public: \
-        typedef name* Ptr; \
-        typedef std::shared_ptr< name > Ref; \
-        typedef std::weak_ptr< name > WeakRef; \
-        typedef std::unique_ptr< name > UniqueRef; \
-        static Ref NewRef(here should be args);
-
 namespace OsmAnd
 {
     OSMAND_CORE_API void OSMAND_CORE_CALL InitializeCore();

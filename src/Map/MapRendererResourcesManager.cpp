@@ -26,6 +26,11 @@
 #   define OSMAND_LOG_RESOURCE_STATE_CHANGE 0
 #endif // !defined(OSMAND_LOG_RESOURCE_STATE_CHANGE)
 
+//#define OSMAND_LOG_MAP_SYMBOLS_REGISTRATION 1
+#ifndef OSMAND_LOG_MAP_SYMBOLS_REGISTRATION
+#   define OSMAND_LOG_MAP_SYMBOLS_REGISTRATION 0
+#endif // !defined(OSMAND_LOG_MAP_SYMBOLS_REGISTRATION)
+
 #if OSMAND_LOG_RESOURCE_STATE_CHANGE
 #   define LOG_RESOURCE_STATE_CHANGE(resource, oldState, newState)                                                                          \
     if (const auto tiledResource = std::dynamic_pointer_cast<const BaseTiledResource>(resource))                                            \
@@ -365,6 +370,15 @@ void OsmAnd::MapRendererResourcesManager::registerMapSymbol(const std::shared_pt
     if (symbolReferencedResources.isEmpty())
         _mapSymbolsInRegisterCount++;
     symbolReferencedResources.push_back(resource);
+
+#if OSMAND_LOG_MAP_SYMBOLS_REGISTRATION
+    LogPrintf(LogSeverityLevel::Debug,
+        "Registered map symbol %p from %p (new total %d), now referenced from %d resources",
+        symbol.get(),
+        resource.get(),
+        _mapSymbolsInRegisterCount,
+        symbolReferencedResources.size());
+#endif // OSMAND_LOG_MAP_SYMBOLS_REGISTRATION
 }
 
 void OsmAnd::MapRendererResourcesManager::unregisterMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<MapRendererBaseResource>& resource)
@@ -375,13 +389,25 @@ void OsmAnd::MapRendererResourcesManager::unregisterMapSymbol(const std::shared_
     auto& registerLayer = *itRegisterLayer;
 
     const auto itSymbolReferencedResources = registerLayer.find(symbol);
+    assert(itSymbolReferencedResources != registerLayer.cend());
     auto& symbolReferencedResources = *itSymbolReferencedResources;
     symbolReferencedResources.removeOne(resource);
+#if OSMAND_LOG_MAP_SYMBOLS_REGISTRATION
+    const auto symbolReferencedResourcesSize = symbolReferencedResources.size();
+#endif // OSMAND_LOG_MAP_SYMBOLS_REGISTRATION
     if (symbolReferencedResources.isEmpty())
     {
         _mapSymbolsInRegisterCount--;
         registerLayer.erase(itSymbolReferencedResources);
     }
+#if OSMAND_LOG_MAP_SYMBOLS_REGISTRATION
+    LogPrintf(LogSeverityLevel::Debug,
+        "Unregistered map symbol %p from %p (new total %d), now referenced from %d resources",
+        symbol.get(),
+        resource.get(),
+        _mapSymbolsInRegisterCount,
+        symbolReferencedResourcesSize);
+#endif // OSMAND_LOG_MAP_SYMBOLS_REGISTRATION
 
     // In case layer is empty, remove it entirely
     if (registerLayer.isEmpty())
