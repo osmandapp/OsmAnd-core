@@ -22,7 +22,7 @@ namespace OsmAnd
     protected:
         MapRendererTiledSymbolsResourcesCollection();
 
-        std::array< SharedResourcesContainer<uint64_t, MapRendererTiledSymbolsResource::GroupResources>, ZoomLevelsCount > _sharedGroupsResources;
+        std::array< SharedResourcesContainer<uint64_t, MapRendererTiledSymbolsResource::SharedGroupResources>, ZoomLevelsCount > _sharedGroupsResources;
     public:
         virtual ~MapRendererTiledSymbolsResourcesCollection();
 

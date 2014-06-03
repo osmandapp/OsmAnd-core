@@ -32,15 +32,31 @@ namespace OsmAnd
             Q_DISABLE_COPY(GroupResources);
         private:
         protected:
-        public:
             GroupResources(const std::shared_ptr<MapSymbolsGroup>& group);
-            ~GroupResources();
+        public:
+            virtual ~GroupResources();
 
             const std::shared_ptr<const MapSymbolsGroup> group;
             QHash< std::shared_ptr<MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > resourcesInGPU;
+
+        friend class OsmAnd::MapRendererTiledSymbolsResource;
         };
         QList< std::shared_ptr<GroupResources> > _uniqueGroupsResources;
-        QList< std::shared_ptr<GroupResources> > _referencedSharedGroupsResources;
+
+        class SharedGroupResources : public GroupResources
+        {
+            Q_DISABLE_COPY(SharedGroupResources);
+        private:
+        protected:
+            SharedGroupResources(const std::shared_ptr<MapSymbolsGroup>& group);
+        public:
+            virtual ~SharedGroupResources();
+
+        friend class OsmAnd::MapRendererTiledSymbolsResource;
+        };
+        QList< std::shared_ptr<SharedGroupResources> > _referencedSharedGroupsResources;
+
+        QHash< std::shared_ptr<const MapSymbolsGroup>, QList< std::shared_ptr<const MapSymbol> > > _publishedMapSymbols;
         QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > _resourcesInGPU;
 
         virtual bool obtainData(bool& dataAvailable, const IQueryController* queryController);
