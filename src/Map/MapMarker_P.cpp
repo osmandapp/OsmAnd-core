@@ -168,7 +168,7 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
     */
 
     // 3. SpriteMapSymbol with pinIconBitmap as an icon
-    if (!owner->pinIcon)
+    if (owner->pinIcon)
     {
         std::shared_ptr<SkBitmap> pinIcon(new SkBitmap());
         owner->pinIcon->deepCopyTo(pinIcon.get(), owner->pinIcon->getConfig());

@@ -96,18 +96,19 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::uploadToGPU()
     }
 
     // All resources have been uploaded to GPU successfully by this point
+    _mapSymbolsGroup = _sourceData->symbolsGroup;
     _sourceData->releaseConsumableContent();
 
     for (const auto& entry : rangeOf(constOf(uploaded)))
     {
-        auto& symbol = entry.key();
+        const auto& symbol = entry.key();
         auto& resource = entry.value();
 
         // Unload bitmap from symbol, since it's uploaded already
         symbol->bitmap.reset();
 
         // Move reference
-        _resourcesInGPU.insert(qMove(symbol), qMove(resource));
+        _resourcesInGPU.insert(symbol, qMove(resource));
     }
 
     return true;
@@ -132,6 +133,7 @@ void OsmAnd::MapRendererKeyedSymbolsResource::unloadFromGPU()
 
 void OsmAnd::MapRendererKeyedSymbolsResource::releaseData()
 {
+    _mapSymbolsGroup.reset();
     _sourceData.reset();
 }
 
@@ -142,5 +144,8 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::prepareForUse()
 
 std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::MapRendererKeyedSymbolsResource::getGpuResourceFor(const std::shared_ptr<const MapSymbol>& mapSymbol)
 {
-    return nullptr;
+    const auto citResourceInGPU = _resourcesInGPU.constFind(mapSymbol);
+    if (citResourceInGPU == _resourcesInGPU.cend())
+        return nullptr;
+    return *citResourceInGPU;
 }

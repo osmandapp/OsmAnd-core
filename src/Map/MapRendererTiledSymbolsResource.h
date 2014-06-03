@@ -41,6 +41,7 @@ namespace OsmAnd
         std::shared_ptr<TiledMapSymbolsData> _sourceData;
         QList< std::shared_ptr<GroupResources> > _uniqueGroupsResources;
         QList< std::shared_ptr<GroupResources> > _referencedSharedGroupsResources;
+        QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > _resourcesInGPU;
 
         virtual bool obtainData(bool& dataAvailable, const IQueryController* queryController);
         virtual bool uploadToGPU();

@@ -158,6 +158,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 
                 resource->setState(MapRendererResourceState::Uploaded);
             }
+            if (!gpuResource)
+                continue;
 
             // Check first point to initialize subdivision
             auto pPoint31 = points31.constData();
@@ -430,6 +432,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 
                 resource->setState(MapRendererResourceState::Uploaded);
             }
+            if (!gpuResource)
+                continue;
 
             std::shared_ptr<RenderableSpriteSymbol> renderable(new RenderableSpriteSymbol());
             renderable->mapSymbol = symbol;
