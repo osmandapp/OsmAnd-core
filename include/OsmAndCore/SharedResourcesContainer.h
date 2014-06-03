@@ -10,6 +10,14 @@
 #include <QReadWriteLock>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Logging.h>
+#include <OsmAndCore/Utilities.h>
+
+//#define OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE 1
+#ifndef OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
+#   define OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE 0
+#endif // !defined(OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE)
 
 namespace OsmAnd
 {
@@ -84,6 +92,13 @@ namespace OsmAnd
         {
             QWriteLocker scopedLocker(&_lock);
 
+#if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
+            LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->insert(%s, %p)",
+                this,
+                qPrintable(QString::fromLatin1("%1").arg(key)),
+                resourcePtr.get());
+#endif
+
             // Resource must not be promised and must not be already available.
             // Otherwise behavior is undefined
             assert(!_promisedResources.contains(key));
@@ -103,6 +118,13 @@ namespace OsmAnd
         {
             QWriteLocker scopedLocker(&_lock);
 
+#if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
+            LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->insert(%s, %p)",
+                this,
+                qPrintable(QString::fromLatin1("%1").arg(key)),
+                resourcePtr.get());
+#endif
+
             // Resource must not be promised and must not be already available.
             // Otherwise behavior is undefined
             assert(!_promisedResources.contains(key));
@@ -118,6 +140,13 @@ namespace OsmAnd
         {
             QWriteLocker scopedLocker(&_lock);
 
+#if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
+            LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->insertAndReference(%s, %p)",
+                this,
+                qPrintable(QString::fromLatin1("%1").arg(key)),
+                resourcePtr.get());
+#endif
+
             // Resource must not be promised and must not be already available.
             // Otherwise behavior is undefined
             assert(!_promisedResources.contains(key));
@@ -130,6 +159,12 @@ namespace OsmAnd
         bool obtainReference(const KEY_TYPE& key, ResourcePtr& outResourcePtr)
         {
             QWriteLocker scopedLocker(&_lock);
+
+#if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
+            LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->obtainReference(%s)",
+                this,
+                qPrintable(QString::fromLatin1("%1").arg(key)));
+#endif
 
             // In case resource was promised, wait forever until promise is fulfilled
             const auto itPromisedResourceEntry = _promisedResources.constFind(key);
@@ -175,6 +210,15 @@ namespace OsmAnd
             assert(availableResourceEntry->refCounter > 0);
             assert(availableResourceEntry->resourcePtr == resourcePtr);
 
+#if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
+            LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->releaseReference(%s, %p): %" PRIu64 " -> %" PRIu64 "",
+                this,
+                qPrintable(QString::fromLatin1("%1").arg(key)),
+                resourcePtr.get(),
+                static_cast<uint64_t>(availableResourceEntry->refCounter),
+                static_cast<uint64_t>(availableResourceEntry->refCounter) - 1);
+#endif
+
             availableResourceEntry->refCounter--;
             if (outRemainingReferences)
                 *outRemainingReferences = availableResourceEntry->refCounter;
@@ -196,6 +240,12 @@ namespace OsmAnd
         {
             QWriteLocker scopedLocker(&_lock);
 
+#if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
+            LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->makePromise(%s)",
+                this,
+                qPrintable(QString::fromLatin1("%1").arg(key)));
+#endif
+
             // Resource must not be promised and must not be already available.
             // Otherwise behavior is undefined
             assert(!_promisedResources.contains(key));
@@ -208,6 +258,12 @@ namespace OsmAnd
         void breakPromise(const KEY_TYPE& key)
         {
             QWriteLocker scopedLocker(&_lock);
+
+#if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
+            LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->breakPromise(%s)",
+                this,
+                qPrintable(QString::fromLatin1("%1").arg(key)));
+#endif
 
             // Resource must be promised and must not be already available.
             // Otherwise behavior is undefined
@@ -246,6 +302,14 @@ namespace OsmAnd
             ;
             _promisedResources.erase(itPromisedResourceEntry);
 
+#if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
+            LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->fulfilPromise(%s, %p): %" PRIu64 "",
+                this,
+                qPrintable(QString::fromLatin1("%1").arg(key)),
+                resourcePtr.get(),
+                static_cast<uint64_t>(promisedResourceEntry->refCounter));
+#endif
+
             if (promisedResourceEntry->refCounter <= 0)
                 return;
 
@@ -272,6 +336,14 @@ namespace OsmAnd
             const auto itPromisedResourceEntry = _promisedResources.find(key);
             const std::shared_ptr<PromisedResourceEntry> promisedResourceEntry(qMove(*itPromisedResourceEntry));
             _promisedResources.erase(itPromisedResourceEntry);
+
+#if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
+            LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->fulfilPromise(%s, %p): %" PRIu64 "",
+                this,
+                qPrintable(QString::fromLatin1("%1").arg(key)),
+                resourcePtr.get(),
+                static_cast<uint64_t>(promisedResourceEntry->refCounter));
+#endif
 
             if (promisedResourceEntry->refCounter <= 0)
                 return;
@@ -302,6 +374,15 @@ namespace OsmAnd
             ;
             _promisedResources.erase(itPromisedResourceEntry);
 
+#if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
+            LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->fulfilPromiseAndReference(%s, %p): %" PRIu64 " -> %" PRIu64 "",
+                this,
+                qPrintable(QString::fromLatin1("%1").arg(key)),
+                resourcePtr.get(),
+                static_cast<uint64_t>(promisedResourceEntry->refCounter),
+                static_cast<uint64_t>(promisedResourceEntry->refCounter) + 1);
+#endif
+
             const auto newEntry = new AvailableResourceEntry(promisedResourceEntry->refCounter + 1, resourcePtr);
             _availableResources.insert(key, qMove(std::shared_ptr<AvailableResourceEntry>(newEntry)));
             promisedResourceEntry->promise.set_value(newEntry->resourcePtr);
@@ -317,8 +398,24 @@ namespace OsmAnd
 
             const auto itPromisedResourceEntry = _promisedResources.constFind(key);
             if (itPromisedResourceEntry == _promisedResources.cend())
+            {
+#if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
+                LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->obtainFutureReference(%s)",
+                    this,
+                    qPrintable(QString::fromLatin1("%1").arg(key)));
+#endif
+
                 return false;
+            }
             const auto& promisedResourceEntry = *itPromisedResourceEntry;
+
+#if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
+            LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->obtainFutureReference(%s): %" PRIu64 " -> %" PRIu64 "",
+                this,
+                qPrintable(QString::fromLatin1("%1").arg(key)),
+                static_cast<uint64_t>(promisedResourceEntry->refCounter),
+                static_cast<uint64_t>(promisedResourceEntry->refCounter) + 1);
+#endif
 
             promisedResourceEntry->refCounter++;
             outFutureResourcePtr = promisedResourceEntry->sharedFuture;
@@ -336,9 +433,25 @@ namespace OsmAnd
 
             const auto itPromisedResourceEntry = _promisedResources.constFind(key);
             if (itPromisedResourceEntry == _promisedResources.cend())
+            {
+#if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
+                LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->releaseFutureReference(%s)",
+                    this,
+                    qPrintable(QString::fromLatin1("%1").arg(key)));
+#endif
+
                 return false;
+            }
             const auto& promisedResourceEntry = *itPromisedResourceEntry;
             assert(promisedResourceEntry->refCounter > 0);
+
+#if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
+            LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->releaseFutureReference(%s): %" PRIu64 " -> %" PRIu64 "",
+                this,
+                qPrintable(QString::fromLatin1("%1").arg(key)),
+                static_cast<uint64_t>(promisedResourceEntry->refCounter),
+                static_cast<uint64_t>(promisedResourceEntry->refCounter) - 1);
+#endif
             
             promisedResourceEntry->refCounter--;
 
@@ -354,6 +467,14 @@ namespace OsmAnd
             {
                 const auto& availableResourceEntry = *itAvailableResourceEntry;
 
+#if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
+                LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->obtainReferenceOrFutureReferenceOrMakePromise(%s): reference %" PRIu64 " -> %" PRIu64 "",
+                    this,
+                    qPrintable(QString::fromLatin1("%1").arg(key)),
+                    static_cast<uint64_t>(availableResourceEntry->refCounter),
+                    static_cast<uint64_t>(availableResourceEntry->refCounter) + 1);
+#endif
+
                 availableResourceEntry->refCounter++;
                 outResourcePtr = availableResourceEntry->resourcePtr;
 
@@ -362,10 +483,47 @@ namespace OsmAnd
             
             const auto futureReferenceAvailable = obtainFutureReference(key, outFutureResourcePtr);
             if (futureReferenceAvailable)
+            {
+#if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
+                LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->obtainReferenceOrFutureReferenceOrMakePromise(%s): future reference",
+                    this,
+                    qPrintable(QString::fromLatin1("%1").arg(key)));
+#endif
+
                 return true;
+            }
             
+#if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
+            LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->obtainReferenceOrFutureReferenceOrMakePromise(%s): promise",
+                this,
+                qPrintable(QString::fromLatin1("%1").arg(key)));
+#endif
+
             makePromise(key);
             return false;
+        }
+
+        uintmax_t getReferencesCount(const KEY_TYPE& key) const
+        {
+            QReadLocker scopedLocker(&_lock);
+
+            const auto citAvailableResourceEntry = _availableResources.constFind(key);
+            if (citAvailableResourceEntry != _availableResources.cend())
+            {
+                const auto& availableResourceEntry = *citAvailableResourceEntry;
+
+                return availableResourceEntry->refCounter;
+            }
+
+            const auto citPromisedResourceEntry = _promisedResources.constFind(key);
+            if (citPromisedResourceEntry != _promisedResources.cend())
+            {
+                const auto& promisedResourceEntry = *citPromisedResourceEntry;
+
+                return promisedResourceEntry->refCounter;
+            }
+
+            return 0;
         }
     };
 }

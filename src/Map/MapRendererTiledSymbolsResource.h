@@ -25,6 +25,8 @@ namespace OsmAnd
     protected:
         MapRendererTiledSymbolsResource(MapRendererResourcesManager* owner, const TiledEntriesCollection<MapRendererBaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom);
 
+        std::shared_ptr<TiledMapSymbolsData> _sourceData;
+
         class GroupResources
         {
             Q_DISABLE_COPY(GroupResources);
@@ -34,11 +36,9 @@ namespace OsmAnd
             GroupResources(const std::shared_ptr<MapSymbolsGroup>& group);
             ~GroupResources();
 
-            const std::shared_ptr<MapSymbolsGroup> group;
+            const std::shared_ptr<const MapSymbolsGroup> group;
             QHash< std::shared_ptr<MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > resourcesInGPU;
         };
-
-        std::shared_ptr<TiledMapSymbolsData> _sourceData;
         QList< std::shared_ptr<GroupResources> > _uniqueGroupsResources;
         QList< std::shared_ptr<GroupResources> > _referencedSharedGroupsResources;
         QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > _resourcesInGPU;

@@ -16,7 +16,7 @@
 #include <OsmAndCore/Logging.h>
 #include <OsmAndCore/Utilities.h>
 
-#define OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE 0
+//#define OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE 1
 #ifndef OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
 #   define OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE 0
 #endif // !defined(OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE)
@@ -186,8 +186,9 @@ namespace OsmAnd
 #endif
 
             // In case resource was promised, wait forever until promise is fulfilled
-            const auto& itPromisedResourceEntry = _promisedResources[level].constFind(key);
-            if (itPromisedResourceEntry != _promisedResources[level].cend())
+            const auto& promisedResources = _promisedResources[level];
+            const auto& itPromisedResourceEntry = promisedResources.constFind(key);
+            if (itPromisedResourceEntry != promisedResources.cend())
             {
                 const auto localFuture = (*itPromisedResourceEntry)->sharedFuture;
                 scopedLocker.unlock();
@@ -204,8 +205,9 @@ namespace OsmAnd
                 return false;
             }
 
-            const auto& itAvailableResourceEntry = _availableResources[level].find(key);
-            if (itAvailableResourceEntry == _availableResources[level].end())
+            auto& availableResources = _availableResources[level];
+            const auto& itAvailableResourceEntry = availableResources.find(key);
+            if (itAvailableResourceEntry == availableResources.end())
                 return false;
             const auto& availableResourceEntry = *itAvailableResourceEntry;
 
@@ -230,8 +232,9 @@ namespace OsmAnd
             // Resource must not be promised. Otherwise behavior is undefined
             assert(!_promisedResources[level].contains(key));
 
-            const auto& itAvailableResourceEntry = _availableResources[level].find(key);
-            if (itAvailableResourceEntry == _availableResources[level].end())
+            auto& availableResources = _availableResources[level];
+            const auto& itAvailableResourceEntry = availableResources.find(key);
+            if (itAvailableResourceEntry == availableResources.end())
                 return false;
             const auto& availableResourceEntry = *itAvailableResourceEntry;
             assert(availableResourceEntry->refCounter > 0);
@@ -254,7 +257,7 @@ namespace OsmAnd
                 }
 
                 _availableResourceEntriesStorage.remove(availableResourceEntry);
-                _availableResources[level].erase(itAvailableResourceEntry);
+                availableResources.erase(itAvailableResourceEntry);
 
                 if (outWasCleaned)
                     *outWasCleaned = true;
@@ -309,11 +312,11 @@ namespace OsmAnd
                 assert(_promisedResources[level].contains(key));
                 assert(!_availableResources[level].contains(key));
 
-                const auto& itPromisedResourceEntry = _promisedResources[level].find(key);
+                auto& promisedResources = _promisedResources[level];
+                const auto& itPromisedResourceEntry = promisedResources.find(key);
                 if (!promisedEntryPtr)
                     promisedEntryPtr = *itPromisedResourceEntry;
-                _promisedResources[level].erase(itPromisedResourceEntry);
-
+                promisedResources.erase(itPromisedResourceEntry);
             }
 
             _promisedResourceEntriesStorage.erase(promisedEntryPtr);
@@ -340,11 +343,11 @@ namespace OsmAnd
                 assert(_promisedResources[level].contains(key));
                 assert(!_availableResources[level].contains(key));
 
-                const auto& itPromisedResourceEntry = _promisedResources[level].find(key);
+                auto& promisedResources = _promisedResources[level];
+                const auto& itPromisedResourceEntry = promisedResources.find(key);
                 if (!promisedEntryPtr)
                     promisedEntryPtr = *itPromisedResourceEntry;
-                _promisedResources[level].erase(itPromisedResourceEntry);
-
+                promisedResources.erase(itPromisedResourceEntry);
             }
             _promisedResourceEntriesStorage.erase(promisedEntryPtr);
 
@@ -393,11 +396,11 @@ namespace OsmAnd
                 assert(_promisedResources[level].contains(key));
                 assert(!_availableResources[level].contains(key));
 
-                const auto& itPromisedResourceEntry = _promisedResources[level].find(key);
+                auto& promisedResources = _promisedResources[level];
+                const auto& itPromisedResourceEntry = promisedResources.find(key);
                 if (!promisedEntryPtr)
                     promisedEntryPtr = *itPromisedResourceEntry;
-                _promisedResources[level].erase(itPromisedResourceEntry);
-
+                promisedResources.erase(itPromisedResourceEntry);
             }
             _promisedResourceEntriesStorage.erase(promisedEntryPtr);
 
@@ -442,11 +445,11 @@ namespace OsmAnd
                 assert(_promisedResources[level].contains(key));
                 assert(!_availableResources[level].contains(key));
 
-                const auto& itPromisedResourceEntry = _promisedResources[level].find(key);
+                auto& promisedResources = _promisedResources[level];
+                const auto& itPromisedResourceEntry = promisedResources.find(key);
                 if (!promisedEntryPtr)
                     promisedEntryPtr = *itPromisedResourceEntry;
-                _promisedResources[level].erase(itPromisedResourceEntry);
-
+                promisedResources.erase(itPromisedResourceEntry);
             }
             _promisedResourceEntriesStorage.remove(promisedEntryPtr);
 
@@ -481,8 +484,9 @@ namespace OsmAnd
             // Otherwise behavior is undefined
             assert(!_availableResources[level].contains(key));
 
-            const auto& itPromisedResourceEntry = _promisedResources[level].constFind(key);
-            if (itPromisedResourceEntry == _promisedResources[level].cend())
+            const auto& promisedResources = _promisedResources[level];
+            const auto& itPromisedResourceEntry = promisedResources.constFind(key);
+            if (itPromisedResourceEntry == promisedResources.cend())
                 return false;
             const auto& promisedResourceEntry = *itPromisedResourceEntry;
 
@@ -507,8 +511,9 @@ namespace OsmAnd
             // Otherwise behavior is undefined
             assert(!_availableResources[level].contains(key));
 
-            const auto& itPromisedResourceEntry = _promisedResources[level].constFind(key);
-            if (itPromisedResourceEntry == _promisedResources[level].cend())
+            const auto& promisedResources = _promisedResources[level];
+            const auto& itPromisedResourceEntry = promisedResources.constFind(key);
+            if (itPromisedResourceEntry == promisedResources.cend())
                 return false;
             const auto& promisedResourceEntry = *itPromisedResourceEntry;
             assert(promisedResourceEntry->refCounter > 0);
@@ -532,8 +537,9 @@ namespace OsmAnd
 
             assert(levels.contains(level));
 
-            const auto& itAvailableResourceEntry = _availableResources[level].find(key);
-            if (itAvailableResourceEntry != _availableResources[level].end())
+            auto& availableResources = _availableResources[level];
+            const auto& itAvailableResourceEntry = availableResources.find(key);
+            if (itAvailableResourceEntry != availableResources.end())
             {
                 const auto& availableResourceEntry = *itAvailableResourceEntry;
 
@@ -560,6 +566,38 @@ namespace OsmAnd
             return false;
         }
 
+        uintmax_t getReferencesCount(const KEY_TYPE& key, const ZoomLevel level = InvalidZoom) const
+        {
+            QReadLocker scopedLocker(&_lock);
+
+            uintmax_t result = 0;
+            const auto firstZoom = (level == InvalidZoom) ? MinZoomLevel : level;
+            const auto lastZoom = (level == InvalidZoom) ? MaxZoomLevel : level;
+            for (int currentLevel = firstZoom; currentLevel <= lastZoom; currentLevel++)
+            {
+                const auto& availableResources = _availableResources[currentLevel];
+                const auto citAvailableResourceEntry = availableResources.constFind(key);
+                if (citAvailableResourceEntry != availableResources.cend())
+                {
+                    const auto& availableResourceEntry = *citAvailableResourceEntry;
+
+                    result += availableResourceEntry->refCounter;
+                    continue;
+                }
+
+                const auto& promisedResources = _promisedResources[currentLevel];
+                const auto citPromisedResourceEntry = promisedResources.constFind(key);
+                if (citPromisedResourceEntry != promisedResources.cend())
+                {
+                    const auto& promisedResourceEntry = *citPromisedResourceEntry;
+
+                    result += promisedResourceEntry->refCounter;
+                    continue;
+                }
+            }
+
+            return result;
+        }
     };
 }
 

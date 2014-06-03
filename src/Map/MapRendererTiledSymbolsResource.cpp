@@ -11,6 +11,11 @@
 #include "QKeyValueIterator.h"
 #include "Utilities.h"
 
+//#define OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE 1
+#ifndef OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
+#   define OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE 0
+#endif // !defined(OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE)
+
 OsmAnd::MapRendererTiledSymbolsResource::MapRendererTiledSymbolsResource(
     MapRendererResourcesManager* owner,
     const TiledEntriesCollection<MapRendererBaseTiledResource>& collection,
@@ -63,7 +68,20 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
             if (sharedGroupsResources.obtainReferenceOrFutureReferenceOrMakePromise(symbolsGroup->id, sharedGroupResources, futureSharedGroupResources))
             {
                 if (static_cast<bool>(sharedGroupResources))
+                {
                     referencedSharedGroupsResources.push_back(qMove(sharedGroupResources));
+
+#if OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
+                    const auto shareableById = std::static_pointer_cast<const MapSymbolsGroupShareableById>(sharedGroupResources->group);
+                    LogPrintf(LogSeverityLevel::Debug,
+                        "Shared GroupResources(%p) for MapObject #%" PRIu64 " (%" PRIi64 ") referenced from %p (%dx%d@%d)",
+                        sharedGroupResources.get(),
+                        shareableById->id,
+                        static_cast<int64_t>(shareableById->id) / 2,
+                        this,
+                        tileId.x, tileId.y, zoom);
+#endif // OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
+                }
                 else
                     futureReferencedSharedGroupsResources.push_back(qMove(futureSharedGroupResources));
                 return false;
@@ -105,6 +123,17 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
             // Otherwise insert it as shared group
             sharedGroupsResources.fulfilPromiseAndReference(shareableById->id, groupResources);
             _referencedSharedGroupsResources.push_back(qMove(groupResources));
+
+#if OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
+            LogPrintf(LogSeverityLevel::Debug,
+                "Shared GroupResources(%p) for MapObject #%" PRIu64 " (%" PRIi64 ") allocated and referenced from %p (%dx%d@%d): %" PRIu64 " ref(s)",
+                groupResources.get(),
+                shareableById->id,
+                static_cast<int64_t>(shareableById->id) / 2,
+                this,
+                tileId.x, tileId.y, zoom,
+                sharedGroupsResources.getReferencesCount(shareableById->id));
+#endif // OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
         }
         else
         {
@@ -118,6 +147,18 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
         auto groupResources = futureGroup.get();
 
         _referencedSharedGroupsResources.push_back(qMove(groupResources));
+
+#if OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
+        const auto shareableById = std::static_pointer_cast<const MapSymbolsGroupShareableById>(groupResources->group);
+        LogPrintf(LogSeverityLevel::Debug,
+            "Shared GroupResources(%p) for MapObject #%" PRIu64 " (%" PRIi64 ") referenced from %p (%dx%d@%d): %" PRIu64 " ref(s)",
+            groupResources.get(),
+            shareableById->id,
+            static_cast<int64_t>(shareableById->id) / 2,
+            this,
+            tileId.x, tileId.y, zoom,
+            sharedGroupsResources.getReferencesCount(shareableById->id));
+#endif // OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
     }
 
     // Register all obtained symbols
@@ -187,7 +228,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
         if (groupResources->group->symbols.isEmpty())
             continue;
 
-        // Basically, this check means "continue if shared symbols were uploaded by other resource"
+        // This check means "continue if shared symbols were uploaded by other resource"
         // This check needs no special handling, since all GPU resources work is done from same thread.
         if (!groupResources->resourcesInGPU.isEmpty())
             continue;
@@ -240,7 +281,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
         // Unload bitmap from symbol, since it's uploaded already
         symbol->bitmap.reset();
 
-        // Add reference
+        // Add GPU resource reference
         _resourcesInGPU.insert(symbol, resource);
         groupResources->resourcesInGPU.insert(qMove(symbol), qMove(resource));
     }
@@ -255,7 +296,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
         // Unload bitmap from symbol, since it's uploaded already
         symbol->bitmap.reset();
 
-        // Add reference
+        // Add GPU resource reference
         _resourcesInGPU.insert(symbol, resource);
         groupResources->resourcesInGPU.insert(qMove(symbol), qMove(resource));
     }
@@ -284,24 +325,50 @@ void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU()
             assert(resourceInGPU.use_count() == 1);
             resourceInGPU.reset();
         }
-#else
-        groupResources->resourcesInGPU.clear();
 #endif
+
+        // For unique group resources it's safe to clear 'MapSymbol->ResourceInGPU' map
+        groupResources->resourcesInGPU.clear();
     }
+    // Do not clear _uniqueGroupsResources list, since it will be used to unregister symbols
 
     // Shared
     auto& sharedGroupsResources = collection->_sharedGroupsResources[zoom];
     for (auto& groupResources : _referencedSharedGroupsResources)
     {
-        const auto shareableById = std::dynamic_pointer_cast<const MapSymbolsGroupShareableById>(groupResources->group);
+        const auto shareableById = std::static_pointer_cast<const MapSymbolsGroupShareableById>(groupResources->group);
 
+        bool wasRemoved = false;
+        uintmax_t* pRefsRemaining = nullptr;
+#if OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
+        uintmax_t refsRemaining = 0;
+        pRefsRemaining = &refsRemaining;
+#endif // OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
+
+        // Release reference first, since GroupResources will be released after GPU resource will be dereferenced,
+        // other tile may catch empty non-loadable GroupResources.
         auto groupResources_ = groupResources;
-        sharedGroupsResources.releaseReference(shareableById->id, groupResources_, true);
+        sharedGroupsResources.releaseReference(shareableById->id, groupResources_, true, &wasRemoved, pRefsRemaining);
 
-        // Release reference to GPU resources
-        // If any reference to resource is last, GPU resource is unloaded
-        groupResources->resourcesInGPU.clear();
+#if OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
+        LogPrintf(LogSeverityLevel::Debug,
+            "Shared GroupResources(%p) dereferenced for MapObject #%" PRIu64 " (%" PRIi64 ") in %p (%dx%d@%d): %" PRIu64 " ref(s) remain, %s",
+            groupResources.get(),
+            shareableById->id,
+            static_cast<int64_t>(shareableById->id) / 2,
+            this,
+            tileId.x, tileId.y, zoom,
+            static_cast<uint64_t>(refsRemaining),
+            wasRemoved ? "removed" : "not removed");
+#endif // OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
+
+        // In case final reference to shared group resources was removed, it's safe to clear resources,
+        // since no-one else will check for this map being empty. Otherwise, these resources are still needed
+        // somewhere
+        if (wasRemoved)
+            groupResources->resourcesInGPU.clear();
     }
+    // Do not clear _referencedSharedGroupsResources list, since it will be used to unregister symbols
 }
 
 void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
@@ -310,51 +377,109 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
     const auto collection = static_cast<MapRendererTiledSymbolsResourcesCollection*>(&link_->collection);
     const auto& self = shared_from_this();
 
-    // Unregister all obtained unique symbols
+    // Remove quick references (if any left)
+    _resourcesInGPU.clear();
+
+    // Unique
     for (const auto& groupResources : constOf(_uniqueGroupsResources))
     {
-        for (const auto& symbol : constOf(groupResources->group->symbols))
-            owner->unregisterMapSymbol(symbol, self);
-    }
-    _uniqueGroupsResources.clear();
-
-    auto& sharedGroupsResources = collection->_sharedGroupsResources[zoom];
-    for (auto& groupResources : _referencedSharedGroupsResources)
-    {
-        const auto shareableById = std::dynamic_pointer_cast<const MapSymbolsGroupShareableById>(groupResources->group);
-
-        bool wasRemoved = false;
-        auto groupResources_ = groupResources;
-        sharedGroupsResources.releaseReference(shareableById->id, groupResources_, true, &wasRemoved);
-
         // Unregister symbols
         for (const auto& symbol : constOf(groupResources->group->symbols))
             owner->unregisterMapSymbol(symbol, self);
 
+        // In case GPU resources was not released before, perform this operation here
+        // Otherwise, groupResources->resourcesInGPU array is empty for unique group resources
         for (const auto& entryResourceInGPU : rangeOf(groupResources->resourcesInGPU))
         {
             const auto& symbol = entryResourceInGPU.key();
             auto& resourceInGPU = entryResourceInGPU.value();
 
-            // In case this was the last reference to shared group resources, check if any resources need to be deleted
-            if (wasRemoved)
-            {
-                // Unload symbol from GPU thread (using dispatcher)
-                assert(resourceInGPU.use_count() == 1);
-                auto resourceInGPU_ = qMove(resourceInGPU);
-                owner->renderer->getGpuThreadDispatcher().invokeAsync(
-                    [resourceInGPU_]
-                    () mutable
-                    {
-                        assert(resourceInGPU_.use_count() == 1);
-                        resourceInGPU_.reset();
-                    });
+            // Unload symbol from GPU thread (using dispatcher)
+            assert(resourceInGPU.use_count() == 1);
+            auto resourceInGPU_ = qMove(resourceInGPU);
+            owner->renderer->getGpuThreadDispatcher().invokeAsync(
+                [resourceInGPU_]
+                () mutable
+                {
+                    assert(resourceInGPU_.use_count() == 1);
+                    resourceInGPU_.reset();
+                });
 #ifndef Q_COMPILER_RVALUE_REFS
-                resourceInGPU.reset();
+            resourceInGPU.reset();
 #endif //!Q_COMPILER_RVALUE_REFS
-            }
         }
     }
+    // Now it's safe to clear _uniqueGroupsResources list,
+    // since after symbols are unregistered, it's not needed anymore
+    _uniqueGroupsResources.clear();
+
+    // Shared
+    auto& sharedGroupsResources = collection->_sharedGroupsResources[zoom];
+    for (auto& groupResources : _referencedSharedGroupsResources)
+    {
+        // Unregister symbols
+        for (const auto& symbol : constOf(groupResources->group->symbols))
+            owner->unregisterMapSymbol(symbol, self);
+
+        // For shared group resources groupResources->resourcesInGPU is going to be empty only in case
+        // group is not referenced from anywhere. In that case just skip dereferencing
+        if (groupResources->resourcesInGPU.isEmpty())
+            continue;
+
+        // Otherwise, perform dereferencing
+        const auto shareableById = std::static_pointer_cast<const MapSymbolsGroupShareableById>(groupResources->group);
+        uintmax_t* pRefsRemaining = nullptr;
+#if OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
+        uintmax_t refsRemaining = 0;
+        pRefsRemaining = &refsRemaining;
+#endif // OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
+        bool wasRemoved = false;
+        auto groupResources_ = groupResources;
+        sharedGroupsResources.releaseReference(shareableById->id, groupResources_, true, &wasRemoved, pRefsRemaining);
+
+#if OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
+        LogPrintf(LogSeverityLevel::Debug,
+            "Shared GroupResources(%p) dereferenced for MapObject #%" PRIu64 " (%" PRIi64 ") in %p (%dx%d@%d): %" PRIu64 " ref(s) remain, %s",
+            groupResources.get(),
+            shareableById->id,
+            static_cast<int64_t>(shareableById->id) / 2,
+            this,
+            tileId.x, tileId.y, zoom,
+            static_cast<uint64_t>(refsRemaining),
+            wasRemoved ? "removed" : "not removed");
+#endif // OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
+        
+        // GPU resources of a shared group resources should be unloaded only in case this was the last
+        // reference to shared group resources
+        if (!wasRemoved)
+            continue;
+
+        // If this was the last reference to those shared group resources, it's safe to unload
+        // all GPU resources assigned to it. And clear the entire mapping, since it's not needed
+        // by anyone anywhere
+        for (const auto& entryResourceInGPU : rangeOf(groupResources->resourcesInGPU))
+        {
+            const auto& symbol = entryResourceInGPU.key();
+            auto& resourceInGPU = entryResourceInGPU.value();
+
+            // Unload symbol from GPU thread (using dispatcher)
+            assert(resourceInGPU.use_count() == 1);
+            auto resourceInGPU_ = qMove(resourceInGPU);
+            owner->renderer->getGpuThreadDispatcher().invokeAsync(
+                [resourceInGPU_]
+                () mutable
+                {
+                    assert(resourceInGPU_.use_count() == 1);
+                    resourceInGPU_.reset();
+                });
+#ifndef Q_COMPILER_RVALUE_REFS
+            resourceInGPU.reset();
+#endif //!Q_COMPILER_RVALUE_REFS
+        }
+        groupResources->resourcesInGPU.clear();
+    }
+    // Now it's safe to clear _uniqueGroupsResources list,
+    // since after symbols are unregistered, it's not needed anymore
     _referencedSharedGroupsResources.clear();
 
     _sourceData.reset();
@@ -375,4 +500,7 @@ OsmAnd::MapRendererTiledSymbolsResource::GroupResources::GroupResources(const st
 
 OsmAnd::MapRendererTiledSymbolsResource::GroupResources::~GroupResources()
 {
+#if OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
+    LogPrintf(LogSeverityLevel::Debug, "Shared GroupResources(%p) destroyed", this);
+#endif // OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
 }
