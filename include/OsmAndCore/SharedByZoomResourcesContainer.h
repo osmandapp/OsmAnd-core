@@ -568,7 +568,7 @@ namespace OsmAnd
 
         uintmax_t getReferencesCount(const KEY_TYPE& key, const ZoomLevel level = InvalidZoom) const
         {
-            QReadLocker scopedLocker(&_lock);
+            QReadLocker scopedLocker(&this->_lock);
 
             uintmax_t result = 0;
             const auto firstZoom = (level == InvalidZoom) ? MinZoomLevel : level;
