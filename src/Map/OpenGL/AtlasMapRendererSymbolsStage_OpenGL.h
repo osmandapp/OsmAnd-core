@@ -19,10 +19,10 @@ namespace OsmAnd
     {
     private:
     protected:
-        GLname _pinnedSymbolVAO;
-        GLname _pinnedSymbolVBO;
-        GLname _pinnedSymbolIBO;
-        struct PinnedSymbolProgram {
+        GLname _spriteSymbolVAO;
+        GLname _spriteSymbolVBO;
+        GLname _spriteSymbolIBO;
+        struct SpriteSymbolProgram {
             GLname id;
 
             struct {
@@ -56,7 +56,7 @@ namespace OsmAnd
                     GLlocation sampler;
                 } param;
             } fs;
-        } _pinnedSymbolProgram;
+        } _spriteSymbolProgram;
         void initializePinned();
         void releasePinned();
 
@@ -68,10 +68,10 @@ namespace OsmAnd
             GLlocation widthOfPreviousN;
             GLlocation widthN;
         };
-        GLname _symbolOnPath2dVAO;
-        GLname _symbolOnPath2dVBO;
-        GLname _symbolOnPath2dIBO;
-        struct SymbolOnPath2dProgram {
+        GLname _onPathSymbol2dVAO;
+        GLname _onPathSymbol2dVBO;
+        GLname _onPathSymbol2dIBO;
+        struct OnPathSymbol2dProgram {
             GLname id;
 
             struct {
@@ -105,15 +105,15 @@ namespace OsmAnd
                     GLlocation sampler;
                 } param;
             } fs;
-        } _symbolOnPath2dProgram;
-        GLint _maxGlyphsPerDrawCallSOP2D;
+        } _onPathSymbol2dProgram;
+        GLint _onPathSymbol2dMaxGlyphsPerDrawCall;
         void initializeOnPath2D();
         void releaseOnPath2D();
 
-        GLname _symbolOnPath3dVAO;
-        GLname _symbolOnPath3dVBO;
-        GLname _symbolOnPath3dIBO;
-        struct SymbolOnPath3dProgram {
+        GLname _onPathSymbol3dVAO;
+        GLname _onPathSymbol3dVBO;
+        GLname _onPathSymbol3dIBO;
+        struct OnPathSymbol3dProgram {
             GLname id;
 
             struct {
@@ -147,8 +147,8 @@ namespace OsmAnd
                     GLlocation sampler;
                 } param;
             } fs;
-        } _symbolOnPath3dProgram;
-        GLint _maxGlyphsPerDrawCallSOP3D;
+        } _onPathSymbol3dProgram;
+        GLint _onPathSymbol2dMaxGlyphsPerDrawCall;
         void initializeOnPath3D();
         void releaseOnPath3D();
         
