@@ -14,6 +14,7 @@
 #include "IMapElevationDataProvider.h"
 #include "MapSymbol.h"
 #include "RasterMapSymbol.h"
+#include "PrimitiveMapSymbol.h"
 #include "Logging.h"
 #include "Utilities.h"
 
@@ -223,6 +224,10 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolToGPU(const std::shared_ptr< const MapSy
     {
         return uploadSymbolAsTextureToGPU(rasterMapSymbol, resourceInGPU);
     }
+    else if (const auto primitiveMapSymbol = std::dynamic_pointer_cast<const PrimitiveMapSymbol>(symbol))
+    {
+        return uploadSymbolAsMeshToGPU(primitiveMapSymbol, resourceInGPU);
+    }
     
     assert(false);
     return false;
@@ -242,12 +247,13 @@ bool OsmAnd::GPUAPI_OpenGL::releaseResourceInGPU( const ResourceInGPU::Type type
 
             return true;
         }
+    case ResourceInGPU::Type::ElementArrayBuffer:
     case ResourceInGPU::Type::ArrayBuffer:
         {
             GL_CHECK_PRESENT(glDeleteBuffers);
 
-            GLuint arrayBuffer = static_cast<GLuint>(reinterpret_cast<intptr_t>(refInGPU));
-            glDeleteBuffers(1, &arrayBuffer);
+            GLuint buffer = static_cast<GLuint>(reinterpret_cast<intptr_t>(refInGPU));
+            glDeleteBuffers(1, &buffer);
             GL_CHECK_RESULT;
 
             return true;
@@ -615,6 +621,33 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(const std::shared_ptr< co
     resourceInGPU.reset(static_cast<ResourceInGPU*>(textureInGPU));
 
     return true;
+}
+
+bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(const std::shared_ptr< const PrimitiveMapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
+{
+    GL_CHECK_PRESENT(glGenBuffers);
+    GL_CHECK_PRESENT(glBindBuffer);
+    GL_CHECK_PRESENT(glBufferData);
+
+
+
+    //// Create vertex buffer and associate it with VAO
+    //glGenBuffers(1, &_spriteSymbolVBO);
+    //GL_CHECK_RESULT;
+    //glBindBuffer(GL_ARRAY_BUFFER, _spriteSymbolVBO);
+    //GL_CHECK_RESULT;
+    //glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(Vertex), vertices, GL_STATIC_DRAW);
+    //GL_CHECK_RESULT;
+
+    //// Create index buffer and associate it with VAO
+    //glGenBuffers(1, &_spriteSymbolIBO);
+    //GL_CHECK_RESULT;
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _spriteSymbolIBO);
+    //GL_CHECK_RESULT;
+    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
+    //GL_CHECK_RESULT;
+
+    return false;
 }
 
 void OsmAnd::GPUAPI_OpenGL::waitUntilUploadIsComplete()

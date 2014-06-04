@@ -84,6 +84,15 @@ OsmAnd::GPUAPI::ResourceInGPU::~ResourceInGPU()
     }
 }
 
+OsmAnd::GPUAPI::MetaResourceInGPU::MetaResourceInGPU(const Type type_, GPUAPI* api_)
+    : ResourceInGPU(type_, api_, nullptr)
+{
+}
+
+OsmAnd::GPUAPI::MetaResourceInGPU::~MetaResourceInGPU()
+{
+}
+
 OsmAnd::GPUAPI::TextureInGPU::TextureInGPU(GPUAPI* api_, const RefInGPU& refInGPU_, const unsigned int width_, const unsigned int height_, const unsigned int mipmapLevels_)
     : ResourceInGPU(Type::Texture, api_, refInGPU_)
     , width(width_)
@@ -107,6 +116,16 @@ OsmAnd::GPUAPI::ArrayBufferInGPU::ArrayBufferInGPU(GPUAPI* api_, const RefInGPU&
 }
 
 OsmAnd::GPUAPI::ArrayBufferInGPU::~ArrayBufferInGPU()
+{
+}
+
+OsmAnd::GPUAPI::ElementArrayBufferInGPU::ElementArrayBufferInGPU(GPUAPI* api_, const RefInGPU& refInGPU_, const unsigned int itemsCount_)
+    : ResourceInGPU(Type::ElementArrayBuffer, api_, refInGPU_)
+    , itemsCount(itemsCount_)
+{
+}
+
+OsmAnd::GPUAPI::ElementArrayBufferInGPU::~ElementArrayBufferInGPU()
 {
 }
 
@@ -246,4 +265,18 @@ std::shared_ptr<OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU> OsmAnd::GPUAPI::AtlasTe
     }
 
     return nullptr;
+}
+
+OsmAnd::GPUAPI::MeshInGPU::MeshInGPU(
+    GPUAPI* api_,
+    const std::shared_ptr<ArrayBufferInGPU>& vertexBuffer_,
+    const std::shared_ptr<ElementArrayBufferInGPU>& indexBuffer_)
+    : MetaResourceInGPU(Type::Mesh, api_)
+    , vertexBuffer(vertexBuffer_)
+    , indexBuffer(indexBuffer)
+{
+}
+
+OsmAnd::GPUAPI::MeshInGPU::~MeshInGPU()
+{
 }

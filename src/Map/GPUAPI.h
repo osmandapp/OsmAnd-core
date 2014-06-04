@@ -49,6 +49,8 @@ namespace OsmAnd
                 Texture,
                 SlotOnAtlasTexture,
                 ArrayBuffer,
+                ElementArrayBuffer,
+                Mesh
             };
         private:
         protected:
@@ -61,6 +63,16 @@ namespace OsmAnd
             GPUAPI* const api;
             const Type type;
             const RefInGPU& refInGPU;
+        };
+
+        class MetaResourceInGPU : public ResourceInGPU
+        {
+            Q_DISABLE_COPY(MetaResourceInGPU);
+        private:
+        protected:
+            MetaResourceInGPU(const Type type, GPUAPI* api);
+        public:
+            virtual ~MetaResourceInGPU();
         };
 
         class TextureInGPU : public ResourceInGPU
@@ -89,6 +101,18 @@ namespace OsmAnd
         public:
             ArrayBufferInGPU(GPUAPI* api, const RefInGPU& refInGPU, const unsigned int itemsCount);
             virtual ~ArrayBufferInGPU();
+
+            const unsigned int itemsCount;
+        };
+
+        class ElementArrayBufferInGPU: public ResourceInGPU
+        {
+            Q_DISABLE_COPY(ElementArrayBufferInGPU);
+        private:
+        protected:
+        public:
+            ElementArrayBufferInGPU(GPUAPI* api, const RefInGPU& refInGPU, const unsigned int itemsCount);
+            virtual ~ElementArrayBufferInGPU();
 
             const unsigned int itemsCount;
         };
@@ -202,6 +226,22 @@ namespace OsmAnd
 
             const std::shared_ptr<AtlasTextureInGPU> atlasTexture;
             const uint32_t slotIndex;
+        };
+
+        class MeshInGPU : public MetaResourceInGPU
+        {
+            Q_DISABLE_COPY(MeshInGPU);
+        private:
+        protected:
+        public:
+            MeshInGPU(
+                GPUAPI* api,
+                const std::shared_ptr<ArrayBufferInGPU>& vertexBuffer,
+                const std::shared_ptr<ElementArrayBufferInGPU>& indexBuffer);
+            virtual ~MeshInGPU();
+
+            const std::shared_ptr<ArrayBufferInGPU> vertexBuffer;
+            const std::shared_ptr<ElementArrayBufferInGPU> indexBuffer;
         };
 
     private:
