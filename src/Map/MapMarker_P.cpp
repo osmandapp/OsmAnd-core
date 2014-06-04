@@ -5,6 +5,8 @@
 #include "MapSymbolsGroup.h"
 #include "BoundToPointMapSymbol.h"
 #include "SpriteMapSymbol.h"
+#include "OnSurfaceMapSymbol.h"
+#include "QKeyValueIterator.h"
 
 OsmAnd::MapMarker_P::MapMarker_P(MapMarker* const owner_)
     : owner(owner_)
@@ -90,18 +92,18 @@ void OsmAnd::MapMarker_P::setPosition(const PointI position)
     _hasUnappliedChanges = true;
 }
 
-float OsmAnd::MapMarker_P::getDirection() const
+float OsmAnd::MapMarker_P::getOnMapSurfaceIconDirection(const MapMarker::OnSurfaceIconKey key) const
 {
     QReadLocker scopedLocker(&_lock);
 
-    return _direction;
+    return _directions[key];
 }
 
-void OsmAnd::MapMarker_P::setDirection(const float direction)
+void OsmAnd::MapMarker_P::setOnMapSurfaceIconDirection(const MapMarker::OnSurfaceIconKey key, const float direction)
 {
     QWriteLocker scopedLocker(&_lock);
 
-    _direction = direction;
+    _directions[key] = direction;
     _hasUnappliedChanges = true;
 }
 
@@ -132,13 +134,19 @@ bool OsmAnd::MapMarker_P::applyChanges()
         //marker->setPrecisionCircleRadius(_precisionCircleRadius);
         //marker->setPrecisionCircleBaseColor(_precisionCircleBaseColor);
 
-        for (const auto& symbol : constOf(symbolGroup->symbols))
+        for (const auto& symbol_ : constOf(symbolGroup->symbols))
         {
-            if (const auto symbolWithPosition = std::dynamic_pointer_cast<BoundToPointMapSymbol>(symbol))
-                symbolWithPosition->location31 = _position;
+            if (const auto symbol = std::dynamic_pointer_cast<BoundToPointMapSymbol>(symbol_))
+            {
+                symbol->location31 = _position;
+            }
+            else if (const auto symbol = std::dynamic_pointer_cast<KeyedOnSurfaceMapSymbol>(symbol_))
+            {
+                const auto citDirection = _directions.constFind(symbol->key);
+                if (citDirection != _directions.cend())
+                    symbol->direction = *citDirection;
+            }
         }
-        
-        //marker->setDirection(_direction);
     }
 
     _hasUnappliedChanges = false;
@@ -155,24 +163,30 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
         std::const_pointer_cast<MapMarker_P>(shared_from_this())));
     int order = owner->baseOrder;
 
-    /*
     // Map marker consists one or more of:
-    // - Set of OnSurfaceMapSymbol from _mapIconsBitmaps
-    for (const auto& mapIconPair : constOf(_mapIconsBitmaps))
+    // 1. Set of OnSurfaceMapSymbol from onMapSurfaceIcons
+    for (const auto& itOnMapSurfaceIcon : rangeOf(constOf(owner->onMapSurfaceIcons)))
     {
-    std::shared_ptr<OnSurfaceMapSymbol> symbol(new OnSurfaceMapSymbol(
-    marker->_p->_symbolsGroup,
-    false,
-    BITMAP,
-    order,
-    content,
-    language,
-    minDistance,
-    location));
+        const auto& onMapSurfaceIcon = itOnMapSurfaceIcon.value();
+
+        std::shared_ptr<SkBitmap> iconClone(new SkBitmap());
+        onMapSurfaceIcon->deepCopyTo(iconClone.get(), onMapSurfaceIcon->getConfig());
+
+        const std::shared_ptr<MapSymbol> onMapSurfaceIconSymbol(new KeyedOnSurfaceMapSymbol(
+            itOnMapSurfaceIcon.key(),
+            symbolsGroup,
+            false, // This symbol is not shareable
+            iconClone,
+            order++,
+            static_cast<MapSymbol::IntersectionModeFlags>(MapSymbol::IgnoredByIntersectionTest | MapSymbol::TransparentForIntersectionLookup),
+            QString().sprintf("markerGroup(%p:%p)->onMapSurfaceIconBitmap:%p", this, symbolsGroup.get(), iconClone->getPixels()),
+            LanguageId::Invariant,
+            PointI(), // Since minDistance is (0, 0), this map symbol will not be compared to others
+            _position));
+        symbolsGroup->symbols.push_back(onMapSurfaceIconSymbol);
     }
 
-    // 2. Special OnSurfaceMapSymbol that represents precision circle (PrimitiveOnSurfaceMapSymbol)
-    */
+    //TODO: 2. Special OnSurfaceMapSymbol that represents precision circle (PrimitiveOnSurfaceMapSymbol)
 
     // 3. SpriteMapSymbol with pinIconBitmap as an icon
     if (owner->pinIcon)
@@ -180,7 +194,7 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
         std::shared_ptr<SkBitmap> pinIcon(new SkBitmap());
         owner->pinIcon->deepCopyTo(pinIcon.get(), owner->pinIcon->getConfig());
 
-        const std::shared_ptr<SpriteMapSymbol> pinIconSymbol(new SpriteMapSymbol(
+        const std::shared_ptr<MapSymbol> pinIconSymbol(new SpriteMapSymbol(
             symbolsGroup,
             false, // This symbol is not shareable
             pinIcon,
@@ -233,4 +247,24 @@ void OsmAnd::MapMarker_P::LinkedMapSymbolsGroup::update()
 {
     if (const auto mapMarkerP_ = mapMarkerP.lock())
         mapMarkerP_->applyChanges();
+}
+
+OsmAnd::MapMarker_P::KeyedOnSurfaceMapSymbol::KeyedOnSurfaceMapSymbol(
+    const MapMarker::OnSurfaceIconKey key_,
+    const std::shared_ptr<MapSymbolsGroup>& group_,
+    const bool isShareable_,
+    const std::shared_ptr<const SkBitmap>& bitmap_,
+    const int order_,
+    const IntersectionModeFlags intersectionModeFlags_,
+    const QString& content_,
+    const LanguageId& languageId_,
+    const PointI& minDistance_,
+    const PointI& location31_)
+    : OnSurfaceMapSymbol(group_, isShareable_, bitmap_, order_, intersectionModeFlags_, content_, languageId_, minDistance_, location31_)
+    , key(key_)
+{
+}
+
+OsmAnd::MapMarker_P::KeyedOnSurfaceMapSymbol::~KeyedOnSurfaceMapSymbol()
+{
 }

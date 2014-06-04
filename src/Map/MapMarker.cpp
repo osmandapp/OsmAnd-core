@@ -3,10 +3,12 @@
 
 OsmAnd::MapMarker::MapMarker(
     const int baseOrder_,
-    const std::shared_ptr<const SkBitmap>& pinIcon_)
+    const std::shared_ptr<const SkBitmap>& pinIcon_,
+    const QHash< OnSurfaceIconKey, std::shared_ptr<const SkBitmap> >& onMapSurfaceIcons_)
     : _p(new MapMarker_P(this))
     , baseOrder(baseOrder_)
     , pinIcon(pinIcon_)
+    , onMapSurfaceIcons(onMapSurfaceIcons_)
 {
 }
 
@@ -64,14 +66,14 @@ void OsmAnd::MapMarker::setPosition(const PointI position)
     _p->setPosition(position);
 }
 
-float OsmAnd::MapMarker::getDirection() const
+float OsmAnd::MapMarker::getOnMapSurfaceIconDirection(const OnSurfaceIconKey key) const
 {
-    return _p->getDirection();
+    return _p->getOnMapSurfaceIconDirection(key);
 }
 
-void OsmAnd::MapMarker::setDirection(const float direction)
+void OsmAnd::MapMarker::setOnMapSurfaceIconDirection(const OnSurfaceIconKey key, const float direction)
 {
-    _p->setDirection(direction);
+    _p->setOnMapSurfaceIconDirection(key, direction);
 }
 
 bool OsmAnd::MapMarker::hasUnappliedChanges() const

@@ -57,8 +57,8 @@ namespace OsmAnd
                 } param;
             } fs;
         } _spriteSymbolProgram;
-        void initializePinned();
-        void releasePinned();
+        void initializeSprite();
+        void releaseSprite();
 
         struct Glyph
         {
@@ -154,6 +154,45 @@ namespace OsmAnd
         
         void initializeOnPath();
         void releaseOnPath();
+
+        GLname _onSurfaceSymbolVAO;
+        GLname _onSurfaceSymbolVBO;
+        GLname _onSurfaceSymbolIBO;
+        struct OnSurfaceSymbolProgram {
+            GLname id;
+
+            struct {
+                // Input data
+                struct {
+                    GLlocation vertexPosition;
+                    GLlocation vertexTexCoords;
+                } in;
+
+                // Parameters
+                struct {
+                    // Common data
+                    GLlocation mPerspectiveProjectionView;
+
+                    // Per-symbol data
+                    GLlocation symbolOffsetFromTarget;
+                    GLlocation direction;
+                    GLlocation symbolSize;
+                    GLlocation zDistanceFromCamera;
+                } param;
+            } vs;
+
+            struct {
+                // Parameters
+                struct {
+                    // Common data
+
+                    // Per-symbol data
+                    GLlocation sampler;
+                } param;
+            } fs;
+        } _onSurfaceSymbolProgram;
+        void initializeOnSurface();
+        void releaseOnSurface();
 
         struct RenderableSymbol
         {

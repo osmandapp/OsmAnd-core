@@ -36,8 +36,9 @@ OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::~AtlasMapRendererSymbolsStage_OpenG
 
 void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initialize()
 {
-    initializePinned();
+    initializeSprite();
     initializeOnPath();
+    initializeOnSurface();
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
@@ -138,11 +139,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 
 void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::release()
 {
-    releasePinned();
+    releaseSprite();
     releaseOnPath();
+    releaseOnSurface();
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializePinned()
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeSprite()
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -327,7 +329,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializePinned()
     GL_CHECK_RESULT;
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releasePinned()
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseSprite()
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -873,6 +875,195 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath3D()
         glDeleteProgram(_onPathSymbol3dProgram.id);
         GL_CHECK_RESULT;
         _onPathSymbol3dProgram = OnPathSymbol3dProgram();
+    }
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurface()
+{
+    const auto gpuAPI = getGPUAPI();
+
+    GL_CHECK_PRESENT(glGenBuffers);
+    GL_CHECK_PRESENT(glBindBuffer);
+    GL_CHECK_PRESENT(glBufferData);
+    GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glVertexAttribPointer);
+
+    // Compile vertex shader
+    const QString vertexShader = QLatin1String(
+        // Input data
+        "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
+        "INPUT vec2 in_vs_vertexTexCoords;                                                                                  ""\n"
+        "                                                                                                                   ""\n"
+        // Output data to next shader stages
+        "PARAM_OUTPUT vec2 v2f_texCoords;                                                                                   ""\n"
+        "                                                                                                                   ""\n"
+        // Parameters: common data
+        "uniform mat4 param_vs_mPerspectiveProjectionView;                                                                  ""\n"
+        "                                                                                                                   ""\n"
+        // Parameters: per-symbol data
+        "uniform highp vec2 param_vs_symbolOffsetFromTarget;                                                                ""\n"
+        "uniform float param_vs_direction;                                                                                  ""\n"
+        "uniform ivec2 param_vs_symbolSize;                                                                                 ""\n"
+        "uniform float param_vs_zDistanceFromCamera;                                                                        ""\n"
+        "                                                                                                                   ""\n"
+        "void main()                                                                                                        ""\n"
+        "{                                                                                                                  ""\n"
+        // Get on-screen vertex coordinates
+        "    float cos_a = cos(param_vs_direction);                                                                         ""\n"
+        "    float sin_a = sin(param_vs_direction);                                                                         ""\n"
+        "    vec2 p;                                                                                                        ""\n"
+        "    p.x = in_vs_vertexPosition.x * float(param_vs_symbolSize.x);                                                   ""\n"
+        "    p.y = in_vs_vertexPosition.y * float(param_vs_symbolSize.y);                                                   ""\n"
+        "    vec4 v;                                                                                                        ""\n"
+        "    v.x = param_vs_symbolOffsetFromTarget.x + (p.x*cos_a - p.y*sin_a);                                             ""\n"
+        "    v.y = 0.0;                                                                                                     ""\n"
+        "    v.z = param_vs_symbolOffsetFromTarget.y + (p.x*sin_a + p.y*cos_a);                                             ""\n"
+        "    v.w = 1.0;                                                                                                     ""\n"
+        "    gl_Position = param_vs_mPerspectiveProjectionView * v;                                                         ""\n"
+        "    gl_Position.z = param_vs_zDistanceFromCamera;                                                                  ""\n"
+        "                                                                                                                   ""\n"
+        // Prepare texture coordinates
+        "    v2f_texCoords = in_vs_vertexTexCoords;                                                                         ""\n"
+        "}                                                                                                                  ""\n");
+    auto preprocessedVertexShader = vertexShader;
+    gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+    gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+    const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+    assert(vsId != 0);
+
+    // Compile fragment shader
+    const QString fragmentShader = QLatin1String(
+        // Input data
+        "PARAM_INPUT vec2 v2f_texCoords;                                                                                    ""\n"
+        "                                                                                                                   ""\n"
+        // Parameters: common data
+        // Parameters: per-symbol data
+        "uniform lowp sampler2D param_fs_sampler;                                                                           ""\n"
+        "                                                                                                                   ""\n"
+        "void main()                                                                                                        ""\n"
+        "{                                                                                                                  ""\n"
+        "    FRAGMENT_COLOR_OUTPUT = SAMPLE_TEXTURE_2D(                                                                     ""\n"
+        "        param_fs_sampler,                                                                                          ""\n"
+        "        v2f_texCoords);                                                                                            ""\n"
+        "}                                                                                                                  ""\n");
+    auto preprocessedFragmentShader = fragmentShader;
+    QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
+    gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
+    gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
+    const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+    assert(fsId != 0);
+
+    // Link everything into program object
+    GLuint shaders[] = { vsId, fsId };
+    _onSurfaceSymbolProgram.id = gpuAPI->linkProgram(2, shaders);
+    assert(_onSurfaceSymbolProgram.id);
+
+    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onSurfaceSymbolProgram.id);
+    lookup->lookupLocation(_onSurfaceSymbolProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
+    lookup->lookupLocation(_onSurfaceSymbolProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
+    lookup->lookupLocation(_onSurfaceSymbolProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onSurfaceSymbolProgram.vs.param.symbolOffsetFromTarget, "param_vs_symbolOffsetFromTarget", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onSurfaceSymbolProgram.vs.param.direction, "param_vs_direction", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onSurfaceSymbolProgram.vs.param.symbolSize, "param_vs_symbolSize", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onSurfaceSymbolProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onSurfaceSymbolProgram.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
+
+#pragma pack(push, 1)
+    struct Vertex
+    {
+        // XY coordinates. Z is assumed to be 0
+        float positionXY[2];
+
+        // UV coordinates
+        float textureUV[2];
+    };
+#pragma pack(pop)
+
+    // Vertex data
+    Vertex vertices[4] =
+    {
+        // In OpenGL, UV origin is BL. But since same rule applies to uploading texture data,
+        // texture in memory is vertically flipped, so swap bottom and top UVs
+        { { -0.5f, -0.5f }, { 0.0f, 1.0f } },//BL
+        { { -0.5f,  0.5f }, { 0.0f, 0.0f } },//TL
+        { {  0.5f,  0.5f }, { 1.0f, 0.0f } },//TR
+        { {  0.5f, -0.5f }, { 1.0f, 1.0f } } //BR
+    };
+    const auto verticesCount = 4;
+
+    // Index data
+    GLushort indices[6] =
+    {
+        0, 1, 2,
+        0, 2, 3
+    };
+    const auto indicesCount = 6;
+
+    // Create Vertex Array Object
+    gpuAPI->glGenVertexArrays_wrapper(1, &_onSurfaceSymbolVAO);
+    GL_CHECK_RESULT;
+    gpuAPI->glBindVertexArray_wrapper(_onSurfaceSymbolVAO);
+    GL_CHECK_RESULT;
+
+    // Create vertex buffer and associate it with VAO
+    glGenBuffers(1, &_onSurfaceSymbolVBO);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ARRAY_BUFFER, _onSurfaceSymbolVBO);
+    GL_CHECK_RESULT;
+    glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(Vertex), vertices, GL_STATIC_DRAW);
+    GL_CHECK_RESULT;
+    glEnableVertexAttribArray(*_onSurfaceSymbolProgram.vs.in.vertexPosition);
+    GL_CHECK_RESULT;
+    glVertexAttribPointer(*_onSurfaceSymbolProgram.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, positionXY)));
+    GL_CHECK_RESULT;
+    glEnableVertexAttribArray(*_onSurfaceSymbolProgram.vs.in.vertexTexCoords);
+    GL_CHECK_RESULT;
+    glVertexAttribPointer(*_onSurfaceSymbolProgram.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, textureUV)));
+    GL_CHECK_RESULT;
+
+    // Create index buffer and associate it with VAO
+    glGenBuffers(1, &_onSurfaceSymbolIBO);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _onSurfaceSymbolIBO);
+    GL_CHECK_RESULT;
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
+    GL_CHECK_RESULT;
+
+    gpuAPI->glBindVertexArray_wrapper(0);
+    GL_CHECK_RESULT;
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurface()
+{
+    const auto gpuAPI = getGPUAPI();
+
+    GL_CHECK_PRESENT(glDeleteBuffers);
+    GL_CHECK_PRESENT(glDeleteProgram);
+
+    if (_onSurfaceSymbolIBO)
+    {
+        glDeleteBuffers(1, &_onSurfaceSymbolIBO);
+        GL_CHECK_RESULT;
+        _onSurfaceSymbolIBO.reset();
+    }
+    if (_onSurfaceSymbolVBO)
+    {
+        glDeleteBuffers(1, &_onSurfaceSymbolVBO);
+        GL_CHECK_RESULT;
+        _onSurfaceSymbolVBO.reset();
+    }
+    if (_onSurfaceSymbolVAO)
+    {
+        gpuAPI->glDeleteVertexArrays_wrapper(1, &_onSurfaceSymbolVAO);
+        GL_CHECK_RESULT;
+        _onSurfaceSymbolVAO.reset();
+    }
+
+    if (_onSurfaceSymbolProgram.id)
+    {
+        glDeleteProgram(_onSurfaceSymbolProgram.id);
+        GL_CHECK_RESULT;
+        _onSurfaceSymbolProgram = OnSurfaceSymbolProgram();
     }
 }
 

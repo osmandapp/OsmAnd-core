@@ -5,12 +5,14 @@
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QList>
+#include <QHash>
 
 #include <SkBitmap.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Map/MapMarker.h>
 
 namespace OsmAnd
 {
@@ -45,11 +47,13 @@ namespace OsmAnd
         PointI getPosition() const;
         void setPosition(const PointI position);
 
-        float getDirection() const;
-        void setDirection(const float direction);
-        
         std::shared_ptr<const SkBitmap> getPinIcon() const;
         void setPinIcon(const std::shared_ptr<const SkBitmap>& bitmap);
+
+        QHash< MapMarker::OnSurfaceIconKey, std::shared_ptr<const SkBitmap> > getOnMapSurfaceIcons() const;
+        void addOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key, const std::shared_ptr<const SkBitmap>& bitmap);
+        void removeOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key);
+        void clearOnMapSurfaceIcons();
 
         std::shared_ptr<MapMarker> buildAndAddToCollection(const std::shared_ptr<MapMarkersCollection>& collection);
     };

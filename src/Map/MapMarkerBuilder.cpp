@@ -70,16 +70,6 @@ void OsmAnd::MapMarkerBuilder::setPosition(const PointI position)
     _p->setPosition(position);
 }
 
-float OsmAnd::MapMarkerBuilder::getDirection() const
-{
-    return _p->getDirection();
-}
-
-void OsmAnd::MapMarkerBuilder::setDirection(const float direction)
-{
-    _p->setDirection(direction);
-}
-
 std::shared_ptr<const SkBitmap> OsmAnd::MapMarkerBuilder::getPinIcon() const
 {
     return _p->getPinIcon();
@@ -93,4 +83,24 @@ void OsmAnd::MapMarkerBuilder::setPinIcon(const std::shared_ptr<const SkBitmap>&
 std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder::buildAndAddToCollection(const std::shared_ptr<MapMarkersCollection>& collection)
 {
     return _p->buildAndAddToCollection(collection);
+}
+
+QHash< OsmAnd::MapMarker::OnSurfaceIconKey, std::shared_ptr<const SkBitmap> > OsmAnd::MapMarkerBuilder::getOnMapSurfaceIcons() const
+{
+    return _p->getOnMapSurfaceIcons();
+}
+
+void OsmAnd::MapMarkerBuilder::addOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key, const std::shared_ptr<const SkBitmap>& bitmap)
+{
+    _p->addOnMapSurfaceIcon(key, bitmap);
+}
+
+void OsmAnd::MapMarkerBuilder::removeOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key)
+{
+    _p->removeOnMapSurfaceIcon(key);
+}
+
+void OsmAnd::MapMarkerBuilder::clearOnMapSurfaceIcons()
+{
+    _p->clearOnMapSurfaceIcons();
 }

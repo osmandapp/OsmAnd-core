@@ -5,6 +5,7 @@
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QList>
+#include <QHash>
 
 #include <SkBitmap.h>
 #include <SkColor.h>
@@ -26,12 +27,16 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY(MapMarker);
 
+    public:
+        typedef const void* OnSurfaceIconKey;
+
     private:
         PrivateImplementation<MapMarker_P> _p;
     protected:
         MapMarker(
             const int baseOrder,
-            const std::shared_ptr<const SkBitmap>& pinIcon);
+            const std::shared_ptr<const SkBitmap>& pinIcon,
+            const QHash< OnSurfaceIconKey, std::shared_ptr<const SkBitmap> >& onMapSurfaceIcons);
 
         bool applyChanges();
     public:
@@ -39,6 +44,7 @@ namespace OsmAnd
 
         const int baseOrder;
         const std::shared_ptr<const SkBitmap> pinIcon;
+        const QHash< OnSurfaceIconKey, std::shared_ptr<const SkBitmap> > onMapSurfaceIcons;
 
         bool isHidden() const;
         void setIsHidden(const bool hidden);
@@ -53,8 +59,8 @@ namespace OsmAnd
         PointI getPosition() const;
         void setPosition(const PointI position);
 
-        float getDirection() const;
-        void setDirection(const float direction);
+        float getOnMapSurfaceIconDirection(const OnSurfaceIconKey key) const;
+        void setOnMapSurfaceIconDirection(const OnSurfaceIconKey key, const float direction);
 
         bool hasUnappliedChanges() const;
 

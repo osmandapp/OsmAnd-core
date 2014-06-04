@@ -14,6 +14,8 @@
 #include "PrivateImplementation.h"
 #include "CommonTypes.h"
 #include "MapSymbolsGroup.h"
+#include "OnSurfaceMapSymbol.h"
+#include "MapMarker.h"
 
 namespace OsmAnd
 {
@@ -40,7 +42,7 @@ namespace OsmAnd
 
         PointI _position;
 
-        float _direction;
+        QHash< MapMarker::OnSurfaceIconKey, float > _directions;
 
         class LinkedMapSymbolsGroup
             : public MapSymbolsGroup
@@ -55,6 +57,29 @@ namespace OsmAnd
             const std::weak_ptr<MapMarker_P> mapMarkerP;
 
             virtual void update();
+
+        friend class OsmAnd::MapMarker_P;
+        };
+
+        class KeyedOnSurfaceMapSymbol : public OnSurfaceMapSymbol
+        {
+        private:
+        protected:
+            KeyedOnSurfaceMapSymbol(
+                const MapMarker::OnSurfaceIconKey key,
+                const std::shared_ptr<MapSymbolsGroup>& group,
+                const bool isShareable,
+                const std::shared_ptr<const SkBitmap>& bitmap,
+                const int order,
+                const IntersectionModeFlags intersectionModeFlags,
+                const QString& content,
+                const LanguageId& languageId,
+                const PointI& minDistance,
+                const PointI& location31);
+        public:
+            virtual ~KeyedOnSurfaceMapSymbol();
+
+            const MapMarker::OnSurfaceIconKey key;
 
         friend class OsmAnd::MapMarker_P;
         };
@@ -84,8 +109,8 @@ namespace OsmAnd
         PointI getPosition() const;
         void setPosition(const PointI position);
 
-        float getDirection() const;
-        void setDirection(const float direction);
+        float getOnMapSurfaceIconDirection(const MapMarker::OnSurfaceIconKey key) const;
+        void setOnMapSurfaceIconDirection(const MapMarker::OnSurfaceIconKey key, const float direction);
 
         bool hasUnappliedChanges() const;
         

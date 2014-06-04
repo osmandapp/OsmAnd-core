@@ -106,20 +106,6 @@ void OsmAnd::MapMarkerBuilder_P::setPosition(const PointI position)
     _position = position;
 }
 
-float OsmAnd::MapMarkerBuilder_P::getDirection() const
-{
-    QReadLocker scopedLocker(&_lock);
-
-    return _direction;
-}
-
-void OsmAnd::MapMarkerBuilder_P::setDirection(const float direction)
-{
-    QWriteLocker scopedLocker(&_lock);
-
-    _direction = Utilities::normalizedAngleDegrees(direction);
-}
-
 std::shared_ptr<const SkBitmap> OsmAnd::MapMarkerBuilder_P::getPinIcon() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -134,18 +120,45 @@ void OsmAnd::MapMarkerBuilder_P::setPinIcon(const std::shared_ptr<const SkBitmap
     _pinIcon = bitmap;
 }
 
+QHash< OsmAnd::MapMarker::OnSurfaceIconKey, std::shared_ptr<const SkBitmap> > OsmAnd::MapMarkerBuilder_P::getOnMapSurfaceIcons() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return detachedOf(_onMapSurfaceIcons);
+}
+
+void OsmAnd::MapMarkerBuilder_P::addOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key, const std::shared_ptr<const SkBitmap>& bitmap)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _onMapSurfaceIcons.insert(key, bitmap);
+}
+
+void OsmAnd::MapMarkerBuilder_P::removeOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _onMapSurfaceIcons.remove(key);
+}
+
+void OsmAnd::MapMarkerBuilder_P::clearOnMapSurfaceIcons()
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _onMapSurfaceIcons.clear();
+}
+
 std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToCollection(const std::shared_ptr<MapMarkersCollection>& collection)
 {
     QReadLocker scopedLocker(&_lock);
 
     // Construct map symbols group for this marker
-    const std::shared_ptr<MapMarker> marker(new MapMarker(_baseOrder, _pinIcon));
+    const std::shared_ptr<MapMarker> marker(new MapMarker(_baseOrder, _pinIcon, detachedOf(_onMapSurfaceIcons)));
     marker->setIsHidden(_isHidden);
     marker->setIsPrecisionCircleEnabled(_isPrecisionCircleEnabled);
     marker->setPrecisionCircleRadius(_precisionCircleRadius);
     marker->setPrecisionCircleBaseColor(_precisionCircleBaseColor);
     marker->setPosition(_position);
-    marker->setDirection(_direction);
     marker->applyChanges();
 
     // Add marker to collection and return it if adding was successful
