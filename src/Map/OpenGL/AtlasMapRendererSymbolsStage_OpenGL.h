@@ -201,7 +201,6 @@ namespace OsmAnd
             std::shared_ptr<const MapSymbol> mapSymbol;
             std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
         };
-        typedef std::shared_ptr<const RenderableSymbol> RenderableSymbolEntry;
 
         struct RenderableSpriteSymbol : RenderableSymbol
         {
@@ -227,39 +226,38 @@ namespace OsmAnd
             // 3D-only:
             glm::vec2 subpathDirectioInWorld;
         };
-        typedef std::shared_ptr<RenderableOnPathSymbol> RenderableSymbolOnPathEntry;
 
         void processOnPathSymbols(
             const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
-            QMultiMap<float, RenderableSymbolEntry>& output,
+            QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output,
             const glm::vec4& viewport,
             QSet< std::shared_ptr<MapRendererBaseResource> > &updatedMapSymbolsResources);
 
         // Obtains visible portions of each OnPathSymbol
         void obtainRenderableEntriesForOnPathSymbols(
             const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
-            QList< RenderableSymbolOnPathEntry >& output,
+            QList< std::shared_ptr<RenderableOnPathSymbol> >& output,
             QSet< std::shared_ptr<MapRendererBaseResource> > &updatedMapSymbolsResources);
 
         // Calculates renderable OnPathSymbols to in world
-        void calculateRenderableOnPathSymbolsInWorld(QList< RenderableSymbolOnPathEntry >& entries);
+        void calculateRenderableOnPathSymbolsInWorld(QList< std::shared_ptr<RenderableOnPathSymbol> >& entries);
 
         // Determines if each renderable OnPathSymbol is 2D-mode or 3D-mode
-        void determineRenderableOnPathSymbolsMode(QList< RenderableSymbolOnPathEntry >& entries, const glm::vec4& viewport);
+        void determineRenderableOnPathSymbolsMode(QList< std::shared_ptr<RenderableOnPathSymbol> >& entries, const glm::vec4& viewport);
 
         // Adjusts renderable OnPathSymbol bitmap placement on entire path
-        void adjustPlacementOfGlyphsOnPath(QList< RenderableSymbolOnPathEntry >& entries, const glm::vec4& viewport);
+        void adjustPlacementOfGlyphsOnPath(QList< std::shared_ptr<RenderableOnPathSymbol> >& entries, const glm::vec4& viewport);
 
-        void sortRenderableOnPathSymbols(const QList< RenderableSymbolOnPathEntry >& entries, QMultiMap< float, RenderableSymbolEntry >& output);
+        void sortRenderableOnPathSymbols(const QList< std::shared_ptr<RenderableOnPathSymbol> >& entries, QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output);
 
         void processSpriteSymbols(
             const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
-            QMultiMap<float, RenderableSymbolEntry>& output,
+            QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output,
             QSet< std::shared_ptr<MapRendererBaseResource> >& updatedMapSymbolsResources);
 
         void obtainAndSortSpriteSymbols(
             const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
-            QMultiMap<float, RenderableSymbolEntry>& output,
+            QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output,
             QSet< std::shared_ptr<MapRendererBaseResource> >& updatedMapSymbolsResources);
 
         typedef QuadTree< std::shared_ptr<const MapSymbol>, AreaI::CoordType > IntersectionsQuadTree;

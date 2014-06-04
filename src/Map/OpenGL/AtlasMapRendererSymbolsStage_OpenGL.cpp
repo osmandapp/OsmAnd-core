@@ -82,13 +82,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
         GL_PUSH_GROUP_MARKER(QString("order %1").arg(mapSymbolsLayerPair.key()));
 
         // Obtain renderables in order how they should be rendered
-        QMultiMap<float, RenderableSymbolEntry> sortedRenderables;
+        QMultiMap<float, std::shared_ptr<RenderableSymbol>> sortedRenderables;
         processOnPathSymbols(mapSymbolsLayer, sortedRenderables, viewport, updatedMapSymbolsResources);
         processSpriteSymbols(mapSymbolsLayer, sortedRenderables, updatedMapSymbolsResources);
 
         // Render symbols in reversed order, since sortedSymbols contains symbols by distance from camera from near->far.
         // And rendering needs to be done far->near
-        QMapIterator< float, RenderableSymbolEntry > itRenderableEntry(sortedRenderables);
+        QMapIterator< float, std::shared_ptr<RenderableSymbol> > itRenderableEntry(sortedRenderables);
         itRenderableEntry.toBack();
         while (itRenderableEntry.hasPrevious())
         {
@@ -1069,12 +1069,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurface()
 
 void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::processOnPathSymbols(
     const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
-    QMultiMap<float, RenderableSymbolEntry>& output,
+    QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output,
     const glm::vec4& viewport,
     QSet< std::shared_ptr<MapRendererBaseResource> > &updatedMapSymbolsResources)
 {
     // Process symbols-on-path (SOPs) to get visible subpaths from them
-    QList< RenderableSymbolOnPathEntry > visibleSOPSubpaths;
+    QList< std::shared_ptr<RenderableOnPathSymbol> > visibleSOPSubpaths;
     obtainRenderableEntriesForOnPathSymbols(input, visibleSOPSubpaths, updatedMapSymbolsResources);
 
     // For each subpath, calculate it's points in world. That's needed for both 2D and 3D SOPs
@@ -1093,7 +1093,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::processOnPathSymbols(
 
 void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::obtainRenderableEntriesForOnPathSymbols(
     const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
-    QList< RenderableSymbolOnPathEntry >& output,
+    QList< std::shared_ptr<RenderableOnPathSymbol> >& output,
     QSet< std::shared_ptr<MapRendererBaseResource> > &updatedMapSymbolsResources)
 {
     output.reserve(input.size());
@@ -1189,7 +1189,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::obtainRenderableEntriesForOnPa
     }
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::calculateRenderableOnPathSymbolsInWorld(QList< RenderableSymbolOnPathEntry >& entries)
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::calculateRenderableOnPathSymbolsInWorld(QList< std::shared_ptr<RenderableOnPathSymbol> >& entries)
 {
     for (auto& renderable : entries)
     {
@@ -1207,7 +1207,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::calculateRenderableOnPathSymbo
 }
 
 //NOTE: This is not quite correct, since it checks entire subpath instead of just occupied part.
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::determineRenderableOnPathSymbolsMode(QList< RenderableSymbolOnPathEntry >& entries, const glm::vec4& viewport)
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::determineRenderableOnPathSymbolsMode(QList< std::shared_ptr<RenderableOnPathSymbol> >& entries, const glm::vec4& viewport)
 {
     for (auto& renderable : entries)
     {
@@ -1258,10 +1258,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::determineRenderableOnPathSymbo
     }
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::adjustPlacementOfGlyphsOnPath(QList< RenderableSymbolOnPathEntry >& entries, const glm::vec4& viewport)
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::adjustPlacementOfGlyphsOnPath(QList< std::shared_ptr<RenderableOnPathSymbol> >& entries, const glm::vec4& viewport)
 {
     //TODO: improve significantly to place as much SOPs as possible by moving them around. Currently it just centers SOP on path
-    QMutableListIterator<RenderableSymbolOnPathEntry> itRenderableSOP(entries);
+    QMutableListIterator<std::shared_ptr<RenderableOnPathSymbol>> itRenderableSOP(entries);
     while (itRenderableSOP.hasNext())
     {
         const auto& renderable = itRenderableSOP.next();
@@ -1361,7 +1361,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::adjustPlacementOfGlyphsOnPath(
     }
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::sortRenderableOnPathSymbols(const QList< RenderableSymbolOnPathEntry >& entries, QMultiMap< float, RenderableSymbolEntry >& output)
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::sortRenderableOnPathSymbols(const QList< std::shared_ptr<RenderableOnPathSymbol> >& entries, QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output)
 {
     // Sort visible SOPs by distance to camera
     for (auto& renderable : entries)
@@ -1381,7 +1381,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::sortRenderableOnPathSymbols(co
 
 void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::processSpriteSymbols(
     const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
-    QMultiMap<float, RenderableSymbolEntry>& output,
+    QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output,
     QSet< std::shared_ptr<MapRendererBaseResource> >& updatedMapSymbolsResources)
 {
     obtainAndSortSpriteSymbols(input, output, updatedMapSymbolsResources);
@@ -1389,7 +1389,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::processSpriteSymbols(
 
 void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::obtainAndSortSpriteSymbols(
     const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
-    QMultiMap<float, RenderableSymbolEntry>& output,
+    QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output,
     QSet< std::shared_ptr<MapRendererBaseResource> >& updatedMapSymbolsResources)
 {
     // Sort pinned symbols by distance to camera
