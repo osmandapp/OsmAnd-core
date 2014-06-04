@@ -46,6 +46,7 @@ namespace OsmAnd
         float groundDistanceFromCameraToTarget;
         float tileScaleFactor;
         float scaleToRetainProjectedSize;
+        float pixelInWorldProjectionScale;
         PointF skyplaneSize;
         float correctedFogDistance;
         Frustum2D frustum2D;

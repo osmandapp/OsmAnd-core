@@ -1285,7 +1285,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::adjustPlacementOfGlyphsOnPath(
 
         const auto& points = is2D ? renderable->subpathPointsOnScreen : renderable->subpathPointsInWorld;
         //NOTE: Original algorithm for 3D SOPs contained a top-down projection that didn't include camera elevation angle. But this should give same results.
-        const auto scale = is2D ? 1.0f : (static_cast<float>(AtlasMapRenderer::TileSize3D) / (internalState.screenTileSize*internalState.tileScaleFactor));
+        const auto scale = is2D ? 1.0f : internalState.pixelInWorldProjectionScale;
         const auto symbolWidth = gpuResource->width*scale;
         auto& length = renderable->subpathLength;
         auto& segmentLengths = renderable->segmentLengths;
@@ -1734,7 +1734,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
     const auto& is2D = renderable->is2D;
     const auto& points = is2D ? renderable->subpathPointsOnScreen : renderable->subpathPointsInWorld;
     //NOTE: Original algorithm for 3D SOPs contained a top-down projection that didn't include camera elevation angle. But this should give same results.
-    const auto projectionScale = is2D ? 1.0f : (static_cast<float>(AtlasMapRenderer::TileSize3D) / (internalState.screenTileSize*internalState.tileScaleFactor));
+    const auto projectionScale = is2D ? 1.0f : internalState.pixelInWorldProjectionScale;
     const auto& subpathDirectionOnScreen = renderable->subpathDirectionOnScreen;
     const glm::vec2 subpathDirectionOnScreenN(-subpathDirectionOnScreen.y, subpathDirectionOnScreen.x);
     const auto shouldInvert = (subpathDirectionOnScreenN.y /* horizont.x*dirN.y - horizont.y*dirN.x == 1.0f*dirN.y - 0.0f*dirN.x */) < 0;
@@ -2611,7 +2611,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceSymbol(
     GL_CHECK_RESULT;
 
     // Set symbol size
-    glUniform2i(_onSurfaceSymbolProgram.vs.param.symbolSize, gpuResource->width, gpuResource->height);
+    glUniform2i(_onSurfaceSymbolProgram.vs.param.symbolSize, gpuResource->width*internalState.pixelInWorldProjectionScale, gpuResource->height*internalState.pixelInWorldProjectionScale);
     GL_CHECK_RESULT;
 
     // Set direction
